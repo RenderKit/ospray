@@ -87,16 +87,13 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
   }
 }
 
-void Spheres_bounds(uniform Spheres *uniform geometry,
-                    uniform size_t primID,
-                    uniform box3fa &bbox)
+unmasked void Spheres_bounds(uniform Spheres *uniform geometry,
+    uniform size_t primID,
+    uniform box3fa &bbox)
 {
   uniform uint8 *uniform spherePtr = geometry->data + geometry->bytesPerSphere*((uniform int64)primID);
-  uniform float radius = geometry->radius;
-  
-  if (geometry->offset_radius >= 0) {
-    radius = *((uniform float *uniform)(spherePtr+geometry->offset_radius));
-  }
+  uniform bool offr = geometry->offset_radius >= 0;
+  uniform float radius = offr ? *((uniform float *uniform)(spherePtr+geometry->offset_radius)) : geometry->radius;
   uniform vec3f center = *((uniform vec3f*uniform)(spherePtr+geometry->offset_center));
   bbox = make_box3fa(center-make_vec3f(radius),center+make_vec3f(radius));
 }
@@ -144,7 +141,7 @@ void Spheres_intersect(uniform Spheres *uniform geometry,
 }
 
 
-export void *uniform Spheres_create(void           *uniform cppEquivalent)
+export void *uniform Spheres_create(void *uniform cppEquivalent)
 {
   uniform Spheres *uniform geom = uniform new uniform Spheres;
   Geometry_Constructor(&geom->geometry,cppEquivalent,

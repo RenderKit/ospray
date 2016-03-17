@@ -16,16 +16,19 @@
 
 #pragma once
 
-// ospray
-#include "common/OSPCommon.h"
-// embree
-#include "common/sys/filename.h"
+// // ospray
+// #include "common/OSPCommon.h"
+// // embree
+// #include "common/sys/filename.h"
+#include "common/FileName.h"
+#include "common/box.h"
 // stl
 #include <map>
 #include <vector>
 
 namespace ospray {
   namespace particle {
+    using namespace ospcommon;
 
     struct Model {
       struct AtomType {
@@ -49,7 +52,7 @@ namespace ospray {
       std::map<std::string,std::vector<float> *> attribute;
 
       /*! read given file with atom type definitions */
-      void readAtomTypeDefinitions(const embree::FileName &fn);
+      void readAtomTypeDefinitions(const FileName &fn);
       
       int getAtomType(const std::string &name);
 

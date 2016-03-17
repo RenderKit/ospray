@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "modules/loaders/OSPObjectFile.h"
+#include "apps/volumeViewer/loaders/OSPObjectFile.h"
 #include "SeismicHorizonFile.h"
 #include "SeismicVolumeFile.h"
 

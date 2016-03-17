@@ -16,11 +16,12 @@
 
 #undef NDEBUG
 
-#include "ospray/common/OSPCommon.h"
 #include "apps/common/xml/XML.h"
 #include "Model.h"
 // embree
-#include "common/sys/filename.h"
+#include "common/FileName.h"
+// std
+#include <sstream>
 
 namespace ospray {
   namespace particle {
@@ -257,7 +258,7 @@ namespace ospray {
     void parse__Uintah_Datafile(Model *model,
                                 const std::string &fileName)
     {
-      std::string basePath = embree::FileName(fileName).path();
+      std::string basePath = FileName(fileName).path();
 
       xml::XMLDoc *doc = NULL;
       try {
@@ -349,7 +350,7 @@ namespace ospray {
       assert(doc);
       assert(doc->child.size() == 1);
       assert(doc->child[0]->name == "Uintah_timestep");
-      std::string basePath = embree::FileName(s).path();
+      std::string basePath = FileName(s).path();
       parse__Uintah_timestep(model, basePath, doc->child[0]);
 
       std::stringstream attrs;
@@ -361,7 +362,7 @@ namespace ospray {
       std::cout << "#osp:mpm: read " << s << " : " 
                 << model->atom.size() << " particles (" << attrs.str() << ")" << std::endl;
 
-      box3f bounds = embree::empty;
+      box3f bounds = empty;
       for (int i=0;i<model->atom.size();i++) {
         bounds.extend(model->atom[i].position);
       }

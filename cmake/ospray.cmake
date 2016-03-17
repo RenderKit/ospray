@@ -30,6 +30,29 @@ MARK_AS_ADVANCED(OSPRAY_PIXELS_PER_JOB)
 # unhide compiler to make it easier for users to see what they are using
 MARK_AS_ADVANCED(CLEAR CMAKE_CXX_COMPILER)
 
+## Macro for printing CMake variables ##
+MACRO(PRINT var)
+  MESSAGE("${var} = ${${var}}")
+ENDMACRO()
+
+## Macro to print a warning message that only appears once ##
+MACRO(OSPRAY_WARN_ONCE identifier message)
+  SET(INTERNAL_WARNING "OSPRAY_WARNED_${identifier}")
+  IF(NOT ${INTERNAL_WARNING})
+    MESSAGE(WARNING ${message})
+    SET(${INTERNAL_WARNING} ON CACHE INTERNAL "Warned about '${message}'")
+  ENDIF()
+ENDMACRO()
+
+## Macro check for compiler support of ISA ##
+MACRO(OSPRAY_CHECK_COMPILER_SUPPORT ISA)
+  IF (OSPRAY_EMBREE_ENABLE_${ISA} AND NOT OSPRAY_COMPILER_SUPPORTS_${ISA})
+    OSPRAY_WARN_ONCE(MISSING_${ISA} "Need at least version ${GCC_VERSION_REQUIRED_${ISA}} of gcc for ${ISA}. Disabling ${ISA}.\nTo compile for ${ISA}, please switch to either 'ICC'-compiler, or upgrade your gcc version.")
+    SET(OSPRAY_EMBREE_ENABLE_${ISA} false)
+  ENDIF()
+ENDMACRO()
+
+
 # Configure the output directories. To allow IMPI to do its magic we
 # will put *executables* into the (same) build directory, but tag
 # mic-executables with ".mic". *libraries* cannot use the
@@ -37,16 +60,6 @@ MARK_AS_ADVANCED(CLEAR CMAKE_CXX_COMPILER)
 # directories (names 'intel64' and 'mic', respectively)
 MACRO(CONFIGURE_OSPRAY)
   CONFIGURE_TASKING_SYSTEM()
-  # Embree common include directories; others may be added depending on build target.
-  # this section could be sooo much cleaner if embree only used
-  # fully-qualified include names...
-  SET(EMBREE_INCLUDE_DIRECTORIES
-    ${OSPRAY_EMBREE_SOURCE_DIR}/
-    ${OSPRAY_EMBREE_SOURCE_DIR}/include
-    ${OSPRAY_EMBREE_SOURCE_DIR}/common
-    ${OSPRAY_EMBREE_SOURCE_DIR}/
-    ${OSPRAY_EMBREE_SOURCE_DIR}/kernels
-  )
 
   IF (OSPRAY_TARGET STREQUAL "mic")
     SET(OSPRAY_EXE_SUFFIX ".mic")
@@ -56,9 +69,6 @@ MACRO(CONFIGURE_OSPRAY)
     SET(THIS_IS_MIC ON)
     SET(__XEON__ OFF)
     INCLUDE(${PROJECT_SOURCE_DIR}/cmake/icc_xeonphi.cmake)
-
-    # additional Embree include directory
-    LIST(APPEND EMBREE_INCLUDE_DIRECTORIES ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeonphi)
 
     SET(OSPRAY_TARGET_MIC ON PARENT_SCOPE)
   ELSE()
@@ -78,9 +88,6 @@ MACRO(CONFIGURE_OSPRAY)
     ELSE()
       MESSAGE(FATAL_ERROR "Unsupported compiler specified: '${CMAKE_CXX_COMPILER_ID}'")
     ENDIF()
-
-    # additional Embree include directory
-    LIST(APPEND EMBREE_INCLUDE_DIRECTORIES ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon)
 
     SET(OSPRAY_EMBREE_ENABLE_AVX512 false)
     IF (OSPRAY_BUILD_ISA STREQUAL "ALL")
@@ -151,51 +158,29 @@ MACRO(CONFIGURE_OSPRAY)
 
   ENDIF()
 
-  IF (OSPRAY_EMBREE_ENABLE_AVX AND NOT OSPRAY_COMPILER_SUPPORTS_AVX)
-    IF (NOT OSPRAY_WARNED_MISSING_AVX)
-      MESSAGE("Warning: Need at least version ${GCC_VERSION_REQUIRED_AVX} of gcc for AVX. Disabling AVX.\nTo compile for AVX, please switch to either 'ICC'-compiler, or upgrade your gcc version.")
-      SET(OSPRAY_WARNED_MISSING_AVX ON CACHE INTERNAL "Warned about missing AVX support.")
-    ENDIF()
-    SET(OSPRAY_EMBREE_ENABLE_AVX false)
-  ENDIF()
-
-  IF (OSPRAY_EMBREE_ENABLE_AVX2 AND NOT OSPRAY_COMPILER_SUPPORTS_AVX2)
-    IF (NOT OSPRAY_WARNED_MISSING_AVX2)
-      MESSAGE("Warning: Need at least version ${GCC_VERSION_REQUIRED_AVX2} of gcc for AVX2. Disabling AVX2.\nTo compile for AVX2, please switch to either 'ICC'-compiler, or upgrade your gcc version.")
-      SET(OSPRAY_WARNED_MISSING_AVX2 ON CACHE INTERNAL "Warned about missing AVX2 support.")
-    ENDIF()
-    SET(OSPRAY_EMBREE_ENABLE_AVX2 false)
-  ENDIF()
-
-  IF (OSPRAY_EMBREE_ENABLE_AVX512 AND NOT OSPRAY_COMPILER_SUPPORTS_AVX512)
-    IF (NOT OSPRAY_WARNED_MISSING_AVX2)
-      MESSAGE("Warning: Need at least version ${GCC_VERSION_REQUIRED_AVX512} of gcc for AVX512. Disabling AVX512.\nTo compile for AVX512, please switch to either 'ICC'-compiler, or upgrade your gcc version.")
-      SET(OSPRAY_WARNED_MISSING_AVX512 ON CACHE INTERNAL "Warned about missing AVX512 support.")
-    ENDIF()
-    SET(OSPRAY_EMBREE_ENABLE_AVX512 false)
-  ENDIF()
+  OSPRAY_CHECK_COMPILER_SUPPORT(AVX)
+  OSPRAY_CHECK_COMPILER_SUPPORT(AVX2)
+  OSPRAY_CHECK_COMPILER_SUPPORT(AVX512)
 
   IF (THIS_IS_MIC)
     # whether to build in MIC/xeon phi support
-    SET(OSPRAY_BUILD_COI_DEVICE OFF CACHE BOOL "Build COI Device for OSPRay's MIC support?")
+    SET(OSPRAY_BUILD_COI_DEVICE OFF CACHE BOOL
+        "Build COI Device for OSPRay's MIC support?")
   ENDIF()
 
   INCLUDE(${PROJECT_SOURCE_DIR}/cmake/ispc.cmake)
 
   INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
   INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
-  INCLUDE_DIRECTORIES(${EMBREE_INCLUDE_DIRECTORIES})
 
   INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR})
   INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR}/ospray/include)
-  INCLUDE_DIRECTORIES_ISPC(${EMBREE_INCLUDE_DIRECTORIES})
 
   # for auto-generated cmakeconfig etc
   INCLUDE_DIRECTORIES(${PROJECT_BINARY_DIR})
   INCLUDE_DIRECTORIES_ISPC(${PROJECT_BINARY_DIR})
 
 ENDMACRO()
-
 
 ## Target creation macros ##
 
@@ -344,52 +329,63 @@ MACRO(CONFIGURE_TASKING_SYSTEM)
   #ENDIF()
 
   SET(OSPRAY_TASKING_SYSTEM ${TASKING_DEFAULT} CACHE STRING
-      "Use TBB or OpenMP as for per-node thread tasking system")
+      "Per-node thread tasking system [TBB,OpenMP,Cilk,Internal,Debug]")
 
   SET_PROPERTY(CACHE OSPRAY_TASKING_SYSTEM PROPERTY
-               STRINGS TBB ${CILK_STRING} OpenMP)
+               STRINGS TBB ${CILK_STRING} OpenMP Internal Debug)
   MARK_AS_ADVANCED(OSPRAY_TASKING_SYSTEM)
 
-  IF(${OSPRAY_TASKING_SYSTEM} STREQUAL "TBB")
+  # NOTE(jda) - Make the OSPRAY_TASKING_SYSTEM build option case-insensitive
+  STRING(TOUPPER ${OSPRAY_TASKING_SYSTEM} OSPRAY_TASKING_SYSTEM_ID)
+
+  SET(USE_TBB      FALSE)
+  SET(USE_CILK     FALSE)
+  SET(USE_OPENMP   FALSE)
+  SET(USE_INTERNAL FALSE)
+
+  IF(${OSPRAY_TASKING_SYSTEM_ID} STREQUAL "TBB")
     SET(USE_TBB TRUE)
-    SET(USE_TBB TRUE PARENT_SCOPE)
-    SET(USE_CILK FALSE)
-    SET(USE_CILK FALSE PARENT_SCOPE)
-  ELSEIF(${OSPRAY_TASKING_SYSTEM} STREQUAL "Cilk")
-    SET(USE_TBB FALSE)
-    SET(USE_TBB FALSE PARENT_SCOPE)
+  ELSEIF(${OSPRAY_TASKING_SYSTEM_ID} STREQUAL "CILK")
     SET(USE_CILK TRUE)
-    SET(USE_CILK TRUE PARENT_SCOPE)
-  ELSE()
-    SET(USE_TBB FALSE)
-    SET(USE_TBB FALSE PARENT_SCOPE)
-    SET(USE_CILK FALSE)
-    SET(USE_CILK FALSE PARENT_SCOPE)
+  ELSEIF(${OSPRAY_TASKING_SYSTEM_ID} STREQUAL "OPENMP")
+    SET(USE_OPENMP TRUE)
+  ELSEIF(${OSPRAY_TASKING_SYSTEM_ID} STREQUAL "INTERNAL")
+    SET(USE_INTERNAL TRUE)
   ENDIF()
+
+  UNSET(TASKING_SYSTEM_LIBS)
+  UNSET(TASKING_SYSTEM_LIBS_MIC)
 
   IF(USE_TBB)
     FIND_PACKAGE(TBB REQUIRED)
     ADD_DEFINITIONS(-DOSPRAY_USE_TBB)
     INCLUDE_DIRECTORIES(${TBB_INCLUDE_DIRS})
+    SET(TASKING_SYSTEM_LIBS ${TBB_LIBRARIES})
+    SET(TASKING_SYSTEM_LIBS_MIC ${TBB_LIBRARIES_MIC})
   ELSE(USE_TBB)
-    UNSET(TBB_INCLUDE_DIR        CACHE)
-    UNSET(TBB_LIBRARY            CACHE)
-    UNSET(TBB_LIBRARY_DEBUG      CACHE)
-    UNSET(TBB_LIBRARY_MALLOC     CACHE)
+    UNSET(TBB_INCLUDE_DIR          CACHE)
+    UNSET(TBB_LIBRARY              CACHE)
+    UNSET(TBB_LIBRARY_DEBUG        CACHE)
+    UNSET(TBB_LIBRARY_MALLOC       CACHE)
     UNSET(TBB_LIBRARY_MALLOC_DEBUG CACHE)
-    UNSET(TBB_INCLUDE_DIR_MIC    CACHE)
-    UNSET(TBB_LIBRARY_MIC        CACHE)
-    UNSET(TBB_LIBRARY_MALLOC_MIC CACHE)
-    IF(${OSPRAY_TASKING_SYSTEM} STREQUAL "OpenMP")
+    UNSET(TBB_INCLUDE_DIR_MIC      CACHE)
+    UNSET(TBB_LIBRARY_MIC          CACHE)
+    UNSET(TBB_LIBRARY_MALLOC_MIC   CACHE)
+    IF(USE_OPENMP)
       FIND_PACKAGE(OpenMP)
       IF (OPENMP_FOUND)
         SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
         SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
         SET(CMAKE_EXE_LINKER_FLAGS
             "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+        ADD_DEFINITIONS(-DOSPRAY_USE_OMP)
       ENDIF()
-    ELSE()#Cilk
+    ELSEIF(USE_CILK)
       ADD_DEFINITIONS(-DOSPRAY_USE_CILK)
+    ELSEIF(USE_INTERNAL)
+      ADD_DEFINITIONS(-DOSPRAY_USE_INTERNAL_TASKING)
+    ELSE()#Debug
+      # Do nothing, will fall back to scalar code (useful for debugging)
     ENDIF()
   ENDIF(USE_TBB)
 ENDMACRO()

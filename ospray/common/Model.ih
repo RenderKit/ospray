@@ -22,6 +22,7 @@
 #include "ospray/volume/Volume.ih"
 
 // embree stuff
+#include "embree2/rtcore.isph"
 #include "embree2/rtcore_scene.isph"
 
 struct Model {

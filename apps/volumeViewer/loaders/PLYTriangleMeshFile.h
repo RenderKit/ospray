@@ -16,29 +16,56 @@
 
 #pragma once
 
+// ospcommon
+#include "common/vec.h"
+// std
 #include <string>
-#include "modules/loaders/VolumeFile.h"
+#include <vector>
+// own
+#include "TriangleMeshFile.h"
 
-//! \brief specific importer for the LLNL "RM" (Richtmyer-Meshkov) instability files
-/*! Note this exists only for a specific demo */
-class RMVolumeFile : public VolumeFile {
+//! \brief A concrete implementation of the TriangleMeshFile class
+//!  for reading triangle data stored in the PLY file format on disk.
+//!
+class PLYTriangleMeshFile : public TriangleMeshFile {
 public:
 
   //! Constructor.
-  RMVolumeFile(const std::string &fileName) : fileName(fileName) {}
+  PLYTriangleMeshFile(const std::string &filename);
 
   //! Destructor.
-  virtual ~RMVolumeFile() {};
+  virtual ~PLYTriangleMeshFile() {}
 
-  //! Import the volume data.
-  virtual OSPVolume importVolume(OSPVolume volume);
+  //! Import the triangle data.
+  virtual OSPGeometry importTriangleMesh(OSPGeometry triangleMesh);
 
   //! A string description of this class.
-  virtual std::string toString() const { return("ospray_module_loaders::RawVolumeFile"); }
+  virtual std::string toString() const;
 
 private:
 
-  //! Path to the file containing the volume data.
-  std::string fileName;
-};
+  //! Path to the file containing the triangle data.
+  std::string filename;
 
+  //! Scaling for vertex coordinates.
+  ospcommon::vec3f scale;
+
+  //! Verbose logging.
+  bool verbose;
+
+  //! Vertices.
+  std::vector<ospcommon::vec3fa> vertices;
+
+  //! Vertex colors.
+  std::vector<ospcommon::vec4f> vertexColors;
+
+  //! Vertex normals.
+  std::vector<ospcommon::vec3fa> vertexNormals;
+
+  //! Triangle definitions.
+  std::vector<ospcommon::vec3i>  triangles;
+
+  //! Parse the file, determining the vertices, vertex colors, and triangles.
+  bool parse();
+
+};

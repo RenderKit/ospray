@@ -332,10 +332,8 @@ namespace ospray {
       : currentApiMode(OSPD_MODE_MASTERED)
     {
       char *logLevelFromEnv = getenv("OSPRAY_LOG_LEVEL");
-      if (logLevelFromEnv) 
+      if (logLevelFromEnv && logLevel == 0)
         logLevel = atoi(logLevelFromEnv);
-      else
-        logLevel = 0;
 
       ospray::init(_ac,&_av);
 
@@ -1104,7 +1102,7 @@ namespace ospray {
     }
 
     /*! return a string represenging the given API Mode */
-    const char *apiModeName(OSPDApiMode mode) 
+    const char *apiModeName(int mode)
     {
       switch (mode) {
       case OSPD_MODE_INDEPENDENT:
@@ -1117,7 +1115,6 @@ namespace ospray {
         PRINT(mode);
         NOTIMPLEMENTED;
       };
-      
     }
 
     /*! switch API mode for distriubted API extensions */

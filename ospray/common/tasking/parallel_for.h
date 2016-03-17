@@ -20,14 +20,16 @@
 #  include <tbb/parallel_for.h>
 #elif defined(OSPRAY_USE_CILK)
 #  include <cilk/cilk.h>
+#elif defined(OSPRAY_USE_INTERNAL_TASKING)
+#  include "ospray/common/tasking/TaskSys.h"
 #endif
 
 namespace ospray {
 
 // NOTE(jda) - This abstraction wraps "fork-join" parallelism, with an implied
 //             synchronizsation after all of the tasks have run.
-template<typename Task>
-inline void parallel_for(int nTasks, const Task& fcn)
+template<typename TASK_T>
+inline void parallel_for(int nTasks, const TASK_T& fcn)
 {
 #ifdef OSPRAY_USE_TBB
   tbb::parallel_for(0, nTasks, 1, fcn);
@@ -35,8 +37,21 @@ inline void parallel_for(int nTasks, const Task& fcn)
   cilk_for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
     fcn(taskIndex);
   }
-#else
+#elif defined(OSPRAY_USE_OMP)
 # pragma omp parallel for schedule(dynamic)
+  for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
+    fcn(taskIndex);
+  }
+#elif defined(OSPRAY_USE_INTERNAL_TASKING)
+  struct LocalTask : public Task {
+    const TASK_T &t;
+    LocalTask(const TASK_T& fcn) : Task("LocalTask"), t(fcn) {}
+    void run(size_t taskIndex) override { t(taskIndex); }
+  };
+
+  Ref<LocalTask> task = new LocalTask(fcn);
+  task->scheduleAndWait(nTasks);
+#else // Debug (no tasking system)
   for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
     fcn(taskIndex);
   }

@@ -24,7 +24,7 @@ namespace ospray {
     using std::endl;
 
     /*! import a HBP file, and add it to the specified model */
-    void importHBP(Model &model, const embree::FileName &fileName)
+    void importHBP(Model &model, const ospcommon::FileName &fileName)
     {
       std::string vtxName = fileName.str()+".vtx";
       std::string triName = fileName.str()+".tri";

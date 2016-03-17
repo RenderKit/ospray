@@ -107,17 +107,17 @@ namespace ospray {
       std::map<std::string,Material *> material;
       
       /*! Constructor. */
-      OBJLoader(Model &model, const embree::FileName& fileName);
+      OBJLoader(Model &model, const ospcommon::FileName& fileName);
       
       /*! Destruction */
       ~OBJLoader();
  
       /*! Public methods. */
-      void loadMTL(const embree::FileName& fileName);
+      void loadMTL(const ospcommon::FileName& fileName);
 
     private:
 
-      embree::FileName path;
+      ospcommon::FileName path;
 
       /*! Geometry buffer. */
       std::vector<vec3f> v;
@@ -136,10 +136,10 @@ namespace ospray {
       int fix_vn(int index);
       void flushFaceGroup();
       Vertex getInt3(const char*& token);
-      uint32 getVertex(std::map<Vertex,uint32>& vertexMap, Mesh *mesh, const Vertex& i);
+      uint32_t getVertex(std::map<Vertex,uint32_t>& vertexMap, Mesh *mesh, const Vertex& i);
     };
 
-    OBJLoader::OBJLoader(Model &model, const embree::FileName &fileName) 
+    OBJLoader::OBJLoader(Model &model, const ospcommon::FileName &fileName) 
       : model(model),
         curMaterial(NULL),
         path(fileName.path())
@@ -227,7 +227,7 @@ namespace ospray {
     }
 
     /* load material file */
-    void OBJLoader::loadMTL(const embree::FileName &fileName)
+    void OBJLoader::loadMTL(const ospcommon::FileName &fileName)
     {
       std::ifstream cin;
       cin.open(fileName.c_str());
@@ -355,10 +355,10 @@ namespace ospray {
       return(v);
     }
 
-    uint32 OBJLoader::getVertex(std::map<Vertex,uint32>& vertexMap, 
+    uint32_t OBJLoader::getVertex(std::map<Vertex,uint32_t>& vertexMap, 
                                 Mesh *mesh, const Vertex& i)
     {
-      const std::map<Vertex, uint32>::iterator& entry = vertexMap.find(i);
+      const std::map<Vertex, uint32_t>::iterator& entry = vertexMap.find(i);
       if (entry != vertexMap.end()) return(entry->second);
 
       if (std::isnan(v[i.v].x) || std::isnan(v[i.v].y) || std::isnan(v[i.v].z))
@@ -389,7 +389,7 @@ namespace ospray {
       // std::vector<vec3fa> &normals;
       // std::vector<vec2f> &texcoords;
       // std::vector<Triangle> &triangles;
-      std::map<Vertex, uint32> vertexMap;
+      std::map<Vertex, uint32_t> vertexMap;
       Mesh *mesh = new Mesh;
       model.mesh.push_back(mesh);
       model.instance.push_back(Instance(model.mesh.size()-1));
@@ -404,9 +404,9 @@ namespace ospray {
           /* triangulate the face with a triangle fan */
           for (size_t k=2; k < face.size(); k++) {
             i1 = i2; i2 = face[k];
-            int32 v0 = getVertex(vertexMap, mesh, i0);
-            int32 v1 = getVertex(vertexMap, mesh, i1);
-            int32 v2 = getVertex(vertexMap, mesh, i2);
+            int32_t v0 = getVertex(vertexMap, mesh, i0);
+            int32_t v1 = getVertex(vertexMap, mesh, i1);
+            int32_t v2 = getVertex(vertexMap, mesh, i2);
             if (v0 < 0 || v1 < 0 || v2 < 0)
               continue;
             Triangle tri;
@@ -420,7 +420,7 @@ namespace ospray {
     }
 
     void importOBJ(Model &model,
-                   const embree::FileName &fileName)
+                   const ospcommon::FileName &fileName)
     {
       std::cout << "ospray::miniSG::importOBJ: importing from " << fileName << endl;
       OBJLoader loader(model,fileName);

@@ -16,13 +16,12 @@
 
 INCLUDE(GNUInstallDirs)
 
-SET(CMAKE_INSTALL_NAME_DIR ${CMAKE_INSTALL_FULL_LIBDIR})
-
 IF (OSPRAY_ZIP_MODE)
   # in tgz / zip let's have relative RPath
   SET(CMAKE_SKIP_INSTALL_RPATH OFF)
   IF (APPLE)
-    SET(CMAKE_INSTALL_RPATH "@executable_path/:@executable_path/../lib")
+    SET(CMAKE_MACOSX_RPATH ON)
+    SET(CMAKE_INSTALL_RPATH "@executable_path/" "@executable_path/../lib")
   ELSE()
     SET(CMAKE_INSTALL_RPATH "\$ORIGIN:\$ORIGIN/../lib")
     # on per target basis:
@@ -30,6 +29,7 @@ IF (OSPRAY_ZIP_MODE)
     #SET_TARGET_PROPERTIES(libs INSTALL_RPATH "$ORIGIN")
   ENDIF()
 ELSE()
+  SET(CMAKE_INSTALL_NAME_DIR ${CMAKE_INSTALL_FULL_LIBDIR})
   IF (APPLE)
     # use RPath on OSX
     SET(CMAKE_SKIP_INSTALL_RPATH OFF)
@@ -162,11 +162,12 @@ ELSE()
     SET(CPACK_GENERATOR TGZ)
     SET(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}.x86_64.linux")
   ELSE()
+    CONFIGURE_TASKING_SYSTEM()# NOTE(jda) - OSPRAY_TASKING_SYSTEM wasn't visible
     IF(${OSPRAY_TASKING_SYSTEM} STREQUAL "TBB")
       SET(TBB_REQ "tbb >= 3.0")
     ENDIF()
     IF(CMAKE_VERSION VERSION_LESS "3.4.0")
-      MESSAGE(WARNING "You need at least v3.4.0 of CMake for generating RPMs")
+      OSPRAY_WARN_ONCE(RPM_PACKAGING "You need at least v3.4.0 of CMake for generating RPMs")
       SET(CPACK_RPM_PACKAGE_REQUIRES ${TBB_REQ})
     ELSE()
       # needs to use COMPONENT names in original capitalization (i.e. lowercase)

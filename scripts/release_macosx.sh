@@ -48,8 +48,8 @@ cmake \
 -D CMAKE_INSTALL_PREFIX=/opt/local \
 -D CMAKE_INSTALL_INCLUDEDIR=include \
 -D CMAKE_INSTALL_LIBDIR=lib \
--D CMAKE_INSTALL_DOCDIR=../../Applications/OSPRay.app/doc \
--D CMAKE_INSTALL_BINDIR=../../Applications/OSPRay.app/bin \
+-D CMAKE_INSTALL_DOCDIR=../../Applications/OSPRay/doc \
+-D CMAKE_INSTALL_BINDIR=../../Applications/OSPRay/bin \
 ..
 #-D TBB_ROOT=/opt/local \
 
@@ -63,8 +63,8 @@ cmake \
 -D CMAKE_INSTALL_LIBDIR=lib \
 -D CMAKE_INSTALL_DOCDIR=doc \
 -D CMAKE_INSTALL_BINDIR=bin \
+-D TBB_ROOT=$TBB_PATH_LOCAL \
 ..
-#-D TBB_ROOT=$TBB_PATH_LOCAL \
 
 # create ZIP files
 make -j 4 package

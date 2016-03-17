@@ -23,7 +23,7 @@
 #include "ospray/device/command.h"
 #include "ospray/api/Device.h"
 // embree
-#include "common/sys/network.h"
+#include "common/network.h"
 
 namespace ospray {
   namespace nwlayer {
@@ -46,7 +46,7 @@ namespace ospray {
     struct MPICommunicator : public Communicator {
     };
     struct TCPCommunicator : public Communicator {
-      std::vector<embree::network::socket_t> remote;
+      std::vector<ospcommon::network::socket_t> remote;
     };
 
 

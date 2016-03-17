@@ -22,7 +22,7 @@
 
 // TODO blocking
 
-inline vec4f getTexel_rgba8(const uniform Texture2D *uniform self, const vec2i i)
+inline vec4f getTexel_RGBA8(const uniform Texture2D *uniform self, const vec2i i)
 {
   assert(self);
   const uint32 c = ((const uniform uint32 *uniform)self->data)[i.y*self->size.x + i.x];
@@ -33,7 +33,7 @@ inline vec4f getTexel_rgba8(const uniform Texture2D *uniform self, const vec2i i
   return make_vec4f(r, g, b, a)*(1.f/255.f);
 }
 
-inline vec4f getTexel_rgb8(const uniform Texture2D *uniform self, const vec2i i)
+inline vec4f getTexel_RGB8(const uniform Texture2D *uniform self, const vec2i i)
 {
   assert(self);
   const uniform uint8 *uniform texel = (const uniform uint8 *uniform)self->data;
@@ -44,7 +44,7 @@ inline vec4f getTexel_rgb8(const uniform Texture2D *uniform self, const vec2i i)
   return make_vec4f(make_vec3f(r, g, b)*(1.f/255.f), 1.f);
 }
 
-inline vec4f getTexel_r8(const uniform Texture2D *uniform self, const vec2i i)
+inline vec4f getTexel_R8(const uniform Texture2D *uniform self, const vec2i i)
 {
   assert(self);
   const uint8 c = ((const uniform uint8 *uniform)self->data)[i.y*self->size.x + i.x];
@@ -62,30 +62,30 @@ inline vec4f srgba(const vec4f c)
   return make_vec4f(srgb(c.x), srgb(c.y), srgb(c.z), c.w);
 }
 
-inline vec4f getTexel_srgba(const uniform Texture2D *uniform self, const vec2i i)
+inline vec4f getTexel_SRGBA(const uniform Texture2D *uniform self, const vec2i i)
 {
-  return srgba(getTexel_rgba8(self, i));
+  return srgba(getTexel_RGBA8(self, i));
 }
 
-inline vec4f getTexel_srgb(const uniform Texture2D *uniform self, const vec2i i)
+inline vec4f getTexel_SRGB(const uniform Texture2D *uniform self, const vec2i i)
 {
-  return srgba(getTexel_rgb8(self, i));
+  return srgba(getTexel_RGB8(self, i));
 }
 
-inline vec4f getTexel_rgba32f(const uniform Texture2D *uniform self, const vec2i i)
+inline vec4f getTexel_RGBA32F(const uniform Texture2D *uniform self, const vec2i i)
 {
   assert(self);
   return ((const uniform vec4f *uniform)self->data)[i.y*self->size.x + i.x];
 }
 
-inline vec4f getTexel_rgb32f(const uniform Texture2D *uniform self, const vec2i i)
+inline vec4f getTexel_RGB32F(const uniform Texture2D *uniform self, const vec2i i)
 {
   assert(self);
   vec3f v = ((const uniform vec3f*uniform )self->data)[i.y*self->size.x + i.x];
   return make_vec4f(v, 1.f);
 }
 
-inline vec4f getTexel_r32f(const uniform Texture2D *uniform self, const vec2i i)
+inline vec4f getTexel_R32F(const uniform Texture2D *uniform self, const vec2i i)
 {
   assert(self);
   float v = ((const uniform float*uniform)self->data)[i.y*self->size.x + i.x];
@@ -171,25 +171,28 @@ static vec4f Texture2D_bilinear_##FMT(const uniform Texture2D *uniform self, \
   return bilerp(cs.frac, c00, c01, c10, c11);                                \
 }
 
-#define __define_tex_get_addr(FMT) \
-  &Texture2D_bilinear_##FMT,       \
-  &Texture2D_nearest_##FMT,
+#define __define_tex_get_case(FMT) \
+  case OSP_TEXTURE_##FMT: return filter_nearest ?  &Texture2D_nearest_##FMT : \
+                                                   &Texture2D_bilinear_##FMT;
 
-// same order as in OSPTextureFormat!
 #define __foreach_fetcher(FCT) \
-  FCT(rgba8)                   \
-  FCT(srgba)                   \
-  FCT(rgba32f)                 \
-  FCT(rgb8)                    \
-  FCT(srgb)                    \
-  FCT(rgb32f)                  \
-  FCT(r8)                      \
-  FCT(r32f)
+  FCT(RGBA8)                   \
+  FCT(SRGBA)                   \
+  FCT(RGBA32F)                 \
+  FCT(RGB8)                    \
+  FCT(SRGB)                    \
+  FCT(RGB32F)                  \
+  FCT(R8)                      \
+  FCT(R32F)   
 
 __foreach_fetcher(__define_tex_get)
 
-static uniform Texture2D_get Texture2D_get_addr[] = {
-  __foreach_fetcher(__define_tex_get_addr)
+static uniform Texture2D_get Texture2D_get_addr(const uniform uint32 type,
+    const uniform bool filter_nearest)
+{
+  switch (type) {
+    __foreach_fetcher(__define_tex_get_case)
+  }
 };
 
 #undef __define_tex_get
@@ -207,17 +210,13 @@ export void *uniform Texture2D_create(uniform vec2i &size, void *uniform data,
   self->size      = size;
 
   // Due to float rounding frac(x) can be exactly 1.0f (e.g. for very small
-  // negative x), although is should be strictly smaller than 1.0f. We handle
+  // negative x), although it should be strictly smaller than 1.0f. We handle
   // this case by having sizef slightly smaller than size, such that
   // frac(x)*sizef is always < size.
-  self->sizef     = make_vec2f(nextafter(size.x, -1.0f), nextafter(size.y, -1.0f));
+  self->sizef = make_vec2f(nextafter(size.x, -1.0f), nextafter(size.y, -1.0f));
   self->halfTexel = make_vec2f(0.5f/size.x, 0.5f/size.y);
-  self->data      = data;
-
-  // select texture fetch function depending on format and filter
-  uniform int filter = flags & OSP_TEXTURE_FILTER_NEAREST ? 1 : 0;
-  uniform int fct_nr = type * 2 + filter;
-  self->get = Texture2D_get_addr[fct_nr];
+  self->data = data;
+  self->get = Texture2D_get_addr(type, flags & OSP_TEXTURE_FILTER_NEAREST);
 
   return self;
 }

@@ -641,7 +641,7 @@ namespace ospray {
 
     /*! remove an existing geometry from a model */
     struct GeometryLocator {
-      bool operator()(const embree::Ref<ospray::Geometry> &g) const {
+      bool operator()(const Ref<ospray::Geometry> &g) const {
         return ptr == &*g;
       }
       Geometry *ptr;
@@ -675,7 +675,7 @@ namespace ospray {
 
     /*! remove an existing volume from a model */
     struct VolumeLocator {
-      bool operator()(const embree::Ref<ospray::Volume> &g) const {
+      bool operator()(const Ref<ospray::Volume> &g) const {
         return ptr == &*g;
       }
       Volume *ptr;

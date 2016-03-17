@@ -44,12 +44,8 @@ namespace ospray {
     LocalDevice::LocalDevice(int *_ac, const char **_av)
     {
       char *logLevelFromEnv = getenv("OSPRAY_LOG_LEVEL");
-      if (logLevelFromEnv)
+      if (logLevelFromEnv && logLevel == 0)
         logLevel = atoi(logLevelFromEnv);
-      else
-        logLevel = 0;
-
-      ospray::init(_ac,&_av);
 
       // -------------------------------------------------------
       // initialize embree. (we need to do this here rather than in
@@ -171,7 +167,7 @@ namespace ospray {
 
     /*! remove an existing geometry from a model */
     struct GeometryLocator {
-      bool operator()(const embree::Ref<ospray::Geometry> &g) const {
+      bool operator()(const Ref<ospray::Geometry> &g) const {
         return ptr == &*g;
       }
       Geometry *ptr;
@@ -207,7 +203,7 @@ namespace ospray {
 
     /*! remove an existing volume from a model */
     struct VolumeLocator {
-      bool operator()(const embree::Ref<ospray::Volume> &g) const {
+      bool operator()(const Ref<ospray::Volume> &g) const {
         return ptr == &*g;
       }
       Volume *ptr;

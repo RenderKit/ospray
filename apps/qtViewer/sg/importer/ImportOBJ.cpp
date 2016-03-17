@@ -16,6 +16,8 @@
 
 #undef NDEBUG
 
+#define WARN_INCLUDE_EMBREE_FILENAME 1
+
 // O_LARGEFILE is a GNU extension.
 #ifdef __APPLE__
 #define  O_LARGEFILE  0
@@ -108,17 +110,17 @@ namespace ospray {
       std::map<std::string,Material *> material;
       
       /*! Constructor. */
-      OBJLoader(World *world, const embree::FileName& fileName);
+      OBJLoader(World *world, const FileName& fileName);
       
       /*! Destruction */
       ~OBJLoader();
  
       /*! Public methods. */
-      void loadMTL(const embree::FileName& fileName);
+      void loadMTL(const FileName& fileName);
 
     private:
 
-      embree::FileName path;
+      FileName path;
 
       /*! Geometry buffer. */
       std::vector<vec3f> v;
@@ -137,10 +139,10 @@ namespace ospray {
       int fix_vn(int index);
       void flushFaceGroup();
       Vertex getInt3(const char*& token);
-      uint32 getVertex(std::map<Vertex,uint32>& vertexMap, TriangleMesh *mesh, const Vertex& i);
+      uint32_t getVertex(std::map<Vertex,uint32_t>& vertexMap, TriangleMesh *mesh, const Vertex& i);
     };
 
-    OBJLoader::OBJLoader(World *world, const embree::FileName &fileName) 
+    OBJLoader::OBJLoader(World *world, const FileName &fileName) 
       : world(world),
         curMaterial(NULL),
         path(fileName.path())
@@ -228,7 +230,7 @@ namespace ospray {
     }
 
     /* load material file */
-    void OBJLoader::loadMTL(const embree::FileName &fileName)
+    void OBJLoader::loadMTL(const FileName &fileName)
     {
       std::ifstream cin;
       cin.open(fileName.c_str());
@@ -352,10 +354,10 @@ namespace ospray {
       return(v);
     }
 
-    uint32 OBJLoader::getVertex(std::map<Vertex,uint32>& vertexMap, 
+    uint32_t OBJLoader::getVertex(std::map<Vertex,uint32_t>& vertexMap, 
                                 TriangleMesh *mesh, const Vertex& i)
     {
-      const std::map<Vertex, uint32>::iterator& entry = vertexMap.find(i);
+      const std::map<Vertex, uint32_t>::iterator& entry = vertexMap.find(i);
       if (entry != vertexMap.end()) return(entry->second);
 
       if (std::isnan(v[i.v].x) || std::isnan(v[i.v].y) || std::isnan(v[i.v].z))
@@ -381,7 +383,7 @@ namespace ospray {
     {
       if (curGroup.empty()) return;
 
-      std::map<Vertex, uint32> vertexMap;
+      std::map<Vertex, uint32_t> vertexMap;
       TriangleMesh *mesh = new TriangleMesh;
       mesh->vertex = new DataVector3f;
       mesh->normal = new DataVector3f;
@@ -399,16 +401,16 @@ namespace ospray {
           /* triangulate the face with a triangle fan */
           for (size_t k=2; k < face.size(); k++) {
             i1 = i2; i2 = face[k];
-            int32 v0 = getVertex(vertexMap, mesh, i0);
-            int32 v1 = getVertex(vertexMap, mesh, i1);
-            int32 v2 = getVertex(vertexMap, mesh, i2);
+            int32_t v0 = getVertex(vertexMap, mesh, i0);
+            int32_t v1 = getVertex(vertexMap, mesh, i1);
+            int32_t v2 = getVertex(vertexMap, mesh, i2);
             if (v0 < 0 || v1 < 0 || v2 < 0)
               continue;
 
             vec3i tri(v0,v1,v2);
             mesh->index.cast<DataVector3i>()->push_back(tri); //Vec3i(v0, v1, v2));
           }
-        }
+      }
       curGroup.clear();
     }
 

@@ -28,16 +28,17 @@ ENDIF()
 
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 SET(OSPRAY_VERSION_MAJOR 0)
-SET(OSPRAY_VERSION_MINOR 9)
-SET(OSPRAY_VERSION_PATCH 2)
+SET(OSPRAY_VERSION_MINOR 10)
+SET(OSPRAY_VERSION_PATCH 0)
 SET(OSPRAY_VERSION
   ${OSPRAY_VERSION_MAJOR}.${OSPRAY_VERSION_MINOR}.${OSPRAY_VERSION_PATCH}
 )
 SET(OSPRAY_SOVERSION 0)
 
-MACRO(PRINT var)
-  MESSAGE("${var} = ${${var}}")
-ENDMACRO()
+
+OPTION(OSPRAY_USE_EXTERNAL_EMBREE
+       "Use a pre-built Embree instead of the internally built version" OFF)
+
 
 SET(CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo")
 IF (WIN32)
@@ -86,13 +87,7 @@ SET(OSPRAY_MIC ${OSPRAY_BUILD_MIC_SUPPORT})
 SET(OSPRAY_MPI ${OSPRAY_BUILD_MPI_DEVICE})
 
 ##############################################################
-# create binary packages; before any INSTALL() invocation/definition 
-##############################################################
-
-INCLUDE(package)
-
-##############################################################
-# CMake modules
+# CMake modules and macro files
 ##############################################################
 
 INCLUDE(cmake/ospray.cmake)
@@ -100,21 +95,37 @@ INCLUDE(cmake/ispc.cmake)
 
 SET(OSPRAY_EMBREE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/ospray/embree-v2.7.1)
 
-
 INCLUDE(cmake/mpi.cmake)
 
 IF(NOT WIN32)
   INCLUDE(cmake/doxygen.cmake)
 ENDIF()
 
+OSPRAY_CONFIGURE_COMPILER()
+
+##############################################################
+# create binary packages; before any INSTALL() invocation/definition
+##############################################################
+
+INCLUDE(package)
+
+##############################################################
+# the OSPRay 'common' library
+##############################################################
+
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
+SET(OSPRAY_TARGET "intel64")
+ADD_SUBDIRECTORY(common builddir/ospray_common/intel64)
+IF (OSPRAY_MIC)
+  SET(OSPRAY_TARGET "mic")
+  ADD_SUBDIRECTORY(common builddir/ospray_common/mic)
+ENDIF()
+
 ##############################################################
 # the OSPRay library
 ##############################################################
 
-OSPRAY_CONFIGURE_COMPILER()
-
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 SET(OSPRAY_TARGET "intel64")
 ADD_SUBDIRECTORY(ospray builddir/ospray/intel64)
 IF (OSPRAY_MIC)

@@ -17,12 +17,13 @@
 #pragma once
 
 // viewer
-#include "ospray/common/OSPCommon.h"
+#include "sg/common/Common.h"
 // std
 #include <vector>
 
 namespace ospray {
   namespace viewer {
+    using namespace sg;
 
     //! \brief Helper class for storing tessellated geometry (with
     //! single color per mesh); that can be used to store 3D geometry

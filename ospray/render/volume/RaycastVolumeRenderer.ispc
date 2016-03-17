@@ -34,7 +34,7 @@ struct PassInfo {
   uniform bool useBG;
 };
 
-void RaycastVolumeRenderer_endFrame(Renderer *uniform self,
+unmasked void RaycastVolumeRenderer_endFrame(Renderer *uniform self,
                                     void *uniform perFrameData,
                                     const uniform int32 accumID)
 {
@@ -44,7 +44,7 @@ void RaycastVolumeRenderer_endFrame(Renderer *uniform self,
   self->fb = NULL;
 }
 
-void *uniform RaycastVolumeRenderer_beginFrame(Renderer *uniform self,
+unmasked void *uniform RaycastVolumeRenderer_beginFrame(Renderer *uniform self,
                                                FrameBuffer *uniform framebuffer)
 {
   self->fb = framebuffer;

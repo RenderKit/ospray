@@ -20,8 +20,6 @@
 #include "ospray/common/Thread.h"
 
 namespace ospray {
-  using   embree::thread_t;
-
   namespace mpi {
     
     //! abstraction for any other peer node that we might want to communicate with

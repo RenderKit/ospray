@@ -14,21 +14,21 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "RMVolumeFile.h"
+// ospcommon
+#include "common/sysinfo.h"
+// std::
 #include <stdio.h>
 #include <string.h>
-#include "modules/loaders/RMVolumeFile.h"
-#include "ospray/common/OSPCommon.h"
-#include "common/sys/sysinfo.h"
-#include "common/sys/thread.h"
 #ifdef __LINUX__
 # include <sched.h>
 #endif
 #include <stdint.h>
-
+#include <mutex>
 
 struct RMLoaderThreads {
   OSPVolume volume;
-  embree::MutexSys mutex;
+  std::mutex mutex;
   int nextBlockID;
   int nextPinID;
   int numThreads;
@@ -36,7 +36,7 @@ struct RMLoaderThreads {
   pthread_t *thread;
   std::string inFilesDir;
   bool useGZip;
-  ospray::vec2f voxelRange;
+  ospcommon::vec2f voxelRange;
   struct Block {
     uint8_t voxel[256*256*128];
   };
@@ -112,7 +112,7 @@ struct RMLoaderThreads {
   {
     mutex.lock();
     int threadID = nextPinID++;
-    embree::setAffinity(threadID);
+    // embree::setAffinity(threadID);
     mutex.unlock();
 
     Block *block = new Block;
@@ -140,12 +140,12 @@ struct RMLoaderThreads {
       for (int i=0;i<5;i++)
         printf("[%i]",block->voxel[i]);
 #endif
-      ospray::vec3i region_lo(I*256,J*256,K*128);
-      ospray::vec3i region_sz(256,256,128);
+      ospcommon::vec3i region_lo(I*256,J*256,K*128);
+      ospcommon::vec3i region_sz(256,256,128);
       ospSetRegion(volume,block->voxel,(osp::vec3i&)region_lo,(osp::vec3i&)region_sz);
       mutex.unlock();
       
-      ospray::vec2f blockRange(block->voxel[0]);
+      ospcommon::vec2f blockRange(block->voxel[0]);
       extendVoxelRange(blockRange,&block->voxel[0],256*256*128);
       
 #ifdef OSPRAY_VOLUME_VOXELRANGE_IN_APP
@@ -166,21 +166,21 @@ struct RMLoaderThreads {
 OSPVolume RMVolumeFile::importVolume(OSPVolume volume)
 {
   // Update the provided dimensions of the volume for the subvolume specified.
-  ospray::vec3i dims(2048,2048,1920);
+  ospcommon::vec3i dims(2048,2048,1920);
   ospSetVec3i(volume, "dimensions", (osp::vec3i&)dims);
   ospSetString(volume,"voxelType", "uchar");
   
 #ifdef __LINUX__
-  int numThreads = embree::getNumberOfLogicalThreads(); //20;
+  int numThreads = ospcommon::getNumberOfLogicalThreads(); //20;
 #else
   int numThreads = 1;
 #endif
 
-  double t0 = ospray::getSysTime();
+  double t0 = ospcommon::getSysTime();
   
 
   RMLoaderThreads(volume,fileName,numThreads);
-  double t1 = ospray::getSysTime();
+  double t1 = ospcommon::getSysTime();
   std::cout << "done loading " << fileName 
        << ", needed " << (t1-t0) << " seconds" << std::endl;
 

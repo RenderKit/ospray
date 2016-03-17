@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "ospray/common/OSPCommon.h"
+#include "common/box.h"
 #include "QOSPRayWindow.h"
 #include "SliceWidget.h"
 #include <QtGui>
@@ -55,7 +55,7 @@ public:
                std::string writeFramesFilename);
 
   //! Get the volume bounding box.
-  ospray::box3f getBoundingBox();
+  ospcommon::box3f getBoundingBox();
 
   //! Get the OSPRay output window.
   QOSPRayWindow *getWindow();
@@ -111,7 +111,7 @@ public slots:
   void setSamplingRate(double value);
 
   //! Set volume clipping box on all volumes.
-  void setVolumeClippingBox(ospray::box3f value);
+  void setVolumeClippingBox(ospcommon::box3f value);
 
   //! Set slices on all volumes.
   void setSlices(std::vector<SliceParameters> sliceParameters);
@@ -132,7 +132,7 @@ protected:
   size_t modelIndex;
 
   //! Bounding box of the (first) volume.
-  ospray::box3f boundingBox;
+  ospcommon::box3f boundingBox;
 
   //! OSPRay renderer.
   OSPRenderer renderer;

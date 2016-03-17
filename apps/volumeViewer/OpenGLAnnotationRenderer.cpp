@@ -29,9 +29,9 @@ void OpenGLAnnotationRenderer::render()
   glEnable(GL_DEPTH_TEST);
 
   // render volume bounding box
-  ospray::box3f boundingBox = volumeViewer->getBoundingBox();
+  ospcommon::box3f boundingBox = volumeViewer->getBoundingBox();
 
-  ospray::vec3f size(boundingBox.upper - boundingBox.lower);
+  ospcommon::vec3f size(boundingBox.upper - boundingBox.lower);
 
   glPushMatrix();
   glTranslatef(boundingBox.lower.x, boundingBox.lower.y, boundingBox.lower.z);

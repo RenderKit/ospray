@@ -22,8 +22,6 @@
 #include <ctype.h>
 // viewer
 #include "ModelViewer.h"
-// embree
-#include "common/sys/filename.h"
 // scene graph
 #include "sg/module/Module.h"
 #include "sg/importer/Importer.h"
@@ -124,7 +122,7 @@ namespace ospray {
             throw std::runtime_error("#osp:qtv: unknown cmdline param '"+arg+"'");
           }
         } else {
-          embree::FileName fn = arg;
+          FileName fn = arg;
           if (fn.ext() == "osp" || fn.ext() == "pkd") {
             world = sg::loadOSP(fn.str());
             // } else if (fn.ext() == "atom") {
