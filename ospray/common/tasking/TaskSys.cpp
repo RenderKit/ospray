@@ -33,9 +33,10 @@ namespace ospray {
     void init(size_t maxNumRenderTasks);
     static TaskSys global;
     static void *threadStub(void *);
-    inline Task *getNextActiveTask();
+    inline Ref<Task> getNextActiveTask();
 
-    //! queue of tasks that have ALREADY been acitvated, and that are ready to run
+    //! Queue of tasks that have ALREADY been acitvated, and that are ready
+    //! to run
     __aligned(64) Task *volatile activeListFirst;
     __aligned(64) Task *volatile activeListLast;
 
@@ -103,7 +104,7 @@ namespace ospray {
     wait();
   }
 
-  inline Task *TaskSys::getNextActiveTask()
+  inline Ref<Task> TaskSys::getNextActiveTask()
   {
     while (1) {
       std::unique_lock<std::mutex> lock(mutex);
@@ -115,18 +116,16 @@ namespace ospray {
         return nullptr;
       }
 
-      Task *const front = activeListFirst;
+      Ref<Task> front = activeListFirst;
       if (front->numJobsStarted >= front->numJobsInTask) {
         if (activeListFirst == activeListLast) {
           activeListFirst = activeListLast = nullptr;
         } else {
           activeListFirst = activeListFirst->next;
         }
-        front->refDec();
         continue;
       }
-      front->refInc(); // becasue the thread calling us now owns it
-      assert(front);
+      assert(front.ptr());
       return front;
     }
   }
@@ -171,20 +170,15 @@ namespace ospray {
     }
   }
 
-
   void TaskSys::threadFunction()
   {
     while (1) {
-      Task *task = getNextActiveTask();
+      Ref<Task> task = getNextActiveTask();
       if (!running) {
-        if (task) {
-          task->refDec();
-        }
         return;
       }
       assert(task);
       task->workOnIt();
-      task->refDec();
     }
   }
 
