@@ -23,9 +23,6 @@
 #include <vector>
 
 namespace ospray {
-  using std::cout;
-  using std::endl;
-
   struct TaskSys {
     bool initialized;
     bool running;
@@ -70,16 +67,11 @@ namespace ospray {
     }
 
     if (myCompleted != 0) {
-      const size_t nowCompleted = (numJobsCompleted += myCompleted); //++numJobsCompleted;
+      const size_t nowCompleted = (numJobsCompleted += myCompleted);
       if (nowCompleted == numJobsInTask) {
-        // Yay - I just finished the job, so I get some extra work do do ... just like in real life....
-        finish();
-        
-        {
-          SCOPED_LOCK(mutex);
-          status = Task::COMPLETED;
-          allJobsCompletedCond.notify_all();
-        }
+        SCOPED_LOCK(mutex);
+        status = Task::COMPLETED;
+        allJobsCompletedCond.notify_all();
       }
     }
   }
@@ -224,5 +216,4 @@ namespace ospray {
     setAffinity(0);
 #endif
   }
-
-}
+}//namespace ospray
