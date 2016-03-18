@@ -26,10 +26,12 @@ struct LinearTransferFunction {
   TransferFunction super;
 
   //! Transfer function opacity values and count.
-  float *uniform opacityValues;  uniform int opacityValueCount;  
+  uniform float *uniform opacityValues;  
+  uniform int            opacityValueCount;  
 
   //! Transfer function color values and count.
-  vec3f *uniform colorValues;  uniform int colorValueCount;  
+  uniform vec3f *uniform colorValues;  
+  uniform int            colorValueCount;  
 
   //! A 2D array that contains precomputed minimum and maximum opacity values for a transfer function.
   vec2f minMaxOpacityInRange[PRECOMPUTED_OPACITY_SUBRANGE_COUNT][PRECOMPUTED_OPACITY_SUBRANGE_COUNT];

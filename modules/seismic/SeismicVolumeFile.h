@@ -19,7 +19,7 @@
 #include "ospray/common/OSPCommon.h"
 #include <cdds.h>
 #include <string>
-#include "modules/loaders/VolumeFile.h"
+#include "apps/volumeViewer/loaders/VolumeFile.h"
 
 //! \brief A concrete implementation of the VolumeFile class
 //!  for reading voxel data stored in seismic file formats on disk.

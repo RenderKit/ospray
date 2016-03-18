@@ -17,13 +17,13 @@
 CONFIGURE_OSPRAY()
 
 OSPRAY_ADD_LIBRARY(ospray_common SHARED
-# STATIC
   common.cpp
   FileName.cpp
   sysinfo.cpp
   malloc.cpp
   library.cpp
   thread.cpp
+  vec.cpp
 
   AffineSpace.h
   box.h
@@ -38,6 +38,5 @@ OSPRAY_ADD_LIBRARY(ospray_common SHARED
   vec.h
 )
 
-		     
-
-		      
+OSPRAY_SET_LIBRARY_VERSION(ospray_common)
+OSPRAY_INSTALL_LIBRARY(ospray_common)

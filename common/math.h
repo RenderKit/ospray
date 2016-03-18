@@ -20,7 +20,7 @@
 #include "constants.h"
 #include <cmath>
 
-#if defined(__WIN32__)
+#ifdef _WIN32
 #include <intrin.h>
 #if (__MSV_VER <= 1700)
 namespace std
@@ -48,7 +48,7 @@ namespace ospcommon
     union { float f; int i; } v; v.i = i; return v.f;
   }
 
-#if defined(__WIN32__)
+#ifdef _WIN32
   __forceinline bool finite ( const float x ) { return _finite(x) != 0; }
 #endif
 
@@ -91,7 +91,7 @@ namespace ospcommon
   __forceinline float rsqrt( const float x ) { return 1.0f/sqrtf(x); }
 #endif
 
-#if !defined(__WIN32__)
+#ifndef _WIN32
   __forceinline float abs  ( const float x ) { return ::fabsf(x); }
   __forceinline float acos ( const float x ) { return ::acosf (x); }
   __forceinline float asin ( const float x ) { return ::asinf (x); }

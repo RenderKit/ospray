@@ -35,6 +35,11 @@ SET(OSPRAY_VERSION
 )
 SET(OSPRAY_SOVERSION 0)
 
+
+OPTION(OSPRAY_USE_EXTERNAL_EMBREE
+       "Use a pre-built Embree instead of the internally built version" OFF)
+
+
 SET(CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo")
 IF (WIN32)
   IF (NOT OSPRAY_DEFAULT_CMAKE_CONFIGURATION_TYPES_SET)

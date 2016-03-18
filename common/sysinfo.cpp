@@ -186,7 +186,7 @@ namespace ospcommon
 
   __noinline int64_t get_xcr0() 
   {
-#if defined (__WIN32__)
+#ifdef _WIN32
     int64_t xcr0 = 0; // int64_t is workaround for compiler bug under VS2013, Win32
 #if defined(__INTEL_COMPILER) 
     xcr0 = _xgetbv(0);
@@ -342,7 +342,7 @@ namespace ospcommon
 /// Windows Platform
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifdef __WIN32__
+#ifdef _WIN32
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>

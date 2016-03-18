@@ -14,11 +14,64 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "vec.h"
 
-#include "common/library.h"
+namespace ospcommon {
+  // -------------------------------------------------------
+  // parsing from strings
+  // -------------------------------------------------------
+  vec2f toVec2f(const char *ptr)
+  {
+    assert(ptr);
+    vec2f v;
+    int rc = sscanf(ptr,"%f %f",&v.x,&v.y); 
+    assert(rc == 2);
+    return v;
+  }
 
-namespace ospray {
-  using ospcommon::getSymbol;
-  using ospcommon::loadLibrary;
-}
+  vec3f toVec3f(const char *ptr)
+  {
+    assert(ptr);
+    vec3f v;
+    int rc = sscanf(ptr,"%f %f %f",&v.x,&v.y,&v.z); 
+    assert(rc == 3);
+    return v;
+  }
+
+  vec4f toVec4f(const char *ptr)
+  {
+    assert(ptr);
+    vec4f v;
+    int rc = sscanf(ptr,"%f %f %f %f",&v.x,&v.y,&v.z,&v.w); 
+    assert(rc == 4);
+    return v;
+  }
+
+  vec2i toVec2i(const char *ptr)
+  {
+    assert(ptr);
+    vec2i v;
+    int rc = sscanf(ptr,"%i %i",&v.x,&v.y); 
+    assert(rc == 2);
+    return v;
+  }
+
+  vec3i toVec3i(const char *ptr)
+  {
+    assert(ptr);
+    vec3i v;
+    int rc = sscanf(ptr,"%i %i %i",&v.x,&v.y,&v.z); 
+    assert(rc == 3);
+    return v;
+  }
+
+  vec4i toVec4i(const char *ptr)
+  {
+    assert(ptr);
+    vec4i v;
+    int rc = sscanf(ptr,"%i %i %i %i",&v.x,&v.y,&v.z,&v.w); 
+    assert(rc == 4);
+    return v;
+  }
+
+} // ::ospcommon

@@ -16,6 +16,7 @@
 
 #include "common.h"
 #include "sysinfo.h"
+#include "library.h"
 
 // std
 #include <time.h>
@@ -58,6 +59,16 @@ namespace ospcommon {
     else
       fprintf(stderr,"%s:%i: Assertion failed: \"%s\".\n", file, line, expr);
     abort();
+  }
+
+  void loadLibrary(const std::string& name)
+  {
+    LibraryRepository::getInstance()->add(name);
+  }
+
+  void *getSymbol(const std::string& name)
+  {
+    return LibraryRepository::getInstance()->getSymbol(name);
   }
 
 } // ::ospcommon

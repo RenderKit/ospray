@@ -35,13 +35,25 @@ FIND_PACKAGE(Threads REQUIRED)
 
 SET(REQUIRED_MINIMUM_EMBREE 2.7.1)
 
-OPTION(OSPRAY_USE_EXTERNAL_EMBREE
-       "Use a pre-built Embree instead of the internally built version" OFF)
-
 IF(OSPRAY_USE_EXTERNAL_EMBREE)
+  # Clear out embree directories if they were previously populated by an
+  # internal build
+  IF(NOT ${LAST_CONFIG_USED_EXTERNAL_EMBREE})
+    UNSET(EMBREE_INCLUDE_DIRS)
+    UNSET(EMBREE_LIBRARY)
+    UNSET(EMBREE_LIBRARY_XEONPHI)
+  ENDIF()
   # Find existing Embree on the machine
   FIND_PACKAGE(embree ${REQUIRED_MINIMUM_EMBREE} REQUIRED)
+  SET(LAST_CONFIG_USED_EXTERNAL_EMBREE ON CACHE INTERNAL "" FORCE)
 ELSE()
+  # Clear out embree directories if they were previously populated by an
+  # external find_package() call
+  IF(${LAST_CONFIG_USED_EXTERNAL_EMBREE})
+    UNSET(EMBREE_INCLUDE_DIRS)
+    UNSET(EMBREE_LIBRARY)
+    UNSET(EMBREE_LIBRARY_XEONPHI)
+  ENDIF()
   # Build Embree included in the OSPRay tree
 
   # NOTE(jda) - Embree assumes that USE_TBB will be defined correctly in
@@ -54,6 +66,7 @@ ELSE()
   SET(EMBREE_INCLUDE_DIRS ${OSPRAY_EMBREE_SOURCE_DIR}/include)
   SET(EMBREE_LIBRARY embree)
   SET(EMBREE_LIBRARY_XEONPHI embree_xeonphi)
+  SET(LAST_CONFIG_USED_EXTERNAL_EMBREE OFF CACHE INTERNAL "" FORCE)
 ENDIF()
 
 INCLUDE_DIRECTORIES(${EMBREE_INCLUDE_DIRS})
@@ -89,11 +102,11 @@ SET(OSPRAY_SOURCES
   common/Model.ispc
   common/Model.cpp
   common/Material.cpp
-  common/Library.cpp
   common/Thread.cpp
 
   common/tasking/parallel_for.h
   common/tasking/async.h
+  common/tasking/TaskSys.cpp
 
   fb/FrameBuffer.ispc
   fb/FrameBuffer.cpp
@@ -215,9 +228,6 @@ SET(OSPRAY_SOURCES
   api/LocalDevice.cpp
   )
 
-# NOTE(jda) - To be removed when OSPCOMMON is merged for next release (?)
-ADD_DEFINITIONS(-DDONT_WARN_INCLUDE_OSPCOMMON_H)
-
 # -------------------------------------------------------
 # MPI components
 # -------------------------------------------------------
@@ -325,7 +335,7 @@ OSPRAY_INSTALL_LIBRARY(ospray)
 IF(NOT THIS_IS_MIC)
   # build ospTutorial, for testing
   ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial)
-  TARGET_LINK_LIBRARIES(ospTutorial ospray ospray_common)
+  OSPRAY_EXE_LINK_LIBRARIES(ospTutorial ospray ospray_common)
 ENDIF()
 
 

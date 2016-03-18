@@ -24,10 +24,11 @@
 namespace ospcommon
 {
 #if defined(__X86_64__) || defined(__MIC__)
-  typedef std::atomic_llong atomic_t;
+  typedef long long atomic_init_t;
 #else
-  typedef std::atomic_int atomic_t;
+  typedef int atomic_init_t;
 #endif
+  typedef std::atomic<atomic_init_t> atomic_t;
   
   static struct NullTy {
   } null MAYBE_UNUSED;
@@ -35,7 +36,7 @@ namespace ospcommon
   class RefCount
   {
   public:
-    inline RefCount(int val = 0) : refCounter(val) {}
+    inline RefCount(atomic_init_t val = 0) : refCounter(val) {}
     virtual ~RefCount() {};
 
     /*! dummy copy-constructor and assignment operator because if they

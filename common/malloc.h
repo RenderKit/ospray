@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "platform.h"
+#include "common.h"
 
 namespace ospcommon
 {
@@ -47,8 +47,8 @@ namespace ospcommon
 //  private:
   
   /*! aligned allocation */
-  void* alignedMalloc(size_t size, size_t align = 64);
-  void alignedFree(void* ptr);
+  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
+  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
   
   // /*! alloca that returns aligned data */
   // template<class T>

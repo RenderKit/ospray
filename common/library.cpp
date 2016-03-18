@@ -19,137 +19,109 @@
 #include "sysinfo.h"
 
 // std
-#include <time.h>
 #ifdef _WIN32
 #  ifndef WIN32_LEAN_AND_MEAN
 #    define WIN32_LEAN_AND_MEAN
 #  endif
-#  include <windows.h> // for GetSystemTime
+#  include <windows.h>
 #else
-#  include <sys/time.h>
 #  include <sys/times.h>
 #  include <dlfcn.h>
 #endif
-// std
-#include <vector>
 
 
 namespace ospcommon {
 
-  /*! type for shared library */
-  typedef struct opaque_lib_t* lib_t;
-	  
-  struct Library 
+  Library::Library(const std::string& name)
   {
-    std::string   name;
-    lib_t lib;
-  };
-
-#if defined(__WIN32__)
-  /* returns address of a symbol from the library */
-  void* getSymbol(lib_t lib, const std::string& sym) {
-    return GetProcAddress(HMODULE(lib),sym.c_str());
-  }
+#ifdef OSPRAY_TARGET_MIC
+    std::string file = name+"_mic";
 #else
-  /* returns address of a symbol from the library */
-  void* getSymbol(lib_t lib, const std::string& sym) {
-    return dlsym(lib,sym.c_str());
-  }
+    std::string file = name;
 #endif
-  
-
-  std::vector<Library*> loadedLibs;
-
-
-
-#if defined(__WIN32__)
-  /* opens a shared library */
-  lib_t openLibrary(const std::string& file)
-  {
+#ifdef _WIN32
     std::string fullName = file+".dll";
     FileName executable = getExecutableFileName();
-    HANDLE handle = LoadLibrary((executable.path() + fullName).c_str());
-    return lib_t(handle);
-  }
+    lib = LoadLibrary((executable.path() + fullName).c_str());
 #else
-  /* opens a shared library */
-  lib_t openLibrary(const std::string& file)
-  {
 #if defined(__MACOSX__)
     std::string fullName = "lib"+file+".dylib";
 #else
     std::string fullName = "lib"+file+".so";
 #endif
-    void* lib = dlopen(fullName.c_str(), RTLD_NOW);
-    if (lib) return lib_t(lib);
-    FileName executable = getExecutableFileName();
-    lib = dlopen((executable.path() + fullName).c_str(),RTLD_NOW);
-    if (lib == NULL) throw std::runtime_error(dlerror());
-    return lib_t(lib);
-  }
+    lib = dlopen(fullName.c_str(), RTLD_NOW);
+    if (!lib) {
+      FileName executable = getExecutableFileName();
+      lib = dlopen((executable.path() + fullName).c_str(), RTLD_NOW);
+    }
 #endif
 
-  void  loadLibrary(const std::string &_name)
-  {
-#ifdef OSPRAY_TARGET_MIC
-    std::string name = _name+"_mic";
-#else
-    std::string name = _name;
-#endif
-
-    for (int i=0;i<loadedLibs.size();i++)
-      if (loadedLibs[i]->name == name)
-        // lib already loaded.
-        return;
-
-    Library *lib = new Library;
-    lib->name = name;
-    lib->lib = openLibrary(name);
-    if (lib->lib == NULL)
+    if (lib == NULL)
       throw std::runtime_error("could not open module lib "+name);
-    
-    loadedLibs.push_back(lib);
   }
-  void *getSymbol(const std::string &name)
-  {
-    for (int i=0;i<loadedLibs.size();i++) {
-      void *sym = getSymbol(loadedLibs[i]->lib, name);
-      if (sym) return sym;
-    }
 
-    // if none found in the loaded libs, try the default lib ...
+  Library::Library(void* const lib) : lib(lib) {};
+
+  void* Library::getSymbol(const std::string& sym) const
+  {
 #ifdef _WIN32
-    void *sym = GetProcAddress(GetModuleHandle(0), name.c_str()); // look in exe (i.e. when linked statically)
-    if (!sym) {
-      MEMORY_BASIC_INFORMATION mbi;
-      VirtualQuery(getSymbol, &mbi, sizeof(mbi)); // get handle to current dll via a known function
-      sym = GetProcAddress((HINSTANCE)(mbi.AllocationBase), name.c_str()); // look in ospray.dll (i.e. when linked dynamically)
-    }
+    return GetProcAddress((HMODULE)lib, sym.c_str());
 #else
-    void *sym = dlsym(RTLD_DEFAULT,name.c_str());
+    return dlsym(lib, sym.c_str());
 #endif
+  }
+
+
+  LibraryRepository* LibraryRepository::instance = NULL;
+
+  LibraryRepository* LibraryRepository::getInstance()
+  {
+    if (instance == NULL)
+      instance = new LibraryRepository;
+
+    return instance;
+  }
+
+  void LibraryRepository::add(const std::string& name)
+  {
+    if (repo.find(name) != repo.end())
+      return; // lib already loaded.
+
+    repo[name] = new Library(name);
+  }
+
+  void* LibraryRepository::getSymbol(const std::string& name) const
+  {
+    void *sym = NULL;
+    for (auto lib = repo.cbegin(); sym == NULL && lib != repo.end(); ++lib)
+      sym = lib->second->getSymbol(name);
+
     return sym;
   }
 
-//   void *getSymbol(const std::string &name)
-//   {
-//     // for (int i=0;i<loadedLibs.size();i++) {
-//     //   void *sym = embree_getSymbol(loadedLibs[i]->lib, name);
-//     //   if (sym) return sym;
-//     // }
+  LibraryRepository::LibraryRepository()
+  {
+    // already populate the repo with "virtual" libs, representing the default OSPRay core lib
+#ifdef _WIN32
+    // look in exe (i.e. when OSPRay is linked statically into the application)
+    repo["exedefault"] = new Library(GetModuleHandle(0));
 
-//     // if none found in the loaded libs, try the default lib ...
-// #ifdef _WIN32
-//     void *sym = GetProcAddress(GetModuleHandle(0), name.c_str()); // look in exe (i.e. when linked statically)
-//     if (!sym) {
-//       MEMORY_BASIC_INFORMATION mbi;
-//       VirtualQuery(getSymbol, &mbi, sizeof(mbi)); // get handle to current dll via a known function
-//       sym = GetProcAddress((HINSTANCE)(mbi.AllocationBase), name.c_str()); // look in ospray.dll (i.e. when linked dynamically)
-//     }
-// #else
-//     void *sym = dlsym(RTLD_DEFAULT,name.c_str());
-// #endif
-//     return sym;
-//   }
+    // look in ospray.dll (i.e. when linked dynamically)
+#if 0
+    // we cannot get a function from ospray.dll, because this would create a
+    // cyclic dependency between ospray.dll and ospray_common.dll
+
+    // only works when ospray_common is liked statically into ospray
+    const void * functionInOSPRayDLL = ospcommon::getSymbol;
+    // get handle to current dll via a known function
+    MEMORY_BASIC_INFORMATION mbi;
+    VirtualQuery(functionInOSPRayDLL, &mbi, sizeof(mbi));
+    repo["dlldefault"] = new Library(mbi.AllocationBase);
+#else
+    repo["ospray"] = new Library(std::string("ospray"));
+#endif
+#else
+    repo["ospray"] = new Library(RTLD_DEFAULT);
+#endif
+  }
 }
-

@@ -332,10 +332,8 @@ namespace ospray {
       : currentApiMode(OSPD_MODE_MASTERED)
     {
       char *logLevelFromEnv = getenv("OSPRAY_LOG_LEVEL");
-      if (logLevelFromEnv) 
+      if (logLevelFromEnv && logLevel == 0)
         logLevel = atoi(logLevelFromEnv);
-      else
-        logLevel = 0;
 
       ospray::init(_ac,&_av);
 

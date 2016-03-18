@@ -16,9 +16,10 @@
 
 #pragma once
 
-#include "../common/common.h"
-#include "./constants.h"
-#include "./math.h"
+#include "common.h"
+#include "constants.h"
+#include "math.h"
+#include <algorithm>
 
 namespace ospcommon {
 
@@ -217,6 +218,7 @@ namespace ospcommon {
   binary_operator(operator-,-);
   binary_operator(operator*,*);
   binary_operator(operator/,/);
+  binary_operator(operator%,%);
 #undef binary_operator
 
   // -------------------------------------------------------
@@ -424,6 +426,16 @@ namespace ospcommon {
   { return v.x+v.y+v.z+v.w; }
 
   template<typename T, int A>
+  inline T reduce_mul(const vec_t<T,2,A> &v)
+  { return v.x*v.y; }
+  template<typename T, int A>
+  inline T reduce_mul(const vec_t<T,3,A> &v)
+  { return v.x*v.y*v.z; }
+  template<typename T, int A>
+  inline T reduce_mul(const vec_t<T,4,A> &v)
+  { return v.x*v.y*v.z*v.w; }
+
+  template<typename T, int A>
   inline T reduce_min(const vec_t<T,2,A> &v)
   { return min(v.x,v.y); }
   template<typename T, int A>
@@ -488,6 +500,16 @@ namespace ospcommon {
   typedef vec_t<int64_t,4>  vec4l;
   typedef vec_t<float,4>    vec4f;
   typedef vec_t<double,4>   vec4d;
+
+  // -------------------------------------------------------
+  // parsing from strings
+  // -------------------------------------------------------
+  vec2f toVec2f(const char *ptr); 
+  vec3f toVec3f(const char *ptr);
+  vec4f toVec4f(const char *ptr);
+  vec2i toVec2i(const char *ptr); 
+  vec3i toVec3i(const char *ptr);
+  vec4i toVec4i(const char *ptr);
 
 
 } // ::ospcommon

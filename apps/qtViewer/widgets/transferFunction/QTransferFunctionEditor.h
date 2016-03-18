@@ -45,15 +45,15 @@ namespace ospray {
 
       /*! set background image for a given color map */
       void setColorMapImage(const QImage &image);
-
+      const std::vector<ospcommon::vec2f> &getPoints() const { return points; }
+      void setPoints(const std::vector<ospcommon::vec2f> &points) { this->points = points; }
     signals:
 
       void transferFunctionChanged();
-
     public:
 
-      // get y value based on linear interpolation of the points values for x in [0, 1]
-      float getInterpolatedValue(float x);
+      // // get y value based on linear interpolation of the points values for x in [0, 1]
+      // float getInterpolatedValue(float x);
 
     protected:
 
@@ -128,6 +128,8 @@ namespace ospray {
 
       // add a new color map to the list of selectable color maps
       void addColorMap(const ColorMap *colorMap);
+      void setOpacityPoints(const std::vector<ospcommon::vec2f> &points) 
+      { transferFunctionAlphaEditor->setPoints(points); }
 
     signals:
       void transferFunctionChanged();

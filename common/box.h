@@ -84,7 +84,8 @@ namespace ospcommon {
 
 
   typedef box_t<int32_t,2> box2i;
-  typedef box_t<float,3> box3f;
+  typedef box_t<int32_t,3> box3i;
+  typedef box_t<float,3>   box3f;
   typedef box_t<float,3,1> box3fa;
   // typedef box_t<vec2i> box2i;
   
