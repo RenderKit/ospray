@@ -24,6 +24,7 @@ OSPRAY_ADD_LIBRARY(ospray_common SHARED
   library.cpp
   thread.cpp
   vec.cpp
+  network.cpp
 
   AffineSpace.h
   box.h
@@ -36,6 +37,11 @@ OSPRAY_ADD_LIBRARY(ospray_common SHARED
   Quaternion.h
   RefCount.h
   vec.h
+)
+
+TARGET_LINK_LIBRARIES(ospray_common
+  # for network.cpp
+  pthread
 )
 
 OSPRAY_SET_LIBRARY_VERSION(ospray_common)
