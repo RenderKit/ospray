@@ -16,6 +16,8 @@
 
 #pragma once
 
+// scene graph
+#include "sg/SceneGraph.h"
 // ospray, PUBLIC
 #include <ospray/ospray.h>
 // stl
@@ -23,8 +25,6 @@
 #include <vector>
 // qt
 #include <QtGui>
-// scene graph
-#include "sg/SceneGraph.h"
 // ospcommon
 
 namespace ospray {
