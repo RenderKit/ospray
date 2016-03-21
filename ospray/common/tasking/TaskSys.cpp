@@ -117,7 +117,7 @@ namespace ospray {
         }
         continue;
       }
-      assert(front.ptr());
+      assert(front.ptr);
       return front;
     }
   }
