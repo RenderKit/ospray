@@ -14,14 +14,14 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+// viewer
+#include "ModelViewer.h"
 // ospray
 #include "ospray/ospray.h"
 // qt
 #include <iostream>
 #include <QtGui>
 #include <ctype.h>
-// viewer
-#include "ModelViewer.h"
 // scene graph
 #include "sg/module/Module.h"
 #include "sg/importer/Importer.h"

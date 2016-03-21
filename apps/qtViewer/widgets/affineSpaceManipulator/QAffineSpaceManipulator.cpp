@@ -14,8 +14,6 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#define WARN_ON_INCLUDING_OSPCOMMON 1
-
 // viewer
 #include "QAffineSpaceManipulator.h"
 #include "HelperGeometry.h"
