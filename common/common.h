@@ -80,4 +80,22 @@ namespace ospcommon {
   OSPCOMMON_INTERFACE void loadLibrary(const std::string &name);
   OSPCOMMON_INTERFACE void *getSymbol(const std::string &name);
 
+  /*! added pretty-print function for large numbers, printing 10000000 as "10M" instead */
+  inline std::string prettyNumber(const size_t s) {
+    double val = s;
+    char result[100];
+    if (val >= 1e12f) {
+      sprintf(result,"%.1fT",val/1e12f);
+    } else if (val >= 1e9f) {
+      sprintf(result,"%.1fG",val/1e9f);
+    } else if (val >= 1e6f) {
+      sprintf(result,"%.1fM",val/1e6f);
+    } else if (val >= 1e3f) {
+      sprintf(result,"%.1fK",val/1e3f);
+    } else {
+      sprintf(result,"%lu",s);
+    }
+    return result;
+  }
+
 } // ::ospcommon
