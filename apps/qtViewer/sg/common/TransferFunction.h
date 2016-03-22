@@ -44,6 +44,8 @@ namespace ospray {
                               const unsigned char *binBasePtr);
       virtual void commit();
       
+      void setValueRange(const vec2f &range);
+
       // /*! set a new color map array (using array of uniformly samples colors) */
       void setColorMap(const std::vector<vec3f> &colorArray);
       /*! set a new alpha map array - x coordinate is point pos, y is point alpha value */
@@ -62,6 +64,7 @@ namespace ospray {
       OSPTransferFunction ospTransferFunction;
       OSPData ospColorData;
       OSPData ospAlphaData;
+      vec2f valueRange;
       // number of samples we'll use in the colordata and alphadata arrays
       int numSamples;
 

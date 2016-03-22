@@ -28,7 +28,8 @@ namespace ospray {
       : ospTransferFunction(NULL), 
         ospColorData(NULL), 
         ospAlphaData(NULL),
-        numSamples(32)
+        numSamples(128),
+        valueRange(0.f,1.f)
     { 
       setDefaultValues(); 
     }
@@ -65,35 +66,17 @@ namespace ospray {
             ;
       return alphaArray.back().second;
     }
-      // float x
-      //   = (_x - alphaArray.front().first)
-      //   / (alphaArray.back().first - alphaArray.front().first);
 
-      // // boundary cases
-      // if(x <= 0.f)
-      //   return alphaArray.front().second;
-      
-      // if(x >= 1.)
-      //   return alphaArray.back().second;
-
-      // // we could make this more efficient...
-      // for(unsigned int i=0; i<alphaArray.size()-1; i++) {
-      //   if(x <= alphaArray[i+1].first) {
-      //     const float f
-      //       = (x - alphaArray[i].first) 
-      //       / (alphaArray[i+1].first - alphaArray[i].first);
-      //     return (1.f-f)*alphaArray[i].second + f*alphaArray[i+1].second;
-      //   }
-      // }
-
-      // // we shouldn't ever get to this point...
-      // assert(false);
-      // return 0.f;
-    // }
+    void TransferFunction::setValueRange(const vec2f &range)
+    { 
+      valueRange = range; 
+      lastModified = TimeStamp::now();
+    }
 
     //! \brief commit the current field values to ospray
     void TransferFunction::commit() 
     {
+      ospSetVec2f(ospTransferFunction,"valueRange",valueRange);
       if (ospColorData == NULL) {
         // for now, no resampling - just use the colors ...
         vec3f *colors = (vec3f*)alloca(sizeof(vec3f)*colorArray.size());

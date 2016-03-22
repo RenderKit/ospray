@@ -87,7 +87,7 @@ namespace ospray {
         const std::string prop = getProp(name);
         if (prop == "") return defaultValue; else return atof(getProp(name).c_str()); 
       }
-      
+
       /*! name of the xml node (i.e., the thing that's in
           "<name>....</name>") */
       std::string name;
