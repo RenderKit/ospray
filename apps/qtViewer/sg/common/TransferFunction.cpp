@@ -20,13 +20,15 @@
 
 namespace ospray {
   namespace sg {
+    using std::cout;
+    using std::endl;
 
     //! constructor
     TransferFunction::TransferFunction() 
       : ospTransferFunction(NULL), 
         ospColorData(NULL), 
         ospAlphaData(NULL),
-        numSamples(128)
+        numSamples(32)
     { 
       setDefaultValues(); 
     }
@@ -34,7 +36,6 @@ namespace ospray {
     // //! \brief Sets a new 'texture map' to be used for the color mapping
     void TransferFunction::setColorMap(const std::vector<vec3f> &colorArray)
     {
-      PING;
       if (ospColorData) { ospRelease(ospColorData); ospColorData = NULL; }
       this->colorArray.clear();
       for (int i=0;i<colorArray.size();i++)
@@ -110,6 +111,7 @@ namespace ospray {
 
         for (int i=0;i<numSamples;i++)
           alpha[i] = getInterpolatedAlphaValue(i * dx);
+
         ospAlphaData = ospNewData(numSamples,OSP_FLOAT,alpha); 
         ospCommit(ospAlphaData);
         ospSetData(ospTransferFunction,"opacities",ospAlphaData);
@@ -193,8 +195,10 @@ namespace ospray {
         colorArray.push_back(std::pair<float,vec3f>(i,vec3f(col[i][0],col[i][1],col[i][2])));
       
       alphaArray.clear();
-      for (int i=0;i<colorArray.size();i++)
-        alphaArray.push_back(std::pair<float,float>(i,1.f)); //i/float(colorArray.size()-1));
+      alphaArray.push_back(std::pair<float,float>(0.f,0.f));
+      alphaArray.push_back(std::pair<float,float>(1.f,1.f));
+      // for (int i=0;i<colorArray.size();i++)
+      //   alphaArray.push_back(std::pair<float,float>(i,1.f)); //i/float(colorArray.size()-1));
     }
 
     OSP_REGISTER_SG_NODE(TransferFunction)
