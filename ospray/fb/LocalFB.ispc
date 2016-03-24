@@ -17,28 +17,25 @@
 #include "LocalFB.ih"
 
 // number of floats each task is clearing; must be a a mulitple of 16
+// NOTE(jda) - must match CLEAR_BLOCK_SIZE defined in LocalFB.cpp!
 #define CLEAR_BLOCK_SIZE (32 * 1024)
 
-export void LocalFrameBuffer_clearAccum(void *uniform _fb)
+export void LocalFrameBuffer_clearAccum(void *uniform _fb,
+                                        uniform int taskIndex)
 {
   uniform LocalFB *uniform fb = (uniform LocalFB *uniform)_fb;
   fb->super.accumID = 0;
 
   if (fb->accumBuffer) {
+    uniform float *uniform fbPointer
+      = (uniform float *uniform)&fb->accumBuffer[0].x;
+    uniform float *uniform block = fbPointer + taskIndex * CLEAR_BLOCK_SIZE;
     uniform size_t num_floats = 4*fb->super.size.x*fb->super.size.y;
-    uniform size_t num_blocks = (num_floats + CLEAR_BLOCK_SIZE - 1) / CLEAR_BLOCK_SIZE;
 
-    //NOTE(jda) - this needs to be threaded? seems to perform ok as-is...
-    for(uniform int taskIndex = 0; taskIndex < num_blocks; ++taskIndex) {
-      uniform float *uniform fbPointer
-        = (uniform float *uniform)&fb->accumBuffer[0].x;
-      uniform float *uniform block = fbPointer + taskIndex * CLEAR_BLOCK_SIZE;
-      uniform size_t num_floats = 4*fb->super.size.x*fb->super.size.y;
-
-      uniform int end = min(CLEAR_BLOCK_SIZE,
-                            num_floats - taskIndex * CLEAR_BLOCK_SIZE);
-      foreach (x=0 ... end)
-        block[x] = 0.f;
+    uniform int end = min(CLEAR_BLOCK_SIZE,
+                          num_floats - (taskIndex * CLEAR_BLOCK_SIZE));
+    foreach (x=0 ... end) {
+      block[x] = 0.f;
     }
   }
 }
