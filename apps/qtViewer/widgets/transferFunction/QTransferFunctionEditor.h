@@ -45,8 +45,8 @@ namespace ospray {
 
       /*! set background image for a given color map */
       void setColorMapImage(const QImage &image);
-      const std::vector<ospcommon::vec2f> &getPoints() const { return points; }
-      void setPoints(const std::vector<ospcommon::vec2f> &points) { this->points = points; }
+      const std::vector<ospcommon::vec2f> &getPoints() const;
+      void setPoints(const std::vector<ospcommon::vec2f> &points);
     signals:
 
       void transferFunctionChanged();

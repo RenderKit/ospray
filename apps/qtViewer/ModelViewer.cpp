@@ -158,6 +158,10 @@ namespace ospray {
         sg::TransferFunction *xf = dynamic_cast<sg::TransferFunction *>
           (sgRenderer->uniqueNodes.object[i]->node.ptr);
         if (xf) xferFuncs.push_back(xf);
+<<<<<<< HEAD
+=======
+        // cout << "FOUND xf : " << xf << endl;
+>>>>>>> 4630fcb4d1f8a05eec45d7b9dc251812d4f0f42c
       }
       std::cout << "#osp:qtv: found " << xferFuncs.size()
                 << " transfer function nodes" << std::endl;
@@ -399,8 +403,8 @@ namespace ospray {
 
       createTimeSlider();
       createEditorWidgetStack();
-      createLightManipulator();
       createTransferFunctionEditor();
+      createLightManipulator();
 
       if (fullscreen) {
         setWindowState(windowState() | Qt::WindowFullScreen);

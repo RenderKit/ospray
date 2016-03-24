@@ -20,8 +20,6 @@
 #include "ospray/common/tasking/async.h"
 #include "ospray/common/tasking/parallel_for.h"
 
-#include <memory>
-
 #ifdef _WIN32
 #  define NOMINMAX
 #  include <windows.h> // for Sleep
