@@ -39,10 +39,12 @@ OSPRAY_ADD_LIBRARY(ospray_common SHARED
   vec.h
 )
 
-TARGET_LINK_LIBRARIES(ospray_common
-  # for network.cpp
-  pthread
-)
+IF(NOT THIS_IS_MIC)
+  TARGET_LINK_LIBRARIES(ospray_common
+    # for network.cpp
+    pthread
+  )
+ENDIF()
 
 OSPRAY_SET_LIBRARY_VERSION(ospray_common)
 OSPRAY_INSTALL_LIBRARY(ospray_common)
