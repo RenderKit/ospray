@@ -99,7 +99,6 @@ LinearTransferFunction_getOpacityForValue(const void *uniform _self,
   // Clamp the value to the lower bound of the value range.
   if (value <= self->super.valueRange.x) 
     return self->opacityValues[0];
-  // print("numopacity %\n",self->opacityValueCount);
 
   // Clamp the value to the upper bound of the value range.
   if (value >= self->super.valueRange.y) 
@@ -119,9 +118,6 @@ LinearTransferFunction_getOpacityForValue(const void *uniform _self,
   float ret =
     (1.0f - remainder) * self->opacityValues[index] 
     + remainder * self->opacityValues[min(index + 1, self->opacityValueCount - 1)];
-  // print("opacity(%) = %\n",value,ret);
-  // print("index % rem %\n",index,remainder);
-  // print("val[index] = %\n",self->opacityValues[index] );
   return ret;
 }
 

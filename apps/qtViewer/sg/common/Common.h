@@ -16,15 +16,23 @@
 
 #pragma once
 
-#define WARN_ON_INCLUDING_OSPCOMMON 1
+// use ospcommon vector types in ospray.h
+#define OSPRAY_EXTERNAL_VECTOR_TYPES 1
+// ospcommon 
+#include "common/AffineSpace.h"
+
+namespace osp {
+  using ospcommon::vec2i;
+  using ospcommon::vec2f;
+  using ospcommon::vec3i;
+  using ospcommon::vec3f;
+  using ospcommon::vec4f;
+  using ospcommon::affine3f;
+}
+
 
 // ospray API
 #include "ospray/ospray.h"
-// ospcommon 
-#include "common/common.h"
-#include "common/vec.h"
-#include "common/box.h"
-#include "common/AffineSpace.h"
 // STL
 
 namespace ospray {

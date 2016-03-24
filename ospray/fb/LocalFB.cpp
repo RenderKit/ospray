@@ -14,8 +14,14 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+//ospray
 #include "LocalFB.h"
 #include "LocalFB_ispc.h"
+#include "ospray/common/tasking/parallel_for.h"
+
+// number of floats each task is clearing; must be a a mulitple of 16
+// NOTE(jda) - must match CLEAR_BLOCK_SIZE defined in LocalFB.ispc!
+#define CLEAR_BLOCK_SIZE (32 * 1024)
 
 namespace ospray {
 
@@ -83,14 +89,19 @@ namespace ospray {
   void LocalFrameBuffer::clear(const uint32 fbChannelFlags)
   {
     if (fbChannelFlags & OSP_FB_ACCUM) {
-      ispc::LocalFrameBuffer_clearAccum(getIE());
+      void *thisIE = getIE();
+      const int num_floats = 4 * size.x * size.y;
+      const int num_blocks = (num_floats + CLEAR_BLOCK_SIZE - 1)
+                             / CLEAR_BLOCK_SIZE;
+      parallel_for(num_blocks,[&](int taskIndex) {
+        ispc::LocalFrameBuffer_clearAccum(thisIE, taskIndex);
+      });
       accumID = 0;
     }
   }
 
   void LocalFrameBuffer::setTile(Tile &tile)
   {
-#if 1
     if (pixelOp)
       pixelOp->preAccum(tile);
     if (accumBuffer)
@@ -109,21 +120,16 @@ namespace ospray {
         NOTIMPLEMENTED;
       }
     }
-#else
-    ispc::LocalFrameBuffer_setTile(getIE(),(ispc::Tile&)tile);
-#endif
   }
 
   const void *LocalFrameBuffer::mapDepthBuffer()
   {
-    // waitForRenderTaskToBeReady();
     this->refInc();
     return (const void *)depthBuffer;
   }
   
   const void *LocalFrameBuffer::mapColorBuffer()
   {
-    // waitForRenderTaskToBeReady();
     this->refInc();
     return (const void *)colorBuffer;
   }

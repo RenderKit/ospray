@@ -1,6 +1,7 @@
 // ======================================================================== //
 // Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
+
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
 // You may obtain a copy of the License at                                  //
@@ -40,7 +41,6 @@ namespace ospray {
       colorMapImage.fill(QColor::fromRgbF(1,1,1,1).rgb());
 
       // default transfer function points
-      // points.push_back(ospcommon::vec2f(0.,1.));
       points.push_back(ospcommon::vec2f(0.,0.));
       points.push_back(ospcommon::vec2f(1.,1.));
     }
@@ -151,7 +151,6 @@ namespace ospray {
             // trigger repaint
             repaint();
             
-            PING;
             // emit signal
             emit transferFunctionChanged();
           }
@@ -362,17 +361,6 @@ namespace ospray {
       updateAlphaMap();
     }
 
-    // void QTransferFunctionEditor::transferFunctionChanged()
-    // {
-    //   PING;
-    // }
-    // void QTransferFunctionAlphaEditor::transferFunctionChanged()
-    // {
-    //   PING;
-    // }
-
-    
-
     void QTransferFunctionEditor::selectColorMap(int index) 
     { 
       activeColorMap = colorMaps[index]; 
@@ -407,25 +395,25 @@ namespace ospray {
 
     void QOSPTransferFunctionEditor::updateColorMap()
     {
-      // PING;
       sgNode->setColorMap(activeColorMap->getColors());
       sgNode->commit();
     }
     
+    const std::vector<ospcommon::vec2f> &QTransferFunctionAlphaEditor::getPoints() const 
+    {
+      return points; 
+    }
+
+    void QTransferFunctionAlphaEditor::setPoints(const std::vector<ospcommon::vec2f> &points) 
+    {
+      this->points = points; 
+    }
+
+
     void QOSPTransferFunctionEditor::updateAlphaMap()
     {
       sgNode->setAlphaMap(transferFunctionAlphaEditor->getPoints());
-      // PING;
-      // const int numAlphas = 256;
-      // std::vector<float> alphas;
-      // for (int i=0;i<numAlphas;i++)
-      //   alphas.push_back(transferFunctionAlphaEditor->getInterpolatedValue(i/float(numAlphas-1)));
-
-      // // PING;
-      // sgNode->setAlphaMap(alphas);
-      // PING;
       sgNode->commit();
-    //   PING;
     }
  
   } // ::ospray::viewer

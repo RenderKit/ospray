@@ -33,7 +33,6 @@ namespace ospray {
 
     void Volume::serialize(sg::Serialization::State &state)
     {
-      PING; PRINT(toString());
       Node::serialize(state);
       if (transferFunction) 
         transferFunction->serialize(state);

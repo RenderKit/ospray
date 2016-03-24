@@ -21,22 +21,13 @@
 namespace ospray {
 
   struct __aligned(64) Task : public RefCount {
-    // typedef enum { FRONT, BACK } ScheduleOrder;
 
-    // ------------------------------------------------------------------
-    // callbacks used to define what the task is doing
-    // ------------------------------------------------------------------
     Task(const char *name = "no name");
-    virtual void run(size_t jobID) = 0;
-    virtual void finish();
     virtual ~Task();
+
     // ------------------------------------------------------------------
     // interface for scheduling a new task into the task system
     // ------------------------------------------------------------------
-
-    //! add a new dependecy: task cannot become active until this depdency has
-    //! completed
-    void addDependency(Task *dependency);
 
     typedef enum {
       /*! schedule job to the END of the job queue, meaning it'll get
@@ -52,16 +43,43 @@ namespace ospray {
      *  activated */
     ScheduleOrder order;
 
-    //! schedule the given task with the given number of
-    //! sub-jobs. . if the task has dependencies, it may not be
-    //! immeately active.
+    //! schedule the given task with the given number of sub-jobs.
     void schedule(size_t numJobs, ScheduleOrder order=BACK_OF_QUEUE);
 
+    //! same as schedule(), but also wait for all jobs to complete
     void scheduleAndWait(size_t numJobs, ScheduleOrder order=BACK_OF_QUEUE);
 
     //! wait for the task to complete, optionally (by default) helping
     //! to actually work on completing this task.
     void wait(bool workOnIt = true);
+
+    //! get name of the task (useful for debugging)
+    const char *getName();
+
+    /*! \brief initialize the task system with given number of worker
+        tasks.
+
+        numThreads==-1 means 'use all that are available; numThreads=0
+        means 'no worker thread, assume that whoever calls wait() will
+        do the work */
+    static void initTaskSystem(const size_t numThreads);
+
+  private:
+
+    //! Allow tasking system backend to access all parts of the class, but
+    //! prevent users from using data which is an implementation detail of the
+    //! task
+    friend class TaskSys;
+
+    // ------------------------------------------------------------------
+    // callback used to define what the task is doing
+    // ------------------------------------------------------------------
+
+    virtual void run(size_t jobID) = 0;
+
+    // ------------------------------------------------------------------
+    // internal data for the tasking systme to manage the task
+    // ------------------------------------------------------------------
 
     //*! work on task until no more useful job available on this task
     void workOnIt();
@@ -84,14 +102,6 @@ namespace ospray {
 
     __aligned(64) Task *volatile next;
     const char *name;
-
-    /*! \brief initialize the task system with given number of worker
-        tasks.
-
-        numThreads==-1 means 'use all that are available; numThreads=0
-        means 'no worker thread, assume that whoever calls wait() will
-        do the work */
-    static void initTaskSystem(const size_t numThreads);
   };
 
 // Inlined function definitions ///////////////////////////////////////////////
@@ -110,7 +120,9 @@ namespace ospray {
   {
   }
 
-  __forceinline void Task::finish()
+  __forceinline const char *Task::getName()
   {
+    return name;
   }
+
 }//namespace ospray

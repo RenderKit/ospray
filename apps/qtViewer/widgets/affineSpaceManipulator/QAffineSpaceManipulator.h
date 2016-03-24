@@ -16,6 +16,8 @@
 
 #pragma once
 
+// sg
+#include "sg/SceneGraph.h"
 // ospray public api
 #include "ospray/ospray.h"
 // ospcomon
