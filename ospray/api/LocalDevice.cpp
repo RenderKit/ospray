@@ -651,11 +651,11 @@ namespace ospray {
 
 
     /*! call a renderer to render a frame buffer */
-    void LocalDevice::renderFrame(OSPFrameBuffer _fb,
+    float LocalDevice::renderFrame(OSPFrameBuffer _fb,
                                   OSPRenderer    _renderer,
                                   const uint32 fbChannelFlags)
     {
-      FrameBuffer *fb       = (FrameBuffer *)_fb;
+      FrameBuffer *fb = (FrameBuffer *)_fb;
       // SwapChain *sc       = (SwapChain *)_sc;
       Renderer  *renderer = (Renderer *)_renderer;
       // Model *model = (Model *)_model;
@@ -666,7 +666,7 @@ namespace ospray {
 
       // FrameBuffer *fb = sc->getBackBuffer();
       try {
-        renderer->renderFrame(fb,fbChannelFlags);
+        return renderer->renderFrame(fb,fbChannelFlags);
       } catch (std::runtime_error e) {
         std::cerr << "=======================================================" << std::endl;
         std::cerr << "# >>> ospray fatal error <<< " << std::endl << e.what() << std::endl;

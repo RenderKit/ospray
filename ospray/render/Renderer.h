@@ -51,7 +51,7 @@ namespace ospray {
     virtual std::string toString() const { return "ospray::Renderer"; }
 
     /*! \brief render one frame, and put it into given frame buffer */
-    virtual void renderFrame(FrameBuffer *fb,
+    virtual float renderFrame(FrameBuffer *fb,
                              const uint32 fbChannelFlags);
 
     //! \brief called to initialize a new frame

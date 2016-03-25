@@ -192,7 +192,7 @@ namespace ospray {
                                     const uint32 fbChannelFlags) = 0; 
 
       /*! call a renderer to render a frame buffer */
-      virtual void renderFrame(OSPFrameBuffer _sc, 
+      virtual float renderFrame(OSPFrameBuffer _sc,
                                OSPRenderer _renderer, 
                                const uint32 fbChannelFlags) = 0;
 

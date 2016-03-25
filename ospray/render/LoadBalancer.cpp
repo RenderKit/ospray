@@ -38,7 +38,7 @@ namespace ospray {
   }
 
   /*! render a frame via the tiled load balancer */
-  void LocalTiledLoadBalancer::renderFrame(Renderer *renderer,
+  float LocalTiledLoadBalancer::renderFrame(Renderer *renderer,
                                            FrameBuffer *fb,
                                            const uint32 channelFlags)
   {
@@ -87,6 +87,15 @@ namespace ospray {
     });
 
     renderer->endFrame(perFrameData,channelFlags);
+
+    float avgVar = 0.f;
+    for (int i = 0; i < NTASKS; i++) {
+      const size_t tile_y = i / numTiles_x;
+      const size_t tile_x = i - tile_y*numTiles_x;
+      const vec2i tileID(tile_x, tile_y);
+      avgVar += fb->tileError(tileID);
+    }
+    return avgVar / NTASKS;
   }
 
   std::string LocalTiledLoadBalancer::toString() const
@@ -100,7 +109,7 @@ namespace ospray {
     return "ospray::InterleavedTiledLoadBalancer";
   }
 
-  void InterleavedTiledLoadBalancer::renderFrame(Renderer *renderer,
+  float InterleavedTiledLoadBalancer::renderFrame(Renderer *renderer,
                                                  FrameBuffer *fb,
                                                  const uint32 channelFlags)
   {
@@ -151,6 +160,8 @@ namespace ospray {
     });
 
     renderer->endFrame(perFrameData,channelFlags);
+
+    return 0.f;//XXX
   }
 
 } // ::ospray
