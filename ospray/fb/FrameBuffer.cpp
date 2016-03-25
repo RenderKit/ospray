@@ -29,8 +29,7 @@ namespace ospray {
       colorBufferFormat(colorBufferFormat),
       hasDepthBuffer(hasDepthBuffer),
       hasAccumBuffer(hasAccumBuffer),
-      hasVarianceBuffer(hasVarianceBuffer),
-      accumID(-1)
+      hasVarianceBuffer(hasVarianceBuffer)
   {
     managedObjectType = OSP_FRAMEBUFFER;
     Assert(size.x > 0 && size.y > 0);

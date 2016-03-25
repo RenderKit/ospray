@@ -57,9 +57,13 @@ namespace ospray {
     else
       accumBuffer = NULL;
 
+    tilesx = divRoundUp(size.x, TILE_SIZE);
+    int tiles = tilesx * divRoundUp(size.y, TILE_SIZE);
+    tileAccumID = new int32[tiles];
+
     if (hasVarianceBuffer) {
       varianceBuffer = (vec4f*)alignedMalloc(sizeof(vec4f)*size.x*size.y);
-      tileErrorBuffer = new float[divRoundUp(size.x,TILE_SIZE)*divRoundUp(size.y,TILE_SIZE)];
+      tileErrorBuffer = new float[tiles];
     } else {
       varianceBuffer = NULL;
       tileErrorBuffer = NULL;
@@ -71,6 +75,7 @@ namespace ospray {
                                                    depthBuffer,
                                                    accumBuffer,
                                                    varianceBuffer,
+                                                   tileAccumID,
                                                    tileErrorBuffer);
   }
 
@@ -80,6 +85,7 @@ namespace ospray {
     alignedFree(colorBuffer);
     alignedFree(accumBuffer);
     alignedFree(varianceBuffer);
+    delete[] tileAccumID;
     delete[] tileErrorBuffer;
   }
 
@@ -90,13 +96,14 @@ namespace ospray {
       // always also clear variance buffer -- only clearing accumulation buffer
       // is meaningless
       ispc::LocalFrameBuffer_clearVariance(getIE());
-      accumID = 0;
+      int tiles = hasVarianceBuffer ? tilesx * divRoundUp(size.y, TILE_SIZE) : 1;
+      for (int i = 0; i < tiles; i++)
+        tileAccumID[i] = 0;
     }
   }
 
   void LocalFrameBuffer::setTile(Tile &tile)
   {
-#if 1
     if (pixelOp)
       pixelOp->preAccum(tile);
     if (accumBuffer)
@@ -115,9 +122,17 @@ namespace ospray {
         NOTIMPLEMENTED;
       }
     }
-#else
-    ispc::LocalFrameBuffer_setTile(getIE(),(ispc::Tile&)tile);
-#endif
+  }
+
+  int32 LocalFrameBuffer::accumID(const vec2i &tile)
+  {
+    const int idx = hasVarianceBuffer ? tile.y * tilesx + tile.x : 0;
+    return tileAccumID[idx];
+  }
+
+  float LocalFrameBuffer::tileError(const vec2i &tile)
+  {
+    return hasVarianceBuffer ? tileErrorBuffer[tile.y * tilesx + tile.x] : 0.0f;
   }
 
   const void *LocalFrameBuffer::mapDepthBuffer()

@@ -32,6 +32,7 @@ struct Tile {
   uniform vec2f    rcp_fbSize;
   uniform int32    generation;
   uniform int32    children;
+  uniform int32    accumID;
 };
 
 struct VaryingTile {
@@ -45,6 +46,7 @@ struct VaryingTile {
   uniform vec2f    rcp_fbSize;
   uniform int32    generation;
   uniform int32    children;
+  uniform int32    accumID;
 };
 
 inline vec4f setRGBA(uniform Tile &tile, varying uint32 i, const varying vec4f rgba)

@@ -294,7 +294,8 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
 inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
                                            const uint32 ix,
-                                           const uint32 iy)
+                                           const uint32 iy,
+                                           const uint32 accumID)
 {
   uniform FrameBuffer *uniform fb = self->super.fb;
 
@@ -309,11 +310,11 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
 
   // init RNG
   RandomTEA rng_state; varying RandomTEA* const uniform rng = &rng_state;
-  RandomTEA__Constructor(rng, fb->size.x*iy+ix, fb->accumID);
+  RandomTEA__Constructor(rng, fb->size.x*iy+ix, accumID);
   const int spp = max(1, self->super.spp);
 
   for (uniform int s=0; s < spp; s++) {
-    screenSample.sampleID.z = fb->accumID*spp + s;
+    screenSample.sampleID.z = accumID*spp + s;
 
     CameraSample cameraSample;
     const vec2f pixelSample = RandomTEA__getFloats(rng);
@@ -356,16 +357,10 @@ void PathTracer_renderTileJob(uniform PathTracer *uniform self,
                               uniform Tile &tile,
                               uniform int taskIndex)
 {
-  uniform FrameBuffer *uniform fb   = self->super.fb;
-  uniform LocalFB *uniform lfb   = (uniform LocalFB *uniform )self->super.fb;
-
-  uniform vec2i tileIdx = tile.region.lower/TILE_SIZE;
-  if (lfb->tileErrorBuffer[tileIdx.y*lfb->numTiles.x+tileIdx.x] < 0.0f)
-    return;
+  uniform FrameBuffer *uniform fb = self->super.fb;
 
   uniform int32 spp = self->super.spp;
-
-  const uniform int blocks = fb->accumID > 0 || spp > 0 ?
+  const uniform int blocks = tile.accumID > 0 || spp > 0 ?
                                1 : min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
 
   const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
@@ -377,7 +372,7 @@ void PathTracer_renderTileJob(uniform PathTracer *uniform self,
     if (ix >= fb->size.x || iy >= fb->size.y)
       continue;
 
-    ScreenSample screenSample = PathTracer_renderPixel(self, ix, iy);
+    ScreenSample screenSample = PathTracer_renderPixel(self, ix, iy, tile.accumID);
 
     for (uniform int p = 0; p < blocks; p++) {
       const uint32 pixel = z_order.xs[i*blocks+p] + (z_order.ys[i*blocks+p] * TILE_SIZE);

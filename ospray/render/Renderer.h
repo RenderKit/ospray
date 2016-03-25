@@ -35,7 +35,7 @@ namespace ospray {
     compositing or even projection/splatting based approaches
    */
   struct Renderer : public ManagedObject {
-    Renderer() : spp(1) {}
+    Renderer() : spp(1), errorThreshold(0.0f) {}
 
     /*! \brief creates an abstract renderer class of given type
 
@@ -87,7 +87,10 @@ namespace ospray {
     float epsilon;
 
     /*! \brief number of samples to be used per pixel in a tile */
-    int32        spp;
+    int32 spp;
+
+    /*! adaptive accumulation: variance-based error to reach */
+    float errorThreshold;
 
     /*! \brief whether the background should be rendered (e.g. for compositing the background may be disabled) */
     bool backgroundEnabled;

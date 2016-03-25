@@ -29,7 +29,7 @@ struct LocalFB
   uniform float *depthBuffer;
   uniform vec4f *accumBuffer;
   uniform vec4f *varianceBuffer; // accumulates every other sample, for variance estimation / stopping
+  uniform int32 *tileAccumID; //< holds accumID per tile, for adaptive accumulation
+  uniform float *tileErrorBuffer; // store error per tile
   vec2i          numTiles;
-  uniform float *tileErrorBuffer;
 };
-
