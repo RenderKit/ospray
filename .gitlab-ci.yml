@@ -1,0 +1,12 @@
+stages:
+  - build
+
+cmake/make:
+  type: build
+  script:
+    - scripts/build_gitlab.sh
+#  tags:
+#    - intel
+#    - xeon
+  allow_failure: false
+
