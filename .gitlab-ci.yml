@@ -27,4 +27,4 @@ build-ubuntu:
   script:
     - scripts/build_gitlab.sh
   tags:
-    - fedora
+    - ubuntu
