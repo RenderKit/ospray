@@ -32,8 +32,8 @@ namespace ospcommon {
     inline box_t(const vec_t &lower, const vec_t &upper) : lower(lower), upper(upper) {}
 
     inline vec_t size() const { return upper - lower; }
-    inline void extend(const vec_t &v) { lower=min(lower,v), upper=max(upper,v); }
-    inline void extend(const box_t &b) { lower=min(lower,b.lower), upper=max(upper,b.upper); }
+    inline void extend(const vec_t &v) { lower=min(lower,v); upper=max(upper,v); }
+    inline void extend(const box_t &b) { lower=min(lower,b.lower); upper=max(upper,b.upper); }
 
     /*! returns the center of the box (not valid for empty boxes) */
     inline vec_t center() const { return 0.5f * (lower+upper); }
@@ -41,6 +41,9 @@ namespace ospcommon {
 
     inline bool contains(const vec_t &vec) const 
     { return !anyLessThan(vec,lower) && !anyLessThan(upper,vec); }
+
+    inline box_t &operator=(const box_t &o)
+    { lower = o.lower; upper = o.upper; return *this; }
 
     vec_t lower, upper;
   };
