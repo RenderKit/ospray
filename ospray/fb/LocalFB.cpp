@@ -105,15 +105,18 @@ namespace ospray {
       parallel_for(num_blocks,[&](int taskIndex) {
         ispc::LocalFrameBuffer_clearAccum(thisIE, taskIndex);
       });
-      // always also clear variance buffer -- only clearing accumulation buffer
-      // is meaningless
-      parallel_for(num_blocks,[&](int taskIndex) {
-        ispc::LocalFrameBuffer_clearVariance(thisIE, taskIndex);
-      });
       int tiles = tilesx * divRoundUp(size.y, TILE_SIZE);
-      for (int i = 0; i < tiles; i++) {
+      for (int i = 0; i < tiles; i++)
         tileAccumID[i] = 0;
-        tileErrorBuffer[i] = inf;
+
+      // always also clear variance buffer (if presnet) -- only clearing
+      // accumulation buffer is meaningless
+      if (hasVarianceBuffer) {
+        parallel_for(num_blocks,[&](int taskIndex) {
+          ispc::LocalFrameBuffer_clearVariance(thisIE, taskIndex);
+        });
+        for (int i = 0; i < tiles; i++)
+          tileErrorBuffer[i] = inf;
       }
     }
   }

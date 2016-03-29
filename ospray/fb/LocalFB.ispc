@@ -43,15 +43,13 @@ export void LocalFrameBuffer_clearVariance(void *uniform _fb, uniform int taskIn
 {
   uniform LocalFB *uniform fb = (uniform LocalFB *uniform)_fb;
 
-  if (fb->varianceBuffer) {
-    uniform float *uniform fbPointer = (uniform float *uniform)&fb->varianceBuffer[0].x;
-    uniform float *uniform block = fbPointer + taskIndex * CLEAR_BLOCK_SIZE;
-    uniform size_t num_floats = 4*fb->super.size.x*fb->super.size.y;
-    uniform int end = min(CLEAR_BLOCK_SIZE, num_floats - taskIndex * CLEAR_BLOCK_SIZE);
+  uniform float *uniform fbPointer = (uniform float *uniform)&fb->varianceBuffer[0].x;
+  uniform float *uniform block = fbPointer + taskIndex * CLEAR_BLOCK_SIZE;
+  uniform size_t num_floats = 4*fb->super.size.x*fb->super.size.y;
+  uniform int end = min(CLEAR_BLOCK_SIZE, num_floats - taskIndex * CLEAR_BLOCK_SIZE);
 
-    foreach (x=0 ... end)
-      block[x] = 0.f;
-  }
+  foreach (x=0 ... end)
+    block[x] = 0.f;
 }
 
 //! \brief write tile into the given frame buffer's color buffer
