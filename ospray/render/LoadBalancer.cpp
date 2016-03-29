@@ -61,25 +61,9 @@ namespace ospray {
       if (fb->tileError(tileID) < renderer->errorThreshold)
         return;
 
-      Tile tile;
-      tile.region.lower.x = tile_x * TILE_SIZE;
-      tile.region.lower.y = tile_y * TILE_SIZE;
-      tile.region.upper.x = std::min(tile.region.lower.x+TILE_SIZE,fb->size.x);
-      tile.region.upper.y = std::min(tile.region.lower.y+TILE_SIZE,fb->size.y);
-      tile.fbSize = fb->size;
-      tile.rcp_fbSize = rcp(vec2f(tile.fbSize));
-      tile.generation = 0;
-      tile.children = 0;
-      tile.children = 0;
-      tile.accumID = accumID;
+      Tile tile(tileID, fb->size, accumID);
 
-      const int spp = renderer->spp;
-      const int blocks = (accumID > 0 || spp > 0) ? 1 :
-                         std::min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
-      const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/
-                              RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
-
-      parallel_for(numJobs, [&](int taskIndex){
+      parallel_for(numJobs(renderer->spp, accumID), [&](int taskIndex){
         renderer->renderTile(perFrameData, tile, taskIndex);
       });
 
@@ -128,24 +112,9 @@ namespace ospray {
       if (fb->tileError(tileID) < renderer->errorThreshold)
         return;
 
-      Tile tile;
-      tile.region.lower.x = tile_x * TILE_SIZE;
-      tile.region.lower.y = tile_y * TILE_SIZE;
-      tile.region.upper.x = std::min(tile.region.lower.x+TILE_SIZE,fb->size.x);
-      tile.region.upper.y = std::min(tile.region.lower.y+TILE_SIZE,fb->size.y);
-      tile.fbSize = fb->size;
-      tile.rcp_fbSize = rcp(vec2f(tile.fbSize));
-      tile.generation = 0;
-      tile.children = 0;
-      tile.accumID = accumID;
+      Tile tile(tileID, fb->size, accumID);
 
-      const int spp = renderer->spp;
-      const int blocks = (accumID > 0 || spp > 0) ? 1 :
-                         std::min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
-      const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/
-                              RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
-
-      parallel_for(numJobs, [&](int taskIndex){
+      parallel_for(numJobs(renderer->spp, accumID), [&](int taskIndex){
         renderer->renderTile(perFrameData, tile, taskIndex);
       });
 
