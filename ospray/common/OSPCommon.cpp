@@ -133,6 +133,9 @@ namespace ospray {
     }
 #endif
 
+    // NOTE(jda) - This doesn't seem to be the right solution, needs further
+    //             investigation before enabling again....temporarily disable
+#if 0
     // NOTE(jda) - Make sure that each thread (both calling application thread
     //             and OSPRay worker threads) has the correct denormals flags
     //             set.
@@ -156,6 +159,7 @@ namespace ospray {
         while(counter < NTASKS);
       });
     }
+#endif
   }
 
   void error_handler(const RTCError code, const char *str)
