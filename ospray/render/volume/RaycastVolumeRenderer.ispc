@@ -34,23 +34,6 @@ struct PassInfo {
   uniform bool useBG;
 };
 
-unmasked void RaycastVolumeRenderer_endFrame(Renderer *uniform self,
-                                    void *uniform perFrameData,
-                                    const uniform int32 accumID)
-{
-  if (self->fb)
-    self->fb->accumID = accumID;
-
-  self->fb = NULL;
-}
-
-unmasked void *uniform RaycastVolumeRenderer_beginFrame(Renderer *uniform self,
-                                               FrameBuffer *uniform framebuffer)
-{
-  self->fb = framebuffer;
-  return NULL;
-}
-
 inline void RaycastVolumeRenderer_computeVolumeSample(RaycastVolumeRenderer *uniform self,
                                                       Volume *uniform volume,
                                                       varying Ray &ray,
@@ -431,20 +414,10 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
 
 export void *uniform RaycastVolumeRenderer_createInstance()
 {
-  // The self object.
   RaycastVolumeRenderer *uniform self = uniform new uniform RaycastVolumeRenderer;
 
-  // Constructor of the parent class.
   Renderer_Constructor(&self->super, NULL);
-
-  // Function to compute the color and opacity for a screen space sample.
   self->super.renderSample = RaycastVolumeRenderer_renderSample;
-
-  // Function to perform per-frame state initialization.
-  self->super.beginFrame = RaycastVolumeRenderer_beginFrame;
-
-  // Function to perform per-frame state completion.
-  self->super.endFrame = RaycastVolumeRenderer_endFrame;
 
   return self;
 }
