@@ -20,7 +20,6 @@
 #include "ospray/common/tasking/parallel_for.h"
 
 // number of floats each task is clearing; must be a a mulitple of 16
-// NOTE(jda) - must match CLEAR_BLOCK_SIZE defined in LocalFB.ispc!
 #define CLEAR_BLOCK_SIZE (32 * 1024)
 
 namespace ospray {
@@ -100,21 +99,29 @@ namespace ospray {
     if (fbChannelFlags & OSP_FB_ACCUM) {
       void *thisIE = getIE();
       const int num_floats = 4 * size.x * size.y;
-      const int num_blocks = (num_floats + CLEAR_BLOCK_SIZE - 1)
-                             / CLEAR_BLOCK_SIZE;
-      parallel_for(num_blocks,[&](int taskIndex) {
-        ispc::LocalFrameBuffer_clearAccum(thisIE, taskIndex);
-      });
+      const int num_blocks = divRoundUp(num_floats, CLEAR_BLOCK_SIZE);
+
+      if (hasAccumBuffer) {
+        parallel_for(num_blocks,[&](int taskIndex) {
+          const int start = taskIndex * CLEAR_BLOCK_SIZE;
+          const int num = min(CLEAR_BLOCK_SIZE, num_floats - start);
+          ispc::LocalFrameBuffer_clearAccum(thisIE, start, num);
+        });
+      }
+
       int tiles = tilesx * divRoundUp(size.y, TILE_SIZE);
       for (int i = 0; i < tiles; i++)
         tileAccumID[i] = 0;
 
-      // always also clear variance buffer (if presnet) -- only clearing
+      // always also clear variance buffer (if present) -- only clearing
       // accumulation buffer is meaningless
       if (hasVarianceBuffer) {
         parallel_for(num_blocks,[&](int taskIndex) {
-          ispc::LocalFrameBuffer_clearVariance(thisIE, taskIndex);
+          const int start = taskIndex * CLEAR_BLOCK_SIZE;
+          const int num = min(CLEAR_BLOCK_SIZE, num_floats - start);
+          ispc::LocalFrameBuffer_clearVariance(thisIE, start, num);
         });
+
         for (int i = 0; i < tiles; i++)
           tileErrorBuffer[i] = inf;
       }

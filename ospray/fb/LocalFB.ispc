@@ -16,39 +16,27 @@
 
 #include "LocalFB.ih"
 
-// number of floats each task is clearing; must be a mulitple of 16
-// NOTE(jda) - must match CLEAR_BLOCK_SIZE defined in LocalFB.cpp!
-#define CLEAR_BLOCK_SIZE (32 * 1024)
-
 export void LocalFrameBuffer_clearAccum(void *uniform _fb,
-                                        uniform int taskIndex)
+    uniform int start,
+    uniform int num)
 {
   uniform LocalFB *uniform fb = (uniform LocalFB *uniform)_fb;
+  uniform float *uniform fbp = (uniform float *uniform)&fb->accumBuffer[0].x;
+  uniform float *uniform block = fbp + start; 
 
-  if (fb->accumBuffer) {
-    uniform float *uniform fbPointer
-      = (uniform float *uniform)&fb->accumBuffer[0].x;
-    uniform float *uniform block = fbPointer + taskIndex * CLEAR_BLOCK_SIZE;
-    uniform size_t num_floats = 4*fb->super.size.x*fb->super.size.y;
-
-    uniform int end = min(CLEAR_BLOCK_SIZE,
-                          num_floats - (taskIndex * CLEAR_BLOCK_SIZE));
-    foreach (x=0 ... end) {
-      block[x] = 0.f;
-    }
-  }
+  foreach (x=0 ... num)
+    block[x] = 0.f;
 }
 
-export void LocalFrameBuffer_clearVariance(void *uniform _fb, uniform int taskIndex)
+export void LocalFrameBuffer_clearVariance(void *uniform _fb,
+    uniform int start,
+    uniform int num)
 {
   uniform LocalFB *uniform fb = (uniform LocalFB *uniform)_fb;
+  uniform float *uniform fbp = (uniform float *uniform)&fb->accumBuffer[0].x;
+  uniform float *uniform block = fbp + start; 
 
-  uniform float *uniform fbPointer = (uniform float *uniform)&fb->varianceBuffer[0].x;
-  uniform float *uniform block = fbPointer + taskIndex * CLEAR_BLOCK_SIZE;
-  uniform size_t num_floats = 4*fb->super.size.x*fb->super.size.y;
-  uniform int end = min(CLEAR_BLOCK_SIZE, num_floats - taskIndex * CLEAR_BLOCK_SIZE);
-
-  foreach (x=0 ... end)
+  foreach (x=0 ... num)
     block[x] = 0.f;
 }
 
