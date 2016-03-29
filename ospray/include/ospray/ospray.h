@@ -137,7 +137,7 @@ typedef enum {
   OSP_FB_COLOR=(1<<0),
   OSP_FB_DEPTH=(1<<1),
   OSP_FB_ACCUM=(1<<2),
-  //  OSP_FB_ALPHA=(1<<3) // not used anywhere; use OSP_FB_COLOR with a frame buffer format containing alpha in 4th channel
+  OSP_FB_VARIANCE=(1<<3)
 } OSPFrameBufferChannel;
 
 typedef enum { 
@@ -272,9 +272,10 @@ extern "C" {
   OSPRAY_INTERFACE int32_t ospLoadModule(const char *pluginName);
 
   //! use renderer to render a frame. 
-  /*! What input to tuse for rendering the frame is encoded in the
-    renderer's parameters, typically in "world". */
-  OSPRAY_INTERFACE void ospRenderFrame(OSPFrameBuffer fb, 
+  /*! What input to use for rendering the frame is encoded in the
+    renderer's parameters, typically in "world".
+    return estimate of variance if framebuffer has VARIANCE buffer */
+  OSPRAY_INTERFACE float ospRenderFrame(OSPFrameBuffer fb,
                                        OSPRenderer renderer, 
                                        const uint32_t whichChannels OSP_DEFAULT_VAL(=OSP_FB_COLOR));
 
@@ -709,7 +710,7 @@ extern "C++" {
   { return ospNewTexture2D(&size.x,format,data,flags); }
   
   /*! c++ variant of ospNewFrameBuffer that can also be called with
-    referneces rather than with pointers */
+    references rather than with pointers */
   inline OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size, 
                                           const OSPFrameBufferFormat format=OSP_RGBA_I8,
                                           const uint32_t whichChannels=OSP_FB_COLOR)

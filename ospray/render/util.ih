@@ -49,6 +49,25 @@ inline float precomputedHalton5(uint32 sampleID)
 }
 
 
+inline uniform float precomputedHalton2(uniform uint32 sampleID) 
+{ 
+  if (!precomputedHalton_initialized) precomputedHalton_create(); 
+  return precomputedHalton[0][sampleID & (NUM_PRECOMPUTED_HALTON_VALUES-1)]; 
+}
+
+inline uniform float precomputedHalton3(uniform uint32 sampleID) 
+{ 
+  if (!precomputedHalton_initialized) precomputedHalton_create(); 
+  return precomputedHalton[1][sampleID & (NUM_PRECOMPUTED_HALTON_VALUES-1)]; 
+}
+
+inline uniform float precomputedHalton5(uniform uint32 sampleID) 
+{ 
+  if (!precomputedHalton_initialized) precomputedHalton_create(); 
+  return precomputedHalton[2][sampleID & (NUM_PRECOMPUTED_HALTON_VALUES-1)]; 
+}
+
+
 
 inline vec3f make_random_color(const int i)
 {

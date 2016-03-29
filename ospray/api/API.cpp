@@ -450,7 +450,7 @@ extern "C" void ospFrameBufferClear(OSPFrameBuffer fb,
 /*! \brief call a renderer to render given model into given framebuffer
 
   model _may_ be empty (though most framebuffers will expect one!) */
-extern "C" void ospRenderFrame(OSPFrameBuffer fb,
+extern "C" float ospRenderFrame(OSPFrameBuffer fb,
                                OSPRenderer renderer,
                                const uint32_t fbChannelFlags
                                )
@@ -467,7 +467,7 @@ extern "C" void ospRenderFrame(OSPFrameBuffer fb,
   std::cout << "done rendering, time per frame = " << (t_frame*1000.f) << "ms, avg'ed fps = " << (den/nom) << std::endl;
 #else
   // rendering = true;
-  ospray::api::Device::current->renderFrame(fb,renderer,fbChannelFlags);
+  return ospray::api::Device::current->renderFrame(fb,renderer,fbChannelFlags);
   // rendering = false;
 #endif
 }

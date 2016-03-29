@@ -35,10 +35,10 @@ namespace ospray {
       */
       struct Master : public TiledLoadBalancer
       {
-        void renderFrame(Renderer *tiledRenderer,
+        float renderFrame(Renderer *tiledRenderer,
                          FrameBuffer *fb,
-                         const uint32 channelFlags);
-        std::string toString() const;
+                         const uint32 channelFlags) override;
+        std::string toString() const override;
       };
 
       /*! \brief the 'slave' in a tile-based master-slave *static*
@@ -56,10 +56,10 @@ namespace ospray {
         /*! total number of worker threads across all(!) slaves */
         int32 numTotalThreads;
 
-        void renderFrame(Renderer *tiledRenderer,
+        float renderFrame(Renderer *tiledRenderer,
                          FrameBuffer *fb,
-                         const uint32 channelFlags);
-        std::string toString() const;
+                         const uint32 channelFlags) override;
+        std::string toString() const override;
       };
     }// ::ospray::mpi::staticLoadBalancer
   } // ::ospray::mpi

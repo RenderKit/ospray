@@ -1033,7 +1033,7 @@ namespace ospray {
 
 
     /*! call a renderer to render a frame buffer */
-    void MPIDevice::renderFrame(OSPFrameBuffer _fb, 
+    float MPIDevice::renderFrame(OSPFrameBuffer _fb, 
                                 OSPRenderer _renderer, 
                                 const uint32 fbChannelFlags)
     {
@@ -1052,7 +1052,7 @@ namespace ospray {
       cmd.send((int32)fbChannelFlags);
       cmd.flush();
 
-      TiledLoadBalancer::instance->renderFrame(NULL,fb,fbChannelFlags);
+      return TiledLoadBalancer::instance->renderFrame(NULL,fb,fbChannelFlags);
     }
 
     //! release (i.e., reduce refcount of) given object

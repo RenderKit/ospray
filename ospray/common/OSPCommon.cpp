@@ -132,30 +132,6 @@ namespace ospray {
       std::cerr << "WARNING: " << e.what() << std::endl;
     }
 #endif
-
-    // NOTE(jda) - Make sure that each thread (both calling application thread
-    //             and OSPRay worker threads) has the correct denormals flags
-    //             set.
-
-    _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
-    _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
-
-    const int NTASKS = std::min((uint32_t)numThreads,
-                                std::thread::hardware_concurrency()) - 1;
-
-    AtomicInt counter;
-    counter = 0;
-
-    // Force each worker thread to pickup exactly one task which sets denormals
-    // flags, where each thread spins until they are all done.
-    for (int i = 0; i < NTASKS; ++i) {
-      async([&]() {
-        _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
-        _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
-        counter++;
-        while(counter < NTASKS);
-      });
-    }
   }
 
   void error_handler(const RTCError code, const char *str)

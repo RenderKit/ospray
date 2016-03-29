@@ -61,7 +61,8 @@ namespace ospray {
     FrameBuffer(const vec2i &size,
                 ColorBufferFormat colorBufferFormat,
                 bool hasDepthBuffer,
-                bool hasAccumBuffer);
+                bool hasAccumBuffer,
+                bool hasVarianceBuffer = false);
 
     virtual void commit();
 
@@ -80,24 +81,22 @@ namespace ospray {
     { return "ospray::FrameBuffer"; }
 
     /*! indicates whether the app requested this frame buffer to have
-        an accumulation buffer */
-    bool hasAccumBuffer;
-    /*! indicates whether the app requested this frame buffer to have
         an (application-mappable) depth buffer */
     bool hasDepthBuffer;
+    /*! indicates whether the app requested this frame buffer to have
+        an accumulation buffer */
+    bool hasAccumBuffer;
+    bool hasVarianceBuffer;
 
     /*! buffer format of the color buffer */
     ColorBufferFormat colorBufferFormat;
 
-    /*! tracks how many times we have already accumulated into this
-        frame buffer. A value of '<0' means that accumulation is
-        disabled (in which case the renderer may not access the
-        accumulation buffer); in all other cases this value indicates
-        how many frames have already been accumulated in this frame
-        buffer. Note that it is up to the application to properly
-        reset the accumulationID (using ospClearAccum(fb)) if anything
+    /*! how often has been accumulated into that tile
+        Note that it is up to the application to properly
+        reset the accumulationIDs (using ospClearAccum(fb)) if anything
         changes that requires clearing the accumulation buffer. */
-    int32 accumID;
+    virtual int32 accumID(const vec2i &tile) = 0;
+    virtual float tileError(const vec2i &tile) = 0;
 
     Ref<PixelOp::Instance> pixelOp;
   };

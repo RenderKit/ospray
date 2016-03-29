@@ -36,7 +36,7 @@ namespace ospray {
   {
     static TiledLoadBalancer *instance;
     virtual std::string toString() const = 0;
-    virtual void renderFrame(Renderer *tiledRenderer,
+    virtual float renderFrame(Renderer *tiledRenderer,
                              FrameBuffer *fb,
                              const uint32 channelFlags) = 0;
   };
@@ -50,7 +50,7 @@ namespace ospray {
   {
     LocalTiledLoadBalancer();
 
-    void renderFrame(Renderer *renderer,
+    float renderFrame(Renderer *renderer,
                      FrameBuffer *fb,
                      const uint32 channelFlags) override;
 
@@ -83,7 +83,7 @@ namespace ospray {
 
     std::string toString() const override;
 
-    void renderFrame(Renderer *tiledRenderer,
+    float renderFrame(Renderer *tiledRenderer,
                      FrameBuffer *fb,
                      const uint32 channelFlags) override;
   };

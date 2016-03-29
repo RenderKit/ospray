@@ -219,7 +219,7 @@ namespace ospray {
       OSPVolume newVolume(const char *type) override;
 
       /*! call a renderer to render a frame buffer */
-      void renderFrame(OSPFrameBuffer _sc,
+      float renderFrame(OSPFrameBuffer _sc,
                                OSPRenderer _renderer, 
                                const uint32 fbChannelFlags) override;
 

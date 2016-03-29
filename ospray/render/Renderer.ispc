@@ -44,13 +44,10 @@ static unmasked void *uniform Renderer_default_beginFrame(uniform Renderer *unif
 }
 
 static unmasked void Renderer_default_endFrame(uniform Renderer *uniform self, 
-                                      void *uniform perFrameData,
-                                      const uniform int32 accumID)
+                                      void *uniform perFrameData)
 {
-  if (self->fb) {
-    self->fb->accumID = accumID;
+  if (self->fb)
     self->fb = NULL;
-  }
 }
 
 unmasked void Renderer_default_renderTileJob(uniform Renderer *uniform self,
@@ -76,7 +73,7 @@ unmasked void Renderer_default_renderTileJob(uniform Renderer *uniform self,
 
     const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
     const uniform int end   = begin     + RENDERTILE_PIXELS_PER_JOB;
-    const uniform int startSampleID = max(fb->accumID,0)*spp;
+    const uniform int startSampleID = max(tile.accumID, 0)*spp;
 
     for (uniform uint32 i=begin;i<end;i+=programCount) {
       const uint32 index = i + programIndex;
@@ -121,19 +118,19 @@ unmasked void Renderer_default_renderTileJob(uniform Renderer *uniform self,
       setRGBAZ(tile,pixel,col,screenSample.alpha,screenSample.z);
     }
   } else {
-    if (fb->accumID >= 0) {
-      pixel_du = precomputedHalton2(fb->accumID);
-      pixel_dv = precomputedHalton3(fb->accumID);
+    if (tile.accumID >= 0) {
+      pixel_du = precomputedHalton2(tile.accumID);
+      pixel_dv = precomputedHalton3(tile.accumID);
     }
 
     ScreenSample screenSample;
-    screenSample.sampleID.z = fb->accumID;
+    screenSample.sampleID.z = tile.accumID;
     screenSample.z = inf;
     screenSample.alpha = 0.f;
 
     CameraSample cameraSample;
 
-    const uniform int blocks = fb->accumID > 0 || spp > 0 ? 1 : min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
+    const uniform int blocks = tile.accumID > 0 || spp > 0 ? 1 : min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
 
     const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
     const uniform int end   = min(begin + RENDERTILE_PIXELS_PER_JOB, TILE_SIZE*TILE_SIZE/blocks);
@@ -220,11 +217,10 @@ export void *uniform Renderer_beginFrame(void *uniform _self,
 
 
 export void Renderer_endFrame(void *uniform _self,
-                              void *uniform perFrameData,
-                              const uniform int32 newAccumID)
+                              void *uniform perFrameData)
 {
   uniform Renderer *uniform self = (uniform Renderer *uniform)_self;
-  self->endFrame(self,perFrameData,newAccumID);
+  self->endFrame(self, perFrameData);
 }
 
 export void Renderer_set(void *uniform _self,

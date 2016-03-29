@@ -16,28 +16,28 @@
 
 #include "LocalFB.ih"
 
-// number of floats each task is clearing; must be a a mulitple of 16
-// NOTE(jda) - must match CLEAR_BLOCK_SIZE defined in LocalFB.cpp!
-#define CLEAR_BLOCK_SIZE (32 * 1024)
-
 export void LocalFrameBuffer_clearAccum(void *uniform _fb,
-                                        uniform int taskIndex)
+    uniform int start,
+    uniform int num)
 {
   uniform LocalFB *uniform fb = (uniform LocalFB *uniform)_fb;
-  fb->super.accumID = 0;
+  uniform float *uniform fbp = (uniform float *uniform)&fb->accumBuffer[0].x;
+  uniform float *uniform block = fbp + start; 
 
-  if (fb->accumBuffer) {
-    uniform float *uniform fbPointer
-      = (uniform float *uniform)&fb->accumBuffer[0].x;
-    uniform float *uniform block = fbPointer + taskIndex * CLEAR_BLOCK_SIZE;
-    uniform size_t num_floats = 4*fb->super.size.x*fb->super.size.y;
+  foreach (x=0 ... num)
+    block[x] = 0.f;
+}
 
-    uniform int end = min(CLEAR_BLOCK_SIZE,
-                          num_floats - (taskIndex * CLEAR_BLOCK_SIZE));
-    foreach (x=0 ... end) {
-      block[x] = 0.f;
-    }
-  }
+export void LocalFrameBuffer_clearVariance(void *uniform _fb,
+    uniform int start,
+    uniform int num)
+{
+  uniform LocalFB *uniform fb = (uniform LocalFB *uniform)_fb;
+  uniform float *uniform fbp = (uniform float *uniform)&fb->accumBuffer[0].x;
+  uniform float *uniform block = fbp + start; 
+
+  foreach (x=0 ... num)
+    block[x] = 0.f;
 }
 
 //! \brief write tile into the given frame buffer's color buffer
@@ -116,7 +116,7 @@ export void LocalFrameBuffer_writeTile_RGBA_F32(void *uniform _fb,
 
         // XXX not even hardcoded gamma for float buffer,
         // should use pixelops anyway
-        col = max(col, make_vec4f(0.f)); 
+        col = max(col, make_vec4f(0.f));
       }
       color[pixelID] = col;
       if (depth) fb->depthBuffer[pixelID] = varyTile->z[chunkID];
@@ -133,12 +133,18 @@ export void LocalFrameBuffer_accumulateTile(void *uniform _fb,
                                             uniform Tile &tile)
 {
   uniform LocalFB *uniform fb  = (uniform LocalFB *uniform)_fb;
-  uniform vec4f *uniform accum = (uniform vec4f *uniform)fb->accumBuffer;
+  uniform vec4f *uniform accum = fb->accumBuffer;
   if (!accum) return;
 
-  const float accScale = rcpf(fb->super.accumID+1);
-
   VaryingTile *uniform varyTile = (VaryingTile *uniform)&tile;
+  uniform vec2i tileIdx = tile.region.lower/TILE_SIZE;
+
+  uniform vec4f *uniform variance = fb->varianceBuffer;
+  const uniform float accScale = rcpf(tile.accumID+1);
+  const uniform float accHalfScale = rcpf(tile.accumID/2+1);
+  float err = 0.f;
+  float cnt = 0.f;
+
   for (uniform uint32 iy=0;iy<TILE_SIZE;iy++) {
     uniform uint32 iiy=tile.region.lower.y+iy;
     if (iiy >= tile.region.upper.y) continue;
@@ -153,7 +159,7 @@ export void LocalFrameBuffer_accumulateTile(void *uniform _fb,
       /*! todo: rather than gathering, replace this code with
           'load4f's and swizzles */
       varying vec4f acc = make_vec4f(0.f);
-      if (fb->super.accumID > 0)
+      if (tile.accumID > 0)
         acc = accum[pixelID];
       unmasked {
         acc.x += varyTile->r[chunkID];
@@ -164,6 +170,27 @@ export void LocalFrameBuffer_accumulateTile(void *uniform _fb,
 
       accum[pixelID] = acc;
 
+      if (variance) {
+        varying vec3f vari = make_vec3f(0.f);
+        if (tile.accumID > 0)
+          vari = make_vec3f(variance[pixelID]);
+        if ((tile.accumID & 1) == 0) {
+          unmasked {
+            vari.x += varyTile->r[chunkID];
+            vari.y += varyTile->g[chunkID];
+            vari.z += varyTile->b[chunkID];
+          }
+
+          variance[pixelID] = make_vec4f(vari);
+        }
+        const vec3f accs = accScale * make_vec3f(acc);
+        const vec3f diff = absf(accs - accHalfScale * vari);
+        const float den = sqrtf(accs.x + accs.y + accs.z);
+        if (den > 0)
+          err = err + (diff.x + diff.y + diff.z) / den;
+        cnt += 1.0f;
+      }
+
       unmasked {
         varyTile->r[chunkID] = accScale * acc.x;
         varyTile->g[chunkID] = accScale * acc.y;
@@ -171,6 +198,15 @@ export void LocalFrameBuffer_accumulateTile(void *uniform _fb,
         varyTile->a[chunkID] = accScale * acc.w;
       }
     }
+  }
+
+  const uniform tileId = tileIdx.y*fb->numTiles.x + tileIdx.x;
+  fb->tileAccumID[tileId]++;
+  if (variance) {
+    const uniform float r = sqrt(reduce_add(cnt) / tile.fbSize.x / tile.fbSize.y);
+    const uniform float errf = r * reduce_add(err) / reduce_add(cnt);
+    // print("[%, %]:  \t%\t%\n", tileIdx.x, tileIdx.y, errf);
+    fb->tileErrorBuffer[tileId] = errf;
   }
 }
 
@@ -181,7 +217,10 @@ export void *uniform LocalFrameBuffer_create(void *uniform cClassPtr,
                                              uniform int32 colorBufferFormat,
                                              void *uniform colorBuffer,
                                              void *uniform depthBuffer,
-                                             void *uniform accumBuffer)
+                                             void *uniform accumBuffer,
+                                             void *uniform varianceBuffer,
+                                             void *uniform tileAccumID,
+                                             void *uniform tileErrorBuffer)
 {
   uniform LocalFB *uniform self = uniform new uniform LocalFB;
   FrameBuffer_Constructor(&self->super,cClassPtr);
@@ -190,5 +229,9 @@ export void *uniform LocalFrameBuffer_create(void *uniform cClassPtr,
   self->colorBuffer = colorBuffer;
   self->depthBuffer = (uniform float *uniform)depthBuffer;
   self->accumBuffer = (uniform vec4f *uniform)accumBuffer;
+  self->varianceBuffer = (uniform vec4f *uniform)varianceBuffer;
+  self->numTiles = (self->super.size+(TILE_SIZE-1))/TILE_SIZE;
+  self->tileAccumID = (uniform int32 *uniform)tileAccumID;
+  self->tileErrorBuffer = (uniform float *uniform)tileErrorBuffer;
   return self;
 }
