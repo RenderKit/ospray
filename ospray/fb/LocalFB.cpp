@@ -142,8 +142,7 @@ namespace ospray {
 
   int32 LocalFrameBuffer::accumID(const vec2i &tile)
   {
-    const int idx = hasVarianceBuffer ? tile.y * tilesx + tile.x : 0;
-    return tileAccumID[idx];
+    return tileAccumID[tile.y * tilesx + tile.x];
   }
 
   float LocalFrameBuffer::tileError(const vec2i &tile)
