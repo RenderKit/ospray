@@ -362,7 +362,7 @@ namespace ospray {
                                 void *data, const uint32 flags) override;
       
       /*! call a renderer to render a frame buffer */
-      void renderFrame(OSPFrameBuffer _sc,
+      float renderFrame(OSPFrameBuffer _sc,
                        OSPRenderer _renderer,
                        const uint32 fbChannelFlags) override;
 
@@ -740,7 +740,7 @@ namespace ospray {
     }
 
     /*! call a renderer to render a frame buffer */
-    void COIDevice::renderFrame(OSPFrameBuffer _sc, 
+    float COIDevice::renderFrame(OSPFrameBuffer _sc, 
                                 OSPRenderer _renderer, 
                                 const uint32 fbChannelFlags)
     {
@@ -748,8 +748,10 @@ namespace ospray {
       args.write((ObjectHandle&)_sc);
       args.write((ObjectHandle&)_renderer);
       args.write((uint32&)fbChannelFlags);
-      callFunction(OSPCOI_RENDER_FRAME,args,nullptr,false);
+      float retValue = 1.0f;
+      callFunction(OSPCOI_RENDER_FRAME,args, &retValue, sizeof(retValue));
       callFunction(OSPCOI_RENDER_FRAME_SYNC,args,nullptr,true);
+      return retValue;
     }
 
 

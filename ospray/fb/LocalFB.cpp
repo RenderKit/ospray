@@ -20,7 +20,6 @@
 #include "ospray/common/tasking/parallel_for.h"
 
 // number of floats each task is clearing; must be a a mulitple of 16
-// NOTE(jda) - must match CLEAR_BLOCK_SIZE defined in LocalFB.ispc!
 #define CLEAR_BLOCK_SIZE (32 * 1024)
 
 namespace ospray {
@@ -28,10 +27,11 @@ namespace ospray {
   LocalFrameBuffer::LocalFrameBuffer(const vec2i &size,
                                      ColorBufferFormat colorBufferFormat,
                                      bool hasDepthBuffer,
-                                     bool hasAccumBuffer, 
+                                     bool hasAccumBuffer,
+                                     bool hasVarianceBuffer,
                                      void *colorBufferToUse)
-    : FrameBuffer(size, colorBufferFormat, hasDepthBuffer, hasAccumBuffer)
-  { 
+    : FrameBuffer(size, colorBufferFormat, hasDepthBuffer, hasAccumBuffer, hasVarianceBuffer)
+  {
     Assert(size.x > 0);
     Assert(size.y > 0);
     if (colorBufferToUse)
@@ -56,34 +56,42 @@ namespace ospray {
       depthBuffer = (float*)alignedMalloc(sizeof(float)*size.x*size.y);
     else
       depthBuffer = NULL;
-    
+
     if (hasAccumBuffer)
       accumBuffer = (vec4f*)alignedMalloc(sizeof(vec4f)*size.x*size.y);
     else
       accumBuffer = NULL;
+
+    tilesx = divRoundUp(size.x, TILE_SIZE);
+    int tiles = tilesx * divRoundUp(size.y, TILE_SIZE);
+    tileAccumID = new int32[tiles];
+
+    if (hasVarianceBuffer) {
+      varianceBuffer = (vec4f*)alignedMalloc(sizeof(vec4f)*size.x*size.y);
+      tileErrorBuffer = new float[tiles];
+    } else {
+      varianceBuffer = NULL;
+      tileErrorBuffer = NULL;
+    }
+
     ispcEquivalent = ispc::LocalFrameBuffer_create(this,size.x,size.y,
                                                    colorBufferFormat,
                                                    colorBuffer,
                                                    depthBuffer,
-                                                   accumBuffer);
+                                                   accumBuffer,
+                                                   varianceBuffer,
+                                                   tileAccumID,
+                                                   tileErrorBuffer);
   }
-  
-  LocalFrameBuffer::~LocalFrameBuffer() 
-  {
-    if (depthBuffer) alignedFree(depthBuffer);
 
-    if (colorBuffer)
-      switch(colorBufferFormat) {
-      case OSP_RGBA_F32:
-        alignedFree(colorBuffer);
-        break;
-      case OSP_RGBA_I8:
-        alignedFree(colorBuffer);
-        break;
-      default:
-        throw std::runtime_error("color buffer format not supported");
-      }
-    if (accumBuffer) alignedFree(accumBuffer);
+  LocalFrameBuffer::~LocalFrameBuffer()
+  {
+    alignedFree(depthBuffer);
+    alignedFree(colorBuffer);
+    alignedFree(accumBuffer);
+    alignedFree(varianceBuffer);
+    delete[] tileAccumID;
+    delete[] tileErrorBuffer;
   }
 
   void LocalFrameBuffer::clear(const uint32 fbChannelFlags)
@@ -91,12 +99,32 @@ namespace ospray {
     if (fbChannelFlags & OSP_FB_ACCUM) {
       void *thisIE = getIE();
       const int num_floats = 4 * size.x * size.y;
-      const int num_blocks = (num_floats + CLEAR_BLOCK_SIZE - 1)
-                             / CLEAR_BLOCK_SIZE;
-      parallel_for(num_blocks,[&](int taskIndex) {
-        ispc::LocalFrameBuffer_clearAccum(thisIE, taskIndex);
-      });
-      accumID = 0;
+      const int num_blocks = divRoundUp(num_floats, CLEAR_BLOCK_SIZE);
+
+      if (hasAccumBuffer) {
+        parallel_for(num_blocks,[&](int taskIndex) {
+          const int start = taskIndex * CLEAR_BLOCK_SIZE;
+          const int num = min(CLEAR_BLOCK_SIZE, num_floats - start);
+          ispc::LocalFrameBuffer_clearAccum(thisIE, start, num);
+        });
+      }
+
+      int tiles = tilesx * divRoundUp(size.y, TILE_SIZE);
+      for (int i = 0; i < tiles; i++)
+        tileAccumID[i] = 0;
+
+      // always also clear variance buffer (if present) -- only clearing
+      // accumulation buffer is meaningless
+      if (hasVarianceBuffer) {
+        parallel_for(num_blocks,[&](int taskIndex) {
+          const int start = taskIndex * CLEAR_BLOCK_SIZE;
+          const int num = min(CLEAR_BLOCK_SIZE, num_floats - start);
+          ispc::LocalFrameBuffer_clearVariance(thisIE, start, num);
+        });
+
+        for (int i = 0; i < tiles; i++)
+          tileErrorBuffer[i] = inf;
+      }
     }
   }
 
@@ -122,18 +150,28 @@ namespace ospray {
     }
   }
 
+  int32 LocalFrameBuffer::accumID(const vec2i &tile)
+  {
+    return tileAccumID[tile.y * tilesx + tile.x];
+  }
+
+  float LocalFrameBuffer::tileError(const vec2i &tile)
+  {
+    return hasVarianceBuffer ? tileErrorBuffer[tile.y * tilesx + tile.x] : 0.0f;
+  }
+
   const void *LocalFrameBuffer::mapDepthBuffer()
   {
     this->refInc();
     return (const void *)depthBuffer;
   }
-  
+
   const void *LocalFrameBuffer::mapColorBuffer()
   {
     this->refInc();
     return (const void *)colorBuffer;
   }
-  
+
   void LocalFrameBuffer::unmap(const void *mappedMem)
   {
     Assert(mappedMem == colorBuffer || mappedMem == depthBuffer );

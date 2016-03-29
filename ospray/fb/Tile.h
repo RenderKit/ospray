@@ -50,6 +50,7 @@ namespace ospray {
     vec2f    rcp_fbSize;
     int32    generation;
     int32    children;
+    int32    accumID; //!< how often has been accumulated into this tile
   };
 
 } // ::ospray

@@ -23,12 +23,13 @@ namespace ospray {
   FrameBuffer::FrameBuffer(const vec2i &size,
                            ColorBufferFormat colorBufferFormat,
                            bool hasDepthBuffer,
-                           bool hasAccumBuffer)
+                           bool hasAccumBuffer,
+                           bool hasVarianceBuffer)
     : size(size),
       colorBufferFormat(colorBufferFormat),
       hasDepthBuffer(hasDepthBuffer),
       hasAccumBuffer(hasAccumBuffer),
-      accumID(-1)
+      hasVarianceBuffer(hasVarianceBuffer)
   {
     managedObjectType = OSP_FRAMEBUFFER;
     Assert(size.x > 0 && size.y > 0);

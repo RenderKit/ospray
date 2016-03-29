@@ -162,7 +162,7 @@ namespace ospray {
       Glut3DWidget::reshape(newSize);
       g_windowSize = newSize;
       if (fb) ospFreeFrameBuffer(fb);
-      fb = ospNewFrameBuffer((const osp::vec2i&)newSize,OSP_RGBA_I8,OSP_FB_COLOR|OSP_FB_DEPTH|OSP_FB_ACCUM);
+      fb = ospNewFrameBuffer((const osp::vec2i&)newSize,OSP_RGBA_I8,OSP_FB_COLOR|OSP_FB_DEPTH|OSP_FB_ACCUM|OSP_FB_VARIANCE);
       ospSet1f(fb, "gamma", 2.2f);
       ospCommit(fb);
       ospFrameBufferClear(fb,OSP_FB_ACCUM);
@@ -687,6 +687,7 @@ namespace ospray {
     ospModel = ospNewModel();
 
     ospRenderer = ospNewRenderer(rendererType.c_str());
+    // ospSet1f(ospRenderer, "varianceThreshold", 0.0002);
     if (!ospRenderer)
       throw std::runtime_error("could not create ospRenderer '"+rendererType+"'");
     Assert(ospRenderer != NULL && "could not create ospRenderer");

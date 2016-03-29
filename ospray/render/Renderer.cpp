@@ -36,6 +36,7 @@ namespace ospray {
   {
     epsilon = getParam1f("epsilon", 1e-6f);
     spp = getParam1i("spp", 1);
+    errorThreshold = getParam1f("varianceThreshold", 0.f);
     backgroundEnabled = getParam1i("backgroundEnabled", 1);
     maxDepthTexture = (Texture2D*)getParamObject("maxDepthTexture", NULL);
     model = (Model*)getParamObject("model", getParamObject("world"));
@@ -131,15 +132,13 @@ namespace ospray {
   void Renderer::endFrame(void *perFrameData, const int32 fbChannelFlags)
   {
     FrameBuffer *fb = this->currentFB;
-    if ((fbChannelFlags & OSP_FB_ACCUM))
-      fb->accumID++;
-    ispc::Renderer_endFrame(getIE(),perFrameData,fb->accumID);
+    ispc::Renderer_endFrame(getIE(),perFrameData);
   }
 
-  void Renderer::renderFrame(FrameBuffer *fb, const uint32 channelFlags)
+  float Renderer::renderFrame(FrameBuffer *fb, const uint32 channelFlags)
   {
      // double T0 = getSysTime();
-    TiledLoadBalancer::instance->renderFrame(this,fb,channelFlags);
+    return TiledLoadBalancer::instance->renderFrame(this,fb,channelFlags);
      // double T1 = getSysTime();
      // printf("time per frame %lf ms\n",(T1-T0)*1e3f);
   }

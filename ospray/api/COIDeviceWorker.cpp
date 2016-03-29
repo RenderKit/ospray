@@ -722,7 +722,8 @@ namespace ospray {
       uint32 channelFlags = args.get<uint32>();
       FrameBuffer *fb = (FrameBuffer*)_fb.lookup();
       Renderer *r = (Renderer*)renderer.lookup();
-      r->renderFrame(fb,channelFlags);
+      float v = r->renderFrame(fb,channelFlags);
+      memcpy(retVal, &v, retValSize);
     }
 
     COINATIVELIBEXPORT
