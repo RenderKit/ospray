@@ -42,6 +42,10 @@ namespace ospray {
     //! number of tiles that "I" own
     size_t numMyTiles()  const { return myTiles.size(); };
 
+    int accumId;
+    virtual int32 accumID(const vec2i &tile) { return accumId; }
+    virtual float tileError(const vec2i &tile) { return 0.0f; }
+
     /*! color buffer and depth buffer on master */
 
     enum {

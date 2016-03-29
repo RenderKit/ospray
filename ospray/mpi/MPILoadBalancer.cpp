@@ -35,7 +35,7 @@ namespace ospray {
 
     namespace staticLoadBalancer {
 
-      void Master::renderFrame(Renderer *tiledRenderer,
+      float Master::renderFrame(Renderer *tiledRenderer,
                                FrameBuffer *fb,
                                const uint32 channelFlags)
       {
@@ -49,6 +49,8 @@ namespace ospray {
         dfb->waitUntilFinished();
 
         async_endFrame();
+
+        return 0.0f;//XXX
       }
 
       std::string Master::toString() const
@@ -56,7 +58,7 @@ namespace ospray {
         return "ospray::mpi::staticLoadBalancer::Master";
       }
 
-      void Slave::renderFrame(Renderer *tiledRenderer,
+      float Slave::renderFrame(Renderer *tiledRenderer,
                               FrameBuffer *fb,
                               const uint32 channelFlags)
       {
@@ -83,6 +85,7 @@ namespace ospray {
 #endif
           const size_t tile_y = tileID / numTiles_x;
           const size_t tile_x = tileID - tile_y*numTiles_x;
+          const vec2i tileId(tile_x, tile_y);
           tile.region.lower.x = tile_x * TILE_SIZE;
           tile.region.lower.y = tile_y * TILE_SIZE;
           tile.region.upper.x = std::min(tile.region.lower.x + TILE_SIZE,
@@ -95,7 +98,7 @@ namespace ospray {
           tile.children = 0;
 
           const int spp = tiledRenderer->spp;
-          const int blocks = (fb->accumID > 0 || spp > 0) ? 1 :
+          const int blocks = (fb->accumID(tileId) > 0 || spp > 0) ? 1 :
                              std::min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
           const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/
                                   RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
@@ -114,6 +117,8 @@ namespace ospray {
         tiledRenderer->endFrame(perFrameData,channelFlags);
 
         async_endFrame();
+
+        return 0.0f;//XXX
       }
 
       std::string Slave::toString() const

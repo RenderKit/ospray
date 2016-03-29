@@ -134,7 +134,7 @@ namespace ospray {
                              (ispc::VaryingTile *)&this->final,
                              (ispc::VaryingTile *)&this->accum,
                              (ispc::VaryingRGBA_I8 *)&this->color,
-                             dfb->hasAccumBuffer,dfb->accumID);
+                             dfb->hasAccumBuffer,dfb->accumId);
 
         dfb->tileIsCompleted(this);
         for (int i=0;i<bufferedTile.size();i++)
@@ -168,7 +168,7 @@ namespace ospray {
                          (ispc::VaryingTile*)&this->final,
                          (ispc::VaryingTile*)&this->accum,
                          (ispc::VaryingRGBA_I8*)&this->color,
-                         dfb->hasAccumBuffer,dfb->accumID);
+                         dfb->hasAccumBuffer,dfb->accumId);
     dfb->tileIsCompleted(this);
   }
 
@@ -198,7 +198,7 @@ namespace ospray {
                            (ispc::VaryingTile*)&this->final,
                            (ispc::VaryingTile*)&this->accum,
                            (ispc::VaryingRGBA_I8*)&this->color,
-                           dfb->hasAccumBuffer,dfb->accumID);
+                           dfb->hasAccumBuffer,dfb->accumId);
       dfb->tileIsCompleted(this);
     }
   }
@@ -317,6 +317,7 @@ namespace ospray {
         localFBonMaster = new LocalFrameBuffer(numPixels,
                                                colorBufferFormat,
                                                hasDepthBuffer,
+                                               false,
                                                false);
       }
     }
@@ -579,7 +580,7 @@ namespace ospray {
       });
 
       if (fbChannelFlags & OSP_FB_ACCUM)
-        accumID = 0;
+        accumId = 0;
     }
   }
 
