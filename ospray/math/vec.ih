@@ -723,6 +723,9 @@ inline uniform vec3f powf(const uniform vec3f v, const uniform float f)
 inline vec3f clamp(const vec3f &a, const uniform vec3f &b, const uniform vec3f &c)
 { return(make_vec3f(clamp(a.x, b.x, c.x), clamp(a.y, b.y, c.y), clamp(a.z, b.z, c.z))); }
 
+inline vec3i clamp(const vec3i &a, const uniform vec3i &b, const uniform vec3i &c)
+{ return(make_vec3i(clamp(a.x, b.x, c.x), clamp(a.y, b.y, c.y), clamp(a.z, b.z, c.z))); }
+
 //! The next machine representable number from 'a' in the direction of 'b'.
 inline uniform vec3f nextafter(const uniform vec3i &a, const uniform vec3i &b)
 { return(make_vec3f(nextafter(a.x, b.x), nextafter(a.y, b.y), nextafter(a.z, b.z))); }

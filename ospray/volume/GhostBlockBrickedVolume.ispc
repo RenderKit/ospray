@@ -351,155 +351,60 @@ template_getVoxel(float)
 template_getVoxel(double)
 #undef template_getVoxel
 
-inline void GBBV_allocateMemory(GBBV *uniform volume)
-{
-  // Memory may already have been allocated.
-  if (volume->blockMem != NULL) return;
-
-  // Volume size in blocks per dimension with padding to the nearest block.
-  volume->blockCount = (volume->super.dimensions + (BLOCK_WIDTH-1) - 1) / (BLOCK_WIDTH-1);
-
-  // Volume size in blocks with padding.
-  const uniform size_t blockCount = volume->blockCount.x * volume->blockCount.y * volume->blockCount.z;
-
-  // allocate the large array of blocks
-  uniform uint64 blockSize = VOXELS_PER_BLOCK * volume->voxelSize;
-  volume->blockMem = malloc64(blockSize * (uint64)blockCount);
-
-  if (volume->blockMem == NULL) {
-    print("failed to allocate block memory!");
-    return;
-  }
+#define template_setRegion(type)                                                  \
+void GBBV_setRegionTask_##type(GBBV *uniform self,                                \
+    const void *uniform _source,                                                  \
+    const uniform vec3i &targetCoord000,                                          \
+    const uniform vec3i &regionSize,                                              \
+    const uniform int taskIndex)                                                  \
+{                                                                                 \
+  const type *uniform source = (const type *uniform)_source;                      \
+  const uniform uint32 region_y = taskIndex % regionSize.y;                       \
+  const uniform uint32 region_z = taskIndex / regionSize.y;                       \
+  const uniform uint64 runOfs                                                     \
+    = (uint64)regionSize.x * (region_y + (uint64)regionSize.y * region_z);        \
+  const type *uniform run = source + runOfs;                                      \
+  vec3i coord = targetCoord000 + make_vec3i(0,region_y,region_z);                 \
+  foreach (x = 0 ... regionSize.x) {                                              \
+    Address address;                                                              \
+    coord.x = targetCoord000.x + x;                                               \
+    if (coord.x < 0 ||                                                            \
+        coord.y < 0 ||                                                            \
+        coord.z < 0 ||                                                            \
+        coord.x >= self->super.dimensions.x ||                                    \
+        coord.y >= self->super.dimensions.y ||                                    \
+        coord.z >= self->super.dimensions.z                                       \
+        )                                                                         \
+      continue;                                                                   \
+                                                                                  \
+    GBBV_getIndices_##type(self, coord, address);                                 \
+    /* set voxel itself */                                                        \
+    foreach_unique(blockID in address.block) {                                    \
+      type *uniform blockPtr                                                      \
+        = ((type*uniform)self->blockMem)                                          \
+        + blockID * (uint64)VOXELS_PER_BLOCK;                                     \
+      blockPtr[address.voxel] = run[x];                                           \
+    }                                                                             \
+    /* copy voxel to end of lower/left/front block if it's on the boundary */     \
+    for (uniform int32 iz=0;iz<2;iz++)                                            \
+      for (uniform int32 iy=0;iy<2;iy++)                                          \
+        for (uniform int32 ix=0;ix<2;ix++) {                                      \
+          if (GBBV_getGhostIndices(self, coord, make_vec3i(ix,iy,iz),address)) {  \
+            foreach_unique(blockID in address.block) {                            \
+              type *uniform blockPtr                                              \
+                = ((type*uniform)self->blockMem)                                  \
+                + (uint64)blockID * (uint64)VOXELS_PER_BLOCK;                     \
+              blockPtr[address.voxel] = run[x];                                   \
+            }                                                                     \
+          }                                                                       \
+        }                                                                         \
+  }                                                                               \
 }
 
-void GBBVUChar_setRegionTask(GBBV *uniform self,
-    const void *uniform _source,
-    const uniform vec3i &targetCoord000,
-    const uniform vec3i &regionSize,
-    const uniform int taskIndex)
-{
-  const uint8 *uniform source = (const uint8 *uniform)_source;
-  const uniform uint32 region_y = taskIndex % regionSize.y;
-  const uniform uint32 region_z = taskIndex / regionSize.y;
-  const uniform uint64 runOfs
-    = (uint64)regionSize.x * (region_y + (uint64)regionSize.y * region_z);
-  const uint8 *uniform run = source + runOfs;
-  vec3i coord = targetCoord000 + make_vec3i(0,region_y,region_z);
-  foreach (x = 0 ... regionSize.x) {
-    Address address;
-    coord.x = targetCoord000.x + x;
-    if (coord.x < 0 ||
-        coord.y < 0 ||
-        coord.z < 0 ||
-        coord.x >= self->super.dimensions.x ||
-        coord.y >= self->super.dimensions.y ||
-        coord.z >= self->super.dimensions.z
-        )
-      continue;
-
-    GBBV_getIndices_uint8(self, coord, address);
-    foreach_unique(blockID in address.block) {
-      uint8 *uniform blockPtr
-        = ((uint8*uniform)self->blockMem)
-        + blockID * (uint64)VOXELS_PER_BLOCK;
-      blockPtr[address.voxel] = run[x];
-    }
-    for (uniform int32 iz=0;iz<2;iz++)
-      for (uniform int32 iy=0;iy<2;iy++)
-        for (uniform int32 ix=0;ix<2;ix++) {
-          if (GBBV_getGhostIndices(self, coord, make_vec3i(ix,iy,iz),address)) {
-            foreach_unique(blockID in address.block) {
-              uint8 *uniform blockPtr
-                = ((uint8*uniform)self->blockMem)
-                + (uint64)blockID * (uint64)VOXELS_PER_BLOCK;
-              blockPtr[address.voxel] = run[x];
-            }
-          }
-        }
-  }
-}
-
-void GBBVFloat_setRegionTask(GBBV *uniform self,
-    const void *uniform _source,
-    const uniform vec3i &targetCoord000,
-    const uniform vec3i &regionSize,
-    const uniform int taskIndex)
-{
-  const float *uniform source = (const float *uniform)_source;
-  const uniform uint32 region_y = taskIndex % regionSize.y;
-  const uniform uint32 region_z = taskIndex / regionSize.y;
-  const uniform uint64 runOfs
-    = (uint64)regionSize.x * (region_y + (uint64)regionSize.y * region_z);
-  const float *uniform run = source + runOfs;
-  vec3i coord = targetCoord000 + make_vec3i(0,region_y,region_z);
-  foreach (x = 0 ... regionSize.x) {
-    Address address;
-    coord.x = targetCoord000.x + x;
-    if (coord.x < 0 ||
-        coord.y < 0 ||
-        coord.z < 0 ||
-        coord.x >= self->super.dimensions.x ||
-        coord.y >= self->super.dimensions.y ||
-        coord.z >= self->super.dimensions.z
-        )
-      continue;
-
-    GBBV_getIndices_float(self, coord, address);
-    // set voxel itself
-    foreach_unique(blockID in address.block) {
-      float *uniform blockPtr
-        = ((float*uniform)self->blockMem)
-        + blockID * (uint64)VOXELS_PER_BLOCK;
-      blockPtr[address.voxel] = run[x];
-    }
-    // copy voxel to end of lower/left/front block if it's on the boundary
-    for (uniform int32 iz=0;iz<2;iz++)
-      for (uniform int32 iy=0;iy<2;iy++)
-        for (uniform int32 ix=0;ix<2;ix++) {
-          if (GBBV_getGhostIndices(self, coord, make_vec3i(ix,iy,iz),address)) {
-            foreach_unique(blockID in address.block) {
-              float *uniform blockPtr
-                = ((float*uniform)self->blockMem)
-                + blockID * (uint64)VOXELS_PER_BLOCK;
-              blockPtr[address.voxel] = run[x];
-            }
-          }
-        }
-  }
-}
-
-void GBBVDouble_setRegionTask(GBBV *uniform self,
-    const void *uniform _source,
-    const uniform vec3i &targetCoord000,
-    const uniform vec3i &regionSize,
-    const uniform int taskIndex)
-{
-  const double *uniform source = (const double *uniform)_source;
-  const uniform uint32 region_y = taskIndex % regionSize.y;
-  const uniform uint32 region_z = taskIndex / regionSize.y;
-  const uniform uint64 runOfs = (uint64)regionSize.x * (region_y + (uint64)regionSize.y * region_z);
-  const double *uniform run = source + runOfs;
-  vec3i coord = targetCoord000 + make_vec3i(0,region_y,region_z);
-  foreach (x = 0 ... regionSize.x) {
-    Address address;
-    coord.x = targetCoord000.x + x;
-    if (coord.x < 0 ||
-        coord.y < 0 ||
-        coord.z < 0 ||
-        coord.x >= self->super.dimensions.x ||
-        coord.y >= self->super.dimensions.y ||
-        coord.z >= self->super.dimensions.z
-        )
-      continue;
-    GBBV_getIndices_double(self, coord, address);
-    foreach_unique(blockID in address.block) {
-      double *uniform blockPtr
-        = ((double*uniform)self->blockMem)
-        + blockID * (uint64)VOXELS_PER_BLOCK;
-      blockPtr[address.voxel] = run[x];
-    }
-  }
-}
+template_setRegion(uint8)
+template_setRegion(float)
+template_setRegion(double)
+#undef template_setRegion
 
 /*! perform trilinear interpolation for given sample. unlike old way
   of doing this (a single computesample on the StructuredVolume level
@@ -590,6 +495,28 @@ template_computeSample(float)
 template_computeSample(double)
 #undef template_computeSample
 
+
+inline void GBBV_allocateMemory(GBBV *uniform volume)
+{
+  // Memory may already have been allocated.
+  if (volume->blockMem != NULL) return;
+
+  // Volume size in blocks per dimension with padding to the nearest block.
+  volume->blockCount = (volume->super.dimensions + (BLOCK_WIDTH-1) - 1) / (BLOCK_WIDTH-1);
+
+  // Volume size in blocks with padding.
+  const uniform size_t blockCount = volume->blockCount.x * volume->blockCount.y * volume->blockCount.z;
+
+  // allocate the large array of blocks
+  uniform uint64 blockSize = VOXELS_PER_BLOCK * volume->voxelSize;
+  volume->blockMem = malloc64(blockSize * (uint64)blockCount);
+
+  if (volume->blockMem == NULL) {
+    print("failed to allocate block memory!");
+    return;
+  }
+}
+
 void GBBV_Constructor(GBBV *uniform volume,
                       /*! pointer to the c++-equivalent class of this entity */
                       void *uniform cppEquivalent,
@@ -604,19 +531,19 @@ void GBBV_Constructor(GBBV *uniform volume,
   if (volume->voxelType == OSP_UCHAR) {
     volume->voxelSize      = sizeof(uniform uint8);
     volume->super.getVoxel = GBBV_getVoxel_uint8;
-    volume->setRegion      = &GBBVUChar_setRegionTask;
+    volume->setRegion      = &GBBV_setRegionTask_uint8;
     volume->super.super.computeSample = GBBV_computeSample_uint8;
   }
   else if (volume->voxelType == OSP_FLOAT) {
     volume->voxelSize      = sizeof(uniform float);
     volume->super.getVoxel = GBBV_getVoxel_float;
-    volume->setRegion      = &GBBVFloat_setRegionTask;
+    volume->setRegion      = &GBBV_setRegionTask_float;
     volume->super.super.computeSample = GBBV_computeSample_float;
   }
   else if (volume->voxelType == OSP_DOUBLE) {
     volume->voxelSize      = sizeof(uniform double);
     volume->super.getVoxel = GBBV_getVoxel_double;
-    volume->setRegion      = &GBBVDouble_setRegionTask;
+    volume->setRegion      = &GBBV_setRegionTask_double;
     volume->super.super.computeSample = GBBV_computeSample_double;
   }
   else {

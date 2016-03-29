@@ -14,14 +14,14 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+// viewer
+#include "ModelViewer.h"
 // ospray
 #include "ospray/ospray.h"
 // qt
 #include <iostream>
 #include <QtGui>
 #include <ctype.h>
-// viewer
-#include "ModelViewer.h"
 // scene graph
 #include "sg/module/Module.h"
 #include "sg/importer/Importer.h"
@@ -31,7 +31,7 @@ namespace ospray {
     using std::cout;
     using std::endl;
 
-    static const std::string DEFAULT_INTEGRATOR_NAME = "ao2";
+    static const std::string DEFAULT_INTEGRATOR_NAME = "scivis"; //ao2";
     // static const std::string DEFAULT_INTEGRATOR_NAME = "eyeLight_geomID";
     
 

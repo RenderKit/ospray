@@ -82,7 +82,8 @@ namespace ospray {
       loadLibrary("ospray_module_" + libName);
     }
 
-    std::map<std::string, Renderer *(*)()>::iterator it = rendererRegistry.find(type);
+    std::map<std::string, Renderer *(*)()>::iterator it
+        = rendererRegistry.find(type);
     if (it != rendererRegistry.end()) {
       return it->second ? (it->second)() : NULL;
     }
@@ -93,11 +94,12 @@ namespace ospray {
     }
 
     std::string creatorName = "ospray_create_renderer__" + type;
-    creatorFct creator = (creatorFct)getSymbol(creatorName); //dlsym(RTLD_DEFAULT,creatorName.c_str());
+    creatorFct creator = (creatorFct)getSymbol(creatorName);
     rendererRegistry[type] = creator;
     if (creator == NULL) {
       if (ospray::logLevel >= 1) {
-        std::cout << "#ospray: could not find renderer type '" << type << "'" << std::endl;
+        std::cout << "#ospray: could not find renderer type '" << type << "'"
+                  << std::endl;
       }
       return NULL;
     }
@@ -105,8 +107,12 @@ namespace ospray {
     Renderer *renderer = (*creator)();
     renderer->managedObjectType = OSP_RENDERER;
     if (renderer == NULL && ospray::logLevel >= 1) {
-      std::cout << "#osp:warning[ospNewRenderer(...)]: could not create renderer of that type." << endl;
-      std::cout << "#osp:warning[ospNewRenderer(...)]: Note: Requested renderer type was '" << type << "'" << endl;
+      std::cout << "#osp:warning[ospNewRenderer(...)]:"
+                << " could not create renderer of that type."
+                << endl;
+      std::cout << "#osp:warning[ospNewRenderer(...)]:"
+                << " Note: Requested renderer type was '" << type << "'"
+                << endl;
     }
 
     return renderer;
@@ -142,7 +148,10 @@ namespace ospray {
     assert(getIE());
 
     OSPPickResult res;
-    ispc::Renderer_pick(getIE(), (const ispc::vec2f&)screenPos, (ispc::vec3f&)res.position, res.hit);
+    ispc::Renderer_pick(getIE(),
+                        (const ispc::vec2f&)screenPos,
+                        (ispc::vec3f&)res.position,
+                        res.hit);
 
     return res;
   }

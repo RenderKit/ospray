@@ -18,9 +18,12 @@
 #ifdef OSPRAY_USE_INTERNAL_TASKING
 #  include "ospray/common/tasking/TaskSys.h"
 #endif
+#include "ospray/common/tasking/async.h"
 // embree
 #include "embree2/rtcore.h"
 #include "common/sysinfo.h"
+//stl
+#include <thread>
 
 namespace ospray {
 
