@@ -32,6 +32,7 @@ namespace ospray {
     int32     *tileAccumID; //< holds accumID per tile, for adaptive accumulation
     float     *tileErrorBuffer; /*!< holds error per tile, for variance estimation / stopping */
     int32     tilesx;
+    int32     tiles;
 
     LocalFrameBuffer(const vec2i &size,
                      ColorBufferFormat colorBufferFormat,
@@ -49,6 +50,7 @@ namespace ospray {
     virtual void setTile(Tile &tile);
     virtual int32 accumID(const vec2i &tile);
     virtual float tileError(const vec2i &tile);
+    virtual float frameError();
 
     virtual const void *mapColorBuffer();
     virtual const void *mapDepthBuffer();

@@ -143,22 +143,20 @@ export void LocalFrameBuffer_accumulateTile(void *uniform _fb,
         acc.z += varyTile->b[chunkID];
         acc.w += varyTile->a[chunkID];
       }
-
       accum[pixelID] = acc;
 
-      if (variance) {
+      // variance buffer accumulates every other frame
+      if (variance && (tile.accumID & 1) == 0) {
         varying vec3f vari = make_vec3f(0.f);
         if (tile.accumID > 0)
           vari = make_vec3f(variance[pixelID]);
-        if ((tile.accumID & 1) == 0) {
-          unmasked {
-            vari.x += varyTile->r[chunkID];
-            vari.y += varyTile->g[chunkID];
-            vari.z += varyTile->b[chunkID];
-          }
-
-          variance[pixelID] = make_vec4f(vari);
+        unmasked {
+          vari.x += varyTile->r[chunkID];
+          vari.y += varyTile->g[chunkID];
+          vari.z += varyTile->b[chunkID];
         }
+        variance[pixelID] = make_vec4f(vari);
+
         const vec3f accs = accScale * make_vec3f(acc);
         const vec3f diff = absf(accs - accHalfScale * vari);
         const float den = sqrtf(accs.x + accs.y + accs.z);
@@ -178,7 +176,10 @@ export void LocalFrameBuffer_accumulateTile(void *uniform _fb,
 
   const uniform tileId = tileIdx.y*fb->numTiles.x + tileIdx.x;
   fb->tileAccumID[tileId]++;
-  if (variance) {
+
+  // error is also only updated every other frame to avoid alternating error
+  // (get a monotone sequence)
+  if (variance && (tile.accumID & 1) == 0) {
     const uniform float cntu = reduce_add(cnt);
     const uniform float r = sqrt(cntu / (tile.fbSize.x * tile.fbSize.y));
     const uniform float errf = r * reduce_add(err) / cntu;

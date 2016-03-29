@@ -58,7 +58,7 @@ namespace ospray {
       const vec2i tileID(tile_x, tile_y);
       const int32 accumID = fb->accumID(tileID);
 
-      if (accumID > 3 && fb->tileError(tileID) < renderer->errorThreshold)
+      if (fb->tileError(tileID) < renderer->errorThreshold)
         return;
 
       Tile tile;
@@ -88,14 +88,7 @@ namespace ospray {
 
     renderer->endFrame(perFrameData,channelFlags);
 
-    float avgVar = 0.f;
-    for (int i = 0; i < NTASKS; i++) {
-      const size_t tile_y = i / numTiles_x;
-      const size_t tile_x = i - tile_y*numTiles_x;
-      const vec2i tileID(tile_x, tile_y);
-      avgVar += fb->tileError(tileID);
-    }
-    return avgVar / NTASKS;
+    return fb->frameError();
   }
 
   std::string LocalTiledLoadBalancer::toString() const
@@ -132,7 +125,7 @@ namespace ospray {
       const vec2i tileID(tile_x, tile_y);
       const int32 accumID = fb->accumID(tileID);
 
-      if (accumID > 3 && fb->tileError(tileID) < renderer->errorThreshold)
+      if (fb->tileError(tileID) < renderer->errorThreshold)
         return;
 
       Tile tile;
@@ -161,7 +154,7 @@ namespace ospray {
 
     renderer->endFrame(perFrameData,channelFlags);
 
-    return 0.f;//XXX
+    return fb->frameError();
   }
 
 } // ::ospray

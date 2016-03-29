@@ -63,7 +63,7 @@ namespace ospray {
       accumBuffer = NULL;
 
     tilesx = divRoundUp(size.x, TILE_SIZE);
-    int tiles = tilesx * divRoundUp(size.y, TILE_SIZE);
+    tiles = tilesx * divRoundUp(size.y, TILE_SIZE);
     tileAccumID = new int32[tiles];
 
     if (hasVarianceBuffer) {
@@ -100,14 +100,13 @@ namespace ospray {
       // it is only necessary to reset the accumID,
       // LocalFrameBuffer_accumulateTile takes care of clearing the
       // accumulation buffers
-      int tiles = tilesx * divRoundUp(size.y, TILE_SIZE);
       for (int i = 0; i < tiles; i++)
         tileAccumID[i] = 0;
 
       // always also also error buffer (if present)
       if (hasVarianceBuffer) {
         for (int i = 0; i < tiles; i++)
-          tileErrorBuffer[i] = inf;
+          tileErrorBuffer[i] = 1.0f;
       }
     }
   }
@@ -141,7 +140,19 @@ namespace ospray {
 
   float LocalFrameBuffer::tileError(const vec2i &tile)
   {
-    return hasVarianceBuffer ? tileErrorBuffer[tile.y * tilesx + tile.x] : 0.0f;
+    int idx = tile.y * tilesx + tile.x;
+    return hasVarianceBuffer && tileAccumID[idx] > 3 ? tileErrorBuffer[idx] : 1.0f;
+  }
+
+  float LocalFrameBuffer::frameError()
+  {
+    if (hasVarianceBuffer) {
+      float maxErr = 0.0f;
+      for (int i = 0; i < tiles; i++)
+        maxErr = tileAccumID[i] > 3 ? std::max(maxErr, tileErrorBuffer[i]) : 1.0f;
+      return maxErr;
+    } else
+      return 1.0f;
   }
 
   const void *LocalFrameBuffer::mapDepthBuffer()

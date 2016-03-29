@@ -44,7 +44,8 @@ namespace ospray {
 
     int accumId;
     virtual int32 accumID(const vec2i &tile) { return accumId; }
-    virtual float tileError(const vec2i &tile) { return 0.0f; }
+    virtual float tileError(const vec2i &tile) { return 1.0f; }
+    virtual float frameError() { return 1.0f; }
 
     /*! color buffer and depth buffer on master */
 
