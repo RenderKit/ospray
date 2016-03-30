@@ -118,6 +118,7 @@ export void LocalFrameBuffer_accumulateTile(void *uniform _fb,
   const uniform float accScale = rcpf(tile.accumID+1);
   const uniform float accHalfScale = rcpf(tile.accumID/2+1);
   float err = 0.f;
+  float cnt = 0.f;
 
   for (uniform uint32 iy=0;iy<TILE_SIZE;iy++) {
     uniform uint32 iiy=tile.region.lower.y+iy;
@@ -160,6 +161,7 @@ export void LocalFrameBuffer_accumulateTile(void *uniform _fb,
         if (den2 > 0.0f) {
           const vec3f diff = absf(accs - accHalfScale * vari);
           err += (diff.x + diff.y + diff.z) * rsqrtf(den2);
+          cnt++;
         }
       }
 
@@ -179,9 +181,8 @@ export void LocalFrameBuffer_accumulateTile(void *uniform _fb,
   // error is also only updated every other frame to avoid alternating error
   // (get a monotone sequence)
   if (variance && (tile.accumID & 1) == 1) {
-    uniform vec2i dia = tile.region.upper - tile.region.lower;
-    uniform float cntu = (uniform float)dia.x * dia.y;
-    const uniform float errf = reduce_add(err) * rsqrtf(cntu);
+    const uniform float cntu = reduce_add(cnt);
+    const uniform float errf = cntu > 0.f ? reduce_add(err) * rsqrtf(cntu) : 0.f;
     // print("[%, %]:  \t%\t%\n", tileIdx.x, tileIdx.y, errf);
     fb->tileErrorBuffer[tileId] = errf;
   }
