@@ -28,3 +28,10 @@ build-ubuntu:
     - scripts/build_gitlab.sh
   tags:
     - ubuntu
+
+build-sles:
+  type: build
+  script:
+    - scripts/build_gitlab.sh
+  tags:
+    - sles
