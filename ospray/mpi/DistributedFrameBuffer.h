@@ -44,8 +44,8 @@ namespace ospray {
 
     int accumId;
     int32 accumID(const vec2i &tile) override { return accumId; }
-    float tileError(const vec2i &tile) override { return 1.0f; }
-    float frameError() override { return 1.0f; }
+    float tileError(const vec2i &tile) override { return inf; }
+    float frameError() override { return inf; }
 
     /*! color buffer and depth buffer on master */
 

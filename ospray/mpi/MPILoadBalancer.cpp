@@ -51,7 +51,7 @@ namespace ospray {
 
         async_endFrame();
 
-        return dfb->frameError();//XXX
+        return dfb->frameError();
       }
 
       std::string Master::toString() const

@@ -111,7 +111,7 @@ namespace ospray {
       // always also also error buffer (if present)
       if (hasVarianceBuffer) {
         for (int i = 0; i < tiles; i++)
-          tileErrorBuffer[i] = 1.0f;
+          tileErrorBuffer[i] = inf;
       }
     }
   }
@@ -146,7 +146,7 @@ namespace ospray {
   float LocalFrameBuffer::tileError(const vec2i &tile)
   {
     int idx = tile.y * tilesx + tile.x;
-    return hasVarianceBuffer && tileAccumID[idx] > 3 ? tileErrorBuffer[idx] : 1.0f;
+    return hasVarianceBuffer && tileAccumID[idx] > 1 ? tileErrorBuffer[idx] : inf;
   }
 
   float LocalFrameBuffer::frameError()
@@ -154,10 +154,10 @@ namespace ospray {
     if (hasVarianceBuffer) {
       float maxErr = 0.0f;
       for (int i = 0; i < tiles; i++)
-        maxErr = tileAccumID[i] > 3 ? std::max(maxErr, tileErrorBuffer[i]) : 1.0f;
+        maxErr = tileAccumID[i] > 1 ? std::max(maxErr, tileErrorBuffer[i]) : inf;
       return maxErr;
     } else
-      return 1.0f;
+      return inf;
   }
 
   const void *LocalFrameBuffer::mapDepthBuffer()

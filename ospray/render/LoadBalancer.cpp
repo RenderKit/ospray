@@ -58,7 +58,7 @@ namespace ospray {
       const vec2i tileID(tile_x, tile_y);
       const int32 accumID = fb->accumID(tileID);
 
-      if (fb->tileError(tileID) < renderer->errorThreshold)
+      if (fb->tileError(tileID) <= renderer->errorThreshold)
         return;
 
       Tile tile(tileID, fb->size, accumID);
@@ -109,7 +109,7 @@ namespace ospray {
       const vec2i tileID(tile_x, tile_y);
       const int32 accumID = fb->accumID(tileID);
 
-      if (fb->tileError(tileID) < renderer->errorThreshold)
+      if (fb->tileError(tileID) <= renderer->errorThreshold)
         return;
 
       Tile tile(tileID, fb->size, accumID);

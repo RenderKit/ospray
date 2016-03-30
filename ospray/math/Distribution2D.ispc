@@ -29,7 +29,7 @@ uniform float Distribution1D_create(const uniform int size, uniform float* unifo
 
   // compute reciprocal sum
   const uniform float rcpSum = 1.0f/sum;
-  // next representatble number in float greater than 1.0f
+  // next representable number in float greater than 1.0f
   const uniform float nextAfter1 = 0x1.000002p+0f;
 
   // normalize
