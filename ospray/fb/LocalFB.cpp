@@ -94,6 +94,11 @@ namespace ospray {
     delete[] tileErrorBuffer;
   }
 
+  std::string LocalFrameBuffer::toString() const
+  {
+    return "ospray::LocalFrameBuffer";
+  }
+
   void LocalFrameBuffer::clear(const uint32 fbChannelFlags)
   {
     if (fbChannelFlags & OSP_FB_ACCUM) {

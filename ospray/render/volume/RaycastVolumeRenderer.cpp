@@ -249,8 +249,7 @@ namespace ospray {
         printed = true;
       }
 
-
-      return Renderer::renderFrame(fb,channelFlags);;
+      return Renderer::renderFrame(fb,channelFlags);
     }
 
     // =======================================================
@@ -327,9 +326,10 @@ namespace ospray {
 
     lights.clear();
 
-    if (lightsData)
+    if (lightsData) {
       for (size_t i=0; i<lightsData->size(); i++)
         lights.push_back(((Light **)lightsData->data)[i]->getIE());
+    }
 
     ispc::RaycastVolumeRenderer_setLights(ispcEquivalent,
                                           lights.empty() ? NULL : &lights[0],

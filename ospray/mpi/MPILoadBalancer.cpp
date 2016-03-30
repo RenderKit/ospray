@@ -36,11 +36,12 @@ namespace ospray {
     namespace staticLoadBalancer {
 
       float Master::renderFrame(Renderer *tiledRenderer,
-                               FrameBuffer *fb,
-                               const uint32 channelFlags)
+                                FrameBuffer *fb,
+                                const uint32 channelFlags)
       {
         async_beginFrame();
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
+        assert(dfb);
 
         dfb->startNewFrame();
         /* the client will do its magic here, and the distributed
@@ -50,7 +51,7 @@ namespace ospray {
 
         async_endFrame();
 
-        return 0.0f;//XXX
+        return dfb->frameError();//XXX
       }
 
       std::string Master::toString() const
@@ -59,8 +60,8 @@ namespace ospray {
       }
 
       float Slave::renderFrame(Renderer *tiledRenderer,
-                              FrameBuffer *fb,
-                              const uint32 channelFlags)
+                               FrameBuffer *fb,
+                               const uint32 channelFlags)
       {
         async_beginFrame();
 

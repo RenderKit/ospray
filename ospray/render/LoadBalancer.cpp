@@ -39,8 +39,8 @@ namespace ospray {
 
   /*! render a frame via the tiled load balancer */
   float LocalTiledLoadBalancer::renderFrame(Renderer *renderer,
-                                           FrameBuffer *fb,
-                                           const uint32 channelFlags)
+                                            FrameBuffer *fb,
+                                            const uint32 channelFlags)
   {
     Assert(renderer);
     Assert(fb);
@@ -87,8 +87,8 @@ namespace ospray {
   }
 
   float InterleavedTiledLoadBalancer::renderFrame(Renderer *renderer,
-                                                 FrameBuffer *fb,
-                                                 const uint32 channelFlags)
+                                                  FrameBuffer *fb,
+                                                  const uint32 channelFlags)
   {
     Assert(renderer);
     Assert(fb);
