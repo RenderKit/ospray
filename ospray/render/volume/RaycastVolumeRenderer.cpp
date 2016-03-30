@@ -229,7 +229,8 @@ namespace ospray {
     in regular mode; otherwise, compute some precomputations and
     return pointer to that (which'll switch the main renderframe fct
     to render data parallel) */
-  void RaycastVolumeRenderer::renderFrame(FrameBuffer *fb, const uint32 channelFlags)
+  float RaycastVolumeRenderer::renderFrame(FrameBuffer *fb,
+                                           const uint32 channelFlags)
   {
     int workerRank = ospray::core::getWorkerRank();
 
@@ -248,8 +249,7 @@ namespace ospray {
         printed = true;
       }
 
-      Renderer::renderFrame(fb,channelFlags);
-      return;
+      return Renderer::renderFrame(fb,channelFlags);
     }
 
     // =======================================================
@@ -309,6 +309,7 @@ namespace ospray {
 
     dfb->waitUntilFinished();
     Renderer::endFrame(NULL,channelFlags);
+    return fb->frameError();
   }
 
 #endif
@@ -325,9 +326,10 @@ namespace ospray {
 
     lights.clear();
 
-    if (lightsData)
+    if (lightsData) {
       for (size_t i=0; i<lightsData->size(); i++)
         lights.push_back(((Light **)lightsData->data)[i]->getIE());
+    }
 
     ispc::RaycastVolumeRenderer_setLights(ispcEquivalent,
                                           lights.empty() ? NULL : &lights[0],

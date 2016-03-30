@@ -39,6 +39,13 @@ namespace ospray {
     virtual float renderFrame(Renderer *tiledRenderer,
                              FrameBuffer *fb,
                              const uint32 channelFlags) = 0;
+
+    static size_t numJobs(const int spp, int accumID)
+    {
+      const int blocks = (accumID > 0 || spp > 0) ? 1 :
+        std::min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
+      return divRoundUp((TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB, blocks);
+    }
   };
 
   //! tiled load balancer for local rendering on the given machine

@@ -16,30 +16,6 @@
 
 #include "LocalFB.ih"
 
-export void LocalFrameBuffer_clearAccum(void *uniform _fb,
-    uniform int start,
-    uniform int num)
-{
-  uniform LocalFB *uniform fb = (uniform LocalFB *uniform)_fb;
-  uniform float *uniform fbp = (uniform float *uniform)&fb->accumBuffer[0].x;
-  uniform float *uniform block = fbp + start; 
-
-  foreach (x=0 ... num)
-    block[x] = 0.f;
-}
-
-export void LocalFrameBuffer_clearVariance(void *uniform _fb,
-    uniform int start,
-    uniform int num)
-{
-  uniform LocalFB *uniform fb = (uniform LocalFB *uniform)_fb;
-  uniform float *uniform fbp = (uniform float *uniform)&fb->accumBuffer[0].x;
-  uniform float *uniform block = fbp + start; 
-
-  foreach (x=0 ... num)
-    block[x] = 0.f;
-}
-
 //! \brief write tile into the given frame buffer's color buffer
 /*! \detailed this buffer _must_ exist when this fct is called, and it
     _must_ have RGBA_I8 format */
@@ -137,7 +113,6 @@ export void LocalFrameBuffer_accumulateTile(void *uniform _fb,
   if (!accum) return;
 
   VaryingTile *uniform varyTile = (VaryingTile *uniform)&tile;
-  uniform vec2i tileIdx = tile.region.lower/TILE_SIZE;
 
   uniform vec4f *uniform variance = fb->varianceBuffer;
   const uniform float accScale = rcpf(tile.accumID+1);
@@ -167,28 +142,27 @@ export void LocalFrameBuffer_accumulateTile(void *uniform _fb,
         acc.z += varyTile->b[chunkID];
         acc.w += varyTile->a[chunkID];
       }
-
       accum[pixelID] = acc;
 
-      if (variance) {
+      // variance buffer accumulates every other frame
+      if (variance && (tile.accumID & 1) == 1) {
         varying vec3f vari = make_vec3f(0.f);
-        if (tile.accumID > 0)
+        if (tile.accumID > 1)
           vari = make_vec3f(variance[pixelID]);
-        if ((tile.accumID & 1) == 0) {
-          unmasked {
-            vari.x += varyTile->r[chunkID];
-            vari.y += varyTile->g[chunkID];
-            vari.z += varyTile->b[chunkID];
-          }
-
-          variance[pixelID] = make_vec4f(vari);
+        unmasked {
+          vari.x += varyTile->r[chunkID];
+          vari.y += varyTile->g[chunkID];
+          vari.z += varyTile->b[chunkID];
         }
+        variance[pixelID] = make_vec4f(vari);
+
         const vec3f accs = accScale * make_vec3f(acc);
-        const vec3f diff = absf(accs - accHalfScale * vari);
-        const float den = sqrtf(accs.x + accs.y + accs.z);
-        if (den > 0)
-          err = err + (diff.x + diff.y + diff.z) / den;
-        cnt += 1.0f;
+        const float den2 = accs.x + accs.y + accs.z;
+        if (den2 > 0.0f) {
+          const vec3f diff = absf(accs - accHalfScale * vari);
+          err += (diff.x + diff.y + diff.z) * rsqrtf(den2);
+          cnt++;
+        }
       }
 
       unmasked {
@@ -200,11 +174,15 @@ export void LocalFrameBuffer_accumulateTile(void *uniform _fb,
     }
   }
 
-  const uniform tileId = tileIdx.y*fb->numTiles.x + tileIdx.x;
+  const uniform vec2i tileIdx = tile.region.lower/TILE_SIZE;
+  const uniform int32 tileId = tileIdx.y*fb->numTiles.x + tileIdx.x;
   fb->tileAccumID[tileId]++;
-  if (variance) {
-    const uniform float r = sqrt(reduce_add(cnt) / tile.fbSize.x / tile.fbSize.y);
-    const uniform float errf = r * reduce_add(err) / reduce_add(cnt);
+
+  // error is also only updated every other frame to avoid alternating error
+  // (get a monotone sequence)
+  if (variance && (tile.accumID & 1) == 1) {
+    const uniform float cntu = reduce_add(cnt);
+    const uniform float errf = cntu > 0.f ? reduce_add(err) * rsqrtf(cntu) : 0.f;
     // print("[%, %]:  \t%\t%\n", tileIdx.x, tileIdx.y, errf);
     fb->tileErrorBuffer[tileId] = errf;
   }

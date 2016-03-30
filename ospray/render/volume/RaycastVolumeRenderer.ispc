@@ -582,7 +582,7 @@ export void DDDVRRenderer_renderTile(void*uniform _self,
 
   const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
   const uniform int end   = begin     + RENDERTILE_PIXELS_PER_JOB;
-  const uniform int startSampleID = max(fb->accumID,0);
+  const uniform int startSampleID = max(fgTile.accumID,0);
 
   for (uniform uint32 i=begin;i<end;i+=programCount) {
     const uint32 index = i + programIndex;
