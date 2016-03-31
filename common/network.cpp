@@ -16,15 +16,15 @@
 
 #include "network.h"
 #include "string.h"
-//#include "mutex.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Platforms supporting Socket interface
 ////////////////////////////////////////////////////////////////////////////////
 
 #ifdef _WIN32
+#include <mutex>
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
-//#include <winsock2.h>
+#include <winsock2.h>
 //#include <io.h>
 typedef int socklen_t;
 #define SHUT_RDWR 0x2
@@ -55,8 +55,8 @@ namespace ospcommon
     __forceinline void initialize() {
 #ifdef _WIN32
       static bool initialized = false;
-      static MutexSys initMutex;
-      Lock<MutexSys> lock(initMutex);
+      static std::mutex initMutex;
+      std::lock_guard<std::mutex> lock(initMutex);
       WSADATA wsaData;
       short version = MAKEWORD(1,1);
       if (WSAStartup(version,&wsaData) != 0)
