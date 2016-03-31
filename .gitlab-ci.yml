@@ -35,3 +35,10 @@ build-sles:
     - scripts/build_gitlab.sh
   tags:
     - sles
+
+build-osx:
+  type: build
+  script:
+    - scripts/build_gitlab.sh
+  tags:
+    - osx
