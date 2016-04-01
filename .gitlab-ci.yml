@@ -7,6 +7,7 @@ build-centos6:
     - scripts/build_gitlab/linux.sh
   tags:
     - centos6
+    - gcc
 
 build-centos7:
   type: build
@@ -14,6 +15,7 @@ build-centos7:
     - scripts/build_gitlab/linux.sh
   tags:
     - centos7
+    - gcc
 
 build-fedora:
   type: build
@@ -21,13 +23,25 @@ build-fedora:
     - scripts/build_gitlab/linux.sh
   tags:
     - fedora
+    - gcc
 
-build-ubuntu:
+build-ubuntu-gcc:
   type: build
   script:
     - scripts/build_gitlab/linux.sh
   tags:
     - ubuntu
+    - gcc
+
+build-ubuntu-clang:
+  type: build
+  script:
+    - export CC=clang
+    - export CXX=clang++
+    - scripts/build_gitlab/linux.sh
+  tags:
+    - ubuntu
+    - clang
 
 build-sles:
   type: build
@@ -35,6 +49,7 @@ build-sles:
     - scripts/build_gitlab/linux.sh
   tags:
     - sles
+    - gcc
 
 build-osx:
   type: build
@@ -42,3 +57,4 @@ build-osx:
     - scripts/build_gitlab/osx.sh
   tags:
     - osx
+    - clang
