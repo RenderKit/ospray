@@ -4,27 +4,41 @@ stages:
 build-centos6:
   type: build
   script:
-    - scripts/build_gitlab.sh
+    - scripts/build_gitlab/linux.sh
   tags:
     - centos6
 
 build-centos7:
   type: build
   script:
-    - scripts/build_gitlab.sh
+    - scripts/build_gitlab/linux.sh
   tags:
     - centos7
 
 build-fedora:
   type: build
   script:
-    - scripts/build_gitlab.sh
+    - scripts/build_gitlab/linux.sh
   tags:
     - fedora
 
 build-ubuntu:
   type: build
   script:
-    - scripts/build_gitlab.sh
+    - scripts/build_gitlab/linux.sh
   tags:
     - ubuntu
+
+build-sles:
+  type: build
+  script:
+    - scripts/build_gitlab/linux.sh
+  tags:
+    - sles
+
+build-osx:
+  type: build
+  script:
+    - scripts/build_gitlab/osx.sh
+  tags:
+    - osx

@@ -135,7 +135,7 @@ if(@OSPRAY_USE_EXTERNAL_EMBREE@)
   # Find existing Embree on the machine
   find_package(embree @REQUIRED_MINIMUM_EMBREE@ REQUIRED)
 else()
-  set(EMBREE_LIBRARY ${CURRENT_ROOT_INSTALL_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}embree${CMAKE_SHARED_LIBRARY_SUFFIX}.2)
+  set(EMBREE_LIBRARY ${CURRENT_ROOT_INSTALL_DIR}/@CMAKE_INSTALL_LIBDIR@/${CMAKE_SHARED_LIBRARY_PREFIX}embree${CMAKE_SHARED_LIBRARY_SUFFIX}.2)
 endif()
 
 # Restore state
@@ -182,7 +182,7 @@ set(OSPRAY_LIBRARIES
   #ospray# NOTE(jda) - target disabled (see above)
   #ospray_embree# NOTE(jda) - target disabled (see above)
   ${EMBREE_LIBRARY}
-  ${CURRENT_ROOT_INSTALL_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}ospray${CMAKE_SHARED_LIBRARY_SUFFIX}
+  ${CURRENT_ROOT_INSTALL_DIR}/@CMAKE_INSTALL_LIBDIR@/${CMAKE_SHARED_LIBRARY_PREFIX}ospray${CMAKE_SHARED_LIBRARY_SUFFIX}
 )
 
 # Reset CMake module path to its state when this script was called.
