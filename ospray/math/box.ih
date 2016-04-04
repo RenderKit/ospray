@@ -18,6 +18,12 @@
 
 #include "vec.ih"
 
+//! a 1-d float bounding box (ie, a range<float>
+struct box1f {
+  float lower;
+  float upper;
+};
+
 //! a 2-d float bounding box
 struct box2f {
   vec2f lower;
@@ -56,6 +62,21 @@ struct box4f {
   vec4f upper;
 };
 
+
+// -------------------------------------------------------
+// all box1f operations
+// -------------------------------------------------------
+
+/*! construct 1f range from a single float */
+inline uniform box1f make_box1f(const uniform float f)
+{ uniform box1f bb; bb.lower = bb.upper = f; return bb; }
+
+/*! construct 1f range from lower and upper value */
+inline uniform box1f make_box1f(const uniform float lo, const uniform float hi)
+{ uniform box1f bb; bb.lower = lo; bb.upper = hi; return bb; }
+
+inline uniform box1f box_union(const uniform box1f &a, const uniform box1f &b)
+{ return make_box1f(min(a.lower,b.lower),max(a.upper,b.upper)); }
 
 // -------------------------------------------------------
 // box3f 'constructors'

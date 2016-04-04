@@ -776,3 +776,17 @@ inline void out(uniform vec3f v) { print("(%,%,%)",v.x,v.y,v.z); }
 inline void out(vec3f v) { print("\n(%\n %\n %)",v.x,v.y,v.z); }
 inline void out(uniform vec3i v) { print("(%,%,%)",v.x,v.y,v.z); }
 inline void out(vec3i v) { print("\n(%\n %\n %)",v.x,v.y,v.z); }
+
+
+// -------------------------------------------------------
+// set/get functions for vectors
+// should eventually get moved to macros so they work for all types
+// -------------------------------------------------------
+
+/*! set vector 'v's value in dimension 'd' to 'f' */
+inline void set(uniform vec3f &v, const uniform uint32 dim, const uniform float f)
+{ (&v.x)[dim] = f; }
+
+/*! get vector 'v's value in dimension 'd' */
+inline float get(const uniform vec3f &v, const uniform uint32 dim)
+{ return (&v.x)[dim]; }
