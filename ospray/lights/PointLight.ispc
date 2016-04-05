@@ -49,10 +49,10 @@ varying LightSample PointLight_sample(const uniform Light *uniform _self,
   sample.pdf = 1.f; // per default we always take this sample
 
   // convert from power to radiance by attenuating by distance^2
-  sample.radiance = self->power * (invdist * invdist);
+  sample.radiance = self->power * sqr(invdist);
   const float sinTheta = self->radius * invdist;
 
-  if (self->radius > 0. & sinTheta > 0.005f) {
+  if (self->radius > 0.f & sinTheta > 0.005f) {
     // sample surface of sphere as seen by hit point -> cone of directions
     // for very small cones treat as point light, because float precision is not good enough 
     if (sinTheta < 1.f) {
@@ -62,12 +62,13 @@ varying LightSample PointLight_sample(const uniform Light *uniform _self,
       sample.pdf = uniformSampleConePDF(cosTheta);
       const float c = localDir.z;
       sample.distance = c*sample.distance - sqrt(self->radius*self->radius - (1.f - c*c) * dist2);
+      // TODO scale radiance by actual distance
     } else { // inside sphere
       const vec3f localDir = cosineSampleHemisphere(s);
       sample.direction = frame(dg.Ns) * localDir;
       sample.pdf = cosineSampleHemispherePDF(localDir);
       // TODO:
-      sample.radiance = self->power * rcp(self->radius*self->radius);
+      sample.radiance = self->power * rcp(sqr(self->radius));
       sample.distance = self->radius;
     }
   }
@@ -75,6 +76,41 @@ varying LightSample PointLight_sample(const uniform Light *uniform _self,
   return sample;
 }
 
+varying LightEval PointLight_eval(const uniform Light *uniform _self,
+    const varying vec3f &pos,
+    const varying vec3f &dir)
+{
+  const PointLight *uniform self = (PointLight *uniform)_self;
+  LightEval res;
+  res.radiance = make_vec3f(0.f);
+  res.distance = inf;
+  res.pdf = 0.f;
+
+  if (self->radius > 0.f) {
+    const vec3f A = self->position - pos;
+    const float a = dot(dir, dir);
+    const float b = 2.f * dot(dir, A);
+    const float centerDist2 = dot(A, A);
+    const float c = centerDist2 - sqr(self->radius);
+    const float radical = sqr(b) - 4.f*a*c;
+
+    if (radical > 0.f) {
+      const float t_near = (b - sqrt(radical)) / (2.f*a);
+      const float t_far = (b + sqrt(radical)) / (2.f*a);
+
+      if (t_far > 0.0f) {
+        res.distance = t_near;
+        const float sinTheta2 = sqr(self->radius) * rcp(centerDist2);
+        const float cosTheta = sqrt(1.f - sinTheta2);
+        res.pdf = uniformSampleConePDF(cosTheta);
+        const float invdist = rcp(t_near);
+        res.radiance = self->power * res.pdf * sqr(invdist);
+      }
+    }
+  }
+
+  return res;
+}
 
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
@@ -97,6 +133,7 @@ export void *uniform PointLight_create(void *uniform cppEquivalent)
   uniform PointLight *uniform self = uniform new uniform PointLight;
   Light_Constructor(&self->super, cppEquivalent);
   self->super.sample = PointLight_sample;
+  self->super.eval = PointLight_eval;
 
   PointLight_set(self, make_vec3f(0.f), make_vec3f(1.f), 0.f);
   return self;

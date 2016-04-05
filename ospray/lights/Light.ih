@@ -31,30 +31,39 @@ struct LightSample
 //! compute the weighted radiance at a point caused by a sample on the light source
 // by convention, giving (0, 0) as "random" numbers should sample the "center"
 // of the light source (used by the raytracing renderers such as the OBJ renderer)
-typedef varying LightSample (*Light_SampleFct)(const uniform Light *uniform _self,
-      /*! point to generate the sample for >*/ const varying DifferentialGeometry &dg,
+typedef varying LightSample (*Light_SampleFct)(const uniform Light *uniform,
+      /*! point to generate the sample for >*/ const varying DifferentialGeometry&,
  /*! random numbers to generate the sample >*/ const varying vec2f &s);
 
-//! compute the radiance caused by the light source (pointed to by the given direction) from inf
-typedef varying vec3f (*Light_EvalEnvFct)(const uniform Light *uniform _self,
+
+struct LightEval
+{
+  vec3f radiance;  //!< radiance that arrives at the given point (not weighted by pdf)
+  float distance;
+  float pdf;       //!< probability that the direction would have been sampled
+};
+
+//! compute the radiance, distance and pdf caused by the light source (pointed to by the given direction) from pos
+typedef varying LightEval (*Light_EvalFct)(const uniform Light *uniform,
+                 /*! position of point >*/const varying vec3f &pos,
 /*! direction towards the light source >*/const varying vec3f &dir);
 
 
 struct Light {
   Light_SampleFct  sample;
-  Light_EvalEnvFct evalEnv;
+  Light_EvalFct eval;
 
   //! Pointer back to the C++ equivalent of this class.
   void *uniform cppEquivalent;
 };
 
 
-varying vec3f defaultEvalEnv(const uniform Light *uniform, const varying vec3f &);
+varying LightEval defaultEval(const uniform Light *uniform, const varying vec3f &, const varying vec3f &);
 
 //! constructor for ispc-side light object
 inline void Light_Constructor(uniform Light *uniform self,
                               void *uniform cppEquivalent)
 {
   self->cppEquivalent = cppEquivalent;
-  self->evalEnv = defaultEvalEnv;
+  self->eval = defaultEval;
 }

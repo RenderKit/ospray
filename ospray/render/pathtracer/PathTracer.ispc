@@ -154,7 +154,8 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       } else if (!lightPath.ignoreVisibleLights)
           for (uniform int i = 0; i < self->numLights; i++) { // TODO: self->num_envLights
             const uniform Light *uniform l = self->lights[i];
-            L = L + Lw * l->evalEnv(l, lightPath.ray.dir);
+            LightEval le = l->eval(l, lightPath.ray.org, lightPath.ray.dir);
+            L = L + Lw * le.radiance;
           }
 
       break;
