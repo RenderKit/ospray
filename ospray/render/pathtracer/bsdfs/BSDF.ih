@@ -42,6 +42,9 @@
 /*! all possible transmissions */
 #define BSDF_TRANSMISSION (BSDF_DIFFUSE_TRANSMISSION | BSDF_GLOSSY_TRANSMISSION | BSDF_SPECULAR_TRANSMISSION)
 
+/*! all non-dirac types */
+#define BSDF_SMOOTH       (BSDF_DIFFUSE | BSDF_GLOSSY)
+
 /*! no component set   */
 #define BSDF_NONE         0
 
