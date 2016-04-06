@@ -1,30 +1,60 @@
 stages:
   - build
 
-build-centos6:
+build-centos6-gcc:
   type: build
   script:
-    - scripts/build_gitlab.sh
+    - scripts/build_gitlab/linux.sh
   tags:
     - centos6
+    - gcc
 
-build-centos7:
+build-centos7-gcc:
   type: build
   script:
-    - scripts/build_gitlab.sh
+    - scripts/build_gitlab/linux.sh
   tags:
     - centos7
+    - gcc
 
-build-fedora:
+build-fedora-gcc:
   type: build
   script:
-    - scripts/build_gitlab.sh
+    - scripts/build_gitlab/linux.sh
   tags:
     - fedora
+    - gcc
 
-build-ubuntu:
+build-ubuntu-gcc:
   type: build
   script:
-    - scripts/build_gitlab.sh
+    - scripts/build_gitlab/linux.sh
   tags:
     - ubuntu
+    - gcc
+
+#build-ubuntu-clang:
+#  type: build
+#  script:
+#    - export CC=clang
+#    - export CXX=clang++
+#    - scripts/build_gitlab/linux.sh
+#  tags:
+#    - ubuntu
+#    - clang
+
+build-sles-gcc:
+  type: build
+  script:
+    - scripts/build_gitlab/linux.sh
+  tags:
+    - sles
+    - gcc
+
+build-osx-clang:
+  type: build
+  script:
+    - scripts/build_gitlab/osx.sh
+  tags:
+    - osx
+    - clang

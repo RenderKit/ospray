@@ -43,8 +43,9 @@ namespace ospray {
     size_t numMyTiles()  const { return myTiles.size(); };
 
     int accumId;
-    virtual int32 accumID(const vec2i &tile) { return accumId; }
-    virtual float tileError(const vec2i &tile) { return 0.0f; }
+    int32 accumID(const vec2i &tile) override { return accumId; }
+    float tileError(const vec2i &tile) override { return inf; }
+    float frameError() override { return inf; }
 
     /*! color buffer and depth buffer on master */
 

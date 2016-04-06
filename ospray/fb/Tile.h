@@ -51,6 +51,18 @@ namespace ospray {
     int32    generation;
     int32    children;
     int32    accumID; //!< how often has been accumulated into this tile
+
+    Tile() {}
+    Tile(const vec2i &tile, const vec2i &fbsize, const int32 accumId)
+      : fbSize(fbsize),
+        rcp_fbSize(rcp(vec2f(fbsize))),
+        generation(0),
+        children(0),
+        accumID(accumId)
+    {
+      region.lower = tile * TILE_SIZE;
+      region.upper = min(region.lower + TILE_SIZE, fbsize);
+    }
   };
 
 } // ::ospray

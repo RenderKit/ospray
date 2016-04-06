@@ -45,7 +45,7 @@ namespace ospray {
 
 #if EXP_DATA_PARALLEL
     /*! per-frame data to describe the data-parallel components */
-    void renderFrame(FrameBuffer *fb, const uint32 channelFlags);
+    float renderFrame(FrameBuffer *fb, const uint32 channelFlags) override;
 #endif
 
   private:

@@ -46,9 +46,9 @@ inline float sqrtf(const float f) { return sqrt(f); }
 inline uniform float sqrtf(const uniform float f) { return sqrt(f); }
 
 /*! c-style reciprocal square root.  */
-inline float rsqrtf(const float f) { return rcpf(sqrtf(f)); }
+inline float rsqrtf(const float f) { return rsqrt(f); }
 /*! c-style reciprocal square root */
-inline uniform float rsqrtf(const uniform float f) { return rcpf(sqrtf(f)); }
+inline uniform float rsqrtf(const uniform float f) { return rsqrt(f); }
 
 /*! square.  */
 inline float sqr(const float f) { return f*f; }

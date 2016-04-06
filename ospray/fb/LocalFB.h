@@ -32,6 +32,7 @@ namespace ospray {
     int32     *tileAccumID; //< holds accumID per tile, for adaptive accumulation
     float     *tileErrorBuffer; /*!< holds error per tile, for variance estimation / stopping */
     int32     tilesx;
+    int32     tiles;
 
     LocalFrameBuffer(const vec2i &size,
                      ColorBufferFormat colorBufferFormat,
@@ -43,17 +44,17 @@ namespace ospray {
 
     //! \brief common function to help printf-debugging
     /*! \detailed Every derived class should overrride this! */
-    virtual std::string toString() const
-    { return "ospray::LocalFrameBuffer"; }
+    virtual std::string toString() const;
 
-    virtual void setTile(Tile &tile);
-    virtual int32 accumID(const vec2i &tile);
-    virtual float tileError(const vec2i &tile);
+    void setTile(Tile &tile) override;
+    int32 accumID(const vec2i &tile) override;
+    float tileError(const vec2i &tile) override;
+    float frameError() override;
 
-    virtual const void *mapColorBuffer();
-    virtual const void *mapDepthBuffer();
-    virtual void unmap(const void *mappedMem);
-    virtual void clear(const uint32 fbChannelFlags);
+    const void *mapColorBuffer() override;
+    const void *mapDepthBuffer() override;
+    void unmap(const void *mappedMem) override;
+    void clear(const uint32 fbChannelFlags) override;
   };
 
 } // ::ospray

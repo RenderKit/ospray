@@ -132,7 +132,7 @@ namespace ospray {
                              (ispc::VaryingTile *)&this->final,
                              (ispc::VaryingTile *)&this->accum,
                              (ispc::VaryingRGBA_I8 *)&this->color,
-                             dfb->hasAccumBuffer,dfb->accumId);
+                             dfb->hasAccumBuffer);
 
         dfb->tileIsCompleted(this);
         for (int i=0;i<bufferedTile.size();i++)
@@ -166,7 +166,7 @@ namespace ospray {
                          (ispc::VaryingTile*)&this->final,
                          (ispc::VaryingTile*)&this->accum,
                          (ispc::VaryingRGBA_I8*)&this->color,
-                         dfb->hasAccumBuffer,dfb->accumId);
+                         dfb->hasAccumBuffer);
     dfb->tileIsCompleted(this);
   }
 
@@ -196,7 +196,7 @@ namespace ospray {
                            (ispc::VaryingTile*)&this->final,
                            (ispc::VaryingTile*)&this->accum,
                            (ispc::VaryingRGBA_I8*)&this->color,
-                           dfb->hasAccumBuffer,dfb->accumId);
+                           dfb->hasAccumBuffer);
       dfb->tileIsCompleted(this);
     }
   }
@@ -212,6 +212,9 @@ namespace ospray {
       LockGuard lock(mutex);
       DBG(printf("rank %i starting new frame\n",mpi::world.rank));
       assert(!frameIsActive);
+
+      if (hasAccumBuffer)
+        accumId++;
 
       if (pixelOp)
         pixelOp->beginFrame();
@@ -578,7 +581,7 @@ namespace ospray {
       });
 
       if (fbChannelFlags & OSP_FB_ACCUM)
-        accumId = 0;
+        accumId = -1; // we increment at the start of the frame
     }
   }
 

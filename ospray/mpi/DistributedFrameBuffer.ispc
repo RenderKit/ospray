@@ -78,10 +78,9 @@ export void DFB_accumulate(VaryingTile    *uniform tile,
                            VaryingTile    *uniform final,
                            VaryingTile    *uniform accum,
                            VaryingRGBA_I8 *uniform color,
-                           uniform bool hasAccumBuffer,
-                           uniform int32 accumID)
+                           uniform bool hasAccumBuffer)
 {
-  if (!hasAccumBuffer || accumID < 1) {
+  if (!hasAccumBuffer || tile->accumID < 1) {
     for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
       vec4f col = make_vec4f(tile->r[i],
                              tile->g[i],
@@ -95,10 +94,16 @@ export void DFB_accumulate(VaryingTile    *uniform tile,
       final->g[i] = col.y;
       final->b[i] = col.z;
       final->a[i] = col.w;
+
+      // XXX hardcoded gamma, should use pixelops!
+      col = max(col,make_vec4f(0.f));
+      // alpha is never gamma-corrected
+      col = make_vec4f(pow(make_vec3f(col), 1.f/2.2f), col.w);
+              
       color->color[i] = cvt_uint32(col);
     }
   } else {
-    const float rcpAccumID = 1.f/(accumID+1);
+    const uniform float rcpAccumID = 1.f/(tile->accumID+1);
     for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
       vec4f col
         = make_vec4f(tile->r[i],
@@ -121,6 +126,12 @@ export void DFB_accumulate(VaryingTile    *uniform tile,
       final->g[i] = col.y;
       final->b[i] = col.z;
       final->a[i] = col.w;
+
+      // XXX hardcoded gamma, should use pixelops!
+      col = max(col,make_vec4f(0.f));
+      // alpha is never gamma-corrected
+      col = make_vec4f(pow(make_vec3f(col), 1.f/2.2f), col.w);
+              
       color->color[i] = cvt_uint32(col);
     }
   }

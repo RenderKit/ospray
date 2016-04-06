@@ -63,7 +63,7 @@ namespace ospray {
       accumBuffer = NULL;
 
     tilesx = divRoundUp(size.x, TILE_SIZE);
-    int tiles = tilesx * divRoundUp(size.y, TILE_SIZE);
+    tiles = tilesx * divRoundUp(size.y, TILE_SIZE);
     tileAccumID = new int32[tiles];
 
     if (hasVarianceBuffer) {
@@ -94,34 +94,22 @@ namespace ospray {
     delete[] tileErrorBuffer;
   }
 
+  std::string LocalFrameBuffer::toString() const
+  {
+    return "ospray::LocalFrameBuffer";
+  }
+
   void LocalFrameBuffer::clear(const uint32 fbChannelFlags)
   {
     if (fbChannelFlags & OSP_FB_ACCUM) {
-      void *thisIE = getIE();
-      const int num_floats = 4 * size.x * size.y;
-      const int num_blocks = divRoundUp(num_floats, CLEAR_BLOCK_SIZE);
-
-      if (hasAccumBuffer) {
-        parallel_for(num_blocks,[&](int taskIndex) {
-          const int start = taskIndex * CLEAR_BLOCK_SIZE;
-          const int num = min(CLEAR_BLOCK_SIZE, num_floats - start);
-          ispc::LocalFrameBuffer_clearAccum(thisIE, start, num);
-        });
-      }
-
-      int tiles = tilesx * divRoundUp(size.y, TILE_SIZE);
+      // it is only necessary to reset the accumID,
+      // LocalFrameBuffer_accumulateTile takes care of clearing the
+      // accumulation buffers
       for (int i = 0; i < tiles; i++)
         tileAccumID[i] = 0;
 
-      // always also clear variance buffer (if present) -- only clearing
-      // accumulation buffer is meaningless
+      // always also also error buffer (if present)
       if (hasVarianceBuffer) {
-        parallel_for(num_blocks,[&](int taskIndex) {
-          const int start = taskIndex * CLEAR_BLOCK_SIZE;
-          const int num = min(CLEAR_BLOCK_SIZE, num_floats - start);
-          ispc::LocalFrameBuffer_clearVariance(thisIE, start, num);
-        });
-
         for (int i = 0; i < tiles; i++)
           tileErrorBuffer[i] = inf;
       }
@@ -157,7 +145,19 @@ namespace ospray {
 
   float LocalFrameBuffer::tileError(const vec2i &tile)
   {
-    return hasVarianceBuffer ? tileErrorBuffer[tile.y * tilesx + tile.x] : 0.0f;
+    int idx = tile.y * tilesx + tile.x;
+    return hasVarianceBuffer && tileAccumID[idx] > 1 ? tileErrorBuffer[idx] : inf;
+  }
+
+  float LocalFrameBuffer::frameError()
+  {
+    if (hasVarianceBuffer) {
+      float maxErr = 0.0f;
+      for (int i = 0; i < tiles; i++)
+        maxErr = tileAccumID[i] > 1 ? std::max(maxErr, tileErrorBuffer[i]) : inf;
+      return maxErr;
+    } else
+      return inf;
   }
 
   const void *LocalFrameBuffer::mapDepthBuffer()

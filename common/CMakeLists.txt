@@ -16,6 +16,9 @@
 
 CONFIGURE_OSPRAY()
 
+SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+FIND_PACKAGE(Threads REQUIRED)
+
 OSPRAY_ADD_LIBRARY(ospray_common SHARED
   common.cpp
   FileName.cpp
@@ -39,11 +42,12 @@ OSPRAY_ADD_LIBRARY(ospray_common SHARED
   vec.h
 )
 
-IF(NOT THIS_IS_MIC)
-  TARGET_LINK_LIBRARIES(ospray_common
-    # for network.cpp
-    pthread
-  )
+OSPRAY_LIBRARY_LINK_LIBRARIES(ospray_common
+  ${CMAKE_THREAD_LIBS_INIT}
+  ${CMAKE_DL_LIBS}
+)
+IF (WIN32)
+  OSPRAY_LIBRARY_LINK_LIBRARIES(ospray_common ws2_32)
 ENDIF()
 
 OSPRAY_SET_LIBRARY_VERSION(ospray_common)

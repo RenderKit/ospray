@@ -39,8 +39,8 @@ namespace ospray {
 
   /*! render a frame via the tiled load balancer */
   float LocalTiledLoadBalancer::renderFrame(Renderer *renderer,
-                                           FrameBuffer *fb,
-                                           const uint32 channelFlags)
+                                            FrameBuffer *fb,
+                                            const uint32 channelFlags)
   {
     Assert(renderer);
     Assert(fb);
@@ -58,28 +58,12 @@ namespace ospray {
       const vec2i tileID(tile_x, tile_y);
       const int32 accumID = fb->accumID(tileID);
 
-      if (accumID > 3 && fb->tileError(tileID) < renderer->errorThreshold)
+      if (fb->tileError(tileID) <= renderer->errorThreshold)
         return;
 
-      Tile tile;
-      tile.region.lower.x = tile_x * TILE_SIZE;
-      tile.region.lower.y = tile_y * TILE_SIZE;
-      tile.region.upper.x = std::min(tile.region.lower.x+TILE_SIZE,fb->size.x);
-      tile.region.upper.y = std::min(tile.region.lower.y+TILE_SIZE,fb->size.y);
-      tile.fbSize = fb->size;
-      tile.rcp_fbSize = rcp(vec2f(tile.fbSize));
-      tile.generation = 0;
-      tile.children = 0;
-      tile.children = 0;
-      tile.accumID = accumID;
+      Tile tile(tileID, fb->size, accumID);
 
-      const int spp = renderer->spp;
-      const int blocks = (accumID > 0 || spp > 0) ? 1 :
-                         std::min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
-      const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/
-                              RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
-
-      parallel_for(numJobs, [&](int taskIndex){
+      parallel_for(numJobs(renderer->spp, accumID), [&](int taskIndex){
         renderer->renderTile(perFrameData, tile, taskIndex);
       });
 
@@ -88,14 +72,7 @@ namespace ospray {
 
     renderer->endFrame(perFrameData,channelFlags);
 
-    float avgVar = 0.f;
-    for (int i = 0; i < NTASKS; i++) {
-      const size_t tile_y = i / numTiles_x;
-      const size_t tile_x = i - tile_y*numTiles_x;
-      const vec2i tileID(tile_x, tile_y);
-      avgVar += fb->tileError(tileID);
-    }
-    return avgVar / NTASKS;
+    return fb->frameError();
   }
 
   std::string LocalTiledLoadBalancer::toString() const
@@ -110,8 +87,8 @@ namespace ospray {
   }
 
   float InterleavedTiledLoadBalancer::renderFrame(Renderer *renderer,
-                                                 FrameBuffer *fb,
-                                                 const uint32 channelFlags)
+                                                  FrameBuffer *fb,
+                                                  const uint32 channelFlags)
   {
     Assert(renderer);
     Assert(fb);
@@ -132,27 +109,12 @@ namespace ospray {
       const vec2i tileID(tile_x, tile_y);
       const int32 accumID = fb->accumID(tileID);
 
-      if (accumID > 3 && fb->tileError(tileID) < renderer->errorThreshold)
+      if (fb->tileError(tileID) <= renderer->errorThreshold)
         return;
 
-      Tile tile;
-      tile.region.lower.x = tile_x * TILE_SIZE;
-      tile.region.lower.y = tile_y * TILE_SIZE;
-      tile.region.upper.x = std::min(tile.region.lower.x+TILE_SIZE,fb->size.x);
-      tile.region.upper.y = std::min(tile.region.lower.y+TILE_SIZE,fb->size.y);
-      tile.fbSize = fb->size;
-      tile.rcp_fbSize = rcp(vec2f(tile.fbSize));
-      tile.generation = 0;
-      tile.children = 0;
-      tile.accumID = accumID;
+      Tile tile(tileID, fb->size, accumID);
 
-      const int spp = renderer->spp;
-      const int blocks = (accumID > 0 || spp > 0) ? 1 :
-                         std::min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
-      const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/
-                              RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
-
-      parallel_for(numJobs, [&](int taskIndex){
+      parallel_for(numJobs(renderer->spp, accumID), [&](int taskIndex){
         renderer->renderTile(perFrameData, tile, taskIndex);
       });
 
@@ -161,7 +123,7 @@ namespace ospray {
 
     renderer->endFrame(perFrameData,channelFlags);
 
-    return 0.f;//XXX
+    return fb->frameError();
   }
 
 } // ::ospray
