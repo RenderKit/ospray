@@ -183,6 +183,7 @@ set(OSPRAY_LIBRARIES
   #ospray_embree# NOTE(jda) - target disabled (see above)
   ${EMBREE_LIBRARY}
   ${CURRENT_ROOT_INSTALL_DIR}/@CMAKE_INSTALL_LIBDIR@/${CMAKE_SHARED_LIBRARY_PREFIX}ospray${CMAKE_SHARED_LIBRARY_SUFFIX}
+  ${CURRENT_ROOT_INSTALL_DIR}/@CMAKE_INSTALL_LIBDIR@/${CMAKE_SHARED_LIBRARY_PREFIX}ospray_common${CMAKE_SHARED_LIBRARY_SUFFIX}
 )
 
 # Reset CMake module path to its state when this script was called.
