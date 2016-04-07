@@ -39,7 +39,7 @@ inline vec3f Conductor_sample(const varying BSDF* uniform super,
 {
   const varying Conductor* uniform self = (const varying Conductor* uniform)super;
   wi = reflect(wo, getN(super));
-  pdf = 1.0f;
+  pdf = inf;
   type = BSDF_SPECULAR_REFLECTION;
   return self->reflectance * fresnelConductor(dot(wo, getN(super)), self->eta, self->k);
 }

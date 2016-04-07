@@ -33,6 +33,8 @@ inline vec3f ThinDielectric_eval(const varying BSDF* uniform super,
   return make_vec3f(0.0f);
 }
 
+
+// TODO: account for multiple internal reflections with geometric sum
 inline vec3f ThinDielectric_sample(const varying BSDF* uniform super,
                                    const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
                                    const vec2f& s, float ss)
@@ -43,22 +45,16 @@ inline vec3f ThinDielectric_sample(const varying BSDF* uniform super,
 
   // Fresnel term
   float F = fresnelDielectric(cosThetaO, self->eta);
+  pdf = inf;
 
   // Sample the reflection or the transmission
-  if (ss <= F)
-  {
-    // Reflection
+  if (ss <= F) { // Reflection
     wi = reflect(wo, getN(super), cosThetaO);
     type = BSDF_SPECULAR_REFLECTION;
-    pdf = F;
     return make_vec3f(1.0f);
-  }
-  else
-  {
-    // Transmission
+  } else { // Transmission
     wi = neg(wo);
     type = BSDF_SPECULAR_TRANSMISSION;
-    pdf = 1.0f-F;
     float alpha = self->thickness * rcp(cosThetaO);
     return powf(self->transmission, alpha);
   }

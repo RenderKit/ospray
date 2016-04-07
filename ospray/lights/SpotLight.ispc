@@ -60,7 +60,7 @@ varying LightSample SpotLight_sample(const uniform Light *uniform _self,
   if (self->radius > 0.)
     sample.pdf = uniformSampleDiskPDF(self->radius) * dist2 * abs(cosAngle);
   else
-    sample.pdf = 1.f; // we always take this sample
+    sample.pdf = inf; // we always take this sample
 
   // convert from power to radiance by attenuating by distance^2; attenuate by angle
   sample.radiance = self->power * (invdist * invdist * angularAttenuation);

@@ -33,8 +33,7 @@ struct LightPath
   Ray    ray;                    /*! Last ray in the path. */
   Medium lastMedium;             /*! Medium the last ray travels inside. */
   uniform uint32 depth;          /*! Recursion depth of path. */
-  float  bsdfPdf; // for MIS
-  BSDFType bsdfType; // for MIS
+  float  bsdfPdf;                // for MIS
   bool   unbent;                 /*! True of the ray path is a straight line. */
 };
 
@@ -43,8 +42,7 @@ inline void init_LightPath(LightPath& lp, const Ray &ray)
   lp.ray = ray;
   lp.lastMedium = make_Medium_Vacuum();
   lp.depth = 0;
-  lp.bsdfPdf = 1.0f;
-  lp.bsdfType = BSDF_SPECULAR_TRANSMISSION;
+  lp.bsdfPdf = inf;
   lp.unbent = true;
 }
 
@@ -53,20 +51,24 @@ inline void extend_fast(LightPath& lp,
                    const vec3f nextRay_dir,
                    const float nextRay_near,
                    const float nextRay_far,
-                   const float bsdfPdf,
-                   const BSDFType bsdfType)
+                   const float bsdfPdf)
 {
   lp.unbent = lp.unbent & eq(nextRay_dir,lp.ray.dir);
   setRay(lp.ray,nextRay_org,nextRay_dir,nextRay_near,nextRay_far);
   lp.depth++;
   lp.bsdfPdf = bsdfPdf;
-  lp.bsdfType = bsdfType;
 }
 
 inline float misHeuristic(float pdf1, float pdf2)
 {
-  return sqr(pdf1) * rcp(sqr(pdf1) + sqr(pdf2)); // power heuristic with beta=2
+  // power heuristic with beta=2
+  const float p = sqr(pdf1) * rcp(sqr(pdf1) + sqr(pdf2));
+  // guard against high pdf (including Dirac delta)
+  // using the limit when pdf1 approaches inf
+  // compare with bit less than sqrt(float_max) (when sqr starts to overflow)
+  return pdf1 > 1e17f ? 1.0f : p;
 }
+
 
 
 //////////////////////////////////////////////////////////////////
@@ -154,8 +156,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
           for (uniform int i = 0; i < self->numLights; i++) { // TODO: self->num_envLights
             const uniform Light *uniform l = self->lights[i];
             LightEval le = l->eval(l, lightPath.ray.org, lightPath.ray.dir);
-            float weight = lightPath.bsdfType & BSDF_SMOOTH ? misHeuristic(lightPath.bsdfPdf, le.pdf) : 1.f;
-            L = L + Lw * le.radiance * weight;
+            L = L + Lw * le.radiance * misHeuristic(lightPath.bsdfPdf, le.pdf);
           }
 
       break;
@@ -216,7 +217,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
         /*! Evaluate BSDF */
         vec3f bsdfValue;
-        float bsdfPdf;
+        float bsdfPdf = 0.f;
         foreach_unique(b in bsdf)
           if (b != NULL)
             bsdfValue = b->eval(b, wo, ls.direction, bsdfPdf);
@@ -247,11 +248,11 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     /*! sample BSDF */
     vec3f wi;
-    uint32 bsdfType = 0;
     vec2f s  = RandomTEA__getFloats(rng);
     vec2f ss = RandomTEA__getFloats(rng); // FIXME: should be only one component
     vec3f bsdfWeight;
     float bsdfPdf = 0.f;
+    uint32 bsdfType = 0;
     foreach_unique(b in bsdf)
       if (b != NULL)
         bsdfWeight = b->sample(b, wo, wi, bsdfPdf, bsdfType, s, ss.x);
@@ -282,7 +283,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     extend_fast(lightPath,
                 dg.P,wi,//dg.error*
                 self->super.epsilon,inf,
-                bsdfPdf,bsdfType);
+                bsdfPdf);
 
     Lw = Lw * bsdfWeight;
   } while (reduce_max(Lw) > self->minContribution);

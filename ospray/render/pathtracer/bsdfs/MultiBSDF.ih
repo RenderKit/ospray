@@ -110,21 +110,21 @@ inline vec3f MultiBSDF_sample(const varying BSDF* uniform super,
     if (eq(weight, make_vec3f(0.0f)) | (pdf == 0.0f))
       return make_vec3f(0.0f);
 
+    if (type & BSDF_SPECULAR)
+      return weight;
+
     // compute overall weight and pdf
     vec3f value = weight * pdf;
     pdf *= self->importances[choice];
 
-    if (!(type & BSDF_SPECULAR))
+    for (uniform int i = 0; i < self->numBsdfs; ++i)
     {
-      for (uniform int i = 0; i < self->numBsdfs; ++i)
+      if ((i != choice) & (self->importances[i] > 0.0f))
       {
-        if ((i != choice) & (self->importances[i] > 0.0f))
-        {
-          const varying BSDF* uniform curBsdf = self->bsdfs[i];
-          float curPdf = 0.0f;
-          value = value + curBsdf->eval(curBsdf, wo, wi, curPdf);
-          pdf = pdf + curPdf * self->importances[i];
-        }
+        const varying BSDF* uniform curBsdf = self->bsdfs[i];
+        float curPdf = 0.0f;
+        value = value + curBsdf->eval(curBsdf, wo, wi, curPdf);
+        pdf = pdf + curPdf * self->importances[i];
       }
     }
 

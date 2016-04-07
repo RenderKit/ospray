@@ -46,7 +46,7 @@ varying LightSample PointLight_sample(const uniform Light *uniform _self,
   sample.direction = dir * invdist;
   sample.distance = dist2 * invdist;
 
-  sample.pdf = 1.f; // per default we always take this sample
+  sample.pdf = inf; // per default we always take this sample
 
   // convert from power to radiance by attenuating by distance^2
   sample.radiance = self->power * sqr(invdist);

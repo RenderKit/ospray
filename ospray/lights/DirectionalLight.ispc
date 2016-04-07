@@ -86,7 +86,7 @@ export void DirectionalLight_set(void *uniform _self,
   self->frame = frame(direction);
   self->radiance = radiance;
   self->cosAngle = cosAngle;
-  self->pdf = cosAngle < COS_ANGLE_MAX ? uniformSampleConePDF(cosAngle) : 1.f;
+  self->pdf = cosAngle < COS_ANGLE_MAX ? uniformSampleConePDF(cosAngle) : inf;
 }
 
 //! Create an ispc-side DirectionalLight object
