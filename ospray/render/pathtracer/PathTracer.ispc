@@ -146,22 +146,29 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     const vec3f wo = neg(lightPath.ray.dir);
 
+    float maxLightDist = lightPath.ray.t; // per default virtual lights are occluded by hit geometry
+
     /*! Environment shading when nothing hit. */
     if (noHit(lightPath.ray)) {
+      maxLightDist = inf; // also include envLights (i.e. the ones in infinity)
       if (lightPath.unbent)
         sample.alpha = 1.0f - luminance(Lw);
       if ((bool)self->backplate & lightPath.unbent) {
         L = L + Lw * get3f(self->backplate, clamp2edge(self->backplate, pixel));
-      } else
-          for (uniform int i = 0; i < self->numLights; i++) { // TODO: self->num_envLights
-            const uniform Light *uniform l = self->lights[i];
-            LightEval le = l->eval(l, lightPath.ray.org, lightPath.ray.dir);
-            L = L + Lw * le.radiance * misHeuristic(lightPath.bsdfPdf, le.pdf);
-          }
-
-      break;
+        maxLightDist = 1e38; // backplate hides envLights (i.e. the ones in infinity)
+      } 
     }
 
+    // add light from virtual lights by intersecting them
+    for (uniform int i = 0; i < self->numLights; i++) {
+      const uniform Light *uniform l = self->lights[i];
+      LightEval le = l->eval(l, lightPath.ray.org, lightPath.ray.dir);
+      if (le.distance <= maxLightDist)
+        L = L + Lw * le.radiance * misHeuristic(lightPath.bsdfPdf, le.pdf);
+    }
+
+    if (noHit(lightPath.ray))
+      break;
 
     DifferentialGeometry dg;
     postIntersect(self->super.model, dg, lightPath.ray,
