@@ -68,24 +68,19 @@ inline vec3f DielectricLayer_sample(const varying BSDF* uniform super,
   const varying DielectricLayer* uniform self = (const varying DielectricLayer* uniform)super;
 
   float cosThetaO = dot(wo, getN(super));
-  if (cosThetaO <= 0.0f) return make_vec3f(0.0f);
+  if (cosThetaO <= 0.0f)
+    return make_vec3f(0.0f);
 
   // Fresnel term
   float cosThetaO1; // positive
   float F = fresnelDielectricEx(cosThetaO, cosThetaO1, self->eta);
 
-  // Sample the coating or the substrate reflection
-  if (ss < F)
-  {
-      // Sample the coating reflection
+  if (ss < F) { // Sample the coating reflection
       type = BSDF_SPECULAR_REFLECTION;
       wi = reflect(wo, getN(super), cosThetaO);
-      pdf = F;
+      pdf = inf;
       return make_vec3f(1.0f);
-  }
-  else
-  {
-      // Sample the substrate BRDF
+  } else { // Sample the substrate BRDF
       float ss1 = (ss - F) * rcp(1.0f-F); // reallocate sample
       float substratePdf;
       vec3f substrateWeight = self->substrate->sample(self->substrate, wo, wi, substratePdf, type, s, ss1);

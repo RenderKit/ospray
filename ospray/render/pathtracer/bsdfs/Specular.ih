@@ -51,6 +51,7 @@ inline vec3f Specular_sample(const varying BSDF* uniform super,
   const vec3f localDir = powerCosineSampleHemisphere(self->exp, s);
   wi = frame(refl) * localDir;
   pdf = powerCosineSampleHemispherePDF(localDir, self->exp);
+  type = BSDF_GLOSSY_REFLECTION;
   return mul(self->R, (self->exp+2) * rcp(self->exp+1) * clamp(dot(wi, getN(super))));
 }
 

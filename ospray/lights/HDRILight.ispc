@@ -74,17 +74,24 @@ varying LightSample HDRILight_sample(const uniform Light *uniform _self,
   return sample;
 }
 
-varying vec3f HDRILight_evalEnv(const uniform Light *uniform _self,
-                                const varying vec3f &dir)
+varying LightEval HDRILight_eval(const uniform Light *uniform _self,
+    const varying vec3f &,
+    const varying vec3f &dir)
 {
   uniform HDRILight *uniform self = (uniform HDRILight *uniform)_self;
+  LightEval res;
 
   const vec3f localDir = self->world2light * dir;
 
   const float u = atan2(localDir.y, localDir.x) * one_over_two_pi;
   const float v = acos(localDir.z) * one_over_pi;
+  const vec2f uv = make_vec2f(u, v);
 
-  return get3f(self->map, make_vec2f(u, v)) * self->intensity;
+  res.radiance = get3f(self->map, uv) * self->intensity;
+  res.distance = inf;
+  res.pdf = Distribution2D_pdf(self->distribution, uv);
+
+  return res;
 }
 
 
@@ -138,10 +145,10 @@ export void HDRILight_set(void *uniform _self,
     // no delete[] importance: ownership was transferred to Distribution2D
 
     self->super.sample = HDRILight_sample;
-    self->super.evalEnv = HDRILight_evalEnv;
+    self->super.eval = HDRILight_eval;
   } else {
     self->super.sample = HDRILight_sample_dummy;
-    self->super.evalEnv = defaultEvalEnv;
+    self->super.eval = defaultEval;
   }
 }
 

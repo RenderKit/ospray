@@ -44,11 +44,18 @@ varying LightSample AmbientLight_sample(const uniform Light *uniform _self,
   return sample;
 }
 
-varying vec3f AmbientLight_evalEnv(const uniform Light *uniform _self,
-                                   const varying vec3f &)
+varying LightEval AmbientLight_eval(const uniform Light *uniform _self,
+    const varying vec3f &pos,
+    const varying vec3f &)
 {
   uniform AmbientLight *uniform self = (uniform AmbientLight *uniform)_self;
-  return self->radiance;
+  LightEval res;
+
+  res.radiance = self->radiance;
+  res.distance = inf;
+  res.pdf = 1.f/(4.f * M_PI); // uniformSampleSpherePDF(); // XXX inconsistent to sample, need surface normal here
+
+  return res;
 }
 
 
@@ -59,7 +66,7 @@ void AmbientLight_Constructor(uniform AmbientLight *uniform self,
   Light_Constructor(&self->super, cppEquivalent);
   self->radiance = radiance;
   self->super.sample = AmbientLight_sample;
-  self->super.evalEnv = AmbientLight_evalEnv;
+  self->super.eval = AmbientLight_eval;
 }
 
 

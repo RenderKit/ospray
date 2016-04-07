@@ -40,7 +40,7 @@ inline vec3f Transmission_sample(const varying BSDF* uniform super,
 {
   const varying Transmission* uniform self = (const varying Transmission* uniform)super;
   wi = neg(wo);
-  pdf = 1.0f;
+  pdf = inf;
   type = BSDF_SPECULAR_TRANSMISSION;
   return self->T;
 }

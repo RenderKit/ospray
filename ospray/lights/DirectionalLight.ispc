@@ -21,7 +21,7 @@
 struct DirectionalLight {
   Light super;      //!< inherited light fields
 
-  vec3f direction;  //!< direction *towards* the light source
+  linear3f frame;   //!< coordinate frame, with vz == direction *towards* the light source
   vec3f radiance;   //!< RGB color and intensity of light
   float cosAngle;   //!< Angular limit of the cone light in an easier to use form: cosine of the half angle in radians
   float pdf;        //!< Probability to sample a direction to the light
@@ -41,26 +41,35 @@ varying LightSample DirectionalLight_sample(const uniform Light *uniform _self,
   const DirectionalLight *uniform self = (DirectionalLight *uniform)_self;
   LightSample sample;
 
-  sample.direction = self->direction;
+  sample.direction = self->frame.vz;
   sample.distance = inf;
   sample.pdf = self->pdf;
 
   if (self->cosAngle < COS_ANGLE_MAX)
-    sample.direction = frame(sample.direction) * uniformSampleCone(self->cosAngle, s);
+    sample.direction = self->frame * uniformSampleCone(self->cosAngle, s);
 
-  sample.radiance = self->radiance;
+  sample.radiance = self->radiance; // *pdf/pdf cancel
 
   return sample;
 }
 
-varying vec3f DirectionalLight_evalEnv(const uniform Light *uniform _self,
-                                       const varying vec3f &dir)
+varying LightEval DirectionalLight_eval(const uniform Light *uniform _self,
+    const varying vec3f &pos,
+    const varying vec3f &dir)
 {
   uniform DirectionalLight *uniform self = (uniform DirectionalLight *uniform)_self;
-  if (self->cosAngle < COS_ANGLE_MAX && dot(self->direction, dir) > self->cosAngle)
-    return self->radiance * self->pdf;
-  else
-    return make_vec3f(0.f);
+  LightEval res;
+  res.distance = inf;
+
+  if (self->cosAngle < COS_ANGLE_MAX && dot(self->frame.vz, dir) > self->cosAngle) {
+    res.radiance = self->radiance * self->pdf;
+    res.pdf = self->pdf;
+  } else {
+    res.radiance = make_vec3f(0.f);
+    res.pdf = 0.f;
+  }
+
+  return res;
 }
 
 
@@ -74,10 +83,10 @@ export void DirectionalLight_set(void *uniform _self,
                                  const uniform float cosAngle)
 {
   uniform DirectionalLight *uniform self = (uniform DirectionalLight *uniform)_self;
-  self->direction = direction;
+  self->frame = frame(direction);
   self->radiance = radiance;
   self->cosAngle = cosAngle;
-  self->pdf = cosAngle < COS_ANGLE_MAX ? uniformSampleConePDF(cosAngle) : 1.f;
+  self->pdf = cosAngle < COS_ANGLE_MAX ? uniformSampleConePDF(cosAngle) : inf;
 }
 
 //! Create an ispc-side DirectionalLight object
@@ -86,8 +95,7 @@ export void *uniform DirectionalLight_create(void *uniform cppEquivalent)
   uniform DirectionalLight *uniform self = uniform new uniform DirectionalLight;
   Light_Constructor(&self->super, cppEquivalent);
   self->super.sample = DirectionalLight_sample;
-  // TODO: an (indirectly) visible sun disc causes too high variance, needs to be fixed with MIS
-  // self->super.evalEnv = DirectionalLight_evalEnv;
+  self->super.eval = DirectionalLight_eval;
 
   DirectionalLight_set(self, make_vec3f(0.f, 0.f, 1.f), make_vec3f(1.f), 1.f);
   return self;
