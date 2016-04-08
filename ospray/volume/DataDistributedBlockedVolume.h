@@ -64,10 +64,10 @@ namespace ospray {
 
     //! A string description of this class.
     std::string toString() const override;
-    
+
     //! Allocate storage and populate the volume, called through the OSPRay API.
     void commit() override;
-    
+
     //! Copy voxels into the volume at the given index (non-zero return value
     //! indicates success).
     int setRegion(const void *source,
@@ -78,7 +78,7 @@ namespace ospray {
   //private:
 
     //! Create the equivalent ISPC volume container.
-    void createEquivalentISPC();
+    void createEquivalentISPC() override;
 
     /*! size of each block, in voxels, WITHOUT padding (in practice the blocks
      *  WILL be padded) */
