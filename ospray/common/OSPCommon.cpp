@@ -27,6 +27,8 @@
 
 namespace ospray {
 
+  RTCDevice g_embreeDevice = NULL;
+
   /*! 64-bit malloc. allows for alloc'ing memory larger than 64 bits */
   extern "C" void *malloc64(size_t size)
   {

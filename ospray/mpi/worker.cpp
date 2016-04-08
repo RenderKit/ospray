@@ -56,6 +56,9 @@ void sleep(unsigned int seconds)
 #endif
 
 namespace ospray {
+
+  extern RTCDevice g_embreeDevice;
+
   namespace mpi {
     using std::cout;
     using std::endl;
@@ -109,6 +112,7 @@ namespace ospray {
       };
 
       RTCDevice embreeDevice = rtcNewDevice(embreeConfig.str().c_str());
+      g_embreeDevice = embreeDevice;
       EmbreeDeviceScopeGuard guard;
       guard.embreeDevice = embreeDevice;
 
@@ -118,7 +122,6 @@ namespace ospray {
         // why did the error function not get called !?
         std::cerr << "#osp:init: embree internal error number "
                   << (int)rtcDeviceGetError(embreeDevice) << std::endl;
-        assert(rtcGetError() == RTC_NO_ERROR);
       }
 
       // -------------------------------------------------------

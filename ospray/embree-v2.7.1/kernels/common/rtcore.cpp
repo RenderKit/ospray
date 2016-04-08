@@ -59,6 +59,7 @@ namespace embree
     Lock<MutexSys> lock(g_mutex);
     if (g_device) throw_RTCError(RTC_INVALID_OPERATION,"already initialized");
     g_device = new Device(cfg,true);
+    PING; PRINT(g_device);
     RTCORE_CATCH_END(g_device);
   }
   

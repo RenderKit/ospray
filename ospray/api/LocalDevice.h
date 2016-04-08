@@ -242,10 +242,6 @@ namespace ospray {
                         OSPVolume volume,
                         const vec3f *worldCoordinates,
                         const size_t &count) override;
-
-      // Data members /////////////////////////////////////////////////////////
-
-      RTCDevice embreeDevice;
     };
 
   } // ::ospray::api

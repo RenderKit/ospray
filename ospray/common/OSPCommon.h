@@ -186,7 +186,6 @@ namespace ospray {
     }
     return result;
   }
-
 } // ::ospray
 
 #ifdef _WIN32
