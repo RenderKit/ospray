@@ -120,7 +120,12 @@ inline vec3f uniformSampleDisk(const float radius, const vec2f &s)
 
 inline float uniformSampleDiskPDF(const float radius)
 {
-  return rcp(M_PI * radius * radius);
+  return rcp(M_PI * sqr(radius));
+}
+
+inline uniform float uniformSampleDiskPDF(const uniform float radius)
+{
+  return rcp(M_PI * sqr(radius));
 }
 
 

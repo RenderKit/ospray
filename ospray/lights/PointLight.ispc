@@ -61,7 +61,7 @@ varying LightSample PointLight_sample(const uniform Light *uniform _self,
       sample.direction = frame(sample.direction) * localDir;
       sample.pdf = uniformSampleConePDF(cosTheta);
       const float c = localDir.z;
-      sample.distance = c*sample.distance - sqrt(self->radius*self->radius - (1.f - c*c) * dist2);
+      sample.distance = c*sample.distance - sqrt(sqr(self->radius) - (1.f - c*c) * dist2);
       // TODO scale radiance by actual distance
     } else { // inside sphere
       const vec3f localDir = cosineSampleHemisphere(s);
@@ -99,6 +99,7 @@ varying LightEval PointLight_eval(const uniform Light *uniform _self,
       const float t_far = (b + sqrt(radical)) / (2.f*a);
 
       if (t_far > 0.0f) {
+        // TODO: handle interior case
         res.distance = t_near;
         const float sinTheta2 = sqr(self->radius) * rcp(centerDist2);
         const float cosTheta = sqrt(1.f - sinTheta2);

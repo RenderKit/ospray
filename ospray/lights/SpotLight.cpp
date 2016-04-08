@@ -51,16 +51,17 @@ namespace ospray {
     const vec3f power = color * intensity;
     direction = normalize(direction);
     openingAngle = clamp(openingAngle, 0.f, 180.f);
-    penumbraAngle = clamp(penumbraAngle, 0.001f, 0.5f*openingAngle);
+    penumbraAngle = clamp(penumbraAngle, 0.f, 0.5f*openingAngle);
     const float cosAngleMax = cos(deg2rad(0.5f*openingAngle));
     const float cosAngleMin = cos(deg2rad(0.5f*openingAngle - penumbraAngle));
+    const float cosAngleScale = 1.0f/(cosAngleMin - cosAngleMax);
     
     ispc::SpotLight_set(getIE(),
                         (ispc::vec3f&)position,
                         (ispc::vec3f&)direction,
                         (ispc::vec3f&)power,
                         cosAngleMax,
-                        cosAngleMin,
+                        cosAngleScale,
                         radius);
   }
 

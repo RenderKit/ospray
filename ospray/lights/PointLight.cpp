@@ -40,6 +40,7 @@ namespace ospray {
   }
 
   OSP_REGISTER_LIGHT(PointLight, PointLight);
+  OSP_REGISTER_LIGHT(PointLight, point);
   OSP_REGISTER_LIGHT(PointLight, SphereLight);
   OSP_REGISTER_LIGHT(PointLight, sphere);
 }
