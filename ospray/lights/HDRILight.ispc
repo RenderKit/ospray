@@ -46,14 +46,14 @@ varying LightSample HDRILight_sample_dummy(const uniform Light *uniform,
 }
 
 varying LightSample HDRILight_sample(const uniform Light *uniform _self,
-                                     const varying DifferentialGeometry &dg,
+                                     const varying DifferentialGeometry &,
                                      const varying vec2f &s)
 {
   uniform HDRILight *uniform self = (uniform HDRILight *uniform)_self;
   LightSample sample;
 
   Sample2D sample2d = Distribution2D_sample(self->distribution, s);
-  // Distribution2D samples wihtin bin i as (i, i+1), whereas we provided
+  // Distribution2D samples within bin i as (i, i+1), whereas we provided
   // average importance for (i-0.5, i+0.5), thus shift by 0.5
   sample2d.uv = sample2d.uv - self->map->halfTexel;
 
@@ -66,7 +66,7 @@ varying LightSample HDRILight_sample(const uniform Light *uniform _self,
 
   sample.direction = self->light2world * localDir;
 
-  sample.pdf = sample2d.pdf * rcp(two_pi * M_PI * sinTheta);
+  sample.pdf = sample2d.pdf * one_over_two_pi_sqr * rcp(sinTheta);
 
   sample.distance = inf;
   sample.radiance = get3f(self->map, sample2d.uv) * self->intensity / sample.pdf;
@@ -89,7 +89,12 @@ varying LightEval HDRILight_eval(const uniform Light *uniform _self,
 
   res.radiance = get3f(self->map, uv) * self->intensity;
   res.distance = inf;
-  res.pdf = Distribution2D_pdf(self->distribution, uv);
+
+  // domain of Distribution2D is shifted by half a texel compared to texture
+  // atan2 can get negative, shift can lead to values > 1.f: reproject to [0..1)
+  const vec2f uvd = frac(uv + self->map->halfTexel);
+  res.pdf = Distribution2D_pdf(self->distribution, uvd);
+  res.pdf *= one_over_two_pi_sqr * rsqrt(1.f - sqr(localDir.z));
 
   return res;
 }

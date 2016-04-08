@@ -42,6 +42,8 @@ inline void* uniform align_ptr(void* uniform ptr) {
 #endif
 
 #define PRINT(x) print(#x" = %\n", x)
+// prints first unmasked element
+#define PRINT0(x) print(#x"[%] = %\n", count_trailing_zeros(lanemask()), extract(x, count_trailing_zeros(lanemask())))
 
 /*! ispc copy of embree error handling callback */
 void error_handler(const RTCError code, const int8* str);
