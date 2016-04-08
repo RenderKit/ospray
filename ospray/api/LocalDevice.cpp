@@ -57,11 +57,11 @@ namespace ospray {
         embreeConfig << " threads=1,verbose=2";
       else if(numThreads > 0)
         embreeConfig << " threads=" << numThreads;
-      rtcInit(embreeConfig.str().c_str());
+      embreeDevice = rtcNewDevice(embreeConfig.str().c_str());
 
-      rtcSetErrorFunction(embreeErrorFunc); // needs to come after rtcInit
+      rtcDeviceSetErrorFunction(embreeDevice, embreeErrorFunc);
 
-      RTCError erc = rtcGetError();
+      RTCError erc = rtcDeviceGetError(embreeDevice);
       if (erc != RTC_NO_ERROR) {
         // why did the error function not get called !?
         std::cerr << "#osp:init: embree internal error number " << (int)erc << std::endl;
@@ -73,7 +73,7 @@ namespace ospray {
 
     LocalDevice::~LocalDevice()
     {
-      rtcExit();
+      rtcDeleteDevice(embreeDevice);
     }
 
     OSPFrameBuffer
