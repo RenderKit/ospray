@@ -339,7 +339,7 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
 
     ScreenSample sample = PathTraceIntegrator_Li(self, cameraSample.screen,
                                                  lightPath, rng);
-    screenSample.rgb = screenSample.rgb + sample.rgb;
+    screenSample.rgb = screenSample.rgb + min(sample.rgb, make_vec3f(self->maxRadiance));
     screenSample.alpha = screenSample.alpha + sample.alpha;
     screenSample.z = min(screenSample.z, sample.z);
   }
@@ -406,6 +406,7 @@ unmasked void PathTracer_renderTile(uniform Renderer *uniform _self,
 export void PathTracer_set(void *uniform _self,
                            const uniform int32 maxDepth,
                            const uniform float minContribution,
+                           const uniform float maxRadiance,
                            void *uniform backplate,
                            void **uniform lights,
                            const uniform uint32 numLights)
@@ -414,6 +415,7 @@ export void PathTracer_set(void *uniform _self,
 
   self->maxDepth = maxDepth;
   self->minContribution = minContribution;
+  self->maxRadiance = maxRadiance;
   self->backplate = (uniform Texture2D *uniform)backplate;
   self->lights = (const uniform Light *uniform *uniform)lights;
   self->numLights = numLights;
@@ -426,7 +428,7 @@ export void* uniform PathTracer_create(void *uniform cppE)
   self->super.renderTile   = PathTracer_renderTile;
   self->super.beginFrame   = PathTracer_beginFrame;
 
-  PathTracer_set(self, 20, 0.01f, NULL, NULL, 0);
+  PathTracer_set(self, 20, 0.01f, inf, NULL, NULL, 0);
 
   precomputeZOrder();
 
