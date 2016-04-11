@@ -19,9 +19,6 @@
 #include "LocalFB_ispc.h"
 #include "ospray/common/tasking/parallel_for.h"
 
-// number of floats each task is clearing; must be a a mulitple of 16
-#define CLEAR_BLOCK_SIZE (32 * 1024)
-
 namespace ospray {
 
   LocalFrameBuffer::LocalFrameBuffer(const vec2i &size,
