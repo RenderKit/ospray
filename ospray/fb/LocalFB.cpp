@@ -66,6 +66,8 @@ namespace ospray {
     if (hasVarianceBuffer) {
       varianceBuffer = (vec4f*)alignedMalloc(sizeof(vec4f)*size.x*size.y);
       tileErrorBuffer = new float[tiles];
+      // maximum number of regions: all regions are of size 3 are split in half
+      errorRegion.reserve(divRoundUp(tiles*2, 3));
     } else {
       varianceBuffer = NULL;
       tileErrorBuffer = NULL;
@@ -105,10 +107,14 @@ namespace ospray {
       for (int i = 0; i < tiles; i++)
         tileAccumID[i] = 0;
 
-      // always also also error buffer (if present)
+      // always also clear error buffer (if present)
       if (hasVarianceBuffer) {
         for (int i = 0; i < tiles; i++)
           tileErrorBuffer[i] = inf;
+
+        errorRegion.clear();
+        // initially create one region covering the complete image
+        errorRegion.push_back(box2i(vec2i(0), vec2i(tilesx, divRoundUp(size.y, TILE_SIZE))));
       }
     }
   }
@@ -142,16 +148,58 @@ namespace ospray {
 
   float LocalFrameBuffer::tileError(const vec2i &tile)
   {
-    int idx = tile.y * tilesx + tile.x;
-    return hasVarianceBuffer && tileAccumID[idx] > 1 ? tileErrorBuffer[idx] : inf;
+    const int idx = tile.y * tilesx + tile.x;
+    return hasVarianceBuffer ? tileErrorBuffer[idx] : inf;
   }
 
-  float LocalFrameBuffer::frameError()
+  float LocalFrameBuffer::endFrame(const float errorThreshold)
   {
     if (hasVarianceBuffer) {
+      // process regions first, but don't process newly split regions again
+      int regions = errorThreshold > 0.f ? errorRegion.size() : 0;
+      for (int i = 0; i < regions; i++) {
+        box2i& region = errorRegion[i];
+        float err = 0.f;
+        float maxErr = 0.0f;
+        for (int y = region.lower.y; y < region.upper.y; y++)
+          for (int x = region.lower.x; x < region.upper.x; x++) {
+            int idx = y * tilesx + x;
+            err += tileErrorBuffer[idx];
+            maxErr = std::max(maxErr, tileErrorBuffer[idx]);
+          }
+        // set all tiles of this region to local max error to enforce their refinement as a group
+        for (int y = region.lower.y; y < region.upper.y; y++)
+          for (int x = region.lower.x; x < region.upper.x; x++) {
+            int idx = y * tilesx + x;
+            tileErrorBuffer[idx] = maxErr;
+          }
+        vec2i size = region.size();
+        int area = reduce_mul(size);
+        err /= area; // avg
+        if (err < 4.f*errorThreshold) { // split region?
+          if (area <= 2) { // would just contain single tile after split: remove
+            region = errorRegion.back();
+            errorRegion.pop_back();
+            regions--;
+            i--;
+            continue;
+          }
+          vec2i split = region.lower + size / 2; // TODO: find split with equal variance
+          errorRegion.push_back(region); // region reference might become invalid
+          if (size.x > size.y) {
+            errorRegion[i].upper.x = split.x;
+            errorRegion.back().lower.x = split.x;
+          } else{
+            errorRegion[i].upper.y = split.y;
+            errorRegion.back().lower.y = split.y;
+          }
+        }
+      }
+
       float maxErr = 0.0f;
       for (int i = 0; i < tiles; i++)
-        maxErr = tileAccumID[i] > 1 ? std::max(maxErr, tileErrorBuffer[i]) : inf;
+        maxErr = std::max(maxErr, tileErrorBuffer[i]);
+
       return maxErr;
     } else
       return inf;

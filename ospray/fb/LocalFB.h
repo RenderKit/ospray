@@ -31,6 +31,7 @@ namespace ospray {
     vec4f     *varianceBuffer; /*!< one RGBA per pixel, may be NULL, accumulates every other sample, for variance estimation / stopping */
     int32     *tileAccumID; //< holds accumID per tile, for adaptive accumulation
     float     *tileErrorBuffer; /*!< holds error per tile, for variance estimation / stopping */
+    std::vector<box2i> errorRegion; // image regions (in #tiles) which do not yet estimate the error on tile base
     int32     tilesx;
     int32     tiles;
 
@@ -49,7 +50,7 @@ namespace ospray {
     void setTile(Tile &tile) override;
     int32 accumID(const vec2i &tile) override;
     float tileError(const vec2i &tile) override;
-    float frameError() override;
+    float endFrame(const float errorThreshold) override;
 
     const void *mapColorBuffer() override;
     const void *mapDepthBuffer() override;
