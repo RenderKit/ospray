@@ -126,23 +126,12 @@ namespace ospray {
   void DPRenderTask::run(size_t taskIndex) const
   {
     const size_t tileID = taskIndex;
-    Tile bgTile, fgTile;
     const size_t tile_y = taskIndex / numTiles_x;
     const size_t tile_x = taskIndex - tile_y*numTiles_x;
-    bgTile.region.lower.x = tile_x * TILE_SIZE;
-    bgTile.region.lower.y = tile_y * TILE_SIZE;
-    bgTile.region.upper.x = std::min(bgTile.region.lower.x+TILE_SIZE,fb->size.x);
-    bgTile.region.upper.y = std::min(bgTile.region.lower.y+TILE_SIZE,fb->size.y);
-    bgTile.fbSize = fb->size;
-    bgTile.rcp_fbSize = rcp(vec2f(bgTile.fbSize));
-    bgTile.generation = 0;
-    bgTile.children = 0;
-
-    fgTile.region = bgTile.region;
-    fgTile.fbSize = bgTile.fbSize;
-    fgTile.rcp_fbSize = bgTile.rcp_fbSize;
-    fgTile.generation = 0;
-    fgTile.children = 0;
+    const vec2i tileId(tile_x, tile_y);
+    const int32 accumID = fb->accumID(tileID);
+    Tile bgTile(tileId, fb->size, accumID);
+    Tile fgTile(bgTile);
 
     size_t numBlocks = dpv->numDDBlocks;
     CacheForBlockTiles blockTileCache(numBlocks);

@@ -33,8 +33,3 @@ struct RaycastVolumeRenderer
   Light **uniform lights;
   uint32 numLights;
 };
-
-void RaycastVolumeRenderer_renderFramePostamble(Renderer *uniform renderer,
-                                                const uniform int32 accumID);
-void RaycastVolumeRenderer_renderFramePreamble(Renderer *uniform renderer,
-                                               FrameBuffer *uniform framebuffer);
