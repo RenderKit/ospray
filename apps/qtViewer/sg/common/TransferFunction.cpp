@@ -133,10 +133,11 @@ namespace ospray {
           char *cont = strdup(child->content.c_str());
           assert(cont);
 
-          const char *c = strtok(cont,",");
+          const char *c = strtok(cont,",\n");
           while (c) {
+            PRINT(c);
             colorArray.push_back(std::pair<float,vec3f>(colorArray.size(),toVec3f(c)));
-            c = strtok(NULL,",");
+            c = strtok(NULL,",\n");
           }
 
           free(cont);
@@ -150,11 +151,11 @@ namespace ospray {
           char *cont = strdup(child->content.c_str());
 
           assert(cont);
-          const char *c = strtok(cont,",");
+          const char *c = strtok(cont,",\n");
           while (c) {
             vec2f cp = toVec2f(c);
             alphaArray.push_back(std::pair<float,float>(cp.x,cp.y));
-            c = strtok(NULL,",");
+            c = strtok(NULL,",\n");
           }
 
           free(cont);

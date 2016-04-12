@@ -22,11 +22,12 @@ struct SpotLight {
   Light super;            //!< inherited light fields
 
   vec3f position;         //!< Position of the SpotLight
-  vec3f direction;        //!< Direction that the SpotLight is emitting; normalized
+  linear3f frame;         //!< coordinate frame, with vz == direction that the SpotLight is emitting
   vec3f power;            //!< RGB color and intensity of the SpotLight
   float cosAngleMax;      //!< Angular limit of the spot in an easier to use form: cosine of the half angle in radians
-  float cosAngleMin;      //!< Border of the penumbra area of the spot in an easier to use form; larger than cosAngleMax
+  float cosAngleScale;    //!< 1/(cos(border of the penumbra area) - cosAngleMax); positive
   float radius;           //!< defines the size of the (extended) SpotLight
+  float diskPdf;          //!< pdf of disk with radius
 };
 
 
@@ -44,7 +45,7 @@ varying LightSample SpotLight_sample(const uniform Light *uniform _self,
   sample.direction = self->position - dg.P;
 
   if (self->radius > 0.)
-    sample.direction = frame(self->direction) * uniformSampleDisk(self->radius, s) + sample.direction;
+    sample.direction = self->frame * uniformSampleDisk(self->radius, s) + sample.direction;
 
   const float dist2 = dot(sample.direction, sample.direction);
   const float invdist = rsqrt(dist2);
@@ -54,18 +55,51 @@ varying LightSample SpotLight_sample(const uniform Light *uniform _self,
   sample.distance = dist2 * invdist;
 
   // cosine of the negated light direction and light vector.
-  const float cosAngle = -dot(self->direction, sample.direction);
-  const float angularAttenuation = clamp((cosAngle - self->cosAngleMax) * rcp(self->cosAngleMin - self->cosAngleMax));
+  const float cosAngle = -dot(self->frame.vz, sample.direction);
+  const float angularAttenuation = clamp((cosAngle - self->cosAngleMax) * self->cosAngleScale);
 
   if (self->radius > 0.)
-    sample.pdf = uniformSampleDiskPDF(self->radius) * dist2 * abs(cosAngle);
+    sample.pdf = self->diskPdf * dist2 * abs(cosAngle);
   else
-    sample.pdf = 1.f; // we always take this sample
+    sample.pdf = inf; // we always take this sample
 
   // convert from power to radiance by attenuating by distance^2; attenuate by angle
-  sample.radiance = self->power * (invdist * invdist * angularAttenuation);
+  sample.radiance = self->power * (sqr(invdist) * angularAttenuation);
 
   return sample;
+}
+
+varying LightEval SpotLight_eval(const uniform Light *uniform _self,
+    const varying vec3f &pos,
+    const varying vec3f &dir)
+{
+  const SpotLight *uniform self = (SpotLight *uniform)_self;
+  LightEval res;
+  res.radiance = make_vec3f(0.f);
+  res.distance = inf;
+  res.pdf = 0.f;
+
+  if (self->radius > 0.f) {
+    // intersect disk
+    const float cosAngle = -dot(dir, self->frame.vz);
+    if (cosAngle > self->cosAngleMax) { // inside illuminated cone?
+      const vec3f vp = pos - self->position;
+      const float dp = dot(vp, self->frame.vz);
+      if (dp > 0.f) { // in front of light?
+        const float t = dp*rcp(cosAngle);
+        const vec3f vd = vp + t * dir;
+        if (dot(vd, vd) < sqr(self->radius)) { // inside disk?
+          const float angularAttenuation = min((cosAngle - self->cosAngleMax) * self->cosAngleScale, 1.f);
+          const float pdf = self->diskPdf * cosAngle;
+          res.radiance = self->power * (angularAttenuation * pdf); // *sqr(t)/sqr(t) cancels
+          res.distance = t;
+          res.pdf = pdf * sqr(t);
+        }
+      }
+    }
+  }
+
+  return res;
 }
 
 
@@ -78,16 +112,17 @@ export void SpotLight_set(void *uniform _self,
                           const uniform vec3f &direction,
                           const uniform vec3f &power,
                           const uniform float cosAngleMax,
-                          const uniform float cosAngleMin,
+                          const uniform float cosAngleScale,
                           const uniform float radius)
 {
   uniform SpotLight *uniform self = (uniform SpotLight *uniform)_self;
   self->position     = position;
-  self->direction    = direction;
+  self->frame        = frame(direction);
   self->power        = power;
   self->cosAngleMax  = cosAngleMax;
-  self->cosAngleMin  = cosAngleMin;
+  self->cosAngleScale= cosAngleScale;
   self->radius       = radius;
+  self->diskPdf      = uniformSampleDiskPDF(radius);
 }
 
 //! Create an ispc-side SpotLight object
@@ -97,13 +132,14 @@ export void *uniform SpotLight_create(void *uniform cppEquivalent)
 
   Light_Constructor(&self->super, cppEquivalent);
   self->super.sample = SpotLight_sample;
+  self->super.eval = SpotLight_eval;
 
   SpotLight_set(self,
                 make_vec3f(0.f),
                 make_vec3f(0.f, 0.f, 1.f),
                 make_vec3f(1.f),
                 0.f,
-                0.01f,
+                100.f,
                 0.f);
 
   return self;

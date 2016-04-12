@@ -724,17 +724,13 @@ namespace ospray {
     std::vector<OSPModel> instanceModels;
 
     for (size_t i=0;i<msgModel->mesh.size();i++) {
-      printf("Mesh %li/%li\n",i,msgModel->mesh.size());
       Ref<miniSG::Mesh> msgMesh = msgModel->mesh[i];
-      // DBG(PRINT(msgMesh.ptr));
 
       // create ospray mesh
       OSPGeometry ospMesh = g_alpha ? ospNewGeometry("alpha_aware_triangle_mesh") : ospNewGeometry("trianglemesh");
 
       // check if we have to transform the vertices:
       if (doesInstancing == false && msgModel->instance[i] != miniSG::Instance(i)) {
-        // cout << "Transforming vertex array ..." << endl;
-        // PRINT(msgMesh->position.size());
         for (size_t vID=0;vID<msgMesh->position.size();vID++) {
           msgMesh->position[vID] = xfmPoint(msgModel->instance[i].xfm,
                                             msgMesh->position[vID]);

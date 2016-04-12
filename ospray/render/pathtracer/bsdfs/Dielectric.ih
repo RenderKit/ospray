@@ -42,23 +42,17 @@ inline vec3f Dielectric_sample(const varying BSDF* uniform super,
   // Fresnel term
   float cosThetaT; // positive
   float F = fresnelDielectricEx(cosThetaO, cosThetaT, self->eta);
+  pdf = inf;
 
   // Sample the reflection or the transmission
-  if (ss <= F)
-  {
-    // Reflection
+  if (ss <= F) { // Reflection
     wi = reflect(wo, getN(super), cosThetaO);
     type = BSDF_SPECULAR_REFLECTION;
-    pdf = F;
     return make_vec3f(1.0f);
-  }
-  else
-  {
-    // Transmission
+  } else { // Transmission
     wi = refract(wo, getN(super), cosThetaO, cosThetaT, self->eta);
     type = BSDF_SPECULAR_TRANSMISSION;
-    pdf = 1.0f-F;
-    return make_vec3f(sqrf(rcp(self->eta))); // solid angle compression
+    return make_vec3f(rsqrt(self->eta)); // solid angle compression
   }
 }
 

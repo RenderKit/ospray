@@ -72,7 +72,7 @@ namespace ospray {
 
     renderer->endFrame(perFrameData,channelFlags);
 
-    return fb->frameError();
+    return fb->endFrame(renderer->errorThreshold);
   }
 
   std::string LocalTiledLoadBalancer::toString() const
@@ -123,7 +123,7 @@ namespace ospray {
 
     renderer->endFrame(perFrameData,channelFlags);
 
-    return fb->frameError();
+    return fb->endFrame(renderer->errorThreshold);
   }
 
 } // ::ospray

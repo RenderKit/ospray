@@ -43,9 +43,9 @@ namespace ospray {
     size_t numMyTiles()  const { return myTiles.size(); };
 
     int accumId;
-    int32 accumID(const vec2i &tile) override { return accumId; }
-    float tileError(const vec2i &tile) override { return inf; }
-    float frameError() override { return inf; }
+    int32 accumID(const vec2i &) override { return accumId; }
+    float tileError(const vec2i &) override { return inf; }
+    float endFrame(const float) override { return inf; };
 
     /*! color buffer and depth buffer on master */
 
@@ -273,9 +273,9 @@ namespace ospray {
     // ==================================================================
     // framebuffer / device interface
     // ==================================================================
-    const void *mapDepthBuffer();
-    const void *mapColorBuffer();
-    void unmap(const void *mappedMem);
+    const void *mapDepthBuffer() override;
+    const void *mapColorBuffer() override;
+    void unmap(const void *mappedMem) override;
 
     /*! \brief clear (the specified channels of) this frame buffer
 
@@ -335,7 +335,7 @@ namespace ospray {
 
     //! \brief common function to help printf-debugging
     /*! \detailed Every derived class should overrride this! */
-    virtual std::string toString() const
+    std::string toString() const override
     { return "ospray::DistributedFrameBuffer"; }
 
 
@@ -400,5 +400,3 @@ namespace ospray {
   };
 
 } // ::ospray
-
-

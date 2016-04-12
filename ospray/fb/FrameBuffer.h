@@ -97,7 +97,7 @@ namespace ospray {
         changes that requires clearing the accumulation buffer. */
     virtual int32 accumID(const vec2i &tile) = 0;
     virtual float tileError(const vec2i &tile) = 0;
-    virtual float frameError() = 0;
+    virtual float endFrame(const float errorThreshold) = 0; // returns error of frame
 
     Ref<PixelOp::Instance> pixelOp;
   };
