@@ -309,7 +309,7 @@ namespace ospray {
 
     dfb->waitUntilFinished();
     Renderer::endFrame(NULL,channelFlags);
-    return fb->frameError();
+    return fb->endFrame(0.f);
   }
 
 #endif
