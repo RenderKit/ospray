@@ -118,7 +118,6 @@ export void LocalFrameBuffer_accumulateTile(void *uniform _fb,
   const uniform float accScale = rcpf(tile.accumID+1);
   const uniform float accHalfScale = rcpf(tile.accumID/2+1);
   float err = 0.f;
-  float cnt = 0.f;
 
   for (uniform uint32 iy=0;iy<TILE_SIZE;iy++) {
     uniform uint32 iiy=tile.region.lower.y+iy;
@@ -143,6 +142,7 @@ export void LocalFrameBuffer_accumulateTile(void *uniform _fb,
         acc.w += varyTile->a[chunkID];
       }
       accum[pixelID] = acc;
+      acc = acc * accScale;
 
       // variance buffer accumulates every other frame
       if (variance && (tile.accumID & 1) == 1) {
@@ -156,20 +156,19 @@ export void LocalFrameBuffer_accumulateTile(void *uniform _fb,
         }
         variance[pixelID] = make_vec4f(vari);
 
-        const vec3f accs = accScale * make_vec3f(acc);
-        const float den2 = accs.x + accs.y + accs.z;
+        const vec3f acc3 = make_vec3f(acc);
+        const float den2 = reduce_add(acc3);
         if (den2 > 0.0f) {
-          const vec3f diff = absf(accs - accHalfScale * vari);
-          err += (diff.x + diff.y + diff.z) * rsqrtf(den2);
-          cnt++;
+          const vec3f diff = absf(acc3 - accHalfScale * vari);
+          err += reduce_add(diff) * rsqrtf(den2);
         }
       }
 
       unmasked {
-        varyTile->r[chunkID] = accScale * acc.x;
-        varyTile->g[chunkID] = accScale * acc.y;
-        varyTile->b[chunkID] = accScale * acc.z;
-        varyTile->a[chunkID] = accScale * acc.w;
+        varyTile->r[chunkID] = acc.x;
+        varyTile->g[chunkID] = acc.y;
+        varyTile->b[chunkID] = acc.z;
+        varyTile->a[chunkID] = acc.w;
       }
     }
   }
@@ -181,8 +180,9 @@ export void LocalFrameBuffer_accumulateTile(void *uniform _fb,
   // error is also only updated every other frame to avoid alternating error
   // (get a monotone sequence)
   if (variance && (tile.accumID & 1) == 1) {
-    const uniform float cntu = reduce_add(cnt);
-    const uniform float errf = cntu > 0.f ? reduce_add(err) * rsqrtf(cntu) : 0.f;
+    uniform vec2i dia = tile.region.upper - tile.region.lower;
+    uniform float cntu = (uniform float)dia.x * dia.y;
+    const uniform float errf = reduce_add(err) * rsqrtf(cntu);
     // print("[%, %]:  \t%\t%\n", tileIdx.x, tileIdx.y, errf);
     fb->tileErrorBuffer[tileId] = errf;
   }
