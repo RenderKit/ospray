@@ -178,9 +178,10 @@ namespace ospray {
         err /= area; // avg
         if (err < 4.f*errorThreshold) { // split region?
           if (area <= 2) { // would just contain single tile after split: remove
-            region = errorRegion.back();
-            errorRegion.pop_back();
             regions--;
+            errorRegion[i] = errorRegion[regions];
+            errorRegion[regions]= errorRegion.back();
+            errorRegion.pop_back();
             i--;
             continue;
           }
@@ -189,7 +190,7 @@ namespace ospray {
           if (size.x > size.y) {
             errorRegion[i].upper.x = split.x;
             errorRegion.back().lower.x = split.x;
-          } else{
+          } else {
             errorRegion[i].upper.y = split.y;
             errorRegion.back().lower.y = split.y;
           }
