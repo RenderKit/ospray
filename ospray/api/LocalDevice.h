@@ -94,7 +94,7 @@ namespace ospray {
 
       /*! Copy data into the given volume. */
       int setRegion(OSPVolume object, const void *source,
-                            const vec3i &index, const vec3i &count) override;
+                            const vec3i &index, const vec3i &count, const vec3i &region) override;
 
       /*! assign (named) vec2f parameter to an object */
       void setVec2f(OSPObject object,

@@ -94,6 +94,7 @@ namespace ospray {
         vec3i region_lo(0,0,z), region_sz(dimensions.x,dimensions.y,1);
         ospSetRegion(volume,slice,
                      (const osp::vec3i&)region_lo,
+                     (const osp::vec3i&)region_sz,
                      (const osp::vec3i&)region_sz);
       }
 
@@ -189,7 +190,10 @@ namespace ospray {
             if (nRead != nPerSlice)
               throw std::runtime_error("StructuredVolume::render(): read incomplete slice data ... partial file or wrong format!?");
             const vec3i region_lo(0,0,z),region_sz(dimensions.x,dimensions.y,1);
-            ospSetRegion(volume,slice,(const osp::vec3i&)region_lo,(const osp::vec3i&)region_sz);
+            ospSetRegion(volume,slice,
+                         (const osp::vec3i&)region_lo,
+                         (const osp::vec3i&)region_sz,
+                         (const osp::vec3i&)region_sz);
           }
           delete[] slice;
         } else {
@@ -201,6 +205,7 @@ namespace ospray {
             const vec3i region_lo(0,0,z), region_sz(dimensions.x,dimensions.y,1);
             ospSetRegion(volume,slice,
                          (const osp::vec3i&)region_lo,
+                         (const osp::vec3i&)region_sz,
                          (const osp::vec3i&)region_sz);
           }
           delete[] slice;
@@ -295,6 +300,7 @@ namespace ospray {
         const vec3i region_lo(0,0,sliceID), region_sz(dimensions.x,dimensions.y,1);
         ospSetRegion(volume,slice,
                      (const osp::vec3i&)region_lo,
+                     (const osp::vec3i&)region_sz,
                      (const osp::vec3i&)region_sz);
         fclose(file);
       }

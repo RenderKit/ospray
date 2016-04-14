@@ -216,7 +216,7 @@ namespace ospray {
 
       /*! Copy data into the given volume. */
       int setRegion(OSPVolume object, const void *source,
-                    const vec3i &index, const vec3i &count) override;
+                    const vec3i &index, const vec3i &count, const Vec3i &region ) override;
 
       /*! create a new pixelOp object (out of list of registered pixelOps) */
       OSPPixelOp newPixelOp(const char *type) override { NOTIMPLEMENTED; }
@@ -1182,7 +1182,8 @@ namespace ospray {
 
     /*! Copy data into the given volume. */
     int COIDevice::setRegion(OSPVolume object, const void *source, 
-                             const vec3i &index, const vec3i &count) 
+                             const vec3i &index, const vec3i &count,
+                             const vec3i &region )
     {
       Assert(object != nullptr && "invalid volume object handle");
       char *typeString = nullptr;
@@ -1198,6 +1199,7 @@ namespace ospray {
       stream.write((ObjectHandle &) data);
       stream.write(index);
       stream.write(count);
+      stream.write(region);
       callFunction(OSPCOI_SET_REGION, stream, &result, sizeof(int));
 //    release(data);
       return(result);

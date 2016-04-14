@@ -753,8 +753,9 @@ namespace ospray {
       Data *data  = (Data *) stream.get<ObjectHandle>().lookup();
       vec3i index = stream.get<vec3i>();
       vec3i count = stream.get<vec3i>();
+      vec3i region = stream.get<vec3i>();
       int *result = (int *) retVal;
-      result[0] = volume->setRegion(data->data, index, count);
+      result[0] = volume->setRegion(data->data, index, count, region);
 
     }
 

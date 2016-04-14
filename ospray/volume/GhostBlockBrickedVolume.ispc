@@ -375,7 +375,8 @@ inline void GGBV_allocateMemory(GGBV *uniform volume)
 task void PBBVUChar_setRegionTask(GGBV *uniform self,
                                   const uint8 *uniform source,
                                   const uniform vec3i &targetCoord000,
-                                  const uniform vec3i &regionSize)
+                                  const uniform vec3i &regionSize,
+                                  const uniform vec3i &region)
 {
   const uniform uint32 region_y = taskIndex % regionSize.y;
   const uniform uint32 region_z = taskIndex / regionSize.y;
@@ -420,7 +421,8 @@ task void PBBVUChar_setRegionTask(GGBV *uniform self,
 task void PBBVFloat_setRegionTask(GGBV *uniform self,
                                   const float *uniform source, 
                                   const uniform vec3i &targetCoord000,
-                                  const uniform vec3i &regionSize)
+                                  const uniform vec3i &regionSize,
+                                  const uniform vec3i &region)
 {
   const uniform uint32 region_y = taskIndex % regionSize.y;
   const uniform uint32 region_z = taskIndex / regionSize.y;
@@ -467,7 +469,8 @@ task void PBBVFloat_setRegionTask(GGBV *uniform self,
 task void PBBVDouble_setRegionTask(GGBV *uniform self,
                                    const double *uniform source, 
                                    const uniform vec3i &targetCoord000,
-                                   const uniform vec3i &regionSize)
+                                   const uniform vec3i &regionSize,
+                                   const uniform vec3i &region)
 {
   const uniform uint32 region_y = taskIndex % regionSize.y;
   const uniform uint32 region_z = taskIndex / regionSize.y;
@@ -500,14 +503,16 @@ task void PBBVDouble_setRegionTask(GGBV *uniform self,
 void GGBVUChar_setRegion(void *uniform _volume, 
                          const void *uniform _source, 
                          const uniform vec3i &targetCoord000,
-                         const uniform vec3i &regionSize)
+                         const uniform vec3i &regionSize,
+                         const uniform vec3i &region)
 {
   // a 'run' is sequence of connected voxels in x direction 
   uniform uint32 numRuns = regionSize.y * regionSize.z;
   launch[numRuns] PBBVUChar_setRegionTask((GGBV*uniform)_volume,
                                           (const uint8*uniform)_source,
                                           targetCoord000,
-                                          regionSize);
+                                          regionSize,
+                                          region);
 }
 
 /*! copy given block of voxels into the volume, where source[0] will
@@ -515,14 +520,16 @@ void GGBVUChar_setRegion(void *uniform _volume,
 void GGBVFloat_setRegion(void *uniform _volume, 
                          const void *uniform _source, 
                          const uniform vec3i &targetCoord000,
-                         const uniform vec3i &regionSize)
+                         const uniform vec3i &regionSize,
+                         const uniform vec3i &region)
 {
   // a 'run' is sequence of connected voxels in x direction 
   uniform uint32 numRuns = regionSize.y * regionSize.z;
   launch[numRuns] PBBVFloat_setRegionTask((GGBV*uniform)_volume,
                                           (const float*uniform)_source,
                                           targetCoord000,
-                                          regionSize);
+                                          regionSize,
+                                          region);
 }
 
 /*! copy given block of voxels into the volume, where source[0] will
@@ -530,14 +537,16 @@ void GGBVFloat_setRegion(void *uniform _volume,
 void GGBVDouble_setRegion(void *uniform _volume, 
                           const void *uniform _source, 
                           const uniform vec3i &targetCoord000,
-                          const uniform vec3i &regionSize)
+                          const uniform vec3i &regionSize,
+                          const uniform vec3i &region)
 {
   // a 'run' is sequence of connected voxels in x direction 
   uniform uint32 numRuns = regionSize.y * regionSize.z;
   launch[numRuns] PBBVDouble_setRegionTask((GGBV*uniform)_volume,
                                            (const double*uniform)_source,
                                            targetCoord000,
-                                           regionSize);
+                                           regionSize,
+                                           region);
 }
 
 /*! perform trilinear interpolation for given sample. unlike old way
@@ -691,11 +700,14 @@ export void GGBV_setRegion(void *uniform _self,
                            const uniform vec3i &regionCoords,
                            /*! size of the region that we're writing to; MUST
                              be the same as the dimensions of source[][][] */
-                           const uniform vec3i &regionSize)
+                           const uniform vec3i &regionSize,
+                           /*! size of the region that the block of data
+                             occupies*/
+                           const uniform vec3i &region)
 {
   // Cast to the actual Volume subtype.
   GGBV *uniform self = (GGBV *uniform)_self;
-  self->setRegion(_self,_source,regionCoords,regionSize);
+  self->setRegion(_self,_source,regionCoords,regionSize,region);
 }
  
 export void GGBV_freeVolume(void *uniform _self)

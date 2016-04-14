@@ -180,6 +180,7 @@ ospray::vec2f voxelRange(+std::numeric_limits<float>::infinity(),
       ospSetRegion(volume,
                    voxelData,
                    (osp::vec3i&)region_lo,
+                   (osp::vec3i&)region_sz,
                    (osp::vec3i&)region_sz);
 
       std::cerr << "volume load: "
@@ -244,6 +245,7 @@ ospray::vec2f voxelRange(+std::numeric_limits<float>::infinity(),
         ospSetRegion(volume,
                      &subvolumeRowData[0],
                      (osp::vec3i&)region_lo,
+                     (osp::vec3i&)region_sz,
                      (osp::vec3i&)region_sz);
       }
     }

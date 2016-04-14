@@ -63,8 +63,11 @@ namespace ospray {
                                     const vec3i &regionCoords, 
                                     /*! size of the region that we're writing to; MUST
                                       be the same as the dimensions of source[][][] */
-                                    const vec3i &regionSize)
-  {
+                                    const vec3i &regionSize,
+                                    /*! size of the region that the block of data
+                                      occupies*/
+                                    const vec3i &region)
+{
     if (g_dbg) PING;
     // Create the equivalent ISPC volume container and allocate memory for voxel data.
     if (ispcEquivalent == NULL) createEquivalentISPC();
@@ -97,7 +100,8 @@ namespace ospray {
     // Copy voxel data into the volume.
     ispc::GGBV_setRegion(ispcEquivalent, source, 
                          (const ispc::vec3i &) regionCoords, 
-                         (const ispc::vec3i &) regionSize);
+                         (const ispc::vec3i &) regionSize,
+                         (const ispc::vec3i &) region);
     return true;
   }
 

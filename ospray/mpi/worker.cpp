@@ -639,6 +639,7 @@ namespace ospray {
           const vec3i index = cmd.get_vec3i();
           const vec3i count = cmd.get_vec3i();
           const size_t size = cmd.get_size_t();
+          const vec3i region = cmd.get_vec3i();
 
           const size_t bcBufferSize = 40*1024*1024;
           static void *bcBuffer = malloc(bcBufferSize);
@@ -649,7 +650,7 @@ namespace ospray {
           Volume *volume = (Volume *)volumeHandle.lookup();
           Assert(volume);
 
-          int success = volume->setRegion(mem, index, count);
+          int success = volume->setRegion(mem, index, count, region);
           // double t1 = getSysTime();
           // static long num = 0;
           // static long bytes = 0;

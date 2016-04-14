@@ -142,7 +142,10 @@ struct RMLoaderThreads {
 #endif
       ospray::vec3i region_lo(I*256,J*256,K*128);
       ospray::vec3i region_sz(256,256,128);
-      ospSetRegion(volume,block->voxel,(osp::vec3i&)region_lo,(osp::vec3i&)region_sz);
+      ospSetRegion(volume,block->voxel,
+                   (osp::vec3i&)region_lo,
+                   (osp::vec3i&)region_sz,
+                   (osp::vec3i&)region_sz);
       mutex.unlock();
       
       ospray::vec2f blockRange(block->voxel[0]);

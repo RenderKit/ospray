@@ -277,11 +277,12 @@ namespace ospray {
 
     /*! Copy data into the given volume. */
     int LocalDevice::setRegion(OSPVolume handle, const void *source,
-                               const vec3i &index, const vec3i &count)
+                               const vec3i &index, const vec3i &count,
+                               const vec3i &region)
     {
       Volume *volume = (Volume *) handle;
       Assert(volume != NULL && "invalid volume object handle");
-      return(volume->setRegion(source, index, count));
+      return(volume->setRegion(source, index, count, region));
     }
 
     /*! assign (named) vec2f parameter to an object */

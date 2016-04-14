@@ -523,10 +523,12 @@ namespace ospray {
   /*! Copy data into the given volume. */
   extern "C" int ospSetRegion(OSPVolume object, void *source,
                               const osp::vec3i &index,
-                              const osp::vec3i &count)
+                              const osp::vec3i &count,
+                              const osp::vec3i &region)
   {
     ASSERT_DEVICE();
-    return(ospray::api::Device::current->setRegion(object, source, (const vec3i&)index, (const vec3i&)count));
+    return(ospray::api::Device::current->setRegion(object, source, (const vec3i&)index,
+                                                   (const vec3i&)count, (const vec3i&)region ));
   }
 
   /*! add a vec2f parameter to an object */

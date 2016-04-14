@@ -465,7 +465,8 @@ export void *uniform SharedStructuredVolume_createInstance(void *uniform cppEqui
   (void *uniform _self,                                                 \
    const void *uniform source,                                          \
    const uniform vec3i &index,                                          \
-   const uniform vec3i &count)                                          \
+   const uniform vec3i &count,                                          \
+   const uniform vec3i &region)                                         \
   {                                                                     \
     SharedStructuredVolume *uniform self                                \
       = (SharedStructuredVolume *uniform)_self;                         \

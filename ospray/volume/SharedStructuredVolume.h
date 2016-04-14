@@ -41,7 +41,7 @@ namespace ospray {
 
     //! Copy voxels into the volume at the given index; not allowed on
     //!  SharedStructuredVolume.
-    int setRegion(const void *source, const vec3i &index, const vec3i &count);
+    int setRegion(const void *source, const vec3i &index, const vec3i &count, const vec3i &region);
 
   private:
 
