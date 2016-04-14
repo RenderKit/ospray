@@ -72,7 +72,8 @@ namespace ospray {
     //! indicates success).
     int setRegion(const void *source,
                   const vec3i &index,
-                  const vec3i &count) override;
+                  const vec3i &count,
+                  const vec3i &region) override;
 
     //NOTE(jda) - a private section needs to be defined to make usage clearer
   //private:

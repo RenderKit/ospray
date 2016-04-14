@@ -85,10 +85,13 @@ namespace ospray {
     virtual void commit() = 0;
 
     //! Copy voxels into the volume at the given index (non-zero return value
-    //!  indicates success).
+    //! indicates success). If the volume is made of uniform blocks, the
+    //! region is equal to count but if volume is composed of non uniform
+    //! blocks may have different regions
     virtual int setRegion(const void *source,
                           const vec3i &index,
-                          const vec3i &count) = 0;
+                          const vec3i &count,
+                          const vec3i &region) = 0;
 
     //! Compute samples at the given world coordinates.
     virtual void computeSamples(float **results,

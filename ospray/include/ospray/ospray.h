@@ -463,7 +463,11 @@ extern "C" {
                                     const osp::vec3i &regionCoords, 
                                     /*! size of the region that we're writing to; MUST
                                       be the same as the dimensions of source[][][] */
-                                    const osp::vec3i &regionSize);
+                                    const osp::vec3i &regionSize,
+                                    /*! size of the region that the block of data
+                                      occupies*/
+                                    const osp::vec3i &region
+                                    );
 
   /*! add 2-float parameter to given object */
   OSPRAY_INTERFACE void ospSetVec2f(OSPObject _object, const char *id, const osp::vec2f &v);

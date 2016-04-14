@@ -90,7 +90,8 @@ struct DDBVolume {
   void (*uniform setRegion)(void *uniform _volume, 
                             const void *uniform _source,
                             const uniform vec3i &regionSize, 
-                            const uniform vec3i &targetCoord000);
+                            const uniform vec3i &targetCoord000,
+                            const uniform vec3i &region);
 };
 
 

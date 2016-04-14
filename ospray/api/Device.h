@@ -75,7 +75,7 @@ namespace ospray {
 
       /*! Copy data into the given volume. */
       virtual int setRegion(OSPVolume object, const void *source, 
-                            const vec3i &index, const vec3i &count) = 0;
+                            const vec3i &index, const vec3i &count, const vec3i &region) = 0;
 
       /*! assign (named) string parameter to an object */
       virtual void setString(OSPObject object, const char *bufName, const char *s) = 0;

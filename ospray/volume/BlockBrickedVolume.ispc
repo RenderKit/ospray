@@ -172,6 +172,7 @@ void BlockBrickedVolumeUChar_setRegion(BlockBrickedVolume *uniform self,
                                        const void *uniform _source,
                                        const uniform vec3i &targetCoord000,
                                        const uniform vec3i &regionSize,
+                                       const uniform vec3i &region,
                                        const uniform int taskIndex)
 {
   const uint8 *uniform source = (const uint8 *uniform)_source;
@@ -207,6 +208,7 @@ void BlockBrickedVolumeFloat_setRegion(BlockBrickedVolume *uniform self,
                                        const void *uniform _source,
                                        const uniform vec3i &targetCoord000,
                                        const uniform vec3i &regionSize,
+                                       const uniform vec3i &region,
                                        const uniform int taskIndex)
 {
   const float *uniform source = (const float *uniform)_source;
@@ -243,6 +245,7 @@ void BlockBrickedVolumeDouble_setRegion(BlockBrickedVolume *uniform self,
                                         const void *uniform _source,
                                         const uniform vec3i &targetCoord000,
                                         const uniform vec3i &regionSize,
+                                        const uniform vec3i &region,
                                         const uniform int taskIndex)
 {
   const double *uniform source = (const double *uniform)_source;
@@ -387,11 +390,14 @@ BlockBrickedVolume_setRegion(void *uniform _self,
                              /*! size of the region that we're writing to; MUST
                                be the same as the dimensions of source[][][] */
                              const uniform vec3i &regionSize,
+                             /*! size of the region that the block of data
+                               occupies*/
+                             const uniform vec3i &region,
                              const uniform int taskIndex)
 {
   // Cast to the actual Volume subtype.
   BlockBrickedVolume *uniform self = (BlockBrickedVolume *uniform)_self;
-  self->setRegion(self, _source, regionCoords, regionSize, taskIndex);
+  self->setRegion(self, _source, regionCoords, regionSize, region, taskIndex);
 }
 
 export void BlockBrickedVolume_freeVolume(void *uniform _self)

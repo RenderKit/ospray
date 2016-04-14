@@ -268,6 +268,7 @@ bool SeismicVolumeFile::importVoxelData(OSPVolume volume) {
       ospray::vec3i regionSize(volumeDimensions.x, 1, 1);
       ospSetRegion(volume, &traceBuffer[traceHeaderSize],
                    (const osp::vec3i &)regionCoords,
+                   (const osp::vec3i &)regionSize,
                    (const osp::vec3i &)regionSize);
 
       traceCount++;

@@ -50,7 +50,7 @@ namespace ospray {
     StructuredVolume::commit();
   }
 
-  int BlockBrickedVolume::setRegion(// points to the first voxel to be copies.
+   int BlockBrickedVolume::setRegion(// points to the first voxel to be copies.
                                     // The voxels at 'source' MUST have
                                     // dimensions 'regionSize', must be
                                     // organized in 3D-array order, and must
@@ -63,7 +63,11 @@ namespace ospray {
                                     // size of the region that we're writing to
                                     // MUST be the same as the dimensions of
                                     // source[][][]
-                                    const vec3i &regionSize)
+                                    const vec3i &regionSize,
+                                    /*! size of the region that the block of data
+                                      occupies*/
+                                    const vec3i &region
+                                    )
   {
     // Create the equivalent ISPC volume container and allocate memory for voxel
     // data.
@@ -105,6 +109,7 @@ namespace ospray {
                                          source,
                                          (const ispc::vec3i &) regionCoords,
                                          (const ispc::vec3i &) regionSize,
+                                         (const ispc::vec3i &) region,
                                          taskIndex);
     });
 

@@ -486,7 +486,8 @@ namespace ospray {
 
     /*! Copy data into the given object. */
     int MPIDevice::setRegion(OSPVolume _volume, const void *source,
-                             const vec3i &index, const vec3i &count)
+                             const vec3i &index, const vec3i &count,
+                             const vec3i &region)
     {
       Assert(_volume);
       Assert(source);
@@ -507,6 +508,7 @@ namespace ospray {
       cmd.send(index);
       cmd.send(count);
       cmd.send(size);
+      cmd.send(region);
       cmd.send(source,size);
       cmd.flush();
 

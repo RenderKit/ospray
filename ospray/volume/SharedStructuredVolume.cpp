@@ -48,7 +48,8 @@ SharedStructuredVolume::~SharedStructuredVolume()
 
   int SharedStructuredVolume::setRegion(const void *source, 
                                         const vec3i &index, 
-                                        const vec3i &count)
+                                        const vec3i &count,
+                                        const vec3i &region)
   {
     if (getIE() == NULL)
       createEquivalentISPC();
@@ -56,17 +57,20 @@ SharedStructuredVolume::~SharedStructuredVolume()
     case OSP_UCHAR:
       ispc::SharedStructuredVolume_setRegion_uint8(getIE(),source,
                                                    (const ispc::vec3i&)index,
-                                                   (const ispc::vec3i&)count);
+                                                   (const ispc::vec3i&)count,
+                                                   (const ispc::vec3i&)region);
       break;
     case OSP_FLOAT:
       ispc::SharedStructuredVolume_setRegion_float(getIE(),source,
                                                    (const ispc::vec3i&)index,
-                                                   (const ispc::vec3i&)count);
+                                                   (const ispc::vec3i&)count,
+                                                   (const ispc::vec3i&)region);
       break;
     case OSP_DOUBLE:
       ispc::SharedStructuredVolume_setRegion_double(getIE(),source,
                                                    (const ispc::vec3i&)index,
-                                                   (const ispc::vec3i&)count);
+                                                   (const ispc::vec3i&)count,
+                                                   (const ispc::vec3i&)region);
       break;
     default:
       throw std::runtime_error("SharedStructuredVolume::setRegion() not "

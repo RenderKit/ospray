@@ -47,7 +47,8 @@ struct GhostBlockBrickedVolume {
   void (*uniform setRegion)(void *uniform _volume, 
                             const void *uniform _source,
                             const uniform vec3i &regionSize, 
-                            const uniform vec3i &targetCoord000);
+                            const uniform vec3i &targetCoord000,
+                            const uniform vec3i &region);
 };
 
 void GhostBlockBrickedVolume_Constructor(GhostBlockBrickedVolume *uniform volume, 

@@ -108,7 +108,12 @@ namespace ospray {
       const vec3i &regionCoords,
       /*! size of the region that we're writing to; MUST
         be the same as the dimensions of source[][][] */
-      const vec3i &regionSize)
+      /*! size of the region that the block of data
+        occupies*/
+      const vec3i &regionSize,
+      /*! size of the region that the block of data
+        occupies*/
+      const vec3i &region)
   {
     // Create the equivalent ISPC volume container and allocate memory for voxel
     // data.
@@ -130,7 +135,7 @@ namespace ospray {
       
       ddBlock[i].cppVolume->setRegion(source,
                                       regionCoords-ddBlock[i].domain.lower,
-                                      regionSize);
+                                      regionSize, region);
       ddBlock[i].ispcVolume = ddBlock[i].cppVolume->getIE();
     }
 
