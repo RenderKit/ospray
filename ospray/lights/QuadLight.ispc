@@ -56,7 +56,7 @@ varying LightSample QuadLight_sample(const uniform Light *uniform _self,
   sample.pdf = self->ppdf * (dist * dist) / abs(cosd);
 
   // emit only to one side
-  sample.radiance = cosd > 0.f ? self->radiance * rcp(sample.pdf) : make_vec3f(0.f);
+  sample.weight = cosd > 0.f ? self->radiance * rcp(sample.pdf) : make_vec3f(0.f);
 
   return sample;
 }
@@ -84,11 +84,11 @@ export void QuadLight_set(void *uniform _self,
 }
 
 //! Create an ispc-side QuadLight object
-export void *uniform QuadLight_create(void *uniform cppEquivalent)
+export void *uniform QuadLight_create()
 {
   uniform QuadLight *uniform self = uniform new uniform QuadLight;
 
-  Light_Constructor(&self->super, cppEquivalent);
+  Light_Constructor(&self->super);
   self->super.sample = QuadLight_sample;
 
   QuadLight_set(self,

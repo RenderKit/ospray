@@ -24,7 +24,7 @@ namespace ospray {
     , intensity(1.f)
     , radius(0.f)
   {
-    ispcEquivalent = ispc::PointLight_create(this);
+    ispcEquivalent = ispc::PointLight_create();
   }
 
   //! Commit parameters understood by the PointLight

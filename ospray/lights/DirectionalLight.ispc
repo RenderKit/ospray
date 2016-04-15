@@ -48,13 +48,13 @@ varying LightSample DirectionalLight_sample(const uniform Light *uniform _self,
   if (self->cosAngle < COS_ANGLE_MAX)
     sample.direction = self->frame * uniformSampleCone(self->cosAngle, s);
 
-  sample.radiance = self->radiance; // *pdf/pdf cancel
+  sample.weight = self->radiance; // *pdf/pdf cancel
 
   return sample;
 }
 
 varying LightEval DirectionalLight_eval(const uniform Light *uniform _self,
-    const varying vec3f &pos,
+    const varying DifferentialGeometry &,
     const varying vec3f &dir)
 {
   uniform DirectionalLight *uniform self = (uniform DirectionalLight *uniform)_self;
@@ -90,10 +90,10 @@ export void DirectionalLight_set(void *uniform _self,
 }
 
 //! Create an ispc-side DirectionalLight object
-export void *uniform DirectionalLight_create(void *uniform cppEquivalent)
+export void *uniform DirectionalLight_create()
 {
   uniform DirectionalLight *uniform self = uniform new uniform DirectionalLight;
-  Light_Constructor(&self->super, cppEquivalent);
+  Light_Constructor(&self->super);
   self->super.sample = DirectionalLight_sample;
   self->super.eval = DirectionalLight_eval;
 

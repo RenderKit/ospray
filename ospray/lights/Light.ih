@@ -22,10 +22,10 @@ struct Light;
 
 struct LightSample
 {
-  vec3f radiance;  //!< radiance for this sample that arrives at the given point, already weighted by pdf
+  vec3f weight;    //!< radiance that arrives at the given point divided by pdf
   vec3f direction; //!< direction towards the light source
-  float distance;  //!< largest valid parameter value for a shadow ray
-  float pdf;       //!< probability that this sample was taken
+  float distance;  //!< largest valid t_far value for a shadow ray
+  float pdf;       //!< probability density that this sample was taken
 };
 
 //! compute the weighted radiance at a point caused by a sample on the light source
@@ -40,30 +40,25 @@ struct LightEval
 {
   vec3f radiance;  //!< radiance that arrives at the given point (not weighted by pdf)
   float distance;
-  float pdf;       //!< probability that the direction would have been sampled
+  float pdf;       //!< probability density that the direction would have been sampled
 };
 
-//! compute the radiance, distance and pdf caused by the light source (pointed to by the given direction) from pos
+//! compute the radiance, distance and pdf caused by the light source (pointed to by the given direction)
 typedef varying LightEval (*Light_EvalFct)(const uniform Light *uniform,
-                 /*! position of point >*/const varying vec3f &pos,
-/*! direction towards the light source >*/const varying vec3f &dir);
+/*! point to evaluate illumination for >*/ const varying DifferentialGeometry&,
+/*! direction towards the light source >*/ const varying vec3f &dir);
 
 
-struct Light {
-  Light_SampleFct  sample;
+struct Light
+{
+  Light_SampleFct sample;
   Light_EvalFct eval;
-
-  //! Pointer back to the C++ equivalent of this class.
-  void *uniform cppEquivalent;
 };
 
 
-varying LightEval defaultEval(const uniform Light *uniform, const varying vec3f &, const varying vec3f &);
+varying LightEval defaultEval(const uniform Light *uniform, const varying DifferentialGeometry&, const varying vec3f&);
 
-//! constructor for ispc-side light object
-inline void Light_Constructor(uniform Light *uniform self,
-                              void *uniform cppEquivalent)
+inline void Light_Constructor(uniform Light *uniform self)
 {
-  self->cppEquivalent = cppEquivalent;
   self->eval = defaultEval;
 }

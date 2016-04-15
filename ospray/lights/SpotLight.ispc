@@ -64,13 +64,13 @@ varying LightSample SpotLight_sample(const uniform Light *uniform _self,
     sample.pdf = inf; // we always take this sample
 
   // convert from power to radiance by attenuating by distance^2; attenuate by angle
-  sample.radiance = self->power * (sqr(invdist) * angularAttenuation);
+  sample.weight = self->power * (sqr(invdist) * angularAttenuation);
 
   return sample;
 }
 
 varying LightEval SpotLight_eval(const uniform Light *uniform _self,
-    const varying vec3f &pos,
+    const varying DifferentialGeometry &dg,
     const varying vec3f &dir)
 {
   const SpotLight *uniform self = (SpotLight *uniform)_self;
@@ -83,7 +83,7 @@ varying LightEval SpotLight_eval(const uniform Light *uniform _self,
     // intersect disk
     const float cosAngle = -dot(dir, self->frame.vz);
     if (cosAngle > self->cosAngleMax) { // inside illuminated cone?
-      const vec3f vp = pos - self->position;
+      const vec3f vp = dg.P - self->position;
       const float dp = dot(vp, self->frame.vz);
       if (dp > 0.f) { // in front of light?
         const float t = dp*rcp(cosAngle);
@@ -126,11 +126,11 @@ export void SpotLight_set(void *uniform _self,
 }
 
 //! Create an ispc-side SpotLight object
-export void *uniform SpotLight_create(void *uniform cppEquivalent)
+export void *uniform SpotLight_create()
 {
   uniform SpotLight *uniform self = uniform new uniform SpotLight;
 
-  Light_Constructor(&self->super, cppEquivalent);
+  Light_Constructor(&self->super);
   self->super.sample = SpotLight_sample;
   self->super.eval = SpotLight_eval;
 

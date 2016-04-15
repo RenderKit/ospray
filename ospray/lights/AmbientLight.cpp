@@ -22,7 +22,7 @@ namespace ospray {
     : color(1.f)
     , intensity(1.f)
   {
-    ispcEquivalent = ispc::AmbientLight_create(this);
+    ispcEquivalent = ispc::AmbientLight_create();
   }
 
   //! Commit parameters understood by the AmbientLight

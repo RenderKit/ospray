@@ -235,12 +235,12 @@ inline void shadeLights(const uniform SciVisRenderer *uniform self,
     const vec2f s = make_vec2f(0.5f);
     const LightSample light = l->sample(l, dg, s);
 
-    if (reduce_max(light.radiance) > 0.f) { // any potential contribution?
+    if (reduce_max(light.weight) > 0.f) { // any potential contribution?
       const float cosNL = abs(dot(light.direction, dg.Ns));
       const float cosLR = max(0.f, dot(light.direction, R));
       const vec3f brdf = info.Kd * cosNL + info.Ks * powf(cosLR, info.Ns);
       const vec3f light_contrib = info.local_opacity
-                                  * brdf * light.radiance;
+                                  * brdf * light.weight;
 
       if (self->shadowsEnabled) {
         const float max_contrib = reduce_max(light_contrib);
@@ -301,7 +301,7 @@ inline void SciVisRenderer_computeVolumeSample(SciVisRenderer *uniform renderer,
                           1.f : abs(dot(safe_normalize(light.direction),
                                         gradient));
 
-      shadedColor = shadedColor + sampleColor * cosNL * light.radiance;
+      shadedColor = shadedColor + sampleColor * cosNL * light.weight;
     }
 
     sampleColor = shadedColor;

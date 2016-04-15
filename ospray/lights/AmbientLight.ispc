@@ -39,13 +39,13 @@ varying LightSample AmbientLight_sample(const uniform Light *uniform _self,
   sample.direction = frame(dg.Ns) * localDir;
   sample.pdf = cosineSampleHemispherePDF(localDir);
   sample.distance = inf;
-  sample.radiance = self->radiance * rcp(sample.pdf);
+  sample.weight = self->radiance * rcp(sample.pdf);
 
   return sample;
 }
 
 varying LightEval AmbientLight_eval(const uniform Light *uniform _self,
-    const varying vec3f &pos,
+    const varying DifferentialGeometry &,
     const varying vec3f &)
 {
   uniform AmbientLight *uniform self = (uniform AmbientLight *uniform)_self;
@@ -60,10 +60,9 @@ varying LightEval AmbientLight_eval(const uniform Light *uniform _self,
 
 
 void AmbientLight_Constructor(uniform AmbientLight *uniform self,
-                              void *uniform cppEquivalent,
                               const uniform vec3f &radiance)
 {
-  Light_Constructor(&self->super, cppEquivalent);
+  Light_Constructor(&self->super);
   self->radiance = radiance;
   self->super.sample = AmbientLight_sample;
   self->super.eval = AmbientLight_eval;
@@ -74,10 +73,10 @@ void AmbientLight_Constructor(uniform AmbientLight *uniform self,
 //////////////////////////////////////////////////////////////////////////////
 
 //! Create an ispc-side AmbientLight object
-export void *uniform AmbientLight_create(void *uniform cppEquivalent)
+export void *uniform AmbientLight_create()
 {
   uniform AmbientLight *uniform self = uniform new uniform AmbientLight;
-  AmbientLight_Constructor(self, cppEquivalent, make_vec3f(1.f));
+  AmbientLight_Constructor(self, make_vec3f(1.f));
   return self;
 }
 

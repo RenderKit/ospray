@@ -24,7 +24,7 @@ namespace ospray {
     , intensity(1.f)
     , angularDiameter(0.f)
   {
-    ispcEquivalent = ispc::DirectionalLight_create(this);
+    ispcEquivalent = ispc::DirectionalLight_create();
   }
 
   //! Commit parameters understood by the DirectionalLight

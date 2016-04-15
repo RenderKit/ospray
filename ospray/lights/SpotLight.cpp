@@ -34,7 +34,7 @@ namespace ospray {
     , penumbraAngle(5.f)
     , radius(0.f)
   {
-    ispcEquivalent = ispc::SpotLight_create(this);
+    ispcEquivalent = ispc::SpotLight_create();
   }
 
   //!< Copy understood parameters into class members
