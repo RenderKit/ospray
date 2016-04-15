@@ -511,7 +511,7 @@ namespace ospray {
       MPI_Status status;
       int rc = MPI_Recv(&numFails,1,MPI_INT,0,MPI_ANY_TAG,mpi::worker.comm,&status);
 
-      Assert(rc != MPI_SUCCESS);
+      Assert(rc == MPI_SUCCESS);
 
       return (numFails == 0);
     }
