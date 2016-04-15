@@ -421,7 +421,7 @@ namespace ospray {
       Assert(_object);
       cmd.newCommand(CMD_COMMIT);
       const ObjectHandle handle = (const ObjectHandle&)_object;
-      cmd.send((const ObjectHandle&)_object);
+      cmd.send(handle);
       cmd.flush();
 
       MPI_Barrier(MPI_COMM_WORLD);
@@ -498,7 +498,6 @@ namespace ospray {
       size_t size = typeSize * size_t(count.x) * size_t(count.y) * size_t(count.z);
       if (size > 1000000000LL)
         throw std::runtime_error("setregion does not currently work for region sizes >= 2GB");
-      // OSPData data = newData(size, type, (void *)source, OSP_DATA_SHARED_BUFFER);
 
       cmd.newCommand(CMD_SET_REGION);
       cmd.send((const ObjectHandle &)_volume);
@@ -511,6 +510,8 @@ namespace ospray {
       int numFails = 0;
       MPI_Status status;
       int rc = MPI_Recv(&numFails,1,MPI_INT,0,MPI_ANY_TAG,mpi::worker.comm,&status);
+
+      Assert(rc != MPI_SUCCESS);
 
       return (numFails == 0);
     }

@@ -145,7 +145,6 @@ namespace ospray {
       Assert(camera != NULL && "could not create camera");
       ospSet3f(camera,"pos",-1,1,-1);
       ospSet3f(camera,"dir",+1,-1,+1);
-//      ospSet1f(camera,"fovy",120);
       ospCommit(camera);
 
       ospSetObject(renderer,"world",model);
@@ -162,8 +161,11 @@ namespace ospray {
       Glut3DWidget::reshape(newSize);
       g_windowSize = newSize;
       if (fb) ospFreeFrameBuffer(fb);
-      fb = ospNewFrameBuffer((const osp::vec2i&)newSize,OSP_RGBA_I8,OSP_FB_COLOR|OSP_FB_DEPTH|OSP_FB_ACCUM|OSP_FB_VARIANCE);
-      ospSet1f(fb, "gamma", 2.2f);
+      fb = ospNewFrameBuffer((const osp::vec2i&)newSize,
+                             OSP_RGBA_I8,
+                             OSP_FB_COLOR|OSP_FB_DEPTH|
+                             OSP_FB_ACCUM|OSP_FB_VARIANCE);
+      ospSet1f(fb, "gamma", 0.5f);
       ospCommit(fb);
       ospFrameBufferClear(fb,OSP_FB_ACCUM);
 
@@ -174,7 +176,8 @@ namespace ospray {
       if (displayWall && displayWall->fb != fb) {
         PRINT(displayWall->size);
         displayWall->fb = ospNewFrameBuffer((const osp::vec2i&)displayWall->size,
-                                            OSP_RGBA_NONE,OSP_FB_COLOR|OSP_FB_DEPTH|OSP_FB_ACCUM);
+                                            OSP_RGBA_NONE,OSP_FB_COLOR|
+                                            OSP_FB_DEPTH|OSP_FB_ACCUM);
         ospFrameBufferClear(displayWall->fb,OSP_FB_ACCUM);
         if (displayWall->po == NULL) {
           displayWall->po = ospNewPixelOp("display_wall");

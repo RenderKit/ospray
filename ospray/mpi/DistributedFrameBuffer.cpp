@@ -128,7 +128,8 @@ namespace ospray {
         this->final.region = tile.region;
         this->final.fbSize = tile.fbSize;
         this->final.rcp_fbSize = tile.rcp_fbSize;
-        ispc::DFB_accumulate((ispc::VaryingTile *)&bufferedTile[0]->tile,
+        ispc::DFB_accumulate(dfb->ispcEquivalent,
+                             (ispc::VaryingTile *)&bufferedTile[0]->tile,
                              (ispc::VaryingTile *)&this->final,
                              (ispc::VaryingTile *)&this->accum,
                              (ispc::VaryingRGBA_I8 *)&this->color,
@@ -162,7 +163,8 @@ namespace ospray {
     this->final.region = tile.region;
     this->final.fbSize = tile.fbSize;
     this->final.rcp_fbSize = tile.rcp_fbSize;
-    ispc::DFB_accumulate((ispc::VaryingTile *)&tile,
+    ispc::DFB_accumulate(dfb->ispcEquivalent,
+                         (ispc::VaryingTile *)&tile,
                          (ispc::VaryingTile*)&this->final,
                          (ispc::VaryingTile*)&this->accum,
                          (ispc::VaryingRGBA_I8*)&this->color,
@@ -192,7 +194,8 @@ namespace ospray {
     }
 
     if (done) {
-      ispc::DFB_accumulate((ispc::VaryingTile*)&this->compositedTileData,
+      ispc::DFB_accumulate(dfb->ispcEquivalent,
+                           (ispc::VaryingTile*)&this->compositedTileData,
                            (ispc::VaryingTile*)&this->final,
                            (ispc::VaryingTile*)&this->accum,
                            (ispc::VaryingRGBA_I8*)&this->color,
@@ -200,8 +203,6 @@ namespace ospray {
       dfb->tileIsCompleted(this);
     }
   }
-
-
 
   void DFB::startNewFrame()
   {
@@ -322,18 +323,19 @@ namespace ospray {
                                                false);
       }
     }
+
     ispc::DFB_set(getIE(),numPixels.x,numPixels.y,
                   colorBufferFormat);
-
   }
 
   void DFB::setFrameMode(FrameMode newFrameMode)
   {
     if (frameMode == newFrameMode) return;
+
     freeTiles();
     this->frameMode = newFrameMode;
     createTiles();
-    }
+  }
 
   const void *DFB::mapDepthBuffer()
   {
@@ -536,7 +538,7 @@ namespace ospray {
       msg->coords = tile.region.lower;
       // TODO: compress pixels before sending ...
       memcpy(&msg->tile,&tile,sizeof(ospray::Tile));
-      msg->command      = WORKER_WRITE_TILE;
+      msg->command = WORKER_WRITE_TILE;
 
       comm->sendTo(this->worker[tileDesc->ownerID],
                    msg,sizeof(*msg));
