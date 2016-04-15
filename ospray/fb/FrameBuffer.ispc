@@ -43,5 +43,5 @@ export void FrameBuffer_set_gamma(void *uniform _self,
                                   const uniform float gamma)
 {
   uniform FrameBuffer *uniform self = (uniform FrameBuffer *uniform)_self;
-  self->gamma = gamma;
+  self->invGamma = 1.0f/gamma;
 }
