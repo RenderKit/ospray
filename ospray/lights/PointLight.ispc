@@ -49,7 +49,7 @@ varying LightSample PointLight_sample(const uniform Light *uniform _self,
   sample.pdf = inf; // per default we always take this sample
 
   // convert from power to radiance by attenuating by distance^2
-  sample.radiance = self->power * sqr(invdist);
+  sample.weight = self->power * sqr(invdist);
   const float sinTheta = self->radius * invdist;
 
   if (self->radius > 0.f & sinTheta > 0.005f) {
@@ -68,7 +68,7 @@ varying LightSample PointLight_sample(const uniform Light *uniform _self,
       sample.direction = frame(dg.Ns) * localDir;
       sample.pdf = cosineSampleHemispherePDF(localDir);
       // TODO:
-      sample.radiance = self->power * rcp(sqr(self->radius));
+      sample.weight = self->power * rcp(sqr(self->radius));
       sample.distance = self->radius;
     }
   }
@@ -77,7 +77,7 @@ varying LightSample PointLight_sample(const uniform Light *uniform _self,
 }
 
 varying LightEval PointLight_eval(const uniform Light *uniform _self,
-    const varying vec3f &pos,
+    const varying DifferentialGeometry &dg,
     const varying vec3f &dir)
 {
   const PointLight *uniform self = (PointLight *uniform)_self;
@@ -87,7 +87,7 @@ varying LightEval PointLight_eval(const uniform Light *uniform _self,
   res.pdf = 0.f;
 
   if (self->radius > 0.f) {
-    const vec3f A = self->position - pos;
+    const vec3f A = self->position - dg.P;
     const float a = dot(dir, dir);
     const float b = 2.f * dot(dir, A);
     const float centerDist2 = dot(A, A);
@@ -129,10 +129,10 @@ export void PointLight_set(void *uniform _self,
 }
 
 //! Create an ispc-side PointLight object
-export void *uniform PointLight_create(void *uniform cppEquivalent)
+export void *uniform PointLight_create()
 {
   uniform PointLight *uniform self = uniform new uniform PointLight;
-  Light_Constructor(&self->super, cppEquivalent);
+  Light_Constructor(&self->super);
   self->super.sample = PointLight_sample;
   self->super.eval = PointLight_eval;
 

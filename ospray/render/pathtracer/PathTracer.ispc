@@ -25,39 +25,6 @@
 #define PDF_CULLING 0.0f
 //#define USE_DGCOLOR
 
-//////////////////////////////////////////////////////////////////
-// LightPath
-
-struct LightPath
-{
-  Ray    ray;                    /*! Last ray in the path. */
-  Medium lastMedium;             /*! Medium the last ray travels inside. */
-  uniform uint32 depth;          /*! Recursion depth of path. */
-  float  bsdfPdf;                // for MIS
-  bool   unbent;                 /*! True of the ray path is a straight line. */
-};
-
-inline void init_LightPath(LightPath& lp, const Ray &ray)
-{
-  lp.ray = ray;
-  lp.lastMedium = make_Medium_Vacuum();
-  lp.depth = 0;
-  lp.bsdfPdf = inf;
-  lp.unbent = true;
-}
-
-inline void extend_fast(LightPath& lp,
-                   const vec3f nextRay_org,
-                   const vec3f nextRay_dir,
-                   const float nextRay_near,
-                   const float nextRay_far,
-                   const float bsdfPdf)
-{
-  lp.unbent = lp.unbent & eq(nextRay_dir,lp.ray.dir);
-  setRay(lp.ray,nextRay_org,nextRay_dir,nextRay_near,nextRay_far);
-  lp.depth++;
-  lp.bsdfPdf = bsdfPdf;
-}
 
 inline float misHeuristic(float pdf1, float pdf2)
 {
@@ -68,11 +35,6 @@ inline float misHeuristic(float pdf1, float pdf2)
   // compare with bit less than sqrt(float_max) (when sqr starts to overflow)
   return pdf1 > 1e17f ? 1.0f : p;
 }
-
-
-
-//////////////////////////////////////////////////////////////////
-// PathTracer
 
 vec3f transparentShadow(const uniform PathTracer* uniform self,
                         vec3f lightContrib,
@@ -129,31 +91,42 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
 
 ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
                              const vec2f &pixel, // normalized, i.e. in [0..1]
-                             LightPath &lightPath,
+                             Ray &ray,
                              varying RandomTEA* uniform rng)
 {
   ScreenSample sample;
   sample.alpha = 1.f;
-  vec3f L = make_vec3f(0.f);
-  vec3f Lw = make_vec3f(1.f);
+
+  vec3f L = make_vec3f(0.f); // accumulated radiance
+  vec3f Lw = make_vec3f(1.f); // path throughput
+  Medium currentMedium = make_Medium_Vacuum();
+  float lastBSDFPdf = inf; // probability density of previous sampled BSDF, for MIS
+  bool straightPath = true; // path from camera did not change direction, for alpha and backplate
+  uniform uint32 depth = 0;
+  // geometric configuration of last surface interaction
+  DifferentialGeometry dg;
+  // P and N also used by light eval
+  dg.P = ray.org;
+  dg.Ns = ray.dir;
+  dg.Ng = ray.dir;
 
   do {
-    /*! Traverse ray. */
-    traceRay(self->super.model, lightPath.ray);
+    traceRay(self->super.model, ray);
 
-    if (lightPath.depth == 0)
-      sample.z = lightPath.ray.t;
+    // record depth of primary rays
+    if (depth == 0)
+      sample.z = ray.t;
 
-    const vec3f wo = neg(lightPath.ray.dir);
+    const vec3f wo = neg(ray.dir);
 
-    float maxLightDist = lightPath.ray.t; // per default virtual lights are occluded by hit geometry
+    float maxLightDist = ray.t; // per default virtual lights are occluded by hit geometry
 
-    /*! Environment shading when nothing hit. */
-    if (noHit(lightPath.ray)) {
+    // environment shading when nothing hit
+    if (noHit(ray)) {
       maxLightDist = inf; // also include envLights (i.e. the ones in infinity)
-      if (lightPath.unbent)
+      if (straightPath)
         sample.alpha = 1.0f - luminance(Lw);
-      if ((bool)self->backplate & lightPath.unbent) {
+      if ((bool)self->backplate & straightPath) {
         L = L + Lw * get3f(self->backplate, clamp2edge(self->backplate, pixel));
         maxLightDist = 1e38; // backplate hides envLights (i.e. the ones in infinity)
       } 
@@ -162,21 +135,26 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     // add light from virtual lights by intersecting them
     for (uniform int i = 0; i < self->numLights; i++) {
       const uniform Light *uniform l = self->lights[i];
-      LightEval le = l->eval(l, lightPath.ray.org, lightPath.ray.dir);
+      LightEval le = l->eval(l, dg, ray.dir);
       if (le.distance <= maxLightDist)
-        L = L + Lw * le.radiance * misHeuristic(lightPath.bsdfPdf, le.pdf);
+        L = L + Lw * le.radiance * misHeuristic(lastBSDFPdf, le.pdf);
     }
 
-    if (noHit(lightPath.ray))
+    if (noHit(ray))
       break;
 
-    DifferentialGeometry dg;
-    postIntersect(self->super.model, dg, lightPath.ray,
+
+
+    ////////////////////////////////////
+    // handle next surface interaction
+
+    // update DifferentialGeometry dg
+    postIntersect(self->super.model, dg, ray,
         DG_MATERIALID|
         DG_NS|DG_NG|DG_FACEFORWARD|DG_NORMALIZE|DG_TEXCOORD|DG_COLOR|DG_TANGENTS
         );
 
-    /*! Shade surface. */
+    // shade surface
     uniform ShadingContext ctx;
     ShadingContext_Constructor(&ctx);
     const varying BSDF* bsdf = NULL;
@@ -184,7 +162,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     uniform PathTraceMaterial* m = (uniform PathTraceMaterial*)dg.material;
     foreach_unique(mm in m)
       if (mm != NULL)
-        bsdf = mm->getBSDF(mm, &ctx, dg, lightPath.ray, lightPath.lastMedium);
+        bsdf = mm->getBSDF(mm, &ctx, dg, ray, currentMedium);
 #else
     foreach_unique(geomID in lightPath.ray.geomID) {
       uniform PathTraceMaterial* uniform m
@@ -207,7 +185,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     }
 #endif
 
-    /*! Direct lighting. Shoot shadow rays to all light sources. */
+    // direct lighting including shadows and MIS
     if (bsdf->type & BSDF_SMOOTH)
     {
       uniform int numLights = self->lights ? min(MAX_LIGHTS, self->numLights) : 0;
@@ -215,14 +193,13 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       {
         const uniform Light *uniform light = self->lights[i];
 
-        /*! Either use precomputed samples for the light or sample light now. */
         LightSample ls = light->sample(light, dg, RandomTEA__getFloats(rng));
 
-        /*! Ignore zero radiance or illumination from the back. */
-        if (reduce_max(ls.radiance) <= 0.0f | ls.pdf <= PDF_CULLING)  //| dot(dg.Ns, ls.direction) <= 1e-8f)
+        // skip when zero contribution from light
+        if (reduce_max(ls.weight) <= 0.0f | ls.pdf <= PDF_CULLING)
           continue;
 
-        /*! Evaluate BSDF */
+        // evaluate BSDF
         vec3f bsdfValue;
         float bsdfPdf = 0.f;
         foreach_unique(b in bsdf)
@@ -232,67 +209,65 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 #ifdef USE_DGCOLOR
         bsdfValue = bsdfValue * make_vec3f(dg.color);
 #endif
+        // skip when zero contribution from material
         if (reduce_max(bsdfValue) <= 0.0f)
           continue;
 
-        /*! Test for shadows. */
+        // test for shadows
         Ray shadow_ray;
         setRay(shadow_ray, dg.P, ls.direction,
-               //dg.error*
                self->super.epsilon, ls.distance-
-               //dg.error*
                self->super.epsilon);
-        shadow_ray.time = lightPath.ray.time;
+        shadow_ray.time = ray.time;
 
-        vec3f unshaded_light_contrib = Lw * ls.radiance * bsdfValue * misHeuristic(ls.pdf, bsdfPdf);
-        L = L + transparentShadow(self, unshaded_light_contrib, shadow_ray, lightPath.lastMedium, rng);
+        vec3f unshaded_light_contrib = Lw * ls.weight * bsdfValue * misHeuristic(ls.pdf, bsdfPdf);
+        L = L + transparentShadow(self, unshaded_light_contrib, shadow_ray, currentMedium, rng);
       }
     }
 
-    /*! Global illumination. Pick one BSDF component and sample it. */
-    if (lightPath.depth >= self->maxDepth)
+    if (depth >= self->maxDepth)
       break;
 
-    /*! sample BSDF */
+    // sample BSDF
     vec3f wi;
     vec2f s  = RandomTEA__getFloats(rng);
     vec2f ss = RandomTEA__getFloats(rng); // FIXME: should be only one component
     vec3f bsdfWeight;
-    float bsdfPdf = 0.f;
     uint32 bsdfType = 0;
+    // also update lastBSDFPdf
     foreach_unique(b in bsdf)
       if (b != NULL)
-        bsdfWeight = b->sample(b, wo, wi, bsdfPdf, bsdfType, s, ss.x);
+        bsdfWeight = b->sample(b, wo, wi, lastBSDFPdf, bsdfType, s, ss.x);
 
 #ifdef USE_DGCOLOR
     if ((type & GLOSSY_REFLECTION) == NONE) // only colorize diffuse component
       bsdfWeight = bsdfWeight * make_vec3f(dg.color);
 #endif
 
-    /*! Continue only if we hit something valid. */
-    if (reduce_max(bsdfWeight) <= 0.0f | bsdfPdf <= PDF_CULLING)
+    // terminate path when zero contribution from material
+    if (reduce_max(bsdfWeight) <= 0.0f | lastBSDFPdf <= PDF_CULLING)
       break;
 
-    /*! Compute simple volumetric effect. */
-    const vec3f transmission = lightPath.lastMedium.transmission;
-    if (ne(transmission,make_vec3f(1.f)))
-      bsdfWeight = bsdfWeight * powf(transmission,lightPath.ray.t);
+    Lw = Lw * bsdfWeight;
 
-    /*! Tracking medium if we hit a medium interface. */
+    // compute simple volumetric effect
+    const vec3f transmission = currentMedium.transmission;
+    if (ne(transmission,make_vec3f(1.f)))
+      Lw = Lw * powf(transmission, ray.t);
+
+    // update currentMedium if we hit a medium interface TODO: support nested dielectrics
     if (bsdfType & BSDF_TRANSMISSION) {
       foreach_unique(uniMat in dg.material) {
         uniform PathTraceMaterial* uniform m = (uniform PathTraceMaterial *)uniMat;
-        if (m != NULL)  m->selectNextMedium(m,lightPath.lastMedium);
+        if (m != NULL)
+          m->selectNextMedium(m, currentMedium);
       }
     }
 
-    /*! Continue the path. */
-    extend_fast(lightPath,
-                dg.P,wi,//dg.error*
-                self->super.epsilon,inf,
-                bsdfPdf);
-
-    Lw = Lw * bsdfWeight;
+    // continue the path
+    straightPath &= eq(ray.dir, wi);
+    setRay(ray, dg.P, wi, self->super.epsilon, inf);
+    depth++;
   } while (reduce_max(Lw) > self->minContribution);
 
   sample.rgb = L;
@@ -334,11 +309,8 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
     const vec2f timeSample = RandomTEA__getFloats(rng);
     screenSample.ray.time = timeSample.x;
 
-    LightPath lightPath;
-    init_LightPath(lightPath, screenSample.ray);
-
     ScreenSample sample = PathTraceIntegrator_Li(self, cameraSample.screen,
-                                                 lightPath, rng);
+                                                 screenSample.ray, rng);
     screenSample.rgb = screenSample.rgb + min(sample.rgb, make_vec3f(self->maxRadiance));
     screenSample.alpha = screenSample.alpha + sample.alpha;
     screenSample.z = min(screenSample.z, sample.z);

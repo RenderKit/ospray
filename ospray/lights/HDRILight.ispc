@@ -36,6 +36,7 @@ struct HDRILight
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 
+// sample function used when no environment map is given: black
 varying LightSample HDRILight_sample_dummy(const uniform Light *uniform,
                                            const varying DifferentialGeometry &,
                                            const varying vec2f &)
@@ -69,13 +70,13 @@ varying LightSample HDRILight_sample(const uniform Light *uniform _self,
   sample.pdf = sample2d.pdf * one_over_two_pi_sqr * rcp(sinTheta);
 
   sample.distance = inf;
-  sample.radiance = get3f(self->map, sample2d.uv) * self->intensity / sample.pdf;
+  sample.weight = get3f(self->map, sample2d.uv) * self->intensity / sample.pdf;
 
   return sample;
 }
 
 varying LightEval HDRILight_eval(const uniform Light *uniform _self,
-    const varying vec3f &,
+    const varying DifferentialGeometry &,
     const varying vec3f &dir)
 {
   uniform HDRILight *uniform self = (uniform HDRILight *uniform)_self;
@@ -158,11 +159,11 @@ export void HDRILight_set(void *uniform _self,
 }
 
 //! Create an ispc-side HDRILight object
-export void *uniform HDRILight_create(void *uniform cppEquivalent)
+export void *uniform HDRILight_create()
 {
   uniform HDRILight *uniform self = uniform new uniform HDRILight;
 
-  Light_Constructor(&self->super, cppEquivalent);
+  Light_Constructor(&self->super);
   self->super.sample = HDRILight_sample_dummy;
   self->distribution = NULL;
 

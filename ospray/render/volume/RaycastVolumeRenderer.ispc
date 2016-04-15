@@ -68,7 +68,7 @@ inline void RaycastVolumeRenderer_computeVolumeSample(RaycastVolumeRenderer *uni
       const float cosNL = (gradient.x == 0.f && gradient.y == 0.f && gradient.z == 0.f) ?
                           1.f : abs(dot(safe_normalize(light.direction), gradient));
 
-      shadedColor = shadedColor + sampleColor * cosNL * light.radiance;
+      shadedColor = shadedColor + sampleColor * cosNL * light.weight;
     }
 
     sampleColor = shadedColor;
@@ -148,7 +148,7 @@ inline void RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *u
     const LightSample light = self->lights[i]->sample(self->lights[i], dg, s);
     const float cosNL = abs(dot(safe_normalize(light.direction), dg.Ns));
 
-    shadedColor = shadedColor + geometryColor * cosNL * light.radiance;
+    shadedColor = shadedColor + geometryColor * cosNL * light.weight;
   }
 
   // Set the color contribution for this sample only (do not accumulate).

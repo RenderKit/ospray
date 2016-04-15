@@ -37,7 +37,7 @@ struct FrameBuffer
 {
   vec2i size; /*!< size (width x height) of frame buffer, in pixels */
   vec2f rcpSize; /*! one over size (precomputed) */
-  uniform float gamma; /*! gamma correction */
+  uniform float invGamma; /*! 1/gamma for gamma correction */
 
   FrameBuffer_ColorBufferFormat colorBufferFormat;
 
