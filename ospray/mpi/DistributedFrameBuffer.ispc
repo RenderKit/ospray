@@ -97,11 +97,10 @@ export void DFB_accumulate(void           *uniform _self,
       final->b[i] = col.z;
       final->a[i] = col.w;
 
-      // XXX hardcoded gamma, should use pixelops!
-      // TODO use fb->super.invGamma
+      // NOTE(jda) - no longer hardcoded, but should use pixelops
       col = max(col,make_vec4f(0.f));
       // alpha is never gamma-corrected
-      col = make_vec4f(pow(make_vec3f(col), self->super.gamma), col.w);
+      col = make_vec4f(pow(make_vec3f(col), self->super.invGamma), col.w);
               
       color->color[i] = cvt_uint32(col);
     }
@@ -130,11 +129,10 @@ export void DFB_accumulate(void           *uniform _self,
       final->b[i] = col.z;
       final->a[i] = col.w;
 
-      // XXX hardcoded gamma, should use pixelops!
-      // TODO use fb->super.invGamma
+      // NOTE(jda) - no longer hardcoded, but should use pixelops
       col = max(col,make_vec4f(0.f));
       // alpha is never gamma-corrected
-      col = make_vec4f(pow(make_vec3f(col), self->super.gamma), col.w);
+      col = make_vec4f(pow(make_vec3f(col), self->super.invGamma), col.w);
               
       color->color[i] = cvt_uint32(col);
     }
