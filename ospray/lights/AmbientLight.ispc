@@ -18,7 +18,8 @@
 #include "ospray/math/sampling.ih"
 #include "ospray/math/LinearSpace.ih"
 
-struct AmbientLight {
+struct AmbientLight
+{
   Light super;      //!< inherited light fields
 
   vec3f radiance;   //!< RGB color and intensity of light
@@ -28,39 +29,39 @@ struct AmbientLight {
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 
-varying LightSample AmbientLight_sample(const uniform Light *uniform _self,
-                                        const varying DifferentialGeometry &dg,
-                                        const varying vec2f &s)
+varying Light_SampleRes AmbientLight_sample(const uniform Light* uniform super,
+                                            const varying DifferentialGeometry& dg,
+                                            const varying vec2f& s)
 {
-  uniform AmbientLight *uniform self = (uniform AmbientLight *uniform)_self;
-  LightSample sample;
+  uniform AmbientLight* uniform self = (uniform AmbientLight* uniform)super;
+  Light_SampleRes res;
 
   const vec3f localDir = cosineSampleHemisphere(s);
-  sample.direction = frame(dg.Ns) * localDir;
-  sample.pdf = cosineSampleHemispherePDF(localDir);
-  sample.distance = inf;
-  sample.weight = self->radiance * rcp(sample.pdf);
+  res.dir = frame(dg.Ns) * localDir;
+  res.pdf = cosineSampleHemispherePDF(localDir);
+  res.dist = inf;
+  res.weight = self->radiance * rcp(res.pdf);
 
-  return sample;
+  return res;
 }
 
-varying LightEval AmbientLight_eval(const uniform Light *uniform _self,
-    const varying DifferentialGeometry &,
-    const varying vec3f &)
+varying Light_EvalRes AmbientLight_eval(const uniform Light* uniform super,
+    const varying DifferentialGeometry&,
+    const varying vec3f&)
 {
-  uniform AmbientLight *uniform self = (uniform AmbientLight *uniform)_self;
-  LightEval res;
+  uniform AmbientLight* uniform self = (uniform AmbientLight* uniform)super;
+  Light_EvalRes res;
 
   res.value = self->radiance;
-  res.distance = inf;
+  res.dist = inf;
   res.pdf = 1.f/(4.f * M_PI); // uniformSampleSpherePDF(); // XXX inconsistent to sample, need surface normal here
 
   return res;
 }
 
 
-void AmbientLight_Constructor(uniform AmbientLight *uniform self,
-                              const uniform vec3f &radiance)
+void AmbientLight_Constructor(uniform AmbientLight* uniform self,
+                              const uniform vec3f& radiance)
 {
   Light_Constructor(&self->super);
   self->radiance = radiance;
@@ -75,15 +76,15 @@ void AmbientLight_Constructor(uniform AmbientLight *uniform self,
 //! Create an ispc-side AmbientLight object
 export void *uniform AmbientLight_create()
 {
-  uniform AmbientLight *uniform self = uniform new uniform AmbientLight;
+  uniform AmbientLight* uniform self = uniform new uniform AmbientLight;
   AmbientLight_Constructor(self, make_vec3f(1.f));
   return self;
 }
 
 //! Set the parameters of an ispc-side AmbientLight object
-export void AmbientLight_set(void *uniform _self,
-                             const uniform vec3f &radiance)
+export void AmbientLight_set(void* uniform super,
+                             const uniform vec3f& radiance)
 {
-  uniform AmbientLight *uniform self = (uniform AmbientLight *uniform)_self;
+  uniform AmbientLight* uniform self = (uniform AmbientLight* uniform)super;
   self->radiance = radiance;
 }

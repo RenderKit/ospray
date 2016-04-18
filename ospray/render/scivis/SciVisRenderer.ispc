@@ -233,11 +233,11 @@ inline void shadeLights(const uniform SciVisRenderer *uniform self,
   for (uniform int i = 0; self->lights && i < self->numLights; i++) {
     const uniform Light *uniform l = self->lights[i];
     const vec2f s = make_vec2f(0.5f);
-    const LightSample light = l->sample(l, dg, s);
+    const Light_SampleRes light = l->sample(l, dg, s);
 
     if (reduce_max(light.weight) > 0.f) { // any potential contribution?
-      const float cosNL = abs(dot(light.direction, dg.Ns));
-      const float cosLR = max(0.f, dot(light.direction, R));
+      const float cosNL = abs(dot(light.dir, dg.Ns));
+      const float cosLR = max(0.f, dot(light.dir, R));
       const vec3f brdf = info.Kd * cosNL + info.Ks * powf(cosLR, info.Ns);
       const vec3f light_contrib = info.local_opacity
                                   * brdf * light.weight;
@@ -246,7 +246,7 @@ inline void shadeLights(const uniform SciVisRenderer *uniform self,
         const float max_contrib = reduce_max(light_contrib);
         if (max_contrib > .01f) {
           Ray shadowRay;
-          setRay(shadowRay, P, light.direction);
+          setRay(shadowRay, P, light.dir);
           const float light_alpha = lightAlpha(shadowRay,
                                                self->super.model,
                                                max_contrib,
@@ -294,11 +294,11 @@ inline void SciVisRenderer_computeVolumeSample(SciVisRenderer *uniform renderer,
     const vec2f s = make_vec2f(0.5f);
 
     for (uniform uint32 i=0; i<renderer->numLights; i++) {
-      const LightSample light = renderer->lights[i]->sample(renderer->lights[i], dg, s);
+      const Light_SampleRes light = renderer->lights[i]->sample(renderer->lights[i], dg, s);
       const float cosNL = (gradient.x == 0.f
                            && gradient.y == 0.f
                            && gradient.z == 0.f) ?
-                          1.f : abs(dot(safe_normalize(light.direction),
+                          1.f : abs(dot(safe_normalize(light.dir),
                                         gradient));
 
       shadedColor = shadedColor + sampleColor * cosNL * light.weight;

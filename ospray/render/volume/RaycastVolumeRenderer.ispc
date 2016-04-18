@@ -64,9 +64,9 @@ inline void RaycastVolumeRenderer_computeVolumeSample(RaycastVolumeRenderer *uni
     const vec2f s = make_vec2f(0.5f);
 
     for (uniform uint32 i=0; i<self->numLights; i++) {
-      const LightSample light = self->lights[i]->sample(self->lights[i], dg, s);
+      const Light_SampleRes light = self->lights[i]->sample(self->lights[i], dg, s);
       const float cosNL = (gradient.x == 0.f && gradient.y == 0.f && gradient.z == 0.f) ?
-                          1.f : abs(dot(safe_normalize(light.direction), gradient));
+                          1.f : abs(dot(safe_normalize(light.dir), gradient));
 
       shadedColor = shadedColor + sampleColor * cosNL * light.weight;
     }
@@ -145,8 +145,8 @@ inline void RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *u
   const vec2f s = make_vec2f(0.5f);
 
   for (uniform uint32 i=0; i<self->numLights; i++) {
-    const LightSample light = self->lights[i]->sample(self->lights[i], dg, s);
-    const float cosNL = abs(dot(safe_normalize(light.direction), dg.Ns));
+    const Light_SampleRes light = self->lights[i]->sample(self->lights[i], dg, s);
+    const float cosNL = abs(dot(safe_normalize(light.dir), dg.Ns));
 
     shadedColor = shadedColor + geometryColor * cosNL * light.weight;
   }

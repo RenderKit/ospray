@@ -135,8 +135,8 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     // add light from virtual lights by intersecting them
     for (uniform int i = 0; i < self->numLights; i++) {
       const uniform Light *uniform l = self->lights[i];
-      LightEval le = l->eval(l, dg, ray.dir);
-      if (le.distance <= maxLightDist)
+      Light_EvalRes le = l->eval(l, dg, ray.dir);
+      if (le.dist <= maxLightDist)
         L = L + Lw * le.value * misHeuristic(lastBSDFPdf, le.pdf);
     }
 
@@ -193,7 +193,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       {
         const uniform Light *uniform light = self->lights[i];
 
-        LightSample ls = light->sample(light, dg, RandomTEA__getFloats(rng));
+        Light_SampleRes ls = light->sample(light, dg, RandomTEA__getFloats(rng));
 
         // skip when zero contribution from light
         if (reduce_max(ls.weight) <= 0.0f | ls.pdf <= PDF_CULLING)
@@ -204,7 +204,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         float bsdfPdf = 0.f;
         foreach_unique(b in bsdf)
           if (b != NULL)
-            bsdfValue = b->eval(b, wo, ls.direction, bsdfPdf);
+            bsdfValue = b->eval(b, wo, ls.dir, bsdfPdf);
 
 #ifdef USE_DGCOLOR
         bsdfValue = bsdfValue * make_vec3f(dg.color);
@@ -215,9 +215,8 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
         // test for shadows
         Ray shadow_ray;
-        setRay(shadow_ray, dg.P, ls.direction,
-               self->super.epsilon, ls.distance-
-               self->super.epsilon);
+        setRay(shadow_ray, dg.P, ls.dir,
+               self->super.epsilon, ls.dist - self->super.epsilon);
         shadow_ray.time = ray.time;
 
         vec3f unshaded_light_contrib = Lw * ls.weight * bsdfValue * misHeuristic(ls.pdf, bsdfPdf);

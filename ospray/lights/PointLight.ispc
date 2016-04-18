@@ -18,7 +18,8 @@
 #include "ospray/math/sampling.ih"
 #include "ospray/math/LinearSpace.ih"
 
-struct PointLight {
+struct PointLight
+{
   Light super;    //!< inherited light fields
 
   vec3f position; //!< light position
@@ -30,12 +31,12 @@ struct PointLight {
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 
-varying LightSample PointLight_sample(const uniform Light *uniform _self,
-                                      const varying DifferentialGeometry &dg,
-                                      const varying vec2f &s)
+varying Light_SampleRes PointLight_sample(const uniform Light* uniform super,
+                                          const varying DifferentialGeometry& dg,
+                                          const varying vec2f& s)
 {
-  const PointLight *uniform self = (PointLight *uniform)_self;
-  LightSample sample;
+  const PointLight* uniform self = (PointLight* uniform)super;
+  Light_SampleRes res;
 
   // extant light vector from the hit point
   const vec3f dir = self->position - dg.P;
@@ -43,47 +44,47 @@ varying LightSample PointLight_sample(const uniform Light *uniform _self,
   const float invdist = rsqrt(dist2);
 
   // normalized light vector
-  sample.direction = dir * invdist;
-  sample.distance = dist2 * invdist;
+  res.dir = dir * invdist;
+  res.dist = dist2 * invdist;
 
-  sample.pdf = inf; // per default we always take this sample
+  res.pdf = inf; // per default we always take this res
 
   // convert from power to radiance by attenuating by distance^2
-  sample.weight = self->power * sqr(invdist);
+  res.weight = self->power * sqr(invdist);
   const float sinTheta = self->radius * invdist;
 
   if (self->radius > 0.f & sinTheta > 0.005f) {
-    // sample surface of sphere as seen by hit point -> cone of directions
+    // res surface of sphere as seen by hit point -> cone of directions
     // for very small cones treat as point light, because float precision is not good enough
     if (sinTheta < 1.f) {
       const float cosTheta = sqrt(1.f - sinTheta * sinTheta);
       const vec3f localDir = uniformSampleCone(cosTheta, s);
-      sample.direction = frame(sample.direction) * localDir;
-      sample.pdf = uniformSampleConePDF(cosTheta);
+      res.dir = frame(res.dir) * localDir;
+      res.pdf = uniformSampleConePDF(cosTheta);
       const float c = localDir.z;
-      sample.distance = c*sample.distance - sqrt(sqr(self->radius) - (1.f - c*c) * dist2);
+      res.dist = c*res.dist - sqrt(sqr(self->radius) - (1.f - c*c) * dist2);
       // TODO scale radiance by actual distance
     } else { // inside sphere
       const vec3f localDir = cosineSampleHemisphere(s);
-      sample.direction = frame(dg.Ns) * localDir;
-      sample.pdf = cosineSampleHemispherePDF(localDir);
+      res.dir = frame(dg.Ns) * localDir;
+      res.pdf = cosineSampleHemispherePDF(localDir);
       // TODO:
-      sample.weight = self->power * rcp(sqr(self->radius));
-      sample.distance = self->radius;
+      res.weight = self->power * rcp(sqr(self->radius));
+      res.dist = self->radius;
     }
   }
 
-  return sample;
+  return res;
 }
 
-varying LightEval PointLight_eval(const uniform Light *uniform _self,
-    const varying DifferentialGeometry &dg,
-    const varying vec3f &dir)
+varying Light_EvalRes PointLight_eval(const uniform Light* uniform super,
+    const varying DifferentialGeometry& dg,
+    const varying vec3f& dir)
 {
-  const PointLight *uniform self = (PointLight *uniform)_self;
-  LightEval res;
+  const PointLight* uniform self = (PointLight* uniform)super;
+  Light_EvalRes res;
   res.value = make_vec3f(0.f);
-  res.distance = inf;
+  res.dist = inf;
   res.pdf = 0.f;
 
   if (self->radius > 0.f) {
@@ -100,7 +101,7 @@ varying LightEval PointLight_eval(const uniform Light *uniform _self,
 
       if (t_far > 0.0f) {
         // TODO: handle interior case
-        res.distance = t_near;
+        res.dist = t_near;
         const float sinTheta2 = sqr(self->radius) * rcp(centerDist2);
         const float cosTheta = sqrt(1.f - sinTheta2);
         res.pdf = uniformSampleConePDF(cosTheta);
@@ -117,21 +118,21 @@ varying LightEval PointLight_eval(const uniform Light *uniform _self,
 //////////////////////////////////////////////////////////////////////////////
 
 //! Set the parameters of an ispc-side PointLight object
-export void PointLight_set(void *uniform _self,
-                           const uniform vec3f &position,
-                           const uniform vec3f &power,
-                           const uniform float radius)
+export void PointLight_set(void* uniform super,
+                           const uniform vec3f& position,
+                           const uniform vec3f& power,
+                           uniform float radius)
 {
-  uniform PointLight *uniform self = (uniform PointLight *uniform)_self;
+  uniform PointLight* uniform self = (uniform PointLight* uniform)super;
   self->position = position;
   self->power = power;
   self->radius = radius;
 }
 
 //! Create an ispc-side PointLight object
-export void *uniform PointLight_create()
+export void* uniform PointLight_create()
 {
-  uniform PointLight *uniform self = uniform new uniform PointLight;
+  uniform PointLight* uniform self = uniform new uniform PointLight;
   Light_Constructor(&self->super);
   self->super.sample = PointLight_sample;
   self->super.eval = PointLight_eval;
