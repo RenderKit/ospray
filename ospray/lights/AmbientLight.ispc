@@ -28,6 +28,8 @@ struct AmbientLight {
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 
+// XXX importance sampling is only done into the positive hemisphere
+// ==> poor support for translucent materials
 varying LightSample AmbientLight_sample(const uniform Light *uniform _self,
                                         const varying DifferentialGeometry &dg,
                                         const varying vec2f &s)
@@ -45,15 +47,15 @@ varying LightSample AmbientLight_sample(const uniform Light *uniform _self,
 }
 
 varying LightEval AmbientLight_eval(const uniform Light *uniform _self,
-    const varying DifferentialGeometry &,
-    const varying vec3f &)
+    const varying DifferentialGeometry &dg,
+    const varying vec3f &dir)
 {
   uniform AmbientLight *uniform self = (uniform AmbientLight *uniform)_self;
   LightEval res;
 
   res.radiance = self->radiance;
   res.distance = inf;
-  res.pdf = 1.f/(4.f * M_PI); // uniformSampleSpherePDF(); // XXX inconsistent to sample, need surface normal here
+  res.pdf = cosineSampleHemispherePDF(max(dot(dg.Ns, dir), 0.f));
 
   return res;
 }
