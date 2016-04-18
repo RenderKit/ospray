@@ -129,7 +129,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       if ((bool)self->backplate & straightPath) {
         L = L + Lw * get3f(self->backplate, clamp2edge(self->backplate, pixel));
         maxLightDist = 1e38; // backplate hides envLights (i.e. the ones in infinity)
-      } 
+      }
     }
 
     // add light from virtual lights by intersecting them
@@ -137,7 +137,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       const uniform Light *uniform l = self->lights[i];
       LightEval le = l->eval(l, dg, ray.dir);
       if (le.distance <= maxLightDist)
-        L = L + Lw * le.radiance * misHeuristic(lastBSDFPdf, le.pdf);
+        L = L + Lw * le.value * misHeuristic(lastBSDFPdf, le.pdf);
     }
 
     if (noHit(ray))

@@ -75,7 +75,7 @@ varying LightEval SpotLight_eval(const uniform Light *uniform _self,
 {
   const SpotLight *uniform self = (SpotLight *uniform)_self;
   LightEval res;
-  res.radiance = make_vec3f(0.f);
+  res.value = make_vec3f(0.f);
   res.distance = inf;
   res.pdf = 0.f;
 
@@ -91,7 +91,7 @@ varying LightEval SpotLight_eval(const uniform Light *uniform _self,
         if (dot(vd, vd) < sqr(self->radius)) { // inside disk?
           const float angularAttenuation = min((cosAngle - self->cosAngleMax) * self->cosAngleScale, 1.f);
           const float pdf = self->diskPdf * cosAngle;
-          res.radiance = self->power * (angularAttenuation * pdf); // *sqr(t)/sqr(t) cancels
+          res.value = self->power * (angularAttenuation * pdf); // *sqr(t)/sqr(t) cancels
           res.distance = t;
           res.pdf = pdf * sqr(t);
         }

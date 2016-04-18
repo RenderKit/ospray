@@ -51,7 +51,7 @@ varying LightEval AmbientLight_eval(const uniform Light *uniform _self,
   uniform AmbientLight *uniform self = (uniform AmbientLight *uniform)_self;
   LightEval res;
 
-  res.radiance = self->radiance;
+  res.value = self->radiance;
   res.distance = inf;
   res.pdf = 1.f/(4.f * M_PI); // uniformSampleSpherePDF(); // XXX inconsistent to sample, need surface normal here
 

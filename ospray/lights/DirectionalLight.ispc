@@ -27,7 +27,7 @@ struct DirectionalLight {
   float pdf;        //!< Probability to sample a direction to the light
 };
 
-// for very small cones treat as singular light, because float precision is not good enough 
+// for very small cones treat as singular light, because float precision is not good enough
 #define COS_ANGLE_MAX 0.99999988f
 
 
@@ -62,10 +62,10 @@ varying LightEval DirectionalLight_eval(const uniform Light *uniform _self,
   res.distance = inf;
 
   if (self->cosAngle < COS_ANGLE_MAX && dot(self->frame.vz, dir) > self->cosAngle) {
-    res.radiance = self->radiance * self->pdf;
+    res.value = self->radiance * self->pdf;
     res.pdf = self->pdf;
   } else {
-    res.radiance = make_vec3f(0.f);
+    res.value = make_vec3f(0.f);
     res.pdf = 0.f;
   }
 

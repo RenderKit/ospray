@@ -21,7 +21,7 @@ varying LightEval Light_eval(const uniform Light *uniform,
     const varying vec3f &)
 {
   LightEval res;
-  res.radiance = make_vec3f(0.f);
+  res.value = make_vec3f(0.f);
   res.distance = inf;
   res.pdf = 0.f;
   return res;

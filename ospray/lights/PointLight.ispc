@@ -54,7 +54,7 @@ varying LightSample PointLight_sample(const uniform Light *uniform _self,
 
   if (self->radius > 0.f & sinTheta > 0.005f) {
     // sample surface of sphere as seen by hit point -> cone of directions
-    // for very small cones treat as point light, because float precision is not good enough 
+    // for very small cones treat as point light, because float precision is not good enough
     if (sinTheta < 1.f) {
       const float cosTheta = sqrt(1.f - sinTheta * sinTheta);
       const vec3f localDir = uniformSampleCone(cosTheta, s);
@@ -82,7 +82,7 @@ varying LightEval PointLight_eval(const uniform Light *uniform _self,
 {
   const PointLight *uniform self = (PointLight *uniform)_self;
   LightEval res;
-  res.radiance = make_vec3f(0.f);
+  res.value = make_vec3f(0.f);
   res.distance = inf;
   res.pdf = 0.f;
 
@@ -105,7 +105,7 @@ varying LightEval PointLight_eval(const uniform Light *uniform _self,
         const float cosTheta = sqrt(1.f - sinTheta2);
         res.pdf = uniformSampleConePDF(cosTheta);
         const float invdist = rcp(t_near);
-        res.radiance = self->power * res.pdf * sqr(invdist);
+        res.value = self->power * res.pdf * sqr(invdist);
       }
     }
   }
