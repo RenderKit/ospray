@@ -16,7 +16,7 @@
 
 #include "Light.ih"
 
-varying LightEval defaultEval(const uniform Light *uniform,
+varying LightEval Light_eval(const uniform Light *uniform,
     const varying DifferentialGeometry&,
     const varying vec3f &)
 {

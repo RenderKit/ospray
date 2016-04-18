@@ -31,9 +31,9 @@ struct LightSample
 //! compute the weighted radiance at a point caused by a sample on the light source
 // by convention, giving (0, 0) as "random" numbers should sample the "center"
 // of the light source (used by the raytracing renderers such as the OBJ renderer)
-typedef varying LightSample (*Light_SampleFct)(const uniform Light *uniform,
-      /*! point to generate the sample for >*/ const varying DifferentialGeometry&,
- /*! random numbers to generate the sample >*/ const varying vec2f &s);
+typedef varying LightSample (*Light_SampleFunc)(const uniform Light *uniform,
+      /*! point to generate the sample for >*/  const varying DifferentialGeometry&,
+ /*! random numbers to generate the sample >*/  const varying vec2f &s);
 
 
 struct LightEval
@@ -44,21 +44,21 @@ struct LightEval
 };
 
 //! compute the radiance, distance and pdf caused by the light source (pointed to by the given direction)
-typedef varying LightEval (*Light_EvalFct)(const uniform Light *uniform,
-/*! point to evaluate illumination for >*/ const varying DifferentialGeometry&,
-/*! direction towards the light source >*/ const varying vec3f &dir);
+typedef varying LightEval (*Light_EvalFunc)(const uniform Light *uniform,
+/*! point to evaluate illumination for >*/  const varying DifferentialGeometry&,
+/*! direction towards the light source >*/  const varying vec3f &dir);
 
 
 struct Light
 {
-  Light_SampleFct sample;
-  Light_EvalFct eval;
+  Light_SampleFunc sample;
+  Light_EvalFunc eval;
 };
 
 
-varying LightEval defaultEval(const uniform Light *uniform, const varying DifferentialGeometry&, const varying vec3f&);
+varying LightEval Light_eval(const uniform Light *uniform, const varying DifferentialGeometry&, const varying vec3f&);
 
 inline void Light_Constructor(uniform Light *uniform self)
 {
-  self->eval = defaultEval;
+  self->eval = Light_eval;
 }

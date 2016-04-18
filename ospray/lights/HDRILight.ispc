@@ -119,7 +119,7 @@ export void HDRILight_set(void *uniform _self,
 
   if (map) {
     self->light2world = light2world;
-    self->world2light = rcp(light2world); 
+    self->world2light = rcp(light2world);
 
     self->map = (uniform Texture2D *uniform)map;
     self->intensity = intensity;
@@ -133,7 +133,7 @@ export void HDRILight_set(void *uniform _self,
     // for i==0 we have a wrap-around, which is wanted for x (phi), but actually not for y (theta),
     // because then light (importance) from the south-pole is leaking to the north-pole
     // however, sin(theta) is zero then, thus we will never sample there
-    uniform float* uniform importance = uniform new uniform float[width*height];  
+    uniform float* uniform importance = uniform new uniform float[width*height];
     for (uniform int y = 0; y < height; y++) {
       uniform float fy = y*self->rcpSize.y;
       uniform float sinTheta = sin(fy * M_PI);
@@ -154,7 +154,7 @@ export void HDRILight_set(void *uniform _self,
     self->super.eval = HDRILight_eval;
   } else {
     self->super.sample = HDRILight_sample_dummy;
-    self->super.eval = defaultEval;
+    self->super.eval = Light_eval;
   }
 }
 
@@ -174,9 +174,8 @@ export void *uniform HDRILight_create()
 
 //! Destroy an ispc-side HDRILight object
 export void HDRILight_destroy(void *uniform _self)
-{ 
+{
   uniform HDRILight *uniform self = (uniform HDRILight *uniform)_self;
   Distribution2D_destroy(self->distribution);
   delete self;
 }
-
