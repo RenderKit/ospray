@@ -36,7 +36,7 @@ inline vec3f ThinDielectric_eval(const varying BSDF* uniform super,
 
 // TODO: account for multiple internal reflections with geometric sum
 inline vec3f ThinDielectric_sample(const varying BSDF* uniform super,
-                                   const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
+                                   const vec3f& wo, vec3f& wi, float& pdf, BSDF_Type& type,
                                    const vec2f& s, float ss)
 {
   const varying ThinDielectric* uniform self = (const varying ThinDielectric* uniform)super;

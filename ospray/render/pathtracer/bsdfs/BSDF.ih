@@ -53,7 +53,7 @@
 
 struct BSDF;
 
-typedef uint32 BSDFType;
+typedef uint32 BSDF_Type;
 
 /*! Result is multiplied by dot(wi,N). */
 typedef vec3f (*BSDF_EvalFunc)(const varying BSDF* uniform super,
@@ -61,19 +61,19 @@ typedef vec3f (*BSDF_EvalFunc)(const varying BSDF* uniform super,
 
 /*! Result is multiplied by dot(wi,N)/pdf. */
 typedef vec3f (*BSDF_SampleFunc)(const varying BSDF* uniform super,
-                                 const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
+                                 const vec3f& wo, vec3f& wi, float& pdf, BSDF_Type& type,
                                  const vec2f& s, float ss);
 
 struct BSDF
 {
-  uniform BSDFType type;
+  uniform BSDF_Type type;
   uniform BSDF_EvalFunc eval;
   uniform BSDF_SampleFunc sample;
   const varying linear3f* uniform frame;
 };
 
 inline void BSDF_Constructor(varying BSDF* uniform self,
-                             uniform BSDFType type,
+                             uniform BSDF_Type type,
                              uniform BSDF_EvalFunc eval,
                              uniform BSDF_SampleFunc sample,
                              const varying linear3f* uniform frame)

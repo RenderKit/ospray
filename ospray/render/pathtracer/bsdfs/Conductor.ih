@@ -34,7 +34,7 @@ inline vec3f Conductor_eval(const varying BSDF* uniform super,
 }
 
 inline vec3f Conductor_sample(const varying BSDF* uniform super,
-                              const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
+                              const vec3f& wo, vec3f& wi, float& pdf, BSDF_Type& type,
                               const vec2f& s, float ss)
 {
   const varying Conductor* uniform self = (const varying Conductor* uniform)super;

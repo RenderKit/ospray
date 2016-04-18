@@ -74,7 +74,7 @@ inline vec3f MultiBSDF_eval(const varying BSDF* uniform super,
 
 /*! Sample the multi-BSDF. */
 inline vec3f MultiBSDF_sample(const varying BSDF* uniform super,
-                              const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
+                              const vec3f& wo, vec3f& wi, float& pdf, BSDF_Type& type,
                               const vec2f& s, float ss)
 {
   const varying MultiBSDF* uniform self = (const varying MultiBSDF* uniform)super;

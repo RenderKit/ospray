@@ -43,7 +43,7 @@ inline vec3f Specular_eval(const varying BSDF* uniform super,
 }
 
 inline vec3f Specular_sample(const varying BSDF* uniform super,
-                             const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
+                             const vec3f& wo, vec3f& wi, float& pdf, BSDF_Type& type,
                              const vec2f& s, float ss)
 {
   const varying Specular* uniform self = (const varying Specular* uniform)super;

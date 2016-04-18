@@ -32,7 +32,7 @@ inline vec3f Reflection_eval(const varying BSDF* uniform super,
 }
 
 inline vec3f Reflection_sample(const varying BSDF* uniform super,
-                               const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
+                               const vec3f& wo, vec3f& wi, float& pdf, BSDF_Type& type,
                                const vec2f& s, float ss)
 {
   const varying Reflection* uniform self = (const varying Reflection* uniform)super;
