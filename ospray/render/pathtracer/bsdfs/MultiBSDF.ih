@@ -111,7 +111,8 @@ inline vec3f MultiBSDF_sample(const varying BSDF* uniform super,
       return make_vec3f(0.0f);
 
     if (type & BSDF_SPECULAR)
-      return weight;
+      // scale by rcp(selection pdf)
+      return weight * (self->importanceSum * rcp(self->importances[choice]));
 
     // compute overall weight and pdf
     vec3f value = weight * pdf;
