@@ -326,6 +326,7 @@ void SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
                                           varying Ray &ray,
                                           varying vec4f &out_color)
 {
+#if 0
   //NOTE(jda) - no geometry opacity handled here...
 
   // We compute intersections on the model and provide the contribution for the
@@ -357,6 +358,66 @@ void SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
   shadeLights(self, ray, dg, info, 0/*depth*/, color);
 
   out_color = make_vec4f(color.x, color.y, color.z, 1.f);
+#else
+  vec3f color        = make_vec3f(0.f);
+  float path_opacity = 1.f;
+  int   depth        = 0;
+  float ray_t_depth  = 0.f;
+
+  while (1) {
+
+    traceRay(self->super.model, ray);
+
+    // Check if we missed, if so we are done //
+    if (ray.geomID < 0) {
+      ray.t = infinity;
+      return;
+    }
+
+    // Record depth of first hit in z buffer //
+    if (depth == 0) {
+      ray_t_depth = ray.t;
+    }
+
+    // Start shading //
+
+    // Calculate material information from DG //
+    DifferentialGeometry dg;
+    postIntersect(self->super.model,
+                  dg,
+                  ray,
+                  DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|
+                  DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
+
+    SciVisShadingInfo info;
+    initShadingInfo(info);
+
+    shadeMaterials(dg, info);
+
+    info.local_opacity = path_opacity * info.d;
+
+    if (info.local_opacity > 0.01f) { // worth shading?
+      shadeAO(self, sampleID, dg, info, color);
+      shadeLights(self, ray, dg, info, depth, color);
+    }
+
+    // Kill path when reached max depth or if remaining contribution too low
+    path_opacity = path_opacity * (1.f - info.d);
+    depth++;
+    if (depth >= self->maxDepth | path_opacity < 0.01f ) {
+      out_color = make_vec4f(color.x, color.y, color.z, 1.f);
+      ray.t = ray_t_depth;
+      return;
+    }
+
+    // Reset ray
+    ray.t0 = ray.t + self->super.epsilon;
+    ray.t = infinity;
+    ray.primID = -1;
+    ray.geomID = -1;
+    ray.instID = -1;
+  }
+#endif
 }
 
 /*! Returns the first hit volume for the provided ray and sets the ray bounds t0 and t,
