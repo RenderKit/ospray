@@ -55,14 +55,40 @@ struct BSDF;
 
 typedef uint32 BSDF_Type;
 
-/*! Result is multiplied by dot(wi,N). */
-typedef vec3f (*BSDF_EvalFunc)(const varying BSDF* uniform super,
-                               const vec3f& wo, const vec3f& wi, float& pdf);
+struct BSDF_EvalRes
+{
+  vec3f value; //!< radiance multiplied by dot(wi,N)
+  float pdf;
+};
 
-/*! Result is multiplied by dot(wi,N)/pdf. */
-typedef vec3f (*BSDF_SampleFunc)(const varying BSDF* uniform super,
-                                 const vec3f& wo, vec3f& wi, float& pdf, BSDF_Type& type,
-                                 const vec2f& s, float ss);
+inline BSDF_EvalRes make_BSDF_EvalRes_zero()
+{
+  BSDF_EvalRes res;
+  res.value = make_vec3f(0.0f);
+  res.pdf = 0.0f;
+  return res;
+}
+
+typedef BSDF_EvalRes (*BSDF_EvalFunc)(const varying BSDF* uniform self,
+                                      const vec3f& wo, const vec3f& wi);
+
+struct BSDF_SampleRes
+{
+  vec3f weight; //!< radiance multiplied by dot(wi,N)/pdf
+  vec3f wi;
+  float pdf;
+  BSDF_Type type;
+};
+
+inline BSDF_SampleRes make_BSDF_SampleRes_zero()
+{
+  BSDF_SampleRes res;
+  res.weight = make_vec3f(0.0f);
+  return res;
+}
+
+typedef BSDF_SampleRes (*BSDF_SampleFunc)(const varying BSDF* uniform self,
+                                          const vec3f& wo, const vec2f& s, float ss);
 
 struct BSDF
 {

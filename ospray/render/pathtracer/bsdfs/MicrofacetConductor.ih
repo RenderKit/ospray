@@ -29,18 +29,15 @@ struct MicrofacetConductor
   GGXDistribution distribution;
 };
 
-inline vec3f MicrofacetConductor_eval(const varying BSDF* uniform super,
-                                      const vec3f& wo, const vec3f& wi, float& pdf)
+inline BSDF_EvalRes MicrofacetConductor_eval(const varying BSDF* uniform super,
+                                             const vec3f& wo, const vec3f& wi)
 {
   const varying MicrofacetConductor* uniform self = (const varying MicrofacetConductor* uniform)super;
+  BSDF_EvalRes res;
 
   float cosThetaO = dot(wo, getN(super));
   float cosThetaI = dot(wi, getN(super));
-  if (cosThetaO <= 0.0f || cosThetaI <= 0.0f)
-  {
-      pdf = 0.0f;
-      return make_vec3f(0.0f);
-  }
+  if (cosThetaO <= 0.0f || cosThetaI <= 0.0f) return make_BSDF_EvalRes_zero();
 
   vec3f wh = normalize(wi + wo);
   float cosThetaH = dot(wh, getN(super));
@@ -53,37 +50,39 @@ inline vec3f MicrofacetConductor_eval(const varying BSDF* uniform super,
   float D = evalVisible(self->distribution, cosThetaH, cosThetaO, cosThetaOH, whPdf);
   float G = G2(self->distribution, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
 
-  pdf = whPdf * rcp(4.0f*abs(cosThetaOH));
-  return F * (D * G * rcp(4.0f*cosThetaO));
+  res.pdf = whPdf * rcp(4.0f*abs(cosThetaOH));
+  res.value = F * (D * G * rcp(4.0f*cosThetaO));
+  return res;
 }
 
-inline vec3f MicrofacetConductor_sample(const varying BSDF* uniform super,
-                                        const vec3f& wo, vec3f& wi, float& pdf, BSDF_Type& type,
-                                        const vec2f& s, float ss)
+inline BSDF_SampleRes MicrofacetConductor_sample(const varying BSDF* uniform super,
+                                                 const vec3f& wo, const vec2f& s, float ss)
 {
   const varying MicrofacetConductor* uniform self = (const varying MicrofacetConductor* uniform)super;
+  BSDF_SampleRes res;
 
   float cosThetaO = dot(wo, getN(super));
-  if (cosThetaO <= 0.0f) return make_vec3f(0.0f);
+  if (cosThetaO <= 0.0f) return make_BSDF_SampleRes_zero();
 
   float whPdf;
   //vec3f wh = getFrame(super) * sample(self->distribution, whPdf, s);
   vec3f wh = getFrame(super) * sampleVisible(self->distribution, transposed(getFrame(super)) * wo, whPdf, s);
 
-  wi = reflect(wo, wh);
-  float cosThetaI = dot(wi, getN(super));
-  if (cosThetaI <= 0.0f) return make_vec3f(0.0f);
+  res.wi = reflect(wo, wh);
+  float cosThetaI = dot(res.wi, getN(super));
+  if (cosThetaI <= 0.0f) return make_BSDF_SampleRes_zero();
   //float cosThetaH = dot(wh, getN(super));
   float cosThetaOH = dot(wo, wh);
-  float cosThetaIH = dot(wi, wh);
+  float cosThetaIH = dot(res.wi, wh);
 
   vec3f F = fresnelConductor(cosThetaOH, self->eta, self->k);
   float G = G2(self->distribution, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
 
-  type = BSDF_GLOSSY_REFLECTION;
-  pdf = whPdf * rcp(4.0f*abs(cosThetaOH));
-  //return F * (G * abs(cosThetaOH * rcp(cosThetaO*cosThetaH)));
-  return F * (G * rcp_safe(G1(self->distribution, cosThetaO, cosThetaOH)));
+  res.type = BSDF_GLOSSY_REFLECTION;
+  res.pdf = whPdf * rcp(4.0f*abs(cosThetaOH));
+  //res.weight = F * (G * abs(cosThetaOH * rcp(cosThetaO*cosThetaH)));
+  res.weight = F * (G * rcp_safe(G1(self->distribution, cosThetaO, cosThetaOH)));
+  return res;
 }
 
 inline void MicrofacetConductor_Constructor(varying MicrofacetConductor* uniform self, const varying linear3f* uniform frame,

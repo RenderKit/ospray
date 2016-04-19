@@ -200,17 +200,16 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
           continue;
 
         // evaluate BSDF
-        vec3f bsdfValue;
-        float bsdfPdf = 0.f;
-        foreach_unique(b in bsdf)
-          if (b != NULL)
-            bsdfValue = b->eval(b, wo, ls.dir, bsdfPdf);
+        BSDF_EvalRes fe;
+        foreach_unique(f in bsdf)
+          if (f != NULL)
+            fe = f->eval(f, wo, ls.dir);
 
 #ifdef USE_DGCOLOR
-        bsdfValue = bsdfValue * make_vec3f(dg.color);
+        fe.value = fe.value * make_vec3f(dg.color);
 #endif
         // skip when zero contribution from material
-        if (reduce_max(bsdfValue) <= 0.0f)
+        if (reduce_max(fe.value) <= 0.0f)
           continue;
 
         // test for shadows
@@ -219,7 +218,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
                self->super.epsilon, ls.dist - self->super.epsilon);
         shadow_ray.time = ray.time;
 
-        vec3f unshaded_light_contrib = Lw * ls.weight * bsdfValue * misHeuristic(ls.pdf, bsdfPdf);
+        vec3f unshaded_light_contrib = Lw * ls.weight * fe.value * misHeuristic(ls.pdf, fe.pdf);
         L = L + transparentShadow(self, unshaded_light_contrib, shadow_ray, currentMedium, rng);
       }
     }
@@ -228,26 +227,26 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       break;
 
     // sample BSDF
-    vec3f wi;
     vec2f s  = RandomTEA__getFloats(rng);
     vec2f ss = RandomTEA__getFloats(rng); // FIXME: should be only one component
-    vec3f bsdfWeight;
-    uint32 bsdfType = 0;
-    // also update lastBSDFPdf
-    foreach_unique(b in bsdf)
-      if (b != NULL)
-        bsdfWeight = b->sample(b, wo, wi, lastBSDFPdf, bsdfType, s, ss.x);
+    BSDF_SampleRes fs;
+    foreach_unique(f in bsdf)
+      if (f != NULL)
+        fs = f->sample(f, wo, s, ss.x);
+
+    // update lastBSDFPdf
+    lastBSDFPdf = fs.pdf;
 
 #ifdef USE_DGCOLOR
     if ((type & GLOSSY_REFLECTION) == NONE) // only colorize diffuse component
-      bsdfWeight = bsdfWeight * make_vec3f(dg.color);
+      fs.weight = fs.weight * make_vec3f(dg.color);
 #endif
 
     // terminate path when zero contribution from material
-    if (reduce_max(bsdfWeight) <= 0.0f | lastBSDFPdf <= PDF_CULLING)
+    if (reduce_max(fs.weight) <= 0.0f | fs.pdf <= PDF_CULLING)
       break;
 
-    Lw = Lw * bsdfWeight;
+    Lw = Lw * fs.weight;
 
     // compute simple volumetric effect
     const vec3f transmission = currentMedium.transmission;
@@ -255,7 +254,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       Lw = Lw * powf(transmission, ray.t);
 
     // update currentMedium if we hit a medium interface TODO: support nested dielectrics
-    if (bsdfType & BSDF_TRANSMISSION) {
+    if (fs.type & BSDF_TRANSMISSION) {
       foreach_unique(uniMat in dg.material) {
         uniform PathTraceMaterial* uniform m = (uniform PathTraceMaterial *)uniMat;
         if (m != NULL)
@@ -264,8 +263,8 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     }
 
     // continue the path
-    straightPath &= eq(ray.dir, wi);
-    setRay(ray, dg.P, wi, self->super.epsilon, inf);
+    straightPath &= eq(ray.dir, fs.wi);
+    setRay(ray, dg.P, fs.wi, self->super.epsilon, inf);
     depth++;
   } while (reduce_max(Lw) > self->minContribution);
 

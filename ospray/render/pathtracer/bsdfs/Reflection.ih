@@ -25,22 +25,23 @@ struct Reflection
   vec3f reflectance;
 };
 
-inline vec3f Reflection_eval(const varying BSDF* uniform super,
-                             const vec3f& wo, const vec3f& wi, float& pdf)
+inline BSDF_EvalRes Reflection_eval(const varying BSDF* uniform super,
+                                    const vec3f& wo, const vec3f& wi)
 {
-  return make_vec3f(0.0f);
+  return make_BSDF_EvalRes_zero();
 }
 
-inline vec3f Reflection_sample(const varying BSDF* uniform super,
-                               const vec3f& wo, vec3f& wi, float& pdf, BSDF_Type& type,
-                               const vec2f& s, float ss)
+inline BSDF_SampleRes Reflection_sample(const varying BSDF* uniform super,
+                                        const vec3f& wo, const vec2f& s, float ss)
 {
   const varying Reflection* uniform self = (const varying Reflection* uniform)super;
+  BSDF_SampleRes res;
 
-  wi = reflect(wo, getN(super));
-  pdf = inf;
-  type = BSDF_SPECULAR_REFLECTION;
-  return self->reflectance;
+  res.wi = reflect(wo, getN(super));
+  res.pdf = inf;
+  res.type = BSDF_SPECULAR_REFLECTION;
+  res.weight = self->reflectance;
+  return res;
 }
 
 inline void Reflection_Constructor(varying Reflection* uniform self, const varying linear3f* uniform frame,

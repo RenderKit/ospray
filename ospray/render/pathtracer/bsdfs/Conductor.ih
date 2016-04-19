@@ -27,21 +27,22 @@ struct Conductor
   vec3f k;           //!< imaginary part of refraction index
 };
 
-inline vec3f Conductor_eval(const varying BSDF* uniform super,
-                            const vec3f& wo, const vec3f& wi, float& pdf)
+inline BSDF_EvalRes Conductor_eval(const varying BSDF* uniform super,
+                                   const vec3f& wo, const vec3f& wi)
 {
-  return make_vec3f(0.0f);
+  return make_BSDF_EvalRes_zero();
 }
 
-inline vec3f Conductor_sample(const varying BSDF* uniform super,
-                              const vec3f& wo, vec3f& wi, float& pdf, BSDF_Type& type,
-                              const vec2f& s, float ss)
+inline BSDF_SampleRes Conductor_sample(const varying BSDF* uniform super,
+                                       const vec3f& wo, const vec2f& s, float ss)
 {
   const varying Conductor* uniform self = (const varying Conductor* uniform)super;
-  wi = reflect(wo, getN(super));
-  pdf = inf;
-  type = BSDF_SPECULAR_REFLECTION;
-  return self->reflectance * fresnelConductor(dot(wo, getN(super)), self->eta, self->k);
+  BSDF_SampleRes res;
+  res.wi = reflect(wo, getN(super));
+  res.pdf = inf;
+  res.type = BSDF_SPECULAR_REFLECTION;
+  res.weight = self->reflectance * fresnelConductor(dot(wo, getN(super)), self->eta, self->k);
+  return res;
 }
 
 inline void Conductor_Constructor(varying Conductor* uniform self, const varying linear3f* uniform frame,
