@@ -37,7 +37,7 @@ namespace ospray {
 
   void FrameBuffer::commit()
   {
-    const float gamma = getParam1f("gamma", 2.2f);
+    const float gamma = getParam1f("gamma", 1.0f);
     ispc::FrameBuffer_set_gamma(ispcEquivalent, gamma);
   }
 
