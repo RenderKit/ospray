@@ -99,7 +99,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
   vec3f L = make_vec3f(0.f); // accumulated radiance
   vec3f Lw = make_vec3f(1.f); // path throughput
-  Medium currentMedium = make_Medium_Vacuum();
+  Medium currentMedium = make_Medium_vacuum();
   float lastBSDFPdf = inf; // probability density of previous sampled BSDF, for MIS
   bool straightPath = true; // path from camera did not change direction, for alpha and backplate
   uniform uint32 depth = 0;

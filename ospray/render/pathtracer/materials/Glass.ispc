@@ -57,7 +57,7 @@ vec3f Glass_getTransparency(const uniform PathTraceMaterial* uniform material,
 }
 
 void Glass_selectNextMedium(const uniform PathTraceMaterial* uniform super,
-                            varying Medium& currentMedium)
+                            Medium& currentMedium)
 {
   const uniform Glass* uniform self = (const uniform Glass* uniform)super;
 
