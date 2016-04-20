@@ -31,9 +31,9 @@ struct PointLight
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 
-varying Light_SampleRes PointLight_sample(const uniform Light* uniform super,
-                                          const varying DifferentialGeometry& dg,
-                                          const varying vec2f& s)
+Light_SampleRes PointLight_sample(const uniform Light* uniform super,
+                                  const DifferentialGeometry& dg,
+                                  const vec2f& s)
 {
   const PointLight* uniform self = (PointLight* uniform)super;
   Light_SampleRes res;
@@ -77,9 +77,9 @@ varying Light_SampleRes PointLight_sample(const uniform Light* uniform super,
   return res;
 }
 
-varying Light_EvalRes PointLight_eval(const uniform Light* uniform super,
-    const varying DifferentialGeometry& dg,
-    const varying vec3f& dir)
+Light_EvalRes PointLight_eval(const uniform Light* uniform super,
+                              const DifferentialGeometry& dg,
+                              const vec3f& dir)
 {
   const PointLight* uniform self = (PointLight* uniform)super;
   Light_EvalRes res;

@@ -31,9 +31,9 @@ struct AmbientLight
 
 // XXX importance sampling is only done into the positive hemisphere
 // ==> poor support for translucent materials
-varying Light_SampleRes AmbientLight_sample(const uniform Light* uniform super,
-                                            const varying DifferentialGeometry& dg,
-                                            const varying vec2f& s)
+Light_SampleRes AmbientLight_sample(const uniform Light* uniform super,
+                                    const DifferentialGeometry& dg,
+                                    const vec2f& s)
 {
   uniform AmbientLight* uniform self = (uniform AmbientLight* uniform)super;
   Light_SampleRes res;
@@ -47,9 +47,9 @@ varying Light_SampleRes AmbientLight_sample(const uniform Light* uniform super,
   return res;
 }
 
-varying Light_EvalRes AmbientLight_eval(const uniform Light* uniform super,
-    const varying DifferentialGeometry& dg,
-    const varying vec3f& dir)
+Light_EvalRes AmbientLight_eval(const uniform Light* uniform super,
+                                const DifferentialGeometry& dg,
+                                const vec3f& dir)
 {
   uniform AmbientLight* uniform self = (uniform AmbientLight* uniform)super;
   Light_EvalRes res;

@@ -16,9 +16,9 @@
 
 #include "Light.ih"
 
-varying Light_EvalRes Light_eval(const uniform Light* uniform,
-    const varying DifferentialGeometry&,
-    const varying vec3f&)
+Light_EvalRes Light_eval(const uniform Light* uniform,
+                         const DifferentialGeometry&,
+                         const vec3f&)
 {
   Light_EvalRes res;
   res.value = make_vec3f(0.f);

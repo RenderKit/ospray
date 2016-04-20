@@ -35,9 +35,9 @@ struct SpotLight
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 
-varying Light_SampleRes SpotLight_sample(const uniform Light* uniform super,
-                                         const varying DifferentialGeometry& dg,
-                                         const varying vec2f& s)
+Light_SampleRes SpotLight_sample(const uniform Light* uniform super,
+                                 const DifferentialGeometry& dg,
+                                 const vec2f& s)
 {
   const SpotLight* uniform self = (SpotLight* uniform)super;
   Light_SampleRes res;
@@ -70,9 +70,9 @@ varying Light_SampleRes SpotLight_sample(const uniform Light* uniform super,
   return res;
 }
 
-varying Light_EvalRes SpotLight_eval(const uniform Light* uniform super,
-    const varying DifferentialGeometry& dg,
-    const varying vec3f& dir)
+Light_EvalRes SpotLight_eval(const uniform Light* uniform super,
+                             const DifferentialGeometry& dg,
+                             const vec3f& dir)
 {
   const SpotLight* uniform self = (SpotLight* uniform)super;
   Light_EvalRes res;

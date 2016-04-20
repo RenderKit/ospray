@@ -35,9 +35,9 @@ struct DirectionalLight
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 
-varying Light_SampleRes DirectionalLight_sample(const uniform Light* uniform super,
-                                                const varying DifferentialGeometry& dg,
-                                                const varying vec2f& s)
+Light_SampleRes DirectionalLight_sample(const uniform Light* uniform super,
+                                        const DifferentialGeometry& dg,
+                                        const vec2f& s)
 {
   const DirectionalLight* uniform self = (DirectionalLight* uniform)super;
   Light_SampleRes res;
@@ -54,9 +54,9 @@ varying Light_SampleRes DirectionalLight_sample(const uniform Light* uniform sup
   return res;
 }
 
-varying Light_EvalRes DirectionalLight_eval(const uniform Light* uniform super,
-    const varying DifferentialGeometry&,
-    const varying vec3f& dir)
+Light_EvalRes DirectionalLight_eval(const uniform Light* uniform super,
+                                    const DifferentialGeometry&,
+                                    const vec3f& dir)
 {
   uniform DirectionalLight* uniform self = (uniform DirectionalLight* uniform)super;
   Light_EvalRes res;
@@ -91,7 +91,7 @@ export void DirectionalLight_set(void* uniform super,
 }
 
 //! Create an ispc-side DirectionalLight object
-export void *uniform DirectionalLight_create()
+export void* uniform DirectionalLight_create()
 {
   uniform DirectionalLight* uniform self = uniform new uniform DirectionalLight;
   Light_Constructor(&self->super);

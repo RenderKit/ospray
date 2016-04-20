@@ -33,9 +33,9 @@ struct QuadLight
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 
-varying Light_SampleRes QuadLight_sample(const uniform Light* uniform super,
-                                         const varying DifferentialGeometry& dg,
-                                         const varying vec2f& s)
+Light_SampleRes QuadLight_sample(const uniform Light* uniform super,
+                                 const DifferentialGeometry& dg,
+                                 const vec2f& s)
 {
   const QuadLight* uniform self = (QuadLight* uniform)super;
   Light_SampleRes res;
