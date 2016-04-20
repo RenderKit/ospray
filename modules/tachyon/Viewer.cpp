@@ -198,6 +198,8 @@ namespace ospray {
         ospCommit(camera);
 
         renderer = ospNewRenderer(renderType);
+        ospSet1i(renderer, "aoSamples", 1);
+        ospSet1i(renderer, "shadowsEnabled", 1);
 
         Assert2(renderer,"could not create renderer");
         ospSetObject(renderer,"model",model);
