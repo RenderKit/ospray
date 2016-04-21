@@ -77,7 +77,7 @@ inline BSDF_SampleRes MultiBSDF_sample(const varying BSDF* uniform super,
 {
   const varying MultiBSDF* uniform self = (const varying MultiBSDF* uniform)super;
 
-  if (self->importanceSum == 0.0f)
+  if (self->importanceSum == 0.0f) // also handles case self->numBsdfs == 0
     return make_BSDF_SampleRes_zero();
 
   if (self->numBsdfs == 1)
@@ -85,7 +85,7 @@ inline BSDF_SampleRes MultiBSDF_sample(const varying BSDF* uniform super,
     const varying BSDF* uniform bsdf = self->bsdfs[0];
     return bsdf->sample(bsdf, wo, s, ss);
   }
-  else if (self->numBsdfs > 1)
+  else
   {
     // choose which BSDF to sample
     float x = ss * self->importanceSum;
@@ -133,10 +133,6 @@ inline BSDF_SampleRes MultiBSDF_sample(const varying BSDF* uniform super,
     res.pdf *= rcp(self->importanceSum);
     res.weight = value * rcp(res.pdf);
     return res;
-  }
-  else
-  {
-    return make_BSDF_SampleRes_zero();
   }
 }
 
