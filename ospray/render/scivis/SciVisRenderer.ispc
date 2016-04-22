@@ -315,39 +315,6 @@ void SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
                                           varying Ray &ray,
                                           varying vec4f &out_color)
 {
-#if 0
-  //NOTE(jda) - no geometry opacity handled here...
-
-  // We compute intersections on the model and provide the contribution for the
-  // closest hit.
-  traceRay(self->super.model, ray);
-
-  // No hit found.
-  if(ray.geomID < 0) {
-    ray.t = infinity;
-    return;
-  }
-
-  // Calculate material information from DG //
-  DifferentialGeometry dg;
-  postIntersect(self->super.model, dg, ray,
-                DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|
-                DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
-
-  SciVisShadingInfo info;
-  initShadingInfo(info);
-
-  shadeMaterials(dg, info);
-
-  info.local_opacity = info.d;
-
-  vec3f color = make_vec3f(0.f);
-
-  shadeAO(self, sampleID, dg, info, color);
-  shadeLights(self, ray, dg, info, 0/*depth*/, color);
-
-  out_color = make_vec4f(color.x, color.y, color.z, 1.f);
-#else
   vec3f color        = make_vec3f(0.f);
   float path_opacity = 1.f;
   int   path_depth   = 0;
@@ -359,11 +326,11 @@ void SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
 
     // Check if we missed, if so we are done //
     if (ray.geomID < 0) {
-      ray.t = infinity;
+      out_color = make_vec4f(color.x, color.y, color.z, 1.f - path_opacity);
       return;
     }
 
-    // Record depth of first hit in z buffer //
+    // Record depth of first hit for depth output //
     if (path_depth == 0) {
       ray_t_depth = ray.t;
     }
@@ -406,7 +373,6 @@ void SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
     ray.geomID = -1;
     ray.instID = -1;
   }
-#endif
 }
 
 /*! Returns the first hit volume for the provided ray and sets the ray bounds t0 and t,
@@ -520,9 +486,13 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
   // Trace the ray through the volume and geometries.
   float firstHit;
 
+  // Geometry contribution.
+  color = color + (1.0f - color.w) * geometryColor;
+
   while ((firstHit = min(ray.t0, geometryRay.t)) < tMax
-         && min(min(color.x, color.y), color.z) < 1.0f
+         /*&& min(min(color.x, color.y), color.z) < 1.0f*///<--why is this here?
          && color.w < 0.99f) {
+
     if (firstHit == ray.t0) {
 
       // Check to see if we've exited the current volume.
@@ -531,6 +501,7 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
         ray.t0 = ray.t + epsilon;
         ray.t = tMax;
         volume = SciVisRenderer_intersectVolumes(renderer, ray, rayOffset);
+
       } else {
 
         if (any(volume == NULL))
@@ -545,6 +516,7 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
         color = color + (1.0f - color.w) * volumeColor;
 
       }
+
     } else {// firstHit == geometryRay.t
 
       // Geometry contribution.
@@ -666,7 +638,7 @@ void SciVisRenderer_renderSample(uniform Renderer *uniform _self,
 
   // Provide the renderer to the intersector as it contains all
   // volumes, geometries, etc.
-  vec4f color = make_vec4f(0.0f,0.f,0.f,0.f);
+  vec4f color = make_vec4f(0.0f);
   float depth = infinity;
 
   SciVisRenderer_intersect(renderer, sample.ray, rayOffset,
