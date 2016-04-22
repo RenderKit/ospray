@@ -25,9 +25,6 @@
 #include "ospray/math/vec.ih"
 
 
-inline float cos2sin(const float f) { return sqrt(max(0.f, 1.f - f * f)); }
-inline float sin2cos(const float f) { return cos2sin(f); }
-
 inline vec3f cartesian(const float phi, const float sinTheta, const float cosTheta)
 {
   float sinPhi, cosPhi;
