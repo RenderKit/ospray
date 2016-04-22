@@ -223,7 +223,7 @@ inline void shadeLights(const uniform SciVisRenderer *uniform self,
                         const varying Ray &ray,
                         const varying DifferentialGeometry &dg,
                         const varying SciVisShadingInfo &info,
-                        const varying float depth,
+                        const varying int path_depth,
                         varying vec3f &color)
 {
   const vec3f R = ray.dir - ((2.f * dot(ray.dir, dg.Ns)) * dg.Ns);
@@ -250,7 +250,7 @@ inline void shadeLights(const uniform SciVisRenderer *uniform self,
           const float light_alpha = lightAlpha(shadowRay,
                                                self->super.model,
                                                max_contrib,
-                                               self->maxDepth - depth,
+                                               self->maxDepth - path_depth,
                                                self->super.epsilon);
           color = color + light_alpha * light_contrib;
         }
@@ -398,7 +398,7 @@ void SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
 
     if (info.local_opacity > 0.01f) { // worth shading?
       shadeAO(self, sampleID, dg, info, color);
-      shadeLights(self, ray, dg, info, ray_t_depth, color);
+      shadeLights(self, ray, dg, info, path_depth, color);
     }
 
     // Kill path when reached max depth or if remaining contribution too low
@@ -648,7 +648,7 @@ void SciVisRenderer_shadeRay(const uniform SciVisRenderer *uniform self,
     // kill path when reached max depth or if remaining contribution too low 
     path_opacity = path_opacity * (1.f - info.d);
     depth++;
-    if (depth >= self->maxDepth | path_opacity < 0.01f ) {
+    if (depth >= self->maxDepth || path_opacity < 0.01f ) {
       sample.rgb = color;
       sample.alpha = 1.f - path_opacity;
       return;
@@ -668,7 +668,7 @@ void SciVisRenderer_renderSample(uniform Renderer *uniform _self,
 {
   //NOTE(jda) - Eliminate #if'd out code path when satisfied with surface only
   //            scene performance and features
-#if 0
+#if 1
   uniform SciVisRenderer *uniform self =
       (uniform SciVisRenderer *uniform)_self;
   SciVisRenderer_shadeRay(self, sample);
