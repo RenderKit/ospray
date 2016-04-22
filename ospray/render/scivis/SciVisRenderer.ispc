@@ -328,7 +328,7 @@ void SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
 {
   vec3f color        = make_vec3f(0.f);
   float path_opacity = 1.f;
-  int   depth        = 0;
+  int   path_depth   = 0;
   float ray_t_depth  = 0.f;
 
   while (1) {
@@ -342,7 +342,7 @@ void SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
     }
 
     // Record depth of first hit in z buffer //
-    if (depth == 0) {
+    if (path_depth == 0) {
       ray_t_depth = ray.t;
     }
 
@@ -365,14 +365,14 @@ void SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
 
     if (info.local_opacity > 0.01f) { // worth shading?
       shadeAO(self, sampleID, dg, info, color);
-      shadeLights(self, ray, dg, info, depth, color);
+      shadeLights(self, ray, dg, info, ray_t_depth, color);
     }
 
     // Kill path when reached max depth or if remaining contribution too low
     path_opacity = path_opacity * (1.f - info.d);
-    depth++;
-    if (depth >= self->maxDepth | path_opacity < 0.01f ) {
-      out_color = make_vec4f(color.x, color.y, color.z, 1.f);
+    path_depth++;
+    if (path_depth >= self->maxDepth || path_opacity < 0.01f ) {
+      out_color = make_vec4f(color.x, color.y, color.z, 1.f - path_opacity);
       ray.t = ray_t_depth;
       return;
     }
@@ -532,7 +532,7 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
         color = color + (1.0f - color.w) * volumeColor;
 
       }
-    } else if (firstHit == geometryRay.t) {
+    } else {// firstHit == geometryRay.t
 
       // Geometry contribution.
       color = color + (1.0f - color.w) * geometryColor;
