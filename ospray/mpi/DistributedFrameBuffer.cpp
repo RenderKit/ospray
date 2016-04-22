@@ -82,6 +82,26 @@ namespace ospray {
 
   Mutex gMutex;
 
+  void DFB::TileData::accumulate(const ospray::Tile &tile)
+  {
+    switch(dfb->colorBufferFormat) {
+      case OSP_FB_RGBA8:
+        ispc::DFB_accumulate_RGBA8(dfb->ispcEquivalent,
+            (ispc::VaryingTile *)&tile,
+            (ispc::VaryingTile*)&this->final,
+            (ispc::VaryingTile*)&this->accum,
+            (ispc::VaryingRGBA_I8*)&this->color,
+            dfb->hasAccumBuffer);
+      case OSP_FB_SRGBA:
+        ispc::DFB_accumulate_SRGBA(dfb->ispcEquivalent,
+            (ispc::VaryingTile *)&tile,
+            (ispc::VaryingTile*)&this->final,
+            (ispc::VaryingTile*)&this->accum,
+            (ispc::VaryingRGBA_I8*)&this->color,
+            dfb->hasAccumBuffer);
+    }
+  }
+
   /*! called exactly once for each ospray::Tile that needs to get
     written into / composited into this dfb tile */
   void DFB::AlphaBlendTile_simple::process(const ospray::Tile &tile)
@@ -128,13 +148,7 @@ namespace ospray {
         this->final.region = tile.region;
         this->final.fbSize = tile.fbSize;
         this->final.rcp_fbSize = tile.rcp_fbSize;
-        ispc::DFB_accumulate(dfb->ispcEquivalent,
-                             (ispc::VaryingTile *)&bufferedTile[0]->tile,
-                             (ispc::VaryingTile *)&this->final,
-                             (ispc::VaryingTile *)&this->accum,
-                             (ispc::VaryingRGBA_I8 *)&this->color,
-                             dfb->hasAccumBuffer);
-
+        accumulate(bufferedTile[0]->tile);
         dfb->tileIsCompleted(this);
         for (int i=0;i<bufferedTile.size();i++)
           delete bufferedTile[i];
@@ -163,15 +177,9 @@ namespace ospray {
     this->final.region = tile.region;
     this->final.fbSize = tile.fbSize;
     this->final.rcp_fbSize = tile.rcp_fbSize;
-    ispc::DFB_accumulate(dfb->ispcEquivalent,
-                         (ispc::VaryingTile *)&tile,
-                         (ispc::VaryingTile*)&this->final,
-                         (ispc::VaryingTile*)&this->accum,
-                         (ispc::VaryingRGBA_I8*)&this->color,
-                         dfb->hasAccumBuffer);
+    accumulate(tile);
     dfb->tileIsCompleted(this);
   }
-
 
   void DFB::ZCompositeTile::newFrame()
   {
@@ -194,12 +202,7 @@ namespace ospray {
     }
 
     if (done) {
-      ispc::DFB_accumulate(dfb->ispcEquivalent,
-                           (ispc::VaryingTile*)&this->compositedTileData,
-                           (ispc::VaryingTile*)&this->final,
-                           (ispc::VaryingTile*)&this->accum,
-                           (ispc::VaryingRGBA_I8*)&this->color,
-                           dfb->hasAccumBuffer);
+      accumulate(this->compositedTileData);
       dfb->tileIsCompleted(this);
     }
   }
@@ -311,7 +314,7 @@ namespace ospray {
     createTiles();
 
     if (comm->group->rank == 0) {
-      if (colorBufferFormat == OSP_RGBA_NONE) {
+      if (colorBufferFormat == OSP_FB_NONE) {
         cout << "#osp:mpi:dfb: we're the master, but framebuffer has 'NONE' "
              << "format; creating distriubted frame buffer WITHOUT having a "
              << "mappable copy on the master" << endl;
@@ -439,7 +442,7 @@ namespace ospray {
       }
 
       switch(colorBufferFormat) {
-      case OSP_RGBA_NONE: {
+      case OSP_FB_NONE: {
         /* if the master doesn't have a framebufer (i.e., format
            'none'), we're only telling it that we're done, but are not
            sending any pixels */
@@ -448,8 +451,9 @@ namespace ospray {
         mtm->coords  = tile->begin;
         comm->sendTo(this->master,mtm,sizeof(*mtm));
       } break;
-      case OSP_RGBA_I8: {
-        /*! if the master has rgba_i8 format, we're sending him a tile
+      case OSP_FB_RGBA8:
+      case OSP_FB_SRGBA: {
+        /*! if the master has RGBA8 or SRGBA format, we're sending him a tile
           of the proper data */
         MasterTileMessage_RGBA_I8 *mtm = new MasterTileMessage_RGBA_I8;
         mtm->command = MASTER_WRITE_TILE_I8;

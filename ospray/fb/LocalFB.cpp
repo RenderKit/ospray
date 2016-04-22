@@ -34,14 +34,15 @@ namespace ospray {
     if (colorBufferToUse)
       colorBuffer = colorBufferToUse;
     else {
-      switch(colorBufferFormat) {
-      case OSP_RGBA_NONE:
+      switch (colorBufferFormat) {
+      case OSP_FB_NONE:
         colorBuffer = NULL;
         break;
-      case OSP_RGBA_F32:
+      case OSP_FB_RGBA8:
+      case OSP_FB_SRGBA:
         colorBuffer = (vec4f*)alignedMalloc(sizeof(vec4f)*size.x*size.y);
         break;
-      case OSP_RGBA_I8:
+      case OSP_FB_RGBA32F:
         colorBuffer = (uint32*)alignedMalloc(sizeof(uint32)*size.x*size.y);
         break;
       default:
@@ -128,12 +129,15 @@ namespace ospray {
     if (pixelOp)
       pixelOp->postAccum(tile);
     if (colorBuffer) {
-      switch(colorBufferFormat) {
-      case OSP_RGBA_I8:
-        ispc::LocalFrameBuffer_writeTile_RGBA_I8(getIE(),(ispc::Tile&)tile);
+      switch (colorBufferFormat) {
+      case OSP_FB_RGBA8:
+        ispc::LocalFrameBuffer_writeTile_RGBA8(getIE(),(ispc::Tile&)tile);
         break;
-      case OSP_RGBA_F32:
-        ispc::LocalFrameBuffer_writeTile_RGBA_F32(getIE(),(ispc::Tile&)tile);
+      case OSP_FB_SRGBA:
+        ispc::LocalFrameBuffer_writeTile_SRGBA(getIE(),(ispc::Tile&)tile);
+        break;
+      case OSP_FB_RGBA32F:
+        ispc::LocalFrameBuffer_writeTile_RGBA32F(getIE(),(ispc::Tile&)tile);
         break;
       default:
         NOTIMPLEMENTED;

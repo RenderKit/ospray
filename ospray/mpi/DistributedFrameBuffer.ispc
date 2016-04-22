@@ -74,70 +74,67 @@ export void DFB_alphaBlendTiles(VaryingTile    *uniform prev,
   }
 }
 
-export void DFB_accumulate(void           *uniform _self,
-                           VaryingTile    *uniform tile,
-                           VaryingTile    *uniform final,
-                           VaryingTile    *uniform accum,
-                           VaryingRGBA_I8 *uniform color,
-                           uniform bool hasAccumBuffer)
-{
-  DistributedFrameBuffer *uniform self = (DistributedFrameBuffer*)_self;
-  if (!hasAccumBuffer || tile->accumID < 1) {
-    for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
-      vec4f col = make_vec4f(tile->r[i],
-                             tile->g[i],
-                             tile->b[i],
-                             tile->a[i]);
-      accum->r[i] = col.x;
-      accum->g[i] = col.y;
-      accum->b[i] = col.z;
-      accum->a[i] = col.w;
-      final->r[i] = col.x;
-      final->g[i] = col.y;
-      final->b[i] = col.z;
-      final->a[i] = col.w;
-
-      // NOTE(jda) - no longer hardcoded, but should use pixelops
-      col = max(col,make_vec4f(0.f));
-      // alpha is never gamma-corrected
-      col = make_vec4f(pow(make_vec3f(col), self->super.invGamma), col.w);
-              
-      color->color[i] = cvt_uint32(col);
-    }
-  } else {
-    const uniform float rcpAccumID = 1.f/(tile->accumID+1);
-    for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
-      vec4f col
-        = make_vec4f(tile->r[i],
-                     tile->g[i],
-                     tile->b[i],
-                     tile->a[i])
-        + make_vec4f(accum->r[i],
-                     accum->g[i],
-                     accum->b[i],
-                     accum->a[i]);
-      
-      accum->r[i] = col.x;
-      accum->g[i] = col.y;
-      accum->b[i] = col.z;
-      accum->a[i] = col.w;
-      
-      col = col * rcpAccumID;
-      
-      final->r[i] = col.x;
-      final->g[i] = col.y;
-      final->b[i] = col.z;
-      final->a[i] = col.w;
-
-      // NOTE(jda) - no longer hardcoded, but should use pixelops
-      col = max(col,make_vec4f(0.f));
-      // alpha is never gamma-corrected
-      col = make_vec4f(pow(make_vec3f(col), self->super.invGamma), col.w);
-              
-      color->color[i] = cvt_uint32(col);
-    }
-  }
+#define template_accumulate(name, cvt)                                       \
+export void DFB_accumulate_##name(void           *uniform _self,             \
+                                  VaryingTile    *uniform tile,              \
+                                  VaryingTile    *uniform final,             \
+                                  VaryingTile    *uniform accum,             \
+                                  VaryingRGBA_I8 *uniform color,             \
+                                  uniform bool hasAccumBuffer)               \
+{                                                                            \
+  DistributedFrameBuffer *uniform self = (DistributedFrameBuffer*)_self;     \
+  if (!hasAccumBuffer || tile->accumID < 1) {                                \
+    for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {           \
+      vec4f col = make_vec4f(tile->r[i],                                     \
+                             tile->g[i],                                     \
+                             tile->b[i],                                     \
+                             tile->a[i]);                                    \
+      accum->r[i] = col.x;                                                   \
+      accum->g[i] = col.y;                                                   \
+      accum->b[i] = col.z;                                                   \
+      accum->a[i] = col.w;                                                   \
+      final->r[i] = col.x;                                                   \
+      final->g[i] = col.y;                                                   \
+      final->b[i] = col.z;                                                   \
+      final->a[i] = col.w;                                                   \
+                                                                             \
+      col = max(col,make_vec4f(0.f));                                        \
+      color->color[i] = cvt(col);                                            \
+    }                                                                        \
+  } else {                                                                   \
+    const uniform float rcpAccumID = 1.f/(tile->accumID+1);                  \
+    for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {           \
+      vec4f col                                                              \
+        = make_vec4f(tile->r[i],                                             \
+                     tile->g[i],                                             \
+                     tile->b[i],                                             \
+                     tile->a[i])                                             \
+        + make_vec4f(accum->r[i],                                            \
+                     accum->g[i],                                            \
+                     accum->b[i],                                            \
+                     accum->a[i]);                                           \
+                                                                             \
+      accum->r[i] = col.x;                                                   \
+      accum->g[i] = col.y;                                                   \
+      accum->b[i] = col.z;                                                   \
+      accum->a[i] = col.w;                                                   \
+                                                                             \
+      col = col * rcpAccumID;                                                \
+                                                                             \
+      final->r[i] = col.x;                                                   \
+      final->g[i] = col.y;                                                   \
+      final->b[i] = col.z;                                                   \
+      final->a[i] = col.w;                                                   \
+                                                                             \
+      col = max(col,make_vec4f(0.f));                                        \
+      color->color[i] = cvt(col);                                            \
+    }                                                                        \
+  }                                                                          \
 }
+
+template_accumulate(RGBA8, cvt_uint32);
+template_accumulate(SRGBA, cvt_srgba);
+#undef template_accumulate
 
 
 export void DFB_zComposite(VaryingTile    *uniform delta,

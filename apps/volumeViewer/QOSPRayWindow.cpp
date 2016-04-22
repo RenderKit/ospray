@@ -222,11 +222,7 @@ void QOSPRayWindow::resizeGL(int width, int height)
   if(frameBuffer)
     ospFreeFrameBuffer(frameBuffer);
 
-  frameBuffer = ospNewFrameBuffer((const osp::vec2i&)windowSize, OSP_RGBA_I8, OSP_FB_COLOR | OSP_FB_ACCUM);
-
-  // set gamma correction
-  ospSet1f(frameBuffer, "gamma", 1.0f);
-  ospCommit(frameBuffer);
+  frameBuffer = ospNewFrameBuffer((const osp::vec2i&)windowSize, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
 
   resetAccumulationBuffer();
 

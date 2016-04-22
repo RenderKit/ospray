@@ -18,88 +18,50 @@
 
 //! \brief write tile into the given frame buffer's color buffer
 /*! \detailed this buffer _must_ exist when this fct is called, and it
-    _must_ have RGBA_I8 format */
-export void LocalFrameBuffer_writeTile_RGBA_I8(void *uniform _fb,
-                                               uniform Tile &tile)
-{
-  uniform LocalFB *uniform fb    = (uniform LocalFB *uniform)_fb;
-  uniform uint32  *uniform color = (uniform uint32 *uniform)fb->colorBuffer;
-  uniform float   *uniform depth = (uniform float *uniform)fb->depthBuffer;
-  if (!color)
-    // actually, this should never happen ...
-    return;
-
-  VaryingTile *uniform varyTile = (VaryingTile *uniform)&tile;
-  for (uniform uint32 iy=0;iy<TILE_SIZE;iy++) {
-    uniform uint32 iiy=tile.region.lower.y+iy;
-    if (iiy >= tile.region.upper.y) continue;
-
-    uniform uint32 chunkID = iy*(TILE_SIZE/programCount);
-
-    for (uint32 iix = tile.region.lower.x+programIndex;
-         iix<tile.region.upper.x;iix+=programCount,chunkID++) {
-
-      uint32 pixelID = iiy*fb->super.size.x+iix;
-      unmasked {
-        varying vec4f col = make_vec4f(varyTile->r[chunkID],
-                                       varyTile->g[chunkID],
-                                       varyTile->b[chunkID],
-                                       varyTile->a[chunkID]);
-
-        // NOTE(jda) - no longer hardcoded, but should use pixelops
-        col = max(col,make_vec4f(0.f));
-        // alpha is never gamma-corrected
-        col = make_vec4f(pow(make_vec3f(col), fb->super.invGamma), col.w);
-
-        const uint32 asRGBA = cvt_uint32(col);
-      }
-      color[pixelID] = asRGBA;
-      if (depth) fb->depthBuffer[pixelID] = varyTile->z[chunkID];
-    }
-  }
+    _must_ have format 'name' */
+#define template_writeTile(name, type, cvt)                                  \
+export void LocalFrameBuffer_writeTile_##name(void *uniform _fb,             \
+                                               uniform Tile &tile)           \
+{                                                                            \
+  uniform LocalFB *uniform fb    = (uniform LocalFB *uniform)_fb;            \
+  uniform type *uniform color    = (uniform type *uniform)fb->colorBuffer;   \
+  uniform float   *uniform depth = (uniform float *uniform)fb->depthBuffer;  \
+  if (!color)                                                                \
+    /* actually, this should never happen ... */                             \
+    return;                                                                  \
+                                                                             \
+  VaryingTile *uniform varyTile = (VaryingTile *uniform)&tile;               \
+  for (uniform uint32 iy=0;iy<TILE_SIZE;iy++) {                              \
+    uniform uint32 iiy=tile.region.lower.y+iy;                               \
+    if (iiy >= tile.region.upper.y) continue;                                \
+                                                                             \
+    uniform uint32 chunkID = iy*(TILE_SIZE/programCount);                    \
+                                                                             \
+    for (uint32 iix = tile.region.lower.x+programIndex;                      \
+         iix<tile.region.upper.x;iix+=programCount,chunkID++) {              \
+                                                                             \
+      uint32 pixelID = iiy*fb->super.size.x+iix;                             \
+      unmasked {                                                             \
+        varying vec4f col = make_vec4f(varyTile->r[chunkID],                 \
+                                       varyTile->g[chunkID],                 \
+                                       varyTile->b[chunkID],                 \
+                                       varyTile->a[chunkID]);                \
+                                                                             \
+        col = max(col,make_vec4f(0.f));                                      \
+        const type cvtCol = cvt(col);                                        \
+      }                                                                      \
+      color[pixelID] = cvtCol;                                               \
+      if (depth) fb->depthBuffer[pixelID] = varyTile->z[chunkID];            \
+    }                                                                        \
+  }                                                                          \
 }
 
 
-//! \brief write tile into the given frame buffer's color buffer
-/*! \detailed this buffer _must_ exist when this fct is called, and it
-    _must_ have RGBA_F32 format */
-export void LocalFrameBuffer_writeTile_RGBA_F32(void *uniform _fb,
-                                                uniform Tile &tile)
-{
-  uniform LocalFB *uniform fb    = (uniform LocalFB *uniform)_fb;
-  uniform vec4f   *uniform color = (uniform vec4f *uniform)fb->colorBuffer;
-  uniform float   *uniform depth = (uniform float *uniform)fb->depthBuffer;
-  if (!color)
-    // actually, this should never happen ...
-    return;
-
-  VaryingTile *uniform varyTile = (VaryingTile *uniform)&tile;
-  for (uniform uint32 iy=0;iy<TILE_SIZE;iy++) {
-    uniform uint32 iiy=tile.region.lower.y+iy;
-    if (iiy >= tile.region.upper.y) continue;
-
-    uniform uint32 chunkID = iy*(TILE_SIZE/programCount);
-
-    for (uint32 iix = tile.region.lower.x+programIndex;
-         iix<tile.region.upper.x;iix+=programCount,chunkID++) {
-
-      uint32 pixelID = iiy*fb->super.size.x+iix;
-      unmasked {
-        varying vec4f col = make_vec4f(varyTile->r[chunkID],
-                                       varyTile->g[chunkID],
-                                       varyTile->b[chunkID],
-                                       varyTile->a[chunkID]);
-
-        // NOTE(jda) - no longer hardcoded, but should use pixelops
-        col = max(col, make_vec4f(0.f));
-        // alpha is never gamma-corrected
-        col = make_vec4f(pow(make_vec3f(col), fb->super.invGamma), col.w);
-      }
-      color[pixelID] = col;
-      if (depth) fb->depthBuffer[pixelID] = varyTile->z[chunkID];
-    }
-  }
-}
+template_writeTile(RGBA8, uint32, cvt_uint32);
+template_writeTile(SRGBA, uint32, cvt_srgba);
+inline vec4f cvt_nop(const vec4f &v) { return v; };
+template_writeTile(RGBA32F, vec4f, cvt_nop);
+#undef template_writeTile
 
 
 //! \brief accumulate tile into BOTH accum buffer AND tile.

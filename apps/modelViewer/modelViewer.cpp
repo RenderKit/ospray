@@ -162,11 +162,9 @@ namespace ospray {
       g_windowSize = newSize;
       if (fb) ospFreeFrameBuffer(fb);
       fb = ospNewFrameBuffer((const osp::vec2i&)newSize,
-                             OSP_RGBA_I8,
+                             OSP_FB_SRGBA,
                              OSP_FB_COLOR|OSP_FB_DEPTH|
                              OSP_FB_ACCUM|OSP_FB_VARIANCE);
-      ospSet1f(fb, "gamma", 2.2f);
-      ospCommit(fb);
       ospFrameBufferClear(fb,OSP_FB_ACCUM);
 
       /*! for now, let's just attach the pixel op to the _main_ frame
@@ -176,7 +174,7 @@ namespace ospray {
       if (displayWall && displayWall->fb != fb) {
         PRINT(displayWall->size);
         displayWall->fb = ospNewFrameBuffer((const osp::vec2i&)displayWall->size,
-                                            OSP_RGBA_NONE,OSP_FB_COLOR|
+                                            OSP_FB_NONE,OSP_FB_COLOR|
                                             OSP_FB_DEPTH|OSP_FB_ACCUM);
         ospFrameBufferClear(displayWall->fb,OSP_FB_ACCUM);
         if (displayWall->po == NULL) {

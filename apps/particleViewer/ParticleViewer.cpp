@@ -91,9 +91,7 @@ namespace ospray {
         Glut3DWidget::reshape(_newSize);
         if (fb) ospFreeFrameBuffer(fb);
         const auto &newSize = reinterpret_cast<const osp::vec2i&>(_newSize);
-        fb = ospNewFrameBuffer(newSize,OSP_RGBA_I8,OSP_FB_COLOR|OSP_FB_ACCUM);
-        ospSet1f(fb, "gamma", 2.2f);
-        ospCommit(fb);
+        fb = ospNewFrameBuffer(newSize, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
         ospFrameBufferClear(fb,OSP_FB_ACCUM);
         accumID = 0;
         ospSetf(camera,"aspect",viewPort.aspect);
