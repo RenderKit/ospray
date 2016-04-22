@@ -52,7 +52,7 @@ vec3f Glass_getTransparency(const uniform PathTraceMaterial* uniform material,
   float eta = eq(currentMedium, self->mediumOutside) ? self->mediumOutside.ior*rcp(self->mediumInside.ior)
                                                      : self->mediumInside.ior*rcp(self->mediumOutside.ior);
 
-  float cosThetaO = max(dot(ray.dir, dg.Ns), 0.0f);
+  float cosThetaO = max(-dot(ray.dir, dg.Ns), 0.0f);
   return make_vec3f(1.0f-fresnelDielectric(cosThetaO, eta));
 }
 
