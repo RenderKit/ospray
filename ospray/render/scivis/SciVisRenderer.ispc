@@ -30,8 +30,7 @@
 
 #define ALPHA_THRESHOLD (.05f)
 
-// Data types
-//////////////////////////////////////////////////////////////////////////////
+// Data types /////////////////////////////////////////////////////////////////
 
 struct SciVisRenderer
 {
@@ -61,17 +60,7 @@ struct SciVisShadingInfo
   vec3f geometryColor;
 };
 
-struct PassInfo {
-  // region to integrate over in this pass
-  varying region1f region;
-  // block to use in this pass - NULL for 'everything other than blocks'
-  DDBVolumeBlock *uniform block;
-  // blend in background color when ray misses
-  uniform bool useBG;
-};
-
-// Function definitions
-///////////////////////////////////////////////////////////////////////////////
+// Function definitions ///////////////////////////////////////////////////////
 
 inline void initShadingInfo(varying SciVisShadingInfo &info)
 {
@@ -426,7 +415,6 @@ void SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
 inline Volume *
 SciVisRenderer_intersectVolumes(uniform SciVisRenderer *uniform renderer,
                                 varying Ray &ray,
-                                const uniform PassInfo &passInfo,
                                 const varying float &rayOffset)
 {
   // The first intersected volume.
@@ -476,19 +464,11 @@ SciVisRenderer_intersectVolumes(uniform SciVisRenderer *uniform renderer,
 /*! This function intersects the volume and geometries. */
 void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
                               varying Ray &ray,
-                              const uniform PassInfo &passInfo,
                               const varying float &rayOffset,
                               const varying vec3i &sampleID,
                               varying vec4f &color,
                               varying float &depth)
 {
-  const region1f clipRange = passInfo.region;
-
-  if (clipRange.lower != 0.f) {
-    ray.t0 = max(ray.t0,clipRange.lower);
-    ray.t = min(ray.t,clipRange.upper);
-  }
-
   // Original tMax for ray interval
   const float tMax = ray.t;
 
@@ -518,8 +498,7 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
   geometryRay.instID = -1;
 
   // Get first intersected volume for each ray and set the ray bounds.
-  Volume *volume = SciVisRenderer_intersectVolumes(renderer, ray,
-                                                   passInfo, rayOffset);
+  Volume *volume = SciVisRenderer_intersectVolumes(renderer, ray, rayOffset);
 
   // Provide ray offset for use with isosurface geometries (this value
   // ignored elsewhere).
@@ -541,8 +520,9 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
   // Trace the ray through the volume and geometries.
   float firstHit;
 
-  while ((firstHit = min(ray.t0, geometryRay.t)) < min(tMax,clipRange.upper)
-         && min(min(color.x, color.y), color.z) < 1.0f && color.w < 0.99f) {
+  while ((firstHit = min(ray.t0, geometryRay.t)) < tMax
+         && min(min(color.x, color.y), color.z) < 1.0f
+         && color.w < 0.99f) {
     if (firstHit == ray.t0) {
 
       // Check to see if we've exited the current volume.
@@ -550,8 +530,7 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
 
         ray.t0 = ray.t + epsilon;
         ray.t = tMax;
-        volume = SciVisRenderer_intersectVolumes(renderer, ray,
-                                                 passInfo, rayOffset);
+        volume = SciVisRenderer_intersectVolumes(renderer, ray, rayOffset);
       } else {
 
         if (any(volume == NULL))
@@ -668,19 +647,13 @@ void SciVisRenderer_renderSample(uniform Renderer *uniform _self,
 {
   //NOTE(jda) - Eliminate #if'd out code path when satisfied with surface only
   //            scene performance and features
-#if 1
+#if 0
   uniform SciVisRenderer *uniform self =
       (uniform SciVisRenderer *uniform)_self;
   SciVisRenderer_shadeRay(self, sample);
 #else
   SciVisRenderer *uniform renderer
     = (SciVisRenderer *uniform) _self;
-
-  PassInfo *uniform passInfo
-    = (PassInfo *uniform)perFrameData;
-
-  // Background color.
-  const uniform bool useBG = ((passInfo == NULL) || passInfo->useBG);
 
   // Ray offset for this sample, as a fraction of the nominal step size.
   float rayOffset = precomputedHalton2(sample.sampleID.z);
@@ -696,20 +669,11 @@ void SciVisRenderer_renderSample(uniform Renderer *uniform _self,
   vec4f color = make_vec4f(0.0f,0.f,0.f,0.f);
   float depth = infinity;
 
-  if (passInfo != NULL) {
-    SciVisRenderer_intersect(renderer, sample.ray, *passInfo,
-                             rayOffset, sample.sampleID, color, depth);
-  } else {
-    uniform PassInfo dummyPassInfo;
-    dummyPassInfo.region = make_region1f(0.f,inf);
-    dummyPassInfo.useBG = true;
-    dummyPassInfo.block = NULL;
-    SciVisRenderer_intersect(renderer, sample.ray, dummyPassInfo,
-                             rayOffset, sample.sampleID, color, depth);
-  }
+  SciVisRenderer_intersect(renderer, sample.ray, rayOffset,
+                           sample.sampleID, color, depth);
 
   // Attenuate the foreground and background colors by the opacity.
-  if (useBG && renderer->super.backgroundEnabled) {
+  if (renderer->super.backgroundEnabled) {
     const vec4f background = make_vec4f(renderer->super.bgColor, 1.f);
     color = color.w * color + (1.0f - color.w) * background;
   }
