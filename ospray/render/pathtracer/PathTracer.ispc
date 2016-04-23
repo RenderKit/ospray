@@ -36,11 +36,11 @@ inline float misHeuristic(float pdf1, float pdf2)
   return pdf1 > 1e17f ? 1.0f : p;
 }
 
+// TODO use intersection filters
 vec3f transparentShadow(const uniform PathTracer* uniform self,
                         vec3f lightContrib,
                         Ray &shadowRay,
-                        Medium medium,
-                        varying RandomTEA* uniform rng)
+                        Medium medium)
 {
   int max_depth = self->maxDepth;
   const float org_t_max = shadowRay.t;
@@ -99,16 +99,16 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
   vec3f L = make_vec3f(0.f); // accumulated radiance
   vec3f Lw = make_vec3f(1.f); // path throughput
-  Medium currentMedium = make_Medium_Vacuum();
+  Medium currentMedium = make_Medium_vacuum();
   float lastBSDFPdf = inf; // probability density of previous sampled BSDF, for MIS
   bool straightPath = true; // path from camera did not change direction, for alpha and backplate
   uniform uint32 depth = 0;
   // geometric configuration of last surface interaction
-  DifferentialGeometry dg;
+  DifferentialGeometry lastDg;
   // P and N also used by light eval
-  dg.P = ray.org;
-  dg.Ns = ray.dir;
-  dg.Ng = ray.dir;
+  lastDg.P = ray.org;
+  lastDg.Ns = ray.dir;
+  lastDg.Ng = ray.dir;
 
   do {
     traceRay(self->super.model, ray);
@@ -129,15 +129,15 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       if ((bool)self->backplate & straightPath) {
         L = L + Lw * get3f(self->backplate, clamp2edge(self->backplate, pixel));
         maxLightDist = 1e38; // backplate hides envLights (i.e. the ones in infinity)
-      } 
+      }
     }
 
     // add light from virtual lights by intersecting them
     for (uniform int i = 0; i < self->numLights; i++) {
       const uniform Light *uniform l = self->lights[i];
-      LightEval le = l->eval(l, dg, ray.dir);
-      if (le.distance <= maxLightDist)
-        L = L + Lw * le.radiance * misHeuristic(lastBSDFPdf, le.pdf);
+      Light_EvalRes le = l->eval(l, lastDg, ray.dir);
+      if (le.dist <= maxLightDist)
+        L = L + Lw * le.value * misHeuristic(lastBSDFPdf, le.pdf);
     }
 
     if (noHit(ray))
@@ -148,7 +148,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     ////////////////////////////////////
     // handle next surface interaction
 
-    // update DifferentialGeometry dg
+    DifferentialGeometry dg;
     postIntersect(self->super.model, dg, ray,
         DG_MATERIALID|
         DG_NS|DG_NG|DG_FACEFORWARD|DG_NORMALIZE|DG_TEXCOORD|DG_COLOR|DG_TANGENTS
@@ -158,32 +158,11 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     uniform ShadingContext ctx;
     ShadingContext_Constructor(&ctx);
     const varying BSDF* bsdf = NULL;
-#if 1
+
     uniform PathTraceMaterial* m = (uniform PathTraceMaterial*)dg.material;
     foreach_unique(mm in m)
       if (mm != NULL)
         bsdf = mm->getBSDF(mm, &ctx, dg, ray, currentMedium);
-#else
-    foreach_unique(geomID in lightPath.ray.geomID) {
-      uniform PathTraceMaterial* uniform m
-        = (uniform PathTraceMaterial*)(self->super.model->geometry[geomID]->material);
-      print("shading %\n",m);
-      if (m != NULL) m->shade(m,lightPath.ray, lightPath.lastMedium, dg, brdfs, Ns);
-    }
-#endif
-
-#if 0
-    // iw: disabled because we dont' have per-geometry lights yet
-    /*! Add light emitted by hit area light source. */
-    if (!lightPath.ignoreVisibleLights) {
-      foreach_unique(geomID in lightPath.ray.geomID) {
-        const uniform AreaLight* uniform l = self->super.model->geometry[geomID]->light;
-        if (l != NULL)
-          // L = add(L, mul(Lw, l->Le(l,dg,wo)));
-          L = L + Lw * l->Le(l,dg,wo);
-      }
-    }
-#endif
 
     // direct lighting including shadows and MIS
     if (bsdf->type & BSDF_SMOOTH)
@@ -193,35 +172,33 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       {
         const uniform Light *uniform light = self->lights[i];
 
-        LightSample ls = light->sample(light, dg, RandomTEA__getFloats(rng));
+        Light_SampleRes ls = light->sample(light, dg, RandomTEA__getFloats(rng));
 
         // skip when zero contribution from light
         if (reduce_max(ls.weight) <= 0.0f | ls.pdf <= PDF_CULLING)
           continue;
 
         // evaluate BSDF
-        vec3f bsdfValue;
-        float bsdfPdf = 0.f;
-        foreach_unique(b in bsdf)
-          if (b != NULL)
-            bsdfValue = b->eval(b, wo, ls.direction, bsdfPdf);
+        BSDF_EvalRes fe;
+        foreach_unique(f in bsdf)
+          if (f != NULL)
+            fe = f->eval(f, wo, ls.dir);
 
 #ifdef USE_DGCOLOR
-        bsdfValue = bsdfValue * make_vec3f(dg.color);
+        fe.value = fe.value * make_vec3f(dg.color);
 #endif
         // skip when zero contribution from material
-        if (reduce_max(bsdfValue) <= 0.0f)
+        if (reduce_max(fe.value) <= 0.0f)
           continue;
 
         // test for shadows
         Ray shadow_ray;
-        setRay(shadow_ray, dg.P, ls.direction,
-               self->super.epsilon, ls.distance-
-               self->super.epsilon);
+        setRay(shadow_ray, dg.P, ls.dir,
+               self->super.epsilon, ls.dist - self->super.epsilon);
         shadow_ray.time = ray.time;
 
-        vec3f unshaded_light_contrib = Lw * ls.weight * bsdfValue * misHeuristic(ls.pdf, bsdfPdf);
-        L = L + transparentShadow(self, unshaded_light_contrib, shadow_ray, currentMedium, rng);
+        const vec3f unshaded_light_contrib = Lw * ls.weight * fe.value * misHeuristic(ls.pdf, fe.pdf);
+        L = L + transparentShadow(self, unshaded_light_contrib, shadow_ray, currentMedium);
       }
     }
 
@@ -229,26 +206,23 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       break;
 
     // sample BSDF
-    vec3f wi;
     vec2f s  = RandomTEA__getFloats(rng);
     vec2f ss = RandomTEA__getFloats(rng); // FIXME: should be only one component
-    vec3f bsdfWeight;
-    uint32 bsdfType = 0;
-    // also update lastBSDFPdf
-    foreach_unique(b in bsdf)
-      if (b != NULL)
-        bsdfWeight = b->sample(b, wo, wi, lastBSDFPdf, bsdfType, s, ss.x);
+    BSDF_SampleRes fs;
+    foreach_unique(f in bsdf)
+      if (f != NULL)
+        fs = f->sample(f, wo, s, ss.x);
 
 #ifdef USE_DGCOLOR
     if ((type & GLOSSY_REFLECTION) == NONE) // only colorize diffuse component
-      bsdfWeight = bsdfWeight * make_vec3f(dg.color);
+      fs.weight = fs.weight * make_vec3f(dg.color);
 #endif
 
     // terminate path when zero contribution from material
-    if (reduce_max(bsdfWeight) <= 0.0f | lastBSDFPdf <= PDF_CULLING)
+    if (reduce_max(fs.weight) <= 0.0f | fs.pdf <= PDF_CULLING)
       break;
 
-    Lw = Lw * bsdfWeight;
+    Lw = Lw * fs.weight;
 
     // compute simple volumetric effect
     const vec3f transmission = currentMedium.transmission;
@@ -256,7 +230,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       Lw = Lw * powf(transmission, ray.t);
 
     // update currentMedium if we hit a medium interface TODO: support nested dielectrics
-    if (bsdfType & BSDF_TRANSMISSION) {
+    if (fs.type & BSDF_TRANSMISSION) {
       foreach_unique(uniMat in dg.material) {
         uniform PathTraceMaterial* uniform m = (uniform PathTraceMaterial *)uniMat;
         if (m != NULL)
@@ -264,9 +238,16 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       }
     }
 
+    // keep lastBSDFPdf and lastDg when there was a Dirac transmission
+    // to better combine MIS with transparent shadows
+    if (fs.type & ~BSDF_SPECULAR_TRANSMISSION) {
+      lastBSDFPdf = fs.pdf;
+      lastDg = dg;
+    }
+
     // continue the path
-    straightPath &= eq(ray.dir, wi);
-    setRay(ray, dg.P, wi, self->super.epsilon, inf);
+    straightPath &= eq(ray.dir, fs.wi);
+    setRay(ray, dg.P, fs.wi, self->super.epsilon, inf);
     depth++;
   } while (reduce_max(Lw) > self->minContribution);
 

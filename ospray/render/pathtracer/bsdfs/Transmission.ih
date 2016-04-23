@@ -28,21 +28,23 @@ struct Transmission
   vec3f T;
 };
 
-inline vec3f Transmission_eval(const varying BSDF* uniform super,
-                               const vec3f& wo, const vec3f& wi, float& pdf)
+inline BSDF_EvalRes Transmission_eval(const varying BSDF* uniform super,
+                                      const vec3f& wo, const vec3f& wi)
 {
-  return make_vec3f(0.0f);
+  return make_BSDF_EvalRes_zero();
 }
 
-inline vec3f Transmission_sample(const varying BSDF* uniform super,
-                                 const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
-                                 const vec2f& s, float ss)
+inline BSDF_SampleRes Transmission_sample(const varying BSDF* uniform super,
+                                          const vec3f& wo, const vec2f& s, float ss)
 {
   const varying Transmission* uniform self = (const varying Transmission* uniform)super;
-  wi = neg(wo);
-  pdf = inf;
-  type = BSDF_SPECULAR_TRANSMISSION;
-  return self->T;
+  BSDF_SampleRes res;
+
+  res.wi = neg(wo);
+  res.pdf = inf;
+  res.type = BSDF_SPECULAR_TRANSMISSION;
+  res.weight = self->T;
+  return res;
 }
 
 inline void Transmission_Constructor(varying Transmission* uniform self, const varying linear3f* uniform frame,

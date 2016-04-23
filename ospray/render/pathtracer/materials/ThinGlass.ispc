@@ -47,8 +47,7 @@ vec3f ThinGlass_getTransparency(const uniform PathTraceMaterial* uniform materia
 {
   const uniform ThinGlass* uniform self = (const uniform ThinGlass* uniform)material;
 
-  float cosThetaO = max(dot(ray.dir, dg.Ns), 0.0f);
-  vec3f transmission = self->transmission;
+  float cosThetaO = max(-dot(ray.dir, dg.Ns), 0.0f);
   float alpha = self->thickness * rcp(cosThetaO);
   return powf(self->transmission, alpha) * (1.0f-fresnelDielectric(cosThetaO, self->eta));
 }

@@ -30,8 +30,7 @@
 
 #define ALPHA_THRESHOLD (.05f)
 
-// Data types
-//////////////////////////////////////////////////////////////////////////////
+// Data types /////////////////////////////////////////////////////////////////
 
 struct SciVisRenderer
 {
@@ -61,17 +60,7 @@ struct SciVisShadingInfo
   vec3f geometryColor;
 };
 
-struct PassInfo {
-  // region to integrate over in this pass
-  varying region1f region;
-  // block to use in this pass - NULL for 'everything other than blocks'
-  DDBVolumeBlock *uniform block;
-  // blend in background color when ray misses
-  uniform bool useBG;
-};
-
-// Function definitions
-///////////////////////////////////////////////////////////////////////////////
+// Function definitions ///////////////////////////////////////////////////////
 
 inline void initShadingInfo(varying SciVisShadingInfo &info)
 {
@@ -223,7 +212,7 @@ inline void shadeLights(const uniform SciVisRenderer *uniform self,
                         const varying Ray &ray,
                         const varying DifferentialGeometry &dg,
                         const varying SciVisShadingInfo &info,
-                        const varying float depth,
+                        const varying int path_depth,
                         varying vec3f &color)
 {
   const vec3f R = ray.dir - ((2.f * dot(ray.dir, dg.Ns)) * dg.Ns);
@@ -233,11 +222,11 @@ inline void shadeLights(const uniform SciVisRenderer *uniform self,
   for (uniform int i = 0; self->lights && i < self->numLights; i++) {
     const uniform Light *uniform l = self->lights[i];
     const vec2f s = make_vec2f(0.5f);
-    const LightSample light = l->sample(l, dg, s);
+    const Light_SampleRes light = l->sample(l, dg, s);
 
     if (reduce_max(light.weight) > 0.f) { // any potential contribution?
-      const float cosNL = abs(dot(light.direction, dg.Ns));
-      const float cosLR = max(0.f, dot(light.direction, R));
+      const float cosNL = abs(dot(light.dir, dg.Ns));
+      const float cosLR = max(0.f, dot(light.dir, R));
       const vec3f brdf = info.Kd * cosNL + info.Ks * powf(cosLR, info.Ns);
       const vec3f light_contrib = info.local_opacity
                                   * brdf * light.weight;
@@ -246,11 +235,11 @@ inline void shadeLights(const uniform SciVisRenderer *uniform self,
         const float max_contrib = reduce_max(light_contrib);
         if (max_contrib > .01f) {
           Ray shadowRay;
-          setRay(shadowRay, P, light.direction);
+          setRay(shadowRay, P, light.dir);
           const float light_alpha = lightAlpha(shadowRay,
                                                self->super.model,
                                                max_contrib,
-                                               self->maxDepth - depth,
+                                               self->maxDepth - path_depth,
                                                self->super.epsilon);
           color = color + light_alpha * light_contrib;
         }
@@ -294,11 +283,11 @@ inline void SciVisRenderer_computeVolumeSample(SciVisRenderer *uniform renderer,
     const vec2f s = make_vec2f(0.5f);
 
     for (uniform uint32 i=0; i<renderer->numLights; i++) {
-      const LightSample light = renderer->lights[i]->sample(renderer->lights[i], dg, s);
+      const Light_SampleRes light = renderer->lights[i]->sample(renderer->lights[i], dg, s);
       const float cosNL = (gradient.x == 0.f
                            && gradient.y == 0.f
                            && gradient.z == 0.f) ?
-                          1.f : abs(dot(safe_normalize(light.direction),
+                          1.f : abs(dot(safe_normalize(light.dir),
                                         gradient));
 
       shadedColor = shadedColor + sampleColor * cosNL * light.weight;
@@ -326,37 +315,64 @@ void SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
                                           varying Ray &ray,
                                           varying vec4f &out_color)
 {
-  //NOTE(jda) - no geometry opacity handled here...
+  vec3f color        = make_vec3f(0.f);
+  float path_opacity = 1.f;
+  int   path_depth   = 0;
+  float ray_t_depth  = 0.f;
 
-  // We compute intersections on the model and provide the contribution for the
-  // closest hit.
-  traceRay(self->super.model, ray);
+  while (1) {
 
-  // No hit found.
-  if(ray.geomID < 0) {
+    traceRay(self->super.model, ray);
+
+    // Check if we missed, if so we are done //
+    if (ray.geomID < 0) {
+      out_color = make_vec4f(color.x, color.y, color.z, 1.f - path_opacity);
+      return;
+    }
+
+    // Record depth of first hit for depth output //
+    if (path_depth == 0) {
+      ray_t_depth = ray.t;
+    }
+
+    // Start shading //
+
+    // Calculate material information from DG //
+    DifferentialGeometry dg;
+    postIntersect(self->super.model,
+                  dg,
+                  ray,
+                  DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|
+                  DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
+
+    SciVisShadingInfo info;
+    initShadingInfo(info);
+
+    shadeMaterials(dg, info);
+
+    info.local_opacity = path_opacity * info.d;
+
+    if (info.local_opacity > 0.01f) { // worth shading?
+      shadeAO(self, sampleID, dg, info, color);
+      shadeLights(self, ray, dg, info, path_depth, color);
+    }
+
+    // Kill path when reached max depth or if remaining contribution too low
+    path_opacity = path_opacity * (1.f - info.d);
+    path_depth++;
+    if (path_depth >= self->maxDepth || path_opacity < 0.01f ) {
+      out_color = make_vec4f(color.x, color.y, color.z, 1.f - path_opacity);
+      ray.t = ray_t_depth;
+      return;
+    }
+
+    // Reset ray
+    ray.t0 = ray.t + self->super.epsilon;
     ray.t = infinity;
-    return;
+    ray.primID = -1;
+    ray.geomID = -1;
+    ray.instID = -1;
   }
-
-  // Calculate material information from DG //
-  DifferentialGeometry dg;
-  postIntersect(self->super.model, dg, ray,
-                DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|
-                DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
-
-  SciVisShadingInfo info;
-  initShadingInfo(info);
-
-  shadeMaterials(dg, info);
-
-  info.local_opacity = info.d;
-
-  vec3f color = make_vec3f(0.f);
-
-  shadeAO(self, sampleID, dg, info, color);
-  shadeLights(self, ray, dg, info, 0/*depth*/, color);
-
-  out_color = make_vec4f(color.x, color.y, color.z, 1.f);
 }
 
 /*! Returns the first hit volume for the provided ray and sets the ray bounds t0 and t,
@@ -365,7 +381,6 @@ void SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
 inline Volume *
 SciVisRenderer_intersectVolumes(uniform SciVisRenderer *uniform renderer,
                                 varying Ray &ray,
-                                const uniform PassInfo &passInfo,
                                 const varying float &rayOffset)
 {
   // The first intersected volume.
@@ -415,19 +430,11 @@ SciVisRenderer_intersectVolumes(uniform SciVisRenderer *uniform renderer,
 /*! This function intersects the volume and geometries. */
 void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
                               varying Ray &ray,
-                              const uniform PassInfo &passInfo,
                               const varying float &rayOffset,
                               const varying vec3i &sampleID,
                               varying vec4f &color,
                               varying float &depth)
 {
-  const region1f clipRange = passInfo.region;
-
-  if (clipRange.lower != 0.f) {
-    ray.t0 = max(ray.t0,clipRange.lower);
-    ray.t = min(ray.t,clipRange.upper);
-  }
-
   // Original tMax for ray interval
   const float tMax = ray.t;
 
@@ -457,8 +464,7 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
   geometryRay.instID = -1;
 
   // Get first intersected volume for each ray and set the ray bounds.
-  Volume *volume = SciVisRenderer_intersectVolumes(renderer, ray,
-                                                   passInfo, rayOffset);
+  Volume *volume = SciVisRenderer_intersectVolumes(renderer, ray, rayOffset);
 
   // Provide ray offset for use with isosurface geometries (this value
   // ignored elsewhere).
@@ -480,8 +486,13 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
   // Trace the ray through the volume and geometries.
   float firstHit;
 
-  while ((firstHit = min(ray.t0, geometryRay.t)) < min(tMax,clipRange.upper)
-         && min(min(color.x, color.y), color.z) < 1.0f && color.w < 0.99f) {
+  // Geometry contribution.
+  color = color + (1.0f - color.w) * geometryColor;
+
+  while ((firstHit = min(ray.t0, geometryRay.t)) < tMax
+         /*&& min(min(color.x, color.y), color.z) < 1.0f*///<--why is this here?
+         && color.w < 0.99f) {
+
     if (firstHit == ray.t0) {
 
       // Check to see if we've exited the current volume.
@@ -489,8 +500,8 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
 
         ray.t0 = ray.t + epsilon;
         ray.t = tMax;
-        volume = SciVisRenderer_intersectVolumes(renderer, ray,
-                                                 passInfo, rayOffset);
+        volume = SciVisRenderer_intersectVolumes(renderer, ray, rayOffset);
+
       } else {
 
         if (any(volume == NULL))
@@ -505,7 +516,8 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
         color = color + (1.0f - color.w) * volumeColor;
 
       }
-    } else if (firstHit == geometryRay.t) {
+
+    } else {// firstHit == geometryRay.t
 
       // Geometry contribution.
       color = color + (1.0f - color.w) * geometryColor;
@@ -531,95 +543,12 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
   }
 }
 
-// Main shading function //
-
-inline
-void SciVisRenderer_shadeRay(const uniform SciVisRenderer *uniform self,
-                             varying ScreenSample &sample)
-{ 
-  Ray &ray = sample.ray;
-  // ISPC issue #703. Switch to 'nice' code once ISPC #703 is fixed.
-  // print("ray.dir % % %\n",ray.dir.x,ray.dir.y,ray.dir.z);
-  vec3f color = make_vec3f(0.f);
-  float path_opacity = 1.f;
-  int depth = 0;
-
-  while (1) {
-
-    traceRay(self->super.model, ray);
-
-    // Record depth of first hit in z buffer //
-    if (depth == 0) {
-      sample.z = ray.t;
-    }
-
-    // Check if we missed, if so we are done //
-    if (ray.geomID < 0) {
-      sample.rgb = self->super.backgroundEnabled ?
-                   color + path_opacity * self->super.bgColor :
-                   color;
-      sample.alpha = 1.f - path_opacity;
-      return;
-    }
-
-    // Start shading //
-
-    // Calculate material information from DG //
-    DifferentialGeometry dg;
-    postIntersect(self->super.model,
-                  dg,
-                  ray,
-                  DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|
-                  DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
-
-    SciVisShadingInfo info;
-    initShadingInfo(info);
-
-    shadeMaterials(dg, info);
-
-    info.local_opacity = path_opacity * info.d;
-
-    if (info.local_opacity > 0.01f) { // worth shading?
-      shadeAO(self, sample.sampleID, dg, info, color);
-      shadeLights(self, ray, dg, info, depth, color);
-    }
-
-    // kill path when reached max depth or if remaining contribution too low 
-    path_opacity = path_opacity * (1.f - info.d);
-    depth++;
-    if (depth >= self->maxDepth | path_opacity < 0.01f ) {
-      sample.rgb = color;
-      sample.alpha = 1.f - path_opacity;
-      return;
-    }
-
-    ray.t0 = ray.t + self->super.epsilon;
-    ray.t = infinity;
-    ray.primID = -1;
-    ray.geomID = -1;
-    ray.instID = -1;
-  }
-}
-
 void SciVisRenderer_renderSample(uniform Renderer *uniform _self,
                                  void *uniform perFrameData,
                                  varying ScreenSample &sample)
 {
-  //NOTE(jda) - Eliminate #if'd out code path when satisfied with surface only
-  //            scene performance and features
-#if 0
-  uniform SciVisRenderer *uniform self =
-      (uniform SciVisRenderer *uniform)_self;
-  SciVisRenderer_shadeRay(self, sample);
-#else
   SciVisRenderer *uniform renderer
     = (SciVisRenderer *uniform) _self;
-
-  PassInfo *uniform passInfo
-    = (PassInfo *uniform)perFrameData;
-
-  // Background color.
-  const uniform bool useBG = ((passInfo == NULL) || passInfo->useBG);
 
   // Ray offset for this sample, as a fraction of the nominal step size.
   float rayOffset = precomputedHalton2(sample.sampleID.z);
@@ -632,23 +561,14 @@ void SciVisRenderer_renderSample(uniform Renderer *uniform _self,
 
   // Provide the renderer to the intersector as it contains all
   // volumes, geometries, etc.
-  vec4f color = make_vec4f(0.0f,0.f,0.f,0.f);
+  vec4f color = make_vec4f(0.0f);
   float depth = infinity;
 
-  if (passInfo != NULL) {
-    SciVisRenderer_intersect(renderer, sample.ray, *passInfo,
-                             rayOffset, sample.sampleID, color, depth);
-  } else {
-    uniform PassInfo dummyPassInfo;
-    dummyPassInfo.region = make_region1f(0.f,inf);
-    dummyPassInfo.useBG = true;
-    dummyPassInfo.block = NULL;
-    SciVisRenderer_intersect(renderer, sample.ray, dummyPassInfo,
-                             rayOffset, sample.sampleID, color, depth);
-  }
+  SciVisRenderer_intersect(renderer, sample.ray, rayOffset,
+                           sample.sampleID, color, depth);
 
   // Attenuate the foreground and background colors by the opacity.
-  if (useBG && renderer->super.backgroundEnabled) {
+  if (renderer->super.backgroundEnabled) {
     const vec4f background = make_vec4f(renderer->super.bgColor, 1.f);
     color = color.w * color + (1.0f - color.w) * background;
   }
@@ -659,7 +579,6 @@ void SciVisRenderer_renderSample(uniform Renderer *uniform _self,
   sample.rgb.z = color.z;
   sample.alpha = color.w;
   sample.z = depth;
-#endif
 }
 
 // Exports (called from C++)

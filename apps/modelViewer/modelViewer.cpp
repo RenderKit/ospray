@@ -690,6 +690,14 @@ namespace ospray {
     ospModel = ospNewModel();
 
     ospRenderer = ospNewRenderer(rendererType.c_str());
+
+    // Set renderer defaults (if not using 'aoX' renderers)
+    if (rendererType[0] != 'a' && rendererType[1] != 'o')
+    {
+      ospSet1i(ospRenderer, "aoSamples", 1);
+      ospSet1i(ospRenderer, "shadowsEnabled", 1);
+    }
+
     // ospSet1f(ospRenderer, "varianceThreshold", 0.0002);
     if (!ospRenderer)
       throw std::runtime_error("could not create ospRenderer '"+rendererType+"'");

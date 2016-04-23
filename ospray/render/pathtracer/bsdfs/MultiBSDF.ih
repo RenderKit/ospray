@@ -49,45 +49,43 @@ inline void MultiBSDF_add(varying BSDF* uniform super,
 }
 
 /*! Evaluates all BSDF components. */
-inline vec3f MultiBSDF_eval(const varying BSDF* uniform super,
-                            const vec3f& wo, const vec3f& wi, float& pdf)
+inline BSDF_EvalRes MultiBSDF_eval(const varying BSDF* uniform super,
+                                   const vec3f& wo, const vec3f& wi)
 {
   const varying MultiBSDF* uniform self = (const varying MultiBSDF* uniform)super;
 
-  vec3f value = make_vec3f(0.0f);
-  pdf = 0.0f;
+  BSDF_EvalRes res = make_BSDF_EvalRes_zero();
 
   for (uniform int i = 0; i < self->numBsdfs; ++i)
   {
     if (self->importances[i] > 0.0f)
     {
       const varying BSDF* uniform curBsdf = self->bsdfs[i];
-      float curPdf = 0.0f;
-      value = value + curBsdf->eval(curBsdf, wo, wi, curPdf);
-      pdf = pdf + curPdf * self->importances[i];
+      BSDF_EvalRes cur = curBsdf->eval(curBsdf, wo, wi);
+      res.value = res.value + cur.value;
+      res.pdf = res.pdf + cur.pdf * self->importances[i];
     }
   }
 
-  pdf *= rcp(self->importanceSum);
-  return value;
+  res.pdf *= rcp(self->importanceSum);
+  return res;
 }
 
 /*! Sample the multi-BSDF. */
-inline vec3f MultiBSDF_sample(const varying BSDF* uniform super,
-                              const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
-                              const vec2f& s, float ss)
+inline BSDF_SampleRes MultiBSDF_sample(const varying BSDF* uniform super,
+                                       const vec3f& wo, const vec2f& s, float ss)
 {
   const varying MultiBSDF* uniform self = (const varying MultiBSDF* uniform)super;
 
-  if (self->importanceSum == 0.0f)
-    return make_vec3f(0.0f);
+  if (self->importanceSum == 0.0f) // also handles case self->numBsdfs == 0
+    return make_BSDF_SampleRes_zero();
 
   if (self->numBsdfs == 1)
   {
     const varying BSDF* uniform bsdf = self->bsdfs[0];
-    return bsdf->sample(bsdf, wo, wi, pdf, type, s, ss);
+    return bsdf->sample(bsdf, wo, s, ss);
   }
-  else if (self->numBsdfs > 1)
+  else
   {
     // choose which BSDF to sample
     float x = ss * self->importanceSum;
@@ -100,40 +98,41 @@ inline vec3f MultiBSDF_sample(const varying BSDF* uniform super,
     ss = (x + self->importances[choice] - prefixSum) * rcp(self->importances[choice]);
 
     // sample chosen BSDF
-    vec3f weight;
+    BSDF_SampleRes res;
     foreach_unique (i in choice)
     {
       const varying BSDF* uniform bsdf = self->bsdfs[i];
-      weight = bsdf->sample(bsdf, wo, wi, pdf, type, s, ss);
+      res = bsdf->sample(bsdf, wo, s, ss);
     }
 
-    if (eq(weight, make_vec3f(0.0f)) | (pdf == 0.0f))
-      return make_vec3f(0.0f);
+    if (eq(res.weight, make_vec3f(0.0f)) | (res.pdf == 0.0f))
+      return make_BSDF_SampleRes_zero();
 
-    if (type & BSDF_SPECULAR)
-      return weight;
+    if (res.type & BSDF_SPECULAR)
+    {
+      // scale by rcp(selection pdf)
+      res.weight = res.weight * (self->importanceSum * rcp(self->importances[choice]));
+      return res;
+    }
 
     // compute overall weight and pdf
-    vec3f value = weight * pdf;
-    pdf *= self->importances[choice];
+    vec3f value = res.weight * res.pdf;
+    res.pdf *= self->importances[choice];
 
     for (uniform int i = 0; i < self->numBsdfs; ++i)
     {
       if ((i != choice) & (self->importances[i] > 0.0f))
       {
         const varying BSDF* uniform curBsdf = self->bsdfs[i];
-        float curPdf = 0.0f;
-        value = value + curBsdf->eval(curBsdf, wo, wi, curPdf);
-        pdf = pdf + curPdf * self->importances[i];
+        BSDF_EvalRes cur = curBsdf->eval(curBsdf, wo, res.wi);
+        value = value + cur.value;
+        res.pdf = res.pdf + cur.pdf * self->importances[i];
       }
     }
 
-    pdf *= rcp(self->importanceSum);
-    return value * rcp(pdf);
-  }
-  else
-  {
-    return make_vec3f(0.0f);
+    res.pdf *= rcp(self->importanceSum);
+    res.weight = value * rcp(res.pdf);
+    return res;
   }
 }
 

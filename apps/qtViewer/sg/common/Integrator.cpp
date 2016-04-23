@@ -26,7 +26,15 @@ namespace ospray {
     {
       if (!ospRenderer) {
         ospRenderer = ospNewRenderer(type.c_str());
-        if (!ospRenderer) 
+
+        // Set renderer defaults (if not using 'aoX' renderers)
+        if (type[0] != 'a' && type[1] != 'o')
+        {
+          ospSet1i(ospRenderer, "aoSamples", 1);
+          ospSet1i(ospRenderer, "shadowsEnabled", 1);
+        }
+
+        if (!ospRenderer)
           throw std::runtime_error("#osp:sg:SceneGraph: could not create renderer (of type '"+type+"')");
       }
       if (lastCommitted >= lastModified) return;

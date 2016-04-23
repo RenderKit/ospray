@@ -31,29 +31,34 @@ struct Velvety
   float f;
 };
 
-inline vec3f Velvety_eval(const varying BSDF* uniform super,
-                          const vec3f& wo, const vec3f& wi, float& pdf)
+inline BSDF_EvalRes Velvety_eval(const varying BSDF* uniform super,
+                                 const vec3f& wo, const vec3f& wi)
 {
   const varying Velvety* uniform self = (const varying Velvety* uniform)super;
+  BSDF_EvalRes res;
 
   const float cosThetaO = clamp(dot(wo,getN(super)));
   const float cosThetaI = clamp(dot(wi,getN(super)));
   const float sinThetaO = sqrt(1.0f - cosThetaO * cosThetaO);
   const float horizonScatter = pow(sinThetaO, self->f);
-  pdf = cosineSampleHemispherePDF(cosThetaI);
-  return mul(horizonScatter * cosThetaI * one_over_pi, self->R);
+  res.pdf = cosineSampleHemispherePDF(cosThetaI);
+  res.value =  mul(horizonScatter * cosThetaI * one_over_pi, self->R);
+  return res;
 }
 
-inline vec3f Velvety_sample(const varying BSDF* uniform super,
-                            const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
-                            const vec2f& s, float ss)
+inline BSDF_SampleRes Velvety_sample(const varying BSDF* uniform super,
+                                     const vec3f& wo, const vec2f& s, float ss)
 {
   const varying Velvety* uniform self = (const varying Velvety* uniform)super;
+  BSDF_SampleRes res;
 
   const vec3f localDir = cosineSampleHemisphere(s);
-  wi = getFrame(super) * localDir;
-  type = BSDF_DIFFUSE_REFLECTION;
-  return Velvety_eval(super, wo, wi, pdf) * rcp(pdf);
+  res.wi = getFrame(super) * localDir;
+  res.type = BSDF_DIFFUSE_REFLECTION;
+  BSDF_EvalRes eval = Velvety_eval(super, wo, res.wi);
+  res.pdf = eval.pdf;
+  res.weight = eval.value * rcp(eval.pdf);
+  return res;
 }
 
 inline void Velvety_Constructor(varying Velvety* uniform self, const varying linear3f* uniform frame,
