@@ -568,6 +568,7 @@ __lift_unary_fct(abs)
 __lift_unary_fct(rcp)
 __lift_unary_fct(exp)
 __lift_unary_fct(frac)
+__lift_unary_fct(sqr)
 
 #undef __lift_unary_fct
 

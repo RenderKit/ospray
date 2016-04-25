@@ -20,13 +20,6 @@
 #include "ospray/math/sampling.ih"
 #include "ospray/math/LinearSpace.ih"
 
-/*! Reflects a viewing vector I at a normal N. */
-inline vec3f reflect(const vec3f& I, const vec3f& N)
-{
-  float cosI = dot(I,N);
-  return (2.0f*cosI) * N - I;
-}
-
 /*! Reflects a viewing vector I at a normal N. Cosine between I
  *  and N is given as input. */
 inline vec3f reflect(const vec3f& I, const vec3f& N, float cosI)
@@ -34,31 +27,41 @@ inline vec3f reflect(const vec3f& I, const vec3f& N, float cosI)
   return (2.0f*cosI) * N - I;
 }
 
+/*! Reflects a viewing vector I at a normal N. */
+inline vec3f reflect(const vec3f& I, const vec3f& N)
+{
+  return reflect(I, N, dot(I, N));
+}
+
+// helper function which computes cosT^2 from cosI and eta
+inline float sqrCosT(const float cosI, const float eta)
+{
+  return 1.0f - sqr(eta)*(1.0f - sqr(cosI));
+}
+
 //! \brief Refracts a viewing vector I at a normal N
 /*! \detailed Refracts a viewing vector I at a normal N using the
  *  relative refraction index eta. Eta is refraction index of outside
  *  medium (where N points into) divided by refraction index of the
  *  inside medium. The vectors I and N have to point towards the same
- *  side of the surface. The cosine between I and N is given as input
- *  and the cosine of -N and transmission ray is computed as
- *  output. */
-inline vec3f refract(const vec3f& I, const vec3f& N, float cosI, float eta)
-{
-  const float k = 1.0f-eta*eta*(1.0f-cosI*cosI);
-  if (k < 0.0f) return make_vec3f(0.f);
-  const float cosT = sqrtf(k);
-  return sub(mul(eta,sub(mul(cosI,N),I)),mul(cosT,N));
-}
-
+ *  side of the surface. The cosine between I and N, and the cosine of -N and
+ *  the refracted ray is given as input */
 inline vec3f refract(const vec3f& I, const vec3f& N, float cosI, float cosT, float eta)
 {
-  return sub(mul(eta,sub(mul(cosI,N),I)),mul(cosT,N));
+  return eta*(cosI*N - I) - cosT*N;
+}
+
+inline vec3f refract(const vec3f& I, const vec3f& N, float cosI, float eta)
+{
+  const float sqrCosT = sqrCosT(cosI, eta);
+  if (sqrCosT < 0.0f) return make_vec3f(0.f);
+  return refract(I, N, cosI, sqrt(sqrCosT), eta);
 }
 
 inline float refract(float cosI, float eta)
 {
-    float k = 1.0f - eta*eta*(1.0f-cosI*cosI);
-    return sqrt(max(k, 0.0f));
+  const float sqrCosT = sqrCosT(cosI, eta);
+  return sqrt(max(sqrCosT, 0.0f));
 }
 
 //! \brief Computes fresnel coefficient for dielectric medium
@@ -70,7 +73,7 @@ inline float fresnelDielectric(float cosI, float cosT, float eta)
 {
   const float Rper = (eta*cosI -     cosT) * rcpf(eta*cosI +     cosT);
   const float Rpar = (    cosI - eta*cosT) * rcpf(    cosI + eta*cosT);
-  return 0.5f*(Rpar*Rpar + Rper*Rper);
+  return 0.5f*(sqr(Rpar) + sqr(Rper));
 }
 
 /*! Computes fresnel coefficient for media interface with relative
@@ -79,35 +82,33 @@ inline float fresnelDielectric(float cosI, float cosT, float eta)
  *  positive. */
 inline float fresnelDielectric(float cosI, float eta)
 {
-  const float k = 1.0f-eta*eta*(1.0f-cosI*cosI);
-  if (k < 0.0f) return 1.0f;
-  const float cosT = sqrtf(k);
-  return fresnelDielectric(cosI, cosT, eta);
+  const float sqrCosT = sqrCosT(cosI, eta);
+  if (sqrCosT < 0.0f) return 1.0f;
+  return fresnelDielectric(cosI, sqrt(sqrCosT), eta);
 }
 
 inline float fresnelDielectricEx(float cosI, float& cosT, float eta)
 {
-  const float k = 1.0f-eta*eta*(1.0f-cosI*cosI);
-  if (k < 0.0f)
+  const float sqrCosT = sqrCosT(cosI, eta);
+  if (sqrCosT < 0.0f)
   {
     cosT = 0.0f;
     return 1.0f;
   }
-  cosT = sqrtf(k);
-  return fresnelDielectric(cosI, cosT, eta);
+  return fresnelDielectric(cosI, sqrt(sqrCosT), eta);
 }
 
 /*! Computes fresnel coefficient for conductor medium with complex
  *  refraction index (eta,k). The cosine has to be positive. */
 inline vec3f fresnelConductor(float cosI, vec3f eta, vec3f k)
 {
-  vec3f tmp = eta*eta + k*k;
+  vec3f tmp = sqr(eta) + sqr(k);
   vec3f Rpar
-    = (tmp * cosI*cosI - 2.0f*eta*cosI + make_vec3f(1.f))
-    * rcp(tmp * cosI*cosI + 2.0f*eta*cosI + make_vec3f(1.f));
+    = (tmp * sqr(cosI) - 2.0f*eta*cosI + make_vec3f(1.f))
+    * rcp(tmp * sqr(cosI) + 2.0f*eta*cosI + make_vec3f(1.f));
   vec3f Rper
-    = (tmp - 2.0f*eta*cosI + make_vec3f(cosI*cosI))
-    * rcp(tmp + 2.0f*eta*cosI + make_vec3f(cosI*cosI));
+    = (tmp - 2.0f*eta*cosI + make_vec3f(sqr(cosI)))
+    * rcp(tmp + 2.0f*eta*cosI + make_vec3f(sqr(cosI)));
   return 0.5f * (Rpar + Rper);
 }
 
