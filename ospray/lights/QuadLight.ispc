@@ -16,7 +16,8 @@
 
 #include "Light.ih"
 
-struct QuadLight {
+struct QuadLight
+{
   Light super;            //!< inherited light fields
 
   vec3f position;         //!< world-space corner position of the light
@@ -32,14 +33,14 @@ struct QuadLight {
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 
-varying LightSample QuadLight_sample(const uniform Light *uniform _self,
-                                     const varying DifferentialGeometry &dg,
-                                     const varying vec2f &s)
+Light_SampleRes QuadLight_sample(const uniform Light* uniform super,
+                                 const DifferentialGeometry& dg,
+                                 const vec2f& s)
 {
-  const QuadLight *uniform self = (QuadLight *uniform)_self;
-  LightSample sample;
+  const QuadLight* uniform self = (QuadLight* uniform)super;
+  Light_SampleRes res;
 
-  // sample position on light with density ppdf = 1/area
+  // res position on light with density ppdf = 1/area
   // TODO: use solid angle sampling
   const vec3f pos = self->position + self->edge1 * s.x + self->edge2 * s.y;
 
@@ -48,17 +49,17 @@ varying LightSample QuadLight_sample(const uniform Light *uniform _self,
   const float dist = length(dir);
 
   // normalized light vector
-  sample.direction = dir / dist;
-  sample.distance = dist;
+  res.dir = dir / dist;
+  res.dist = dist;
 
   // convert to pdf wrt. solid angle
-  const float cosd = dot(self->nnormal, sample.direction);
-  sample.pdf = self->ppdf * (dist * dist) / abs(cosd);
+  const float cosd = dot(self->nnormal, res.dir);
+  res.pdf = self->ppdf * (dist * dist) / abs(cosd);
 
   // emit only to one side
-  sample.radiance = cosd > 0.f ? self->radiance * rcp(sample.pdf) : make_vec3f(0.f);
+  res.weight = cosd > 0.f ? self->radiance * rcp(res.pdf) : make_vec3f(0.f);
 
-  return sample;
+  return res;
 }
 
 
@@ -66,17 +67,17 @@ varying LightSample QuadLight_sample(const uniform Light *uniform _self,
 //////////////////////////////////////////////////////////////////////////////
 
 //! Set the parameters of an ispc-side QuadLight object
-export void QuadLight_set(void *uniform _self,
-                          const uniform vec3f &position,
-                          const uniform vec3f &edge2,
-                          const uniform vec3f &edge1,
-                          const uniform vec3f &radiance)
+export void QuadLight_set(void* uniform super,
+                          const uniform vec3f& position,
+                          const uniform vec3f& edge2,
+                          const uniform vec3f& edge1,
+                          const uniform vec3f& radiance)
 {
-  uniform QuadLight *uniform self = (uniform QuadLight *uniform)_self;
-  self->position     = position;
-  self->edge1        = edge1;
-  self->edge2        = edge2;
-  self->radiance     = radiance;
+  uniform QuadLight* uniform self = (uniform QuadLight* uniform)super;
+  self->position = position;
+  self->edge1    = edge1;
+  self->edge2    = edge2;
+  self->radiance = radiance;
 
   const uniform vec3f ndirection = cross(edge2, edge1);
   self->ppdf = rcp(length(ndirection));
@@ -84,11 +85,11 @@ export void QuadLight_set(void *uniform _self,
 }
 
 //! Create an ispc-side QuadLight object
-export void *uniform QuadLight_create(void *uniform cppEquivalent)
+export void* uniform QuadLight_create()
 {
-  uniform QuadLight *uniform self = uniform new uniform QuadLight;
+  uniform QuadLight* uniform self = uniform new uniform QuadLight;
 
-  Light_Constructor(&self->super, cppEquivalent);
+  Light_Constructor(&self->super);
   self->super.sample = QuadLight_sample;
 
   QuadLight_set(self,

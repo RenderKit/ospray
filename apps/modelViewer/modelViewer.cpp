@@ -145,7 +145,6 @@ namespace ospray {
       Assert(camera != NULL && "could not create camera");
       ospSet3f(camera,"pos",-1,1,-1);
       ospSet3f(camera,"dir",+1,-1,+1);
-//      ospSet1f(camera,"fovy",120);
       ospCommit(camera);
 
       ospSetObject(renderer,"world",model);
@@ -162,7 +161,10 @@ namespace ospray {
       Glut3DWidget::reshape(newSize);
       g_windowSize = newSize;
       if (fb) ospFreeFrameBuffer(fb);
-      fb = ospNewFrameBuffer((const osp::vec2i&)newSize,OSP_RGBA_I8,OSP_FB_COLOR|OSP_FB_DEPTH|OSP_FB_ACCUM|OSP_FB_VARIANCE);
+      fb = ospNewFrameBuffer((const osp::vec2i&)newSize,
+                             OSP_RGBA_I8,
+                             OSP_FB_COLOR|OSP_FB_DEPTH|
+                             OSP_FB_ACCUM|OSP_FB_VARIANCE);
       ospSet1f(fb, "gamma", 2.2f);
       ospCommit(fb);
       ospFrameBufferClear(fb,OSP_FB_ACCUM);
@@ -174,7 +176,8 @@ namespace ospray {
       if (displayWall && displayWall->fb != fb) {
         PRINT(displayWall->size);
         displayWall->fb = ospNewFrameBuffer((const osp::vec2i&)displayWall->size,
-                                            OSP_RGBA_NONE,OSP_FB_COLOR|OSP_FB_DEPTH|OSP_FB_ACCUM);
+                                            OSP_RGBA_NONE,OSP_FB_COLOR|
+                                            OSP_FB_DEPTH|OSP_FB_ACCUM);
         ospFrameBufferClear(displayWall->fb,OSP_FB_ACCUM);
         if (displayWall->po == NULL) {
           displayWall->po = ospNewPixelOp("display_wall");
@@ -687,6 +690,14 @@ namespace ospray {
     ospModel = ospNewModel();
 
     ospRenderer = ospNewRenderer(rendererType.c_str());
+
+    // Set renderer defaults (if not using 'aoX' renderers)
+    if (rendererType[0] != 'a' && rendererType[1] != 'o')
+    {
+      ospSet1i(ospRenderer, "aoSamples", 1);
+      ospSet1i(ospRenderer, "shadowsEnabled", 1);
+    }
+
     // ospSet1f(ospRenderer, "varianceThreshold", 0.0002);
     if (!ospRenderer)
       throw std::runtime_error("could not create ospRenderer '"+rendererType+"'");

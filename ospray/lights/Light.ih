@@ -20,50 +20,44 @@
 
 struct Light;
 
-struct LightSample
+struct Light_SampleRes
 {
-  vec3f radiance;  //!< radiance for this sample that arrives at the given point, already weighted by pdf
-  vec3f direction; //!< direction towards the light source
-  float distance;  //!< largest valid parameter value for a shadow ray
-  float pdf;       //!< probability that this sample was taken
+  vec3f weight;  //!< radiance that arrives at the given point divided by pdf
+  vec3f dir;     //!< direction towards the light source
+  float dist;    //!< largest valid t_far value for a shadow ray
+  float pdf;     //!< probability density that this sample was taken
 };
 
 //! compute the weighted radiance at a point caused by a sample on the light source
 // by convention, giving (0, 0) as "random" numbers should sample the "center"
 // of the light source (used by the raytracing renderers such as the OBJ renderer)
-typedef varying LightSample (*Light_SampleFct)(const uniform Light *uniform,
-      /*! point to generate the sample for >*/ const varying DifferentialGeometry&,
- /*! random numbers to generate the sample >*/ const varying vec2f &s);
+typedef Light_SampleRes (*Light_SampleFunc)(const uniform Light* uniform self,
+                                            const DifferentialGeometry& dg, /*! point to generate the sample for >*/
+                                            const vec2f& s);                /*! random numbers to generate the sample >*/
 
 
-struct LightEval
+struct Light_EvalRes
 {
-  vec3f radiance;  //!< radiance that arrives at the given point (not weighted by pdf)
-  float distance;
-  float pdf;       //!< probability that the direction would have been sampled
+  vec3f value;     //!< radiance that arrives at the given point (not weighted by pdf)
+  float dist;
+  float pdf;       //!< probability density that the direction would have been sampled
 };
 
-//! compute the radiance, distance and pdf caused by the light source (pointed to by the given direction) from pos
-typedef varying LightEval (*Light_EvalFct)(const uniform Light *uniform,
-                 /*! position of point >*/const varying vec3f &pos,
-/*! direction towards the light source >*/const varying vec3f &dir);
+//! compute the radiance, distance and pdf caused by the light source (pointed to by the given direction)
+typedef Light_EvalRes (*Light_EvalFunc)(const uniform Light* uniform self,
+                                        const DifferentialGeometry& dg, /*! point to evaluate illumination for >*/
+                                        const vec3f& dir);              /*! direction towards the light source >*/
 
 
-struct Light {
-  Light_SampleFct  sample;
-  Light_EvalFct eval;
-
-  //! Pointer back to the C++ equivalent of this class.
-  void *uniform cppEquivalent;
+struct Light
+{
+  Light_SampleFunc sample;
+  Light_EvalFunc eval;
 };
 
+Light_EvalRes Light_eval(const uniform Light* uniform self, const DifferentialGeometry& dg, const vec3f& dir);
 
-varying LightEval defaultEval(const uniform Light *uniform, const varying vec3f &, const varying vec3f &);
-
-//! constructor for ispc-side light object
-inline void Light_Constructor(uniform Light *uniform self,
-                              void *uniform cppEquivalent)
+inline void Light_Constructor(uniform Light* uniform self)
 {
-  self->cppEquivalent = cppEquivalent;
-  self->eval = defaultEval;
+  self->eval = Light_eval;
 }

@@ -507,6 +507,13 @@ void VolumeViewer::initObjects(const std::string &renderer_type)
   renderer = ospNewRenderer(renderer_type.c_str());
   exitOnCondition(renderer == NULL, "could not create OSPRay renderer object");
 
+  // Set renderer defaults (if not using 'aoX' renderers)
+  if (renderer_type[0] != 'a' && renderer_type[1] != 'o')
+  {
+    ospSet1i(renderer, "aoSamples", 1);
+    ospSet1i(renderer, "shadowsEnabled", 1);
+  }
+
   // Create OSPRay ambient and directional lights. GUI elements will modify their parameters.
   ambientLight = ospNewLight(renderer, "AmbientLight");
   exitOnCondition(ambientLight == NULL, "could not create ambient light");

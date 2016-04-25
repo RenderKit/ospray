@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-// ospray 
+// ospray
 #include "ospray/fb/FrameBuffer.ih"
 #include "ospray/render/util.ih"
 #include "ospray/common/Model.ih"
@@ -82,7 +82,7 @@ inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weig
 }
 
 inline void OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varying ScreenSample &sample)
-{ 
+{
   Ray &ray = sample.ray;
   // ISPC issue #703. Switch to 'nice' code once ISPC #703 is fixed.
   // print("ray.dir % % %\n",ray.dir.x,ray.dir.y,ray.dir.z);
@@ -166,22 +166,22 @@ inline void OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyin
       for (uniform int i = 0; self->lights && i < self->numLights; i++) {
         const uniform Light *uniform l = self->lights[i];
         const vec2f s = make_vec2f(0.f);
-        const LightSample light = l->sample(l, dg, s);
+        const Light_SampleRes light = l->sample(l, dg, s);
 
-        if (reduce_max(light.radiance) > 0.f) { // any potential contribution?
-          const float cosNL = abs(dot(light.direction, dg.Ns));
-          const float cosLR = max(0.f, dot(light.direction, R));
-          const vec3f unshaded_light_contrib = local_opacity * (Kd * cosNL + Ks * powf(cosLR, Ns)) * light.radiance;
+        if (reduce_max(light.weight) > 0.f) { // any potential contribution?
+          const float cosNL = abs(dot(light.dir, dg.Ns));
+          const float cosLR = max(0.f, dot(light.dir, R));
+          const vec3f unshaded_light_contrib = local_opacity * (Kd * cosNL + Ks * powf(cosLR, Ns)) * light.weight;
 
           if (self->shadowsEnabled) {
             const float max_contrib = reduce_max(unshaded_light_contrib);
             if (max_contrib > .01f) {
               Ray shadowRay;
-              setRay(shadowRay, P, light.direction);
+              setRay(shadowRay, P, light.dir);
               const float light_alpha = lightAlpha(shadowRay, self->super.model, max_contrib, self->super.epsilon);
               local_shade_color = local_shade_color + light_alpha * unshaded_light_contrib;
             }
-          } else 
+          } else
             local_shade_color = local_shade_color + unshaded_light_contrib;
         }
       }

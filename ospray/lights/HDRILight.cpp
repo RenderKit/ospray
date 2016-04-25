@@ -25,7 +25,7 @@ namespace ospray {
     , map(NULL)
     , intensity(1.f)
   {
-    ispcEquivalent = ispc::HDRILight_create(this);
+    ispcEquivalent = ispc::HDRILight_create();
   }
 
   HDRILight::~HDRILight()

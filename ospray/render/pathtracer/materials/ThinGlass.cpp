@@ -29,9 +29,9 @@ namespace ospray {
         if (getIE() != NULL) return;
 
         const vec3f& transmission
-          = getParam3f("transmission",vec3f(1.f)); //vec3f(0.19,0.45,1.5));
+          = getParam3f("transmission", vec3f(1.f));
         const float eta
-          = getParamf("eta",1.4f); //vec3f(.4f,0.f,0.f));
+          = getParamf("eta", 1.5f);
         const float thickness
           = getParamf("thickness",1.f);
 

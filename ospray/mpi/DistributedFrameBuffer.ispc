@@ -74,12 +74,14 @@ export void DFB_alphaBlendTiles(VaryingTile    *uniform prev,
   }
 }
 
-export void DFB_accumulate(VaryingTile    *uniform tile,
+export void DFB_accumulate(void           *uniform _self,
+                           VaryingTile    *uniform tile,
                            VaryingTile    *uniform final,
                            VaryingTile    *uniform accum,
                            VaryingRGBA_I8 *uniform color,
                            uniform bool hasAccumBuffer)
 {
+  DistributedFrameBuffer *uniform self = (DistributedFrameBuffer*)_self;
   if (!hasAccumBuffer || tile->accumID < 1) {
     for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
       vec4f col = make_vec4f(tile->r[i],
@@ -95,10 +97,10 @@ export void DFB_accumulate(VaryingTile    *uniform tile,
       final->b[i] = col.z;
       final->a[i] = col.w;
 
-      // XXX hardcoded gamma, should use pixelops!
+      // NOTE(jda) - no longer hardcoded, but should use pixelops
       col = max(col,make_vec4f(0.f));
       // alpha is never gamma-corrected
-      col = make_vec4f(pow(make_vec3f(col), 1.f/2.2f), col.w);
+      col = make_vec4f(pow(make_vec3f(col), self->super.invGamma), col.w);
               
       color->color[i] = cvt_uint32(col);
     }
@@ -127,10 +129,10 @@ export void DFB_accumulate(VaryingTile    *uniform tile,
       final->b[i] = col.z;
       final->a[i] = col.w;
 
-      // XXX hardcoded gamma, should use pixelops!
+      // NOTE(jda) - no longer hardcoded, but should use pixelops
       col = max(col,make_vec4f(0.f));
       // alpha is never gamma-corrected
-      col = make_vec4f(pow(make_vec3f(col), 1.f/2.2f), col.w);
+      col = make_vec4f(pow(make_vec3f(col), self->super.invGamma), col.w);
               
       color->color[i] = cvt_uint32(col);
     }

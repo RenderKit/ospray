@@ -32,7 +32,7 @@ namespace ospray {
     , color(1.f)
     , intensity(1.f)
   {
-    ispcEquivalent = ispc::QuadLight_create(this);
+    ispcEquivalent = ispc::QuadLight_create();
   }
 
   //!< Copy understood parameters into class members

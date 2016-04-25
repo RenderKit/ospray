@@ -30,7 +30,7 @@ inline Medium make_Medium(const vec3f transmission, const float ior)
   return m;
 }
 
-inline Medium make_Medium_Vacuum() {
+inline Medium make_Medium_vacuum() {
   return make_Medium(make_vec3f(1.0f),1.0f);
 }
 

@@ -25,7 +25,7 @@ vec3f PathTraceMaterial_getTransparency(const uniform PathTraceMaterial* uniform
 }
 
 void PathTraceMaterial_selectNextMedium(const uniform PathTraceMaterial* uniform self,
-                                        varying Medium& currentMedium)
+                                        Medium& currentMedium)
 { /* do nothing by default */ }
 
 void PathTraceMaterial_Constructor(uniform PathTraceMaterial* uniform self,
