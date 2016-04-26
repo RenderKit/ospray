@@ -304,8 +304,7 @@ namespace ospray {
   {
     assert(comm);
     this->ispcEquivalent = ispc::DFB_create(this);
-    ispc::DFB_set(getIE(),numPixels.x,numPixels.y,
-                  colorBufferFormat);
+    ispc::DFB_set(getIE(),numPixels.x,numPixels.y, colorBufferFormat);
     comm->registerObject(this,myID);
 
     createTiles();
@@ -515,21 +514,15 @@ namespace ospray {
   void DFB::closeCurrentFrame()
   {
     DBG(printf("rank %i CLOSES frame\n",mpi::world.rank));
-
-    //NOTE (jda) - Confused here, why lock if ok not to???
-    //if (!locked) mutex.lock();
     frameIsActive = false;
     frameIsDone   = true;
     doneCond.notify_all();
-
-    //if (!locked) mutex.unlock();
   }
 
   //! write given tile data into the frame buffer, sending to remove owner if
   //! required
   void DFB::setTile(ospray::Tile &tile)
   {
-    const size_t numPixels = TILE_SIZE*TILE_SIZE;
     DFB::TileDesc *tileDesc = this->getTileDescFor(tile.region.lower);
 
     if (!tileDesc->mine()) {

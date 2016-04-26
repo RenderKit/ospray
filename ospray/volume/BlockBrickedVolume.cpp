@@ -99,10 +99,10 @@ namespace ospray {
     const int NTASKS = regionSize.y * regionSize.z;
     parallel_for(NTASKS, [&](int taskIndex){
         ispc::BlockBrickedVolume_setRegion(ispcEquivalent,
-            source,
-            (const ispc::vec3i &) regionCoords,
-            (const ispc::vec3i &) regionSize,
-            taskIndex);
+                                           source,
+                                           (const ispc::vec3i &)regionCoords,
+                                           (const ispc::vec3i &)regionSize,
+                                           taskIndex);
     });
 
     return true;

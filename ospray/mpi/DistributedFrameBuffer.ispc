@@ -24,17 +24,6 @@ struct DistributedFrameBuffer {
 struct VaryingRGBA_I8 {
   varying uint32 color[TILE_SIZE*TILE_SIZE/programCount];
 };
-// /*! the ispc equivalent of the c-side
-//   DistributedFrameBuffer::DFBTileData as it is sent over the
-//   network */
-// struct DFBTileData {
-//   VaryingTile accum;
-//   // varying float  accum_r[TILE_SIZE*TILE_SIZE/programCount];
-//   // varying float  accum_g[TILE_SIZE*TILE_SIZE/programCount];
-//   // varying float  accum_b[TILE_SIZE*TILE_SIZE/programCount];
-//   // varying float  accum_a[TILE_SIZE*TILE_SIZE/programCount];
-//   varying uint32 color[TILE_SIZE*TILE_SIZE/programCount];
-// };
 
 export void DFB_alphaBlendBackground(VaryingTile    *uniform firstTile,
                                      const uniform vec4f &bgColor)
@@ -56,16 +45,9 @@ export void DFB_alphaBlendBackground(VaryingTile    *uniform firstTile,
 export void DFB_alphaBlendTiles(VaryingTile    *uniform prev,
                                 VaryingTile    *uniform over)
 {
-  // print("alpha0 prev % over %\n",prev->a[0],over->a[0]);
   for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
-    vec4f col_prev = make_vec4f(prev->r[i],
-                                prev->g[i],
-                                prev->b[i],
-                                prev->a[i]);
-    vec4f col_over = make_vec4f(over->r[i],
-                                over->g[i],
-                                over->b[i],
-                                over->a[i]);
+    vec4f col_prev = make_vec4f(prev->r[i], prev->g[i], prev->b[i], prev->a[i]);
+    vec4f col_over = make_vec4f(over->r[i], over->g[i], over->b[i], over->a[i]);
     vec4f col_new = col_over + col_prev * (1.f-col_over.w);
     prev->r[i] = col_new.x;
     prev->g[i] = col_new.y;
@@ -84,10 +66,7 @@ export void DFB_accumulate(void           *uniform _self,
   DistributedFrameBuffer *uniform self = (DistributedFrameBuffer*)_self;
   if (!hasAccumBuffer || tile->accumID < 1) {
     for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
-      vec4f col = make_vec4f(tile->r[i],
-                             tile->g[i],
-                             tile->b[i],
-                             tile->a[i]);
+      vec4f col = make_vec4f(tile->r[i], tile->g[i], tile->b[i], tile->a[i]);
       accum->r[i] = col.x;
       accum->g[i] = col.y;
       accum->b[i] = col.z;
@@ -107,15 +86,8 @@ export void DFB_accumulate(void           *uniform _self,
   } else {
     const uniform float rcpAccumID = 1.f/(tile->accumID+1);
     for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
-      vec4f col
-        = make_vec4f(tile->r[i],
-                     tile->g[i],
-                     tile->b[i],
-                     tile->a[i])
-        + make_vec4f(accum->r[i],
-                     accum->g[i],
-                     accum->b[i],
-                     accum->a[i]);
+      vec4f col = make_vec4f(tile->r[i], tile->g[i], tile->b[i], tile->a[i])
+        + make_vec4f(accum->r[i], accum->g[i], accum->b[i], accum->a[i]);
       
       accum->r[i] = col.x;
       accum->g[i] = col.y;
@@ -156,7 +128,8 @@ export void DFB_zComposite(VaryingTile    *uniform delta,
 
 export void *uniform DFB_create(void *uniform cClassPtr)
 {
-  DistributedFrameBuffer *uniform self = uniform new uniform DistributedFrameBuffer;
+  DistributedFrameBuffer *uniform self =
+      uniform new uniform DistributedFrameBuffer;
   FrameBuffer_Constructor(&self->super,cClassPtr);
 
   return self;
@@ -171,7 +144,9 @@ export void DFB_set(void *uniform _self,
   FrameBuffer_set(&self->super,size_x,size_y,colorBufferFormat);
 }
 
-inline void swapFragments(VaryingTile *uniform t0, VaryingTile *uniform t1, uniform int fragID)
+inline void swapFragments(VaryingTile *uniform t0,
+                          VaryingTile *uniform t1,
+                          uniform int fragID)
 {
   float r = t0->r[fragID]; t0->r[fragID] = t1->r[fragID]; t1->r[fragID] = r;
   float g = t0->g[fragID]; t0->g[fragID] = t1->g[fragID]; t1->g[fragID] = g;
@@ -220,6 +195,7 @@ inline void sortAndBlendFragments(VaryingTile *uniform *uniform tileArray,
   }
 }
 
+#if 0
 task void DFB_sortAndBlendFragments_job(VaryingTile *uniform *uniform tileArray,
                                         uniform int32 numTiles)
 {
@@ -227,10 +203,12 @@ task void DFB_sortAndBlendFragments_job(VaryingTile *uniform *uniform tileArray,
   uniform int end = begin + (PIXELS_PER_BLEND_JOB/programCount);
   sortAndBlendFragments(tileArray,numTiles,begin,end);
 }
+#endif
 
 export void DFB_sortAndBlendFragments(VaryingTile *uniform *uniform tileArray,
                                       uniform int32 numTiles)
 {
+// NOTE(jda) - I do not know if this should be removed...?
 #if 1
   sortAndBlendFragments(tileArray,numTiles,0,TILE_SIZE*TILE_SIZE/programCount);
 #else
