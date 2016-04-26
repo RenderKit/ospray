@@ -62,16 +62,13 @@ export void DFB_accumulate_##name(void           *uniform _self,             \
                                   VaryingTile    *uniform final,             \
                                   VaryingTile    *uniform accum,             \
                                   VaryingRGBA_I8 *uniform color,             \
-                                  uniform int  accumID,                      \
-                                  uniform bool hasAccumBuffer)               \
+                                  uniform int     accumID,                   \
+                                  uniform bool    hasAccumBuffer)            \
 {                                                                            \
   DistributedFrameBuffer *uniform self = (DistributedFrameBuffer*)_self;     \
   if (!hasAccumBuffer || accumID < 1) {                                      \
     for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {           \
-      vec4f col = make_vec4f(tile->r[i],                                     \
-                             tile->g[i],                                     \
-                             tile->b[i],                                     \
-                             tile->a[i]);                                    \
+      vec4f col = make_vec4f(tile->r[i], tile->g[i], tile->b[i], tile->a[i]);\
       accum->r[i] = col.x;                                                   \
       accum->g[i] = col.y;                                                   \
       accum->b[i] = col.z;                                                   \
@@ -81,21 +78,13 @@ export void DFB_accumulate_##name(void           *uniform _self,             \
       final->b[i] = col.z;                                                   \
       final->a[i] = col.w;                                                   \
                                                                              \
-      col = max(col,make_vec4f(0.f));                                        \
       color->color[i] = cvt(col);                                            \
     }                                                                        \
   } else {                                                                   \
     const uniform float rcpAccumID = 1.f/(accumID+1);                        \
     for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {           \
-      vec4f col                                                              \
-        = make_vec4f(tile->r[i],                                             \
-                     tile->g[i],                                             \
-                     tile->b[i],                                             \
-                     tile->a[i])                                             \
-        + make_vec4f(accum->r[i],                                            \
-                     accum->g[i],                                            \
-                     accum->b[i],                                            \
-                     accum->a[i]);                                           \
+      vec4f col = make_vec4f(tile->r[i], tile->g[i], tile->b[i], tile->a[i]) \
+        + make_vec4f(accum->r[i], accum->g[i], accum->b[i], accum->a[i]);    \
                                                                              \
       accum->r[i] = col.x;                                                   \
       accum->g[i] = col.y;                                                   \
@@ -109,14 +98,13 @@ export void DFB_accumulate_##name(void           *uniform _self,             \
       final->b[i] = col.z;                                                   \
       final->a[i] = col.w;                                                   \
                                                                              \
-      col = max(col,make_vec4f(0.f));                                        \
       color->color[i] = cvt(col);                                            \
     }                                                                        \
   }                                                                          \
 }
 
 template_accumulate(RGBA8, cvt_uint32);
-template_accumulate(SRGBA, cvt_srgba);
+template_accumulate(SRGBA, linear_to_srgba8);
 #undef template_accumulate
 
 

@@ -48,7 +48,7 @@ struct FrameBuffer
 /*! helper function to convert float-color into rgba-uint format */
 inline uint32 cvt_uint32(const float f)
 {
-  return (int32)(255.9f * max(min(f,1.f),0.f));
+  return (int32)(255.f * clamp(f, 0.f, 1.f));
 }
 
 /*! helper function to convert float-color into rgba-uint format */
@@ -68,14 +68,6 @@ inline uint32 cvt_uint32(const vec3f &v)
     (cvt_uint32(v.x) << 0)  |
     (cvt_uint32(v.y) << 8)  |
     (cvt_uint32(v.z) << 16);
-}
-
-/*! helper function to convert float-color into srgba format */
-inline uint32 cvt_srgba(const vec4f &v)
-{
-  // alpha is never gamma-corrected
-  // approximate sRGB transfer curve with gamma 2.2
-  return cvt_uint32(make_vec4f(pow(make_vec3f(v), 1/2.2f), v.w));
 }
 
 

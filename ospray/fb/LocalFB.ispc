@@ -47,7 +47,6 @@ export void LocalFrameBuffer_writeTile_##name(void *uniform _fb,             \
                                        varyTile->b[chunkID],                 \
                                        varyTile->a[chunkID]);                \
                                                                              \
-        col = max(col,make_vec4f(0.f));                                      \
         const type cvtCol = cvt(col);                                        \
       }                                                                      \
       color[pixelID] = cvtCol;                                               \
@@ -58,7 +57,7 @@ export void LocalFrameBuffer_writeTile_##name(void *uniform _fb,             \
 
 
 template_writeTile(RGBA8, uint32, cvt_uint32);
-template_writeTile(SRGBA, uint32, cvt_srgba);
+template_writeTile(SRGBA, uint32, linear_to_srgba8);
 inline vec4f cvt_nop(const vec4f &v) { return v; };
 template_writeTile(RGBA32F, vec4f, cvt_nop);
 #undef template_writeTile
