@@ -98,7 +98,12 @@ MACRO (OSPRAY_ISPC_COMPILE)
   IF (THIS_IS_MIC)
     SET(ISPC_TARGET_EXT .cpp)
     SET(ISPC_TARGET_ARGS generic-16)
-    SET(ISPC_ADDITIONAL_ARGS ${ISPC_ADDITIONAL_ARGS} --opt=force-aligned-memory --emit-c++ --c++-include-file=${PROJECT_SOURCE_DIR}/ospray/common/ISPC_KNC_Backend.h )
+    SET(ISPC_ADDITIONAL_ARGS
+      ${ISPC_ADDITIONAL_ARGS}
+      --opt=force-aligned-memory
+      --emit-c++
+      --c++-include-file=${PROJECT_SOURCE_DIR}/ospray/common/ISPC_KNC_Backend.h
+    )
   ELSE()
     SET(ISPC_TARGET_EXT ${CMAKE_CXX_OUTPUT_EXTENSION})
     STRING(REPLACE ";" "," ISPC_TARGET_ARGS "${ISPC_TARGETS}")
@@ -126,6 +131,10 @@ MACRO (OSPRAY_ISPC_COMPILE)
 
   IF (NOT WIN32)
     SET(ISPC_ADDITIONAL_ARGS ${ISPC_ADDITIONAL_ARGS} --pic)
+  ENDIF()
+
+  IF (NOT OSPRAY_DEBUG_BUILD)
+    SET(ISPC_ADDITIONAL_ARGS ${ISPC_ADDITIONAL_ARGS} --opt=disable-assertions)
   ENDIF()
 
   SET(ISPC_OBJECTS "")

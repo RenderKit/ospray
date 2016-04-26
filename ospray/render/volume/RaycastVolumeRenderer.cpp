@@ -115,7 +115,7 @@ namespace ospray {
 
     DPRenderTask(int workerRank);
 
-    void run(size_t taskIndex) const;
+    void operator()(int taskIndex) const;
   };
 
   DPRenderTask::DPRenderTask(int workerRank)
@@ -123,7 +123,7 @@ namespace ospray {
   {
   }
 
-  void DPRenderTask::run(size_t taskIndex) const
+  void DPRenderTask::operator()(int taskIndex) const
   {
     const size_t tileID = taskIndex;
     const size_t tile_y = taskIndex / numTiles_x;
@@ -138,9 +138,12 @@ namespace ospray {
     // for (int i=0;i<numBlocks;i++)
     //   PRINT(dpv->ddBlock[i].bounds);
     bool *blockWasVisible = (bool*)alloca(numBlocks*sizeof(bool));
+
     for (int i=0;i<numBlocks;i++)
       blockWasVisible[i] = false;
-    bool renderForeAndBackground = (taskIndex % core::getWorkerCount()) == core::getWorkerRank();
+
+    bool renderForeAndBackground =
+        (taskIndex % core::getWorkerCount()) == core::getWorkerRank();
 
     const int numJobs = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
 
@@ -174,7 +177,8 @@ namespace ospray {
           + totalBlocksInTile /* plus how many blocks map to this
                                      tile, IN TOTAL (ie, INCLUDING blocks
                                      on other nodes)*/;
-      // printf("rank %i total tiles in tile %i is %i\n",core::getWorkerRank(),taskIndex,nextGenTiles);
+      // printf("rank %i total tiles in tile %i is %i\n",
+      //        core::getWorkerRank(),taskIndex,nextGenTiles);
 
       // set background tile
       bgTile.generation = 0;
@@ -185,7 +189,8 @@ namespace ospray {
       fgTile.generation = 1;
       fgTile.children = 0; //nextGenTiles-1;
       fb->setTile(fgTile);
-      // all other tiles for gen #1 will be set below, no matter whether it's mine or not
+      // all other tiles for gen #1 will be set below, no matter whether
+      // it's mine or not
     }
 
     // now, send all block cache tiles that were generated on this
@@ -223,10 +228,10 @@ namespace ospray {
   {
     int workerRank = ospray::core::getWorkerRank();
 
-    std::vector<const DataDistributedBlockedVolume *> ddVolumeVec;
+    using DDBV = DataDistributedBlockedVolume;
+    std::vector<const DDBV *> ddVolumeVec;
     for (int volumeID=0;volumeID<model->volume.size();volumeID++) {
-      const DataDistributedBlockedVolume *ddv
-          = dynamic_cast<const DataDistributedBlockedVolume*>(model->volume[volumeID].ptr);
+      const DDBV *ddv = dynamic_cast<const DDBV*>(model->volume[volumeID].ptr);
       if (!ddv) continue;
       ddVolumeVec.push_back(ddv);
     }
@@ -234,7 +239,8 @@ namespace ospray {
     if (ddVolumeVec.empty()) {
       static bool printed = false;
       if (!printed) {
-        cout << "no data parallel volumes, rendering in traditional raycast_volume_render mode" << endl;
+        cout << "no data parallel volumes, rendering in traditional"
+             << " raycast_volume_render mode" << endl;
         printed = true;
       }
 
@@ -252,16 +258,19 @@ namespace ospray {
 
     // check if we're even in mpi parallel mode (can't do
     // data-parallel otherwise)
-    if (!ospray::core::isMpiParallel())
+    if (!ospray::core::isMpiParallel()) {
       throw std::runtime_error("#dvr: need data-parallel rendering, "
                                "but not running in mpi mode!?");
+    }
 
     // switch (distributed) frame buffer into compositing mode
     DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
-    if (!dfb)
+    if (!dfb) {
       throw std::runtime_error("OSPRay data parallel rendering error. "
                                "this is a data-parallel scene, but we're "
                                "not using the distributed frame buffer!?");
+    }
+
     dfb->setFrameMode(DistributedFrameBuffer::ALPHA_BLENDING);
 
 
@@ -294,7 +303,7 @@ namespace ospray {
     renderTask.dpv = ddVolumeVec[0];
 
     size_t NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
-    parallel_for(NTASKS, [&](int taskIndex){renderTask.run(taskIndex);});
+    parallel_for(NTASKS, renderTask);
 
     dfb->waitUntilFinished();
     Renderer::endFrame(NULL,channelFlags);
