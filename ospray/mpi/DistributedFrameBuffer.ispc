@@ -61,10 +61,11 @@ export void DFB_accumulate(void           *uniform _self,
                            VaryingTile    *uniform final,
                            VaryingTile    *uniform accum,
                            VaryingRGBA_I8 *uniform color,
+                           uniform int  accumID,
                            uniform bool hasAccumBuffer)
 {
   DistributedFrameBuffer *uniform self = (DistributedFrameBuffer*)_self;
-  if (!hasAccumBuffer || tile->accumID < 1) {
+  if (!hasAccumBuffer || accumID < 1) {
     for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
       vec4f col = make_vec4f(tile->r[i], tile->g[i], tile->b[i], tile->a[i]);
       accum->r[i] = col.x;
@@ -84,7 +85,7 @@ export void DFB_accumulate(void           *uniform _self,
       color->color[i] = cvt_uint32(col);
     }
   } else {
-    const uniform float rcpAccumID = 1.f/(tile->accumID+1);
+    const uniform float rcpAccumID = 1.f/(accumID+1);
     for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
       vec4f col = make_vec4f(tile->r[i], tile->g[i], tile->b[i], tile->a[i])
         + make_vec4f(accum->r[i], accum->g[i], accum->b[i], accum->a[i]);

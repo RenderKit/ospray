@@ -133,6 +133,7 @@ namespace ospray {
                              (ispc::VaryingTile *)&this->final,
                              (ispc::VaryingTile *)&this->accum,
                              (ispc::VaryingRGBA_I8 *)&this->color,
+                             dfb->accumId,
                              dfb->hasAccumBuffer);
 
         dfb->tileIsCompleted(this);
@@ -168,6 +169,7 @@ namespace ospray {
                          (ispc::VaryingTile*)&this->final,
                          (ispc::VaryingTile*)&this->accum,
                          (ispc::VaryingRGBA_I8*)&this->color,
+                         dfb->accumId,
                          dfb->hasAccumBuffer);
     dfb->tileIsCompleted(this);
   }
@@ -199,6 +201,7 @@ namespace ospray {
                            (ispc::VaryingTile*)&this->final,
                            (ispc::VaryingTile*)&this->accum,
                            (ispc::VaryingRGBA_I8*)&this->color,
+                           dfb->accumId,
                            dfb->hasAccumBuffer);
       dfb->tileIsCompleted(this);
     }
