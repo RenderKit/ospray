@@ -59,7 +59,7 @@ ENDMACRO()
 # ".mic"-suffix trick, so we'll put libraries into separate
 # directories (names 'intel64' and 'mic', respectively)
 MACRO(CONFIGURE_OSPRAY)
-  CONFIGURE_TASKING_SYSTEM()
+  OSPRAY_CONFIGURE_TASKING_SYSTEM()
 
   IF("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     SET(OSPRAY_DEBUG_BUILD          ON )
@@ -99,8 +99,6 @@ MACRO(CONFIGURE_OSPRAY)
       INCLUDE(${PROJECT_SOURCE_DIR}/cmake/clang.cmake)
     ELSEIF (OSPRAY_COMPILER_MSVC)
       INCLUDE(${PROJECT_SOURCE_DIR}/cmake/msvc.cmake)
-    ELSE()
-      MESSAGE(FATAL_ERROR "Unsupported compiler specified: '${CMAKE_CXX_COMPILER_ID}'")
     ENDIF()
 
     SET(OSPRAY_EMBREE_ENABLE_AVX512 false)
@@ -348,12 +346,14 @@ ENDMACRO()
 
 ## Tasking system configuration macro ##
 
-MACRO(CONFIGURE_TASKING_SYSTEM)
+MACRO(OSPRAY_CONFIGURE_TASKING_SYSTEM)
   # -------------------------------------------------------
   # Setup tasking system build configuration
   # -------------------------------------------------------
 
-  IF(${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
+  # NOTE(jda) - Notice that this implies that OSPRAY_CONFIGURE_COMPILER() has
+  #             been called before this macro!
+  IF(OSPRAY_COMPILER_ICC)
     SET(CILK_STRING "Cilk")
   ENDIF()
 
