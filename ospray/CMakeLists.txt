@@ -105,6 +105,8 @@ SET(OSPRAY_SOURCES
   include/ospray/OSPDataType.h
   include/ospray/OSPTexture.h
 
+  device/buffers.cpp
+  device/command.h
   device/nwlayer.cpp
 
   math/box.ispc
