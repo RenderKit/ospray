@@ -96,9 +96,19 @@ endif(NOT EXISTS ${OSPRAY_INCLUDE_DIR}/ospray/version.h)
 set(OSPRAY_INCLUDE_DIRS
   ${OSPRAY_INCLUDE_DIR}
   ${OSPRAY_INCLUDE_DIR}/ospray
-  ${OSPRAY_INCLUDE_DIR}/ospray/embree-v2.7.1
-  ${OSPRAY_INCLUDE_DIR}/ospray/embree-v2.7.1/common
 )
+
+
+###############################################################################
+# ospray build configuration
+
+
+SET(OSPRAY_COMPILER_ICC   @OSPRAY_COMPILER_ICC@  )
+SET(OSPRAY_COMPILER_GCC   @OSPRAY_COMPILER_GCC@  )
+SET(OSPRAY_COMPILER_CLANG @OSPRAY_COMPILER_CLANG@)
+SET(OSPRAY_COMPILER_MSVC  @OSPRAY_COMPILER_MSVC@ )
+
+SET(OSPRAY_USE_EXTERNAL_EMBREE @OSPRAY_USE_EXTERNAL_EMBREE@)
 
 
 ###############################################################################
@@ -113,7 +123,7 @@ set(OSPRAY_CURRENT_ROOT_INSTALL_DIR   ${CURRENT_ROOT_INSTALL_DIR})
 #             any ospray dependencies. A list of libs should be constructed
 #             and added to the OSPRAY_LIBRARIES variable below.
 
-if (@OSPRAY_TASKING_TBB@)
+if (OSPRAY_TASKING_TBB)
   # Find tbb
   find_package(TBB)
   if(":${TBB_LIBRARY}" STREQUAL ":")
@@ -127,11 +137,11 @@ if (@OSPRAY_TASKING_TBB@)
   list(APPEND OSPRAY_DEPENDENCIES ${TBB_LIBRARIES})
 endif()
 
-if (@OSPRAY_TASKING_CILK@)
+if (OSPRAY_TASKING_CILK)
   add_definitions(-DOSPRAY_TASKING_CILK)
 endif()
 
-if(@OSPRAY_USE_EXTERNAL_EMBREE@)
+if(OSPRAY_USE_EXTERNAL_EMBREE)
   # Find existing Embree on the machine
   find_package(embree @REQUIRED_MINIMUM_EMBREE@ REQUIRED)
 else()
