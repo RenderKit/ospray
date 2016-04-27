@@ -56,9 +56,7 @@ ELSEIF (WIN32)
   ENDIF()
 ELSE()
   FIND_PACKAGE(GLUT)
-  IF (GLUT_FOUND)
-    SET(GLUT_LIBRARIES glut GLU m)
-  ELSE()
+  IF (NOT GLUT_FOUND)
     FIND_PATH(GLUT_INCLUDE_DIR GL/glut.h 
       $ENV{TACC_FREEGLUT_INC}
       )
@@ -67,7 +65,16 @@ ELSE()
       )
     FIND_LIBRARY(GLUT_LIBRARIES NAMES libglut.so PATHS $ENV{TACC_FREEGLUT_LIB})
     IF (NOT GLUT_LIBRARIES)
-      MESSAGE(FATAL_ERROR "Could not find GLUT library, even after trying additional search dirs")
+      MESSAGE(FATAL_ERROR "Could not find GLUT library, even after trying"
+                          " additional search dirs."
+                          " Please disable the following to build without GLUT:"
+                          "\n"
+                          " OSPRAY_APPS_MODELVIEWER,"
+                          " OSPRAY_APPS_PARTICLEVIEWER,"
+                          " OSPRAY_APPS_QTVIEWER,"
+                          " OSPRAY_APPS_STREAMLINEVIEWER,"
+                          " OSPRAY_MODULE_TACHYON"
+                          "\n")
     ELSE()
       SET(GLUT_FOUND ON)
     ENDIF()
