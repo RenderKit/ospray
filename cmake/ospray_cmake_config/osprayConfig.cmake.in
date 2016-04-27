@@ -113,7 +113,7 @@ set(OSPRAY_CURRENT_ROOT_INSTALL_DIR   ${CURRENT_ROOT_INSTALL_DIR})
 #             any ospray dependencies. A list of libs should be constructed
 #             and added to the OSPRAY_LIBRARIES variable below.
 
-if (@USE_TBB@)
+if (@OSPRAY_TASKING_TBB@)
   # Find tbb
   find_package(TBB)
   if(":${TBB_LIBRARY}" STREQUAL ":")
@@ -123,12 +123,12 @@ if (@USE_TBB@)
     message(STATUS "Found required OSPRay dependency: TBB in ${TBB_INCLUDE_DIRS}")
   endif()
 
-  add_definitions(-DOSPRAY_USE_TBB)
+  add_definitions(-DOSPRAY_TASKING_TBB)
   list(APPEND OSPRAY_DEPENDENCIES ${TBB_LIBRARIES})
 endif()
 
-if (@USE_CILK@)
-  add_definitions(-DOSPRAY_USE_CILK)
+if (@OSPRAY_TASKING_CILK@)
+  add_definitions(-DOSPRAY_TASKING_CILK)
 endif()
 
 if(@OSPRAY_USE_EXTERNAL_EMBREE@)

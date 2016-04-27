@@ -31,7 +31,7 @@ namespace ospray {
   TiledLoadBalancer *TiledLoadBalancer::instance = NULL;
 
   LocalTiledLoadBalancer::LocalTiledLoadBalancer()
-#ifdef OSPRAY_USE_TBB
+#ifdef OSPRAY_TASKING_TBB
     : tbb_init(numThreads)
 #endif
   {

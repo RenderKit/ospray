@@ -16,11 +16,11 @@
 
 #pragma once
 
-#ifdef OSPRAY_USE_TBB
+#ifdef OSPRAY_TASKING_TBB
 #  include <tbb/parallel_for.h>
 #elif defined(OSPRAY_USE_CILK)
 #  include <cilk/cilk.h>
-#elif defined(OSPRAY_USE_INTERNAL_TASKING)
+#elif defined(OSPRAY_TASKING_INTERNAL)
 #  include "ospray/common/tasking/TaskSys.h"
 #endif
 
@@ -31,18 +31,18 @@ namespace ospray {
 template<typename TASK_T>
 inline void parallel_for(int nTasks, const TASK_T& fcn)
 {
-#ifdef OSPRAY_USE_TBB
+#ifdef OSPRAY_TASKING_TBB
   tbb::parallel_for(0, nTasks, 1, fcn);
 #elif defined(OSPRAY_USE_CILK)
   cilk_for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
     fcn(taskIndex);
   }
-#elif defined(OSPRAY_USE_OMP)
+#elif defined(OSPRAY_TASKING_OMP)
 # pragma omp parallel for schedule(dynamic)
   for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
     fcn(taskIndex);
   }
-#elif defined(OSPRAY_USE_INTERNAL_TASKING)
+#elif defined(OSPRAY_TASKING_INTERNAL)
   struct LocalTask : public Task {
     const TASK_T &t;
     LocalTask(const TASK_T& fcn) : Task("LocalTask"), t(fcn) {}

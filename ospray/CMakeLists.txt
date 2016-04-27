@@ -74,8 +74,8 @@ ELSE()
   ENDIF()
   # Build Embree included in the OSPRay tree
 
-  # NOTE(jda) - Embree assumes that USE_TBB will be defined correctly in
-  #             CONFIGURE_OSPRAY().CONFIGURE_TASKING_SYSTEM()
+  # NOTE(jda) - Embree assumes that OSPRAY_TASKING_TBB will be defined correctly
+  #             in CONFIGURE_OSPRAY().CONFIGURE_TASKING_SYSTEM()
   # NOTE(jda) - Only do the Embree include once (Xeon), it will build both
   #             Xeon and MIC code if both are enabled.
   IF (NOT THIS_IS_MIC)
