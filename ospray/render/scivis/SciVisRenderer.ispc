@@ -107,6 +107,9 @@ inline void shadeMaterials(const varying DifferentialGeometry &dg,
       }
     }
   }
+  // BRDF normalization
+  info.Kd = info.Kd * one_over_pi;
+  info.Ks = info.Ks * ((info.Ns + 2.f) * one_over_two_pi);
 }
 
 // AO functions //
@@ -139,6 +142,7 @@ inline float calculateAO(const uniform SciVisRenderer *uniform self,
       hits++;
   }
 
+  // the cosTheta of cosineSampleHemispherePDF and dot(dg.Ns, ao_dir) cancel
   return 1.0f - (float)hits/self->aoSamples;
 }
 
@@ -600,7 +604,10 @@ export void SciVisRenderer_set(void *uniform _self,
   self->maxDepth = maxDepth;
   self->aoSamples = aoSamples;
   self->aoRayLength = aoRayLength;
-  self->aoWeight = aoWeight;
+
+  // already factor in parts of cosineSampleHemispherePDF
+  self->aoWeight = aoWeight * pi;
+
   self->lights = (const uniform Light *uniform *uniform)lights;
   self->numLights = numLights;
 }
@@ -610,7 +617,7 @@ export void *uniform SciVisRenderer_create(void *uniform cppE)
   uniform SciVisRenderer *uniform self = uniform new uniform SciVisRenderer;
   Renderer_Constructor(&self->super,cppE);
   self->super.renderSample = SciVisRenderer_renderSample;
-  SciVisRenderer_set(self, true, 10, 4, infinity, 1.f, NULL, 0);
+  SciVisRenderer_set(self, true, 10, 4, infinity, 0.25f, NULL, 0);
 
   return self;
 }

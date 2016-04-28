@@ -41,7 +41,7 @@ inline BSDF_EvalRes Specular_eval(const varying BSDF* uniform super,
   const vec3f refl = reflect(wo, getN(super));
   if (dot(refl,wi) < 0.0f) return make_BSDF_EvalRes_zero();
   res.pdf = powerCosineSampleHemispherePDF(dot(refl,wi), self->exp);
-  res.value = mul(self->R, (self->exp+2) * one_over_two_pi * pow(dot(refl,wi),self->exp) * clamp(dot(wi, getN(super))));
+  res.value = self->R * ((self->exp+2.f) * one_over_two_pi * pow(dot(refl,wi),self->exp) * clamp(dot(wi, getN(super))));
   return res;
 }
 
@@ -56,7 +56,7 @@ inline BSDF_SampleRes Specular_sample(const varying BSDF* uniform super,
   res.wi = frame(refl) * localDir;
   res.pdf = powerCosineSampleHemispherePDF(localDir, self->exp);
   res.type = BSDF_GLOSSY_REFLECTION;
-  res.weight = mul(self->R, (self->exp+2) * rcp(self->exp+1) * clamp(dot(res.wi, getN(super))));
+  res.weight = self->R * ((self->exp+2.f) * rcp(self->exp+1.f) * clamp(dot(res.wi, getN(super))));
   return res;
 }
 
