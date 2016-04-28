@@ -10,3 +10,5 @@ tags
 *.gz
 *.rpm
 *.zip
+tbb
+ospray-doc

@@ -16,11 +16,13 @@
 
 #!/bin/bash
 
+export ROOT_DIR=$PWD
+
 # to make sure we do not include nor link against wrong TBB
 export CPATH=
 export LIBRARY_PATH=
 export LD_LIBRARY_PATH=
-TBB_PATH_LOCAL=$PWD/tbb
+TBB_PATH_LOCAL=$ROOT_DIR/tbb
 
 # check version of symbols
 function check_symbols
@@ -54,21 +56,21 @@ cmake \
 -D CMAKE_C_COMPILER:FILEPATH=icc \
 -D CMAKE_CXX_COMPILER:FILEPATH=icpc \
 -D OSPRAY_BUILD_ISA=ALL \
--D OSPRAY_BUILD_MIC_SUPPORT=ON \
--D OSPRAY_BUILD_COI_DEVICE=ON \
--D OSPRAY_BUILD_MPI_DEVICE=ON \
+-D OSPRAY_BUILD_MIC_SUPPORT=OFF \
+-D OSPRAY_BUILD_COI_DEVICE=OFF \
+-D OSPRAY_BUILD_MPI_DEVICE=OFF \
 -D USE_IMAGE_MAGICK=OFF \
 -D OSPRAY_ZIP_MODE=OFF \
--D CMAKE_INSTALL_PREFIX=/usr \
+-D CMAKE_INSTALL_PREFIX=$ROOT_DIR/install \
 -D TBB_ROOT=$TBB_PATH_LOCAL \
 ..
 
 # create RPM files
 make -j `nproc` preinstall
 
-check_symbols libospray.so GLIBC 2 4
+check_symbols libospray.so GLIBC   2 4
 check_symbols libospray.so GLIBCXX 3 4
-check_symbols libospray.so CXXABI 1 3
+check_symbols libospray.so CXXABI  1 3
 make package
 
 # read OSPRay version
@@ -94,4 +96,4 @@ cmake \
 # create tar.gz files
 make -j `nproc` package
 
-cd ..
+cd $ROOT_DIR
