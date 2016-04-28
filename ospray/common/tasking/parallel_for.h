@@ -18,7 +18,7 @@
 
 #ifdef OSPRAY_TASKING_TBB
 #  include <tbb/parallel_for.h>
-#elif defined(OSPRAY_USE_CILK)
+#elif defined(OSPRAY_TASKING_CILK)
 #  include <cilk/cilk.h>
 #elif defined(OSPRAY_TASKING_INTERNAL)
 #  include "ospray/common/tasking/TaskSys.h"
@@ -33,7 +33,7 @@ inline void parallel_for(int nTasks, const TASK_T& fcn)
 {
 #ifdef OSPRAY_TASKING_TBB
   tbb::parallel_for(0, nTasks, 1, fcn);
-#elif defined(OSPRAY_USE_CILK)
+#elif defined(OSPRAY_TASKING_CILK)
   cilk_for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
     fcn(taskIndex);
   }

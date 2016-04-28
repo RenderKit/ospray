@@ -18,7 +18,7 @@
 
 #ifdef OSPRAY_TASKING_TBB
 #  include <tbb/task.h>
-#elif defined(OSPRAY_USE_CILK)
+#elif defined(OSPRAY_TASKING_CILK)
 #  include <cilk/cilk.h>
 #elif defined(OSPRAY_TASKING_INTERNAL)
 #  include "ospray/common/tasking/TaskSys.h"
