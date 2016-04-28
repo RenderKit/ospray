@@ -35,12 +35,6 @@ namespace ospray {
     Assert(size.x > 0 && size.y > 0);
   }
 
-  void FrameBuffer::commit()
-  {
-    const float gamma = getParam1f("gamma", 1.0f);
-    ispc::FrameBuffer_set_gamma(ispcEquivalent, gamma);
-  }
-
   /*! helper function for debugging. write out given pixels in PPM format */
   void writePPM(const std::string &fileName, const vec2i &size, const uint32 *pixels)
   {

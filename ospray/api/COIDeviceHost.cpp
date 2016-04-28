@@ -1021,7 +1021,7 @@ namespace ospray {
       args.write((uint32)mode);
       args.write(channels);
 
-      Assert(mode == OSP_RGBA_I8);
+      Assert(mode == OSP_FB_RGBA8);
       COIFrameBuffer *fb = new COIFrameBuffer;
       fbList[handle] = fb;
       fb->hostMem = new int32[size.x*size.y];

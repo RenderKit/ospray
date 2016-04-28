@@ -18,9 +18,9 @@
 
 #include "ospray/common/OSPCommon.ih"
 
-////////////////////////////////////////////////////////////////////////////////
-/// Constants
-////////////////////////////////////////////////////////////////////////////////
+// ------------------------------------------------------------------
+// Constants
+// ------------------------------------------------------------------
 
 #define inf     floatbits(0x7F800000)
 #define pos_inf floatbits(0x7F800000)
@@ -118,7 +118,7 @@ inline varying float deg2rad (const varying float x)  { return x * 1.74532925199
 inline uniform float rad2deg (const uniform float x)  { return x * 5.72957795130823208768e1f; }
 inline varying float rad2deg (const varying float x)  { return x * 5.72957795130823208768e1f; }
 
-inline float cos2sin(const float f) { return sqrt(max(0.f, 1.f - f * f)); }
+inline float cos2sin(const float f) { return sqrt(max(0.f, 1.f - sqr(f))); }
 inline float sin2cos(const float f) { return cos2sin(f); }
 
 inline uniform float nextafter(const uniform float a, const uniform float b)

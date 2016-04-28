@@ -16,11 +16,11 @@
 
 #pragma once
 
-#ifdef OSPRAY_USE_TBB
+#ifdef OSPRAY_TASKING_TBB
 #  include <tbb/task.h>
 #elif defined(OSPRAY_USE_CILK)
 #  include <cilk/cilk.h>
-#elif defined(OSPRAY_USE_INTERNAL_TASKING)
+#elif defined(OSPRAY_TASKING_INTERNAL)
 #  include "ospray/common/tasking/TaskSys.h"
 #endif
 
@@ -36,7 +36,7 @@ namespace ospray {
 template<typename TASK_T>
 inline void async(const TASK_T& fcn)
 {
-#ifdef OSPRAY_USE_TBB
+#ifdef OSPRAY_TASKING_TBB
   struct LocalTBBTask : public tbb::task
   {
     TASK_T func;
@@ -50,9 +50,9 @@ inline void async(const TASK_T& fcn)
   };
 
   tbb::task::enqueue(*new(tbb::task::allocate_root())LocalTBBTask(fcn));
-#elif defined(OSPRAY_USE_CILK)
+#elif defined(OSPRAY_TASKING_CILK)
   cilk_spawn fcn();
-#elif defined(OSPRAY_USE_INTERNAL_TASKING)
+#elif defined(OSPRAY_TASKING_INTERNAL)
   struct LocalTask : public Task {
     TASK_T t;
     LocalTask(const TASK_T& fcn) : Task("LocalTask"), t(std::move(fcn)) {}

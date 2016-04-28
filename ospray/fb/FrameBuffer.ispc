@@ -38,10 +38,3 @@ void FrameBuffer_set(FrameBuffer *uniform self,
   self->rcpSize.y  = 1.f/size_y;
   self->colorBufferFormat = (uniform FrameBuffer_ColorBufferFormat)colorBufferFormat;
 }
-
-export void FrameBuffer_set_gamma(void *uniform _self,
-                                  const uniform float gamma)
-{
-  uniform FrameBuffer *uniform self = (uniform FrameBuffer *uniform)_self;
-  self->invGamma = 1.0f/gamma;
-}

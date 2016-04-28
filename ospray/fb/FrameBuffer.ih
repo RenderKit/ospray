@@ -37,7 +37,6 @@ struct FrameBuffer
 {
   vec2i size; /*!< size (width x height) of frame buffer, in pixels */
   vec2f rcpSize; /*! one over size (precomputed) */
-  uniform float invGamma; /*! 1/gamma for gamma correction */
 
   FrameBuffer_ColorBufferFormat colorBufferFormat;
 
@@ -49,7 +48,7 @@ struct FrameBuffer
 /*! helper function to convert float-color into rgba-uint format */
 inline uint32 cvt_uint32(const float f)
 {
-  return (int32)(255.9f * max(min(f,1.f),0.f));
+  return (int32)(255.f * clamp(f, 0.f, 1.f));
 }
 
 /*! helper function to convert float-color into rgba-uint format */

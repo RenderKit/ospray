@@ -24,7 +24,7 @@
 #include "ospray/render/Renderer.h"
 
 // tbb
-#ifdef OSPRAY_USE_TBB
+#ifdef OSPRAY_TASKING_TBB
 # include <tbb/task_scheduler_init.h>
 #endif
 
@@ -63,7 +63,7 @@ namespace ospray {
 
     std::string toString() const override;
 
-#ifdef OSPRAY_USE_TBB
+#ifdef OSPRAY_TASKING_TBB
     tbb::task_scheduler_init tbb_init;
 #endif
   };

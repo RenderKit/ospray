@@ -114,6 +114,8 @@ namespace ospray {
           written into / composited into this dfb tile */
       virtual void process(const ospray::Tile &tile) = 0;
 
+      void accumulate(const ospray::Tile &tile);
+
       ospray::Tile __aligned(64) accum;
       /* iw: TODO - have to change this. right now, to be able to give
          the 'postaccum' pixel op a readily normalized tile we have to

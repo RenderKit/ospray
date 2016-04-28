@@ -24,33 +24,6 @@
 
 namespace ospray {
 
-  /*! helper function to convert float-color into rgba-uint format */
-  inline uint32 cvt_uint32(const float f)
-  {
-    return (int32)(255.9f * std::max(std::min(f,1.f),0.f));
-  }
-
-  /*! helper function to convert float-color into rgba-uint format */
-  inline uint32 cvt_uint32(const vec4f &v)
-  {
-    return 
-      (cvt_uint32(v.x) << 0)  |
-      (cvt_uint32(v.y) << 8)  |
-      (cvt_uint32(v.z) << 16) |
-      (cvt_uint32(v.w) << 24);
-  }
-
-  /*! helper function to convert float-color into rgba-uint format */
-  inline uint32 cvt_uint32(const vec3f &v)
-  {
-    return 
-      (cvt_uint32(v.x) << 0)  |
-      (cvt_uint32(v.y) << 8)  |
-      (cvt_uint32(v.z) << 16);
-  }
-
-
-
   /*! abstract frame buffer class */
   struct FrameBuffer : public ManagedObject {
     /*! app-mappable format of the color buffer. make sure that this
@@ -63,8 +36,6 @@ namespace ospray {
                 bool hasDepthBuffer,
                 bool hasAccumBuffer,
                 bool hasVarianceBuffer = false);
-
-    virtual void commit();
 
     virtual const void *mapDepthBuffer() = 0;
     virtual const void *mapColorBuffer() = 0;

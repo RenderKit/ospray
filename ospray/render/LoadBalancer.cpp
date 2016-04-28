@@ -31,7 +31,7 @@ namespace ospray {
   TiledLoadBalancer *TiledLoadBalancer::instance = NULL;
 
   LocalTiledLoadBalancer::LocalTiledLoadBalancer()
-#ifdef OSPRAY_USE_TBB
+#ifdef OSPRAY_TASKING_TBB
     : tbb_init(numThreads)
 #endif
   {
@@ -52,7 +52,7 @@ namespace ospray {
 
     const int NTASKS = numTiles_x * numTiles_y;
 
-    parallel_for(NTASKS, [&](int taskIndex){
+    parallel_for(NTASKS, [&](int taskIndex) {
       const size_t tile_y = taskIndex / numTiles_x;
       const size_t tile_x = taskIndex - tile_y*numTiles_x;
       const vec2i tileID(tile_x, tile_y);
@@ -63,7 +63,7 @@ namespace ospray {
 
       Tile tile(tileID, fb->size, accumID);
 
-      parallel_for(numJobs(renderer->spp, accumID), [&](int taskIndex){
+      parallel_for(numJobs(renderer->spp, accumID), [&](int taskIndex) {
         renderer->renderTile(perFrameData, tile, taskIndex);
       });
 
@@ -102,7 +102,7 @@ namespace ospray {
     const int NTASKS = (numTiles_total / numDevices)
                        + (numTiles_total % numDevices > deviceID);
 
-    parallel_for(NTASKS, [&](int taskIndex){
+    parallel_for(NTASKS, [&](int taskIndex) {
       int tileIndex = deviceID + numDevices * taskIndex;
       const size_t tile_y = tileIndex / numTiles_x;
       const size_t tile_x = tileIndex - tile_y*numTiles_x;
@@ -114,7 +114,7 @@ namespace ospray {
 
       Tile tile(tileID, fb->size, accumID);
 
-      parallel_for(numJobs(renderer->spp, accumID), [&](int taskIndex){
+      parallel_for(numJobs(renderer->spp, accumID), [&](int taskIndex) {
         renderer->renderTile(perFrameData, tile, taskIndex);
       });
 

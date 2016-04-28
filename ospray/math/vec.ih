@@ -568,6 +568,7 @@ __lift_unary_fct(abs)
 __lift_unary_fct(rcp)
 __lift_unary_fct(exp)
 __lift_unary_fct(frac)
+__lift_unary_fct(sqr)
 
 #undef __lift_unary_fct
 
@@ -793,3 +794,68 @@ inline void set(uniform vec3f &v, const uniform uint32 dim, const uniform float 
 /*! get vector 'v's value in dimension 'd' */
 inline float get(const uniform vec3f &v, const uniform uint32 dim)
 { return (&v.x)[dim]; }
+
+
+// -------------------------------------------------------
+// sRGB conversion functions
+// -------------------------------------------------------
+#define APPROXIMATE_SRGB
+
+inline float linear_to_srgb(const float f)
+{
+  const float c = max(f, 0.f);
+#ifdef APPROXIMATE_SRGB
+  return pow(c, 1.f/2.2f);
+#else
+  return c <= 0.0031308f ? 12.92f*c : pow(c, 1.f/2.4f)*1.055f - 0.055f;
+#endif
+}
+
+inline vec4f linear_to_srgba(const vec4f c)
+{
+  return make_vec4f(linear_to_srgb(c.x),
+                    linear_to_srgb(c.y),
+                    linear_to_srgb(c.z),
+                    max(c.w, 0f)); // alpha is never gamma-corrected
+}
+
+inline uint32 linear_to_srgba8(const vec4f c)
+{
+#if 1
+  vec4f l = 255.f * min(linear_to_srgba(c), make_vec4f(1.f));
+  return 
+    ((uint32)l.x << 0)  |
+    ((uint32)l.y << 8)  |
+    ((uint32)l.z << 16) |
+    ((uint32)l.w << 24);
+#else
+//  TODO use ISPC's float_to_srgb8 once it is fixed (issue #1198)
+  return
+    (float_to_srgb8(c.x) << 0)  |
+    (float_to_srgb8(c.y) << 8)  |
+    (float_to_srgb8(c.z) << 16) |
+    ((uint32)clamp(c.w, 0.f, 1.f) << 24); // alpha is never gamma-corrected
+#endif
+}
+
+inline float srgb_to_linear(const float f)
+{
+  const float c = max(f, 0.f);
+#ifdef APPROXIMATE_SRGB
+  return pow(c, 2.2f);
+#else
+  return c <= 0.04045f ? c/12.92f : pow((c + 0.055f)/1.055f, 2.4f);
+#endif
+}
+
+inline vec4f srgba_to_linear(const vec4f c)
+{
+  return make_vec4f(srgb_to_linear(c.x),
+                    srgb_to_linear(c.y),
+                    srgb_to_linear(c.z),
+                    max(c.w, 0.f));  // alpha is never gamma-corrected
+}
+
+// TODO implement srgba8_to_linear with a 256 entry LUT
+
+#undef APPROXIMATE_SRGB

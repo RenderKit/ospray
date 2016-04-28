@@ -66,19 +66,22 @@
 typedef enum {
   OSP_FB_NONE,    //!< framebuffer will not be mapped by application
   OSP_FB_RGBA8,   //!< one dword per pixel: rgb+alpha, each one byte
+  OSP_FB_SRGBA,   //!< one dword per pixel: rgb (in sRGB space) + alpha, each one byte
   OSP_FB_RGBA32F, //!< one float4 per pixel: rgb+alpha, each one float
-  /* TODO
-     OSP_FB_RGB8,    //!< three 8-bit unsigned chars per pixel
-     OSP_FB_RGB32F,  ?
-     OSP_FB_SRGBA,   //!< one dword per pixel: rgb (in sRGB space) + alpha, each one byte
-     OSP_FB_SRGB,    //!< three 8-bit unsigned chars (in sRGB space) per pixel
-  */
-  // deprecated names
-  OSP_RGBA_NONE = OSP_FB_NONE,
-  OSP_RGBA_I8 = OSP_FB_RGBA8,
-  OSP_RGBA_F32 = OSP_FB_RGBA32F,
-  OSP_RGB_I8/* = OSP_FB_RGB8 XXX unsupported! */
+/* TODO
+  OSP_FB_RGB8,    //!< three 8-bit unsigned chars per pixel
+  OSP_FB_RGB32F,  ?
+  OSP_FB_SRGB,    //!< three 8-bit unsigned chars (in sRGB space) per pixel
+*/
 } OSPFrameBufferFormat;
+
+/*! OSPRay channel constants for Frame Buffer (can be OR'ed together) */
+typedef enum {
+  OSP_FB_COLOR=(1<<0),
+  OSP_FB_DEPTH=(1<<1),
+  OSP_FB_ACCUM=(1<<2),
+  OSP_FB_VARIANCE=(1<<3)
+} OSPFrameBufferChannel;
 
 //! constants for switching the OSPRay MPI Scope between 'per rank' and 'all ranks'
 /*! \see ospdApiMode */
@@ -131,14 +134,6 @@ typedef enum {
   OSP_OK=0, /*! no error; any value other than zero means 'some kind of error' */
   OSP_GENERAL_ERROR /*! unspecified error */
 } OSPResult;
-
-/*! OSPRay channel constants for Frame Buffer (can be OR'ed together) */
-typedef enum {
-  OSP_FB_COLOR=(1<<0),
-  OSP_FB_DEPTH=(1<<1),
-  OSP_FB_ACCUM=(1<<2),
-  OSP_FB_VARIANCE=(1<<3)
-} OSPFrameBufferChannel;
 
 typedef enum { 
   OSPD_Z_COMPOSITE
@@ -390,8 +385,8 @@ extern "C" {
 
     \param externalFormat describes the format the color buffer has
     *on the host*, and the format that 'ospMapFrameBuffer' will
-    eventually return. Valid values are OSP_FB_RBGA_FLOAT,
-    OSP_FB_RBGA_I8, OSP_FB_RGB_I8, and OSP_FB_NONE (note that
+    eventually return. Valid values are OSP_FB_SRGBA, OSP_FB_RGBA8,
+    OSP_FB_RGBA32F, and OSP_FB_NONE (note that
     OSP_FB_NONE is a perfectly reasonably choice for a framebuffer
     that will be used only internally, see notes below).
     The origin of the screen coordinate system is the lower left
@@ -425,10 +420,6 @@ extern "C" {
     format of OSP_FB_NONE the pixels from the path tracing stage will
     never ever be transferred to the application.
   */
-  // OSPRAY_INTERFACE OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size, 
-  //                                                   const OSPFrameBufferFormat OSP_DEFAULT_VAL(=OSP_RGBA_I8),
-  //                                                   const uint32_t whichChannels OSP_DEFAULT_VAL(=OSP_FB_COLOR));
-
   OSPRAY_INTERFACE OSPFrameBuffer ospNewFrameBuffer(const int32_t *size /*!< 2 ints: width x height */, 
                                                     const OSPFrameBufferFormat format,
                                                     const uint32_t whichChannels);
@@ -692,7 +683,7 @@ extern "C" {
 
 #ifdef __cplusplus
 extern "C++" {
-  /*! c++ version with references */
+  /*! C++ version with references */
   inline void ospPick(OSPPickResult *result, OSPRenderer renderer, const osp::vec2f &screenPos)
   { ospPick(result,renderer,&screenPos.x); }
   
@@ -702,21 +693,21 @@ extern "C++" {
                               const size_t &count)
   { ospSampleVolume(&results,volume,(const float *)worldCoordinates,count); }
   
-  /*! c++ variant of this function that uses references rather than pointers */
-  extern "C++" inline OSPTexture2D ospNewTexture2D(const osp::vec2i &size,
+  /*! C++ variant of this function that uses references rather than pointers */
+  inline OSPTexture2D ospNewTexture2D(const osp::vec2i &size,
                                                    const OSPTextureFormat format, 
                                                    void *data = NULL, 
                                                    const uint32_t flags = 0)
   { return ospNewTexture2D(&size.x,format,data,flags); }
   
-  /*! c++ variant of ospNewFrameBuffer that can also be called with
+  /*! C++ variant of ospNewFrameBuffer that can also be called with
     references rather than with pointers */
   inline OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size, 
-                                          const OSPFrameBufferFormat format=OSP_RGBA_I8,
+                                          const OSPFrameBufferFormat format=OSP_FB_SRGBA,
                                           const uint32_t whichChannels=OSP_FB_COLOR)
   { return ospNewFrameBuffer(&size.x,format,whichChannels); }
   
-  /*! c++ variant that uses refreences rather than pointerts */
+  /*! C++ variant that uses refreences rather than pointerts */
   inline int ospSetRegion(/*! the object we're writing this block of pixels into */
                           OSPVolume object, 
                           /* points to the first voxel to be copies. The

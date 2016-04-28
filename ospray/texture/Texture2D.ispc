@@ -26,9 +26,9 @@ inline vec4f getTexel_RGBA8(const uniform Texture2D *uniform self, const vec2i i
 {
   assert(self);
   const uint32 c = ((const uniform uint32 *uniform)self->data)[i.y*self->size.x + i.x];
-  const uint32 r = c         & 255;
-  const uint32 g = (c >>  8) & 255;
-  const uint32 b = (c >> 16) & 255;
+  const uint32 r = c         & 0xff;
+  const uint32 g = (c >>  8) & 0xff;
+  const uint32 b = (c >> 16) & 0xff;
   const uint32 a = c >> 24;
   return make_vec4f(r, g, b, a)*(1.f/255.f);
 }
@@ -51,25 +51,14 @@ inline vec4f getTexel_R8(const uniform Texture2D *uniform self, const vec2i i)
   return make_vec4f(c*(1.f/255.f), 0.0f, 0.0f, 1.f);
 }
 
-inline float srgb(const float c)
-{
-//  return c <= 0.04045f ? c/12.92f : pow((c + 0.055f)/1.055f, 2.4f); // exact
-  return pow(c, 2.2f); // approximate
-}
-
-inline vec4f srgba(const vec4f c)
-{
-  return make_vec4f(srgb(c.x), srgb(c.y), srgb(c.z), c.w);
-}
-
 inline vec4f getTexel_SRGBA(const uniform Texture2D *uniform self, const vec2i i)
 {
-  return srgba(getTexel_RGBA8(self, i));
+  return srgba_to_linear(getTexel_RGBA8(self, i));
 }
 
 inline vec4f getTexel_SRGB(const uniform Texture2D *uniform self, const vec2i i)
 {
-  return srgba(getTexel_RGB8(self, i));
+  return srgba_to_linear(getTexel_RGB8(self, i));
 }
 
 inline vec4f getTexel_RGBA32F(const uniform Texture2D *uniform self, const vec2i i)
