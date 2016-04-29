@@ -305,6 +305,7 @@ namespace ospray {
       numTiles((numPixels.x+TILE_SIZE-1)/TILE_SIZE,
                (numPixels.y+TILE_SIZE-1)/TILE_SIZE),
       frameIsActive(false), frameIsDone(false), localFBonMaster(NULL),
+      accumId(0),
       frameMode(WRITE_ONCE)
   {
     assert(comm);
@@ -581,7 +582,7 @@ namespace ospray {
         }
       });
 
-      if (fbChannelFlags & OSP_FB_ACCUM)
+      if (hasAccumBuffer && (fbChannelFlags & OSP_FB_ACCUM))
         accumId = -1; // we increment at the start of the frame
     }
   }
