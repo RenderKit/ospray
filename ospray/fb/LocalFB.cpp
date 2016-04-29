@@ -63,6 +63,7 @@ namespace ospray {
     tilesx = divRoundUp(size.x, TILE_SIZE);
     tiles = tilesx * divRoundUp(size.y, TILE_SIZE);
     tileAccumID = new int32[tiles];
+    memset(tileAccumID, 0, tiles*sizeof(int32));
 
     if (hasVarianceBuffer) {
       varianceBuffer = (vec4f*)alignedMalloc(sizeof(vec4f)*size.x*size.y);
@@ -105,8 +106,7 @@ namespace ospray {
       // it is only necessary to reset the accumID,
       // LocalFrameBuffer_accumulateTile takes care of clearing the
       // accumulation buffers
-      for (int i = 0; i < tiles; i++)
-        tileAccumID[i] = 0;
+      memset(tileAccumID, 0, tiles*sizeof(int32));
 
       // always also clear error buffer (if present)
       if (hasVarianceBuffer) {
