@@ -3,32 +3,42 @@ Version History
 
 ### Changes in v0.10.0:
 
--   OSPRay can now use a newer, pre-installed Embree enabled by
-    the new 'OSPRAY_USE_EXTERNAL_EMBREE' CMake option
--   New 'ospcommon' library used to separately provide math types
-    and OS abstractions for both OSPRay and sample apps
+-   Added new tasking options: `Cilk`, `Internal`, and `Debug`
+    -   Provides more ways for OSPRay to interact with calling
+        application tasking systems
+        - `Cilk`: Use Intel® Cilk™ Plus language extensions (ICC only)
+        - `Internal`: Use hand written OSPRay tasking system
+        - `Debug`: All tasks are run in serial (useful for debugging)
+    -   In most cases, `TBB` remains the fastest option
+-   Added support for adaptive accumulation and stopping
+    -   `ospRenderFrame` now returns an estimation of the variance in
+        the rendered image if the framebuffer was created with the
+        `OSP_FB_VARIANCE` channel
+    -   If the renderer parameter `varianceThreshold` is set,
+        progressive refinement concentrates on regions of the image with
+        a variance higher than this threshold
+-   `OSPTexture2D` now supports sRGB formats -- actually most images are
+    stored in sRGB. As a consequence the API call `ospNewTexture2D()`
+    needed to change to accept the new `OSPTextureFormat` parameter.
+-   Similarly, OSPRay's framebuffer types now also distinguishes between
+    linear and sRGB 8-bit formats. The new types are `OSP_FB_NONE`,
+    `OSP_FB_RGBA8`, `OSP_FB_SRGBA`, and `OSP_FB_RGBA32F`
+-   Changed "scivis" renderer parameter defaults
+    -   All shading (AO + shadows) must be explicitly enabled
+-   OSPRay can now use a newer, pre-installed Embree enabled by the new
+    `OSPRAY_USE_EXTERNAL_EMBREE` CMake option
+-   New `ospcommon` library used to separately provide math types and OS
+    abstractions for both OSPRay and sample apps
     -   Removes extra dependencies on internal Embree math types and
         utility functions
-    -   'ospray.h' header is now C99 compatible
--   Replaced old OSPRay framebuffer types with new ones: OSP_FB_NONE,
-    OSP_FB_RGBA8, OSP_FB_SRGBA, and OSP_FB_RGBA32F
--   New support for adaptive accumulation
-    -   Enable detection of frame variance
--   Added new tasking options: 'Cilk', 'Internal', and 'Debug'
-    -   Provides more ways for OSPRay to interact with calling application
-        tasking systems
-        -   'Cilk'    : Use Intel® Cilk™PLus language extensions (ICC only)
-        -   'Internal': Use hand written OSPRay tasking system
-        -   'Debug'   : All tasks are run in serial (useful for debugging)
-    -   In most cases, TBB remains the fastest option
--   New 'scivis' renderer parameter defaults
-    -   All shading (AO + shadows) must be expicitly enabled
--   Removed loaders module, functionality remains inside of ospVolumeViewer
+    -   `ospray.h` header is now C99 compatible
+-   Removed loaders module, functionality remains inside of
+    `ospVolumeViewer`
 -   Many miscellaneous cleanups, bugfixes, and improvements:
-    -   Fixed data distributed volume rendering bugs when using
-        less blocks than workers
-    -   Fixes to CMake find_package() config
-    -   Fix bug in GhostBlockBrickVolume when using doubles
+    -   Fixed data distributed volume rendering bugs when using less
+        blocks than workers
+    -   Fixes to CMake `find_package()` config
+    -   Fix bug in `GhostBlockBrickVolume` when using `double`s
     -   Various robustness changes made in CMake to make it easier to
         compile OSPRay
 
@@ -43,10 +53,10 @@ Version History
     infrastructure restored (volume rendering is known to still be
     broken)
 -   New support for CPack built OSPRay binary redistributable packages
--   Add support for HDRI lighting in path tracer
--   Add `ospRemoveVolume()` API call
--   Add ability to render a subsection of the full view into the entire
-    framebuffer in the perspective camera
+-   Added support for HDRI lighting in path tracer
+-   Added `ospRemoveVolume()` API call
+-   Added ability to render a subsection of the full view into the
+    entire framebuffer in the perspective camera
 -   Many miscellaneous cleanups, bugfixes, and improvements:
     -   The depthbuffer is now correctly populated by in the "scivis"
         renderer
