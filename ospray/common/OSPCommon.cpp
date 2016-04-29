@@ -127,7 +127,7 @@ namespace ospray {
       }
     }
 
-#ifdef OSPRAY_USE_INTERNAL_TASKING
+#ifdef OSPRAY_TASKING_INTERNAL
     try {
       ospray::Task::initTaskSystem(debugMode ? 0 : numThreads);
     } catch (const std::runtime_error &e) {
