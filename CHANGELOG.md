@@ -17,9 +17,9 @@ Version History
 -   Added new tasking options: 'Cilk', 'Internal', and 'Debug'
     -   Provides more ways for OSPRay to interact with calling application
         tasking systems
-            'Cilk': Use Intel® Cilk™PLus language extensions (ICC only)
-        'Internal': Use hand written OSPRay tasking system
-           'Debug': All tasks are run in serial (useful for debugging)
+        -   'Cilk'    : Use Intel® Cilk™PLus language extensions (ICC only)
+        -   'Internal': Use hand written OSPRay tasking system
+        -   'Debug'   : All tasks are run in serial (useful for debugging)
     -   In most cases, TBB remains the fastest option
 -   New 'scivis' renderer parameter defaults
     -   All shading (AO + shadows) must be expicitly enabled
