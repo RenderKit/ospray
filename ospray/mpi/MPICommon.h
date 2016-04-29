@@ -83,6 +83,6 @@ namespace ospray {
                            group */
 
     void init(int *ac, const char **av);
-  };
+  }
 
 } // ::ospray

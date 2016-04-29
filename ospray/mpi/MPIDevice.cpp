@@ -185,7 +185,6 @@ namespace ospray {
         cout << "=======================================================" << endl;
       }
       int rc;
-      MPI_Status status;
 
       app.comm = world.comm; 
       app.makeIntraComm();
@@ -250,7 +249,6 @@ namespace ospray {
                                                      const char *launchCommand)
     {
       int rc;
-      MPI_Status status;
 
       ospray::init(ac,&av);
       mpi::init(ac,av);
@@ -382,7 +380,6 @@ namespace ospray {
                                           OSPFrameBufferChannel channel)
     {
       int rc; 
-      MPI_Status status;
 
       ObjectHandle handle = (const ObjectHandle &)_fb;
       FrameBuffer *fb = (FrameBuffer *)handle.lookup();
@@ -509,7 +506,8 @@ namespace ospray {
 
       int numFails = 0;
       MPI_Status status;
-      int rc = MPI_Recv(&numFails,1,MPI_INT,0,MPI_ANY_TAG,mpi::worker.comm,&status);
+      int rc = MPI_Recv(&numFails,1,MPI_INT,
+                        0,MPI_ANY_TAG,mpi::worker.comm,&status);
 
       Assert(rc == MPI_SUCCESS);
 
@@ -941,7 +939,8 @@ namespace ospray {
 
       int numFails = 0;
       MPI_Status status;
-      int rc = MPI_Recv(&numFails,1,MPI_INT,0,MPI_ANY_TAG,mpi::worker.comm,&status);
+      int rc = MPI_Recv(&numFails,1,MPI_INT,
+                        0,MPI_ANY_TAG,mpi::worker.comm,&status);
       if (numFails == 0)
         return (OSPMaterial)(int64)handle;
       else {
@@ -984,7 +983,8 @@ namespace ospray {
       // int MPI_Allreduce(void* , void*, int, MPI_Datatype, MPI_Op, MPI_Comm);
       int numFails = 0;
       MPI_Status status;
-      int rc = MPI_Recv(&numFails,1,MPI_INT,0,MPI_ANY_TAG,mpi::worker.comm,&status);
+      int rc = MPI_Recv(&numFails,1,MPI_INT,
+                        0,MPI_ANY_TAG,mpi::worker.comm,&status);
       if (numFails==0)
         return (OSPLight)(int64)handle;
       else {

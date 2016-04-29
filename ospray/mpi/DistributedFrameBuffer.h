@@ -31,21 +31,21 @@ namespace ospray {
       public virtual FrameBuffer
   {
     //! get number of pixels per tile, in x and y direction
-    vec2i getTileSize()  const { return vec2i(TILE_SIZE); };
+    vec2i getTileSize()  const { return vec2i(TILE_SIZE); }
 
     //! return number of tiles in x and y direction
-    vec2i getNumTiles()  const { return numTiles; };
+    vec2i getNumTiles()  const { return numTiles; }
 
     //! get number of pixels in x and y diretion
     vec2i getNumPixels() const { return size; }
 
     //! number of tiles that "I" own
-    size_t numMyTiles()  const { return myTiles.size(); };
+    size_t numMyTiles()  const { return myTiles.size(); }
 
     int accumId;
     int32 accumID(const vec2i &) override { return accumId; }
     float tileError(const vec2i &) override { return inf; }
-    float endFrame(const float) override { return inf; };
+    float endFrame(const float) override { return inf; }
 
     /*! color buffer and depth buffer on master */
 
@@ -99,9 +99,9 @@ namespace ospray {
         the DFB tile itself */
     struct TileData : public TileDesc {
       TileData(DistributedFrameBuffer *dfb,
-                  const vec2i &begin,
-                  size_t tileID,
-                  size_t ownerID);
+               const vec2i &begin,
+               size_t tileID,
+               size_t ownerID);
 
       /*! called exactly once at the beginning of each frame */
       virtual void newFrame() = 0;
