@@ -17,7 +17,6 @@
 //ospray
 #include "LocalFB.h"
 #include "LocalFB_ispc.h"
-#include "ospray/common/tasking/parallel_for.h"
 
 namespace ospray {
 
