@@ -1,6 +1,37 @@
 Version History
 ---------------
 
+### Changes in v0.10.0:
+
+-   OSPRay can now use a newer, pre-installed Embree enabled by
+    the new 'OSPRAY_USE_EXTERNAL_EMBREE' CMake option
+-   New 'ospcommon' library used to separately provide math types
+    and OS abstractions for both OSPRay and sample apps
+    -   Removes extra dependencies on internal Embree math types and
+        utility functions
+    -   'ospray.h' header is now C99 compatible
+-   Replaced old OSPRay framebuffer types with new ones: OSP_FB_NONE,
+    OSP_FB_RGBA8, OSP_FB_SRGBA, and OSP_FB_RGBA32F
+-   New support for adaptive accumulation
+    -   Enable detection of frame variance
+-   Added new tasking options: 'Cilk', 'Internal', and 'Debug'
+    -   Provides more ways for OSPRay to interact with calling application
+        tasking systems
+            'Cilk': Use Intel® Cilk™PLus language extensions (ICC only)
+        'Internal': Use hand written OSPRay tasking system
+           'Debug': All tasks are run in serial (useful for debugging)
+    -   In most cases, TBB remains the fastest option
+-   New 'scivis' renderer parameter defaults
+    -   All shading (AO + shadows) must be expicitly enabled
+-   Removed loaders module, functionality remains inside of ospVolumeViewer
+-   Many miscellaneous cleanups, bugfixes, and improvements:
+    -   Fixed data distributed volume rendering bugs when using
+        less blocks than workers
+    -   Fixes to CMake find_package() config
+    -   Fix bug in GhostBlockBrickVolume when using doubles
+    -   Various robustness changes made in CMake to make it easier to
+        compile OSPRay
+
 ### Changes in v0.9.1:
 
 -   Volume rendering now integrated into the "scivis" renderer
