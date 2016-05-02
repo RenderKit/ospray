@@ -18,8 +18,6 @@
 #include "ospray/volume/BlockBrickedVolume.h"
 #include "ospray/common/tasking/parallel_for.h"
 #include "BlockBrickedVolume_ispc.h"
-// std
-#include <cassert>
 
 namespace ospray {
 

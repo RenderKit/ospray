@@ -19,12 +19,10 @@
 #include "SharedStructuredVolume_ispc.h"
 #include "StructuredVolume_ispc.h"
 #include "ospray/common/Data.h"
-// std
-#include <cassert>
 
 namespace ospray {
 
-SharedStructuredVolume::SharedStructuredVolume() : voxelData(NULL) {}
+SharedStructuredVolume::SharedStructuredVolume() : voxelData(nullptr) {}
 
 SharedStructuredVolume::~SharedStructuredVolume()
 {
@@ -40,7 +38,7 @@ SharedStructuredVolume::~SharedStructuredVolume()
   void SharedStructuredVolume::commit()
   {
     // Create the equivalent ISPC volume container.
-    if (ispcEquivalent == NULL) createEquivalentISPC();
+    if (ispcEquivalent == nullptr) createEquivalentISPC();
 
     // StructuredVolume commit actions.
     StructuredVolume::commit();
@@ -50,7 +48,7 @@ SharedStructuredVolume::~SharedStructuredVolume()
                                         const vec3i &index, 
                                         const vec3i &count)
   {
-    if (getIE() == NULL)
+    if (getIE() == nullptr)
       createEquivalentISPC();
     switch (getVoxelType()) {
     case OSP_UCHAR:
@@ -70,10 +68,9 @@ SharedStructuredVolume::~SharedStructuredVolume()
       break;
     default:
       throw std::runtime_error("SharedStructuredVolume::setRegion() not "
-                               "support for volumes of voxel type '"+voxelType+"'");
+                               "support for volumes of voxel type '"
+                               + voxelType + "'");
     }
-    // exitOnCondition(true, "setRegion() not allowed on this volume type; "
-    //                 "volume data must be provided via the voxelData parameter");
     return 0;
   }
 
@@ -89,20 +86,22 @@ SharedStructuredVolume::~SharedStructuredVolume()
     exitOnCondition(reduce_min(dimensions) <= 0, "invalid volume dimensions");
 
     // Get the voxel data.
-    voxelData = (Data *)getParamObject("voxelData", NULL);
+    voxelData = (Data *)getParamObject("voxelData", nullptr);
     
-    // exitOnCondition(voxelData == NULL, "no voxel data provided");
-    if (voxelData)
+    if (voxelData) {
       warnOnCondition(!(voxelData->flags & OSP_DATA_SHARED_BUFFER),
-                      "the voxel data buffer was not created with the OSP_DATA_SHARED_BUFFER flag; "
-                      "use another volume type (e.g. BlockBrickedVolume) for better performance");
+                      "The voxel data buffer was not created with the "
+                      "OSP_DATA_SHARED_BUFFER flag; "
+                      "Use another volume type (e.g. BlockBrickedVolume) for "
+                      "better performance");
+    }
 
     // The voxel count.
-    size_t voxelCount = (size_t)dimensions.x * (size_t)dimensions.y * (size_t)dimensions.z;
-    allocatedVoxelData
-      = (voxelData == NULL)
-      ? malloc(voxelCount*sizeOf(ospVoxelType))
-      : NULL;
+    size_t voxelCount = (size_t)dimensions.x *
+                        (size_t)dimensions.y *
+                        (size_t)dimensions.z;
+    allocatedVoxelData = (voxelData == nullptr) ?
+                         malloc(voxelCount*sizeOf(ospVoxelType)) : nullptr;
     
     // Create an ISPC SharedStructuredVolume object and assign
     // type-specific function pointers.
@@ -123,7 +122,8 @@ SharedStructuredVolume::~SharedStructuredVolume()
       StructuredVolume::buildAccelerator();
   }
 
-  // A volume type with XYZ storage order. The voxel data is provided by the application via a shared data buffer.
+  // A volume type with XYZ storage order. The voxel data is provided by the
+  // application via a shared data buffer.
   OSP_REGISTER_VOLUME(SharedStructuredVolume, shared_structured_volume);
 
 } // ::ospray
