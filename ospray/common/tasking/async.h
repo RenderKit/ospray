@@ -40,12 +40,7 @@ inline void async(const TASK_T& fcn)
   struct LocalTBBTask : public tbb::task
   {
     TASK_T func;
-    tbb::task* execute() override
-    {
-      func();
-      return nullptr;
-    }
-
+    tbb::task* execute() override { func(); return nullptr; }
     LocalTBBTask( const TASK_T& f ) : func(f) {}
   };
 
