@@ -49,8 +49,8 @@ inline void parallel_for(int nTasks, const TASK_T& fcn)
     void run(size_t taskIndex) override { t(taskIndex); }
   };
 
-  Ref<LocalTask> task = new LocalTask(fcn);
-  task->scheduleAndWait(nTasks);
+  LocalTask task(fcn);
+  task.scheduleAndWait(nTasks);
 #else // Debug (no tasking system)
   for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
     fcn(taskIndex);
