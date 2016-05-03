@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <ospray/common/tasking/TaskingTypeTraits.h>
+
 #ifdef OSPRAY_TASKING_TBB
 #  include <tbb/task.h>
 #elif defined(OSPRAY_TASKING_CILK)
@@ -36,6 +38,10 @@ namespace ospray {
 template<typename TASK_T>
 inline void async(const TASK_T& fcn)
 {
+  static_assert(has_operator_method<TASK_T>::value,
+                "ospray::async() requires the implementation of method "
+                "'void TASK_T::operator()'.");
+
 #ifdef OSPRAY_TASKING_TBB
   struct LocalTBBTask : public tbb::task
   {

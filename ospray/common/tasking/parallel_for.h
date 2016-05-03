@@ -33,7 +33,7 @@ namespace ospray {
 template<typename TASK_T>
 inline void parallel_for(int nTasks, const TASK_T& fcn)
 {
-  static_assert(has_operator_method_integral_param<TASK_T>::value,
+  static_assert(has_operator_method_with_integral_param<TASK_T>::value,
                 "ospray::parallel_for() requires the implementation of method "
                 "'void TASK_T::operator(P taskIndex), where P is of type "
                 "short, int, uint, or size_t.");
