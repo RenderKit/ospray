@@ -51,7 +51,7 @@ namespace ospray {
     void createEquivalentISPC() override;
 
     //! Called when a dependency of this object changes.
-    void dependencyGotChanged(ManagedObject *object);
+    void dependencyGotChanged(ManagedObject *object) override;
 
     //! The voxelData object upon commit().
     Data *voxelData;
