@@ -143,7 +143,9 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     if (noHit(ray))
       break;
 
-
+    // terminate after evaluation of lights and before next shading to always have both samples for MIS
+    if (depth >= self->maxDepth)
+      break;
 
     ////////////////////////////////////
     // handle next surface interaction
@@ -201,9 +203,6 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         L = L + transparentShadow(self, unshaded_light_contrib, shadow_ray, currentMedium);
       }
     }
-
-    if (depth >= self->maxDepth)
-      break;
 
     // sample BSDF
     vec2f s  = RandomTEA__getFloats(rng);
