@@ -107,10 +107,6 @@ STRING(TOUPPER ${OSPRAY_BUILD_ISA} OSPRAY_BUILD_ISA)
 SET(OSPRAY_MIC ${OSPRAY_BUILD_MIC_SUPPORT})
 SET(OSPRAY_MPI ${OSPRAY_BUILD_MPI_DEVICE})
 
-IF (OSPRAY_MPI)
-  SET(OSPRAY_MPI_DISTRIBUTED ON) # sets this define in OSPConfig.h
-ENDIF()
-
 ##############################################################
 # create binary packages; before any INSTALL() invocation/definition
 ##############################################################
