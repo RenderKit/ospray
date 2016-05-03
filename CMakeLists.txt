@@ -37,11 +37,6 @@ SET(OSPRAY_VERSION
 )
 SET(OSPRAY_SOVERSION 0)
 
-
-OPTION(OSPRAY_USE_EXTERNAL_EMBREE
-       "Use a pre-built Embree instead of the internally built version" OFF)
-
-
 SET(CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo")
 IF (WIN32)
   IF (NOT OSPRAY_DEFAULT_CMAKE_CONFIGURATION_TYPES_SET)
@@ -59,17 +54,46 @@ SET(OSPRAY_BINARY_DIR ${PROJECT_BINARY_DIR})
 SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
 SET(EXECUTABLE_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
 
+##############################################################
+# CMake modules and macro files
+##############################################################
+
+INCLUDE(cmake/ospray.cmake)
+INCLUDE(cmake/ispc.cmake)
+
+SET(OSPRAY_EMBREE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/ospray/embree-v2.7.1)
+
+INCLUDE(cmake/mpi.cmake)
+
+IF(NOT WIN32)
+  INCLUDE(cmake/doxygen.cmake)
+ENDIF()
+
+OSPRAY_CONFIGURE_COMPILER()
+
+##############################################################
+# OSPRay specific build options and configuration selection
+##############################################################
+
+OPTION(OSPRAY_USE_EXTERNAL_EMBREE
+       "Use a pre-built Embree instead of the internally built version" OFF)
+
 # add experimental KNL/AVX512 build option - not fully supported, yet, so keep it hidden
 OPTION(OSPRAY_BUILD_ENABLE_KNL "Enable experimental 'Knights Landing' build?")
 MARK_AS_ADVANCED(OSPRAY_BUILD_ENABLE_KNL)
 
-OPTION(OSPRAY_VOLUME_VOXELRANGE_IN_APP "Move 'voxelrange' computations to app?" OFF)
+OPTION(OSPRAY_VOLUME_VOXELRANGE_IN_APP
+       "Move 'voxelrange' computations to app?" OFF)
 MARK_AS_ADVANCED(OSPRAY_VOLUME_VOXELRANGE_IN_APP)
 
 IF (WIN32)
-  SET(OSPRAY_BUILD_MIC_SUPPORT OFF CACHE INTERNAL "OSPRay with KNC not supported on Windows.")
+  SET(OSPRAY_BUILD_MIC_SUPPORT OFF CACHE INTERNAL
+      "OSPRay with KNC not supported on Windows.")
 ELSE()
   OPTION(OSPRAY_BUILD_MIC_SUPPORT "Build OSPRay with KNC Support?")
+  IF (OSPRAY_BUILD_MIC_SUPPORT AND NOT OSPRAY_COMPILER_ICC)
+    MESSAGE(FATAL_ERROR "To build with MIC support, you must use ICC!")
+  ENDIF()
 ENDIF()
 
 OPTION(OSPRAY_BUILD_MPI_DEVICE "Add MPI Remote/Distributed rendering support?")
@@ -88,22 +112,9 @@ STRING(TOUPPER ${OSPRAY_BUILD_ISA} OSPRAY_BUILD_ISA)
 SET(OSPRAY_MIC ${OSPRAY_BUILD_MIC_SUPPORT})
 SET(OSPRAY_MPI ${OSPRAY_BUILD_MPI_DEVICE})
 
-##############################################################
-# CMake modules and macro files
-##############################################################
-
-INCLUDE(cmake/ospray.cmake)
-INCLUDE(cmake/ispc.cmake)
-
-SET(OSPRAY_EMBREE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/ospray/embree-v2.7.1)
-
-INCLUDE(cmake/mpi.cmake)
-
-IF(NOT WIN32)
-  INCLUDE(cmake/doxygen.cmake)
+IF (OSPRAY_MPI)
+  SET(OSPRAY_MPI_DISTRIBUTED ON) # sets this define in OSPConfig.h
 ENDIF()
-
-OSPRAY_CONFIGURE_COMPILER()
 
 ##############################################################
 # create binary packages; before any INSTALL() invocation/definition
