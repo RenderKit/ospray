@@ -60,9 +60,6 @@ SET(EXECUTABLE_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
 
 INCLUDE(cmake/ospray.cmake)
 INCLUDE(cmake/ispc.cmake)
-
-SET(OSPRAY_EMBREE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/ospray/embree-v2.7.1)
-
 INCLUDE(cmake/mpi.cmake)
 
 IF(NOT WIN32)
@@ -76,14 +73,12 @@ OSPRAY_CONFIGURE_COMPILER()
 ##############################################################
 
 OPTION(OSPRAY_USE_EXTERNAL_EMBREE
-       "Use a pre-built Embree instead of the internally built version" OFF)
+       "Use a pre-built Embree instead of the internally built version")
 
-# add experimental KNL/AVX512 build option - not fully supported, yet, so keep it hidden
 OPTION(OSPRAY_BUILD_ENABLE_KNL "Enable experimental 'Knights Landing' build?")
 MARK_AS_ADVANCED(OSPRAY_BUILD_ENABLE_KNL)
 
-OPTION(OSPRAY_VOLUME_VOXELRANGE_IN_APP
-       "Move 'voxelrange' computations to app?" OFF)
+OPTION(OSPRAY_VOLUME_VOXELRANGE_IN_APP "Move 'voxelrange' computations to app?")
 MARK_AS_ADVANCED(OSPRAY_VOLUME_VOXELRANGE_IN_APP)
 
 IF (WIN32)
@@ -92,7 +87,7 @@ IF (WIN32)
 ELSE()
   OPTION(OSPRAY_BUILD_MIC_SUPPORT "Build OSPRay with KNC Support?")
   IF (OSPRAY_BUILD_MIC_SUPPORT AND NOT OSPRAY_COMPILER_ICC)
-    MESSAGE(FATAL_ERROR "To build with MIC support, you must use ICC!")
+    MESSAGE(FATAL_ERROR "MIC support requires the Intel Compiler.")
   ENDIF()
 ENDIF()
 
@@ -106,7 +101,7 @@ ELSE()
   SET_PROPERTY(CACHE OSPRAY_BUILD_ISA PROPERTY STRINGS ALL SSE AVX AVX2)
 ENDIF()
 
-# make ospray target and compiler uppercase - we need this in some other parts of the build system
+# make ISA target case-insensitive, used in configure_ospray() macro
 STRING(TOUPPER ${OSPRAY_BUILD_ISA} OSPRAY_BUILD_ISA)
 
 SET(OSPRAY_MIC ${OSPRAY_BUILD_MIC_SUPPORT})
