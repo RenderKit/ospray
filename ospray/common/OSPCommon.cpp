@@ -165,6 +165,7 @@ namespace ospray {
     case OSP_UCHAR2:    return sizeof(vec2uc);
     case OSP_UCHAR3:    return sizeof(vec3uc);
     case OSP_UCHAR4:    return sizeof(vec4uc);
+    case OSP_USHORT:    return sizeof(uint16);
     case OSP_INT:       return sizeof(int32);
     case OSP_INT2:      return sizeof(vec2i);
     case OSP_INT3:      return sizeof(vec3i);
@@ -211,6 +212,7 @@ namespace ospray {
     if (strcmp(string, "uchar2") == 0) return(OSP_UCHAR2);
     if (strcmp(string, "uchar3") == 0) return(OSP_UCHAR3);
     if (strcmp(string, "uchar4") == 0) return(OSP_UCHAR4);
+    if (strcmp(string, "ushort") == 0) return(OSP_USHORT);
     if (strcmp(string, "uint"  ) == 0) return(OSP_UINT);
     if (strcmp(string, "uint2" ) == 0) return(OSP_UINT2);
     if (strcmp(string, "uint3" ) == 0) return(OSP_UINT3);

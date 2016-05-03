@@ -59,6 +59,8 @@ OSPVolume RawVolumeFile::importVolume(OSPVolume volume)
 
   if (strcmp(voxelType, "uchar") == 0)
     voxelSize = sizeof(unsigned char);
+  else if (strcmp(voxelType, "ushort") == 0)
+    voxelSize = sizeof(uint16_t);
   else if (strcmp(voxelType, "float") == 0)
     voxelSize = sizeof(float);
   else if (strcmp(voxelType, "double") == 0)
@@ -156,6 +158,11 @@ ospcommon::vec2f voxelRange(+std::numeric_limits<float>::infinity(),
       if (strcmp(voxelType, "uchar") == 0) {
         extendVoxelRange(voxelRange,
                          (unsigned char *)voxelData,
+                         volumeDimensions.x*volumeDimensions.y);
+      }
+      else if (strcmp(voxelType, "ushort") == 0) {
+        extendVoxelRange(voxelRange,
+                         (uint16_t *)voxelData,
                          volumeDimensions.x*volumeDimensions.y);
       }
       else if (strcmp(voxelType, "float") == 0) {

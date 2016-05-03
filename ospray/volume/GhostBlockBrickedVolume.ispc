@@ -60,6 +60,7 @@
 
 /*! @{ number of bits we have to SHIFT addresses for given type */
 #define shift_per_uint8 0
+#define shift_per_uint16 1
 #define shift_per_float 2
 #define shift_per_double 3
 /*! @} */
@@ -67,6 +68,7 @@
 /*! @{ number of bits we have to MULTIPLY offsets with for given
 type */
 #define scale_per_uint8 1
+#define scale_per_uint16 2
 #define scale_per_float 4
 #define scale_per_double 8
 /*! @} */
@@ -155,6 +157,7 @@ inline int intDiv(float x)
          }
 
 template_brickTranslation(uint8);
+template_brickTranslation(uint16);
 template_brickTranslation(float);
 template_brickTranslation(double);
 
@@ -222,6 +225,7 @@ template_brickTranslation(double);
   }
 
 template_getAddress(uint8);
+template_getAddress(uint16);
 template_getAddress(float);
 template_getAddress(double);
 
@@ -315,6 +319,7 @@ inline bool GBBV_getGhostIndices(GBBV *uniform volume,
   }                                                                     \
 
 template_accessArray(uint8);
+template_accessArray(uint16);
 template_accessArray(float);
 template_accessArray(double);
 #undef template_accessArray
@@ -347,6 +352,7 @@ template_accessArray(double);
   }
 
 template_getVoxel(uint8)
+template_getVoxel(uint16)
 template_getVoxel(float)
 template_getVoxel(double)
 #undef template_getVoxel
@@ -402,6 +408,7 @@ void GBBV_setRegionTask_##type(GBBV *uniform self,                              
 }
 
 template_setRegion(uint8)
+template_setRegion(uint16)
 template_setRegion(float)
 template_setRegion(double)
 #undef template_setRegion
@@ -491,6 +498,7 @@ template_setRegion(double)
   }
 
 template_computeSample(uint8)
+template_computeSample(uint16)
 template_computeSample(float)
 template_computeSample(double)
 #undef template_computeSample
@@ -533,6 +541,12 @@ void GBBV_Constructor(GBBV *uniform volume,
     volume->super.getVoxel = GBBV_getVoxel_uint8;
     volume->setRegion      = &GBBV_setRegionTask_uint8;
     volume->super.super.computeSample = GBBV_computeSample_uint8;
+  }
+  else if (volume->voxelType == OSP_USHORT) {
+    volume->voxelSize      = sizeof(uniform uint16);
+    volume->super.getVoxel = GBBV_getVoxel_uint16;
+    volume->setRegion      = &GBBV_setRegionTask_uint16;
+    volume->super.super.computeSample = GBBV_computeSample_uint16;
   }
   else if (volume->voxelType == OSP_FLOAT) {
     volume->voxelSize      = sizeof(uniform float);
