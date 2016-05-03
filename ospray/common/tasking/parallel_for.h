@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <ospray/common/tasking/TaskingTypeTraits.h>
+
 #ifdef OSPRAY_TASKING_TBB
 #  include <tbb/parallel_for.h>
 #elif defined(OSPRAY_TASKING_CILK)
@@ -31,6 +33,11 @@ namespace ospray {
 template<typename TASK_T>
 inline void parallel_for(int nTasks, const TASK_T& fcn)
 {
+  static_assert(has_operator_method_integral_param<TASK_T>::value,
+                "ospray::parallel_for() requires the implementation of method "
+                "'void TASK_T::operator(P taskIndex), where P is of type "
+                "short, int, uint, or size_t.");
+
 #ifdef OSPRAY_TASKING_TBB
   tbb::parallel_for(0, nTasks, 1, fcn);
 #elif defined(OSPRAY_TASKING_CILK)
