@@ -115,6 +115,7 @@ int main(int ac, const char **av) {
   // create and setup renderer
   OSPRenderer renderer = ospNewRenderer("scivis"); // choose Scientific Visualization renderer
   ospSet1f(renderer, "aoWeight", 1.0f);            // with full Ambient Occlusion
+  ospSet1i(renderer, "aoSamples", 1);
   ospSetObject(renderer, "model",  world);
   ospSetObject(renderer, "camera", camera);
   ospCommit(renderer);
