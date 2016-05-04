@@ -89,7 +89,7 @@ protected:
   bool isEnabled;
 
   //! The probe coordinate.
-  ospcommon::vec3f coordinate;
+  osp::vec3f coordinate;
 
   // UI elements.
   std::vector<ProbeCoordinateWidget *> probeCoordinateWidgets;

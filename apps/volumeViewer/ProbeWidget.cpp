@@ -132,12 +132,12 @@ void ProbeWidget::updateProbe()
     return;
   }
 
-  coordinate = ospcommon::vec3f(probeCoordinateWidgets[0]->getValue(), probeCoordinateWidgets[1]->getValue(), probeCoordinateWidgets[2]->getValue());
+  coordinate = osp::vec3f{probeCoordinateWidgets[0]->getValue(), probeCoordinateWidgets[1]->getValue(), probeCoordinateWidgets[2]->getValue()};
 
   if (volume) {
 
     float *results = NULL;
-    ospSampleVolume(results, volume, (osp::vec3f*)&coordinate, 1);
+    ospSampleVolume(&results, volume, coordinate, 1);
 
     if (!results)
       std::cout << "error calling ospSampleVolume()" << std::endl;
