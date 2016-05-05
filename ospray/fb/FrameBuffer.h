@@ -68,7 +68,9 @@ namespace ospray {
         changes that requires clearing the accumulation buffer. */
     virtual int32 accumID(const vec2i &tile) = 0;
     virtual float tileError(const vec2i &tile) = 0;
-    virtual float endFrame(const float errorThreshold) = 0; // returns error of frame
+
+    //! returns error of frame
+    virtual float endFrame(const float errorThreshold) = 0;
 
     Ref<PixelOp::Instance> pixelOp;
   };
@@ -78,6 +80,7 @@ namespace ospray {
   void writePPM(const std::string &fileName, const vec2i &size, uint32 *pixels);
 
   //! helper function to write a (float) image as (flipped) PFM file
-  void writePFM(const std::string &fileName, const vec2i &size, const int channel, const float *pixels);
+  void writePFM(const std::string &fileName, const vec2i &size,
+                const int channel, const float *pixels);
   
 } // ::ospray

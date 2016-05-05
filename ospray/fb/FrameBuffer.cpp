@@ -36,7 +36,9 @@ namespace ospray {
   }
 
   /*! helper function for debugging. write out given pixels in PPM format */
-  void writePPM(const std::string &fileName, const vec2i &size, const uint32 *pixels)
+  void writePPM(const std::string &fileName,
+                const vec2i &size,
+                const uint32 *pixels)
   {
     FILE *file = fopen(fileName.c_str(),"w");
     if (!file) {
@@ -52,7 +54,10 @@ namespace ospray {
   }
 
   // helper function to write a (float) image as (flipped) PFM file
-  void writePFM(const std::string &fileName, const vec2i &size, const int channel, const float *pixel)
+  void writePFM(const std::string &fileName,
+                const vec2i &size,
+                const int channel,
+                const float *pixel)
   {
     FILE *file = fopen(fileName.c_str(),"w");
     if (!file) {
