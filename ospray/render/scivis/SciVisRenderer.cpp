@@ -76,6 +76,8 @@ namespace ospray {
     OSP_REGISTER_RENDERER(SciVisRenderer, rt);
     OSP_REGISTER_RENDERER(SciVisRenderer, scivis);
     OSP_REGISTER_RENDERER(SciVisRenderer, sv);
+    OSP_REGISTER_RENDERER(SciVisRenderer, obj);
+    OSP_REGISTER_RENDERER(SciVisRenderer, OBJ);
 
   } // ::ospray::scivis
 } // ::ospray
