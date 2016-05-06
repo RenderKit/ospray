@@ -17,6 +17,8 @@ Version History
     -   If the renderer parameter `varianceThreshold` is set,
         progressive refinement concentrates on regions of the image with
         a variance higher than this threshold
+-   Added support for volumes with voxelType `ushort` (16-bit unsigned
+    integers)
 -   `OSPTexture2D` now supports sRGB formats -- actually most images are
     stored in sRGB. As a consequence the API call `ospNewTexture2D()`
     needed to change to accept the new `OSPTextureFormat` parameter.
