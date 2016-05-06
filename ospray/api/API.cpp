@@ -396,7 +396,6 @@ extern "C" OSPTexture2D ospNewTexture2D(const osp::vec2i &size,
                                         const uint32_t flags)
 {
   ASSERT_DEVICE();
-  assert(size != NULL);
   Assert2(size.x > 0, "Width must be greater than 0 in ospNewTexture2D");
   Assert2(size.y > 0, "Height must be greater than 0 in ospNewTexture2D");
   LOG("ospNewTexture2D( (" << size.x << ", " << size.y << "), " << type << ", " << data << ", " << flags << ")");
@@ -794,8 +793,6 @@ extern "C" void ospSampleVolume(float **results,
     *results = NULL;
     return;
   }
-
-  Assert2(worldCoordinates, "NULL worldCoordinates passed to ospSampleVolume");
 
   ospray::api::Device::current->sampleVolume(results, volume, (vec3f*)&worldCoordinates, count);
 }

@@ -65,6 +65,7 @@ namespace ospray {
       size_t num = node->getPropl("num");
       size_t ofs = node->getPropl("ofs");
       float  rad = atof(node->getProp("radius").c_str());
+      PRINT(num);
       PRINT(rad);
 
       Spheres::Sphere s(vec3f(0.f),rad,0);
@@ -78,9 +79,9 @@ namespace ospray {
           sphere.push_back(s);
         }
       } else {
+        const vec3f *in = (const vec3f*)(binBasePtr+ofs);
         for (int i=0;i<num;i++) {
-          const vec3f *in = (const vec3f*)(binBasePtr+ofs);
-          memcpy(&s,&in[i],sizeof(s));
+          memcpy(&s,&in[i],sizeof(*in));
           sphere.push_back(s);
         }
       }
