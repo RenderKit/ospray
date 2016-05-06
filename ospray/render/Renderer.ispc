@@ -26,14 +26,14 @@ void Renderer_default_renderSample(uniform Renderer *uniform self,
 {
   sample.z = inf;
   sample.alpha = 1.f;
-  sample.rgb = make_random_color((sample.sampleID.x<<0)+
+  sample.rgb = make_random_color((sample.sampleID.x<<0 )+
                                  (sample.sampleID.y<<14)+
-                                 (sample.sampleID.z<<28)
-                                 );
+                                 (sample.sampleID.z<<28));
 }
 
-static unmasked void *uniform Renderer_default_beginFrame(uniform Renderer *uniform self,
-                                                 uniform FrameBuffer *uniform fb)
+static unmasked void *uniform
+Renderer_default_beginFrame(uniform Renderer *uniform self,
+                            uniform FrameBuffer *uniform fb)
 {
   self->fb = fb;
   if (self->camera == NULL)
@@ -44,16 +44,15 @@ static unmasked void *uniform Renderer_default_beginFrame(uniform Renderer *unif
 }
 
 static unmasked void Renderer_default_endFrame(uniform Renderer *uniform self, 
-                                      void *uniform perFrameData)
+                                               void *uniform perFrameData)
 {
-  if (self->fb)
-    self->fb = NULL;
+  if (self->fb) self->fb = NULL;
 }
 
-unmasked void Renderer_default_renderTileJob(uniform Renderer *uniform self,
-                                    void *uniform perFrameData,
-                                    uniform Tile &tile,
-                                    uniform int taskIndex)
+unmasked void Renderer_default_renderTile(uniform Renderer *uniform self,
+                                          void *uniform perFrameData,
+                                          uniform Tile &tile,
+                                          uniform int taskIndex)
 {
   uniform FrameBuffer *uniform fb     = self->fb;
   uniform Camera      *uniform camera = self->camera;
@@ -75,7 +74,7 @@ unmasked void Renderer_default_renderTileJob(uniform Renderer *uniform self,
     const uniform int end   = begin     + RENDERTILE_PIXELS_PER_JOB;
     const uniform int startSampleID = max(tile.accumID, 0)*spp;
 
-    for (uniform uint32 i=begin;i<end;i+=programCount) {
+    for (uniform uint32 i = begin; i < end; i += programCount) {
       const uint32 index = i + programIndex;
       screenSample.sampleID.x        = tile.region.lower.x + z_order.xs[index];
       screenSample.sampleID.y        = tile.region.lower.y + z_order.ys[index];
@@ -85,7 +84,8 @@ unmasked void Renderer_default_renderTileJob(uniform Renderer *uniform self,
         continue;
 
       float tMax = infinity;
-      // set ray t value for early ray termination if we have a maximum depth texture
+      // set ray t value for early ray termination if we have a maximum depth
+      // texture
       if (self->maxDepthTexture) {
         // always sample center of pixel
         vec2f depthTexCoord;
@@ -96,13 +96,15 @@ unmasked void Renderer_default_renderTileJob(uniform Renderer *uniform self,
       }
       vec3f col = make_vec3f(0.f);
       const uint32 pixel = z_order.xs[index] + (z_order.ys[index] * TILE_SIZE);
-      for (uniform uint32 s = 0; s<spp; s++) {
+      for (uniform uint32 s = 0; s < spp; s++) {
         pixel_du = precomputedHalton2(startSampleID+s);
         pixel_dv = precomputedHalton3(startSampleID+s);
         screenSample.sampleID.z = startSampleID+s;
 
-        cameraSample.screen.x = (screenSample.sampleID.x + pixel_du) * fb->rcpSize.x;
-        cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
+        cameraSample.screen.x = (screenSample.sampleID.x + pixel_du)
+                                * fb->rcpSize.x;
+        cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv)
+                                * fb->rcpSize.y;
 
         // TODO: fix correlations / better RNG
         cameraSample.lens.x = precomputedHalton3(startSampleID+s);
@@ -130,25 +132,31 @@ unmasked void Renderer_default_renderTileJob(uniform Renderer *uniform self,
 
     CameraSample cameraSample;
 
-    const uniform int blocks = tile.accumID > 0 || spp > 0 ? 1 : min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
+    const uniform int blocks = tile.accumID > 0
+                               || spp > 0 ? 1 : min(1 << -2 * spp,
+                                                    TILE_SIZE*TILE_SIZE);
 
     const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
-    const uniform int end   = min(begin + RENDERTILE_PIXELS_PER_JOB, TILE_SIZE*TILE_SIZE/blocks);
+    const uniform int end   = min(begin + RENDERTILE_PIXELS_PER_JOB,
+                                  TILE_SIZE*TILE_SIZE/blocks);
 
-    for (uint32 i=begin+programIndex;i<end;i+=programCount) {
-      screenSample.sampleID.x        = tile.region.lower.x + z_order.xs[i*blocks];
-      screenSample.sampleID.y        = tile.region.lower.y + z_order.ys[i*blocks];
+    for (uint32 i = begin + programIndex; i < end; i+=programCount) {
+      screenSample.sampleID.x = tile.region.lower.x + z_order.xs[i*blocks];
+      screenSample.sampleID.y = tile.region.lower.y + z_order.ys[i*blocks];
       if ((screenSample.sampleID.x >= fb->size.x) |
           (screenSample.sampleID.y >= fb->size.y)) {
         continue;
       }
 
-      cameraSample.screen.x = (screenSample.sampleID.x + pixel_du) * fb->rcpSize.x;
-      cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
+      cameraSample.screen.x = (screenSample.sampleID.x + pixel_du)
+                              * fb->rcpSize.x;
+      cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv)
+                              * fb->rcpSize.y;
 
       camera->initRay(camera,screenSample.ray,cameraSample);
 
-      // set ray t value for early ray termination if we have a maximum depth texture
+      // set ray t value for early ray termination if we have a maximum depth
+      // texture
       if (self->maxDepthTexture) {
         // always sample center of pixel
         vec2f depthTexCoord;
@@ -161,7 +169,8 @@ unmasked void Renderer_default_renderTileJob(uniform Renderer *uniform self,
       self->renderSample(self,perFrameData,screenSample);
 
       for (uniform int p = 0; p < blocks; p++) {
-        const uint32 pixel = z_order.xs[i*blocks+p] + (z_order.ys[i*blocks+p] * TILE_SIZE);
+        const uint32 pixel = z_order.xs[i*blocks+p]
+                             + (z_order.ys[i*blocks+p] * TILE_SIZE);
         assert(pixel < TILE_SIZE*TILE_SIZE);
         setRGBAZ(tile,pixel,screenSample.rgb,screenSample.alpha,screenSample.z);
       }
@@ -180,7 +189,7 @@ void Renderer_Constructor(uniform Renderer *uniform self,
   self->backgroundEnabled = true;
   self->maxDepthTexture = NULL;
   self->renderSample = Renderer_default_renderSample;
-  self->renderTile   = Renderer_default_renderTileJob;
+  self->renderTile   = Renderer_default_renderTile;
   self->beginFrame   = Renderer_default_beginFrame;
   self->endFrame     = Renderer_default_endFrame;
   self->toneMap      = NULL;
