@@ -20,6 +20,7 @@
 
 struct PointLight
 {
+  //ALIGNED_STRUCT
   Light super;    //!< inherited light fields
 
   vec3f position; //!< light position
