@@ -20,7 +20,6 @@
 
 struct SpotLight
 {
-  //ALIGNED_STRUCT
   Light super;            //!< inherited light fields
 
   vec3f position;         //!< Position of the SpotLight

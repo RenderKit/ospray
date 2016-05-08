@@ -22,7 +22,6 @@
 
 struct HDRILight
 {
-  //ALIGNED_STRUCT
   Light super;                        //!< inherited light fields
 
   linear3f light2world;               //!< Transformation from light space into world space

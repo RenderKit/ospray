@@ -18,7 +18,6 @@
 
 struct QuadLight
 {
-  //ALIGNED_STRUCT
   Light super;            //!< inherited light fields
 
   vec3f position;         //!< world-space corner position of the light
