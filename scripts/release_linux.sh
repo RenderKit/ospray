@@ -16,13 +16,7 @@
 
 #!/bin/bash
 
-export ROOT_DIR=$PWD
-
-# to make sure we do not include nor link against wrong TBB
-export CPATH=
-export LIBRARY_PATH=
-export LD_LIBRARY_PATH=
-TBB_PATH_LOCAL=$ROOT_DIR/tbb
+#### Helper functions ####
 
 # check version of symbols
 function check_symbols
@@ -45,6 +39,48 @@ function check_symbols
   done
 }
 
+#### Set variables for script ####
+
+export ROOT_DIR=$PWD
+
+DEP_LOCATION=http://sdvis.org/~jdamstut/deps
+TBB_TARBALL=embree-2.9.0.x86_64.linux.tar.gz
+EMBREE_TARBALL=tbb44_20160413oss_lin.tgz
+
+# set compiler
+export CC=gcc
+export CXX=g++
+
+# to make sure we do not include nor link against wrong TBB
+unset CPATH
+unset LIBRARY_PATH
+unset LD_LIBRARY_PATH
+
+#### Fetch dependencies (TBB+Embree) ####
+
+mkdir deps
+rm -rf deps/*
+cd deps
+
+# TBB
+wget $DEP_LOCATION/$TBB_TARBALL
+tar -xaf $TBB_TARBALL
+rm $TBB_TARBALL
+
+# Embree
+wget $DEP_LOCATION/$EMBREE_TARBALL
+tar -xaf $EMBREE_TARBALL
+rm $EMBREE_TARBALL
+
+cd $ROOT_DIR
+ln -snf deps/tbb* tbb
+ln -snf deps/embree* embree
+
+TBB_PATH_LOCAL=$ROOT_DIR/tbb
+export embree_DIR=$ROOT_DIR/embree
+
+#### Build OSPRay ####
+
 mkdir -p build_release
 cd build_release
 # make sure to use default settings
@@ -53,12 +89,11 @@ rm -f ospray/version.h
 
 # set release and RPM settings
 cmake \
--D CMAKE_C_COMPILER:FILEPATH=icc \
--D CMAKE_CXX_COMPILER:FILEPATH=icpc \
 -D OSPRAY_BUILD_ISA=ALL \
 -D OSPRAY_BUILD_MIC_SUPPORT=OFF \
 -D OSPRAY_BUILD_COI_DEVICE=OFF \
 -D OSPRAY_BUILD_MPI_DEVICE=OFF \
+-D OSPRAY_USE_EXTERNAL_EMBREE=ON \
 -D USE_IMAGE_MAGICK=OFF \
 -D OSPRAY_ZIP_MODE=OFF \
 -D CMAKE_INSTALL_PREFIX=$ROOT_DIR/install \
@@ -71,7 +106,7 @@ make -j `nproc` preinstall
 check_symbols libospray.so GLIBC   2 4
 check_symbols libospray.so GLIBCXX 3 4
 check_symbols libospray.so CXXABI  1 3
-make package
+make -j `nproc` package
 
 # read OSPRay version
 OSPRAY_VERSION=`sed -n 's/#define OSPRAY_VERSION "\(.*\)"/\1/p' ospray/version.h`
@@ -96,4 +131,3 @@ cmake \
 # create tar.gz files
 make -j `nproc` package
 
-cd $ROOT_DIR
