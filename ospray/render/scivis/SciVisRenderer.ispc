@@ -494,8 +494,10 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
   // Trace the ray through the volume and geometries.
   float firstHit;
 
-  // Geometry contribution.
-  color = color + (1.0f - color.w) * geometryColor;
+  if(geometryRay.t < ray.t0 || volume == NULL) {
+    // Geometry contribution.
+    color = color + (1.0f - color.w) * geometryColor;
+  }
 
   while ((firstHit = min(ray.t0, geometryRay.t)) < tMax
          /*&& min(min(color.x, color.y), color.z) < 1.0f*///<--why is this here?
