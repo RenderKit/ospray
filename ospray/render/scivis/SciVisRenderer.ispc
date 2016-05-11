@@ -287,7 +287,8 @@ inline void SciVisRenderer_computeVolumeSample(SciVisRenderer *uniform renderer,
     const vec2f s = make_vec2f(0.5f);
 
     for (uniform uint32 i=0; i<renderer->numLights; i++) {
-      const Light_SampleRes light = renderer->lights[i]->sample(renderer->lights[i], dg, s);
+      const Light_SampleRes light =
+          renderer->lights[i]->sample(renderer->lights[i], dg, s);
       const float cosNL = (gradient.x == 0.f
                            && gradient.y == 0.f
                            && gradient.z == 0.f) ?
@@ -379,9 +380,11 @@ void SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
   }
 }
 
-/*! Returns the first hit volume for the provided ray and sets the ray bounds t0 and t,
-    considering the provided ray offset and any clipping. If no volume is found, the
-    returned volume is NULL and ray.t0 will be set to infinity. */
+/*! Returns the first hit volume for the provided ray and sets the ray bounds
+ *  t0 and t, considering the provided ray offset and any clipping. If no
+ *  volume is found, the returned volume is NULL and ray.t0 will be set to
+ *  infinity.
+ */
 inline Volume *
 SciVisRenderer_intersectVolumes(uniform SciVisRenderer *uniform renderer,
                                 varying Ray &ray,
@@ -403,7 +406,8 @@ SciVisRenderer_intersectVolumes(uniform SciVisRenderer *uniform renderer,
     intersectBox(ray, volume_i->boundingBox, t0, t1);
 
     // Clip against volume clipping box (if specified).
-    if(ne(volume_i->volumeClippingBox.lower, volume_i->volumeClippingBox.upper)) {
+    if(ne(volume_i->volumeClippingBox.lower,
+          volume_i->volumeClippingBox.upper)) {
       float tClip0, tClip1;
       intersectBox(ray, volume_i->volumeClippingBox, tClip0, tClip1);
 
