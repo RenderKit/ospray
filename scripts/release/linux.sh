@@ -47,9 +47,11 @@ DEP_LOCATION=http://sdvis.org/~jdamstut/deps
 TBB_TARBALL=embree-2.9.0.x86_64.linux.tar.gz
 EMBREE_TARBALL=tbb44_20160413oss_lin.tgz
 
-# set compiler
-export CC=gcc
-export CXX=g++
+# set compiler if the user hasn't explicitly set CC and CXX
+if [ -z $CC ]; then
+  export CC=icc
+  export CXX=icpc
+fi
 
 # to make sure we do not include nor link against wrong TBB
 unset CPATH
@@ -58,23 +60,25 @@ unset LD_LIBRARY_PATH
 
 #### Fetch dependencies (TBB+Embree) ####
 
-mkdir deps
-rm -rf deps/*
-cd deps
-
-# TBB
-wget $DEP_LOCATION/$TBB_TARBALL
-tar -xaf $TBB_TARBALL
-rm $TBB_TARBALL
-
-# Embree
-wget $DEP_LOCATION/$EMBREE_TARBALL
-tar -xaf $EMBREE_TARBALL
-rm $EMBREE_TARBALL
-
-cd $ROOT_DIR
-ln -snf deps/tbb* tbb
-ln -snf deps/embree* embree
+if [ ! -d deps ]; then
+  mkdir deps
+  rm -rf deps/*
+  cd deps
+  
+  # TBB
+  wget $DEP_LOCATION/$TBB_TARBALL
+  tar -xaf $TBB_TARBALL
+  rm $TBB_TARBALL
+  
+  # Embree
+  wget $DEP_LOCATION/$EMBREE_TARBALL
+  tar -xaf $EMBREE_TARBALL
+  rm $EMBREE_TARBALL
+  
+  cd $ROOT_DIR
+  ln -snf deps/tbb* tbb
+  ln -snf deps/embree* embree
+fi
 
 TBB_PATH_LOCAL=$ROOT_DIR/tbb
 export embree_DIR=$ROOT_DIR/embree
@@ -83,9 +87,9 @@ export embree_DIR=$ROOT_DIR/embree
 
 mkdir -p build_release
 cd build_release
-# make sure to use default settings
-rm -f CMakeCache.txt
-rm -f ospray/version.h
+
+# Clean out build directory to be sure we are doing a fresh build
+rm -rf *
 
 # set release and RPM settings
 cmake \
