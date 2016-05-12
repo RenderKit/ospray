@@ -18,7 +18,7 @@
 
 #include "MPICommon.h"
 #include "ospray/api/Device.h"
-#include "ospray/device/command.h"
+#include "ospray/mpi/command.h"
 #include "CommandStream.h"
 #include "ospray/common/Managed.h"
 

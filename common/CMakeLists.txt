@@ -27,7 +27,6 @@ OSPRAY_ADD_LIBRARY(ospray_common SHARED
   library.cpp
   thread.cpp
   vec.cpp
-  network.cpp
 
   AffineSpace.h
   box.h
@@ -35,7 +34,6 @@ OSPRAY_ADD_LIBRARY(ospray_common SHARED
   intrinsics.h
   LinearSpace.h
   math.h
-  mpi.h
   platform.h
   Quaternion.h
   RefCount.h
