@@ -58,17 +58,17 @@ if [ ! -d deps ]; then
 
   # Embree
   wget $DEP_LOCATION/$EMBREE_TARBALL
-  tar -xaf $EMBREE_TARBALL
+  tar -xf $EMBREE_TARBALL
   rm $EMBREE_TARBALL
 
   # ISPC
   wget $DEP_LOCATION/$ISPC_TARBALL
-  tar -xaf $ISPC_TARBALL
+  tar -xf $ISPC_TARBALL
   rm $ISPC_TARBALL
 
   # TBB
   wget $DEP_LOCATION/$TBB_TARBALL
-  tar -xaf $TBB_TARBALL
+  tar -xf $TBB_TARBALL
   rm $TBB_TARBALL
 
   cd $ROOT_DIR
@@ -81,11 +81,13 @@ TBB_PATH_LOCAL=$ROOT_DIR/tbb
 export embree_DIR=$ROOT_DIR/embree
 export PATH=$ROOT_DIR/ispc:$PATH
 
+#### Build OSPRay ####
+
 mkdir -p build_release
 cd build_release
-# make sure to use default settings
-rm -f CMakeCache.txt
-rm -f ospray/version.h
+
+# Clean out build directory to be sure we are doing a fresh build
+rm -rf *
 
 # set release and installer settings
 cmake \
@@ -100,6 +102,7 @@ cmake \
 -D CMAKE_INSTALL_LIBDIR=lib \
 -D CMAKE_INSTALL_DOCDIR=../../Applications/OSPRay/doc \
 -D CMAKE_INSTALL_BINDIR=../../Applications/OSPRay/bin \
+-D TBB_ROOT=$TBB_PATH_LOCAL \
 ..
 
 # create installers
