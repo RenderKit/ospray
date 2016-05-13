@@ -43,7 +43,7 @@ function check_symbols
 
 export ROOT_DIR=$PWD
 
-DEP_LOCATION=http://sdvis.org/~jdamstut/deps
+DEP_LOCATION=http://sdvis.org/~jdamstut/ospray_deps/linux
 TBB_TARBALL=embree-2.9.0.x86_64.linux.tar.gz
 EMBREE_TARBALL=tbb44_20160413oss_lin.tgz
 ISPC_TARBALL=ispc-v1.9.0-linux.tar.gz
@@ -66,7 +66,7 @@ if [ -n $OSPRAY_RELEASE_NO_VERIFY ]; then
   unset LD_LIBRARY_PATH
 fi
 
-#### Fetch dependencies (TBB+Embree) ####
+#### Fetch dependencies (TBB+Embree+ISPC) ####
 
 if [ ! -d deps ]; then
   mkdir deps
