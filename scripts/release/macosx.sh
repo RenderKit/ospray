@@ -30,9 +30,9 @@ umask 002
 export ROOT_DIR=$PWD
 
 DEP_LOCATION=http://sdvis.org/~jdamstut/ospray_deps/osx
-TBB_TARBALL=embree-2.9.0.x86_64.osx.tar.gz
-EMBREE_TARBALL=tbb44_20160413oss_osx.tgz
+EMBREE_TARBALL=embree-2.9.0.x86_64.macosx.tar.gz
 ISPC_TARBALL=ispc-v1.9.0-osx.tar.gz
+TBB_TARBALL=tbb44_20160413oss_osx.tgz
 
 # set compiler if the user hasn't explicitly set CC and CXX
 if [ -z $CC ]; then
@@ -56,11 +56,6 @@ if [ ! -d deps ]; then
   rm -rf deps/*
   cd deps
 
-  # TBB
-  wget $DEP_LOCATION/$TBB_TARBALL
-  tar -xaf $TBB_TARBALL
-  rm $TBB_TARBALL
-
   # Embree
   wget $DEP_LOCATION/$EMBREE_TARBALL
   tar -xaf $EMBREE_TARBALL
@@ -71,10 +66,15 @@ if [ ! -d deps ]; then
   tar -xaf $ISPC_TARBALL
   rm $ISPC_TARBALL
 
+  # TBB
+  wget $DEP_LOCATION/$TBB_TARBALL
+  tar -xaf $TBB_TARBALL
+  rm $TBB_TARBALL
+
   cd $ROOT_DIR
-  ln -snf deps/tbb* tbb
   ln -snf deps/embree* embree
   ln -snf deps/ispc* ispc
+  ln -snf deps/tbb* tbb
 fi
 
 TBB_PATH_LOCAL=$ROOT_DIR/tbb
