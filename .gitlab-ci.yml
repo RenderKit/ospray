@@ -2,6 +2,8 @@ stages:
   - build
   - deploy
 
+### BUILD JOBS ###
+
 build-centos6-gcc:
   type: build
   script:
@@ -66,18 +68,23 @@ build-osx-clang:
     - clang
     - build
 
-release-test:
+### RELEASE JOBS ###
+
+release-linux:
   type: deploy
   script:
-    - export CC=gcc
-    - export CXX=g++
-    - export OSPRAY_RELEASE_NO_VERIFY=1
+    - module load intel
+    - export CC=icc
+    - export CXX=icpc
     - scripts/release/linux.sh
   tags:
     - icc
     - release
   only:
-    - jda/release_test
+    - devel
+    - master
   artifacts:
     paths:
       - build_release/*.gz
+
+#TODO: add OS X and Windows release jobs
