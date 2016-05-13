@@ -24,7 +24,9 @@ cmake -L \
 -T "Intel C++ Compiler 16.0" \
 -D OSPRAY_BUILD_ISA=ALL \
 -D OSPRAY_BUILD_MIC_SUPPORT=OFF \
+-D OSPRAY_USE_EXTERNAL_EMBREE=ON \
+-D embree_DIR=../../embree/lib/cmake/embree-2.9.0 \
 -D USE_IMAGE_MAGICK=OFF \
 ..
 
-cmake --build . --config Release --target PACKAGE -- -m -nologo
+cmake --build . --config Release --target ALL_BUILD -- -m -nologo

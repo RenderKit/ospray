@@ -107,6 +107,7 @@ release-windows:
     - master
   artifacts:
     paths:
-      - build_release/*.gz
+      - build_release/ospray*.zip
+      - build_release/ospray*.exe
 
 #TODO: add OS X release jobs
