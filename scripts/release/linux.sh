@@ -58,9 +58,13 @@ if [ -z $CC ]; then
 fi
 
 # to make sure we do not include nor link against wrong TBB
-unset CPATH
-unset LIBRARY_PATH
-unset LD_LIBRARY_PATH
+# NOTE: if we are not verifying CentOS6 defaults, we are likely using
+#       a different compiler which requires LD_LIBRARY_PATH!
+if [ -n $OSPRAY_RELEASE_NO_VERIFY ]; then
+  unset CPATH
+  unset LIBRARY_PATH
+  unset LD_LIBRARY_PATH
+fi
 
 #### Fetch dependencies (TBB+Embree) ####
 
