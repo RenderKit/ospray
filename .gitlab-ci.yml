@@ -68,6 +68,14 @@ build-osx-clang:
     - clang
     - build
 
+build-windows-msvc:
+  type: build
+  script:
+    - scripts/build_gitlab/win.sh
+  tags:
+    - msvc
+    - build
+
 ### RELEASE JOBS ###
 
 release-linux:
@@ -87,4 +95,18 @@ release-linux:
     paths:
       - build_release/*.gz
 
-#TODO: add OS X and Windows release jobs
+release-windows:
+  type: deploy
+  script:
+    - scripts/release/win.sh
+  tags:
+    - msvc
+    - release
+  only:
+    - devel
+    - master
+  artifacts:
+    paths:
+      - build_release/*.gz
+
+#TODO: add OS X release jobs

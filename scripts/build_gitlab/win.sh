@@ -20,10 +20,12 @@ rm -rf build
 mkdir build
 cd build
 
-cmake \
-  -D OSPRAY_BUILD_ISA=ALL \
-  -D OSPRAY_APPS_PARTICLEVIEWER=ON \
-  -D OSPRAY_MODULE_TACHYON=ON \
+cmake -L \
+-G "Visual Studio 12 2013 Win64" \
+-T "Intel C++ Compiler 16.0" \
+-D OSPRAY_BUILD_ISA=ALL \
+-D OSPRAY_BUILD_MIC_SUPPORT=OFF \
+-D USE_IMAGE_MAGICK=OFF \
 ..
 
-make -j`nproc`
+cmake --build . --config Release --target PACKAGE -- -m -nologo
