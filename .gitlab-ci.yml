@@ -71,7 +71,7 @@ build-osx-clang:
 build-windows-msvc:
   type: build
   script:
-    - scripts/build_gitlab/win.sh
+    - call scripts\build_gitlab\win.bat
   tags:
     - msvc
     - build
@@ -79,6 +79,20 @@ build-windows-msvc:
 ### RELEASE JOBS ###
 
 release-linux:
+  type: deploy
+  script:
+    - scripts/release/linux.sh
+  tags:
+    - gcc
+    - release
+  only:
+    - devel
+    - master
+  artifacts:
+    paths:
+      - build_release/*.gz
+
+release-linux-icc:
   type: deploy
   script:
     - module load intel
@@ -98,7 +112,7 @@ release-linux:
 release-windows:
   type: deploy
   script:
-    - scripts/release/win.sh
+    - call scripts\release\win.bat
   tags:
     - msvc
     - release
@@ -107,7 +121,7 @@ release-windows:
     - master
   artifacts:
     paths:
-      - build_release/ospray*.zip
-      - build_release/ospray*.exe
+      - build_release\ospray*.zip
+      - build_release\ospray*.exe
 
 #TODO: add OS X release jobs
