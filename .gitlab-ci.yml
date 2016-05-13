@@ -78,9 +78,12 @@ build-windows-msvc:
 
 ### RELEASE JOBS ###
 
-release-linux:
+release-linux-gcc:
   type: deploy
   script:
+    - module load gcc
+    - export CC=gcc
+    - export CXX=g++
     - scripts/release/linux.sh
   tags:
     - gcc
