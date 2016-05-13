@@ -15,7 +15,8 @@
 // ======================================================================== //
 
 #include "util.h"
-#include <ospray/common/OSPCommon.h>
+#include "common/vec.h"
+// #include <ospray/common/OSPCommon.h>
 
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
@@ -25,9 +26,10 @@
 #include <math.h>
 
 namespace ospray {
-  namespace opengl {
+  typedef ospcommon::vec2i vec2i;
+  typedef ospcommon::vec3f vec3f;
 
-    using embree::cross;
+  namespace opengl {
 
     OSPTexture2D getOSPDepthTextureFromOpenGLPerspective()
     {
@@ -120,7 +122,8 @@ namespace ospray {
         }
 
       // nearest texture filtering required for depth textures -- we don't want interpolation of depth values...
-      OSPTexture2D depthTexture = ospNewTexture2D(glDepthBufferWidth, glDepthBufferHeight, OSP_FLOAT, ospDepth, OSP_TEXTURE_FILTER_NEAREST);
+      vec2i texSize(glDepthBufferWidth, glDepthBufferHeight);
+      OSPTexture2D depthTexture = ospNewTexture2D((osp::vec2i&)texSize, OSP_TEXTURE_R32F, ospDepth, OSP_TEXTURE_FILTER_NEAREST);
 
       delete[] ospDepth;
 

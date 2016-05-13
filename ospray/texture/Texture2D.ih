@@ -16,8 +16,7 @@
 
 #pragma once
 
-#include "Texture.ih"
-#include "ospray/common/default.ih"
+#include "ospray/OSPTexture.h"
 #include "ospray/math/vec.ih"
 
 struct Texture2D;

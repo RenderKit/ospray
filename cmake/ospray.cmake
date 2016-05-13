@@ -30,22 +30,50 @@ MARK_AS_ADVANCED(OSPRAY_PIXELS_PER_JOB)
 # unhide compiler to make it easier for users to see what they are using
 MARK_AS_ADVANCED(CLEAR CMAKE_CXX_COMPILER)
 
+## Macro for printing CMake variables ##
+MACRO(PRINT var)
+  MESSAGE("${var} = ${${var}}")
+ENDMACRO()
+
+## Macro to print a warning message that only appears once ##
+MACRO(OSPRAY_WARN_ONCE identifier message)
+  SET(INTERNAL_WARNING "OSPRAY_WARNED_${identifier}")
+  IF(NOT ${INTERNAL_WARNING})
+    MESSAGE(WARNING ${message})
+    SET(${INTERNAL_WARNING} ON CACHE INTERNAL "Warned about '${message}'")
+  ENDIF()
+ENDMACRO()
+
+## Macro check for compiler support of ISA ##
+MACRO(OSPRAY_CHECK_COMPILER_SUPPORT ISA)
+  IF (OSPRAY_EMBREE_ENABLE_${ISA} AND NOT OSPRAY_COMPILER_SUPPORTS_${ISA})
+    OSPRAY_WARN_ONCE(MISSING_${ISA} "Need at least version ${GCC_VERSION_REQUIRED_${ISA}} of gcc for ${ISA}. Disabling ${ISA}.\nTo compile for ${ISA}, please switch to either 'ICC'-compiler, or upgrade your gcc version.")
+    SET(OSPRAY_EMBREE_ENABLE_${ISA} false)
+  ENDIF()
+ENDMACRO()
+
+
 # Configure the output directories. To allow IMPI to do its magic we
 # will put *executables* into the (same) build directory, but tag
 # mic-executables with ".mic". *libraries* cannot use the
 # ".mic"-suffix trick, so we'll put libraries into separate
 # directories (names 'intel64' and 'mic', respectively)
 MACRO(CONFIGURE_OSPRAY)
-  # Embree common include directories; others may be added depending on build target.
-  # this section could be sooo much cleaner if embree only used
-  # fully-qualified include names...
-  SET(EMBREE_INCLUDE_DIRECTORIES
-    ${OSPRAY_EMBREE_SOURCE_DIR}/
-    ${OSPRAY_EMBREE_SOURCE_DIR}/include
-    ${OSPRAY_EMBREE_SOURCE_DIR}/common
-    ${OSPRAY_EMBREE_SOURCE_DIR}/
-    ${OSPRAY_EMBREE_SOURCE_DIR}/kernels
-    )
+  OSPRAY_CONFIGURE_TASKING_SYSTEM()
+
+  IF("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    SET(OSPRAY_DEBUG_BUILD          ON )
+    SET(OSPRAY_RELWITHDEBINFO_BUILD OFF)
+    SET(OSPRAY_RELEASE_BUILD        OFF)
+  ELSEIF("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
+    SET(OSPRAY_DEBUG_BUILD          OFF)
+    SET(OSPRAY_RELWITHDEBINFO_BUILD ON )
+    SET(OSPRAY_RELEASE_BUILD        OFF)
+  ELSE()# Release
+    SET(OSPRAY_DEBUG_BUILD          OFF)
+    SET(OSPRAY_RELWITHDEBINFO_BUILD OFF)
+    SET(OSPRAY_RELEASE_BUILD        ON )
+  ENDIF()
 
   IF (OSPRAY_TARGET STREQUAL "mic")
     SET(OSPRAY_EXE_SUFFIX ".mic")
@@ -56,9 +84,6 @@ MACRO(CONFIGURE_OSPRAY)
     SET(__XEON__ OFF)
     INCLUDE(${PROJECT_SOURCE_DIR}/cmake/icc_xeonphi.cmake)
 
-    # additional Embree include directory
-    LIST(APPEND EMBREE_INCLUDE_DIRECTORIES ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeonphi)
-
     SET(OSPRAY_TARGET_MIC ON PARENT_SCOPE)
   ELSE()
     SET(OSPRAY_EXE_SUFFIX "")
@@ -66,20 +91,15 @@ MACRO(CONFIGURE_OSPRAY)
     SET(OSPRAY_ISPC_SUFFIX ".o")
     SET(THIS_IS_MIC OFF)
     SET(__XEON__ ON)
-    IF (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
+    IF (OSPRAY_COMPILER_ICC)
       INCLUDE(${PROJECT_SOURCE_DIR}/cmake/icc.cmake)
-    ELSEIF (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+    ELSEIF (OSPRAY_COMPILER_GCC)
       INCLUDE(${PROJECT_SOURCE_DIR}/cmake/gcc.cmake)
-    ELSEIF (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+    ELSEIF (OSPRAY_COMPILER_CLANG)
       INCLUDE(${PROJECT_SOURCE_DIR}/cmake/clang.cmake)
-    ELSEIF (${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC")
+    ELSEIF (OSPRAY_COMPILER_MSVC)
       INCLUDE(${PROJECT_SOURCE_DIR}/cmake/msvc.cmake)
-    ELSE()
-      MESSAGE(FATAL_ERROR "Unsupported compiler specified: '${CMAKE_CXX_COMPILER_ID}'")
     ENDIF()
-
-    # additional Embree include directory
-    LIST(APPEND EMBREE_INCLUDE_DIRECTORIES ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon)
 
     SET(OSPRAY_EMBREE_ENABLE_AVX512 false)
     IF (OSPRAY_BUILD_ISA STREQUAL "ALL")
@@ -150,49 +170,27 @@ MACRO(CONFIGURE_OSPRAY)
 
   ENDIF()
 
-  IF (OSPRAY_EMBREE_ENABLE_AVX AND NOT OSPRAY_COMPILER_SUPPORTS_AVX)
-    IF (NOT OSPRAY_WARNED_MISSING_AVX)
-      MESSAGE("Warning: Need at least version ${GCC_VERSION_REQUIRED_AVX} of gcc for AVX. Disabling AVX.\nTo compile for AVX, please switch to either 'ICC'-compiler, or upgrade your gcc version.")
-      SET(OSPRAY_WARNED_MISSING_AVX ON CACHE INTERNAL "Warned about missing AVX support.")
-    ENDIF()
-    SET(OSPRAY_EMBREE_ENABLE_AVX false)
-  ENDIF()
-
-  IF (OSPRAY_EMBREE_ENABLE_AVX2 AND NOT OSPRAY_COMPILER_SUPPORTS_AVX2)
-    IF (NOT OSPRAY_WARNED_MISSING_AVX2)
-      MESSAGE("Warning: Need at least version ${GCC_VERSION_REQUIRED_AVX2} of gcc for AVX2. Disabling AVX2.\nTo compile for AVX2, please switch to either 'ICC'-compiler, or upgrade your gcc version.")
-      SET(OSPRAY_WARNED_MISSING_AVX2 ON CACHE INTERNAL "Warned about missing AVX2 support.")
-    ENDIF()
-    SET(OSPRAY_EMBREE_ENABLE_AVX2 false)
-  ENDIF()
-
-  IF (OSPRAY_EMBREE_ENABLE_AVX512 AND NOT OSPRAY_COMPILER_SUPPORTS_AVX512)
-    IF (NOT OSPRAY_WARNED_MISSING_AVX2)
-      MESSAGE("Warning: Need at least version ${GCC_VERSION_REQUIRED_AVX512} of gcc for AVX512. Disabling AVX512.\nTo compile for AVX512, please switch to either 'ICC'-compiler, or upgrade your gcc version.")
-      SET(OSPRAY_WARNED_MISSING_AVX512 ON CACHE INTERNAL "Warned about missing AVX512 support.")
-    ENDIF()
-    SET(OSPRAY_EMBREE_ENABLE_AVX512 false)
-  ENDIF()
+  OSPRAY_CHECK_COMPILER_SUPPORT(AVX)
+  OSPRAY_CHECK_COMPILER_SUPPORT(AVX2)
+  OSPRAY_CHECK_COMPILER_SUPPORT(AVX512)
 
   IF (THIS_IS_MIC)
-    # whether to build in MIC/xeon phi support
-    SET(OSPRAY_BUILD_COI_DEVICE OFF CACHE BOOL "Build COI Device for OSPRay's MIC support?")
+    OPTION(OSPRAY_BUILD_COI_DEVICE "Build COI Device for OSPRay's MIC support?" ON)
   ENDIF()
 
   INCLUDE(${PROJECT_SOURCE_DIR}/cmake/ispc.cmake)
 
   INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
-  INCLUDE_DIRECTORIES(${EMBREE_INCLUDE_DIRECTORIES})
+  INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
   INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR})
-  INCLUDE_DIRECTORIES_ISPC(${EMBREE_INCLUDE_DIRECTORIES})
+  INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR}/ospray/include)
 
   # for auto-generated cmakeconfig etc
   INCLUDE_DIRECTORIES(${PROJECT_BINARY_DIR})
   INCLUDE_DIRECTORIES_ISPC(${PROJECT_BINARY_DIR})
 
 ENDMACRO()
-
 
 ## Target creation macros ##
 
@@ -285,4 +283,149 @@ MACRO(OSPRAY_SET_LIBRARY_VERSION _name)
   SET(name ${_name}${OSPRAY_LIB_SUFFIX})
   SET_TARGET_PROPERTIES(${name}
     PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
+ENDMACRO()
+
+## Compiler configuration macro ##
+
+MACRO(OSPRAY_CONFIGURE_COMPILER)
+  # enable ability for users to force a compiler using the pre-0.8.3 method
+  SET(OSPRAY_COMPILER "" CACHE STRING "Force compiler: GCC, ICC, CLANG")
+  SET_PROPERTY(CACHE OSPRAY_COMPILER PROPERTY STRINGS GCC ICC CLANG)
+  MARK_AS_ADVANCED(OSPRAY_COMPILER)
+
+  IF(NOT ":${OSPRAY_COMPILER}" STREQUAL ":")
+    STRING(TOUPPER ${OSPRAY_COMPILER} OSPRAY_COMPILER)
+    IF(${OSPRAY_COMPILER} STREQUAL "GCC")
+      FIND_PROGRAM(GCC_EXECUTABLE gcc DOC "Path to the gcc executable.")
+      FIND_PROGRAM(G++_EXECUTABLE g++ DOC "Path to the g++ executable.")
+      SET(CMAKE_C_COMPILER ${GCC_EXECUTABLE} CACHE STRING "C Compiler" FORCE)
+      SET(CMAKE_CXX_COMPILER ${G++_EXECUTABLE} CACHE STRING "CXX Compiler" FORCE)
+      SET(CMAKE_C_COMPILER "gcc")
+      SET(CMAKE_CXX_COMPILER "g++")
+      SET(CMAKE_CXX_COMPILER_ID "GNU")
+    ELSEIF(${OSPRAY_COMPILER} STREQUAL "ICC")
+      FIND_PROGRAM(ICC_EXECUTABLE icc DOC "Path to the icc executable.")
+      FIND_PROGRAM(ICPC_EXECUTABLE icpc DOC "Path to the icpc executable.")
+      SET(CMAKE_C_COMPILER ${ICC_EXECUTABLE} CACHE STRING "CXX Compiler" FORCE)
+      SET(CMAKE_CXX_COMPILER ${ICPC_EXECUTABLE} CACHE STRING "CXX Compiler" FORCE)
+      SET(CMAKE_CXX_COMPILER_ID "Intel")
+    ELSEIF(${OSPRAY_COMPILER} STREQUAL "CLANG")
+      FIND_PROGRAM(CLANG_EXECUTABLE clang DOC "Path to the clang executable.")
+      FIND_PROGRAM(CLANG_EXECUTABLE clang++ DOC "Path to the clang++ executable.")
+      SET(CMAKE_C_COMPILER ${CLANG_EXECUTABLE} CACHE STRING "C Compiler" FORCE)
+      SET(CMAKE_CXX_COMPILER ${CLANG_EXECUTABLE} CACHE STRING "CXX Compiler" FORCE)
+      SET(CMAKE_CXX_COMPILER_ID "Clang")
+    ENDIF()
+  ENDIF()
+
+  IF (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
+    SET(OSPRAY_COMPILER_ICC   ON )
+    SET(OSPRAY_COMPILER_GCC   OFF)
+    SET(OSPRAY_COMPILER_CLANG OFF)
+    SET(OSPRAY_COMPILER_MSVC  OFF)
+  ELSEIF (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+    SET(OSPRAY_COMPILER_ICC   OFF)
+    SET(OSPRAY_COMPILER_GCC   ON )
+    SET(OSPRAY_COMPILER_CLANG OFF)
+    SET(OSPRAY_COMPILER_MSVC  OFF)
+  ELSEIF (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+    SET(OSPRAY_COMPILER_ICC   OFF)
+    SET(OSPRAY_COMPILER_GCC   OFF)
+    SET(OSPRAY_COMPILER_CLANG ON )
+    SET(OSPRAY_COMPILER_MSVC  OFF)
+  ELSEIF (${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC")
+    SET(OSPRAY_COMPILER_ICC   OFF)
+    SET(OSPRAY_COMPILER_GCC   OFF)
+    SET(OSPRAY_COMPILER_CLANG OFF)
+    SET(OSPRAY_COMPILER_MSVC  ON )
+  ELSE()
+    MESSAGE(FATAL_ERROR
+            "Unsupported compiler specified: '${CMAKE_CXX_COMPILER_ID}'")
+  ENDIF()
+ENDMACRO()
+
+## Tasking system configuration macro ##
+
+MACRO(OSPRAY_CONFIGURE_TASKING_SYSTEM)
+  # -------------------------------------------------------
+  # Setup tasking system build configuration
+  # -------------------------------------------------------
+
+  # NOTE(jda) - Notice that this implies that OSPRAY_CONFIGURE_COMPILER() has
+  #             been called before this macro!
+  IF(OSPRAY_COMPILER_ICC)
+    SET(CILK_STRING "Cilk")
+  ENDIF()
+
+  # NOTE(jda) - Always default to TBB, at least until Cilk is *exactly* the same
+  #             as TBB...
+  #IF(${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
+  #  SET(TASKING_DEFAULT ${CILK_STRING})
+  #ELSE()
+    SET(TASKING_DEFAULT TBB)
+  #ENDIF()
+
+  SET(OSPRAY_TASKING_SYSTEM ${TASKING_DEFAULT} CACHE STRING
+      "Per-node thread tasking system [TBB,OpenMP,Cilk,Internal,Debug]")
+
+  SET_PROPERTY(CACHE OSPRAY_TASKING_SYSTEM PROPERTY
+               STRINGS TBB ${CILK_STRING} OpenMP Internal Debug)
+  MARK_AS_ADVANCED(OSPRAY_TASKING_SYSTEM)
+
+  # NOTE(jda) - Make the OSPRAY_TASKING_SYSTEM build option case-insensitive
+  STRING(TOUPPER ${OSPRAY_TASKING_SYSTEM} OSPRAY_TASKING_SYSTEM_ID)
+
+  SET(OSPRAY_TASKING_TBB      FALSE)
+  SET(OSPRAY_TASKING_CILK     FALSE)
+  SET(OSPRAY_TASKING_OPENMP   FALSE)
+  SET(OSPRAY_TASKING_INTERNAL FALSE)
+  SET(OSPRAY_TASKING_DEBUG    FALSE)
+
+  IF(${OSPRAY_TASKING_SYSTEM_ID} STREQUAL "TBB")
+    SET(OSPRAY_TASKING_TBB TRUE)
+  ELSEIF(${OSPRAY_TASKING_SYSTEM_ID} STREQUAL "CILK")
+    SET(OSPRAY_TASKING_CILK TRUE)
+  ELSEIF(${OSPRAY_TASKING_SYSTEM_ID} STREQUAL "OPENMP")
+    SET(OSPRAY_TASKING_OPENMP TRUE)
+  ELSEIF(${OSPRAY_TASKING_SYSTEM_ID} STREQUAL "INTERNAL")
+    SET(OSPRAY_TASKING_INTERNAL TRUE)
+  ELSE()
+    SET(OSPRAY_TASKING_DEBUG TRUE)
+  ENDIF()
+
+  UNSET(TASKING_SYSTEM_LIBS)
+  UNSET(TASKING_SYSTEM_LIBS_MIC)
+
+  IF(OSPRAY_TASKING_TBB)
+    FIND_PACKAGE(TBB REQUIRED)
+    ADD_DEFINITIONS(-DOSPRAY_TASKING_TBB)
+    INCLUDE_DIRECTORIES(${TBB_INCLUDE_DIRS})
+    SET(TASKING_SYSTEM_LIBS ${TBB_LIBRARIES})
+    SET(TASKING_SYSTEM_LIBS_MIC ${TBB_LIBRARIES_MIC})
+  ELSE(OSPRAY_TASKING_TBB)
+    UNSET(TBB_INCLUDE_DIR          CACHE)
+    UNSET(TBB_LIBRARY              CACHE)
+    UNSET(TBB_LIBRARY_DEBUG        CACHE)
+    UNSET(TBB_LIBRARY_MALLOC       CACHE)
+    UNSET(TBB_LIBRARY_MALLOC_DEBUG CACHE)
+    UNSET(TBB_INCLUDE_DIR_MIC      CACHE)
+    UNSET(TBB_LIBRARY_MIC          CACHE)
+    UNSET(TBB_LIBRARY_MALLOC_MIC   CACHE)
+    IF(OSPRAY_TASKING_OPENMP)
+      FIND_PACKAGE(OpenMP)
+      IF (OPENMP_FOUND)
+        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+        SET(CMAKE_EXE_LINKER_FLAGS
+            "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+        ADD_DEFINITIONS(-DOSPRAY_TASKING_OMP)
+      ENDIF()
+    ELSEIF(OSPRAY_TASKING_CILK)
+      ADD_DEFINITIONS(-DOSPRAY_TASKING_CILK)
+    ELSEIF(OSPRAY_TASKING_INTERNAL)
+      ADD_DEFINITIONS(-DOSPRAY_TASKING_INTERNAL)
+    ELSE()#Debug
+      # Do nothing, will fall back to scalar code (useful for debugging)
+    ENDIF()
+  ENDIF(OSPRAY_TASKING_TBB)
 ENDMACRO()

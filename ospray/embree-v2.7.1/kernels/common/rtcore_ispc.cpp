@@ -90,7 +90,8 @@ namespace embree
   extern "C" RTCScene ispcNewScene (RTCSceneFlags flags, RTCAlgorithmFlags aflags) 
   {
     if (!isCoherent(flags) && !isIncoherent(flags)) flags = RTCSceneFlags(flags | RTC_SCENE_COHERENT);
-    return rtcNewScene(flags,aflags);
+    throw std::runtime_error("ispcNewScene is no longer working in ospray - do not use any more");
+    // return rtcNewScene(flags,aflags);
   }
  
   extern "C" RTCScene ispcNewScene2 (RTCDevice device, RTCSceneFlags flags, RTCAlgorithmFlags aflags) 

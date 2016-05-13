@@ -198,6 +198,8 @@ namespace ospray {
         ospCommit(camera);
 
         renderer = ospNewRenderer(renderType);
+        ospSet1i(renderer, "aoSamples", 1);
+        ospSet1i(renderer, "shadowsEnabled", 1);
 
         Assert2(renderer,"could not create renderer");
         ospSetObject(renderer,"model",model);
@@ -205,9 +207,9 @@ namespace ospray {
         ospSet1i(renderer,"do_shadows",doShadows);
         ospCommit(renderer);
 
-      };
+      }
 
-      virtual void keypress(char key, const vec2f where)
+      void keypress(char key, const vec2i &where) override
       {
         switch (key) {
         case 'X':
@@ -279,7 +281,7 @@ namespace ospray {
         Glut3DWidget::reshape(_newSize);
         if (fb) ospFreeFrameBuffer(fb);
         const auto &newSize = reinterpret_cast<const osp::vec2i&>(_newSize);
-        fb = ospNewFrameBuffer(newSize,OSP_RGBA_I8,OSP_FB_COLOR|OSP_FB_ACCUM);
+        fb = ospNewFrameBuffer(newSize, OSP_FB_SRGBA, OSP_FB_COLOR|OSP_FB_ACCUM);
         ospSetf(camera,"aspect",viewPort.aspect);
         ospCommit(camera);
       }

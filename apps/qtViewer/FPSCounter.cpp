@@ -28,12 +28,12 @@ namespace ospray {
       
     void FPSCounter::startRender() 
     { 
-      frameStartTime = ospray::getSysTime(); 
+      frameStartTime = ospcommon::getSysTime(); 
     }
 
     void FPSCounter::doneRender() 
     { 
-      double seconds = ospray::getSysTime() - frameStartTime; 
+      double seconds = ospcommon::getSysTime() - frameStartTime; 
       fps = 1./seconds;
       smooth_nom = smooth_nom * 0.8 + seconds;
       smooth_den = smooth_den * 0.8 + 1.;

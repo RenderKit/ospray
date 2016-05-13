@@ -32,9 +32,6 @@
 #include <fcntl.h>
 // xml
 #include "apps/common/xml/XML.h"
-#include "ospray/common/Library.h"
-// embree stuff
-#include "common/sys/library.h"
 
 namespace ospray {
   namespace sg {
@@ -104,7 +101,7 @@ namespace ospray {
         return true;
       }
       if (node->name == "int") {
-        target->addParam(new ParamT<int32>(name,atoi(node->content.c_str())));
+        target->addParam(new ParamT<int32_t>(name,atoi(node->content.c_str())));
         return true;
       }
       if (node->name == "float") {

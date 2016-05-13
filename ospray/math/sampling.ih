@@ -25,9 +25,6 @@
 #include "ospray/math/vec.ih"
 
 
-inline float cos2sin(const float f) { return sqrt(max(0.f, 1.f - f * f)); }
-inline float sin2cos(const float f) { return cos2sin(f); }
-
 inline vec3f cartesian(const float phi, const float sinTheta, const float cosTheta)
 {
   float sinPhi, cosPhi;
@@ -80,7 +77,7 @@ inline float powerCosineSampleHemispherePDF(const float cosTheta, const float n)
   return (n + 1.0f) * (0.5f / M_PI) * pow(cosTheta, n);
 }
 
-inline float powerCosineSampleHemispherePDF(const vec3f dir, const float n) // TODO: order of arguments
+inline float powerCosineSampleHemispherePDF(const vec3f& dir, const float n) // TODO: order of arguments
 {
   return (n + 1.0f) * (0.5f / M_PI) * pow(dir.z, n);
 }
@@ -120,7 +117,12 @@ inline vec3f uniformSampleDisk(const float radius, const vec2f &s)
 
 inline float uniformSampleDiskPDF(const float radius)
 {
-  return rcp(M_PI * radius * radius);
+  return rcp(M_PI * sqr(radius));
+}
+
+inline uniform float uniformSampleDiskPDF(const uniform float radius)
+{
+  return rcp(M_PI * sqr(radius));
 }
 
 

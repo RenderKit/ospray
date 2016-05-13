@@ -18,12 +18,12 @@
 
 // sg
 #include "sg/common/Node.h"
-// embree
-#include "common/sys/filename.h"
+// ospcommon
+#include "common/FileName.h"
 
 namespace ospray {
   namespace sg {
-    using embree::FileName;
+    using ospcommon::FileName;
 
     /*! \brief C++ wrapper for a 2D Texture */
     struct Texture2D : public Node {
@@ -34,7 +34,7 @@ namespace ospray {
       /*! \detailed if file does not exist, or cannot be loaded for
           some reason, return NULL. Multiple loads from the same file
           will return the *same* texture object */
-      static Ref<Texture2D> load(const FileName &fileName);
+      static Ref<Texture2D> load(const FileName &fileName, const bool prefereLinear = false);
       virtual void render(RenderContext &ctx);
 
       //! texture size, in pixels
@@ -42,7 +42,7 @@ namespace ospray {
       //! pixel data, in whatever format specified in 'texelType'
       void       *texel;
       //! format of each texel
-      OSPDataType texelType;
+      OSPTextureFormat texelType;
       
       OSPTexture2D ospTexture;
     };

@@ -103,7 +103,7 @@ namespace ospray {
     </dl>
 
    */
-  struct ManagedObject : public embree::RefCount
+  struct ManagedObject : public RefCount
   {
     /*! \brief constructor */
     ManagedObject();
@@ -247,6 +247,17 @@ namespace ospray {
     //! \brief un-register a listener
     /*! \detailed this object will no longer get update notifications from us  */
     void unregisterListener(ManagedObject *noLongerListening);
+
+
+    //! Print an error message.
+    void emitMessage(const std::string &kind, const std::string &message) const;
+
+    //! Error checking.
+    void exitOnCondition(bool condition, const std::string &message) const;
+
+    //! Warning condition.
+    void warnOnCondition(bool condition, const std::string &message) const;
+
 
     // -------------------------------------------------------
     // member variables 

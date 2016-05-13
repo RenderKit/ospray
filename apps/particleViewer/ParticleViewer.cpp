@@ -21,12 +21,12 @@
 #include "apps/common/widgets/glut3D.h"
 // ospray, for rendering
 #include "ospray/ospray.h"
-#include "common/parallel_for.h"
+#include "common/tasking/parallel_for.h"
 // particle viewer
 #include "Model.h"
 #include "uintah.h"
-// embree
-#include "sys/filename.h"
+// ospcommon
+#include "common/FileName.h"
 
 namespace ospray {
   namespace particle {
@@ -86,14 +86,12 @@ namespace ospray {
         ospCommit(renderer);
       };
 
-      virtual void reshape(const ospray::vec2i &_newSize)
+      virtual void reshape(const ospcommon::vec2i &_newSize)
       {
         Glut3DWidget::reshape(_newSize);
         if (fb) ospFreeFrameBuffer(fb);
         const auto &newSize = reinterpret_cast<const osp::vec2i&>(_newSize);
-        fb = ospNewFrameBuffer(newSize,OSP_RGBA_I8,OSP_FB_COLOR|OSP_FB_ACCUM);
-        ospSet1f(fb, "gamma", 2.2f);
-        ospCommit(fb);
+        fb = ospNewFrameBuffer(newSize, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
         ospFrameBufferClear(fb,OSP_FB_ACCUM);
         accumID = 0;
         ospSetf(camera,"aspect",viewPort.aspect);
@@ -102,7 +100,7 @@ namespace ospray {
         setTitle("OSPRay Particle Viewer");
       }
 
-      virtual void keypress(char key, const vec2f where)
+      virtual void keypress(char key, const vec2i &where)
       {
         switch(key) {
         case 'Q': exit(0);
@@ -169,7 +167,7 @@ namespace ospray {
         if (accumID < maxAccum)
           forceRedraw();
 
-        ucharFB = (uint32 *) ospMapFrameBuffer(fb);
+        ucharFB = (uint32_t *) ospMapFrameBuffer(fb);
         frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
         Glut3DWidget::display();
 
@@ -226,17 +224,17 @@ namespace ospray {
 
     struct DeferredLoadJob {
       DeferredLoadJob(particle::Model *model,
-                      const embree::FileName &xyzFileName,
-                      const embree::FileName &defFileName)
+                      const FileName &xyzFileName,
+                      const FileName &defFileName)
         : model(model), xyzFileName(xyzFileName), defFileName(defFileName)
       {}
 
       //! the mode we still have to load
       particle::Model *model;
       //! file name of xyz file to be loaded into this model
-      embree::FileName xyzFileName;
+      FileName xyzFileName;
       //! name of atom type defintion file active when this xyz file was added
-      embree::FileName defFileName;
+      FileName defFileName;
     };
 
     void ospParticleViewerMain(int &ac, const char **&av)
@@ -245,7 +243,7 @@ namespace ospray {
 
       cout << "ospParticleViewer: starting to process cmdline arguments" << endl;
       std::vector<DeferredLoadJob *> deferredLoadingListXYZ;
-      embree::FileName defFileName = "";
+      FileName defFileName = "";
 
       for (int i=1;i<ac;i++) {
         const std::string arg = av[i];
@@ -272,7 +270,7 @@ namespace ospray {
         } else if (av[i][0] == '-') {
           error("unkown commandline argument '"+arg+"'");
         } else {
-          embree::FileName fn = arg;
+          FileName fn = arg;
           if (fn.str() == "___CUBE_TEST___") {
             int numPerSide = atoi(av[++i]);
             particle::Model *m = createTestCube(numPerSide);
@@ -280,7 +278,7 @@ namespace ospray {
           } else if (fn.ext() == "xyz") {
             particle::Model *m = new particle::Model;
             //            m->loadXYZ(fn);
-            // std::pair<particle::Model *, embree::FileName> loadJob(m,fn.str());
+            // std::pair<particle::Model *, FileName> loadJob(m,fn.str());
             deferredLoadingListXYZ.push_back(new DeferredLoadJob(m,fn,defFileName));
             particleModel.push_back(m);
           } else if (fn.ext() == "xyz2") {
@@ -299,8 +297,8 @@ namespace ospray {
         error("no input file specified");
 
       parallel_for(deferredLoadingListXYZ.size(), [&](int i){
-        embree::FileName defFileName = deferredLoadingListXYZ[i]->defFileName;
-        embree::FileName xyzFileName = deferredLoadingListXYZ[i]->xyzFileName;
+        FileName defFileName = deferredLoadingListXYZ[i]->defFileName;
+        FileName xyzFileName = deferredLoadingListXYZ[i]->xyzFileName;
         particle::Model *model = deferredLoadingListXYZ[i]->model;
 
         if (defFileName.str() != "")

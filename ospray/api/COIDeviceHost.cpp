@@ -358,14 +358,11 @@ namespace ospray {
       OSPLight newLight(OSPRenderer _renderer, const char *type) override;
 
       /*! create a new Texture2D object */
-      OSPTexture2D newTexture2D(int width,
-                                int height,
-                                OSPDataType type,
-                                void *data,
-                                int flags) override;
+      OSPTexture2D newTexture2D(const vec2i &size, const OSPTextureFormat,
+                                void *data, const uint32 flags) override;
       
       /*! call a renderer to render a frame buffer */
-      void renderFrame(OSPFrameBuffer _sc,
+      float renderFrame(OSPFrameBuffer _sc,
                        OSPRenderer _renderer,
                        const uint32 fbChannelFlags) override;
 
@@ -743,7 +740,7 @@ namespace ospray {
     }
 
     /*! call a renderer to render a frame buffer */
-    void COIDevice::renderFrame(OSPFrameBuffer _sc, 
+    float COIDevice::renderFrame(OSPFrameBuffer _sc, 
                                 OSPRenderer _renderer, 
                                 const uint32 fbChannelFlags)
     {
@@ -751,8 +748,10 @@ namespace ospray {
       args.write((ObjectHandle&)_sc);
       args.write((ObjectHandle&)_renderer);
       args.write((uint32&)fbChannelFlags);
-      callFunction(OSPCOI_RENDER_FRAME,args,nullptr,false);
+      float retValue = 1.0f;
+      callFunction(OSPCOI_RENDER_FRAME,args, &retValue, sizeof(retValue));
       callFunction(OSPCOI_RENDER_FRAME_SYNC,args,nullptr,true);
+      return retValue;
     }
 
 
@@ -886,26 +885,23 @@ namespace ospray {
     }
 
     /*! create a new texture2D */
-    OSPTexture2D COIDevice::newTexture2D(int width,
-                                         int height,
-                                         OSPDataType type,
-                                         void *data,
-                                         int flags)
+    OSPTexture2D COIDevice::newTexture2D(const vec2i &sz,
+        const OSPTextureFormat type, void *data, const uint32 flags)
     {
       COIRESULT result;
       DataStream args;
       ObjectHandle ID = ObjectHandle::alloc();
 
-      if (width * height == 0) {
+      if (sz.x * sz.y == 0) {
         throw std::runtime_error("cowardly refusing to create empty texture...");
       }
 
       args.write(ID);
-      args.write((int32)width);
-      args.write((int32)height);
+      args.write((int32)sz.x);
+      args.write((int32)sz.y);
       args.write((int32)type);
       args.write((int32)flags);
-      int64 numBytes = sizeOf(type)*width*height;
+      int64 numBytes = sizeOf(type) * sz.x * sz.y;
       for (auto &engine : engines) {
         COIBUFFER coiBuffer;
         // PRINT(nitems);
@@ -1025,7 +1021,7 @@ namespace ospray {
       args.write((uint32)mode);
       args.write(channels);
 
-      Assert(mode == OSP_RGBA_I8);
+      Assert(mode == OSP_FB_RGBA8);
       COIFrameBuffer *fb = new COIFrameBuffer;
       fbList[handle] = fb;
       fb->hostMem = new int32[size.x*size.y];

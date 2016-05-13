@@ -17,9 +17,11 @@
 #include "ModelViewer.h"
 #include "widgets/affineSpaceManipulator/HelperGeometry.h"
 #include "FPSCounter.h"
-
+// sg
 #include "sg/SceneGraph.h"
 #include "sg/Renderer.h"
+// std
+#include <sstream>
 
 namespace ospray {
   namespace viewer {
@@ -191,9 +193,18 @@ namespace ospray {
           // add combo box and stacked widget entries
           pageComboBox->addItem(tr(name.c_str()));
 
+          TransferFunction *xf = xferFuncs[i].ptr;
+          assert(xf);
           // create a transfer function editor for this transfer function node
           QOSPTransferFunctionEditor *xfEd
-            = new QOSPTransferFunctionEditor(xferFuncs[i]);
+            = new QOSPTransferFunctionEditor(xf);
+          const std::vector<std::pair<float,float> > &alpha = xf->getAlphaArray();
+          if (!alpha.empty()) {
+            std::vector<ospcommon::vec2f> points;
+            for (int i=0;i<alpha.size();i++)
+              points.push_back(vec2f(alpha[i].first,alpha[i].second));
+            xfEd->setOpacityPoints(points);
+          }
           stackedWidget->addWidget(xfEd);
           connect(xfEd, SIGNAL(transferFunctionChanged()),
                   this, SLOT(render()));
@@ -388,8 +399,8 @@ namespace ospray {
 
       createTimeSlider();
       createEditorWidgetStack();
-      createLightManipulator();
       createTransferFunctionEditor();
+      createLightManipulator();
 
       if (fullscreen) {
         setWindowState(windowState() | Qt::WindowFullScreen);

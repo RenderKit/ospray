@@ -18,9 +18,9 @@
 
 #include "ospray/common/OSPCommon.ih"
 
-////////////////////////////////////////////////////////////////////////////////
-/// Constants
-////////////////////////////////////////////////////////////////////////////////
+// ------------------------------------------------------------------
+// Constants
+// ------------------------------------------------------------------
 
 #define inf     floatbits(0x7F800000)
 #define pos_inf floatbits(0x7F800000)
@@ -34,6 +34,7 @@
 #define one_over_pi      0.31830988618379069122f
 #define one_over_two_pi  0.15915494309189534561f
 #define one_over_four_pi 0.079577471545947672804f
+#define one_over_two_pi_sqr 0.050660591821168885722f
 
 /*! c-style reciprocal. required since ispc 1.7 due to type changes in this version */
 inline float rcpf(const float f) { return rcp(f); }
@@ -46,9 +47,9 @@ inline float sqrtf(const float f) { return sqrt(f); }
 inline uniform float sqrtf(const uniform float f) { return sqrt(f); }
 
 /*! c-style reciprocal square root.  */
-inline float rsqrtf(const float f) { return rcpf(sqrtf(f)); }
+inline float rsqrtf(const float f) { return rsqrt(f); }
 /*! c-style reciprocal square root */
-inline uniform float rsqrtf(const uniform float f) { return rcpf(sqrtf(f)); }
+inline uniform float rsqrtf(const uniform float f) { return rsqrt(f); }
 
 /*! square.  */
 inline float sqr(const float f) { return f*f; }
@@ -116,6 +117,9 @@ inline varying float deg2rad (const varying float x)  { return x * 1.74532925199
 
 inline uniform float rad2deg (const uniform float x)  { return x * 5.72957795130823208768e1f; }
 inline varying float rad2deg (const varying float x)  { return x * 5.72957795130823208768e1f; }
+
+inline float cos2sin(const float f) { return sqrt(max(0.f, 1.f - sqr(f))); }
+inline float sin2cos(const float f) { return cos2sin(f); }
 
 inline uniform float nextafter(const uniform float a, const uniform float b)
 {

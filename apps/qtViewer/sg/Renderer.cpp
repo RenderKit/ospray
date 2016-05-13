@@ -54,6 +54,7 @@ namespace ospray {
                      integrator->getOSPHandle(),
                      OSP_FB_COLOR|OSP_FB_ACCUM);
       accumID++;
+      
       return 0;
     }
 
@@ -70,7 +71,7 @@ namespace ospray {
         accumID = 0;
         // cout << "resetting accum" << endl;
         if (frameBuffer)
-        frameBuffer->clearAccum(); 
+        frameBuffer->clear(); 
       }
     }
 

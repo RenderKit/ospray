@@ -18,9 +18,9 @@
 # unsets all public (designed to be used externally) variables and reports
 # error message at priority depending upon [REQUIRED/QUIET/<NONE>] argument.
 macro(OSPRAY_REPORT_NOT_FOUND REASON_MSG)
-  UNSET(OSPRAY_FOUND)
-  UNSET(OSPRAY_INCLUDE_DIRS)
-  UNSET(OSPRAY_LIBRARIES)
+  unset(OSPRAY_FOUND)
+  unset(OSPRAY_INCLUDE_DIRS)
+  unset(OSPRAY_LIBRARIES)
 
   # Reset the CMake module path to its state when this script was called.
   set(CMAKE_MODULE_PATH ${CALLERS_CMAKE_MODULE_PATH})
@@ -66,7 +66,7 @@ if(WIN32)
     )
 else(WIN32)
   get_filename_component(CURRENT_ROOT_INSTALL_DIR
-    ${CURRENT_CONFIG_INSTALL_DIR}/../../ ABSOLUTE
+    ${CURRENT_CONFIG_INSTALL_DIR}/../../../ ABSOLUTE
     )
 endif(WIN32)
 
@@ -96,9 +96,19 @@ endif(NOT EXISTS ${OSPRAY_INCLUDE_DIR}/ospray/version.h)
 set(OSPRAY_INCLUDE_DIRS
   ${OSPRAY_INCLUDE_DIR}
   ${OSPRAY_INCLUDE_DIR}/ospray
-  ${OSPRAY_INCLUDE_DIR}/ospray/embree-v2.7.1
-  ${OSPRAY_INCLUDE_DIR}/ospray/embree-v2.7.1/common
 )
+
+
+###############################################################################
+# ospray build configuration
+
+
+SET(OSPRAY_COMPILER_ICC   @OSPRAY_COMPILER_ICC@  )
+SET(OSPRAY_COMPILER_GCC   @OSPRAY_COMPILER_GCC@  )
+SET(OSPRAY_COMPILER_CLANG @OSPRAY_COMPILER_CLANG@)
+SET(OSPRAY_COMPILER_MSVC  @OSPRAY_COMPILER_MSVC@ )
+
+SET(OSPRAY_USE_EXTERNAL_EMBREE @OSPRAY_USE_EXTERNAL_EMBREE@)
 
 
 ###############################################################################
@@ -113,7 +123,7 @@ set(OSPRAY_CURRENT_ROOT_INSTALL_DIR   ${CURRENT_ROOT_INSTALL_DIR})
 #             any ospray dependencies. A list of libs should be constructed
 #             and added to the OSPRAY_LIBRARIES variable below.
 
-if (@USE_TBB@)
+if (OSPRAY_TASKING_TBB)
   # Find tbb
   find_package(TBB)
   if(":${TBB_LIBRARY}" STREQUAL ":")
@@ -123,8 +133,23 @@ if (@USE_TBB@)
     message(STATUS "Found required OSPRay dependency: TBB in ${TBB_INCLUDE_DIRS}")
   endif()
 
-  add_definitions(-DOSPRAY_USE_TBB)
+  add_definitions(-DOSPRAY_TASKING_TBB)
   list(APPEND OSPRAY_DEPENDENCIES ${TBB_LIBRARIES})
+endif()
+
+if (OSPRAY_TASKING_CILK)
+  add_definitions(-DOSPRAY_TASKING_CILK)
+endif()
+
+if(OSPRAY_USE_EXTERNAL_EMBREE)
+  # Find existing Embree on the machine
+  find_package(embree @REQUIRED_MINIMUM_EMBREE@ REQUIRED)
+else()
+  if (APPLE)
+    set(EMBREE_LIBRARY ${CURRENT_ROOT_INSTALL_DIR}/@CMAKE_INSTALL_LIBDIR@/${CMAKE_SHARED_LIBRARY_PREFIX}embree.2${CMAKE_SHARED_LIBRARY_SUFFIX})
+  else()
+    set(EMBREE_LIBRARY ${CURRENT_ROOT_INSTALL_DIR}/@CMAKE_INSTALL_LIBDIR@/${CMAKE_SHARED_LIBRARY_PREFIX}embree${CMAKE_SHARED_LIBRARY_SUFFIX}.2)
+  endif()
 endif()
 
 # Restore state
@@ -170,8 +195,9 @@ set(OSPRAY_LIBRARIES
   ${OSPRAY_DEPENDENCIES}
   #ospray# NOTE(jda) - target disabled (see above)
   #ospray_embree# NOTE(jda) - target disabled (see above)
-  ${CMAKE_CURRENT_LIST_DIR}/../../lib/${CMAKE_SHARED_LIBRARY_PREFIX}embree${CMAKE_SHARED_LIBRARY_SUFFIX}
-  ${CMAKE_CURRENT_LIST_DIR}/../../lib/${CMAKE_SHARED_LIBRARY_PREFIX}ospray${CMAKE_SHARED_LIBRARY_SUFFIX}
+  ${EMBREE_LIBRARY}
+  ${CURRENT_ROOT_INSTALL_DIR}/@CMAKE_INSTALL_LIBDIR@/${CMAKE_SHARED_LIBRARY_PREFIX}ospray${CMAKE_SHARED_LIBRARY_SUFFIX}
+  ${CURRENT_ROOT_INSTALL_DIR}/@CMAKE_INSTALL_LIBDIR@/${CMAKE_SHARED_LIBRARY_PREFIX}ospray_common${CMAKE_SHARED_LIBRARY_SUFFIX}
 )
 
 # Reset CMake module path to its state when this script was called.

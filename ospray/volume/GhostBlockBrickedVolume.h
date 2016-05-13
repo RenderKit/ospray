@@ -27,7 +27,6 @@ namespace ospray {
   class GhostBlockBrickedVolume : public StructuredVolume {
   public:
 
-    //! Destructor.
     ~GhostBlockBrickedVolume();
 
     //! A string description of this class.

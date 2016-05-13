@@ -38,6 +38,7 @@ inline float eval(const GGXDistribution& self,
   return alpha2 * rcp(pi*sqr(tmp));
 }
 
+// TODO: remove dup, or return pdf
 inline float eval(const GGXDistribution& self,
                   float cosTheta, float& pdf)
 {

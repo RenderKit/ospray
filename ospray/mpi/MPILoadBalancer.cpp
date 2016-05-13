@@ -19,7 +19,7 @@
 #include "ospray/render/Renderer.h"
 #include "ospray/fb/LocalFB.h"
 #include "ospray/mpi/DistributedFrameBuffer.h"
-#include "ospray/common/parallel_for.h"
+#include "ospray/common/tasking/parallel_for.h"
 
 #include <algorithm>
 
@@ -35,12 +35,13 @@ namespace ospray {
 
     namespace staticLoadBalancer {
 
-      void Master::renderFrame(Renderer *tiledRenderer,
-                               FrameBuffer *fb,
-                               const uint32 channelFlags)
+      float Master::renderFrame(Renderer *tiledRenderer,
+                                FrameBuffer *fb,
+                                const uint32 channelFlags)
       {
         async_beginFrame();
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
+        assert(dfb);
 
         dfb->startNewFrame();
         /* the client will do its magic here, and the distributed
@@ -49,6 +50,8 @@ namespace ospray {
         dfb->waitUntilFinished();
 
         async_endFrame();
+
+        return dfb->endFrame(0.f);
       }
 
       std::string Master::toString() const
@@ -56,9 +59,9 @@ namespace ospray {
         return "ospray::mpi::staticLoadBalancer::Master";
       }
 
-      void Slave::renderFrame(Renderer *tiledRenderer,
-                              FrameBuffer *fb,
-                              const uint32 channelFlags)
+      float Slave::renderFrame(Renderer *tiledRenderer,
+                               FrameBuffer *fb,
+                               const uint32 channelFlags)
       {
         async_beginFrame();
 
@@ -75,32 +78,19 @@ namespace ospray {
           const size_t tileID = taskIndex;
           if ((tileID % worker.size) != worker.rank) return;
 
-#if TILE_SIZE>128
-          Tile *tilePtr = new Tile;
-          Tile &tile = *tilePtr;
-#else
-          Tile __aligned(64) tile;
-#endif
           const size_t tile_y = tileID / numTiles_x;
           const size_t tile_x = tileID - tile_y*numTiles_x;
-          tile.region.lower.x = tile_x * TILE_SIZE;
-          tile.region.lower.y = tile_y * TILE_SIZE;
-          tile.region.upper.x = std::min(tile.region.lower.x + TILE_SIZE,
-                                         fb->size.x);
-          tile.region.upper.y = std::min(tile.region.lower.y + TILE_SIZE,
-                                         fb->size.y);
-          tile.fbSize = fb->size;
-          tile.rcp_fbSize = rcp(vec2f(fb->size));
-          tile.generation = 0;
-          tile.children = 0;
+          const vec2i tileId(tile_x, tile_y);
+          const int32 accumID = fb->accumID(tileID);
 
-          const int spp = tiledRenderer->spp;
-          const int blocks = (fb->accumID > 0 || spp > 0) ? 1 :
-                             std::min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
-          const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/
-                                  RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
+#if TILE_SIZE>128
+          Tile *tilePtr = new Tile(tileId, fb->size, accumID);
+          Tile &tile = *tilePtr;
+#else
+          Tile __aligned(64) tile(tileId, fb->size, accumID);
+#endif
 
-          parallel_for(numJobs, [&](int taskIndex){
+          parallel_for(numJobs(tiledRenderer->spp, accumID), [&](int taskIndex){
             tiledRenderer->renderTile(perFrameData, tile, taskIndex);
           });
 
@@ -114,6 +104,8 @@ namespace ospray {
         tiledRenderer->endFrame(perFrameData,channelFlags);
 
         async_endFrame();
+
+        return dfb->endFrame(0.f);
       }
 
       std::string Slave::toString() const

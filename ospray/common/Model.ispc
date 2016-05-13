@@ -31,18 +31,22 @@ export void *uniform Model_create(void *uniform cppE)
   return (void *uniform)model;
 }
 
-export void Model_init(void *uniform _model, uniform int32 numGeometries, uniform int32 numVolumes)
+export void Model_init(void *uniform _model, 
+                       void *uniform embreeDevice,
+                       uniform int32 numGeometries, 
+                       uniform int32 numVolumes)
 {
   uniform Model *uniform model = (uniform Model *uniform)_model;
   if (model->embreeSceneHandle)
     rtcDeleteScene(model->embreeSceneHandle);
 
-  model->embreeSceneHandle = rtcNewScene(//RTC_SCENE_STATIC|RTC_SCENE_HIGH_QUALITY,
-                                         RTC_SCENE_STATIC,//|RTC_SCENE_COMPACT,
-                                         //RTC_SCENE_DYNAMIC,
-                                         //RTC_SCENE_DYNAMIC|RTC_SCENE_COMPACT,
-                                         RTC_INTERSECT_UNIFORM|RTC_INTERSECT_VARYING);
-
+  model->embreeSceneHandle = rtcDeviceNewScene((RTCDevice)embreeDevice,
+                                               //RTC_SCENE_STATIC|RTC_SCENE_HIGH_QUALITY,
+                                               RTC_SCENE_STATIC,//|RTC_SCENE_COMPACT,
+                                               //RTC_SCENE_DYNAMIC,
+                                               //RTC_SCENE_DYNAMIC|RTC_SCENE_COMPACT,
+                                               RTC_INTERSECT_UNIFORM|RTC_INTERSECT_VARYING);
+  
   if (model->geometry) delete[] model->geometry;
   model->geometryCount = numGeometries;
   if (numGeometries > 0)

@@ -70,6 +70,7 @@ namespace ospray {
     ptr  = object;
     type = OSP_OBJECT;
   }
+
   void ManagedObject::Param::set(const char *str)
   {
     Assert2(this,"trying to set null parameter");
@@ -77,6 +78,7 @@ namespace ospray {
     this->s  = strdup(str);
     type     = OSP_STRING;
   }
+
   void ManagedObject::Param::set(void *ptr)
   {
     Assert2(this,"trying to set null parameter");
@@ -84,6 +86,7 @@ namespace ospray {
     (void*&)this->ptr = ptr;
     type     = OSP_VOID_PTR;
   }
+
   void ManagedObject::Param::clear()
   {
     Assert2(this,"trying to clear null parameter");
@@ -94,6 +97,7 @@ namespace ospray {
     type = OSP_OBJECT;
     ptr = NULL;
   }
+
   ManagedObject::Param::Param(const char *name)  
     : name(NULL), type(OSP_FLOAT), ptr(NULL) 
   {
@@ -159,5 +163,31 @@ namespace ospray {
       object->dependencyGotChanged(this);
     }
   }
+
+  void ManagedObject::emitMessage(const std::string &kind,
+                           const std::string &message) const
+  {
+    std::cerr << "  " + toString()
+              << "  " + kind + ": " + message + "." << std::endl;
+  }
+
+  void ManagedObject::exitOnCondition(bool condition,
+                               const std::string &message) const
+  {
+    if (!condition)
+      return;
+    emitMessage("ERROR", message);
+    exit(1);
+  }
+
+  void ManagedObject::warnOnCondition(bool condition,
+                               const std::string &message) const
+  {
+    if (!condition)
+      return;
+
+    emitMessage("WARNING", message);
+  }
+
 
 } // ::ospray

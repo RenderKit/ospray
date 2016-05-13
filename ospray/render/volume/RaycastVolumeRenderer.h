@@ -34,18 +34,18 @@ namespace ospray {
     ~RaycastVolumeRenderer();
 
     //! Create a material of the given type.
-    Material* createMaterial(const char *type);
+    Material* createMaterial(const char *type) override;
 
     //! Initialize the renderer state, and create the equivalent ISPC volume
     //! renderer object.
-    void commit();
+    void commit() override;
 
     //! A string description of this class.
-    std::string toString() const;
+    std::string toString() const override;
 
 #if EXP_DATA_PARALLEL
     /*! per-frame data to describe the data-parallel components */
-    void renderFrame(FrameBuffer *fb, const uint32 channelFlags);
+    float renderFrame(FrameBuffer *fb, const uint32 channelFlags) override;
 #endif
 
   private:

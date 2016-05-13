@@ -18,16 +18,13 @@
 
 // ospray::sg
 #include "../common/World.h"
-// embree
-#include "common/sys/filename.h"
+#include "common/FileName.h"
 
 /*! \file sg/module/Importer.h Defines the interface for writing
     file importers for the ospray::sg */
 
 namespace ospray {
   namespace sg {
-
-    using embree::FileName;
 
     struct ImportState {
       Ref<sg::World> world;

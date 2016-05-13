@@ -16,18 +16,20 @@
 
 #pragma once
 
-// ospray
+// scene graph
+#include "sg/SceneGraph.h"
+// ospray, PUBLIC
 #include <ospray/ospray.h>
 // stl
 #include <string>
 #include <vector>
 // qt
 #include <QtGui>
-// scene graph
-#include "sg/SceneGraph.h"
+// ospcommon
 
 namespace ospray {
   namespace viewer {
+    using namespace ospcommon;
 
     /*! the editor widget to edit a transfer function's alpha
         values. This will show the current color map as a background
@@ -43,15 +45,15 @@ namespace ospray {
 
       /*! set background image for a given color map */
       void setColorMapImage(const QImage &image);
-
+      const std::vector<ospcommon::vec2f> &getPoints() const;
+      void setPoints(const std::vector<ospcommon::vec2f> &points);
     signals:
 
       void transferFunctionChanged();
-
     public:
 
-      // get y value based on linear interpolation of the points values for x in [0, 1]
-      float getInterpolatedValue(float x);
+      // // get y value based on linear interpolation of the points values for x in [0, 1]
+      // float getInterpolatedValue(float x);
 
     protected:
 
@@ -63,10 +65,10 @@ namespace ospray {
       //! @}
 
       // transform normalized coordinates to widget coordinates
-      QPointF pointToWidgetPoint(const ospray::vec2f &point);
+      QPointF pointToWidgetPoint(const ospcommon::vec2f &point);
 
       // transform widget coordinates to normalized coordinates
-      ospray::vec2f widgetPointToPoint(const QPointF &widgetPoint);
+      ospcommon::vec2f widgetPointToPoint(const QPointF &widgetPoint);
 
       // get the index of the selected point based on the clicked point in widget coordinates
       // returns -1 if no selected point
@@ -77,7 +79,7 @@ namespace ospray {
 
       //! the points that define the transfer function, in normalize
       //! coordinates ([0,0], [1,1])
-      std::vector<ospray::vec2f> points;
+      std::vector<ospcommon::vec2f> points;
 
       //! currently selected point
       int selectedPointIndex;
@@ -101,7 +103,7 @@ namespace ospray {
       public:
 
         //! construct a new color map from given colors
-        ColorMap(const std::string &name, const std::vector<ospray::vec3f> &colors);
+        ColorMap(const std::string &name, const std::vector<ospcommon::vec3f> &colors);
 
         //! return the name of this color map
         inline std::string getName() const { return name; };
@@ -112,12 +114,12 @@ namespace ospray {
 
         //! query function that returns the current color map (to be
         //! used in a scene graph node, for example
-        std::vector<ospray::vec3f> getColors() const { return colors; };
+        std::vector<ospcommon::vec3f> getColors() const { return colors; };
 
       protected:
 
         const std::string name;
-        const std::vector<ospray::vec3f> colors;
+        const std::vector<ospcommon::vec3f> colors;
       };
 
     public:
@@ -126,6 +128,8 @@ namespace ospray {
 
       // add a new color map to the list of selectable color maps
       void addColorMap(const ColorMap *colorMap);
+      void setOpacityPoints(const std::vector<ospcommon::vec2f> &points) 
+      { transferFunctionAlphaEditor->setPoints(points); }
 
     signals:
       void transferFunctionChanged();

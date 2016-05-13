@@ -44,9 +44,9 @@ namespace ospray {
       // setParam( "Ka", vec3f(0.f) );
     }
 
-    Texture2D *loadTexture(const std::string &path, const std::string &fileNameBase)
+    Texture2D *loadTexture(const std::string &path, const std::string &fileNameBase, const bool prefereLinear)
     {
-      const embree::FileName fileName = path+"/"+fileNameBase;
+      const FileName fileName = path+"/"+fileNameBase;
 
       static std::map<std::string,Texture2D*> textureCache;
       if (textureCache.find(fileName.str()) != textureCache.end()) 
@@ -111,6 +111,7 @@ namespace ospray {
           tex->height   = height;
           tex->channels = 3;
           tex->depth    = 1;
+          tex->prefereLinear = prefereLinear;
           tex->data     = new unsigned char[width*height*3];
           fread(tex->data,width*height*3,1,file);
           // flip in y, because OSPRay's textures have the origin at the lower left corner
@@ -129,6 +130,7 @@ namespace ospray {
         tex->height   = image.rows();
         tex->channels = image.matte() ? 4 : 3;
         tex->depth    = 4;
+        tex->prefereLinear = prefereLinear;
         float rcpMaxRGB = 1.0f/float(MaxRGB);
         const Magick::PixelPacket* pixels = image.getConstPixels(0,0,tex->width,tex->height);
         if (!pixels) {
@@ -201,7 +203,7 @@ namespace ospray {
       return defaultVal;
     }
 
-    int32 Material::getParam(const char *name, int32 defaultVal) 
+    int32_t Material::getParam(const char *name, int32_t defaultVal) 
     {
       ParamMap::iterator it = params.find(name);
       if (it != params.end()) {
@@ -246,7 +248,7 @@ namespace ospray {
     }
 
 
-    uint32 Material::getParam(const char *name, uint32 defaultVal) 
+    uint32_t Material::getParam(const char *name, uint32_t defaultVal) 
     {
       ParamMap::iterator it = params.find(name);
       if (it != params.end()) {
@@ -338,7 +340,7 @@ namespace ospray {
     box3f Model::getBBox() 
     {
       // this does not yet properly support instancing with transforms!
-      box3f bBox = embree::empty;
+      box3f bBox = ospcommon::empty;
       if (!instance.empty()) {
         std::vector<box3f> meshBounds;
         for (int i=0;i<mesh.size();i++)

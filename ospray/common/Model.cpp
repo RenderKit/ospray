@@ -30,6 +30,8 @@ namespace ospray {
   using std::cout;
   using std::endl;
 
+  extern RTCDevice g_embreeDevice;
+
   Model::Model()
   {
     managedObjectType = OSP_MODEL;
@@ -44,10 +46,10 @@ namespace ospray {
            << geometry.size() << " geometries and " << volume.size() << " volumes" << std::endl << std::flush;
     }
 
-    ispc::Model_init(getIE(), geometry.size(), volume.size());
+    ispc::Model_init(getIE(), g_embreeDevice, geometry.size(), volume.size());
     embreeSceneHandle = (RTCScene)ispc::Model_getEmbreeSceneHandle(getIE());
 
-    bounds = embree::empty;
+    bounds = empty;
 
     // for now, only implement triangular geometry...
     for (size_t i=0; i < geometry.size(); i++) {

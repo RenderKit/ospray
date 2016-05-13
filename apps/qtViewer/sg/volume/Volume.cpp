@@ -30,6 +30,13 @@ namespace ospray {
     /*! \brief returns a std::string with the c++ name of this class */
     std::string Volume::toString() const
     { return "ospray::sg::Volume"; }
+
+    void Volume::serialize(sg::Serialization::State &state)
+    {
+      Node::serialize(state);
+      if (transferFunction) 
+        transferFunction->serialize(state);
+    }
     
     // =======================================================
     // structured volume class
@@ -193,9 +200,9 @@ namespace ospray {
           }
           delete[] slice;
         } else {
-          uint8 *slice = new uint8[nPerSlice];
+          uint8_t *slice = new uint8_t[nPerSlice];
           for (int z=0;z<dimensions.z;z++) {
-            size_t nRead = fread(slice,sizeof(uint8),nPerSlice,file);
+            size_t nRead = fread(slice,sizeof(uint8_t),nPerSlice,file);
             if (nRead != nPerSlice)
               throw std::runtime_error("StructuredVolume::render(): read incomplete slice data ... partial file or wrong format!?");
             const vec3i region_lo(0,0,z), region_sz(dimensions.x,dimensions.y,1);
@@ -235,7 +242,7 @@ namespace ospray {
 
     //! constructor
     StackedRawSlices::StackedRawSlices()
-      : dimensions(-1), baseName(""), voxelType("uint8"), volume(NULL)
+      : dimensions(-1), baseName(""), voxelType("uint8_t"), volume(NULL)
     {}
 
     /*! \brief returns a std::string with the c++ name of this class */
@@ -254,8 +261,8 @@ namespace ospray {
       baseName = node->getProp("baseName");
       firstSliceID = node->getPropl("firstSliceID");
       numSlices = node->getPropl("numSlices");
-      if (voxelType != "uint8") 
-        throw std::runtime_error("unknown StackedRawSlices.voxelType (currently only supporting 'uint8')");
+      if (voxelType != "uint8_t") 
+        throw std::runtime_error("unknown StackedRawSlices.voxelType (currently only supporting 'uint8_t')");
           
       if (!transferFunction) 
         setTransferFunction(new TransferFunction);
@@ -280,7 +287,7 @@ namespace ospray {
       ospSetString(volume,"voxelType",voxelType.c_str());
       ospSetVec3i(volume,"dimensions",(const osp::vec3i&)dimensions);
       size_t nPerSlice = dimensions.x*dimensions.y;
-      uint8 *slice = new uint8[nPerSlice];
+      uint8_t *slice = new uint8_t[nPerSlice];
       for (int sliceID=0;sliceID<numSlices;sliceID++) {
         char sliceName[strlen(baseName.c_str())+20];
         sprintf(sliceName,baseName.c_str(),firstSliceID+sliceID);

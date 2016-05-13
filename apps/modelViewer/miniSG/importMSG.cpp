@@ -23,7 +23,7 @@ namespace ospray {
     using std::endl;
 
     void importMSG(Model &model,
-                   const embree::FileName &fileName)
+                   const ospcommon::FileName &fileName)
     {
       error("importMSG: not implemented yet");
     }

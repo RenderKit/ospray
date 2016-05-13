@@ -51,7 +51,9 @@ namespace ospray {
     sphereData        = getParamData("spheres");
     materialList      = getParamData("materialList");
     colorData         = getParamData("color");
-    
+    colorOffset       = getParam1i("color_offset",0);
+    colorStride       = getParam1i("color_stride",4*sizeof(float));
+
     if (sphereData.ptr == NULL) {
       throw std::runtime_error("#ospray:geometry/spheres: no 'spheres' data "
                                "specified");
@@ -88,7 +90,8 @@ namespace ospray {
 
     ispc::SpheresGeometry_set(getIE(),model->getIE(),
                               sphereData->data,_materialList,
-                              colorData?(ispc::vec4f*)colorData->data:NULL,
+                              colorData?(unsigned char*)colorData->data:NULL,
+                              colorOffset, colorStride,
                               numSpheres,bytesPerSphere,
                               radius,materialID,
                               offset_center,offset_radius,

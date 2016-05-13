@@ -185,7 +185,6 @@ namespace ospray {
         cout << "=======================================================" << endl;
       }
       int rc;
-      MPI_Status status;
 
       app.comm = world.comm; 
       app.makeIntraComm();
@@ -250,7 +249,6 @@ namespace ospray {
                                                      const char *launchCommand)
     {
       int rc;
-      MPI_Status status;
 
       ospray::init(ac,&av);
       mpi::init(ac,av);
@@ -332,10 +330,8 @@ namespace ospray {
       : currentApiMode(OSPD_MODE_MASTERED)
     {
       char *logLevelFromEnv = getenv("OSPRAY_LOG_LEVEL");
-      if (logLevelFromEnv) 
+      if (logLevelFromEnv && logLevel == 0)
         logLevel = atoi(logLevelFromEnv);
-      else
-        logLevel = 0;
 
       ospray::init(_ac,&_av);
 
@@ -384,7 +380,6 @@ namespace ospray {
                                           OSPFrameBufferChannel channel)
     {
       int rc; 
-      MPI_Status status;
 
       ObjectHandle handle = (const ObjectHandle &)_fb;
       FrameBuffer *fb = (FrameBuffer *)handle.lookup();
@@ -423,7 +418,7 @@ namespace ospray {
       Assert(_object);
       cmd.newCommand(CMD_COMMIT);
       const ObjectHandle handle = (const ObjectHandle&)_object;
-      cmd.send((const ObjectHandle&)_object);
+      cmd.send(handle);
       cmd.flush();
 
       MPI_Barrier(MPI_COMM_WORLD);
@@ -500,7 +495,6 @@ namespace ospray {
       size_t size = typeSize * size_t(count.x) * size_t(count.y) * size_t(count.z);
       if (size > 1000000000LL)
         throw std::runtime_error("setregion does not currently work for region sizes >= 2GB");
-      // OSPData data = newData(size, type, (void *)source, OSP_DATA_SHARED_BUFFER);
 
       cmd.newCommand(CMD_SET_REGION);
       cmd.send((const ObjectHandle &)_volume);
@@ -512,7 +506,10 @@ namespace ospray {
 
       int numFails = 0;
       MPI_Status status;
-      int rc = MPI_Recv(&numFails,1,MPI_INT,0,MPI_ANY_TAG,mpi::worker.comm,&status);
+      int rc = MPI_Recv(&numFails,1,MPI_INT,
+                        0,MPI_ANY_TAG,mpi::worker.comm,&status);
+
+      Assert(rc == MPI_SUCCESS);
 
       return (numFails == 0);
     }
@@ -942,7 +939,8 @@ namespace ospray {
 
       int numFails = 0;
       MPI_Status status;
-      int rc = MPI_Recv(&numFails,1,MPI_INT,0,MPI_ANY_TAG,mpi::worker.comm,&status);
+      int rc = MPI_Recv(&numFails,1,MPI_INT,
+                        0,MPI_ANY_TAG,mpi::worker.comm,&status);
       if (numFails == 0)
         return (OSPMaterial)(int64)handle;
       else {
@@ -985,7 +983,8 @@ namespace ospray {
       // int MPI_Allreduce(void* , void*, int, MPI_Datatype, MPI_Op, MPI_Comm);
       int numFails = 0;
       MPI_Status status;
-      int rc = MPI_Recv(&numFails,1,MPI_INT,0,MPI_ANY_TAG,mpi::worker.comm,&status);
+      int rc = MPI_Recv(&numFails,1,MPI_INT,
+                        0,MPI_ANY_TAG,mpi::worker.comm,&status);
       if (numFails==0)
         return (OSPLight)(int64)handle;
       else {
@@ -1035,7 +1034,7 @@ namespace ospray {
 
 
     /*! call a renderer to render a frame buffer */
-    void MPIDevice::renderFrame(OSPFrameBuffer _fb, 
+    float MPIDevice::renderFrame(OSPFrameBuffer _fb, 
                                 OSPRenderer _renderer, 
                                 const uint32 fbChannelFlags)
     {
@@ -1054,7 +1053,7 @@ namespace ospray {
       cmd.send((int32)fbChannelFlags);
       cmd.flush();
 
-      TiledLoadBalancer::instance->renderFrame(NULL,fb,fbChannelFlags);
+      return TiledLoadBalancer::instance->renderFrame(NULL,fb,fbChannelFlags);
     }
 
     //! release (i.e., reduce refcount of) given object
@@ -1085,18 +1084,17 @@ namespace ospray {
     }
 
     /*! create a new Texture2D object */
-    OSPTexture2D MPIDevice::newTexture2D(int width, int height, 
-                                         OSPDataType type, void *data, int flags)
+    OSPTexture2D MPIDevice::newTexture2D(const vec2i &sz,
+        const OSPTextureFormat type, void *data, const uint32 flags)
     {
       ObjectHandle handle = ObjectHandle::alloc();
       cmd.newCommand(CMD_NEW_TEXTURE2D);
       cmd.send(handle);
-      cmd.send((int32)width);
-      cmd.send((int32)height);
+      cmd.send(sz);
       cmd.send((int32)type);
       cmd.send((int32)flags);
       assert(data);
-      size_t size = ospray::sizeOf(type)*width*height;
+      size_t size = ospray::sizeOf(type) * sz.x * sz.y;
       cmd.send(size);
 
       cmd.send(data,size);
@@ -1105,7 +1103,7 @@ namespace ospray {
     }
 
     /*! return a string represenging the given API Mode */
-    const char *apiModeName(OSPDApiMode mode) 
+    const char *apiModeName(int mode)
     {
       switch (mode) {
       case OSPD_MODE_INDEPENDENT:
@@ -1118,7 +1116,6 @@ namespace ospray {
         PRINT(mode);
         NOTIMPLEMENTED;
       };
-      
     }
 
     /*! switch API mode for distriubted API extensions */

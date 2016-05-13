@@ -18,7 +18,7 @@
 
 #include "MPICommon.h"
 #include "ospray/api/Device.h"
-#include "ospray/device/command.h"
+#include "ospray/mpi/command.h"
 #include "CommandStream.h"
 #include "ospray/common/Managed.h"
 
@@ -219,7 +219,7 @@ namespace ospray {
       OSPVolume newVolume(const char *type) override;
 
       /*! call a renderer to render a frame buffer */
-      void renderFrame(OSPFrameBuffer _sc,
+      float renderFrame(OSPFrameBuffer _sc,
                                OSPRenderer _renderer, 
                                const uint32 fbChannelFlags) override;
 
@@ -242,8 +242,8 @@ namespace ospray {
       void setMaterial(OSPGeometry _geom, OSPMaterial _mat) override;
 
       /*! create a new Texture2D object */
-      OSPTexture2D newTexture2D(int width, int height, OSPDataType type,
-                                void *data, int flags) override;
+      OSPTexture2D newTexture2D(const vec2i &size, const OSPTextureFormat,
+                                void *data, const uint32 flags) override;
 
       /*! switch API mode for distriubted API extensions */
       void apiMode(OSPDApiMode mode) override;
@@ -263,7 +263,7 @@ namespace ospray {
     // ==================================================================
 
     /*! return a string represenging the given API Mode */
-    const char *apiModeName(OSPDApiMode mode);
+    const char *apiModeName(int mode);
 
   } // ::ospray::mpi
 } // ::ospray

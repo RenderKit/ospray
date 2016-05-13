@@ -36,5 +36,12 @@ namespace ospray {
       namedNodes[name] = node; 
     }
 
+    void Node::setFromXML(const xml::Node *const node, 
+                          const unsigned char *binBasePtr)
+    { 
+      throw std::runtime_error(toString()+":setFromXML() not implemented for XML node type "
+                               +node->name); 
+    };
+
   }
 }

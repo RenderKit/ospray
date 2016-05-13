@@ -24,33 +24,6 @@
 
 namespace ospray {
 
-  /*! helper function to convert float-color into rgba-uint format */
-  inline uint32 cvt_uint32(const float f)
-  {
-    return (int32)(255.9f * std::max(std::min(f,1.f),0.f));
-  }
-
-  /*! helper function to convert float-color into rgba-uint format */
-  inline uint32 cvt_uint32(const vec4f &v)
-  {
-    return 
-      (cvt_uint32(v.x) << 0)  |
-      (cvt_uint32(v.y) << 8)  |
-      (cvt_uint32(v.z) << 16) |
-      (cvt_uint32(v.w) << 24);
-  }
-
-  /*! helper function to convert float-color into rgba-uint format */
-  inline uint32 cvt_uint32(const vec3f &v)
-  {
-    return 
-      (cvt_uint32(v.x) << 0)  |
-      (cvt_uint32(v.y) << 8)  |
-      (cvt_uint32(v.z) << 16);
-  }
-
-
-
   /*! abstract frame buffer class */
   struct FrameBuffer : public ManagedObject {
     /*! app-mappable format of the color buffer. make sure that this
@@ -61,9 +34,8 @@ namespace ospray {
     FrameBuffer(const vec2i &size,
                 ColorBufferFormat colorBufferFormat,
                 bool hasDepthBuffer,
-                bool hasAccumBuffer);
-
-    virtual void commit();
+                bool hasAccumBuffer,
+                bool hasVarianceBuffer = false);
 
     virtual const void *mapDepthBuffer() = 0;
     virtual const void *mapColorBuffer() = 0;
@@ -80,24 +52,25 @@ namespace ospray {
     { return "ospray::FrameBuffer"; }
 
     /*! indicates whether the app requested this frame buffer to have
-        an accumulation buffer */
-    bool hasAccumBuffer;
-    /*! indicates whether the app requested this frame buffer to have
         an (application-mappable) depth buffer */
     bool hasDepthBuffer;
+    /*! indicates whether the app requested this frame buffer to have
+        an accumulation buffer */
+    bool hasAccumBuffer;
+    bool hasVarianceBuffer;
 
     /*! buffer format of the color buffer */
     ColorBufferFormat colorBufferFormat;
 
-    /*! tracks how many times we have already accumulated into this
-        frame buffer. A value of '<0' means that accumulation is
-        disabled (in which case the renderer may not access the
-        accumulation buffer); in all other cases this value indicates
-        how many frames have already been accumulated in this frame
-        buffer. Note that it is up to the application to properly
-        reset the accumulationID (using ospClearAccum(fb)) if anything
+    /*! how often has been accumulated into that tile
+        Note that it is up to the application to properly
+        reset the accumulationIDs (using ospClearAccum(fb)) if anything
         changes that requires clearing the accumulation buffer. */
-    int32 accumID;
+    virtual int32 accumID(const vec2i &tile) = 0;
+    virtual float tileError(const vec2i &tile) = 0;
+
+    //! returns error of frame
+    virtual float endFrame(const float errorThreshold) = 0;
 
     Ref<PixelOp::Instance> pixelOp;
   };
@@ -107,6 +80,7 @@ namespace ospray {
   void writePPM(const std::string &fileName, const vec2i &size, uint32 *pixels);
 
   //! helper function to write a (float) image as (flipped) PFM file
-  void writePFM(const std::string &fileName, const vec2i &size, const int channel, const float *pixels);
+  void writePFM(const std::string &fileName, const vec2i &size,
+                const int channel, const float *pixels);
   
 } // ::ospray

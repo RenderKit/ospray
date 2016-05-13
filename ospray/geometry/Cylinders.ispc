@@ -45,15 +45,13 @@ struct Cylinders {
 
 typedef uniform float uniform_float;
 
-void Cylinders_bounds(uniform Cylinders *uniform geometry,
-                      uniform size_t primID,
-                      uniform box3fa &bbox)
+unmasked void Cylinders_bounds(uniform Cylinders *uniform geometry,
+    uniform size_t primID,
+    uniform box3fa &bbox)
 {
   uniform uint8 *uniform cylinderPtr = geometry->data + geometry->bytesPerCylinder*primID;
-  uniform float radius = geometry->radius;
-  if (geometry->offset_radius >= 0) {
-    radius = *((uniform float *)(cylinderPtr+geometry->offset_radius));
-  }
+  uniform bool offr = geometry->offset_radius >= 0;
+  uniform float radius = offr ? *((uniform float *)(cylinderPtr+geometry->offset_radius)) : geometry->radius;
   uniform vec3f v0 = *((uniform vec3f*)(cylinderPtr+geometry->offset_v0));
   uniform vec3f v1 = *((uniform vec3f*)(cylinderPtr+geometry->offset_v1));
   bbox = make_box3fa(min(v0,v1)-make_vec3f(radius),
@@ -122,7 +120,7 @@ void Cylinders_intersect(uniform Cylinders *uniform geometry,
     // we need hit in object space, in postIntersect it is in world-space
     const vec3f P = ray.t*ray.dir - A;
     const vec3f V = cross(P,AB);
-    ray.Ng = normalize(cross(AB,V));
+    ray.Ng = cross(AB,V);
   }
 }
 
@@ -155,7 +153,7 @@ static void Cylinders_postIntersect(uniform Geometry *uniform geometry,
   }
 }
 
-export void *uniform Cylinders_create(void           *uniform cppEquivalent)
+export void *uniform Cylinders_create(void *uniform cppEquivalent)
 {
   uniform Cylinders *uniform geom = uniform new uniform Cylinders;
   Geometry_Constructor(&geom->geometry,cppEquivalent,

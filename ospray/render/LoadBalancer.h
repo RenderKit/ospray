@@ -24,7 +24,7 @@
 #include "ospray/render/Renderer.h"
 
 // tbb
-#ifdef OSPRAY_USE_TBB
+#ifdef OSPRAY_TASKING_TBB
 # include <tbb/task_scheduler_init.h>
 #endif
 
@@ -36,9 +36,16 @@ namespace ospray {
   {
     static TiledLoadBalancer *instance;
     virtual std::string toString() const = 0;
-    virtual void renderFrame(Renderer *tiledRenderer,
+    virtual float renderFrame(Renderer *tiledRenderer,
                              FrameBuffer *fb,
                              const uint32 channelFlags) = 0;
+
+    static size_t numJobs(const int spp, int accumID)
+    {
+      const int blocks = (accumID > 0 || spp > 0) ? 1 :
+        std::min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
+      return divRoundUp((TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB, blocks);
+    }
   };
 
   //! tiled load balancer for local rendering on the given machine
@@ -50,13 +57,13 @@ namespace ospray {
   {
     LocalTiledLoadBalancer();
 
-    void renderFrame(Renderer *renderer,
+    float renderFrame(Renderer *renderer,
                      FrameBuffer *fb,
                      const uint32 channelFlags) override;
 
     std::string toString() const override;
 
-#ifdef OSPRAY_USE_TBB
+#ifdef OSPRAY_TASKING_TBB
     tbb::task_scheduler_init tbb_init;
 #endif
   };
@@ -83,7 +90,7 @@ namespace ospray {
 
     std::string toString() const override;
 
-    void renderFrame(Renderer *tiledRenderer,
+    float renderFrame(Renderer *tiledRenderer,
                      FrameBuffer *fb,
                      const uint32 channelFlags) override;
   };

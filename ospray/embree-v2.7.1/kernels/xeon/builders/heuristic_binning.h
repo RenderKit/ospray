@@ -43,7 +43,7 @@ namespace embree
           num = min(BINS,size_t(4.0f + 0.05f*pinfo.size()));
 #endif
           const vfloat4 diag = (vfloat4) pinfo.centBounds.size();
-          scale = select(diag > vfloat4(1E-34f),vfloat4(0.99f*num)/diag,vfloat4(0.0f));
+          scale = select(diag > vfloat4(1E-13f),vfloat4(0.99f*num)/diag,vfloat4(0.0f));
           ofs  = (vfloat4) pinfo.centBounds.lower;
         }
         
@@ -156,7 +156,7 @@ namespace embree
       }
       
       /*! bins an array of primitives */
-      __forceinline void bin (const PrimRef* prims, size_t N, const BinMapping<BINS>& mapping)
+      __forceinline void bin(const PrimRef* prims, size_t N, const BinMapping<BINS>& mapping)
       {
 	if (N == 0) return;
         
@@ -425,7 +425,7 @@ namespace embree
       }
 
       /*! bins an array of primitives */
-      __forceinline void bin (const PrimRef* prims, size_t N, const BinMapping<16>& mapping)
+      __forceinline void bin(const PrimRef* prims, size_t N, const BinMapping<16>& mapping)
       {
 
         const vfloat16 init_min(pos_inf);

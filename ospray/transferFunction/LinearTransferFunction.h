@@ -25,17 +25,18 @@
 
 namespace ospray {
 
-  //! \brief A concrete implementation of the TransferFunction class for
-  //!  piecewise linear transfer functions.
-  //!
-  class LinearTransferFunction : public TransferFunction {
+  /*! \brief A concrete implementation of the TransferFunction class for
+    piecewise linear transfer functions.
+  */
+  class LinearTransferFunction : public TransferFunction 
+  {
   public:
 
     //! Constructor.
     LinearTransferFunction() {}
 
     //! Destructor.
-    virtual ~LinearTransferFunction() { if (ispcEquivalent != NULL) ispc::LinearTransferFunction_destroy(ispcEquivalent); }
+    virtual ~LinearTransferFunction();
 
     //! Allocate storage and populate the transfer function.
     virtual void commit();

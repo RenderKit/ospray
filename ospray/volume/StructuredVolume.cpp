@@ -114,6 +114,10 @@ namespace ospray {
     if (!strcmp(kind, "uchar") && width == 1)
       res = OSP_UCHAR;
 
+    // Unsigned 16-bit scalar integer.
+    if (!strcmp(kind, "ushort") && width == 1)
+      res = OSP_USHORT;
+
     // Single precision scalar floating point.
     if (!strcmp(kind, "float") && width == 1)
       res = OSP_FLOAT;

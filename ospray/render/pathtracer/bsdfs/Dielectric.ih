@@ -25,41 +25,39 @@ struct Dielectric
   float eta;
 };
 
-inline vec3f Dielectric_eval(const varying BSDF* uniform super,
-                             const vec3f& wo, const vec3f& wi, float& pdf)
+inline BSDF_EvalRes Dielectric_eval(const varying BSDF* uniform super,
+                                    const vec3f& wo, const vec3f& wi)
 {
-  return make_vec3f(0.0f);
+  return make_BSDF_EvalRes_zero();
 }
 
-inline vec3f Dielectric_sample(const varying BSDF* uniform super,
-                               const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
-                               const vec2f& s, float ss)
+inline BSDF_SampleRes Dielectric_sample(const varying BSDF* uniform super,
+                                        const vec3f& wo, const vec2f& s, float ss)
 {
   const varying Dielectric* uniform self = (const varying Dielectric* uniform)super;
+  BSDF_SampleRes res;
 
   float cosThetaO = max(dot(wo, getN(super)), 0.0f);
 
   // Fresnel term
   float cosThetaT; // positive
   float F = fresnelDielectricEx(cosThetaO, cosThetaT, self->eta);
+  res.pdf = inf;
 
   // Sample the reflection or the transmission
-  if (ss <= F)
-  {
+  if (ss <= F) {
     // Reflection
-    wi = reflect(wo, getN(super), cosThetaO);
-    type = BSDF_SPECULAR_REFLECTION;
-    pdf = F;
-    return make_vec3f(1.0f);
-  }
-  else
-  {
+    res.wi = reflect(wo, getN(super), cosThetaO);
+    res.type = BSDF_SPECULAR_REFLECTION;
+    res.weight = make_vec3f(1.0f);
+  } else {
     // Transmission
-    wi = refract(wo, getN(super), cosThetaO, cosThetaT, self->eta);
-    type = BSDF_SPECULAR_TRANSMISSION;
-    pdf = 1.0f-F;
-    return make_vec3f(sqrf(rcp(self->eta))); // solid angle compression
+    res.wi = refract(wo, getN(super), cosThetaO, cosThetaT, self->eta);
+    res.type = BSDF_SPECULAR_TRANSMISSION;
+    res.weight = make_vec3f(rsqrt(self->eta)); // solid angle compression
   }
+
+  return res;
 }
 
 inline void Dielectric_Constructor(varying Dielectric* uniform self, const varying linear3f* uniform frame,

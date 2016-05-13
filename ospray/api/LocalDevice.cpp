@@ -33,6 +33,8 @@
 #include <algorithm>
 
 namespace ospray {
+  extern RTCDevice g_embreeDevice;
+
   namespace api {
 
     void embreeErrorFunc(const RTCError code, const char* str)
@@ -44,12 +46,8 @@ namespace ospray {
     LocalDevice::LocalDevice(int *_ac, const char **_av)
     {
       char *logLevelFromEnv = getenv("OSPRAY_LOG_LEVEL");
-      if (logLevelFromEnv)
+      if (logLevelFromEnv && logLevel == 0)
         logLevel = atoi(logLevelFromEnv);
-      else
-        logLevel = 0;
-
-      ospray::init(_ac,&_av);
 
       // -------------------------------------------------------
       // initialize embree. (we need to do this here rather than in
@@ -61,11 +59,11 @@ namespace ospray {
         embreeConfig << " threads=1,verbose=2";
       else if(numThreads > 0)
         embreeConfig << " threads=" << numThreads;
-      rtcInit(embreeConfig.str().c_str());
+      g_embreeDevice = rtcNewDevice(embreeConfig.str().c_str());
 
-      rtcSetErrorFunction(embreeErrorFunc); // needs to come after rtcInit
+      rtcDeviceSetErrorFunction(g_embreeDevice, embreeErrorFunc);
 
-      RTCError erc = rtcGetError();
+      RTCError erc = rtcDeviceGetError(g_embreeDevice);
       if (erc != RTC_NO_ERROR) {
         // why did the error function not get called !?
         std::cerr << "#osp:init: embree internal error number " << (int)erc << std::endl;
@@ -77,7 +75,7 @@ namespace ospray {
 
     LocalDevice::~LocalDevice()
     {
-      rtcExit();
+      rtcDeleteDevice(g_embreeDevice);
     }
 
     OSPFrameBuffer
@@ -88,9 +86,11 @@ namespace ospray {
       FrameBuffer::ColorBufferFormat colorBufferFormat = mode; //FrameBuffer::RGBA_UINT8;//FLOAT32;
       bool hasDepthBuffer = (channels & OSP_FB_DEPTH)!=0;
       bool hasAccumBuffer = (channels & OSP_FB_ACCUM)!=0;
+      bool hasVarianceBuffer = (channels & OSP_FB_VARIANCE)!=0;
 
       FrameBuffer *fb = new LocalFrameBuffer(size,colorBufferFormat,
-                                             hasDepthBuffer,hasAccumBuffer);
+                                             hasDepthBuffer,hasAccumBuffer,
+                                             hasVarianceBuffer);
       fb->refInc();
       return (OSPFrameBuffer)fb;
     }
@@ -171,7 +171,7 @@ namespace ospray {
 
     /*! remove an existing geometry from a model */
     struct GeometryLocator {
-      bool operator()(const embree::Ref<ospray::Geometry> &g) const {
+      bool operator()(const Ref<ospray::Geometry> &g) const {
         return ptr == &*g;
       }
       Geometry *ptr;
@@ -207,7 +207,7 @@ namespace ospray {
 
     /*! remove an existing volume from a model */
     struct VolumeLocator {
-      bool operator()(const embree::Ref<ospray::Volume> &g) const {
+      bool operator()(const Ref<ospray::Volume> &g) const {
         return ptr == &*g;
       }
       Volume *ptr;
@@ -613,10 +613,12 @@ namespace ospray {
     }
 
     /*! create a new Texture2D object */
-    OSPTexture2D LocalDevice::newTexture2D(int width, int height, OSPDataType type, void *data, int flags) {
-      Assert(width > 0 && "Width must be greater than 0 in LocalDevice::newTexture2D");
-      Assert(height > 0 && "Height must be greater than 0 in LocalDevice::newTexture2D");
-      Texture2D *tx = Texture2D::createTexture(width, height, type, data, flags);
+    OSPTexture2D LocalDevice::newTexture2D(const vec2i &size,
+        const OSPTextureFormat type, void *data, const uint32 flags)
+    {
+      Assert(size.x > 0 && "Width must be greater than 0 in LocalDevice::newTexture2D");
+      Assert(size.y > 0 && "Height must be greater than 0 in LocalDevice::newTexture2D");
+      Texture2D *tx = Texture2D::createTexture(size, type, data, flags);
       if(tx) tx->refInc();
       return (OSPTexture2D)tx;
     }
@@ -651,11 +653,11 @@ namespace ospray {
 
 
     /*! call a renderer to render a frame buffer */
-    void LocalDevice::renderFrame(OSPFrameBuffer _fb,
+    float LocalDevice::renderFrame(OSPFrameBuffer _fb,
                                   OSPRenderer    _renderer,
                                   const uint32 fbChannelFlags)
     {
-      FrameBuffer *fb       = (FrameBuffer *)_fb;
+      FrameBuffer *fb = (FrameBuffer *)_fb;
       // SwapChain *sc       = (SwapChain *)_sc;
       Renderer  *renderer = (Renderer *)_renderer;
       // Model *model = (Model *)_model;
@@ -666,7 +668,7 @@ namespace ospray {
 
       // FrameBuffer *fb = sc->getBackBuffer();
       try {
-        renderer->renderFrame(fb,fbChannelFlags);
+        return renderer->renderFrame(fb,fbChannelFlags);
       } catch (std::runtime_error e) {
         std::cerr << "=======================================================" << std::endl;
         std::cerr << "# >>> ospray fatal error <<< " << std::endl << e.what() << std::endl;

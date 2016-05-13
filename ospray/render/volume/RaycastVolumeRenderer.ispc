@@ -25,18 +25,6 @@
 #include "ospray/camera/Camera.ih"
 #include "ospray/common/Model.ih"
 
-#if 0//Cannot enable here b/c RENDERTILE_PIXELS_PER_JOB doesn't match C++ side?
-#ifdef RENDERTILE_PIXELS_PER_JOB
-#  undef RENDERTILE_PIXELS_PER_JOB
-#endif
-
-/*! number of pixels that each job in a parallel rendertile task
-    executes together. Must be a multipel of the maximum possible
-    programCount (16), and must be smaller than TILE_SIZE (in one
-    dimension) */
-#define RENDERTILE_PIXELS_PER_JOB 32
-#endif
-
 struct PassInfo {
   // region to integrate over in this pass
   varying region1f region;
@@ -46,37 +34,19 @@ struct PassInfo {
   uniform bool useBG;
 };
 
-void RaycastVolumeRenderer_endFrame(Renderer *uniform self,
-                                    void *uniform perFrameData,
-                                    const uniform int32 accumID)
-{
-  if (self->fb)
-    self->fb->accumID = accumID;
-
-  self->fb = NULL;
-}
-
-void *uniform RaycastVolumeRenderer_beginFrame(Renderer *uniform self,
-                                               FrameBuffer *uniform framebuffer)
-{
-  self->fb = framebuffer;
-  return NULL;
-}
-
 inline void RaycastVolumeRenderer_computeVolumeSample(RaycastVolumeRenderer *uniform self,
                                                       Volume *uniform volume,
                                                       varying Ray &ray,
                                                       varying vec4f &color)
 {
-  // if (!volume) { print("NULL VOLUME IN VOLUMESAMPLE()\n");  }
-  // if (!volume->computeSample) { print("trying to sample volume w/o sample function!!!!\n");  }
-
   // Sample the volume at the hit point in world coordinates.
   const vec3f coordinates = ray.org + ray.t0 * ray.dir;
   const float sample = volume->computeSample(volume, coordinates);
 
+  TransferFunction *uniform xf = volume->transferFunction;
+
   // Look up the color associated with the volume sample.
-  vec3f sampleColor = volume->transferFunction->getColorForValue(volume->transferFunction, sample);
+  vec3f sampleColor = xf->getColorForValue(xf, sample);
 
   // Compute gradient shading, if enabled.
   if(volume->gradientShadingEnabled) {
@@ -94,21 +64,23 @@ inline void RaycastVolumeRenderer_computeVolumeSample(RaycastVolumeRenderer *uni
     const vec2f s = make_vec2f(0.5f);
 
     for (uniform uint32 i=0; i<self->numLights; i++) {
-      const LightSample light = self->lights[i]->sample(self->lights[i], dg, s);
+      const Light_SampleRes light = self->lights[i]->sample(self->lights[i], dg, s);
       const float cosNL = (gradient.x == 0.f && gradient.y == 0.f && gradient.z == 0.f) ?
-                          1.f : abs(dot(safe_normalize(light.direction), gradient));
+                          1.f : abs(dot(safe_normalize(light.dir), gradient));
 
-      shadedColor = shadedColor + sampleColor * cosNL * light.radiance;
+      shadedColor = shadedColor + sampleColor * cosNL * light.weight;
     }
 
     sampleColor = shadedColor;
   }
 
   // Look up the opacity associated with the volume sample.
-  const float sampleOpacity = volume->transferFunction->getOpacityForValue(volume->transferFunction, sample);
+  const float sampleOpacity = xf->getOpacityForValue(xf, sample);
 
   // Set the color contribution for this sample only (do not accumulate).
-  color = clamp(sampleOpacity / volume->samplingRate) * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
+  color
+    = clamp(sampleOpacity / volume->samplingRate) 
+    * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
 
   // Advance the ray for the next sample.
   volume->intersect(volume, ray);
@@ -173,10 +145,10 @@ inline void RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *u
   const vec2f s = make_vec2f(0.5f);
 
   for (uniform uint32 i=0; i<self->numLights; i++) {
-    const LightSample light = self->lights[i]->sample(self->lights[i], dg, s);
-    const float cosNL = abs(dot(safe_normalize(light.direction), dg.Ns));
+    const Light_SampleRes light = self->lights[i]->sample(self->lights[i], dg, s);
+    const float cosNL = abs(dot(safe_normalize(light.dir), dg.Ns));
 
-    shadedColor = shadedColor + geometryColor * cosNL * light.radiance;
+    shadedColor = shadedColor + geometryColor * cosNL * light.weight;
   }
 
   // Set the color contribution for this sample only (do not accumulate).
@@ -204,18 +176,6 @@ RaycastVolumeRenderer_intersectVolumes(uniform RaycastVolumeRenderer *uniform se
     // Intersect volume bounding box.
     float t0, t1;
     Volume *uniform volume_i = passInfo.block->ispcVolume;
-#if 0
-     print("bb %\n % % %\n % % %\n",
-           volume_i,
-           volume_i->boundingBox.lower.x,
-           volume_i->boundingBox.lower.y,
-           volume_i->boundingBox.lower.z,
-           volume_i->boundingBox.upper.x,
-           volume_i->boundingBox.upper.y,
-           volume_i->boundingBox.upper.z);
-     if (eq(volume_i->boundingBox.lower,volume_i->boundingBox.upper))
-       print("EMPTY BBOX!!!!\n");
-#endif
     intersectBox(ray, volume_i->boundingBox, t0, t1);
     t0 = max(t0,passInfo.region.lower);
     t1 = min(t1,passInfo.region.upper);
@@ -230,17 +190,7 @@ RaycastVolumeRenderer_intersectVolumes(uniform RaycastVolumeRenderer *uniform se
 
     // If we intersected a volume, offset ray by a fraction of the nominal ray step.
 
-#if 0
-    if (volume) {
-      float dt = volume->samplingStep * rcpf(volume->samplingRate);
-      float t0 = ray.t0;
-      int i0 = (int)(ray.t0 / dt);
-      ray.t0 = (i0 + rayOffset)*dt;
-      if (ray.t0 < t0) ray.t0 += dt;
-    }
-#else
     if (volume) ray.t0 += rayOffset * volume->samplingStep * rcpf(volume->samplingRate);
-#endif
 
     // Return the first intersected volume.
     return volume;
@@ -464,20 +414,10 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
 
 export void *uniform RaycastVolumeRenderer_createInstance()
 {
-  // The self object.
   RaycastVolumeRenderer *uniform self = uniform new uniform RaycastVolumeRenderer;
 
-  // Constructor of the parent class.
   Renderer_Constructor(&self->super, NULL);
-
-  // Function to compute the color and opacity for a screen space sample.
   self->super.renderSample = RaycastVolumeRenderer_renderSample;
-
-  // Function to perform per-frame state initialization.
-  self->super.beginFrame = RaycastVolumeRenderer_beginFrame;
-
-  // Function to perform per-frame state completion.
-  self->super.endFrame = RaycastVolumeRenderer_endFrame;
 
   return self;
 }
@@ -642,7 +582,7 @@ export void DDDVRRenderer_renderTile(void*uniform _self,
 
   const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
   const uniform int end   = begin     + RENDERTILE_PIXELS_PER_JOB;
-  const uniform int startSampleID = max(fb->accumID,0);
+  const uniform int startSampleID = max(fgTile.accumID,0);
 
   for (uniform uint32 i=begin;i<end;i+=programCount) {
     const uint32 index = i + programIndex;

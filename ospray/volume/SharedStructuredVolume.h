@@ -34,27 +34,30 @@ namespace ospray {
     ~SharedStructuredVolume();
 
     //! A string description of this class.
-    std::string toString() const;
+    std::string toString() const override;
 
     //! Allocate storage and populate the volume, called through the OSPRay API.
-    void commit();
+    void commit() override;
 
     //! Copy voxels into the volume at the given index; not allowed on
     //!  SharedStructuredVolume.
-    int setRegion(const void *source, const vec3i &index, const vec3i &count);
+    int setRegion(const void *source,
+                  const vec3i &index,
+                  const vec3i &count) override;
 
   private:
 
     //! Create the equivalent ISPC volume container.
-    void createEquivalentISPC();
+    void createEquivalentISPC() override;
 
     //! Called when a dependency of this object changes.
-    void dependencyGotChanged(ManagedObject *object);
+    void dependencyGotChanged(ManagedObject *object) override;
 
     //! The voxelData object upon commit().
     Data *voxelData;
 
-    //! the pointer to allocated data if the user did _not_ specify a shared buffer
+    //! the pointer to allocated data if the user did _not_ specify a shared
+    //! buffer
     void *allocatedVoxelData;
   };
 

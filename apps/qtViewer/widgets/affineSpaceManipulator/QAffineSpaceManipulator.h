@@ -16,16 +16,22 @@
 
 #pragma once
 
-// ospray interna
-#include "ospray/common/OSPCommon.h"
+// sg
+#include "sg/SceneGraph.h"
 // ospray public api
 #include "ospray/ospray.h"
+// ospcomon
+#include "common/box.h"
+#include "common/LinearSpace.h"
 // qt
 #include <QtGui>
 #include <QGLWidget>
 
 namespace ospray {
   namespace viewer {
+    using namespace ospcommon;
+    typedef LinearSpace3f linear3f;
+
     // ==================================================================
     //! \brief A QT Widget that allows mouse manipulation of a reference
     /*! The Widget works by keeping and manipulating a reference frame

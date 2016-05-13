@@ -41,7 +41,7 @@ namespace ospray {
   */
   struct PixelOp : public ManagedObject
   {
-    struct Instance : public embree::RefCount
+    struct Instance : public RefCount
     {
       FrameBuffer *fb;
       /*! gets called every time the frame buffer got 'commit'ted */

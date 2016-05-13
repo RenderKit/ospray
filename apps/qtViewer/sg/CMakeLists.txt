@@ -52,6 +52,7 @@ ADD_LIBRARY(ospray_sg STATIC
 )
 
 TARGET_LINK_LIBRARIES(ospray_sg
-  ospray_xml
   ospray
+  ospray_common
+  ospray_xml
 )

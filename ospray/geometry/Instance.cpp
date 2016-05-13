@@ -69,7 +69,7 @@ namespace ospray {
     const vec3f v110(b.lower.x,b.upper.y,b.upper.z);
     const vec3f v111(b.upper.x,b.upper.y,b.upper.z);
 
-    bounds = embree::empty;
+    bounds = empty;
     bounds.extend(xfmPoint(xfm,v000));
     bounds.extend(xfmPoint(xfm,v001));
     bounds.extend(xfmPoint(xfm,v010));

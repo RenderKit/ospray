@@ -16,8 +16,13 @@
 
 #include "Light.ih"
 
-varying vec3f defaultEvalEnv(const uniform Light *uniform,
-                             const varying vec3f &)
+Light_EvalRes Light_eval(const uniform Light* uniform,
+                         const DifferentialGeometry&,
+                         const vec3f&)
 {
-  return make_vec3f(0.f);
+  Light_EvalRes res;
+  res.value = make_vec3f(0.f);
+  res.dist = inf;
+  res.pdf = 0.f;
+  return res;
 }

@@ -23,25 +23,22 @@ namespace ospray {
   FrameBuffer::FrameBuffer(const vec2i &size,
                            ColorBufferFormat colorBufferFormat,
                            bool hasDepthBuffer,
-                           bool hasAccumBuffer)
+                           bool hasAccumBuffer,
+                           bool hasVarianceBuffer)
     : size(size),
       colorBufferFormat(colorBufferFormat),
       hasDepthBuffer(hasDepthBuffer),
       hasAccumBuffer(hasAccumBuffer),
-      accumID(-1)
+      hasVarianceBuffer(hasVarianceBuffer)
   {
     managedObjectType = OSP_FRAMEBUFFER;
     Assert(size.x > 0 && size.y > 0);
   }
 
-  void FrameBuffer::commit()
-  {
-    const float gamma = getParam1f("gamma", 1.0f);
-    ispc::FrameBuffer_set_gamma(ispcEquivalent, gamma);
-  }
-
   /*! helper function for debugging. write out given pixels in PPM format */
-  void writePPM(const std::string &fileName, const vec2i &size, const uint32 *pixels)
+  void writePPM(const std::string &fileName,
+                const vec2i &size,
+                const uint32 *pixels)
   {
     FILE *file = fopen(fileName.c_str(),"w");
     if (!file) {
@@ -57,7 +54,10 @@ namespace ospray {
   }
 
   // helper function to write a (float) image as (flipped) PFM file
-  void writePFM(const std::string &fileName, const vec2i &size, const int channel, const float *pixel)
+  void writePFM(const std::string &fileName,
+                const vec2i &size,
+                const int channel,
+                const float *pixel)
   {
     FILE *file = fopen(fileName.c_str(),"w");
     if (!file) {

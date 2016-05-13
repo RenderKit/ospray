@@ -74,7 +74,17 @@ namespace ospray {
     Ref<Data> sphereData;
     Ref<Data> materialList;
     void     *_materialList;
-    Ref<Data> colorData; /*!< sphere color array (vec3fa) */
+    /*! data array from which we read the per-sphere color data; if
+        NULL we do not have per-sphere data */
+    Ref<Data> colorData; 
+    /*! stride in colorData array for accessing i'th sphere's
+        color. color of sphere i will be read as 3 floats from
+        'colorOffset+i*colorStride */
+    size_t    colorStride;
+    /*! offset in colorData array for accessing i'th sphere's
+        color. color of sphere i will be read as 3 floats from
+        'colorOffset+i*colorStride */
+    size_t    colorOffset;
 
     Spheres();
     ~Spheres();

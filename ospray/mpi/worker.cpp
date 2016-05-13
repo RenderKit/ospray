@@ -56,19 +56,22 @@ void sleep(unsigned int seconds)
 #endif
 
 namespace ospray {
+
+  extern RTCDevice g_embreeDevice;
+
   namespace mpi {
     using std::cout;
     using std::endl;
 
     struct GeometryLocator {
-      bool operator()(const embree::Ref<ospray::Geometry> &g) const {
+      bool operator()(const Ref<ospray::Geometry> &g) const {
         return ptr == &*g;
       }
       Geometry *ptr;
     };
 
     struct VolumeLocator {
-      bool operator()(const embree::Ref<ospray::Volume> &g) const {
+      bool operator()(const Ref<ospray::Volume> &g) const {
         return ptr == &*g;
       }
       Volume *ptr;
@@ -100,14 +103,25 @@ namespace ospray {
         embreeConfig << " threads=1,verbose=2";
       else if(numThreads > 0)
         embreeConfig << " threads=" << numThreads;
-      rtcInit(embreeConfig.str().c_str());
 
-      rtcSetErrorFunction(embreeErrorFunc); // needs to come after rtcInit
+      // NOTE(jda) - This guard guarentees that the embree device gets cleaned
+      //             up no matter how the scope of runWorker() is left
+      struct EmbreeDeviceScopeGuard {
+        RTCDevice embreeDevice;
+        ~EmbreeDeviceScopeGuard() { rtcDeleteDevice(embreeDevice); }
+      };
 
-      if (rtcGetError() != RTC_NO_ERROR) {
+      RTCDevice embreeDevice = rtcNewDevice(embreeConfig.str().c_str());
+      g_embreeDevice = embreeDevice;
+      EmbreeDeviceScopeGuard guard;
+      guard.embreeDevice = embreeDevice;
+
+      rtcDeviceSetErrorFunction(embreeDevice, embreeErrorFunc);
+
+      if (rtcDeviceGetError(embreeDevice) != RTC_NO_ERROR) {
         // why did the error function not get called !?
-        std::cerr << "#osp:init: embree internal error number " << (int)rtcGetError() << std::endl;
-        assert(rtcGetError() == RTC_NO_ERROR);
+        std::cerr << "#osp:init: embree internal error number "
+                  << (int)rtcDeviceGetError(embreeDevice) << std::endl;
       }
 
       // -------------------------------------------------------
@@ -313,11 +327,11 @@ namespace ospray {
 
         case ospray::CMD_FRAMEBUFFER_CREATE: {
           const ObjectHandle handle = cmd.get_handle();
-          const vec2i  size               = cmd.get_vec2i();
+          const vec2i size                = cmd.get_vec2i();
           const OSPFrameBufferFormat mode = (OSPFrameBufferFormat)cmd.get_int32();
           const uint32 channelFlags       = cmd.get_int32();
-          bool hasDepthBuffer = (channelFlags & OSP_FB_DEPTH);
-          bool hasAccumBuffer = (channelFlags & OSP_FB_ACCUM);
+          const bool hasDepthBuffer = (channelFlags & OSP_FB_DEPTH);
+          const bool hasAccumBuffer = (channelFlags & OSP_FB_ACCUM);
 // #if USE_DFB
           FrameBuffer *fb = new DistributedFrameBuffer(ospray::mpi::async::CommLayer::WORLD,
                                                        size,handle,mode,
@@ -418,15 +432,14 @@ namespace ospray {
           const ObjectHandle handle = cmd.get_handle();
           Texture2D *texture2D = NULL;
 
-          int32 width = cmd.get_int32();
-          int32 height = cmd.get_int32();
-          int32 type = cmd.get_int32();
-          int32 flags = cmd.get_int32();
-          size_t size = cmd.get_size_t();
+          const vec2i sz = cmd.get_vec2i();
+          const int32 type = cmd.get_int32();
+          const int32 flags = cmd.get_int32();
+          const size_t size = cmd.get_size_t();
           void *data = malloc(size);
           cmd.get_data(size,data);
 
-          texture2D = Texture2D::createTexture(width,height,(OSPDataType)type,data,
+          texture2D = Texture2D::createTexture(sz, (OSPTextureFormat)type, data,
                                                flags | OSP_DATA_SHARED_BUFFER);
           assert(texture2D);
 

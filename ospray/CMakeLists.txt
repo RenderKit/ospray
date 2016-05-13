@@ -30,54 +30,80 @@ SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 FIND_PACKAGE(Threads REQUIRED)
 
 # -------------------------------------------------------
-# Setup tasking system build configuration
+# Find or build Embree
 # -------------------------------------------------------
 
-SET(OSPRAY_TASKING_SYSTEM TBB CACHE STRING
-    "Use TBB or OpenMP as for per-node thread tasking system")
-SET_PROPERTY(CACHE OSPRAY_TASKING_SYSTEM PROPERTY STRINGS TBB OpenMP)
-MARK_AS_ADVANCED(OSPRAY_TASKING_SYSTEM)
+SET(REQUIRED_MINIMUM_EMBREE 2.7.1)
 
-IF(${OSPRAY_TASKING_SYSTEM} STREQUAL "TBB")
-  SET(USE_TBB TRUE)
-  SET(USE_TBB TRUE PARENT_SCOPE)
+IF(OSPRAY_USE_EXTERNAL_EMBREE)
+  # Clear out embree directories if they were previously populated by an
+  # internal build
+  IF(NOT ${LAST_CONFIG_USED_EXTERNAL_EMBREE})
+    UNSET(EMBREE_INCLUDE_DIRS)
+    UNSET(EMBREE_LIBRARIES)
+    UNSET(EMBREE_LIBRARY)
+    UNSET(EMBREE_LIBRARY_XEONPHI)
+  ENDIF()
+
+  # Find existing Embree on the machine
+  FIND_PACKAGE(embree ${REQUIRED_MINIMUM_EMBREE} REQUIRED)
+  SET(LAST_CONFIG_USED_EXTERNAL_EMBREE ON CACHE INTERNAL "" FORCE)
+
+  # NOTE(jda) - EMBREE_LIBRARIES is not defined until at lest v2.10.0, for now
+  #             create a "faked" EMBREE_LIBRARIES until we set our min version
+  #             to >= 2.10.0 of Embree
+  IF(NOT DEFINED EMBREE_LIBRARIES)
+    SET(EMBREE_LIBRARIES ${EMBREE_LIBRARY})
+  ELSE()
+    # NOTE(jda) - We are using the updated Embree find_package() config, check
+    #             if we need to add TBB to EMBREE_LIBRARIES
+    IF(${EMBREE_TASKING_TBB} AND NOT ${EMBREE_USE_PACKAGED_TBB})
+      OSPRAY_WARN_ONCE(EMBREE_FORCE_TBB "WARNING: You *MUST* have TBB installed based on the Embree we found!")
+      FIND_PACKAGE(TBB REQUIRED)
+      SET(EMBREE_LIBRARIES ${EMBREE_LIBRARIES} ${TBB_LIBRARIES})
+    ENDIF()
+  ENDIF()
 ELSE()
-  SET(USE_TBB FALSE)
-  SET(USE_TBB FALSE PARENT_SCOPE)
+  # Clear out embree directories if they were previously populated by an
+  # external find_package() call
+  IF(${LAST_CONFIG_USED_EXTERNAL_EMBREE})
+    UNSET(EMBREE_INCLUDE_DIRS)
+    UNSET(EMBREE_LIBRARIES)
+    UNSET(EMBREE_LIBRARY)
+    UNSET(EMBREE_LIBRARY_XEONPHI)
+  ENDIF()
+  # Build Embree included in the OSPRay tree
+
+  # NOTE(jda) - Embree assumes that OSPRAY_TASKING_TBB will be defined correctly
+  #             in CONFIGURE_OSPRAY().CONFIGURE_TASKING_SYSTEM()
+  # NOTE(jda) - Only do the Embree include once (Xeon), it will build both
+  #             Xeon and MIC code if both are enabled.
+  IF (NOT THIS_IS_MIC)
+    INCLUDE(../cmake/build_embree.cmake)
+  ENDIF()
+  SET(EMBREE_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/ospray/embree-v2.7.1/include)
+  SET(EMBREE_LIBRARY embree)
+  SET(EMBREE_LIBRARIES ${EMBREE_LIBRARY})
+  SET(EMBREE_LIBRARY_XEONPHI embree_xeonphi)
+  SET(LAST_CONFIG_USED_EXTERNAL_EMBREE OFF CACHE INTERNAL "" FORCE)
 ENDIF()
 
-IF(USE_TBB)
-  FIND_PACKAGE(TBB REQUIRED)
-  ADD_DEFINITIONS(-DOSPRAY_USE_TBB)
-  INCLUDE_DIRECTORIES(${TBB_INCLUDE_DIRS})
-ELSE(USE_TBB)
-  UNSET(TBB_INCLUDE_DIR        CACHE)
-  UNSET(TBB_LIBRARY            CACHE)
-  UNSET(TBB_LIBRARY_DEBUG      CACHE)
-  UNSET(TBB_LIBRARY_MALLOC     CACHE)
-  UNSET(TBB_LIBRARY_MALLOC_DEBUG CACHE)
-  UNSET(TBB_INCLUDE_DIR_MIC    CACHE)
-  UNSET(TBB_LIBRARY_MIC        CACHE)
-  UNSET(TBB_LIBRARY_MALLOC_MIC CACHE)
-ENDIF(USE_TBB)
+INCLUDE_DIRECTORIES(${EMBREE_INCLUDE_DIRS})
+INCLUDE_DIRECTORIES_ISPC(${EMBREE_INCLUDE_DIRS})
 
-# -------------------------------------------------------
-# Build and configure embree
-# -------------------------------------------------------
-
-# NOTE(jda) - Embree assumes that USE_TBB will be defined correctly (above)...
-# NOTE(jda) - Only do the embree include once (Xeon), it will build both
-#             Xeon and MIC code if both are enabled.
-IF (NOT THIS_IS_MIC)
-  INCLUDE(../cmake/build_embree.cmake)
-ENDIF()
+SET(EMBREE_INCLUDE_DIRS    ${EMBREE_INCLUDE_DIRS}    PARENT_SCOPE)
+SET(EMBREE_LIBRARIES       ${EMBREE_LIBRARIES}       PARENT_SCOPE)
+SET(EMBREE_LIBRARY         ${EMBREE_LIBRARY}         PARENT_SCOPE)
+SET(EMBREE_LIBRARY_XEONPHI ${EMBREE_LIBRARY_XEONHPI} PARENT_SCOPE)
 
 # -------------------------------------------------------
 # Setup ospray source files
 # -------------------------------------------------------
 
 SET(OSPRAY_SOURCES
-  device/nwlayer.cpp
+  include/ospray/ospray.h
+  include/ospray/OSPDataType.h
+  include/ospray/OSPTexture.h
 
   math/box.ispc
   math/Distribution2D.ispc
@@ -90,15 +116,16 @@ SET(OSPRAY_SOURCES
   common/ISPC_KNL_Backend.h
   common/Managed.cpp
   common/ObjectHandle.cpp
-  common/OSPDataType.h
   common/Data.cpp
   common/Model.ispc
   common/Model.cpp
   common/Material.cpp
-  common/Library.cpp
   common/Thread.cpp
-  common/Texture.h
-  common/parallel_for.h
+
+  common/tasking/parallel_for.h
+  common/tasking/async.h
+  common/tasking/TaskingTypeTraits.h
+  common/tasking/TaskSys.cpp
 
   fb/FrameBuffer.ispc
   fb/FrameBuffer.cpp
@@ -180,10 +207,6 @@ SET(OSPRAY_SOURCES
   render/simpleAO/SimpleAOMaterial.cpp
   render/simpleAO/SimpleAOMaterial.ih
   render/simpleAO/SimpleAOMaterial.ispc
-  render/obj/OBJRenderer.ispc
-  render/obj/OBJMaterial.ispc
-  render/obj/OBJRenderer.cpp
-  render/obj/OBJMaterial.cpp
   render/scivis/SciVisRenderer.ispc
   render/scivis/SciVisMaterial.ispc
   render/scivis/SciVisMaterial.ih
@@ -229,6 +252,9 @@ IF (OSPRAY_MPI)
   CONFIGURE_MPI()
 
   SET(OSPRAY_SOURCES ${OSPRAY_SOURCES}
+    mpi/buffers.h
+    mpi/command.h
+
     mpi/MPIDevice.cpp
     mpi/MPICommon.cpp
     mpi/MPILoadBalancer.cpp
@@ -245,15 +271,6 @@ IF (OSPRAY_MPI)
 
     fb/DisplayWall.cpp
     )
-
-  # ============================================
-  OSPRAY_ADD_EXECUTABLE(ospCreateCompositeTestCubes
-    mpi/testing/createCompositeTestCubes
-    )
-  OSPRAY_EXE_LINK_LIBRARIES(ospCreateCompositeTestCubes
-    ospray
-    )
-
 ENDIF()
 
 # -------------------------------------------------------
@@ -282,6 +299,7 @@ IF (OSPRAY_BUILD_COI_DEVICE)
   MARK_AS_ADVANCED(LIBCOI_DEVICE)
   MARK_AS_ADVANCED(LIBCOI_HOST)
   SET(OSPRAY_MIC_COI ON PARENT_SCOPE)
+  # NOTE(jda) - hardcoded paths (!)...use a find_package() here?
   INCLUDE_DIRECTORIES(/opt/intel/mic/coi/include)
   INCLUDE_DIRECTORIES(/usr/include/intel-coi)
   IF (THIS_IS_MIC)
@@ -304,19 +322,20 @@ ENDIF()
 OSPRAY_ADD_LIBRARY(ospray SHARED ${OSPRAY_SOURCES})
 
 OSPRAY_LIBRARY_LINK_LIBRARIES(ospray
+  ospray_common
   ${CMAKE_THREAD_LIBS_INIT}
   ${CMAKE_DL_LIBS}
 )
 
 IF (THIS_IS_MIC)
   OSPRAY_LIBRARY_LINK_LIBRARIES(ospray
-    embree_xeonphi
-    ${TBB_LIBRARIES_MIC}
+    ${EMBREE_LIBRARY_XEONPHI}
+    ${TASKING_SYSTEM_LIBS_MIC}
   )
 ELSE()
   OSPRAY_LIBRARY_LINK_LIBRARIES(ospray
-    embree
-    ${TBB_LIBRARIES}
+    ${EMBREE_LIBRARIES}
+    ${TASKING_SYSTEM_LIBS}
   )
 ENDIF()
 
@@ -330,6 +349,15 @@ ENDIF()
 
 OSPRAY_SET_LIBRARY_VERSION(ospray)
 OSPRAY_INSTALL_LIBRARY(ospray)
+
+IF(NOT THIS_IS_MIC)
+  # build ospTutorial, for testing
+  ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial.cpp)
+  OSPRAY_EXE_LINK_LIBRARIES(ospTutorial ospray ospray_common)
+  # C version
+  ADD_EXECUTABLE(ospTutorialC ../apps/ospTutorial.c)
+  OSPRAY_EXE_LINK_LIBRARIES(ospTutorialC ospray ospray_common)
+ENDIF()
 
 
 ##############################################################
@@ -347,7 +375,7 @@ IF (OSPRAY_MPI)
   ENDIF()
 
   OSPRAY_ADD_EXECUTABLE(ospray_mpi_worker mpi/MPIWorker.cpp)
-  OSPRAY_EXE_LINK_LIBRARIES(ospray_mpi_worker ospray)
+  OSPRAY_EXE_LINK_LIBRARIES(ospray_mpi_worker ospray ospray_common)
   OSPRAY_INSTALL_EXE(ospray_mpi_worker)
 ENDIF()
 
@@ -367,6 +395,7 @@ IF (OSPRAY_BUILD_COI_DEVICE)
     OSPRAY_ADD_EXECUTABLE(ospray_coi_worker api/COIDeviceWorker.cpp)
     OSPRAY_EXE_LINK_LIBRARIES(ospray_coi_worker
       ospray
+      ospray_common
       ${LIBCOI_DEVICE}
     )
     # ------------------------------------------------------------

@@ -28,18 +28,15 @@ struct DielectricLayer
   float thickness;
 };
 
-inline vec3f DielectricLayer_eval(const varying BSDF* uniform super,
-                                  const vec3f& wo, const vec3f& wi, float& pdf)
+inline BSDF_EvalRes DielectricLayer_eval(const varying BSDF* uniform super,
+                                         const vec3f& wo, const vec3f& wi)
 {
   const varying DielectricLayer* uniform self = (const varying DielectricLayer* uniform)super;
+  BSDF_EvalRes res;
 
   float cosThetaO = dot(wo, getN(super));
   float cosThetaI = dot(wi, getN(super));
-  if (cosThetaO <= 0.0f || cosThetaI <= 0.0f)
-  {
-    pdf = 0.0f;
-    return make_vec3f(0.0f);
-  }
+  if (cosThetaO <= 0.0f || cosThetaI <= 0.0f) return make_BSDF_EvalRes_zero();
 
   // Fresnel term
   float cosThetaO1; // positive
@@ -47,59 +44,55 @@ inline vec3f DielectricLayer_eval(const varying BSDF* uniform super,
 
   // Evaluate the substrate BRDF
   // Ignore refraction
-  float substratePdf;
-  vec3f substrateValue = self->substrate->eval(self->substrate, wo, wi, substratePdf);
+  BSDF_EvalRes substrate = self->substrate->eval(self->substrate, wo, wi);
 
   // Apply the coating transmittance
   // Computing the path length from the original angles would result in too much absorption, so instead use the refracted angles
   float cosThetaI1 = refract(cosThetaI, self->eta); // positive
-  substrateValue = substrateValue * pow(self->transmittance, self->thickness * (rcp(cosThetaO1) + rcp(cosThetaI1)));
+  substrate.value = substrate.value * pow(self->transmittance, self->thickness * (rcp(cosThetaO1) + rcp(cosThetaI1)));
 
   // Compute the final subtrate reflection
   // Ignore Fresnel for the exiting ray
-  pdf = (1.0f-F) * substratePdf;
-  return (1.0f-F) * substrateValue;
+  res.pdf = (1.0f-F) * substrate.pdf;
+  res.value = (1.0f-F) * substrate.value;
+  return res;
 }
 
-inline vec3f DielectricLayer_sample(const varying BSDF* uniform super,
-                                    const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
-                                    const vec2f& s, float ss)
+inline BSDF_SampleRes DielectricLayer_sample(const varying BSDF* uniform super,
+                                             const vec3f& wo, const vec2f& s, float ss)
 {
   const varying DielectricLayer* uniform self = (const varying DielectricLayer* uniform)super;
+  BSDF_SampleRes res;
 
   float cosThetaO = dot(wo, getN(super));
-  if (cosThetaO <= 0.0f) return make_vec3f(0.0f);
+  if (cosThetaO <= 0.0f) return make_BSDF_SampleRes_zero();
 
   // Fresnel term
   float cosThetaO1; // positive
   float F = fresnelDielectricEx(cosThetaO, cosThetaO1, self->eta);
 
-  // Sample the coating or the substrate reflection
-  if (ss < F)
-  {
+  if (ss < F) {
       // Sample the coating reflection
-      type = BSDF_SPECULAR_REFLECTION;
-      wi = reflect(wo, getN(super), cosThetaO);
-      pdf = F;
-      return make_vec3f(1.0f);
-  }
-  else
-  {
+      res.type = BSDF_SPECULAR_REFLECTION;
+      res.wi = reflect(wo, getN(super), cosThetaO);
+      res.pdf = inf;
+      res.weight = make_vec3f(1.0f);
+  } else {
       // Sample the substrate BRDF
       float ss1 = (ss - F) * rcp(1.0f-F); // reallocate sample
-      float substratePdf;
-      vec3f substrateWeight = self->substrate->sample(self->substrate, wo, wi, substratePdf, type, s, ss1);
-      if (reduce_max(substrateWeight) <= 0.0f) return make_vec3f(0.0f);
-      float cosThetaI = max(dot(wi, getN(super)), 0.0f); // should be positive
+      res = self->substrate->sample(self->substrate, wo, s, ss1);
+      if (reduce_max(res.weight) <= 0.0f) return res;
+      float cosThetaI = max(dot(res.wi, getN(super)), 0.0f); // should be positive
 
       // Apply the coating transmittance
       float cosThetaI1 = refract(cosThetaI, self->eta); // positive
-      substrateWeight = substrateWeight * pow(self->transmittance, self->thickness * (rcp(cosThetaO1) + rcp(cosThetaI1)));
+      res.weight = res.weight * pow(self->transmittance, self->thickness * (rcp(cosThetaO1) + rcp(cosThetaI1)));
 
-      // Compute the final base reflection
-      pdf = (1.0f-F) * substratePdf;
-      return substrateWeight;
+      // Compute the final reflection
+      res.pdf = (1.0f-F) * res.pdf;
   }
+
+  return res;
 }
 
 inline void DielectricLayer_Constructor(varying DielectricLayer* uniform self, const varying linear3f* uniform frame,

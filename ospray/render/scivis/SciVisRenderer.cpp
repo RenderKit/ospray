@@ -43,11 +43,11 @@ namespace ospray {
 
       void **lightPtr = lightArray.empty() ? NULL : &lightArray[0];
 
-      const bool shadowsEnabled = bool(getParam1i("shadowsEnabled", 1));
+      const bool shadowsEnabled = getParam1i("shadowsEnabled", 0);
 
       const int32 maxDepth = getParam1i("maxDepth", 10);
 
-      int   numAOSamples = getParam1i("aoSamples", 4);
+      int   numAOSamples = getParam1i("aoSamples", 0);
       float rayLength    = getParam1f("aoOcclusionDistance", 1e20f);
       float aoWeight     = getParam1f("aoWeight", 0.25f);
 
@@ -76,6 +76,8 @@ namespace ospray {
     OSP_REGISTER_RENDERER(SciVisRenderer, rt);
     OSP_REGISTER_RENDERER(SciVisRenderer, scivis);
     OSP_REGISTER_RENDERER(SciVisRenderer, sv);
+    OSP_REGISTER_RENDERER(SciVisRenderer, obj);
+    OSP_REGISTER_RENDERER(SciVisRenderer, OBJ);
 
   } // ::ospray::scivis
 } // ::ospray

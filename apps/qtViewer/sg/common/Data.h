@@ -108,11 +108,11 @@ namespace ospray {
       virtual vec3fa  get3fa(index_t idx)  const { return this->base[idx]; }
     };
 
-    struct DataArray1i : public DataArrayT<int32,OSP_INT> {
-      DataArray1i(int32 *base, size_t size, bool mine=true)
-        : DataArrayT<int32,OSP_INT>(base,size,mine)
+    struct DataArray1i : public DataArrayT<int32_t,OSP_INT> {
+      DataArray1i(int32_t *base, size_t size, bool mine=true)
+        : DataArrayT<int32_t,OSP_INT>(base,size,mine)
         {}
-      virtual int32 get1i(index_t idx) const { return this->base[idx]; }
+      virtual int32_t get1i(index_t idx) const { return this->base[idx]; }
     };
 
     struct DataArray3i : public DataArrayT<vec3i,OSP_INT3> {

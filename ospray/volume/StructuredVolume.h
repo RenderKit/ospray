@@ -17,7 +17,7 @@
 #pragma once
 
 // ospray
-#include "ospray/common/parallel_for.h"
+#include "ospray/common/tasking/parallel_for.h"
 #include "ospray/volume/Volume.h"
 // stl
 #include <algorithm>
@@ -54,7 +54,7 @@ namespace ospray {
     /*! \returns 0 on error, any non-zero value indicates success */
     virtual int setRegion(const void *source_pointer,
                           const vec3i &target_index,
-                          const vec3i &source_count) = 0;
+                          const vec3i &source_count) override = 0;
 
   protected:
 

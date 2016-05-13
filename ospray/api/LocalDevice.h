@@ -16,7 +16,11 @@
 
 #pragma once
 
+//ospray
 #include "Device.h"
+//embree
+#include "embree2/rtcore.h"
+
 
 /*! \file localdevice.h Implements the "local" device for local rendering */
 
@@ -48,7 +52,7 @@ namespace ospray {
 
       /*! set a frame buffer's pixel op object */
       void setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op) override;
-      
+
       /*! create a new model */
       OSPModel newModel() override;
 
@@ -195,19 +199,16 @@ namespace ospray {
       OSPLight newLight(OSPRenderer _renderer, const char *type) override;
 
       /*! create a new Texture2D object */
-      OSPTexture2D newTexture2D(int width,
-                                int height,
-                                OSPDataType type,
-                                void *data,
-                                int flags) override;
+      OSPTexture2D newTexture2D(const vec2i &size, const OSPTextureFormat,
+          void *data, const uint32 flags) override;
 
       /*! clear the specified channel(s) of the frame buffer specified in 'whichChannels'
-        
+
         if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to
-        '0,0,0,0'.  
+        '0,0,0,0'.
 
         if whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to
-        +inf.  
+        +inf.
 
         if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0,
         and reset accumID.
@@ -216,8 +217,8 @@ namespace ospray {
                                     const uint32 fbChannelFlags) override;
 
       /*! call a renderer to render a frame buffer */
-      void renderFrame(OSPFrameBuffer _sc,
-                               OSPRenderer _renderer, 
+      float renderFrame(OSPFrameBuffer _sc,
+                               OSPRenderer _renderer,
                                const uint32 fbChannelFlags) override;
 
       //! release (i.e., reduce refcount of) given object
@@ -241,7 +242,6 @@ namespace ospray {
                         OSPVolume volume,
                         const vec3f *worldCoordinates,
                         const size_t &count) override;
-
     };
 
   } // ::ospray::api

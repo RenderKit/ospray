@@ -26,32 +26,26 @@ namespace ospray {
   using std::cout;
   using std::endl;
 
-#define QUEUE_PROCESSING_JOBS 0
-
   struct DistributedFrameBuffer
     : public mpi::async::CommLayer::Object,
       public virtual FrameBuffer
   {
-#if QUEUE_PROCESSING_JOBS
-    struct ProcThread : public ospray::Thread {
-      DistributedFrameBuffer *dfb;
-      ProcThread(DistributedFrameBuffer *dfb) : dfb(dfb) {};
-      virtual void run();
-    };
-    ProcThread procThread;
-#endif
-
     //! get number of pixels per tile, in x and y direction
-    vec2i getTileSize()  const { return vec2i(TILE_SIZE); };
+    vec2i getTileSize()  const { return vec2i(TILE_SIZE); }
 
     //! return number of tiles in x and y direction
-    vec2i getNumTiles()  const { return numTiles; };
+    vec2i getNumTiles()  const { return numTiles; }
 
     //! get number of pixels in x and y diretion
     vec2i getNumPixels() const { return size; }
 
     //! number of tiles that "I" own
-    size_t numMyTiles()  const { return myTiles.size(); };
+    size_t numMyTiles()  const { return myTiles.size(); }
+
+    int accumId;
+    int32 accumID(const vec2i &) override { return accumId; }
+    float tileError(const vec2i &) override { return inf; }
+    float endFrame(const float) override { return inf; }
 
     /*! color buffer and depth buffer on master */
 
@@ -105,9 +99,9 @@ namespace ospray {
         the DFB tile itself */
     struct TileData : public TileDesc {
       TileData(DistributedFrameBuffer *dfb,
-                  const vec2i &begin,
-                  size_t tileID,
-                  size_t ownerID);
+               const vec2i &begin,
+               size_t tileID,
+               size_t ownerID);
 
       /*! called exactly once at the beginning of each frame */
       virtual void newFrame() = 0;
@@ -119,6 +113,8 @@ namespace ospray {
       /*! called exactly once for each ospray::Tile that needs to get
           written into / composited into this dfb tile */
       virtual void process(const ospray::Tile &tile) = 0;
+
+      void accumulate(const ospray::Tile &tile);
 
       ospray::Tile __aligned(64) accum;
       /* iw: TODO - have to change this. right now, to be able to give
@@ -263,32 +259,6 @@ namespace ospray {
         tiles. will be null on all workers, and _may_ be null on the
         master if the master does not have a color buffer */
     Ref<LocalFrameBuffer> localFBonMaster;
-#if QUEUE_PROCESSING_JOBS
-    struct MsgTaskQueue {
-      std::queue<Ref<ospray::Task> > queue;
-      Mutex mutex;
-
-      void addJob(Task *task) {
-        mutex.lock();
-        queue.push(task);
-        mutex.unlock();
-      }
-
-      void waitAll() {
-        mutex.lock();
-        while (!queue.empty()) {
-          Ref<Task> task = queue.front();
-          queue.pop();
-          mutex.unlock();
-          task->wait();
-          mutex.lock();
-        }
-        mutex.unlock();
-      }
-    };
-    MsgTaskQueue msgTaskQueue;
-#endif
-
 
     inline bool IamTheMaster() const { return comm->IamTheMaster(); }
     //! constructor
@@ -305,9 +275,9 @@ namespace ospray {
     // ==================================================================
     // framebuffer / device interface
     // ==================================================================
-    const void *mapDepthBuffer();
-    const void *mapColorBuffer();
-    void unmap(const void *mappedMem);
+    const void *mapDepthBuffer() override;
+    const void *mapColorBuffer() override;
+    void unmap(const void *mappedMem) override;
 
     /*! \brief clear (the specified channels of) this frame buffer
 
@@ -367,7 +337,7 @@ namespace ospray {
 
     //! \brief common function to help printf-debugging
     /*! \detailed Every derived class should overrride this! */
-    virtual std::string toString() const
+    std::string toString() const override
     { return "ospray::DistributedFrameBuffer"; }
 
 
@@ -432,5 +402,3 @@ namespace ospray {
   };
 
 } // ::ospray
-
-

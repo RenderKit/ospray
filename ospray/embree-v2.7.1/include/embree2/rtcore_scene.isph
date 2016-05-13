@@ -53,9 +53,9 @@ enum RTCAlgorithmFlags
 typedef uniform struct __RTCScene {}* uniform RTCScene;
 
 /*! Creates a new scene. 
-     WARNING: This function is deprecated, use rtcDeviceNewScene instead.
-*/
-RTCORE_DEPRECATED RTCScene rtcNewScene (uniform RTCSceneFlags flags, uniform RTCAlgorithmFlags aflags);
+//      WARNING: This function is deprecated, use rtcDeviceNewScene instead.
+// */
+// RTCORE_DEPRECATED RTCScene rtcNewScene (uniform RTCSceneFlags flags, uniform RTCAlgorithmFlags aflags);
 
 /*! Creates a new scene. */
 RTCScene rtcDeviceNewScene (RTCDevice device, uniform RTCSceneFlags flags, uniform RTCAlgorithmFlags aflags);

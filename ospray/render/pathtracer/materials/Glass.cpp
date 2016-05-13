@@ -33,10 +33,8 @@ namespace ospray {
         const vec3f& transmissionOutside
           = getParam3f("transmissionOutside",vec3f(1.f));
 
-        const float etaInside
-          = getParamf("etaInside",getParamf("eta",1.4f));
-        const float etaOutside
-          = getParamf("etaOutside",1.f);
+        const float etaInside = getParamf("etaInside", getParamf("eta", 1.5f));
+        const float etaOutside = getParamf("etaOutside", 1.f);
 
         ispcEquivalent = ispc::PathTracer_Glass_create
           (etaInside, (const ispc::vec3f&)transmissionInside,

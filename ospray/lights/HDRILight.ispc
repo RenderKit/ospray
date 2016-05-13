@@ -36,24 +36,25 @@ struct HDRILight
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 
-varying LightSample HDRILight_sample_dummy(const uniform Light *uniform,
-                                           const varying DifferentialGeometry &,
-                                           const varying vec2f &)
+// sample function used when no environment map is given: black
+Light_SampleRes HDRILight_sample_dummy(const uniform Light* uniform,
+                                       const DifferentialGeometry&,
+                                       const vec2f&)
 {
-  LightSample sample;
-  memset(&sample, 0, sizeof(LightSample));
-  return sample;
+  Light_SampleRes res;
+  memset(&res, 0, sizeof(Light_SampleRes));
+  return res;
 }
 
-varying LightSample HDRILight_sample(const uniform Light *uniform _self,
-                                     const varying DifferentialGeometry &dg,
-                                     const varying vec2f &s)
+Light_SampleRes HDRILight_sample(const uniform Light* uniform super,
+                                 const DifferentialGeometry&,
+                                 const vec2f& s)
 {
-  uniform HDRILight *uniform self = (uniform HDRILight *uniform)_self;
-  LightSample sample;
+  uniform HDRILight* uniform self = (uniform HDRILight* uniform)super;
+  Light_SampleRes res;
 
   Sample2D sample2d = Distribution2D_sample(self->distribution, s);
-  // Distribution2D samples wihtin bin i as (i, i+1), whereas we provided
+  // Distribution2D samples within bin i as (i, i+1), whereas we provided
   // average importance for (i-0.5, i+0.5), thus shift by 0.5
   sample2d.uv = sample2d.uv - self->map->halfTexel;
 
@@ -64,27 +65,39 @@ varying LightSample HDRILight_sample(const uniform Light *uniform _self,
   sincos(theta, &sinTheta, &cosTheta);
   const vec3f localDir = cartesian(phi, sinTheta, cosTheta);
 
-  sample.direction = self->light2world * localDir;
+  res.dir = self->light2world * localDir;
 
-  sample.pdf = sample2d.pdf * rcp(two_pi * M_PI * sinTheta);
+  res.pdf = sample2d.pdf * one_over_two_pi_sqr * rcp(sinTheta);
 
-  sample.distance = inf;
-  sample.radiance = get3f(self->map, sample2d.uv) * self->intensity / sample.pdf;
+  res.dist = inf;
+  res.weight = get3f(self->map, sample2d.uv) * self->intensity / res.pdf;
 
-  return sample;
+  return res;
 }
 
-varying vec3f HDRILight_evalEnv(const uniform Light *uniform _self,
-                                const varying vec3f &dir)
+Light_EvalRes HDRILight_eval(const uniform Light* uniform super,
+                             const DifferentialGeometry&,
+                             const vec3f& dir)
 {
-  uniform HDRILight *uniform self = (uniform HDRILight *uniform)_self;
+  uniform HDRILight* uniform self = (uniform HDRILight* uniform)super;
+  Light_EvalRes res;
 
   const vec3f localDir = self->world2light * dir;
 
   const float u = atan2(localDir.y, localDir.x) * one_over_two_pi;
   const float v = acos(localDir.z) * one_over_pi;
+  const vec2f uv = make_vec2f(u, v);
 
-  return get3f(self->map, make_vec2f(u, v)) * self->intensity;
+  res.value = get3f(self->map, uv) * self->intensity;
+  res.dist = inf;
+
+  // domain of Distribution2D is shifted by half a texel compared to texture
+  // atan2 can get negative, shift can lead to values > 1.f: reproject to [0..1)
+  const vec2f uvd = frac(uv + self->map->halfTexel);
+  res.pdf = Distribution2D_pdf(self->distribution, uvd);
+  res.pdf *= one_over_two_pi_sqr * rsqrt(1.f - sqr(localDir.z));
+
+  return res;
 }
 
 
@@ -92,12 +105,12 @@ varying vec3f HDRILight_evalEnv(const uniform Light *uniform _self,
 //////////////////////////////////////////////////////////////////////////////
 
 //! Set the parameters of an ispc-side HDRILight object
-export void HDRILight_set(void *uniform _self,
-                          const uniform linear3f &light2world,
-                          void *uniform map,
-                          const uniform float intensity)
+export void HDRILight_set(void* uniform super,
+                          const uniform linear3f& light2world,
+                          void* uniform map,
+                          uniform float intensity)
 {
-  uniform HDRILight *uniform self = (uniform HDRILight *uniform)_self;
+  uniform HDRILight* uniform self = (uniform HDRILight* uniform)super;
 
   if (self->distribution != NULL) {
     Distribution2D_destroy(self->distribution);
@@ -106,9 +119,9 @@ export void HDRILight_set(void *uniform _self,
 
   if (map) {
     self->light2world = light2world;
-    self->world2light = rcp(light2world); 
+    self->world2light = rcp(light2world);
 
-    self->map = (uniform Texture2D *uniform)map;
+    self->map = (uniform Texture2D* uniform)map;
     self->intensity = intensity;
 
     self->rcpSize = 1.f/self->map->sizef;
@@ -120,7 +133,7 @@ export void HDRILight_set(void *uniform _self,
     // for i==0 we have a wrap-around, which is wanted for x (phi), but actually not for y (theta),
     // because then light (importance) from the south-pole is leaking to the north-pole
     // however, sin(theta) is zero then, thus we will never sample there
-    uniform float* uniform importance = uniform new uniform float[width*height];  
+    uniform float* uniform importance = uniform new uniform float[width*height];
     for (uniform int y = 0; y < height; y++) {
       uniform float fy = y*self->rcpSize.y;
       uniform float sinTheta = sin(fy * M_PI);
@@ -138,19 +151,19 @@ export void HDRILight_set(void *uniform _self,
     // no delete[] importance: ownership was transferred to Distribution2D
 
     self->super.sample = HDRILight_sample;
-    self->super.evalEnv = HDRILight_evalEnv;
+    self->super.eval = HDRILight_eval;
   } else {
     self->super.sample = HDRILight_sample_dummy;
-    self->super.evalEnv = defaultEvalEnv;
+    self->super.eval = Light_eval;
   }
 }
 
 //! Create an ispc-side HDRILight object
-export void *uniform HDRILight_create(void *uniform cppEquivalent)
+export void *uniform HDRILight_create()
 {
-  uniform HDRILight *uniform self = uniform new uniform HDRILight;
+  uniform HDRILight* uniform self = uniform new uniform HDRILight;
 
-  Light_Constructor(&self->super, cppEquivalent);
+  Light_Constructor(&self->super);
   self->super.sample = HDRILight_sample_dummy;
   self->distribution = NULL;
 
@@ -160,10 +173,9 @@ export void *uniform HDRILight_create(void *uniform cppEquivalent)
 }
 
 //! Destroy an ispc-side HDRILight object
-export void HDRILight_destroy(void *uniform _self)
-{ 
-  uniform HDRILight *uniform self = (uniform HDRILight *uniform)_self;
+export void HDRILight_destroy(void* uniform super)
+{
+  uniform HDRILight* uniform self = (uniform HDRILight* uniform)super;
   Distribution2D_destroy(self->distribution);
   delete self;
 }
-

@@ -3,7 +3,16 @@
 bin
 *.user*
 build
+build_release
 *.sw?
 tags
 .ycm_extra_conf.pyc
 *.autosave
+*.gz
+*.rpm
+*.zip
+deps
+tbb
+embree
+ispc
+ospray-doc

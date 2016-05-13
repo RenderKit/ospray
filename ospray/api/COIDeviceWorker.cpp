@@ -520,14 +520,13 @@ namespace ospray {
     {
       DataStream args(argsPtr);
       ObjectHandle handle = args.get<ObjectHandle>();
-      int    width  = args.get<int32>(); 
-      int    height = args.get<int32>(); 
+      vec2i  size   = args.get<vec2i>();
       int    type   = args.get<int32>(); 
       int    flags  = args.get<int32>(); 
 
       COIBufferAddRef(bufferPtr[0]);
 
-      Texture2D *tx = Texture2D::createTexture(width, height, (OSPDataType)type, bufferPtr[0], flags);
+      Texture2D *tx = Texture2D::createTexture(size, (OSPTextureFormat)type, bufferPtr[0], flags);
 
       handle.assign(tx);
       if (ospray::debugMode) COIProcessProxyFlush();
@@ -642,7 +641,7 @@ namespace ospray {
 
     /*! remove an existing geometry from a model */
     struct GeometryLocator {
-      bool operator()(const embree::Ref<ospray::Geometry> &g) const {
+      bool operator()(const Ref<ospray::Geometry> &g) const {
         return ptr == &*g;
       }
       Geometry *ptr;
@@ -676,7 +675,7 @@ namespace ospray {
 
     /*! remove an existing volume from a model */
     struct VolumeLocator {
-      bool operator()(const embree::Ref<ospray::Volume> &g) const {
+      bool operator()(const Ref<ospray::Volume> &g) const {
         return ptr == &*g;
       }
       Volume *ptr;
@@ -723,7 +722,8 @@ namespace ospray {
       uint32 channelFlags = args.get<uint32>();
       FrameBuffer *fb = (FrameBuffer*)_fb.lookup();
       Renderer *r = (Renderer*)renderer.lookup();
-      r->renderFrame(fb,channelFlags);
+      float v = r->renderFrame(fb,channelFlags);
+      memcpy(retVal, &v, retValSize);
     }
 
     COINATIVELIBEXPORT

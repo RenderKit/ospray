@@ -20,13 +20,14 @@
 // ospray, for rendering
 #include "ospray/ospray.h"
 // embree
-#include "common/sys/filename.h"
+#include "common/FileName.h"
 // xml
 #include "apps/common/xml/XML.h"
 
 namespace ospray {
   using std::cout;
   using std::endl;
+  using namespace ospcommon;
 
   const char *rendererType = "raycast_eyelight";
   bool doShadows = 1;
@@ -75,7 +76,7 @@ namespace ospray {
       else
         return vec3f(lerpf(f, .5f,1.f,vec3f(0,1,0),vec3f(1,0,0)));
     }
-    void parseSV(const embree::FileName &fn)
+    void parseSV(const FileName &fn)
     {
       FILE *file = fopen(fn.str().c_str(),"rb");
       if (!file) return;
@@ -94,7 +95,7 @@ namespace ospray {
 
     box3f getBounds() const 
     {
-      box3f bounds = embree::empty;
+      box3f bounds = empty;
       for (int i=0;i<vertex.size();i++)
         bounds.extend(vertex[i]);
       return bounds;
@@ -108,7 +109,7 @@ namespace ospray {
 
     StreamLines() : radius(0.001f) {};
 
-    void parsePNT(const embree::FileName &fn)
+    void parsePNT(const FileName &fn)
     {
       FILE *file = fopen(fn.c_str(),"r");
       if (!file) {
@@ -133,7 +134,7 @@ namespace ospray {
     }
 
 
-    void parsePNTlist(const embree::FileName &fn)
+    void parsePNTlist(const FileName &fn)
     {
       FILE *file = fopen(fn.c_str(),"r");
       Assert(file);
@@ -144,7 +145,7 @@ namespace ospray {
       fclose(file);
     }
 
-    void parseSLRAW(const embree::FileName &fn)
+    void parseSLRAW(const FileName &fn)
     {
       FILE *file = fopen(fn.c_str(),"rb");
 
@@ -176,7 +177,7 @@ namespace ospray {
       fclose(file);
     }
 
-    void parseSWC(const embree::FileName &fn)
+    void parseSWC(const FileName &fn)
     {
       std::vector<vec3fa> filePoints;
 
@@ -199,7 +200,7 @@ namespace ospray {
       fclose(file);
     }
 
-    void parse(const embree::FileName &fn)
+    void parse(const FileName &fn)
     {
       if (fn.ext() == "pnt") 
         parsePNT(fn);
@@ -218,7 +219,7 @@ namespace ospray {
     }
     box3f getBounds() const 
     {
-      box3f bounds = embree::empty;
+      box3f bounds = empty;
       for (int i=0;i<vertex.size();i++)
         bounds.extend(vertex[i]);
       return bounds;
@@ -240,13 +241,13 @@ namespace ospray {
     std::vector<Cylinder> cylinders[3];
     box3f bounds;
 
-    void parse(const embree::FileName &fn)
+    void parse(const FileName &fn)
     {
       std::vector<vec3fa> filePoints;
 
       FILE *file = fopen(fn.c_str(),"r");
       Assert(file);
-      bounds = embree::empty;
+      bounds = empty;
       for (char line[10000]; fgets(line,10000,file) && !feof(file); ) {
         if (line[0] == '#') continue;
         
@@ -580,18 +581,16 @@ namespace ospray {
       ospCommit(renderer);
 
     };
-    virtual void reshape(const ospray::vec2i &newSize) 
+    virtual void reshape(const vec2i &newSize) 
     {
       Glut3DWidget::reshape(newSize);
       if (fb) ospFreeFrameBuffer(fb);
-      fb = ospNewFrameBuffer((const osp::vec2i&)newSize,OSP_RGBA_I8,OSP_FB_COLOR|OSP_FB_ACCUM);
-      ospSet1f(fb, "gamma", 2.2f);
-      ospCommit(fb);
+      fb = ospNewFrameBuffer((const osp::vec2i&)newSize, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
       ospSetf(camera,"aspect",viewPort.aspect);
       ospCommit(camera);
     }
 
-    virtual void keypress(char key, const vec2f where)
+    virtual void keypress(char key, const vec2i where)
     {
       switch (key) {
       case 'S':
@@ -602,7 +601,7 @@ namespace ospray {
         ospFrameBufferClear(fb,OSP_FB_ACCUM);
         break;
       default:
-        Glut3DWidget::keypress(key,where);
+        Glut3DWidget::keypress(key, where);
       }
     }
     virtual void display() 
@@ -658,7 +657,7 @@ namespace ospray {
     for (int i=1;i<ac;i++) {
       std::string arg = av[i];
       if (arg[0] != '-') {
-        const embree::FileName fn = arg;
+        const FileName fn = arg;
         if (fn.ext() == "osx")
           parseOSX(streamLines,triangles,fn);
         else if (fn.ext() == "pnt")

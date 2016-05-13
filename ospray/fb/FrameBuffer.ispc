@@ -20,7 +20,6 @@ void FrameBuffer_Constructor(FrameBuffer *uniform self,
                              void *uniform cClassPtr)
 {
   self->cClassPtr  = cClassPtr;
-  self->accumID    = -1;
   self->size.x     = 0;
   self->size.y     = 0;
   self->rcpSize.x  = 0.f;
@@ -33,17 +32,9 @@ void FrameBuffer_set(FrameBuffer *uniform self,
                      const uniform uint32 size_y,
                      uniform int32 colorBufferFormat)
 {
-  self->accumID    = -1;
   self->size.x     = size_x;
   self->size.y     = size_y;
   self->rcpSize.x  = 1.f/size_x;
   self->rcpSize.y  = 1.f/size_y;
   self->colorBufferFormat = (uniform FrameBuffer_ColorBufferFormat)colorBufferFormat;
-}
-
-export void FrameBuffer_set_gamma(void *uniform _self,
-                                  const uniform float gamma)
-{
-  uniform FrameBuffer *uniform self = (uniform FrameBuffer *uniform)_self;
-  self->gamma = gamma;
 }

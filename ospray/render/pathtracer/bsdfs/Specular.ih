@@ -32,26 +32,32 @@ struct Specular
   float exp;
 };
 
-inline vec3f Specular_eval(const varying BSDF* uniform super,
-                           const vec3f& wo, const vec3f& wi, float& pdf)
+inline BSDF_EvalRes Specular_eval(const varying BSDF* uniform super,
+                                  const vec3f& wo, const vec3f& wi)
 {
   const varying Specular* uniform self = (const varying Specular* uniform)super;
+  BSDF_EvalRes res;
+
   const vec3f refl = reflect(wo, getN(super));
-  if (dot(refl,wi) < 0.0f) return make_vec3f(0.0f);
-  pdf = powerCosineSampleHemispherePDF(dot(refl,wi), self->exp);
-  return mul(self->R, (self->exp+2) * one_over_two_pi * pow(dot(refl,wi),self->exp) * clamp(dot(wi, getN(super))));
+  if (dot(refl,wi) < 0.0f) return make_BSDF_EvalRes_zero();
+  res.pdf = powerCosineSampleHemispherePDF(dot(refl,wi), self->exp);
+  res.value = self->R * ((self->exp+2.f) * one_over_two_pi * pow(dot(refl,wi),self->exp) * clamp(dot(wi, getN(super))));
+  return res;
 }
 
-inline vec3f Specular_sample(const varying BSDF* uniform super,
-                             const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
-                             const vec2f& s, float ss)
+inline BSDF_SampleRes Specular_sample(const varying BSDF* uniform super,
+                                      const vec3f& wo, const vec2f& s, float ss)
 {
   const varying Specular* uniform self = (const varying Specular* uniform)super;
+  BSDF_SampleRes res;
+
   const vec3f refl = reflect(wo, getN(super));
   const vec3f localDir = powerCosineSampleHemisphere(self->exp, s);
-  wi = frame(refl) * localDir;
-  pdf = powerCosineSampleHemispherePDF(localDir, self->exp);
-  return mul(self->R, (self->exp+2) * rcp(self->exp+1) * clamp(dot(wi, getN(super))));
+  res.wi = frame(refl) * localDir;
+  res.pdf = powerCosineSampleHemispherePDF(localDir, self->exp);
+  res.type = BSDF_GLOSSY_REFLECTION;
+  res.weight = self->R * ((self->exp+2.f) * rcp(self->exp+1.f) * clamp(dot(res.wi, getN(super))));
+  return res;
 }
 
 inline void Specular_Constructor(varying Specular* uniform self,

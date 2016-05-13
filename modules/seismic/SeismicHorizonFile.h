@@ -19,7 +19,7 @@
 #include "ospray/common/OSPCommon.h"
 #include <cdds.h>
 #include <string>
-#include "modules/loaders/TriangleMeshFile.h"
+#include "apps/volumeViewer/loaders/TriangleMeshFile.h"
 
 //! \brief A concrete implementation of the TriangleMeshFile class
 //!  for reading horizon data stored in seismic file formats on disk.
