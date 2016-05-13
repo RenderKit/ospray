@@ -46,9 +46,13 @@ export ROOT_DIR=$PWD
 DEP_LOCATION=http://sdvis.org/~jdamstut/deps
 TBB_TARBALL=embree-2.9.0.x86_64.linux.tar.gz
 EMBREE_TARBALL=tbb44_20160413oss_lin.tgz
+ISPC_TARBALL=ispc-v1.9.0-linux.tar.gz
 
 # set compiler if the user hasn't explicitly set CC and CXX
 if [ -z $CC ]; then
+  echo "***NOTE: Defaulting to use icc/icpc!"
+  echo -n "         Please set env variables 'CC' and 'CXX' to"
+  echo " a different supported compiler (gcc/clang) if desired."
   export CC=icc
   export CXX=icpc
 fi
@@ -75,13 +79,20 @@ if [ ! -d deps ]; then
   tar -xaf $EMBREE_TARBALL
   rm $EMBREE_TARBALL
   
+  # ISPC
+  wget $DEP_LOCATION/$ISPC_TARBALL
+  tar -xaf $ISPC_TARBALL
+  rm $ISPC_TARBALL
+
   cd $ROOT_DIR
   ln -snf deps/tbb* tbb
   ln -snf deps/embree* embree
+  ln -snf deps/ispc* ispc
 fi
 
 TBB_PATH_LOCAL=$ROOT_DIR/tbb
 export embree_DIR=$ROOT_DIR/embree
+export PATH=$ROOT_DIR/ispc:$PATH
 
 #### Build OSPRay ####
 
@@ -107,9 +118,14 @@ cmake \
 # create RPM files
 make -j `nproc` preinstall
 
-check_symbols libospray.so GLIBC   2 4
-check_symbols libospray.so GLIBCXX 3 4
-check_symbols libospray.so CXXABI  1 3
+# if we define 'OSPRAY_RELEASE_NO_VERIFY' to anything, then we
+#   don't verify link dependencies for CentOS6
+if [ -z $OSPRAY_RELEASE_NO_VERIFY ]; then
+  check_symbols libospray.so GLIBC   2 4
+  check_symbols libospray.so GLIBCXX 3 4
+  check_symbols libospray.so CXXABI  1 3
+fi
+
 make -j `nproc` package
 
 # read OSPRay version
