@@ -84,6 +84,7 @@ release-linux-gcc:
     - module load gcc
     - export CC=gcc
     - export CXX=g++
+    - export OSPRAY_RELEASE_NO_VERIFY=1
     - scripts/release/linux.sh
   tags:
     - gcc
