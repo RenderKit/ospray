@@ -20,8 +20,6 @@ rem set TBB_PATH_LOCAL=%cd%\tbb
 
 md build_release
 cd build_release
-del CMakeCache.txt
-del ospray\version.h
 
 rem set release settings
 cmake -L ^
@@ -30,6 +28,8 @@ cmake -L ^
 -D OSPRAY_ZIP_MODE=OFF ^
 -D OSPRAY_BUILD_ISA=ALL ^
 -D OSPRAY_BUILD_MIC_SUPPORT=OFF ^
+-D OSPRAY_USE_EXTERNAL_EMBREE=ON ^
+-D embree_DIR=..\..\embree\lib\cmake\embree-2.9.0 ^
 -D USE_IMAGE_MAGICK=OFF ^
 -D CMAKE_INSTALL_INCLUDEDIR=include ^
 -D CMAKE_INSTALL_LIBDIR=lib ^

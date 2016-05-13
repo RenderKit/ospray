@@ -35,7 +35,7 @@ struct has_operator_method
   static std::false_type test(...);
 
   using type = decltype(test<T>(nullptr));
-  static constexpr bool value = std::is_same<std::true_type, type>::value;
+  static const bool value = std::is_same<std::true_type, type>::value;
 };
 
 //NOTE(jda) - This checks at compile time if T implements the method
@@ -59,7 +59,7 @@ struct has_operator_method_with_integral_param
   using PARAM_IS_SIZET    = std::is_same<T_SIZET_PARAM,
                                          decltype(&T::operator())>;
 
-  static constexpr bool value = has_operator_method<T>::value &&
+  static const bool value = has_operator_method<T>::value &&
                                 (PARAM_IS_SHORT::value
                                  || PARAM_IS_INT::value
                                  || PARAM_IS_UNSIGNED::value

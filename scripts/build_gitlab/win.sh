@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2016 Intel Corporation                                    ##
+## Copyright 2015-2016 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,39 +14,19 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-CONFIGURE_OSPRAY()
+#!/bin/sh
 
-SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-FIND_PACKAGE(Threads REQUIRED)
+mkdir build
+cd build
 
-OSPRAY_ADD_LIBRARY(ospray_common SHARED
-  common.cpp
-  FileName.cpp
-  sysinfo.cpp
-  malloc.cpp
-  library.cpp
-  thread.cpp
-  vec.cpp
+cmake -L \
+-G "Visual Studio 12 2013 Win64" \
+-T "Intel C++ Compiler 16.0" \
+-D OSPRAY_BUILD_ISA=ALL \
+-D OSPRAY_BUILD_MIC_SUPPORT=OFF \
+-D OSPRAY_USE_EXTERNAL_EMBREE=ON \
+-D embree_DIR=../../embree/lib/cmake/embree-2.9.0 \
+-D USE_IMAGE_MAGICK=OFF \
+..
 
-  AffineSpace.h
-  box.h
-  constants.h
-  intrinsics.h
-  LinearSpace.h
-  math.h
-  platform.h
-  Quaternion.h
-  RefCount.h
-  vec.h
-)
-
-OSPRAY_LIBRARY_LINK_LIBRARIES(ospray_common
-  ${CMAKE_THREAD_LIBS_INIT}
-  ${CMAKE_DL_LIBS}
-)
-IF (WIN32)
-  OSPRAY_LIBRARY_LINK_LIBRARIES(ospray_common ws2_32)
-ENDIF()
-
-OSPRAY_SET_LIBRARY_VERSION(ospray_common)
-OSPRAY_INSTALL_LIBRARY(ospray_common)
+cmake --build . --config Release --target ALL_BUILD -- -m -nologo

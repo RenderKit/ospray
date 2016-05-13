@@ -14,4 +14,5 @@ tags
 deps
 tbb
 embree
+ispc
 ospray-doc
