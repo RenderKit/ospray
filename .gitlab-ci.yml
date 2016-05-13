@@ -132,6 +132,7 @@ release-osx-clang:
   artifacts:
     paths:
       - build_release/*.gz
+      - build_release/*.dmg
 
 release-windows:
   type: deploy
