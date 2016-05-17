@@ -92,9 +92,7 @@ unmasked void Renderer_default_renderTile(uniform Renderer *uniform self,
         depthTexCoord.x = (screenSample.sampleID.x + 0.5f) * fb->rcpSize.x;
         depthTexCoord.y = (screenSample.sampleID.y + 0.5f) * fb->rcpSize.y;
 
-        tMax = min(infinity, get1f(self->maxDepthTexture, depthTexCoord));
-        if (isnan(tMax))
-          tMax = infinity;
+        tMax = min(get1f(self->maxDepthTexture, depthTexCoord), infinity);
       }
       vec3f col = make_vec3f(0.f);
       const uint32 pixel = z_order.xs[index] + (z_order.ys[index] * TILE_SIZE);
