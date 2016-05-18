@@ -14,10 +14,12 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <limits>
 // ospray
 #include "ospray/volume/DataDistributedBlockedVolume.h"
 #include "ospray/common/Core.h"
 #include "ospray/transferFunction/TransferFunction.h"
+#include "ospray/mpi/MPICommon.h"
 // ispc exports:
 #include "DataDistributedBlockedVolume_ispc.h"
 
@@ -113,7 +115,7 @@ namespace ospray {
     // Create the equivalent ISPC volume container and allocate memory for voxel
     // data.
     if (ispcEquivalent == NULL) createEquivalentISPC();
-    
+
     for (int i=0;i<numDDBlocks;i++) {
       // that block isn't mine, I shouldn't care ...
       if (!ddBlock[i].isMine) continue;
@@ -131,9 +133,40 @@ namespace ospray {
       ddBlock[i].cppVolume->setRegion(source,
                                       regionCoords-ddBlock[i].domain.lower,
                                       regionSize);
+
       ddBlock[i].ispcVolume = ddBlock[i].cppVolume->getIE();
+
+#ifndef OSPRAY_VOLUME_VOXELRANGE_IN_APP
+      ManagedObject::Param *param = ddBlock[i].cppVolume->findParam("voxelRange");
+      if (param != NULL && param->type == OSP_FLOAT2){
+        vec2f blockRange = ((vec2f*)param->f)[0];
+        voxelRange.x = std::min(voxelRange.x, blockRange.x);
+        voxelRange.y = std::max(voxelRange.y, blockRange.y);
+      }
+#endif
     }
 
+    // TODO WILL: Testing something silly for fixing the voxelRange for distributed volumes
+    // On worker 0 we want to perform an MPI_Reduce on the voxelRange of each worker so that
+    // when the viewer queries for the voxel range of the distributed volume we have a valid
+    // range to give back.
+
+#ifndef OSPRAY_VOLUME_VOXELRANGE_IN_APP
+    std::cout << "Worker #" << mpi::worker.rank << " has local voxel range " << voxelRange << std::endl;
+    // TODO WILL: We need to do a reduction here to worker 0 since it will be queried
+    // for the voxel range by the display node
+    vec2f globalVoxelRange = voxelRange;
+    // TODO WILL: This should now fix the incorrect voxel range computation for distributed volumes however
+    // is it ok that I'm putting these MPI_Reduce calls in here? I'm not sure if there's some convention, should
+    // I be sending along some other channel?
+    // TODO: Is it correct to assume all workers will be here for the reduction and this will not hang?
+    MPI_CALL(Reduce(&voxelRange.x, &globalVoxelRange.x, 1, MPI_FLOAT, MPI_MIN, 0, mpi::worker.comm));
+    MPI_CALL(Reduce(&voxelRange.y, &globalVoxelRange.y, 1, MPI_FLOAT, MPI_MAX, 0, mpi::worker.comm));
+    if (mpi::worker.rank == 0){
+      std::cout << "Worker 0 has globalVoxelRange = " << globalVoxelRange << std::endl;
+    }
+    set("voxelRange", globalVoxelRange);
+#endif
     return 0;
   }
 

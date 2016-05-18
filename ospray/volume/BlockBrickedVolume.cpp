@@ -92,6 +92,7 @@ namespace ospray {
         throw std::runtime_error("invalid voxelType in "
                                  "BlockBrickedVolume::setRegion()");
       }
+      set("voxelRange", voxelRange);
     }
 #endif
 
