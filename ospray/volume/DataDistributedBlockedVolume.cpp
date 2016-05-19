@@ -19,7 +19,9 @@
 #include "ospray/volume/DataDistributedBlockedVolume.h"
 #include "ospray/common/Core.h"
 #include "ospray/transferFunction/TransferFunction.h"
+#if EXP_DATA_PARALLEL
 #include "ospray/mpi/MPICommon.h"
+#endif
 // ispc exports:
 #include "DataDistributedBlockedVolume_ispc.h"
 

@@ -124,8 +124,7 @@ OSPVolume RawVolumeFile::importVolume(OSPVolume volume)
   }
 
 #ifdef OSPRAY_VOLUME_VOXELRANGE_IN_APP
-ospcommon::vec2f voxelRange(+std::numeric_limits<float>::infinity(),
-                           -std::numeric_limits<float>::infinity());
+  ospcommon::vec2f voxelRange(+std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity());
 #endif
 
   // To avoid hitting memory limits or exceeding the 2GB limit in MPIDevice::ospSetRegion we
@@ -135,7 +134,6 @@ ospcommon::vec2f voxelRange(+std::numeric_limits<float>::infinity(),
   // For testing try with super tiny 1k chunks
   const int SET_REGION_CHUNK_SIZE = 1512e6;
   const int MAX_CHUNK_VOXELS = SET_REGION_CHUNK_SIZE / voxelSize;
-  std::cout << "voxelSize = " << voxelSize << ", MAX_CHUNK_VOXELS = " << MAX_CHUNK_VOXELS << std::endl;
   // For chunk dims we must step biggest along X until we hit chunkDim.x == volumeDimensions.x
   // then increase chunk size along Y until we hit chunkDim.y == volumeDimensions.y and then
   // we can increase chunk size along Z (assumes row order is XYZ which should be fine for any sane raw file)
@@ -152,8 +150,7 @@ ospcommon::vec2f voxelRange(+std::numeric_limits<float>::infinity(),
     }
   }
 
-#define WILL_CHUNK_LOGGING 0
-  std::cout << "Reading volume chunks of size {" << chunkDimensions.x << ", " << chunkDimensions.y
+  std::cout << "Reading volume in chunks of size {" << chunkDimensions.x << ", " << chunkDimensions.y
     << ", " << chunkDimensions.z << "}" << std::endl;
 
   if (!useSubvolume) {
@@ -180,43 +177,12 @@ ospcommon::vec2f voxelRange(+std::numeric_limits<float>::infinity(),
           // The end of the file may have been reached unexpectedly.
           exitOnCondition(voxelsRead != chunkVoxels, "end of volume file reached before read completed");
 
-          // TODO WILL: Need to support this, this will be the path forward since ospGet* is being removed
 #ifdef OSPRAY_VOLUME_VOXELRANGE_IN_APP
-          assert(false && "TODO Will: Need to handle this case for chunked raw reader");
-          /*
-          if (strcmp(voxelType, "uchar") == 0) {
-            extendVoxelRange(voxelRange,
-                (unsigned char *)voxelData,
-                volumeDimensions.x*volumeDimensions.y);
-          }
-          else if (strcmp(voxelType, "ushort") == 0) {
-            extendVoxelRange(voxelRange,
-                (uint16_t *)voxelData,
-                volumeDimensions.x*volumeDimensions.y);
-          }
-          else if (strcmp(voxelType, "float") == 0) {
-            extendVoxelRange(voxelRange,
-                (float *)voxelData,
-                volumeDimensions.x*volumeDimensions.y);
-          }
-          else if (strcmp(voxelType, "double") == 0) {
-            extendVoxelRange(voxelRange,
-                (double *)voxelData,
-                volumeDimensions.x*volumeDimensions.y);
-          }
-          else {
-            exitOnCondition(true, "unsupported voxel type");
-          }
-          */
+          extendVoxelRange(voxelRange, voxelSize, voxelData, voxelsRead);
 #endif
           ospcommon::vec3i region_lo(chunkx * chunkDimensions.x, chunky * chunkDimensions.y,
               chunkz * chunkDimensions.z);
 
-#if WILL_CHUNK_LOGGING
-          std::cout << "setting region from lo = " << region_lo
-            << ", of size = {" << chunkDimensions.x << ", " << chunkDimensions.y
-            << ", " << chunkDimensions.z << "}" << std::endl;
-#endif
           ospSetRegion(volume, voxelData, (osp::vec3i&)region_lo, chunkDimensions);
         }
         // Read any remainder voxels on the scanline
@@ -229,9 +195,8 @@ ospcommon::vec2f voxelRange(+std::numeric_limits<float>::infinity(),
               chunkz * chunkDimensions.z);
           ospcommon::vec3i region_sz(remainderVoxels.x, chunkDimensions.y, chunkDimensions.z);
 
-#if WILL_CHUNK_LOGGING
-          std::cout << "setting scanline remainder from lo = " << region_lo
-            << ", of size = " << region_sz << std::endl;
+#ifdef OSPRAY_VOLUME_VOXELRANGE_IN_APP
+          extendVoxelRange(voxelRange, voxelSize, voxelData, voxelsRead);
 #endif
           ospSetRegion(volume, voxelData, (osp::vec3i&)region_lo, (osp::vec3i&)region_sz);
         }
@@ -245,10 +210,10 @@ ospcommon::vec2f voxelRange(+std::numeric_limits<float>::infinity(),
             chunkz * chunkDimensions.z);
         ospcommon::vec3i region_sz(chunkDimensions.x, remainderVoxels.y, chunkDimensions.z);
 
-#if WILL_CHUNK_LOGGING
-        std::cout << "setting slice remainder from lo = " << region_lo
-          << ", of size = " << region_sz << std::endl;
+#ifdef OSPRAY_VOLUME_VOXELRANGE_IN_APP
+        extendVoxelRange(voxelRange, voxelSize, voxelData, voxelsRead);
 #endif
+
         ospSetRegion(volume, voxelData, (osp::vec3i&)region_lo, (osp::vec3i&)region_sz);
       }
     }
@@ -260,10 +225,10 @@ ospcommon::vec2f voxelRange(+std::numeric_limits<float>::infinity(),
       ospcommon::vec3i region_lo(0, 0, numChunks.z * chunkDimensions.z);
       ospcommon::vec3i region_sz(chunkDimensions.x, chunkDimensions.y, remainderVoxels.z);
 
-#if WILL_CHUNK_LOGGING
-      std::cout << "setting volume remainder from lo = " << region_lo
-        << ", of size = " << region_sz << std::endl;
+#ifdef OSPRAY_VOLUME_VOXELRANGE_IN_APP
+      extendVoxelRange(voxelRange, voxelSize, voxelData, voxelsRead);
 #endif
+
       ospSetRegion(volume, voxelData, (osp::vec3i&)region_lo, (osp::vec3i&)region_sz);
     }
     delete[] voxelData;
