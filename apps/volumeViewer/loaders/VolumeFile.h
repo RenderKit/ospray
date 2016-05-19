@@ -50,6 +50,32 @@ inline void extendVoxelRange(ospcommon::vec2f &voxelRange, const T *voxel, size_
     voxelRange.y = std::max(voxelRange.y,(float)voxel[i]);
   }
 }
+//! Convenient wrapper that will do the template dispatch for you based on the voxelSize passed
+//! voxelSize = 1 -> unsigned char
+//! voxelSize = 2 -> uint16_t
+//! voxelSize = 4 -> float
+//! voxelSize = 8 -> double
+inline void extendVoxelRange(ospcommon::vec2f &voxelRange, const size_t voxelSize, const unsigned char *voxels,
+                             const size_t numVoxels)
+{
+  switch (voxelSize) {
+    case sizeof(unsigned char):
+      extendVoxelRange(voxelRange, (unsigned char*)voxels, numVoxels);
+      break;
+    case sizeof(uint16_t):
+      extendVoxelRange(voxelRange, (uint16_t*)voxels, numVoxels);
+      break;
+    case sizeof(float):
+      extendVoxelRange(voxelRange, (float*)voxels, numVoxels);
+      break;
+    case sizeof(double):
+      extendVoxelRange(voxelRange, (double*)voxels, numVoxels);
+      break;
+    default:
+      std::cerr << "ERROR: unsupported voxel type with size " << voxelSize << std::endl;
+      exit(1);
+  }
+}
 
 
 
