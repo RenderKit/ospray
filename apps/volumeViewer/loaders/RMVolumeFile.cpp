@@ -18,6 +18,7 @@
 // ospcommon
 #include "common/sysinfo.h"
 // std::
+#include <iostream>
 #include <stdio.h>
 #include <string.h>
 #ifdef __LINUX__
@@ -46,7 +47,8 @@ struct RMLoaderThreads {
     : volume(volume), nextBlockID(0), thread(NULL), nextPinID(0),
       numThreads(numThreads)
   {
-    inFilesDir = fileName;
+    inFilesDir = fileName.substr(0, fileName.rfind('.'));
+    std::cout << "Reading LLNL Richtmyer-Meshkov bob from " << inFilesDir << std::endl;
 
     useGZip = (getenv("OSPRAY_RM_NO_GZIP") == NULL);
 
@@ -82,7 +84,7 @@ struct RMLoaderThreads {
     if (useGZip) {
       sprintf(fileName,"%s/d_%04d_%04li.gz",
               fileNameBase.c_str(),timeStep,blockID);
-      const std::string cmd = "/usr/bin/gunzip -c "+std::string(fileName);
+      const std::string cmd = "gunzip -c "+std::string(fileName);
       file = popen(cmd.c_str(),"r");
       if (!file)
         throw std::runtime_error("could not open file in popen command '"+cmd+"'");
@@ -171,7 +173,8 @@ OSPVolume RMVolumeFile::importVolume(OSPVolume volume)
   ospSetString(volume,"voxelType", "uchar");
   
 #ifdef __LINUX__
-  int numThreads = ospcommon::getNumberOfLogicalThreads(); //20;
+  // TODO: Fix deadlock!?
+  int numThreads = 1;//ospcommon::getNumberOfLogicalThreads(); //20;
 #else
   int numThreads = 1;
 #endif
@@ -187,4 +190,41 @@ OSPVolume RMVolumeFile::importVolume(OSPVolume volume)
   return(volume);
 }
 
+OSPObject* RMObjectFile::importObjects(){
+  const char *dpFromEnv = getenv("OSPRAY_DATA_PARALLEL");
+  // Same as OSPObjectFile::importVolume for creating the initial OSPVolume
+  OSPVolume volume = NULL;
+  if (dpFromEnv) {
+    // Create the OSPRay object.
+    std::cout << "#osp.loader: found OSPRAY_DATA_PARALLEL env-var, "
+      << "#osp.loader: trying to use data _parallel_ mode..." << std::endl;
+    osp::vec3i blockDims;
+    int rc = sscanf(dpFromEnv,"%dx%dx%d",&blockDims.x,&blockDims.y,&blockDims.z);
+    if (rc != 3){
+      throw std::runtime_error("could not parse OSPRAY_DATA_PARALLEL env-var. Must be of format <X>x<Y>x<>Z (e.g., '4x4x4'");
+    }
+    volume = ospNewVolume("data_distributed_volume");
+    if (volume == NULL){
+      throw std::runtime_error("#loaders.ospObjectFile: could not create volume ...");
+    }
+    ospSetVec3i(volume,"num_dp_blocks",blockDims);
+  } else {
+    // Create the OSPRay object.
+    std::cout << "#osp.loader: no OSPRAY_DATA_PARALLEL dimensions set, "
+      << "#osp.loader: assuming data replicated mode is desired" << std::endl;
+    std::cout << "#osp.loader: to use data parallel mode, set OSPRAY_DATA_PARALLEL env-var to <X>x<Y>x<Z>" << std::endl;
+    std::cout << "#osp.loader: where X, Y, and Z are the desired _number_ of data parallel blocks" << std::endl;
+    volume = ospNewVolume("block_bricked_volume");
+  }
+  if (volume == NULL){
+    throw std::runtime_error("#loaders.ospObjectFile: could not create volume ...");
+  }
+
+  // We just use the RMVolumeFile loader internally
+  RMVolumeFile vol_file(fileName);
+  OSPObject *objects = new OSPObject[2];
+  objects[0] = vol_file.importVolume(volume);
+  objects[1] = NULL;
+  return objects;
+}
 
