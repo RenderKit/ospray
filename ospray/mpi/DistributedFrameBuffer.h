@@ -76,6 +76,8 @@ namespace ospray {
       necessariy 'end-begin'. 'color' and 'depth' arrays are always
       alloc'ed in TILE_SIZE pixels */
     struct TileDesc {
+      ALIGNED_STRUCT;
+
       /*! constructor */
       TileDesc(DistributedFrameBuffer *dfb,
                  const vec2i &begin,

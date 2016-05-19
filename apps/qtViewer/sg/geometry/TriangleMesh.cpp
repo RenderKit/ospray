@@ -116,7 +116,6 @@ namespace ospray {
     /*! 'render' the nodes */
     void PTMTriangleMesh::render(RenderContext &ctx)
     {
-      PRINT(this);
       if (ospGeometry) return;
 
       assert(ctx.world);
@@ -124,8 +123,10 @@ namespace ospray {
 
       ospGeometry = ospNewGeometry("trianglemesh");
       // set vertex arrays
-      if (vertex && vertex->notEmpty())
-        ospSetData(ospGeometry,"vertex",vertex->getOSP());
+      if (vertex && vertex->notEmpty()) {
+        OSPData data = vertex->getOSP();
+        ospSetData(ospGeometry,"vertex",data);
+      }
       if (normal && normal->notEmpty())
         ospSetData(ospGeometry,"vertex.normal",normal->getOSP());
       if (texcoord && texcoord->notEmpty())

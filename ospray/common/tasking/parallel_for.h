@@ -28,6 +28,13 @@
 
 namespace ospray {
 
+template<typename TASK_T>
+inline void serial_for(int nTasks, const TASK_T& fcn)
+{
+  for (int i=0;i<nTasks;i++)
+    fcn(i);
+}
+
 // NOTE(jda) - This abstraction wraps "fork-join" parallelism, with an implied
 //             synchronizsation after all of the tasks have run.
 template<typename TASK_T>
