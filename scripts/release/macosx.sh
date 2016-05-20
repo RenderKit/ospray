@@ -27,12 +27,15 @@ umask 002
 
 #### Set variables for script ####
 
-export ROOT_DIR=$PWD
+ROOT_DIR=$PWD
+DEP_DIR=$ROOT_DIR/deps
 
-DEP_LOCATION=http://sdvis.org/~jdamstut/ospray_deps/osx
-EMBREE_TARBALL=embree-2.9.0.x86_64.macosx.tar.gz
-ISPC_TARBALL=ispc-v1.9.0-osx.tar.gz
-TBB_TARBALL=tbb44_20160413oss_osx.tgz
+DEP_LOCATION=http://sdvis.org/ospray/download/dependencies/osx
+DEP_EMBREE=embree-2.9.0.x86_64.macosx
+DEP_ISPC=ispc-v1.9.0-osx
+DEP_TBB=tbb44_20160413oss
+DEP_TARBALLS="$DEP_EMBREE.tar.gz $DEP_ISPC.tar.gz ${DEP_TBB}_osx.tgz"
+
 
 # set compiler if the user hasn't explicitly set CC and CXX
 if [ -z $CC ]; then
@@ -51,35 +54,16 @@ TBB_PATH_LOCAL=$PWD/tbb
 
 #### Fetch dependencies (TBB+Embree+ISPC) ####
 
-if [ ! -d deps ]; then
-  mkdir deps
-  rm -rf deps/*
-  cd deps
+mkdir -p $DEP_DIR
+cd $DEP_DIR
 
-  # Embree
-  wget $DEP_LOCATION/$EMBREE_TARBALL
-  tar -xf $EMBREE_TARBALL
-  rm $EMBREE_TARBALL
+for dep in $DEP_TARBALLS ; do
+  wget --progress=dot:mega -c $DEP_LOCATION/$dep
+  tar -xf $dep
+done
+export embree_DIR=$DEP_DIR/$DEP_EMBREE
 
-  # ISPC
-  wget $DEP_LOCATION/$ISPC_TARBALL
-  tar -xf $ISPC_TARBALL
-  rm $ISPC_TARBALL
-
-  # TBB
-  wget $DEP_LOCATION/$TBB_TARBALL
-  tar -xf $TBB_TARBALL
-  rm $TBB_TARBALL
-
-  cd $ROOT_DIR
-  ln -snf deps/embree* embree
-  ln -snf deps/ispc* ispc
-  ln -snf deps/tbb* tbb
-fi
-
-TBB_PATH_LOCAL=$ROOT_DIR/tbb
-export embree_DIR=$ROOT_DIR/embree
-export PATH=$ROOT_DIR/ispc:$PATH
+cd $ROOT_DIR
 
 #### Build OSPRay ####
 
@@ -89,12 +73,16 @@ cd build_release
 # Clean out build directory to be sure we are doing a fresh build
 rm -rf *
 
+
 # set release and installer settings
 cmake \
 -D OSPRAY_BUILD_ISA=ALL \
 -D OSPRAY_BUILD_MIC_SUPPORT=OFF \
 -D OSPRAY_BUILD_COI_DEVICE=OFF \
 -D OSPRAY_BUILD_MPI_DEVICE=OFF \
+-D OSPRAY_USE_EXTERNAL_EMBREE=ON \
+-D TBB_ROOT=$DEP_DIR/$DEP_TBB \
+-D ISPC_EXECUTABLE=$DEP_DIR/$DEP_ISPC/ispc \
 -D USE_IMAGE_MAGICK=OFF \
 -D OSPRAY_ZIP_MODE=OFF \
 -D CMAKE_INSTALL_PREFIX=/opt/local \
@@ -102,7 +90,6 @@ cmake \
 -D CMAKE_INSTALL_LIBDIR=lib \
 -D CMAKE_INSTALL_DOCDIR=../../Applications/OSPRay/doc \
 -D CMAKE_INSTALL_BINDIR=../../Applications/OSPRay/bin \
--D TBB_ROOT=$TBB_PATH_LOCAL \
 ..
 
 # create installers
@@ -115,7 +102,6 @@ cmake \
 -D CMAKE_INSTALL_LIBDIR=lib \
 -D CMAKE_INSTALL_DOCDIR=doc \
 -D CMAKE_INSTALL_BINDIR=bin \
--D TBB_ROOT=$TBB_PATH_LOCAL \
 ..
 
 # create ZIP files
