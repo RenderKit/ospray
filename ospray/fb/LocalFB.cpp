@@ -26,7 +26,8 @@ namespace ospray {
                                      bool hasAccumBuffer,
                                      bool hasVarianceBuffer,
                                      void *colorBufferToUse)
-    : FrameBuffer(size, colorBufferFormat, hasDepthBuffer, hasAccumBuffer, hasVarianceBuffer)
+    : FrameBuffer(size, colorBufferFormat, hasDepthBuffer,
+                  hasAccumBuffer, hasVarianceBuffer)
   {
     Assert(size.x > 0);
     Assert(size.y > 0);
@@ -172,7 +173,8 @@ namespace ospray {
             err += tileErrorBuffer[idx];
             maxErr = std::max(maxErr, tileErrorBuffer[idx]);
           }
-        // set all tiles of this region to local max error to enforce their refinement as a group
+        // set all tiles of this region to local max error to enforce their
+        // refinement as a group
         for (int y = region.lower.y; y < region.upper.y; y++)
           for (int x = region.lower.x; x < region.upper.x; x++) {
             int idx = y * tilesx + x;
@@ -190,8 +192,9 @@ namespace ospray {
             i--;
             continue;
           }
-          vec2i split = region.lower + size / 2; // TODO: find split with equal variance
-          errorRegion.push_back(region); // region reference might become invalid
+          vec2i split = region.lower + size / 2; // TODO: find split with equal
+                                                 //       variance
+          errorRegion.push_back(region); // region ref might become invalid
           if (size.x > size.y) {
             errorRegion[i].upper.x = split.x;
             errorRegion.back().lower.x = split.x;

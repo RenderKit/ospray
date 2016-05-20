@@ -656,31 +656,26 @@ namespace ospray {
 
     /*! call a renderer to render a frame buffer */
     float LocalDevice::renderFrame(OSPFrameBuffer _fb,
-                                  OSPRenderer    _renderer,
-                                  const uint32 fbChannelFlags)
+                                   OSPRenderer    _renderer,
+                                   const uint32   fbChannelFlags)
     {
-      FrameBuffer *fb = (FrameBuffer *)_fb;
-      // SwapChain *sc       = (SwapChain *)_sc;
-      Renderer  *renderer = (Renderer *)_renderer;
-      // Model *model = (Model *)_model;
+      FrameBuffer *fb       = (FrameBuffer *)_fb;
+      Renderer    *renderer = (Renderer *)_renderer;
 
       Assert(fb != NULL && "invalid frame buffer handle");
-      // Assert(sc != NULL && "invalid frame buffer handle");
       Assert(renderer != NULL && "invalid renderer handle");
 
-      // FrameBuffer *fb = sc->getBackBuffer();
       try {
-        return renderer->renderFrame(fb,fbChannelFlags);
-      } catch (std::runtime_error e) {
-        std::cerr << "=======================================================" << std::endl;
-        std::cerr << "# >>> ospray fatal error <<< " << std::endl << e.what() << std::endl;
-        std::cerr << "=======================================================" << std::endl;
+        return renderer->renderFrame(fb, fbChannelFlags);
+      } catch (const std::runtime_error &e) {
+        std::cerr << "======================================================="
+                  << std::endl;
+        std::cerr << "# >>> ospray fatal error <<< " << std::endl << e.what()
+                  << std::endl;
+        std::cerr << "======================================================="
+                  << std::endl;
         exit(1);
       }
-      // WARNING: I'm doing an *im*plicit swapbuffers here at the end
-      // of renderframe, but to be more opengl-conform we should
-      // actually have the user call an *ex*plicit ospSwapBuffers call...
-      // sc->advance();
     }
 
     //! release (i.e., reduce refcount of) given object
@@ -708,7 +703,8 @@ namespace ospray {
       geometry->setMaterial(material);
     }
 
-    OSPPickResult LocalDevice::pick(OSPRenderer _renderer, const vec2f &screenPos)
+    OSPPickResult LocalDevice::pick(OSPRenderer _renderer,
+                                    const vec2f &screenPos)
     {
       Assert(_renderer != NULL && "invalid renderer handle");
       Renderer *renderer = (Renderer*)_renderer;
@@ -716,7 +712,10 @@ namespace ospray {
       return renderer->pick(screenPos);
     }
 
-    void LocalDevice::sampleVolume(float **results, OSPVolume _volume, const vec3f *worldCoordinates, const size_t &count)
+    void LocalDevice::sampleVolume(float **results,
+                                   OSPVolume _volume,
+                                   const vec3f *worldCoordinates,
+                                   const size_t &count)
     {
       Volume *volume = (Volume *)_volume;
 

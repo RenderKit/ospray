@@ -738,12 +738,12 @@ namespace ospray {
                                  uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      ObjectHandle _fb       = args.get<ObjectHandle>();
+      ObjectHandle _fb      = args.get<ObjectHandle>();
       ObjectHandle renderer = args.get<ObjectHandle>();
       uint32 channelFlags = args.get<uint32>();
       FrameBuffer *fb = (FrameBuffer*)_fb.lookup();
       Renderer *r = (Renderer*)renderer.lookup();
-      float v = r->renderFrame(fb,channelFlags);
+      float v = r->renderFrame(fb, channelFlags);
       memcpy(retVal, &v, retValSize);
     }
 

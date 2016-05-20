@@ -47,26 +47,28 @@ namespace ospray {
   }
 
   /*! define the given handle to refer to given object */
-  void ObjectHandle::assign(const ObjectHandle &handle, const ManagedObject *object)
+  void ObjectHandle::assign(const ObjectHandle &handle,
+                            const ManagedObject *object)
   {
     objectByHandle[handle] = (ManagedObject*)object;
   }
+
   void ObjectHandle::assign(const ManagedObject *object) const
   {
     objectByHandle[*this] = (ManagedObject*)object;
   }
+
   void ObjectHandle::freeObject() const
   {
-    std::map<int64,Ref<ManagedObject> >::iterator it = 
-      objectByHandle.find(i64);
+    auto it = objectByHandle.find(i64);
     Assert(it != objectByHandle.end());
     it->second = NULL;
     objectByHandle.erase(it);
   }
+
   bool ObjectHandle::defined() const 
   {
-    std::map<int64,Ref<ManagedObject> >::const_iterator it = 
-      objectByHandle.find(i64);
+    auto it = objectByHandle.find(i64);
     return it != objectByHandle.end();
   }
 
@@ -74,18 +76,18 @@ namespace ospray {
   {
     if (i64 == 0) return NULL;
 
-    std::map<int64,Ref<ManagedObject> >::const_iterator it = 
-      objectByHandle.find(i64);
+    auto it = objectByHandle.find(i64);
     Assert(it != objectByHandle.end());
     return it->second.ptr;
   }
 
-  ObjectHandle ObjectHandle::lookup(ManagedObject *object) {
+  ObjectHandle ObjectHandle::lookup(ManagedObject *object)
+  {
+    for (auto it = objectByHandle.begin(); it != objectByHandle.end(); it++) {
+      if (it->second.ptr == object) return(ObjectHandle(it->first));
+    }
 
-    std::map<int64, Ref<ManagedObject> >::const_iterator it;
-    for (it = objectByHandle.begin() ; it != objectByHandle.end() ; it++) if (it->second.ptr == object) return(ObjectHandle(it->first));
     return(nullHandle);
-
   }
     
   const ObjectHandle ObjectHandle::nullHandle(0);

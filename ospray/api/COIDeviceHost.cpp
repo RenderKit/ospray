@@ -741,19 +741,18 @@ namespace ospray {
 
     /*! call a renderer to render a frame buffer */
     float COIDevice::renderFrame(OSPFrameBuffer _sc, 
-                                OSPRenderer _renderer, 
-                                const uint32 fbChannelFlags)
+                                 OSPRenderer _renderer,
+                                 const uint32 fbChannelFlags)
     {
       DataStream args;
       args.write((ObjectHandle&)_sc);
       args.write((ObjectHandle&)_renderer);
       args.write((uint32&)fbChannelFlags);
       float retValue = 1.0f;
-      callFunction(OSPCOI_RENDER_FRAME,args, &retValue, sizeof(retValue));
-      callFunction(OSPCOI_RENDER_FRAME_SYNC,args,nullptr,true);
+      callFunction(OSPCOI_RENDER_FRAME, args, &retValue, sizeof(retValue));
+      callFunction(OSPCOI_RENDER_FRAME_SYNC, args, nullptr, true);
       return retValue;
     }
-
 
     void COIDevice::commit(OSPObject obj)
     {
