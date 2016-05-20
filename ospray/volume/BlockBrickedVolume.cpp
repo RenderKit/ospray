@@ -59,8 +59,6 @@ namespace ospray {
       // dimensions of source[][][]
       const vec3i &regionSize)
   {
-    PING; fflush(0); usleep(1000);
-
     // Create the equivalent ISPC volume container and allocate memory for voxel
     // data.
     if (ispcEquivalent == nullptr)
