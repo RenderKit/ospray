@@ -61,12 +61,12 @@ namespace ospray {
 
     tilesx = divRoundUp(size.x, TILE_SIZE);
     tiles = tilesx * divRoundUp(size.y, TILE_SIZE);
-    tileAccumID = new int32[tiles];
+    tileAccumID = (int32*)alignedMalloc(sizeof(int32)*tiles);
     memset(tileAccumID, 0, tiles*sizeof(int32));
 
     if (hasVarianceBuffer) {
       varianceBuffer = (vec4f*)alignedMalloc(sizeof(vec4f)*size.x*size.y);
-      tileErrorBuffer = new float[tiles];
+      tileErrorBuffer = (float*)alignedMalloc(sizeof(float)*tiles);
       // maximum number of regions: all regions are of size 3 are split in half
       errorRegion.reserve(divRoundUp(tiles*2, 3));
     } else {
@@ -90,8 +90,8 @@ namespace ospray {
     alignedFree(colorBuffer);
     alignedFree(accumBuffer);
     alignedFree(varianceBuffer);
-    delete[] tileAccumID;
-    delete[] tileErrorBuffer;
+    alignedFree(tileAccumID);
+    alignedFree(tileErrorBuffer);
   }
 
   std::string LocalFrameBuffer::toString() const
@@ -114,7 +114,9 @@ namespace ospray {
 
         errorRegion.clear();
         // initially create one region covering the complete image
-        errorRegion.push_back(box2i(vec2i(0), vec2i(tilesx, divRoundUp(size.y, TILE_SIZE))));
+        errorRegion.push_back(box2i(vec2i(0),
+                                    vec2i(tilesx,
+                                          divRoundUp(size.y, TILE_SIZE))));
       }
     }
   }
