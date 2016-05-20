@@ -39,8 +39,9 @@ namespace ospray {
 
     void embreeErrorFunc(const RTCError code, const char* str)
     {
-      std::cerr << "#osp: embree internal error " << code << " : " << str << std::endl;
-      throw std::runtime_error("embree internal error '"+std::string(str)+"'");
+      std::cerr << "#osp: embree internal error " << code << " : " << str
+                << std::endl;
+      throw std::runtime_error("embree internal error '" +std::string(str)+"'");
     }
 
     LocalDevice::LocalDevice(int *_ac, const char **_av)
@@ -66,7 +67,8 @@ namespace ospray {
       RTCError erc = rtcDeviceGetError(g_embreeDevice);
       if (erc != RTC_NO_ERROR) {
         // why did the error function not get called !?
-        std::cerr << "#osp:init: embree internal error number " << (int)erc << std::endl;
+        std::cerr << "#osp:init: embree internal error number " << (int)erc
+                  << std::endl;
         assert(erc == RTC_NO_ERROR);
       }
 

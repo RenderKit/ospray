@@ -39,6 +39,8 @@
 using namespace std;
 
 namespace ospray {
+  extern RTCDevice g_embreeDevice;
+
   namespace coi {
 
     // only used if manual buffer uploads are turned on ...
@@ -75,7 +77,7 @@ namespace ospray {
       }
 
       TiledLoadBalancer::instance =
-          new InterleavedTiledLoadBalancer(deviceID,numDevices);
+          new InterleavedTiledLoadBalancer(deviceID, numDevices);
     }
 
     COINATIVELIBEXPORT
@@ -1039,6 +1041,13 @@ namespace ospray {
   } // ::ospray::coi
 } // ::ospray
 
+void embreeErrorFunc(const RTCError code, const char* str)
+{
+  std::cerr << "#osp: embree internal error " << code << " : " << str
+            << std::endl;
+  throw std::runtime_error("embree internal error '" + std::string(str) + "'");
+}
+
 int main(int ac, const char **av)
 {
   ospray::init(&ac,&av);
@@ -1051,14 +1060,20 @@ int main(int ac, const char **av)
   std::stringstream embreeConfig;
   embreeConfig << "verbose=" << ospray::logLevel;
   if (ospray::debugMode) 
-    embreeConfig << ",threads=1";
+    embreeConfig << " threads=1,verbose=2";
   else if(ospray::numThreads > 0)
     embreeConfig << " threads=" << ospray::numThreads;
-  rtcInit(embreeConfig.str().c_str());
-  //rtcInit("verbose=2,traverser=single,threads=1");
-  //rtcInit("verbose=2,traverser=chunk");
+  ospray::g_embreeDevice = rtcNewDevice(embreeConfig.str().c_str());
 
-  assert(rtcGetError() == RTC_NO_ERROR);
+  rtcDeviceSetErrorFunction(ospray::g_embreeDevice, embreeErrorFunc);
+  RTCError erc = rtcDeviceGetError(ospray::g_embreeDevice);
+  if (erc != RTC_NO_ERROR) {
+    // why did the error function not get called !?
+    std::cerr << "#osp:init: embree internal error number " << (int)erc
+              << std::endl;
+    assert(erc == RTC_NO_ERROR);
+  }
+
   ospray::TiledLoadBalancer::instance = NULL;
 
   COIPipelineStartExecutingRunFunctions();
