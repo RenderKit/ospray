@@ -39,10 +39,10 @@ namespace ospray {
         break;
       case OSP_FB_RGBA8:
       case OSP_FB_SRGBA:
-        colorBuffer = (vec4f*)alignedMalloc(sizeof(vec4f)*size.x*size.y);
+        colorBuffer = (uint32*)alignedMalloc(sizeof(uint32)*size.x*size.y);
         break;
       case OSP_FB_RGBA32F:
-        colorBuffer = (uint32*)alignedMalloc(sizeof(uint32)*size.x*size.y);
+        colorBuffer = (vec4f*)alignedMalloc(sizeof(vec4f)*size.x*size.y);
         break;
       default:
         throw std::runtime_error("color buffer format not supported");
