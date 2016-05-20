@@ -112,6 +112,7 @@ release-linux-icc:
   only:
     - devel
     - master
+    - release-0.10
   artifacts:
     paths:
       - build_release/*.gz
@@ -129,6 +130,7 @@ release-osx-clang:
   only:
     - devel
     - master
+    - release-0.10
   artifacts:
     paths:
       - build_release/*.gz
@@ -145,6 +147,7 @@ release-windows:
   only:
     - devel
     - master
+    - release-0.10
   artifacts:
     paths:
       - build_release\ospray*.zip
