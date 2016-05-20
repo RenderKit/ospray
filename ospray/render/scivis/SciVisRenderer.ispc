@@ -557,14 +557,6 @@ void SciVisRenderer_renderSample(uniform Renderer *uniform _self,
                                  void *uniform perFrameData,
                                  varying ScreenSample &sample)
 {
-// #if 1
-//   sample.rgb.x = 1.f;
-//   sample.rgb.y = 1.f;
-//   sample.rgb.z = 1.f;
-//   sample.alpha = 1.f;
-//   sample.z = 1.f;
-//   return;
-// #else
   SciVisRenderer *uniform renderer
     = (SciVisRenderer *uniform) _self;
 

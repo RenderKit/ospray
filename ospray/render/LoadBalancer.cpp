@@ -61,7 +61,7 @@ namespace ospray {
       if (fb->tileError(tileID) <= renderer->errorThreshold)
         return;
 
-      Tile tile(tileID, fb->size, accumID);
+      Tile __aligned(64) tile(tileID, fb->size, accumID);
 
       parallel_for(numJobs(renderer->spp, accumID), [&](int taskIndex) {
         renderer->renderTile(perFrameData, tile, taskIndex);
@@ -112,13 +112,27 @@ namespace ospray {
       if (fb->tileError(tileID) <= renderer->errorThreshold)
         return;
 
-      Tile tile(tileID, fb->size, accumID);
+#ifdef __MIC__
+#  define MAX_TILE_SIZE 32
+#else
+#  define MAX_TILE_SIZE 128
+#endif
+
+#if TILE_SIZE>MAX_TILE_SIZE
+      Tile *tilePtr = new Tile(tileIndex, fb->size, accumID);
+      Tile &tile = *tilePtr;
+#else
+      Tile __aligned(64) tile(tileIndex, fb->size, accumID);
+#endif
 
       parallel_for(numJobs(renderer->spp, accumID), [&](int taskIndex) {
         renderer->renderTile(perFrameData, tile, taskIndex);
       });
 
       fb->setTile(tile);
+#if TILE_SIZE>MAX_TILE_SIZE
+      delete tilePtr;
+#endif
     });
 
     renderer->endFrame(perFrameData,channelFlags);

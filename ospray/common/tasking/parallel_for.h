@@ -28,13 +28,6 @@
 
 namespace ospray {
 
-template<typename TASK_T>
-inline void serial_for(int nTasks, const TASK_T& fcn)
-{
-  for (int i=0;i<nTasks;i++)
-    fcn(i);
-}
-
 // NOTE(jda) - This abstraction wraps "fork-join" parallelism, with an implied
 //             synchronizsation after all of the tasks have run.
 template<typename TASK_T>
@@ -70,6 +63,22 @@ inline void parallel_for(int nTasks, const TASK_T& fcn)
     fcn(taskIndex);
   }
 #endif
+}
+
+// NOTE(jda) - Allow serial version of parallel_for() without the need to change
+//             the entire tasking system backend (which can trigger rebuild of
+//             Embree).
+template<typename TASK_T>
+inline void serial_for(int nTasks, const TASK_T& fcn)
+{
+  static_assert(has_operator_method_with_integral_param<TASK_T>::value,
+                "ospray::serial_for() requires the implementation of method "
+                "'void TASK_T::operator(P taskIndex), where P is of type "
+                "short, int, uint, or size_t.");
+
+  for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
+    fcn(taskIndex);
+  }
 }
 
 }//namespace ospray
