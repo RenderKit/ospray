@@ -25,13 +25,14 @@
 # include <sched.h>
 #endif
 #include <stdint.h>
+#include <atomic>
 #include <mutex>
 
 struct RMLoaderThreads {
   OSPVolume volume;
   std::mutex mutex;
-  int nextBlockID;
-  int nextPinID;
+  std::atomic<int> nextBlockID;
+  std::atomic<int> nextPinID;
   int numThreads;
   int timeStep;
   pthread_t *thread;
@@ -48,7 +49,8 @@ struct RMLoaderThreads {
       numThreads(numThreads)
   {
     inFilesDir = fileName.substr(0, fileName.rfind('.'));
-    std::cout << "Reading LLNL Richtmyer-Meshkov bob from " << inFilesDir << std::endl;
+    std::cout << "Reading LLNL Richtmyer-Meshkov bob from " << inFilesDir
+      << " with " << numThreads << " threads" << std::endl;
 
     useGZip = (getenv("OSPRAY_RM_NO_GZIP") == NULL);
 
@@ -68,9 +70,11 @@ struct RMLoaderThreads {
     thread = new pthread_t[numThreads];
     for (int i=0;i<numThreads;i++)
       pthread_create(thread+i,NULL,(void*(*)(void*))threadFunc,this);
+
     void *result = NULL;
     for (int i=0;i<numThreads;i++)
       pthread_join(thread[i],&result);
+
 #ifdef OSPRAY_VOLUME_VOXELRANGE_IN_APP
     VolumeFile::voxelRangeOf[volume] = voxelRange;
 #endif
@@ -112,16 +116,11 @@ struct RMLoaderThreads {
   
   void run() 
   {
-    mutex.lock();
-    int threadID = nextPinID++;
-    // embree::setAffinity(threadID);
-    mutex.unlock();
+    int threadID = nextPinID.fetch_add(1);
 
     Block *block = new Block;
     while(1) {
-      mutex.lock();
-      int blockID = nextBlockID++;
-      mutex.unlock();
+      int blockID = nextBlockID.fetch_add(1);
       if (blockID >= 8*8*15) break;
 
       // int b = K*64+J*8+I;
@@ -134,28 +133,22 @@ struct RMLoaderThreads {
 #ifdef __LINUX__
       cpu = sched_getcpu();
 #endif
-      printf("[b%i:%i,%i,%i,(%i)]",blockID,I,J,K,cpu); fflush(0);
+      printf("[b%i:%i,%i,%i,(%i)]",blockID,I,J,K,cpu);
       loadBlock(*block,inFilesDir,blockID);
  
-      mutex.lock();
-#ifdef OSPRAY_VOLUME_VOXELRANGE_IN_APP
-      for (int i=0;i<5;i++)
-        printf("[%i]",block->voxel[i]);
-#endif
-      ospcommon::vec3i region_lo(I*256,J*256,K*128);
-      ospcommon::vec3i region_sz(256,256,128);
-      ospSetRegion(volume,block->voxel,(osp::vec3i&)region_lo,(osp::vec3i&)region_sz);
-      mutex.unlock();
-      
       ospcommon::vec2f blockRange(block->voxel[0]);
       extendVoxelRange(blockRange,&block->voxel[0],256*256*128);
+      ospcommon::vec3i region_lo(I*256,J*256,K*128);
+      ospcommon::vec3i region_sz(256,256,128);
+      {
+        std::lock_guard<std::mutex> lock(mutex);
+        ospSetRegion(volume,block->voxel,(osp::vec3i&)region_lo,(osp::vec3i&)region_sz);
       
 #ifdef OSPRAY_VOLUME_VOXELRANGE_IN_APP
-      mutex.lock();
-      this->voxelRange.x = std::min(this->voxelRange.x,blockRange.x);
-      this->voxelRange.y = std::max(this->voxelRange.y,blockRange.y);
-      mutex.unlock();
+        this->voxelRange.x = std::min(this->voxelRange.x,blockRange.x);
+        this->voxelRange.y = std::max(this->voxelRange.y,blockRange.y);
 #endif
+      }
     }
     delete block;
   }
@@ -173,14 +166,12 @@ OSPVolume RMVolumeFile::importVolume(OSPVolume volume)
   ospSetString(volume,"voxelType", "uchar");
   
 #ifdef __LINUX__
-  // TODO: Fix deadlock!?
-  int numThreads = 1;//ospcommon::getNumberOfLogicalThreads(); //20;
+  int numThreads = ospcommon::getNumberOfLogicalThreads();
 #else
   int numThreads = 1;
 #endif
 
   double t0 = ospcommon::getSysTime();
-  
 
   RMLoaderThreads(volume,fileName,numThreads);
   double t1 = ospcommon::getSysTime();
