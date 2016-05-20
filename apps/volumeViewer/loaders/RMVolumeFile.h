@@ -18,6 +18,7 @@
 
 #include <string>
 #include "VolumeFile.h"
+#include "ObjectFile.h"
 
 //! \brief specific importer for the LLNL "RM" (Richtmyer-Meshkov) instability files
 /*! Note this exists only for a specific demo */
@@ -35,6 +36,27 @@ public:
 
   //! A string description of this class.
   virtual std::string toString() const { return("ospray_module_loaders::RawVolumeFile"); }
+
+private:
+
+  //! Path to the file containing the volume data.
+  std::string fileName;
+};
+
+//! \brief specific importer for the LLNL "RM" (Richtmyer-Meshkov) instability files
+/*! Note this exists only for a specific demo */
+class RMObjectFile : public ObjectFile {
+public:
+  //! Constructor.
+  RMObjectFile(const std::string &fileName) : fileName(fileName) {}
+
+  //! Destructor.
+  virtual ~RMObjectFile() {}
+  //! Import the object data.
+  virtual OSPObject *importObjects();
+
+  //! A string description of this class.
+  virtual std::string toString() const { return("ospray_module_loaders::RMObjectFile"); }
 
 private:
 

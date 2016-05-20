@@ -493,8 +493,10 @@ namespace ospray {
       int typeSize = sizeOf(type);
 
       size_t size = typeSize * size_t(count.x) * size_t(count.y) * size_t(count.z);
-      if (size > 1000000000LL)
-        throw std::runtime_error("setregion does not currently work for region sizes >= 2GB");
+      // This size restriction is imposed by MPI_Bcast which indexes into the buffer with an int
+      // limiting us to a max size of 2^31 bytes, a bit more than 2GB
+      if (size > 2000000000LL)
+        throw std::runtime_error("setregion does not currently work for region sizes > 2GB");
 
       cmd.newCommand(CMD_SET_REGION);
       cmd.send((const ObjectHandle &)_volume);
