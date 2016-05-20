@@ -613,7 +613,9 @@ namespace ospray {
         displayWall->streamName = av[++i];
         displayWall->size.x = atof(av[++i]);
         displayWall->size.y = atof(av[++i]);
-      } else if (arg == "-bench") {
+      } else if (arg == "--max-depth") {
+        maxDepth = atoi(av[++i]);
+      } else if (arg == "--bench") {
         if (++i < ac)
           {
             std::string arg2(av[i]);
