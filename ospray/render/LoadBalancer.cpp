@@ -63,8 +63,8 @@ namespace ospray {
 
       Tile __aligned(64) tile(tileID, fb->size, accumID);
 
-      parallel_for(numJobs(renderer->spp, accumID), [&](int taskIndex) {
-        renderer->renderTile(perFrameData, tile, taskIndex);
+      parallel_for(numJobs(renderer->spp, accumID), [&](int tIdx) {
+        renderer->renderTile(perFrameData, tile, tIdx);
       });
 
       fb->setTile(tile);
@@ -119,14 +119,14 @@ namespace ospray {
 #endif
 
 #if TILE_SIZE>MAX_TILE_SIZE
-      Tile *tilePtr = new Tile(tileIndex, fb->size, accumID);
+      Tile *tilePtr = new Tile(tileID, fb->size, accumID);
       Tile &tile = *tilePtr;
 #else
-      Tile __aligned(64) tile(tileIndex, fb->size, accumID);
+      Tile __aligned(64) tile(tileID, fb->size, accumID);
 #endif
 
-      parallel_for(numJobs(renderer->spp, accumID), [&](int taskIndex) {
-        renderer->renderTile(perFrameData, tile, taskIndex);
+      parallel_for(numJobs(renderer->spp, accumID), [&](int tIdx) {
+        renderer->renderTile(perFrameData, tile, tIdx);
       });
 
       fb->setTile(tile);
