@@ -96,6 +96,7 @@ namespace ospray {
 #endif
     // Copy voxel data into the volume.
     const int NTASKS = regionSize.y * regionSize.z;
+
     parallel_for(NTASKS, [&](int taskIndex){
         ispc::GBBV_setRegion(ispcEquivalent,
                              source,
