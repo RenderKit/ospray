@@ -50,6 +50,7 @@ namespace ospray {
   bool g_createDefaultMaterial = true;
   int accumID = -1;
   int maxAccum = 64;
+  bool useDisplay = true;
   int spp = 1; /*! number of samples per pixel */
   int maxDepth = 2; // only set with home/end
   unsigned int maxObjectsToConsider = (uint32_t)-1;
@@ -592,6 +593,8 @@ namespace ospray {
         // shortcut for '--renderer pathtracer'
         maxAccum = 1024;
         rendererType = "pathtracer";
+      } else if (arg == "--nowin") {
+        useDisplay = false;
       } else if (arg == "--sun-dir") {
         if (!strcmp(av[i+1],"none")) {
           defaultDirLight_direction = vec3f(0.f);
@@ -954,7 +957,16 @@ namespace ospray {
                          msgModel->camera[0]->at,
                          msgModel->camera[0]->up);
     }
-    ospray::glut3D::runGLUT();
+    if (useDisplay)
+      ospray::glut3D::runGLUT();
+    else
+    {
+      window.reshape(window.defaultInitSize);
+      while (true)
+      {
+        window.display();
+      }
+    }
   }
 }
 
