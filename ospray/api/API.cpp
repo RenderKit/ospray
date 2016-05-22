@@ -424,7 +424,8 @@ extern "C" OSPVolume ospNewVolume(const char *type)
   OSPVolume volume = ospray::api::Device::current->newVolume(type);
   if (ospray::logLevel > 0) {
     if (volume)
-      cout << "ospNewVolume: " << ((ospray::Volume*)volume)->toString() << endl;
+      cout << "ospNewVolume: " << type << endl;
+      // cout << "ospNewVolume: " << ((ospray::Volume*)volume)->toString() << endl;
     else
       std::cerr << "#ospray: could not create volume '" << type << "'" << std::endl;
   }
@@ -443,7 +444,7 @@ extern "C" OSPTransferFunction ospNewTransferFunction(const char *type)
   OSPTransferFunction transferFunction = ospray::api::Device::current->newTransferFunction(type);
   if(ospray::logLevel > 0) {
     if(transferFunction)
-      cout << "ospNewTransferFunction: " << ((ospray::TransferFunction*)transferFunction)->toString() << endl;
+      cout << "ospNewTransferFunction(" << type << ")" << endl;
     else
       std::cerr << "#ospray: could not create transfer function '" << type << "'" << std::endl;
   }
