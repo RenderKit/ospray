@@ -26,6 +26,7 @@
 // stl
 #include <algorithm>
 #include <sstream>
+#include <string>
 
 namespace ospray {
   using namespace ospcommon;
@@ -52,6 +53,7 @@ namespace ospray {
   int maxAccum = 64;
   // If we want to clear the framebuffer after reaching maxAccum accumulations, useful for benchmarking
   bool accumReset = false;
+  std::string benchmarkImageOut = "benchmark.ppm";
   bool useDisplay = true;
   int spp = 1; /*! number of samples per pixel */
   int maxDepth = 2; // only set with home/end
@@ -358,10 +360,13 @@ namespace ospray {
       if (g_benchFrames > 0 && frameID== g_benchWarmup+g_benchFrames) {
         double time = ospray::getSysTime()-benchStart;
         double avgFps = fpsSum/double(frameID-g_benchWarmup);
-        printf("Benchmark: time: %f avg fps: %f avg frame time: %fs\n", time, avgFps, time/double(frameID-g_benchWarmup));
+        std::cout << "Benchmark: time: " << time << " avg fps: " << avgFps
+          << " avg frame time: " << time/double(frameID-g_benchWarmup) << "s\n"
+          << "Saving benchmark image result to " << benchmarkImageOut.c_str() << std::endl;
 
         const uint32_t * p = (uint32_t*)ospMapFrameBuffer(fb, OSP_FB_COLOR);
-        writePPM("benchmark.ppm", g_windowSize.x, g_windowSize.y, p);
+
+        writePPM(benchmarkImageOut.c_str(), g_windowSize.x, g_windowSize.y, p);
 
         exit(0);
       }
@@ -652,6 +657,8 @@ namespace ospray {
         }
         std::cout << "Benchmarking with " << g_benchWarmup << " warmup frames and "
           << g_benchFrames << " timing frames" << std::endl;
+      } else if (arg == "--bench-out") {
+        benchmarkImageOut = std::string(av[++i]);
       } else if (arg == "--no-default-material") {
         g_createDefaultMaterial = false;
       } else if (av[i][0] == '-') {
