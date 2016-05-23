@@ -193,6 +193,7 @@ namespace ospray {
   {
     if (initialized)
       throw std::runtime_error("#osp: task system initialized twice!");
+
     initialized = true;
     running = true;
 
@@ -211,9 +212,5 @@ namespace ospray {
       threads.push_back(createThread((thread_func)TaskSys::threadStub,
                                      (void*)-1,4*1024*1024,-1));
     }
-
-#if ~defined(__MIC__)
-    setAffinity(0);
-#endif
   }
 }//namespace ospray

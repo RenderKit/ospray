@@ -18,8 +18,6 @@
 #include "ospray/volume/BlockBrickedVolume.h"
 #include "ospray/common/tasking/parallel_for.h"
 #include "BlockBrickedVolume_ispc.h"
-// std
-#include <cassert>
 
 namespace ospray {
 
@@ -84,6 +82,8 @@ namespace ospray {
         + (size_t)regionSize.z;
       if (voxelType == "uchar")
         computeVoxelRange((unsigned char *)source, numVoxelsInRegion);
+      else if (voxelType == "ushort")
+        computeVoxelRange((unsigned short *)source, numVoxelsInRegion);
       else if (voxelType == "float")
         computeVoxelRange((float *)source, numVoxelsInRegion);
       else if (voxelType == "double")
@@ -92,6 +92,7 @@ namespace ospray {
         throw std::runtime_error("invalid voxelType in "
                                  "BlockBrickedVolume::setRegion()");
       }
+      set("voxelRange", voxelRange);
     }
 #endif
 

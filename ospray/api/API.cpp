@@ -29,7 +29,7 @@
 #endif
 
 #if 1
-# define LOG(a) if (ospray::logLevel > 2) std::cout << "#ospray: " << a << std::endl;
+# define LOG(a) if (ospray::logLevel > 2) { std::cout << "#ospray: " << a << std::endl << std::flush; fflush(0); }
 #else
 # define LOG(a) /*ignore*/
 #endif
@@ -189,12 +189,12 @@ extern "C" void ospFreeFrameBuffer(OSPFrameBuffer fb)
   ospray::api::Device::current->release(fb);
 }
 
-extern "C" OSPFrameBuffer ospNewFrameBuffer(const int *size,
+extern "C" OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size,
                                             const OSPFrameBufferFormat mode,
                                             const uint32_t channels)
 {
   ASSERT_DEVICE();
-  return ospray::api::Device::current->frameBufferCreate(*(const vec2i*)size,mode,channels);
+  return ospray::api::Device::current->frameBufferCreate((vec2i&)size, mode, channels);
 }
 
 //! load module \<name\> from shard lib libospray_module_\<name\>.so, or
@@ -233,14 +233,6 @@ extern "C" void ospAddGeometry(OSPModel model, OSPGeometry geometry)
   return ospray::api::Device::current->addGeometry(model,geometry);
 }
 
-extern "C" void ospAddVolume(OSPModel model, OSPVolume volume)
-{
-  ASSERT_DEVICE();
-  Assert(model != NULL && "invalid model in ospAddVolume");
-  Assert(volume != NULL && "invalid volume in ospAddVolume");
-  return ospray::api::Device::current->addVolume(model, volume);
-}
-
 extern "C" void ospRemoveGeometry(OSPModel model, OSPGeometry geometry)
 {
   ASSERT_DEVICE();
@@ -249,11 +241,31 @@ extern "C" void ospRemoveGeometry(OSPModel model, OSPGeometry geometry)
   return ospray::api::Device::current->removeGeometry(model, geometry);
 }
 
+extern "C" void ospAddVolume(OSPModel model, OSPVolume volume)
+{
+  ASSERT_DEVICE();
+  Assert(model != NULL && "invalid model in ospAddVolume");
+  Assert(volume != NULL && "invalid volume in ospAddVolume");
+  return ospray::api::Device::current->addVolume(model, volume);
+}
+
+extern "C" void ospRemoveVolume(OSPModel model, OSPVolume volume)
+{
+  ASSERT_DEVICE();
+  Assert(model != NULL && "invalid model in ospRemoveVolume");
+  Assert(volume != NULL && "invalid volume in ospRemoveVolume");
+  return ospray::api::Device::current->removeVolume(model, volume);
+}
+
 /*! create a new data buffer, with optional init data and control flags */
 extern "C" OSPData ospNewData(size_t nitems, OSPDataType format, const void *init, const uint32_t flags)
 {
   ASSERT_DEVICE();
-  return ospray::api::Device::current->newData(nitems,format,(void*)init,flags);
+  LOG("ospSetData(...)");
+  LOG("ospSetData(...," << nitems << "," << ((int)format) << "," << ((int*)init) << "," << flags << ",...)");
+  OSPData data = ospray::api::Device::current->newData(nitems,format,(void*)init,flags);
+  LOG("DONE ospSetData(...,\"" << nitems << "," << ((int)format) << "," << ((int*)init) << "," << flags << ",...)");
+  return data;
 }
 
 /*! add a data array to another object */
@@ -347,6 +359,7 @@ extern "C" OSPGeometry ospNewGeometry(const char *type)
   OSPGeometry geometry = ospray::api::Device::current->newGeometry(type);
   if ((ospray::logLevel > 0) && (geometry == NULL))
     std::cerr << "#ospray: could not create geometry '" << type << "'" << std::endl;
+  LOG("DONE ospNewGeometry(" << type << ") >> " << (int *)geometry);
   return geometry;
 }
 
@@ -390,17 +403,16 @@ extern "C" OSPCamera ospNewCamera(const char *type)
   return camera;
 }
 
-extern "C" OSPTexture2D ospNewTexture2D(const int32_t *size,
+extern "C" OSPTexture2D ospNewTexture2D(const osp::vec2i &size,
                                         const OSPTextureFormat type,
                                         void *data,
                                         const uint32_t flags)
 {
   ASSERT_DEVICE();
-  assert(size != NULL);
-  Assert2(size[0] > 0, "Width must be greater than 0 in ospNewTexture2D");
-  Assert2(size[1] > 0, "Height must be greater than 0 in ospNewTexture2D");
-  LOG("ospNewTexture2D( (" << size[0] << ", " << size[1] << "), " << type << ", " << data << ", " << flags << ")");
-  return ospray::api::Device::current->newTexture2D(*(const vec2i*)size, type, data, flags);
+  Assert2(size.x > 0, "Width must be greater than 0 in ospNewTexture2D");
+  Assert2(size.y > 0, "Height must be greater than 0 in ospNewTexture2D");
+  LOG("ospNewTexture2D( (" << size.x << ", " << size.y << "), " << type << ", " << data << ", " << flags << ")");
+  return ospray::api::Device::current->newTexture2D((vec2i&)size, type, data, flags);
 }
 
 /*! \brief create a new volume of given type, return 'NULL' if that type is not known */
@@ -412,7 +424,8 @@ extern "C" OSPVolume ospNewVolume(const char *type)
   OSPVolume volume = ospray::api::Device::current->newVolume(type);
   if (ospray::logLevel > 0) {
     if (volume)
-      cout << "ospNewVolume: " << ((ospray::Volume*)volume)->toString() << endl;
+      cout << "ospNewVolume: " << type << endl;
+      // cout << "ospNewVolume: " << ((ospray::Volume*)volume)->toString() << endl;
     else
       std::cerr << "#ospray: could not create volume '" << type << "'" << std::endl;
   }
@@ -431,7 +444,7 @@ extern "C" OSPTransferFunction ospNewTransferFunction(const char *type)
   OSPTransferFunction transferFunction = ospray::api::Device::current->newTransferFunction(type);
   if(ospray::logLevel > 0) {
     if(transferFunction)
-      cout << "ospNewTransferFunction: " << ((ospray::TransferFunction*)transferFunction)->toString() << endl;
+      cout << "ospNewTransferFunction(" << type << ")" << endl;
     else
       std::cerr << "#ospray: could not create transfer function '" << type << "'" << std::endl;
   }
@@ -475,10 +488,9 @@ extern "C" float ospRenderFrame(OSPFrameBuffer fb,
 extern "C" void ospCommit(OSPObject object)
 {
   // assert(!rendering);
-
+  LOG("ospCommit(...)");
   ASSERT_DEVICE();
   Assert(object && "invalid object handle to commit to");
-  LOG("ospCommit(...)");
   ospray::api::Device::current->commit(object);
 }
 
@@ -513,12 +525,12 @@ extern "C" void ospSeti(OSPObject _object, const char *id, int x)
 
 /*! Copy data into the given volume. */
 extern "C" int ospSetRegion(OSPVolume object, void *source,
-                            const int *index, const int *count)
+                            const osp::vec3i &index, const osp::vec3i &count)
 {
   ASSERT_DEVICE();
   return(ospray::api::Device::current->setRegion(object, source, 
-                                                 *(const vec3i*)index,
-                                                 *(const vec3i*)count));
+                                                 (vec3i&)index,
+                                                 (vec3i&)count));
 }
 
 /*! add a vec2f parameter to an object */
@@ -733,10 +745,9 @@ extern "C" int ospGetVec3i(OSPObject object, const char *name, osp::vec3i *value
   model.  the resulting geometry still has to be added to another
   model via ospAddGeometry */
 extern "C" OSPGeometry ospNewInstance(OSPModel modelToInstantiate,
-                                      const float *_xfm) //const osp::affine3f &xfm)
+                                      const osp::affine3f &xfm)
 {
   ASSERT_DEVICE();
-  const osp::affine3f xfm = *(const osp::affine3f *)_xfm;
   // return ospray::api::Device::current->newInstance(modelToInstantiate,xfm);
   OSPGeometry geom = ospNewGeometry("instance");
   ospSet3fv(geom,"xfm.l.vx",&xfm.l.vx.x);
@@ -749,12 +760,12 @@ extern "C" OSPGeometry ospNewInstance(OSPModel modelToInstantiate,
 
 extern "C" void ospPick(OSPPickResult *result,
                         OSPRenderer renderer,
-                        const float *screenPos)
+                        const osp::vec2f &screenPos)
 {
   ASSERT_DEVICE();
   Assert2(renderer, "NULL renderer passed to ospPick");
   if (!result) return;
-  *result = ospray::api::Device::current->pick(renderer, *(const vec2f *)screenPos);
+  *result = ospray::api::Device::current->pick(renderer, (const vec2f&)screenPos);
 }
 
 //! \brief allows for switching the MPI scope from "per rank" to "all ranks"
@@ -783,24 +794,9 @@ extern "C" void ospdMpiShutdown()
 }
 #endif
 
-// extern "C" OSPPickData ospUnproject(OSPRenderer renderer, const osp::vec2f &screenPos)
-// {
-//   static bool warned = false;
-//   if (!warned) {
-//     std::cout << "'ospUnproject()' has been deprecated. Please use the new function 'ospPick()' instead" << std::endl;
-//     warned = true;
-//   }
-//   ASSERT_DEVICE();
-//   Assert2(renderer, "NULL renderer passed to ospUnproject");
-//   vec2f flippedScreenPos = vec2f(screenPos.x, 1.0f - screenPos.y);
-//   OSPPickResult pick = ospray::api::Device::current->pick(renderer, flippedScreenPos);
-//   OSPPickData res = { pick.hit,  pick.position.x,  pick.position.y,  pick.position.z };
-//   return res;
-// }
-
 extern "C" void ospSampleVolume(float **results,
                                 OSPVolume volume,
-                                const float *worldCoordinates,
+                                const osp::vec3f &worldCoordinates,
                                 const size_t count)
 {
   ASSERT_DEVICE();
@@ -811,8 +807,6 @@ extern "C" void ospSampleVolume(float **results,
     return;
   }
 
-  Assert2(worldCoordinates, "NULL worldCoordinates passed to ospSampleVolume");
-
-  ospray::api::Device::current->sampleVolume(results, volume, (const vec3f *)worldCoordinates, count);
+  ospray::api::Device::current->sampleVolume(results, volume, (vec3f*)&worldCoordinates, count);
 }
 

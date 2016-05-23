@@ -49,6 +49,8 @@ typedef enum {
   //! Unsigned character scalar and vector types.
   OSP_UCHAR =110, OSP_UCHAR2, OSP_UCHAR3, OSP_UCHAR4, 
 
+  OSP_USHORT =115,
+
   //! Signed integer scalar and vector types.
   OSP_INT   =120, OSP_INT2, OSP_INT3, OSP_INT4,
 

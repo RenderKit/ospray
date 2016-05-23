@@ -46,24 +46,26 @@ namespace ospray {
     CacheForBlockTiles(size_t numBlocks)
       : numBlocks(numBlocks), blockTile(new Tile *[numBlocks])
     {
-      for (int i=0;i<numBlocks;i++) blockTile[i] = NULL;
+      for (int i = 0; i < numBlocks; i++) blockTile[i] = nullptr;
     }
 
     ~CacheForBlockTiles()
     {
-      for (int i=0;i<numBlocks;i++)
+      for (int i = 0; i < numBlocks; i++)
         if (blockTile[i]) delete blockTile[i];
+
       delete[] blockTile;
     }
 
     Tile *allocTile()
     {
+      float infinity = std::numeric_limits<float>::infinity();
       Tile *tile = new Tile;
-      for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) tile->r[i] = 0.f;
-      for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) tile->g[i] = 0.f;
-      for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) tile->b[i] = 0.f;
-      for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) tile->a[i] = 0.f;
-      for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) tile->z[i] = std::numeric_limits<float>::infinity();
+      for (int i = 0; i < TILE_SIZE*TILE_SIZE; i++) tile->r[i] = 0.f;
+      for (int i = 0; i < TILE_SIZE*TILE_SIZE; i++) tile->g[i] = 0.f;
+      for (int i = 0; i < TILE_SIZE*TILE_SIZE; i++) tile->b[i] = 0.f;
+      for (int i = 0; i < TILE_SIZE*TILE_SIZE; i++) tile->a[i] = 0.f;
+      for (int i = 0; i < TILE_SIZE*TILE_SIZE; i++) tile->z[i] = infinity;
       return tile;
     }
 
@@ -72,17 +74,17 @@ namespace ospray {
 #if TILE_CACHE_SAFE_MUTEX
       mutex.lock();
       Tile *tile = blockTile[blockID];
-      if (tile == NULL) {
+      if (tile == nullptr) {
         blockTile[blockID] = tile = allocTile();
       }
       mutex.unlock();
       return tile;
 #else
       Tile *tile = blockTile[blockID];
-      if (tile != NULL) return tile;
+      if (tile != nullptr) return tile;
       mutex.lock();
       tile = blockTile[blockID];
-      if (tile == NULL) {
+      if (tile == nullptr) {
         blockTile[blockID] = tile = allocTile();
       }
       mutex.unlock();
@@ -139,7 +141,7 @@ namespace ospray {
     //   PRINT(dpv->ddBlock[i].bounds);
     bool *blockWasVisible = (bool*)alloca(numBlocks*sizeof(bool));
 
-    for (int i=0;i<numBlocks;i++)
+    for (int i = 0; i < numBlocks; i++)
       blockWasVisible[i] = false;
 
     bool renderForeAndBackground =
@@ -168,9 +170,10 @@ namespace ospray {
       // be coming in generation #1
 
       size_t totalBlocksInTile=0;
-      for (int blockID=0;blockID<numBlocks;blockID++)
+      for (int blockID = 0; blockID < numBlocks; blockID++) {
         if (blockWasVisible[blockID])
           totalBlocksInTile++;
+      }
 
       size_t nextGenTiles
           = 1 /* expect one additional tile for background tile. */
@@ -200,18 +203,16 @@ namespace ospray {
     // _across_all_clients_, but we only have to send ours (assuming
     // that all clients together send exactly as many as the owner
     // told the DFB to expect)
-    for (int blockID=0;blockID<numBlocks;blockID++) {
+    for (int blockID = 0; blockID < numBlocks; blockID++) {
       Tile *tile = blockTileCache.blockTile[blockID];
-      if (tile == NULL)
+      if (tile == nullptr)
         continue;
+
       tile->region = bgTile.region;
       tile->fbSize = bgTile.fbSize;
       tile->rcp_fbSize = bgTile.rcp_fbSize;
       tile->generation = 1;
       tile->children = 0; //nextGenTile-1;
-
-      // for (int i=0;i<TILE_SIZE*TILE_SIZE;i++)
-      //   tile->r[i] = float((blockID*3*7) % 11) / 11.f;
 
       fb->setTile(*tile);
     }
@@ -219,7 +220,7 @@ namespace ospray {
 
   /*! try if we are running in data-parallel mode, and if
     data-parallel is even required. if not (eg, if there's no
-    data-parallel volumes in the scene) return NULL and render only
+    data-parallel volumes in the scene) return nullptr and render only
     in regular mode; otherwise, compute some precomputations and
     return pointer to that (which'll switch the main renderframe fct
     to render data parallel) */
@@ -229,9 +230,9 @@ namespace ospray {
     int workerRank = ospray::core::getWorkerRank();
 
     using DDBV = DataDistributedBlockedVolume;
-    std::vector<const DDBV *> ddVolumeVec;
-    for (int volumeID=0;volumeID<model->volume.size();volumeID++) {
-      const DDBV *ddv = dynamic_cast<const DDBV*>(model->volume[volumeID].ptr);
+    std::vector<const DDBV*> ddVolumeVec;
+    for (int volumeID = 0; volumeID < model->volume.size(); volumeID++) {
+      const DDBV* ddv = dynamic_cast<const DDBV*>(model->volume[volumeID].ptr);
       if (!ddv) continue;
       ddVolumeVec.push_back(ddv);
     }
@@ -273,7 +274,6 @@ namespace ospray {
 
     dfb->setFrameMode(DistributedFrameBuffer::ALPHA_BLENDING);
 
-
     // note: we can NEVER be the master, since the master doesn't even
     // have an instance of this renderer class -
     assert(workerRank >= 0);
@@ -297,8 +297,8 @@ namespace ospray {
     DPRenderTask renderTask(workerRank);
     renderTask.fb = fb;
     renderTask.renderer = this;
-    renderTask.numTiles_x = divRoundUp(dfb->size.x,TILE_SIZE);
-    renderTask.numTiles_y = divRoundUp(dfb->size.y,TILE_SIZE);
+    renderTask.numTiles_x = divRoundUp(dfb->size.x, TILE_SIZE);
+    renderTask.numTiles_y = divRoundUp(dfb->size.y, TILE_SIZE);
     renderTask.channelFlags = channelFlags;
     renderTask.dpv = ddVolumeVec[0];
 
@@ -306,7 +306,7 @@ namespace ospray {
     parallel_for(NTASKS, renderTask);
 
     dfb->waitUntilFinished();
-    Renderer::endFrame(NULL,channelFlags);
+    Renderer::endFrame(nullptr, channelFlags);
     return fb->endFrame(0.f);
   }
 
@@ -315,12 +315,12 @@ namespace ospray {
   void RaycastVolumeRenderer::commit()
   {
     // Create the equivalent ISPC RaycastVolumeRenderer object.
-    if (ispcEquivalent == NULL) {
+    if (ispcEquivalent == nullptr) {
       ispcEquivalent = ispc::RaycastVolumeRenderer_createInstance();
     }
 
     // Set the lights if any.
-    Data *lightsData = (Data *)getParamData("lights", NULL);
+    Data *lightsData = (Data *)getParamData("lights", nullptr);
 
     lights.clear();
 
@@ -330,7 +330,7 @@ namespace ospray {
     }
 
     ispc::RaycastVolumeRenderer_setLights(ispcEquivalent,
-                                          lights.empty() ? NULL : &lights[0],
+                                          lights.empty() ? nullptr : &lights[0],
                                           lights.size());
 
     // Initialize state in the parent class, must be called after the ISPC

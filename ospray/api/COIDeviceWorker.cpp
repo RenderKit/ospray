@@ -39,6 +39,8 @@
 using namespace std;
 
 namespace ospray {
+  extern RTCDevice g_embreeDevice;
+
   namespace coi {
 
     // only used if manual buffer uploads are turned on ...
@@ -69,12 +71,13 @@ namespace ospray {
 
       if (ospray::debugMode || ospray::logLevel >= 1) {
         std::cout << "!osp:coi: initializing device #" << deviceID
-                  << " (" << (deviceID+1) << "/" << numDevices << ")" << std::endl;
+                  << " (" << (deviceID+1) << "/" << numDevices << ")"
+                  << std::endl;
         COIProcessProxyFlush();
       }
 
       TiledLoadBalancer::instance =
-          new InterleavedTiledLoadBalancer(deviceID,numDevices);
+          new InterleavedTiledLoadBalancer(deviceID, numDevices);
     }
 
     COINATIVELIBEXPORT
@@ -119,7 +122,8 @@ namespace ospray {
                                  +COIResultGetName(res));
       
       if (format == OSP_STRING)
-        throw std::runtime_error("data arrays of strings not currently supported on coi device ...");
+        throw std::runtime_error("data arrays of strings not currently "
+                                 "supported on coi device ...");
 
       if (format == OSP_OBJECT) {
         ObjectHandle *in = (ObjectHandle *)bufferPtr[0];
@@ -159,7 +163,8 @@ namespace ospray {
       int    flags  = args.get<int32>(); 
 
       if (ospray::debugMode) {
-        cout << "=======================================================" << endl;
+        cout << "======================================================="
+             << endl;
         cout << "!osp:coi: done uploading data " << handle.ID() << endl;
       }
       
@@ -168,7 +173,8 @@ namespace ospray {
       size_t size = nitems * sizeOf((OSPDataType)format);
 
       if (format == OSP_STRING)
-        throw std::runtime_error("data arrays of strings not currently supported on coi device ...");
+        throw std::runtime_error("data arrays of strings not currently "
+                                 "supported on coi device ...");
 
       if (format == OSP_OBJECT) {
         if (ospray::debugMode) COIProcessProxyFlush();
@@ -223,12 +229,15 @@ namespace ospray {
       int    flags  = args.get<int32>(); 
 
       if (ospray::debugMode) {
-        cout << "=======================================================" << endl;
+        cout << "======================================================="
+             << endl;
         cout << "!osp:coi: new (as-yet-empty) data " << handle.ID() << endl;
       }
       
-      if (format == OSP_STRING)
-        throw std::runtime_error("data arrays of strings not currently supported on coi device ...");
+      if (format == OSP_STRING) {
+        throw std::runtime_error("data arrays of strings not currently "
+                                 "supported on coi device ...");
+      }
 
       size_t size = nitems * sizeOf((OSPDataType)format);
       void *mem = new char[size];
@@ -279,9 +288,11 @@ namespace ospray {
         = (FrameBuffer::ColorBufferFormat)mode;
       bool hasDepthBuffer = (channels & OSP_FB_DEPTH)!=0;
       bool hasAccumBuffer = (channels & OSP_FB_ACCUM)!=0;
+      bool hasVarianceBuffer = (channels & OSP_FB_VARIANCE)!=0;
       
       FrameBuffer *fb = new LocalFrameBuffer(size,colorBufferFormat,
                                              hasDepthBuffer,hasAccumBuffer,
+                                             hasVarianceBuffer,
                                              pixelArray);
       handle.assign(fb);
 
@@ -356,9 +367,11 @@ namespace ospray {
       DataStream args(argsPtr);
       ObjectHandle handle = args.get<ObjectHandle>();
       const char *type = args.getString();
-      cout << "!osp:coi: new transfer function " << handle.ID() << " " << type << endl;
+      cout << "!osp:coi: new transfer function " << handle.ID()
+           << " " << type << endl;
 
-      TransferFunction *transferFunction = TransferFunction::createInstance(type);
+      TransferFunction *transferFunction =
+          TransferFunction::createInstance(type);
       handle.assign(transferFunction);
 
       if (ospray::debugMode) COIProcessProxyFlush();
@@ -468,7 +481,9 @@ namespace ospray {
       Assert(worldCoordinatesData);
 
       float *results = NULL;
-      volume->computeSamples(&results, (const vec3f *)worldCoordinatesData->data, worldCoordinatesData->numItems);
+      volume->computeSamples(&results,
+                             (const vec3f *)worldCoordinatesData->data,
+                             worldCoordinatesData->numItems);
       Assert(results);
 
       memcpy(retVal, results, retValSize);
@@ -526,7 +541,10 @@ namespace ospray {
 
       COIBufferAddRef(bufferPtr[0]);
 
-      Texture2D *tx = Texture2D::createTexture(size, (OSPTextureFormat)type, bufferPtr[0], flags);
+      Texture2D *tx = Texture2D::createTexture(size,
+                                               (OSPTextureFormat)type,
+                                               bufferPtr[0],
+                                               flags);
 
       handle.assign(tx);
       if (ospray::debugMode) COIProcessProxyFlush();
@@ -665,7 +683,9 @@ namespace ospray {
 
       GeometryLocator locator;
       locator.ptr = geometry;
-      Model::GeometryVector::iterator it = std::find_if(model->geometry.begin(), model->geometry.end(), locator);
+      Model::GeometryVector::iterator it =
+          std::find_if(model->geometry.begin(),
+                       model->geometry.end(), locator);
       if(it != model->geometry.end()) {
         model->geometry.erase(it);
       }
@@ -699,7 +719,8 @@ namespace ospray {
 
       VolumeLocator locator;
       locator.ptr = volume;
-      Model::VolumeVector::iterator it = std::find_if(model->volume.begin(), model->volume.end(), locator);
+      Model::VolumeVector::iterator it =
+          std::find_if(model->volume.begin(), model->volume.end(), locator);
       if(it != model->volume.end()) {
         model->volume.erase(it);
       }
@@ -717,12 +738,12 @@ namespace ospray {
                                  uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      ObjectHandle _fb       = args.get<ObjectHandle>();
+      ObjectHandle _fb      = args.get<ObjectHandle>();
       ObjectHandle renderer = args.get<ObjectHandle>();
       uint32 channelFlags = args.get<uint32>();
       FrameBuffer *fb = (FrameBuffer*)_fb.lookup();
       Renderer *r = (Renderer*)renderer.lookup();
-      float v = r->renderFrame(fb,channelFlags);
+      float v = r->renderFrame(fb, channelFlags);
       memcpy(retVal, &v, retValSize);
     }
 
@@ -833,7 +854,8 @@ namespace ospray {
       Data *data = (Data *) stream.get<ObjectHandle>().lookup();
       int *result = (int *) retVal;  result[0] = true;
       memcpy(&result[1], &data->numItems, sizeof(size_t));
-      memcpy((char *)(&result[1]) + sizeof(size_t), &data->type, sizeof(OSPDataType));
+      memcpy((char *)(&result[1]) + sizeof(size_t),
+             &data->type, sizeof(OSPDataType));
 
     }
 
@@ -847,7 +869,8 @@ namespace ospray {
                                    uint16_t         retValSize)
     {
 
-      //! The size of ReturnValue is larger than that indicated by the following definition.
+      //! The size of ReturnValue is larger than that indicated by the
+      //  following definition.
       DataStream stream(argsPtr);
       ManagedObject *object = stream.get<ObjectHandle>().lookup();
       int *result = (int *) retVal;  result[0] = true;
@@ -855,7 +878,8 @@ namespace ospray {
       for (size_t i=0, offset=0 ; i < object->paramList.size() ; i++) {
 
           size_t size = strlen(object->paramList[i]->name) + 1;
-          memcpy((char *)(&result[1]) + offset, object->paramList[i]->name, size);
+          memcpy((char *)(&result[1]) + offset,
+                 object->paramList[i]->name, size);
           offset += size;
 
       }
@@ -877,7 +901,8 @@ namespace ospray {
       int *result = (int *) retVal;  result[0] = true;
 
       int size = 0;
-      for (size_t i=0 ; i < object->paramList.size() ; i++) size += (strlen(object->paramList[i]->name) + 1) * sizeof(char);
+      for (size_t i = 0; i < object->paramList.size(); i++)
+        size += (strlen(object->paramList[i]->name) + 1) * sizeof(char);
       memcpy(&result[1], &size, sizeof(int));
 
     }
@@ -901,14 +926,20 @@ namespace ospray {
         case 0: {
 
           OSPDataType type = object->managedObjectType;
-          result[0] = true;  memcpy(&result[1], &type, sizeof(OSPDataType));  break;
+          result[0] = true;
+          memcpy(&result[1], &type, sizeof(OSPDataType));
+          break;
 
         } default: {
 
           ManagedObject::Param *param = object->findParam(name);
           if (param == NULL) return;
-          OSPDataType type = (param->type == OSP_OBJECT) ? param->ptr->managedObjectType : param->type;
-          result[0] = true;  memcpy(&result[1], &type, sizeof(OSPDataType));  break;
+          OSPDataType type =
+              (param->type == OSP_OBJECT) ? param->ptr->managedObjectType :
+                                            param->type;
+          result[0] = true;
+          memcpy(&result[1], &type, sizeof(OSPDataType));
+          break;
 
         }
       }
@@ -934,9 +965,13 @@ namespace ospray {
       switch (type) {
         case OSP_DATA: {
 
-          if (param == NULL || param->type != OSP_OBJECT || param->ptr->managedObjectType != OSP_DATA) return;
+          if (param == NULL ||
+              param->type != OSP_OBJECT ||
+              param->ptr->managedObjectType != OSP_DATA) return;
           ObjectHandle handle = ObjectHandle::lookup(param->ptr);
-          result[0] = true;  memcpy(&result[1], &handle, sizeof(ObjectHandle));  break;
+          result[0] = true;
+          memcpy(&result[1], &handle, sizeof(ObjectHandle));
+          break;
 
         } case OSP_FLOAT: {
 
@@ -976,21 +1011,29 @@ namespace ospray {
 
         } case OSP_MATERIAL: {
 
-          if (object->managedObjectType != OSP_GEOMETRY || ((Geometry *) object)->getMaterial() == NULL) return;
-          ObjectHandle handle = ObjectHandle::lookup(((Geometry *) object)->getMaterial());
-          result[0] = true;  memcpy(&result[1], &handle, sizeof(ObjectHandle));  break;
+          if (object->managedObjectType != OSP_GEOMETRY ||
+              ((Geometry *) object)->getMaterial() == NULL) return;
+          ObjectHandle handle =
+              ObjectHandle::lookup(((Geometry *) object)->getMaterial());
+          result[0] = true;
+          memcpy(&result[1], &handle, sizeof(ObjectHandle));
+          break;
 
         } case OSP_OBJECT: {
 
           if (param == NULL || param->type != OSP_OBJECT) return;
           ObjectHandle handle = ObjectHandle::lookup(param->ptr);
-          result[0] = true;  memcpy(&result[1], &handle, sizeof(ObjectHandle));  break;
+          result[0] = true;
+          memcpy(&result[1], &handle, sizeof(ObjectHandle));
+          break;
 
         } case OSP_STRING: {
 
           if (param == NULL || param->type != OSP_STRING) return;
           const char *value = param->s;
-          result[0] = true;  memcpy(&result[1], value, strnlen(value, retValSize - 1) + 1);  break;
+          result[0] = true;
+          memcpy(&result[1], value, strnlen(value, retValSize - 1) + 1);
+          break;
 
         } default:  return;
 
@@ -999,6 +1042,13 @@ namespace ospray {
 
   } // ::ospray::coi
 } // ::ospray
+
+void embreeErrorFunc(const RTCError code, const char* str)
+{
+  std::cerr << "#osp: embree internal error " << code << " : " << str
+            << std::endl;
+  throw std::runtime_error("embree internal error '" + std::string(str) + "'");
+}
 
 int main(int ac, const char **av)
 {
@@ -1012,14 +1062,20 @@ int main(int ac, const char **av)
   std::stringstream embreeConfig;
   embreeConfig << "verbose=" << ospray::logLevel;
   if (ospray::debugMode) 
-    embreeConfig << ",threads=1";
+    embreeConfig << " threads=1,verbose=2";
   else if(ospray::numThreads > 0)
     embreeConfig << " threads=" << ospray::numThreads;
-  rtcInit(embreeConfig.str().c_str());
-  //rtcInit("verbose=2,traverser=single,threads=1");
-  //rtcInit("verbose=2,traverser=chunk");
+  ospray::g_embreeDevice = rtcNewDevice(embreeConfig.str().c_str());
 
-  assert(rtcGetError() == RTC_NO_ERROR);
+  rtcDeviceSetErrorFunction(ospray::g_embreeDevice, embreeErrorFunc);
+  RTCError erc = rtcDeviceGetError(ospray::g_embreeDevice);
+  if (erc != RTC_NO_ERROR) {
+    // why did the error function not get called !?
+    std::cerr << "#osp:init: embree internal error number " << (int)erc
+              << std::endl;
+    assert(erc == RTC_NO_ERROR);
+  }
+
   ospray::TiledLoadBalancer::instance = NULL;
 
   COIPipelineStartExecutingRunFunctions();

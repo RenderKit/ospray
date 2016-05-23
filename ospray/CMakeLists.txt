@@ -58,7 +58,8 @@ IF(OSPRAY_USE_EXTERNAL_EMBREE)
     # NOTE(jda) - We are using the updated Embree find_package() config, check
     #             if we need to add TBB to EMBREE_LIBRARIES
     IF(${EMBREE_TASKING_TBB} AND NOT ${EMBREE_USE_PACKAGED_TBB})
-      OSPRAY_WARN_ONCE(EMBREE_FORCE_TBB "WARNING: You *MUST* have TBB installed based on the Embree we found!")
+      OSPRAY_WARN_ONCE(EMBREE_FORCE_TBB
+        "WARNING: You *MUST* have TBB installed based on the Embree we found!")
       FIND_PACKAGE(TBB REQUIRED)
       SET(EMBREE_LIBRARIES ${EMBREE_LIBRARIES} ${TBB_LIBRARIES})
     ENDIF()
@@ -81,7 +82,7 @@ ELSE()
   IF (NOT THIS_IS_MIC)
     INCLUDE(../cmake/build_embree.cmake)
   ENDIF()
-  SET(EMBREE_INCLUDE_DIRS ${OSPRAY_EMBREE_SOURCE_DIR}/include)
+  SET(EMBREE_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/ospray/embree-v2.7.1/include)
   SET(EMBREE_LIBRARY embree)
   SET(EMBREE_LIBRARIES ${EMBREE_LIBRARY})
   SET(EMBREE_LIBRARY_XEONPHI embree_xeonphi)
@@ -105,10 +106,6 @@ SET(OSPRAY_SOURCES
   include/ospray/OSPDataType.h
   include/ospray/OSPTexture.h
 
-  device/buffers.cpp
-  device/command.h
-  device/nwlayer.cpp
-
   math/box.ispc
   math/Distribution2D.ispc
 
@@ -128,6 +125,7 @@ SET(OSPRAY_SOURCES
 
   common/tasking/parallel_for.h
   common/tasking/async.h
+  common/tasking/TaskingTypeTraits.h
   common/tasking/TaskSys.cpp
 
   fb/FrameBuffer.ispc
@@ -210,10 +208,6 @@ SET(OSPRAY_SOURCES
   render/simpleAO/SimpleAOMaterial.cpp
   render/simpleAO/SimpleAOMaterial.ih
   render/simpleAO/SimpleAOMaterial.ispc
-  render/obj/OBJRenderer.ispc
-  render/obj/OBJMaterial.ispc
-  render/obj/OBJRenderer.cpp
-  render/obj/OBJMaterial.cpp
   render/scivis/SciVisRenderer.ispc
   render/scivis/SciVisMaterial.ispc
   render/scivis/SciVisMaterial.ih
@@ -259,6 +253,9 @@ IF (OSPRAY_MPI)
   CONFIGURE_MPI()
 
   SET(OSPRAY_SOURCES ${OSPRAY_SOURCES}
+    mpi/buffers.h
+    mpi/command.h
+
     mpi/MPIDevice.cpp
     mpi/MPICommon.cpp
     mpi/MPILoadBalancer.cpp
@@ -306,9 +303,7 @@ IF (OSPRAY_BUILD_COI_DEVICE)
   # NOTE(jda) - hardcoded paths (!)...use a find_package() here?
   INCLUDE_DIRECTORIES(/opt/intel/mic/coi/include)
   INCLUDE_DIRECTORIES(/usr/include/intel-coi)
-  IF (THIS_IS_MIC)
-    SET(OSPRAY_COI_COMPONENTS api/COIDeviceDev.cpp)
-  ELSE()
+  IF (NOT THIS_IS_MIC)
     SET(OSPRAY_COI_COMPONENTS api/COIDeviceHost.cpp)
   ENDIF()
   SET(OSPRAY_SOURCES ${OSPRAY_SOURCES} ${OSPRAY_COI_COMPONENTS})
@@ -356,8 +351,11 @@ OSPRAY_INSTALL_LIBRARY(ospray)
 
 IF(NOT THIS_IS_MIC)
   # build ospTutorial, for testing
-  ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial)
+  ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial.cpp)
   OSPRAY_EXE_LINK_LIBRARIES(ospTutorial ospray ospray_common)
+  # C version
+  ADD_EXECUTABLE(ospTutorialC ../apps/ospTutorial.c)
+  OSPRAY_EXE_LINK_LIBRARIES(ospTutorialC ospray ospray_common)
 ENDIF()
 
 

@@ -113,6 +113,9 @@ public slots:
   //! Save screenshot.
   void screenshot(std::string filename = std::string());
 
+  //! Quit the volume viewer when pressing escape
+  virtual void keyPressEvent(QKeyEvent * event);
+
   //! Re-commit all OSPRay volumes.
   void commitVolumes();
 

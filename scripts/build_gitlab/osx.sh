@@ -1,7 +1,5 @@
 #/bin/sh
 
-alias nproc='sysctrl -n hw.ncpu'
-
 mkdir build
 cd build
 rm -rf *
@@ -11,4 +9,4 @@ cmake \
 -D OSPRAY_TASKING_SYSTEM=Internal \
 ..
 
-make -j`nproc`
+make -j 4

@@ -257,6 +257,13 @@ void VolumeViewer::screenshot(std::string filename)
   std::cout << (success ? "saved screenshot to " : "failed saving screenshot ") << filename << std::endl;
 }
 
+void VolumeViewer::keyPressEvent(QKeyEvent * event)
+{
+  if (event->key() == Qt::Key_Escape){
+    close();
+  }
+}
+
 void VolumeViewer::commitVolumes()
 {
   for(size_t i=0; i<modelStates.size(); i++)

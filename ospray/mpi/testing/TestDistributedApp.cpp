@@ -16,11 +16,6 @@
 // ======================================================================== //
 
 
-// enable the "mpi distributed" part of the ospray api
-#ifndef OSPRAY_MPI_DISTRIBUTED
-#  define OSPRAY_MPI_DISTRIBUTED
-#endif
-
 #include <mpi.h>
 #include <ospray/ospray.h>
 

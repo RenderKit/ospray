@@ -107,6 +107,9 @@ inline void shadeMaterials(const varying DifferentialGeometry &dg,
       }
     }
   }
+  // BRDF normalization
+  info.Kd = info.Kd * one_over_pi;
+  info.Ks = info.Ks * ((info.Ns + 2.f) * one_over_two_pi);
 }
 
 // AO functions //
@@ -139,6 +142,7 @@ inline float calculateAO(const uniform SciVisRenderer *uniform self,
       hits++;
   }
 
+  // the cosTheta of cosineSampleHemispherePDF and dot(dg.Ns, ao_dir) cancel
   return 1.0f - (float)hits/self->aoSamples;
 }
 
@@ -283,7 +287,8 @@ inline void SciVisRenderer_computeVolumeSample(SciVisRenderer *uniform renderer,
     const vec2f s = make_vec2f(0.5f);
 
     for (uniform uint32 i=0; i<renderer->numLights; i++) {
-      const Light_SampleRes light = renderer->lights[i]->sample(renderer->lights[i], dg, s);
+      const Light_SampleRes light =
+          renderer->lights[i]->sample(renderer->lights[i], dg, s);
       const float cosNL = (gradient.x == 0.f
                            && gradient.y == 0.f
                            && gradient.z == 0.f) ?
@@ -375,9 +380,11 @@ void SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
   }
 }
 
-/*! Returns the first hit volume for the provided ray and sets the ray bounds t0 and t,
-    considering the provided ray offset and any clipping. If no volume is found, the
-    returned volume is NULL and ray.t0 will be set to infinity. */
+/*! Returns the first hit volume for the provided ray and sets the ray bounds
+ *  t0 and t, considering the provided ray offset and any clipping. If no
+ *  volume is found, the returned volume is NULL and ray.t0 will be set to
+ *  infinity.
+ */
 inline Volume *
 SciVisRenderer_intersectVolumes(uniform SciVisRenderer *uniform renderer,
                                 varying Ray &ray,
@@ -399,7 +406,8 @@ SciVisRenderer_intersectVolumes(uniform SciVisRenderer *uniform renderer,
     intersectBox(ray, volume_i->boundingBox, t0, t1);
 
     // Clip against volume clipping box (if specified).
-    if(ne(volume_i->volumeClippingBox.lower, volume_i->volumeClippingBox.upper)) {
+    if(ne(volume_i->volumeClippingBox.lower,
+          volume_i->volumeClippingBox.upper)) {
       float tClip0, tClip1;
       intersectBox(ray, volume_i->volumeClippingBox, tClip0, tClip1);
 
@@ -486,8 +494,10 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
   // Trace the ray through the volume and geometries.
   float firstHit;
 
-  // Geometry contribution.
-  color = color + (1.0f - color.w) * geometryColor;
+  if(geometryRay.t < ray.t0 || volume == NULL) {
+    // Geometry contribution.
+    color = color + (1.0f - color.w) * geometryColor;
+  }
 
   while ((firstHit = min(ray.t0, geometryRay.t)) < tMax
          /*&& min(min(color.x, color.y), color.z) < 1.0f*///<--why is this here?
@@ -600,7 +610,10 @@ export void SciVisRenderer_set(void *uniform _self,
   self->maxDepth = maxDepth;
   self->aoSamples = aoSamples;
   self->aoRayLength = aoRayLength;
-  self->aoWeight = aoWeight;
+
+  // already factor in parts of cosineSampleHemispherePDF
+  self->aoWeight = aoWeight * pi;
+
   self->lights = (const uniform Light *uniform *uniform)lights;
   self->numLights = numLights;
 }
@@ -610,7 +623,7 @@ export void *uniform SciVisRenderer_create(void *uniform cppE)
   uniform SciVisRenderer *uniform self = uniform new uniform SciVisRenderer;
   Renderer_Constructor(&self->super,cppE);
   self->super.renderSample = SciVisRenderer_renderSample;
-  SciVisRenderer_set(self, true, 10, 4, infinity, 1.f, NULL, 0);
+  SciVisRenderer_set(self, true, 10, 4, infinity, 0.25f, NULL, 0);
 
   return self;
 }

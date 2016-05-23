@@ -16,9 +16,11 @@
 
 #pragma once
 
+#include <ospray/common/tasking/TaskingTypeTraits.h>
+
 #ifdef OSPRAY_TASKING_TBB
 #  include <tbb/parallel_for.h>
-#elif defined(OSPRAY_USE_CILK)
+#elif defined(OSPRAY_TASKING_CILK)
 #  include <cilk/cilk.h>
 #elif defined(OSPRAY_TASKING_INTERNAL)
 #  include "ospray/common/tasking/TaskSys.h"
@@ -31,9 +33,14 @@ namespace ospray {
 template<typename TASK_T>
 inline void parallel_for(int nTasks, const TASK_T& fcn)
 {
+  static_assert(has_operator_method_with_integral_param<TASK_T>::value,
+                "ospray::parallel_for() requires the implementation of method "
+                "'void TASK_T::operator(P taskIndex), where P is of type "
+                "short, int, uint, or size_t.");
+
 #ifdef OSPRAY_TASKING_TBB
   tbb::parallel_for(0, nTasks, 1, fcn);
-#elif defined(OSPRAY_USE_CILK)
+#elif defined(OSPRAY_TASKING_CILK)
   cilk_for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
     fcn(taskIndex);
   }
@@ -56,6 +63,22 @@ inline void parallel_for(int nTasks, const TASK_T& fcn)
     fcn(taskIndex);
   }
 #endif
+}
+
+// NOTE(jda) - Allow serial version of parallel_for() without the need to change
+//             the entire tasking system backend (which can trigger rebuild of
+//             Embree).
+template<typename TASK_T>
+inline void serial_for(int nTasks, const TASK_T& fcn)
+{
+  static_assert(has_operator_method_with_integral_param<TASK_T>::value,
+                "ospray::serial_for() requires the implementation of method "
+                "'void TASK_T::operator(P taskIndex), where P is of type "
+                "short, int, uint, or size_t.");
+
+  for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
+    fcn(taskIndex);
+  }
 }
 
 }//namespace ospray

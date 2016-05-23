@@ -189,8 +189,17 @@ RaycastVolumeRenderer_intersectVolumes(uniform RaycastVolumeRenderer *uniform se
     ray = volumeRay;
 
     // If we intersected a volume, offset ray by a fraction of the nominal ray step.
-
-    if (volume) ray.t0 += rayOffset * volume->samplingStep * rcpf(volume->samplingRate);
+    /* make sure that we place the first sample in this block exactly
+       where it would have been if this was not its own block, but
+       rather a region in a larger volume; else we get artifacts */
+    if (volume) {
+      float dt = volume->samplingStep * rcpf(volume->samplingRate);
+      float t0 = ray.t0;
+      int i0 = (int)(ray.t0 / dt);
+      ray.t0 = (i0 + rayOffset)*dt;
+      if (ray.t0 < t0) ray.t0 += dt;
+    }
+    // if (volume) ray.t0 += rayOffset * volume->samplingStep * rcpf(volume->samplingRate);
 
     // Return the first intersected volume.
     return volume;
@@ -611,7 +620,8 @@ export void DDDVRRenderer_renderTile(void*uniform _self,
       depthTexCoord.x = (fgSample.sampleID.x + 0.5f) * fb->rcpSize.x;
       depthTexCoord.y = (fgSample.sampleID.y + 0.5f) * fb->rcpSize.y;
 
-      fgSample.ray.t = get1f(self->maxDepthTexture, depthTexCoord);
+      const float oldT = fgSample.ray.t;
+      fgSample.ray.t = max(get1f(self->maxDepthTexture, depthTexCoord),oldT);
     }
 
     bgSample = fgSample;

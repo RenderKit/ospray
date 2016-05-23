@@ -18,10 +18,6 @@
 #include "ospray/volume/GhostBlockBrickedVolume.h"
 #include "ospray/common/tasking/parallel_for.h"
 #include "GhostBlockBrickedVolume_ispc.h"
-// std
-#include <cassert>
-
-bool g_dbg = 0;
 
 namespace ospray {
 
@@ -86,16 +82,21 @@ namespace ospray {
         + (size_t)regionSize.z;
       if (voxelType == "uchar")
         computeVoxelRange((unsigned char *)source, numVoxelsInRegion);
+      else if (voxelType == "ushort")
+        computeVoxelRange((unsigned short *)source, numVoxelsInRegion);
       else if (voxelType == "float")
         computeVoxelRange((float *)source, numVoxelsInRegion);
       else if (voxelType == "double")
         computeVoxelRange((double *) source, numVoxelsInRegion);
-      else
-        throw std::runtime_error("invalid voxelType in GhostBlockBrickedVolume::setRegion()");
+      else {
+        throw std::runtime_error("invalid voxelType in "
+                                 "GhostBlockBrickedVolume::setRegion()");
+      }
     }
 #endif
     // Copy voxel data into the volume.
     const int NTASKS = regionSize.y * regionSize.z;
+
     parallel_for(NTASKS, [&](int taskIndex){
         ispc::GBBV_setRegion(ispcEquivalent,
                              source,
@@ -112,18 +113,20 @@ namespace ospray {
     // Get the voxel type.
     voxelType = getParamString("voxelType", "unspecified");
     exitOnCondition(getVoxelType() == OSP_UNKNOWN,
-                    "unrecognized voxel type (must be set before calling ospSetRegion())");
+                    "unrecognized voxel type (must be set before calling "
+                    "ospSetRegion())");
 
     // Get the volume dimensions.
     this->dimensions = getParam3i("dimensions", vec3i(0));
     exitOnCondition(reduce_min(this->dimensions) <= 0,
-                    "invalid volume dimensions (must be set before calling ospSetRegion())");
+                    "invalid volume dimensions (must be set before calling "
+                    "ospSetRegion())");
 
     // Create an ISPC GhostBlockBrickedVolume object and assign type-specific
     // function pointers.
     ispcEquivalent = ispc::GBBV_createInstance(this,
-                                               (int)getVoxelType(),
-                                               (const ispc::vec3i &)this->dimensions);
+                                         (int)getVoxelType(),
+                                         (const ispc::vec3i &)this->dimensions);
   }
 
 #ifdef EXP_NEW_BB_VOLUME_KERNELS

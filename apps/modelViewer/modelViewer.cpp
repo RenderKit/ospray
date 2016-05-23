@@ -26,6 +26,7 @@
 // stl
 #include <algorithm>
 #include <sstream>
+#include <string>
 
 namespace ospray {
   using namespace ospcommon;
@@ -50,6 +51,10 @@ namespace ospray {
   bool g_createDefaultMaterial = true;
   int accumID = -1;
   int maxAccum = 64;
+  // If we want to clear the framebuffer after reaching maxAccum accumulations, useful for benchmarking
+  bool accumReset = false;
+  std::string benchmarkImageOut = "benchmark.ppm";
+  bool useDisplay = true;
   int spp = 1; /*! number of samples per pixel */
   int maxDepth = 2; // only set with home/end
   unsigned int maxObjectsToConsider = (uint32_t)-1;
@@ -156,9 +161,17 @@ namespace ospray {
 
     }
 
+    void forceRedraw() override {
+      if (useDisplay) {
+        Glut3DWidget::forceRedraw();
+      }
+    }
+
     void reshape(const ospray::vec2i &newSize) override
     {
-      Glut3DWidget::reshape(newSize);
+      if (useDisplay) {
+        Glut3DWidget::reshape(newSize);
+      }
       g_windowSize = newSize;
       if (fb) ospFreeFrameBuffer(fb);
       fb = ospNewFrameBuffer((const osp::vec2i&)newSize,
@@ -338,23 +351,25 @@ namespace ospray {
       //}
       static double benchStart=0;
       static double fpsSum=0;
-      if (g_benchFrames > 0 && frameID == g_benchWarmup)
-        {
-          benchStart = ospray::getSysTime();
-        }
+      if (g_benchFrames > 0 && frameID == g_benchWarmup) {
+        benchStart = ospray::getSysTime();
+      }
       if (g_benchFrames > 0 && frameID >= g_benchWarmup)
         fpsSum += fps.getFPS();
-      if (g_benchFrames > 0 && frameID== g_benchWarmup+g_benchFrames)
-        {
-          double time = ospray::getSysTime()-benchStart;
-          double avgFps = fpsSum/double(frameID-g_benchWarmup);
-          printf("Benchmark: time: %f avg fps: %f avg frame time: %f\n", time, avgFps, time/double(frameID-g_benchWarmup));
 
-          const uint32_t * p = (uint32_t*)ospMapFrameBuffer(fb, OSP_FB_COLOR);
-          writePPM("benchmark.ppm", g_windowSize.x, g_windowSize.y, p);
+      if (g_benchFrames > 0 && frameID== g_benchWarmup+g_benchFrames) {
+        double time = ospray::getSysTime()-benchStart;
+        double avgFps = fpsSum/double(frameID-g_benchWarmup);
+        std::cout << "Benchmark: time: " << time << " avg fps: " << avgFps
+          << " avg frame time: " << time/double(frameID-g_benchWarmup) << "s\n"
+          << "Saving benchmark image result to " << benchmarkImageOut.c_str() << std::endl;
 
-          exit(0);
-        }
+        const uint32_t * p = (uint32_t*)ospMapFrameBuffer(fb, OSP_FB_COLOR);
+
+        writePPM(benchmarkImageOut.c_str(), g_windowSize.x, g_windowSize.y, p);
+
+        exit(0);
+      }
       ++frameID;
 
       if (viewPort.modified) {
@@ -382,7 +397,9 @@ namespace ospray {
       if (outFileName) {
         ospSet1i(renderer,"spp",numSPPinFileOutput);
         ospCommit(renderer);
-        std::cout << "#ospModelViewer: Renderering offline image with " << numSPPinFileOutput << " samples per pixel per frame, and accumulation of " << numAccumsFrameInFileOutput << " such frames" << endl;
+        std::cout << "#ospModelViewer: Renderering offline image with " << numSPPinFileOutput
+          << " samples per pixel per frame, and accumulation of " << numAccumsFrameInFileOutput
+          << " such frames" << endl;
         for (int i=0;i<numAccumsFrameInFileOutput;i++) {
           ospRenderFrame(fb,renderer,OSP_FB_COLOR|OSP_FB_ACCUM);
           ucharFB = (uint32_t *) ospMapFrameBuffer(fb, OSP_FB_COLOR);
@@ -401,11 +418,21 @@ namespace ospray {
         ospRenderFrame(displayWall->fb,renderer,OSP_FB_COLOR|OSP_FB_ACCUM);
       ++accumID;
 
+      // If we reach max accumulation clear the framebuffer
+      if (accumID == maxAccum && accumReset) {
+        accumID = 0;
+        ospFrameBufferClear(fb,OSP_FB_ACCUM);
+        if (displayWall)
+          ospFrameBufferClear(displayWall->fb,OSP_FB_ACCUM);
+      }
+
       // set the glut3d widget's frame buffer to the opsray frame buffer, then display
       ucharFB = (uint32_t *) ospMapFrameBuffer(fb, OSP_FB_COLOR);
       frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
 
-      Glut3DWidget::display();
+      if (useDisplay) {
+        Glut3DWidget::display();
+      }
 
       // that pointer is no longer valid, so set it to null
       ucharFB = NULL;
@@ -413,15 +440,11 @@ namespace ospray {
       char title[1000];
 
       if (alwaysRedraw) {
-        sprintf(title,"OSPRay Model Viewer (%f fps)",
-                fps.getFPS());
+        sprintf(title,"OSPRay Model Viewer (%f fps)", fps.getFPS());
         setTitle(title);
         forceRedraw();
       } else if (accumID < maxAccum) {
         forceRedraw();
-      } else {
-        // sprintf(title,"OSPRay Model Viewer");
-        // setTitle(title);
       }
     }
 
@@ -568,6 +591,9 @@ namespace ospray {
   {
     msgModel = new miniSG::Model;
 
+    std::vector<OSPLight> lights;
+    OSPTexture2D ospBackplate = NULL;
+
     cout << "#ospModelViewer: starting to process cmdline arguments" << endl;
     for (int i=1;i<ac;i++) {
       const std::string arg = av[i];
@@ -592,6 +618,8 @@ namespace ospray {
         // shortcut for '--renderer pathtracer'
         maxAccum = 1024;
         rendererType = "pathtracer";
+      } else if (arg == "--nowin") {
+        useDisplay = false;
       } else if (arg == "--sun-dir") {
         if (!strcmp(av[i+1],"none")) {
           defaultDirLight_direction = vec3f(0.f);
@@ -613,20 +641,54 @@ namespace ospray {
         displayWall->streamName = av[++i];
         displayWall->size.x = atof(av[++i]);
         displayWall->size.y = atof(av[++i]);
-      } else if (arg == "-bench") {
-        if (++i < ac)
+      } else if (arg == "--max-depth") {
+        maxDepth = atoi(av[++i]);
+      } else if (arg == "--max-accum") {
+        maxAccum = atoi(av[++i]);
+      } else if (arg == "--accum-reset") {
+        accumReset = true;
+      } else if (arg == "--bench") {
+        if (++i < ac) {
+          std::string arg2(av[i]);
+          size_t pos = arg2.find("x");
+          if (pos != std::string::npos)
           {
-            std::string arg2(av[i]);
-            size_t pos = arg2.find("x");
-            if (pos != std::string::npos)
-              {
-                arg2.replace(pos, 1, " ");
-                std::stringstream ss(arg2);
-                ss >> g_benchWarmup >> g_benchFrames;
-              }
+            arg2.replace(pos, 1, " ");
+            std::stringstream ss(arg2);
+            ss >> g_benchWarmup >> g_benchFrames;
           }
+        }
+        std::cout << "Benchmarking with " << g_benchWarmup << " warmup frames and "
+          << g_benchFrames << " timing frames" << std::endl;
+      } else if (arg == "--bench-out") {
+        benchmarkImageOut = std::string(av[++i]);
       } else if (arg == "--no-default-material") {
         g_createDefaultMaterial = false;
+      } else if (arg == "--hdri-light") {
+        // Syntax for HDRI light is the same as Embree:
+        // --hdri-light L.r L.g L.b <image file>.(pfm|ppm)
+        OSPLight ospHdri = ospNewLight(ospRenderer, "hdri");
+        ospSetString(ospHdri, "name", "hdri_test");
+        ospSet3f(ospHdri, "up", 0.f, 0.f, 1.f);
+        ospSet3f(ospHdri, "dir", 0.f, 1.f, 0.0f);
+        vec3f intensity(atof(av[++i]), atof(av[++i]), atof(av[++i]));
+        ospSet3f(ospHdri, "intensity", intensity.x, intensity.y, intensity.z);
+        FileName imageFile(av[++i]);
+        miniSG::Texture2D *lightMap = miniSG::loadTexture(imageFile.path(), imageFile.base());
+        if (lightMap == NULL){
+          std::cout << "Failed to load hdri-light texture '" << imageFile << "'" << std::endl;
+        }
+        OSPTexture2D ospLightMap = createTexture2D(lightMap);
+        ospSetObject(ospHdri, "map", ospLightMap);
+        ospCommit(ospHdri);
+        lights.push_back(ospHdri);
+      } else if (arg == "--backplate") {
+        FileName imageFile(av[++i]);
+        miniSG::Texture2D *backplate = miniSG::loadTexture(imageFile.path(), imageFile.base());
+        if (backplate == NULL){
+          std::cout << "Failed to load backplate texture '" << imageFile << "'" << std::endl;
+        }
+        ospBackplate = createTexture2D(backplate);
       } else if (av[i][0] == '-') {
         error("unknown commandline argument '"+arg+"'");
       } else {
@@ -688,6 +750,9 @@ namespace ospray {
     ospModel = ospNewModel();
 
     ospRenderer = ospNewRenderer(rendererType.c_str());
+    if (ospBackplate != NULL){
+      ospSetObject(ospRenderer, "backplate", ospBackplate);
+    }
 
     // Set renderer defaults (if not using 'aoX' renderers)
     if (rendererType[0] != 'a' && rendererType[1] != 'o')
@@ -868,10 +933,7 @@ namespace ospray {
     ospCommit(ospModel);
     cout << "#ospModelViewer: done creating ospray model." << endl;
 
-    //TODO: Need to figure out where we're going to read lighting data from
-    //begin light test
-    std::vector<OSPLight> lights;
-    if (defaultDirLight_direction != vec3f(0.f)) {
+    if (defaultDirLight_direction != vec3f(0.0)) {
       cout << "#ospModelViewer: Adding a hard coded directional light as the sun." << endl;
       OSPLight ospLight = ospNewLight(ospRenderer, "DirectionalLight");
       ospSetString(ospLight, "name", "sun" );
@@ -922,16 +984,6 @@ namespace ospray {
     ospSet1f(ospQuad, "intensity", 45.f);
     ospCommit(ospQuad);
     lights.push_back(ospQuad);
-    //HDRI light
-    cout << "#ospModelViewer: Adding a hard coded hdrilight for test." << endl;
-    OSPLight ospHdri = ospNewLight(ospRenderer, "hdri");
-    ospSetString(ospHdri, "name", "hdri_test");
-    ospSet3f(ospHdri, "up", 0.f, 0.f, 1.f);
-    ospSet3f(ospHdri, "dir", 0.f, 1.f, 0.0f);
-    ospSet1f(ospHdri, "intensity", 10.f);
-    ospSetObject(ospHdri, "map", g_tex);
-    ospCommit(ospHdri);
-    lights.push_back(ospHdri);
 #endif
     OSPData lightArray = ospNewData(lights.size(), OSP_OBJECT, &lights[0], 0);
     ospSetData(ospRenderer, "lights", lightArray);
@@ -942,7 +994,6 @@ namespace ospray {
     // create viewer window
     // -------------------------------------------------------
     MSGViewer window(ospModel,ospRenderer);
-    window.create("ospModelViewer: OSPRay Mini-Scene Graph test viewer");
     printf("#ospModelViewer: done creating window. Press 'Q' to quit.\n");
     const box3f worldBounds(msgModel->getBBox());
     window.setWorldBounds(worldBounds);
@@ -952,7 +1003,16 @@ namespace ospray {
                          msgModel->camera[0]->at,
                          msgModel->camera[0]->up);
     }
-    ospray::glut3D::runGLUT();
+    if (useDisplay) {
+      window.create("ospModelViewer: OSPRay Mini-Scene Graph test viewer");
+      ospray::glut3D::runGLUT();
+    } else {
+      window.reshape(window.defaultInitSize);
+      while (true)
+      {
+        window.display();
+      }
+    }
   }
 }
 

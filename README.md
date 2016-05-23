@@ -1,7 +1,7 @@
 OSPRay
 ======
 
-This is release v0.9.1 of OSPRay. For changes and new features see the
+This is release v0.10.0 of OSPRay. For changes and new features see the
 [changelog](CHANGELOG.md). Also visit http://www.ospray.org for more
 information.
 
@@ -161,7 +161,8 @@ Tutorial
 --------
 
 A minimal working example demonstrating how to use OSPRay can be found
-at `apps/ospTutorial.cpp`. On Linux build it in the build_directory with
+at `apps/ospTutorial.cpp`^[A C99 version is available at
+`apps/ospTutorial.c`.]. On Linux build it in the build_directory with
 
     g++ ../apps/ospTutorial.cpp -I ../ospray/include -I .. -I ../ospray/embree/common \
       ./libospray.so -Wl,-rpath,. -o ospTutorial

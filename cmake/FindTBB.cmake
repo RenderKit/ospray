@@ -50,6 +50,7 @@ IF (WIN32)
     HINTS ${TBB_ROOT}
     PATHS
       ${PROJECT_SOURCE_DIR}/tbb
+      ${PROJECT_SOURCE_DIR}/../tbb
       "${PROGRAMFILES32}/IntelSWTools/compilers_and_libraries/windows/tbb"
       "${PROGRAMFILES32}/Intel/Composer XE/tbb"
       "${PROGRAMFILES32}/Intel/compilers_and_libraries/windows/tbb"

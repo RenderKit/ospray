@@ -29,5 +29,7 @@ OSP_REGISTER_VOLUME_FILE(RawVolumeFile, gz);
 // Loader for PLY triangle mesh files.
 OSP_REGISTER_TRIANGLEMESH_FILE(PLYTriangleMeshFile, ply);
 
-// Loader for RAW volume files.
+// Loader for LLNL Richtmyer-Meshkov volume files.
 OSP_REGISTER_VOLUME_FILE(RMVolumeFile, bob);
+OSP_REGISTER_OBJECT_FILE(RMObjectFile, bob);
+
