@@ -344,7 +344,6 @@ namespace ospray {
 
   const void *DFB::mapDepthBuffer()
   {
-    PING; fflush(0);
     if (!localFBonMaster) {
       throw std::runtime_error("#osp:mpi:dfb: tried to 'ospMap()' the depth "
                                "buffer of a frame buffer that doesn't have a "
