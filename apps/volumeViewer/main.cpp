@@ -42,9 +42,9 @@ void printUsage(const char *exeName)
               << "    --slice <filename>                      load volume slice from 'filename'\n"
               << "    --transferfunction <filename>           load transfer function from 'filename'\n"
               << "    --viewsize <width>x<height>             force OSPRay view size to 'width'x'height'\n"
-              << "    --vu <x> <y> <z>                        set viewport up vector to ('x', 'y', 'z')\n"
-              << "    --vp <x> <y> <z>                        set camera position ('x', 'y', 'z')\n"
-              << "    --vi <x> <y> <z>                        set look at position ('x', 'y', 'z')\n"
+              << "    -vu <x> <y> <z>                         set viewport up vector to ('x', 'y', 'z')\n"
+              << "    -vp <x> <y> <z>                         set camera position ('x', 'y', 'z')\n"
+              << "    -vi <x> <y> <z>                         set look at position ('x', 'y', 'z')\n"
               << "    -r,--renderer <renderer>                set renderer to use\n"
               << "    --writeframes <filename>                emit frames to 'filename_xxxxx.ppm'\n"
               << "    --benchmark <warm-up frames> <frames>   perform benchmarking\n"
@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
 
       } else throw std::runtime_error("improperly formatted <width>x<height> argument");
 
-    } else if (arg == "--vu") {
+    } else if (arg == "-vu") {
 
       if (i + 3 >= argc) throw std::runtime_error("missing <x> <y> <z> arguments");
 
@@ -168,9 +168,9 @@ int main(int argc, char *argv[])
       viewUp.y = atof(argv[++i]);
       viewUp.z = atof(argv[++i]);
 
-      std::cout << "got viewup (--vu) = " << viewUp.x << " " << viewUp.y << " " << viewUp.z << std::endl;
+      std::cout << "got viewup (-vu) = " << viewUp.x << " " << viewUp.y << " " << viewUp.z << std::endl;
 
-    } else if (arg == "--vp") {
+    } else if (arg == "-vp") {
 
       if (i + 3 >= argc) throw std::runtime_error("missing <x> <y> <z> arguments");
 
@@ -178,9 +178,9 @@ int main(int argc, char *argv[])
       viewFrom.y = atof(argv[++i]);
       viewFrom.z = atof(argv[++i]);
 
-      std::cout << "got view-from (--vp) = " << viewFrom.x << " " << viewFrom.y << " " << viewFrom.z << std::endl;
+      std::cout << "got view-from (-vp) = " << viewFrom.x << " " << viewFrom.y << " " << viewFrom.z << std::endl;
 
-    } else if (arg == "--vi") {
+    } else if (arg == "-vi") {
 
       if (i + 3 >= argc) throw std::runtime_error("missing <x> <y> <z> arguments");
 
@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
       viewAt.y = atof(argv[++i]);
       viewAt.z = atof(argv[++i]);
 
-      std::cout << "got view-at (--vi) = " << viewAt.x << " " << viewAt.y << " " << viewAt.z << std::endl;
+      std::cout << "got view-at (-vi) = " << viewAt.x << " " << viewAt.y << " " << viewAt.z << std::endl;
 
     } else if (arg == "--writeframes") {
 
