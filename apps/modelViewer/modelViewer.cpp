@@ -50,6 +50,8 @@ namespace ospray {
   bool g_createDefaultMaterial = true;
   int accumID = -1;
   int maxAccum = 64;
+  // If we want to clear the framebuffer after reaching maxAccum accumulations, useful for benchmarking
+  bool accumReset = false;
   bool useDisplay = true;
   int spp = 1; /*! number of samples per pixel */
   int maxDepth = 2; // only set with home/end
@@ -157,9 +159,17 @@ namespace ospray {
 
     }
 
+    void forceRedraw() override {
+      if (useDisplay) {
+        Glut3DWidget::forceRedraw();
+      }
+    }
+
     void reshape(const ospray::vec2i &newSize) override
     {
-      Glut3DWidget::reshape(newSize);
+      if (useDisplay) {
+        Glut3DWidget::reshape(newSize);
+      }
       g_windowSize = newSize;
       if (fb) ospFreeFrameBuffer(fb);
       fb = ospNewFrameBuffer((const osp::vec2i&)newSize,
@@ -339,23 +349,22 @@ namespace ospray {
       //}
       static double benchStart=0;
       static double fpsSum=0;
-      if (g_benchFrames > 0 && frameID == g_benchWarmup)
-        {
-          benchStart = ospray::getSysTime();
-        }
+      if (g_benchFrames > 0 && frameID == g_benchWarmup) {
+        benchStart = ospray::getSysTime();
+      }
       if (g_benchFrames > 0 && frameID >= g_benchWarmup)
         fpsSum += fps.getFPS();
-      if (g_benchFrames > 0 && frameID== g_benchWarmup+g_benchFrames)
-        {
-          double time = ospray::getSysTime()-benchStart;
-          double avgFps = fpsSum/double(frameID-g_benchWarmup);
-          printf("Benchmark: time: %f avg fps: %f avg frame time: %f\n", time, avgFps, time/double(frameID-g_benchWarmup));
 
-          const uint32_t * p = (uint32_t*)ospMapFrameBuffer(fb, OSP_FB_COLOR);
-          writePPM("benchmark.ppm", g_windowSize.x, g_windowSize.y, p);
+      if (g_benchFrames > 0 && frameID== g_benchWarmup+g_benchFrames) {
+        double time = ospray::getSysTime()-benchStart;
+        double avgFps = fpsSum/double(frameID-g_benchWarmup);
+        printf("Benchmark: time: %f avg fps: %f avg frame time: %fs\n", time, avgFps, time/double(frameID-g_benchWarmup));
 
-          exit(0);
-        }
+        const uint32_t * p = (uint32_t*)ospMapFrameBuffer(fb, OSP_FB_COLOR);
+        writePPM("benchmark.ppm", g_windowSize.x, g_windowSize.y, p);
+
+        exit(0);
+      }
       ++frameID;
 
       if (viewPort.modified) {
@@ -383,7 +392,9 @@ namespace ospray {
       if (outFileName) {
         ospSet1i(renderer,"spp",numSPPinFileOutput);
         ospCommit(renderer);
-        std::cout << "#ospModelViewer: Renderering offline image with " << numSPPinFileOutput << " samples per pixel per frame, and accumulation of " << numAccumsFrameInFileOutput << " such frames" << endl;
+        std::cout << "#ospModelViewer: Renderering offline image with " << numSPPinFileOutput
+          << " samples per pixel per frame, and accumulation of " << numAccumsFrameInFileOutput
+          << " such frames" << endl;
         for (int i=0;i<numAccumsFrameInFileOutput;i++) {
           ospRenderFrame(fb,renderer,OSP_FB_COLOR|OSP_FB_ACCUM);
           ucharFB = (uint32_t *) ospMapFrameBuffer(fb, OSP_FB_COLOR);
@@ -402,11 +413,21 @@ namespace ospray {
         ospRenderFrame(displayWall->fb,renderer,OSP_FB_COLOR|OSP_FB_ACCUM);
       ++accumID;
 
+      // If we reach max accumulation clear the framebuffer
+      if (accumID == maxAccum && accumReset) {
+        accumID = 0;
+        ospFrameBufferClear(fb,OSP_FB_ACCUM);
+        if (displayWall)
+          ospFrameBufferClear(displayWall->fb,OSP_FB_ACCUM);
+      }
+
       // set the glut3d widget's frame buffer to the opsray frame buffer, then display
       ucharFB = (uint32_t *) ospMapFrameBuffer(fb, OSP_FB_COLOR);
       frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
 
-      Glut3DWidget::display();
+      if (useDisplay) {
+        Glut3DWidget::display();
+      }
 
       // that pointer is no longer valid, so set it to null
       ucharFB = NULL;
@@ -414,15 +435,11 @@ namespace ospray {
       char title[1000];
 
       if (alwaysRedraw) {
-        sprintf(title,"OSPRay Model Viewer (%f fps)",
-                fps.getFPS());
+        sprintf(title,"OSPRay Model Viewer (%f fps)", fps.getFPS());
         setTitle(title);
         forceRedraw();
       } else if (accumID < maxAccum) {
         forceRedraw();
-      } else {
-        // sprintf(title,"OSPRay Model Viewer");
-        // setTitle(title);
       }
     }
 
@@ -618,18 +635,23 @@ namespace ospray {
         displayWall->size.y = atof(av[++i]);
       } else if (arg == "--max-depth") {
         maxDepth = atoi(av[++i]);
+      } else if (arg == "--max-accum") {
+        maxAccum = atoi(av[++i]);
+      } else if (arg == "--accum-reset") {
+        accumReset = true;
       } else if (arg == "--bench") {
-        if (++i < ac)
+        if (++i < ac) {
+          std::string arg2(av[i]);
+          size_t pos = arg2.find("x");
+          if (pos != std::string::npos)
           {
-            std::string arg2(av[i]);
-            size_t pos = arg2.find("x");
-            if (pos != std::string::npos)
-              {
-                arg2.replace(pos, 1, " ");
-                std::stringstream ss(arg2);
-                ss >> g_benchWarmup >> g_benchFrames;
-              }
+            arg2.replace(pos, 1, " ");
+            std::stringstream ss(arg2);
+            ss >> g_benchWarmup >> g_benchFrames;
           }
+        }
+        std::cout << "Benchmarking with " << g_benchWarmup << " warmup frames and "
+          << g_benchFrames << " timing frames" << std::endl;
       } else if (arg == "--no-default-material") {
         g_createDefaultMaterial = false;
       } else if (av[i][0] == '-') {
@@ -947,7 +969,6 @@ namespace ospray {
     // create viewer window
     // -------------------------------------------------------
     MSGViewer window(ospModel,ospRenderer);
-    window.create("ospModelViewer: OSPRay Mini-Scene Graph test viewer");
     printf("#ospModelViewer: done creating window. Press 'Q' to quit.\n");
     const box3f worldBounds(msgModel->getBBox());
     window.setWorldBounds(worldBounds);
@@ -957,10 +978,10 @@ namespace ospray {
                          msgModel->camera[0]->at,
                          msgModel->camera[0]->up);
     }
-    if (useDisplay)
+    if (useDisplay) {
+      window.create("ospModelViewer: OSPRay Mini-Scene Graph test viewer");
       ospray::glut3D::runGLUT();
-    else
-    {
+    } else {
       window.reshape(window.defaultInitSize);
       while (true)
       {
