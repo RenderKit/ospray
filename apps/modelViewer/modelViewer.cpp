@@ -592,6 +592,8 @@ namespace ospray {
     msgModel = new miniSG::Model;
 
     std::vector<OSPLight> lights;
+    OSPTexture2D ospBackplate = NULL;
+
     cout << "#ospModelViewer: starting to process cmdline arguments" << endl;
     for (int i=1;i<ac;i++) {
       const std::string arg = av[i];
@@ -680,6 +682,13 @@ namespace ospray {
         ospSetObject(ospHdri, "map", ospLightMap);
         ospCommit(ospHdri);
         lights.push_back(ospHdri);
+      } else if (arg == "--backplate") {
+        FileName imageFile(av[++i]);
+        miniSG::Texture2D *backplate = miniSG::loadTexture(imageFile.path(), imageFile.base());
+        if (backplate == NULL){
+          std::cout << "Failed to load backplate texture '" << imageFile << "'" << std::endl;
+        }
+        ospBackplate = createTexture2D(backplate);
       } else if (av[i][0] == '-') {
         error("unknown commandline argument '"+arg+"'");
       } else {
@@ -741,6 +750,9 @@ namespace ospray {
     ospModel = ospNewModel();
 
     ospRenderer = ospNewRenderer(rendererType.c_str());
+    if (ospBackplate != NULL){
+      ospSetObject(ospRenderer, "backplate", ospBackplate);
+    }
 
     // Set renderer defaults (if not using 'aoX' renderers)
     if (rendererType[0] != 'a' && rendererType[1] != 'o')
