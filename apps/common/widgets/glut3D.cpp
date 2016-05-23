@@ -425,11 +425,18 @@ namespace ospray {
 
     void initGLUT(int32_t *ac, const char **av)
     {
-      glutInit(ac, (char **) av);
+      bool useWindow = true;
+      for (int i = 1; i < *ac;i++){
+          std::string arg(av[i]);
+          if (arg == "--nowin") {
+            useWindow = false;
+          }
+      }
 
-
-      // glutInitDisplayMode (GLUT_RGBA | GLUT_SINGLE);
-      glutInitDisplayMode (GLUT_RGBA | GLUT_DOUBLE);
+      if (useWindow) {
+        glutInit(ac, (char **) av);
+        glutInitDisplayMode (GLUT_RGBA | GLUT_DOUBLE);
+      }
 
       for(int i = 1; i < *ac;i++)
         {
