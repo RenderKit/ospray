@@ -26,6 +26,32 @@
 // qt
 #include <QtGui>
 
+void printUsage(const char *exeName)
+{
+    std::cerr << "\n  USAGE:  " << exeName << " <filename> [filenames...] [options]\n"
+              << " \n"
+              << "  Options:\n"
+              << "    --benchmark <warm-up frames> <frames>   run benchmark and report overall frame rate\n"
+              << "    --dt <dt>                               use ray cast sample step size 'dt'\n"
+              << "    --module <moduleName>                   load the module 'moduleName'\n"
+              << "    --ply <filename>                        load PLY geometry from 'filename'\n"
+              << "    --rotate <rate>                         automatically rotate view according to 'rate'\n"
+              << "    --fps,--show-framerate                  show the frame rate in the window title bar\n"
+              << "    --fullscreen                            enter fullscreen mode\n"
+              << "    --own-model-per-object                  create a separate model for each object\n"
+              << "    --slice <filename>                      load volume slice from 'filename'\n"
+              << "    --transferfunction <filename>           load transfer function from 'filename'\n"
+              << "    --viewsize <width>x<height>             force OSPRay view size to 'width'x'height'\n"
+              << "    --vu <x> <y> <z>                        set viewport up vector to ('x', 'y', 'z')\n"
+              << "    --vp <x> <y> <z>                        set camera position ('x', 'y', 'z')\n"
+              << "    --vi <x> <y> <z>                        set look at position ('x', 'y', 'z')\n"
+              << "    -r,--renderer <renderer>                set renderer to use\n"
+              << "    --writeframes <filename>                emit frames to 'filename_xxxxx.ppm'\n"
+              << "    --benchmark <warm-up frames> <frames>   perform benchmarking\n"
+              << "    -h,--help                               print this message\n"
+              << " \n";
+}
+
 int main(int argc, char *argv[])
 {
   // Initialize OSPRay.
@@ -36,35 +62,9 @@ int main(int argc, char *argv[])
 
   // Print the command line usage.
   if (argc < 2) {
-
-    std::cerr << " "                                                                                        << std::endl;
-    std::cerr << "  USAGE:  " << argv[0] << " <filename> [filename] ... [options]"                          << std::endl;
-    std::cerr << " "                                                                                        << std::endl;
-    std::cerr << "  Options:"                                                                               << std::endl;
-    std::cerr << " "                                                                                        << std::endl;
-    std::cerr << "    -benchmark <warm-up frames> <frames> : run benchmark and report overall frame rate"   << std::endl;
-    std::cerr << "    -dt <dt>                             : use ray cast sample step size 'dt'"            << std::endl;
-    std::cerr << "    -module <moduleName>                 : load the module 'moduleName'"                  << std::endl;
-    std::cerr << "    -ply <filename>                      : load PLY geometry from 'filename'"             << std::endl;
-    std::cerr << "    -rotate <rate>                       : automatically rotate view according to 'rate'" << std::endl;
-    std::cerr << "    -showframerate                       : show the frame rate in the window title bar"   << std::endl;
-    std::cerr << "    -fullscreen                          : enter fullscreen mode"                         << std::endl;
-    std::cerr << "    -ownmodelperobject                   : create a separate model for each object"       << std::endl;
-    std::cerr << "    -slice <filename>                    : load volume slice from 'filename'"             << std::endl;
-    std::cerr << "    -transferfunction <filename>         : load transfer function from 'filename'"        << std::endl;
-    std::cerr << "    -viewsize <width>x<height>           : force OSPRay view size to 'width'x'height'"    << std::endl;
-    std::cerr << "    -viewup <x> <y> <z>                  : set viewport up vector to ('x', 'y', 'z')"     << std::endl;
-    std::cerr << "    -writeframes <filename>              : emit frames to 'filename_xxxxx.ppm'"           << std::endl;
-    std::cerr << " "                                                                                        << std::endl;
-
+    printUsage(argv[0]);
     return 1;
   }
-
-  // // Parse the OSPRay object file filenames.
-  // std::vector<std::string> objectFileFilenames;
-
-  // for (size_t i=1 ; (i < argc) && (argv[i][0] != '-') ; i++)
-  //   objectFileFilenames.push_back(std::string(argv[i]));
 
   // Default values for the optional command line arguments.
   float dt = 0.0f;
@@ -86,68 +86,66 @@ int main(int argc, char *argv[])
 
   std::vector<std::string> inFileName;
   // Parse the optional command line arguments.
-  for (int i=// objectFileFilenames.size() + 
-         1 ; i < argc ; i++) {
+  for (int i = 1; i < argc; ++i) {
 
     const std::string arg = argv[i];
 
-    if (arg == "-dt") {
+    if (arg == "--dt") {
 
       if (i + 1 >= argc) throw std::runtime_error("missing <dt> argument");
       dt = atof(argv[++i]);
       std::cout << "got dt = " << dt << std::endl;
 
-    } else if (arg == "-ply") {
+    } else if (arg == "--ply") {
 
-      // Note: we use "-ply" since "-geometry" gets parsed elsewhere...
       if (i + 1 >= argc) throw std::runtime_error("missing <filename> argument");
       plyFilenames.push_back(std::string(argv[++i]));
       std::cout << "got PLY filename = " << plyFilenames.back() << std::endl;
 
-    } else if (arg == "-rotate") {
+    } else if (arg == "--rotate") {
 
       if (i + 1 >= argc) throw std::runtime_error("missing <rate> argument");
       rotationRate = atof(argv[++i]);
       std::cout << "got rotationRate = " << rotationRate << std::endl;
 
-    } else if (arg == "-slice") {
+    } else if (arg == "--slice") {
 
       if (i + 1 >= argc) throw std::runtime_error("missing <filename> argument");
       sliceFilenames.push_back(std::string(argv[++i]));
       std::cout << "got slice filename = " << sliceFilenames.back() << std::endl;
 
-    } else if (arg == "-showframerate" || arg == "-fps") {
+    } else if (arg == "--show-framerate" || arg == "--fps") {
 
       showFrameRate = true;
       std::cout << "set show frame rate" << std::endl;
 
-    } else if (arg == "-fullscreen") {
+    } else if (arg == "--fullscreen") {
 
       fullScreen = true;
       std::cout << "go full screen" << std::endl;
 
-    } else if (arg == "-ownmodelperobject") {
+    } else if (arg == "--own-model-per-object") {
 
       ownModelPerObject = true;
 
-    } else if (arg == "-transferfunction") {
+    } else if (arg == "--transferfunction") {
 
       if (i + 1 >= argc) throw std::runtime_error("missing <filename> argument");
       transferFunctionFilename = std::string(argv[++i]);
       std::cout << "got transferFunctionFilename = " << transferFunctionFilename << std::endl;
 
-    } else if (arg == "-benchmark") {
+    } else if (arg == "--benchmark") {
 
       if (i + 2 >= argc) throw std::runtime_error("missing <warm-up frames> <frames> arguments");
       benchmarkWarmUpFrames = atoi(argv[++i]);
       benchmarkFrames = atoi(argv[++i]);
       std::cout << "got benchmarkWarmUpFrames = " << benchmarkWarmUpFrames << ", benchmarkFrames = " << benchmarkFrames << std::endl;
 
-    }  else if (arg == "-r" || arg == "-renderer") {
+    }  else if (arg == "-r" || arg == "--renderer") {
 
       renderer = argv[++i];
 
-    } else if (arg == "-viewsize") {
+    } else if (arg == "--viewsize") {
 
       if (i + 1 >= argc) throw std::runtime_error("missing <width>x<height> argument");
       std::string arg2(argv[++i]);
@@ -162,7 +160,7 @@ int main(int argc, char *argv[])
 
       } else throw std::runtime_error("improperly formatted <width>x<height> argument");
 
-    } else if (arg == "-viewup" || arg == "-vu") {
+    } else if (arg == "--vu") {
 
       if (i + 3 >= argc) throw std::runtime_error("missing <x> <y> <z> arguments");
 
@@ -170,9 +168,9 @@ int main(int argc, char *argv[])
       viewUp.y = atof(argv[++i]);
       viewUp.z = atof(argv[++i]);
 
-      std::cout << "got viewup (-vu) = " << viewUp.x << " " << viewUp.y << " " << viewUp.z << std::endl;
+      std::cout << "got viewup (--vu) = " << viewUp.x << " " << viewUp.y << " " << viewUp.z << std::endl;
 
-    } else if (arg == "-vp") {
+    } else if (arg == "--vp") {
 
       if (i + 3 >= argc) throw std::runtime_error("missing <x> <y> <z> arguments");
 
@@ -180,9 +178,9 @@ int main(int argc, char *argv[])
       viewFrom.y = atof(argv[++i]);
       viewFrom.z = atof(argv[++i]);
 
-      std::cout << "got view-from (-vp) = " << viewFrom.x << " " << viewFrom.y << " " << viewFrom.z << std::endl;
+      std::cout << "got view-from (--vp) = " << viewFrom.x << " " << viewFrom.y << " " << viewFrom.z << std::endl;
 
-    } else if (arg == "-vi") {
+    } else if (arg == "--vi") {
 
       if (i + 3 >= argc) throw std::runtime_error("missing <x> <y> <z> arguments");
 
@@ -190,15 +188,15 @@ int main(int argc, char *argv[])
       viewAt.y = atof(argv[++i]);
       viewAt.z = atof(argv[++i]);
 
-      std::cout << "got view-at (-vi) = " << viewAt.x << " " << viewAt.y << " " << viewAt.z << std::endl;
+      std::cout << "got view-at (--vi) = " << viewAt.x << " " << viewAt.y << " " << viewAt.z << std::endl;
 
-    } else if (arg == "-writeframes") {
+    } else if (arg == "--writeframes") {
 
-      if (i + 1 >= argc || argv[i + 1][0] == '-') throw std::runtime_error("the '-writeframes' option requires a filename argument");
+      if (i + 1 >= argc || argv[i + 1][0] == '-') throw std::runtime_error("the '--writeframes' option requires a filename argument");
       writeFramesFilename = argv[++i];
       std::cout << "got writeFramesFilename = " << writeFramesFilename << std::endl;
 
-    } else if (arg == "-module") {
+    } else if (arg == "--module") {
 
       if (i + 1 >= argc) throw std::runtime_error("missing <moduleName> argument");
       std::string moduleName = argv[++i];
@@ -210,11 +208,16 @@ int main(int argc, char *argv[])
         ss << error;
         throw std::runtime_error("could not load module " + moduleName + ", error " + ss.str());
       }
-
-    } else if (arg[0] == '-')
+    } else if (arg == "-h" || arg == "--help") {
+      printUsage(argv[0]);
+      return 0;
+    } else if (arg[0] == '-') {
+      std::cerr << "Unknown parameter " + arg << std::endl;
+      printUsage(argv[0]);
       throw std::runtime_error("unknown parameter " + arg);
-    else 
+    } else {
       inFileName.push_back(arg);
+    }
 
   }
 

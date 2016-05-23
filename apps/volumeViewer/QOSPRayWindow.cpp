@@ -25,9 +25,9 @@
 
 std::ostream &operator<<(std::ostream &o, const Viewport &viewport)
 {
-  o <<  "-vp " << viewport.from.x << " " << viewport.from.y << " " << viewport.from.z
-    << " -vi " << viewport.at.x   << " " << viewport.at.y   << " " << viewport.at.z
-    << " -vu " << viewport.up.x   << " " << viewport.up.y   << " " << viewport.up.z
+  o <<  "--vp " << viewport.from.x << " " << viewport.from.y << " " << viewport.from.z
+    << " --vi " << viewport.at.x   << " " << viewport.at.y   << " " << viewport.at.z
+    << " --vu " << viewport.up.x   << " " << viewport.up.y   << " " << viewport.up.z
     << std::endl;
 
   return o;

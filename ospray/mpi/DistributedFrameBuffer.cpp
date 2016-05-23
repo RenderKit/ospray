@@ -213,7 +213,6 @@ namespace ospray {
   {
     std::vector<mpi::async::CommLayer::Message *> delayedMessage;
 
-    // PING; PRINT(this); fflush(0);
     {
       LockGuard lock(mutex);
       DBG(printf("rank %i starting new frame\n",mpi::world.rank));
@@ -225,13 +224,9 @@ namespace ospray {
       if (pixelOp)
         pixelOp->beginFrame();
 
-      // PING;fflush(0);
-      // PRINT(myTiles.size());fflush(0);
       for (int i=0;i<myTiles.size();i++) {
-        // PRINT(myTiles[i]); fflush(0);
         myTiles[i]->newFrame();
       }
-      // PING;fflush(0);
 
       // create a local copy of delayed tiles, so we can work on them outside
       // the mutex
@@ -249,8 +244,6 @@ namespace ospray {
       // incoming WILL write into the frame buffer, composite tiles,
       // etc!
       frameIsActive = true;
-
-      // PRINT(delayedMessage.size());
     }
 
     // might actually want to move this to a thread:
@@ -401,7 +394,6 @@ namespace ospray {
 
   void DFB::processMessage(MasterTileMessage_RGBA_I8 *msg)
   {
-    //    PING;
     for (int iy=0;iy<TILE_SIZE;iy++) {
       int iiy = iy+msg->coords.y;
       if (iiy >= numPixels.y) continue;
@@ -489,13 +481,10 @@ namespace ospray {
       if (!frameIsActive) {
         // frame is not actually active, yet - put the tile into the
         // delayed processing buffer, and return WITHOUT deleting it.
-        DBG(PING);
         delayedMessage.push_back(_msg);
         return;
       }
     }
-
-    DBG(PING);
 
     async([=]() {
       switch (_msg->command) {
@@ -513,8 +502,6 @@ namespace ospray {
       };
       delete _msg;
     });
-
-    DBG(PING);
   }
 
   void DFB::closeCurrentFrame()
@@ -579,7 +566,7 @@ namespace ospray {
           for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.b[i] = 0.f;
           for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.a[i] = 0.f;
         }
-      });
+        });
 
       if (hasAccumBuffer && (fbChannelFlags & OSP_FB_ACCUM))
         accumId = -1; // we increment at the start of the frame

@@ -26,7 +26,8 @@ namespace ospray {
                                      bool hasAccumBuffer,
                                      bool hasVarianceBuffer,
                                      void *colorBufferToUse)
-    : FrameBuffer(size, colorBufferFormat, hasDepthBuffer, hasAccumBuffer, hasVarianceBuffer)
+    : FrameBuffer(size, colorBufferFormat, hasDepthBuffer,
+                  hasAccumBuffer, hasVarianceBuffer)
   {
     Assert(size.x > 0);
     Assert(size.y > 0);
@@ -39,10 +40,10 @@ namespace ospray {
         break;
       case OSP_FB_RGBA8:
       case OSP_FB_SRGBA:
-        colorBuffer = (vec4f*)alignedMalloc(sizeof(vec4f)*size.x*size.y);
+        colorBuffer = (uint32*)alignedMalloc(sizeof(uint32)*size.x*size.y);
         break;
       case OSP_FB_RGBA32F:
-        colorBuffer = (uint32*)alignedMalloc(sizeof(uint32)*size.x*size.y);
+        colorBuffer = (vec4f*)alignedMalloc(sizeof(vec4f)*size.x*size.y);
         break;
       default:
         throw std::runtime_error("color buffer format not supported");
@@ -61,12 +62,12 @@ namespace ospray {
 
     tilesx = divRoundUp(size.x, TILE_SIZE);
     tiles = tilesx * divRoundUp(size.y, TILE_SIZE);
-    tileAccumID = new int32[tiles];
+    tileAccumID = (int32*)alignedMalloc(sizeof(int32)*tiles);
     memset(tileAccumID, 0, tiles*sizeof(int32));
 
     if (hasVarianceBuffer) {
       varianceBuffer = (vec4f*)alignedMalloc(sizeof(vec4f)*size.x*size.y);
-      tileErrorBuffer = new float[tiles];
+      tileErrorBuffer = (float*)alignedMalloc(sizeof(float)*tiles);
       // maximum number of regions: all regions are of size 3 are split in half
       errorRegion.reserve(divRoundUp(tiles*2, 3));
     } else {
@@ -90,8 +91,8 @@ namespace ospray {
     alignedFree(colorBuffer);
     alignedFree(accumBuffer);
     alignedFree(varianceBuffer);
-    delete[] tileAccumID;
-    delete[] tileErrorBuffer;
+    alignedFree(tileAccumID);
+    alignedFree(tileErrorBuffer);
   }
 
   std::string LocalFrameBuffer::toString() const
@@ -114,7 +115,9 @@ namespace ospray {
 
         errorRegion.clear();
         // initially create one region covering the complete image
-        errorRegion.push_back(box2i(vec2i(0), vec2i(tilesx, divRoundUp(size.y, TILE_SIZE))));
+        errorRegion.push_back(box2i(vec2i(0),
+                                    vec2i(tilesx,
+                                          divRoundUp(size.y, TILE_SIZE))));
       }
     }
   }
@@ -170,7 +173,8 @@ namespace ospray {
             err += tileErrorBuffer[idx];
             maxErr = std::max(maxErr, tileErrorBuffer[idx]);
           }
-        // set all tiles of this region to local max error to enforce their refinement as a group
+        // set all tiles of this region to local max error to enforce their
+        // refinement as a group
         for (int y = region.lower.y; y < region.upper.y; y++)
           for (int x = region.lower.x; x < region.upper.x; x++) {
             int idx = y * tilesx + x;
@@ -188,8 +192,9 @@ namespace ospray {
             i--;
             continue;
           }
-          vec2i split = region.lower + size / 2; // TODO: find split with equal variance
-          errorRegion.push_back(region); // region reference might become invalid
+          vec2i split = region.lower + size / 2; // TODO: find split with equal
+                                                 //       variance
+          errorRegion.push_back(region); // region ref might become invalid
           if (size.x > size.y) {
             errorRegion[i].upper.x = split.x;
             errorRegion.back().lower.x = split.x;

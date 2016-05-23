@@ -145,7 +145,6 @@ namespace ospray {
       try {
       while (1) {
         const int command = cmd.get_int32();
-        // PING; PRINT(command); fflush(0);
         // printf("worker: got command %i\n",command); fflush(0);
 
         switch (command) {
@@ -346,6 +345,7 @@ namespace ospray {
           const ObjectHandle handle = cmd.get_handle();
           const uint32 channelFlags       = cmd.get_int32();
           FrameBuffer *fb = (FrameBuffer*)handle.lookup();
+          assert(fb);
           fb->clear(channelFlags);
         } break;
         case ospray::CMD_RENDER_FRAME: {
@@ -654,8 +654,8 @@ namespace ospray {
           const size_t size = cmd.get_size_t();
 
           const size_t bcBufferSize = 40*1024*1024;
-          static void *bcBuffer = malloc(bcBufferSize);
-          void *mem = size < bcBufferSize ? bcBuffer : malloc(size);
+          static void *bcBuffer = alignedMalloc(bcBufferSize);
+          void *mem = size < bcBufferSize ? bcBuffer : alignedMalloc(size);
           // double t0 = getSysTime();
           cmd.get_data(size,mem);
 
@@ -679,7 +679,7 @@ namespace ospray {
 
           if (worker.rank == 0)
             MPI_Send(&sumFail,1,MPI_INT,0,0,mpi::app.comm);
-          if (size >= bcBufferSize) free(mem);
+          if (size >= bcBufferSize) alignedFree(mem);
         } break;
 
           // ==================================================================
