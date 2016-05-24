@@ -100,8 +100,6 @@ namespace ospray {
     //! initially committed).
     virtual void updateEditableParameters();
 
-    virtual OSPDataType getVoxelType() = 0;
-
   protected:
 
     //! Complete volume initialization (only on first commit).

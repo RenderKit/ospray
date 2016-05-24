@@ -56,9 +56,6 @@ namespace ospray {
                           const vec3i &target_index,
                           const vec3i &source_count) override = 0;
 
-    //! Get the OSPDataType enum corresponding to the voxel type string.
-    OSPDataType getVoxelType() override;
-
   protected:
 
     //! Create the equivalent ISPC volume container.
@@ -75,6 +72,9 @@ namespace ospray {
     //! build the accelerator - allows child class (data distributed) to avoid
     //! building..
     virtual void buildAccelerator();
+
+    //! Get the OSPDataType enum corresponding to the voxel type string.
+    OSPDataType getVoxelType();
 
     //! Volume size in voxels per dimension.
     vec3i dimensions;
