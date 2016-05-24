@@ -1,7 +1,7 @@
 OSPRay
 ======
 
-This is release v0.10.0 of OSPRay. For changes and new features see the
+This is release v0.10.1 of OSPRay. For changes and new features see the
 [changelog](CHANGELOG.md). Also visit http://www.ospray.org for more
 information.
 
@@ -23,7 +23,7 @@ compute nodes in HPC systems.
 OSPRay internally builds on top of [Embree](https://embree.github.io/)
 and [ISPC (Intel® SPMD Program Compiler)](https://ispc.github.io/),
 and fully utilizes modern instruction sets like Intel® SSE, AVX, AVX2,
-or Intel® Xeon Phi™ to achieve high rendering performance.
+and AVX-512 to achieve high rendering performance.
 
 
 OSPRay Support and Contact

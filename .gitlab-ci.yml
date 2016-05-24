@@ -79,24 +79,24 @@ build-windows-msvc:
 
 ### RELEASE JOBS ###
 
-#release-linux-gcc:
-#  type: deploy
-#  script:
-#    - module load gcc
-#    - export CC=gcc
-#    - export CXX=g++
-#    - export OSPRAY_RELEASE_NO_VERIFY=1
-#    - scripts/release/linux.sh
-#  tags:
-#    - gcc
-#    - release
-#    - centos6
-#  only:
-#    - devel
-#    - master
-#  artifacts:
-#    paths:
-#      - build_release/*.gz
+release-linux-gcc:
+  type: deploy
+  script:
+    - module load gcc
+    - export CC=gcc
+    - export CXX=g++
+    - export OSPRAY_RELEASE_NO_VERIFY=1
+    - scripts/release/linux.sh
+  tags:
+    - gcc
+    - release
+    - centos6
+  only:
+    - devel
+    - master
+  artifacts:
+    paths:
+      - build_release/*.gz
 
 release-linux-icc:
   type: deploy
@@ -112,6 +112,7 @@ release-linux-icc:
   only:
     - devel
     - master
+    - release-0.10
   artifacts:
     paths:
       - build_release/*.gz
@@ -129,6 +130,7 @@ release-osx-clang:
   only:
     - devel
     - master
+    - release-0.10
   artifacts:
     paths:
       - build_release/*.gz
@@ -145,6 +147,7 @@ release-windows:
   only:
     - devel
     - master
+    - release-0.10
   artifacts:
     paths:
       - build_release\ospray*.zip

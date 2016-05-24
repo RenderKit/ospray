@@ -20,7 +20,6 @@
 export CPATH=
 export LIBRARY_PATH=
 export LD_LIBRARY_PATH=
-#TBB_PATH_LOCAL=$PWD/tbb
 
 mkdir -p build_release
 cd build_release
