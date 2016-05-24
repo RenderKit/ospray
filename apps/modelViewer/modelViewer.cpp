@@ -175,7 +175,7 @@ namespace ospray {
       g_windowSize = newSize;
       if (fb) ospFreeFrameBuffer(fb);
       fb = ospNewFrameBuffer((const osp::vec2i&)newSize,
-                             OSP_FB_SRGBA,
+                             OSP_FB_RGBA8,
                              OSP_FB_COLOR|OSP_FB_DEPTH|
                              OSP_FB_ACCUM|OSP_FB_VARIANCE);
       ospFrameBufferClear(fb,OSP_FB_ACCUM);
@@ -666,11 +666,11 @@ namespace ospray {
         g_createDefaultMaterial = false;
       } else if (arg == "--hdri-light") {
         // Syntax for HDRI light is the same as Embree:
-        // --hdri-light L.r L.g L.b <image file>.(pfm|ppm)
+        // --hdri-light intensity <image file>.(pfm|ppm)
         OSPLight ospHdri = ospNewLight(ospRenderer, "hdri");
         ospSetString(ospHdri, "name", "hdri_test");
-        ospSet3f(ospHdri, "up", 0.f, 0.f, 1.f);
-        ospSet3f(ospHdri, "dir", 0.f, 1.f, 0.0f);
+        ospSet3f(ospHdri, "up", 0.f, 1.f, 0.f);
+        ospSet3f(ospHdri, "dir", -1.f, 0.f, 0.0f);
         ospSet1f(ospHdri, "intensity", atof(av[++i]));
         FileName imageFile(av[++i]);
         miniSG::Texture2D *lightMap = miniSG::loadTexture(imageFile.path(), imageFile.base());
@@ -714,7 +714,7 @@ namespace ospray {
 
     // -------------------------------------------------------
     // done parsing
-    // -------------------------------------------------------]
+    // -------------------------------------------------------
     cout << "#ospModelViewer: done parsing. found model with" << endl;
     // cout << "  - num materials: " << msgModel->material.size() << endl;
     cout << "  - num meshes   : " << msgModel->mesh.size() << " ";
@@ -751,6 +751,29 @@ namespace ospray {
     ospRenderer = ospNewRenderer(rendererType.c_str());
     if (ospBackplate != NULL){
       ospSetObject(ospRenderer, "backplate", ospBackplate);
+    }
+
+    {
+      OSPLight ospQuad = ospNewLight(ospRenderer, "QuadLight");
+      ospSetString(ospQuad, "name", "quad_test");
+      ospSet3f(ospQuad, "position", -1500.f, 0.f, -1500.f);
+      ospSet3f(ospQuad, "edge1", -1500.f, 1500.f, -1500.f);
+      ospSet3f(ospQuad, "edge2", 1500.f, 0.f, -1500.f);
+      ospSet3f(ospQuad, "color", 1.f, 0.9f, 0.85f);
+      ospSet1f(ospQuad, "intensity", 10.f);
+      ospCommit(ospQuad);
+      lights.push_back(ospQuad);
+    }
+    {
+      OSPLight ospQuad = ospNewLight(ospRenderer, "QuadLight");
+      ospSetString(ospQuad, "name", "quad_test2");
+      ospSet3f(ospQuad, "position", 3500.f, 4000.f, -1500.f);
+      ospSet3f(ospQuad, "edge1", 3500.f, 4500.f, 1500.f);
+      ospSet3f(ospQuad, "edge2", 3500.f, -4500.f, -1500.f);
+      ospSet3f(ospQuad, "color", .8f, 0.85f, 1.0f);
+      ospSet1f(ospQuad, "intensity", 6.f);
+      ospCommit(ospQuad);
+      lights.push_back(ospQuad);
     }
 
     // Set renderer defaults (if not using 'aoX' renderers)
@@ -803,12 +826,21 @@ namespace ospray {
       OSPGeometry ospMesh = g_alpha ? ospNewGeometry("alpha_aware_triangle_mesh") : ospNewGeometry("trianglemesh");
 
       // check if we have to transform the vertices:
-      if (doesInstancing == false && msgModel->instance[i] != miniSG::Instance(i)) {
+      //if (doesInstancing == false && msgModel->instance[i] != miniSG::Instance(i)) {
         for (size_t vID=0;vID<msgMesh->position.size();vID++) {
+          if (i == 0){
+            linear3f rotation;
+            const float cos_45 = 0.525322;
+            const float sin_45 = 0.850904;
+            rotation.vx = vec3f(cos_45, sin_45, 0);
+            rotation.vy = vec3f(-sin_45, cos_45, 0);
+            rotation.vz = vec3f(0, 0, 1);
+            msgModel->instance[i].xfm.l = rotation; 
+          }
           msgMesh->position[vID] = xfmPoint(msgModel->instance[i].xfm,
                                             msgMesh->position[vID]);
         }
-      }
+      //}
 
       // add position array to mesh
       OSPData position = ospNewData(msgMesh->position.size(),OSP_FLOAT3A,
@@ -861,6 +893,12 @@ namespace ospray {
 
       // add triangle material id array to mesh
       if (msgMesh->materialList.empty()) {
+        // The magnetic reconnection mesh is the first one
+        if (i == 0){
+          msgMesh->material->setParam("Kd", vec3f(0.85));
+          msgMesh->material->setParam("Ks", vec3f(0.05));
+          msgMesh->material->setParam("Ns", 80.f);
+        }
         // we have a single material for this mesh...
         OSPMaterial singleMaterial = createMaterial(ospRenderer, msgMesh->material.ptr);
         ospSetMaterial(ospMesh,singleMaterial);
@@ -942,51 +980,8 @@ namespace ospray {
       ospCommit(ospLight);
       lights.push_back(ospLight);
     }
-#if 0
-    //spot light
-    cout << "#ospModelViewer: Adding a hard coded spotlight for test." << endl;
-    OSPLight ospSpot = ospNewLight(ospRenderer, "SpotLight");
-    ospSetString(ospSpot, "name", "spot_test");
-    ospSet3f(ospSpot, "position", 0.f, 2.f, 0.f);
-    ospSet3f(ospSpot, "direction", 0.f, -1.f, 0.7f);
-    ospSet3f(ospSpot, "color", 1.f, 1.f, .5f);
-    ospSet1f(ospSpot, "intensity", 17.f);
-    ospSet1f(ospSpot, "openingAngle", 50.f);
-    ospSet1f(ospSpot, "penumbraAngle", 2.f);
-    ospCommit(ospSpot);
-    lights.push_back(ospSpot);
-    //point light
-    cout << "#ospModelViewer: Adding a hard coded pointlight for test." << endl;
-    OSPLight ospPoint = ospNewLight(ospRenderer, "PointLight");
-    ospSetString(ospPoint, "name", "point_test");
-    ospSet3f(ospPoint, "position", -5.f, 20.f, 10.f);
-    ospSet3f(ospPoint, "color", .5f, 1.f, 1.f);
-    ospSet1f(ospPoint, "intensity", 200.f);
-    ospSet1f(ospPoint, "radius", 4.f);
-    ospCommit(ospPoint);
-    lights.push_back(ospPoint);
-    //ambient light
-    cout << "#ospModelViewer: Adding a hard coded ambientlight for test." << endl;
-    OSPLight ospAmbient = ospNewLight(ospRenderer, "AmbientLight");
-    ospSetString(ospAmbient, "name", "ambient_test");
-    ospSet1f(ospAmbient, "intensity", 0.2f);
-    ospCommit(ospAmbient);
-    lights.push_back(ospAmbient);
-    //quad light
-    cout << "#ospModelViewer: Adding a hard coded quadlight for test." << endl;
-    OSPLight ospQuad = ospNewLight(ospRenderer, "QuadLight");
-    ospSetString(ospQuad, "name", "quad_test");
-    ospSet3f(ospQuad, "position", 1.f, 3.5f, 0.f);
-    ospSet3f(ospQuad, "edge1", 0.f, 0.f, 0.3f);
-    ospSet3f(ospQuad, "edge2", 2.f, 0.f, 0.f);
-    ospSet3f(ospQuad, "color", .5f, 1.f, .5f);
-    ospSet1f(ospQuad, "intensity", 45.f);
-    ospCommit(ospQuad);
-    lights.push_back(ospQuad);
-#endif
     OSPData lightArray = ospNewData(lights.size(), OSP_OBJECT, &lights[0], 0);
     ospSetData(ospRenderer, "lights", lightArray);
-    //end light test
     ospCommit(ospRenderer);
 
     // -------------------------------------------------------
