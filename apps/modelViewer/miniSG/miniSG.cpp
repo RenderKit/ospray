@@ -181,7 +181,7 @@ namespace ospray {
           tex->data     = new unsigned char[width * height * numChannels * sizeof(float)];
           fread(tex->data, sizeof(float), width * height * numChannels, file);
           // flip in y, because OSPRay's textures have the origin at the lower left corner
-          unsigned char *texels = (unsigned char *)tex->data;
+          float *texels = (float *)tex->data;
           for (size_t y = 0; y < height / 2; ++y) {
             for (size_t x = 0; x < width * numChannels; ++x) {
               // Scale the pixels by the scale factor
