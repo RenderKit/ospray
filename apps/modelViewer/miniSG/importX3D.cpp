@@ -117,8 +117,7 @@ namespace ospray {
           // warnIgnore("'Color' (in IndexedFaceSet)");
           continue;
         }
-
-        throw std::runtime_error("importX3D: unknown child type '"+node->name+"' to 'IndexedFaceSet' node");
+        warnIgnore("'" + node->name + "' child of 'IndexedFaceSet' node");
       }
 
       model.mesh.push_back(mesh);
