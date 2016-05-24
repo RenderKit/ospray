@@ -671,8 +671,7 @@ namespace ospray {
         ospSetString(ospHdri, "name", "hdri_test");
         ospSet3f(ospHdri, "up", 0.f, 0.f, 1.f);
         ospSet3f(ospHdri, "dir", 0.f, 1.f, 0.0f);
-        vec3f intensity(atof(av[++i]), atof(av[++i]), atof(av[++i]));
-        ospSet3f(ospHdri, "intensity", intensity.x, intensity.y, intensity.z);
+        ospSet1f(ospHdri, "intensity", atof(av[++i]));
         FileName imageFile(av[++i]);
         miniSG::Texture2D *lightMap = miniSG::loadTexture(imageFile.path(), imageFile.base());
         if (lightMap == NULL){
