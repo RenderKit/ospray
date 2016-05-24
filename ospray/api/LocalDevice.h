@@ -131,52 +131,6 @@ namespace ospray {
       /*! add untyped void pointer to object - this will *ONLY* work in local rendering!  */
       void setVoidPtr(OSPObject object, const char *bufName, void *v) override;
 
-      /*! Get the handle of the named data array associated with an object. */
-      int getData(OSPObject object, const char *name, OSPData *value) override;
-
-      /*! Get a copy of the data in an array (the application is responsible for freeing this pointer). */
-      int getDataValues(OSPData object,
-                        void **pointer,
-                        size_t *count,
-                        OSPDataType *type) override;
-
-      /*! Get the named scalar floating point value associated with an object. */
-      int getf(OSPObject object, const char *name, float *value) override;
-
-      /*! Get the named scalar integer associated with an object. */
-      int geti(OSPObject object, const char *name, int *value) override;
-
-      /*! Get the material associated with a geometry object. */
-      int getMaterial(OSPGeometry geometry, OSPMaterial *value) override;
-
-      /*! Get the named object associated with an object. */
-      int getObject(OSPObject object,
-                    const char *name,
-                    OSPObject *value) override;
-
-      /*! Retrieve a NULL-terminated list of the parameter names associated with an object. */
-      int getParameters(OSPObject object, char ***value) override;
-
-      /*! Get a pointer to a copy of the named character string associated with an object. */
-      int getString(OSPObject object, const char *name, char **value) override;
-
-      /*! Get the type of the named parameter or the given object (if 'name' is NULL). */
-      int getType(OSPObject object,
-                  const char *name,
-                  OSPDataType *value) override;
-
-      /*! Get the named 2-vector floating point value associated with an object. */
-      int getVec2f(OSPObject object, const char *name, vec2f *value) override;
-
-      /*! Get the named 3-vector floating point value associated with an object. */
-      int getVec3f(OSPObject object, const char *name, vec3f *value) override;
-
-      /*! Get the named 4-vector floating point value associated with an object. */
-      int getVec4f(OSPObject object, const char *name, vec4f *value) override;
-
-      /*! Get the named 3-vector integer value associated with an object. */
-      int getVec3i(OSPObject object, const char *name, vec3i *value) override;
-
       /*! create a new renderer object (out of list of registered renderers) */
       OSPRenderer newRenderer(const char *type) override;
 

@@ -45,12 +45,14 @@ namespace ospray {
       numbers mean increasing verbosity of log messages */
   uint32_t logLevel = 0;
   bool debugMode = false;
-  int32_t numThreads = -1; //!< for default (==maximum) number of OSPRay/Embree threads
+  int32_t numThreads = -1; //!< for default (==maximum) number of
+                           //   OSPRay/Embree threads
 
   WarnOnce::WarnOnce(const std::string &s) 
     : s(s) 
   {
-    std::cout << "Warning: " << s << " (only reporting first occurrence)" << std::endl;
+    std::cout << "Warning: " << s << " (only reporting first occurrence)"
+              << std::endl;
   }
   
   /*! for debugging. compute a checksum for given area range... */
@@ -61,21 +63,16 @@ namespace ospray {
     long sum = 0;
     long i = 0;
 
-    int nextPing = 1;
     while (mem < end) {
       sum += (i+13) * *mem;
       ++i;
       ++mem;
-      
-      // if (i==nextPing) { 
-      //  std::cout << "checksum after " << (i*8) << " bytes: " << (int*)sum << std::endl;
-      //   nextPing += nextPing;
-     // }
     }
     return (void *)sum;
   }
 
-  void doAssertion(const char *file, int line, const char *expr, const char *expl) {
+  void doAssertion(const char *file, int line,
+                   const char *expr, const char *expl) {
     if (expl)
       fprintf(stderr,"%s:%i: Assertion failed: \"%s\":\nAdditional Info: %s\n", 
               file, line, expr, expl);
@@ -94,10 +91,12 @@ namespace ospray {
   void init(int *_ac, const char ***_av)
   {
 #ifndef OSPRAY_TARGET_MIC
-    // If we're not on a MIC, check for SSE4.1 as minimum supported ISA. Will be increased to SSE4.2 in future.
+    // If we're not on a MIC, check for SSE4.1 as minimum supported ISA. Will
+    // be increased to SSE4.2 in future.
     int cpuFeatures = ospcommon::getCPUFeatures();
     if ((cpuFeatures & ospcommon::CPU_FEATURE_SSE41) == 0)
-      throw std::runtime_error("Error. OSPRay only runs on CPUs that support at least SSE4.1.");
+      throw std::runtime_error("Error. OSPRay only runs on CPUs that support"
+                               " at least SSE4.1.");
 #endif
 
     if (_ac && _av) {
@@ -192,7 +191,8 @@ namespace ospray {
     };
 
     std::stringstream error;
-    error << __FILE__ << ":" << __LINE__ << ": unknown OSPDataType " << (int)type;
+    error << __FILE__ << ":" << __LINE__ << ": unknown OSPDataType "
+          << (int)type;
     throw std::runtime_error(error.str());
   }
 
@@ -233,7 +233,8 @@ namespace ospray {
     }
 
     std::stringstream error;
-    error << __FILE__ << ":" << __LINE__ << ": unknown OSPTextureFormat " << (int)type;
+    error << __FILE__ << ":" << __LINE__ << ": unknown OSPTextureFormat "
+          << (int)type;
     throw std::runtime_error(error.str());
   }
 

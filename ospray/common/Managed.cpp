@@ -107,9 +107,9 @@ namespace ospray {
     f[2] = 0;
     f[3] = 0;
     if (name) this->name = strdup(name);
-  };
+  }
 
-  void *ManagedObject::getVoidPtr(const char *name, void * valIfNotFound) 
+  void *ManagedObject::getVoidPtr(const char *name, void * valIfNotFound)
   {
     Param *param = findParam(name);                                     
     if (!param) return valIfNotFound;                                   
@@ -117,7 +117,8 @@ namespace ospray {
     return (void*)param->ptr;                                            
   }
 
-  ManagedObject::Param *ManagedObject::findParam(const char *name, bool addIfNotExist)
+  ManagedObject::Param *ManagedObject::findParam(const char *name,
+                                                 bool addIfNotExist)
   {
     for (size_t i=0 ; i < paramList.size() ; i++) {
       if (!strcmp(paramList[i]->name,name)) return paramList[i];
@@ -127,12 +128,13 @@ namespace ospray {
     return paramList[paramList.size()-1];
   }
 
-#define define_getparam(T,ABB,TARGETTYPE,FIELD)                       \
-  T ManagedObject::getParam##ABB(const char *name, T valIfNotFound) { \
-  Param *param = findParam(name);                                     \
-  if (!param) return valIfNotFound;                                   \
-  if (param->type != TARGETTYPE) return valIfNotFound;                \
-  return (T&)param->FIELD;                                            \
+#define define_getparam(T,ABB,TARGETTYPE,FIELD)                     \
+  T ManagedObject::getParam##ABB(const char *name, T valIfNotFound) \
+  {                                                                 \
+    Param *param = findParam(name);                                 \
+    if (!param) return valIfNotFound;                               \
+    if (param->type != TARGETTYPE) return valIfNotFound;            \
+    return (T&)param->FIELD;                                        \
   }
   
   define_getparam(ManagedObject *, Object, OSP_OBJECT, ptr);
@@ -157,7 +159,7 @@ namespace ospray {
   /*!< call 'dependencyGotChanged' on each of the objects in 'objectsListeningForChanges' */
   void ManagedObject::notifyListenersThatObjectGotChanged() 
   {
-    for (std::set<ManagedObject *>::iterator it = objectsListeningForChanges.begin();
+    for (auto it = objectsListeningForChanges.begin();
          it != objectsListeningForChanges.end(); it++)  {
       ManagedObject *object = *it;
       object->dependencyGotChanged(this);

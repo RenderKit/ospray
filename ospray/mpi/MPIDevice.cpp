@@ -314,11 +314,14 @@ namespace ospray {
       int initialized = false;
       MPI_CALL(Initialized(&initialized));
       if (initialized) 
-        throw std::runtime_error("OSPRay MPI Error: MPI already Initialized when calling ospMpiInit()");
+        throw std::runtime_error("OSPRay MPI Error: MPI already Initialized "
+                                 "when calling ospMpiInit()");
       
       ospray::mpi::init(ac,(const char **)*av);
       if (mpi::world.size < 2) {
-        throw std::runtime_error("#osp:mpi: trying to run distributed API mode with a single rank? (did you forget the 'mpirun'?)");
+        throw std::runtime_error("#osp:mpi: trying to run distributed API mode "
+                                 "with a single rank? (did you forget the "
+                                 "'mpirun'?)");
       }
 
       ospray::api::Device::current
@@ -339,7 +342,10 @@ namespace ospray {
         if (mpi::world.rank < 0) {
           PRINT(mpi::world.rank);
           PRINT(mpi::world.size);
-          throw std::runtime_error("OSPRay MPI startup error. Use \"mpirun -n 1 <command>\" when calling an application that tries to spawnto start the application you were trying to start.");
+          throw std::runtime_error("OSPRay MPI startup error. Use \"mpirun "
+                                   "-n 1 <command>\" when calling an "
+                                   "application that tries to spawn to start "
+                                   "the application you were trying to start.");
         }
       }
 
@@ -447,7 +453,8 @@ namespace ospray {
     }
 
     /*! create a new data buffer */
-    OSPData MPIDevice::newData(size_t nitems, OSPDataType format, void *init, int flags)
+    OSPData MPIDevice::newData(size_t nitems, OSPDataType format,
+                               void *init, int flags)
     {
       ObjectHandle handle = ObjectHandle::alloc();
       cmd.newCommand(CMD_NEW_DATA);
@@ -476,7 +483,8 @@ namespace ospray {
     /*! assign (named) string parameter to an object */
     void MPIDevice::setVoidPtr(OSPObject _object, const char *bufName, void *v)
     {
-      throw std::runtime_error("setting a void pointer as parameter to an object is not allowed in MPI mode");
+      throw std::runtime_error("setting a void pointer as parameter to an "
+                               "object is not allowed in MPI mode");
     }
 
     /*! Copy data into the given object. */
@@ -486,17 +494,21 @@ namespace ospray {
       Assert(_volume);
       Assert(source);
 
-      char *typeString = NULL;
+      char *typeString = nullptr;
       getString(_volume, "voxelType", &typeString);
       OSPDataType type = typeForString(typeString);
+
       Assert(type != OSP_UNKNOWN && "unknown volume voxel type");
       int typeSize = sizeOf(type);
 
       size_t size = typeSize * size_t(count.x) * size_t(count.y) * size_t(count.z);
-      // This size restriction is imposed by MPI_Bcast which indexes into the buffer with an int
+      // This size restriction is imposed by MPI_Bcast which indexes into the
+      // buffer with an int
       // limiting us to a max size of 2^31 bytes, a bit more than 2GB
-      if (size > 2000000000LL)
-        throw std::runtime_error("setregion does not currently work for region sizes > 2GB");
+      if (size > 2000000000LL) {
+        throw std::runtime_error("setregion does not currently work for "
+                                 "region sizes > 2GB");
+      }
 
       cmd.newCommand(CMD_SET_REGION);
       cmd.send((const ObjectHandle &)_volume);
@@ -651,192 +663,6 @@ namespace ospray {
       cmd.send(bufName);
       cmd.send(valObjectHandle);
       cmd.flush();
-    }
-
-    /*! Get the handle of the named data array associated with an object. */
-    int MPIDevice::getData(OSPObject object, const char *name, OSPData *value) 
-    {
-      // Not yet implemented.
-      return false;
-    }
-    
-    /*! Get a copy of the data in an array (the application is
-        responsible for freeing this pointer). */
-    int MPIDevice::getDataValues(OSPData object, void **pointer, 
-                                 size_t *count, OSPDataType *type) 
-    {
-      // Not yet implemented.
-      return false;
-    }
-
-    /*! Get the named scalar floating point value associated with an object. */
-    int MPIDevice::getf(OSPObject object, const char *name, float *value)
-    {
-      Assert(object);
-      Assert(name);
-
-      cmd.newCommand(CMD_GET_VALUE);
-      cmd.send((const ObjectHandle &) object);
-      cmd.send(name);
-      cmd.send(OSP_FLOAT);
-      cmd.flush();
-
-      struct ReturnValue { int success; float value; } result;
-      cmd.get_data(sizeof(ReturnValue), &result, 0, mpi::worker.comm);
-
-      return result.success ? *value = result.value, true : false;
-    }
-
-    /*! Get the named scalar integer associated with an object. */
-    int MPIDevice::geti(OSPObject object, const char *name, int *value)
-    {
-      Assert(object);
-      Assert(name);
-
-      cmd.newCommand(CMD_GET_VALUE);
-      cmd.send((const ObjectHandle &) object);
-      cmd.send(name);
-      cmd.send(OSP_INT);
-      cmd.flush();
-
-      struct ReturnValue { int success; int value; } result;
-      cmd.get_data(sizeof(ReturnValue), &result, 0, mpi::worker.comm);
-
-      return result.success ? *value = result.value, true : false;
-    }
-
-    /*! Get the material associated with a geometry object. */
-    int MPIDevice::getMaterial(OSPGeometry geometry, OSPMaterial *value) 
-    {
-      // Not yet implemented.
-      return false;
-    }
-
-    /*! Get the named object associated with an object. */
-    int MPIDevice::getObject(OSPObject object, const char *name, OSPObject *value) 
-    {
-      // Not yet implemented.
-      return false;
-    }
-
-    /*! Retrieve a NULL-terminated list of the parameter names associated with an object. */
-    int MPIDevice::getParameters(OSPObject object, char ***value) 
-    {
-      // Not yet implemented.
-      return false;
-    }
-
-    /*! Retrieve the total length of the names (with terminators) of the parameters associated with an object. */
-    int MPIDevice::getParametersSize(OSPObject object, int *value) 
-    {
-      // Not yet implemented.
-      return false;
-    }
-
-    /*! Get the type of the named parameter or the given object (if 'name' is NULL). */
-    int MPIDevice::getType(OSPObject object, const char *name, OSPDataType *value)
-    {
-      Assert(object);
-
-      cmd.newCommand(CMD_GET_TYPE);
-      cmd.send((const ObjectHandle &) object);
-      cmd.send(name ? name : "\0");
-      cmd.flush();
-
-      struct ReturnValue { int success; OSPDataType value; } result;
-      cmd.get_data(sizeof(ReturnValue), &result, 0, mpi::worker.comm);
-
-      return result.success ? *value = result.value, true : false;
-    }
-
-    /*! Get a pointer to a copy of the named character string associated with an object. */
-    int MPIDevice::getString(OSPObject object, const char *name, char **value)
-    {
-      Assert(object);
-      Assert(name);
-
-      cmd.newCommand(CMD_GET_VALUE);
-      cmd.send((const ObjectHandle &) object);
-      cmd.send(name);
-      cmd.send(OSP_STRING);
-      cmd.flush();
-
-      struct ReturnValue { int success; char value[2048]; } result;
-      cmd.get_data(sizeof(ReturnValue), &result, 0, mpi::worker.comm);
-
-      return result.success ? *value = strdup(result.value), true : false;
-    }
-
-    /*! Get the named 2-vector floating point value associated with an object. */
-    int MPIDevice::getVec2f(OSPObject object, const char *name, vec2f *value)
-    {
-      Assert(object);
-      Assert(name);
-
-      cmd.newCommand(CMD_GET_VALUE);
-      cmd.send((const ObjectHandle &) object);
-      cmd.send(name);
-      cmd.send(OSP_FLOAT2);
-      cmd.flush();
-
-      struct ReturnValue { int success; vec2f value; } result;
-      cmd.get_data(sizeof(ReturnValue), &result, 0, mpi::worker.comm);
-
-      return result.success ? *value = result.value, true : false;
-    }
-
-    /*! Get the named 3-vector floating point value associated with an object. */
-    int MPIDevice::getVec3f(OSPObject object, const char *name, vec3f *value)
-    {
-      Assert(object);
-      Assert(name);
-
-      cmd.newCommand(CMD_GET_VALUE);
-      cmd.send((const ObjectHandle &) object);
-      cmd.send(name);
-      cmd.send(OSP_FLOAT3);
-      cmd.flush();
-
-      struct ReturnValue { int success; vec3f value; } result;
-      cmd.get_data(sizeof(ReturnValue), &result, 0, mpi::worker.comm);
-
-      return result.success ? *value = result.value, true : false;
-    }
-
-    /*! Get the named 4-vector floating point value associated with an object. */
-    int MPIDevice::getVec4f(OSPObject object, const char *name, vec4f *value)
-    {
-      Assert(object);
-      Assert(name);
-
-      cmd.newCommand(CMD_GET_VALUE);
-      cmd.send((const ObjectHandle &) object);
-      cmd.send(name);
-      cmd.send(OSP_FLOAT4);
-      cmd.flush();
-
-      struct ReturnValue { int success; vec4f value; } result;
-      cmd.get_data(sizeof(ReturnValue), &result, 0, mpi::worker.comm);
-
-      return result.success ? *value = result.value, true : false;
-    }
-
-    /*! Get the named 3-vector integer value associated with an object. */
-    int MPIDevice::getVec3i(OSPObject object, const char *name, vec3i *value)
-    {
-      Assert(object);
-      Assert(name);
-
-      cmd.newCommand(CMD_GET_VALUE);
-      cmd.send((const ObjectHandle &) object);
-      cmd.send(name);
-      cmd.send(OSP_INT3);
-      cmd.flush();
-
-      struct ReturnValue { int success; vec3i value; } result;
-      cmd.get_data(sizeof(ReturnValue), &result, 0, mpi::worker.comm);
-
-      return result.success ? *value = result.value, true : false;
     }
 
     /*! create a new pixelOp object (out of list of registered pixelOps) */
@@ -1170,7 +996,8 @@ namespace ospray {
       default:
         NOTIMPLEMENTED;
       };
-      throw std::runtime_error("Distributed API not available on this device (when calling ospApiMode())"); 
+      throw std::runtime_error("Distributed API not available on this device "
+                               "(when calling ospApiMode())");
     }
 
     void MPIDevice::sampleVolume(float **results, OSPVolume volume, 
@@ -1190,6 +1017,23 @@ namespace ospray {
 
       // for data-distributed volumes this will need to be updated...
       cmd.get_data(count * sizeof(float), *results, 0, mpi::worker.comm);
+    }
+
+    int MPIDevice::getString(OSPObject object, const char *name, char **value)
+    {
+      Assert(object);
+      Assert(name);
+
+      cmd.newCommand(CMD_GET_VALUE);
+      cmd.send((const ObjectHandle &) object);
+      cmd.send(name);
+      cmd.send(OSP_STRING);
+      cmd.flush();
+
+      struct ReturnValue { int success; char value[2048]; } result;
+      cmd.get_data(sizeof(ReturnValue), &result, 0, mpi::worker.comm);
+
+      return result.success ? *value = strdup(result.value), true : false;
     }
 
   } // ::ospray::mpi

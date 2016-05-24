@@ -20,6 +20,7 @@
 #include "Device.h"
 #include "COIDeviceCommon.h"
 #include "ospray/common/Data.h"
+#include "ospray/volume/Volume.h"
 // coi
 #include "common/COIResult_common.h"
 #include "source/COIEngine_source.h"
@@ -47,11 +48,6 @@ namespace ospray {
       x(OSPCOI_NEW_DATA,                "ospray_coi_new_data")              \
       x(OSPCOI_COMMIT,                  "ospray_coi_commit")                \
       x(OSPCOI_SET_VALUE,               "ospray_coi_set_value")             \
-      x(OSPCOI_GET_DATA_PROPERTIES,     "ospray_coi_get_data_properties")   \
-      x(OSPCOI_GET_DATA_VALUES,         "ospray_coi_get_data_values")       \
-      x(OSPCOI_GET_PARAMETERS,          "ospray_coi_get_parameters")        \
-      x(OSPCOI_GET_PARAMETERS_SIZE,     "ospray_coi_get_parameters_size")   \
-      x(OSPCOI_GET_TYPE,                "ospray_coi_get_type")              \
       x(OSPCOI_GET_VALUE,               "ospray_coi_get_value")             \
       x(OSPCOI_NEW_MATERIAL,            "ospray_coi_new_material")          \
       x(OSPCOI_SET_MATERIAL,            "ospray_coi_set_material")          \
@@ -275,69 +271,6 @@ namespace ospray {
                       const char *bufName,
                       void *v) override { NOTIMPLEMENTED; }
 
-      /*! Get the handle of the named data array associated with an object. */
-      int getData(OSPObject object,
-                  const char *name,
-                  OSPData *value) override;
-
-      /*! Get the type and count of the elements contained in the given array
-       *  object.*/
-      int getDataProperties(OSPData object, size_t *count, OSPDataType *type);
-
-      /*! Get a copy of the data in an array (the application is responsible
-       *  for freeing this pointer). */
-      int getDataValues(OSPData object, void **pointer,
-                        size_t *count, OSPDataType *type) override;
-
-      /*! Get the named scalar floating point value associated with an object.*/
-      int getf(OSPObject object, const char *name, float *value) override;
-
-      /*! Get the named scalar integer associated with an object. */
-      int geti(OSPObject object, const char *name, int *value) override;
-
-      /*! Get the material associated with a geometry object. */
-      int getMaterial(OSPGeometry geometry, OSPMaterial *value) override;
-
-      /*! Get the named object associated with an object. */
-      int getObject(OSPObject object,
-                    const char *name,
-                    OSPObject *value) override;
-
-      /*! Retrieve a nullptr-terminated list of the parameter names associated
-       *  with an object. */
-      int getParameters(OSPObject object, char ***value) override;
-
-      /*! Retrieve the total length of the names (with terminators) of the
-       *  parameters associated with an object. */
-      int getParametersSize(OSPObject object, int *value);
-
-      /*! Get a pointer to a copy of the named character string associated
-       *  with an object. */
-      int getString(OSPObject object,
-                    const char *name,
-                    char **value) override;
-
-      /*! Get the type of the named parameter or the given object (if 'name'
-       *  is nullptr). */
-      int getType(OSPObject object,
-                  const char *name,
-                  OSPDataType *value) override;
-
-      /*! Get the named 2-vector floating point value associated with an
-       *  object. */
-      int getVec2f(OSPObject object, const char *name, vec2f *value) override;
-
-      /*! Get the named 3-vector floating point value associated with an
-       *  object. */
-      int getVec3f(OSPObject object, const char *name, vec3f *value) override;
-
-      /*! Get the named 4-vector floating point value associated with an
-       *  object. */
-      int getVec4f(OSPObject object, const char *name, vec4f *value) override;
-
-      /*! Get the named 3-vector integer value associated with an object. */
-      int getVec3i(OSPObject object, const char *name, vec3i *value) override;
-
       /*! create a new renderer object (out of list of registered renderers) */
       OSPRenderer newRenderer(const char *type) override;
 
@@ -390,10 +323,14 @@ namespace ospray {
                         OSPVolume volume,
                         const vec3f *worldCoordinates,
                         const size_t &count) override;
+
+    private:
+
+      /*! This only exists to support getting a volume type for setRegion */
+      int getString(OSPObject object, const char *name, char **value);
     };
 
 
-    
     /*! create this engine, initialize coi with this engine ID, print
       basic device info */
     COIEngine::COIEngine(COIDevice *osprayDevice, size_t engineID)
@@ -1180,9 +1117,11 @@ namespace ospray {
                              const vec3i &index, const vec3i &count) 
     {
       Assert(object != nullptr && "invalid volume object handle");
+
       char *typeString = nullptr;
       getString(object, "voxelType", &typeString);
       OSPDataType type = typeForString(typeString);
+
       Assert(type != OSP_UNKNOWN && "unknown volume element type");
       OSPData data = newData(size_t(count.x) * count.y * count.z, type,
                              (void*)source, OSP_DATA_SHARED_BUFFER);
@@ -1273,219 +1212,17 @@ namespace ospray {
       callFunction(OSPCOI_SET_VALUE,args);
     }
 
-    /*! Get the handle of the named data array associated with an object. */
-    int COIDevice::getData(OSPObject object, const char *name, OSPData *value) {
-
-      struct ReturnValue { int success;  ObjectHandle value; } result;
-      Assert(object != nullptr && "invalid source object handle");
-      DataStream stream;
-      stream.write((ObjectHandle &) object);
-      stream.write(name);
-      stream.write(OSP_DATA);
-      callFunction(OSPCOI_GET_VALUE, stream, &result, sizeof(ReturnValue));
-      return(result.success ? *value = (OSPData)(int64) result.value, true : false);
-
-    }
-
-    /*! Get the type and count of the elements contained in the given array
-     *  object.*/
-    int COIDevice::getDataProperties(OSPData object,
-                                     size_t *count,
-                                     OSPDataType *type) {
-
-      struct ReturnValue
-      {
-        int success;
-        size_t count;
-        OSPDataType type;
-      } result;
-
-      Assert(object != nullptr && "invalid data object handle");
-      DataStream stream;
-      stream.write((ObjectHandle &) object);
-      callFunction(OSPCOI_GET_DATA_PROPERTIES,
-                   stream,
-                   &result,
-                   sizeof(ReturnValue));
-
-      if (result.success) {
-        *count = result.count;
-        *type = result.type;
-      }
-
-      return result.success;
-    }
-
-    /*! Get a copy of the data in an array (the application is responsible
-     *  for freeing this pointer). */
-    int COIDevice::getDataValues(OSPData object, void **pointer,
-                                 size_t *count, OSPDataType *type) {
-
-      if (getDataProperties(object, count, type) == false) return(false);
-      size_t size = *count * sizeOf(*type);
-      COIBUFFER coiBuffer = nullptr;
-      COIRESULT coiResult;
-
-      coiResult = COIBufferCreate(
-          size,
-          COI_BUFFER_NORMAL,
-          size > 1024 * 1024 * 128 ? COI_OPTIMIZE_HUGE_PAGE_SIZE : 0,
-          nullptr,
-          1, &engines[0]->coiProcess,
-          &coiBuffer
-      );
-
-      if (coiResult != COI_SUCCESS) {
-        coiError(coiResult,
-                 "unable to create COI buffer in COIDevice::getDataValues");
-      }
-      COI_ACCESS_FLAGS coiBufferFlags = COI_SINK_WRITE;
-      int result;
-      DataStream stream;
-      stream.write((ObjectHandle &) object);
-
-      coiResult = COIPipelineRunFunction(
-          engines[0]->coiPipe,
-          engines[0]->coiFctHandle[OSPCOI_GET_DATA_VALUES],
-          1, &coiBuffer, &coiBufferFlags,
-          0, nullptr,
-          stream.buf, stream.ofs,
-          &result, sizeof(int),
-          nullptr
-      );
-
-      if (coiResult != COI_SUCCESS) {
-        coiError(coiResult,
-                 "error during COIDevice::getDataValues run function");
-      }
-      if (!result) {
-        COIBufferDestroy(coiBuffer);
-        return(false);
-      }
-      void *coiBufferPointer = nullptr;
-     *pointer = malloc(size);
-      COIMAPINSTANCE coiMapInstance;
-
-      coiResult = COIBufferMap(
-          coiBuffer,
-          0, 0,
-          COI_MAP_READ_ONLY,
-          0, nullptr,
-          nullptr,
-          &coiMapInstance,
-          &coiBufferPointer
-      );
-
-      if (coiResult != COI_SUCCESS) {
-        coiError(coiResult,
-                 "unable to map COI buffer in COIDevice::getDataValues");
-      }
-      memcpy(*pointer, coiBufferPointer, size);
-      COIBufferUnmap(coiMapInstance, 0, nullptr, nullptr);
-      COIBufferDestroy(coiBuffer);  return(true);
-    }
-
-    /*! Get the named scalar floating point value associated with an object. */
-    int COIDevice::getf(OSPObject object, const char *name, float *value) {
-
-      struct ReturnValue { int success;  float value; } result;
-      Assert(object != nullptr && "invalid source object handle");
-      DataStream stream;
-      stream.write((ObjectHandle &) object);
-      stream.write(name);
-      stream.write(OSP_FLOAT);
-      callFunction(OSPCOI_GET_VALUE, stream, &result, sizeof(ReturnValue));
-      return(result.success ? *value = result.value, true : false);
-
-    }
-
-    /*! Get the named scalar integer associated with an object. */
-    int COIDevice::geti(OSPObject object, const char *name, int *value) {
-
-      struct ReturnValue { int success;  int value; } result;
-      Assert(object != nullptr && "invalid source object handle");
-      DataStream stream;
-      stream.write((ObjectHandle &) object);
-      stream.write(name);
-      stream.write(OSP_INT);
-      callFunction(OSPCOI_GET_VALUE, stream, &result, sizeof(ReturnValue));
-      return(result.success ? *value = result.value, true : false);
-
-    }
-
-    /*! Get the material associated with a geometry object. */
-    int COIDevice::getMaterial(OSPGeometry object, OSPMaterial *value) {
-
-      struct ReturnValue { int success;  ObjectHandle value; } result;
-      Assert(object != nullptr && "invalid source object handle");
-      DataStream stream;
-      stream.write((ObjectHandle &) object);
-      stream.write("\0");
-      stream.write(OSP_MATERIAL);
-      callFunction(OSPCOI_GET_VALUE, stream, &result, sizeof(ReturnValue));
-      return(result.success ? *value = (OSPMaterial)(int64) result.value, true : false);
-
-    }
-
-    /*! Get the named object associated with an object. */
-    int COIDevice::getObject(OSPObject object,
-                             const char *name,
-                             OSPObject *value) {
-
-      struct ReturnValue { int success;  ObjectHandle value; } result;
-      Assert(object != nullptr && "invalid source object handle");
-      DataStream stream;
-      stream.write((ObjectHandle &) object);
-      stream.write(name);
-      stream.write(OSP_OBJECT);
-      callFunction(OSPCOI_GET_VALUE, stream, &result, sizeof(ReturnValue));
-      return result.success ? *value = (OSPObject)(int64)result.value, true : false;
-    }
-
-    /*! Retrieve a nullptr-terminated list of the parameter names associated with an object. */
-    int COIDevice::getParameters(OSPObject object, char ***value) {
-
-      int size = 0;  getParametersSize(object, &size);
-      struct ReturnValue { int success;  int value; };
-      ReturnValue *result = (ReturnValue *) malloc(size + sizeof(int));
-      Assert(object != nullptr && "invalid source object handle");
-      DataStream stream;
-      stream.write((ObjectHandle &) object);
-      callFunction(OSPCOI_GET_PARAMETERS, stream, result, size + sizeof(int));
-
-      int count = 0;
-      for (size_t offset=0, length=0 ; offset < size ; offset += length + 1) {
-
-        length = strlen(((char *) &result->value) + offset);
-        count++;
-
-      }
-
-      char **names = (char **) malloc((count + 1) * sizeof(char *));
-      for (size_t i=0, offset=0 ; i < count ; i++) {
-
-        names[i] = strdup(((char *) &result->value) + offset);
-        offset  += strlen(((char *) &result->value) + offset) + 1;
-
-      }
-
-      names[count] = nullptr;
-      return(*value = names, free(result), true);
-
-    }
-
-    /*! Retrieve the total length of the names (with terminators) of the
-     *  parameters associated with an object. */
-    int COIDevice::getParametersSize(OSPObject object, int *value) {
-
-      struct ReturnValue { int success;  int value; } result;
-      Assert(object != nullptr && "invalid source object handle");
-      DataStream stream;
-      stream.write((ObjectHandle &) object);
-      callFunction(OSPCOI_GET_PARAMETERS_SIZE, stream,
-                   &result, sizeof(ReturnValue));
-      return(result.success ? *value = result.value, true : false);
-
+    /*! Clear the specified channel(s) of the frame buffer specified in 'whichChannels'.
+        If whichChannel&OSP_FB_COLOR!=0, clear the color buffer to '0,0,0,0'.  
+        If whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to +inf.  
+        If whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0, and reset accumID.
+    */
+    void COIDevice::frameBufferClear(OSPFrameBuffer _fb, const uint32 fbChannelFlags)
+    {
+      DataStream args;
+      args.write((ObjectHandle&)_fb);
+      args.write(fbChannelFlags);
+      callFunction(OSPCOI_FRAMEBUFFER_CLEAR,args);
     }
 
     /*! Get a pointer to a copy of the named character string associated with
@@ -1501,89 +1238,6 @@ namespace ospray {
       callFunction(OSPCOI_GET_VALUE, stream, &result, sizeof(ReturnValue));
       return(result.success ? *value = strdup(result.value), true : false);
 
-    }
-
-    /*! Get the type of the named parameter or the given object (if 'name' is
-     *  nullptr). */
-    int COIDevice::getType(OSPObject object, const char *name, OSPDataType *value) {
-
-      struct ReturnValue { int success;  OSPDataType type; } result;
-      Assert(object != nullptr && "invalid source object handle");
-      DataStream stream;
-      stream.write((ObjectHandle &) object);
-      stream.write(name ? name : "\0");
-      callFunction(OSPCOI_GET_TYPE, stream, &result, sizeof(ReturnValue));
-      return(result.success ? *value = result.type, true : false);
-
-    }
-
-    /*! Get the named 2-vector floating point value associated with an object.*/
-    int COIDevice::getVec2f(OSPObject object, const char *name, vec2f *value) {
-
-      struct ReturnValue { int success;  vec2f value; } result;
-      Assert(object != nullptr && "invalid source object handle");
-      DataStream stream;
-      stream.write((ObjectHandle &) object);
-      stream.write(name);
-      stream.write(OSP_FLOAT2);
-      callFunction(OSPCOI_GET_VALUE, stream, &result, sizeof(ReturnValue));
-      return(result.success ? *value = result.value, true : false);
-
-    }
-
-    /*! Get the named 3-vector floating point value associated with an object.*/
-    int COIDevice::getVec3f(OSPObject object, const char *name, vec3f *value) {
-
-      struct ReturnValue { int success;  vec3f value; } result;
-      Assert(object != nullptr && "invalid source object handle");
-      DataStream stream;
-      stream.write((ObjectHandle &) object);
-      stream.write(name);
-      stream.write(OSP_FLOAT3);
-      callFunction(OSPCOI_GET_VALUE, stream, &result, sizeof(ReturnValue));
-      return(result.success ? *value = result.value, true : false);
-
-    }
-
-    /*! Get the named 4-vector floating point value associated with an object.*/
-    int COIDevice::getVec4f(OSPObject object, const char *name, vec4f *value) {
-
-      struct ReturnValue { int success;  vec4f value; } result;
-      Assert(object != nullptr && "invalid source object handle");
-      DataStream stream;
-      stream.write((ObjectHandle &) object);
-      stream.write(name);
-      stream.write(OSP_FLOAT4);
-      callFunction(OSPCOI_GET_VALUE, stream, &result, sizeof(ReturnValue));
-      return(result.success ? *value = result.value, true : false);
-
-    }
-
-    /*! Get the named 3-vector integer value associated with an object. */
-    int COIDevice::getVec3i(OSPObject object, const char *name, vec3i *value) {
-
-      struct ReturnValue { int success;  vec3i value; } result;
-      Assert(object != nullptr && "invalid source object handle");
-      DataStream stream;
-      stream.write((ObjectHandle &) object);
-      stream.write(name);
-      stream.write(OSP_INT3);
-      callFunction(OSPCOI_GET_VALUE, stream, &result, sizeof(ReturnValue));
-      return(result.success ? *value = result.value, true : false);
-
-    }
-
-    /*! Clear the specified channel(s) of the frame buffer specified in 'whichChannels'.
-        If whichChannel&OSP_FB_COLOR!=0, clear the color buffer to '0,0,0,0'.  
-        If whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to +inf.  
-        If whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0, and reset accumID.
-    */
-    void COIDevice::frameBufferClear(OSPFrameBuffer _fb, const uint32 fbChannelFlags)
-    {
-      DataStream args;
-      args.write((ObjectHandle&)_fb);
-      args.write(fbChannelFlags);
-      callFunction(OSPCOI_FRAMEBUFFER_CLEAR,args);
     }
 
   } // ::ospray::coi

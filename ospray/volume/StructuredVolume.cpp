@@ -101,32 +101,10 @@ namespace ospray {
     Volume::finish();
   }
 
-  OSPDataType StructuredVolume::getVoxelType() const
+  OSPDataType StructuredVolume::getVoxelType()
   {
-    // Separate out the base type and vector width.
-    char* kind = (char*)alloca(voxelType.size());
-    unsigned int width = 1;
-    sscanf(voxelType.c_str(), "%[^0-9]%u", kind, &width);
-
-    OSPDataType res = OSP_UNKNOWN;
-
-    // Unsigned 8-bit scalar integer.
-    if (!strcmp(kind, "uchar") && width == 1)
-      res = OSP_UCHAR;
-
-    // Unsigned 16-bit scalar integer.
-    if (!strcmp(kind, "ushort") && width == 1)
-      res = OSP_USHORT;
-
-    // Single precision scalar floating point.
-    if (!strcmp(kind, "float") && width == 1)
-      res = OSP_FLOAT;
-
-    // Double precision scalar floating point.
-    if (!strcmp(kind, "double") && width == 1)
-      res = OSP_DOUBLE;
-
-    return res;
+    return finished ? typeForString(getParamString("voxelType", "unspecified")):
+                      typeForString(voxelType.c_str());
   }
 
 } // ::ospray

@@ -660,87 +660,6 @@ extern "C" void ospSetMaterial(OSPGeometry geometry, OSPMaterial material)
   ospray::api::Device::current->setMaterial(geometry,material);
 }
 
-//! Get the handle of the named data array associated with an object.
-extern "C" int ospGetData(OSPObject object, const char *name, OSPData *value) {
-  ASSERT_DEVICE();
-  return(ospray::api::Device::current->getData(object, name, value));
-}
-
-//! Get a copy of the data in an array (the application is responsible for freeing this pointer).
-extern "C" int ospGetDataValues(OSPData object, void **pointer, size_t *count, OSPDataType *type) {
-  ASSERT_DEVICE();
-  return(ospray::api::Device::current->getDataValues(object, pointer, count, type));
-}
-
-//! Get the named scalar floating point value associated with an object.
-extern "C" int ospGetf(OSPObject object, const char *name, float *value)
-{
-  ASSERT_DEVICE();
-  return(ospray::api::Device::current->getf(object, name, value));
-}
-
-//! Get the named scalar integer associated with an object.
-extern "C" int ospGeti(OSPObject object, const char *name, int *value)
-{
-  ASSERT_DEVICE();
-  return(ospray::api::Device::current->geti(object, name, value));
-}
-
-//! Get the material associated with a geometry object.
-extern "C" int ospGetMaterial(OSPGeometry geometry, OSPMaterial *value)
-{
-  ASSERT_DEVICE();
-  return(ospray::api::Device::current->getMaterial(geometry, value));
-}
-
-//! Get the named object associated with an object.
-extern "C" int ospGetObject(OSPObject object, const char *name, OSPObject *value)
-{
-  ASSERT_DEVICE();
-  return(ospray::api::Device::current->getObject(object, name, value));
-}
-
-//! Retrieve a NULL-terminated list of the parameter names associated with an object.
-extern "C" int ospGetParameters(OSPObject object, char ***value) {
-  ASSERT_DEVICE();
-  return(ospray::api::Device::current->getParameters(object, value));
-}
-
-//! Get a pointer to a copy of the named character string associated with an object.
-extern "C" int ospGetString(OSPObject object, const char *name, char **value)
-{
-  ASSERT_DEVICE();
-  return(ospray::api::Device::current->getString(object, name, value));
-}
-
-//! Get the type of the named parameter or the given object (if 'name' is NULL).
-extern "C" int ospGetType(OSPObject object, const char *name, OSPDataType *value)
-{
-  ASSERT_DEVICE();
-  return(ospray::api::Device::current->getType(object, name, value));
-}
-
-//! Get the named 2-vector floating point value associated with an object.
-extern "C" int ospGetVec2f(OSPObject object, const char *name, osp::vec2f *value)
-{
-  ASSERT_DEVICE();
-  return(ospray::api::Device::current->getVec2f(object, name, (vec2f *)value));
-}
-
-//! Get the named 3-vector floating point value associated with an object.
-extern "C" int ospGetVec3f(OSPObject object, const char *name, osp::vec3f *value)
-{
-  ASSERT_DEVICE();
-  return(ospray::api::Device::current->getVec3f(object, name, (vec3f *)value));
-}
-
-//! Get the named 3-vector integer value associated with an object.
-extern "C" int ospGetVec3i(OSPObject object, const char *name, osp::vec3i *value)
-{
-  ASSERT_DEVICE();
-  return(ospray::api::Device::current->getVec3i(object, name, (vec3i *)value));
-}
-
 /*! \brief create a new instance geometry that instantiates another
   model.  the resulting geometry still has to be added to another
   model via ospAddGeometry */
@@ -765,7 +684,8 @@ extern "C" void ospPick(OSPPickResult *result,
   ASSERT_DEVICE();
   Assert2(renderer, "NULL renderer passed to ospPick");
   if (!result) return;
-  *result = ospray::api::Device::current->pick(renderer, (const vec2f&)screenPos);
+  *result = ospray::api::Device::current->pick(renderer,
+                                               (const vec2f&)screenPos);
 }
 
 //! \brief allows for switching the MPI scope from "per rank" to "all ranks"
@@ -807,6 +727,7 @@ extern "C" void ospSampleVolume(float **results,
     return;
   }
 
-  ospray::api::Device::current->sampleVolume(results, volume, (vec3f*)&worldCoordinates, count);
+  ospray::api::Device::current->sampleVolume(results, volume,
+                                             (vec3f*)&worldCoordinates, count);
 }
 

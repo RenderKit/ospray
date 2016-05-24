@@ -58,7 +58,7 @@ namespace ospray {
     arrays etc being shared by common pointer). To do this any ospray
     object has an (optional) pointer to a possibly exisitng ISPC
     counterpart (its "ISPC equivalent", or IE). For objects that do not
-    have an IE, this value is NULL; typically, the IE will also have a
+    have an IE, this value is nullptr; typically, the IE will also have a
     pointer back to its "C equivalent" (CE); and typically, it will be
     the C side that is doing creation, destruction, etc. Since (due to
     some internal ISPC issues) many of the ISPC types we use cannot be
@@ -114,7 +114,8 @@ namespace ospray {
      * not need an own destructor. */
     virtual ~ManagedObject();
 
-    /*! \brief commit the object's outstanding changes (such as changed parameters etc) */
+    /*! \brief commit the object's outstanding changes (such as changed
+     *         parameters etc) */
     virtual void commit();
     
     //! \brief common function to help printf-debugging 
@@ -134,14 +135,16 @@ namespace ospray {
       Param(const char *name);
       ~Param() { clear(); };
 
-      /*! clear parameter to 'invalid type and value'; free/de-refcount data if reqd' */
+      /*! clear parameter to 'invalid type and value'; free/de-refcount data if
+       *  reqd' */
       void clear();
 
       /*! set parameter to a 'pointer to object' type, and given pointer */
       void set(ManagedObject *ptr);
 
       //! set parameter to a 'c-string' type 
-      /* \internal this function creates and keeps a *copy* of the passed string! */
+      /* \internal this function creates and keeps a *copy* of the passed
+       *  string! */
       void set(const char *s);
 
       //! set parameter to a 'c-string' type 
@@ -184,17 +187,19 @@ namespace ospray {
       const char *name;
     };
 
-    /*! \brief find a given parameter, or add it if not exists (and so specified) */
+    /*! \brief find a given parameter, or add it if not exists (and so
+     *         specified) */
     Param *findParam(const char *name, bool addIfNotExist = false);
 
     /*! \brief check if a given parameter is available */
     bool hasParam(const char *name) 
-    { return findParam(name,false) != NULL; }
+    { return findParam(name,false) != nullptr; }
 
     /*! \brief set given parameter to given data array */
     void   setParam(const char *name, ManagedObject *data);
 
-    /*! set a parameter with given name to given value, create param if not existing */
+    /*! set a parameter with given name to given value, create param if not
+     *  existing */
     template<typename T>
     inline void set(const char *name, const T &t) { findParam(name,1)->set(t); }
 
@@ -206,9 +211,10 @@ namespace ospray {
         have its refcount increased; it is up to the callee to
         properly do that (typically by assigning to a proper 'ref'
         instance */
-    ManagedObject *getParamObject(const char *name, ManagedObject *valIfNotFound=NULL);
+    ManagedObject *getParamObject(const char *name,
+                                  ManagedObject *valIfNotFound = nullptr);
 
-    Data *getParamData(const char *name, Data *valIfNotFound=NULL)
+    Data *getParamData(const char *name, Data *valIfNotFound = nullptr)
     { return (Data*)getParamObject(name,(ManagedObject*)valIfNotFound); }
 
     vec4f  getParam4f(const char *name, const vec4f  valIfNotFound);
@@ -220,8 +226,8 @@ namespace ospray {
     float  getParam1f(const char *name, const float  valIfNotFound);
     float  getParamf (const char *name, const float  valIfNotFound);
 
-    void  *getVoidPtr(const char *name, void *valIfNotFound);
-    const char  *getParamString(const char *name, const char *valIfNotFound);
+    void *getVoidPtr(const char *name, void *valIfNotFound);
+    const char *getParamString(const char *name, const char *valIfNotFound);
     /*! @} */
 
     // ------------------------------------------------------------------
@@ -232,7 +238,8 @@ namespace ospray {
     // depdencies got changed/committed.
     // ------------------------------------------------------------------
 
-    /*! \brief gets called whenever any of this node's dependencies got changed */
+    /*! \brief gets called whenever any of this node's dependencies got
+     *         changed */
     virtual void dependencyGotChanged(ManagedObject *object);
     
     //! \brief Will notify all listeners that we got changed
@@ -245,7 +252,7 @@ namespace ospray {
     void registerListener(ManagedObject *newListener);
 
     //! \brief un-register a listener
-    /*! \detailed this object will no longer get update notifications from us  */
+    /*! \detailed this object will no longer get update notifications from us */
     void unregisterListener(ManagedObject *noLongerListening);
 
 
@@ -278,10 +285,11 @@ namespace ospray {
     /*! \brief list of parameters attached to this object */
     std::vector<Param *> paramList;
 
-    /*! \brief a global ID that can be used for referencing an object remotely */
+    /*! \brief a global ID that can be used for referencing an object remotely*/
     id_t ID;
 
-    /*! \brief ISPC-side eqivalent of this C++-side class, if available (NULL if not) */
+    /*! \brief ISPC-side eqivalent of this C++-side class, if available
+     *         (nullptr if not) */
     void *ispcEquivalent;
 
     /*! \brief subtype of this ManagedObject */
