@@ -14,6 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <string>
+
 #include "QOSPRayWindow.h"
 #include "modules/opengl/util.h"
 
@@ -193,7 +195,7 @@ void QOSPRayWindow::paintGL()
 
   glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_UNSIGNED_BYTE, mappedFrameBuffer);
   if (writeFramesFilename.length()) {
-    std::string filename = writeFramesFilename + std::to_string(frameCount);
+    std::string filename = writeFramesFilename + std::to_string(static_cast<long long>(frameCount));
     writeFrameBufferToFile(filename, mappedFrameBuffer);
   }
 
