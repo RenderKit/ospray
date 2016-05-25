@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include <string>
+#include <mpi.h>
 
 #include "QOSPRayWindow.h"
 #include "modules/opengl/util.h"
@@ -222,6 +223,8 @@ void QOSPRayWindow::paintGL()
 
     writeFrameBufferToFile(benchmarkFilename, mappedFrameBuffer);
 
+    // Abort MPI
+    MPI_Abort(MPI_COMM_WORLD, 0);
     QCoreApplication::quit();
   }
 }
