@@ -64,6 +64,15 @@ namespace ospray {
       }
       free(s);
     }
+    // Trying a hacky idea to get the colors we want in an sRGB framebuffer
+    float srgb_to_linear(float c){
+      const float a = 0.055;
+      if (c <= 0.04045f){
+        return c / 12.92f;
+      } else {
+        return std::pow((c + a) / (1.f + a), 2.4f);
+      }
+    }
     void parseIndexedFaceSet(Model &model, const affine3f &xfm, xml::Node *root)
     {
       Ref<Mesh> mesh = new Mesh;
@@ -112,12 +121,17 @@ namespace ospray {
           continue;
         }
         if (node->name == "Color") {
-          /* ignore for now */
           parseVectorOfVec3fas(mesh->color,node->getProp("color"));
-          // warnIgnore("'Color' (in IndexedFaceSet)");
           continue;
         }
         warnIgnore("'" + node->name + "' child of 'IndexedFaceSet' node");
+      }
+      std::cout << "num colors in mesh: " << mesh->color.size() << std::endl;
+      for (auto &c : mesh->color){
+        // Will: Hack in conversion 
+        c.x = srgb_to_linear(c.x);
+        c.y = srgb_to_linear(c.y);
+        c.z = srgb_to_linear(c.z);
       }
 
       model.mesh.push_back(mesh);

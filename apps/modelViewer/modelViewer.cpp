@@ -175,7 +175,7 @@ namespace ospray {
       g_windowSize = newSize;
       if (fb) ospFreeFrameBuffer(fb);
       fb = ospNewFrameBuffer((const osp::vec2i&)newSize,
-                             OSP_FB_RGBA8,
+                             OSP_FB_SRGBA,
                              OSP_FB_COLOR|OSP_FB_DEPTH|
                              OSP_FB_ACCUM|OSP_FB_VARIANCE);
       ospFrameBufferClear(fb,OSP_FB_ACCUM);
