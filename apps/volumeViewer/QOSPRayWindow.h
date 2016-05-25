@@ -89,7 +89,7 @@ public:
 
   void setRenderingEnabled(bool renderingEnabled);
   void setRotationRate(float rotationRate);
-  void setBenchmarkParameters(int benchmarkWarmUpFrames, int benchmarkFrames);
+  void setBenchmarkParameters(int benchmarkWarmUpFrames, int benchmarkFrames, const std::string &benchmarkFilename);
   virtual void setWorldBounds(const ospcommon::box3f &worldBounds);
 
   Viewport * getViewport() { return &viewport; }
@@ -147,6 +147,9 @@ protected:
   /*! benchmarking: number of frames over which to measure frame rate */
   int benchmarkFrames;
 
+  /*! benchmarking: file name to save the final image to */
+  std::string benchmarkFilename;
+
   /*! benchmarking: timer to measure elapsed time over benchmark frames */
   QTime benchmarkTimer;
 
@@ -164,6 +167,6 @@ protected:
   OSPTexture2D maxDepthTexture;
 
   std::string writeFramesFilename;
-  void writeFrameBufferToFile(const uint32_t *pixelData);
+  void writeFrameBufferToFile(std::string filename, const uint32_t *pixelData);
 
 };

@@ -99,10 +99,12 @@ void QOSPRayWindow::setRotationRate(float rotationRate)
   this->rotationRate = rotationRate;
 }
 
-void QOSPRayWindow::setBenchmarkParameters(int benchmarkWarmUpFrames, int benchmarkFrames)
+void QOSPRayWindow::setBenchmarkParameters(int benchmarkWarmUpFrames, int benchmarkFrames,
+  const std::string &benchmarkFilename)
 {
   this->benchmarkWarmUpFrames = benchmarkWarmUpFrames;
   this->benchmarkFrames = benchmarkFrames;
+  this->benchmarkFilename = benchmarkFilename;
 }
 
 void QOSPRayWindow::setWorldBounds(const ospcommon::box3f &worldBounds)
@@ -190,7 +192,10 @@ void QOSPRayWindow::paintGL()
   uint32_t *mappedFrameBuffer = (unsigned int *) ospMapFrameBuffer(frameBuffer);
 
   glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_UNSIGNED_BYTE, mappedFrameBuffer);
-  if (writeFramesFilename.length()) writeFrameBufferToFile(mappedFrameBuffer);
+  if (writeFramesFilename.length()) {
+    std::string filename = writeFramesFilename + std::to_string(frameCount);
+    writeFrameBufferToFile(filename, mappedFrameBuffer);
+  }
 
   ospUnmapFrameBuffer(mappedFrameBuffer, frameBuffer);
 
@@ -208,7 +213,12 @@ void QOSPRayWindow::paintGL()
 
     float elapsedSeconds = float(benchmarkTimer.elapsed()) / 1000.f;
 
-    std::cout << "benchmark: " << elapsedSeconds << " elapsed seconds ==> " << float(benchmarkFrames) / elapsedSeconds << " fps" << std::endl;
+    std::cout << "benchmark: " << elapsedSeconds << " elapsed seconds ==> "
+      << float(benchmarkFrames) / elapsedSeconds << " fps" << std::endl;
+
+    uint32_t *mappedFrameBuffer = (unsigned int *) ospMapFrameBuffer(frameBuffer);
+
+    writeFrameBufferToFile(benchmarkFilename, mappedFrameBuffer);
 
     QCoreApplication::quit();
   }
@@ -362,13 +372,14 @@ void QOSPRayWindow::renderGL()
   emit(renderGLComponents());
 }
 
-void QOSPRayWindow::writeFrameBufferToFile(const uint32_t *pixelData)
+void QOSPRayWindow::writeFrameBufferToFile(std::string filename, const uint32_t *pixelData)
 {
-  static uint32_t frameNumber = 0;
-  char filename[1024];
-  sprintf(filename, "%s_%05u.ppm", writeFramesFilename.c_str(), frameNumber++);
-  FILE *file = fopen(filename, "wb");  if (!file) { std::cerr << "unable to write to file '" << filename << "'" << std::endl;  return; }
-
+  filename += ".ppm";
+  FILE *file = fopen(filename.c_str(), "wb");
+  if (!file) {
+    std::cerr << "unable to write to file '" << filename << "'" << std::endl;
+    return;
+  }
   fprintf(file, "P6\n%i %i\n255\n", windowSize.x, windowSize.y);
   unsigned char out[3 * windowSize.x];
   for (int y=0 ; y < windowSize.y ; y++) {
