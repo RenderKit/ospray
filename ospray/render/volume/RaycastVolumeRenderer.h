@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <chrono>
+#include "ospray/common/Core.h"
 #include "ospray/render/Renderer.h"
 
 namespace ospray {
@@ -59,6 +61,11 @@ namespace ospray {
     //! ISPC equivalents for lights.
     std::vector<void *> lights;
 
+  private:
+    // Will HACK: Timing the render frame calls on each worker
+    size_t totalFrames = 0;
+    size_t frameCount = 0;
+    std::chrono::milliseconds avgFrameTime = std::chrono::milliseconds(0);
   };
 
   // Inlined function definitions /////////////////////////////////////////////

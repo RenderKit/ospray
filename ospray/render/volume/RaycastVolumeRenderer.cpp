@@ -278,6 +278,8 @@ namespace ospray {
     // have an instance of this renderer class -
     assert(workerRank >= 0);
 
+    auto frameStart = std::chrono::high_resolution_clock::now();
+
     Renderer::beginFrame(fb);
 
     dfb->startNewFrame();
@@ -307,6 +309,23 @@ namespace ospray {
 
     dfb->waitUntilFinished();
     Renderer::endFrame(nullptr, channelFlags);
+
+    auto frameEnd = std::chrono::high_resolution_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(frameEnd - frameStart);
+    // Skip the first 10 frames to warm up
+    if (totalFrames > 10) {
+      avgFrameTime = (elapsed + frameCount * avgFrameTime) / (frameCount + 1);
+      ++frameCount;
+    } else {
+      ++totalFrames;
+    }
+
+    if (frameCount > 0 && frameCount % 25 == 0) {
+      std::cout << "Worker " << core::getWorkerRank() << " avg frame time: "
+        << avgFrameTime.count() << "ms over " << frameCount << " frames"
+        << std::endl;
+    }
+
     return fb->endFrame(0.f);
   }
 
