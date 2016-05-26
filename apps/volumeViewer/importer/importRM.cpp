@@ -157,6 +157,31 @@ namespace ospray {
       ~RMLoaderThreads() { delete[] thread; };
     };
 
+    // Just import the RM file into some larger scene, just loads the volume
+    void importVolumeRM(const FileName &fileName, Volume *volume) {
+      // Update the provided dimensions of the volume for the subvolume specified.
+      ospcommon::vec3i dims(2048,2048,1920);
+      volume->dimensions = dims;
+      ospSetVec3i(volume->handle, "dimensions", (osp::vec3i&)dims);
+      ospSetString(volume->handle,"voxelType", "uchar");
+
+      // I think osp sysinfo is gone so just use 8 threads
+      const int numThreads = 8;
+
+      double t0 = ospcommon::getSysTime();
+
+      RMLoaderThreads(volume,fileName,numThreads);
+      double t1 = ospcommon::getSysTime();
+      std::cout << "done loading " << fileName 
+        << ", needed " << (t1-t0) << " seconds" << std::endl;
+
+      ospSet2f(volume->handle,"voxelRange",volume->voxelRange.x,volume->voxelRange.y);
+      volume->bounds = ospcommon::empty;
+      volume->bounds.extend(volume->gridOrigin);
+      volume->bounds.extend(volume->gridOrigin+ vec3f(volume->dimensions) * volume->gridSpacing);
+    }
+
+    // Treat a single RM file as a "scene"
     void importRM(const FileName &fileName, Group *group) {
       const char *dpFromEnv = getenv("OSPRAY_DATA_PARALLEL");
       // Same as OSPObjectFile::importVolume for creating the initial OSPVolume and importRAW
@@ -187,25 +212,8 @@ namespace ospray {
         throw std::runtime_error("#loaders.ospObjectFile: could not create volume ...");
       }
 
-      // Update the provided dimensions of the volume for the subvolume specified.
-      ospcommon::vec3i dims(2048,2048,1920);
-      volume->dimensions = dims;
-      ospSetVec3i(volume->handle, "dimensions", (osp::vec3i&)dims);
-      ospSetString(volume->handle,"voxelType", "uchar");
+      importVolumeRM(fileName, volume);
 
-      const int numThreads = 8;
-
-      double t0 = ospcommon::getSysTime();
-
-      RMLoaderThreads(volume,fileName,numThreads);
-      double t1 = ospcommon::getSysTime();
-      std::cout << "done loading " << fileName 
-        << ", needed " << (t1-t0) << " seconds" << std::endl;
-
-      ospSet2f(volume->handle,"voxelRange",volume->voxelRange.x,volume->voxelRange.y);
-      volume->bounds = ospcommon::empty;
-      volume->bounds.extend(volume->gridOrigin);
-      volume->bounds.extend(volume->gridOrigin+ vec3f(volume->dimensions) * volume->gridSpacing);
       // Add the volume to the group
       group->volume.push_back(volume);
     }
