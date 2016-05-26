@@ -34,6 +34,8 @@
 
 namespace ospray {
   namespace vv_importer {
+    const static osp::vec3i rmBlockDims{256, 256, 128};
+
     struct RMLoaderThreads {
       Volume *volume;
 
@@ -45,18 +47,29 @@ namespace ospray {
       pthread_t *thread;
       std::string inFilesDir;
       bool useGZip;
+      // Will: Scaling stuff for DFB benchmarking so we can
+      // scale the RM dataset up arbitrarily
+      osp::vec3f scaleFactor;
+      osp::vec3i scaledBlockDims;
 
       struct Block {
         uint8_t voxel[256*256*128];
       };
 
-      RMLoaderThreads(Volume *volume, const std::string &fileName, int numThreads=10) 
+      RMLoaderThreads(Volume *volume, const std::string &fileName, int numThreads, osp::vec3f scaleFactor)
         : volume(volume), nextBlockID(0), thread(NULL), nextPinID(0),
-        numThreads(numThreads)
+        numThreads(numThreads), scaleFactor(scaleFactor)
       {
+        scaledBlockDims.x = scaleFactor.x * rmBlockDims.x;
+        scaledBlockDims.y = scaleFactor.y * rmBlockDims.y;
+        scaledBlockDims.z = scaleFactor.z * rmBlockDims.z;
+
         inFilesDir = fileName.substr(0, fileName.rfind('.'));
         std::cout << "Reading LLNL Richtmyer-Meshkov bob from " << inFilesDir
-          << " with " << numThreads << " threads" << std::endl;
+          << " with " << numThreads << " threads\n"
+          << "\tBlocks will be scaled from {" << rmBlockDims.x << ", " << rmBlockDims.y
+          << ", " << rmBlockDims.z << "} to {" << scaledBlockDims.x << ", "
+          << scaledBlockDims.y << ", " << scaledBlockDims.z << "}" << std::endl;
 
         useGZip = (getenv("OSPRAY_RM_NO_GZIP") == NULL);
 
@@ -115,6 +128,17 @@ namespace ospray {
           fclose(file);
       }
 
+      // Upsample the 256x256 slice of RM data to scaledBlockDims.x * scaledBlockDims.y,
+      // it's assumed that out points to a large enough array to hold the upsampled data
+      void upsampleSlice(const uint8_t *slice, uint8_t *out){
+        for (int y = 0; y < scaledBlockDims.y; ++y){
+          for (int x = 0; x < scaledBlockDims.x; ++x){
+            const int sliceIdx = static_cast<int>(y / scaleFactor.y) * rmBlockDims.x + static_cast<int>(x / scaleFactor.x);
+            out[y * scaledBlockDims.x + x] = slice[sliceIdx];
+          }
+        }
+      }
+
       void run() 
       {
         int threadID = nextPinID.fetch_add(1);
@@ -129,7 +153,6 @@ namespace ospray {
           int J = (blockID / 8) % 8;
           int K = (blockID / 64);
 
-
           int cpu = -1;
 #ifdef __LINUX__
           cpu = sched_getcpu();
@@ -139,15 +162,24 @@ namespace ospray {
 
           ospcommon::vec2f blockRange(block->voxel[0]);
           extendVoxelRange(blockRange,&block->voxel[0],256*256*128);
-          ospcommon::vec3i region_lo(I*256,J*256,K*128);
-          ospcommon::vec3i region_sz(256,256,128);
+          // Apply scaling to each slice of the data
+          uint8_t *scaledSlice = new uint8_t[scaledBlockDims.x * scaledBlockDims.y];
+          ospcommon::vec3i region_sz(scaledBlockDims.x, scaledBlockDims.y, 1);
+          for (int z = 0; z < scaledBlockDims.z; ++z){
+            const int zOrig = static_cast<int>(z / scaleFactor.z);
+            ospcommon::vec3i region_lo(I * scaledBlockDims.x, J * scaledBlockDims.y, K * scaledBlockDims.z + z);
+            upsampleSlice(&block->voxel[zOrig * rmBlockDims.x * rmBlockDims.y], scaledSlice);
+            {
+              std::lock_guard<std::mutex> lock(mutex);
+              ospSetRegion(volume->handle, scaledSlice, (osp::vec3i&)region_lo, (osp::vec3i&)region_sz);
+            }
+          }
           {
             std::lock_guard<std::mutex> lock(mutex);
-            ospSetRegion(volume->handle,block->voxel,(osp::vec3i&)region_lo,(osp::vec3i&)region_sz);
-
-            volume->voxelRange.x = std::min(volume->voxelRange.x,blockRange.x);
-            volume->voxelRange.y = std::max(volume->voxelRange.y,blockRange.y);
+            volume->voxelRange.x = std::min(volume->voxelRange.x, blockRange.x);
+            volume->voxelRange.y = std::max(volume->voxelRange.y, blockRange.y);
           }
+          delete[] scaledSlice;
         }
         delete block;
       }
@@ -159,18 +191,37 @@ namespace ospray {
 
     // Just import the RM file into some larger scene, just loads the volume
     void importVolumeRM(const FileName &fileName, Volume *volume) {
+      const char *scaleFactorEnv = getenv("OSPRAY_RM_SCALE_FACTOR");
+      osp::vec3f scaleFactor{1.f, 1.f, 1.f};
+      if (scaleFactorEnv){
+        std::cout << "#osp.loader: found OSPRAY_RM_SCALE_FACTOR env-var" << std::endl;
+        if (sscanf(scaleFactorEnv, "%fx%fx%f", &scaleFactor.x, &scaleFactor.y, &scaleFactor.z) != 3){
+          throw std::runtime_error("Could not parse OSPRAY_RM_SCALE_FACTOR env-var. Must be of format"
+              "<X>x<Y>x<Z> (e.g '1.5x2x0.5')");
+        }
+        std::cout << "#osp.loader: got OSPRAY_RM_SCALE_FACTOR env-var = {"
+          << scaleFactor.x << ", " << scaleFactor.y << ", " << scaleFactor.z
+          << "}" << std::endl;
+      }
       // Update the provided dimensions of the volume for the subvolume specified.
-      ospcommon::vec3i dims(2048,2048,1920);
+      ospcommon::vec3i dims(2048 * scaleFactor.x, 2048 * scaleFactor.y, 1920 * scaleFactor.z);
       volume->dimensions = dims;
       ospSetVec3i(volume->handle, "dimensions", (osp::vec3i&)dims);
       ospSetString(volume->handle,"voxelType", "uchar");
 
-      // I think osp sysinfo is gone so just use 8 threads
-      const int numThreads = 8;
+      // I think osp sysinfo is gone so just use 8 threads or check env var
+      int numThreads = 8;
+      const char *numThreadsEnv = getenv("OSPRAY_RM_LOADER_THREADS");
+      if (numThreadsEnv){
+        numThreads = atoi(numThreadsEnv);
+        std::cout << "#osp.loader: Got OSPRAY_RM_LOADER_THREADS env-var, using " << numThreads << "\n";
+      } else {
+        std::cout << "#osp.loader: No OSPRAY_RM_LOADER_THREADS env-var found, defaulting to 8\n";
+      }
 
       double t0 = ospcommon::getSysTime();
 
-      RMLoaderThreads(volume,fileName,numThreads);
+      RMLoaderThreads(volume, fileName, numThreads, scaleFactor);
       double t1 = ospcommon::getSysTime();
       std::cout << "done loading " << fileName 
         << ", needed " << (t1-t0) << " seconds" << std::endl;
