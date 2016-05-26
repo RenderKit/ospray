@@ -62,6 +62,7 @@ SET(SRCS ${SRCS}
 	importer/Importer.cpp
 	importer/importOSP.cpp
 	importer/importRAW.cpp
+  importer/importRM.cpp
 	importer/TinyXML2.cpp
   )
 
