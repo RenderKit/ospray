@@ -511,7 +511,7 @@ inline void DDVR_renderSample(RaycastVolumeRenderer *uniform self,
     }
   }
 
-if (!isMyTile) return;
+  if (!isMyTile) return;
 
   if (blockRegion.lower >= blockRegion.upper) {
     // ------------------------------------------------------------------

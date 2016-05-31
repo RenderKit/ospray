@@ -31,8 +31,10 @@
 #endif
 
 #define TILE_CACHE_SAFE_MUTEX 0
+#define DBG(a) /* ignore */
 
 namespace ospray {
+  const static int LOG_RANK = 0;
 
   Material *RaycastVolumeRenderer::createMaterial(const char *type)
   {
@@ -306,19 +308,23 @@ namespace ospray {
     renderTask.channelFlags = channelFlags;
     renderTask.dpv = ddVolumeVec[0];
 
-    if (mpi::worker.rank == 0) {
-      std::cout << "Worker " << mpi::worker.rank << " start render tile at "
-        << duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count()
-        << "ms" << std::endl;
-    }
+    DBG({
+      if (mpi::worker.rank == LOG_RANK){
+        std::cout << "Worker " << mpi::worker.rank << " start render tile at "
+          << duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count()
+          << "ms\n";
+      }
+    })
     size_t NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
     parallel_for(NTASKS, renderTask);
 
-    if (mpi::worker.rank == 0){
-      std::cout << "Worker " << mpi::worker.rank << " end render tile at "
-        << duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count()
-        << "ms" << std::endl;
-    }
+    DBG({
+      if (mpi::worker.rank == LOG_RANK){
+        std::cout << "Worker " << mpi::worker.rank << " end render tile at "
+          << duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count()
+          << "ms\n";
+      }
+    })
 
     dfb->waitUntilFinished();
     Renderer::endFrame(nullptr, channelFlags);
@@ -334,10 +340,11 @@ namespace ospray {
     }
 
     if (frameCount > 0 && frameCount % 25 == 0) {
-      std::cout << "Worker " << core::getWorkerRank() << " avg frame time: "
+      std::cout << "Worker " << mpi::worker.rank << " avg frame time: "
         << avgFrameTime.count() << "ms over " << frameCount << " frames"
         << std::endl;
     }
+    std::cout << std::flush;
 
     return fb->endFrame(0.f);
   }
