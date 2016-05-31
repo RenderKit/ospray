@@ -20,6 +20,7 @@
 #include "common/FileName.h"
 // ospray api
 #include "ospray/ospray.h"
+#include "common/sysinfo.h"
 
 // std::
 #include <iostream>
@@ -209,14 +210,13 @@ namespace ospray {
       ospSetVec3i(volume->handle, "dimensions", (osp::vec3i&)dims);
       ospSetString(volume->handle,"voxelType", "uchar");
 
-      // I think osp sysinfo is gone so just use 8 threads or check env var
-      int numThreads = 8;
+      int numThreads = ospcommon::getNumberOfLogicalThreads();
       const char *numThreadsEnv = getenv("OSPRAY_RM_LOADER_THREADS");
       if (numThreadsEnv){
         numThreads = atoi(numThreadsEnv);
         std::cout << "#osp.loader: Got OSPRAY_RM_LOADER_THREADS env-var, using " << numThreads << "\n";
       } else {
-        std::cout << "#osp.loader: No OSPRAY_RM_LOADER_THREADS env-var found, defaulting to 8\n";
+        std::cout << "#osp.loader: No OSPRAY_RM_LOADER_THREADS env-var found, using 8\n";
       }
 
       double t0 = ospcommon::getSysTime();
