@@ -14,6 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <chrono>
+#include <atomic>
 #include "DistributedFrameBuffer.h"
 #include "DistributedFrameBuffer_ispc.h"
 
@@ -30,6 +32,10 @@
 namespace ospray {
   using std::cout;
   using std::endl;
+
+  // TODO WILL: Tracker for when we've finished the frame so we
+  // will only print the first call to AlphaBlendTile_simple::Process
+  static std::atomic<bool> dfbPrintTileProcess(true);
 
   inline int clientRank(int clientID) { return clientID+1; }
 
@@ -108,6 +114,15 @@ namespace ospray {
     written into / composited into this dfb tile */
   void DFB::AlphaBlendTile_simple::process(const ospray::Tile &tile)
   {
+    // TODO WILL: The first call to this is when we receive our first tile for compositing
+    if (dfbPrintTileProcess.load()) {
+      using namespace std::chrono;
+      auto firstProcess = high_resolution_clock::now();
+      std::cout << "Worker " << mpi::worker.rank << " DFB::AlphaBlendTile_simple::process at "
+        << duration_cast<milliseconds>(firstProcess.time_since_epoch()).count()
+        << "ms" << std::endl;
+      dfbPrintTileProcess.store(false);
+    }
     BufferedTile *addTile = new BufferedTile;
     memcpy(&addTile->tile,&tile,sizeof(tile));
     computeSortOrder(addTile);
@@ -506,9 +521,18 @@ namespace ospray {
 
   void DFB::closeCurrentFrame()
   {
+    using namespace std::chrono;
+
     DBG(printf("rank %i CLOSES frame\n",mpi::world.rank));
     frameIsActive = false;
+    // TODO WILL: Is this when the worker has finished its local compositin?
+    auto closeTime = high_resolution_clock::now();
+    std::cout << "Worker " << mpi::worker.rank << " DFB::closeCurrentFrame at "
+      << duration_cast<milliseconds>(closeTime.time_since_epoch()).count()
+      << "ms" << std::endl;
     frameIsDone   = true;
+    // Print the first tile we process again
+    dfbPrintTileProcess.store(true);
     doneCond.notify_all();
   }
 

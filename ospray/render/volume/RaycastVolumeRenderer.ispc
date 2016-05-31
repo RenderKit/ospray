@@ -473,6 +473,11 @@ inline void DDVR_renderSample(RaycastVolumeRenderer *uniform self,
   region1f blockRegion = make_region1f(+inf,-inf);
   float org_ray_t0 = fgSample.ray.t0;
   float org_ray_t1 = fgSample.ray.t;
+  // TODO WILL: We want to know how much time is spent intersecting all the boxes here
+  // as we get to O(100+) boxes this could become an issue since each worker will test all
+  // boxes. Ingo mentioned an easy check here is just to run this loop twice and see if it
+  // hurts performance a lot. DO NOT do the renderSample call 2x b/c of course that will be 2x
+  // slower just the box tests.
   for (uniform int blockID=0;blockID<numBlocks;blockID++) {
     float t0 = org_ray_t0;
     float t1 = org_ray_t1;

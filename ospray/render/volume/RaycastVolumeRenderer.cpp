@@ -227,6 +227,8 @@ namespace ospray {
   float RaycastVolumeRenderer::renderFrame(FrameBuffer *fb,
                                            const uint32 channelFlags)
   {
+    using namespace std::chrono;
+
     int workerRank = ospray::core::getWorkerRank();
 
     using DDBV = DataDistributedBlockedVolume;
@@ -278,7 +280,7 @@ namespace ospray {
     // have an instance of this renderer class -
     assert(workerRank >= 0);
 
-    auto frameStart = std::chrono::high_resolution_clock::now();
+    auto frameStart = high_resolution_clock::now();
 
     Renderer::beginFrame(fb);
 
@@ -304,14 +306,21 @@ namespace ospray {
     renderTask.channelFlags = channelFlags;
     renderTask.dpv = ddVolumeVec[0];
 
+    std::cout << "Worker " << mpi::worker.rank << " start render tile at "
+      << duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count()
+      << "ms" << std::endl;
     size_t NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
     parallel_for(NTASKS, renderTask);
+
+    std::cout << "Worker " << mpi::worker.rank << " end render tile at "
+      << duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count()
+      << "ms" << std::endl;
 
     dfb->waitUntilFinished();
     Renderer::endFrame(nullptr, channelFlags);
 
-    auto frameEnd = std::chrono::high_resolution_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(frameEnd - frameStart);
+    auto frameEnd = high_resolution_clock::now();
+    auto elapsed = duration_cast<milliseconds>(frameEnd - frameStart);
     // Skip the first 10 frames to warm up
     if (totalFrames > 10) {
       avgFrameTime = (elapsed + frameCount * avgFrameTime) / (frameCount + 1);
