@@ -115,7 +115,7 @@ namespace ospray {
   void DFB::AlphaBlendTile_simple::process(const ospray::Tile &tile)
   {
     // TODO WILL: The first call to this is when we receive our first tile for compositing
-    if (dfbPrintTileProcess.load()) {
+    if (dfbPrintTileProcess.load() && mpi::worker.rank == 0) {
       using namespace std::chrono;
       auto firstProcess = high_resolution_clock::now();
       std::cout << "Worker " << mpi::worker.rank << " DFB::AlphaBlendTile_simple::process at "
@@ -526,10 +526,12 @@ namespace ospray {
     DBG(printf("rank %i CLOSES frame\n",mpi::world.rank));
     frameIsActive = false;
     // TODO WILL: Is this when the worker has finished its local compositin?
-    auto closeTime = high_resolution_clock::now();
-    std::cout << "Worker " << mpi::worker.rank << " DFB::closeCurrentFrame at "
-      << duration_cast<milliseconds>(closeTime.time_since_epoch()).count()
-      << "ms" << std::endl;
+    if (mpi::worker.rank == 0){
+      auto closeTime = high_resolution_clock::now();
+      std::cout << "Worker " << mpi::worker.rank << " DFB::closeCurrentFrame at "
+        << duration_cast<milliseconds>(closeTime.time_since_epoch()).count()
+        << "ms" << std::endl;
+    }
     frameIsDone   = true;
     // Print the first tile we process again
     dfbPrintTileProcess.store(true);

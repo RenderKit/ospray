@@ -306,15 +306,19 @@ namespace ospray {
     renderTask.channelFlags = channelFlags;
     renderTask.dpv = ddVolumeVec[0];
 
-    std::cout << "Worker " << mpi::worker.rank << " start render tile at "
-      << duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count()
-      << "ms" << std::endl;
+    if (mpi::worker.rank == 0) {
+      std::cout << "Worker " << mpi::worker.rank << " start render tile at "
+        << duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count()
+        << "ms" << std::endl;
+    }
     size_t NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
     parallel_for(NTASKS, renderTask);
 
-    std::cout << "Worker " << mpi::worker.rank << " end render tile at "
-      << duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count()
-      << "ms" << std::endl;
+    if (mpi::worker.rank == 0){
+      std::cout << "Worker " << mpi::worker.rank << " end render tile at "
+        << duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count()
+        << "ms" << std::endl;
+    }
 
     dfb->waitUntilFinished();
     Renderer::endFrame(nullptr, channelFlags);
