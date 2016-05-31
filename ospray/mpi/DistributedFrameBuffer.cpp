@@ -115,13 +115,12 @@ namespace ospray {
   void DFB::AlphaBlendTile_simple::process(const ospray::Tile &tile)
   {
     // TODO WILL: The first call to this is when we receive our first tile for compositing
-    if (dfbPrintTileProcess.load() && mpi::worker.rank == 0) {
+    if (dfbPrintTileProcess.exchange(false) && mpi::worker.rank == 0) {
       using namespace std::chrono;
       auto firstProcess = high_resolution_clock::now();
       std::cout << "Worker " << mpi::worker.rank << " DFB::AlphaBlendTile_simple::process at "
         << duration_cast<milliseconds>(firstProcess.time_since_epoch()).count()
         << "ms" << std::endl;
-      dfbPrintTileProcess.store(false);
     }
     BufferedTile *addTile = new BufferedTile;
     memcpy(&addTile->tile,&tile,sizeof(tile));
