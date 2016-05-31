@@ -666,7 +666,7 @@ namespace ospray {
         g_createDefaultMaterial = false;
       } else if (arg == "--hdri-light") {
         // Syntax for HDRI light is the same as Embree:
-        // --hdri-light L.r L.g L.b <image file>.(pfm|ppm)
+        // --hdri-light <intensity> <image file>.(pfm|ppm)
         OSPLight ospHdri = ospNewLight(ospRenderer, "hdri");
         ospSetString(ospHdri, "name", "hdri_test");
         ospSet3f(ospHdri, "up", 0.f, 0.f, 1.f);
