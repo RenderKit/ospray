@@ -410,7 +410,7 @@ namespace ospray {
     TileData *td = (TileData*)tileDesc;
     // TODO WILL: LOG HERE WHEN PROCESSING, this is called when getting a remote tile
     WILL_DBG({
-      if (dfbPrintTileProcessMsg.exchange(false)) {
+      if (true){//dfbPrintTileProcessMsg.exchange(false)) {
         using namespace std::chrono;
         auto firstMsg = high_resolution_clock::now();
         std::cout << "Worker " << mpi::worker.rank << " DFB::processMessage at "
