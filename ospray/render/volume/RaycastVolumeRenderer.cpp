@@ -30,11 +30,12 @@
 # include "ospray/render/LoadBalancer.h"
 #endif
 
+// Include my debug hack
+#include "ospray/will_dbg_log.h"
+
 #define TILE_CACHE_SAFE_MUTEX 0
-#define DBG(a) /* ignore */
 
 namespace ospray {
-  const static int LOG_RANK = 0;
 
   Material *RaycastVolumeRenderer::createMaterial(const char *type)
   {
@@ -308,22 +309,18 @@ namespace ospray {
     renderTask.channelFlags = channelFlags;
     renderTask.dpv = ddVolumeVec[0];
 
-    DBG({
-      if (mpi::worker.rank == LOG_RANK){
-        std::cout << "Worker " << mpi::worker.rank << " start render tile at "
-          << duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count()
-          << "ms\n";
-      }
+    WILL_DBG({
+      std::cout << "Worker " << mpi::worker.rank << " start render tile at "
+        << duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count()
+        << "ms\n";
     })
     size_t NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
     parallel_for(NTASKS, renderTask);
 
-    DBG({
-      if (mpi::worker.rank == LOG_RANK){
-        std::cout << "Worker " << mpi::worker.rank << " end render tile at "
-          << duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count()
-          << "ms\n";
-      }
+    WILL_DBG({
+      std::cout << "Worker " << mpi::worker.rank << " end render tile at "
+        << duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count()
+        << "ms\n";
     })
 
     dfb->waitUntilFinished();

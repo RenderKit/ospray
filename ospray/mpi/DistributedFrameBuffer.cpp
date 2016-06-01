@@ -27,8 +27,10 @@
 #  include <windows.h> // for Sleep
 #endif
 
+// Include my debug hack
+#include "ospray/will_dbg_log.h"
+
 #define DBG(a) /* ignore */
-#define WILL_DBG(a) /* ignore */
 
 namespace ospray {
   using std::cout;
@@ -37,7 +39,7 @@ namespace ospray {
   // TODO WILL: Tracker for when we've finished the frame so we
   // will only print the first call to AlphaBlendTile_simple::Process
   static std::atomic<bool> dfbPrintTileProcess(true);
-  const static int LOG_RANK = 0;
+  static std::atomic<bool> dfbPrintTileProcessMsg(true);
 
   inline int clientRank(int clientID) { return clientID+1; }
 
@@ -118,7 +120,7 @@ namespace ospray {
   {
     // TODO WILL: The first call to this is when we receive our first tile for compositing
     WILL_DBG({
-      if (dfbPrintTileProcess.exchange(false) && mpi::worker.rank == LOG_RANK) {
+      if (dfbPrintTileProcess.exchange(false)) {
         using namespace std::chrono;
         auto firstProcess = high_resolution_clock::now();
         std::cout << "Worker " << mpi::worker.rank << " DFB::AlphaBlendTile_simple::process at "
@@ -195,7 +197,7 @@ namespace ospray {
   void DFB::WriteOnlyOnceTile::process(const ospray::Tile &tile)
   {
     WILL_DBG({
-      if (dfbPrintTileProcess.exchange(false) && mpi::worker.rank == LOG_RANK) {
+      if (dfbPrintTileProcess.exchange(false)) {
         using namespace std::chrono;
         auto firstProcess = high_resolution_clock::now();
         std::cout << "Worker " << mpi::worker.rank << " DFB::WriteOnlyOnceTile::process at "
@@ -406,6 +408,16 @@ namespace ospray {
     DFB::TileDesc *tileDesc = this->getTileDescFor(msg->coords);
     // TODO: compress/decompress tile data
     TileData *td = (TileData*)tileDesc;
+    // TODO WILL: LOG HERE WHEN PROCESSING, this is called when getting a remote tile
+    WILL_DBG({
+      if (dfbPrintTileProcessMsg.exchange(false)) {
+        using namespace std::chrono;
+        auto firstMsg = high_resolution_clock::now();
+        std::cout << "Worker " << mpi::worker.rank << " DFB::processMessage at "
+          << duration_cast<milliseconds>(firstMsg.time_since_epoch()).count()
+          << "ms\n";
+      }
+    })
     td->process(msg->tile);
   }
 
@@ -539,16 +551,15 @@ namespace ospray {
     frameIsActive = false;
     WILL_DBG({
       // TODO WILL: Is this when the worker has finished its local compositin?
-      if (mpi::worker.rank == LOG_RANK){
-        auto closeTime = high_resolution_clock::now();
-        std::cout << "Worker " << mpi::worker.rank << " DFB::closeCurrentFrame at "
-          << duration_cast<milliseconds>(closeTime.time_since_epoch()).count()
-          << "ms" << std::endl;
-      }
+      auto closeTime = high_resolution_clock::now();
+      std::cout << "Worker " << mpi::worker.rank << " DFB::closeCurrentFrame at "
+        << duration_cast<milliseconds>(closeTime.time_since_epoch()).count()
+        << "ms" << std::endl;
     })
     frameIsDone   = true;
     // Print the first tile we process again
     dfbPrintTileProcess.store(true);
+    dfbPrintTileProcessMsg.store(true);
     doneCond.notify_all();
   }
 
