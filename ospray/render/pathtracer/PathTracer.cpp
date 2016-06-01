@@ -76,11 +76,37 @@ namespace ospray {
                          lightPtr, lightArray.size());
   }
 
+#define WILL_DBG(a) /* ignore */
+
+  void* PathTracer::beginFrame(FrameBuffer *fb) {
+    using namespace std::chrono;
+    frameStart = high_resolution_clock::now();
+    void *ret = Renderer::beginFrame(fb);
+    return ret;
+  }
+  void PathTracer::endFrame(void *perFrameData, const int32 fbChannelFlags) {
+    using namespace std::chrono;
+    Renderer::endFrame(perFrameData, fbChannelFlags);
+
+    frameEnd = high_resolution_clock::now();
+    auto elapsed = duration_cast<milliseconds>(frameEnd - frameStart);
+    // Skip the first 10 frames to warm up
+    if (totalFrames > 10) {
+      avgFrameTime = (elapsed + frameCount * avgFrameTime) / (frameCount + 1);
+      ++frameCount;
+    } else {
+      ++totalFrames;
+    }
+
+    if (frameCount > 0 && frameCount % 25 == 0) {
+      std::cout << "Worker " << mpi::worker.rank << " avg frame time: "
+        << avgFrameTime.count() << "ms over " << frameCount << " frames\n";
+    }
+  }
+
   float PathTracer::renderFrame(FrameBuffer *fb, const uint32 channelFlags) {
     const static int LOG_RANK = 0;
     using namespace std::chrono;
-
-#define WILL_DBG(a) a
 
     WILL_DBG({
       if (mpi::worker.rank == LOG_RANK){

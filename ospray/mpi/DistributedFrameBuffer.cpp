@@ -28,7 +28,7 @@
 #endif
 
 #define DBG(a) /* ignore */
-#define WILL_DBG(a) a
+#define WILL_DBG(a) /* ignore */
 
 namespace ospray {
   using std::cout;

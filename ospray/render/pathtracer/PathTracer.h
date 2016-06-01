@@ -25,10 +25,19 @@ namespace ospray {
     virtual std::string toString() const { return "ospray::PathTracer"; }
     virtual void commit();
     virtual Material *createMaterial(const char *type);
+    virtual void *beginFrame(FrameBuffer *fb) override;
+    virtual void endFrame(void *perFrameData, const int32 fbChannelFlags) override;
     virtual float renderFrame(FrameBuffer *fb, const uint32 channelFlags) override;
 
     std::vector<void*> lightArray; // the 'IE's of the XXXLights
     Data *lightData;
+
+  private:
+    // Will HACK: Timing the render frame calls on each worker
+    size_t totalFrames = 0;
+    size_t frameCount = 0;
+    std::chrono::milliseconds avgFrameTime = std::chrono::milliseconds(0);
+    std::chrono::high_resolution_clock::time_point frameStart, frameEnd;
   };
 }
 
