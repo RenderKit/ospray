@@ -554,7 +554,7 @@ namespace ospray {
       auto closeTime = high_resolution_clock::now();
       std::cout << "Worker " << mpi::worker.rank << " DFB::closeCurrentFrame at "
         << duration_cast<milliseconds>(closeTime.time_since_epoch()).count()
-        << "ms" << std::endl;
+        << "ms\n";
     })
     frameIsDone   = true;
     // Print the first tile we process again

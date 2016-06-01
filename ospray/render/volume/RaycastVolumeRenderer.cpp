@@ -152,6 +152,15 @@ namespace ospray {
 
     const int numJobs = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
 
+    WILL_DBG({
+      using namespace std::chrono;
+      auto tileTime = high_resolution_clock::now();
+      std::cout << "Worker " << mpi::worker.rank << " DPRenderTask::operator() at "
+        << duration_cast<milliseconds>(tileTime.time_since_epoch()).count()
+        << "ms\n";
+    })
+
+
     parallel_for(numJobs, [&](int taskIndex){
       ispc::DDDVRRenderer_renderTile(renderer->getIE(),
                                      (ispc::Tile&)fgTile,

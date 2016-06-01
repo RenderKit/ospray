@@ -27,6 +27,8 @@
 #include <map>
 #include <chrono>
 
+#include "ospray/will_dbg_log.h"
+
 namespace ospray {
   PathTracer::PathTracer() : Renderer()
   {
@@ -76,8 +78,6 @@ namespace ospray {
                          lightPtr, lightArray.size());
   }
 
-#define WILL_DBG(a) /* ignore */
-
   void* PathTracer::beginFrame(FrameBuffer *fb) {
     using namespace std::chrono;
     frameStart = high_resolution_clock::now();
@@ -109,21 +109,17 @@ namespace ospray {
     using namespace std::chrono;
 
     WILL_DBG({
-      if (mpi::worker.rank == LOG_RANK){
-        std::cout << "Worker " << mpi::worker.rank << " start render frame at "
-          << duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count()
-          << "ms\n";
-      }
+      std::cout << "Worker " << mpi::worker.rank << " start render frame at "
+        << duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count()
+        << "ms\n";
     })
       
     float ret = Renderer::renderFrame(fb, channelFlags);
 
     WILL_DBG({
-      if (mpi::worker.rank == LOG_RANK){
-        std::cout << "Worker " << mpi::worker.rank << " end render frame at "
-          << duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count()
-          << "ms\n";
-      }
+      std::cout << "Worker " << mpi::worker.rank << " end render frame at "
+        << duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count()
+        << "ms\n";
     })
 
     return ret;
