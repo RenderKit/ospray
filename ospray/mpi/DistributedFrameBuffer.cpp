@@ -556,7 +556,7 @@ namespace ospray {
       std::cout << "Worker " << mpi::worker.rank << " DFB::closeCurrentFrame for frame #"
         << closeFrameCount << " at "
         << duration_cast<milliseconds>(closeTime.time_since_epoch()).count()
-        << "ms\n";
+        << "ms" << std::endl;
       ++closeFrameCount;
     })
     frameIsDone   = true;
