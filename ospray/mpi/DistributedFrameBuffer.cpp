@@ -550,11 +550,14 @@ namespace ospray {
     DBG(printf("rank %i CLOSES frame\n",mpi::world.rank));
     frameIsActive = false;
     WILL_DBG({
+      static size_t closeFrameCount = 0;
       // TODO WILL: Is this when the worker has finished its local compositin?
       auto closeTime = high_resolution_clock::now();
-      std::cout << "Worker " << mpi::worker.rank << " DFB::closeCurrentFrame at "
+      std::cout << "Worker " << mpi::worker.rank << " DFB::closeCurrentFrame for frame #"
+        << closeFrameCount << " at "
         << duration_cast<milliseconds>(closeTime.time_since_epoch()).count()
         << "ms\n";
+      ++closeFrameCount;
     })
     frameIsDone   = true;
     // Print the first tile we process again

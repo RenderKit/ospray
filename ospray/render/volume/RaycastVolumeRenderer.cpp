@@ -319,7 +319,8 @@ namespace ospray {
     renderTask.dpv = ddVolumeVec[0];
 
     WILL_DBG({
-      std::cout << "Worker " << mpi::worker.rank << " start render tile at "
+      std::cout << "Worker " << mpi::worker.rank << " start render tile for frame #"
+        << totalFrames << " at "
         << duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count()
         << "ms\n";
     })
@@ -327,7 +328,8 @@ namespace ospray {
     parallel_for(NTASKS, renderTask);
 
     WILL_DBG({
-      std::cout << "Worker " << mpi::worker.rank << " end render tile at "
+      std::cout << "Worker " << mpi::worker.rank << " end render tile for frame #"
+        << totalFrames << " at "
         << duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count()
         << "ms\n";
     })
@@ -341,9 +343,8 @@ namespace ospray {
     if (totalFrames > 10) {
       avgFrameTime = (elapsed + frameCount * avgFrameTime) / (frameCount + 1);
       ++frameCount;
-    } else {
-      ++totalFrames;
     }
+    ++totalFrames;
 
     if (frameCount > 0 && frameCount % 25 == 0) {
       std::cout << "Worker " << mpi::worker.rank << " avg frame time: "

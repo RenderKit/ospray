@@ -94,9 +94,8 @@ namespace ospray {
     if (totalFrames > 10) {
       avgFrameTime = (elapsed + frameCount * avgFrameTime) / (frameCount + 1);
       ++frameCount;
-    } else {
-      ++totalFrames;
     }
+    ++totalFrames;
 
     if (frameCount > 0 && frameCount % 25 == 0) {
       std::cout << "Worker " << mpi::worker.rank << " avg frame time: "
@@ -109,7 +108,7 @@ namespace ospray {
     using namespace std::chrono;
 
     WILL_DBG({
-      std::cout << "Worker " << mpi::worker.rank << " start render frame at "
+      std::cout << "Worker " << mpi::worker.rank << " start render frame # " << totalFrames << " at "
         << duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count()
         << "ms\n";
     })
