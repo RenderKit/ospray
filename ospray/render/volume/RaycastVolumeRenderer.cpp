@@ -341,8 +341,7 @@ namespace ospray {
 
     if (frameCount > 0 && frameCount % 25 == 0) {
       std::cout << "Worker " << mpi::worker.rank << " avg frame time: "
-        << avgFrameTime.count() << "ms over " << frameCount << " frames"
-        << std::endl;
+        << avgFrameTime.count() << "ms over " << frameCount << " frames\n";
     }
     std::cout << std::flush;
 

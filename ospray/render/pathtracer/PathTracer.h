@@ -25,6 +25,7 @@ namespace ospray {
     virtual std::string toString() const { return "ospray::PathTracer"; }
     virtual void commit();
     virtual Material *createMaterial(const char *type);
+    virtual float renderFrame(FrameBuffer *fb, const uint32 channelFlags) override;
 
     std::vector<void*> lightArray; // the 'IE's of the XXXLights
     Data *lightData;

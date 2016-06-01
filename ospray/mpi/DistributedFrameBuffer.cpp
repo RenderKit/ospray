@@ -28,6 +28,7 @@
 #endif
 
 #define DBG(a) /* ignore */
+#define WILL_DBG(a) a
 
 namespace ospray {
   using std::cout;
@@ -116,7 +117,7 @@ namespace ospray {
   void DFB::AlphaBlendTile_simple::process(const ospray::Tile &tile)
   {
     // TODO WILL: The first call to this is when we receive our first tile for compositing
-    DBG({
+    WILL_DBG({
       if (dfbPrintTileProcess.exchange(false) && mpi::worker.rank == LOG_RANK) {
         using namespace std::chrono;
         auto firstProcess = high_resolution_clock::now();
@@ -193,6 +194,15 @@ namespace ospray {
   */
   void DFB::WriteOnlyOnceTile::process(const ospray::Tile &tile)
   {
+    WILL_DBG({
+      if (dfbPrintTileProcess.exchange(false) && mpi::worker.rank == LOG_RANK) {
+        using namespace std::chrono;
+        auto firstProcess = high_resolution_clock::now();
+        std::cout << "Worker " << mpi::worker.rank << " DFB::WriteOnlyOnceTile::process at "
+          << duration_cast<milliseconds>(firstProcess.time_since_epoch()).count()
+          << "ms\n";
+      }
+    })
     this->final.region = tile.region;
     this->final.fbSize = tile.fbSize;
     this->final.rcp_fbSize = tile.rcp_fbSize;
@@ -527,7 +537,7 @@ namespace ospray {
 
     DBG(printf("rank %i CLOSES frame\n",mpi::world.rank));
     frameIsActive = false;
-    DBG({
+    WILL_DBG({
       // TODO WILL: Is this when the worker has finished its local compositin?
       if (mpi::worker.rank == LOG_RANK){
         auto closeTime = high_resolution_clock::now();

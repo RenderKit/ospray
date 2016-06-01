@@ -20,10 +20,12 @@
 // ospray
 #include "ospray/common/Data.h"
 #include "ospray/lights/Light.h"
+#include "ospray/mpi/MPICommon.h"
 // ispc exports
 #include "PathTracer_ispc.h"
 // std
 #include <map>
+#include <chrono>
 
 namespace ospray {
   PathTracer::PathTracer() : Renderer()
@@ -72,6 +74,33 @@ namespace ospray {
     ispc::PathTracer_set(getIE(), maxDepth, minContribution, maxRadiance,
                          backplate ? backplate->getIE() : NULL,
                          lightPtr, lightArray.size());
+  }
+
+  float PathTracer::renderFrame(FrameBuffer *fb, const uint32 channelFlags) {
+    const static int LOG_RANK = 0;
+    using namespace std::chrono;
+
+#define WILL_DBG(a) a
+
+    WILL_DBG({
+      if (mpi::worker.rank == LOG_RANK){
+        std::cout << "Worker " << mpi::worker.rank << " start render frame at "
+          << duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count()
+          << "ms\n";
+      }
+    })
+      
+    float ret = Renderer::renderFrame(fb, channelFlags);
+
+    WILL_DBG({
+      if (mpi::worker.rank == LOG_RANK){
+        std::cout << "Worker " << mpi::worker.rank << " end render frame at "
+          << duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count()
+          << "ms\n";
+      }
+    })
+
+    return ret;
   }
 
   OSP_REGISTER_RENDERER(PathTracer,pathtracer);
