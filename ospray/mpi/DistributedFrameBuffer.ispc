@@ -155,15 +155,54 @@ inline void swapFragments(VaryingTile *uniform t0,
 
 #define PIXELS_PER_BLEND_JOB 64
 
-/*
-task void sortAndBlendFragment_job(VaryingTile *uniform *uniform tileArray, uniform int32 numTiles){
+// TODO WILL: MEGA HACK beware!
+export uniform int DFB_getProgramCount(){
+  return programCount;
 }
-*/
+
+export void DFB_sortAndBlendFragment_job(VaryingTile *uniform *uniform tileArray, uniform int32 numTiles,
+                                         const uniform int frag)
+{
+  for (uniform int i=1;i<numTiles;i++)
+    for (uniform int j=i;j>0;--j) {
+      VaryingTile *uniform ta = tileArray[j];
+      VaryingTile *uniform tb = tileArray[j-1];
+      if (ta->z[frag] < tb->z[frag])
+        break;
+      swapFragments(ta,tb,frag);
+    }
+
+  vec3f acc_col = make_vec3f(0,0,0);
+  float acc_alpha = 0.f;
+
+  for (uniform int i=0;i<numTiles;i++) {
+    VaryingTile *uniform tile = tileArray[i];
+    vec3f frag_col = make_vec3f(tile->r[frag],tile->g[frag],tile->b[frag]);
+    float frag_alpha = tile->a[frag];
+
+    acc_col = //frag_alpha * 
+      frag_col + (1.f-frag_alpha) * acc_col;
+    acc_alpha = //frag_alpha * 
+      frag_alpha + (1.f-frag_alpha) * acc_alpha;
+  }
+
+  VaryingTile *uniform tile = tileArray[0];
+  tile->r[frag] = acc_col.x;
+  tile->g[frag] = acc_col.y;
+  tile->b[frag] = acc_col.z;
+  tile->a[frag] = acc_alpha;
+}
 
 inline void sortAndBlendFragments(VaryingTile *uniform *uniform tileArray,
                                   uniform int32 numTiles,
                                   uniform int begin_frag, uniform int end_frag)
 {
+#if 0
+  uniform int numTasks = end_frag - begin_frag;
+  print("numTasks = %, begin_frag = %, end_frag = %\n", numTasks, begin_frag, end_frag);
+  // TODO: The task indices are not set properly?
+  launch[numTasks] sortAndBlendFragment_job(tileArray, numTiles, begin_frag);
+#else
   // TODO WILL: Should this be done in parallel?
   for (uniform int frag=begin_frag;frag<end_frag;frag++) {
     for (uniform int i=1;i<numTiles;i++)
@@ -195,6 +234,7 @@ inline void sortAndBlendFragments(VaryingTile *uniform *uniform tileArray,
     tile->b[frag] = acc_col.z;
     tile->a[frag] = acc_alpha;
   }
+#endif
 }
 
 #if 0

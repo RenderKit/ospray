@@ -164,8 +164,16 @@ namespace ospray {
           tileArray[i] = &bufferedTile[i]->tile;
         }
 
+#if 1
+        const int NUM_BLEND_TASKS = TILE_SIZE * TILE_SIZE / ispc::DFB_getProgramCount();
+        parallel_for(NUM_BLEND_TASKS, [&](int frag) {
+          ispc::DFB_sortAndBlendFragment_job((ispc::VaryingTile **)tileArray,
+            bufferedTile.size(), frag);
+        });
+#else
         ispc::DFB_sortAndBlendFragments((ispc::VaryingTile **)tileArray,
                                         bufferedTile.size());
+#endif
 
         this->final.region = tile.region;
         this->final.fbSize = tile.fbSize;
