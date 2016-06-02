@@ -216,7 +216,7 @@ namespace ospray {
         numThreads = atoi(numThreadsEnv);
         std::cout << "#osp.loader: Got OSPRAY_RM_LOADER_THREADS env-var, using " << numThreads << "\n";
       } else {
-        std::cout << "#osp.loader: No OSPRAY_RM_LOADER_THREADS env-var found, using 8\n";
+        std::cout << "#osp.loader: No OSPRAY_RM_LOADER_THREADS env-var found, using " << numThreads << "\n";
       }
 
       double t0 = ospcommon::getSysTime();
