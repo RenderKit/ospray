@@ -41,12 +41,15 @@ function check_symbols
 
 #### Set variables for script ####
 
-export ROOT_DIR=$PWD
+ROOT_DIR=$PWD
+DEP_DIR=$ROOT_DIR/deps
 
-DEP_LOCATION=http://sdvis.org/~jdamstut/ospray_deps/linux
-EMBREE_TARBALL=embree-2.9.0.x86_64.linux.tar.gz
-ISPC_TARBALL=ispc-v1.9.0-linux.tar.gz
-TBB_TARBALL=tbb44_20160413oss_lin.tgz
+DEP_LOCATION=http://sdvis.org/ospray/download/dependencies/linux
+DEP_EMBREE=embree_dynamic-2.9.0.x86_64.linux
+DEP_ISPC=ispc-v1.9.0-linux
+DEP_TBB=tbb44_20160413oss
+DEP_TARBALLS="$DEP_EMBREE.tar.gz $DEP_ISPC.tar.gz ${DEP_TBB}_lin.tgz"
+
 
 # set compiler if the user hasn't explicitly set CC and CXX
 if [ -z $CC ]; then
@@ -68,35 +71,16 @@ fi
 
 #### Fetch dependencies (TBB+Embree+ISPC) ####
 
-if [ ! -d deps ]; then
-  mkdir deps
-  rm -rf deps/*
-  cd deps
-  
-  # Embree
-  wget $DEP_LOCATION/$EMBREE_TARBALL
-  tar -xaf $EMBREE_TARBALL
-  rm $EMBREE_TARBALL
-  
-  # ISPC
-  wget $DEP_LOCATION/$ISPC_TARBALL
-  tar -xaf $ISPC_TARBALL
-  rm $ISPC_TARBALL
+mkdir -p $DEP_DIR
+cd $DEP_DIR
 
-  # TBB
-  wget $DEP_LOCATION/$TBB_TARBALL
-  tar -xaf $TBB_TARBALL
-  rm $TBB_TARBALL
+for dep in $DEP_TARBALLS ; do
+  wget --progress=dot:mega -c $DEP_LOCATION/$dep
+  tar -xaf $dep
+done
+export embree_DIR=$DEP_DIR/$DEP_EMBREE
 
-  cd $ROOT_DIR
-  ln -snf deps/embree* embree
-  ln -snf deps/ispc* ispc
-  ln -snf deps/tbb* tbb
-fi
-
-TBB_PATH_LOCAL=$ROOT_DIR/tbb
-export embree_DIR=$ROOT_DIR/embree
-export PATH=$ROOT_DIR/ispc:$PATH
+cd $ROOT_DIR
 
 #### Build OSPRay ####
 
@@ -106,17 +90,20 @@ cd build_release
 # Clean out build directory to be sure we are doing a fresh build
 rm -rf *
 
+
 # set release and RPM settings
 cmake \
 -D OSPRAY_BUILD_ISA=ALL \
+-D OSPRAY_BUILD_ENABLE_KNL=ON \
 -D OSPRAY_BUILD_MIC_SUPPORT=OFF \
 -D OSPRAY_BUILD_COI_DEVICE=OFF \
 -D OSPRAY_BUILD_MPI_DEVICE=OFF \
 -D OSPRAY_USE_EXTERNAL_EMBREE=ON \
+-D TBB_ROOT=$DEP_DIR/$DEP_TBB \
+-D ISPC_EXECUTABLE=$DEP_DIR/$DEP_ISPC/ispc \
 -D USE_IMAGE_MAGICK=OFF \
 -D OSPRAY_ZIP_MODE=OFF \
 -D CMAKE_INSTALL_PREFIX=/usr \
--D TBB_ROOT=$TBB_PATH_LOCAL \
 ..
 
 # create RPM files

@@ -29,7 +29,7 @@
 #endif
 
 #if 1
-# define LOG(a) if (ospray::logLevel > 2) std::cout << "#ospray: " << a << std::endl;
+# define LOG(a) if (ospray::logLevel > 2) { std::cout << "#ospray: " << a << std::endl << std::flush; fflush(0); }
 #else
 # define LOG(a) /*ignore*/
 #endif
@@ -233,14 +233,6 @@ extern "C" void ospAddGeometry(OSPModel model, OSPGeometry geometry)
   return ospray::api::Device::current->addGeometry(model,geometry);
 }
 
-extern "C" void ospAddVolume(OSPModel model, OSPVolume volume)
-{
-  ASSERT_DEVICE();
-  Assert(model != NULL && "invalid model in ospAddVolume");
-  Assert(volume != NULL && "invalid volume in ospAddVolume");
-  return ospray::api::Device::current->addVolume(model, volume);
-}
-
 extern "C" void ospRemoveGeometry(OSPModel model, OSPGeometry geometry)
 {
   ASSERT_DEVICE();
@@ -249,11 +241,31 @@ extern "C" void ospRemoveGeometry(OSPModel model, OSPGeometry geometry)
   return ospray::api::Device::current->removeGeometry(model, geometry);
 }
 
+extern "C" void ospAddVolume(OSPModel model, OSPVolume volume)
+{
+  ASSERT_DEVICE();
+  Assert(model != NULL && "invalid model in ospAddVolume");
+  Assert(volume != NULL && "invalid volume in ospAddVolume");
+  return ospray::api::Device::current->addVolume(model, volume);
+}
+
+extern "C" void ospRemoveVolume(OSPModel model, OSPVolume volume)
+{
+  ASSERT_DEVICE();
+  Assert(model != NULL && "invalid model in ospRemoveVolume");
+  Assert(volume != NULL && "invalid volume in ospRemoveVolume");
+  return ospray::api::Device::current->removeVolume(model, volume);
+}
+
 /*! create a new data buffer, with optional init data and control flags */
 extern "C" OSPData ospNewData(size_t nitems, OSPDataType format, const void *init, const uint32_t flags)
 {
   ASSERT_DEVICE();
-  return ospray::api::Device::current->newData(nitems,format,(void*)init,flags);
+  LOG("ospSetData(...)");
+  LOG("ospSetData(...," << nitems << "," << ((int)format) << "," << ((int*)init) << "," << flags << ",...)");
+  OSPData data = ospray::api::Device::current->newData(nitems,format,(void*)init,flags);
+  LOG("DONE ospSetData(...,\"" << nitems << "," << ((int)format) << "," << ((int*)init) << "," << flags << ",...)");
+  return data;
 }
 
 /*! add a data array to another object */
@@ -347,6 +359,7 @@ extern "C" OSPGeometry ospNewGeometry(const char *type)
   OSPGeometry geometry = ospray::api::Device::current->newGeometry(type);
   if ((ospray::logLevel > 0) && (geometry == NULL))
     std::cerr << "#ospray: could not create geometry '" << type << "'" << std::endl;
+  LOG("DONE ospNewGeometry(" << type << ") >> " << (int *)geometry);
   return geometry;
 }
 
@@ -474,10 +487,9 @@ extern "C" float ospRenderFrame(OSPFrameBuffer fb,
 extern "C" void ospCommit(OSPObject object)
 {
   // assert(!rendering);
-
+  LOG("ospCommit(...)");
   ASSERT_DEVICE();
   Assert(object && "invalid object handle to commit to");
-  LOG("ospCommit(...)");
   ospray::api::Device::current->commit(object);
 }
 

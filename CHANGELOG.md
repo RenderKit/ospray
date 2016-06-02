@@ -1,6 +1,11 @@
 Version History
 ---------------
 
+### Changes in v0.10.1:
+-   Fixed support of first generation Intel® Xeon Phi™ coprocessor
+    (codename Knights Corner)
+-   Restored missing implementation of `ospRemoveVolume()`
+
 ### Changes in v0.10.0:
 
 -   Added new tasking options: `Cilk`, `Internal`, and `Debug`
@@ -9,7 +14,8 @@ Version History
         - `Cilk`: Use Intel® Cilk™ Plus language extensions (ICC only)
         - `Internal`: Use hand written OSPRay tasking system
         - `Debug`: All tasks are run in serial (useful for debugging)
-    -   In most cases, `TBB` remains the fastest option
+    -   In most cases, Intel Threading Building Blocks (Intel `TBB`)
+        remains the fastest option
 -   Added support for adaptive accumulation and stopping
     -   `ospRenderFrame` now returns an estimation of the variance in
         the rendered image if the framebuffer was created with the
@@ -51,8 +57,8 @@ Version History
         renders them
     -   Ambient occlusion works with implicit isosurfaces, with a known
         visual quality/performance trade-off
--   Intel® Xeon Phi™ (codename Knights Corner) COI device and build
-    infrastructure restored (volume rendering is known to still be
+-   Intel Xeon Phi coprocessor (codename Knights Corner) COI device and
+    build infrastructure restored (volume rendering is known to still be
     broken)
 -   New support for CPack built OSPRay binary redistributable packages
 -   Added support for HDRI lighting in path tracer
@@ -66,8 +72,9 @@ Version History
     -   Trianglemesh postIntersect shading is now 64-bit safe
     -   Texture2D has been reworked, with many improvements and bug fixes
     -   Fixed bug where MPI device would freeze while rendering frames
-        with TBB
-    -   Updates to CMake with better error messages when TBB is missing
+        with Intel TBB
+    -   Updates to CMake with better error messages when Intel TBB is
+        missing
 
 ### Changes in v0.9.0:
 
@@ -80,9 +87,9 @@ changes.
     functionality of "obj" and "ao" renderers
     -   Ambient occlusion is quite flexible: dynamic number of samples,
         maximum ray distance, and weight
--   Updated Embree version to v2.7.1 with native support for AVX512 for
-    triangle mesh surface rendering on the Intel Xeon Phi processor
-    (codename Knights Landing)
+-   Updated Embree version to v2.7.1 with native support for Intel
+    AVX-512 for triangle mesh surface rendering on the Intel Xeon Phi
+    processor (codename Knights Landing)
 -   OSPRay now uses C++11 features, requiring up to date compiler and
     standard library versions (GCC v4.8.0)
 -   Optimization of volume sampling resulting in volume rendering
@@ -93,8 +100,8 @@ changes.
         material
     -   Support for alpha and depth components of framebuffer 
 -   Added thinlens camera, i.e. support for depth of field
--   Tasking system has been updated to use Intel® Threading Building
-    Blocks (TBB)
+-   Tasking system has been updated to use Intel Threading Building
+    Blocks (Intel TBB)
 -   The `ospGet*()` API calls have been deprecated and will be removed
     in a subsequent release
 
@@ -126,7 +133,7 @@ changes.
 
 ### Changes in v0.8.2:
 
--   Initial support for AVX512 and the Intel® Xeon Phi™ processor
+-   Initial support for Intel AVX-512 and the Intel Xeon Phi processor
     (codename Knights Landing)
 -   Performance improvements to the volume renderer
 -   Incorporated implicit slices and isosurfaces of volumes as core

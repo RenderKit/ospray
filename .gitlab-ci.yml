@@ -79,6 +79,8 @@ build-windows-msvc:
 
 ### RELEASE JOBS ###
 
+# NOTE(jda) - Current CentOS 6 release machine needs gcc environment
+#             debugged
 #release-linux-gcc:
 #  type: deploy
 #  script:
@@ -112,6 +114,7 @@ release-linux-icc:
   only:
     - devel
     - master
+    - release-0.10
   artifacts:
     paths:
       - build_release/*.gz
@@ -129,6 +132,7 @@ release-osx-clang:
   only:
     - devel
     - master
+    - release-0.10
   artifacts:
     paths:
       - build_release/*.gz
@@ -145,6 +149,7 @@ release-windows:
   only:
     - devel
     - master
+    - release-0.10
   artifacts:
     paths:
       - build_release\ospray*.zip

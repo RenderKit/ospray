@@ -3013,15 +3013,15 @@ static FORCEINLINE __vec16_i32 __masked_load_i32(void *p, __vec16_i1 mask) {
 }
 
 static FORCEINLINE __vec16_f __masked_load_float(void *p, __vec16_i1 mask) {
-#ifdef ISPC_FORCE_ALIGNED_MEMORY
-  return _mm512_mask_load_ps(_mm512_undefined_ps(), mask,p);
-#else
+// #ifdef ISPC_FORCE_ALIGNED_MEMORY
+//   return _mm512_mask_load_ps(_mm512_undefined_ps(), mask,p);
+// #else
   __vec16_f tmp;
   tmp.v = _mm512_mask_extloadunpacklo_ps(tmp.v, 0xFFFF, p, _MM_UPCONV_PS_NONE, _MM_HINT_NONE);
   tmp.v = _mm512_mask_extloadunpackhi_ps(tmp.v, 0xFFFF, (uint8_t*)p+64, _MM_UPCONV_PS_NONE, _MM_HINT_NONE);
   __vec16_f ret;
   return _mm512_mask_mov_ps(ret.v, mask, tmp.v);
-#endif
+// #endif
 }
 
 static FORCEINLINE __vec16_i64 __masked_load_i64(void *p, __vec16_i1 mask) {
@@ -3072,13 +3072,13 @@ static FORCEINLINE void __masked_store_i8(void *p, const __vec16_i8 &val, __vec1
 }
 
 static FORCEINLINE __vec16_i8 __masked_load_i8(void *p, __vec16_i1 mask) {
-#ifdef ISPC_FORCE_ALIGNED_MEMORY
-  __vec16_i32 tmp = _mm512_mask_extload_epi32(_mm512_undefined_epi32(), mask, p, _MM_UPCONV_EPI32_SINT8, _MM_BROADCAST32_NONE, _MM_HINT_NONE);
-#else
+// #ifdef ISPC_FORCE_ALIGNED_MEMORY
+//   __vec16_i32 tmp = _mm512_mask_extload_epi32(_mm512_undefined_epi32(), mask, p, _MM_UPCONV_EPI32_SINT8, _MM_BROADCAST32_NONE, _MM_HINT_NONE);
+// #else
   __vec16_i32 tmp;
   tmp.v = _mm512_mask_extloadunpacklo_epi32(tmp.v, 0xFFFF, p, _MM_UPCONV_EPI32_SINT8, _MM_HINT_NONE);
   tmp.v = _mm512_mask_extloadunpackhi_epi32(tmp.v, 0xFFFF, (uint8_t*)p+64, _MM_UPCONV_EPI32_SINT8, _MM_HINT_NONE);
-#endif
+// #endif
   __vec16_i8 ret;
   _mm512_extstore_epi32(&ret, tmp, _MM_DOWNCONV_EPI32_SINT8, _MM_HINT_NONE);
   return ret;
@@ -3647,10 +3647,12 @@ static FORCEINLINE void __scatter64_i64(__vec16_i64 ptrs, __vec16_i64 val, __vec
   #warning "__scatter64_i64 is slow due to outdated compiler"
   __scatter_base_offsets64_i64(0, 1, ptrs, val, mask);
 #else
+
   __vec16_i32 first8ptrs, second8ptrs;
   hilo2zmm(ptrs, first8ptrs.v, second8ptrs.v);
   __vec16_i32 first8vals, second8vals;
   hilo2zmm(val, first8vals.v, second8vals.v);
+
   _mm512_mask_i64extscatter_epi64 (0, mask, first8ptrs, first8vals, _MM_DOWNCONV_EPI64_NONE, 1, _MM_HINT_NONE);
   const __mmask8 mask8 = 0x00FF & (mask >> 8);
   _mm512_mask_i64extscatter_epi64 (0, mask8, second8ptrs, second8vals, _MM_DOWNCONV_EPI64_NONE, 1, _MM_HINT_NONE);

@@ -611,7 +611,8 @@ export void DDDVRRenderer_renderTile(void*uniform _self,
       depthTexCoord.x = (fgSample.sampleID.x + 0.5f) * fb->rcpSize.x;
       depthTexCoord.y = (fgSample.sampleID.y + 0.5f) * fb->rcpSize.y;
 
-      fgSample.ray.t = get1f(self->maxDepthTexture, depthTexCoord);
+      const float oldT = fgSample.ray.t;
+      fgSample.ray.t = max(get1f(self->maxDepthTexture, depthTexCoord),oldT);
     }
 
     bgSample = fgSample;

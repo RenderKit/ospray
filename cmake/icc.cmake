@@ -14,7 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -no-ansi-alias -static-intel -std=c++11")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -no-ansi-alias -std=c++11")
 SET(CMAKE_CXX_FLAGS_DEBUG          "-DDEBUG  -g")
 SET(CMAKE_CXX_FLAGS_RELEASE        "-DNDEBUG -O3")
 #SET(CMAKE_CXX_FLAGS_RELEASE        "-DNDEBUG    -O3 -no-ansi-alias -restrict -fp-model fast -fimf-precision=low -no-prec-div -no-prec-sqrt -fma -no-inline-max-total-size -inline-factor=200 ")
@@ -26,6 +26,10 @@ IF (APPLE)
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.7") # we only use MacOSX 10.7 features
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++") # link against C++11 stdlib
 ENDIF()
+
+# enable -static-intel and avoid to export ICC specific symbols from OSPRay
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-intel")
+SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--exclude-libs=ALL")
 
 # these flags apply ONLY to how embree is built; the rest of the ospray C++ code is ISA-agnostic
 SET(OSPRAY_ARCH_SSE3    "-xsse3")

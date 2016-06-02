@@ -35,6 +35,9 @@ namespace ospray {
       may actually use uchars, but the tile will always store
       floats. */
   struct __aligned(64) Tile {
+    // make sure this tile is 64-byte aligned when alloc'ed
+    ALIGNED_STRUCT;
+
     // 'red' component; in float.
     float r[TILE_SIZE*TILE_SIZE];
     // 'green' component; in float.
