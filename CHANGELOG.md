@@ -2,6 +2,7 @@ Version History
 ---------------
 
 ### Changes in v0.10.1:
+
 -   Fixed support of first generation Intel® Xeon Phi™ coprocessor
     (codename Knights Corner)
 -   Restored missing implementation of `ospRemoveVolume()`
