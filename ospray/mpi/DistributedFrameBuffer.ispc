@@ -155,10 +155,16 @@ inline void swapFragments(VaryingTile *uniform t0,
 
 #define PIXELS_PER_BLEND_JOB 64
 
+/*
+task void sortAndBlendFragment_job(VaryingTile *uniform *uniform tileArray, uniform int32 numTiles){
+}
+*/
+
 inline void sortAndBlendFragments(VaryingTile *uniform *uniform tileArray,
                                   uniform int32 numTiles,
                                   uniform int begin_frag, uniform int end_frag)
 {
+  // TODO WILL: Should this be done in parallel?
   for (uniform int frag=begin_frag;frag<end_frag;frag++) {
     for (uniform int i=1;i<numTiles;i++)
       for (uniform int j=i;j>0;--j) {

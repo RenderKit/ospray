@@ -524,6 +524,7 @@ namespace ospray {
         return;
       }
     }
+    // TODO WILL: LOG when we actually get a tile and then also when we process it
 
     async([=]() {
       switch (_msg->command) {
