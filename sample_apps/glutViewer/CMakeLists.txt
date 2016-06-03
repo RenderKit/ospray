@@ -35,15 +35,23 @@ include_directories(
 # --------------------------------------------
 # main executable
 # --------------------------------------------
-add_executable(${APP_NAME}
-  GlutViewerScriptHandler.cpp
-  GlutViewerScriptHandler.h
+
+set(APP_SRCS
   OSPGlutViewer.cpp
   OSPGlutViewer.h
-  ScriptedOSPGlutViewer.cpp
-  ScriptedOSPGlutViewer.h
   glutViewer.cpp
 )
+
+if(OSPRAY_APPS_ENABLE_SCRIPTING)
+  set(APP_SRCS ${APP_SRCS}
+    ScriptedOSPGlutViewer.cpp
+    ScriptedOSPGlutViewer.h
+    GlutViewerScriptHandler.cpp
+    GlutViewerScriptHandler.h
+  )
+endif()
+
+add_executable(${APP_NAME} ${APP_SRCS})
 
 target_link_libraries(${APP_NAME}
   ospray
@@ -51,11 +59,15 @@ target_link_libraries(${APP_NAME}
   ospray_common
   ospray_glut3d
   ospray_minisg
-  ospray_script
   ${OPENGL_LIBRARIES}
   ${GLUT_LIBRARIES}
   ${Readline_LIB}
 )
+
+if(OSPRAY_APPS_ENABLE_SCRIPTING)
+  target_link_libraries(${APP_NAME} ospray_script)
+endif()
+
 # ------------------------------------------------------------
 
 install(TARGETS ${APP_NAME}

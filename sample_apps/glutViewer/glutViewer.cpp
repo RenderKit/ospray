@@ -16,7 +16,11 @@
 
 #include "common/commandline/Utility.h"
 
-#include "ScriptedOSPGlutViewer.h"
+#ifdef OSPRAY_APPS_ENABLE_SCRIPTING
+# include "ScriptedOSPGlutViewer.h"
+#else
+# include "OSPGlutViewer.h"
+#endif
 
 std::string scriptFileFromCommandLine(int ac, const char **&av)
 {
@@ -46,11 +50,15 @@ int main(int ac, const char **av)
 
   std::tie(bbox, model, renderer, camera) = ospObjs;
 
+#ifdef OSPRAY_APPS_ENABLE_SCRIPTING
   auto scriptFileName = scriptFileFromCommandLine(ac, av);
 
   ospray::ScriptedOSPGlutViewer window(bbox, model, renderer,
                                        camera, scriptFileName);
-  window.create("ospDebugViewer: OSPRay Mini-Scene Graph test viewer");
+#else
+  ospray::OSPGlutViewer window(bbox, model, renderer, camera);
+#endif
+  window.create("ospGlutViewer: OSPRay Mini-Scene Graph test viewer");
 
   ospray::glut3D::runGLUT();
 }

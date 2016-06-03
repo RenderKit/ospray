@@ -22,7 +22,6 @@ IF(NOT THIS_IS_MIC)
     ${CMAKE_SOURCE_DIR}/ospray/include
     ${CMAKE_CURRENT_LIST_DIR}
     common
-    common/script/chaiscript
   )
 
   # common utilities
@@ -38,11 +37,26 @@ IF(NOT THIS_IS_MIC)
     ADD_SUBDIRECTORY(bench)
   ENDIF()
 
+  # determine if we can enable scripting features (can't with icc)
+  IF(NOT OSPRAY_COMPILER_ICC)
+    OPTION(OSPRAY_APPS_ENABLE_SCRIPTING
+           "Enable scripting features in viewer apps."
+           ON)
+    MARK_AS_ADVANCED(OSPRAY_APPS_ENABLE_SCRIPTING)
+  ELSE()
+    SET(OSPRAY_APPS_ENABLE_SCRIPTING OFF)
+  ENDIF()
+
+  IF(OSPRAY_APPS_ENABLE_SCRIPTING)
+    ADD_DEFINITIONS(-DOSPRAY_APPS_ENABLE_SCRIPTING)
+    INCLUDE_DIRECTORIES(common/script/chaiscript)
+    ADD_SUBDIRECTORY(common/script)
+  ENDIF()
+
   # mini-scene graph viewer implemented with GLUT
   OPTION(OSPRAY_APPS_GLUTVIEWER "Build ospGlutViewer application." ON)
 
   IF(OSPRAY_APPS_GLUTVIEWER)
-    ADD_SUBDIRECTORY(common/script)
     INCLUDE(${PROJECT_SOURCE_DIR}/cmake/glut.cmake)
     # common utility classes for GLUT-based 3D viewer widget
     ADD_SUBDIRECTORY(common/widgets)
