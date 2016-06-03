@@ -17,10 +17,12 @@
 set(LIBRARY_NAME ospray_glut3d)
 
 add_library(${LIBRARY_NAME} SHARED glut3D.cpp)
+
 target_link_libraries(${LIBRARY_NAME}
+  ospray
+  ospray_common
   ${OPENGL_LIBRARIES}
   ${GLUT_LIBRARIES}
-  ${OSPRAY_LIBRARIES}
 )
 
 ospray_set_library_version(${LIBRARY_NAME})
