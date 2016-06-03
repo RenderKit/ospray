@@ -25,7 +25,7 @@ IF(NOT THIS_IS_MIC)
     common/script/chaiscript
   )
 
-  # common xml utility classes
+  # common utilities
   ADD_SUBDIRECTORY(common/commandline)
   ADD_SUBDIRECTORY(common/importer)
   ADD_SUBDIRECTORY(common/miniSG)

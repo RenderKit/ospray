@@ -351,10 +351,10 @@ OSPRAY_INSTALL_LIBRARY(ospray)
 
 IF(NOT THIS_IS_MIC)
   # build ospTutorial, for testing
-  ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial.cpp)
+  ADD_EXECUTABLE(ospTutorial ../sample_apps/ospTutorial.cpp)
   OSPRAY_EXE_LINK_LIBRARIES(ospTutorial ospray ospray_common)
   # C version
-  ADD_EXECUTABLE(ospTutorialC ../apps/ospTutorial.c)
+  ADD_EXECUTABLE(ospTutorialC ../sample_apps/ospTutorial.c)
   OSPRAY_EXE_LINK_LIBRARIES(ospTutorialC ospray ospray_common)
 ENDIF()
 

@@ -19,7 +19,7 @@
 #include "sg/geometry/Spheres.h"
 #include "sg/common/Integrator.h"
 // xml parser
-#include "apps/common/xml/XML.h"
+#include "common/xml/XML.h"
 
 namespace ospray {
   namespace sg {
