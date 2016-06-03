@@ -36,8 +36,8 @@ struct Tile {
 };
 
 struct VaryingTile {
-  varying float  r[TILE_SIZE*TILE_SIZE/programCount]; /*! red */
-  varying float  g[TILE_SIZE*TILE_SIZE/programCount]; /*! green */
+  varying float  r[TILE_SIZE*TILE_SIZE/programCount]; /*!< red */
+  varying float  g[TILE_SIZE*TILE_SIZE/programCount]; /*!< green */
   varying float  b[TILE_SIZE*TILE_SIZE/programCount]; /*!< blue */
   varying float  a[TILE_SIZE*TILE_SIZE/programCount]; /*!< alpha */
   varying float  z[TILE_SIZE*TILE_SIZE/programCount]; /*!< depth */

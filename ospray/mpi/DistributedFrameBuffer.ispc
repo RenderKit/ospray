@@ -21,10 +21,6 @@ struct DistributedFrameBuffer {
   FrameBuffer super;
 };
 
-struct VaryingRGBA_I8 {
-  varying uint32 color[TILE_SIZE*TILE_SIZE/programCount];
-};
-
 export void DFB_alphaBlendBackground(VaryingTile    *uniform firstTile,
                                      const uniform vec4f &bgColor)
 {
@@ -56,16 +52,17 @@ export void DFB_alphaBlendTiles(VaryingTile    *uniform prev,
   }
 }
 
-#define template_accumulate(name, cvt)                                       \
+#define template_accumulate(name, dst_fmt, cvt)                              \
 export void DFB_accumulate_##name(void           *uniform _self,             \
                                   VaryingTile    *uniform tile,              \
                                   VaryingTile    *uniform final,             \
                                   VaryingTile    *uniform accum,             \
-                                  VaryingRGBA_I8 *uniform color,             \
+                                  void           *uniform _color,            \
                                   uniform int     accumID,                   \
                                   uniform bool    hasAccumBuffer)            \
 {                                                                            \
   DistributedFrameBuffer *uniform self = (DistributedFrameBuffer*)_self;     \
+  dst_fmt *uniform color = (dst_fmt*uniform)_color;                          \
   if (!hasAccumBuffer || accumID < 1) {                                      \
     for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {           \
       vec4f col = make_vec4f(tile->r[i], tile->g[i], tile->b[i], tile->a[i]);\
@@ -78,7 +75,7 @@ export void DFB_accumulate_##name(void           *uniform _self,             \
       final->b[i] = col.z;                                                   \
       final->a[i] = col.w;                                                   \
                                                                              \
-      color->color[i] = cvt(col);                                            \
+      color[i] = cvt(col);                                                   \
     }                                                                        \
   } else {                                                                   \
     const uniform float rcpAccumID = 1.f/(accumID+1);                        \
@@ -98,13 +95,21 @@ export void DFB_accumulate_##name(void           *uniform _self,             \
       final->b[i] = col.z;                                                   \
       final->a[i] = col.w;                                                   \
                                                                              \
-      color->color[i] = cvt(col);                                            \
+      color[i] = cvt(col);                                                   \
     }                                                                        \
   }                                                                          \
 }
 
-template_accumulate(RGBA8, cvt_uint32);
-template_accumulate(SRGBA, linear_to_srgba8);
+inline vec4f soa_to_aos4f(const vec4f s)
+{
+  vec4f a;
+  soa_to_aos4(s.x, s.y, s.z, s.w, (uniform float*uniform)&a);
+  return a;
+}
+
+template_accumulate(RGBA8, varying uint32, cvt_uint32);
+template_accumulate(SRGBA, varying uint32, linear_to_srgba8);
+template_accumulate(RGBA32F, varying vec4f, soa_to_aos4f);
 #undef template_accumulate
 
 

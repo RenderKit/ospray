@@ -62,6 +62,7 @@ namespace ospray {
           does not actually care about the pixel data - we still have
           to let the master know when we're done. */
       MASTER_WRITE_TILE_I8,
+      MASTER_WRITE_TILE_F32,
       /*! command tag used for sending 'final' tiles from the tile
           owner to the master frame buffer. Note that we *do* send a
           message back ot the master even in cases where the master
@@ -125,8 +126,9 @@ namespace ospray {
          and we cannot change this) */
       ospray::Tile  __aligned(64) final;
 
-      //! the rbga32-convoerted colors
-      uint32 __aligned(64) color[TILE_SIZE*TILE_SIZE];
+      //! the rbga32-converted colors
+      // TODO: dynamically allocate to save memory when only uint32 / I8 colors
+      vec4f __aligned(64) color[TILE_SIZE*TILE_SIZE];
     };
 
     // -------------------------------------------------------
@@ -245,6 +247,13 @@ namespace ospray {
 
     /*! message sent to the master when a tile is finished. Todo:
         compress the color data */
+    struct MasterTileMessage_RGBA_F32 : public mpi::async::CommLayer::Message {
+      vec2i coords;
+      vec4f color[TILE_SIZE][TILE_SIZE];
+    };
+
+    /*! message sent to the master when a tile is finished. Todo:
+        compress the color data */
     struct MasterTileMessage_NONE : public mpi::async::CommLayer::Message {
       vec2i coords;
     };
@@ -316,6 +325,9 @@ namespace ospray {
 
     //! process a (non-empty) write tile message at the master
     void processMessage(MasterTileMessage_RGBA_I8 *msg);
+
+    //! process a (non-empty) write tile message at the master
+    void processMessage(MasterTileMessage_RGBA_F32 *msg);
 
     //! process a (empty) write tile message at the master
     void processMessage(MasterTileMessage_NONE *msg);

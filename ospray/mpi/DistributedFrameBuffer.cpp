@@ -87,20 +87,31 @@ namespace ospray {
     switch(dfb->colorBufferFormat) {
       case OSP_FB_RGBA8:
         ispc::DFB_accumulate_RGBA8(dfb->ispcEquivalent,
-            (ispc::VaryingTile *)&tile,
+            (ispc::VaryingTile*)&tile,
             (ispc::VaryingTile*)&this->final,
             (ispc::VaryingTile*)&this->accum,
-            (ispc::VaryingRGBA_I8*)&this->color,
+            &this->color,
             dfb->accumId,
             dfb->hasAccumBuffer);
+        break;
       case OSP_FB_SRGBA:
         ispc::DFB_accumulate_SRGBA(dfb->ispcEquivalent,
-            (ispc::VaryingTile *)&tile,
+            (ispc::VaryingTile*)&tile,
             (ispc::VaryingTile*)&this->final,
             (ispc::VaryingTile*)&this->accum,
-            (ispc::VaryingRGBA_I8*)&this->color,
+            &this->color,
             dfb->accumId,
             dfb->hasAccumBuffer);
+        break;
+      case OSP_FB_RGBA32F:
+        ispc::DFB_accumulate_RGBA32F(dfb->ispcEquivalent,
+            (ispc::VaryingTile*)&tile,
+            (ispc::VaryingTile*)&this->final,
+            (ispc::VaryingTile*)&this->accum,
+            &this->color,
+            dfb->accumId,
+            dfb->hasAccumBuffer);
+        break;
     }
   }
 
@@ -413,6 +424,27 @@ namespace ospray {
     this->tileIsCompleted(td);
   }
 
+  void DFB::processMessage(MasterTileMessage_RGBA_F32 *msg)
+  {
+    for (int iy=0;iy<TILE_SIZE;iy++) {
+      int iiy = iy+msg->coords.y;
+      if (iiy >= numPixels.y) continue;
+
+      for (int ix=0;ix<TILE_SIZE;ix++) {
+        int iix = ix+msg->coords.x;
+        if (iix >= numPixels.x) continue;
+
+        ((vec4f*)localFBonMaster->colorBuffer)[iix + iiy*numPixels.x]
+          = msg->color[iy][ix];
+      }
+    }
+
+    // and finally, tell the master that this tile is done
+    DFB::TileDesc *tileDesc = this->getTileDescFor(msg->coords);
+    TileData *td = (TileData*)tileDesc;
+    this->tileIsCompleted(td);
+  }
+
   void DFB::tileIsCompleted(TileData *tile)
   {
     DBG(printf("rank %i: tilecompleted %i,%i\n",mpi::world.rank,
@@ -454,6 +486,15 @@ namespace ospray {
         memcpy(mtm->color,tile->color,TILE_SIZE*TILE_SIZE*sizeof(uint32));
         comm->sendTo(this->master,mtm,sizeof(*mtm));
       } break;
+      case OSP_FB_RGBA32F: {
+        /*! if the master has RGBA32F format, we're sending him a tile of the
+          proper data */
+        MasterTileMessage_RGBA_F32 *mtm = new MasterTileMessage_RGBA_F32;
+        mtm->command = MASTER_WRITE_TILE_F32;
+        mtm->coords  = tile->begin;
+        memcpy(mtm->color,tile->color,TILE_SIZE*TILE_SIZE*sizeof(vec4f));
+        comm->sendTo(this->master,mtm,sizeof(*mtm));
+      } break;
       default:
         throw std::runtime_error("#osp:mpi:dfb: color buffer format not "
                                  "implemented for distributed frame buffer");
@@ -493,6 +534,9 @@ namespace ospray {
         break;
       case DFB::MASTER_WRITE_TILE_I8:
         this->processMessage((DFB::MasterTileMessage_RGBA_I8*)_msg);
+        break;
+      case DFB::MASTER_WRITE_TILE_F32:
+        this->processMessage((DFB::MasterTileMessage_RGBA_F32*)_msg);
         break;
       case DFB::WORKER_WRITE_TILE:
         this->processMessage((DFB::WriteTileMessage*)_msg);
