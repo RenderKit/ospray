@@ -14,17 +14,20 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "OSPObjectFile.h"
+#include "RawVolumeFile.h"
+#include "RMVolumeFile.h"
+#include "PLYTriangleMeshFile.h"
 
-#include "common.h"
+// Loader for XML object files.
+OSP_REGISTER_OBJECT_FILE(OSPObjectFile, osp);
 
-namespace ospcommon
-{
-#define ALIGN_PTR(ptr,alignment) \
-  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
+// Loader for RAW volume files.
+OSP_REGISTER_VOLUME_FILE(RawVolumeFile, raw);
+OSP_REGISTER_VOLUME_FILE(RawVolumeFile, gz);
 
-  /*! aligned allocation */
-  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
-  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
-}
+// Loader for PLY triangle mesh files.
+OSP_REGISTER_TRIANGLEMESH_FILE(PLYTriangleMeshFile, ply);
 
+// Loader for RAW volume files.
+OSP_REGISTER_VOLUME_FILE(RMVolumeFile, bob);

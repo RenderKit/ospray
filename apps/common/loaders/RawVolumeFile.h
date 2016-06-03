@@ -16,15 +16,34 @@
 
 #pragma once
 
-#include "common.h"
+// own
+#include "VolumeFile.h"
+// std
+#include <string>
 
-namespace ospcommon
-{
-#define ALIGN_PTR(ptr,alignment) \
-  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
+//! \brief A concrete implementation of the VolumeFile class for reading
+//!  voxel data stored in a file on disk as a single monolithic brick,
+//!  where the volume specification is defined elsewhere.
+//!
+class RawVolumeFile : public VolumeFile {
+public:
 
-  /*! aligned allocation */
-  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
-  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
-}
+  //! Constructor.
+  RawVolumeFile(const std::string &filename) : filename(filename) {}
+
+  //! Destructor.
+  virtual ~RawVolumeFile() {};
+
+  //! Import the volume data.
+  virtual OSPVolume importVolume(OSPVolume volume);
+
+  //! A string description of this class.
+  virtual std::string toString() const { return("ospray_module_loaders::RawVolumeFile"); }
+
+private:
+
+  //! Path to the file containing the volume data.
+  std::string filename;
+
+};
 

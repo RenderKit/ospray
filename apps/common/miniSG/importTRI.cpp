@@ -14,17 +14,41 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "miniSG.h"
+#include "importer.h"
 
-#include "common.h"
+namespace ospray {
+  namespace miniSG {
+    using std::cout;
+    using std::endl;
 
-namespace ospcommon
-{
-#define ALIGN_PTR(ptr,alignment) \
-  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
+    void importTRI(Model &model,
+                   const ospcommon::FileName &fileName)
+    {
+      FILE *file = fopen(fileName.c_str(),"rb");
+      if (!file) error("could not open input file");
 
-  /*! aligned allocation */
-  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
-  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
-}
+      int32_t numVertices;
+      auto rc = fread(&numVertices,1,sizeof(numVertices),file);
+
+      Mesh *mesh = new Mesh;
+      model.mesh.push_back(mesh);
+
+      mesh->position.resize(numVertices);
+      mesh->normal.resize(numVertices);
+      mesh->triangle.resize(numVertices/3);
+      rc = fread(&mesh->position[0],numVertices,4*sizeof(float),file);
+      rc = fread(&mesh->normal[0],numVertices,4*sizeof(float),file);
+      (void)rc;
+      for (int i=0;i<numVertices/3;i++) {
+        mesh->triangle[i].v0 = 3*i+0;
+        mesh->triangle[i].v1 = 3*i+1;
+        mesh->triangle[i].v2 = 3*i+2;
+      }
+      model.instance.push_back(Instance(0));
+    }
+
+  } // ::ospray::minisg
+} // ::ospray
+
 

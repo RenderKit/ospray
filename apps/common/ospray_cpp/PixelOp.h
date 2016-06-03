@@ -16,15 +16,42 @@
 
 #pragma once
 
-#include "common.h"
+#include <ospray_cpp/ManagedObject.h>
 
-namespace ospcommon
+namespace ospray {
+namespace cpp    {
+
+class PixelOp : public ManagedObject_T<OSPPixelOp>
 {
-#define ALIGN_PTR(ptr,alignment) \
-  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
+public:
 
-  /*! aligned allocation */
-  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
-  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
+  PixelOp(const std::string &type);
+  PixelOp(const PixelOp &copy);
+  PixelOp(OSPPixelOp existing);
+};
+
+// Inlined function definitions ///////////////////////////////////////////////
+
+inline PixelOp::PixelOp(const std::string &type)
+{
+  OSPPixelOp c = ospNewPixelOp(type.c_str());
+  if (c) {
+    m_object = c;
+  } else {
+    throw std::runtime_error("Failed to create OSPPixelOp!");
+  }
 }
 
+inline PixelOp::PixelOp(const PixelOp &copy) :
+  ManagedObject_T(copy.handle())
+{
+}
+
+inline PixelOp::PixelOp(OSPPixelOp existing) :
+  ManagedObject_T(existing)
+{
+}
+
+
+}// namespace cpp
+}// namespace ospray

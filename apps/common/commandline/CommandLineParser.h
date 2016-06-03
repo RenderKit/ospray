@@ -16,15 +16,10 @@
 
 #pragma once
 
-#include "common.h"
-
-namespace ospcommon
+class CommandLineParser
 {
-#define ALIGN_PTR(ptr,alignment) \
-  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
+public:
+  virtual ~CommandLineParser() = default;
 
-  /*! aligned allocation */
-  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
-  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
-}
-
+  virtual bool parse(int ac, const char **&av) = 0;
+};

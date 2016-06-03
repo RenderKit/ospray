@@ -16,15 +16,34 @@
 
 #pragma once
 
-#include "common.h"
+#include <common/commandline/CommandLineParser.h>
+#include <ospray_cpp/Camera.h>
 
-namespace ospcommon
+#include <string>
+
+class CameraParser : public CommandLineParser
 {
-#define ALIGN_PTR(ptr,alignment) \
-  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
+public:
+  virtual ospray::cpp::Camera camera() = 0;
+};
 
-  /*! aligned allocation */
-  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
-  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
-}
+class DefaultCameraParser : public CameraParser
+{
+public:
+  DefaultCameraParser() = default;
+  bool parse(int ac, const char **&av) override;
+  ospray::cpp::Camera camera() override;
 
+protected:
+
+  std::string         m_cameraType;
+  ospray::cpp::Camera m_camera;
+
+  ospcommon::vec3f m_eye {-1,  1, -1};
+  ospcommon::vec3f m_up  { 1, -1,  1};
+  ospcommon::vec3f m_gaze{ 0,  1,  0};
+
+private:
+
+  void finalize();
+};

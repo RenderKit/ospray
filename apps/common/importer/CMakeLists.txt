@@ -14,41 +14,21 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-CONFIGURE_OSPRAY()
+set(LIBRARY_NAME ospray_importer)
 
-set(LIBRARY_NAME ospray_common)
-
-SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-FIND_PACKAGE(Threads REQUIRED)
-
-OSPRAY_ADD_LIBRARY(${LIBRARY_NAME} SHARED
-  common.cpp
-  FileName.cpp
-  sysinfo.cpp
-  malloc.cpp
-  library.cpp
-  thread.cpp
-  vec.cpp
-
-  AffineSpace.h
-  box.h
-  constants.h
-  intrinsics.h
-  LinearSpace.h
-  math.h
-  platform.h
-  Quaternion.h
-  RefCount.h
-  vec.h
+add_library(${LIBRARY_NAME} SHARED
+  importOSP.cpp
+  importRAW.cpp
+  Importer.cpp
+  TinyXML2.cpp
 )
 
-OSPRAY_LIBRARY_LINK_LIBRARIES(${LIBRARY_NAME}
-  ${CMAKE_THREAD_LIBS_INIT}
-  ${CMAKE_DL_LIBS}
-)
-IF (WIN32)
-  OSPRAY_LIBRARY_LINK_LIBRARIES(${LIBRARY_NAME} ws2_32)
-ENDIF()
+target_link_libraries(${LIBRARY_NAME} ospray_common ospray)
 
-OSPRAY_SET_LIBRARY_VERSION(${LIBRARY_NAME})
-OSPRAY_INSTALL_LIBRARY(${LIBRARY_NAME})
+ospray_set_library_version(${LIBRARY_NAME})
+
+install(TARGETS ${LIBRARY_NAME}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT lib
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel
+)

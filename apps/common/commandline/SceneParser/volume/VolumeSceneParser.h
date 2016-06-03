@@ -16,15 +16,43 @@
 
 #pragma once
 
-#include "common.h"
+#include <common/commandline/SceneParser/SceneParser.h>
+#include <ospray_cpp/Renderer.h>
+#include <ospray_cpp/TransferFunction.h>
+#include <common/miniSG/miniSG.h>
 
-namespace ospcommon
+#include <limits>
+#include <string>
+#include <vector>
+
+class VolumeSceneParser : public SceneParser
 {
-#define ALIGN_PTR(ptr,alignment) \
-  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
+public:
+  VolumeSceneParser(ospray::cpp::Renderer);
 
-  /*! aligned allocation */
-  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
-  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
-}
+  bool parse(int ac, const char **&av) override;
 
+  ospray::cpp::Model model() const override;
+  ospcommon::box3f   bbox()  const override;
+
+private:
+
+  // Helper functions //
+
+  void importObjectsFromFile(const std::string &filename);
+  void createDefaultTransferFunction();
+
+  // Data //
+
+  ospray::cpp::Renderer m_renderer;
+  ospray::cpp::Model    m_model;
+  ospcommon::box3f      m_bbox;
+
+  float m_samplingRate{0.125f};
+
+  float m_tf_scale{1.f};
+  std::vector<ospcommon::vec4f> m_tf_colors;
+  std::vector<float> m_isosurfaces;
+
+  ospray::cpp::TransferFunction m_tf{"piecewise_linear"};
+};

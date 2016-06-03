@@ -16,15 +16,30 @@
 
 #pragma once
 
-#include "common.h"
+#include <common/commandline/CommandLineParser.h>
 
-namespace ospcommon
+#include <ospray_cpp/Renderer.h>
+#include <ospray_cpp/Light.h>
+
+class LightsParser : public CommandLineParser
 {
-#define ALIGN_PTR(ptr,alignment) \
-  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
+};
 
-  /*! aligned allocation */
-  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
-  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
-}
+class DefaultLightsParser : public LightsParser
+{
+public:
+  DefaultLightsParser(ospray::cpp::Renderer renderer);
+  bool parse(int ac, const char **&av) override;
 
+protected:
+
+  ospray::cpp::Renderer m_renderer;
+
+  /*! when using the OBJ renderer, we create a automatic dirlight with this
+   * direction; use ''--sun-dir x y z' to change */
+  ospcommon::vec3f m_defaultDirLight_direction;
+
+private:
+
+  void finalize();
+};

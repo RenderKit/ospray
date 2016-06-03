@@ -14,41 +14,51 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-CONFIGURE_OSPRAY()
+set(APP_NAME ospGlutViewer)
 
-set(LIBRARY_NAME ospray_common)
+find_package(Readline)
 
-SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-FIND_PACKAGE(Threads REQUIRED)
+if(READLINE_FOUND)
+  add_definitions(-DUSE_SYSTEM_READLINE)
+  set(Readline_INC ${Readline_INCLUDE_DIR})
+  set(Readline_LIB ${Readline_LIBRARY})
+else()
+  message(STATUS "Readline NOT found, command history feature NOT enabled.")
+endif()
 
-OSPRAY_ADD_LIBRARY(${LIBRARY_NAME} SHARED
-  common.cpp
-  FileName.cpp
-  sysinfo.cpp
-  malloc.cpp
-  library.cpp
-  thread.cpp
-  vec.cpp
-
-  AffineSpace.h
-  box.h
-  constants.h
-  intrinsics.h
-  LinearSpace.h
-  math.h
-  platform.h
-  Quaternion.h
-  RefCount.h
-  vec.h
+include_directories(
+  ${CMAKE_CURRENT_LIST_DIR}
+  ${CMAKE_CURRENT_LIST_DIR}/script
+  ${Readline_INC}
 )
 
-OSPRAY_LIBRARY_LINK_LIBRARIES(${LIBRARY_NAME}
-  ${CMAKE_THREAD_LIBS_INIT}
-  ${CMAKE_DL_LIBS}
+# --------------------------------------------
+# main executable
+# --------------------------------------------
+add_executable(${APP_NAME}
+  GlutViewerScriptHandler.cpp
+  GlutViewerScriptHandler.h
+  OSPGlutViewer.cpp
+  OSPGlutViewer.h
+  ScriptedOSPGlutViewer.cpp
+  ScriptedOSPGlutViewer.h
+  glutViewer.cpp
 )
-IF (WIN32)
-  OSPRAY_LIBRARY_LINK_LIBRARIES(${LIBRARY_NAME} ws2_32)
-ENDIF()
 
-OSPRAY_SET_LIBRARY_VERSION(${LIBRARY_NAME})
-OSPRAY_INSTALL_LIBRARY(${LIBRARY_NAME})
+target_link_libraries(${APP_NAME}
+  ospray
+  ospray_commandline
+  ospray_common
+  ospray_glut3d
+  ospray_minisg
+  ospray_script
+  ${OPENGL_LIBRARIES}
+  ${GLUT_LIBRARIES}
+  ${Readline_LIB}
+)
+# ------------------------------------------------------------
+
+install(TARGETS ${APP_NAME}
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  COMPONENT apps
+)

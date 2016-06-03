@@ -16,15 +16,13 @@
 
 #pragma once
 
-#include "common.h"
+#include <common/commandline/CommandLineParser.h>
+#include <ospray_cpp/Model.h>
+#include <common/box.h>
 
-namespace ospcommon
+class SceneParser : public CommandLineParser
 {
-#define ALIGN_PTR(ptr,alignment) \
-  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
-
-  /*! aligned allocation */
-  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
-  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
-}
-
+public:
+  virtual ospray::cpp::Model model() const = 0;
+  virtual ospcommon::box3f   bbox()  const = 0;
+};

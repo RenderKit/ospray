@@ -16,15 +16,37 @@
 
 #pragma once
 
-#include "common.h"
+// tachyon module
+#include "Model.h"
+// std
+#include <string>
+#include <ostream>
 
-namespace ospcommon
-{
-#define ALIGN_PTR(ptr,alignment) \
-  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
+namespace ospray {
+  using std::string;
 
-  /*! aligned allocation */
-  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
-  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
-}
+  struct Loc {
+    Loc() { name = "(undef/internal)"; line = 0; }
+    const char *name;
+    int line;
+    void Print() const { printf(" @ [%s:%d] ", name, line); }
+    string toString() const;
+  
+    static Loc current;
+  };
+
+  inline std::ostream &operator<<(std::ostream &o, const Loc &fp)
+  {
+    o << fp.toString();
+    return o;
+  }
+
+  void Warning(Loc p, const char *, ...);
+  void Error(Loc p, const char *, ...);
+  void PerformanceNotice(Loc p, const char *, ...);
+  void PerformanceWarning(Loc p, const char *, ...);
+
+} // ::ospray
+
+
 

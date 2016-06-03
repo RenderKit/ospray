@@ -16,15 +16,32 @@
 
 #pragma once
 
-#include "common.h"
+#include <common/commandline/CommandLineParser.h>
+#include <ospray_cpp/Renderer.h>
 
-namespace ospcommon
+#include <string>
+
+class RendererParser : public CommandLineParser
 {
-#define ALIGN_PTR(ptr,alignment) \
-  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
+public:
+  virtual ospray::cpp::Renderer renderer() = 0;
+};
 
-  /*! aligned allocation */
-  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
-  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
-}
+class DefaultRendererParser : public RendererParser
+{
+public:
+  DefaultRendererParser() = default;
+  bool parse(int ac, const char **&av) override;
+  ospray::cpp::Renderer renderer() override;
 
+protected:
+
+  std::string           m_rendererType;
+  ospray::cpp::Renderer m_renderer;
+
+  int m_spp{1};
+
+private:
+
+  void finalize();
+};

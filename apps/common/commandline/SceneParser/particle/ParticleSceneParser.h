@@ -16,15 +16,27 @@
 
 #pragma once
 
-#include "common.h"
+#include <common/commandline/SceneParser/SceneParser.h>
+#include <ospray_cpp/Renderer.h>
 
-namespace ospcommon
+class ParticleSceneParser : public SceneParser
 {
-#define ALIGN_PTR(ptr,alignment) \
-  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
+public:
+  ParticleSceneParser(ospray::cpp::Renderer);
 
-  /*! aligned allocation */
-  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
-  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
-}
+  bool parse(int ac, const char **&av) override;
 
+  ospray::cpp::Model model() const override;
+  ospcommon::box3f   bbox()  const override;
+
+private:
+
+  ospray::cpp::Renderer m_renderer;
+  ospray::cpp::Model    m_model;
+  ospcommon::box3f      m_bbox;
+
+  void finalize();
+
+  void createSpheres();
+  void createCylinders();
+};

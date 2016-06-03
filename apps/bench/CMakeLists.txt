@@ -1,4 +1,4 @@
-## ======================================================================== ##
+# ======================================================================== ##
 ## Copyright 2009-2016 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
@@ -14,41 +14,33 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-CONFIGURE_OSPRAY()
+set(APP_NAME ospBenchmark)
 
-set(LIBRARY_NAME ospray_common)
-
-SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-FIND_PACKAGE(Threads REQUIRED)
-
-OSPRAY_ADD_LIBRARY(${LIBRARY_NAME} SHARED
-  common.cpp
-  FileName.cpp
-  sysinfo.cpp
-  malloc.cpp
-  library.cpp
-  thread.cpp
-  vec.cpp
-
-  AffineSpace.h
-  box.h
-  constants.h
-  intrinsics.h
-  LinearSpace.h
-  math.h
-  platform.h
-  Quaternion.h
-  RefCount.h
-  vec.h
+include_directories(
+  ${CMAKE_CURRENT_LIST_DIR}
 )
 
-OSPRAY_LIBRARY_LINK_LIBRARIES(${LIBRARY_NAME}
-  ${CMAKE_THREAD_LIBS_INIT}
-  ${CMAKE_DL_LIBS}
+# --------------------------------------------
+# main executable
+# --------------------------------------------
+add_executable(${APP_NAME}
+  bench.cpp
+  OSPRayFixture.cpp
+  OSPRayFixture.h
+  simple_outputter.hpp
 )
-IF (WIN32)
-  OSPRAY_LIBRARY_LINK_LIBRARIES(${LIBRARY_NAME} ws2_32)
-ENDIF()
 
-OSPRAY_SET_LIBRARY_VERSION(${LIBRARY_NAME})
-OSPRAY_INSTALL_LIBRARY(${LIBRARY_NAME})
+target_link_libraries(${APP_NAME}
+  ospray
+  ospray_commandline
+  ospray_common
+  ospray_importer
+  ospray_minisg
+)
+
+# ------------------------------------------------------------
+
+install(TARGETS ${APP_NAME}
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  COMPONENT apps
+)

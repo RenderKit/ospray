@@ -14,17 +14,21 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "miniSG.h"
+#include "importer.h"
 
-#include "common.h"
+namespace ospray {
+  namespace miniSG {
+    using std::cout;
+    using std::endl;
 
-namespace ospcommon
-{
-#define ALIGN_PTR(ptr,alignment) \
-  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
+    void importMSG(Model &model,
+                   const ospcommon::FileName &fileName)
+    {
+      error("importMSG: not implemented yet");
+    }
 
-  /*! aligned allocation */
-  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
-  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
-}
+  } // ::ospray::minisg
+} // ::ospray
+
 

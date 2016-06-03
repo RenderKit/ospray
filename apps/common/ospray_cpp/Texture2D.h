@@ -16,15 +16,30 @@
 
 #pragma once
 
-#include "common.h"
+#include <ospray_cpp/ManagedObject.h>
 
-namespace ospcommon
+namespace ospray {
+namespace cpp    {
+
+class Texture2D : public ManagedObject_T<OSPTexture2D>
 {
-#define ALIGN_PTR(ptr,alignment) \
-  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
+public:
 
-  /*! aligned allocation */
-  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
-  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
+  Texture2D(const Texture2D &copy);
+  Texture2D(OSPTexture2D existing);
+};
+
+// Inlined function definitions ///////////////////////////////////////////////
+
+inline Texture2D::Texture2D(const Texture2D &copy) :
+  ManagedObject_T(copy.handle())
+{
 }
 
+inline Texture2D::Texture2D(OSPTexture2D existing) :
+  ManagedObject_T(existing)
+{
+}
+
+}// namespace cpp
+}// namespace ospray

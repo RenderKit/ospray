@@ -14,17 +14,43 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "common/commandline/Utility.h"
 
-#include "common.h"
+#include "ScriptedOSPGlutViewer.h"
 
-namespace ospcommon
+std::string scriptFileFromCommandLine(int ac, const char **&av)
 {
-#define ALIGN_PTR(ptr,alignment) \
-  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
+  std::string scriptFileName;
 
-  /*! aligned allocation */
-  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
-  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
+  for (int i = 1; i < ac; i++) {
+    const std::string arg = av[i];
+    if (arg == "--script" || arg == "-s") {
+      scriptFileName = av[++i];
+    }
+  }
+
+  return scriptFileName;
 }
 
+int main(int ac, const char **av)
+{
+  ospInit(&ac,av);
+  ospray::glut3D::initGLUT(&ac,av);
+
+  auto ospObjs = parseWithDefaultParsers(ac, av);
+
+  ospcommon::box3f      bbox;
+  ospray::cpp::Model    model;
+  ospray::cpp::Renderer renderer;
+  ospray::cpp::Camera   camera;
+
+  std::tie(bbox, model, renderer, camera) = ospObjs;
+
+  auto scriptFileName = scriptFileFromCommandLine(ac, av);
+
+  ospray::ScriptedOSPGlutViewer window(bbox, model, renderer,
+                                       camera, scriptFileName);
+  window.create("ospDebugViewer: OSPRay Mini-Scene Graph test viewer");
+
+  ospray::glut3D::runGLUT();
+}

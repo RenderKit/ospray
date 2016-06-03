@@ -16,15 +16,56 @@
 
 #pragma once
 
-#include "common.h"
+// ospcommon
+#include "common/vec.h"
+// std
+#include <string>
+#include <vector>
+// own
+#include "TriangleMeshFile.h"
 
-namespace ospcommon
-{
-#define ALIGN_PTR(ptr,alignment) \
-  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
+//! \brief A concrete implementation of the TriangleMeshFile class
+//!  for reading triangle data stored in the PLY file format on disk.
+//!
+class PLYTriangleMeshFile : public TriangleMeshFile {
+public:
 
-  /*! aligned allocation */
-  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
-  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
-}
+  //! Constructor.
+  PLYTriangleMeshFile(const std::string &filename);
 
+  //! Destructor.
+  virtual ~PLYTriangleMeshFile() {}
+
+  //! Import the triangle data.
+  virtual OSPGeometry importTriangleMesh(OSPGeometry triangleMesh);
+
+  //! A string description of this class.
+  virtual std::string toString() const;
+
+private:
+
+  //! Path to the file containing the triangle data.
+  std::string filename;
+
+  //! Scaling for vertex coordinates.
+  ospcommon::vec3f scale;
+
+  //! Verbose logging.
+  bool verbose;
+
+  //! Vertices.
+  std::vector<ospcommon::vec3fa> vertices;
+
+  //! Vertex colors.
+  std::vector<ospcommon::vec4f> vertexColors;
+
+  //! Vertex normals.
+  std::vector<ospcommon::vec3fa> vertexNormals;
+
+  //! Triangle definitions.
+  std::vector<ospcommon::vec3i>  triangles;
+
+  //! Parse the file, determining the vertices, vertex colors, and triangles.
+  bool parse();
+
+};

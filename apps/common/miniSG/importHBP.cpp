@@ -14,17 +14,36 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "miniSG.h"
+#include "importer.h"
+#include <fstream>
 
-#include "common.h"
+namespace ospray {
+  namespace miniSG {
+    using std::cout;
+    using std::endl;
 
-namespace ospcommon
-{
-#define ALIGN_PTR(ptr,alignment) \
-  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
+    /*! import a HBP file, and add it to the specified model */
+    void importHBP(Model &model, const ospcommon::FileName &fileName)
+    {
+      std::string vtxName = fileName.str()+".vtx";
+      std::string triName = fileName.str()+".tri";
+      FILE *vtx = fopen(vtxName.c_str(),"rb");
+      FILE *tri = fopen(triName.c_str(),"rb");
 
-  /*! aligned allocation */
-  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
-  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
-}
+      Mesh *mesh = new Mesh;
+      vec3f v; 
+      Triangle t;
 
+      while (fread(&v,sizeof(v),1,vtx))
+        mesh->position.push_back(vec3fa(v));
+      while (fread(&t,sizeof(t),1,tri))
+        mesh->triangle.push_back(t);
+      
+      model.mesh.push_back(mesh);
+      model.instance.push_back(Instance(model.mesh.size()-1));
+      mesh->material = NULL; 
+    }
+
+  } // ::ospray::minisg
+} // ::ospray

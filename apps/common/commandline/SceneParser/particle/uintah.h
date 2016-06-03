@@ -14,17 +14,13 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "Model.h"
 
-#include "common.h"
+namespace ospray {
+  namespace particle {
 
-namespace ospcommon
-{
-#define ALIGN_PTR(ptr,alignment) \
-  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
+    //! parse given uintah-format timestep.xml file, and return in a model
+    Model *parse__Uintah_timestep_xml(const std::string &s);
 
-  /*! aligned allocation */
-  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
-  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
-}
-
+  } // ::ospray::particle
+} // ::ospray

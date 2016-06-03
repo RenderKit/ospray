@@ -16,15 +16,55 @@
 
 #pragma once
 
-#include "common.h"
+#include <ospray_cpp/ManagedObject.h>
+#include <ospray_cpp/Material.h>
 
-namespace ospcommon
+namespace ospray {
+namespace cpp    {
+
+class Geometry : public ManagedObject_T<OSPGeometry>
 {
-#define ALIGN_PTR(ptr,alignment) \
-  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
+public:
 
-  /*! aligned allocation */
-  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
-  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
+  Geometry(const std::string &type);
+  Geometry(const Geometry &copy);
+  Geometry(OSPGeometry existing);
+
+  void setMaterial(Material &m);
+  void setMaterial(OSPMaterial m);
+};
+
+// Inlined function definitions ///////////////////////////////////////////////
+
+inline Geometry::Geometry(const std::string &type)
+{
+  OSPGeometry c = ospNewGeometry(type.c_str());
+  if (c) {
+    m_object = c;
+  } else {
+    throw std::runtime_error("Failed to create OSPGeometry!");
+  }
 }
 
+inline Geometry::Geometry(const Geometry &copy) :
+  ManagedObject_T(copy.handle())
+{
+}
+
+inline Geometry::Geometry(OSPGeometry existing) :
+  ManagedObject_T(existing)
+{
+}
+
+inline void Geometry::setMaterial(Material &m)
+{
+  setMaterial(m.handle());
+}
+
+inline void Geometry::setMaterial(OSPMaterial m)
+{
+  ospSetMaterial(handle(), m);
+}
+
+}// namespace cpp
+}// namespace ospray

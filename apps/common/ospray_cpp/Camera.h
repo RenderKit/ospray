@@ -16,15 +16,41 @@
 
 #pragma once
 
-#include "common.h"
+#include <ospray_cpp/ManagedObject.h>
 
-namespace ospcommon
+namespace ospray {
+namespace cpp    {
+
+class Camera : public ManagedObject_T<OSPCamera>
 {
-#define ALIGN_PTR(ptr,alignment) \
-  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
+public:
 
-  /*! aligned allocation */
-  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
-  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
+  Camera(const std::string &type);
+  Camera(const Camera &copy);
+  Camera(OSPCamera existing = nullptr);
+};
+
+// Inlined function definitions ///////////////////////////////////////////////
+
+inline Camera::Camera(const std::string &type)
+{
+  OSPCamera c = ospNewCamera(type.c_str());
+  if (c) {
+    m_object = c;
+  } else {
+    throw std::runtime_error("Failed to create OSPCamera!");
+  }
 }
 
+inline Camera::Camera(const Camera &copy) :
+  ManagedObject_T(copy.handle())
+{
+}
+
+inline Camera::Camera(OSPCamera existing) :
+  ManagedObject_T(existing)
+{
+}
+
+}// namespace cpp
+}// namespace ospray

@@ -16,15 +16,29 @@
 
 #pragma once
 
-#include "common.h"
+#include <string>
+#include "VolumeFile.h"
 
-namespace ospcommon
-{
-#define ALIGN_PTR(ptr,alignment) \
-  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
+//! \brief specific importer for the LLNL "RM" (Richtmyer-Meshkov) instability files
+/*! Note this exists only for a specific demo */
+class RMVolumeFile : public VolumeFile {
+public:
 
-  /*! aligned allocation */
-  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
-  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
-}
+  //! Constructor.
+  RMVolumeFile(const std::string &fileName) : fileName(fileName) {}
+
+  //! Destructor.
+  virtual ~RMVolumeFile() {};
+
+  //! Import the volume data.
+  virtual OSPVolume importVolume(OSPVolume volume);
+
+  //! A string description of this class.
+  virtual std::string toString() const { return("ospray_module_loaders::RawVolumeFile"); }
+
+private:
+
+  //! Path to the file containing the volume data.
+  std::string fileName;
+};
 

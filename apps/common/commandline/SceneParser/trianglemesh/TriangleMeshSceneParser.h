@@ -16,15 +16,42 @@
 
 #pragma once
 
-#include "common.h"
+#include <common/commandline/SceneParser/SceneParser.h>
+#include <ospray_cpp/Renderer.h>
+#include <common/miniSG/miniSG.h>
 
-namespace ospcommon
+#include <string>
+
+
+class TriangleMeshSceneParser : public SceneParser
 {
-#define ALIGN_PTR(ptr,alignment) \
-  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
+public:
+  TriangleMeshSceneParser(ospray::cpp::Renderer);
 
-  /*! aligned allocation */
-  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
-  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
-}
+  bool parse(int ac, const char **&av) override;
 
+  ospray::cpp::Model model() const override;
+  ospcommon::box3f   bbox()  const override;
+
+private:
+
+  ospray::cpp::Material createDefaultMaterial(ospray::cpp::Renderer renderer);
+  ospray::cpp::Material createMaterial(ospray::cpp::Renderer renderer,
+                                       ospray::miniSG::Material *mat);
+
+  ospray::cpp::Model    m_model;
+  ospray::cpp::Renderer m_renderer;
+
+  bool m_alpha;
+  bool m_createDefaultMaterial;
+  unsigned int m_maxObjectsToConsider;
+
+  // if turned on, we'll put each triangle mesh into its own instance,
+  // no matter what
+  bool m_forceInstancing;
+
+  ospcommon::Ref<ospray::miniSG::Model> m_msgModel;
+  std::vector<ospray::miniSG::Model *> m_msgAnimation;
+
+  void finalize();
+};

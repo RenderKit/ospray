@@ -16,15 +16,24 @@
 
 #pragma once
 
-#include "common.h"
+#include "OSPGlutViewer.h"
+#include "GlutViewerScriptHandler.h"
 
-namespace ospcommon
+namespace ospray {
+
+class ScriptedOSPGlutViewer : public OSPGlutViewer
 {
-#define ALIGN_PTR(ptr,alignment) \
-  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
+public:
 
-  /*! aligned allocation */
-  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
-  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
-}
+  ScriptedOSPGlutViewer(const ospcommon::box3f &worldBounds,
+                        cpp::Model model, cpp::Renderer renderer,
+                        cpp::Camera camera, std::string scriptFileName = "");
 
+private:
+
+  void keypress(char key, const ospcommon::vec2i &where) override;
+
+  GlutViewerScriptHandler m_scriptHandler;
+};
+
+}// namespace ospray

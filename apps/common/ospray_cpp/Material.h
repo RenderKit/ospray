@@ -16,15 +16,31 @@
 
 #pragma once
 
-#include "common.h"
+#include <ospray_cpp/ManagedObject.h>
 
-namespace ospcommon
+namespace ospray {
+namespace cpp    {
+
+class Material : public ManagedObject_T<OSPMaterial>
 {
-#define ALIGN_PTR(ptr,alignment) \
-  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
+public:
 
-  /*! aligned allocation */
-  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
-  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
+  Material() = default;
+  Material(const Material &copy);
+  Material(OSPMaterial existing);
+};
+
+// Inlined function definitions ///////////////////////////////////////////////
+
+inline Material::Material(const Material &copy) :
+  ManagedObject_T(copy.handle())
+{
 }
 
+inline Material::Material(OSPMaterial existing) :
+  ManagedObject_T(existing)
+{
+}
+
+}// namespace cpp
+}// namespace ospray

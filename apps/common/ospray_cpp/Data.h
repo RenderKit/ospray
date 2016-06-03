@@ -16,15 +16,38 @@
 
 #pragma once
 
-#include "common.h"
+#include <ospray_cpp/ManagedObject.h>
 
-namespace ospcommon
+namespace ospray {
+namespace cpp    {
+
+class Data : public ManagedObject_T<OSPData>
 {
-#define ALIGN_PTR(ptr,alignment) \
-  ((((size_t)ptr)+alignment-1)&((size_t)-(ssize_t)alignment))
+public:
 
-  /*! aligned allocation */
-  OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
-  OSPCOMMON_INTERFACE void alignedFree(void* ptr);
+  Data(size_t numItems, OSPDataType format,
+       const void *init = nullptr, int flags = 0);
+  Data(const Data &copy);
+  Data(OSPData existing);
+};
+
+// Inlined function definitions ///////////////////////////////////////////////
+
+inline Data::Data(size_t numItems, OSPDataType format,
+                  const void *init, int flags)
+{
+  m_object = ospNewData(numItems, format, init, flags);
 }
 
+inline Data::Data(const Data &copy) :
+  ManagedObject_T(copy.handle())
+{
+}
+
+inline Data::Data(OSPData existing) :
+  ManagedObject_T(existing)
+{
+}
+
+}// namespace cpp
+}// namespace ospray

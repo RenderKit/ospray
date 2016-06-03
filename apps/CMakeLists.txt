@@ -18,26 +18,35 @@ CONFIGURE_OSPRAY()
 
 IF(NOT THIS_IS_MIC)
 
+  INCLUDE_DIRECTORIES(
+    ${CMAKE_SOURCE_DIR}/ospray/include
+    ${CMAKE_CURRENT_LIST_DIR}
+    common
+    common/script/chaiscript
+  )
+
   # common xml utility classes
+  ADD_SUBDIRECTORY(common/commandline)
+  ADD_SUBDIRECTORY(common/importer)
+  ADD_SUBDIRECTORY(common/miniSG)
   ADD_SUBDIRECTORY(common/xml)
 
-  # mini-scene graph viewer for _geometry_ (intentionally simple)
-  OPTION(OSPRAY_APPS_MODELVIEWER "Build ospModelViewer application." ON)
+  # benchmark application which has no windowing framework dependencies
+  OPTION(OSPRAY_APPS_BENCHMARK "Build ospBenchmark application." ON)
 
-  # include glut and widgets only when needed
-  # needs to be before the first application, such that the GLUT include path is known
-  # XXX if the defaults change, include could be missing on the first run of CMake
-  IF(OSPRAY_APPS_MODELVIEWER      OR
-     OSPRAY_APPS_STREAMLINEVIEWER OR
-     OSPRAY_APPS_PARTICLEVIEWER)
-    # GLUT is used by apps as well
+  IF(OSPRAY_APPS_BENCHMARK)
+    ADD_SUBDIRECTORY(bench)
+  ENDIF()
+
+  # mini-scene graph viewer implemented with GLUT
+  OPTION(OSPRAY_APPS_GLUTVIEWER "Build ospGlutViewer application." ON)
+
+  IF(OSPRAY_APPS_GLUTVIEWER)
+    ADD_SUBDIRECTORY(common/script)
     INCLUDE(${PROJECT_SOURCE_DIR}/cmake/glut.cmake)
     # common utility classes for GLUT-based 3D viewer widget
     ADD_SUBDIRECTORY(common/widgets)
-  ENDIF()
-
-  IF (OSPRAY_APPS_MODELVIEWER)
-    ADD_SUBDIRECTORY(modelViewer)
+    ADD_SUBDIRECTORY(glutViewer)
   ENDIF()
 
  IF(NOT WIN32)
@@ -49,19 +58,6 @@ IF(NOT THIS_IS_MIC)
     IF (OSPRAY_APPS_QTVIEWER)
       ADD_SUBDIRECTORY(qtViewer)
     ENDIF()
-  ENDIF()
-
-  # stream line viewer for NASA Stream Line Demo
-  OPTION(OSPRAY_APPS_STREAMLINEVIEWER "Build ospStreamLineViewer application." OFF)
-  MARK_AS_ADVANCED(OSPRAY_APPS_STREAMLINEVIEWER)
-  IF(OSPRAY_APPS_STREAMLINEVIEWER)
-    ADD_SUBDIRECTORY(streamLineViewer)
-  ENDIF()
-
-  # xyz atom model viewer (one sphere per atom)
-  OPTION(OSPRAY_APPS_PARTICLEVIEWER "Build ospParticleViewer application." OFF)
-  IF(OSPRAY_APPS_PARTICLEVIEWER)
-    ADD_SUBDIRECTORY(particleViewer)
   ENDIF()
 
   # volume viewer application
