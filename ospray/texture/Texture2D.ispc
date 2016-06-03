@@ -182,6 +182,7 @@ static uniform Texture2D_get Texture2D_get_addr(const uniform uint32 type,
   switch (type) {
     __foreach_fetcher(__define_tex_get_case)
   }
+  return 0;
 };
 
 #undef __define_tex_get
