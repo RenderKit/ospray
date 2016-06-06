@@ -208,8 +208,18 @@ namespace ospray {
       ospcommon::vec3i dims(2048 * scaleFactor.x, 2048 * scaleFactor.y, 1920 * scaleFactor.z);
       volume->dimensions = dims;
       ospSetVec3i(volume->handle, "dimensions", (osp::vec3i&)dims);
-      std::cout << "RM Volume dimensions = {" << dims.x << ", " << dims.y << ", " << dims.z << "}\n";
       ospSetString(volume->handle,"voxelType", "uchar");
+      volume->bounds = ospcommon::empty;
+      //volume->bounds.extend(volume->gridOrigin);
+      //volume->bounds.extend(volume->gridOrigin+ vec3f(volume->dimensions) * volume->gridSpacing);
+      const ospcommon::vec3f gridOrigin(-1.f, -1.f, -1.f);
+      volume->bounds.extend(gridOrigin);
+      volume->bounds.extend(vec3f(1.f, 1.f, 1.f));
+      const ospcommon::vec3f gridSpacing(2.f / dims.x, 2.f / dims.y, 2.f / dims.z);
+      ospSetVec3f(volume->handle, "gridOrigin", (osp::vec3f&)gridOrigin);
+      ospSetVec3f(volume->handle, "gridSpacing", (osp::vec3f&)gridSpacing);
+
+      std::cout << "RM Volume dimensions = {" << dims.x << ", " << dims.y << ", " << dims.z << "}\n";
 
       int numThreads = ospcommon::getNumberOfLogicalThreads();
       const char *numThreadsEnv = getenv("OSPRAY_RM_LOADER_THREADS");
@@ -228,15 +238,6 @@ namespace ospray {
         << ", needed " << (t1-t0) << " seconds" << std::endl;
 
       ospSet2f(volume->handle,"voxelRange",volume->voxelRange.x,volume->voxelRange.y);
-      volume->bounds = ospcommon::empty;
-      //volume->bounds.extend(volume->gridOrigin);
-      //volume->bounds.extend(volume->gridOrigin+ vec3f(volume->dimensions) * volume->gridSpacing);
-      const ospcommon::vec3f gridOrigin(-1.f, -1.f, -1.f);
-      volume->bounds.extend(gridOrigin);
-      volume->bounds.extend(vec3f(1.f, 1.f, 1.f));
-      const ospcommon::vec3f gridSpacing(2.f / dims.x, 2.f / dims.y, 2.f / dims.z);
-      ospSetVec3f(volume->handle, "gridOrigin", (osp::vec3f&)gridOrigin);
-      ospSetVec3f(volume->handle, "gridSpacing", (osp::vec3f&)gridSpacing);
     }
 
     // Treat a single RM file as a "scene"
