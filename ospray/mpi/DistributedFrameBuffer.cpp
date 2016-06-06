@@ -16,6 +16,7 @@
 
 #include <chrono>
 #include <atomic>
+#include <iomanip>
 #include "DistributedFrameBuffer.h"
 #include "DistributedFrameBuffer_ispc.h"
 
@@ -423,7 +424,8 @@ namespace ospray {
       if (true){//dfbPrintTileProcessMsg.exchange(false)) {
         using namespace std::chrono;
         auto firstMsg = high_resolution_clock::now();
-        std::cout << "Worker " << mpi::worker.rank << " DFB::processMessage at "
+        std::cout << "Worker " << mpi::worker.rank << " DFB::processMessage msg "
+          << std::hex << reinterpret_cast<size_t>(msg) << " at " << std::dec
           << duration_cast<milliseconds>(firstMsg.time_since_epoch()).count()
           << "ms\n";
       }
@@ -535,6 +537,14 @@ namespace ospray {
       }
     }
     // TODO WILL: LOG when we actually get a tile and then also when we process it
+    WILL_DBG({
+      using namespace std::chrono;
+      auto incomingTime = high_resolution_clock::now();
+      std::cout << "Worker " << mpi::worker.rank << " DFB::incoming for frame #"
+        << dbgCurrentFrame << " msg " << std::hex << reinterpret_cast<size_t>(_msg)
+        << " at " << std::dec << duration_cast<milliseconds>(incomingTime.time_since_epoch()).count()
+        << "ms" << std::endl;
+    })
 
     async([=]() {
       switch (_msg->command) {
@@ -556,19 +566,18 @@ namespace ospray {
 
   void DFB::closeCurrentFrame()
   {
-    using namespace std::chrono;
 
     DBG(printf("rank %i CLOSES frame\n",mpi::world.rank));
     frameIsActive = false;
     WILL_DBG({
-      static size_t closeFrameCount = 0;
+      using namespace std::chrono;
       // TODO WILL: Is this when the worker has finished its local compositin?
       auto closeTime = high_resolution_clock::now();
       std::cout << "Worker " << mpi::worker.rank << " DFB::closeCurrentFrame for frame #"
-        << closeFrameCount << " at "
+        << dbgCurrentFrame << " at "
         << duration_cast<milliseconds>(closeTime.time_since_epoch()).count()
         << "ms" << std::endl;
-      ++closeFrameCount;
+      ++dbgCurrentFrame;
     })
     frameIsDone   = true;
     // Print the first tile we process again

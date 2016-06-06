@@ -391,6 +391,8 @@ namespace ospray {
         frame */
     bool frameIsDone;
 
+    size_t dbgCurrentFrame = 0;
+
     //! condition that gets triggered when the frame is done
     Condition doneCond;
 
