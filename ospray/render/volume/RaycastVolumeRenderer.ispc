@@ -479,7 +479,7 @@ inline void DDVR_renderSample(RaycastVolumeRenderer *uniform self,
   // hurts performance a lot. DO NOT do the renderSample call 2x b/c of course that will be 2x
   // slower just the box tests.
   // Here is the DOUBLE BOX TEST
-#if 0
+#if 1
   // Do the box tests twice to see if they have a significant performance impact
   for (uniform int blockID=0;blockID<numBlocks;blockID++) {
     float t0 = org_ray_t0;
