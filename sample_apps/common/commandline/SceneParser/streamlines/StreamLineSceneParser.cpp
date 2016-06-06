@@ -235,7 +235,7 @@ struct StockleyWhealCannon {
       bounds.extend(v); // neglects radius
 
       if (parent == -1) // root soma, just one sphere
-        spheres[0].push_back((Sphere){v, radius});
+        spheres[0].push_back(Sphere{v, radius});
       else { // cylinder with sphere at end
         int idx;
         switch (type) {
@@ -243,8 +243,8 @@ struct StockleyWhealCannon {
           case 4: idx = 2; break; // apical dendrite
           default: idx = 0; break; // soma / axon
         }
-        spheres[idx].push_back((Sphere){v, radius});
-        cylinders[idx].push_back((Cylinder){filePoints[parent-1], v, radius});
+        spheres[idx].push_back(Sphere{v, radius});
+        cylinders[idx].push_back(Cylinder{filePoints[parent-1], v, radius});
       }
     }
     fclose(file);

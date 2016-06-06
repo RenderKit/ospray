@@ -201,7 +201,7 @@ void ParticleSceneParser::createSpheres()
 {
   struct Sphere {
     vec3f center;
-    uint  colorID;
+    int   colorID;
   };
 
   std::vector<Sphere> spheres;
@@ -216,7 +216,7 @@ void ParticleSceneParser::createSpheres()
   std::default_random_engine rng;
   std::uniform_real_distribution<float> vdist(-1000.0f, 1000.0f);
   std::uniform_real_distribution<float> cdist(0.0f, 1.0f);
-  std::uniform_int_distribution<uint>   ciddist(0, NUM_COLORS-1);
+  std::uniform_int_distribution<int>    ciddist(0, NUM_COLORS-1);
 
   for (int i = 0; i < NUM_SPHERES; i++) {
     spheres[i].center.x = vdist(rng);
@@ -256,7 +256,7 @@ void ParticleSceneParser::createCylinders()
   struct Cylinder {
     vec3f v0;
     vec3f v1;
-    uint  colorID;
+    int   colorID;
   };
 
   std::vector<Cylinder> cylinders;
@@ -271,7 +271,7 @@ void ParticleSceneParser::createCylinders()
   std::default_random_engine rng;
   std::uniform_real_distribution<float> vdist(-1000.0f, 1000.0f);
   std::uniform_real_distribution<float> cdist(0.0f, 1.0f);
-  std::uniform_int_distribution<uint>   ciddist(0, NUM_COLORS-1);
+  std::uniform_int_distribution<int>    ciddist(0, NUM_COLORS-1);
 
   for (int i = 0; i < NUM_CYLINDERS; i++) {
     cylinders[i].v0.x = vdist(rng);

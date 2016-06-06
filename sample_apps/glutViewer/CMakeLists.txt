@@ -64,6 +64,10 @@ target_link_libraries(${APP_NAME}
   ${Readline_LIB}
 )
 
+if(NOT WIN32)
+  target_link_libraries(${APP_NAME} ospray_importer)
+endif()
+
 if(OSPRAY_APPS_ENABLE_SCRIPTING)
   target_link_libraries(${APP_NAME} ospray_script)
 endif()

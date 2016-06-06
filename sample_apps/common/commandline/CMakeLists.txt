@@ -81,8 +81,6 @@ set(SOURCE_FILES
 
   SceneParser/trianglemesh/TriangleMeshSceneParser.cpp
 
-  SceneParser/volume/VolumeSceneParser.cpp
-
   Utility.h
 )
 
@@ -97,14 +95,24 @@ if(OSPRAY_COMMANDLINE_TACHYON_SUPPORT)
   )
 endif()
 
+if(NOT WIN32)
+  set(SOURCE_FILES
+    ${SOURCE_FILES}
+    SceneParser/volume/VolumeSceneParser.cpp
+  )
+endif()
+
 add_library(${LIBRARY_NAME} SHARED ${SOURCE_FILES})
 
 target_link_libraries(${LIBRARY_NAME}
   ospray_common
-  ospray_importer
   ospray_minisg
   ospray_xml
 )
+
+if(NOT WIN32)
+  target_link_libraries(${LIBRARY_NAME} ospray_importer)
+endif()
 
 ospray_set_library_version(${LIBRARY_NAME})
 

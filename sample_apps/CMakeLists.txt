@@ -26,7 +26,9 @@ IF(NOT THIS_IS_MIC)
 
   # common utilities
   ADD_SUBDIRECTORY(common/commandline)
-  ADD_SUBDIRECTORY(common/importer)
+  IF(NOT WIN32)
+    ADD_SUBDIRECTORY(common/importer)
+  ENDIF()
   ADD_SUBDIRECTORY(common/miniSG)
   ADD_SUBDIRECTORY(common/xml)
 

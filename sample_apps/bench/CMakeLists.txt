@@ -34,9 +34,12 @@ target_link_libraries(${APP_NAME}
   ospray
   ospray_commandline
   ospray_common
-  ospray_importer
   ospray_minisg
 )
+
+if(NOT WIN32)
+  target_link_libraries(${APP_NAME} ospray_importer)
+endif()
 
 # ------------------------------------------------------------
 
