@@ -208,6 +208,7 @@ namespace ospray {
       ospcommon::vec3i dims(2048 * scaleFactor.x, 2048 * scaleFactor.y, 1920 * scaleFactor.z);
       volume->dimensions = dims;
       ospSetVec3i(volume->handle, "dimensions", (osp::vec3i&)dims);
+      std::cout << "RM Volume dimensions = {" << dims.x << ", " << dims.y << ", " << dims.z << "}\n";
       ospSetString(volume->handle,"voxelType", "uchar");
 
       int numThreads = ospcommon::getNumberOfLogicalThreads();
