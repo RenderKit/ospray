@@ -164,8 +164,10 @@ namespace ospray {
           tileArray[i] = &bufferedTile[i]->tile;
         }
 
+        // TODO WILL: This is the parallel blending
 #if 1
         const int NUM_BLEND_TASKS = TILE_SIZE * TILE_SIZE / ispc::DFB_getProgramCount();
+        // TODO WILL: Try with serial_for?
         parallel_for(NUM_BLEND_TASKS, [&](int frag) {
           ispc::DFB_sortAndBlendFragment_job((ispc::VaryingTile **)tileArray,
             bufferedTile.size(), frag);

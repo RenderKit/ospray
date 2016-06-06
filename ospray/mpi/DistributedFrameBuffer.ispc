@@ -197,13 +197,6 @@ inline void sortAndBlendFragments(VaryingTile *uniform *uniform tileArray,
                                   uniform int32 numTiles,
                                   uniform int begin_frag, uniform int end_frag)
 {
-#if 0
-  uniform int numTasks = end_frag - begin_frag;
-  print("numTasks = %, begin_frag = %, end_frag = %\n", numTasks, begin_frag, end_frag);
-  // TODO: The task indices are not set properly?
-  launch[numTasks] sortAndBlendFragment_job(tileArray, numTiles, begin_frag);
-#else
-  // TODO WILL: Should this be done in parallel?
   for (uniform int frag=begin_frag;frag<end_frag;frag++) {
     for (uniform int i=1;i<numTiles;i++)
       for (uniform int j=i;j>0;--j) {
@@ -234,7 +227,6 @@ inline void sortAndBlendFragments(VaryingTile *uniform *uniform tileArray,
     tile->b[frag] = acc_col.z;
     tile->a[frag] = acc_alpha;
   }
-#endif
 }
 
 #if 0
