@@ -1,0 +1,185 @@
+#!/bin/bash
+#
+#-----------------------------------------------------------------------------
+# This Lonestar job script is designed to create a vnc session on 
+# nodes through the SLURM batch system. Once the job
+# is scheduled, check the output of your job (which by default is
+# stored in your home directory in a file named vncserver.out)
+# and it will tell you the port number that has been setup for you so
+# that you can attach via a separate VNC client to any Lonestar login 
+# node (e.g., login1.ls5.tacc.utexas.edu).
+#
+# Note that for security, we recommend setting up a tunneled VNC
+# session in order to connect via a client (more information on doing
+# this is available at the User Guide link below).  Once you connect,
+# you should see a single xterm running which you can use to launch
+# any X application (e.g., ParaView or VisIt) 
+#
+# Note: you can fine tune the SLURM submission variables below as
+# needed.  Typical items to change are the runtime limit, location of
+# the job output, and the allocation project to submit against (it is
+# commented out for now, but is required if you have multiple
+# allocations).  
+#
+# To submit the job, issue: "sbatch /share/doc/slurm/job.vnc" 
+#
+# For more information, please consult the User Guide at: 
+#
+# http://www.tacc.utexas.edu/user-services/user-guides/lonestar-user-guide
+#-----------------------------------------------------------------------------
+#
+#SBATCH -A OSPRay
+
+# The script will run the volume run script from the specified work dir
+WORK_DIR=$WORK/ospray/build/rel/
+VOLUME_RUN_SCRIPT=$WORK/ospray/rm_run.sh
+
+#--------------------------------------------------------------------------
+# ---- You normally should not need to edit anything below this point -----
+#--------------------------------------------------------------------------
+
+echo job $JOB_ID execution at: `date`
+
+# LS5 special - make sure xfce is loaded 
+module load xfce
+
+if [ "x`which startxfce4`" == "x" ] ; then
+  echo "TACC: could not find Xfce start script"
+  echo "TACC: VNC session will default to twm"
+fi
+
+# our node name
+NODE_HOSTNAME=`hostname -s`
+echo "running on node $NODE_HOSTNAME"
+
+# VNC server executable
+VNCSERVER_BIN=`which vncserver`
+echo "using default VNC server $VNCSERVER_BIN"
+
+# set memory limits to 95% of total memory to prevent node death
+NODE_MEMORY=`free -k | grep ^Mem: | awk '{ print $2; }'`
+NODE_MEMORY_LIMIT=`echo "0.95 * $NODE_MEMORY / 1" | bc`
+ulimit -v $NODE_MEMORY_LIMIT -m $NODE_MEMORY_LIMIT
+echo "memory limit set to $NODE_MEMORY_LIMIT kilobytes"
+
+# set wayness, used for ibrun
+WAYNESS=`echo $PE | perl -pe 's/([0-9]+)way/\1/;'`
+echo "set wayness to $WAYNESS"
+
+# Check whether a vncpasswd file exists.  If not, complain and exit.
+if [ \! -e $HOME/.vnc/passwd ] ; then
+	echo 
+	echo "=================================================================="
+	echo "   You must run 'vncpasswd' once before launching a vnc session"
+	echo "=================================================================="
+	echo
+	exit 1
+fi
+
+# launch VNC session
+VNC_DISPLAY=`$VNCSERVER_BIN $@ 2>&1 | grep desktop | awk -F: '{print $2}'`
+echo "got VNC display :$VNC_DISPLAY"
+
+# make sure this is a valid display, and that it is 1 or 2, since those are the only displays forwarded
+
+if [ x$VNC_DISPLAY == "x" ]; then
+    echo 
+    echo "===================================================="
+    echo "   ERROR: No vnc display found"
+    echo "   Error launching vncserver: $VNCSERVER"
+    echo "   Please submit a ticket to the TACC User Portal"
+    echo "   http://portal.tacc.utexas.edu/"
+    echo "===================================================="
+    echo
+    exit 1
+fi
+
+if [ $VNC_DISPLAY -gt 2 ]; then
+    echo 
+    echo "===================================================="
+    echo "   ERROR: vnc display out of bounds ($VNC_DISPLAY)"
+    echo "   Error launching vncserver: $VNCSERVER"
+    echo "   Please submit a ticket to the TACC User Portal"
+    echo "   http://portal.tacc.utexas.edu/"
+    echo "===================================================="
+    echo
+    exit 1
+fi
+
+LOCAL_VNC_PORT=`expr 5900 + $VNC_DISPLAY`
+echo "local (compute node) VNC port is $LOCAL_VNC_PORT"
+
+# Lonestar uses incremental node numbering, just grab the last digits and prepend the vnc display (usually 1)
+LOGIN_VNC_PORT="$VNC_DISPLAY`echo $NODE_HOSTNAME | perl -ne 'print $1 if /nid0(\d\d\d\d)/;'`"
+
+#LOGIN_VNC_PORT="$VNC_DISPLAY`echo $NODE_HOSTNAME | perl -ne 'print 59$2 if /c\d(\d\d)-\d(\d\d)/;'`"
+echo "got login node VNC port $LOGIN_VNC_PORT"
+
+# create reverse tunnel port to login nodes.  Make one tunnel for each login so the user can just
+# connect to loenstar.tacc
+for i in `seq 3`; do
+    ssh -f -g -N -R $LOGIN_VNC_PORT:$NODE_HOSTNAME:$LOCAL_VNC_PORT login$i
+	echo "Reverse port forward setup status for login$i is $?"
+done
+echo "Created reverse ports on Lonestar logins"
+
+echo "Your VNC server is now running!"
+echo "To connect via VNC client:  SSH tunnel port $LOGIN_VNC_PORT to ls5.tacc.utexas.edu:$LOGIN_VNC_PORT"
+echo "                            Then connect to localhost::$LOGIN_VNC_PORT"
+#echo
+#echo "OR:                         Connect directly to login1.longhorn.tacc.utexas.edu::$LOGIN_VNC_PORT"
+#echo
+
+# set display for X applications
+export DISPLAY=":$VNC_DISPLAY"
+
+
+# Warn the user when their session is about to close
+# see if the user set their own runtime
+#TACC_RUNTIME=`qstat -j $JOB_ID | grep h_rt | perl -ne 'print $1 if /h_rt=(\d+)/'`  # qstat returns seconds
+TACC_RUNTIME=`squeue -l -j $SLURM_JOB_ID | grep $SLURM_QUEUE | awk '{print $7}'` # squeue returns HH:MM:SS
+if [ x"$TACC_RUNTIME" == "x" ]; then
+	TACC_Q_RUNTIME=`sinfo -p $SLURM_QUEUE | grep -m 1 $SLURM_QUEUE | awk '{print $3}'`
+	if [ x"$TACC_Q_RUNTIME" != "x" ]; then
+		# pnav: this assumes format hh:dd:ss, will convert to seconds below
+		#       if days are specified, this won't work
+		TACC_RUNTIME=$TACC_Q_RUNTIME
+	fi
+fi
+
+if [ x"$TACC_RUNTIME" != "x" ]; then
+	# there's a runtime limit, so warn the user when the session will die
+	# give 5 minute warning for runtimes > 5 minutes
+        H=$((`echo $TACC_RUNTIME | awk -F: '{print $1}'` * 3600))		
+        M=$((`echo $TACC_RUNTIME | awk -F: '{print $2}'` * 60))		
+        S=`echo $TACC_RUNTIME | awk -F: '{print $3}'`
+        TACC_RUNTIME_SEC=$(($H + $M))
+        
+	if [ $TACC_RUNTIME_SEC -gt 300 ]; then
+        	TACC_RUNTIME_SEC=`expr $TACC_RUNTIME_SEC - 300`
+        	sleep $TACC_RUNTIME_SEC && echo "$USER's VNC session on $VNC_DISPLAY will end in 5 minutes.  Please save your work now." | wall &
+        fi
+fi
+
+# we need vglclient to run to have graphics across multi-node jobs
+vglclient >& /dev/null &
+VGL_PID=$!
+echo "VNC display $DISPLAY"
+
+# WILL: Instead of running xterm we can run a script that will benchmark the ospVolumeViewer.
+# This way we don't need to worry about it requiring X11
+cd $WORK_DIR
+bash $VOLUME_RUN_SCRIPT
+
+# job is done!
+
+echo "Killing VGL client"
+kill $VGL_PID
+
+echo "Killing VNC server" 
+vncserver -kill $DISPLAY
+
+# wait a brief moment so vncserver can clean up after itself
+sleep 1
+
+echo job $SLURM_JOB_ID execution finished at: `date`
