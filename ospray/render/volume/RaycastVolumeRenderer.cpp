@@ -346,10 +346,11 @@ namespace ospray {
 
     auto frameEnd = high_resolution_clock::now();
     auto elapsed = duration_cast<milliseconds>(frameEnd - frameStart);
+    auto tileElapsed = duration_cast<milliseconds>(tileEnd - tileStart);
     // Skip the first 10 frames to warm up
     if (totalFrames > 10) {
       avgFrameTime = (elapsed + frameCount * avgFrameTime) / (frameCount + 1);
-      avgTileTime = (elapsed + frameCount * avgTileTime) / (frameCount + 1);
+      avgTileTime = (tileElapsed + frameCount * avgTileTime) / (frameCount + 1);
       ++frameCount;
     }
     ++totalFrames;
