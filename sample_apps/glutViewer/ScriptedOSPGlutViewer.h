@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "OSPGlutViewer.h"
+#include "common/widgets/OSPGlutViewer.h"
 #include "GlutViewerScriptHandler.h"
 
 namespace ospray {

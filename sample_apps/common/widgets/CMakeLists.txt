@@ -16,7 +16,7 @@
 
 set(LIBRARY_NAME ospray_glut3d)
 
-add_library(${LIBRARY_NAME} SHARED glut3D.cpp)
+add_library(${LIBRARY_NAME} SHARED glut3D.cpp OSPGlutViewer.cpp)
 
 target_link_libraries(${LIBRARY_NAME}
   ospray

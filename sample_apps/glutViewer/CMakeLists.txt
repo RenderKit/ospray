@@ -37,8 +37,6 @@ include_directories(
 # --------------------------------------------
 
 set(APP_SRCS
-  OSPGlutViewer.cpp
-  OSPGlutViewer.h
   glutViewer.cpp
 )
 
