@@ -16,12 +16,14 @@
 
 set(LIBRARY_NAME ospray_xml)
 
-add_library(${LIBRARY_NAME}
+add_definitions(-Dospray_xml_EXPORTS)
+
+add_library(${LIBRARY_NAME} SHARED
   XML.cpp
 )
 
 target_link_libraries(${LIBRARY_NAME}
-  ${OSPRAY_LIBRARIES}
+  ospray_common
 )
 
 ospray_set_library_version(${LIBRARY_NAME})

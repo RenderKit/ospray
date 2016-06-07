@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <common/commandline/CommandLineExport.h>
 #include <common/commandline/CommandLineParser.h>
 #include <ospray_cpp/Renderer.h>
 
@@ -27,7 +28,7 @@ public:
   virtual ospray::cpp::Renderer renderer() = 0;
 };
 
-class DefaultRendererParser : public RendererParser
+class OSPRAY_COMMANDLINE_INTERFACE DefaultRendererParser : public RendererParser
 {
 public:
   DefaultRendererParser() = default;

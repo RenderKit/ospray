@@ -16,14 +16,12 @@
 
 #pragma once
 
+#include <common/commandline/CommandLineExport.h>
 #include <common/commandline/SceneParser/SceneParser.h>
 #include <ospray_cpp/Renderer.h>
 #include <common/miniSG/miniSG.h>
 
-#include <string>
-
-
-class TriangleMeshSceneParser : public SceneParser
+class OSPRAY_COMMANDLINE_INTERFACE TriangleMeshSceneParser : public SceneParser
 {
 public:
   TriangleMeshSceneParser(ospray::cpp::Renderer);

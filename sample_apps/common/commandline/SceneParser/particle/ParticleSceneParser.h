@@ -16,10 +16,11 @@
 
 #pragma once
 
+#include <common/commandline/CommandLineExport.h>
 #include <common/commandline/SceneParser/SceneParser.h>
 #include <ospray_cpp/Renderer.h>
 
-class ParticleSceneParser : public SceneParser
+class OSPRAY_COMMANDLINE_INTERFACE ParticleSceneParser : public SceneParser
 {
 public:
   ParticleSceneParser(ospray::cpp::Renderer);

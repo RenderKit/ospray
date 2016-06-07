@@ -16,10 +16,11 @@
 
 #pragma once
 
+#include <common/commandline/CommandLineExport.h>
 #include <common/commandline/SceneParser/SceneParser.h>
 #include <ospray_cpp/Renderer.h>
 
-class MultiSceneParser : public SceneParser
+class OSPRAY_COMMANDLINE_INTERFACE MultiSceneParser : public SceneParser
 {
 public:
   MultiSceneParser(ospray::cpp::Renderer);

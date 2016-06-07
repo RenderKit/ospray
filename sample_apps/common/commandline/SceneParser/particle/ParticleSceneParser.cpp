@@ -52,7 +52,7 @@ particle::Model *createTestCube(int numPerSide)
 OSPData makeMaterials(OSPRenderer renderer, particle::Model *model)
 {
   int numMaterials = model->atomType.size();
-  OSPMaterial matArray[numMaterials];
+  std::vector<OSPMaterial> matArray(numMaterials);
   for (int i = 0; i < numMaterials; i++) {
     OSPMaterial mat = ospNewMaterial(renderer,"OBJMaterial");
     assert(mat);
@@ -60,7 +60,7 @@ OSPData makeMaterials(OSPRenderer renderer, particle::Model *model)
     ospCommit(mat);
     matArray[i] = mat;
   }
-  OSPData data = ospNewData(numMaterials,OSP_OBJECT,matArray);
+  OSPData data = ospNewData(numMaterials,OSP_OBJECT,matArray.data());
   ospCommit(data);
   return data;
 }

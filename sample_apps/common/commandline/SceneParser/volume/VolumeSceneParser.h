@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <common/commandline/CommandLineExport.h>
 #include <common/commandline/SceneParser/SceneParser.h>
 #include <ospray_cpp/Renderer.h>
 #include <ospray_cpp/TransferFunction.h>
@@ -25,7 +26,7 @@
 #include <string>
 #include <vector>
 
-class VolumeSceneParser : public SceneParser
+class OSPRAY_COMMANDLINE_INTERFACE VolumeSceneParser : public SceneParser
 {
 public:
   VolumeSceneParser(ospray::cpp::Renderer);

@@ -21,6 +21,7 @@
 using namespace ospray;
 using namespace ospcommon;
 
+#include <string>
 #include <iostream>
 using std::cerr;
 using std::endl;

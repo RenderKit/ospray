@@ -16,35 +16,12 @@
 
 #pragma once
 
-#include <common/commandline/CommandLineExport.h>
-#include <common/commandline/CommandLineParser.h>
-#include <ospray_cpp/Camera.h>
-
-#include <string>
-
-class CameraParser : public CommandLineParser
-{
-public:
-  virtual ospray::cpp::Camera camera() = 0;
-};
-
-class OSPRAY_COMMANDLINE_INTERFACE DefaultCameraParser : public CameraParser
-{
-public:
-  DefaultCameraParser() = default;
-  bool parse(int ac, const char **&av) override;
-  ospray::cpp::Camera camera() override;
-
-protected:
-
-  std::string         m_cameraType;
-  ospray::cpp::Camera m_camera;
-
-  ospcommon::vec3f m_eye {-1,  1, -1};
-  ospcommon::vec3f m_up  { 1, -1,  1};
-  ospcommon::vec3f m_gaze{ 0,  1,  0};
-
-private:
-
-  void finalize();
-};
+#ifdef _WIN32
+#  ifdef ospray_commandline_EXPORTS
+#    define OSPRAY_COMMANDLINE_INTERFACE __declspec(dllexport)
+#  else
+#    define OSPRAY_COMMANDLINE_INTERFACE __declspec(dllimport)
+#  endif
+#else
+#  define OSPRAY_COMMANDLINE_INTERFACE
+#endif

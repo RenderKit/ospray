@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <common/commandline/CommandLineExport.h>
 #include <common/commandline/CommandLineParser.h>
 
 #include <ospray_cpp/Renderer.h>
@@ -25,7 +26,7 @@ class LightsParser : public CommandLineParser
 {
 };
 
-class DefaultLightsParser : public LightsParser
+class OSPRAY_COMMANDLINE_INTERFACE DefaultLightsParser : public LightsParser
 {
 public:
   DefaultLightsParser(ospray::cpp::Renderer renderer);
