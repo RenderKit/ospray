@@ -66,6 +66,7 @@ namespace ospray {
     size_t totalFrames = 0;
     size_t frameCount = 0;
     std::chrono::milliseconds avgFrameTime = std::chrono::milliseconds(0);
+    std::chrono::milliseconds avgTileTime = std::chrono::milliseconds(0);
   };
 
   // Inlined function definitions /////////////////////////////////////////////

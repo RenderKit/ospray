@@ -14,6 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <chrono>
+#include <atomic>
+
 // ospray
 #include "ospray/lights/Light.h"
 #include "ospray/common/Data.h"
@@ -175,7 +178,6 @@ namespace ospray {
                                      taskIndex);
     });
 
-
     if (renderForeAndBackground) {
       // this is a tile owned by me - i'm responsible for writing
       // generaition #0, and telling the fb how many more tiles will
@@ -324,8 +326,13 @@ namespace ospray {
         << duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count()
         << "ms\n";
     })
-    size_t NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
+    const size_t NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
+
+    auto tileStart = high_resolution_clock::now();
+
     parallel_for(NTASKS, renderTask);
+
+    auto tileEnd = high_resolution_clock::now();
 
     WILL_DBG({
       std::cout << "Worker " << mpi::worker.rank << " end render tile for frame #"
@@ -342,6 +349,7 @@ namespace ospray {
     // Skip the first 10 frames to warm up
     if (totalFrames > 10) {
       avgFrameTime = (elapsed + frameCount * avgFrameTime) / (frameCount + 1);
+      avgTileTime = (elapsed + frameCount * avgTileTime) / (frameCount + 1);
       ++frameCount;
     }
     ++totalFrames;
@@ -349,6 +357,8 @@ namespace ospray {
     if (frameCount > 0 && frameCount % 25 == 0) {
       std::cout << "Worker " << mpi::worker.rank << " avg frame time: "
         << avgFrameTime.count() << "ms over " << frameCount << " frames\n";
+      std::cout << "Worker " << mpi::worker.rank << " avg tile time: "
+        << avgTileTime.count() << "ms over " << frameCount << " frames\n";
     }
     std::cout << std::flush;
 
