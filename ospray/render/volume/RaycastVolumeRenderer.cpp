@@ -14,6 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <chrono>
+#include <atomic>
+
 // ospray
 #include "ospray/lights/Light.h"
 #include "ospray/common/Data.h"
@@ -128,8 +131,33 @@ namespace ospray {
   {
   }
 
+  using namespace std::chrono;
+  // WILL: Struct for measuring the DPRenderTask total time spent per thread
+  // this is then accumulated and averaged across threads to find the min/max
+  // and mean times spent rendering tiles in DPRenderTask::operator()
+  struct TileRenderTiming {
+    // Accumulated total tile render time
+    milliseconds tileRenderTime;
+    // Total tiles rendered by
+    size_t tilesRendered;
+
+    TileRenderTiming() : tileRenderTime(0), tilesRendered(0){}
+  };
+
+  std::atomic<int> nextThreadID(0);
+  // We don't run on any machines with > 48 threads
+  std::vector<TileRenderTiming> tileRenderTimes(48, TileRenderTiming());
+  thread_local int threadID = -1;
+
+  // TODO WILL: Measure time spent in this section JUST rendering the tiles
+  // not accounting for anything else like sending stuff around
   void DPRenderTask::operator()(int taskIndex) const
   {
+    if (threadID == -1){
+      threadID = nextThreadID.fetch_add(1);
+    }
+    auto taskStart = high_resolution_clock::now();
+
     const size_t tileID = taskIndex;
     const size_t tile_y = taskIndex / numTiles_x;
     const size_t tile_x = taskIndex - tile_y*numTiles_x;
@@ -174,7 +202,12 @@ namespace ospray {
                                      renderForeAndBackground,
                                      taskIndex);
     });
+    auto taskEnd = high_resolution_clock::now();
+    tileRenderTimes[threadID].tileRenderTime += duration_cast<milliseconds>(taskEnd - taskStart);
+    tileRenderTimes[threadID].tilesRendered += 1;
 
+    // TODO WILL: Would we want the task end time to be after calling setTile?
+    // What happens when we call setTile?
 
     if (renderForeAndBackground) {
       // this is a tile owned by me - i'm responsible for writing
@@ -292,6 +325,12 @@ namespace ospray {
     // have an instance of this renderer class -
     assert(workerRank >= 0);
 
+    // Clear the old tile render timings
+    tileRenderTimes.clear();
+    // TODO WILL: I don't think TBB should spawn more than this many threads,
+    // even on a machine where it has 48 logical cores & TBB decides to oversubscribe some
+    tileRenderTimes.resize(64);
+
     auto frameStart = high_resolution_clock::now();
 
     Renderer::beginFrame(fb);
@@ -324,7 +363,7 @@ namespace ospray {
         << duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count()
         << "ms\n";
     })
-    size_t NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
+    const size_t NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
     parallel_for(NTASKS, renderTask);
 
     WILL_DBG({
@@ -349,6 +388,27 @@ namespace ospray {
     if (frameCount > 0 && frameCount % 25 == 0) {
       std::cout << "Worker " << mpi::worker.rank << " avg frame time: "
         << avgFrameTime.count() << "ms over " << frameCount << " frames\n";
+      // Now figure out some stats on the per-thread tile render timings
+      milliseconds minTileTime = tileRenderTimes[0].tileRenderTime;
+      milliseconds maxTileTime = tileRenderTimes[0].tileRenderTime;
+      milliseconds totalTileTime(0);
+      size_t numThreadsDidNoTile = 0;
+      for (const auto &t : tileRenderTimes) {
+        if (t.tilesRendered > 0){
+          minTileTime = std::min(minTileTime, t.tileRenderTime);
+          maxTileTime = std::max(maxTileTime, t.tileRenderTime);
+          totalTileTime += t.tileRenderTime;
+        } else {
+          ++numThreadsDidNoTile;
+        }
+      }
+      std::cout << "Worker " << mpi::worker.rank << " min thread time: " << minTileTime.count()
+        << "ms, max thread time: " << maxTileTime.count() << "ms, mean thread time: "
+        << totalTileTime.count() / static_cast<float>(tileRenderTimes.size() - numThreadsDidNoTile)
+        << "ms, mean tile time: "
+        // TODO WILL: I don't think this is quite correct for the tile timings, should probably find
+        // the mean tile time per thread, or track time for each tile for each thread in a vector?
+        << totalTileTime.count() / static_cast<float>(NTASKS) << "ms, num tiles: " << NTASKS << "\n";
     }
     std::cout << std::flush;
 
