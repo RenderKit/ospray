@@ -28,6 +28,16 @@
 #include <tuple>
 #include <type_traits>
 
+inline void parseForLoadingModules(int ac, const char**& av)
+{
+  for (int i = 1; i < ac; i++) {
+    const std::string arg = av[i];
+    if (arg == "--module" || arg == "-m") {
+      ospLoadModule(av[++i]);
+    }
+  }
+}
+
 using ParsedOSPObjects = std::tuple<ospcommon::box3f,
                                     ospray::cpp::Model,
                                     ospray::cpp::Renderer,
@@ -47,6 +57,8 @@ inline ParsedOSPObjects parseCommandLine(int ac, const char **&av)
                 "SceneParser_T is not a subclass of SceneParser.");
   static_assert(std::is_base_of<LightsParser, LightsParser_T>::value,
                 "LightsParser_T is not a subclass of LightsParser.");
+
+  parseForLoadingModules(ac, av);
 
   CameraParser_T cameraParser;
   cameraParser.parse(ac, av);
