@@ -28,12 +28,15 @@
 #include <ospray_cpp/Model.h>
 #include <ospray_cpp/Renderer.h>
 
+#include "common/widgets/Glut3dExport.h"
+
 namespace ospray {
 
 /*! mini scene graph viewer widget. \internal Note that all handling
   of camera is almost exactly similar to the code in volView;
   might make sense to move that into a common class! */
-class OSPGlutViewer : public ospray::glut3D::Glut3DWidget
+class OSPGlutViewer OSPRAY_GLUT3D_INTERFACE
+    : public ospray::glut3D::Glut3DWidget
 {
 public:
 

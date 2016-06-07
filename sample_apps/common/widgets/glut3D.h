@@ -30,16 +30,7 @@
 #include <unistd.h>
 #endif
 
-#ifdef _WIN32
-#  ifdef ospray_glut3d_EXPORTS
-#    define OSPRAY_GLUT3D_INTERFACE __declspec(dllexport)
-#  else
-#    define OSPRAY_GLUT3D_INTERFACE __declspec(dllimport)
-#  endif
-#else
-#  define OSPRAY_GLUT3D_INTERFACE
-#endif
-
+#include "common/widgets/Glut3dExport.h"
 
 namespace ospray {
   //! dedicated namespace for 3D glut viewer widget
