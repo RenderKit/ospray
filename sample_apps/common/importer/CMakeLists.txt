@@ -19,6 +19,7 @@ set(LIBRARY_NAME ospray_importer)
 add_library(${LIBRARY_NAME} SHARED
   importOSP.cpp
   importRAW.cpp
+  importRM.cpp
   Importer.cpp
   TinyXML2.cpp
 )

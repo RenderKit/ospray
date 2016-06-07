@@ -23,6 +23,7 @@ namespace ospray {
   namespace importer {
 
     void importOSP(const FileName &fileName, Group *existingGroupToAddTo);
+    void importRM(const FileName &fileName, Group *existingGroupToAddTo);
 
     Group *import(const std::string &fn, Group *existingGroupToAddTo)
     {
@@ -32,9 +33,12 @@ namespace ospray {
 
       if (fileName.ext() == "osp") {
         importOSP(fn, group);
-      } else 
-        throw std::runtime_error("#ospray:importer: do not know how to import"
-                                 "file of type " + fileName.ext());
+      } else if (fileName.ext() == "bob") {
+        importRM(fn, group);
+      } else {
+        throw std::runtime_error("#ospray:importer: do not know how to import file of type "
+            + fileName.ext());
+      }
 
       return group;
     }

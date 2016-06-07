@@ -28,14 +28,18 @@ namespace ospray {
   namespace importer {
 
     void importVolumeRAW(const FileName &fileName, Volume *volume);
+    void importVolumeRM(const FileName &fileName, Volume *volume);
 
     void importVolume(const FileName &fileName, Volume *volume)
     {
       const std::string ext = fileName.ext();
-      if (ext == "raw" || ext == "gz")
-        importVolumeRAW(fileName,volume);
-      else
+      if (ext == "raw" || ext == "gz") {
+        importVolumeRAW(fileName, volume);
+      } else if (ext == "bob") {
+        importVolumeRM(fileName, volume);
+      } else {
         throw std::runtime_error("unknown volume format '"+ext+"'");
+      }
 
       // post-checks
       assert(volume->handle != nullptr);
