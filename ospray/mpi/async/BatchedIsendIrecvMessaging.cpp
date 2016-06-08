@@ -128,10 +128,10 @@ namespace ospray {
           elapsedTime += duration_cast<milliseconds>(endTime - startTime);
           if (elapsedTime >= measureTime) {
             auto elapsedSec = duration_cast<duration<double, std::ratio<1>>>(elapsedTime);
-            double mbRecvd = bytesRecvd / 1e6;
+            double gbitRecvd = bytesRecvd * 8e-9;
             std::cout << "Worker " << mpi::worker.rank << " bandwidth "
-              << mbRecvd / elapsedSec.count()
-              << " MB/s over " << elapsedSec.count() << "s\n";
+              << gbitRecvd / elapsedSec.count()
+              << " Gbps over " << elapsedSec.count() << "s\n";
             elapsedTime = milliseconds(0);
             bytesRecvd = 0;
           }
