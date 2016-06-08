@@ -19,7 +19,7 @@
 #ifdef OSPRAY_APPS_ENABLE_SCRIPTING
 # include "ScriptedOSPGlutViewer.h"
 #else
-# include "OSPGlutViewer.h"
+# include "common/widgets/OSPGlutViewer.h"
 #endif
 
 std::string scriptFileFromCommandLine(int ac, const char **&av)

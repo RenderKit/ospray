@@ -35,7 +35,7 @@ namespace ospray {
 /*! mini scene graph viewer widget. \internal Note that all handling
   of camera is almost exactly similar to the code in volView;
   might make sense to move that into a common class! */
-class OSPGlutViewer OSPRAY_GLUT3D_INTERFACE
+class OSPRAY_GLUT3D_INTERFACE OSPGlutViewer
     : public ospray::glut3D::Glut3DWidget
 {
 public:
