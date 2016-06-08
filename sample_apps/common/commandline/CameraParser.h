@@ -22,7 +22,7 @@
 
 #include <string>
 
-class CameraParser : public CommandLineParser
+class OSPRAY_COMMANDLINE_INTERFACE CameraParser : public CommandLineParser
 {
 public:
   virtual ospray::cpp::Camera camera() = 0;

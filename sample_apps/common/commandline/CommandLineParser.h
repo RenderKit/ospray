@@ -16,7 +16,9 @@
 
 #pragma once
 
-class CommandLineParser
+#include <common/commandline/CommandLineExport.h>
+
+class OSPRAY_COMMANDLINE_INTERFACE CommandLineParser
 {
 public:
   virtual ~CommandLineParser() = default;

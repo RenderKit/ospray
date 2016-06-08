@@ -16,11 +16,12 @@
 
 #pragma once
 
+#include <common/commandline/CommandLineExport.h>
 #include <common/commandline/CommandLineParser.h>
 #include <ospray_cpp/Model.h>
 #include <common/box.h>
 
-class SceneParser : public CommandLineParser
+class OSPRAY_COMMANDLINE_INTERFACE SceneParser : public CommandLineParser
 {
 public:
   virtual ospray::cpp::Model model() const = 0;

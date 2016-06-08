@@ -22,7 +22,7 @@
 
 #include <string>
 
-class RendererParser : public CommandLineParser
+class OSPRAY_COMMANDLINE_INTERFACE RendererParser : public CommandLineParser
 {
 public:
   virtual ospray::cpp::Renderer renderer() = 0;

@@ -22,7 +22,7 @@
 #include <ospray_cpp/Renderer.h>
 #include <ospray_cpp/Light.h>
 
-class LightsParser : public CommandLineParser
+class OSPRAY_COMMANDLINE_INTERFACE LightsParser : public CommandLineParser
 {
 };
 
