@@ -86,8 +86,10 @@ static OSPTexture2D createTexture2D(ospray::miniSG::Texture2D *msgTex)
 
 // SceneParser definitions ////////////////////////////////////////////////////
 
-TriangleMeshSceneParser::TriangleMeshSceneParser(cpp::Renderer renderer) :
+TriangleMeshSceneParser::TriangleMeshSceneParser(cpp::Renderer renderer,
+                                                 std::string geometryType) :
   m_renderer(renderer),
+  m_geometryType(geometryType),
   m_alpha(false),
   m_createDefaultMaterial(true),
   m_maxObjectsToConsider((uint32_t)-1),
@@ -270,7 +272,7 @@ void TriangleMeshSceneParser::finalize()
 
     // create ospray mesh
     auto ospMesh = m_alpha ? cpp::Geometry("alpha_aware_triangle_mesh") :
-                             cpp::Geometry("triangles");
+                             cpp::Geometry(m_geometryType);
 
     // check if we have to transform the vertices:
     if (doesInstancing == false &&

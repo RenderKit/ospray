@@ -24,7 +24,8 @@
 class OSPRAY_COMMANDLINE_INTERFACE TriangleMeshSceneParser : public SceneParser
 {
 public:
-  TriangleMeshSceneParser(ospray::cpp::Renderer);
+  TriangleMeshSceneParser(ospray::cpp::Renderer renderer,
+                          std::string geometryType = "triangles");
 
   bool parse(int ac, const char **&av) override;
 
@@ -39,6 +40,8 @@ private:
 
   ospray::cpp::Model    m_model;
   ospray::cpp::Renderer m_renderer;
+
+  std::string m_geometryType;
 
   bool m_alpha;
   bool m_createDefaultMaterial;
