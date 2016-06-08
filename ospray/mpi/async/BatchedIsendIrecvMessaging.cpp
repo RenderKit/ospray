@@ -60,6 +60,8 @@ namespace ospray {
       
       void BatchedIsendIrecvImpl::RecvThread::run()
       {
+        using namespace std::chrono;
+
         // note this thread not only _probes_ for new receives, it
         // also immediately starts the receive operation using Irecv()
         Group *g = (Group *)this->group;
@@ -69,16 +71,28 @@ namespace ospray {
         MPI_Status status;
         int numRequests = 0;
         
+        // TODO WILL: Just estimate bandwidth here instead of going through MPI_Finalize
+        const milliseconds measureTime(500);
+        milliseconds elapsedTime(0);
+        size_t bytesRecvd = 0;
+        
         while (1) {
           numRequests = 0;
           // wait for first message
+          // TODO WILL: The probe is a blocking call until we get another message, this
+          // shouldn't be accounted for in our timing
+          // Or do we actually want it included? Since the time we spend waiting and not
+          // sending would reduce our overall avg. bandwidth and should be accounted for
+          auto startTime = high_resolution_clock::now();
           {
             // usleep(280);
             MPI_CALL(Probe(MPI_ANY_SOURCE,g->tag,g->comm,&status));
+
             Action *action = new Action;
             action->addr = Address(g,status.MPI_SOURCE);
             MPI_CALL(Get_count(&status,MPI_BYTE,&action->size));
 
+            bytesRecvd += action->size;
             action->data = malloc(action->size);
             MPI_CALL(Irecv(action->data,action->size,MPI_BYTE,
                            status.MPI_SOURCE,status.MPI_TAG,
@@ -97,6 +111,7 @@ namespace ospray {
             action->addr = Address(g,status.MPI_SOURCE);
             MPI_CALL(Get_count(&status,MPI_BYTE,&action->size));
 
+            bytesRecvd += action->size;
             action->data = malloc(action->size);
             MPI_CALL(Irecv(action->data,action->size,MPI_BYTE,
                            status.MPI_SOURCE,status.MPI_TAG,
@@ -106,6 +121,20 @@ namespace ospray {
 
           // now, have certain number of messages available...
           MPI_CALL(Waitall(numRequests,request,MPI_STATUSES_IGNORE));
+          // TODO WILL: Track the bytes transfered, after a total of 10s have elapsed print
+          // out the bandwidth used (with our without the blocking probe in that timing?)
+          
+          auto endTime = high_resolution_clock::now();
+          elapsedTime += duration_cast<milliseconds>(endTime - startTime);
+          if (elapsedTime >= measureTime) {
+            auto elapsedSec = duration_cast<duration<double, std::ratio<1>>>(elapsedTime);
+            double mbRecvd = bytesRecvd / 1e6;
+            std::cout << "Worker " << mpi::worker.rank << " bandwidth "
+              << mbRecvd / elapsedSec.count()
+              << " MB/s over " << elapsedSec.count() << "s\n";
+            elapsedTime = milliseconds(0);
+            bytesRecvd = 0;
+          }
 
           // OK, all actions are valid now
           g->recvQueue.putSome(&actions[0],numRequests);
