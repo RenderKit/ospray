@@ -21,6 +21,7 @@
 // ospray api
 #include "ospray/ospray.h"
 #include "common/sysinfo.h"
+#include "ospray/common/tasking/parallel_for.h"
 
 // std::
 #include <iostream>
@@ -132,12 +133,12 @@ namespace ospray {
       // Upsample the 256x256 slice of RM data to scaledBlockDims.x * scaledBlockDims.y,
       // it's assumed that out points to a large enough array to hold the upsampled data
       void upsampleSlice(const uint8_t *slice, uint8_t *out){
-        for (int y = 0; y < scaledBlockDims.y; ++y){
-          for (int x = 0; x < scaledBlockDims.x; ++x){
-            const int sliceIdx = static_cast<int>(y / scaleFactor.y) * rmBlockDims.x + static_cast<int>(x / scaleFactor.x);
-            out[y * scaledBlockDims.x + x] = slice[sliceIdx];
-          }
-        }
+        parallel_for(scaledBlockDims.y * scaledBlockDims.x, [&](int taskID){
+          int x = taskID % scaledBlockDims.x;
+          int y = taskID / scaledBlockDims.x;
+          const int sliceIdx = static_cast<int>(y / scaleFactor.y) * rmBlockDims.x + static_cast<int>(x / scaleFactor.x);
+          out[y * scaledBlockDims.x + x] = slice[sliceIdx];
+        });
       }
 
       void run() 
