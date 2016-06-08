@@ -96,6 +96,31 @@ namespace ospray {
   {
     return("ospray::DataDistributedBlockedVolume<" + voxelType + ">");
   }
+
+  static osp::vec3f scaleFactor{1.f, 1.f, 1.f};
+
+  static void upsampleRegion(const uint8_t *source, uint8_t *out, const vec3i &scaledRegion, const vec3i &regionSize){
+    for (size_t z = 0; z < scaledRegion.z; ++z){
+      for (size_t y = 0; y < scaledRegion.y; ++y){
+        for (size_t x = 0; x < scaledRegion.x; ++x){
+          const int idx = static_cast<int>(z / scaleFactor.z) * regionSize.x * regionSize.y
+            + static_cast<int>(y / scaleFactor.y) * regionSize.x + static_cast<int>(x / scaleFactor.x);
+          out[z * scaledRegion.y * scaledRegion.x + y * scaledRegion.x + x] = source[idx];
+        }
+      }
+    }
+    /*
+    for (size_t z = 0; z < scaledRegion.z; ++z){
+      parallel_for(scaledRegion.x * scaledRegion.y, [&](int taskID){
+        int x = taskID % scaledRegion.x;
+        int y = taskID / scaledRegion.x;
+        const int idx = static_cast<int>(z / scaleFactor.z) * regionSize.x * regionSize.y
+            + static_cast<int>(y / scaleFactor.y) * regionSize.x + static_cast<int>(x / scaleFactor.x);
+        out[z * scaledRegion.y * scaledRegion.x + y * scaledRegion.x + x] = source[idx];
+      });
+    }
+    */
+  }
   
   //! Copy voxels into the volume at the given index (non-zero return value
   //! indicates success).
@@ -118,25 +143,58 @@ namespace ospray {
     // data.
     if (ispcEquivalent == NULL) createEquivalentISPC();
 
+    static bool once = true;
+    if (once) {
+      const char *scaleFactorEnv = getenv("OSPRAY_RM_SCALE_FACTOR");
+      if (scaleFactorEnv){
+        std::cout << "#osp.DataDistributedBlockedVolume HACK: found OSPRAY_RM_SCALE_FACTOR env-var" << std::endl;
+        if (sscanf(scaleFactorEnv, "%fx%fx%f", &scaleFactor.x, &scaleFactor.y, &scaleFactor.z) != 3){
+          throw std::runtime_error("Could not parse OSPRAY_RM_SCALE_FACTOR env-var. Must be of format"
+              "<X>x<Y>x<Z> (e.g '1.5x2x0.5')");
+        }
+        std::cout << "#osp.DataDistributedBlockedVolume HACK: got OSPRAY_RM_SCALE_FACTOR env-var = {"
+          << scaleFactor.x << ", " << scaleFactor.y << ", " << scaleFactor.z
+          << "}" << std::endl;
+      }
+      once = false;
+    }
+    vec3i scaledRegionSize;
+    scaledRegionSize.x = scaleFactor.x * regionSize.x;
+    scaledRegionSize.y = scaleFactor.y * regionSize.y;
+    scaledRegionSize.z = scaleFactor.z * regionSize.z;
+
+    vec3i scaledRegionCoords;
+    scaledRegionCoords.x = scaleFactor.x * regionCoords.x;
+    scaledRegionCoords.y = scaleFactor.y * regionCoords.y;
+    scaledRegionCoords.z = scaleFactor.z * regionCoords.z;
+
+    //PRINT(scaledRegionSize);
+    //PRINT(scaledRegionCoords);
+
     for (int i=0;i<numDDBlocks;i++) {
       // that block isn't mine, I shouldn't care ...
       if (!ddBlock[i].isMine) continue;
-      
+
       // first, do some culling to make sure we only do setrgion
       // calls on blocks that actually map to this block
-      if (ddBlock[i].domain.lower.x >= regionCoords.x+regionSize.x) continue;
-      if (ddBlock[i].domain.lower.y >= regionCoords.y+regionSize.y) continue;
-      if (ddBlock[i].domain.lower.z >= regionCoords.z+regionSize.z) continue;
+      if (ddBlock[i].domain.lower.x >= scaledRegionCoords.x+scaledRegionSize.x) continue;
+      if (ddBlock[i].domain.lower.y >= scaledRegionCoords.y+scaledRegionSize.y) continue;
+      if (ddBlock[i].domain.lower.z >= scaledRegionCoords.z+scaledRegionSize.z) continue;
       
-      if (ddBlock[i].domain.upper.x+regionSize.x < regionCoords.x) continue;
-      if (ddBlock[i].domain.upper.y+regionSize.y < regionCoords.y) continue;
-      if (ddBlock[i].domain.upper.z+regionSize.z < regionCoords.z) continue;
+      if (ddBlock[i].domain.upper.x+scaledRegionSize.x < scaledRegionCoords.x) continue;
+      if (ddBlock[i].domain.upper.y+scaledRegionSize.y < scaledRegionCoords.y) continue;
+      if (ddBlock[i].domain.upper.z+scaledRegionSize.z < scaledRegionCoords.z) continue;
+
+      uint8_t *scaledSource = new uint8_t[scaledRegionSize.x * scaledRegionSize.y * scaledRegionSize.z];
+      upsampleRegion(static_cast<const uint8_t*>(source), scaledSource, scaledRegionSize, regionSize);
       
-      ddBlock[i].cppVolume->setRegion(source,
-                                      regionCoords-ddBlock[i].domain.lower,
-                                      regionSize);
+      ddBlock[i].cppVolume->setRegion(scaledSource,
+                                      scaledRegionCoords-ddBlock[i].domain.lower,
+                                      scaledRegionSize);
 
       ddBlock[i].ispcVolume = ddBlock[i].cppVolume->getIE();
+
+      delete[] scaledSource;
 
 #ifndef OSPRAY_VOLUME_VOXELRANGE_IN_APP
       ManagedObject::Param *param = ddBlock[i].cppVolume->findParam("voxelRange");

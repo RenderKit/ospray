@@ -165,17 +165,18 @@ namespace ospray {
           ospcommon::vec2f blockRange(block->voxel[0]);
           extendVoxelRange(blockRange,&block->voxel[0],256*256*128);
           // Apply scaling to each slice of the data
-          uint8_t *scaledSlice = new uint8_t[scaledBlockDims.x * scaledBlockDims.y];
-          ospcommon::vec3i region_sz(scaledBlockDims.x, scaledBlockDims.y, 1);
-          for (int z = 0; z < scaledBlockDims.z; ++z){
-            const int zOrig = static_cast<int>(z / scaleFactor.z);
-            ospcommon::vec3i region_lo(I * scaledBlockDims.x, J * scaledBlockDims.y, K * scaledBlockDims.z + z);
-            upsampleSlice(&block->voxel[zOrig * rmBlockDims.x * rmBlockDims.y], scaledSlice);
+          uint8_t *scaledSlice = new uint8_t[scaledBlockDims.x * scaledBlockDims.y * scaledBlockDims.z];
+          ospcommon::vec3i region_sz(scaledBlockDims.x, scaledBlockDims.y, scaledBlockDims.z);
+          //for (int z = 0; z < scaledBlockDims.z; ++z){
+            //const int zOrig = static_cast<int>(z / scaleFactor.z);
+            //ospcommon::vec3i region_lo(I * scaledBlockDims.x, J * scaledBlockDims.y, K * scaledBlockDims.z + z);
+            //upsampleSlice(&block->voxel[zOrig * rmBlockDims.x * rmBlockDims.y], scaledSlice);
+            ospcommon::vec3i region_lo(I * scaledBlockDims.x, J * scaledBlockDims.y, K * scaledBlockDims.z);
             {
               std::lock_guard<std::mutex> lock(mutex);
               ospSetRegion(volume->handle, scaledSlice, (osp::vec3i&)region_lo, (osp::vec3i&)region_sz);
             }
-          }
+          //}
           {
             std::lock_guard<std::mutex> lock(mutex);
             volume->voxelRange.x = std::min(volume->voxelRange.x, blockRange.x);
@@ -195,6 +196,7 @@ namespace ospray {
     void importVolumeRM(const FileName &fileName, Volume *volume) {
       const char *scaleFactorEnv = getenv("OSPRAY_RM_SCALE_FACTOR");
       osp::vec3f scaleFactor{1.f, 1.f, 1.f};
+      /*
       if (scaleFactorEnv){
         std::cout << "#osp.loader: found OSPRAY_RM_SCALE_FACTOR env-var" << std::endl;
         if (sscanf(scaleFactorEnv, "%fx%fx%f", &scaleFactor.x, &scaleFactor.y, &scaleFactor.z) != 3){
@@ -205,6 +207,7 @@ namespace ospray {
           << scaleFactor.x << ", " << scaleFactor.y << ", " << scaleFactor.z
           << "}" << std::endl;
       }
+      */
       // Update the provided dimensions of the volume for the subvolume specified.
       ospcommon::vec3i dims(2048 * scaleFactor.x, 2048 * scaleFactor.y, 1920 * scaleFactor.z);
       volume->dimensions = dims;
