@@ -169,10 +169,10 @@ ENDIF()
 ##############################################################
 
 SET(OSPRAY_TARGET "intel64")
-ADD_SUBDIRECTORY(sample_apps builddir/sample_apps/intel64)
+ADD_SUBDIRECTORY(apps builddir/apps/intel64)
 IF (OSPRAY_MIC)
   SET(OSPRAY_TARGET "mic")
-  ADD_SUBDIRECTORY(sample_apps builddir/sample_apps/mic)
+  ADD_SUBDIRECTORY(apps builddir/apps/mic)
 ENDIF()
 
 # create a configure file that both ospray and ispc can read the cmake config from
