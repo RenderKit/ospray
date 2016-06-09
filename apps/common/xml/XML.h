@@ -63,31 +63,21 @@ namespace ospray {
       virtual ~Node();
 
       inline bool hasProp(const std::string &name) const {
-        for (int i=0;i<prop.size();i++) 
+        for (size_t i = 0; i < prop.size(); i++)
           if (prop[i]->name == name) return true;
         return false;
       }
       inline std::string getProp(const std::string &name) const {
-        for (int i=0;i<prop.size();i++) 
+        for (size_t i = 0; i < prop.size(); i++)
           if (prop[i]->name == name) return prop[i]->value; 
         return "";
       }
 
       /*! find properly with given name, and return as long ('l')
         int. return undefined if prop does not exist */
-      inline size_t getPropl(const std::string &name, const size_t defaultValue = 0) const
-      { 
-        const std::string prop = getProp(name);
-        if (prop == "") return defaultValue; else return atol(getProp(name).c_str()); 
-      }
-      /*! find properly with given name, and return as long ('l')
-        int. return undefined if prop does not exist */
-      inline float getPropf(const std::string &name, const float defaultValue = 0.f) const
-      { 
-        const std::string prop = getProp(name);
-        if (prop == "") return defaultValue; else return atof(getProp(name).c_str()); 
-      }
-
+      inline size_t getPropl(const std::string &name) const
+      { return atol(getProp(name).c_str()); }
+      
       /*! name of the xml node (i.e., the thing that's in
           "<name>....</name>") */
       std::string name;

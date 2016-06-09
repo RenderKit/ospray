@@ -31,7 +31,7 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 // xml
-#include "apps/common/xml/XML.h"
+#include "common/xml/XML.h"
 
 namespace ospray {
   namespace sg {
