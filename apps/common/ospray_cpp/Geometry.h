@@ -47,12 +47,12 @@ inline Geometry::Geometry(const std::string &type)
 }
 
 inline Geometry::Geometry(const Geometry &copy) :
-  ManagedObject_T(copy.handle())
+  ManagedObject_T<OSPGeometry>(copy.handle())
 {
 }
 
 inline Geometry::Geometry(OSPGeometry existing) :
-  ManagedObject_T(existing)
+  ManagedObject_T<OSPGeometry>(existing)
 {
 }
 

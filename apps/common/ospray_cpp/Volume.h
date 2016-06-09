@@ -43,12 +43,12 @@ inline Volume::Volume(const std::string &type)
 }
 
 inline Volume::Volume(const Volume &copy) :
-  ManagedObject_T(copy.handle())
+  ManagedObject_T<OSPVolume>(copy.handle())
 {
 }
 
 inline Volume::Volume(OSPVolume existing) :
-  ManagedObject_T(existing)
+  ManagedObject_T<OSPVolume>(existing)
 {
 }
 

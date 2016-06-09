@@ -54,12 +54,12 @@ inline Model::Model()
 }
 
 inline Model::Model(const Model &copy) :
-  ManagedObject_T(copy.handle())
+  ManagedObject_T<OSPModel>(copy.handle())
 {
 }
 
 inline Model::Model(OSPModel existing) :
-  ManagedObject_T(existing)
+  ManagedObject_T<OSPModel>(existing)
 {
 }
 

@@ -64,19 +64,19 @@ inline FrameBuffer::FrameBuffer(const osp::vec2i &size,
 }
 
 inline FrameBuffer::FrameBuffer(const FrameBuffer &copy) :
-  ManagedObject_T(copy.handle()),
+  ManagedObject_T<OSPFrameBuffer>(copy.handle()),
   m_owner(false)
 {
 }
 
 inline FrameBuffer::FrameBuffer(FrameBuffer &&move) :
-  ManagedObject_T(move.handle())
+  ManagedObject_T<OSPFrameBuffer>(move.handle())
 {
   move.m_object = nullptr;
 }
 
 inline FrameBuffer::FrameBuffer(OSPFrameBuffer existing) :
-  ManagedObject_T(existing)
+  ManagedObject_T<OSPFrameBuffer>(existing)
 {
 }
 

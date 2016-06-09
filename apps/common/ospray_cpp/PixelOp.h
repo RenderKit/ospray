@@ -43,12 +43,12 @@ inline PixelOp::PixelOp(const std::string &type)
 }
 
 inline PixelOp::PixelOp(const PixelOp &copy) :
-  ManagedObject_T(copy.handle())
+  ManagedObject_T<OSPPixelOp>(copy.handle())
 {
 }
 
 inline PixelOp::PixelOp(OSPPixelOp existing) :
-  ManagedObject_T(existing)
+  ManagedObject_T<OSPPixelOp>(existing)
 {
 }
 

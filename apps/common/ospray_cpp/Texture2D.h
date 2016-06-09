@@ -32,12 +32,12 @@ public:
 // Inlined function definitions ///////////////////////////////////////////////
 
 inline Texture2D::Texture2D(const Texture2D &copy) :
-  ManagedObject_T(copy.handle())
+  ManagedObject_T<OSPTexture2D>(copy.handle())
 {
 }
 
 inline Texture2D::Texture2D(OSPTexture2D existing) :
-  ManagedObject_T(existing)
+  ManagedObject_T<OSPTexture2D>(existing)
 {
 }
 

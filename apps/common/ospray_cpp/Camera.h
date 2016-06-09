@@ -43,12 +43,12 @@ inline Camera::Camera(const std::string &type)
 }
 
 inline Camera::Camera(const Camera &copy) :
-  ManagedObject_T(copy.handle())
+  ManagedObject_T<OSPCamera>(copy.handle())
 {
 }
 
 inline Camera::Camera(OSPCamera existing) :
-  ManagedObject_T(existing)
+  ManagedObject_T<OSPCamera>(existing)
 {
 }
 

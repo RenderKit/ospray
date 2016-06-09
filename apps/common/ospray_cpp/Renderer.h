@@ -51,12 +51,12 @@ inline Renderer::Renderer(const std::string &type)
 }
 
 inline Renderer::Renderer(const Renderer &copy) :
-  ManagedObject_T(copy.handle())
+  ManagedObject_T<OSPRenderer>(copy.handle())
 {
 }
 
 inline Renderer::Renderer(OSPRenderer existing) :
-  ManagedObject_T(existing)
+  ManagedObject_T<OSPRenderer>(existing)
 {
 }
 

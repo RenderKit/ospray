@@ -43,12 +43,12 @@ inline TransferFunction::TransferFunction(const std::string &type)
 }
 
 inline TransferFunction::TransferFunction(const TransferFunction &copy) :
-  ManagedObject_T(copy.handle())
+  ManagedObject_T<OSPTransferFunction>(copy.handle())
 {
 }
 
 inline TransferFunction::TransferFunction(OSPTransferFunction existing) :
-  ManagedObject_T(existing)
+  ManagedObject_T<OSPTransferFunction>(existing)
 {
 }
 

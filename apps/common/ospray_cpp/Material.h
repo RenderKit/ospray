@@ -33,12 +33,12 @@ public:
 // Inlined function definitions ///////////////////////////////////////////////
 
 inline Material::Material(const Material &copy) :
-  ManagedObject_T(copy.handle())
+  ManagedObject_T<OSPMaterial>(copy.handle())
 {
 }
 
 inline Material::Material(OSPMaterial existing) :
-  ManagedObject_T(existing)
+  ManagedObject_T<OSPMaterial>(existing)
 {
 }
 

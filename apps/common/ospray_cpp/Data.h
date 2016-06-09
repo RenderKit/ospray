@@ -40,12 +40,12 @@ inline Data::Data(size_t numItems, OSPDataType format,
 }
 
 inline Data::Data(const Data &copy) :
-  ManagedObject_T(copy.handle())
+  ManagedObject_T<OSPData>(copy.handle())
 {
 }
 
 inline Data::Data(OSPData existing) :
-  ManagedObject_T(existing)
+  ManagedObject_T<OSPData>(existing)
 {
 }
 
