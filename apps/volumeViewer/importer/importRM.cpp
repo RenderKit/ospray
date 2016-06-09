@@ -174,7 +174,7 @@ namespace ospray {
             ospcommon::vec3i region_lo(I * scaledBlockDims.x, J * scaledBlockDims.y, K * scaledBlockDims.z);
             {
               std::lock_guard<std::mutex> lock(mutex);
-              ospSetRegion(volume->handle, scaledSlice, (osp::vec3i&)region_lo, (osp::vec3i&)region_sz);
+              ospSetRegion(volume->handle, block->voxel, (osp::vec3i&)region_lo, (osp::vec3i&)region_sz);
             }
           //}
           {
@@ -196,7 +196,6 @@ namespace ospray {
     void importVolumeRM(const FileName &fileName, Volume *volume) {
       const char *scaleFactorEnv = getenv("OSPRAY_RM_SCALE_FACTOR");
       osp::vec3f scaleFactor{1.f, 1.f, 1.f};
-      /*
       if (scaleFactorEnv){
         std::cout << "#osp.loader: found OSPRAY_RM_SCALE_FACTOR env-var" << std::endl;
         if (sscanf(scaleFactorEnv, "%fx%fx%f", &scaleFactor.x, &scaleFactor.y, &scaleFactor.z) != 3){
@@ -207,9 +206,9 @@ namespace ospray {
           << scaleFactor.x << ", " << scaleFactor.y << ", " << scaleFactor.z
           << "}" << std::endl;
       }
-      */
       // Update the provided dimensions of the volume for the subvolume specified.
       ospcommon::vec3i dims(2048 * scaleFactor.x, 2048 * scaleFactor.y, 1920 * scaleFactor.z);
+      scaleFactor = osp::vec3f{1.f, 1.f, 1.f};
       volume->dimensions = dims;
       ospSetVec3i(volume->handle, "dimensions", (osp::vec3i&)dims);
       ospSetString(volume->handle,"voxelType", "uchar");

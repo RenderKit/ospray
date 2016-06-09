@@ -101,16 +101,6 @@ namespace ospray {
 
   static void upsampleRegion(const uint8_t *source, uint8_t *out, const vec3i &scaledRegion, const vec3i &regionSize){
     for (size_t z = 0; z < scaledRegion.z; ++z){
-      for (size_t y = 0; y < scaledRegion.y; ++y){
-        for (size_t x = 0; x < scaledRegion.x; ++x){
-          const int idx = static_cast<int>(z / scaleFactor.z) * regionSize.x * regionSize.y
-            + static_cast<int>(y / scaleFactor.y) * regionSize.x + static_cast<int>(x / scaleFactor.x);
-          out[z * scaledRegion.y * scaledRegion.x + y * scaledRegion.x + x] = source[idx];
-        }
-      }
-    }
-    /*
-    for (size_t z = 0; z < scaledRegion.z; ++z){
       parallel_for(scaledRegion.x * scaledRegion.y, [&](int taskID){
         int x = taskID % scaledRegion.x;
         int y = taskID / scaledRegion.x;
@@ -119,7 +109,6 @@ namespace ospray {
         out[z * scaledRegion.y * scaledRegion.x + y * scaledRegion.x + x] = source[idx];
       });
     }
-    */
   }
   
   //! Copy voxels into the volume at the given index (non-zero return value
@@ -145,6 +134,7 @@ namespace ospray {
 
     static bool once = true;
     if (once) {
+      // TODO WILL: Change this to be a simple param instead of an environment variable
       const char *scaleFactorEnv = getenv("OSPRAY_RM_SCALE_FACTOR");
       if (scaleFactorEnv){
         std::cout << "#osp.DataDistributedBlockedVolume HACK: found OSPRAY_RM_SCALE_FACTOR env-var" << std::endl;
