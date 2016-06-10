@@ -43,6 +43,9 @@ namespace ospray {
         const milliseconds measureTime(500);
         milliseconds elapsedTime(0);
         size_t bytesSent = 0;
+        size_t minBytesSent(-1), maxBytesSent = 0, avgBytesSent = 0;
+        size_t numMsgSent = 0;
+        size_t numAsyncSends = 0;
         
         Group  *g = this->group;
         Action *actions[SEND_WINDOW_SIZE];
@@ -55,10 +58,17 @@ namespace ospray {
 
           for (int i=0;i<numActions;i++) {
             Action *action = actions[i];
+
             bytesSent += action->size;
+            minBytesSent = std::min(minBytesSent, size_t(action->size));
+            maxBytesSent = std::max(maxBytesSent, size_t(action->size));
+            avgBytesSent = (action->size + avgBytesSent * numMsgSent) / (numMsgSent + 1);
+            ++numMsgSent;
+
             MPI_CALL(Isend(action->data,action->size,MPI_BYTE,
                            action->addr.rank,g->tag,g->comm,&request[i]));
           }
+          ++numAsyncSends;
           
           MPI_CALL(Waitall(numActions,request,MPI_STATUSES_IGNORE));
 
@@ -70,8 +80,21 @@ namespace ospray {
             std::cout << "Worker " << mpi::worker.rank << " send bandwidth "
               << gbitSent / elapsedSec.count()
               << " Gbps over " << elapsedSec.count() << "s\n";
+
+            std::cout << "Worker " << mpi::worker.rank << " min msg: " << minBytesSent
+              << " max msg: " << maxBytesSent << " avg msg: " << avgBytesSent
+              << " over " << numMsgSent << " msgs\n";
+
+            std::cout << "Worker " << mpi::worker.rank << " avg async msgs "
+              << static_cast<double>(numMsgSent) / numAsyncSends << "\n";
+
             elapsedTime = milliseconds(0);
             bytesSent = 0;
+            minBytesSent = size_t(-1);
+            maxBytesSent = 0;
+            avgBytesSent = 0;
+            numMsgSent = 0;
+            numAsyncSends = 0;
           }
           
           for (int i=0;i<numActions;i++) {

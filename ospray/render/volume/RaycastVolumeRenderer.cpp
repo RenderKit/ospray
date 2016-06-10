@@ -226,6 +226,8 @@ namespace ospray {
     // _across_all_clients_, but we only have to send ours (assuming
     // that all clients together send exactly as many as the owner
     // told the DFB to expect)
+    //
+    // TODO WILL: What is this??
     for (int blockID = 0; blockID < numBlocks; blockID++) {
       Tile *tile = blockTileCache.blockTile[blockID];
       if (tile == nullptr)
