@@ -374,6 +374,7 @@ namespace ospray {
         << avgTileTime.count() << "ms over " << frameCount << " frames\n";
       std::cout << "Worker " << mpi::worker.rank << " data projected on to "
         << totalTilesProjectedOnto.load() << "/" << NTASKS << " tiles\n";
+
     }
     std::cout << std::flush;
 
