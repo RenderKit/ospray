@@ -130,17 +130,6 @@ namespace ospray {
           fclose(file);
       }
 
-      // Upsample the 256x256 slice of RM data to scaledBlockDims.x * scaledBlockDims.y,
-      // it's assumed that out points to a large enough array to hold the upsampled data
-      void upsampleSlice(const uint8_t *slice, uint8_t *out){
-        parallel_for(scaledBlockDims.y * scaledBlockDims.x, [&](int taskID){
-          int x = taskID % scaledBlockDims.x;
-          int y = taskID / scaledBlockDims.x;
-          const int sliceIdx = static_cast<int>(y / scaleFactor.y) * rmBlockDims.x + static_cast<int>(x / scaleFactor.x);
-          out[y * scaledBlockDims.x + x] = slice[sliceIdx];
-        });
-      }
-
       void run() 
       {
         int threadID = nextPinID.fetch_add(1);
@@ -167,18 +156,10 @@ namespace ospray {
           // Apply scaling to each slice of the data
           uint8_t *scaledSlice = new uint8_t[scaledBlockDims.x * scaledBlockDims.y * scaledBlockDims.z];
           ospcommon::vec3i region_sz(scaledBlockDims.x, scaledBlockDims.y, scaledBlockDims.z);
-          //for (int z = 0; z < scaledBlockDims.z; ++z){
-            //const int zOrig = static_cast<int>(z / scaleFactor.z);
-            //ospcommon::vec3i region_lo(I * scaledBlockDims.x, J * scaledBlockDims.y, K * scaledBlockDims.z + z);
-            //upsampleSlice(&block->voxel[zOrig * rmBlockDims.x * rmBlockDims.y], scaledSlice);
-            ospcommon::vec3i region_lo(I * scaledBlockDims.x, J * scaledBlockDims.y, K * scaledBlockDims.z);
-            {
-              std::lock_guard<std::mutex> lock(mutex);
-              ospSetRegion(volume->handle, block->voxel, (osp::vec3i&)region_lo, (osp::vec3i&)region_sz);
-            }
-          //}
+          ospcommon::vec3i region_lo(I * scaledBlockDims.x, J * scaledBlockDims.y, K * scaledBlockDims.z);
           {
             std::lock_guard<std::mutex> lock(mutex);
+            ospSetRegion(volume->handle, block->voxel, (osp::vec3i&)region_lo, (osp::vec3i&)region_sz);
             volume->voxelRange.x = std::min(volume->voxelRange.x, blockRange.x);
             volume->voxelRange.y = std::max(volume->voxelRange.y, blockRange.y);
           }
