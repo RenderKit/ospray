@@ -21,6 +21,7 @@
 // ospray api
 #include "ospray/ospray.h"
 #include "common/sysinfo.h"
+#include "ospray/common/tasking/parallel_for.h"
 
 // std::
 #include <iostream>
@@ -129,17 +130,6 @@ namespace ospray {
           fclose(file);
       }
 
-      // Upsample the 256x256 slice of RM data to scaledBlockDims.x * scaledBlockDims.y,
-      // it's assumed that out points to a large enough array to hold the upsampled data
-      void upsampleSlice(const uint8_t *slice, uint8_t *out){
-        for (int y = 0; y < scaledBlockDims.y; ++y){
-          for (int x = 0; x < scaledBlockDims.x; ++x){
-            const int sliceIdx = static_cast<int>(y / scaleFactor.y) * rmBlockDims.x + static_cast<int>(x / scaleFactor.x);
-            out[y * scaledBlockDims.x + x] = slice[sliceIdx];
-          }
-        }
-      }
-
       void run() 
       {
         int threadID = nextPinID.fetch_add(1);
@@ -164,19 +154,12 @@ namespace ospray {
           ospcommon::vec2f blockRange(block->voxel[0]);
           extendVoxelRange(blockRange,&block->voxel[0],256*256*128);
           // Apply scaling to each slice of the data
-          uint8_t *scaledSlice = new uint8_t[scaledBlockDims.x * scaledBlockDims.y];
-          ospcommon::vec3i region_sz(scaledBlockDims.x, scaledBlockDims.y, 1);
-          for (int z = 0; z < scaledBlockDims.z; ++z){
-            const int zOrig = static_cast<int>(z / scaleFactor.z);
-            ospcommon::vec3i region_lo(I * scaledBlockDims.x, J * scaledBlockDims.y, K * scaledBlockDims.z + z);
-            upsampleSlice(&block->voxel[zOrig * rmBlockDims.x * rmBlockDims.y], scaledSlice);
-            {
-              std::lock_guard<std::mutex> lock(mutex);
-              ospSetRegion(volume->handle, scaledSlice, (osp::vec3i&)region_lo, (osp::vec3i&)region_sz);
-            }
-          }
+          uint8_t *scaledSlice = new uint8_t[scaledBlockDims.x * scaledBlockDims.y * scaledBlockDims.z];
+          ospcommon::vec3i region_sz(scaledBlockDims.x, scaledBlockDims.y, scaledBlockDims.z);
+          ospcommon::vec3i region_lo(I * scaledBlockDims.x, J * scaledBlockDims.y, K * scaledBlockDims.z);
           {
             std::lock_guard<std::mutex> lock(mutex);
+            ospSetRegion(volume->handle, block->voxel, (osp::vec3i&)region_lo, (osp::vec3i&)region_sz);
             volume->voxelRange.x = std::min(volume->voxelRange.x, blockRange.x);
             volume->voxelRange.y = std::max(volume->voxelRange.y, blockRange.y);
           }
@@ -206,6 +189,7 @@ namespace ospray {
       }
       // Update the provided dimensions of the volume for the subvolume specified.
       ospcommon::vec3i dims(2048 * scaleFactor.x, 2048 * scaleFactor.y, 1920 * scaleFactor.z);
+      scaleFactor = osp::vec3f{1.f, 1.f, 1.f};
       volume->dimensions = dims;
       ospSetVec3i(volume->handle, "dimensions", (osp::vec3i&)dims);
       ospSetString(volume->handle,"voxelType", "uchar");
