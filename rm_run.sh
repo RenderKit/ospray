@@ -2,36 +2,51 @@
 
 # Trying minimal number of bricks for the nodes so each node gets a single brick
 # The data with this bricking is in the rm_min_brick* runs
-dp_grids[2]=1x1x1
-dp_grids[3]=2x1x1
-dp_grids[5]=2x2x1
-dp_grids[9]=2x2x2
-dp_grids[17]=4x2x2
-dp_grids[33]=4x4x2
-dp_grids[65]=4x4x4
+MIN_BRICK=1
 
 OSP_MPI="--osp:mpi"
 OSP_VIEWER_CMD="ibrun ./ospVolumeViewer"
+
 if [ $SLURM_NNODES -eq 1 ]; then
 	echo "Not passing --osp:mpi for single node run"
 	OSP_MPI=""
   OSP_VIEWER_CMD="./ospVolumeViewer"
 	unset OSPRAY_DATA_PARALLEL
+elif [ $MIN_BRICK -eq 1 ]; then
+  if [ $SLURM_NNODES -eq 2 ]; then
+    dp_grid=(1 1 1)
+  elif [ $SLURM_NNODES -eq 3 ]; then
+    dp_grid=(2 1 1)
+  elif [ $SLURM_NNODES -eq 5 ]; then
+    dp_grid=(2 2 1)
+  elif [ $SLURM_NNODES -eq 9 ]; then
+    dp_grid=(2 2 2)
+  elif [ $SLURM_NNODES -eq 17 ]; then
+    dp_grid=(4 2 2)
+  elif [ $SLURM_NNODES -eq 33 ]; then
+    dp_grid=(4 4 2)
+  elif [ $SLURM_NNODES -eq 65 ]; then
+    dp_grid=(4 4 4)
+  fi
 else
-  set -x
-  #echo "Not setting OSPRAY_DATA_PARALLEL for replicated data benchmark"
-  #unset OSPRAY_DATA_PARALLEL
-  # For min brick or adaptive brick runs
-  export OSPRAY_DATA_PARALLEL=${dp_grids[$SLURM_NNODES]}
-  # For fixed brick runs
-  #export OSPRAY_DATA_PARALLEL=4x4x4
-  set +x
+  dp_grid=(4 4 4)
 fi
+
+set -x
+#echo "Not setting OSPRAY_DATA_PARALLEL for replicated data benchmark"
+#unset OSPRAY_DATA_PARALLEL
+# For min brick or adaptive brick runs
+export OSPRAY_DATA_PARALLEL=${dp_grid[0]}x${dp_grid[1]}x${dp_grid[2]}
+set +x
 
 # 1.75^3 scales the volume up to ~43GB
 # 1.6^3 gives ~39GB per node
 rm_scale=(1.75 1.75 1.75)
+rm_scale[0]=`echo "${rm_scale[0]} * ${dp_grid[0]}" | bc`
+rm_scale[1]=`echo "${rm_scale[1]} * ${dp_grid[1]}" | bc`
+rm_scale[2]=`echo "${rm_scale[2]} * ${dp_grid[2]}" | bc`
 export OSPRAY_RM_SCALE_FACTOR=${rm_scale[0]}x${rm_scale[1]}x${rm_scale[2]}
+echo "rm_scale ${rm_scale[*]}"
 
 DATA_PATH=/work/03160/will/data
 
