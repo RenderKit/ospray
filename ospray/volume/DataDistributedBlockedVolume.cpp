@@ -137,14 +137,14 @@ namespace ospray {
       // TODO WILL: Change this to be a simple param instead of an environment variable
       const char *scaleFactorEnv = getenv("OSPRAY_RM_SCALE_FACTOR");
       if (scaleFactorEnv){
-        std::cout << "#osp.DataDistributedBlockedVolume HACK: found OSPRAY_RM_SCALE_FACTOR env-var" << std::endl;
+        std::cout << "#osp.DataDistributedBlockedVolume HACK: found OSPRAY_RM_SCALE_FACTOR env-var\n";
         if (sscanf(scaleFactorEnv, "%fx%fx%f", &scaleFactor.x, &scaleFactor.y, &scaleFactor.z) != 3){
           throw std::runtime_error("Could not parse OSPRAY_RM_SCALE_FACTOR env-var. Must be of format"
               "<X>x<Y>x<Z> (e.g '1.5x2x0.5')");
         }
         std::cout << "#osp.DataDistributedBlockedVolume HACK: got OSPRAY_RM_SCALE_FACTOR env-var = {"
           << scaleFactor.x << ", " << scaleFactor.y << ", " << scaleFactor.z
-          << "}" << std::endl;
+          << "}\n";
       }
       once = false;
     }
