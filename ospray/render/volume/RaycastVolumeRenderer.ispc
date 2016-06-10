@@ -457,31 +457,6 @@ inline uniform bool itIsIThatHasToRenderThisBlock(DDBVolumeBlock *uniform block,
     (myRank - block->firstOwner) == (tileID % block->numOwners);
 }
 
-uniform vec3f get_color_for_rank(uniform int32 myRank) {
-  uniform vec3f color = make_vec3f(0.f);
-  switch (myRank) {
-    case 0:
-      color.x = 1;
-      break;
-    case 1:
-      color.x = 0.5;
-      break;
-    case 2:
-      color.y = 1;
-      break;
-    case 3:
-      color.y = 0.5;
-      break;
-    case 4:
-      color.z = 1;
-      break;
-    case 5:
-      color.z = 0.5;
-      break;
-  }
-  return color;
-}
-
 // TODO WILL: Color by the worker rank
 inline void DDVR_renderSample(RaycastVolumeRenderer *uniform self,
                               ScreenSample &fgSample,
@@ -513,7 +488,6 @@ inline void DDVR_renderSample(RaycastVolumeRenderer *uniform self,
     intersectBox(fgSample.ray,block[blockID].bounds,t0,t1);
   }
 #endif
-  const uniform vec3f myRankColor = get_color_for_rank(myRank);
   for (uniform int blockID=0;blockID<numBlocks;blockID++) {
     float t0 = org_ray_t0;
     float t1 = org_ray_t1;
@@ -542,8 +516,7 @@ inline void DDVR_renderSample(RaycastVolumeRenderer *uniform self,
         RaycastVolumeRenderer_renderSample((Renderer*uniform)self,&passInfo,fgSample);
         fgSample.ray.t0 = org_ray_t0;
         fgSample.ray.t  = org_ray_t1;
-        //setRGBAZ(*blockTile,pixelID,fgSample.rgb,fgSample.alpha,fgSample.z);
-        setRGBAZ(*blockTile,pixelID,myRankColor,fgSample.alpha,fgSample.z);
+        setRGBAZ(*blockTile,pixelID,fgSample.rgb,fgSample.alpha,fgSample.z);
       }
     }
   }

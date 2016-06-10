@@ -220,7 +220,10 @@ namespace ospray {
     // that all clients together send exactly as many as the owner
     // told the DFB to expect)
     //
-    // TODO WILL: What is this??
+    // TODO WILL: Here we actually send the renderer results of the volume
+    // for the tile to be composited by whoever is responsible for compositing
+    // the data. The Tile* we get from the cache will be nullptr if we never
+    // rendered the block for this tile (aka we don't own that block)
     for (int blockID = 0; blockID < numBlocks; blockID++) {
       Tile *tile = blockTileCache.blockTile[blockID];
       if (tile == nullptr)
