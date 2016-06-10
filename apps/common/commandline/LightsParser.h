@@ -24,6 +24,8 @@
 
 class OSPRAY_COMMANDLINE_INTERFACE LightsParser : public CommandLineParser
 {
+public:
+  virtual ~LightsParser() = default;
 };
 
 class OSPRAY_COMMANDLINE_INTERFACE DefaultLightsParser : public LightsParser

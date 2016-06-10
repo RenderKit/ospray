@@ -24,6 +24,7 @@
 class OSPRAY_COMMANDLINE_INTERFACE SceneParser : public CommandLineParser
 {
 public:
+  virtual ~SceneParser() = default;
   virtual ospray::cpp::Model model() const = 0;
   virtual ospcommon::box3f   bbox()  const = 0;
 };
