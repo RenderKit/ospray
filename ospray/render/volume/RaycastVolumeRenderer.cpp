@@ -180,13 +180,6 @@ namespace ospray {
                                      taskIndex);
     });
 
-    for (int i = 0; i < numBlocks; ++i){
-      if (blockWasVisible[i]){
-        totalTilesProjectedOnto += 1;
-        break;
-      }
-    }
-
     if (renderForeAndBackground) {
       // this is a tile owned by me - i'm responsible for writing
       // generaition #0, and telling the fb how many more tiles will
@@ -232,6 +225,7 @@ namespace ospray {
       Tile *tile = blockTileCache.blockTile[blockID];
       if (tile == nullptr)
         continue;
+      totalTilesProjectedOnto += 1;
 
       tile->region = bgTile.region;
       tile->fbSize = bgTile.fbSize;
