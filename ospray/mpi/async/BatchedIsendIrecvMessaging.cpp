@@ -34,21 +34,45 @@ namespace ospray {
         procThread.start();
       }
 
+      // TODO WILL: Log send bandwidth as well
       void BatchedIsendIrecvImpl::SendThread::run()
       {
+        using namespace std::chrono;
+        // TODO WILL: Just estimate bandwidth here instead of going through MPI_Finalize
+        // TODO: PRINT BASED ON FRAME TIMING
+        const milliseconds measureTime(500);
+        milliseconds elapsedTime(0);
+        size_t bytesSent = 0;
+        
         Group  *g = this->group;
         Action *actions[SEND_WINDOW_SIZE];
         MPI_Request request[SEND_WINDOW_SIZE];
         while (1) {
           // usleep(80);
           size_t numActions = g->sendQueue.getSome(actions,SEND_WINDOW_SIZE);
+
+          auto startTime = high_resolution_clock::now();
+
           for (int i=0;i<numActions;i++) {
             Action *action = actions[i];
+            bytesSent += action->size;
             MPI_CALL(Isend(action->data,action->size,MPI_BYTE,
                            action->addr.rank,g->tag,g->comm,&request[i]));
           }
           
           MPI_CALL(Waitall(numActions,request,MPI_STATUSES_IGNORE));
+
+          auto endTime = high_resolution_clock::now();
+          elapsedTime += duration_cast<milliseconds>(endTime - startTime);
+          if (elapsedTime >= measureTime) {
+            auto elapsedSec = duration_cast<duration<double, std::ratio<1>>>(elapsedTime);
+            double gbitSent = bytesSent * 8e-9;
+            std::cout << "Worker " << mpi::worker.rank << " send bandwidth "
+              << gbitSent / elapsedSec.count()
+              << " Gbps over " << elapsedSec.count() << "s\n";
+            elapsedTime = milliseconds(0);
+            bytesSent = 0;
+          }
           
           for (int i=0;i<numActions;i++) {
             Action *action = actions[i];
@@ -72,6 +96,7 @@ namespace ospray {
         int numRequests = 0;
         
         // TODO WILL: Just estimate bandwidth here instead of going through MPI_Finalize
+        // TODO: PRINT BASED ON FRAME TIMING
         const milliseconds measureTime(500);
         milliseconds elapsedTime(0);
         size_t bytesRecvd = 0;
@@ -129,7 +154,7 @@ namespace ospray {
           if (elapsedTime >= measureTime) {
             auto elapsedSec = duration_cast<duration<double, std::ratio<1>>>(elapsedTime);
             double gbitRecvd = bytesRecvd * 8e-9;
-            std::cout << "Worker " << mpi::worker.rank << " bandwidth "
+            std::cout << "Worker " << mpi::worker.rank << " recv bandwidth "
               << gbitRecvd / elapsedSec.count()
               << " Gbps over " << elapsedSec.count() << "s\n";
             elapsedTime = milliseconds(0);
