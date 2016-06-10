@@ -258,7 +258,7 @@ void OSPGlutViewer::display()
   std::string title("OSPRay Debug Viewer");
 
   if (m_alwaysRedraw) {
-    title += " (" + std::to_string(m_fps.getFPS()) + " fps)";
+    title += " (" + std::to_string((long double)m_fps.getFPS()) + " fps)";
     setTitle(title);
     forceRedraw();
   } else {
