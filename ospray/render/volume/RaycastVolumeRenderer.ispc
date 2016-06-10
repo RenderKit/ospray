@@ -459,24 +459,25 @@ inline uniform bool itIsIThatHasToRenderThisBlock(DDBVolumeBlock *uniform block,
 
 uniform vec3f get_color_for_rank(uniform int32 myRank) {
   uniform vec3f color = make_vec3f(0.f);
-  if (myRank < 2){
-    color.x = 1;
-  } else if (myRank < 4){
-    color.x = 0.5;
-  }
-  if (myRank >= 3){
-    if (myRank < 6){
+  switch (myRank) {
+    case 0:
+      color.x = 1;
+      break;
+    case 1:
+      color.x = 0.5;
+      break;
+    case 2:
       color.y = 1;
-    } else if (myRank < 8){
+      break;
+    case 3:
       color.y = 0.5;
-    }
-  }
-  if (myRank >= 7){
-    if (myRank < 10){
+      break;
+    case 4:
       color.z = 1;
-    } else if (myRank < 16){
+      break;
+    case 5:
       color.z = 0.5;
-    }
+      break;
   }
   return color;
 }
