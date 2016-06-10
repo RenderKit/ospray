@@ -180,10 +180,12 @@ namespace ospray {
                                      taskIndex);
     });
 
-    for (int i = 0; i < numBlocks; ++i){
-      if (blockWasVisible[i]){
-        totalTilesProjectedOnto += 1;
-        break;
+    if (taskIndex == 0){
+      for (int i = 0; i < numBlocks; ++i){
+        if (blockWasVisible[i]){
+          totalTilesProjectedOnto += 1;
+          break;
+        }
       }
     }
 
