@@ -131,6 +131,8 @@ namespace ospray {
   {
   }
 
+  std::atomic<int> totalTilesProjectedOnto(0);
+
   void DPRenderTask::operator()(int taskIndex) const
   {
     const size_t tileID = taskIndex;
@@ -177,6 +179,13 @@ namespace ospray {
                                      renderForeAndBackground,
                                      taskIndex);
     });
+
+    for (int i = 0; i < numBlocks; ++i){
+      if (blockWasVisible[i]){
+        totalTilesProjectedOnto += 1;
+        break;
+      }
+    }
 
     if (renderForeAndBackground) {
       // this is a tile owned by me - i'm responsible for writing
@@ -328,6 +337,7 @@ namespace ospray {
     })
     const size_t NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
 
+    totalTilesProjectedOnto.store(0);
     auto tileStart = high_resolution_clock::now();
 
     parallel_for(NTASKS, renderTask);
@@ -360,6 +370,8 @@ namespace ospray {
         << avgFrameTime.count() << "ms over " << frameCount << " frames\n";
       std::cout << "Worker " << mpi::worker.rank << " avg tile time: "
         << avgTileTime.count() << "ms over " << frameCount << " frames\n";
+      std::cout << "Worker " << mpi::worker.rank << " data projected on to "
+        << totalTilesProjectedOnto.load() << "/" << NTASKS << " tiles\n";
     }
     std::cout << std::flush;
 
