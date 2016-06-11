@@ -6,6 +6,7 @@ if [ $SLURM_NNODES -eq 1 ]; then
 	OSP_MPI=""
 fi
 
+# TODO: Need better camera position
 CAM_VP="-2469.9 -2302.92 1035.65"
 CAM_VI="5284.37 4329.21 664.905"
 CAM_VU="0 0 1"

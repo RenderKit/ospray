@@ -13,24 +13,42 @@ if [ $SLURM_NNODES -eq 1 ]; then
   OSP_VIEWER_CMD="./ospVolumeViewer"
 	unset OSPRAY_DATA_PARALLEL
 elif [ $MIN_BRICK -eq 1 ]; then
+  echo "Setting up data parallel grid for min brick run"
   if [ $SLURM_NNODES -eq 2 ]; then
     dp_grid=(1 1 1)
-  elif [ $SLURM_NNODES -eq 3 ]; then
-    dp_grid=(2 1 1)
-  elif [ $SLURM_NNODES -eq 5 ]; then
-    dp_grid=(2 2 1)
-  elif [ $SLURM_NNODES -eq 9 ]; then
+  elif [ $SLURM_NNODES -le 9 ]; then
     dp_grid=(2 2 2)
-  elif [ $SLURM_NNODES -eq 17 ]; then
-    dp_grid=(4 2 2)
-  elif [ $SLURM_NNODES -eq 33 ]; then
-    dp_grid=(4 4 2)
-  elif [ $SLURM_NNODES -eq 65 ]; then
+  elif [ $SLURM_NNODES -le 27 ]; then
+    dp_grid=(3 3 3)
+  elif [ $SLURM_NNODES -le 64 ]; then
     dp_grid=(4 4 4)
+  elif [ $SLURM_NNODES -le 125 ]; then
+    dp_grid=(5 5 5)
   fi
 else
+  echo "Setting up data parallel grid for fixed 4^3 brick run"
   dp_grid=(4 4 4)
 fi
+
+# Set the data scaling ratio for this node count
+if [ $SLURM_NNODES -eq 2 ]; then
+  scale_factor=(1 1 1)
+elif [ $SLURM_NNODES -eq 3 ]; then
+  scale_factor=(2 1 1)
+elif [ $SLURM_NNODES -eq 5 ]; then
+  scale_factor=(2 2 1)
+elif [ $SLURM_NNODES -eq 9 ]; then
+  scale_factor=(2 2 2)
+elif [ $SLURM_NNODES -eq 17 ]; then
+  scale_factor=(4 2 2)
+elif [ $SLURM_NNODES -eq 33 ]; then
+  scale_factor=(4 4 2)
+elif [ $SLURM_NNODES -eq 65 ]; then
+  scale_factor=(4 4 4)
+fi
+
+echo "DP Grid ${dp_grid[*]}"
+echo "Weak Scale Factor ${scale_factor[*]}"
 
 set -x
 #echo "Not setting OSPRAY_DATA_PARALLEL for replicated data benchmark"
@@ -42,11 +60,11 @@ set +x
 # 1.75^3 scales the volume up to ~43GB
 # 1.6^3 gives ~39GB per node
 rm_scale=(1.75 1.75 1.75)
-rm_scale[0]=`echo "${rm_scale[0]} * ${dp_grid[0]}" | bc`
-rm_scale[1]=`echo "${rm_scale[1]} * ${dp_grid[1]}" | bc`
-rm_scale[2]=`echo "${rm_scale[2]} * ${dp_grid[2]}" | bc`
+rm_scale[0]=`echo "${rm_scale[0]} * ${scale_factor[0]}" | bc`
+rm_scale[1]=`echo "${rm_scale[1]} * ${scale_factor[1]}" | bc`
+rm_scale[2]=`echo "${rm_scale[2]} * ${scale_factor[2]}" | bc`
 export OSPRAY_RM_SCALE_FACTOR=${rm_scale[0]}x${rm_scale[1]}x${rm_scale[2]}
-echo "rm_scale ${rm_scale[*]}"
+echo "RM Scaling ${rm_scale[*]}"
 
 DATA_PATH=/work/03160/will/data
 
@@ -65,7 +83,7 @@ sleep 10
 ${OSP_VIEWER_CMD} ${DATA_PATH}/bob273.bob $OSP_MPI --viewsize 1024x1024 \
 	--transferfunction ${DATA_PATH}/rm_more_transparent.tfn \
 	--benchmark 25 50 $SLURM_JOB_NAME \
-  -vp "0 0.001 2.4" -vi "0 0 0"
+  -vp "0 0.001 2.4" -vi "0 0 0" --osp:numthreads 22
 
 set +x
 
