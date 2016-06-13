@@ -139,7 +139,7 @@ namespace ospray {
     scaledRegionCoords.z = scaleFactor.z * regionCoords.z;
 
     // Upsample volume data as desired
-    uint8_t *scaledSource = source;
+    uint8_t *scaledSource = const_cast<uint8_t*>(static_cast<const uint8_t*>(source));
     if (upsamplingVolume) {
       scaledSource = new uint8_t[scaledRegionSize.x * scaledRegionSize.y * scaledRegionSize.z];
       upsampleRegion(static_cast<const uint8_t*>(source), scaledSource, scaledRegionSize, regionSize);
