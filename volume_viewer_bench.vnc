@@ -29,11 +29,6 @@
 #-----------------------------------------------------------------------------
 #
 #SBATCH -A OSPRay
-
-# The script will run the volume run script from the specified work dir
-WORK_DIR=$WORK/ospray/build/rel/
-VOLUME_RUN_SCRIPT=$WORK/ospray/rm_run.sh
-
 #--------------------------------------------------------------------------
 # ---- You normally should not need to edit anything below this point -----
 #--------------------------------------------------------------------------
