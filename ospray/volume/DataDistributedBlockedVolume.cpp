@@ -99,18 +99,6 @@ namespace ospray {
 
   static osp::vec3f scaleFactor{1.f, 1.f, 1.f};
 
-  static void upsampleRegion(const uint8_t *source, uint8_t *out, const vec3i &scaledRegion, const vec3i &regionSize){
-    for (size_t z = 0; z < scaledRegion.z; ++z){
-      parallel_for(scaledRegion.x * scaledRegion.y, [&](int taskID){
-        int x = taskID % scaledRegion.x;
-        int y = taskID / scaledRegion.x;
-        const int idx = static_cast<int>(z / scaleFactor.z) * regionSize.x * regionSize.y
-            + static_cast<int>(y / scaleFactor.y) * regionSize.x + static_cast<int>(x / scaleFactor.x);
-        out[z * scaledRegion.y * scaledRegion.x + y * scaledRegion.x + x] = source[idx];
-      });
-    }
-  }
-  
   //! Copy voxels into the volume at the given index (non-zero return value
   //! indicates success).
   int DataDistributedBlockedVolume::setRegion(
@@ -175,16 +163,14 @@ namespace ospray {
       if (ddBlock[i].domain.upper.y+scaledRegionSize.y < scaledRegionCoords.y) continue;
       if (ddBlock[i].domain.upper.z+scaledRegionSize.z < scaledRegionCoords.z) continue;
 
-      uint8_t *scaledSource = new uint8_t[scaledRegionSize.x * scaledRegionSize.y * scaledRegionSize.z];
-      upsampleRegion(static_cast<const uint8_t*>(source), scaledSource, scaledRegionSize, regionSize);
-      
-      ddBlock[i].cppVolume->setRegion(scaledSource,
-                                      scaledRegionCoords-ddBlock[i].domain.lower,
-                                      scaledRegionSize);
+      vec3i domainLower;
+      domainLower.x = ddBlock[i].domain.lower.x / scaleFactor.x;
+      domainLower.y = ddBlock[i].domain.lower.y / scaleFactor.y;
+      domainLower.z = ddBlock[i].domain.lower.z / scaleFactor.z;
+
+      ddBlock[i].cppVolume->setRegion(source, regionCoords - domainLower, regionSize);
 
       ddBlock[i].ispcVolume = ddBlock[i].cppVolume->getIE();
-
-      delete[] scaledSource;
 
 #ifndef OSPRAY_VOLUME_VOXELRANGE_IN_APP
       ManagedObject::Param *param = ddBlock[i].cppVolume->findParam("voxelRange");
