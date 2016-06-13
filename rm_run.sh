@@ -74,6 +74,10 @@ DATA_PATH=/work/03160/will/data
 WORKER_HOSTS=`scontrol show hostname $SLURM_NODELIST | tr '\n' ',' | sed s/,$//`
 echo "RM bench using hosts $WORKER_HOSTS"
 
+cam_vp=(3452.33 491.153 -539.244)
+cam_vi=(2314.56 806.91 159.391)
+cam_vu=(-0.51643 0.102325 -0.850194)
+
 echo "Sleeping for 10s to make sure X-server is running"
 # Log the command used to run the benchmark
 set -x
@@ -83,7 +87,9 @@ sleep 10
 ${OSP_VIEWER_CMD} ${DATA_PATH}/bob273.bob $OSP_MPI --viewsize 1024x1024 \
 	--transferfunction ${DATA_PATH}/rm_more_transparent.tfn \
 	--benchmark 25 50 ${OUT_DIR}/$SLURM_JOB_NAME \
-  -vp "0 0.001 2.4" -vi "0 0 0" --osp:numthreads 22
+  -vp ${cam_vp[0]} ${cam_vp[1]} ${cam_vp[2]} \
+  -vi ${cam_vi[0]} ${cam_vi[1]} ${cam_vi[2]} \
+  -vu ${cam_vu[0]} ${cam_vu[1]} ${cam_vu[2]}
 
 set +x
 
