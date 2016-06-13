@@ -189,21 +189,29 @@ namespace ospray {
       }
       // Update the provided dimensions of the volume for the subvolume specified.
       ospcommon::vec3i dims(2048 * scaleFactor.x, 2048 * scaleFactor.y, 1920 * scaleFactor.z);
-      scaleFactor = osp::vec3f{1.f, 1.f, 1.f};
       volume->dimensions = dims;
       ospSetVec3i(volume->handle, "dimensions", (osp::vec3i&)dims);
       ospSetString(volume->handle,"voxelType", "uchar");
       volume->bounds = ospcommon::empty;
-      //volume->bounds.extend(volume->gridOrigin);
-      //volume->bounds.extend(volume->gridOrigin+ vec3f(volume->dimensions) * volume->gridSpacing);
-      const ospcommon::vec3f gridOrigin(-1.f, -1.f, -1.f);
+      // Instead of scaling into unit box scale into the original dimensions so Carson's camera pos will work
+      const ospcommon::vec3f gridOrigin(0.f, 0.f, 0.f);
+      const ospcommon::vec3f gridSpacing(1.f / scaleFactor.x, 1.f / scaleFactor.y, 1.f / scaleFactor.z);
+      volume->gridOrigin = gridOrigin;
+      volume->gridSpacing = gridSpacing;
+      std::cout << "grid spacing = " << gridSpacing.x << ", " << gridSpacing.y
+        << ", " << gridSpacing.z << "\n";
+#if 1
       volume->bounds.extend(gridOrigin);
-      volume->bounds.extend(vec3f(1.f, 1.f, 1.f));
-      const ospcommon::vec3f gridSpacing(2.f / dims.x, 2.f / dims.y, 2.f / dims.z);
+      volume->bounds.extend(vec3f(2048, 2048, 1920));
+#else
+      volume->bounds.extend(volume->gridOrigin);
+      volume->bounds.extend(volume->gridOrigin+ vec3f(volume->dimensions) * volume->gridSpacing);
+#endif
       ospSetVec3f(volume->handle, "gridOrigin", (osp::vec3f&)gridOrigin);
       ospSetVec3f(volume->handle, "gridSpacing", (osp::vec3f&)gridSpacing);
 
       std::cout << "RM Volume dimensions = {" << dims.x << ", " << dims.y << ", " << dims.z << "}\n";
+      scaleFactor = osp::vec3f{1.f, 1.f, 1.f};
 
       int numThreads = ospcommon::getNumberOfLogicalThreads();
       const char *numThreadsEnv = getenv("OSPRAY_RM_LOADER_THREADS");
