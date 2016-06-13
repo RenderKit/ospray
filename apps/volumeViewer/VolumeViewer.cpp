@@ -302,6 +302,13 @@ void VolumeViewer::setSubsamplingInteractionEnabled(bool value)
     ospCommit(renderer);
 }
 
+void VolumeViewer::setSamplesPerPixel(int spp)
+{
+  ospSet1i(renderer, "spp", spp);
+  if(rendererInitialized)
+    ospCommit(renderer);
+}
+
 void VolumeViewer::setGradientShadingEnabled(bool value)
 {
   for(size_t i=0; i<modelStates.size(); i++)

@@ -134,6 +134,9 @@ public slots:
   //! Set sampling rate on all volumes.
   void setSamplingRate(double value);
 
+  //! Set samples per pixel to take each frame
+  void setSamplesPerPixel(int spp);
+
   //! Set volume clipping box on all volumes.
   void setVolumeClippingBox(ospcommon::box3f value);
 

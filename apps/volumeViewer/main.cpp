@@ -48,6 +48,7 @@ void printUsage(const char *exeName)
               << "    -vi <x> <y> <z>                            set look at position ('x', 'y', 'z')\n"
               << "    -r,--renderer <renderer>                   set renderer to use\n"
               << "    --writeframes <filename>                   emit frames to 'filename_xxxxx.ppm'\n"
+              << "    --spp <spp>                                set the number of samples to take per pixel\n"
               << "    -h,--help                                  print this message\n"
               << " \n";
 }
@@ -68,6 +69,7 @@ int main(int argc, char *argv[])
 
   // Default values for the optional command line arguments.
   float dt = 0.0f;
+  int spp = 0;
   std::vector<std::string> plyFilenames;
   float rotationRate = 0.0f;
   std::vector<std::string> sliceFilenames;
@@ -212,6 +214,10 @@ int main(int argc, char *argv[])
         ss << error;
         throw std::runtime_error("could not load module " + moduleName + ", error " + ss.str());
       }
+    } else if (arg == "--spp") {
+      if (i + 1 >= argc) throw std::runtime_error("missing <spp> argument");
+      spp = atoi(argv[++i]);
+      std::cout << "got spp = " << spp << std::endl;
     } else if (arg == "-h" || arg == "--help") {
       printUsage(argv[0]);
       return 0;
@@ -248,6 +254,10 @@ int main(int argc, char *argv[])
 
   if (dt > 0.0f)
     volumeViewer->setSamplingRate(dt);
+
+  if (spp > 0) {
+    volumeViewer->setSamplesPerPixel(spp);
+  }
 
   // Load slice(s) from file.
   for(unsigned int i=0; i<sliceFilenames.size(); i++)
