@@ -74,8 +74,8 @@ DATA_PATH=/work/03160/will/data
 WORKER_HOSTS=`scontrol show hostname $SLURM_NODELIST | tr '\n' ',' | sed s/,$//`
 echo "RM bench using hosts $WORKER_HOSTS"
 
-cam_vp=(3452.33 491.153 -539.244)
-cam_vi=(2314.56 806.91 159.391)
+cam_vp=(3193.11 597.808 -829.977)
+cam_vi=(2255.28 849.297 139.322)
 cam_vu=(-0.51643 0.102325 -0.850194)
 
 echo "Sleeping for 10s to make sure X-server is running"
