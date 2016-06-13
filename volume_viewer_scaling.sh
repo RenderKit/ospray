@@ -1,9 +1,9 @@
 #!/bin/bash
 
 #node_counts=(2 3 5 9 17 33 65 129)
-node_counts=(9 17 33 65)
+node_counts=(129)
 queue="normal"
-job_time="00:35:00"
+job_time="00:30:00"
 job_name=rm_data_scaling
 
 # The script will run the volume run script from the specified work dir
