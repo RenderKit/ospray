@@ -56,7 +56,7 @@ OSPGlutViewer::OSPGlutViewer(const box3f &worldBounds, cpp::Model model,
   m_renderer.commit();
 
 #if 0
-  cout << "#ospDebugViewer: set world bounds " << worldBounds
+  cout << "#ospGlutViewer: set world bounds " << worldBounds
        << ", motion speed " << motionSpeed << endl;
 #endif
 
@@ -102,7 +102,7 @@ void OSPGlutViewer::saveScreenshot(const std::string &basename)
 {
   const uint32_t *p = (uint32_t*)m_fb.map(OSP_FB_COLOR);
   writePPM(basename + ".ppm", m_windowSize.x, m_windowSize.y, p);
-  cout << "#ospDebugViewer: saved current frame to '" << basename << ".ppm'"
+  cout << "#ospGlutViewer: saved current frame to '" << basename << ".ppm'"
        << endl;
 }
 
@@ -255,7 +255,7 @@ void OSPGlutViewer::display()
   // that pointer is no longer valid, so set it to null
   ucharFB = nullptr;
 
-  std::string title("OSPRay Debug Viewer");
+  std::string title("OSPRay GLUT Viewer");
 
   if (m_alwaysRedraw) {
     title += " (" + std::to_string((long double)m_fps.getFPS()) + " fps)";
