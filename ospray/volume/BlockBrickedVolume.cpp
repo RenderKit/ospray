@@ -48,6 +48,20 @@ namespace ospray {
     StructuredVolume::commit();
   }
 
+  static osp::vec3f scaleFactor{1.f, 1.f, 1.f};
+
+  static void upsampleRegion(const uint8_t *source, uint8_t *out, const vec3i &scaledRegion, const vec3i &regionSize){
+    for (size_t z = 0; z < scaledRegion.z; ++z){
+      parallel_for(scaledRegion.x * scaledRegion.y, [&](int taskID){
+        int x = taskID % scaledRegion.x;
+        int y = taskID / scaledRegion.x;
+        const int idx = static_cast<int>(z / scaleFactor.z) * regionSize.x * regionSize.y
+            + static_cast<int>(y / scaleFactor.y) * regionSize.x + static_cast<int>(x / scaleFactor.x);
+        out[z * scaledRegion.y * scaledRegion.x + y * scaledRegion.x + x] = source[idx];
+      });
+    }
+  }
+
   int BlockBrickedVolume::setRegion(
       // points to the first voxel to be copied. The voxels at 'source' MUST
       // have dimensions 'regionSize', must be organized in 3D-array order, and
@@ -96,15 +110,54 @@ namespace ospray {
     }
 #endif
 
+    static bool once = true;
+    static bool upsamplingVolume = false;
+    if (once) {
+      // TODO WILL: Change this to be a simple param instead of an environment variable
+      const char *scaleFactorEnv = getenv("OSPRAY_RM_SCALE_FACTOR");
+      if (scaleFactorEnv){
+        std::cout << "#osp.BlockBrickedVolume HACK: found OSPRAY_RM_SCALE_FACTOR env-var\n";
+        if (sscanf(scaleFactorEnv, "%fx%fx%f", &scaleFactor.x, &scaleFactor.y, &scaleFactor.z) != 3){
+          throw std::runtime_error("Could not parse OSPRAY_RM_SCALE_FACTOR env-var. Must be of format"
+              "<X>x<Y>x<Z> (e.g '1.5x2x0.5')");
+        }
+        std::cout << "#osp.BlockBrickedVolume HACK: got OSPRAY_RM_SCALE_FACTOR env-var = {"
+          << scaleFactor.x << ", " << scaleFactor.y << ", " << scaleFactor.z
+          << "}\n";
+        upsamplingVolume = true;
+      }
+      once = false;
+    }
+    vec3i scaledRegionSize;
+    scaledRegionSize.x = scaleFactor.x * regionSize.x;
+    scaledRegionSize.y = scaleFactor.y * regionSize.y;
+    scaledRegionSize.z = scaleFactor.z * regionSize.z;
+
+    vec3i scaledRegionCoords;
+    scaledRegionCoords.x = scaleFactor.x * regionCoords.x;
+    scaledRegionCoords.y = scaleFactor.y * regionCoords.y;
+    scaledRegionCoords.z = scaleFactor.z * regionCoords.z;
+
+    // Upsample volume data as desired
+    uint8_t *scaledSource = const_cast<uint8_t*>(static_cast<const uint8_t*>(source));
+    if (upsamplingVolume) {
+      scaledSource = new uint8_t[scaledRegionSize.x * scaledRegionSize.y * scaledRegionSize.z];
+      upsampleRegion(static_cast<const uint8_t*>(source), scaledSource, scaledRegionSize, regionSize);
+    }
+
     // Copy voxel data into the volume.
-    const int NTASKS = regionSize.y * regionSize.z;
+    const int NTASKS = scaledRegionSize.y * scaledRegionSize.z;
     parallel_for(NTASKS, [&](int taskIndex){
         ispc::BlockBrickedVolume_setRegion(ispcEquivalent,
-                                           source,
-                                           (const ispc::vec3i &)regionCoords,
-                                           (const ispc::vec3i &)regionSize,
+                                           scaledSource,
+                                           (const ispc::vec3i &)scaledRegionCoords,
+                                           (const ispc::vec3i &)scaledRegionSize,
                                            taskIndex);
     });
+
+    if (upsamplingVolume) {
+      delete[] scaledSource;
+    }
 
     return true;
   }

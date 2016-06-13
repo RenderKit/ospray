@@ -163,12 +163,12 @@ namespace ospray {
       if (ddBlock[i].domain.upper.y+scaledRegionSize.y < scaledRegionCoords.y) continue;
       if (ddBlock[i].domain.upper.z+scaledRegionSize.z < scaledRegionCoords.z) continue;
 
-      vec3i domainLower;
-      domainLower.x = ddBlock[i].domain.lower.x / scaleFactor.x;
-      domainLower.y = ddBlock[i].domain.lower.y / scaleFactor.y;
-      domainLower.z = ddBlock[i].domain.lower.z / scaleFactor.z;
+      vec3i regionStart;
+      regionStart.x = (scaledRegionCoords.x - ddBlock[i].domain.lower.x) / scaleFactor.x;
+      regionStart.y = (scaledRegionCoords.y - ddBlock[i].domain.lower.y) / scaleFactor.y;
+      regionStart.z = (scaledRegionCoords.z - ddBlock[i].domain.lower.z) / scaleFactor.z;
 
-      ddBlock[i].cppVolume->setRegion(source, regionCoords - domainLower, regionSize);
+      ddBlock[i].cppVolume->setRegion(source, regionStart, regionSize);
 
       ddBlock[i].ispcVolume = ddBlock[i].cppVolume->getIE();
 
