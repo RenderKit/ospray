@@ -4,6 +4,7 @@
 # The data with this bricking is in the rm_min_brick* runs
 MIN_BRICK=1
 DATA_SCALING=1
+REPLICATED_DATA=0
 
 OSP_MPI="--osp:mpi"
 OSP_VIEWER_CMD="ibrun ./ospVolumeViewer"
@@ -24,17 +25,22 @@ else
       dp_grid=(3 3 3)
     elif [ $SLURM_NNODES -le 65 ]; then
       dp_grid=(4 4 4)
+    elif [ $SLURM_NNODES -le 217 ]; then
+      dp_grid=(6 6 6)
     fi
   else
-    echo "Setting up data parallel grid for fixed 4^3 brick run"
     dp_grid=(4 4 4)
+    echo "Setting up data parallel grid for fixed ${dp_grid[*]} brick run"
   fi
-  set -x
-  #echo "Not setting OSPRAY_DATA_PARALLEL for replicated data benchmark"
-  #unset OSPRAY_DATA_PARALLEL
-  # For min brick or adaptive brick runs
-  export OSPRAY_DATA_PARALLEL=${dp_grid[0]}x${dp_grid[1]}x${dp_grid[2]}
-  set +x
+
+  if [ $REPLICATED_DATA -eq 1 ]; then
+    echo "Not setting OSPRAY_DATA_PARALLEL for replicated data benchmark"
+    unset OSPRAY_DATA_PARALLEL
+  else
+    # For min brick or adaptive brick runs
+    echo "Setting OSPRAY_DATA_PARALLEL = ${dp_grid[*]}"
+    export OSPRAY_DATA_PARALLEL=${dp_grid[0]}x${dp_grid[1]}x${dp_grid[2]}
+  fi
 fi
 
 # 1.75^3 scales the volume up to ~43GB
@@ -54,6 +60,8 @@ if [ $DATA_SCALING -eq 1 ]; then
     scale_factor=(4 4 2)
   elif [ $SLURM_NNODES -eq 65 ]; then
     scale_factor=(4 4 4)
+  elif [ $SLURM_NNODES -eq 129 ]; then
+    scale_factor=(8 4 4)
   fi
   echo "Data Scale Factor ${scale_factor[*]}"
   rm_scale[0]=`echo "${rm_scale[0]} * ${scale_factor[0]}" | bc`
@@ -78,6 +86,8 @@ cam_vp=(3193.11 597.808 -829.977)
 cam_vi=(2255.28 849.297 139.322)
 cam_vu=(-0.51643 0.102325 -0.850194)
 
+dt=`echo $SLURM_NNODES - 1 | bc`
+
 echo "Sleeping for 10s to make sure X-server is running"
 # Log the command used to run the benchmark
 set -x
@@ -85,7 +95,7 @@ set -x
 sleep 10
 
 ${OSP_VIEWER_CMD} ${DATA_PATH}/bob273.bob $OSP_MPI --viewsize 1024x1024 \
-	--transferfunction ${DATA_PATH}/rm_more_transparent.tfn \
+	--transferfunction ${DATA_PATH}/carson_rm.tfn \
 	--benchmark 25 50 ${OUT_DIR}/$SLURM_JOB_NAME \
   -vp ${cam_vp[0]} ${cam_vp[1]} ${cam_vp[2]} \
   -vi ${cam_vi[0]} ${cam_vi[1]} ${cam_vi[2]} \
