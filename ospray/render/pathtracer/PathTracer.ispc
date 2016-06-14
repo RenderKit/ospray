@@ -119,7 +119,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     const vec3f wo = neg(ray.dir);
 
-    float maxLightDist = ray.t; // per default virtual lights are occluded by hit geometry
+    float maxLightDist = ray.t; // per default, virtual lights are occluded by hit geometry
 
     // environment shading when nothing hit
     if (noHit(ray)) {
@@ -128,7 +128,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         sample.alpha = 1.0f - luminance(Lw);
       if ((bool)self->backplate & straightPath) {
         L = L + Lw * get3f(self->backplate, clamp2edge(self->backplate, pixel));
-        maxLightDist = 1e38; // backplate hides envLights (i.e. the ones in infinity)
+        maxLightDist = 1e38; // backplate hides envLights (i.e. the ones at infinity)
       }
     }
 
