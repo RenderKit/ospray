@@ -470,11 +470,29 @@ namespace ospray {
     if (ospMat) return ospMat;
 
     ospMat = ospNewMaterial(renderer,"OBJMaterial");
+
+    //ospMat = ospNewMaterial(renderer,"Glass");
+    //ospMat = ospNewMaterial(renderer,"ThinGlass");
+
     if (!ospMat)  {
       throw std::runtime_error("could not create default material 'OBJMaterial'");
       // cout << "given renderer does not know material type 'OBJMaterial'" << endl;
     }
     ospSet3f(ospMat, "Kd", .8f, 0.f, 0.f);
+
+    if (0) {
+    ospSet3f(ospMat, "transmission", 1.0f, 1.0f, 1.0f);
+    ospSet3f(ospMat, "transmissionOutside", 1.0f, 1.0f, 1.0f);
+    ospSet1f(ospMat, "etaInside", 1.0f);
+    ospSet1f(ospMat, "etaOutside", 1.0f);
+    }
+
+    if (0) {
+    ospSet3f(ospMat, "transmission", 1.0f, 1.0f, 1.0f);
+    ospSet1f(ospMat, "eta", 1.8f);
+    ospSet1f(ospMat, "thickness", 1.0f);
+    }
+
     ospCommit(ospMat);
     return ospMat;
   }
@@ -524,6 +542,9 @@ namespace ospray {
   OSPMaterial createMaterial(OSPRenderer renderer,
                              miniSG::Material *mat)
   {
+
+     // std::cout << "createMaterial " << !mat ? "NULL" : mat->getParam("type","OBJMaterial") << "\n";
+
     if (mat == NULL) {
       static int numWarnings = 0;
       if (++numWarnings < 10)
@@ -669,13 +690,21 @@ namespace ospray {
         // --hdri-light <intensity> <image file>.(pfm|ppm)
         OSPLight ospHdri = ospNewLight(ospRenderer, "hdri");
         ospSetString(ospHdri, "name", "hdri_test");
-        ospSet3f(ospHdri, "up", 0.f, 0.f, 1.f);
-        ospSet3f(ospHdri, "dir", 0.f, 1.f, 0.0f);
+        if (1) {
+        ospSet3f(ospHdri, "up", 0.f, 1.f, 0.f);
+        ospSet3f(ospHdri, "dir", 1.f, 0.f, 0.0f);
+        } else {// up = z
+            ospSet3f(ospHdri, "up", 0.f, 0.f, 1.f);
+            ospSet3f(ospHdri, "dir", 0.f, 1.f, 0.0f);
+        }
         ospSet1f(ospHdri, "intensity", atof(av[++i]));
         FileName imageFile(av[++i]);
         miniSG::Texture2D *lightMap = miniSG::loadTexture(imageFile.path(), imageFile.base());
         if (lightMap == NULL){
           std::cout << "Failed to load hdri-light texture '" << imageFile << "'" << std::endl;
+        } else {
+            std::cout << "Successfully loaded hdri-light texture '" << imageFile << "'" << std::endl;
+
         }
         OSPTexture2D ospLightMap = createTexture2D(lightMap);
         ospSetObject(ospHdri, "map", ospLightMap);

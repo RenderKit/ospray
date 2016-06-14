@@ -39,6 +39,8 @@ const varying BSDF* uniform Glass_getBSDF(const uniform PathTraceMaterial* unifo
   float eta = eq(currentMedium, self->mediumOutside) ? self->mediumOutside.ior*rcp(self->mediumInside.ior)
                                                      : self->mediumInside.ior*rcp(self->mediumOutside.ior);
 
+  //print("Glass_getBSDF eta = % \n", eta);
+
   return Dielectric_create(ctx, LinearSpace3f_create(ctx, frame(dg.Ns)), eta);
 }
 
@@ -51,6 +53,8 @@ vec3f Glass_getTransparency(const uniform PathTraceMaterial* uniform material,
 
   float eta = eq(currentMedium, self->mediumOutside) ? self->mediumOutside.ior*rcp(self->mediumInside.ior)
                                                      : self->mediumInside.ior*rcp(self->mediumOutside.ior);
+
+  //print("Glass_getTransparency eta = % \n", eta);
 
   float cosThetaO = max(-dot(ray.dir, dg.Ns), 0.0f);
   return make_vec3f(1.0f-fresnelDielectric(cosThetaO, eta));

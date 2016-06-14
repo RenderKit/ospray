@@ -42,6 +42,9 @@ namespace ospray {
       }
     };
 
+
+
+
     OSP_REGISTER_MATERIAL(Glass,PathTracer_Glass);
   }
 }
