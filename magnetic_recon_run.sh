@@ -13,7 +13,8 @@ CAM_VI="-118.1073 131.917816 139.267548"
 DATA_PATH=/work/03160/will/data
 
 # We take num workers samples per pixel so that's num nodes - 1 to account for the master
-((SPP = $SLURM_NNODES - 1))
+#((SPP = $SLURM_NNODES - 1))
+SPP=256
 
 # Print the expanded list of workers hosts so we can easily paste into osp_separate_launch
 #scontrol show hostname $SLURM_NODELIST > stamp-worker-nodes.txt
