@@ -149,6 +149,12 @@ namespace ospray {
         << ", " << chunkDimensions.z << "}" << std::endl;
 
       if (!useSubvolume) {
+        // Log out some progress stats after we've read LOG_PROGRESS_SIZE bytes (25GB)
+        const size_t LOG_PROGRESS_SIZE = 25e9;
+        const size_t VOLUME_TOTAL_SIZE = voxelSize * volumeDimensions.x * volumeDimensions.y * volumeDimensions.z;
+        size_t totalDataRead = 0;
+        size_t dataSizeRead = 0;
+
         // Allocate memory for a single chunk
         const size_t chunkVoxels = chunkDimensions.x * chunkDimensions.y * chunkDimensions.z;
         unsigned char *voxelData = new unsigned char[chunkVoxels * voxelSize];
@@ -169,6 +175,15 @@ namespace ospray {
           for (int chunky = 0; chunky < numChunks.y; ++chunky) {
             for (int chunkx = 0; chunkx < numChunks.x; ++chunkx) {
               size_t voxelsRead = fread(voxelData, voxelSize, chunkVoxels, file);
+              dataSizeRead += voxelsRead * voxelSize;
+              if (dataSizeRead >= LOG_PROGRESS_SIZE){
+                totalDataRead += dataSizeRead;
+                dataSizeRead = 0;
+                float percent = 100.0 * totalDataRead / static_cast<double>(VOLUME_TOTAL_SIZE);
+                std::cout << "importRaw: Have read " << totalDataRead * 1e-9 << "GB of "
+                  << VOLUME_TOTAL_SIZE * 1e-9 << "GB (" << percent << "%)" << std::endl;
+              }
+
               // The end of the file may have been reached unexpectedly.
               exitOnCondition(voxelsRead != chunkVoxels, "end of volume file reached before read completed");
 
@@ -184,6 +199,7 @@ namespace ospray {
               assert(chunkDimensions.y == 1 && chunkDimensions.z == 1);
               size_t remainder = remainderVoxels.x;
               size_t voxelsRead = fread(voxelData, voxelSize, remainder, file);
+              dataSizeRead += voxelsRead * voxelSize;
               ospcommon::vec3i region_lo(numChunks.x * chunkDimensions.x, chunky * chunkDimensions.y,
                   chunkz * chunkDimensions.z);
               ospcommon::vec3i region_sz(remainderVoxels.x, chunkDimensions.y, chunkDimensions.z);
@@ -197,6 +213,7 @@ namespace ospray {
             assert(chunkDimensions.x == volumeDimensions.x && chunkDimensions.z == 1);
             size_t remainder = chunkDimensions.x * remainderVoxels.y;
             size_t voxelsRead = fread(voxelData, voxelSize, remainder, file);
+            dataSizeRead += voxelsRead * voxelSize;
             ospcommon::vec3i region_lo(0, numChunks.y * chunkDimensions.y,
                 chunkz * chunkDimensions.z);
             ospcommon::vec3i region_sz(chunkDimensions.x, remainderVoxels.y, chunkDimensions.z);
@@ -210,6 +227,7 @@ namespace ospray {
           assert(chunkDimensions.x == volumeDimensions.x && chunkDimensions.y == volumeDimensions.y);
           size_t remainder = chunkDimensions.x * chunkDimensions.y * remainderVoxels.z;
           size_t voxelsRead = fread(voxelData, voxelSize, remainder, file);
+          dataSizeRead += voxelsRead * voxelSize;
           ospcommon::vec3i region_lo(0, 0, numChunks.z * chunkDimensions.z);
           ospcommon::vec3i region_sz(chunkDimensions.x, chunkDimensions.y, remainderVoxels.z);
 
