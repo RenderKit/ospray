@@ -193,8 +193,7 @@ void QOSPRayWindow::paintGL()
   auto end = high_resolution_clock::now();
 
   double framesPerSecond = 1000.0 / renderFrameTimer.elapsed();
-  if (frameCount >= benchmarkWarmUpFrames) {
-    std::cout << "Starting to record benchmark timings\n";
+  if (benchmarkFrames > 0 && frameCount >= benchmarkWarmUpFrames) {
     elapsedRenderTime += duration_cast<milliseconds>(end - start);
   }
 
@@ -225,7 +224,11 @@ void QOSPRayWindow::paintGL()
 
     double elapsedSeconds = duration_cast<duration<double, std::ratio<1>>>(elapsedRenderTime).count();
 
-    std::cout << "benchmark: " << elapsedSeconds << " elapsed seconds ==> "
+    float oldElapsedSeconds = float(benchmarkTimer.elapsed()) / 1000.f;
+    std::cout << "benchmark: " << oldElapsedSeconds << " elapsed seconds ==> "
+      << float(benchmarkFrames) / oldElapsedSeconds << " fps" << std::endl;
+
+    std::cout << "benchmark: " << elapsedSeconds << " true elapsed seconds --> "
       << float(benchmarkFrames) / elapsedSeconds << " fps" << std::endl;
 
     uint32_t *mappedFrameBuffer = (unsigned int *) ospMapFrameBuffer(frameBuffer);
