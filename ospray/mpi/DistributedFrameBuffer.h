@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <atomic>
+
 #include "ospray/mpi/async/CommLayer.h"
 #include "ospray/fb/Tile.h"
 #include "ospray/fb/LocalFB.h"
@@ -391,7 +393,7 @@ namespace ospray {
         frame */
     bool frameIsDone;
 
-    size_t dbgCurrentFrame = 0;
+    static std::atomic<size_t> dbgCurrentFrame;
 
     //! condition that gets triggered when the frame is done
     Condition doneCond;

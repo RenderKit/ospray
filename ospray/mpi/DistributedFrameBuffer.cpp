@@ -525,6 +525,8 @@ namespace ospray {
     }
   }
 
+  std::atomic<size_t> DFB::dbgCurrentFrame(0);
+
   void DFB::incoming(mpi::async::CommLayer::Message *_msg)
   {
     if (!frameIsActive) {
@@ -541,7 +543,7 @@ namespace ospray {
       using namespace std::chrono;
       auto incomingTime = high_resolution_clock::now();
       std::cout << "Worker " << mpi::worker.rank << " DFB::incoming for frame #"
-        << dbgCurrentFrame << " msg " << std::hex << reinterpret_cast<size_t>(_msg)
+        << dbgCurrentFrame.load() << " msg " << std::hex << reinterpret_cast<size_t>(_msg)
         << " at " << std::dec << duration_cast<milliseconds>(incomingTime.time_since_epoch()).count()
         << "ms" << std::endl;
     })
@@ -574,11 +576,11 @@ namespace ospray {
       // TODO WILL: Is this when the worker has finished its local compositin?
       auto closeTime = high_resolution_clock::now();
       std::cout << "Worker " << mpi::worker.rank << " DFB::closeCurrentFrame for frame #"
-        << dbgCurrentFrame << " at "
+        << dbgCurrentFrame.load() << " at "
         << duration_cast<milliseconds>(closeTime.time_since_epoch()).count()
         << "ms" << std::endl;
-      ++dbgCurrentFrame;
     })
+    ++dbgCurrentFrame;
     frameIsDone   = true;
     // Print the first tile we process again
     dfbPrintTileProcess.store(true);

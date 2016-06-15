@@ -15,6 +15,10 @@
 // ======================================================================== //
 
 #include "BatchedIsendIrecvMessaging.h"
+// WILL HACK
+#include "ospray/mpi/DistributedFrameBuffer.h"
+#include <limits>
+#include <atomic>
 
 namespace ospray {
   namespace mpi {
@@ -34,18 +38,67 @@ namespace ospray {
         procThread.start();
       }
 
+      using namespace std::chrono;
+
+      enum BandwidthType {
+        SEND, RECV
+      };
+
+      std::ostream& operator<<(std::ostream &os, const BandwidthType &t){
+        switch (t) {
+          case SEND: os << "send"; break;
+          case RECV: os << "recv"; break;
+          default: os << "INVALID!?"; break;
+        }
+        return os;
+      }
+
+      struct BandwidthProfiler {
+        milliseconds elapsedTime = milliseconds(0);
+        // Switch these to not be *Sent just minBytes, maxBytes w/e
+        size_t bytesXfd = 0;
+        size_t minBytes = std::numeric_limits<size_t>::max();
+        size_t maxBytes = 0;
+        size_t avgBytes = 0;
+        size_t numMsg = 0;
+        size_t numAsync = 0;
+        size_t frameStart = 0;
+        size_t frameEnd = 0;
+        BandwidthType type;
+
+        BandwidthProfiler(BandwidthType type) : type(type){}
+
+        void print() {
+          auto elapsedSec = duration_cast<duration<double, std::ratio<1>>>(elapsedTime);
+          double gbitSent = bytesXfd * 8e-9;
+          std::cout << "Worker " << mpi::worker.rank << " " << type << " bandwidth "
+            << gbitSent / (frameEnd - frameStart) << " Gbit/frame over "
+            << frameEnd - frameStart << " frames\n";
+
+          if (numMsg > 0 && numAsync > 0) {
+            std::cout << "Worker " << mpi::worker.rank << " avg async " << type
+              << " msgs " << static_cast<double>(numMsg) / numAsync << " w/ total msgs = "
+              << numMsg << "\n";
+          }
+
+
+          elapsedTime = milliseconds(0);
+          bytesXfd = 0;
+          minBytes = std::numeric_limits<size_t>::max();
+          maxBytes = 0;
+          avgBytes = 0;
+          numMsg = 0;
+          numAsync = 0;
+          frameStart = 0;
+          frameEnd = 0;
+        }
+      };
+
       // TODO WILL: Log send bandwidth as well
       void BatchedIsendIrecvImpl::SendThread::run()
       {
-        using namespace std::chrono;
-        // TODO WILL: Just estimate bandwidth here instead of going through MPI_Finalize
-        // TODO: PRINT BASED ON FRAME TIMING
-        const milliseconds measureTime(500);
-        milliseconds elapsedTime(0);
-        size_t bytesSent = 0;
-        size_t minBytesSent(-1), maxBytesSent = 0, avgBytesSent = 0;
-        size_t numMsgSent = 0;
-        size_t numAsyncSends = 0;
+        BandwidthProfiler bprof(SEND);
+        bprof.frameStart = DistributedFrameBuffer::dbgCurrentFrame.load();
         
         Group  *g = this->group;
         Action *actions[SEND_WINDOW_SIZE];
@@ -54,49 +107,32 @@ namespace ospray {
           // usleep(80);
           size_t numActions = g->sendQueue.getSome(actions,SEND_WINDOW_SIZE);
 
-          auto startTime = high_resolution_clock::now();
+          // NOTE: We may be off by a little bit if the frame switches right when we check this but we've
+          // not sent all it's data? However we should't be off by that much I think
+          size_t currentFrame = DistributedFrameBuffer::dbgCurrentFrame.load();
+          if (currentFrame - bprof.frameStart >= 25){
+            bprof.frameEnd = currentFrame;
+            bprof.print();
+            bprof.frameStart = DistributedFrameBuffer::dbgCurrentFrame.load();
+
+          }
 
           for (int i=0;i<numActions;i++) {
             Action *action = actions[i];
 
-            bytesSent += action->size;
-            minBytesSent = std::min(minBytesSent, size_t(action->size));
-            maxBytesSent = std::max(maxBytesSent, size_t(action->size));
-            avgBytesSent = (action->size + avgBytesSent * numMsgSent) / (numMsgSent + 1);
-            ++numMsgSent;
+            bprof.bytesXfd += action->size;
+            bprof.minBytes = std::min(bprof.minBytes, size_t(action->size));
+            bprof.maxBytes = std::max(bprof.maxBytes, size_t(action->size));
+            bprof.avgBytes = (action->size + bprof.avgBytes * bprof.numMsg) / (bprof.numMsg + 1);
+            ++bprof.numMsg;
 
             MPI_CALL(Isend(action->data,action->size,MPI_BYTE,
                            action->addr.rank,g->tag,g->comm,&request[i]));
           }
-          ++numAsyncSends;
+          ++bprof.numAsync;
           
           MPI_CALL(Waitall(numActions,request,MPI_STATUSES_IGNORE));
-
-          auto endTime = high_resolution_clock::now();
-          elapsedTime += duration_cast<milliseconds>(endTime - startTime);
-          if (elapsedTime >= measureTime) {
-            auto elapsedSec = duration_cast<duration<double, std::ratio<1>>>(elapsedTime);
-            double gbitSent = bytesSent * 8e-9;
-            std::cout << "Worker " << mpi::worker.rank << " send bandwidth "
-              << gbitSent / elapsedSec.count()
-              << " Gbps over " << elapsedSec.count() << "s\n";
-
-            std::cout << "Worker " << mpi::worker.rank << " min msg: " << minBytesSent
-              << " max msg: " << maxBytesSent << " avg msg: " << avgBytesSent
-              << " over " << numMsgSent << " msgs\n";
-
-            std::cout << "Worker " << mpi::worker.rank << " avg async msgs "
-              << static_cast<double>(numMsgSent) / numAsyncSends << "\n";
-
-            elapsedTime = milliseconds(0);
-            bytesSent = 0;
-            minBytesSent = size_t(-1);
-            maxBytesSent = 0;
-            avgBytesSent = 0;
-            numMsgSent = 0;
-            numAsyncSends = 0;
-          }
-          
+     
           for (int i=0;i<numActions;i++) {
             Action *action = actions[i];
             free(action->data);
@@ -107,8 +143,6 @@ namespace ospray {
       
       void BatchedIsendIrecvImpl::RecvThread::run()
       {
-        using namespace std::chrono;
-
         // note this thread not only _probes_ for new receives, it
         // also immediately starts the receive operation using Irecv()
         Group *g = (Group *)this->group;
@@ -118,20 +152,27 @@ namespace ospray {
         MPI_Status status;
         int numRequests = 0;
         
-        // TODO WILL: Just estimate bandwidth here instead of going through MPI_Finalize
-        // TODO: PRINT BASED ON FRAME TIMING
-        const milliseconds measureTime(500);
-        milliseconds elapsedTime(0);
-        size_t bytesRecvd = 0;
+        BandwidthProfiler bprof(RECV);
+        bprof.frameStart = DistributedFrameBuffer::dbgCurrentFrame.load();
         
         while (1) {
           numRequests = 0;
+
+          // NOTE: We may be off by a little bit if the frame switches right when we check this but we've
+          // not sent all it's data? However we should't be off by that much I think
+          size_t currentFrame = DistributedFrameBuffer::dbgCurrentFrame.load();
+          if (currentFrame - bprof.frameStart >= 25){
+            bprof.frameEnd = currentFrame;
+            bprof.print();
+            bprof.frameStart = DistributedFrameBuffer::dbgCurrentFrame.load();
+
+          }
+
           // wait for first message
           // TODO WILL: The probe is a blocking call until we get another message, this
           // shouldn't be accounted for in our timing
           // Or do we actually want it included? Since the time we spend waiting and not
           // sending would reduce our overall avg. bandwidth and should be accounted for
-          auto startTime = high_resolution_clock::now();
           {
             // usleep(280);
             MPI_CALL(Probe(MPI_ANY_SOURCE,g->tag,g->comm,&status));
@@ -140,7 +181,12 @@ namespace ospray {
             action->addr = Address(g,status.MPI_SOURCE);
             MPI_CALL(Get_count(&status,MPI_BYTE,&action->size));
 
-            bytesRecvd += action->size;
+            bprof.bytesXfd += action->size;
+            bprof.minBytes = std::min(bprof.minBytes, size_t(action->size));
+            bprof.maxBytes = std::max(bprof.maxBytes, size_t(action->size));
+            bprof.avgBytes = (action->size + bprof.avgBytes * bprof.numMsg) / (bprof.numMsg + 1);
+            ++bprof.numMsg;
+
             action->data = malloc(action->size);
             MPI_CALL(Irecv(action->data,action->size,MPI_BYTE,
                            status.MPI_SOURCE,status.MPI_TAG,
@@ -159,30 +205,22 @@ namespace ospray {
             action->addr = Address(g,status.MPI_SOURCE);
             MPI_CALL(Get_count(&status,MPI_BYTE,&action->size));
 
-            bytesRecvd += action->size;
+            bprof.bytesXfd += action->size;
+            bprof.minBytes = std::min(bprof.minBytes, size_t(action->size));
+            bprof.maxBytes = std::max(bprof.maxBytes, size_t(action->size));
+            bprof.avgBytes = (action->size + bprof.avgBytes * bprof.numMsg) / (bprof.numMsg + 1);
+            ++bprof.numMsg;
+
             action->data = malloc(action->size);
             MPI_CALL(Irecv(action->data,action->size,MPI_BYTE,
                            status.MPI_SOURCE,status.MPI_TAG,
                            g->comm,&request[numRequests]));
             actions[numRequests++] = action;
           }
+          ++bprof.numAsync;
 
           // now, have certain number of messages available...
           MPI_CALL(Waitall(numRequests,request,MPI_STATUSES_IGNORE));
-          // TODO WILL: Track the bytes transfered, after a total of 10s have elapsed print
-          // out the bandwidth used (with our without the blocking probe in that timing?)
-          
-          auto endTime = high_resolution_clock::now();
-          elapsedTime += duration_cast<milliseconds>(endTime - startTime);
-          if (elapsedTime >= measureTime) {
-            auto elapsedSec = duration_cast<duration<double, std::ratio<1>>>(elapsedTime);
-            double gbitRecvd = bytesRecvd * 8e-9;
-            std::cout << "Worker " << mpi::worker.rank << " recv bandwidth "
-              << gbitRecvd / elapsedSec.count()
-              << " Gbps over " << elapsedSec.count() << "s\n";
-            elapsedTime = milliseconds(0);
-            bytesRecvd = 0;
-          }
 
           // OK, all actions are valid now
           g->recvQueue.putSome(&actions[0],numRequests);
