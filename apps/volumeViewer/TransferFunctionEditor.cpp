@@ -258,38 +258,6 @@ void TransferFunctionEditor::updateDataValueRange()
   emit committed();
 }
 
-#if 0
-static void buildCarsonParaviewColorMap(std::vector<ColorMap> &colorMaps){
-  // Re-sample Carson's color map from paraview into a LinearTransfer functon color map
-  // since the ospray color maps don't let us specify values -> color mappings we need to
-  // re-sample it for each sample point since it assumes the colors you pass you want evenly
-  // spaced over the value range.
-  // These points are formatteD:
-  // value, R, G, B
-  const float RM_COLORS[] = {
-    0, 0.25490196078431399, 0.30980392156862702, 0.46274509803921599,
-    4.5454540382171702, 0, 0, 0,
-    33.333332061767599, 0.043137254901960798, 0.16078431372549001, 0.28235294117647097,
-    36.363636016845703, 0.070588235294117604, 0.247058823529412, 0.42745098039215701,
-    58.333332061767599, 0.0078431372549019607, 0.18039215686274501, 0.52549019607843095,
-    87.8787841796875, 0.20000000000000001, 0.623529411764706, 0.85098039215686305,
-    120.454544067383, 0.13725490196078399, 0.30588235294117599, 0.50980392156862697,
-    136.36363220214801, 0.47058823529411797, 0.64705882352941202, 0.70588235294117696,
-    157.575759887695, 0.81176470588235305, 0.98431372549019602, 1,
-    181.81817626953099, 0.82745098039215703, 0, 0,
-    194.69696044921901, 0.77254901960784295, 0.34901960784313701, 0.0039215686274509803,
-    250, 0.545098039215686, 0.25490196078431399, 0.078431372549019607
-  };
-  const size_t NUM_COLORS = sizeof(RM_COLORS) / sizeof(float);
-
-  size_t color_index = 0;
-  const int max_value = 255;
-  // We're re-sampling for a uchar dataset
-  for (int sample_val = 0; sample_val < max_value; ++sample_val) {
-  }
-}
-#endif
-
 void TransferFunctionEditor::loadColorMaps()
 {
   // Color maps based on ParaView default color maps.
@@ -310,12 +278,33 @@ void TransferFunctionEditor::loadColorMaps()
     194.69696044921901, 0.77254901960784295, 0.34901960784313701, 0.0039215686274509803,
     250, 0.545098039215686, 0.25490196078431399, 0.078431372549019607
   };
-  const size_t NUM_COLORS = (sizeof(RM_COLORS) / sizeof(float)) / 4;
+  const float DNS_COLORS[] = {
+    -0.098350569605827304, 0.25490196078431399, 0.30980392156862702, 0.46274509803921599,
+    -0.072822888470368705, 0, 0, 0,
+    0.088852439136708095, 0.043137254901960798, 0.16078431372549001, 0.28235294117647097,
+    0.105870900319762, 0.070588235294117604, 0.247058823529412, 0.42745098039215701,
+    0.229254701049531, 0.0078431372549019607, 0.18039215686274501, 0.52549019607843095,
+    0.39518463331324899, 0.20000000000000001, 0.623529411764706, 0.85098039215686305,
+    0.57813304818370703, 0.13725490196078399, 0.30588235294117599, 0.50980392156862697,
+    0.66747992654736499, 0.47058823529411797, 0.64705882352941202, 0.70588235294117696,
+    0.78660915482874105, 0.81176470588235305, 0.98431372549019602, 1,
+    0.92275675859843098, 0.82745098039215703, 0.56078431372548998, 0.0941176470588235,
+    1.0674136877059901, 0.77254901960784295, 0.20000000000000001, 0.086274509803921595,
+    1.3056720495223999, 0.545098039215686, 0.25490196078431399, 0.078431372549019607
+  };
+  size_t NUM_COLORS = (sizeof(RM_COLORS) / sizeof(float)) / 4;
   colors.clear();
   for (size_t i = 0; i < NUM_COLORS; ++i){
     colors.push_back(ospcommon::vec3f(RM_COLORS[i * 4 + 1], RM_COLORS[i * 4 + 2], RM_COLORS[i * 4 + 3]));
   }
   colorMaps.push_back(ColorMap("CarsonRM", colors));
+
+  NUM_COLORS = (sizeof(DNS_COLORS) / sizeof(float)) / 4;
+  colors.clear();
+  for (size_t i = 0; i < NUM_COLORS; ++i){
+    colors.push_back(ospcommon::vec3f(DNS_COLORS[i * 4 + 1], DNS_COLORS[i * 4 + 2], DNS_COLORS[i * 4 + 3]));
+  }
+  colorMaps.push_back(ColorMap("CarsonDNS", colors));
 
   // Jet.
   colors.clear();
