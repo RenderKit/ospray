@@ -24,6 +24,8 @@
 #include <QtGui>
 #include <QGLWidget>
 
+#include <chrono>
+
 struct Viewport
 {
   Viewport() : from(0,-1,0),
@@ -155,6 +157,8 @@ protected:
 
   /*! Timer to measure elapsed time over a single frame. */
   QTime renderFrameTimer;
+
+  std::chrono::milliseconds elapsedRenderTime = std::chrono::milliseconds(0);
 
   ospcommon::vec2i windowSize;
   Viewport viewport;

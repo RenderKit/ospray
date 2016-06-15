@@ -128,6 +128,7 @@ void QOSPRayWindow::paintGL()
   if(!renderingEnabled || !frameBuffer || !renderer)
     return;
 
+  using namespace std::chrono;
   // if we're benchmarking and we've completed the required number of warm-up frames, start the timer
   if(benchmarkFrames > 0 && frameCount == benchmarkWarmUpFrames) {
     std::cout << "starting benchmark timer" << std::endl;
@@ -187,8 +188,16 @@ void QOSPRayWindow::paintGL()
     glDisable(GL_BLEND);
   }
 
+  auto start = high_resolution_clock::now();
   ospRenderFrame(frameBuffer, renderer, OSP_FB_COLOR | OSP_FB_ACCUM);
+  auto end = high_resolution_clock::now();
+
   double framesPerSecond = 1000.0 / renderFrameTimer.elapsed();
+  if (frameCount >= benchmarkWarmUpFrames) {
+    std::cout << "Starting to record benchmark timings\n";
+    elapsedRenderTime += duration_cast<milliseconds>(end - start);
+  }
+
   char title[1024];  sprintf(title, "OSPRay Volume Viewer (%.4f fps)", framesPerSecond);
   if (showFrameRate == true) parent->setWindowTitle(title);
 
@@ -214,7 +223,7 @@ void QOSPRayWindow::paintGL()
   // quit if we're benchmarking and have exceeded the needed number of frames
   if(benchmarkFrames > 0 && frameCount >= benchmarkWarmUpFrames + benchmarkFrames) {
 
-    float elapsedSeconds = float(benchmarkTimer.elapsed()) / 1000.f;
+    double elapsedSeconds = duration_cast<duration<double, std::ratio<1>>>(elapsedRenderTime).count();
 
     std::cout << "benchmark: " << elapsedSeconds << " elapsed seconds ==> "
       << float(benchmarkFrames) / elapsedSeconds << " fps" << std::endl;
