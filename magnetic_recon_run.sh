@@ -16,9 +16,6 @@ DATA_PATH=/work/03160/will/data
 #((SPP = $SLURM_NNODES - 1))
 SPP=256
 
-# Print the expanded list of workers hosts so we can easily paste into osp_separate_launch
-#scontrol show hostname $SLURM_NODELIST > stamp-worker-nodes.txt
-# Pull the first 3 hosts from SLURM and use them to run lammps
 WORKER_HOSTS=`scontrol show hostname $SLURM_NODELIST | tr '\n' ',' | sed s/,$//`
 echo "Magnetic Reconnection bench using hosts $WORKER_HOSTS"
 set -x
