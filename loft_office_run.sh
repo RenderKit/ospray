@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DATA_PATH=${WORK}/data/LoftOffice
+DATA_PATH=${WORK}/../data/LoftOffice
 
 OSP_MPI="--osp:mpi"
 if [ $SLURM_NNODES -eq 1 ]; then
@@ -23,11 +23,11 @@ WORKER_HOSTS=`scontrol show hostname $SLURM_NODELIST | tr '\n' ',' | sed s/,$//`
 echo "Loft Office bench using hosts $WORKER_HOSTS"
 set -x
 cd $WORK_DIR
-ibrun ./ospModelViewer ${DATA_PATH}/LoftOffice/LoftOffice.obj $OSP_MPI \
+ibrun ./ospModelViewer ${DATA_PATH}/LoftOffice.obj $OSP_MPI \
 	--renderer pathtracer --bench-out ${OUT_DIR}/${SLURM_JOB_NAME}.ppm \
 	--max-depth 15 --spp $SPP --bench 25x25 --max-accum 1 \
   --accum-reset --nowin --1k \
 	-vp $CAM_VP -vu $CAM_VU -vi $CAM_VI \
-  --hdri-light 1 ${DATA_PATH}/LoftOffice/light_tent_by_lightmapltd.pfm \
-  --backplate ${DATA_PATH}/LoftOffice/background.ppm
+  --hdri-light 1 ${DATA_PATH}/light_tent_by_lightmapltd.pfm \
+  --backplate ${DATA_PATH}/background.ppm
 
