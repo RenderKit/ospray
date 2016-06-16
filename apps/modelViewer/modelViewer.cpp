@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <sstream>
 #include <string>
+#include <mpi.h>
 
 namespace ospray {
   using namespace ospcommon;
@@ -368,6 +369,8 @@ namespace ospray {
 
         writePPM(benchmarkImageOut.c_str(), g_windowSize.x, g_windowSize.y, p);
 
+        // Abort MPI
+        MPI_Abort(MPI_COMM_WORLD, 0);
         exit(0);
       }
       ++frameID;
