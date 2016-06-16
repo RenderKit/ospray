@@ -1,41 +1,39 @@
 #!/bin/bash
 
-# Trying minimal number of bricks for the nodes so each node gets a single brick
-# The data with this bricking is in the rm_min_brick* runs
-MIN_BRICK=1
-DATA_SCALING=0
-REPLICATED_DATA=0
-
 OSP_MPI="--osp:mpi"
 OSP_VIEWER_CMD="ibrun ./ospVolumeViewer"
 
 if [ $SLURM_NNODES -eq 1 ]; then
-	echo "Not passing --osp:mpi for single node run"
+	echo "Not passing --osp:mpi for single node/brick run"
 	OSP_MPI=""
   OSP_VIEWER_CMD="./ospVolumeViewer"
 	unset OSPRAY_DATA_PARALLEL
 else
+  ((NUM_BRICKS = $SLURM_NNODES - 1))
+  if [ -n "$RM_NUM_BRICKS" ]; then
+    echo "Overriding default num bricks = num nodes and setting to $RM_NUM_BRICKS"
+    NUM_BRICKS=$RM_NUM_BRICKS
+  fi
   if [ $MIN_BRICK -eq 1 ]; then
-    NUM_BRICKS=$SLURM_NNODES
-    if [ -n "$RM_NUM_BRICKS" ]; then
-      echo "Overriding default num bricks = num nodes and setting to $RM_NUM_BRICKS"
-      NUM_BRICKS=$RM_NUM_BRICKS
-    fi
     echo "Setting up data parallel grid for min brick run"
-    if [ $NUM_BRICKS -eq 3 ]; then
+    if [ $NUM_BRICKS -eq 1 ]; then
+      dp_grid=(1 1 1)
+    elif [ $NUM_BRICKS -eq 2 ]; then
       dp_grid=(2 1 1)
-    elif [ $NUM_BRICKS -eq 5 ]; then
+    elif [ $NUM_BRICKS -eq 4 ]; then
       dp_grid=(2 2 1)
-    elif [ $NUM_BRICKS -eq 9 ]; then
+    elif [ $NUM_BRICKS -eq 8 ]; then
       dp_grid=(2 2 2)
-    elif [ $NUM_BRICKS -eq 17 ]; then
+    elif [ $NUM_BRICKS -eq 16 ]; then
       dp_grid=(4 2 2)
-    elif [ $NUM_BRICKS -eq 33 ]; then
+    elif [ $NUM_BRICKS -eq 32 ]; then
       dp_grid=(4 4 2)
-    elif [ $NUM_BRICKS -eq 65 ]; then
+    elif [ $NUM_BRICKS -eq 64 ]; then
       dp_grid=(4 4 4)
-    elif [ $NUM_BRICKS -eq 129 ]; then
+    elif [ $NUM_BRICKS -eq 128 ]; then
       dp_grid=(8 4 4)
+    elif [ $NUM_BRICKS -eq 256 ]; then
+      dp_grid=(8 8 4)
     fi
   else
     dp_grid=(4 4 4)
@@ -55,8 +53,6 @@ fi
 # 1.75^3 scales the volume up to ~43GB
 rm_scale=(1.75 1.75 1.75)
 
-# TODO WILL: Min brick runs with these bricks, acutally get # bricks = # workers
-# and graph showing fixed nodes w/ 1 to 128 (or beyond to 256) bricks @ 128 nodes
 if [ $DATA_SCALING -eq 1 ]; then
   scale_factor=(1 1 1)
   if [ $SLURM_NNODES -eq 3 ]; then
@@ -73,6 +69,8 @@ if [ $DATA_SCALING -eq 1 ]; then
     scale_factor=(4 4 4)
   elif [ $SLURM_NNODES -eq 129 ]; then
     scale_factor=(8 4 4)
+  elif [ $SLURM_NNODES -eq 257 ]; then
+    scale_factor=(8 8 4)
   fi
   echo "Data Scale Factor ${scale_factor[*]}"
   rm_scale[0]=`echo "${rm_scale[0]} * ${scale_factor[0]}" | bc`
