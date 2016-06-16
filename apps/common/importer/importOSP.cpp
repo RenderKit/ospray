@@ -130,44 +130,67 @@ namespace ospray {
            node = node->NextSibling()) {
         
         // Volume size in voxels per dimension.
-        if (!strcmp(node->ToElement()->Name(), "dimensions")) 
-          { volume->dimensions = parseInt3(node);  continue; }
+        if (!strcmp(node->ToElement()->Name(), "dimensions")) {
+          volume->dimensions = parseInt3(node);
+          continue;
+        }
         
         // File containing a volume specification and / or voxel data.
-        if (!strcmp(node->ToElement()->Name(), "filename")) 
-          { volumeFilename = node->ToElement()->GetText();  continue; }
+        if (!strcmp(node->ToElement()->Name(), "filename")) {
+          volumeFilename = node->ToElement()->GetText();
+          continue;
+        }
         
         // Grid origin in world coordinates.
-        if (!strcmp(node->ToElement()->Name(), "gridOrigin")) 
-          { volume->gridOrigin = parseFloat3(node);  continue; }
+        if (!strcmp(node->ToElement()->Name(), "gridOrigin")) {
+          volume->gridOrigin = parseFloat3(node);
+          ospSetVec3f(volume->handle, "gridOrigin", (osp::vec3f&)volume->gridOrigin);
+          continue;
+        }
         
         // Grid spacing in each dimension in world coordinates.
-        if (!strcmp(node->ToElement()->Name(), "gridSpacing"))
-          { volume->gridSpacing = parseFloat3(node);  continue; }
+        if (!strcmp(node->ToElement()->Name(), "gridSpacing")) {
+          volume->gridSpacing = parseFloat3(node);
+          ospSetVec3f(volume->handle, "gridSpacing", (osp::vec3f&)volume->gridSpacing);
+          continue;
+        }
         
         // Sampling rate for ray casting based renderers.
-        if (!strcmp(node->ToElement()->Name(), "samplingRate")) 
-          { volume->samplingRate = parseFloat1(node);  continue; }
+        if (!strcmp(node->ToElement()->Name(), "samplingRate")) {
+          volume->samplingRate = parseFloat1(node);
+          ospSet1f(volume->handle, "samplingRate", volume->samplingRate);
+          continue;
+        }
         
         // Subvolume offset from origin within the full volume.
-        if (!strcmp(node->ToElement()->Name(), "subvolumeOffsets")) 
-          { volume->subVolumeOffsets = parseInt3(node);  continue; }
+        if (!strcmp(node->ToElement()->Name(), "subvolumeOffsets")) {
+          volume->subVolumeOffsets = parseInt3(node);
+          continue;
+        }
         
         // Subvolume dimensions within the full volume.
-        if (!strcmp(node->ToElement()->Name(), "subvolumeDimensions")) 
-          { volume->subVolumeDimensions = parseInt3(node);  continue; }
+        if (!strcmp(node->ToElement()->Name(), "subvolumeDimensions")) {
+          volume->subVolumeDimensions = parseInt3(node);
+          continue;
+        }
         
         // Subvolume steps in each dimension; can be used to subsample.
-        if (!strcmp(node->ToElement()->Name(), "subvolumeSteps")) 
-          { volume->subVolumeSteps = parseInt3(node);  continue; }
+        if (!strcmp(node->ToElement()->Name(), "subvolumeSteps")) {
+          volume->subVolumeSteps = parseInt3(node);
+          continue;
+        }
         
         // Voxel value range.
-        if (!strcmp(node->ToElement()->Name(), "voxelRange")) 
-          { volume->voxelRange = parseFloat2(node);  continue; }
+        if (!strcmp(node->ToElement()->Name(), "voxelRange")) {
+          volume->voxelRange = parseFloat2(node);
+          continue;
+        }
         
         // Voxel type string.
-        if (!strcmp(node->ToElement()->Name(), "voxelType")) 
-          { volume->voxelType = node->ToElement()->GetText();  continue; }
+        if (!strcmp(node->ToElement()->Name(), "voxelType")) {
+          volume->voxelType = node->ToElement()->GetText();
+          continue;
+        }
         
         // Error check.
         exitOnCondition(true, "unrecognized XML element type '" + 
