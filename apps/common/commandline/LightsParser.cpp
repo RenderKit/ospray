@@ -28,8 +28,8 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
     } else if (arg == "--hdri-light") {
       // Syntax for HDRI light is the same as Embree:
         // --hdri-light <intensity> <image file>.(pfm|ppm)
-        OSPLight ospHdri = m_renderer.newLight("hdri");
-        ospSetString(ospHdri, "name", "hdri_test");
+        auto ospHdri = m_renderer.newLight("hdri");
+        ospHdri.set("name", "hdri light");//   ospSetString(ospHdri, "name", "hdri_test");
         if (1) {
         ospSet3f(ospHdri, "up", 0.f, 1.f, 0.f);
         ospSet3f(ospHdri, "dir", 1.f, 0.f, 0.0f);
