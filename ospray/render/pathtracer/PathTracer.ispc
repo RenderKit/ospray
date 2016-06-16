@@ -143,7 +143,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     }
 
     // add light from virtual lights by intersecting them
-    if (depth < self->maxDepth)
+    if (depth < self->maxDepth)// connecting to a light is an extra depth;
     for (uniform int i = 0; i < self->numLights; i++) {
       const uniform Light *uniform l = self->lights[i];
       Light_EvalRes le = l->eval(l, lastDg, ray.dir);
@@ -194,6 +194,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         bsdf = mm->getBSDF(mm, &ctx, dg, ray, currentMedium);
 
     // direct lighting including shadows and MIS
+      //if (0)
     if (bsdf->type & BSDF_SMOOTH)
     {
       uniform int numLights = self->lights ? min(MAX_LIGHTS, self->numLights) : 0;
@@ -255,7 +256,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     //const vec3f transmission = make_vec3f(1,1,1);
     if (ne(transmission,make_vec3f(1.f))) {
       //print("transmission = % % % \n", (float)transmission.x, (float)transmission.y, (float)transmission.z);
-      Lw = Lw * powf(transmission, ray.t);
+      //Lw = Lw * powf(transmission, ray.t);
     }
 
     // update currentMedium if we hit a medium interface 

@@ -63,12 +63,12 @@ inline BSDF_SampleRes Dielectric_sample(const varying BSDF* uniform super,
   res.weight = make_vec3f(rsqrt(self->eta)); // solid angle compression
   return res;
 */
-  vec3f d = wo;
-  //vec3f d = make_vec3f(-wo.x, -wo.y, -wo.z);
+  //vec3f d = wo;
+  // We want the actual ray direction into the surface.
+  vec3f d = make_vec3f(-wo.x, -wo.y, -wo.z);
 
   vec3f N = getN(super);
-  float eta = self->eta;// ior(outside) / ior(inside)
-  //eta = 1.0 / eta;
+  float eta = 1.0 / self->eta;// ior(outside) / ior(inside)
   float cos1 = dot(d, N);
   float cos1_abs = cos1;
   if (cos1_abs < 0.0) {
