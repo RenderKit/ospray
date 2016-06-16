@@ -43,6 +43,9 @@ protected:
 
   int m_spp{1};
 
+  // LEDIAEV
+  int maxDepth{5};
+
 private:
 
   void finalize();

@@ -18,6 +18,7 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
     const std::string arg = av[i];
     if (arg == "--sun-dir") {
       if (!strcmp(av[i+1],"none")) {
+        ++i;
         m_defaultDirLight_direction = vec3f(0.f);
       } else {
         m_defaultDirLight_direction.x = atof(av[++i]);

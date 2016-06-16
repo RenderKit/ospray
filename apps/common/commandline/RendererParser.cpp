@@ -9,6 +9,8 @@ bool DefaultRendererParser::parse(int ac, const char **&av)
       m_rendererType = av[++i];
     } else if (arg == "--spp" || arg == "-spp") {
       m_spp = atoi(av[++i]);
+    } else if (arg == "--max-depth") {
+      maxDepth = atoi(av[++i]);
     }
   }
 
@@ -37,6 +39,9 @@ void DefaultRendererParser::finalize()
   }
 
   m_renderer.set("spp", m_spp);
+
+  // LEDIAEV
+  m_renderer.set("maxDepth", maxDepth);
 
   m_renderer.commit();
 }
