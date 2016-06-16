@@ -20,7 +20,8 @@ grep -ERIin "Edit[*:. \*\n;\+\=]{0,5}Axes" *
 
 grep -ERIin "" *
 
-scp -r lmlediae@visdemo.an.intel.com:/bertha/LLNL LLNL
+scp -r lmlediae@visdemo.an.intel.com:/<remote dir> <local dir>
+scp <file> lmlediae@vis-master.an.intel.com:/<dest dir>
 
 tar -zxvf data.tar.gz
 
@@ -29,4 +30,6 @@ vncserver (remote)
 vncviewer (local)
 
 
-./ospModelViewer --renderer pathtracer --max-depth 20 --hdri-light 0.5 "/home/lmlediae/git/po_fork/env_images/all_white_studio.pfm" "/home/lmlediae/Desktop/csafe_iso_modo1.obj"
+./ospGlutViewer --renderer pathtracer --max-depth 20 --hdri-light 1 "/home/lmlediae/git/po_fork/env_images/all_white_studio.pfm" "/home/lmlediae/git/ospray_data/new/csafe_iso_modo1.obj"
+
+./ospGlutViewer --renderer pathtracer --max-accum 5000 --max-depth 20 --sun-dir none --hdri-light 1 "/home/lmlediae/git/po_fork/env_images/LA_Downtown_Helipad_GoldenHour_3k.pfm"  "/home/lmlediae/git/ospray_data/new/csafe_iso_modo1.obj"
