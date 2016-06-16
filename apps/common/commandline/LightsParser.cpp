@@ -101,15 +101,15 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
         //ospCommit(ospHdri);
         lights.push_back(ospHdri.handle());
     } else if (arg == "--backplate") {
-      /*
+      
         FileName imageFile(av[++i]);
-        miniSG::Texture2D *backplate = miniSG::loadTexture(imageFile.path(), imageFile.base());
+        ospray::miniSG::Texture2D *backplate = ospray::miniSG::loadTexture(imageFile.path(), imageFile.base());
         if (backplate == NULL){
           std::cout << "Failed to load backplate texture '" << imageFile << "'" << std::endl;
         }
-        ospBackplate = createTexture2D(backplate);
-        ospSetObject(ospRenderer, "backplate", ospBackplate);
-        */
+        OSPTexture2D ospBackplate = createTexture2D(backplate);
+        m_renderer.set("backplate", ospBackplate);
+        
     }
   }
 
