@@ -67,6 +67,9 @@ struct Ray {
   int primID_hi64;
 
   void *uniform userData;
+
+  // LEDIAEV
+  uint32 ix, iy;
 };
 
 #define infinity (1e20f)

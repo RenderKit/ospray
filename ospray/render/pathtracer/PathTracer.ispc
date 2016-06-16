@@ -110,6 +110,13 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
   lastDg.Ns = ray.dir;
   lastDg.Ng = ray.dir;
 
+  //int32 n_embedded_geom = 0;
+  uniform Geometry *uniform last_geom = NULL;
+  uniform Geometry *uniform current_geom = NULL;
+
+  //print("self->maxDepth = % \n", self->maxDepth );
+
+  if (self->maxDepth > 0)
   do {
     traceRay(self->super.model, ray);
 
@@ -124,8 +131,11 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     // environment shading when nothing hit
     if (noHit(ray)) {
       maxLightDist = inf; // also include envLights (i.e. the ones in infinity)
-      if (straightPath)
-        sample.alpha = 1.0f - luminance(Lw);
+      if (straightPath) {
+        float a1 = luminance(Lw);
+        //print("a = % \n", a1);
+        sample.alpha = 1.0f - a1;
+      }
       if ((bool)self->backplate & straightPath) {
         L = L + Lw * get3f(self->backplate, clamp2edge(self->backplate, pixel));
         maxLightDist = 1e38; // backplate hides envLights (i.e. the ones at infinity)
@@ -133,6 +143,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     }
 
     // add light from virtual lights by intersecting them
+    if (depth < self->maxDepth)
     for (uniform int i = 0; i < self->numLights; i++) {
       const uniform Light *uniform l = self->lights[i];
       Light_EvalRes le = l->eval(l, lastDg, ray.dir);
@@ -142,6 +153,17 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     if (noHit(ray))
       break;
+
+    // We hit something
+
+    //print("pixel % % \n", ray.ix, ray.iy);
+
+    if (0) {
+    if (ray.ix < 300 || ray.ix > 500 || ray.iy < 300 || ray.iy > 500) {
+      L = make_vec3f(0,0,0);
+      break;
+    }
+    }
 
     // terminate after evaluation of lights and before next shading to always have both samples for MIS
     if (depth >= self->maxDepth)
@@ -155,6 +177,11 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         DG_MATERIALID|
         DG_NS|DG_NG|DG_FACEFORWARD|DG_NORMALIZE|DG_TEXCOORD|DG_COLOR|DG_TANGENTS
         );
+
+    //postIntersect(self->super.model, dg, ray,
+    //    DG_MATERIALID|
+    //    DG_NS|DG_NG|DG_NORMALIZE|DG_TEXCOORD|DG_COLOR|DG_TANGENTS
+    //    );
 
     // shade surface
     uniform ShadingContext ctx;
@@ -225,16 +252,26 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     // compute simple volumetric effect
     const vec3f transmission = currentMedium.transmission;
-    if (ne(transmission,make_vec3f(1.f)))
+    //const vec3f transmission = make_vec3f(1,1,1);
+    if (ne(transmission,make_vec3f(1.f))) {
+      //print("transmission = % % % \n", (float)transmission.x, (float)transmission.y, (float)transmission.z);
       Lw = Lw * powf(transmission, ray.t);
+    }
 
-    // update currentMedium if we hit a medium interface TODO: support nested dielectrics
+    // update currentMedium if we hit a medium interface 
+    // TODO: support nested dielectrics
     if (fs.type & BSDF_TRANSMISSION) {
+
+      //print("BSDF_TRANSMISSION\n");
+
       foreach_unique(uniMat in dg.material) {
         uniform PathTraceMaterial* uniform m = (uniform PathTraceMaterial *)uniMat;
-        if (m != NULL)
+        if (m != NULL) {
           m->selectNextMedium(m, currentMedium);
+        }
       }
+    } else {
+      //print("not BSDF_TRANSMISSION\n");
     }
 
     // keep lastBSDFPdf and lastDg when there was a Dirac transmission
@@ -251,6 +288,10 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
   } while (reduce_max(Lw) > self->minContribution);
 
   sample.rgb = L;
+  if (isnan(L.x) || isnan(L.y) || isnan(L.z)){
+    sample.rgb = make_vec3f(0.0f,0.0f,0.0f);
+    sample.alpha = 1.0f;
+  }
   return sample;
 }
 
@@ -270,6 +311,10 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
 
   screenSample.sampleID.x = ix;
   screenSample.sampleID.y = iy;
+
+  // LEDIAEV
+  screenSample.ray.ix = ix;
+  screenSample.ray.iy = iy;
 
   // init RNG
   RandomTEA rng_state; varying RandomTEA* const uniform rng = &rng_state;

@@ -664,6 +664,10 @@ namespace ospray {
         displayWall->size.y = atof(av[++i]);
       } else if (arg == "--max-depth") {
         maxDepth = atoi(av[++i]);
+
+
+        //std::cout << "max-depth = " << maxDepth << "\n";
+
       } else if (arg == "--max-accum") {
         maxAccum = atoi(av[++i]);
       } else if (arg == "--accum-reset") {
@@ -778,6 +782,11 @@ namespace ospray {
     ospModel = ospNewModel();
 
     ospRenderer = ospNewRenderer(rendererType.c_str());
+
+
+    ospSet1i(ospRenderer, "maxDepth", maxDepth);
+
+
     if (ospBackplate != NULL){
       ospSetObject(ospRenderer, "backplate", ospBackplate);
     }

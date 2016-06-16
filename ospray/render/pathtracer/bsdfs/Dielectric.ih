@@ -36,23 +36,109 @@ inline BSDF_SampleRes Dielectric_sample(const varying BSDF* uniform super,
 {
   const varying Dielectric* uniform self = (const varying Dielectric* uniform)super;
   BSDF_SampleRes res;
-
-  float cosThetaO = max(dot(wo, getN(super)), 0.0f);
-
-  // Fresnel term
-  float cosThetaT; // positive
-  float F = fresnelDielectricEx(cosThetaO, cosThetaT, self->eta);
   res.pdf = inf;
 
+  
+
+
+  //float cosThetaO = max(dot(wo, getN(super)), 0.0f);
+  //float cosThetaO = dot(wo, getN(super));
+  //if (cosThetaO < 0) {
+    //cosThetaO = -cosThetaO;
+  //}
+
+  // Fresnel term
+  //float cosThetaT; // positive
+  //float F = 1.0f;
+  //if (canReflect) {
+  //  F = fresnelDielectricEx(cosThetaO, cosThetaT, self->eta);
+  //}
+  
+
+//print("ss= %, F = %, eta = %\n",F,self->eta);
+
+/*
+  res.wi = refract(wo, getN(super), cosThetaO, cosThetaT, self->eta);
+  res.type = BSDF_SPECULAR_TRANSMISSION;
+  res.weight = make_vec3f(rsqrt(self->eta)); // solid angle compression
+  return res;
+*/
+  vec3f d = wo;
+  //vec3f d = make_vec3f(-wo.x, -wo.y, -wo.z);
+
+  vec3f N = getN(super);
+  float eta = self->eta;// ior(outside) / ior(inside)
+  //eta = 1.0 / eta;
+  float cos1 = dot(d, N);
+  float cos1_abs = cos1;
+  if (cos1_abs < 0.0) {
+    cos1_abs = -cos1_abs;
+  }
+  vec3f dt = cos1*N;
+  vec3f dp = d - dt;
+
+  bool canReflect = ((self->eta - 1.0) < -1.0e-6 || (self->eta - 1.0) > 1.0e-6);
+  bool headOn = ((cos1_abs - 1.0) > -1.0e-6 && (cos1_abs - 1.0) < 1.0e-6);
+  bool mustReflect=false;
+  float FresnelR;
+  vec3f dirR, dirT;
+  if (!canReflect) {
+    FresnelR = 0;
+    dirT = d;
+  } else {
+    if (headOn) {
+     FresnelR = (eta - 1.0)/(eta + 1.0);
+     FresnelR = FresnelR*FresnelR;
+     dirT = d;
+     dirR = make_vec3f(-d.x, -d.y, -d.z);
+    } else {
+      dirR = dp - dt;// already normalized.
+      
+      vec3f b = dp;
+      b = normalize(b);
+      float sin1 = dot(dp,b);
+      float sin2 = sin1/eta;
+      if (sin2 > 1.0) {// total internal reflection.
+        FresnelR = 1.0;
+        mustReflect = true;
+      } else {
+        float k = 1.0 - sin2*sin2;
+        if (k < 0.0) {
+          k = 0.0;
+        }
+        if (k > 1.0) {
+          k = 1.0;
+        }
+        float cos2 = sqrt(k);
+        vec3f N2 = dt;
+        N2 = normalize(N2);
+        dirT = N2*cos2 + b*sin2;
+        float c1 = cos1_abs;
+        float c2 = cos2;
+
+        float r1 = (eta*c1 - c2)    /(eta*c1 + c2);
+        float r2 = (c1     - eta*c2)/(c1     + eta*c2);
+        FresnelR = 0.5*(r1*r1 + r2*r2);
+      }
+    }
+  }
+
+  if (FresnelR < 0) {
+    FresnelR = 0;
+  }
+  if (FresnelR > 1.0) {
+    FresnelR = 1.0;
+  }
+  
   // Sample the reflection or the transmission
-  if (ss <= F) {
+  if ((ss < FresnelR && canReflect) || mustReflect) {
     // Reflection
-    res.wi = reflect(wo, getN(super), cosThetaO);
+    res.wi = dirR;//reflect(wo, getN(super), cosThetaO);
     res.type = BSDF_SPECULAR_REFLECTION;
     res.weight = make_vec3f(1.0f);
   } else {
     // Transmission
-    res.wi = refract(wo, getN(super), cosThetaO, cosThetaT, self->eta);
+    res.wi = dirT;
     res.type = BSDF_SPECULAR_TRANSMISSION;
     res.weight = make_vec3f(rsqrt(self->eta)); // solid angle compression
   }
