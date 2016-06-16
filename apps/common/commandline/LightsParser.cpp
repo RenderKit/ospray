@@ -25,6 +25,39 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
         m_defaultDirLight_direction.y = atof(av[++i]);
         m_defaultDirLight_direction.z = atof(av[++i]);
       }
+    } else if (arg == "--hdri-light") {
+      // Syntax for HDRI light is the same as Embree:
+        // --hdri-light <intensity> <image file>.(pfm|ppm)
+        OSPLight ospHdri = ospNewLight(ospRenderer, "hdri");
+        ospSetString(ospHdri, "name", "hdri_test");
+        if (1) {
+        ospSet3f(ospHdri, "up", 0.f, 1.f, 0.f);
+        ospSet3f(ospHdri, "dir", 1.f, 0.f, 0.0f);
+        } else {// up = z
+            ospSet3f(ospHdri, "up", 0.f, 0.f, 1.f);
+            ospSet3f(ospHdri, "dir", 0.f, 1.f, 0.0f);
+        }
+        ospSet1f(ospHdri, "intensity", atof(av[++i]));
+        FileName imageFile(av[++i]);
+        miniSG::Texture2D *lightMap = miniSG::loadTexture(imageFile.path(), imageFile.base());
+        if (lightMap == NULL){
+          std::cout << "Failed to load hdri-light texture '" << imageFile << "'" << std::endl;
+        } else {
+            std::cout << "Successfully loaded hdri-light texture '" << imageFile << "'" << std::endl;
+
+        }
+        OSPTexture2D ospLightMap = createTexture2D(lightMap);
+        ospSetObject(ospHdri, "map", ospLightMap);
+        ospCommit(ospHdri);
+        lights.push_back(ospHdri);
+    } else if (arg == "--backplate") {
+        FileName imageFile(av[++i]);
+        miniSG::Texture2D *backplate = miniSG::loadTexture(imageFile.path(), imageFile.base());
+        if (backplate == NULL){
+          std::cout << "Failed to load backplate texture '" << imageFile << "'" << std::endl;
+        }
+        ospBackplate = createTexture2D(backplate);
+        ospSetObject(ospRenderer, "backplate", ospBackplate);
     }
   }
 
