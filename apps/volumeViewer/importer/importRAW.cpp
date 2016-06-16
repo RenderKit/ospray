@@ -122,6 +122,9 @@ namespace ospray {
         ospSetVec3i(volume->handle, "dimensions", (osp::vec3i&)volumeDimensions);
       PRINT(volumeDimensions);
 
+      ospSetVec3f(volume->handle, "gridOrigin", (osp::vec3f&)volume->gridOrigin);
+      ospSetVec3f(volume->handle, "gridSpacing", (osp::vec3f&)volume->gridSpacing);
+
       // To avoid hitting memory limits or exceeding the 2GB limit in MPIDevice::ospSetRegion we
       // set the volume data in at 1.5GB chunks
       // TODO How to compute these chunks, they must be convex as well, e.g. we can't set
