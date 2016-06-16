@@ -92,6 +92,7 @@ namespace ospray {
       vec3i subVolumeDimensions {-1};
       vec3i subVolumeSteps {-1};
       vec3i dimensions {-1};
+      vec3f scaleFactor{1};
 
       std::string voxelType;
     };

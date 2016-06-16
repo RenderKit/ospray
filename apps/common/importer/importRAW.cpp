@@ -118,8 +118,13 @@ namespace ospray {
         // Update the provided dimensions of the volume for the subvolume specified.
         ospSetVec3i(volume->handle, "dimensions", (osp::vec3i&)importVolumeDimensions);
       }
-      else
-        ospSetVec3i(volume->handle, "dimensions", (osp::vec3i&)volumeDimensions);
+      else {
+        vec3i dims = volumeDimensions;
+        if (volume->scaleFactor != vec3f(1.f)) {
+          dims = vec3i(vec3f(dims) * volume->scaleFactor);
+        }
+        ospSetVec3i(volume->handle, "dimensions", (osp::vec3i&)dims);
+      }
       PRINT(volumeDimensions);
 
       // To avoid hitting memory limits or exceeding the 2GB limit in MPIDevice::ospSetRegion we
@@ -299,6 +304,10 @@ namespace ospray {
         //   delete [] subvolumeRowData;
       }
 
+      if (volume->scaleFactor != vec3f(1.f)) {
+        volume->dimensions = vec3i(vec3f(volume->dimensions) * volume->scaleFactor);
+        std::cout << "#importRAW: scaled volume to " << volume->dimensions << std::endl;
+      }
       volume->bounds = ospcommon::empty;
       volume->bounds.extend(volume->gridOrigin);
       volume->bounds.extend(volume->gridOrigin+ vec3f(volume->dimensions) * volume->gridSpacing);
