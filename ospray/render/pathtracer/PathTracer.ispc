@@ -111,8 +111,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
   lastDg.Ng = ray.dir;
 
   //int32 n_embedded_geom = 0;
-  uniform Geometry *uniform last_geom = NULL;
-  uniform Geometry *uniform current_geom = NULL;
+  bool insideVolume = false;
 
   //print("self->maxDepth = % \n", self->maxDepth );
 
@@ -253,17 +252,39 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     // compute simple volumetric effect
     const vec3f transmission = currentMedium.transmission;
-    //const vec3f transmission = make_vec3f(1,1,1);
+    //const vec3f transmission = make_vec3f(-0.000694827, -0.0068415, -0.0109111);
+
+    //if (ne(transmission,make_vec3f(0.f)))
     if (ne(transmission,make_vec3f(1.f))) {
-      //print("transmission = % % % \n", (float)transmission.x, (float)transmission.y, (float)transmission.z);
+      //
       //Lw = Lw * powf(transmission, ray.t);
+     // Lw = Lw * expf(transmission * ray.t);
     }
+
+    if (insideVolume) {
+      foreach_unique(uniMat in dg.material) {
+        uniform PathTraceMaterial* uniform m = (uniform PathTraceMaterial *)uniMat;
+        vec3f absorption;
+        if (m != NULL) {
+          absorption = m->getAbsorption(m);
+          Lw = Lw * expf(absorption * ray.t);
+        }
+      }
+     // print("insideVolume \n\n");
+      //print("transmission = % % % \n\n\n", (float)transmission.x, (float)transmission.y, (float)transmission.z);
+    }
+
+    //vec3f absorptionCoeff = getAbsorptionCoefficient(bsdf);
 
     // update currentMedium if we hit a medium interface 
     // TODO: support nested dielectrics
     if (fs.type & BSDF_TRANSMISSION) {
 
       //print("BSDF_TRANSMISSION\n");
+
+      // This is a quick fix. This only works if all volumes are disjoint (some space is between them and 
+      // they don't overlap).
+      insideVolume = !insideVolume;
 
       foreach_unique(uniMat in dg.material) {
         uniform PathTraceMaterial* uniform m = (uniform PathTraceMaterial *)uniMat;
@@ -287,6 +308,16 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     setRay(ray, dg.P, fs.wi, self->super.epsilon, inf);
     depth++;
   } while (reduce_max(Lw) > self->minContribution);
+
+  if (0) {
+  if (insideVolume) {
+    L = make_vec3f(0.0f,1.0f,0.0f);
+    sample.alpha = 1.0f;
+  } else {
+    L = make_vec3f(0.0f,0.0f,0.0f);
+    sample.alpha = 1.0f;
+  }
+  }
 
   sample.rgb = L;
   if (isnan(L.x) || isnan(L.y) || isnan(L.z)){

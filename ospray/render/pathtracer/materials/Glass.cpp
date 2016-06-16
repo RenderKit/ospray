@@ -33,12 +33,23 @@ namespace ospray {
         const vec3f& transmissionOutside
           = getParam3f("transmissionOutside",vec3f(1.f));
 
+          std::cout << "transmission = " << transmissionInside.x << " " << transmissionInside.y << " " << transmissionInside.z << "\n";
+
         const float etaInside = getParamf("etaInside", getParamf("eta", 1.5f));
         const float etaOutside = getParamf("etaOutside", 1.f);
 
+        //const vec3f& absorptionColor = getParam3f("absorptionColor",vec3f(1.0f));
+        const float absorptionDistance = getParamf("absorptionDistance", 0.0f);
+
+        // Why is "absorptionColor" not found, while "color" is found???
+        const vec3f& absorptionColor = getParam3f("transmission",getParam3f("color",vec3f(1.f)));
+
+        std::cout << "absCol = " << absorptionColor.x << " " << absorptionColor.y << " " << absorptionColor.z << ", absDist = " << absorptionDistance << "\n\n";
+
         ispcEquivalent = ispc::PathTracer_Glass_create
           (etaInside, (const ispc::vec3f&)transmissionInside,
-           etaOutside, (const ispc::vec3f&)transmissionOutside);
+           etaOutside, (const ispc::vec3f&)transmissionOutside,
+           absorptionDistance, (const ispc::vec3f&)absorptionColor);
       }
     };
 

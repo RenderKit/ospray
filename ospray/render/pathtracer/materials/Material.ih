@@ -26,6 +26,8 @@
 
 struct PathTraceMaterial;
 
+typedef vec3f (*PathTraceMaterial_GetAbsorptionFunc)(const uniform PathTraceMaterial* uniform self);
+
 typedef const varying BSDF* uniform (*PathTraceMaterial_GetBSDFFunc)(const uniform PathTraceMaterial* uniform self,
                                                                      uniform ShadingContext* uniform ctx,
                                                                      /*! The point to shade on a surface. */
@@ -46,15 +48,19 @@ typedef vec3f (*PathTraceMaterial_GetTransparencyFunc)(const uniform PathTraceMa
 typedef void (*PathTraceMaterial_SelectNextMediumFunc)(const uniform PathTraceMaterial* uniform self,
                                                        Medium& currentMedium);
 
+
+
 struct PathTraceMaterial
 {
   Material material;
   PathTraceMaterial_GetBSDFFunc getBSDF;
   PathTraceMaterial_GetTransparencyFunc getTransparency;
   PathTraceMaterial_SelectNextMediumFunc selectNextMedium;
+  PathTraceMaterial_GetAbsorptionFunc getAbsorption;
 };
 
 void PathTraceMaterial_Constructor(uniform PathTraceMaterial* uniform self,
                                    uniform PathTraceMaterial_GetBSDFFunc getBSDF,
                                    uniform PathTraceMaterial_GetTransparencyFunc getTransparency,
-                                   uniform PathTraceMaterial_SelectNextMediumFunc selectNextMedium);
+                                   uniform PathTraceMaterial_SelectNextMediumFunc selectNextMedium,
+                                   uniform PathTraceMaterial_GetAbsorptionFunc getAbsorption);

@@ -23,6 +23,10 @@ struct Glass
 
   Medium mediumInside;
   Medium mediumOutside;
+
+  float absorptionDistance;
+  vec3f absorptionColor;
+  vec3f absorption_k;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -69,17 +73,51 @@ void Glass_selectNextMedium(const uniform PathTraceMaterial* uniform super,
     currentMedium = self->mediumOutside;
 }
 
+vec3f Glass_getAbsorption(const uniform PathTraceMaterial* uniform material)
+{
+  const uniform Glass* uniform self = (const uniform Glass* uniform)material;
+
+  vec3f r = make_vec3f(self->absorption_k.x,self->absorption_k.y,self->absorption_k.z);
+
+  return r;
+}
+
 void Glass_Constructor(uniform Glass* uniform self,
                        uniform float iorInside,
                        const uniform vec3f& transmissionInside,
                        uniform float iorOutside,
-                       const uniform vec3f& transmissionOutside)
+                       const uniform vec3f& transmissionOutside,
+                       uniform float absDistance,
+                       const uniform vec3f& absColor)
 {
-  PathTraceMaterial_Constructor(&self->super, Glass_getBSDF, Glass_getTransparency, Glass_selectNextMedium);
+  PathTraceMaterial_Constructor(&self->super, Glass_getBSDF, Glass_getTransparency, Glass_selectNextMedium, Glass_getAbsorption);
   self->mediumInside.ior           = iorInside;
   self->mediumInside.transmission  = transmissionInside;
   self->mediumOutside.ior          = iorOutside;
   self->mediumOutside.transmission = transmissionOutside;
+  self->absorptionDistance = absDistance;
+  self->absorptionColor = absColor;
+
+  //print("absColor = % % %, dist = % \n\n",absColor.x/absDistance, absColor.y/absDistance, absColor.z/absDistance, absDistance);
+
+  if (absDistance > 1.0e-6) {
+    if (absColor.x > 1.0e-6)
+      self->absorption_k.x = log(absColor.x)/absDistance;
+    else 
+      self->absorption_k.x = 0;
+
+    if (absColor.y > 1.0e-6)
+      self->absorption_k.y = log(absColor.y)/absDistance;
+    else 
+      self->absorption_k.y = 0;
+
+    if (absColor.z > 1.0e-6)
+      self->absorption_k.z = log(absColor.z)/absDistance;
+    else 
+      self->absorption_k.z = 0;
+  }
+
+ // print("k = % % %\n\n", self->absorption_k.x, self->absorption_k.y, self->absorption_k.z);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -88,9 +126,12 @@ void Glass_Constructor(uniform Glass* uniform self,
 export void* uniform PathTracer_Glass_create(uniform float iorInside,
                                              const uniform vec3f& transmissionInside,
                                              uniform float iorOutside,
-                                             const uniform vec3f& transmissionOutside)
+                                             const uniform vec3f& transmissionOutside,
+                                             uniform float absorptionDistance,
+                                             const uniform vec3f& absorptionColor)
 {
   uniform Glass* uniform self = uniform new uniform Glass;
-  Glass_Constructor(self, iorInside, transmissionInside, iorOutside, transmissionOutside);
+  Glass_Constructor(self, iorInside, transmissionInside, iorOutside, transmissionOutside,
+    absorptionDistance,absorptionColor);
   return self;
 }

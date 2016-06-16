@@ -249,7 +249,7 @@ static void intersectionFilter(void* uniform ptr,   /*!< pointer to user data */
 {
   uniform Geometry *uniform geom = (uniform Geometry *uniform)ptr;
   if (ray.intersectionFilter) {
-    ray.intersectionFilter(geom,(varying Ray &)ray);
+    ray.userData(geom,(varying Ray &)ray);
   }
 }
 #endif
