@@ -19,6 +19,7 @@
 #include "ospray/volume/DataDistributedBlockedVolume.h"
 #include "ospray/common/Core.h"
 #include "ospray/transferFunction/TransferFunction.h"
+#include "ospray/volume/GhostBlockBrickedVolume.h"
 #if EXP_DATA_PARALLEL
 #include "ospray/mpi/MPICommon.h"
 #endif
@@ -242,7 +243,11 @@ namespace ospray {
           
           
           if (block->isMine) {
+#ifdef EXP_NEW_BB_VOLUME_KERNELS
+            Ref<Volume> volume = new GhostBlockBrickedVolume;
+#else
             Ref<Volume> volume = new BlockBrickedVolume;
+#endif
             vec3i blockDims = block->domain.upper - block->domain.lower;
             volume->findParam("dimensions",1)->set(blockDims);
             volume->findParam("gridOrigin",1)->set(block->bounds.lower);

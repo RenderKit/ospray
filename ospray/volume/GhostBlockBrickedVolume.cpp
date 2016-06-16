@@ -94,16 +94,47 @@ namespace ospray {
       }
     }
 #endif
-    // Copy voxel data into the volume.
-    const int NTASKS = regionSize.y * regionSize.z;
 
+    scaleFactor = getParam3f("scaleFactor", vec3f(-1.f));
+    const bool upsampling = scaleFactor.x > 0 && scaleFactor.y > 0 && scaleFactor.z > 0;
+    const vec3i scaledRegionSize = vec3i(scaleFactor * vec3f(regionSize));
+    const vec3i scaledRegionCoords = vec3i(scaleFactor * vec3f(regionCoords));
+
+    void *scaledSource = nullptr;
+    if (upsampling) {
+      if (voxelType == "uchar") {
+        scaledSource = malloc(sizeof(unsigned char) * size_t(scaledRegionSize.x) * size_t(scaledRegionSize.y) * size_t(scaledRegionSize.z));
+        upsampleRegion((unsigned char *)source, (unsigned char *)scaledSource, regionSize, scaledRegionSize);
+      }
+      else if (voxelType == "ushort") {
+        scaledSource = malloc(sizeof(unsigned short) * size_t(scaledRegionSize.x) * size_t(scaledRegionSize.y) * size_t(scaledRegionSize.z));
+        upsampleRegion((unsigned short *)source, (unsigned short *)scaledSource, regionSize, scaledRegionSize);
+      }
+      else if (voxelType == "float") {
+        scaledSource = malloc(sizeof(float) * size_t(scaledRegionSize.x) * size_t(scaledRegionSize.y) * size_t(scaledRegionSize.z));
+        upsampleRegion((float *)source, (float *)scaledSource, regionSize, scaledRegionSize);
+      }
+      else if (voxelType == "double") {
+        scaledSource = malloc(sizeof(double) * size_t(scaledRegionSize.x) * size_t(scaledRegionSize.y) * size_t(scaledRegionSize.z));
+        upsampleRegion((double *)source, (double *)scaledSource, regionSize, scaledRegionSize);
+      }
+    }
+
+    // Copy voxel data into the volume.
+    const int NTASKS = upsampling ? scaledRegionSize.y * scaledRegionSize.z : regionSize.y * regionSize.z;
     parallel_for(NTASKS, [&](int taskIndex){
         ispc::GBBV_setRegion(ispcEquivalent,
-                             source,
-                             (const ispc::vec3i &)regionCoords,
-                             (const ispc::vec3i &)regionSize,
+                             upsampling ? scaledSource : source,
+                             upsampling ? (const ispc::vec3i &)scaledRegionCoords
+                                : (const ispc::vec3i &)regionCoords,
+                             upsampling ? (const ispc::vec3i &)scaledRegionSize
+                                : (const ispc::vec3i &)regionSize,
                              taskIndex);
     });
+
+    if (upsampling) {
+      free(scaledSource);
+    }
 
     return true;
   }

@@ -69,6 +69,9 @@ namespace ospray {
     void computeVoxelRange(const T* source, const size_t &count);
 #endif
 
+    template<typename T>
+    void upsampleRegion(const T *source, T *out, const vec3i &regionSize, const vec3i &scaledRegionSize);
+
     //! build the accelerator - allows child class (data distributed) to avoid
     //! building..
     virtual void buildAccelerator();
@@ -93,6 +96,9 @@ namespace ospray {
 
     //! Voxel type.
     std::string voxelType;
+
+    //! Scale factor for the volume
+    vec3f scaleFactor;
   };
 
 // Inlined member functions ///////////////////////////////////////////////////
@@ -126,6 +132,18 @@ namespace ospray {
     }
   }
 #endif
+    template<typename T>
+    void StructuredVolume::upsampleRegion(const T *source, T *out, const vec3i &regionSize, const vec3i &scaledRegionSize){
+      for (size_t z = 0; z < scaledRegionSize.z; ++z){
+        parallel_for(scaledRegionSize.x * scaledRegionSize.y, [&](int taskID){
+          int x = taskID % scaledRegionSize.x;
+          int y = taskID / scaledRegionSize.x;
+          const int idx = static_cast<int>(z / scaleFactor.z) * regionSize.x * regionSize.y
+              + static_cast<int>(y / scaleFactor.y) * regionSize.x + static_cast<int>(x / scaleFactor.x);
+          out[z * scaledRegionSize.y * scaledRegionSize.x + y * scaledRegionSize.x + x] = source[idx];
+        });
+      }
+    }
 
 } // ::ospray
 
