@@ -50,6 +50,9 @@ namespace ospray {
           vec3f Tf = getParam3f("Tf", getParam3f("tf", vec3f(0.0f)));
 
           if (reduce_max(Kd + Ks + Tf) > 1.0) {
+#if 1
+            std::cout << "#osp:PT: warning: OBJ material produces energy (Kd + Ks + Tf must be <= 1)" << std::endl;
+#else
             std::cout << "#osp:PT: warning: OBJ material produces energy (Kd + Ks + Tf must be <= 1), re-normalizing" << std::endl;
             Kd = 0.9f * Kd;
             const float rsum = 1.f / reduce_max(Kd + Kd + Tf);
@@ -58,6 +61,7 @@ namespace ospray {
               Ks *= rsum;
               Tf *= rsum;
             }
+#endif
           }
 
           ispc::PathTracer_OBJ_set(ispcEquivalent,
