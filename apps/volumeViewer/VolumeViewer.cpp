@@ -194,7 +194,7 @@ void VolumeViewer::addGeometry(std::string filename)
 
   // If successful, commit the triangle mesh and add it to all models.
   // if(TriangleMeshFile::importTriangleMesh(filename, triangleMesh) != NULL) {
-  ospray::vv_importer::Group *newStuff = ospray::vv_importer::import(filename);
+  ospray::importer::Group *newStuff = ospray::importer::import(filename);
   if (!newStuff) return;
   if (newStuff->geometry.size() != 1) return;
   
@@ -423,7 +423,7 @@ void VolumeViewer::importObjectsFromFile(const std::string &filename)
   
   // Load OSPRay objects from a file.
   //  OSPObject *objects = ObjectFile::importObjects(filename.c_str());
-  ospray::vv_importer::Group *imported = ospray::vv_importer::import(filename);
+  ospray::importer::Group *imported = ospray::importer::import(filename);
   assert(imported);
 
 #if 1
@@ -449,7 +449,7 @@ void VolumeViewer::importObjectsFromFile(const std::string &filename)
     if (ownModelPerObject)
       modelStates.push_back(ModelState(ospNewModel()));
     
-    ospray::vv_importer::Volume *vol = imported->volume[i];
+    ospray::importer::Volume *vol = imported->volume[i];
     assert(vol);
     // For now we set the same transfer function on all volumes.
     ospSetObject(vol->handle, "transferFunction", transferFunction);

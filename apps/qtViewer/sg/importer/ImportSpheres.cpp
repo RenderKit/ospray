@@ -27,7 +27,7 @@
 // stl
 #include <map>
 // xml
-#include "apps/common/xml/XML.h"
+#include "common/xml/XML.h"
 // stdlib, for mmap
 #include <sys/types.h>
 #include <sys/stat.h>

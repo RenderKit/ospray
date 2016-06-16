@@ -22,7 +22,7 @@
 // stl
 #include <map>
 // xml
-#include "apps/common/xml/XML.h"
+#include "common/xml/XML.h"
 // ospcommon
 #include "common/vec.h"
 

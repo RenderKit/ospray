@@ -113,7 +113,7 @@ namespace ospray {
 
         async_endFrame();
 
-        return dfb->endFrame(0.f);
+        return inf; // irrelevant on slave
       }
 
       std::string Slave::toString() const

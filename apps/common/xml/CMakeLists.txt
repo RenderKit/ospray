@@ -14,16 +14,21 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-CONFIGURE_OSPRAY()
+set(LIBRARY_NAME ospray_xml)
 
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray)
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
+add_definitions(-Dospray_xml_EXPORTS)
 
-ADD_LIBRARY(ospray_xml SHARED XML.cpp)
+add_library(${LIBRARY_NAME} SHARED
+  XML.cpp
+)
 
-TARGET_LINK_LIBRARIES(ospray_xml ospray ospray_common)
-OSPRAY_SET_LIBRARY_VERSION(ospray_xml)
-INSTALL(TARGETS ospray_xml
+target_link_libraries(${LIBRARY_NAME}
+  ospray_common
+)
+
+ospray_set_library_version(${LIBRARY_NAME})
+
+install(TARGETS ${LIBRARY_NAME}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT lib
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel

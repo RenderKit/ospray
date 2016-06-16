@@ -30,16 +30,7 @@
 #include <unistd.h>
 #endif
 
-#ifdef _WIN32
-#  ifdef ospray_glut3d_EXPORTS
-#    define OSPRAY_GLUT3D_INTERFACE __declspec(dllexport)
-#  else
-#    define OSPRAY_GLUT3D_INTERFACE __declspec(dllimport)
-#  endif
-#else
-#  define OSPRAY_GLUT3D_INTERFACE
-#endif
-
+#include "common/widgets/Glut3dExport.h"
 
 namespace ospray {
   //! dedicated namespace for 3D glut viewer widget
@@ -79,7 +70,7 @@ namespace ospray {
       // this is the fct that gets called when any mouse button got
       // pressed or released in the associated window
       OSPRAY_GLUT3D_INTERFACE virtual void button(Glut3DWidget *widget,
-                                                  const vec2i &pos) {}
+                                                  const vec2i &pos);
       /*! key press handler - override this fct to catch keyboard. */
       OSPRAY_GLUT3D_INTERFACE virtual void keypress(Glut3DWidget *widget,
                                                     const int32_t key);
@@ -175,8 +166,8 @@ namespace ospray {
                           its values get changed. */
 
         vec3f from;
-        vec3f up;
         vec3f at;
+        vec3f up;
         float openingAngle; //!< in radians, along Y direction
         float aspect; //!< aspect ratio X:Y
         // float focalDistance;

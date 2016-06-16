@@ -43,9 +43,10 @@ namespace ospray {
     size_t numMyTiles()  const { return myTiles.size(); }
 
     int accumId;
+    float *tileErrorBuffer; /*!< holds error per tile, for variance estimation / stopping */
     int32 accumID(const vec2i &) override { return accumId; }
-    float tileError(const vec2i &) override { return inf; }
-    float endFrame(const float) override { return inf; }
+    float tileError(const vec2i &tile) override;
+    float endFrame(const float errorThreshold) override;
 
     /*! color buffer and depth buffer on master */
 
@@ -119,7 +120,10 @@ namespace ospray {
 
       void accumulate(const ospray::Tile &tile);
 
+      float error; // estimated variance of this tile
+      // TODO: dynamically allocate to save memory when no ACCUM or VARIANCE
       ospray::Tile __aligned(64) accum;
+      ospray::Tile __aligned(64) variance;
       /* iw: TODO - have to change this. right now, to be able to give
          the 'postaccum' pixel op a readily normalized tile we have to
          create a local copy (the tile stores only the accum value,
@@ -242,6 +246,7 @@ namespace ospray {
         compress the color data */
     struct MasterTileMessage_RGBA_I8 : public mpi::async::CommLayer::Message {
       vec2i coords;
+      float error;
       uint32 color[TILE_SIZE][TILE_SIZE];
     };
 
@@ -249,20 +254,21 @@ namespace ospray {
         compress the color data */
     struct MasterTileMessage_RGBA_F32 : public mpi::async::CommLayer::Message {
       vec2i coords;
+      float error;
       vec4f color[TILE_SIZE][TILE_SIZE];
     };
 
-    /*! message sent to the master when a tile is finished. Todo:
-        compress the color data */
+    /*! message sent to the master when a tile is finished */
     struct MasterTileMessage_NONE : public mpi::async::CommLayer::Message {
       vec2i coords;
+      float error;
     };
 
     /*! message sent from one node's instance to another, to tell that
         instance to write that tile */
     struct WriteTileMessage : public mpi::async::CommLayer::Message {
       // TODO: add compression of pixels during transmission
-      vec2i coords;
+      vec2i coords; // XXX redundant: it's also in tile.region.lower
       ospray::Tile tile;
     };
 
@@ -278,10 +284,14 @@ namespace ospray {
                            size_t myHandle,
                            ColorBufferFormat colorBufferFormat,
                            bool hasDepthBuffer,
-                           bool hasAccumBuffer);
+                           bool hasAccumBuffer,
+                           bool hasVarianceBuffer);
     //! destructor
     ~DistributedFrameBuffer()
-    { freeTiles(); }
+    {
+      freeTiles();
+      alignedFree(tileErrorBuffer);
+    }
 
     // ==================================================================
     // framebuffer / device interface
@@ -342,12 +352,12 @@ namespace ospray {
     /*! return tile descriptor for given pixel coordinates. this tile
       ! may or may not belong to current instance */
     inline TileDesc *getTileDescFor(const vec2i &coords) const
-    { return allTiles[getTileIDof(coords.x,coords.y)]; }
+    { return allTiles[getTileIDof(coords)]; }
 
     /*! return the tile ID for given pair of coordinates. this tile
         may or may not belong to current instance */
-    inline size_t getTileIDof(size_t x, size_t y) const
-    { return (x/TILE_SIZE)+(y/TILE_SIZE)*numTiles.x; }
+    inline size_t getTileIDof(const vec2i &c) const
+    { return (c.x/TILE_SIZE)+(c.y/TILE_SIZE)*numTiles.x; }
 
     //! \brief common function to help printf-debugging
     /*! \detailed Every derived class should overrride this! */

@@ -361,6 +361,7 @@ namespace ospray {
       FrameBuffer::ColorBufferFormat colorBufferFormat = mode; //FrameBuffer::RGBA_UINT8;//FLOAT32;
       bool hasDepthBuffer = (channels & OSP_FB_DEPTH)!=0;
       bool hasAccumBuffer = (channels & OSP_FB_ACCUM)!=0;
+      bool hasVarianceBuffer = (channels & OSP_FB_VARIANCE)!=0;
 
       ObjectHandle handle = ObjectHandle::alloc();
       
@@ -368,7 +369,7 @@ namespace ospray {
                                                    size,
                                                    handle,
                                                    colorBufferFormat,
-                                                   hasDepthBuffer,hasAccumBuffer);
+                                                   hasDepthBuffer,hasAccumBuffer,hasVarianceBuffer);
       fb->refInc();
       ObjectHandle::assign(handle,fb);
       cmd.newCommand(CMD_FRAMEBUFFER_CREATE);
@@ -389,8 +390,6 @@ namespace ospray {
 
       ObjectHandle handle = (const ObjectHandle &)_fb;
       FrameBuffer *fb = (FrameBuffer *)handle.lookup();
-
-      LocalFrameBuffer *lfb = (LocalFrameBuffer*)fb;
 
       switch (channel) {
       case OSP_FB_COLOR: return fb->mapColorBuffer();
@@ -836,10 +835,15 @@ namespace ospray {
     void MPIDevice::frameBufferClear(OSPFrameBuffer _fb,
                                      const uint32 fbChannelFlags)
     {
+      ObjectHandle handle = (const ObjectHandle &)_fb;
       cmd.newCommand(CMD_FRAMEBUFFER_CLEAR);
-      cmd.send((const ObjectHandle&)_fb);
+      cmd.send(handle);
       cmd.send((int32)fbChannelFlags);
       cmd.flush();
+
+      // also clear FB on master, i.e. clear error buffer for variance estimation
+      FrameBuffer *fb = (FrameBuffer *)handle.lookup();
+      fb->clear(fbChannelFlags);
     }
 
     /*! remove an existing geometry from a model */
@@ -866,7 +870,6 @@ namespace ospray {
                                 OSPRenderer _renderer, 
                                 const uint32 fbChannelFlags)
     {
-      double T0 = getSysTime();
       const ObjectHandle handle = (const ObjectHandle&)_fb;
       // const ObjectHandle handle = (const ObjectHandle&)_sc;
       // SwapChain *sc = (SwapChain *)handle.lookup();
