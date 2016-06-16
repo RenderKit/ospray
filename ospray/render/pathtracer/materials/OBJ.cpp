@@ -44,13 +44,25 @@ namespace ospray {
           linear2f rot_Bump   = xform_Bump.l.orthogonal().transposed();
 
           const float d = getParam1f("d", getParam1f("alpha", 1.f));
-          const vec3f Kd = getParam3f("Kd", getParam3f("kd", getParam3f("color", vec3f(0.8f))));
-          const vec3f Ks = getParam3f("Ks", getParam3f("ks", vec3f(0.f)));
+          vec3f Kd = getParam3f("Kd", getParam3f("kd", getParam3f("color", vec3f(0.8f))));
+          vec3f Ks = getParam3f("Ks", getParam3f("ks", vec3f(0.f)));
           const float Ns = getParam1f("Ns", getParam1f("ns", 10.f));
-          const vec3f Tf = getParam3f("Tf", getParam3f("tf", vec3f(0.0f)));
+          vec3f Tf = getParam3f("Tf", getParam3f("tf", vec3f(0.0f)));
 
-          if (reduce_max(Kd + Ks + Tf) > 1.0)
+          if (reduce_max(Kd + Ks + Tf) > 1.0) {
+#if 1
             std::cout << "#osp:PT: warning: OBJ material produces energy (Kd + Ks + Tf must be <= 1)" << std::endl;
+#else
+            std::cout << "#osp:PT: warning: OBJ material produces energy (Kd + Ks + Tf must be <= 1), re-normalizing" << std::endl;
+            Kd = 0.9f * Kd;
+            const float rsum = 1.f / reduce_max(Kd + Kd + Tf);
+            if (rsum < 1.f) {
+              Kd *= rsum;
+              Ks *= rsum;
+              Tf *= rsum;
+            }
+#endif
+          }
 
           ispc::PathTracer_OBJ_set(ispcEquivalent,
              map_d ? map_d->getIE() : NULL, (const ispc::AffineSpace2f&)xform_d,
