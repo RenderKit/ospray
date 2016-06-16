@@ -331,10 +331,11 @@ namespace ospray {
           const uint32 channelFlags       = cmd.get_int32();
           const bool hasDepthBuffer = (channelFlags & OSP_FB_DEPTH);
           const bool hasAccumBuffer = (channelFlags & OSP_FB_ACCUM);
+          const bool hasVarianceBuffer = (channelFlags & OSP_FB_VARIANCE);
 // #if USE_DFB
           FrameBuffer *fb = new DistributedFrameBuffer(ospray::mpi::async::CommLayer::WORLD,
                                                        size,handle,mode,
-                                                       hasDepthBuffer,hasAccumBuffer);
+                                                       hasDepthBuffer,hasAccumBuffer,hasVarianceBuffer);
 
 // #else
 //           FrameBuffer *fb = new LocalFrameBuffer(size,mode,hasDepthBuffer,hasAccumBuffer);

@@ -84,33 +84,44 @@ namespace ospray {
 
   void DFB::TileData::accumulate(const ospray::Tile &tile)
   {
+    vec2i dia = tile.region.upper - tile.region.lower;
+    float pixelsf = (float)dia.x * dia.y;
     switch(dfb->colorBufferFormat) {
       case OSP_FB_RGBA8:
-        ispc::DFB_accumulate_RGBA8(dfb->ispcEquivalent,
+        error = ispc::DFB_accumulate_RGBA8(dfb->ispcEquivalent,
             (ispc::VaryingTile*)&tile,
             (ispc::VaryingTile*)&this->final,
             (ispc::VaryingTile*)&this->accum,
+            (ispc::VaryingTile*)&this->variance,
             &this->color,
+            pixelsf,
             dfb->accumId,
-            dfb->hasAccumBuffer);
+            dfb->hasAccumBuffer,
+            dfb->hasVarianceBuffer);
         break;
       case OSP_FB_SRGBA:
-        ispc::DFB_accumulate_SRGBA(dfb->ispcEquivalent,
+        error = ispc::DFB_accumulate_SRGBA(dfb->ispcEquivalent,
             (ispc::VaryingTile*)&tile,
             (ispc::VaryingTile*)&this->final,
             (ispc::VaryingTile*)&this->accum,
+            (ispc::VaryingTile*)&this->variance,
             &this->color,
+            pixelsf,
             dfb->accumId,
-            dfb->hasAccumBuffer);
+            dfb->hasAccumBuffer,
+            dfb->hasVarianceBuffer);
         break;
       case OSP_FB_RGBA32F:
-        ispc::DFB_accumulate_RGBA32F(dfb->ispcEquivalent,
+        error = ispc::DFB_accumulate_RGBA32F(dfb->ispcEquivalent,
             (ispc::VaryingTile*)&tile,
             (ispc::VaryingTile*)&this->final,
             (ispc::VaryingTile*)&this->accum,
+            (ispc::VaryingTile*)&this->variance,
             &this->color,
+            pixelsf,
             dfb->accumId,
-            dfb->hasAccumBuffer);
+            dfb->hasAccumBuffer,
+            dfb->hasVarianceBuffer);
         break;
     }
   }
@@ -223,7 +234,6 @@ namespace ospray {
   void DFB::startNewFrame()
   {
     std::vector<mpi::async::CommLayer::Message *> delayedMessage;
-
     {
       LockGuard lock(mutex);
       DBG(printf("rank %i starting new frame\n",mpi::world.rank));
@@ -301,15 +311,16 @@ namespace ospray {
                               size_t myID,
                               ColorBufferFormat colorBufferFormat,
                               bool hasDepthBuffer,
-                              bool hasAccumBuffer)
+                              bool hasAccumBuffer,
+                              bool hasVarianceBuffer)
     : mpi::async::CommLayer::Object(comm,myID),
-      FrameBuffer(numPixels,colorBufferFormat,hasDepthBuffer,hasAccumBuffer),
+      FrameBuffer(numPixels,colorBufferFormat,hasDepthBuffer,hasAccumBuffer,hasVarianceBuffer),
       numPixels(numPixels),
       maxValidPixelID(numPixels-vec2i(1)),
-      numTiles((numPixels.x+TILE_SIZE-1)/TILE_SIZE,
-               (numPixels.y+TILE_SIZE-1)/TILE_SIZE),
+      numTiles(divRoundUp(numPixels, getTileSize())),
       frameIsActive(false), frameIsDone(false), localFBonMaster(NULL),
       accumId(0),
+      tileErrorBuffer(NULL),
       frameMode(WRITE_ONCE)
   {
     assert(comm);
@@ -322,7 +333,7 @@ namespace ospray {
     if (comm->group->rank == 0) {
       if (colorBufferFormat == OSP_FB_NONE) {
         cout << "#osp:mpi:dfb: we're the master, but framebuffer has 'NONE' "
-             << "format; creating distriubted frame buffer WITHOUT having a "
+             << "format; creating distributed frame buffer WITHOUT having a "
              << "mappable copy on the master" << endl;
       } else {
         localFBonMaster = new LocalFrameBuffer(numPixels,
@@ -331,6 +342,8 @@ namespace ospray {
                                                false,
                                                false);
       }
+      if (hasVarianceBuffer)
+        tileErrorBuffer = (float*)alignedMalloc(sizeof(float)*numTiles.x*numTiles.y);
     }
 
     ispc::DFB_set(getIE(),numPixels.x,numPixels.y,
@@ -396,6 +409,8 @@ namespace ospray {
   void DFB::processMessage(MasterTileMessage_NONE *msg)
   {
     { /* nothing to do for 'none' tiles */ }
+    if (hasVarianceBuffer && (accumId & 1) == 1)
+      tileErrorBuffer[getTileIDof(msg->coords)] = msg->error;
 
     // and finally, tell the master that this tile is done
     DFB::TileDesc *tileDesc = this->getTileDescFor(msg->coords);
@@ -405,6 +420,8 @@ namespace ospray {
 
   void DFB::processMessage(MasterTileMessage_RGBA_I8 *msg)
   {
+    if (hasVarianceBuffer && (accumId & 1) == 1)
+      tileErrorBuffer[getTileIDof(msg->coords)] = msg->error;
     for (int iy=0;iy<TILE_SIZE;iy++) {
       int iiy = iy+msg->coords.y;
       if (iiy >= numPixels.y) continue;
@@ -426,6 +443,8 @@ namespace ospray {
 
   void DFB::processMessage(MasterTileMessage_RGBA_F32 *msg)
   {
+    if (hasVarianceBuffer && (accumId & 1) == 1)
+      tileErrorBuffer[getTileIDof(msg->coords)] = msg->error;
     for (int iy=0;iy<TILE_SIZE;iy++) {
       int iiy = iy+msg->coords.y;
       if (iiy >= numPixels.y) continue;
@@ -474,6 +493,7 @@ namespace ospray {
         MasterTileMessage_NONE *mtm = new MasterTileMessage_NONE;
         mtm->command = MASTER_WRITE_TILE_NONE;
         mtm->coords  = tile->begin;
+        mtm->error   = tile->error;
         comm->sendTo(this->master,mtm,sizeof(*mtm));
       } break;
       case OSP_FB_RGBA8:
@@ -483,6 +503,7 @@ namespace ospray {
         MasterTileMessage_RGBA_I8 *mtm = new MasterTileMessage_RGBA_I8;
         mtm->command = MASTER_WRITE_TILE_I8;
         mtm->coords  = tile->begin;
+        mtm->error   = tile->error;
         memcpy(mtm->color,tile->color,TILE_SIZE*TILE_SIZE*sizeof(uint32));
         comm->sendTo(this->master,mtm,sizeof(*mtm));
       } break;
@@ -492,6 +513,7 @@ namespace ospray {
         MasterTileMessage_RGBA_F32 *mtm = new MasterTileMessage_RGBA_F32;
         mtm->command = MASTER_WRITE_TILE_F32;
         mtm->coords  = tile->begin;
+        mtm->error   = tile->error;
         memcpy(mtm->color,tile->color,TILE_SIZE*TILE_SIZE*sizeof(vec4f));
         comm->sendTo(this->master,mtm,sizeof(*mtm));
       } break;
@@ -611,10 +633,38 @@ namespace ospray {
           for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.a[i] = 0.f;
         }
         });
-
-      if (hasAccumBuffer && (fbChannelFlags & OSP_FB_ACCUM))
-        accumId = -1; // we increment at the start of the frame
     }
+    if (hasAccumBuffer && (fbChannelFlags & OSP_FB_ACCUM)) {
+      accumId = -1; // we increment at the start of the frame
+
+      // always also clear error buffer (if present)
+      if (tileErrorBuffer) {
+        const int tiles = numTiles.x*numTiles.y;
+        for (int i = 0; i < tiles; i++)
+          tileErrorBuffer[i] = inf;
+      }
+    }
+  }
+
+  float DFB::tileError(const vec2i &tile)
+  {
+    if (tileErrorBuffer)
+      return tileErrorBuffer[getTileIDof(tile)];
+    else
+      return inf;
+  }
+
+  float DFB::endFrame(const float errorThreshold)
+  {
+    if (tileErrorBuffer) {
+      float maxErr = 0.0f;
+      const int tiles = numTiles.x*numTiles.y;
+      for (int i = 0; i < tiles; i++)
+        maxErr = std::max(maxErr, tileErrorBuffer[i]);
+
+      return maxErr;
+    } else
+      return inf;
   }
 
 } // ::ospray
