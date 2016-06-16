@@ -36,7 +36,7 @@ else
       dp_grid=(8 8 4)
     fi
   else
-    dp_grid=(4 4 4)
+    dp_grid=(6 6 6)
     echo "Setting up data parallel grid for fixed ${dp_grid[*]} brick run"
   fi
 

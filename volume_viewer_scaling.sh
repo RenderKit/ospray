@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#node_counts=(1 2 3 5 9 17 33 65 129 257)
-node_counts=(65 129)
+#node_counts=(2 3 5 9 17 33 65 129 257)
+node_counts=(129)
 queue="normal"
-job_time="01:00:00"
-job_name=rm_data_scale_min
+job_time="02:30:00"
+job_name=rm_data_scale_6_cubed
 
 # The script will run the volume run script from the specified work dir
 export WORK_DIR=$WORK/ospray/build/rel/
@@ -12,7 +12,7 @@ export OUT_DIR=`pwd`
 export VOLUME_RUN_SCRIPT=$WORK/ospray/rm_run.sh
 #export VOLUME_RUN_SCRIPT=$WORK/ospray/dns_run.sh
 
-export MIN_BRICK=1
+export MIN_BRICK=0
 export DATA_SCALING=1
 export REPLICATED_DATA=0
 

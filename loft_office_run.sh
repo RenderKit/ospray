@@ -14,7 +14,9 @@ CAM_VI="1.4654 -0.462097 3.01829"
 CAM_VU="0 -0.0034912 0.999994"
 
 # We take num workers samples per pixel so that's num nodes - 1 to account for the master
-((SPP = $SLURM_NNODES - 1))
+#((SPP = $SLURM_NNODES - 1))
+# For strong scaling runs
+SPP=64
 
 # Print the expanded list of workers hosts so we can easily paste into osp_separate_launch
 #scontrol show hostname $SLURM_NODELIST > stamp-worker-nodes.txt
@@ -29,5 +31,5 @@ ibrun ./ospModelViewer ${DATA_PATH}/LoftOffice.obj $OSP_MPI \
   --accum-reset --nowin --1k \
 	-vp $CAM_VP -vu $CAM_VU -vi $CAM_VI \
   --hdri-light 1 ${DATA_PATH}/light_tent_by_lightmapltd.pfm \
-  --backplate ${DATA_PATH}/background.ppm
+  --backplate ${DATA_PATH}/background_white.ppm
 
