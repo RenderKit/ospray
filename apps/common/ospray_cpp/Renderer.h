@@ -35,7 +35,7 @@ public:
   Material newMaterial(const std::string &type);
   Light    newLight(const std::string &type);
 
-  void renderFrame(const FrameBuffer &fb, uint32_t channels);
+  float renderFrame(const FrameBuffer &fb, uint32_t channels);
 };
 
 // Inlined function definitions ///////////////////////////////////////////////
@@ -76,9 +76,9 @@ inline Light Renderer::newLight(const std::string &type)
   return Light(ospNewLight(handle(), type.c_str()));
 }
 
-inline void Renderer::renderFrame(const FrameBuffer &fb, uint32_t channels)
+inline float Renderer::renderFrame(const FrameBuffer &fb, uint32_t channels)
 {
-  ospRenderFrame(fb.handle(), handle(), channels);
+  return ospRenderFrame(fb.handle(), handle(), channels);
 }
 
 
