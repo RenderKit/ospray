@@ -124,7 +124,79 @@ namespace ospray {
         } catch(std::runtime_error e) {
           std::cerr << e.what() << std::endl;
         }
-      } else {
+      } else if (ext == "pfm") {
+        try {
+          // Note: the PFM file specification does not support comments thus we don't skip any
+          // http://netpbm.sourceforge.net/doc/pfm.html
+          int rc = 0;
+          FILE *file = fopen(fileName.str().c_str(), "rb");
+          const int LINESZ = 10000;
+          char lineBuf[LINESZ + 1]; 
+          if (!file) {
+            throw std::runtime_error("#osp:miniSG: could not open texture file '"+fileName.str()+"'.");
+          }
+          // read format specifier:
+          // PF: color floating point image
+          // Pf: grayscae floating point image
+          char format[2] = {0};
+          fscanf(file, "%c%c\n", &format[0], &format[1]);
+          if (format[0] != 'P' || (format[1] != 'F' && format[1] != 'f')){
+            throw std::runtime_error("#osp:miniSG: invalid pfm texture file, header is not PF or Pf");
+          }
+          int numChannels = 3;
+          if (format[1] == 'f') {
+            numChannels = 1;
+          }
+        
+          // read width and height
+          int width = -1;
+          int height = -1;
+          rc = fscanf(file, "%i %i\n", &width, &height);
+          if (rc != 2) {
+            throw std::runtime_error("#osp:miniSG: could not parse width and height in PF PFM file '"+fileName.str()+"'. "
+                                     "Please report this bug at ospray.github.io, and include named file to reproduce the error.");
+          }
+        
+          // read scale factor/endiannes
+          float scaleEndian = 0.0;
+          rc = fscanf(file, "%f\n", &scaleEndian);
+
+          if (rc != 1) {
+            throw std::runtime_error("#osp:miniSG: could not parse scale factor/endianness in PF PFM file '"+fileName.str()+"'. "
+                                     "Please report this bug at ospray.github.io, and include named file to reproduce the error.");
+          }
+          if (scaleEndian == 0.0) {
+            throw std::runtime_error("#osp:miniSG: scale factor/endianness in PF PFM file can not be 0");
+          }
+          if (scaleEndian > 0.0) {
+            throw std::runtime_error("#osp:miniSG: could not parse PF PFM file '"+fileName.str()+"': currently supporting only little endian formats"
+                                     "Please report this bug at ospray.github.io, and include named file to reproduce the error.");
+          }
+          float scaleFactor = std::abs(scaleEndian);
+        
+          tex = new Texture2D;
+          tex->width    = width;
+          tex->height   = height;
+          tex->channels = numChannels;
+          tex->depth    = sizeof(float);
+          tex->prefereLinear = prefereLinear;
+          tex->data     = new unsigned char[width * height * numChannels * sizeof(float)];
+          fread(tex->data, sizeof(float), width * height * numChannels, file);
+          // flip in y, because OSPRay's textures have the origin at the lower left corner
+          float *texels = (float *)tex->data;
+          for (size_t y = 0; y < height / 2; ++y) {
+            for (size_t x = 0; x < width * numChannels; ++x) {
+              // Scale the pixels by the scale factor
+              texels[y * width * numChannels + x] = texels[y * width * numChannels + x] * scaleFactor;
+              texels[(height - 1 - y) * width * numChannels + x] = texels[(height - 1 - y) * width * numChannels + x] * scaleFactor;
+              std::swap(texels[y * width * numChannels + x], texels[(height - 1 - y) * width * numChannels + x]);
+            }
+          }
+        } catch(std::runtime_error e) {
+          std::cerr << e.what() << std::endl;
+        }
+      }
+       else {
 #ifdef USE_IMAGEMAGICK
         Magick::Image image(fileName.str().c_str());
         tex = new Texture2D;

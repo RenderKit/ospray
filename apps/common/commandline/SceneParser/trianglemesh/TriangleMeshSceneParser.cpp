@@ -18,6 +18,8 @@
 
 #include <ospray_cpp/Data.h>
 
+//#include <common/commandline/Utility.h>
+
 using namespace ospray;
 using namespace ospcommon;
 
