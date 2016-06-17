@@ -36,6 +36,21 @@ std::string scriptFileFromCommandLine(int ac, const char **&av)
   return scriptFileName;
 }
 
+void parseForDisplayWall(int ac, const char **&av, ospray::OSPGlutViewer &v)
+{
+  for (int i = 1; i < ac; i++) {
+    const std::string arg = av[i];
+    if (arg == "--display-wall") {
+      ospray::OSPGlutViewer::DisplayWall displayWall;
+      displayWall.hostname   = av[++i];
+      displayWall.streamName = av[++i];
+      displayWall.size.x     = atof(av[++i]);
+      displayWall.size.y     = atof(av[++i]);
+      v.setDisplayWall(displayWall);
+    }
+  }
+}
+
 int main(int ac, const char **av)
 {
   ospInit(&ac,av);
@@ -59,6 +74,8 @@ int main(int ac, const char **av)
   ospray::OSPGlutViewer window(bbox, model, renderer, camera);
 #endif
   window.create("ospGlutViewer: OSPRay Mini-Scene Graph test viewer");
+
+  parseForDisplayWall(ac, av, window);
 
   ospray::glut3D::runGLUT();
 }

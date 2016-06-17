@@ -46,7 +46,8 @@ OSPGlutViewer::OSPGlutViewer(const box3f &worldBounds, cpp::Model model,
     m_queuedRenderer(nullptr),
     m_alwaysRedraw(true),
     m_accumID(-1),
-    m_fullScreen(false)
+    m_fullScreen(false),
+    m_useDisplayWall(false)
 {
   setWorldBounds(worldBounds);
 
@@ -77,6 +78,7 @@ void OSPGlutViewer::resetAccumulation()
 void OSPGlutViewer::toggleFullscreen()
 {
   m_fullScreen = !m_fullScreen;
+
   if(m_fullScreen) {
     glutFullScreen();
   } else {
@@ -106,6 +108,12 @@ void OSPGlutViewer::saveScreenshot(const std::string &basename)
        << endl;
 }
 
+void OSPGlutViewer::setDisplayWall(const OSPGlutViewer::DisplayWall &dw)
+{
+  displayWall = dw;
+  m_useDisplayWall = true;
+}
+
 void OSPGlutViewer::reshape(const vec2i &newSize)
 {
   Glut3DWidget::reshape(newSize);
@@ -114,6 +122,30 @@ void OSPGlutViewer::reshape(const vec2i &newSize)
                           OSP_FB_COLOR | OSP_FB_DEPTH | OSP_FB_ACCUM);
 
   m_fb.clear(OSP_FB_ACCUM);
+
+  /*! for now, let's just attach the pixel op to the _main_ frame
+      buffer - eventually we need to have a _second_ frame buffer
+      of the proper (much higher) size, but for now let's just use
+      the existing one... */
+  if (m_useDisplayWall && displayWall.fb.handle() != m_fb.handle()) {
+    PRINT(displayWall.size);
+    displayWall.fb =
+        ospray::cpp::FrameBuffer((const osp::vec2i&)displayWall.size,
+                                 OSP_FB_NONE,
+                                 OSP_FB_COLOR | OSP_FB_DEPTH | OSP_FB_ACCUM);
+
+    displayWall.fb.clear(OSP_FB_ACCUM);
+
+    if (displayWall.po.handle() == nullptr) {
+      displayWall.po = ospray::cpp::PixelOp("display_wall");
+      displayWall.po.set("hostname", displayWall.hostname);
+      displayWall.po.set("streamName", displayWall.streamName);
+      displayWall.po.commit();
+    }
+
+    displayWall.fb.setPixelOp(displayWall.po);
+  }
+
   m_camera.set("aspect", viewPort.aspect);
   m_camera.commit();
   viewPort.modified = true;
@@ -128,7 +160,7 @@ void OSPGlutViewer::keypress(char key, const vec2i &where)
     forceRedraw();
     break;
   case '!':
-    saveScreenshot("ospdebugviewer");
+    saveScreenshot("ospglutviewer");
     break;
   case 'X':
     if (viewPort.up == vec3f(1,0,0) || viewPort.up == vec3f(-1.f,0,0)) {
@@ -239,9 +271,14 @@ void OSPGlutViewer::display()
     viewPort.modified = false;
     m_accumID=0;
     m_fb.clear(OSP_FB_ACCUM);
+
+    if (m_useDisplayWall)
+      displayWall.fb.clear(OSP_FB_ACCUM);
   }
 
   m_renderer.renderFrame(m_fb, OSP_FB_COLOR | OSP_FB_ACCUM);
+  if (m_useDisplayWall)
+    m_renderer.renderFrame(displayWall.fb, OSP_FB_COLOR | OSP_FB_ACCUM);
   ++m_accumID;
 
   // set the glut3d widget's frame buffer to the opsray frame buffer,
