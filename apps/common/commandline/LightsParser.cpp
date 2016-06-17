@@ -4,7 +4,6 @@
 
 #include <vector>
 
-#include <common/FileName.h>
 #include <common/miniSG/miniSG.h>
 
 using namespace ospcommon;
