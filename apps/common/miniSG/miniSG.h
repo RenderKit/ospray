@@ -270,5 +270,7 @@ namespace ospray {
 
     void error(const std::string &err);
 
+    OSPTexture2D createTexture2D(Texture2D *msgTex);
+
   } // ::ospray::minisg
 } // ::ospray
