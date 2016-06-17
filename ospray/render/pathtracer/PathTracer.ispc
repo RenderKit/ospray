@@ -110,7 +110,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
   lastDg.Ns = ray.dir;
   lastDg.Ng = ray.dir;
 
-  bool insideVolume = false;// Quick fix for glass absorption.
+  bool insideSolid = false;// Quick fix for glass absorption.
 
   if (self->maxDepth > 0)
   do {
@@ -236,7 +236,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       Lw = Lw * powf(transmission, ray.t);
     }
 
-    if (insideVolume) {// For absorbing translucent materials.
+    if (insideSolid) {// For absorbing translucent materials.
       foreach_unique(uniMat in dg.material) {
         uniform PathTraceMaterial* uniform m = (uniform PathTraceMaterial *)uniMat;
         if (m != NULL) {
@@ -249,9 +249,9 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     // TODO: support nested dielectrics
     if (fs.type & BSDF_TRANSMISSION) {
 
-      // This is a quick fix for glass. This only works if all volumes are disjoint 
+      // This is a quick fix for glass. This only works if all solid objects are disjoint 
       // (some space is between them and they don't overlap).
-      insideVolume = !insideVolume;
+      insideSolid = !insideSolid;
 
       foreach_unique(uniMat in dg.material) {
         uniform PathTraceMaterial* uniform m = (uniform PathTraceMaterial *)uniMat;
