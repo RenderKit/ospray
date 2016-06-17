@@ -77,13 +77,10 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
         // --hdri-light <intensity> <image file>.(pfm|ppm)
         auto ospHdri = m_renderer.newLight("hdri");
         ospHdri.set("name", "hdri light");//   ospSetString(ospHdri, "name", "hdri_test");
-        if (1) {
+        if (1) {//TODO: add commandline option for up direction.
           ospHdri.set("up", 0.f, 1.f, 0.f);//ospSet3f(ospHdri, "up", 0.f, 1.f, 0.f);
           ospHdri.set("dir", 1.f, 0.f, 0.0f);//ospSet3f(ospHdri, "dir", 1.f, 0.f, 0.0f);
         } else {// up = z
-            //ospSet3f(ospHdri, "up", 0.f, 0.f, 1.f);
-            //ospSet3f(ospHdri, "dir", 0.f, 1.f, 0.0f);
-
           ospHdri.set("up", 0.f, 0.f, 1.f);//ospSet3f(ospHdri, "up", 0.f, 1.f, 0.f);
           ospHdri.set("dir", 0.f, 1.f, 0.0f);//ospSet3f(ospHdri, "dir", 1.f, 0.f, 0.0f);
         }
@@ -112,7 +109,6 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
         
     }
   }
-
 
   //TODO: Need to figure out where we're going to read lighting data from
   
