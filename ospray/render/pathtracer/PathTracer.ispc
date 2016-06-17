@@ -110,10 +110,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
   lastDg.Ns = ray.dir;
   lastDg.Ng = ray.dir;
 
-  //int32 n_embedded_geom = 0;
-  bool insideVolume = false;
-
-  //print("self->maxDepth = % \n", self->maxDepth );
+  bool insideVolume = false;// Quick fix for glass absorption.
 
   if (self->maxDepth > 0)
   do {
@@ -153,17 +150,6 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     if (noHit(ray))
       break;
 
-    // We hit something
-
-    //print("pixel % % \n", ray.ix, ray.iy);
-
-    if (0) {
-    if (ray.ix < 300 || ray.ix > 500 || ray.iy < 300 || ray.iy > 500) {
-      L = make_vec3f(0,0,0);
-      break;
-    }
-    }
-
     // terminate after evaluation of lights and before next shading to always have both samples for MIS
     if (depth >= self->maxDepth)
       break;
@@ -177,11 +163,6 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         DG_NS|DG_NG|DG_FACEFORWARD|DG_NORMALIZE|DG_TEXCOORD|DG_COLOR|DG_TANGENTS
         );
 
-    //postIntersect(self->super.model, dg, ray,
-    //    DG_MATERIALID|
-    //    DG_NS|DG_NG|DG_NORMALIZE|DG_TEXCOORD|DG_COLOR|DG_TANGENTS
-    //    );
-
     // shade surface
     uniform ShadingContext ctx;
     ShadingContext_Constructor(&ctx);
@@ -193,7 +174,6 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         bsdf = mm->getBSDF(mm, &ctx, dg, ray, currentMedium);
 
     // direct lighting including shadows and MIS
-      //if (0)
     if (bsdf->type & BSDF_SMOOTH)
     {
       uniform int numLights = self->lights ? min(MAX_LIGHTS, self->numLights) : 0;
@@ -252,38 +232,25 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     // compute simple volumetric effect
     const vec3f transmission = currentMedium.transmission;
-    //const vec3f transmission = make_vec3f(-0.000694827, -0.0068415, -0.0109111);
-
-    //if (ne(transmission,make_vec3f(0.f)))
     if (ne(transmission,make_vec3f(1.f))) {
-      //
-      //Lw = Lw * powf(transmission, ray.t);
-     // Lw = Lw * expf(transmission * ray.t);
+      Lw = Lw * powf(transmission, ray.t);
     }
 
-    if (insideVolume) {
+    if (insideVolume) {// For absorbing translucent materials.
       foreach_unique(uniMat in dg.material) {
         uniform PathTraceMaterial* uniform m = (uniform PathTraceMaterial *)uniMat;
-        vec3f absorption;
         if (m != NULL) {
-          absorption = m->getAbsorption(m);
-          Lw = Lw * expf(absorption * ray.t);
+          Lw = Lw * m->getAbsorption(m, ray.t);
         }
       }
-     // print("insideVolume \n\n");
-      //print("transmission = % % % \n\n\n", (float)transmission.x, (float)transmission.y, (float)transmission.z);
     }
-
-    //vec3f absorptionCoeff = getAbsorptionCoefficient(bsdf);
 
     // update currentMedium if we hit a medium interface 
     // TODO: support nested dielectrics
     if (fs.type & BSDF_TRANSMISSION) {
 
-      //print("BSDF_TRANSMISSION\n");
-
-      // This is a quick fix. This only works if all volumes are disjoint (some space is between them and 
-      // they don't overlap).
+      // This is a quick fix for glass. This only works if all volumes are disjoint 
+      // (some space is between them and they don't overlap).
       insideVolume = !insideVolume;
 
       foreach_unique(uniMat in dg.material) {
@@ -292,8 +259,6 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
           m->selectNextMedium(m, currentMedium);
         }
       }
-    } else {
-      //print("not BSDF_TRANSMISSION\n");
     }
 
     // keep lastBSDFPdf and lastDg when there was a Dirac transmission
@@ -308,16 +273,6 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     setRay(ray, dg.P, fs.wi, self->super.epsilon, inf);
     depth++;
   } while (reduce_max(Lw) > self->minContribution);
-
-  if (0) {
-  if (insideVolume) {
-    L = make_vec3f(0.0f,1.0f,0.0f);
-    sample.alpha = 1.0f;
-  } else {
-    L = make_vec3f(0.0f,0.0f,0.0f);
-    sample.alpha = 1.0f;
-  }
-  }
 
   sample.rgb = L;
   if (isnan(L.x) || isnan(L.y) || isnan(L.z)){
@@ -343,10 +298,6 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
 
   screenSample.sampleID.x = ix;
   screenSample.sampleID.y = iy;
-
-  // LEDIAEV
-  screenSample.ray.ix = ix;
-  screenSample.ray.iy = iy;
 
   // init RNG
   RandomTEA rng_state; varying RandomTEA* const uniform rng = &rng_state;

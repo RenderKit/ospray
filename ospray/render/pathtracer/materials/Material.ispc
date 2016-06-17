@@ -28,9 +28,9 @@ void PathTraceMaterial_selectNextMedium(const uniform PathTraceMaterial* uniform
                                         Medium& currentMedium)
 { /* do nothing by default */ }
 
-vec3f PathTraceMaterial_getAbsorption(const uniform PathTraceMaterial* uniform self)
+vec3f PathTraceMaterial_getAbsorption(const uniform PathTraceMaterial* uniform self, float distance)
 {
-  return make_vec3f(0.0f);
+  return make_vec3f(1.0f);
 }
 
 void PathTraceMaterial_Constructor(uniform PathTraceMaterial* uniform self,

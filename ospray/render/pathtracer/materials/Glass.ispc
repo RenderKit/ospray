@@ -73,11 +73,20 @@ void Glass_selectNextMedium(const uniform PathTraceMaterial* uniform super,
     currentMedium = self->mediumOutside;
 }
 
-vec3f Glass_getAbsorption(const uniform PathTraceMaterial* uniform material)
+vec3f Glass_getAbsorption(const uniform PathTraceMaterial* uniform material, float distance)
 {
   const uniform Glass* uniform self = (const uniform Glass* uniform)material;
 
-  vec3f r = make_vec3f(self->absorption_k.x,self->absorption_k.y,self->absorption_k.z);
+  vec3f r = make_vec3f(1.0f);
+
+  // Beer's law for glass absorption.
+
+  if (self->absorption_k.x != 0)
+   r.x = expf(self->absorption_k.x * distance);
+  if (self->absorption_k.y != 0)
+   r.y = expf(self->absorption_k.y * distance);
+  if (self->absorption_k.z != 0)
+   r.z = expf(self->absorption_k.z * distance);
 
   return r;
 }
@@ -98,26 +107,22 @@ void Glass_Constructor(uniform Glass* uniform self,
   self->absorptionDistance = absDistance;
   self->absorptionColor = absColor;
 
-  //print("absColor = % % %, dist = % \n\n",absColor.x/absDistance, absColor.y/absDistance, absColor.z/absDistance, absDistance);
-
-  if (absDistance > 1.0e-6) {
-    if (absColor.x > 1.0e-6)
+  if (absDistance > 0) {
+    if (absColor.x > 0)
       self->absorption_k.x = log(absColor.x)/absDistance;
     else 
       self->absorption_k.x = 0;
 
-    if (absColor.y > 1.0e-6)
+    if (absColor.y > 0)
       self->absorption_k.y = log(absColor.y)/absDistance;
     else 
       self->absorption_k.y = 0;
 
-    if (absColor.z > 1.0e-6)
+    if (absColor.z > 0)
       self->absorption_k.z = log(absColor.z)/absDistance;
     else 
       self->absorption_k.z = 0;
   }
-
- // print("k = % % %\n\n", self->absorption_k.x, self->absorption_k.y, self->absorption_k.z);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
