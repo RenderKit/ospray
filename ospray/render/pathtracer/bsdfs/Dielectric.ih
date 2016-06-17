@@ -38,35 +38,8 @@ inline BSDF_SampleRes Dielectric_sample(const varying BSDF* uniform super,
   BSDF_SampleRes res;
   res.pdf = inf;
 
-  
-
-
-  //float cosThetaO = max(dot(wo, getN(super)), 0.0f);
-  //float cosThetaO = dot(wo, getN(super));
-  //if (cosThetaO < 0) {
-    //cosThetaO = -cosThetaO;
-  //}
-
-  // Fresnel term
-  //float cosThetaT; // positive
-  //float F = 1.0f;
-  //if (canReflect) {
-  //  F = fresnelDielectricEx(cosThetaO, cosThetaT, self->eta);
-  //}
-  
-
-//print("ss= %, F = %, eta = %\n",F,self->eta);
-
-/*
-  res.wi = refract(wo, getN(super), cosThetaO, cosThetaT, self->eta);
-  res.type = BSDF_SPECULAR_TRANSMISSION;
-  res.weight = make_vec3f(rsqrt(self->eta)); // solid angle compression
-  return res;
-*/
-  //vec3f d = wo;
   // We want the actual ray direction into the surface.
   vec3f d = make_vec3f(-wo.x, -wo.y, -wo.z);
-
   vec3f N = getN(super);
   float eta = 1.0 / self->eta;// ior(outside) / ior(inside)
   float cos1 = dot(d, N);
@@ -76,7 +49,6 @@ inline BSDF_SampleRes Dielectric_sample(const varying BSDF* uniform super,
   }
   vec3f dt = cos1*N;
   vec3f dp = d - dt;
-
   bool canReflect = ((self->eta - 1.0) < -1.0e-6 || (self->eta - 1.0) > 1.0e-6);
   bool headOn = ((cos1_abs - 1.0) > -1.0e-6 && (cos1_abs - 1.0) < 1.0e-6);
   bool mustReflect=false;
@@ -93,7 +65,6 @@ inline BSDF_SampleRes Dielectric_sample(const varying BSDF* uniform super,
      dirR = make_vec3f(-d.x, -d.y, -d.z);
     } else {
       dirR = dp - dt;// already normalized.
-      
       vec3f b = dp;
       b = normalize(b);
       float sin1 = dot(dp,b);
@@ -122,8 +93,7 @@ inline BSDF_SampleRes Dielectric_sample(const varying BSDF* uniform super,
       }
     }
   }
-
-  if (FresnelR < 0) {
+  if (FresnelR < 0) {// Clamp in case of roundoff error.
     FresnelR = 0;
   }
   if (FresnelR > 1.0) {
@@ -133,7 +103,7 @@ inline BSDF_SampleRes Dielectric_sample(const varying BSDF* uniform super,
   // Sample the reflection or the transmission
   if ((ss < FresnelR && canReflect) || mustReflect) {
     // Reflection
-    res.wi = dirR;//reflect(wo, getN(super), cosThetaO);
+    res.wi = dirR;
     res.type = BSDF_SPECULAR_REFLECTION;
     res.weight = make_vec3f(1.0f);
   } else {

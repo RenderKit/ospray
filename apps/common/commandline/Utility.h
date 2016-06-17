@@ -14,9 +14,6 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-//#include <common/FileName.h>
-//#include <common/miniSG/miniSG.h>
-
 #pragma once
 
 #include <ospray_cpp/Camera.h>

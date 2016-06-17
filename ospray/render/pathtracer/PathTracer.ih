@@ -32,8 +32,6 @@ struct PathTracer {
   float minContribution;
   float maxRadiance;
   Texture2D* uniform backplate;
-  // I would like the backplate to be a struct, configurable with different types of projections (linear, spherical).
-  uint32 backplateType;// 0 = default, 1 = spherical (same as for environment lights)
 
   const uniform Light *uniform *uniform lights;
   uint32 numLights;

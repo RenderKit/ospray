@@ -14,9 +14,6 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-
-
-
 #pragma once
 
 #include <common/commandline/CommandLineExport.h>
@@ -24,10 +21,6 @@
 
 #include <ospray_cpp/Renderer.h>
 #include <ospray_cpp/Light.h>
-
-//#include <common/commandline/Utility.h>
-
-//extern OSPTexture2D createTexture2D(ospray::miniSG::Texture2D *msgTex);
 
 class OSPRAY_COMMANDLINE_INTERFACE LightsParser : public CommandLineParser
 {

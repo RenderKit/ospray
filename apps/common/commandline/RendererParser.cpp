@@ -39,8 +39,6 @@ void DefaultRendererParser::finalize()
   }
 
   m_renderer.set("spp", m_spp);
-
-  // LEDIAEV
   m_renderer.set("maxDepth", maxDepth);
 
   m_renderer.commit();

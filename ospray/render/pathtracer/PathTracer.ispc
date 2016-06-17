@@ -128,9 +128,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     if (noHit(ray)) {
       maxLightDist = inf; // also include envLights (i.e. the ones in infinity)
       if (straightPath) {
-        float a1 = luminance(Lw);
-        //print("a = % \n", a1);
-        sample.alpha = 1.0f - a1;
+        sample.alpha = 1.0f - luminance(Lw);
       }
       if ((bool)self->backplate & straightPath) {
         L = L + Lw * get3f(self->backplate, clamp2edge(self->backplate, pixel));
