@@ -35,22 +35,12 @@ struct Glass
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-/*
-const varying BSDF* uniform OBJ_getBSDF(const uniform PathTraceMaterial* uniform super,
-                                        uniform ShadingContext* uniform ctx,
-                                        const DifferentialGeometry& dg,
-                                        const Ray& ray,
-                                        const Medium& currentMedium)
-*/
-
 const varying BSDF* uniform Glass_getBSDF(const uniform PathTraceMaterial* uniform super,
                                           uniform ShadingContext* uniform ctx,
                                           const DifferentialGeometry& dg,
                                           const Ray& ray,
                                           const Medium& currentMedium)
 {
-  //uniform const OBJ* uniform self = (uniform const OBJ* uniform)super;
-  //varying BSDF* uniform bsdf = MultiBSDF_create(ctx);
   uniform const Glass* uniform self = (uniform const Glass* uniform)super;
 
   float eta = eq(currentMedium, self->mediumOutside) ? self->mediumOutside.ior*rcp(self->mediumInside.ior)
@@ -130,50 +120,6 @@ vec3f Glass_getAbsorption(const uniform PathTraceMaterial* uniform material,
     return r;
 }
 
-/*
-void Glass_Constructor(uniform Glass* uniform self,
-                       uniform float iorInside,
-                       const uniform vec3f& transmissionInside,
-                       uniform float iorOutside,
-                       const uniform vec3f& transmissionOutside,
-                       uniform float absDistance,
-                       const uniform vec3f& absColor,
-                       Texture2D* map_Kd, 
-                       const uniform affine2f &xform_Kd)
-{
-  PathTraceMaterial_Constructor(&self->super, Glass_getBSDF, Glass_getTransparency, Glass_selectNextMedium, Glass_getAbsorption);
-  self->mediumInside.ior           = iorInside;
-  self->mediumInside.transmission  = transmissionInside;
-  self->mediumOutside.ior          = iorOutside;
-  self->mediumOutside.transmission = transmissionOutside;
-  self->absorptionDistance = absDistance;
-  self->absorptionColor = absColor;
-
-  //uniform OBJ* uniform self = (uniform OBJ* uniform)_self
-
-  if (absDistance > 0) {
-    if (absColor.x > 0)
-      self->absorption_k.x = log(absColor.x)/absDistance;
-    else 
-      self->absorption_k.x = 0;
-
-    if (absColor.y > 0)
-      self->absorption_k.y = log(absColor.y)/absDistance;
-    else 
-      self->absorption_k.y = 0;
-
-    if (absColor.z > 0)
-      self->absorption_k.z = log(absColor.z)/absDistance;
-    else 
-      self->absorption_k.z = 0;
-  }
-
-//(uniform Texture2D*)
-  self->colorMap = make_TextureParam(map_Kd, xform_Kd);
-
-}
-*/
-
 ///////////////////////////////////////////////////////////////////////////////
 // External API
 
@@ -218,20 +164,8 @@ export void PathTracer_Glass_set(
 
 void Glass_Constructor(uniform Glass* uniform self)
 {
-  PathTraceMaterial_Constructor(&self->super, Glass_getBSDF, Glass_getTransparency, Glass_selectNextMedium, Glass_getAbsorption);
-/*
-  uniform affine2f xform = make_AffineSpace2f_identity();
-
-  PathTracer_Glass_set(
-    self,
-    0.f, 
-    make_vec3f(0.0f),
-    0.f, 
-    make_vec3f(0.f),
-    0.f,
-    make_vec3f(0.f),
-    NULL, 
-    xform);*/
+  PathTraceMaterial_Constructor(&self->super, Glass_getBSDF, 
+    Glass_getTransparency, Glass_selectNextMedium, Glass_getAbsorption);
 }
 
 export void* uniform PathTracer_Glass_create()
