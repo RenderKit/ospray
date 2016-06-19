@@ -110,6 +110,8 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
   lastDg.Ns = ray.dir;
   lastDg.Ng = ray.dir;
 
+  DifferentialGeometry previousDg;
+
   bool insideSolid = false;// Quick fix for glass absorption.
 
   if (self->maxDepth > 0)
@@ -238,7 +240,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       foreach_unique(uniMat in dg.material) {
         uniform PathTraceMaterial* uniform m = (uniform PathTraceMaterial *)uniMat;
         if (m != NULL) {
-          Lw = Lw * m->getAbsorption(m, ray.t);
+          Lw = Lw * m->getAbsorption(m, previousDg, ray.t);
         }
       }
     }
@@ -265,6 +267,8 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       lastBSDFPdf = fs.pdf;
       lastDg = dg;
     }
+
+    previousDg = dg;
 
     // continue the path
     straightPath &= eq(ray.dir, fs.wi);

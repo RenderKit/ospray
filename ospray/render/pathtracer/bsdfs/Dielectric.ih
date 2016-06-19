@@ -112,7 +112,7 @@ inline BSDF_SampleRes Dielectric_sample(const varying BSDF* uniform super,
   bool mustReflect = false;
 
   bool be_careful = true;// Extra test for edge cases when the shading normal is different from the geometry normal.
-  bool nudge = true;// Only used if be_careful==true.
+  bool nudge = true;// When we have grazing angles. Only used if be_careful==true.
 
   if (be_careful) {
     if (dot(d,N) > 0) {

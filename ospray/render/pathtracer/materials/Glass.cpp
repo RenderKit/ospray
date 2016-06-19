@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "ospray/common/Material.h"
+#include "ospray/texture/Texture2D.h"
 #include "Glass_ispc.h"
 
 namespace ospray {
@@ -38,10 +39,23 @@ namespace ospray {
         // Why is "absorptionColor" not found, while "color" is found???
         const vec3f& absorptionColor = getParam3f("color",vec3f(1.f));
 
-        ispcEquivalent = ispc::PathTracer_Glass_create
-          (etaInside, (const ispc::vec3f&)transmissionInside,
-           etaOutside, (const ispc::vec3f&)transmissionOutside,
-           absorptionDistance, (const ispc::vec3f&)absorptionColor);
+
+        Texture2D *map_Kd = (Texture2D*)getParamObject("map_Kd", getParamObject("map_kd",  getParamObject("colorMap", NULL)));
+        affine2f xform_Kd = getTextureTransform("map_kd") * getTextureTransform("colorMap"); 
+          
+          
+        ispcEquivalent = ispc::PathTracer_Glass_create();
+
+        ispc::PathTracer_Glass_set(
+          ispcEquivalent,
+          etaInside, 
+          (const ispc::vec3f&)transmissionInside,
+          etaOutside, 
+          (const ispc::vec3f&)transmissionOutside,
+          absorptionDistance,
+          (const ispc::vec3f&)absorptionColor,
+          map_Kd ? map_Kd->getIE() : NULL,
+          (const ispc::AffineSpace2f&)xform_Kd);
       }
     };
 

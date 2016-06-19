@@ -28,7 +28,10 @@ void PathTraceMaterial_selectNextMedium(const uniform PathTraceMaterial* uniform
                                         Medium& currentMedium)
 { /* do nothing by default */ }
 
-vec3f PathTraceMaterial_getAbsorption(const uniform PathTraceMaterial* uniform self, float distance)
+vec3f PathTraceMaterial_getAbsorption(
+  const uniform PathTraceMaterial* uniform self,
+  const DifferentialGeometry& dg, 
+  const float & distance)
 {
   return make_vec3f(1.0f);
 }
