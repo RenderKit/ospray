@@ -23,12 +23,76 @@ struct Dielectric
   BSDF super;
 
   float eta;
+  DifferentialGeometry dgeom;
 };
 
 inline BSDF_EvalRes Dielectric_eval(const varying BSDF* uniform super,
                                     const vec3f& wo, const vec3f& wi)
 {
   return make_BSDF_EvalRes_zero();
+}
+
+inline vec3f RefractionDirection(const vec3f & d, const vec3f & N, const float eta, 
+  varying float & FresnelR, varying bool & mustReflect)
+{
+  mustReflect = false;
+
+  float cos1 = dot(d, N);
+  float cos1_abs = cos1;
+  if (cos1_abs < 0.0) {
+    cos1_abs = -cos1_abs;
+  }
+  bool headOn = (1.0-1.0e-6 < cos1_abs && cos1_abs < 1.0-1.0e-6);
+  vec3f dir;
+  if (headOn) {
+    FresnelR = (eta - 1.0)/(eta + 1.0);
+    FresnelR = FresnelR*FresnelR;
+    dir = d;
+  } else {
+    vec3f dt = cos1*N;
+    vec3f dp = d - dt;
+    vec3f b = normalize(dp);
+    float sin1 = dot(dp,b);
+    float sin2 = sin1/eta;
+    if (sin2 > 1.0) {// total internal reflection.
+      dir = make_vec3f(0.0f);// Can't refract.
+      FresnelR = 1.0;
+      mustReflect = true;
+    } else {
+      float k = 1.0 - sin2*sin2;
+      if (k < 0.0) {
+        k = 0.0;
+      }
+      if (k > 1.0) {
+        k = 1.0;
+      }
+      float cos2 = sqrt(k);
+      vec3f N2 = normalize(dt);
+      dir = N2*cos2 + b*sin2;
+      float c1 = cos1_abs;
+      float c2 = cos2;
+      float r1 = (eta*c1 - c2)    /(eta*c1 + c2);
+      float r2 = (c1     - eta*c2)/(c1     + eta*c2);
+      FresnelR = 0.5*(r1*r1 + r2*r2);
+    }
+  }
+  if (FresnelR < 0) {// Clamp in case of roundoff error.
+    FresnelR = 0;
+  }
+  if (FresnelR > 1.0) {
+    FresnelR = 1.0;
+  }
+
+  return dir;
+}
+
+inline vec3f ReflectionDirection(const vec3f & d, const vec3f & N)
+{
+  float cos1 = dot(d, N);
+  vec3f dt = cos1*N;
+  vec3f dp = d - dt;
+  vec3f dir = dp - dt;
+  return dir;
 }
 
 inline BSDF_SampleRes Dielectric_sample(const varying BSDF* uniform super,
@@ -38,97 +102,109 @@ inline BSDF_SampleRes Dielectric_sample(const varying BSDF* uniform super,
   BSDF_SampleRes res;
   res.pdf = inf;
 
+  float glass_epsilon = 1.0e-6;
   // We want the actual ray direction into the surface.
   vec3f d = make_vec3f(-wo.x, -wo.y, -wo.z);
-  vec3f N = getN(super);
+  vec3f N = self->dgeom.Ns; //getN(super);
+  vec3f shapeN = self->dgeom.Ng;// For testing if the ray entered/exited the geometry.
   float eta = 1.0 / self->eta;// ior(outside) / ior(inside)
-  float cos1 = dot(d, N);
-  float cos1_abs = cos1;
-  if (cos1_abs < 0.0) {
-    cos1_abs = -cos1_abs;
-  }
-  vec3f dt = cos1*N;
-  vec3f dp = d - dt;
-  bool canReflect = ((self->eta - 1.0) < -1.0e-6 || (self->eta - 1.0) > 1.0e-6);
-  bool headOn = ((cos1_abs - 1.0) > -1.0e-6 && (cos1_abs - 1.0) < 1.0e-6);
-  bool mustReflect=false;
-  float FresnelR;
-  vec3f dirR, dirT;
-  if (!canReflect) {
-    FresnelR = 0;
-    dirT = d;
-  } else {
-    if (headOn) {
-     FresnelR = (eta - 1.0)/(eta + 1.0);
-     FresnelR = FresnelR*FresnelR;
-     dirT = d;
-     dirR = make_vec3f(-d.x, -d.y, -d.z);
-    } else {
-      dirR = dp - dt;// already normalized.
-      vec3f b = dp;
-      b = normalize(b);
-      float sin1 = dot(dp,b);
-      float sin2 = sin1/eta;
-      if (sin2 > 1.0) {// total internal reflection.
-        FresnelR = 1.0;
-        mustReflect = true;
-      } else {
-        float k = 1.0 - sin2*sin2;
-        if (k < 0.0) {
-          k = 0.0;
-        }
-        if (k > 1.0) {
-          k = 1.0;
-        }
-        float cos2 = sqrt(k);
-        vec3f N2 = dt;
-        N2 = normalize(N2);
-        dirT = N2*cos2 + b*sin2;
-        float c1 = cos1_abs;
-        float c2 = cos2;
+  bool canReflect = (eta < 1.0-glass_epsilon || eta > 1.0+glass_epsilon);
+  bool mustReflect = false;
 
-        float r1 = (eta*c1 - c2)    /(eta*c1 + c2);
-        float r2 = (c1     - eta*c2)/(c1     + eta*c2);
-        FresnelR = 0.5*(r1*r1 + r2*r2);
-      }
+  bool be_careful = true;// Extra test for edge cases when the shading normal is different from the geometry normal.
+  bool nudge = true;// Only used if be_careful==true.
+
+  if (be_careful) {
+    if (dot(d,N) > 0) {
+      N = make_vec3f(-N.x, -N.y, -N.z);
+    }
+    if (dot(d,shapeN) > 0) {
+      shapeN = make_vec3f(-shapeN.x, -shapeN.y, -shapeN.z);
     }
   }
-  if (FresnelR < 0) {// Clamp in case of roundoff error.
-    FresnelR = 0;
-  }
-  if (FresnelR > 1.0) {
-    FresnelR = 1.0;
-  }
-  
+
+  float FresnelR, geometricCosine=0;
+  vec3f dirR = ReflectionDirection(d,N), dirT = RefractionDirection(d, N, eta, FresnelR, mustReflect);
+
   // Sample the reflection or the transmission
-  if ((ss < FresnelR && canReflect) || mustReflect) {
-    // Reflection
+  if ((ss < FresnelR && canReflect) || mustReflect) {// Reflection
     res.wi = dirR;
     res.type = BSDF_SPECULAR_REFLECTION;
     res.weight = make_vec3f(1.0f);
-  } else {
-    // Transmission
+
+    if (be_careful) {
+      geometricCosine = dot(res.wi,shapeN);
+      if (geometricCosine >= 0) {
+        // reflecting as expected.
+        if (nudge && (geometricCosine < glass_epsilon)) {// Grazing angle.
+          res.wi = res.wi + (glass_epsilon)*shapeN;
+          res.wi = normalize(res.wi);
+        } 
+      } else {// geometricCosine < 0
+        // transmitting instead.
+        if (nudge && (geometricCosine > -glass_epsilon)) {// Grazing angle.
+          res.wi = res.wi - (glass_epsilon)*shapeN;
+          res.wi = normalize(res.wi);
+        }
+        res.type = BSDF_SPECULAR_TRANSMISSION;
+        res.weight = make_vec3f(rsqrt(self->eta)); // solid angle compression
+      }
+    }
+  } else {// Transmission
     res.wi = dirT;
     res.type = BSDF_SPECULAR_TRANSMISSION;
     res.weight = make_vec3f(rsqrt(self->eta)); // solid angle compression
+
+    if (be_careful) {
+      geometricCosine = dot(res.wi,shapeN);
+      if (geometricCosine <= 0) {
+        // transmitting as expected.
+        if (nudge && (geometricCosine > -glass_epsilon)) {// Grazing angle.
+          res.wi = res.wi - (glass_epsilon)*shapeN;
+          res.wi = normalize(res.wi);
+        } 
+      } else {// geometricCosine > 0
+        // reflecting instead.
+        if (nudge && (geometricCosine < glass_epsilon)) {// Grazing angle.
+          res.wi = res.wi + (glass_epsilon)*shapeN;
+          res.wi = normalize(res.wi);
+        }
+        res.type = BSDF_SPECULAR_REFLECTION;
+        res.weight = make_vec3f(1.0f);
+      }
+    }
   }
 
   return res;
 }
 
-inline void Dielectric_Constructor(varying Dielectric* uniform self, const varying linear3f* uniform frame,
+//inline void Dielectric_Constructor(varying Dielectric* uniform self, const varying linear3f* uniform frame,
+//                                   float eta)
+inline void Dielectric_Constructor(varying Dielectric* uniform self, uniform ShadingContext* uniform ctx, const DifferentialGeometry& dg,
                                    float eta)
 {
+
+  const varying linear3f* uniform frame = LinearSpace3f_create(ctx, frame(dg.Ns));
+
   BSDF_Constructor(&self->super, BSDF_SPECULAR,
                    Dielectric_eval, Dielectric_sample,
                    frame);
   self->eta = eta;
+  self->dgeom = dg;
 }
 
-inline varying BSDF* uniform Dielectric_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
+//inline varying BSDF* uniform Dielectric_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
+//                                               float eta)
+
+inline varying BSDF* uniform Dielectric_create(uniform ShadingContext* uniform ctx, const DifferentialGeometry& dg,
                                                float eta)
+
 {
   varying Dielectric* uniform self = (varying Dielectric* uniform)ShadingContext_alloc(ctx, sizeof(Dielectric));
-  Dielectric_Constructor(self, frame, eta);
+
+
+  
+  Dielectric_Constructor(self, ctx, dg, eta);
+  //Dielectric_Constructor(self, frame, eta);
   return &self->super;
 }
