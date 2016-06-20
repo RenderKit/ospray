@@ -28,7 +28,6 @@
   following tools don't have to care about this.*/
 #define BOING_HACK 1
 
-
 namespace ospray {
   namespace miniSG {
     using std::cout;
@@ -301,9 +300,7 @@ namespace ospray {
           if (!strncmp(token, "map_d" , 5)) { parseSepOpt(token += 5);  cur->setParam("map_d", loadTexture(path, std::string(token), true),Material::Param::TEXTURE);  continue; }
           if (!strncmp(token, "map_Ns" , 6)) { parseSepOpt(token += 6); cur->setParam("map_Ns", loadTexture(path, std::string(token), true),Material::Param::TEXTURE);  continue; }
           if (!strncmp(token, "map_Ka" , 6)) { parseSepOpt(token += 6); cur->setParam("map_Ka", loadTexture(path, std::string(token)),Material::Param::TEXTURE);  continue; }
-          if (!strncmp(token, "map_Kd" , 6)) {
-
-              parseSepOpt(token += 6); cur->setParam("map_Kd", loadTexture(path, std::string(token)),Material::Param::TEXTURE);  continue; }
+          if (!strncmp(token, "map_Kd" , 6)) { parseSepOpt(token += 6); cur->setParam("map_Kd", loadTexture(path, std::string(token)),Material::Param::TEXTURE);  continue; }
           if (!strncmp(token, "map_Ks" , 6)) { parseSepOpt(token += 6); cur->setParam("map_Ks", loadTexture(path, std::string(token)),Material::Param::TEXTURE);  continue; }
           /*! the following are extensions to the standard */
           if (!strncmp(token, "map_Refl" , 8)) { parseSepOpt(token += 8);  cur->setParam("map_Refl", loadTexture(path, std::string(token)),Material::Param::TEXTURE);  continue; }
