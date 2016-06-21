@@ -632,7 +632,7 @@ namespace ospray {
           for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.b[i] = 0.f;
           for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.a[i] = 0.f;
         }
-        });
+      });
     }
     if (hasAccumBuffer && (fbChannelFlags & OSP_FB_ACCUM)) {
       accumId = -1; // we increment at the start of the frame
