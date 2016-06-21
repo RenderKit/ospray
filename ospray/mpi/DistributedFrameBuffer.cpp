@@ -314,7 +314,8 @@ namespace ospray {
                               bool hasAccumBuffer,
                               bool hasVarianceBuffer)
     : mpi::async::CommLayer::Object(comm,myID),
-      FrameBuffer(numPixels,colorBufferFormat,hasDepthBuffer,hasAccumBuffer,hasVarianceBuffer),
+      FrameBuffer(numPixels,colorBufferFormat,hasDepthBuffer,
+                  hasAccumBuffer,hasVarianceBuffer),
       numPixels(numPixels),
       maxValidPixelID(numPixels-vec2i(1)),
       numTiles(divRoundUp(numPixels, getTileSize())),
@@ -342,8 +343,10 @@ namespace ospray {
                                                false,
                                                false);
       }
-      if (hasVarianceBuffer)
-        tileErrorBuffer = (float*)alignedMalloc(sizeof(float)*numTiles.x*numTiles.y);
+      if (hasVarianceBuffer) {
+        tileErrorBuffer =
+            (float*)alignedMalloc(sizeof(float)*numTiles.x*numTiles.y);
+      }
     }
 
     ispc::DFB_set(getIE(),numPixels.x,numPixels.y,
