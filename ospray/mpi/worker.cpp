@@ -80,7 +80,6 @@ namespace ospray {
     void runWorker(int *_ac, const char **_av)
     {
       mpi::MPIDevice *device = (mpi::MPIDevice *)ospray::api::Device::current;
-      ospray::init(_ac,&_av);
 
       // initialize embree. (we need to do this here rather than in
       // ospray::init() because in mpi-mode the latter is also called
@@ -111,13 +110,6 @@ namespace ospray {
                   << (int)rtcDeviceGetError(embreeDevice) << std::endl;
       }
 
-      // -------------------------------------------------------
-      // initialize our task system
-      // -------------------------------------------------------
-#if 0
-      ospray::Task::initTaskSystem(debugMode ? 0 : numThreads);
-#endif
-
       CommandStream cmd;
 
       char hostname[HOST_NAME_MAX];
@@ -126,13 +118,11 @@ namespace ospray {
              worker.rank,worker.size,getpid(),hostname);
       int rc;
 
-      // TiledLoadBalancer::instance = new mpi::DynamicLoadBalancer_Slave;
       TiledLoadBalancer::instance = new mpi::staticLoadBalancer::Slave;
 
       try {
       while (1) {
         const int command = cmd.get_int32();
-        // printf("worker: got command %i\n",command); fflush(0);
 
         switch (command) {
         case ospray::CMD_NEW_PIXELOP: {

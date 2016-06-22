@@ -51,7 +51,8 @@ namespace ospray {
         user has launched the app across all ranks using mpirun "<all
         rank> <app>"; no new processes need to get launched.
 
-        Based on the 'startworkers' flag, this function can set up ospray in one of two modes:
+        Based on the 'startworkers' flag, this function can set up ospray in
+        one of two modes:
         
         in "workers" mode (startworkes=true) all ranks > 0 become
         workers, and will NOT return to the application; rank 0 is the
@@ -87,19 +88,20 @@ namespace ospray {
       MPI_Barrier(MPI_COMM_WORLD);
 
       if (world.size <= 1) {
-        throw std::runtime_error("No MPI workers found.\n#osp:mpi: Fatal Error - OSPRay told to run in MPI mode, but there seems to be no MPI peers!?\n#osp:mpi: (Did you forget an 'mpirun' in front of your application?)");
+        throw std::runtime_error("No MPI workers found.\n#osp:mpi: Fatal Error "
+                                 "- OSPRay told to run in MPI mode, but there "
+                                 "seems to be no MPI peers!?\n#osp:mpi: (Did "
+                                 "you forget an 'mpirun' in front of your "
+                                 "application?)");
       }
 
       if (world.rank == 0) {
-#if 0
-        ospray::Task::initTaskSystem(debugMode ? 0 : numThreads);
-#endif
-
         // we're the root
         MPI_Comm_split(mpi::world.comm,1,mpi::world.rank,&app.comm);
         app.makeIntraComm();
         // app.makeIntercomm();
-        printf("#w: app process %i/%i (global %i/%i)\n",app.rank,app.size,world.rank,world.size);
+        printf("#w: app process %i/%i (global %i/%i)\n",
+               app.rank,app.size,world.rank,world.size);
 
         MPI_Intercomm_create(app.comm, 0, world.comm, 1, 1, &worker.comm); 
         // worker.makeIntracomm();
@@ -116,19 +118,23 @@ namespace ospray {
         
         MPI_Barrier(MPI_COMM_WORLD);
         // -------------------------------------------------------
-        // at this point, all processes should be set up and synced. in particular
+        // at this point, all processes should be set up and synced. in
+        // particular:
         // - app has intracommunicator to all workers (and vica versa)
-        // - app process(es) are in one intercomm ("app"); workers all in another ("worker")
+        // - app process(es) are in one intercomm ("app"); workers all in
+        //   another ("worker")
         // - all processes (incl app) have barrier'ed, and thus now in sync.
 
-        // now, root proc(s) will return, initialize the MPI device, then return to the app
+        // now, root proc(s) will return, initialize the MPI device, then
+        // return to the app
         return new mpi::MPIDevice(ac,av);
       } else {
         // we're the workers
         MPI_Comm_split(mpi::world.comm,0,mpi::world.rank,&worker.comm);
         worker.makeIntraComm();
         // worker.makeIntercomm();
-        printf("#w: worker process %i/%i (global %i/%i)\n",worker.rank,worker.size,world.rank,world.size);
+        printf("#w: worker process %i/%i (global %i/%i)\n",
+               worker.rank,worker.size,world.rank,world.size);
 
         MPI_Intercomm_create(worker.comm, 0, world.comm, 0, 1, &app.comm); 
         app.makeInterComm();
@@ -137,26 +143,31 @@ namespace ospray {
         // app.containsMe = false;
 
         // replying to test-message
-        printf("#w: worker %i trying to receive tag %i...\n",worker.rank,worker.rank);
+        printf("#w: worker %i trying to receive tag %i...\n",
+               worker.rank,worker.rank);
         int reply;
         MPI_Recv(&reply,1,MPI_INT,0,worker.rank,app.comm,&status);
         MPI_Send(&reply,1,MPI_INT,0,worker.rank,app.comm);
 
         MPI_Barrier(MPI_COMM_WORLD);
         // -------------------------------------------------------
-        // at this point, all processes should be set up and synced. in particular
+        // at this point, all processes should be set up and synced. in
+        // particular:
         // - app has intracommunicator to all workers (and vica versa)
-        // - app process(es) are in one intercomm ("app"); workers all in another ("worker")
+        // - app process(es) are in one intercomm ("app"); workers all in
+        //   another ("worker")
         // - all processes (incl app) have barrier'ed, and thus now in sync.
 
-        // now, all workers will enter their worker loop (ie, they will *not* return
+        // now, all workers will enter their worker loop (ie, they will *not*
+        // return)
         if (ranksBecomeWorkers) {
           cout << "RUNNING WORKER W/O RETURNING!" << endl;
           mpi::runWorker(ac,av);
           throw std::runtime_error("should never reach here!");
           /* no return here - 'runWorker' will never return */
         } else {
-          cout << "#osp:mpi: distributed mode detected, returning device on all ranks!" << endl << std::flush;
+          cout << "#osp:mpi: distributed mode detected, "
+               << "returning device on all ranks!" << endl;
           return new mpi::MPIDevice(ac,av);
         }
       }
@@ -168,21 +179,28 @@ namespace ospray {
     /*! in this mode ("separate worker group" mode)
       - the user may or may not have launched MPI explicitly for his app
       - the app may or may not be running distributed
-      - the ospray frontend (the part linked to the app) will wait for a remote MPI gruop of 
+      - the ospray frontend (the part linked to the app) will wait for a remote
+        MPI gruop of
       workers to connect to this app
-      - the ospray frontend will store the port its waiting on connections for in the
-      filename passed to this function; or will print it to stdout if this is NULL
+      - the ospray frontend will store the port its waiting on connections for
+        in the
+      filename passed to this function; or will print it to stdout if this is
+      NULL
     */
-    ospray::api::Device *createMPI_ListenForWorkers(int *ac, const char **av, 
-                                                    const char *fileNameToStorePortIn)
+    ospray::api::Device *
+    createMPI_ListenForWorkers(int *ac, const char **av,
+                               const char *fileNameToStorePortIn)
     {
       ospray::init(ac,&av);
       mpi::init(ac,av);
 
       if (world.rank < 1) {
-        cout << "=======================================================" << endl;
-        cout << "initializing OSPRay MPI in 'listening for workers' mode" << endl;
-        cout << "=======================================================" << endl;
+        cout << "======================================================="
+             << endl;
+        cout << "initializing OSPRay MPI in 'listening for workers' mode"
+             << endl;
+        cout << "======================================================="
+             << endl;
       }
       int rc;
 
@@ -195,7 +213,8 @@ namespace ospray {
         rc = MPI_Open_port(MPI_INFO_NULL, appPortName);
         Assert(rc == MPI_SUCCESS);
         
-        // fix port name: replace all '$'s by '%'s to allow using it on the cmdline...
+        // fix port name: replace all '$'s by '%'s to allow using it on the
+        //                cmdline...
         char *fixedPortName = strdup(appPortName);
         for (char *s = fixedPortName; *s; ++s)
           if (*s == '$') *s = '%';
@@ -218,16 +237,20 @@ namespace ospray {
       // worker.makeIntracomm();
       
       if (app.rank == 0) {
-        cout << "=======================================================" << endl;
+        cout << "======================================================="
+             << endl;
         cout << "OSPRAY Worker ring connected" << endl;
-        cout << "=======================================================" << endl;
+        cout << "======================================================="
+             << endl;
       }
       MPI_Barrier(app.comm);
       
       if (app.rank == 1) {
-        cout << "WARNING: you're trying to run an mpi-parallel app with ospray; " << endl
+        cout << "WARNING: you're trying to run an mpi-parallel app with ospray;"
+             << endl
              << " only the root rank is allowed to issue ospray calls" << endl;
-        cout << "=======================================================" << endl;
+        cout << "======================================================="
+             << endl;
       }
       MPI_Barrier(app.comm);
 
@@ -261,16 +284,20 @@ namespace ospray {
       
       char appPortName[MPI_MAX_PORT_NAME];
       if (app.rank == 0 || app.size == -1) {
-        cout << "=======================================================" << endl;
-        cout << "initializing OSPRay MPI in 'launching new workers' mode" << endl;
+        cout << "======================================================="
+             << endl;
+        cout << "initializing OSPRay MPI in 'launching new workers' mode"
+             << endl;
         cout << "using launch script '" << launchCommand << "'" << endl;
         rc = MPI_Open_port(MPI_INFO_NULL, appPortName);
         Assert(rc == MPI_SUCCESS);
         
-        // fix port name: replace all '$'s by '%'s to allow using it on the cmdline...
+        // fix port name: replace all '$'s by '%'s to allow using it on the
+        //                cmdline...
         char *fixedPortName = strdup(appPortName);
         cout << "with port " << fixedPortName <<  endl;
-        cout << "=======================================================" << endl;
+        cout << "======================================================="
+             << endl;
         for (char *s = fixedPortName; *s; ++s)
           if (*s == '$') *s = '%';
 
@@ -281,7 +308,8 @@ namespace ospray {
 #else
         if (fork()) {
           system(systemCommand);
-          cout << "OSPRay worker process has died - killing application" << endl;
+          cout << "OSPRay worker process has died - killing application"
+               << endl;
           exit(0);
         }
 #endif
@@ -294,13 +322,17 @@ namespace ospray {
       if (app.rank == 0 || app.size == -1) {
         cout << "OSPRay MPI Worker ring successfully connected." << endl;
         cout << "found " << worker.size << " workers." << endl;
-        cout << "=======================================================" << endl;
+        cout << "======================================================="
+             << endl;
       }
       if (app.size > 1) {
         if (app.rank == 1) {
-          cout << "ospray:WARNING: you're trying to run an mpi-parallel app with ospray\n"
-               << "(only the root node is allowed to issue ospray api calls right now)\n";
-          cout << "=======================================================" << endl;
+          cout << "ospray:WARNING: you're trying to run an mpi-parallel app "
+               << "with ospray\n"
+               << "(only the root node is allowed to issue ospray api "
+               << "calls right now)\n";
+          cout << "======================================================="
+               << endl;
         }
         MPI_Barrier(app.comm);
         return NULL;
@@ -319,13 +351,15 @@ namespace ospray {
       
       ospray::mpi::init(ac,(const char **)*av);
       if (mpi::world.size < 2) {
-        throw std::runtime_error("#osp:mpi: trying to run distributed API mode "
-                                 "with a single rank? (did you forget the "
+        throw std::runtime_error("#osp:mpi: trying to run distributed API mode"
+                                 " with a single rank? (did you forget the "
                                  "'mpirun'?)");
       }
 
       ospray::api::Device::current
-        = ospray::mpi::createMPI_runOnExistingRanks(ac,(const char**)*av,false);
+        = ospray::mpi::createMPI_runOnExistingRanks(ac,
+                                                    (const char**)*av,
+                                                    false);
     }
     
     MPIDevice::MPIDevice(// AppMode appMode, OSPMode ospMode,
@@ -336,16 +370,15 @@ namespace ospray {
       if (logLevelFromEnv && logLevel == 0)
         logLevel = atoi(logLevelFromEnv);
 
-      ospray::init(_ac,&_av);
-
-      if (mpi::world.size !=1) {
+      if (mpi::world.size != 1) {
         if (mpi::world.rank < 0) {
           PRINT(mpi::world.rank);
           PRINT(mpi::world.size);
           throw std::runtime_error("OSPRay MPI startup error. Use \"mpirun "
                                    "-n 1 <command>\" when calling an "
                                    "application that tries to spawn to start "
-                                   "the application you were trying to start.");
+                                   "the application you were trying to "
+                                   "start.");
         }
       }
 
@@ -358,18 +391,18 @@ namespace ospray {
                                  const OSPFrameBufferFormat mode,
                                  const uint32 channels)
     {
-      FrameBuffer::ColorBufferFormat colorBufferFormat = mode; //FrameBuffer::RGBA_UINT8;//FLOAT32;
+      FrameBuffer::ColorBufferFormat colorBufferFormat = mode;
       bool hasDepthBuffer = (channels & OSP_FB_DEPTH)!=0;
       bool hasAccumBuffer = (channels & OSP_FB_ACCUM)!=0;
       bool hasVarianceBuffer = (channels & OSP_FB_VARIANCE)!=0;
 
       ObjectHandle handle = ObjectHandle::alloc();
       
-      FrameBuffer *fb = new DistributedFrameBuffer(ospray::mpi::async::CommLayer::WORLD,
-                                                   size,
-                                                   handle,
-                                                   colorBufferFormat,
-                                                   hasDepthBuffer,hasAccumBuffer,hasVarianceBuffer);
+      FrameBuffer *fb =
+          new DistributedFrameBuffer(ospray::mpi::async::CommLayer::WORLD,
+                                     size, handle, colorBufferFormat,
+                                     hasDepthBuffer,hasAccumBuffer,
+                                     hasVarianceBuffer);
       fb->refInc();
       ObjectHandle::assign(handle,fb);
       cmd.newCommand(CMD_FRAMEBUFFER_CREATE);
@@ -500,7 +533,8 @@ namespace ospray {
       Assert(type != OSP_UNKNOWN && "unknown volume voxel type");
       int typeSize = sizeOf(type);
 
-      size_t size = typeSize * size_t(count.x) * size_t(count.y) * size_t(count.z);
+      size_t size =
+          typeSize * size_t(count.x) * size_t(count.y) * size_t(count.z);
       // This size restriction is imposed by MPI_Bcast which indexes into the
       // buffer with an int
       // limiting us to a max size of 2^31 bytes, a bit more than 2GB
@@ -528,7 +562,9 @@ namespace ospray {
     }
 
     /*! assign (named) string parameter to an object */
-    void MPIDevice::setString(OSPObject _object, const char *bufName, const char *s)
+    void MPIDevice::setString(OSPObject _object,
+                              const char *bufName,
+                              const char *s)
     {
       Assert(_object);
       Assert(bufName);
@@ -554,7 +590,8 @@ namespace ospray {
       std::string initSymName = "ospray_init_module_"+std::string(name);
       void*initSym = getSymbol(initSymName);
       if (!initSym)
-        throw std::runtime_error("#osp:mpi:mpidevice: could not find module initializer "+initSymName);
+        throw std::runtime_error("#osp:mpi:mpidevice: could not find module "
+                                 "initializer " + initSymName);
       void (*initMethod)() = (void(*)())initSym;
       initMethod();
 
@@ -566,7 +603,9 @@ namespace ospray {
     }
 
     /*! assign (named) float parameter to an object */
-    void MPIDevice::setFloat(OSPObject _object, const char *bufName, const float f)
+    void MPIDevice::setFloat(OSPObject _object,
+                             const char *bufName,
+                             const float f)
     {
       Assert(_object);
       Assert(bufName);
@@ -590,7 +629,9 @@ namespace ospray {
     }
 
     /*! assign (named) vec2f parameter to an object */
-    void MPIDevice::setVec2f(OSPObject _object, const char *bufName, const vec2f &v)
+    void MPIDevice::setVec2f(OSPObject _object,
+                             const char *bufName,
+                             const vec2f &v)
     {
       Assert(_object);
       Assert(bufName);
@@ -602,7 +643,9 @@ namespace ospray {
     }
 
     /*! assign (named) vec3f parameter to an object */
-    void MPIDevice::setVec3f(OSPObject _object, const char *bufName, const vec3f &v)
+    void MPIDevice::setVec3f(OSPObject _object,
+                             const char *bufName,
+                             const vec3f &v)
     {
       Assert(_object);
       Assert(bufName);
@@ -614,7 +657,9 @@ namespace ospray {
     }
 
     /*! assign (named) vec4f parameter to an object */
-    void MPIDevice::setVec4f(OSPObject _object, const char *bufName, const vec4f &v)
+    void MPIDevice::setVec4f(OSPObject _object,
+                             const char *bufName,
+                             const vec4f &v)
     {
       Assert(_object);
       Assert(bufName);
@@ -626,7 +671,9 @@ namespace ospray {
     }
 
     /*! assign (named) vec2i parameter to an object */
-    void MPIDevice::setVec2i(OSPObject _object, const char *bufName, const vec2i &v)
+    void MPIDevice::setVec2i(OSPObject _object,
+                             const char *bufName,
+                             const vec2i &v)
     {
       Assert(_object);
       Assert(bufName);
@@ -638,7 +685,9 @@ namespace ospray {
     }
 
     /*! assign (named) vec3i parameter to an object */
-    void MPIDevice::setVec3i(OSPObject _object, const char *bufName, const vec3i &v)
+    void MPIDevice::setVec3i(OSPObject _object,
+                             const char *bufName,
+                             const vec3i &v)
     {
       Assert(_object);
       Assert(bufName);
@@ -650,7 +699,9 @@ namespace ospray {
     }
 
     /*! assign (named) data item as a parameter to an object */
-    void MPIDevice::setObject(OSPObject _target, const char *bufName, OSPObject _value)
+    void MPIDevice::setObject(OSPObject _target,
+                              const char *bufName,
+                              OSPObject _value)
     {
       Assert(_target != NULL);
       Assert(bufName != NULL);
@@ -821,7 +872,8 @@ namespace ospray {
       return NULL;
     }
 
-    /*! clear the specified channel(s) of the frame buffer specified in 'whichChannels'
+    /*! clear the specified channel(s) of the frame buffer specified in
+        'whichChannels'
         
       if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to
       '0,0,0,0'.  
@@ -841,7 +893,8 @@ namespace ospray {
       cmd.send((int32)fbChannelFlags);
       cmd.flush();
 
-      // also clear FB on master, i.e. clear error buffer for variance estimation
+      // also clear FB on master, i.e. clear error buffer for variance
+      // estimation
       FrameBuffer *fb = (FrameBuffer *)handle.lookup();
       fb->clear(fbChannelFlags);
     }
@@ -961,7 +1014,8 @@ namespace ospray {
         NOTIMPLEMENTED;
       } break;
         // ==================================================================
-        // currently in default (mastered) mode where master tells workers what to do
+        // currently in default (mastered) mode where master tells workers what
+        // to do
         // ==================================================================
       case OSPD_MODE_MASTERED: {
         // first: tell workers to switch to new mode: they're in
@@ -975,12 +1029,14 @@ namespace ospray {
         } break;
         case OSPD_MODE_INDEPENDENT:
         case OSPD_MODE_COLLABORATIVE: {
-          printf("rank %i telling clients to switch to %s mode.\n",mpi::world.rank,apiModeName(newMode));
+          printf("rank %i telling clients to switch to %s mode.\n",
+                 mpi::world.rank,apiModeName(newMode));
           cmd.newCommand(CMD_API_MODE);
           cmd.send((int32)newMode);
           cmd.flush();
           currentApiMode = newMode;
-          // and just to be sure, do a barrier here -- not acutally needed AFAICT.
+          // and just to be sure, do a barrier here -- not acutally needed
+          // AFAICT.
           MPI_Barrier(MPI_COMM_WORLD);
         } break;
         default:
@@ -1003,8 +1059,10 @@ namespace ospray {
                                "(when calling ospApiMode())");
     }
 
-    void MPIDevice::sampleVolume(float **results, OSPVolume volume, 
-                                 const vec3f *worldCoordinates, const size_t &count)
+    void MPIDevice::sampleVolume(float **results,
+                                 OSPVolume volume,
+                                 const vec3f *worldCoordinates,
+                                 const size_t &count)
     {
       Assert2(volume, "invalid volume handle");
       Assert2(worldCoordinates, "invalid worldCoordinates");
