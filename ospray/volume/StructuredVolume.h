@@ -104,7 +104,7 @@ namespace ospray {
   {
     const size_t blockSize = 1000000;
     int numBlocks = divRoundUp(count, blockSize);
-    vec2f* blockRange = (vec2f*)alloca(numBlocks*sizeof(vec2f));
+    vec2f* blockRange = STACK_BUFFER(vec2f, numBlocks);
 
     //NOTE(jda) - shouldn't this be a simple reduction (TBB/OMP)?
     parallel_for(numBlocks, [&](int taskIndex){

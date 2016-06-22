@@ -112,6 +112,8 @@ namespace ospray {
             dfb->hasAccumBuffer,
             dfb->hasVarianceBuffer);
         break;
+    default:
+      break;
     }
   }
 
@@ -150,7 +152,7 @@ namespace ospray {
       }
 
       if (missingInCurrentGeneration == 0) {
-        Tile **tileArray = (Tile**)alloca(sizeof(Tile*)*bufferedTile.size());
+        Tile **tileArray = STACK_BUFFER(Tile*, bufferedTile.size());
         for (int i = 0; i < bufferedTile.size(); i++) {
           tileArray[i] = &bufferedTile[i]->tile;
         }

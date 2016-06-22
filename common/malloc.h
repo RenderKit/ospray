@@ -26,5 +26,17 @@ namespace ospcommon
   /*! aligned allocation */
   OSPCOMMON_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
   OSPCOMMON_INTERFACE void alignedFree(void* ptr);
+
+// NOTE(jda) - can't use function wrapped alloca solution as Clang won't inline
+//             a function containing alloca()...but it works with gcc/icc
+#if 0
+  template<typename T>
+  __forceinline T* stackBuffer(size_t nElements)
+  {
+    return static_cast<T*>(alloca(sizeof(T) * nElements));
+  }
+#else
+#  define STACK_BUFFER(TYPE, nElements) (TYPE*)alloca(sizeof(TYPE)*nElements)
+#endif
 }
 

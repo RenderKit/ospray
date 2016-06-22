@@ -129,7 +129,7 @@ namespace ospray {
 
     size_t numBlocks = dpv->numDDBlocks;
     CacheForBlockTiles blockTileCache(numBlocks);
-    bool *blockWasVisible = (bool*)alloca(numBlocks*sizeof(bool));
+    bool *blockWasVisible = STACK_BUFFER(bool, numBlocks);
 
     for (int i = 0; i < numBlocks; i++)
       blockWasVisible[i] = false;
