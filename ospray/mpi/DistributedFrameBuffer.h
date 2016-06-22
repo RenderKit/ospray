@@ -43,7 +43,10 @@ namespace ospray {
     size_t numMyTiles()  const { return myTiles.size(); }
 
     int accumId;
-    float *tileErrorBuffer; /*!< holds error per tile, for variance estimation / stopping */
+
+    //! holds error per tile, for variance estimation / stopping
+    float *tileErrorBuffer;
+
     int32 accumID(const vec2i &) override { return accumId; }
     float tileError(const vec2i &tile) override;
     float endFrame(const float errorThreshold) override;

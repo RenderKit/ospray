@@ -33,7 +33,7 @@ namespace ospray {
 
   inline int clientRank(int clientID) { return clientID+1; }
 
-  typedef DistributedFrameBuffer DFB;
+  using DFB = DistributedFrameBuffer;
 
   DFB::TileDesc::TileDesc(DFB *dfb,
                           const vec2i &begin,
@@ -67,20 +67,7 @@ namespace ospray {
       for (int ix=0;ix<t->tile.region.upper.x-t->tile.region.lower.x;ix++)
         z = std::min(z,t->tile.z[ix+TILE_SIZE*iy]);
     t->sortOrder = z;
-
-    // t->sortOrder = - t->tile.generation;
   }
-
-  inline int compareBufferedTiles(const void *_a,
-                                  const void *_b)
-  {
-    const auto *a = *(const DFB::AlphaBlendTile_simple::BufferedTile **)_a;
-    const auto *b = *(const DFB::AlphaBlendTile_simple::BufferedTile **)_b;
-    if (a->sortOrder == b->sortOrder) return 0;
-    return a->sortOrder > b->sortOrder ? -1 : +1;
-  }
-
-  Mutex gMutex;
 
   void DFB::TileData::accumulate(const ospray::Tile &tile)
   {
@@ -139,7 +126,7 @@ namespace ospray {
     this->final.rcp_fbSize = tile.rcp_fbSize;
 
     {
-      LockGuard lock(mutex);
+      SCOPED_LOCK(mutex);
       bufferedTile.push_back(addTile);
 
       if (tile.generation == currentGeneration) {
@@ -180,7 +167,6 @@ namespace ospray {
       }
     }
   }
-
 
   /*! called exactly once at the beginning of each frame */
   void DFB::WriteOnlyOnceTile::newFrame()
@@ -235,7 +221,7 @@ namespace ospray {
   {
     std::vector<mpi::async::CommLayer::Message *> delayedMessage;
     {
-      LockGuard lock(mutex);
+      SCOPED_LOCK(mutex);
       DBG(printf("rank %i starting new frame\n",mpi::world.rank));
       assert(!frameIsActive);
 
@@ -276,8 +262,9 @@ namespace ospray {
 
   void DFB::freeTiles()
   {
-    for (int i=0;i<allTiles.size();i++)
-      delete allTiles[i];
+    for (auto &tile : allTiles)
+      delete tile;
+
     allTiles.clear();
     myTiles.clear();
   }
@@ -285,8 +272,8 @@ namespace ospray {
   void DFB::createTiles()
   {
     size_t tileID=0;
-    for (size_t y=0;y<numPixels.y;y+=TILE_SIZE)
-      for (size_t x=0;x<numPixels.x;x+=TILE_SIZE,tileID++) {
+    for (size_t y = 0; y < numPixels.y; y += TILE_SIZE)
+      for (size_t x = 0; x < numPixels.x; x += TILE_SIZE, tileID++) {
         size_t ownerID = tileID % (comm->group->size-1);
         if (clientRank(ownerID) == comm->group->rank) {
           TileData *td
@@ -355,7 +342,8 @@ namespace ospray {
 
   void DFB::setFrameMode(FrameMode newFrameMode)
   {
-    if (frameMode == newFrameMode) return;
+    if (frameMode == newFrameMode)
+      return;
 
     freeTiles();
     this->frameMode = newFrameMode;
@@ -425,11 +413,11 @@ namespace ospray {
   {
     if (hasVarianceBuffer && (accumId & 1) == 1)
       tileErrorBuffer[getTileIDof(msg->coords)] = msg->error;
-    for (int iy=0;iy<TILE_SIZE;iy++) {
+    for (int iy = 0; iy < TILE_SIZE; iy++) {
       int iiy = iy+msg->coords.y;
       if (iiy >= numPixels.y) continue;
 
-      for (int ix=0;ix<TILE_SIZE;ix++) {
+      for (int ix = 0; ix < TILE_SIZE; ix++) {
         int iix = ix+msg->coords.x;
         if (iix >= numPixels.x) continue;
 
@@ -448,13 +436,16 @@ namespace ospray {
   {
     if (hasVarianceBuffer && (accumId & 1) == 1)
       tileErrorBuffer[getTileIDof(msg->coords)] = msg->error;
-    for (int iy=0;iy<TILE_SIZE;iy++) {
-      int iiy = iy+msg->coords.y;
-      if (iiy >= numPixels.y) continue;
 
-      for (int ix=0;ix<TILE_SIZE;ix++) {
+    for (int iy = 0; iy < TILE_SIZE; iy++) {
+      int iiy = iy+msg->coords.y;
+      if (iiy >= numPixels.y)
+        continue;
+
+      for (int ix = 0; ix < TILE_SIZE; ix++) {
         int iix = ix+msg->coords.x;
-        if (iix >= numPixels.x) continue;
+        if (iix >= numPixels.x)
+          continue;
 
         ((vec4f*)localFBonMaster->colorBuffer)[iix + iiy*numPixels.x]
           = msg->color[iy][ix];
@@ -595,8 +586,7 @@ namespace ospray {
       memcpy(&msg->tile,&tile,sizeof(ospray::Tile));
       msg->command = WORKER_WRITE_TILE;
 
-      comm->sendTo(this->worker[tileDesc->ownerID],
-                   msg,sizeof(*msg));
+      comm->sendTo(this->worker[tileDesc->ownerID], msg,sizeof(*msg));
     } else {
       // this is my tile...
       assert(frameIsActive);
@@ -621,19 +611,19 @@ namespace ospray {
         DFB::TileData *td = this->myTiles[taskIndex];
         assert(td);
         if (fbChannelFlags & OSP_FB_ACCUM) {
-          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.r[i] = 0.f;
-          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.g[i] = 0.f;
-          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.b[i] = 0.f;
-          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.a[i] = 0.f;
-          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.z[i] = inf;
+          for (int i = 0; i < TILE_SIZE*TILE_SIZE; i++) td->accum.r[i] = 0.f;
+          for (int i = 0; i < TILE_SIZE*TILE_SIZE; i++) td->accum.g[i] = 0.f;
+          for (int i = 0; i < TILE_SIZE*TILE_SIZE; i++) td->accum.b[i] = 0.f;
+          for (int i = 0; i < TILE_SIZE*TILE_SIZE; i++) td->accum.a[i] = 0.f;
+          for (int i = 0; i < TILE_SIZE*TILE_SIZE; i++) td->accum.z[i] = inf;
         }
         if (fbChannelFlags & OSP_FB_DEPTH)
-          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.z[i] = inf;
+          for (int i = 0; i < TILE_SIZE*TILE_SIZE; i++) td->final.z[i] = inf;
         if (fbChannelFlags & OSP_FB_COLOR) {
-          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.r[i] = 0.f;
-          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.g[i] = 0.f;
-          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.b[i] = 0.f;
-          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.a[i] = 0.f;
+          for (int i = 0; i < TILE_SIZE*TILE_SIZE; i++) td->final.r[i] = 0.f;
+          for (int i = 0; i < TILE_SIZE*TILE_SIZE; i++) td->final.g[i] = 0.f;
+          for (int i = 0; i < TILE_SIZE*TILE_SIZE; i++) td->final.b[i] = 0.f;
+          for (int i = 0; i < TILE_SIZE*TILE_SIZE; i++) td->final.a[i] = 0.f;
         }
       });
     }
@@ -657,7 +647,7 @@ namespace ospray {
       return inf;
   }
 
-  float DFB::endFrame(const float errorThreshold)
+  float DFB::endFrame(const float /*errorThreshold*/)
   {
     if (tileErrorBuffer) {
       float maxErr = 0.0f;
