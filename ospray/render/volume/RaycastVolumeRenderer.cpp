@@ -129,8 +129,6 @@ namespace ospray {
 
     size_t numBlocks = dpv->numDDBlocks;
     CacheForBlockTiles blockTileCache(numBlocks);
-    // for (int i=0;i<numBlocks;i++)
-    //   PRINT(dpv->ddBlock[i].bounds);
     bool *blockWasVisible = (bool*)alloca(numBlocks*sizeof(bool));
 
     for (int i = 0; i < numBlocks; i++)

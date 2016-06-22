@@ -63,23 +63,10 @@ namespace ospray {
     using std::cout;
     using std::endl;
 
-    struct GeometryLocator {
-      bool operator()(const Ref<ospray::Geometry> &g) const {
-        return ptr == &*g;
-      }
-      Geometry *ptr;
-    };
-
-    struct VolumeLocator {
-      bool operator()(const Ref<ospray::Volume> &g) const {
-        return ptr == &*g;
-      }
-      Volume *ptr;
-    };
-
     void embreeErrorFunc(const RTCError code, const char* str)
     {
-      std::cerr << "#osp: embree internal error " << code << " : " << str << std::endl;
+      std::cerr << "#osp: embree internal error " << code << " : "
+                << str << std::endl;
       throw std::runtime_error("embree internal error '"+std::string(str)+"'");
     }
 
@@ -151,9 +138,10 @@ namespace ospray {
         case ospray::CMD_NEW_PIXELOP: {
           const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
-          if (worker.rank == 0)
-            if (logLevel > 2)
-              cout << "creating new pixelOp \"" << type << "\" ID " << handle << endl;
+          if (worker.rank == 0 && logLevel > 2) {
+            cout << "creating new pixelOp \"" << type << "\" ID "
+                 << handle << endl;
+          }
           PixelOp *pixelOp = PixelOp::createPixelOp(type);
           cmd.free(type);
           Assert(pixelOp);
@@ -162,9 +150,10 @@ namespace ospray {
         case ospray::CMD_NEW_RENDERER: {
           const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
-          if (worker.rank == 0)
-            if (logLevel > 2)
-              cout << "creating new renderer \"" << type << "\" ID " << handle << endl;
+          if (worker.rank == 0 && logLevel > 2) {
+            cout << "creating new renderer \"" << type << "\" ID "
+                 << handle << endl;
+          }
           Renderer *renderer = Renderer::createRenderer(type);
           cmd.free(type);
           Assert(renderer);
@@ -173,40 +162,45 @@ namespace ospray {
         case ospray::CMD_NEW_CAMERA: {
           const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
-          if (worker.rank == 0)
-            if (logLevel > 2)
-              cout << "creating new camera \"" << type << "\" ID " << (void*)(int64)handle << endl;
+          if (worker.rank == 0 && logLevel > 2) {
+            cout << "creating new camera \"" << type << "\" ID "
+                 << (void*)(int64)handle << endl;
+          }
           Camera *camera = Camera::createCamera(type);
           cmd.free(type);
           Assert(camera);
           handle.assign(camera);
-          //          cout << "#w: new camera " << handle << endl;
         } break;
         case ospray::CMD_NEW_VOLUME: {
           // Assert(type != NULL && "invalid volume type identifier");
           const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
-          if (worker.rank == 0)
-            if (logLevel > 2)
-              cout << "creating new volume \"" << type << "\" ID " << (void*)(int64)handle << endl;
+          if (worker.rank == 0 && logLevel > 2) {
+            cout << "creating new volume \"" << type << "\" ID "
+                 << (void*)(int64)handle << endl;
+          }
           Volume *volume = Volume::createInstance(type);
-          if (!volume)
-            throw std::runtime_error("unknown volume type '"+std::string(type)+"'");
+          if (!volume) {
+            throw std::runtime_error("unknown volume type '" +
+                                     std::string(type) + "'");
+          }
           volume->refInc();
           cmd.free(type);
           Assert(volume);
           handle.assign(volume);
-          //          cout << "#w: new volume " << handle << endl;
         } break;
         case ospray::CMD_NEW_TRANSFERFUNCTION: {
           const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
-          if (worker.rank == 0)
-            if (logLevel > 2)
-              cout << "creating new transfer function \"" << type << "\" ID " << (void*)(int64)handle << endl;
-          TransferFunction *transferFunction = TransferFunction::createInstance(type);
+          if (worker.rank == 0 && logLevel > 2) {
+            cout << "creating new transfer function \"" << type << "\" ID "
+                 << (void*)(int64)handle << endl;
+          }
+          TransferFunction *transferFunction =
+              TransferFunction::createInstance(type);
           if (!transferFunction) {
-            throw std::runtime_error("unknown transfer function type '"+std::string(type)+"'");
+            throw std::runtime_error("unknown transfer function type '" +
+                                     std::string(type) + "'");
           }
           transferFunction->refInc();
           cmd.free(type);
@@ -217,9 +211,10 @@ namespace ospray {
           const ObjectHandle rendererHandle = cmd.get_handle();
           const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
-          if (worker.rank == 0)
-            if (logLevel > 2)
-              cout << "creating new material \"" << type << "\" ID " << (void*)(int64)handle << endl;
+          if (worker.rank == 0 && logLevel > 2) {
+            cout << "creating new material \"" << type << "\" ID "
+                 << (void*)(int64)handle << endl;
+          }
 
           Renderer *renderer = (Renderer *)rendererHandle.lookup();
           Material *material = NULL;
@@ -263,9 +258,10 @@ namespace ospray {
           const ObjectHandle rendererHandle = cmd.get_handle();
           const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
-          if (worker.rank == 0)
-            if (logLevel > 2)
-              cout << "creating new light \"" << type << "\" ID " << (void*)(int64)handle << endl;
+          if (worker.rank == 0 && logLevel > 2) {
+            cout << "creating new light \"" << type << "\" ID "
+                 << (void*)(int64)handle << endl;
+          }
 
           Renderer *renderer = (Renderer *)rendererHandle.lookup();
           Light *light = NULL;
@@ -309,79 +305,65 @@ namespace ospray {
           // Assert(type != NULL && "invalid volume type identifier");
           const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
-          if (worker.rank == 0)
-            if (logLevel > 2)
-              cout << "creating new geometry \"" << type << "\" ID " << (void*)(int64)handle << endl;
+          if (worker.rank == 0 && logLevel > 2) {
+            cout << "creating new geometry \"" << type << "\" ID "
+                 << (void*)(int64)handle << endl;
+          }
           Geometry *geometry = Geometry::createGeometry(type);
-          if (!geometry)
-            throw std::runtime_error("unknown geometry type '"+std::string(type)+"'");
+          if (!geometry) {
+            throw std::runtime_error("unknown geometry type '"
+                                     + std::string(type) + "'");
+          }
           geometry->refInc();
           cmd.free(type);
           Assert(geometry);
           handle.assign(geometry);
-          if (worker.rank == 0)
-            if (logLevel > 2)
-              cout << "#w: new geometry " << handle << " " << geometry->toString() << endl;
+          if (worker.rank == 0 && logLevel > 2) {
+            cout << "#w: new geometry " << handle << " "
+                 << geometry->toString() << endl;
+          }
         } break;
 
         case ospray::CMD_FRAMEBUFFER_CREATE: {
           const ObjectHandle handle = cmd.get_handle();
           const vec2i size                = cmd.get_vec2i();
-          const OSPFrameBufferFormat mode = (OSPFrameBufferFormat)cmd.get_int32();
+          const OSPFrameBufferFormat mode =
+              (OSPFrameBufferFormat)cmd.get_int32();
           const uint32 channelFlags       = cmd.get_int32();
           const bool hasDepthBuffer = (channelFlags & OSP_FB_DEPTH);
           const bool hasAccumBuffer = (channelFlags & OSP_FB_ACCUM);
           const bool hasVarianceBuffer = (channelFlags & OSP_FB_VARIANCE);
-// #if USE_DFB
-          FrameBuffer *fb = new DistributedFrameBuffer(ospray::mpi::async::CommLayer::WORLD,
-                                                       size,handle,mode,
-                                                       hasDepthBuffer,hasAccumBuffer,hasVarianceBuffer);
+          FrameBuffer *fb =
+              new DistributedFrameBuffer(ospray::mpi::async::CommLayer::WORLD,
+                                         size, handle, mode, hasDepthBuffer,
+                                         hasAccumBuffer, hasVarianceBuffer);
 
-// #else
-//           FrameBuffer *fb = new LocalFrameBuffer(size,mode,hasDepthBuffer,hasAccumBuffer);
-// #endif
           handle.assign(fb);
         } break;
         case ospray::CMD_FRAMEBUFFER_CLEAR: {
           const ObjectHandle handle = cmd.get_handle();
-          const uint32 channelFlags       = cmd.get_int32();
+          const uint32 channelFlags = cmd.get_int32();
           FrameBuffer *fb = (FrameBuffer*)handle.lookup();
           assert(fb);
           fb->clear(channelFlags);
         } break;
         case ospray::CMD_RENDER_FRAME: {
           const ObjectHandle  fbHandle = cmd.get_handle();
-          // const ObjectHandle  swapChainHandle = cmd.get_handle();
           const ObjectHandle  rendererHandle  = cmd.get_handle();
           const uint32 channelFlags          = cmd.get_int32();
           FrameBuffer *fb = (FrameBuffer*)fbHandle.lookup();
-          // SwapChain *sc = (SwapChain*)swapChainHandle.lookup();
-          // Assert(sc);
           Renderer *renderer = (Renderer*)rendererHandle.lookup();
           Assert(renderer);
        // double before = getSysTime();
           renderer->renderFrame(fb,channelFlags); //sc->getBackBuffer());
        // double after = getSysTime();
        // float T = after - before;
-       // printf("#rank %i: pure time to render %f, theo fps %f\n",mpi::worker.rank,T,1.f/T);
+       // printf("#rank %i: pure time to render %f, theo fps %f\n",
+       //        mpi::worker.rank,T,1.f/T);
        // fflush(0);
-
-          // sc->advance();
         } break;
         case ospray::CMD_FRAMEBUFFER_MAP: {
           FATAL("should never get called on worker!?");
-          // const ObjectHandle handle = cmd.get_handle();
-          // FrameBuffer *fb = (FrameBuffer*)handle.lookup();
-          // // SwapChain *sc = (SwapChain*)handle.lookup();
-          // // Assert(sc);
-          // if (worker.rank == 0) {
-          //   // FrameBuffer *fb = sc->getBackBuffer();
-          //   void *ptr = (void*)fb->map();
-          //   // void *ptr = (void*)sc->map();
-          //   rc = MPI_Send(ptr,fb->size.x*fb->size.y,MPI_INT,0,0,mpi::app.comm);
-          //   Assert(rc == MPI_SUCCESS);
-          //   fb->unmap(ptr);
-          // }
         } break;
         case ospray::CMD_NEW_MODEL: {
           const ObjectHandle handle = cmd.get_handle();
@@ -465,9 +447,12 @@ namespace ospray {
           Geometry *geom = (Geometry*)geomHandle.lookup();
           Assert(geom);
 
-          GeometryLocator locator;
-          locator.ptr = geom;
-          Model::GeometryVector::iterator it = std::find_if(model->geometry.begin(), model->geometry.end(), locator);
+          auto it = std::find_if(model->geometry.begin(),
+                                 model->geometry.end(),
+                                 [&](const Ref<ospray::Geometry> &g) {
+            return geom == &*g;
+          });
+
           if(it != model->geometry.end()) {
             model->geometry.erase(it);
           }
@@ -481,9 +466,12 @@ namespace ospray {
           Volume *geom = (Volume*)geomHandle.lookup();
           Assert(geom);
 
-          VolumeLocator locator;
-          locator.ptr = geom;
-          Model::VolumeVector::iterator it = std::find_if(model->volume.begin(), model->volume.end(), locator);
+          auto it = std::find_if(model->volume.begin(),
+                                 model->volume.end(),
+                                 [&](const Ref<ospray::Volume> &g) {
+            return geom == &*g;
+          });
+
           if(it != model->volume.end()) {
             model->volume.erase(it);
           }
@@ -503,9 +491,10 @@ namespace ospray {
           const ObjectHandle handle = cmd.get_handle();
           ManagedObject *obj = handle.lookup();
           Assert(obj);
-          // printf("#w%i:c%i obj %lx\n",worker.rank,(int)handle,obj);
-          if (logLevel > 2)
-            cout << "#w: committing " << handle << " " << obj->toString() << endl;
+          if (logLevel > 2) {
+            cout << "#w: committing " << handle << " " << obj->toString()
+                 << endl;
+          }
           obj->commit();
 
           // hack, to stay compatible with earlier version
@@ -568,7 +557,8 @@ namespace ospray {
               ManagedObject::Param *param = object->findParam(name);
               bool foundParameter = (param != NULL);
 
-              result.success = foundParameter ? result.value = param->type, 1 : 0;
+              result.success =
+                  foundParameter ? result.value = param->type, 1 : 0;
             }
 
             cmd.send(&result, sizeof(ReturnValue), 0, mpi::app.comm);
@@ -585,7 +575,8 @@ namespace ospray {
             Assert(object);
 
             ManagedObject::Param *param = object->findParam(name);
-            bool foundParameter = (param == NULL || param->type != type) ? false : true;
+            bool foundParameter =
+                (param == NULL || param->type != type) ? false : true;
             switch (type) {
               case OSP_STRING: {
                 struct ReturnValue { int success; char value[2048]; } result;
@@ -596,33 +587,9 @@ namespace ospray {
                   result.success = 0;
                 cmd.send(&result, sizeof(ReturnValue), 0, mpi::app.comm);
               } break;
-              case OSP_FLOAT: {
-                struct ReturnValue { int success; float value; } result;
-                result.success = foundParameter ? result.value = ((float *) param->f)[0], 1 : 0;
-                cmd.send(&result, sizeof(ReturnValue), 0, mpi::app.comm);
-              } break;
-              case OSP_FLOAT2: {
-                struct ReturnValue { int success; vec2f value; } result;
-                result.success = foundParameter ? result.value = ((vec2f *) param->f)[0], 1 : 0;
-                cmd.send(&result, sizeof(ReturnValue), 0, mpi::app.comm);
-              } break;
-              case OSP_FLOAT3: {
-                struct ReturnValue { int success; vec3f value; } result;
-                result.success = foundParameter ? result.value = ((vec3f *) param->f)[0], 1 : 0;
-                cmd.send(&result, sizeof(ReturnValue), 0, mpi::app.comm);
-              } break;
-              case OSP_INT: {
-                struct ReturnValue { int success; int value; } result;
-                result.success = foundParameter ? result.value = ((int *) param->i)[0], 1 : 0;
-                cmd.send(&result, sizeof(ReturnValue), 0, mpi::app.comm);
-              } break;
-              case OSP_INT3: {
-                struct ReturnValue { int success; vec3i value; } result;
-                result.success = foundParameter ? result.value = ((vec3i *) param->i)[0], 1 : 0;
-                cmd.send(&result, sizeof(ReturnValue), 0, mpi::app.comm);
-              } break;
               default: {
-                throw std::runtime_error("CMD_GET_VALUE not implemented for type");
+                throw std::runtime_error("CMD_GET_VALUE not implemented for "
+                                         "type");
               }
             }
             cmd.flush();
@@ -664,15 +631,6 @@ namespace ospray {
           Assert(volume);
 
           int success = volume->setRegion(mem, index, count);
-          // double t1 = getSysTime();
-          // static long num = 0;
-          // static long bytes = 0;
-          // bytes += size;
-          // static double sum = 0.f;
-          // sum += (t1-t0);
-          // num++;
-          // if (mpi::worker.rank == 0)
-          //   printf("time for get_data(%li bytes so far) is %fs, that's %f Mbytes/sec\n",bytes,sum,bytes/sum/1e6f);
 
           int myFail = (success == 0);
           int sumFail = 0;
@@ -789,14 +747,16 @@ namespace ospray {
           // embree automatically puts this into "lib<name>.so" format
           std::string libName = "ospray_module_"+std::string(name)+"_mic";
 #else
-          std::string libName = "ospray_module_"+std::string(name)+"";
+          std::string libName = "ospray_module_" + std::string(name) + "";
 #endif
           loadLibrary(libName);
 
           std::string initSymName = "ospray_init_module_"+std::string(name);
           void*initSym = getSymbol(initSymName);
-          if (!initSym)
-            throw std::runtime_error("could not find module initializer "+initSymName);
+          if (!initSym) {
+            throw std::runtime_error("could not find module initializer "
+                                     + initSymName);
+          }
           void (*initMethod)() = (void(*)())initSym;
           initMethod();
 
@@ -814,7 +774,9 @@ namespace ospray {
           const OSPDApiMode newMode = (OSPDApiMode)cmd.get_int32();
           assert(device);
           assert(device->currentApiMode == OSPD_MODE_MASTERED);
-          printf("rank %i: master telling me to switch to %s mode.\n",mpi::world.rank,apiModeName(newMode));
+          printf("rank %i: master telling me to switch to %s mode.\n",
+                 mpi::world.rank,
+                 apiModeName(newMode));
           switch (newMode) {
           case OSPD_MODE_COLLABORATIVE: {
             PING;
