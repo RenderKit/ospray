@@ -139,7 +139,7 @@ namespace ospray {
 
     const int numJobs = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
 
-    parallel_for(numJobs, [&](int taskIndex){
+    parallel_for(numJobs, [&](int tid){
       ispc::DDDVRRenderer_renderTile(renderer->getIE(),
                                      (ispc::Tile&)fgTile,
                                      (ispc::Tile&)bgTile,
@@ -150,7 +150,7 @@ namespace ospray {
                                      tileID,
                                      ospray::core::getWorkerRank(),
                                      renderForeAndBackground,
-                                     taskIndex);
+                                     tid);
     });
 
 
