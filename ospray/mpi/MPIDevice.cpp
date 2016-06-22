@@ -44,7 +44,7 @@ namespace ospray {
     /*! it's up to the proper init routine to decide which processes
       call this function and which ones don't. This function will not
       return. */
-    void runWorker(int *_ac, const char **_av);
+    void runWorker();
 
 
     /*! in this mode ("ospray on ranks" mode, or "ranks" mode), the
@@ -162,7 +162,7 @@ namespace ospray {
         // return)
         if (ranksBecomeWorkers) {
           cout << "RUNNING WORKER W/O RETURNING!" << endl;
-          mpi::runWorker(ac,av);
+          mpi::runWorker();
           throw std::runtime_error("should never reach here!");
           /* no return here - 'runWorker' will never return */
         } else {

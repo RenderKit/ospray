@@ -25,7 +25,7 @@ namespace ospray {
     using std::cout;
     using std::endl;
 
-    void runWorker(int *_ac, const char **_av);
+    void runWorker();
 
     void workerMain(int ac, const char **av)
     {
@@ -78,7 +78,7 @@ namespace ospray {
         app.makeInterComm();
       }
       MPI_Barrier(world.comm);
-      runWorker(&ac,av); // this fct will not return
+      runWorker(); // this fct will not return
     }
 
   } // ::ospray::api

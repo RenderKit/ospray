@@ -77,7 +77,7 @@ namespace ospray {
 
       \internal We ssume that mpi::worker and mpi::app have already been set up
     */
-    void runWorker(int *_ac, const char **_av)
+    void runWorker()
     {
       mpi::MPIDevice *device = (mpi::MPIDevice *)ospray::api::Device::current;
 
