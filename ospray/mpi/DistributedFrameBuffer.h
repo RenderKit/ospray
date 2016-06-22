@@ -384,6 +384,7 @@ namespace ospray {
     FrameMode frameMode;
     void setFrameMode(FrameMode newFrameMode) ;
     void createTiles();
+    TileData *createTile(const vec2i &xy, size_t tileID, size_t ownerID);
     void freeTiles();
 
     /*! number of tiles written this frame */

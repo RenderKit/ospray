@@ -27,6 +27,8 @@
 
 #define DBG(a) /* ignore */
 
+#define USE_ALPHABLEND_TILE_TYPE 1 // NOTE(jda) - else ZComposite...
+
 namespace ospray {
   using std::cout;
   using std::endl;
@@ -149,7 +151,7 @@ namespace ospray {
 
       if (missingInCurrentGeneration == 0) {
         Tile **tileArray = (Tile**)alloca(sizeof(Tile*)*bufferedTile.size());
-        for (int i=0;i<bufferedTile.size();i++) {
+        for (int i = 0; i < bufferedTile.size(); i++) {
           tileArray[i] = &bufferedTile[i]->tile;
         }
 
@@ -161,8 +163,8 @@ namespace ospray {
         this->final.rcp_fbSize = tile.rcp_fbSize;
         accumulate(bufferedTile[0]->tile);
         dfb->tileIsCompleted(this);
-        for (int i=0;i<bufferedTile.size();i++)
-          delete bufferedTile[i];
+        for (auto &tile : bufferedTile)
+          delete tile;
         bufferedTile.clear();
       }
     }
@@ -231,9 +233,8 @@ namespace ospray {
       if (pixelOp)
         pixelOp->beginFrame();
 
-      for (int i=0;i<myTiles.size();i++) {
-        myTiles[i]->newFrame();
-      }
+      for (auto &tile : myTiles)
+        tile->newFrame();
 
       // create a local copy of delayed tiles, so we can work on them outside
       // the mutex
@@ -254,10 +255,8 @@ namespace ospray {
     }
 
     // might actually want to move this to a thread:
-    for (int i=0;i<delayedMessage.size();i++) {
-      mpi::async::CommLayer::Message *msg = delayedMessage[i];
+    for (auto &msg : delayedMessage)
       this->incoming(msg);
-    }
   }
 
   void DFB::freeTiles()
@@ -269,6 +268,23 @@ namespace ospray {
     myTiles.clear();
   }
 
+  DFB::TileData *DFB::createTile(const vec2i &xy, size_t tileID, size_t ownerID)
+  {
+    TileData *td = nullptr;
+
+    if (frameMode == WRITE_ONCE)
+      td = new WriteOnlyOnceTile(this, xy, tileID, ownerID);
+    else {
+#if USE_ALPHABLEND_TILE_TYPE
+      td = new AlphaBlendTile_simple(this, xy, tileID, ownerID);
+#else
+      td = new ZCompositeTile(this, xy, tileID, ownerID);
+#endif
+    }
+
+    return td;
+  }
+
   void DFB::createTiles()
   {
     size_t tileID = 0;
@@ -276,19 +292,11 @@ namespace ospray {
       for (size_t x = 0; x < numPixels.x; x += TILE_SIZE, tileID++) {
         size_t ownerID = tileID % (comm->group->size - 1);
         if (clientRank(ownerID) == comm->group->rank) {
-          TileData *td
-            = (frameMode == WRITE_ONCE)
-            ? (TileData*)new WriteOnlyOnceTile(this,vec2i(x,y),tileID,ownerID)
-#if 1
-            : (TileData*)new AlphaBlendTile_simple(this,vec2i(x,y),
-                                                   tileID,ownerID);
-#else
-            : (TileData*)new ZCompositeTile(this,vec2i(x,y),tileID,ownerID);
-#endif
+          TileData *td = createTile(vec2i(x, y), tileID, ownerID);
           myTiles.push_back(td);
           allTiles.push_back(td);
         } else {
-          allTiles.push_back(new TileDesc(this,vec2i(x,y),tileID,ownerID));
+          allTiles.push_back(new TileDesc(this, vec2i(x,y), tileID, ownerID));
         }
       }
     }
