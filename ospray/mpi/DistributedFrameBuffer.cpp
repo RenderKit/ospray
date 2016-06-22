@@ -271,10 +271,10 @@ namespace ospray {
 
   void DFB::createTiles()
   {
-    size_t tileID=0;
-    for (size_t y = 0; y < numPixels.y; y += TILE_SIZE)
+    size_t tileID = 0;
+    for (size_t y = 0; y < numPixels.y; y += TILE_SIZE) {
       for (size_t x = 0; x < numPixels.x; x += TILE_SIZE, tileID++) {
-        size_t ownerID = tileID % (comm->group->size-1);
+        size_t ownerID = tileID % (comm->group->size - 1);
         if (clientRank(ownerID) == comm->group->rank) {
           TileData *td
             = (frameMode == WRITE_ONCE)
@@ -291,6 +291,7 @@ namespace ospray {
           allTiles.push_back(new TileDesc(this,vec2i(x,y),tileID,ownerID));
         }
       }
+    }
   }
 
   DFB::DistributedFrameBuffer(mpi::async::CommLayer *comm,
@@ -627,6 +628,7 @@ namespace ospray {
         }
       });
     }
+
     if (hasAccumBuffer && (fbChannelFlags & OSP_FB_ACCUM)) {
       accumId = -1; // we increment at the start of the frame
 
