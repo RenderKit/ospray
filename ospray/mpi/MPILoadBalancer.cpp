@@ -75,8 +75,13 @@ namespace ospray {
 
         const int ALLTASKS = numTiles_x * numTiles_y;
         int NTASKS = ALLTASKS / worker.size;
-        while (((NTASKS-1) * worker.size + worker.rank) > ALLTASKS)
-          NTASKS--;
+
+        // NOTE(jda) - If all tiles do not divide evenly among all worker ranks
+        //             (a.k.a. ALLTASKS / worker.size has a remainder), then
+        //             some ranks will have one extra tile to do. Thus NTASKS
+        //             is incremented if we are one of those ranks.
+        if ((ALLTASKS % worker.size) > worker.rank)
+          NTASKS++;
 
         // serial_for(NTASKS, [&](int taskIndex){
         parallel_for(NTASKS, [&](int taskIndex){
