@@ -201,6 +201,8 @@ namespace ospray {
         throw std::runtime_error("sampleVolume() not implemented for this device");
       }
 
+      virtual void finalize() = 0;
+
     };
   } // ::ospray::api
 } // ::ospray

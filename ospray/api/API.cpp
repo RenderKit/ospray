@@ -731,3 +731,8 @@ extern "C" void ospSampleVolume(float **results,
                                              (vec3f*)&worldCoordinates, count);
 }
 
+extern "C" void ospFinalize()
+{
+  ospray::api::Device::current->finalize();
+}
+

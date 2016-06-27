@@ -651,6 +651,8 @@ extern "C" {
                                         const size_t count);
 #endif
 
+  OSPRAY_INTERFACE void ospFinalize();
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

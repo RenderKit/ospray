@@ -626,6 +626,8 @@ namespace ospray {
       volume->computeSamples(results, worldCoordinates, count);
     }
 
+    void LocalDevice::finalize() {}
+
   } // ::ospray::api
 } // ::ospray
 
