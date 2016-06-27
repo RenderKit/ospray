@@ -105,6 +105,7 @@ namespace ospray {
         MPI_Request request[SEND_WINDOW_SIZE];
         while (1) {
           // usleep(80);
+          // Note that this is a blocking call
           size_t numActions = g->sendQueue.getSome(actions,SEND_WINDOW_SIZE);
 
           // NOTE: We may be off by a little bit if the frame switches right when we check this but we've
@@ -131,6 +132,9 @@ namespace ospray {
           }
           ++bprof.numAsync;
           
+          // TODO: Batch up messages into a buffer and then fill it as messages are
+          // sent only call waitall when the buffer is filled and we must flush.
+          // May need to maintain multiple output buffers for different ranks to send too
           MPI_CALL(Waitall(numActions,request,MPI_STATUSES_IGNORE));
      
           for (int i=0;i<numActions;i++) {
