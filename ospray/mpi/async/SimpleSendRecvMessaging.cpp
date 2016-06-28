@@ -16,6 +16,9 @@
 
 //#define PROFILE_MPI 1
 
+#include <chrono>
+#include <atomic>
+#include <thread>
 #include "SimpleSendRecvMessaging.h"
 
 namespace ospray {
@@ -87,7 +90,14 @@ namespace ospray {
         Group *g = this->group;
 
         while (1) {
-          Action *action = g->sendQueue.get();
+          Action *action = nullptr;
+          size_t numActions = 0;
+          while (numActions == 0){
+            numActions = g->sendQueue.getSome(&action,1,std::chrono::milliseconds(1));
+            if (g->shouldExit.load()){
+              return;
+            }
+          }
           double t0 = getSysTime();
           MPI_CALL(Send(action->data,action->size,MPI_BYTE,
                         action->addr.rank,g->tag,action->addr.group->comm));
@@ -116,8 +126,14 @@ namespace ospray {
 
         while (1) {
           MPI_Status status;
-          // PING;fflush(0);
-          MPI_CALL(Probe(MPI_ANY_SOURCE,g->tag,g->comm,&status));
+          int msgAvail = 0;
+          while (!msgAvail) {
+            MPI_CALL(Iprobe(MPI_ANY_SOURCE,g->tag,g->comm,&msgAvail,&status));
+            if (g->shouldExit.load()){
+              return;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+          }
           Action *action = new Action;
           action->addr = Address(g,status.MPI_SOURCE);
 
@@ -149,7 +165,14 @@ namespace ospray {
       {
         Group *g = (Group *)this->group;
         while (1) {
-          Action *action = g->procQueue.get();
+          Action *action = nullptr;
+          size_t numActions = 0;
+          while (numActions == 0){
+            numActions = g->procQueue.getSome(&action,1,std::chrono::milliseconds(1));
+            if (g->shouldExit.load()){
+              return;
+            }
+          }
           g->consumer->process(action->addr,action->data,action->size);
           delete action;
         }
@@ -157,7 +180,11 @@ namespace ospray {
 
       void SimpleSendRecvImpl::Group::shutdown()
       {
-        std::cout << "shutdown() not implemented for this messaging ..." << std::endl;
+        std::cout << "#osp:mpi:SimpleSendRecvImpl:Group shutting down" << std::endl;
+        shouldExit.store(true);
+        sendThread.join();
+        recvThread.join();
+        procThread.join();
       }
 
       void SimpleSendRecvImpl::init()

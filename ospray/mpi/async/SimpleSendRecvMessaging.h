@@ -23,6 +23,7 @@
 // stl
 #include <deque>
 #include <vector>
+#include <atomic>
 
 namespace ospray {
   namespace mpi {
@@ -77,6 +78,7 @@ namespace ospray {
           SendThread sendThread;
           RecvThread recvThread;
           ProcThread procThread;
+          std::atomic<bool> shouldExit;
         };
 
         virtual void init();
