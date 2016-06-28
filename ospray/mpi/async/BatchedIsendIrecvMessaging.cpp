@@ -93,7 +93,6 @@ namespace ospray {
               }
               std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
-            //MPI_CALL(Probe(MPI_ANY_SOURCE,g->tag,g->comm,&status));
             Action *action = new Action;
             action->addr = Address(g,status.MPI_SOURCE);
             MPI_CALL(Get_count(&status,MPI_BYTE,&action->size));
