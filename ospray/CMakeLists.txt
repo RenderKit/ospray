@@ -133,6 +133,7 @@ SET(OSPRAY_SOURCES
   fb/LocalFB.ispc
   fb/LocalFB.cpp
   fb/PixelOp.cpp
+  fb/Tile.h
 
   camera/Camera.cpp
   camera/PerspectiveCamera.ispc

@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "DistributedFrameBuffer.h"
+#include "DistributedFrameBuffer_TileTypes.h"
 #include "DistributedFrameBuffer_ispc.h"
 
 #include "ospray/common/tasking/async.h"
@@ -37,23 +38,20 @@ namespace ospray {
 
   using DFB = DistributedFrameBuffer;
 
-  DFB::TileDesc::TileDesc(DFB *dfb,
-                          const vec2i &begin,
-                          size_t tileID,
-                          size_t ownerID)
+  // TileType definitions /////////////////////////////////////////////////////
+
+  TileDesc::TileDesc(DFB *dfb, const vec2i &begin,
+                     size_t tileID, size_t ownerID)
     : tileID(tileID), ownerID(ownerID), dfb(dfb), begin(begin)
   {}
 
-  DFB::TileData::TileData(DFB *dfb,
-                          const vec2i &begin,
-                          size_t tileID,
-                          size_t ownerID)
+  TileData::TileData(DFB *dfb, const vec2i &begin,
+                     size_t tileID, size_t ownerID)
     : TileDesc(dfb,begin,tileID,ownerID)
   {}
 
-
   /*! called exactly once at the beginning of each frame */
-  void DFB::AlphaBlendTile_simple::newFrame()
+  void AlphaBlendTile_simple::newFrame()
   {
     currentGeneration = 0;
     expectedInNextGeneration = 0;
@@ -62,7 +60,7 @@ namespace ospray {
     assert(bufferedTile.empty());
   }
 
-  void computeSortOrder(DFB::AlphaBlendTile_simple::BufferedTile *t)
+  void computeSortOrder(AlphaBlendTile_simple::BufferedTile *t)
   {
     float z = std::numeric_limits<float>::infinity();
     for (int iy=0;iy<t->tile.region.upper.y-t->tile.region.lower.y;iy++)
@@ -71,7 +69,7 @@ namespace ospray {
     t->sortOrder = z;
   }
 
-  void DFB::TileData::accumulate(const ospray::Tile &tile)
+  void TileData::accumulate(const ospray::Tile &tile)
   {
     vec2i dia = tile.region.upper - tile.region.lower;
     float pixelsf = (float)dia.x * dia.y;
@@ -119,7 +117,7 @@ namespace ospray {
 
   /*! called exactly once for each ospray::Tile that needs to get
     written into / composited into this dfb tile */
-  void DFB::AlphaBlendTile_simple::process(const ospray::Tile &tile)
+  void AlphaBlendTile_simple::process(const ospray::Tile &tile)
   {
     BufferedTile *addTile = new BufferedTile;
     memcpy(&addTile->tile,&tile,sizeof(tile));
@@ -173,7 +171,7 @@ namespace ospray {
   }
 
   /*! called exactly once at the beginning of each frame */
-  void DFB::WriteOnlyOnceTile::newFrame()
+  void WriteOnlyOnceTile::newFrame()
   {
     /* nothing to do for write-once tile - we *know* it'll get written
        only once */
@@ -186,7 +184,7 @@ namespace ospray {
     per tile, so there's not a lot to do in here than accumulating the
     tile data and telling the parent that we're done.
   */
-  void DFB::WriteOnlyOnceTile::process(const ospray::Tile &tile)
+  void WriteOnlyOnceTile::process(const ospray::Tile &tile)
   {
     this->final.region = tile.region;
     this->final.fbSize = tile.fbSize;
@@ -194,6 +192,8 @@ namespace ospray {
     accumulate(tile);
     dfb->tileIsCompleted(this);
   }
+
+  // DistributedFrameBuffer definitions ///////////////////////////////////////
 
   void DFB::ZCompositeTile::newFrame()
   {
