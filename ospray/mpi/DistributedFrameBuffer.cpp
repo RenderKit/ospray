@@ -408,67 +408,6 @@ namespace ospray {
     td->process(msg->tile);
   }
 
-  void DFB::processMessage(MasterTileMessage_NONE *msg)
-  {
-    { /* nothing to do for 'none' tiles */ }
-    if (hasVarianceBuffer && (accumId & 1) == 1)
-      tileErrorBuffer[getTileIDof(msg->coords)] = msg->error;
-
-    // and finally, tell the master that this tile is done
-    DFB::TileDesc *tileDesc = this->getTileDescFor(msg->coords);
-    TileData *td = (TileData*)tileDesc;
-    this->tileIsCompleted(td);
-  }
-
-  void DFB::processMessage(MasterTileMessage_RGBA_I8 *msg)
-  {
-    if (hasVarianceBuffer && (accumId & 1) == 1)
-      tileErrorBuffer[getTileIDof(msg->coords)] = msg->error;
-    for (int iy = 0; iy < TILE_SIZE; iy++) {
-      int iiy = iy+msg->coords.y;
-      if (iiy >= numPixels.y) continue;
-
-      for (int ix = 0; ix < TILE_SIZE; ix++) {
-        int iix = ix+msg->coords.x;
-        if (iix >= numPixels.x) continue;
-
-        ((uint32*)localFBonMaster->colorBuffer)[iix + iiy*numPixels.x]
-          = msg->color[iy][ix];
-      }
-    }
-
-    // and finally, tell the master that this tile is done
-    DFB::TileDesc *tileDesc = this->getTileDescFor(msg->coords);
-    TileData *td = (TileData*)tileDesc;
-    this->tileIsCompleted(td);
-  }
-
-  void DFB::processMessage(MasterTileMessage_RGBA_F32 *msg)
-  {
-    if (hasVarianceBuffer && (accumId & 1) == 1)
-      tileErrorBuffer[getTileIDof(msg->coords)] = msg->error;
-
-    for (int iy = 0; iy < TILE_SIZE; iy++) {
-      int iiy = iy+msg->coords.y;
-      if (iiy >= numPixels.y)
-        continue;
-
-      for (int ix = 0; ix < TILE_SIZE; ix++) {
-        int iix = ix+msg->coords.x;
-        if (iix >= numPixels.x)
-          continue;
-
-        ((vec4f*)localFBonMaster->colorBuffer)[iix + iiy*numPixels.x]
-          = msg->color[iy][ix];
-      }
-    }
-
-    // and finally, tell the master that this tile is done
-    DFB::TileDesc *tileDesc = this->getTileDescFor(msg->coords);
-    TileData *td = (TileData*)tileDesc;
-    this->tileIsCompleted(td);
-  }
-
   void DFB::tileIsCompleted(TileData *tile)
   {
     DBG(printf("rank %i: tilecompleted %i,%i\n",mpi::world.rank,

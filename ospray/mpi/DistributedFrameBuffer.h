@@ -246,25 +246,23 @@ namespace ospray {
 
     /*! message sent to the master when a tile is finished. Todo:
         compress the color data */
-    struct MasterTileMessage_RGBA_I8 : public mpi::async::CommLayer::Message {
+    template <typename FBType>
+    struct MasterTileMessage_FB : public mpi::async::CommLayer::Message {
       vec2i coords;
       float error;
-      uint32 color[TILE_SIZE][TILE_SIZE];
+      FBType color[TILE_SIZE][TILE_SIZE];
     };
 
-    /*! message sent to the master when a tile is finished. Todo:
-        compress the color data */
-    struct MasterTileMessage_RGBA_F32 : public mpi::async::CommLayer::Message {
+    /*! specialize for void (no tile data) */
+    template <void>
+    struct MasterTileMessage_FB : public mpi::async::CommLayer::Message {
       vec2i coords;
       float error;
-      vec4f color[TILE_SIZE][TILE_SIZE];
     };
 
-    /*! message sent to the master when a tile is finished */
-    struct MasterTileMessage_NONE : public mpi::async::CommLayer::Message {
-      vec2i coords;
-      float error;
-    };
+    using MasterTileMessage_RGBA_I8  = MasterTileMessage_FB<uint32>;
+    using MasterTileMessage_RGBA_F32 = MasterTileMessage_FB<vec4f>;
+    using MasterTileMessage_NONE     = MasterTileMessage_FB<void>;
 
     /*! message sent from one node's instance to another, to tell that
         instance to write that tile */
@@ -336,13 +334,8 @@ namespace ospray {
     void incoming(mpi::async::CommLayer::Message *msg) override;
 
     //! process a (non-empty) write tile message at the master
-    void processMessage(MasterTileMessage_RGBA_I8 *msg);
-
-    //! process a (non-empty) write tile message at the master
-    void processMessage(MasterTileMessage_RGBA_F32 *msg);
-
-    //! process a (empty) write tile message at the master
-    void processMessage(MasterTileMessage_NONE *msg);
+    template <typename FBType>
+    void processMessage(MasterTileMessage_FB<FBType> *msg);
 
     //! process a client-to-client write tile message */
     void processMessage(WriteTileMessage *msg);
@@ -427,5 +420,47 @@ namespace ospray {
         loadbalancer even started working on that frame. */
     std::vector<mpi::async::CommLayer::Message *> delayedMessage;
   };
+
+  // Inlined definitions //////////////////////////////////////////////////////
+
+  template <typename FBType>
+  inline void
+  DistributedFrameBuffer::processMessage(MasterTileMessage_FB<FBType> *msg)
+  {
+    if (hasVarianceBuffer && (accumId & 1) == 1)
+      tileErrorBuffer[getTileIDof(msg->coords)] = msg->error;
+
+    for (int iy = 0; iy < TILE_SIZE; iy++) {
+      int iiy = iy+msg->coords.y;
+      if (iiy >= numPixels.y) continue;
+
+      for (int ix = 0; ix < TILE_SIZE; ix++) {
+        int iix = ix+msg->coords.x;
+        if (iix >= numPixels.x) continue;
+
+        ((FBType*)localFBonMaster->colorBuffer)[iix + iiy*numPixels.x]
+          = msg->color[iy][ix];
+      }
+    }
+
+    // and finally, tell the master that this tile is done
+    auto *tileDesc = this->getTileDescFor(msg->coords);
+    TileData *td = (TileData*)tileDesc;
+    this->tileIsCompleted(td);
+  }
+
+  template <void>
+  inline void
+  DistributedFrameBuffer::processMessage(MasterTileMessage_FB<void> *msg)
+  {
+    { /* nothing to do for 'none' tiles */ }
+    if (hasVarianceBuffer && (accumId & 1) == 1)
+      tileErrorBuffer[getTileIDof(msg->coords)] = msg->error;
+
+    // and finally, tell the master that this tile is done
+    auto *tileDesc = this->getTileDescFor(msg->coords);
+    TileData *td = (TileData*)tileDesc;
+    this->tileIsCompleted(td);
+  }
 
 } // ::ospray
