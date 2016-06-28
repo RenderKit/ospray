@@ -46,7 +46,8 @@ namespace ospray {
           // usleep(80);
           size_t numActions = 0;
           while (numActions == 0){
-            numActions = g->sendQueue.getSome(actions,SEND_WINDOW_SIZE);
+            numActions = g->sendQueue.getSome(actions,SEND_WINDOW_SIZE,
+                std::chrono::milliseconds(1));
             if (g->shouldExit.load()){
               return;
             }
@@ -139,7 +140,8 @@ namespace ospray {
           Action *actions[PROC_WINDOW_SIZE];
           size_t numActions = 0;
           while (numActions == 0){
-            numActions = g->recvQueue.getSome(actions,PROC_WINDOW_SIZE);
+            numActions = g->recvQueue.getSome(actions,PROC_WINDOW_SIZE,
+                std::chrono::milliseconds(1));
             if (g->shouldExit.load()){
               return;
             }
