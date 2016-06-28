@@ -96,6 +96,9 @@ namespace ospray {
             dfb->hasAccumBuffer,
             dfb->hasVarianceBuffer);
         break;
+      case OSP_FB_NONE:// NOTE(jda) - We accumulate here to enable PixelOps
+                       //             working correctly here...this needs a
+                       //             better solution!
       case OSP_FB_RGBA32F:
         error = ispc::DFB_accumulate_RGBA32F(dfb->ispcEquivalent,
             (ispc::VaryingTile*)&tile,
