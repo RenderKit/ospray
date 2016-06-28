@@ -32,15 +32,6 @@ namespace ospray {
     : public mpi::async::CommLayer::Object,
       public virtual FrameBuffer
   {
-    //! get number of pixels per tile, in x and y direction
-    vec2i getTileSize()  const { return vec2i(TILE_SIZE); }
-
-    //! return number of tiles in x and y direction
-    vec2i getNumTiles()  const { return numTiles; }
-
-    //! get number of pixels in x and y diretion
-    vec2i getNumPixels() const { return size; }
-
     //! number of tiles that "I" own
     size_t numMyTiles()  const { return myTiles.size(); }
 
@@ -201,17 +192,6 @@ namespace ospray {
     std::string toString() const override
     { return "ospray::DistributedFrameBuffer"; }
 
-
-    /*! the number of pixels in the (whole) frame buffer (independent
-        of which tiles we have).
-
-      Note this number should ALWAYS be equal to FrameBuffer::size;
-      but we use a more explicit name in this class to avoid confusion
-      when also iterating over numTiles, numDisplays, etc */
-    vec2i numPixels;
-    vec2i maxValidPixelID;
-    vec2i numTiles;
-
     typedef enum {
       WRITE_ONCE, ALPHA_BLENDING
     } FrameMode;
@@ -271,6 +251,8 @@ namespace ospray {
   {
     if (hasVarianceBuffer && (accumId & 1) == 1)
       tileErrorBuffer[getTileIDof(msg->coords)] = msg->error;
+
+    vec2i numPixels = getNumPixels();
 
     for (int iy = 0; iy < TILE_SIZE; iy++) {
       int iiy = iy+msg->coords.y;

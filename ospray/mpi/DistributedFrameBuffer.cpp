@@ -290,6 +290,7 @@ namespace ospray {
   void DFB::createTiles()
   {
     size_t tileID = 0;
+    vec2i numPixels = getNumPixels();
     for (size_t y = 0; y < numPixels.y; y += TILE_SIZE) {
       for (size_t x = 0; x < numPixels.x; x += TILE_SIZE, tileID++) {
         size_t ownerID = tileID % (comm->group->size - 1);
@@ -314,9 +315,6 @@ namespace ospray {
     : mpi::async::CommLayer::Object(comm,myID),
       FrameBuffer(numPixels,colorBufferFormat,hasDepthBuffer,
                   hasAccumBuffer,hasVarianceBuffer),
-      numPixels(numPixels),
-      maxValidPixelID(numPixels-vec2i(1)),
-      numTiles(divRoundUp(numPixels, getTileSize())),
       frameIsActive(false), frameIsDone(false), localFBonMaster(NULL),
       accumId(0),
       tileErrorBuffer(NULL),
@@ -324,7 +322,7 @@ namespace ospray {
   {
     assert(comm);
     this->ispcEquivalent = ispc::DFB_create(this);
-    ispc::DFB_set(getIE(),numPixels.x,numPixels.y, colorBufferFormat);
+    ispc::DFB_set(getIE(), numPixels.x, numPixels.y, colorBufferFormat);
     comm->registerObject(this,myID);
 
     createTiles();
@@ -347,8 +345,7 @@ namespace ospray {
       }
     }
 
-    ispc::DFB_set(getIE(),numPixels.x,numPixels.y,
-                  colorBufferFormat);
+    ispc::DFB_set(getIE(), numPixels.x, numPixels.y, colorBufferFormat);
   }
 
   void DFB::setFrameMode(FrameMode newFrameMode)

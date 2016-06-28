@@ -60,16 +60,15 @@ namespace ospray {
     else
       accumBuffer = NULL;
 
-    tilesx = divRoundUp(size.x, TILE_SIZE);
-    tiles = tilesx * divRoundUp(size.y, TILE_SIZE);
-    tileAccumID = (int32*)alignedMalloc(sizeof(int32)*tiles);
-    memset(tileAccumID, 0, tiles*sizeof(int32));
+    int allTiles = numTiles.x * numTiles.y;
+    tileAccumID = (int32*)alignedMalloc(sizeof(int32)*allTiles);
+    memset(tileAccumID, 0, allTiles*sizeof(int32));
 
     if (hasVarianceBuffer) {
       varianceBuffer = (vec4f*)alignedMalloc(sizeof(vec4f)*size.x*size.y);
-      tileErrorBuffer = (float*)alignedMalloc(sizeof(float)*tiles);
+      tileErrorBuffer = (float*)alignedMalloc(sizeof(float)*getTotalTiles());
       // maximum number of regions: all regions are of size 3 are split in half
-      errorRegion.reserve(divRoundUp(tiles*2, 3));
+      errorRegion.reserve(divRoundUp(getTotalTiles()*2, 3));
     } else {
       varianceBuffer = NULL;
       tileErrorBuffer = NULL;
@@ -106,18 +105,16 @@ namespace ospray {
       // it is only necessary to reset the accumID,
       // LocalFrameBuffer_accumulateTile takes care of clearing the
       // accumulation buffers
-      memset(tileAccumID, 0, tiles*sizeof(int32));
+      memset(tileAccumID, 0, getTotalTiles()*sizeof(int32));
 
       // always also clear error buffer (if present)
       if (hasVarianceBuffer) {
-        for (int i = 0; i < tiles; i++)
+        for (int i = 0; i < getTotalTiles(); i++)
           tileErrorBuffer[i] = inf;
 
         errorRegion.clear();
         // initially create one region covering the complete image
-        errorRegion.push_back(box2i(vec2i(0),
-                                    vec2i(tilesx,
-                                          divRoundUp(size.y, TILE_SIZE))));
+        errorRegion.push_back(box2i(vec2i(0), getNumTiles()));
       }
     }
   }
@@ -149,12 +146,12 @@ namespace ospray {
 
   int32 LocalFrameBuffer::accumID(const vec2i &tile)
   {
-    return tileAccumID[tile.y * tilesx + tile.x];
+    return tileAccumID[tile.y * numTiles.x + tile.x];
   }
 
   float LocalFrameBuffer::tileError(const vec2i &tile)
   {
-    const int idx = tile.y * tilesx + tile.x;
+    const int idx = tile.y * numTiles.x + tile.x;
     return hasVarianceBuffer ? tileErrorBuffer[idx] : inf;
   }
 
@@ -169,7 +166,7 @@ namespace ospray {
         float maxErr = 0.0f;
         for (int y = region.lower.y; y < region.upper.y; y++)
           for (int x = region.lower.x; x < region.upper.x; x++) {
-            int idx = y * tilesx + x;
+            int idx = y * numTiles.x + x;
             err += tileErrorBuffer[idx];
             maxErr = std::max(maxErr, tileErrorBuffer[idx]);
           }
@@ -177,7 +174,7 @@ namespace ospray {
         // refinement as a group
         for (int y = region.lower.y; y < region.upper.y; y++)
           for (int x = region.lower.x; x < region.upper.x; x++) {
-            int idx = y * tilesx + x;
+            int idx = y * numTiles.x + x;
             tileErrorBuffer[idx] = maxErr;
           }
         vec2i size = region.size();
@@ -206,7 +203,7 @@ namespace ospray {
       }
 
       float maxErr = 0.0f;
-      for (int i = 0; i < tiles; i++)
+      for (int i = 0; i < getTotalTiles(); i++)
         maxErr = std::max(maxErr, tileErrorBuffer[i]);
 
       return maxErr;

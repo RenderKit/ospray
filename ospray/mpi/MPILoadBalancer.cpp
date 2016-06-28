@@ -70,10 +70,7 @@ namespace ospray {
 
         void *perFrameData = tiledRenderer->beginFrame(fb);
 
-        int numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
-        int numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
-
-        const int ALLTASKS = numTiles_x * numTiles_y;
+        const int ALLTASKS = fb->getTotalTiles();
         int NTASKS = ALLTASKS / worker.size;
 
         // NOTE(jda) - If all tiles do not divide evenly among all worker ranks
@@ -86,6 +83,7 @@ namespace ospray {
         // serial_for(NTASKS, [&](int taskIndex){
         parallel_for(NTASKS, [&](int taskIndex){
           const size_t tileID = taskIndex * worker.size + worker.rank;
+          const size_t numTiles_x = fb->getNumTiles().x;
           const size_t tile_y = tileID / numTiles_x;
           const size_t tile_x = tileID - tile_y*numTiles_x;
           const vec2i tileId(tile_x, tile_y);
