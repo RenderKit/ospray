@@ -64,14 +64,24 @@ namespace ospray {
                                const uint32 channelFlags)
       {
         async_beginFrame();
+        using namespace std::chrono;
+
+        // Will HACK: Timing the render frame calls on each worker
+        static size_t totalFrames = 0;
+        static size_t frameCount = 0;
+        static milliseconds avgFrameTime = milliseconds(0);
+        static milliseconds avgTileTime = milliseconds(0);
 
         auto *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
+        auto frameStart = high_resolution_clock::now();
         dfb->startNewFrame();
 
         void *perFrameData = tiledRenderer->beginFrame(fb);
 
         int numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
         int numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
+
+        auto tileStart = high_resolution_clock::now();
 
         const int NTASKS = numTiles_x * numTiles_y;
         // serial_for(NTASKS, [&](int taskIndex){
@@ -108,8 +118,29 @@ namespace ospray {
 #endif
         });
 
+        auto tileEnd = high_resolution_clock::now();
+
         dfb->waitUntilFinished();
         tiledRenderer->endFrame(perFrameData,channelFlags);
+        auto frameEnd = high_resolution_clock::now();
+
+        auto elapsed = duration_cast<milliseconds>(frameEnd - frameStart);
+        auto tileElapsed = duration_cast<milliseconds>(tileEnd - tileStart);
+        // Skip the first 10 frames to warm up
+        if (totalFrames > 10) {
+          avgFrameTime = (elapsed + frameCount * avgFrameTime) / (frameCount + 1);
+          avgTileTime = (tileElapsed + frameCount * avgTileTime) / (frameCount + 1);
+          ++frameCount;
+        }
+        ++totalFrames;
+
+        if (frameCount > 0 && frameCount % 25 == 0) {
+          std::cout << "Worker " << mpi::worker.rank << " avg frame time: "
+            << avgFrameTime.count() << "ms over " << frameCount << " frames\n";
+          std::cout << "Worker " << mpi::worker.rank << " avg tile time: "
+            << avgTileTime.count() << "ms over " << frameCount << " frames\n";
+        }
+        std::cout << std::flush;
 
         async_endFrame();
 
