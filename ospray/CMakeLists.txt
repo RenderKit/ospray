@@ -270,6 +270,7 @@ IF (OSPRAY_MPI)
 
     mpi/DistributedFrameBuffer.cpp
     mpi/DistributedFrameBuffer.ispc
+    mpi/DistributedFrameBuffer_TileTypes.cpp
 
     fb/DisplayWall.cpp
     )
