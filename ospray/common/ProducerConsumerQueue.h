@@ -131,8 +131,12 @@ namespace ospray {
   template<typename T>
   size_t ProducerConsumerQueue<T>::getSome(T *some, size_t maxSize)
   {
+    using namespace std::chrono;
     std::unique_lock<std::mutex> lock(mutex);
-    notEmptyCond.wait(lock, [&]{return !content.empty();});
+    //notEmptyCond.wait(lock, [&]{return !content.empty();});
+    if (!notEmptyCond.wait_for(lock, milliseconds(1), [&]{return !content.empty();})){
+      return 0;
+    }
 
     size_t num = 0;
     while (num < maxSize && !content.empty()) {
