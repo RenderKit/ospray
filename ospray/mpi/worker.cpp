@@ -784,10 +784,7 @@ namespace ospray {
           // ==================================================================
         case ospray::CMD_FINALIZE: {
           // ==================================================================
-          printf("worker %i: finalizing\n", mpi::worker.rank);
           async::shutdown();
-          //MPI_CALL(Finalize());
-          PING;
           std::exit(0);
         } break;
           // ==================================================================

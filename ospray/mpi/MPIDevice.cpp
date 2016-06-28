@@ -385,7 +385,6 @@ namespace ospray {
       TiledLoadBalancer::instance = new mpi::staticLoadBalancer::Master;
     }
     MPIDevice::~MPIDevice() {
-      PING;
       cmd.newCommand(CMD_FINALIZE);
       cmd.flush();
       async::shutdown();
