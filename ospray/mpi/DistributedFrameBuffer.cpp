@@ -193,14 +193,12 @@ namespace ospray {
     dfb->tileIsCompleted(this);
   }
 
-  // DistributedFrameBuffer definitions ///////////////////////////////////////
-
-  void DFB::ZCompositeTile::newFrame()
+  void ZCompositeTile::newFrame()
   {
     numPartsComposited = 0;
   }
 
-  void DFB::ZCompositeTile::process(const ospray::Tile &tile)
+  void ZCompositeTile::process(const ospray::Tile &tile)
   {
     bool done = false;
 
@@ -220,6 +218,8 @@ namespace ospray {
       dfb->tileIsCompleted(this);
     }
   }
+
+  // DistributedFrameBuffer definitions ///////////////////////////////////////
 
   void DFB::startNewFrame()
   {
@@ -270,7 +270,7 @@ namespace ospray {
     myTiles.clear();
   }
 
-  DFB::TileData *DFB::createTile(const vec2i &xy, size_t tileID, size_t ownerID)
+  TileData *DFB::createTile(const vec2i &xy, size_t tileID, size_t ownerID)
   {
     TileData *td = nullptr;
 
@@ -400,9 +400,21 @@ namespace ospray {
     doneCond.wait(lock, [&]{return frameIsDone;});
   }
 
+  void DistributedFrameBuffer::processMessage(MasterTileMessage *msg)
+  {
+    { /* nothing to do for 'none' tiles */ }
+    if (hasVarianceBuffer && (accumId & 1) == 1)
+      tileErrorBuffer[getTileIDof(msg->coords)] = msg->error;
+
+    // and finally, tell the master that this tile is done
+    auto *tileDesc = this->getTileDescFor(msg->coords);
+    TileData *td = (TileData*)tileDesc;
+    this->tileIsCompleted(td);
+  }
+
   void DFB::processMessage(DFB::WriteTileMessage *msg)
   {
-    DFB::TileDesc *tileDesc = this->getTileDescFor(msg->coords);
+    auto *tileDesc = this->getTileDescFor(msg->coords);
     // TODO: compress/decompress tile data
     TileData *td = (TileData*)tileDesc;
     td->process(msg->tile);
@@ -526,7 +538,7 @@ namespace ospray {
   //! required
   void DFB::setTile(ospray::Tile &tile)
   {
-    DFB::TileDesc *tileDesc = this->getTileDescFor(tile.region.lower);
+    auto *tileDesc = this->getTileDescFor(tile.region.lower);
 
     if (!tileDesc->mine()) {
       // NOT my tile...
@@ -558,7 +570,7 @@ namespace ospray {
   {
     if (!myTiles.empty()) {
       parallel_for(myTiles.size(), [&](int taskIndex){
-        DFB::TileData *td = this->myTiles[taskIndex];
+        TileData *td = this->myTiles[taskIndex];
         assert(td);
         if (fbChannelFlags & OSP_FB_ACCUM) {
           for (int i = 0; i < TILE_SIZE*TILE_SIZE; i++) td->accum.r[i] = 0.f;

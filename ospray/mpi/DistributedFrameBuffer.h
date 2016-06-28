@@ -25,6 +25,9 @@ namespace ospray {
   using std::cout;
   using std::endl;
 
+  struct TileDesc;
+  struct TileData;
+
   struct DistributedFrameBuffer
     : public mpi::async::CommLayer::Object,
       public virtual FrameBuffer
@@ -85,25 +88,21 @@ namespace ospray {
         that this tile is now done. */
     void tileIsCompleted(TileData *tile);
 
+    struct MasterTileMessage : public mpi::async::CommLayer::Message {
+      vec2i coords;
+      float error;
+    };
+
     /*! message sent to the master when a tile is finished. Todo:
         compress the color data */
     template <typename FBType>
-    struct MasterTileMessage_FB : public mpi::async::CommLayer::Message {
-      vec2i coords;
-      float error;
+    struct MasterTileMessage_FB : public MasterTileMessage {
       FBType color[TILE_SIZE][TILE_SIZE];
-    };
-
-    /*! specialize for void (no tile data) */
-    template <void>
-    struct MasterTileMessage_FB : public mpi::async::CommLayer::Message {
-      vec2i coords;
-      float error;
     };
 
     using MasterTileMessage_RGBA_I8  = MasterTileMessage_FB<uint32>;
     using MasterTileMessage_RGBA_F32 = MasterTileMessage_FB<vec4f>;
-    using MasterTileMessage_NONE     = MasterTileMessage_FB<void>;
+    using MasterTileMessage_NONE     = MasterTileMessage;
 
     /*! message sent from one node's instance to another, to tell that
         instance to write that tile */
@@ -172,6 +171,9 @@ namespace ospray {
     //! handle incoming message from commlayer. it's the
     //! recipient's job to properly delete the message.
     void incoming(mpi::async::CommLayer::Message *msg) override;
+
+    //! process a client-to-client write tile message */
+    void processMessage(MasterTileMessage *msg);
 
     //! process a (non-empty) write tile message at the master
     template <typename FBType>
@@ -282,20 +284,6 @@ namespace ospray {
           = msg->color[iy][ix];
       }
     }
-
-    // and finally, tell the master that this tile is done
-    auto *tileDesc = this->getTileDescFor(msg->coords);
-    TileData *td = (TileData*)tileDesc;
-    this->tileIsCompleted(td);
-  }
-
-  template <void>
-  inline void
-  DistributedFrameBuffer::processMessage(MasterTileMessage_FB<void> *msg)
-  {
-    { /* nothing to do for 'none' tiles */ }
-    if (hasVarianceBuffer && (accumId & 1) == 1)
-      tileErrorBuffer[getTileIDof(msg->coords)] = msg->error;
 
     // and finally, tell the master that this tile is done
     auto *tileDesc = this->getTileDescFor(msg->coords);
