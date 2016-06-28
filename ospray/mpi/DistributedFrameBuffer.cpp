@@ -28,8 +28,6 @@
 
 #define DBG(a) /* ignore */
 
-#define USE_ALPHABLEND_TILE_TYPE 1 // NOTE(jda) - else ZComposite...
-
 namespace ospray {
   using std::cout;
   using std::endl;
@@ -274,14 +272,17 @@ namespace ospray {
   {
     TileData *td = nullptr;
 
-    if (frameMode == WRITE_ONCE)
+    switch(frameMode) {
+    case WRITE_ONCE:
       td = new WriteOnlyOnceTile(this, xy, tileID, ownerID);
-    else {
-#if USE_ALPHABLEND_TILE_TYPE
+      break;
+    case ALPHA_BLEND:
       td = new AlphaBlendTile_simple(this, xy, tileID, ownerID);
-#else
+      break;
+    case Z_COMPOSITE:
+    default:
       td = new ZCompositeTile(this, xy, tileID, ownerID);
-#endif
+      break;
     }
 
     return td;

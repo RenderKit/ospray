@@ -193,7 +193,7 @@ namespace ospray {
     { return "ospray::DistributedFrameBuffer"; }
 
     typedef enum {
-      WRITE_ONCE, ALPHA_BLENDING
+      WRITE_ONCE, ALPHA_BLEND, Z_COMPOSITE
     } FrameMode;
 
     FrameMode frameMode;
