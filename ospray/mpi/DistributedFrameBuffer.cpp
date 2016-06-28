@@ -33,9 +33,114 @@ using std::endl;
 
 namespace ospray {
 
-  inline int clientRank(int clientID) { return clientID+1; }
+  // Helper types /////////////////////////////////////////////////////////////
 
   using DFB = DistributedFrameBuffer;
+
+  struct MasterTileMessage : public mpi::async::CommLayer::Message {
+    vec2i coords;
+    float error;
+  };
+
+  /*! message sent to the master when a tile is finished. Todo:
+      compress the color data */
+  template <typename FBType>
+  struct MasterTileMessage_FB : public MasterTileMessage {
+    FBType color[TILE_SIZE][TILE_SIZE];
+  };
+
+  using MasterTileMessage_RGBA_I8  = MasterTileMessage_FB<uint32>;
+  using MasterTileMessage_RGBA_F32 = MasterTileMessage_FB<vec4f>;
+  using MasterTileMessage_NONE     = MasterTileMessage;
+
+  /*! message sent from one node's instance to another, to tell that
+      instance to write that tile */
+  struct WriteTileMessage : public mpi::async::CommLayer::Message {
+    // TODO: add compression of pixels during transmission
+    vec2i coords; // XXX redundant: it's also in tile.region.lower
+    ospray::Tile tile;
+  };
+
+  /*! color buffer and depth buffer on master */
+
+  enum {
+    /*! command tag that identifies a CommLayer::message as a write
+      tile command. this is a command using for sending a tile of
+      new samples to another instance of the framebuffer (the one
+      that actually owns that tile) for processing and 'writing' of
+      that tile on that owner node. */
+    WORKER_WRITE_TILE = 13,
+    /*! command tag used for sending 'final' tiles from the tile
+        owner to the master frame buffer. Note that we *do* send a
+        message back ot the master even in cases where the master
+        does not actually care about the pixel data - we still have
+        to let the master know when we're done. */
+    MASTER_WRITE_TILE_I8,
+    MASTER_WRITE_TILE_F32,
+    /*! command tag used for sending 'final' tiles from the tile
+        owner to the master frame buffer. Note that we *do* send a
+        message back ot the master even in cases where the master
+        does not actually care about the pixel data - we still have
+        to let the master know when we're done. */
+    MASTER_WRITE_TILE_NONE,
+  } COMMANDTAG;
+
+  // Helper functions /////////////////////////////////////////////////////////
+
+  inline int clientRank(int clientID) { return clientID+1; }
+
+  // DistributedFrameBuffer definitions ///////////////////////////////////////
+
+  DFB::DistributedFrameBuffer(mpi::async::CommLayer *comm,
+                              const vec2i &numPixels,
+                              size_t myID,
+                              ColorBufferFormat colorBufferFormat,
+                              bool hasDepthBuffer,
+                              bool hasAccumBuffer,
+                              bool hasVarianceBuffer)
+    : mpi::async::CommLayer::Object(comm,myID),
+      FrameBuffer(numPixels,colorBufferFormat,hasDepthBuffer,
+                  hasAccumBuffer,hasVarianceBuffer),
+      accumId(0),
+      tileErrorBuffer(nullptr),
+      localFBonMaster(nullptr),
+      frameMode(WRITE_ONCE),
+      frameIsActive(false),
+      frameIsDone(false)
+  {
+    assert(comm);
+    this->ispcEquivalent = ispc::DFB_create(this);
+    ispc::DFB_set(getIE(), numPixels.x, numPixels.y, colorBufferFormat);
+    comm->registerObject(this,myID);
+
+    createTiles();
+
+    if (comm->group->rank == 0) {
+      if (colorBufferFormat == OSP_FB_NONE) {
+        cout << "#osp:mpi:dfb: we're the master, but framebuffer has 'NONE' "
+             << "format; creating distributed frame buffer WITHOUT having a "
+             << "mappable copy on the master" << endl;
+      } else {
+        localFBonMaster = new LocalFrameBuffer(numPixels,
+                                               colorBufferFormat,
+                                               hasDepthBuffer,
+                                               false,
+                                               false);
+      }
+      if (hasVarianceBuffer) {
+        tileErrorBuffer =
+            (float*)alignedMalloc(sizeof(float)*numTiles.x*numTiles.y);
+      }
+    }
+
+    ispc::DFB_set(getIE(), numPixels.x, numPixels.y, colorBufferFormat);
+  }
+
+  DFB::~DistributedFrameBuffer()
+  {
+    freeTiles();
+    alignedFree(tileErrorBuffer);
+  }
 
   void DFB::startNewFrame()
   {
@@ -124,49 +229,6 @@ namespace ospray {
     }
   }
 
-  DFB::DistributedFrameBuffer(mpi::async::CommLayer *comm,
-                              const vec2i &numPixels,
-                              size_t myID,
-                              ColorBufferFormat colorBufferFormat,
-                              bool hasDepthBuffer,
-                              bool hasAccumBuffer,
-                              bool hasVarianceBuffer)
-    : mpi::async::CommLayer::Object(comm,myID),
-      FrameBuffer(numPixels,colorBufferFormat,hasDepthBuffer,
-                  hasAccumBuffer,hasVarianceBuffer),
-      frameIsActive(false), frameIsDone(false), localFBonMaster(NULL),
-      accumId(0),
-      tileErrorBuffer(NULL),
-      frameMode(WRITE_ONCE)
-  {
-    assert(comm);
-    this->ispcEquivalent = ispc::DFB_create(this);
-    ispc::DFB_set(getIE(), numPixels.x, numPixels.y, colorBufferFormat);
-    comm->registerObject(this,myID);
-
-    createTiles();
-
-    if (comm->group->rank == 0) {
-      if (colorBufferFormat == OSP_FB_NONE) {
-        cout << "#osp:mpi:dfb: we're the master, but framebuffer has 'NONE' "
-             << "format; creating distributed frame buffer WITHOUT having a "
-             << "mappable copy on the master" << endl;
-      } else {
-        localFBonMaster = new LocalFrameBuffer(numPixels,
-                                               colorBufferFormat,
-                                               hasDepthBuffer,
-                                               false,
-                                               false);
-      }
-      if (hasVarianceBuffer) {
-        tileErrorBuffer =
-            (float*)alignedMalloc(sizeof(float)*numTiles.x*numTiles.y);
-      }
-    }
-
-    ispc::DFB_set(getIE(), numPixels.x, numPixels.y, colorBufferFormat);
-  }
-
   void DFB::setFrameMode(FrameMode newFrameMode)
   {
     if (frameMode == newFrameMode)
@@ -213,7 +275,7 @@ namespace ospray {
   void DFB::waitUntilFinished()
   {
     std::unique_lock<std::mutex> lock(mutex);
-    doneCond.wait(lock, [&]{return frameIsDone;});
+    frameDoneCond.wait(lock, [&]{return frameIsDone;});
   }
 
   void DistributedFrameBuffer::processMessage(MasterTileMessage *msg)
@@ -228,7 +290,7 @@ namespace ospray {
     this->tileIsCompleted(td);
   }
 
-  void DFB::processMessage(DFB::WriteTileMessage *msg)
+  void DFB::processMessage(WriteTileMessage *msg)
   {
     auto *tileDesc = this->getTileDescFor(msg->coords);
     // TODO: compress/decompress tile data
@@ -323,17 +385,17 @@ namespace ospray {
 
     async([=]() {
       switch (_msg->command) {
-      case DFB::MASTER_WRITE_TILE_NONE:
-        this->processMessage((DFB::MasterTileMessage_NONE*)_msg);
+      case MASTER_WRITE_TILE_NONE:
+        this->processMessage((MasterTileMessage_NONE*)_msg);
         break;
-      case DFB::MASTER_WRITE_TILE_I8:
-        this->processMessage((DFB::MasterTileMessage_RGBA_I8*)_msg);
+      case MASTER_WRITE_TILE_I8:
+        this->processMessage((MasterTileMessage_RGBA_I8*)_msg);
         break;
-      case DFB::MASTER_WRITE_TILE_F32:
-        this->processMessage((DFB::MasterTileMessage_RGBA_F32*)_msg);
+      case MASTER_WRITE_TILE_F32:
+        this->processMessage((MasterTileMessage_RGBA_F32*)_msg);
         break;
-      case DFB::WORKER_WRITE_TILE:
-        this->processMessage((DFB::WriteTileMessage*)_msg);
+      case WORKER_WRITE_TILE:
+        this->processMessage((WriteTileMessage*)_msg);
         break;
       default:
         assert(0);
@@ -347,7 +409,7 @@ namespace ospray {
     DBG(printf("rank %i CLOSES frame\n",mpi::world.rank));
     frameIsActive = false;
     frameIsDone   = true;
-    doneCond.notify_all();
+    frameDoneCond.notify_all();
   }
 
   //! write given tile data into the frame buffer, sending to remove owner if

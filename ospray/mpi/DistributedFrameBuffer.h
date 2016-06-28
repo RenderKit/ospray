@@ -28,88 +28,15 @@ namespace ospray {
   struct TileDesc;
   struct TileData;
 
+  struct MasterTileMessage;
+  template <typename FBType>
+  struct MasterTileMessage_FB;
+  struct WriteTileMessage;
+
   struct DistributedFrameBuffer
     : public mpi::async::CommLayer::Object,
       public virtual FrameBuffer
   {
-    //! number of tiles that "I" own
-    size_t numMyTiles()  const { return myTiles.size(); }
-
-    int accumId;
-
-    //! holds error per tile, for variance estimation / stopping
-    float *tileErrorBuffer;
-
-    int32 accumID(const vec2i &) override { return accumId; }
-    float tileError(const vec2i &tile) override;
-    float endFrame(const float errorThreshold) override;
-
-    /*! color buffer and depth buffer on master */
-
-    enum {
-      /*! command tag that identifies a CommLayer::message as a write
-        tile command. this is a command using for sending a tile of
-        new samples to another instance of the framebuffer (the one
-        that actually owns that tile) for processing and 'writing' of
-        that tile on that owner node. */
-      WORKER_WRITE_TILE = 13,
-      /*! command tag used for sending 'final' tiles from the tile
-          owner to the master frame buffer. Note that we *do* send a
-          message back ot the master even in cases where the master
-          does not actually care about the pixel data - we still have
-          to let the master know when we're done. */
-      MASTER_WRITE_TILE_I8,
-      MASTER_WRITE_TILE_F32,
-      /*! command tag used for sending 'final' tiles from the tile
-          owner to the master frame buffer. Note that we *do* send a
-          message back ot the master even in cases where the master
-          does not actually care about the pixel data - we still have
-          to let the master know when we're done. */
-      MASTER_WRITE_TILE_NONE,
-    } COMMANDTAG;
-
-    /*! this function gets called whenever one of our tiles is done
-        writing/compositing/blending/etc; i.e., as soon as we know
-        that all the ingredient tile datas for that tile have been
-        received from the client(s) that generated them. By the time
-        the tile gets called we do know that 'accum' field of the tile
-        has been set; it is this function's job to make sure we
-        properly call the post-op(s), properly send final color data
-        to the master (if required), and properly do the bookkeeping
-        that this tile is now done. */
-    void tileIsCompleted(TileData *tile);
-
-    struct MasterTileMessage : public mpi::async::CommLayer::Message {
-      vec2i coords;
-      float error;
-    };
-
-    /*! message sent to the master when a tile is finished. Todo:
-        compress the color data */
-    template <typename FBType>
-    struct MasterTileMessage_FB : public MasterTileMessage {
-      FBType color[TILE_SIZE][TILE_SIZE];
-    };
-
-    using MasterTileMessage_RGBA_I8  = MasterTileMessage_FB<uint32>;
-    using MasterTileMessage_RGBA_F32 = MasterTileMessage_FB<vec4f>;
-    using MasterTileMessage_NONE     = MasterTileMessage;
-
-    /*! message sent from one node's instance to another, to tell that
-        instance to write that tile */
-    struct WriteTileMessage : public mpi::async::CommLayer::Message {
-      // TODO: add compression of pixels during transmission
-      vec2i coords; // XXX redundant: it's also in tile.region.lower
-      ospray::Tile tile;
-    };
-
-    /*! local frame buffer on the master used for storing the final
-        tiles. will be null on all workers, and _may_ be null on the
-        master if the master does not have a color buffer */
-    Ref<LocalFrameBuffer> localFBonMaster;
-
-    inline bool IamTheMaster() const { return comm->IamTheMaster(); }
-    //! constructor
     DistributedFrameBuffer(mpi::async::CommLayer *comm,
                            const vec2i &numPixels,
                            size_t myHandle,
@@ -118,15 +45,12 @@ namespace ospray {
                            bool hasAccumBuffer,
                            bool hasVarianceBuffer);
 
-    ~DistributedFrameBuffer()
-    {
-      freeTiles();
-      alignedFree(tileErrorBuffer);
-    }
+    ~DistributedFrameBuffer();
 
     // ==================================================================
     // framebuffer / device interface
     // ==================================================================
+
     const void *mapDepthBuffer() override;
     const void *mapColorBuffer() override;
     void unmap(const void *mappedMem) override;
@@ -155,6 +79,14 @@ namespace ospray {
     void waitUntilFinished();
 
     // ==================================================================
+    // remaining framebuffer interface
+    // ==================================================================
+
+    int32 accumID(const vec2i &) override { return accumId; }
+    float tileError(const vec2i &tile) override;
+    float endFrame(const float errorThreshold) override;
+
+    // ==================================================================
     // interface for the comm layer, to enable communication between
     // different instances of same object
     // ==================================================================
@@ -177,6 +109,21 @@ namespace ospray {
     // internal helper functions
     // ==================================================================
 
+    /*! this function gets called whenever one of our tiles is done
+        writing/compositing/blending/etc; i.e., as soon as we know
+        that all the ingredient tile datas for that tile have been
+        received from the client(s) that generated them. By the time
+        the tile gets called we do know that 'accum' field of the tile
+        has been set; it is this function's job to make sure we
+        properly call the post-op(s), properly send final color data
+        to the master (if required), and properly do the bookkeeping
+        that this tile is now done. */
+    void tileIsCompleted(TileData *tile);
+
+    //! number of tiles that "I" own
+    inline size_t numMyTiles() const { return myTiles.size(); }
+    inline bool IamTheMaster() const { return comm->IamTheMaster(); }
+
     /*! return tile descriptor for given pixel coordinates. this tile
       ! may or may not belong to current instance */
     inline TileDesc *getTileDescFor(const vec2i &coords) const
@@ -195,6 +142,16 @@ namespace ospray {
     typedef enum {
       WRITE_ONCE, ALPHA_BLEND, Z_COMPOSITE
     } FrameMode;
+
+    int accumId;
+
+    //! holds error per tile, for variance estimation / stopping
+    float *tileErrorBuffer;
+
+    /*! local frame buffer on the master used for storing the final
+        tiles. will be null on all workers, and _may_ be null on the
+        master if the master does not have a color buffer */
+    Ref<LocalFrameBuffer> localFBonMaster;
 
     FrameMode frameMode;
     void setFrameMode(FrameMode newFrameMode) ;
@@ -232,7 +189,7 @@ namespace ospray {
     bool frameIsDone;
 
     //! condition that gets triggered when the frame is done
-    Condition doneCond;
+    Condition frameDoneCond;
 
     /*! a vector of async messages for the *current* frame that got
         received before that frame actually started, and that we have
