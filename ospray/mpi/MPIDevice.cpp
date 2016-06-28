@@ -384,6 +384,12 @@ namespace ospray {
 
       TiledLoadBalancer::instance = new mpi::staticLoadBalancer::Master;
     }
+    MPIDevice::~MPIDevice() {
+      PING;
+      cmd.newCommand(CMD_FINALIZE);
+      cmd.flush();
+      async::shutdown();
+    }
 
 
     OSPFrameBuffer 
@@ -1078,14 +1084,6 @@ namespace ospray {
 
       // for data-distributed volumes this will need to be updated...
       cmd.get_data(count * sizeof(float), *results, 0, mpi::worker.comm);
-    }
-
-    void MPIDevice::finalize()
-    {
-      cmd.newCommand(CMD_FINALIZE);
-      cmd.flush();
-      //MPI_CALL(Finalize());
-      async::shutdown();
     }
 
     int MPIDevice::getString(OSPObject object, const char *name, char **value)

@@ -26,7 +26,7 @@ namespace ospray {
 
   namespace api {
 
-    Device *Device::current = NULL;
+    Ref<Device> Device::current = nullptr;
 
     Device::Device() {
 //      rtcSetErrorFunction(error_handler); need to call rtcInit first
