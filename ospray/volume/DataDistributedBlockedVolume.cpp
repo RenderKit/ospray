@@ -20,6 +20,7 @@
 #include "ospray/volume/GhostBlockBrickedVolume.h"
 #include "ospray/common/Core.h"
 #include "ospray/transferFunction/TransferFunction.h"
+#include "ospray/volume/GhostBlockBrickedVolume.h"
 #if EXP_DATA_PARALLEL
 #include "ospray/mpi/MPICommon.h"
 #endif

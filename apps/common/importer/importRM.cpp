@@ -160,9 +160,27 @@ namespace ospray {
 
     // Just import the RM file into some larger scene, just loads the volume
     void importVolumeRM(const FileName &fileName, Volume *volume) {
+      const char *scaleFactorEnv = getenv("OSPRAY_VOLUME_SCALE_FACTOR");
+      if (scaleFactorEnv){
+        std::cout << "#importRM: found OSPRAY_VOLUME_SCALE_FACTOR env-var\n";
+        vec3f scaleFactor;
+        if (sscanf(scaleFactorEnv, "%fx%fx%f", &scaleFactor.x, &scaleFactor.y, &scaleFactor.z) != 3){
+          throw std::runtime_error("Could not parse OSPRAY_RM_SCALE_FACTOR env-var. Must be of format"
+              "<X>x<Y>x<Z> (e.g '1.5x2x0.5')");
+        }
+        std::cout << "#importRM: got OSPRAY_VOLUME_SCALE_FACTOR env-var = {"
+          << scaleFactor.x << ", " << scaleFactor.y << ", " << scaleFactor.z
+          << "}\n";
+        volume->scaleFactor = scaleFactor;
+        ospSetVec3f(volume->handle, "scaleFactor", (osp::vec3f&)volume->scaleFactor);
+      }
+
       // Update the provided dimensions of the volume for the subvolume specified.
       ospcommon::vec3i dims(2048,2048,1920);
       volume->dimensions = dims;
+      if (volume->scaleFactor != vec3f(1.f)) {
+        dims = vec3i(vec3f(dims) * volume->scaleFactor);
+      }
       ospSetVec3i(volume->handle, "dimensions", (osp::vec3i&)dims);
       ospSetString(volume->handle,"voxelType", "uchar");
 
@@ -176,6 +194,7 @@ namespace ospray {
         << ", needed " << (t1-t0) << " seconds" << std::endl;
 
       ospSet2f(volume->handle,"voxelRange",volume->voxelRange.x,volume->voxelRange.y);
+      volume->dimensions = dims;
       volume->bounds = ospcommon::empty;
       volume->bounds.extend(volume->gridOrigin);
       volume->bounds.extend(volume->gridOrigin+ vec3f(volume->dimensions) * volume->gridSpacing);
