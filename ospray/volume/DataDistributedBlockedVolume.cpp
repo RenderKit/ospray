@@ -120,22 +120,27 @@ namespace ospray {
     // data.
     if (ispcEquivalent == NULL) createEquivalentISPC();
 
+    // The block domains are in terms of the scaled regions so we must check
+    // if the data is for the block in the scaled volume
+    const vec3i scaledRegionCoords(vec3f(regionCoords) * scaleFactor);
+    const vec3i scaledRegionSize(vec3f(regionSize) * scaleFactor);
+
     for (int i=0;i<numDDBlocks;i++) {
       // that block isn't mine, I shouldn't care ...
       if (!ddBlock[i].isMine) continue;
       
       // first, do some culling to make sure we only do setrgion
       // calls on blocks that actually map to this block
-      if (ddBlock[i].domain.lower.x >= regionCoords.x+regionSize.x) continue;
-      if (ddBlock[i].domain.lower.y >= regionCoords.y+regionSize.y) continue;
-      if (ddBlock[i].domain.lower.z >= regionCoords.z+regionSize.z) continue;
+      if (ddBlock[i].domain.lower.x >= scaledRegionCoords.x+scaledRegionSize.x) continue;
+      if (ddBlock[i].domain.lower.y >= scaledRegionCoords.y+scaledRegionSize.y) continue;
+      if (ddBlock[i].domain.lower.z >= scaledRegionCoords.z+scaledRegionSize.z) continue;
       
-      if (ddBlock[i].domain.upper.x+regionSize.x < regionCoords.x) continue;
-      if (ddBlock[i].domain.upper.y+regionSize.y < regionCoords.y) continue;
-      if (ddBlock[i].domain.upper.z+regionSize.z < regionCoords.z) continue;
+      if (ddBlock[i].domain.upper.x+scaledRegionSize.x < scaledRegionCoords.x) continue;
+      if (ddBlock[i].domain.upper.y+scaledRegionSize.y < scaledRegionCoords.y) continue;
+      if (ddBlock[i].domain.upper.z+scaledRegionSize.z < scaledRegionCoords.z) continue;
       
       ddBlock[i].cppVolume->setRegion(source,
-                                      regionCoords-ddBlock[i].domain.lower,
+                                      vec3i(vec3f(scaledRegionCoords-ddBlock[i].domain.lower) / scaleFactor),
                                       regionSize);
 
       ddBlock[i].ispcVolume = ddBlock[i].cppVolume->getIE();
@@ -191,6 +196,8 @@ namespace ospray {
 
     // Set the grid spacing, default to (1,1,1).
     this->gridSpacing = getParam3f("gridSpacing", vec3f(1.f));
+
+    this->scaleFactor = getParam3f("scaleFactor", vec3f(-1.f));
 
     numDDBlocks = ospcommon::reduce_mul(ddBlocks);
     ddBlock     = new DDBlock[numDDBlocks];
@@ -254,6 +261,7 @@ namespace ospray {
             volume->findParam("gridOrigin",1)->set(block->bounds.lower);
             volume->findParam("gridSpacing",1)->set(gridSpacing);
             volume->findParam("voxelType",1)->set(voxelType.c_str());
+            volume->findParam("scaleFactor",1)->set(scaleFactor);
             
             printf("rank %li owns block %i,%i,%i (ID %i), dims %i %i %i\n",
                    (size_t)core::getWorkerRank(),ix,iy,iz,
