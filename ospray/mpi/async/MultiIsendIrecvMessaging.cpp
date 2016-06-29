@@ -40,7 +40,7 @@ namespace ospray {
           Action *action = nullptr;
           size_t numActions = 0;
           while (numActions == 0){
-            numActions = g->sendQueue.getSome(&action,1,std::chrono::milliseconds(1));
+            numActions = g->sendQueue.getSomeFor(&action,1,std::chrono::milliseconds(1));
             if (g->shouldExit.load()){
               return;
             }
@@ -91,7 +91,7 @@ namespace ospray {
           Action *action = nullptr;
           size_t numActions = 0;
           while (numActions == 0){
-            numActions = g->recvQueue.getSome(&action,1,std::chrono::milliseconds(1));
+            numActions = g->recvQueue.getSomeFor(&action,1,std::chrono::milliseconds(1));
             if (g->shouldExit.load()){
               return;
             }

@@ -54,8 +54,12 @@ namespace ospray {
       if the queue is currently empty, wait until at least one element is there 
       or until the optional timeOut has elapsed, in which case the function may
       return 0. */
-    size_t getSome(T *some, size_t maxSize,
-        std::chrono::milliseconds timeOut = std::chrono::milliseconds(0));
+    size_t getSome(T *some, size_t maxSize);
+    /*! get elements in the queue into the given vector, and clear the queue.
+      if the queue is currently empty, wait until at least one element is there 
+      or until the timeOut has elapsed, in which case the function may
+      return 0. */
+    size_t getSomeFor(T *some, size_t maxSize, std::chrono::milliseconds timeOut);
 
   private:
     /*! the actual queue that holds the data */
@@ -132,13 +136,25 @@ namespace ospray {
 
   /*! get element that got written into the queue */
   template<typename T>
-  size_t ProducerConsumerQueue<T>::getSome(T *some, size_t maxSize, std::chrono::milliseconds timeOut)
+  size_t ProducerConsumerQueue<T>::getSome(T *some, size_t maxSize)
+  {
+    std::unique_lock<std::mutex> lock(mutex);
+    notEmptyCond.wait(lock, [&]{return !content.empty();});
+
+    size_t num = 0;
+    while (num < maxSize && !content.empty()) {
+      some[num++] = content.front();
+      content.pop_front();
+    }
+    return num;
+  }
+
+  template<typename T>
+  size_t ProducerConsumerQueue<T>::getSomeFor(T *some, size_t maxSize, std::chrono::milliseconds timeOut)
   {
     using namespace std::chrono;
     std::unique_lock<std::mutex> lock(mutex);
-    if (timeOut == std::chrono::milliseconds(0)) {
-      notEmptyCond.wait(lock, [&]{return !content.empty();});
-    } else if (!notEmptyCond.wait_for(lock, timeOut, [&]{return !content.empty();})) {
+    if (!notEmptyCond.wait_for(lock, timeOut, [&]{return !content.empty();})) {
       return 0;
     }
 
