@@ -278,7 +278,7 @@ namespace ospray {
     frameDoneCond.wait(lock, [&]{return frameIsDone;});
   }
 
-  void DistributedFrameBuffer::processMessage(MasterTileMessage *msg)
+  void DFB::processMessage(MasterTileMessage *msg)
   {
     { /* nothing to do for 'none' tiles */ }
     if (hasVarianceBuffer && (accumId & 1) == 1)
