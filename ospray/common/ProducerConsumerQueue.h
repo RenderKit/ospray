@@ -51,9 +51,8 @@ namespace ospray {
     void getAll(std::vector<T> &all);
 
     /*! get elements in the queue into the given vector, and clear the queue.
-      if the queue is currently empty, wait until at least one element is there 
-      or until the optional timeOut has elapsed, in which case the function may
-      return 0. */
+      if the queue is currently empty, waiting until at least one element is there 
+      */
     size_t getSome(T *some, size_t maxSize);
     /*! get elements in the queue into the given vector, and clear the queue.
       if the queue is currently empty, wait until at least one element is there 
