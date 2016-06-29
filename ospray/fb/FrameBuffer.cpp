@@ -26,6 +26,8 @@ namespace ospray {
                            bool hasAccumBuffer,
                            bool hasVarianceBuffer)
     : size(size),
+      numTiles(divRoundUp(size, getTileSize())),
+      maxValidPixelID(size-vec2i(1)),
       colorBufferFormat(colorBufferFormat),
       hasDepthBuffer(hasDepthBuffer),
       hasAccumBuffer(hasAccumBuffer),

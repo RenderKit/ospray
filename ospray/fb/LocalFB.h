@@ -32,8 +32,6 @@ namespace ospray {
     int32     *tileAccumID; //< holds accumID per tile, for adaptive accumulation
     float     *tileErrorBuffer; /*!< holds error per tile, for variance estimation / stopping */
     std::vector<box2i> errorRegion; // image regions (in #tiles) which do not yet estimate the error on tile base
-    int32     tilesx;
-    int32     tiles;
 
     LocalFrameBuffer(const vec2i &size,
                      ColorBufferFormat colorBufferFormat,

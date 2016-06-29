@@ -16,9 +16,6 @@
 
 #pragma once
 
-// std
-#include <algorithm>
-
 // ospray
 #include "ospray/fb/PixelOp.h"
 
@@ -29,7 +26,7 @@ namespace ospray {
     /*! app-mappable format of the color buffer. make sure that this
         matches the definition on the ISPC side */
     typedef OSPFrameBufferFormat ColorBufferFormat;
-    
+
     const vec2i size;
     FrameBuffer(const vec2i &size,
                 ColorBufferFormat colorBufferFormat,
@@ -46,7 +43,21 @@ namespace ospray {
     /*! \brief clear (the specified channels of) this frame buffer */
     virtual void clear(const uint32 fbChannelFlags) = 0;
 
-    //! \brief common function to help printf-debugging 
+    //! get number of pixels per tile, in x and y direction
+    vec2i getTileSize()  const { return vec2i(TILE_SIZE); }
+
+    //! return number of tiles in x and y direction
+    vec2i getNumTiles()  const { return numTiles; }
+
+    int getTotalTiles()  const { return numTiles.x * numTiles.y; }
+
+    //! get number of pixels in x and y diretion
+    vec2i getNumPixels() const { return size; }
+
+    vec2i numTiles;
+    vec2i maxValidPixelID;
+
+    //! \brief common function to help printf-debugging
     /*! \detailed Every derived class should overrride this! */
     virtual std::string toString() const
     { return "ospray::FrameBuffer"; }
@@ -82,5 +93,5 @@ namespace ospray {
   //! helper function to write a (float) image as (flipped) PFM file
   void writePFM(const std::string &fileName, const vec2i &size,
                 const int channel, const float *pixels);
-  
+
 } // ::ospray

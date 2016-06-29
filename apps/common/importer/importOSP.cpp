@@ -161,6 +161,14 @@ namespace ospray {
           ospSet1f(volume->handle, "samplingRate", volume->samplingRate);
           continue;
         }
+
+        // Volume scale factor.
+        if (!strcmp(node->ToElement()->Name(), "scaleFactor")) {
+          volume->scaleFactor = parseFloat3(node);
+          std::cout << "Got scaleFactor = " << volume->scaleFactor << std::endl;
+          ospSetVec3f(volume->handle, "scaleFactor", (osp::vec3f&)volume->scaleFactor);
+          continue;
+        }
         
         // Subvolume offset from origin within the full volume.
         if (!strcmp(node->ToElement()->Name(), "subvolumeOffsets")) {

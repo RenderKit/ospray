@@ -90,6 +90,22 @@ namespace ospray {
                       "invalid subvolume steps");
       
       bool useSubvolume = false;
+
+      // Check for volume scale factor from the environment
+      const char *scaleFactorEnv = getenv("OSPRAY_VOLUME_SCALE_FACTOR");
+      if (scaleFactorEnv){
+        std::cout << "#importRAW: found OSPRAY_VOLUME_SCALE_FACTOR env-var\n";
+        vec3f scaleFactor;
+        if (sscanf(scaleFactorEnv, "%fx%fx%f", &scaleFactor.x, &scaleFactor.y, &scaleFactor.z) != 3){
+          throw std::runtime_error("Could not parse OSPRAY_RM_SCALE_FACTOR env-var. Must be of format"
+              "<X>x<Y>x<Z> (e.g '1.5x2x0.5')");
+        }
+        std::cout << "#importRAW: got OSPRAY_VOLUME_SCALE_FACTOR env-var = {"
+          << scaleFactor.x << ", " << scaleFactor.y << ", " << scaleFactor.z
+          << "}\n";
+        volume->scaleFactor = scaleFactor;
+        ospSetVec3f(volume->handle, "scaleFactor", (osp::vec3f&)volume->scaleFactor);
+      }
       
       // The dimensions of the volume to be imported; this will be changed if a
       // subvolume is specified.
@@ -118,8 +134,13 @@ namespace ospray {
         // Update the provided dimensions of the volume for the subvolume specified.
         ospSetVec3i(volume->handle, "dimensions", (osp::vec3i&)importVolumeDimensions);
       }
-      else
-        ospSetVec3i(volume->handle, "dimensions", (osp::vec3i&)volumeDimensions);
+      else {
+        vec3i dims = volumeDimensions;
+        if (volume->scaleFactor != vec3f(1.f)) {
+          dims = vec3i(vec3f(dims) * volume->scaleFactor);
+        }
+        ospSetVec3i(volume->handle, "dimensions", (osp::vec3i&)dims);
+      }
       PRINT(volumeDimensions);
 
       // To avoid hitting memory limits or exceeding the 2GB limit in MPIDevice::ospSetRegion we
@@ -145,7 +166,7 @@ namespace ospray {
         }
       }
 
-      std::cout << "#importRaw: Reading volume in chunks of size {" << chunkDimensions.x << ", " << chunkDimensions.y
+      std::cout << "#importRAW: Reading volume in chunks of size {" << chunkDimensions.x << ", " << chunkDimensions.y
         << ", " << chunkDimensions.z << "}" << std::endl;
 
       if (!useSubvolume) {
@@ -166,7 +187,7 @@ namespace ospray {
         remainderVoxels.x = volumeDimensions.x % chunkDimensions.x;
         remainderVoxels.y = volumeDimensions.y % chunkDimensions.y;
         remainderVoxels.z = volumeDimensions.z % chunkDimensions.z;
-        std::cout << "#importRaw: Number of chunks on each axis = {" << numChunks.x << ", " << numChunks.y << ", "
+        std::cout << "#importRAW: Number of chunks on each axis = {" << numChunks.x << ", " << numChunks.y << ", "
           << numChunks.z << "}, remainderVoxels {" << remainderVoxels.x
           << ", " << remainderVoxels.y << ", " << remainderVoxels.z << "}, each chunk is "
           << chunkVoxels << " voxels " << std::endl;
@@ -181,7 +202,7 @@ namespace ospray {
                 totalDataRead += dataSizeRead;
                 dataSizeRead = 0;
                 float percent = 100.0 * totalDataRead / static_cast<double>(VOLUME_TOTAL_SIZE);
-                std::cout << "#importRaw: Have read " << totalDataRead * 1e-9 << "GB of "
+                std::cout << "#importRAW: Have read " << totalDataRead * 1e-9 << "GB of "
                   << VOLUME_TOTAL_SIZE * 1e-9 << "GB (" << percent << "%)" << std::endl;
               }
 
@@ -299,6 +320,10 @@ namespace ospray {
         //   delete [] subvolumeRowData;
       }
 
+      if (volume->scaleFactor != vec3f(1.f)) {
+        volume->dimensions = vec3i(vec3f(volume->dimensions) * volume->scaleFactor);
+        std::cout << "#importRAW: scaled volume to " << volume->dimensions << std::endl;
+      }
       volume->bounds = ospcommon::empty;
       volume->bounds.extend(volume->gridOrigin);
       volume->bounds.extend(volume->gridOrigin+ vec3f(volume->dimensions) * volume->gridSpacing);

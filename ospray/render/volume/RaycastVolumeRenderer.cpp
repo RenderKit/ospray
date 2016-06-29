@@ -262,7 +262,7 @@ namespace ospray {
                                "not using the distributed frame buffer!?");
     }
 
-    dfb->setFrameMode(DistributedFrameBuffer::ALPHA_BLENDING);
+    dfb->setFrameMode(DistributedFrameBuffer::ALPHA_BLEND);
 
     // note: we can NEVER be the master, since the master doesn't even
     // have an instance of this renderer class -
