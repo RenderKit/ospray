@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "DistributedFrameBuffer.h"
+#include "DistributedFrameBuffer_TileTypes.h"
 #include "DistributedFrameBuffer_ispc.h"
 
 #include "ospray/common/tasking/async.h"
@@ -27,198 +28,118 @@
 
 #define DBG(a) /* ignore */
 
-#define USE_ALPHABLEND_TILE_TYPE 1 // NOTE(jda) - else ZComposite...
+using std::cout;
+using std::endl;
 
 namespace ospray {
-  using std::cout;
-  using std::endl;
 
-  inline int clientRank(int clientID) { return clientID+1; }
+  // Helper types /////////////////////////////////////////////////////////////
 
   using DFB = DistributedFrameBuffer;
 
-  DFB::TileDesc::TileDesc(DFB *dfb,
-                          const vec2i &begin,
-                          size_t tileID,
-                          size_t ownerID)
-    : tileID(tileID), ownerID(ownerID), dfb(dfb), begin(begin)
-  {}
+  struct MasterTileMessage : public mpi::async::CommLayer::Message {
+    vec2i coords;
+    float error;
+  };
 
-  DFB::TileData::TileData(DFB *dfb,
-                          const vec2i &begin,
-                          size_t tileID,
-                          size_t ownerID)
-    : TileDesc(dfb,begin,tileID,ownerID)
-  {}
+  /*! message sent to the master when a tile is finished. Todo:
+      compress the color data */
+  template <typename FBType>
+  struct MasterTileMessage_FB : public MasterTileMessage {
+    FBType color[TILE_SIZE][TILE_SIZE];
+  };
 
+  using MasterTileMessage_RGBA_I8  = MasterTileMessage_FB<uint32>;
+  using MasterTileMessage_RGBA_F32 = MasterTileMessage_FB<vec4f>;
+  using MasterTileMessage_NONE     = MasterTileMessage;
 
-  /*! called exactly once at the beginning of each frame */
-  void DFB::AlphaBlendTile_simple::newFrame()
+  /*! message sent from one node's instance to another, to tell that
+      instance to write that tile */
+  struct WriteTileMessage : public mpi::async::CommLayer::Message {
+    // TODO: add compression of pixels during transmission
+    vec2i coords; // XXX redundant: it's also in tile.region.lower
+    ospray::Tile tile;
+  };
+
+  /*! color buffer and depth buffer on master */
+
+  enum {
+    /*! command tag that identifies a CommLayer::message as a write
+      tile command. this is a command using for sending a tile of
+      new samples to another instance of the framebuffer (the one
+      that actually owns that tile) for processing and 'writing' of
+      that tile on that owner node. */
+    WORKER_WRITE_TILE = 13,
+    /*! command tag used for sending 'final' tiles from the tile
+        owner to the master frame buffer. Note that we *do* send a
+        message back ot the master even in cases where the master
+        does not actually care about the pixel data - we still have
+        to let the master know when we're done. */
+    MASTER_WRITE_TILE_I8,
+    MASTER_WRITE_TILE_F32,
+    /*! command tag used for sending 'final' tiles from the tile
+        owner to the master frame buffer. Note that we *do* send a
+        message back ot the master even in cases where the master
+        does not actually care about the pixel data - we still have
+        to let the master know when we're done. */
+    MASTER_WRITE_TILE_NONE,
+  } COMMANDTAG;
+
+  // Helper functions /////////////////////////////////////////////////////////
+
+  inline int clientRank(int clientID) { return clientID+1; }
+
+  // DistributedFrameBuffer definitions ///////////////////////////////////////
+
+  DFB::DistributedFrameBuffer(mpi::async::CommLayer *comm,
+                              const vec2i &numPixels,
+                              size_t myID,
+                              ColorBufferFormat colorBufferFormat,
+                              bool hasDepthBuffer,
+                              bool hasAccumBuffer,
+                              bool hasVarianceBuffer)
+    : mpi::async::CommLayer::Object(comm,myID),
+      FrameBuffer(numPixels,colorBufferFormat,hasDepthBuffer,
+                  hasAccumBuffer,hasVarianceBuffer),
+      accumId(0),
+      tileErrorBuffer(nullptr),
+      localFBonMaster(nullptr),
+      frameMode(WRITE_ONCE),
+      frameIsActive(false),
+      frameIsDone(false)
   {
-    currentGeneration = 0;
-    expectedInNextGeneration = 0;
-    missingInCurrentGeneration = 1;
+    assert(comm);
+    this->ispcEquivalent = ispc::DFB_create(this);
+    ispc::DFB_set(getIE(), numPixels.x, numPixels.y, colorBufferFormat);
+    comm->registerObject(this,myID);
 
-    assert(bufferedTile.empty());
-  }
+    createTiles();
 
-  void computeSortOrder(DFB::AlphaBlendTile_simple::BufferedTile *t)
-  {
-    float z = std::numeric_limits<float>::infinity();
-    for (int iy=0;iy<t->tile.region.upper.y-t->tile.region.lower.y;iy++)
-      for (int ix=0;ix<t->tile.region.upper.x-t->tile.region.lower.x;ix++)
-        z = std::min(z,t->tile.z[ix+TILE_SIZE*iy]);
-    t->sortOrder = z;
-  }
-
-  void DFB::TileData::accumulate(const ospray::Tile &tile)
-  {
-    vec2i dia = tile.region.upper - tile.region.lower;
-    float pixelsf = (float)dia.x * dia.y;
-    switch(dfb->colorBufferFormat) {
-      case OSP_FB_RGBA8:
-        error = ispc::DFB_accumulate_RGBA8(dfb->ispcEquivalent,
-            (ispc::VaryingTile*)&tile,
-            (ispc::VaryingTile*)&this->final,
-            (ispc::VaryingTile*)&this->accum,
-            (ispc::VaryingTile*)&this->variance,
-            &this->color,
-            pixelsf,
-            dfb->accumId,
-            dfb->hasAccumBuffer,
-            dfb->hasVarianceBuffer);
-        break;
-      case OSP_FB_SRGBA:
-        error = ispc::DFB_accumulate_SRGBA(dfb->ispcEquivalent,
-            (ispc::VaryingTile*)&tile,
-            (ispc::VaryingTile*)&this->final,
-            (ispc::VaryingTile*)&this->accum,
-            (ispc::VaryingTile*)&this->variance,
-            &this->color,
-            pixelsf,
-            dfb->accumId,
-            dfb->hasAccumBuffer,
-            dfb->hasVarianceBuffer);
-        break;
-      case OSP_FB_RGBA32F:
-        error = ispc::DFB_accumulate_RGBA32F(dfb->ispcEquivalent,
-            (ispc::VaryingTile*)&tile,
-            (ispc::VaryingTile*)&this->final,
-            (ispc::VaryingTile*)&this->accum,
-            (ispc::VaryingTile*)&this->variance,
-            &this->color,
-            pixelsf,
-            dfb->accumId,
-            dfb->hasAccumBuffer,
-            dfb->hasVarianceBuffer);
-        break;
-    default:
-      break;
-    }
-  }
-
-  /*! called exactly once for each ospray::Tile that needs to get
-    written into / composited into this dfb tile */
-  void DFB::AlphaBlendTile_simple::process(const ospray::Tile &tile)
-  {
-    BufferedTile *addTile = new BufferedTile;
-    memcpy(&addTile->tile,&tile,sizeof(tile));
-    computeSortOrder(addTile);
-
-    this->final.region = tile.region;
-    this->final.fbSize = tile.fbSize;
-    this->final.rcp_fbSize = tile.rcp_fbSize;
-
-    {
-      SCOPED_LOCK(mutex);
-      bufferedTile.push_back(addTile);
-
-      if (tile.generation == currentGeneration) {
-        --missingInCurrentGeneration;
-        expectedInNextGeneration += tile.children;
-        while (missingInCurrentGeneration == 0 &&
-               expectedInNextGeneration > 0) {
-          currentGeneration++;
-          missingInCurrentGeneration = expectedInNextGeneration;
-          expectedInNextGeneration = 0;
-          for (int i=0;i<bufferedTile.size();i++) {
-            BufferedTile *bt = bufferedTile[i];
-            if (bt->tile.generation == currentGeneration) {
-              --missingInCurrentGeneration;
-              expectedInNextGeneration += bt->tile.children;
-            }
-          }
-        }
+    if (comm->group->rank == 0) {
+      if (colorBufferFormat == OSP_FB_NONE) {
+        cout << "#osp:mpi:dfb: we're the master, but framebuffer has 'NONE' "
+             << "format; creating distributed frame buffer WITHOUT having a "
+             << "mappable copy on the master" << endl;
+      } else {
+        localFBonMaster = new LocalFrameBuffer(numPixels,
+                                               colorBufferFormat,
+                                               hasDepthBuffer,
+                                               false,
+                                               false);
       }
-
-      if (missingInCurrentGeneration == 0) {
-        Tile **tileArray = STACK_BUFFER(Tile*, bufferedTile.size());
-        for (int i = 0; i < bufferedTile.size(); i++) {
-          tileArray[i] = &bufferedTile[i]->tile;
-        }
-
-        ispc::DFB_sortAndBlendFragments((ispc::VaryingTile **)tileArray,
-                                        bufferedTile.size());
-
-        this->final.region = tile.region;
-        this->final.fbSize = tile.fbSize;
-        this->final.rcp_fbSize = tile.rcp_fbSize;
-        accumulate(bufferedTile[0]->tile);
-        dfb->tileIsCompleted(this);
-        for (auto &tile : bufferedTile)
-          delete tile;
-        bufferedTile.clear();
+      if (hasVarianceBuffer) {
+        tileErrorBuffer =
+            (float*)alignedMalloc(sizeof(float)*numTiles.x*numTiles.y);
       }
     }
+
+    ispc::DFB_set(getIE(), numPixels.x, numPixels.y, colorBufferFormat);
   }
 
-  /*! called exactly once at the beginning of each frame */
-  void DFB::WriteOnlyOnceTile::newFrame()
+  DFB::~DistributedFrameBuffer()
   {
-    /* nothing to do for write-once tile - we *know* it'll get written
-       only once */
-  }
-
-  /*! called exactly once for each ospray::Tile that needs to get
-    written into / composited into this dfb tile.
-
-    for a write-once tile, we expect this to be called exactly once
-    per tile, so there's not a lot to do in here than accumulating the
-    tile data and telling the parent that we're done.
-  */
-  void DFB::WriteOnlyOnceTile::process(const ospray::Tile &tile)
-  {
-    this->final.region = tile.region;
-    this->final.fbSize = tile.fbSize;
-    this->final.rcp_fbSize = tile.rcp_fbSize;
-    accumulate(tile);
-    dfb->tileIsCompleted(this);
-  }
-
-  void DFB::ZCompositeTile::newFrame()
-  {
-    numPartsComposited = 0;
-  }
-
-  void DFB::ZCompositeTile::process(const ospray::Tile &tile)
-  {
-    bool done = false;
-
-    {
-      SCOPED_LOCK(mutex);
-      if (numPartsComposited == 0)
-        memcpy(&compositedTileData,&tile,sizeof(tile));
-      else
-        ispc::DFB_zComposite((ispc::VaryingTile*)&tile,
-                             (ispc::VaryingTile*)&this->compositedTileData);
-
-      done = (++numPartsComposited == dfb->comm->numWorkers());
-    }
-
-    if (done) {
-      accumulate(this->compositedTileData);
-      dfb->tileIsCompleted(this);
-    }
+    freeTiles();
+    alignedFree(tileErrorBuffer);
   }
 
   void DFB::startNewFrame()
@@ -270,18 +191,21 @@ namespace ospray {
     myTiles.clear();
   }
 
-  DFB::TileData *DFB::createTile(const vec2i &xy, size_t tileID, size_t ownerID)
+  TileData *DFB::createTile(const vec2i &xy, size_t tileID, size_t ownerID)
   {
     TileData *td = nullptr;
 
-    if (frameMode == WRITE_ONCE)
+    switch(frameMode) {
+    case WRITE_ONCE:
       td = new WriteOnlyOnceTile(this, xy, tileID, ownerID);
-    else {
-#if USE_ALPHABLEND_TILE_TYPE
+      break;
+    case ALPHA_BLEND:
       td = new AlphaBlendTile_simple(this, xy, tileID, ownerID);
-#else
+      break;
+    case Z_COMPOSITE:
+    default:
       td = new ZCompositeTile(this, xy, tileID, ownerID);
-#endif
+      break;
     }
 
     return td;
@@ -290,6 +214,7 @@ namespace ospray {
   void DFB::createTiles()
   {
     size_t tileID = 0;
+    vec2i numPixels = getNumPixels();
     for (size_t y = 0; y < numPixels.y; y += TILE_SIZE) {
       for (size_t x = 0; x < numPixels.x; x += TILE_SIZE, tileID++) {
         size_t ownerID = tileID % (comm->group->size - 1);
@@ -302,53 +227,6 @@ namespace ospray {
         }
       }
     }
-  }
-
-  DFB::DistributedFrameBuffer(mpi::async::CommLayer *comm,
-                              const vec2i &numPixels,
-                              size_t myID,
-                              ColorBufferFormat colorBufferFormat,
-                              bool hasDepthBuffer,
-                              bool hasAccumBuffer,
-                              bool hasVarianceBuffer)
-    : mpi::async::CommLayer::Object(comm,myID),
-      FrameBuffer(numPixels,colorBufferFormat,hasDepthBuffer,
-                  hasAccumBuffer,hasVarianceBuffer),
-      numPixels(numPixels),
-      maxValidPixelID(numPixels-vec2i(1)),
-      numTiles(divRoundUp(numPixels, getTileSize())),
-      frameIsActive(false), frameIsDone(false), localFBonMaster(NULL),
-      accumId(0),
-      tileErrorBuffer(NULL),
-      frameMode(WRITE_ONCE)
-  {
-    assert(comm);
-    this->ispcEquivalent = ispc::DFB_create(this);
-    ispc::DFB_set(getIE(),numPixels.x,numPixels.y, colorBufferFormat);
-    comm->registerObject(this,myID);
-
-    createTiles();
-
-    if (comm->group->rank == 0) {
-      if (colorBufferFormat == OSP_FB_NONE) {
-        cout << "#osp:mpi:dfb: we're the master, but framebuffer has 'NONE' "
-             << "format; creating distributed frame buffer WITHOUT having a "
-             << "mappable copy on the master" << endl;
-      } else {
-        localFBonMaster = new LocalFrameBuffer(numPixels,
-                                               colorBufferFormat,
-                                               hasDepthBuffer,
-                                               false,
-                                               false);
-      }
-      if (hasVarianceBuffer) {
-        tileErrorBuffer =
-            (float*)alignedMalloc(sizeof(float)*numTiles.x*numTiles.y);
-      }
-    }
-
-    ispc::DFB_set(getIE(),numPixels.x,numPixels.y,
-                  colorBufferFormat);
   }
 
   void DFB::setFrameMode(FrameMode newFrameMode)
@@ -397,76 +275,27 @@ namespace ospray {
   void DFB::waitUntilFinished()
   {
     std::unique_lock<std::mutex> lock(mutex);
-    doneCond.wait(lock, [&]{return frameIsDone;});
+    frameDoneCond.wait(lock, [&]{return frameIsDone;});
   }
 
-  void DFB::processMessage(DFB::WriteTileMessage *msg)
-  {
-    DFB::TileDesc *tileDesc = this->getTileDescFor(msg->coords);
-    // TODO: compress/decompress tile data
-    TileData *td = (TileData*)tileDesc;
-    td->process(msg->tile);
-  }
-
-  void DFB::processMessage(MasterTileMessage_NONE *msg)
+  void DFB::processMessage(MasterTileMessage *msg)
   {
     { /* nothing to do for 'none' tiles */ }
     if (hasVarianceBuffer && (accumId & 1) == 1)
       tileErrorBuffer[getTileIDof(msg->coords)] = msg->error;
 
     // and finally, tell the master that this tile is done
-    DFB::TileDesc *tileDesc = this->getTileDescFor(msg->coords);
+    auto *tileDesc = this->getTileDescFor(msg->coords);
     TileData *td = (TileData*)tileDesc;
     this->tileIsCompleted(td);
   }
 
-  void DFB::processMessage(MasterTileMessage_RGBA_I8 *msg)
+  void DFB::processMessage(WriteTileMessage *msg)
   {
-    if (hasVarianceBuffer && (accumId & 1) == 1)
-      tileErrorBuffer[getTileIDof(msg->coords)] = msg->error;
-    for (int iy = 0; iy < TILE_SIZE; iy++) {
-      int iiy = iy+msg->coords.y;
-      if (iiy >= numPixels.y) continue;
-
-      for (int ix = 0; ix < TILE_SIZE; ix++) {
-        int iix = ix+msg->coords.x;
-        if (iix >= numPixels.x) continue;
-
-        ((uint32*)localFBonMaster->colorBuffer)[iix + iiy*numPixels.x]
-          = msg->color[iy][ix];
-      }
-    }
-
-    // and finally, tell the master that this tile is done
-    DFB::TileDesc *tileDesc = this->getTileDescFor(msg->coords);
+    auto *tileDesc = this->getTileDescFor(msg->coords);
+    // TODO: compress/decompress tile data
     TileData *td = (TileData*)tileDesc;
-    this->tileIsCompleted(td);
-  }
-
-  void DFB::processMessage(MasterTileMessage_RGBA_F32 *msg)
-  {
-    if (hasVarianceBuffer && (accumId & 1) == 1)
-      tileErrorBuffer[getTileIDof(msg->coords)] = msg->error;
-
-    for (int iy = 0; iy < TILE_SIZE; iy++) {
-      int iiy = iy+msg->coords.y;
-      if (iiy >= numPixels.y)
-        continue;
-
-      for (int ix = 0; ix < TILE_SIZE; ix++) {
-        int iix = ix+msg->coords.x;
-        if (iix >= numPixels.x)
-          continue;
-
-        ((vec4f*)localFBonMaster->colorBuffer)[iix + iiy*numPixels.x]
-          = msg->color[iy][ix];
-      }
-    }
-
-    // and finally, tell the master that this tile is done
-    DFB::TileDesc *tileDesc = this->getTileDescFor(msg->coords);
-    TileData *td = (TileData*)tileDesc;
-    this->tileIsCompleted(td);
+    td->process(msg->tile);
   }
 
   void DFB::tileIsCompleted(TileData *tile)
@@ -556,17 +385,17 @@ namespace ospray {
 
     async([=]() {
       switch (_msg->command) {
-      case DFB::MASTER_WRITE_TILE_NONE:
-        this->processMessage((DFB::MasterTileMessage_NONE*)_msg);
+      case MASTER_WRITE_TILE_NONE:
+        this->processMessage((MasterTileMessage_NONE*)_msg);
         break;
-      case DFB::MASTER_WRITE_TILE_I8:
-        this->processMessage((DFB::MasterTileMessage_RGBA_I8*)_msg);
+      case MASTER_WRITE_TILE_I8:
+        this->processMessage((MasterTileMessage_RGBA_I8*)_msg);
         break;
-      case DFB::MASTER_WRITE_TILE_F32:
-        this->processMessage((DFB::MasterTileMessage_RGBA_F32*)_msg);
+      case MASTER_WRITE_TILE_F32:
+        this->processMessage((MasterTileMessage_RGBA_F32*)_msg);
         break;
-      case DFB::WORKER_WRITE_TILE:
-        this->processMessage((DFB::WriteTileMessage*)_msg);
+      case WORKER_WRITE_TILE:
+        this->processMessage((WriteTileMessage*)_msg);
         break;
       default:
         assert(0);
@@ -580,14 +409,14 @@ namespace ospray {
     DBG(printf("rank %i CLOSES frame\n",mpi::world.rank));
     frameIsActive = false;
     frameIsDone   = true;
-    doneCond.notify_all();
+    frameDoneCond.notify_all();
   }
 
   //! write given tile data into the frame buffer, sending to remove owner if
   //! required
   void DFB::setTile(ospray::Tile &tile)
   {
-    DFB::TileDesc *tileDesc = this->getTileDescFor(tile.region.lower);
+    auto *tileDesc = this->getTileDescFor(tile.region.lower);
 
     if (!tileDesc->mine()) {
       // NOT my tile...
@@ -619,7 +448,7 @@ namespace ospray {
   {
     if (!myTiles.empty()) {
       parallel_for(myTiles.size(), [&](int taskIndex){
-        DFB::TileData *td = this->myTiles[taskIndex];
+        TileData *td = this->myTiles[taskIndex];
         assert(td);
         if (fbChannelFlags & OSP_FB_ACCUM) {
           for (int i = 0; i < TILE_SIZE*TILE_SIZE; i++) td->accum.r[i] = 0.f;

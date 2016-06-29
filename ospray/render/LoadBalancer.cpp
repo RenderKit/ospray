@@ -47,12 +47,8 @@ namespace ospray {
 
     void *perFrameData = renderer->beginFrame(fb);
 
-    int numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
-    int numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
-
-    const int NTASKS = numTiles_x * numTiles_y;
-
-    parallel_for(NTASKS, [&](int taskIndex) {
+    parallel_for(fb->getTotalTiles(), [&](int taskIndex) {
+      const size_t numTiles_x = fb->getNumTiles().x;
       const size_t tile_y = taskIndex / numTiles_x;
       const size_t tile_x = taskIndex - tile_y*numTiles_x;
       const vec2i tileID(tile_x, tile_y);
@@ -95,15 +91,14 @@ namespace ospray {
 
     void *perFrameData = renderer->beginFrame(fb);
 
-    int numTiles_x     = divRoundUp(fb->size.x,TILE_SIZE);
-    int numTiles_y     = divRoundUp(fb->size.y,TILE_SIZE);
-    int numTiles_total = numTiles_x * numTiles_y;
+    int numTiles_total = fb->getTotalTiles();
 
     const int NTASKS = (numTiles_total / numDevices)
                        + (numTiles_total % numDevices > deviceID);
 
     parallel_for(NTASKS, [&](int taskIndex) {
       int tileIndex = deviceID + numDevices * taskIndex;
+      const size_t numTiles_x = fb->getNumTiles().x;
       const size_t tile_y = tileIndex / numTiles_x;
       const size_t tile_x = tileIndex - tile_y*numTiles_x;
       const vec2i tileID(tile_x, tile_y);
