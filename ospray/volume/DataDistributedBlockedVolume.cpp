@@ -197,7 +197,7 @@ namespace ospray {
     // Set the grid spacing, default to (1,1,1).
     this->gridSpacing = getParam3f("gridSpacing", vec3f(1.f));
 
-    this->scaleFactor = getParam3f("scaleFactor", vec3f(-1.f));
+    this->scaleFactor = getParam3f("scaleFactor", vec3f(1.f));
 
     numDDBlocks = ospcommon::reduce_mul(ddBlocks);
     ddBlock     = new DDBlock[numDDBlocks];
