@@ -112,7 +112,7 @@ target_link_libraries(${LIBRARY_NAME}
 )
 
 if(NOT WIN32)
-  target_link_libraries(${LIBRARY_NAME} ospray_importer)
+  target_link_libraries(${LIBRARY_NAME} ospray_importer ospray_tfn)
 endif()
 
 ospray_set_library_version(${LIBRARY_NAME})

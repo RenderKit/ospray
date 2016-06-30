@@ -22,6 +22,7 @@ using namespace ospray;
 using namespace ospcommon;
 
 #include "common/importer/Importer.h"
+#include "common/tfn_lib/tfn_lib.h"
 
 #include <iostream>
 using std::cerr;
@@ -39,6 +40,7 @@ VolumeSceneParser::VolumeSceneParser(cpp::Renderer renderer) :
 bool VolumeSceneParser::parse(int ac, const char **&av)
 {
   bool loadedScene = false;
+  bool loadedTransferFunction = false;
 
   FileName scene;
 
@@ -55,6 +57,9 @@ bool VolumeSceneParser::parse(int ac, const char **&av)
       m_tf_colors.push_back(color);
     } else if (arg == "-tfs" || arg == "--tf-scale") {
       m_tf_scale = atof(av[++i]);
+    } else if (arg == "-tff" || arg == "--tf-file") {
+      importTransferFunction(std::string(av[++i]));
+      loadedTransferFunction = true;
     } else if (arg == "-is" || arg == "--surface") {
       m_isosurfaces.push_back(atof(av[++i]));
     } else {
@@ -67,7 +72,9 @@ bool VolumeSceneParser::parse(int ac, const char **&av)
   }
 
   if (loadedScene) {
-    createDefaultTransferFunction();
+    if (!loadedTransferFunction) {
+      createDefaultTransferFunction();
+    }
     importObjectsFromFile(scene);
   }
 
@@ -136,6 +143,59 @@ void VolumeSceneParser::importObjectsFromFile(const std::string &filename)
   model.commit();
 }
 
+void VolumeSceneParser::importTransferFunction(const std::string &filename)
+{
+  tfn::TransferFunction fcn(filename);
+  auto colorsData = ospray::cpp::Data(fcn.rgbValues.size(), OSP_FLOAT3,
+                                      fcn.rgbValues.data());
+  m_tf.set("colors", colorsData);
+
+  m_tf_scale = fcn.opacityScaling;
+  PRINT(m_tf_scale);
+  // Sample the opacity values, taking 256 samples to match the volume viewer
+  // the volume viewer does the sampling a bit differently so we match that
+  // instead of what's done in createDefault
+  std::vector<float> opacityValues;
+  const int N_OPACITIES = 256;
+  for (int i = 0; i < N_OPACITIES; ++i) {
+    const float x = float(i) / float(N_OPACITIES - 1);
+
+    float opacity = 0;
+    if (x <= 0) {
+      opacity = fcn.opacityValues[0].y;
+    } else if (x >= 1) {
+      opacity = fcn.opacityValues.back().y;
+    } else {
+      // TODO: Can optimize this into one loop and track the current lo/hi
+      for (size_t j = 0; j < fcn.opacityValues.size() - 1; ++j) {
+        if (x <= fcn.opacityValues[j + 1].x) {
+          const float delta = x - fcn.opacityValues[j].x;
+          const float interval = fcn.opacityValues[j + 1].x - fcn.opacityValues[j].x;
+          if (delta == 0 || interval == 0) {
+            opacity = fcn.opacityValues[j].y;
+            break;
+          } else {
+            opacity = fcn.opacityValues[j].y + delta / interval
+              * (fcn.opacityValues[j + 1].y - fcn.opacityValues[j].y);
+            break;
+          }
+        }
+      }
+    }
+    opacityValues.push_back(m_tf_scale * opacity);
+  }
+
+  auto opacityValuesData = ospray::cpp::Data(opacityValues.size(),
+                                             OSP_FLOAT,
+                                             opacityValues.data());
+  m_tf.set("opacities", opacityValuesData);
+  PRINT(fcn.dataValueMin);
+  PRINT(fcn.dataValueMax);
+  m_tf.set("valueRange", vec2f(fcn.dataValueMin, fcn.dataValueMax));
+
+  // Commit transfer function
+  m_tf.commit();
+}
 void VolumeSceneParser::createDefaultTransferFunction()
 {
   // Add colors

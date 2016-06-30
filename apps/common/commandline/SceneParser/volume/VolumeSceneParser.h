@@ -41,6 +41,7 @@ private:
   // Helper functions //
 
   void importObjectsFromFile(const std::string &filename);
+  void importTransferFunction(const std::string &filename);
   void createDefaultTransferFunction();
 
   // Data //
