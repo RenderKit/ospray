@@ -384,6 +384,11 @@ namespace ospray {
 
       TiledLoadBalancer::instance = new mpi::staticLoadBalancer::Master;
     }
+    MPIDevice::~MPIDevice() {
+      cmd.newCommand(CMD_FINALIZE);
+      cmd.flush();
+      async::shutdown();
+    }
 
 
     OSPFrameBuffer 

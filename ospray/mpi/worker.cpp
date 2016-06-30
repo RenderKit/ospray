@@ -79,7 +79,7 @@ namespace ospray {
     */
     void runWorker()
     {
-      mpi::MPIDevice *device = (mpi::MPIDevice *)ospray::api::Device::current;
+      Ref<mpi::MPIDevice> device = ospray::api::Device::current.dynamicCast<mpi::MPIDevice>();
 
       // initialize embree. (we need to do this here rather than in
       // ospray::init() because in mpi-mode the latter is also called
@@ -781,6 +781,12 @@ namespace ospray {
           NOTIMPLEMENTED;
         } break;
 
+          // ==================================================================
+        case ospray::CMD_FINALIZE: {
+          // ==================================================================
+          async::shutdown();
+          std::exit(0);
+        } break;
           // ==================================================================
         default:
           // ==================================================================

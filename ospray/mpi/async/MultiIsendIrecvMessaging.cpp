@@ -14,6 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <chrono>
+#include <atomic>
+#include <thread>
 #include "MultiIsendIrecvMessaging.h"
 
 namespace ospray {
@@ -34,7 +37,14 @@ namespace ospray {
       {
         Group *g = this->group;
         while (1) {
-          Action *action = g->sendQueue.get();
+          Action *action = nullptr;
+          size_t numActions = 0;
+          while (numActions == 0){
+            numActions = g->sendQueue.getSomeFor(&action,1,std::chrono::milliseconds(1));
+            if (g->shouldExit.load()){
+              return;
+            }
+          }
           // note we're not using any window here; we just pull them
           // in order. this is OK because they key is to have mulitple
           // sends going in parallel - which we do because each
@@ -54,7 +64,14 @@ namespace ospray {
         
         while (1) {
           MPI_Status status;
-          MPI_CALL(Probe(MPI_ANY_SOURCE,g->tag,g->comm,&status));
+          int msgAvail = 0;
+          while (!msgAvail) {
+            MPI_CALL(Iprobe(MPI_ANY_SOURCE,g->tag,g->comm,&msgAvail,&status));
+            if (g->shouldExit.load()){
+              return;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+          }
           Action *action = new Action;
           action->addr = Address(g,status.MPI_SOURCE);
 
@@ -71,7 +88,14 @@ namespace ospray {
       {
         Group *g = (Group *)this->group;
         while (1) {
-          Action *action = g->recvQueue.get();
+          Action *action = nullptr;
+          size_t numActions = 0;
+          while (numActions == 0){
+            numActions = g->recvQueue.getSomeFor(&action,1,std::chrono::milliseconds(1));
+            if (g->shouldExit.load()){
+              return;
+            }
+          }
           MPI_CALL(Wait(&action->request,MPI_STATUS_IGNORE));
           g->consumer->process(action->addr,action->data,action->size);
           delete action;
@@ -80,7 +104,11 @@ namespace ospray {
 
       void MultiIsendIrecvImpl::Group::shutdown()
       {
-        std::cout << "shutdown() not implemented for this messaging ..." << std::endl;
+        std::cout << "#osp:mpi:MultiIsendIrecvImpl:Group shutting down" << std::endl;
+        shouldExit.store(true);
+        sendThread.join();
+        recvThread.join();
+        procThread.join();
       }
 
       void MultiIsendIrecvImpl::init()
