@@ -132,6 +132,9 @@ namespace ospray {
             if (g->shouldExit.load()){
               return;
             }
+            if (msgAvail){
+              break;
+            }
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
           }
           Action *action = new Action;
