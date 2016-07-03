@@ -36,7 +36,7 @@ namespace ospray {
   {
     PING; PRINT(_type);
 
-    char *type = (char*)alloca(strlen(_type)+1);
+    char *type = STACK_BUFFER(char, strlen(_type)+1);
     strcpy(type,_type);
     char *atSign = strstr(type,"@");
     char *libName = nullptr;

@@ -25,6 +25,7 @@
 class OSPRAY_COMMANDLINE_INTERFACE CameraParser : public CommandLineParser
 {
 public:
+  virtual ~CameraParser() = default;
   virtual ospray::cpp::Camera camera() = 0;
 };
 

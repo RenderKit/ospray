@@ -75,6 +75,8 @@ namespace ospray {
     CMD_API_MODE,
     CMD_SAMPLE_VOLUME,
 
+    CMD_FINALIZE,
+
     CMD_USER
   } CommandTag;
 

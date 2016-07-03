@@ -832,7 +832,7 @@ namespace ospray {
       case 27 /*ESC*/:
       case 'q':
       case 'Q':
-        _exit(0);
+        std::exit(0);
       }
     }
 

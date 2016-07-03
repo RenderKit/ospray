@@ -25,7 +25,7 @@ namespace ospray {
     using std::cout;
     using std::endl;
 
-    void runWorker(int *_ac, const char **_av);
+    void runWorker();
 
     void workerMain(int ac, const char **av)
     {
@@ -41,42 +41,44 @@ namespace ospray {
       mpi::init(&ac,av);
       worker.comm = world.comm;
       worker.makeIntraComm();
-      // worker.makeIntercomm();
 
       if (ac == 3 && !strcmp(av[1],"--osp:connect")) {
-        // if (worker.rank == 0) {
         char *appPortName = strdup(av[2]);
         // de-fix port name - 'real' port name has '$'s, not '%'s
         for (char *s = appPortName; *s; ++s)
           if (*s == '%') *s = '$';
         cout << "#w: trying to connect to port " << appPortName << endl;
-        rc = MPI_Comm_connect(appPortName,MPI_INFO_NULL,0,worker.comm,&app.comm);
+        rc = MPI_Comm_connect(appPortName,MPI_INFO_NULL,0,
+                              worker.comm,&app.comm);
         Assert(rc == MPI_SUCCESS);
         cout << "#w: ospray started with " << worker.size << " workers, "
              << "#w: and connected to app at  " << appPortName << endl;
-        // }
         app.makeInterComm();
-        // app.makeIntracomm();
       } else {
         char servicePortName[MPI_MAX_PORT_NAME];
         if (world.rank == 0) {
           rc = MPI_Open_port(MPI_INFO_NULL, servicePortName);
-          cout << "#osp:ospray_mpi_worker opened port: " << servicePortName << endl;
-          for (char *s = servicePortName;*s;s++)
+          cout << "#osp:ospray_mpi_worker opened port: " << servicePortName
+               << endl;
+          for (char *s = servicePortName; *s ; s++)
             if (*s == '$') *s = '%';
+
           Assert(rc == MPI_SUCCESS);
-          cout << "------------------------------------------------------" << endl;
-          cout << "ospray service started with " << worker.size << " workers" << endl;
+          cout << "------------------------------------------------------"
+               << endl;
+          cout << "ospray service started with " << worker.size
+               << " workers" << endl;
           cout << "OSPRAY_SERVICE_PORT:" << servicePortName << endl;
         }
-        cout << "#osp:ospray_mpi_worker trying to accept from '" << servicePortName << "'" << endl;
-        rc = MPI_Comm_accept(servicePortName,MPI_INFO_NULL,0,MPI_COMM_WORLD,&app.comm);
+        cout << "#osp:ospray_mpi_worker trying to accept from '"
+             << servicePortName << "'" << endl;
+        rc = MPI_Comm_accept(servicePortName,MPI_INFO_NULL,
+                             0,MPI_COMM_WORLD,&app.comm);
         Assert(rc == MPI_SUCCESS);
         app.makeInterComm();
-        // app.makeIntracomm();
       }
       MPI_Barrier(world.comm);
-      runWorker(&ac,av); // this fct will not return
+      runWorker(); // this fct will not return
     }
 
   } // ::ospray::api

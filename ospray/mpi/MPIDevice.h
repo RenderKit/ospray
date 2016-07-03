@@ -37,6 +37,7 @@ namespace ospray {
       /*! constructor */
       MPIDevice(// AppMode appMode, OSPMode ospMode,
                 int *_ac=NULL, const char **_av=NULL);
+      virtual ~MPIDevice();
 
       /*! create a new frame buffer */
       OSPFrameBuffer

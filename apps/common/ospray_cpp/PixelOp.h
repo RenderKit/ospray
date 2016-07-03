@@ -25,6 +25,7 @@ class PixelOp : public ManagedObject_T<OSPPixelOp>
 {
 public:
 
+  PixelOp() = default;
   PixelOp(const std::string &type);
   PixelOp(const PixelOp &copy);
   PixelOp(OSPPixelOp existing);

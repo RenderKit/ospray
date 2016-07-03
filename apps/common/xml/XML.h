@@ -16,11 +16,6 @@
 
 #pragma once
 
-// // ospray
-// #include "ospray/common/OSPCommon.h"
-// // embree
-// #include "common/sys/filename.h"
-
 // ospcomon
 #include "common/common.h"
 #include "common/vec.h"
@@ -74,6 +69,7 @@ namespace ospray {
       }
 
       /*! find properly with given name, and return as long ('l')
+<<<<<<< HEAD
         int. return undefined if prop does not exist */
       inline size_t getPropl(const std::string &name, const size_t defaultValue=0) const
       {
@@ -93,6 +89,21 @@ namespace ospray {
           return defaultValue;
         else 
           return atof(val.c_str()); 
+=======
+        int. return defaultValue if prop does not exist */
+      inline size_t getPropl(const std::string &name, const size_t defaultValue=0) const
+      { 
+        const std::string prop = getProp(name);
+        return prop.empty() ? defaultValue : atol(prop.c_str()); 
+      }
+
+      /*! find properly with given name, and return as float. return
+          defaultValue if prop does not exist */
+      inline float getPropf(const std::string &name, const float defaultValue=0) const
+      { 
+        const std::string prop = getProp(name);
+        return prop.empty() ? defaultValue : atof(prop.c_str()); 
+>>>>>>> 96b286863ffdcd7faad33946b5b23cd6e5a870c3
       }
       
       /*! name of the xml node (i.e., the thing that's in

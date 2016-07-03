@@ -21,7 +21,6 @@
 class OSPRAY_COMMANDLINE_INTERFACE CommandLineParser
 {
 public:
-  virtual ~CommandLineParser() = default;
-
+  virtual ~CommandLineParser() {}
   virtual bool parse(int ac, const char **&av) = 0;
 };

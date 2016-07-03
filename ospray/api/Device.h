@@ -27,9 +27,9 @@ namespace ospray {
   namespace api {
 
     /*! abstract base class of all 'devices' that implement the ospray API */
-    struct Device {
+    struct Device : public RefCount {
       /*! singleton that points to currently active device */
-      static Device *current;
+      static Ref<Device> current;
 
       Device();
 
@@ -200,7 +200,6 @@ namespace ospray {
       {
         throw std::runtime_error("sampleVolume() not implemented for this device");
       }
-
     };
   } // ::ospray::api
 } // ::ospray

@@ -25,6 +25,7 @@
 class OSPRAY_COMMANDLINE_INTERFACE RendererParser : public CommandLineParser
 {
 public:
+  virtual ~RendererParser() = default;
   virtual ospray::cpp::Renderer renderer() = 0;
 };
 
@@ -41,6 +42,7 @@ protected:
   ospray::cpp::Renderer m_renderer;
 
   int m_spp{1};
+  int maxDepth{5};
 
 private:
 

@@ -17,8 +17,10 @@
 #include <limits>
 // ospray
 #include "ospray/volume/DataDistributedBlockedVolume.h"
+#include "ospray/volume/GhostBlockBrickedVolume.h"
 #include "ospray/common/Core.h"
 #include "ospray/transferFunction/TransferFunction.h"
+#include "ospray/volume/GhostBlockBrickedVolume.h"
 #if EXP_DATA_PARALLEL
 #include "ospray/mpi/MPICommon.h"
 #endif
@@ -118,23 +120,38 @@ namespace ospray {
     // data.
     if (ispcEquivalent == NULL) createEquivalentISPC();
 
+    // The block domains are in terms of the scaled regions so we must check
+    // if the data is for the block in the scaled volume
+    vec3i finalRegionCoords(vec3f(regionCoords) * scaleFactor);
+    vec3i finalRegionSize(vec3f(regionSize) * scaleFactor);
+    if (scaleFactor != vec3f(-1.f)) {
+      finalRegionCoords = vec3i(vec3f(regionCoords) * scaleFactor);
+      finalRegionSize = vec3i(vec3f(regionSize) * scaleFactor);
+    } else {
+      finalRegionCoords = regionCoords;
+      finalRegionSize = regionSize;
+    }
+
     for (int i=0;i<numDDBlocks;i++) {
       // that block isn't mine, I shouldn't care ...
       if (!ddBlock[i].isMine) continue;
       
       // first, do some culling to make sure we only do setrgion
       // calls on blocks that actually map to this block
-      if (ddBlock[i].domain.lower.x >= regionCoords.x+regionSize.x) continue;
-      if (ddBlock[i].domain.lower.y >= regionCoords.y+regionSize.y) continue;
-      if (ddBlock[i].domain.lower.z >= regionCoords.z+regionSize.z) continue;
+      if (ddBlock[i].domain.lower.x >= finalRegionCoords.x+finalRegionSize.x) continue;
+      if (ddBlock[i].domain.lower.y >= finalRegionCoords.y+finalRegionSize.y) continue;
+      if (ddBlock[i].domain.lower.z >= finalRegionCoords.z+finalRegionSize.z) continue;
       
-      if (ddBlock[i].domain.upper.x+regionSize.x < regionCoords.x) continue;
-      if (ddBlock[i].domain.upper.y+regionSize.y < regionCoords.y) continue;
-      if (ddBlock[i].domain.upper.z+regionSize.z < regionCoords.z) continue;
+      if (ddBlock[i].domain.upper.x+finalRegionSize.x < finalRegionCoords.x) continue;
+      if (ddBlock[i].domain.upper.y+finalRegionSize.y < finalRegionCoords.y) continue;
+      if (ddBlock[i].domain.upper.z+finalRegionSize.z < finalRegionCoords.z) continue;
+
+      vec3i setRegionCoords = finalRegionCoords - ddBlock[i].domain.lower;
+      if (scaleFactor != vec3f(-1.f)) {
+        setRegionCoords = vec3i(vec3f(setRegionCoords) / scaleFactor);
+      }
       
-      ddBlock[i].cppVolume->setRegion(source,
-                                      regionCoords-ddBlock[i].domain.lower,
-                                      regionSize);
+      ddBlock[i].cppVolume->setRegion(source, setRegionCoords, regionSize);
 
       ddBlock[i].ispcVolume = ddBlock[i].cppVolume->getIE();
 
@@ -190,6 +207,8 @@ namespace ospray {
     // Set the grid spacing, default to (1,1,1).
     this->gridSpacing = getParam3f("gridSpacing", vec3f(1.f));
 
+    this->scaleFactor = getParam3f("scaleFactor", vec3f(-1.f));
+
     numDDBlocks = ospcommon::reduce_mul(ddBlocks);
     ddBlock     = new DDBlock[numDDBlocks];
 
@@ -242,12 +261,19 @@ namespace ospray {
           
           
           if (block->isMine) {
+#ifdef EXP_NEW_BB_VOLUME_KERNELS
+            Ref<Volume> volume = new GhostBlockBrickedVolume;
+#else
             Ref<Volume> volume = new BlockBrickedVolume;
+#endif
             vec3i blockDims = block->domain.upper - block->domain.lower;
             volume->findParam("dimensions",1)->set(blockDims);
             volume->findParam("gridOrigin",1)->set(block->bounds.lower);
             volume->findParam("gridSpacing",1)->set(gridSpacing);
             volume->findParam("voxelType",1)->set(voxelType.c_str());
+            if (scaleFactor != vec3f(-1.f)) {
+              volume->findParam("scaleFactor",1)->set(scaleFactor);
+            }
             
             printf("rank %li owns block %i,%i,%i (ID %i), dims %i %i %i\n",
                    (size_t)core::getWorkerRank(),ix,iy,iz,

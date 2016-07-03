@@ -133,6 +133,7 @@ SET(OSPRAY_SOURCES
   fb/LocalFB.ispc
   fb/LocalFB.cpp
   fb/PixelOp.cpp
+  fb/Tile.h
 
   camera/Camera.cpp
   camera/PerspectiveCamera.ispc
@@ -269,6 +270,7 @@ IF (OSPRAY_MPI)
 
     mpi/DistributedFrameBuffer.cpp
     mpi/DistributedFrameBuffer.ispc
+    mpi/DistributedFrameBuffer_TileTypes.cpp
 
     fb/DisplayWall.cpp
     )

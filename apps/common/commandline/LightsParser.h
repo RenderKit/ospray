@@ -24,6 +24,8 @@
 
 class OSPRAY_COMMANDLINE_INTERFACE LightsParser : public CommandLineParser
 {
+public:
+  virtual ~LightsParser() = default;
 };
 
 class OSPRAY_COMMANDLINE_INTERFACE DefaultLightsParser : public LightsParser
@@ -39,7 +41,6 @@ protected:
   /*! when using the OBJ renderer, we create a automatic dirlight with this
    * direction; use ''--sun-dir x y z' to change */
   ospcommon::vec3f m_defaultDirLight_direction;
-
 private:
 
   void finalize();

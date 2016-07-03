@@ -28,7 +28,6 @@
   following tools don't have to care about this.*/
 #define BOING_HACK 1
 
-
 namespace ospray {
   namespace miniSG {
     using std::cout;

@@ -70,7 +70,7 @@ std::string getPidString() {
   return s;
 }
 
-#define ASSERT_DEVICE() if (ospray::api::Device::current == NULL)       \
+#define ASSERT_DEVICE() if (!ospray::api::Device::current)              \
     throw std::runtime_error("OSPRay not yet initialized "              \
                              "(most likely this means you tried to "    \
                              "call an ospray API function before "      \
@@ -172,7 +172,7 @@ extern "C" void ospInit(int *_ac, const char **_av)
   }
 
   // no device created on cmd line, yet, so default to localdevice
-  if (ospray::api::Device::current == NULL) {
+  if (!ospray::api::Device::current) {
     ospray::api::Device::current = new ospray::api::LocalDevice(_ac,_av);
   }
 }
@@ -315,7 +315,7 @@ extern "C" OSPPixelOp ospNewPixelOp(const char *_type)
   Assert2(_type,"invalid render type identifier in ospNewPixelOp");
   LOG("ospNewPixelOp(" << _type << ")");
   int L = strlen(_type);
-  char *type = (char *)alloca(L+1);
+  char *type = STACK_BUFFER(char, L+1);
   for (int i=0;i<=L;i++) {
     char c = _type[i];
     if (c == '-' || c == ':')
@@ -701,8 +701,9 @@ extern "C" void ospPick(OSPPickResult *result,
   MPI_Init(), NOT "in addition to" */
 extern "C" void ospdMpiInit(int *ac, char ***av, OSPDRenderMode mode)
 {
-  if (ospray::api::Device::current != NULL)
+  if (!ospray::api::Device::current) {
     throw std::runtime_error("#osp:mpi: OSPRay already initialized!?");
+  }
   ospray::mpi::initDistributedAPI(ac,av,mode);
 }
 

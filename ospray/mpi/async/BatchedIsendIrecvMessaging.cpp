@@ -14,6 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <chrono>
+#include <atomic>
+#include <thread>
 #include "BatchedIsendIrecvMessaging.h"
 
 namespace ospray {
@@ -27,7 +30,7 @@ namespace ospray {
       BatchedIsendIrecvImpl::Group::Group(const std::string &name, MPI_Comm comm, 
                                        Consumer *consumer, int32 tag)
         : async::Group(comm,consumer,tag),
-          sendThread(this), recvThread(this), procThread(this)
+          sendThread(this), recvThread(this), procThread(this), shouldExit(false)
       {
         recvThread.start();
         sendThread.start();
@@ -41,13 +44,22 @@ namespace ospray {
         MPI_Request request[SEND_WINDOW_SIZE];
         while (1) {
           // usleep(80);
-          size_t numActions = g->sendQueue.getSome(actions,SEND_WINDOW_SIZE);
+          size_t numActions = 0;
+          while (numActions == 0){
+            numActions = g->sendQueue.getSomeFor(actions,SEND_WINDOW_SIZE,
+                std::chrono::milliseconds(1));
+            if (g->shouldExit.load()){
+              return;
+            }
+          }
           for (int i=0;i<numActions;i++) {
             Action *action = actions[i];
             MPI_CALL(Isend(action->data,action->size,MPI_BYTE,
                            action->addr.rank,g->tag,g->comm,&request[i]));
           }
-          
+
+          // TODO: Is it ok to wait even if we're exiting? Maybe we'd just get send
+          // failed statuses back?
           MPI_CALL(Waitall(numActions,request,MPI_STATUSES_IGNORE));
           
           for (int i=0;i<numActions;i++) {
@@ -74,7 +86,17 @@ namespace ospray {
           // wait for first message
           {
             // usleep(280);
-            MPI_CALL(Probe(MPI_ANY_SOURCE,g->tag,g->comm,&status));
+            int msgAvail = 0;
+            while (!msgAvail) {
+              MPI_CALL(Iprobe(MPI_ANY_SOURCE,g->tag,g->comm,&msgAvail,&status));
+              if (g->shouldExit.load()){
+                return;
+              }
+              if (msgAvail){
+                break;
+              }
+              std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
             Action *action = new Action;
             action->addr = Address(g,status.MPI_SOURCE);
             MPI_CALL(Get_count(&status,MPI_BYTE,&action->size));
@@ -104,6 +126,8 @@ namespace ospray {
             actions[numRequests++] = action;
           }
 
+          // TODO: Is it ok to wait even if we're exiting? Maybe we'd just get send
+          // failed statuses back?
           // now, have certain number of messages available...
           MPI_CALL(Waitall(numRequests,request,MPI_STATUSES_IGNORE));
 
@@ -117,7 +141,14 @@ namespace ospray {
         Group *g = (Group *)this->group;
         while (1) {
           Action *actions[PROC_WINDOW_SIZE];
-          size_t numActions = g->recvQueue.getSome(actions,PROC_WINDOW_SIZE);
+          size_t numActions = 0;
+          while (numActions == 0){
+            numActions = g->recvQueue.getSomeFor(actions,PROC_WINDOW_SIZE,
+                std::chrono::milliseconds(1));
+            if (g->shouldExit.load()){
+              return;
+            }
+          }
           for (int i=0;i<numActions;i++) {
             Action *action = actions[i];
             g->consumer->process(action->addr,action->data,action->size);
@@ -128,8 +159,11 @@ namespace ospray {
 
       void BatchedIsendIrecvImpl::Group::shutdown()
       {
-        std::cout << "shutdown() not implemented for this messaging ..."
-                  << std::endl;
+        std::cout << "#osp:mpi:BatchIsendIrecvMessaging:Group shutting down" << std::endl;
+        shouldExit.store(true);
+        sendThread.join();
+        recvThread.join();
+        procThread.join();
       }
 
       void BatchedIsendIrecvImpl::init()

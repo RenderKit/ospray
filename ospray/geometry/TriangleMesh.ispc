@@ -243,17 +243,6 @@ void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
   mesh->geom_materialID = geom_materialID;
 }
 
-#ifdef OSPRAY_INTERSECTION_FILTER
-static void intersectionFilter(void* uniform ptr,   /*!< pointer to user data */
-                               varying Ray &ray  /*!< intersection to filter */)
-{
-  uniform Geometry *uniform geom = (uniform Geometry *uniform)ptr;
-  if (ray.intersectionFilter) {
-    ray.intersectionFilter(geom,(varying Ray &)ray);
-  }
-}
-#endif
-
 export void *uniform TriangleMesh_create(void *uniform cppEquivalent)
 {
   uniform TriangleMesh *uniform mesh = uniform new uniform TriangleMesh;
@@ -298,9 +287,4 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
                            (Material*uniform)material,
                            (Material*uniform*uniform)materialList,
                            prim_materialID);
-#ifdef OSPRAY_INTERSECTION_FILTER
- rtcSetUserData(model->embreeSceneHandle,geomID,mesh);
- rtcSetIntersectionFilterFunction(model->embreeSceneHandle,geomID,
-                                  (uniform RTCFilterFuncVarying)&intersectionFilter);
-#endif
 }

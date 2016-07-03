@@ -28,12 +28,22 @@ void PathTraceMaterial_selectNextMedium(const uniform PathTraceMaterial* uniform
                                         Medium& currentMedium)
 { /* do nothing by default */ }
 
+vec3f PathTraceMaterial_getAbsorption(
+  const uniform PathTraceMaterial* uniform self,
+  const DifferentialGeometry& dg, 
+  const float & distance)
+{
+  return make_vec3f(1.0f);
+}
+
 void PathTraceMaterial_Constructor(uniform PathTraceMaterial* uniform self,
                                    uniform PathTraceMaterial_GetBSDFFunc getBSDF,
                                    uniform PathTraceMaterial_GetTransparencyFunc getTransparency,
-                                   uniform PathTraceMaterial_SelectNextMediumFunc selectNextMedium)
+                                   uniform PathTraceMaterial_SelectNextMediumFunc selectNextMedium,
+                                   uniform PathTraceMaterial_GetAbsorptionFunc getAbsorption)
 {
   self->getBSDF = getBSDF;
   self->getTransparency = getTransparency ? getTransparency : PathTraceMaterial_getTransparency;
   self->selectNextMedium = selectNextMedium ? selectNextMedium : PathTraceMaterial_selectNextMedium;
+  self->getAbsorption = getAbsorption ? getAbsorption : PathTraceMaterial_getAbsorption;
 }

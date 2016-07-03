@@ -95,6 +95,7 @@ namespace ospray {
           SendThread sendThread;
           ProcThread procThread;
           RecvThread recvThread;
+          std::atomic<bool> shouldExit;
         };
 
         virtual void init();
