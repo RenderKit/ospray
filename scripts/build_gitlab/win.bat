@@ -21,8 +21,8 @@ md build
 cd build
 
 cmake -L ^
--G "%1" ^
--T "%2" ^
+-G "%~1" ^
+-T "%~2" ^
 -D OSPRAY_BUILD_ISA=ALL ^
 -D OSPRAY_BUILD_MIC_SUPPORT=OFF ^
 -D OSPRAY_USE_EXTERNAL_EMBREE=ON ^
