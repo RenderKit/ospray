@@ -71,9 +71,27 @@ build-osx-clang:
 build-windows-msvc:
   type: build
   script:
-    - call scripts\build_gitlab\win.bat
+    - call scripts\build_gitlab\win.bat "Visual Studio 12 2013 Win64" "v120"
   tags:
     - msvc
+    - build
+    - win7
+
+build-windows-msvc14:
+  type: build
+  script:
+    - call scripts\build_gitlab\win.bat "Visual Studio 14 2015 Win64" "v140"
+  tags:
+    - msvc14
+    - build
+    - win7
+
+build-windows-icc:
+  type: build
+  script:
+    - call scripts\build_gitlab\win.bat "Visual Studio 12 2013 Win64" "Intel C++ Compiler 16.0"
+  tags:
+    - icc
     - build
     - win7
 
