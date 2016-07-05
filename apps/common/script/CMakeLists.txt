@@ -25,7 +25,7 @@ target_link_libraries(${LIBRARY_NAME}
   ospray_common
   ospray
   ${CMAKE_THREAD_LIBS_INIT}
-  dl
+  ${CMAKE_DL_LIBS}
 )
 
 ospray_set_library_version(${LIBRARY_NAME})
