@@ -20,7 +20,7 @@
 
 namespace ospcommon {
 
-  /*! over over scalar type T and N dimensions */
+  /*! over scalar type T and N dimensions */
   template<typename T, int N, int ALIGN=0>
   struct box_t {
     typedef T scalar_t;
