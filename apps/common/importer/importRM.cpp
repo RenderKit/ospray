@@ -26,23 +26,15 @@
 #include <iostream>
 #include <stdio.h>
 #include <string.h>
-#ifdef __LINUX__
-# include <sched.h>
-#endif
 #include <stdint.h>
+#include <iostream>
+#include <thread>
 #include <atomic>
 #include <mutex>
 
 namespace ospray {
   namespace importer {
     struct RMLoaderThreads {
-    // TODO: RMLoaderThreads should use OSPRay's thread abstractions
-#ifdef _WIN32
-      RMLoaderThreads(Volume *, const std::string &, int)
-      {
-        exitOnCondition(true, "RM importer not yet supported on Windows");
-      }
-#else
       Volume *volume;
 
       std::mutex mutex;
@@ -50,7 +42,7 @@ namespace ospray {
       std::atomic<int> nextPinID;
       int numThreads;
       int timeStep;
-      pthread_t *thread;
+      std::vector<std::thread> threads;
       std::string inFilesDir;
       bool useGZip;
 
@@ -59,8 +51,7 @@ namespace ospray {
       };
 
       RMLoaderThreads(Volume *volume, const std::string &fileName, int numThreads=10) 
-        : volume(volume), nextBlockID(0), thread(NULL), nextPinID(0),
-        numThreads(numThreads)
+        : volume(volume), nextBlockID(0), nextPinID(0), numThreads(numThreads)
       {
         inFilesDir = fileName.substr(0, fileName.rfind('.'));
         std::cout << "Reading LLNL Richtmyer-Meshkov bob from " << inFilesDir
@@ -68,11 +59,8 @@ namespace ospray {
 
         useGZip = (getenv("OSPRAY_RM_NO_GZIP") == NULL);
 
-        const char *slash = rindex(fileName.c_str(),'/');
-        std::string base 
-          = slash != NULL
-          ? std::string(slash+1)
-          : fileName;
+        const size_t slash = fileName.rfind('/');
+        std::string base = slash != std::string::npos ? fileName.substr(slash + 1) : fileName;
 
         int rc = sscanf(base.c_str(),"bob%03d.bob",&timeStep);
         if (rc != 1)
@@ -81,13 +69,12 @@ namespace ospray {
         volume->voxelRange.x = +std::numeric_limits<float>::infinity();
         volume->voxelRange.y = -std::numeric_limits<float>::infinity();
 
-        thread = new pthread_t[numThreads];
-        for (int i=0;i<numThreads;i++)
-          pthread_create(thread+i,NULL,(void*(*)(void*))threadFunc,this);
-
-        void *result = NULL;
-        for (int i=0;i<numThreads;i++){
-          pthread_join(thread[i],&result);
+        threads.reserve(numThreads);
+        for (int i = 0; i < numThreads; ++i) {
+          threads.push_back(std::thread([&](){ run(); }));
+        }
+        for (size_t i = 0; i < threads.size(); ++i) {
+          threads[i].join();
         }
       };
 
@@ -95,12 +82,16 @@ namespace ospray {
         char fileName[10000];
         FILE *file;
         if (useGZip) {
+#ifndef _WIN32
           sprintf(fileName,"%s/d_%04d_%04li.gz",
               fileNameBase.c_str(),timeStep,blockID);
           const std::string cmd = "gunzip -c "+std::string(fileName);
           file = popen(cmd.c_str(),"r");
           if (!file)
             throw std::runtime_error("could not open file in popen command '"+cmd+"'");
+#else
+          throw std::runtime_error("gzipped RM bob's aren't supported on Windows!");
+#endif
         } else {
           sprintf(fileName,"%s/d_%04d_%04li",
               fileNameBase.c_str(),timeStep,blockID);
@@ -117,10 +108,15 @@ namespace ospray {
           throw std::runtime_error("could not read enough data from "+std::string(fileName));
         }
 
-        if (useGZip) 
+        if (useGZip) {
+#ifndef _WIN32
           pclose(file);
-        else
+#else
+          throw std::runtime_error("gzipped RM bob's aren't supported on Windows!");
+#endif
+        } else {
           fclose(file);
+        }
       }
 
       void run() 
@@ -138,11 +134,7 @@ namespace ospray {
           int K = (blockID / 64);
 
 
-          int cpu = -1;
-#ifdef __LINUX__
-          cpu = sched_getcpu();
-#endif
-          printf("[b%i:%i,%i,%i,(%i)]",blockID,I,J,K,cpu);
+          printf("[b%i:%i,%i,%i,(%i)]",blockID,I,J,K,threadID);
           loadBlock(*block,inFilesDir,blockID);
 
           ospcommon::vec2f blockRange(block->voxel[0]);
@@ -159,11 +151,6 @@ namespace ospray {
         }
         delete block;
       }
-
-      static void *threadFunc(void *arg)
-      { ((RMLoaderThreads *)arg)->run(); return NULL; }
-      ~RMLoaderThreads() { delete[] thread; };
-#endif
     };
 
     // Just import the RM file into some larger scene, just loads the volume
