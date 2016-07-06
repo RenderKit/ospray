@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <time.h>
 #include <chrono>
 #include <atomic>
 #include <thread>
@@ -80,6 +81,7 @@ namespace ospray {
         Action *actions[RECV_WINDOW_SIZE];
         MPI_Status status;
         int numRequests = 0;
+        const timespec sleep_time = timespec{0, 1000000};
         
         while (1) {
           numRequests = 0;
@@ -95,7 +97,9 @@ namespace ospray {
               if (msgAvail){
                 break;
               }
-              std::this_thread::sleep_for(std::chrono::milliseconds(1));
+              // TODO: Can we do a CMake feature test for this_thread::sleep_for and
+              // conditionally use nanosleep?
+              nanosleep(&sleep_time, NULL);
             }
             Action *action = new Action;
             action->addr = Address(g,status.MPI_SOURCE);
