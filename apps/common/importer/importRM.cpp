@@ -36,6 +36,13 @@
 namespace ospray {
   namespace importer {
     struct RMLoaderThreads {
+    // TODO: RMLoaderThreads should use OSPRay's thread abstractions
+#ifdef _WIN32
+      RMLoaderThreads(Volume *, const std::string &, int)
+      {
+        exitOnCondition(true, "RM importer not yet supported on Windows");
+      }
+#else
       Volume *volume;
 
       std::mutex mutex;
@@ -156,6 +163,7 @@ namespace ospray {
       static void *threadFunc(void *arg)
       { ((RMLoaderThreads *)arg)->run(); return NULL; }
       ~RMLoaderThreads() { delete[] thread; };
+#endif
     };
 
     // Just import the RM file into some larger scene, just loads the volume
