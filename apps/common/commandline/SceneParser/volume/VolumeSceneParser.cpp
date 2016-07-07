@@ -75,7 +75,7 @@ bool VolumeSceneParser::parse(int ac, const char **&av)
     if (!loadedTransferFunction) {
       createDefaultTransferFunction();
     }
-    importObjectsFromFile(scene);
+    importObjectsFromFile(scene, loadedTransferFunction);
   }
 
   return loadedScene;
@@ -91,7 +91,8 @@ ospcommon::box3f VolumeSceneParser::bbox() const
   return m_bbox;
 }
 
-void VolumeSceneParser::importObjectsFromFile(const std::string &filename)
+void VolumeSceneParser::importObjectsFromFile(const std::string &filename,
+                                              bool loadedTransferFunction)
 {
   auto &model = m_model;
 
@@ -119,9 +120,12 @@ void VolumeSceneParser::importObjectsFromFile(const std::string &filename)
     model.addVolume(volume);
 
     // Set the minimum and maximum values in the domain for both color and
-    // opacity components of the transfer function.
-    m_tf.set("valueRange", vol->voxelRange.x, vol->voxelRange.y);
-    m_tf.commit();
+    // opacity components of the transfer function if we didn't load a transfer
+    // function for a file (in that case this is already set)
+    if (!loadedTransferFunction) {
+      m_tf.set("valueRange", vol->voxelRange.x, vol->voxelRange.y);
+      m_tf.commit();
+    }
 
     //m_bbox.extend(vol->bounds);
     m_bbox = vol->bounds;
@@ -157,29 +161,33 @@ void VolumeSceneParser::importTransferFunction(const std::string &filename)
   // instead of what's done in createDefault
   std::vector<float> opacityValues;
   const int N_OPACITIES = 256;
+  size_t lo = 0;
+  size_t hi = 1;
   for (int i = 0; i < N_OPACITIES; ++i) {
     const float x = float(i) / float(N_OPACITIES - 1);
-
     float opacity = 0;
-    if (x <= 0) {
+    if (i == 0) {
       opacity = fcn.opacityValues[0].y;
-    } else if (x >= 1) {
+    } else if (i == N_OPACITIES - 1) {
       opacity = fcn.opacityValues.back().y;
     } else {
-      // TODO: Can optimize this into one loop and track the current lo/hi
-      for (size_t j = 0; j < fcn.opacityValues.size() - 1; ++j) {
-        if (x <= fcn.opacityValues[j + 1].x) {
-          const float delta = x - fcn.opacityValues[j].x;
-          const float interval = fcn.opacityValues[j + 1].x - fcn.opacityValues[j].x;
-          if (delta == 0 || interval == 0) {
-            opacity = fcn.opacityValues[j].y;
-            break;
-          } else {
-            opacity = fcn.opacityValues[j].y + delta / interval
-              * (fcn.opacityValues[j + 1].y - fcn.opacityValues[j].y);
+      // If we're over this val, find the next segment
+      if (x > fcn.opacityValues[lo].x) {
+        for (size_t j = lo; j < fcn.opacityValues.size() - 1; ++j) {
+          if (x <= fcn.opacityValues[j + 1].x) {
+            lo = j;
+            hi = j + 1;
             break;
           }
         }
+      }
+      const float delta = x - fcn.opacityValues[lo].x;
+      const float interval = fcn.opacityValues[hi].x - fcn.opacityValues[lo].x;
+      if (delta == 0 || interval == 0) {
+        opacity = fcn.opacityValues[lo].y;
+      } else {
+        opacity = fcn.opacityValues[lo].y + delta / interval
+          * (fcn.opacityValues[hi].y - fcn.opacityValues[lo].y);
       }
     }
     opacityValues.push_back(m_tf_scale * opacity);

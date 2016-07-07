@@ -182,9 +182,6 @@ void TransferFunctionEditor::setDataValueRange(ospcommon::vec2f dataValueRange, 
   dataValueMinSpinBox.setValue(dataValueRange.x / powf(10.f, scaleExponent));
   dataValueMaxSpinBox.setValue(dataValueRange.y / powf(10.f, scaleExponent));
   dataValueScaleSpinBox.setValue(scaleExponent);
-  PRINT(dataValueMinSpinBox.value());
-  PRINT(dataValueMaxSpinBox.value());
-  PRINT(dataValueScaleSpinBox.value());
 }
 
 void TransferFunctionEditor::updateOpacityValues()
@@ -195,7 +192,6 @@ void TransferFunctionEditor::updateOpacityValues()
   // Opacity scaling factor (normalized in [0, 1]).
   const float opacityScalingNormalized = float(opacityScalingSlider.value() - opacityScalingSlider.minimum())
     / float(opacityScalingSlider.maximum() - opacityScalingSlider.minimum());
-  PRINT(opacityScalingNormalized);
 
   // Scale opacity values.
   for (unsigned int i=0; i < opacityValues.size(); i++)
@@ -261,7 +257,6 @@ void TransferFunctionEditor::updateDataValueRange()
 
   // Set the minimum and maximum values in the domain for both color and opacity components of the transfer function.
   ospcommon::vec2f range(dataValueScale * float(dataValueMinSpinBox.value()), dataValueScale * float(dataValueMaxSpinBox.value()));
-  PRINT(range);
   ospSet2f(transferFunction, "valueRange", range.x, range.y);
 
   // Commit and emit signal.

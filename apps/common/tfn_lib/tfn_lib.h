@@ -20,7 +20,6 @@
 #include "common/vec.h"
 #include "common/FileName.h"
 
-// Piggy-back off the ospray_importer_EXPORTS define
 #ifdef _WIN32
   #ifdef ospray_tfn_EXPORTS
     #define OSPTFNLIB_INTERFACE __declspec(dllexport)
