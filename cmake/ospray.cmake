@@ -75,6 +75,11 @@ MACRO(CONFIGURE_OSPRAY)
     SET(OSPRAY_RELEASE_BUILD        ON )
   ENDIF()
 
+  IF (WIN32)
+    # avoid problematic min/max defines of windows.h
+    ADD_DEFINITIONS(-DNOMINMAX)
+  ENDIF()
+
   IF (OSPRAY_TARGET STREQUAL "mic")
     SET(OSPRAY_EXE_SUFFIX ".mic")
     SET(OSPRAY_LIB_SUFFIX "_mic")

@@ -32,8 +32,12 @@ namespace ospray {
       FileName fn = fileName;
       bool gzipped = fn.ext() == "gz";
       if (gzipped) {
-        std::string cmd = "/usr/bin/gunzip -c "+filename;
+#ifdef _WIN32
+        exitOnCondition(true, "Transparent handling of zipped files not yet supported on Windows");
+#else
+        std::string cmd = "/usr/bin/gunzip -c " + filename;
         file = popen(cmd.c_str(),"r");
+#endif
       } else {
         file = fopen(filename.c_str(),"rb");
       }
@@ -328,9 +332,11 @@ namespace ospray {
       volume->bounds.extend(volume->gridOrigin);
       volume->bounds.extend(volume->gridOrigin+ vec3f(volume->dimensions) * volume->gridSpacing);
       
+#ifndef _WIN32
       if (gzipped)
         pclose(file);
       else
+#endif
         fclose(file);
       // Return the volume.
       

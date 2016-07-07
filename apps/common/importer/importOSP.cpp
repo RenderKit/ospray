@@ -22,7 +22,6 @@
 #include "TinyXML2.h"
 // std
 #include <stdexcept>
-#include <libgen.h>
 
 namespace ospray {
   namespace importer {
@@ -207,21 +206,13 @@ namespace ospray {
       
       // Load the contents of the volume file if specified.
       if (volumeFilename != nullptr) {
-        
-        // Some implementations of 'dirname()' are destructive.
-        char *duplicateFilename = strdup(orgFileName.str().c_str());
-        
         // The volume file path is absolute.
         if (volumeFilename[0] == '/') 
           importVolume(volumeFilename, volume);
         else {
-          importVolume((std::string(dirname(duplicateFilename))
+          importVolume((orgFileName.path().str()
                         + "/" + volumeFilename).c_str(), volume);
         }
-        
-        // Free the temporary character array.
-        if (duplicateFilename != nullptr)
-          free(duplicateFilename);
       }
       
       group->volume.push_back(volume);

@@ -42,7 +42,7 @@ namespace ospray {
     typedef AffineSpace3f affine3f;
     typedef LinearSpace3f linear3f;
 
-#define THROW_SG_ERROR(where,err) \
+#define THROW_SG_ERROR(err) \
     throw std::runtime_error("in "+std::string(__PRETTY_FUNCTION__)+":"+std::string(err));
 
     typedef unsigned int uint;

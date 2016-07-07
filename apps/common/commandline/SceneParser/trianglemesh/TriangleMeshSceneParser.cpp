@@ -214,12 +214,11 @@ void TriangleMeshSceneParser::finalize()
 
   if (m_msgModel->instance.size() > m_maxObjectsToConsider) {
     m_msgModel->instance.resize(m_maxObjectsToConsider);
-  }
 
-  if (doesInstancing) {
-    m_msgModel->mesh.resize(m_maxObjectsToConsider);
+    if (!doesInstancing) {
+      m_msgModel->mesh.resize(m_maxObjectsToConsider);
+    }
   }
-
 
   std::vector<OSPModel> instanceModels;
 

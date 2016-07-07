@@ -26,9 +26,7 @@ IF(NOT THIS_IS_MIC)
 
   # common utilities
   ADD_SUBDIRECTORY(common/commandline)
-  IF(NOT WIN32)
-    ADD_SUBDIRECTORY(common/importer)
-  ENDIF()
+  ADD_SUBDIRECTORY(common/importer)
   ADD_SUBDIRECTORY(common/miniSG)
   ADD_SUBDIRECTORY(common/xml)
 
@@ -75,6 +73,7 @@ IF(NOT THIS_IS_MIC)
       ADD_SUBDIRECTORY(qtViewer)
     ENDIF()
   ENDIF()
+ ENDIF()
 
   # volume viewer application
   IF(NOT (APPLE AND (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")))
@@ -83,5 +82,4 @@ IF(NOT THIS_IS_MIC)
       ADD_SUBDIRECTORY(volumeViewer)
     ENDIF()
   ENDIF()
- ENDIF(NOT WIN32)
 ENDIF()

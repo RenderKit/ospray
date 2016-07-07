@@ -22,7 +22,6 @@
 #include "ospray/common/tasking/parallel_for.h"
 
 #ifdef _WIN32
-#  define NOMINMAX
 #  include <windows.h> // for Sleep
 #endif
 

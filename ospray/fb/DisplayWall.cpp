@@ -32,7 +32,7 @@ namespace ospray {
     const char *hostname = po->getParamString("hostname", "localhost");
     streamName = po->getParamString("streamName", "ospray");
 
-    std::cerr << "connecting to hostname " << hostname << " for stream name " << streamName << std::endl;
+    std::cerr << "connecting to host " << hostname << " for stream " << streamName << std::endl;
 
     // connect to DisplayCluster at given hostname.
     dcSocket = dcStreamConnect(hostname);

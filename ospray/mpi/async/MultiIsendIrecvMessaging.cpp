@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <time.h>
 #include <chrono>
 #include <atomic>
 #include <thread>
@@ -61,6 +62,7 @@ namespace ospray {
         // note this thread not only _probes_ for new receives, it
         // also immediately starts the receive operation using Irecv()
         Group *g = (Group *)this->group;
+        const timespec sleep_time = timespec{0, 150000};
         
         while (1) {
           MPI_Status status;
@@ -73,7 +75,9 @@ namespace ospray {
             if (msgAvail){
               break;
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            // TODO: Can we do a CMake feature test for this_thread::sleep_for and
+            // conditionally use nanosleep?
+            nanosleep(&sleep_time, NULL);
           }
           Action *action = new Action;
           action->addr = Address(g,status.MPI_SOURCE);

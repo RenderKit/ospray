@@ -297,6 +297,13 @@ namespace ospcommon {
   inline bool operator!=(const vec_t<T,4> &a, const vec_t<T,4> &b)
   { return !(a==b); }
 
+  /*
+   *  don't define '<' on vectors:
+   *  it's prone to bugs, because a definition of an ordering of vectors is a
+   *  bit arbitrary and depends on the context
+   *  e.g. in box::extend we certainly want the element-wise min/max and not
+   *  the std::min/std::max made applicable by operator<
+   *
   template<typename T> 
   inline bool operator<(const vec_t<T,2> &a, const vec_t<T,2> &b)
   { 
@@ -321,6 +328,7 @@ namespace ospcommon {
                       ((a.y==b.y) && ((a.z< b.z) ||
                                       ((a.z==b.z) && (a.w < b.w)))))); 
   }
+  */
 
   // 'anyLessThan' - return true if any component is less than the other vec's
   template<typename T> 
@@ -394,18 +402,18 @@ namespace ospcommon {
   // -------------------------------------------------------
   // binary functors
   // -------------------------------------------------------
-#define define_functor(f)						\
-  template<typename T>							\
-    inline vec_t<T,2> f(const vec_t<T,2> &a, const vec_t<T,2> &b)	\
-    { return vec_t<T,2>(f(a.x,b.x),f(a.y,b.y)); }			\
-  									\
-  template<typename T>							\
-    inline vec_t<T,3> f(const vec_t<T,3> &a, const vec_t<T,3> &b)	\
-    { return vec_t<T,3>(f(a.x,b.x),f(a.y,b.y),f(a.z,b.z)); }		\
-  									\
+#define define_functor(f)                                               \
   template<typename T>                                                  \
-    inline vec_t<T,4> f(const vec_t<T,4> &a, const vec_t<T,4> &b)	\
-    { return vec_t<T,4>(f(a.x,b.x),f(a.y,b.y),f(a.z,b.z),f(a.w,b.w)); }	\
+    inline vec_t<T,2> f(const vec_t<T,2> &a, const vec_t<T,2> &b)       \
+    { return vec_t<T,2>(f(a.x,b.x),f(a.y,b.y)); }                       \
+                                                                        \
+  template<typename T, int A>                                           \
+    inline vec_t<T,3,A> f(const vec_t<T,3,A> &a, const vec_t<T,3,A> &b) \
+    { return vec_t<T,3,A>(f(a.x,b.x),f(a.y,b.y),f(a.z,b.z)); }          \
+                                                                        \
+  template<typename T>                                                  \
+    inline vec_t<T,4> f(const vec_t<T,4> &a, const vec_t<T,4> &b)       \
+    { return vec_t<T,4>(f(a.x,b.x),f(a.y,b.y),f(a.z,b.z),f(a.w,b.w)); } \
   
   define_functor(min);
   define_functor(max);

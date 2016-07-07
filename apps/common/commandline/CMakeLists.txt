@@ -64,8 +64,6 @@ if(OSPRAY_COMMANDLINE_TACHYON_SUPPORT)
   add_definitions(-DOSPRAY_TACHYON_SUPPORT)
 endif()
 
-add_definitions(-Dospray_commandline_EXPORTS)
-
 set(SOURCE_FILES
   CommandLineExport.h
   CommandLineParser.h

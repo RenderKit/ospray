@@ -16,8 +16,6 @@
 
 set(LIBRARY_NAME ospray_xml)
 
-add_definitions(-Dospray_xml_EXPORTS)
-
 add_library(${LIBRARY_NAME} SHARED
   XML.cpp
 )

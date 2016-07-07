@@ -16,7 +16,7 @@
 
 set(LIBRARY_NAME ospray_minisg)
 
-set(USE_IMAGE_MAGICK OFF CACHE BOOL "Use ImageMagick for ModelViewer's Texture loaders.")
+option(USE_IMAGE_MAGICK "Use ImageMagick for ModelViewer's Texture loaders.")
 mark_as_advanced(USE_IMAGE_MAGICK)
 if (USE_IMAGE_MAGICK)
   if (APPLE)
