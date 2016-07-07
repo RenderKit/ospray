@@ -124,7 +124,7 @@ namespace ospray {
       void SimpleSendRecvImpl::RecvThread::run()
       {
         Group *g = (Group *)this->group;
-        const timespec sleep_time = timespec{0, 1000000};
+        const timespec sleep_time = timespec{0, 150000};
 
         while (1) {
           MPI_Status status;

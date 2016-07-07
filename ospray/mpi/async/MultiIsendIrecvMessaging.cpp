@@ -62,7 +62,7 @@ namespace ospray {
         // note this thread not only _probes_ for new receives, it
         // also immediately starts the receive operation using Irecv()
         Group *g = (Group *)this->group;
-        const timespec sleep_time = timespec{0, 1000000};
+        const timespec sleep_time = timespec{0, 150000};
         
         while (1) {
           MPI_Status status;

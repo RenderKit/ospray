@@ -81,7 +81,7 @@ namespace ospray {
         Action *actions[RECV_WINDOW_SIZE];
         MPI_Status status;
         int numRequests = 0;
-        const timespec sleep_time = timespec{0, 1000000};
+        const timespec sleep_time = timespec{0, 150000};
         
         while (1) {
           numRequests = 0;
