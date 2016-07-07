@@ -40,7 +40,9 @@ private:
 
   // Helper functions //
 
-  void importObjectsFromFile(const std::string &filename);
+  void importObjectsFromFile(const std::string &filename,
+                             bool loadedTransferFunction);
+  void importTransferFunction(const std::string &filename);
   void createDefaultTransferFunction();
 
   // Data //

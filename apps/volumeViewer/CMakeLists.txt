@@ -25,6 +25,7 @@ SET(LIBS ${LIBS} ospray)
 SET(LIBS ${LIBS} ospray_common)
 SET(LIBS ${LIBS} ospray_importer)
 SET(LIBS ${LIBS} ospray_module_opengl_util)
+SET(LIBS ${LIBS} ospray_tfn)
 
 # link optional loaders-based modules if built
 IF (OSPRAY_MODULE_SEISMIC)

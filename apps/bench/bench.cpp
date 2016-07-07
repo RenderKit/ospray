@@ -109,6 +109,9 @@ void printUsageAndExit()
        << " will scale to: [0,x] where x is the input value." << endl;
   cout << "                          default: 1.0" << endl;
 
+  cout << "    -tff | --tf-file --> Specify the transfer function file to use"
+       << endl;
+
   cout << endl;
   cout << "    -is | --surface --> Specify an isosurface at value: val "
        << endl;
