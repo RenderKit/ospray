@@ -120,9 +120,6 @@ int main(int argc, char **argv) {
         color = loColor + delta / interval * (hiColor - loColor);
       }
     }
-    color.x = cvtSrgb(color.x);
-    color.y = cvtSrgb(color.y);
-    color.z = cvtSrgb(color.z);
     rgbSamples.push_back(color);
   }
 
