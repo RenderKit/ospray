@@ -25,6 +25,7 @@ cmake -L ^
 -T "%~2" ^
 -D OSPRAY_BUILD_ISA=ALL ^
 -D OSPRAY_BUILD_MIC_SUPPORT=OFF ^
+-D OSPRAY_BUILD_MPI_DEVICE=ON ^
 -D OSPRAY_USE_EXTERNAL_EMBREE=ON ^
 -D embree_DIR=..\..\embree\lib\cmake\embree-2.9.0 ^
 -D USE_IMAGE_MAGICK=OFF ^
