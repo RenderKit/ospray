@@ -50,19 +50,29 @@ int main(int argc, char **argv) {
     throw std::runtime_error("#ospCvtParaViewTfcn: Error - failed to read transfer function name\n");
   }
 
+  if (paraViewFcn["ColorSpace"].type() == Json::stringValue
+      && paraViewFcn["ColorSpace"].asString() == "Diverging") {
+    std::cout << "#ospCvtParaViewTfcn: WARNING: ParaView's diverging color space "
+      << "interpolation is not supported, colors may be incorrect\n";
+  }
+
+
   // Read the value, opacity pairs and ignore the strange extra 0.5, 0 entries
   std::cout << "#ospCvtParaViewTfcn: Reading value, opacity pairs\n";
   std::vector<vec2f> opacities;
   Json::Value pvOpacities = paraViewFcn["Points"];
   if (!pvOpacities.isArray()) {
-    throw std::runtime_error("#ospCvtParaViewTfcn: Error - failed to find value, opacity 'Points' array\n");
-  }
-  // We the first 2 of every 4 values which are the (value, opacity) pair
-  // followed by some random (0.5, 0) value pair that ParaView throws in there
-  for (Json::Value::ArrayIndex i = 0; i < pvOpacities.size(); i += 4) {
-    const float val = pvOpacities[i].asFloat();
-    const float opacity = pvOpacities[i + 1].asFloat();
-    opacities.push_back(vec2f(val, opacity));
+    std::cout << "#ospCvtParaViewTfcn: No opacity data, setting default of linearly increasing [0, 1]\n";
+    opacities.push_back(vec2f(0.f, 0.f));
+    opacities.push_back(vec2f(1.f, 1.f));
+  } else {
+    // We the first 2 of every 4 values which are the (value, opacity) pair
+    // followed by some random (0.5, 0) value pair that ParaView throws in there
+    for (Json::Value::ArrayIndex i = 0; i < pvOpacities.size(); i += 4) {
+      const float val = pvOpacities[i].asFloat();
+      const float opacity = pvOpacities[i + 1].asFloat();
+      opacities.push_back(vec2f(val, opacity));
+    }
   }
   const float dataValueMin = opacities[0].x;
   const float dataValueMax = opacities.back().x;
