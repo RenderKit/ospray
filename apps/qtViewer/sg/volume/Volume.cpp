@@ -289,8 +289,8 @@ namespace ospray {
       size_t nPerSlice = dimensions.x*dimensions.y;
       uint8_t *slice = new uint8_t[nPerSlice];
       for (int sliceID=0;sliceID<numSlices;sliceID++) {
-        char sliceName[strlen(baseName.c_str())+20];
-        sprintf(sliceName,baseName.c_str(),firstSliceID+sliceID);
+        char *sliceName = (char*)alloca(strlen(baseName.c_str()) + 20);
+        sprintf(sliceName, baseName.c_str(), firstSliceID + sliceID);
         PRINT(sliceName);
         FILE *file = fopen(sliceName,"rb");
         if (!file) 

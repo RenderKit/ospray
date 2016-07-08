@@ -64,7 +64,6 @@ IF(NOT THIS_IS_MIC)
     ADD_SUBDIRECTORY(glutViewer)
   ENDIF()
 
- IF(NOT WIN32)
   # NOTE(jda) - Disable Qt based viewers when on OS X using ICC due to
   #             unresolved issues
   # qt-based viewer for geometry (and soon volumes)
@@ -74,7 +73,6 @@ IF(NOT THIS_IS_MIC)
       ADD_SUBDIRECTORY(qtViewer)
     ENDIF()
   ENDIF()
- ENDIF()
 
   # volume viewer application
   IF(NOT (APPLE AND (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")))
