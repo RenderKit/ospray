@@ -25,7 +25,7 @@
 #    define OSPGLUTIL_INTERFACE __declspec(dllimport)
 #  endif
 #else
-#  define OSPGLUTIL_INTERFACE extern
+#  define OSPGLUTIL_INTERFACE
 #endif
 
 namespace ospray {

@@ -63,6 +63,8 @@ namespace ospray {
     using std::cout;
     using std::endl;
 
+    OSPRAY_INTERFACE void runWorker();
+
     void embreeErrorFunc(const RTCError code, const char* str)
     {
       std::cerr << "#osp: embree internal error " << code << " : "

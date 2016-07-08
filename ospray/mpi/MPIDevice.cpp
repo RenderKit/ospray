@@ -44,7 +44,7 @@ namespace ospray {
     /*! it's up to the proper init routine to decide which processes
       call this function and which ones don't. This function will not
       return. */
-    void runWorker();
+    OSPRAY_INTERFACE void runWorker();
 
 
     /*! in this mode ("ospray on ranks" mode, or "ranks" mode), the
