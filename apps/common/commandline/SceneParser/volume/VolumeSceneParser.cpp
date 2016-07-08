@@ -155,7 +155,6 @@ void VolumeSceneParser::importTransferFunction(const std::string &filename)
   m_tf.set("colors", colorsData);
 
   m_tf_scale = fcn.opacityScaling;
-  PRINT(m_tf_scale);
   // Sample the opacity values, taking 256 samples to match the volume viewer
   // the volume viewer does the sampling a bit differently so we match that
   // instead of what's done in createDefault
@@ -197,8 +196,6 @@ void VolumeSceneParser::importTransferFunction(const std::string &filename)
                                              OSP_FLOAT,
                                              opacityValues.data());
   m_tf.set("opacities", opacityValuesData);
-  PRINT(fcn.dataValueMin);
-  PRINT(fcn.dataValueMax);
   m_tf.set("valueRange", vec2f(fcn.dataValueMin, fcn.dataValueMax));
 
   // Commit transfer function
