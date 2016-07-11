@@ -129,36 +129,75 @@ void TransferFunctionEditor::load(std::string filename)
     return;
 
   // Get serialized transfer function state from file.
-  tfn::TransferFunction loadedTfn{ospcommon::FileName(filename)};
+  bool invalidIdentificationHeader = false;
+  try {
+    tfn::TransferFunction loadedTfn{ospcommon::FileName(filename)};
 
-  // Update transfer function state. Update values of the UI elements directly to signal appropriate slots.
-  std::vector<ColorMap>::iterator fnd = std::find_if(colorMaps.begin(), colorMaps.end(),
-      [&](const ColorMap &m) {
+    // Update transfer function state. Update values of the UI elements directly to signal appropriate slots.
+    std::vector<ColorMap>::iterator fnd = std::find_if(colorMaps.begin(), colorMaps.end(),
+        [&](const ColorMap &m) {
         return m.getName() == loadedTfn.name;
-      });
-  int index = 0;
-  if (fnd != colorMaps.end()) {
-    *fnd = ColorMap(loadedTfn.name, loadedTfn.rgbValues);
-    index = std::distance(colorMaps.begin(), fnd);
-  } else {
-    colorMaps.push_back(ColorMap(loadedTfn.name, loadedTfn.rgbValues));
-    colorMapComboBox.addItem(loadedTfn.name.c_str());
-    index = colorMaps.size() - 1;
-  }
+        });
+    int index = 0;
+    if (fnd != colorMaps.end()) {
+      *fnd = ColorMap(loadedTfn.name, loadedTfn.rgbValues);
+      index = std::distance(colorMaps.begin(), fnd);
+    } else {
+      colorMaps.push_back(ColorMap(loadedTfn.name, loadedTfn.rgbValues));
+      colorMapComboBox.addItem(loadedTfn.name.c_str());
+      index = colorMaps.size() - 1;
+    }
 
-  // Commit and emit signal.
-  setDataValueRange(ospcommon::vec2f(loadedTfn.dataValueMin, loadedTfn.dataValueMax), true);
-  // Convert over to QPointF to pass to the widget
-  QVector<QPointF> points;
-  for (const auto &x : loadedTfn.opacityValues) {
-    points.push_back(QPointF(x.x, x.y));
-  }
-  opacityValuesWidget.setPoints(points);
-  opacityScalingSlider.setValue(loadedTfn.opacityScaling
-      * (opacityScalingSlider.maximum() - opacityScalingSlider.minimum()));
-  updateOpacityValues();
+    // Commit and emit signal.
+    setDataValueRange(ospcommon::vec2f(loadedTfn.dataValueMin, loadedTfn.dataValueMax), true);
+    // Convert over to QPointF to pass to the widget
+    QVector<QPointF> points;
+    for (const auto &x : loadedTfn.opacityValues) {
+      points.push_back(QPointF(x.x, x.y));
+    }
+    opacityValuesWidget.setPoints(points);
+    opacityScalingSlider.setValue(loadedTfn.opacityScaling
+        * (opacityScalingSlider.maximum() - opacityScalingSlider.minimum()));
+    updateOpacityValues();
 
-  colorMapComboBox.setCurrentIndex(index);
+    colorMapComboBox.setCurrentIndex(index);
+  } catch (const std::runtime_error &e) {
+    const std::string errMsg = e.what();
+    std::cout << "#ospVolumeViewer error loading transferfunction: " << errMsg << "\n";
+    // If it's an invalid identification header error we can try loading an old style
+    // transfer function, otherwise something else we can't handle is wrong.
+    if (errMsg.find("Read invalid identification header") != std::string::npos) {
+      // Get serialized transfer function state from file.
+      QFile file(filename.c_str());
+      bool success = file.open(QIODevice::ReadOnly);
+
+      if (!success) {
+        std::cerr << "unable to open " << filename << std::endl;
+        return;
+      }
+
+      QDataStream in(&file);
+      int colorMapIndex;
+      in >> colorMapIndex;
+      double dataValueMin, dataValueMax;
+      in >> dataValueMin >> dataValueMax;
+      QVector<QPointF> points;
+      in >> points;
+      int opacityScalingIndex;
+      in >> opacityScalingIndex;
+
+      // Update transfer function state. Update values of the UI elements directly to signal appropriate slots.
+      colorMapComboBox.setCurrentIndex(colorMapIndex);
+      setDataValueRange(ospcommon::vec2f(dataValueMin, dataValueMax), true);
+      opacityValuesWidget.setPoints(points);
+      opacityScalingSlider.setValue(opacityScalingIndex);
+
+      std::cout << "#ospVolumeViewer WARNING: using old-style transfer function, save the loaded function "
+        << "out to switch to the new format\n";
+    } else {
+      throw e;
+    }
+  }
   ospCommit(transferFunction);
   emit committed();
 }
