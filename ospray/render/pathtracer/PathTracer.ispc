@@ -174,7 +174,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         bsdf = mm->getBSDF(mm, &ctx, dg, ray, currentMedium);
 
     // direct lighting including shadows and MIS
-    if (bsdf->type & BSDF_SMOOTH)
+    if (bsdf && (bsdf->type & BSDF_SMOOTH))
     {
       uniform int numLights = self->lights ? min(MAX_LIGHTS, self->numLights) : 0;
       for (uniform int i = 0; i < numLights; i++)
