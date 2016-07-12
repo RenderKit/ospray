@@ -229,7 +229,7 @@ namespace ospray {
   getEnvVar<float>(const std::string &var)
   {
     auto *str = getenv(var.c_str());
-    bool found = (str == nullptr);
+    bool found = (str != nullptr);
     return {found, found ? atof(str) : float{}};
   }
 
@@ -238,7 +238,7 @@ namespace ospray {
   getEnvVar<int>(const std::string &var)
   {
     auto *str = getenv(var.c_str());
-    bool found = (str == nullptr);
+    bool found = (str != nullptr);
     return {found, found ? atoi(str) : int{}};
   }
 
@@ -247,7 +247,7 @@ namespace ospray {
   getEnvVar<std::string>(const std::string &var)
   {
     auto *str = getenv(var.c_str());
-    bool found = (str == nullptr);
+    bool found = (str != nullptr);
     return {found, found ? std::string(str) : std::string{}};
   }
 
