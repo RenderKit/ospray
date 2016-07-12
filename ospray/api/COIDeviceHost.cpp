@@ -356,8 +356,9 @@ namespace ospray {
     void COIEngine::loadOSPRay()
     {
       COIRESULT result;
-      const char *coiWorker = getenv("OSPRAY_COI_WORKER");
-      if (coiWorker == nullptr) {
+      OSPRAY_COI_WORKER = getEnvVar<std::string>("OSPRAY_COI_WORKER");
+      auto &coiWorker = OSPRAY_COI_WORKER.second;
+      if (!OSPRAY_COI_WORKER.first) {
         cerr << "Error: OSPRAY_COI_WORKER not defined." << endl;
         cerr << "Note: In order to run the OSPRay COI device on the Xeon"
              << " Phi(s) it needs to know the full path of the"
@@ -368,8 +369,8 @@ namespace ospray {
              << " this executable." << endl;
         exit(1);
       }
-      const char *sinkLDPath = getenv("SINK_LD_LIBRARY_PATH");
-      if (sinkLDPath == nullptr) {
+      SINK_LD_LIBRARY_PATH = getEnvVar<std::string>("SINK_LD_LIBRARY_PATH");
+      if (!SINK_LD_LIBRARY_PATH.first) {
         cerr << "SINK_LD_LIBRARY_PATH not defined." << endl;
         cerr << "Note: In order for the COI version of OSPRay to find all"
                   << " the shared libraries (ospray, plus whatever modules the"
@@ -384,7 +385,7 @@ namespace ospray {
       }
 
       std::vector<const char*> workerArgs;
-      workerArgs.push_back(coiWorker);
+      workerArgs.push_back(coiWorker.c_str());
       if (ospray::debugMode)
         workerArgs.push_back("--osp:debug");
       if (ospray::logLevel == 1)
@@ -393,7 +394,7 @@ namespace ospray {
         workerArgs.push_back("--osp:vv");
 
       result = COIProcessCreateFromFile(coiEngine,
-                                        coiWorker,
+                                        coiWorker.c_str(),
                                         workerArgs.size(), workerArgs.data(),
                                         false, nullptr,
                                         true,nullptr,/*proxy!*/
@@ -507,9 +508,9 @@ namespace ospray {
       cout << "#osp:coi: found " << numEngines << " COI engines" << endl;
       Assert(numEngines > 0);
 
-      char *maxEnginesFromEnv = getenv("OSPRAY_COI_MAX_ENGINES");
-      if (maxEnginesFromEnv) {
-        numEngines = std::min((int)numEngines,(int)atoi(maxEnginesFromEnv));
+      auto OSPRAY_COI_MAX_ENGINES = getEnvVar<int>("OSPRAY_COI_MAX_ENGINES");
+      if (OSPRAY_COI_MAX_ENGINES.first) {
+        numEngines = std::min((int)numEngines, OSPRAY_COI_MAX_ENGINES.second);
         cout << "#osp:coi: max engines after considering"
              << " 'OSPRAY_COI_MAX_ENGINES' : " << numEngines << endl;
       }
