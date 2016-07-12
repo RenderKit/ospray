@@ -21,6 +21,8 @@ SET(OSPRAY_DIR ${PROJECT_SOURCE_DIR})
 # arch-specific cmd-line flags for various arch and compiler configs
 
 SET(OSPRAY_TILE_SIZE 64 CACHE INT "Tile size")
+SET_PROPERTY(CACHE OSPRAY_TILE_SIZE PROPERTY STRINGS 8 16 32 64 128 256 512)
+
 SET(OSPRAY_PIXELS_PER_JOB 64 CACHE INT
     "Must be multiple of largest vector width *and* <= OSPRAY_TILE_SIZE")
 
