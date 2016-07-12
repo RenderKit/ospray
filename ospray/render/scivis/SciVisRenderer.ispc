@@ -35,6 +35,7 @@
 struct SciVisRenderer
 {
   Renderer super;
+  float volumeEpsilon;
 
   const uniform Light *uniform *uniform lights;
   uint32 numLights;
@@ -442,24 +443,6 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
   // Original tMax for ray interval
   const float tMax = ray.t;
 
-  // Ray epsilon based on bounding box of all volumes.
-  uniform box3f boundingBox = renderer->super.model->volumeCount
-    ? renderer->super.model->volumes[0]->boundingBox
-    : make_box3f(make_vec3f(0.f), make_vec3f(0.f));
-
-  Model *uniform model = renderer->super.model;
-  for (uniform int32 i=1; i<renderer->super.model->volumeCount; i++) {
-    boundingBox.lower = min(boundingBox.lower,
-                            model->volumes[i]->boundingBox.lower);
-    boundingBox.upper = max(boundingBox.upper,
-                            model->volumes[i]->boundingBox.upper);
-  }
-
-  const uniform float epsilon
-    = renderer->super.model->volumeCount
-    ? 1e-4f * distance(boundingBox.lower, boundingBox.upper)
-    : 1e-4f;
-
   // Copy of the ray for geometry intersection. The original ray is
   // used for volume intersection.
   Ray geometryRay = ray;
@@ -499,7 +482,7 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
       // Check to see if we've exited the current volume.
       if (ray.t0 >= ray.t) {
 
-        ray.t0 = ray.t + epsilon;
+        ray.t0 = ray.t + renderer->volumeEpsilon;
         ray.t = tMax;
         volume = SciVisRenderer_intersectVolumes(renderer, ray, rayOffset);
 
@@ -525,7 +508,7 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
 
       if (color.w < 0.99f) {
         // Reset geometry ray.
-        geometryRay.t0 = geometryRay.t + epsilon;
+        geometryRay.t0 = geometryRay.t + renderer->volumeEpsilon;
         geometryRay.t = tMax; //!< end of valid ray interval for traceRay()
         geometryRay.primID = -1;
         geometryRay.geomID = -1;
@@ -581,6 +564,27 @@ void SciVisRenderer_renderSample(uniform Renderer *uniform _self,
   sample.z = depth;
 }
 
+static unmasked void *uniform
+SciVisRenderer_beginFrame(uniform Renderer *uniform _self,
+                          uniform FrameBuffer *uniform fb)
+{
+  uniform SciVisRenderer *uniform self = (uniform SciVisRenderer *uniform)_self;
+  self->super.fb = fb;
+  Model *uniform model = self->super.model;
+  self->volumeEpsilon = self->super.epsilon;
+
+  if (model->volumeCount) {
+    // Ray epsilon based on bounding box of all volumes.
+    uniform box3f boundingBox = make_box3f_empty();
+    for (uniform int32 i = 0; i < model->volumeCount; i++)
+      boundingBox = box_extend(boundingBox, model->volumes[i]->boundingBox);
+
+    self->volumeEpsilon = 1e-4f * length(box_size(boundingBox));
+  }
+
+  return NULL;
+}
+
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
 
@@ -593,8 +597,7 @@ export void SciVisRenderer_set(void *uniform _self,
                                void **uniform lights,
                                const uniform uint32 numLights)
 {
-  uniform SciVisRenderer *uniform self =
-      (uniform SciVisRenderer *uniform)_self;
+  uniform SciVisRenderer *uniform self = (uniform SciVisRenderer *uniform)_self;
 
   self->shadowsEnabled = shadowsEnabled;
   self->maxDepth = maxDepth;
@@ -613,6 +616,7 @@ export void *uniform SciVisRenderer_create(void *uniform cppE)
   uniform SciVisRenderer *uniform self = uniform new uniform SciVisRenderer;
   Renderer_Constructor(&self->super,cppE);
   self->super.renderSample = SciVisRenderer_renderSample;
+  self->super.beginFrame = SciVisRenderer_beginFrame;
   SciVisRenderer_set(self, true, 10, 4, infinity, 0.25f, NULL, 0);
 
   return self;

@@ -338,7 +338,6 @@ unmasked void *uniform PathTracer_beginFrame(uniform Renderer *uniform _self,
                                     uniform FrameBuffer *uniform fb)
 {
   _self->fb = fb;
-  uniform PathTracer  *uniform self = (uniform PathTracer *uniform)_self;
   return NULL;
 }
 
