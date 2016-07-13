@@ -46,19 +46,19 @@
 
 namespace ospray {
 
-class OSPRayScriptHandler
+OSPSCRIPT_INTERFACE class OSPRayScriptHandler
 {
 public:
 
-  OSPSCRIPT_INTERFACE OSPRayScriptHandler(OSPModel model, OSPRenderer renderer, OSPCamera camera);
-  OSPSCRIPT_INTERFACE ~OSPRayScriptHandler();
+  OSPRayScriptHandler(OSPModel model, OSPRenderer renderer, OSPCamera camera);
+  ~OSPRayScriptHandler();
 
-  OSPSCRIPT_INTERFACE void runScriptFromFile(const std::string &file);
+  void runScriptFromFile(const std::string &file);
 
-  OSPSCRIPT_INTERFACE void start();
-  OSPSCRIPT_INTERFACE void stop();
+  void start();
+  void stop();
 
-  OSPSCRIPT_INTERFACE bool running();
+  bool running();
 
 protected:
 
@@ -67,7 +67,7 @@ protected:
   //!
   //! \note Allow anyone who extends (inherits from) OSPRayScriptHandler to
   //!       have access to the engine to let them add custom functions or types.
-  OSPSCRIPT_INTERFACE chaiscript::ChaiScript &scriptEngine();
+  chaiscript::ChaiScript &scriptEngine();
 
   //! \note Child classes should append this string with any additional help
   //!       text that is desired when 'help' is invoked in the script engine.

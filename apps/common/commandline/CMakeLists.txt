@@ -80,6 +80,8 @@ SET(SOURCE_FILES
 
   SceneParser/trianglemesh/TriangleMeshSceneParser.cpp
 
+  SceneParser/volume/VolumeSceneParser.cpp
+
   Utility.h
 )
 
@@ -88,7 +90,6 @@ IF(OSPRAY_COMMANDLINE_TACHYON_SUPPORT)
     SceneParser/tachyon/TachyonSceneParser.cpp
     SceneParser/tachyon/Model.cpp
     SceneParser/tachyon/Loc.cpp
-    SceneParser/volume/VolumeSceneParser.cpp
     lexer_l.cpp
     parser_y.cpp
   )
