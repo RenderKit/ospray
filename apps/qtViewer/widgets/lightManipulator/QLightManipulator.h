@@ -24,7 +24,7 @@
 //sg
 #include "sg/Renderer.h"
 // ospcomon
-#include "common/common.h"
+#include "ospcommon/common.h"
 
 namespace ospray {
   namespace viewer {

@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/volume/BlockBrickedVolume.ih"
+#include "volume/BlockBrickedVolume.ih"
 
 //! The number of bits used to represent the width of a Block in voxels.
 #define BLOCK_VOXEL_WIDTH_BITCOUNT (6)

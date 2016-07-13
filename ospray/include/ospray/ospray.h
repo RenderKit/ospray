@@ -41,8 +41,8 @@
 #include <sys/types.h>
 #include <stdint.h>
 
-#include "ospray/OSPDataType.h"
-#include "ospray/OSPTexture.h"
+#include "OSPDataType.h"
+#include "OSPTexture.h"
 
 #ifdef _WIN32
 #  ifdef ospray_EXPORTS

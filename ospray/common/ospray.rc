@@ -1,4 +1,4 @@
-#include "ospray/version.h"
+#include "version.h"
 
 1 VERSIONINFO
  FILEVERSION OSPRAY_VERSION_MAJOR,OSPRAY_VERSION_MINOR,0

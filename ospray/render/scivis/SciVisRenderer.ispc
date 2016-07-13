@@ -14,17 +14,17 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/fb/FrameBuffer.ih"
-#include "ospray/render/util.ih"
-#include "ospray/common/Model.ih"
-#include "ospray/texture/Texture2D.ih"
-#include "ospray/lights/Light.ih"
-#include "ospray/render/Renderer.ih"
-#include "ospray/math/random.ih"
-#include "ospray/math/sampling.ih"
-#include "ospray/math/LinearSpace.ih"
+#include "fb/FrameBuffer.ih"
+#include "render/util.ih"
+#include "common/Model.ih"
+#include "texture/Texture2D.ih"
+#include "lights/Light.ih"
+#include "render/Renderer.ih"
+#include "math/random.ih"
+#include "math/sampling.ih"
+#include "math/LinearSpace.ih"
 
-#include "ospray/volume/DataDistributedBlockedVolume.ih"
+#include "volume/DataDistributedBlockedVolume.ih"
 
 #include "SciVisMaterial.ih"
 

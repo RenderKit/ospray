@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #include "PerspectiveCamera.ih"
-#include "ospray/math/sampling.ih"
+#include "math/sampling.ih"
 
 void PerspectiveCamera_initRay(uniform Camera *uniform _self,
                                varying Ray &ray,

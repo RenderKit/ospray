@@ -17,8 +17,8 @@
 #pragma once
 
 // ospray
-#include "ospray/fb/Tile.h"
-#include "ospray/common/Managed.h"
+#include "fb/Tile.h"
+#include "common/Managed.h"
 
 namespace ospray {
 

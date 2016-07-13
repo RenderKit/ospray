@@ -19,7 +19,7 @@
 #include "common/xml/XML.h"
 #include "Model.h"
 // embree
-#include "common/FileName.h"
+#include "ospcommon/FileName.h"
 // std
 #include <sstream>
 

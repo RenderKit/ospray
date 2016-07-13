@@ -15,11 +15,11 @@
 // ======================================================================== //
 
 // ospray
-#include "ospray/mpi/MPILoadBalancer.h"
-#include "ospray/render/Renderer.h"
-#include "ospray/fb/LocalFB.h"
-#include "ospray/mpi/DistributedFrameBuffer.h"
-#include "ospray/common/tasking/parallel_for.h"
+#include "mpi/MPILoadBalancer.h"
+#include "render/Renderer.h"
+#include "fb/LocalFB.h"
+#include "mpi/DistributedFrameBuffer.h"
+#include "common/tasking/parallel_for.h"
 
 #include <algorithm>
 

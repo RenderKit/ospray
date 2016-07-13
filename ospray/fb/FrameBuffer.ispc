@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/fb/FrameBuffer.ih"
+#include "fb/FrameBuffer.ih"
 
 void FrameBuffer_Constructor(FrameBuffer *uniform self,
                              void *uniform cClassPtr)

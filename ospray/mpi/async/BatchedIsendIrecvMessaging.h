@@ -18,8 +18,8 @@
 
 // ospray
 #include "Messaging.h"
-#include "ospray/common/Thread.h"
-#include "ospray/common/ProducerConsumerQueue.h"
+#include "common/Thread.h"
+#include "common/ProducerConsumerQueue.h"
 // stl
 #include <deque>
 #include <vector>

@@ -20,7 +20,7 @@
     buffers that can be used to send data across all kinds of
     network/communication devices */
 
-#include "ospray/common/OSPCommon.h"
+#include "common/OSPCommon.h"
 
 namespace ospray {
   namespace nwlayer {

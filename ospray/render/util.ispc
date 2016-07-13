@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/render/util.ih"
-#include "ospray/math/random.ih"
+#include "render/util.ih"
+#include "math/random.ih"
 
 uniform float precomputedHalton[3][NUM_PRECOMPUTED_HALTON_VALUES];
 uniform bool  precomputedHalton_initialized = false;

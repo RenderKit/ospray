@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "ospray/common/Managed.h"
+#include "common/Managed.h"
 
 /*! \brief Define a function to create an instance of the InternalClass
   associated with ExternalName.

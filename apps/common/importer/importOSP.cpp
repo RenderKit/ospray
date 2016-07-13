@@ -17,7 +17,7 @@
 // own
 #include "Importer.h"
 // ospcommon
-#include "common/FileName.h"
+#include "ospcommon/FileName.h"
 // tinyxml
 #include "TinyXML2.h"
 // std

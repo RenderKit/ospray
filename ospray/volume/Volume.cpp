@@ -15,11 +15,11 @@
 // ======================================================================== //
 
 // ospray
-#include "ospray/common/Library.h"
-#include "ospray/volume/Volume.h"
+#include "common/Library.h"
+#include "volume/Volume.h"
 #include "Volume_ispc.h"
-#include "ospray/transferFunction/TransferFunction.h"
-#include "ospray/common/Data.h"
+#include "transferFunction/TransferFunction.h"
+#include "common/Data.h"
 // stl
 #include <map>
 

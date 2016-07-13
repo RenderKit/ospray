@@ -17,8 +17,8 @@
 #pragma once
 
 #include <vector>
-#include "common/vec.h"
-#include "common/FileName.h"
+#include "ospcommon/vec.h"
+#include "ospcommon/FileName.h"
 
 #ifdef _WIN32
   #ifdef ospray_tfn_EXPORTS

@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/volume/DataDistributedBlockedVolume.ih"
+#include "volume/DataDistributedBlockedVolume.ih"
 
 void DDBVolume_Constructor(DDBVolume *uniform self,
                            void *uniform cppEquivalent,

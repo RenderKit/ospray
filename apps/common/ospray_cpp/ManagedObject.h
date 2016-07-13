@@ -20,7 +20,7 @@
 #include <type_traits>
 
 #include <ospray/ospray.h>
-#include "common/vec.h"
+#include "ospcommon/vec.h"
 
 namespace ospray {
 namespace cpp    {

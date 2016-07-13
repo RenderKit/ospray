@@ -19,8 +19,8 @@
 // ospray
 #include "Device.h"
 #include "COIDeviceCommon.h"
-#include "ospray/common/Data.h"
-#include "ospray/volume/Volume.h"
+#include "common/Data.h"
+#include "volume/Volume.h"
 // coi
 #include "common/COIResult_common.h"
 #include "source/COIEngine_source.h"

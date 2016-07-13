@@ -16,10 +16,10 @@
 
 #pragma once
 
-#include "ospray/common/Ray.ih"
-#include "ospray/lights/Light.ih"
-#include "ospray/math/box.ih"
-#include "ospray/render/Renderer.ih"
+#include "common/Ray.ih"
+#include "lights/Light.ih"
+#include "math/box.ih"
+#include "render/Renderer.ih"
 
 //! \brief ISPC variables and functions for the RaycastVolumeRenderer
 //!  class, a concrete subtype of the Renderer class for rendering

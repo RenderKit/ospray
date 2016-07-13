@@ -15,8 +15,8 @@
 // ======================================================================== //
 
 // ospray
-#include "ospray/common/Library.h"
-#include "ospray/transferFunction/TransferFunction.h"
+#include "common/Library.h"
+#include "transferFunction/TransferFunction.h"
 // std
 #include <map>
 

@@ -18,9 +18,9 @@
 
 /*! \file Renderer.h Defines the base renderer class */
 
-#include "ospray/common/Model.h"
-#include "ospray/fb/FrameBuffer.h"
-#include "ospray/texture/Texture2D.h"
+#include "common/Model.h"
+#include "fb/FrameBuffer.h"
+#include "texture/Texture2D.h"
 
 namespace ospray {
 

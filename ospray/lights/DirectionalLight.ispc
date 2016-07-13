@@ -15,8 +15,8 @@
 // ======================================================================== //
 
 #include "Light.ih"
-#include "ospray/math/sampling.ih"
-#include "ospray/math/LinearSpace.ih"
+#include "math/sampling.ih"
+#include "math/LinearSpace.ih"
 
 struct DirectionalLight
 {

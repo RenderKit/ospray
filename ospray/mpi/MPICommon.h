@@ -17,7 +17,7 @@
 #pragma once
 
 #include <mpi.h>
-#include "ospray/common/OSPCommon.h"
+#include "common/OSPCommon.h"
 
 // IMPI on Windows defines MPI_CALL already, erroneously
 #ifdef MPI_CALL

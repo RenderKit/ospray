@@ -16,7 +16,7 @@
 
 // ospray 
 #include "Geometry.h"
-#include "ospray/common/Library.h"
+#include "common/Library.h"
 // stl 
 #include <map>
 // ISPC exports

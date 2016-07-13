@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/volume/GhostBlockBrickedVolume.ih"
+#include "volume/GhostBlockBrickedVolume.ih"
 
 /*! total number of bits per block dimension. '6' would mean 18 bits =
   1/4million voxels per block, which for alots would be 1MB, so should

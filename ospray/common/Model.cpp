@@ -16,7 +16,7 @@
 
 // ospray
 #include "Model.h"
-#include "ospray/geometry/TriangleMesh.h"
+#include "geometry/TriangleMesh.h"
 // embree
 #include "embree2/rtcore.h"
 #include "embree2/rtcore_scene.h"

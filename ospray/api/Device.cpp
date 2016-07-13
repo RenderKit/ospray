@@ -16,7 +16,7 @@
 
 // ospray
 #include "Device.h"
-#include "ospray/common/OSPCommon.h"
+#include "common/OSPCommon.h"
 // embree
 #include "embree2/rtcore.h"
 

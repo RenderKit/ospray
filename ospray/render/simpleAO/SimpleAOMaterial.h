@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "ospray/common/Material.h"
-#include "ospray/texture/Texture2D.h"
+#include "common/Material.h"
+#include "texture/Texture2D.h"
 
 namespace ospray {
   namespace simpleao {

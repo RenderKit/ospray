@@ -18,8 +18,8 @@
 #include "DistributedFrameBuffer_TileTypes.h"
 #include "DistributedFrameBuffer_ispc.h"
 
-#include "ospray/common/tasking/async.h"
-#include "ospray/common/tasking/parallel_for.h"
+#include "common/tasking/async.h"
+#include "common/tasking/parallel_for.h"
 
 #ifdef _WIN32
 #  include <windows.h> // for Sleep

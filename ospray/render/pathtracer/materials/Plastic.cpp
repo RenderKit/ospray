@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/common/Material.h"
+#include "common/Material.h"
 #include "Plastic_ispc.h"
 
 namespace ospray {

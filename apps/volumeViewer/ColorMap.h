@@ -19,7 +19,7 @@
 // ospray public
 #include <ospray/ospray.h>
 // ospcommon
-#include "common/vec.h"
+#include "ospcommon/vec.h"
 // std
 #include <string>
 #include <vector>

@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "common/box.h"
+#include "ospcommon/box.h"
 #include "QOSPRayWindow.h"
 #include "SliceWidget.h"
 #include <QtGui>

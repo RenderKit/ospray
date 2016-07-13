@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #include "PanoramicCamera.ih"
-#include "ospray/math/sampling.ih"
+#include "math/sampling.ih"
 
 void PanoramicCamera_initRay(uniform Camera *uniform _self,
                              varying Ray &ray,

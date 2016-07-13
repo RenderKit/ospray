@@ -14,16 +14,16 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/fb/FrameBuffer.ih"
-#include "ospray/common/Model.ih"
-#include "ospray/common/Ray.ih"
-#include "ospray/render/util.ih"
-#include "ospray/render/volume/RaycastVolumeRenderer.ih"
-#include "ospray/render/volume/RaycastVolumeMaterial.ih"
-#include "ospray/volume/DataDistributedBlockedVolume.ih"
-#include "ospray/render/util.ih"
-#include "ospray/camera/Camera.ih"
-#include "ospray/common/Model.ih"
+#include "fb/FrameBuffer.ih"
+#include "common/Model.ih"
+#include "common/Ray.ih"
+#include "render/util.ih"
+#include "render/volume/RaycastVolumeRenderer.ih"
+#include "render/volume/RaycastVolumeMaterial.ih"
+#include "volume/DataDistributedBlockedVolume.ih"
+#include "render/util.ih"
+#include "camera/Camera.ih"
+#include "common/Model.ih"
 
 struct PassInfo {
   // region to integrate over in this pass

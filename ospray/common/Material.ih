@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "ospray/common/OSPCommon.ih"
+#include "common/OSPCommon.ih"
 
 /*! ISPC-side abstraction for a material. */
 struct Material {

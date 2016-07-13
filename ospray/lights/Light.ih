@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "ospray/common/DifferentialGeometry.ih"
+#include "common/DifferentialGeometry.ih"
 
 struct Light;
 

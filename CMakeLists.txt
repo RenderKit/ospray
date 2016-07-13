@@ -133,13 +133,11 @@ INCLUDE(package)
 # the OSPRay 'common' library
 ##############################################################
 
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 SET(OSPRAY_TARGET "intel64")
-ADD_SUBDIRECTORY(common builddir/ospray_common/intel64)
+ADD_SUBDIRECTORY(ospcommon builddir/ospray_common/intel64)
 IF (OSPRAY_MIC)
   SET(OSPRAY_TARGET "mic")
-  ADD_SUBDIRECTORY(common builddir/ospray_common/mic)
+  ADD_SUBDIRECTORY(ospcommon builddir/ospray_common/mic)
 ENDIF()
 
 ##############################################################

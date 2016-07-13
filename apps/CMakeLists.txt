@@ -20,6 +20,7 @@ IF(NOT THIS_IS_MIC)
 
   INCLUDE_DIRECTORIES(
     ${CMAKE_SOURCE_DIR}/ospray/include
+    ${CMAKE_SOURCE_DIR}
     ${CMAKE_CURRENT_LIST_DIR}
     common
   )

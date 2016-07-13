@@ -14,12 +14,12 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "./Material.ih"
-#include "ospray/texture/TextureParam.ih"
-#include "../bsdfs/MultiBSDF.ih"
-#include "../bsdfs/Transmission.ih"
-#include "../bsdfs/Lambert.ih"
-#include "../bsdfs/Specular.ih"
+#include "Material.ih"
+#include "texture/TextureParam.ih"
+#include "render/pathtracer/bsdfs/MultiBSDF.ih"
+#include "render/pathtracer/bsdfs/Transmission.ih"
+#include "render/pathtracer/bsdfs/Lambert.ih"
+#include "render/pathtracer/bsdfs/Specular.ih"
 
 struct OBJ
 {

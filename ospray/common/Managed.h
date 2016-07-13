@@ -17,9 +17,9 @@
 #pragma once
 
 // ospray 
-#include "OSPCommon.h"
-#include "ospray/ospray.h"
-#include "ospray/common/ObjectHandle.h"
+#include "ospray/OSPDataType.h"
+#include "common/OSPCommon.h"
+#include "common/ObjectHandle.h"
 // stl 
 #include <vector>
 #include <set>

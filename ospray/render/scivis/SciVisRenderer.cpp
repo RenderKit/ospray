@@ -18,8 +18,8 @@
 #include "SciVisRenderer.h"
 #include "SciVisMaterial.h"
 // ospray
-#include "ospray/common/Data.h"
-#include "ospray/lights/Light.h"
+#include "common/Data.h"
+#include "lights/Light.h"
 //sys
 #include <vector>
 // ispc exports

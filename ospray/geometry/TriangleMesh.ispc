@@ -16,8 +16,8 @@
 
 // ospray
 #include "TriangleMesh.ih"
-#include "ospray/common/Model.ih"
-#include "ospray/math/LinearSpace.ih"
+#include "common/Model.ih"
+#include "math/LinearSpace.ih"
 
 // embree
 #include "embree2/rtcore.isph"
