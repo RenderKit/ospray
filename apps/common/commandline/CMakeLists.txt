@@ -88,14 +88,9 @@ IF(OSPRAY_COMMANDLINE_TACHYON_SUPPORT)
     SceneParser/tachyon/TachyonSceneParser.cpp
     SceneParser/tachyon/Model.cpp
     SceneParser/tachyon/Loc.cpp
+    SceneParser/volume/VolumeSceneParser.cpp
     lexer_l.cpp
     parser_y.cpp
-  )
-ENDIF()
-
-IF(NOT WIN32)
-  LIST(APPEND SOURCE_FILES
-    SceneParser/volume/VolumeSceneParser.cpp
   )
 ENDIF()
 
