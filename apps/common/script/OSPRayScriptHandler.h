@@ -67,7 +67,7 @@ protected:
   //!
   //! \note Allow anyone who extends (inherits from) OSPRayScriptHandler to
   //!       have access to the engine to let them add custom functions or types.
-  chaiscript::ChaiScript &scriptEngine();
+  OSPSCRIPT_INTERFACE chaiscript::ChaiScript &scriptEngine();
 
   //! \note Child classes should append this string with any additional help
   //!       text that is desired when 'help' is invoked in the script engine.
