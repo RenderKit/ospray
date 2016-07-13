@@ -34,19 +34,9 @@
 // ChaiScript
 #include "chaiscript/chaiscript.hpp"
 
-#ifdef _WIN32
-#  ifdef ospray_script_EXPORTS
-#    define OSPSCRIPT_INTERFACE __declspec(dllexport)
-#  else
-#    define OSPSCRIPT_INTERFACE __declspec(dllimport)
-#  endif
-#else
-#  define OSPSCRIPT_INTERFACE
-#endif
-
 namespace ospray {
 
-OSPSCRIPT_INTERFACE class OSPRayScriptHandler
+class OSPRayScriptHandler
 {
 public:
 

@@ -81,7 +81,7 @@ export void Model_setVolume(void *uniform pointer,
                             uniform int32 index,
                             void *uniform volume)
 {
-  Model *uniform model = (Model *uniform) pointer;
-  model->volumes[index] = (Volume *uniform) volume;
+  uniform Model *uniform model = (uniform Model *uniform) pointer;
+  model->volumes[index] = (uniform Volume *uniform) volume;
 }
 
