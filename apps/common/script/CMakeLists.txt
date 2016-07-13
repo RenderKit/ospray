@@ -14,24 +14,14 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-set(LIBRARY_NAME ospray_script)
+CONFIGURE_OSPRAY()
 
-add_library(${LIBRARY_NAME}
+OSPRAY_CREATE_LIBRARY(script
   OSPRayScriptHandler.cpp
   OSPRayScriptHandler.h
-)
-
-target_link_libraries(${LIBRARY_NAME}
+LINK
   ospray_common
   ospray
   ${CMAKE_THREAD_LIBS_INIT}
   ${CMAKE_DL_LIBS}
-)
-
-ospray_set_library_version(${LIBRARY_NAME})
-
-install(TARGETS ${LIBRARY_NAME}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT lib
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel
 )

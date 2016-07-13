@@ -16,18 +16,13 @@
 
 CONFIGURE_OSPRAY()
 
-SET(LIBRARY_NAME ospray_importer)
-
-OSPRAY_ADD_LIBRARY(${LIBRARY_NAME} SHARED
+OSPRAY_CREATE_LIBRARY(importer
   importOSP.cpp
   importRAW.cpp
   importRM.cpp
   Importer.cpp
   TinyXML2.cpp
+LINK
+  ospray_common
+  ospray
 )
-
-OSPRAY_LIBRARY_LINK_LIBRARIES(${LIBRARY_NAME} ospray_common ospray)
-
-OSPRAY_SET_LIBRARY_VERSION(${LIBRARY_NAME})
-
-OSPRAY_INSTALL_LIBRARY(${LIBRARY_NAME})

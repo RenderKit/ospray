@@ -14,14 +14,12 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-include_directories(${CMAKE_CURRENT_LIST_DIR})
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_LIST_DIR})
 
-set(LIBRARY_NAME ospray_commandline)
+OPTION(OSPRAY_COMMANDLINE_TACHYON_SUPPORT "Support Tachyon scene parser" )
+MARK_AS_ADVANCED(OSPRAY_COMMANDLINE_TACHYON_SUPPORT)
 
-option(OSPRAY_COMMANDLINE_TACHYON_SUPPORT OFF)
-mark_as_advanced(OSPRAY_COMMANDLINE_TACHYON_SUPPORT)
-
-if(OSPRAY_COMMANDLINE_TACHYON_SUPPORT)
+IF(OSPRAY_COMMANDLINE_TACHYON_SUPPORT)
   # -------------------------------------------------------
   find_program(LEX_EXE flex)
   if(LEX_EXE STREQUAL "LEX_EXE-NOTFOUND")
@@ -61,10 +59,10 @@ if(OSPRAY_COMMANDLINE_TACHYON_SUPPORT)
   yacc_file(SceneParser/tachyon/parser.yy)
   lex_file(SceneParser/tachyon/lexer.ll)
 
-  add_definitions(-DOSPRAY_TACHYON_SUPPORT)
-endif()
+  ADD_DEFINITIONS(-DOSPRAY_TACHYON_SUPPORT)
+ENDIF()
 
-set(SOURCE_FILES
+SET(SOURCE_FILES
   CommandLineExport.h
   CommandLineParser.h
   CameraParser.cpp
@@ -82,43 +80,27 @@ set(SOURCE_FILES
 
   SceneParser/trianglemesh/TriangleMeshSceneParser.cpp
 
+  SceneParser/volume/VolumeSceneParser.cpp
+
   Utility.h
 )
 
-if(OSPRAY_COMMANDLINE_TACHYON_SUPPORT)
-  set(SOURCE_FILES
-    ${SOURCE_FILES}
+IF(OSPRAY_COMMANDLINE_TACHYON_SUPPORT)
+  LIST(APPEND SOURCE_FILES
     SceneParser/tachyon/TachyonSceneParser.cpp
     SceneParser/tachyon/Model.cpp
     SceneParser/tachyon/Loc.cpp
     lexer_l.cpp
     parser_y.cpp
   )
-endif()
+ENDIF()
 
-if(NOT WIN32)
-  set(SOURCE_FILES
-    ${SOURCE_FILES}
-    SceneParser/volume/VolumeSceneParser.cpp
-  )
-endif()
-
-add_library(${LIBRARY_NAME} SHARED ${SOURCE_FILES})
-
-target_link_libraries(${LIBRARY_NAME}
+OSPRAY_CREATE_LIBRARY(commandline
+  ${SOURCE_FILES}
+LINK
   ospray_common
   ospray_minisg
   ospray_xml
-)
-
-if(NOT WIN32)
-  target_link_libraries(${LIBRARY_NAME} ospray_importer ospray_tfn)
-endif()
-
-ospray_set_library_version(${LIBRARY_NAME})
-
-install(TARGETS ${LIBRARY_NAME}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT lib
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel
+  ospray_importer
+  ospray_tfn
 )
