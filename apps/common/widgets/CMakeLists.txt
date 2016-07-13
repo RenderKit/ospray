@@ -14,25 +14,15 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-set(LIBRARY_NAME ospray_glut3d)
+CONFIGURE_OSPRAY()
 
-add_library(${LIBRARY_NAME} SHARED
+OSPRAY_CREATE_LIBRARY(glut3d
   Glut3dExport.h
   glut3D.cpp
   OSPGlutViewer.cpp
-)
-
-target_link_libraries(${LIBRARY_NAME}
+LINK
   ospray
   ospray_common
   ${OPENGL_LIBRARIES}
   ${GLUT_LIBRARIES}
-)
-
-ospray_set_library_version(${LIBRARY_NAME})
-
-install(TARGETS ${LIBRARY_NAME}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT lib
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel
 )

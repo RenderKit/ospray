@@ -14,36 +14,19 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-set(APP_NAME ospBenchmark)
+CONFIGURE_OSPRAY()
 
-include_directories(
-  ${CMAKE_CURRENT_LIST_DIR}
-)
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_LIST_DIR})
 
-# --------------------------------------------
-# main executable
-# --------------------------------------------
-add_executable(${APP_NAME}
+OSPRAY_CREATE_APPLICATION(Benchmark
   bench.cpp
   OSPRayFixture.cpp
   OSPRayFixture.h
   simple_outputter.hpp
-)
-
-target_link_libraries(${APP_NAME}
+LINK
   ospray
   ospray_commandline
   ospray_common
   ospray_minisg
-)
-
-if(NOT WIN32)
-  target_link_libraries(${APP_NAME} ospray_importer)
-endif()
-
-# ------------------------------------------------------------
-
-install(TARGETS ${APP_NAME}
-  DESTINATION ${CMAKE_INSTALL_BINDIR}
-  COMPONENT apps
+  ospray_importer
 )
