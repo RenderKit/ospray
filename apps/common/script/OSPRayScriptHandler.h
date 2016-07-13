@@ -34,21 +34,31 @@
 // ChaiScript
 #include "chaiscript/chaiscript.hpp"
 
+#ifdef _WIN32
+#  ifdef ospray_script_EXPORTS
+#    define OSPSCRIPT_INTERFACE __declspec(dllexport)
+#  else
+#    define OSPSCRIPT_INTERFACE __declspec(dllimport)
+#  endif
+#else
+#  define OSPSCRIPT_INTERFACE
+#endif
+
 namespace ospray {
 
 class OSPRayScriptHandler
 {
 public:
 
-  OSPRayScriptHandler(OSPModel model, OSPRenderer renderer, OSPCamera camera);
-  ~OSPRayScriptHandler();
+  OSPSCRIPT_INTERFACE OSPRayScriptHandler(OSPModel model, OSPRenderer renderer, OSPCamera camera);
+  OSPSCRIPT_INTERFACE ~OSPRayScriptHandler();
 
-  void runScriptFromFile(const std::string &file);
+  OSPSCRIPT_INTERFACE void runScriptFromFile(const std::string &file);
 
-  void start();
-  void stop();
+  OSPSCRIPT_INTERFACE void start();
+  OSPSCRIPT_INTERFACE void stop();
 
-  bool running();
+  OSPSCRIPT_INTERFACE bool running();
 
 protected:
 
