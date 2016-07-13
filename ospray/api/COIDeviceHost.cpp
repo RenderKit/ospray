@@ -356,7 +356,7 @@ namespace ospray {
     void COIEngine::loadOSPRay()
     {
       COIRESULT result;
-      OSPRAY_COI_WORKER = getEnvVar<std::string>("OSPRAY_COI_WORKER");
+      auto OSPRAY_COI_WORKER = getEnvVar<std::string>("OSPRAY_COI_WORKER");
       auto &coiWorker = OSPRAY_COI_WORKER.second;
       if (!OSPRAY_COI_WORKER.first) {
         cerr << "Error: OSPRAY_COI_WORKER not defined." << endl;
@@ -369,7 +369,8 @@ namespace ospray {
              << " this executable." << endl;
         exit(1);
       }
-      SINK_LD_LIBRARY_PATH = getEnvVar<std::string>("SINK_LD_LIBRARY_PATH");
+      auto SINK_LD_LIBRARY_PATH =
+          getEnvVar<std::string>("SINK_LD_LIBRARY_PATH");
       if (!SINK_LD_LIBRARY_PATH.first) {
         cerr << "SINK_LD_LIBRARY_PATH not defined." << endl;
         cerr << "Note: In order for the COI version of OSPRay to find all"
