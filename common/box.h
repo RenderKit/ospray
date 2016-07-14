@@ -51,6 +51,13 @@ namespace ospcommon {
   template<typename scalar_t>
   inline scalar_t area(const box_t<scalar_t,2> &b) { return b.size().product(); }
 
+  template<typename scalar_t, int A>
+  inline scalar_t area(const box_t<scalar_t,3,A> &b) 
+  {
+    const typename box_t<scalar_t,3,A>::vec_t size = b.size();
+    return 2.f*(size.x*size.y+size.x*size.z+size.y*size.z); 
+  }
+  
   /*! return the volume of the 3D box - undefined for empty boxes */
   template<typename scalar_t, int A>
   inline scalar_t volume(const box_t<scalar_t,3,A> &b) { return b.size().product(); }
