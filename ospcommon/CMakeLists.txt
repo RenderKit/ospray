@@ -49,3 +49,22 @@ OSPRAY_CREATE_LIBRARY(common
 LINK
   ${LINK_LIBS}
 )
+
+OSPRAY_INSTALL_SDK_HEADERS(
+  box.h
+  common.h
+  constants.h
+  FileName.h
+  intrinsics.h
+  library.h
+  LinearSpace.h
+  malloc.h
+  math.h
+  platform.h
+  Quaternion.h
+  RefCount.h
+  sysinfo.h
+  thread.h
+  vec.h
+  DESTINATION ../ospcommon #NOTE: this is "next" to the SDK/ directory
+)
