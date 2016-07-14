@@ -22,6 +22,7 @@ using namespace ospray;
 using namespace ospcommon;
 
 #include "common/importer/Importer.h"
+#include "common/tfn_lib/tfn_lib.h"
 
 #include <iostream>
 using std::cerr;
@@ -39,6 +40,7 @@ VolumeSceneParser::VolumeSceneParser(cpp::Renderer renderer) :
 bool VolumeSceneParser::parse(int ac, const char **&av)
 {
   bool loadedScene = false;
+  bool loadedTransferFunction = false;
 
   FileName scene;
 
@@ -55,6 +57,9 @@ bool VolumeSceneParser::parse(int ac, const char **&av)
       m_tf_colors.push_back(color);
     } else if (arg == "-tfs" || arg == "--tf-scale") {
       m_tf_scale = atof(av[++i]);
+    } else if (arg == "-tff" || arg == "--tf-file") {
+      importTransferFunction(std::string(av[++i]));
+      loadedTransferFunction = true;
     } else if (arg == "-is" || arg == "--surface") {
       m_isosurfaces.push_back(atof(av[++i]));
     } else {
@@ -67,8 +72,10 @@ bool VolumeSceneParser::parse(int ac, const char **&av)
   }
 
   if (loadedScene) {
-    createDefaultTransferFunction();
-    importObjectsFromFile(scene);
+    if (!loadedTransferFunction) {
+      createDefaultTransferFunction();
+    }
+    importObjectsFromFile(scene, loadedTransferFunction);
   }
 
   return loadedScene;
@@ -84,7 +91,8 @@ ospcommon::box3f VolumeSceneParser::bbox() const
   return m_bbox;
 }
 
-void VolumeSceneParser::importObjectsFromFile(const std::string &filename)
+void VolumeSceneParser::importObjectsFromFile(const std::string &filename,
+                                              bool loadedTransferFunction)
 {
   auto &model = m_model;
 
@@ -112,9 +120,12 @@ void VolumeSceneParser::importObjectsFromFile(const std::string &filename)
     model.addVolume(volume);
 
     // Set the minimum and maximum values in the domain for both color and
-    // opacity components of the transfer function.
-    m_tf.set("valueRange", vol->voxelRange.x, vol->voxelRange.y);
-    m_tf.commit();
+    // opacity components of the transfer function if we didn't load a transfer
+    // function for a file (in that case this is already set)
+    if (!loadedTransferFunction) {
+      m_tf.set("valueRange", vol->voxelRange.x, vol->voxelRange.y);
+      m_tf.commit();
+    }
 
     //m_bbox.extend(vol->bounds);
     m_bbox = vol->bounds;
@@ -136,6 +147,60 @@ void VolumeSceneParser::importObjectsFromFile(const std::string &filename)
   model.commit();
 }
 
+void VolumeSceneParser::importTransferFunction(const std::string &filename)
+{
+  tfn::TransferFunction fcn(filename);
+  auto colorsData = ospray::cpp::Data(fcn.rgbValues.size(), OSP_FLOAT3,
+                                      fcn.rgbValues.data());
+  m_tf.set("colors", colorsData);
+
+  m_tf_scale = fcn.opacityScaling;
+  // Sample the opacity values, taking 256 samples to match the volume viewer
+  // the volume viewer does the sampling a bit differently so we match that
+  // instead of what's done in createDefault
+  std::vector<float> opacityValues;
+  const int N_OPACITIES = 256;
+  size_t lo = 0;
+  size_t hi = 1;
+  for (int i = 0; i < N_OPACITIES; ++i) {
+    const float x = float(i) / float(N_OPACITIES - 1);
+    float opacity = 0;
+    if (i == 0) {
+      opacity = fcn.opacityValues[0].y;
+    } else if (i == N_OPACITIES - 1) {
+      opacity = fcn.opacityValues.back().y;
+    } else {
+      // If we're over this val, find the next segment
+      if (x > fcn.opacityValues[lo].x) {
+        for (size_t j = lo; j < fcn.opacityValues.size() - 1; ++j) {
+          if (x <= fcn.opacityValues[j + 1].x) {
+            lo = j;
+            hi = j + 1;
+            break;
+          }
+        }
+      }
+      const float delta = x - fcn.opacityValues[lo].x;
+      const float interval = fcn.opacityValues[hi].x - fcn.opacityValues[lo].x;
+      if (delta == 0 || interval == 0) {
+        opacity = fcn.opacityValues[lo].y;
+      } else {
+        opacity = fcn.opacityValues[lo].y + delta / interval
+          * (fcn.opacityValues[hi].y - fcn.opacityValues[lo].y);
+      }
+    }
+    opacityValues.push_back(m_tf_scale * opacity);
+  }
+
+  auto opacityValuesData = ospray::cpp::Data(opacityValues.size(),
+                                             OSP_FLOAT,
+                                             opacityValues.data());
+  m_tf.set("opacities", opacityValuesData);
+  m_tf.set("valueRange", vec2f(fcn.dataValueMin, fcn.dataValueMax));
+
+  // Commit transfer function
+  m_tf.commit();
+}
 void VolumeSceneParser::createDefaultTransferFunction()
 {
   // Add colors

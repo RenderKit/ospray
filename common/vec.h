@@ -512,12 +512,12 @@ namespace ospcommon {
   // -------------------------------------------------------
   // parsing from strings
   // -------------------------------------------------------
-  vec2f toVec2f(const char *ptr);
-  vec3f toVec3f(const char *ptr);
-  vec4f toVec4f(const char *ptr);
-  vec2i toVec2i(const char *ptr);
-  vec3i toVec3i(const char *ptr);
-  vec4i toVec4i(const char *ptr);
+  OSPCOMMON_INTERFACE vec2f toVec2f(const char *ptr);
+  OSPCOMMON_INTERFACE vec3f toVec3f(const char *ptr);
+  OSPCOMMON_INTERFACE vec4f toVec4f(const char *ptr);
+  OSPCOMMON_INTERFACE vec2i toVec2i(const char *ptr);
+  OSPCOMMON_INTERFACE vec3i toVec3i(const char *ptr);
+  OSPCOMMON_INTERFACE vec4i toVec4i(const char *ptr);
 
 
 } // ::ospcommon

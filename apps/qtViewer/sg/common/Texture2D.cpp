@@ -41,13 +41,13 @@ namespace ospray {
           char lineBuf[LINESZ+1]; 
 
           if (!file) 
-            throw std::runtime_error("#osp:miniSG: could not open texture file '"+fileName.str()+"'.");
+            throw std::runtime_error("#osp:sg: could not open texture file '"+fileName.str()+"'.");
           
           // read format specifier:
           int format=0;
           fscanf(file,"P%i\n",&format);
           if (format != 6) 
-            throw std::runtime_error("#osp:miniSG: can currently load only binary P6 subformats for PPM texture files. "
+            throw std::runtime_error("#osp:sg: can currently load only binary P6 subformats for PPM texture files. "
                                      "Please report this bug at ospray.github.io.");
 
           // skip all comment lines
@@ -61,7 +61,7 @@ namespace ospray {
           int width=-1,height=-1;
           rc = fscanf(file,"%i %i\n",&width,&height);
           if (rc != 2) 
-            throw std::runtime_error("#osp:miniSG: could not parse width and height in P6 PPM file '"+fileName.str()+"'. "
+            throw std::runtime_error("#osp:sg: could not parse width and height in P6 PPM file '"+fileName.str()+"'. "
                                      "Please report this bug at ospray.github.io, and include named file to reproduce the error.");
         
           // skip all comment lines
@@ -77,10 +77,10 @@ namespace ospray {
             peekchar = getc(file);
 
           if (rc != 1) 
-            throw std::runtime_error("#osp:miniSG: could not parse maxval in P6 PPM file '"+fileName.str()+"'. "
+            throw std::runtime_error("#osp:sg: could not parse maxval in P6 PPM file '"+fileName.str()+"'. "
                                      "Please report this bug at ospray.github.io, and include named file to reproduce the error.");
           if (maxVal != 255)
-            throw std::runtime_error("#osp:miniSG: could not parse P6 PPM file '"+fileName.str()+"': currently supporting only maxVal=255 formats."
+            throw std::runtime_error("#osp:sg: could not parse P6 PPM file '"+fileName.str()+"': currently supporting only maxVal=255 formats."
                                      "Please report this bug at ospray.github.io, and include named file to reproduce the error.");
         
           tex = new Texture2D;

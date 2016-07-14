@@ -416,10 +416,10 @@ namespace ospray {
 
     void importOBJ(const Ref<World> &world, const FileName &fileName)
     {
-      std::cout << "ospray::miniSG::importOBJ: importing from " << fileName << endl;
+      std::cout << "ospray::sg::importOBJ: importing from " << fileName << endl;
       OBJLoader loader(world.ptr,fileName);
     }
 
-  } // ::ospray::minisg
+  }
 } // ::ospray
 

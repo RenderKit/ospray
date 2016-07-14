@@ -391,7 +391,7 @@ void QOSPRayWindow::writeFrameBufferToFile(std::string filename, const uint32_t 
       out[3 * x + 1] = in[4 * x + 1];
       out[3 * x + 2] = in[4 * x + 2];
     }
-    fwrite(&out, 3 * windowSize.x, sizeof(char), file);
+    fwrite(out, 3 * windowSize.x, sizeof(char), file);
   }
   fprintf(file, "\n");
   fclose(file);

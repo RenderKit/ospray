@@ -16,16 +16,12 @@
 
 CONFIGURE_OSPRAY()
 
-OSPRAY_CREATE_LIBRARY(loaders
-  ObjectFile.cpp
-  OSPObjectFile.cpp
-  PLYTriangleMeshFile.cpp
-  RawVolumeFile.cpp
-  RMVolumeFile.cpp
-  SymbolRegistry.cpp
-  TinyXML2.cpp
-  TriangleMeshFile.cpp
-  VolumeFile.cpp
+OSPRAY_CREATE_LIBRARY(tfn tfn_lib.cpp LINK ospray_common)
+
+OSPRAY_CREATE_APPLICATION(CvtParaViewTfcn
+  convertParaViewTfcn.cpp
+  jsoncpp.cpp
 LINK
-  ${OSPRAY_LIBRARIES}
+  ospray_common
+  ospray_tfn
 )

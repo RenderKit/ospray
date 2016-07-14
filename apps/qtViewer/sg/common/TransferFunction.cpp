@@ -88,7 +88,7 @@ namespace ospray {
         lastModified = TimeStamp::now();
       }
       if (ospAlphaData == NULL) {
-        float alpha[numSamples];
+        float *alpha = (float*)alloca(sizeof(float)*numSamples);
         float x0 = alphaArray.front().first;
         float dx = (alphaArray.back().first - x0) / (numSamples-1);
 

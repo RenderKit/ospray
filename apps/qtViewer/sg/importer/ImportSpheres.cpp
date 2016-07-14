@@ -28,11 +28,6 @@
 #include <map>
 // xml
 #include "common/xml/XML.h"
-// stdlib, for mmap
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <fcntl.h>
 
 namespace ospray {
   namespace sg {

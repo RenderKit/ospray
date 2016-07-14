@@ -44,7 +44,7 @@ namespace ospray {
     /*! it's up to the proper init routine to decide which processes
       call this function and which ones don't. This function will not
       return. */
-    void runWorker();
+    OSPRAY_INTERFACE void runWorker();
 
 
     /*! in this mode ("ospray on ranks" mode, or "ranks" mode), the
@@ -366,9 +366,9 @@ namespace ospray {
                          int *_ac, const char **_av)
       : currentApiMode(OSPD_MODE_MASTERED)
     {
-      char *logLevelFromEnv = getenv("OSPRAY_LOG_LEVEL");
-      if (logLevelFromEnv && logLevel == 0)
-        logLevel = atoi(logLevelFromEnv);
+      auto logLevelFromEnv = getEnvVar<int>("OSPRAY_LOG_LEVEL");
+      if (logLevelFromEnv.first && logLevel == 0)
+        logLevel = logLevelFromEnv.second;
 
       if (mpi::world.size != 1) {
         if (mpi::world.rank < 0) {

@@ -33,7 +33,6 @@ namespace osp {
 
 // ospray API
 #include "ospray/ospray.h"
-// STL
 
 namespace ospray {
   namespace sg {
@@ -43,7 +42,7 @@ namespace ospray {
     typedef LinearSpace3f linear3f;
 
 #define THROW_SG_ERROR(err) \
-    throw std::runtime_error("in "+std::string(__PRETTY_FUNCTION__)+":"+std::string(err));
+    throw std::runtime_error("in "+std::string(__PRETTY_FUNCTION__)+":"+std::string(err))
 
     typedef unsigned int uint;
     
@@ -73,6 +72,9 @@ namespace ospray {
     vec3i parseVec3i(const std::string &text);
 
     /*! @} */
+
+    //! map the given file to memory and return that pointer
+    const unsigned char * mapFile(const std::string &fileName);
 
   } // ::ospray::sg
 } // ::ospray
