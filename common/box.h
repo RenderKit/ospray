@@ -62,6 +62,25 @@ namespace ospcommon {
   template<typename scalar_t, int A>
   inline scalar_t volume(const box_t<scalar_t,3,A> &b) { return b.size().product(); }
 
+  /*! computes whether two boxes are either touching OR overlapping;
+      ie, the case where boxes just barely touch side-by side (even if
+      they do not have any actual overlapping _volume_!) then this is
+      still true */
+  template<typename scalar_t, int A>
+  inline bool touchingOrOverlapping(const box_t<scalar_t,3,A> &a,
+                                    const box_t<scalar_t,3,A> &b)
+  { 
+    if (a.lower.x > b.upper.x) return false;
+    if (a.lower.y > b.upper.y) return false;
+    if (a.lower.z > b.upper.z) return false;
+
+    if (b.lower.x > a.upper.x) return false;
+    if (b.lower.y > a.upper.y) return false;
+    if (b.lower.z > a.upper.z) return false;
+
+    return true;
+  }
+    
 
   /*! compute the intersection of two boxes */
   template<typename T, int N, int A>
