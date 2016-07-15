@@ -51,6 +51,7 @@ LINK
 )
 
 OSPRAY_INSTALL_SDK_HEADERS(
+  AffineSpace.h
   box.h
   common.h
   constants.h
