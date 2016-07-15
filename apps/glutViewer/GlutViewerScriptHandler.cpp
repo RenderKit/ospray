@@ -18,6 +18,7 @@
 #include "ScriptedOSPGlutViewer.h"
 
 #include <iostream>
+using std::endl;
 
 namespace ospray {
 
