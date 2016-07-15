@@ -56,8 +56,17 @@ namespace ospcommon {
     }
 #endif
 
-    if (lib == NULL)
+    if (lib == NULL) {
+#ifdef _WIN32
+      // TODO: Must use GetLastError and FormatMessage on windows
+      // to log out the error that occurred when calling LoadLibrary
       throw std::runtime_error("could not open module lib "+name);
+#else
+      std::string error = dlerror();
+      throw std::runtime_error("could not open module lib "+name
+          +" due to "+error);
+#endif
+    }
   }
 
   Library::Library(void* const lib) : lib(lib) {};

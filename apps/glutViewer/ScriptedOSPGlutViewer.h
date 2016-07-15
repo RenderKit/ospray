@@ -21,19 +21,19 @@
 
 namespace ospray {
 
-class ScriptedOSPGlutViewer : public OSPGlutViewer
-{
-public:
+  class ScriptedOSPGlutViewer : public OSPGlutViewer
+  {
+  public:
 
-  ScriptedOSPGlutViewer(const ospcommon::box3f &worldBounds,
-                        cpp::Model model, cpp::Renderer renderer,
-                        cpp::Camera camera, std::string scriptFileName = "");
+    ScriptedOSPGlutViewer(const ospcommon::box3f &worldBounds,
+                          cpp::Model model, cpp::Renderer renderer,
+                          cpp::Camera camera, std::string scriptFileName = "");
 
-private:
+  private:
 
-  void keypress(char key, const ospcommon::vec2i &where) override;
+    void keypress(char key, const ospcommon::vec2i &where) override;
 
-  GlutViewerScriptHandler m_scriptHandler;
-};
+    GlutViewerScriptHandler m_scriptHandler;
+  };
 
 }// namespace ospray
