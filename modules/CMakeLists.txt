@@ -15,7 +15,18 @@
 ## ======================================================================== ##
 
 INCLUDE_DIRECTORIES(
+  ${CMAKE_SOURCE_DIR}/ospray/include
+  ${CMAKE_SOURCE_DIR}/ospray
   ${CMAKE_SOURCE_DIR}
+  ${PROJECT_BINARY_DIR}
+  ${EMBREE_INCLUDE_DIRS}
+)
+INCLUDE_DIRECTORIES_ISPC(
+  ${CMAKE_SOURCE_DIR}/ospray/include
+  ${CMAKE_SOURCE_DIR}/ospray
+  ${CMAKE_SOURCE_DIR}
+  ${PROJECT_BINARY_DIR}
+  ${EMBREE_INCLUDE_DIRS}
 )
 
 FILE(GLOB plugins RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/ *)
