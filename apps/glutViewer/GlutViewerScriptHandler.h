@@ -20,24 +20,24 @@
 
 namespace ospray {
 
-class ScriptedOSPGlutViewer;
+  class ScriptedOSPGlutViewer;
 
-class GlutViewerScriptHandler : public OSPRayScriptHandler
-{
-public:
+  class GlutViewerScriptHandler : public OSPRayScriptHandler
+  {
+  public:
 
-  GlutViewerScriptHandler(OSPModel              model,
-                          OSPRenderer           renderer,
-                          OSPCamera             camera,
-                          ScriptedOSPGlutViewer  *viewer);
+    GlutViewerScriptHandler(OSPModel                model,
+                            OSPRenderer             renderer,
+                            OSPCamera               camera,
+                            ScriptedOSPGlutViewer  *viewer);
 
-private:
+  private:
 
-  void registerScriptFunctions();
+    void registerScriptFunctions();
 
-  // Data //
+    // Data //
 
-  ScriptedOSPGlutViewer *m_viewer;
-};
+    ScriptedOSPGlutViewer *m_viewer;
+  };
 
 }// namespace ospray

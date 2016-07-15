@@ -95,7 +95,8 @@ namespace ospray {
               if (msgAvail){
                 break;
               }
-              std::this_thread::sleep_for(std::chrono::milliseconds(1));
+              // std::this_thread::sleep_for(std::chrono::milliseconds(1));
+              usleep(100);
             }
             Action *action = new Action;
             action->addr = Address(g,status.MPI_SOURCE);

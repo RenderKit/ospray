@@ -16,43 +16,43 @@
 
 #include "ScriptedOSPGlutViewer.h"
 
-using std::cout;
-using std::endl;
-
-using std::string;
-
-using std::lock_guard;
-using std::mutex;
-
-using namespace ospcommon;
-
 // MSGViewer definitions //////////////////////////////////////////////////////
 
 namespace ospray {
 
-ScriptedOSPGlutViewer::ScriptedOSPGlutViewer(const box3f   &worldBounds,
-                                             cpp::Model     model,
-                                             cpp::Renderer  renderer,
-                                             cpp::Camera    camera,
-                                             std::string    scriptFileName)
-  : OSPGlutViewer(worldBounds, model, renderer, camera),
-    m_scriptHandler(model.handle(), renderer.handle(), camera.handle(), this)
-{
-  if (!scriptFileName.empty())
-    m_scriptHandler.runScriptFromFile(scriptFileName);
-}
+  using std::cout;
+  using std::endl;
+  
+  using std::string;
+  
+  using std::lock_guard;
+  using std::mutex;
+  
+  using namespace ospcommon;
 
-void ScriptedOSPGlutViewer::keypress(char key, const vec2i &where)
-{
-  switch (key) {
-  case ':':
-    if (!m_scriptHandler.running()) {
-      m_scriptHandler.start();
-    }
-    break;
-  default:
-    OSPGlutViewer::keypress(key,where);
+  ScriptedOSPGlutViewer::ScriptedOSPGlutViewer(const box3f   &worldBounds,
+                                               cpp::Model     model,
+                                               cpp::Renderer  renderer,
+                                               cpp::Camera    camera,
+                                               std::string    scriptFileName)
+    : OSPGlutViewer(worldBounds, model, renderer, camera),
+      m_scriptHandler(model.handle(), renderer.handle(), camera.handle(), this)
+  {
+    if (!scriptFileName.empty())
+      m_scriptHandler.runScriptFromFile(scriptFileName);
   }
-}
+
+  void ScriptedOSPGlutViewer::keypress(char key, const vec2i &where)
+  {
+    switch (key) {
+    case ':':
+      if (!m_scriptHandler.running()) {
+        m_scriptHandler.start();
+      }
+      break;
+    default:
+      OSPGlutViewer::keypress(key,where);
+    }
+  }
 
 }// namepace ospray
