@@ -14,19 +14,17 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-set(APP_NAME ospGlutViewer)
+FIND_PACKAGE(Readline)
 
-find_package(Readline)
+IF(READLINE_FOUND)
+  ADD_DEFINITIONS(-DUSE_SYSTEM_READLINE)
+  SET(Readline_INC ${Readline_INCLUDE_DIR})
+  SET(Readline_LIB ${Readline_LIBRARY})
+ELSE()
+  MESSAGE(STATUS "Readline NOT found, command history feature NOT enabled.")
+ENDIF()
 
-if(READLINE_FOUND)
-  add_definitions(-DUSE_SYSTEM_READLINE)
-  set(Readline_INC ${Readline_INCLUDE_DIR})
-  set(Readline_LIB ${Readline_LIBRARY})
-else()
-  message(STATUS "Readline NOT found, command history feature NOT enabled.")
-endif()
-
-include_directories(
+INCLUDE_DIRECTORIES(
   ${CMAKE_CURRENT_LIST_DIR}
   ${CMAKE_CURRENT_LIST_DIR}/script
   ${Readline_INC}
@@ -36,43 +34,33 @@ include_directories(
 # main executable
 # --------------------------------------------
 
-set(APP_SRCS
+SET(APP_SRCS
   glutViewer.cpp
 )
 
-if(OSPRAY_APPS_ENABLE_SCRIPTING)
-  set(APP_SRCS ${APP_SRCS}
+IF(OSPRAY_APPS_ENABLE_SCRIPTING)
+  LIST(APPEND APP_SRCS
     ScriptedOSPGlutViewer.cpp
     ScriptedOSPGlutViewer.h
     GlutViewerScriptHandler.cpp
     GlutViewerScriptHandler.h
   )
-endif()
+ENDIF()
 
-add_executable(${APP_NAME} ${APP_SRCS})
-
-target_link_libraries(${APP_NAME}
+SET(LIBS
   ospray
   ospray_commandline
   ospray_common
   ospray_glut3d
   ospray_minisg
+  ospray_importer
   ${OPENGL_LIBRARIES}
   ${GLUT_LIBRARIES}
   ${Readline_LIB}
 )
 
-if(NOT WIN32)
-  target_link_libraries(${APP_NAME} ospray_importer)
-endif()
+IF (OSPRAY_APPS_ENABLE_SCRIPTING)
+  LIST(APPEND LIBS ospray_script)
+ENDIF()
 
-if(OSPRAY_APPS_ENABLE_SCRIPTING)
-  target_link_libraries(${APP_NAME} ospray_script)
-endif()
-
-# ------------------------------------------------------------
-
-install(TARGETS ${APP_NAME}
-  DESTINATION ${CMAKE_INSTALL_BINDIR}
-  COMPONENT apps
-)
+OSPRAY_CREATE_APPLICATION(GlutViewer ${APP_SRCS} LINK ${LIBS})

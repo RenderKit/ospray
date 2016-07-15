@@ -14,30 +14,14 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(OSPRAY_MODULE_SEISMIC OFF CACHE BOOL "Build seismic volume file support module")
-
 CONFIGURE_OSPRAY()
 
-IF(NOT THIS_IS_MIC AND OSPRAY_MODULE_SEISMIC)
-  IF (NOT OSPRAY_MODULE_LOADERS)
-    message(FATAL_ERROR
-        "The 'loaders' module must be enabled to build the 'seismic' module.")
-  ENDIF (NOT OSPRAY_MODULE_LOADERS)
+OSPRAY_CREATE_LIBRARY(tfn tfn_lib.cpp LINK ospray_common)
 
-  INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray)
-  INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
-
-  LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/modules/seismic)
-  FIND_PACKAGE(FreeDDS REQUIRED)
-  INCLUDE_DIRECTORIES(${FreeDDS_INCLUDE_DIRS})
-
-  ADD_LIBRARY(ospray_module_seismic SHARED
-    SeismicHorizonFile.cpp
-    SeismicVolumeFile.cpp
-    SymbolRegistry.cpp
-  )
-
-  TARGET_LINK_LIBRARIES(ospray_module_seismic ${FreeDDS_LIBRARIES})
-  OSPRAY_SET_LIBRARY_VERSION(ospray_module_seismic)
-  OSPRAY_INSTALL_LIBRARY(ospray_module_seismic)
-ENDIF()
+OSPRAY_CREATE_APPLICATION(CvtParaViewTfcn
+  convertParaViewTfcn.cpp
+  jsoncpp.cpp
+LINK
+  ospray_common
+  ospray_tfn
+)

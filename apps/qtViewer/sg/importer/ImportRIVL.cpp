@@ -16,11 +16,6 @@
 
 #undef NDEBUG
 
-// O_LARGEFILE is a GNU extension.
-#ifdef __APPLE__
-#define  O_LARGEFILE  0
-#endif
-
 #define WARN_ON_INCLUDING_OSPCOMMON 1
 
 #include "SceneGraph.h"
@@ -28,11 +23,6 @@
 #include "sg/geometry/TriangleMesh.h"
 // stl
 #include <map>
-// stdlib, for mmap
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <fcntl.h>
 
 namespace ospray {
   namespace sg {
@@ -468,23 +458,7 @@ namespace ospray {
     {
       string xmlFileName = fileName;
       string binFileName = fileName+".bin";
-
-      FILE *file = fopen(binFileName.c_str(),"rb");
-      if (!file)
-        perror("could not open binary file");
-      fseek(file,0,SEEK_END);
-      ssize_t fileSize =
-#ifdef _WIN32
-        _ftelli64(file);
-#else
-        ftell(file);
-#endif
-      fclose(file);
-
-      int fd = ::open(binFileName.c_str(),O_LARGEFILE|O_RDWR);
-      if (fd == -1)
-        perror("could not open file");
-      binBasePtr = (unsigned char *)mmap(NULL,fileSize,PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);
+      const unsigned char * const binBasePtr = mapFile(binFileName);
 
       xml::XMLDoc *doc = xml::readXML(fileName);
       if (doc->child.size() != 1 || doc->child[0]->name != "BGFscene")

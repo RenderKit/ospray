@@ -44,11 +44,11 @@ namespace ospray {
       throw std::runtime_error("embree internal error '" +std::string(str)+"'");
     }
 
-    LocalDevice::LocalDevice(int *_ac, const char **_av)
+    LocalDevice::LocalDevice(int */*_ac*/, const char **/*_av*/)
     {
-      char *logLevelFromEnv = getenv("OSPRAY_LOG_LEVEL");
-      if (logLevelFromEnv && logLevel == 0)
-        logLevel = atoi(logLevelFromEnv);
+      auto logLevelFromEnv = getEnvVar<int>("OSPRAY_LOG_LEVEL");
+      if (logLevelFromEnv.first && logLevel == 0)
+        logLevel = logLevelFromEnv.second;
 
       // -------------------------------------------------------
       // initialize embree. (we need to do this here rather than in

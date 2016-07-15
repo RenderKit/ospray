@@ -383,7 +383,7 @@ void QOSPRayWindow::writeFrameBufferToFile(std::string filename, const uint32_t 
     return;
   }
   fprintf(file, "P6\n%i %i\n255\n", windowSize.x, windowSize.y);
-  unsigned char out[3 * windowSize.x];
+  unsigned char *out = (unsigned char *)alloca(3 * windowSize.x);
   for (int y=0 ; y < windowSize.y ; y++) {
     const unsigned char *in = (const unsigned char *) &pixelData[(windowSize.y - 1 - y) * windowSize.x];
     for (int x=0 ; x < windowSize.x ; x++) {
@@ -391,7 +391,7 @@ void QOSPRayWindow::writeFrameBufferToFile(std::string filename, const uint32_t 
       out[3 * x + 1] = in[4 * x + 1];
       out[3 * x + 2] = in[4 * x + 2];
     }
-    fwrite(&out, 3 * windowSize.x, sizeof(char), file);
+    fwrite(out, 3 * windowSize.x, sizeof(char), file);
   }
   fprintf(file, "\n");
   fclose(file);

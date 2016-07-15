@@ -26,9 +26,8 @@ IF(NOT THIS_IS_MIC)
 
   # common utilities
   ADD_SUBDIRECTORY(common/commandline)
-  IF(NOT WIN32)
-    ADD_SUBDIRECTORY(common/importer)
-  ENDIF()
+  ADD_SUBDIRECTORY(common/importer)
+  ADD_SUBDIRECTORY(common/tfn_lib)
   ADD_SUBDIRECTORY(common/miniSG)
   ADD_SUBDIRECTORY(common/xml)
 
@@ -65,7 +64,6 @@ IF(NOT THIS_IS_MIC)
     ADD_SUBDIRECTORY(glutViewer)
   ENDIF()
 
- IF(NOT WIN32)
   # NOTE(jda) - Disable Qt based viewers when on OS X using ICC due to
   #             unresolved issues
   # qt-based viewer for geometry (and soon volumes)
@@ -83,5 +81,4 @@ IF(NOT THIS_IS_MIC)
       ADD_SUBDIRECTORY(volumeViewer)
     ENDIF()
   ENDIF()
- ENDIF(NOT WIN32)
 ENDIF()

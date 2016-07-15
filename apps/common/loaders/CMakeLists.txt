@@ -14,9 +14,9 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-set(LIBRARY_NAME ospray_loaders)
+CONFIGURE_OSPRAY()
 
-add_library(${LIBRARY_NAME} SHARED
+OSPRAY_CREATE_LIBRARY(loaders
   ObjectFile.cpp
   OSPObjectFile.cpp
   PLYTriangleMeshFile.cpp
@@ -26,8 +26,6 @@ add_library(${LIBRARY_NAME} SHARED
   TinyXML2.cpp
   TriangleMeshFile.cpp
   VolumeFile.cpp
+LINK
+  ${OSPRAY_LIBRARIES}
 )
-
-target_link_libraries(${LIBRARY_NAME} ${OSPRAY_LIBRARIES})
-
-install(TARGETS ${LIBRARY_NAME} DESTINATION lib)

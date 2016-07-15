@@ -14,22 +14,15 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-set(LIBRARY_NAME ospray_importer)
+CONFIGURE_OSPRAY()
 
-add_library(${LIBRARY_NAME} SHARED
+OSPRAY_CREATE_LIBRARY(importer
   importOSP.cpp
   importRAW.cpp
   importRM.cpp
   Importer.cpp
   TinyXML2.cpp
-)
-
-target_link_libraries(${LIBRARY_NAME} ospray_common ospray)
-
-ospray_set_library_version(${LIBRARY_NAME})
-
-install(TARGETS ${LIBRARY_NAME}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT lib
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel
+LINK
+  ospray_common
+  ospray
 )

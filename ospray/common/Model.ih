@@ -38,7 +38,7 @@ struct Model {
   uniform int32 geometryCount;
 
   //! volumes contained in the model
-  Volume **uniform volumes;
+  uniform Volume *uniform *uniform volumes;
   uniform int32 volumeCount;
 
 };

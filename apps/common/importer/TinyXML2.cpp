@@ -38,6 +38,7 @@ distribution.
 */
 
 #include "TinyXML2.h"
+#include "common/common.h"
 
 #include <new>          // yes, this one new style header, is in the Android SDK.
 #   ifdef ANDROID_NDK

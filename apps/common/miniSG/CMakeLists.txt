@@ -14,31 +14,31 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-set(LIBRARY_NAME ospray_minisg)
+IF (APPLE)
+  # the magick libraries apparently have some issues on mac that requrie
+  # ospray to be built with very special compile flags; we can specify those,
+  # but then it no longer works with the mac-version of Qt, so we currently
+  # pick qt compatiblity over magick compatibility.
+  SET(USE_IMAGE_MAGICK OFF)
+ELSE()
+  OPTION(USE_IMAGE_MAGICK "Use ImageMagick for ModelViewer's Texture loaders.")
+  MARK_AS_ADVANCED(USE_IMAGE_MAGICK)
+ENDIF()
 
-set(USE_IMAGE_MAGICK OFF CACHE BOOL "Use ImageMagick for ModelViewer's Texture loaders.")
-mark_as_advanced(USE_IMAGE_MAGICK)
-if (USE_IMAGE_MAGICK)
-  if (APPLE)
-    message(ERROR "ImageMagick currently not supported under Apple")
-    # the magick libraries apparently have some issues on mac that
-    # requrie ospray to be built with very special compile flags; we
-    # can specify those, but then it no longer works with the
-    # mac-version of Qt, so we currently pick qt compatibliity over
-    # magick compatibility.
-  else(APPLE)
-    find_package(ImageMagick COMPONENTS Magick++)
-    if (IMAGEMAGICK_FOUND)
-      add_definitions(-DUSE_IMAGEMAGICK)
-      include_directories(${ImageMagick_Magick++_INCLUDE_DIR})
-      set(MAGICK_LIBRARIES ${ImageMagick_Magick++_LIBRARY})
-    else (IMAGEMAGICK_FOUND)
-      message(STATUS "ImageMagick not found. Texture loaders other than PPM are disabled.")
-    endif (IMAGEMAGICK_FOUND)
-  endif(APPLE)
-endif (USE_IMAGE_MAGICK)
+CONFIGURE_OSPRAY()
 
-add_library(${LIBRARY_NAME}
+IF (USE_IMAGE_MAGICK)
+  FIND_PACKAGE(ImageMagick COMPONENTS Magick++)
+  IF (IMAGEMAGICK_FOUND)
+    ADD_DEFINITIONS(-DUSE_IMAGEMAGICK)
+    INCLUDE_DIRECTORIES(${ImageMagick_Magick++_INCLUDE_DIR})
+    SET(MAGICK_LIBRARIES ${ImageMagick_Magick++_LIBRARY})
+  ELSE()
+    MESSAGE(STATUS "ImageMagick not found. Texture loaders other than PPM are disabled.")
+  ENDIF()
+ENDIF()
+
+ADD_LIBRARY(ospray_minisg STATIC
   miniSG.cpp
   importer.cpp
   importOBJ.cpp
@@ -50,17 +50,9 @@ add_library(${LIBRARY_NAME}
   importRIVL.cpp
 )
 
-target_link_libraries(${LIBRARY_NAME}
+TARGET_LINK_LIBRARIES(ospray_minisg
   ospray_xml
   ospray_common
   ospray
   ${MAGICK_LIBRARIES}
-)
-
-ospray_set_library_version(${LIBRARY_NAME})
-
-install(TARGETS ${LIBRARY_NAME}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT lib
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel
 )

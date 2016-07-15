@@ -16,7 +16,7 @@
 
 IF (NOT OSPRAY_MODULE_OPENGL_UTIL)
   message(FATAL_ERROR "The 'OpenGL util' module must be enabled to build the 'ospVolumeViewer' application.")
-ENDIF (NOT OSPRAY_MODULE_OPENGL_UTIL)
+ENDIF()
 
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
@@ -25,6 +25,7 @@ SET(LIBS ${LIBS} ospray)
 SET(LIBS ${LIBS} ospray_common)
 SET(LIBS ${LIBS} ospray_importer)
 SET(LIBS ${LIBS} ospray_module_opengl_util)
+SET(LIBS ${LIBS} ospray_tfn)
 
 # link optional loaders-based modules if built
 IF (OSPRAY_MODULE_SEISMIC)
@@ -74,9 +75,9 @@ SET(MOC_HEADERS
 
 QT4_WRAP_CPP(MOC_OUTFILES ${MOC_HEADERS})
 
-ADD_EXECUTABLE(ospVolumeViewer ${SRCS} ${MOC_OUTFILES})
-TARGET_LINK_LIBRARIES(ospVolumeViewer ${LIBS})
-INSTALL(TARGETS ospVolumeViewer
-  DESTINATION ${CMAKE_INSTALL_BINDIR}
-  COMPONENT apps
+OSPRAY_CREATE_APPLICATION(VolumeViewer
+  ${SRCS}
+  ${MOC_OUTFILES}
+LINK
+  ${LIBS} 
 )

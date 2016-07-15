@@ -89,7 +89,7 @@ namespace ospray {
                             ? "data_distributed_volume"
                             : "block_bricked_volume");
       if (!volume)
-        THROW_SG_ERROR(__PRETTY_FUNCTION__,"could not allocate volume");
+        THROW_SG_ERROR("could not allocate volume");
 
       ospSetString(volume,"voxelType",voxelType.c_str());
       ospSetVec3i(volume,"dimensions",(const osp::vec3i&)dimensions);
@@ -169,7 +169,7 @@ namespace ospray {
       else
         volume = ospNewVolume(useBlockBricked ? "block_bricked_volume" : "shared_structured_volume");
       if (!volume)
-        THROW_SG_ERROR(__PRETTY_FUNCTION__,"could not allocate volume");
+        THROW_SG_ERROR("could not allocate volume");
       
       PING; PRINT(voxelType);
       ospSetString(volume,"voxelType",voxelType.c_str());
@@ -217,7 +217,7 @@ namespace ospray {
         float *voxels = new float[nVoxels];
         size_t nRead = fread(voxels,sizeof(float),nVoxels,file);
         if (nRead != nVoxels)
-          THROW_SG_ERROR(__PRETTY_FUNCTION__,"read incomplete data (truncated file or wrong format?!)");
+          THROW_SG_ERROR("read incomplete data (truncated file or wrong format?!)");
         OSPData data = ospNewData(nVoxels,OSP_FLOAT,voxels,OSP_DATA_SHARED_BUFFER);
         ospSetData(volume,"voxelData",data);
       }
@@ -282,15 +282,15 @@ namespace ospray {
       
       volume = ospNewVolume("block_bricked_volume");
       if (!volume)
-        THROW_SG_ERROR(__PRETTY_FUNCTION__,"could not allocate volume");
+        THROW_SG_ERROR("could not allocate volume");
 
       ospSetString(volume,"voxelType",voxelType.c_str());
       ospSetVec3i(volume,"dimensions",(const osp::vec3i&)dimensions);
       size_t nPerSlice = dimensions.x*dimensions.y;
       uint8_t *slice = new uint8_t[nPerSlice];
       for (int sliceID=0;sliceID<numSlices;sliceID++) {
-        char sliceName[strlen(baseName.c_str())+20];
-        sprintf(sliceName,baseName.c_str(),firstSliceID+sliceID);
+        char *sliceName = (char*)alloca(strlen(baseName.c_str()) + 20);
+        sprintf(sliceName, baseName.c_str(), firstSliceID + sliceID);
         PRINT(sliceName);
         FILE *file = fopen(sliceName,"rb");
         if (!file) 

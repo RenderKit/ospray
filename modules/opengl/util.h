@@ -18,6 +18,16 @@
 
 #include "ospray/ospray.h"
 
+#ifdef _WIN32
+#  ifdef ospray_module_opengl_EXPORTS
+#    define OSPGLUTIL_INTERFACE __declspec(dllexport)
+#  else
+#    define OSPGLUTIL_INTERFACE __declspec(dllimport)
+#  endif
+#else
+#  define OSPGLUTIL_INTERFACE
+#endif
+
 namespace ospray {
   namespace opengl {
 
@@ -29,7 +39,7 @@ namespace ospray {
       buffer and transforms it to an OSPRay depth texture where the depth values
       represent ray distances from the camera.
     */
-    extern OSPTexture2D getOSPDepthTextureFromOpenGLPerspective();
+    OSPGLUTIL_INTERFACE OSPTexture2D getOSPDepthTextureFromOpenGLPerspective();
 
     /*! \brief Compute and return an OSPRay depth texture from the provided view parameters
          and OpenGL depth buffer, assuming a perspective projection.
@@ -53,7 +63,7 @@ namespace ospray {
       \param glDepthBufferWidth,glDepthBufferHeight Dimensions of the provided OpenGL depth
       buffer
     */
-    extern OSPTexture2D getOSPDepthTextureFromOpenGLPerspective(const double &fovy,
+    OSPGLUTIL_INTERFACE OSPTexture2D getOSPDepthTextureFromOpenGLPerspective(const double &fovy,
                                                                 const double &aspect,
                                                                 const double &zNear,
                                                                 const double &zFar,
@@ -75,7 +85,7 @@ namespace ospray {
 
         The OSPRay frame buffer object must have been constructed with the OSP_FB_DEPTH flag.
     */
-    extern float * getOpenGLDepthFromOSPPerspective(OSPFrameBuffer frameBuffer,
+    OSPGLUTIL_INTERFACE float * getOpenGLDepthFromOSPPerspective(OSPFrameBuffer frameBuffer,
                                                     const osp::vec2i &frameBufferSize);
 
     /*! \brief Compute and return OpenGL depth values from the provided view parameters and
@@ -97,7 +107,7 @@ namespace ospray {
 
         \param frameBufferSize Dimensions of the provided OSPRay depth uffer
     */
-    extern float * getOpenGLDepthFromOSPPerspective(const double &fovy,
+    OSPGLUTIL_INTERFACE float * getOpenGLDepthFromOSPPerspective(const double &fovy,
                                                     const double &aspect,
                                                     const double &zNear,
                                                     const double &zFar,

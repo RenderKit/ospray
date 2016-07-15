@@ -14,6 +14,12 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#ifdef _WIN32
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h> // for Sleep
+#else
+#  include <time.h>
+#endif
 #include <chrono>
 #include <atomic>
 #include <thread>
@@ -80,7 +86,12 @@ namespace ospray {
         Action *actions[RECV_WINDOW_SIZE];
         MPI_Status status;
         int numRequests = 0;
-        
+#ifdef _WIN32
+        const DWORD sleep_time = 1; // ms --> much longer than 150us
+#else
+        const timespec sleep_time = timespec{0, 150000};
+#endif
+
         while (1) {
           numRequests = 0;
           // wait for first message
@@ -95,8 +106,13 @@ namespace ospray {
               if (msgAvail){
                 break;
               }
-              // std::this_thread::sleep_for(std::chrono::milliseconds(1));
-              usleep(100);
+#ifdef _WIN32
+              Sleep(sleep_time);
+#else
+              // TODO: Can we do a CMake feature test for this_thread::sleep_for and
+              // conditionally use nanosleep?
+              nanosleep(&sleep_time, NULL);
+#endif
             }
             Action *action = new Action;
             action->addr = Address(g,status.MPI_SOURCE);

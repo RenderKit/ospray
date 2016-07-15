@@ -75,60 +75,12 @@ inline uniform box1f make_box1f(const uniform float f)
 inline uniform box1f make_box1f(const uniform float lo, const uniform float hi)
 { uniform box1f bb; bb.lower = lo; bb.upper = hi; return bb; }
 
-inline uniform box1f box_union(const uniform box1f &a, const uniform box1f &b)
+inline uniform box1f box_extend(const uniform box1f &a, const uniform box1f &b)
 { return make_box1f(min(a.lower,b.lower),max(a.upper,b.upper)); }
 
 // -------------------------------------------------------
 // box3f 'constructors'
 // -------------------------------------------------------
-
-#if 0
-//! make a box with given lower and upper coordinates
-inline uniform box3f make_box3f(const uniform vec3f lo, const uniform vec3f hi)
-{ uniform box3f bb; bb.lower = lo; bb.upper = hi; return bb; }
-
-//! make a box with given lower and upper coordinates
-inline box3f make_box3f(const vec3f lo, const vec3f hi)
-{ box3f bb; bb.lower = lo; bb.upper = hi; return bb; }
-
-//! make a box with given lower and upper coordinates
-inline box3fa make_box3f(const vec3fa lo, const vec3fa hi)
-{ box3fa bb; bb.lower = lo; bb.upper = hi; return bb; }
-
-//! make a 3f-box out of given 3fa-box
-inline box3f make_box3f(const box3fa &other)
-{ box3f bb; bb.lower = make_vec3f(other.lower); bb.upper = make_vec3f(other.upper); return bb; }
-
-//! make a 3f-box out of given 3fa-box
-inline uniform box3f make_box3f(const uniform box3fa &other)
-{ uniform box3f bb; bb.lower = make_vec3f(other.lower); bb.upper = make_vec3f(other.upper); return bb; }
-
-
-// -------------------------------------------------------
-// box3fa 'constructors'
-// -------------------------------------------------------
-
-//! make a box with given lower and upper coordinates
-inline uniform box3fa make_box3fa(const uniform box3f &b)
-{ uniform box3fa bb; bb.lower = make_vec3fa(b.lower); bb.upper = make_vec3fa(b.upper); return bb; }
-
-//! make a box with given lower and upper coordinates
-inline box3fa make_box3fa(const vec3f lo, const vec3f hi)
-{ box3fa bb; bb.lower = make_vec3fa(lo); bb.upper = make_vec3fa(hi); return bb; }
-
-//! make a box with given lower and upper coordinates
-inline box3fa make_box3fa(const vec3fa lo, const vec3fa hi)
-{ box3fa bb; bb.lower = lo; bb.upper = hi; return bb; }
-
-//! make a box with given lower and upper coordinates
-inline uniform box3fa make_box3fa(const uniform vec3f lo, const uniform vec3f hi)
-{ uniform box3fa bb; bb.lower = make_vec3fa(lo); bb.upper = make_vec3fa(hi); return bb; }
-
-//! make a box with given lower and upper coordinates
-inline uniform box3fa make_box3fa(uniform const vec3fa lo, uniform const vec3fa hi)
-{ uniform box3fa bb; bb.lower = lo; bb.upper = hi; return bb; }
-#else
-
 
 #define MAKE_BOX_CONSTRUCTORS_uv_3T_fromVec3(univary,Tabb,otherT)       \
   inline univary box3##Tabb make_box3##Tabb(const univary vec3##otherT lower,  \
@@ -155,6 +107,11 @@ inline uniform box3fa make_box3fa(uniform const vec3fa lo, uniform const vec3fa 
       return bb;                                                        \
   }
 
+#define MAKE_BOX_CONSTRUCTORS_uv_3T_empty(Tabb)                                \
+  inline uniform box3##Tabb make_box3##Tabb##_empty() {                        \
+    return make_box3##Tabb(make_vec3##Tabb(inf), make_vec3##Tabb(neg_inf));    \
+  }
+
 #define MAKE_BOX_CONSTRUCTORS_uv_3T(univary,Tabb) \
   MAKE_BOX_CONSTRUCTORS_uv_3T_fromVec3(univary,Tabb,f) \
   MAKE_BOX_CONSTRUCTORS_uv_3T_fromVec3(univary,Tabb,fa) \
@@ -162,7 +119,7 @@ inline uniform box3fa make_box3fa(uniform const vec3fa lo, uniform const vec3fa 
                                                        \
   MAKE_BOX_CONSTRUCTORS_uv_3T_fromBox3(univary,Tabb,f) \
   MAKE_BOX_CONSTRUCTORS_uv_3T_fromBox3(univary,Tabb,fa) \
-  MAKE_BOX_CONSTRUCTORS_uv_3T_fromBox3(univary,Tabb,i) 
+  MAKE_BOX_CONSTRUCTORS_uv_3T_fromBox3(univary,Tabb,i)
 
 #define MAKE_BOX_CONSTRUCTORS_uv_3(univary)     \
   MAKE_BOX_CONSTRUCTORS_uv_3T(univary,i)        \
@@ -172,12 +129,47 @@ inline uniform box3fa make_box3fa(uniform const vec3fa lo, uniform const vec3fa 
 #define MAKE_BOX_CONSTRUCTORS_uv(univary)       \
   MAKE_BOX_CONSTRUCTORS_uv_3(univary)           
 
-MAKE_BOX_CONSTRUCTORS_uv(uniform);
-MAKE_BOX_CONSTRUCTORS_uv(varying);   
+MAKE_BOX_CONSTRUCTORS_uv(uniform)
+MAKE_BOX_CONSTRUCTORS_uv(varying)
+MAKE_BOX_CONSTRUCTORS_uv_3T_empty(f)
+MAKE_BOX_CONSTRUCTORS_uv_3T_empty(fa)
 
+#undef MAKE_BOX_CONSTRUCTORS_uv_3T_fromVec3
+#undef MAKE_BOX_CONSTRUCTORS_uv_3T_fromBox3
+#undef MAKE_BOX_CONSTRUCTORS_uv_3T_empty
+#undef MAKE_BOX_CONSTRUCTORS_uv_3T
+#undef MAKE_BOX_CONSTRUCTORS_uv_3
+#undef MAKE_BOX_CONSTRUCTORS_uv
 
+// -------------------------------------------------------
+// box3 'operations'
+// -------------------------------------------------------
 
-#endif
+#define MAKE_BOX_OPERATIONS_uv_3T(univary,T)                                   \
+  inline univary vec3##T box_size(univary box3##T bb) {                        \
+   return bb.upper - bb.lower;                                                 \
+  }                                                                            \
+                                                                               \
+  inline univary box3##T                                                       \
+  box_extend(const univary box3##T bb, const univary vec3##T v) {              \
+    return make_box3##T(min(bb.lower,v), max(bb.upper,v));                     \
+  }                                                                            \
+                                                                               \
+  inline univary box3##T                                                       \
+  box_extend(const univary box3##T bb, const univary box3##T other) {          \
+    return make_box3##T(min(bb.lower,other.lower), max(bb.upper,other.upper)); \
+  }
+
+#define MAKE_BOX_OPERATIONS_uv(univary)                                        \
+  MAKE_BOX_OPERATIONS_uv_3T(univary,i)                                         \
+  MAKE_BOX_OPERATIONS_uv_3T(univary,f)                                         \
+  MAKE_BOX_OPERATIONS_uv_3T(univary,fa)
+
+MAKE_BOX_OPERATIONS_uv(uniform)
+MAKE_BOX_OPERATIONS_uv(varying)
+
+#undef MAKE_BOX_OPERATIONS_uv_3T
+#undef MAKE_BOX_OPERATIONS_uv
 
 //! print given box to stdout
 void print_box(const uniform box3f &bbox);

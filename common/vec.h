@@ -297,13 +297,7 @@ namespace ospcommon {
   inline bool operator!=(const vec_t<T,4> &a, const vec_t<T,4> &b)
   { return !(a==b); }
 
-  /*
-   *  don't define '<' on vectors:
-   *  it's prone to bugs, because a definition of an ordering of vectors is a
-   *  bit arbitrary and depends on the context
-   *  e.g. in box::extend we certainly want the element-wise min/max and not
-   *  the std::min/std::max made applicable by operator<
-   *
+  /*! comparison operators; we need those to be able to put vec's in std::map etc @{ */
   template<typename T> 
   inline bool operator<(const vec_t<T,2> &a, const vec_t<T,2> &b)
   { 
@@ -328,7 +322,7 @@ namespace ospcommon {
                       ((a.y==b.y) && ((a.z< b.z) ||
                                       ((a.z==b.z) && (a.w < b.w)))))); 
   }
-  */
+  /*! @} */
 
   // 'anyLessThan' - return true if any component is less than the other vec's
   template<typename T> 
@@ -512,12 +506,12 @@ namespace ospcommon {
   // -------------------------------------------------------
   // parsing from strings
   // -------------------------------------------------------
-  vec2f toVec2f(const char *ptr);
-  vec3f toVec3f(const char *ptr);
-  vec4f toVec4f(const char *ptr);
-  vec2i toVec2i(const char *ptr);
-  vec3i toVec3i(const char *ptr);
-  vec4i toVec4i(const char *ptr);
+  OSPCOMMON_INTERFACE vec2f toVec2f(const char *ptr);
+  OSPCOMMON_INTERFACE vec3f toVec3f(const char *ptr);
+  OSPCOMMON_INTERFACE vec4f toVec4f(const char *ptr);
+  OSPCOMMON_INTERFACE vec2i toVec2i(const char *ptr);
+  OSPCOMMON_INTERFACE vec3i toVec3i(const char *ptr);
+  OSPCOMMON_INTERFACE vec4i toVec4i(const char *ptr);
 
 
 } // ::ospcommon
