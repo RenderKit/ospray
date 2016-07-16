@@ -16,8 +16,7 @@
 
 #pragma once
 
-#include "common/OSPCommon.ih"
-#include "math/vec.ih"
+#include "../math/vec.ih"
 
 /*! \file ospray/render/util.ih \brief Utility-functions for shaders */
 

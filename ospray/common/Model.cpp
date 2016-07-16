@@ -32,6 +32,8 @@ namespace ospray {
 
   extern RTCDevice g_embreeDevice;
 
+  extern "C" void *ospray_getEmbreeDevice() { return g_embreeDevice; }
+
   Model::Model()
   {
     managedObjectType = OSP_MODEL;
