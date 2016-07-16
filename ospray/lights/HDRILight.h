@@ -17,7 +17,7 @@
 #pragma once
 
 #include "Light.h"
-#include "ospray/texture/Texture2D.h"
+#include "texture/Texture2D.h"
 
 namespace ospray {
 

@@ -32,8 +32,8 @@
 */
 
 // ospray
-#include "ospray/render/Renderer.h"
-#include "ospray/texture/Texture2D.h"
+#include "render/Renderer.h"
+#include "texture/Texture2D.h"
 
 namespace ospray {
 

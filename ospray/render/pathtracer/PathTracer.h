@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "ospray/render/Renderer.h"
-#include "ospray/common/Material.h"
+#include "render/Renderer.h"
+#include "common/Material.h"
 
 namespace ospray {
   struct PathTracer : public Renderer {

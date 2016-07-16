@@ -19,12 +19,12 @@
 #endif
 
 #if OSP_COMPOSITING_TEST
-# include "ospray/mpi/MPICommon.h"
+# include "mpi/MPICommon.h"
 #endif
 
 // ospray
 #include "TriangleMesh.h"
-#include "ospray/common/Model.h"
+#include "common/Model.h"
 #include "../include/ospray/ospray.h"
 // embree 
 #include "embree2/rtcore.h"

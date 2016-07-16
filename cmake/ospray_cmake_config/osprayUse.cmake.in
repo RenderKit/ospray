@@ -19,3 +19,5 @@
 #             to automatically have an add_definitions(...) call for clients
 #             which need certain preprocessor definitions based on how ospray
 #             was built.
+
+include(${CMAKE_CURRENT_LIST_DIR}/ispc.cmake)

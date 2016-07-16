@@ -21,8 +21,8 @@
 // ospray public api
 #include "ospray/ospray.h"
 // ospcomon
-#include "common/box.h"
-#include "common/LinearSpace.h"
+#include "ospcommon/box.h"
+#include "ospcommon/LinearSpace.h"
 // qt
 #include <QtGui>
 #include <QGLWidget>

@@ -19,7 +19,7 @@
 // use ospcommon vector types in ospray.h
 #define OSPRAY_EXTERNAL_VECTOR_TYPES 1
 // ospcommon 
-#include "common/AffineSpace.h"
+#include "ospcommon/AffineSpace.h"
 
 namespace osp {
   using ospcommon::vec2i;

@@ -15,10 +15,10 @@
 // ======================================================================== //
 
 #include "PathTracer.ih"
-#include "ospray/camera/Camera.ih"
+#include "camera/Camera.ih"
 
-#include "materials/Medium.ih"
-#include "materials/Material.ih"
+#include "render/pathtracer/materials/Medium.ih"
+#include "render/pathtracer/materials/Material.ih"
 #include "math/random.ih"
 #include "fb/LocalFB.ih"
 

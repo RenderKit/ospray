@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "ospray/common/OSPCommon.ih"
-#include "ospray/volume/Volume.ih"
+#include "common/OSPCommon.ih"
+#include "volume/Volume.ih"
 
 struct GridAccelerator;
 

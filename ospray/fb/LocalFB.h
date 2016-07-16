@@ -17,7 +17,7 @@
 #pragma once
 
 // ospray
-#include "ospray/fb/FrameBuffer.h"
+#include "fb/FrameBuffer.h"
 
 namespace ospray {
 

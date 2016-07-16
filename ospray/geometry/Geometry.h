@@ -16,9 +16,9 @@
 
 #pragma once
 
-#include "ospray/common/Managed.h"
-#include "ospray/common/OSPCommon.h"
-#include "ospray/common/Material.h"
+#include "common/Managed.h"
+#include "common/OSPCommon.h"
+#include "common/Material.h"
 
 namespace ospray {
 

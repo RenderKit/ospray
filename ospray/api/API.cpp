@@ -14,15 +14,15 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/common/OSPCommon.h"
-#include "ospray/include/ospray/ospray.h"
-#include "ospray/render/Renderer.h"
-#include "ospray/camera/Camera.h"
-#include "ospray/common/Material.h"
-#include "ospray/volume/Volume.h"
-#include "ospray/transferFunction/TransferFunction.h"
+#include "common/OSPCommon.h"
+#include "include/ospray/ospray.h"
+#include "render/Renderer.h"
+#include "camera/Camera.h"
+#include "common/Material.h"
+#include "volume/Volume.h"
+#include "transferFunction/TransferFunction.h"
 #include "LocalDevice.h"
-#include "ospray/common/Core.h"
+#include "common/Core.h"
 
 #ifdef _WIN32
 #  include <process.h> // for getpid

@@ -17,8 +17,8 @@
 #pragma once
 
 // ospray
-#include "ospray/common/Data.h"
-#include "ospray/transferFunction/TransferFunction.h"
+#include "common/Data.h"
+#include "transferFunction/TransferFunction.h"
 #include "LinearTransferFunction_ispc.h"
 // std
 #include <vector>

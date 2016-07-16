@@ -15,8 +15,8 @@
 // ======================================================================== //
 
 #include "Material.ih"
-#include "../bsdfs/Dielectric.ih"
-#include "ospray/texture/TextureParam.ih"
+#include "render/pathtracer/bsdfs/Dielectric.ih"
+#include "texture/TextureParam.ih"
 
 struct Glass
 {

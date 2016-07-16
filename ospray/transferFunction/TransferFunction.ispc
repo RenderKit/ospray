@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/transferFunction/TransferFunction.ih"
+#include "transferFunction/TransferFunction.ih"
 
 export void TransferFunction_setValueRange(void *uniform pointer, 
                                            const uniform vec2f &value) 

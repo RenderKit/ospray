@@ -16,9 +16,9 @@
 
 #pragma once
 
-#include "ospray/fb/Tile.ih"
-#include "ospray/fb/FrameBuffer.ih"
-#include "ospray/render/util.ih"
+#include "fb/Tile.ih"
+#include "fb/FrameBuffer.ih"
+#include "render/util.ih"
 
 /*! a Local FrameBuffer that stores all pixel values (color, depth,
     accum) in a plain 2D array of pixels (one array per component) */

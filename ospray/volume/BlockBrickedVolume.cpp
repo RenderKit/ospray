@@ -15,8 +15,8 @@
 // ======================================================================== //
 
 //ospray
-#include "ospray/volume/BlockBrickedVolume.h"
-#include "ospray/common/tasking/parallel_for.h"
+#include "volume/BlockBrickedVolume.h"
+#include "common/tasking/parallel_for.h"
 #include "BlockBrickedVolume_ispc.h"
 
 namespace ospray {

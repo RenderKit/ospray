@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/fb/FrameBuffer.ih"
-#include "ospray/math/vec.ih"
+#include "fb/FrameBuffer.ih"
+#include "math/vec.ih"
 
 struct DistributedFrameBuffer {
   FrameBuffer super;

@@ -23,7 +23,7 @@
 #elif defined(OSPRAY_TASKING_CILK)
 #  include <cilk/cilk.h>
 #elif defined(OSPRAY_TASKING_INTERNAL)
-#  include "ospray/common/tasking/TaskSys.h"
+#  include "common/tasking/TaskSys.h"
 #endif
 
 namespace ospray {

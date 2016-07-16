@@ -16,9 +16,9 @@
 
 #pragma once
 
-#include "common/common.h"
-#include "common/box.h"
-#include "common/AffineSpace.h"
+#include "ospcommon/common.h"
+#include "ospcommon/box.h"
+#include "ospcommon/AffineSpace.h"
 
 #ifdef __APPLE__
 #include <GLUT/glut.h>

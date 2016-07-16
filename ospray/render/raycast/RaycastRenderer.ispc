@@ -15,11 +15,11 @@
 // ======================================================================== //
 
 // ospray
-#include "ospray/fb/FrameBuffer.ih"
-#include "ospray/camera/PerspectiveCamera.ih"
-#include "ospray/common/Model.ih"
-#include "ospray/render/util.ih"
-#include "ospray/render/Renderer.ih"
+#include "fb/FrameBuffer.ih"
+#include "camera/PerspectiveCamera.ih"
+#include "common/Model.ih"
+#include "render/util.ih"
+#include "render/Renderer.ih"
 
 /*! \brief a simple, primary-ray-only ray cast render that
 

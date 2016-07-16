@@ -21,7 +21,7 @@
 // ospray
 #include "OSPCommon.h"
 // ospcommon
-#include "common/thread.h"
+#include "ospcommon/thread.h"
 
 namespace ospray {
   

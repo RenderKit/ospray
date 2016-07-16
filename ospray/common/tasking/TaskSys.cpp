@@ -16,8 +16,8 @@
 
 #include "TaskSys.h"
 //ospray
-#include "common/sysinfo.h"
-#include "common/thread.h"
+#include "ospcommon/sysinfo.h"
+#include "ospcommon/thread.h"
 //stl
 #include <thread>
 #include <vector>

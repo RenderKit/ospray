@@ -14,28 +14,19 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-CONFIGURE_OSPRAY()
-
-INCLUDE_DIRECTORIES(
-  ${PROJECT_BINARY_DIR}
-  ${CMAKE_SOURCE_DIR}/ospray/include
-  ${CMAKE_SOURCE_DIR}/ospray
-  ${CMAKE_SOURCE_DIR}/apps
-  ${CMAKE_SOURCE_DIR}/apps/common
-  ${CMAKE_SOURCE_DIR}
-  ${EMBREE_INCLUDE_DIRS}
+OSPRAY_INSTALL_SDK_HEADERS(
+  Camera.h
+  Data.h
+  FrameBuffer.h
+  Geometry.h
+  Light.h
+  ManagedObject.h
+  Material.h
+  Model.h
+  PixelOp.h
+  Renderer.h
+  Texture2D.h
+  TransferFunction.h
+  Volume.h
+  DESTINATION ../ospray_cpp
 )
-INCLUDE_DIRECTORIES_ISPC(
-  ${PROJECT_BINARY_DIR}
-  ${CMAKE_SOURCE_DIR}/ospray/include
-  ${CMAKE_SOURCE_DIR}/ospray
-  ${CMAKE_SOURCE_DIR}
-  ${EMBREE_INCLUDE_DIRS}
-)
-
-FILE(GLOB plugins RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/ *)
-FOREACH(plugin ${plugins})
-  IF (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${plugin}/CMakeLists.txt)
-    ADD_SUBDIRECTORY(${plugin})
-  ENDIF (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${plugin}/CMakeLists.txt)
-ENDFOREACH(plugin ${plugins})

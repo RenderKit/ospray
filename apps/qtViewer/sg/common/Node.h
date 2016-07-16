@@ -24,7 +24,7 @@
 // xml
 #include "../../../common/xml/XML.h"
 // ospcommon
-#include "common/vec.h"
+#include "ospcommon/vec.h"
 
 namespace ospray {
 

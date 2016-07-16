@@ -18,7 +18,7 @@
 
 // ospray::sg
 #include "../common/World.h"
-#include "common/FileName.h"
+#include "ospcommon/FileName.h"
 
 /*! \file sg/module/Importer.h Defines the interface for writing
     file importers for the ospray::sg */

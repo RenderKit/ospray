@@ -16,19 +16,19 @@
 
 #undef NDEBUG // do all assertions in this file
 
-#include "ospray/mpi/MPICommon.h"
-#include "ospray/mpi/MPIDevice.h"
-#include "ospray/common/Model.h"
-#include "ospray/common/Data.h"
-#include "ospray/common/Library.h"
-#include "ospray/geometry/TriangleMesh.h"
-#include "ospray/render/Renderer.h"
-#include "ospray/camera/Camera.h"
-#include "ospray/volume/Volume.h"
-#include "ospray/mpi/MPILoadBalancer.h"
-#include "ospray/fb/LocalFB.h"
-#include "ospray/mpi/async/CommLayer.h"
-#include "ospray/mpi/DistributedFrameBuffer.h"
+#include "mpi/MPICommon.h"
+#include "mpi/MPIDevice.h"
+#include "common/Model.h"
+#include "common/Data.h"
+#include "common/Library.h"
+#include "geometry/TriangleMesh.h"
+#include "render/Renderer.h"
+#include "camera/Camera.h"
+#include "volume/Volume.h"
+#include "mpi/MPILoadBalancer.h"
+#include "fb/LocalFB.h"
+#include "mpi/async/CommLayer.h"
+#include "mpi/DistributedFrameBuffer.h"
 // std
 #ifndef _WIN32
 #  include <unistd.h> // for fork()

@@ -18,8 +18,8 @@
 
 #include "PathTracer.h"
 // ospray
-#include "ospray/common/Data.h"
-#include "ospray/lights/Light.h"
+#include "common/Data.h"
+#include "lights/Light.h"
 // ispc exports
 #include "PathTracer_ispc.h"
 // std

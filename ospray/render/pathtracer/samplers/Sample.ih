@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "ospray/math/AffineSpace.ih"
+#include "math/AffineSpace.ih"
 
 struct Sample1f {
   float v;

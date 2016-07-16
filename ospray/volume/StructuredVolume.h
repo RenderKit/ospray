@@ -17,8 +17,8 @@
 #pragma once
 
 // ospray
-#include "ospray/common/tasking/parallel_for.h"
-#include "ospray/volume/Volume.h"
+#include "common/tasking/parallel_for.h"
+#include "volume/Volume.h"
 // stl
 #include <algorithm>
 #include <string>

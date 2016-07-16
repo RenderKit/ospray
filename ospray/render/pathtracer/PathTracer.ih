@@ -16,12 +16,12 @@
 
 #pragma once
 
-#include "ospray/math/vec.ih"
-#include "ospray/common/Model.ih"
-#include "ospray/fb/FrameBuffer.ih"
-#include "ospray/render/util.ih"
-#include "ospray/lights/Light.ih"
-#include "ospray/render/Renderer.ih"
+#include "math/vec.ih"
+#include "common/Model.ih"
+#include "fb/FrameBuffer.ih"
+#include "render/util.ih"
+#include "lights/Light.ih"
+#include "render/Renderer.ih"
 
 #define MAX_LIGHTS 1000
 

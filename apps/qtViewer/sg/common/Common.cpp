@@ -32,8 +32,6 @@
 #define  O_LARGEFILE  0
 #endif
 
-
-
 namespace ospray {
   namespace sg {
 
@@ -87,7 +85,7 @@ namespace ospray {
         MapViewOfFile(fileMappingHandle, FILE_MAP_READ, 0, 0, fileSize);
 #else
         mmap(nullptr, fileSize, PROT_READ, MAP_SHARED, fd, 0);
-#endif*/
+#endif
     }
 
   } // ::ospray::sg

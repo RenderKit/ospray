@@ -18,8 +18,8 @@
 
 #include "sg/common/Common.h"
 // ospcommon
-#include "common/RefCount.h"
-#include "common/AffineSpace.h"
+#include "ospcommon/RefCount.h"
+#include "ospcommon/AffineSpace.h"
 // std
 #include <vector>
 

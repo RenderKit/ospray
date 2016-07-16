@@ -16,9 +16,9 @@
 
 #pragma once
 
-#include "ospray/mpi/async/CommLayer.h"
-#include "ospray/fb/LocalFB.h"
-#include "ospray/common/Thread.h"
+#include "mpi/async/CommLayer.h"
+#include "fb/LocalFB.h"
+#include "common/Thread.h"
 #include <queue>
 
 namespace ospray {

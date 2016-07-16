@@ -188,16 +188,6 @@ MACRO(CONFIGURE_OSPRAY)
 
   INCLUDE(${PROJECT_SOURCE_DIR}/cmake/ispc.cmake)
 
-  INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
-  INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
-
-  INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR})
-  INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR}/ospray/include)
-
-  # for auto-generated cmakeconfig etc
-  INCLUDE_DIRECTORIES(${PROJECT_BINARY_DIR})
-  INCLUDE_DIRECTORIES_ISPC(${PROJECT_BINARY_DIR})
-
 ENDMACRO()
 
 ## Target creation macros ##
@@ -358,6 +348,32 @@ MACRO(OSPRAY_CREATE_APPLICATION name)
   )
 ENDMACRO()
 
+## Conveniance macro for installing OSPRay headers ##
+# Usage
+#
+#   OSPRAY_INSTALL_SDK_HEADERS(header1 [header2 ...] [DESTINATION destination])
+#
+# will install headers into ${CMAKE_INSTALL_PREFIX}/ospray/SDK/${destination},
+# where destination is optional.
+
+MACRO(OSPRAY_INSTALL_SDK_HEADERS)
+  SET(HEADERS "")
+  SET(DESTINATION "")
+
+  SET(CURRENT_LIST HEADERS)
+  FOREACH(arg ${ARGN})
+    IF (${arg} STREQUAL "DESTINATION")
+      SET(CURRENT_LIST DESTINATION)
+    ELSE()
+      LIST(APPEND ${CURRENT_LIST} ${arg})
+    ENDIF ()
+  ENDFOREACH()
+
+  INSTALL(FILES ${HEADERS}
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK/${DESTINATION}
+    COMPONENT devel
+  )
+ENDMACRO()
 
 ## Compiler configuration macro ##
 

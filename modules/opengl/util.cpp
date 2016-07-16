@@ -15,8 +15,7 @@
 // ======================================================================== //
 
 #include "util.h"
-#include "common/vec.h"
-// #include <ospray/common/OSPCommon.h>
+#include "ospcommon/vec.h"
 
 #ifdef _WIN32
 #  ifndef WIN32_LEAN_AND_MEAN

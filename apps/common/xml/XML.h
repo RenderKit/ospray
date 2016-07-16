@@ -17,9 +17,9 @@
 #pragma once
 
 // ospcomon
-#include "common/common.h"
-#include "common/vec.h"
-#include "common/FileName.h"
+#include "ospcommon/common.h"
+#include "ospcommon/vec.h"
+#include "ospcommon/FileName.h"
 // stl
 #include <stack>
 #include <vector>

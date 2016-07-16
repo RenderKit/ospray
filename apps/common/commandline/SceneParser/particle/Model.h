@@ -20,8 +20,8 @@
 // #include "common/OSPCommon.h"
 // // embree
 // #include "common/sys/filename.h"
-#include "common/FileName.h"
-#include "common/box.h"
+#include "ospcommon/FileName.h"
+#include "ospcommon/box.h"
 // stl
 #include <map>
 #include <vector>

@@ -15,10 +15,10 @@
 // ======================================================================== //
 
 #include "Light.ih"
-#include "ospray/math/LinearSpace.ih"
-#include "ospray/math/Distribution2D.ih"
-#include "ospray/math/sampling.ih"
-#include "ospray/texture/Texture2D.ih"
+#include "math/LinearSpace.ih"
+#include "math/Distribution2D.ih"
+#include "math/sampling.ih"
+#include "texture/Texture2D.ih"
 
 struct HDRILight
 {

@@ -41,10 +41,10 @@ typedef int ssize_t;
 #endif
 
 #if 1
-#include "../../common/AffineSpace.h"
-#include "../../common/intrinsics.h"
-#include "../../common/RefCount.h"
-#include "../../common/malloc.h"
+#include "ospcommon/AffineSpace.h"
+#include "ospcommon/intrinsics.h"
+#include "ospcommon/RefCount.h"
+#include "ospcommon/malloc.h"
 #else
 // embree
 #include "common/math/vec2.h"

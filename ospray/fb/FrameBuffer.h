@@ -17,7 +17,9 @@
 #pragma once
 
 // ospray
-#include "ospray/fb/PixelOp.h"
+#include "common/Managed.h"
+#include "ospray/ospray.h"
+#include "fb/PixelOp.h"
 
 namespace ospray {
 
