@@ -127,6 +127,9 @@ SET(OSPRAY_MPI ${OSPRAY_BUILD_MPI_DEVICE})
 # create binary packages; before any INSTALL() invocation/definition
 ##############################################################
 
+OPTION(OSPRAY_ZIP_MODE "Use tarball/zip CPack generator instead of RPM" ON)
+MARK_AS_ADVANCED(OSPRAY_ZIP_MODE)
+
 INCLUDE(package)
 
 ##############################################################
