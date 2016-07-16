@@ -139,6 +139,8 @@ void OSPGlutViewer::reshape(const vec2i &newSize)
 
   m_fb.clear(OSP_FB_ACCUM);
 
+  PING;
+
   /*! for now, let's just attach the pixel op to the _main_ frame
       buffer - eventually we need to have a _second_ frame buffer
       of the proper (much higher) size, but for now let's just use
@@ -153,7 +155,11 @@ void OSPGlutViewer::reshape(const vec2i &newSize)
     displayWall.fb.clear(OSP_FB_ACCUM);
 
     if (displayWall.po.handle() == nullptr) {
+#if OSPRAY_DISPLAY_WALD
+      displayWall.po = ospray::cpp::PixelOp("display_wald");
+#else
       displayWall.po = ospray::cpp::PixelOp("display_wall");
+#endif
       displayWall.po.set("hostname", displayWall.hostname);
       displayWall.po.set("streamName", displayWall.streamName);
       displayWall.po.commit();
@@ -293,8 +299,9 @@ void OSPGlutViewer::display()
   }
 
   m_renderer.renderFrame(m_fb, OSP_FB_COLOR | OSP_FB_ACCUM);
-  if (m_useDisplayWall)
+  if (m_useDisplayWall) {
     m_renderer.renderFrame(displayWall.fb, OSP_FB_COLOR | OSP_FB_ACCUM);
+  }
   ++m_accumID;
 
   // set the glut3d widget's frame buffer to the opsray frame buffer,

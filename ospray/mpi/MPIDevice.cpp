@@ -740,6 +740,10 @@ namespace ospray {
       Assert(_fb != NULL);
       Assert(_op != NULL);
 
+      PING;
+      PRINT(_fb);
+      PRINT(_op);
+
       cmd.newCommand(CMD_SET_PIXELOP);
       cmd.send((const ObjectHandle&)_fb);
       cmd.send((const ObjectHandle&)_op);

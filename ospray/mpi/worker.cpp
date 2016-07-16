@@ -605,6 +605,8 @@ namespace ospray {
           assert(fb);
           assert(po);
           fb->pixelOp = po->createInstance(fb,fb->pixelOp.ptr);
+          if (!fb->pixelOp)
+            std::cout << "#osp:mpi: WARNING. display op did not create an instance!" << std::endl;
         } break;
 
         case ospray::CMD_SET_REGION: {

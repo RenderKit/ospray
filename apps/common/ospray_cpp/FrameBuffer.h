@@ -107,6 +107,7 @@ inline void FrameBuffer::setPixelOp(PixelOp &p)
 
 inline void FrameBuffer::setPixelOp(OSPPixelOp p)
 {
+  PING; PRINT(handle()); PRINT(p);
   ospSetPixelOp(handle(), p);
 }
 
