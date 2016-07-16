@@ -365,8 +365,9 @@ namespace ospray {
                    numTiles.x*numTiles.y));
       }
 
-      if (numTilesCompletedByMe == myTiles.size())
+      if (numTilesCompletedByMe == myTiles.size()) {
         closeCurrentFrame();
+      }
     }
   }
 
@@ -408,6 +409,15 @@ namespace ospray {
     DBG(printf("rank %i CLOSES frame\n",mpi::world.rank));
     frameIsActive = false;
     frameIsDone   = true;
+
+    if (IamTheMaster()) {
+      /* do nothing */
+    } else {
+      if (pixelOp) { 
+        pixelOp->endFrame();
+      }
+    }
+
     frameDoneCond.notify_all();
   }
 
