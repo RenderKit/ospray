@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "common/OSPCommon.ih"
+#include "../common/OSPCommon.ih"
 
 // ------------------------------------------------------------------
 // Constants

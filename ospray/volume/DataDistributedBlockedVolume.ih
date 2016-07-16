@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "volume/StructuredVolume.ih"
+#include "../volume/StructuredVolume.ih"
 
 struct DDBVolumeBlock 
 {

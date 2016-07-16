@@ -16,10 +16,9 @@
 
 #pragma once
 
-#include "common/OSPCommon.ih"
-#include "common/Ray.ih"
-#include "transferFunction/TransferFunction.ih"
-#include "math/box.ih"
+#include "../common/Ray.ih"
+#include "../transferFunction/TransferFunction.ih"
+#include "../math/box.ih"
 
 // #if EXP_DATA_PARALLEL
 // struct DataParallelInfo {

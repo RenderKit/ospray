@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "math/vec.ih"
+#include "../math/vec.ih"
 
 struct Geometry;
 struct Model;
