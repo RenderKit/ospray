@@ -46,8 +46,9 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
         m_defaultDirLight_direction.z = atof(av[++i]);
       }
     } else if (arg == "--hdri-light") {
-      // Syntax for HDRI light is the same as Embree:
-        // --hdri-light <intensity> <image file>.(pfm|ppm)
+        if (i+2 >= ac)
+          throw std::runtime_error("Not enough arguments! Usage:\n\t"
+              "--hdri-light <intensity> <image file>.(pfm|ppm)");
         auto ospHdri = m_renderer.newLight("hdri");
         ospHdri.set("name", "hdri light");
         if (1) {//TODO: add commandline option for up direction.
@@ -83,7 +84,7 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
   //TODO: Need to figure out where we're going to read lighting data from
   
   if (m_defaultDirLight_direction != vec3f(0.f)) {
-    auto ospLight = m_renderer.newLight("DirectionalLight");
+    auto ospLight = m_renderer.newLight("directional");
     if (ospLight.handle() == nullptr) {
       throw std::runtime_error("Failed to create a 'DirectionalLight'!");
     }
