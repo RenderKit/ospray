@@ -54,7 +54,7 @@ Light_EvalRes AmbientLight_eval(const uniform Light* uniform super,
   uniform AmbientLight* uniform self = (uniform AmbientLight* uniform)super;
   Light_EvalRes res;
 
-  res.value = self->radiance;
+  res.radiance = self->radiance;
   res.dist = inf;
   res.pdf = cosineSampleHemispherePDF(max(dot(dg.Ns, dir), 0.f));
 

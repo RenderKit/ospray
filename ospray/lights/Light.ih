@@ -38,7 +38,7 @@ typedef Light_SampleRes (*Light_SampleFunc)(const uniform Light* uniform self,
 
 struct Light_EvalRes
 {
-  vec3f value;     //!< radiance that arrives at the given point (not weighted by pdf)
+  vec3f radiance;  //!< radiance that arrives at the given point (not weighted by pdf)
   float dist;
   float pdf;       //!< probability density that the direction would have been sampled
 };

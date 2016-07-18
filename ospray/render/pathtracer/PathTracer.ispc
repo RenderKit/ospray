@@ -144,7 +144,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       const uniform Light *uniform l = self->lights[i];
       Light_EvalRes le = l->eval(l, lastDg, ray.dir);
       if (le.dist <= maxLightDist)
-        L = L + Lw * le.value * misHeuristic(lastBSDFPdf, le.pdf);
+        L = L + Lw * le.radiance * misHeuristic(lastBSDFPdf, le.pdf);
     }
 
     if (noHit(ray))
