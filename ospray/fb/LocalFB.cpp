@@ -60,9 +60,9 @@ namespace ospray {
     else
       accumBuffer = NULL;
 
-    int allTiles = numTiles.x * numTiles.y;
-    tileAccumID = (int32*)alignedMalloc(sizeof(int32)*allTiles);
-    memset(tileAccumID, 0, allTiles*sizeof(int32));
+    const size_t bytes = sizeof(int32)*getTotalTiles();
+    tileAccumID = (int32*)alignedMalloc(bytes);
+    memset(tileAccumID, 0, bytes);
 
     if (hasVarianceBuffer) {
       varianceBuffer = (vec4f*)alignedMalloc(sizeof(vec4f)*size.x*size.y);
