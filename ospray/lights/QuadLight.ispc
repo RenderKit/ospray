@@ -54,10 +54,44 @@ Light_SampleRes QuadLight_sample(const uniform Light* uniform super,
 
   // convert to pdf wrt. solid angle
   const float cosd = dot(self->nnormal, res.dir);
-  res.pdf = self->ppdf * (dist * dist) / abs(cosd);
+  res.pdf = self->ppdf * sqr(dist) / abs(cosd);
 
   // emit only to one side
   res.weight = cosd > 0.f ? self->radiance * rcp(res.pdf) : make_vec3f(0.f);
+
+  return res;
+}
+
+Light_EvalRes QuadLight_eval(const uniform Light* uniform super,
+                             const DifferentialGeometry& dg,
+                             const vec3f& dir)
+{
+  uniform QuadLight* uniform self = (uniform QuadLight* uniform)super;
+  Light_EvalRes res;
+  res.radiance = make_vec3f(0.f);
+  res.pdf = 0.f;
+  res.dist = inf; 
+
+  // backfacing?
+  const float cosd = dot(self->nnormal, dir);
+  // denominator = dot(cross(edge1, edge2), dir) == cosd/ppdf
+  if (cosd <= 0.f)
+    return res;
+
+  const vec3f c = self->position - dg.P;
+  const vec3f r = cross(c, dir);
+  const float u = dot(r, self->edge1);
+  const float v = -dot(r, self->edge2);
+
+  // u/denominator > 1?
+  if (min(u, v) < 0.f | max(u, v)*self->ppdf > cosd)
+    return res;
+
+  const float rcosd = rcp(cosd);
+  const float dist = dot(self->nnormal, c) * rcosd;
+  res.radiance = self->radiance;
+  res.pdf = self->ppdf * sqr(dist) * rcosd;
+  res.dist = dist; 
 
   return res;
 }
@@ -80,8 +114,8 @@ export void QuadLight_set(void* uniform super,
   self->radiance = radiance;
 
   const uniform vec3f ndirection = cross(edge2, edge1);
-  self->ppdf = rcp(length(ndirection));
-  self->nnormal = ndirection * self->ppdf;
+  self->ppdf = rcp(length(ndirection)); // 1/area
+  self->nnormal = ndirection * self->ppdf; // normalize
 }
 
 //! Create an ispc-side QuadLight object
@@ -91,6 +125,7 @@ export void* uniform QuadLight_create()
 
   Light_Constructor(&self->super);
   self->super.sample = QuadLight_sample;
+  self->super.eval = QuadLight_eval;
 
   QuadLight_set(self,
                 make_vec3f(0.f),
