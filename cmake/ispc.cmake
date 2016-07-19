@@ -15,13 +15,9 @@
 ## ======================================================================== ##
 
 # ISPC versions to look for, in decending order (newest first)
-IF(WIN32)
-  SET(ISPC_VERSION_WORKING "1.9.0" "1.8.2")
-ELSE()                                    
-  SET(ISPC_VERSION_WORKING "1.9.0" "1.8.2" "1.8.1")
-ENDIF()
+SET(ISPC_VERSION_WORKING "1.9.1" "1.9.0")
 LIST(GET ISPC_VERSION_WORKING -1 ISPC_VERSION_REQUIRED)
-SET(ISPC_VERSION_RECOMMENDED_KNC "1.8.1")
+SET(ISPC_VERSION_RECOMMENDED_KNC "1.9.0")
 
 IF (NOT ISPC_EXECUTABLE)
   # try sibling folder as hint for path of ISPC
