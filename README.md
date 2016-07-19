@@ -164,7 +164,7 @@ Tutorial
 --------
 
 A minimal working example demonstrating how to use OSPRay can be found
-at `apps/ospTutorial.cpp`^[A C99 version is available at
+at `apps/ospTutorial.cpp`C99 version is available at
 `apps/ospTutorial.c`.]. On Linux build it in the build_directory with
 
     g++ ../apps/ospTutorial.cpp -I ../ospray/include -I .. -I ../ospray/embree/common \
