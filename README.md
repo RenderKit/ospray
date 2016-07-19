@@ -70,7 +70,7 @@ following prerequisites:
 -   To build OSPRay you need [CMake](http://www.cmake.org), any
     form of C++ compiler (we recommend using the [Intel® C++ compiler
     (icc)](https://software.intel.com/en-us/c-compilers), but also
-    support GCC and clang-cc), and standard Linux development tools.
+    support gcc and clang), and standard Linux development tools.
     To build the demo viewers, you should also have some version of
     OpenGL and the GL Utility Toolkit (GLUT or freeglut), as well as
     Qt 4.6 or higher.
@@ -79,14 +79,14 @@ following prerequisites:
     latest binary release of ISPC (currently 1.9.0) from the [ISPC
     downloads page](https://ispc.github.io/downloads.html). The build
     system looks for ISPC in the `PATH` and in the directory right
-    "next to" the checked-out OSPRay sources.^[For example, if OSPRay is
+    "next to" the checked-out OSPRay sources. [For example, if OSPRay is
     in `~/Projects/ospray`, ISPC will also be searched in
     `~/Projects/ispc-v1.9.0-linux`] Alternatively set the CMake
     variable `ISPC_EXECUTABLE` to the location of the ISPC compiler.
 -   Per default OSPRay uses the Intel® Threading Building Blocks (TBB)
     as tasking system, which we recommend for performance and
     flexibility reasons. Alternatively you can set CMake variable
-    `OSPRAY_TASKING_SYSTEM` to `OpenMP`, `Internal`, or `Cilk` (ICC only).
+    `OSPRAY_TASKING_SYSTEM` to `OpenMP`, `Internal`, or `Cilk` (icc only).
 -   OSPRay also heavily uses [Embree](http://embree.github.io); however,
     OSPRay directly includes its own copy of Embree, so a special
     installation of Embree is *not* required.
