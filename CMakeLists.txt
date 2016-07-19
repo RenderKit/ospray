@@ -82,8 +82,6 @@ IF(NOT WIN32)
   INCLUDE(cmake/doxygen.cmake)
 ENDIF()
 
-CONFIGURE_OSPRAY()
-
 ##############################################################
 # OSPRay specific build options and configuration selection
 ##############################################################
@@ -124,6 +122,8 @@ INCLUDE(package)
 ##############################################################
 # the OSPRay 'common' library
 ##############################################################
+
+CONFIGURE_OSPRAY()
 
 SET(OSPRAY_TARGET "intel64")
 ADD_SUBDIRECTORY(ospcommon builddir/ospray_common/intel64)
