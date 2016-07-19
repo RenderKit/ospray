@@ -48,8 +48,8 @@ ENDMACRO()
 
 ## Macro check for compiler support of ISA ##
 MACRO(OSPRAY_CHECK_COMPILER_SUPPORT ISA)
-  IF (${ISA} STREQUAL "AVX512" AND NOT OSPRAY_COMPILER_ICC)
-    OSPRAY_WARN_ONCE(MISSING_AVX512 "OSPRay Currently requires ICC for KNL support. Disabling KNL ISA target.")
+  IF (${ISA} STREQUAL "AVX512" AND (NOT OSPRAY_COMPILER_ICC OR WIN32 OR APPLE))
+    OSPRAY_WARN_ONCE(MISSING_AVX512 "OSPRay Currently requires ICC on Linux for KNL support. Disabling KNL ISA target.")
     SET(OSPRAY_EMBREE_ENABLE_${ISA} false)
   ELSEIF (OSPRAY_EMBREE_ENABLE_${ISA} AND NOT OSPRAY_COMPILER_SUPPORTS_${ISA})
     OSPRAY_WARN_ONCE(MISSING_${ISA} "Need at least version ${GCC_VERSION_REQUIRED_${ISA}} of gcc for ${ISA}. Disabling ${ISA}.\nTo compile for ${ISA}, please switch to either 'ICC'-compiler, or upgrade your gcc version.")
