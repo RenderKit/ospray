@@ -55,6 +55,7 @@ LIST(APPEND ospray_MODULE_INSTALL_FILES ${CMAKE_SOURCE_DIR}/cmake/FindTBB.cmake)
 INSTALL(FILES
   ${ospray_MODULE_INSTALL_FILES}
   ${CMAKE_SOURCE_DIR}/cmake/ispc.cmake
+  ${CMAKE_SOURCE_DIR}/cmake/ospray.cmake
   DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/ospray-${OSPRAY_VERSION}"
   COMPONENT devel
 )
