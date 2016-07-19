@@ -48,7 +48,10 @@ ENDMACRO()
 
 ## Macro check for compiler support of ISA ##
 MACRO(OSPRAY_CHECK_COMPILER_SUPPORT ISA)
-  IF (OSPRAY_EMBREE_ENABLE_${ISA} AND NOT OSPRAY_COMPILER_SUPPORTS_${ISA})
+  IF (${ISA} STREQUAL "AVX512" AND NOT OSPRAY)
+    OSPRAY_WARN_ONCE(MISSING_AVX512 "OSPRay Currently requires ICC for KNL support. Disabling KNL ISA target.")
+    SET(OSPRAY_EMBREE_ENABLE_${ISA} false)
+  ELSEIF (OSPRAY_EMBREE_ENABLE_${ISA} AND NOT OSPRAY_COMPILER_SUPPORTS_${ISA})
     OSPRAY_WARN_ONCE(MISSING_${ISA} "Need at least version ${GCC_VERSION_REQUIRED_${ISA}} of gcc for ${ISA}. Disabling ${ISA}.\nTo compile for ${ISA}, please switch to either 'ICC'-compiler, or upgrade your gcc version.")
     SET(OSPRAY_EMBREE_ENABLE_${ISA} false)
   ENDIF()
@@ -56,6 +59,8 @@ ENDMACRO()
 
 ## Macro configure ISA targets for ispc ##
 MACRO(OSPRAY_CONFIGURE_ISPC_ISA)
+
+  OSPRAY_CONFIGURE_COMPILER()
 
   SET(OSPRAY_EMBREE_ENABLE_SSE    true)
   SET(OSPRAY_EMBREE_ENABLE_AVX    true)
@@ -90,11 +95,6 @@ MACRO(OSPRAY_CONFIGURE_ISPC_ISA)
   UNSET(OSPRAY_ISPC_TARGET_LIST)
 
   IF (OSPRAY_BUILD_ISA STREQUAL "ALL")
-    # ------------------------------------------------------------------
-    # in 'all' mode, we have a list of multiple targets for ispc,
-    # and enable all targets for embree (we may still disable some
-    # below if the compiler doesn't support them
-    # ------------------------------------------------------------------
     IF(OSPRAY_EMBREE_ENABLE_SSE)
       SET(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} sse4)
     ENDIF()
@@ -385,7 +385,7 @@ ENDMACRO()
 ## Compiler configuration macro ##
 
 MACRO(OSPRAY_CONFIGURE_COMPILER)
-  # enable ability for users to force a compiler using the pre-0.8.3 method
+  # enable ability for users to force a compiler using the pre-0.8.3 method (doesn't work right now!)
   SET(OSPRAY_COMPILER "" CACHE STRING "Force compiler: GCC, ICC, CLANG")
   SET_PROPERTY(CACHE OSPRAY_COMPILER PROPERTY STRINGS GCC ICC CLANG)
   MARK_AS_ADVANCED(OSPRAY_COMPILER)

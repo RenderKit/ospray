@@ -14,6 +14,4 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-CONFIGURE_OSPRAY()
-
 OSPRAY_CREATE_LIBRARY(xml XML.cpp LINK ospray_common)

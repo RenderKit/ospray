@@ -82,7 +82,7 @@ IF(NOT WIN32)
   INCLUDE(cmake/doxygen.cmake)
 ENDIF()
 
-OSPRAY_CONFIGURE_COMPILER()
+CONFIGURE_OSPRAY()
 
 ##############################################################
 # OSPRay specific build options and configuration selection

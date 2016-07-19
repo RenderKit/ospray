@@ -14,8 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-CONFIGURE_OSPRAY()
-
 SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 FIND_PACKAGE(Threads REQUIRED)
 
