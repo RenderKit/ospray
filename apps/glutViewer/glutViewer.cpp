@@ -64,6 +64,7 @@ void parseForDisplayWall(int ac, const char **&av, ospray::OSPGlutViewer &v)
       displayWall.hostname   = service.mpiPortName;
       displayWall.streamName = service.mpiPortName;
       displayWall.size = size;
+      displayWall.stereo = service.stereo;
 #else
       displayWall.hostname   = av[++i];
       displayWall.streamName = av[++i];

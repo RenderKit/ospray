@@ -116,9 +116,9 @@ namespace ospray {
 
     if (comm->group->rank == 0) {
       if (colorBufferFormat == OSP_FB_NONE) {
-        cout << "#osp:mpi:dfb: we're the master, but framebuffer has 'NONE' "
-             << "format; creating distributed frame buffer WITHOUT having a "
-             << "mappable copy on the master" << endl;
+        DBG(cout << "#osp:mpi:dfb: we're the master, but framebuffer has 'NONE' "
+            << "format; creating distributed frame buffer WITHOUT having a "
+            << "mappable copy on the master" << endl);
       } else {
         localFBonMaster = new LocalFrameBuffer(numPixels,
                                                colorBufferFormat,

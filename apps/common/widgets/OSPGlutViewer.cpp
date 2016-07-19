@@ -146,17 +146,24 @@ void OSPGlutViewer::reshape(const vec2i &newSize)
       of the proper (much higher) size, but for now let's just use
       the existing one... */
   if (m_useDisplayWall && displayWall.fb.handle() != m_fb.handle()) {
-    PRINT(displayWall.size);
+#if OSPRAY_DISPLAY_WALD
+    displayWall.camera = cpp::Camera("perspective");
+    displayWall.camera.set("aspect", displayWall.size.x/float(displayWall.size.y));
+    if (displayWall.stereo)
+      // in stereo mode, make sure to set 
+      displayWall.size.x *= 2;
+#endif
     displayWall.fb =
-        ospray::cpp::FrameBuffer((const osp::vec2i&)displayWall.size,
-                                 OSP_FB_NONE,
-                                 OSP_FB_COLOR | OSP_FB_DEPTH | OSP_FB_ACCUM);
+      ospray::cpp::FrameBuffer((const osp::vec2i&)displayWall.size,
+                               OSP_FB_NONE,
+                               OSP_FB_COLOR | OSP_FB_DEPTH | OSP_FB_ACCUM);
 
     displayWall.fb.clear(OSP_FB_ACCUM);
 
     if (displayWall.po.handle() == nullptr) {
 #if OSPRAY_DISPLAY_WALD
       displayWall.po = ospray::cpp::PixelOp("display_wald");
+      displayWall.po.set("stereo",(int)displayWall.stereo);
 #else
       displayWall.po = ospray::cpp::PixelOp("display_wall");
 #endif
@@ -290,6 +297,16 @@ void OSPGlutViewer::display()
     m_camera.set("up", viewPort.up);
     m_camera.set("aspect", viewPort.aspect);
     m_camera.commit();
+
+#if OSPRAY_DISPLAY_WALD
+    if (m_useDisplayWall) {
+      displayWall.camera.set("pos", viewPort.from);
+      displayWall.camera.set("dir", dir);
+      displayWall.camera.set("up", viewPort.up);
+      displayWall.camera.commit();
+    }
+#endif
+
     viewPort.modified = false;
     m_accumID=0;
     m_fb.clear(OSP_FB_ACCUM);
@@ -300,7 +317,18 @@ void OSPGlutViewer::display()
 
   m_renderer.renderFrame(m_fb, OSP_FB_COLOR | OSP_FB_ACCUM);
   if (m_useDisplayWall) {
+#if OSPRAY_DISPLAY_WALD
+    // when using displaywald we use two different camera (to adjust
+    // for both different aspect ratios as well as for possibly
+    // different stereo settings in viewer window vs display wall)
+    m_renderer.set("camera",displayWall.camera);
+    m_renderer.commit();
     m_renderer.renderFrame(displayWall.fb, OSP_FB_COLOR | OSP_FB_ACCUM);
+    m_renderer.set("camera",m_camera);
+    m_renderer.commit();
+#else
+    m_renderer.renderFrame(displayWall.fb, OSP_FB_COLOR | OSP_FB_ACCUM);
+#endif
   }
   ++m_accumID;
 

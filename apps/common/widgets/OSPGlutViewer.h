@@ -61,6 +61,11 @@ namespace ospray {
       ospcommon::vec2i size{-1};
       ospray::cpp::FrameBuffer fb;
       ospray::cpp::PixelOp     po;
+#if OSPRAY_DISPLAY_WALD
+      // display uses its own camera; it has a different aspect ratio!
+      ospray::cpp::Camera      camera;
+      int stereo;
+#endif
     } displayWall;
 
     void setDisplayWall(const DisplayWall &dw);
