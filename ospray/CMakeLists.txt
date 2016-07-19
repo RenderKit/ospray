@@ -15,7 +15,7 @@
 ## ======================================================================== ##
 
 IF(OSPRAY_BUILD_MPI_DEVICE)
-  OPTION(OSPRAY_EXP_DATA_PARALLEL "Experimental data-parallel compositing mode")
+  OPTION(OSPRAY_EXP_DATA_PARALLEL "Experimental data-parallel compositing mode" ON)
   OPTION(OSPRAY_PIN_ASYNC "Pin async mpi comm threads?" OFF)
   MARK_AS_ADVANCED(OSPRAY_PIN_ASYNC)
 ENDIF()
