@@ -91,9 +91,6 @@ OSPRAY_CONFIGURE_COMPILER()
 OPTION(OSPRAY_USE_EXTERNAL_EMBREE
        "Use a pre-built Embree instead of the internally built version")
 
-OPTION(OSPRAY_BUILD_ENABLE_KNL "Enable experimental 'Knights Landing' build?")
-MARK_AS_ADVANCED(OSPRAY_BUILD_ENABLE_KNL)
-
 OPTION(OSPRAY_VOLUME_VOXELRANGE_IN_APP "Move 'voxelrange' computations to app?")
 MARK_AS_ADVANCED(OSPRAY_VOLUME_VOXELRANGE_IN_APP)
 
@@ -108,14 +105,6 @@ ELSE()
 ENDIF()
 
 OPTION(OSPRAY_BUILD_MPI_DEVICE "Add MPI Remote/Distributed rendering support?")
-
-# the arch we're targeting for the non-MIC/non-xeon phi part of ospray
-SET(OSPRAY_BUILD_ISA "ALL" CACHE STRING "Target ISA (SSE, AVX, AVX2, or ALL)")
-IF (OSPRAY_BUILD_ENABLE_KNL)
-  SET_PROPERTY(CACHE OSPRAY_BUILD_ISA PROPERTY STRINGS ALL SSE AVX AVX2 AVX512)
-ELSE()
-  SET_PROPERTY(CACHE OSPRAY_BUILD_ISA PROPERTY STRINGS ALL SSE AVX AVX2)
-ENDIF()
 
 # make ISA target case-insensitive, used in configure_ospray() macro
 STRING(TOUPPER ${OSPRAY_BUILD_ISA} OSPRAY_BUILD_ISA)
