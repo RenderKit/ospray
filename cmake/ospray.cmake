@@ -56,15 +56,38 @@ ENDMACRO()
 
 ## Macro configure ISA targets for ispc ##
 MACRO(OSPRAY_CONFIGURE_ISPC_ISA)
+
+  SET(OSPRAY_EMBREE_ENABLE_SSE    true)
+  SET(OSPRAY_EMBREE_ENABLE_AVX    true)
+  SET(OSPRAY_EMBREE_ENABLE_AVX2   true)
+  SET(OSPRAY_EMBREE_ENABLE_AVX512 true)
+
+  OSPRAY_CHECK_COMPILER_SUPPORT(AVX)
+  OSPRAY_CHECK_COMPILER_SUPPORT(AVX2)
+  OSPRAY_CHECK_COMPILER_SUPPORT(AVX512)
+
   # the arch we're targeting for the non-MIC/non-xeon phi part of ospray
   SET(OSPRAY_BUILD_ISA "ALL" CACHE STRING
       "Target ISA (SSE, AVX, AVX2, AVX512, or ALL)")
-  SET_PROPERTY(CACHE OSPRAY_BUILD_ISA PROPERTY STRINGS ALL SSE AVX AVX2 AVX512)
+  UNSET(OSPRAY_SUPPORTED_ISAS)
 
-  SET(OSPRAY_EMBREE_ENABLE_SSE    false)
-  SET(OSPRAY_EMBREE_ENABLE_AVX    false)
-  SET(OSPRAY_EMBREE_ENABLE_AVX2   false)
-  SET(OSPRAY_EMBREE_ENABLE_AVX512 false)
+  IF(OSPRAY_EMBREE_ENABLE_SSE)
+    SET(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} SSE)
+  ENDIF()
+  IF(OSPRAY_EMBREE_ENABLE_AVX)
+    SET(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} AVX)
+  ENDIF()
+  IF(OSPRAY_EMBREE_ENABLE_AVX2)
+    SET(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} AVX2)
+  ENDIF()
+  IF(OSPRAY_EMBREE_ENABLE_AVX512)
+    SET(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} AVX512)
+  ENDIF()
+
+  SET_PROPERTY(CACHE OSPRAY_BUILD_ISA PROPERTY STRINGS
+               ALL ${OSPRAY_SUPPORTED_ISAS})
+
+  UNSET(OSPRAY_ISPC_TARGET_LIST)
 
   IF (OSPRAY_BUILD_ISA STREQUAL "ALL")
     # ------------------------------------------------------------------
@@ -72,63 +95,53 @@ MACRO(OSPRAY_CONFIGURE_ISPC_ISA)
     # and enable all targets for embree (we may still disable some
     # below if the compiler doesn't support them
     # ------------------------------------------------------------------
-    SET(OSPRAY_EMBREE_ENABLE_SSE    true)
-    SET(OSPRAY_EMBREE_ENABLE_AVX    true)
-    SET(OSPRAY_EMBREE_ENABLE_AVX2   true)
-    SET(OSPRAY_EMBREE_ENABLE_AVX512 true)
-    SET(OSPRAY_ISPC_TARGET_LIST sse4 avx avx2 avx512knl-i32x16)
+    IF(OSPRAY_EMBREE_ENABLE_SSE)
+      SET(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} sse4)
+    ENDIF()
+    IF(OSPRAY_EMBREE_ENABLE_AVX)
+      SET(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} avx)
+    ENDIF()
+    IF(OSPRAY_EMBREE_ENABLE_AVX2)
+      SET(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} avx2)
+    ENDIF()
+    IF(OSPRAY_EMBREE_ENABLE_AVX512)
+      SET(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} avx512knl-i32x16)
+    ENDIF()
 
   ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX512")
-    # ------------------------------------------------------------------
-    # in 'avx512' mode, we currently build only avx512, in generic
-    # mode, but enable all embree targets to fall back to (currently
-    # does not work since embree would require a 16-wide trace
-    # function which it has in neither of the three targets)
-    # ------------------------------------------------------------------
+
+    IF(NOT OSPRAY_EMBREE_ENABLE_AVX512)
+      MESSAGE(FATAL_ERROR "Compiler does not support AVX512!")
+    ENDIF()
     SET(OSPRAY_ISPC_TARGET_LIST avx512knl-i32x16)
-    SET(OSPRAY_EMBREE_ENABLE_SSE    true)
-    SET(OSPRAY_EMBREE_ENABLE_AVX    true)
-    SET(OSPRAY_EMBREE_ENABLE_AVX2   true)
-    SET(OSPRAY_EMBREE_ENABLE_AVX512 true)
 
   ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX2")
-    # ------------------------------------------------------------------
-    # in 'avx2' mode, we enable ONLY avx2 for ispc, and all targets
-    # up to avx2 for embree. note that if the compiler doesn't
-    # support AVX we will have a combination where embree uses AVX
-    # (the most the compiler can do), while ispc still uses
-    # avx. this works because both targets are 8 wide. it does
-    # however require the compiler to understand AT LEAST AVX1.
-    # ------------------------------------------------------------------
+
+    IF(NOT OSPRAY_EMBREE_ENABLE_AVX2)
+      MESSAGE(FATAL_ERROR "Compiler does not support AVX2!")
+    ENDIF()
+
     SET(OSPRAY_ISPC_TARGET_LIST avx2)
-    SET(OSPRAY_EMBREE_ENABLE_SSE  true)
-    SET(OSPRAY_EMBREE_ENABLE_AVX  true)
-    SET(OSPRAY_EMBREE_ENABLE_AVX2 true)
+    SET(OSPRAY_EMBREE_ENABLE_AVX512 false)
 
   ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX")
-    # ------------------------------------------------------------------
-    # in 'avx' mode, we enable ONLY avx for ispc, and both sse and
-    # avx for embree. note that this works ONLY works if the
-    # compiler knows at least AVX
-    # ------------------------------------------------------------------
+
+    IF(NOT OSPRAY_EMBREE_ENABLE_AVX)
+      MESSAGE(FATAL_ERROR "Compiler does not support AVX!")
+    ENDIF()
+
     SET(OSPRAY_ISPC_TARGET_LIST avx)
-    SET(OSPRAY_EMBREE_ENABLE_SSE true)
-    SET(OSPRAY_EMBREE_ENABLE_AVX true)
+    SET(OSPRAY_EMBREE_ENABLE_AVX512 false)
+    SET(OSPRAY_EMBREE_ENABLE_AVX2   false)
 
   ELSEIF (OSPRAY_BUILD_ISA STREQUAL "SSE")
-    # ------------------------------------------------------------------
-    # in 'sse' mode, we enable ONLY sse4 for ispc, and only sse for
-    # embree
-    # ------------------------------------------------------------------
     SET(OSPRAY_ISPC_TARGET_LIST sse4)
-    SET(OSPRAY_EMBREE_ENABLE_SSE true)
+    SET(OSPRAY_EMBREE_ENABLE_AVX512 false)
+    SET(OSPRAY_EMBREE_ENABLE_AVX2   false)
+    SET(OSPRAY_EMBREE_ENABLE_AVX    false)
   ELSE ()
     MESSAGE(ERROR "Invalid OSPRAY_BUILD_ISA value. Please select one of SSE, AVX, AVX2, AVX512, or ALL.")
   ENDIF()
-
-  OSPRAY_CHECK_COMPILER_SUPPORT(AVX)
-  OSPRAY_CHECK_COMPILER_SUPPORT(AVX2)
-  OSPRAY_CHECK_COMPILER_SUPPORT(AVX512)
 ENDMACRO()
 
 # Configure the output directories. To allow IMPI to do its magic we
