@@ -86,7 +86,7 @@ following prerequisites:
 -   Per default OSPRay uses the Intel® Threading Building Blocks (TBB)
     as tasking system, which we recommend for performance and
     flexibility reasons. Alternatively you can set CMake variable
-    `OSPRAY_TASKING_SYSTEM` to `OpenMP`.
+    `OSPRAY_TASKING_SYSTEM` to `OpenMP`, `Internal`, or `Cilk` (ICC only).
 -   OSPRay also heavily uses [Embree](http://embree.github.io); however,
     OSPRay directly includes its own copy of Embree, so a special
     installation of Embree is *not* required.
