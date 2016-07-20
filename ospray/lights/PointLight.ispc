@@ -98,7 +98,7 @@ Light_EvalRes PointLight_eval(const uniform Light* uniform super,
       const float t_near = (b - sqrt(radical)) / (2.f*a);
       const float t_far = (b + sqrt(radical)) / (2.f*a);
 
-      if ((t_far > 0.0f) & (t_near <= maxDist)) {
+      if (t_far > 0.0f & t_near <= maxDist) {
         // TODO: handle interior case
 
         const float sinTheta2 = sqr(self->radius) * rcp(centerDist2);

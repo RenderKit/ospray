@@ -88,7 +88,7 @@ Light_EvalRes QuadLight_eval(const uniform Light* uniform super,
 
   const float rcosd = rcp(cosd);
   const float dist = dot(self->nnormal, c) * rcosd;
-  if (dist <= maxDist)
+  if (dist > maxDist)
     return res;
 
   res.radiance = self->radiance;
