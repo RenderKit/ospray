@@ -114,7 +114,6 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
   bool insideSolid = false;// Quick fix for glass absorption.
 
-  if (self->maxDepth > 0)
   do {
     traceRay(self->super.model, ray);
 
@@ -139,7 +138,6 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     }
 
     // add light from virtual lights by intersecting them
-    if (depth < self->maxDepth)// connecting to a light is an extra depth;
     for (uniform int i = 0; i < self->numLights; i++) {
       const uniform Light *uniform l = self->lights[i];
       Light_EvalRes le = l->eval(l, lastDg, ray.dir);
