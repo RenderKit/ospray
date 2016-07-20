@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "ospray/volume/BlockBrickedVolume.h"
+#include "volume/BlockBrickedVolume.h"
 
 namespace ospray {
 

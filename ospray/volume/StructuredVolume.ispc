@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/volume/StructuredVolume.ih"
-#include "ospray/volume/GridAccelerator.ih"
+#include "volume/StructuredVolume.ih"
+#include "volume/GridAccelerator.ih"
 
 inline varying float StructuredVolume_computeSample(void *uniform _volume, const varying vec3f &worldCoordinates)
 {

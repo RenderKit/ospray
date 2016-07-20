@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "ospray/mpi/MPICommon.h"
-#include "ospray/render/LoadBalancer.h"
+#include "mpi/MPICommon.h"
+#include "render/LoadBalancer.h"
 
 namespace ospray {
   namespace mpi {

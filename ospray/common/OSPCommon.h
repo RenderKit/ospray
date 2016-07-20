@@ -41,10 +41,10 @@ typedef int ssize_t;
 #endif
 
 #if 1
-#include "../../common/AffineSpace.h"
-#include "../../common/intrinsics.h"
-#include "../../common/RefCount.h"
-#include "../../common/malloc.h"
+#include "ospcommon/AffineSpace.h"
+#include "ospcommon/intrinsics.h"
+#include "ospcommon/RefCount.h"
+#include "ospcommon/malloc.h"
 #else
 // embree
 #include "common/math/vec2.h"
@@ -61,6 +61,7 @@ typedef int ssize_t;
 #include <atomic>
 #include <mutex>
 #include <condition_variable>
+#include <type_traits>
 
 #if 1
 // iw: remove this eventually, and replace all occurrences with actual
@@ -211,6 +212,45 @@ namespace ospray {
     }
     return result;
   }
+
+  template <typename T>
+  inline std::pair<bool, T> getEnvVar(const std::string &/*var*/)
+  {
+    static_assert(!std::is_same<T, float>::value &&
+                  !std::is_same<T, int>::value &&
+                  !std::is_same<T, std::string>::value,
+                  "You can only get an int, float, or std::string "
+                  "when using ospray::getEnvVar<T>()!");
+    return {false, {}};
+  }
+
+  template <>
+  inline std::pair<bool, float>
+  getEnvVar<float>(const std::string &var)
+  {
+    auto *str = getenv(var.c_str());
+    bool found = (str != nullptr);
+    return {found, found ? atof(str) : float{}};
+  }
+
+  template <>
+  inline std::pair<bool, int>
+  getEnvVar<int>(const std::string &var)
+  {
+    auto *str = getenv(var.c_str());
+    bool found = (str != nullptr);
+    return {found, found ? atoi(str) : int{}};
+  }
+
+  template <>
+  inline std::pair<bool, std::string>
+  getEnvVar<std::string>(const std::string &var)
+  {
+    auto *str = getenv(var.c_str());
+    bool found = (str != nullptr);
+    return {found, found ? std::string(str) : std::string{}};
+  }
+
 } // ::ospray
 
 #ifdef _WIN32

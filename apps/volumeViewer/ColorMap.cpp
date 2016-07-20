@@ -22,12 +22,12 @@ ColorMap::ColorMap(std::string name, std::vector<ospcommon::vec3f> colors)
   this->colors = colors;
 }
 
-std::string ColorMap::getName()
+std::string ColorMap::getName() const
 {
   return name;
 }
 
-std::vector<ospcommon::vec3f> ColorMap::getColors()
+std::vector<ospcommon::vec3f> ColorMap::getColors() const
 {
   return colors;
 }

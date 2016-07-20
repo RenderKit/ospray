@@ -16,7 +16,7 @@
 
 #include "RaycastVolumeMaterial.h"
 #include "RaycastVolumeMaterial_ispc.h"
-#include "ospray/common/Data.h"
+#include "common/Data.h"
 
 namespace ospray {
 

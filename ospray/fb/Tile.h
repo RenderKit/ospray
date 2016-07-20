@@ -16,10 +16,13 @@
 
 #pragma once
 
-#include "ospray/common/OSPCommon.h"
-#include "ospray/render/util.h"
+#include "common/OSPCommon.h"
+#include "render/util.h"
 
 namespace ospray {
+
+  static_assert(TILE_SIZE > 0 && (TILE_SIZE & (TILE_SIZE - 1)) == 0,
+      "OSPRay config error: TILE_SIZE must be a positive power of two.");
 
   //! a tile of pixels used by any tile-based renderer
   /*! pixels in the tile are in a row-major TILE_SIZE x TILE_SIZE

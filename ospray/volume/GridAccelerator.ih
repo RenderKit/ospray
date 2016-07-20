@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "ospray/common/OSPCommon.ih"
-#include "ospray/common/Ray.ih"
+#include "common/OSPCommon.ih"
+#include "common/Ray.ih"
 
 //! \brief A spatial acceleration structure over a BlockBrickedVolume, used
 //!  for opacity and variance based space skipping.

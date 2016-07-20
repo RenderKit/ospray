@@ -15,11 +15,11 @@
 // ======================================================================== //
 
 // ospray
-#include "ospray/mpi/MPILoadBalancer.h"
-#include "ospray/render/Renderer.h"
-#include "ospray/fb/LocalFB.h"
-#include "ospray/mpi/DistributedFrameBuffer.h"
-#include "ospray/common/tasking/parallel_for.h"
+#include "mpi/MPILoadBalancer.h"
+#include "render/Renderer.h"
+#include "fb/LocalFB.h"
+#include "mpi/DistributedFrameBuffer.h"
+#include "common/tasking/parallel_for.h"
 
 #include <algorithm>
 
@@ -70,15 +70,20 @@ namespace ospray {
 
         void *perFrameData = tiledRenderer->beginFrame(fb);
 
-        int numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
-        int numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
+        const int ALLTASKS = fb->getTotalTiles();
+        int NTASKS = ALLTASKS / worker.size;
 
-        const int NTASKS = numTiles_x * numTiles_y;
+        // NOTE(jda) - If all tiles do not divide evenly among all worker ranks
+        //             (a.k.a. ALLTASKS / worker.size has a remainder), then
+        //             some ranks will have one extra tile to do. Thus NTASKS
+        //             is incremented if we are one of those ranks.
+        if ((ALLTASKS % worker.size) > worker.rank)
+          NTASKS++;
+
         // serial_for(NTASKS, [&](int taskIndex){
         parallel_for(NTASKS, [&](int taskIndex){
-          const size_t tileID = taskIndex;
-          if ((tileID % worker.size) != worker.rank) return;
-
+          const size_t tileID = taskIndex * worker.size + worker.rank;
+          const size_t numTiles_x = fb->getNumTiles().x;
           const size_t tile_y = tileID / numTiles_x;
           const size_t tile_x = tileID - tile_y*numTiles_x;
           const vec2i tileId(tile_x, tile_y);
@@ -97,9 +102,9 @@ namespace ospray {
           Tile __aligned(64) tile(tileId, fb->size, accumID);
 #endif
 
-          // serial_for(numJobs(tiledRenderer->spp, accumID), [&](int taskIndex){
-          parallel_for(numJobs(tiledRenderer->spp, accumID), [&](int taskIndex){
-            tiledRenderer->renderTile(perFrameData, tile, taskIndex);
+          // serial_for(numJobs(tiledRenderer->spp, accumID), [&](int tid){
+          parallel_for(numJobs(tiledRenderer->spp, accumID), [&](int tid){
+            tiledRenderer->renderTile(perFrameData, tile, tid);
           });
 
           fb->setTile(tile);
@@ -113,7 +118,7 @@ namespace ospray {
 
         async_endFrame();
 
-        return dfb->endFrame(0.f);
+        return inf; // irrelevant on slave
       }
 
       std::string Slave::toString() const

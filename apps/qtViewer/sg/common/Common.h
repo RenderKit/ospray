@@ -19,7 +19,7 @@
 // use ospcommon vector types in ospray.h
 #define OSPRAY_EXTERNAL_VECTOR_TYPES 1
 // ospcommon 
-#include "common/AffineSpace.h"
+#include "ospcommon/AffineSpace.h"
 
 namespace osp {
   using ospcommon::vec2i;
@@ -33,7 +33,6 @@ namespace osp {
 
 // ospray API
 #include "ospray/ospray.h"
-// STL
 
 namespace ospray {
   namespace sg {
@@ -42,8 +41,8 @@ namespace ospray {
     typedef AffineSpace3f affine3f;
     typedef LinearSpace3f linear3f;
 
-#define THROW_SG_ERROR(where,err) \
-    throw std::runtime_error("in "+std::string(__PRETTY_FUNCTION__)+":"+std::string(err));
+#define THROW_SG_ERROR(err) \
+    throw std::runtime_error("in "+std::string(__PRETTY_FUNCTION__)+":"+std::string(err))
 
     typedef unsigned int uint;
     
@@ -73,6 +72,9 @@ namespace ospray {
     vec3i parseVec3i(const std::string &text);
 
     /*! @} */
+
+    //! map the given file to memory and return that pointer
+    const unsigned char * mapFile(const std::string &fileName);
 
   } // ::ospray::sg
 } // ::ospray

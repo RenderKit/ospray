@@ -14,17 +14,17 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/fb/FrameBuffer.ih"
-#include "ospray/render/util.ih"
-#include "ospray/common/Model.ih"
-#include "ospray/texture/Texture2D.ih"
-#include "ospray/lights/Light.ih"
-#include "ospray/render/Renderer.ih"
-#include "ospray/math/random.ih"
-#include "ospray/math/sampling.ih"
-#include "ospray/math/LinearSpace.ih"
+#include "fb/FrameBuffer.ih"
+#include "render/util.ih"
+#include "common/Model.ih"
+#include "texture/Texture2D.ih"
+#include "lights/Light.ih"
+#include "render/Renderer.ih"
+#include "math/random.ih"
+#include "math/sampling.ih"
+#include "math/LinearSpace.ih"
 
-#include "ospray/volume/DataDistributedBlockedVolume.ih"
+#include "volume/DataDistributedBlockedVolume.ih"
 
 #include "SciVisMaterial.ih"
 
@@ -35,6 +35,7 @@
 struct SciVisRenderer
 {
   Renderer super;
+  float volumeEpsilon;
 
   const uniform Light *uniform *uniform lights;
   uint32 numLights;
@@ -256,10 +257,9 @@ inline void shadeLights(const uniform SciVisRenderer *uniform self,
 
 // Volume shading //
 
-inline void SciVisRenderer_computeVolumeSample(SciVisRenderer *uniform renderer,
+inline vec4f SciVisRenderer_computeVolumeSample(SciVisRenderer *uniform renderer,
                                                Volume *uniform volume,
-                                               varying Ray &ray,
-                                               varying vec4f &color)
+                                               varying Ray &ray)
 {
   // Sample the volume at the hit point in world coordinates.
   const vec3f coordinates = ray.org + ray.t0 * ray.dir;
@@ -306,24 +306,23 @@ inline void SciVisRenderer_computeVolumeSample(SciVisRenderer *uniform renderer,
       volume->transferFunction->getOpacityForValue(volume->transferFunction,
                                                    sample);
 
-  // Set the color contribution for this sample only (do not accumulate).
-  color = clamp(sampleOpacity / volume->samplingRate)
-          * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
-
   // Advance the ray for the next sample.
   volume->intersect(volume, ray);
+
+  // return the color contribution for this sample only (do not accumulate)
+  return clamp(sampleOpacity / volume->samplingRate)
+          * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
 }
 
 inline
-void SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
+vec4f SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
                                           const varying vec3i &sampleID,
-                                          varying Ray &ray,
-                                          varying vec4f &out_color)
+                                          varying Ray &ray)
 {
   vec3f color        = make_vec3f(0.f);
   float path_opacity = 1.f;
   int   path_depth   = 0;
-  float ray_t_depth  = 0.f;
+  float first_hit_dist = 0.f;
 
   while (1) {
 
@@ -331,13 +330,12 @@ void SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
 
     // Check if we missed, if so we are done //
     if (ray.geomID < 0) {
-      out_color = make_vec4f(color.x, color.y, color.z, 1.f - path_opacity);
-      return;
+      return make_vec4f(color, 1.f - path_opacity);
     }
 
     // Record depth of first hit for depth output //
     if (path_depth == 0) {
-      ray_t_depth = ray.t;
+      first_hit_dist = ray.t;
     }
 
     // Start shading //
@@ -366,9 +364,8 @@ void SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
     path_opacity = path_opacity * (1.f - info.d);
     path_depth++;
     if (path_depth >= self->maxDepth || path_opacity < 0.01f ) {
-      out_color = make_vec4f(color.x, color.y, color.z, 1.f - path_opacity);
-      ray.t = ray_t_depth;
-      return;
+      ray.t = first_hit_dist;
+      return make_vec4f(color, 1.f - path_opacity);
     }
 
     // Reset ray
@@ -446,24 +443,6 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
   // Original tMax for ray interval
   const float tMax = ray.t;
 
-  // Ray epsilon based on bounding box of all volumes.
-  uniform box3f boundingBox = renderer->super.model->volumeCount
-    ? renderer->super.model->volumes[0]->boundingBox
-    : make_box3f(make_vec3f(0.f), make_vec3f(0.f));
-
-  Model *uniform model = renderer->super.model;
-  for (uniform int32 i=1; i<renderer->super.model->volumeCount; i++) {
-    boundingBox.lower = min(boundingBox.lower,
-                            model->volumes[i]->boundingBox.lower);
-    boundingBox.upper = max(boundingBox.upper,
-                            model->volumes[i]->boundingBox.upper);
-  }
-
-  const uniform float epsilon
-    = renderer->super.model->volumeCount
-    ? 1e-4f * distance(boundingBox.lower, boundingBox.upper)
-    : 1e-4f;
-
   // Copy of the ray for geometry intersection. The original ray is
   // used for volume intersection.
   Ray geometryRay = ray;
@@ -479,14 +458,9 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
   if (volume != NULL)
     geometryRay.time = -rayOffset * volume->samplingStep;
 
-  // Separate color contributions for the volume and geometries. Initialize to
-  // provided color in case of no contribution...
-  vec4f volumeColor = color;
-  vec4f geometryColor = color;
-
   // Initial trace through geometries.
-  SciVisRenderer_computeGeometrySample(renderer, sampleID,
-                                       geometryRay, geometryColor);
+  vec4f geometryColor = SciVisRenderer_computeGeometrySample(renderer,
+      sampleID, geometryRay);
 
   // Depth is the first volume bounding box or geometry hit
   depth = min(ray.t0, geometryRay.t);
@@ -496,7 +470,7 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
 
   if(geometryRay.t < ray.t0 || volume == NULL) {
     // Geometry contribution.
-    color = color + (1.0f - color.w) * geometryColor;
+    color = geometryColor;
   }
 
   while ((firstHit = min(ray.t0, geometryRay.t)) < tMax
@@ -508,7 +482,7 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
       // Check to see if we've exited the current volume.
       if (ray.t0 >= ray.t) {
 
-        ray.t0 = ray.t + epsilon;
+        ray.t0 = ray.t + renderer->volumeEpsilon;
         ray.t = tMax;
         volume = SciVisRenderer_intersectVolumes(renderer, ray, rayOffset);
 
@@ -517,10 +491,10 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
         if (any(volume == NULL))
           print("ACCESSING NULL VOLUME HERE!\n");
 
-        // Compute the volume sample at the current position and advance the
-        // ray.
+        // Compute the volume sample at the current position and advance the ray
+        vec4f volumeColor;
         foreach_unique (v in volume)
-          SciVisRenderer_computeVolumeSample(renderer, v, ray, volumeColor);
+          volumeColor = SciVisRenderer_computeVolumeSample(renderer, v, ray);
 
         // Volume contribution.
         color = color + (1.0f - color.w) * volumeColor;
@@ -534,7 +508,7 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
 
       if (color.w < 0.99f) {
         // Reset geometry ray.
-        geometryRay.t0 = geometryRay.t + epsilon;
+        geometryRay.t0 = geometryRay.t + renderer->volumeEpsilon;
         geometryRay.t = tMax; //!< end of valid ray interval for traceRay()
         geometryRay.primID = -1;
         geometryRay.geomID = -1;
@@ -545,8 +519,8 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
         geometryRay.time = volume ? -rayOffset * volume->samplingStep : 0.f;
 
         // Trace next geometry ray.
-        SciVisRenderer_computeGeometrySample(renderer, sampleID,
-                                             geometryRay, geometryColor);
+        geometryColor = SciVisRenderer_computeGeometrySample(renderer,
+            sampleID, geometryRay);
       }
 
     }
@@ -577,10 +551,9 @@ void SciVisRenderer_renderSample(uniform Renderer *uniform _self,
   SciVisRenderer_intersect(renderer, sample.ray, rayOffset,
                            sample.sampleID, color, depth);
 
-  // Attenuate the foreground and background colors by the opacity.
+  // blend with background
   if (renderer->super.backgroundEnabled) {
-    const vec4f background = make_vec4f(renderer->super.bgColor, 1.f);
-    color = color.w * color + (1.0f - color.w) * background;
+    color = color + (1.0f - color.w) * make_vec4f(renderer->super.bgColor, 0.f);
   }
 
   // Store the result in the sample.
@@ -589,6 +562,27 @@ void SciVisRenderer_renderSample(uniform Renderer *uniform _self,
   sample.rgb.z = color.z;
   sample.alpha = color.w;
   sample.z = depth;
+}
+
+static unmasked void *uniform
+SciVisRenderer_beginFrame(uniform Renderer *uniform _self,
+                          uniform FrameBuffer *uniform fb)
+{
+  uniform SciVisRenderer *uniform self = (uniform SciVisRenderer *uniform)_self;
+  self->super.fb = fb;
+  Model *uniform model = self->super.model;
+  self->volumeEpsilon = self->super.epsilon;
+
+  if (model->volumeCount) {
+    // Ray epsilon based on bounding box of all volumes.
+    uniform box3f boundingBox = make_box3f_empty();
+    for (uniform int32 i = 0; i < model->volumeCount; i++)
+      boundingBox = box_extend(boundingBox, model->volumes[i]->boundingBox);
+
+    self->volumeEpsilon = 1e-4f * length(box_size(boundingBox));
+  }
+
+  return NULL;
 }
 
 // Exports (called from C++)
@@ -603,8 +597,7 @@ export void SciVisRenderer_set(void *uniform _self,
                                void **uniform lights,
                                const uniform uint32 numLights)
 {
-  uniform SciVisRenderer *uniform self =
-      (uniform SciVisRenderer *uniform)_self;
+  uniform SciVisRenderer *uniform self = (uniform SciVisRenderer *uniform)_self;
 
   self->shadowsEnabled = shadowsEnabled;
   self->maxDepth = maxDepth;
@@ -623,6 +616,7 @@ export void *uniform SciVisRenderer_create(void *uniform cppE)
   uniform SciVisRenderer *uniform self = uniform new uniform SciVisRenderer;
   Renderer_Constructor(&self->super,cppE);
   self->super.renderSample = SciVisRenderer_renderSample;
+  self->super.beginFrame = SciVisRenderer_beginFrame;
   SciVisRenderer_set(self, true, 10, 4, infinity, 0.25f, NULL, 0);
 
   return self;

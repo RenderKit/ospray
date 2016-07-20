@@ -26,6 +26,8 @@ namespace ospray {
                            bool hasAccumBuffer,
                            bool hasVarianceBuffer)
     : size(size),
+      numTiles(divRoundUp(size, getTileSize())),
+      maxValidPixelID(size-vec2i(1)),
       colorBufferFormat(colorBufferFormat),
       hasDepthBuffer(hasDepthBuffer),
       hasAccumBuffer(hasAccumBuffer),
@@ -65,7 +67,7 @@ namespace ospray {
       return;
     }
     fprintf(file, "PF\n%i %i\n-1.0\n", size.x, size.y);
-    float *out = (float *)alloca(sizeof(float)*3*size.x);
+    float *out = STACK_BUFFER(float, 3*size.x);
     for (int y = 0; y < size.y; y++) {
       const float *in = (const float *)&pixel[(size.y-1-y)*size.x*channel];
       for (int x = 0; x < size.x; x++) {

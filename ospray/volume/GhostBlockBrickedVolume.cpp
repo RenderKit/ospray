@@ -15,8 +15,8 @@
 // ======================================================================== //
 
 //ospray
-#include "ospray/volume/GhostBlockBrickedVolume.h"
-#include "ospray/common/tasking/parallel_for.h"
+#include "volume/GhostBlockBrickedVolume.h"
+#include "common/tasking/parallel_for.h"
 #include "GhostBlockBrickedVolume_ispc.h"
 
 namespace ospray {
@@ -94,16 +94,23 @@ namespace ospray {
       }
     }
 #endif
-    // Copy voxel data into the volume.
-    const int NTASKS = regionSize.y * regionSize.z;
 
+    vec3i finalRegionSize = regionSize;
+    vec3i finalRegionCoords = regionCoords;
+    void *finalSource = const_cast<void*>(source);
+    const bool upsampling = scaleRegion(source, finalSource, finalRegionSize, finalRegionCoords);
+    // Copy voxel data into the volume.
+    const int NTASKS = finalRegionSize.y * finalRegionSize.z;
     parallel_for(NTASKS, [&](int taskIndex){
-        ispc::GBBV_setRegion(ispcEquivalent,
-                             source,
-                             (const ispc::vec3i &)regionCoords,
-                             (const ispc::vec3i &)regionSize,
-                             taskIndex);
+        ispc::GBBV_setRegion(ispcEquivalent, finalSource, (const ispc::vec3i&)finalRegionCoords,
+            (const ispc::vec3i&)finalRegionSize, taskIndex);
     });
+
+    // If we're upsampling finalSource points at the chunk of data allocated by scaleRegion
+    // to hold the upsampled volume data and we must free it.
+    if (upsampling) {
+      free(finalSource);
+    }
 
     return true;
   }

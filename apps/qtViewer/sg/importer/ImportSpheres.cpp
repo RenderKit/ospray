@@ -27,12 +27,7 @@
 // stl
 #include <map>
 // xml
-#include "apps/common/xml/XML.h"
-// stdlib, for mmap
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <fcntl.h>
+#include "common/xml/XML.h"
 
 namespace ospray {
   namespace sg {

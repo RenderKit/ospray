@@ -14,10 +14,8 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-CONFIGURE_OSPRAY()
-
 IF(OSPRAY_BUILD_MPI_DEVICE)
-  OPTION(OSPRAY_EXP_DATA_PARALLEL "Experimental data-parallel compositing mode")
+  OPTION(OSPRAY_EXP_DATA_PARALLEL "Experimental data-parallel compositing mode" ON)
   OPTION(OSPRAY_PIN_ASYNC "Pin async mpi comm threads?" OFF)
   MARK_AS_ADVANCED(OSPRAY_PIN_ASYNC)
 ENDIF()
@@ -34,6 +32,21 @@ FIND_PACKAGE(Threads REQUIRED)
 # -------------------------------------------------------
 
 SET(REQUIRED_MINIMUM_EMBREE 2.7.1)
+
+# Do a check to see if we can find the system Embree
+IF(NOT DEFINED LAST_CONFIG_USED_EXTERNAL_EMBREE)
+  FIND_PACKAGE(embree ${REQUIRED_MINIMUM_EMBREE} QUIET)
+  IF(NOT DEFINED EMBREE_INCLUDE_DIRS)
+    MESSAGE(WARNING
+            "We did not find Embree installed on your system. If you would"
+            " like to use a newer version of Embree than the one in the"
+            " OSPRay source tree (v2.7.1), please download and extract or"
+            " compile Embree from source, set the 'embree_DIR' environment"
+            " variable to where it is installed, and re-enable the"
+            " OSPRAY_USE_EXTERNAL_EMBREE CMake option.")
+    SET(OSPRAY_USE_EXTERNAL_EMBREE OFF CACHE BOOL "" FORCE)
+  ENDIF()
+ENDIF()
 
 IF(OSPRAY_USE_EXTERNAL_EMBREE)
   # Clear out embree directories if they were previously populated by an
@@ -89,8 +102,20 @@ ELSE()
   SET(LAST_CONFIG_USED_EXTERNAL_EMBREE OFF CACHE INTERNAL "" FORCE)
 ENDIF()
 
-INCLUDE_DIRECTORIES(${EMBREE_INCLUDE_DIRS})
-INCLUDE_DIRECTORIES_ISPC(${EMBREE_INCLUDE_DIRS})
+INCLUDE_DIRECTORIES(
+  ${CMAKE_SOURCE_DIR}/ospray/include
+  ${CMAKE_SOURCE_DIR}/ospray
+  ${CMAKE_SOURCE_DIR}
+  ${PROJECT_BINARY_DIR}
+  ${EMBREE_INCLUDE_DIRS}
+)
+INCLUDE_DIRECTORIES_ISPC(
+  ${CMAKE_SOURCE_DIR}/ospray/include
+  ${CMAKE_SOURCE_DIR}/ospray
+  ${CMAKE_SOURCE_DIR}
+  ${PROJECT_BINARY_DIR}
+  ${EMBREE_INCLUDE_DIRS}
+)
 
 SET(EMBREE_INCLUDE_DIRS    ${EMBREE_INCLUDE_DIRS}    PARENT_SCOPE)
 SET(EMBREE_LIBRARIES       ${EMBREE_LIBRARIES}       PARENT_SCOPE)
@@ -133,6 +158,7 @@ SET(OSPRAY_SOURCES
   fb/LocalFB.ispc
   fb/LocalFB.cpp
   fb/PixelOp.cpp
+  fb/Tile.h
 
   camera/Camera.cpp
   camera/PerspectiveCamera.ispc
@@ -242,7 +268,141 @@ SET(OSPRAY_SOURCES
   api/API.cpp
   api/Device.cpp
   api/LocalDevice.cpp
-  )
+)
+
+# -------------------------------------------------------
+# Install API headers
+# -------------------------------------------------------
+
+OSPRAY_INSTALL_SDK_HEADERS(
+  camera/Camera.h
+  camera/Camera.ih
+  camera/OrthographicCamera.h
+  camera/OrthographicCamera.ih
+  camera/PanoramicCamera.h
+  camera/PanoramicCamera.ih
+  camera/PerspectiveCamera.h
+  camera/PerspectiveCamera.ih
+  DESTINATION camera
+)
+
+OSPRAY_INSTALL_SDK_HEADERS(
+  common/Core.h
+  common/Data.h
+  common/DifferentialGeometry.ih
+  common/Library.h
+  common/Managed.h
+  common/Material.h
+  common/Material.ih
+  common/Model.h
+  common/Model.ih
+  common/ObjectHandle.h
+  common/OSPCommon.h
+  common/OSPCommon.ih
+  common/Ray.h
+  common/Ray.ih
+  common/Texture.h
+  common/Thread.h
+  DESTINATION common
+)
+
+OSPRAY_INSTALL_SDK_HEADERS(
+  common/tasking/async.h
+  common/tasking/parallel_for.h
+  common/tasking/TaskingTypeTraits.h
+  common/tasking/TaskSys.h
+  DESTINATION common/tasking
+)
+
+OSPRAY_INSTALL_SDK_HEADERS(
+  fb/FrameBuffer.h
+  fb/FrameBuffer.ih
+  fb/PixelOp.h
+  fb/Tile.h
+  fb/Tile.ih
+  DESTINATION fb
+)
+
+OSPRAY_INSTALL_SDK_HEADERS(
+  geometry/Cylinders.h
+  geometry/Geometry.h
+  geometry/Geometry.ih
+  geometry/Instance.h
+  geometry/Isosurfaces.h
+  geometry/Slices.h
+  geometry/Spheres.h
+  geometry/StreamLines.h
+  geometry/TriangleMesh.h
+  geometry/TriangleMesh.ih
+  DESTINATION geometry
+)
+
+OSPRAY_INSTALL_SDK_HEADERS(
+  lights/AmbientLight.h
+  lights/DirectionalLight.h
+  lights/HDRILight.h
+  lights/Light.h
+  lights/Light.ih
+  lights/PointLight.h
+  lights/QuadLight.h
+  lights/SpotLight.h
+  DESTINATION lights
+)
+
+OSPRAY_INSTALL_SDK_HEADERS(
+  #FIXME: check if all of these are used...
+  math/AffineSpace.ih
+  math/box.ih
+  math/Distribution2D.ih
+  math/LinearSpace.ih
+  math/math.ih
+  math/random.ih
+  math/region.ih
+  math/sampling.ih
+  math/vec.ih
+  DESTINATION math
+)
+
+OSPRAY_INSTALL_SDK_HEADERS(
+  render/LoadBalancer.h
+  render/Renderer.h
+  render/Renderer.ih
+  render/util.h
+  render/util.ih
+  DESTINATION render
+)
+
+#TODO: all the specific renderer headers...
+
+OSPRAY_INSTALL_SDK_HEADERS(
+  texture/Texture2D.h
+  texture/Texture2D.ih
+  texture/TextureParam.ih
+  DESTINATION texture
+)
+
+OSPRAY_INSTALL_SDK_HEADERS(
+  transferFunction/LinearTransferFunction.h
+  transferFunction/LinearTransferFunction.ih
+  transferFunction/TransferFunction.h
+  transferFunction/TransferFunction.ih
+  DESTINATION transferFunction
+)
+
+OSPRAY_INSTALL_SDK_HEADERS(
+  volume/BlockBrickedVolume.h
+  volume/BlockBrickedVolume.ih
+  volume/GridAccelerator.ih
+  volume/GhostBlockBrickedVolume.h
+  volume/GhostBlockBrickedVolume.ih
+  volume/SharedStructuredVolume.h
+  volume/SharedStructuredVolume.ih
+  volume/StructuredVolume.h
+  volume/StructuredVolume.ih
+  volume/Volume.h
+  volume/Volume.ih
+  DESTINATION volume
+)
 
 # -------------------------------------------------------
 # MPI components
@@ -269,6 +429,7 @@ IF (OSPRAY_MPI)
 
     mpi/DistributedFrameBuffer.cpp
     mpi/DistributedFrameBuffer.ispc
+    mpi/DistributedFrameBuffer_TileTypes.cpp
 
     fb/DisplayWall.cpp
     )
@@ -364,13 +525,9 @@ ENDIF()
 ##############################################################
 IF (OSPRAY_MPI)
   IF (THIS_IS_MIC)
-    OSPRAY_LIBRARY_LINK_LIBRARIES(ospray
-      ${MPI_LIBRARY_MIC}
-    )
+    OSPRAY_LIBRARY_LINK_LIBRARIES(ospray ${MPI_LIBRARY_MIC})
   ELSE()
-    OSPRAY_LIBRARY_LINK_LIBRARIES(ospray
-      ${MPI_CXX_LIBRARIES}
-    )
+    OSPRAY_LIBRARY_LINK_LIBRARIES(ospray ${MPI_CXX_LIBRARIES})
   ENDIF()
 
   OSPRAY_ADD_EXECUTABLE(ospray_mpi_worker mpi/MPIWorker.cpp)
@@ -387,9 +544,7 @@ IF (OSPRAY_BUILD_COI_DEVICE)
     # ------------------------------------------------------------
     # dev-side of COI device: lib dev-side libospray to coi dev libs,...
     # ------------------------------------------------------------
-    OSPRAY_LIBRARY_LINK_LIBRARIES(ospray
-      ${LIBCOI_DEVICE}
-    )
+    OSPRAY_LIBRARY_LINK_LIBRARIES(ospray ${LIBCOI_DEVICE})
     # ... and add the coi worker executable
     OSPRAY_ADD_EXECUTABLE(ospray_coi_worker api/COIDeviceWorker.cpp)
     OSPRAY_EXE_LINK_LIBRARIES(ospray_coi_worker
@@ -403,9 +558,7 @@ IF (OSPRAY_BUILD_COI_DEVICE)
     # ------------------------------------------------------------
     # host-side of COI device: just link libospray to coi host libs
     # ------------------------------------------------------------
-    OSPRAY_LIBRARY_LINK_LIBRARIES(ospray
-      ${LIBCOI_HOST}
-    )
+    OSPRAY_LIBRARY_LINK_LIBRARIES(ospray ${LIBCOI_HOST})
     # note: no need to add the host-side libcoi to the install
     # targets; it's already done above
   ENDIF()

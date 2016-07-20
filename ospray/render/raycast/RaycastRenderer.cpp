@@ -18,7 +18,7 @@
 
 // ospray
 #include "RaycastRenderer.h"
-#include "ospray/camera/PerspectiveCamera.h"
+#include "camera/PerspectiveCamera.h"
 // ispc exports
 #include "RaycastRenderer_ispc.h"
 

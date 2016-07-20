@@ -17,8 +17,8 @@
 // ospray
 #include "SimpleAO.h"
 #include "SimpleAOMaterial.h"
-#include "ospray/camera/Camera.h"
-#include "ospray/texture/Texture2D.h"
+#include "camera/Camera.h"
+#include "texture/Texture2D.h"
 // ispc exports
 #include "SimpleAO_ispc.h"
 

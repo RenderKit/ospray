@@ -17,9 +17,9 @@
 #pragma once
 
 // ospray stuff
-#include "ospray/common/Ray.ih"
-#include "ospray/geometry/Geometry.ih"
-#include "ospray/volume/Volume.ih"
+#include "../common/Ray.ih"
+#include "../geometry/Geometry.ih"
+#include "../volume/Volume.ih"
 
 // embree stuff
 #include "embree2/rtcore.isph"
@@ -38,7 +38,7 @@ struct Model {
   uniform int32 geometryCount;
 
   //! volumes contained in the model
-  Volume **uniform volumes;
+  uniform Volume *uniform *uniform volumes;
   uniform int32 volumeCount;
 
 };

@@ -16,9 +16,9 @@
 
 #pragma once
 
-#include "../samplers/Sample.ih"
-#include "ospray/math/sampling.ih"
-#include "ospray/math/LinearSpace.ih"
+#include "render/pathtracer/samplers/Sample.ih"
+#include "math/sampling.ih"
+#include "math/LinearSpace.ih"
 
 /*! Reflects a viewing vector I at a normal N. Cosine between I
  *  and N is given as input. */

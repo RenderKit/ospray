@@ -16,10 +16,9 @@
 
 #pragma once
 
-#include "ospray/common/OSPCommon.ih"
-#include "ospray/common/Ray.ih"
-#include "ospray/transferFunction/TransferFunction.ih"
-#include "ospray/math/box.ih"
+#include "../common/Ray.ih"
+#include "../transferFunction/TransferFunction.ih"
+#include "../math/box.ih"
 
 // #if EXP_DATA_PARALLEL
 // struct DataParallelInfo {
@@ -55,9 +54,6 @@ struct Volume {
   //! Clipping box for the volume (applies to volume rendering only). An empty clipping box is ignored.
   uniform box3f volumeClippingBox;
 
-  //! Bounding box for the volume in world coordinates.
-  uniform box3f boundingBox;
-
   //! The value at the given sample location in world coordinates.
   varying float (*uniform computeSample)(void *uniform _self, 
                                          const varying vec3f &worldCoordinates);
@@ -74,6 +70,9 @@ struct Volume {
                                       uniform float *uniform isovalues, 
                                       uniform int numIsovalues, 
                                       varying Ray &ray);
+
+  //! Bounding box for the volume in world coordinates.  This is an internal derived parameter and not meant to be redefined externally.
+  uniform box3f boundingBox;
 };
 
 void Volume_Constructor(Volume *uniform volume,

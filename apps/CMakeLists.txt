@@ -14,33 +14,56 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-CONFIGURE_OSPRAY()
-
 IF(NOT THIS_IS_MIC)
 
-  # common xml utility classes
+  INCLUDE_DIRECTORIES(
+    ${CMAKE_SOURCE_DIR}/ospray/include
+    ${CMAKE_SOURCE_DIR}
+    ${CMAKE_CURRENT_LIST_DIR}
+    common
+  )
+
+  # common utilities
+  ADD_SUBDIRECTORY(common/commandline)
+  ADD_SUBDIRECTORY(common/importer)
+  ADD_SUBDIRECTORY(common/ospray_cpp)
+  ADD_SUBDIRECTORY(common/tfn_lib)
+  ADD_SUBDIRECTORY(common/miniSG)
   ADD_SUBDIRECTORY(common/xml)
 
-  # mini-scene graph viewer for _geometry_ (intentionally simple)
-  OPTION(OSPRAY_APPS_MODELVIEWER "Build ospModelViewer application." ON)
+  # benchmark application which has no windowing framework dependencies
+  OPTION(OSPRAY_APPS_BENCHMARK "Build ospBenchmark application." ON)
 
-  # include glut and widgets only when needed
-  # needs to be before the first application, such that the GLUT include path is known
-  # XXX if the defaults change, include could be missing on the first run of CMake
-  IF(OSPRAY_APPS_MODELVIEWER      OR
-     OSPRAY_APPS_STREAMLINEVIEWER OR
-     OSPRAY_APPS_PARTICLEVIEWER)
-    # GLUT is used by apps as well
+  IF(OSPRAY_APPS_BENCHMARK)
+    ADD_SUBDIRECTORY(bench)
+  ENDIF()
+
+  # determine if we can enable scripting features (can't with icc)
+  IF(NOT OSPRAY_COMPILER_ICC)
+    OPTION(OSPRAY_APPS_ENABLE_SCRIPTING
+           "Enable scripting features in viewer apps."
+           ON)
+    MARK_AS_ADVANCED(OSPRAY_APPS_ENABLE_SCRIPTING)
+  ELSE()
+    SET(OSPRAY_APPS_ENABLE_SCRIPTING OFF)
+  ENDIF()
+
+  IF(OSPRAY_APPS_ENABLE_SCRIPTING)
+    ADD_DEFINITIONS(-DOSPRAY_APPS_ENABLE_SCRIPTING)
+    INCLUDE_DIRECTORIES(common/script/chaiscript)
+    ADD_SUBDIRECTORY(common/script)
+  ENDIF()
+
+  # mini-scene graph viewer implemented with GLUT
+  OPTION(OSPRAY_APPS_GLUTVIEWER "Build ospGlutViewer application." ON)
+
+  IF(OSPRAY_APPS_GLUTVIEWER)
     INCLUDE(${PROJECT_SOURCE_DIR}/cmake/glut.cmake)
     # common utility classes for GLUT-based 3D viewer widget
     ADD_SUBDIRECTORY(common/widgets)
+    ADD_SUBDIRECTORY(glutViewer)
   ENDIF()
 
-  IF (OSPRAY_APPS_MODELVIEWER)
-    ADD_SUBDIRECTORY(modelViewer)
-  ENDIF()
-
- IF(NOT WIN32)
   # NOTE(jda) - Disable Qt based viewers when on OS X using ICC due to
   #             unresolved issues
   # qt-based viewer for geometry (and soon volumes)
@@ -51,19 +74,6 @@ IF(NOT THIS_IS_MIC)
     ENDIF()
   ENDIF()
 
-  # stream line viewer for NASA Stream Line Demo
-  OPTION(OSPRAY_APPS_STREAMLINEVIEWER "Build ospStreamLineViewer application." OFF)
-  MARK_AS_ADVANCED(OSPRAY_APPS_STREAMLINEVIEWER)
-  IF(OSPRAY_APPS_STREAMLINEVIEWER)
-    ADD_SUBDIRECTORY(streamLineViewer)
-  ENDIF()
-
-  # xyz atom model viewer (one sphere per atom)
-  OPTION(OSPRAY_APPS_PARTICLEVIEWER "Build ospParticleViewer application." OFF)
-  IF(OSPRAY_APPS_PARTICLEVIEWER)
-    ADD_SUBDIRECTORY(particleViewer)
-  ENDIF()
-
   # volume viewer application
   IF(NOT (APPLE AND (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")))
     OPTION(OSPRAY_APPS_VOLUMEVIEWER "Build ospVolumeViewer application." ON)
@@ -71,5 +81,4 @@ IF(NOT THIS_IS_MIC)
       ADD_SUBDIRECTORY(volumeViewer)
     ENDIF()
   ENDIF()
- ENDIF(NOT WIN32)
 ENDIF()

@@ -17,9 +17,24 @@
 // scene graph common stuff
 #include "Common.h"
 
+// stdlib, for mmap
+#include <sys/types.h>
+#include <sys/stat.h>
+#ifdef _WIN32
+#  include <windows.h>
+#else
+#  include <sys/mman.h>
+#endif
+#include <fcntl.h>
+
+// O_LARGEFILE is a GNU extension.
+#ifdef __APPLE__
+#define  O_LARGEFILE  0
+#endif
+
 namespace ospray {
   namespace sg {
-    
+
     //! parse vec3i from std::string (typically an xml-node's content string) 
     vec3i parseVec3i(const std::string &text) 
     { 
@@ -37,6 +52,41 @@ namespace ospray {
       assert(rc == 2); 
       return ret; 
     }
-    
+
+    const unsigned char * mapFile(const std::string &fileName)
+    {
+      FILE *file = fopen(fileName.c_str(), "rb");
+      if (!file)
+        THROW_SG_ERROR("could not open binary file");
+      fseek(file, 0, SEEK_END);
+      ssize_t fileSize =
+#ifdef _WIN32
+        _ftelli64(file);
+#else
+        ftell(file);
+#endif
+      fclose(file);
+
+#ifdef _WIN32
+      HANDLE fileHandle = CreateFile(fileName.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+      if (fileHandle == nullptr)
+        THROW_SG_ERROR("could not open file '" + fileName + "' (error " + std::to_string(GetLastError()) + ")\n");
+      HANDLE fileMappingHandle = CreateFileMapping(fileHandle, nullptr, PAGE_READONLY, 0, 0, nullptr);
+      if (fileMappingHandle == nullptr)
+        THROW_SG_ERROR("could not create file mapping (error " + std::to_string(GetLastError()) + ")\n");
+#else
+      int fd = ::open(fileName.c_str(), O_LARGEFILE | O_RDONLY);
+      if (fd == -1)
+        THROW_SG_ERROR("could not open file '" + fileName + "'\n");
+#endif
+
+      return (unsigned char *)
+#ifdef _WIN32
+        MapViewOfFile(fileMappingHandle, FILE_MAP_READ, 0, 0, fileSize);
+#else
+        mmap(nullptr, fileSize, PROT_READ, MAP_SHARED, fd, 0);
+#endif
+    }
+
   } // ::ospray::sg
 } // ::ospray

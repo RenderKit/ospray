@@ -17,7 +17,7 @@
 #pragma once
 
 #include <ospray/ospray.h>
-#include "common/vec.h"
+#include "ospcommon/vec.h"
 #include <QtGui>
 
 class IsosurfaceEditor;

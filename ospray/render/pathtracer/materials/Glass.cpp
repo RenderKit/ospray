@@ -14,7 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/common/Material.h"
+#include "common/Material.h"
+#include "texture/Texture2D.h"
 #include "Glass_ispc.h"
 
 namespace ospray {
@@ -29,16 +30,32 @@ namespace ospray {
         if (getIE() != NULL) return;
 
         const vec3f& transmissionInside
-          = getParam3f("transmission",getParam3f("color",vec3f(1.f)));
+          = getParam3f("transmissionInside",vec3f(1.f));
         const vec3f& transmissionOutside
           = getParam3f("transmissionOutside",vec3f(1.f));
-
         const float etaInside = getParamf("etaInside", getParamf("eta", 1.5f));
-        const float etaOutside = getParamf("etaOutside", 1.f);
+        const float etaOutside = getParamf("etaOutside", 1.f);;
+        const float absorptionDistance = getParamf("absorptionDistance", 0.0f);
+        // Why is "absorptionColor" not found, while "color" is found???
+        const vec3f& absorptionColor = getParam3f("color",vec3f(1.f));
 
-        ispcEquivalent = ispc::PathTracer_Glass_create
-          (etaInside, (const ispc::vec3f&)transmissionInside,
-           etaOutside, (const ispc::vec3f&)transmissionOutside);
+
+        Texture2D *map_Kd = (Texture2D*)getParamObject("map_Kd", getParamObject("map_kd",  getParamObject("colorMap", NULL)));
+        affine2f xform_Kd = getTextureTransform("map_kd") * getTextureTransform("colorMap"); 
+          
+          
+        ispcEquivalent = ispc::PathTracer_Glass_create();
+
+        ispc::PathTracer_Glass_set(
+          ispcEquivalent,
+          etaInside, 
+          (const ispc::vec3f&)transmissionInside,
+          etaOutside, 
+          (const ispc::vec3f&)transmissionOutside,
+          absorptionDistance,
+          (const ispc::vec3f&)absorptionColor,
+          map_Kd ? map_Kd->getIE() : NULL,
+          (const ispc::AffineSpace2f&)xform_Kd);
       }
     };
 

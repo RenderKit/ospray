@@ -14,15 +14,11 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/fb/FrameBuffer.ih"
-#include "ospray/math/vec.ih"
+#include "fb/FrameBuffer.ih"
+#include "math/vec.ih"
 
 struct DistributedFrameBuffer {
   FrameBuffer super;
-};
-
-struct VaryingRGBA_I8 {
-  varying uint32 color[TILE_SIZE*TILE_SIZE/programCount];
 };
 
 export void DFB_alphaBlendBackground(VaryingTile    *uniform firstTile,
@@ -56,16 +52,21 @@ export void DFB_alphaBlendTiles(VaryingTile    *uniform prev,
   }
 }
 
-#define template_accumulate(name, cvt)                                       \
-export void DFB_accumulate_##name(void           *uniform _self,             \
+#define template_accumulate(name, dst_fmt, cvt)                              \
+export uniform float DFB_accumulate_##name(void  *uniform _self,             \
                                   VaryingTile    *uniform tile,              \
                                   VaryingTile    *uniform final,             \
                                   VaryingTile    *uniform accum,             \
-                                  VaryingRGBA_I8 *uniform color,             \
+                                  VaryingTile    *uniform variance,          \
+                                  void           *uniform _color,            \
+                                  uniform float   cntu,                      \
                                   uniform int     accumID,                   \
-                                  uniform bool    hasAccumBuffer)            \
+                                  uniform bool    hasAccumBuffer,            \
+                                  uniform bool    hasVarianceBuffer)         \
 {                                                                            \
   DistributedFrameBuffer *uniform self = (DistributedFrameBuffer*)_self;     \
+  dst_fmt *uniform color = (dst_fmt*uniform)_color;                          \
+  uniform float errf = inf;                                                  \
   if (!hasAccumBuffer || accumID < 1) {                                      \
     for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {           \
       vec4f col = make_vec4f(tile->r[i], tile->g[i], tile->b[i], tile->a[i]);\
@@ -78,12 +79,15 @@ export void DFB_accumulate_##name(void           *uniform _self,             \
       final->b[i] = col.z;                                                   \
       final->a[i] = col.w;                                                   \
                                                                              \
-      color->color[i] = cvt(col);                                            \
+      color[i] = cvt(col);                                                   \
     }                                                                        \
   } else {                                                                   \
-    const uniform float rcpAccumID = 1.f/(accumID+1);                        \
+    const uniform float rcpAccumID = rcpf(accumID+1);                        \
+    const uniform float accHalfScale = rcpf(accumID/2+1);                    \
+    float err = 0.f;                                                         \
     for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {           \
-      vec4f col = make_vec4f(tile->r[i], tile->g[i], tile->b[i], tile->a[i]) \
+      vec3f col3 = make_vec3f(tile->r[i], tile->g[i], tile->b[i]);           \
+      vec4f col = make_vec4f(col3, tile->a[i])                               \
         + make_vec4f(accum->r[i], accum->g[i], accum->b[i], accum->a[i]);    \
                                                                              \
       accum->r[i] = col.x;                                                   \
@@ -93,18 +97,49 @@ export void DFB_accumulate_##name(void           *uniform _self,             \
                                                                              \
       col = col * rcpAccumID;                                                \
                                                                              \
+      /* variance buffer accumulates every other frame */                    \
+      if (hasVarianceBuffer && (accumID & 1) == 1) {                         \
+        varying vec3f vari = make_vec3f(0.f);                                \
+        if (accumID > 1)                                                     \
+          vari = make_vec3f(variance->r[i], variance->g[i], variance->b[i]); \
+        vari = vari + col3;                                                  \
+        variance->r[i] = vari.x;                                             \
+        variance->g[i] = vari.y;                                             \
+        variance->b[i] = vari.z;                                             \
+                                                                             \
+        const vec3f acc3 = make_vec3f(col);                                  \
+        const float den2 = reduce_add(acc3);                                 \
+        if (den2 > 0.0f) {                                                   \
+          const vec3f diff = absf(acc3 - accHalfScale * vari);               \
+          err += reduce_add(diff) * rsqrtf(den2);                            \
+        }                                                                    \
+      }                                                                      \
+                                                                             \
       final->r[i] = col.x;                                                   \
       final->g[i] = col.y;                                                   \
       final->b[i] = col.z;                                                   \
       final->a[i] = col.w;                                                   \
                                                                              \
-      color->color[i] = cvt(col);                                            \
+      color[i] = cvt(col);                                                   \
     }                                                                        \
+    /* error is also only updated every other frame to avoid alternating     \
+     * error (get a monotone sequence) */                                    \
+    if (hasVarianceBuffer && (accumID & 1) == 1)                             \
+      errf = reduce_add(err) * rsqrtf(cntu);                                 \
   }                                                                          \
+  return errf;                                                               \
 }
 
-template_accumulate(RGBA8, cvt_uint32);
-template_accumulate(SRGBA, linear_to_srgba8);
+inline vec4f soa_to_aos4f(const vec4f s)
+{
+  vec4f a;
+  soa_to_aos4(s.x, s.y, s.z, s.w, (uniform float*uniform)&a);
+  return a;
+}
+
+template_accumulate(RGBA8, varying uint32, cvt_uint32);
+template_accumulate(SRGBA, varying uint32, linear_to_srgba8);
+template_accumulate(RGBA32F, varying vec4f, soa_to_aos4f);
 #undef template_accumulate
 
 

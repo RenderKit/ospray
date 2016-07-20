@@ -16,7 +16,7 @@
 
 // ospray
 #include "Model.h"
-#include "ospray/geometry/TriangleMesh.h"
+#include "geometry/TriangleMesh.h"
 // embree
 #include "embree2/rtcore.h"
 #include "embree2/rtcore_scene.h"
@@ -31,6 +31,8 @@ namespace ospray {
   using std::endl;
 
   extern RTCDevice g_embreeDevice;
+
+  extern "C" void *ospray_getEmbreeDevice() { return g_embreeDevice; }
 
   Model::Model()
   {
@@ -63,9 +65,6 @@ namespace ospray {
 
       bounds.extend(geometry[i]->bounds);
       ispc::Model_setGeometry(getIE(), i, geometry[i]->getIE());
-    }
-    if (geometry.size() > 10) {
-      PING; PRINT(geometry.size());
     }
 
     for (size_t i=0; i<volume.size(); i++) 

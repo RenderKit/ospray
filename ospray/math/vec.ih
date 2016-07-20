@@ -28,7 +28,7 @@
     TYPE x,y,z;                                 \
   };                                            \
   struct vec3##ABB##a {                         \
-    TYPE x,y,z,a;                               \
+    TYPE x,y,z,w;                               \
   };                                            \
 
 #define __define_ispc_vector4(TYPE,ABB)         \
@@ -410,6 +410,28 @@ inline varying vec3f negate(const varying vec3f &a)
   inline vec3##abb opname (const type a, const vec3##abb b) {           \
     return make_vec3##abb(a op b.x, a op b.y, a op b.z);                \
   }                                                                     \
+  /* vec3##abb##a */                                                    \
+  inline uniform vec3##abb##a opname (const uniform vec3##abb##a a,     \
+                                      const uniform vec3##abb##a b) {   \
+    return make_vec3##abb##a(a.x op b.x, a.y op b.y, a.z op b.z);       \
+  }                                                                     \
+  inline vec3##abb##a opname (const vec3##abb##a a, const vec3##abb##a b) { \
+    return make_vec3##abb##a(a.x op b.x, a.y op b.y, a.z op b.z);       \
+  }                                                                     \
+  inline uniform vec3##abb##a opname (const uniform vec3##abb##a a,     \
+                                      const uniform type b) {           \
+    return make_vec3##abb##a(a.x op b, a.y op b, a.z op b);             \
+  }                                                                     \
+  inline vec3##abb##a opname (const vec3##abb##a a, const type b) {     \
+    return make_vec3##abb##a(a.x op b, a.y op b, a.z op b);             \
+  }                                                                     \
+  inline uniform vec3##abb##a opname (const uniform type a,             \
+                                      const uniform vec3##abb##a b) {   \
+    return make_vec3##abb##a(a op b.x, a op b.y, a op b.z);             \
+  }                                                                     \
+  inline vec3##abb##a opname (const type a, const vec3##abb##a b) {     \
+    return make_vec3##abb##a(a op b.x, a op b.y, a op b.z);             \
+  }                                                                     \
   /* vec4##abb */                                                       \
   inline uniform vec4##abb opname (const uniform vec4##abb a,           \
                                    const uniform vec4##abb b) {         \
@@ -436,7 +458,7 @@ inline varying vec3f negate(const varying vec3f &a)
 #define __define_binary_operator(opname,op)             \
   __define_binary_operator_typed(opname,op,f,float)     \
   __define_binary_operator_typed(opname,op,i,int32)     \
-  __define_binary_operator_typed(opname,op,ui,uint32) 
+  __define_binary_operator_typed(opname,op,ui,uint32)
 
 
 // define 'regular' operators
@@ -480,6 +502,10 @@ inline uniform bool eq(const uniform vec3f a, const uniform vec3f b)
 { return a.x==b.x && a.y==b.y && a.z==b.z; }
 inline bool eq(const vec3f a, const vec3f b)
 { return a.x==b.x & a.y==b.y & a.z==b.z; }
+inline uniform bool eq(const uniform vec3fa a, const uniform vec3fa b)
+{ return a.x==b.x && a.y==b.y && a.z==b.z; }
+inline bool eq(const vec3fa a, const vec3fa b)
+{ return a.x==b.x & a.y==b.y & a.z==b.z; }
 
 inline uniform bool ne(const uniform vec2f a, const uniform vec2f b)
 { return !eq(a,b); }
@@ -488,6 +514,10 @@ inline bool ne(const vec2f a, const vec2f b)
 inline uniform bool ne(const uniform vec3f a, const uniform vec3f b)
 { return !eq(a,b); }
 inline bool ne(const vec3f a, const vec3f b)
+{ return !eq(a,b); }
+inline uniform bool ne(const uniform vec3fa a, const uniform vec3fa b)
+{ return !eq(a,b); }
+inline bool ne(const vec3fa a, const vec3fa b)
 { return !eq(a,b); }
 
 
@@ -507,6 +537,15 @@ inline varying float length(const varying vec3f a) { return sqrtf(dot(a,a)); }
 inline uniform float distance(const uniform vec3f a, const uniform vec3f b) { return length(sub(a,b)); }
 inline varying float distance(const varying vec3f a, const uniform vec3f b) { return length(sub(a,b)); }
 
+
+inline uniform float dot(const uniform vec3fa a, const uniform vec3fa b) { return a.x*b.x+a.y*b.y+a.z*b.z; }
+inline varying float dot(const varying vec3fa a, const varying vec3fa b) { return a.x*b.x+a.y*b.y+a.z*b.z; }
+
+inline uniform float length(const uniform vec3fa a) { return sqrtf(dot(a,a)); }
+inline varying float length(const varying vec3fa a) { return sqrtf(dot(a,a)); }
+
+inline uniform float distance(const uniform vec3fa a, const uniform vec3fa b) { return length(sub(a,b)); }
+inline varying float distance(const varying vec3fa a, const uniform vec3fa b) { return length(sub(a,b)); }
 
 // ------------------------------------------------------------------
 // cross product
@@ -536,8 +575,27 @@ inline vec3f normalize(const vec3f v)
 inline vec3f normalize(const vec3f v, float &len)
 { len = sqrtf(dot(v,v)); return v * rcpf(len); }
 
-inline vec3f safe_normalize(const vec3f v) 
+inline vec3f safe_normalize(const vec3f v)
 { return v * (1.f/sqrt(max(1e-6f,dot(v,v)))); }
+
+/*! differentiated normalization */
+inline varying vec3f dnormalize(const varying vec3f& p, const varying vec3f& dp)
+{
+  const float pp  = dot(p,p);
+  const float pdp = dot(p,dp);
+  return (pp*dp-pdp*p)*rcp(pp)*rsqrt(pp);
+}
+
+
+inline uniform vec3fa normalize(const uniform vec3fa &v) { return v * (1.f/sqrt(dot(v,v))); }
+inline varying vec3fa normalize(const varying vec3fa  v) { return v * (1.f/sqrt(dot(v,v))); }
+
+inline varying vec3fa dnormalize(const varying vec3fa& p, const varying vec3fa& dp)
+{
+  const float pp  = dot(p,p);
+  const float pdp = dot(p,dp);
+  return (pp*dp-pdp*p)*rcp(pp)*rsqrt(pp);
+}
 
 
 #define __lift_unary_fct(F)                             \
@@ -619,7 +677,7 @@ inline uniform vec4f make_vec4f(const uniform vec3f rgb, const uniform float a)
 #define __define_lerp3a(ABB)                                            \
   inline uniform vec3##ABB##a lerp(uniform float factor, const uniform vec3##ABB##a a, const uniform vec3##ABB##a b) \
   {                                                                     \
-    return make_vec3##ABB##a(lerp(factor, a.x, b.x), lerp(factor, a.y, b.y), lerp(factor, a.z, b.z), lerp(factor, a.a, b.a)); \
+    return make_vec3##ABB##a(lerp(factor, a.x, b.x), lerp(factor, a.y, b.y), lerp(factor, a.z, b.z), lerp(factor, a.w, b.w)); \
   }                                                                     \
   inline vec3##ABB##a lerp(float factor, const vec3##ABB##a a, const vec3##ABB##a b) \
   {                                                                     \
@@ -816,14 +874,14 @@ inline vec4f linear_to_srgba(const vec4f c)
   return make_vec4f(linear_to_srgb(c.x),
                     linear_to_srgb(c.y),
                     linear_to_srgb(c.z),
-                    max(c.w, 0f)); // alpha is never gamma-corrected
+                    max(c.w, 0.f)); // alpha is never gamma-corrected
 }
 
 inline uint32 linear_to_srgba8(const vec4f c)
 {
 #if 1
   vec4f l = 255.f * min(linear_to_srgba(c), make_vec4f(1.f));
-  return 
+  return
     ((uint32)l.x << 0)  |
     ((uint32)l.y << 8)  |
     ((uint32)l.z << 16) |

@@ -19,7 +19,7 @@
 // ospray public
 #include <ospray/ospray.h>
 // ospcommon
-#include "common/vec.h"
+#include "ospcommon/vec.h"
 // std
 #include <string>
 #include <vector>
@@ -31,8 +31,8 @@ public:
 
   ColorMap(std::string name, std::vector<ospcommon::vec3f> colors);
 
-  std::string getName();
-  std::vector<ospcommon::vec3f> getColors();
+  std::string getName() const;
+  std::vector<ospcommon::vec3f> getColors() const;
 
   QImage getImage();
 

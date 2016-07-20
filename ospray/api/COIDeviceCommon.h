@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "ospray/common/OSPCommon.h"
-#include "ospray/common/ObjectHandle.h"
+#include "common/OSPCommon.h"
+#include "common/ObjectHandle.h"
 
 namespace ospray {
   namespace coi {

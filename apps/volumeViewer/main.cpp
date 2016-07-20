@@ -31,24 +31,24 @@ void printUsage(const char *exeName)
     std::cerr << "\n  USAGE:  " << exeName << " <filename> [filenames...] [options]\n"
               << " \n"
               << "  Options:\n"
-              << "    --benchmark <warm-up frames> <frames>   run benchmark and report overall frame rate\n"
-              << "    --dt <dt>                               use ray cast sample step size 'dt'\n"
-              << "    --module <moduleName>                   load the module 'moduleName'\n"
-              << "    --ply <filename>                        load PLY geometry from 'filename'\n"
-              << "    --rotate <rate>                         automatically rotate view according to 'rate'\n"
-              << "    --fps,--show-framerate                  show the frame rate in the window title bar\n"
-              << "    --fullscreen                            enter fullscreen mode\n"
-              << "    --own-model-per-object                  create a separate model for each object\n"
-              << "    --slice <filename>                      load volume slice from 'filename'\n"
-              << "    --transferfunction <filename>           load transfer function from 'filename'\n"
-              << "    --viewsize <width>x<height>             force OSPRay view size to 'width'x'height'\n"
-              << "    --vu <x> <y> <z>                        set viewport up vector to ('x', 'y', 'z')\n"
-              << "    --vp <x> <y> <z>                        set camera position ('x', 'y', 'z')\n"
-              << "    --vi <x> <y> <z>                        set look at position ('x', 'y', 'z')\n"
-              << "    -r,--renderer <renderer>                set renderer to use\n"
-              << "    --writeframes <filename>                emit frames to 'filename_xxxxx.ppm'\n"
-              << "    --benchmark <warm-up frames> <frames>   perform benchmarking\n"
-              << "    -h,--help                               print this message\n"
+              << "    --benchmark <warm-up> <frames> <img file>  run benchmark and report overall frame rate\n"
+              << "                                               saving the final frame to <img file>\n"
+              << "    --dt <dt>                                  use ray cast sample step size 'dt'\n"
+              << "    --module <moduleName>                      load the module 'moduleName'\n"
+              << "    --ply <filename>                           load PLY geometry from 'filename'\n"
+              << "    --rotate <rate>                            automatically rotate view according to 'rate'\n"
+              << "    --fps,--show-framerate                     show the frame rate in the window title bar\n"
+              << "    --fullscreen                               enter fullscreen mode\n"
+              << "    --own-model-per-object                     create a separate model for each object\n"
+              << "    --slice <filename>                         load volume slice from 'filename'\n"
+              << "    --transferfunction <filename>              load transfer function from 'filename'\n"
+              << "    --viewsize <width>x<height>                force OSPRay view size to 'width'x'height'\n"
+              << "    -vu <x> <y> <z>                            set viewport up vector to ('x', 'y', 'z')\n"
+              << "    -vp <x> <y> <z>                            set camera position ('x', 'y', 'z')\n"
+              << "    -vi <x> <y> <z>                            set look at position ('x', 'y', 'z')\n"
+              << "    -r,--renderer <renderer>                   set renderer to use\n"
+              << "    --writeframes <filename>                   emit frames to 'filename_xxxxx.ppm'\n"
+              << "    -h,--help                                  print this message\n"
               << " \n";
 }
 
@@ -74,6 +74,7 @@ int main(int argc, char *argv[])
   std::string transferFunctionFilename;
   int benchmarkWarmUpFrames = 0;
   int benchmarkFrames = 0;
+  std::string benchmarkFilename;
   int viewSizeWidth = 0;
   int viewSizeHeight = 0;
   ospcommon::vec3f viewUp(0.f);
@@ -136,10 +137,13 @@ int main(int argc, char *argv[])
 
     } else if (arg == "--benchmark") {
 
-      if (i + 2 >= argc) throw std::runtime_error("missing <warm-up frames> <frames> arguments");
+      if (i + 3 >= argc) throw std::runtime_error("missing <warm-up frames> <frames> <filename> arguments");
       benchmarkWarmUpFrames = atoi(argv[++i]);
       benchmarkFrames = atoi(argv[++i]);
-      std::cout << "got benchmarkWarmUpFrames = " << benchmarkWarmUpFrames << ", benchmarkFrames = " << benchmarkFrames << std::endl;
+      benchmarkFilename = argv[++i];
+      std::cout << "got benchmarkWarmUpFrames = "
+        << benchmarkWarmUpFrames << ", benchmarkFrames = "
+        << benchmarkFrames << ", benchmarkFilename = " << benchmarkFilename << std::endl;
 
     }  else if (arg == "-r" || arg == "--renderer") {
 
@@ -160,7 +164,7 @@ int main(int argc, char *argv[])
 
       } else throw std::runtime_error("improperly formatted <width>x<height> argument");
 
-    } else if (arg == "--vu") {
+    } else if (arg == "-vu") {
 
       if (i + 3 >= argc) throw std::runtime_error("missing <x> <y> <z> arguments");
 
@@ -168,9 +172,9 @@ int main(int argc, char *argv[])
       viewUp.y = atof(argv[++i]);
       viewUp.z = atof(argv[++i]);
 
-      std::cout << "got viewup (--vu) = " << viewUp.x << " " << viewUp.y << " " << viewUp.z << std::endl;
+      std::cout << "got viewup (-vu) = " << viewUp.x << " " << viewUp.y << " " << viewUp.z << std::endl;
 
-    } else if (arg == "--vp") {
+    } else if (arg == "-vp") {
 
       if (i + 3 >= argc) throw std::runtime_error("missing <x> <y> <z> arguments");
 
@@ -178,9 +182,9 @@ int main(int argc, char *argv[])
       viewFrom.y = atof(argv[++i]);
       viewFrom.z = atof(argv[++i]);
 
-      std::cout << "got view-from (--vp) = " << viewFrom.x << " " << viewFrom.y << " " << viewFrom.z << std::endl;
+      std::cout << "got view-from (-vp) = " << viewFrom.x << " " << viewFrom.y << " " << viewFrom.z << std::endl;
 
-    } else if (arg == "--vi") {
+    } else if (arg == "-vi") {
 
       if (i + 3 >= argc) throw std::runtime_error("missing <x> <y> <z> arguments");
 
@@ -188,7 +192,7 @@ int main(int argc, char *argv[])
       viewAt.y = atof(argv[++i]);
       viewAt.z = atof(argv[++i]);
 
-      std::cout << "got view-at (--vi) = " << viewAt.x << " " << viewAt.y << " " << viewAt.z << std::endl;
+      std::cout << "got view-at (-vi) = " << viewAt.x << " " << viewAt.y << " " << viewAt.z << std::endl;
 
     } else if (arg == "--writeframes") {
 
@@ -254,7 +258,8 @@ int main(int argc, char *argv[])
     volumeViewer->getTransferFunctionEditor()->load(transferFunctionFilename);
 
   // Set benchmarking parameters.
-  volumeViewer->getWindow()->setBenchmarkParameters(benchmarkWarmUpFrames, benchmarkFrames);
+  volumeViewer->getWindow()->setBenchmarkParameters(benchmarkWarmUpFrames,
+      benchmarkFrames, benchmarkFilename);
 
   if (viewAt != viewFrom) {
     volumeViewer->getWindow()->getViewport()->at = viewAt;

@@ -15,10 +15,11 @@
 // ======================================================================== //
 
 //ospray
-#include "ospray/volume/SharedStructuredVolume.h"
+#include "volume/SharedStructuredVolume.h"
 #include "SharedStructuredVolume_ispc.h"
 #include "StructuredVolume_ispc.h"
-#include "ospray/common/Data.h"
+#include "common/Data.h"
+#include "ospray/ospray.h"
 
 namespace ospray {
 

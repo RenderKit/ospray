@@ -15,6 +15,8 @@
 // ======================================================================== //
 
 #include "TransferFunctionEditor.h"
+#include <tfn_lib/tfn_lib.h>
+#include <algorithm>
 #include <iostream>
 
 TransferFunctionEditor::TransferFunctionEditor(OSPTransferFunction transferFunction)
@@ -118,40 +120,86 @@ TransferFunctionEditor::TransferFunctionEditor(OSPTransferFunction transferFunct
 void TransferFunctionEditor::load(std::string filename)
 {
   // Get filename if not specified.
-  if(filename.empty())
-    filename = QFileDialog::getOpenFileName(this, tr("Load transfer function"), ".", "Transfer function files (*.tfn)").toStdString();
+  if(filename.empty()) {
+    filename = QFileDialog::getOpenFileName(this, tr("Load transfer function"),
+        ".", "Transfer function files (*.tfn)").toStdString();
+  }
 
   if(filename.empty())
     return;
 
   // Get serialized transfer function state from file.
-  QFile file(filename.c_str());
-  bool success = file.open(QIODevice::ReadOnly);
+  bool invalidIdentificationHeader = false;
+  try {
+    tfn::TransferFunction loadedTfn{ospcommon::FileName(filename)};
 
-  if(!success) {
-    std::cerr << "unable to open " << filename << std::endl;
-    return;
+    // Update transfer function state. Update values of the UI elements directly to signal appropriate slots.
+    std::vector<ColorMap>::iterator fnd = std::find_if(colorMaps.begin(), colorMaps.end(),
+        [&](const ColorMap &m) {
+        return m.getName() == loadedTfn.name;
+        });
+    int index = 0;
+    if (fnd != colorMaps.end()) {
+      *fnd = ColorMap(loadedTfn.name, loadedTfn.rgbValues);
+      index = std::distance(colorMaps.begin(), fnd);
+    } else {
+      colorMaps.push_back(ColorMap(loadedTfn.name, loadedTfn.rgbValues));
+      colorMapComboBox.addItem(loadedTfn.name.c_str());
+      index = colorMaps.size() - 1;
+    }
+
+    // Commit and emit signal.
+    setDataValueRange(ospcommon::vec2f(loadedTfn.dataValueMin, loadedTfn.dataValueMax), true);
+    // Convert over to QPointF to pass to the widget
+    QVector<QPointF> points;
+    for (const auto &x : loadedTfn.opacityValues) {
+      points.push_back(QPointF(x.x, x.y));
+    }
+    opacityValuesWidget.setPoints(points);
+    opacityScalingSlider.setValue(loadedTfn.opacityScaling
+        * (opacityScalingSlider.maximum() - opacityScalingSlider.minimum()));
+    updateOpacityValues();
+
+    colorMapComboBox.setCurrentIndex(index);
+  } catch (const std::runtime_error &e) {
+    const std::string errMsg = e.what();
+    std::cout << "#ospVolumeViewer error loading transferfunction: " << errMsg << "\n";
+    // If it's an invalid identification header error we can try loading an old style
+    // transfer function, otherwise something else we can't handle is wrong.
+    if (errMsg.find("Read invalid identification header") != std::string::npos) {
+      // Get serialized transfer function state from file.
+      QFile file(filename.c_str());
+      bool success = file.open(QIODevice::ReadOnly);
+
+      if (!success) {
+        std::cerr << "unable to open " << filename << std::endl;
+        return;
+      }
+
+      QDataStream in(&file);
+      int colorMapIndex;
+      in >> colorMapIndex;
+      double dataValueMin, dataValueMax;
+      in >> dataValueMin >> dataValueMax;
+      QVector<QPointF> points;
+      in >> points;
+      int opacityScalingIndex;
+      in >> opacityScalingIndex;
+
+      // Update transfer function state. Update values of the UI elements directly to signal appropriate slots.
+      colorMapComboBox.setCurrentIndex(colorMapIndex);
+      setDataValueRange(ospcommon::vec2f(dataValueMin, dataValueMax), true);
+      opacityValuesWidget.setPoints(points);
+      opacityScalingSlider.setValue(opacityScalingIndex);
+
+      std::cout << "#ospVolumeViewer WARNING: using old-style transfer function, save the loaded function "
+        << "out to switch to the new format\n";
+    } else {
+      throw e;
+    }
   }
-
-  QDataStream in(&file);
-
-  int colorMapIndex;
-  in >> colorMapIndex;
-
-  double dataValueMin, dataValueMax;
-  in >> dataValueMin >> dataValueMax;
-
-  QVector<QPointF> points;
-  in >> points;
-
-  int opacityScalingIndex;
-  in >> opacityScalingIndex;
-
-  // Update transfer function state. Update values of the UI elements directly to signal appropriate slots.
-  colorMapComboBox.setCurrentIndex(colorMapIndex);
-  setDataValueRange(ospcommon::vec2f(dataValueMin, dataValueMax), true);
-  opacityValuesWidget.setPoints(points);
-  opacityScalingSlider.setValue(opacityScalingIndex);
+  ospCommit(transferFunction);
+  emit committed();
 }
 
 void TransferFunctionEditor::setDataValueRange(ospcommon::vec2f dataValueRange, bool force)
@@ -181,7 +229,8 @@ void TransferFunctionEditor::updateOpacityValues()
   std::vector<float> opacityValues = opacityValuesWidget.getInterpolatedValuesOverInterval(256);
 
   // Opacity scaling factor (normalized in [0, 1]).
-  const float opacityScalingNormalized = float(opacityScalingSlider.value() - opacityScalingSlider.minimum()) / float(opacityScalingSlider.maximum() - opacityScalingSlider.minimum());
+  const float opacityScalingNormalized = float(opacityScalingSlider.value() - opacityScalingSlider.minimum())
+    / float(opacityScalingSlider.maximum() - opacityScalingSlider.minimum());
 
   // Scale opacity values.
   for (unsigned int i=0; i < opacityValues.size(); i++)
@@ -208,25 +257,20 @@ void TransferFunctionEditor::save()
   if(filename.endsWith(".tfn") != true)
     filename += ".tfn";
 
-  // Serialize transfer function state to file.
-  QFile file(filename);
-  bool success = file.open(QIODevice::WriteOnly);
-
-  if(!success) {
-    std::cerr << "unable to open " << filename.toStdString() << std::endl;
-    return;
+  const std::vector<ospcommon::vec3f> colors = colorMaps[colorMapComboBox.currentIndex()].getColors();
+  const QVector<QPointF> opacityPts = opacityValuesWidget.getPoints();
+  std::vector<ospcommon::vec2f> opacityValues;
+  for (const auto &x : opacityPts) {
+    opacityValues.push_back(ospcommon::vec2f(x.x(), x.y()));
   }
-
-  // Data value scale.
-  float dataValueScale = powf(10.f, float(dataValueScaleSpinBox.value()));
-
-  QDataStream out(&file);
-
-  out << colorMapComboBox.currentIndex();
-  out << dataValueScale * dataValueMinSpinBox.value();
-  out << dataValueScale * dataValueMaxSpinBox.value();
-  out << opacityValuesWidget.getPoints();
-  out << opacityScalingSlider.value();
+  const float dataValueScale = powf(10.f, float(dataValueScaleSpinBox.value()));
+  const float valMin = dataValueScale * dataValueMinSpinBox.value();
+  const float valMax = dataValueScale * dataValueMaxSpinBox.value();
+  const float opacityScaling = opacityScalingSlider.value()
+    / float(opacityScalingSlider.maximum() - opacityScalingSlider.minimum());
+  ospcommon::FileName ospFname{filename.toStdString()};
+  tfn::TransferFunction saveTfn(ospFname.name(), colors, opacityValues, valMin, valMax, opacityScaling);
+  saveTfn.save(ospFname);
 }
 
 void TransferFunctionEditor::setColorMapIndex(int index)
@@ -251,7 +295,8 @@ void TransferFunctionEditor::updateDataValueRange()
   float dataValueScale = powf(10.f, float(dataValueScaleSpinBox.value()));
 
   // Set the minimum and maximum values in the domain for both color and opacity components of the transfer function.
-  ospSet2f(transferFunction, "valueRange", dataValueScale * float(dataValueMinSpinBox.value()), dataValueScale * float(dataValueMaxSpinBox.value()));
+  ospcommon::vec2f range(dataValueScale * float(dataValueMinSpinBox.value()), dataValueScale * float(dataValueMaxSpinBox.value()));
+  ospSet2f(transferFunction, "valueRange", range.x, range.y);
 
   // Commit and emit signal.
   ospCommit(transferFunction);

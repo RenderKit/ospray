@@ -14,8 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-CONFIGURE_OSPRAY()
-
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
@@ -54,13 +52,12 @@ SET(MOC_HEADERS
 
 QT4_WRAP_CPP(MOC_OUTFILES ${MOC_HEADERS})
 
-ADD_EXECUTABLE(ospQtViewer ${SRCS} ${MOC_OUTFILES})
-TARGET_LINK_LIBRARIES(ospQtViewer ${LIBS} 
+OSPRAY_CREATE_APPLICATION(QtViewer
+  ${SRCS}
+  ${MOC_OUTFILES}
+LINK
+  ${LIBS} 
   ospray_sg
   ${TBB_LIBRARY_MALLOC}
   ${TBB_LIBRARY}
-  )
-INSTALL(TARGETS ospQtViewer
-  DESTINATION ${CMAKE_INSTALL_BINDIR}
-  COMPONENT apps
 )

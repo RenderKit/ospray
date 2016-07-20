@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "common/box.h"
+#include "ospcommon/box.h"
 #include "QOSPRayWindow.h"
 #include "SliceWidget.h"
 #include <QtGui>
@@ -31,13 +31,34 @@ class OpenGLAnnotationRenderer;
 //! OSPRay model and its volumes / geometries
 struct ModelState {
 
+  struct Volume {
+    Volume(OSPVolume handle, 
+           const ospcommon::box3f &boundingBox, 
+           const ospcommon::vec2f &voxelRange) 
+      : handle(handle), 
+        boundingBox(boundingBox), 
+        voxelRange(voxelRange)
+    {
+      assert(!boundingBox.empty());
+    }
+
+    OSPVolume handle;
+    ospcommon::vec2f voxelRange;
+    ospcommon::box3f boundingBox;
+  };
+
+  struct Geometry {
+    Geometry(OSPGeometry handle=NULL) : handle(handle) {}
+    OSPGeometry handle;
+  };
+
   ModelState(OSPModel model) : model(model) { }
 
   OSPModel model; //!< the OSPRay model
 
-  std::vector<OSPVolume> volumes; //!< OSPRay volumes for the model
-  std::vector<OSPGeometry> slices; //! OSPRay slice geometries for the model
-  std::vector<OSPGeometry> isosurfaces; //! OSPRay isosurface geometries for the model
+  std::vector<Volume *> volumes; //!< OSPRay volumes for the model
+  std::vector<Geometry *> slices; //! OSPRay slice geometries for the model
+  std::vector<Geometry *> isosurfaces; //! OSPRay isosurface geometries for the model
 };
 
 class VolumeViewer : public QMainWindow {

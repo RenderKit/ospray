@@ -14,6 +14,15 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#ifdef _WIN32
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h> // for Sleep
+#else
+#  include <time.h>
+#endif
+#include <chrono>
+#include <atomic>
+#include <thread>
 #include "MultiIsendIrecvMessaging.h"
 
 namespace ospray {
@@ -34,7 +43,14 @@ namespace ospray {
       {
         Group *g = this->group;
         while (1) {
-          Action *action = g->sendQueue.get();
+          Action *action = nullptr;
+          size_t numActions = 0;
+          while (numActions == 0){
+            numActions = g->sendQueue.getSomeFor(&action,1,std::chrono::milliseconds(1));
+            if (g->shouldExit.load()){
+              return;
+            }
+          }
           // note we're not using any window here; we just pull them
           // in order. this is OK because they key is to have mulitple
           // sends going in parallel - which we do because each
@@ -51,10 +67,31 @@ namespace ospray {
         // note this thread not only _probes_ for new receives, it
         // also immediately starts the receive operation using Irecv()
         Group *g = (Group *)this->group;
-        
+#ifdef _WIN32
+        const DWORD sleep_time = 1; // ms --> much longer than 150us
+#else
+        const timespec sleep_time = timespec{ 0, 150000 };
+#endif
+
         while (1) {
           MPI_Status status;
-          MPI_CALL(Probe(MPI_ANY_SOURCE,g->tag,g->comm,&status));
+          int msgAvail = 0;
+          while (!msgAvail) {
+            MPI_CALL(Iprobe(MPI_ANY_SOURCE,g->tag,g->comm,&msgAvail,&status));
+            if (g->shouldExit.load()){
+              return;
+            }
+            if (msgAvail){
+              break;
+            }
+#ifdef _WIN32
+            Sleep(sleep_time);
+#else
+            // TODO: Can we do a CMake feature test for this_thread::sleep_for and
+            // conditionally use nanosleep?
+            nanosleep(&sleep_time, NULL);
+#endif
+          }
           Action *action = new Action;
           action->addr = Address(g,status.MPI_SOURCE);
 
@@ -71,7 +108,14 @@ namespace ospray {
       {
         Group *g = (Group *)this->group;
         while (1) {
-          Action *action = g->recvQueue.get();
+          Action *action = nullptr;
+          size_t numActions = 0;
+          while (numActions == 0){
+            numActions = g->recvQueue.getSomeFor(&action,1,std::chrono::milliseconds(1));
+            if (g->shouldExit.load()){
+              return;
+            }
+          }
           MPI_CALL(Wait(&action->request,MPI_STATUS_IGNORE));
           g->consumer->process(action->addr,action->data,action->size);
           delete action;
@@ -80,7 +124,11 @@ namespace ospray {
 
       void MultiIsendIrecvImpl::Group::shutdown()
       {
-        std::cout << "shutdown() not implemented for this messaging ..." << std::endl;
+        std::cout << "#osp:mpi:MultiIsendIrecvImpl:Group shutting down" << std::endl;
+        shouldExit.store(true);
+        sendThread.join();
+        recvThread.join();
+        procThread.join();
       }
 
       void MultiIsendIrecvImpl::init()

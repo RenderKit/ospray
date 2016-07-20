@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "ospray/transferFunction/TransferFunction.ih"
+#include "../transferFunction/TransferFunction.ih"
 
 #define PRECOMPUTED_OPACITY_SUBRANGE_COUNT 32
 

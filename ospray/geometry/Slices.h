@@ -17,7 +17,7 @@
 #pragma once
 
 #include "Geometry.h"
-#include "ospray/volume/Volume.h"
+#include "volume/Volume.h"
 
 namespace ospray {
 

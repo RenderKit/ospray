@@ -145,11 +145,15 @@ namespace ospray {
         bool isPipe = false;
 
         if (strlen(filename) > 7 && !strcmp(filename+strlen(filename)-7,".ply.gz")) {
+#ifdef _WIN32
+          THROW_SG_ERROR("#osp:sg:ply: gzipped file not supported yet on Windows");
+#else
           isPipe = true;
           char cmd[10000];
           sprintf(cmd,"/usr/bin/gunzip -c %s",filename);
           file = popen(cmd,"r");
-        } else 
+#endif
+        } else
           file = fopen(filename,"rb");
     
         if (!file) 

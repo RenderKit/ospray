@@ -16,8 +16,7 @@
 
 #pragma once
 
-#include "ospray/common/OSPCommon.ih"
-#include "ospray/math/vec.ih"
+#include "../math/vec.ih"
 
 /*! \file ospray/render/util.ih \brief Utility-functions for shaders */
 
@@ -97,12 +96,39 @@ inline uint32 getZOrderY(const uint32 &xs16_ys16) { return xs16_ys16 >> 16; }
 extern uniform z_order_t z_order;
 extern uniform bool z_order_initialized;
 
+inline uniform uint32 partitionZOrder(uniform uint32 n) {
+  n &= 0x0000FFFF;
+  n = (n | (n << 8)) & 0x00FF00FF;
+  n = (n | (n << 4)) & 0x0F0F0F0F;
+  n = (n | (n << 2)) & 0x33333333;
+  n = (n | (n << 1)) & 0x55555555;
+  return n;
+}
+
+inline uniform uint32 unpartitionZOrder(uniform uint32 n) {
+  n &= 0x55555555;
+  n = (n ^ (n >> 1)) & 0x33333333;
+  n = (n ^ (n >> 2)) & 0x0F0F0F0F;
+  n = (n ^ (n >> 4)) & 0x00FF00FF;
+  n = (n ^ (n >> 8)) & 0x0000FFFF;
+  return n;
+}
+
+inline uniform uint32 interleaveZOrder(uniform uint32 x, uniform uint32 y) {
+  return partitionZOrder(x) | (partitionZOrder(y) << 1);
+}
+
+inline void deinterleaveZOrder(uniform uint32 z, uniform uint32 *uniform x, uniform uint32 *uniform y) {
+  assert(x); assert(y);
+  *x = *y = 0;
+  *x = unpartitionZOrder(z);
+  *y = unpartitionZOrder(z >> 1);
+}
+
 /*! precompute a per-pixel z-order to be used within a tile */
 extern void precomputedZOrder_create();
 
 /*! precompute a per-pixel z-order to be used within a tile */
 inline void precomputeZOrder()
 { if (!z_order_initialized) precomputedZOrder_create(); }
-
-
 

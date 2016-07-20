@@ -17,7 +17,7 @@
 #pragma once
 
 #include "sg/common/Common.h"
-#include "common/intrinsics.h"
+#include "ospcommon/intrinsics.h"
 
 namespace ospray {
   namespace sg {

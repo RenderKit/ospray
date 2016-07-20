@@ -16,13 +16,13 @@
 
 #pragma once
 
-#include "ospray/common/Material.ih"
-#include "ospray/common/DifferentialGeometry.ih"
-#include "ospray/common/Ray.ih"
+#include "common/Material.ih"
+#include "common/DifferentialGeometry.ih"
+#include "common/Ray.ih"
 #include "Medium.ih"
-#include "../samplers/Sample.ih"
-#include "../bsdfs/BSDF.ih"
-#include "../bsdfs/ShadingContext.ih"
+#include "render/pathtracer/samplers/Sample.ih"
+#include "render/pathtracer/bsdfs/BSDF.ih"
+#include "render/pathtracer/bsdfs/ShadingContext.ih"
 
 struct PathTraceMaterial;
 
@@ -46,15 +46,22 @@ typedef vec3f (*PathTraceMaterial_GetTransparencyFunc)(const uniform PathTraceMa
 typedef void (*PathTraceMaterial_SelectNextMediumFunc)(const uniform PathTraceMaterial* uniform self,
                                                        Medium& currentMedium);
 
+typedef vec3f (*PathTraceMaterial_GetAbsorptionFunc)(
+  const uniform PathTraceMaterial* uniform self,
+  const DifferentialGeometry& dg, 
+  const float & distance);
+
 struct PathTraceMaterial
 {
   Material material;
   PathTraceMaterial_GetBSDFFunc getBSDF;
   PathTraceMaterial_GetTransparencyFunc getTransparency;
   PathTraceMaterial_SelectNextMediumFunc selectNextMedium;
+  PathTraceMaterial_GetAbsorptionFunc getAbsorption;
 };
 
 void PathTraceMaterial_Constructor(uniform PathTraceMaterial* uniform self,
                                    uniform PathTraceMaterial_GetBSDFFunc getBSDF,
                                    uniform PathTraceMaterial_GetTransparencyFunc getTransparency,
-                                   uniform PathTraceMaterial_SelectNextMediumFunc selectNextMedium);
+                                   uniform PathTraceMaterial_SelectNextMediumFunc selectNextMedium,
+                                   uniform PathTraceMaterial_GetAbsorptionFunc getAbsorption);

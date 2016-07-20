@@ -14,15 +14,15 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/common/OSPCommon.h"
-#include "ospray/include/ospray/ospray.h"
-#include "ospray/render/Renderer.h"
-#include "ospray/camera/Camera.h"
-#include "ospray/common/Material.h"
-#include "ospray/volume/Volume.h"
-#include "ospray/transferFunction/TransferFunction.h"
+#include "common/OSPCommon.h"
+#include "include/ospray/ospray.h"
+#include "render/Renderer.h"
+#include "camera/Camera.h"
+#include "common/Material.h"
+#include "volume/Volume.h"
+#include "transferFunction/TransferFunction.h"
 #include "LocalDevice.h"
-#include "ospray/common/Core.h"
+#include "common/Core.h"
 
 #ifdef _WIN32
 #  include <process.h> // for getpid
@@ -70,7 +70,7 @@ std::string getPidString() {
   return s;
 }
 
-#define ASSERT_DEVICE() if (ospray::api::Device::current == NULL)       \
+#define ASSERT_DEVICE() if (!ospray::api::Device::current)              \
     throw std::runtime_error("OSPRay not yet initialized "              \
                              "(most likely this means you tried to "    \
                              "call an ospray API function before "      \
@@ -85,22 +85,24 @@ extern "C" void ospInit(int *_ac, const char **_av)
                              "(did you call ospInit twice?)");
   }
 
-  auto *nThreads = getenv("OSPRAY_THREADS");
-  if (nThreads) {
-    numThreads = atoi(nThreads);
+  auto OSPRAY_THREADS = getEnvVar<int>("OSPRAY_THREADS");
+  if (OSPRAY_THREADS.first) {
+    numThreads = OSPRAY_THREADS.second;
   }
 
   /* call ospray::init to properly parse common args like
      --osp:verbose, --osp:debug etc */
   ospray::init(_ac,&_av);
 
-  const char *OSP_MPI_LAUNCH_FROM_ENV = getenv("OSPRAY_MPI_LAUNCH");
+  auto OSP_MPI_LAUNCH = getEnvVar<std::string>("OSPRAY_MPI_LAUNCH");
 
-  if (OSP_MPI_LAUNCH_FROM_ENV) {
+  if (OSP_MPI_LAUNCH.first) {
 #ifdef OSPRAY_MPI
-    std::cout << "#osp: launching ospray mpi ring - make sure that mpd is running" << std::endl;
+    std::cout << "#osp: launching ospray mpi ring -"
+              << " make sure that mpd is running" << std::endl;
     ospray::api::Device::current
-      = mpi::createMPI_LaunchWorkerGroup(_ac,_av,OSP_MPI_LAUNCH_FROM_ENV);
+      = mpi::createMPI_LaunchWorkerGroup(_ac,_av,
+                                         OSP_MPI_LAUNCH.second.c_str());
 #else
     throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif
@@ -172,7 +174,7 @@ extern "C" void ospInit(int *_ac, const char **_av)
   }
 
   // no device created on cmd line, yet, so default to localdevice
-  if (ospray::api::Device::current == NULL) {
+  if (!ospray::api::Device::current) {
     ospray::api::Device::current = new ospray::api::LocalDevice(_ac,_av);
   }
 }
@@ -315,7 +317,7 @@ extern "C" OSPPixelOp ospNewPixelOp(const char *_type)
   Assert2(_type,"invalid render type identifier in ospNewPixelOp");
   LOG("ospNewPixelOp(" << _type << ")");
   int L = strlen(_type);
-  char *type = (char *)alloca(L+1);
+  char *type = STACK_BUFFER(char, L+1);
   for (int i=0;i<=L;i++) {
     char c = _type[i];
     if (c == '-' || c == ':')
@@ -424,7 +426,8 @@ extern "C" OSPVolume ospNewVolume(const char *type)
   OSPVolume volume = ospray::api::Device::current->newVolume(type);
   if (ospray::logLevel > 0) {
     if (volume)
-      cout << "ospNewVolume: " << ((ospray::Volume*)volume)->toString() << endl;
+      cout << "ospNewVolume: " << type << endl;
+      // cout << "ospNewVolume: " << ((ospray::Volume*)volume)->toString() << endl;
     else
       std::cerr << "#ospray: could not create volume '" << type << "'" << std::endl;
   }
@@ -443,7 +446,7 @@ extern "C" OSPTransferFunction ospNewTransferFunction(const char *type)
   OSPTransferFunction transferFunction = ospray::api::Device::current->newTransferFunction(type);
   if(ospray::logLevel > 0) {
     if(transferFunction)
-      cout << "ospNewTransferFunction: " << ((ospray::TransferFunction*)transferFunction)->toString() << endl;
+      cout << "ospNewTransferFunction(" << type << ")" << endl;
     else
       std::cerr << "#ospray: could not create transfer function '" << type << "'" << std::endl;
   }
@@ -659,87 +662,6 @@ extern "C" void ospSetMaterial(OSPGeometry geometry, OSPMaterial material)
   ospray::api::Device::current->setMaterial(geometry,material);
 }
 
-//! Get the handle of the named data array associated with an object.
-extern "C" int ospGetData(OSPObject object, const char *name, OSPData *value) {
-  ASSERT_DEVICE();
-  return(ospray::api::Device::current->getData(object, name, value));
-}
-
-//! Get a copy of the data in an array (the application is responsible for freeing this pointer).
-extern "C" int ospGetDataValues(OSPData object, void **pointer, size_t *count, OSPDataType *type) {
-  ASSERT_DEVICE();
-  return(ospray::api::Device::current->getDataValues(object, pointer, count, type));
-}
-
-//! Get the named scalar floating point value associated with an object.
-extern "C" int ospGetf(OSPObject object, const char *name, float *value)
-{
-  ASSERT_DEVICE();
-  return(ospray::api::Device::current->getf(object, name, value));
-}
-
-//! Get the named scalar integer associated with an object.
-extern "C" int ospGeti(OSPObject object, const char *name, int *value)
-{
-  ASSERT_DEVICE();
-  return(ospray::api::Device::current->geti(object, name, value));
-}
-
-//! Get the material associated with a geometry object.
-extern "C" int ospGetMaterial(OSPGeometry geometry, OSPMaterial *value)
-{
-  ASSERT_DEVICE();
-  return(ospray::api::Device::current->getMaterial(geometry, value));
-}
-
-//! Get the named object associated with an object.
-extern "C" int ospGetObject(OSPObject object, const char *name, OSPObject *value)
-{
-  ASSERT_DEVICE();
-  return(ospray::api::Device::current->getObject(object, name, value));
-}
-
-//! Retrieve a NULL-terminated list of the parameter names associated with an object.
-extern "C" int ospGetParameters(OSPObject object, char ***value) {
-  ASSERT_DEVICE();
-  return(ospray::api::Device::current->getParameters(object, value));
-}
-
-//! Get a pointer to a copy of the named character string associated with an object.
-extern "C" int ospGetString(OSPObject object, const char *name, char **value)
-{
-  ASSERT_DEVICE();
-  return(ospray::api::Device::current->getString(object, name, value));
-}
-
-//! Get the type of the named parameter or the given object (if 'name' is NULL).
-extern "C" int ospGetType(OSPObject object, const char *name, OSPDataType *value)
-{
-  ASSERT_DEVICE();
-  return(ospray::api::Device::current->getType(object, name, value));
-}
-
-//! Get the named 2-vector floating point value associated with an object.
-extern "C" int ospGetVec2f(OSPObject object, const char *name, osp::vec2f *value)
-{
-  ASSERT_DEVICE();
-  return(ospray::api::Device::current->getVec2f(object, name, (vec2f *)value));
-}
-
-//! Get the named 3-vector floating point value associated with an object.
-extern "C" int ospGetVec3f(OSPObject object, const char *name, osp::vec3f *value)
-{
-  ASSERT_DEVICE();
-  return(ospray::api::Device::current->getVec3f(object, name, (vec3f *)value));
-}
-
-//! Get the named 3-vector integer value associated with an object.
-extern "C" int ospGetVec3i(OSPObject object, const char *name, osp::vec3i *value)
-{
-  ASSERT_DEVICE();
-  return(ospray::api::Device::current->getVec3i(object, name, (vec3i *)value));
-}
-
 /*! \brief create a new instance geometry that instantiates another
   model.  the resulting geometry still has to be added to another
   model via ospAddGeometry */
@@ -764,7 +686,8 @@ extern "C" void ospPick(OSPPickResult *result,
   ASSERT_DEVICE();
   Assert2(renderer, "NULL renderer passed to ospPick");
   if (!result) return;
-  *result = ospray::api::Device::current->pick(renderer, (const vec2f&)screenPos);
+  *result = ospray::api::Device::current->pick(renderer,
+                                               (const vec2f&)screenPos);
 }
 
 //! \brief allows for switching the MPI scope from "per rank" to "all ranks"
@@ -780,8 +703,9 @@ extern "C" void ospPick(OSPPickResult *result,
   MPI_Init(), NOT "in addition to" */
 extern "C" void ospdMpiInit(int *ac, char ***av, OSPDRenderMode mode)
 {
-  if (ospray::api::Device::current != NULL)
+  if (!ospray::api::Device::current) {
     throw std::runtime_error("#osp:mpi: OSPRay already initialized!?");
+  }
   ospray::mpi::initDistributedAPI(ac,av,mode);
 }
 
@@ -806,6 +730,7 @@ extern "C" void ospSampleVolume(float **results,
     return;
   }
 
-  ospray::api::Device::current->sampleVolume(results, volume, (vec3f*)&worldCoordinates, count);
+  ospray::api::Device::current->sampleVolume(results, volume,
+                                             (vec3f*)&worldCoordinates, count);
 }
 

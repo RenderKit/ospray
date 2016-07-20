@@ -1,7 +1,7 @@
 OSPRay
 ======
 
-This is release v0.10.1 of OSPRay. For changes and new features see the
+This is release v1.0.0 of OSPRay. For changes and new features see the
 [changelog](CHANGELOG.md). Also visit http://www.ospray.org for more
 information.
 
@@ -29,10 +29,10 @@ and AVX-512 to achieve high rendering performance.
 OSPRay Support and Contact
 --------------------------
 
-OSPRay is still in beta stage, and though we do our best to
+OSPRay is under active development, and though we do our best to
 guarantee stable release versions a certain number of bugs,
 as-yet-missing features, inconsistencies, or any other issues are
-unavoidable at this stage. Should you find any such issues please report
+still possible. Should you find any such issues please report
 them immediately via [OSPRay's GitHub Issue
 Tracker](https://github.com/ospray/OSPRay/issues) (or, if you should
 happen to have a fix for it,you can also send us a pull request); for
@@ -67,7 +67,7 @@ following prerequisites:
 -   To build OSPRay you need [CMake](http://www.cmake.org), any
     form of C++ compiler (we recommend using the [Intel® C++ compiler
     (icc)](https://software.intel.com/en-us/c-compilers), but also
-    support GCC and clang-cc), and standard Linux development tools.
+    support GCC and Clang), and standard Linux development tools.
     To build the demo viewers, you should also have some version of
     OpenGL and the GL Utility Toolkit (GLUT or freeglut), as well as
     Qt 4.6 or higher.
@@ -83,7 +83,7 @@ following prerequisites:
 -   Per default OSPRay uses the Intel® Threading Building Blocks (TBB)
     as tasking system, which we recommend for performance and
     flexibility reasons. Alternatively you can set CMake variable
-    `OSPRAY_TASKING_SYSTEM` to `OpenMP`.
+    `OSPRAY_TASKING_SYSTEM` to `OpenMP`, `Internal`, or `Cilk` (icc only).
 -   OSPRay also heavily uses [Embree](http://embree.github.io); however,
     OSPRay directly includes its own copy of Embree, so a special
     installation of Embree is *not* required.
@@ -129,13 +129,13 @@ CMake is easy:
 -   The compiler CMake will use will default to whatever the `CC` and
     `CXX` environment variables point to. Should you want to specify a
     different compiler, run cmake manually while specifying the desired
-    compiler. The default compiler on most linux machines is 'gcc', but
-    it can be pointed to 'clang' instead by executing the following:
+    compiler. The default compiler on most linux machines is `gcc`, but
+    it can be pointed to `clang` instead by executing the following:
 
         user@mymachine[~/Projects/ospray/release]: cmake 
             -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang ..
 
-    CMake will now use clang instead of gcc. If you are ok with using
+    CMake will now use Clang instead of GCC. If you are ok with using
     the default compiler on your system, then simply skip this step.
     Note that the compiler variables cannot be changed after the first
     `cmake` or `ccmake` run. 
@@ -216,3 +216,6 @@ at the [OSPRay Demos and Examples] page.
 [imgTutorial2]: https://ospray.github.io/images/tutorial_accumulatedframe.png
 [imgQtViewer]: https://ospray.github.io/images/QtViewer.jpg
 [imgVolumeViewer]: https://ospray.github.io/images/VolumeViewer.png
+[imgSpotLight]: https://ospray.github.io/images/spot_light.png
+[imgQuadLight]: https://ospray.github.io/images/quad_light.png
+[imgHDRILight]: https://ospray.github.io/images/hdri_light.png

@@ -14,29 +14,23 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-CONFIGURE_OSPRAY()
+IF (OSPRAY_MODULE_DISPLAY_WALD)
+	INCLUDE_DIRECTORIES(${DISPLAY_WALD_INCLUDE_DIR})
+	ADD_DEFINITIONS(-DOSPRAY_DISPLAY_WALD=1)
+ENDIF()
 
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray)
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
-ADD_LIBRARY(ospray_glut3d SHARED glut3D.cpp)
-
-TARGET_LINK_LIBRARIES(ospray_glut3d ospray
+SET(LIBS
+	ospray
+  ospray_common
   ${OPENGL_LIBRARIES}
   ${GLUT_LIBRARIES}
+	)
+
+OSPRAY_CREATE_LIBRARY(glut3d
+  Glut3dExport.h
+  glut3D.cpp
+  OSPGlutViewer.cpp
+	LINK
+	${LIBS}
 )
-OSPRAY_SET_LIBRARY_VERSION(ospray_glut3d)
-INSTALL(TARGETS ospray_glut3d
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT lib
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel
-)
-
-
-##############################################################
-# redistribute freeglut
-##############################################################
-
-IF (WIN32)
-  INSTALL(PROGRAMS ${GLUT_DLL} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT apps) # 3rd party?
-ENDIF()

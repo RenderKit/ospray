@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "ospray/math/vec.ih"
+#include "math/vec.ih"
 
 struct Distribution2D 
 {

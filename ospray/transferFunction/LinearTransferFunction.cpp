@@ -14,9 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/common/Data.h"
-#include "ospray/common/OSPCommon.h"
-#include "ospray/transferFunction/LinearTransferFunction.h"
+#include "common/Data.h"
+#include "common/OSPCommon.h"
+#include "transferFunction/LinearTransferFunction.h"
 #include "TransferFunction_ispc.h"
 
 namespace ospray {

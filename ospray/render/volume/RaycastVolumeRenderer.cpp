@@ -15,19 +15,19 @@
 // ======================================================================== //
 
 // ospray
-#include "ospray/lights/Light.h"
-#include "ospray/common/Data.h"
-#include "ospray/common/Core.h"
-#include "ospray/common/tasking/parallel_for.h"
-#include "ospray/render/volume/RaycastVolumeRenderer.h"
+#include "lights/Light.h"
+#include "common/Data.h"
+#include "common/Core.h"
+#include "common/tasking/parallel_for.h"
+#include "render/volume/RaycastVolumeRenderer.h"
 #include "RaycastVolumeMaterial.h"
 
 // ispc exports
 #include "RaycastVolumeRenderer_ispc.h"
 #if EXP_DATA_PARALLEL
-# include "ospray/mpi/DistributedFrameBuffer.h"
-# include "ospray/volume/DataDistributedBlockedVolume.h"
-# include "ospray/render/LoadBalancer.h"
+# include "mpi/DistributedFrameBuffer.h"
+# include "volume/DataDistributedBlockedVolume.h"
+# include "render/LoadBalancer.h"
 #endif
 
 #define TILE_CACHE_SAFE_MUTEX 0
@@ -112,18 +112,10 @@ namespace ospray {
     size_t                    numTiles_x;
     size_t                    numTiles_y;
     uint32                    channelFlags;
-    int32                     workerRank;
     const DataDistributedBlockedVolume *dpv;
-
-    DPRenderTask(int workerRank);
 
     void operator()(int taskIndex) const;
   };
-
-  DPRenderTask::DPRenderTask(int workerRank)
-    : workerRank(workerRank)
-  {
-  }
 
   void DPRenderTask::operator()(int taskIndex) const
   {
@@ -137,9 +129,7 @@ namespace ospray {
 
     size_t numBlocks = dpv->numDDBlocks;
     CacheForBlockTiles blockTileCache(numBlocks);
-    // for (int i=0;i<numBlocks;i++)
-    //   PRINT(dpv->ddBlock[i].bounds);
-    bool *blockWasVisible = (bool*)alloca(numBlocks*sizeof(bool));
+    bool *blockWasVisible = STACK_BUFFER(bool, numBlocks);
 
     for (int i = 0; i < numBlocks; i++)
       blockWasVisible[i] = false;
@@ -149,7 +139,7 @@ namespace ospray {
 
     const int numJobs = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
 
-    parallel_for(numJobs, [&](int taskIndex){
+    parallel_for(numJobs, [&](int tid){
       ispc::DDDVRRenderer_renderTile(renderer->getIE(),
                                      (ispc::Tile&)fgTile,
                                      (ispc::Tile&)bgTile,
@@ -160,7 +150,7 @@ namespace ospray {
                                      tileID,
                                      ospray::core::getWorkerRank(),
                                      renderForeAndBackground,
-                                     taskIndex);
+                                     tid);
     });
 
 
@@ -169,7 +159,7 @@ namespace ospray {
       // generaition #0, and telling the fb how many more tiles will
       // be coming in generation #1
 
-      size_t totalBlocksInTile=0;
+      size_t totalBlocksInTile = 0;
       for (int blockID = 0; blockID < numBlocks; blockID++) {
         if (blockWasVisible[blockID])
           totalBlocksInTile++;
@@ -185,12 +175,12 @@ namespace ospray {
 
       // set background tile
       bgTile.generation = 0;
-      bgTile.children = nextGenTiles;
+      bgTile.children   = nextGenTiles;
       fb->setTile(bgTile);
 
       // set foreground tile
       fgTile.generation = 1;
-      fgTile.children = 0; //nextGenTiles-1;
+      fgTile.children   = 0; //nextGenTiles-1;
       fb->setTile(fgTile);
       // all other tiles for gen #1 will be set below, no matter whether
       // it's mine or not
@@ -212,7 +202,7 @@ namespace ospray {
       tile->fbSize = bgTile.fbSize;
       tile->rcp_fbSize = bgTile.rcp_fbSize;
       tile->generation = 1;
-      tile->children = 0; //nextGenTile-1;
+      tile->children   = 0; //nextGenTile-1;
 
       fb->setTile(*tile);
     }
@@ -272,7 +262,7 @@ namespace ospray {
                                "not using the distributed frame buffer!?");
     }
 
-    dfb->setFrameMode(DistributedFrameBuffer::ALPHA_BLENDING);
+    dfb->setFrameMode(DistributedFrameBuffer::ALPHA_BLEND);
 
     // note: we can NEVER be the master, since the master doesn't even
     // have an instance of this renderer class -
@@ -294,7 +284,7 @@ namespace ospray {
     }
 
     // create the render task
-    DPRenderTask renderTask(workerRank);
+    DPRenderTask renderTask;
     renderTask.fb = fb;
     renderTask.renderer = this;
     renderTask.numTiles_x = divRoundUp(dfb->size.x, TILE_SIZE);

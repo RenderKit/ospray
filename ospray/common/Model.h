@@ -17,8 +17,8 @@
 #pragma once
 
 // ospray stuff
-#include "ospray/geometry/Geometry.h"
-#include "ospray/volume/Volume.h"
+#include "geometry/Geometry.h"
+#include "volume/Volume.h"
 
 // stl stuff
 #include <vector>

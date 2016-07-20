@@ -14,15 +14,15 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/fb/FrameBuffer.ih"
-#include "ospray/camera/Camera.ih"
-#include "ospray/common/Ray.ih"
-#include "ospray/render/util.ih"
-#include "ospray/math/math.ih"
-#include "ospray/math/random.ih"
-#include "ospray/common/Model.ih"
-#include "ospray/render/Renderer.ih"
-#include "ospray/render/simpleAO/SimpleAOMaterial.ih"
+#include "fb/FrameBuffer.ih"
+#include "camera/Camera.ih"
+#include "common/Ray.ih"
+#include "render/util.ih"
+#include "math/math.ih"
+#include "math/random.ih"
+#include "common/Model.ih"
+#include "render/Renderer.ih"
+#include "render/simpleAO/SimpleAOMaterial.ih"
 
 struct SimpleAO {
   uniform Renderer super;

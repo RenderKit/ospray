@@ -15,10 +15,10 @@
 // ======================================================================== //
 
 #include "PathTracer.ih"
-#include "ospray/camera/Camera.ih"
+#include "camera/Camera.ih"
 
-#include "materials/Medium.ih"
-#include "materials/Material.ih"
+#include "render/pathtracer/materials/Medium.ih"
+#include "render/pathtracer/materials/Material.ih"
 #include "math/random.ih"
 #include "fb/LocalFB.ih"
 
@@ -110,6 +110,10 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
   lastDg.Ns = ray.dir;
   lastDg.Ng = ray.dir;
 
+  DifferentialGeometry previousDg;
+
+  bool insideSolid = false;// Quick fix for glass absorption.
+
   do {
     traceRay(self->super.model, ray);
 
@@ -119,16 +123,17 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     const vec3f wo = neg(ray.dir);
 
-    float maxLightDist = ray.t; // per default virtual lights are occluded by hit geometry
+    float maxLightDist = ray.t; // per default, virtual lights are occluded by hit geometry
 
     // environment shading when nothing hit
     if (noHit(ray)) {
       maxLightDist = inf; // also include envLights (i.e. the ones in infinity)
-      if (straightPath)
+      if (straightPath) {
         sample.alpha = 1.0f - luminance(Lw);
+      }
       if ((bool)self->backplate & straightPath) {
         L = L + Lw * get3f(self->backplate, clamp2edge(self->backplate, pixel));
-        maxLightDist = 1e38; // backplate hides envLights (i.e. the ones in infinity)
+        maxLightDist = 1e38; // backplate hides envLights (i.e. the ones at infinity)
       }
     }
 
@@ -137,7 +142,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       const uniform Light *uniform l = self->lights[i];
       Light_EvalRes le = l->eval(l, lastDg, ray.dir);
       if (le.dist <= maxLightDist)
-        L = L + Lw * le.value * misHeuristic(lastBSDFPdf, le.pdf);
+        L = L + Lw * le.radiance * misHeuristic(lastBSDFPdf, le.pdf);
     }
 
     if (noHit(ray))
@@ -167,7 +172,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         bsdf = mm->getBSDF(mm, &ctx, dg, ray, currentMedium);
 
     // direct lighting including shadows and MIS
-    if (bsdf->type & BSDF_SMOOTH)
+    if (bsdf && (bsdf->type & BSDF_SMOOTH))
     {
       uniform int numLights = self->lights ? min(MAX_LIGHTS, self->numLights) : 0;
       for (uniform int i = 0; i < numLights; i++)
@@ -225,15 +230,32 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     // compute simple volumetric effect
     const vec3f transmission = currentMedium.transmission;
-    if (ne(transmission,make_vec3f(1.f)))
+    if (ne(transmission,make_vec3f(1.f))) {
       Lw = Lw * powf(transmission, ray.t);
+    }
 
-    // update currentMedium if we hit a medium interface TODO: support nested dielectrics
-    if (fs.type & BSDF_TRANSMISSION) {
+    if (insideSolid) {// For absorbing translucent materials.
       foreach_unique(uniMat in dg.material) {
         uniform PathTraceMaterial* uniform m = (uniform PathTraceMaterial *)uniMat;
-        if (m != NULL)
+        if (m != NULL) {
+          Lw = Lw * m->getAbsorption(m, previousDg, ray.t);
+        }
+      }
+    }
+
+    // update currentMedium if we hit a medium interface 
+    // TODO: support nested dielectrics
+    if (fs.type & BSDF_TRANSMISSION) {
+
+      // This is a quick fix for glass. This only works if all solid objects are disjoint 
+      // (some space is between them and they don't overlap).
+      insideSolid = !insideSolid;
+
+      foreach_unique(uniMat in dg.material) {
+        uniform PathTraceMaterial* uniform m = (uniform PathTraceMaterial *)uniMat;
+        if (m != NULL) {
           m->selectNextMedium(m, currentMedium);
+        }
       }
     }
 
@@ -244,6 +266,8 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       lastDg = dg;
     }
 
+    previousDg = dg;
+
     // continue the path
     straightPath &= eq(ray.dir, fs.wi);
     setRay(ray, dg.P, fs.wi, self->super.epsilon, inf);
@@ -251,6 +275,10 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
   } while (reduce_max(Lw) > self->minContribution);
 
   sample.rgb = L;
+  if (isnan(L.x) || isnan(L.y) || isnan(L.z)){
+    sample.rgb = make_vec3f(0.0f,0.0f,0.0f);
+    sample.alpha = 1.0f;
+  }
   return sample;
 }
 
@@ -308,7 +336,6 @@ unmasked void *uniform PathTracer_beginFrame(uniform Renderer *uniform _self,
                                     uniform FrameBuffer *uniform fb)
 {
   _self->fb = fb;
-  uniform PathTracer  *uniform self = (uniform PathTracer *uniform)_self;
   return NULL;
 }
 

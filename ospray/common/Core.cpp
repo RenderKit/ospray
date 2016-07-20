@@ -25,9 +25,9 @@
     something similarly
 */
 
-#include "ospray/common/Core.h"
+#include "common/Core.h"
 #ifdef OSPRAY_MPI
-# include "ospray/mpi/MPIDevice.h"
+# include "mpi/MPIDevice.h"
 #endif
 namespace ospray {
   

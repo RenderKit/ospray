@@ -16,6 +16,7 @@
 
 // ospray
 #include "Data.h"
+#include "ospray/ospray.h"
 // stl
 #include <sstream>
 

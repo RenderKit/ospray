@@ -30,7 +30,7 @@ inline vec4f getTexel_RGBA8(const uniform Texture2D *uniform self, const vec2i i
   const uint32 g = (c >>  8) & 0xff;
   const uint32 b = (c >> 16) & 0xff;
   const uint32 a = c >> 24;
-  return make_vec4f(r, g, b, a)*(1.f/255.f);
+  return make_vec4f((float)r, (float)g, (float)b, (float)a)*(1.f/255.f);
 }
 
 inline vec4f getTexel_RGB8(const uniform Texture2D *uniform self, const vec2i i)
@@ -41,7 +41,7 @@ inline vec4f getTexel_RGB8(const uniform Texture2D *uniform self, const vec2i i)
   const uint32 r = texel[texelOfs];
   const uint32 g = texel[texelOfs+1];
   const uint32 b = texel[texelOfs+2];
-  return make_vec4f(make_vec3f(r, g, b)*(1.f/255.f), 1.f);
+  return make_vec4f(make_vec3f((float)r, (float)g, (float)b)*(1.f/255.f), 1.f);
 }
 
 inline vec4f getTexel_R8(const uniform Texture2D *uniform self, const vec2i i)
@@ -182,6 +182,7 @@ static uniform Texture2D_get Texture2D_get_addr(const uniform uint32 type,
   switch (type) {
     __foreach_fetcher(__define_tex_get_case)
   }
+  return 0;
 };
 
 #undef __define_tex_get
@@ -202,7 +203,7 @@ export void *uniform Texture2D_create(uniform vec2i &size, void *uniform data,
   // negative x), although it should be strictly smaller than 1.0f. We handle
   // this case by having sizef slightly smaller than size, such that
   // frac(x)*sizef is always < size.
-  self->sizef = make_vec2f(nextafter(size.x, -1.0f), nextafter(size.y, -1.0f));
+  self->sizef = make_vec2f(nextafter((float)size.x, -1.0f), nextafter((float)size.y, -1.0f));
   self->halfTexel = make_vec2f(0.5f/size.x, 0.5f/size.y);
   self->data = data;
   self->get = Texture2D_get_addr(type, flags & OSP_TEXTURE_FILTER_NEAREST);

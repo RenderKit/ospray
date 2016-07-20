@@ -15,8 +15,8 @@
 // ======================================================================== //
 
 #include "Light.ih"
-#include "ospray/math/sampling.ih"
-#include "ospray/math/LinearSpace.ih"
+#include "math/sampling.ih"
+#include "math/LinearSpace.ih"
 
 struct DirectionalLight
 {
@@ -63,10 +63,10 @@ Light_EvalRes DirectionalLight_eval(const uniform Light* uniform super,
   res.dist = inf;
 
   if (self->cosAngle < COS_ANGLE_MAX && dot(self->frame.vz, dir) > self->cosAngle) {
-    res.value = self->radiance * self->pdf;
+    res.radiance = self->radiance * self->pdf;
     res.pdf = self->pdf;
   } else {
-    res.value = make_vec3f(0.f);
+    res.radiance = make_vec3f(0.f);
     res.pdf = 0.f;
   }
 

@@ -47,7 +47,7 @@
  */
 
 // ospray
-#include "ospray/render/Renderer.h"
+#include "render/Renderer.h"
 
 namespace ospray {
 

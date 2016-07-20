@@ -18,11 +18,12 @@
 
 // ospray
 #include "Messaging.h"
-#include "ospray/common/Thread.h"
-#include "ospray/common/ProducerConsumerQueue.h"
+#include "common/Thread.h"
+#include "common/ProducerConsumerQueue.h"
 // stl
 #include <deque>
 #include <vector>
+#include <atomic>
 
 namespace ospray {
   namespace mpi {
@@ -83,6 +84,7 @@ namespace ospray {
           SendThread sendThread;
           ProcThread procThread;
           RecvThread recvThread;
+          std::atomic<bool> shouldExit;
         };
 
         virtual void init();

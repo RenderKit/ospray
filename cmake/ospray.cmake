@@ -21,6 +21,8 @@ SET(OSPRAY_DIR ${PROJECT_SOURCE_DIR})
 # arch-specific cmd-line flags for various arch and compiler configs
 
 SET(OSPRAY_TILE_SIZE 64 CACHE INT "Tile size")
+SET_PROPERTY(CACHE OSPRAY_TILE_SIZE PROPERTY STRINGS 8 16 32 64 128 256 512)
+
 SET(OSPRAY_PIXELS_PER_JOB 64 CACHE INT
     "Must be multiple of largest vector width *and* <= OSPRAY_TILE_SIZE")
 
@@ -46,12 +48,103 @@ ENDMACRO()
 
 ## Macro check for compiler support of ISA ##
 MACRO(OSPRAY_CHECK_COMPILER_SUPPORT ISA)
-  IF (OSPRAY_EMBREE_ENABLE_${ISA} AND NOT OSPRAY_COMPILER_SUPPORTS_${ISA})
+  IF (${ISA} STREQUAL "AVX512" AND (NOT OSPRAY_COMPILER_ICC OR WIN32 OR APPLE))
+    OSPRAY_WARN_ONCE(MISSING_AVX512 "OSPRay Currently requires ICC on Linux for KNL support. Disabling KNL ISA target.")
+    SET(OSPRAY_EMBREE_ENABLE_${ISA} false)
+  ELSEIF (OSPRAY_EMBREE_ENABLE_${ISA} AND NOT OSPRAY_COMPILER_SUPPORTS_${ISA})
     OSPRAY_WARN_ONCE(MISSING_${ISA} "Need at least version ${GCC_VERSION_REQUIRED_${ISA}} of gcc for ${ISA}. Disabling ${ISA}.\nTo compile for ${ISA}, please switch to either 'ICC'-compiler, or upgrade your gcc version.")
     SET(OSPRAY_EMBREE_ENABLE_${ISA} false)
   ENDIF()
 ENDMACRO()
 
+## Macro configure ISA targets for ispc ##
+MACRO(OSPRAY_CONFIGURE_ISPC_ISA)
+
+  OSPRAY_CONFIGURE_COMPILER()
+
+  SET(OSPRAY_EMBREE_ENABLE_SSE    true)
+  SET(OSPRAY_EMBREE_ENABLE_AVX    true)
+  SET(OSPRAY_EMBREE_ENABLE_AVX2   true)
+  SET(OSPRAY_EMBREE_ENABLE_AVX512 true)
+
+  OSPRAY_CHECK_COMPILER_SUPPORT(AVX)
+  OSPRAY_CHECK_COMPILER_SUPPORT(AVX2)
+  OSPRAY_CHECK_COMPILER_SUPPORT(AVX512)
+
+  # the arch we're targeting for the non-MIC/non-xeon phi part of ospray
+  SET(OSPRAY_BUILD_ISA "ALL" CACHE STRING
+      "Target ISA (SSE, AVX, AVX2, AVX512, or ALL)")
+  STRING(TOUPPER ${OSPRAY_BUILD_ISA} OSPRAY_BUILD_ISA)
+
+  UNSET(OSPRAY_SUPPORTED_ISAS)
+
+  IF(OSPRAY_EMBREE_ENABLE_SSE)
+    SET(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} SSE)
+  ENDIF()
+  IF(OSPRAY_EMBREE_ENABLE_AVX)
+    SET(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} AVX)
+  ENDIF()
+  IF(OSPRAY_EMBREE_ENABLE_AVX2)
+    SET(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} AVX2)
+  ENDIF()
+  IF(OSPRAY_EMBREE_ENABLE_AVX512)
+    SET(OSPRAY_SUPPORTED_ISAS ${OSPRAY_SUPPORTED_ISAS} AVX512)
+  ENDIF()
+
+  SET_PROPERTY(CACHE OSPRAY_BUILD_ISA PROPERTY STRINGS
+               ALL ${OSPRAY_SUPPORTED_ISAS})
+
+  UNSET(OSPRAY_ISPC_TARGET_LIST)
+
+  IF (OSPRAY_BUILD_ISA STREQUAL "ALL")
+    IF(OSPRAY_EMBREE_ENABLE_SSE)
+      SET(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} sse4)
+    ENDIF()
+    IF(OSPRAY_EMBREE_ENABLE_AVX)
+      SET(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} avx)
+    ENDIF()
+    IF(OSPRAY_EMBREE_ENABLE_AVX2)
+      SET(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} avx2)
+    ENDIF()
+    IF(OSPRAY_EMBREE_ENABLE_AVX512)
+      SET(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} avx512knl-i32x16)
+    ENDIF()
+
+  ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX512")
+
+    IF(NOT OSPRAY_EMBREE_ENABLE_AVX512)
+      MESSAGE(FATAL_ERROR "Compiler does not support AVX512!")
+    ENDIF()
+    SET(OSPRAY_ISPC_TARGET_LIST avx512knl-i32x16)
+
+  ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX2")
+
+    IF(NOT OSPRAY_EMBREE_ENABLE_AVX2)
+      MESSAGE(FATAL_ERROR "Compiler does not support AVX2!")
+    ENDIF()
+
+    SET(OSPRAY_ISPC_TARGET_LIST avx2)
+    SET(OSPRAY_EMBREE_ENABLE_AVX512 false)
+
+  ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX")
+
+    IF(NOT OSPRAY_EMBREE_ENABLE_AVX)
+      MESSAGE(FATAL_ERROR "Compiler does not support AVX!")
+    ENDIF()
+
+    SET(OSPRAY_ISPC_TARGET_LIST avx)
+    SET(OSPRAY_EMBREE_ENABLE_AVX512 false)
+    SET(OSPRAY_EMBREE_ENABLE_AVX2   false)
+
+  ELSEIF (OSPRAY_BUILD_ISA STREQUAL "SSE")
+    SET(OSPRAY_ISPC_TARGET_LIST sse4)
+    SET(OSPRAY_EMBREE_ENABLE_AVX512 false)
+    SET(OSPRAY_EMBREE_ENABLE_AVX2   false)
+    SET(OSPRAY_EMBREE_ENABLE_AVX    false)
+  ELSE ()
+    MESSAGE(ERROR "Invalid OSPRAY_BUILD_ISA value. Please select one of SSE, AVX, AVX2, AVX512, or ALL.")
+  ENDIF()
+ENDMACRO()
 
 # Configure the output directories. To allow IMPI to do its magic we
 # will put *executables* into the (same) build directory, but tag
@@ -59,6 +152,7 @@ ENDMACRO()
 # ".mic"-suffix trick, so we'll put libraries into separate
 # directories (names 'intel64' and 'mic', respectively)
 MACRO(CONFIGURE_OSPRAY)
+  OSPRAY_CONFIGURE_ISPC_ISA()
   OSPRAY_CONFIGURE_TASKING_SYSTEM()
 
   IF("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
@@ -75,6 +169,11 @@ MACRO(CONFIGURE_OSPRAY)
     SET(OSPRAY_RELEASE_BUILD        ON )
   ENDIF()
 
+  IF (WIN32)
+    # avoid problematic min/max defines of windows.h
+    ADD_DEFINITIONS(-DNOMINMAX)
+  ENDIF()
+
   IF (OSPRAY_TARGET STREQUAL "mic")
     SET(OSPRAY_EXE_SUFFIX ".mic")
     SET(OSPRAY_LIB_SUFFIX "_mic")
@@ -83,7 +182,6 @@ MACRO(CONFIGURE_OSPRAY)
     SET(THIS_IS_MIC ON)
     SET(__XEON__ OFF)
     INCLUDE(${PROJECT_SOURCE_DIR}/cmake/icc_xeonphi.cmake)
-
     SET(OSPRAY_TARGET_MIC ON PARENT_SCOPE)
   ELSE()
     SET(OSPRAY_EXE_SUFFIX "")
@@ -91,88 +189,7 @@ MACRO(CONFIGURE_OSPRAY)
     SET(OSPRAY_ISPC_SUFFIX ".o")
     SET(THIS_IS_MIC OFF)
     SET(__XEON__ ON)
-    IF (OSPRAY_COMPILER_ICC)
-      INCLUDE(${PROJECT_SOURCE_DIR}/cmake/icc.cmake)
-    ELSEIF (OSPRAY_COMPILER_GCC)
-      INCLUDE(${PROJECT_SOURCE_DIR}/cmake/gcc.cmake)
-    ELSEIF (OSPRAY_COMPILER_CLANG)
-      INCLUDE(${PROJECT_SOURCE_DIR}/cmake/clang.cmake)
-    ELSEIF (OSPRAY_COMPILER_MSVC)
-      INCLUDE(${PROJECT_SOURCE_DIR}/cmake/msvc.cmake)
-    ENDIF()
-
-    SET(OSPRAY_EMBREE_ENABLE_AVX512 false)
-    IF (OSPRAY_BUILD_ISA STREQUAL "ALL")
-      # ------------------------------------------------------------------
-      # in 'all' mode, we have a list of multiple targets for ispc,
-      # and enable all targets for embree (we may still disable some
-      # below if the compiler doesn't support them
-      # ------------------------------------------------------------------
-      SET(OSPRAY_ISPC_TARGET_LIST sse4 avx avx2)
-      SET(OSPRAY_EMBREE_ENABLE_SSE  true)
-      SET(OSPRAY_EMBREE_ENABLE_AVX  true)
-      SET(OSPRAY_EMBREE_ENABLE_AVX2 true)
-      IF (OSPRAY_BUILD_ENABLE_KNL)
-        SET(OSPRAY_EMBREE_ENABLE_AVX512 true)
-        SET(OSPRAY_ISPC_TARGET_LIST sse4 avx avx2 avx512knl-i32x16)
-      ENDIF()
-
-    ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX512")
-      # ------------------------------------------------------------------
-      # in 'avx512' mode, we currently build only avx512, in generic
-      # mode, but enable all embree targets to fall back to (currently
-      # does not work since embree would require a 16-wide trace
-      # function which it has in neither of the three targets)
-      # ------------------------------------------------------------------
-      SET(OSPRAY_ISPC_TARGET_LIST avx512knl-i32x16)
-      SET(OSPRAY_EMBREE_ENABLE_SSE  true)
-      SET(OSPRAY_EMBREE_ENABLE_AVX  true)
-      SET(OSPRAY_EMBREE_ENABLE_AVX2 true)
-      SET(OSPRAY_EMBREE_ENABLE_AVX512 true)
-
-    ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX2")
-      # ------------------------------------------------------------------
-      # in 'avx2' mode, we enable ONLY avx2 for ispc, and all targets
-      # up to avx2 for embree. note that if the compiler doesn't
-      # support AVX we will have a combination where embree uses AVX
-      # (the most the compiler can do), while ispc still uses
-      # avx. this works because both targets are 8 wide. it does
-      # however require the compiler to understand AT LEAST AVX1.
-      # ------------------------------------------------------------------
-      SET(OSPRAY_ISPC_TARGET_LIST avx2)
-      SET(OSPRAY_EMBREE_ENABLE_SSE  true)
-      SET(OSPRAY_EMBREE_ENABLE_AVX  true)
-      SET(OSPRAY_EMBREE_ENABLE_AVX2 true)
-
-    ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX")
-      # ------------------------------------------------------------------
-      # in 'avx' mode, we enable ONLY avx for ispc, and both sse and
-      # avx for embree. note that this works ONLY works if the
-      # compiler knows at least AVX
-      # ------------------------------------------------------------------
-      SET(OSPRAY_ISPC_TARGET_LIST avx)
-      SET(OSPRAY_EMBREE_ENABLE_SSE  true)
-      SET(OSPRAY_EMBREE_ENABLE_AVX  true)
-      SET(OSPRAY_EMBREE_ENABLE_AVX2 false)
-
-    ELSEIF (OSPRAY_BUILD_ISA STREQUAL "SSE")
-      # ------------------------------------------------------------------
-      # in 'sse' mode, we enable ONLY sse4 for ispc, and only sse for
-      # embree
-      # ------------------------------------------------------------------
-      SET(OSPRAY_ISPC_TARGET_LIST sse4)
-      SET(OSPRAY_EMBREE_ENABLE_SSE  true)
-      SET(OSPRAY_EMBREE_ENABLE_AVX  false)
-      SET(OSPRAY_EMBREE_ENABLE_AVX2 false)
-    ELSE ()
-      MESSAGE(ERROR "Invalid OSPRAY_BUILD_ISA value. Please select one of SSE, AVX, AVX2, or ALL.")
-    ENDIF()
-
   ENDIF()
-
-  OSPRAY_CHECK_COMPILER_SUPPORT(AVX)
-  OSPRAY_CHECK_COMPILER_SUPPORT(AVX2)
-  OSPRAY_CHECK_COMPILER_SUPPORT(AVX512)
 
   IF (THIS_IS_MIC)
     OPTION(OSPRAY_BUILD_COI_DEVICE
@@ -180,17 +197,6 @@ MACRO(CONFIGURE_OSPRAY)
   ENDIF()
 
   INCLUDE(${PROJECT_SOURCE_DIR}/cmake/ispc.cmake)
-
-  INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
-  INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
-
-  INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR})
-  INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR}/ospray/include)
-
-  # for auto-generated cmakeconfig etc
-  INCLUDE_DIRECTORIES(${PROJECT_BINARY_DIR})
-  INCLUDE_DIRECTORIES_ISPC(${PROJECT_BINARY_DIR})
-
 ENDMACRO()
 
 ## Target creation macros ##
@@ -269,6 +275,8 @@ MACRO(OSPRAY_INSTALL_LIBRARY name)
   )
 ENDMACRO()
 
+# only use for executables required for OSPRay functionality, e.g. the MPI
+# worker, because these go into install component 'lib'
 MACRO(OSPRAY_INSTALL_EXE _name)
   SET(name ${_name}${OSPRAY_EXE_SUFFIX})
   # use OSPRAY_LIB_SUFFIX for COMPONENT to get lib_mic and not lib.mic
@@ -286,10 +294,100 @@ MACRO(OSPRAY_SET_LIBRARY_VERSION _name)
     PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
 ENDMACRO()
 
+## Conveniance macro for creating OSPRay libraries ##
+# Usage
+#
+#   OSPRAY_CREATE_LIBRARY(<name> source1 [source2 ...]
+#                         [LINK lib1 [lib2 ...]])
+#
+# will create and install shared library 'ospray_<name>' from 'sources' with
+# version OSPRAY_[SO]VERSION and optionally link against 'libs'
+
+MACRO(OSPRAY_CREATE_LIBRARY name)
+  SET(LIBRARY_NAME ospray_${name})
+  SET(LIBRARY_SOURCES "")
+  SET(LINK_LIBS "")
+
+  SET(CURRENT_LIST LIBRARY_SOURCES)
+  FOREACH(arg ${ARGN})
+    IF (${arg} STREQUAL "LINK")
+      SET(CURRENT_LIST LINK_LIBS)
+    ELSE()
+      LIST(APPEND ${CURRENT_LIST} ${arg})
+    ENDIF ()
+  ENDFOREACH()
+ 
+  OSPRAY_ADD_LIBRARY(${LIBRARY_NAME} SHARED ${LIBRARY_SOURCES})
+  OSPRAY_LIBRARY_LINK_LIBRARIES(${LIBRARY_NAME} ${LINK_LIBS})
+  OSPRAY_SET_LIBRARY_VERSION(${LIBRARY_NAME})
+  OSPRAY_INSTALL_LIBRARY(${LIBRARY_NAME})
+ENDMACRO()
+
+## Conveniance macro for creating OSPRay applications ##
+# Usage
+#
+#   OSPRAY_CREATE_APPLICATION(<name> source1 [source2 ...]
+#                             [LINK lib1 [lib2 ...]])
+#
+# will create and install application 'osp<name>' from 'sources' with version
+# OSPRAY_VERSION and optionally link against 'libs'
+
+MACRO(OSPRAY_CREATE_APPLICATION name)
+  SET(APP_NAME osp${name})
+  SET(APP_SOURCES "")
+  SET(LINK_LIBS "")
+
+  SET(CURRENT_LIST APP_SOURCES)
+  FOREACH(arg ${ARGN})
+    IF (${arg} STREQUAL "LINK")
+      SET(CURRENT_LIST LINK_LIBS)
+    ELSE()
+      LIST(APPEND ${CURRENT_LIST} ${arg})
+    ENDIF ()
+  ENDFOREACH()
+ 
+  ADD_EXECUTABLE(${APP_NAME} ${APP_SOURCES})
+  TARGET_LINK_LIBRARIES(${APP_NAME} ${LINK_LIBS})
+  IF (WIN32)
+    SET_TARGET_PROPERTIES(${APP_NAME} PROPERTIES VERSION ${OSPRAY_VERSION})
+  ENDIF()
+  INSTALL(TARGETS ${APP_NAME}
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
+    COMPONENT apps
+  )
+ENDMACRO()
+
+## Conveniance macro for installing OSPRay headers ##
+# Usage
+#
+#   OSPRAY_INSTALL_SDK_HEADERS(header1 [header2 ...] [DESTINATION destination])
+#
+# will install headers into ${CMAKE_INSTALL_PREFIX}/ospray/SDK/${destination},
+# where destination is optional.
+
+MACRO(OSPRAY_INSTALL_SDK_HEADERS)
+  SET(HEADERS "")
+  SET(DESTINATION "")
+
+  SET(CURRENT_LIST HEADERS)
+  FOREACH(arg ${ARGN})
+    IF (${arg} STREQUAL "DESTINATION")
+      SET(CURRENT_LIST DESTINATION)
+    ELSE()
+      LIST(APPEND ${CURRENT_LIST} ${arg})
+    ENDIF ()
+  ENDFOREACH()
+
+  INSTALL(FILES ${HEADERS}
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/SDK/${DESTINATION}
+    COMPONENT devel
+  )
+ENDMACRO()
+
 ## Compiler configuration macro ##
 
 MACRO(OSPRAY_CONFIGURE_COMPILER)
-  # enable ability for users to force a compiler using the pre-0.8.3 method
+  # enable ability for users to force a compiler using the pre-0.8.3 method (doesn't work right now!)
   SET(OSPRAY_COMPILER "" CACHE STRING "Force compiler: GCC, ICC, CLANG")
   SET_PROPERTY(CACHE OSPRAY_COMPILER PROPERTY STRINGS GCC ICC CLANG)
   MARK_AS_ADVANCED(OSPRAY_COMPILER)
@@ -324,21 +422,25 @@ MACRO(OSPRAY_CONFIGURE_COMPILER)
     SET(OSPRAY_COMPILER_GCC   OFF)
     SET(OSPRAY_COMPILER_CLANG OFF)
     SET(OSPRAY_COMPILER_MSVC  OFF)
+    INCLUDE(${PROJECT_SOURCE_DIR}/cmake/icc.cmake)
   ELSEIF (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     SET(OSPRAY_COMPILER_ICC   OFF)
     SET(OSPRAY_COMPILER_GCC   ON )
     SET(OSPRAY_COMPILER_CLANG OFF)
     SET(OSPRAY_COMPILER_MSVC  OFF)
+    INCLUDE(${PROJECT_SOURCE_DIR}/cmake/gcc.cmake)
   ELSEIF (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     SET(OSPRAY_COMPILER_ICC   OFF)
     SET(OSPRAY_COMPILER_GCC   OFF)
     SET(OSPRAY_COMPILER_CLANG ON )
     SET(OSPRAY_COMPILER_MSVC  OFF)
+    INCLUDE(${PROJECT_SOURCE_DIR}/cmake/clang.cmake)
   ELSEIF (${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC")
     SET(OSPRAY_COMPILER_ICC   OFF)
     SET(OSPRAY_COMPILER_GCC   OFF)
     SET(OSPRAY_COMPILER_CLANG OFF)
     SET(OSPRAY_COMPILER_MSVC  ON )
+    INCLUDE(${PROJECT_SOURCE_DIR}/cmake/msvc.cmake)
   ELSE()
     MESSAGE(FATAL_ERROR
             "Unsupported compiler specified: '${CMAKE_CXX_COMPILER_ID}'")

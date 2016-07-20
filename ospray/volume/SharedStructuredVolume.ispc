@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/volume/SharedStructuredVolume.ih"
+#include "volume/SharedStructuredVolume.ih"
 
 /*! get a voxel from given volume type */
 

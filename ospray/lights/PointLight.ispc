@@ -15,8 +15,8 @@
 // ======================================================================== //
 
 #include "Light.ih"
-#include "ospray/math/sampling.ih"
-#include "ospray/math/LinearSpace.ih"
+#include "math/sampling.ih"
+#include "math/LinearSpace.ih"
 
 struct PointLight
 {
@@ -83,7 +83,7 @@ Light_EvalRes PointLight_eval(const uniform Light* uniform super,
 {
   const PointLight* uniform self = (PointLight* uniform)super;
   Light_EvalRes res;
-  res.value = make_vec3f(0.f);
+  res.radiance = make_vec3f(0.f);
   res.dist = inf;
   res.pdf = 0.f;
 
@@ -106,7 +106,7 @@ Light_EvalRes PointLight_eval(const uniform Light* uniform super,
         const float cosTheta = sqrt(1.f - sinTheta2);
         res.pdf = uniformSampleConePDF(cosTheta);
         const float invdist = rcp(t_near);
-        res.value = self->power * res.pdf * sqr(invdist);
+        res.radiance = self->power * res.pdf * sqr(invdist);
       }
     }
   }

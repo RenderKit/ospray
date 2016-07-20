@@ -18,8 +18,8 @@
 
 // ospray
 #include "StreamLines.h"
-#include "ospray/common/Data.h"
-#include "ospray/common/Model.h"
+#include "common/Data.h"
+#include "common/Model.h"
 // ispc-generated files
 #include "StreamLines_ispc.h"
 
