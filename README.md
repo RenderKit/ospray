@@ -73,7 +73,7 @@ following prerequisites:
 -   To build OSPRay you need [CMake](http://www.cmake.org), any
     form of C++ compiler (we recommend using the [Intel® C++ compiler
     (icc)](https://software.intel.com/en-us/c-compilers), but also
-    support gcc and clang), and standard Linux development tools.
+    support GCC and Clang), and standard Linux development tools.
     To build the demo viewers, you should also have some version of
     OpenGL and the GL Utility Toolkit (GLUT or freeglut), as well as
     Qt 4.6 or higher.
@@ -82,7 +82,7 @@ following prerequisites:
     latest binary release of ISPC (currently 1.9.0) from the [ISPC
     downloads page](https://ispc.github.io/downloads.html). The build
     system looks for ISPC in the `PATH` and in the directory right
-    "next to" the checked-out OSPRay sources. [For example, if OSPRay is
+    "next to" the checked-out OSPRay sources.^[For example, if OSPRay is
     in `~/Projects/ospray`, ISPC will also be searched in
     `~/Projects/ispc-v1.9.0-linux`] Alternatively set the CMake
     variable `ISPC_EXECUTABLE` to the location of the ISPC compiler.
@@ -135,13 +135,13 @@ CMake is easy:
 -   The compiler CMake will use will default to whatever the `CC` and
     `CXX` environment variables point to. Should you want to specify a
     different compiler, run cmake manually while specifying the desired
-    compiler. The default compiler on most linux machines is 'gcc', but
-    it can be pointed to 'clang' instead by executing the following:
+    compiler. The default compiler on most linux machines is `gcc`, but
+    it can be pointed to `clang` instead by executing the following:
 
         user@mymachine[~/Projects/ospray/release]: cmake 
             -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang ..
 
-    CMake will now use clang instead of gcc. If you are ok with using
+    CMake will now use Clang instead of GCC. If you are ok with using
     the default compiler on your system, then simply skip this step.
     Note that the compiler variables cannot be changed after the first
     `cmake` or `ccmake` run. 
@@ -167,7 +167,7 @@ Tutorial
 --------
 
 A minimal working example demonstrating how to use OSPRay can be found
-at `apps/ospTutorial.cpp`C99 version is available at
+at `apps/ospTutorial.cpp`^[A C99 version is available at
 `apps/ospTutorial.c`.]. On Linux build it in the build_directory with
 
     g++ ../apps/ospTutorial.cpp -I ../ospray/include -I .. -I ../ospray/embree/common \

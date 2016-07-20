@@ -88,7 +88,7 @@ Light_EvalRes HDRILight_eval(const uniform Light* uniform super,
   const float v = acos(localDir.z) * one_over_pi;
   const vec2f uv = make_vec2f(u, v);
 
-  res.value = get3f(self->map, uv) * self->intensity;
+  res.radiance = get3f(self->map, uv) * self->intensity;
   res.dist = inf;
 
   // domain of Distribution2D is shifted by half a texel compared to texture
