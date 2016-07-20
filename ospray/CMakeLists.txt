@@ -33,6 +33,21 @@ FIND_PACKAGE(Threads REQUIRED)
 
 SET(REQUIRED_MINIMUM_EMBREE 2.7.1)
 
+# Do a check to see if we can find the system Embree
+IF(NOT DEFINED LAST_CONFIG_USED_EXTERNAL_EMBREE)
+  FIND_PACKAGE(embree ${REQUIRED_MINIMUM_EMBREE} QUIET)
+  IF(NOT DEFINED EMBREE_INCLUDE_DIRS)
+    MESSAGE(WARNING
+            "We did not find Embree installed on your system. If you would"
+            " like to use a newer version of Embree than the one in the"
+            " OSPRay source tree (v2.7.1), please download and extract or"
+            " compile Embree from source, set the 'embree_DIR' environment"
+            " variable to where it is installed, and re-enable the"
+            " OSPRAY_USE_EXTERNAL_EMBREE CMake option.")
+    SET(OSPRAY_USE_EXTERNAL_EMBREE OFF CACHE BOOL "" FORCE)
+  ENDIF()
+ENDIF()
+
 IF(OSPRAY_USE_EXTERNAL_EMBREE)
   # Clear out embree directories if they were previously populated by an
   # internal build
