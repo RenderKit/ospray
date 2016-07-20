@@ -7,9 +7,9 @@ information.
 
 CI build status:
 
-`master`:[![build status](https://gitlab.com/ospray/ospray/badges/master/build.svg)](https://gitlab.com/ospray/ospray/commits/master)
+#`master`:[![build status](https://gitlab.com/ospray/ospray/badges/master/build.svg)](https://gitlab.com/ospray/ospray/commits/master)
 
-`devel` :[![build status](https://gitlab.com/ospray/ospray/badges/devel/build.svg)](https://gitlab.com/ospray/ospray/commits/devel)
+#`devel` :[![build status](https://gitlab.com/ospray/ospray/badges/devel/build.svg)](https://gitlab.com/ospray/ospray/commits/devel)
 
 OSPRay Overview
 ===============
@@ -35,10 +35,10 @@ and AVX-512 to achieve high rendering performance.
 OSPRay Support and Contact
 --------------------------
 
-OSPRay is still in beta stage, and though we do our best to
+OSPRay is under active development, and though we do our best to
 guarantee stable release versions a certain number of bugs,
 as-yet-missing features, inconsistencies, or any other issues are
-unavoidable at this stage. Should you find any such issues please report
+still possible. Should you find any such issues please report
 them immediately via [OSPRay's GitHub Issue
 Tracker](https://github.com/ospray/OSPRay/issues) (or, if you should
 happen to have a fix for it,you can also send us a pull request); for
@@ -222,3 +222,6 @@ at the [OSPRay Demos and Examples] page.
 [imgTutorial2]: https://ospray.github.io/images/tutorial_accumulatedframe.png
 [imgQtViewer]: https://ospray.github.io/images/QtViewer.jpg
 [imgVolumeViewer]: https://ospray.github.io/images/VolumeViewer.png
+[imgSpotLight]: https://ospray.github.io/images/spot_light.png
+[imgQuadLight]: https://ospray.github.io/images/quad_light.png
+[imgHDRILight]: https://ospray.github.io/images/hdri_light.png
