@@ -5,12 +5,6 @@ This is release v1.0.0 of OSPRay. For changes and new features see the
 [changelog](CHANGELOG.md). Also visit http://www.ospray.org for more
 information.
 
-CI build status:
-
-#`master`:[![build status](https://gitlab.com/ospray/ospray/badges/master/build.svg)](https://gitlab.com/ospray/ospray/commits/master)
-
-#`devel` :[![build status](https://gitlab.com/ospray/ospray/badges/devel/build.svg)](https://gitlab.com/ospray/ospray/commits/devel)
-
 OSPRay Overview
 ===============
 
