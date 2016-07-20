@@ -56,18 +56,18 @@ Light_SampleRes DirectionalLight_sample(const uniform Light* uniform super,
 
 Light_EvalRes DirectionalLight_eval(const uniform Light* uniform super,
                                     const DifferentialGeometry&,
-                                    const vec3f& dir)
+                                    const vec3f& dir,
+                                    const float maxDist)
 {
   uniform DirectionalLight* uniform self = (uniform DirectionalLight* uniform)super;
   Light_EvalRes res;
-  res.dist = inf;
+  res.radiance = make_vec3f(0.f);
 
-  if (self->cosAngle < COS_ANGLE_MAX && dot(self->frame.vz, dir) > self->cosAngle) {
+  if (inf <= maxDist
+      && self->cosAngle < COS_ANGLE_MAX 
+      && dot(self->frame.vz, dir) > self->cosAngle) {
     res.radiance = self->radiance * self->pdf;
     res.pdf = self->pdf;
-  } else {
-    res.radiance = make_vec3f(0.f);
-    res.pdf = 0.f;
   }
 
   return res;
