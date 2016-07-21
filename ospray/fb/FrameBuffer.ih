@@ -37,6 +37,7 @@ struct FrameBuffer
 {
   vec2i size; /*!< size (width x height) of frame buffer, in pixels */
   vec2f rcpSize; /*! one over size (precomputed) */
+  int32 frameID;
 
   FrameBuffer_ColorBufferFormat colorBufferFormat;
 

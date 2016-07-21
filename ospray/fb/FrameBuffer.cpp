@@ -16,7 +16,6 @@
 
 #include "FrameBuffer.h"
 #include "FrameBuffer_ispc.h"
-#include "LocalFB_ispc.h"
 
 namespace ospray {
 
@@ -29,12 +28,19 @@ namespace ospray {
       numTiles(divRoundUp(size, getTileSize())),
       maxValidPixelID(size-vec2i(1)),
       colorBufferFormat(colorBufferFormat),
+      frameID(-1),
       hasDepthBuffer(hasDepthBuffer),
       hasAccumBuffer(hasAccumBuffer),
       hasVarianceBuffer(hasVarianceBuffer)
   {
     managedObjectType = OSP_FRAMEBUFFER;
     Assert(size.x > 0 && size.y > 0);
+  }
+
+  void FrameBuffer::beginFrame()
+  {
+    frameID++;
+    ispc::FrameBuffer_set_frameID(getIE(), frameID);
   }
 
   /*! helper function for debugging. write out given pixels in PPM format */

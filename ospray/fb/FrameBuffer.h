@@ -75,12 +75,18 @@ namespace ospray {
     /*! buffer format of the color buffer */
     ColorBufferFormat colorBufferFormat;
 
+    //! This marks the global number of frames that have been rendered since
+    //! the last ospFramebufferClear() has been called.
+    int32 frameID;
+
     /*! how often has been accumulated into that tile
         Note that it is up to the application to properly
         reset the accumulationIDs (using ospClearAccum(fb)) if anything
         changes that requires clearing the accumulation buffer. */
     virtual int32 accumID(const vec2i &tile) = 0;
     virtual float tileError(const vec2i &tile) = 0;
+
+    void beginFrame();
 
     //! returns error of frame
     virtual float endFrame(const float errorThreshold) = 0;
