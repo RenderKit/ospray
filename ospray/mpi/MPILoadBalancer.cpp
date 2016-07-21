@@ -43,6 +43,8 @@ namespace ospray {
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
         assert(dfb);
 
+        dfb->beginFrame();
+
         dfb->startNewFrame();
         /* the client will do its magic here, and the distributed
            frame buffer will be writing tiles here, without us doing

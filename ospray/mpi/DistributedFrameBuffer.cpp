@@ -455,6 +455,7 @@ namespace ospray {
   */
   void DFB::clear(const uint32 fbChannelFlags)
   {
+    frameID = -1; // we increment at the start of the frame
     if (!myTiles.empty()) {
       parallel_for(myTiles.size(), [&](int taskIndex){
         TileData *td = this->myTiles[taskIndex];

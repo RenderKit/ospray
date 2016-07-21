@@ -139,8 +139,6 @@ void OSPGlutViewer::reshape(const vec2i &newSize)
 
   m_fb.clear(OSP_FB_ACCUM);
 
-  PING;
-
   /*! for now, let's just attach the pixel op to the _main_ frame
       buffer - eventually we need to have a _second_ frame buffer
       of the proper (much higher) size, but for now let's just use

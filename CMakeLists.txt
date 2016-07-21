@@ -82,14 +82,12 @@ IF(NOT WIN32)
   INCLUDE(cmake/doxygen.cmake)
 ENDIF()
 
-OSPRAY_CONFIGURE_COMPILER()
-
 ##############################################################
 # OSPRay specific build options and configuration selection
 ##############################################################
 
 OPTION(OSPRAY_USE_EXTERNAL_EMBREE
-       "Use a pre-built Embree instead of the internally built version")
+       "Use a pre-built Embree instead of the internally built version" ON)
 
 OPTION(OSPRAY_VOLUME_VOXELRANGE_IN_APP "Move 'voxelrange' computations to app?")
 MARK_AS_ADVANCED(OSPRAY_VOLUME_VOXELRANGE_IN_APP)
@@ -106,9 +104,6 @@ ENDIF()
 
 OPTION(OSPRAY_BUILD_MPI_DEVICE "Add MPI Remote/Distributed rendering support?")
 
-# make ISA target case-insensitive, used in configure_ospray() macro
-STRING(TOUPPER ${OSPRAY_BUILD_ISA} OSPRAY_BUILD_ISA)
-
 SET(OSPRAY_MIC ${OSPRAY_BUILD_MIC_SUPPORT})
 SET(OSPRAY_MPI ${OSPRAY_BUILD_MPI_DEVICE})
 
@@ -124,6 +119,8 @@ INCLUDE(package)
 ##############################################################
 # the OSPRay 'common' library
 ##############################################################
+
+CONFIGURE_OSPRAY()
 
 SET(OSPRAY_TARGET "intel64")
 ADD_SUBDIRECTORY(ospcommon builddir/ospray_common/intel64)

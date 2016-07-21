@@ -14,10 +14,8 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-CONFIGURE_OSPRAY()
-
 IF(OSPRAY_BUILD_MPI_DEVICE)
-  OPTION(OSPRAY_EXP_DATA_PARALLEL "Experimental data-parallel compositing mode")
+  OPTION(OSPRAY_EXP_DATA_PARALLEL "Experimental data-parallel compositing mode" ON)
   OPTION(OSPRAY_PIN_ASYNC "Pin async mpi comm threads?" OFF)
   MARK_AS_ADVANCED(OSPRAY_PIN_ASYNC)
 ENDIF()
@@ -34,6 +32,21 @@ FIND_PACKAGE(Threads REQUIRED)
 # -------------------------------------------------------
 
 SET(REQUIRED_MINIMUM_EMBREE 2.7.1)
+
+# Do a check to see if we can find the system Embree
+IF(NOT DEFINED LAST_CONFIG_USED_EXTERNAL_EMBREE)
+  FIND_PACKAGE(embree ${REQUIRED_MINIMUM_EMBREE} QUIET)
+  IF(NOT DEFINED EMBREE_INCLUDE_DIRS)
+    MESSAGE(WARNING
+            "We did not find Embree installed on your system. If you would"
+            " like to use a newer version of Embree than the one in the"
+            " OSPRay source tree (v2.7.1), please download and extract or"
+            " compile Embree from source, set the 'embree_DIR' environment"
+            " variable to where it is installed, and re-enable the"
+            " OSPRAY_USE_EXTERNAL_EMBREE CMake option.")
+    SET(OSPRAY_USE_EXTERNAL_EMBREE OFF CACHE BOOL "" FORCE)
+  ENDIF()
+ENDIF()
 
 IF(OSPRAY_USE_EXTERNAL_EMBREE)
   # Clear out embree directories if they were previously populated by an
@@ -89,6 +102,23 @@ ELSE()
   SET(LAST_CONFIG_USED_EXTERNAL_EMBREE OFF CACHE INTERNAL "" FORCE)
 ENDIF()
 
+# NOTE(jda) - Windows not yet handled...
+IF (NOT WIN32 AND OSPRAY_ZIP_MODE)
+  INSTALL(PROGRAMS ${EMBREE_LIBRARY} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib) # /intel64?
+  IF(OSPRAY_MIC)
+    INSTALL(PROGRAMS ${EMBREE_LIBRARY_XEONPHI} DESTINATION ${CMAKE_INSTALL_LIBDIR}/mic COMPONENT lib_mic)
+  ENDIF()
+ENDIF()
+
+SET(EMBREE_INCLUDE_DIRS    ${EMBREE_INCLUDE_DIRS}    PARENT_SCOPE)
+SET(EMBREE_LIBRARIES       ${EMBREE_LIBRARIES}       PARENT_SCOPE)
+SET(EMBREE_LIBRARY         ${EMBREE_LIBRARY}         PARENT_SCOPE)
+SET(EMBREE_LIBRARY_XEONPHI ${EMBREE_LIBRARY_XEONPHI} PARENT_SCOPE)
+
+# -------------------------------------------------------
+# Setup ospray include directories and source files
+# -------------------------------------------------------
+
 INCLUDE_DIRECTORIES(
   ${CMAKE_SOURCE_DIR}/ospray/include
   ${CMAKE_SOURCE_DIR}/ospray
@@ -103,15 +133,6 @@ INCLUDE_DIRECTORIES_ISPC(
   ${PROJECT_BINARY_DIR}
   ${EMBREE_INCLUDE_DIRS}
 )
-
-SET(EMBREE_INCLUDE_DIRS    ${EMBREE_INCLUDE_DIRS}    PARENT_SCOPE)
-SET(EMBREE_LIBRARIES       ${EMBREE_LIBRARIES}       PARENT_SCOPE)
-SET(EMBREE_LIBRARY         ${EMBREE_LIBRARY}         PARENT_SCOPE)
-SET(EMBREE_LIBRARY_XEONPHI ${EMBREE_LIBRARY_XEONHPI} PARENT_SCOPE)
-
-# -------------------------------------------------------
-# Setup ospray source files
-# -------------------------------------------------------
 
 SET(OSPRAY_SOURCES
   include/ospray/ospray.h

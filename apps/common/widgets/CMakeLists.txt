@@ -14,8 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-CONFIGURE_OSPRAY()
-
 IF (OSPRAY_MODULE_DISPLAY_WALD)
 	INCLUDE_DIRECTORIES(${DISPLAY_WALD_INCLUDE_DIR})
 	ADD_DEFINITIONS(-DOSPRAY_DISPLAY_WALD=1)
