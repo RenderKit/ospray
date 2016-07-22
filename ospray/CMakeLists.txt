@@ -14,6 +14,8 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+CONFIGURE_OSPRAY()
+
 IF(OSPRAY_BUILD_MPI_DEVICE)
   OPTION(OSPRAY_EXP_DATA_PARALLEL "Experimental data-parallel compositing mode" ON)
   OPTION(OSPRAY_PIN_ASYNC "Pin async mpi comm threads?" OFF)
@@ -70,9 +72,9 @@ IF(OSPRAY_USE_EXTERNAL_EMBREE)
   ELSE()
     # NOTE(jda) - We are using the updated Embree find_package() config, check
     #             if we need to add TBB to EMBREE_LIBRARIES
-    IF(${EMBREE_TASKING_TBB} AND NOT ${EMBREE_USE_PACKAGED_TBB})
+    IF(EMBREE_TASKING_SYSTEM STREQUAL "TBB")
       OSPRAY_WARN_ONCE(EMBREE_FORCE_TBB
-        "WARNING: You *MUST* have TBB installed based on the Embree we found!")
+        "You *MUST* have TBB installed based on the Embree we found!")
       FIND_PACKAGE(TBB REQUIRED)
       SET(EMBREE_LIBRARIES ${EMBREE_LIBRARIES} ${TBB_LIBRARIES})
     ENDIF()

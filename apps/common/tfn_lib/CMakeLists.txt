@@ -14,6 +14,8 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+CONFIGURE_OSPRAY()
+
 OSPRAY_CREATE_LIBRARY(tfn tfn_lib.cpp LINK ospray_common)
 
 OSPRAY_CREATE_APPLICATION(CvtParaViewTfcn
