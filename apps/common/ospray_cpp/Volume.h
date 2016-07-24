@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include <ospray_cpp/ManagedObject.h>
 
 namespace ospray {
