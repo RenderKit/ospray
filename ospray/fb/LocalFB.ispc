@@ -40,7 +40,7 @@ export void LocalFrameBuffer_writeTile_##name(void *uniform _fb,             \
     for (uint32 iix = tile.region.lower.x+programIndex;                      \
          iix<tile.region.upper.x;iix+=programCount,chunkID++) {              \
                                                                              \
-      uint32 pixelID = iiy*fb->super.size.x+iix;                             \
+      uint32 pixelID = iiy*fb->FB_STRIDE+iix;                                \
       unmasked {                                                             \
         varying vec4f col = make_vec4f(varyTile->r[chunkID],                 \
                                        varyTile->g[chunkID],                 \
@@ -150,7 +150,6 @@ export void LocalFrameBuffer_accumulateTile(void *uniform _fb,
   }
 }
 
-
 export void *uniform LocalFrameBuffer_create(void *uniform cClassPtr,
                                              const uniform uint32 size_x,
                                              const uniform uint32 size_y,
@@ -173,5 +172,13 @@ export void *uniform LocalFrameBuffer_create(void *uniform cClassPtr,
   self->numTiles = (self->super.size+(TILE_SIZE-1))/TILE_SIZE;
   self->tileAccumID = (uniform int32 *uniform)tileAccumID;
   self->tileErrorBuffer = (uniform float *uniform)tileErrorBuffer;
+
+#ifdef FB_PADDED
+  self->stride = (size_x+15)&~15; // pad to 16
+  // on COI/MIC depth buffer is allocated locally without stride
+  // disable it (cannot be mapped anyway on COI) to avoid writing over the end
+  self->depthBuffer = NULL;
+#endif
+
   return self;
 }
