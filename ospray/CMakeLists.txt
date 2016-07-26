@@ -64,6 +64,12 @@ IF(OSPRAY_USE_EXTERNAL_EMBREE)
   FIND_PACKAGE(embree ${EMBREE_VERSION_REQUIRED} REQUIRED)
   SET(LAST_CONFIG_USED_EXTERNAL_EMBREE ON CACHE INTERNAL "" FORCE)
 
+  IF(OSPRAY_MIC AND NOT EMBREE_VERSION VERSION_LESS "2.10.0")
+    MESSAGE(FATAL_ERROR "The found Embree version ${EMBREE_VERSION} does not"
+            " support KNC anymore. Either disable the OSPRAY_BUILD_MIC_SUPPORT"
+            " option or use an Embree v2.9 or earlier.")
+  ENDIF()
+
   # NOTE(jda) - EMBREE_LIBRARIES is not defined until at lest v2.10.0, for now
   #             create a "faked" EMBREE_LIBRARIES until we set our min version
   #             to >= 2.10.0 of Embree
