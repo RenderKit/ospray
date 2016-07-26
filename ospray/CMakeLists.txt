@@ -67,11 +67,12 @@ IF(OSPRAY_USE_EXTERNAL_EMBREE)
   # NOTE(jda) - EMBREE_LIBRARIES is not defined until at lest v2.10.0, for now
   #             create a "faked" EMBREE_LIBRARIES until we set our min version
   #             to >= 2.10.0 of Embree
-  IF(NOT DEFINED EMBREE_LIBRARIES)
+  # also remove Embree's TBB libs if OSPRay uses TBB to avoid problems with
+  # cyclic rpath
+  IF(NOT DEFINED EMBREE_LIBRARIES OR OSPRAY_TASKING_TBB)
     SET(EMBREE_LIBRARIES ${EMBREE_LIBRARY})
   ELSE()
-    # NOTE(jda) - We are using the updated Embree find_package() config, check
-    #             if we need to add TBB to EMBREE_LIBRARIES
+    # check if we need to add TBB to EMBREE_LIBRARIES
     IF((EMBREE_TASKING_TBB OR (EMBREE_TASKING_SYSTEM STREQUAL "TBB"))
         AND NOT EMBREE_USE_PACKAGED_TBB)
       OSPRAY_WARN_ONCE(EMBREE_FORCE_TBB
