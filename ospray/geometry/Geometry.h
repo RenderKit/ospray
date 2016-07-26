@@ -48,7 +48,7 @@ namespace ospray {
     virtual void setMaterial(Material *mat);
 
     //! get material assigned to this geometry 
-    virtual Material *getMaterial() const { return material.ptr; };
+    virtual Material *getMaterial() const { return material.ptr; }
 
     //! \brief common function to help printf-debugging 
     virtual std::string toString() const { return "ospray::Geometry"; }
@@ -67,7 +67,6 @@ namespace ospray {
 
     box3f bounds;
 
-  private:
     //! material associated to this geometry
     /*! this field is private to make sure it is only set through
         'setMaterial' (see comment there) */

@@ -45,8 +45,8 @@ namespace ospray {
     virtual std::string toString() const { return "ospray::Model"; }
     virtual void finalize();
 
-    typedef std::vector<Ref<Geometry> > GeometryVector;
-    typedef std::vector<Ref<Volume> > VolumeVector;
+    using GeometryVector = std::vector<Ref<Geometry>>;
+    using VolumeVector   = std::vector<Ref<Volume>>;
     
     //! \brief vector of all geometries used in this model
     GeometryVector geometry;
