@@ -33,11 +33,11 @@ FIND_PACKAGE(Threads REQUIRED)
 # Find or build Embree
 # -------------------------------------------------------
 
-SET(REQUIRED_MINIMUM_EMBREE 2.7.1)
+SET(EMBREE_VERSION_REQUIRED 2.7.1)
 
 # Do a check to see if we can find the system Embree
 IF(NOT DEFINED LAST_CONFIG_USED_EXTERNAL_EMBREE)
-  FIND_PACKAGE(embree ${REQUIRED_MINIMUM_EMBREE} QUIET)
+  FIND_PACKAGE(embree ${EMBREE_VERSION_REQUIRED} QUIET)
   IF(NOT DEFINED EMBREE_INCLUDE_DIRS)
     MESSAGE(WARNING
             "We did not find Embree installed on your system. If you would"
@@ -61,18 +61,26 @@ IF(OSPRAY_USE_EXTERNAL_EMBREE)
   ENDIF()
 
   # Find existing Embree on the machine
-  FIND_PACKAGE(embree ${REQUIRED_MINIMUM_EMBREE} REQUIRED)
+  FIND_PACKAGE(embree ${EMBREE_VERSION_REQUIRED} REQUIRED)
   SET(LAST_CONFIG_USED_EXTERNAL_EMBREE ON CACHE INTERNAL "" FORCE)
+
+  IF(OSPRAY_MIC AND NOT EMBREE_VERSION VERSION_LESS "2.10.0")
+    MESSAGE(FATAL_ERROR "The found Embree version ${EMBREE_VERSION} does not"
+            " support KNC anymore. Either disable the OSPRAY_BUILD_MIC_SUPPORT"
+            " option or use an Embree v2.9 or earlier.")
+  ENDIF()
 
   # NOTE(jda) - EMBREE_LIBRARIES is not defined until at lest v2.10.0, for now
   #             create a "faked" EMBREE_LIBRARIES until we set our min version
   #             to >= 2.10.0 of Embree
-  IF(NOT DEFINED EMBREE_LIBRARIES)
+  # also remove Embree's TBB libs if OSPRay uses TBB to avoid problems with
+  # cyclic rpath
+  IF(NOT DEFINED EMBREE_LIBRARIES OR OSPRAY_TASKING_TBB)
     SET(EMBREE_LIBRARIES ${EMBREE_LIBRARY})
   ELSE()
-    # NOTE(jda) - We are using the updated Embree find_package() config, check
-    #             if we need to add TBB to EMBREE_LIBRARIES
-    IF(EMBREE_TASKING_SYSTEM STREQUAL "TBB")
+    # check if we need to add TBB to EMBREE_LIBRARIES
+    IF((EMBREE_TASKING_TBB OR (EMBREE_TASKING_SYSTEM STREQUAL "TBB"))
+        AND NOT EMBREE_USE_PACKAGED_TBB)
       OSPRAY_WARN_ONCE(EMBREE_FORCE_TBB
         "You *MUST* have TBB installed based on the Embree we found!")
       FIND_PACKAGE(TBB REQUIRED)
