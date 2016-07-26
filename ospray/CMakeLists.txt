@@ -33,11 +33,11 @@ FIND_PACKAGE(Threads REQUIRED)
 # Find or build Embree
 # -------------------------------------------------------
 
-SET(REQUIRED_MINIMUM_EMBREE 2.7.1)
+SET(EMBREE_VERSION_REQUIRED 2.7.1)
 
 # Do a check to see if we can find the system Embree
 IF(NOT DEFINED LAST_CONFIG_USED_EXTERNAL_EMBREE)
-  FIND_PACKAGE(embree ${REQUIRED_MINIMUM_EMBREE} QUIET)
+  FIND_PACKAGE(embree ${EMBREE_VERSION_REQUIRED} QUIET)
   IF(NOT DEFINED EMBREE_INCLUDE_DIRS)
     MESSAGE(WARNING
             "We did not find Embree installed on your system. If you would"
@@ -61,7 +61,7 @@ IF(OSPRAY_USE_EXTERNAL_EMBREE)
   ENDIF()
 
   # Find existing Embree on the machine
-  FIND_PACKAGE(embree ${REQUIRED_MINIMUM_EMBREE} REQUIRED)
+  FIND_PACKAGE(embree ${EMBREE_VERSION_REQUIRED} REQUIRED)
   SET(LAST_CONFIG_USED_EXTERNAL_EMBREE ON CACHE INTERNAL "" FORCE)
 
   # NOTE(jda) - EMBREE_LIBRARIES is not defined until at lest v2.10.0, for now
