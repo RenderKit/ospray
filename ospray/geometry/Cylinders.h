@@ -21,7 +21,7 @@
 /*! @{ \ingroup ospray_module_streamlines */
 namespace ospray {
 
-  /*! \defgroup geometry_cylinders Cylinders ("cylinders") 
+  /*! \defgroup geometry_cylinders Cylinders ("cylinders")
 
     \ingroup ospray_supported_geometries
 
@@ -57,8 +57,8 @@ namespace ospray {
     Implements the \ref geometry_cylinders geometry
 
   */
-  struct Cylinders : public Geometry {
-    //! \brief common function to help printf-debugging 
+  struct OSPRAY_SDK_INTERFACE Cylinders : public Geometry {
+    //! \brief common function to help printf-debugging
     virtual std::string toString() const { return "ospray::Cylinders"; }
     /*! \brief integrates this geometry's primitives into the respective
         model's acceleration structure */
@@ -66,7 +66,7 @@ namespace ospray {
 
     float radius;   //!< default radius, if no per-cylinder radius was specified.
     int32 materialID;
-    
+
     size_t numCylinders;
     size_t bytesPerCylinder; //!< num bytes per cylinder
     int64 offset_v0;

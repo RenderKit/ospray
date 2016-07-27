@@ -34,7 +34,7 @@ namespace ospray {
     tile renderer, but this abstraction level also allows for frame
     compositing or even projection/splatting based approaches
    */
-  struct Renderer : public ManagedObject {
+  struct OSPRAY_SDK_INTERFACE Renderer : public ManagedObject {
     Renderer() : spp(1), errorThreshold(0.0f) {}
 
     /*! \brief creates an abstract renderer class of given type

@@ -37,7 +37,7 @@ namespace ospray {
       agree on which fields will be set. Similarly, the frame buffer
       may actually use uchars, but the tile will always store
       floats. */
-  struct __aligned(64) Tile {
+  struct OSPRAY_SDK_INTERFACE __aligned(64) Tile {
     // make sure this tile is 64-byte aligned when alloc'ed
     ALIGNED_STRUCT;
 

@@ -21,7 +21,7 @@
 namespace ospray {
   /*! @{ \ingroup ospray_module_streamlines */
 
-  /*! \defgroup geometry_spheres Spheres ("spheres") 
+  /*! \defgroup geometry_spheres Spheres ("spheres")
 
     \ingroup ospray_supported_geometries
 
@@ -54,8 +54,8 @@ namespace ospray {
     Implements the \ref geometry_spheres geometry
 
   */
-  struct Spheres : public Geometry {
-    //! \brief common function to help printf-debugging 
+  struct OSPRAY_SDK_INTERFACE Spheres : public Geometry {
+    //! \brief common function to help printf-debugging
     virtual std::string toString() const { return "ospray::Spheres"; }
     /*! \brief integrates this geometry's primitives into the respective
       model's acceleration structure */
@@ -63,7 +63,7 @@ namespace ospray {
 
     float radius;   //!< default radius, if no per-sphere radius was specified.
     int32 materialID;
-    
+
     size_t numSpheres;
     size_t bytesPerSphere; //!< num bytes per sphere
     int64 offset_center;
@@ -76,7 +76,7 @@ namespace ospray {
     void     *_materialList;
     /*! data array from which we read the per-sphere color data; if
         NULL we do not have per-sphere data */
-    Ref<Data> colorData; 
+    Ref<Data> colorData;
     /*! stride in colorData array for accessing i'th sphere's
         color. color of sphere i will be read as 3 floats from
         'colorOffset+i*colorStride */

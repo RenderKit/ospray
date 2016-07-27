@@ -21,7 +21,7 @@
 namespace ospray {
 
   //! an AmbientLight is a constant light that is present everywhere
-  class AmbientLight : public Light {
+  class OSPRAY_SDK_INTERFACE AmbientLight : public Light {
     public:
       AmbientLight();
 

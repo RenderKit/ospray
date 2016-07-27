@@ -22,16 +22,16 @@ namespace ospray {
 
   /*! a DirectionalLight is a singular light which is infinitely distant and
    *  thus projects parallel rays of light across the entire scene */
-  class DirectionalLight : public Light {
+  class OSPRAY_SDK_INTERFACE DirectionalLight : public Light {
     public:
       DirectionalLight();
-  
+
       //! toString is used to aid in printf debugging
       virtual std::string toString() const { return "ospray::DirectionalLight"; }
-  
+
       //! Copy understood parameters into member parameters
       virtual void commit();
-  
+
     private:
       vec3f direction;      //!< Direction of the emitted rays
       vec3f color;          //!< RGB color of the emitted light

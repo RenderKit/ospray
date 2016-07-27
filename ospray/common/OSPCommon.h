@@ -99,7 +99,7 @@ namespace ospray {
 #  define OSPRAY_INTERFACE
 #  define OSPRAY_DLLEXPORT
 #endif
-
+#define OSPRAY_SDK_INTERFACE OSPRAY_INTERFACE
 
 // for MIC, disable the 'variable declared bbut never referenced'
 // warning, else the ISPC-generated code produces _far_ too many such
@@ -126,10 +126,10 @@ namespace embree {
 
 // #if defined(__MIC__)
 // #pragma message("using aligned opeartor new (this is knc, right!?)...")
-// void* operator new(size_t size) { return embree::alignedMalloc(size); }       
-// void operator delete(void* ptr) { embree::alignedFree(ptr); }      
-// void* operator new[](size_t size) throws { return embree::alignedMalloc(size); }  
-// void operator delete[](void* ptr) { embree::alignedFree(ptr); }    
+// void* operator new(size_t size) { return embree::alignedMalloc(size); }
+// void operator delete(void* ptr) { embree::alignedFree(ptr); }
+// void* operator new[](size_t size) throws { return embree::alignedMalloc(size); }
+// void operator delete[](void* ptr) { embree::alignedFree(ptr); }
 // #endif
 
 
@@ -191,7 +191,7 @@ namespace ospray {
   /*! size of OSPTextureFormat */
   OSPRAY_INTERFACE size_t sizeOf(const OSPTextureFormat);
 
-  struct WarnOnce {
+  struct OSPRAY_SDK_INTERFACE WarnOnce {
     WarnOnce(const std::string &s);
   private:
     const std::string s;

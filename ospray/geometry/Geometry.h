@@ -34,12 +34,12 @@ namespace ospray {
     as a set of individual triangle meshes that each have a different
     material (and their own connectivity and vertex sharing info), but
     that together form a single model with a single accel structure */
-  struct Geometry : public ManagedObject
+  struct OSPRAY_SDK_INTERFACE Geometry : public ManagedObject
   {
     //! constructor
     Geometry() : bounds(empty) { managedObjectType = OSP_GEOMETRY; }
 
-    //! set given geometry's material. 
+    //! set given geometry's material.
     /*! all material assignations should go through this function; the
         'material' field itself is private). This allows the
         respective geometry's derived instance to always properly set
@@ -47,23 +47,23 @@ namespace ospray {
         c++-side's material gets changed */
     virtual void setMaterial(Material *mat);
 
-    //! get material assigned to this geometry 
+    //! get material assigned to this geometry
     virtual Material *getMaterial() const { return material.ptr; };
 
-    //! \brief common function to help printf-debugging 
+    //! \brief common function to help printf-debugging
     virtual std::string toString() const { return "ospray::Geometry"; }
 
     /*! \brief integrates this geometry's primitives into the respective
         model's acceleration structure */
     virtual void finalize(Model *model) {}
 
-    /*! \brief creates an abstract geometry class of given type 
+    /*! \brief creates an abstract geometry class of given type
 
       The respective geometry type must be a registered geometry type
       in either ospray proper or any already loaded module. For
       geometry types specified in special modules, make sure to call
       ospLoadModule first. */
-    static Geometry *createGeometry(const char *type); 
+    static Geometry *createGeometry(const char *type);
 
     box3f bounds;
 
@@ -75,8 +75,8 @@ namespace ospray {
   };
 
   /*! \brief registers a internal ospray::<ClassName> geometry under
-      the externally accessible name "external_name" 
-      
+      the externally accessible name "external_name"
+
       \internal This currently works by defining a extern "C" function
       with a given predefined name that creates a new instance of this
       geometry. By having this symbol in the shared lib ospray can
@@ -88,5 +88,5 @@ namespace ospray {
   {                                                                 \
     return new InternalClassName;                                   \
   }                                                                 \
-  
+
 } // ::ospray

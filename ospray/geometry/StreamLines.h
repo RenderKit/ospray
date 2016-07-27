@@ -22,7 +22,7 @@ namespace ospray {
 
   /*! @{ \ingroup ospray_module_streamlines */
 
-  /*! \defgroup geometry_streamlines Stream Lines ("streamlines") 
+  /*! \defgroup geometry_streamlines Stream Lines ("streamlines")
 
     \ingroup ospray_supported_geometries
 
@@ -79,8 +79,8 @@ namespace ospray {
     Implements the \ref geometry_streamlines geometry
 
   */
-  struct StreamLines : public Geometry {
-    //! \brief common function to help printf-debugging 
+  struct OSPRAY_SDK_INTERFACE StreamLines : public Geometry {
+    //! \brief common function to help printf-debugging
     virtual std::string toString() const { return "ospray::StreamLines"; }
     /*! \brief integrates this geometry's primitives into the respective
       model's acceleration structure */

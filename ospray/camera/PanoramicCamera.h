@@ -26,7 +26,7 @@ namespace ospray {
     without support for Depth of Field or Motion Blur
 
     \ingroup ospray_supported_cameras
-    
+
     A simple panoramic camera. This camera type is loaded by passing
     the type string "panoramic" to \ref ospNewCamera
 
@@ -42,10 +42,10 @@ namespace ospray {
   */
 
   //! Implements a simple panoramic camera (see \subpage panoramic_camera)
-  struct PanoramicCamera : public Camera {
+  struct OSPRAY_SDK_INTERFACE PanoramicCamera : public Camera {
     /*! \brief constructor \internal also creates the ispc-side data structure */
     PanoramicCamera();
-    //! \brief common function to help printf-debugging 
+    //! \brief common function to help printf-debugging
     /*! Every derived class should overrride this! */
     virtual std::string toString() const { return "ospray::PanoramicCamera"; }
     virtual void commit();

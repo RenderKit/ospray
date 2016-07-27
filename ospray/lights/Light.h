@@ -21,7 +21,7 @@
 namespace ospray {
 
   //! Base class for Light objects
-  struct Light : public ManagedObject {
+  struct OSPRAY_SDK_INTERFACE Light : public ManagedObject {
     //! Create a light of the given type
     static Light *createLight(const char *type);
 
