@@ -473,7 +473,7 @@ namespace ospray {
             if (!fin.is_open())
             {
               throw std::runtime_error("Failed to open \"" +
-                                       std::string(av[i]) +
+                                       std::string(av[i+1]) +
                                        "\" for reading");
             }
 
