@@ -160,7 +160,7 @@ namespace ospray {
       from(0,0,-1),
       at(0,0,0),
       up(upVectorFromCmdLine),
-      openingAngle(60.f*M_PI/360.f),
+      openingAngle(60.f),
       aspect(1.f)
     {
       frame = AffineSpace3fa::translate(from) * AffineSpace3fa(ospcommon::one);
