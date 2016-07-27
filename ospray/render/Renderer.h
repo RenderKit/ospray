@@ -114,7 +114,7 @@ namespace ospray {
       of this renderer.
   */
 #define OSP_REGISTER_RENDERER(InternalClassName,external_name)      \
-  extern "C" OSPRAY_INTERFACE Renderer *ospray_create_renderer__##external_name()    \
+  extern "C" OSPRAY_DLLEXPORT Renderer *ospray_create_renderer__##external_name()    \
   {                                                                 \
     return new InternalClassName;                                   \
   }

@@ -95,7 +95,7 @@ namespace ospray {
       of this renderer.
   */
 #define OSP_REGISTER_PIXEL_OP(InternalClassName,external_name)      \
-  extern "C" PixelOp *ospray_create_pixel_op__##external_name()     \
+  extern "C" OSPRAY_DLLEXPORT PixelOp *ospray_create_pixel_op__##external_name()     \
   {                                                                 \
     return new InternalClassName;                                   \
   }                                                                 \

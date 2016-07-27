@@ -70,7 +70,7 @@ namespace ospray {
       of this material.
   */
 #define OSP_REGISTER_MATERIAL(InternalClassName,external_name)      \
-  extern "C" OSPRAY_INTERFACE Material *ospray_create_material__##external_name()    \
+  extern "C" OSPRAY_DLLEXPORT Material *ospray_create_material__##external_name()    \
   {                                                                 \
     return new InternalClassName;                                   \
   }                                                                 \

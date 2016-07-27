@@ -84,7 +84,7 @@ namespace ospray {
       of this geometry.
   */
 #define OSP_REGISTER_GEOMETRY(InternalClassName,external_name)      \
-  extern "C" OSPRAY_INTERFACE ospray::Geometry *ospray_create_geometry__##external_name() \
+  extern "C" OSPRAY_DLLEXPORT ospray::Geometry *ospray_create_geometry__##external_name() \
   {                                                                 \
     return new InternalClassName;                                   \
   }                                                                 \

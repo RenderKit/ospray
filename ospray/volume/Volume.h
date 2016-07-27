@@ -28,7 +28,7 @@
   module and registered with OSPRay using this macro.
 */
 #define OSP_REGISTER_VOLUME(InternalClass, ExternalName)                    \
-  extern "C" OSPRAY_INTERFACE Volume *ospray_create_volume_##ExternalName() \
+  extern "C" OSPRAY_DLLEXPORT Volume *ospray_create_volume_##ExternalName() \
   {                                                                         \
     return(new InternalClass());                    												\
   }

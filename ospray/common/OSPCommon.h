@@ -94,8 +94,10 @@ namespace ospray {
 #  else
 #    define OSPRAY_INTERFACE __declspec(dllimport)
 #  endif
+#  define OSPRAY_DLLEXPORT __declspec(dllexport)
 #else
 #  define OSPRAY_INTERFACE
+#  define OSPRAY_DLLEXPORT
 #endif
 
 
