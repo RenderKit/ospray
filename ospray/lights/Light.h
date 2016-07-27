@@ -21,7 +21,7 @@
 namespace ospray {
 
   //! Base class for Light objects
-  struct Light : public ManagedObject {
+  struct OSPRAY_SDK_INTERFACE Light : public ManagedObject {
     //! Create a light of the given type
     static Light *createLight(const char *type);
 
@@ -33,7 +33,7 @@ namespace ospray {
   };
 
 #define OSP_REGISTER_LIGHT(InternalClassName, external_name)        \
-  extern "C" OSPRAY_INTERFACE ospray::Light *ospray_create_light__##external_name()  \
+  extern "C" OSPRAY_DLLEXPORT ospray::Light *ospray_create_light__##external_name()  \
   {                                                                 \
     return new InternalClassName;                                   \
   }

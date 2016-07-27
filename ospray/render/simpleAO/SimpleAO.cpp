@@ -60,7 +60,7 @@ namespace ospray {
             depricated!*/
 
 #define OSP_REGISTER_AO_RENDERER(external_name, nSamples)               \
-  extern "C" OSPRAY_INTERFACE                                           \
+  extern "C" OSPRAY_DLLEXPORT                                           \
   Renderer *ospray_create_renderer__##external_name()                   \
   {                                                                     \
     SimpleAO *renderer = new SimpleAO(nSamples);                        \

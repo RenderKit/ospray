@@ -24,7 +24,7 @@
 namespace ospray {
 
   /*! abstract frame buffer class */
-  struct FrameBuffer : public ManagedObject {
+  struct OSPRAY_SDK_INTERFACE FrameBuffer : public ManagedObject {
     /*! app-mappable format of the color buffer. make sure that this
         matches the definition on the ISPC side */
     typedef OSPFrameBufferFormat ColorBufferFormat;

@@ -21,7 +21,7 @@
 namespace ospray {
 
   //! a PointLight is a singular light emitting from a point uniformly into all directions
-  class PointLight : public Light {
+  class OSPRAY_SDK_INTERFACE PointLight : public Light {
     public:
       PointLight();
 

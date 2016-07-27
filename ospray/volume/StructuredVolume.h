@@ -33,10 +33,10 @@ namespace ospray {
     type string passed to Volume::createInstance() specifies a
     particular concrete implementation.  This type string must be
     registered in OSPRay proper, or in a loaded module via
-    OSP_REGISTER_VOLUME. To place the volume in world coordinates, 
+    OSP_REGISTER_VOLUME. To place the volume in world coordinates,
     modify the gridOrigin and gridSpacing to translate and scale the volume.
   */
-  class StructuredVolume : public Volume {
+  class OSPRAY_SDK_INTERFACE StructuredVolume : public Volume {
   public:
 
     //! Constructor.

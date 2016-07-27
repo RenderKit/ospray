@@ -21,7 +21,7 @@
 
 namespace ospray {
 
-  /*! \defgroup geometry_instance Instancing ("instance") 
+  /*! \defgroup geometry_instance Instancing ("instance")
 
     \brief Implements instancing via a single instance of another
     model.
@@ -46,11 +46,11 @@ namespace ospray {
   /*! \brief A Single Instance
 
    */
-  struct Instance : public Geometry
+  struct OSPRAY_SDK_INTERFACE Instance : public Geometry
   {
     /*! Constructor */
     Instance();
-    //! \brief common function to help printf-debugging 
+    //! \brief common function to help printf-debugging
     virtual std::string toString() const { return "ospray::Instance"; }
     /*! \brief integrates this geometry's primitives into the respective
         model's acceleration structure */
@@ -61,7 +61,7 @@ namespace ospray {
     /*! reference to instanced model. Must be a *model* that we're instancing, not a geometry */
     Ref<Model>    instancedScene;
     /*! geometry ID of this geometry in the parent model */
-    uint32        embreeGeomID; 
+    uint32        embreeGeomID;
   };
 
 } // ::ospray

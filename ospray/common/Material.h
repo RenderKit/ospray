@@ -23,7 +23,7 @@ namespace ospray {
   /*! \brief implements the basic abstraction for anything that is a 'material'.
 
     Note that different renderers will probably define different materials, so the same "logical" material (such a as a "diffuse gray" material) may look differently */
-  struct Material : public ManagedObject
+  struct OSPRAY_SDK_INTERFACE Material : public ManagedObject
   {
     //! \brief common function to help printf-debugging
     /*! Every derived class should overrride this! */
@@ -50,7 +50,7 @@ namespace ospray {
      */
     affine2f getTextureTransform(const char* texture_name);
 
-    /*! \brief creates an abstract material class of given type 
+    /*! \brief creates an abstract material class of given type
 
       The respective material type must be a registered material type
       in either ospray proper or any already loaded module. For
@@ -70,7 +70,7 @@ namespace ospray {
       of this material.
   */
 #define OSP_REGISTER_MATERIAL(InternalClassName,external_name)      \
-  extern "C" OSPRAY_INTERFACE Material *ospray_create_material__##external_name()    \
+  extern "C" OSPRAY_DLLEXPORT Material *ospray_create_material__##external_name()    \
   {                                                                 \
     return new InternalClassName;                                   \
   }                                                                 \
