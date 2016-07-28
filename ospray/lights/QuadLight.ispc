@@ -64,13 +64,12 @@ Light_SampleRes QuadLight_sample(const uniform Light* uniform super,
 
 Light_EvalRes QuadLight_eval(const uniform Light* uniform super,
                              const DifferentialGeometry& dg,
-                             const vec3f& dir)
+                             const vec3f& dir,
+                             const float maxDist)
 {
   uniform QuadLight* uniform self = (uniform QuadLight* uniform)super;
   Light_EvalRes res;
   res.radiance = make_vec3f(0.f);
-  res.pdf = 0.f;
-  res.dist = inf; 
 
   // backfacing?
   const float cosd = dot(self->nnormal, dir);
@@ -89,9 +88,11 @@ Light_EvalRes QuadLight_eval(const uniform Light* uniform super,
 
   const float rcosd = rcp(cosd);
   const float dist = dot(self->nnormal, c) * rcosd;
+  if (dist > maxDist)
+    return res;
+
   res.radiance = self->radiance;
   res.pdf = self->ppdf * sqr(dist) * rcosd;
-  res.dist = dist; 
 
   return res;
 }

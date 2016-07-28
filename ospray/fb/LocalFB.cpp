@@ -101,6 +101,7 @@ namespace ospray {
 
   void LocalFrameBuffer::clear(const uint32 fbChannelFlags)
   {
+    frameID = -1; // we increment at the start of the frame
     if (fbChannelFlags & OSP_FB_ACCUM) {
       // it is only necessary to reset the accumID,
       // LocalFrameBuffer_accumulateTile takes care of clearing the

@@ -77,10 +77,15 @@ Light_SampleRes HDRILight_sample(const uniform Light* uniform super,
 
 Light_EvalRes HDRILight_eval(const uniform Light* uniform super,
                              const DifferentialGeometry&,
-                             const vec3f& dir)
+                             const vec3f& dir,
+                             const float maxDist)
 {
   uniform HDRILight* uniform self = (uniform HDRILight* uniform)super;
   Light_EvalRes res;
+  res.radiance = make_vec3f(0.f);
+
+  if (inf > maxDist)
+    return res;
 
   const vec3f localDir = self->world2light * dir;
 
@@ -89,7 +94,6 @@ Light_EvalRes HDRILight_eval(const uniform Light* uniform super,
   const vec2f uv = make_vec2f(u, v);
 
   res.radiance = get3f(self->map, uv) * self->intensity;
-  res.dist = inf;
 
   // domain of Distribution2D is shifted by half a texel compared to texture
   // atan2 can get negative, shift can lead to values > 1.f: reproject to [0..1)

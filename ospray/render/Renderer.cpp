@@ -126,6 +126,7 @@ namespace ospray {
   void *Renderer::beginFrame(FrameBuffer *fb)
   {
     this->currentFB = fb;
+    fb->beginFrame();
     return ispc::Renderer_beginFrame(getIE(),fb->getIE());
   }
 

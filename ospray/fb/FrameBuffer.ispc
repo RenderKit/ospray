@@ -38,3 +38,9 @@ void FrameBuffer_set(FrameBuffer *uniform self,
   self->rcpSize.y  = 1.f/size_y;
   self->colorBufferFormat = (uniform FrameBuffer_ColorBufferFormat)colorBufferFormat;
 }
+
+export void FrameBuffer_set_frameID(void *uniform _self, uniform int32 frameID)
+{
+  uniform FrameBuffer *uniform self = (uniform FrameBuffer *uniform)_self;
+  self->frameID = frameID;
+}

@@ -39,14 +39,14 @@ typedef Light_SampleRes (*Light_SampleFunc)(const uniform Light* uniform,
 struct Light_EvalRes
 {
   vec3f radiance;  //!< radiance that arrives at the given point (not weighted by pdf)
-  float dist;      //!< distance from the given point and direction to the light source
   float pdf;       //!< probability density that the direction would have been sampled
 };
 
-//! compute the radiance, distance and pdf caused by the light source (pointed to by the given direction)
+//! compute the radiance and pdf caused by the light source (pointed to by the given direction up until maxDist)
 typedef Light_EvalRes (*Light_EvalFunc)(const uniform Light* uniform,
                                         const DifferentialGeometry&, //! point to evaluate illumination for >*/
-                                        const vec3f& dir);           //! direction towards the light source, normalized >*/
+                                        const vec3f& dir,            //! direction towards the light source, normalized >*/
+                                        const float maxDist);        //! maximum distance to look for light contribution >*/
 
 
 struct Light
@@ -55,7 +55,7 @@ struct Light
   Light_EvalFunc eval;
 };
 
-Light_EvalRes Light_eval(const uniform Light* uniform self, const DifferentialGeometry& dg, const vec3f& dir);
+Light_EvalRes Light_eval(const uniform Light* uniform, const DifferentialGeometry&, const vec3f&, const float);
 
 inline void Light_Constructor(uniform Light* uniform self)
 {

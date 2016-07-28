@@ -49,13 +49,13 @@ Light_SampleRes AmbientLight_sample(const uniform Light* uniform super,
 
 Light_EvalRes AmbientLight_eval(const uniform Light* uniform super,
                                 const DifferentialGeometry& dg,
-                                const vec3f& dir)
+                                const vec3f& dir,
+                                const float maxDist)
 {
   uniform AmbientLight* uniform self = (uniform AmbientLight* uniform)super;
   Light_EvalRes res;
 
-  res.radiance = self->radiance;
-  res.dist = inf;
+  res.radiance = inf <= maxDist ? self->radiance : make_vec3f(0.f);
   res.pdf = cosineSampleHemispherePDF(max(dot(dg.Ns, dir), 0.f));
 
   return res;

@@ -297,33 +297,6 @@ namespace ospcommon {
   inline bool operator!=(const vec_t<T,4> &a, const vec_t<T,4> &b)
   { return !(a==b); }
 
-  /*! comparison operators; we need those to be able to put vec's in std::map etc @{ */
-  template<typename T> 
-  inline bool operator<(const vec_t<T,2> &a, const vec_t<T,2> &b)
-  { 
-    return (a.x<b.x) || ((a.x==b.x) && (a.y<b.y)); 
-  }
-
-  template<typename T, int A, int B> 
-  inline bool operator<(const vec_t<T,3,A> &a, const vec_t<T,3,B> &b)
-  { 
-    return
-      (a.x< b.x) || 
-      ((a.x==b.x) && ((a.y< b.y) ||
-                      ((a.y==b.y) && (a.z<b.z)))); 
-  }
-
-  template<typename T> 
-  inline bool operator<(const vec_t<T,4> &a, const vec_t<T,4> &b)
-  { 
-    return
-      (a.x< b.x) || 
-      ((a.x==b.x) && ((a.y< b.y) ||
-                      ((a.y==b.y) && ((a.z< b.z) ||
-                                      ((a.z==b.z) && (a.w < b.w)))))); 
-  }
-  /*! @} */
-
   // 'anyLessThan' - return true if any component is less than the other vec's
   template<typename T> 
   inline bool anyLessThan(const vec_t<T,2> &a, const vec_t<T,2> &b)
@@ -515,3 +488,50 @@ namespace ospcommon {
 
 
 } // ::ospcommon
+
+/*! template specialization for std::less comparison operator;
+ *  we need those to be able to put vec's in std::map etc @{ */
+/* Defining just operator< is prone to bugs, because a definition of an
+ * ordering of vectors is a bit arbitrary and depends on the context.
+ * For example, in box::extend we certainly want the element-wise min/max and
+ * not the std::min/std::max made applicable by vec3f::operator<.
+*/
+namespace std {
+  template<typename T> 
+  struct less<ospcommon::vec_t<T,2>>
+  {
+    inline bool operator()(const ospcommon::vec_t<T,2> &a,
+                           const ospcommon::vec_t<T,2> &b) const
+    { 
+      return (a.x < b.x) || ((a.x == b.x) && (a.y < b.y)); 
+    }
+  };
+
+  template<typename T, int A> 
+  struct less<ospcommon::vec_t<T,3,A>>
+  {
+    inline bool operator()(const ospcommon::vec_t<T,3,A> &a,
+                           const ospcommon::vec_t<T,3,A> &b) const
+    { 
+      return
+        (a.x < b.x) || 
+        ((a.x == b.x) && ((a.y < b.y) ||
+          ((a.y == b.y) && (a.z < b.z)))); 
+    }
+  };
+
+  template<typename T> 
+  struct less<ospcommon::vec_t<T,4>>
+  {
+    inline bool operator()(const ospcommon::vec_t<T,4> &a,
+                           const ospcommon::vec_t<T,4> &b) const
+    { 
+      return
+        (a.x < b.x) || 
+        ((a.x == b.x) && ((a.y < b.y) ||
+          ((a.y == b.y) && ((a.z < b.z) ||
+            ((a.z == b.z) && (a.w < b.w)))))); 
+    }
+  };
+} // std
+/*! @} */

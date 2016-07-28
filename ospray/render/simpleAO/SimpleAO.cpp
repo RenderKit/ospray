@@ -28,7 +28,7 @@ namespace ospray {
   SimpleAO::SimpleAO(int defaultNumSamples)
     : defaultNumSamples(defaultNumSamples)
   {
-    ispcEquivalent = ispc::SimpleAO_create(this,NULL,NULL);
+    ispcEquivalent = ispc::SimpleAO_create(this);
   }
 
   /*! \brief create a material of given type */

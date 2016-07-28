@@ -39,6 +39,9 @@ public:
 
   void addVolume(Volume &v);
   void addVolume(OSPVolume v);
+
+  void removeVolume(Volume &v);
+  void removeVolume(OSPVolume v);
 };
 
 // Inlined function definitions ///////////////////////////////////////////////
@@ -91,6 +94,16 @@ inline void Model::addVolume(Volume &v)
 inline void Model::addVolume(OSPVolume v)
 {
   ospAddVolume(handle(), v);
+}
+
+inline void Model::removeVolume(Volume &v)
+{
+  removeVolume(v.handle());
+}
+
+inline void Model::removeVolume(OSPVolume v)
+{
+  ospRemoveVolume(handle(), v);
 }
 
 }// namespace cpp

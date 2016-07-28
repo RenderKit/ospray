@@ -170,12 +170,10 @@ void SimpleAO_renderSample(uniform Renderer *uniform _self,
 }
 
 
-export void *uniform SimpleAO_create(void *uniform cppE,
-                                     void *uniform _model,
-                                     void *uniform _camera)
+export void *uniform SimpleAO_create(void *uniform cppE)
 {
   uniform SimpleAO *uniform self = uniform new uniform SimpleAO;
-  Renderer_Constructor(&self->super, cppE, _model, _camera, 1);
+  Renderer_Constructor(&self->super, cppE, NULL, NULL, 1);
   self->super.renderSample = SimpleAO_renderSample;
   return self;
 }
