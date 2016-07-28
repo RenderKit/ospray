@@ -74,6 +74,8 @@ inline uniform box1f make_box1f(const uniform float f)
 /*! construct 1f range from lower and upper value */
 inline uniform box1f make_box1f(const uniform float lo, const uniform float hi)
 { uniform box1f bb; bb.lower = lo; bb.upper = hi; return bb; }
+inline varying box1f make_box1f(const varying float lo, const varying float hi)
+{ varying box1f bb; bb.lower = lo; bb.upper = hi; return bb; }
 
 inline uniform box1f box_extend(const uniform box1f &a, const uniform box1f &b)
 { return make_box1f(min(a.lower,b.lower),max(a.upper,b.upper)); }
