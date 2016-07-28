@@ -375,7 +375,6 @@ OSPRAY_INSTALL_SDK_HEADERS(
   math/LinearSpace.ih
   math/math.ih
   math/random.ih
-  math/region.ih
   math/sampling.ih
   math/vec.ih
   DESTINATION math
