@@ -77,10 +77,6 @@ namespace ospray {
     virtual void mouseButton(int32_t whichButton, bool released,
                              const ospcommon::vec2i &pos) override;
 
-  private:
-
-    // Private functions //
-
     void display() override;
 
     void switchRenderers();
