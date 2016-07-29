@@ -1,4 +1,5 @@
 // ======================================================================== //
+// Copyright 2016 SURVICE Engineering Company                               //
 // Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
@@ -535,7 +536,7 @@ namespace ospray {
         try
         {
           std::cout << "looking for \"" << name << "\" in \"" << path << "\"" << std::endl;
-          std::string libName = path + "\\ospray_module_" + std::string(name);
+          std::string libName = path + DirSep + "ospray_module_" + std::string(name);
           loadLibrary(libName);
           std::cout << "found in " << path << std::endl;
           std::cout << std::flush;

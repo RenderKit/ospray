@@ -1,4 +1,5 @@
 // ======================================================================== //
+// Copyright 2016 SURVICE Engineering Company                               //
 // Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
@@ -29,7 +30,6 @@
 #  include <dlfcn.h>
 #endif
 
-
 namespace ospcommon {
 
   Library::Library(const std::string& name)
@@ -38,7 +38,7 @@ namespace ospcommon {
     FileName    executable = getExecutableFileName();
     std::string path       = ""; // std::string(executable.path()) + "\\";
 
-    auto pos = name.rfind("\\");
+    auto pos = name.rfind(DirSep);
     if (pos != std::string::npos)
       path = name.substr(0, pos+1);
     auto module = name.substr(pos+1);
