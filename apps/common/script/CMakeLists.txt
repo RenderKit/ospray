@@ -14,14 +14,13 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-ADD_LIBRARY(ospray_script
+OSPRAY_CREATE_LIBRARY(script
   OSPRayScriptHandler.cpp
   OSPRayScriptHandler.h
-)
-
-TARGET_LINK_LIBRARIES(ospray_script
+  LINK
   ospray_common
   ospray
   ${CMAKE_THREAD_LIBS_INIT}
   ${CMAKE_DL_LIBS}
 )
+
