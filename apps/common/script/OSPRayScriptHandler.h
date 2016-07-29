@@ -36,6 +36,43 @@
 
 namespace ospray {
 
+// Protect some of the script module functionality under an additionaly namespace
+namespace script {
+  using RegisterTypesFn = void (*)(chaiscript::ChaiScript&);
+  using RegisterObjectsFn = void (*)(chaiscript::ChaiScript&);
+  using GetHelpFn = void (*)();
+
+  class Module {
+    RegisterTypesFn registerTypes;
+    // We should only register the module types once per instance of the script engine
+    // this kind of assumes that there will be only one script engine running, which
+    // I guess is true.
+    bool typesRegistered;
+    RegisterObjectsFn registerObjects;
+    GetHelpFn getHelp;
+
+  public:
+    Module(RegisterTypesFn types, RegisterObjectsFn objs, GetHelpFn help);
+    // Register the types, functions and objects exported by this module.
+    //
+    // The object registration will be run each time registerModule is called
+    // but the types & functions registration will only be done once.
+    void registerModule(chaiscript::ChaiScript &engine);
+    void help() const;
+  };
+
+  //! \brief Setup a modules scripting registration callbacks to be called when a script
+  //!        thread begins.
+  //!
+  //! registerTypes should register types and functions exported by the module
+  //! registerObjects should register global variables exported by the module
+  //! getHelp should print the modules help string, detailing functions/types/objects
+  //!
+  //! Any of the function pointers above can also be nullptr in which case they'll be ignored
+  void register_module(RegisterTypesFn registerTypes, RegisterObjectsFn registerObjects,
+                       GetHelpFn getHelp);
+}
+
 class OSPRayScriptHandler
 {
 public:

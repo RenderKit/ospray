@@ -157,6 +157,33 @@ void ospCommit(OSPObject object)
 
 namespace ospray {
 
+namespace script {
+  Module::Module(RegisterTypesFn types, RegisterObjectsFn objs, GetHelpFn help)
+    : registerTypes(types), typesRegistered(false), registerObjects(objs), getHelp(help)
+  {}
+  void Module::registerModule(chaiscript::ChaiScript &engine) {
+    if (registerTypes && !typesRegistered) {
+      registerTypes(engine);
+      typesRegistered = true;
+    }
+    if (registerObjects) {
+      registerObjects(engine);
+    }
+  }
+  void Module::help() const {
+    if (getHelp) {
+      getHelp();
+    }
+  }
+
+  static std::vector<Module> SCRIPT_MODULES;
+  void register_module(RegisterTypesFn registerTypes, RegisterObjectsFn registerObjects,
+                       GetHelpFn getHelp)
+  {
+    SCRIPT_MODULES.push_back(Module(registerTypes, registerObjects, getHelp));
+  }
+}
+
 OSPRayScriptHandler::OSPRayScriptHandler(OSPModel    model,
                                          OSPRenderer renderer,
                                          OSPCamera   camera) :
@@ -168,6 +195,7 @@ OSPRayScriptHandler::OSPRayScriptHandler(OSPModel    model,
 {
   registerScriptTypes();
   registerScriptFunctions();
+  registerScriptObjects();
 
   std::stringstream ss;
   ss << "Commands available:" << endl << endl;
@@ -210,8 +238,6 @@ void OSPRayScriptHandler::runScriptFromFile(const std::string &file)
                         " running interactively!");
   }
 
-  registerScriptObjects();
-
   try {
     m_chai.eval_file(file);
   } catch (const chaiscript::exception::eval_error &e) {
@@ -222,8 +248,6 @@ void OSPRayScriptHandler::runScriptFromFile(const std::string &file)
 
 void OSPRayScriptHandler::consoleLoop()
 {
-  registerScriptObjects();
-
   using_history();
 
   do {
@@ -233,6 +257,9 @@ void OSPRayScriptHandler::consoleLoop()
       break;
     } else if (input == "help") {
       cout << m_helpText << endl;
+      for (const auto &m : script::SCRIPT_MODULES) {
+        m.help();
+      }
       continue;
     } else {
       stringstream ss(input);
@@ -301,9 +328,12 @@ chaiscript::ChaiScript &OSPRayScriptHandler::scriptEngine()
 
 void OSPRayScriptHandler::registerScriptObjects()
 {
-  m_chai.add(chaiscript::var(m_model),    "m");
-  m_chai.add(chaiscript::var(m_renderer), "r");
-  m_chai.add(chaiscript::var(m_camera),   "c");
+  m_chai.add_global(chaiscript::var(m_model),    "m");
+  m_chai.add_global(chaiscript::var(m_renderer), "r");
+  m_chai.add_global(chaiscript::var(m_camera),   "c");
+  for (auto &m : script::SCRIPT_MODULES) {
+    m.registerModule(m_chai);
+  }
 }
 
 void OSPRayScriptHandler::registerScriptTypes()
