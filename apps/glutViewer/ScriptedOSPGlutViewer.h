@@ -31,6 +31,7 @@ namespace ospray {
 
   private:
 
+    void display() override;
     void keypress(char key, const ospcommon::vec2i &where) override;
 
     GlutViewerScriptHandler m_scriptHandler;

@@ -87,6 +87,12 @@ public:
 
   bool running();
 
+  //! \brief The scriptMutex is used to synchronize the execution
+  //         of scripts with rendering to avoid trampling on rendering data
+  //         while it's in use. If external code is holding this lock scripts
+  //         will not execute until it's released again.
+  std::mutex scriptMutex;
+
 protected:
 
   //! \brief ChaiScript engine, only accessable if the interactive thread isn't

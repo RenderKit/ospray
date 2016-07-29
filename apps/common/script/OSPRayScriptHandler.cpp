@@ -280,6 +280,7 @@ void OSPRayScriptHandler::consoleLoop()
 
 void OSPRayScriptHandler::runChaiLine(const std::string &line)
 {
+  std::lock_guard<std::mutex> lock(scriptMutex);
   try {
     m_chai.eval(line);
   } catch (const chaiscript::exception::eval_error &e) {
@@ -289,6 +290,7 @@ void OSPRayScriptHandler::runChaiLine(const std::string &line)
 
 void OSPRayScriptHandler::runChaiFile(const std::string &file)
 {
+  std::lock_guard<std::mutex> lock(scriptMutex);
   try {
     m_chai.eval_file(file);
   } catch (const std::runtime_error &e) {
