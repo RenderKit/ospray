@@ -123,7 +123,7 @@ namespace ospray {
     const size_t tile_y = taskIndex / numTiles_x;
     const size_t tile_x = taskIndex - tile_y*numTiles_x;
     const vec2i tileId(tile_x, tile_y);
-    const int32 accumID = fb->accumID(tileID);
+    const int32 accumID = fb->accumID(tileId);
     Tile bgTile(tileId, fb->size, accumID);
     Tile fgTile(bgTile);
 
