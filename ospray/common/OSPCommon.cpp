@@ -133,8 +133,6 @@ namespace ospray {
             pos   = paths.find(';');
           }
           modulePaths.push_back(paths);
-          for (auto p : modulePaths)
-            std::cout << "module_path = " << p << std::endl;
           removeArgs(ac,av,i, 2);
         } else {
           ++i;

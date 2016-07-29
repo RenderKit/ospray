@@ -34,9 +34,8 @@ namespace ospcommon {
 
   Library::Library(const std::string& name)
   {
-    std::cout << "Library::Library(\"" << name << "\")" << std::endl;
     FileName    executable = getExecutableFileName();
-    std::string path       = ""; // std::string(executable.path()) + "\\";
+    std::string path       = "";
 
     auto pos = name.rfind(DirSep);
     if (pos != std::string::npos)
@@ -50,7 +49,6 @@ namespace ospcommon {
 #endif
 #ifdef _WIN32
     std::string fullName = file+".dll";
-    std::cout << "Library::Library - trying " << path + fullName << std::endl;
     lib = LoadLibrary((path + fullName).c_str());
 #else
 #if defined(__MACOSX__)
@@ -58,7 +56,6 @@ namespace ospcommon {
 #else
     std::string fullName = "lib"+file+".so";
 #endif
-    std::cout << "Library::Library - trying " << path + fullName << std::endl;
     lib = dlopen((path + fullName).c_str(), RTLD_NOW);
     if (!lib) {
       FileName executable = getExecutableFileName();
