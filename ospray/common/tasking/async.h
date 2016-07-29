@@ -43,7 +43,7 @@ inline void async(const TASK_T& fcn)
                 "'void TASK_T::operator()'.");
 
 #ifdef OSPRAY_TASKING_TBB
-  struct OSPRAY_SDK_INTERFACE LocalTBBTask : public tbb::task
+  struct /*OSPRAY_SDK_INTERFACE*/ LocalTBBTask : public tbb::task
   {
     TASK_T func;
     tbb::task* execute() override { func(); return nullptr; }
