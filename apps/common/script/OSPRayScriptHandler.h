@@ -73,15 +73,6 @@ namespace script {
                        GetHelpFn getHelp);
 }
 
-struct ScriptHazard {
-  std::mutex mutex;
-  std::condition_variable condvar;
-  bool ospHazard;
-  bool scriptHazard;
-
-  ScriptHazard();
-};
-
 class OSPRayScriptHandler
 {
 public:
@@ -96,7 +87,7 @@ public:
 
   bool running();
 
-  ScriptHazard guard;
+  std::mutex scriptMutex;
 
 protected:
 

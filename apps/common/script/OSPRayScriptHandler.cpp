@@ -184,8 +184,6 @@ namespace script {
   }
 }
 
-ScriptHazard() : ospHazard(false), scriptHazard(false) {}
-
 OSPRayScriptHandler::OSPRayScriptHandler(OSPModel    model,
                                          OSPRenderer renderer,
                                          OSPCamera   camera) :
