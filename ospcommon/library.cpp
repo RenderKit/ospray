@@ -34,15 +34,24 @@ namespace ospcommon {
 
   Library::Library(const std::string& name)
   {
+    std::cout << "Library::Library(\"" << name << "\")" << std::endl;
+    FileName    executable = getExecutableFileName();
+    std::string path       = ""; // std::string(executable.path()) + "\\";
+
+    auto pos = name.rfind("\\");
+    if (pos != std::string::npos)
+      path = name.substr(0, pos+1);
+    auto module = name.substr(pos+1);
+
 #ifdef OSPRAY_TARGET_MIC
-    std::string file = name+"_mic";
+    std::string file = module+"_mic";
 #else
-    std::string file = name;
+    std::string file = module;
 #endif
 #ifdef _WIN32
     std::string fullName = file+".dll";
-    FileName executable = getExecutableFileName();
-    lib = LoadLibrary((executable.path() + fullName).c_str());
+    std::cout << "Library::Library - trying " << path + fullName << std::endl;
+    lib = LoadLibrary((path + fullName).c_str());
 #else
 #if defined(__MACOSX__)
     std::string fullName = "lib"+file+".dylib";

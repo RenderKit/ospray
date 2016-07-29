@@ -90,6 +90,20 @@ extern "C" void ospInit(int *_ac, const char **_av)
     numThreads = OSPRAY_THREADS.second;
   }
 
+  auto OSPRAY_MODULEPATHS = getEnvVar<std::string>("OSPRAY_MODULEPATHS");
+  if (OSPRAY_MODULEPATHS.first) {
+    auto paths = OSPRAY_MODULEPATHS.second;
+    auto pos   = paths.find(';');
+    while (pos != std::string::npos)
+    {
+      modulePaths.push_back(paths.substr(0, pos));
+      paths = paths.substr(pos+1);
+      pos   = paths.find(';');
+    }
+
+    modulePaths.push_back(paths);
+  }
+
   /* call ospray::init to properly parse common args like
      --osp:verbose, --osp:debug etc */
   ospray::init(_ac,&_av);

@@ -529,8 +529,35 @@ namespace ospray {
     /*! load module */
     int LocalDevice::loadModule(const char *name)
     {
-      std::string libName = "ospray_module_" + std::string(name);
-      loadLibrary(libName);
+      auto found = false;
+      for (auto path : modulePaths)
+      {
+        try
+        {
+          std::cout << "looking for \"" << name << "\" in \"" << path << "\"" << std::endl;
+          std::string libName = path + "\\ospray_module_" + std::string(name);
+          loadLibrary(libName);
+          std::cout << "found in " << path << std::endl;
+          std::cout << std::flush;
+          found = true;
+          break;
+        }
+        catch (...)
+        {
+          // no-op
+         std::cout << "\"" << name << "\" not in \"" << path << "\"" << std::endl;
+         continue;
+        }
+      }
+
+      if (!found)
+      {
+        std::cout << "trying default" << std::endl;
+        std::string libName = "ospray_module_" + std::string(name);
+        loadLibrary(libName);
+        std::cout << "found in default!" << std::endl;
+        std::cout << std::flush;
+      }
 
       std::string initSymName = "ospray_init_module_" + std::string(name);
       void*initSym = getSymbol(initSymName);

@@ -182,6 +182,9 @@ namespace ospray {
       number. (cmdline: --osp:numthreads \<n\>) */
   extern int32 numThreads;
 
+  /*! ';'-separated list of paths to check for ospray modules (cmdline: --osp:modulepaths) */
+  extern std::vector<std::string> modulePaths;
+
   /*! size of OSPDataType */
   OSPRAY_INTERFACE size_t sizeOf(const OSPDataType);
 
