@@ -145,8 +145,9 @@ namespace ospray {
 
     int accumId;
 
-    //! holds error per tile, for variance estimation / stopping
-    float *tileErrorBuffer;
+    //!< holds error per tile and adaptive regions, for variance estimation / stopping
+    TileError tileErrorRegion;
+
 
     /*! local frame buffer on the master used for storing the final
         tiles. will be null on all workers, and _may_ be null on the
@@ -207,7 +208,7 @@ namespace ospray {
   DistributedFrameBuffer::processMessage(MasterTileMessage_FB<FBType> *msg)
   {
     if (hasVarianceBuffer && (accumId & 1) == 1)
-      tileErrorBuffer[getTileIDof(msg->coords)] = msg->error;
+      tileErrorRegion.update(msg->coords/TILE_SIZE, msg->error);
 
     vec2i numPixels = getNumPixels();
 
