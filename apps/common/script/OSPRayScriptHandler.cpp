@@ -184,6 +184,8 @@ namespace script {
   }
 }
 
+ScriptHazard() : ospHazard(false), scriptHazard(false) {}
+
 OSPRayScriptHandler::OSPRayScriptHandler(OSPModel    model,
                                          OSPRenderer renderer,
                                          OSPCamera   camera) :
@@ -362,6 +364,11 @@ void OSPRayScriptHandler::registerScriptTypes()
        {chaiscript::fun(static_cast<void (ospray::cpp::ManagedObject::*)(const std::string &, double, double, double)>(&ospray::cpp::ManagedObject::set)), "set"},
        {chaiscript::fun(static_cast<void (ospray::cpp::ManagedObject::*)(const std::string &, void*)>(&ospray::cpp::ManagedObject::set)), "set"},
        {chaiscript::fun(static_cast<void (ospray::cpp::ManagedObject::*)(const std::string &, OSPObject)>(&ospray::cpp::ManagedObject::set)), "set"},
+       {chaiscript::fun(static_cast<void (ospray::cpp::ManagedObject::*)(const std::string &, const ospcommon::vec2i&)>(&ospray::cpp::ManagedObject::set)), "set"},
+       {chaiscript::fun(static_cast<void (ospray::cpp::ManagedObject::*)(const std::string &, const ospcommon::vec2f&)>(&ospray::cpp::ManagedObject::set)), "set"},
+       {chaiscript::fun(static_cast<void (ospray::cpp::ManagedObject::*)(const std::string &, const ospcommon::vec3i&)>(&ospray::cpp::ManagedObject::set)), "set"},
+       {chaiscript::fun(static_cast<void (ospray::cpp::ManagedObject::*)(const std::string &, const ospcommon::vec3f&)>(&ospray::cpp::ManagedObject::set)), "set"},
+       {chaiscript::fun(static_cast<void (ospray::cpp::ManagedObject::*)(const std::string &, const ospcommon::vec4f&)>(&ospray::cpp::ManagedObject::set)), "set"},
        //{chaiscript::fun(static_cast<void (ospray::cpp::ManagedObject::*)(const std::string &, const ospray::cpp::ManagedObject &)>(&ospray::cpp::ManagedObject::set)), "set"},
        {chaiscript::fun(&ospray::cpp::ManagedObject::commit), "commit"},
        {chaiscript::fun(&ospray::cpp::ManagedObject::object), "handle"}
@@ -490,6 +497,46 @@ void OSPRayScriptHandler::registerScriptTypes()
        chaiscript::constructor<ospray::cpp::Volume(const std::string &)>(),
        chaiscript::constructor<ospray::cpp::Volume(const ospray::cpp::Volume &)>(),
        chaiscript::constructor<ospray::cpp::Volume(OSPVolume)>()
+     },
+     {
+     }
+     );
+
+  chaiscript::utility::add_class<ospcommon::vec2i>(*m, "vec2i",
+     {
+       chaiscript::constructor<ospcommon::vec2i(int x, int y)>(),
+     },
+     {
+     }
+     );
+
+  chaiscript::utility::add_class<ospcommon::vec2f>(*m, "vec2f",
+     {
+       chaiscript::constructor<ospcommon::vec2f(float x, float y)>(),
+     },
+     {
+     }
+     );
+
+  chaiscript::utility::add_class<ospcommon::vec3i>(*m, "vec3i",
+     {
+       chaiscript::constructor<ospcommon::vec3i(int x, int y, int z)>(),
+     },
+     {
+     }
+     );
+
+  chaiscript::utility::add_class<ospcommon::vec3f>(*m, "vec3f",
+     {
+       chaiscript::constructor<ospcommon::vec3f(float x, float y, float z)>(),
+     },
+     {
+     }
+     );
+
+  chaiscript::utility::add_class<ospcommon::vec4f>(*m, "vec4f",
+     {
+       chaiscript::constructor<ospcommon::vec4f(float x, float y, float z, float w)>(),
      },
      {
      }

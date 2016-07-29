@@ -73,6 +73,15 @@ namespace script {
                        GetHelpFn getHelp);
 }
 
+struct ScriptHazard {
+  std::mutex mutex;
+  std::condition_variable condvar;
+  bool ospHazard;
+  bool scriptHazard;
+
+  ScriptHazard();
+};
+
 class OSPRayScriptHandler
 {
 public:
@@ -87,11 +96,7 @@ public:
 
   bool running();
 
-  //! \brief The scriptMutex is used to synchronize the execution
-  //         of scripts with rendering to avoid trampling on rendering data
-  //         while it's in use. If external code is holding this lock scripts
-  //         will not execute until it's released again.
-  std::mutex scriptMutex;
+  ScriptHazard guard;
 
 protected:
 
