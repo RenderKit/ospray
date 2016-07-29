@@ -535,8 +535,10 @@ namespace ospray {
       {
         try
         {
-          std::cout << "looking for \"" << name << "\" in \"" << path << "\"" << std::endl;
-          std::string libName = path + DirSep + "ospray_module_" + std::string(name);
+          std::cout << "looking for \"" << name << "\" in \"" << path << "\""
+                    << std::endl;
+          std::string libName = path + DirSep + "ospray_module_" +
+            std::string(name);
           loadLibrary(libName);
           std::cout << "found in " << path << std::endl;
           std::cout << std::flush;
@@ -546,7 +548,8 @@ namespace ospray {
         catch (...)
         {
           // no-op
-         std::cout << "\"" << name << "\" not in \"" << path << "\"" << std::endl;
+         std::cout << "\"" << name << "\" not in \"" << path << "\""
+                   << std::endl;
          continue;
         }
       }

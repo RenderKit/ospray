@@ -58,7 +58,8 @@ namespace ospcommon {
 #else
     std::string fullName = "lib"+file+".so";
 #endif
-    lib = dlopen(fullName.c_str(), RTLD_NOW);
+    std::cout << "Library::Library - trying " << path + fullName << std::endl;
+    lib = dlopen((path + fullName).c_str(), RTLD_NOW);
     if (!lib) {
       FileName executable = getExecutableFileName();
       lib = dlopen((executable.path() + fullName).c_str(), RTLD_NOW);
