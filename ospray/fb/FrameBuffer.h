@@ -24,7 +24,7 @@
 namespace ospray {
 
   /*! abstract frame buffer class */
-  struct FrameBuffer : public ManagedObject {
+  struct OSPRAY_SDK_INTERFACE FrameBuffer : public ManagedObject {
     /*! app-mappable format of the color buffer. make sure that this
         matches the definition on the ISPC side */
     typedef OSPFrameBufferFormat ColorBufferFormat;
@@ -102,4 +102,20 @@ namespace ospray {
   void writePFM(const std::string &fileName, const vec2i &size,
                 const int channel, const float *pixels);
 
+  // manages error per tile and adaptive regions, for variance estimation / stopping
+  class TileError {
+    public:
+      TileError(const vec2i &numTiles);
+      ~TileError();
+      void clear();
+      float operator[](const vec2i &tile) const;
+      void update(const vec2i &tile, const float error);
+      float refine(const float errorThreshold);
+
+    private:
+      vec2i numTiles;
+      int tiles;
+      float *tileErrorBuffer; /*!< holds error per tile, for variance estimation / stopping */
+      std::vector<box2i> errorRegion; // image regions (in #tiles) which do not yet estimate the error on tile base
+  };
 } // ::ospray

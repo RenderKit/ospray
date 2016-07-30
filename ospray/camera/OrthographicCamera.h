@@ -26,7 +26,7 @@ namespace ospray {
     projections, without support for Depth of Field or Motion Blur
 
     \ingroup ospray_supported_cameras
-    
+
     A simple orthographic camera. This camera type is loaded by passing
     the type string "orthographic" to \ref ospNewCamera
 
@@ -44,14 +44,14 @@ namespace ospray {
   */
 
   //! Implements a simple orthographic camera (see \subpage orthographic_camera)
-  struct OrthographicCamera : public Camera {
+  struct OSPRAY_SDK_INTERFACE OrthographicCamera : public Camera {
     /*! \brief constructor \internal also creates the ispc-side data structure */
     OrthographicCamera();
-    //! \brief common function to help printf-debugging 
+    //! \brief common function to help printf-debugging
     /*! Every derived class should overrride this! */
     virtual std::string toString() const { return "ospray::OrthographicCamera"; }
     virtual void commit();
-    
+
   public:
     // ------------------------------------------------------------------
     // the parameters we 'parsed' from our parameters

@@ -53,7 +53,7 @@ namespace ospray {
     rendering on a local machine, without any cross-node
     communication/load balancing at all (even if there are multiple
     application ranks each doing local rendering on their own)  */
-  struct LocalTiledLoadBalancer : public TiledLoadBalancer
+  struct OSPRAY_SDK_INTERFACE LocalTiledLoadBalancer : public TiledLoadBalancer
   {
     LocalTiledLoadBalancer();
 
@@ -73,7 +73,7 @@ namespace ospray {
     rendering on a local machine, without any cross-node
     communication/load balancing at all (even if there are multiple
     application ranks each doing local rendering on their own)  */
-  struct InterleavedTiledLoadBalancer : public TiledLoadBalancer
+  struct OSPRAY_SDK_INTERFACE InterleavedTiledLoadBalancer : public TiledLoadBalancer
   {
     size_t deviceID;
     size_t numDevices;

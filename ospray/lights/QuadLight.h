@@ -22,7 +22,7 @@ namespace ospray {
 
   /*! a QuadLight is a virtual area light uniformly emitting from a rectangular
    * area into the positive half space */
-  class QuadLight : public Light {
+  class OSPRAY_SDK_INTERFACE QuadLight : public Light {
     public:
       QuadLight();
 

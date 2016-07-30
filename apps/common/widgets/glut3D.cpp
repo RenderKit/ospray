@@ -1,4 +1,5 @@
 // ======================================================================== //
+// Copyright 2016 SURVICE Engineering Company                               //
 // Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
@@ -32,7 +33,10 @@
 #  include <sys/times.h>
 #  include <unistd.h> // for usleep
 #endif
+#include <fstream>
 #include <sstream>
+#include <stdexcept>
+#include <string>
 
 namespace ospray {
 
@@ -156,7 +160,7 @@ namespace ospray {
       from(0,0,-1),
       at(0,0,0),
       up(upVectorFromCmdLine),
-      openingAngle(60.f*M_PI/360.f),
+      openingAngle(60.f),
       aspect(1.f)
     {
       frame = AffineSpace3fa::translate(from) * AffineSpace3fa(ospcommon::one);
@@ -462,6 +466,54 @@ namespace ospray {
             Glut3DWidget::defaultInitSize.x = atoi(av[i+1]);
             Glut3DWidget::defaultInitSize.y = atoi(av[i+2]);
             removeArgs(*ac,(char **&)av,i,3); --i;
+            continue;
+          }
+          if (arg == "-v" || arg == "--view") {
+            std::ifstream fin(av[i+1]);
+            if (!fin.is_open())
+            {
+              throw std::runtime_error("Failed to open \"" +
+                                       std::string(av[i+1]) +
+                                       "\" for reading");
+            }
+
+            if (!viewPortFromCmdLine)
+              viewPortFromCmdLine = new Glut3DWidget::ViewPort;
+
+            auto& fx = viewPortFromCmdLine->from.x;
+            auto& fy = viewPortFromCmdLine->from.y;
+            auto& fz = viewPortFromCmdLine->from.z;
+
+            auto& ax = viewPortFromCmdLine->at.x;
+            auto& ay = viewPortFromCmdLine->at.y;
+            auto& az = viewPortFromCmdLine->at.z;
+
+            auto& ux = upVectorFromCmdLine.x;
+            auto& uy = upVectorFromCmdLine.y;
+            auto& uz = upVectorFromCmdLine.z;
+
+            auto& fov = viewPortFromCmdLine->openingAngle;
+
+            auto token = std::string("");
+            while (fin >> token)
+            {
+              if (token == "-vp")
+                fin >> fx >> fy >> fz;
+              else if (token == "-vu")
+                fin >> ux >> uy >> uz;
+              else if (token == "-vi")
+                fin >> ax >> ay >> az;
+              else if (token == "-fv")
+                fin >> fov;
+              else
+              {
+                throw std::runtime_error("Unrecognized token:  \"" + token +
+                                         '\"');
+              }
+            }
+
+            assert(i+1 < *ac);
+            removeArgs(*ac,(char **&)av, i, 2); --i;
             continue;
           }
           if (arg == "-vu") {

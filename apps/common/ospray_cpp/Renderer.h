@@ -36,6 +36,8 @@ public:
   Light    newLight(const std::string &type);
 
   float renderFrame(const FrameBuffer &fb, uint32_t channels);
+
+  OSPPickResult pick(const ospcommon::vec2f &screenPos);
 };
 
 // Inlined function definitions ///////////////////////////////////////////////
@@ -79,6 +81,13 @@ inline Light Renderer::newLight(const std::string &type)
 inline float Renderer::renderFrame(const FrameBuffer &fb, uint32_t channels)
 {
   return ospRenderFrame(fb.handle(), handle(), channels);
+}
+
+inline OSPPickResult Renderer::pick(const ospcommon::vec2f &screenPos)
+{
+  OSPPickResult result;
+  ospPick(&result, handle(), (const osp::vec2f&)screenPos);
+  return result;
 }
 
 

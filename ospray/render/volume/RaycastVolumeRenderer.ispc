@@ -423,7 +423,7 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
                                     *passInfo, rayOffset, color, depth);
   } else {
     uniform PassInfo dummyPassInfo;
-    dummyPassInfo.region = make_region1f(0.f,inf);
+    dummyPassInfo.region = make_box1f(0.f,inf);
     dummyPassInfo.useBG = true;
     dummyPassInfo.block = NULL;
     RaycastVolumeRenderer_intersect(self, sample.ray,
@@ -496,7 +496,7 @@ inline void DDVR_renderSample(RaycastVolumeRenderer *uniform self,
                               uniform bool isMyTile)
 {
   // ray interval that overlaps _any_ block
-  region1f blockRegion = make_region1f(+inf,-inf);
+  region1f blockRegion = make_box1f(+inf,-inf);
   float org_ray_t0 = fgSample.ray.t0;
   float org_ray_t1 = fgSample.ray.t;
   for (uniform int blockID=0;blockID<numBlocks;blockID++) {
@@ -521,7 +521,7 @@ inline void DDVR_renderSample(RaycastVolumeRenderer *uniform self,
         uniform PassInfo passInfo;
         // set integration pass up for region from (at most) ray origin to
         // start of blocks
-        passInfo.region = make_region1f(t0,t1);
+        passInfo.region = make_box1f(t0,t1);
         // do not use background color in this pass
         passInfo.useBG = false;
         // do not use any block in this pass
@@ -551,7 +551,7 @@ inline void DDVR_renderSample(RaycastVolumeRenderer *uniform self,
     uniform PassInfo passInfo;
     // set integration pass up for region from (at most) ray origin to start
     // of blocks
-    passInfo.region = make_region1f(fgSample.ray.t0,fgSample.ray.t);
+    passInfo.region = make_box1f(fgSample.ray.t0,fgSample.ray.t);
     // do not use background color in this pass
     passInfo.useBG = true;
     // do not use any block in this pass
@@ -575,7 +575,7 @@ inline void DDVR_renderSample(RaycastVolumeRenderer *uniform self,
     uniform PassInfo passInfo;
     // set integration pass up for region from (at most) ray origin to start
     // of blocks
-    passInfo.region = make_region1f(fgSample.ray.t0,blockRegion.lower);
+    passInfo.region = make_box1f(fgSample.ray.t0,blockRegion.lower);
     // do not use background color in this pass
     passInfo.useBG = false;
     // do not use any block in this pass
@@ -589,7 +589,7 @@ inline void DDVR_renderSample(RaycastVolumeRenderer *uniform self,
     // -------------------------------------------------------
     // set integration pass up for region from (at most) ray origin to start
     // of blocks
-    passInfo.region = make_region1f(blockRegion.upper,bgSample.ray.t);
+    passInfo.region = make_box1f(blockRegion.upper,bgSample.ray.t);
     // do not use background color in this pass
     passInfo.useBG = true;
     // do not use any block in this pass

@@ -30,8 +30,7 @@ namespace ospray {
     vec4f     *accumBuffer; /*!< one RGBA per pixel, may be NULL */
     vec4f     *varianceBuffer; /*!< one RGBA per pixel, may be NULL, accumulates every other sample, for variance estimation / stopping */
     int32     *tileAccumID; //< holds accumID per tile, for adaptive accumulation
-    float     *tileErrorBuffer; /*!< holds error per tile, for variance estimation / stopping */
-    std::vector<box2i> errorRegion; // image regions (in #tiles) which do not yet estimate the error on tile base
+    TileError  tileErrorRegion; /*!< holds error per tile and adaptive regions, for variance estimation / stopping */
 
     LocalFrameBuffer(const vec2i &size,
                      ColorBufferFormat colorBufferFormat,

@@ -25,9 +25,10 @@ using std::cout;
 using std::endl;
 using std::string;
 
-BENCHMARK_F(OSPRayFixture, test1, 1, 100)
+BENCHMARK_F(OSPRayFixture, test1, 1, 1)
 {
-  renderer->renderFrame(*fb, OSP_FB_COLOR | OSP_FB_ACCUM);
+  for (int i = 0; i < numBenchFrames; ++i)
+    renderer->renderFrame(*fb, OSP_FB_COLOR | OSP_FB_ACCUM);
 }
 
 // NOTE(jda) - Implement make_unique() as it didn't show up until C++14...
@@ -85,6 +86,11 @@ void printUsageAndExit()
   cout << "    -wf | --warmup --> Specify the number of warmup frames: N"
        << endl;
   cout << "                       default: 10" << endl;
+
+  cout << endl;
+  cout << "    -bf | --bench --> Specify the number of benchmark frames: N"
+       << endl;
+  cout << "                      default: 100" << endl;
 
   cout << endl;
   cout << "**camera rendering options**" << endl;
@@ -151,6 +157,8 @@ void parseCommandLine(int argc, const char *argv[])
       OSPRayFixture::height = atoi(argv[++i]);
     } else if (arg == "-wf" || arg == "--warmup") {
       OSPRayFixture::numWarmupFrames = atoi(argv[++i]);
+    } else if (arg == "-bf" || arg == "--bench") {
+      OSPRayFixture::numBenchFrames = atoi(argv[++i]);
     } else if (arg == "-bg" || arg == "--background") {
       ospcommon::vec3f &color = OSPRayFixture::bg_color;
       color.x = atof(argv[++i]);
@@ -194,7 +202,7 @@ int main(int argc, const char *argv[])
 # if 0
   hayai::ConsoleOutputter outputter;
 #else
-  hayai::SimpleOutputter outputter;
+  hayai::SimpleOutputter outputter(OSPRayFixture::numBenchFrames);
 #endif
 
   hayai::Benchmarker::AddOutputter(outputter);

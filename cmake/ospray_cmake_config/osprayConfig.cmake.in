@@ -60,15 +60,9 @@ set(CMAKE_MODULE_PATH ${CURRENT_CONFIG_INSTALL_DIR})
 # ospray was configured & built) from the current install directory for this
 # this file.  This allows for the install tree to be relocated, after ospray
 # was built, outside of CMake.
-if(WIN32)
-  get_filename_component(CURRENT_ROOT_INSTALL_DIR
-    ${CURRENT_CONFIG_INSTALL_DIR}/../ ABSOLUTE
-    )
-else(WIN32)
-  get_filename_component(CURRENT_ROOT_INSTALL_DIR
-    ${CURRENT_CONFIG_INSTALL_DIR}/../../../ ABSOLUTE
-    )
-endif(WIN32)
+get_filename_component(CURRENT_ROOT_INSTALL_DIR
+  ${CURRENT_CONFIG_INSTALL_DIR}/../../../ ABSOLUTE
+)
 
 if(NOT EXISTS ${CURRENT_ROOT_INSTALL_DIR})
   OSPRAY_REPORT_NOT_FOUND(
@@ -144,7 +138,7 @@ endif()
 
 if(OSPRAY_USE_EXTERNAL_EMBREE)
   # Find existing Embree on the machine
-  find_package(embree @REQUIRED_MINIMUM_EMBREE@ REQUIRED)
+  find_package(embree @EMBREE_VERSION_REQUIRED@ REQUIRED)
 else()
   if (APPLE)
     set(EMBREE_LIBRARY ${CURRENT_ROOT_INSTALL_DIR}/@CMAKE_INSTALL_LIBDIR@/${CMAKE_SHARED_LIBRARY_PREFIX}embree.2${CMAKE_SHARED_LIBRARY_SUFFIX})

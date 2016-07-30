@@ -23,7 +23,7 @@ namespace ospray {
 
   /*! a SpotLight is a singular light emitting from a point uniformly into a
    *  cone of directions bounded by halfAngle */
-  class HDRILight : public Light {
+  class OSPRAY_SDK_INTERFACE HDRILight : public Light {
     public:
       HDRILight();
       ~HDRILight();

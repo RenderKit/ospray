@@ -28,21 +28,21 @@
   module and registered with OSPRay using this macro.
 */
 #define OSP_REGISTER_TRANSFER_FUNCTION(InternalClass, ExternalName)     \
-  extern "C" OSPRAY_INTERFACE TransferFunction *ospray_create_transfer_function_##ExternalName() \
+  extern "C" OSPRAY_DLLEXPORT TransferFunction *ospray_create_transfer_function_##ExternalName() \
   { return(new InternalClass()); }
 
 namespace ospray {
 
   /*! \brief A TransferFunction is an abstraction that maps a value to
     a color and opacity for rendering.
-  
+
     The actual mapping is unknown to this class, and is implemented
     in subclasses.  A type string specifies a particular concrete
     implementation to createInstance().  This type string must be
     registered in OSPRay proper, or in a loaded module using
     OSP_REGISTER_TRANSFER_FUNCTION.
   */
-  class TransferFunction : public ManagedObject 
+  class OSPRAY_SDK_INTERFACE TransferFunction : public ManagedObject
   {
   public:
 

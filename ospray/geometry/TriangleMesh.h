@@ -21,7 +21,7 @@
 
 namespace ospray {
 
-  /*! \defgroup geometry_trianglemesh Triangle Meshes ("trianglemesh") 
+  /*! \defgroup geometry_trianglemesh Triangle Meshes ("trianglemesh")
 
     \brief Implements a traditional triangle mesh (indexed face set) geometry
 
@@ -69,7 +69,7 @@ namespace ospray {
       - a 'prim.materialID' array (Data<uint32> type), indexing into
       - a 'materialList' array (holding the OSPMaterial pointers)
    */
-  struct TriangleMesh : public Geometry
+  struct OSPRAY_SDK_INTERFACE TriangleMesh : public Geometry
   {
 
     TriangleMesh();

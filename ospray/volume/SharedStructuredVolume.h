@@ -24,7 +24,7 @@ namespace ospray {
   //!  in which the voxel data is laid out in memory in XYZ order and
   //!  provided via a shared data buffer.
   //!
-  class SharedStructuredVolume : public StructuredVolume {
+  class OSPRAY_SDK_INTERFACE SharedStructuredVolume : public StructuredVolume {
   public:
 
     //! Constructor.

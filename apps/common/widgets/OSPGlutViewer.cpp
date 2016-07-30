@@ -1,4 +1,5 @@
 // ======================================================================== //
+// Copyright 2016 SURVICE Engineering Company                               //
 // Copyright 2016 Intel Corporation                                         //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
@@ -294,6 +295,7 @@ void OSPGlutViewer::display()
     m_camera.set("dir", dir);
     m_camera.set("up", viewPort.up);
     m_camera.set("aspect", viewPort.aspect);
+    m_camera.set("fovy", viewPort.openingAngle);
     m_camera.commit();
 
 #if OSPRAY_DISPLAY_WALD

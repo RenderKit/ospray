@@ -21,6 +21,8 @@
 // ospray api
 #include "ospray/ospray.h"
 
+#define ENABLE_PRINTS 0
+
 namespace ospray {
   namespace importer {
 
@@ -104,9 +106,11 @@ namespace ospray {
           throw std::runtime_error("Could not parse OSPRAY_RM_SCALE_FACTOR env-var. Must be of format"
               "<X>x<Y>x<Z> (e.g '1.5x2x0.5')");
         }
+#if ENABLE_PRINTS
         std::cout << "#importRAW: got OSPRAY_VOLUME_SCALE_FACTOR env-var = {"
           << scaleFactor.x << ", " << scaleFactor.y << ", " << scaleFactor.z
           << "}\n";
+#endif
         volume->scaleFactor = scaleFactor;
         ospSetVec3f(volume->handle, "scaleFactor", (osp::vec3f&)volume->scaleFactor);
       }
@@ -145,7 +149,9 @@ namespace ospray {
         }
         ospSetVec3i(volume->handle, "dimensions", (osp::vec3i&)dims);
       }
+#if ENABLE_PRINTS
       PRINT(volumeDimensions);
+#endif
 
       // To avoid hitting memory limits or exceeding the 2GB limit in MPIDevice::ospSetRegion we
       // set the volume data in at 1.5GB chunks
@@ -170,8 +176,10 @@ namespace ospray {
         }
       }
 
+#if ENABLE_PRINTS
       std::cout << "#importRAW: Reading volume in chunks of size {" << chunkDimensions.x << ", " << chunkDimensions.y
         << ", " << chunkDimensions.z << "}" << std::endl;
+#endif
 
       if (!useSubvolume) {
         // Log out some progress stats after we've read LOG_PROGRESS_SIZE bytes (25GB)
@@ -191,10 +199,12 @@ namespace ospray {
         remainderVoxels.x = volumeDimensions.x % chunkDimensions.x;
         remainderVoxels.y = volumeDimensions.y % chunkDimensions.y;
         remainderVoxels.z = volumeDimensions.z % chunkDimensions.z;
+#if ENABLE_PRINTS
         std::cout << "#importRAW: Number of chunks on each axis = {" << numChunks.x << ", " << numChunks.y << ", "
           << numChunks.z << "}, remainderVoxels {" << remainderVoxels.x
           << ", " << remainderVoxels.y << ", " << remainderVoxels.z << "}, each chunk is "
           << chunkVoxels << " voxels " << std::endl;
+#endif
         // Load and copy in each chunk of the volume data into the OSPRay volume
         for (int chunkz = 0; chunkz < numChunks.z; ++chunkz) {
           for (int chunky = 0; chunky < numChunks.y; ++chunky) {
@@ -206,8 +216,10 @@ namespace ospray {
                 totalDataRead += dataSizeRead;
                 dataSizeRead = 0;
                 float percent = 100.0 * totalDataRead / static_cast<double>(VOLUME_TOTAL_SIZE);
+#if ENABLE_PRINTS
                 std::cout << "#importRAW: Have read " << totalDataRead * 1e-9 << "GB of "
                   << VOLUME_TOTAL_SIZE * 1e-9 << "GB (" << percent << "%)" << std::endl;
+#endif
               }
 
               // The end of the file may have been reached unexpectedly.
@@ -326,7 +338,9 @@ namespace ospray {
 
       if (volume->scaleFactor != vec3f(1.f)) {
         volume->dimensions = vec3i(vec3f(volume->dimensions) * volume->scaleFactor);
+#if ENABLE_PRINTS
         std::cout << "#importRAW: scaled volume to " << volume->dimensions << std::endl;
+#endif
       }
       volume->bounds = ospcommon::empty;
       volume->bounds.extend(volume->gridOrigin);

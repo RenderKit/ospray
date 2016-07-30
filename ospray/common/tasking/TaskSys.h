@@ -20,7 +20,7 @@
 
 namespace ospray {
 
-  struct __aligned(64) Task : public RefCount {
+  struct OSPRAY_SDK_INTERFACE __aligned(64) Task : public RefCount {
 
     Task(const char *name = "no name");
     virtual ~Task();

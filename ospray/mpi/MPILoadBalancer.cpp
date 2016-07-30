@@ -89,7 +89,7 @@ namespace ospray {
           const size_t tile_y = tileID / numTiles_x;
           const size_t tile_x = tileID - tile_y*numTiles_x;
           const vec2i tileId(tile_x, tile_y);
-          const int32 accumID = fb->accumID(tileID);
+          const int32 accumID = fb->accumID(tileId);
 
 #ifdef __MIC__
 #  define MAX_TILE_SIZE 32

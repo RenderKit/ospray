@@ -168,7 +168,7 @@ namespace ospray {
         vec3f from;
         vec3f at;
         vec3f up;
-        float openingAngle; //!< in radians, along Y direction
+        float openingAngle; //!< in degrees, along Y direction
         float aspect; //!< aspect ratio X:Y
         // float focalDistance;
       

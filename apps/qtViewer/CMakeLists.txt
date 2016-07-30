@@ -14,6 +14,8 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+CONFIGURE_OSPRAY()
+
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})

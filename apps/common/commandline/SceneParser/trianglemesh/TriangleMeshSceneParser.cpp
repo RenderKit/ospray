@@ -68,6 +68,8 @@ bool TriangleMeshSceneParser::parse(int ac, const char **&av)
       m_alpha = true;
     } else if (arg == "--no-default-material") {
       m_createDefaultMaterial = false;
+    } else if (arg == "--trianglemesh-type") {
+      m_geometryType = av[++i];
     } else {
       FileName fn = arg;
       if (fn.ext() == "stl") {

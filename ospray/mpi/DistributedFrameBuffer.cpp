@@ -101,7 +101,8 @@ namespace ospray {
       FrameBuffer(numPixels,colorBufferFormat,hasDepthBuffer,
                   hasAccumBuffer,hasVarianceBuffer),
       accumId(0),
-      tileErrorBuffer(nullptr),
+      tileErrorRegion(hasVarianceBuffer && comm->group->rank == 0 ?
+          getNumTiles() : vec2i(0)),
       localFBonMaster(nullptr),
       frameMode(WRITE_ONCE),
       frameIsActive(false),
@@ -126,10 +127,6 @@ namespace ospray {
                                                false,
                                                false);
       }
-      if (hasVarianceBuffer) {
-        tileErrorBuffer =
-            (float*)alignedMalloc(sizeof(float)*numTiles.x*numTiles.y);
-      }
     }
 
     ispc::DFB_set(getIE(), numPixels.x, numPixels.y, colorBufferFormat);
@@ -138,7 +135,6 @@ namespace ospray {
   DFB::~DistributedFrameBuffer()
   {
     freeTiles();
-    alignedFree(tileErrorBuffer);
   }
 
   void DFB::startNewFrame()
@@ -281,7 +277,7 @@ namespace ospray {
   {
     { /* nothing to do for 'none' tiles */ }
     if (hasVarianceBuffer && (accumId & 1) == 1)
-      tileErrorBuffer[getTileIDof(msg->coords)] = msg->error;
+      tileErrorRegion.update(msg->coords/TILE_SIZE, msg->error);
 
     // and finally, tell the master that this tile is done
     auto *tileDesc = this->getTileDescFor(msg->coords);
@@ -480,35 +476,18 @@ namespace ospray {
 
     if (hasAccumBuffer && (fbChannelFlags & OSP_FB_ACCUM)) {
       accumId = -1; // we increment at the start of the frame
-
-      // always also clear error buffer (if present)
-      if (tileErrorBuffer) {
-        const int tiles = numTiles.x*numTiles.y;
-        for (int i = 0; i < tiles; i++)
-          tileErrorBuffer[i] = inf;
-      }
+      tileErrorRegion.clear();
     }
   }
 
   float DFB::tileError(const vec2i &tile)
   {
-    if (tileErrorBuffer)
-      return tileErrorBuffer[getTileIDof(tile)];
-    else
-      return inf;
+    return tileErrorRegion[tile];
   }
 
-  float DFB::endFrame(const float /*errorThreshold*/)
+  float DFB::endFrame(const float errorThreshold)
   {
-    if (tileErrorBuffer) {
-      float maxErr = 0.0f;
-      const int tiles = numTiles.x*numTiles.y;
-      for (int i = 0; i < tiles; i++)
-        maxErr = std::max(maxErr, tileErrorBuffer[i]);
-
-      return maxErr;
-    } else
-      return inf;
+    return tileErrorRegion.refine(errorThreshold);
   }
 
 } // ::ospray

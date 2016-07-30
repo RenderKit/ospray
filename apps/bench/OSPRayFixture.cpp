@@ -32,6 +32,7 @@ std::vector<string> OSPRayFixture::benchmarkModelFiles;
 int OSPRayFixture::width  = 1024;
 int OSPRayFixture::height = 1024;
 
+int OSPRayFixture::numBenchFrames = 100;
 int OSPRayFixture::numWarmupFrames = 10;
 
 vec3f OSPRayFixture::bg_color = {1.f, 1.f, 1.f};

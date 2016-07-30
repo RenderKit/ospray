@@ -1,4 +1,5 @@
 // ======================================================================== //
+// Copyright 2016 SURVICE Engineering Company                               //
 // Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
@@ -44,6 +45,7 @@ protected:
   ospcommon::vec3f m_eye {-1,  1, -1};
   ospcommon::vec3f m_up  { 1, -1,  1};
   ospcommon::vec3f m_gaze{ 0,  1,  0};
+  float m_fovy{ 60.f };
 
 private:
 

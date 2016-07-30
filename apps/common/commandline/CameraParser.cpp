@@ -1,4 +1,5 @@
 // ======================================================================== //
+// Copyright 2016 SURVICE Engineering Company                               //
 // Copyright 2016 Intel Corporation                                         //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
@@ -14,7 +15,12 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <stdexcept>
+#include <fstream>
+#include <string>
+
 #include "CameraParser.h"
+
 
 bool DefaultCameraParser::parse(int ac, const char **&av)
 {
@@ -22,6 +28,29 @@ bool DefaultCameraParser::parse(int ac, const char **&av)
     const std::string arg = av[i];
     if (arg == "--camera" || arg == "-c") {
       m_cameraType = av[++i];
+    } else if (arg == "-v" || arg == "--view") {
+      std::ifstream fin(av[++i]);
+      if (!fin.is_open())
+      {
+        throw std::runtime_error("Failed to open \"" + std::string(av[i]) +
+                                 "\" for reading");
+      }
+
+      auto token = std::string("");
+      while (fin >> token)
+      {
+        if (token == "-vp")
+          fin >> m_eye.x >> m_eye.y >> m_eye.z;
+        else if (token == "-vu")
+          fin >> m_up.x >> m_up.y >> m_up.z;
+        else if (token == "-vi")
+          fin >> m_gaze.x >> m_gaze.y >> m_gaze.z;
+        else if (token == "-fv")
+          fin >> m_fovy;
+        else
+          throw std::runtime_error("Unrecognized token:  \"" + token + '\"');
+      }
+
     } else if (arg == "-vp" || arg == "--eye") {
       auto &pos = m_eye;
       pos.x = atof(av[++i]);
@@ -37,6 +66,8 @@ bool DefaultCameraParser::parse(int ac, const char **&av)
       at.x = atof(av[++i]);
       at.y = atof(av[++i]);
       at.z = atof(av[++i]);
+    } else if (arg == "-fv" || arg == "--fovy") {
+      m_fovy = atof(av[++i]);
     }
   }
 
@@ -56,8 +87,9 @@ void DefaultCameraParser::finalize()
     m_cameraType = "perspective";
 
   m_camera = ospray::cpp::Camera(m_cameraType.c_str());
-  m_camera.set("pos", m_eye);
-  m_camera.set("up",  m_up);
-  m_camera.set("dir", m_gaze - m_eye);
+  m_camera.set("pos",  m_eye);
+  m_camera.set("up",   m_up);
+  m_camera.set("dir",  m_gaze - m_eye);
+  m_camera.set("fovy", m_fovy);
   m_camera.commit();
 }

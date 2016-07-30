@@ -35,7 +35,7 @@ namespace ospcommon {
     typedef T Scalar;
 
     inline vec_t() {};
-    inline vec_t(scalar_t s) : x(s), y(s) {};
+    inline explicit vec_t(scalar_t s) : x(s), y(s) {};
     inline vec_t(scalar_t x, scalar_t y) : x(x), y(y) {};
     inline vec_t(const vec_t<T,2> &o) : x(o.x), y(o.y) {}
 

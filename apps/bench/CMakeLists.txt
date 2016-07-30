@@ -14,6 +14,8 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+CONFIGURE_OSPRAY()
+
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_LIST_DIR})
 
 OSPRAY_CREATE_APPLICATION(Benchmark

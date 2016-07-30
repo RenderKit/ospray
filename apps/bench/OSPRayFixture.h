@@ -44,6 +44,7 @@ struct OSPRayFixture : public hayai::Fixture
   static int width;
   static int height;
 
+  static int numBenchFrames;
   static int numWarmupFrames;
 
   static ospcommon::vec3f bg_color;

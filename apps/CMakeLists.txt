@@ -14,6 +14,8 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+CONFIGURE_OSPRAY()
+
 IF(NOT THIS_IS_MIC)
 
   INCLUDE_DIRECTORIES(

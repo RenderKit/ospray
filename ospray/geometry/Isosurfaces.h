@@ -21,7 +21,7 @@
 
 namespace ospray {
 
-  /*! \defgroup geometry_isosurfaces Isosurfaces ("isosurfaces") 
+  /*! \defgroup geometry_isosurfaces Isosurfaces ("isosurfaces")
 
     \ingroup ospray_supported_geometries
 
@@ -47,12 +47,12 @@ namespace ospray {
     Implements the \ref geometry_isosurfaces geometry
 
   */
-  struct Isosurfaces : public Geometry 
+  struct OSPRAY_SDK_INTERFACE Isosurfaces : public Geometry
   {
     //! constructor
     Isosurfaces();
 
-    //! \brief common function to help printf-debugging 
+    //! \brief common function to help printf-debugging
     virtual std::string toString() const { return "ospray::Isosurfaces"; }
 
     /*! \brief integrates this geometry's primitives into the respective
