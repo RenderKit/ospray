@@ -276,6 +276,7 @@ void OSPRayScriptHandler::consoleLoop()
 
   } while (m_running);
 
+  m_running = false;
   cout << "**** EXIT COMMAND MODE *****" << endl;
 }
 
