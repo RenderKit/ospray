@@ -39,6 +39,8 @@ namespace ospray {
     ss << "toggleFullScreen()    --> toggle fullscreen mode" << endl;
     ss << "resetView()           --> reset camera view" << endl;
     ss << "printViewport()       --> print view params in the console" << endl;
+    ss << "renderFrame(n_frames) --> release the script lock and render 'n_frames' frames,\n"
+       << "                          then return to running the script." << endl;
     ss << "screenshot(filename)  --> save a screenshot (adds '.ppm')" << endl;
 
     m_helpText += ss.str();
@@ -73,6 +75,17 @@ namespace ospray {
       m_viewer->printViewport();
     };
 
+    // renderFrame()
+    auto renderFrame = [&](const int n_frames) {
+      // Temporarily unlock the mutex and wait for the display
+      // loop to acquire it and render and wait til a n frames have finished
+      const int startFrame = m_viewer->getFrameID();
+      lock.unlock();
+      // Wait for n_frames to be rendered
+      while (startFrame + n_frames > m_viewer->getFrameID());
+      lock.lock();
+    };
+
     // screenshot()
     auto screenshot = [&](const std::string &name) {
       m_viewer->saveScreenshot(name);
@@ -83,6 +96,7 @@ namespace ospray {
     chai.add(chaiscript::fun(toggleFullscreen), "toggleFullscreen");
     chai.add(chaiscript::fun(resetView),        "resetView"       );
     chai.add(chaiscript::fun(printViewport),    "printViewport"   );
+    chai.add(chaiscript::fun(renderFrame),      "renderFrame"     );
     chai.add(chaiscript::fun(screenshot),       "screenshot"      );
   }
 

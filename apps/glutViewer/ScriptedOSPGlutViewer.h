@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <atomic>
+
 #include "common/widgets/OSPGlutViewer.h"
 #include "GlutViewerScriptHandler.h"
 
@@ -29,12 +31,16 @@ namespace ospray {
                           cpp::Model model, cpp::Renderer renderer,
                           cpp::Camera camera, std::string scriptFileName = "");
 
+    int getFrameID() const;
+
   private:
 
     void display() override;
     void keypress(char key, const ospcommon::vec2i &where) override;
 
     GlutViewerScriptHandler m_scriptHandler;
+
+    std::atomic<int> frameID;
   };
 
 }// namespace ospray

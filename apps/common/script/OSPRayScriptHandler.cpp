@@ -191,7 +191,8 @@ OSPRayScriptHandler::OSPRayScriptHandler(OSPModel    model,
   m_renderer(renderer),
   m_camera(camera),
   m_chai(chaiscript::Std_Lib::library()),
-  m_running(false)
+  m_running(false),
+  lock(scriptMutex, std::defer_lock_t())
 {
   registerScriptTypes();
   registerScriptFunctions();
@@ -280,22 +281,24 @@ void OSPRayScriptHandler::consoleLoop()
 
 void OSPRayScriptHandler::runChaiLine(const std::string &line)
 {
-  std::lock_guard<std::mutex> lock(scriptMutex);
+  lock.lock();
   try {
     m_chai.eval(line);
   } catch (const chaiscript::exception::eval_error &e) {
     cerr << e.what() << endl;
   }
+  lock.unlock();
 }
 
 void OSPRayScriptHandler::runChaiFile(const std::string &file)
 {
-  std::lock_guard<std::mutex> lock(scriptMutex);
+  lock.lock();
   try {
     m_chai.eval_file(file);
   } catch (const std::runtime_error &e) {
     cerr << e.what() << endl;
   }
+  lock.unlock();
 }
 
 void OSPRayScriptHandler::start()

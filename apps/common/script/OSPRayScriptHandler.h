@@ -17,6 +17,7 @@
 #pragma once
 
 #include <thread>
+#include <mutex>
 
 #include <ospray_cpp/Camera.h>
 #include <ospray_cpp/Data.h>
@@ -101,6 +102,9 @@ protected:
   //! \note Child classes should append this string with any additional help
   //!       text that is desired when 'help' is invoked in the script engine.
   std::string m_helpText;
+
+  //! \note This scripts unique lock managing locking/unlocking of the scriptMutex
+  std::unique_lock<std::mutex> lock;
 
 private:
 

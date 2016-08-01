@@ -33,12 +33,16 @@ namespace ospray {
                                                cpp::Camera    camera,
                                                std::string    scriptFileName)
     : OSPGlutViewer(worldBounds, model, renderer, camera),
-      m_scriptHandler(model.handle(), renderer.handle(), camera.handle(), this)
+      m_scriptHandler(model.handle(), renderer.handle(), camera.handle(), this),
+      frameID(0)
   {
     if (!scriptFileName.empty())
       m_scriptHandler.runScriptFromFile(scriptFileName);
   }
 
+  int ScriptedOSPGlutViewer::getFrameID() const {
+    return frameID.load();
+  }
 
   void ScriptedOSPGlutViewer::display() {
     if (!m_fb.handle() || !m_renderer.handle()) return;
@@ -49,8 +53,6 @@ namespace ospray {
     // It's not like the mutex is heavily contested.
     std::lock_guard<std::mutex> lock(m_scriptHandler.scriptMutex);
 
-    static int frameID = 0;
-
     //{
     // note that the order of 'start' and 'end' here is
     // (intentionally) reversed: due to our asynchrounous rendering
@@ -58,7 +60,7 @@ namespace ospray {
     // call (which in itself will not do a lot other than triggering
     // work), but the average time between the two calls is roughly the
     // frame rate (including display overhead, of course)
-    if (frameID > 0) m_fps.doneRender();
+    if (frameID.load() > 0) m_fps.doneRender();
 
     // NOTE: consume a new renderer if one has been queued by another thread
     switchRenderers();
