@@ -80,7 +80,7 @@ void OSPRayFixture::SetUp()
     renderer->renderFrame(*fb, OSP_FB_COLOR | OSP_FB_ACCUM);
   }
 
-  f->fb->clear(OSP_FB_ACCUM | OSP_FB_COLOR);
+  fb->clear(OSP_FB_ACCUM | OSP_FB_COLOR);
 }
 
 void OSPRayFixture::TearDown()
