@@ -51,7 +51,7 @@ namespace ospray {
     // get our scene data trampled on if scripting is running.
     // TODO: Conditionally lock this? How much performance hit do we really get?
     // It's not like the mutex is heavily contested.
-    std::lock_guard<std::mutex> lock(m_scriptHandler.scriptMutex);
+    std::lock_guard<std::mutex> lock(m_scriptHandler.m_scriptMutex);
 
     //{
     // note that the order of 'start' and 'end' here is

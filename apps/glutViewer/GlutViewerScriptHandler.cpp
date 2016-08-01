@@ -80,10 +80,10 @@ namespace ospray {
       // Temporarily unlock the mutex and wait for the display
       // loop to acquire it and render and wait til a n frames have finished
       const int startFrame = m_viewer->getFrameID();
-      lock.unlock();
+      m_lock.unlock();
       // Wait for n_frames to be rendered
       while (startFrame + n_frames > m_viewer->getFrameID());
-      lock.lock();
+      m_lock.lock();
     };
 
     // screenshot()

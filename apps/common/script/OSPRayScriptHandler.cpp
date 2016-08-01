@@ -159,14 +159,14 @@ namespace ospray {
 
 namespace script {
   Module::Module(RegisterModuleFn registerMod, GetHelpFn getHelp)
-    : registerMod(registerMod), getHelp(getHelp)
+    : m_registerMod(registerMod), m_getHelp(getHelp)
   {}
   void Module::registerModule(chaiscript::ChaiScript &engine) {
-    registerMod(engine);
+    m_registerMod(engine);
   }
   void Module::help() const {
-    if (getHelp) {
-      getHelp();
+    if (m_getHelp) {
+      m_getHelp();
     }
   }
 
@@ -185,7 +185,7 @@ OSPRayScriptHandler::OSPRayScriptHandler(OSPModel    model,
   m_camera(camera),
   m_chai(chaiscript::Std_Lib::library()),
   m_running(false),
-  lock(scriptMutex, std::defer_lock_t())
+  m_lock(m_scriptMutex, std::defer_lock_t())
 {
   registerScriptTypes();
   registerScriptFunctions();
@@ -275,24 +275,24 @@ void OSPRayScriptHandler::consoleLoop()
 
 void OSPRayScriptHandler::runChaiLine(const std::string &line)
 {
-  lock.lock();
+  m_lock.lock();
   try {
     m_chai.eval(line);
   } catch (const chaiscript::exception::eval_error &e) {
     cerr << e.what() << endl;
   }
-  lock.unlock();
+  m_lock.unlock();
 }
 
 void OSPRayScriptHandler::runChaiFile(const std::string &file)
 {
-  lock.lock();
+  m_lock.lock();
   try {
     m_chai.eval_file(file);
   } catch (const std::runtime_error &e) {
     cerr << e.what() << endl;
   }
-  lock.unlock();
+  m_lock.unlock();
 }
 
 void OSPRayScriptHandler::start()

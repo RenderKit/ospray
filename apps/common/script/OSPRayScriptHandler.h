@@ -47,30 +47,28 @@
 
 namespace ospray {
 
-// Protect some of the script module functionality under an additionaly namespace
+// Protect some of the script module functionality under an additional namespace
 namespace script {
   using RegisterModuleFn = void (*)(chaiscript::ChaiScript&);
   using GetHelpFn = void (*)();
 
   class OSPSCRIPT_INTERFACE Module {
-    RegisterModuleFn registerMod;
-    GetHelpFn getHelp;
+    RegisterModuleFn m_registerMod;
+    GetHelpFn m_getHelp;
 
   public:
     Module(RegisterModuleFn registerMod, GetHelpFn getHelp);
     // Register the types, functions and objects exported by this module.
-    //
-    // The object registration will be run each time registerModule is called
-    // but the types & functions registration will only be done once.
     void registerModule(chaiscript::ChaiScript &engine);
+    // Print the modules help string via m_getHelp if a help callback was registered.
     void help() const;
   };
 
   //! \brief Setup a modules scripting registration callbacks to be called when a script
-  //!        thread begins.
+  //!        thread begins or requests help.
   //!
-  //! registerModule should register types, functions and global variables exported by the module
-  //! getHelp should print the modules help string, detailing functions/types/objects. getHelp
+  //! registerModule Register types, functions and global variables exported by the module
+  //! getHelp Print the modules help string to cout, detailing functions/types/objects. getHelp
   //          can be null if no help text will be provided.
   OSPSCRIPT_INTERFACE void register_module(RegisterModuleFn registerModule, GetHelpFn getHelp);
 }
@@ -89,7 +87,10 @@ public:
 
   bool running();
 
-  std::mutex scriptMutex;
+  //! \brief Mutex that can be used to protect against scripts trampling
+  //!        scene data that is actively being used for rendering. Acquiring
+  //!        this mutex will block scripts from running until it's released.
+  std::mutex m_scriptMutex;
 
 protected:
 
@@ -104,8 +105,8 @@ protected:
   //!       text that is desired when 'help' is invoked in the script engine.
   std::string m_helpText;
 
-  //! \note This scripts unique lock managing locking/unlocking of the scriptMutex
-  std::unique_lock<std::mutex> lock;
+  //! \brief This scripts unique lock managing locking/unlocking of the scriptMutex
+  std::unique_lock<std::mutex> m_lock;
 
 private:
 
