@@ -14,13 +14,21 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+FIND_PACKAGE(Readline)
+
+SET(LIBS ospray_common ospray ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})
+IF(READLINE_FOUND)
+  ADD_DEFINITIONS(-DUSE_SYSTEM_READLINE)
+  INCLUDE_DIRECTORIES(${Readline_INCLUDE_DIR})
+  SET(LIBS ${LIBS} ${Readline_LIBRARY})
+ELSE()
+  MESSAGE(STATUS "Readline NOT found, command history feature NOT enabled.")
+ENDIF()
+
 OSPRAY_CREATE_LIBRARY(script
   OSPRayScriptHandler.cpp
   OSPRayScriptHandler.h
   LINK
-  ospray_common
-  ospray
-  ${CMAKE_THREAD_LIBS_INIT}
-  ${CMAKE_DL_LIBS}
+  ${LIBS}
 )
 

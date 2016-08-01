@@ -44,6 +44,7 @@ namespace ospray {
                   cpp::Model model,
                   cpp::Renderer renderer, 
                   cpp::Camera camera);
+    virtual ~OSPGlutViewer(){}
 
     void setRenderer(OSPRenderer renderer);
     void resetAccumulation();

@@ -67,27 +67,23 @@ static void using_history(){}
 
 static std::string get_next_command() {
   std::string retval("quit");
-  if ( ! std::cin.eof() ) {
-    char *input_raw = readline("% ");
-    if ( input_raw ) {
-      add_history(input_raw);
+  char *input_raw = readline("% ");
+  if (input_raw) {
+    add_history(input_raw);
 
-      std::string val(input_raw);
-      size_t pos = val.find_first_not_of("\t \n");
-      if (pos != std::string::npos)
-      {
-        val.erase(0, pos);
-      }
-      pos = val.find_last_not_of("\t \n");
-      if (pos != std::string::npos)
-      {
-        val.erase(pos+1, std::string::npos);
-      }
-
-      retval = val;
-
-      ::free(input_raw);
+    std::string val(input_raw);
+    size_t pos = val.find_first_not_of("\t \n");
+    if (pos != std::string::npos) {
+      val.erase(0, pos);
     }
+    pos = val.find_last_not_of("\t \n");
+    if (pos != std::string::npos) {
+      val.erase(pos+1, std::string::npos);
+    }
+
+    retval = val;
+
+    ::free(input_raw);
   }
   return retval;
 }
@@ -159,14 +155,14 @@ namespace ospray {
 
 namespace script {
   Module::Module(RegisterModuleFn registerMod, GetHelpFn getHelp)
-    : m_registerMod(registerMod), m_getHelp(getHelp)
+    : registerMod(registerMod), getHelp(getHelp)
   {}
   void Module::registerModule(chaiscript::ChaiScript &engine) {
-    m_registerMod(engine);
+    registerMod(engine);
   }
   void Module::help() const {
-    if (m_getHelp) {
-      m_getHelp();
+    if (getHelp) {
+      getHelp();
     }
   }
 
@@ -180,12 +176,12 @@ namespace script {
 OSPRayScriptHandler::OSPRayScriptHandler(OSPModel    model,
                                          OSPRenderer renderer,
                                          OSPCamera   camera) :
-  m_model(model),
-  m_renderer(renderer),
-  m_camera(camera),
-  m_chai(chaiscript::Std_Lib::library()),
-  m_running(false),
-  m_lock(m_scriptMutex, std::defer_lock_t())
+  model(model),
+  renderer(renderer),
+  camera(camera),
+  chai(chaiscript::Std_Lib::library()),
+  scriptRunning(false),
+  lock(scriptMutex, std::defer_lock_t())
 {
   registerScriptTypes();
   registerScriptFunctions();
@@ -217,7 +213,7 @@ OSPRayScriptHandler::OSPRayScriptHandler(OSPModel    model,
   ss << "ospCommit(object)"                         << endl;
   ss << endl;
 
-  m_helpText = ss.str();
+  helpText = ss.str();
 }
 
 OSPRayScriptHandler::~OSPRayScriptHandler()
@@ -227,13 +223,13 @@ OSPRayScriptHandler::~OSPRayScriptHandler()
 
 void OSPRayScriptHandler::runScriptFromFile(const std::string &file)
 {
-  if (m_running) {
+  if (scriptRunning) {
     throw runtime_error("Cannot execute a script file when"
                         " running interactively!");
   }
 
   try {
-    m_chai.eval_file(file);
+    chai.eval_file(file);
   } catch (const chaiscript::exception::eval_error &e) {
     cerr << "ERROR: script '" << file << "' executed with error(s):" << endl;
     cerr << "    " << e.what() << endl;
@@ -250,7 +246,7 @@ void OSPRayScriptHandler::consoleLoop()
     if (input == "done" || input == "exit" || input == "quit") {
       break;
     } else if (input == "help") {
-      cout << m_helpText << endl;
+      cout << helpText << endl;
       for (const auto &m : script::SCRIPT_MODULES) {
         m.help();
       }
@@ -267,32 +263,32 @@ void OSPRayScriptHandler::consoleLoop()
 
     runChaiLine(input);
 
-  } while (m_running);
+  } while (scriptRunning);
 
-  m_running = false;
+  scriptRunning = false;
   cout << "**** EXIT COMMAND MODE *****" << endl;
 }
 
 void OSPRayScriptHandler::runChaiLine(const std::string &line)
 {
-  m_lock.lock();
+  lock.lock();
   try {
-    m_chai.eval(line);
+    chai.eval(line);
   } catch (const chaiscript::exception::eval_error &e) {
     cerr << e.what() << endl;
   }
-  m_lock.unlock();
+  lock.unlock();
 }
 
 void OSPRayScriptHandler::runChaiFile(const std::string &file)
 {
-  m_lock.lock();
+  lock.lock();
   try {
-    m_chai.eval_file(file);
+    chai.eval_file(file);
   } catch (const std::runtime_error &e) {
     cerr << e.what() << endl;
   }
-  m_lock.unlock();
+  lock.unlock();
 }
 
 void OSPRayScriptHandler::start()
@@ -301,37 +297,43 @@ void OSPRayScriptHandler::start()
   cout << "**** START COMMAND MODE ****" << endl << endl;
   cout << "Type 'help' to see available objects and functions." << endl;
   cout << endl;
-  m_running = true;
-  m_thread = std::thread(&OSPRayScriptHandler::consoleLoop, this);
+  scriptRunning = true;
+  thread = std::thread(&OSPRayScriptHandler::consoleLoop, this);
 }
 
 void OSPRayScriptHandler::stop()
 {
-  m_running = false;
-  if (m_thread.joinable())
-    m_thread.join();
+#ifdef USE_SYSTEM_READLINE
+  if (scriptRunning) {
+    rl_done = 1;
+  }
+#endif
+  scriptRunning = false;
+  if (thread.joinable()){
+    thread.join();
+  }
 }
 
 bool OSPRayScriptHandler::running()
 {
-  return m_running;
+  return scriptRunning;
 }
 
 chaiscript::ChaiScript &OSPRayScriptHandler::scriptEngine()
 {
-  if (m_running)
+  if (scriptRunning)
     throw runtime_error("Cannot modify the script env while running!");
 
-  return m_chai;
+  return chai;
 }
 
 void OSPRayScriptHandler::registerScriptObjects()
 {
-  m_chai.add_global(chaiscript::var(m_model),    "m");
-  m_chai.add_global(chaiscript::var(m_renderer), "r");
-  m_chai.add_global(chaiscript::var(m_camera),   "c");
+  chai.add_global(chaiscript::var(model),    "m");
+  chai.add_global(chaiscript::var(renderer), "r");
+  chai.add_global(chaiscript::var(camera),   "c");
   for (auto &m : script::SCRIPT_MODULES) {
-    m.registerModule(m_chai);
+    m.registerModule(chai);
   }
 }
 
@@ -537,65 +539,65 @@ void OSPRayScriptHandler::registerScriptTypes()
      }
      );
 
-  m_chai.add(m);
+  chai.add(m);
 
   // Inheritance relationships //
 
   // osp objects
-  m_chai.add(chaiscript::base_class<osp::ManagedObject, osp::Camera>());
-  m_chai.add(chaiscript::base_class<osp::ManagedObject, osp::Data>());
-  m_chai.add(chaiscript::base_class<osp::ManagedObject, osp::FrameBuffer>());
-  m_chai.add(chaiscript::base_class<osp::ManagedObject, osp::Geometry>());
-  m_chai.add(chaiscript::base_class<osp::ManagedObject, osp::Light>());
-  m_chai.add(chaiscript::base_class<osp::ManagedObject, osp::Material>());
-  m_chai.add(chaiscript::base_class<osp::ManagedObject, osp::Model>());
-  m_chai.add(chaiscript::base_class<osp::ManagedObject, osp::PixelOp>());
-  m_chai.add(chaiscript::base_class<osp::ManagedObject, osp::Renderer>());
-  m_chai.add(chaiscript::base_class<osp::ManagedObject,
+  chai.add(chaiscript::base_class<osp::ManagedObject, osp::Camera>());
+  chai.add(chaiscript::base_class<osp::ManagedObject, osp::Data>());
+  chai.add(chaiscript::base_class<osp::ManagedObject, osp::FrameBuffer>());
+  chai.add(chaiscript::base_class<osp::ManagedObject, osp::Geometry>());
+  chai.add(chaiscript::base_class<osp::ManagedObject, osp::Light>());
+  chai.add(chaiscript::base_class<osp::ManagedObject, osp::Material>());
+  chai.add(chaiscript::base_class<osp::ManagedObject, osp::Model>());
+  chai.add(chaiscript::base_class<osp::ManagedObject, osp::PixelOp>());
+  chai.add(chaiscript::base_class<osp::ManagedObject, osp::Renderer>());
+  chai.add(chaiscript::base_class<osp::ManagedObject,
                                     osp::TransferFunction>());
-  m_chai.add(chaiscript::base_class<osp::ManagedObject, osp::Texture2D>());
-  m_chai.add(chaiscript::base_class<osp::ManagedObject, osp::Volume>());
+  chai.add(chaiscript::base_class<osp::ManagedObject, osp::Texture2D>());
+  chai.add(chaiscript::base_class<osp::ManagedObject, osp::Volume>());
 
   // ospray::cpp objects
-  m_chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
+  chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
                                     ospray::cpp::Camera>());
-  m_chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
+  chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
                                     ospray::cpp::Data>());
-  m_chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
+  chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
                                     ospray::cpp::FrameBuffer>());
-  m_chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
+  chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
                                     ospray::cpp::Geometry>());
-  m_chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
+  chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
                                     ospray::cpp::Light>());
-  m_chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
+  chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
                                     ospray::cpp::Material>());
-  m_chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
+  chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
                                     ospray::cpp::Model>());
-  m_chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
+  chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
                                     ospray::cpp::PixelOp>());
-  m_chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
+  chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
                                     ospray::cpp::Renderer>());
-  m_chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
+  chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
                                     ospray::cpp::TransferFunction>());
-  m_chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
+  chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
                                     ospray::cpp::Texture2D>());
-  m_chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
+  chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
                                     ospray::cpp::Volume>());
 }
 
 void OSPRayScriptHandler::registerScriptFunctions()
 {
-  m_chai.add(chaiscript::fun(&chaiospray::ospLoadModule), "ospLoadModule");
-  m_chai.add(chaiscript::fun(&chaiospray::ospSetString),  "ospSetString" );
-  m_chai.add(chaiscript::fun(&chaiospray::ospSetObject),  "ospSetObject" );
-  m_chai.add(chaiscript::fun(&chaiospray::ospSet1f),      "ospSet1f"     );
-  m_chai.add(chaiscript::fun(&chaiospray::ospSet1i),      "ospSet1i"     );
-  m_chai.add(chaiscript::fun(&chaiospray::ospSet2f),      "ospSet2f"     );
-  m_chai.add(chaiscript::fun(&chaiospray::ospSet2i),      "ospSet2i"     );
-  m_chai.add(chaiscript::fun(&chaiospray::ospSet3f),      "ospSet3f"     );
-  m_chai.add(chaiscript::fun(&chaiospray::ospSet3i),      "ospSet3i"     );
-  m_chai.add(chaiscript::fun(&chaiospray::ospSetVoidPtr), "ospSetVoidPtr");
-  m_chai.add(chaiscript::fun(&chaiospray::ospCommit),     "ospCommit"    );
+  chai.add(chaiscript::fun(&chaiospray::ospLoadModule), "ospLoadModule");
+  chai.add(chaiscript::fun(&chaiospray::ospSetString),  "ospSetString" );
+  chai.add(chaiscript::fun(&chaiospray::ospSetObject),  "ospSetObject" );
+  chai.add(chaiscript::fun(&chaiospray::ospSet1f),      "ospSet1f"     );
+  chai.add(chaiscript::fun(&chaiospray::ospSet1i),      "ospSet1i"     );
+  chai.add(chaiscript::fun(&chaiospray::ospSet2f),      "ospSet2f"     );
+  chai.add(chaiscript::fun(&chaiospray::ospSet2i),      "ospSet2i"     );
+  chai.add(chaiscript::fun(&chaiospray::ospSet3f),      "ospSet3f"     );
+  chai.add(chaiscript::fun(&chaiospray::ospSet3i),      "ospSet3i"     );
+  chai.add(chaiscript::fun(&chaiospray::ospSetVoidPtr), "ospSetVoidPtr");
+  chai.add(chaiscript::fun(&chaiospray::ospCommit),     "ospCommit"    );
 }
 
 }// namespace ospray

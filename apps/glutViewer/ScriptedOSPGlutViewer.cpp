@@ -33,11 +33,11 @@ namespace ospray {
                                                cpp::Camera    camera,
                                                std::string    scriptFileName)
     : OSPGlutViewer(worldBounds, model, renderer, camera),
-      m_scriptHandler(model.handle(), renderer.handle(), camera.handle(), this),
+      scriptHandler(model.handle(), renderer.handle(), camera.handle(), this),
       frameID(0)
   {
     if (!scriptFileName.empty())
-      m_scriptHandler.runScriptFromFile(scriptFileName);
+      scriptHandler.runScriptFromFile(scriptFileName);
   }
 
   int ScriptedOSPGlutViewer::getFrameID() const {
@@ -49,9 +49,7 @@ namespace ospray {
 
     // We need to synchronize with the scripting engine so we don't
     // get our scene data trampled on if scripting is running.
-    // TODO: Conditionally lock this? How much performance hit do we really get?
-    // It's not like the mutex is heavily contested.
-    std::lock_guard<std::mutex> lock(m_scriptHandler.m_scriptMutex);
+    std::lock_guard<std::mutex> lock(scriptHandler.scriptMutex);
 
     //{
     // note that the order of 'start' and 'end' here is
@@ -114,7 +112,7 @@ namespace ospray {
     // that pointer is no longer valid, so set it to null
     ucharFB = nullptr;
 
-    std::string title("OSPRay Scripted GLUT Viewer");
+    std::string title("OSPRay GLUT Viewer");
 
     if (m_alwaysRedraw) {
       title += " (" + std::to_string((long double)m_fps.getFPS()) + " fps)";
@@ -122,15 +120,15 @@ namespace ospray {
       forceRedraw();
     } else {
       setTitle(title);
-    }
+  }
   }
 
   void ScriptedOSPGlutViewer::keypress(char key, const vec2i &where)
   {
     switch (key) {
     case ':':
-      if (!m_scriptHandler.running()) {
-        m_scriptHandler.start();
+      if (!scriptHandler.running()) {
+        scriptHandler.start();
       }
       break;
     default:

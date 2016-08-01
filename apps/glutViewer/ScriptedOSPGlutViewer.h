@@ -38,7 +38,7 @@ namespace ospray {
     void display() override;
     void keypress(char key, const ospcommon::vec2i &where) override;
 
-    GlutViewerScriptHandler m_scriptHandler;
+    GlutViewerScriptHandler scriptHandler;
 
     std::atomic<int> frameID;
   };

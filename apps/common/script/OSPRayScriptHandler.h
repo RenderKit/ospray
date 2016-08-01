@@ -53,14 +53,14 @@ namespace script {
   using GetHelpFn = void (*)();
 
   class OSPSCRIPT_INTERFACE Module {
-    RegisterModuleFn m_registerMod;
-    GetHelpFn m_getHelp;
+    RegisterModuleFn registerMod;
+    GetHelpFn getHelp;
 
   public:
     Module(RegisterModuleFn registerMod, GetHelpFn getHelp);
     // Register the types, functions and objects exported by this module.
     void registerModule(chaiscript::ChaiScript &engine);
-    // Print the modules help string via m_getHelp if a help callback was registered.
+    // Print the modules help string via getHelp if a help callback was registered.
     void help() const;
   };
 
@@ -78,7 +78,7 @@ class OSPSCRIPT_INTERFACE OSPRayScriptHandler
 public:
 
   OSPRayScriptHandler(OSPModel model, OSPRenderer renderer, OSPCamera camera);
-  ~OSPRayScriptHandler();
+  virtual ~OSPRayScriptHandler();
 
   void runScriptFromFile(const std::string &file);
 
@@ -90,7 +90,7 @@ public:
   //! \brief Mutex that can be used to protect against scripts trampling
   //!        scene data that is actively being used for rendering. Acquiring
   //!        this mutex will block scripts from running until it's released.
-  std::mutex m_scriptMutex;
+  std::mutex scriptMutex;
 
 protected:
 
@@ -103,10 +103,10 @@ protected:
 
   //! \note Child classes should append this string with any additional help
   //!       text that is desired when 'help' is invoked in the script engine.
-  std::string m_helpText;
+  std::string helpText;
 
   //! \brief This scripts unique lock managing locking/unlocking of the scriptMutex
-  std::unique_lock<std::mutex> m_lock;
+  std::unique_lock<std::mutex> lock;
 
 private:
 
@@ -121,16 +121,16 @@ private:
 
   // Data //
 
-  cpp::Model    m_model;
-  cpp::Renderer m_renderer;
-  cpp::Camera   m_camera;
+  cpp::Model    model;
+  cpp::Renderer renderer;
+  cpp::Camera   camera;
 
-  chaiscript::ChaiScript m_chai;
+  chaiscript::ChaiScript chai;
 
-  bool m_running;
+  bool scriptRunning;
 
   //! \brief background thread to handle the scripting commands from the console
-  std::thread m_thread;
+  std::thread thread;
 };
 
 }// namespace ospray

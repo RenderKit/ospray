@@ -27,7 +27,7 @@ namespace ospray {
                                                    OSPCamera   camera,
                                                    ScriptedOSPGlutViewer  *viewer)
     : OSPRayScriptHandler(model, renderer, camera),
-      m_viewer(viewer)
+      viewer(viewer)
   {
     registerScriptFunctions();
 
@@ -43,7 +43,7 @@ namespace ospray {
        << "                          then return to running the script." << endl;
     ss << "screenshot(filename)  --> save a screenshot (adds '.ppm')" << endl;
 
-    m_helpText += ss.str();
+    helpText += ss.str();
   }
 
   void GlutViewerScriptHandler::registerScriptFunctions()
@@ -52,43 +52,43 @@ namespace ospray {
 
     // setRenderer()
     auto setRenderer = [&](ospray::cpp::Renderer &r) {
-      m_viewer->setRenderer((OSPRenderer)r.handle());
+      viewer->setRenderer((OSPRenderer)r.handle());
     };
 
     // refresh()
     auto refresh = [&]() {
-      m_viewer->resetAccumulation();
+      viewer->resetAccumulation();
     };
 
     // toggleFullscreen()
     auto toggleFullscreen = [&]() {
-      m_viewer->toggleFullscreen();
+      viewer->toggleFullscreen();
     };
 
     // resetView()
     auto resetView = [&]() {
-      m_viewer->resetView();
+      viewer->resetView();
     };
 
     // printViewport()
     auto printViewport = [&]() {
-      m_viewer->printViewport();
+      viewer->printViewport();
     };
 
     // renderFrame()
     auto renderFrame = [&](const int n_frames) {
       // Temporarily unlock the mutex and wait for the display
       // loop to acquire it and render and wait til a n frames have finished
-      const int startFrame = m_viewer->getFrameID();
-      m_lock.unlock();
+      const int startFrame = viewer->getFrameID();
+      lock.unlock();
       // Wait for n_frames to be rendered
-      while (startFrame + n_frames > m_viewer->getFrameID());
-      m_lock.lock();
+      while (startFrame + n_frames > viewer->getFrameID());
+      lock.lock();
     };
 
     // screenshot()
     auto screenshot = [&](const std::string &name) {
-      m_viewer->saveScreenshot(name);
+      viewer->saveScreenshot(name);
     };
 
     chai.add(chaiscript::fun(setRenderer),      "setRenderer"     );
