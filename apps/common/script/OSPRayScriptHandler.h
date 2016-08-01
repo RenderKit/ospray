@@ -35,6 +35,16 @@
 // ChaiScript
 #include "chaiscript/chaiscript.hpp"
 
+#ifdef _WIN32
+  #ifdef ospray_script_EXPORTS
+    #define OSPSCRIPT_INTERFACE __declspec(dllexport)
+  #else
+    #define OSPSCRIPT_INTERFACE __declspec(dllimport)
+  #endif
+#else
+  #define OSPSCRIPT_INTERFACE
+#endif
+
 namespace ospray {
 
 // Protect some of the script module functionality under an additionaly namespace
@@ -42,7 +52,7 @@ namespace script {
   using RegisterModuleFn = void (*)(chaiscript::ChaiScript&);
   using GetHelpFn = void (*)();
 
-  class Module {
+  class OSPSCRIPT_INTERFACE Module {
     RegisterModuleFn registerMod;
     GetHelpFn getHelp;
 
@@ -62,10 +72,10 @@ namespace script {
   //! registerModule should register types, functions and global variables exported by the module
   //! getHelp should print the modules help string, detailing functions/types/objects. getHelp
   //          can be null if no help text will be provided.
-  void register_module(RegisterModuleFn registerModule, GetHelpFn getHelp);
+  OSPSCRIPT_INTERFACE void register_module(RegisterModuleFn registerModule, GetHelpFn getHelp);
 }
 
-class OSPRayScriptHandler
+class OSPSCRIPT_INTERFACE OSPRayScriptHandler
 {
 public:
 
