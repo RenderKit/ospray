@@ -158,17 +158,11 @@ void ospCommit(OSPObject object)
 namespace ospray {
 
 namespace script {
-  Module::Module(RegisterTypesFn types, RegisterObjectsFn objs, GetHelpFn help)
-    : registerTypes(types), typesRegistered(false), registerObjects(objs), getHelp(help)
+  Module::Module(RegisterModuleFn registerMod, GetHelpFn getHelp)
+    : registerMod(registerMod), getHelp(getHelp)
   {}
   void Module::registerModule(chaiscript::ChaiScript &engine) {
-    if (registerTypes && !typesRegistered) {
-      registerTypes(engine);
-      typesRegistered = true;
-    }
-    if (registerObjects) {
-      registerObjects(engine);
-    }
+    registerMod(engine);
   }
   void Module::help() const {
     if (getHelp) {
@@ -177,10 +171,9 @@ namespace script {
   }
 
   static std::vector<Module> SCRIPT_MODULES;
-  void register_module(RegisterTypesFn registerTypes, RegisterObjectsFn registerObjects,
-                       GetHelpFn getHelp)
-  {
-    SCRIPT_MODULES.push_back(Module(registerTypes, registerObjects, getHelp));
+  void register_module(RegisterModuleFn registerModule, GetHelpFn getHelp) {
+    assert(registerMod);
+    SCRIPT_MODULES.push_back(Module(registerModule, getHelp));
   }
 }
 

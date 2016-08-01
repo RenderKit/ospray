@@ -25,7 +25,7 @@ namespace ospray {
   GlutViewerScriptHandler::GlutViewerScriptHandler(OSPModel    model,
                                                    OSPRenderer renderer,
                                                    OSPCamera   camera,
-                                                   ScriptedOSPGlutViewer  *viewer) 
+                                                   ScriptedOSPGlutViewer  *viewer)
     : OSPRayScriptHandler(model, renderer, camera),
       m_viewer(viewer)
   {
