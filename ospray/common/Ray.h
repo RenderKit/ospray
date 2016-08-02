@@ -17,7 +17,7 @@
 #pragma once
 
 // ospray stuff
-#include "ospray/common/OSPCommon.h"
+#include "common/OSPCommon.h"
 
 namespace ospray {
   /*! \brief ospray *scalar* ray class
