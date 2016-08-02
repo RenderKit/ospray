@@ -131,6 +131,16 @@ namespace ospray {
         scriptHandler.start();
       }
       break;
+    case 27 /*ESC*/:
+    case 'q':
+    case 'Q':
+      if (scriptHandler.running()) {
+        std::cout << "Please exit command mode before quitting"
+          << " to avoid messing up your terminal\n";
+        break;
+      } else {
+        std::exit(0);
+      }
     default:
       OSPGlutViewer::keypress(key,where);
     }

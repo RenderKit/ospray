@@ -303,11 +303,6 @@ void OSPRayScriptHandler::start()
 
 void OSPRayScriptHandler::stop()
 {
-#ifdef USE_SYSTEM_READLINE
-  if (scriptRunning) {
-    rl_done = 1;
-  }
-#endif
   scriptRunning = false;
   if (thread.joinable()){
     thread.join();
