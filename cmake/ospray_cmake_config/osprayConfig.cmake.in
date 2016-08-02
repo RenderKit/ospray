@@ -73,11 +73,13 @@ if(NOT EXISTS ${CURRENT_ROOT_INSTALL_DIR})
     "outside of CMake after ospray was built.")
 endif(NOT EXISTS ${CURRENT_ROOT_INSTALL_DIR})
 
+set(OSPRAY_ROOT ${CURRENT_ROOT_INSTALL_DIR})
+
 # Set the include directories for ospray (itself).
-set(OSPRAY_INCLUDE_DIR "${CURRENT_ROOT_INSTALL_DIR}/include")
+set(OSPRAY_INCLUDE_DIR "${OSPRAY_ROOT}/include")
 if(NOT EXISTS ${OSPRAY_INCLUDE_DIR}/ospray/version.h)
   OSPRAY_REPORT_NOT_FOUND(
-    "ospray install root:  ${CURRENT_ROOT_INSTALL_DIR}, "
+    "ospray install root:  ${OSPRAY_ROOT}, "
     "determined from relative path from osprayConfg.cmake install location:  "
     "${CURRENT_CONFIG_INSTALL_DIR}, does not contain ospray headers. "
     "Either the install directory was deleted, or the install tree was only "
@@ -98,12 +100,13 @@ set(OSPRAY_INCLUDE_DIRS
 # ospray build configuration
 
 
-SET(OSPRAY_COMPILER_ICC   @OSPRAY_COMPILER_ICC@  )
-SET(OSPRAY_COMPILER_GCC   @OSPRAY_COMPILER_GCC@  )
-SET(OSPRAY_COMPILER_CLANG @OSPRAY_COMPILER_CLANG@)
-SET(OSPRAY_COMPILER_MSVC  @OSPRAY_COMPILER_MSVC@ )
+set(OSPRAY_COMPILER_ICC   @OSPRAY_COMPILER_ICC@)
+set(OSPRAY_COMPILER_GCC   @OSPRAY_COMPILER_GCC@)
+set(OSPRAY_COMPILER_CLANG @OSPRAY_COMPILER_CLANG@)
+set(OSPRAY_COMPILER_MSVC  @OSPRAY_COMPILER_MSVC@)
 
-SET(OSPRAY_USE_EXTERNAL_EMBREE @OSPRAY_USE_EXTERNAL_EMBREE@)
+set(OSPRAY_USE_EXTERNAL_EMBREE @OSPRAY_USE_EXTERNAL_EMBREE@)
+set(OSPRAY_TASKING_TBB         @OSPRAY_TASKING_TBB@)
 
 
 ###############################################################################
@@ -137,10 +140,10 @@ if (OSPRAY_TASKING_CILK)
 endif()
 
 IF(WIN32)
-  SET(LIBRARY_PATH_PREFIX ${CURRENT_ROOT_INSTALL_DIR}/@CMAKE_INSTALL_LIBDIR@/${CMAKE_IMPORT_LIBRARY_PREFIX})
+  SET(LIBRARY_PATH_PREFIX ${OSPRAY_ROOT}/@CMAKE_INSTALL_LIBDIR@/${CMAKE_IMPORT_LIBRARY_PREFIX})
   SET(LIBRARY_SUFFIX ${CMAKE_IMPORT_LIBRARY_SUFFIX})
 ELSE()
-  SET(LIBRARY_PATH_PREFIX ${CURRENT_ROOT_INSTALL_DIR}/@CMAKE_INSTALL_LIBDIR@/${CMAKE_SHARED_LIBRARY_PREFIX})
+  SET(LIBRARY_PATH_PREFIX ${OSPRAY_ROOT}/@CMAKE_INSTALL_LIBDIR@/${CMAKE_SHARED_LIBRARY_PREFIX})
   SET(LIBRARY_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
 ENDIF()
 
@@ -206,8 +209,10 @@ set(OSPRAY_LIBRARIES
 # Reset CMake module path to its state when this script was called.
 set(CMAKE_MODULE_PATH ${OSPRAY_CALLERS_CMAKE_MODULE_PATH})
 
+set(OSPRAY_CMAKE_ROOT ${OSPRAY_ROOT}/@CMAKE_INSTALL_LIBDIR@/cmake/ospray-@OSPRAY_VERSION@)
+
 # Include definitions for clients to use ospray header files
-set(OSPRAY_USE_FILE ${CMAKE_CURRENT_LIST_DIR}/osprayUse.cmake)
+set(OSPRAY_USE_FILE ${OSPRAY_CMAKE_ROOT}/osprayUse.cmake)
 
 # OSPRAY_REPORT_NOT_FOUND() aborts, so if we made it this far,
 # we have found ospray and all required dependencies.
