@@ -64,7 +64,6 @@ namespace ospray {
             (ispc::VaryingTile*)&this->variance,
             &this->color,
             pixelsf,
-            dfb->accumId,
             dfb->hasAccumBuffer,
             dfb->hasVarianceBuffer);
         break;
@@ -76,7 +75,6 @@ namespace ospray {
             (ispc::VaryingTile*)&this->variance,
             &this->color,
             pixelsf,
-            dfb->accumId,
             dfb->hasAccumBuffer,
             dfb->hasVarianceBuffer);
         break;
@@ -91,7 +89,6 @@ namespace ospray {
             (ispc::VaryingTile*)&this->variance,
             &this->color,
             pixelsf,
-            dfb->accumId,
             dfb->hasAccumBuffer,
             dfb->hasVarianceBuffer);
         break;

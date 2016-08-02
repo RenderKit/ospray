@@ -84,10 +84,6 @@ namespace ospray {
     MASTER_WRITE_TILE_NONE,
   } COMMANDTAG;
 
-  // Helper functions /////////////////////////////////////////////////////////
-
-  inline int clientRank(int clientID) { return clientID+1; }
-
   // DistributedFrameBuffer definitions ///////////////////////////////////////
 
   DFB::DistributedFrameBuffer(mpi::async::CommLayer *comm,
@@ -100,9 +96,7 @@ namespace ospray {
     : mpi::async::CommLayer::Object(comm,myID),
       FrameBuffer(numPixels,colorBufferFormat,hasDepthBuffer,
                   hasAccumBuffer,hasVarianceBuffer),
-      accumId(0),
-      tileErrorRegion(hasVarianceBuffer && comm->group->rank == 0 ?
-          getNumTiles() : vec2i(0)),
+      tileErrorRegion(hasVarianceBuffer ? getNumTiles() : vec2i(0)),
       localFBonMaster(nullptr),
       frameMode(WRITE_ONCE),
       frameIsActive(false),
@@ -114,6 +108,9 @@ namespace ospray {
     comm->registerObject(this,myID);
 
     createTiles();
+    const size_t bytes = sizeof(int32)*getTotalTiles();
+    tileAccumID = (int32*)alignedMalloc(bytes);
+    memset(tileAccumID, 0, bytes);
 
     if (comm->group->rank == 0) {
       if (colorBufferFormat == OSP_FB_NONE) {
@@ -135,18 +132,16 @@ namespace ospray {
   DFB::~DistributedFrameBuffer()
   {
     freeTiles();
+    alignedFree(tileAccumID);
   }
 
-  void DFB::startNewFrame()
+  void DFB::startNewFrame(const float errorThreshold)
   {
     std::vector<mpi::async::CommLayer::Message *> delayedMessage;
     {
       SCOPED_LOCK(mutex);
       DBG(printf("rank %i starting new frame\n",mpi::world.rank));
       assert(!frameIsActive);
-
-      if (hasAccumBuffer)
-        accumId++;
 
       if (pixelOp)
         pixelOp->beginFrame();
@@ -158,8 +153,19 @@ namespace ospray {
       // the mutex
       delayedMessage = this->delayedMessage;
       this->delayedMessage.clear();
+
+      tileErrorRegion.sync();
       numTilesCompletedThisFrame = 0;
-      numTilesToMasterThisFrame = 0;
+
+      if (hasAccumBuffer) {
+        // increment accumID only for active tiles
+        for (int t = 0; t < getTotalTiles(); t++)
+          if (tileError(vec2i(t, 0)) <= errorThreshold) {
+            if (IamTheMaster() || allTiles[t]->mine())
+              numTilesCompletedThisFrame++;
+          } else
+            tileAccumID[t]++;
+      }
 
       frameIsDone   = false;
 
@@ -175,6 +181,10 @@ namespace ospray {
     // might actually want to move this to a thread:
     for (auto &msg : delayedMessage)
       this->incoming(msg);
+
+    if (numTilesCompletedThisFrame
+        == (IamTheMaster() ? getTotalTiles() : myTiles.size()))
+      closeCurrentFrame();
   }
 
   void DFB::freeTiles()
@@ -213,7 +223,7 @@ namespace ospray {
     for (size_t y = 0; y < numPixels.y; y += TILE_SIZE) {
       for (size_t x = 0; x < numPixels.x; x += TILE_SIZE, tileID++) {
         size_t ownerID = tileID % (comm->group->size - 1);
-        if (clientRank(ownerID) == comm->group->rank) {
+        if (workerRank(ownerID) == comm->group->rank) {
           TileData *td = createTile(vec2i(x, y), tileID, ownerID);
           myTiles.push_back(td);
           allTiles.push_back(td);
@@ -275,9 +285,12 @@ namespace ospray {
 
   void DFB::processMessage(MasterTileMessage *msg)
   {
-    { /* nothing to do for 'none' tiles */ }
-    if (hasVarianceBuffer && (accumId & 1) == 1)
-      tileErrorRegion.update(msg->coords/TILE_SIZE, msg->error);
+    /* just update error for 'none' tiles */
+    if (hasVarianceBuffer) {
+      const vec2i tileID = msg->coords/TILE_SIZE;
+      if ((accumID(tileID) & 1) == 1)
+        tileErrorRegion.update(tileID, msg->error);
+    }
 
     // and finally, tell the master that this tile is done
     auto *tileDesc = this->getTileDescFor(msg->coords);
@@ -357,7 +370,7 @@ namespace ospray {
         numTilesCompletedByMe = ++numTilesCompletedThisFrame;
         DBG(printf("rank %i: MARKING AS COMPLETED %i,%i -> %i %i\n",
                    mpi::world.rank,
-                   tile->begin.x,tile->begin.y,numTilesCompletedThisFrame,
+                   tile->begin.x,tile->begin.y,(int)numTilesCompletedThisFrame,
                    numTiles.x*numTiles.y));
       }
 
@@ -417,7 +430,7 @@ namespace ospray {
     frameDoneCond.notify_all();
   }
 
-  //! write given tile data into the frame buffer, sending to remove owner if
+  //! write given tile data into the frame buffer, sending to remote owner if
   //! required
   void DFB::setTile(ospray::Tile &tile)
   {
@@ -475,9 +488,15 @@ namespace ospray {
     }
 
     if (hasAccumBuffer && (fbChannelFlags & OSP_FB_ACCUM)) {
-      accumId = -1; // we increment at the start of the frame
+      // we increment at the start of the frame
+      memset(tileAccumID, -1, getTotalTiles()*sizeof(int32));
       tileErrorRegion.clear();
     }
+  }
+
+  int32 DFB::accumID(const vec2i &tile)
+  {
+    return tileAccumID[tile.y * numTiles.x + tile.x];
   }
 
   float DFB::tileError(const vec2i &tile)

@@ -270,7 +270,7 @@ namespace ospray {
 
     Renderer::beginFrame(fb);
 
-    dfb->startNewFrame();
+    dfb->startNewFrame(errorThreshold);
 
     if (ddVolumeVec.size() > 1) {
       /* note: our assumption below is that all blocks together are
