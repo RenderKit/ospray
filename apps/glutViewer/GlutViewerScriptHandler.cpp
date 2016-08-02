@@ -41,6 +41,8 @@ namespace ospray {
     ss << "printViewport()       --> print view params in the console" << endl;
     ss << "renderFrame(n_frames) --> release the script lock and render 'n_frames' frames,\n"
        << "                          then return to running the script." << endl;
+    ss << "setWorldBounds(bbox)  --> set the world bounds to the specified box3f,\n"
+       << "                          repositioning the camera." << endl;
     ss << "screenshot(filename)  --> save a screenshot (adds '.ppm')" << endl;
 
     helpText += ss.str();
@@ -86,6 +88,11 @@ namespace ospray {
       lock.lock();
     };
 
+    // setWorldBounds
+    auto setWorldBounds = [&](const ospcommon::box3f &box) {
+      viewer->setWorldBounds(box);
+    };
+
     // screenshot()
     auto screenshot = [&](const std::string &name) {
       viewer->saveScreenshot(name);
@@ -97,6 +104,7 @@ namespace ospray {
     chai.add(chaiscript::fun(resetView),        "resetView"       );
     chai.add(chaiscript::fun(printViewport),    "printViewport"   );
     chai.add(chaiscript::fun(renderFrame),      "renderFrame"     );
+    chai.add(chaiscript::fun(setWorldBounds),   "setWorldBounds"  );
     chai.add(chaiscript::fun(screenshot),       "screenshot"      );
   }
 

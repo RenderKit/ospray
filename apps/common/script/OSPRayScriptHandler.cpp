@@ -15,7 +15,8 @@
 // ======================================================================== //
 
 #include "OSPRayScriptHandler.h"
-
+#include "ospcommon/vec.h"
+#include "ospcommon/box.h"
 #include "chaiscript/chaiscript_stdlib.hpp"
 #include "chaiscript/utility/utility.hpp"
 
@@ -529,6 +530,15 @@ void OSPRayScriptHandler::registerScriptTypes()
   chaiscript::utility::add_class<ospcommon::vec4f>(*m, "vec4f",
      {
        chaiscript::constructor<ospcommon::vec4f(float x, float y, float z, float w)>(),
+     },
+     {
+     }
+     );
+
+  chaiscript::utility::add_class<ospcommon::box3f>(*m, "box3f",
+     {
+       chaiscript::constructor<ospcommon::box3f()>(),
+       chaiscript::constructor<ospcommon::box3f(const ospcommon::vec3f &lower, const ospcommon::vec3f &upper)>(),
      },
      {
      }
