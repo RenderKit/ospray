@@ -87,6 +87,15 @@ namespace ospray {
       while (startFrame + n_frames > viewer->getFrameID());
       lock.lock();
     };
+    auto renderOneFrame = [&]() {
+      // Temporarily unlock the mutex and wait for the display
+      // loop to acquire it and render and wait til a n frames have finished
+      const int startFrame = viewer->getFrameID();
+      lock.unlock();
+      // Wait for n_frames to be rendered
+      while (startFrame + 1 > viewer->getFrameID());
+      lock.lock();
+    };
 
     // setWorldBounds
     auto setWorldBounds = [&](const ospcommon::box3f &box) {
@@ -104,6 +113,7 @@ namespace ospray {
     chai.add(chaiscript::fun(resetView),        "resetView"       );
     chai.add(chaiscript::fun(printViewport),    "printViewport"   );
     chai.add(chaiscript::fun(renderFrame),      "renderFrame"     );
+    chai.add(chaiscript::fun(renderOneFrame),   "renderFrame"     );
     chai.add(chaiscript::fun(setWorldBounds),   "setWorldBounds"  );
     chai.add(chaiscript::fun(screenshot),       "screenshot"      );
   }
