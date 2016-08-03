@@ -161,12 +161,8 @@ void OSPGlutViewer::reshape(const vec2i &newSize)
 
     if (displayWall.po.handle() == nullptr) {
 #if OSPRAY_DISPLAY_WALD
-<<<<<<< HEAD
-      displayWall.po = ospray::cpp::PixelOp("display_wald");
-      displayWall.po.set("stereo",(int)displayWall.stereo);
-=======
       displayWall.po = ospray::cpp::PixelOp("display_wald@displayWald");
->>>>>>> 3d77d23df8b7aa65e3e9e1a503753753bbddc2cd
+      displayWall.po.set("stereo",(int)displayWall.stereo);
 #else
       displayWall.po = ospray::cpp::PixelOp("display_wall");
 #endif
