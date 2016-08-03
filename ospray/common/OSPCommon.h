@@ -1,4 +1,5 @@
 // ======================================================================== //
+// Copyright 2016 SURVICE Engineering Company                               //
 // Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
@@ -181,6 +182,9 @@ namespace ospray {
   /*! number of Embree threads to use, 0 for the default
       number. (cmdline: --osp:numthreads \<n\>) */
   extern int32 numThreads;
+
+  /*! ';'-separated list of paths to check for ospray modules (cmdline: --osp:modulepaths) */
+  extern std::vector<std::string> modulePaths;
 
   /*! size of OSPDataType */
   OSPRAY_INTERFACE size_t sizeOf(const OSPDataType);

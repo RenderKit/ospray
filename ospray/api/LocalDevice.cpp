@@ -1,4 +1,5 @@
 // ======================================================================== //
+// Copyright 2016 SURVICE Engineering Company                               //
 // Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
@@ -529,8 +530,28 @@ namespace ospray {
     /*! load module */
     int LocalDevice::loadModule(const char *name)
     {
-      std::string libName = "ospray_module_" + std::string(name);
-      loadLibrary(libName);
+      auto found = false;
+      for (auto path : modulePaths)
+      {
+        try
+        {
+          std::string libName = path + DirSep + "ospray_module_" +
+            std::string(name);
+          loadLibrary(libName);
+          found = true;
+          break;
+        }
+        catch (...)
+        {
+          // no-op
+        }
+      }
+
+      if (!found)
+      {
+        std::string libName = "ospray_module_" + std::string(name);
+        loadLibrary(libName);
+      }
 
       std::string initSymName = "ospray_init_module_" + std::string(name);
       void*initSym = getSymbol(initSymName);

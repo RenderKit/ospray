@@ -1,4 +1,5 @@
 // ======================================================================== //
+// Copyright 2016 SURVICE Engineering Company                               //
 // Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
@@ -18,6 +19,12 @@
 // std
 #include <map>
 #include <string>
+
+#if _WIN32
+#  define DirSep "\\"
+#else
+#  define DirSep "/"
+#endif // _WIN32
 
 namespace ospcommon {
 

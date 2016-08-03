@@ -1,4 +1,5 @@
 // ======================================================================== //
+// Copyright 2016 SURVICE Engineering Company                               //
 // Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
@@ -29,27 +30,33 @@
 #  include <dlfcn.h>
 #endif
 
-
 namespace ospcommon {
 
   Library::Library(const std::string& name)
   {
+    FileName    executable = getExecutableFileName();
+    std::string path       = "";
+
+    auto pos = name.rfind(DirSep);
+    if (pos != std::string::npos)
+      path = name.substr(0, pos+1);
+    auto module = name.substr(pos+1);
+
 #ifdef OSPRAY_TARGET_MIC
-    std::string file = name+"_mic";
+    std::string file = module+"_mic";
 #else
-    std::string file = name;
+    std::string file = module;
 #endif
 #ifdef _WIN32
     std::string fullName = file+".dll";
-    FileName executable = getExecutableFileName();
-    lib = LoadLibrary((executable.path() + fullName).c_str());
+    lib = LoadLibrary((path + fullName).c_str());
 #else
 #if defined(__MACOSX__)
     std::string fullName = "lib"+file+".dylib";
 #else
     std::string fullName = "lib"+file+".so";
 #endif
-    lib = dlopen(fullName.c_str(), RTLD_NOW);
+    lib = dlopen((path + fullName).c_str(), RTLD_NOW);
     if (!lib) {
       FileName executable = getExecutableFileName();
       lib = dlopen((executable.path() + fullName).c_str(), RTLD_NOW);

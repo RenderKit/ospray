@@ -1,4 +1,5 @@
 // ======================================================================== //
+// Copyright 2016 SURVICE Engineering Company                               //
 // Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
@@ -88,6 +89,20 @@ extern "C" void ospInit(int *_ac, const char **_av)
   auto OSPRAY_THREADS = getEnvVar<int>("OSPRAY_THREADS");
   if (OSPRAY_THREADS.first) {
     numThreads = OSPRAY_THREADS.second;
+  }
+
+  auto OSPRAY_MODULEPATHS = getEnvVar<std::string>("OSPRAY_MODULEPATHS");
+  if (OSPRAY_MODULEPATHS.first) {
+    auto paths = OSPRAY_MODULEPATHS.second;
+    auto pos   = paths.find(';');
+    while (pos != std::string::npos)
+    {
+      modulePaths.push_back(paths.substr(0, pos));
+      paths = paths.substr(pos+1);
+      pos   = paths.find(';');
+    }
+
+    modulePaths.push_back(paths);
   }
 
   /* call ospray::init to properly parse common args like

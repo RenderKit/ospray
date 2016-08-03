@@ -1,4 +1,5 @@
 // ======================================================================== //
+// Copyright 2016 SURVICE Engineering Company                               //
 // Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
@@ -47,6 +48,8 @@ namespace ospray {
   bool debugMode = false;
   int32_t numThreads = -1; //!< for default (==maximum) number of
                            //   OSPRay/Embree threads
+
+  std::vector<std::string> modulePaths;
 
   WarnOnce::WarnOnce(const std::string &s) 
     : s(s) 
@@ -120,6 +123,17 @@ namespace ospray {
         } else if (parm == "--osp:numthreads" || parm == "--osp:num-threads") {
           numThreads = atoi(av[i+1]);
           removeArgs(ac,av,i,2);
+        } else if (parm == "--osp:modulepaths") {
+          auto paths = std::string(av[i+1]);
+          auto pos   = paths.find(';');
+          while (pos != std::string::npos)
+          {
+            modulePaths.push_back(paths.substr(0, pos));
+            paths = paths.substr(pos+1);
+            pos   = paths.find(';');
+          }
+          modulePaths.push_back(paths);
+          removeArgs(ac,av,i, 2);
         } else {
           ++i;
         }
