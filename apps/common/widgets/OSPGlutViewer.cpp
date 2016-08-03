@@ -155,7 +155,7 @@ void OSPGlutViewer::reshape(const vec2i &newSize)
 
     if (displayWall.po.handle() == nullptr) {
 #if OSPRAY_DISPLAY_WALD
-      displayWall.po = ospray::cpp::PixelOp("display_wald");
+      displayWall.po = ospray::cpp::PixelOp("display_wald@displayWald");
 #else
       displayWall.po = ospray::cpp::PixelOp("display_wall");
 #endif
