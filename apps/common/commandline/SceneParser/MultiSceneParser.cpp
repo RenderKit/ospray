@@ -76,6 +76,9 @@ bool MultiSceneParser::parse(int ac, const char **&av)
   if (parser) {
     m_model = parser->model();
     m_bbox  = parser->bbox();
+  } else {
+    m_model = cpp::Model();
+    m_model.commit();
   }
 
   return parser != nullptr;
