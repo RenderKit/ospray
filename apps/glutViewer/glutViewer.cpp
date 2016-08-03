@@ -50,7 +50,7 @@ void parseForDisplayWall(int ac, const char **&av, ospray::OSPGlutViewer &v)
       std::cout << "#osp.glutViewer: using displayWald-style display wall module"
                 << std::endl;
       const std::string hostName = av[++i];
-      const int portNo = 2903; /* todo: extract that from hostname if required */
+      const int portNo = atoi(av[++i]); /* todo: extract that from hostname if required */
 
       std::cout << "#osp.glutViewer: trying to get display wall config from "
                 << hostName << ":" << portNo << std::endl;
