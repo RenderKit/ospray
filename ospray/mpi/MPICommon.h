@@ -32,6 +32,12 @@ namespace ospray {
   /*! Helper class for MPI Programming */
   namespace mpi {
 
+    inline void checkMpiError(int rc)
+    {
+      if (rc != MPI_SUCCESS)
+        throw std::runtime_error("MPI Error");
+    }
+
     //! abstraction for an MPI group. 
     /*! it's the responsiblity of the respective mpi setup routines to
       fill in the proper values */

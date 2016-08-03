@@ -22,12 +22,6 @@
 namespace ospray {
   namespace mpi {
 
-    inline void checkMpiError(int rc)
-    {
-      if (rc != MPI_SUCCESS)
-        throw std::runtime_error("MPI Error");
-    }
-
     /*! \brief abstraction for a binary command stream */
     /*! abstracts the concept of the mpi device writing commands and
       parameters, and the respective worker reading and unpacking

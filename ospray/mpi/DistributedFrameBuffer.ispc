@@ -60,10 +60,10 @@ export uniform float DFB_accumulate_##name(void  *uniform _self,             \
                                   VaryingTile    *uniform variance,          \
                                   void           *uniform _color,            \
                                   uniform float   cntu,                      \
-                                  uniform int     accumID,                   \
                                   uniform bool    hasAccumBuffer,            \
                                   uniform bool    hasVarianceBuffer)         \
 {                                                                            \
+  const uniform int accumID = tile->accumID;                                 \
   const uniform vec2i size = box_size(tile->region);                         \
   const uniform int maxi = size.y*(TILE_SIZE/programCount);                  \
   DistributedFrameBuffer *uniform self = (DistributedFrameBuffer*)_self;     \

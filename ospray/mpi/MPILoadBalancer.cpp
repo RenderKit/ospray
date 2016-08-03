@@ -35,7 +35,7 @@ namespace ospray {
 
     namespace staticLoadBalancer {
 
-      float Master::renderFrame(Renderer *tiledRenderer,
+      float Master::renderFrame(Renderer *renderer,
                                 FrameBuffer *fb,
                                 const uint32 channelFlags)
       {
@@ -45,7 +45,7 @@ namespace ospray {
 
         dfb->beginFrame();
 
-        dfb->startNewFrame();
+        dfb->startNewFrame(renderer->errorThreshold);
         /* the client will do its magic here, and the distributed
            frame buffer will be writing tiles here, without us doing
            anything ourselves */
@@ -53,7 +53,7 @@ namespace ospray {
 
         async_endFrame();
 
-        return dfb->endFrame(0.f);
+        return dfb->endFrame(renderer->errorThreshold);
       }
 
       std::string Master::toString() const
@@ -61,16 +61,16 @@ namespace ospray {
         return "ospray::mpi::staticLoadBalancer::Master";
       }
 
-      float Slave::renderFrame(Renderer *tiledRenderer,
+      float Slave::renderFrame(Renderer *renderer,
                                FrameBuffer *fb,
                                const uint32 channelFlags)
       {
         async_beginFrame();
 
         auto *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
-        dfb->startNewFrame();
+        dfb->startNewFrame(renderer->errorThreshold);
 
-        void *perFrameData = tiledRenderer->beginFrame(fb);
+        void *perFrameData = renderer->beginFrame(fb);
 
         const int ALLTASKS = fb->getTotalTiles();
         int NTASKS = ALLTASKS / worker.size;
@@ -91,6 +91,9 @@ namespace ospray {
           const vec2i tileId(tile_x, tile_y);
           const int32 accumID = fb->accumID(tileId);
 
+          if (fb->tileError(tileId) <= renderer->errorThreshold)
+            return;
+
 #ifdef __MIC__
 #  define MAX_TILE_SIZE 32
 #else
@@ -104,9 +107,9 @@ namespace ospray {
           Tile __aligned(64) tile(tileId, fb->size, accumID);
 #endif
 
-          // serial_for(numJobs(tiledRenderer->spp, accumID), [&](int tid){
-          parallel_for(numJobs(tiledRenderer->spp, accumID), [&](int tid){
-            tiledRenderer->renderTile(perFrameData, tile, tid);
+          // serial_for(numJobs(renderer->spp, accumID), [&](int tid){
+          parallel_for(numJobs(renderer->spp, accumID), [&](int tid){
+            renderer->renderTile(perFrameData, tile, tid);
           });
 
           fb->setTile(tile);
@@ -116,7 +119,7 @@ namespace ospray {
         });
 
         dfb->waitUntilFinished();
-        tiledRenderer->endFrame(perFrameData,channelFlags);
+        renderer->endFrame(perFrameData,channelFlags);
 
         async_endFrame();
 

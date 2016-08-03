@@ -110,6 +110,9 @@ namespace ospray {
       void clear();
       float operator[](const vec2i &tile) const;
       void update(const vec2i &tile, const float error);
+#ifdef OSPRAY_MPI
+      void sync(); // broadcast tileErrorBuffer to all workers
+#endif
       float refine(const float errorThreshold);
 
     private:
