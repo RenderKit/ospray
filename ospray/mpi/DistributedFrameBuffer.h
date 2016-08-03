@@ -40,7 +40,7 @@ namespace ospray {
     DistributedFrameBuffer(mpi::async::CommLayer *comm,
                            const vec2i &numPixels,
                            size_t myHandle,
-                           ColorBufferFormat colorBufferFormat,
+                           ColorBufferFormat,
                            bool hasDepthBuffer,
                            bool hasAccumBuffer,
                            bool hasVarianceBuffer);

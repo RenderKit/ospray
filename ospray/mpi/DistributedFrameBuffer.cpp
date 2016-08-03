@@ -125,8 +125,6 @@ namespace ospray {
                                                false);
       }
     }
-
-    ispc::DFB_set(getIE(), numPixels.x, numPixels.y, colorBufferFormat);
   }
 
   DFB::~DistributedFrameBuffer()
