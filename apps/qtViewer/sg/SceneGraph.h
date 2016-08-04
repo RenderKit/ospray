@@ -77,7 +77,7 @@ namespace ospray {
       /*! 'render' the nodes */
       virtual void render(RenderContext &ctx)
       { 
-        for (uint i = 0; i < child.size(); i++) {
+        for (uint32_t i = 0; i < child.size(); i++) {
           assert(child[i]);
           PRINT(child[i].ptr);
           child[i]->render(ctx); 
@@ -87,7 +87,7 @@ namespace ospray {
       virtual box3f getBounds()
       {
         box3f bounds = empty;
-        for (uint i = 0; i < child.size(); i++) {
+        for (uint32_t i = 0; i < child.size(); i++) {
           assert(child[i].ptr);
           bounds.extend(child[i]->getBounds());
         }

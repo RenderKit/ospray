@@ -22,14 +22,14 @@ build-centos7-gcc:
     - gcc
     - build
 
-#build-fedora-gcc:
-#  type: build
-#  script:
-#    - scripts/build_gitlab/linux.sh
-#  tags:
-#    - fedora
-#    - gcc
-#    - build
+build-fedora-gcc:
+  type: build
+  script:
+    - scripts/build_gitlab/linux.sh
+  tags:
+    - fedora
+    - gcc
+    - build
 
 build-ubuntu-gcc:
   type: build

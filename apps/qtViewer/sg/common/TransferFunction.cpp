@@ -39,7 +39,7 @@ namespace ospray {
     {
       if (ospColorData) { ospRelease(ospColorData); ospColorData = nullptr; }
       this->colorArray.clear();
-      for (uint i = 0; i < colorArray.size(); ++i)
+      for (uint32_t i = 0; i < colorArray.size(); ++i)
         this->colorArray.push_back({i, colorArray[i]});
     }
 
@@ -56,7 +56,7 @@ namespace ospray {
     {
       if (x <= alphaArray.front().first)
         return alphaArray.front().second;
-      for (uint i = 1; i < alphaArray.size(); i++) {
+      for (uint32_t i = 1; i < alphaArray.size(); i++) {
         if (x <= alphaArray[i].first) {
           return
             alphaArray[i-1].second +
@@ -82,7 +82,7 @@ namespace ospray {
       if (ospColorData == nullptr) {
         // for now, no resampling - just use the colors ...
         vec3f *colors = (vec3f*)alloca(sizeof(vec3f)*colorArray.size());
-        for (uint i = 0; i < colorArray.size(); i++)
+        for (uint32_t i = 0; i < colorArray.size(); i++)
           colors[i] = colorArray[i].second;
         ospColorData = ospNewData(colorArray.size(),OSP_FLOAT3,colors); 
         ospCommit(ospColorData);
@@ -125,7 +125,7 @@ namespace ospray {
       if (name != "")
         registerNamedNode(name,this);
 
-      for (uint ii = 0; ii != node->child.size(); ii++) {
+      for (uint32_t ii = 0; ii != node->child.size(); ii++) {
         const xml::Node *child = node->child[ii];
         // -------------------------------------------------------
         // colors

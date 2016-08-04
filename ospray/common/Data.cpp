@@ -55,7 +55,7 @@ namespace ospray {
   {
     if (type == OSP_OBJECT) {
       Data **child = (Data **)data;
-      for (uint i = 0; i < numItems; i++) if (child[i]) child[i]->refDec();
+      for (uint32_t i = 0; i < numItems; i++) if (child[i]) child[i]->refDec();
     }
     if (!(flags & OSP_DATA_SHARED_BUFFER)) alignedFree(data);
   }
