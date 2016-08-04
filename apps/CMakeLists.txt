@@ -77,7 +77,7 @@ IF(NOT THIS_IS_MIC)
   ENDIF()
 
   # volume viewer application
-  IF(NOT (APPLE AND (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")))
+  IF(NOT (APPLE AND OSPRAY_COMPILER_ICC))
     OPTION(OSPRAY_APPS_VOLUMEVIEWER "Build ospVolumeViewer application." ON)
     IF(OSPRAY_APPS_VOLUMEVIEWER)
       ADD_SUBDIRECTORY(volumeViewer)

@@ -30,7 +30,7 @@ namespace ospray {
 
     Spheres::Sphere::Sphere(vec3f position, 
                             float radius,
-                            uint typeID) 
+                            uint32_t typeID)
       : position(position), 
         radius(radius), 
         typeID(typeID) 
@@ -73,7 +73,7 @@ namespace ospray {
       if (ofs == (size_t)-1) {
         cout << "#osp:qtv: 'Spheres' ofs is '-1', "
              << "generating set of random spheres..." << endl;
-        for (uint i = 0; i < num; i++) {
+        for (uint32_t i = 0; i < num; i++) {
           s.position.x = drand48();
           s.position.y = drand48();
           s.position.z = drand48();
@@ -82,7 +82,7 @@ namespace ospray {
         }
       } else {
         const vec3f *in = (const vec3f*)(binBasePtr+ofs);
-        for (uint i = 0; i < num; i++) {
+        for (uint32_t i = 0; i < num; i++) {
           memcpy(&s,&in[i],sizeof(*in));
           sphere.push_back(s);
         }
