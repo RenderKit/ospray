@@ -45,7 +45,7 @@ export void Model_init(void *uniform _model,
   uniform RTCAlgorithmFlags traversal_flags =
       RTC_INTERSECT_UNIFORM | RTC_INTERSECT_VARYING;
 
-#if (RTCORE_VERSION_MAJOR >= 2 && RTCORE_VERSION_MINOR >= 9)
+#if (RTCORE_VERSION_MAJOR >= 2 && RTCORE_VERSION_MINOR >= 10)
     traversal_flags |= RTC_INTERSECT_STREAM;
 #endif
 
