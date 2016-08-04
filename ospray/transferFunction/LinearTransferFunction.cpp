@@ -45,7 +45,6 @@ namespace ospray {
 
     // Set the opacity values.
     if (opacityValues) {
-      float *alpha = (float *)opacityValues->data;
       ispc::LinearTransferFunction_setOpacityValues(ispcEquivalent, 
                                                     opacityValues->numItems, 
                                                     (float *)opacityValues->data);

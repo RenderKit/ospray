@@ -177,7 +177,6 @@ namespace ospray {
       FILE *file = fopen(fileName.c_str(),"r");
       if (!file) 
         throw std::runtime_error("could not open input file "+fileName);
-      int numAtoms;
 
       int rc = 0;
       char atomType[1000];
@@ -195,8 +194,8 @@ namespace ospray {
     box3f Model::getBBox() const 
     {
       box3f bbox = empty;
-      for (int i=0;i<atom.size();i++)
-        bbox.extend(atom[i].position);
+      for (auto &a : atom)
+        bbox.extend(a.position);
       return bbox;
     }
 

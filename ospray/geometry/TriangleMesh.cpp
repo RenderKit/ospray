@@ -187,7 +187,7 @@ namespace ospray {
 
     bounds = empty;
     
-    for (int i=0;i<numVerts*numCompsInVtx;i+=numCompsInVtx) 
+    for (uint i = 0; i < numVerts*numCompsInVtx; i+=numCompsInVtx)
       bounds.extend(*(vec3f*)(vertex + i));
 
     if (logLevel >= 2) 

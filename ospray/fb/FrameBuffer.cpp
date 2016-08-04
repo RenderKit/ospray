@@ -27,11 +27,11 @@ namespace ospray {
     : size(size),
       numTiles(divRoundUp(size, getTileSize())),
       maxValidPixelID(size-vec2i(1)),
-      colorBufferFormat(colorBufferFormat),
-      frameID(-1),
       hasDepthBuffer(hasDepthBuffer),
       hasAccumBuffer(hasAccumBuffer),
-      hasVarianceBuffer(hasVarianceBuffer)
+      hasVarianceBuffer(hasVarianceBuffer),
+      colorBufferFormat(colorBufferFormat),
+      frameID(-1)
   {
     managedObjectType = OSP_FRAMEBUFFER;
     Assert(size.x > 0 && size.y > 0);

@@ -176,7 +176,6 @@ namespace ospray {
       if (!useSubvolume) {
         // Log out some progress stats after we've read LOG_PROGRESS_SIZE bytes (25GB)
         const size_t LOG_PROGRESS_SIZE = 25e9;
-        const size_t VOLUME_TOTAL_SIZE = voxelSize * volumeDimensions.x * volumeDimensions.y * volumeDimensions.z;
         size_t totalDataRead = 0;
         size_t dataSizeRead = 0;
 
@@ -205,7 +204,11 @@ namespace ospray {
               if (dataSizeRead >= LOG_PROGRESS_SIZE){
                 totalDataRead += dataSizeRead;
                 dataSizeRead = 0;
-                float percent = 100.0 * totalDataRead / static_cast<double>(VOLUME_TOTAL_SIZE);
+                const size_t VOLUME_TOTAL_SIZE =
+                    voxelSize *  volumeDimensions.x * volumeDimensions.y *
+                    volumeDimensions.z;
+                float percent = 100.0 * totalDataRead /
+                                static_cast<double>(VOLUME_TOTAL_SIZE);
                 std::cout << "#importRAW: Have read " << totalDataRead * 1e-9 << "GB of "
                   << VOLUME_TOTAL_SIZE * 1e-9 << "GB (" << percent << "%)" << std::endl;
               }

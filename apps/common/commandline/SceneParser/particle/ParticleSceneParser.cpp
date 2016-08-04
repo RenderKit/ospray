@@ -137,7 +137,7 @@ bool ParticleSceneParser::parse(int ac, const char **&av)
 
   if (loadedScene) {
     //TODO: this needs parallelized as it was in ospParticleViewer...
-    for (int i = 0; i < deferredLoadingListXYZ.size(); ++i) {
+    for (uint i = 0; i < deferredLoadingListXYZ.size(); ++i) {
       FileName defFileName = deferredLoadingListXYZ[i]->defFileName;
       FileName xyzFileName = deferredLoadingListXYZ[i]->xyzFileName;
       particle::Model *model = deferredLoadingListXYZ[i]->model;
@@ -147,7 +147,7 @@ bool ParticleSceneParser::parse(int ac, const char **&av)
       model->loadXYZ(xyzFileName);
     }
 
-    for (int i = 0; i < particleModel.size(); i++) {
+    for (uint i = 0; i < particleModel.size(); i++) {
       OSPModel model = ospNewModel();
       OSPData materialData = makeMaterials(m_renderer.handle(), particleModel[i]);
 

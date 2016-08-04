@@ -44,7 +44,8 @@ namespace ospray {
 
     //! constructor
     StructuredVolume::StructuredVolume()
-      : dimensions(-1), voxelType("<undefined>"), volume(NULL), mappedPointer(NULL)
+      : dimensions(-1), voxelType("<undefined>"),
+        mappedPointer(nullptr), volume(nullptr)
     {}
 
     /*! \brief returns a std::string with the c++ name of this class */
@@ -60,7 +61,7 @@ namespace ospray {
                                       const unsigned char *binBasePtr)
     {
       Assert2(binBasePtr,
-              "mapped binary file is NULL, in XML node that "
+              "mapped binary file is nullptr, in XML node that "
               "needs mapped binary data (sg::StructuredVolume)");
       voxelType = node->getProp("voxelType");
       if (node->hasProp("ofs"))
@@ -94,7 +95,7 @@ namespace ospray {
       ospSetString(volume,"voxelType",voxelType.c_str());
       ospSetVec3i(volume,"dimensions",(const osp::vec3i&)dimensions);
       size_t nPerSlice = (size_t)dimensions.x*(size_t)dimensions.y;
-      assert(mappedPointer != NULL);
+      assert(mappedPointer != nullptr);
 
       for (int z=0;z<dimensions.z;z++) {
         float *slice = (float*)(((unsigned char *)mappedPointer)+z*nPerSlice*sizeof(float));
@@ -121,7 +122,7 @@ namespace ospray {
 
     //! constructor
     StructuredVolumeFromFile::StructuredVolumeFromFile()
-      : dimensions(-1), fileName(""), voxelType("<undefined>"), volume(NULL)
+      : dimensions(-1), fileName(""), voxelType("<undefined>"), volume(nullptr)
     {}
 
     /*! \brief returns a std::string with the c++ name of this class */
@@ -179,8 +180,6 @@ namespace ospray {
       
       FileName realFileName = fileNameOfCorrespondingXmlDoc.path()+fileName;
       FILE *file = fopen(realFileName.c_str(),"rb");
-      float minValue = +std::numeric_limits<float>::infinity();
-      float maxValue = -std::numeric_limits<float>::infinity();
       if (!file) 
         throw std::runtime_error("StructuredVolumeFromFile::render(): could not open file '"
                                  +realFileName.str()+"' (expanded from xml file '"
@@ -242,7 +241,7 @@ namespace ospray {
 
     //! constructor
     StackedRawSlices::StackedRawSlices()
-      : dimensions(-1), baseName(""), voxelType("uint8_t"), volume(NULL)
+      : baseName(""), voxelType("uint8_t"), dimensions(-1), volume(nullptr)
     {}
 
     /*! \brief returns a std::string with the c++ name of this class */

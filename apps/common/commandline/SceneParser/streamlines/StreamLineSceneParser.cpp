@@ -73,8 +73,8 @@ struct Triangles {
   box3f getBounds() const
   {
     box3f bounds = empty;
-    for (int i=0;i<vertex.size();i++)
-      bounds.extend(vertex[i]);
+    for (const auto &v : vertex)
+      bounds.extend(v);
     return bounds;
   }
 };
@@ -82,9 +82,7 @@ struct Triangles {
 struct StreamLines {
   std::vector<vec3fa> vertex;
   std::vector<int>    index;
-  float radius;
-
-  StreamLines() : radius(0.001f) {}
+  float radius {0.001f};
 
   void parsePNT(const FileName &fn)
   {
@@ -132,6 +130,7 @@ struct StreamLines {
 
     int numStreamlines;
     int rc = fread(&numStreamlines, sizeof(int), 1, file);
+    (void)rc;
     Assert(rc == 1);
 
     for(int s=0; s<numStreamlines; s++) {
@@ -196,8 +195,8 @@ struct StreamLines {
   box3f getBounds() const
   {
     box3f bounds = empty;
-    for (int i=0;i<vertex.size();i++)
-      bounds.extend(vertex[i]);
+    for (const auto &v : vertex)
+      bounds.extend(v);
     return bounds;
   }
 };
@@ -326,7 +325,7 @@ void parseOSX(StreamLines *streamLines,
   if (doc->child.size() != 1 || doc->child[0]->name != "OSPRay")
     throw std::runtime_error("could not parse osx file: Not in OSPRay format!?");
   xml::Node *root_element = doc->child[0];
-  for (int childID=0;childID<root_element->child.size();childID++) {
+  for (uint childID = 0; childID < root_element->child.size(); childID++) {
     xml::Node *node = root_element->child[childID];
     if (node->name == "Info") {
       // ignore
@@ -335,13 +334,13 @@ void parseOSX(StreamLines *streamLines,
 
     if (node->name == "Model") {
       xml::Node *model_node = node;
-      for (int childID=0;childID<model_node->child.size();childID++) {
+      for (uint childID = 0; childID < model_node->child.size(); childID++) {
         xml::Node *node = model_node->child[childID];
 
         if (node->name == "StreamLines") {
 
           xml::Node *sl_node = node;
-          for (int childID=0;childID<sl_node->child.size();childID++) {
+          for (uint childID = 0; childID < sl_node->child.size(); childID++) {
             xml::Node *node = sl_node->child[childID];
             if (node->name == "vertex") {
               osxParseVec3fas(streamLines->vertex,node->content);
@@ -357,7 +356,7 @@ void parseOSX(StreamLines *streamLines,
 
         if (node->name == "TriangleMesh") {
           xml::Node *tris_node = node;
-          for (int childID=0;childID<tris_node->child.size();childID++) {
+          for (uint childID = 0; childID < tris_node->child.size(); childID++) {
             xml::Node *node = tris_node->child[childID];
             if (node->name == "vertex") {
               osxParseVec3fas(triangles->vertex,node->content);
@@ -390,16 +389,13 @@ void exportOSX(const char *fn,StreamLines *streamLines, Triangles *triangles)
       fprintf(file,"<StreamLines>\n");
       {
         fprintf(file,"<vertex>\n");
-        for (int i=0;i<streamLines->vertex.size();i++)
-          fprintf(file,"%f %f %f\n",
-                  streamLines->vertex[i].x,
-                  streamLines->vertex[i].y,
-                  streamLines->vertex[i].z);
+        for (const auto &v : streamLines->vertex)
+          fprintf(file,"%f %f %f\n", v.x, v.y, v.z);
         fprintf(file,"</vertex>\n");
 
         fprintf(file,"<index>\n");
-        for (int i=0;i<streamLines->index.size();i++)
-          fprintf(file,"%i ",streamLines->index[i]);
+        for (const auto & i : streamLines->index)
+          fprintf(file,"%i ",i);
         fprintf(file,"\n</index>\n");
       }
       fprintf(file,"</StreamLines>\n");
@@ -408,27 +404,18 @@ void exportOSX(const char *fn,StreamLines *streamLines, Triangles *triangles)
       fprintf(file,"<TriangleMesh>\n");
       {
         fprintf(file,"<vertex>\n");
-        for (int i=0;i<triangles->vertex.size();i++)
-          fprintf(file,"%f %f %f\n",
-                  triangles->vertex[i].x,
-                  triangles->vertex[i].y,
-                  triangles->vertex[i].z);
+        for (const auto &v : triangles->vertex)
+          fprintf(file,"%f %f %f\n", v.x, v.y, v.z);
         fprintf(file,"</vertex>\n");
 
         fprintf(file,"<color>\n");
-        for (int i=0;i<triangles->color.size();i++)
-          fprintf(file,"%f %f %f\n",
-                  triangles->color[i].x,
-                  triangles->color[i].y,
-                  triangles->color[i].z);
+        for (const auto &c : triangles->color)
+          fprintf(file,"%f %f %f\n", c.x, c.y, c.z);
         fprintf(file,"</color>\n");
 
         fprintf(file,"<index>\n");
-        for (int i=0;i<triangles->index.size();i++)
-          fprintf(file,"%i %i %i\n",
-                  triangles->index[i].x,
-                  triangles->index[i].y,
-                  triangles->index[i].z);
+        for (const auto &i : triangles->index)
+          fprintf(file,"%i %i %i\n", i.x, i.y, i.z);
         fprintf(file,"</index>\n");
 
       }

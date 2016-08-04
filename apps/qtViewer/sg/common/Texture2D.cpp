@@ -90,8 +90,8 @@ namespace ospray {
           fread(tex->texel,width*height*3,1,file);
           // flip in y, because OSPRay's textures have the origin at the lower left corner
           unsigned char *texels = (unsigned char *)tex->texel;
-          for (size_t y=0; y < height/2; y++)
-            for (size_t x=0; x < width*3; x++)
+          for (int y=0; y < height/2; y++)
+            for (int x=0; x < width*3; x++)
               std::swap(texels[y*width*3+x], texels[(height-1-y)*width*3+x]);
         } catch(std::runtime_error e) {
           std::cerr << e.what() << std::endl;
