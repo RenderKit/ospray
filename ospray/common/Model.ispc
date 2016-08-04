@@ -40,13 +40,22 @@ export void Model_init(void *uniform _model,
   if (model->embreeSceneHandle)
     rtcDeleteScene(model->embreeSceneHandle);
 
+#if RTCORE_VERSION > 29000
+  model->embreeSceneHandle = rtcDeviceNewScene((RTCDevice)embreeDevice,
+                                               //RTC_SCENE_STATIC|RTC_SCENE_HIGH_QUALITY,
+                                               RTC_SCENE_STATIC,//|RTC_SCENE_COMPACT,
+                                               //RTC_SCENE_DYNAMIC,
+                                               //RTC_SCENE_DYNAMIC|RTC_SCENE_COMPACT,
+                                               RTC_INTERSECT_UNIFORM|RTC_INTERSECT_VARYING|RTC_INTERSECT_STREAM);
+#else
   model->embreeSceneHandle = rtcDeviceNewScene((RTCDevice)embreeDevice,
                                                //RTC_SCENE_STATIC|RTC_SCENE_HIGH_QUALITY,
                                                RTC_SCENE_STATIC,//|RTC_SCENE_COMPACT,
                                                //RTC_SCENE_DYNAMIC,
                                                //RTC_SCENE_DYNAMIC|RTC_SCENE_COMPACT,
                                                RTC_INTERSECT_UNIFORM|RTC_INTERSECT_VARYING);
-  
+#endif
+
   if (model->geometry) delete[] model->geometry;
   model->geometryCount = numGeometries;
   if (numGeometries > 0)
