@@ -330,6 +330,8 @@ __asm__ __volatile__ (									\
 					IACA_UD_BYTES}
 
 namespace ospcommon {
-
+#ifdef __WIN32__
+  using uint = unsigned int;
+#endif
 }
   
