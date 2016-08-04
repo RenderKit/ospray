@@ -34,7 +34,7 @@ namespace ospray {
       void setDefaultValues();
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const { return "ospray::sg::TransferFunction"; }
+      virtual std::string toString() const;
 
       //! \brief creates ospray-side object(s) for this node
       virtual void render(RenderContext &ctx);
@@ -59,7 +59,7 @@ namespace ospray {
       /*! return the ospray handle for this xfer fct, so we can assign
         it to ospray obejcts that need a reference to the ospray
         version of this xf */
-      OSPTransferFunction getOSPHandle() const { return ospTransferFunction; };
+      OSPTransferFunction getOSPHandle() const { return ospTransferFunction; }
     protected:
       OSPTransferFunction ospTransferFunction;
       OSPData ospColorData;

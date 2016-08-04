@@ -105,8 +105,7 @@ namespace ospray {
     {
       assert(node->name == "Info");
       Info *info = new Info;
-      for (int i=0;i<node->child.size();i++) {
-        xml::Node *c = node->child[i];
+      for (auto *c : node->child) {
         if (c->name == "acks")
           info->acks = c->content;
         else if (c->name == "description")
@@ -138,8 +137,7 @@ namespace ospray {
     {
       assert(node->name == "Integrator");
       Integrator *integrator = new Integrator(node->getProp("type"));
-      for (int i=0;i<node->child.size();i++) {
-        xml::Node *c = node->child[i];
+      for (auto *c : node->child) {
         if (parseParam(integrator,c))
           continue;
         throw std::runtime_error("unknown node type '"+c->name
@@ -148,10 +146,11 @@ namespace ospray {
       return integrator;
     }
     
-    void parseWorldNode(sg::World *world, xml::Node *node, const unsigned char *binBasePtr)
+    void parseWorldNode(sg::World *world,
+                        xml::Node *node,
+                        const unsigned char *binBasePtr)
     {
-      for (int i=0;i<node->child.size();i++) {
-        xml::Node *c = node->child[i];
+      for (auto *c : node->child) {
         Ref<sg::Node> newNode = createNodeFrom(c,binBasePtr);
         world->node.push_back(newNode);
       }

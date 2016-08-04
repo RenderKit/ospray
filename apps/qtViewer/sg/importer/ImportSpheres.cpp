@@ -59,9 +59,9 @@ namespace ospray {
       sg::Spheres *spheres = new sg::Spheres;
 
       float radius = 1.f/numPerSide;
-      for (int z=0;z<numPerSide;z++)
-        for (int y=0;y<numPerSide;y++)
-          for (int x=0;x<numPerSide;x++) {
+      for (uint z = 0; z < numPerSide; z++)
+        for (uint y = 0; y < numPerSide; y++)
+          for (uint x = 0; x < numPerSide; x++) {
             vec3f a;
             a.x = x/float(numPerSide);
             a.y = y/float(numPerSide);

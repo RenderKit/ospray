@@ -138,8 +138,6 @@ Texture2D *loadTexture(const std::string &_path, const std::string &fileNameBase
             // http://netpbm.sourceforge.net/doc/pfm.html
             int rc = 0;
             FILE *file = fopen(fileName.str().c_str(), "rb");
-            const int LINESZ = 10000;
-            char lineBuf[LINESZ + 1];
             if (!file) {
                 throw std::runtime_error("#osp:miniSG: could not open texture file '"+fileName.str()+"'.");
             }
@@ -192,8 +190,8 @@ Texture2D *loadTexture(const std::string &_path, const std::string &fileNameBase
             fread(tex->data, sizeof(float), width * height * numChannels, file);
             // flip in y, because OSPRay's textures have the origin at the lower left corner
             float *texels = (float *)tex->data;
-            for (size_t y = 0; y < height / 2; ++y) {
-                for (size_t x = 0; x < width * numChannels; ++x) {
+            for (int y = 0; y < height / 2; ++y) {
+                for (int x = 0; x < width * numChannels; ++x) {
                     // Scale the pixels by the scale factor
                     texels[y * width * numChannels + x] = texels[y * width * numChannels + x] * scaleFactor;
                     texels[(height - 1 - y) * width * numChannels + x] = texels[(height - 1 - y) * width * numChannels + x] * scaleFactor;

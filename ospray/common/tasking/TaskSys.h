@@ -107,12 +107,12 @@ namespace ospray {
 // Inlined function definitions ///////////////////////////////////////////////
 
   __forceinline Task::Task(const char *name)
-    : status(Task::INITIALIZING),
-      name(name),
-      numJobsCompleted(),
+    : numJobsCompleted(),
       numJobsStarted(),
+      numJobsInTask(0),
+      status(Task::INITIALIZING),
       numMissingDependencies(),
-      numJobsInTask(0)
+      name(name)
   {
   }
 
