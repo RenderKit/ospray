@@ -4,14 +4,14 @@ stages:
 
 ### BUILD JOBS ###
 
-#build-centos6-gcc:
-#  type: build
-#  script:
-#    - scripts/build_gitlab/linux.sh
-#  tags:
-#    - centos6
-#    - gcc
-#    - build
+build-centos6-gcc:
+  type: build
+  script:
+    - scripts/build_gitlab/linux.sh
+  tags:
+    - centos6
+    - gcc
+    - build
 
 build-centos7-gcc:
   type: build
@@ -22,42 +22,42 @@ build-centos7-gcc:
     - gcc
     - build
 
-#build-fedora-gcc:
-#  type: build
-#  script:
-#    - scripts/build_gitlab/linux.sh
-#  tags:
-#    - fedora
-#    - gcc
-#    - build
+build-fedora-gcc:
+  type: build
+  script:
+    - scripts/build_gitlab/linux.sh
+  tags:
+    - fedora
+    - gcc
+    - build
 
-#build-ubuntu-gcc:
-#  type: build
-#  script:
-#    - scripts/build_gitlab/linux.sh
-#  tags:
-#    - ubuntu
-#    - gcc
-#    - build
+build-ubuntu-gcc:
+  type: build
+  script:
+    - scripts/build_gitlab/linux.sh
+  tags:
+    - ubuntu
+    - gcc
+    - build
 
-#build-ubuntu-clang:
-#  type: build
-#  script:
-#    - export CC=clang
-#    - export CXX=clang++
-#    - scripts/build_gitlab/linux.sh
-#  tags:
-#    - ubuntu
-#    - clang
+build-ubuntu-clang:
+  type: build
+  script:
+    - export CC=clang
+    - export CXX=clang++
+    - scripts/build_gitlab/linux.sh
+  tags:
+    - ubuntu
+    - clang
 
-#build-sles-gcc:
-#  type: build
-#  script:
-#    - scripts/build_gitlab/linux.sh
-#  tags:
-#    - sles
-#    - gcc
-#    - build
+build-sles-gcc:
+  type: build
+  script:
+    - scripts/build_gitlab/linux.sh
+  tags:
+    - sles
+    - gcc
+    - build
 
 build-osx-clang:
   type: build
@@ -77,23 +77,23 @@ build-windows-msvc:
     - build
     - win7
 
-#build-windows-msvc14:
-#  type: build
-#  script:
-#    - call scripts\build_gitlab\win.bat "Visual Studio 14 2015 Win64" "v140"
-#  tags:
-#    - msvc14
-#    - build
-#    - win7
+build-windows-msvc14:
+  type: build
+  script:
+    - call scripts\build_gitlab\win.bat "Visual Studio 14 2015 Win64" "v140"
+  tags:
+    - msvc14
+    - build
+    - win7
 
-#build-windows-icc:
-#  type: build
-#  script:
-#    - call scripts\build_gitlab\win.bat "Visual Studio 12 2013 Win64" "Intel C++ Compiler 16.0"
-#  tags:
-#    - icc
-#    - build
-#    - win7
+build-windows-icc:
+  type: build
+  script:
+    - call scripts\build_gitlab\win.bat "Visual Studio 12 2013 Win64" "Intel C++ Compiler 16.0"
+  tags:
+    - icc
+    - build
+    - win7
 
 ### RELEASE JOBS ###
 
