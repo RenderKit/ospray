@@ -37,7 +37,7 @@ namespace ospray {
       lightArray.clear();
 
       if (lightData) {
-        for (uint i = 0; i < lightData->size(); i++)
+        for (uint32_t i = 0; i < lightData->size(); i++)
           lightArray.push_back(((Light**)lightData->data)[i]->getIE());
       }
 

@@ -77,7 +77,7 @@ namespace ospray {
       }
       // PRINT(len);
       
-      for (uint i = 0; i < numParticles; i++) {
+      for (uint32_t i = 0; i < numParticles; i++) {
         Particle p;
         int rc = fread(&p,sizeof(p),1,file);
         if (rc != 1) {
@@ -132,7 +132,7 @@ namespace ospray {
       }
       // PRINT(len);
       
-      for (uint i = 0; i < numParticles; i++) {
+      for (uint32_t i = 0; i < numParticles; i++) {
         double attrib;
         int rc = fread(&attrib,sizeof(attrib),1,file);
         if (rc != 1) {
@@ -179,7 +179,7 @@ namespace ospray {
       }
       // PRINT(len);
       
-      for (uint i = 0; i < numParticles; i++) {
+      for (uint32_t i = 0; i < numParticles; i++) {
         float attrib;
         int rc = fread(&attrib,sizeof(attrib),1,file);
         if (rc != 1) {
@@ -219,7 +219,7 @@ namespace ospray {
       std::string variable;
       std::string filename;
       std::string varType = var->getProp("type");
-      for (uint i = 0; i < var->child.size(); i++) {
+      for (uint32_t i = 0; i < var->child.size(); i++) {
         xml::Node *n = var->child[i];
         if (n->name == "index") {
           index = atoi(n->content.c_str());
@@ -282,7 +282,7 @@ namespace ospray {
       assert(doc->child.size() == 1);
       xml::Node *node = doc->child[0];
       assert(node->name == "Uintah_Output");
-      for (uint i = 0; i < node->child.size(); i++) {
+      for (uint32_t i = 0; i < node->child.size(); i++) {
         xml::Node *c = node->child[i];
         assert(c->name == "Variable");
         parse__Variable(model,basePath,c);
@@ -293,10 +293,10 @@ namespace ospray {
                                      const std::string &basePath, xml::Node *node)
     {
       assert(node->name == "Data");
-      for (uint i = 0; i < node->child.size(); i++) {
+      for (uint32_t i = 0; i < node->child.size(); i++) {
         xml::Node *c = node->child[i];
         assert(c->name == "Datafile");
-        for (uint j = 0; j < c->prop.size(); j++) {
+        for (uint32_t j = 0; j < c->prop.size(); j++) {
           xml::Prop *p = c->prop[j];
           if (p->name == "href") {
             try {
@@ -319,7 +319,7 @@ namespace ospray {
                                      xml::Node *node)
     {
       assert(node->name == "Meta");
-      for (uint i = 0; i < node->child.size(); i++) {
+      for (uint32_t i = 0; i < node->child.size(); i++) {
         xml::Node *c = node->child[i];
         if (c->name == "endianness") {
           if (c->content == "big_endian") {
@@ -333,7 +333,7 @@ namespace ospray {
                                 const std::string &basePath, xml::Node *node)
     {
       assert(node->name == "Uintah_timestep");
-      for (uint i = 0; i < node->child.size(); i++) {
+      for (uint32_t i = 0; i < node->child.size(); i++) {
         xml::Node *c = node->child[i];
         if (c->name == "Meta") {
           parse__Uintah_TimeStep_Meta(model,basePath,c);
