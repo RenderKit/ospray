@@ -201,6 +201,7 @@ namespace ospray {
       tile->region = bgTile.region;
       tile->fbSize = bgTile.fbSize;
       tile->rcp_fbSize = bgTile.rcp_fbSize;
+      tile->accumID = accumID;
       tile->generation = 1;
       tile->children   = 0; //nextGenTile-1;
 
