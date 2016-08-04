@@ -40,15 +40,15 @@ build-ubuntu-gcc:
     - gcc
     - build
 
-build-ubuntu-clang:
-  type: build
-  script:
-    - export CC=clang
-    - export CXX=clang++
-    - scripts/build_gitlab/linux.sh
-  tags:
-    - ubuntu
-    - clang
+#build-ubuntu-clang:
+#  type: build
+#  script:
+#    - export CC=clang
+#    - export CXX=clang++
+#    - scripts/build_gitlab/linux.sh
+#  tags:
+#    - ubuntu
+#    - clang
 
 build-sles-gcc:
   type: build
