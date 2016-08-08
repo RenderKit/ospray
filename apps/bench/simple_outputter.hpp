@@ -62,7 +62,7 @@ namespace hayai
                 << std::setprecision(5)
                 << std::setw(9)
                 << result.IterationsPerSecondAverage() * numBenchmarkFrames
-                << " fps";
+                << " fps\n";
     }
 
 
