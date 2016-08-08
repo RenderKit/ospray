@@ -91,6 +91,8 @@ OSPRAY_CONFIGURE_COMPILER()
 OPTION(OSPRAY_USE_EXTERNAL_EMBREE
        "Use a pre-built Embree instead of the internally built version" ON)
 
+OPTION(OSPRAY_USE_EMBREE_STREAMS "Enable Streams if using Embree 2.10.0+" OFF)
+
 OPTION(OSPRAY_VOLUME_VOXELRANGE_IN_APP "Move 'voxelrange' computations to app?")
 MARK_AS_ADVANCED(OSPRAY_VOLUME_VOXELRANGE_IN_APP)
 
