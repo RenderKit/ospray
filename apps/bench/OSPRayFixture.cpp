@@ -34,6 +34,7 @@ int OSPRayFixture::height = 1024;
 
 int OSPRayFixture::numBenchFrames = 100;
 int OSPRayFixture::numWarmupFrames = 10;
+bool OSPRayFixture::logFrameTimes = false;
 
 vec3f OSPRayFixture::bg_color = {1.f, 1.f, 1.f};
 

@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <chrono>
 #include "hayai/hayai.hpp"
 #include "simple_outputter.hpp"
 
@@ -27,8 +28,16 @@ using std::string;
 
 BENCHMARK_F(OSPRayFixture, test1, 1, 1)
 {
-  for (int i = 0; i < numBenchFrames; ++i)
+  using namespace std::chrono;
+  for (int i = 0; i < numBenchFrames; ++i) {
+    high_resolution_clock::time_point startFrame = high_resolution_clock::now();
     renderer->renderFrame(*fb, OSP_FB_COLOR | OSP_FB_ACCUM);
+    high_resolution_clock::time_point endFrame = high_resolution_clock::now();
+    if (logFrameTimes) {
+      milliseconds elapsed = duration_cast<milliseconds>(endFrame - startFrame);
+      std::cout << elapsed.count() << "ms\n";
+    }
+  }
 }
 
 // NOTE(jda) - Implement make_unique() as it didn't show up until C++14...
@@ -93,6 +102,10 @@ void printUsageAndExit()
   cout << "                      default: 100" << endl;
 
   cout << endl;
+  cout << "    -lft | --log-frame-times --> Log frame time in ms for every frame rendered"
+       << endl;
+
+  cout << endl;
   cout << "**camera rendering options**" << endl;
 
   cout << endl;
@@ -149,7 +162,9 @@ void parseCommandLine(int argc, const char *argv[])
 
   for (int i = 1; i < argc; ++i) {
     string arg = argv[i];
-    if (arg == "-i" || arg == "--image") {
+    if (arg == "-h" || arg == "--help") {
+      printUsageAndExit();
+    } else if (arg == "-i" || arg == "--image") {
       OSPRayFixture::imageOutputFile = argv[++i];
     } else if (arg == "-w" || arg == "--width") {
       OSPRayFixture::width = atoi(argv[++i]);
@@ -164,6 +179,8 @@ void parseCommandLine(int argc, const char *argv[])
       color.x = atof(argv[++i]);
       color.y = atof(argv[++i]);
       color.z = atof(argv[++i]);
+    } else if (arg == "-lft" || arg == "--log-frame-times") {
+      OSPRayFixture::logFrameTimes = true;
     }
   }
 
