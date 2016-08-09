@@ -56,47 +56,47 @@ namespace ospray {
 OSPGlutViewer::OSPGlutViewer(const box3f &worldBounds, cpp::Model model,
                              cpp::Renderer renderer, cpp::Camera camera)
   : Glut3DWidget(Glut3DWidget::FRAMEBUFFER_NONE),
-    m_model(model),
-    m_fb(nullptr),
-    m_renderer(renderer),
-    m_camera(camera),
-    m_queuedRenderer(nullptr),
-    m_alwaysRedraw(true),
-    m_accumID(-1),
-    m_fullScreen(false),
-    m_useDisplayWall(false)
+    sceneModel(model),
+    frameBuffer(nullptr),
+    renderer(renderer),
+    camera(camera),
+    queuedRenderer(nullptr),
+    alwaysRedraw(true),
+    accumID(-1),
+    fullScreen(false),
+    useDisplayWall(false)
 {
   setWorldBounds(worldBounds);
 
-  m_renderer.set("world",  m_model);
-  m_renderer.set("model",  m_model);
-  m_renderer.set("camera", m_camera);
-  m_renderer.commit();
+  renderer.set("world",  sceneModel);
+  renderer.set("model",  sceneModel);
+  renderer.set("camera", camera);
+  renderer.commit();
 
 #if 0
   cout << "#ospGlutViewer: set world bounds " << worldBounds
        << ", motion speed " << motionSpeed << endl;
 #endif
 
-  m_resetAccum = false;
+  resetAccum = false;
 }
 
 void OSPGlutViewer::setRenderer(OSPRenderer renderer)
 {
-  lock_guard<mutex> lock{m_rendererMutex};
-  m_queuedRenderer = renderer;
+  lock_guard<mutex> lock{rendererMutex};
+  queuedRenderer = renderer;
 }
 
 void OSPGlutViewer::resetAccumulation()
 {
-  m_resetAccum = true;
+  resetAccum = true;
 }
 
 void OSPGlutViewer::toggleFullscreen()
 {
-  m_fullScreen = !m_fullScreen;
+  fullScreen = !fullScreen;
 
-  if(m_fullScreen) {
+  if(fullScreen) {
     glutFullScreen();
   } else {
     glutPositionWindow(0,10);
@@ -105,7 +105,7 @@ void OSPGlutViewer::toggleFullscreen()
 
 void OSPGlutViewer::resetView()
 {
-  viewPort = m_viewPort;
+  viewPort = glutViewPort;
 }
 
 void OSPGlutViewer::printViewport()
@@ -119,8 +119,8 @@ void OSPGlutViewer::printViewport()
 
 void OSPGlutViewer::saveScreenshot(const std::string &basename)
 {
-  const uint32_t *p = (uint32_t*)m_fb.map(OSP_FB_COLOR);
-  writePPM(basename + ".ppm", m_windowSize.x, m_windowSize.y, p);
+  const uint32_t *p = (uint32_t*)frameBuffer.map(OSP_FB_COLOR);
+  writePPM(basename + ".ppm", windowSize.x, windowSize.y, p);
   cout << "#ospGlutViewer: saved current frame to '" << basename << ".ppm'"
        << endl;
 }
@@ -128,23 +128,23 @@ void OSPGlutViewer::saveScreenshot(const std::string &basename)
 void OSPGlutViewer::setDisplayWall(const OSPGlutViewer::DisplayWall &dw)
 {
   displayWall = dw;
-  m_useDisplayWall = true;
+  useDisplayWall = true;
 }
 
 void OSPGlutViewer::reshape(const vec2i &newSize)
 {
   Glut3DWidget::reshape(newSize);
-  m_windowSize = newSize;
-  m_fb = cpp::FrameBuffer(osp::vec2i{newSize.x, newSize.y}, OSP_FB_SRGBA,
+  windowSize = newSize;
+  frameBuffer = cpp::FrameBuffer(osp::vec2i{newSize.x, newSize.y}, OSP_FB_SRGBA,
                           OSP_FB_COLOR | OSP_FB_DEPTH | OSP_FB_ACCUM);
 
-  m_fb.clear(OSP_FB_ACCUM);
+  frameBuffer.clear(OSP_FB_ACCUM);
 
   /*! for now, let's just attach the pixel op to the _main_ frame
       buffer - eventually we need to have a _second_ frame buffer
       of the proper (much higher) size, but for now let's just use
       the existing one... */
-  if (m_useDisplayWall && displayWall.fb.handle() != m_fb.handle()) {
+  if (useDisplayWall && displayWall.fb.handle() != frameBuffer.handle()) {
 #if OSPRAY_DISPLAY_WALD
     displayWall.camera = cpp::Camera("perspective");
     displayWall.camera.set("aspect", displayWall.size.x/float(displayWall.size.y));
@@ -174,8 +174,8 @@ void OSPGlutViewer::reshape(const vec2i &newSize)
     displayWall.fb.setPixelOp(displayWall.po);
   }
 
-  m_camera.set("aspect", viewPort.aspect);
-  m_camera.commit();
+  camera.set("aspect", viewPort.aspect);
+  camera.commit();
   viewPort.modified = true;
   forceRedraw();
 }
@@ -184,7 +184,7 @@ void OSPGlutViewer::keypress(char key, const vec2i &where)
 {
   switch (key) {
   case 'R':
-    m_alwaysRedraw = !m_alwaysRedraw;
+    alwaysRedraw = !alwaysRedraw;
     forceRedraw();
     break;
   case '!':
@@ -242,7 +242,7 @@ void OSPGlutViewer::mouseButton(int32_t whichButton,
     vec2f normpos = vec2f(pos.x / (float)windowSize.x,
                           1.0f - pos.y / (float)windowSize.y);
     OSPPickResult pick;
-    ospPick(&pick, m_renderer.handle(),
+    ospPick(&pick, renderer.handle(),
             osp::vec2f{normpos.x, normpos.y});
     if(pick.hit) {
       viewPort.at = ospcommon::vec3f{pick.position.x,
@@ -257,7 +257,7 @@ void OSPGlutViewer::mouseButton(int32_t whichButton,
 
 void OSPGlutViewer::display()
 {
-  if (!m_fb.handle() || !m_renderer.handle()) return;
+  if (!frameBuffer.handle() || !renderer.handle()) return;
 
   static int frameID = 0;
 
@@ -268,17 +268,17 @@ void OSPGlutViewer::display()
   // call (which in itself will not do a lot other than triggering
   // work), but the average time between the two calls is roughly the
   // frame rate (including display overhead, of course)
-  if (frameID > 0) m_fps.doneRender();
+  if (frameID > 0) fps.doneRender();
 
   // NOTE: consume a new renderer if one has been queued by another thread
   switchRenderers();
 
-  if (m_resetAccum) {
-    m_fb.clear(OSP_FB_ACCUM);
-    m_resetAccum = false;
+  if (resetAccum) {
+    frameBuffer.clear(OSP_FB_ACCUM);
+    resetAccum = false;
   }
 
-  m_fps.startRender();
+  fps.startRender();
   //}
 
   ++frameID;
@@ -286,20 +286,20 @@ void OSPGlutViewer::display()
   if (viewPort.modified) {
     static bool once = true;
     if(once) {
-      m_viewPort = viewPort;
+      glutViewPort = viewPort;
       once = false;
     }
-    Assert2(m_camera.handle(),"ospray camera is null");
-    m_camera.set("pos", viewPort.from);
+    Assert2(camera.handle(),"ospray camera is null");
+    camera.set("pos", viewPort.from);
     auto dir = viewPort.at - viewPort.from;
-    m_camera.set("dir", dir);
-    m_camera.set("up", viewPort.up);
-    m_camera.set("aspect", viewPort.aspect);
-    m_camera.set("fovy", viewPort.openingAngle);
-    m_camera.commit();
+    camera.set("dir", dir);
+    camera.set("up", viewPort.up);
+    camera.set("aspect", viewPort.aspect);
+    camera.set("fovy", viewPort.openingAngle);
+    camera.commit();
 
 #if OSPRAY_DISPLAY_WALD
-    if (m_useDisplayWall) {
+    if (useDisplayWall) {
       displayWall.camera.set("pos", viewPort.from);
       displayWall.camera.set("dir", dir);
       displayWall.camera.set("up", viewPort.up);
@@ -308,45 +308,45 @@ void OSPGlutViewer::display()
 #endif
 
     viewPort.modified = false;
-    m_accumID=0;
-    m_fb.clear(OSP_FB_ACCUM);
+    accumID=0;
+    frameBuffer.clear(OSP_FB_ACCUM);
 
-    if (m_useDisplayWall)
+    if (useDisplayWall)
       displayWall.fb.clear(OSP_FB_ACCUM);
   }
 
-  m_renderer.renderFrame(m_fb, OSP_FB_COLOR | OSP_FB_ACCUM);
-  if (m_useDisplayWall) {
+  renderer.renderFrame(frameBuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
+  if (useDisplayWall) {
 #if OSPRAY_DISPLAY_WALD
     // when using displaywald we use two different camera (to adjust
     // for both different aspect ratios as well as for possibly
     // different stereo settings in viewer window vs display wall)
-    m_renderer.set("camera",displayWall.camera);
-    m_renderer.commit();
-    m_renderer.renderFrame(displayWall.fb, OSP_FB_COLOR | OSP_FB_ACCUM);
-    m_renderer.set("camera",m_camera);
-    m_renderer.commit();
+    renderer.set("camera",displayWall.camera);
+    renderer.commit();
+    renderer.renderFrame(displayWall.fb, OSP_FB_COLOR | OSP_FB_ACCUM);
+    renderer.set("camera",camera);
+    renderer.commit();
 #else
-    m_renderer.renderFrame(displayWall.fb, OSP_FB_COLOR | OSP_FB_ACCUM);
+    renderer.renderFrame(displayWall.fb, OSP_FB_COLOR | OSP_FB_ACCUM);
 #endif
   }
-  ++m_accumID;
+  ++accumID;
 
   // set the glut3d widget's frame buffer to the opsray frame buffer,
   // then display
-  ucharFB = (uint32_t *)m_fb.map(OSP_FB_COLOR);
+  ucharFB = (uint32_t *)frameBuffer.map(OSP_FB_COLOR);
   frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
   Glut3DWidget::display();
 
-  m_fb.unmap(ucharFB);
+  frameBuffer.unmap(ucharFB);
 
   // that pointer is no longer valid, so set it to null
   ucharFB = nullptr;
 
   std::string title("OSPRay GLUT Viewer");
 
-  if (m_alwaysRedraw) {
-    title += " (" + std::to_string((long double)m_fps.getFPS()) + " fps)";
+  if (alwaysRedraw) {
+    title += " (" + std::to_string((long double)fps.getFPS()) + " fps)";
     setTitle(title);
     forceRedraw();
   } else {
@@ -356,12 +356,12 @@ void OSPGlutViewer::display()
 
 void OSPGlutViewer::switchRenderers()
 {
-  lock_guard<mutex> lock{m_rendererMutex};
+  lock_guard<mutex> lock{rendererMutex};
 
-  if (m_queuedRenderer.handle()) {
-    m_renderer = m_queuedRenderer;
-    m_queuedRenderer = nullptr;
-    m_fb.clear(OSP_FB_ACCUM);
+  if (queuedRenderer.handle()) {
+    renderer = queuedRenderer;
+    queuedRenderer = nullptr;
+    frameBuffer.clear(OSP_FB_ACCUM);
   }
 }
 

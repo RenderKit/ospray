@@ -87,26 +87,26 @@ namespace ospray {
 
     // Data //
 
-    cpp::Model       m_model;
-    cpp::FrameBuffer m_fb;
-    cpp::Renderer    m_renderer;
-    cpp::Camera      m_camera;
+    cpp::Model       sceneModel;
+    cpp::FrameBuffer frameBuffer;
+    cpp::Renderer    renderer;
+    cpp::Camera      camera;
 
-    ospray::glut3D::FPSCounter m_fps;
+    ospray::glut3D::FPSCounter fps;
 
-    std::mutex m_rendererMutex;
-    cpp::Renderer m_queuedRenderer;
+    std::mutex rendererMutex;
+    cpp::Renderer queuedRenderer;
 
-    bool m_alwaysRedraw;
+    bool alwaysRedraw;
 
-    ospcommon::vec2i m_windowSize;
-    int m_accumID;
-    bool m_fullScreen;
-    glut3D::Glut3DWidget::ViewPort m_viewPort;
+    ospcommon::vec2i windowSize;
+    int accumID;
+    bool fullScreen;
+    glut3D::Glut3DWidget::ViewPort glutViewPort;
 
-    std::atomic<bool> m_resetAccum;
+    std::atomic<bool> resetAccum;
 
-    bool m_useDisplayWall;
+    bool useDisplayWall;
   };
 
 }// namespace ospray
