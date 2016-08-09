@@ -27,7 +27,7 @@ bool DefaultCameraParser::parse(int ac, const char **&av)
   for (int i = 1; i < ac; i++) {
     const std::string arg = av[i];
     if (arg == "--camera" || arg == "-c") {
-      m_cameraType = av[++i];
+      cameraType = av[++i];
     } else if (arg == "-v" || arg == "--view") {
       std::ifstream fin(av[++i]);
       if (!fin.is_open())
@@ -40,34 +40,31 @@ bool DefaultCameraParser::parse(int ac, const char **&av)
       while (fin >> token)
       {
         if (token == "-vp")
-          fin >> m_eye.x >> m_eye.y >> m_eye.z;
+          fin >> eye.x >> eye.y >> eye.z;
         else if (token == "-vu")
-          fin >> m_up.x >> m_up.y >> m_up.z;
+          fin >> up.x >> up.y >> up.z;
         else if (token == "-vi")
-          fin >> m_gaze.x >> m_gaze.y >> m_gaze.z;
+          fin >> gaze.x >> gaze.y >> gaze.z;
         else if (token == "-fv")
-          fin >> m_fovy;
+          fin >> fovy;
         else
           throw std::runtime_error("Unrecognized token:  \"" + token + '\"');
       }
 
     } else if (arg == "-vp" || arg == "--eye") {
-      auto &pos = m_eye;
-      pos.x = atof(av[++i]);
-      pos.y = atof(av[++i]);
-      pos.z = atof(av[++i]);
+      eye.x = atof(av[++i]);
+      eye.y = atof(av[++i]);
+      eye.z = atof(av[++i]);
     } else if (arg == "-vu" || arg == "--up") {
-      auto &up = m_up;
       up.x = atof(av[++i]);
       up.y = atof(av[++i]);
       up.z = atof(av[++i]);
     } else if (arg == "-vi" || arg == "--gaze") {
-      auto &at = m_gaze;
-      at.x = atof(av[++i]);
-      at.y = atof(av[++i]);
-      at.z = atof(av[++i]);
+      gaze.x = atof(av[++i]);
+      gaze.y = atof(av[++i]);
+      gaze.z = atof(av[++i]);
     } else if (arg == "-fv" || arg == "--fovy") {
-      m_fovy = atof(av[++i]);
+      fovy = atof(av[++i]);
     }
   }
 
@@ -78,18 +75,18 @@ bool DefaultCameraParser::parse(int ac, const char **&av)
 
 ospray::cpp::Camera DefaultCameraParser::camera()
 {
-  return m_camera;
+  return parsedCamera;
 }
 
 void DefaultCameraParser::finalize()
 {
-  if (m_cameraType.empty())
-    m_cameraType = "perspective";
+  if (cameraType.empty())
+    cameraType = "perspective";
 
-  m_camera = ospray::cpp::Camera(m_cameraType.c_str());
-  m_camera.set("pos",  m_eye);
-  m_camera.set("up",   m_up);
-  m_camera.set("dir",  m_gaze - m_eye);
-  m_camera.set("fovy", m_fovy);
-  m_camera.commit();
+  parsedCamera = ospray::cpp::Camera(cameraType.c_str());
+  parsedCamera.set("pos",  eye);
+  parsedCamera.set("up",   up);
+  parsedCamera.set("dir",  gaze - eye);
+  parsedCamera.set("fovy", fovy);
+  parsedCamera.commit();
 }

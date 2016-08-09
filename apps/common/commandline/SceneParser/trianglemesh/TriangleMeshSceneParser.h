@@ -38,21 +38,21 @@ private:
   ospray::cpp::Material createMaterial(ospray::cpp::Renderer renderer,
                                        ospray::miniSG::Material *mat);
 
-  ospray::cpp::Model    m_model;
-  ospray::cpp::Renderer m_renderer;
+  ospray::cpp::Model    sceneModel;
+  ospray::cpp::Renderer renderer;
 
-  std::string m_geometryType;
+  std::string geometryType;
 
-  bool m_alpha;
-  bool m_createDefaultMaterial;
-  unsigned int m_maxObjectsToConsider;
+  bool alpha;
+  bool shouldCreateDefaultMaterial;
+  unsigned int maxObjectsToConsider;
 
   // if turned on, we'll put each triangle mesh into its own instance,
   // no matter what
-  bool m_forceInstancing;
+  bool forceInstancing;
 
-  ospcommon::Ref<ospray::miniSG::Model> m_msgModel;
-  std::vector<ospray::miniSG::Model *> m_msgAnimation;
+  ospcommon::Ref<ospray::miniSG::Model> msgModel;
+  std::vector<ospray::miniSG::Model *> msgAnimation;
 
   void finalize();
 };

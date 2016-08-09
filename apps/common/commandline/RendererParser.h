@@ -38,10 +38,10 @@ public:
 
 protected:
 
-  std::string           m_rendererType;
-  ospray::cpp::Renderer m_renderer;
+  std::string           rendererType;
+  ospray::cpp::Renderer parsedRenderer;
 
-  int m_spp{1};
+  int spp{1};
   int maxDepth{5};
 
 private:

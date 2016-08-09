@@ -25,8 +25,8 @@
 using namespace ospcommon;
 
 DefaultLightsParser::DefaultLightsParser(ospray::cpp::Renderer renderer) :
-  m_renderer(renderer),
-  m_defaultDirLight_direction(.3, -1, -.2)
+  renderer(renderer),
+  defaultDirLight_direction(.3, -1, -.2)
 {
 }
 
@@ -39,17 +39,17 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
     if (arg == "--sun-dir") {
       if (!strcmp(av[i+1],"none")) {
         ++i;
-        m_defaultDirLight_direction = vec3f(0.f);
+        defaultDirLight_direction = vec3f(0.f);
       } else {
-        m_defaultDirLight_direction.x = atof(av[++i]);
-        m_defaultDirLight_direction.y = atof(av[++i]);
-        m_defaultDirLight_direction.z = atof(av[++i]);
+        defaultDirLight_direction.x = atof(av[++i]);
+        defaultDirLight_direction.y = atof(av[++i]);
+        defaultDirLight_direction.z = atof(av[++i]);
       }
     } else if (arg == "--hdri-light") {
         if (i+2 >= ac)
           throw std::runtime_error("Not enough arguments! Usage:\n\t"
               "--hdri-light <intensity> <image file>.(pfm|ppm)");
-        auto ospHdri = m_renderer.newLight("hdri");
+        auto ospHdri = renderer.newLight("hdri");
         ospHdri.set("name", "hdri light");
         if (1) {//TODO: add commandline option for up direction.
           ospHdri.set("up", 0.f, 1.f, 0.f);
@@ -77,20 +77,20 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
           std::cout << "Failed to load backplate texture '" << imageFile << "'" << std::endl;
         }
         OSPTexture2D ospBackplate = ospray::miniSG::createTexture2D(backplate);
-        m_renderer.set("backplate", ospBackplate);   
+        renderer.set("backplate", ospBackplate);   
     }
   }
 
   //TODO: Need to figure out where we're going to read lighting data from
   
-  if (m_defaultDirLight_direction != vec3f(0.f)) {
-    auto ospLight = m_renderer.newLight("directional");
+  if (defaultDirLight_direction != vec3f(0.f)) {
+    auto ospLight = renderer.newLight("directional");
     if (ospLight.handle() == nullptr) {
       throw std::runtime_error("Failed to create a 'DirectionalLight'!");
     }
     ospLight.set("name", "sun");
     ospLight.set("color", 1.f, 1.f, 1.f);
-    ospLight.set("direction", m_defaultDirLight_direction);
+    ospLight.set("direction", defaultDirLight_direction);
     ospLight.set("angularDiameter", 0.53f);
     ospLight.commit();
     lights.push_back(ospLight.handle());
@@ -98,7 +98,7 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
 
   auto lightArray = ospray::cpp::Data(lights.size(), OSP_OBJECT, lights.data());
   //lightArray.commit();
-  m_renderer.set("lights", lightArray);
+  renderer.set("lights", lightArray);
 
   finalize();
 
