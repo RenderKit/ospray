@@ -66,7 +66,7 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
         }
         OSPTexture2D ospBackplate = ospray::miniSG::createTexture2D(backplate);
         m_renderer.set("backplate", ospBackplate);   
-    } else if (arg == "--up") {
+    } else if (arg == "--hdri-up") {
       if (!strcmp(av[i+1],"x") || !strcmp(av[i+1],"X")) {
         HDRI_up = 0;
       } else if (!strcmp(av[i+1],"y") || !strcmp(av[i+1],"Y")) {
@@ -74,7 +74,7 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
       } else if (!strcmp(av[i+1],"z") || !strcmp(av[i+1],"Z")) {
         HDRI_up = 2;
       } else {
-        printf("--up must be x, y, or z.\n");
+        printf("--hdri-up must be x, y, or z.\n");
       }
     }
   }// Done reading commandline args.
