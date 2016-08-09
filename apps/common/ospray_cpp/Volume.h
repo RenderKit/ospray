@@ -47,7 +47,7 @@ inline Volume::Volume(const std::string &type)
 {
   OSPVolume c = ospNewVolume(type.c_str());
   if (c) {
-    m_object = c;
+    ospObject = c;
   } else {
     throw std::runtime_error("Failed to create OSPVolume!");
   }

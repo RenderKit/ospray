@@ -36,7 +36,7 @@ inline Camera::Camera(const std::string &type)
 {
   OSPCamera c = ospNewCamera(type.c_str());
   if (c) {
-    m_object = c;
+    ospObject = c;
   } else {
     throw std::runtime_error("Failed to create OSPCamera!");
   }

@@ -46,7 +46,7 @@ inline Renderer::Renderer(const std::string &type)
 {
   OSPRenderer c = ospNewRenderer(type.c_str());
   if (c) {
-    m_object = c;
+    ospObject = c;
   } else {
     throw std::runtime_error("Failed to create OSPRenderer!");
   }
