@@ -37,6 +37,7 @@ void BenchScriptHandler::registerScriptFunctions() {
   auto &chai = this->scriptEngine();
 
   auto benchmark = [&]() {
+    fixture->fb->clear(OSP_FB_ACCUM | OSP_FB_COLOR);
     auto stats = (*fixture->benchmarker)([&]() {
       fixture->renderer->renderFrame(*(fixture->fb), OSP_FB_COLOR | OSP_FB_ACCUM);
     });
