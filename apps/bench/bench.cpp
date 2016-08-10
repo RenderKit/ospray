@@ -220,5 +220,6 @@ int main(int argc, const char *argv[])
     }
   }
   std::cout << stats << "\n";
+  fixture.TearDown();
   return 0;
 }
