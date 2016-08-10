@@ -151,6 +151,9 @@ void printUsageAndExit()
   cout << "    -is | --surface --> Specify an isosurface at value: val "
        << endl;
 
+  cout << endl;
+  cout << "    --help --> Print this help text" << endl;
+
   exit(0);
 }
 
@@ -162,7 +165,7 @@ void parseCommandLine(int argc, const char *argv[])
 
   for (int i = 1; i < argc; ++i) {
     string arg = argv[i];
-    if (arg == "-h" || arg == "--help") {
+    if (arg == "--help") {
       printUsageAndExit();
     } else if (arg == "-i" || arg == "--image") {
       OSPRayFixture::imageOutputFile = argv[++i];
