@@ -8,6 +8,7 @@
 #include <type_traits>
 #include <numeric>
 #include <ostream>
+#include <iterator>
 
 namespace pico_bench {
 
