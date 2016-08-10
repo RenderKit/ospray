@@ -9,6 +9,7 @@
 #include <numeric>
 #include <ostream>
 #include <iterator>
+#include <cmath>
 
 namespace pico_bench {
 
