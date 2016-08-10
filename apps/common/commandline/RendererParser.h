@@ -43,6 +43,8 @@ protected:
 
   int spp{1};
   int maxDepth{5};
+  int shadows{1};
+  int aoSamples{1};
 
 private:
 

@@ -25,6 +25,10 @@ bool DefaultRendererParser::parse(int ac, const char **&av)
       rendererType = av[++i];
     } else if (arg == "--spp" || arg == "-spp") {
       spp = atoi(av[++i]);
+    } else if (arg == "--noshadows" || arg == "-ns") {
+      shadows = 0;
+    } else if (arg == "--ao-samples" || arg == "-ao") {
+      aoSamples = atoi(av[++i]);
     } else if (arg == "--max-depth") {
       maxDepth = atoi(av[++i]);
     }
@@ -50,8 +54,8 @@ void DefaultRendererParser::finalize()
   // Set renderer defaults (if not using 'aoX' renderers)
   if (rendererType[0] != 'a' && rendererType[1] != 'o')
   {
-    parsedRenderer.set("aoSamples", 1);
-    parsedRenderer.set("shadowsEnabled", 1);
+    parsedRenderer.set("aoSamples", aoSamples);
+    parsedRenderer.set("shadowsEnabled", shadows);
   }
 
   parsedRenderer.set("spp", spp);
