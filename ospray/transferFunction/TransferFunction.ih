@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "ospray/common/OSPCommon.ih"
-#include "ospray/math/vec.ih"
+#include "../common/OSPCommon.ih"
+#include "../math/vec.ih"
 
 //! Abstract base class for any kind of transfer function.
 struct TransferFunction {

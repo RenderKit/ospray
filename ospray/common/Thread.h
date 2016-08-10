@@ -21,11 +21,11 @@
 // ospray
 #include "OSPCommon.h"
 // ospcommon
-#include "common/thread.h"
+#include "ospcommon/thread.h"
 
 namespace ospray {
-  
-  struct Thread {
+
+  struct OSPRAY_SDK_INTERFACE Thread {
     Thread() : desiredThreadID(-1) {}
 
     /*! the actual run function that the newly started thread will execute */

@@ -16,24 +16,31 @@
 
 #pragma once
 
+#include <atomic>
+
 #include "common/widgets/OSPGlutViewer.h"
 #include "GlutViewerScriptHandler.h"
 
 namespace ospray {
 
-class ScriptedOSPGlutViewer : public OSPGlutViewer
-{
-public:
+  class ScriptedOSPGlutViewer : public OSPGlutViewer
+  {
+  public:
 
-  ScriptedOSPGlutViewer(const ospcommon::box3f &worldBounds,
-                        cpp::Model model, cpp::Renderer renderer,
-                        cpp::Camera camera, std::string scriptFileName = "");
+    ScriptedOSPGlutViewer(const ospcommon::box3f &worldBounds,
+                          cpp::Model model, cpp::Renderer renderer,
+                          cpp::Camera camera, std::string scriptFileName = "");
 
-private:
+    int getFrameID() const;
 
-  void keypress(char key, const ospcommon::vec2i &where) override;
+  private:
 
-  GlutViewerScriptHandler m_scriptHandler;
-};
+    void display() override;
+    void keypress(char key, const ospcommon::vec2i &where) override;
+
+    GlutViewerScriptHandler scriptHandler;
+
+    std::atomic<int> frameID;
+  };
 
 }// namespace ospray

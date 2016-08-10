@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "ospray/common/Managed.h"
+#include "common/Managed.h"
 
 /*! \brief Define a function to create an instance of the InternalClass
   associated with ExternalName.
@@ -28,7 +28,7 @@
   module and registered with OSPRay using this macro.
 */
 #define OSP_REGISTER_VOLUME(InternalClass, ExternalName)                    \
-  extern "C" OSPRAY_INTERFACE Volume *ospray_create_volume_##ExternalName() \
+  extern "C" OSPRAY_DLLEXPORT Volume *ospray_create_volume_##ExternalName() \
   {                                                                         \
     return(new InternalClass());                    												\
   }
@@ -37,7 +37,7 @@ namespace ospray {
 
   /*! \brief A Volume is an abstraction for the concrete object which
     performs the volume sampling.
-  
+
     The actual memory layout, dimensionality, and source of samples
     are unknown to this class.  Subclasses may implement structured
     volumes, unstructured volumes, radial basis functions, etc.  A
@@ -45,12 +45,12 @@ namespace ospray {
     createInstance().  This type string must be registered either in
     OSPRay proper, or in a loaded module using OSP_REGISTER_VOLUME.
   */
-  class Volume : public ManagedObject 
+  class OSPRAY_SDK_INTERFACE Volume : public ManagedObject
   {
   public:
 
 #if EXP_DATA_PARALLEL
-    struct DataParallelPiece : public RefCount {
+    struct OSPRAY_SDK_INTERFACE DataParallelPiece : public RefCount {
       /*! world space bounding box of this piece. it is assumed that
           this covers all the space that rays should be integrating
           over; so _including_ any ghost cells if those are required

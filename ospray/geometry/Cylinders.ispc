@@ -15,11 +15,11 @@
 // ======================================================================== //
 
 // ospray
-#include "ospray/math/vec.ih"
-#include "ospray/math/box.ih"
-#include "ospray/common/Ray.ih"
-#include "ospray/common/Model.ih"
-#include "ospray/geometry/Geometry.ih"
+#include "math/vec.ih"
+#include "math/box.ih"
+#include "common/Ray.ih"
+#include "common/Model.ih"
+#include "geometry/Geometry.ih"
 // embree
 #include "embree2/rtcore.isph"
 #include "embree2/rtcore_scene.isph"

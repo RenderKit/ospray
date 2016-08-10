@@ -16,20 +16,12 @@
 
 CONFIGURE_OSPRAY()
 
-SET(LIBRARY_NAME ospray_tfn)
+OSPRAY_CREATE_LIBRARY(tfn tfn_lib.cpp LINK ospray_common)
 
-OSPRAY_ADD_LIBRARY(${LIBRARY_NAME} SHARED tfn_lib.cpp)
-
-OSPRAY_LIBRARY_LINK_LIBRARIES(${LIBRARY_NAME} ospray_common)
-
-OSPRAY_SET_LIBRARY_VERSION(${LIBRARY_NAME})
-
-OSPRAY_INSTALL_LIBRARY(${LIBRARY_NAME})
-
-ADD_EXECUTABLE(ospCvtParaViewTfcn convertParaViewTfcn.cpp jsoncpp.cpp)
-TARGET_LINK_LIBRARIES(ospCvtParaViewTfcn ospray_common ${LIBRARY_NAME})
-INSTALL(TARGETS ospCvtParaViewTfcn
-  DESTINATION ${CMAKE_INSTALL_BINDIR}
-  COMPONENT apps
+OSPRAY_CREATE_APPLICATION(CvtParaViewTfcn
+  convertParaViewTfcn.cpp
+  jsoncpp.cpp
+LINK
+  ospray_common
+  ospray_tfn
 )
-

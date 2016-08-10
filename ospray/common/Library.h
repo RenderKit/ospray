@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "common/library.h"
+#include "ospcommon/library.h"
 
 namespace ospray {
   using ospcommon::getSymbol;

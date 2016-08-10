@@ -17,10 +17,10 @@
 #pragma once
 
 #include "MPICommon.h"
-#include "ospray/api/Device.h"
-#include "ospray/mpi/command.h"
+#include "api/Device.h"
+#include "mpi/command.h"
 #include "CommandStream.h"
-#include "ospray/common/Managed.h"
+#include "common/Managed.h"
 
 /*! \file mpidevice.h Implements the "mpi" device for mpi rendering */
 

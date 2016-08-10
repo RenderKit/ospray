@@ -32,8 +32,6 @@
 #define  O_LARGEFILE  0
 #endif
 
-
-
 namespace ospray {
   namespace sg {
 
@@ -42,6 +40,7 @@ namespace ospray {
     { 
       vec3i ret; 
       int rc = sscanf(text.c_str(),"%i %i %i",&ret.x,&ret.y,&ret.z); 
+      (void)rc;
       assert(rc == 3); 
       return ret; 
     }
@@ -51,7 +50,8 @@ namespace ospray {
     { 
       vec2i ret; 
       int rc = sscanf(text.c_str(),"%i %i",&ret.x,&ret.y); 
-      assert(rc == 2); 
+      (void)rc;
+      assert(rc == 2);
       return ret; 
     }
 
@@ -87,7 +87,7 @@ namespace ospray {
         MapViewOfFile(fileMappingHandle, FILE_MAP_READ, 0, 0, fileSize);
 #else
         mmap(nullptr, fileSize, PROT_READ, MAP_SHARED, fd, 0);
-#endif*/
+#endif
     }
 
   } // ::ospray::sg

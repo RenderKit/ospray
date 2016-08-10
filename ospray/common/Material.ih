@@ -16,9 +16,10 @@
 
 #pragma once
 
-#include "ospray/common/OSPCommon.ih"
+#include "../common/OSPCommon.ih"
 
 /*! ISPC-side abstraction for a material. */
 struct Material {
-  void *uniform cppEquivalent; //! pointer back to the C++-equivalent of this class
+  //! pointer back to the C++-equivalent of this class
+  void *uniform cppEquivalent; 
 };

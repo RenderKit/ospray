@@ -16,12 +16,18 @@
 
 CONFIGURE_OSPRAY()
 
-SET(LIBRARY_NAME ospray_common)
-
 SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 FIND_PACKAGE(Threads REQUIRED)
 
-OSPRAY_ADD_LIBRARY(${LIBRARY_NAME} SHARED
+SET(LINK_LIBS
+  ${CMAKE_THREAD_LIBS_INIT}
+  ${CMAKE_DL_LIBS}
+)
+IF (WIN32)
+  LIST(APPEND LINK_LIBS ws2_32)
+ENDIF()
+
+OSPRAY_CREATE_LIBRARY(common
   common.cpp
   FileName.cpp
   sysinfo.cpp
@@ -40,15 +46,26 @@ OSPRAY_ADD_LIBRARY(${LIBRARY_NAME} SHARED
   Quaternion.h
   RefCount.h
   vec.h
+LINK
+  ${LINK_LIBS}
 )
 
-OSPRAY_LIBRARY_LINK_LIBRARIES(${LIBRARY_NAME}
-  ${CMAKE_THREAD_LIBS_INIT}
-  ${CMAKE_DL_LIBS}
+OSPRAY_INSTALL_SDK_HEADERS(
+  AffineSpace.h
+  box.h
+  common.h
+  constants.h
+  FileName.h
+  intrinsics.h
+  library.h
+  LinearSpace.h
+  malloc.h
+  math.h
+  platform.h
+  Quaternion.h
+  RefCount.h
+  sysinfo.h
+  thread.h
+  vec.h
+  DESTINATION ../ospcommon #NOTE: this is "next" to the SDK/ directory
 )
-IF (WIN32)
-  OSPRAY_LIBRARY_LINK_LIBRARIES(${LIBRARY_NAME} ws2_32)
-ENDIF()
-
-OSPRAY_SET_LIBRARY_VERSION(${LIBRARY_NAME})
-OSPRAY_INSTALL_LIBRARY(${LIBRARY_NAME})

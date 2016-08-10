@@ -18,8 +18,8 @@
 
 // ospray
 #include "Spheres.h"
-#include "ospray/common/Data.h"
-#include "ospray/common/Model.h"
+#include "common/Data.h"
+#include "common/Model.h"
 // ispc-generated files
 #include "Spheres_ispc.h"
 
@@ -81,7 +81,7 @@ namespace ospray {
     if (materialList) {
       void **ispcMaterials = (void**) malloc(sizeof(void*) *
                                              materialList->numItems);
-      for (int i=0;i<materialList->numItems;i++) {
+      for (uint32_t i = 0; i < materialList->numItems; i++) {
         Material *m = ((Material**)materialList->data)[i];
         ispcMaterials[i] = m?m->getIE():NULL;
       }

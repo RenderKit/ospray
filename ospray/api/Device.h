@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "ospray/common/OSPCommon.h"
-#include "ospray/include/ospray/ospray.h"
+#include "common/OSPCommon.h"
+#include "ospray/ospray.h"
 
 /*! \file device.h Defines the abstract base class for OSPRay
     "devices" that implement the OSPRay API */

@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "ospray/common/DifferentialGeometry.ih"
+#include "common/DifferentialGeometry.ih"
 
 struct Light;
 
@@ -30,23 +30,23 @@ struct Light_SampleRes
 
 //! compute the weighted radiance at a point caused by a sample on the light source
 // by convention, giving (0, 0) as "random" numbers should sample the "center"
-// of the light source (used by the raytracing renderers such as the OBJ renderer)
-typedef Light_SampleRes (*Light_SampleFunc)(const uniform Light* uniform self,
-                                            const DifferentialGeometry& dg, /*! point to generate the sample for >*/
-                                            const vec2f& s);                /*! random numbers to generate the sample >*/
+// of the light source (used by the raytracing renderers such as the SciVis renderer)
+typedef Light_SampleRes (*Light_SampleFunc)(const uniform Light* uniform,
+                                            const DifferentialGeometry&, /*! point to generate the sample for >*/
+                                            const vec2f& s);             /*! random numbers to generate the sample >*/
 
 
 struct Light_EvalRes
 {
-  vec3f value;     //!< radiance that arrives at the given point (not weighted by pdf)
-  float dist;
+  vec3f radiance;  //!< radiance that arrives at the given point (not weighted by pdf)
   float pdf;       //!< probability density that the direction would have been sampled
 };
 
-//! compute the radiance, distance and pdf caused by the light source (pointed to by the given direction)
-typedef Light_EvalRes (*Light_EvalFunc)(const uniform Light* uniform self,
-                                        const DifferentialGeometry& dg, /*! point to evaluate illumination for >*/
-                                        const vec3f& dir);              /*! direction towards the light source >*/
+//! compute the radiance and pdf caused by the light source (pointed to by the given direction up until maxDist)
+typedef Light_EvalRes (*Light_EvalFunc)(const uniform Light* uniform,
+                                        const DifferentialGeometry&, //! point to evaluate illumination for >*/
+                                        const vec3f& dir,            //! direction towards the light source, normalized >*/
+                                        const float maxDist);        //! maximum distance to look for light contribution >*/
 
 
 struct Light
@@ -55,7 +55,7 @@ struct Light
   Light_EvalFunc eval;
 };
 
-Light_EvalRes Light_eval(const uniform Light* uniform self, const DifferentialGeometry& dg, const vec3f& dir);
+Light_EvalRes Light_eval(const uniform Light* uniform, const DifferentialGeometry&, const vec3f&, const float);
 
 inline void Light_Constructor(uniform Light* uniform self)
 {

@@ -15,11 +15,11 @@
 // ======================================================================== //
 
 // ospray
-#include "ospray/math/vec.ih"
-#include "ospray/math/box.ih"
-#include "ospray/common/Ray.ih"
-#include "ospray/common/Model.ih"
-#include "ospray/geometry/Geometry.ih"
+#include "math/vec.ih"
+#include "math/box.ih"
+#include "common/Ray.ih"
+#include "common/Model.ih"
+#include "geometry/Geometry.ih"
 // embree
 #include "embree2/rtcore.isph"
 #include "embree2/rtcore_scene.isph"
@@ -71,18 +71,28 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
     dg.color = *((vec4f *)(self->color_data+colorAddr));
   }
   
-  if ((flags & DG_MATERIALID) && (self->offset_materialID >= 0)) {
-    const uniform int32 primsPerPage = (1024*1024*64);
-    if (any(ray.primID >= primsPerPage )) {
-      const int primPageID  = ray.primID / primsPerPage;
-      const int localPrimID = ray.primID % primsPerPage;
-      foreach_unique(primPage in primPageID) {
-        uniform uint8 *uniform pagePtr   = self->data
-                                           + (((int64)primPage)
-                                              * primsPerPage
-                                              * self->bytesPerSphere);
-        uniform uint8 *varying spherePtr = pagePtr
-                                           + self->bytesPerSphere*localPrimID;
+  if (flags & DG_MATERIALID) {
+    if (self->offset_materialID >= 0) {
+      const uniform int32 primsPerPage = (1024*1024*64);
+      if (any(ray.primID >= primsPerPage )) {
+        const int primPageID  = ray.primID / primsPerPage;
+        const int localPrimID = ray.primID % primsPerPage;
+        foreach_unique(primPage in primPageID) {
+          uniform uint8 *uniform pagePtr   = self->data
+                                             + (((int64)primPage)
+                                                * primsPerPage
+                                                * self->bytesPerSphere);
+          uniform uint8 *varying spherePtr = pagePtr
+                                             + self->bytesPerSphere*localPrimID;
+          dg.materialID =
+              *((uniform uint32 *varying)(spherePtr+self->offset_materialID));
+          if (self->materialList) {
+            dg.material = self->materialList[dg.materialID];
+          }
+        }
+      } else {
+        uniform uint8 *varying spherePtr = self->data
+                                           + self->bytesPerSphere*ray.primID;
         dg.materialID =
             *((uniform uint32 *varying)(spherePtr+self->offset_materialID));
         if (self->materialList) {
@@ -90,10 +100,7 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
         }
       }
     } else {
-      uniform uint8 *varying spherePtr = self->data
-                                         + self->bytesPerSphere*ray.primID;
-      dg.materialID =
-          *((uniform uint32 *varying)(spherePtr+self->offset_materialID));
+      dg.materialID = self->materialID;
       if (self->materialList) {
         dg.material = self->materialList[dg.materialID];
       }

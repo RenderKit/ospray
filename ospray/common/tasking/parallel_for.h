@@ -23,7 +23,7 @@
 #elif defined(OSPRAY_TASKING_CILK)
 #  include <cilk/cilk.h>
 #elif defined(OSPRAY_TASKING_INTERNAL)
-#  include "ospray/common/tasking/TaskSys.h"
+#  include "common/tasking/TaskSys.h"
 #endif
 
 namespace ospray {
@@ -50,7 +50,7 @@ inline void parallel_for(int nTasks, const TASK_T& fcn)
     fcn(taskIndex);
   }
 #elif defined(OSPRAY_TASKING_INTERNAL)
-  struct LocalTask : public Task {
+  struct OSPRAY_SDK_INTERFACE LocalTask : public Task {
     const TASK_T &t;
     LocalTask(const TASK_T& fcn) : Task("LocalTask"), t(fcn) {}
     void run(size_t taskIndex) override { t(taskIndex); }

@@ -16,7 +16,7 @@
 
 #include "SciVisMaterial.h"
 #include "SciVisMaterial_ispc.h"
-#include "ospray/common/Data.h"
+#include "common/Data.h"
 
 namespace ospray {
   namespace scivis {

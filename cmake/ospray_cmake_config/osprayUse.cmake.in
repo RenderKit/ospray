@@ -19,3 +19,8 @@
 #             to automatically have an add_definitions(...) call for clients
 #             which need certain preprocessor definitions based on how ospray
 #             was built.
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${OSPRAY_CMAKE_ROOT})
+
+include(${OSPRAY_CMAKE_ROOT}/ispc.cmake)
+include(${OSPRAY_CMAKE_ROOT}/ospray.cmake)

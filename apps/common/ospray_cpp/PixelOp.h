@@ -37,7 +37,7 @@ inline PixelOp::PixelOp(const std::string &type)
 {
   OSPPixelOp c = ospNewPixelOp(type.c_str());
   if (c) {
-    m_object = c;
+    ospObject = c;
   } else {
     throw std::runtime_error("Failed to create OSPPixelOp!");
   }

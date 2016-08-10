@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/render/volume/RaycastVolumeMaterial.ih"
+#include "render/volume/RaycastVolumeMaterial.ih"
 
 export void *uniform RaycastVolumeMaterial_create(void *uniform cppE)
 {

@@ -31,7 +31,7 @@ ENDIF()
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 SET(OSPRAY_VERSION_MAJOR 1)
 SET(OSPRAY_VERSION_MINOR 0)
-SET(OSPRAY_VERSION_PATCH 0)
+SET(OSPRAY_VERSION_PATCH 1)
 SET(OSPRAY_VERSION_GITHASH 0)
 IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
   FIND_PACKAGE(Git)
@@ -89,10 +89,9 @@ OSPRAY_CONFIGURE_COMPILER()
 ##############################################################
 
 OPTION(OSPRAY_USE_EXTERNAL_EMBREE
-       "Use a pre-built Embree instead of the internally built version")
+       "Use a pre-built Embree instead of the internally built version" ON)
 
-OPTION(OSPRAY_BUILD_ENABLE_KNL "Enable experimental 'Knights Landing' build?")
-MARK_AS_ADVANCED(OSPRAY_BUILD_ENABLE_KNL)
+OPTION(OSPRAY_USE_EMBREE_STREAMS "Enable Streams if using Embree 2.10.0+" OFF)
 
 OPTION(OSPRAY_VOLUME_VOXELRANGE_IN_APP "Move 'voxelrange' computations to app?")
 MARK_AS_ADVANCED(OSPRAY_VOLUME_VOXELRANGE_IN_APP)
@@ -109,17 +108,6 @@ ENDIF()
 
 OPTION(OSPRAY_BUILD_MPI_DEVICE "Add MPI Remote/Distributed rendering support?")
 
-# the arch we're targeting for the non-MIC/non-xeon phi part of ospray
-SET(OSPRAY_BUILD_ISA "ALL" CACHE STRING "Target ISA (SSE, AVX, AVX2, or ALL)")
-IF (OSPRAY_BUILD_ENABLE_KNL)
-  SET_PROPERTY(CACHE OSPRAY_BUILD_ISA PROPERTY STRINGS ALL SSE AVX AVX2 AVX512)
-ELSE()
-  SET_PROPERTY(CACHE OSPRAY_BUILD_ISA PROPERTY STRINGS ALL SSE AVX AVX2)
-ENDIF()
-
-# make ISA target case-insensitive, used in configure_ospray() macro
-STRING(TOUPPER ${OSPRAY_BUILD_ISA} OSPRAY_BUILD_ISA)
-
 SET(OSPRAY_MIC ${OSPRAY_BUILD_MIC_SUPPORT})
 SET(OSPRAY_MPI ${OSPRAY_BUILD_MPI_DEVICE})
 
@@ -127,19 +115,22 @@ SET(OSPRAY_MPI ${OSPRAY_BUILD_MPI_DEVICE})
 # create binary packages; before any INSTALL() invocation/definition
 ##############################################################
 
+OPTION(OSPRAY_ZIP_MODE "Use tarball/zip CPack generator instead of RPM" ON)
+MARK_AS_ADVANCED(OSPRAY_ZIP_MODE)
+
 INCLUDE(package)
 
 ##############################################################
 # the OSPRay 'common' library
 ##############################################################
 
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
+CONFIGURE_OSPRAY()
+
 SET(OSPRAY_TARGET "intel64")
-ADD_SUBDIRECTORY(common builddir/ospray_common/intel64)
+ADD_SUBDIRECTORY(ospcommon builddir/ospray_common/intel64)
 IF (OSPRAY_MIC)
   SET(OSPRAY_TARGET "mic")
-  ADD_SUBDIRECTORY(common builddir/ospray_common/mic)
+  ADD_SUBDIRECTORY(ospcommon builddir/ospray_common/mic)
 ENDIF()
 
 ##############################################################

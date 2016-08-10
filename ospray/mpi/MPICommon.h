@@ -17,7 +17,7 @@
 #pragma once
 
 #include <mpi.h>
-#include "ospray/common/OSPCommon.h"
+#include "common/OSPCommon.h"
 
 // IMPI on Windows defines MPI_CALL already, erroneously
 #ifdef MPI_CALL
@@ -31,6 +31,12 @@ namespace ospray {
 
   /*! Helper class for MPI Programming */
   namespace mpi {
+
+    inline void checkMpiError(int rc)
+    {
+      if (rc != MPI_SUCCESS)
+        throw std::runtime_error("MPI Error");
+    }
 
     //! abstraction for an MPI group. 
     /*! it's the responsiblity of the respective mpi setup routines to

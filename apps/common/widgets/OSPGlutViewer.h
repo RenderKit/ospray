@@ -32,74 +32,77 @@
 
 namespace ospray {
 
-/*! mini scene graph viewer widget. \internal Note that all handling
-  of camera is almost exactly similar to the code in volView;
-  might make sense to move that into a common class! */
-class OSPRAY_GLUT3D_INTERFACE OSPGlutViewer
+  /*! mini scene graph viewer widget. \internal Note that all handling
+    of camera is almost exactly similar to the code in volView;
+    might make sense to move that into a common class! */
+  class OSPRAY_GLUT3D_INTERFACE OSPGlutViewer
     : public ospray::glut3D::Glut3DWidget
-{
-public:
-
-  OSPGlutViewer(const ospcommon::box3f &worldBounds, cpp::Model model,
-                cpp::Renderer renderer, cpp::Camera camera);
-
-  void setRenderer(OSPRenderer renderer);
-  void resetAccumulation();
-  void toggleFullscreen();
-  void resetView();
-  void printViewport();
-  void saveScreenshot(const std::string &basename);
-
-  // Helper types //
-
-  struct DisplayWall
   {
-    std::string hostname;
-    std::string streamName;
-    ospcommon::vec2i size{-1};
-    ospray::cpp::FrameBuffer fb;
-    ospray::cpp::PixelOp     po;
-  } displayWall;
+  public:
 
-  void setDisplayWall(const DisplayWall &dw);
+    OSPGlutViewer(const ospcommon::box3f &worldBounds, 
+                  cpp::Model model,
+                  cpp::Renderer renderer, 
+                  cpp::Camera camera);
 
-protected:
+    void setRenderer(OSPRenderer renderer);
+    void resetAccumulation();
+    void toggleFullscreen();
+    void resetView();
+    void printViewport();
+    void saveScreenshot(const std::string &basename);
 
-  virtual void reshape(const ospcommon::vec2i &newSize) override;
-  virtual void keypress(char key, const ospcommon::vec2i &where) override;
-  virtual void mouseButton(int32_t whichButton, bool released,
-                           const ospcommon::vec2i &pos) override;
+    // Helper types //
 
-private:
+    struct DisplayWall
+    {
+      std::string hostname;
+      std::string streamName;
+      ospcommon::vec2i size{-1};
+      ospray::cpp::FrameBuffer fb;
+      ospray::cpp::PixelOp     po;
+#if OSPRAY_DISPLAY_WALD
+      // display uses its own camera; it has a different aspect ratio!
+      ospray::cpp::Camera      camera;
+      int stereo;
+#endif
+    } displayWall;
 
-  // Private functions //
+    void setDisplayWall(const DisplayWall &dw);
 
-  void display() override;
+  protected:
 
-  void switchRenderers();
+    virtual void reshape(const ospcommon::vec2i &newSize) override;
+    virtual void keypress(char key, const ospcommon::vec2i &where) override;
+    virtual void mouseButton(int32_t whichButton, bool released,
+                             const ospcommon::vec2i &pos) override;
 
-  // Data //
+    void display() override;
 
-  cpp::Model       m_model;
-  cpp::FrameBuffer m_fb;
-  cpp::Renderer    m_renderer;
-  cpp::Camera      m_camera;
+    void switchRenderers();
 
-  ospray::glut3D::FPSCounter m_fps;
+    // Data //
 
-  std::mutex m_rendererMutex;
-  cpp::Renderer m_queuedRenderer;
+    cpp::Model       sceneModel;
+    cpp::FrameBuffer frameBuffer;
+    cpp::Renderer    renderer;
+    cpp::Camera      camera;
 
-  bool m_alwaysRedraw;
+    ospray::glut3D::FPSCounter fps;
 
-  ospcommon::vec2i m_windowSize;
-  int m_accumID;
-  bool m_fullScreen;
-  glut3D::Glut3DWidget::ViewPort m_viewPort;
+    std::mutex rendererMutex;
+    cpp::Renderer queuedRenderer;
 
-  std::atomic<bool> m_resetAccum;
+    bool alwaysRedraw;
 
-  bool m_useDisplayWall;
-};
+    ospcommon::vec2i windowSize;
+    int accumID;
+    bool fullScreen;
+    glut3D::Glut3DWidget::ViewPort glutViewPort;
+
+    std::atomic<bool> resetAccum;
+
+    bool useDisplayWall;
+  };
 
 }// namespace ospray

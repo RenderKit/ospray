@@ -16,11 +16,11 @@
 
 #pragma once
 
-// ospray 
-#include "OSPCommon.h"
-#include "ospray/ospray.h"
-#include "ospray/common/ObjectHandle.h"
-// stl 
+// ospray
+#include "ospray/OSPDataType.h"
+#include "common/OSPCommon.h"
+#include "common/ObjectHandle.h"
+// stl
 #include <vector>
 #include <set>
 
@@ -29,7 +29,7 @@ namespace ospray {
   /*! forward-def so param can use a pointer to data */
   struct Data;
 
-  /*! \brief defines a basic object whose lifetime is managed by ospray 
+  /*! \brief defines a basic object whose lifetime is managed by ospray
 
     One of the core concepts of ospray is that all logical
     objects in ospray -- renderers, geometries, models, camera, data
@@ -37,7 +37,7 @@ namespace ospray {
     class that provides a certain kind of common, shared
     infrastructure:
 
-    <dl> 
+    <dl>
 
     <dt>Reference counting</dt><dd> All ospray objects are reference
     counted, and will automatically live as long as any other object
@@ -99,11 +99,11 @@ namespace ospray {
     whatever parameters that camera may need to properly operate have
     to be specified via parameters, without the API even knowing what
     those parameters that might be.</dd>
-    
+
     </dl>
 
    */
-  struct ManagedObject : public RefCount
+  struct OSPRAY_SDK_INTERFACE ManagedObject : public RefCount
   {
     /*! \brief constructor */
     ManagedObject();
@@ -117,8 +117,8 @@ namespace ospray {
     /*! \brief commit the object's outstanding changes (such as changed
      *         parameters etc) */
     virtual void commit();
-    
-    //! \brief common function to help printf-debugging 
+
+    //! \brief common function to help printf-debugging
     /*! \detailed Every derived class should overrride this! */
     virtual std::string toString() const;
 
@@ -131,7 +131,7 @@ namespace ospray {
 
     /*! \brief container for _any_ sort of parameter an app can assign
         to an ospray object */
-    struct Param {
+    struct OSPRAY_SDK_INTERFACE Param {
       Param(const char *name);
       ~Param() { clear(); };
 
@@ -142,19 +142,19 @@ namespace ospray {
       /*! set parameter to a 'pointer to object' type, and given pointer */
       void set(ManagedObject *ptr);
 
-      //! set parameter to a 'c-string' type 
+      //! set parameter to a 'c-string' type
       /* \internal this function creates and keeps a *copy* of the passed
        *  string! */
       void set(const char *s);
 
-      //! set parameter to a 'c-string' type 
+      //! set parameter to a 'c-string' type
       /* \internal this function does *not* copy whatever data this
          pointer points to (it doesn't have the info to do so), so
          this pointer belongs to the application, and it can not be
          used remotely */
       void set(void *v);
 
-      /*! set parameter to given value and type 
+      /*! set parameter to given value and type
         @{ */
       void set(const float  &v) { clear(); type = OSP_FLOAT; f[0] = v; }
       void set(const int    &v) { clear(); type = OSP_INT;   i[0] = v; }
@@ -176,7 +176,7 @@ namespace ospray {
       union {
         float f[4];
         int32 i[4];
-        uint32 ui[4]; 
+        uint32 ui[4];
         int64  l;
         ManagedObject *ptr;
         const char    *s;
@@ -192,7 +192,7 @@ namespace ospray {
     Param *findParam(const char *name, bool addIfNotExist = false);
 
     /*! \brief check if a given parameter is available */
-    bool hasParam(const char *name) 
+    bool hasParam(const char *name)
     { return findParam(name,false) != nullptr; }
 
     /*! \brief set given parameter to given data array */
@@ -205,8 +205,8 @@ namespace ospray {
 
     /*! @{ */
     /*! \brief find the named parameter, and return its object value if
-        available; else return 'default' value 
-        
+        available; else return 'default' value
+
         The returned managed object will *not* automatically
         have its refcount increased; it is up to the callee to
         properly do that (typically by assigning to a proper 'ref'
@@ -241,7 +241,7 @@ namespace ospray {
     /*! \brief gets called whenever any of this node's dependencies got
      *         changed */
     virtual void dependencyGotChanged(ManagedObject *object);
-    
+
     //! \brief Will notify all listeners that we got changed
     /*! \detailed will call 'dependencyGotChanged' on each of the
         objects in 'objectsListeningForChanges' */
@@ -267,7 +267,7 @@ namespace ospray {
 
 
     // -------------------------------------------------------
-    // member variables 
+    // member variables
     // -------------------------------------------------------
 
     //! \brief List of managed objects that want to get notified
@@ -281,7 +281,7 @@ namespace ospray {
        _has_ to properly unregister itself as a listenere before it
        dies */
     std::set<ManagedObject *> objectsListeningForChanges;
-    
+
     /*! \brief list of parameters attached to this object */
     std::vector<Param *> paramList;
 

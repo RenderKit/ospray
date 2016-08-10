@@ -17,7 +17,7 @@
 #pragma once
 
 #include <ospray/ospray.h>
-#include "common/box.h"
+#include "ospcommon/box.h"
 #include <QtGui>
 
 struct SliceParameters

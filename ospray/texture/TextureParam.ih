@@ -17,7 +17,7 @@
 #pragma once
 
 #include "Texture2D.ih"
-#include "ospray/math/AffineSpace.ih"
+#include "math/AffineSpace.ih"
 
 
 //! Texture2D including coordinate transformation, plus helpers

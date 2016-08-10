@@ -22,19 +22,19 @@
 #include <common/COIMacros_common.h>
 #include <common/COISysInfo_common.h>
 #include <common/COIEvent_common.h>
-#include "ospray/common/ObjectHandle.h"
+#include "common/ObjectHandle.h"
 // ospray
-#include "ospray/common/Model.h"
-#include "ospray/common/Data.h"
-#include "ospray/geometry/TriangleMesh.h"
-#include "ospray/camera/Camera.h"
-#include "ospray/volume/Volume.h"
-#include "ospray/transferFunction/TransferFunction.h"
-#include "ospray/render/Renderer.h"
-#include "ospray/render/LoadBalancer.h"
-#include "ospray/texture/Texture2D.h"
-#include "ospray/lights/Light.h"
-#include "ospray/fb/LocalFB.h"
+#include "common/Model.h"
+#include "common/Data.h"
+#include "geometry/TriangleMesh.h"
+#include "camera/Camera.h"
+#include "volume/Volume.h"
+#include "transferFunction/TransferFunction.h"
+#include "render/Renderer.h"
+#include "render/LoadBalancer.h"
+#include "texture/Texture2D.h"
+#include "lights/Light.h"
+#include "fb/LocalFB.h"
 
 using namespace std;
 

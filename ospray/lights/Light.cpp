@@ -16,7 +16,7 @@
 
 //ospray
 #include "Light.h"
-#include "ospray/common/Library.h"
+#include "common/Library.h"
 
 //system
 #include <map>

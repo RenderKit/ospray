@@ -14,15 +14,15 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/fb/FrameBuffer.ih"
-#include "ospray/camera/Camera.ih"
-#include "ospray/common/Ray.ih"
-#include "ospray/render/util.ih"
-#include "ospray/math/math.ih"
-#include "ospray/math/random.ih"
-#include "ospray/common/Model.ih"
-#include "ospray/render/Renderer.ih"
-#include "ospray/render/simpleAO/SimpleAOMaterial.ih"
+#include "fb/FrameBuffer.ih"
+#include "camera/Camera.ih"
+#include "common/Ray.ih"
+#include "render/util.ih"
+#include "math/math.ih"
+#include "math/random.ih"
+#include "common/Model.ih"
+#include "render/Renderer.ih"
+#include "render/simpleAO/SimpleAOMaterial.ih"
 
 struct SimpleAO {
   uniform Renderer super;
@@ -170,12 +170,10 @@ void SimpleAO_renderSample(uniform Renderer *uniform _self,
 }
 
 
-export void *uniform SimpleAO_create(void *uniform cppE,
-                                     void *uniform _model,
-                                     void *uniform _camera)
+export void *uniform SimpleAO_create(void *uniform cppE)
 {
   uniform SimpleAO *uniform self = uniform new uniform SimpleAO;
-  Renderer_Constructor(&self->super, cppE, _model, _camera, 1);
+  Renderer_Constructor(&self->super, cppE, NULL, NULL, 1);
   self->super.renderSample = SimpleAO_renderSample;
   return self;
 }

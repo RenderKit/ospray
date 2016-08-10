@@ -32,7 +32,7 @@
 #include "sg/common/FrameBuffer.h"
 
 // ospcommon
-#include "common/FileName.h"
+#include "ospcommon/FileName.h"
 
 namespace ospray {
   namespace sg {
@@ -77,7 +77,7 @@ namespace ospray {
       /*! 'render' the nodes */
       virtual void render(RenderContext &ctx)
       { 
-        for (int i=0;i<child.size();i++) {
+        for (uint32_t i = 0; i < child.size(); i++) {
           assert(child[i]);
           PRINT(child[i].ptr);
           child[i]->render(ctx); 
@@ -87,7 +87,7 @@ namespace ospray {
       virtual box3f getBounds()
       {
         box3f bounds = empty;
-        for (int i=0;i<child.size();i++) {
+        for (uint32_t i = 0; i < child.size(); i++) {
           assert(child[i].ptr);
           bounds.extend(child[i]->getBounds());
         }

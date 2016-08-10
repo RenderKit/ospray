@@ -17,9 +17,6 @@
 CONFIGURE_OSPRAY()
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
-# for xml library required by the scene graph
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../..)
-INCLUDE_DIRECTORIES(${OSPRAY_SOURCE_DIR})
 
 ADD_LIBRARY(ospray_sg STATIC
   # scene graph nodes
@@ -50,7 +47,6 @@ ADD_LIBRARY(ospray_sg STATIC
   importer/ImportOBJ.cpp
   importer/ImportPLY.cpp
   importer/ImportRIVL.cpp
-  #    ImportX3D.cpp
 )
 
 TARGET_LINK_LIBRARIES(ospray_sg

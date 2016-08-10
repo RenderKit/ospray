@@ -18,7 +18,7 @@
 #include "Module.h"
 #include "../common/RuntimeError.h"
 // ospray
-#include "common/common.h"
+#include "ospcommon/common.h"
 // std
 #include <set>
 

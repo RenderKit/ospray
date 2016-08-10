@@ -1,9 +1,50 @@
 Version History
 ---------------
 
+### Changes in v1.0.0:
+
+-   New OSPRay 'SDK'
+    -   OSPRay internal headers are now installed, enabling applications
+        to extend OSPRay from a binary install
+    -   CMake macros for OSPRay and ISPC configuration now a part of
+        binary releases
+        -   CMake clients use them by calling
+            `include(${OSPRAY_USE_FILE})` in their CMake code after
+            calling `find_package(ospray)`
+    -   New OSPRay C++ wrapper classes
+        -   These act as a thin layer on top of OSPRay object handles,
+            where multiple wrappers will share the same underlying
+            handle when assigned, copied, or moved
+        -   New OSPRay objects are only created when a class instance is
+            explicity constructed
+        -   C++ users are encouraged to use these over the `ospray.h`
+            API
+-   Complete rework of sample applications
+    -   New shared code for parsing the `commandline`
+    -   Save/load of transfer functions now handled through a separate
+        library which does not depend on Qt
+    -   Added `ospCvtParaViewTfcn` utility, which enables
+        `ospVolumeViewer` to load color maps from ParaView
+    -   GLUT based sample viewer updates
+        -   Rename of `ospModelViewer` to `ospGlutViewer`
+        -   GLUT viewer now supports volume rendering
+        -   Command mode with preliminary scripting capabilities,
+            enabled by pressing '`:`' key (not available when using
+            Intel C++ compiler (icc))
+    -   Enhanced support of sample applications on Windows
+-   New minimum ISPC version is 1.9.0
+-   Support of Intel® AVX-512 for second generation Intel® Xeon Phi™
+    processor (codename Knights Landing) is now a part of the
+    `OSPRAY_BUILD_ISA` CMake build configuration
+    -   Compiling AVX-512 requires icc to be enabled as a build option
+-   Enhanced error messages when `ospLoadModule()` fails
+-   Added `OSP_FB_RGBA32F` support in the `DistributedFrameBuffer`
+-   Updated Glass shader in the PathTracer
+-   Many miscellaneous cleanups, bugfixes, and improvements
+
 ### Changes in v0.10.1:
 
--   Fixed support of first generation Intel® Xeon Phi™ coprocessor
+-   Fixed support of first generation Intel Xeon Phi coprocessor
     (codename Knights Corner)
 -   Restored missing implementation of `ospRemoveVolume()`
 
@@ -12,7 +53,7 @@ Version History
 -   Added new tasking options: `Cilk`, `Internal`, and `Debug`
     -   Provides more ways for OSPRay to interact with calling
         application tasking systems
-        - `Cilk`: Use Intel® Cilk™ Plus language extensions (ICC only)
+        - `Cilk`: Use Intel® Cilk™ Plus language extensions (icc only)
         - `Internal`: Use hand written OSPRay tasking system
         - `Debug`: All tasks are run in serial (useful for debugging)
     -   In most cases, Intel Threading Building Blocks (Intel `TBB`)

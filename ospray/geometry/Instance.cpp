@@ -18,7 +18,7 @@
 
 // ospray
 #include "Instance.h"
-#include "ospray/common/Model.h"
+#include "common/Model.h"
 // ispc exports
 #include "Instance_ispc.h"
 

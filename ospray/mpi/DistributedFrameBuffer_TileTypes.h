@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "ospray/fb/Tile.h"
+#include "fb/Tile.h"
 
 #include <vector>
 

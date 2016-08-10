@@ -19,7 +19,7 @@
 // ospray API
 #include "ospray/ospray.h"
 // ospcommon
-#include "common/box.h"
+#include "ospcommon/box.h"
 // std
 #include <vector>
 

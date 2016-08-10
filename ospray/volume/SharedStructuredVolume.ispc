@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/volume/SharedStructuredVolume.ih"
+#include "volume/SharedStructuredVolume.ih"
 
 /*! get a voxel from given volume type */
 
@@ -272,7 +272,7 @@ void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform self,
 
   if (voxelType == OSP_UCHAR)
     bytesPerVoxel = sizeof(uniform uint8);
-  if (voxelType == OSP_USHORT)
+  else if (voxelType == OSP_USHORT)
     bytesPerVoxel = sizeof(uniform uint16);
   else if (voxelType == OSP_FLOAT)
     bytesPerVoxel = sizeof(uniform float);

@@ -17,8 +17,8 @@
 #pragma once
 
 // ospray
-#include "ospray/common/Data.h"
-#include "ospray/transferFunction/TransferFunction.h"
+#include "common/Data.h"
+#include "transferFunction/TransferFunction.h"
 #include "LinearTransferFunction_ispc.h"
 // std
 #include <vector>
@@ -28,7 +28,7 @@ namespace ospray {
   /*! \brief A concrete implementation of the TransferFunction class for
     piecewise linear transfer functions.
   */
-  class LinearTransferFunction : public TransferFunction 
+  class OSPRAY_SDK_INTERFACE LinearTransferFunction : public TransferFunction
   {
   public:
 

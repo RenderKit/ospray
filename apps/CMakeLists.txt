@@ -20,6 +20,7 @@ IF(NOT THIS_IS_MIC)
 
   INCLUDE_DIRECTORIES(
     ${CMAKE_SOURCE_DIR}/ospray/include
+    ${CMAKE_SOURCE_DIR}
     ${CMAKE_CURRENT_LIST_DIR}
     common
   )
@@ -27,6 +28,7 @@ IF(NOT THIS_IS_MIC)
   # common utilities
   ADD_SUBDIRECTORY(common/commandline)
   ADD_SUBDIRECTORY(common/importer)
+  ADD_SUBDIRECTORY(common/ospray_cpp)
   ADD_SUBDIRECTORY(common/tfn_lib)
   ADD_SUBDIRECTORY(common/miniSG)
   ADD_SUBDIRECTORY(common/xml)
@@ -75,7 +77,7 @@ IF(NOT THIS_IS_MIC)
   ENDIF()
 
   # volume viewer application
-  IF(NOT (APPLE AND (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")))
+  IF(NOT (APPLE AND OSPRAY_COMPILER_ICC))
     OPTION(OSPRAY_APPS_VOLUMEVIEWER "Build ospVolumeViewer application." ON)
     IF(OSPRAY_APPS_VOLUMEVIEWER)
       ADD_SUBDIRECTORY(volumeViewer)

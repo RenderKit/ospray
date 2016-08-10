@@ -15,12 +15,12 @@
 // ======================================================================== //
 
 // ospray
-#include "ospray/math/vec.ih"
-#include "ospray/math/box.ih"
-#include "ospray/common/Ray.ih"
-#include "ospray/common/Model.ih"
-#include "ospray/geometry/Geometry.ih"
-#include "ospray/volume/Volume.ih"
+#include "math/vec.ih"
+#include "math/box.ih"
+#include "common/Ray.ih"
+#include "common/Model.ih"
+#include "geometry/Geometry.ih"
+#include "volume/Volume.ih"
 // embree
 #include "embree2/rtcore.isph"
 #include "embree2/rtcore_scene.isph"
@@ -77,7 +77,11 @@ void Isosurfaces_intersect(uniform Isosurfaces *uniform self,
     if (!isnan(sample0+sample)) {
       for (uniform int i=0; i<self->numIsovalues; i++) {
         if ((self->isovalues[i] - sample0) * (self->isovalues[i] - sample) <= 0.f) {
-          const float tIso = t0 + (self->isovalues[i] - sample0) * rcpf(sample - sample0) * (t - t0);
+          const float rcpSamp = rcpf(sample - sample0);
+          float tIso = infinity;
+          if (!isnan(rcpSamp)) {
+            tIso = t0 + (self->isovalues[i] - sample0) * rcpf(sample - sample0) * (t - t0);
+          }
 
           if (tIso < tHit) {
             tHit = tIso;

@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "ospray/common/Ray.ih"
+#include "../common/Ray.ih"
 
 /*! \file camera.ih Defines the abstract base class of an ISPC-side camera */
 

@@ -17,13 +17,13 @@
 #pragma once
 
 #include "Light.h"
-#include "ospray/texture/Texture2D.h"
+#include "texture/Texture2D.h"
 
 namespace ospray {
 
   /*! a SpotLight is a singular light emitting from a point uniformly into a
    *  cone of directions bounded by halfAngle */
-  class HDRILight : public Light {
+  class OSPRAY_SDK_INTERFACE HDRILight : public Light {
     public:
       HDRILight();
       ~HDRILight();

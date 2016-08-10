@@ -16,19 +16,19 @@
 
 #undef NDEBUG // do all assertions in this file
 
-#include "ospray/mpi/MPICommon.h"
-#include "ospray/mpi/MPIDevice.h"
-#include "ospray/common/Model.h"
-#include "ospray/common/Data.h"
-#include "ospray/common/Library.h"
-#include "ospray/geometry/TriangleMesh.h"
-#include "ospray/render/Renderer.h"
-#include "ospray/camera/Camera.h"
-#include "ospray/volume/Volume.h"
-#include "ospray/mpi/MPILoadBalancer.h"
-#include "ospray/fb/LocalFB.h"
-#include "ospray/mpi/async/CommLayer.h"
-#include "ospray/mpi/DistributedFrameBuffer.h"
+#include "mpi/MPICommon.h"
+#include "mpi/MPIDevice.h"
+#include "common/Model.h"
+#include "common/Data.h"
+#include "common/Library.h"
+#include "geometry/TriangleMesh.h"
+#include "render/Renderer.h"
+#include "camera/Camera.h"
+#include "volume/Volume.h"
+#include "mpi/MPILoadBalancer.h"
+#include "fb/LocalFB.h"
+#include "mpi/async/CommLayer.h"
+#include "mpi/DistributedFrameBuffer.h"
 // std
 #ifndef _WIN32
 #  include <unistd.h> // for fork()
@@ -366,9 +366,9 @@ namespace ospray {
                          int *_ac, const char **_av)
       : currentApiMode(OSPD_MODE_MASTERED)
     {
-      char *logLevelFromEnv = getenv("OSPRAY_LOG_LEVEL");
-      if (logLevelFromEnv && logLevel == 0)
-        logLevel = atoi(logLevelFromEnv);
+      auto logLevelFromEnv = getEnvVar<int>("OSPRAY_LOG_LEVEL");
+      if (logLevelFromEnv.first && logLevel == 0)
+        logLevel = logLevelFromEnv.second;
 
       if (mpi::world.size != 1) {
         if (mpi::world.rank < 0) {
@@ -384,7 +384,9 @@ namespace ospray {
 
       TiledLoadBalancer::instance = new mpi::staticLoadBalancer::Master;
     }
-    MPIDevice::~MPIDevice() {
+
+    MPIDevice::~MPIDevice()
+    {
       cmd.newCommand(CMD_FINALIZE);
       cmd.flush();
       async::shutdown();
@@ -463,6 +465,10 @@ namespace ospray {
       const ObjectHandle handle = (const ObjectHandle&)_object;
       cmd.send(handle);
       cmd.flush();
+
+      ManagedObject *obj = handle.lookup();
+      if (obj)
+        obj->commit();
 
       MPI_Barrier(MPI_COMM_WORLD);
     }
@@ -615,6 +621,11 @@ namespace ospray {
       Assert(_object);
       Assert(bufName);
 
+      const ObjectHandle handle = (const ObjectHandle&)_object;
+      ManagedObject *obj = handle.lookup();
+      if (obj)
+        obj->set(bufName, f);
+
       cmd.newCommand(CMD_SET_FLOAT);
       cmd.send((const ObjectHandle &)_object);
       cmd.send(bufName);
@@ -752,6 +763,10 @@ namespace ospray {
       Assert(type != NULL);
 
       ObjectHandle handle = ObjectHandle::alloc();
+
+      // create renderer to hold some parameters locally (in particular
+      // errorThreshold)
+      ObjectHandle::assign(handle, new Renderer);
 
       cmd.newCommand(CMD_NEW_RENDERER);
       cmd.send(handle);
@@ -928,21 +943,19 @@ namespace ospray {
                                 OSPRenderer _renderer, 
                                 const uint32 fbChannelFlags)
     {
-      const ObjectHandle handle = (const ObjectHandle&)_fb;
-      // const ObjectHandle handle = (const ObjectHandle&)_sc;
-      // SwapChain *sc = (SwapChain *)handle.lookup();
-      FrameBuffer *fb = (FrameBuffer *)handle.lookup();
-      // Assert(sc);
+      const ObjectHandle fb_handle = (const ObjectHandle&)_fb;
+      const ObjectHandle renderer_handle = (const ObjectHandle&)_renderer;
 
-      //FrameBuffer *fb = sc->getFrontBuffer();
-      // FrameBuffer *fb = sc->getBackBuffer();
       cmd.newCommand(CMD_RENDER_FRAME);
-      cmd.send((const ObjectHandle&)_fb);
-      cmd.send((const ObjectHandle&)_renderer);
+      cmd.send(fb_handle);
+      cmd.send(renderer_handle);
       cmd.send((int32)fbChannelFlags);
       cmd.flush();
 
-      return TiledLoadBalancer::instance->renderFrame(NULL,fb,fbChannelFlags);
+      FrameBuffer *fb = (FrameBuffer *)fb_handle.lookup();
+      Renderer *renderer = (Renderer *)renderer_handle.lookup();
+
+      return TiledLoadBalancer::instance->renderFrame(renderer,fb,fbChannelFlags);
     }
 
     //! release (i.e., reduce refcount of) given object

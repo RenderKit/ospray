@@ -17,9 +17,9 @@
 #pragma once
 
 // ospcomon
-#include "common/common.h"
-#include "common/vec.h"
-#include "common/FileName.h"
+#include "ospcommon/common.h"
+#include "ospcommon/vec.h"
+#include "ospcommon/FileName.h"
 // stl
 #include <stack>
 #include <vector>
@@ -69,19 +69,25 @@ namespace ospray {
       }
 
       /*! find properly with given name, and return as long ('l')
-        int. return defaultValue if prop does not exist */
+        int. return undefined if prop does not exist */
       inline size_t getPropl(const std::string &name, const size_t defaultValue=0) const
-      { 
-        const std::string prop = getProp(name);
-        return prop.empty() ? defaultValue : atol(prop.c_str()); 
+      {
+        const std::string val = getProp(name);
+        if (val.empty()) 
+          return defaultValue;
+        else 
+          return atol(val.c_str()); 
       }
-
-      /*! find properly with given name, and return as float. return
-          defaultValue if prop does not exist */
-      inline float getPropf(const std::string &name, const float defaultValue=0) const
-      { 
-        const std::string prop = getProp(name);
-        return prop.empty() ? defaultValue : atof(prop.c_str()); 
+      
+      /*! find properly with given name, and return as long ('l')
+        int. return undefined if prop does not exist */
+      inline float getPropf(const std::string &name, const float defaultValue=0.f) const
+      {
+        const std::string val = getProp(name);
+        if (val.empty()) 
+          return defaultValue;
+        else 
+          return atof(val.c_str()); 
       }
       
       /*! name of the xml node (i.e., the thing that's in

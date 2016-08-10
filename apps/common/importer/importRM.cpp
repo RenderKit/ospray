@@ -17,8 +17,8 @@
 // own
 #include "Importer.h"
 // ospcommon
-#include "common/FileName.h"
-#include "common/sysinfo.h"
+#include "ospcommon/FileName.h"
+#include "ospcommon/sysinfo.h"
 // ospray api
 #include "ospray/ospray.h"
 

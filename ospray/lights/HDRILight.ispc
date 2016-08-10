@@ -15,10 +15,10 @@
 // ======================================================================== //
 
 #include "Light.ih"
-#include "ospray/math/LinearSpace.ih"
-#include "ospray/math/Distribution2D.ih"
-#include "ospray/math/sampling.ih"
-#include "ospray/texture/Texture2D.ih"
+#include "math/LinearSpace.ih"
+#include "math/Distribution2D.ih"
+#include "math/sampling.ih"
+#include "texture/Texture2D.ih"
 
 struct HDRILight
 {
@@ -77,10 +77,15 @@ Light_SampleRes HDRILight_sample(const uniform Light* uniform super,
 
 Light_EvalRes HDRILight_eval(const uniform Light* uniform super,
                              const DifferentialGeometry&,
-                             const vec3f& dir)
+                             const vec3f& dir,
+                             const float maxDist)
 {
   uniform HDRILight* uniform self = (uniform HDRILight* uniform)super;
   Light_EvalRes res;
+  res.radiance = make_vec3f(0.f);
+
+  if (inf > maxDist)
+    return res;
 
   const vec3f localDir = self->world2light * dir;
 
@@ -88,8 +93,7 @@ Light_EvalRes HDRILight_eval(const uniform Light* uniform super,
   const float v = acos(localDir.z) * one_over_pi;
   const vec2f uv = make_vec2f(u, v);
 
-  res.value = get3f(self->map, uv) * self->intensity;
-  res.dist = inf;
+  res.radiance = get3f(self->map, uv) * self->intensity;
 
   // domain of Distribution2D is shifted by half a texel compared to texture
   // atan2 can get negative, shift can lead to values > 1.f: reproject to [0..1)

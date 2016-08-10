@@ -16,7 +16,7 @@
 
 // ospray
 #include "PixelOp.h"
-#include "ospray/common/Library.h"
+#include "common/Library.h"
 // stl
 #include <map>
 
@@ -34,8 +34,6 @@ namespace ospray {
 
   PixelOp *PixelOp::createPixelOp(const char *_type)
   {
-    PING; PRINT(_type);
-
     char *type = STACK_BUFFER(char, strlen(_type)+1);
     strcpy(type,_type);
     char *atSign = strstr(type,"@");
@@ -60,7 +58,6 @@ namespace ospray {
     //dlsym(RTLD_DEFAULT,creatorName.c_str());
     pixelOpRegistry[type] = creator;
     if (creator == nullptr) {
-      PING;
       if (ospray::logLevel >= 1) {
         std::cout << "#ospray: could not find pixelOp type '" << type
                   << "'" << std::endl;
@@ -68,9 +65,6 @@ namespace ospray {
       return nullptr;
     }
     PixelOp *pixelOp = (*creator)();  
-    PING;
-    PRINT(pixelOp);
-    PRINT(pixelOp->toString());
     pixelOp->managedObjectType = OSP_PIXEL_OP;
     return(pixelOp);
   }

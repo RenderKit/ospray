@@ -15,10 +15,10 @@
 // ======================================================================== //
 
 //ospray
-#include "ospray/common/Data.h"
-#include "ospray/common/Core.h"
-#include "ospray/common/Library.h"
-#include "ospray/volume/StructuredVolume.h"
+#include "common/Data.h"
+#include "common/Core.h"
+#include "common/Library.h"
+#include "volume/StructuredVolume.h"
 #include "GridAccelerator_ispc.h"
 #include "StructuredVolume_ispc.h"
 

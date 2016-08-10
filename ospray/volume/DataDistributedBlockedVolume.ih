@@ -16,9 +16,7 @@
 
 #pragma once
 
-#include "ospray/volume/StructuredVolume.ih"
-
-
+#include "../volume/StructuredVolume.ih"
 
 struct DDBVolumeBlock 
 {

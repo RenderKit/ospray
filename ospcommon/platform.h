@@ -328,8 +328,4 @@ __asm__ __volatile__ (									\
 					IACA_SSC_MARK(111)}
 #define IACA_END {IACA_SSC_MARK(222) \
 					IACA_UD_BYTES}
-
-namespace ospcommon {
-
-}
   

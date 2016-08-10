@@ -20,8 +20,8 @@
 // #include "common/OSPCommon.h"
 // // embree
 // #include "common/sys/filename.h"
-#include "common/FileName.h"
-#include "common/box.h"
+#include "ospcommon/FileName.h"
+#include "ospcommon/box.h"
 // stl
 #include <map>
 #include <vector>
@@ -66,25 +66,25 @@ namespace ospray {
 
       static float defaultRadius;
 
-      Model() {}
-
       void addAttribute(const std::string &name, float value)
       {
         if (!attribute[name]) attribute[name] = new std::vector<float>;
         attribute[name]->push_back(value);
       }
 
-      void savePositions(const std::string &fileName)
+      void savePositions(const std::string &/*fileName*/)
       {
-        FILE *file = fopen(fileName.c_str(),"wb");
+        NOT_IMPLEMENTED
       }
+
       void saveAttribute(const std::string &fileName, const std::vector<float> &attr)
       {
         FILE *file = fopen(fileName.c_str(),"wb");
-        for (int i=0;i<attr.size();i++)
-          fwrite(&attr[i],sizeof(float),1,file);
+        for (auto &attribute : attr)
+          fwrite(&attribute,sizeof(float),1,file);
         fclose(file);
       }
+
       void saveToFile(const std::string &fileName) {
         const std::string binName = fileName+".bin";
         
@@ -92,8 +92,8 @@ namespace ospray {
         FILE *bin = fopen(binName.c_str(),"wb");
         
         fprintf(txt,"atoms %li offset %li\n",atom.size(),ftell(bin));
-        for (int i=0;i<atom.size();i++)
-          fwrite(&atom[i].position,sizeof(vec3f),1,bin);
+        for (auto &a : atom)
+          fwrite(&a.position,sizeof(vec3f),1,bin);
 
         for (std::map<std::string,std::vector<float> *>::const_iterator it=attribute.begin();
              it != attribute.end();it++) {

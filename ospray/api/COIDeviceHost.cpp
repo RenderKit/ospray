@@ -19,8 +19,8 @@
 // ospray
 #include "Device.h"
 #include "COIDeviceCommon.h"
-#include "ospray/common/Data.h"
-#include "ospray/volume/Volume.h"
+#include "common/Data.h"
+#include "volume/Volume.h"
 // coi
 #include "common/COIResult_common.h"
 #include "source/COIEngine_source.h"
@@ -356,8 +356,9 @@ namespace ospray {
     void COIEngine::loadOSPRay()
     {
       COIRESULT result;
-      const char *coiWorker = getenv("OSPRAY_COI_WORKER");
-      if (coiWorker == nullptr) {
+      auto OSPRAY_COI_WORKER = getEnvVar<std::string>("OSPRAY_COI_WORKER");
+      auto &coiWorker = OSPRAY_COI_WORKER.second;
+      if (!OSPRAY_COI_WORKER.first) {
         cerr << "Error: OSPRAY_COI_WORKER not defined." << endl;
         cerr << "Note: In order to run the OSPRay COI device on the Xeon"
              << " Phi(s) it needs to know the full path of the"
@@ -368,8 +369,9 @@ namespace ospray {
              << " this executable." << endl;
         exit(1);
       }
-      const char *sinkLDPath = getenv("SINK_LD_LIBRARY_PATH");
-      if (sinkLDPath == nullptr) {
+      auto SINK_LD_LIBRARY_PATH =
+          getEnvVar<std::string>("SINK_LD_LIBRARY_PATH");
+      if (!SINK_LD_LIBRARY_PATH.first) {
         cerr << "SINK_LD_LIBRARY_PATH not defined." << endl;
         cerr << "Note: In order for the COI version of OSPRay to find all"
                   << " the shared libraries (ospray, plus whatever modules the"
@@ -384,7 +386,7 @@ namespace ospray {
       }
 
       std::vector<const char*> workerArgs;
-      workerArgs.push_back(coiWorker);
+      workerArgs.push_back(coiWorker.c_str());
       if (ospray::debugMode)
         workerArgs.push_back("--osp:debug");
       if (ospray::logLevel == 1)
@@ -393,7 +395,7 @@ namespace ospray {
         workerArgs.push_back("--osp:vv");
 
       result = COIProcessCreateFromFile(coiEngine,
-                                        coiWorker,
+                                        coiWorker.c_str(),
                                         workerArgs.size(), workerArgs.data(),
                                         false, nullptr,
                                         true,nullptr,/*proxy!*/
@@ -507,9 +509,9 @@ namespace ospray {
       cout << "#osp:coi: found " << numEngines << " COI engines" << endl;
       Assert(numEngines > 0);
 
-      char *maxEnginesFromEnv = getenv("OSPRAY_COI_MAX_ENGINES");
-      if (maxEnginesFromEnv) {
-        numEngines = std::min((int)numEngines,(int)atoi(maxEnginesFromEnv));
+      auto OSPRAY_COI_MAX_ENGINES = getEnvVar<int>("OSPRAY_COI_MAX_ENGINES");
+      if (OSPRAY_COI_MAX_ENGINES.first) {
+        numEngines = std::min((int)numEngines, OSPRAY_COI_MAX_ENGINES.second);
         cout << "#osp:coi: max engines after considering"
              << " 'OSPRAY_COI_MAX_ENGINES' : " << numEngines << endl;
       }
@@ -963,8 +965,10 @@ namespace ospray {
       fb->hostMem = new int32[size.x*size.y];
       fb->coiBuffer = new COIBUFFER[engines.size()];
       fb->size = size;
+      const size_t stride = (size.x + 15) & ~15; // COI FB is padded to 16
+      const size_t coi_pixels = stride * size.y;
       for (int i = 0; i < engines.size(); i++) {
-        result = COIBufferCreate(size.x*size.y*sizeof(int32),
+        result = COIBufferCreate(coi_pixels*sizeof(int32),
                                  COI_BUFFER_NORMAL,COI_OPTIMIZE_HUGE_PAGE_SIZE,
                                  //COI_MAP_READ_WRITE,
                                  nullptr,1,&engines[i]->coiProcess,
@@ -1005,26 +1009,28 @@ namespace ospray {
       // -------------------------------------------------------
       // trigger N copies...
       // -------------------------------------------------------
+      const size_t stride = (fb->size.x + 15) & ~15; // COI FB is padded to 16
+      const size_t coi_pixels = stride * fb->size.y;
       for (int i = 0; i < numEngines; i++) {
         bzero(&doneCopy[i],sizeof(COIEVENT));
-        devBuffer[i] = new int32[fb->size.x*fb->size.y];
+        devBuffer[i] = new int32[coi_pixels];
         result = COIBufferRead(fb->coiBuffer[i],0,devBuffer[i],
-                               fb->size.x*fb->size.y*sizeof(int32),
+                               coi_pixels*sizeof(int32),
                                COI_COPY_USE_DMA,0,nullptr,&doneCopy[i]);
         Assert(result == COI_SUCCESS);
       }
       // -------------------------------------------------------
       // do 50 assemblies...
       // -------------------------------------------------------
+      const size_t sizeX = fb->size.x;
+      const size_t sizeY = fb->size.y;
+      const size_t numTilesX = divRoundUp(sizeX,(size_t)TILE_SIZE);
+      const size_t numTilesY = divRoundUp(sizeY,(size_t)TILE_SIZE);
       for (int engineID = 0; engineID < numEngines; engineID++) {
-        const size_t sizeX = fb->size.x;
-        const size_t sizeY = fb->size.y;
         COIEventWait(1,&doneCopy[engineID],-1,1,nullptr,nullptr);
         uint32 *src = (uint32*)devBuffer[engineID];
         uint32 *dst = (uint32*)fb->hostMem;
 
-        const size_t numTilesX = divRoundUp(sizeX,(size_t)TILE_SIZE);
-        const size_t numTilesY = divRoundUp(sizeY,(size_t)TILE_SIZE);
         //NOTE(jda) - can this be parallelized?
         for (size_t tileY=0;tileY<numTilesY;tileY++) {
           for (size_t tileX=0;tileX<numTilesX;tileX++) {
@@ -1037,8 +1043,9 @@ namespace ospray {
             const size_t y1 = std::min(y0+TILE_SIZE,sizeY);
             for (size_t y=y0;y<y1;y++)
               for (size_t x=x0;x<x1;x++) {
-                const size_t idx = x+y*sizeX;
-                dst[idx] = src[idx];
+                const size_t srcIdx = x+y*stride;
+                const size_t dstIdx = x+y*sizeX;
+                dst[dstIdx] = src[srcIdx];
               }
           }
         }

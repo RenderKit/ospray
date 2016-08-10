@@ -16,10 +16,13 @@
 
 #pragma once
 
-#include "ospray/common/OSPCommon.h"
-#include "ospray/render/util.h"
+#include "common/OSPCommon.h"
+#include "render/util.h"
 
 namespace ospray {
+
+  static_assert(TILE_SIZE > 0 && (TILE_SIZE & (TILE_SIZE - 1)) == 0,
+      "OSPRay config error: TILE_SIZE must be a positive power of two.");
 
   //! a tile of pixels used by any tile-based renderer
   /*! pixels in the tile are in a row-major TILE_SIZE x TILE_SIZE
@@ -34,7 +37,7 @@ namespace ospray {
       agree on which fields will be set. Similarly, the frame buffer
       may actually use uchars, but the tile will always store
       floats. */
-  struct __aligned(64) Tile {
+  struct OSPRAY_SDK_INTERFACE __aligned(64) Tile {
     // make sure this tile is 64-byte aligned when alloc'ed
     ALIGNED_STRUCT;
 

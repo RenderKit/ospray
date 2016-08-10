@@ -19,11 +19,11 @@
 // ospray PUBLIC api
 #include "ospray/ospray.h"
 // ospcommon
-#include "common/common.h"
-#include "common/RefCount.h"
-#include "common/box.h"
-#include "common/AffineSpace.h"
-#include "common/FileName.h"
+#include "ospcommon/common.h"
+#include "ospcommon/RefCount.h"
+#include "ospcommon/box.h"
+#include "ospcommon/AffineSpace.h"
+#include "ospcommon/FileName.h"
 
 // stl 
 #include <vector>

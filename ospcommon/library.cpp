@@ -41,8 +41,11 @@ namespace ospcommon {
 #endif
 #ifdef _WIN32
     std::string fullName = file+".dll";
-    FileName executable = getExecutableFileName();
-    lib = LoadLibrary((executable.path() + fullName).c_str());
+    lib = LoadLibrary(fullName.c_str());
+    if (!lib) {
+      FileName executable = getExecutableFileName();
+      lib = LoadLibrary((executable.path() + fullName).c_str());
+    }
 #else
 #if defined(__MACOSX__)
     std::string fullName = "lib"+file+".dylib";
@@ -56,8 +59,17 @@ namespace ospcommon {
     }
 #endif
 
-    if (lib == NULL)
+    if (lib == NULL) {
+#ifdef _WIN32
+      // TODO: Must use GetLastError and FormatMessage on windows
+      // to log out the error that occurred when calling LoadLibrary
       throw std::runtime_error("could not open module lib "+name);
+#else
+      std::string error = dlerror();
+      throw std::runtime_error("could not open module lib "+name
+          +" due to "+error);
+#endif
+    }
   }
 
   Library::Library(void* const lib) : lib(lib) {};

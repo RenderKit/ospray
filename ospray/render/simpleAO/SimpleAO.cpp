@@ -17,8 +17,8 @@
 // ospray
 #include "SimpleAO.h"
 #include "SimpleAOMaterial.h"
-#include "ospray/camera/Camera.h"
-#include "ospray/texture/Texture2D.h"
+#include "camera/Camera.h"
+#include "texture/Texture2D.h"
 // ispc exports
 #include "SimpleAO_ispc.h"
 
@@ -28,7 +28,7 @@ namespace ospray {
   SimpleAO::SimpleAO(int defaultNumSamples)
     : defaultNumSamples(defaultNumSamples)
   {
-    ispcEquivalent = ispc::SimpleAO_create(this,NULL,NULL);
+    ispcEquivalent = ispc::SimpleAO_create(this);
   }
 
   /*! \brief create a material of given type */
@@ -60,7 +60,7 @@ namespace ospray {
             depricated!*/
 
 #define OSP_REGISTER_AO_RENDERER(external_name, nSamples)               \
-  extern "C" OSPRAY_INTERFACE                                           \
+  extern "C" OSPRAY_DLLEXPORT                                           \
   Renderer *ospray_create_renderer__##external_name()                   \
   {                                                                     \
     SimpleAO *renderer = new SimpleAO(nSamples);                        \

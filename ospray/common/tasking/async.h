@@ -23,7 +23,7 @@
 #elif defined(OSPRAY_TASKING_CILK)
 #  include <cilk/cilk.h>
 #elif defined(OSPRAY_TASKING_INTERNAL)
-#  include "ospray/common/tasking/TaskSys.h"
+#  include "common/tasking/TaskSys.h"
 #endif
 
 namespace ospray {
@@ -43,7 +43,7 @@ inline void async(const TASK_T& fcn)
                 "'void TASK_T::operator()'.");
 
 #ifdef OSPRAY_TASKING_TBB
-  struct LocalTBBTask : public tbb::task
+  struct /*OSPRAY_SDK_INTERFACE*/ LocalTBBTask : public tbb::task
   {
     TASK_T func;
     tbb::task* execute() override { func(); return nullptr; }
@@ -54,7 +54,7 @@ inline void async(const TASK_T& fcn)
 #elif defined(OSPRAY_TASKING_CILK)
   cilk_spawn fcn();
 #elif defined(OSPRAY_TASKING_INTERNAL)
-  struct LocalTask : public Task {
+  struct OSPRAY_SDK_INTERFACE LocalTask : public Task {
     TASK_T t;
     LocalTask(const TASK_T& fcn) : Task("LocalTask"), t(std::move(fcn)) {}
     void run(size_t) override { t(); }

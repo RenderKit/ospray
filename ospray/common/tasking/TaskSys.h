@@ -16,11 +16,11 @@
 
 #pragma once
 
-#include "ospray/common/OSPCommon.h"
+#include "common/OSPCommon.h"
 
 namespace ospray {
 
-  struct __aligned(64) Task : public RefCount {
+  struct OSPRAY_SDK_INTERFACE __aligned(64) Task : public RefCount {
 
     Task(const char *name = "no name");
     virtual ~Task();
@@ -107,12 +107,12 @@ namespace ospray {
 // Inlined function definitions ///////////////////////////////////////////////
 
   __forceinline Task::Task(const char *name)
-    : status(Task::INITIALIZING),
-      name(name),
-      numJobsCompleted(),
+    : numJobsCompleted(),
       numJobsStarted(),
+      numJobsInTask(0),
+      status(Task::INITIALIZING),
       numMissingDependencies(),
-      numJobsInTask(0)
+      name(name)
   {
   }
 

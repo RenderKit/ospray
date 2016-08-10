@@ -25,7 +25,7 @@ namespace ospray {
     box3f TriangleMesh::getBounds()
     {
       box3f bounds = empty;
-      for (int i=0;i<vertex->getSize();i++)
+      for (uint32_t i = 0; i < vertex->getSize(); i++)
         bounds.extend(vertex->get3f(i));
       return bounds;
     }
@@ -34,7 +34,7 @@ namespace ospray {
     box3f PTMTriangleMesh::getBounds()
     {
       box3f bounds = empty;
-      for (int i=0;i<vertex->getSize();i++)
+      for (uint32_t i = 0; i < vertex->getSize(); i++)
         bounds.extend(vertex->get3f(i));
       return bounds;
     }

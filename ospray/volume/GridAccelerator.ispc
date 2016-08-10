@@ -15,9 +15,9 @@
 // ======================================================================== //
 
 // ospray
-#include "ospray/volume/GridAccelerator.ih"
-#include "ospray/volume/StructuredVolume.ih"
-#include "ospray/math/box.ih"
+#include "volume/GridAccelerator.ih"
+#include "volume/StructuredVolume.ih"
+#include "math/box.ih"
 
 //! Bit count used to represent the brick width.
 #define BRICK_WIDTH_BITCOUNT (4)

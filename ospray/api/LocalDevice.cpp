@@ -15,19 +15,19 @@
 // ======================================================================== //
 
 #include "LocalDevice.h"
-#include "ospray/common/Model.h"
-#include "ospray/common/Data.h"
-#include "ospray/geometry/TriangleMesh.h"
-#include "ospray/render/Renderer.h"
-#include "ospray/camera/Camera.h"
-#include "ospray/volume/Volume.h"
-#include "ospray/transferFunction/TransferFunction.h"
-#include "ospray/render/LoadBalancer.h"
-#include "ospray/common/Material.h"
-#include "ospray/common/Library.h"
-#include "ospray/texture/Texture2D.h"
-#include "ospray/lights/Light.h"
-#include "ospray/fb/LocalFB.h"
+#include "common/Model.h"
+#include "common/Data.h"
+#include "geometry/TriangleMesh.h"
+#include "render/Renderer.h"
+#include "camera/Camera.h"
+#include "volume/Volume.h"
+#include "transferFunction/TransferFunction.h"
+#include "render/LoadBalancer.h"
+#include "common/Material.h"
+#include "common/Library.h"
+#include "texture/Texture2D.h"
+#include "lights/Light.h"
+#include "fb/LocalFB.h"
 
 // stl
 #include <algorithm>
@@ -44,11 +44,11 @@ namespace ospray {
       throw std::runtime_error("embree internal error '" +std::string(str)+"'");
     }
 
-    LocalDevice::LocalDevice(int *_ac, const char **_av)
+    LocalDevice::LocalDevice(int */*_ac*/, const char **/*_av*/)
     {
-      char *logLevelFromEnv = getenv("OSPRAY_LOG_LEVEL");
-      if (logLevelFromEnv && logLevel == 0)
-        logLevel = atoi(logLevelFromEnv);
+      auto logLevelFromEnv = getEnvVar<int>("OSPRAY_LOG_LEVEL");
+      if (logLevelFromEnv.first && logLevel == 0)
+        logLevel = logLevelFromEnv.second;
 
       // -------------------------------------------------------
       // initialize embree. (we need to do this here rather than in

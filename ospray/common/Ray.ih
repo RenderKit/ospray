@@ -17,8 +17,8 @@
 #pragma once
 
 // ospray 
-#include "ospray/math/vec.ih"
-#include "ospray/math/box.ih"
+#include "../math/vec.ih"
+#include "../math/box.ih"
 
 /*! \brief ospray ray class 
 

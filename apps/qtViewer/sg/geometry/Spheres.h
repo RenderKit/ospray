@@ -32,7 +32,7 @@ namespace ospray {
         uint32_t typeID;
         
         // constructor
-        Sphere(vec3f position, float radius, uint typeID=0);
+        Sphere(vec3f position, float radius, uint32_t typeID=0);
         
         // return the bounding box
         inline box3f getBounds() const

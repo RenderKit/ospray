@@ -36,8 +36,8 @@
 */
 
 // ospray
-#include "ospray/render/Renderer.h"
-#include "ospray/common/Material.h"
+#include "render/Renderer.h"
+#include "common/Material.h"
 
 // system
 #include <vector>

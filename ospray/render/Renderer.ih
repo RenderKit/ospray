@@ -16,11 +16,11 @@
 
 #pragma once
 
-#include "ospray/common/OSPCommon.ih"
-#include "ospray/fb/FrameBuffer.ih"
-#include "ospray/fb/Tile.ih"
-#include "ospray/common/Ray.ih"
-#include "ospray/texture/Texture2D.ih"
+#include "../common/OSPCommon.ih"
+#include "../fb/FrameBuffer.ih"
+#include "../fb/Tile.ih"
+#include "../common/Ray.ih"
+#include "../texture/Texture2D.ih"
 
 struct Renderer;
 struct Model;

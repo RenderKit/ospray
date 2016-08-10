@@ -16,9 +16,9 @@
 
 #pragma once
 
-#include "ospray/common/Material.ih"
-#include "ospray/common/Ray.ih"
-#include "ospray/common/DifferentialGeometry.ih"
+#include "../common/Material.ih"
+#include "../common/Ray.ih"
+#include "../common/DifferentialGeometry.ih"
 
 /*! Geometries are supposed to fill certain members of DifferentialGeometry:
     calculate Ng, Ns, st, color, and materialID if the respective bit DG_NG,

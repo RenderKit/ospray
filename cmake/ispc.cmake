@@ -15,13 +15,9 @@
 ## ======================================================================== ##
 
 # ISPC versions to look for, in decending order (newest first)
-IF(WIN32)
-  SET(ISPC_VERSION_WORKING "1.9.0" "1.8.2")
-ELSE()                                    
-  SET(ISPC_VERSION_WORKING "1.9.0" "1.8.2" "1.8.1")
-ENDIF()
+SET(ISPC_VERSION_WORKING "1.9.1" "1.9.0")
 LIST(GET ISPC_VERSION_WORKING -1 ISPC_VERSION_REQUIRED)
-SET(ISPC_VERSION_RECOMMENDED_KNC "1.8.1")
+SET(ISPC_VERSION_RECOMMENDED_KNC "1.9.0")
 
 IF (NOT ISPC_EXECUTABLE)
   # try sibling folder as hint for path of ISPC
@@ -100,6 +96,7 @@ MACRO (OSPRAY_ISPC_COMPILE)
     SET(ISPC_TARGET_ARGS generic-16)
     SET(ISPC_ADDITIONAL_ARGS
       ${ISPC_ADDITIONAL_ARGS}
+      -DOSPRAY_TARGET_MIC
       --opt=force-aligned-memory
       --emit-c++
       --c++-include-file=${PROJECT_SOURCE_DIR}/ospray/common/ISPC_KNC_Backend.h

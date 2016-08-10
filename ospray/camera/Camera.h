@@ -16,16 +16,16 @@
 
 #pragma once
 
-#include "ospray/common/Managed.h"
-#include "ospray/common/Ray.h"
+#include "common/Managed.h"
+#include "common/Ray.h"
 
 namespace ospray {
-  
-  //! base camera class abstraction 
+
+  //! base camera class abstraction
   /*! the base class itself does not do anything useful; look into
       perspectivecamera etc for that */
-  struct Camera : public ManagedObject {
-    //! \brief common function to help printf-debugging 
+  struct OSPRAY_SDK_INTERFACE Camera : public ManagedObject {
+    //! \brief common function to help printf-debugging
     /*! Every derived class should overrride this! */
     virtual std::string toString() const { return "ospray::Camera (base class)"; }
     virtual void commit();
@@ -42,8 +42,8 @@ namespace ospray {
   };
 
   /*! \brief registers a internal ospray::'ClassName' camera under
-      the externally accessible name "external_name" 
-      
+      the externally accessible name "external_name"
+
       \internal This currently works by defining a extern "C" function
       with a given predefined name that creates a new instance of this
       camera. By having this symbol in the shared lib ospray can
@@ -51,7 +51,7 @@ namespace ospray {
       of this camera.
   */
 #define OSP_REGISTER_CAMERA(InternalClassName,external_name)        \
-  extern "C" OSPRAY_INTERFACE Camera *ospray_create_camera__##external_name()        \
+  extern "C" OSPRAY_DLLEXPORT Camera *ospray_create_camera__##external_name()        \
   {                                                                 \
     return new InternalClassName;                                   \
   }                                                                 \

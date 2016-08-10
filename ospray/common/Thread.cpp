@@ -18,7 +18,7 @@
 
 #include "Thread.h"
 // embree
-# include "common/thread.h"
+# include "ospcommon/thread.h"
 
 namespace ospray {
 

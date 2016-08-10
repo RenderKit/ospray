@@ -1,3 +1,20 @@
+// ======================================================================== //
+// Copyright 2016 Intel Corporation                                         //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#include <chrono>
 #include "hayai/hayai.hpp"
 #include "simple_outputter.hpp"
 
@@ -9,9 +26,18 @@ using std::cout;
 using std::endl;
 using std::string;
 
-BENCHMARK_F(OSPRayFixture, test1, 1, 100)
+BENCHMARK_F(OSPRayFixture, test1, 1, 1)
 {
-  renderer->renderFrame(*fb, OSP_FB_COLOR | OSP_FB_ACCUM);
+  using namespace std::chrono;
+  for (int i = 0; i < numBenchFrames; ++i) {
+    high_resolution_clock::time_point startFrame = high_resolution_clock::now();
+    renderer->renderFrame(*fb, OSP_FB_COLOR | OSP_FB_ACCUM);
+    high_resolution_clock::time_point endFrame = high_resolution_clock::now();
+    if (logFrameTimes) {
+      milliseconds elapsed = duration_cast<milliseconds>(endFrame - startFrame);
+      std::cout << elapsed.count() << "ms\n";
+    }
+  }
 }
 
 // NOTE(jda) - Implement make_unique() as it didn't show up until C++14...
@@ -71,6 +97,15 @@ void printUsageAndExit()
   cout << "                       default: 10" << endl;
 
   cout << endl;
+  cout << "    -bf | --bench --> Specify the number of benchmark frames: N"
+       << endl;
+  cout << "                      default: 100" << endl;
+
+  cout << endl;
+  cout << "    -lft | --log-frame-times --> Log frame time in ms for every frame rendered"
+       << endl;
+
+  cout << endl;
   cout << "**camera rendering options**" << endl;
 
   cout << endl;
@@ -116,6 +151,9 @@ void printUsageAndExit()
   cout << "    -is | --surface --> Specify an isosurface at value: val "
        << endl;
 
+  cout << endl;
+  cout << "    --help --> Print this help text" << endl;
+
   exit(0);
 }
 
@@ -127,7 +165,9 @@ void parseCommandLine(int argc, const char *argv[])
 
   for (int i = 1; i < argc; ++i) {
     string arg = argv[i];
-    if (arg == "-i" || arg == "--image") {
+    if (arg == "--help") {
+      printUsageAndExit();
+    } else if (arg == "-i" || arg == "--image") {
       OSPRayFixture::imageOutputFile = argv[++i];
     } else if (arg == "-w" || arg == "--width") {
       OSPRayFixture::width = atoi(argv[++i]);
@@ -135,11 +175,15 @@ void parseCommandLine(int argc, const char *argv[])
       OSPRayFixture::height = atoi(argv[++i]);
     } else if (arg == "-wf" || arg == "--warmup") {
       OSPRayFixture::numWarmupFrames = atoi(argv[++i]);
+    } else if (arg == "-bf" || arg == "--bench") {
+      OSPRayFixture::numBenchFrames = atoi(argv[++i]);
     } else if (arg == "-bg" || arg == "--background") {
       ospcommon::vec3f &color = OSPRayFixture::bg_color;
       color.x = atof(argv[++i]);
       color.y = atof(argv[++i]);
       color.z = atof(argv[++i]);
+    } else if (arg == "-lft" || arg == "--log-frame-times") {
+      OSPRayFixture::logFrameTimes = true;
     }
   }
 
@@ -178,7 +222,7 @@ int main(int argc, const char *argv[])
 # if 0
   hayai::ConsoleOutputter outputter;
 #else
-  hayai::SimpleOutputter outputter;
+  hayai::SimpleOutputter outputter(OSPRayFixture::numBenchFrames);
 #endif
 
   hayai::Benchmarker::AddOutputter(outputter);

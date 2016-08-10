@@ -16,13 +16,13 @@
 
 #pragma once
 
-#include "ospray/common/Material.ih"
-#include "ospray/common/DifferentialGeometry.ih"
-#include "ospray/common/Ray.ih"
+#include "common/Material.ih"
+#include "common/DifferentialGeometry.ih"
+#include "common/Ray.ih"
 #include "Medium.ih"
-#include "../samplers/Sample.ih"
-#include "../bsdfs/BSDF.ih"
-#include "../bsdfs/ShadingContext.ih"
+#include "render/pathtracer/samplers/Sample.ih"
+#include "render/pathtracer/bsdfs/BSDF.ih"
+#include "render/pathtracer/bsdfs/ShadingContext.ih"
 
 struct PathTraceMaterial;
 

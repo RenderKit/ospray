@@ -15,19 +15,19 @@
 // ======================================================================== //
 
 // ospray
-#include "ospray/lights/Light.h"
-#include "ospray/common/Data.h"
-#include "ospray/common/Core.h"
-#include "ospray/common/tasking/parallel_for.h"
-#include "ospray/render/volume/RaycastVolumeRenderer.h"
+#include "lights/Light.h"
+#include "common/Data.h"
+#include "common/Core.h"
+#include "common/tasking/parallel_for.h"
+#include "render/volume/RaycastVolumeRenderer.h"
 #include "RaycastVolumeMaterial.h"
 
 // ispc exports
 #include "RaycastVolumeRenderer_ispc.h"
 #if EXP_DATA_PARALLEL
-# include "ospray/mpi/DistributedFrameBuffer.h"
-# include "ospray/volume/DataDistributedBlockedVolume.h"
-# include "ospray/render/LoadBalancer.h"
+# include "mpi/DistributedFrameBuffer.h"
+# include "volume/DataDistributedBlockedVolume.h"
+# include "render/LoadBalancer.h"
 #endif
 
 #define TILE_CACHE_SAFE_MUTEX 0
@@ -123,7 +123,7 @@ namespace ospray {
     const size_t tile_y = taskIndex / numTiles_x;
     const size_t tile_x = taskIndex - tile_y*numTiles_x;
     const vec2i tileId(tile_x, tile_y);
-    const int32 accumID = fb->accumID(tileID);
+    const int32 accumID = fb->accumID(tileId);
     Tile bgTile(tileId, fb->size, accumID);
     Tile fgTile(bgTile);
 
@@ -201,6 +201,7 @@ namespace ospray {
       tile->region = bgTile.region;
       tile->fbSize = bgTile.fbSize;
       tile->rcp_fbSize = bgTile.rcp_fbSize;
+      tile->accumID = accumID;
       tile->generation = 1;
       tile->children   = 0; //nextGenTile-1;
 
@@ -270,7 +271,7 @@ namespace ospray {
 
     Renderer::beginFrame(fb);
 
-    dfb->startNewFrame();
+    dfb->startNewFrame(errorThreshold);
 
     if (ddVolumeVec.size() > 1) {
       /* note: our assumption below is that all blocks together are

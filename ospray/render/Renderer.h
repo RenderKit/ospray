@@ -18,9 +18,9 @@
 
 /*! \file Renderer.h Defines the base renderer class */
 
-#include "ospray/common/Model.h"
-#include "ospray/fb/FrameBuffer.h"
-#include "ospray/texture/Texture2D.h"
+#include "common/Model.h"
+#include "fb/FrameBuffer.h"
+#include "texture/Texture2D.h"
 
 namespace ospray {
 
@@ -34,7 +34,7 @@ namespace ospray {
     tile renderer, but this abstraction level also allows for frame
     compositing or even projection/splatting based approaches
    */
-  struct Renderer : public ManagedObject {
+  struct OSPRAY_SDK_INTERFACE Renderer : public ManagedObject {
     Renderer() : spp(1), errorThreshold(0.0f) {}
 
     /*! \brief creates an abstract renderer class of given type
@@ -114,7 +114,7 @@ namespace ospray {
       of this renderer.
   */
 #define OSP_REGISTER_RENDERER(InternalClassName,external_name)      \
-  extern "C" OSPRAY_INTERFACE Renderer *ospray_create_renderer__##external_name()    \
+  extern "C" OSPRAY_DLLEXPORT Renderer *ospray_create_renderer__##external_name()    \
   {                                                                 \
     return new InternalClassName;                                   \
   }

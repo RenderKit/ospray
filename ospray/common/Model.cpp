@@ -16,7 +16,7 @@
 
 // ospray
 #include "Model.h"
-#include "ospray/geometry/TriangleMesh.h"
+#include "geometry/TriangleMesh.h"
 // embree
 #include "embree2/rtcore.h"
 #include "embree2/rtcore_scene.h"
@@ -31,6 +31,8 @@ namespace ospray {
   using std::endl;
 
   extern RTCDevice g_embreeDevice;
+
+  extern "C" void *ospray_getEmbreeDevice() { return g_embreeDevice; }
 
   Model::Model()
   {

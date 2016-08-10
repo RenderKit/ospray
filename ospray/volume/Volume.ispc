@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/volume/Volume.ih"
+#include "volume/Volume.ih"
 
 void Volume_Constructor(Volume *uniform self,
                         /*! pointer to the c++-equivalent class of this entity */

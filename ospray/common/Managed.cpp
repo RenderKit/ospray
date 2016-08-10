@@ -22,15 +22,15 @@ namespace ospray {
 
   /*! \brief constructor */
   ManagedObject::ManagedObject()
-    : ID(-1), ispcEquivalent(NULL), managedObjectType(OSP_UNKNOWN) 
+    : ID(-1), ispcEquivalent(nullptr), managedObjectType(OSP_UNKNOWN)
   {}
 
   /*! \brief destructor */
   ManagedObject::~ManagedObject() 
   {
-    // it is OK to potentially delete NULL, nothing bad happens ==> no need to check
+    // it is OK to potentially delete nullptr, nothing bad happens ==> no need to check
     ispc::delete_uniform(ispcEquivalent);
-    ispcEquivalent = NULL;
+    ispcEquivalent = nullptr;
   }
 
   /*! \brief commit the object's outstanding changes (such as changed parameters etc) */
@@ -95,11 +95,11 @@ namespace ospray {
     if (type == OSP_STRING && ptr)
       free(ptr);
     type = OSP_OBJECT;
-    ptr = NULL;
+    ptr = nullptr;
   }
 
   ManagedObject::Param::Param(const char *name)  
-    : name(NULL), type(OSP_FLOAT), ptr(NULL) 
+    : ptr(nullptr), type(OSP_FLOAT), name(nullptr)
   {
     Assert(name);
     f[0] = 0;
@@ -123,7 +123,7 @@ namespace ospray {
     for (size_t i=0 ; i < paramList.size() ; i++) {
       if (!strcmp(paramList[i]->name,name)) return paramList[i];
     }
-    if (!addIfNotExist) return NULL;
+    if (!addIfNotExist) return nullptr;
     paramList.push_back(new Param(name));
     return paramList[paramList.size()-1];
   }

@@ -16,9 +16,9 @@
 
 #pragma once
 
-#include "ospray/math/vec.ih"
-#include "ospray/common/Material.ih"
-#include "ospray/texture/Texture2D.ih"
+#include "math/vec.ih"
+#include "common/Material.ih"
+#include "texture/Texture2D.ih"
 
 struct SimpleAOMaterial {
   Material super;

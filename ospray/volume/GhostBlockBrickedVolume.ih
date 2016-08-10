@@ -17,7 +17,7 @@
 #pragma once
 
 #include "ospray/OSPDataType.h"
-#include "ospray/volume/StructuredVolume.ih"
+#include "../volume/StructuredVolume.ih"
 
 //! \brief ISPC variables and functions for the GhostBlockBrickedVolume class
 /*! \detailed ISPC variables and functions for the GhostBlockBrickedVolume class,

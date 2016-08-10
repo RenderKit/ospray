@@ -16,9 +16,9 @@
 
 #pragma once
 
-#include "common/common.h"
-#include "common/box.h"
-#include "common/AffineSpace.h"
+#include "ospcommon/common.h"
+#include "ospcommon/box.h"
+#include "ospcommon/AffineSpace.h"
 
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -168,7 +168,7 @@ namespace ospray {
         vec3f from;
         vec3f at;
         vec3f up;
-        float openingAngle; //!< in radians, along Y direction
+        float openingAngle; //!< in degrees, along Y direction
         float aspect; //!< aspect ratio X:Y
         // float focalDistance;
       
