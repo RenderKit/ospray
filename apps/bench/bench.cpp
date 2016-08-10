@@ -17,6 +17,7 @@
 #include <chrono>
 
 #include "OSPRayFixture.h"
+#include "BenchScriptHandler.h"
 
 #include "commandline/Utility.h"
 #include "pico_bench/pico_bench.h"
@@ -169,6 +170,8 @@ void parseCommandLine(int argc, const char *argv[])
       color.z = atof(argv[++i]);
     } else if (arg == "-lft" || arg == "--log-frame-times") {
       OSPRayFixture::logFrameTimes = true;
+    } else if (arg == "--script") {
+      OSPRayFixture::scriptFile = argv[++i];
     }
   }
 
@@ -204,22 +207,28 @@ int main(int argc, const char *argv[])
   allocateFixtureObjects();
   parseCommandLine(argc, argv);
 
-  using namespace std::chrono;
-  using Millis = duration<double, std::ratio<1, 1000>>;
-  auto bencher = pico_bench::Benchmarker<Millis>{OSPRayFixture::numBenchFrames};
-
   OSPRayFixture fixture;
   fixture.SetUp();
-  auto stats = bencher([&]() {
-    fixture.renderer->renderFrame(*fixture.fb, OSP_FB_COLOR | OSP_FB_ACCUM);
-  });
-  stats.time_suffix = "ms";
-  if (OSPRayFixture::logFrameTimes) {
-    for (size_t i = 0; i < stats.size(); ++i) {
-      std::cout << stats[i].count() << stats.time_suffix << "\n";
+  if (fixture.scriptFile.empty()) {
+    using namespace std::chrono;
+    // If we don't have a script do this, otherwise run the script
+    // and let it setup bench scenes and benchmrk them and so on
+    auto stats = (*fixture.benchmarker)([&]() {
+      fixture.renderer->renderFrame(*fixture.fb, OSP_FB_COLOR | OSP_FB_ACCUM);
+    });
+    stats.time_suffix = "ms";
+    if (OSPRayFixture::logFrameTimes) {
+      for (size_t i = 0; i < stats.size(); ++i) {
+        std::cout << stats[i].count() << stats.time_suffix << "\n";
+      }
     }
+    std::cout << stats << "\n";
+  } else {
+    // The script will be responsible for setting up the benchmark config
+    // and calling `benchmark(N)` to benchmark the scene
+    BenchScriptHandler scriptHandler(&fixture);
+    scriptHandler.runScriptFromFile(fixture.scriptFile);
   }
-  std::cout << stats << "\n";
   fixture.TearDown();
   return 0;
 }

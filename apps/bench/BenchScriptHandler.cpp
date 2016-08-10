@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2016 Intel Corporation                                         //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,44 +14,31 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
-#include <chrono>
 #include "pico_bench/pico_bench.h"
+#include "BenchScriptHandler.h"
 
-#include <ospray_cpp/Camera.h>
-#include <ospray_cpp/Model.h>
-#include <ospray_cpp/Renderer.h>
+BenchScriptHandler::BenchScriptHandler(OSPRayFixture *fixture)
+  : OSPRayScriptHandler(fixture->model->handle(), fixture->renderer->handle(), fixture->camera->handle())
+{
+  registerScriptTypes();
+  registerScriptFunctions();
+}
+void BenchScriptHandler::registerScriptFunctions() {
+  auto &chai = this->scriptEngine();
+  auto benchmark = [&]() {
+    auto stats = (*fixture->benchmarker)([&]() {
+      fixture->renderer->renderFrame(*(fixture->fb), OSP_FB_COLOR | OSP_FB_ACCUM);
+    });
+    stats.time_suffix = "ms";
+    if (OSPRayFixture::logFrameTimes) {
+      for (size_t i = 0; i < stats.size(); ++i) {
+        std::cout << stats[i].count() << stats.time_suffix << "\n";
+      }
+    }
+    std::cout << stats << "\n";
+  };
+  chai.add(chaiscript::fun(benchmark), "benchmark");
+}
+void BenchScriptHandler::registerScriptTypes() {
+}
 
-struct OSPRayFixture {
-  // Fixture hayai interface //
-
-  void SetUp();
-  void TearDown();
-
-  // Fixture data //
-
-  static std::unique_ptr<ospray::cpp::Renderer>    renderer;
-  static std::unique_ptr<ospray::cpp::Camera>      camera;
-  static std::unique_ptr<ospray::cpp::Model>       model;
-  static std::unique_ptr<ospray::cpp::FrameBuffer> fb;
-
-  // Command-line configuration data //
-
-  static std::string imageOutputFile;
-  static std::string scriptFile;
-
-  static std::vector<std::string> benchmarkModelFiles;
-
-  static int width;
-  static int height;
-
-  static size_t numBenchFrames;
-  static size_t numWarmupFrames;
-  static bool logFrameTimes;
-
-  static ospcommon::vec3f bg_color;
-
-  using Millis = std::chrono::duration<double, std::ratio<1, 1000>>;
-  static std::unique_ptr<pico_bench::Benchmarker<Millis>> benchmarker;
-};

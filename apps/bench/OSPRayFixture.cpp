@@ -26,6 +26,7 @@ std::unique_ptr<ospray::cpp::Model>       OSPRayFixture::model;
 std::unique_ptr<ospray::cpp::FrameBuffer> OSPRayFixture::fb;
 
 string OSPRayFixture::imageOutputFile;
+string OSPRayFixture::scriptFile;
 
 std::vector<string> OSPRayFixture::benchmarkModelFiles;
 
@@ -37,6 +38,7 @@ size_t OSPRayFixture::numWarmupFrames = 10;
 bool OSPRayFixture::logFrameTimes = false;
 
 vec3f OSPRayFixture::bg_color = {1.f, 1.f, 1.f};
+std::unique_ptr<pico_bench::Benchmarker<OSPRayFixture::Millis>> OSPRayFixture::benchmarker = nullptr;
 
 // helper function to write the rendered image as PPM file
 static void writePPM(const string &fileName, const int sizeX, const int sizeY,
@@ -82,6 +84,7 @@ void OSPRayFixture::SetUp()
   }
 
   fb->clear(OSP_FB_ACCUM | OSP_FB_COLOR);
+  benchmarker = make_unique<pico_bench::Benchmarker<Millis>>(OSPRayFixture::numBenchFrames);
 }
 
 void OSPRayFixture::TearDown()

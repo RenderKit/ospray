@@ -21,11 +21,13 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_LIST_DIR})
 OSPRAY_CREATE_APPLICATION(Benchmark
   bench.cpp
   OSPRayFixture.cpp
-  OSPRayFixture.h
+  BenchScriptHandler.cpp
 LINK
   ospray
   ospray_commandline
   ospray_common
   ospray_minisg
   ospray_importer
+  # TODO THIS must be conditional on ospray enable scripting
+  ospray_script
 )
