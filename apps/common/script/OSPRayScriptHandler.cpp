@@ -495,50 +495,66 @@ void OSPRayScriptHandler::registerScriptTypes()
      }
      );
 
-  chaiscript::utility::add_class<ospcommon::vec2i>(*m, "vec2i",
+  using namespace ospcommon;
+  chaiscript::utility::add_class<vec2i>(*m, "vec2i",
      {
-       chaiscript::constructor<ospcommon::vec2i(int x, int y)>(),
+       chaiscript::constructor<vec2i(int x, int y)>(),
      },
      {
+       {chaiscript::fun(static_cast<vec2i (*)(const vec2i &, const vec2i &)>(operator+)), "+"},
+       {chaiscript::fun(static_cast<vec2i (*)(const vec2i &, const vec2i &)>(operator*)), "*"},
+       {chaiscript::fun(static_cast<vec2i (*)(const vec2i &, const vec2i &)>(operator-)), "-"},
      }
      );
 
-  chaiscript::utility::add_class<ospcommon::vec2f>(*m, "vec2f",
+  chaiscript::utility::add_class<vec2f>(*m, "vec2f",
      {
-       chaiscript::constructor<ospcommon::vec2f(float x, float y)>(),
+       chaiscript::constructor<vec2f(float x, float y)>(),
      },
      {
+       {chaiscript::fun(static_cast<vec2f (*)(const vec2f &, const vec2f &)>(operator+)), "+"},
+       {chaiscript::fun(static_cast<vec2f (*)(const vec2f &, const vec2f &)>(operator*)), "*"},
+       {chaiscript::fun(static_cast<vec2f (*)(const vec2f &, const vec2f &)>(operator-)), "-"},
      }
      );
 
-  chaiscript::utility::add_class<ospcommon::vec3i>(*m, "vec3i",
+  chaiscript::utility::add_class<vec3i>(*m, "vec3i",
      {
-       chaiscript::constructor<ospcommon::vec3i(int x, int y, int z)>(),
+       chaiscript::constructor<vec3i(int x, int y, int z)>(),
      },
      {
+       {chaiscript::fun(static_cast<vec3i (*)(const vec3i &, const vec3i &)>(operator+)), "+"},
+       {chaiscript::fun(static_cast<vec3i (*)(const vec3i &, const vec3i &)>(operator*)), "*"},
+       {chaiscript::fun(static_cast<vec3i (*)(const vec3i &, const vec3i &)>(operator-)), "-"},
      }
      );
 
-  chaiscript::utility::add_class<ospcommon::vec3f>(*m, "vec3f",
+  chaiscript::utility::add_class<vec3f>(*m, "vec3f",
      {
-       chaiscript::constructor<ospcommon::vec3f(float x, float y, float z)>(),
+       chaiscript::constructor<vec3f(float x, float y, float z)>(),
      },
      {
+       {chaiscript::fun(static_cast<vec3f (*)(const vec3f &, const vec3f &)>(operator+)), "+"},
+       {chaiscript::fun(static_cast<vec3f (*)(const vec3f &, const vec3f &)>(operator*)), "*"},
+       {chaiscript::fun(static_cast<vec3f (*)(const vec3f &, const vec3f &)>(operator-)), "-"},
      }
      );
 
-  chaiscript::utility::add_class<ospcommon::vec4f>(*m, "vec4f",
+  chaiscript::utility::add_class<vec4f>(*m, "vec4f",
      {
-       chaiscript::constructor<ospcommon::vec4f(float x, float y, float z, float w)>(),
+       chaiscript::constructor<vec4f(float x, float y, float z, float w)>(),
      },
      {
+       {chaiscript::fun(static_cast<vec4f (*)(const vec4f &, const vec4f &)>(operator+)), "+"},
+       {chaiscript::fun(static_cast<vec4f (*)(const vec4f &, const vec4f &)>(operator*)), "*"},
+       {chaiscript::fun(static_cast<vec4f (*)(const vec4f &, const vec4f &)>(operator-)), "-"},
      }
      );
 
-  chaiscript::utility::add_class<ospcommon::box3f>(*m, "box3f",
+  chaiscript::utility::add_class<box3f>(*m, "box3f",
      {
-       chaiscript::constructor<ospcommon::box3f()>(),
-       chaiscript::constructor<ospcommon::box3f(const ospcommon::vec3f &lower, const ospcommon::vec3f &upper)>(),
+       chaiscript::constructor<box3f()>(),
+       chaiscript::constructor<box3f(const vec3f &lower, const vec3f &upper)>(),
      },
      {
      }
