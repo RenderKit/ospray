@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "pico_bench/pico_bench.h"
+#include "chaiscript/utility/utility.hpp"
 #include "BenchScriptHandler.h"
 
 BenchScriptHandler::BenchScriptHandler(OSPRayFixture *fixture)
@@ -35,10 +36,43 @@ void BenchScriptHandler::registerScriptFunctions() {
         std::cout << stats[i].count() << stats.time_suffix << "\n";
       }
     }
+    return stats;
+  };
+  auto printStats = [](const BenchStats &stats) {
     std::cout << stats << "\n";
   };
+
   chai.add(chaiscript::fun(benchmark), "benchmark");
+  chai.add(chaiscript::fun(printStats), "printStats");
 }
 void BenchScriptHandler::registerScriptTypes() {
+  using Millis = OSPRayFixture::Millis;
+  auto &chai = this->scriptEngine();
+  chaiscript::ModulePtr m = chaiscript::ModulePtr(new chaiscript::Module());
+
+  chaiscript::utility::add_class<Millis>(*m, "Millis",
+    {},
+    {
+      {chaiscript::fun(static_cast<double (Millis::*)() const>(&Millis::count)), "count"}
+    }
+  );
+
+  chaiscript::utility::add_class<BenchStats>(*m, "Statistics",
+    {},
+    {
+      {chaiscript::fun(static_cast<Millis (BenchStats::*)(const float) const>(&BenchStats::percentile)), "percentile"},
+      {chaiscript::fun(static_cast<void (BenchStats::*)(const float)>(&BenchStats::winsorize)), "winsorize"},
+      {chaiscript::fun(static_cast<Millis (BenchStats::*)() const>(&BenchStats::median)), "median"},
+      {chaiscript::fun(static_cast<Millis (BenchStats::*)() const>(&BenchStats::median_abs_dev)), "median_abs_dev"},
+      {chaiscript::fun(static_cast<Millis (BenchStats::*)() const>(&BenchStats::mean)), "mean"},
+      {chaiscript::fun(static_cast<Millis (BenchStats::*)() const>(&BenchStats::std_dev)), "std_dev"},
+      {chaiscript::fun(static_cast<Millis (BenchStats::*)() const>(&BenchStats::min)), "min"},
+      {chaiscript::fun(static_cast<Millis (BenchStats::*)() const>(&BenchStats::max)), "max"},
+      {chaiscript::fun(static_cast<size_t (BenchStats::*)() const>(&BenchStats::size)), "size"},
+      {chaiscript::fun(static_cast<const Millis& (BenchStats::*)(size_t) const>(&BenchStats::operator[])), "at"}
+    }
+  );
+
+  chai.add(m);
 }
 

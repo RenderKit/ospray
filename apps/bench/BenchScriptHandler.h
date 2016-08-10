@@ -28,5 +28,6 @@ class BenchScriptHandler : public ospray::OSPRayScriptHandler {
     void registerScriptTypes();
 
     OSPRayFixture *fixture;
+    using BenchStats = pico_bench::Statistics<OSPRayFixture::Millis>;
 };
 
