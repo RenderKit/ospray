@@ -17,6 +17,7 @@
 #ifdef OSPRAY_APPS_ENABLE_SCRIPTING
 
 #include <ospcommon/vec.h>
+#include <ospray/common/OSPCommon.h>
 
 #include "pico_bench/pico_bench.h"
 #include "chaiscript/utility/utility.hpp"
@@ -133,6 +134,12 @@ void BenchScriptHandler::registerScriptFunctions() {
     return ospray::cpp::Volume(imported->volume[0]->handle);
   };
 
+  // Get an string environment variable
+  auto getEnvString = [](const std::string &var){
+    return ospray::getEnvVar<std::string>(var).second;
+  };
+
+
   chai.add(chaiscript::fun(benchmark), "benchmark");
   chai.add(chaiscript::fun(printStats), "printStats");
   chai.add(chaiscript::fun(setRenderer), "setRenderer");
@@ -140,6 +147,7 @@ void BenchScriptHandler::registerScriptFunctions() {
   chai.add(chaiscript::fun(refresh), "refresh");
   chai.add(chaiscript::fun(loadTransferFunction), "loadTransferFunction");
   chai.add(chaiscript::fun(loadVolume), "loadVolume");
+  chai.add(chaiscript::fun(getEnvString), "getEnvString");
 }
 void BenchScriptHandler::registerScriptTypes() {
   using Millis = OSPRayFixture::Millis;
