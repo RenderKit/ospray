@@ -504,6 +504,7 @@ void OSPRayScriptHandler::registerScriptTypes()
        {chaiscript::fun(static_cast<vec2i (*)(const vec2i &, const vec2i &)>(operator+)), "+"},
        {chaiscript::fun(static_cast<vec2i (*)(const vec2i &, const vec2i &)>(operator*)), "*"},
        {chaiscript::fun(static_cast<vec2i (*)(const vec2i &, const vec2i &)>(operator-)), "-"},
+       {chaiscript::fun(static_cast<vec2i& (vec2i::*)(const vec2i &)>(&vec2i::operator=)), "="},
      }
      );
 
@@ -515,6 +516,7 @@ void OSPRayScriptHandler::registerScriptTypes()
        {chaiscript::fun(static_cast<vec2f (*)(const vec2f &, const vec2f &)>(operator+)), "+"},
        {chaiscript::fun(static_cast<vec2f (*)(const vec2f &, const vec2f &)>(operator*)), "*"},
        {chaiscript::fun(static_cast<vec2f (*)(const vec2f &, const vec2f &)>(operator-)), "-"},
+       {chaiscript::fun(static_cast<vec2f& (vec2f::*)(const vec2f &)>(&vec2f::operator=)), "="},
      }
      );
 
@@ -526,6 +528,7 @@ void OSPRayScriptHandler::registerScriptTypes()
        {chaiscript::fun(static_cast<vec3i (*)(const vec3i &, const vec3i &)>(operator+)), "+"},
        {chaiscript::fun(static_cast<vec3i (*)(const vec3i &, const vec3i &)>(operator*)), "*"},
        {chaiscript::fun(static_cast<vec3i (*)(const vec3i &, const vec3i &)>(operator-)), "-"},
+       {chaiscript::fun(static_cast<vec3i& (vec3i::*)(const vec3i &)>(&vec3i::operator=)), "="},
      }
      );
 
@@ -537,6 +540,7 @@ void OSPRayScriptHandler::registerScriptTypes()
        {chaiscript::fun(static_cast<vec3f (*)(const vec3f &, const vec3f &)>(operator+)), "+"},
        {chaiscript::fun(static_cast<vec3f (*)(const vec3f &, const vec3f &)>(operator*)), "*"},
        {chaiscript::fun(static_cast<vec3f (*)(const vec3f &, const vec3f &)>(operator-)), "-"},
+       {chaiscript::fun(static_cast<vec3f& (vec3f::*)(const vec3f &)>(&vec3f::operator=)), "="},
      }
      );
 
@@ -548,6 +552,7 @@ void OSPRayScriptHandler::registerScriptTypes()
        {chaiscript::fun(static_cast<vec4f (*)(const vec4f &, const vec4f &)>(operator+)), "+"},
        {chaiscript::fun(static_cast<vec4f (*)(const vec4f &, const vec4f &)>(operator*)), "*"},
        {chaiscript::fun(static_cast<vec4f (*)(const vec4f &, const vec4f &)>(operator-)), "-"},
+       {chaiscript::fun(static_cast<vec4f& (vec4f::*)(const vec4f &)>(&vec4f::operator=)), "="},
      }
      );
 
