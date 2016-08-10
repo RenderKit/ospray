@@ -40,8 +40,8 @@ struct OSPRayFixture {
   static int width;
   static int height;
 
-  static int numBenchFrames;
-  static int numWarmupFrames;
+  static size_t numBenchFrames;
+  static size_t numWarmupFrames;
   static bool logFrameTimes;
 
   static ospcommon::vec3f bg_color;
