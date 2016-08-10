@@ -44,6 +44,7 @@ namespace ospray {
                   cpp::Model model,
                   cpp::Renderer renderer, 
                   cpp::Camera camera);
+    virtual ~OSPGlutViewer() = default;
 
     void setRenderer(OSPRenderer renderer);
     void resetAccumulation();
@@ -76,10 +77,6 @@ namespace ospray {
     virtual void keypress(char key, const ospcommon::vec2i &where) override;
     virtual void mouseButton(int32_t whichButton, bool released,
                              const ospcommon::vec2i &pos) override;
-
-  private:
-
-    // Private functions //
 
     void display() override;
 
