@@ -15,30 +15,15 @@
 // ======================================================================== //
 
 #include <chrono>
-#include "hayai/hayai.hpp"
-#include "simple_outputter.hpp"
 
 #include "OSPRayFixture.h"
 
 #include "commandline/Utility.h"
+#include "pico_bench/pico_bench.h"
 
 using std::cout;
 using std::endl;
 using std::string;
-
-BENCHMARK_F(OSPRayFixture, test1, 1, 1)
-{
-  using namespace std::chrono;
-  for (int i = 0; i < numBenchFrames; ++i) {
-    high_resolution_clock::time_point startFrame = high_resolution_clock::now();
-    renderer->renderFrame(*fb, OSP_FB_COLOR | OSP_FB_ACCUM);
-    high_resolution_clock::time_point endFrame = high_resolution_clock::now();
-    if (logFrameTimes) {
-      milliseconds elapsed = duration_cast<milliseconds>(endFrame - startFrame);
-      std::cout << elapsed.count() << "ms\n";
-    }
-  }
-}
 
 // NOTE(jda) - Implement make_unique() as it didn't show up until C++14...
 template<typename T, typename ...Args>
@@ -219,14 +204,20 @@ int main(int argc, const char *argv[])
   allocateFixtureObjects();
   parseCommandLine(argc, argv);
 
-# if 0
-  hayai::ConsoleOutputter outputter;
-#else
-  hayai::SimpleOutputter outputter(OSPRayFixture::numBenchFrames);
-#endif
+  using namespace std::chrono;
+  auto bencher = pico_bench::Benchmarker<milliseconds>{OSPRayFixture::numBenchFrames};
 
-  hayai::Benchmarker::AddOutputter(outputter);
-
-  hayai::Benchmarker::RunAllTests();
+  OSPRayFixture fixture;
+  fixture.SetUp();
+  auto stats = bencher([&]() {
+    fixture.renderer->renderFrame(*fixture.fb, OSP_FB_COLOR | OSP_FB_ACCUM);
+  });
+  stats.time_suffix = "ms";
+  if (OSPRayFixture::logFrameTimes) {
+    for (size_t i = 0; i < stats.size(); ++i) {
+      std::cout << stats[i].count() << stats.time_suffix << "\n";
+    }
+  }
+  std::cout << stats << "\n";
   return 0;
 }

@@ -14,19 +14,15 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-
-#include "hayai/hayai.hpp"
-
 #include <ospray_cpp/Camera.h>
 #include <ospray_cpp/Model.h>
 #include <ospray_cpp/Renderer.h>
 
-struct OSPRayFixture : public hayai::Fixture
-{
+struct OSPRayFixture {
   // Fixture hayai interface //
 
-  void SetUp() override;
-  void TearDown() override;
+  void SetUp();
+  void TearDown();
 
   // Fixture data //
 

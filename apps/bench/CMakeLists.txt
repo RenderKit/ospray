@@ -22,7 +22,6 @@ OSPRAY_CREATE_APPLICATION(Benchmark
   bench.cpp
   OSPRayFixture.cpp
   OSPRayFixture.h
-  simple_outputter.hpp
 LINK
   ospray
   ospray_commandline
