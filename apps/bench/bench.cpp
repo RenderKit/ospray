@@ -205,7 +205,8 @@ int main(int argc, const char *argv[])
   parseCommandLine(argc, argv);
 
   using namespace std::chrono;
-  auto bencher = pico_bench::Benchmarker<milliseconds>{OSPRayFixture::numBenchFrames};
+  using Millis = duration<double, std::ratio<1, 1000>>;
+  auto bencher = pico_bench::Benchmarker<Millis>{OSPRayFixture::numBenchFrames};
 
   OSPRayFixture fixture;
   fixture.SetUp();
