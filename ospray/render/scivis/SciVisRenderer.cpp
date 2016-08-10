@@ -50,6 +50,7 @@ namespace ospray {
       int   numAOSamples = getParam1i("aoSamples", 0);
       float rayLength    = getParam1f("aoOcclusionDistance", 1e20f);
       float aoWeight     = getParam1f("aoWeight", 0.25f);
+      const bool oneSidedLighting = getParam1i("oneSidedLighting", 1);
 
       ispc::SciVisRenderer_set(getIE(),
                                shadowsEnabled,
@@ -58,7 +59,8 @@ namespace ospray {
                                rayLength,
                                aoWeight,
                                lightPtr,
-                               lightArray.size());
+                               lightArray.size(),
+                               oneSidedLighting);
     }
 
     SciVisRenderer::SciVisRenderer()

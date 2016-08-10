@@ -39,6 +39,7 @@ struct SciVisRenderer
 
   const uniform Light *uniform *uniform lights;
   uint32 numLights;
+  bool  oneSidedLighting;
 
   bool  shadowsEnabled;
 
@@ -230,7 +231,13 @@ inline void shadeLights(const uniform SciVisRenderer *uniform self,
     const Light_SampleRes light = l->sample(l, dg, s);
 
     if (reduce_max(light.weight) > 0.f) { // any potential contribution?
-      const float cosNL = abs(dot(light.dir, dg.Ns));
+      float cosNL = dot(light.dir, dg.Ns);
+      if (self->oneSidedLighting) {
+        if (cosNL < 0.0f)
+          continue;
+      }
+      else
+        cosNL = abs(cosNL);
       const float cosLR = max(0.f, dot(light.dir, R));
       const vec3f brdf = info.Kd * cosNL + info.Ks * powf(cosLR, info.Ns);
       const vec3f light_contrib = info.local_opacity
@@ -595,7 +602,8 @@ export void SciVisRenderer_set(void *uniform _self,
                                const uniform float aoRayLength,
                                const uniform float aoWeight,
                                void **uniform lights,
-                               const uniform uint32 numLights)
+                               const uniform uint32 numLights,
+                               const uniform bool oneSidedLighting)
 {
   uniform SciVisRenderer *uniform self = (uniform SciVisRenderer *uniform)_self;
 
@@ -609,6 +617,7 @@ export void SciVisRenderer_set(void *uniform _self,
 
   self->lights = (const uniform Light *uniform *uniform)lights;
   self->numLights = numLights;
+  self->oneSidedLighting = oneSidedLighting;
 }
 
 export void *uniform SciVisRenderer_create(void *uniform cppE)
@@ -617,7 +626,7 @@ export void *uniform SciVisRenderer_create(void *uniform cppE)
   Renderer_Constructor(&self->super,cppE);
   self->super.renderSample = SciVisRenderer_renderSample;
   self->super.beginFrame = SciVisRenderer_beginFrame;
-  SciVisRenderer_set(self, true, 10, 4, infinity, 0.25f, NULL, 0);
+  SciVisRenderer_set(self, true, 10, 4, infinity, 0.25f, NULL, 0, true);
 
   return self;
 }
