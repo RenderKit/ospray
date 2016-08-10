@@ -16,6 +16,8 @@
 
 #pragma once
 
+#ifdef OSPRAY_APPS_ENABLE_SCRIPTING
+
 #include "common/script/OSPRayScriptHandler.h"
 #include "OSPRayFixture.h"
 
@@ -30,4 +32,6 @@ class BenchScriptHandler : public ospray::OSPRayScriptHandler {
     OSPRayFixture *fixture;
     using BenchStats = pico_bench::Statistics<OSPRayFixture::Millis>;
 };
+
+#endif
 
