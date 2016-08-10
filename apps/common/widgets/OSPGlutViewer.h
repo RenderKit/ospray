@@ -44,7 +44,8 @@ namespace ospray {
                   cpp::Model model,
                   cpp::Renderer renderer, 
                   cpp::Camera camera);
-    virtual ~OSPGlutViewer() = default;
+    virtual ~OSPGlutViewer() {}// NOTE(jda) - can't use 'default' here with ICC
+                               //             16.0.0.20160415 on CentOS 6
 
     void setRenderer(OSPRenderer renderer);
     void resetAccumulation();
