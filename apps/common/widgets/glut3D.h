@@ -192,7 +192,6 @@ namespace ospray {
       OSPRAY_GLUT3D_INTERFACE Glut3DWidget(FrameBufferMode frameBufferMode,
                                            ManipulatorMode initialManipulator=INSPECT_CENTER_MODE,
                                            int allowedManipulators=INSPECT_CENTER_MODE|MOVE_MODE);
-      virtual ~Glut3DWidget() = default;
 
       /*! set a default camera position that views given bounds from the
         top left front */
