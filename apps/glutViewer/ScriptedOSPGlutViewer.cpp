@@ -45,7 +45,7 @@ namespace ospray {
   }
 
   void ScriptedOSPGlutViewer::display() {
-    if (!m_fb.handle() || !m_renderer.handle()) return;
+    if (!frameBuffer.handle() || !renderer.handle()) return;
 
     // We need to synchronize with the scripting engine so we don't
     // get our scene data trampled on if scripting is running.
@@ -58,17 +58,17 @@ namespace ospray {
     // call (which in itself will not do a lot other than triggering
     // work), but the average time between the two calls is roughly the
     // frame rate (including display overhead, of course)
-    if (frameID.load() > 0) m_fps.doneRender();
+    if (frameID.load() > 0) fps.doneRender();
 
     // NOTE: consume a new renderer if one has been queued by another thread
     switchRenderers();
 
-    if (m_resetAccum) {
-      m_fb.clear(OSP_FB_ACCUM);
-      m_resetAccum = false;
+    if (resetAccum) {
+      frameBuffer.clear(OSP_FB_ACCUM);
+      resetAccum = false;
     }
 
-    m_fps.startRender();
+    fps.startRender();
     //}
 
     ++frameID;
@@ -76,46 +76,46 @@ namespace ospray {
     if (viewPort.modified) {
       static bool once = true;
       if(once) {
-        m_viewPort = viewPort;
+        glutViewPort = viewPort;
         once = false;
       }
-      Assert2(m_camera.handle(),"ospray camera is null");
-      m_camera.set("pos", viewPort.from);
+      Assert2(camera.handle(),"ospray camera is null");
+      camera.set("pos", viewPort.from);
       auto dir = viewPort.at - viewPort.from;
-      m_camera.set("dir", dir);
-      m_camera.set("up", viewPort.up);
-      m_camera.set("aspect", viewPort.aspect);
-      m_camera.set("fovy", viewPort.openingAngle);
-      m_camera.commit();
+      camera.set("dir", dir);
+      camera.set("up", viewPort.up);
+      camera.set("aspect", viewPort.aspect);
+      camera.set("fovy", viewPort.openingAngle);
+      camera.commit();
       viewPort.modified = false;
-      m_accumID=0;
-      m_fb.clear(OSP_FB_ACCUM);
+      accumID=0;
+      frameBuffer.clear(OSP_FB_ACCUM);
 
-      if (m_useDisplayWall)
+      if (useDisplayWall)
         displayWall.fb.clear(OSP_FB_ACCUM);
     }
 
-    m_renderer.renderFrame(m_fb, OSP_FB_COLOR | OSP_FB_ACCUM);
-    if (m_useDisplayWall) {
-      m_renderer.renderFrame(displayWall.fb, OSP_FB_COLOR | OSP_FB_ACCUM);
+    renderer.renderFrame(frameBuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
+    if (useDisplayWall) {
+      renderer.renderFrame(displayWall.fb, OSP_FB_COLOR | OSP_FB_ACCUM);
     }
-    ++m_accumID;
+    ++accumID;
 
     // set the glut3d widget's frame buffer to the opsray frame buffer,
     // then display
-    ucharFB = (uint32_t *)m_fb.map(OSP_FB_COLOR);
+    ucharFB = (uint32_t *)frameBuffer.map(OSP_FB_COLOR);
     frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
     Glut3DWidget::display();
 
-    m_fb.unmap(ucharFB);
+    frameBuffer.unmap(ucharFB);
 
     // that pointer is no longer valid, so set it to null
     ucharFB = nullptr;
 
     std::string title("OSPRay GLUT Viewer");
 
-    if (m_alwaysRedraw) {
-      title += " (" + std::to_string((long double)m_fps.getFPS()) + " fps)";
+    if (alwaysRedraw) {
+      title += " (" + std::to_string((long double)fps.getFPS()) + " fps)";
       setTitle(title);
       forceRedraw();
     } else {
