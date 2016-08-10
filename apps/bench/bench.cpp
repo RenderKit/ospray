@@ -139,6 +139,11 @@ void printUsageAndExit()
 
   cout << endl;
   cout << "    --help --> Print this help text" << endl;
+#ifdef OSPRAY_APPS_ENABLE_SCRIPTING
+  cout << endl;
+  cout << "    --script --> Specify a script file to drive the benchmarker"
+       << endl;
+#endif
 
   exit(0);
 }
