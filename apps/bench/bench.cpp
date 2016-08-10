@@ -224,10 +224,15 @@ int main(int argc, const char *argv[])
     }
     std::cout << stats << "\n";
   } else {
+#ifdef OSPRAY_APPS_ENABLE_SCRIPTING
     // The script will be responsible for setting up the benchmark config
     // and calling `benchmark(N)` to benchmark the scene
     BenchScriptHandler scriptHandler(&fixture);
     scriptHandler.runScriptFromFile(fixture.scriptFile);
+#else
+    throw std::runtime_error("You must build with OSPRAY_APPS_ENABLE_SCRIPTING=ON "
+                             "to use scripting");
+#endif
   }
   fixture.TearDown();
   return 0;

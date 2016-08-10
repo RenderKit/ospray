@@ -40,9 +40,10 @@ bool OSPRayFixture::logFrameTimes = false;
 vec3f OSPRayFixture::bg_color = {1.f, 1.f, 1.f};
 std::unique_ptr<pico_bench::Benchmarker<OSPRayFixture::Millis>> OSPRayFixture::benchmarker = nullptr;
 
+namespace bench {
 // helper function to write the rendered image as PPM file
-static void writePPM(const string &fileName, const int sizeX, const int sizeY,
-                     const uint32_t *pixel)
+void writePPM(const string &fileName, const int sizeX, const int sizeY,
+              const uint32_t *pixel)
 {
   FILE *file = fopen(fileName.c_str(), "wb");
   fprintf(file, "P6\n%i %i\n255\n", sizeX, sizeY);
@@ -58,6 +59,7 @@ static void writePPM(const string &fileName, const int sizeX, const int sizeY,
   }
   fprintf(file, "\n");
   fclose(file);
+}
 }
 
 static void createFramebuffer(OSPRayFixture *f)
@@ -91,7 +93,7 @@ void OSPRayFixture::TearDown()
 {
   if (!imageOutputFile.empty()) {
     auto *lfb = (uint32_t*)fb->map(OSP_FB_COLOR);
-    writePPM(imageOutputFile + ".ppm", width, height, lfb);
+    bench::writePPM(imageOutputFile + ".ppm", width, height, lfb);
     fb->unmap(lfb);
   }
 }

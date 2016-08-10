@@ -23,6 +23,11 @@
 #include <ospray_cpp/Model.h>
 #include <ospray_cpp/Renderer.h>
 
+namespace bench {
+void writePPM(const std::string &fileName, const int sizeX, const int sizeY,
+              const uint32_t *pixel);
+}
+
 struct OSPRayFixture {
   // Fixture hayai interface //
 
