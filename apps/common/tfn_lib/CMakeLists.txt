@@ -27,7 +27,6 @@ if (OSPRAY_APPS_PARAVIEW_TFN_CVT)
     convertParaViewTfcn.cpp
     jsoncpp.cpp
   LINK
-    ospray_common
     ospray_tfn
   )
 endif()
