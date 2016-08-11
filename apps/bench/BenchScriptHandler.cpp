@@ -126,7 +126,7 @@ void BenchScriptHandler::registerScriptTypes() {
   chaiscript::utility::add_class<Millis>(*m, "Millis",
     {},
     {
-      {chaiscript::fun(static_cast<double (Millis::*)() const>(&Millis::count)), "count"},
+      {chaiscript::fun(&Millis::count), "count"},
       {chaiscript::fun(millisToString), "to_string"}
     }
   );
@@ -147,14 +147,14 @@ void BenchScriptHandler::registerScriptTypes() {
       // Are these casts even needed?? the functons aren't overloaded.
       {chaiscript::fun(static_cast<Millis (BenchStats::*)(const float) const>(&BenchStats::percentile)), "percentile"},
       {chaiscript::fun(static_cast<void (BenchStats::*)(const float)>(&BenchStats::winsorize)), "winsorize"},
-      {chaiscript::fun(static_cast<Millis (BenchStats::*)() const>(&BenchStats::median)), "median"},
-      {chaiscript::fun(static_cast<Millis (BenchStats::*)() const>(&BenchStats::median_abs_dev)), "median_abs_dev"},
-      {chaiscript::fun(static_cast<Millis (BenchStats::*)() const>(&BenchStats::mean)), "mean"},
-      {chaiscript::fun(static_cast<Millis (BenchStats::*)() const>(&BenchStats::std_dev)), "std_dev"},
-      {chaiscript::fun(static_cast<Millis (BenchStats::*)() const>(&BenchStats::min)), "min"},
-      {chaiscript::fun(static_cast<Millis (BenchStats::*)() const>(&BenchStats::max)), "max"},
-      {chaiscript::fun(static_cast<size_t (BenchStats::*)() const>(&BenchStats::size)), "size"},
-      {chaiscript::fun(static_cast<const Millis& (BenchStats::*)(size_t) const>(&BenchStats::operator[])), "[]"},
+      {chaiscript::fun(&BenchStats::median), "median"},
+      {chaiscript::fun(&BenchStats::median_abs_dev), "median_abs_dev"},
+      {chaiscript::fun(&BenchStats::mean), "mean"},
+      {chaiscript::fun(&BenchStats::std_dev), "std_dev"},
+      {chaiscript::fun(&BenchStats::min), "min"},
+      {chaiscript::fun(&BenchStats::max), "max"},
+      {chaiscript::fun(&BenchStats::size), "size"},
+      {chaiscript::fun(&BenchStats::operator[]), "[]"},
       {chaiscript::fun(static_cast<BenchStats& (BenchStats::*)(const BenchStats&)>(&BenchStats::operator=)), "="},
       {chaiscript::fun(statsToString), "to_string"}
     }
