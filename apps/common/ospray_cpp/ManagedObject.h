@@ -64,6 +64,9 @@ namespace ospray {
 
       // OSPObject*
       virtual void set(const std::string &name, OSPObject v) = 0;
+     
+      // ManagedObject&
+      virtual void set(const std::string &name, const ManagedObject &v) = 0;
 
       //! Commit to ospray
       virtual void commit() const = 0;
@@ -110,8 +113,7 @@ namespace ospray {
 
       void set(const std::string &name, OSPObject v) override;
 
-      template <typename OTHER_OSP_TYPE>
-      void set(const std::string &name, const ManagedObject_T<OTHER_OSP_TYPE> &v);
+      void set(const std::string &name, const ManagedObject &v) override;
 
       void commit() const override;
 
@@ -260,12 +262,10 @@ namespace ospray {
     }
 
     template <typename OSP_TYPE>
-    template <typename OTHER_OSP_TYPE>
     inline void
-    ManagedObject_T<OSP_TYPE>::set(const std::string &name,
-                                   const ManagedObject_T<OTHER_OSP_TYPE> &v)
+    ManagedObject_T<OSP_TYPE>::set(const std::string &name, const ManagedObject &v)
     {
-      ospSetObject(ospObject, name.c_str(), v.handle());
+      ospSetObject(ospObject, name.c_str(), v.object());
     }
 
     template <typename OSP_TYPE>
