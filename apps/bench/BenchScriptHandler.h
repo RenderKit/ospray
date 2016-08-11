@@ -18,18 +18,19 @@
 
 #ifdef OSPRAY_APPS_ENABLE_SCRIPTING
 
+#include <memory>
 #include "common/script/OSPRayScriptHandler.h"
 #include "OSPRayFixture.h"
 
 class BenchScriptHandler : public ospray::OSPRayScriptHandler {
   public:
-    BenchScriptHandler(OSPRayFixture *fixture);
+    BenchScriptHandler(std::shared_ptr<OSPRayFixture> fixture);
 
   private:
     void registerScriptFunctions();
     void registerScriptTypes();
 
-    OSPRayFixture *fixture;
+    std::shared_ptr<OSPRayFixture> fixture;
     using BenchStats = pico_bench::Statistics<OSPRayFixture::Millis>;
 };
 

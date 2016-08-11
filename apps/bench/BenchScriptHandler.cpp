@@ -16,6 +16,9 @@
 
 #ifdef OSPRAY_APPS_ENABLE_SCRIPTING
 
+#include <sstream>
+#include <string>
+
 #include <ospcommon/vec.h>
 #include <ospray/common/OSPCommon.h>
 
@@ -27,47 +30,16 @@
 
 #include "BenchScriptHandler.h"
 
-BenchScriptHandler::BenchScriptHandler(OSPRayFixture *fixture)
-  : OSPRayScriptHandler(fixture->model->handle(), fixture->renderer->handle(), fixture->camera->handle())
+BenchScriptHandler::BenchScriptHandler(std::shared_ptr<OSPRayFixture> fixture)
+  : OSPRayScriptHandler(fixture->model.handle(), fixture->renderer.handle(), fixture->camera.handle())
 {
+  OSPRayFixture &chaiFixture = *fixture;
+  scriptEngine().add_global(chaiscript::var(chaiFixture), "cmdlineFixture");
   registerScriptTypes();
   registerScriptFunctions();
 }
 void BenchScriptHandler::registerScriptFunctions() {
   auto &chai = this->scriptEngine();
-
-  auto benchmark = [&]() {
-    fixture->fb->clear(OSP_FB_ACCUM | OSP_FB_COLOR);
-    auto stats = (*fixture->benchmarker)([&]() {
-      fixture->renderer->renderFrame(*(fixture->fb), OSP_FB_COLOR | OSP_FB_ACCUM);
-    });
-    stats.time_suffix = "ms";
-    if (OSPRayFixture::logFrameTimes) {
-      for (size_t i = 0; i < stats.size(); ++i) {
-        std::cout << stats[i].count() << stats.time_suffix << "\n";
-      }
-    }
-    return stats;
-  };
-
-  auto printStats = [](const BenchStats &stats) {
-    std::cout << stats << "\n";
-  };
-
-  auto setRenderer = [&](ospray::cpp::Renderer &r) {
-    *fixture->renderer = r;
-    fixture->fb->clear(OSP_FB_ACCUM | OSP_FB_COLOR);
-  };
-
-  auto saveImage = [&](const std::string &file) {
-    auto *lfb = (uint32_t*)fixture->fb->map(OSP_FB_COLOR);
-    bench::writePPM(file + ".ppm", fixture->width, fixture->height, lfb);
-    fixture->fb->unmap(lfb);
-  };
-
-  auto refresh = [&]() {
-    fixture->fb->clear(OSP_FB_ACCUM | OSP_FB_COLOR);
-  };
 
   auto loadTransferFunction = [&](const std::string &fname) {
     using namespace ospcommon;
@@ -140,12 +112,6 @@ void BenchScriptHandler::registerScriptFunctions() {
     return ospray::getEnvVar<std::string>(var).second;
   };
 
-
-  chai.add(chaiscript::fun(benchmark), "benchmark");
-  chai.add(chaiscript::fun(printStats), "printStats");
-  chai.add(chaiscript::fun(setRenderer), "setRenderer");
-  chai.add(chaiscript::fun(saveImage), "saveImage");
-  chai.add(chaiscript::fun(refresh), "refresh");
   chai.add(chaiscript::fun(loadTransferFunction), "loadTransferFunction");
   chai.add(chaiscript::fun(loadVolume), "loadVolume");
   chai.add(chaiscript::fun(getEnvString), "getEnvString");
@@ -166,9 +132,15 @@ void BenchScriptHandler::registerScriptTypes() {
     }
   );
 
+  auto statsToString = [](const BenchStats &stats) {
+    std::stringstream ss;
+    ss << stats;
+    return ss.str();
+  };
   chaiscript::utility::add_class<BenchStats>(*m, "Statistics",
     {},
     {
+      // Are these casts even needed?? the functons aren't overloaded.
       {chaiscript::fun(static_cast<Millis (BenchStats::*)(const float) const>(&BenchStats::percentile)), "percentile"},
       {chaiscript::fun(static_cast<void (BenchStats::*)(const float)>(&BenchStats::winsorize)), "winsorize"},
       {chaiscript::fun(static_cast<Millis (BenchStats::*)() const>(&BenchStats::median)), "median"},
@@ -179,7 +151,36 @@ void BenchScriptHandler::registerScriptTypes() {
       {chaiscript::fun(static_cast<Millis (BenchStats::*)() const>(&BenchStats::max)), "max"},
       {chaiscript::fun(static_cast<size_t (BenchStats::*)() const>(&BenchStats::size)), "size"},
       {chaiscript::fun(static_cast<const Millis& (BenchStats::*)(size_t) const>(&BenchStats::operator[])), "[]"},
-      {chaiscript::fun(static_cast<BenchStats& (BenchStats::*)(const BenchStats&)>(&BenchStats::operator=)), "="}
+      {chaiscript::fun(static_cast<BenchStats& (BenchStats::*)(const BenchStats&)>(&BenchStats::operator=)), "="},
+      {chaiscript::fun(statsToString), "to_string"}
+    }
+  );
+
+  auto setRenderer = [&](OSPRayFixture &fix, ospray::cpp::Renderer &r) {
+    fix.renderer = r;
+  };
+  auto setCamera = [&](OSPRayFixture &fix, ospray::cpp::Camera &c) {
+    fix.camera = c;
+  };
+  auto setModel = [&](OSPRayFixture &fix, ospray::cpp::Model &m) {
+    fix.model = m;
+  };
+  auto benchDefault = [&](OSPRayFixture &fix) {
+    return fix.benchmark();
+  };
+
+  chaiscript::utility::add_class<OSPRayFixture>(*m, "Fixture",
+    {
+      chaiscript::constructor<OSPRayFixture(ospray::cpp::Renderer, ospray::cpp::Camera, ospray::cpp::Model)>(),
+    },
+    {
+      {chaiscript::fun(&OSPRayFixture::benchmark), "benchmark"},
+      {chaiscript::fun(benchDefault), "benchmark"},
+      {chaiscript::fun(&OSPRayFixture::saveImage), "saveImage"},
+      {chaiscript::fun(&OSPRayFixture::setFrameBufferDims), "setFrameBufferDims"},
+      {chaiscript::fun(setRenderer), "setRenderer"},
+      {chaiscript::fun(setCamera), "setCamera"},
+      {chaiscript::fun(setModel), "setModel"}
     }
   );
 

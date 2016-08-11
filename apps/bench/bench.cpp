@@ -185,14 +185,20 @@ void parseCommandLine(int argc, const char *argv[])
 
   auto ospObjs = parseWithDefaultParsers(argc, argv);
 
-  ospcommon::box3f bbox;
   Model model;
   Renderer renderer;
   Camera camera;
-  std::tie(bbox, model, renderer, camera) = ospObjs;
+  std::tie(std::ignore, model, renderer, camera) = ospObjs;
   cmdlineFixture = std::make_shared<OSPRayFixture>(renderer, camera, model);
   if (width > 0 || height > 0) {
     cmdlineFixture->setFrameBufferDims(width, height);
+  }
+  // Set the default warm up and bench frames
+  if (numWarmupFrames > 0) {
+    cmdlineFixture->defaultWarmupFrames = numWarmupFrames;
+  }
+  if (numBenchFrames > 0){
+    cmdlineFixture->defaultBenchFrames = numBenchFrames;
   }
 }
 
@@ -203,7 +209,7 @@ int main(int argc, const char *argv[]) {
   if (scriptFile.empty()) {
     // If we don't have a script do this, otherwise run the script
     // and let it setup bench scenes and benchmrk them and so on
-    auto stats = cmdlineFixture->benchmark(numWarmupFrames, numBenchFrames);
+    auto stats = cmdlineFixture->benchmark();
     if (logFrameTimes) {
       for (size_t i = 0; i < stats.size(); ++i) {
         std::cout << stats[i].count() << stats.time_suffix << "\n";
@@ -214,8 +220,8 @@ int main(int argc, const char *argv[]) {
 #ifdef OSPRAY_APPS_ENABLE_SCRIPTING
     // The script will be responsible for setting up the benchmark config
     // and calling `benchmark(N)` to benchmark the scene
-    BenchScriptHandler scriptHandler(&fixture);
-    scriptHandler.runScriptFromFile(fixture.scriptFile);
+    BenchScriptHandler scriptHandler(cmdlineFixture);
+    scriptHandler.runScriptFromFile(scriptFile);
 #else
     throw std::runtime_error("You must build with OSPRAY_APPS_ENABLE_SCRIPTING=ON "
                              "to use scripting");

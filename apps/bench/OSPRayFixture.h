@@ -52,6 +52,9 @@ struct OSPRayFixture {
   ospray::cpp::Camera camera;
   ospray::cpp::Model model;
 
+  size_t defaultWarmupFrames;
+  size_t defaultBenchFrames;
+
 private:
   ospray::cpp::FrameBuffer fb;
 
@@ -59,8 +62,5 @@ private:
 
   int width;
   int height;
-
-  size_t defaultBenchFrames;
-  size_t defaultWarmupFrames;
 };
 
