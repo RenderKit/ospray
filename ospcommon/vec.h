@@ -346,9 +346,14 @@ namespace ospcommon {
   // -------------------------------------------------------
   // normalize()
   // -------------------------------------------------------
-  template<typename T, int N, int A> inline vec_t<T,N,A> normalize(const vec_t<T,N,A> &v)
+  template<typename T, int N, int A>
+  inline vec_t<T,N,A> normalize(const vec_t<T,N,A> &v)
   { return v * rsqrt(dot(v,v)); }
-  
+
+  template<typename T, int N, int A>
+  inline vec_t<T,N,A> safe_normalize(const vec_t<T,N,A> &v)
+  { return v * rsqrt(max(1e-6f, dot(v,v))); }
+
   // -------------------------------------------------------
   // ostream operators
   // -------------------------------------------------------
