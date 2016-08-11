@@ -72,7 +72,7 @@ OSPRayFixture::benchmark(const size_t warmUpFrames, const size_t benchFrames) {
   auto stats = benchmarker([&]() {
       renderer.renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
   });
-  stats.time_suffix = "ms";
+  stats.time_suffix = " ms";
   return stats;
 }
 void OSPRayFixture::saveImage(const std::string &fname) {

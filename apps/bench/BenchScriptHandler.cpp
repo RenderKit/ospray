@@ -133,7 +133,12 @@ void BenchScriptHandler::registerScriptTypes() {
 
   auto statsToString = [](const BenchStats &stats) {
     std::stringstream ss;
-    ss << stats;
+    ss << "Frame Time " << stats
+      << "\nFPS Statistics:\n"
+      << "\tmax: " << 1000.0 / stats.min().count() << " fps\n"
+      << "\tmin: " << 1000.0 / stats.max().count() << " fps\n"
+      << "\tmedian: " << 1000.0 / stats.median().count() << " fps\n"
+      << "\tmean: " << 1000.0 / stats.mean().count() << " fps\n";
     return ss.str();
   };
   chaiscript::utility::add_class<BenchStats>(*m, "Statistics",

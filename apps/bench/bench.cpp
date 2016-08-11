@@ -220,7 +220,12 @@ int main(int argc, const char *argv[]) {
         std::cout << stats[i].count() << stats.time_suffix << "\n";
       }
     }
-    std::cout << stats << "\n";
+    std::cout << "Frame Time " << stats << "\n"
+      << "FPS Statistics:\n"
+      << "\tmax: " << 1000.0 / stats.min().count() << " fps\n"
+      << "\tmin: " << 1000.0 / stats.max().count() << " fps\n"
+      << "\tmedian: " << 1000.0 / stats.median().count() << " fps\n"
+      << "\tmean: " << 1000.0 / stats.mean().count() << " fps\n";
   } else {
 #ifdef OSPRAY_APPS_ENABLE_SCRIPTING
     // The script will be responsible for setting up the benchmark config
