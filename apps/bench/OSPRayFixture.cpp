@@ -16,33 +16,19 @@
 
 #include "OSPRayFixture.h"
 
-using std::string;
-
 using namespace ospcommon;
+using namespace ospray;
 
-std::unique_ptr<ospray::cpp::Renderer>    OSPRayFixture::renderer;
-std::unique_ptr<ospray::cpp::Camera>      OSPRayFixture::camera;
-std::unique_ptr<ospray::cpp::Model>       OSPRayFixture::model;
-std::unique_ptr<ospray::cpp::FrameBuffer> OSPRayFixture::fb;
+const static int DEFAULT_WIDTH = 1024;
+const static int DEFAULT_HEIGHT = 1024;
+const static size_t DEFAULT_BENCH_FRAMES = 100;
+const static size_t DEFAULT_WARMUP_FRAMES = 10;
 
-string OSPRayFixture::imageOutputFile;
-string OSPRayFixture::scriptFile;
-
-std::vector<string> OSPRayFixture::benchmarkModelFiles;
-
-int OSPRayFixture::width  = 1024;
-int OSPRayFixture::height = 1024;
-
-size_t OSPRayFixture::numBenchFrames = 100;
-size_t OSPRayFixture::numWarmupFrames = 10;
-bool OSPRayFixture::logFrameTimes = false;
-
-vec3f OSPRayFixture::bg_color = {1.f, 1.f, 1.f};
-std::unique_ptr<pico_bench::Benchmarker<OSPRayFixture::Millis>> OSPRayFixture::benchmarker = nullptr;
+const static vec3f DEFAULT_BG_COLOR = {1.f, 1.f, 1.f};
 
 namespace bench {
 // helper function to write the rendered image as PPM file
-void writePPM(const string &fileName, const int sizeX, const int sizeY,
+void writePPM(const std::string &fileName, const int sizeX, const int sizeY,
               const uint32_t *pixel)
 {
   FILE *file = fopen(fileName.c_str(), "wb");
@@ -62,38 +48,46 @@ void writePPM(const string &fileName, const int sizeX, const int sizeY,
 }
 }
 
-static void createFramebuffer(OSPRayFixture *f)
+OSPRayFixture::OSPRayFixture(cpp::Renderer r, cpp::Camera c, cpp::Model m)
+  : renderer(r), camera(c), model(m), width(DEFAULT_WIDTH), height(DEFAULT_HEIGHT),
+  defaultBenchFrames(DEFAULT_BENCH_FRAMES), defaultWarmupFrames(DEFAULT_WARMUP_FRAMES)
 {
-  *f->fb = ospray::cpp::FrameBuffer(osp::vec2i{f->width, f->height},
-                                    OSP_FB_SRGBA,
-                                    OSP_FB_COLOR|OSP_FB_ACCUM);
-  f->fb->clear(OSP_FB_ACCUM | OSP_FB_COLOR);
+  setFrameBufferDims(width, height);
+  renderer.set("world", model);
+  renderer.set("model", model);
+  renderer.set("camera", camera);
+  renderer.set("spp", 1);
+  renderer.commit();
 }
-
-void OSPRayFixture::SetUp()
-{
-  createFramebuffer(this);
-
-  renderer->set("world",  *model);
-  renderer->set("model",  *model);
-  renderer->set("camera", *camera);
-  renderer->set("spp", 1);
-
-  renderer->commit();
-
-  for (int i = 0; i < numWarmupFrames; ++i) {
-    renderer->renderFrame(*fb, OSP_FB_COLOR | OSP_FB_ACCUM);
+pico_bench::Statistics<OSPRayFixture::Millis>
+OSPRayFixture::benchmark(const size_t warmUpFrames, const size_t benchFrames) {
+  const size_t warmup = warmUpFrames == 0 ? defaultWarmupFrames : warmUpFrames;
+  const size_t bench = benchFrames == 0 ? defaultBenchFrames : benchFrames;
+  for (size_t i = 0; i < warmup; ++i) {
+    renderer.renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
   }
+  fb.clear(OSP_FB_ACCUM | OSP_FB_COLOR);
 
-  fb->clear(OSP_FB_ACCUM | OSP_FB_COLOR);
-  benchmarker = make_unique<pico_bench::Benchmarker<Millis>>(OSPRayFixture::numBenchFrames);
+  auto benchmarker = pico_bench::Benchmarker<Millis>(bench);
+  auto stats = benchmarker([&]() {
+      renderer.renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
+  });
+  stats.time_suffix = "ms";
+  return stats;
+}
+void OSPRayFixture::saveImage(const std::string &fname) {
+  auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
+  bench::writePPM(fname + ".ppm", width, height, lfb);
+  fb.unmap(lfb);
+}
+void OSPRayFixture::setFrameBufferDims(const int w, const int h) {
+  width = w > 0 ? w : width;
+  height = h > 0 ? h : height;
+
+  fb = cpp::FrameBuffer(osp::vec2i{width, height}, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
+  fb.clear(OSP_FB_ACCUM | OSP_FB_COLOR);
+
+  camera.set("aspect", static_cast<float>(width) / height);
+  camera.commit();
 }
 
-void OSPRayFixture::TearDown()
-{
-  if (!imageOutputFile.empty()) {
-    auto *lfb = (uint32_t*)fb->map(OSP_FB_COLOR);
-    bench::writePPM(imageOutputFile + ".ppm", width, height, lfb);
-    fb->unmap(lfb);
-  }
-}

@@ -29,34 +29,38 @@ void writePPM(const std::string &fileName, const int sizeX, const int sizeY,
 }
 
 struct OSPRayFixture {
-  // Fixture hayai interface //
-
-  void SetUp();
-  void TearDown();
-
-  // Fixture data //
-
-  static std::unique_ptr<ospray::cpp::Renderer>    renderer;
-  static std::unique_ptr<ospray::cpp::Camera>      camera;
-  static std::unique_ptr<ospray::cpp::Model>       model;
-  static std::unique_ptr<ospray::cpp::FrameBuffer> fb;
-
-  // Command-line configuration data //
-
-  static std::string imageOutputFile;
-  static std::string scriptFile;
-
-  static std::vector<std::string> benchmarkModelFiles;
-
-  static int width;
-  static int height;
-
-  static size_t numBenchFrames;
-  static size_t numWarmupFrames;
-  static bool logFrameTimes;
-
-  static ospcommon::vec3f bg_color;
-
   using Millis = std::chrono::duration<double, std::ratio<1, 1000>>;
-  static std::unique_ptr<pico_bench::Benchmarker<Millis>> benchmarker;
+
+  // Create a benchmarker with default image dims and bench frame count,
+  // image dims = 1024x1024
+  // warm up frames = 10
+  // benchmark frames = 100
+  OSPRayFixture(ospray::cpp::Renderer renderer, ospray::cpp::Camera camera,
+                ospray::cpp::Model model);
+  // Benchmark the scene, passing no params (or 0 for warmUpFrames or benchFrames) will
+  // use the default configuration stored in the fixture, e.g. what was parsed from
+  // the command line.
+  pico_bench::Statistics<Millis> benchmark(const size_t warmUpFrames = 0, const size_t benchFrames = 0);
+  // Save the rendered image. The name should not be suffixed by .ppm, it will be appended
+  // for you.
+  void saveImage(const std::string &fname);
+  // Change the framebuffer dimensions for the benchmark. If either is 0, the previously
+  // set width or height will be used accordingly.
+  void setFrameBufferDims(const int w = 0, const int h = 0);
+
+  ospray::cpp::Renderer renderer;
+  ospray::cpp::Camera camera;
+  ospray::cpp::Model model;
+
+private:
+  ospray::cpp::FrameBuffer fb;
+
+  // Configuration data //
+
+  int width;
+  int height;
+
+  size_t defaultBenchFrames;
+  size_t defaultWarmupFrames;
 };
+

@@ -26,13 +26,6 @@ using std::cout;
 using std::endl;
 using std::string;
 
-// NOTE(jda) - Implement make_unique() as it didn't show up until C++14...
-template<typename T, typename ...Args>
-std::unique_ptr<T> make_unique(Args&& ...args)
-{
-  return std::unique_ptr<T>(new T( std::forward<Args>(args)... ));
-}
-
 void printUsageAndExit()
 {
   cout << "Usage: ospBenchmark [options] model_file" << endl;
@@ -73,9 +66,12 @@ void printUsageAndExit()
   cout << "                        Ex: -r pathtracer" << endl;
   cout << "                        default: ao1" << endl;
 
+  /*
+   * TODO: This was never used anyway?
   cout << endl;
   cout << "    -bg | --background --> Specify the background color: R G B"
        << endl;
+       */
 
   cout << endl;
   cout << "    -wf | --warmup --> Specify the number of warmup frames: N"
@@ -148,81 +144,67 @@ void printUsageAndExit()
   exit(0);
 }
 
+std::string imageOutputFile = "";
+std::string scriptFile = "";
+size_t numWarmupFrames = 0;
+size_t numBenchFrames = 0;
+bool logFrameTimes = false;
+// This is the fixture setup by the command line arguments
+std::shared_ptr<OSPRayFixture> cmdlineFixture;
+
 void parseCommandLine(int argc, const char *argv[])
 {
+  using namespace ospcommon;
+  using namespace ospray::cpp;
   if (argc <= 1) {
     printUsageAndExit();
   }
 
+  int width = 0;
+  int height = 0;
   for (int i = 1; i < argc; ++i) {
     string arg = argv[i];
     if (arg == "--help") {
       printUsageAndExit();
     } else if (arg == "-i" || arg == "--image") {
-      OSPRayFixture::imageOutputFile = argv[++i];
+      imageOutputFile = argv[++i];
     } else if (arg == "-w" || arg == "--width") {
-      OSPRayFixture::width = atoi(argv[++i]);
+      width = atoi(argv[++i]);
     } else if (arg == "-h" || arg == "--height") {
-      OSPRayFixture::height = atoi(argv[++i]);
+      height = atoi(argv[++i]);
     } else if (arg == "-wf" || arg == "--warmup") {
-      OSPRayFixture::numWarmupFrames = atoi(argv[++i]);
+      numWarmupFrames = atoi(argv[++i]);
     } else if (arg == "-bf" || arg == "--bench") {
-      OSPRayFixture::numBenchFrames = atoi(argv[++i]);
-    } else if (arg == "-bg" || arg == "--background") {
-      ospcommon::vec3f &color = OSPRayFixture::bg_color;
-      color.x = atof(argv[++i]);
-      color.y = atof(argv[++i]);
-      color.z = atof(argv[++i]);
+      numBenchFrames = atoi(argv[++i]);
     } else if (arg == "-lft" || arg == "--log-frame-times") {
-      OSPRayFixture::logFrameTimes = true;
+      logFrameTimes = true;
     } else if (arg == "--script") {
-      OSPRayFixture::scriptFile = argv[++i];
+      scriptFile = argv[++i];
     }
   }
 
   auto ospObjs = parseWithDefaultParsers(argc, argv);
 
   ospcommon::box3f bbox;
-  std::tie(bbox,
-           *OSPRayFixture::model,
-           *OSPRayFixture::renderer,
-           *OSPRayFixture::camera) = ospObjs;
-
-  float width  = OSPRayFixture::width;
-  float height = OSPRayFixture::height;
-  auto &camera = *OSPRayFixture::camera;
-  camera.set("aspect", width/height);
-  camera.commit();
+  Model model;
+  Renderer renderer;
+  Camera camera;
+  std::tie(bbox, model, renderer, camera) = ospObjs;
+  cmdlineFixture = std::make_shared<OSPRayFixture>(renderer, camera, model);
+  if (width > 0 || height > 0) {
+    cmdlineFixture->setFrameBufferDims(width, height);
+  }
 }
 
-void allocateFixtureObjects()
-{
-  // NOTE(jda) - Have to allocate objects here, because we can't allocate them
-  //             statically (before ospInit) and can't in the fixture's
-  //             constructor because they need to exist during parseCommandLine.
-  OSPRayFixture::renderer = make_unique<ospray::cpp::Renderer>();
-  OSPRayFixture::camera   = make_unique<ospray::cpp::Camera>();
-  OSPRayFixture::model    = make_unique<ospray::cpp::Model>();
-  OSPRayFixture::fb       = make_unique<ospray::cpp::FrameBuffer>();
-}
-
-int main(int argc, const char *argv[])
-{
+int main(int argc, const char *argv[]) {
   ospInit(&argc, argv);
-  allocateFixtureObjects();
   parseCommandLine(argc, argv);
 
-  OSPRayFixture fixture;
-  fixture.SetUp();
-  if (fixture.scriptFile.empty()) {
-    using namespace std::chrono;
+  if (scriptFile.empty()) {
     // If we don't have a script do this, otherwise run the script
     // and let it setup bench scenes and benchmrk them and so on
-    auto stats = (*fixture.benchmarker)([&]() {
-      fixture.renderer->renderFrame(*fixture.fb, OSP_FB_COLOR | OSP_FB_ACCUM);
-    });
-    stats.time_suffix = "ms";
-    if (OSPRayFixture::logFrameTimes) {
+    auto stats = cmdlineFixture->benchmark(numWarmupFrames, numBenchFrames);
+    if (logFrameTimes) {
       for (size_t i = 0; i < stats.size(); ++i) {
         std::cout << stats[i].count() << stats.time_suffix << "\n";
       }
@@ -239,6 +221,11 @@ int main(int argc, const char *argv[])
                              "to use scripting");
 #endif
   }
-  fixture.TearDown();
+
+  if (!imageOutputFile.empty()) {
+    cmdlineFixture->saveImage(imageOutputFile);
+  }
+
   return 0;
 }
+
