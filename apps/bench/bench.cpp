@@ -137,8 +137,13 @@ void printUsageAndExit()
   cout << "    --help --> Print this help text" << endl;
 #ifdef OSPRAY_APPS_ENABLE_SCRIPTING
   cout << endl;
-  cout << "    --script --> Specify a script file to drive the benchmarker"
-       << endl;
+  cout << "    --script --> Specify a script file to drive the benchmarker.\n"
+       << "                 In a script you can access the parsed world and command\n"
+       << "                 line benchmark configuration via the following variables:\n"
+       << "                 defaultFixture -> benchmark settings from the commandline\n"
+       << "                 m -> world model parsed from command line scene args\n"
+       << "                 c -> camera set from command line args\n"
+       << "                 r -> renderer set from command line args\n";
 #endif
 
   exit(0);
@@ -231,7 +236,6 @@ int main(int argc, const char *argv[]) {
   if (!imageOutputFile.empty()) {
     cmdlineFixture->saveImage(imageOutputFile);
   }
-
   return 0;
 }
 

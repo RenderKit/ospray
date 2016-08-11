@@ -24,13 +24,12 @@
 
 class BenchScriptHandler : public ospray::OSPRayScriptHandler {
   public:
-    BenchScriptHandler(std::shared_ptr<OSPRayFixture> fixture);
+    BenchScriptHandler(std::shared_ptr<OSPRayFixture> &fixture);
 
   private:
     void registerScriptFunctions();
     void registerScriptTypes();
 
-    std::shared_ptr<OSPRayFixture> fixture;
     using BenchStats = pico_bench::Statistics<OSPRayFixture::Millis>;
 };
 

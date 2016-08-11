@@ -30,11 +30,10 @@
 
 #include "BenchScriptHandler.h"
 
-BenchScriptHandler::BenchScriptHandler(std::shared_ptr<OSPRayFixture> fixture)
+BenchScriptHandler::BenchScriptHandler(std::shared_ptr<OSPRayFixture> &fixture)
   : OSPRayScriptHandler(fixture->model.handle(), fixture->renderer.handle(), fixture->camera.handle())
 {
-  OSPRayFixture &chaiFixture = *fixture;
-  scriptEngine().add_global(chaiscript::var(chaiFixture), "cmdlineFixture");
+  scriptEngine().add_global(chaiscript::var(fixture), "defaultFixture");
   registerScriptTypes();
   registerScriptFunctions();
 }
