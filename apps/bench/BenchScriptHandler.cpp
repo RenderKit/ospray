@@ -155,10 +155,14 @@ void BenchScriptHandler::registerScriptTypes() {
   auto &chai = this->scriptEngine();
   chaiscript::ModulePtr m = chaiscript::ModulePtr(new chaiscript::Module());
 
+  auto millisToString = [](const Millis &m) {
+    return std::to_string(m.count()) + "ms";
+  };
   chaiscript::utility::add_class<Millis>(*m, "Millis",
     {},
     {
-      {chaiscript::fun(static_cast<double (Millis::*)() const>(&Millis::count)), "count"}
+      {chaiscript::fun(static_cast<double (Millis::*)() const>(&Millis::count)), "count"},
+      {chaiscript::fun(millisToString), "to_string"}
     }
   );
 
@@ -174,7 +178,7 @@ void BenchScriptHandler::registerScriptTypes() {
       {chaiscript::fun(static_cast<Millis (BenchStats::*)() const>(&BenchStats::min)), "min"},
       {chaiscript::fun(static_cast<Millis (BenchStats::*)() const>(&BenchStats::max)), "max"},
       {chaiscript::fun(static_cast<size_t (BenchStats::*)() const>(&BenchStats::size)), "size"},
-      {chaiscript::fun(static_cast<const Millis& (BenchStats::*)(size_t) const>(&BenchStats::operator[])), "at"},
+      {chaiscript::fun(static_cast<const Millis& (BenchStats::*)(size_t) const>(&BenchStats::operator[])), "[]"},
       {chaiscript::fun(static_cast<BenchStats& (BenchStats::*)(const BenchStats&)>(&BenchStats::operator=)), "="}
     }
   );
