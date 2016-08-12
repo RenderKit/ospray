@@ -138,7 +138,7 @@ bool ParticleSceneParser::parse(int ac, const char **&av)
   if (loadedScene) {
     sceneModel = make_unique<cpp::Model>();
 
-    auto &model = *sceneMmodel;
+    auto &model = *sceneModel;
 
     //TODO: this needs parallelized as it was in ospParticleViewer...
     for (uint32_t i = 0; i < deferredLoadingListXYZ.size(); ++i) {

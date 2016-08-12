@@ -204,7 +204,7 @@ void VolumeSceneParser::importTransferFunction(const std::string &filename)
 }
 void VolumeSceneParser::createDefaultTransferFunction()
 {
-  m_tf = cpp::TransferFunction("piecewise_linear");
+  transferFunction = cpp::TransferFunction("piecewise_linear");
 
   // Add colors
   std::vector<vec4f> colors;

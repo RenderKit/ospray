@@ -368,8 +368,8 @@ void TriangleMeshSceneParser::finalize()
   if (doesInstancing) {
     for (size_t i = 0; i < msgModel->instance.size(); i++) {
       OSPGeometry inst =
-          ospNewInstance(instanceModels[m_msgModel->instance[i].meshID],
-          reinterpret_cast<osp::affine3f&>(m_msgModel->instance[i].xfm));
+          ospNewInstance(instanceModels[msgModel->instance[i].meshID],
+          reinterpret_cast<osp::affine3f&>(msgModel->instance[i].xfm));
       sceneModel->addGeometry(inst);
     }
   }
