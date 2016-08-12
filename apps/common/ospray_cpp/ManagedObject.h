@@ -125,7 +125,7 @@ namespace ospray {
       OSP_TYPE m_object;
     };
 
-    // Inlined function definitions ///////////////////////////////////////////////
+    // Inlined function definitions ///////////////////////////////////////////
 
     template <typename OSP_TYPE>
     inline ManagedObject_T<OSP_TYPE>::ManagedObject_T(OSP_TYPE object) :

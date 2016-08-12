@@ -136,6 +136,10 @@ bool ParticleSceneParser::parse(int ac, const char **&av)
   }
 
   if (loadedScene) {
+    m_model = make_unique<cpp::Model>();
+
+    auto &model = *m_model;
+
     //TODO: this needs parallelized as it was in ospParticleViewer...
     for (uint32_t i = 0; i < deferredLoadingListXYZ.size(); ++i) {
       FileName defFileName = deferredLoadingListXYZ[i]->defFileName;
@@ -170,7 +174,7 @@ bool ParticleSceneParser::parse(int ac, const char **&av)
       modelTimeStep.push_back(model);
     }
 
-    m_model = modelTimeStep[timeStep];
+    model = modelTimeStep[timeStep];
     m_bbox  = particleModel[0]->getBBox();
   }
 
@@ -179,7 +183,7 @@ bool ParticleSceneParser::parse(int ac, const char **&av)
 
 ospray::cpp::Model ParticleSceneParser::model() const
 {
-  return m_model;
+  return m_model.get() == nullptr ? cpp::Model() : *m_model;
 }
 
 ospcommon::box3f ParticleSceneParser::bbox() const

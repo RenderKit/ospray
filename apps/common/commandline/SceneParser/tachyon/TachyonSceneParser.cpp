@@ -16,7 +16,7 @@
 
 #include "TachyonSceneParser.h"
 #include "Model.h"
-#include "common/FileName.h"
+#include "ospcommon/FileName.h"
 
 #include <iostream>
 using std::cout;

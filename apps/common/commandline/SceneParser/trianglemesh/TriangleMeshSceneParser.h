@@ -38,8 +38,9 @@ private:
   ospray::cpp::Material createMaterial(ospray::cpp::Renderer renderer,
                                        ospray::miniSG::Material *mat);
 
-  ospray::cpp::Model    m_model;
   ospray::cpp::Renderer m_renderer;
+
+  std::unique_ptr<ospray::cpp::Model> m_model;
 
   std::string m_geometryType;
 

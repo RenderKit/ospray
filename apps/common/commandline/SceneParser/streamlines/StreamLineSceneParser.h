@@ -32,9 +32,10 @@ public:
 
 private:
 
-  ospray::cpp::Model    m_model;
   ospray::cpp::Renderer m_renderer;
   ospcommon::box3f      m_bbox;
+
+  std::unique_ptr<ospray::cpp::Model> m_model;
 
   void finalize();
 };

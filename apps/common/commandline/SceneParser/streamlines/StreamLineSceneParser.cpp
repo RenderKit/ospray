@@ -489,7 +489,9 @@ bool StreamLineSceneParser::parse(int ac, const char **&av)
   }
 
   if (loadedScene) {
-    m_model = ospNewModel();
+    m_model = make_unique<cpp::Model>();
+
+    auto &model = *m_model;
 
     OSPMaterial mat = ospNewMaterial(m_renderer.handle(), "default");
     if (mat) {
@@ -512,7 +514,7 @@ bool StreamLineSceneParser::parse(int ac, const char **&av)
       if (mat)
         ospSetMaterial(geom,mat);
       ospCommit(geom);
-      ospAddGeometry(m_model.handle(), geom);
+      ospAddGeometry(model.handle(), geom);
       bounds.extend(streamLines->getBounds());
     }
 
@@ -530,7 +532,7 @@ bool StreamLineSceneParser::parse(int ac, const char **&av)
       ospSetObject(geom, "vertex.color", color);
       ospSetMaterial(geom, mat);
       ospCommit(geom);
-      ospAddGeometry(m_model.handle(), geom);
+      ospAddGeometry(model.handle(), geom);
       bounds.extend(triangles->getBounds());
     }
 
@@ -562,7 +564,7 @@ bool StreamLineSceneParser::parse(int ac, const char **&av)
           ospSetMaterial(spheres[i], material[i]);
 
         ospCommit(spheres[i]);
-        ospAddGeometry(m_model.handle(), spheres[i]);
+        ospAddGeometry(model.handle(), spheres[i]);
 
 
         cylinders[i] = ospNewGeometry("cylinders");
@@ -576,13 +578,13 @@ bool StreamLineSceneParser::parse(int ac, const char **&av)
           ospSetMaterial(cylinders[i], material[i]);
 
         ospCommit(cylinders[i]);
-        ospAddGeometry(m_model.handle(), cylinders[i]);
+        ospAddGeometry(model.handle(), cylinders[i]);
       }
 
       bounds.extend(swc->getBounds());
     }
 
-    m_model.commit();
+    model.commit();
     m_bbox = bounds;
   }
 
@@ -595,7 +597,7 @@ bool StreamLineSceneParser::parse(int ac, const char **&av)
 
 cpp::Model StreamLineSceneParser::model() const
 {
-  return m_model;
+  return m_model.get() == nullptr ? cpp::Model() : *m_model;
 }
 
 box3f StreamLineSceneParser::bbox() const

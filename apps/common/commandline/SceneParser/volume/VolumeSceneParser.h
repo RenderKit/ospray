@@ -48,8 +48,9 @@ private:
   // Data //
 
   ospray::cpp::Renderer m_renderer;
-  ospray::cpp::Model    m_model;
   ospcommon::box3f      m_bbox;
+
+  std::unique_ptr<ospray::cpp::Model> m_model;
 
   float m_samplingRate{0.125f};
 
@@ -57,5 +58,5 @@ private:
   std::vector<ospcommon::vec4f> m_tf_colors;
   std::vector<float> m_isosurfaces;
 
-  ospray::cpp::TransferFunction m_tf{"piecewise_linear"};
+  ospray::cpp::TransferFunction m_tf;
 };
