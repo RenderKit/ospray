@@ -134,7 +134,7 @@ namespace ospray {
           int K = (blockID / 64);
 
 
-#if ENABLE_PRINTS
+#if OSPRAY_APPS_IMPORTER_ENABLE_PRINTS
           printf("[b%i:%i,%i,%i,(%i)]",blockID,I,J,K,threadID);
 #endif
           loadBlock(*block,inFilesDir,blockID);

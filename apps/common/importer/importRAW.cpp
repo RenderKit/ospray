@@ -21,8 +21,6 @@
 // ospray api
 #include "ospray/ospray.h"
 
-#define ENABLE_PRINTS 0
-
 namespace ospray {
   namespace importer {
 
@@ -49,13 +47,13 @@ namespace ospray {
       // Offset into the volume data file if any.
       if (volume->fileOffset > 0)
         fseek(file, volume->fileOffset, SEEK_SET);
-      
+
       // Volume dimensions.
-      ospcommon::vec3i volumeDimensions = volume->dimensions;  
+      ospcommon::vec3i volumeDimensions = volume->dimensions;
       assert(volumeDimensions != vec3i(0) && volumeDimensions != vec3i(-1));
-      
+
       // Voxel type string.
-      const char *voxelType = volume->voxelType.c_str();  
+      const char *voxelType = volume->voxelType.c_str();
       // Voxel size in bytes.
       size_t voxelSize;
 
@@ -77,8 +75,8 @@ namespace ospray {
       exitOnCondition(reduce_min(subvolumeOffsets) < 0 ||
                       reduce_max(subvolumeOffsets - volumeDimensions) >= 0,
                       "invalid subvolume offsets");
-      
-      ospcommon::vec3i subvolumeDimensions = volumeDimensions - subvolumeOffsets;  
+
+      ospcommon::vec3i subvolumeDimensions = volumeDimensions - subvolumeOffsets;
       if (volume->subVolumeDimensions != vec3i(-1))
         subvolumeDimensions = volume->subVolumeDimensions;
 
@@ -86,15 +84,15 @@ namespace ospray {
                       reduce_max(subvolumeDimensions -
                                  (volumeDimensions - subvolumeOffsets)) > 0,
                       "invalid subvolume dimension(s) specified");
-      
-      ospcommon::vec3i subvolumeSteps = ospcommon::vec3i(1);  
+
+      ospcommon::vec3i subvolumeSteps = ospcommon::vec3i(1);
       if (volume->subVolumeSteps != vec3i(-1))
         subvolumeSteps = volume->subVolumeSteps;
       exitOnCondition(reduce_min(subvolumeSteps) < 1 ||
                       reduce_max(subvolumeSteps -
                                  (volumeDimensions - subvolumeOffsets)) >= 0,
                       "invalid subvolume steps");
-      
+
       bool useSubvolume = false;
 
       // Check for volume scale factor from the environment
@@ -106,7 +104,7 @@ namespace ospray {
           throw std::runtime_error("Could not parse OSPRAY_RM_SCALE_FACTOR env-var. Must be of format"
               "<X>x<Y>x<Z> (e.g '1.5x2x0.5')");
         }
-#if ENABLE_PRINTS
+#if OSPRAY_APPS_IMPORTER_ENABLE_PRINTS
         std::cout << "#importRAW: got OSPRAY_VOLUME_SCALE_FACTOR env-var = {"
           << scaleFactor.x << ", " << scaleFactor.y << ", " << scaleFactor.z
           << "}\n";
@@ -114,11 +112,11 @@ namespace ospray {
         volume->scaleFactor = scaleFactor;
         ospSetVec3f(volume->handle, "scaleFactor", (osp::vec3f&)volume->scaleFactor);
       }
-      
+
       // The dimensions of the volume to be imported; this will be changed if a
       // subvolume is specified.
       ospcommon::vec3i importVolumeDimensions = volumeDimensions;
-      
+
       if (reduce_max(subvolumeOffsets) > 0 ||
           subvolumeDimensions != volumeDimensions ||
           reduce_max(subvolumeSteps) > 1) {
@@ -149,7 +147,7 @@ namespace ospray {
         }
         ospSetVec3i(volume->handle, "dimensions", (osp::vec3i&)dims);
       }
-#if ENABLE_PRINTS
+#if OSPRAY_APPS_IMPORTER_ENABLE_PRINTS
       PRINT(volumeDimensions);
 #endif
 
@@ -176,7 +174,7 @@ namespace ospray {
         }
       }
 
-#if ENABLE_PRINTS
+#if OSPRAY_APPS_IMPORTER_ENABLE_PRINTS
       std::cout << "#importRAW: Reading volume in chunks of size {" << chunkDimensions.x << ", " << chunkDimensions.y
         << ", " << chunkDimensions.z << "}" << std::endl;
 #endif
@@ -198,7 +196,7 @@ namespace ospray {
         remainderVoxels.x = volumeDimensions.x % chunkDimensions.x;
         remainderVoxels.y = volumeDimensions.y % chunkDimensions.y;
         remainderVoxels.z = volumeDimensions.z % chunkDimensions.z;
-#if ENABLE_PRINTS
+#if OSPRAY_APPS_IMPORTER_ENABLE_PRINTS
         std::cout << "#importRAW: Number of chunks on each axis = {" << numChunks.x << ", " << numChunks.y << ", "
           << numChunks.z << "}, remainderVoxels {" << remainderVoxels.x
           << ", " << remainderVoxels.y << ", " << remainderVoxels.z << "}, each chunk is "
@@ -214,7 +212,7 @@ namespace ospray {
               if (dataSizeRead >= LOG_PROGRESS_SIZE){
                 totalDataRead += dataSizeRead;
                 dataSizeRead = 0;
-#if ENABLE_PRINTS
+#if OSPRAY_APPS_IMPORTER_ENABLE_PRINTS
                 const size_t VOLUME_TOTAL_SIZE =
                     voxelSize *  volumeDimensions.x * volumeDimensions.y *
                     volumeDimensions.z;
@@ -323,8 +321,8 @@ namespace ospray {
         //       }
 
         //       // Copy subvolume row into the volume.
-        //       ospcommon::vec3i region_lo(0, 
-        //                                  (i2 - subvolumeOffsets.y) / subvolumeSteps.y, 
+        //       ospcommon::vec3i region_lo(0,
+        //                                  (i2 - subvolumeOffsets.y) / subvolumeSteps.y,
         //                                  (i3 - subvolumeOffsets.z) / subvolumeSteps.z);
         //       ospcommon::vec3i region_sz(importVolumeDimensions.x, 1, 1);
         //       ospSetRegion(volume,
@@ -341,14 +339,14 @@ namespace ospray {
 
       if (volume->scaleFactor != vec3f(1.f)) {
         volume->dimensions = vec3i(vec3f(volume->dimensions) * volume->scaleFactor);
-#if ENABLE_PRINTS
+#if OSPRAY_APPS_IMPORTER_ENABLE_PRINTS
         std::cout << "#importRAW: scaled volume to " << volume->dimensions << std::endl;
 #endif
       }
       volume->bounds = ospcommon::empty;
       volume->bounds.extend(volume->gridOrigin);
       volume->bounds.extend(volume->gridOrigin+ vec3f(volume->dimensions) * volume->gridSpacing);
-      
+
 #ifndef _WIN32
       if (gzipped)
         pclose(file);
@@ -356,8 +354,8 @@ namespace ospray {
 #endif
         fclose(file);
       // Return the volume.
-      
+
     }
-    
+
   } // ::ospray::vv
 } // ::ospray
