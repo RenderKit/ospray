@@ -46,12 +46,12 @@ namespace ospray {
     CacheForBlockTiles(size_t numBlocks)
       : numBlocks(numBlocks), blockTile(new Tile *[numBlocks])
     {
-      for (int i = 0; i < numBlocks; i++) blockTile[i] = nullptr;
+      for (size_t i = 0; i < numBlocks; i++) blockTile[i] = nullptr;
     }
 
     ~CacheForBlockTiles()
     {
-      for (int i = 0; i < numBlocks; i++)
+      for (size_t i = 0; i < numBlocks; i++)
         if (blockTile[i]) delete blockTile[i];
 
       delete[] blockTile;
@@ -131,7 +131,7 @@ namespace ospray {
     CacheForBlockTiles blockTileCache(numBlocks);
     bool *blockWasVisible = STACK_BUFFER(bool, numBlocks);
 
-    for (int i = 0; i < numBlocks; i++)
+    for (size_t i = 0; i < numBlocks; i++)
       blockWasVisible[i] = false;
 
     bool renderForeAndBackground =
@@ -160,7 +160,7 @@ namespace ospray {
       // be coming in generation #1
 
       size_t totalBlocksInTile = 0;
-      for (int blockID = 0; blockID < numBlocks; blockID++) {
+      for (size_t blockID = 0; blockID < numBlocks; blockID++) {
         if (blockWasVisible[blockID])
           totalBlocksInTile++;
       }
@@ -193,7 +193,7 @@ namespace ospray {
     // _across_all_clients_, but we only have to send ours (assuming
     // that all clients together send exactly as many as the owner
     // told the DFB to expect)
-    for (int blockID = 0; blockID < numBlocks; blockID++) {
+    for (size_t blockID = 0; blockID < numBlocks; blockID++) {
       Tile *tile = blockTileCache.blockTile[blockID];
       if (tile == nullptr)
         continue;
@@ -217,11 +217,9 @@ namespace ospray {
   float RaycastVolumeRenderer::renderFrame(FrameBuffer *fb,
                                            const uint32 channelFlags)
   {
-    int workerRank = ospray::core::getWorkerRank();
-
     using DDBV = DataDistributedBlockedVolume;
     std::vector<const DDBV*> ddVolumeVec;
-    for (int volumeID = 0; volumeID < model->volume.size(); volumeID++) {
+    for (size_t volumeID = 0; volumeID < model->volume.size(); volumeID++) {
       const DDBV* ddv = dynamic_cast<const DDBV*>(model->volume[volumeID].ptr);
       if (!ddv) continue;
       ddVolumeVec.push_back(ddv);
@@ -263,10 +261,6 @@ namespace ospray {
     }
 
     dfb->setFrameMode(DistributedFrameBuffer::ALPHA_BLEND);
-
-    // note: we can NEVER be the master, since the master doesn't even
-    // have an instance of this renderer class -
-    assert(workerRank >= 0);
 
     Renderer::beginFrame(fb);
 

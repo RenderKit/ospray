@@ -42,9 +42,10 @@ namespace ospray {
       MPI_CALL(Comm_size(MPI_COMM_WORLD,&world.size));
 
       mpi::async::CommLayer::WORLD = new mpi::async::CommLayer;
-      mpi::async::Group *worldGroup = mpi::async::createGroup("world",MPI_COMM_WORLD,
-                                                              mpi::async::CommLayer::WORLD,
-                                                              290374);
+      mpi::async::Group *worldGroup =
+          mpi::async::createGroup(MPI_COMM_WORLD,
+                                  mpi::async::CommLayer::WORLD,
+                                  290374);
       mpi::async::CommLayer::WORLD->group = worldGroup;
     }
 

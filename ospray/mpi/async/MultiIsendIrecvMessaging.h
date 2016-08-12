@@ -68,8 +68,7 @@ namespace ospray {
 
         struct Group : public mpi::async::Group {
 
-          Group(const std::string &name, MPI_Comm comm, 
-                Consumer *consumer, int32 tag = MPI_ANY_TAG);
+          Group(MPI_Comm comm, Consumer *consumer, int32 tag = MPI_ANY_TAG);
           void shutdown();
 
           /*! the queue new send requests are put into; the send
@@ -89,14 +88,13 @@ namespace ospray {
 
         virtual void init();
         virtual void shutdown();
-        virtual async::Group *createGroup(const std::string &name, 
-                                        MPI_Comm comm, 
-                                        Consumer *consumer, 
-                                        int32 tag = MPI_ANY_TAG);
+        virtual async::Group *createGroup(MPI_Comm comm,
+                                          Consumer *consumer,
+                                          int32 tag = MPI_ANY_TAG);
         virtual void send(const Address &dest, void *msgPtr, int32 msgSize);
 
         std::vector<Group *> myGroups;
       };
-    };
+    }
   }
 }

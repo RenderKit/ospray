@@ -99,16 +99,20 @@ namespace ospray {
           Action *action = nullptr;
           size_t numActions = 0;
           while (numActions == 0){
-            numActions = g->sendQueue.getSomeFor(&action,1,std::chrono::milliseconds(1));
+            numActions = g->sendQueue.getSomeFor(&action,
+                                                 1,
+                                                 std::chrono::milliseconds(1));
             if (g->shouldExit.load()){
               return;
             }
           }
+#if PROFILE_MPI
           double t0 = getSysTime();
+#endif
           MPI_CALL(Send(action->data,action->size,MPI_BYTE,
                         action->addr.rank,g->tag,action->addr.group->comm));
-          double t1 = getSysTime();
 #if PROFILE_MPI
+          double t1 = getSysTime();
           if (logIt) {
             t_send += (t1-t0);
             b_sent += action->size;
@@ -160,11 +164,14 @@ namespace ospray {
           MPI_CALL(Get_count(&status,MPI_BYTE,&action->size));
 
           action->data = malloc(action->size);
-          double t0 = getSysTime();
-          MPI_CALL(Recv(action->data,action->size,MPI_BYTE,status.MPI_SOURCE,status.MPI_TAG,
-                        g->comm,MPI_STATUS_IGNORE));
-          double t1 = getSysTime();
 #if PROFILE_MPI
+          double t0 = getSysTime();
+#endif
+          MPI_CALL(Recv(action->data,action->size,
+                        MPI_BYTE,status.MPI_SOURCE,status.MPI_TAG,
+                        g->comm,MPI_STATUS_IGNORE));
+#if PROFILE_MPI
+          double t1 = getSysTime();
           if (logIt) {
             t_recv += (t1-t0);
             b_recv += action->size;
@@ -221,7 +228,7 @@ namespace ospray {
         printf("#osp:mpi:SimpleSendRecvMessaging shutting down %i/%i\n",mpi::world.rank,mpi::world.size);
         fflush(0);
         mpi::world.barrier();
-        for (int i=0;i<myGroups.size();i++)
+        for (uint32_t i = 0; i < myGroups.size(); i++)
           myGroups[i]->shutdown();
 
         MPI_CALL(Finalize());
