@@ -148,22 +148,32 @@ ENDIF()
 # OSPRay modules
 ##############################################################
 
-SET(OSPRAY_TARGET "intel64")
-ADD_SUBDIRECTORY(modules builddir/modules/intel64)
-IF (OSPRAY_MIC)
-  SET(OSPRAY_TARGET "mic")
-  ADD_SUBDIRECTORY(modules builddir/modules/mic)
+OPTION(OSPRAY_ENABLE_MODULES "Enable the 'modules' subtree in the build." ON)
+MARK_AS_ADVANCED(OSPRAY_ENABLE_MODULES)
+
+IF (OSPRAY_ENABLE_MODULES)
+  SET(OSPRAY_TARGET "intel64")
+  ADD_SUBDIRECTORY(modules builddir/modules/intel64)
+  IF (OSPRAY_MIC)
+    SET(OSPRAY_TARGET "mic")
+    ADD_SUBDIRECTORY(modules builddir/modules/mic)
+  ENDIF()
 ENDIF()
 
 ##############################################################
 # OSPRay sample apps; at the end: they may need modules
 ##############################################################
 
-SET(OSPRAY_TARGET "intel64")
-ADD_SUBDIRECTORY(apps builddir/apps/intel64)
-IF (OSPRAY_MIC)
-  SET(OSPRAY_TARGET "mic")
-  ADD_SUBDIRECTORY(apps builddir/apps/mic)
+OPTION(OSPRAY_ENABLE_APPS "Enable the 'apps' subtree in the build." ON)
+MARK_AS_ADVANCED(OSPRAY_ENABLE_APPS)
+
+IF (OSPRAY_ENABLE_APPS)
+  SET(OSPRAY_TARGET "intel64")
+  ADD_SUBDIRECTORY(apps builddir/apps/intel64)
+  IF (OSPRAY_MIC)
+    SET(OSPRAY_TARGET "mic")
+    ADD_SUBDIRECTORY(apps builddir/apps/mic)
+  ENDIF()
 ENDIF()
 
 # create a configure file that both ospray and ispc can read the cmake config from
