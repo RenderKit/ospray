@@ -72,6 +72,7 @@ bool VolumeSceneParser::parse(int ac, const char **&av)
   }
 
   if (loadedScene) {
+    sceneModel = make_unique<cpp::Model>();
     if (!loadedTransferFunction) {
       createDefaultTransferFunction();
     }
@@ -83,7 +84,7 @@ bool VolumeSceneParser::parse(int ac, const char **&av)
 
 cpp::Model VolumeSceneParser::model() const
 {
-  return sceneModel;
+  return sceneModel.get() == nullptr ? cpp::Model() : *sceneModel;
 }
 
 ospcommon::box3f VolumeSceneParser::bbox() const
@@ -94,7 +95,7 @@ ospcommon::box3f VolumeSceneParser::bbox() const
 void VolumeSceneParser::importObjectsFromFile(const std::string &filename,
                                               bool loadedTransferFunction)
 {
-  auto &model = sceneModel;
+  auto &model = *sceneModel;
 
   // Load OSPRay objects from a file.
   ospray::importer::Group *imported = ospray::importer::import(filename);
@@ -203,6 +204,8 @@ void VolumeSceneParser::importTransferFunction(const std::string &filename)
 }
 void VolumeSceneParser::createDefaultTransferFunction()
 {
+  m_tf = cpp::TransferFunction("piecewise_linear");
+
   // Add colors
   std::vector<vec4f> colors;
   if (tf_colors.empty()) {

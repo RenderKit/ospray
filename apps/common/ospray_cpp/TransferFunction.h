@@ -25,12 +25,15 @@ class TransferFunction : public ManagedObject_T<OSPTransferFunction>
 {
 public:
 
+  TransferFunction();
   TransferFunction(const std::string &type);
   TransferFunction(const TransferFunction &copy);
   TransferFunction(OSPTransferFunction existing);
 };
 
 // Inlined function definitions ///////////////////////////////////////////////
+
+inline TransferFunction::TransferFunction() {}
 
 inline TransferFunction::TransferFunction(const std::string &type)
 {

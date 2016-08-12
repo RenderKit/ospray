@@ -100,13 +100,17 @@ bool TriangleMeshSceneParser::parse(int ac, const char **&av)
     }
   }
 
-  if (loadedScene) finalize();
+  if (loadedScene) {
+    sceneModel = make_unique<cpp::Model>();
+    finalize();
+  }
+
   return loadedScene;
 }
 
 cpp::Model TriangleMeshSceneParser::model() const
 {
-  return sceneModel;
+  return sceneModel.get() == nullptr ? cpp::Model() : *sceneModel;
 }
 
 ospcommon::box3f TriangleMeshSceneParser::bbox() const
@@ -357,18 +361,18 @@ void TriangleMeshSceneParser::finalize()
       model_i.commit();
       instanceModels.push_back(model_i.handle());
     } else {
-      sceneModel.addGeometry(ospMesh);
+      sceneModel->addGeometry(ospMesh);
     }
   }
 
   if (doesInstancing) {
     for (size_t i = 0; i < msgModel->instance.size(); i++) {
       OSPGeometry inst =
-          ospNewInstance(instanceModels[msgModel->instance[i].meshID],
-          reinterpret_cast<osp::affine3f&>(msgModel->instance[i].xfm));
-      sceneModel.addGeometry(inst);
+          ospNewInstance(instanceModels[m_msgModel->instance[i].meshID],
+          reinterpret_cast<osp::affine3f&>(m_msgModel->instance[i].xfm));
+      sceneModel->addGeometry(inst);
     }
   }
 
-  sceneModel.commit();
+  sceneModel->commit();
 }
