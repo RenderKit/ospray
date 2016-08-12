@@ -153,6 +153,7 @@ void VolumeSceneParser::importTransferFunction(const std::string &filename)
   tfn::TransferFunction fcn(filename);
   auto colorsData = ospray::cpp::Data(fcn.rgbValues.size(), OSP_FLOAT3,
                                       fcn.rgbValues.data());
+  transferFunction = cpp::TransferFunction("piecewise_linear");
   transferFunction.set("colors", colorsData);
 
   tf_scale = fcn.opacityScaling;
