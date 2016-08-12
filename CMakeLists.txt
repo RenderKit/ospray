@@ -146,11 +146,16 @@ ENDIF()
 # OSPRay modules
 ##############################################################
 
-SET(OSPRAY_TARGET "intel64")
-ADD_SUBDIRECTORY(modules builddir/modules/intel64)
-IF (OSPRAY_MIC)
-  SET(OSPRAY_TARGET "mic")
-  ADD_SUBDIRECTORY(modules builddir/modules/mic)
+OPTION(OSPRAY_ENABLE_MODULES "Enable the 'modules' subtree in the build." ON)
+MARK_AS_ADVANCED(OSPRAY_ENABLE_MODULES)
+
+IF (OSPRAY_ENABLE_MODULES)
+  SET(OSPRAY_TARGET "intel64")
+  ADD_SUBDIRECTORY(modules builddir/modules/intel64)
+  IF (OSPRAY_MIC)
+    SET(OSPRAY_TARGET "mic")
+    ADD_SUBDIRECTORY(modules builddir/modules/mic)
+  ENDIF()
 ENDIF()
 
 ##############################################################
