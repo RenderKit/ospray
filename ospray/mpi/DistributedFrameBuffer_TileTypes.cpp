@@ -24,7 +24,7 @@ namespace ospray {
 
   TileDesc::TileDesc(DFB *dfb, const vec2i &begin,
                      size_t tileID, size_t ownerID)
-    : tileID(tileID), ownerID(ownerID), dfb(dfb), begin(begin)
+    : dfb(dfb), begin(begin), tileID(tileID), ownerID(ownerID)
   {}
 
   TileData::TileData(DFB *dfb, const vec2i &begin,
@@ -121,7 +121,7 @@ namespace ospray {
           currentGeneration++;
           missingInCurrentGeneration = expectedInNextGeneration;
           expectedInNextGeneration = 0;
-          for (int i=0;i<bufferedTile.size();i++) {
+          for (uint32_t i = 0; i < bufferedTile.size(); i++) {
             BufferedTile *bt = bufferedTile[i];
             if (bt->tile.generation == currentGeneration) {
               --missingInCurrentGeneration;
@@ -133,7 +133,7 @@ namespace ospray {
 
       if (missingInCurrentGeneration == 0) {
         Tile **tileArray = STACK_BUFFER(Tile*, bufferedTile.size());
-        for (int i = 0; i < bufferedTile.size(); i++) {
+        for (uint32_t i = 0; i < bufferedTile.size(); i++) {
           tileArray[i] = &bufferedTile[i]->tile;
         }
 
@@ -192,7 +192,7 @@ namespace ospray {
         ispc::DFB_zComposite((ispc::VaryingTile*)&tile,
                              (ispc::VaryingTile*)&this->compositedTileData);
 
-      done = (++numPartsComposited == dfb->comm->numWorkers());
+      done = (++numPartsComposited == size_t(dfb->comm->numWorkers()));
     }
 
     if (done) {

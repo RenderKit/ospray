@@ -78,10 +78,9 @@ namespace ospray {
       struct AsyncMessagingImpl {
         virtual void init() = 0;
         virtual void shutdown() = 0;
-        virtual Group *createGroup(const std::string &name, 
-                                        MPI_Comm comm, 
-                                        Consumer *consumer, 
-                                        int32 tag = MPI_ANY_TAG) = 0;
+        virtual Group *createGroup(MPI_Comm comm,
+                                   Consumer *consumer,
+                                   int32 tag = MPI_ANY_TAG) = 0;
         virtual void send(const Address &dest, void *msgPtr, int32 msgSize) = 0;
 
         static AsyncMessagingImpl *global;
@@ -89,14 +88,15 @@ namespace ospray {
 
 
       /*! @{ The actual asynchronous messaging API */
-      Group *createGroup(const std::string &name, MPI_Comm comm, 
-                         Consumer *consumer, int32 tag = MPI_ANY_TAG);
-      void   shutdown();
+      Group *createGroup(MPI_Comm comm,
+                         Consumer *consumer,
+                         int32 tag = MPI_ANY_TAG);
+      void shutdown();
 
       /*! send a asynchronous message to the address specified. the
           'group' in said address HAS to be a group created via
           'async::Group' */
-      void   send(const Address &dest, void *msgPtr, int32 msgSize);
+      void send(const Address &dest, void *msgPtr, int32 msgSize);
       /*! @} */
 
     } // ::ospray::mpi::async

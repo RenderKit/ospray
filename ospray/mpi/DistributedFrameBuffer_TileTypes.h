@@ -38,6 +38,8 @@ namespace ospray {
              size_t tileID,
              size_t ownerID);
 
+    virtual ~TileDesc() {}
+
     /*! returns whether this tile is one of this particular
         node's tiles */
     virtual bool mine() const { return false; }

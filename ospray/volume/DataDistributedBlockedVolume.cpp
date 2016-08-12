@@ -42,7 +42,7 @@ namespace ospray {
     
     StructuredVolume::commit();
 
-    for (int i=0;i<numDDBlocks;i++) {
+    for (uint32_t i=0;i<numDDBlocks;i++) {
       DDBlock *block = ddBlock+i;
       if (!block->isMine) {
         continue;
@@ -61,7 +61,7 @@ namespace ospray {
   void DataDistributedBlockedVolume::updateEditableParameters()
   {
     StructuredVolume::updateEditableParameters();
-    for (int i=0;i<numDDBlocks;i++) {
+    for (uint32_t i = 0; i < numDDBlocks; i++) {
       DDBlock *block = ddBlock+i;
 
       if (!block->isMine) {
@@ -132,7 +132,7 @@ namespace ospray {
       finalRegionSize = regionSize;
     }
 
-    for (int i=0;i<numDDBlocks;i++) {
+    for (uint32_t i = 0; i < numDDBlocks; i++) {
       // that block isn't mine, I shouldn't care ...
       if (!ddBlock[i].isMine) continue;
       
@@ -221,7 +221,7 @@ namespace ospray {
       throw std::runtime_error("data parallel volume, but not in mpi parallel "
                                "mode...");
     }
-    int64 numWorkers = ospray::core::getWorkerCount();
+    uint64_t numWorkers = ospray::core::getWorkerCount();
     // PRINT(numDDBlocks);
     // PRINT(numWorkers);
 

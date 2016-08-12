@@ -38,6 +38,7 @@ namespace ospray {
       }
 
       int rc;
+      (void)rc;
       mpi::init(&ac,av);
       worker.comm = world.comm;
       worker.makeIntraComm();

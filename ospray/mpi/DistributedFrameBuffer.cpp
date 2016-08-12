@@ -62,7 +62,7 @@ namespace ospray {
 
   /*! color buffer and depth buffer on master */
 
-  enum {
+  enum COMMANDTAG {
     /*! command tag that identifies a CommLayer::message as a write
       tile command. this is a command using for sending a tile of
       new samples to another instance of the framebuffer (the one
@@ -82,7 +82,7 @@ namespace ospray {
         does not actually care about the pixel data - we still have
         to let the master know when we're done. */
     MASTER_WRITE_TILE_NONE,
-  } COMMANDTAG;
+  };
 
   // DistributedFrameBuffer definitions ///////////////////////////////////////
 
@@ -93,9 +93,9 @@ namespace ospray {
                               bool hasDepthBuffer,
                               bool hasAccumBuffer,
                               bool hasVarianceBuffer)
-    : mpi::async::CommLayer::Object(comm,myID),
-      FrameBuffer(numPixels,colorBufferFormat,hasDepthBuffer,
+    : FrameBuffer(numPixels,colorBufferFormat,hasDepthBuffer,
                   hasAccumBuffer,hasVarianceBuffer),
+      mpi::async::CommLayer::Object(comm,myID),
       tileErrorRegion(hasVarianceBuffer ? getNumTiles() : vec2i(0)),
       localFBonMaster(nullptr),
       frameMode(WRITE_ONCE),
@@ -218,8 +218,8 @@ namespace ospray {
   {
     size_t tileID = 0;
     vec2i numPixels = getNumPixels();
-    for (size_t y = 0; y < numPixels.y; y += TILE_SIZE) {
-      for (size_t x = 0; x < numPixels.x; x += TILE_SIZE, tileID++) {
+    for (int y = 0; y < numPixels.y; y += TILE_SIZE) {
+      for (int x = 0; x < numPixels.x; x += TILE_SIZE, tileID++) {
         size_t ownerID = tileID % (comm->group->size - 1);
         if (workerRank(ownerID) == comm->group->rank) {
           TileData *td = createTile(vec2i(x, y), tileID, ownerID);
@@ -309,7 +309,7 @@ namespace ospray {
     DBG(printf("rank %i: tilecompleted %i,%i\n",mpi::world.rank,
                tile->begin.x,tile->begin.y));
     if (IamTheMaster()) {
-      size_t numTilesCompletedByMyTile = 0;
+      int numTilesCompletedByMyTile = 0;
       /*! we will not do anything with the tile other than mark it's done */
       {
         SCOPED_LOCK(mutex);

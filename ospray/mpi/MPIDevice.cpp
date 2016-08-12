@@ -307,7 +307,8 @@ namespace ospray {
         throw std::runtime_error("OSPRay MPI: no fork() yet on Windows");
 #else
         if (fork()) {
-          system(systemCommand);
+          auto result = system(systemCommand);
+          (void)result;
           cout << "OSPRay worker process has died - killing application"
                << endl;
           exit(0);
@@ -426,8 +427,6 @@ namespace ospray {
     const void *MPIDevice::frameBufferMap(OSPFrameBuffer _fb, 
                                           OSPFrameBufferChannel channel)
     {
-      int rc; 
-
       ObjectHandle handle = (const ObjectHandle &)_fb;
       FrameBuffer *fb = (FrameBuffer *)handle.lookup();
 
@@ -839,6 +838,7 @@ namespace ospray {
       MPI_Status status;
       int rc = MPI_Recv(&numFails,1,MPI_INT,
                         0,MPI_ANY_TAG,mpi::worker.comm,&status);
+      (void)rc;
       if (numFails == 0)
         return (OSPMaterial)(int64)handle;
       else {
@@ -883,6 +883,7 @@ namespace ospray {
       MPI_Status status;
       int rc = MPI_Recv(&numFails,1,MPI_INT,
                         0,MPI_ANY_TAG,mpi::worker.comm,&status);
+      (void)rc;
       if (numFails==0)
         return (OSPLight)(int64)handle;
       else {
