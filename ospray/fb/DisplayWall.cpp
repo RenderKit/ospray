@@ -88,6 +88,6 @@ namespace ospray {
   }
 
 
-  OSP_REGISTER_PIXEL_OP(DisplayWallPO,display_wall);
+  OSP_REGISTER_PIXEL_OP(DisplayWallPO,display_wall)
 
 }

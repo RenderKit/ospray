@@ -48,6 +48,6 @@ namespace ospray {
                               nearClip);
   }
 
-  OSP_REGISTER_CAMERA(PanoramicCamera,panoramic);
+  OSP_REGISTER_CAMERA(PanoramicCamera,panoramic)
 
 } // ::ospray

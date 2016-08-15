@@ -40,6 +40,6 @@ namespace ospray {
       }
     };
 
-    OSP_REGISTER_MATERIAL(ThinGlass,PathTracer_ThinGlass);
+    OSP_REGISTER_MATERIAL(ThinGlass,PathTracer_ThinGlass)
   }
 }

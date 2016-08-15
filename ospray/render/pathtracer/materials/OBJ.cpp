@@ -67,7 +67,7 @@ namespace ospray {
       }
     };
 
-    OSP_REGISTER_MATERIAL(OBJMaterial,PathTracer_OBJMaterial);
+    OSP_REGISTER_MATERIAL(OBJMaterial,PathTracer_OBJMaterial)
     OSP_REGISTER_MATERIAL(OBJMaterial,PathTracer_default)
   }
 }

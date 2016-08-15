@@ -156,10 +156,10 @@ namespace ospcommon {
   template<typename T> inline vec_t<T,4> op(const vec_t<T,4> &v)\
   { return vec_t<T,4>(op(v.x),op(v.y),op(v.z),op(v.w)); }\
 
-  unary_functor(rcp);
-  unary_functor(abs);
-  unary_functor(sin);
-  unary_functor(cos);
+  unary_functor(rcp)
+  unary_functor(abs)
+  unary_functor(sin)
+  unary_functor(cos)
 #undef unary_functor
   
   // -------------------------------------------------------
@@ -214,11 +214,11 @@ namespace ospcommon {
                          const vec_t<T,4> &b)                           \
   { return vec_t<T,4>(a op b.x,a op b.y,a op b.z,a op b.w); }           \
   
-  binary_operator(operator+,+);
-  binary_operator(operator-,-);
-  binary_operator(operator*,*);
-  binary_operator(operator/,/);
-  binary_operator(operator%,%);
+  binary_operator(operator+,+)
+  binary_operator(operator-,-)
+  binary_operator(operator*,*)
+  binary_operator(operator/,/)
+  binary_operator(operator%,%)
 #undef binary_operator
 
   // -------------------------------------------------------
@@ -257,10 +257,10 @@ namespace ospcommon {
                           const T &b)                                   \
   { a.x op b; a.y op b; a.z op b; a.w op b; return a; }                 \
   
-  binary_operator(operator+=,+=);
-  binary_operator(operator-=,-=);
-  binary_operator(operator*=,*=);
-  binary_operator(operator/=,/=);
+  binary_operator(operator+=,+=)
+  binary_operator(operator-=,-=)
+  binary_operator(operator*=,*=)
+  binary_operator(operator/=,/=)
 #undef binary_operator
 
   // -------------------------------------------------------
@@ -382,9 +382,9 @@ namespace ospcommon {
     inline vec_t<T,4> f(const vec_t<T,4> &a, const vec_t<T,4> &b)       \
     { return vec_t<T,4>(f(a.x,b.x),f(a.y,b.y),f(a.z,b.z),f(a.w,b.w)); } \
   
-  define_functor(min);
-  define_functor(max);
-  define_functor(divRoundUp);
+  define_functor(min)
+  define_functor(max)
+  define_functor(divRoundUp)
 #undef define_functor
 
   // -------------------------------------------------------
