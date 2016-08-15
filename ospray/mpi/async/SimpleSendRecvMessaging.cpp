@@ -81,8 +81,9 @@ namespace ospray {
       extern "C" void async_endFrame() {}
 #endif
 
-      SimpleSendRecvImpl::Group::Group(const std::string &name, MPI_Comm comm, 
-                                       Consumer *consumer, int32 tag)
+      SimpleSendRecvImpl::Group::Group(MPI_Comm comm,
+                                       Consumer *consumer,
+                                       int32 tag)
         : async::Group(comm,consumer,tag),
           sendThread(this), recvThread(this), procThread(this)
       {
@@ -234,12 +235,11 @@ namespace ospray {
         MPI_CALL(Finalize());
       }
 
-      async::Group *SimpleSendRecvImpl::createGroup(const std::string &name, 
-                                                    MPI_Comm comm, 
+      async::Group *SimpleSendRecvImpl::createGroup(MPI_Comm comm,
                                                     Consumer *consumer, 
                                                     int32 tag)
       {
-        Group *g = new Group(name,comm,consumer,tag);
+        Group *g = new Group(comm,consumer,tag);
         myGroups.push_back(g);
         return g;
       }

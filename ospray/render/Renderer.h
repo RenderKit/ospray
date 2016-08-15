@@ -73,10 +73,10 @@ namespace ospray {
     virtual void renderTile(void *perFrameData, Tile &tile, size_t jobID) const;
 
     /*! \brief create a material of given type */
-    virtual Material *createMaterial(const char *type) { return NULL; }
+    virtual Material *createMaterial(const char *type);
 
     /*! \brief create a light of given type */
-    virtual Light *createLight(const char *type) { return NULL; }
+    virtual Light *createLight(const char *type);
 
     virtual OSPPickResult pick(const vec2f &screenPos);
 
@@ -103,6 +103,20 @@ namespace ospray {
     Ref<Texture2D> maxDepthTexture;
 
   };
+
+  // Inlined function definitions /////////////////////////////////////////////
+
+  inline Material *Renderer::createMaterial(const char *type)
+  {
+    UNUSED(type);
+    return nullptr;
+  }
+
+  inline Light *Renderer::createLight(const char *type)
+  {
+    UNUSED(type);
+    return nullptr;
+  }
 
   /*! \brief registers a internal ospray::<ClassName> renderer under
       the externally accessible name "external_name"

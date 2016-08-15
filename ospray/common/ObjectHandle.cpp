@@ -33,6 +33,7 @@ namespace ospray {
   {
     freedHandles.push((int64)*this);
   }
+
   ObjectHandle ObjectHandle::alloc()
   {
     ObjectHandle h;

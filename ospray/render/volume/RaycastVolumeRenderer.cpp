@@ -36,6 +36,7 @@ namespace ospray {
 
   Material *RaycastVolumeRenderer::createMaterial(const char *type)
   {
+    UNUSED(type);
     return new RaycastVolumeMaterial;
   }
 
@@ -324,8 +325,8 @@ namespace ospray {
   }
 
   // A renderer type for volumes with embedded surfaces.
-  OSP_REGISTER_RENDERER(RaycastVolumeRenderer, raycast_volume_renderer);
-  OSP_REGISTER_RENDERER(RaycastVolumeRenderer, dvr);
+  OSP_REGISTER_RENDERER(RaycastVolumeRenderer, raycast_volume_renderer)
+  OSP_REGISTER_RENDERER(RaycastVolumeRenderer, dvr)
 
 } // ::ospray
 

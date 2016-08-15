@@ -22,7 +22,7 @@
 
 namespace ospray {
 
-  class DistributedFrameBuffer;
+  struct DistributedFrameBuffer;
 
   // -------------------------------------------------------
   /*! keeps the book-keeping of one tile of the frame buffer. note
