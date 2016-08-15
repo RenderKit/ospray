@@ -39,7 +39,7 @@ namespace ospray {
                                 FrameBuffer *fb,
                                 const uint32 channelFlags)
       {
-        UNUSED(tiledRenderer, channelFlags);
+        UNUSED(channelFlags);
         async_beginFrame();
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
         assert(dfb);
