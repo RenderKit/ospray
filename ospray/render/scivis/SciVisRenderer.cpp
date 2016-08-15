@@ -41,7 +41,7 @@ namespace ospray {
           lightArray.push_back(((Light**)lightData->data)[i]->getIE());
       }
 
-      void **lightPtr = lightArray.empty() ? NULL : &lightArray[0];
+      void **lightPtr = lightArray.empty() ? nullptr : &lightArray[0];
 
       const bool shadowsEnabled = getParam1i("shadowsEnabled", 0);
 
@@ -69,6 +69,7 @@ namespace ospray {
     /*! \brief create a material of given type */
     Material *SciVisRenderer::createMaterial(const char *type)
     {
+      UNUSED(type);
       return new SciVisMaterial;
     }
 

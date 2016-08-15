@@ -226,7 +226,10 @@ namespace ospray {
 
   void LocalFrameBuffer::unmap(const void *mappedMem)
   {
-    Assert(mappedMem == colorBuffer || mappedMem == depthBuffer );
+    if (!(mappedMem == colorBuffer || mappedMem == depthBuffer)) {
+      throw std::runtime_error("ERROR: unmapping a pointer not created by "
+                               "OSPRay!");
+    }
     this->refDec();
   }
 

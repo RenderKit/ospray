@@ -344,6 +344,7 @@ namespace ospray {
 
     void initDistributedAPI(int *ac, char ***av, OSPDRenderMode mpiMode)
     {
+      UNUSED(mpiMode);
       int initialized = false;
       MPI_CALL(Initialized(&initialized));
       if (initialized) 
@@ -367,6 +368,7 @@ namespace ospray {
                          int *_ac, const char **_av)
       : currentApiMode(OSPD_MODE_MASTERED)
     {
+      UNUSED(_ac, _av);
       auto logLevelFromEnv = getEnvVar<int>("OSPRAY_LOG_LEVEL");
       if (logLevelFromEnv.first && logLevel == 0)
         logLevel = logLevelFromEnv.second;
@@ -519,6 +521,7 @@ namespace ospray {
     /*! assign (named) string parameter to an object */
     void MPIDevice::setVoidPtr(OSPObject _object, const char *bufName, void *v)
     {
+      UNUSED(_object, bufName, v);
       throw std::runtime_error("setting a void pointer as parameter to an "
                                "object is not allowed in MPI mode");
     }

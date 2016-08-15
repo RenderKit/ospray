@@ -60,7 +60,9 @@ namespace ospray {
 
   /*! \brief gets called whenever any of this node's dependencies got changed */
   void ManagedObject::dependencyGotChanged(ManagedObject *object) 
-  {}
+  {
+    UNUSED(object);
+  }
 
   void ManagedObject::Param::set(ManagedObject *object)
   {

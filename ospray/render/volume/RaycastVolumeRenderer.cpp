@@ -36,6 +36,7 @@ namespace ospray {
 
   Material *RaycastVolumeRenderer::createMaterial(const char *type)
   {
+    UNUSED(type);
     return new RaycastVolumeMaterial;
   }
 

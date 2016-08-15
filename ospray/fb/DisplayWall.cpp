@@ -40,6 +40,7 @@ namespace ospray {
     if(!dcSocket)
       std::cerr << "could not connect to DisplayCluster at " << hostname << std::endl;
 #else
+    UNUSED(po);
     std::cout << "#osp:dw: display cluster support not compiled in" << std::endl;
 #endif
   }
