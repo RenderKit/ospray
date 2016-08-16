@@ -43,12 +43,14 @@ namespace ospray {
     void free();
 
     inline ObjectHandle(const int64 i = 0) { i64 = i; }
-    inline ObjectHandle(const ObjectHandle &other) : i64(other.i64) {}
+    inline ObjectHandle(const ObjectHandle &other) { i64 = other.i64; }
     inline ObjectHandle &operator=(const ObjectHandle &other)
     { i64 = other.i64; return *this; }
 
-    struct { int32 ID; int32 owner; } i32;
-    int64 &i64 { (int64&)this->i32 };
+    union {
+      struct { int32 ID; int32 owner; } i32;
+      int64 i64;
+    };
 
     /*! look up an object by handle, and return it. must be a defiend handle */
     ManagedObject *lookup() const;
