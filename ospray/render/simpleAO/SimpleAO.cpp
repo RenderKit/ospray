@@ -67,12 +67,12 @@ namespace ospray {
     return renderer;                                                    \
   }
 
-  OSP_REGISTER_AO_RENDERER(ao,   4 );
-  OSP_REGISTER_AO_RENDERER(ao1,  1 );
-  OSP_REGISTER_AO_RENDERER(ao2,  2 );
-  OSP_REGISTER_AO_RENDERER(ao4,  4 );
-  OSP_REGISTER_AO_RENDERER(ao8,  8 );
-  OSP_REGISTER_AO_RENDERER(ao16, 16);
+  OSP_REGISTER_AO_RENDERER(ao,   4 )
+  OSP_REGISTER_AO_RENDERER(ao1,  1 )
+  OSP_REGISTER_AO_RENDERER(ao2,  2 )
+  OSP_REGISTER_AO_RENDERER(ao4,  4 )
+  OSP_REGISTER_AO_RENDERER(ao8,  8 )
+  OSP_REGISTER_AO_RENDERER(ao16, 16)
 
 } // ::ospray
 

@@ -138,7 +138,7 @@ namespace ospray {
 
 #ifdef EXP_NEW_BB_VOLUME_KERNELS
   // A volume type with 64-bit addressing and multi-level bricked storage order.
-  OSP_REGISTER_VOLUME(GhostBlockBrickedVolume, block_bricked_volume);
+  OSP_REGISTER_VOLUME(GhostBlockBrickedVolume, block_bricked_volume)
 #endif
 
 } // ::ospray

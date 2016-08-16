@@ -81,7 +81,7 @@ namespace ospray {
     */
     void runWorker()
     {
-      Ref<mpi::MPIDevice> device = ospray::api::Device::current.dynamicCast<mpi::MPIDevice>();
+      auto device = ospray::api::Device::current.dynamicCast<mpi::MPIDevice>();
 
       // initialize embree. (we need to do this here rather than in
       // ospray::init() because in mpi-mode the latter is also called
@@ -223,6 +223,7 @@ namespace ospray {
           int myFail = (material == NULL);
           int sumFail = 0;
           rc = MPI_Allreduce(&myFail,&sumFail,1,MPI_INT,MPI_SUM,worker.comm);
+          (void)rc;
           if (sumFail == 0) {
             material->refInc();
             cmd.free(type);
@@ -393,7 +394,7 @@ namespace ospray {
                  this stage */
               ObjectHandle    *asHandle = (ObjectHandle    *)data->data;
               ManagedObject **asObjPtr = (ManagedObject **)data->data;
-              for (int i=0;i<nitems;i++) {
+              for (size_t i = 0; i < nitems; i++) {
                 if (asHandle[i] != NULL_HANDLE) {
                   asObjPtr[i] = asHandle[i].lookup();
                   asObjPtr[i]->refInc();
@@ -405,7 +406,7 @@ namespace ospray {
 
         case ospray::CMD_NEW_TEXTURE2D: {
           const ObjectHandle handle = cmd.get_handle();
-          Texture2D *texture2D = NULL;
+          Texture2D *texture2D = nullptr;
 
           const vec2i sz = cmd.get_vec2i();
           const int32 type = cmd.get_int32();
@@ -509,6 +510,7 @@ namespace ospray {
         case ospray::CMD_RELEASE: {
           const ObjectHandle handle = cmd.get_handle();
           ManagedObject *obj = handle.lookup();
+          (void)obj;
           Assert(obj);
           handle.freeObject();
         } break;

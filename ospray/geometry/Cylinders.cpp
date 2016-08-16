@@ -79,6 +79,6 @@ namespace ospray {
   }
 
 
-  OSP_REGISTER_GEOMETRY(Cylinders,cylinders);
+  OSP_REGISTER_GEOMETRY(Cylinders,cylinders)
 
 } // ::ospray

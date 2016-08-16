@@ -69,7 +69,7 @@ namespace ospray {
     //! Allow tasking system backend to access all parts of the class, but
     //! prevent users from using data which is an implementation detail of the
     //! task
-    friend class TaskSys;
+    friend struct TaskSys;
 
     // ------------------------------------------------------------------
     // callback used to define what the task is doing

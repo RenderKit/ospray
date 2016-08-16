@@ -45,8 +45,7 @@ namespace ospray {
       numbers mean increasing verbosity of log messages */
   uint32_t logLevel = 0;
   bool debugMode = false;
-  int32_t numThreads = -1; //!< for default (==maximum) number of
-                           //   OSPRay/Embree threads
+  uint32_t numThreads = std::thread::hardware_concurrency();
 
   WarnOnce::WarnOnce(const std::string &s) 
     : s(s) 
@@ -118,7 +117,7 @@ namespace ospray {
           logLevel = atoi(av[i+1]);
           removeArgs(ac,av,i,2);
         } else if (parm == "--osp:numthreads" || parm == "--osp:num-threads") {
-          numThreads = atoi(av[i+1]);
+          numThreads = static_cast<uint32_t>(atoi(av[i+1]));
           removeArgs(ac,av,i,2);
         } else {
           ++i;

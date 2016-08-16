@@ -29,14 +29,17 @@ namespace ospray {
   namespace mpi {
     namespace async {
 
-      MultiIsendIrecvImpl::Group::Group(const std::string &name, MPI_Comm comm, 
-                                       Consumer *consumer, int32 tag)
+      MultiIsendIrecvImpl::Group::Group(MPI_Comm comm,
+                                        Consumer *consumer,
+                                        int32 tag)
         : async::Group(comm,consumer,tag),
-          sendThread(this), recvThread(this), procThread(this)
+          sendThread(this),
+          procThread(this),
+          recvThread(this)
       {
-        recvThread.start();
         sendThread.start();
         procThread.start();
+        recvThread.start();
       }
 
       void MultiIsendIrecvImpl::SendThread::run()
@@ -46,7 +49,9 @@ namespace ospray {
           Action *action = nullptr;
           size_t numActions = 0;
           while (numActions == 0){
-            numActions = g->sendQueue.getSomeFor(&action,1,std::chrono::milliseconds(1));
+            numActions = g->sendQueue.getSomeFor(&action,
+                                                 1,
+                                                 std::chrono::milliseconds(1));
             if (g->shouldExit.load()){
               return;
             }
@@ -145,18 +150,17 @@ namespace ospray {
         printf("#osp:mpi:MultiIsendIrecvMessaging shutting down %i/%i\n",mpi::world.rank,mpi::world.size);
         fflush(0);
         mpi::world.barrier();
-        for (int i=0;i<myGroups.size();i++)
+        for (uint32_t i = 0; i < myGroups.size(); i++)
           myGroups[i]->shutdown();
 
         MPI_CALL(Finalize());
       }
 
-      async::Group *MultiIsendIrecvImpl::createGroup(const std::string &name, 
-                                                    MPI_Comm comm, 
-                                                    Consumer *consumer, 
-                                                    int32 tag)
+      async::Group *MultiIsendIrecvImpl::createGroup(MPI_Comm comm,
+                                                     Consumer *consumer,
+                                                     int32 tag)
       {
-        Group *g = new Group(name,comm,consumer,tag);
+        Group *g = new Group(comm,consumer,tag);
         myGroups.push_back(g);
         return g;
       }

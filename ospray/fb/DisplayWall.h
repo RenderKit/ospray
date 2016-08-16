@@ -50,11 +50,27 @@ namespace ospray {
       virtual void postAccum(Tile &tile);
     };
 
-    virtual PixelOp::Instance *createInstance(FrameBuffer *fb, PixelOp::Instance *prev) { PING; return new Instance(this, fb); };
+    virtual PixelOp::Instance *createInstance(FrameBuffer *fb,
+                                              PixelOp::Instance *prev);
 
     //! \brief common function to help printf-debugging 
     /*! Every derived class should overrride this! */
-    virtual std::string toString() const { return "ospray::DisplayWallPO"; }
+    virtual std::string toString() const;
   };
 
-}
+  // Inlined function definitions /////////////////////////////////////////////
+
+  inline PixelOp::Instance *
+  DisplayWallPO::createInstance(FrameBuffer *fb, PixelOp::Instance *prev)
+  {
+    UNUSED(prev);
+    PING;
+    return new Instance(this, fb);
+  }
+
+  std::string DisplayWallPO::toString() const
+  {
+    return "ospray::DisplayWallPO";
+  }
+
+}// ::ospray

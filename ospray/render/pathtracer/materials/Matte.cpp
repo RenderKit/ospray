@@ -36,6 +36,6 @@ namespace ospray {
       }
     };
 
-    OSP_REGISTER_MATERIAL(Matte,PathTracer_Matte);
+    OSP_REGISTER_MATERIAL(Matte,PathTracer_Matte)
   }
 }

@@ -33,6 +33,7 @@ public:
 private:
 
   ospray::cpp::Renderer renderer;
-  ospray::cpp::Model    sceneModel;
   ospcommon::box3f      sceneBbox;
+
+  std::unique_ptr<ospray::cpp::Model> sceneModel;
 };

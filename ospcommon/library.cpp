@@ -72,7 +72,7 @@ namespace ospcommon {
     }
   }
 
-  Library::Library(void* const lib) : lib(lib) {};
+  Library::Library(void* const lib) : lib(lib) {}
 
   void* Library::getSymbol(const std::string& sym) const
   {

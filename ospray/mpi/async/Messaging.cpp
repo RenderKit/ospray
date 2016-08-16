@@ -26,14 +26,10 @@ namespace ospray {
       
       AsyncMessagingImpl *AsyncMessagingImpl::global = NULL;
 
-      Group::Group(//const std::string &name, 
-                   MPI_Comm comm, 
-                   Consumer *consumer, int32 tag)
-        :  tag(tag), consumer(consumer)
+      Group::Group(MPI_Comm comm, Consumer *consumer, int32 tag)
+        :  consumer(consumer), tag(tag)
       {
-        int rc = MPI_SUCCESS;
         MPI_CALL(Comm_dup(comm,&this->comm));
-        // this->comm = comm;
         MPI_CALL(Comm_rank(comm,&rank));
         MPI_CALL(Comm_size(comm,&size));
       }
@@ -57,11 +53,10 @@ namespace ospray {
         // extern Group *WORLD;
       }
 
-      Group *createGroup(const std::string &name, MPI_Comm comm, 
-                         Consumer *consumer, int32 tag)
+      Group *createGroup(MPI_Comm comm, Consumer *consumer, int32 tag)
       {
         initAsync();
-        return AsyncMessagingImpl::global->createGroup(name,comm,consumer,tag);
+        return AsyncMessagingImpl::global->createGroup(comm,consumer,tag);
       }
 
       void shutdown()

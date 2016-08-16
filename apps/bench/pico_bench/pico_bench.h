@@ -145,6 +145,7 @@ public:
 	Benchmarker(const size_t max_iter) : MAX_ITER(max_iter), MAX_RUNTIME(0)
 	{}
 
+#ifndef PICO_BENCH_NO_DECLVAL
 	template<typename Fn>
 	typename std::enable_if<std::is_void<decltype(std::declval<Fn>()())>::value, stats_type>::type
 	operator()(Fn fn) const {
@@ -166,6 +167,22 @@ public:
 		}
 		return stats_type{samples};
 	}
+#else
+	template<typename Fn>
+	stats_type operator()(Fn _fn) const {
+		BenchWrapper<Fn> fn{_fn};
+		// Do a single un-timed warm up run
+		fn();
+		T elapsed{0};
+		std::vector<T> samples;
+		for (size_t i = 0; i < MAX_ITER && (MAX_RUNTIME.count() == 0 || elapsed < MAX_RUNTIME);
+				++i, elapsed += samples.back())
+		{
+			samples.push_back(fn());
+		}
+		return stats_type{samples};
+	}
+#endif
 };
 }
 

@@ -21,7 +21,7 @@
 #include "SceneParser/tachyon/Model.h"
 #include "SceneParser/tachyon/Loc.h"
 
-#include "common/vec.h"
+#include "ospcommon/vec.h"
 
   extern int yydebug;
 

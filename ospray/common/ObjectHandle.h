@@ -42,9 +42,10 @@ namespace ospray {
     static ObjectHandle alloc();
     void free();
 
-    inline ObjectHandle(const int64 i = 0) : i64(i) {};
-    inline ObjectHandle(const ObjectHandle &other) : i64(other.i64) {};
-    inline ObjectHandle &operator=(const ObjectHandle &other) { i64=other.i64; return *this; }
+    inline ObjectHandle(const int64 i = 0) { i64 = i; }
+    inline ObjectHandle(const ObjectHandle &other) { i64 = other.i64; }
+    inline ObjectHandle &operator=(const ObjectHandle &other)
+    { i64 = other.i64; return *this; }
 
     union {
       struct { int32 ID; int32 owner; } i32;
@@ -82,8 +83,8 @@ namespace ospray {
   };
 
   inline bool operator==(const ObjectHandle &a, const ObjectHandle &b)
-  { return a.i64==b.i64; }
+  { return a.i64 == b.i64; }
   inline bool operator!=(const ObjectHandle &a, const ObjectHandle &b)
-  { return a.i64!=b.i64; }
+  { return a.i64 != b.i64; }
 
 } // ::ospray

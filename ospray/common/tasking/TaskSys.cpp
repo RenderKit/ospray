@@ -203,7 +203,7 @@ namespace ospray {
     }
 
     /* generate all threads */
-    for (size_t t=1; t<numThreads; t++) {
+    for (size_t t = 1; t < numThreads; t++) {
       threads.push_back(createThread((thread_func)TaskSys::threadStub,
                                      (void*)-1,4*1024*1024,-1));
     }

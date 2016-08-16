@@ -17,7 +17,7 @@
 #undef NDEBUG
 
 // ospray
-#include "common/AffineSpace.h"
+#include "ospcommon/AffineSpace.h"
 // tachyon module
 #include "Model.h"
 #include "Loc.h"
