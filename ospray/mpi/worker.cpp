@@ -81,7 +81,7 @@ namespace ospray {
     */
     void runWorker()
     {
-      Ref<mpi::MPIDevice> device = ospray::api::Device::current.dynamicCast<mpi::MPIDevice>();
+      auto device = ospray::api::Device::current.dynamicCast<mpi::MPIDevice>();
 
       // initialize embree. (we need to do this here rather than in
       // ospray::init() because in mpi-mode the latter is also called
