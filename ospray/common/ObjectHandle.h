@@ -77,8 +77,9 @@ namespace ospray {
     /*! cast to int64 to allow fast operations with this type */
     inline operator int64() const { return i64; }
 
-    static const ObjectHandle nullHandle;
   };
+
+  extern const ObjectHandle nullHandle;
 
   inline bool operator==(const ObjectHandle &a, const ObjectHandle &b)
   { return a.i64 == b.i64; }
