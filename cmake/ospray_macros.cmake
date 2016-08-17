@@ -135,46 +135,30 @@ MACRO(OSPRAY_CONFIGURE_ISPC_ISA)
   ENDIF()
 ENDMACRO()
 
-# Configure the output directories. To allow IMPI to do its magic we
-# will put *executables* into the (same) build directory, but tag
-# mic-executables with ".mic". *libraries* cannot use the
-# ".mic"-suffix trick, so we'll put libraries into separate
-# directories (names 'intel64' and 'mic', respectively)
-MACRO(CONFIGURE_OSPRAY)
-  OSPRAY_CONFIGURE_ISPC_ISA()
-  OSPRAY_CONFIGURE_TASKING_SYSTEM()
+## Target creation macros ##
 
-  IF (WIN32)
-    # avoid problematic min/max defines of windows.h
-    ADD_DEFINITIONS(-DNOMINMAX)
-  ENDIF()
+MACRO(OSPRAY_ADD_SUBDIRECTORY subdirectory)
+  SET(OSPRAY_EXE_SUFFIX "")
+  SET(OSPRAY_LIB_SUFFIX "")
+  SET(OSPRAY_ISPC_SUFFIX ".o")
+  SET(THIS_IS_MIC OFF)
+  SET(__XEON__ ON)
 
-  IF (OSPRAY_TARGET STREQUAL "mic")
+  ADD_SUBDIRECTORY(${subdirectory} builddir/${subdirectory}/intel64)
+
+  IF (OSPRAY_MIC)
     SET(OSPRAY_EXE_SUFFIX ".mic")
     SET(OSPRAY_LIB_SUFFIX "_mic")
     SET(OSPRAY_ISPC_SUFFIX ".cpp")
     SET(OSPRAY_ISPC_TARGET "mic")
     SET(THIS_IS_MIC ON)
     SET(__XEON__ OFF)
-    INCLUDE(${PROJECT_SOURCE_DIR}/cmake/icc_xeonphi.cmake)
+    INCLUDE(icc_xeonphi)
     SET(OSPRAY_TARGET_MIC ON PARENT_SCOPE)
-  ELSE()
-    SET(OSPRAY_EXE_SUFFIX "")
-    SET(OSPRAY_LIB_SUFFIX "")
-    SET(OSPRAY_ISPC_SUFFIX ".o")
-    SET(THIS_IS_MIC OFF)
-    SET(__XEON__ ON)
-  ENDIF()
 
-  IF (THIS_IS_MIC)
-    OPTION(OSPRAY_BUILD_COI_DEVICE
-           "Build COI Device for OSPRay's MIC support?" ON)
+    ADD_SUBDIRECTORY(${subdirectory} builddir/${subdirectory}/mic)
   ENDIF()
-
-  INCLUDE(ispc)
 ENDMACRO()
-
-## Target creation macros ##
 
 MACRO(OSPRAY_ADD_EXECUTABLE name)
   ADD_EXECUTABLE(${name}${OSPRAY_EXE_SUFFIX} ${ARGN})
