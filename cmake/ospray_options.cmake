@@ -76,7 +76,11 @@ SET(EXECUTABLE_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
 INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR})
 SET(OSPRAY_BINARY_DIR ${CMAKE_BINARY_DIR})
 SET(OSPRAY_DIR ${PROJECT_SOURCE_DIR})
-# arch-specific cmd-line flags for various arch and compiler configs
+
+IF (WIN32)
+  # avoid problematic min/max defines of windows.h
+  ADD_DEFINITIONS(-DNOMINMAX)
+ENDIF()
 
 ##############################################################
 # OSPRay specific build options and configuration selection
@@ -101,6 +105,8 @@ ELSE()
   IF (OSPRAY_BUILD_MIC_SUPPORT AND NOT OSPRAY_COMPILER_ICC)
     MESSAGE(FATAL_ERROR "MIC support requires the Intel Compiler.")
   ENDIF()
+  OPTION(OSPRAY_BUILD_COI_DEVICE
+         "Build COI Device for OSPRay's MIC support?" ON)
 ENDIF()
 
 OPTION(OSPRAY_BUILD_MPI_DEVICE "Add MPI Remote/Distributed rendering support?")
@@ -116,3 +122,6 @@ SET(OSPRAY_PIXELS_PER_JOB 64 CACHE INT
 
 MARK_AS_ADVANCED(OSPRAY_TILE_SIZE)
 MARK_AS_ADVANCED(OSPRAY_PIXELS_PER_JOB)
+
+OSPRAY_CONFIGURE_ISPC_ISA()
+OSPRAY_CONFIGURE_TASKING_SYSTEM()
