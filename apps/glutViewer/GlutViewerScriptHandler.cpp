@@ -25,9 +25,9 @@ namespace ospray {
   GlutViewerScriptHandler::GlutViewerScriptHandler(OSPModel    model,
                                                    OSPRenderer renderer,
                                                    OSPCamera   camera,
-                                                   ScriptedOSPGlutViewer  *viewer) 
+                                                   ScriptedOSPGlutViewer  *viewer)
     : OSPRayScriptHandler(model, renderer, camera),
-      m_viewer(viewer)
+      viewer(viewer)
   {
     registerScriptFunctions();
 
@@ -39,9 +39,13 @@ namespace ospray {
     ss << "toggleFullScreen()    --> toggle fullscreen mode" << endl;
     ss << "resetView()           --> reset camera view" << endl;
     ss << "printViewport()       --> print view params in the console" << endl;
+    ss << "renderFrame(n_frames) --> release the script lock and render 'n_frames' frames,\n"
+       << "                          then return to running the script." << endl;
+    ss << "setWorldBounds(bbox)  --> set the world bounds to the specified box3f,\n"
+       << "                          repositioning the camera." << endl;
     ss << "screenshot(filename)  --> save a screenshot (adds '.ppm')" << endl;
 
-    m_helpText += ss.str();
+    helpText += ss.str();
   }
 
   void GlutViewerScriptHandler::registerScriptFunctions()
@@ -50,32 +54,57 @@ namespace ospray {
 
     // setRenderer()
     auto setRenderer = [&](ospray::cpp::Renderer &r) {
-      m_viewer->setRenderer((OSPRenderer)r.handle());
+      viewer->setRenderer((OSPRenderer)r.handle());
     };
 
     // refresh()
     auto refresh = [&]() {
-      m_viewer->resetAccumulation();
+      viewer->resetAccumulation();
     };
 
     // toggleFullscreen()
     auto toggleFullscreen = [&]() {
-      m_viewer->toggleFullscreen();
+      viewer->toggleFullscreen();
     };
 
     // resetView()
     auto resetView = [&]() {
-      m_viewer->resetView();
+      viewer->resetView();
     };
 
     // printViewport()
     auto printViewport = [&]() {
-      m_viewer->printViewport();
+      viewer->printViewport();
+    };
+
+    // renderFrame()
+    auto renderFrame = [&](const int n_frames) {
+      // Temporarily unlock the mutex and wait for the display
+      // loop to acquire it and render and wait til a n frames have finished
+      const int startFrame = viewer->getFrameID();
+      lock.unlock();
+      // Wait for n_frames to be rendered
+      while (startFrame + n_frames > viewer->getFrameID());
+      lock.lock();
+    };
+    auto renderOneFrame = [&]() {
+      // Temporarily unlock the mutex and wait for the display
+      // loop to acquire it and render and wait til a n frames have finished
+      const int startFrame = viewer->getFrameID();
+      lock.unlock();
+      // Wait for n_frames to be rendered
+      while (startFrame + 1 > viewer->getFrameID());
+      lock.lock();
+    };
+
+    // setWorldBounds
+    auto setWorldBounds = [&](const ospcommon::box3f &box) {
+      viewer->setWorldBounds(box);
     };
 
     // screenshot()
     auto screenshot = [&](const std::string &name) {
-      m_viewer->saveScreenshot(name);
+      viewer->saveScreenshot(name);
     };
 
     chai.add(chaiscript::fun(setRenderer),      "setRenderer"     );
@@ -83,6 +112,9 @@ namespace ospray {
     chai.add(chaiscript::fun(toggleFullscreen), "toggleFullscreen");
     chai.add(chaiscript::fun(resetView),        "resetView"       );
     chai.add(chaiscript::fun(printViewport),    "printViewport"   );
+    chai.add(chaiscript::fun(renderFrame),      "renderFrame"     );
+    chai.add(chaiscript::fun(renderOneFrame),   "renderFrame"     );
+    chai.add(chaiscript::fun(setWorldBounds),   "setWorldBounds"  );
     chai.add(chaiscript::fun(screenshot),       "screenshot"      );
   }
 

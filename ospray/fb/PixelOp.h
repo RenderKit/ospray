@@ -59,14 +59,14 @@ namespace ospray {
           etcpp. In distriubuted mode, it is undefined if this op gets
           executed on the node that _produces_ the tile, or on the
           node that _owns_ the tile (and its accum buffer data)  */
-      virtual void preAccum(Tile &tile) {}
+      virtual void preAccum(Tile &tile) { UNUSED(tile); }
 
       /*! called right after the tile got accumulated; i.e., the
           tile's RGBA values already contain the accu-buffer blended
           values (assuming an accubuffer exists), and this function
           defines how these pixels are being processed before written
           into the color buffer */
-      virtual void postAccum(Tile &tile) {}
+      virtual void postAccum(Tile &tile) { UNUSED(tile); }
 
       //! \brief common function to help printf-debugging
       /*! Every derived class should overrride this! */

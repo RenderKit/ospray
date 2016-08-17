@@ -133,7 +133,7 @@ namespace ospray {
         to an ospray object */
     struct OSPRAY_SDK_INTERFACE Param {
       Param(const char *name);
-      ~Param() { clear(); };
+      ~Param() { clear(); }
 
       /*! clear parameter to 'invalid type and value'; free/de-refcount data if
        *  reqd' */

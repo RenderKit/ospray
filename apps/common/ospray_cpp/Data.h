@@ -36,7 +36,7 @@ public:
 inline Data::Data(size_t numItems, OSPDataType format,
                   const void *init, int flags)
 {
-  m_object = ospNewData(numItems, format, init, flags);
+  ospObject = ospNewData(numItems, format, init, flags);
 }
 
 inline Data::Data(const Data &copy) :

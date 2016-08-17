@@ -33,6 +33,7 @@ namespace ospray {
   {
     freedHandles.push((int64)*this);
   }
+
   ObjectHandle ObjectHandle::alloc()
   {
     ObjectHandle h;
@@ -90,6 +91,6 @@ namespace ospray {
     return(nullHandle);
   }
     
-  const ObjectHandle ObjectHandle::nullHandle(0);
+  const ObjectHandle nullHandle(0);
 
 } // ::ospray

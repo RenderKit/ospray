@@ -16,7 +16,7 @@
 
 #include "TachyonSceneParser.h"
 #include "Model.h"
-#include "common/FileName.h"
+#include "ospcommon/FileName.h"
 
 #include <iostream>
 using std::cout;
@@ -159,7 +159,7 @@ OSPModel specifyModel(tachyon::Model &tm)
 // Class definitions //////////////////////////////////////////////////////////
 
 TachyonSceneParser::TachyonSceneParser(cpp::Renderer renderer) :
-  m_renderer(renderer)
+  renderer(renderer)
 {
 }
 
@@ -176,8 +176,8 @@ bool TachyonSceneParser::parse(int ac, const char **&av)
         TimeStep ts(arg);
         importFile(ts.tm, arg);
         ts.om = specifyModel(ts.tm);
-        m_model = ts.om;
-        m_bbox  = ts.tm.getBounds();
+        sceneModel = ts.om;
+        sceneBbox  = ts.tm.getBounds();
         break;
       }
     }
@@ -188,10 +188,10 @@ bool TachyonSceneParser::parse(int ac, const char **&av)
 
 cpp::Model TachyonSceneParser::model() const
 {
-  return m_model;
+  return sceneModel;
 }
 
 box3f TachyonSceneParser::bbox() const
 {
-  return m_bbox;
+  return sceneBbox;
 }

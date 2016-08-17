@@ -22,9 +22,13 @@ bool DefaultRendererParser::parse(int ac, const char **&av)
     const std::string arg = av[i];
     if (arg == "--renderer" || arg == "-r") {
       assert(i+1 < ac);
-      m_rendererType = av[++i];
+      rendererType = av[++i];
     } else if (arg == "--spp" || arg == "-spp") {
-      m_spp = atoi(av[++i]);
+      spp = atoi(av[++i]);
+    } else if (arg == "--noshadows" || arg == "-ns") {
+      shadows = 0;
+    } else if (arg == "--ao-samples" || arg == "-ao") {
+      aoSamples = atoi(av[++i]);
     } else if (arg == "--max-depth") {
       maxDepth = atoi(av[++i]);
     }
@@ -37,25 +41,25 @@ bool DefaultRendererParser::parse(int ac, const char **&av)
 
 ospray::cpp::Renderer DefaultRendererParser::renderer()
 {
-  return m_renderer;
+  return parsedRenderer;
 }
 
 void DefaultRendererParser::finalize()
 {
-  if (m_rendererType.empty())
-    m_rendererType = "scivis";
+  if (rendererType.empty())
+    rendererType = "scivis";
 
-  m_renderer = ospray::cpp::Renderer(m_rendererType.c_str());
+  parsedRenderer = ospray::cpp::Renderer(rendererType.c_str());
 
   // Set renderer defaults (if not using 'aoX' renderers)
-  if (m_rendererType[0] != 'a' && m_rendererType[1] != 'o')
+  if (rendererType[0] != 'a' && rendererType[1] != 'o')
   {
-    m_renderer.set("aoSamples", 1);
-    m_renderer.set("shadowsEnabled", 1);
+    parsedRenderer.set("aoSamples", aoSamples);
+    parsedRenderer.set("shadowsEnabled", shadows);
   }
 
-  m_renderer.set("spp", m_spp);
-  m_renderer.set("maxDepth", maxDepth);
+  parsedRenderer.set("spp", spp);
+  parsedRenderer.set("maxDepth", maxDepth);
 
-  m_renderer.commit();
+  parsedRenderer.commit();
 }

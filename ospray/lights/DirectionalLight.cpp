@@ -43,8 +43,8 @@ namespace ospray {
     ispc::DirectionalLight_set(getIE(), (ispc::vec3f&)direction, (ispc::vec3f&)radiance, cosAngle);
   }
 
-  OSP_REGISTER_LIGHT(DirectionalLight, DirectionalLight);
-  OSP_REGISTER_LIGHT(DirectionalLight, DistantLight);
-  OSP_REGISTER_LIGHT(DirectionalLight, distant);
-  OSP_REGISTER_LIGHT(DirectionalLight, directional);
+  OSP_REGISTER_LIGHT(DirectionalLight, DirectionalLight)
+  OSP_REGISTER_LIGHT(DirectionalLight, DistantLight)
+  OSP_REGISTER_LIGHT(DirectionalLight, distant)
+  OSP_REGISTER_LIGHT(DirectionalLight, directional)
 }

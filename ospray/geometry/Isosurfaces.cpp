@@ -45,6 +45,6 @@ namespace ospray {
     ispc::Isosurfaces_set(getIE(), model->getIE(), numIsovalues, isovalues, volume->getIE());
   }
 
-  OSP_REGISTER_GEOMETRY(Isosurfaces, isosurfaces);
+  OSP_REGISTER_GEOMETRY(Isosurfaces, isosurfaces)
 
 } // ::ospray

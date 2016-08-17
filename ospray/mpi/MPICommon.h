@@ -44,18 +44,17 @@ namespace ospray {
     struct Group {
       /*! whether the current process/thread is a member of this
         gorup */
-      bool     containsMe; 
+      bool containsMe {false};
       /*! communictor for this group. intercommunicator if i'm a
         member of this gorup; else it's an intracommunicator */
-      MPI_Comm comm; 
+      MPI_Comm comm {MPI_COMM_NULL};
       /*! my rank in this group if i'm a member; else set to
         MPI_ROOT */
-      int rank; 
+      int rank {-1};
       /*! size of this group if i'm a member, else size of remote
         group this intracommunicaotr refers to */
-      int size; 
+      int size {-1};
 
-      Group() : size(-1), rank(-1), comm(MPI_COMM_NULL), containsMe(false) {};
 #if 1
       // this is the RIGHT naming convention - old code has them all inside out.
       void makeIntraComm() 

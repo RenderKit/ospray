@@ -33,14 +33,18 @@ namespace ospray {
       enum { RECV_WINDOW_SIZE = 48 };
       enum { PROC_WINDOW_SIZE = 20 };
 
-      BatchedIsendIrecvImpl::Group::Group(const std::string &name, MPI_Comm comm, 
-                                       Consumer *consumer, int32 tag)
+      BatchedIsendIrecvImpl::Group::Group(MPI_Comm comm,
+                                          Consumer *consumer,
+                                          int32 tag)
         : async::Group(comm,consumer,tag),
-          sendThread(this), recvThread(this), procThread(this), shouldExit(false)
+          sendThread(this),
+          procThread(this),
+          recvThread(this),
+          shouldExit(false)
       {
-        recvThread.start();
         sendThread.start();
         procThread.start();
+        recvThread.start();
       }
 
       void BatchedIsendIrecvImpl::SendThread::run()
@@ -49,16 +53,15 @@ namespace ospray {
         Action *actions[SEND_WINDOW_SIZE];
         MPI_Request request[SEND_WINDOW_SIZE];
         while (1) {
-          // usleep(80);
           size_t numActions = 0;
           while (numActions == 0){
             numActions = g->sendQueue.getSomeFor(actions,SEND_WINDOW_SIZE,
-                std::chrono::milliseconds(1));
+                                                 std::chrono::milliseconds(1));
             if (g->shouldExit.load()){
               return;
             }
           }
-          for (int i=0;i<numActions;i++) {
+          for (uint32_t i = 0; i < numActions; i++) {
             Action *action = actions[i];
             MPI_CALL(Isend(action->data,action->size,MPI_BYTE,
                            action->addr.rank,g->tag,g->comm,&request[i]));
@@ -68,7 +71,7 @@ namespace ospray {
           // failed statuses back?
           MPI_CALL(Waitall(numActions,request,MPI_STATUSES_IGNORE));
           
-          for (int i=0;i<numActions;i++) {
+          for (uint32_t i = 0; i < numActions; i++) {
             Action *action = actions[i];
             free(action->data);
             delete action;
@@ -166,7 +169,7 @@ namespace ospray {
               return;
             }
           }
-          for (int i=0;i<numActions;i++) {
+          for (uint32_t i = 0; i < numActions; i++) {
             Action *action = actions[i];
             g->consumer->process(action->addr,action->data,action->size);
             delete action;
@@ -176,7 +179,8 @@ namespace ospray {
 
       void BatchedIsendIrecvImpl::Group::shutdown()
       {
-        std::cout << "#osp:mpi:BatchIsendIrecvMessaging:Group shutting down" << std::endl;
+        std::cout << "#osp:mpi:BatchIsendIrecvMessaging:Group shutting down"
+                  << std::endl;
         shouldExit.store(true);
         sendThread.join();
         recvThread.join();
@@ -199,18 +203,17 @@ namespace ospray {
                mpi::world.rank,mpi::world.size);
         fflush(0);
         mpi::world.barrier();
-        for (int i=0;i<myGroups.size();i++)
+        for (uint32_t i = 0; i < myGroups.size(); i++)
           myGroups[i]->shutdown();
 
         MPI_CALL(Finalize());
       }
 
-      async::Group *BatchedIsendIrecvImpl::createGroup(const std::string &name, 
-                                                    MPI_Comm comm, 
-                                                    Consumer *consumer, 
-                                                    int32 tag)
+      async::Group *BatchedIsendIrecvImpl::createGroup(MPI_Comm comm,
+                                                       Consumer *consumer,
+                                                       int32 tag)
       {
-        Group *g = new Group(name,comm,consumer,tag);
+        Group *g = new Group(comm,consumer,tag);
         myGroups.push_back(g);
         return g;
       }

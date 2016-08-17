@@ -40,7 +40,7 @@ inline Geometry::Geometry(const std::string &type)
 {
   OSPGeometry c = ospNewGeometry(type.c_str());
   if (c) {
-    m_object = c;
+    ospObject = c;
   } else {
     throw std::runtime_error("Failed to create OSPGeometry!");
   }

@@ -111,7 +111,7 @@ extern "C" void ospInit(int *_ac, const char **_av)
   if (_ac && _av) {
     // we're only supporting local rendering for now - network device
     // etc to come.
-    for (int i=1;i<*_ac;i++) {
+    for (int i = 1; i < *_ac; i++) {
 
       if (std::string(_av[i]) == "--osp:mpi") {
 #ifdef OSPRAY_MPI

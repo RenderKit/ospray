@@ -37,7 +37,7 @@ namespace ospray {
 
     // Data //
 
-    ScriptedOSPGlutViewer *m_viewer;
+    ScriptedOSPGlutViewer *viewer;
   };
 
 }// namespace ospray

@@ -50,7 +50,7 @@ inline Model::Model()
 {
   OSPModel c = ospNewModel();
   if (c) {
-    m_object = c;
+    ospObject = c;
   } else {
     throw std::runtime_error("Failed to create OSPModel!");
   }

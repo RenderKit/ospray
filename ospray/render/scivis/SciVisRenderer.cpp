@@ -41,7 +41,7 @@ namespace ospray {
           lightArray.push_back(((Light**)lightData->data)[i]->getIE());
       }
 
-      void **lightPtr = lightArray.empty() ? NULL : &lightArray[0];
+      void **lightPtr = lightArray.empty() ? nullptr : &lightArray[0];
 
       const bool shadowsEnabled = getParam1i("shadowsEnabled", 0);
 
@@ -50,6 +50,7 @@ namespace ospray {
       int   numAOSamples = getParam1i("aoSamples", 0);
       float rayLength    = getParam1f("aoOcclusionDistance", 1e20f);
       float aoWeight     = getParam1f("aoWeight", 0.25f);
+      const bool oneSidedLighting = getParam1i("oneSidedLighting", 1);
 
       ispc::SciVisRenderer_set(getIE(),
                                shadowsEnabled,
@@ -58,7 +59,8 @@ namespace ospray {
                                rayLength,
                                aoWeight,
                                lightPtr,
-                               lightArray.size());
+                               lightArray.size(),
+                               oneSidedLighting);
     }
 
     SciVisRenderer::SciVisRenderer()
@@ -69,15 +71,16 @@ namespace ospray {
     /*! \brief create a material of given type */
     Material *SciVisRenderer::createMaterial(const char *type)
     {
+      UNUSED(type);
       return new SciVisMaterial;
     }
 
-    OSP_REGISTER_RENDERER(SciVisRenderer, raytracer);
-    OSP_REGISTER_RENDERER(SciVisRenderer, rt);
-    OSP_REGISTER_RENDERER(SciVisRenderer, scivis);
-    OSP_REGISTER_RENDERER(SciVisRenderer, sv);
-    OSP_REGISTER_RENDERER(SciVisRenderer, obj);
-    OSP_REGISTER_RENDERER(SciVisRenderer, OBJ);
+    OSP_REGISTER_RENDERER(SciVisRenderer, raytracer)
+    OSP_REGISTER_RENDERER(SciVisRenderer, rt)
+    OSP_REGISTER_RENDERER(SciVisRenderer, scivis)
+    OSP_REGISTER_RENDERER(SciVisRenderer, sv)
+    OSP_REGISTER_RENDERER(SciVisRenderer, obj)
+    OSP_REGISTER_RENDERER(SciVisRenderer, OBJ)
 
   } // ::ospray::scivis
 } // ::ospray

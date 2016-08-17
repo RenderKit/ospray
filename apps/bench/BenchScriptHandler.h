@@ -14,33 +14,24 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "common/Material.h"
-#include "Velvet_ispc.h"
+#pragma once
 
-namespace ospray {
-  namespace pathtracer {
-    struct Velvet : public ospray::Material {
-      //! \brief common function to help printf-debugging
-      /*! Every derived class should overrride this! */
-      virtual std::string toString() const { return "ospray::pathtracer::Velvet"; }
+#ifdef OSPRAY_APPS_ENABLE_SCRIPTING
 
-      //! \brief commit the material's parameters
-      virtual void commit() {
-        if (getIE() != NULL) return;
+#include <memory>
+#include "common/script/OSPRayScriptHandler.h"
+#include "OSPRayFixture.h"
 
-        vec3f reflectance              = getParam3f("reflectance",
-                                                    vec3f(.4f,0.f,0.f));
-        float backScattering           = getParam1f("backScattering",.5f);
-        vec3f horizonScatteringColor   = getParam3f("horizonScatteringColor",
-                                                    vec3f(.75f,.1f,.1f));
-        float horizonScatteringFallOff = getParam1f("horizonScatteringFallOff",10);
+class BenchScriptHandler : public ospray::OSPRayScriptHandler {
+  public:
+    BenchScriptHandler(std::shared_ptr<OSPRayFixture> &fixture);
 
-        ispcEquivalent = ispc::PathTracer_Velvet_create
-          ((const ispc::vec3f&)reflectance,(const ispc::vec3f&)horizonScatteringColor,
-           horizonScatteringFallOff,backScattering);
-      }
-    };
+  private:
+    void registerScriptFunctions();
+    void registerScriptTypes();
 
-    OSP_REGISTER_MATERIAL(Velvet,PathTracer_Velvet)
-  }
-}
+    using BenchStats = pico_bench::Statistics<OSPRayFixture::Millis>;
+};
+
+#endif
+

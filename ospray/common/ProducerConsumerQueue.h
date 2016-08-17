@@ -110,7 +110,7 @@ namespace ospray {
     {
       SCOPED_LOCK(mutex);
       wasEmpty = content.empty();
-      for (int i=0;i<numTs;i++)
+      for (size_t i = 0; i < numTs; i++)
         content.push_back(t[i]);
     }
     if (wasEmpty)

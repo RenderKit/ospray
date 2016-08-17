@@ -54,6 +54,6 @@ namespace ospray {
         intensity);
   }
 
-  OSP_REGISTER_LIGHT(HDRILight, hdri);
-//  OSP_REGISTER_LIGHT(HDRILight, HDRILight);
+  OSP_REGISTER_LIGHT(HDRILight, hdri)
+//  OSP_REGISTER_LIGHT(HDRILight, HDRILight)
 }

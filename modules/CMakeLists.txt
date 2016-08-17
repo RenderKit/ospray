@@ -14,8 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-CONFIGURE_OSPRAY()
-
 INCLUDE_DIRECTORIES(
   ${PROJECT_BINARY_DIR}
   ${CMAKE_SOURCE_DIR}/ospray/include
@@ -25,6 +23,7 @@ INCLUDE_DIRECTORIES(
   ${CMAKE_SOURCE_DIR}
   ${EMBREE_INCLUDE_DIRS}
 )
+
 INCLUDE_DIRECTORIES_ISPC(
   ${PROJECT_BINARY_DIR}
   ${CMAKE_SOURCE_DIR}/ospray/include

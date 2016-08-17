@@ -40,6 +40,7 @@ namespace ospray {
     if(!dcSocket)
       std::cerr << "could not connect to DisplayCluster at " << hostname << std::endl;
 #else
+    UNUSED(po);
     std::cout << "#osp:dw: display cluster support not compiled in" << std::endl;
 #endif
   }
@@ -88,6 +89,6 @@ namespace ospray {
   }
 
 
-  OSP_REGISTER_PIXEL_OP(DisplayWallPO,display_wall);
+  OSP_REGISTER_PIXEL_OP(DisplayWallPO,display_wall)
 
 }

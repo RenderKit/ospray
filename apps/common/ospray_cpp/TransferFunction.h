@@ -25,6 +25,7 @@ class TransferFunction : public ManagedObject_T<OSPTransferFunction>
 {
 public:
 
+  TransferFunction();
   TransferFunction(const std::string &type);
   TransferFunction(const TransferFunction &copy);
   TransferFunction(OSPTransferFunction existing);
@@ -32,11 +33,13 @@ public:
 
 // Inlined function definitions ///////////////////////////////////////////////
 
+inline TransferFunction::TransferFunction() {}
+
 inline TransferFunction::TransferFunction(const std::string &type)
 {
   OSPTransferFunction c = ospNewTransferFunction(type.c_str());
   if (c) {
-    m_object = c;
+    ospObject = c;
   } else {
     throw std::runtime_error("Failed to create OSPTransferFunction!");
   }

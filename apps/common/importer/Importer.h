@@ -33,6 +33,8 @@
 #  define OSPIMPORTER_INTERFACE
 #endif
 
+#define OSPRAY_APPS_IMPORTER_ENABLE_PRINTS 0
+
 namespace ospray {
   namespace importer {
     using namespace ospcommon;

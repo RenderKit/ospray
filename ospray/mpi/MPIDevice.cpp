@@ -307,7 +307,8 @@ namespace ospray {
         throw std::runtime_error("OSPRay MPI: no fork() yet on Windows");
 #else
         if (fork()) {
-          system(systemCommand);
+          auto result = system(systemCommand);
+          (void)result;
           cout << "OSPRay worker process has died - killing application"
                << endl;
           exit(0);
@@ -343,6 +344,7 @@ namespace ospray {
 
     void initDistributedAPI(int *ac, char ***av, OSPDRenderMode mpiMode)
     {
+      UNUSED(mpiMode);
       int initialized = false;
       MPI_CALL(Initialized(&initialized));
       if (initialized) 
@@ -366,6 +368,7 @@ namespace ospray {
                          int *_ac, const char **_av)
       : currentApiMode(OSPD_MODE_MASTERED)
     {
+      UNUSED(_ac, _av);
       auto logLevelFromEnv = getEnvVar<int>("OSPRAY_LOG_LEVEL");
       if (logLevelFromEnv.first && logLevel == 0)
         logLevel = logLevelFromEnv.second;
@@ -426,8 +429,6 @@ namespace ospray {
     const void *MPIDevice::frameBufferMap(OSPFrameBuffer _fb, 
                                           OSPFrameBufferChannel channel)
     {
-      int rc; 
-
       ObjectHandle handle = (const ObjectHandle &)_fb;
       FrameBuffer *fb = (FrameBuffer *)handle.lookup();
 
@@ -526,6 +527,7 @@ namespace ospray {
     /*! assign (named) string parameter to an object */
     void MPIDevice::setVoidPtr(OSPObject _object, const char *bufName, void *v)
     {
+      UNUSED(_object, bufName, v);
       throw std::runtime_error("setting a void pointer as parameter to an "
                                "object is not allowed in MPI mode");
     }
@@ -839,6 +841,7 @@ namespace ospray {
       MPI_Status status;
       int rc = MPI_Recv(&numFails,1,MPI_INT,
                         0,MPI_ANY_TAG,mpi::worker.comm,&status);
+      (void)rc;
       if (numFails == 0)
         return (OSPMaterial)(int64)handle;
       else {
@@ -883,6 +886,7 @@ namespace ospray {
       MPI_Status status;
       int rc = MPI_Recv(&numFails,1,MPI_INT,
                         0,MPI_ANY_TAG,mpi::worker.comm,&status);
+      (void)rc;
       if (numFails==0)
         return (OSPLight)(int64)handle;
       else {

@@ -22,7 +22,7 @@
 
 namespace ospray {
 
-  class DistributedFrameBuffer;
+  struct DistributedFrameBuffer;
 
   // -------------------------------------------------------
   /*! keeps the book-keeping of one tile of the frame buffer. note
@@ -37,6 +37,8 @@ namespace ospray {
              const vec2i &begin,
              size_t tileID,
              size_t ownerID);
+
+    virtual ~TileDesc() {}
 
     /*! returns whether this tile is one of this particular
         node's tiles */

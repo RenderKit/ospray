@@ -57,6 +57,6 @@ namespace ospray {
   }
 
 
-  OSP_REGISTER_MATERIAL(RaycastVolumeMaterial, RaycastVolumeMaterial);
+  OSP_REGISTER_MATERIAL(RaycastVolumeMaterial, RaycastVolumeMaterial)
 
 } // ::ospray

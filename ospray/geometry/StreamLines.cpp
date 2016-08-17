@@ -58,6 +58,6 @@ namespace ospray {
                                  (ispc::vec4f*)color);
   }
 
-  OSP_REGISTER_GEOMETRY(StreamLines,streamlines);
+  OSP_REGISTER_GEOMETRY(StreamLines,streamlines)
 
 } // ::ospray

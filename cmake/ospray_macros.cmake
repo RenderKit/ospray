@@ -14,24 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-#include bindir - that's where ispc puts generated header files
-INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR})
-SET(OSPRAY_BINARY_DIR ${CMAKE_BINARY_DIR})
-SET(OSPRAY_DIR ${PROJECT_SOURCE_DIR})
-# arch-specific cmd-line flags for various arch and compiler configs
-
-SET(OSPRAY_TILE_SIZE 64 CACHE INT "Tile size")
-SET_PROPERTY(CACHE OSPRAY_TILE_SIZE PROPERTY STRINGS 8 16 32 64 128 256 512)
-
-SET(OSPRAY_PIXELS_PER_JOB 64 CACHE INT
-    "Must be multiple of largest vector width *and* <= OSPRAY_TILE_SIZE")
-
-MARK_AS_ADVANCED(OSPRAY_TILE_SIZE)
-MARK_AS_ADVANCED(OSPRAY_PIXELS_PER_JOB)
-
-# unhide compiler to make it easier for users to see what they are using
-MARK_AS_ADVANCED(CLEAR CMAKE_CXX_COMPILER)
-
 ## Macro for printing CMake variables ##
 MACRO(PRINT var)
   MESSAGE("${var} = ${${var}}")
@@ -49,10 +31,16 @@ ENDMACRO()
 ## Macro check for compiler support of ISA ##
 MACRO(OSPRAY_CHECK_COMPILER_SUPPORT ISA)
   IF (${ISA} STREQUAL "AVX512" AND (NOT OSPRAY_COMPILER_ICC OR WIN32 OR APPLE))
-    OSPRAY_WARN_ONCE(MISSING_AVX512 "OSPRay Currently requires ICC on Linux for KNL support. Disabling KNL ISA target.")
+    OSPRAY_WARN_ONCE(MISSING_AVX512
+                     "OSPRay Currently requires ICC on Linux for KNL support. "
+                     "Disabling KNL ISA target.")
     SET(OSPRAY_EMBREE_ENABLE_${ISA} false)
   ELSEIF (OSPRAY_EMBREE_ENABLE_${ISA} AND NOT OSPRAY_COMPILER_SUPPORTS_${ISA})
-    OSPRAY_WARN_ONCE(MISSING_${ISA} "Need at least version ${GCC_VERSION_REQUIRED_${ISA}} of gcc for ${ISA}. Disabling ${ISA}.\nTo compile for ${ISA}, please switch to either 'ICC'-compiler, or upgrade your gcc version.")
+    OSPRAY_WARN_ONCE(MISSING_${ISA}
+                     "Need at least version ${GCC_VERSION_REQUIRED_${ISA}} of "
+                     "gcc for ${ISA}. Disabling ${ISA}.\nTo compile for "
+                     "${ISA}, please switch to either 'ICC'-compiler, or "
+                     "upgrade your gcc version.")
     SET(OSPRAY_EMBREE_ENABLE_${ISA} false)
   ENDIF()
 ENDMACRO()
@@ -142,64 +130,35 @@ MACRO(OSPRAY_CONFIGURE_ISPC_ISA)
     SET(OSPRAY_EMBREE_ENABLE_AVX2   false)
     SET(OSPRAY_EMBREE_ENABLE_AVX    false)
   ELSE ()
-    MESSAGE(ERROR "Invalid OSPRAY_BUILD_ISA value. Please select one of SSE, AVX, AVX2, AVX512, or ALL.")
+    MESSAGE(ERROR "Invalid OSPRAY_BUILD_ISA value. "
+                  "Please select one of SSE, AVX, AVX2, AVX512, or ALL.")
   ENDIF()
 ENDMACRO()
 
-# Configure the output directories. To allow IMPI to do its magic we
-# will put *executables* into the (same) build directory, but tag
-# mic-executables with ".mic". *libraries* cannot use the
-# ".mic"-suffix trick, so we'll put libraries into separate
-# directories (names 'intel64' and 'mic', respectively)
-MACRO(CONFIGURE_OSPRAY)
-  OSPRAY_CONFIGURE_ISPC_ISA()
-  OSPRAY_CONFIGURE_TASKING_SYSTEM()
+## Target creation macros ##
 
-  IF("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-    SET(OSPRAY_DEBUG_BUILD          ON )
-    SET(OSPRAY_RELWITHDEBINFO_BUILD OFF)
-    SET(OSPRAY_RELEASE_BUILD        OFF)
-  ELSEIF("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
-    SET(OSPRAY_DEBUG_BUILD          OFF)
-    SET(OSPRAY_RELWITHDEBINFO_BUILD ON )
-    SET(OSPRAY_RELEASE_BUILD        OFF)
-  ELSE()# Release
-    SET(OSPRAY_DEBUG_BUILD          OFF)
-    SET(OSPRAY_RELWITHDEBINFO_BUILD OFF)
-    SET(OSPRAY_RELEASE_BUILD        ON )
-  ENDIF()
+MACRO(OSPRAY_ADD_SUBDIRECTORY subdirectory)
+  SET(OSPRAY_EXE_SUFFIX "")
+  SET(OSPRAY_LIB_SUFFIX "")
+  SET(OSPRAY_ISPC_SUFFIX ".o")
+  SET(THIS_IS_MIC OFF)
+  SET(__XEON__ ON)
 
-  IF (WIN32)
-    # avoid problematic min/max defines of windows.h
-    ADD_DEFINITIONS(-DNOMINMAX)
-  ENDIF()
+  ADD_SUBDIRECTORY(${subdirectory} builddir/${subdirectory}/intel64)
 
-  IF (OSPRAY_TARGET STREQUAL "mic")
+  IF (OSPRAY_MIC)
     SET(OSPRAY_EXE_SUFFIX ".mic")
     SET(OSPRAY_LIB_SUFFIX "_mic")
     SET(OSPRAY_ISPC_SUFFIX ".cpp")
     SET(OSPRAY_ISPC_TARGET "mic")
     SET(THIS_IS_MIC ON)
     SET(__XEON__ OFF)
-    INCLUDE(${PROJECT_SOURCE_DIR}/cmake/icc_xeonphi.cmake)
+    INCLUDE(icc_xeonphi)
     SET(OSPRAY_TARGET_MIC ON PARENT_SCOPE)
-  ELSE()
-    SET(OSPRAY_EXE_SUFFIX "")
-    SET(OSPRAY_LIB_SUFFIX "")
-    SET(OSPRAY_ISPC_SUFFIX ".o")
-    SET(THIS_IS_MIC OFF)
-    SET(__XEON__ ON)
-  ENDIF()
 
-  IF (THIS_IS_MIC)
-    OPTION(OSPRAY_BUILD_COI_DEVICE
-           "Build COI Device for OSPRay's MIC support?" ON)
+    ADD_SUBDIRECTORY(${subdirectory} builddir/${subdirectory}/mic)
   ENDIF()
-
-  INCLUDE(ispc)
 ENDMACRO()
-
-## Target creation macros ##
 
 MACRO(OSPRAY_ADD_EXECUTABLE name)
   ADD_EXECUTABLE(${name}${OSPRAY_EXE_SUFFIX} ${ARGN})
@@ -217,11 +176,12 @@ MACRO(OSPRAY_ADD_LIBRARY name type)
     ENDIF ()
   ENDFOREACH()
   OSPRAY_ISPC_COMPILE(${ISPC_SOURCES})
-  ADD_LIBRARY(${name}${OSPRAY_LIB_SUFFIX} ${type} ${ISPC_OBJECTS} ${OTHER_SOURCES} ${ISPC_SOURCES})
+  ADD_LIBRARY(${name}${OSPRAY_LIB_SUFFIX} ${type}
+              ${ISPC_OBJECTS} ${OTHER_SOURCES} ${ISPC_SOURCES})
 
   IF (THIS_IS_MIC)
     FOREACH(src ${ISPC_OBJECTS})
-      SET_SOURCE_FILES_PROPERTIES( ${src} PROPERTIES COMPILE_FLAGS -std=gnu++98 )
+      SET_SOURCE_FILES_PROPERTIES(${src} PROPERTIES COMPILE_FLAGS -std=gnu++98)
     ENDFOREACH()
   ENDIF()
 ENDMACRO()
@@ -402,10 +362,14 @@ ENDMACRO()
 ## Compiler configuration macro ##
 
 MACRO(OSPRAY_CONFIGURE_COMPILER)
-  # enable ability for users to force a compiler using the pre-0.8.3 method (doesn't work right now!)
+  # enable ability for users to force a compiler using the pre-0.8.3 method
+  # (doesn't work right now!)
   SET(OSPRAY_COMPILER "" CACHE STRING "Force compiler: GCC, ICC, CLANG")
   SET_PROPERTY(CACHE OSPRAY_COMPILER PROPERTY STRINGS GCC ICC CLANG)
   MARK_AS_ADVANCED(OSPRAY_COMPILER)
+
+  # unhide compiler to make it easier for users to see what they are using
+  MARK_AS_ADVANCED(CLEAR CMAKE_CXX_COMPILER)
 
   IF(NOT ":${OSPRAY_COMPILER}" STREQUAL ":")
     STRING(TOUPPER ${OSPRAY_COMPILER} OSPRAY_COMPILER)

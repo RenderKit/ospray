@@ -14,19 +14,23 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-CONFIGURE_OSPRAY()
+add_definitions(-DPICO_BENCH_NO_DECLVAL)
+set(LIBS ospray ospray_commandline ospray_common ospray_minisg
+  ospray_importer ospray_tfn)
 
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_LIST_DIR})
+if (OSPRAY_APPS_ENABLE_SCRIPTING)
+  add_definitions(-DOSPRAY_APPS_ENABLE_SCRIPTING)
+  include_directories(${PROJECT_SOURCE_DIR}/apps/common/script)
+  set(LIBS ${LIBS} ospray_script)
+endif()
 
-OSPRAY_CREATE_APPLICATION(Benchmark
+include_directories(${PROJECT_SOURCE_DIR}/apps/common)
+include_directories(${CMAKE_CURRENT_LIST_DIR})
+
+ospray_create_application(Benchmark
   bench.cpp
   OSPRayFixture.cpp
-  OSPRayFixture.h
-  simple_outputter.hpp
+  BenchScriptHandler.cpp
 LINK
-  ospray
-  ospray_commandline
-  ospray_common
-  ospray_minisg
-  ospray_importer
+  ${LIBS}
 )

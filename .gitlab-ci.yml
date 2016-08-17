@@ -13,6 +13,18 @@ build-centos6-gcc:
     - gcc
     - build
 
+build-centos6-icc:
+  type: build
+  script:
+    - module load intel
+    - export CC=icc
+    - export CXX=icpc
+    - scripts/build_gitlab/linux.sh
+  tags:
+    - centos6
+    - icc
+    - build
+
 build-centos7-gcc:
   type: build
   script:
@@ -114,6 +126,7 @@ build-windows-icc:
 #  only:
 #    - devel
 #    - master
+#    - release-1.0
 #  artifacts:
 #    paths:
 #      - build_release/*.gz
@@ -132,6 +145,7 @@ release-linux-icc:
   only:
     - devel
     - master
+    - release-1.0
   artifacts:
     paths:
       - build_release/*.gz
@@ -149,6 +163,7 @@ release-osx-clang:
   only:
     - devel
     - master
+    - release-1.0
   artifacts:
     paths:
       - build_release/*.gz
@@ -165,6 +180,7 @@ release-windows:
   only:
     - devel
     - master
+    - release-1.0
   artifacts:
     paths:
       - build_release\ospray*.zip
