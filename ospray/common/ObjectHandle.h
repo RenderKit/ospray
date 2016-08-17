@@ -38,7 +38,7 @@ namespace ospray {
     as if they were pointers (and thus, 'null' objects are
     consistent between local and mpi rendering)
   */
-  struct OSPRAY_SDK_INTERFACE ObjectHandle {
+  union OSPRAY_SDK_INTERFACE ObjectHandle {
     static ObjectHandle alloc();
     void free();
 
@@ -47,10 +47,8 @@ namespace ospray {
     inline ObjectHandle &operator=(const ObjectHandle &other)
     { i64 = other.i64; return *this; }
 
-    union {
-      struct { int32 ID; int32 owner; } i32;
-      int64 i64;
-    };
+    struct { int32 ID; int32 owner; } i32;
+    int64 i64;
 
     /*! look up an object by handle, and return it. must be a defiend handle */
     ManagedObject *lookup() const;
@@ -79,8 +77,9 @@ namespace ospray {
     /*! cast to int64 to allow fast operations with this type */
     inline operator int64() const { return i64; }
 
-    static const ObjectHandle nullHandle;
   };
+
+  extern const ObjectHandle nullHandle;
 
   inline bool operator==(const ObjectHandle &a, const ObjectHandle &b)
   { return a.i64 == b.i64; }

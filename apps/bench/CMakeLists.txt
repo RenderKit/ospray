@@ -14,8 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-configure_ospray()
-
 add_definitions(-DPICO_BENCH_NO_DECLVAL)
 set(LIBS ospray ospray_commandline ospray_common ospray_minisg
   ospray_importer ospray_tfn)

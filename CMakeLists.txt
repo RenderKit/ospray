@@ -34,10 +34,10 @@ SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 # CMake modules and macro files
 ##############################################################
 
-INCLUDE(cmake/ospray_macros.cmake)
-INCLUDE(cmake/ospray_options.cmake)
-INCLUDE(cmake/ispc.cmake)
-INCLUDE(cmake/mpi.cmake)
+INCLUDE(ospray_macros)
+INCLUDE(ospray_options)
+INCLUDE(ispc)
+INCLUDE(mpi)
 
 IF(NOT WIN32)
   INCLUDE(cmake/doxygen.cmake)
@@ -56,25 +56,13 @@ INCLUDE(package)
 # the OSPRay 'common' library
 ##############################################################
 
-CONFIGURE_OSPRAY()
-
-SET(OSPRAY_TARGET "intel64")
-ADD_SUBDIRECTORY(ospcommon builddir/ospray_common/intel64)
-IF (OSPRAY_MIC)
-  SET(OSPRAY_TARGET "mic")
-  ADD_SUBDIRECTORY(ospcommon builddir/ospray_common/mic)
-ENDIF()
+OSPRAY_ADD_SUBDIRECTORY(ospcommon)
 
 ##############################################################
 # the OSPRay library
 ##############################################################
 
-SET(OSPRAY_TARGET "intel64")
-ADD_SUBDIRECTORY(ospray builddir/ospray/intel64)
-IF (OSPRAY_MIC)
-  SET(OSPRAY_TARGET "mic")
-  ADD_SUBDIRECTORY(ospray builddir/ospray/mic)
-ENDIF()
+OSPRAY_ADD_SUBDIRECTORY(ospray)
 
 ##############################################################
 # OSPRay modules
@@ -84,12 +72,7 @@ OPTION(OSPRAY_ENABLE_MODULES "Enable the 'modules' subtree in the build." ON)
 MARK_AS_ADVANCED(OSPRAY_ENABLE_MODULES)
 
 IF (OSPRAY_ENABLE_MODULES)
-  SET(OSPRAY_TARGET "intel64")
-  ADD_SUBDIRECTORY(modules builddir/modules/intel64)
-  IF (OSPRAY_MIC)
-    SET(OSPRAY_TARGET "mic")
-    ADD_SUBDIRECTORY(modules builddir/modules/mic)
-  ENDIF()
+  OSPRAY_ADD_SUBDIRECTORY(modules)
 ENDIF()
 
 ##############################################################
@@ -100,12 +83,9 @@ OPTION(OSPRAY_ENABLE_APPS "Enable the 'apps' subtree in the build." ON)
 MARK_AS_ADVANCED(OSPRAY_ENABLE_APPS)
 
 IF (OSPRAY_ENABLE_APPS)
-  SET(OSPRAY_TARGET "intel64")
-  ADD_SUBDIRECTORY(apps builddir/apps/intel64)
-  IF (OSPRAY_MIC)
-    SET(OSPRAY_TARGET "mic")
-    ADD_SUBDIRECTORY(apps builddir/apps/mic)
-  ENDIF()
+  # NOTE(jda) - Don't use OSPRAY_ADD_SUBDIRECTORY() macro as we don't have any
+  #             KNC code in the apps subdirectory to compile.
+  ADD_SUBDIRECTORY(apps)
 ENDIF()
 
 # create a configure file that both ospray and ispc can read the cmake config
