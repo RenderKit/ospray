@@ -52,24 +52,6 @@ namespace ospray {
     void printViewport();
     void saveScreenshot(const std::string &basename);
 
-    // Helper types //
-
-    struct DisplayWall
-    {
-      std::string hostname;
-      std::string streamName;
-      ospcommon::vec2i size{-1};
-      ospray::cpp::FrameBuffer fb;
-      ospray::cpp::PixelOp     po;
-#if OSPRAY_DISPLAY_WALD
-      // display uses its own camera; it has a different aspect ratio!
-      ospray::cpp::Camera      camera;
-      int stereo;
-#endif
-    } displayWall;
-
-    void setDisplayWall(const DisplayWall &dw);
-
   protected:
 
     virtual void reshape(const ospcommon::vec2i &newSize) override;
@@ -96,13 +78,10 @@ namespace ospray {
     bool alwaysRedraw;
 
     ospcommon::vec2i windowSize;
-    int accumID;
     bool fullScreen;
     glut3D::Glut3DWidget::ViewPort glutViewPort;
 
     std::atomic<bool> resetAccum;
-
-    bool useDisplayWall;
   };
 
 }// namespace ospray

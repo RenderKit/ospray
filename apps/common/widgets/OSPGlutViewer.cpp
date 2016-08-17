@@ -62,9 +62,7 @@ OSPGlutViewer::OSPGlutViewer(const box3f &worldBounds, cpp::Model model,
     camera(camera),
     queuedRenderer(nullptr),
     alwaysRedraw(true),
-    accumID(-1),
-    fullScreen(false),
-    useDisplayWall(false)
+    fullScreen(false)
 {
   setWorldBounds(worldBounds);
 
@@ -125,54 +123,15 @@ void OSPGlutViewer::saveScreenshot(const std::string &basename)
        << endl;
 }
 
-void OSPGlutViewer::setDisplayWall(const OSPGlutViewer::DisplayWall &dw)
-{
-  displayWall = dw;
-  useDisplayWall = true;
-}
-
 void OSPGlutViewer::reshape(const vec2i &newSize)
 {
   Glut3DWidget::reshape(newSize);
   windowSize = newSize;
-  frameBuffer = cpp::FrameBuffer(osp::vec2i{newSize.x, newSize.y}, OSP_FB_SRGBA,
-                          OSP_FB_COLOR | OSP_FB_DEPTH | OSP_FB_ACCUM);
+  frameBuffer = cpp::FrameBuffer(osp::vec2i{newSize.x, newSize.y},
+                                 OSP_FB_SRGBA,
+                                 OSP_FB_COLOR | OSP_FB_DEPTH | OSP_FB_ACCUM);
 
   frameBuffer.clear(OSP_FB_ACCUM);
-
-  /*! for now, let's just attach the pixel op to the _main_ frame
-      buffer - eventually we need to have a _second_ frame buffer
-      of the proper (much higher) size, but for now let's just use
-      the existing one... */
-  if (useDisplayWall && displayWall.fb.handle() != frameBuffer.handle()) {
-#if OSPRAY_DISPLAY_WALD
-    displayWall.camera = cpp::Camera("perspective");
-    displayWall.camera.set("aspect", displayWall.size.x/float(displayWall.size.y));
-    if (displayWall.stereo)
-      // in stereo mode, make sure to set 
-      displayWall.size.x *= 2;
-#endif
-    displayWall.fb =
-      ospray::cpp::FrameBuffer((const osp::vec2i&)displayWall.size,
-                               OSP_FB_NONE,
-                               OSP_FB_COLOR | OSP_FB_DEPTH | OSP_FB_ACCUM);
-
-    displayWall.fb.clear(OSP_FB_ACCUM);
-
-    if (displayWall.po.handle() == nullptr) {
-#if OSPRAY_DISPLAY_WALD
-      displayWall.po = ospray::cpp::PixelOp("display_wald@displayWald");
-      displayWall.po.set("stereo",(int)displayWall.stereo);
-#else
-      displayWall.po = ospray::cpp::PixelOp("display_wall");
-#endif
-      displayWall.po.set("hostname", displayWall.hostname);
-      displayWall.po.set("streamName", displayWall.streamName);
-      displayWall.po.commit();
-    }
-
-    displayWall.fb.setPixelOp(displayWall.po);
-  }
 
   camera.set("aspect", viewPort.aspect);
   camera.commit();
@@ -298,39 +257,11 @@ void OSPGlutViewer::display()
     camera.set("fovy", viewPort.openingAngle);
     camera.commit();
 
-#if OSPRAY_DISPLAY_WALD
-    if (useDisplayWall) {
-      displayWall.camera.set("pos", viewPort.from);
-      displayWall.camera.set("dir", dir);
-      displayWall.camera.set("up", viewPort.up);
-      displayWall.camera.commit();
-    }
-#endif
-
     viewPort.modified = false;
-    accumID=0;
     frameBuffer.clear(OSP_FB_ACCUM);
-
-    if (useDisplayWall)
-      displayWall.fb.clear(OSP_FB_ACCUM);
   }
 
   renderer.renderFrame(frameBuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
-  if (useDisplayWall) {
-#if OSPRAY_DISPLAY_WALD
-    // when using displaywald we use two different camera (to adjust
-    // for both different aspect ratios as well as for possibly
-    // different stereo settings in viewer window vs display wall)
-    renderer.set("camera",displayWall.camera);
-    renderer.commit();
-    renderer.renderFrame(displayWall.fb, OSP_FB_COLOR | OSP_FB_ACCUM);
-    renderer.set("camera",camera);
-    renderer.commit();
-#else
-    renderer.renderFrame(displayWall.fb, OSP_FB_COLOR | OSP_FB_ACCUM);
-#endif
-  }
-  ++accumID;
 
   // set the glut3d widget's frame buffer to the opsray frame buffer,
   // then display

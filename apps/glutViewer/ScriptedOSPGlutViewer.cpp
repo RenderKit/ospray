@@ -88,18 +88,10 @@ namespace ospray {
       camera.set("fovy", viewPort.openingAngle);
       camera.commit();
       viewPort.modified = false;
-      accumID=0;
       frameBuffer.clear(OSP_FB_ACCUM);
-
-      if (useDisplayWall)
-        displayWall.fb.clear(OSP_FB_ACCUM);
     }
 
     renderer.renderFrame(frameBuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
-    if (useDisplayWall) {
-      renderer.renderFrame(displayWall.fb, OSP_FB_COLOR | OSP_FB_ACCUM);
-    }
-    ++accumID;
 
     // set the glut3d widget's frame buffer to the opsray frame buffer,
     // then display
@@ -120,7 +112,7 @@ namespace ospray {
       forceRedraw();
     } else {
       setTitle(title);
-  }
+    }
   }
 
   void ScriptedOSPGlutViewer::keypress(char key, const vec2i &where)
