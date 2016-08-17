@@ -57,9 +57,10 @@ void parseForDisplayWall(int ac, const char **&av, ospray::OSPGlutViewer &v)
       ospray::dw::ServiceInfo service;
       service.getFrom(hostName,portNo);
       const ospcommon::vec2i size = service.totalPixelsInWall;
-      std::cout << "#osp.glutViewer: found display wald with " 
+      std::cout << "#osp.glutViewer: found display wald with "
                 << size.x << "x" << size.y << " pixels "
-                << "(" << ospcommon::prettyNumber(size.product()) << "pixels)" 
+                << "(" << ospcommon::prettyNumber(size.product()) << "pixels)"
+                << (service.stereo > 0 ? " Stereo" : "")
                 << std::endl;
       displayWall.hostname   = service.mpiPortName;
       displayWall.streamName = service.mpiPortName;
