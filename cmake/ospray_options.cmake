@@ -102,9 +102,11 @@ ELSE()
   OPTION(OSPRAY_BUILD_MIC_SUPPORT "Build OSPRay with KNC Support?")
   IF (OSPRAY_BUILD_MIC_SUPPORT AND NOT OSPRAY_COMPILER_ICC)
     MESSAGE(FATAL_ERROR "MIC support requires the Intel Compiler.")
+  ELSEIF (OSPRAY_BUILD_MIC_SUPPORT)
+    # Build COI device?
+    OPTION(OSPRAY_BUILD_COI_DEVICE
+           "Build COI Device for OSPRay's MIC support?" ON)
   ENDIF()
-  OPTION(OSPRAY_BUILD_COI_DEVICE
-         "Build COI Device for OSPRay's MIC support?" ON)
 ENDIF()
 
 OPTION(OSPRAY_BUILD_MPI_DEVICE "Add MPI Remote/Distributed rendering support?")
