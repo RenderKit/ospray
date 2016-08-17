@@ -470,17 +470,7 @@ IF (OSPRAY_MPI)
     mpi/DistributedFrameBuffer.ispc
     mpi/DistributedFrameBuffer_TileTypes.cpp
 
-    fb/DisplayWall.cpp
-    )
-ENDIF()
-
-# -------------------------------------------------------
-# DisplayCluster components
-# -------------------------------------------------------
-INCLUDE(${PROJECT_SOURCE_DIR}/cmake/displaycluster.cmake)
-
-IF (OSPRAY_DISPLAYCLUSTER)
-  CONFIGURE_DISPLAYCLUSTER()
+  )
 ENDIF()
 
 # -------------------------------------------------------
@@ -542,10 +532,6 @@ ELSE()
     ${EMBREE_LIBRARIES}
     ${TASKING_SYSTEM_LIBS}
   )
-ENDIF()
-
-IF (OSPRAY_DISPLAYCLUSTER)
-  OSPRAY_LIBRARY_LINK_LIBRARIES(ospray ${DISPLAYCLUSTER_LIBRARIES})
 ENDIF()
 
 IF (WIN32)
