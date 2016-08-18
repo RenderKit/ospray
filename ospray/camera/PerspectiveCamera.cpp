@@ -118,6 +118,8 @@ namespace ospray {
     focusDistance = getParamf("focusDistance", 1.f);
     ipdFactor = getParamf("ipdFactor", 30.f);
     
+    aspect *= 2;// For double-wide buffer.
+    
     vec2f imageStart = getParam2f("imageStart", vec2f(0.f));
     vec2f imageEnd   = getParam2f("imageEnd", vec2f(1.f));
     
