@@ -56,7 +56,6 @@ OSPRayFixture::OSPRayFixture(cpp::Renderer r, cpp::Camera c, cpp::Model m)
   renderer.set("world", model);
   renderer.set("model", model);
   renderer.set("camera", camera);
-  renderer.set("spp", 1);
   renderer.commit();
 }
 pico_bench::Statistics<OSPRayFixture::Millis>

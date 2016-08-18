@@ -302,7 +302,7 @@ inline vec4f SciVisRenderer_computeVolumeSample(SciVisRenderer *uniform renderer
                           1.f : abs(dot(safe_normalize(light.dir),
                                         gradient));
 
-      shadedColor = shadedColor + sampleColor * cosNL * light.weight;
+      shadedColor = shadedColor + sampleColor * cosNL * light.weight * one_over_pi /*BRDF normalization to match surface shading*/;
     }
 
     sampleColor = shadedColor;
