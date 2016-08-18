@@ -108,6 +108,7 @@ namespace ospray {
     float apertureRadius;
     float focusDistance;
     float ipdFactor;
+    int cameraMode;// 0 for double-wide buffer, 1 for single left, 2 for single right.
   };
   
 } // ::ospray

@@ -97,7 +97,7 @@ namespace ospray {
 
 
 
-// Stereo
+// Stereo, Work In Progress.
 
 namespace ospray {
   
@@ -118,7 +118,11 @@ namespace ospray {
     focusDistance = getParamf("focusDistance", 1.f);
     ipdFactor = getParamf("ipdFactor", 30.f);
     
-    aspect *= 2;// For double-wide buffer.
+    cameraMode = getParam1i("cameraMode", 0);
+    
+    if (cameraMode == 0) {
+      //aspect *= 2;// For double-wide buffer.
+    }
     
     vec2f imageStart = getParam2f("imageStart", vec2f(0.f));
     vec2f imageEnd   = getParam2f("imageEnd", vec2f(1.f));
@@ -137,7 +141,7 @@ namespace ospray {
     
     //focusDistance = 4;
     
-    printf("focusDistance = %f\n", focusDistance);
+    //printf("focusDistance = %f\n", focusDistance);
     
     float imgPlane_size_y = 2.f*tanf(fovy/2.f*M_PI/180.) * focusDistance;
     float imgPlane_size_x = imgPlane_size_y * aspect;
@@ -147,7 +151,7 @@ namespace ospray {
     
     vec3f dir_00 = dir - .5f * dir_du - .5f * dir_dv;
     
-    ipdFactor = 30;
+    ipdFactor = 30;// testing
     
     float ipdFactorCamera = focusDistance / ipdFactor;// 0.1f;
     float ipdFactorFilm = ipdFactorCamera / imgPlane_size_x;
@@ -155,8 +159,7 @@ namespace ospray {
     //ipdFactorCamera = 0;
     //ipdFactorFilm = 0;
     
-    ipdFactorCamera = 5;
-
+    ipdFactorCamera = 20;// testing
     
     float scaledAperture = 0.f;
     // prescale to focal plane
@@ -177,6 +180,7 @@ namespace ospray {
                                 scaledAperture,
                                 aspect,
                                 nearClip,
+                                cameraMode,
                                 ipdFactorCamera,
                                 ipdFactorFilm);
   }

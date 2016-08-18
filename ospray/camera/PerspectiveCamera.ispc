@@ -108,17 +108,24 @@ const varying CameraSample &sample)
   float sample_screen_y = sample.screen.y;
   
   vec3f dXcamera = make_vec3f(0.f), dXfilm = make_vec3f(0.f);
-  if (sample.screen.x < 0.5) {
+  if (self->cameraMode == 1) {// Render left view.
     dXcamera = -self->ipdFactorCamera * self->dir_du;
     dXfilm   =  self->ipdFactorFilm * self->dir_du;
-    sample_screen_x = sample_screen_x + 0.25;
-  } else {
+    //sample_screen_x = sample_screen_x + 0.25;
+  } else if (self->cameraMode == 2) {// Render right view.
     dXcamera =  self->ipdFactorCamera * self->dir_du;
     dXfilm   = -self->ipdFactorFilm * self->dir_du;
-    
-    
-    sample_screen_x = sample_screen_x - 0.25;
-    
+    //sample_screen_x = sample_screen_x - 0.25;
+  } else {// stereo double-wide buffer.
+    if (sample.screen.x < 0.5) {
+      dXcamera = -self->ipdFactorCamera * self->dir_du;
+      dXfilm   =  self->ipdFactorFilm * self->dir_du;
+      sample_screen_x = sample_screen_x + 0.25;
+    } else {
+      dXcamera =  self->ipdFactorCamera * self->dir_du;
+      dXfilm   = -self->ipdFactorFilm * self->dir_du;
+      sample_screen_x = sample_screen_x - 0.25;
+    }
   }
   
   vec3f org = self->org + dXcamera;
@@ -165,6 +172,7 @@ const uniform vec2f &imageEnd,
 const uniform float scaledAperture,
 const uniform float aspect,
 const uniform float nearClip,
+const uniform int32 cameraMode,
 const uniform float ipdFactorCamera,
 const uniform float ipdFactorFilm)
 {
@@ -180,6 +188,7 @@ const uniform float ipdFactorFilm)
   self->scaledAperture = scaledAperture;
   self->super.doesDOF = scaledAperture > 0.f;
   self->aspect = aspect;
+  self->cameraMode = cameraMode;
   self->ipdFactorCamera = ipdFactorCamera;
   self->ipdFactorFilm = ipdFactorFilm;
 }

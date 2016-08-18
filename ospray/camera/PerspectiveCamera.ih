@@ -52,5 +52,6 @@ vec2f imageStart; //!< where the viewable tile begins [0..1]
 vec2f imageEnd; //!< where the viewable tile ends [0..1]
 float scaledAperture; //!< radius of aperture, divided by horizontal image plane size
 float aspect; //!< image plane size x / y
+int32 cameraMode;
 float ipdFactorCamera, ipdFactorFilm;
 };
