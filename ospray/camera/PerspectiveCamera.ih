@@ -35,3 +35,23 @@ struct PerspectiveCamera {
   float scaledAperture; //!< radius of aperture, divided by horizontal image plane size
   float aspect; //!< image plane size x / y
 };
+
+
+// Stereo
+
+struct PerspectiveStereoCamera {
+/*! \brief The parent class info required for this camera to
+'inherit' from Camera */
+Camera super;
+
+vec3f org;    //!< position of camera
+vec3f dir_00; //!< direction of ray with screenSample=(0,0); scaled to focusDistance
+vec3f dir_du; //!< delta of ray direction between two pixels in X; scaled to focusDistance
+vec3f dir_dv; //!< delta of ray direction between two pixels in Y; scaled to focusDistance
+vec2f imageStart; //!< where the viewable tile begins [0..1]
+vec2f imageEnd; //!< where the viewable tile ends [0..1]
+float scaledAperture; //!< radius of aperture, divided by horizontal image plane size
+float aspect; //!< image plane size x / y
+int32 cameraMode;
+float ipdFactorCamera, ipdFactorFilm;
+};
