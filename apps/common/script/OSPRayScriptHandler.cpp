@@ -169,7 +169,6 @@ namespace script {
 
   static std::vector<Module> SCRIPT_MODULES;
   void register_module(RegisterModuleFn registerModule, GetHelpFn getHelp) {
-    assert(registerMod);
     SCRIPT_MODULES.push_back(Module(registerModule, getHelp));
   }
 }
