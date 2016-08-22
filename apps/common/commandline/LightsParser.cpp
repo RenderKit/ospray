@@ -117,7 +117,7 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
       throw std::runtime_error("Failed to create a 'DirectionalLight'!");
     }
     ospLight.set("name", "sun");
-    ospLight.set("color", 1.f, .98f, .92f);
+    ospLight.set("color", 1.f, .94f, .88f);
     ospLight.set("direction", defaultDirLight_direction);
     ospLight.set("intensity", defaultDirLight_intensity);
     ospLight.set("angularDiameter", 0.53f);
