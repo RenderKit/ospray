@@ -26,7 +26,7 @@ using namespace ospcommon;
 
 DefaultLightsParser::DefaultLightsParser(ospray::cpp::Renderer renderer) :
   renderer(renderer),
-  defaultDirLight_direction(.3, -1, -.2)
+  defaultDirLight_direction(.3, -1, -.2), defaultDirLight_intensity(3.14f)
 {
 }
 
@@ -50,6 +50,8 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
         defaultDirLight_direction.y = atof(av[++i]);
         defaultDirLight_direction.z = atof(av[++i]);
       }
+    } else if (arg == "--sun-int") {
+        defaultDirLight_intensity = atof(av[++i]);
     } else if (arg == "--hdri-light") {
       hasHDRI = true;
         if (i+2 >= ac)
@@ -115,8 +117,9 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
       throw std::runtime_error("Failed to create a 'DirectionalLight'!");
     }
     ospLight.set("name", "sun");
-    ospLight.set("color", 1.f, 1.f, 1.f);
+    ospLight.set("color", 1.f, .98f, .92f);
     ospLight.set("direction", defaultDirLight_direction);
+    ospLight.set("intensity", defaultDirLight_intensity);
     ospLight.set("angularDiameter", 0.53f);
     ospLight.commit();
     lights.push_back(ospLight.handle());
