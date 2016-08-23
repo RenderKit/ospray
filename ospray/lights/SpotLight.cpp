@@ -65,7 +65,7 @@ namespace ospray {
                         radius);
   }
 
-  OSP_REGISTER_LIGHT(SpotLight, SpotLight)
-  OSP_REGISTER_LIGHT(SpotLight, ExtendedSpotLight)
-  OSP_REGISTER_LIGHT(SpotLight, spot)
+  OSP_REGISTER_LIGHT(SpotLight, SpotLight);
+  OSP_REGISTER_LIGHT(SpotLight, ExtendedSpotLight);
+  OSP_REGISTER_LIGHT(SpotLight, spot);
 }

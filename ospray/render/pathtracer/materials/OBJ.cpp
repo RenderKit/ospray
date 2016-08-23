@@ -49,13 +49,13 @@ namespace ospray {
           const float Ns = getParam1f("Ns", getParam1f("ns", 10.f));
           vec3f Tf = vec3f(1.0-d)*getParam3f("Tf", getParam3f("tf", vec3f(0.0f)));
 
-          float color_total = reduce_max(Kd + Ks + Tf);
-        if (color_total > 1.0) {
+          const float color_total = reduce_max(Kd + Ks + Tf);
+          if (color_total > 1.0) {
             std::cout << "#osp:PT: warning: OBJ material produces energy (Kd + Ks + Tf = " << color_total << ", should be <= 1). Scaling down to 1." << std::endl;
-          Kd /= color_total;
-          Ks /= color_total;
-          Tf /= color_total;
-        }
+            Kd /= color_total;
+            Ks /= color_total;
+            Tf /= color_total;
+          }
 
           ispc::PathTracer_OBJ_set(ispcEquivalent,
              map_d ? map_d->getIE() : NULL, (const ispc::AffineSpace2f&)xform_d,
@@ -72,7 +72,7 @@ namespace ospray {
       }
     };
 
-    OSP_REGISTER_MATERIAL(OBJMaterial,PathTracer_OBJMaterial)
-    OSP_REGISTER_MATERIAL(OBJMaterial,PathTracer_default)
+    OSP_REGISTER_MATERIAL(OBJMaterial,PathTracer_OBJMaterial);
+    OSP_REGISTER_MATERIAL(OBJMaterial,PathTracer_default);
   }
 }

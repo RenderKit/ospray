@@ -50,10 +50,7 @@ namespace ospray {
       lateron always get a handle to this fct and create an instance
       of this camera.
   */
-#define OSP_REGISTER_CAMERA(InternalClassName,external_name)        \
-  extern "C" OSPRAY_DLLEXPORT Camera *ospray_create_camera__##external_name()        \
-  {                                                                 \
-    return new InternalClassName;                                   \
-  }                                                                 \
+#define OSP_REGISTER_CAMERA(InternalClass, external_name) \
+  OSP_REGISTER_OBJECT(Camera, camera, InternalClass, external_name)
 
 } // ::ospray

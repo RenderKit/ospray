@@ -89,6 +89,6 @@ namespace ospray {
                                instancedScene->getIE());
   }
 
-  OSP_REGISTER_GEOMETRY(Instance,instance)
+  OSP_REGISTER_GEOMETRY(Instance,instance);
 
 } // ::ospray

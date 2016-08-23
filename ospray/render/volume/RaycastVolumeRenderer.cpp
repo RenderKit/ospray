@@ -325,8 +325,8 @@ namespace ospray {
   }
 
   // A renderer type for volumes with embedded surfaces.
-  OSP_REGISTER_RENDERER(RaycastVolumeRenderer, raycast_volume_renderer)
-  OSP_REGISTER_RENDERER(RaycastVolumeRenderer, dvr)
+  OSP_REGISTER_RENDERER(RaycastVolumeRenderer, raycast_volume_renderer);
+  OSP_REGISTER_RENDERER(RaycastVolumeRenderer, dvr);
 
 } // ::ospray
 

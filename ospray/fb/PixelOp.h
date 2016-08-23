@@ -94,10 +94,7 @@ namespace ospray {
       lateron always get a handle to this fct and create an instance
       of this renderer.
   */
-#define OSP_REGISTER_PIXEL_OP(InternalClassName,external_name)      \
-  extern "C" OSPRAY_DLLEXPORT PixelOp *ospray_create_pixel_op__##external_name()     \
-  {                                                                 \
-    return new InternalClassName;                                   \
-  }                                                                 \
+#define OSP_REGISTER_PIXEL_OP(InternalClass, external_name) \
+  OSP_REGISTER_OBJECT(PixelOp, pixel_op, InternalClass, external_name)
 
 }

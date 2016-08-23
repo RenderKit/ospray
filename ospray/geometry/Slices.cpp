@@ -44,6 +44,6 @@ namespace ospray {
     ispc::Slices_set(getIE(), model->getIE(), numPlanes, (ispc::vec4f*)planes, volume->getIE());
   }
 
-  OSP_REGISTER_GEOMETRY(Slices, slices)
+  OSP_REGISTER_GEOMETRY(Slices, slices);
 
 } // ::ospray

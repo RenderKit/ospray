@@ -55,6 +55,6 @@ namespace ospray {
                                  nearClip);
   }
 
-  OSP_REGISTER_CAMERA(OrthographicCamera, orthographic)
+  OSP_REGISTER_CAMERA(OrthographicCamera, orthographic);
 
 } // ::ospray

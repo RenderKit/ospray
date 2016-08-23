@@ -82,10 +82,7 @@ namespace ospray {
       lateron always get a handle to this fct and create an instance
       of this geometry.
   */
-#define OSP_REGISTER_GEOMETRY(InternalClassName,external_name)      \
-  extern "C" OSPRAY_DLLEXPORT ospray::Geometry *ospray_create_geometry__##external_name() \
-  {                                                                 \
-    return new InternalClassName;                                   \
-  }                                                                 \
+#define OSP_REGISTER_GEOMETRY(InternalClass, external_name) \
+  OSP_REGISTER_OBJECT(Geometry, renderer, InternalClass, external_name)
 
 } // ::ospray

@@ -213,7 +213,7 @@ namespace ospray {
                            (uint32_t*)prim_materialID);
   }
 
-  OSP_REGISTER_GEOMETRY(TriangleMesh,triangles)
-  OSP_REGISTER_GEOMETRY(TriangleMesh,trianglemesh)
+  OSP_REGISTER_GEOMETRY(TriangleMesh,triangles);
+  OSP_REGISTER_GEOMETRY(TriangleMesh,trianglemesh);
 
 } // ::ospray

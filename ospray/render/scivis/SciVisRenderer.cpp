@@ -75,12 +75,12 @@ namespace ospray {
       return new SciVisMaterial;
     }
 
-    OSP_REGISTER_RENDERER(SciVisRenderer, raytracer)
-    OSP_REGISTER_RENDERER(SciVisRenderer, rt)
-    OSP_REGISTER_RENDERER(SciVisRenderer, scivis)
-    OSP_REGISTER_RENDERER(SciVisRenderer, sv)
-    OSP_REGISTER_RENDERER(SciVisRenderer, obj)
-    OSP_REGISTER_RENDERER(SciVisRenderer, OBJ)
+    OSP_REGISTER_RENDERER(SciVisRenderer, raytracer);
+    OSP_REGISTER_RENDERER(SciVisRenderer, rt);
+    OSP_REGISTER_RENDERER(SciVisRenderer, scivis);
+    OSP_REGISTER_RENDERER(SciVisRenderer, sv);
+    OSP_REGISTER_RENDERER(SciVisRenderer, obj);
+    OSP_REGISTER_RENDERER(SciVisRenderer, OBJ);
 
   } // ::ospray::scivis
 } // ::ospray

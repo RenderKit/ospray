@@ -86,8 +86,8 @@ namespace ospray {
                                 nearClip);
   }
 
-  OSP_REGISTER_CAMERA(PerspectiveCamera,perspective)
-  OSP_REGISTER_CAMERA(PerspectiveCamera,thinlens)
+  OSP_REGISTER_CAMERA(PerspectiveCamera,perspective);
+  OSP_REGISTER_CAMERA(PerspectiveCamera,thinlens);
 
 } // ::ospray
 

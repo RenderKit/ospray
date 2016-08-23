@@ -44,6 +44,6 @@ namespace ospray {
       }
     };
 
-    OSP_REGISTER_MATERIAL(MetallicPaint,PathTracer_MetallicPaint)
+    OSP_REGISTER_MATERIAL(MetallicPaint,PathTracer_MetallicPaint);
   }
 }
