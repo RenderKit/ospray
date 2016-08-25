@@ -26,7 +26,7 @@ public:
 	std::string time_suffix;
 
 	Statistics(std::vector<T> s) : samples(s) {
-		std::sort(std::begin(samples), std::end(samples));
+		std::sort(samples.begin(), samples.end());
 	}
 	T percentile(const float p) const {
 		return percentile(p, samples);
@@ -43,20 +43,20 @@ public:
 		const auto m = median();
 		std::vector<T> deviations;
 		deviations.reserve(samples.size());
-		std::transform(std::begin(samples), std::end(samples), std::back_inserter(deviations),
+		std::transform(samples.begin(), samples.end(), std::back_inserter(deviations),
 			[&m](const T &t){
 				return T{std::abs((t - m).count())};
 			});
-		std::sort(std::begin(deviations), std::end(deviations));
+		std::sort(deviations.begin(), deviations.end());
 		return percentile(50.0, deviations);
 	}
 	T mean() const {
-		const auto m = std::accumulate(std::begin(samples), std::end(samples), T{0});
+		const auto m = std::accumulate(samples.begin(), samples.end(), T{0});
 		return m / samples.size();
 	}
 	T std_dev() const {
 		const auto m = mean();
-		auto val = std::accumulate(std::begin(samples), std::end(samples), T{0},
+		auto val = std::accumulate(samples.begin(), samples.end(), T{0},
 			[&m](const T &p, const T &t){
 				return T{static_cast<rep>(p.count() + std::pow((t - m).count(), 2))};
 			});
