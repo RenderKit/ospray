@@ -243,7 +243,8 @@ inline void shadeLights(const uniform SciVisRenderer *uniform self,
       const vec3f light_contrib = info.local_opacity
                                   * brdf * light.weight;
 
-      if (self->shadowsEnabled) {
+      if (0)//self->shadowsEnabled) 
+      {
         const float max_contrib = reduce_max(light_contrib);
         if (max_contrib > .01f) {
           Ray shadowRay;
@@ -277,6 +278,11 @@ inline vec4f SciVisRenderer_computeVolumeSample(SciVisRenderer *uniform renderer
       volume->transferFunction->getColorForValue(volume->transferFunction,
                                                  sample);
 
+  // Look up the opacity associated with the volume sample.
+  const float sampleOpacity =
+      volume->transferFunction->getOpacityForValue(volume->transferFunction,
+                                                   sample);
+
   // Compute gradient shading, if enabled.
   if(volume->gradientShadingEnabled) {
 
@@ -305,16 +311,28 @@ inline vec4f SciVisRenderer_computeVolumeSample(SciVisRenderer *uniform renderer
       shadedColor = shadedColor + sampleColor * cosNL * light.weight * one_over_pi /*BRDF normalization to match surface shading*/;
     }
 
-    sampleColor = shadedColor;
-  }
+   //sampleColor = shadedColor;
 
-  // Look up the opacity associated with the volume sample.
-  const float sampleOpacity =
-      volume->transferFunction->getOpacityForValue(volume->transferFunction,
-                                                   sample);
+    dg.color = make_vec4f(sampleColor, 1);
+    dg.Ng = dg.Ns;
+    SciVisShadingInfo info;
+    initShadingInfo(info);
 
-  // Advance the ray for the next sample.
-  volume->intersect(volume, ray);
+    //hardcode volume spec for now
+    info.Ks = make_vec3f(.3f,.3f,.3f);
+    info.Ns = 20.0f;
+    info.local_opacity=1.f;
+    dg.material = 0;
+    shadeMaterials(dg, info);
+
+    //info.local_opacity = path_opacity * info.d;
+
+    //if (length(sampleColor) > 0.6f) { // worth shading?
+      vec3f litColor = make_vec3f(0.0f);
+      shadeLights(renderer, ray, dg, info, 1, litColor);
+      sampleColor = litColor;
+    //}
+    }
 
   // return the color contribution for this sample only (do not accumulate)
   return clamp(sampleOpacity / volume->samplingRate)
@@ -501,7 +519,14 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
         // Compute the volume sample at the current position and advance the ray
         vec4f volumeColor;
         foreach_unique (v in volume)
-          volumeColor = SciVisRenderer_computeVolumeSample(renderer, v, ray);
+        {
+          //volumeColor = SciVisRenderer_computeVolumeSample(renderer, v, ray);
+          // Advance the ray for the next sample.
+          //volume->intersect(v, ray);
+
+          //interval sampling
+          volumeColor = SciVisRenderer_computeVolumeInterval(renderer, v, ray, ray.t0, min(geometryRay.t,ray.t));
+        }
 
         // Volume contribution.
         color = color + (1.0f - color.w) * volumeColor;
