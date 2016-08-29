@@ -30,17 +30,17 @@ ENDMACRO()
 
 ## Macro check for compiler support of ISA ##
 MACRO(OSPRAY_CHECK_COMPILER_SUPPORT ISA)
-  IF (${ISA} STREQUAL "AVX512" AND (NOT OSPRAY_COMPILER_ICC OR WIN32 OR APPLE))
+  IF (${ISA} STREQUAL "AVX512" AND (WIN32 OR APPLE))
     OSPRAY_WARN_ONCE(MISSING_AVX512
-                     "OSPRay Currently requires ICC on Linux for KNL support. "
+                     "OSPRay only supports KNL on Linux. "
                      "Disabling KNL ISA target.")
     SET(OSPRAY_EMBREE_ENABLE_${ISA} false)
   ELSEIF (OSPRAY_EMBREE_ENABLE_${ISA} AND NOT OSPRAY_COMPILER_SUPPORTS_${ISA})
     OSPRAY_WARN_ONCE(MISSING_${ISA}
                      "Need at least version ${GCC_VERSION_REQUIRED_${ISA}} of "
-                     "gcc for ${ISA}. Disabling ${ISA}.\nTo compile for "
+                     "GCC for ${ISA}. Disabling ${ISA}.\nTo compile for "
                      "${ISA}, please switch to either 'ICC'-compiler, or "
-                     "upgrade your gcc version.")
+                     "upgrade your GCC version.")
     SET(OSPRAY_EMBREE_ENABLE_${ISA} false)
   ENDIF()
 ENDMACRO()
@@ -50,19 +50,23 @@ MACRO(OSPRAY_CONFIGURE_ISPC_ISA)
 
   OSPRAY_CONFIGURE_COMPILER()
 
+  # the arch we're targeting for the non-MIC/non-xeon phi part of ospray
+  SET(OSPRAY_BUILD_ISA "ALL" CACHE STRING
+      "Target ISA (SSE, AVX, AVX2, AVX512, or ALL). NOTE: 'All' omits AVX512")
+  STRING(TOUPPER ${OSPRAY_BUILD_ISA} OSPRAY_BUILD_ISA)
+
   SET(OSPRAY_EMBREE_ENABLE_SSE    true)
   SET(OSPRAY_EMBREE_ENABLE_AVX    true)
   SET(OSPRAY_EMBREE_ENABLE_AVX2   true)
-  SET(OSPRAY_EMBREE_ENABLE_AVX512 true)
+  IF(${OSPRAY_BUILD_ISA} STREQUAL "AVX512")
+    SET(OSPRAY_EMBREE_ENABLE_AVX512 true)
+  ELSE()
+    SET(OSPRAY_EMBREE_ENABLE_AVX512 false)
+  ENDIF()
 
   OSPRAY_CHECK_COMPILER_SUPPORT(AVX)
   OSPRAY_CHECK_COMPILER_SUPPORT(AVX2)
   OSPRAY_CHECK_COMPILER_SUPPORT(AVX512)
-
-  # the arch we're targeting for the non-MIC/non-xeon phi part of ospray
-  SET(OSPRAY_BUILD_ISA "ALL" CACHE STRING
-      "Target ISA (SSE, AVX, AVX2, AVX512, or ALL)")
-  STRING(TOUPPER ${OSPRAY_BUILD_ISA} OSPRAY_BUILD_ISA)
 
   UNSET(OSPRAY_SUPPORTED_ISAS)
 
@@ -85,6 +89,7 @@ MACRO(OSPRAY_CONFIGURE_ISPC_ISA)
   UNSET(OSPRAY_ISPC_TARGET_LIST)
 
   IF (OSPRAY_BUILD_ISA STREQUAL "ALL")
+
     IF(OSPRAY_EMBREE_ENABLE_SSE)
       SET(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} sse4)
     ENDIF()
@@ -93,9 +98,6 @@ MACRO(OSPRAY_CONFIGURE_ISPC_ISA)
     ENDIF()
     IF(OSPRAY_EMBREE_ENABLE_AVX2)
       SET(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} avx2)
-    ENDIF()
-    IF(OSPRAY_EMBREE_ENABLE_AVX512)
-      SET(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} avx512knl-i32x16)
     ENDIF()
 
   ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX512")
