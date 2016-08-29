@@ -137,9 +137,9 @@ export void PathTracer_Glass_set(
   uniform Glass* uniform self = (uniform Glass* uniform)_self;
 
   self->mediumInside.ior           = iorInside;
-  self->mediumInside.transmission  = transmissionInside;
+  self->mediumInside.attenuation   = transmissionInside;
   self->mediumOutside.ior          = iorOutside;
-  self->mediumOutside.transmission = transmissionOutside;
+  self->mediumOutside.attenuation  = transmissionOutside;
   self->absorptionDistance         = absDistance;
   self->absorptionColor            = absColor;
   self->colorMap = make_TextureParam((uniform Texture2D*)map_Kd, xform_Kd);

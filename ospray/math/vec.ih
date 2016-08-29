@@ -498,6 +498,10 @@ inline uniform bool eq(const uniform vec2f a, const uniform vec2f b)
 { return a.x==b.x && a.y==b.y; }
 inline bool eq(const vec2f a, const vec2f b)
 { return a.x==b.x & a.y==b.y; }
+inline uniform bool eq(const uniform vec3f a, const uniform float b)
+{ return a.x==b && a.y==b && a.z==b; }
+inline bool eq(const vec3f a, const float b)
+{ return a.x==b & a.y==b & a.z==b; }
 inline uniform bool eq(const uniform vec3f a, const uniform vec3f b)
 { return a.x==b.x && a.y==b.y && a.z==b.z; }
 inline bool eq(const vec3f a, const vec3f b)
@@ -510,6 +514,10 @@ inline bool eq(const vec3fa a, const vec3fa b)
 inline uniform bool ne(const uniform vec2f a, const uniform vec2f b)
 { return !eq(a,b); }
 inline bool ne(const vec2f a, const vec2f b)
+{ return !eq(a,b); }
+inline uniform bool ne(const uniform vec3f a, const uniform float b)
+{ return !eq(a,b); }
+inline bool ne(const vec3f a, const float b)
 { return !eq(a,b); }
 inline uniform bool ne(const uniform vec3f a, const uniform vec3f b)
 { return !eq(a,b); }

@@ -65,10 +65,10 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
 
     lightContrib = lightContrib * transparency;
 
-    /*! Compute simple volumetric effect. */
-    if (ne(medium.transmission, make_vec3f(1.f)))
-      lightContrib = lightContrib * powf(medium.transmission,
-                                         shadowRay.t - shadowRay.t0);
+    // compute attenuation with Beer's law
+    if (ne(medium.attenuation, 0.f))
+      lightContrib = lightContrib
+                     * expf(medium.attenuation * (shadowRay.t - shadowRay.t0));
 
     if (reduce_max(lightContrib) <= self->minContribution)
       return lightContrib;
@@ -228,10 +228,9 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     Lw = Lw * fs.weight;
 
-    // compute simple volumetric effect
-    const vec3f transmission = currentMedium.transmission;
-    if (ne(transmission,make_vec3f(1.f))) {
-      Lw = Lw * powf(transmission, ray.t);
+    // compute attenuation with Beer's law
+    if (ne(currentMedium.attenuation, 0.f)) {
+      Lw = Lw * expf(currentMedium.attenuation * ray.t);
     }
 
     if (insideSolid) {// For absorbing translucent materials.
