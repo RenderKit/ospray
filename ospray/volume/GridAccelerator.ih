@@ -50,6 +50,12 @@ void GridAccelerator_intersect(GridAccelerator *uniform accelerator,
                                uniform float step,
                                varying Ray &ray);
 
+//! Step a ray through the accelerator until a cell with visible volumetric
+//! elements is found.
+void GridAccelerator_intersectAdaptive(GridAccelerator *uniform accelerator,
+                               const varying float step,
+                               varying Ray &ray);
+
 //! Step a ray through the accelerator until a cell containing the isovalue is
 //! found.
 void GridAccelerator_intersectIsosurface(GridAccelerator *uniform accelerator,
