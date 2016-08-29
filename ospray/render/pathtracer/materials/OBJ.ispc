@@ -135,7 +135,7 @@ vec3f OBJ_getTransparency(const uniform PathTraceMaterial* uniform super,
 
 void OBJ_Constructor(uniform OBJ* uniform self)
 {
-  PathTraceMaterial_Constructor(&self->super, OBJ_getBSDF, OBJ_getTransparency, NULL, NULL);
+  PathTraceMaterial_Constructor(&self->super, OBJ_getBSDF, OBJ_getTransparency);
 
   uniform affine2f xform = make_AffineSpace2f_identity();
 

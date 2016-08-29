@@ -22,40 +22,31 @@ namespace ospray {
   namespace pathtracer {
     struct Glass : public ospray::Material {
       //! \brief common function to help printf-debugging
-      /*! Every derived class should overrride this! */
+      /*! Every derived class should override this! */
       virtual std::string toString() const { return "ospray::pathtracer::Glass"; }
 
       //! \brief commit the material's parameters
       virtual void commit() {
         if (getIE() != NULL) return;
 
-        const vec3f& transmissionInside
-          = getParam3f("transmissionInside",vec3f(1.f));
-        const vec3f& transmissionOutside
-          = getParam3f("transmissionOutside",vec3f(1.f));
         const float etaInside = getParamf("etaInside", getParamf("eta", 1.5f));
         const float etaOutside = getParamf("etaOutside", 1.f);;
-        const float absorptionDistance = getParamf("absorptionDistance", 0.0f);
-        // Why is "absorptionColor" not found, while "color" is found???
-        const vec3f& absorptionColor = getParam3f("color",vec3f(1.f));
-
-
-        Texture2D *map_Kd = (Texture2D*)getParamObject("map_Kd", getParamObject("map_kd",  getParamObject("colorMap", NULL)));
-        affine2f xform_Kd = getTextureTransform("map_kd") * getTextureTransform("colorMap"); 
-          
+        const vec3f& attenuationColorInside
+          = getParam3f("attenuationColorInside", getParam3f("attenuationColor",
+                getParam3f("color", vec3f(1.f))));
+        const vec3f& attenuationColorOutside
+          = getParam3f("attenuationColorOutside", vec3f(1.f));
+        const float attenuationDistance = getParamf("attenuationDistance", 1.0f);
           
         ispcEquivalent = ispc::PathTracer_Glass_create();
 
         ispc::PathTracer_Glass_set(
           ispcEquivalent,
           etaInside, 
-          (const ispc::vec3f&)transmissionInside,
+          (const ispc::vec3f&)attenuationColorInside,
           etaOutside, 
-          (const ispc::vec3f&)transmissionOutside,
-          absorptionDistance,
-          (const ispc::vec3f&)absorptionColor,
-          map_Kd ? map_Kd->getIE() : NULL,
-          (const ispc::AffineSpace2f&)xform_Kd);
+          (const ispc::vec3f&)attenuationColorOutside,
+          attenuationDistance);
       }
     };
 

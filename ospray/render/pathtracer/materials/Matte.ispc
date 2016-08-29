@@ -40,7 +40,7 @@ const varying BSDF* uniform Matte_getBSDF(const uniform PathTraceMaterial* unifo
 inline void Matte_Constructor(uniform Matte* uniform self,
                               const uniform vec3f& reflectance)
 {
-  PathTraceMaterial_Constructor(&self->super, Matte_getBSDF, NULL, NULL, NULL);
+  PathTraceMaterial_Constructor(&self->super, Matte_getBSDF);
   self->reflectance = reflectance;
 }
 
