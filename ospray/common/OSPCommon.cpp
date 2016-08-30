@@ -120,7 +120,7 @@ namespace ospray {
           logLevel = atoi(av[i+1]);
           removeArgs(ac,av,i,2);
         } else if (parm == "--osp:numthreads" || parm == "--osp:num-threads") {
-          numThreads = static_cast<uint32_t>(atoi(av[i+1]));
+          numThreads = atoi(av[i+1]);
           removeArgs(ac,av,i,2);
         } else {
           ++i;
