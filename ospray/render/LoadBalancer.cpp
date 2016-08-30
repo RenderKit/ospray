@@ -20,15 +20,13 @@
 #include "common/tasking/parallel_for.h"
 // ospc
 #include "ospcommon/sysinfo.h"
-// stl
-#include <algorithm>
 
 namespace ospray {
 
   using std::cout;
   using std::endl;
 
-  TiledLoadBalancer *TiledLoadBalancer::instance = NULL;
+  TiledLoadBalancer *TiledLoadBalancer::instance = nullptr;
 
   LocalTiledLoadBalancer::LocalTiledLoadBalancer()
 #ifdef OSPRAY_TASKING_TBB
