@@ -15,7 +15,9 @@
 // ======================================================================== //
 
 #include "OSPCommon.h"
-#if defined(OSPRAY_TASKING_CILK)
+#if defined(OSPRAY_TASKING_TBB)
+# include <tbb/task_scheduler_init.h>
+#elif defined(OSPRAY_TASKING_CILK)
 # include <cilk/cilk_api.h>
 #elif defined(OSPRAY_TASKING_OMP)
 # include <omp.h>
@@ -126,7 +128,10 @@ namespace ospray {
       }
     }
 
-#if defined(OSPRAY_TASKING_CILK)
+#if defined(OSPRAY_TASKING_TBB)
+    static tbb::task_scheduler_init tbb_init(numThreads);
+    UNUSED(tbb_init);
+#elif defined(OSPRAY_TASKING_CILK)
     __cilkrts_set_param("nworkers", std::to_string(numThreads).c_str());
 #elif defined(OSPRAY_TASKING_OMP)
     if (numThreads > 0) {

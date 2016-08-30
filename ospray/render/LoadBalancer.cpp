@@ -28,13 +28,6 @@ namespace ospray {
 
   TiledLoadBalancer *TiledLoadBalancer::instance = nullptr;
 
-  LocalTiledLoadBalancer::LocalTiledLoadBalancer()
-#ifdef OSPRAY_TASKING_TBB
-    : tbb_init(numThreads)
-#endif
-  {
-  }
-
   /*! render a frame via the tiled load balancer */
   float LocalTiledLoadBalancer::renderFrame(Renderer *renderer,
                                             FrameBuffer *fb,
