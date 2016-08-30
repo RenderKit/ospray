@@ -567,9 +567,12 @@ IF (OSPRAY_MPI)
     OSPRAY_LIBRARY_LINK_LIBRARIES(ospray ${MPI_CXX_LIBRARIES})
   ENDIF()
 
-  OSPRAY_ADD_EXECUTABLE(ospray_mpi_worker mpi/MPIWorker.cpp)
-  OSPRAY_EXE_LINK_LIBRARIES(ospray_mpi_worker ospray ospray_common)
-  OSPRAY_INSTALL_EXE(ospray_mpi_worker)
+  OSPRAY_CREATE_APPLICATION(ospray_mpi_worker
+    mpi/MPIWorker.cpp
+  LINK
+    ospray
+    ospray_common
+  )
 ENDIF()
 
 
@@ -583,14 +586,13 @@ IF (OSPRAY_BUILD_COI_DEVICE)
     # ------------------------------------------------------------
     OSPRAY_LIBRARY_LINK_LIBRARIES(ospray ${LIBCOI_DEVICE})
     # ... and add the coi worker executable
-    OSPRAY_ADD_EXECUTABLE(ospray_coi_worker api/COIDeviceWorker.cpp)
-    OSPRAY_EXE_LINK_LIBRARIES(ospray_coi_worker
+    OSPRAY_CREATE_APPLICATION(ospray_coi_worker
+      api/COIDeviceWorker.cpp
+    LINK
       ospray
       ospray_common
       ${LIBCOI_DEVICE}
     )
-    # ------------------------------------------------------------
-    OSPRAY_INSTALL_EXE(ospray_coi_worker)
   ELSE()
     # ------------------------------------------------------------
     # host-side of COI device: just link libospray to coi host libs

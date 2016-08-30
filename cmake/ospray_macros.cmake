@@ -305,11 +305,10 @@ ENDMACRO()
 #   OSPRAY_CREATE_APPLICATION(<name> source1 [source2 ...]
 #                             [LINK lib1 [lib2 ...]])
 #
-# will create and install application 'osp<name>' from 'sources' with version
+# will create and install application <name> from 'sources' with version
 # OSPRAY_VERSION and optionally link against 'libs'
 
-MACRO(OSPRAY_CREATE_APPLICATION name)
-  SET(APP_NAME osp${name})
+MACRO(OSPRAY_CREATE_APPLICATION APP_NAME)
   SET(APP_SOURCES "")
   SET(LINK_LIBS "")
 
