@@ -52,19 +52,6 @@ namespace ospray {
     void printViewport();
     void saveScreenshot(const std::string &basename);
 
-    // Helper types //
-
-    struct DisplayWall
-    {
-      std::string hostname;
-      std::string streamName;
-      ospcommon::vec2i size{-1};
-      ospray::cpp::FrameBuffer fb;
-      ospray::cpp::PixelOp     po;
-    } displayWall;
-
-    void setDisplayWall(const DisplayWall &dw);
-
   protected:
 
     virtual void reshape(const ospcommon::vec2i &newSize) override;
@@ -100,8 +87,6 @@ namespace ospray {
     glut3D::Glut3DWidget::ViewPort m_viewPort;
 
     std::atomic<bool> m_resetAccum;
-
-    bool m_useDisplayWall;
   };
 
 }// namespace ospray
