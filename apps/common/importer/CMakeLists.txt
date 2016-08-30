@@ -14,7 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-OSPRAY_CREATE_LIBRARY(importer
+OSPRAY_CREATE_LIBRARY(ospray_importer
   importOSP.cpp
   importRAW.cpp
   importRM.cpp

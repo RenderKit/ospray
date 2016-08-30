@@ -19,17 +19,13 @@ IF (OSPRAY_MODULE_DISPLAY_WALD)
   ADD_DEFINITIONS(-DOSPRAY_DISPLAY_WALD=1)
 ENDIF()
 
-SET(LIBS
-  ospray
-  ospray_common
-  ${OPENGL_LIBRARIES}
-  ${GLUT_LIBRARIES}
-)
-
-OSPRAY_CREATE_LIBRARY(glut3d
+OSPRAY_CREATE_LIBRARY(ospray_glut3d
   Glut3dExport.h
   glut3D.cpp
   OSPGlutViewer.cpp
 LINK
-  ${LIBS}
+  ospray
+  ospray_common
+  ${OPENGL_LIBRARIES}
+  ${GLUT_LIBRARIES}
 )

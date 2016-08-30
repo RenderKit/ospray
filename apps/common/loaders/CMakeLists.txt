@@ -16,7 +16,7 @@
 
 CONFIGURE_OSPRAY()
 
-OSPRAY_CREATE_LIBRARY(loaders
+OSPRAY_CREATE_LIBRARY(ospray_loaders
   ObjectFile.cpp
   OSPObjectFile.cpp
   PLYTriangleMeshFile.cpp

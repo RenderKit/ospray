@@ -277,11 +277,10 @@ ENDMACRO()
 #   OSPRAY_CREATE_LIBRARY(<name> source1 [source2 ...]
 #                         [LINK lib1 [lib2 ...]])
 #
-# will create and install shared library 'ospray_<name>' from 'sources' with
+# will create and install shared library <name> from 'sources' with
 # version OSPRAY_[SO]VERSION and optionally link against 'libs'
 
-MACRO(OSPRAY_CREATE_LIBRARY name)
-  SET(LIBRARY_NAME ospray_${name})
+MACRO(OSPRAY_CREATE_LIBRARY LIBRARY_NAME)
   SET(LIBRARY_SOURCES "")
   SET(LINK_LIBS "")
 

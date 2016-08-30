@@ -23,7 +23,7 @@ IF (WIN32)
   LIST(APPEND LINK_LIBS ws2_32)
 ENDIF()
 
-OSPRAY_CREATE_LIBRARY(common
+OSPRAY_CREATE_LIBRARY(ospray_common
   common.cpp
   FileName.cpp
   sysinfo.cpp
