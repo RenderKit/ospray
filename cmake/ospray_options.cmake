@@ -83,6 +83,15 @@ IF (WIN32)
 ENDIF()
 
 ##############################################################
+# create binary packages; before any INSTALL() invocation/definition
+##############################################################
+
+OPTION(OSPRAY_ZIP_MODE "Use tarball/zip CPack generator instead of RPM" ON)
+MARK_AS_ADVANCED(OSPRAY_ZIP_MODE)
+
+INCLUDE(package)
+
+##############################################################
 # OSPRay specific build options and configuration selection
 ##############################################################
 
