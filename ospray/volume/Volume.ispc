@@ -44,6 +44,24 @@ export void Volume_setGradientShadingEnabled(void *uniform _self, const uniform 
   self->gradientShadingEnabled = value;
 }
 
+export void Volume_setPreIntegration(void *uniform _self, const uniform bool &value)
+{
+  uniform Volume *uniform self = (uniform Volume *uniform)_self;
+  self->preIntegration = value;
+}
+
+export void Volume_setSingleShade(void *uniform _self, const uniform bool &value)
+{
+  uniform Volume *uniform self = (uniform Volume *uniform)_self;
+  self->singleShade = value;
+}
+
+export void Volume_setAdaptiveSampling(void *uniform _self, const uniform bool &value)
+{
+  uniform Volume *uniform self = (uniform Volume *uniform)_self;
+  self->adaptiveSampling = value;
+}
+
 export void Volume_setSamplingRate(void *uniform _self, const uniform float value)
 {
   uniform Volume *uniform self = (uniform Volume *uniform)_self;

@@ -34,13 +34,13 @@ LightEditor::LightEditor(OSPLight ambientLight, OSPLight directionalLight) : amb
   layout->addWidget(formWidget);
 
   // Ambient light intensity.
-  ambientLightIntensitySpinBox.setRange(0.0, 1.0);
+  ambientLightIntensitySpinBox.setRange(0.0, 3.0);
   ambientLightIntensitySpinBox.setSingleStep(0.01);
   formLayout->addRow("Ambient light intensity", &ambientLightIntensitySpinBox);
   connect(&ambientLightIntensitySpinBox, SIGNAL(valueChanged(double)), this, SLOT(ambientLightChanged()));
 
   // Directional light intensity.
-  directionalLightIntensitySpinBox.setRange(0.0, 1.0);
+  directionalLightIntensitySpinBox.setRange(0.0, 3.0);
   directionalLightIntensitySpinBox.setSingleStep(0.01);
   formLayout->addRow("Directional light intensity", &directionalLightIntensitySpinBox);
   connect(&directionalLightIntensitySpinBox, SIGNAL(valueChanged(double)), this, SLOT(directionalLightChanged()));
@@ -54,23 +54,23 @@ LightEditor::LightEditor(OSPLight ambientLight, OSPLight directionalLight) : amb
   connect(&directionalLightElevationSlider, SIGNAL(valueChanged(int)), this, SLOT(directionalLightChanged()));
 
   // Set default light parameters.
-  ambientLightIntensitySpinBox.setValue(0.05);
+  ambientLightIntensitySpinBox.setValue(0.2);
 
-  directionalLightIntensitySpinBox.setValue(0.95);
-  directionalLightAzimuthSlider.setValue(0.125 * (directionalLightAzimuthSlider.minimum() + directionalLightAzimuthSlider.maximum())); // 45 degrees azimuth
-  directionalLightElevationSlider.setValue(0.75 * (directionalLightElevationSlider.minimum() + directionalLightElevationSlider.maximum())); // 45 degrees elevation
+  directionalLightIntensitySpinBox.setValue(0.9);
+  directionalLightAzimuthSlider.setValue(0.6 * (directionalLightAzimuthSlider.minimum() + directionalLightAzimuthSlider.maximum())); // 45 degrees azimuth
+  directionalLightElevationSlider.setValue(0.25 * (directionalLightElevationSlider.minimum() + directionalLightElevationSlider.maximum())); // 45 degrees elevation
 }
 
 void LightEditor::ambientLightChanged()
 {
-  ospSet1f(ambientLight, "intensity", float(ambientLightIntensitySpinBox.value()));
+  ospSet1f(ambientLight, "intensity", float(ambientLightIntensitySpinBox.value()*3.14));
   ospCommit(ambientLight);
   emit lightsChanged();
 }
 
 void LightEditor::directionalLightChanged()
 {
-  ospSet1f(directionalLight, "intensity", float(directionalLightIntensitySpinBox.value()));
+  ospSet1f(directionalLight, "intensity", float(directionalLightIntensitySpinBox.value()*3.14));
 
   // Get alpha value in [-180, 180] degrees.
   float alpha = -180.0f + float(directionalLightAzimuthSlider.value() - directionalLightAzimuthSlider.minimum()) / float(directionalLightAzimuthSlider.maximum() - directionalLightAzimuthSlider.minimum()) * 360.0f;

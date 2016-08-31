@@ -39,6 +39,22 @@ PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer, ospcommon::box3
   connect(gradientShadingEnabledCheckBox, SIGNAL(toggled(bool)), volumeViewer, SLOT(setGradientShadingEnabled(bool)));
   formLayout->addRow("Volume gradient shading (lighting)", gradientShadingEnabledCheckBox);
 
+  QCheckBox *adaptiveSamplingCB = new QCheckBox();
+  connect(adaptiveSamplingCB, SIGNAL(toggled(bool)), volumeViewer, SLOT(setAdaptiveSampling(bool)));
+  formLayout->addRow("Adaptive sampling", adaptiveSamplingCB);
+
+  QCheckBox *preIntegrationCB = new QCheckBox();
+  connect(preIntegrationCB, SIGNAL(toggled(bool)), volumeViewer, SLOT(setPreIntegration(bool)));
+  formLayout->addRow("PreIntegration", preIntegrationCB);
+
+  QCheckBox *singleShadeCB = new QCheckBox();
+  connect(singleShadeCB, SIGNAL(toggled(bool)), volumeViewer, SLOT(setSingleShade(bool)));
+  formLayout->addRow("Single Shading Calculation", singleShadeCB);
+
+  QCheckBox *shadowsCB = new QCheckBox();
+  connect(shadowsCB, SIGNAL(toggled(bool)), volumeViewer, SLOT(setShadows(bool)));
+  formLayout->addRow("Shadows", shadowsCB);
+
   // sampling rate selection
   QDoubleSpinBox *samplingRateSpinBox = new QDoubleSpinBox();
   samplingRateSpinBox->setDecimals(3);
@@ -86,6 +102,10 @@ PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer, ospcommon::box3
   // set default values. this will trigger signal / slot executions.
   subsamplingInteractionEnabledCheckBox->setChecked(false);
   gradientShadingEnabledCheckBox->setChecked(false);
+  singleShadeCB->setChecked(true);
+  adaptiveSamplingCB->setChecked(true);
+  preIntegrationCB->setChecked(true);
+  shadowsCB->setChecked(true);
   samplingRateSpinBox->setValue(0.125);
 }
 

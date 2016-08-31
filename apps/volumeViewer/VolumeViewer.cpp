@@ -313,6 +313,49 @@ void VolumeViewer::setGradientShadingEnabled(bool value)
   render();
 }
 
+//! Set gradient shading flag on all volumes.
+void VolumeViewer::setPreIntegration(bool value)
+{
+  for(size_t i=0; i<modelStates.size(); i++)
+    for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
+      ospSet1i(modelStates[i].volumes[j]->handle, "preIntegration", value);
+      ospCommit(modelStates[i].volumes[j]->handle);
+    }
+
+  render();
+}
+
+//! Set gradient shading flag on all volumes.
+void VolumeViewer::setSingleShade(bool value)
+{
+  for(size_t i=0; i<modelStates.size(); i++)
+    for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
+      ospSet1i(modelStates[i].volumes[j]->handle, "singleShade", value);
+      ospCommit(modelStates[i].volumes[j]->handle);
+  }
+
+  render();
+}
+
+void VolumeViewer::setShadows(bool value)
+{
+  ospSet1i(renderer, "shadowsEnabled", value);  
+  if(rendererInitialized)
+    ospCommit(renderer);
+}
+
+//! Set gradient shading flag on all volumes.
+void VolumeViewer::setAdaptiveSampling(bool value)
+{
+    for(size_t i=0; i<modelStates.size(); i++)
+      for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
+        ospSet1i(modelStates[i].volumes[j]->handle, "adaptiveSampling", value);
+        ospCommit(modelStates[i].volumes[j]->handle);
+  }
+
+  render();
+}
+
 void VolumeViewer::setSamplingRate(double value)
 {
   for(size_t i=0; i<modelStates.size(); i++)
@@ -524,10 +567,12 @@ void VolumeViewer::initObjects(const std::string &renderer_type)
   // Create OSPRay ambient and directional lights. GUI elements will modify their parameters.
   ambientLight = ospNewLight(renderer, "AmbientLight");
   exitOnCondition(ambientLight == NULL, "could not create ambient light");
+  ospSet3f(ambientLight, "color", 0.02f, 0.04f, 0.1f);
   ospCommit(ambientLight);
 
   directionalLight = ospNewLight(renderer, "DirectionalLight");
   exitOnCondition(directionalLight == NULL, "could not create directional light");
+  ospSet3f(directionalLight, "color", 1.f, 0.8f, 0.4f);
   ospCommit(directionalLight);
 
   // Set the light sources on the renderer.

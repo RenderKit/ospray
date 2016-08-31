@@ -239,11 +239,15 @@ inline void shadeLights(const uniform SciVisRenderer *uniform self,
       else
         cosNL = abs(cosNL);
       const float cosLR = max(0.f, dot(light.dir, R));
-      const vec3f brdf = info.Kd * cosNL + info.Ks * powf(cosLR, info.Ns);
+      vec3f specular  = info.Ks * powf(cosLR, info.Ns*.3f);
+      specular.x  = clamp(specular.x);
+      specular.y  = clamp(specular.y);
+      specular.z  = clamp(specular.z);
+      const vec3f brdf = info.Kd * cosNL + specular;
       const vec3f light_contrib = info.local_opacity
                                   * brdf * light.weight;
 
-      if (0)//self->shadowsEnabled) 
+      if (self->shadowsEnabled) 
       {
         const float max_contrib = reduce_max(light_contrib);
         if (max_contrib > .01f) {
@@ -325,14 +329,10 @@ inline vec4f SciVisRenderer_computeVolumeSample(SciVisRenderer *uniform renderer
     dg.material = 0;
     shadeMaterials(dg, info);
 
-    //info.local_opacity = path_opacity * info.d;
-
-    //if (length(sampleColor) > 0.6f) { // worth shading?
-      vec3f litColor = make_vec3f(0.0f);
-      shadeLights(renderer, ray, dg, info, 1, litColor);
-      sampleColor = litColor;
-    //}
-    }
+    vec3f litColor = make_vec3f(0.0f);
+    shadeLights(renderer, ray, dg, info, 1, litColor);
+    sampleColor = litColor;
+  }
 
   // return the color contribution for this sample only (do not accumulate)
   return clamp(sampleOpacity / volume->samplingRate)
@@ -345,37 +345,54 @@ inline vec4f SciVisRenderer_computeVolumeInterval(SciVisRenderer *uniform render
                                                varying Ray &ray, float tBegin,
                                                float tEnd, float maxOpacity)
 {
-  bool singleShade = true;
-  DifferentialGeometry singleDG;
+  // if (!volume->preIntegration)
+      // print("!preIntegration\n");
+  vec3f singleCoordinates;
   float singleMax = -1.f;
-  float singleMin = 0.3f;
+  float singleMin = 0.001f;
+  float maxSamplingRate = 1.f; //2.f nyquist frequency
   ray.t0 = tBegin;
+  float tSkipped = -1;  //for adaptive, skip adapting sampling rate up to this value
   vec4f intervalColor = make_vec4f(0.f);
   volume->intersect(volume, ray);
   float samplingRate = volume->samplingRate;
+  float lastSample = -1.f;
+  float adaptiveScalar = 20.f;
   while (ray.t0 < tEnd && intervalColor.w < maxOpacity)
   {
     // Sample the volume at the hit point in world coordinates.
     const vec3f coordinates = ray.org + ray.t0 * ray.dir;
     const float sample = volume->computeSample(volume, coordinates);
+    if (lastSample == -1.f)
+      lastSample = sample;
 
     // Look up the color associated with the volume sample.
-    vec3f sampleColor =
-        volume->transferFunction->getColorForValue(volume->transferFunction,
-                                                   sample);
-
     // Look up the opacity associated with the volume sample.
-    const float sampleOpacity =
-        volume->transferFunction->getOpacityForValue(volume->transferFunction,
-                                                     sample);
-
-    if (sampleOpacity > .05f && samplingRate < 1.f)  // adaptive backtack
+    vec3f sampleColor;
+    float sampleOpacity;
+    if (volume->preIntegration)
     {
-      ray.t0 -= ray.time;
-      ray.t0 = max(ray.t0, tBegin);
+      sampleColor = volume->transferFunction->getIntegratedColorForValue(volume->transferFunction,  lastSample,  sample);
+      sampleOpacity = volume->transferFunction->getIntegratedOpacityForValue(volume->transferFunction,
+                                                     lastSample, sample);
+      lastSample = sample;
+    }
+    else
+    {
+      sampleColor = volume->transferFunction->getColorForValue(volume->transferFunction,
+                                                   sample);
+      sampleOpacity = volume->transferFunction->getOpacityForValue(volume->transferFunction,
+                                                     sample);
+    }
+
+    if (volume->adaptiveSampling && sampleOpacity > .01f && ray.t0 > tSkipped)  // adaptive backtack
+    {
+      tSkipped = ray.t0;
+      // tSkipped = tEnd; //DEBUG!
+      ray.t0 = max(ray.t0-ray.time, tBegin);
+      // ray.t0 = tBegin; //DEBUG!
       //adaptively refine sampling rate
-      samplingRate = max(min(10.f*sampleOpacity,1.f)/*nyquist frequency*/,1.f);
-      samplingRate = 1.f;
+      samplingRate = max(min(adaptiveScalar*sampleOpacity,maxSamplingRate)/*nyquist frequency*/,1.f);
       volume->intersectAdaptive(volume, ray, samplingRate);
       continue;
     }
@@ -383,12 +400,12 @@ inline vec4f SciVisRenderer_computeVolumeInterval(SciVisRenderer *uniform render
     // Compute gradient shading, if enabled.
     if(volume->gradientShadingEnabled) 
     {
-      if (singleShade && sampleOpacity > singleMax && sampleOpacity > singleMin)
+      if (volume->singleShade && sampleOpacity*(1.0f - intervalColor.w) > singleMax && sampleOpacity > singleMin)
       {
-        singleMax = sampleOpacity;
-        singleDG.P = coordinates;
+        singleMax = sampleOpacity*(1.0f - intervalColor.w);
+        singleCoordinates = coordinates;
       }
-      else
+      else if (!volume->singleShade)
       {
         // Use volume gradient as the normal.
         const vec3f gradient =
@@ -399,22 +416,6 @@ inline vec4f SciVisRenderer_computeVolumeInterval(SciVisRenderer *uniform render
         dg.P = coordinates;
         dg.Ns = gradient;
 
-        // Compute lighting.
-        vec3f shadedColor = make_vec3f(0.f);
-        const vec2f s = make_vec2f(0.5f);
-
-        for (uniform uint32 i=0; i<renderer->numLights; i++) {
-          const Light_SampleRes light =
-              renderer->lights[i]->sample(renderer->lights[i], dg, s);
-          const float cosNL = (gradient.x == 0.f
-                               && gradient.y == 0.f
-                               && gradient.z == 0.f) ?
-                              1.f : abs(dot(safe_normalize(light.dir),
-                                            gradient));
-
-          shadedColor = shadedColor + sampleColor * cosNL * light.weight * one_over_pi /*BRDF normalization to match surface shading*/;
-        }
-
        //sampleColor = shadedColor;
 
         dg.color = make_vec4f(sampleColor, 1);
@@ -423,58 +424,54 @@ inline vec4f SciVisRenderer_computeVolumeInterval(SciVisRenderer *uniform render
         initShadingInfo(info);
 
         //hardcode volume spec for now
-        info.Ks = make_vec3f(.3f,.3f,.3f);
+        info.Ks = make_vec3f(.3f,.3f,.3f)*sampleOpacity;
         info.Ns = 20.0f;
         info.local_opacity=1.f;
         dg.material = 0;
         shadeMaterials(dg, info);
 
-        //info.local_opacity = path_opacity * info.d;
-
-        //if (length(sampleColor) > 0.6f) { // worth shading?
-          vec3f litColor = make_vec3f(0.0f);
-          shadeLights(renderer, ray, dg, info, 1, litColor);
-          sampleColor = litColor;
-        //}
-        }
+        vec3f litColor = make_vec3f(0.0f);
+        shadeLights(renderer, ray, dg, info, 1, litColor);
+        sampleColor = litColor;
       }
+    }
+    if (volume->adaptiveSampling)
+    {
       // ray.time = absolute step length.  convert to effective sampling rate
       float dt = 1.0f/((ray.time)/volume->samplingStep);
         // return the color contribution for this sample only (do not accumulate)
       vec4f contribution =  clamp(sampleOpacity / dt)
           * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
       intervalColor = intervalColor + (1.0f - intervalColor.w) * contribution;
-      //volume->intersect(volume, ray);
       //adaptively refine sampling rate
-      samplingRate = max(min(10.f*sampleOpacity,1.f)/*nyquist frequency*/,volume->samplingRate);
+      if (ray.t0 > tSkipped)
+        samplingRate = max(min(adaptiveScalar*sampleOpacity,maxSamplingRate)/*nyquist frequency*/,volume->samplingRate);
+      // samplingRate = volume->samplingRate;
       volume->intersectAdaptive(volume, ray, samplingRate);
     }
-  if(volume->gradientShadingEnabled && singleShade && singleMax > 0.f) 
+    else
+    {
+      volume->intersect(volume, ray);
+      vec4f contribution =  clamp(sampleOpacity / volume->samplingRate)
+          * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
+      intervalColor = intervalColor + (1.0f - intervalColor.w) * contribution;
+    }
+  }
+  if(volume->gradientShadingEnabled && volume->singleShade && singleMax >= singleMin) 
   {
+    // print("singleShade\n");
     // Use volume gradient as the normal.
     const vec3f gradient =
-        safe_normalize(volume->computeGradient(volume, singleDG.P));
+        safe_normalize(volume->computeGradient(volume, singleCoordinates));
 
     // Setup differential geometry for the volume sample point.
     DifferentialGeometry dg;
-    dg.P = singleDG.P;
+    dg.P = singleCoordinates;
     dg.Ns = gradient;
 
     // Compute lighting.
     vec3f shadedColor = make_vec3f(0.f);
     const vec2f s = make_vec2f(0.5f);
-
-    for (uniform uint32 i=0; i<renderer->numLights; i++) {
-      const Light_SampleRes light =
-          renderer->lights[i]->sample(renderer->lights[i], dg, s);
-      const float cosNL = (gradient.x == 0.f
-                           && gradient.y == 0.f
-                           && gradient.z == 0.f) ?
-                          1.f : abs(dot(safe_normalize(light.dir),
-                                        gradient));
-
-      shadedColor = shadedColor + shadedColor * cosNL * light.weight * one_over_pi /*BRDF normalization to match surface shading*/;
-    }
 
     dg.color = intervalColor;
     dg.Ng = dg.Ns;
@@ -482,19 +479,18 @@ inline vec4f SciVisRenderer_computeVolumeInterval(SciVisRenderer *uniform render
     initShadingInfo(info);
 
     //hardcode volume spec for now
-    info.Ks = make_vec3f(.3f,.3f,.3f);
-    info.Ns = 20.0f;
-    info.local_opacity=1.f;
+    float specScalar = singleMax*10.0f;
+    if (specScalar > 1.f)
+      specScalar = 1.f;
+    info.Ks = make_vec3f(.2f,.2f,.2f)*specScalar;
+    info.Ns = 40.0f;
+    info.local_opacity=intervalColor.w;
     dg.material = 0;
     shadeMaterials(dg, info);
 
-    //info.local_opacity = path_opacity * info.d;
-
-    //if (length(sampleColor) > 0.6f) { // worth shading?
-      vec3f litColor = make_vec3f(0.0f);
-      shadeLights(renderer, ray, dg, info, 1, litColor);
-      //sampleColor = litColor;
-      intervalColor = make_vec4f(litColor,intervalColor.w);
+    vec3f litColor = make_vec3f(0.0f);
+    shadeLights(renderer, ray, dg, info, 1, litColor);
+    intervalColor = make_vec4f(litColor,intervalColor.w);
   }
   return intervalColor;
 }
@@ -790,7 +786,8 @@ export void SciVisRenderer_set(void *uniform _self,
                                const uniform float aoWeight,
                                void **uniform lights,
                                const uniform uint32 numLights,
-                               const uniform bool oneSidedLighting)
+                               const uniform bool oneSidedLighting
+                               )
 {
   uniform SciVisRenderer *uniform self = (uniform SciVisRenderer *uniform)_self;
 

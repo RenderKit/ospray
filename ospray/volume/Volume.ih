@@ -42,6 +42,15 @@ struct Volume {
   //! Allow the renderer to perform gradient shading.
   uniform bool gradientShadingEnabled;
 
+  //! Only shade maximum opacity point, if gradientShadingEnabled == 1
+  uniform bool singleShade;
+
+  //! Integrates over transfer function values, good for high frequency tf
+  uniform bool preIntegration;
+
+  //! Adaptively alter the sampling rate according to the sampled values
+  uniform bool adaptiveSampling;
+
   //! Recommended sampling step size for ray casting based renderers, set by the underlying volume implementation.
   uniform float samplingStep;
 

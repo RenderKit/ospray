@@ -326,7 +326,6 @@ void GridAccelerator_intersectAdaptive(GridAccelerator *uniform accelerator,
   // Tentatively advance the ray.
   ray.t0 += step;
   ray.time = step;
-  return;
 
   const vec3f ray_rdir = rcp(ray.dir);
   // sign of direction determines near/far index

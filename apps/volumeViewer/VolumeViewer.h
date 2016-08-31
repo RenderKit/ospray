@@ -131,6 +131,17 @@ public slots:
   //! Set gradient shading flag on all volumes.
   void setGradientShadingEnabled(bool value);
 
+  //! Set gradient shading flag on all volumes.
+  void setPreIntegration(bool value);
+
+  //! Set gradient shading flag on all volumes.
+  void setSingleShade(bool value);
+
+  void setShadows(bool value);
+
+  //! Set gradient shading flag on all volumes.
+  void setAdaptiveSampling(bool value);
+
   //! Set sampling rate on all volumes.
   void setSamplingRate(double value);
 

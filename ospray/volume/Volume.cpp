@@ -123,6 +123,18 @@ namespace ospray {
                                            getParam1i("gradientShadingEnabled",
                                                       0));
 
+    ispc::Volume_setPreIntegration(ispcEquivalent,
+                                       getParam1i("preIntegration",
+                                                  1));
+
+    ispc::Volume_setSingleShade(ispcEquivalent,
+                                   getParam1i("singleShade",
+                                              1));
+
+    ispc::Volume_setAdaptiveSampling(ispcEquivalent,
+                                   getParam1i("adaptiveSampling",
+                                              1));
+
     // Set the recommended sampling rate for ray casting based renderers.
     ispc::Volume_setSamplingRate(ispcEquivalent,
                                  getParam1f("samplingRate", 1.0f));
