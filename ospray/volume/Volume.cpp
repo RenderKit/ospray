@@ -135,6 +135,19 @@ namespace ospray {
                                    getParam1i("adaptiveSampling",
                                               1));
 
+    ispc::Volume_setAdaptiveScalar(ispcEquivalent,
+                                 getParam1f("adaptiveScalar", 10.0f));
+
+    ispc::Volume_setAdaptiveMaxSamplingRate(ispcEquivalent,
+                                 getParam1f("adaptiveMaxSamplingRate", 0.5f));
+
+    ispc::Volume_setAdaptiveBacktrack(ispcEquivalent,
+                                 getParam1f("adaptiveBacktrack", 0.01f));
+
+        // Set the recommended sampling rate for ray casting based renderers.
+    ispc::Volume_setSamplingRate(ispcEquivalent,
+                                 getParam1f("samplingRate", 1.0f));
+
     // Set the recommended sampling rate for ray casting based renderers.
     ispc::Volume_setSamplingRate(ispcEquivalent,
                                  getParam1f("samplingRate", 1.0f));

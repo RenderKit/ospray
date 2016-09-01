@@ -350,14 +350,16 @@ inline vec4f SciVisRenderer_computeVolumeInterval(SciVisRenderer *uniform render
   vec3f singleCoordinates;
   float singleMax = -1.f;
   float singleMin = 0.001f;
-  float maxSamplingRate = 1.f; //2.f nyquist frequency
   ray.t0 = tBegin;
   float tSkipped = -1;  //for adaptive, skip adapting sampling rate up to this value
   vec4f intervalColor = make_vec4f(0.f);
   volume->intersect(volume, ray);
   float samplingRate = volume->samplingRate;
   float lastSample = -1.f;
-  float adaptiveScalar = 20.f;
+  float adaptiveScalar = volume->adaptiveScalar;
+  float maxSamplingRate = volume->adaptiveMaxSamplingRate; //2.f nyquist frequency
+  float adaptiveBacktrack = volume->adaptiveBacktrack;
+  // maxSamplingRate = 0.125;
   while (ray.t0 < tEnd && intervalColor.w < maxOpacity)
   {
     // Sample the volume at the hit point in world coordinates.
@@ -372,29 +374,36 @@ inline vec4f SciVisRenderer_computeVolumeInterval(SciVisRenderer *uniform render
     float sampleOpacity;
     if (volume->preIntegration)
     {
-      sampleColor = volume->transferFunction->getIntegratedColorForValue(volume->transferFunction,  lastSample,  sample);
       sampleOpacity = volume->transferFunction->getIntegratedOpacityForValue(volume->transferFunction,
                                                      lastSample, sample);
-      lastSample = sample;
     }
     else
     {
-      sampleColor = volume->transferFunction->getColorForValue(volume->transferFunction,
-                                                   sample);
       sampleOpacity = volume->transferFunction->getOpacityForValue(volume->transferFunction,
                                                      sample);
     }
 
-    if (volume->adaptiveSampling && sampleOpacity > .01f && ray.t0 > tSkipped)  // adaptive backtack
+    if (volume->adaptiveSampling && sampleOpacity > adaptiveBacktrack && ray.t0 > tSkipped)  // adaptive backtack
     {
       tSkipped = ray.t0;
       // tSkipped = tEnd; //DEBUG!
       ray.t0 = max(ray.t0-ray.time, tBegin);
       // ray.t0 = tBegin; //DEBUG!
       //adaptively refine sampling rate
-      samplingRate = max(min(adaptiveScalar*sampleOpacity,maxSamplingRate)/*nyquist frequency*/,1.f);
+      samplingRate = min(adaptiveScalar*sampleOpacity,maxSamplingRate);
       volume->intersectAdaptive(volume, ray, samplingRate);
       continue;
+    }
+
+    if (volume->preIntegration)
+    {
+      sampleColor = volume->transferFunction->getIntegratedColorForValue(volume->transferFunction,  lastSample,  sample);
+      lastSample = sample;
+    }
+    else
+    {
+      sampleColor = volume->transferFunction->getColorForValue(volume->transferFunction,
+                                                   sample);
     }
 
     // Compute gradient shading, if enabled.
@@ -439,6 +448,8 @@ inline vec4f SciVisRenderer_computeVolumeInterval(SciVisRenderer *uniform render
     {
       // ray.time = absolute step length.  convert to effective sampling rate
       float dt = 1.0f/((ray.time)/volume->samplingStep);
+      // if (dt != volume->samplingRate)
+        // print("dt: % samplingStep % \n", dt, volume->samplingRate);
         // return the color contribution for this sample only (do not accumulate)
       vec4f contribution =  clamp(sampleOpacity / dt)
           * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
@@ -446,15 +457,17 @@ inline vec4f SciVisRenderer_computeVolumeInterval(SciVisRenderer *uniform render
       //adaptively refine sampling rate
       if (ray.t0 > tSkipped)
         samplingRate = max(min(adaptiveScalar*sampleOpacity,maxSamplingRate)/*nyquist frequency*/,volume->samplingRate);
+      // if (samplingRate != volume->samplingRate)  
+        // print("samplingRate % volumeSR %\n", samplingRate, volume->samplingRate);
       // samplingRate = volume->samplingRate;
       volume->intersectAdaptive(volume, ray, samplingRate);
     }
     else
     {
-      volume->intersect(volume, ray);
       vec4f contribution =  clamp(sampleOpacity / volume->samplingRate)
           * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
       intervalColor = intervalColor + (1.0f - intervalColor.w) * contribution;
+      volume->intersect(volume, ray);
     }
   }
   if(volume->gradientShadingEnabled && volume->singleShade && singleMax >= singleMin) 

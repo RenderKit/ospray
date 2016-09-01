@@ -139,6 +139,12 @@ public slots:
 
   void setShadows(bool value);
 
+  void setAdaptiveScalar(double value);
+
+  void setAdaptiveMaxSamplingRate(double value);
+
+  void setAdaptiveBacktrack(double value);
+
   //! Set gradient shading flag on all volumes.
   void setAdaptiveSampling(bool value);
 

@@ -51,6 +51,15 @@ struct Volume {
   //! Adaptively alter the sampling rate according to the sampled values
   uniform bool adaptiveSampling;
 
+  //! scalar to multiply step size for adaptive calculation
+  uniform float adaptiveScalar;
+
+  //! maximum adaptive sampling rate
+  uniform float adaptiveMaxSamplingRate;
+
+  //! what value to backstep for adaptie sampling, will step back and sample finely
+  uniform float adaptiveBacktrack;
+
   //! Recommended sampling step size for ray casting based renderers, set by the underlying volume implementation.
   uniform float samplingStep;
 

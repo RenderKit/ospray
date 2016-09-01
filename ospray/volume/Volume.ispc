@@ -62,6 +62,24 @@ export void Volume_setAdaptiveSampling(void *uniform _self, const uniform bool &
   self->adaptiveSampling = value;
 }
 
+export void Volume_setAdaptiveScalar(void *uniform _self, const uniform float &value)
+{
+  uniform Volume *uniform self = (uniform Volume *uniform)_self;
+  self->adaptiveScalar = value;
+}
+
+export void Volume_setAdaptiveMaxSamplingRate(void *uniform _self, const uniform float &value)
+{
+  uniform Volume *uniform self = (uniform Volume *uniform)_self;
+  self->adaptiveMaxSamplingRate = value;
+}
+
+export void Volume_setAdaptiveBacktrack(void *uniform _self, const uniform float &value)
+{
+  uniform Volume *uniform self = (uniform Volume *uniform)_self;
+  self->adaptiveBacktrack = value;
+}
+
 export void Volume_setSamplingRate(void *uniform _self, const uniform float value)
 {
   uniform Volume *uniform self = (uniform Volume *uniform)_self;

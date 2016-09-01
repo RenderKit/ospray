@@ -344,6 +344,46 @@ void VolumeViewer::setShadows(bool value)
     ospCommit(renderer);
 }
 
+
+//! Set gradient shading flag on all volumes.
+void VolumeViewer::setAdaptiveScalar(double value)
+{
+  std::cout << __PRETTY_FUNCTION__ << std::endl;
+  for(size_t i=0; i<modelStates.size(); i++)
+    for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
+      ospSet1f(modelStates[i].volumes[j]->handle, "adaptiveScalar", value);
+      ospCommit(modelStates[i].volumes[j]->handle);
+  }
+  render();
+}
+
+
+//! Set gradient shading flag on all volumes.
+void VolumeViewer::setAdaptiveMaxSamplingRate(double value)
+{
+  std::cout << __PRETTY_FUNCTION__ << std::endl;
+  for(size_t i=0; i<modelStates.size(); i++)
+    for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
+      ospSet1f(modelStates[i].volumes[j]->handle, "adaptiveMaxSamplingRate", value);
+      ospCommit(modelStates[i].volumes[j]->handle);
+  }
+  render();
+}
+
+
+//! Set gradient shading flag on all volumes.
+void VolumeViewer::setAdaptiveBacktrack(double value)
+{
+  std::cout << __PRETTY_FUNCTION__ << std::endl;
+  for(size_t i=0; i<modelStates.size(); i++)
+    for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
+      ospSet1f(modelStates[i].volumes[j]->handle, "adaptiveBacktrack", value);
+      ospCommit(modelStates[i].volumes[j]->handle);
+  }
+
+  render();
+}
+
 //! Set gradient shading flag on all volumes.
 void VolumeViewer::setAdaptiveSampling(bool value)
 {
