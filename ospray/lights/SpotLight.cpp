@@ -52,8 +52,8 @@ namespace ospray {
     direction = normalize(direction);
     openingAngle = clamp(openingAngle, 0.f, 180.f);
     penumbraAngle = clamp(penumbraAngle, 0.f, 0.5f*openingAngle);
-    const float cosAngleMax = cos(deg2rad(0.5f*openingAngle));
-    const float cosAngleMin = cos(deg2rad(0.5f*openingAngle - penumbraAngle));
+    const float cosAngleMax = ospcommon::cos(deg2rad(0.5f*openingAngle));
+    const float cosAngleMin = ospcommon::cos(deg2rad(0.5f*openingAngle - penumbraAngle));
     const float cosAngleScale = 1.0f/(cosAngleMin - cosAngleMax);
     
     ispc::SpotLight_set(getIE(),
