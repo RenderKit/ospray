@@ -137,5 +137,3 @@ OSPRAY_CONFIGURE_TASKING_SYSTEM()
 
 # Must be before ISA config
 INCLUDE(configure_embree)
-
-OSPRAY_CONFIGURE_ISPC_ISA()

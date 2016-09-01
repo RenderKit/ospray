@@ -97,6 +97,9 @@ IF(OSPRAY_USE_EXTERNAL_EMBREE)
     SET(EMBREE_ISA_SUPPORTS_AVX512 TRUE)
   ENDIF()
 
+  # Configure OSPRay ISA last after we've detected what we got w/ Embree
+  OSPRAY_CONFIGURE_ISPC_ISA()
+
 ELSE(OSPRAY_USE_EXTERNAL_EMBREE)
 
   # Clear out embree directories if they were previously populated by an
@@ -115,6 +118,14 @@ ELSE(OSPRAY_USE_EXTERNAL_EMBREE)
   # NOTE(jda) - Only do the Embree include once (Xeon), it will build both
   #             Xeon and MIC code if both are enabled.
   IF (NOT THIS_IS_MIC)
+    SET(EMBREE_ISA_SUPPORTS_AVX    TRUE)
+    SET(EMBREE_ISA_SUPPORTS_AVX2   TRUE)
+    SET(EMBREE_ISA_SUPPORTS_AVX512 TRUE)
+
+    # Configure OSPRay ISA before building internal Embree so we know what ISA
+    # for Embree to build.
+    OSPRAY_CONFIGURE_ISPC_ISA()
+
     INCLUDE(build_embree)
   ENDIF()
   SET(EMBREE_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/ospray/embree-v2.7.1/include)
@@ -122,10 +133,6 @@ ELSE(OSPRAY_USE_EXTERNAL_EMBREE)
   SET(EMBREE_LIBRARIES ${EMBREE_LIBRARY})
   SET(EMBREE_LIBRARY_XEONPHI embree_xeonphi)
   SET(LAST_CONFIG_USED_EXTERNAL_EMBREE OFF CACHE INTERNAL "" FORCE)
-
-  SET(EMBREE_ISA_SUPPORTS_AVX    TRUE)
-  SET(EMBREE_ISA_SUPPORTS_AVX2   TRUE)
-  SET(EMBREE_ISA_SUPPORTS_AVX512 TRUE)
 
 ENDIF(OSPRAY_USE_EXTERNAL_EMBREE)
 

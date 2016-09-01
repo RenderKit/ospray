@@ -375,7 +375,9 @@ namespace ospray {
           for (int y=0;y<Ny;y++) {
             const float t = (y+0.f)/Ny*2.f*M_PI;
             const float f = (x+0.f)/Nx*2.f*M_PI;
-            vtx[x][y] = vec3f(cos(t)*sin(f),sin(t)*sin(f),cos(f));
+            vtx[x][y] = vec3f(ospcommon::cos(t)*ospcommon::sin(f),
+                              ospcommon::sin(t)*ospcommon::sin(f),
+                              ospcommon::cos(f));
             txt[x][y] = vec2f(x/float(Nx),y/float(Ny));
             vec3f c = (((x/4)+(y/4))%2) ? color_bright : color_dark;
             col[x][y] = vec3f(c);
