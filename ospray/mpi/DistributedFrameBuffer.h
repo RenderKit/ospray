@@ -120,6 +120,17 @@ namespace ospray {
         that this tile is now done. */
     void tileIsCompleted(TileData *tile);
 
+    /*! TODO WILL: The "master" can now participate in rendering and
+        compositing tiles and needs to track the difference in when it
+        finishes working on a tile and "sends" it to itself to write
+        into the (tileIsCompleted) final framebuffer vs. when it
+        receives completed tiles from itself/others.
+        TODO I would not say I'm that happy with this current solution.
+        part of the reason for going this way currently is that when completing
+        a tile based on the TileData alone I don't think we know what type
+        of tile we just finished? */
+    void masterTileIsCompleted(TileData *tile);
+
     //! number of tiles that "I" own
     size_t numMyTiles() const { return myTiles.size(); }
     bool IamTheMaster() const { return comm->IamTheMaster(); }
@@ -228,7 +239,7 @@ namespace ospray {
     // and finally, tell the master that this tile is done
     auto *tileDesc = this->getTileDescFor(msg->coords);
     TileData *td = (TileData*)tileDesc;
-    this->tileIsCompleted(td);
+    this->masterTileIsCompleted(td);
   }
 
 } // ::ospray

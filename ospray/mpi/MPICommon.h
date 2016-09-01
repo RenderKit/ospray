@@ -18,6 +18,7 @@
 
 #include <mpi.h>
 #include "common/OSPCommon.h"
+#include "mpi/Work.h"
 
 // IMPI on Windows defines MPI_CALL already, erroneously
 #ifdef MPI_CALL
@@ -77,6 +78,52 @@ namespace ospray {
       /*! perform a MPI_barrier on this communicator */
       void barrier() { MPI_CALL(Barrier(comm)); }
     };
+
+    // //! abstraction for any other peer node that we might want to communicate with
+    struct Address {
+      //! group that this peer is in
+      Group *group;
+      //! this peer's rank in this group
+      int32  rank;
+        
+      Address(Group *group=NULL, int32 rank=-1)
+        : group(group), rank(rank)
+      {}
+      inline bool isValid() const { return group != NULL && rank >= 0; }
+    };
+
+    //special flags for sending and reciving from all ranks instead of individuals
+    const int32 SEND_ALL=-1;
+    const int32 RECV_ALL=-1;
+
+    //     //! abstraction for any other peer node that we might want to communicate with
+    // struct Address {
+    //   //! group that this peer is in
+    //   Group *group;
+    //   //! this peer's rank in this group
+    //   int32  rank;
+        
+    //   Address(Group *group=NULL, int32 rank=-1)
+    //     : group(group), rank(rank)
+    //   {}
+    //   inline bool isValid() const { return group != NULL && rank >= 0; }
+    // };
+
+    // struct Message {
+    //     Address     addr;
+    //     void       *ptr;
+    //     int32       size;
+    //     MPI_Request request; //! request for MPI_Test
+    //     int         done;    //! done flag for MPI_Test
+    //     MPI_Status  status;  //! status for MPI_Test
+    // };
+
+    // OSPRAY_INTERFACE void send(const Address& address, void* msgPtr, int32 msgSize);
+    OSPRAY_INTERFACE void send(const Address& addr, work::Work* work);
+    OSPRAY_INTERFACE void recv(const Address& addr, std::vector<work::Work*>& work);  //TODO: callback?
+    // OSPRAY_INTERFACE void send(const Address& addr, )
+    OSPRAY_INTERFACE void flush();
+    OSPRAY_INTERFACE void barrier(const Group& group);
 
     OSPRAY_INTERFACE extern Group world; //! MPI_COMM_WORLD
     OSPRAY_INTERFACE extern Group app; /*! for workers: intracommunicator to app

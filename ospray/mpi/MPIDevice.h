@@ -19,33 +19,33 @@
 #include "MPICommon.h"
 #include "api/Device.h"
 #include "mpi/command.h"
-#include "CommandStream.h"
+// #include "CommandStream.h"
+#include "Work.h"
 #include "common/Managed.h"
 
-/*! \file mpidevice.h Implements the "mpi" device for mpi rendering */
+/*! \file MPIDevice.h Implements the "mpi" device for mpi rendering */
 
 namespace ospray {
   namespace mpi {
-
     struct MPIDevice : public api::Device {
-      typedef ospray::mpi::CommandStream CommandStream;
+      // typedef ospray::mpi::CommandStream CommandStream;
 
-      CommandStream cmd;
+      // CommandStream cmd;
 
-      typedef ospray::CommandTag CommandTag;
+      // typedef ospray::CommandTag CommandTag;
 
       /*! constructor */
-      MPIDevice(// AppMode appMode, OSPMode ospMode,
-                int *_ac=NULL, const char **_av=NULL);
+      MPIDevice(int *_ac=NULL, const char **_av=NULL,
+                OSPDApiMode apiMode = OSPD_MODE_MASTERED);
       virtual ~MPIDevice();
 
       /*! create a new frame buffer */
       OSPFrameBuffer
-      frameBufferCreate(const vec2i &size, 
+      frameBufferCreate(const vec2i &size,
                         const OSPFrameBufferFormat mode,
                         const uint32 channels) override;
 
-      /*! create a new transfer function object (out of list of 
+      /*! create a new transfer function object (out of list of
         registered transfer function types) */
       OSPTransferFunction newTransferFunction(const char *type) override;
 
@@ -62,17 +62,17 @@ namespace ospray {
 
       /*! set a frame buffer's pixel op object */
       void setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op) override;
-      
+
       /*! create a new pixelOp object (out of list of registered pixelOps) */
       OSPPixelOp newPixelOp(const char *type) override;
-        
+
       /*! clear the specified channel(s) of the frame buffer specified in 'whichChannels'
-        
+
         if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to
-        '0,0,0,0'.  
+        '0,0,0,0'.
 
         if whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to
-        +inf.  
+        +inf.
 
         if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0,
         and reset accumID.
@@ -172,7 +172,7 @@ namespace ospray {
 
       /*! call a renderer to render a frame buffer */
       float renderFrame(OSPFrameBuffer _sc,
-                               OSPRenderer _renderer, 
+                               OSPRenderer _renderer,
                                const uint32 fbChannelFlags) override;
 
       /*! load module */
@@ -208,10 +208,14 @@ namespace ospray {
                         const vec3f *worldCoordinates,
                         const size_t &count) override;
 
+      void processWork(work::Work* work);
+
     private:
 
       /*! This only exists to support getting the voxel type for setRegion */
       int getString(OSPObject object, const char *name, char **value);
+
+      ObjectHandle allocateHandle() const;
 
     };
 

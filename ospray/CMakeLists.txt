@@ -368,6 +368,7 @@ IF (OSPRAY_MPI)
     mpi/MPICommon.cpp
     mpi/MPILoadBalancer.cpp
     mpi/worker.cpp
+    mpi/Work.cpp
 
     mpi/async/Messaging.cpp
     mpi/async/SimpleSendRecvMessaging.cpp
