@@ -433,7 +433,7 @@ inline vec4f SciVisRenderer_computeVolumeInterval(SciVisRenderer *uniform render
         initShadingInfo(info);
 
         //hardcode volume spec for now
-        info.Ks = make_vec3f(.3f,.3f,.3f)*sampleOpacity;
+        info.Ks = make_vec3f(.3f)*sampleOpacity;
         info.Ns = 20.0f;
         info.local_opacity=1.f;
         dg.material = 0;
@@ -484,7 +484,6 @@ inline vec4f SciVisRenderer_computeVolumeInterval(SciVisRenderer *uniform render
 
     // Compute lighting.
     vec3f shadedColor = make_vec3f(0.f);
-    const vec2f s = make_vec2f(0.5f);
 
     dg.color = intervalColor;
     dg.Ng = dg.Ns;
@@ -492,11 +491,11 @@ inline vec4f SciVisRenderer_computeVolumeInterval(SciVisRenderer *uniform render
     initShadingInfo(info);
 
     //hardcode volume spec for now
-    float specScalar = singleMax*10.0f;
+    float specScalar = singleMax*1.0f;
     if (specScalar > 1.f)
       specScalar = 1.f;
-    info.Ks = make_vec3f(.2f,.2f,.2f)*specScalar;
-    info.Ns = 40.0f;
+    info.Ks = make_vec3f(.3f)*specScalar;
+    info.Ns = 20.0f;
     info.local_opacity=intervalColor.w;
     dg.material = 0;
     shadeMaterials(dg, info);

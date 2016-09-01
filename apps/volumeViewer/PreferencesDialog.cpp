@@ -127,10 +127,10 @@ PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer, ospcommon::box3
   adaptiveSamplingCB->setChecked(true);
   preIntegrationCB->setChecked(true);
   shadowsCB->setChecked(true);
-  adaptiveScalarSB->setValue(30.f);
-  adaptiveMaxSamplingRateSB->setValue(0.5f);
-  adaptiveBacktrackSB->setValue(0.01f);
-  samplingRateSpinBox->setValue(0.125);
+  adaptiveScalarSB->setValue(15.f);
+  adaptiveMaxSamplingRateSB->setValue(0.7f);
+  adaptiveBacktrackSB->setValue(0.02f);
+  samplingRateSpinBox->setValue(0.07);
 }
 
 void PreferencesDialog::updateVolumeClippingBox()

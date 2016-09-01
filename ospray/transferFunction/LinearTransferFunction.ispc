@@ -56,6 +56,89 @@ LinearTransferFunction_getColorForValue(const void *uniform _self,
      + remainder        * self->colorValues[min(index + 1, self->colorValueCount - 1)]);
 }
 
+inline varying float 
+LinearTransferFunction_getIntegratedOpacityForValue(const void *uniform _self, 
+                                          varying float value1, varying float value2) 
+{
+ if (value1 > value2)
+ {
+   float tmpVal = value1;
+   value1 = value2;
+   value2 = tmpVal;
+ }
+  // Return 0 for NaN values.
+  if (isnan(value1) || isnan(value2)) return 0.0f;
+
+  // Cast to the actual TransferFunction subtype.
+  const LinearTransferFunction *uniform self
+    = (const LinearTransferFunction *uniform) _self;
+
+  // No opacity values may be available.
+  if (self->opacityValueCount == 0) 
+    return 1.0f;
+
+  // Clamp the value to the lower bound of the value range.
+  if (value2 <= self->super.valueRange.x) 
+    value2 = self->super.valueRange.x;
+
+  // Clamp the value to the lower bound of the value range.
+  if (value1 <= self->super.valueRange.x) 
+    value1 = self->super.valueRange.x;
+
+  // Clamp the value to the upper bound of the value range.
+  if (value2 >= self->super.valueRange.y) 
+    value2 = self->super.valueRange.y;
+
+  // Clamp the value to the upper bound of the value range.
+  if (value1 >= self->super.valueRange.y) 
+    value1 = self->super.valueRange.y;
+
+  // Map the value into the range [0.0, numValues).
+  const float remapped1
+    = (value1 - self->super.valueRange.x)
+    / (self->super.valueRange.y - self->super.valueRange.x) 
+    * (self->opacityValueCount - 1.0f);
+
+  const float remapped2
+    = (value2 - self->super.valueRange.x)
+    / (self->super.valueRange.y - self->super.valueRange.x) 
+    * (self->opacityValueCount - 1.0f);
+
+  // Compute the opacity index and fractional offset.
+  int index1 = floor(remapped1);  
+  float remainder1 = remapped1 - index1;
+
+  // The interpolated opacity.
+  float interpval1 =
+    (1.0f - remainder1) * self->opacityValues[index1] 
+    + remainder1 * self->opacityValues[min(index1 + 1, self->opacityValueCount - 1)];
+
+  // Compute the opacity index and fractional offset.
+  int index2 = floor(remapped2);  
+  float remainder2 = remapped2 - index2;
+
+  // The interpolated opacity.
+  float interpval2 =
+    (1.0f - remainder2) * self->opacityValues[index2] 
+    + remainder2 * self->opacityValues[min(index2 + 1, self->opacityValueCount - 1)];
+
+  float ret = 0.f;
+
+  // ret += interpval2 + interpval1;
+  // int numAdded = 0;
+  // for (int i=index1+1;i<index2 && i < self->opacityValueCount;i++)
+  // {
+  //   ret += self->opacityValues[i];
+  //   numAdded++;
+  // }
+  // ret = ret / (2.f+numAdded);
+
+  //return ret;
+  if (index2 - index1 > 1)
+    ret += self->opacityPITable[(index1+1)+(index2-1)*self->opacityValueCount];
+  return  (ret + interpval1 + interpval2)/(index2-index1+1);
+}
+
 inline varying vec3f 
 LinearTransferFunction_getIntegratedColorForValue(const void *uniform _self, 
                                         varying float value1, varying float value2) 
@@ -126,16 +209,20 @@ LinearTransferFunction_getIntegratedColorForValue(const void *uniform _self,
 
   vec3f ret = make_vec3f(0.f);
 
-  ret = interpColor1 + interpColor2;
-  int numAdded = 0;
-  for (int i=index1+1;i<index2 && i < self->colorValueCount;i++)
-  {
-    ret = ret + self->colorValues[i];
-    numAdded++;
-  }
-  ret = ret / (2.f+numAdded);
+  // ret = interpColor1 + interpColor2;
+  // int numAdded = 0;
+  // for (int i=index1+1;i<index2 && i < self->colorValueCount;i++)
+  // {
+  //   ret = ret + self->colorValues[i];
+  //   numAdded++;
+  // }
+  // ret = ret / (2.f+numAdded);
 
-  return ret;
+  // return ret;
+  if (index2 - index1 >= 2)
+   ret = self->colorPITable[(index1+1)+(index2-1)*self->colorValueCount];
+ float dev = max((index2-index1+1.f),2.f);
+  return (ret + interpColor1 + interpColor2)/dev;
 }
 
 uniform vec2f 
@@ -200,86 +287,6 @@ LinearTransferFunction_getOpacityForValue(const void *uniform _self,
   float ret =
     (1.0f - remainder) * self->opacityValues[index] 
     + remainder * self->opacityValues[min(index + 1, self->opacityValueCount - 1)];
-  return ret;
-}
-
-inline varying float 
-LinearTransferFunction_getIntegratedOpacityForValue(const void *uniform _self, 
-                                          varying float value1, varying float value2) 
-{
- if (value1 > value2)
- {
-   float tmpVal = value1;
-   value1 = value2;
-   value2 = tmpVal;
- }
-  // Return 0 for NaN values.
-  if (isnan(value1) || isnan(value2)) return 0.0f;
-
-  // Cast to the actual TransferFunction subtype.
-  const LinearTransferFunction *uniform self
-    = (const LinearTransferFunction *uniform) _self;
-
-  // No opacity values may be available.
-  if (self->opacityValueCount == 0) 
-    return 1.0f;
-
-  // Clamp the value to the lower bound of the value range.
-  if (value2 <= self->super.valueRange.x) 
-    value2 = self->super.valueRange.x;
-
-  // Clamp the value to the lower bound of the value range.
-  if (value1 <= self->super.valueRange.x) 
-    value1 = self->super.valueRange.x;
-
-  // Clamp the value to the upper bound of the value range.
-  if (value2 >= self->super.valueRange.y) 
-    value2 = self->super.valueRange.y;
-
-  // Clamp the value to the upper bound of the value range.
-  if (value1 >= self->super.valueRange.y) 
-    value1 = self->super.valueRange.y;
-
-  // Map the value into the range [0.0, numValues).
-  const float remapped1
-    = (value1 - self->super.valueRange.x)
-    / (self->super.valueRange.y - self->super.valueRange.x) 
-    * (self->opacityValueCount - 1.0f);
-
-  const float remapped2
-    = (value2 - self->super.valueRange.x)
-    / (self->super.valueRange.y - self->super.valueRange.x) 
-    * (self->opacityValueCount - 1.0f);
-
-  // Compute the opacity index and fractional offset.
-  int index1 = floor(remapped1);  
-  float remainder1 = remapped1 - index1;
-
-  // The interpolated opacity.
-  float interpval1 =
-    (1.0f - remainder1) * self->opacityValues[index1] 
-    + remainder1 * self->opacityValues[min(index1 + 1, self->opacityValueCount - 1)];
-
-  // Compute the opacity index and fractional offset.
-  int index2 = floor(remapped2);  
-  float remainder2 = remapped2 - index2;
-
-  // The interpolated opacity.
-  float interpval2 =
-    (1.0f - remainder2) * self->opacityValues[index2] 
-    + remainder2 * self->opacityValues[min(index2 + 1, self->opacityValueCount - 1)];
-
-  float ret = 0.f;
-
-  ret += interpval2 + interpval1;
-  int numAdded = 0;
-  for (int i=index1+1;i<index2 && i < self->opacityValueCount;i++)
-  {
-    ret += self->opacityValues[i];
-    numAdded++;
-  }
-  ret = ret / (2.f+numAdded);
-
   return ret;
 }
 
@@ -354,16 +361,66 @@ export void *uniform LinearTransferFunction_createInstance()
   // Transfer function colors and count.
   self->colorValues = NULL;  
   self->colorValueCount = 0;
+  self->colorPITable = NULL;
 
   // Transfer function opacity values and count.
   self->opacityValues = NULL;  
   self->opacityValueCount = 0;
+  self->opacityPITable = NULL;
 
   // The default transfer function value range.
   self->super.valueRange = make_vec2f(0.0f, 1.0f);
 
   // Freshly baked transfer function.
   return self;
+}
+
+void LinearTransferFunction_precomputePreIntegratedOpacityValues(void* uniform _self)
+{
+  // Cast to the actual TransferFunction subtype.
+  LinearTransferFunction *uniform self
+    = (LinearTransferFunction *uniform) _self;
+
+  if (self->opacityPITable)
+    delete[] self->opacityPITable;
+  self->opacityPITable = uniform new uniform float[self->opacityValueCount*self->opacityValueCount];
+
+  for(int i=0;i<self->opacityValueCount;i++)
+  {
+    for(int j=0;j<self->opacityValueCount;j++)
+    {
+      if (j < i)
+        continue;
+      float val = 0.f;
+      for (int k = i; k <= j; k++)
+        val += self->opacityValues[k];
+      self->opacityPITable[j*self->opacityValueCount+i] = val;
+    }
+  }
+}
+
+void LinearTransferFunction_precomputePreIntegratedColorValues(void* uniform _self)
+{
+  // Cast to the actual TransferFunction subtype.
+  LinearTransferFunction *uniform self
+    = (LinearTransferFunction *uniform) _self;
+
+  if (self->colorPITable)
+    delete[] self->colorPITable;
+  self->colorPITable = uniform new uniform vec3f[self->colorValueCount*self->colorValueCount];
+
+  for(int i=0;i<self->colorValueCount;i++)
+  {
+    for(int j=0;j<self->colorValueCount;j++)
+    {
+      if (j < i)
+        continue;
+      vec3f val = make_vec3f(0.f);
+      for (int k = i; k <= j; k++)
+        val = val + self->colorValues[k];
+      self->colorPITable[j*self->colorValueCount+i] = val;
+    }
+  }
 }
 
 export void LinearTransferFunction_destroy(void *uniform _self) 
@@ -400,6 +457,7 @@ export void LinearTransferFunction_setColorValues(void *uniform _self,
   for (uniform size_t i=0; i < count; i++) 
     self->colorValues[i] = source[i];
 
+  LinearTransferFunction_precomputePreIntegratedColorValues(_self);
 }
 
 export void LinearTransferFunction_setOpacityValues(void *uniform _self, 
@@ -427,5 +485,7 @@ export void LinearTransferFunction_setOpacityValues(void *uniform _self,
 
   // Precompute the min / max opacity ranges.
   LinearTransferFunction_precomputeMinMaxOpacityRanges(_self);
+
+  LinearTransferFunction_precomputePreIntegratedOpacityValues(_self);
 
 }
