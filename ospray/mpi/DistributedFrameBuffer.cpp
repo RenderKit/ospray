@@ -82,11 +82,7 @@ namespace ospray {
         does not actually care about the pixel data - we still have
         to let the master know when we're done. */
     MASTER_WRITE_TILE_NONE,
-  } COMMANDTAG;
-
-  // Helper functions /////////////////////////////////////////////////////////
-
-  inline int clientRank(int clientID) { return clientID; }
+  };
 
   // DistributedFrameBuffer definitions ///////////////////////////////////////
 
@@ -222,14 +218,10 @@ namespace ospray {
   {
     size_t tileID = 0;
     vec2i numPixels = getNumPixels();
-    for (size_t y = 0; y < numPixels.y; y += TILE_SIZE) {
-      for (size_t x = 0; x < numPixels.x; x += TILE_SIZE, tileID++) {
-        // TODO: WILL Could we just not subtract 1 from the size to assign the master tiles to composite??
-        // TODO: This needs to be based on the number of workers, then it would be ok
-        // with some rank not being a worker but being shipped tiles (the master rank).
-        size_t ownerID = tileID % comm->group->size;
-        DBG(std::cout << "tile " << tileID << " is owned by " << ownerID << "\n");
-        if (clientRank(ownerID) == comm->group->rank) {
+    for (int y = 0; y < numPixels.y; y += TILE_SIZE) {
+      for (int x = 0; x < numPixels.x; x += TILE_SIZE, tileID++) {
+        size_t ownerID = tileID % (comm->group->size - 1);
+        if (workerRank(ownerID) == comm->group->rank) {
           TileData *td = createTile(vec2i(x, y), tileID, ownerID);
           myTiles.push_back(td);
           allTiles.push_back(td);
@@ -301,10 +293,7 @@ namespace ospray {
     // and finally, tell the master that this tile is done
     auto *tileDesc = this->getTileDescFor(msg->coords);
     TileData *td = (TileData*)tileDesc;
-    this->masterTileIsCompleted(td);
-
-    DBG(printf("rank %i: processMessage(MasterTileMessage) %i,%i owned by %d\n",
-          mpi::world.rank,msg->coords.x,msg->coords.y, td->ownerID));
+    this->tileIsCompleted(td);
   }
 
   void DFB::processMessage(WriteTileMessage *msg)
@@ -317,87 +306,75 @@ namespace ospray {
 
   void DFB::tileIsCompleted(TileData *tile)
   {
-    DBG(printf("rank %i: tilecompleted %i,%i owned by %d\n",mpi::world.rank,
-               tile->begin.x,tile->begin.y, tile->ownerID));
-    if (tile->ownerID == comm->group->rank && pixelOp) {
-      pixelOp->postAccum(tile->final);
-    }
-    MasterTileMessage *masterMsg = nullptr;
-    size_t msgSize = 0;
-    switch(colorBufferFormat) {
-    case OSP_FB_NONE: {
-      /* if the master doesn't have a framebufer (i.e., format
-         'none'), we're only telling it that we're done, but are not
-         sending any pixels */
-      MasterTileMessage_NONE *mtm = new MasterTileMessage_NONE;
-      mtm->command = MASTER_WRITE_TILE_NONE;
-      mtm->coords  = tile->begin;
-      mtm->error   = tile->error;
-      masterMsg    = mtm; 
-      msgSize      = sizeof(*mtm);
-    } break;
-    case OSP_FB_RGBA8:
-    case OSP_FB_SRGBA: {
-      /*! if the master has RGBA8 or SRGBA format, we're sending him a tile
-        of the proper data */
-      MasterTileMessage_RGBA_I8 *mtm = new MasterTileMessage_RGBA_I8;
-      mtm->command = MASTER_WRITE_TILE_I8;
-      mtm->coords  = tile->begin;
-      mtm->error   = tile->error;
-      memcpy(mtm->color,tile->color,TILE_SIZE*TILE_SIZE*sizeof(uint32));
-      masterMsg    = mtm; 
-      msgSize      = sizeof(*mtm);
-    } break;
-    case OSP_FB_RGBA32F: {
-      /*! if the master has RGBA32F format, we're sending him a tile of the
-        proper data */
-      MasterTileMessage_RGBA_F32 *mtm = new MasterTileMessage_RGBA_F32;
-      mtm->command = MASTER_WRITE_TILE_F32;
-      mtm->coords  = tile->begin;
-      mtm->error   = tile->error;
-      memcpy(mtm->color,tile->color,TILE_SIZE*TILE_SIZE*sizeof(vec4f));
-      masterMsg    = mtm; 
-      msgSize      = sizeof(*mtm);
-    } break;
-    default:
-      throw std::runtime_error("#osp:mpi:dfb: color buffer format not "
-                               "implemented for distributed frame buffer");
-    };
+    DBG(printf("rank %i: tilecompleted %i,%i\n",mpi::world.rank,
+               tile->begin.x,tile->begin.y));
     if (IamTheMaster()) {
-      incoming(masterMsg);
+      int numTilesCompletedByMyTile = 0;
+      /*! we will not do anything with the tile other than mark it's done */
+      {
+        SCOPED_LOCK(mutex);
+        numTilesCompletedByMyTile = ++numTilesCompletedThisFrame;
+        DBG(printf("MASTER: MARKING AS COMPLETED %i,%i -> %li %i\n",
+                   tile->begin.x,tile->begin.y,numTilesCompletedThisFrame,
+                   numTiles.x*numTiles.y));
+      }
+      if (numTilesCompletedByMyTile == numTiles.x*numTiles.y)
+        closeCurrentFrame();
     } else {
-      comm->sendTo(this->master, masterMsg, msgSize);
+      if (pixelOp) {
+        pixelOp->postAccum(tile->final);
+      }
+
+      switch(colorBufferFormat) {
+      case OSP_FB_NONE: {
+        /* if the master doesn't have a framebufer (i.e., format
+           'none'), we're only telling it that we're done, but are not
+           sending any pixels */
+        MasterTileMessage_NONE *mtm = new MasterTileMessage_NONE;
+        mtm->command = MASTER_WRITE_TILE_NONE;
+        mtm->coords  = tile->begin;
+        mtm->error   = tile->error;
+        comm->sendTo(this->master,mtm,sizeof(*mtm));
+      } break;
+      case OSP_FB_RGBA8:
+      case OSP_FB_SRGBA: {
+        /*! if the master has RGBA8 or SRGBA format, we're sending him a tile
+          of the proper data */
+        MasterTileMessage_RGBA_I8 *mtm = new MasterTileMessage_RGBA_I8;
+        mtm->command = MASTER_WRITE_TILE_I8;
+        mtm->coords  = tile->begin;
+        mtm->error   = tile->error;
+        memcpy(mtm->color,tile->color,TILE_SIZE*TILE_SIZE*sizeof(uint32));
+        comm->sendTo(this->master,mtm,sizeof(*mtm));
+      } break;
+      case OSP_FB_RGBA32F: {
+        /*! if the master has RGBA32F format, we're sending him a tile of the
+          proper data */
+        MasterTileMessage_RGBA_F32 *mtm = new MasterTileMessage_RGBA_F32;
+        mtm->command = MASTER_WRITE_TILE_F32;
+        mtm->coords  = tile->begin;
+        mtm->error   = tile->error;
+        memcpy(mtm->color,tile->color,TILE_SIZE*TILE_SIZE*sizeof(vec4f));
+        comm->sendTo(this->master,mtm,sizeof(*mtm));
+      } break;
+      default:
+        throw std::runtime_error("#osp:mpi:dfb: color buffer format not "
+                                 "implemented for distributed frame buffer");
+      };
 
       size_t numTilesCompletedByMe = 0;
       {
         SCOPED_LOCK(mutex);
         numTilesCompletedByMe = ++numTilesCompletedThisFrame;
         DBG(printf("rank %i: MARKING AS COMPLETED %i,%i -> %i %i\n",
-              mpi::world.rank,
-              tile->begin.x,tile->begin.y,(int)numTilesCompletedThisFrame,
-              numTiles.x*numTiles.y));
+                   mpi::world.rank,
+                   tile->begin.x,tile->begin.y,(int)numTilesCompletedThisFrame,
+                   numTiles.x*numTiles.y));
       }
+
       if (numTilesCompletedByMe == myTiles.size()) {
         closeCurrentFrame();
       }
-    }
-  }
-
-  void DFB::masterTileIsCompleted(TileData *tile)
-  {
-    // Only the master should complete master tiles.
-    assert(IamTheMaster());
-    size_t numTilesCompletedByMyTile = 0;
-    /*! we will not do anything with the tile other than mark it's done */
-    {
-      SCOPED_LOCK(mutex);
-      numTilesCompletedByMyTile = ++numTilesCompletedThisFrame;
-      DBG(printf("MASTER: MARKING AS COMPLETED %i,%i -> %li %i\n",
-          tile->begin.x,tile->begin.y,numTilesCompletedThisFrame,
-          numTiles.x*numTiles.y));
-    }
-    if (numTilesCompletedByMyTile == numTiles.x*numTiles.y) {
-      closeCurrentFrame();
     }
   }
 
@@ -440,9 +417,12 @@ namespace ospray {
     frameIsActive = false;
     frameIsDone   = true;
 
-    // WILL: The master will need to run pixel ops too!
-    if (pixelOp) {
-      pixelOp->endFrame();
+    if (IamTheMaster()) {
+      /* do nothing */
+    } else {
+      if (pixelOp) { 
+        pixelOp->endFrame();
+      }
     }
 
     frameDoneCond.notify_all();
@@ -455,7 +435,6 @@ namespace ospray {
     auto *tileDesc = this->getTileDescFor(tile.region.lower);
 
     if (!tileDesc->mine()) {
-      // TODO WILL: This will never be run unless we're data parallel!
       // NOT my tile...
       WriteTileMessage *msg = new WriteTileMessage;
       msg->coords = tile.region.lower;
@@ -463,23 +442,10 @@ namespace ospray {
       memcpy(&msg->tile,&tile,sizeof(ospray::Tile));
       msg->command = WORKER_WRITE_TILE;
 
-      // TODO WILL: This is why all ranks must be workers
-      if (tileDesc->ownerID == 0){
-        comm->sendTo(this->master, msg,sizeof(*msg));
-        DBG(std::cout << "rank " << comm->group->rank << " sending tile "
-          << tileDesc->tileID << " I don't own, to " << tileDesc->ownerID
-          << "(aka master)\n");
-      } else {
-        comm->sendTo(this->worker[tileDesc->ownerID - 1], msg,sizeof(*msg));
-        DBG(std::cout << "rank " << comm->group->rank << " sending tile "
-          << tileDesc->tileID << " I don't own, to " << tileDesc->ownerID
-          << "(aka worker " << tileDesc->ownerID - 1 << ")\n");
-      }
+      comm->sendTo(this->worker[tileDesc->ownerID], msg,sizeof(*msg));
     } else {
       // this is my tile...
       assert(frameIsActive);
-      DBG(std::cout << "rank " << comm->group->rank << " processing tile "
-        << tile.region.lower << " I own\n");
 
       TileData *td = (TileData*)tileDesc;
 
