@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <chrono>
 #include "TriangleMeshSceneParser.h"
 
 #include <ospray_cpp/Data.h>
@@ -206,6 +207,7 @@ cpp::Material TriangleMeshSceneParser::createMaterial(cpp::Renderer ren,
 
 void TriangleMeshSceneParser::finalize()
 {
+  auto start = std::chrono::high_resolution_clock::now();
   // code does not yet do instancing ... check that the model doesn't
   // contain instances
   bool doesInstancing = 0;
@@ -375,4 +377,6 @@ void TriangleMeshSceneParser::finalize()
   }
 
   sceneModel->commit();
+  auto end = std::chrono::high_resolution_clock::now();
+  std::cout << "Loading took " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms\n";
 }

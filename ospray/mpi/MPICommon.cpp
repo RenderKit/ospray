@@ -100,11 +100,8 @@ namespace ospray {
       size_t sz = buf.getIndex()-sendWorkIndex;
       // set size in msg header
       buf.setIndex(sendSizeIndex);
-      PRINT(sendSizeIndex);
       buf << sz << sendNumMessages;
       buf.setIndex(endIndex);
-      PRINT(sz);
-      PRINT(sendNumMessages);
       // MPI_CALL(Bcast(&sz, 1, MPI_AINT, MPI_ROOT, mpi::worker.comm));
       // Now send the buffer
       if (addr.rank != SEND_ALL)
@@ -128,11 +125,10 @@ namespace ospray {
       MPI_Bcast(buf.getData(),2048,MPI_BYTE,0,addr.group->comm);
       int command = 0;
       buf >> command >> bufSize >> recvNumMessages;
-      PRINT(bufSize);
       assert(command == -1 && "error fetching work, mpi out of sync");
       if (bufSize > (2048-12))
       {
-        std::cout << "need more room for big msg" << std::endl;
+        //std::cout << "need more room for big msg" << std::endl;
         buf.clear();
         buf.reserve(bufSize);
         MPI_Bcast(buf.getData(),bufSize,MPI_BYTE,0,addr.group->comm);

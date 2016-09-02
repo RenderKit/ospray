@@ -145,8 +145,10 @@ namespace ospray {
       {
         if ((buffer.size() - getIndex()) < size)
         {
+          /*
           std::cout << "warning: reallocating SerialBuffer, had "
             << buffer.size() << " bytes but need " << index + size << "\n";
+            */
           // allocates over requested so we don't get a lot of small reallocations
           buffer.resize(getIndex() + size + 1024);  
           // bytesAvailable += size + 1024;
@@ -183,11 +185,11 @@ namespace ospray {
       void Work::run() {}
 
       void decode_buffer(SerialBuffer &buf, std::vector<Work*> &cmds, const int numMessages) {
-        std::cerr << "decoding " << numMessages << " messages\n";
+        //std::cout << "decoding " << numMessages << " messages\n";
         for (size_t i = 0; i < numMessages; ++i) {
           size_t type = 0;
           buf >> type;
-          std::cout << "Decoding message of type " << type << "\n";
+          //std::cout << "Decoding message of type " << type << "\n";
           Work::WorkMap::const_iterator fnd = Work::WORK_MAP.find(type);
           if (fnd != Work::WORK_MAP.end()) {
             Work *w = (*fnd->second)();
