@@ -24,15 +24,12 @@ void PerspectiveCamera_initRay(uniform Camera *uniform _self,
   uniform PerspectiveCamera *uniform self =
     (uniform PerspectiveCamera *uniform)_self;
 
-  uniform vec2f& imageStart = self->imageStart;
-  uniform vec2f& imageEnd   = self->imageEnd;
+  const vec2f screen = Camera_subRegion(_self, sample.screen);
   
   vec3f org = self->org;
   vec3f dir = self->dir_00
-    + ((imageStart.x * self->dir_du)
-       + (sample.screen.x * (self->dir_du * (imageEnd.x - imageStart.x))))
-    + ((imageStart.y * self->dir_dv)
-    + (sample.screen.y * (self->dir_dv * (imageEnd.y - imageStart.y))));
+    + screen.x * self->dir_du
+    + screen.y * self->dir_dv;
 
   if (self->super.doesDOF) {
     const vec3f llp = uniformSampleDisk(self->scaledAperture, sample.lens);
@@ -65,8 +62,6 @@ export void PerspectiveCamera_set(void *uniform _self,
                                   const uniform vec3f &dir_00,
                                   const uniform vec3f &dir_du,
                                   const uniform vec3f &dir_dv,
-                                  const uniform vec2f &imageStart,
-                                  const uniform vec2f &imageEnd,
                                   const uniform float scaledAperture,
                                   const uniform float aspect,
                                   const uniform float nearClip)
@@ -77,8 +72,6 @@ export void PerspectiveCamera_set(void *uniform _self,
   self->dir_00 = dir_00;
   self->dir_du = dir_du;
   self->dir_dv = dir_dv;
-  self->imageStart = imageStart;
-  self->imageEnd   = imageEnd;
   self->super.nearClip = nearClip;
   self->scaledAperture = scaledAperture;
   self->super.doesDOF = scaledAperture > 0.f;
@@ -99,13 +92,10 @@ const varying CameraSample &sample)
   uniform PerspectiveStereoCamera *uniform self =
   (uniform PerspectiveStereoCamera *uniform)_self;
   
-  uniform vec2f& imageStart = self->imageStart;
-  uniform vec2f& imageEnd   = self->imageEnd;
+  const vec2f screen = Camera_subRegion(_self, sample.screen);
   
-  float imageStart_x = imageStart.x;
-  float imageStart_y = imageStart.y;
-  float sample_screen_x = sample.screen.x;
-  float sample_screen_y = sample.screen.y;
+  float sample_screen_x = screen.x;
+  float sample_screen_y = screen.y;
   
   vec3f dXcamera = make_vec3f(0.f), dXfilm = make_vec3f(0.f);
   if (self->cameraMode == 1) {// Render left view.
@@ -130,11 +120,9 @@ const varying CameraSample &sample)
   
   vec3f org = self->org + dXcamera;
   vec3f dir = self->dir_00
-  + ((imageStart_x * self->dir_du)
-  + (sample_screen_x * (self->dir_du * (imageEnd.x - imageStart.x))))
-  + ((imageStart_y * self->dir_dv)
-  + (sample_screen_y * (self->dir_dv * (imageEnd.y - imageStart.y))))
-  + dXfilm;
+    + screen.x * self->dir_du
+    + screen.y * self->dir_dv;
+    + dXfilm;
   
   if (self->super.doesDOF) {
     const vec3f llp = uniformSampleDisk(self->scaledAperture, sample.lens);
@@ -167,8 +155,6 @@ const uniform vec3f &org,
 const uniform vec3f &dir_00,
 const uniform vec3f &dir_du,
 const uniform vec3f &dir_dv,
-const uniform vec2f &imageStart,
-const uniform vec2f &imageEnd,
 const uniform float scaledAperture,
 const uniform float aspect,
 const uniform float nearClip,
@@ -182,8 +168,6 @@ const uniform float ipdFactorFilm)
   self->dir_00 = dir_00;
   self->dir_du = dir_du;
   self->dir_dv = dir_dv;
-  self->imageStart = imageStart;
-  self->imageEnd   = imageEnd;
   self->super.nearClip = nearClip;
   self->scaledAperture = scaledAperture;
   self->super.doesDOF = scaledAperture > 0.f;

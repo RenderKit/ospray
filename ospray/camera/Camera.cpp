@@ -18,6 +18,8 @@
 #include "Camera.h"
 // embree 
 #include "../common/Library.h"
+// ispc-side stuff
+#include "Camera_ispc.h"
 // stl 
 #include <map>
 
@@ -56,6 +58,15 @@ namespace ospray {
     dir      = getParam3f("dir", vec3f(0.f, 0.f, 1.f));
     up       = getParam3f("up", vec3f(0.f, 1.f, 0.f));
     nearClip = getParam1f("near_clip", getParam1f("nearClip", 1e-6f));
+
+    imageStart = getParam2f("image_start", getParam2f("imageStart", vec2f(0.f)));
+    imageEnd   = getParam2f("image_end", getParam2f("imageEnd", vec2f(1.f)));
+    clamp(imageStart, vec2f(0.f), vec2f(1.f));
+    clamp(imageEnd, imageStart, vec2f(1.f));
+
+    ispc::Camera_set(getIE(),
+                    (const ispc::vec2f&)imageStart,
+                    (const ispc::vec2f&)imageEnd);
   }
 
 } // ::ospray
