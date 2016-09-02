@@ -85,6 +85,9 @@ namespace ospray {
       buf  << work->getTag() << *work;
       sendNumMessages++;
       // TODO: This is assuming we're always sending to the same place
+      if (sendAddress.group != NULL && sendAddress != addr) {
+        throw std::runtime_error("Can't send to different addresses currently!");
+      }
       sendAddress = addr;
       // flush();
     }

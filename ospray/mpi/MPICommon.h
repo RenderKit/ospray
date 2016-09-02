@@ -91,6 +91,12 @@ namespace ospray {
       {}
       inline bool isValid() const { return group != NULL && rank >= 0; }
     };
+    inline bool operator==(const Address &a, const Address &b) {
+      return a.group == b.group && a.rank == b.rank;
+    }
+    inline bool operator!=(const Address &a, const Address &b) {
+      return !(a == b);
+    }
 
     //special flags for sending and reciving from all ranks instead of individuals
     const int32 SEND_ALL=-1;
