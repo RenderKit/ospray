@@ -39,7 +39,6 @@ namespace ospray {
                                 FrameBuffer *fb,
                                 const uint32 channelFlags)
       {
-        PING;
         UNUSED(channelFlags);
         async_beginFrame();
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
@@ -67,7 +66,6 @@ namespace ospray {
                                FrameBuffer *fb,
                                const uint32 channelFlags)
       {
-        PING;
         async_beginFrame();
 
         auto *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
@@ -80,19 +78,19 @@ namespace ospray {
 
         const int ALLTASKS = fb->getTotalTiles();
         // TODO WILL: In collaborative mode rank 0 should join the worker group
-        // as well so this world should actually just be worker as before
-        int NTASKS = ALLTASKS / world.size;
+        // as well so this worker should actually just be worker as before
+        int NTASKS = ALLTASKS / worker.size;
 
         // NOTE(jda) - If all tiles do not divide evenly among all worker ranks
         //             (a.k.a. ALLTASKS / worker.size has a remainder), then
         //             some ranks will have one extra tile to do. Thus NTASKS
         //             is incremented if we are one of those ranks.
-        if ((ALLTASKS % world.size) > world.rank)
+        if ((ALLTASKS % worker.size) > worker.rank)
           NTASKS++;
 
         // serial_for(NTASKS, [&](int taskIndex){
         parallel_for(NTASKS, [&](int taskIndex){
-          const size_t tileID = taskIndex * world.size + world.rank;
+          const size_t tileID = taskIndex * worker.size + worker.rank;
           const size_t numTiles_x = fb->getNumTiles().x;
           const size_t tile_y = tileID / numTiles_x;
           const size_t tile_x = tileID - tile_y*numTiles_x;
@@ -125,8 +123,6 @@ namespace ospray {
           delete tilePtr;
 #endif
         });
-
-        std::cout << world.rank << " has finished running " << NTASKS << " tile tasks\n";
 
         dfb->waitUntilFinished();
         renderer->endFrame(perFrameData,channelFlags);
