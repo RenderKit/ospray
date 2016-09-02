@@ -483,6 +483,16 @@ namespace ospray {
       //MPI_Barrier(MPI_COMM_WORLD);
       work::CommitObject work(handle);
       processWork(&work);
+      /*
+      cmd.send(handle);
+      cmd.flush();
+
+      if (handle.defined()){
+        handle.lookup()->commit();
+      }
+
+      MPI_Barrier(MPI_COMM_WORLD);
+      */
     }
 
     /*! add a new geometry to a model */
@@ -575,6 +585,17 @@ namespace ospray {
       Assert(bufName);
       work::SetParam<float> work((ObjectHandle&)_object, bufName, f);
       processWork(&work);
+      /*
+      const ObjectHandle handle = (const ObjectHandle&)_object;
+      if (handle.defined()){
+        handle.lookup()->set(bufName, f);
+      }
+
+      cmd.newCommand(CMD_SET_FLOAT);
+      cmd.send((const ObjectHandle &)_object);
+      cmd.send(bufName);
+      cmd.send(f);
+      */
     }
 
     /*! assign (named) int parameter to an object */
