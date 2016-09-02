@@ -23,12 +23,10 @@ void OrthographicCamera_initRay(uniform Camera *uniform _self,
   uniform OrthographicCamera *uniform self = 
     (uniform OrthographicCamera *uniform)_self;
   
-  const vec2f screen = Camera_subRegion(_self, sample.screen);
-
   const vec3f dir = self->dir;
   const vec3f org = self->pos_00
-    + screen.x * self->pos_du
-    + screen.y * self->pos_dv;
+    + sample.screen.x * self->pos_du
+    + sample.screen.y * self->pos_dv;
 
   setRay(ray, org, dir, self->super.nearClip, infinity);
 }

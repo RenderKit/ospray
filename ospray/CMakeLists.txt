@@ -110,7 +110,6 @@ SET(OSPRAY_SOURCES
   fb/Tile.h
 
   camera/Camera.cpp
-  camera/Camera.ispc
   camera/PerspectiveCamera.ispc
   camera/PerspectiveCamera.cpp
   camera/OrthographicCamera.ispc
