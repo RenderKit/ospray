@@ -467,9 +467,9 @@ namespace ospray {
       cmd.send(handle);
       cmd.flush();
 
-      ManagedObject *obj = handle.lookup();
-      if (obj)
-        obj->commit();
+      if (handle.defined()){
+        handle.lookup()->commit();
+      }
 
       MPI_Barrier(MPI_COMM_WORLD);
     }
@@ -624,9 +624,9 @@ namespace ospray {
       Assert(bufName);
 
       const ObjectHandle handle = (const ObjectHandle&)_object;
-      ManagedObject *obj = handle.lookup();
-      if (obj)
-        obj->set(bufName, f);
+      if (handle.defined()){
+        handle.lookup()->set(bufName, f);
+      }
 
       cmd.newCommand(CMD_SET_FLOAT);
       cmd.send((const ObjectHandle &)_object);
