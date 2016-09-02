@@ -132,7 +132,7 @@ namespace ospray {
         // bytesAvailable += size;
       }
       void SerialBuffer::read(unsigned char* data, size_t size) {
-        assert(getIndex() >= size);
+        assert(buffer.size() - getIndex() >= size);
         memcpy(data, getPtr(), size);
         index += size;
         // bytesAvailable -= size;
@@ -145,9 +145,10 @@ namespace ospray {
       {
         if ((buffer.size() - getIndex()) < size)
         {
-                    std::cout << "warning: reallocating SerialBuffer, had "
+          std::cout << "warning: reallocating SerialBuffer, had "
             << buffer.size() << " bytes but need " << index + size << "\n";
-          buffer.resize(getIndex() + size + 1024);  // allocates over requested so we don't get a lot of small reallocations
+          // allocates over requested so we don't get a lot of small reallocations
+          buffer.resize(getIndex() + size + 1024);  
           // bytesAvailable += size + 1024;
         }
       }

@@ -43,9 +43,12 @@ namespace ospray {
         // size_t bytesAvailable;
 
         SerialBuffer(size_t sz = 1024 * 32);
-        unsigned char* getPtr();  // get data at current index  WARNING: if realloced, ptrs invalidated
-        unsigned char* getPtr(size_t ind) { return &buffer.at(ind); } // get data at index  WARNING: if realloced, ptrs invalidated
-        unsigned char* getData() { return buffer.data(); }  // return data at index 0 WARNING: if realloced, ptrs invalidated
+        // get data at current index  WARNING: if realloced, ptrs invalidated
+        unsigned char* getPtr();
+        // get data at index  WARNING: if realloced, ptrs invalidated
+        unsigned char* getPtr(size_t ind) { return &buffer.at(ind); }
+        // return data at index 0 WARNING: if realloced, ptrs invalidated
+        unsigned char* getData() { return buffer.data(); }
         void write(unsigned char* data, size_t size);
         void read(unsigned char* data, size_t size);
         //reserve size elements from current index
