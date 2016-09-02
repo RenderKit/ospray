@@ -1007,10 +1007,15 @@ namespace ospray {
     {
       if (currentApiMode == OSPD_MODE_MASTERED) {
         mpi::send(mpi::Address(&mpi::worker,(int32)mpi::SEND_ALL), work);
+        // TODO: Maybe instead of this we can have a concept of "flushing" work units
+        if (dynamic_cast<work::CommandFinalize*>(work)) {
+          mpi::flush();
+        }
       }
-      else {
+      // TODO: In mastered mode we want to selectively run commands maybe!?
+      //else {
         work->run();
-      }
+      //}
     }
 
     ObjectHandle MPIDevice::allocateHandle() const {
