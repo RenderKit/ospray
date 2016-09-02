@@ -172,7 +172,7 @@ namespace ospray {
     MPI_CALL(Reduce(&voxelRange.y, &globalVoxelRange.y, 1, MPI_FLOAT, MPI_MAX, 0, mpi::worker.comm));
     set("voxelRange", globalVoxelRange);
 #endif
-    return 0;
+    return true;
   }
 
   void DataDistributedBlockedVolume::createEquivalentISPC()
@@ -275,7 +275,7 @@ namespace ospray {
               volume->findParam("scaleFactor",1)->set(scaleFactor);
             }
             
-            printf("rank %li owns block %i,%i,%i (ID %i), dims %i %i %i\n",
+            printf("worker rank %li owns block %i,%i,%i (ID %i), dims %i %i %i\n",
                    (size_t)core::getWorkerRank(),ix,iy,iz,
                    blockID,blockDims.x,blockDims.y,blockDims.z);
             block->cppVolume = volume;
