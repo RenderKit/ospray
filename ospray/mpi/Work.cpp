@@ -227,11 +227,6 @@ namespace ospray {
         handle.assign(geometry);
       }
       template<>
-      void NewObject<TriangleMesh>::run() {
-        TriangleMesh *triangleMesh = new TriangleMesh;
-        handle.assign(triangleMesh);
-      }
-      template<>
       void NewObject<Camera>::run() {
         Camera *camera = Camera::createCamera(type.c_str());
         Assert(camera);

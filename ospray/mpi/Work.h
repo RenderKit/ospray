@@ -190,8 +190,6 @@ namespace ospray {
       template<>
       void NewObject<Geometry>::run();
       template<>
-      void NewObject<TriangleMesh>::run();
-      template<>
       void NewObject<Camera>::run();
       template<>
       void NewObject<Volume>::run();
