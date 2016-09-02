@@ -84,6 +84,7 @@ namespace ospray {
       }
       buf  << work->getTag() << *work;
       sendNumMessages++;
+      // TODO: This is assuming we're always sending to the same place
       sendAddress = addr;
       // flush();
     }
@@ -95,7 +96,12 @@ namespace ospray {
       size_t endIndex = buf.getIndex();
       size_t sz = buf.getIndex()-sendWorkIndex;
       // set size in msg header
-      buf.setIndex(sendSizeIndex); buf << sz << sendNumMessages; buf.setIndex(endIndex);
+      buf.setIndex(sendSizeIndex);
+      PRINT(sendSizeIndex);
+      buf << sz << sendNumMessages;
+      buf.setIndex(endIndex);
+      PRINT(sz);
+      PRINT(sendNumMessages);
       // MPI_CALL(Bcast(&sz, 1, MPI_AINT, MPI_ROOT, mpi::worker.comm));
       // Now send the buffer
       if (addr.rank != SEND_ALL)
@@ -112,26 +118,29 @@ namespace ospray {
     {
       work::SerialBuffer& buf = recvBuffer;
       //TODO: assert current mode is syncronized
-      int command;
-      size_t bufSize;
+      int recvNumMessages = 0;
+      size_t bufSize = 0;
       if (addr.rank != RECV_ALL)
         std::runtime_error("mpi::recv on individual ranks not yet implemented");
       MPI_Bcast(buf.getData(),2048,MPI_BYTE,0,addr.group->comm);
-      buf >> command >> bufSize;
+      int command = 0;
+      buf >> command >> bufSize >> recvNumMessages;
+      PRINT(bufSize);
       assert(command == -1 && "error fetching work, mpi out of sync");
       if (bufSize > (2048-12))
       {
+        std::cout << "need more room for big msg" << std::endl;
         buf.clear();
         buf.reserve(bufSize);
         MPI_Bcast(buf.getData(),bufSize,MPI_BYTE,0,addr.group->comm);
       }
-      work::decode_buffer(buf, workCommands);
+      work::decode_buffer(buf, workCommands, recvNumMessages);
       buf.clear();
     }
 
     // void send(const Address& address, void* msgPtr, int32 msgSize)
     // {
-    //   mpi::async::CommLayer::WORLD->sendTo(address, msgPtr, msgSize); 
+    //   mpi::async::CommLayer::WORLD->sendTo(address, msgPtr, msgSize);
     // }
 
     void flush()
