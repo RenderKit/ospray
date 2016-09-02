@@ -121,7 +121,7 @@ namespace ospray {
 
       // Decode the commands in the buffer, appending them to the cmds vector.
       // TODO: Should we be using std::shared_ptr here instead of raw pointers?
-      void decode_buffer(SerialBuffer &buf, std::vector<Work*> &cmds);
+      void decode_buffer(SerialBuffer &buf, std::vector<Work*> &cmds, const int numMessages);
 
       template<typename T>
       struct NewObjectTag;

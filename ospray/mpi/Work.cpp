@@ -181,9 +181,7 @@ namespace ospray {
 
       void Work::run() {}
 
-      void decode_buffer(SerialBuffer &buf, std::vector<Work*> &cmds) {
-        int numMessages = 0;
-        buf >> numMessages;
+      void decode_buffer(SerialBuffer &buf, std::vector<Work*> &cmds, const int numMessages) {
         std::cerr << "decoding " << numMessages << " messages\n";
         for (size_t i = 0; i < numMessages; ++i) {
           size_t type = 0;
