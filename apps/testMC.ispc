@@ -355,9 +355,6 @@ inline vec3f makeRelativeVertex(const int vID)
                     vID & 4 ? 1.f : 0.f);
 }
 
-inline vec3f lerp(const vec3f a, const vec3f b, float w)
-{ return a + w * (b-a); }
-
 inline vec3f makeInterpolatedVertex(const float isoval, const varying float vertexValue[8], const int id0, const int id1)
 {
   const vec3f v0pos = makeRelativeVertex(id0);
@@ -365,7 +362,7 @@ inline vec3f makeInterpolatedVertex(const float isoval, const varying float vert
   const float v0val = vertexValue[id0];
   const float v1val = vertexValue[id1];
   const float w = (isoval - v0val) / (v1val-v0val);
-  return lerp(v0pos,v1pos,w);
+  return lerp(w, v0pos, v1pos);
 }
 
 void doCellsForTriangleCount(const float isoValue,
