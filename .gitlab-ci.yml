@@ -43,24 +43,33 @@ build-fedora-gcc:
     - gcc
     - build
 
-build-ubuntu-gcc:
+build-ubuntu1604-gcc:
   type: build
   script:
     - scripts/build_gitlab/linux.sh
   tags:
-    - ubuntu
+    - ubuntu1604
     - gcc
     - build
 
-#build-ubuntu-clang:
-#  type: build
-#  script:
-#    - export CC=clang
-#    - export CXX=clang++
-#    - scripts/build_gitlab/linux.sh
-#  tags:
-#    - ubuntu
-#    - clang
+build-ubuntu1604-clang:
+  type: build
+  script:
+    - export CC=clang
+    - export CXX=clang++
+    - scripts/build_gitlab/linux.sh
+  tags:
+    - ubuntu1604
+    - clang
+
+build-ubuntu1404-gcc:
+  type: build
+  script:
+    - scripts/build_gitlab/linux.sh
+  tags:
+    - ubuntu1404
+    - gcc
+    - build
 
 build-sles-gcc:
   type: build
@@ -80,32 +89,32 @@ build-osx-clang:
     - clang
     - build
 
-build-windows-msvc:
-  type: build
-  script:
-    - call scripts\build_gitlab\win.bat "Visual Studio 12 2013 Win64" "v120"
-  tags:
-    - msvc
-    - build
-    - win7
+#build-windows-msvc:
+#  type: build
+#  script:
+#    - call scripts\build_gitlab\win.bat "Visual Studio 12 2013 Win64" "v120"
+#  tags:
+#    - msvc
+#    - build
+#    - win7
 
-build-windows-msvc14:
-  type: build
-  script:
-    - call scripts\build_gitlab\win.bat "Visual Studio 14 2015 Win64" "v140"
-  tags:
-    - msvc14
-    - build
-    - win7
+#build-windows-msvc14:
+#  type: build
+#  script:
+#    - call scripts\build_gitlab\win.bat "Visual Studio 14 2015 Win64" "v140"
+#  tags:
+#    - msvc14
+#    - build
+#    - win7
 
-build-windows-icc:
-  type: build
-  script:
-    - call scripts\build_gitlab\win.bat "Visual Studio 12 2013 Win64" "Intel C++ Compiler 16.0"
-  tags:
-    - icc
-    - build
-    - win7
+#build-windows-icc:
+#  type: build
+#  script:
+#    - call scripts\build_gitlab\win.bat "Visual Studio 12 2013 Win64" "Intel C++ Compiler 16.0"
+#  tags:
+#    - icc
+#    - build
+#    - win7
 
 ### RELEASE JOBS ###
 
@@ -169,19 +178,19 @@ release-osx-clang:
       - build_release/*.gz
       - build_release/*.dmg
 
-release-windows:
-  type: deploy
-  script:
-    - call scripts\release\win.bat
-  tags:
-    - msvc
-    - release
-    - win7
-  only:
-    - devel
-    - master
-    - release-1.0
-  artifacts:
-    paths:
-      - build_release\ospray*.zip
-      - build_release\ospray*.exe
+#release-windows:
+#  type: deploy
+#  script:
+#    - call scripts\release\win.bat
+#  tags:
+#    - msvc
+#    - release
+#    - win7
+#  only:
+#    - devel
+#    - master
+#    - release-1.0
+#  artifacts:
+#    paths:
+#      - build_release\ospray*.zip
+#      - build_release\ospray*.exe
