@@ -26,7 +26,11 @@
 namespace ospray {
   namespace mpi {
     namespace work {
-#define REGISTER_WORK_UNIT(W) W::TAG, []() -> Work* { return new W(); }
+      template<typename T>
+      Work* make_work_unit() {
+        return new T();
+      }
+#define REGISTER_WORK_UNIT(W) W::TAG, make_work_unit<W>
       const Work::WorkMap Work::WORK_MAP = {
         { REGISTER_WORK_UNIT(NewObject<Renderer>) },
         { REGISTER_WORK_UNIT(NewObject<Model>) },
