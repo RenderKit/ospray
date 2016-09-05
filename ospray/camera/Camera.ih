@@ -17,6 +17,7 @@
 #pragma once
 
 #include "../common/Ray.ih"
+#include "math/box.ih"
 
 /*! \file camera.ih Defines the abstract base class of an ISPC-side camera */
 
@@ -31,7 +32,7 @@ struct CameraSample {
 };
 
 /*! \brief Fct pointer type for 'virtual' method that sets a pixel */
-typedef void (*Camera_initRay)(uniform Camera  *uniform,
+typedef void (*Camera_initRay)(uniform Camera *uniform,
                                varying Ray &ray,
                                const varying CameraSample &sample);
 
@@ -48,5 +49,10 @@ struct Camera
                     unused. */
 
   float nearClip; /*!< \brief near clipping plane. */
+  box2f subImage; //!< viewable tile / subregion to compute, [0..1]^2 x [0..1]^2
 };
 
+inline vec2f Camera_subRegion(const uniform Camera *uniform self, const vec2f &screen)
+{
+  return lerp(screen, self->subImage.lower, self->subImage.upper);
+}
