@@ -25,10 +25,8 @@ MARK_AS_ADVANCED(EXP_NEW_BB_VOLUME_KERNELS)
 
 # NOTE(jda) - PThread hint used by both Embree and OSPRay
 SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+SET(THREADS_PREFER_PTHREAD_FLAG TRUE) # for gcc6
 FIND_PACKAGE(Threads REQUIRED)
-IF ("${CMAKE_THREAD_LIBS_INIT}" STREQUAL "")
-  SET(CMAKE_THREAD_LIBS_INIT -lpthread)
-ENDIF()
 
 # -------------------------------------------------------
 # redistribute TBB
