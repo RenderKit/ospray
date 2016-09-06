@@ -72,8 +72,7 @@ namespace ospray {
                                 (const ispc::vec3f&)dir_du,
                                 (const ispc::vec3f&)dir_dv,
                                 scaledAperture,
-                                aspect,
-                                nearClip);
+                                aspect);
   }
 
   OSP_REGISTER_CAMERA(PerspectiveCamera,perspective);
@@ -159,7 +158,6 @@ namespace ospray {
                                 (const ispc::vec3f&)dir_dv,
                                 scaledAperture,
                                 aspect,
-                                nearClip,
                                 cameraMode,
                                 ipdFactorCamera,
                                 ipdFactorFilm);

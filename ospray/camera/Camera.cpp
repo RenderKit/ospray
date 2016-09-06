@@ -64,7 +64,7 @@ namespace ospray {
     clamp(imageStart, vec2f(0.f), vec2f(1.f));
     clamp(imageEnd, imageStart, vec2f(1.f));
 
-    ispc::Camera_set(getIE(),
+    ispc::Camera_set(getIE(), nearClip,
                     (const ispc::vec2f&)imageStart,
                     (const ispc::vec2f&)imageEnd);
   }

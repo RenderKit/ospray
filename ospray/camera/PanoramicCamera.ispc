@@ -55,11 +55,9 @@ export void *uniform PanoramicCamera_create(void *uniform cppE)
 
 export void PanoramicCamera_set(void *uniform _self, 
                                 const uniform vec3f &pos,
-                                const uniform linear3f &frame,
-                                const uniform float nearClip)
+                                const uniform linear3f &frame)
 {
   uniform PanoramicCamera *uniform self = (uniform PanoramicCamera *uniform)_self;
   self->pos = pos;
   self->frame = frame;
-  self->super.nearClip = nearClip;
 }

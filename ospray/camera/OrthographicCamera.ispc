@@ -51,8 +51,7 @@ export void OrthographicCamera_set(void *uniform _self,
                                    const uniform vec3f &dir,
                                    const uniform vec3f &pos_00,
                                    const uniform vec3f &pos_du,
-                                   const uniform vec3f &pos_dv,
-                                   const uniform float nearClip)
+                                   const uniform vec3f &pos_dv)
 {
   uniform OrthographicCamera *uniform self
     = (uniform OrthographicCamera *uniform)_self;
@@ -60,5 +59,4 @@ export void OrthographicCamera_set(void *uniform _self,
   self->pos_00 = pos_00;
   self->pos_du = pos_du;
   self->pos_dv = pos_dv;
-  self->super.nearClip = nearClip;
 }

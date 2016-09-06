@@ -63,8 +63,7 @@ export void PerspectiveCamera_set(void *uniform _self,
                                   const uniform vec3f &dir_du,
                                   const uniform vec3f &dir_dv,
                                   const uniform float scaledAperture,
-                                  const uniform float aspect,
-                                  const uniform float nearClip)
+                                  const uniform float aspect)
 {
   uniform PerspectiveCamera *uniform self
     = (uniform PerspectiveCamera *uniform)_self;
@@ -72,7 +71,6 @@ export void PerspectiveCamera_set(void *uniform _self,
   self->dir_00 = dir_00;
   self->dir_du = dir_du;
   self->dir_dv = dir_dv;
-  self->super.nearClip = nearClip;
   self->scaledAperture = scaledAperture;
   self->super.doesDOF = scaledAperture > 0.f;
   self->aspect = aspect;
@@ -157,7 +155,6 @@ const uniform vec3f &dir_du,
 const uniform vec3f &dir_dv,
 const uniform float scaledAperture,
 const uniform float aspect,
-const uniform float nearClip,
 const uniform int32 cameraMode,
 const uniform float ipdFactorCamera,
 const uniform float ipdFactorFilm)
@@ -168,7 +165,6 @@ const uniform float ipdFactorFilm)
   self->dir_00 = dir_00;
   self->dir_du = dir_du;
   self->dir_dv = dir_dv;
-  self->super.nearClip = nearClip;
   self->scaledAperture = scaledAperture;
   self->super.doesDOF = scaledAperture > 0.f;
   self->aspect = aspect;

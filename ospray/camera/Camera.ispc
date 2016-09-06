@@ -18,10 +18,12 @@
 
 
 export void Camera_set(void *uniform _self,
+                       const uniform float nearClip,
                        const uniform vec2f &imageStart,
                        const uniform vec2f &imageEnd)
 {
   uniform Camera *uniform self = (uniform Camera *uniform)_self;
+  self->nearClip = nearClip;
   self->subImage.lower = imageStart;
   self->subImage.upper = imageEnd;
 }
