@@ -41,7 +41,9 @@ namespace ospray {
     aspect = getParamf("aspect", 1.f);
     apertureRadius = getParamf("apertureRadius", 0.f);
     focusDistance = getParamf("focusDistance", 1.f);
-
+    stereoMode = (StereoMode)getParam1i("stereoMode", STEREO_NONE);
+    interpupillaryDistance = getParamf("interpupillaryDistance", 0.0635f); // 63.5 mm
+    
     // ------------------------------------------------------------------
     // now, update the local precomputed values
     // ------------------------------------------------------------------
@@ -49,7 +51,19 @@ namespace ospray {
     vec3f dir_du = normalize(cross(dir, up));
     vec3f dir_dv = cross(dir_du, dir);
 
-    float imgPlane_size_y = 2.f*tanf(fovy/2.f*M_PI/180.);
+    vec3f org = pos;
+    const vec3f ipd_offset = 0.5f * interpupillaryDistance * dir_du;
+
+    switch (stereoMode) {
+      case STEREO_LEFT:
+        org -= ipd_offset;
+        break;
+      case STEREO_RIGHT:
+        org += ipd_offset;
+        break;
+    }
+    
+    float imgPlane_size_y = 2.f*tanf(deg2rad(0.5f*fovy));
     float imgPlane_size_x = imgPlane_size_y * aspect;
 
     dir_du *= imgPlane_size_x;
@@ -67,103 +81,18 @@ namespace ospray {
     }
 
     ispc::PerspectiveCamera_set(getIE(),
-                                (const ispc::vec3f&)pos,
-                                (const ispc::vec3f&)dir_00,
-                                (const ispc::vec3f&)dir_du,
-                                (const ispc::vec3f&)dir_dv,
-                                scaledAperture,
-                                aspect);
-  }
-
-  OSP_REGISTER_CAMERA(PerspectiveCamera,perspective);
-  OSP_REGISTER_CAMERA(PerspectiveCamera,thinlens);
-
-} // ::ospray
-
-
-
-
-
-
-
-// Stereo, Work In Progress.
-
-namespace ospray {
-  
-  PerspectiveStereoCamera::PerspectiveStereoCamera()
-  {
-    ispcEquivalent = ispc::PerspectiveStereoCamera_create(this);
-  }
-  void PerspectiveStereoCamera::commit()
-  {
-    Camera::commit();
-    
-    // ------------------------------------------------------------------
-    // first, "parse" the additional expected parameters
-    // ------------------------------------------------------------------
-    fovy = getParamf("fovy", 60.f);
-    aspect = getParamf("aspect", 1.f);
-    apertureRadius = getParamf("apertureRadius", 0.f);
-    focusDistance = getParamf("focusDistance", 1.f);
-    ipdFactor = getParamf("ipdFactor", 30.f);
-    
-    cameraMode = getParam1i("cameraMode", 0);
-    
-    if (cameraMode == 0) {
-      //aspect *= 2;// For double-wide buffer.
-    }
-    
-    // ------------------------------------------------------------------
-    // now, update the local precomputed values
-    // ------------------------------------------------------------------
-    dir = normalize(dir);
-    vec3f dir_du = normalize(cross(dir, up));
-    vec3f dir_dv = cross(dir_du, dir);
-    
-    //focusDistance = 4;
-    
-    //printf("focusDistance = %f\n", focusDistance);
-    
-    float imgPlane_size_y = 2.f*tanf(fovy/2.f*M_PI/180.) * focusDistance;
-    float imgPlane_size_x = imgPlane_size_y * aspect;
-    
-    dir_du *= imgPlane_size_x;
-    dir_dv *= imgPlane_size_y;
-    
-    vec3f dir_00 = dir - .5f * dir_du - .5f * dir_dv;
-    
-    ipdFactor = 30;// testing
-    
-    float ipdFactorCamera = focusDistance / ipdFactor;// 0.1f;
-    float ipdFactorFilm = ipdFactorCamera / imgPlane_size_x;
-    
-    //ipdFactorCamera = 0;
-    //ipdFactorFilm = 0;
-    
-    ipdFactorCamera = 20;// testing
-    
-    float scaledAperture = 0.f;
-    // prescale to focal plane
-    if (apertureRadius > 0.f) {
-      dir_du *= focusDistance;
-      dir_dv *= focusDistance;
-      dir_00 *= focusDistance;
-      scaledAperture = apertureRadius / imgPlane_size_x;
-    }
-    
-    ispc::PerspectiveStereoCamera_set(getIE(),
-                                (const ispc::vec3f&)pos,
+                                (const ispc::vec3f&)org,
                                 (const ispc::vec3f&)dir_00,
                                 (const ispc::vec3f&)dir_du,
                                 (const ispc::vec3f&)dir_dv,
                                 scaledAperture,
                                 aspect,
-                                cameraMode,
-                                ipdFactorCamera,
-                                ipdFactorFilm);
+                                stereoMode == STEREO_SIDE_BY_SIDE,
+                                (const ispc::vec3f&)ipd_offset);
   }
-  
-  OSP_REGISTER_CAMERA(PerspectiveStereoCamera,perspectivestereo);
-  OSP_REGISTER_CAMERA(PerspectiveStereoCamera,thinlensstereo);
-  
+
+  OSP_REGISTER_CAMERA(PerspectiveCamera,perspective);
+  OSP_REGISTER_CAMERA(PerspectiveCamera,thinlens);
+  OSP_REGISTER_CAMERA(PerspectiveCamera,stereo);
+
 } // ::ospray
