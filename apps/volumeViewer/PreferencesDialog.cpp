@@ -122,7 +122,7 @@ PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer, ospcommon::box3
 
   // set default values. this will trigger signal / slot executions.
   subsamplingInteractionEnabledCheckBox->setChecked(false);
-  gradientShadingEnabledCheckBox->setChecked(false);
+  gradientShadingEnabledCheckBox->setChecked(true);
   singleShadeCB->setChecked(true);
   adaptiveSamplingCB->setChecked(true);
   preIntegrationCB->setChecked(true);

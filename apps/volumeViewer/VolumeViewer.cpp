@@ -604,6 +604,8 @@ void VolumeViewer::initObjects(const std::string &renderer_type)
     ospSet1i(renderer, "shadowsEnabled", 1);
   }
 
+
+
   // Create OSPRay ambient and directional lights. GUI elements will modify their parameters.
   ambientLight = ospNewLight(renderer, "AmbientLight");
   exitOnCondition(ambientLight == NULL, "could not create ambient light");
@@ -631,12 +633,66 @@ void VolumeViewer::initObjects(const std::string &renderer_type)
   for (size_t i=0 ; i < objectFileFilenames.size() ; i++)
     importObjectsFromFile(objectFileFilenames[i]);
 
+
   boundingBox = ospcommon::empty;
   if (!modelStates.empty()) {
     for (size_t i=0; i<modelStates[0].volumes.size(); i++) 
       boundingBox.extend(modelStates[0].volumes[i]->boundingBox);
   }
   PRINT(boundingBox);
+
+
+//add plane
+  // OSPMaterial planeMaterial = ospNewMaterial(renderer,"default");
+  // ospSet3f(planeMaterial,"Kd",1,1,1);
+  // // ospSet3f(planeMaterial,"Ks",.1,.1,.1);
+  // // ospSet1f(planeMaterial,"Ns",10);
+  // // ospSet1f(planeMaterial,"d",1;
+  // ospCommit(planeMaterial);
+
+    float pcolor[] =  { 0.9f, 0.5f, 0.5f, 1.0f,
+                     0.8f, 0.8f, 0.8f, 1.0f,
+                     0.8f, 0.8f, 0.8f, 1.0f,
+                     0.5f, 0.9f, 0.5f, 1.0f };
+
+  osp::vec3f *vertices = new osp::vec3f[4];
+  float ps = 1000.f;
+  float py = boundingBox.lower.y-10.f;
+  vertices[0] = osp::vec3f{-ps, py, -ps};
+  vertices[1] = osp::vec3f{-ps, py, ps};
+  vertices[2] = osp::vec3f{ps, py, -ps};
+  vertices[3] = osp::vec3f{ps, py, ps};
+
+  OSPGeometry ospMesh = ospNewGeometry("triangles");
+  OSPData position = ospNewData(4, OSP_FLOAT3, &vertices[0]);
+  ospCommit(position);
+  ospSetData(ospMesh, "vertex", position);
+
+  OSPData data = ospNewData(4, OSP_FLOAT4, pcolor);
+  ospCommit(data);
+  ospSetData(ospMesh, "vertex.color", data);
+
+  size_t numTriangles = 2;
+  osp::vec3i *triangles = new osp::vec3i[2];
+  triangles[0] = osp::vec3i{0,1,2};
+  triangles[1] = osp::vec3i{1,2,3};
+
+  OSPData index = ospNewData(numTriangles, OSP_INT3, &triangles[0]);
+  ospCommit(index);
+  ospSetData(ospMesh, "index", index); 
+  delete[] triangles;
+
+  // ospSetMaterial(ospMesh, planeMaterial);
+  ospCommit(ospMesh);
+
+  for(size_t i=0; i<modelStates.size(); i++) 
+  {
+    ospCommit(modelStates[i].model);
+    ospAddGeometry(modelStates[i].model, ospMesh);
+    ospCommit(modelStates[i].model);
+  }
+  ospRelease(index);
+
   // // Get the bounding box of all volumes of the first model.
   // if(modelStates.size() > 0 && modelStates[0].volumes.size() > 0) {
   //   ospGetVec3f(modelStates[0].volumes[0], "boundingBoxMin", (osp::vec3f*)&boundingBox.lower);
