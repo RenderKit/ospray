@@ -368,6 +368,7 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
       //adaptively refine sampling rate
       samplingRate = min(adaptiveScalar*sampleOpacity,maxSamplingRate);
       volume->intersectAdaptive(volume, ray, samplingRate);
+      lastSample = -1;
       continue;
     }
 

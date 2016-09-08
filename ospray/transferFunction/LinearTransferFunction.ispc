@@ -188,6 +188,11 @@ LinearTransferFunction_getIntegratedColorForValue(const void *uniform _self,
   // Compute the color index and fractional offset.
   int   index1     = floor(value1);  
   float remainder1 = value1 - index1;
+  // The interpolated opacity.
+  int oindex1 = min((value1)/((float)(self->colorValueCount-1))*((float)(self->opacityValueCount-1)),self->opacityValueCount-1);
+  float opacity1 =
+    (1.0f - remainder1) * self->opacityValues[oindex1] 
+    + remainder1 * self->opacityValues[min(oindex1 + 1, self->opacityValueCount - 1)];
 
   // The interpolated color.
    vec3f interpColor1 = ((1.0f - remainder1) * self->colorValues[index1] 
@@ -202,6 +207,10 @@ LinearTransferFunction_getIntegratedColorForValue(const void *uniform _self,
   // Compute the color index and fractional offset.
   int   index2     = floor(value2);  
   float remainder2 = value2 - index2;
+  int oindex2 = min((value2)/((float)(self->colorValueCount-1))*((float)(self->opacityValueCount-1)),self->opacityValueCount-1);
+  float opacity2 =
+    (1.0f - remainder1) * self->opacityValues[oindex2] 
+    + remainder1 * self->opacityValues[min(oindex2 + 1, self->opacityValueCount - 1)];
 
   // The interpolated color.
    vec3f interpColor2 = ((1.0f - remainder2) * self->colorValues[index2] 
@@ -219,10 +228,10 @@ LinearTransferFunction_getIntegratedColorForValue(const void *uniform _self,
   // ret = ret / (2.f+numAdded);
 
   // return ret;
-  if (index2 - index1 >= 2)
-   ret = self->colorPITable[(index1+1)+(index2-1)*self->colorValueCount];
+  //if (index2 - index1 >= 2)
+  // ret = self->colorPITable[(index1+1)+(index2-1)*self->colorValueCount];
  float dev = max((index2-index1+1.f),2.f);
-  return (ret + interpColor1 + interpColor2)/dev;
+  return (ret + (interpColor1*opacity1 + interpColor2*opacity2)*2.f/(opacity1+opacity2+1e-5f))/dev;
 }
 
 uniform vec2f 
@@ -416,8 +425,20 @@ void LinearTransferFunction_precomputePreIntegratedColorValues(void* uniform _se
       if (j < i)
         continue;
       vec3f val = make_vec3f(0.f);
+      float opacityAccum = 0.f;
       for (int k = i; k <= j; k++)
-        val = val + self->colorValues[k];
+      {
+        const float interp = ((float)k)/(float)self->colorValueCount;
+        float opacity = 1.f;
+        if (self->opacityValueCount > 0)
+        {
+          opacity = self->opacityValues[interp*self->opacityValueCount];
+        }
+        val = val + self->colorValues[k]*opacity;
+        opacityAccum += opacity;
+      }
+      if (opacityAccum > 0.f)
+        val = val/opacityAccum;
       self->colorPITable[j*self->colorValueCount+i] = val;
     }
   }

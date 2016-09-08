@@ -54,7 +54,7 @@ LightEditor::LightEditor(OSPLight ambientLight, OSPLight directionalLight) : amb
   connect(&directionalLightElevationSlider, SIGNAL(valueChanged(int)), this, SLOT(directionalLightChanged()));
 
   // Set default light parameters.
-  ambientLightIntensitySpinBox.setValue(0.1);
+  ambientLightIntensitySpinBox.setValue(0.1);  //doesn't seem to fire if it's 0 first
   ambientLightIntensitySpinBox.setValue(0.0);
 
   directionalLightIntensitySpinBox.setValue(1.0);
