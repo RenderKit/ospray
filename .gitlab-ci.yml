@@ -98,14 +98,14 @@ build-osx-clang:
 #    - build
 #    - win7
 
-#build-windows-msvc14:
-#  type: build
-#  script:
-#    - call scripts\build_gitlab\win.bat "Visual Studio 14 2015 Win64" "v140"
-#  tags:
-#    - msvc14
-#    - build
-#    - win7
+build-windows-msvc14:
+  type: build
+  script:
+    - call scripts\build_gitlab\win.bat "Visual Studio 14 2015 Win64" "v140"
+  tags:
+    - msvc14
+    - build
+    - win7
 
 #build-windows-icc:
 #  type: build
