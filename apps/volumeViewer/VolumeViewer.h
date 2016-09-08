@@ -160,6 +160,12 @@ public slots:
   //! Set isosurfaces on all volumes.
   void setIsovalues(std::vector<float> isovalues);
 
+  void setPlane(bool st);
+
+  void setAOSamples(int value);
+
+  void setAOWeight(double value);
+
 protected:
 
   //! OSPRay object file filenames, one for each model / time step.
@@ -236,5 +242,9 @@ protected:
 
   //! Create and configure the user interface widgets and callbacks.
   void initUserInterfaceWidgets();
+
+  bool usePlane;
+
+  OSPGeometry planeMesh;
 
 };

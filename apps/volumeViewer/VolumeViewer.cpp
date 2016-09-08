@@ -53,7 +53,8 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
     transferFunctionEditor(NULL),
     isosurfaceEditor(NULL),
     autoRotateAction(NULL),
-    autoRotationRate(0.025f)
+    autoRotationRate(0.025f),
+    usePlane(true)
 {
   // Default window size.
   resize(1024, 768);
@@ -342,13 +343,50 @@ void VolumeViewer::setShadows(bool value)
   ospSet1i(renderer, "shadowsEnabled", value);  
   if(rendererInitialized)
     ospCommit(renderer);
+
+  render();
+}
+
+void VolumeViewer::setPlane(bool st)
+{
+  usePlane = st;
+  if (planeMesh)
+  {
+    for(size_t i=0; i<modelStates.size(); i++) 
+    {
+      ospCommit(modelStates[i].model);
+      if (usePlane)
+        ospAddGeometry(modelStates[i].model, planeMesh);
+      else
+        ospRemoveGeometry(modelStates[i].model, planeMesh);
+      ospCommit(modelStates[i].model);
+    }
+  }
+  render();
+}
+
+//! Set gradient shading flag on all volumes.
+void VolumeViewer::setAOWeight(double value)
+{
+  ospSet1f(renderer, "aoWeight", value);  
+  if(rendererInitialized)
+    ospCommit(renderer);
+  render();
+}
+
+//! Set gradient shading flag on all volumes.
+void VolumeViewer::setAOSamples(int value)
+{
+  ospSet1i(renderer, "aoSamples", value);  
+  if(rendererInitialized)
+    ospCommit(renderer);
+  render();
 }
 
 
 //! Set gradient shading flag on all volumes.
 void VolumeViewer::setAdaptiveScalar(double value)
 {
-  std::cout << __PRETTY_FUNCTION__ << std::endl;
   for(size_t i=0; i<modelStates.size(); i++)
     for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
       ospSet1f(modelStates[i].volumes[j]->handle, "adaptiveScalar", value);
@@ -361,7 +399,6 @@ void VolumeViewer::setAdaptiveScalar(double value)
 //! Set gradient shading flag on all volumes.
 void VolumeViewer::setAdaptiveMaxSamplingRate(double value)
 {
-  std::cout << __PRETTY_FUNCTION__ << std::endl;
   for(size_t i=0; i<modelStates.size(); i++)
     for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
       ospSet1f(modelStates[i].volumes[j]->handle, "adaptiveMaxSamplingRate", value);
@@ -374,7 +411,6 @@ void VolumeViewer::setAdaptiveMaxSamplingRate(double value)
 //! Set gradient shading flag on all volumes.
 void VolumeViewer::setAdaptiveBacktrack(double value)
 {
-  std::cout << __PRETTY_FUNCTION__ << std::endl;
   for(size_t i=0; i<modelStates.size(); i++)
     for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
       ospSet1f(modelStates[i].volumes[j]->handle, "adaptiveBacktrack", value);
@@ -604,8 +640,6 @@ void VolumeViewer::initObjects(const std::string &renderer_type)
     ospSet1i(renderer, "shadowsEnabled", 1);
   }
 
-
-
   // Create OSPRay ambient and directional lights. GUI elements will modify their parameters.
   ambientLight = ospNewLight(renderer, "AmbientLight");
   exitOnCondition(ambientLight == NULL, "could not create ambient light");
@@ -641,71 +675,50 @@ void VolumeViewer::initObjects(const std::string &renderer_type)
   }
   PRINT(boundingBox);
 
-
-//add plane
-  // OSPMaterial planeMaterial = ospNewMaterial(renderer,"default");
-  // ospSet3f(planeMaterial,"Kd",1,1,1);
-  // // ospSet3f(planeMaterial,"Ks",.1,.1,.1);
-  // // ospSet1f(planeMaterial,"Ns",10);
-  // // ospSet1f(planeMaterial,"d",1;
-  // ospCommit(planeMaterial);
-
-    float pcolor[] =  { 0.9f, 0.5f, 0.5f, 1.0f,
-                     0.8f, 0.8f, 0.8f, 1.0f,
-                     0.8f, 0.8f, 0.8f, 1.0f,
-                     0.5f, 0.9f, 0.5f, 1.0f };
+  //add plane
+  OSPMaterial planeMaterial = ospNewMaterial(renderer,"default");
+  ospSet3f(planeMaterial,"Kd",.5,.5,.5);
+  ospSet3f(planeMaterial,"Ks",0,0,0);
+  ospSet1f(planeMaterial,"Ns",0);
+  ospCommit(planeMaterial);
 
   osp::vec3f *vertices = new osp::vec3f[4];
-  float ps = 1000.f;
-  float py = boundingBox.lower.y-10.f;
-  vertices[0] = osp::vec3f{-ps, py, -ps};
-  vertices[1] = osp::vec3f{-ps, py, ps};
-  vertices[2] = osp::vec3f{ps, py, -ps};
-  vertices[3] = osp::vec3f{ps, py, ps};
+  float ps = 100000.f;
+  float py = boundingBox.upper.y+1.f;
+  bool zy = true;
+  if (zy)
+  {
+    vertices[0] = osp::vec3f{-ps, -ps, py};
+    vertices[1] = osp::vec3f{-ps, ps, py};
+    vertices[2] = osp::vec3f{ps,  -ps, py};
+    vertices[3] = osp::vec3f{ps,  ps, py};
+  }
+  else
+  {
+    vertices[0] = osp::vec3f{-ps, py, -ps};
+    vertices[1] = osp::vec3f{-ps, py, ps};
+    vertices[2] = osp::vec3f{ps, py, -ps};
+    vertices[3] = osp::vec3f{ps, py, ps};
+    }
 
-  OSPGeometry ospMesh = ospNewGeometry("triangles");
+  planeMesh = ospNewGeometry("triangles");
   OSPData position = ospNewData(4, OSP_FLOAT3, &vertices[0]);
   ospCommit(position);
-  ospSetData(ospMesh, "vertex", position);
+  ospSetData(planeMesh, "vertex", position);
 
-  OSPData data = ospNewData(4, OSP_FLOAT4, pcolor);
-  ospCommit(data);
-  ospSetData(ospMesh, "vertex.color", data);
-
-  size_t numTriangles = 2;
   osp::vec3i *triangles = new osp::vec3i[2];
   triangles[0] = osp::vec3i{0,1,2};
   triangles[1] = osp::vec3i{1,2,3};
 
-  OSPData index = ospNewData(numTriangles, OSP_INT3, &triangles[0]);
+  OSPData index = ospNewData(2, OSP_INT3, &triangles[0]);
   ospCommit(index);
-  ospSetData(ospMesh, "index", index); 
+  ospSetData(planeMesh, "index", index); 
   delete[] triangles;
 
-  // ospSetMaterial(ospMesh, planeMaterial);
-  ospCommit(ospMesh);
-
-  for(size_t i=0; i<modelStates.size(); i++) 
-  {
-    ospCommit(modelStates[i].model);
-    ospAddGeometry(modelStates[i].model, ospMesh);
-    ospCommit(modelStates[i].model);
-  }
+  ospSetMaterial(planeMesh, planeMaterial);
+  ospCommit(planeMesh);
+  setPlane(usePlane);
   ospRelease(index);
-
-  // // Get the bounding box of all volumes of the first model.
-  // if(modelStates.size() > 0 && modelStates[0].volumes.size() > 0) {
-  //   ospGetVec3f(modelStates[0].volumes[0], "boundingBoxMin", (osp::vec3f*)&boundingBox.lower);
-  //   ospGetVec3f(modelStates[0].volumes[0], "boundingBoxMax", (osp::vec3f*)&boundingBox.upper);
-
-  //   for (size_t i=1; i<modelStates[0].volumes.size(); i++) {
-  //     ospcommon::box3f volumeBoundingBox;
-  //     ospGetVec3f(modelStates[0].volumes[i], "boundingBoxMin", (osp::vec3f*)&volumeBoundingBox.lower);
-  //     ospGetVec3f(modelStates[0].volumes[i], "boundingBoxMax", (osp::vec3f*)&volumeBoundingBox.upper);
-
-  //     boundingBox.extend(volumeBoundingBox);
-  //   }
-  // }
 }
 
 void VolumeViewer::initUserInterfaceWidgets()

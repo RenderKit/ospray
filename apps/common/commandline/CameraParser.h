@@ -42,9 +42,9 @@ protected:
   std::string         cameraType;
   ospray::cpp::Camera parsedCamera;
 
-  ospcommon::vec3f eye {-1,  1, -1};
-  ospcommon::vec3f up  { 1, -1,  1};
-  ospcommon::vec3f gaze{ 0,  1,  0};
+  ospcommon::vec3f eye {.5,  .5, 1};
+  ospcommon::vec3f up  { 0, 1,  0};
+  ospcommon::vec3f gaze{ 0,  -.1, -1};
   float fovy{ 60.f };
 
 private:
