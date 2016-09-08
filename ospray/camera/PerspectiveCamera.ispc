@@ -24,19 +24,20 @@ void PerspectiveCamera_initRay(uniform Camera *uniform _self,
   uniform PerspectiveCamera *uniform self =
     (uniform PerspectiveCamera *uniform)_self;
 
-  vec2f screen = Camera_subRegion(_self, sample.screen);
-  
+  vec2f screen = sample.screen;
   vec3f org = self->org;
 
   if (self->side_by_side) {
-    if (screen.x < 0.5f) {
+    screen.x *= 2.f;
+    if (screen.x < 1.f) {
       org = org - self->ipd_offset;
-      screen.x += 0.25f;
     } else {
       org = org + self->ipd_offset;
-      screen.x -= 0.25f;
+      screen.x -= 1.f;
     }
   }
+
+  screen = Camera_subRegion(_self, screen);
 
   vec3f dir = self->dir_00
     + screen.x * self->dir_du
