@@ -125,7 +125,7 @@ namespace ospray {
 
     ispc::Volume_setPreIntegration(ispcEquivalent,
                                        getParam1i("preIntegration",
-                                                  1));
+                                                  0));
 
     ispc::Volume_setSingleShade(ispcEquivalent,
                                    getParam1i("singleShade",
