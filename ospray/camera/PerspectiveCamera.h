@@ -61,10 +61,10 @@ namespace ospray {
     float apertureRadius;
     float focusDistance;
     typedef enum {
-      STEREO_NONE,
-      STEREO_LEFT,
-      STEREO_RIGHT,
-      STEREO_SIDE_BY_SIDE
+      OSP_STEREO_NONE,
+      OSP_STEREO_LEFT,
+      OSP_STEREO_RIGHT,
+      OSP_STEREO_SIDE_BY_SIDE
     } StereoMode;
     StereoMode stereoMode;
     float interpupillaryDistance; // distance between the two cameras (stereo)

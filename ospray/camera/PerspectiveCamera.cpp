@@ -41,7 +41,7 @@ namespace ospray {
     aspect = getParamf("aspect", 1.f);
     apertureRadius = getParamf("apertureRadius", 0.f);
     focusDistance = getParamf("focusDistance", 1.f);
-    stereoMode = (StereoMode)getParam1i("stereoMode", STEREO_NONE);
+    stereoMode = (StereoMode)getParam1i("stereoMode", OSP_STEREO_NONE);
     interpupillaryDistance = getParamf("interpupillaryDistance", 0.0635f); // 63.5 mm
     
     // ------------------------------------------------------------------
@@ -55,13 +55,13 @@ namespace ospray {
     const vec3f ipd_offset = 0.5f * interpupillaryDistance * dir_du;
 
     switch (stereoMode) {
-      case STEREO_LEFT:
+      case OSP_STEREO_LEFT:
         org -= ipd_offset;
         break;
-      case STEREO_RIGHT:
+      case OSP_STEREO_RIGHT:
         org += ipd_offset;
         break;
-      case STEREO_SIDE_BY_SIDE:
+      case OSP_STEREO_SIDE_BY_SIDE:
         aspect *= 0.5f;
         break;
     }
@@ -90,7 +90,7 @@ namespace ospray {
                                 (const ispc::vec3f&)dir_dv,
                                 scaledAperture,
                                 aspect,
-                                stereoMode == STEREO_SIDE_BY_SIDE,
+                                stereoMode == OSP_STEREO_SIDE_BY_SIDE,
                                 (const ispc::vec3f&)ipd_offset);
   }
 
