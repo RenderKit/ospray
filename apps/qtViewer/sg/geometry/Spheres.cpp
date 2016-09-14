@@ -125,8 +125,8 @@ namespace ospray {
       void setFromXML(const xml::Node *const node, 
                       const unsigned char *binBasePtr)
       {
-        vec3i dimensions = parseVec3i(node->getProp("dimensions"));
-        int   num        = atoi(node->getProp("num").c_str());
+        vec3i dimensions = toVec3i(node->getProp("dimensions").c_str());
+        int   num        = toInt(node->getProp("num").c_str());
         
         float max_r = atof(node->getProp("radius").c_str());//std::max(dimensions.x,std::max(dimensions.y,dimensions.z)) / powf(num,.33f);
         float f = 0.3f; // overhang around the dimensions

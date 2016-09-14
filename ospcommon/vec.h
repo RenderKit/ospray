@@ -484,6 +484,8 @@ namespace ospcommon {
   // -------------------------------------------------------
   // parsing from strings
   // -------------------------------------------------------
+  OSPCOMMON_INTERFACE int   toInt(const char *ptr);
+  OSPCOMMON_INTERFACE float toFloat(const char *ptr);
   OSPCOMMON_INTERFACE vec2f toVec2f(const char *ptr);
   OSPCOMMON_INTERFACE vec3f toVec3f(const char *ptr);
   OSPCOMMON_INTERFACE vec4f toVec4f(const char *ptr);
