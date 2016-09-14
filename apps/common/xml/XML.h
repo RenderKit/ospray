@@ -64,7 +64,7 @@ namespace ospray {
       }
 
       /*! return value of property with given name if present, else return 'fallbackValue' */
-      inline std::string getProp(const std::string &name, const std::string &fallbackValue=0) const {
+      inline std::string getProp(const std::string &name, const std::string &fallbackValue="") const {
         for (size_t i = 0; i < prop.size(); i++)
           if (prop[i]->name == name) return prop[i]->value; 
         return fallbackValue;
