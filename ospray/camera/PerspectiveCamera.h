@@ -60,6 +60,7 @@ namespace ospray {
     float aspect;
     float apertureRadius;
     float focusDistance;
+    bool architectural; // orient image plane to be parallel to 'up' and shift the lens
     typedef enum {
       OSP_STEREO_NONE,
       OSP_STEREO_LEFT,

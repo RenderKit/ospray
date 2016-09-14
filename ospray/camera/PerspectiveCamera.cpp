@@ -41,15 +41,21 @@ namespace ospray {
     aspect = getParamf("aspect", 1.f);
     apertureRadius = getParamf("apertureRadius", 0.f);
     focusDistance = getParamf("focusDistance", 1.f);
+    architectural = getParam1i("architectural", false);
     stereoMode = (StereoMode)getParam1i("stereoMode", OSP_STEREO_NONE);
-    interpupillaryDistance = getParamf("interpupillaryDistance", 0.0635f); // 63.5 mm
+    // the default 63.5mm represents the average human IPD
+    interpupillaryDistance = getParamf("interpupillaryDistance", 0.0635f);
     
     // ------------------------------------------------------------------
     // now, update the local precomputed values
     // ------------------------------------------------------------------
     dir = normalize(dir);
     vec3f dir_du = normalize(cross(dir, up));
-    vec3f dir_dv = cross(dir_du, dir);
+    vec3f dir_dv;
+    if (architectural)
+      dir_dv = normalize(up); // orient film to be parallel to 'up' and shift such that 'dir' is centered
+    else
+      dir_dv = cross(dir_du, dir); // rotate film to be perpendicular to 'dir'
 
     vec3f org = pos;
     const vec3f ipd_offset = 0.5f * interpupillaryDistance * dir_du;
