@@ -83,15 +83,25 @@ IF (WIN32)
 ENDIF()
 
 ##############################################################
-# OSPRay specific build options and configuration selection
+# create binary packages; before any INSTALL() invocation/definition
 ##############################################################
 
-OSPRAY_CONFIGURE_COMPILER()
+OPTION(OSPRAY_ZIP_MODE "Use tarball/zip CPack generator instead of RPM" ON)
+MARK_AS_ADVANCED(OSPRAY_ZIP_MODE)
+
+INCLUDE(package)
+
+##############################################################
+# OSPRay specific build options and configuration selection
+##############################################################
 
 OPTION(OSPRAY_USE_EXTERNAL_EMBREE
        "Use a pre-built Embree instead of the internally built version" ON)
 
-OPTION(OSPRAY_USE_EMBREE_STREAMS "Enable Streams if using Embree 2.10.0+" OFF)
+OPTION(OSPRAY_USE_EMBREE_STREAMS "Enable Streams if using Embree v2.10 or later")
+
+OPTION(OSPRAY_USE_HIGH_QUALITY_BVH
+       "Takes slighly longer to build but offers higher ray tracing performance; recommended when using Embree v2.11 or later")
 
 OPTION(OSPRAY_VOLUME_VOXELRANGE_IN_APP "Move 'voxelrange' computations to app?")
 MARK_AS_ADVANCED(OSPRAY_VOLUME_VOXELRANGE_IN_APP)
@@ -125,5 +135,8 @@ SET(OSPRAY_PIXELS_PER_JOB 64 CACHE INT
 MARK_AS_ADVANCED(OSPRAY_TILE_SIZE)
 MARK_AS_ADVANCED(OSPRAY_PIXELS_PER_JOB)
 
-OSPRAY_CONFIGURE_ISPC_ISA()
+OSPRAY_CONFIGURE_COMPILER()
 OSPRAY_CONFIGURE_TASKING_SYSTEM()
+
+# Must be before ISA config
+INCLUDE(configure_embree)

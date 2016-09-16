@@ -297,4 +297,14 @@ namespace ospray {
 
   };
 
+
+#define OSP_REGISTER_OBJECT(Object, object_name, InternalClass, external_name) \
+  extern "C" OSPRAY_DLLEXPORT                                                  \
+      Object *ospray_create_##object_name##__##external_name()                 \
+  {                                                                            \
+    return new InternalClass;                                                  \
+  } \
+  /* additional declaration to avoid "extra ;" -Wpedantic warnings */          \
+  Object *ospray_create_##object_name##__##external_name()
+
 } // ::ospray

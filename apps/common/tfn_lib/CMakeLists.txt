@@ -14,18 +14,18 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-ospray_create_library(tfn tfn_lib.cpp LINK ospray_common)
+OSPRAY_CREATE_LIBRARY(ospray_tfn tfn_lib.cpp LINK ospray_common)
 
-option(OSPRAY_APPS_PARAVIEW_TFN_CVT
+OPTION(OSPRAY_APPS_PARAVIEW_TFN_CVT
   "Build ParaView to OSPRay viewer transfer function converter"
-  ON)
+  ON
+)
 
-if (OSPRAY_APPS_PARAVIEW_TFN_CVT)
-  ospray_create_application(CvtParaViewTfcn
+IF (OSPRAY_APPS_PARAVIEW_TFN_CVT)
+  OSPRAY_CREATE_APPLICATION(ospCvtParaViewTfcn
     convertParaViewTfcn.cpp
     jsoncpp.cpp
   LINK
     ospray_tfn
   )
-endif()
-
+ENDIF()

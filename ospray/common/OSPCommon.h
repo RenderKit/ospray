@@ -180,7 +180,7 @@ namespace ospray {
   extern bool debugMode;
   /*! number of Embree threads to use, 0 for the default
       number. (cmdline: --osp:numthreads \<n\>) */
-  extern uint32_t numThreads;
+  extern int numThreads;
 
   /*! size of OSPDataType */
   OSPRAY_INTERFACE size_t sizeOf(const OSPDataType);

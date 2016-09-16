@@ -35,6 +35,6 @@ namespace ospray {
     ispc::AmbientLight_set(getIE(), (ispc::vec3f&)radiance);
   }
 
-  OSP_REGISTER_LIGHT(AmbientLight, AmbientLight)
-  OSP_REGISTER_LIGHT(AmbientLight, ambient)
+  OSP_REGISTER_LIGHT(AmbientLight, AmbientLight);
+  OSP_REGISTER_LIGHT(AmbientLight, ambient);
 }

@@ -498,6 +498,10 @@ inline uniform bool eq(const uniform vec2f a, const uniform vec2f b)
 { return a.x==b.x && a.y==b.y; }
 inline bool eq(const vec2f a, const vec2f b)
 { return a.x==b.x & a.y==b.y; }
+inline uniform bool eq(const uniform vec3f a, const uniform float b)
+{ return a.x==b && a.y==b && a.z==b; }
+inline bool eq(const vec3f a, const float b)
+{ return a.x==b & a.y==b & a.z==b; }
 inline uniform bool eq(const uniform vec3f a, const uniform vec3f b)
 { return a.x==b.x && a.y==b.y && a.z==b.z; }
 inline bool eq(const vec3f a, const vec3f b)
@@ -510,6 +514,10 @@ inline bool eq(const vec3fa a, const vec3fa b)
 inline uniform bool ne(const uniform vec2f a, const uniform vec2f b)
 { return !eq(a,b); }
 inline bool ne(const vec2f a, const vec2f b)
+{ return !eq(a,b); }
+inline uniform bool ne(const uniform vec3f a, const uniform float b)
+{ return !eq(a,b); }
+inline bool ne(const vec3f a, const float b)
 { return !eq(a,b); }
 inline uniform bool ne(const uniform vec3f a, const uniform vec3f b)
 { return !eq(a,b); }
@@ -654,45 +662,47 @@ inline uniform vec4f make_vec4f(const uniform vec3f rgb, const uniform float a)
 // inline vec3f rcp(const vec3f v)
 // { return make_vec3f(rcp(v.x),rcp(v.y),rcp(v.z)); }
 
-#define __define_lerp2(ABB)                                             \
-  inline uniform vec2##ABB lerp(uniform float factor, const uniform vec2##ABB a, const uniform vec2##ABB b) \
+#define __define_lerp2_uv(univar,ABB)                                             \
+  inline univar vec2##ABB lerp(univar float factor, const univar vec2##ABB a, const univar vec2##ABB b) \
   {                                                                     \
     return make_vec2##ABB(lerp(factor, a.x, b.x), lerp(factor, a.y, b.y)); \
   }                                                                     \
-  inline vec2##ABB lerp(float factor, const vec2##ABB a, const vec2##ABB b) \
+  inline univar vec2##ABB lerp(univar vec2f factor, const univar vec2##ABB a, const univar vec2##ABB b) \
   {                                                                     \
-    return make_vec2##ABB(lerp(factor, a.x, b.x), lerp(factor, a.y, b.y)); \
+    return make_vec2##ABB(lerp(factor.x, a.x, b.x), lerp(factor.y, a.y, b.y)); \
   }
 
-#define __define_lerp3(ABB)                                             \
-  inline uniform vec3##ABB lerp(uniform float factor, const uniform vec3##ABB a, const uniform vec3##ABB b) \
+#define __define_lerp2(ABB)                                      \
+  __define_lerp2_uv(uniform,ABB)                                 \
+  __define_lerp2_uv(varying,ABB)
+
+#define __define_lerp3_uv(univar,ABB)                                             \
+  inline univar vec3##ABB lerp(univar float factor, const univar vec3##ABB a, const univar vec3##ABB b) \
   {                                                                     \
     return make_vec3##ABB(lerp(factor, a.x, b.x), lerp(factor, a.y, b.y), lerp(factor, a.z, b.z)); \
   }                                                                     \
-  inline vec3##ABB lerp(float factor, const vec3##ABB a, const vec3##ABB b) \
+  inline univar vec3##ABB lerp(univar vec3f factor, const univar vec3##ABB a, const univar vec3##ABB b) \
   {                                                                     \
-    return make_vec3##ABB(lerp(factor, a.x, b.x), lerp(factor, a.y, b.y), lerp(factor, a.z, b.z)); \
-  }                                                                     \
-
-#define __define_lerp3a(ABB)                                            \
-  inline uniform vec3##ABB##a lerp(uniform float factor, const uniform vec3##ABB##a a, const uniform vec3##ABB##a b) \
-  {                                                                     \
-    return make_vec3##ABB##a(lerp(factor, a.x, b.x), lerp(factor, a.y, b.y), lerp(factor, a.z, b.z), lerp(factor, a.w, b.w)); \
-  }                                                                     \
-  inline vec3##ABB##a lerp(float factor, const vec3##ABB##a a, const vec3##ABB##a b) \
-  {                                                                     \
-    return make_vec3##ABB##a(lerp(factor, a.x, b.x), lerp(factor, a.y, b.y), lerp(factor, a.z, b.z)); \
+    return make_vec3##ABB(lerp(factor.x, a.x, b.x), lerp(factor.y, a.y, b.y), lerp(factor.z, a.z, b.z)); \
   }
 
-#define __define_lerp4(ABB)                                             \
-  inline uniform vec4##ABB lerp(uniform float factor, const uniform vec4##ABB a, const uniform vec4##ABB b) \
+#define __define_lerp3(ABB)                                      \
+  __define_lerp3_uv(uniform,ABB)                                 \
+  __define_lerp3_uv(varying,ABB)
+
+#define __define_lerp4_uv(univar,ABB)                                             \
+  inline univar vec4##ABB lerp(univar float factor, const univar vec4##ABB a, const univar vec4##ABB b) \
   {                                                                     \
     return make_vec4##ABB(lerp(factor, a.x, b.x), lerp(factor, a.y, b.y), lerp(factor, a.z, b.z), lerp(factor, a.w, b.w)); \
   }                                                                     \
-  inline vec4##ABB lerp(float factor, const vec4##ABB a, const vec4##ABB b) \
+  inline univar vec4##ABB lerp(univar vec4f factor, const univar vec4##ABB a, const univar vec4##ABB b) \
   {                                                                     \
-    return make_vec4##ABB(lerp(factor, a.x, b.x), lerp(factor, a.y, b.y), lerp(factor, a.z, b.z), lerp(factor, a.w, b.w)); \
+    return make_vec4##ABB(lerp(factor.x, a.x, b.x), lerp(factor.y, a.y, b.y), lerp(factor.z, a.z, b.z), lerp(factor.w, a.w, b.w)); \
   }
+
+#define __define_lerp4(ABB)                                      \
+  __define_lerp4_uv(uniform,ABB)                                 \
+  __define_lerp4_uv(varying,ABB)
 
 __define_lerp2(f)
 __define_lerp2(i)
@@ -702,9 +712,6 @@ __define_lerp3(f)
 __define_lerp3(i)
 __define_lerp3(ui)
 __define_lerp3(uc)
-//__define_lerp3a(i)
-//__define_lerp3a(ui)
-//__define_lerp3a(uc)
 __define_lerp4(f)
 __define_lerp4(i)
 __define_lerp4(ui)

@@ -64,7 +64,7 @@ void Velvet_Constructor(uniform Velvet* uniform self,
                         uniform float horizonScatteringFallOff,
                         uniform float backScattering)
 {
-  PathTraceMaterial_Constructor(&self->super, Velvet_getBSDF, NULL, NULL, NULL);
+  PathTraceMaterial_Constructor(&self->super, Velvet_getBSDF);
   self->reflectance = reflectance;
   self->horizonScatteringColor = horizonScatteringColor;
   self->horizonScatteringFallOff = horizonScatteringFallOff;

@@ -51,10 +51,9 @@ namespace ospray {
                                  (const ispc::vec3f&)dir,
                                  (const ispc::vec3f&)pos_00,
                                  (const ispc::vec3f&)pos_du,
-                                 (const ispc::vec3f&)pos_dv,
-                                 nearClip);
+                                 (const ispc::vec3f&)pos_dv);
   }
 
-  OSP_REGISTER_CAMERA(OrthographicCamera, orthographic)
+  OSP_REGISTER_CAMERA(OrthographicCamera, orthographic);
 
 } // ::ospray

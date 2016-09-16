@@ -127,11 +127,8 @@ namespace ospray {
       lateron always get a handle to this fct and create an instance
       of this renderer.
   */
-#define OSP_REGISTER_RENDERER(InternalClassName,external_name)      \
-  extern "C" OSPRAY_DLLEXPORT Renderer *ospray_create_renderer__##external_name()    \
-  {                                                                 \
-    return new InternalClassName;                                   \
-  }
+#define OSP_REGISTER_RENDERER(InternalClass, external_name) \
+  OSP_REGISTER_OBJECT(Renderer, renderer, InternalClass, external_name)
 
 } // ::ospray
 

@@ -44,10 +44,9 @@ namespace ospray {
 
     ispc::PanoramicCamera_set(getIE(),
                               (const ispc::vec3f&)pos,
-                              (const ispc::LinearSpace3f&)frame,
-                              nearClip);
+                              (const ispc::LinearSpace3f&)frame);
   }
 
-  OSP_REGISTER_CAMERA(PanoramicCamera,panoramic)
+  OSP_REGISTER_CAMERA(PanoramicCamera,panoramic);
 
 } // ::ospray

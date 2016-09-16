@@ -45,7 +45,8 @@ namespace ospray {
           
           // read format specifier:
           int format=0;
-          fscanf(file,"P%i\n",&format);
+          if (fscanf(file,"P%i\n",&format) != 1)
+            throw std::runtime_error("#osp:sg: could not parse PPM type");
           if (format != 6) 
             throw std::runtime_error("#osp:sg: can currently load only binary P6 subformats for PPM texture files. "
                                      "Please report this bug at ospray.github.io.");
@@ -53,7 +54,8 @@ namespace ospray {
           // skip all comment lines
           peekchar = getc(file);
           while (peekchar == '#') {
-            fgets(lineBuf,LINESZ,file);
+            if (!fgets(lineBuf,LINESZ,file))
+              throw std::runtime_error("could not fgets");
             peekchar = getc(file);
           } ungetc(peekchar,file);
         
@@ -67,7 +69,8 @@ namespace ospray {
           // skip all comment lines
           peekchar = getc(file);
           while (peekchar == '#') {
-            fgets(lineBuf,LINESZ,file);
+            if (!fgets(lineBuf,LINESZ,file))
+              throw std::runtime_error("could not fgets");
             peekchar = getc(file);
           } ungetc(peekchar,file);
         
@@ -87,7 +90,8 @@ namespace ospray {
           tex->size      = vec2i(width,height);
           tex->texelType = prefereLinear ? OSP_TEXTURE_RGB8 : OSP_TEXTURE_SRGB;
           tex->texel     = new unsigned char[width*height*3];
-          fread(tex->texel,width*height*3,1,file);
+          if (!fread(tex->texel,width*height*3,1,file))
+            throw std::runtime_error("could not fread");
           // flip in y, because OSPRay's textures have the origin at the lower left corner
           unsigned char *texels = (unsigned char *)tex->texel;
           for (int y=0; y < height/2; y++)

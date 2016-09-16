@@ -98,6 +98,6 @@ namespace ospray {
                               offset_materialID,offset_colorID);
   }
 
-  OSP_REGISTER_GEOMETRY(Spheres,spheres)
+  OSP_REGISTER_GEOMETRY(Spheres,spheres);
 
 } // ::ospray

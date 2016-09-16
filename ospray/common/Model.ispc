@@ -41,6 +41,9 @@ export void Model_init(void *uniform _model,
     rtcDeleteScene(model->embreeSceneHandle);
 
   uniform RTCSceneFlags scene_flags = RTC_SCENE_STATIC;
+#ifdef OSPRAY_USE_HIGH_QUALITY_BVH
+  scene_flags |= RTC_SCENE_HIGH_QUALITY;
+#endif
 
   uniform RTCAlgorithmFlags traversal_flags =
       RTC_INTERSECT_UNIFORM | RTC_INTERSECT_VARYING;

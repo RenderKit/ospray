@@ -32,10 +32,7 @@ namespace ospray {
     virtual std::string toString() const { return "ospray::Light"; }
   };
 
-#define OSP_REGISTER_LIGHT(InternalClassName, external_name)        \
-  extern "C" OSPRAY_DLLEXPORT ospray::Light *ospray_create_light__##external_name()  \
-  {                                                                 \
-    return new InternalClassName;                                   \
-  }
+#define OSP_REGISTER_LIGHT(InternalClass, external_name) \
+  OSP_REGISTER_OBJECT(Light, light, InternalClass, external_name)
 
 }

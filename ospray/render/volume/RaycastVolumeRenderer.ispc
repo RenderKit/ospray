@@ -72,7 +72,8 @@ RaycastVolumeRenderer_computeVolumeSample(RaycastVolumeRenderer *uniform self,
           (gradient.x == 0.f && gradient.y == 0.f && gradient.z == 0.f) ?
           1.f : abs(dot(safe_normalize(light.dir), gradient));
 
-      shadedColor = shadedColor + sampleColor * cosNL * light.weight;
+      // BRDF normalization to match surface shading
+      shadedColor = shadedColor + sampleColor * cosNL * light.weight * one_over_pi;
     }
 
     sampleColor = shadedColor;
@@ -83,7 +84,7 @@ RaycastVolumeRenderer_computeVolumeSample(RaycastVolumeRenderer *uniform self,
 
   // Set the color contribution for this sample only (do not accumulate).
   color
-    = clamp(sampleOpacity / volume->samplingRate) 
+    = clamp(sampleOpacity / volume->samplingRate)
     * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
 
   // Advance the ray for the next sample.

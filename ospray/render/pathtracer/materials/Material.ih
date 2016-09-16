@@ -35,6 +35,7 @@ typedef const varying BSDF* uniform (*PathTraceMaterial_GetBSDFFunc)(const unifo
                                                                      /*! The medium this ray travels inside. */
                                                                      const Medium& currentMedium);
 
+// shortcut: compute transmission of material, for transparent shadows, neglecting refraction
 typedef vec3f (*PathTraceMaterial_GetTransparencyFunc)(const uniform PathTraceMaterial* uniform self,
                                                        /*! The point to shade on a surface. */
                                                        const DifferentialGeometry& dg,
@@ -46,22 +47,15 @@ typedef vec3f (*PathTraceMaterial_GetTransparencyFunc)(const uniform PathTraceMa
 typedef void (*PathTraceMaterial_SelectNextMediumFunc)(const uniform PathTraceMaterial* uniform self,
                                                        Medium& currentMedium);
 
-typedef vec3f (*PathTraceMaterial_GetAbsorptionFunc)(
-  const uniform PathTraceMaterial* uniform self,
-  const DifferentialGeometry& dg, 
-  const float & distance);
-
 struct PathTraceMaterial
 {
   Material material;
   PathTraceMaterial_GetBSDFFunc getBSDF;
   PathTraceMaterial_GetTransparencyFunc getTransparency;
   PathTraceMaterial_SelectNextMediumFunc selectNextMedium;
-  PathTraceMaterial_GetAbsorptionFunc getAbsorption;
 };
 
 void PathTraceMaterial_Constructor(uniform PathTraceMaterial* uniform self,
                                    uniform PathTraceMaterial_GetBSDFFunc getBSDF,
-                                   uniform PathTraceMaterial_GetTransparencyFunc getTransparency,
-                                   uniform PathTraceMaterial_SelectNextMediumFunc selectNextMedium,
-                                   uniform PathTraceMaterial_GetAbsorptionFunc getAbsorption);
+                                   uniform PathTraceMaterial_GetTransparencyFunc getTransparency = NULL,
+                                   uniform PathTraceMaterial_SelectNextMediumFunc selectNextMedium = NULL);

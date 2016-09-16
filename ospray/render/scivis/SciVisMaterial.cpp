@@ -57,8 +57,8 @@ namespace ospray {
                                volume ? volume->getIE() : nullptr);
     }
 
-    OSP_REGISTER_MATERIAL(SciVisMaterial, SciVisMaterial)
-    OSP_REGISTER_MATERIAL(SciVisMaterial, OBJMaterial)
+    OSP_REGISTER_MATERIAL(SciVisMaterial, SciVisMaterial);
+    OSP_REGISTER_MATERIAL(SciVisMaterial, OBJMaterial);
 
   } // ::ospray::scivis
 } // ::ospray

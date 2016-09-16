@@ -63,7 +63,7 @@ inline void MetallicPaint_Constructor(uniform MetallicPaint* uniform self,
                                       const uniform float glitterSpread,
                                       const uniform float ior)
 {
-  PathTraceMaterial_Constructor(&self->super, MetallicPaint_getBSDF, NULL, NULL, NULL);
+  PathTraceMaterial_Constructor(&self->super, MetallicPaint_getBSDF);
   self->shadeColor = shadeColor;
   self->glitterColor = glitterColor;
   self->glitterSpread = glitterSpread;

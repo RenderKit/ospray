@@ -302,7 +302,7 @@ namespace ospray {
 
   // A volume type with internal data-distribution. needs a renderer
   // that is capable of data-parallel rendering!
-  OSP_REGISTER_VOLUME(DataDistributedBlockedVolume, data_distributed_volume)
+  OSP_REGISTER_VOLUME(DataDistributedBlockedVolume, data_distributed_volume);
 
 #endif
 

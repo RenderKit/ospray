@@ -65,10 +65,10 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
 
     lightContrib = lightContrib * transparency;
 
-    /*! Compute simple volumetric effect. */
-    if (ne(medium.transmission, make_vec3f(1.f)))
-      lightContrib = lightContrib * powf(medium.transmission,
-                                         shadowRay.t - shadowRay.t0);
+    // compute attenuation with Beer's law
+    if (ne(medium.attenuation, 0.f))
+      lightContrib = lightContrib
+                     * expf(medium.attenuation * (shadowRay.t - shadowRay.t0));
 
     if (reduce_max(lightContrib) <= self->minContribution)
       return lightContrib;
@@ -111,8 +111,6 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
   lastDg.Ng = ray.dir;
 
   DifferentialGeometry previousDg;
-
-  bool insideSolid = false;// Quick fix for glass absorption.
 
   do {
     traceRay(self->super.model, ray);
@@ -228,29 +226,14 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     Lw = Lw * fs.weight;
 
-    // compute simple volumetric effect
-    const vec3f transmission = currentMedium.transmission;
-    if (ne(transmission,make_vec3f(1.f))) {
-      Lw = Lw * powf(transmission, ray.t);
-    }
-
-    if (insideSolid) {// For absorbing translucent materials.
-      foreach_unique(uniMat in dg.material) {
-        uniform PathTraceMaterial* uniform m = (uniform PathTraceMaterial *)uniMat;
-        if (m != NULL) {
-          Lw = Lw * m->getAbsorption(m, previousDg, ray.t);
-        }
-      }
+    // compute attenuation with Beer's law
+    if (ne(currentMedium.attenuation, 0.f)) {
+      Lw = Lw * expf(currentMedium.attenuation * ray.t);
     }
 
     // update currentMedium if we hit a medium interface 
     // TODO: support nested dielectrics
     if (fs.type & BSDF_TRANSMISSION) {
-
-      // This is a quick fix for glass. This only works if all solid objects are disjoint 
-      // (some space is between them and they don't overlap).
-      insideSolid = !insideSolid;
-
       foreach_unique(uniMat in dg.material) {
         uniform PathTraceMaterial* uniform m = (uniform PathTraceMaterial *)uniMat;
         if (m != NULL) {
@@ -283,45 +266,93 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 }
 
 
-inline void PathTracer_renderSample(uniform Renderer *uniform _self,
-                                    void *uniform perFrameData,
-                                    varying ScreenSample &sample)
+inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
+                                           const uint32 ix,
+                                           const uint32 iy,
+                                           const uint32 accumID)
 {
-  uniform PathTracer *uniform self = (uniform PathTracer *uniform)_self;
   uniform FrameBuffer *uniform fb = self->super.fb;
 
   uniform Camera *uniform camera = self->super.camera;
-  sample.rgb = make_vec3f(0.f);
+  ScreenSample screenSample;
+  screenSample.rgb = make_vec3f(0.f);
+  screenSample.alpha = 0.f;
+  screenSample.z = inf;
 
-  int &ix = sample.sampleID.x;
-  int &iy = sample.sampleID.y;
-  int &accumID = sample.sampleID.z;
+  screenSample.sampleID.x = ix;
+  screenSample.sampleID.y = iy;
 
   // init RNG
   RandomTEA rng_state; varying RandomTEA* const uniform rng = &rng_state;
   RandomTEA__Constructor(rng, fb->size.x*iy+ix, accumID);
   const int spp = max(1, self->super.spp);
 
-  const vec2f pixelSample = RandomTEA__getFloats(rng);
-  // NOTE(jda) - This is calculated by the 'base' Renderer_renderSample, where
-  //             the RNG values will be _slightly_ different...seems to not
-  //             affect images much though.
-  vec2f screen_xy;
-  screen_xy.x = (sample.sampleID.x + pixelSample.x) * fb->rcpSize.x;
-  screen_xy.y = (sample.sampleID.y + pixelSample.y) * fb->rcpSize.y;
+  for (uniform int s=0; s < spp; s++) {
+    screenSample.sampleID.z = accumID*spp + s;
 
-  const vec2f timeSample = RandomTEA__getFloats(rng);
-  sample.ray.time = timeSample.x;
+    CameraSample cameraSample;
+    const vec2f pixelSample = RandomTEA__getFloats(rng);
+    cameraSample.screen.x = (screenSample.sampleID.x + pixelSample.x) * fb->rcpSize.x;
+    cameraSample.screen.y = (screenSample.sampleID.y + pixelSample.y) * fb->rcpSize.y;
+    cameraSample.lens     = RandomTEA__getFloats(rng);
 
-  ScreenSample newSample = PathTraceIntegrator_Li(self, screen_xy,
-                                                  sample.ray, rng);
-  sample.rgb = sample.rgb + min(newSample.rgb, make_vec3f(self->maxRadiance));
-  sample.alpha = sample.alpha + newSample.alpha;
-  sample.z = min(sample.z, newSample.z);
+    camera->initRay(camera, screenSample.ray, cameraSample);
+    const vec2f timeSample = RandomTEA__getFloats(rng);
+    screenSample.ray.time = timeSample.x;
 
-  sample.rgb = sample.rgb * rcpf(spp);
-  sample.alpha = sample.alpha * rcpf(spp);
+    ScreenSample sample = PathTraceIntegrator_Li(self, cameraSample.screen,
+                                                 screenSample.ray, rng);
+    screenSample.rgb = screenSample.rgb + min(sample.rgb, make_vec3f(self->maxRadiance));
+    screenSample.alpha = screenSample.alpha + sample.alpha;
+    screenSample.z = min(screenSample.z, sample.z);
+  }
+
+  screenSample.rgb = screenSample.rgb * rcpf(spp);
+  screenSample.alpha = screenSample.alpha * rcpf(spp);
+  return screenSample;
 }
+
+
+
+
+void PathTracer_renderTileJob(uniform PathTracer *uniform self,
+                              uniform Tile &tile,
+                              uniform int taskIndex)
+{
+  uniform FrameBuffer *uniform fb = self->super.fb;
+
+  uniform int32 spp = self->super.spp;
+  const uniform int blocks = tile.accumID > 0 || spp > 0 ?
+                               1 : min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
+
+  const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
+  const uniform int end   = min(begin + RENDERTILE_PIXELS_PER_JOB, TILE_SIZE*TILE_SIZE/blocks);
+
+  for (uint32 i=begin+programIndex;i<end;i+=programCount) {
+    const uint32 ix = tile.region.lower.x + z_order.xs[i*blocks];
+    const uint32 iy = tile.region.lower.y + z_order.ys[i*blocks];
+    if (ix >= fb->size.x || iy >= fb->size.y)
+      continue;
+
+    ScreenSample screenSample = PathTracer_renderPixel(self, ix, iy, tile.accumID);
+
+    for (uniform int p = 0; p < blocks; p++) {
+      const uint32 pixel = z_order.xs[i*blocks+p] + (z_order.ys[i*blocks+p] * TILE_SIZE);
+      setRGBAZ(tile, pixel, screenSample.rgb, screenSample.alpha, screenSample.z);
+    }
+  }
+}
+
+unmasked void PathTracer_renderTile(uniform Renderer *uniform _self,
+                           void *uniform perFrameData,
+                           uniform Tile &tile,
+                           uniform int jobID)
+{
+  uniform PathTracer *uniform self = (uniform PathTracer *uniform)_self;
+
+  PathTracer_renderTileJob(self, tile, jobID);
+}
+
 
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
@@ -348,10 +379,10 @@ export void* uniform PathTracer_create(void *uniform cppE)
 {
   uniform PathTracer *uniform self = uniform new uniform PathTracer;
   Renderer_Constructor(&self->super,cppE);
-
-  self->super.renderSample = PathTracer_renderSample;
+  self->super.renderTile = PathTracer_renderTile;
 
   PathTracer_set(self, 20, 0.01f, inf, NULL, NULL, 0);
+  precomputeZOrder();
 
   return self;
 }

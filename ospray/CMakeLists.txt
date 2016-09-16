@@ -25,103 +25,8 @@ MARK_AS_ADVANCED(EXP_NEW_BB_VOLUME_KERNELS)
 
 # NOTE(jda) - PThread hint used by both Embree and OSPRay
 SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+SET(THREADS_PREFER_PTHREAD_FLAG TRUE) # for gcc6
 FIND_PACKAGE(Threads REQUIRED)
-
-# -------------------------------------------------------
-# Find or build Embree
-# -------------------------------------------------------
-
-SET(EMBREE_VERSION_REQUIRED 2.7.1)
-
-# Do a check to see if we can find the system Embree
-IF(NOT DEFINED LAST_CONFIG_USED_EXTERNAL_EMBREE)
-  FIND_PACKAGE(embree ${EMBREE_VERSION_REQUIRED} QUIET)
-  IF(NOT DEFINED EMBREE_INCLUDE_DIRS)
-    MESSAGE(WARNING
-            "We did not find Embree installed on your system. If you would"
-            " like to use a newer version of Embree than the one in the"
-            " OSPRay source tree (v2.7.1), please download and extract or"
-            " compile Embree from source, set the 'embree_DIR' environment"
-            " variable to where it is installed, and re-enable the"
-            " OSPRAY_USE_EXTERNAL_EMBREE CMake option.")
-    SET(OSPRAY_USE_EXTERNAL_EMBREE OFF CACHE BOOL "" FORCE)
-  ENDIF()
-ENDIF()
-
-IF(OSPRAY_USE_EXTERNAL_EMBREE)
-  # Clear out embree directories if they were previously populated by an
-  # internal build
-  IF(NOT ${LAST_CONFIG_USED_EXTERNAL_EMBREE})
-    UNSET(EMBREE_INCLUDE_DIRS)
-    UNSET(EMBREE_LIBRARIES)
-    UNSET(EMBREE_LIBRARY)
-    UNSET(EMBREE_LIBRARY_XEONPHI)
-  ENDIF()
-
-  # Find existing Embree on the machine
-  FIND_PACKAGE(embree ${EMBREE_VERSION_REQUIRED} REQUIRED)
-  SET(LAST_CONFIG_USED_EXTERNAL_EMBREE ON CACHE INTERNAL "" FORCE)
-
-  IF(OSPRAY_MIC AND NOT EMBREE_VERSION VERSION_LESS "2.10.0")
-    MESSAGE(FATAL_ERROR "The found Embree version ${EMBREE_VERSION} does not"
-            " support KNC anymore. Either disable the OSPRAY_BUILD_MIC_SUPPORT"
-            " option or use an Embree v2.9 or earlier.")
-  ENDIF()
-
-  # NOTE(jda) - EMBREE_LIBRARIES is not defined until at lest v2.10.0, for now
-  #             create a "faked" EMBREE_LIBRARIES until we set our min version
-  #             to >= 2.10.0 of Embree
-  # also remove Embree's TBB libs if OSPRay uses TBB to avoid problems with
-  # cyclic rpath
-  IF(NOT DEFINED EMBREE_LIBRARIES OR OSPRAY_TASKING_TBB)
-    SET(EMBREE_LIBRARIES ${EMBREE_LIBRARY})
-  ELSE()
-    # check if we need to add TBB to EMBREE_LIBRARIES
-    IF((EMBREE_TASKING_TBB OR (EMBREE_TASKING_SYSTEM STREQUAL "TBB"))
-        AND NOT EMBREE_USE_PACKAGED_TBB)
-      OSPRAY_WARN_ONCE(EMBREE_FORCE_TBB
-        "You *MUST* have TBB installed based on the Embree we found!")
-      FIND_PACKAGE(TBB REQUIRED)
-      SET(EMBREE_LIBRARIES ${EMBREE_LIBRARIES} ${TBB_LIBRARIES})
-    ENDIF()
-  ENDIF()
-ELSE()
-  # Clear out embree directories if they were previously populated by an
-  # external find_package() call
-  IF(${LAST_CONFIG_USED_EXTERNAL_EMBREE})
-    UNSET(EMBREE_INCLUDE_DIRS)
-    UNSET(EMBREE_LIBRARIES)
-    UNSET(EMBREE_LIBRARY)
-    UNSET(EMBREE_LIBRARY_XEONPHI)
-  ENDIF()
-  # Build Embree included in the OSPRay tree
-
-  # NOTE(jda) - Embree assumes that OSPRAY_TASKING_TBB will be defined correctly
-  #             in CONFIGURE_OSPRAY().CONFIGURE_TASKING_SYSTEM()
-  # NOTE(jda) - Only do the Embree include once (Xeon), it will build both
-  #             Xeon and MIC code if both are enabled.
-  IF (NOT THIS_IS_MIC)
-    INCLUDE(../cmake/build_embree.cmake)
-  ENDIF()
-  SET(EMBREE_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/ospray/embree-v2.7.1/include)
-  SET(EMBREE_LIBRARY embree)
-  SET(EMBREE_LIBRARIES ${EMBREE_LIBRARY})
-  SET(EMBREE_LIBRARY_XEONPHI embree_xeonphi)
-  SET(LAST_CONFIG_USED_EXTERNAL_EMBREE OFF CACHE INTERNAL "" FORCE)
-ENDIF()
-
-# NOTE(jda) - Windows not yet handled...
-IF (NOT WIN32 AND OSPRAY_ZIP_MODE)
-  INSTALL(PROGRAMS ${EMBREE_LIBRARY} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib) # /intel64?
-  IF(OSPRAY_MIC)
-    INSTALL(PROGRAMS ${EMBREE_LIBRARY_XEONPHI} DESTINATION ${CMAKE_INSTALL_LIBDIR}/mic COMPONENT lib_mic)
-  ENDIF()
-ENDIF()
-
-SET(EMBREE_INCLUDE_DIRS    ${EMBREE_INCLUDE_DIRS}    PARENT_SCOPE)
-SET(EMBREE_LIBRARIES       ${EMBREE_LIBRARIES}       PARENT_SCOPE)
-SET(EMBREE_LIBRARY         ${EMBREE_LIBRARY}         PARENT_SCOPE)
-SET(EMBREE_LIBRARY_XEONPHI ${EMBREE_LIBRARY_XEONPHI} PARENT_SCOPE)
 
 # -------------------------------------------------------
 # redistribute TBB
@@ -137,12 +42,14 @@ IF (OSPRAY_TASKING_TBB)
     FIND_FILE(TBB_DLL_MALLOC tbbmalloc.dll PATHS HINTS ${TBB_DLL_HINTS})
     MARK_AS_ADVANCED(TBB_DLL)
     MARK_AS_ADVANCED(TBB_DLL_MALLOC)
-    INSTALL(PROGRAMS ${TBB_DLL} ${TBB_DLL_MALLOC} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT apps) # 3rd party?
+    INSTALL(PROGRAMS ${TBB_DLL} ${TBB_DLL_MALLOC}
+            DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT apps) # 3rd party?
   ELSEIF (OSPRAY_ZIP_MODE)
     INSTALL(PROGRAMS ${TBB_LIBRARY} ${TBB_LIBRARY_MALLOC} ${TBB_LIBRARY_DEBUG} ${TBB_LIBRARY_MALLOC_DEBUG}
             DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib) # /intel64?
     IF(OSPRAY_MIC AND TBB_FOUND_MIC)
-      INSTALL(PROGRAMS ${TBB_LIBRARIES_MIC} DESTINATION ${CMAKE_INSTALL_LIBDIR}/mic COMPONENT lib_mic)
+      INSTALL(PROGRAMS ${TBB_LIBRARIES_MIC}
+              DESTINATION ${CMAKE_INSTALL_LIBDIR}/mic COMPONENT lib_mic)
     ENDIF()
   ENDIF()
 ENDIF()
@@ -201,6 +108,7 @@ SET(OSPRAY_SOURCES
   fb/Tile.h
 
   camera/Camera.cpp
+  camera/Camera.ispc
   camera/PerspectiveCamera.ispc
   camera/PerspectiveCamera.cpp
   camera/OrthographicCamera.ispc
@@ -508,7 +416,29 @@ IF (THIS_IS_MIC)
   ADD_DEFINITIONS(-DOSPRAY_TARGET_MIC)
 ENDIF()
 
-OSPRAY_ADD_LIBRARY(ospray SHARED ${OSPRAY_SOURCES})
+SET(OSPRAY_LIBS
+  ospray_common
+  ${CMAKE_THREAD_LIBS_INIT}
+  ${CMAKE_DL_LIBS}
+)
+
+IF (THIS_IS_MIC)
+  LIST(APPEND OSPRAY_LIBS
+    ${EMBREE_LIBRARY_XEONPHI}
+    ${TASKING_SYSTEM_LIBS_MIC}
+  )
+ELSE()
+  LIST(APPEND OSPRAY_LIBS
+    ${EMBREE_LIBRARIES}
+    ${TASKING_SYSTEM_LIBS}
+  )
+ENDIF()
+
+IF (WIN32)
+  LIST(APPEND OSPRAY_LIBS ws2_32)
+ENDIF()
+
+OSPRAY_CREATE_LIBRARY(ospray ${OSPRAY_SOURCES} LINK ${OSPRAY_LIBS})
 
 # export ISPC SDK symbols on Windows
 IF (WIN32 AND OSPRAY_BUILD_ISA STREQUAL "ALL")
@@ -516,30 +446,6 @@ IF (WIN32 AND OSPRAY_BUILD_ISA STREQUAL "ALL")
                        "/DEF:${PROJECT_SOURCE_DIR}/ospray/ospray.def")
 ENDIF()
 
-OSPRAY_LIBRARY_LINK_LIBRARIES(ospray
-  ospray_common
-  ${CMAKE_THREAD_LIBS_INIT}
-  ${CMAKE_DL_LIBS}
-)
-
-IF (THIS_IS_MIC)
-  OSPRAY_LIBRARY_LINK_LIBRARIES(ospray
-    ${EMBREE_LIBRARY_XEONPHI}
-    ${TASKING_SYSTEM_LIBS_MIC}
-  )
-ELSE()
-  OSPRAY_LIBRARY_LINK_LIBRARIES(ospray
-    ${EMBREE_LIBRARIES}
-    ${TASKING_SYSTEM_LIBS}
-  )
-ENDIF()
-
-IF (WIN32)
-  OSPRAY_LIBRARY_LINK_LIBRARIES(ospray ws2_32)
-ENDIF()
-
-OSPRAY_SET_LIBRARY_VERSION(ospray)
-OSPRAY_INSTALL_LIBRARY(ospray)
 
 IF(NOT THIS_IS_MIC)
   # build ospTutorial, for testing
@@ -561,9 +467,12 @@ IF (OSPRAY_MPI)
     OSPRAY_LIBRARY_LINK_LIBRARIES(ospray ${MPI_CXX_LIBRARIES})
   ENDIF()
 
-  OSPRAY_ADD_EXECUTABLE(ospray_mpi_worker mpi/MPIWorker.cpp)
-  OSPRAY_EXE_LINK_LIBRARIES(ospray_mpi_worker ospray ospray_common)
-  OSPRAY_INSTALL_EXE(ospray_mpi_worker)
+  OSPRAY_CREATE_APPLICATION(ospray_mpi_worker
+    mpi/MPIWorker.cpp
+  LINK
+    ospray
+    ospray_common
+  )
 ENDIF()
 
 
@@ -577,14 +486,13 @@ IF (OSPRAY_BUILD_COI_DEVICE)
     # ------------------------------------------------------------
     OSPRAY_LIBRARY_LINK_LIBRARIES(ospray ${LIBCOI_DEVICE})
     # ... and add the coi worker executable
-    OSPRAY_ADD_EXECUTABLE(ospray_coi_worker api/COIDeviceWorker.cpp)
-    OSPRAY_EXE_LINK_LIBRARIES(ospray_coi_worker
+    OSPRAY_CREATE_APPLICATION(ospray_coi_worker
+      api/COIDeviceWorker.cpp
+    LINK
       ospray
       ospray_common
       ${LIBCOI_DEVICE}
     )
-    # ------------------------------------------------------------
-    OSPRAY_INSTALL_EXE(ospray_coi_worker)
   ELSE()
     # ------------------------------------------------------------
     # host-side of COI device: just link libospray to coi host libs

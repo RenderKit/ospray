@@ -24,6 +24,6 @@ IF(NOT THIS_IS_MIC AND OSPRAY_MODULE_OPENGL_UTIL)
 
   LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/modules/opengl)
 
-  OSPRAY_CREATE_LIBRARY(module_opengl_util util.cpp
+  OSPRAY_CREATE_LIBRARY(ospray_module_opengl_util util.cpp
     LINK ospray ${OPENGL_LIBRARIES})
 ENDIF()

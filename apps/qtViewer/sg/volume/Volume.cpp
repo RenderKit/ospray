@@ -66,7 +66,7 @@ namespace ospray {
       voxelType = node->getProp("voxelType");
       if (node->hasProp("ofs"))
         mappedPointer = binBasePtr + node->getPropl("ofs");
-      dimensions = parseVec3i(node->getProp("dimensions"));
+      dimensions = toVec3i(node->getProp("dimensions").c_str());
 
       if (voxelType != "float" && voxelType != "uint8") 
         throw std::runtime_error("unknown StructuredVolume.voxelType (currently only supporting 'float' and 'uint8')");
@@ -139,7 +139,7 @@ namespace ospray {
     {
       voxelType = node->getProp("voxelType");
       if (voxelType == "uint8") voxelType = "uchar";
-      dimensions = parseVec3i(node->getProp("dimensions"));
+      dimensions = toVec3i(node->getProp("dimensions").c_str());
       fileName = node->getProp("fileName");
       if (fileName == "") throw std::runtime_error("sg::StructuredVolumeFromFile: no 'fileName' specified");
 
@@ -256,7 +256,7 @@ namespace ospray {
     void StackedRawSlices::setFromXML(const xml::Node *const node, const unsigned char *binBasePtr)
     {
       voxelType = node->getProp("voxelType");
-      sliceResolution = parseVec2i(node->getProp("sliceResolution"));
+      sliceResolution = toVec2i(node->getProp("sliceResolution").c_str());
       baseName = node->getProp("baseName");
       firstSliceID = node->getPropl("firstSliceID");
       numSlices = node->getPropl("numSlices");

@@ -69,10 +69,7 @@ namespace ospray {
       lateron always get a handle to this fct and create an instance
       of this material.
   */
-#define OSP_REGISTER_MATERIAL(InternalClassName,external_name)      \
-  extern "C" OSPRAY_DLLEXPORT Material *ospray_create_material__##external_name()    \
-  {                                                                 \
-    return new InternalClassName;                                   \
-  }                                                                 \
+#define OSP_REGISTER_MATERIAL(InternalClass, external_name) \
+  OSP_REGISTER_OBJECT(Material, material, InternalClass, external_name)
 
 } // ::ospray
