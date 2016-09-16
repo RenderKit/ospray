@@ -176,6 +176,9 @@ void OSPGlutViewer::keypress(char key, const vec2i &where)
     viewPort.modified = true;
     forceRedraw();
     break;
+  case 'c':
+    viewPort.modified = true;//Reset accumulation
+    break;
   case 'f':
     toggleFullscreen();
     break;
