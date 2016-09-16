@@ -685,21 +685,17 @@ void VolumeViewer::initObjects(const std::string &renderer_type)
   osp::vec3f *vertices = new osp::vec3f[4];
   float ps = 100000.f;
   float py = boundingBox.upper.y+1.f;
-  bool zy = true;
-  if (zy)
-  {
-    vertices[0] = osp::vec3f{-ps, -ps, py};
-    vertices[1] = osp::vec3f{-ps, ps, py};
-    vertices[2] = osp::vec3f{ps,  -ps, py};
-    vertices[3] = osp::vec3f{ps,  ps, py};
-  }
-  else
-  {
-    vertices[0] = osp::vec3f{-ps, py, -ps};
-    vertices[1] = osp::vec3f{-ps, py, ps};
-    vertices[2] = osp::vec3f{ps, py, -ps};
-    vertices[3] = osp::vec3f{ps, py, ps};
-    }
+#if 1
+  vertices[0] = osp::vec3f{-ps, -ps, -py};
+  vertices[1] = osp::vec3f{-ps,  ps, -py};
+  vertices[2] = osp::vec3f{ ps, -ps, -py};
+  vertices[3] = osp::vec3f{ ps,  ps, -py};
+#else
+  vertices[0] = osp::vec3f{-ps, py, -ps};
+  vertices[1] = osp::vec3f{-ps, py, ps};
+  vertices[2] = osp::vec3f{ps, py, -ps};
+  vertices[3] = osp::vec3f{ps, py, ps};
+#endif
 
   planeMesh = ospNewGeometry("triangles");
   OSPData position = ospNewData(4, OSP_FLOAT3, &vertices[0]);

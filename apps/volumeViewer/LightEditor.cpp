@@ -59,7 +59,7 @@ LightEditor::LightEditor(OSPLight ambientLight, OSPLight directionalLight) : amb
 
   directionalLightIntensitySpinBox.setValue(1.0);
   directionalLightAzimuthSlider.setValue(0.8 * (directionalLightAzimuthSlider.minimum() + directionalLightAzimuthSlider.maximum())); // 45 degrees azimuth
-  directionalLightElevationSlider.setValue(0.6 * (directionalLightElevationSlider.minimum() + directionalLightElevationSlider.maximum())); // 45 degrees elevation
+  directionalLightElevationSlider.setValue(0.2 * (directionalLightElevationSlider.minimum() + directionalLightElevationSlider.maximum())); // 45 degrees elevation
 }
 
 void LightEditor::ambientLightChanged()

@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
   bool showFrameRate = false;
   bool fullScreen = false;
   bool ownModelPerObject = false;
-  std::string renderer = "dvr";
+  std::string renderer = "scivis";//"dvr";
   std::string writeFramesFilename;
   bool usePlane = false;
 
