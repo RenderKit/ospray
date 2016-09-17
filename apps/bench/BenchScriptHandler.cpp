@@ -40,62 +40,6 @@ BenchScriptHandler::BenchScriptHandler(std::shared_ptr<OSPRayFixture> &fixture)
 void BenchScriptHandler::registerScriptFunctions() {
   auto &chai = this->scriptEngine();
 
-  auto loadTransferFunction = [&](const std::string &fname) {
-    using namespace ospcommon;
-    tfn::TransferFunction fcn(fname);
-    ospray::cpp::TransferFunction transferFunction("piecewise_linear");
-    auto colorsData = ospray::cpp::Data(fcn.rgbValues.size(), OSP_FLOAT3,
-                                        fcn.rgbValues.data());
-    transferFunction.set("colors", colorsData);
-
-    const float tf_scale = fcn.opacityScaling;
-    // Sample the opacity values, taking 256 samples to match the volume viewer
-    // the volume viewer does the sampling a bit differently so we match that
-    // instead of what's done in createDefault
-    std::vector<float> opacityValues;
-    const int N_OPACITIES = 256;
-    size_t lo = 0;
-    size_t hi = 1;
-    for (int i = 0; i < N_OPACITIES; ++i) {
-      const float x = float(i) / float(N_OPACITIES - 1);
-      float opacity = 0;
-      if (i == 0) {
-        opacity = fcn.opacityValues[0].y;
-      } else if (i == N_OPACITIES - 1) {
-        opacity = fcn.opacityValues.back().y;
-      } else {
-        // If we're over this val, find the next segment
-        if (x > fcn.opacityValues[lo].x) {
-          for (size_t j = lo; j < fcn.opacityValues.size() - 1; ++j) {
-            if (x <= fcn.opacityValues[j + 1].x) {
-              lo = j;
-              hi = j + 1;
-              break;
-            }
-          }
-        }
-        const float delta = x - fcn.opacityValues[lo].x;
-        const float interval = fcn.opacityValues[hi].x - fcn.opacityValues[lo].x;
-        if (delta == 0 || interval == 0) {
-          opacity = fcn.opacityValues[lo].y;
-        } else {
-          opacity = fcn.opacityValues[lo].y + delta / interval
-            * (fcn.opacityValues[hi].y - fcn.opacityValues[lo].y);
-        }
-      }
-      opacityValues.push_back(tf_scale * opacity);
-    }
-
-    auto opacityValuesData = ospray::cpp::Data(opacityValues.size(),
-                                               OSP_FLOAT,
-                                               opacityValues.data());
-    transferFunction.set("opacities", opacityValuesData);
-    transferFunction.set("valueRange", vec2f(fcn.dataValueMin, fcn.dataValueMax));
-
-    transferFunction.commit();
-    return transferFunction;
-  };
-
   // load the first volume in the file. This isn't really a great solution for
   // final support of loading data from scripts but will work ok.
   auto loadVolume = [&](const std::string &fname) {
@@ -106,14 +50,7 @@ void BenchScriptHandler::registerScriptFunctions() {
     return ospray::cpp::Volume(imported->volume[0]->handle);
   };
 
-  // Get an string environment variable
-  auto getEnvString = [](const std::string &var){
-    return ospray::getEnvVar<std::string>(var).second;
-  };
-
-  chai.add(chaiscript::fun(loadTransferFunction), "loadTransferFunction");
   chai.add(chaiscript::fun(loadVolume), "loadVolume");
-  chai.add(chaiscript::fun(getEnvString), "getEnvString");
 }
 void BenchScriptHandler::registerScriptTypes() {
   using Millis = OSPRayFixture::Millis;
