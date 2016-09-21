@@ -35,14 +35,17 @@ cmake -L ^
 -D CMAKE_INSTALL_DOCDIR=doc ^
 -D CMAKE_INSTALL_BINDIR=bin ^
 ..
+if %ERRORLEVEL% GEQ 1 goto abort
 
 rem compile and create installers
 # option '--clean-first' somehow conflicts with options after '--' for msbuild
 cmake --build . --config Release --target PACKAGE -- /m /nologo
+if %ERRORLEVEL% GEQ 1 goto abort
 
 rem create ZIP files
 cmake -D OSPRAY_ZIP_MODE=ON ..
 cmake --build . --config Release --target PACKAGE -- /m /nologo
+if %ERRORLEVEL% GEQ 1 goto abort
 
 cd ..
 
