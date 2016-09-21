@@ -37,6 +37,7 @@ IF (OSPRAY_TASKING_TBB)
     SET(TBB_DLL_HINTS
       ${TBB_ROOT}/../redist/${TBB_ARCH}_win/tbb/${TBB_VCVER}
       ${TBB_ROOT}/../redist/${TBB_ARCH}/tbb/${TBB_VCVER}
+      ${TBB_ROOT}/bin/${TBB_ARCH}/${TBB_VCVER}
     )
     FIND_FILE(TBB_DLL tbb.dll HINTS ${TBB_DLL_HINTS})
     FIND_FILE(TBB_DLL_MALLOC tbbmalloc.dll PATHS HINTS ${TBB_DLL_HINTS})
