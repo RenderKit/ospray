@@ -369,7 +369,7 @@ extern "C" {
 
     Valid flags that can be OR'ed together into the flags value:
     - OSP_DATA_SHARED_BUFFER: indicates that the buffer can be shared with the app.
-    In this case the calling program guarantees that the 'init' pointer will remain
+    In this case the calling program guarantees that the 'source' pointer will remain
     valid for the duration that this data array is being used.
   */
   OSPRAY_INTERFACE OSPData ospNewData(size_t numItems,
