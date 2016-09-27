@@ -391,6 +391,10 @@ void OSPRayScriptHandler::registerScriptObjects()
   chai.add_global(chaiscript::var(model),    "m");
   chai.add_global(chaiscript::var(renderer), "r");
   chai.add_global(chaiscript::var(camera),   "c");
+  chai.add_global_const(chaiscript::const_var(static_cast<int>(OSP_FB_COLOR)), "OSP_FB_COLOR");
+  chai.add_global_const(chaiscript::const_var(static_cast<int>(OSP_FB_ACCUM)), "OSP_FB_ACCUM");
+  chai.add_global_const(chaiscript::const_var(static_cast<int>(OSP_FB_DEPTH)), "OSP_FB_DEPTH");
+  chai.add_global_const(chaiscript::const_var(static_cast<int>(OSP_FB_VARIANCE)), "OSP_FB_VARIANCE");
   for (auto &m : script::SCRIPT_MODULES) {
     m.registerModule(chai);
   }

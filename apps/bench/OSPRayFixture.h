@@ -45,8 +45,9 @@ struct OSPRayFixture {
   // for you.
   void saveImage(const std::string &fname);
   // Change the framebuffer dimensions for the benchmark. If either is 0, the previously
-  // set width or height will be used accordingly.
-  void setFrameBufferDims(const int w = 0, const int h = 0);
+  // set width or height will be used accordingly. Can also change the framebuffer flags used
+  // to enable/disable accumulation.
+  void setFrameBuffer(const int w = 0, const int h = 0, const int fbFlags = OSP_FB_COLOR | OSP_FB_ACCUM);
 
   ospray::cpp::Renderer renderer;
   ospray::cpp::Camera camera;
@@ -62,5 +63,6 @@ private:
 
   int width;
   int height;
+  int framebufferFlags;
 };
 

@@ -52,7 +52,7 @@ OSPRayFixture::OSPRayFixture(cpp::Renderer r, cpp::Camera c, cpp::Model m)
   : renderer(r), camera(c), model(m), width(DEFAULT_WIDTH), height(DEFAULT_HEIGHT),
   defaultBenchFrames(DEFAULT_BENCH_FRAMES), defaultWarmupFrames(DEFAULT_WARMUP_FRAMES)
 {
-  setFrameBufferDims(width, height);
+  setFrameBuffer(width, height);
   renderer.set("world", model);
   renderer.set("model", model);
   renderer.set("camera", camera);
@@ -63,13 +63,13 @@ OSPRayFixture::benchmark(const size_t warmUpFrames, const size_t benchFrames) {
   const size_t warmup = warmUpFrames == 0 ? defaultWarmupFrames : warmUpFrames;
   const size_t bench = benchFrames == 0 ? defaultBenchFrames : benchFrames;
   for (size_t i = 0; i < warmup; ++i) {
-    renderer.renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
+    renderer.renderFrame(fb, framebufferFlags);
   }
-  fb.clear(OSP_FB_ACCUM | OSP_FB_COLOR);
+  fb.clear(framebufferFlags);
 
   auto benchmarker = pico_bench::Benchmarker<Millis>(bench);
   auto stats = benchmarker([&]() {
-      renderer.renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
+      renderer.renderFrame(fb, framebufferFlags);
   });
   stats.time_suffix = " ms";
   return stats;
@@ -79,12 +79,13 @@ void OSPRayFixture::saveImage(const std::string &fname) {
   bench::writePPM(fname + ".ppm", width, height, lfb);
   fb.unmap(lfb);
 }
-void OSPRayFixture::setFrameBufferDims(const int w, const int h) {
+void OSPRayFixture::setFrameBuffer(const int w, const int h, const int fbFlags) {
   width = w > 0 ? w : width;
   height = h > 0 ? h : height;
 
-  fb = cpp::FrameBuffer(osp::vec2i{width, height}, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
-  fb.clear(OSP_FB_ACCUM | OSP_FB_COLOR);
+  fb = cpp::FrameBuffer(osp::vec2i{width, height}, OSP_FB_SRGBA, fbFlags);
+  fb.clear(fbFlags);
+  framebufferFlags = fbFlags;
 
   camera.set("aspect", static_cast<float>(width) / height);
   camera.commit();

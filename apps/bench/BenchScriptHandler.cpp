@@ -118,7 +118,7 @@ void BenchScriptHandler::registerScriptTypes() {
       {chaiscript::fun(&OSPRayFixture::benchmark), "benchmark"},
       {chaiscript::fun(benchDefault), "benchmark"},
       {chaiscript::fun(&OSPRayFixture::saveImage), "saveImage"},
-      {chaiscript::fun(&OSPRayFixture::setFrameBufferDims), "setFrameBufferDims"},
+      {chaiscript::fun(&OSPRayFixture::setFrameBuffer), "setFrameBuffer"},
       {chaiscript::fun(setRenderer), "setRenderer"},
       {chaiscript::fun(setCamera), "setCamera"},
       {chaiscript::fun(setModel), "setModel"}
