@@ -110,8 +110,6 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
   lastDg.Ns = ray.dir;
   lastDg.Ng = ray.dir;
 
-  DifferentialGeometry previousDg;
-
   do {
     traceRay(self->super.model, ray);
 
@@ -248,8 +246,6 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       lastBSDFPdf = fs.pdf;
       lastDg = dg;
     }
-
-    previousDg = dg;
 
     // continue the path
     straightPath &= eq(ray.dir, fs.wi);

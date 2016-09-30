@@ -196,7 +196,7 @@ void parseCommandLine(int argc, const char *argv[])
   std::tie(std::ignore, model, renderer, camera) = ospObjs;
   cmdlineFixture = std::make_shared<OSPRayFixture>(renderer, camera, model);
   if (width > 0 || height > 0) {
-    cmdlineFixture->setFrameBufferDims(width, height);
+    cmdlineFixture->setFrameBuffer(width, height);
   }
   // Set the default warm up and bench frames
   if (numWarmupFrames > 0) {

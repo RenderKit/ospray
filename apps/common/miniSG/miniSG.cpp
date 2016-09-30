@@ -188,7 +188,7 @@ namespace ospray {
           tex->channels = numChannels;
           tex->depth    = sizeof(float);
           tex->prefereLinear = prefereLinear;
-          tex->data     = new unsigned char[width * height * numChannels * sizeof(float)];
+          tex->data     = new float[width * height * numChannels];
           if (fread(tex->data, sizeof(float), width * height * numChannels, file)
               != width * height * numChannels)
             throw std::runtime_error("could not fread");
@@ -213,7 +213,8 @@ namespace ospray {
         tex->width    = image.columns();
         tex->height   = image.rows();
         tex->channels = image.matte() ? 4 : 3;
-        tex->depth    = 4;
+        const bool hdr = image.depth() > 8;
+        tex->depth    = hdr ? 4 : 1;
         tex->prefereLinear = prefereLinear;
         float rcpMaxRGB = 1.0f/float(MaxRGB);
         const Magick::PixelPacket* pixels = image.getConstPixels(0,0,tex->width,tex->height);
@@ -222,17 +223,26 @@ namespace ospray {
           delete tex;
           tex = nullptr;
         } else {
-          tex->data = new float[tex->width*tex->height*tex->channels];
+          tex->data = new unsigned char[tex->width*tex->height*tex->channels*tex->depth];
           // convert pixels and flip image (because OSPRay's textures have the origin at the lower left corner)
           for (size_t y=0; y<tex->height; y++) {
             for (size_t x=0; x<tex->width; x++) {
               const Magick::PixelPacket &pixel = pixels[y*tex->width+x];
-              float *dst = &((float*)tex->data)[(x+(tex->height-1-y)*tex->width)*tex->channels];
-              *dst++ = pixel.red * rcpMaxRGB;
-              *dst++ = pixel.green * rcpMaxRGB;
-              *dst++ = pixel.blue * rcpMaxRGB;
-              if (tex->channels == 4)
-                *dst++ = pixel.opacity * rcpMaxRGB;
+              if (hdr) {
+                float *dst = &((float*)tex->data)[(x+(tex->height-1-y)*tex->width)*tex->channels];
+                *dst++ = pixel.red * rcpMaxRGB;
+                *dst++ = pixel.green * rcpMaxRGB;
+                *dst++ = pixel.blue * rcpMaxRGB;
+                if (tex->channels == 4)
+                  *dst++ = pixel.opacity * rcpMaxRGB;
+              } else {
+                unsigned char *dst = &((unsigned char*)tex->data)[(x+(tex->height-1-y)*tex->width)*tex->channels];
+                *dst++ = pixel.red;
+                *dst++ = pixel.green;
+                *dst++ = pixel.blue;
+                if (tex->channels == 4)
+                  *dst++ = pixel.opacity;
+              }
             }
           }
         }
