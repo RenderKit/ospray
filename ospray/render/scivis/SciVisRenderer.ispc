@@ -371,12 +371,16 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
     if (volume->adaptiveSampling && sampleOpacity > adaptiveBacktrack && ray.t0 > tSkipped)  // adaptive backtack
     {
       tSkipped = ray.t0;
-      ray.t0 = max(ray.t0-ray.time, tBegin);
       //adaptively refine sampling rate
-      samplingRate = min(adaptiveScalar*sampleOpacity,maxSamplingRate);
-      volume->intersectAdaptive(volume, ray, samplingRate);
-      lastSample = -1;
-      continue;
+      float newSamplingRate = min(adaptiveScalar*sampleOpacity,maxSamplingRate);
+      if (newSamplingRate > samplingRate + 0.01f)
+      {
+        samplingRate = newSamplingRate;
+        ray.t0 = max(ray.t0-ray.time, tBegin);
+        volume->intersectAdaptive(volume, ray, samplingRate);
+        lastSample = -1;
+        continue;
+      }
     }
 
     if (!isShadowRay)
