@@ -106,7 +106,7 @@ inline void shadeMaterials(const varying DifferentialGeometry &dg,
     foreach_unique (mat in scivisMaterial) {
       // textures modify (mul) values, see
       //   http://paulbourke.net/dataformats/mtl/
-      info.d = mat->d * get1f(mat->map_d, dg.st, 1.f) * dg.color.w;
+      info.d = mat->d * get1f(mat->map_d, dg.st, 1.f);
       info.Kd = mat->Kd * make_vec3f(dg.color);
       if (mat->map_Kd) {
         vec4f Kd_from_map = get4f(mat->map_Kd, dg.st);
