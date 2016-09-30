@@ -154,11 +154,12 @@ inline float calculateAO(const uniform SciVisRenderer *uniform self,
     setRay(ao_ray, dg.P + (1e-3f * dg.Ns), ao_dir,
            self->super.epsilon, self->aoRayLength);
     //shade volumes
-    const float rayOffset = self->super.epsilon*s.x + 1e-3f;
     if (dot(ao_ray.dir, dg.Ns) < 0.05f || isOccluded(self->super.model,ao_ray))
       hits+=1.f;
     else
     {
+      const float epsilon = self->volumeEpsilon*10.f;
+      const float rayOffset = epsilon*s.x + epsilon;
       if (SciVisRenderer_intersectVolumes(self, ao_ray, rayOffset))
       {
         //hits++;
@@ -436,18 +437,12 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
     {
       // ray.time = absolute step length.  convert to effective sampling rate
       float dt = 1.0f/((ray.time)/volume->samplingStep);
-      // if (dt != volume->samplingRate)
-        // print("dt: % samplingStep % \n", dt, volume->samplingRate);
-        // return the color contribution for this sample only (do not accumulate)
       vec4f contribution =  clamp(sampleOpacity / dt)
           * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
       intervalColor = intervalColor + (1.0f - intervalColor.w) * contribution;
       //adaptively refine sampling rate
       if (ray.t0 > tSkipped)
         samplingRate = max(min(adaptiveScalar*sampleOpacity,maxSamplingRate)/*nyquist frequency*/,volume->samplingRate);
-      // if (samplingRate != volume->samplingRate)  
-        // print("samplingRate % volumeSR %\n", samplingRate, volume->samplingRate);
-      // samplingRate = volume->samplingRate;
       volume->intersectAdaptive(volume, ray, samplingRate);
     }
     else
@@ -460,7 +455,6 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
   }
   if(!isShadowRay && volume->gradientShadingEnabled && volume->singleShade && singleMax >= singleMin) 
   {
-    // print("singleShade\n");
     // Use volume gradient as the normal.
     const vec3f gradient =
         safe_normalize(volume->computeGradient(volume, singleCoordinates));
@@ -775,7 +769,7 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
 
         // Volume contribution.
         color = color + (1.0f - color.w) * volumeColor;
-        ray.t0 = tEnd;
+        ray.t0 = tEnd + renderer->volumeEpsilon;
       }
 
     } else {// firstHit == geometryRay.t
