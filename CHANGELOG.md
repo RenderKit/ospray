@@ -4,16 +4,18 @@ Version History
 ### Changes in v1.1.0:
 
 -   New Volume rendering features
-    -   Adaptive sampling
-    -   Pre-integration
-    -   Ambient occlusion
-    -   Shadows
-    -   Specular surface shading
-    -   Single shading point option for accelerated shading
+    -   Adaptive sampling to help improve the correctness of rendering
+        high frequency volume data
+    -   Transfer function pre-integration for higher fidelity images
 -   New "scivis" renderer features
     -   Single sided lighting (enabled by default)
-    -   Smooth shading
-    -   Volumes can now cast shadows and occlusion onto surfaces
+    -   New volume specific features:
+        -   Ambient occlusion
+        -   Volumes can cast shadows
+        -   Specular surface volume shading
+        -   Smooth shading in volumes
+        -   Single shading point option for accelerated shading
+        -   Volumes can now cast shadows and occlusion onto surfaces
 -   Add preliminary support for adaptive accumulation in the MPI device
 -   OSPRay library can now be compiled with -Wall and -Wextra enabled
     -   Tested with gcc-5.3.1 and clang-3.8
