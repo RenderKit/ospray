@@ -1,6 +1,41 @@
 Version History
 ---------------
 
+### Changes in v1.1.0:
+
+-   New Volume rendering features
+    -   Adaptive sampling
+    -   Pre-integration
+-   New "scivis" renderer features
+    -   Single sided lighting (enabled by default)
+    -   Smooth shading
+    -   Volumes can now cast shadows
+-   Add preliminary support for adaptive accumulation in the MPI device
+-   OSPRay library can now be compiled with -Wall and -Wextra enabled
+    -   Tested with gcc-5.3.1 and clang-3.8
+    -   Sample apps and modules have not been fixed yet, thus apps
+        which build OSPRay as a CMake subproject should disable them
+        with -DOSPRAY_ENABLE_APPS=OFF and -DOSPRAY_ENABLE_MODULES=OFF
+-   Preliminary support for stereo rendering in the "perspective" camera
+-   Enhanced output statistics in ospBenchmark app
+-   Many fixes to the OSPRay SDK
+    -   Improved CMake detection of compile-time enabled features
+    -   Now distribute OSPRay configuration and ISPC CMake macros
+    -   Improved SDK support on Windows
+-   This will be our last release supporting KNC
+    -   Future major and minor releases will be upgraded to the latest
+        version of Embree, which no longer supports KNC
+    -   Depending on user feedback, patch releases may be made
+        for major problems with KNC.
+-   Minor bug fixes, improvements, and cleanups
+    -   Fix internal CMake naming inconsistencies in macros
+    -   Fix missing API calls in C++ wrapper classes
+    -   Fix crashes on MIC
+    -   Fix thread count initialization bug with TBB
+    -   CMake optimizations for faster configuration times
+    -   Enhanced support for scripting in both ospGlutViewer and
+        ospBenchmark apps
+
 ### Changes in v1.0.0:
 
 -   New OSPRay 'SDK'
