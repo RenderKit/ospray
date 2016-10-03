@@ -6,10 +6,14 @@ Version History
 -   New Volume rendering features
     -   Adaptive sampling
     -   Pre-integration
+    -   Ambient occlusion
+    -   Shadows
+    -   Specular surface shading
+    -   Single shading point option for accelerated shading
 -   New "scivis" renderer features
     -   Single sided lighting (enabled by default)
     -   Smooth shading
-    -   Volumes can now cast shadows
+    -   Volumes can now cast shadows and occlusion onto surfaces
 -   Add preliminary support for adaptive accumulation in the MPI device
 -   OSPRay library can now be compiled with -Wall and -Wextra enabled
     -   Tested with gcc-5.3.1 and clang-3.8
