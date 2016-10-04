@@ -43,7 +43,7 @@ namespace ospray {
         throw std::runtime_error("emply RIVL model !?");
 
       Ref<sg::Node> lastNode;
-      for (int childID=0;childID<root->child.size();childID++) {//xmlNode *node = root->children; node; node = node->next) {
+      for (uint32_t childID = 0; childID < root->child.size(); childID++) {
         xml::Node *node = root->child[childID];
         std::string nodeName = node->name;
         if (nodeName == "text") {
@@ -55,7 +55,7 @@ namespace ospray {
           nodeList.push_back(txt.ptr);
 
           int height = -1, width = -1, ofs = -1, channels = -1, depth = -1;
-          for (int pID=0;pID<node->prop.size();pID++) {
+          for (uint32_t pID = 0; pID < node->prop.size(); pID++) {
             xml::Prop *prop = node->prop[pID];
             if (prop->name == "ofs") {
               ofs = atol(prop->value.c_str());

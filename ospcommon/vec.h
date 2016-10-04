@@ -35,7 +35,7 @@ namespace ospcommon {
     typedef T Scalar;
 
     inline vec_t() {};
-    inline vec_t(scalar_t s) : x(s), y(s) {};
+    inline explicit vec_t(scalar_t s) : x(s), y(s) {};
     inline vec_t(scalar_t x, scalar_t y) : x(x), y(y) {};
     inline vec_t(const vec_t<T,2> &o) : x(o.x), y(o.y) {}
 
@@ -156,10 +156,10 @@ namespace ospcommon {
   template<typename T> inline vec_t<T,4> op(const vec_t<T,4> &v)\
   { return vec_t<T,4>(op(v.x),op(v.y),op(v.z),op(v.w)); }\
 
-  unary_functor(rcp);
-  unary_functor(abs);
-  unary_functor(sin);
-  unary_functor(cos);
+  unary_functor(rcp)
+  unary_functor(abs)
+  unary_functor(sin)
+  unary_functor(cos)
 #undef unary_functor
   
   // -------------------------------------------------------
@@ -214,11 +214,11 @@ namespace ospcommon {
                          const vec_t<T,4> &b)                           \
   { return vec_t<T,4>(a op b.x,a op b.y,a op b.z,a op b.w); }           \
   
-  binary_operator(operator+,+);
-  binary_operator(operator-,-);
-  binary_operator(operator*,*);
-  binary_operator(operator/,/);
-  binary_operator(operator%,%);
+  binary_operator(operator+,+)
+  binary_operator(operator-,-)
+  binary_operator(operator*,*)
+  binary_operator(operator/,/)
+  binary_operator(operator%,%)
 #undef binary_operator
 
   // -------------------------------------------------------
@@ -257,10 +257,10 @@ namespace ospcommon {
                           const T &b)                                   \
   { a.x op b; a.y op b; a.z op b; a.w op b; return a; }                 \
   
-  binary_operator(operator+=,+=);
-  binary_operator(operator-=,-=);
-  binary_operator(operator*=,*=);
-  binary_operator(operator/=,/=);
+  binary_operator(operator+=,+=)
+  binary_operator(operator-=,-=)
+  binary_operator(operator*=,*=)
+  binary_operator(operator/=,/=)
 #undef binary_operator
 
   // -------------------------------------------------------
@@ -296,33 +296,6 @@ namespace ospcommon {
   template<typename T> 
   inline bool operator!=(const vec_t<T,4> &a, const vec_t<T,4> &b)
   { return !(a==b); }
-
-  /*! comparison operators; we need those to be able to put vec's in std::map etc @{ */
-  template<typename T> 
-  inline bool operator<(const vec_t<T,2> &a, const vec_t<T,2> &b)
-  { 
-    return (a.x<b.x) || ((a.x==b.x) && (a.y<b.y)); 
-  }
-
-  template<typename T, int A, int B> 
-  inline bool operator<(const vec_t<T,3,A> &a, const vec_t<T,3,B> &b)
-  { 
-    return
-      (a.x< b.x) || 
-      ((a.x==b.x) && ((a.y< b.y) ||
-                      ((a.y==b.y) && (a.z<b.z)))); 
-  }
-
-  template<typename T> 
-  inline bool operator<(const vec_t<T,4> &a, const vec_t<T,4> &b)
-  { 
-    return
-      (a.x< b.x) || 
-      ((a.x==b.x) && ((a.y< b.y) ||
-                      ((a.y==b.y) && ((a.z< b.z) ||
-                                      ((a.z==b.z) && (a.w < b.w)))))); 
-  }
-  /*! @} */
 
   // 'anyLessThan' - return true if any component is less than the other vec's
   template<typename T> 
@@ -373,9 +346,14 @@ namespace ospcommon {
   // -------------------------------------------------------
   // normalize()
   // -------------------------------------------------------
-  template<typename T, int N, int A> inline vec_t<T,N,A> normalize(const vec_t<T,N,A> &v)
+  template<typename T, int N, int A>
+  inline vec_t<T,N,A> normalize(const vec_t<T,N,A> &v)
   { return v * rsqrt(dot(v,v)); }
-  
+
+  template<typename T, int N, int A>
+  inline vec_t<T,N,A> safe_normalize(const vec_t<T,N,A> &v)
+  { return v * rsqrt(max(1e-6f, dot(v,v))); }
+
   // -------------------------------------------------------
   // ostream operators
   // -------------------------------------------------------
@@ -409,9 +387,9 @@ namespace ospcommon {
     inline vec_t<T,4> f(const vec_t<T,4> &a, const vec_t<T,4> &b)       \
     { return vec_t<T,4>(f(a.x,b.x),f(a.y,b.y),f(a.z,b.z),f(a.w,b.w)); } \
   
-  define_functor(min);
-  define_functor(max);
-  define_functor(divRoundUp);
+  define_functor(min)
+  define_functor(max)
+  define_functor(divRoundUp)
 #undef define_functor
 
   // -------------------------------------------------------
@@ -506,6 +484,8 @@ namespace ospcommon {
   // -------------------------------------------------------
   // parsing from strings
   // -------------------------------------------------------
+  OSPCOMMON_INTERFACE int   toInt(const char *ptr);
+  OSPCOMMON_INTERFACE float toFloat(const char *ptr);
   OSPCOMMON_INTERFACE vec2f toVec2f(const char *ptr);
   OSPCOMMON_INTERFACE vec3f toVec3f(const char *ptr);
   OSPCOMMON_INTERFACE vec4f toVec4f(const char *ptr);
@@ -515,3 +495,50 @@ namespace ospcommon {
 
 
 } // ::ospcommon
+
+/*! template specialization for std::less comparison operator;
+ *  we need those to be able to put vec's in std::map etc @{ */
+/* Defining just operator< is prone to bugs, because a definition of an
+ * ordering of vectors is a bit arbitrary and depends on the context.
+ * For example, in box::extend we certainly want the element-wise min/max and
+ * not the std::min/std::max made applicable by vec3f::operator<.
+*/
+namespace std {
+  template<typename T> 
+  struct less<ospcommon::vec_t<T,2>>
+  {
+    inline bool operator()(const ospcommon::vec_t<T,2> &a,
+                           const ospcommon::vec_t<T,2> &b) const
+    { 
+      return (a.x < b.x) || ((a.x == b.x) && (a.y < b.y)); 
+    }
+  };
+
+  template<typename T, int A> 
+  struct less<ospcommon::vec_t<T,3,A>>
+  {
+    inline bool operator()(const ospcommon::vec_t<T,3,A> &a,
+                           const ospcommon::vec_t<T,3,A> &b) const
+    { 
+      return
+        (a.x < b.x) || 
+        ((a.x == b.x) && ((a.y < b.y) ||
+          ((a.y == b.y) && (a.z < b.z)))); 
+    }
+  };
+
+  template<typename T> 
+  struct less<ospcommon::vec_t<T,4>>
+  {
+    inline bool operator()(const ospcommon::vec_t<T,4> &a,
+                           const ospcommon::vec_t<T,4> &b) const
+    { 
+      return
+        (a.x < b.x) || 
+        ((a.x == b.x) && ((a.y < b.y) ||
+          ((a.y == b.y) && ((a.z < b.z) ||
+            ((a.z == b.z) && (a.w < b.w)))))); 
+    }
+  };
+} // std
+/*! @} */

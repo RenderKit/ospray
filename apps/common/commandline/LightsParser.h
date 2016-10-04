@@ -36,11 +36,12 @@ public:
 
 protected:
 
-  ospray::cpp::Renderer m_renderer;
+  ospray::cpp::Renderer renderer;
 
   /*! when using the OBJ renderer, we create a automatic dirlight with this
    * direction; use ''--sun-dir x y z' to change */
-  ospcommon::vec3f m_defaultDirLight_direction;
+  ospcommon::vec3f defaultDirLight_direction;
+  float defaultDirLight_intensity;
 private:
 
   void finalize();

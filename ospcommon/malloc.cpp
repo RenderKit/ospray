@@ -127,7 +127,10 @@ namespace ospcommon
     return ptr;
   }
 
-  void os_commit (void* ptr, size_t bytes) {
+  void os_commit (void* ptr, size_t bytes)
+  {
+    (void)ptr;
+    (void)bytes;
   }
 
   size_t os_shrink(void* ptr, size_t bytesNew, size_t bytesOld) 

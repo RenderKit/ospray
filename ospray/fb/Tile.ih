@@ -17,7 +17,7 @@
 #pragma once
 
 #include "../common/OSPCommon.ih"
-#include "../math/region.ih"
+#include "../math/box.ih"
 
 /*! a screen tile. the memory layout of this class has to _exactly_
   match the (C++-)one in tile.h */

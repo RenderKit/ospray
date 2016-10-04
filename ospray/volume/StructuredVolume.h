@@ -33,10 +33,10 @@ namespace ospray {
     type string passed to Volume::createInstance() specifies a
     particular concrete implementation.  This type string must be
     registered in OSPRay proper, or in a loaded module via
-    OSP_REGISTER_VOLUME. To place the volume in world coordinates, 
+    OSP_REGISTER_VOLUME. To place the volume in world coordinates,
     modify the gridOrigin and gridSpacing to translate and scale the volume.
   */
-  class StructuredVolume : public Volume {
+  class OSPRAY_SDK_INTERFACE StructuredVolume : public Volume {
   public:
 
     //! Constructor.
@@ -145,7 +145,7 @@ namespace ospray {
 #endif
   template<typename T>
   void StructuredVolume::upsampleRegion(const T *source, T *out, const vec3i &regionSize, const vec3i &scaledRegionSize){
-    for (size_t z = 0; z < scaledRegionSize.z; ++z){
+    for (int z = 0; z < scaledRegionSize.z; ++z){
       parallel_for(scaledRegionSize.x * scaledRegionSize.y, [&](int taskID){
         int x = taskID % scaledRegionSize.x;
         int y = taskID / scaledRegionSize.x;

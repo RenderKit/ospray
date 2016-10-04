@@ -90,7 +90,7 @@ namespace ospray {
     this->normal = normalData ? (float*)normalData->data : NULL;
     this->color  = colorData ? (vec4f*)colorData->data : NULL;
     this->texcoord = texcoordData ? (vec2f*)texcoordData->data : NULL;
-    this->prim_materialID  = prim_materialIDData ? (uint32*)prim_materialIDData->data : NULL;
+    this->prim_materialID  = prim_materialIDData ? (uint32_t*)prim_materialIDData->data : NULL;
     this->materialList  = materialListData ? (ospray::Material**)materialListData->data : NULL;
     
     if (materialList && !ispcMaterialPtrs) {
@@ -187,7 +187,7 @@ namespace ospray {
 
     bounds = empty;
     
-    for (int i=0;i<numVerts*numCompsInVtx;i+=numCompsInVtx) 
+    for (uint32_t i = 0; i < numVerts*numCompsInVtx; i+=numCompsInVtx)
       bounds.extend(*(vec3f*)(vertex + i));
 
     if (logLevel >= 2) 
@@ -210,7 +210,7 @@ namespace ospray {
                            geom_materialID,
                            getMaterial()?getMaterial()->getIE():NULL,
                            ispcMaterialPtrs,
-                           (uint32*)prim_materialID);
+                           (uint32_t*)prim_materialID);
   }
 
   OSP_REGISTER_GEOMETRY(TriangleMesh,triangles);

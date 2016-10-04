@@ -22,10 +22,6 @@
 # include "common/widgets/OSPGlutViewer.h"
 #endif
 
-#if OSPRAY_DISPLAY_WALD
-#  include "client/Client.h"
-#endif
-
 std::string scriptFileFromCommandLine(int ac, const char **&av)
 {
   std::string scriptFileName;
@@ -38,41 +34,6 @@ std::string scriptFileFromCommandLine(int ac, const char **&av)
   }
 
   return scriptFileName;
-}
-
-void parseForDisplayWall(int ac, const char **&av, ospray::OSPGlutViewer &v)
-{
-  for (int i = 1; i < ac; i++) {
-    const std::string arg = av[i];
-    if (arg == "--display-wall") {
-      ospray::OSPGlutViewer::DisplayWall displayWall;
-#if OSPRAY_DISPLAY_WALD
-      std::cout << "#osp.glutViewer: using displayWald-style display wall module"
-                << std::endl;
-      const std::string hostName = av[++i];
-      const int portNo = 2903; /* todo: extract that from hostname if required */
-
-      std::cout << "#osp.glutViewer: trying to get display wall config from "
-                << hostName << ":" << portNo << std::endl;
-      ospray::dw::ServiceInfo service;
-      service.getFrom(hostName,portNo);
-      const ospcommon::vec2i size = service.totalPixelsInWall;
-      std::cout << "#osp.glutViewer: found display wald with " 
-                << size.x << "x" << size.y << " pixels "
-                << "(" << ospcommon::prettyNumber(size.product()) << "pixels)" 
-                << std::endl;
-      displayWall.hostname   = service.mpiPortName;
-      displayWall.streamName = service.mpiPortName;
-      displayWall.size = size;
-#else
-      displayWall.hostname   = av[++i];
-      displayWall.streamName = av[++i];
-      displayWall.size.x     = atof(av[++i]);
-      displayWall.size.y     = atof(av[++i]);
-#endif
-      v.setDisplayWall(displayWall);
-    }
-  }
 }
 
 int main(int ac, const char **av)
@@ -98,8 +59,6 @@ int main(int ac, const char **av)
   ospray::OSPGlutViewer window(bbox, model, renderer, camera);
 #endif
   window.create("ospGlutViewer: OSPRay Mini-Scene Graph test viewer");
-
-  parseForDisplayWall(ac, av, window);
 
   ospray::glut3D::runGLUT();
 }

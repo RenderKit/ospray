@@ -26,7 +26,7 @@ namespace ospray {
     camera) for perspective rendering, without support for Depth of Field or Motion Blur
 
     \ingroup ospray_supported_cameras
-    
+
     A simple perspective camera. This camera type is loaded by passing
     the type string "perspective" to \ref ospNewCamera
 
@@ -44,14 +44,14 @@ namespace ospray {
   */
 
   //! Implements a simple perspective camera (see \subpage perspective_camera)
-  struct PerspectiveCamera : public Camera {
+  struct OSPRAY_SDK_INTERFACE PerspectiveCamera : public Camera {
     /*! \brief constructor \internal also creates the ispc-side data structure */
     PerspectiveCamera();
-    //! \brief common function to help printf-debugging 
+    //! \brief common function to help printf-debugging
     /*! Every derived class should overrride this! */
     virtual std::string toString() const { return "ospray::PerspectiveCamera"; }
     virtual void commit();
-    
+
   public:
     // ------------------------------------------------------------------
     // the parameters we 'parsed' from our parameters
@@ -60,6 +60,15 @@ namespace ospray {
     float aspect;
     float apertureRadius;
     float focusDistance;
+    bool architectural; // orient image plane to be parallel to 'up' and shift the lens
+    typedef enum {
+      OSP_STEREO_NONE,
+      OSP_STEREO_LEFT,
+      OSP_STEREO_RIGHT,
+      OSP_STEREO_SIDE_BY_SIDE
+    } StereoMode;
+    StereoMode stereoMode;
+    float interpupillaryDistance; // distance between the two cameras (stereo)
   };
-
+  
 } // ::ospray

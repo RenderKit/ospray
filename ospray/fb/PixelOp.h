@@ -32,16 +32,16 @@ namespace ospray {
       sending tiles to a display wall, etc. PixelOps are intentionally
       'stateless' in that it they should be pure functors that can be
       applied to different frame buffers, potentially at the same
-      time. 
+      time.
 
       To allow a pixelop to maintain some sort of state for a frame,
       the 'beginframe', a pixelop is supposed to create and return a
       state every time it gets "attached" to a frame buffer, and this
-      state then gets passed every time a frame buffer gets started, 
+      state then gets passed every time a frame buffer gets started,
   */
-  struct PixelOp : public ManagedObject
+  struct OSPRAY_SDK_INTERFACE PixelOp : public ManagedObject
   {
-    struct Instance : public RefCount
+    struct OSPRAY_SDK_INTERFACE Instance : public RefCount
     {
       FrameBuffer *fb;
       /*! gets called every time the frame buffer got 'commit'ted */
@@ -50,7 +50,7 @@ namespace ospray {
       virtual void beginFrame() {}
       /*! gets called once at the end of the frame */
       virtual void endFrame() {}
-      
+
       /*! called whenever a new tile comes in from a renderer, but
           _before_ the tile gets written/accumulated into the frame
           buffer. this way we can, for example, fill in missing
@@ -59,16 +59,16 @@ namespace ospray {
           etcpp. In distriubuted mode, it is undefined if this op gets
           executed on the node that _produces_ the tile, or on the
           node that _owns_ the tile (and its accum buffer data)  */
-      virtual void preAccum(Tile &tile) {}
+      virtual void preAccum(Tile &tile) { UNUSED(tile); }
 
       /*! called right after the tile got accumulated; i.e., the
           tile's RGBA values already contain the accu-buffer blended
           values (assuming an accubuffer exists), and this function
           defines how these pixels are being processed before written
           into the color buffer */
-      virtual void postAccum(Tile &tile) {}
+      virtual void postAccum(Tile &tile) { UNUSED(tile); }
 
-      //! \brief common function to help printf-debugging 
+      //! \brief common function to help printf-debugging
       /*! Every derived class should overrride this! */
       virtual std::string toString() const;
     };
@@ -76,7 +76,7 @@ namespace ospray {
     //! \brief create an instance of this pixel op
     virtual Instance *createInstance(FrameBuffer *fb, PixelOp::Instance *prev);
 
-    /*! \brief creates an abstract renderer class of given type 
+    /*! \brief creates an abstract renderer class of given type
 
       The respective renderer type must be a registered renderer type
       in either ospray proper or any already loaded module. For
@@ -86,18 +86,15 @@ namespace ospray {
   };
 
   /*! \brief registers a internal ospray::<ClassName> renderer under
-      the externally accessible name "external_name" 
-      
+      the externally accessible name "external_name"
+
       \internal This currently works by defining a extern "C" function
       with a given predefined name that creates a new instance of this
       renderer. By having this symbol in the shared lib ospray can
       lateron always get a handle to this fct and create an instance
       of this renderer.
   */
-#define OSP_REGISTER_PIXEL_OP(InternalClassName,external_name)      \
-  extern "C" PixelOp *ospray_create_pixel_op__##external_name()     \
-  {                                                                 \
-    return new InternalClassName;                                   \
-  }                                                                 \
-  
+#define OSP_REGISTER_PIXEL_OP(InternalClass, external_name) \
+  OSP_REGISTER_OBJECT(PixelOp, pixel_op, InternalClass, external_name)
+
 }

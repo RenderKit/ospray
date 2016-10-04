@@ -52,7 +52,7 @@ namespace ospray {
     if (symbolRegistry.count(type) == 0) {
 
       // Construct the name of the creation function to look for.
-      std::string creationFunctionName = "ospray_create_volume_" + type;
+      std::string creationFunctionName = "ospray_create_volume__" + type;
 
       // Look for the named function.
       symbolRegistry[type] =
@@ -123,9 +123,33 @@ namespace ospray {
                                            getParam1i("gradientShadingEnabled",
                                                       0));
 
+    ispc::Volume_setPreIntegration(ispcEquivalent,
+                                       getParam1i("preIntegration",
+                                                  0));
+
+    ispc::Volume_setSingleShade(ispcEquivalent,
+                                   getParam1i("singleShade",
+                                              1));
+
+    ispc::Volume_setAdaptiveSampling(ispcEquivalent,
+                                   getParam1i("adaptiveSampling",
+                                              1));
+
+    ispc::Volume_setAdaptiveScalar(ispcEquivalent,
+                                 getParam1f("adaptiveScalar", 15.0f));
+
+    ispc::Volume_setAdaptiveMaxSamplingRate(ispcEquivalent,
+                                 getParam1f("adaptiveMaxSamplingRate", 0.7f));
+
+    ispc::Volume_setAdaptiveBacktrack(ispcEquivalent,
+                                 getParam1f("adaptiveBacktrack", 0.03f));
+
     // Set the recommended sampling rate for ray casting based renderers.
     ispc::Volume_setSamplingRate(ispcEquivalent,
                                  getParam1f("samplingRate", 1.0f));
+
+    vec3f specular = getParam3f("specular", vec3f(0.3f));
+    ispc::Volume_setSpecular(ispcEquivalent, (const ispc::vec3f &)specular);
 
     // Set the transfer function.
     TransferFunction *transferFunction =

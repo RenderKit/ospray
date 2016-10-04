@@ -58,9 +58,10 @@ namespace ospray {
 
     lightArray.clear();
 
-    if (lightData)
-      for (int i = 0; i < lightData->size(); i++)
+    if (lightData) {
+      for (uint32_t i = 0; i < lightData->size(); i++)
         lightArray.push_back(((Light**)lightData->data)[i]->getIE());
+    }
 
     void **lightPtr = lightArray.empty() ? NULL : &lightArray[0];
 
@@ -81,5 +82,6 @@ namespace ospray {
   {
     printf("Loaded plugin 'pathtracer' ...\n");
   }
-};
+
+}
 

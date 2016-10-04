@@ -31,7 +31,7 @@ public:
 
 private:
 
-  ospray::cpp::Renderer m_renderer;
-  ospray::cpp::Model    m_model;
-  ospcommon::box3f      m_bbox;
+  ospray::cpp::Renderer renderer;
+  ospray::cpp::Model    sceneModel;
+  ospcommon::box3f      sceneBbox;
 };

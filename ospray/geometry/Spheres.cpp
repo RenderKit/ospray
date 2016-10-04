@@ -81,7 +81,7 @@ namespace ospray {
     if (materialList) {
       void **ispcMaterials = (void**) malloc(sizeof(void*) *
                                              materialList->numItems);
-      for (int i=0;i<materialList->numItems;i++) {
+      for (uint32_t i = 0; i < materialList->numItems; i++) {
         Material *m = ((Material**)materialList->data)[i];
         ispcMaterials[i] = m?m->getIE():NULL;
       }

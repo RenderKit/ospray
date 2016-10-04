@@ -83,7 +83,7 @@ struct DeferredLoadJob {
 // Class definitions //////////////////////////////////////////////////////////
 
 ParticleSceneParser::ParticleSceneParser(cpp::Renderer renderer) :
-  m_renderer(renderer)
+  renderer(renderer)
 {
 }
 
@@ -136,8 +136,12 @@ bool ParticleSceneParser::parse(int ac, const char **&av)
   }
 
   if (loadedScene) {
+    sceneModel = make_unique<cpp::Model>();
+
+    auto &model = *sceneModel;
+
     //TODO: this needs parallelized as it was in ospParticleViewer...
-    for (int i = 0; i < deferredLoadingListXYZ.size(); ++i) {
+    for (uint32_t i = 0; i < deferredLoadingListXYZ.size(); ++i) {
       FileName defFileName = deferredLoadingListXYZ[i]->defFileName;
       FileName xyzFileName = deferredLoadingListXYZ[i]->xyzFileName;
       particle::Model *model = deferredLoadingListXYZ[i]->model;
@@ -147,9 +151,9 @@ bool ParticleSceneParser::parse(int ac, const char **&av)
       model->loadXYZ(xyzFileName);
     }
 
-    for (int i = 0; i < particleModel.size(); i++) {
+    for (uint32_t i = 0; i < particleModel.size(); i++) {
       OSPModel model = ospNewModel();
-      OSPData materialData = makeMaterials(m_renderer.handle(), particleModel[i]);
+      OSPData materialData = makeMaterials(renderer.handle(), particleModel[i]);
 
       OSPData data = ospNewData(particleModel[i]->atom.size()*5,OSP_FLOAT,
                                 &particleModel[i]->atom[0],OSP_DATA_SHARED_BUFFER);
@@ -170,8 +174,8 @@ bool ParticleSceneParser::parse(int ac, const char **&av)
       modelTimeStep.push_back(model);
     }
 
-    m_model = modelTimeStep[timeStep];
-    m_bbox  = particleModel[0]->getBBox();
+    model = modelTimeStep[timeStep];
+    sceneBbox  = particleModel[0]->getBBox();
   }
 
   return loadedScene;
@@ -179,11 +183,11 @@ bool ParticleSceneParser::parse(int ac, const char **&av)
 
 ospray::cpp::Model ParticleSceneParser::model() const
 {
-  return m_model;
+  return sceneModel.get() == nullptr ? cpp::Model() : *sceneModel;
 }
 
 ospcommon::box3f ParticleSceneParser::bbox() const
 {
-  return m_bbox;
+  return sceneBbox;
 }
 

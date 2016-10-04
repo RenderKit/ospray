@@ -60,15 +60,17 @@ export uniform float DFB_accumulate_##name(void  *uniform _self,             \
                                   VaryingTile    *uniform variance,          \
                                   void           *uniform _color,            \
                                   uniform float   cntu,                      \
-                                  uniform int     accumID,                   \
                                   uniform bool    hasAccumBuffer,            \
                                   uniform bool    hasVarianceBuffer)         \
 {                                                                            \
+  const uniform int accumID = tile->accumID;                                 \
+  const uniform vec2i size = box_size(tile->region);                         \
+  const uniform int maxi = size.y*(TILE_SIZE/programCount);                  \
   DistributedFrameBuffer *uniform self = (DistributedFrameBuffer*)_self;     \
   dst_fmt *uniform color = (dst_fmt*uniform)_color;                          \
   uniform float errf = inf;                                                  \
   if (!hasAccumBuffer || accumID < 1) {                                      \
-    for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {           \
+    for (uniform int i = 0; i < maxi; i++) {                                 \
       vec4f col = make_vec4f(tile->r[i], tile->g[i], tile->b[i], tile->a[i]);\
       accum->r[i] = col.x;                                                   \
       accum->g[i] = col.y;                                                   \
@@ -85,7 +87,7 @@ export uniform float DFB_accumulate_##name(void  *uniform _self,             \
     const uniform float rcpAccumID = rcpf(accumID+1);                        \
     const uniform float accHalfScale = rcpf(accumID/2+1);                    \
     float err = 0.f;                                                         \
-    for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {           \
+    for (uniform int i = 0; i < maxi; i++) {                                 \
       vec3f col3 = make_vec3f(tile->r[i], tile->g[i], tile->b[i]);           \
       vec4f col = make_vec4f(col3, tile->a[i])                               \
         + make_vec4f(accum->r[i], accum->g[i], accum->b[i], accum->a[i]);    \
@@ -111,7 +113,8 @@ export uniform float DFB_accumulate_##name(void  *uniform _self,             \
         const float den2 = reduce_add(acc3);                                 \
         if (den2 > 0.0f) {                                                   \
           const vec3f diff = absf(acc3 - accHalfScale * vari);               \
-          err += reduce_add(diff) * rsqrtf(den2);                            \
+          if ((i*programCount % TILE_SIZE) + programIndex < size.x)          \
+            err += reduce_add(diff) * rsqrtf(den2);                          \
         }                                                                    \
       }                                                                      \
                                                                              \

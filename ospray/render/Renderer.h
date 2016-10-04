@@ -34,7 +34,7 @@ namespace ospray {
     tile renderer, but this abstraction level also allows for frame
     compositing or even projection/splatting based approaches
    */
-  struct Renderer : public ManagedObject {
+  struct OSPRAY_SDK_INTERFACE Renderer : public ManagedObject {
     Renderer() : spp(1), errorThreshold(0.0f) {}
 
     /*! \brief creates an abstract renderer class of given type
@@ -73,10 +73,10 @@ namespace ospray {
     virtual void renderTile(void *perFrameData, Tile &tile, size_t jobID) const;
 
     /*! \brief create a material of given type */
-    virtual Material *createMaterial(const char *type) { return NULL; }
+    virtual Material *createMaterial(const char *type);
 
     /*! \brief create a light of given type */
-    virtual Light *createLight(const char *type) { return NULL; }
+    virtual Light *createLight(const char *type);
 
     virtual OSPPickResult pick(const vec2f &screenPos);
 
@@ -104,6 +104,20 @@ namespace ospray {
 
   };
 
+  // Inlined function definitions /////////////////////////////////////////////
+
+  inline Material *Renderer::createMaterial(const char *type)
+  {
+    UNUSED(type);
+    return nullptr;
+  }
+
+  inline Light *Renderer::createLight(const char *type)
+  {
+    UNUSED(type);
+    return nullptr;
+  }
+
   /*! \brief registers a internal ospray::<ClassName> renderer under
       the externally accessible name "external_name"
 
@@ -113,11 +127,8 @@ namespace ospray {
       lateron always get a handle to this fct and create an instance
       of this renderer.
   */
-#define OSP_REGISTER_RENDERER(InternalClassName,external_name)      \
-  extern "C" OSPRAY_INTERFACE Renderer *ospray_create_renderer__##external_name()    \
-  {                                                                 \
-    return new InternalClassName;                                   \
-  }
+#define OSP_REGISTER_RENDERER(InternalClass, external_name) \
+  OSP_REGISTER_OBJECT(Renderer, renderer, InternalClass, external_name)
 
 } // ::ospray
 

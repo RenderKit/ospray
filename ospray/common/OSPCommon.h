@@ -94,10 +94,12 @@ namespace ospray {
 #  else
 #    define OSPRAY_INTERFACE __declspec(dllimport)
 #  endif
+#  define OSPRAY_DLLEXPORT __declspec(dllexport)
 #else
 #  define OSPRAY_INTERFACE
+#  define OSPRAY_DLLEXPORT
 #endif
-
+#define OSPRAY_SDK_INTERFACE OSPRAY_INTERFACE
 
 // for MIC, disable the 'variable declared bbut never referenced'
 // warning, else the ISPC-generated code produces _far_ too many such
@@ -124,10 +126,10 @@ namespace embree {
 
 // #if defined(__MIC__)
 // #pragma message("using aligned opeartor new (this is knc, right!?)...")
-// void* operator new(size_t size) { return embree::alignedMalloc(size); }       
-// void operator delete(void* ptr) { embree::alignedFree(ptr); }      
-// void* operator new[](size_t size) throws { return embree::alignedMalloc(size); }  
-// void operator delete[](void* ptr) { embree::alignedFree(ptr); }    
+// void* operator new(size_t size) { return embree::alignedMalloc(size); }
+// void operator delete(void* ptr) { embree::alignedFree(ptr); }
+// void* operator new[](size_t size) throws { return embree::alignedMalloc(size); }
+// void operator delete[](void* ptr) { embree::alignedFree(ptr); }
 // #endif
 
 
@@ -173,12 +175,12 @@ namespace ospray {
   inline size_t rdtsc() { return ospcommon::rdtsc(); }
 
   /*! logging level (cmdline: --osp:loglevel \<n\>) */
-  extern uint32 logLevel;
+  extern uint32_t logLevel;
   /*! whether we're running in debug mode (cmdline: --osp:debug) */
   extern bool debugMode;
   /*! number of Embree threads to use, 0 for the default
       number. (cmdline: --osp:numthreads \<n\>) */
-  extern int32 numThreads;
+  extern int numThreads;
 
   /*! size of OSPDataType */
   OSPRAY_INTERFACE size_t sizeOf(const OSPDataType);
@@ -189,7 +191,7 @@ namespace ospray {
   /*! size of OSPTextureFormat */
   OSPRAY_INTERFACE size_t sizeOf(const OSPTextureFormat);
 
-  struct WarnOnce {
+  struct OSPRAY_SDK_INTERFACE WarnOnce {
     WarnOnce(const std::string &s);
   private:
     const std::string s;

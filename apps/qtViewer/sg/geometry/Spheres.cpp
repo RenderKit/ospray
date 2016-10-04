@@ -30,7 +30,7 @@ namespace ospray {
 
     Spheres::Sphere::Sphere(vec3f position, 
                             float radius,
-                            uint typeID) 
+                            uint32_t typeID)
       : position(position), 
         radius(radius), 
         typeID(typeID) 
@@ -60,7 +60,8 @@ namespace ospray {
       existant) that contains additional binary data that the xml
       node fields may point into
     */
-    void Spheres::setFromXML(const xml::Node *const node, const unsigned char *binBasePtr) 
+    void Spheres::setFromXML(const xml::Node *const node,
+                             const unsigned char *binBasePtr)
     {
       size_t num = node->getPropl("num");
       size_t ofs = node->getPropl("ofs");
@@ -70,8 +71,9 @@ namespace ospray {
 
       Spheres::Sphere s(vec3f(0.f),rad,0);
       if (ofs == (size_t)-1) {
-        cout << "#osp:qtv: 'Spheres' ofs is '-1', generating set of random spheres..." << endl;
-        for (int i=0;i<num;i++) {
+        cout << "#osp:qtv: 'Spheres' ofs is '-1', "
+             << "generating set of random spheres..." << endl;
+        for (uint32_t i = 0; i < num; i++) {
           s.position.x = drand48();
           s.position.y = drand48();
           s.position.z = drand48();
@@ -80,7 +82,7 @@ namespace ospray {
         }
       } else {
         const vec3f *in = (const vec3f*)(binBasePtr+ofs);
-        for (int i=0;i<num;i++) {
+        for (uint32_t i = 0; i < num; i++) {
           memcpy(&s,&in[i],sizeof(*in));
           sphere.push_back(s);
         }
@@ -99,14 +101,13 @@ namespace ospray {
                                 &sphere[0],OSP_DATA_SHARED_BUFFER);
       ospSetData(ospGeometry,"spheres",data);
 
-      // ospSet1f(geom,"radius",radius*particleModel[i]->radius);
       ospSet1i(ospGeometry,"bytes_per_sphere",sizeof(Spheres::Sphere));
       ospSet1i(ospGeometry,"center_offset",     0*sizeof(float));
       ospSet1i(ospGeometry,"offset_radius",     3*sizeof(float));
       ospSet1i(ospGeometry,"offset_materialID", 4*sizeof(float));
-      // ospSetData(geom,"materialList",materialData);
 
-      OSPMaterial mat = ospNewMaterial(ctx.integrator?ctx.integrator->getOSPHandle():NULL,"default");
+      OSPMaterial mat =
+          ospNewMaterial(ctx.integrator?ctx.integrator->getOSPHandle():nullptr,"default");
       if (mat) {
         vec3f kd = vec3f(.7f);
         ospSet3fv(mat,"kd",&kd.x);
@@ -124,8 +125,8 @@ namespace ospray {
       void setFromXML(const xml::Node *const node, 
                       const unsigned char *binBasePtr)
       {
-        vec3i dimensions = parseVec3i(node->getProp("dimensions"));
-        int   num        = atoi(node->getProp("num").c_str());
+        vec3i dimensions = toVec3i(node->getProp("dimensions").c_str());
+        int   num        = toInt(node->getProp("num").c_str());
         
         float max_r = atof(node->getProp("radius").c_str());//std::max(dimensions.x,std::max(dimensions.y,dimensions.z)) / powf(num,.33f);
         float f = 0.3f; // overhang around the dimensions

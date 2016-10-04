@@ -13,6 +13,18 @@ build-centos6-gcc:
     - gcc
     - build
 
+build-centos6-icc:
+  type: build
+  script:
+    - module load intel
+    - export CC=icc
+    - export CXX=icpc
+    - scripts/build_gitlab/linux.sh
+  tags:
+    - centos6
+    - icc
+    - build
+
 build-centos7-gcc:
   type: build
   script:
@@ -22,33 +34,42 @@ build-centos7-gcc:
     - gcc
     - build
 
-build-fedora-gcc:
+build-arch-gcc:
   type: build
   script:
     - scripts/build_gitlab/linux.sh
   tags:
-    - fedora
+    - arch
     - gcc
     - build
 
-build-ubuntu-gcc:
+build-ubuntu1604-gcc:
   type: build
   script:
     - scripts/build_gitlab/linux.sh
   tags:
-    - ubuntu
+    - ubuntu1604
     - gcc
     - build
 
-#build-ubuntu-clang:
-#  type: build
-#  script:
-#    - export CC=clang
-#    - export CXX=clang++
-#    - scripts/build_gitlab/linux.sh
-#  tags:
-#    - ubuntu
-#    - clang
+build-ubuntu1604-clang:
+  type: build
+  script:
+    - export CC=clang
+    - export CXX=clang++
+    - scripts/build_gitlab/linux.sh
+  tags:
+    - ubuntu1604
+    - clang
+
+build-ubuntu1404-gcc:
+  type: build
+  script:
+    - scripts/build_gitlab/linux.sh
+  tags:
+    - ubuntu1404
+    - gcc
+    - build
 
 build-sles-gcc:
   type: build
@@ -89,7 +110,7 @@ build-windows-msvc14:
 build-windows-icc:
   type: build
   script:
-    - call scripts\build_gitlab\win.bat "Visual Studio 12 2013 Win64" "Intel C++ Compiler 16.0"
+    - call scripts\build_gitlab\win.bat "Visual Studio 12 2013 Win64" "Intel C++ Compiler 17.0"
   tags:
     - icc
     - build
@@ -133,7 +154,7 @@ release-linux-icc:
   only:
     - devel
     - master
-    - release-1.0
+    - release-1.1.x
   artifacts:
     paths:
       - build_release/*.gz
@@ -151,7 +172,7 @@ release-osx-clang:
   only:
     - devel
     - master
-    - release-1.0
+    - release-1.1.x
   artifacts:
     paths:
       - build_release/*.gz
@@ -168,7 +189,7 @@ release-windows:
   only:
     - devel
     - master
-    - release-1.0
+    - release-1.1.x
   artifacts:
     paths:
       - build_release\ospray*.zip

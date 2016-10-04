@@ -236,6 +236,24 @@
 
 #define NOT_IMPLEMENTED FATAL(std::string(__FUNCTION__) + " not implemented")
 
+// NOTE(jda) - These macros are used to construct the last UNUSED(...) macro,
+//             used to mark a variable number of arguments as unused so the
+//             compiler doesn't warn when -Wextra (gcc/clang/icc) is used. Only
+//             works with 1 to 5 passed arguments.
+#define UNUSED_1(x) (void)x
+#define UNUSED_2(x, y) UNUSED_1(x); UNUSED_1(y)
+#define UNUSED_3(x, ...) UNUSED_2(x, UNUSED_2(__VA_ARGS__))
+#define UNUSED_4(x, ...) UNUSED_2(x, UNUSED_3(__VA_ARGS__))
+#define UNUSED_5(x, ...) UNUSED_2(x, UNUSED_4(__VA_ARGS__))
+
+// NUM_ARGS(...) evaluates to the literal number of the passed-in arguments.
+#define _NUM_ARGS2(X,X5,X4,X3,X2,X1,N,...) N
+#define NUM_ARGS(...) _NUM_ARGS2(0,__VA_ARGS__,5,4,3,2,1,0)
+
+#define _UNUSED_N3(N, ...) UNUSED_##N(__VA_ARGS__)
+#define _UNUSED_N2(N, ...) _UNUSED_N3(N, __VA_ARGS__)
+#define UNUSED(...) _UNUSED_N2(NUM_ARGS(__VA_ARGS__), __VA_ARGS__)
+
 ////////////////////////////////////////////////////////////////////////////////
 /// Basic Types
 ////////////////////////////////////////////////////////////////////////////////
@@ -328,8 +346,4 @@ __asm__ __volatile__ (									\
 					IACA_SSC_MARK(111)}
 #define IACA_END {IACA_SSC_MARK(222) \
 					IACA_UD_BYTES}
-
-namespace ospcommon {
-
-}
   

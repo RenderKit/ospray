@@ -20,11 +20,32 @@ namespace ospcommon {
   // -------------------------------------------------------
   // parsing from strings
   // -------------------------------------------------------
+  int toInt(const char *ptr)
+  {
+    assert(ptr);
+    int v;
+    int rc = sscanf(ptr,"%i",&v); 
+    (void)rc;
+    assert(rc == 1);
+    return v;
+  }
+  
+  float toFloat(const char *ptr)
+  {
+    assert(ptr);
+    float v;
+    int rc = sscanf(ptr,"%f",&v); 
+    (void)rc;
+    assert(rc == 1);
+    return v;
+  }
+
   vec2f toVec2f(const char *ptr)
   {
     assert(ptr);
     vec2f v;
     int rc = sscanf(ptr,"%f %f",&v.x,&v.y); 
+    (void)rc;
     assert(rc == 2);
     return v;
   }
@@ -34,6 +55,7 @@ namespace ospcommon {
     assert(ptr);
     vec3f v;
     int rc = sscanf(ptr,"%f %f %f",&v.x,&v.y,&v.z); 
+    (void)rc;
     assert(rc == 3);
     return v;
   }
@@ -43,6 +65,7 @@ namespace ospcommon {
     assert(ptr);
     vec4f v;
     int rc = sscanf(ptr,"%f %f %f %f",&v.x,&v.y,&v.z,&v.w); 
+    (void)rc;
     assert(rc == 4);
     return v;
   }
@@ -52,6 +75,7 @@ namespace ospcommon {
     assert(ptr);
     vec2i v;
     int rc = sscanf(ptr,"%i %i",&v.x,&v.y); 
+    (void)rc;
     assert(rc == 2);
     return v;
   }
@@ -61,6 +85,7 @@ namespace ospcommon {
     assert(ptr);
     vec3i v;
     int rc = sscanf(ptr,"%i %i %i",&v.x,&v.y,&v.z); 
+    (void)rc;
     assert(rc == 3);
     return v;
   }
@@ -70,6 +95,7 @@ namespace ospcommon {
     assert(ptr);
     vec4i v;
     int rc = sscanf(ptr,"%i %i %i %i",&v.x,&v.y,&v.z,&v.w); 
+    (void)rc;
     assert(rc == 4);
     return v;
   }

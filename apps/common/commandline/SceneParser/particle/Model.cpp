@@ -120,7 +120,8 @@ namespace ospray {
         throw std::runtime_error("could not parse .dat.xyz header in input file "+fileName);
       
       char line[10000]; 
-      fgets(line,10000,file); // description line
+      if (!fgets(line,10000,file))
+        throw std::runtime_error("could not fgets");
 
       std::cout << "#" << fileName << " (.dat.xyz format): expecting " << numAtoms << " atoms" << std::endl;
       for (int i=0;i<numAtoms;i++) {
@@ -177,7 +178,6 @@ namespace ospray {
       FILE *file = fopen(fileName.c_str(),"r");
       if (!file) 
         throw std::runtime_error("could not open input file "+fileName);
-      int numAtoms;
 
       int rc = 0;
       char atomType[1000];
@@ -195,8 +195,8 @@ namespace ospray {
     box3f Model::getBBox() const 
     {
       box3f bbox = empty;
-      for (int i=0;i<atom.size();i++)
-        bbox.extend(atom[i].position);
+      for (auto &a : atom)
+        bbox.extend(a.position);
       return bbox;
     }
 

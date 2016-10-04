@@ -23,11 +23,6 @@
 #include "fb/FrameBuffer.h"
 #include "render/Renderer.h"
 
-// tbb
-#ifdef OSPRAY_TASKING_TBB
-# include <tbb/task_scheduler_init.h>
-#endif
-
 namespace ospray {
 
 
@@ -37,8 +32,8 @@ namespace ospray {
     static TiledLoadBalancer *instance;
     virtual std::string toString() const = 0;
     virtual float renderFrame(Renderer *tiledRenderer,
-                             FrameBuffer *fb,
-                             const uint32 channelFlags) = 0;
+                              FrameBuffer *fb,
+                              const uint32 channelFlags) = 0;
 
     static size_t numJobs(const int spp, int accumID)
     {
@@ -53,19 +48,13 @@ namespace ospray {
     rendering on a local machine, without any cross-node
     communication/load balancing at all (even if there are multiple
     application ranks each doing local rendering on their own)  */
-  struct LocalTiledLoadBalancer : public TiledLoadBalancer
+  struct OSPRAY_SDK_INTERFACE LocalTiledLoadBalancer : public TiledLoadBalancer
   {
-    LocalTiledLoadBalancer();
-
     float renderFrame(Renderer *renderer,
-                     FrameBuffer *fb,
-                     const uint32 channelFlags) override;
+                      FrameBuffer *fb,
+                      const uint32 channelFlags) override;
 
     std::string toString() const override;
-
-#ifdef OSPRAY_TASKING_TBB
-    tbb::task_scheduler_init tbb_init;
-#endif
   };
 
   //! tiled load balancer for local rendering on the given machine
@@ -73,7 +62,7 @@ namespace ospray {
     rendering on a local machine, without any cross-node
     communication/load balancing at all (even if there are multiple
     application ranks each doing local rendering on their own)  */
-  struct InterleavedTiledLoadBalancer : public TiledLoadBalancer
+  struct OSPRAY_SDK_INTERFACE InterleavedTiledLoadBalancer : public TiledLoadBalancer
   {
     size_t deviceID;
     size_t numDevices;
@@ -91,8 +80,8 @@ namespace ospray {
     std::string toString() const override;
 
     float renderFrame(Renderer *tiledRenderer,
-                     FrameBuffer *fb,
-                     const uint32 channelFlags) override;
+                      FrameBuffer *fb,
+                      const uint32 channelFlags) override;
   };
 
 } // ::ospray

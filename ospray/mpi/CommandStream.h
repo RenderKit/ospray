@@ -22,12 +22,6 @@
 namespace ospray {
   namespace mpi {
 
-    inline void checkMpiError(int rc)
-    {
-      if (rc != MPI_SUCCESS)
-        throw std::runtime_error("MPI Error");
-    }
-
     /*! \brief abstraction for a binary command stream */
     /*! abstracts the concept of the mpi device writing commands and
       parameters, and the respective worker reading and unpacking
@@ -58,7 +52,7 @@ namespace ospray {
       }
       inline void send(size_t i)
       {
-        int rc = MPI_Bcast(&i,1,MPI_AINT,MPI_ROOT,mpi::worker.comm);
+        int rc = MPI_Bcast((void*)&i,1,MPI_AINT,MPI_ROOT,mpi::worker.comm);
         checkMpiError(rc);
       }
       inline void send(const vec2f &v)
@@ -88,7 +82,7 @@ namespace ospray {
       }
       inline void send(uint32 i)
       {
-        int rc = MPI_Bcast(&i,1,MPI_INT,MPI_ROOT,mpi::worker.comm);
+        int rc = MPI_Bcast((void*)&i,1,MPI_INT,MPI_ROOT,mpi::worker.comm);
         checkMpiError(rc);
       }
       inline void send(const ObjectHandle &h)
@@ -119,7 +113,7 @@ namespace ospray {
       inline size_t get_size_t()
       {
         size_t v;
-        int rc = MPI_Bcast(&v,1,MPI_AINT,0,mpi::app.comm);
+        int rc = MPI_Bcast((void*)&v,1,MPI_AINT,0,mpi::app.comm);
         checkMpiError(rc);
         return v;
       }
@@ -141,42 +135,42 @@ namespace ospray {
       inline ObjectHandle get_handle()
       {
         ObjectHandle v;
-        int rc = MPI_Bcast(&v,2,MPI_INT,0,mpi::app.comm);
+        int rc = MPI_Bcast((void*)&v,2,MPI_INT,0,mpi::app.comm);
         checkMpiError(rc);
         return v;
       }
       inline vec2i get_vec2i()
       {
         vec2i v;
-        int rc = MPI_Bcast(&v,2,MPI_INT,0,mpi::app.comm);
+        int rc = MPI_Bcast((void*)&v,2,MPI_INT,0,mpi::app.comm);
         checkMpiError(rc);
         return v;
       }
       inline vec2f get_vec2f()
       {
         vec2f v;
-        int rc = MPI_Bcast(&v,2,MPI_FLOAT,0,mpi::app.comm);
+        int rc = MPI_Bcast((void*)&v,2,MPI_FLOAT,0,mpi::app.comm);
         checkMpiError(rc);
         return v;
       }
       inline vec3f get_vec3f()
       {
         vec3f v;
-        int rc = MPI_Bcast(&v,3,MPI_FLOAT,0,mpi::app.comm);
+        int rc = MPI_Bcast((void*)&v,3,MPI_FLOAT,0,mpi::app.comm);
         checkMpiError(rc);
         return v;
       }
       inline vec4f get_vec4f()
       {
         vec4f v;
-        int rc = MPI_Bcast(&v,4,MPI_FLOAT,0,mpi::app.comm);
+        int rc = MPI_Bcast((void*)&v,4,MPI_FLOAT,0,mpi::app.comm);
         checkMpiError(rc);
         return v;
       }
       inline vec3i get_vec3i()
       {
         vec3i v;
-        int rc = MPI_Bcast(&v,3,MPI_INT,0,mpi::app.comm);
+        int rc = MPI_Bcast((void*)&v,3,MPI_INT,0,mpi::app.comm);
         checkMpiError(rc);
         return v;
       }

@@ -62,7 +62,7 @@ namespace ospray {
 
   /*! color buffer and depth buffer on master */
 
-  enum {
+  enum COMMANDTAG {
     /*! command tag that identifies a CommLayer::message as a write
       tile command. this is a command using for sending a tile of
       new samples to another instance of the framebuffer (the one
@@ -82,11 +82,7 @@ namespace ospray {
         does not actually care about the pixel data - we still have
         to let the master know when we're done. */
     MASTER_WRITE_TILE_NONE,
-  } COMMANDTAG;
-
-  // Helper functions /////////////////////////////////////////////////////////
-
-  inline int clientRank(int clientID) { return clientID+1; }
+  };
 
   // DistributedFrameBuffer definitions ///////////////////////////////////////
 
@@ -97,11 +93,10 @@ namespace ospray {
                               bool hasDepthBuffer,
                               bool hasAccumBuffer,
                               bool hasVarianceBuffer)
-    : mpi::async::CommLayer::Object(comm,myID),
-      FrameBuffer(numPixels,colorBufferFormat,hasDepthBuffer,
+    : FrameBuffer(numPixels,colorBufferFormat,hasDepthBuffer,
                   hasAccumBuffer,hasVarianceBuffer),
-      accumId(0),
-      tileErrorBuffer(nullptr),
+      mpi::async::CommLayer::Object(comm,myID),
+      tileErrorRegion(hasVarianceBuffer ? getNumTiles() : vec2i(0)),
       localFBonMaster(nullptr),
       frameMode(WRITE_ONCE),
       frameIsActive(false),
@@ -113,12 +108,15 @@ namespace ospray {
     comm->registerObject(this,myID);
 
     createTiles();
+    const size_t bytes = sizeof(int32)*getTotalTiles();
+    tileAccumID = (int32*)alignedMalloc(bytes);
+    memset(tileAccumID, 0, bytes);
 
     if (comm->group->rank == 0) {
       if (colorBufferFormat == OSP_FB_NONE) {
-        cout << "#osp:mpi:dfb: we're the master, but framebuffer has 'NONE' "
-             << "format; creating distributed frame buffer WITHOUT having a "
-             << "mappable copy on the master" << endl;
+        DBG(cout << "#osp:mpi:dfb: we're the master, but framebuffer has 'NONE' "
+            << "format; creating distributed frame buffer WITHOUT having a "
+            << "mappable copy on the master" << endl);
       } else {
         localFBonMaster = new LocalFrameBuffer(numPixels,
                                                colorBufferFormat,
@@ -126,31 +124,22 @@ namespace ospray {
                                                false,
                                                false);
       }
-      if (hasVarianceBuffer) {
-        tileErrorBuffer =
-            (float*)alignedMalloc(sizeof(float)*numTiles.x*numTiles.y);
-      }
     }
-
-    ispc::DFB_set(getIE(), numPixels.x, numPixels.y, colorBufferFormat);
   }
 
   DFB::~DistributedFrameBuffer()
   {
     freeTiles();
-    alignedFree(tileErrorBuffer);
+    alignedFree(tileAccumID);
   }
 
-  void DFB::startNewFrame()
+  void DFB::startNewFrame(const float errorThreshold)
   {
     std::vector<mpi::async::CommLayer::Message *> delayedMessage;
     {
       SCOPED_LOCK(mutex);
       DBG(printf("rank %i starting new frame\n",mpi::world.rank));
       assert(!frameIsActive);
-
-      if (hasAccumBuffer)
-        accumId++;
 
       if (pixelOp)
         pixelOp->beginFrame();
@@ -162,8 +151,19 @@ namespace ospray {
       // the mutex
       delayedMessage = this->delayedMessage;
       this->delayedMessage.clear();
+
+      tileErrorRegion.sync();
       numTilesCompletedThisFrame = 0;
-      numTilesToMasterThisFrame = 0;
+
+      if (hasAccumBuffer) {
+        // increment accumID only for active tiles
+        for (int t = 0; t < getTotalTiles(); t++)
+          if (tileError(vec2i(t, 0)) <= errorThreshold) {
+            if (IamTheMaster() || allTiles[t]->mine())
+              numTilesCompletedThisFrame++;
+          } else
+            tileAccumID[t]++;
+      }
 
       frameIsDone   = false;
 
@@ -179,6 +179,10 @@ namespace ospray {
     // might actually want to move this to a thread:
     for (auto &msg : delayedMessage)
       this->incoming(msg);
+
+    if (numTilesCompletedThisFrame
+        == (IamTheMaster() ? getTotalTiles() : myTiles.size()))
+      closeCurrentFrame();
   }
 
   void DFB::freeTiles()
@@ -214,10 +218,10 @@ namespace ospray {
   {
     size_t tileID = 0;
     vec2i numPixels = getNumPixels();
-    for (size_t y = 0; y < numPixels.y; y += TILE_SIZE) {
-      for (size_t x = 0; x < numPixels.x; x += TILE_SIZE, tileID++) {
+    for (int y = 0; y < numPixels.y; y += TILE_SIZE) {
+      for (int x = 0; x < numPixels.x; x += TILE_SIZE, tileID++) {
         size_t ownerID = tileID % (comm->group->size - 1);
-        if (clientRank(ownerID) == comm->group->rank) {
+        if (workerRank(ownerID) == comm->group->rank) {
           TileData *td = createTile(vec2i(x, y), tileID, ownerID);
           myTiles.push_back(td);
           allTiles.push_back(td);
@@ -279,9 +283,12 @@ namespace ospray {
 
   void DFB::processMessage(MasterTileMessage *msg)
   {
-    { /* nothing to do for 'none' tiles */ }
-    if (hasVarianceBuffer && (accumId & 1) == 1)
-      tileErrorBuffer[getTileIDof(msg->coords)] = msg->error;
+    /* just update error for 'none' tiles */
+    if (hasVarianceBuffer) {
+      const vec2i tileID = msg->coords/TILE_SIZE;
+      if ((accumID(tileID) & 1) == 1)
+        tileErrorRegion.update(tileID, msg->error);
+    }
 
     // and finally, tell the master that this tile is done
     auto *tileDesc = this->getTileDescFor(msg->coords);
@@ -302,7 +309,7 @@ namespace ospray {
     DBG(printf("rank %i: tilecompleted %i,%i\n",mpi::world.rank,
                tile->begin.x,tile->begin.y));
     if (IamTheMaster()) {
-      size_t numTilesCompletedByMyTile = 0;
+      int numTilesCompletedByMyTile = 0;
       /*! we will not do anything with the tile other than mark it's done */
       {
         SCOPED_LOCK(mutex);
@@ -361,7 +368,7 @@ namespace ospray {
         numTilesCompletedByMe = ++numTilesCompletedThisFrame;
         DBG(printf("rank %i: MARKING AS COMPLETED %i,%i -> %i %i\n",
                    mpi::world.rank,
-                   tile->begin.x,tile->begin.y,numTilesCompletedThisFrame,
+                   tile->begin.x,tile->begin.y,(int)numTilesCompletedThisFrame,
                    numTiles.x*numTiles.y));
       }
 
@@ -421,7 +428,7 @@ namespace ospray {
     frameDoneCond.notify_all();
   }
 
-  //! write given tile data into the frame buffer, sending to remove owner if
+  //! write given tile data into the frame buffer, sending to remote owner if
   //! required
   void DFB::setTile(ospray::Tile &tile)
   {
@@ -455,6 +462,7 @@ namespace ospray {
   */
   void DFB::clear(const uint32 fbChannelFlags)
   {
+    frameID = -1; // we increment at the start of the frame
     if (!myTiles.empty()) {
       parallel_for(myTiles.size(), [&](int taskIndex){
         TileData *td = this->myTiles[taskIndex];
@@ -478,36 +486,25 @@ namespace ospray {
     }
 
     if (hasAccumBuffer && (fbChannelFlags & OSP_FB_ACCUM)) {
-      accumId = -1; // we increment at the start of the frame
-
-      // always also clear error buffer (if present)
-      if (tileErrorBuffer) {
-        const int tiles = numTiles.x*numTiles.y;
-        for (int i = 0; i < tiles; i++)
-          tileErrorBuffer[i] = inf;
-      }
+      // we increment at the start of the frame
+      memset(tileAccumID, -1, getTotalTiles()*sizeof(int32));
+      tileErrorRegion.clear();
     }
+  }
+
+  int32 DFB::accumID(const vec2i &tile)
+  {
+    return tileAccumID[tile.y * numTiles.x + tile.x];
   }
 
   float DFB::tileError(const vec2i &tile)
   {
-    if (tileErrorBuffer)
-      return tileErrorBuffer[getTileIDof(tile)];
-    else
-      return inf;
+    return tileErrorRegion[tile];
   }
 
-  float DFB::endFrame(const float /*errorThreshold*/)
+  float DFB::endFrame(const float errorThreshold)
   {
-    if (tileErrorBuffer) {
-      float maxErr = 0.0f;
-      const int tiles = numTiles.x*numTiles.y;
-      for (int i = 0; i < tiles; i++)
-        maxErr = std::max(maxErr, tileErrorBuffer[i]);
-
-      return maxErr;
-    } else
-      return inf;
+    return tileErrorRegion.refine(errorThreshold);
   }
 
 } // ::ospray

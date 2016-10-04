@@ -14,10 +14,13 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "ospray/common/OSPCommon.h"
 #include "OSPRayScriptHandler.h"
-
+#include "ospcommon/vec.h"
+#include "ospcommon/box.h"
 #include "chaiscript/chaiscript_stdlib.hpp"
 #include "chaiscript/utility/utility.hpp"
+#include "tfn_lib/tfn_lib.h"
 
 using std::runtime_error;
 
@@ -67,27 +70,23 @@ static void using_history(){}
 
 static std::string get_next_command() {
   std::string retval("quit");
-  if ( ! std::cin.eof() ) {
-    char *input_raw = readline("% ");
-    if ( input_raw ) {
-      add_history(input_raw);
+  char *input_raw = readline("% ");
+  if (input_raw) {
+    add_history(input_raw);
 
-      std::string val(input_raw);
-      size_t pos = val.find_first_not_of("\t \n");
-      if (pos != std::string::npos)
-      {
-        val.erase(0, pos);
-      }
-      pos = val.find_last_not_of("\t \n");
-      if (pos != std::string::npos)
-      {
-        val.erase(pos+1, std::string::npos);
-      }
-
-      retval = val;
-
-      ::free(input_raw);
+    std::string val(input_raw);
+    size_t pos = val.find_first_not_of("\t \n");
+    if (pos != std::string::npos) {
+      val.erase(0, pos);
     }
+    pos = val.find_last_not_of("\t \n");
+    if (pos != std::string::npos) {
+      val.erase(pos+1, std::string::npos);
+    }
+
+    retval = val;
+
+    ::free(input_raw);
   }
   return retval;
 }
@@ -151,23 +150,104 @@ void ospCommit(OSPObject object)
   ::ospCommit(object);
 }
 
+ospray::cpp::TransferFunction loadTransferFunction(const std::string &fname) {
+  using namespace ospcommon;
+  tfn::TransferFunction fcn(fname);
+  ospray::cpp::TransferFunction transferFunction("piecewise_linear");
+  auto colorsData = ospray::cpp::Data(fcn.rgbValues.size(), OSP_FLOAT3,
+                                      fcn.rgbValues.data());
+  transferFunction.set("colors", colorsData);
+
+  const float tf_scale = fcn.opacityScaling;
+  // Sample the opacity values, taking 256 samples to match the volume viewer
+  // the volume viewer does the sampling a bit differently so we match that
+  // instead of what's done in createDefault
+  std::vector<float> opacityValues;
+  const int N_OPACITIES = 256;
+  size_t lo = 0;
+  size_t hi = 1;
+  for (int i = 0; i < N_OPACITIES; ++i) {
+    const float x = float(i) / float(N_OPACITIES - 1);
+    float opacity = 0;
+    if (i == 0) {
+      opacity = fcn.opacityValues[0].y;
+    } else if (i == N_OPACITIES - 1) {
+      opacity = fcn.opacityValues.back().y;
+    } else {
+      // If we're over this val, find the next segment
+      if (x > fcn.opacityValues[lo].x) {
+        for (size_t j = lo; j < fcn.opacityValues.size() - 1; ++j) {
+          if (x <= fcn.opacityValues[j + 1].x) {
+            lo = j;
+            hi = j + 1;
+            break;
+          }
+        }
+      }
+      const float delta = x - fcn.opacityValues[lo].x;
+      const float interval = fcn.opacityValues[hi].x - fcn.opacityValues[lo].x;
+      if (delta == 0 || interval == 0) {
+        opacity = fcn.opacityValues[lo].y;
+      } else {
+        opacity = fcn.opacityValues[lo].y + delta / interval
+          * (fcn.opacityValues[hi].y - fcn.opacityValues[lo].y);
+      }
+    }
+    opacityValues.push_back(tf_scale * opacity);
+  }
+
+  auto opacityValuesData = ospray::cpp::Data(opacityValues.size(),
+                                             OSP_FLOAT,
+                                             opacityValues.data());
+  transferFunction.set("opacities", opacityValuesData);
+  transferFunction.set("valueRange", vec2f(fcn.dataValueMin, fcn.dataValueMax));
+  transferFunction.commit();
+  return transferFunction;
+}
+
+// Get an string environment variable
+std::string getEnvString(const std::string &var) {
+  return ospray::getEnvVar<std::string>(var).second;
+}
+
 }
 
 // OSPRayScriptHandler definitions ////////////////////////////////////////////
 
 namespace ospray {
 
+namespace script {
+  Module::Module(RegisterModuleFn registerMod, GetHelpFn getHelp)
+    : registerMod(registerMod), getHelp(getHelp)
+  {}
+  void Module::registerModule(chaiscript::ChaiScript &engine) {
+    registerMod(engine);
+  }
+  void Module::help() const {
+    if (getHelp) {
+      getHelp();
+    }
+  }
+
+  static std::vector<Module> SCRIPT_MODULES;
+  void register_module(RegisterModuleFn registerModule, GetHelpFn getHelp) {
+    SCRIPT_MODULES.push_back(Module(registerModule, getHelp));
+  }
+}
+
 OSPRayScriptHandler::OSPRayScriptHandler(OSPModel    model,
                                          OSPRenderer renderer,
                                          OSPCamera   camera) :
-  m_model(model),
-  m_renderer(renderer),
-  m_camera(camera),
-  m_chai(chaiscript::Std_Lib::library()),
-  m_running(false)
+  model(model),
+  renderer(renderer),
+  camera(camera),
+  chai(chaiscript::Std_Lib::library()),
+  scriptRunning(false),
+  lock(scriptMutex, std::defer_lock_t())
 {
   registerScriptTypes();
   registerScriptFunctions();
+  registerScriptObjects();
 
   std::stringstream ss;
   ss << "Commands available:" << endl << endl;
@@ -193,9 +273,11 @@ OSPRayScriptHandler::OSPRayScriptHandler(OSPModel    model,
   ss << "ospSet3i(object, id, int, int, int)"       << endl;
   ss << "ospSetVoidPtr(object, id, ptr)"            << endl;
   ss << "ospCommit(object)"                         << endl;
+  ss << "TransferFunction loadTransferFunction(file)" << endl;
+  ss << "string getEnvString(env_var)" << endl;
   ss << endl;
 
-  m_helpText = ss.str();
+  helpText = ss.str();
 }
 
 OSPRayScriptHandler::~OSPRayScriptHandler()
@@ -205,15 +287,13 @@ OSPRayScriptHandler::~OSPRayScriptHandler()
 
 void OSPRayScriptHandler::runScriptFromFile(const std::string &file)
 {
-  if (m_running) {
+  if (scriptRunning) {
     throw runtime_error("Cannot execute a script file when"
                         " running interactively!");
   }
 
-  registerScriptObjects();
-
   try {
-    m_chai.eval_file(file);
+    chai.eval_file(file);
   } catch (const chaiscript::exception::eval_error &e) {
     cerr << "ERROR: script '" << file << "' executed with error(s):" << endl;
     cerr << "    " << e.what() << endl;
@@ -222,8 +302,6 @@ void OSPRayScriptHandler::runScriptFromFile(const std::string &file)
 
 void OSPRayScriptHandler::consoleLoop()
 {
-  registerScriptObjects();
-
   using_history();
 
   do {
@@ -232,7 +310,10 @@ void OSPRayScriptHandler::consoleLoop()
     if (input == "done" || input == "exit" || input == "quit") {
       break;
     } else if (input == "help") {
-      cout << m_helpText << endl;
+      cout << helpText << endl;
+      for (const auto &m : script::SCRIPT_MODULES) {
+        m.help();
+      }
       continue;
     } else {
       stringstream ss(input);
@@ -246,27 +327,32 @@ void OSPRayScriptHandler::consoleLoop()
 
     runChaiLine(input);
 
-  } while (m_running);
+  } while (scriptRunning);
 
+  scriptRunning = false;
   cout << "**** EXIT COMMAND MODE *****" << endl;
 }
 
 void OSPRayScriptHandler::runChaiLine(const std::string &line)
 {
+  lock.lock();
   try {
-    m_chai.eval(line);
+    chai.eval(line);
   } catch (const chaiscript::exception::eval_error &e) {
     cerr << e.what() << endl;
   }
+  lock.unlock();
 }
 
 void OSPRayScriptHandler::runChaiFile(const std::string &file)
 {
+  lock.lock();
   try {
-    m_chai.eval_file(file);
+    chai.eval_file(file);
   } catch (const std::runtime_error &e) {
     cerr << e.what() << endl;
   }
+  lock.unlock();
 }
 
 void OSPRayScriptHandler::start()
@@ -275,35 +361,43 @@ void OSPRayScriptHandler::start()
   cout << "**** START COMMAND MODE ****" << endl << endl;
   cout << "Type 'help' to see available objects and functions." << endl;
   cout << endl;
-  m_running = true;
-  m_thread = std::thread(&OSPRayScriptHandler::consoleLoop, this);
+  scriptRunning = true;
+  thread = std::thread(&OSPRayScriptHandler::consoleLoop, this);
 }
 
 void OSPRayScriptHandler::stop()
 {
-  m_running = false;
-  if (m_thread.joinable())
-    m_thread.join();
+  scriptRunning = false;
+  if (thread.joinable()){
+    thread.join();
+  }
 }
 
 bool OSPRayScriptHandler::running()
 {
-  return m_running;
+  return scriptRunning;
 }
 
 chaiscript::ChaiScript &OSPRayScriptHandler::scriptEngine()
 {
-  if (m_running)
+  if (scriptRunning)
     throw runtime_error("Cannot modify the script env while running!");
 
-  return m_chai;
+  return chai;
 }
 
 void OSPRayScriptHandler::registerScriptObjects()
 {
-  m_chai.add(chaiscript::var(m_model),    "m");
-  m_chai.add(chaiscript::var(m_renderer), "r");
-  m_chai.add(chaiscript::var(m_camera),   "c");
+  chai.add_global(chaiscript::var(model),    "m");
+  chai.add_global(chaiscript::var(renderer), "r");
+  chai.add_global(chaiscript::var(camera),   "c");
+  chai.add_global_const(chaiscript::const_var(static_cast<int>(OSP_FB_COLOR)), "OSP_FB_COLOR");
+  chai.add_global_const(chaiscript::const_var(static_cast<int>(OSP_FB_ACCUM)), "OSP_FB_ACCUM");
+  chai.add_global_const(chaiscript::const_var(static_cast<int>(OSP_FB_DEPTH)), "OSP_FB_DEPTH");
+  chai.add_global_const(chaiscript::const_var(static_cast<int>(OSP_FB_VARIANCE)), "OSP_FB_VARIANCE");
+  for (auto &m : script::SCRIPT_MODULES) {
+    m.registerModule(chai);
+  }
 }
 
 void OSPRayScriptHandler::registerScriptTypes()
@@ -330,7 +424,12 @@ void OSPRayScriptHandler::registerScriptTypes()
        {chaiscript::fun(static_cast<void (ospray::cpp::ManagedObject::*)(const std::string &, double, double, double)>(&ospray::cpp::ManagedObject::set)), "set"},
        {chaiscript::fun(static_cast<void (ospray::cpp::ManagedObject::*)(const std::string &, void*)>(&ospray::cpp::ManagedObject::set)), "set"},
        {chaiscript::fun(static_cast<void (ospray::cpp::ManagedObject::*)(const std::string &, OSPObject)>(&ospray::cpp::ManagedObject::set)), "set"},
-       //{chaiscript::fun(static_cast<void (ospray::cpp::ManagedObject::*)(const std::string &, const ospray::cpp::ManagedObject &)>(&ospray::cpp::ManagedObject::set)), "set"},
+       {chaiscript::fun(static_cast<void (ospray::cpp::ManagedObject::*)(const std::string &, const ospcommon::vec2i&)>(&ospray::cpp::ManagedObject::set)), "set"},
+       {chaiscript::fun(static_cast<void (ospray::cpp::ManagedObject::*)(const std::string &, const ospcommon::vec2f&)>(&ospray::cpp::ManagedObject::set)), "set"},
+       {chaiscript::fun(static_cast<void (ospray::cpp::ManagedObject::*)(const std::string &, const ospcommon::vec3i&)>(&ospray::cpp::ManagedObject::set)), "set"},
+       {chaiscript::fun(static_cast<void (ospray::cpp::ManagedObject::*)(const std::string &, const ospcommon::vec3f&)>(&ospray::cpp::ManagedObject::set)), "set"},
+       {chaiscript::fun(static_cast<void (ospray::cpp::ManagedObject::*)(const std::string &, const ospcommon::vec4f&)>(&ospray::cpp::ManagedObject::set)), "set"},
+       {chaiscript::fun(static_cast<void (ospray::cpp::ManagedObject::*)(const std::string &, const ospray::cpp::ManagedObject &)>(&ospray::cpp::ManagedObject::set)), "set"},
        {chaiscript::fun(&ospray::cpp::ManagedObject::commit), "commit"},
        {chaiscript::fun(&ospray::cpp::ManagedObject::object), "handle"}
      }
@@ -463,65 +562,137 @@ void OSPRayScriptHandler::registerScriptTypes()
      }
      );
 
-  m_chai.add(m);
+  using namespace ospcommon;
+  chaiscript::utility::add_class<vec2i>(*m, "vec2i",
+     {
+       chaiscript::constructor<vec2i(int x, int y)>(),
+     },
+     {
+       {chaiscript::fun(static_cast<vec2i (*)(const vec2i &, const vec2i &)>(operator+)), "+"},
+       {chaiscript::fun(static_cast<vec2i (*)(const vec2i &, const vec2i &)>(operator*)), "*"},
+       {chaiscript::fun(static_cast<vec2i (*)(const vec2i &, const vec2i &)>(operator-)), "-"},
+       {chaiscript::fun(static_cast<vec2i& (vec2i::*)(const vec2i &)>(&vec2i::operator=)), "="},
+     }
+     );
+
+  chaiscript::utility::add_class<vec2f>(*m, "vec2f",
+     {
+       chaiscript::constructor<vec2f(float x, float y)>(),
+     },
+     {
+       {chaiscript::fun(static_cast<vec2f (*)(const vec2f &, const vec2f &)>(operator+)), "+"},
+       {chaiscript::fun(static_cast<vec2f (*)(const vec2f &, const vec2f &)>(operator*)), "*"},
+       {chaiscript::fun(static_cast<vec2f (*)(const vec2f &, const vec2f &)>(operator-)), "-"},
+       {chaiscript::fun(static_cast<vec2f& (vec2f::*)(const vec2f &)>(&vec2f::operator=)), "="},
+     }
+     );
+
+  chaiscript::utility::add_class<vec3i>(*m, "vec3i",
+     {
+       chaiscript::constructor<vec3i(int x, int y, int z)>(),
+     },
+     {
+       {chaiscript::fun(static_cast<vec3i (*)(const vec3i &, const vec3i &)>(operator+)), "+"},
+       {chaiscript::fun(static_cast<vec3i (*)(const vec3i &, const vec3i &)>(operator*)), "*"},
+       {chaiscript::fun(static_cast<vec3i (*)(const vec3i &, const vec3i &)>(operator-)), "-"},
+       {chaiscript::fun(static_cast<vec3i& (vec3i::*)(const vec3i &)>(&vec3i::operator=)), "="},
+     }
+     );
+
+  chaiscript::utility::add_class<vec3f>(*m, "vec3f",
+     {
+       chaiscript::constructor<vec3f(float x, float y, float z)>(),
+     },
+     {
+       {chaiscript::fun(static_cast<vec3f (*)(const vec3f &, const vec3f &)>(operator+)), "+"},
+       {chaiscript::fun(static_cast<vec3f (*)(const vec3f &, const vec3f &)>(operator*)), "*"},
+       {chaiscript::fun(static_cast<vec3f (*)(const vec3f &, const vec3f &)>(operator-)), "-"},
+       {chaiscript::fun(static_cast<vec3f& (vec3f::*)(const vec3f &)>(&vec3f::operator=)), "="},
+     }
+     );
+
+  chaiscript::utility::add_class<vec4f>(*m, "vec4f",
+     {
+       chaiscript::constructor<vec4f(float x, float y, float z, float w)>(),
+     },
+     {
+       {chaiscript::fun(static_cast<vec4f (*)(const vec4f &, const vec4f &)>(operator+)), "+"},
+       {chaiscript::fun(static_cast<vec4f (*)(const vec4f &, const vec4f &)>(operator*)), "*"},
+       {chaiscript::fun(static_cast<vec4f (*)(const vec4f &, const vec4f &)>(operator-)), "-"},
+       {chaiscript::fun(static_cast<vec4f& (vec4f::*)(const vec4f &)>(&vec4f::operator=)), "="},
+     }
+     );
+
+  chaiscript::utility::add_class<box3f>(*m, "box3f",
+     {
+       chaiscript::constructor<box3f()>(),
+       chaiscript::constructor<box3f(const vec3f &lower, const vec3f &upper)>(),
+     },
+     {
+     }
+     );
+
+  chai.add(m);
 
   // Inheritance relationships //
 
   // osp objects
-  m_chai.add(chaiscript::base_class<osp::ManagedObject, osp::Camera>());
-  m_chai.add(chaiscript::base_class<osp::ManagedObject, osp::Data>());
-  m_chai.add(chaiscript::base_class<osp::ManagedObject, osp::FrameBuffer>());
-  m_chai.add(chaiscript::base_class<osp::ManagedObject, osp::Geometry>());
-  m_chai.add(chaiscript::base_class<osp::ManagedObject, osp::Light>());
-  m_chai.add(chaiscript::base_class<osp::ManagedObject, osp::Material>());
-  m_chai.add(chaiscript::base_class<osp::ManagedObject, osp::Model>());
-  m_chai.add(chaiscript::base_class<osp::ManagedObject, osp::PixelOp>());
-  m_chai.add(chaiscript::base_class<osp::ManagedObject, osp::Renderer>());
-  m_chai.add(chaiscript::base_class<osp::ManagedObject,
+  chai.add(chaiscript::base_class<osp::ManagedObject, osp::Camera>());
+  chai.add(chaiscript::base_class<osp::ManagedObject, osp::Data>());
+  chai.add(chaiscript::base_class<osp::ManagedObject, osp::FrameBuffer>());
+  chai.add(chaiscript::base_class<osp::ManagedObject, osp::Geometry>());
+  chai.add(chaiscript::base_class<osp::ManagedObject, osp::Light>());
+  chai.add(chaiscript::base_class<osp::ManagedObject, osp::Material>());
+  chai.add(chaiscript::base_class<osp::ManagedObject, osp::Model>());
+  chai.add(chaiscript::base_class<osp::ManagedObject, osp::PixelOp>());
+  chai.add(chaiscript::base_class<osp::ManagedObject, osp::Renderer>());
+  chai.add(chaiscript::base_class<osp::ManagedObject,
                                     osp::TransferFunction>());
-  m_chai.add(chaiscript::base_class<osp::ManagedObject, osp::Texture2D>());
-  m_chai.add(chaiscript::base_class<osp::ManagedObject, osp::Volume>());
+  chai.add(chaiscript::base_class<osp::ManagedObject, osp::Texture2D>());
+  chai.add(chaiscript::base_class<osp::ManagedObject, osp::Volume>());
 
   // ospray::cpp objects
-  m_chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
+  chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
                                     ospray::cpp::Camera>());
-  m_chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
+  chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
                                     ospray::cpp::Data>());
-  m_chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
+  chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
                                     ospray::cpp::FrameBuffer>());
-  m_chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
+  chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
                                     ospray::cpp::Geometry>());
-  m_chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
+  chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
                                     ospray::cpp::Light>());
-  m_chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
+  chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
                                     ospray::cpp::Material>());
-  m_chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
+  chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
                                     ospray::cpp::Model>());
-  m_chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
+  chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
                                     ospray::cpp::PixelOp>());
-  m_chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
+  chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
                                     ospray::cpp::Renderer>());
-  m_chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
+  chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
                                     ospray::cpp::TransferFunction>());
-  m_chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
+  chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
                                     ospray::cpp::Texture2D>());
-  m_chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
+  chai.add(chaiscript::base_class<ospray::cpp::ManagedObject,
                                     ospray::cpp::Volume>());
 }
 
 void OSPRayScriptHandler::registerScriptFunctions()
 {
-  m_chai.add(chaiscript::fun(&chaiospray::ospLoadModule), "ospLoadModule");
-  m_chai.add(chaiscript::fun(&chaiospray::ospSetString),  "ospSetString" );
-  m_chai.add(chaiscript::fun(&chaiospray::ospSetObject),  "ospSetObject" );
-  m_chai.add(chaiscript::fun(&chaiospray::ospSet1f),      "ospSet1f"     );
-  m_chai.add(chaiscript::fun(&chaiospray::ospSet1i),      "ospSet1i"     );
-  m_chai.add(chaiscript::fun(&chaiospray::ospSet2f),      "ospSet2f"     );
-  m_chai.add(chaiscript::fun(&chaiospray::ospSet2i),      "ospSet2i"     );
-  m_chai.add(chaiscript::fun(&chaiospray::ospSet3f),      "ospSet3f"     );
-  m_chai.add(chaiscript::fun(&chaiospray::ospSet3i),      "ospSet3i"     );
-  m_chai.add(chaiscript::fun(&chaiospray::ospSetVoidPtr), "ospSetVoidPtr");
-  m_chai.add(chaiscript::fun(&chaiospray::ospCommit),     "ospCommit"    );
+  chai.add(chaiscript::fun(&chaiospray::ospLoadModule), "ospLoadModule");
+  chai.add(chaiscript::fun(&chaiospray::ospSetString),  "ospSetString" );
+  chai.add(chaiscript::fun(&chaiospray::ospSetObject),  "ospSetObject" );
+  chai.add(chaiscript::fun(&chaiospray::ospSet1f),      "ospSet1f"     );
+  chai.add(chaiscript::fun(&chaiospray::ospSet1i),      "ospSet1i"     );
+  chai.add(chaiscript::fun(&chaiospray::ospSet2f),      "ospSet2f"     );
+  chai.add(chaiscript::fun(&chaiospray::ospSet2i),      "ospSet2i"     );
+  chai.add(chaiscript::fun(&chaiospray::ospSet3f),      "ospSet3f"     );
+  chai.add(chaiscript::fun(&chaiospray::ospSet3i),      "ospSet3i"     );
+  chai.add(chaiscript::fun(&chaiospray::ospSetVoidPtr), "ospSetVoidPtr");
+  chai.add(chaiscript::fun(&chaiospray::ospCommit),     "ospCommit"    );
+  chai.add(chaiscript::fun(&chaiospray::loadTransferFunction), "loadTransferFunction");
+  chai.add(chaiscript::fun(&chaiospray::getEnvString), "getEnvString");
 }
 
 }// namespace ospray

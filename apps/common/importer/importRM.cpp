@@ -50,7 +50,7 @@ namespace ospray {
         uint8_t voxel[256*256*128];
       };
 
-      RMLoaderThreads(Volume *volume, const std::string &fileName, int numThreads=10) 
+      RMLoaderThreads(Volume *volume, const std::string &fileName, int numThreads=10)
         : volume(volume), nextBlockID(0), nextPinID(0), numThreads(numThreads)
       {
         inFilesDir = fileName.substr(0, fileName.rfind('.'));
@@ -119,7 +119,7 @@ namespace ospray {
         }
       }
 
-      void run() 
+      void run()
       {
         int threadID = nextPinID.fetch_add(1);
 
@@ -134,7 +134,9 @@ namespace ospray {
           int K = (blockID / 64);
 
 
+#if OSPRAY_APPS_IMPORTER_ENABLE_PRINTS
           printf("[b%i:%i,%i,%i,(%i)]",blockID,I,J,K,threadID);
+#endif
           loadBlock(*block,inFilesDir,blockID);
 
           ospcommon::vec2f blockRange(block->voxel[0]);
@@ -185,7 +187,7 @@ namespace ospray {
 
       RMLoaderThreads(volume,fileName,numThreads);
       double t1 = ospcommon::getSysTime();
-      std::cout << "done loading " << fileName 
+      std::cout << "done loading " << fileName
         << ", needed " << (t1-t0) << " seconds" << std::endl;
 
       ospSet2f(volume->handle,"voxelRange",volume->voxelRange.x,volume->voxelRange.y);

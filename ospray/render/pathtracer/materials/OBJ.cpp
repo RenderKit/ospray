@@ -44,13 +44,18 @@ namespace ospray {
           linear2f rot_Bump   = xform_Bump.l.orthogonal().transposed();
 
           const float d = getParam1f("d", getParam1f("alpha", 1.f));
-          const vec3f Kd = getParam3f("Kd", getParam3f("kd", getParam3f("color", vec3f(0.8f))));
-          const vec3f Ks = getParam3f("Ks", getParam3f("ks", vec3f(0.f)));
+          vec3f Kd = getParam3f("Kd", getParam3f("kd", getParam3f("color", vec3f(0.8f))));
+          vec3f Ks = getParam3f("Ks", getParam3f("ks", vec3f(0.f)));
           const float Ns = getParam1f("Ns", getParam1f("ns", 10.f));
-          const vec3f Tf = getParam3f("Tf", getParam3f("tf", vec3f(0.0f)));
+          vec3f Tf = vec3f(1.0-d)*getParam3f("Tf", getParam3f("tf", vec3f(0.0f)));
 
-          if (reduce_max(Kd + Ks + Tf) > 1.0)
-            std::cout << "#osp:PT: warning: OBJ material produces energy (Kd + Ks + Tf must be <= 1)" << std::endl;
+          const float color_total = reduce_max(Kd + Ks + Tf);
+          if (color_total > 1.0) {
+            std::cout << "#osp:PT: warning: OBJ material produces energy (Kd + Ks + Tf = " << color_total << ", should be <= 1). Scaling down to 1." << std::endl;
+            Kd /= color_total;
+            Ks /= color_total;
+            Tf /= color_total;
+          }
 
           ispc::PathTracer_OBJ_set(ispcEquivalent,
              map_d ? map_d->getIE() : NULL, (const ispc::AffineSpace2f&)xform_d,
@@ -68,6 +73,6 @@ namespace ospray {
     };
 
     OSP_REGISTER_MATERIAL(OBJMaterial,PathTracer_OBJMaterial);
-    OSP_REGISTER_MATERIAL(OBJMaterial,PathTracer_default)
+    OSP_REGISTER_MATERIAL(OBJMaterial,PathTracer_default);
   }
 }

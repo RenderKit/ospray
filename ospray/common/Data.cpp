@@ -25,8 +25,8 @@ namespace ospray {
   Data::Data(size_t numItems, OSPDataType type, void *init, int flags) :
     numItems(numItems),
     numBytes(numItems * sizeOf(type)),
-    type(type),
-    flags(flags)
+    flags(flags),
+    type(type)
   {
     /* two notes here:
        a) i'm using embree's 'new' to enforce alignment
@@ -55,7 +55,7 @@ namespace ospray {
   {
     if (type == OSP_OBJECT) {
       Data **child = (Data **)data;
-      for (int i=0;i<numItems;i++) if (child[i]) child[i]->refDec();
+      for (uint32_t i = 0; i < numItems; i++) if (child[i]) child[i]->refDec();
     }
     if (!(flags & OSP_DATA_SHARED_BUFFER)) alignedFree(data);
   }

@@ -37,17 +37,17 @@ namespace ospray {
     against, and that one can afterwards 'query' for certain
     properties (like the shading normal or material for a given
     ray/model intersection) */
-  struct Model : public ManagedObject
+  struct OSPRAY_SDK_INTERFACE Model : public ManagedObject
   {
     Model();
 
-    //! \brief common function to help printf-debugging 
+    //! \brief common function to help printf-debugging
     virtual std::string toString() const { return "ospray::Model"; }
     virtual void finalize();
 
-    typedef std::vector<Ref<Geometry> > GeometryVector;
-    typedef std::vector<Ref<Volume> > VolumeVector;
-    
+    using GeometryVector = std::vector<Ref<Geometry>>;
+    using VolumeVector   = std::vector<Ref<Volume>>;
+
     //! \brief vector of all geometries used in this model
     GeometryVector geometry;
     //! \brief vector of all volumes used in this model
@@ -61,7 +61,7 @@ namespace ospray {
 // #endif
 
     //! \brief the embree scene handle for this geometry
-    RTCScene embreeSceneHandle; 
+    RTCScene embreeSceneHandle;
     box3f bounds;
   };
 

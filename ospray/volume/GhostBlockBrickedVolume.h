@@ -24,7 +24,7 @@ namespace ospray {
   //!  with 64-bit addressing in which the voxel data is laid out in
   //!  memory in multiple pages each in brick order.
   //!
-  class GhostBlockBrickedVolume : public StructuredVolume {
+  class OSPRAY_SDK_INTERFACE GhostBlockBrickedVolume : public StructuredVolume {
   public:
 
     ~GhostBlockBrickedVolume();

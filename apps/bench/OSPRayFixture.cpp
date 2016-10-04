@@ -16,29 +16,20 @@
 
 #include "OSPRayFixture.h"
 
-using std::string;
-
 using namespace ospcommon;
+using namespace ospray;
 
-std::unique_ptr<ospray::cpp::Renderer>    OSPRayFixture::renderer;
-std::unique_ptr<ospray::cpp::Camera>      OSPRayFixture::camera;
-std::unique_ptr<ospray::cpp::Model>       OSPRayFixture::model;
-std::unique_ptr<ospray::cpp::FrameBuffer> OSPRayFixture::fb;
+const static int DEFAULT_WIDTH = 1024;
+const static int DEFAULT_HEIGHT = 1024;
+const static size_t DEFAULT_BENCH_FRAMES = 100;
+const static size_t DEFAULT_WARMUP_FRAMES = 10;
 
-string OSPRayFixture::imageOutputFile;
+const static vec3f DEFAULT_BG_COLOR = {1.f, 1.f, 1.f};
 
-std::vector<string> OSPRayFixture::benchmarkModelFiles;
-
-int OSPRayFixture::width  = 1024;
-int OSPRayFixture::height = 1024;
-
-int OSPRayFixture::numWarmupFrames = 10;
-
-vec3f OSPRayFixture::bg_color = {1.f, 1.f, 1.f};
-
+namespace bench {
 // helper function to write the rendered image as PPM file
-static void writePPM(const string &fileName, const int sizeX, const int sizeY,
-                     const uint32_t *pixel)
+void writePPM(const std::string &fileName, const int sizeX, const int sizeY,
+              const uint32_t *pixel)
 {
   FILE *file = fopen(fileName.c_str(), "wb");
   fprintf(file, "P6\n%i %i\n255\n", sizeX, sizeY);
@@ -55,36 +46,48 @@ static void writePPM(const string &fileName, const int sizeX, const int sizeY,
   fprintf(file, "\n");
   fclose(file);
 }
-
-static void createFramebuffer(OSPRayFixture *f)
-{
-  *f->fb = ospray::cpp::FrameBuffer(osp::vec2i{f->width, f->height},
-                                    OSP_FB_SRGBA,
-                                    OSP_FB_COLOR|OSP_FB_ACCUM);
-  f->fb->clear(OSP_FB_ACCUM | OSP_FB_COLOR);
 }
 
-void OSPRayFixture::SetUp()
+OSPRayFixture::OSPRayFixture(cpp::Renderer r, cpp::Camera c, cpp::Model m)
+  : renderer(r), camera(c), model(m), width(DEFAULT_WIDTH), height(DEFAULT_HEIGHT),
+  defaultBenchFrames(DEFAULT_BENCH_FRAMES), defaultWarmupFrames(DEFAULT_WARMUP_FRAMES)
 {
-  createFramebuffer(this);
-
-  renderer->set("world",  *model);
-  renderer->set("model",  *model);
-  renderer->set("camera", *camera);
-  renderer->set("spp", 1);
-
-  renderer->commit();
-
-  for (int i = 0; i < numWarmupFrames; ++i) {
-    renderer->renderFrame(*fb, OSP_FB_COLOR | OSP_FB_ACCUM);
+  setFrameBuffer(width, height);
+  renderer.set("world", model);
+  renderer.set("model", model);
+  renderer.set("camera", camera);
+  renderer.commit();
+}
+pico_bench::Statistics<OSPRayFixture::Millis>
+OSPRayFixture::benchmark(const size_t warmUpFrames, const size_t benchFrames) {
+  const size_t warmup = warmUpFrames == 0 ? defaultWarmupFrames : warmUpFrames;
+  const size_t bench = benchFrames == 0 ? defaultBenchFrames : benchFrames;
+  for (size_t i = 0; i < warmup; ++i) {
+    renderer.renderFrame(fb, framebufferFlags);
   }
+  fb.clear(framebufferFlags);
+
+  auto benchmarker = pico_bench::Benchmarker<Millis>(bench);
+  auto stats = benchmarker([&]() {
+      renderer.renderFrame(fb, framebufferFlags);
+  });
+  stats.time_suffix = " ms";
+  return stats;
+}
+void OSPRayFixture::saveImage(const std::string &fname) {
+  auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
+  bench::writePPM(fname + ".ppm", width, height, lfb);
+  fb.unmap(lfb);
+}
+void OSPRayFixture::setFrameBuffer(const int w, const int h, const int fbFlags) {
+  width = w > 0 ? w : width;
+  height = h > 0 ? h : height;
+
+  fb = cpp::FrameBuffer(osp::vec2i{width, height}, OSP_FB_SRGBA, fbFlags);
+  fb.clear(fbFlags);
+  framebufferFlags = fbFlags;
+
+  camera.set("aspect", static_cast<float>(width) / height);
+  camera.commit();
 }
 
-void OSPRayFixture::TearDown()
-{
-  if (!imageOutputFile.empty()) {
-    auto *lfb = (uint32_t*)fb->map(OSP_FB_COLOR);
-    writePPM(imageOutputFile + ".ppm", width, height, lfb);
-    fb->unmap(lfb);
-  }
-}

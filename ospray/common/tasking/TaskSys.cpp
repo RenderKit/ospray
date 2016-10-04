@@ -24,8 +24,8 @@
 
 namespace ospray {
   struct TaskSys {
-    bool initialized;
-    bool running;
+    bool initialized {false};
+    bool running {false};
 
     void init(size_t maxNumRenderTasks);
     static TaskSys global;
@@ -34,8 +34,8 @@ namespace ospray {
 
     //! Queue of tasks that have ALREADY been acitvated, and that are ready
     //! to run
-    __aligned(64) Task *volatile activeListFirst;
-    __aligned(64) Task *volatile activeListLast;
+    __aligned(64) Task *volatile activeListFirst {nullptr};
+    __aligned(64) Task *volatile activeListLast {nullptr};
 
     Mutex     __aligned(64) mutex;
     Condition __aligned(64) tasksAvailable;
@@ -43,11 +43,6 @@ namespace ospray {
     void threadFunction();
 
     std::vector<thread_t> threads;
-
-    TaskSys()
-      : activeListFirst(nullptr), activeListLast(nullptr),
-        initialized(false), running(false)
-    {}
 
     ~TaskSys();
   };
@@ -109,7 +104,7 @@ namespace ospray {
       }
 
       Ref<Task> front = activeListFirst;
-      if (front->numJobsStarted >= front->numJobsInTask) {
+      if (front->numJobsStarted >= int(front->numJobsInTask)) {
         if (activeListFirst == activeListLast) {
           activeListFirst = activeListLast = nullptr;
         } else {
@@ -178,8 +173,8 @@ namespace ospray {
   {
     running = false;
     tasksAvailable.notify_all();
-    for (int i = 0; i < threads.size(); ++i) {
-      join(threads[i]);
+    for (auto &thread : threads) {
+      join(thread);
     }
   }
 
@@ -208,7 +203,7 @@ namespace ospray {
     }
 
     /* generate all threads */
-    for (size_t t=1; t<numThreads; t++) {
+    for (size_t t = 1; t < numThreads; t++) {
       threads.push_back(createThread((thread_func)TaskSys::threadStub,
                                      (void*)-1,4*1024*1024,-1));
     }

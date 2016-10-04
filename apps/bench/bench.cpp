@@ -14,28 +14,17 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "hayai/hayai.hpp"
-#include "simple_outputter.hpp"
+#include <chrono>
 
 #include "OSPRayFixture.h"
+#include "BenchScriptHandler.h"
 
 #include "commandline/Utility.h"
+#include "pico_bench/pico_bench.h"
 
 using std::cout;
 using std::endl;
 using std::string;
-
-BENCHMARK_F(OSPRayFixture, test1, 1, 100)
-{
-  renderer->renderFrame(*fb, OSP_FB_COLOR | OSP_FB_ACCUM);
-}
-
-// NOTE(jda) - Implement make_unique() as it didn't show up until C++14...
-template<typename T, typename ...Args>
-std::unique_ptr<T> make_unique(Args&& ...args)
-{
-  return std::unique_ptr<T>(new T( std::forward<Args>(args)... ));
-}
 
 void printUsageAndExit()
 {
@@ -77,14 +66,26 @@ void printUsageAndExit()
   cout << "                        Ex: -r pathtracer" << endl;
   cout << "                        default: ao1" << endl;
 
+  /*
+   * TODO: This was never used anyway?
   cout << endl;
   cout << "    -bg | --background --> Specify the background color: R G B"
        << endl;
+       */
 
   cout << endl;
   cout << "    -wf | --warmup --> Specify the number of warmup frames: N"
        << endl;
   cout << "                       default: 10" << endl;
+
+  cout << endl;
+  cout << "    -bf | --bench --> Specify the number of benchmark frames: N"
+       << endl;
+  cout << "                      default: 100" << endl;
+
+  cout << endl;
+  cout << "    -lft | --log-frame-times --> Log frame time in ms for every frame rendered"
+       << endl;
 
   cout << endl;
   cout << "**camera rendering options**" << endl;
@@ -132,73 +133,114 @@ void printUsageAndExit()
   cout << "    -is | --surface --> Specify an isosurface at value: val "
        << endl;
 
+  cout << endl;
+  cout << "    --help --> Print this help text" << endl;
+#ifdef OSPRAY_APPS_ENABLE_SCRIPTING
+  cout << endl;
+  cout << "    --script --> Specify a script file to drive the benchmarker.\n"
+       << "                 In a script you can access the parsed world and command\n"
+       << "                 line benchmark configuration via the following variables:\n"
+       << "                 defaultFixture -> benchmark settings from the commandline\n"
+       << "                 m -> world model parsed from command line scene args\n"
+       << "                 c -> camera set from command line args\n"
+       << "                 r -> renderer set from command line args\n";
+#endif
+
   exit(0);
 }
 
+std::string imageOutputFile = "";
+std::string scriptFile = "";
+size_t numWarmupFrames = 0;
+size_t numBenchFrames = 0;
+bool logFrameTimes = false;
+// This is the fixture setup by the command line arguments
+std::shared_ptr<OSPRayFixture> cmdlineFixture;
+
 void parseCommandLine(int argc, const char *argv[])
 {
+  using namespace ospcommon;
+  using namespace ospray::cpp;
   if (argc <= 1) {
     printUsageAndExit();
   }
 
+  int width = 0;
+  int height = 0;
   for (int i = 1; i < argc; ++i) {
     string arg = argv[i];
-    if (arg == "-i" || arg == "--image") {
-      OSPRayFixture::imageOutputFile = argv[++i];
+    if (arg == "--help") {
+      printUsageAndExit();
+    } else if (arg == "-i" || arg == "--image") {
+      imageOutputFile = argv[++i];
     } else if (arg == "-w" || arg == "--width") {
-      OSPRayFixture::width = atoi(argv[++i]);
+      width = atoi(argv[++i]);
     } else if (arg == "-h" || arg == "--height") {
-      OSPRayFixture::height = atoi(argv[++i]);
+      height = atoi(argv[++i]);
     } else if (arg == "-wf" || arg == "--warmup") {
-      OSPRayFixture::numWarmupFrames = atoi(argv[++i]);
-    } else if (arg == "-bg" || arg == "--background") {
-      ospcommon::vec3f &color = OSPRayFixture::bg_color;
-      color.x = atof(argv[++i]);
-      color.y = atof(argv[++i]);
-      color.z = atof(argv[++i]);
+      numWarmupFrames = atoi(argv[++i]);
+    } else if (arg == "-bf" || arg == "--bench") {
+      numBenchFrames = atoi(argv[++i]);
+    } else if (arg == "-lft" || arg == "--log-frame-times") {
+      logFrameTimes = true;
+    } else if (arg == "--script") {
+      scriptFile = argv[++i];
     }
   }
 
   auto ospObjs = parseWithDefaultParsers(argc, argv);
 
-  ospcommon::box3f bbox;
-  std::tie(bbox,
-           *OSPRayFixture::model,
-           *OSPRayFixture::renderer,
-           *OSPRayFixture::camera) = ospObjs;
-
-  float width  = OSPRayFixture::width;
-  float height = OSPRayFixture::height;
-  auto &camera = *OSPRayFixture::camera;
-  camera.set("aspect", width/height);
-  camera.commit();
+  Model model;
+  Renderer renderer;
+  Camera camera;
+  std::tie(std::ignore, model, renderer, camera) = ospObjs;
+  cmdlineFixture = std::make_shared<OSPRayFixture>(renderer, camera, model);
+  if (width > 0 || height > 0) {
+    cmdlineFixture->setFrameBuffer(width, height);
+  }
+  // Set the default warm up and bench frames
+  if (numWarmupFrames > 0) {
+    cmdlineFixture->defaultWarmupFrames = numWarmupFrames;
+  }
+  if (numBenchFrames > 0){
+    cmdlineFixture->defaultBenchFrames = numBenchFrames;
+  }
 }
 
-void allocateFixtureObjects()
-{
-  // NOTE(jda) - Have to allocate objects here, because we can't allocate them
-  //             statically (before ospInit) and can't in the fixture's
-  //             constructor because they need to exist during parseCommandLine.
-  OSPRayFixture::renderer = make_unique<ospray::cpp::Renderer>();
-  OSPRayFixture::camera   = make_unique<ospray::cpp::Camera>();
-  OSPRayFixture::model    = make_unique<ospray::cpp::Model>();
-  OSPRayFixture::fb       = make_unique<ospray::cpp::FrameBuffer>();
-}
-
-int main(int argc, const char *argv[])
-{
+int main(int argc, const char *argv[]) {
   ospInit(&argc, argv);
-  allocateFixtureObjects();
   parseCommandLine(argc, argv);
 
-# if 0
-  hayai::ConsoleOutputter outputter;
+  if (scriptFile.empty()) {
+    // If we don't have a script do this, otherwise run the script
+    // and let it setup bench scenes and benchmrk them and so on
+    auto stats = cmdlineFixture->benchmark();
+    if (logFrameTimes) {
+      for (size_t i = 0; i < stats.size(); ++i) {
+        std::cout << stats[i].count() << stats.time_suffix << "\n";
+      }
+    }
+    std::cout << "Frame Time " << stats << "\n"
+      << "FPS Statistics:\n"
+      << "\tmax: " << 1000.0 / stats.min().count() << " fps\n"
+      << "\tmin: " << 1000.0 / stats.max().count() << " fps\n"
+      << "\tmedian: " << 1000.0 / stats.median().count() << " fps\n"
+      << "\tmean: " << 1000.0 / stats.mean().count() << " fps\n";
+  } else {
+#ifdef OSPRAY_APPS_ENABLE_SCRIPTING
+    // The script will be responsible for setting up the benchmark config
+    // and calling `benchmark(N)` to benchmark the scene
+    BenchScriptHandler scriptHandler(cmdlineFixture);
+    scriptHandler.runScriptFromFile(scriptFile);
 #else
-  hayai::SimpleOutputter outputter;
+    throw std::runtime_error("You must build with OSPRAY_APPS_ENABLE_SCRIPTING=ON "
+                             "to use scripting");
 #endif
+  }
 
-  hayai::Benchmarker::AddOutputter(outputter);
-
-  hayai::Benchmarker::RunAllTests();
+  if (!imageOutputFile.empty()) {
+    cmdlineFixture->saveImage(imageOutputFile);
+  }
   return 0;
 }
+

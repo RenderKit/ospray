@@ -1,4 +1,5 @@
 // ======================================================================== //
+// Copyright 2016 SURVICE Engineering Company                               //
 // Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
@@ -433,10 +434,12 @@ namespace ospray {
       vec3f from = camera->getFrom();
       vec3f up   = camera->getUp();
       vec3f at   = camera->getAt();
+      float fovy = camera->getFovy();
       std::cout << "#osp:qtv: camera is"
                 << " -vp " << from.x << " " << from.y << " " << from.z
                 << " -vi " << at.x << " " << at.y << " " << at.z
                 << " -vu " << up.x << " " << up.y << " " << up.z
+                << " -fv " << fovy
                 << std::endl;
     }
 

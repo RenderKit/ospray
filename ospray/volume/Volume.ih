@@ -42,11 +42,31 @@ struct Volume {
   //! Allow the renderer to perform gradient shading.
   uniform bool gradientShadingEnabled;
 
+  //! Only shade maximum opacity point, if gradientShadingEnabled == 1
+  uniform bool singleShade;
+
+  //! Integrates over transfer function values, good for high frequency tf
+  uniform bool preIntegration;
+
+  //! Adaptively alter the sampling rate according to the sampled values
+  uniform bool adaptiveSampling;
+
+  //! scalar to multiply step size for adaptive calculation
+  uniform float adaptiveScalar;
+
+  //! maximum adaptive sampling rate
+  uniform float adaptiveMaxSamplingRate;
+
+  //! what value to backstep for adaptie sampling, will step back and sample finely
+  uniform float adaptiveBacktrack;
+
   //! Recommended sampling step size for ray casting based renderers, set by the underlying volume implementation.
   uniform float samplingStep;
 
   //! Recommended sampling rate for the renderer.
   uniform float samplingRate;
+
+  uniform vec3f specular;
 
   //! Color and opacity transfer function.
   TransferFunction *uniform transferFunction;
@@ -64,6 +84,9 @@ struct Volume {
 
   //! Find the next hit point in the volume for ray casting based renderers.
   void (*uniform intersect)(void *uniform _self, varying Ray &ray);
+
+  //! Find the next hit point in the volume for ray casting based renderers.
+  void (*uniform intersectAdaptive)(void *uniform _self, varying Ray &ray, const varying float samplingRate);
 
   //! Find the next isosurface hit point in the volume for ray casting based renderers.
   void (*uniform intersectIsosurface)(void *uniform _self, 

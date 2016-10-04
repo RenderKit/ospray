@@ -180,25 +180,31 @@ namespace ospray {
       virtual OSPGeometry newInstance(OSPModel modelToInstantiate,
                                       const osp::affine3f &xfm)
       {
-        throw "instances not implemented";
+        UNUSED(modelToInstantiate, xfm);
+        NOT_IMPLEMENTED;
       }
 
       /*! perform a pick operation */
       virtual OSPPickResult pick(OSPRenderer renderer, const vec2f &screenPos) 
       { 
-        throw std::runtime_error("pick() not impelemnted for this device"); 
+        UNUSED(renderer, screenPos);
+        NOT_IMPLEMENTED;
       }
 
       /*! switch API mode for distriubted API extensions */
       virtual void apiMode(OSPDApiMode mode)
       { 
-        throw std::runtime_error("Distributed API not available on this device (when calling ospApiMode())"); 
+        UNUSED(mode);
+        NOT_IMPLEMENTED;
       }
 
-      virtual void sampleVolume(float **results, OSPVolume volume, 
-                                const vec3f *worldCoordinates, const size_t &count)
+      virtual void sampleVolume(float **results,
+                                OSPVolume volume,
+                                const vec3f *worldCoordinates,
+                                const size_t &count)
       {
-        throw std::runtime_error("sampleVolume() not implemented for this device");
+        UNUSED(results, volume, worldCoordinates, count);
+        NOT_IMPLEMENTED;
       }
     };
   } // ::ospray::api

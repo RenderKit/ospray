@@ -36,6 +36,7 @@ namespace ospray {
 
   Material *RaycastVolumeRenderer::createMaterial(const char *type)
   {
+    UNUSED(type);
     return new RaycastVolumeMaterial;
   }
 
@@ -46,12 +47,12 @@ namespace ospray {
     CacheForBlockTiles(size_t numBlocks)
       : numBlocks(numBlocks), blockTile(new Tile *[numBlocks])
     {
-      for (int i = 0; i < numBlocks; i++) blockTile[i] = nullptr;
+      for (size_t i = 0; i < numBlocks; i++) blockTile[i] = nullptr;
     }
 
     ~CacheForBlockTiles()
     {
-      for (int i = 0; i < numBlocks; i++)
+      for (size_t i = 0; i < numBlocks; i++)
         if (blockTile[i]) delete blockTile[i];
 
       delete[] blockTile;
@@ -123,7 +124,7 @@ namespace ospray {
     const size_t tile_y = taskIndex / numTiles_x;
     const size_t tile_x = taskIndex - tile_y*numTiles_x;
     const vec2i tileId(tile_x, tile_y);
-    const int32 accumID = fb->accumID(tileID);
+    const int32 accumID = fb->accumID(tileId);
     Tile bgTile(tileId, fb->size, accumID);
     Tile fgTile(bgTile);
 
@@ -131,7 +132,7 @@ namespace ospray {
     CacheForBlockTiles blockTileCache(numBlocks);
     bool *blockWasVisible = STACK_BUFFER(bool, numBlocks);
 
-    for (int i = 0; i < numBlocks; i++)
+    for (size_t i = 0; i < numBlocks; i++)
       blockWasVisible[i] = false;
 
     bool renderForeAndBackground =
@@ -160,7 +161,7 @@ namespace ospray {
       // be coming in generation #1
 
       size_t totalBlocksInTile = 0;
-      for (int blockID = 0; blockID < numBlocks; blockID++) {
+      for (size_t blockID = 0; blockID < numBlocks; blockID++) {
         if (blockWasVisible[blockID])
           totalBlocksInTile++;
       }
@@ -193,7 +194,7 @@ namespace ospray {
     // _across_all_clients_, but we only have to send ours (assuming
     // that all clients together send exactly as many as the owner
     // told the DFB to expect)
-    for (int blockID = 0; blockID < numBlocks; blockID++) {
+    for (size_t blockID = 0; blockID < numBlocks; blockID++) {
       Tile *tile = blockTileCache.blockTile[blockID];
       if (tile == nullptr)
         continue;
@@ -201,6 +202,7 @@ namespace ospray {
       tile->region = bgTile.region;
       tile->fbSize = bgTile.fbSize;
       tile->rcp_fbSize = bgTile.rcp_fbSize;
+      tile->accumID = accumID;
       tile->generation = 1;
       tile->children   = 0; //nextGenTile-1;
 
@@ -217,11 +219,9 @@ namespace ospray {
   float RaycastVolumeRenderer::renderFrame(FrameBuffer *fb,
                                            const uint32 channelFlags)
   {
-    int workerRank = ospray::core::getWorkerRank();
-
     using DDBV = DataDistributedBlockedVolume;
     std::vector<const DDBV*> ddVolumeVec;
-    for (int volumeID = 0; volumeID < model->volume.size(); volumeID++) {
+    for (size_t volumeID = 0; volumeID < model->volume.size(); volumeID++) {
       const DDBV* ddv = dynamic_cast<const DDBV*>(model->volume[volumeID].ptr);
       if (!ddv) continue;
       ddVolumeVec.push_back(ddv);
@@ -264,13 +264,9 @@ namespace ospray {
 
     dfb->setFrameMode(DistributedFrameBuffer::ALPHA_BLEND);
 
-    // note: we can NEVER be the master, since the master doesn't even
-    // have an instance of this renderer class -
-    assert(workerRank >= 0);
-
     Renderer::beginFrame(fb);
 
-    dfb->startNewFrame();
+    dfb->startNewFrame(errorThreshold);
 
     if (ddVolumeVec.size() > 1) {
       /* note: our assumption below is that all blocks together are

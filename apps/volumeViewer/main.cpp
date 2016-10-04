@@ -82,8 +82,9 @@ int main(int argc, char *argv[])
   bool showFrameRate = false;
   bool fullScreen = false;
   bool ownModelPerObject = false;
-  std::string renderer = "dvr";
+  std::string renderer = "scivis";//"dvr";
   std::string writeFramesFilename;
+  bool usePlane = false;
 
   std::vector<std::string> inFileName;
   // Parse the optional command line arguments.
@@ -109,6 +110,8 @@ int main(int argc, char *argv[])
       rotationRate = atof(argv[++i]);
       std::cout << "got rotationRate = " << rotationRate << std::endl;
 
+    } else if (arg == "--plane") {
+      usePlane = true;
     } else if (arg == "--slice") {
 
       if (i + 1 >= argc) throw std::runtime_error("missing <filename> argument");
@@ -235,6 +238,8 @@ int main(int argc, char *argv[])
 
   // Display the first model.
   volumeViewer->setModel(0);
+
+  volumeViewer->setPlane(usePlane);
 
   // Load PLY geometries from file.
   for(unsigned int i=0; i<plyFilenames.size(); i++)

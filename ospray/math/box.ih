@@ -74,37 +74,96 @@ inline uniform box1f make_box1f(const uniform float f)
 /*! construct 1f range from lower and upper value */
 inline uniform box1f make_box1f(const uniform float lo, const uniform float hi)
 { uniform box1f bb; bb.lower = lo; bb.upper = hi; return bb; }
+inline varying box1f make_box1f(const varying float lo, const varying float hi)
+{ varying box1f bb; bb.lower = lo; bb.upper = hi; return bb; }
 
 inline uniform box1f box_extend(const uniform box1f &a, const uniform box1f &b)
 { return make_box1f(min(a.lower,b.lower),max(a.upper,b.upper)); }
 
+
 // -------------------------------------------------------
-// box3f 'constructors'
+// box2 'constructors'
 // -------------------------------------------------------
 
-#define MAKE_BOX_CONSTRUCTORS_uv_3T_fromVec3(univary,Tabb,otherT)       \
-  inline univary box3##Tabb make_box3##Tabb(const univary vec3##otherT lower,  \
-                                     const univary vec3##otherT upper) { \
-    univary box3##Tabb bb;                                              \
-      bb.lower.x = lower.x;                                             \
-      bb.lower.y = lower.y;                                             \
-      bb.lower.z = lower.z;                                             \
-      bb.upper.x = upper.x;                                             \
-      bb.upper.y = upper.y;                                             \
-      bb.upper.z = upper.z;                                             \
-      return bb;                                                        \
+#define MAKE_BOX_CONSTRUCTORS_uv_2T_fromVec2(univary,Tabb,otherT)              \
+  inline univary box2##Tabb make_box2##Tabb(const univary vec2##otherT lower,  \
+                                     const univary vec2##otherT upper) {       \
+    univary box2##Tabb bb;                                                     \
+      bb.lower.x = lower.x;                                                    \
+      bb.lower.y = lower.y;                                                    \
+      bb.upper.x = upper.x;                                                    \
+      bb.upper.y = upper.y;                                                    \
+      return bb;                                                               \
   }
 
-#define MAKE_BOX_CONSTRUCTORS_uv_3T_fromBox3(univary,Tabb,otherT)       \
-  inline univary box3##Tabb make_box3##Tabb(const univary box3##otherT other) { \
-    univary box3##Tabb bb;                                              \
-      bb.lower.x = other.lower.x;                                       \
-      bb.lower.y = other.lower.y;                                       \
-      bb.lower.z = other.lower.z;                                       \
-      bb.upper.x = other.upper.x;                                       \
-      bb.upper.y = other.upper.y;                                       \
-      bb.upper.z = other.upper.z;                                       \
-      return bb;                                                        \
+#define MAKE_BOX_CONSTRUCTORS_uv_2T_fromBox2(univary,Tabb,otherT)              \
+  inline univary box2##Tabb make_box2##Tabb(const univary box2##otherT other) {\
+    univary box2##Tabb bb;                                                     \
+      bb.lower.x = other.lower.x;                                              \
+      bb.lower.y = other.lower.y;                                              \
+      bb.upper.x = other.upper.x;                                              \
+      bb.upper.y = other.upper.y;                                              \
+      return bb;                                                               \
+  }
+
+#define MAKE_BOX_CONSTRUCTORS_uv_2T_empty(Tabb)                                \
+  inline uniform box2##Tabb make_box2##Tabb##_empty() {                        \
+    return make_box2##Tabb(make_vec2##Tabb(inf), make_vec2##Tabb(neg_inf));    \
+  }
+
+#define MAKE_BOX_CONSTRUCTORS_uv_2T(univary,Tabb)                              \
+  MAKE_BOX_CONSTRUCTORS_uv_2T_fromVec2(univary,Tabb,f)                         \
+  MAKE_BOX_CONSTRUCTORS_uv_2T_fromVec2(univary,Tabb,i)                         \
+                                                                               \
+  MAKE_BOX_CONSTRUCTORS_uv_2T_fromBox2(univary,Tabb,f)                         \
+  MAKE_BOX_CONSTRUCTORS_uv_2T_fromBox2(univary,Tabb,i)
+
+#define MAKE_BOX_CONSTRUCTORS_uv_2(univary)                                    \
+  MAKE_BOX_CONSTRUCTORS_uv_2T(univary,i)                                       \
+  MAKE_BOX_CONSTRUCTORS_uv_2T(univary,f)                                       \
+
+#define MAKE_BOX_CONSTRUCTORS_uv(univary)                                      \
+  MAKE_BOX_CONSTRUCTORS_uv_2(univary)           
+
+MAKE_BOX_CONSTRUCTORS_uv(uniform)
+MAKE_BOX_CONSTRUCTORS_uv(varying)
+MAKE_BOX_CONSTRUCTORS_uv_2T_empty(f)
+
+#undef MAKE_BOX_CONSTRUCTORS_uv_2T_fromVec2
+#undef MAKE_BOX_CONSTRUCTORS_uv_2T_fromBox2
+#undef MAKE_BOX_CONSTRUCTORS_uv_2T_empty
+#undef MAKE_BOX_CONSTRUCTORS_uv_2T
+#undef MAKE_BOX_CONSTRUCTORS_uv_2
+#undef MAKE_BOX_CONSTRUCTORS_uv
+
+
+// -------------------------------------------------------
+// box3 'constructors'
+// -------------------------------------------------------
+
+#define MAKE_BOX_CONSTRUCTORS_uv_3T_fromVec3(univary,Tabb,otherT)              \
+  inline univary box3##Tabb make_box3##Tabb(const univary vec3##otherT lower,  \
+                                     const univary vec3##otherT upper) {       \
+    univary box3##Tabb bb;                                                     \
+      bb.lower.x = lower.x;                                                    \
+      bb.lower.y = lower.y;                                                    \
+      bb.lower.z = lower.z;                                                    \
+      bb.upper.x = upper.x;                                                    \
+      bb.upper.y = upper.y;                                                    \
+      bb.upper.z = upper.z;                                                    \
+      return bb;                                                               \
+  }
+
+#define MAKE_BOX_CONSTRUCTORS_uv_3T_fromBox3(univary,Tabb,otherT)              \
+  inline univary box3##Tabb make_box3##Tabb(const univary box3##otherT other) {\
+    univary box3##Tabb bb;                                                     \
+      bb.lower.x = other.lower.x;                                              \
+      bb.lower.y = other.lower.y;                                              \
+      bb.lower.z = other.lower.z;                                              \
+      bb.upper.x = other.upper.x;                                              \
+      bb.upper.y = other.upper.y;                                              \
+      bb.upper.z = other.upper.z;                                              \
+      return bb;                                                               \
   }
 
 #define MAKE_BOX_CONSTRUCTORS_uv_3T_empty(Tabb)                                \
@@ -112,21 +171,21 @@ inline uniform box1f box_extend(const uniform box1f &a, const uniform box1f &b)
     return make_box3##Tabb(make_vec3##Tabb(inf), make_vec3##Tabb(neg_inf));    \
   }
 
-#define MAKE_BOX_CONSTRUCTORS_uv_3T(univary,Tabb) \
-  MAKE_BOX_CONSTRUCTORS_uv_3T_fromVec3(univary,Tabb,f) \
-  MAKE_BOX_CONSTRUCTORS_uv_3T_fromVec3(univary,Tabb,fa) \
-  MAKE_BOX_CONSTRUCTORS_uv_3T_fromVec3(univary,Tabb,i) \
-                                                       \
-  MAKE_BOX_CONSTRUCTORS_uv_3T_fromBox3(univary,Tabb,f) \
-  MAKE_BOX_CONSTRUCTORS_uv_3T_fromBox3(univary,Tabb,fa) \
+#define MAKE_BOX_CONSTRUCTORS_uv_3T(univary,Tabb)                              \
+  MAKE_BOX_CONSTRUCTORS_uv_3T_fromVec3(univary,Tabb,f)                         \
+  MAKE_BOX_CONSTRUCTORS_uv_3T_fromVec3(univary,Tabb,fa)                        \
+  MAKE_BOX_CONSTRUCTORS_uv_3T_fromVec3(univary,Tabb,i)                         \
+                                                                               \
+  MAKE_BOX_CONSTRUCTORS_uv_3T_fromBox3(univary,Tabb,f)                         \
+  MAKE_BOX_CONSTRUCTORS_uv_3T_fromBox3(univary,Tabb,fa)                        \
   MAKE_BOX_CONSTRUCTORS_uv_3T_fromBox3(univary,Tabb,i)
 
-#define MAKE_BOX_CONSTRUCTORS_uv_3(univary)     \
-  MAKE_BOX_CONSTRUCTORS_uv_3T(univary,i)        \
-  MAKE_BOX_CONSTRUCTORS_uv_3T(univary,f)        \
+#define MAKE_BOX_CONSTRUCTORS_uv_3(univary)                                    \
+  MAKE_BOX_CONSTRUCTORS_uv_3T(univary,i)                                       \
+  MAKE_BOX_CONSTRUCTORS_uv_3T(univary,f)                                       \
   MAKE_BOX_CONSTRUCTORS_uv_3T(univary,fa)
 
-#define MAKE_BOX_CONSTRUCTORS_uv(univary)       \
+#define MAKE_BOX_CONSTRUCTORS_uv(univary)                                      \
   MAKE_BOX_CONSTRUCTORS_uv_3(univary)           
 
 MAKE_BOX_CONSTRUCTORS_uv(uniform)
@@ -141,34 +200,40 @@ MAKE_BOX_CONSTRUCTORS_uv_3T_empty(fa)
 #undef MAKE_BOX_CONSTRUCTORS_uv_3
 #undef MAKE_BOX_CONSTRUCTORS_uv
 
+
 // -------------------------------------------------------
-// box3 'operations'
+// box 'operations'
 // -------------------------------------------------------
 
-#define MAKE_BOX_OPERATIONS_uv_3T(univary,T)                                   \
-  inline univary vec3##T box_size(univary box3##T bb) {                        \
+#define MAKE_BOX_OPERATIONS_uv_N_T(univary, N, T)                              \
+  inline univary vec##N##T box_size(univary box##N##T bb) {                    \
    return bb.upper - bb.lower;                                                 \
   }                                                                            \
                                                                                \
-  inline univary box3##T                                                       \
-  box_extend(const univary box3##T bb, const univary vec3##T v) {              \
-    return make_box3##T(min(bb.lower,v), max(bb.upper,v));                     \
+  inline univary box##N##T                                                     \
+  box_extend(const univary box##N##T bb, const univary vec##N##T v) {          \
+    return make_box##N##T(min(bb.lower,v), max(bb.upper,v));                   \
   }                                                                            \
                                                                                \
-  inline univary box3##T                                                       \
-  box_extend(const univary box3##T bb, const univary box3##T other) {          \
-    return make_box3##T(min(bb.lower,other.lower), max(bb.upper,other.upper)); \
+  inline univary box##N##T                                                     \
+  box_extend(const univary box##N##T bb, const univary box##N##T other) {      \
+    return make_box##N##T(min(bb.lower,other.lower), max(bb.upper,other.upper));\
   }
 
+#define MAKE_BOX_OPERATIONS_uv_N(univary, N)                                   \
+  MAKE_BOX_OPERATIONS_uv_N_T(univary, N, i)                                    \
+  MAKE_BOX_OPERATIONS_uv_N_T(univary, N, f)
+
 #define MAKE_BOX_OPERATIONS_uv(univary)                                        \
-  MAKE_BOX_OPERATIONS_uv_3T(univary,i)                                         \
-  MAKE_BOX_OPERATIONS_uv_3T(univary,f)                                         \
-  MAKE_BOX_OPERATIONS_uv_3T(univary,fa)
+  MAKE_BOX_OPERATIONS_uv_N(univary, 2)                                         \
+  MAKE_BOX_OPERATIONS_uv_N(univary, 3)                                         \
+  MAKE_BOX_OPERATIONS_uv_N_T(univary, 3, fa)
 
 MAKE_BOX_OPERATIONS_uv(uniform)
 MAKE_BOX_OPERATIONS_uv(varying)
 
-#undef MAKE_BOX_OPERATIONS_uv_3T
+#undef MAKE_BOX_OPERATIONS_uv_N_T
+#undef MAKE_BOX_OPERATIONS_uv_N
 #undef MAKE_BOX_OPERATIONS_uv
 
 //! print given box to stdout
@@ -176,3 +241,8 @@ void print_box(const uniform box3f &bbox);
 
 //! print given box to stdout
 void print_box(const uniform box3fa &bbox);
+
+// this is just a renaming - in some cases the code reads cleaner if we're
+// talking about 'regions' than about boxes
+typedef box1f region1f;
+typedef box2i region2i;

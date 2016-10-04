@@ -91,7 +91,9 @@ void RaycastRenderer_renderSample_Ng(uniform Renderer *uniform _self,
   if (sample.ray.geomID < 0)
     sample.rgb = make_vec3f(1.f);
   else {
-    sample.rgb = absf(sample.ray.Ng);
+    DifferentialGeometry dg;
+    postIntersect(self->super.model, dg, sample.ray, DG_NORMALIZE | DG_NG);
+    sample.rgb = absf(dg.Ng);
   }
 }
 

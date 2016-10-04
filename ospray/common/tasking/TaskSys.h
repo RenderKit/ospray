@@ -20,7 +20,7 @@
 
 namespace ospray {
 
-  struct __aligned(64) Task : public RefCount {
+  struct OSPRAY_SDK_INTERFACE __aligned(64) Task : public RefCount {
 
     Task(const char *name = "no name");
     virtual ~Task();
@@ -69,7 +69,7 @@ namespace ospray {
     //! Allow tasking system backend to access all parts of the class, but
     //! prevent users from using data which is an implementation detail of the
     //! task
-    friend class TaskSys;
+    friend struct TaskSys;
 
     // ------------------------------------------------------------------
     // callback used to define what the task is doing
@@ -107,12 +107,12 @@ namespace ospray {
 // Inlined function definitions ///////////////////////////////////////////////
 
   __forceinline Task::Task(const char *name)
-    : status(Task::INITIALIZING),
-      name(name),
-      numJobsCompleted(),
+    : numJobsCompleted(),
       numJobsStarted(),
+      numJobsInTask(0),
+      status(Task::INITIALIZING),
       numMissingDependencies(),
-      numJobsInTask(0)
+      name(name)
   {
   }
 

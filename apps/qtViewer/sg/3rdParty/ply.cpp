@@ -193,18 +193,18 @@
 
   /*** the PLY object ***/
 
-  // static int nverts,nfaces;
-  // static Vertex **vlist;
-  // static Face **flist;
-  static PlyOtherElems *other_elements = NULL;
-  static PlyOtherProp *vert_other,*face_other;//,*edge_other;
-  static int nelems;
-  static char **element_list;
-  static int num_comments;
-  static char **comments;
-  static int num_obj_info;
-  static char **obj_info;
-  static int file_type;
+  //static int nverts,nfaces;
+  //static Vertex **vlist;
+  //static Face **flist;
+  //static PlyOtherElems *other_elements = NULL;
+  //static PlyOtherProp *vert_other,*face_other;//,*edge_other;
+  //static int nelems;
+  //static char **element_list;
+  //static int num_comments;
+  //static char **comments;
+  //static int num_obj_info;
+  //static char **obj_info;
+  //static int file_type;
 
   int has_x, has_y, has_z;
   int has_face_red=0; // face colors

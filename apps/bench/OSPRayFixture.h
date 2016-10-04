@@ -14,37 +14,55 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#pragma once
 
-#include "hayai/hayai.hpp"
+#include <chrono>
+#include "pico_bench/pico_bench.h"
 
 #include <ospray_cpp/Camera.h>
 #include <ospray_cpp/Model.h>
 #include <ospray_cpp/Renderer.h>
 
-struct OSPRayFixture : public hayai::Fixture
-{
-  // Fixture hayai interface //
+namespace bench {
+void writePPM(const std::string &fileName, const int sizeX, const int sizeY,
+              const uint32_t *pixel);
+}
 
-  void SetUp() override;
-  void TearDown() override;
+struct OSPRayFixture {
+  using Millis = std::chrono::duration<double, std::ratio<1, 1000>>;
 
-  // Fixture data //
+  // Create a benchmarker with default image dims and bench frame count,
+  // image dims = 1024x1024
+  // warm up frames = 10
+  // benchmark frames = 100
+  OSPRayFixture(ospray::cpp::Renderer renderer, ospray::cpp::Camera camera,
+                ospray::cpp::Model model);
+  // Benchmark the scene, passing no params (or 0 for warmUpFrames or benchFrames) will
+  // use the default configuration stored in the fixture, e.g. what was parsed from
+  // the command line.
+  pico_bench::Statistics<Millis> benchmark(const size_t warmUpFrames = 0, const size_t benchFrames = 0);
+  // Save the rendered image. The name should not be suffixed by .ppm, it will be appended
+  // for you.
+  void saveImage(const std::string &fname);
+  // Change the framebuffer dimensions for the benchmark. If either is 0, the previously
+  // set width or height will be used accordingly. Can also change the framebuffer flags used
+  // to enable/disable accumulation.
+  void setFrameBuffer(const int w = 0, const int h = 0, const int fbFlags = OSP_FB_COLOR | OSP_FB_ACCUM);
 
-  static std::unique_ptr<ospray::cpp::Renderer>    renderer;
-  static std::unique_ptr<ospray::cpp::Camera>      camera;
-  static std::unique_ptr<ospray::cpp::Model>       model;
-  static std::unique_ptr<ospray::cpp::FrameBuffer> fb;
+  ospray::cpp::Renderer renderer;
+  ospray::cpp::Camera camera;
+  ospray::cpp::Model model;
 
-  // Command-line configuration data //
+  size_t defaultWarmupFrames;
+  size_t defaultBenchFrames;
 
-  static std::string imageOutputFile;
+private:
+  ospray::cpp::FrameBuffer fb;
 
-  static std::vector<std::string> benchmarkModelFiles;
+  // Configuration data //
 
-  static int width;
-  static int height;
-
-  static int numWarmupFrames;
-
-  static ospcommon::vec3f bg_color;
+  int width;
+  int height;
+  int framebufferFlags;
 };
+

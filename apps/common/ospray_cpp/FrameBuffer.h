@@ -51,7 +51,7 @@ private:
 
   void free();
 
-  bool m_owner = true;
+  bool owner = true;
 };
 
 // Inlined function definitions ///////////////////////////////////////////////
@@ -60,19 +60,19 @@ inline FrameBuffer::FrameBuffer(const osp::vec2i &size,
                                 OSPFrameBufferFormat format,
                                 int channels)
 {
-  m_object = ospNewFrameBuffer(size, format, channels);
+  ospObject = ospNewFrameBuffer(size, format, channels);
 }
 
 inline FrameBuffer::FrameBuffer(const FrameBuffer &copy) :
   ManagedObject_T<OSPFrameBuffer>(copy.handle()),
-  m_owner(false)
+  owner(false)
 {
 }
 
 inline FrameBuffer::FrameBuffer(FrameBuffer &&move) :
   ManagedObject_T<OSPFrameBuffer>(move.handle())
 {
-  move.m_object = nullptr;
+  move.ospObject = nullptr;
 }
 
 inline FrameBuffer::FrameBuffer(OSPFrameBuffer existing) :
@@ -83,15 +83,15 @@ inline FrameBuffer::FrameBuffer(OSPFrameBuffer existing) :
 inline FrameBuffer& FrameBuffer::operator=(const FrameBuffer &copy)
 {
   free();
-  m_object = copy.m_object;
+  ospObject = copy.ospObject;
   return *this;
 }
 
 inline FrameBuffer& FrameBuffer::operator=(FrameBuffer &&move)
 {
   free();
-  m_object = move.m_object;
-  move.m_object = nullptr;
+  ospObject = move.ospObject;
+  move.ospObject = nullptr;
   return *this;
 }
 
@@ -127,7 +127,7 @@ inline void FrameBuffer::clear(uint32_t channel)
 
 inline void FrameBuffer::free()
 {
-  if (m_owner && handle()) {
+  if (owner && handle()) {
     ospFreeFrameBuffer(handle());
   }
 }

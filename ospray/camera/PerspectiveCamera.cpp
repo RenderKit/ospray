@@ -41,23 +41,38 @@ namespace ospray {
     aspect = getParamf("aspect", 1.f);
     apertureRadius = getParamf("apertureRadius", 0.f);
     focusDistance = getParamf("focusDistance", 1.f);
-
-    vec2f imageStart = getParam2f("imageStart", vec2f(0.f));
-    vec2f imageEnd   = getParam2f("imageEnd", vec2f(1.f));
-
-    assert(imageStart.x >= 0.f && imageStart.x <= 1.f);
-    assert(imageStart.y >= 0.f && imageStart.y <= 1.f);
-    assert(imageEnd.x >= 0.f && imageEnd.x <= 1.f);
-    assert(imageEnd.y >= 0.f && imageEnd.y <= 1.f);
-
+    architectural = getParam1i("architectural", false);
+    stereoMode = (StereoMode)getParam1i("stereoMode", OSP_STEREO_NONE);
+    // the default 63.5mm represents the average human IPD
+    interpupillaryDistance = getParamf("interpupillaryDistance", 0.0635f);
+    
     // ------------------------------------------------------------------
     // now, update the local precomputed values
     // ------------------------------------------------------------------
     dir = normalize(dir);
     vec3f dir_du = normalize(cross(dir, up));
-    vec3f dir_dv = cross(dir_du, dir);
+    vec3f dir_dv;
+    if (architectural)
+      dir_dv = normalize(up); // orient film to be parallel to 'up' and shift such that 'dir' is centered
+    else
+      dir_dv = cross(dir_du, dir); // rotate film to be perpendicular to 'dir'
 
-    float imgPlane_size_y = 2.f*tanf(fovy/2.f*M_PI/180.);
+    vec3f org = pos;
+    const vec3f ipd_offset = 0.5f * interpupillaryDistance * dir_du;
+
+    switch (stereoMode) {
+      case OSP_STEREO_LEFT:
+        org -= ipd_offset;
+        break;
+      case OSP_STEREO_RIGHT:
+        org += ipd_offset;
+        break;
+      case OSP_STEREO_SIDE_BY_SIDE:
+        aspect *= 0.5f;
+        break;
+    }
+    
+    float imgPlane_size_y = 2.f*tanf(deg2rad(0.5f*fovy));
     float imgPlane_size_x = imgPlane_size_y * aspect;
 
     dir_du *= imgPlane_size_x;
@@ -75,18 +90,18 @@ namespace ospray {
     }
 
     ispc::PerspectiveCamera_set(getIE(),
-                                (const ispc::vec3f&)pos,
+                                (const ispc::vec3f&)org,
                                 (const ispc::vec3f&)dir_00,
                                 (const ispc::vec3f&)dir_du,
                                 (const ispc::vec3f&)dir_dv,
-                                (const ispc::vec2f&)imageStart,
-                                (const ispc::vec2f&)imageEnd,
                                 scaledAperture,
                                 aspect,
-                                nearClip);
+                                stereoMode == OSP_STEREO_SIDE_BY_SIDE,
+                                (const ispc::vec3f&)ipd_offset);
   }
 
   OSP_REGISTER_CAMERA(PerspectiveCamera,perspective);
   OSP_REGISTER_CAMERA(PerspectiveCamera,thinlens);
+  OSP_REGISTER_CAMERA(PerspectiveCamera,stereo);
 
 } // ::ospray

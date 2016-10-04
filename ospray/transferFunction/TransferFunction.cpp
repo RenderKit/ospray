@@ -37,7 +37,7 @@ namespace ospray {
       return((*symbolRegistry[type])());
 
     // Otherwise construct the name of the creation function to look for.
-    std::string creationFunctionName = "ospray_create_transfer_function_" + type;
+    std::string creationFunctionName = "ospray_create_transfer_function__" + type;
 
     // Look for the named function.
     symbolRegistry[type] = (creationFunctionPointer) getSymbol(creationFunctionName);

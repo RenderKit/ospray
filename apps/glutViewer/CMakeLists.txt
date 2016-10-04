@@ -14,26 +14,9 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-FIND_PACKAGE(Readline)
-
-IF(READLINE_FOUND)
-  ADD_DEFINITIONS(-DUSE_SYSTEM_READLINE)
-  SET(Readline_INC ${Readline_INCLUDE_DIR})
-  SET(Readline_LIB ${Readline_LIBRARY})
-ELSE()
-  MESSAGE(STATUS "Readline NOT found, command history feature NOT enabled.")
-ENDIF()
-
-IF (OSPRAY_MODULE_DISPLAY_WALD)
-  INCLUDE_DIRECTORIES(${DISPLAY_WALD_DIR})
-  ADD_DEFINITIONS(-DOSPRAY_DISPLAY_WALD=1)
-  CONFIGURE_MPI()
-ENDIF()
-
 INCLUDE_DIRECTORIES(
   ${CMAKE_CURRENT_LIST_DIR}
   ${CMAKE_CURRENT_LIST_DIR}/script
-  ${Readline_INC}
 )
 
 # --------------------------------------------
@@ -62,15 +45,10 @@ SET(LIBS
   ospray_importer
   ${OPENGL_LIBRARIES}
   ${GLUT_LIBRARIES}
-  ${Readline_LIB}
 )
 
 IF (OSPRAY_APPS_ENABLE_SCRIPTING)
   LIST(APPEND LIBS ospray_script)
 ENDIF()
 
-IF (OSPRAY_MODULE_DISPLAY_WALD)
-  LIST(APPEND LIBS ospray_displayWald_client)
-ENDIF()
-
-OSPRAY_CREATE_APPLICATION(GlutViewer ${APP_SRCS} LINK ${LIBS})
+OSPRAY_CREATE_APPLICATION(ospGlutViewer ${APP_SRCS} LINK ${LIBS})

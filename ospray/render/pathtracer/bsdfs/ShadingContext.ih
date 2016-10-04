@@ -18,7 +18,7 @@
 
 #include "math/LinearSpace.ih"
 
-#define SHADINGCONTEXT_SIZE      (16*1024)
+#define SHADINGCONTEXT_SIZE      (programCount*2048)
 #define SHADINGCONTEXT_ALIGNMENT 64
 
 struct ShadingContext
@@ -41,7 +41,8 @@ inline void* uniform ShadingContext_alloc(uniform ShadingContext* uniform self, 
   //print("ShadingContext_alloc: %, %\n", this->size, size);
   void* uniform ptr = &self->data[self->size];
   self->size = (self->size + size + SHADINGCONTEXT_ALIGNMENT - 1) & ((uint32)(-SHADINGCONTEXT_ALIGNMENT));
-  //if (self->size > SHADINGCONTEXT_SIZE) throw std::runtime_error("out of memory for ShadingContext allocation");
+  if (self->size > SHADINGCONTEXT_SIZE)
+    print("#osp:PT: out of memory for ShadingContext allocation!\n");
   return ptr;
 }
 

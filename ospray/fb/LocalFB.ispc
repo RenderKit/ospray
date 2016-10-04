@@ -40,7 +40,7 @@ export void LocalFrameBuffer_writeTile_##name(void *uniform _fb,             \
     for (uint32 iix = tile.region.lower.x+programIndex;                      \
          iix<tile.region.upper.x;iix+=programCount,chunkID++) {              \
                                                                              \
-      uint32 pixelID = iiy*fb->super.size.x+iix;                             \
+      uint32 pixelID = iiy*fb->FB_STRIDE+iix;                                \
       unmasked {                                                             \
         varying vec4f col = make_vec4f(varyTile->r[chunkID],                 \
                                        varyTile->g[chunkID],                 \
@@ -66,13 +66,15 @@ template_writeTile(RGBA32F, vec4f, cvt_nop);
 //! \brief accumulate tile into BOTH accum buffer AND tile.
 /*! \detailed After this call, the frame buffer will contain 'prev
     accum value + tile value', while the tile will contain '(prev
-    accum value + tile value/numAccums' */
-export void LocalFrameBuffer_accumulateTile(void *uniform _fb,
+    accum value + tile value/numAccums'
+   return tile error */
+export uniform float LocalFrameBuffer_accumulateTile(void *uniform _fb,
                                             uniform Tile &tile)
 {
   uniform LocalFB *uniform fb  = (uniform LocalFB *uniform)_fb;
   uniform vec4f *uniform accum = fb->accumBuffer;
-  if (!accum) return;
+  if (!accum)
+    return inf;
 
   VaryingTile *uniform varyTile = (VaryingTile *uniform)&tile;
 
@@ -141,15 +143,15 @@ export void LocalFrameBuffer_accumulateTile(void *uniform _fb,
 
   // error is also only updated every other frame to avoid alternating error
   // (get a monotone sequence)
+  uniform float errf = inf;
   if (variance && (tile.accumID & 1) == 1) {
     uniform vec2i dia = tile.region.upper - tile.region.lower;
     uniform float cntu = (uniform float)dia.x * dia.y;
-    const uniform float errf = reduce_add(err) * rsqrtf(cntu);
+    errf = reduce_add(err) * rsqrtf(cntu);
     // print("[%, %]:  \t%\t%\n", tileIdx.x, tileIdx.y, errf);
-    fb->tileErrorBuffer[tileId] = errf;
   }
+  return errf;
 }
-
 
 export void *uniform LocalFrameBuffer_create(void *uniform cClassPtr,
                                              const uniform uint32 size_x,
@@ -159,8 +161,7 @@ export void *uniform LocalFrameBuffer_create(void *uniform cClassPtr,
                                              void *uniform depthBuffer,
                                              void *uniform accumBuffer,
                                              void *uniform varianceBuffer,
-                                             void *uniform tileAccumID,
-                                             void *uniform tileErrorBuffer)
+                                             void *uniform tileAccumID)
 {
   uniform LocalFB *uniform self = uniform new uniform LocalFB;
   FrameBuffer_Constructor(&self->super,cClassPtr);
@@ -172,6 +173,13 @@ export void *uniform LocalFrameBuffer_create(void *uniform cClassPtr,
   self->varianceBuffer = (uniform vec4f *uniform)varianceBuffer;
   self->numTiles = (self->super.size+(TILE_SIZE-1))/TILE_SIZE;
   self->tileAccumID = (uniform int32 *uniform)tileAccumID;
-  self->tileErrorBuffer = (uniform float *uniform)tileErrorBuffer;
+
+#ifdef FB_PADDED
+  self->stride = (size_x+15)&~15; // pad to 16
+  // on COI/MIC depth buffer is allocated locally without stride
+  // disable it (cannot be mapped anyway on COI) to avoid writing over the end
+  self->depthBuffer = NULL;
+#endif
+
   return self;
 }

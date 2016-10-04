@@ -39,13 +39,66 @@ PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer, ospcommon::box3
   connect(gradientShadingEnabledCheckBox, SIGNAL(toggled(bool)), volumeViewer, SLOT(setGradientShadingEnabled(bool)));
   formLayout->addRow("Volume gradient shading (lighting)", gradientShadingEnabledCheckBox);
 
+  QCheckBox *adaptiveSamplingCB = new QCheckBox();
+  connect(adaptiveSamplingCB, SIGNAL(toggled(bool)), volumeViewer, SLOT(setAdaptiveSampling(bool)));
+  formLayout->addRow("Adaptive sampling", adaptiveSamplingCB);
+
+  QCheckBox *preIntegrationCB = new QCheckBox();
+  connect(preIntegrationCB, SIGNAL(toggled(bool)), volumeViewer, SLOT(setPreIntegration(bool)));
+  formLayout->addRow("PreIntegration", preIntegrationCB);
+
+  QCheckBox *singleShadeCB = new QCheckBox();
+  connect(singleShadeCB, SIGNAL(toggled(bool)), volumeViewer, SLOT(setSingleShade(bool)));
+  formLayout->addRow("Single Shading Calculation", singleShadeCB);
+
+  QCheckBox *shadowsCB = new QCheckBox();
+  connect(shadowsCB, SIGNAL(toggled(bool)), volumeViewer, SLOT(setShadows(bool)));
+  formLayout->addRow("Shadows", shadowsCB);
+
+  QCheckBox *planeCB = new QCheckBox();
+  connect(planeCB, SIGNAL(toggled(bool)), volumeViewer, SLOT(setPlane(bool)));
+  formLayout->addRow("Plane", planeCB);
+
+  QDoubleSpinBox *adaptiveScalarSB = new QDoubleSpinBox();
+  adaptiveScalarSB->setDecimals(4);
+  adaptiveScalarSB->setRange(1.0, 1000.0);
+  adaptiveScalarSB->setSingleStep(1.0);
+  connect(adaptiveScalarSB, SIGNAL(valueChanged(double)), volumeViewer, SLOT(setAdaptiveScalar(double)));
+  formLayout->addRow("Adaptive scalar", adaptiveScalarSB);
+
+  QDoubleSpinBox *adaptiveMaxSamplingRateSB = new QDoubleSpinBox();
+  adaptiveMaxSamplingRateSB->setDecimals(3);
+  adaptiveMaxSamplingRateSB->setRange(0.01, 2.0);
+  adaptiveMaxSamplingRateSB->setSingleStep(0.01);
+  connect(adaptiveMaxSamplingRateSB, SIGNAL(valueChanged(double)), volumeViewer, SLOT(setAdaptiveMaxSamplingRate(double)));
+  formLayout->addRow("Adaptive max sampling rate", adaptiveMaxSamplingRateSB);
+
+  QDoubleSpinBox *adaptiveBacktrackSB = new QDoubleSpinBox();
+  adaptiveBacktrackSB->setDecimals(4);
+  adaptiveBacktrackSB->setRange(0.0001, 2.0f);
+  adaptiveBacktrackSB->setSingleStep(0.0001);
+  connect(adaptiveBacktrackSB, SIGNAL(valueChanged(double)), volumeViewer, SLOT(setAdaptiveBacktrack(double)));
+  formLayout->addRow("Adaptive backtrack", adaptiveBacktrackSB);
+
   // sampling rate selection
   QDoubleSpinBox *samplingRateSpinBox = new QDoubleSpinBox();
   samplingRateSpinBox->setDecimals(3);
-  samplingRateSpinBox->setRange(0.01, 1.0);
+  samplingRateSpinBox->setRange(0.01, 2.0);
   samplingRateSpinBox->setSingleStep(0.01);
   connect(samplingRateSpinBox, SIGNAL(valueChanged(double)), volumeViewer, SLOT(setSamplingRate(double)));
   formLayout->addRow("Sampling rate", samplingRateSpinBox);
+
+  QDoubleSpinBox *aoWeightSB = new QDoubleSpinBox();
+  aoWeightSB->setDecimals(3);
+  aoWeightSB->setRange(0.0, 4.0);
+  aoWeightSB->setSingleStep(0.1);
+  connect(aoWeightSB, SIGNAL(valueChanged(double)), volumeViewer, SLOT(setAOWeight(double)));
+  formLayout->addRow("AOWeight", aoWeightSB);
+
+  QSpinBox *aoSamplesSB = new QSpinBox();
+  aoSamplesSB->setRange(0, 64);
+  connect(aoSamplesSB, SIGNAL(valueChanged(int)), volumeViewer, SLOT(setAOSamples(int)));
+  formLayout->addRow("AOSamples", aoSamplesSB);
 
   // volume clipping box
   for(size_t i=0; i<6; i++) {
@@ -85,17 +138,27 @@ PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer, ospcommon::box3
 
   // set default values. this will trigger signal / slot executions.
   subsamplingInteractionEnabledCheckBox->setChecked(false);
-  gradientShadingEnabledCheckBox->setChecked(false);
-  samplingRateSpinBox->setValue(0.125);
+  gradientShadingEnabledCheckBox->setChecked(true);
+  singleShadeCB->setChecked(true);
+  adaptiveSamplingCB->setChecked(true);
+  preIntegrationCB->setChecked(true);
+  shadowsCB->setChecked(true);
+  planeCB->setChecked(true);
+  adaptiveScalarSB->setValue(15.f);
+  adaptiveMaxSamplingRateSB->setValue(0.7f);
+  adaptiveBacktrackSB->setValue(0.02f);
+  samplingRateSpinBox->setValue(0.07);
+  aoWeightSB->setValue(0.4f);
+  aoSamplesSB->setValue(1);
 }
 
 void PreferencesDialog::updateVolumeClippingBox()
 {
-  ospcommon::vec3f lower(volumeClippingBoxSpinBoxes[0]->value(), 
-                      volumeClippingBoxSpinBoxes[1]->value(), 
+  ospcommon::vec3f lower(volumeClippingBoxSpinBoxes[0]->value(),
+                      volumeClippingBoxSpinBoxes[1]->value(),
                       volumeClippingBoxSpinBoxes[2]->value());
-  ospcommon::vec3f upper(volumeClippingBoxSpinBoxes[3]->value(), 
-                      volumeClippingBoxSpinBoxes[4]->value(), 
+  ospcommon::vec3f upper(volumeClippingBoxSpinBoxes[3]->value(),
+                      volumeClippingBoxSpinBoxes[4]->value(),
                       volumeClippingBoxSpinBoxes[5]->value());
 
   volumeViewer->setVolumeClippingBox(ospcommon::box3f(lower, upper));

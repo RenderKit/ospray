@@ -41,8 +41,11 @@ namespace ospcommon {
 #endif
 #ifdef _WIN32
     std::string fullName = file+".dll";
-    FileName executable = getExecutableFileName();
-    lib = LoadLibrary((executable.path() + fullName).c_str());
+    lib = LoadLibrary(fullName.c_str());
+    if (!lib) {
+      FileName executable = getExecutableFileName();
+      lib = LoadLibrary((executable.path() + fullName).c_str());
+    }
 #else
 #if defined(__MACOSX__)
     std::string fullName = "lib"+file+".dylib";
@@ -69,7 +72,7 @@ namespace ospcommon {
     }
   }
 
-  Library::Library(void* const lib) : lib(lib) {};
+  Library::Library(void* const lib) : lib(lib) {}
 
   void* Library::getSymbol(const std::string& sym) const
   {

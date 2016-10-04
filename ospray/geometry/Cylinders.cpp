@@ -45,10 +45,13 @@ namespace ospray {
     materialList      = getParamData("materialList");
     colorData         = getParamData("color");
 
-    if (cylinderData.ptr == NULL || bytesPerCylinder == 0)
-      throw std::runtime_error("#ospray:geometry/cylinders: no 'cylinders' data specified");
+    if (cylinderData.ptr == NULL || bytesPerCylinder == 0) {
+      throw std::runtime_error("#ospray:geometry/cylinders: no 'cylinders'"
+                               " data specified");
+    }
     numCylinders = cylinderData->numBytes / bytesPerCylinder;
-    std::cout << "#osp: creating 'cylinders' geometry, #cylinders = " << numCylinders << std::endl;
+    std::cout << "#osp: creating 'cylinders' geometry, #cylinders = "
+              << numCylinders << std::endl;
 
     if (_materialList) {
       free(_materialList);
@@ -56,8 +59,9 @@ namespace ospray {
     }
 
     if (materialList) {
-      void **ispcMaterials = (void**) malloc(sizeof(void*) * materialList->numItems);
-      for (int i=0;i<materialList->numItems;i++) {
+      void **ispcMaterials =
+          (void**) malloc(sizeof(void*) * materialList->numItems);
+      for (uint32_t i = 0; i < materialList->numItems; i++) {
         Material *m = ((Material**)materialList->data)[i];
         ispcMaterials[i] = m?m->getIE():NULL;
       }

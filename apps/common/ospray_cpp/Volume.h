@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include <ospray_cpp/ManagedObject.h>
 
 namespace ospray {
@@ -28,6 +30,15 @@ public:
   Volume(const std::string &type);
   Volume(const Volume &copy);
   Volume(OSPVolume existing);
+
+  void setRegion(void *source,
+                 const ospcommon::vec3i &regionCoords,
+                 const ospcommon::vec3i &regionSize);
+
+  void sampleVolume(float **results,
+                    const ospcommon::vec3f *worldCoordinates,
+                    size_t count);
+  std::vector<float> sampleVolume(const std::vector<ospcommon::vec3f> &points);
 };
 
 // Inlined function definitions ///////////////////////////////////////////////
@@ -36,7 +47,7 @@ inline Volume::Volume(const std::string &type)
 {
   OSPVolume c = ospNewVolume(type.c_str());
   if (c) {
-    m_object = c;
+    ospObject = c;
   } else {
     throw std::runtime_error("Failed to create OSPVolume!");
   }
@@ -50,6 +61,41 @@ inline Volume::Volume(const Volume &copy) :
 inline Volume::Volume(OSPVolume existing) :
   ManagedObject_T<OSPVolume>(existing)
 {
+}
+
+inline void Volume::setRegion(void *source,
+                              const ospcommon::vec3i &regionCoords,
+                              const ospcommon::vec3i &regionSize)
+{
+  ospSetRegion(handle(),
+               source,
+               (const osp::vec3i&)regionCoords,
+               (const osp::vec3i&)regionSize);
+}
+
+inline void Volume::sampleVolume(float **results,
+                                 const ospcommon::vec3f *worldCoordinates,
+                                 size_t count)
+{
+  ospSampleVolume(results,
+                  handle(),
+                  (const osp::vec3f&)*worldCoordinates,
+                  count);
+}
+
+inline std::vector<float>
+Volume::sampleVolume(const std::vector<ospcommon::vec3f> &points)
+{
+  float *results = nullptr;
+  auto numPoints = points.size();
+  sampleVolume(&results, points.data(), numPoints);
+
+  if (!results)
+    throw std::runtime_error("Failed to sample volume!");
+
+  std::vector<float> retval(points.size());
+  memcpy(retval.data(), results, numPoints*sizeof(float));
+  return retval;
 }
 
 }// namespace cpp

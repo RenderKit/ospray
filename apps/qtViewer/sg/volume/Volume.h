@@ -57,8 +57,8 @@ namespace ospray {
       /*! \brief 'render' the object to ospray */
       virtual void render(RenderContext &ctx);
 
-      SG_NODE_DECLARE_MEMBER(vec3i,dimensions,Dimensions);    
-      SG_NODE_DECLARE_MEMBER(std::string,voxelType,ScalarType);    
+      SG_NODE_DECLARE_MEMBER(vec3i,dimensions,Dimensions)
+      SG_NODE_DECLARE_MEMBER(std::string,voxelType,ScalarType)
 
       const unsigned char *mappedPointer;
 

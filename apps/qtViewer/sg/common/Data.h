@@ -33,11 +33,11 @@ namespace ospray {
 
     struct DataBuffer : public Node {
       DataBuffer(OSPDataType type)
-        : type(type), data(NULL)
+        : type(type), data(nullptr)
       {}
       virtual ~DataBuffer() {}
 
-      virtual std::string toString() const { return "DataBuffer<abstract>"; };
+      virtual std::string toString() const { return "DataBuffer<abstract>"; }
 
       virtual float  get1f(index_t idx)  const { INVALID_DATA_ERROR; }
       virtual vec2f  get2f(index_t idx)  const { INVALID_DATA_ERROR; }
@@ -52,8 +52,8 @@ namespace ospray {
 
       virtual void       *getBase()  const = 0;
       virtual size_t      getSize()  const = 0;
-      virtual bool        notEmpty() const { return getSize() != 0; };
-      virtual OSPDataType getType()  const { return type; };
+      virtual bool        notEmpty() const { return getSize() != 0; }
+      virtual OSPDataType getType()  const { return type; }
 
       virtual OSPData     getOSP()   {
         if (notEmpty() && !data) {
@@ -61,10 +61,10 @@ namespace ospray {
           ospCommit(data);
         }
         return data;
-      };
+      }
 
-      OSPData     data;
       OSPDataType type;
+      OSPData     data;
     };
 
 #undef INVALID_DATA_ERROR
@@ -76,7 +76,7 @@ namespace ospray {
     template<typename T, long int TID>
     struct DataArrayT : public DataBuffer {
       DataArrayT(T *base, size_t size, bool mine=true)
-        : DataBuffer((OSPDataType)TID), base(base), mine(mine), size(size)
+        : DataBuffer((OSPDataType)TID),  size(size), mine(mine), base(base)
       {}
       virtual void        *getBase()  const { return (void*)base; }
       virtual size_t       getSize()  const { return size; }

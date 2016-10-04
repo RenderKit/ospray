@@ -14,19 +14,16 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "Camera.ih"
 
-#include "vec.ih"
 
-struct region1f {
-  float lower;
-  float upper;
-};
-
-inline region1f make_region1f(const float lower, const float upper) 
-{ region1f ret; ret.lower = lower; ret.upper = upper; return ret; }
-
-struct region2i {
-  vec2i lower;
-  vec2i upper;
-};
+export void Camera_set(void *uniform _self,
+                       const uniform float nearClip,
+                       const uniform vec2f &imageStart,
+                       const uniform vec2f &imageEnd)
+{
+  uniform Camera *uniform self = (uniform Camera *uniform)_self;
+  self->nearClip = nearClip;
+  self->subImage.lower = imageStart;
+  self->subImage.upper = imageEnd;
+}

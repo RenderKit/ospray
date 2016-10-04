@@ -17,10 +17,10 @@
 #pragma once
 
 // ospray stuff
-#include "ospray/common/OSPCommon.h"
+#include "common/OSPCommon.h"
 
 namespace ospray {
-  /*! \brief ospray *scalar* ray class 
+  /*! \brief ospray *scalar* ray class
 
     This implement the base ospray ray class; it is 'derived'
     from Embree's ray class, but can have additional members that embree
@@ -39,7 +39,7 @@ namespace ospray {
     vs embrees 'float dx,dy,dz;') but there HAS to be a one-to-one
     correspondence between what we store and what embree expects in its
     'intersect' functions */
-  struct Ray {
+  struct OSPRAY_SDK_INTERFACE Ray {
     /* ray input data */
     vec3fa org;  /*!< ray origin */
     vec3fa dir;  /*!< ray direction */
@@ -47,13 +47,13 @@ namespace ospray {
     float t;    /*!< end of valid ray interval, or distance to hit point after 'intersect' */
     float time; //!< Time of this ray for motion blur
     int32 mask; //!< Used to mask out objects during traversal
-  
+
     /* hit data */
     vec3fa Ng;    /*! geometry normal. may or may not be set by geometry intersectors */
-  
+
     float u;     //!< Barycentric u coordinate of hit
     float v;     //!< Barycentric v coordinate of hit
-  
+
     int geomID;  //!< geometry ID
     int primID;  //!< primitive ID
     int instID;  //!< instance ID

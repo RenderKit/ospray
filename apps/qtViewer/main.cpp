@@ -1,4 +1,5 @@
 // ======================================================================== //
+// Copyright 2016 SURVICE Engineering Company                               //
 // Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
@@ -25,6 +26,9 @@
 // scene graph
 #include "sg/module/Module.h"
 #include "sg/importer/Importer.h"
+
+#include <fstream>
+#include <stdexcept>
 
 namespace ospray {
   namespace viewer {
@@ -95,6 +99,51 @@ namespace ospray {
             sg::loadModule(argv[++argID]);
           } else if (arg == "--renderer") {
             integratorFromCommandLine = argv[++argID];
+          } else if (arg == "-v") {
+            std::ifstream fin(argv[++argID]);
+            if (!fin.is_open())
+            {
+              throw std::runtime_error("Failed to open \"" +
+                                       std::string(argv[argID]) +
+                                       "\" for reading");
+            }
+
+            if (!cameraFromCommandLine) cameraFromCommandLine = new sg::PerspectiveCamera;
+
+            auto x = 0.f;
+            auto y = 0.f;
+            auto z = 0.f;
+
+            auto token = std::string("");
+            while (fin >> token)
+            {
+              if (token == "-vp")
+              {
+                fin >> x >> y >> z;
+                cameraFromCommandLine->setFrom(vec3f(x,y,z));
+              }
+              else if (token == "-vu")
+              {
+                fin >> x >> y >> z;
+                cameraFromCommandLine->setUp(vec3f(x,y,z));
+              }
+              else if (token == "-vi")
+              {
+                fin >> x >> y >> z;
+                upFromCommandLine = vec3f(x, y, z);
+                cameraFromCommandLine->setAt(upFromCommandLine);
+              }
+              else if (token == "-fv")
+              {
+                fin >> x;
+                cameraFromCommandLine->setFovy(x);
+              }
+              else
+              {
+                throw std::runtime_error("Unrecognized token:  \"" + token +
+                                         '\"');
+              }
+            }
           } else if (arg == "-vi") {
             if (!cameraFromCommandLine) cameraFromCommandLine = new sg::PerspectiveCamera;
             assert(argID+3<argc);

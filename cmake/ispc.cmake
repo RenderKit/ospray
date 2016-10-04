@@ -96,6 +96,7 @@ MACRO (OSPRAY_ISPC_COMPILE)
     SET(ISPC_TARGET_ARGS generic-16)
     SET(ISPC_ADDITIONAL_ARGS
       ${ISPC_ADDITIONAL_ARGS}
+      -DOSPRAY_TARGET_MIC
       --opt=force-aligned-memory
       --emit-c++
       --c++-include-file=${PROJECT_SOURCE_DIR}/ospray/common/ISPC_KNC_Backend.h

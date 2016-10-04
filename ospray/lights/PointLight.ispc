@@ -79,13 +79,12 @@ Light_SampleRes PointLight_sample(const uniform Light* uniform super,
 
 Light_EvalRes PointLight_eval(const uniform Light* uniform super,
                               const DifferentialGeometry& dg,
-                              const vec3f& dir)
+                              const vec3f& dir,
+                              const float maxDist)
 {
   const PointLight* uniform self = (PointLight* uniform)super;
   Light_EvalRes res;
   res.radiance = make_vec3f(0.f);
-  res.dist = inf;
-  res.pdf = 0.f;
 
   if (self->radius > 0.f) {
     const vec3f A = self->position - dg.P;
@@ -99,9 +98,9 @@ Light_EvalRes PointLight_eval(const uniform Light* uniform super,
       const float t_near = (b - sqrt(radical)) / (2.f*a);
       const float t_far = (b + sqrt(radical)) / (2.f*a);
 
-      if (t_far > 0.0f) {
+      if (t_far > 0.0f & t_near <= maxDist) {
         // TODO: handle interior case
-        res.dist = t_near;
+
         const float sinTheta2 = sqr(self->radius) * rcp(centerDist2);
         const float cosTheta = sqrt(1.f - sinTheta2);
         res.pdf = uniformSampleConePDF(cosTheta);

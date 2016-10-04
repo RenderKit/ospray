@@ -52,19 +52,6 @@ namespace ospray {
     void printViewport();
     void saveScreenshot(const std::string &basename);
 
-    // Helper types //
-
-    struct DisplayWall
-    {
-      std::string hostname;
-      std::string streamName;
-      ospcommon::vec2i size{-1};
-      ospray::cpp::FrameBuffer fb;
-      ospray::cpp::PixelOp     po;
-    } displayWall;
-
-    void setDisplayWall(const DisplayWall &dw);
-
   protected:
 
     virtual void reshape(const ospcommon::vec2i &newSize) override;
@@ -72,36 +59,29 @@ namespace ospray {
     virtual void mouseButton(int32_t whichButton, bool released,
                              const ospcommon::vec2i &pos) override;
 
-  private:
-
-    // Private functions //
-
     void display() override;
 
     void switchRenderers();
 
     // Data //
 
-    cpp::Model       m_model;
-    cpp::FrameBuffer m_fb;
-    cpp::Renderer    m_renderer;
-    cpp::Camera      m_camera;
+    cpp::Model       sceneModel;
+    cpp::FrameBuffer frameBuffer;
+    cpp::Renderer    renderer;
+    cpp::Camera      camera;
 
-    ospray::glut3D::FPSCounter m_fps;
+    ospray::glut3D::FPSCounter fps;
 
-    std::mutex m_rendererMutex;
-    cpp::Renderer m_queuedRenderer;
+    std::mutex rendererMutex;
+    cpp::Renderer queuedRenderer;
 
-    bool m_alwaysRedraw;
+    bool alwaysRedraw;
 
-    ospcommon::vec2i m_windowSize;
-    int m_accumID;
-    bool m_fullScreen;
-    glut3D::Glut3DWidget::ViewPort m_viewPort;
+    ospcommon::vec2i windowSize;
+    bool fullScreen;
+    glut3D::Glut3DWidget::ViewPort glutViewPort;
 
-    std::atomic<bool> m_resetAccum;
-
-    bool m_useDisplayWall;
+    std::atomic<bool> resetAccum;
   };
 
 }// namespace ospray

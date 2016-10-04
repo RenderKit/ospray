@@ -40,7 +40,7 @@ namespace ospray {
     DistributedFrameBuffer(mpi::async::CommLayer *comm,
                            const vec2i &numPixels,
                            size_t myHandle,
-                           ColorBufferFormat colorBufferFormat,
+                           ColorBufferFormat,
                            bool hasDepthBuffer,
                            bool hasAccumBuffer,
                            bool hasVarianceBuffer);
@@ -73,7 +73,7 @@ namespace ospray {
         and wants the (distributed) frame buffer to process it */
     void setTile(ospray::Tile &tile) override;
 
-    void startNewFrame();
+    void startNewFrame(const float errorThreshold);
     void closeCurrentFrame();
 
     void waitUntilFinished();
@@ -82,7 +82,7 @@ namespace ospray {
     // remaining framebuffer interface
     // ==================================================================
 
-    int32 accumID(const vec2i &) override { return accumId; }
+    int32 accumID(const vec2i &) override;
     float tileError(const vec2i &tile) override;
     float endFrame(const float errorThreshold) override;
 
@@ -95,7 +95,7 @@ namespace ospray {
     //! recipient's job to properly delete the message.
     void incoming(mpi::async::CommLayer::Message *msg) override;
 
-    //! process a client-to-client write tile message */
+    //! process an empty client-to-master write tile message */
     void processMessage(MasterTileMessage *msg);
 
     //! process a (non-empty) write tile message at the master
@@ -121,17 +121,18 @@ namespace ospray {
     void tileIsCompleted(TileData *tile);
 
     //! number of tiles that "I" own
-    inline size_t numMyTiles() const { return myTiles.size(); }
-    inline bool IamTheMaster() const { return comm->IamTheMaster(); }
+    size_t numMyTiles() const { return myTiles.size(); }
+    bool IamTheMaster() const { return comm->IamTheMaster(); }
+    static int32 workerRank(int id) { return mpi::async::CommLayer::workerRank(id); }
 
     /*! return tile descriptor for given pixel coordinates. this tile
       ! may or may not belong to current instance */
-    inline TileDesc *getTileDescFor(const vec2i &coords) const
+    TileDesc *getTileDescFor(const vec2i &coords) const
     { return allTiles[getTileIDof(coords)]; }
 
     /*! return the tile ID for given pair of coordinates. this tile
         may or may not belong to current instance */
-    inline size_t getTileIDof(const vec2i &c) const
+    size_t getTileIDof(const vec2i &c) const
     { return (c.x/TILE_SIZE)+(c.y/TILE_SIZE)*numTiles.x; }
 
     //! \brief common function to help printf-debugging
@@ -143,10 +144,10 @@ namespace ospray {
       WRITE_ONCE, ALPHA_BLEND, Z_COMPOSITE
     } FrameMode;
 
-    int accumId;
+    int32 *tileAccumID; //< holds accumID per tile, for adaptive accumulation
+    //!< holds error per tile and adaptive regions, for variance estimation / stopping
+    TileError tileErrorRegion;
 
-    //! holds error per tile, for variance estimation / stopping
-    float *tileErrorBuffer;
 
     /*! local frame buffer on the master used for storing the final
         tiles. will be null on all workers, and _may_ be null on the
@@ -159,14 +160,11 @@ namespace ospray {
     TileData *createTile(const vec2i &xy, size_t tileID, size_t ownerID);
     void freeTiles();
 
-    /*! number of tiles written this frame */
-    size_t numTilesCompletedThisFrame;
-
-    /*! number of tiles we've (already) sent to the master this frame
-        (used to track when current node is done with this frame - we
-        are done exactly once we've completed sending the last tile to
+    /*! #tiles we've (already) sent to / received by the master this frame
+        (used to track when current node is done with this frame - we are done
+        exactly once we've completed sending / receiving the last tile to / by
         the master) */
-    size_t numTilesToMasterThisFrame;
+    size_t numTilesCompletedThisFrame;
 
     /*! vector of info for *all* tiles. Each logical tile in the
       screen has an entry here */
@@ -206,8 +204,11 @@ namespace ospray {
   inline void
   DistributedFrameBuffer::processMessage(MasterTileMessage_FB<FBType> *msg)
   {
-    if (hasVarianceBuffer && (accumId & 1) == 1)
-      tileErrorBuffer[getTileIDof(msg->coords)] = msg->error;
+    if (hasVarianceBuffer) {
+      const vec2i tileID = msg->coords/TILE_SIZE;
+      if ((accumID(tileID) & 1) == 1)
+        tileErrorRegion.update(tileID, msg->error);
+    }
 
     vec2i numPixels = getNumPixels();
 

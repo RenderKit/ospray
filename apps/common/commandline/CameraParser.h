@@ -1,4 +1,5 @@
 // ======================================================================== //
+// Copyright 2016 SURVICE Engineering Company                               //
 // Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
@@ -38,12 +39,13 @@ public:
 
 protected:
 
-  std::string         m_cameraType;
-  ospray::cpp::Camera m_camera;
+  std::string         cameraType;
+  ospray::cpp::Camera parsedCamera;
 
-  ospcommon::vec3f m_eye {-1,  1, -1};
-  ospcommon::vec3f m_up  { 1, -1,  1};
-  ospcommon::vec3f m_gaze{ 0,  1,  0};
+  ospcommon::vec3f eye {.5,  .5, 1};
+  ospcommon::vec3f up  { 0, 1,  0};
+  ospcommon::vec3f gaze{ 0,  -.1, -1};
+  float fovy{ 60.f };
 
 private:
 

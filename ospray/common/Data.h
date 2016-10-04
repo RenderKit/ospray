@@ -16,14 +16,14 @@
 
 #pragma once
 
-// ospray 
+// ospray
 #include "Managed.h"
 
 namespace ospray {
 
   /*! \brief defines a data array (aka "buffer") type that contains
       'n' items of a given type */
-  struct Data : public ManagedObject
+  struct OSPRAY_SDK_INTERFACE Data : public ManagedObject
   {
     virtual void commit() { notifyListenersThatObjectGotChanged(); }
 

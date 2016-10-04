@@ -26,19 +26,22 @@ namespace ospray {
   namespace mpi {
     namespace async {
 
-      CommLayer *CommLayer::WORLD = NULL;
+      CommLayer *CommLayer::WORLD = nullptr;
 
       CommLayer::Object::Object(CommLayer *comm, ObjectID myID)
         : myID(myID), comm(comm)
       {
         master = mpi::async::CommLayer::Address(comm->masterRank(),myID);
         worker = new mpi::async::CommLayer::Address[comm->numWorkers()];
-        for (int i=0;i<comm->numWorkers();i++)
+        for (int i = 0 ; i < comm->numWorkers(); i++)
           worker[i] = mpi::async::CommLayer::Address(comm->workerRank(i),myID);
       }
 
-      void CommLayer::process(const mpi::Address &source, void *message, int32 size)
+      void CommLayer::process(const mpi::Address &source,
+                              void *message,
+                              int32 size)
       {
+        UNUSED(size);
         Message *msg = (Message*)message;
 
         Object *obj = nullptr;
@@ -47,8 +50,10 @@ namespace ospray {
           obj = registry[msg->dest.objectID];
         }
 
-        if (!obj)
-          throw std::runtime_error("#osp:mpi:CommLayer: no object with given ID");
+        if (!obj) {
+          throw std::runtime_error("#osp:mpi:CommLayer: no object with given "
+                                   "ID");
+        }
 
         msg->source.rank  = source.rank;
         obj->incoming(msg);

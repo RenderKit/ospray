@@ -25,45 +25,47 @@ namespace ospray {
 
     //! constructor
     TransferFunction::TransferFunction() 
-      : ospTransferFunction(NULL), 
-        ospColorData(NULL), 
-        ospAlphaData(NULL),
-        numSamples(128),
-        valueRange(0.f,1.f)
-    { 
+      : ospTransferFunction(nullptr),
+        ospColorData(nullptr),
+        ospAlphaData(nullptr),
+        valueRange(0.f,1.f),
+        numSamples(128)
+    {
       setDefaultValues(); 
     }
 
     // //! \brief Sets a new 'texture map' to be used for the color mapping
     void TransferFunction::setColorMap(const std::vector<vec3f> &colorArray)
     {
-      if (ospColorData) { ospRelease(ospColorData); ospColorData = NULL; }
+      if (ospColorData) { ospRelease(ospColorData); ospColorData = nullptr; }
       this->colorArray.clear();
-      for (int i=0;i<colorArray.size();i++)
-        this->colorArray.push_back(std::pair<float,vec3f>(i,colorArray[i]));
+      for (uint32_t i = 0; i < colorArray.size(); ++i)
+        this->colorArray.push_back({i, colorArray[i]});
     }
 
     //! \brief Sets a new 'texture map' to be used for the alpha mapping
     void TransferFunction::setAlphaMap(const std::vector<vec2f> &alphaArray)
     {
-      if (ospAlphaData) { ospRelease(ospAlphaData); ospAlphaData = NULL; }
+      if (ospAlphaData) { ospRelease(ospAlphaData); ospAlphaData = nullptr; }
       this->alphaArray.clear();
-      for (int i=0;i<alphaArray.size();i++)
-        this->alphaArray.push_back(std::pair<float,float>(alphaArray[i].x,alphaArray[i].y));
+      for (const auto &alpha : alphaArray)
+        this->alphaArray.push_back({alpha.x, alpha.y});
     }
 
     float TransferFunction::getInterpolatedAlphaValue(float x)
     {
       if (x <= alphaArray.front().first)
         return alphaArray.front().second;
-      for (int i=1;i<alphaArray.size();i++) 
-        if (x <= alphaArray[i].first)
+      for (uint32_t i = 1; i < alphaArray.size(); i++) {
+        if (x <= alphaArray[i].first) {
           return
             alphaArray[i-1].second +
             (alphaArray[i].second - alphaArray[i-1].second)
             * (x-alphaArray[i-1].first) 
             / (alphaArray[i].first - alphaArray[i-1].first)
             ;
+        }
+      }
       return alphaArray.back().second;
     }
 
@@ -77,17 +79,17 @@ namespace ospray {
     void TransferFunction::commit() 
     {
       ospSetVec2f(ospTransferFunction,"valueRange",valueRange);
-      if (ospColorData == NULL) {
+      if (ospColorData == nullptr) {
         // for now, no resampling - just use the colors ...
         vec3f *colors = (vec3f*)alloca(sizeof(vec3f)*colorArray.size());
-        for (int i=0;i<colorArray.size();i++)
+        for (uint32_t i = 0; i < colorArray.size(); i++)
           colors[i] = colorArray[i].second;
         ospColorData = ospNewData(colorArray.size(),OSP_FLOAT3,colors); 
         ospCommit(ospColorData);
         ospSetData(ospTransferFunction,"colors",ospColorData);
         lastModified = TimeStamp::now();
       }
-      if (ospAlphaData == NULL) {
+      if (ospAlphaData == nullptr) {
         float *alpha = (float*)alloca(sizeof(float)*numSamples);
         float x0 = alphaArray.front().first;
         float dx = (alphaArray.back().first - x0) / (numSamples-1);
@@ -123,7 +125,7 @@ namespace ospray {
       if (name != "")
         registerNamedNode(name,this);
 
-      for (int ii = 0; ii != node->child.size(); ii++) {
+      for (uint32_t ii = 0; ii != node->child.size(); ii++) {
         const xml::Node *child = node->child[ii];
         // -------------------------------------------------------
         // colors
@@ -137,7 +139,7 @@ namespace ospray {
           while (c) {
             PRINT(c);
             colorArray.push_back(std::pair<float,vec3f>(colorArray.size(),toVec3f(c)));
-            c = strtok(NULL,",\n");
+            c = strtok(nullptr,",\n");
           }
 
           free(cont);
@@ -155,7 +157,7 @@ namespace ospray {
           while (c) {
             vec2f cp = toVec2f(c);
             alphaArray.push_back(std::pair<float,float>(cp.x,cp.y));
-            c = strtok(NULL,",\n");
+            c = strtok(nullptr,",\n");
           }
 
           free(cont);
@@ -183,6 +185,11 @@ namespace ospray {
       alphaArray.push_back(std::pair<float,float>(1.f,1.f));
       // for (int i=0;i<colorArray.size();i++)
       //   alphaArray.push_back(std::pair<float,float>(i,1.f)); //i/float(colorArray.size()-1));
+    }
+
+    std::string TransferFunction::toString() const
+    {
+      return "ospray::sg::TransferFunction";
     }
 
     OSP_REGISTER_SG_NODE(TransferFunction)

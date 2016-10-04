@@ -22,16 +22,16 @@
 namespace ospray {
 
   /*! \brief A Texture defined through a 2D Image. */
-  struct Texture2D : public ManagedObject {
+  struct OSPRAY_SDK_INTERFACE Texture2D : public ManagedObject {
 
-    //! \brief common function to help printf-debugging 
+    //! \brief common function to help printf-debugging
     /*! Every derived class should overrride this! */
     virtual std::string toString() const { return "ospray::Texture2D"; }
 
     virtual ~Texture2D();
 
     /*! \brief creates a Texture2D object with the given parameter */
-    static Texture2D *createTexture(const vec2i &size, const OSPTextureFormat, 
+    static Texture2D *createTexture(const vec2i &size, const OSPTextureFormat,
                                     void *data, const int flags);
 
     vec2i size;

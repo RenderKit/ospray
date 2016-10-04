@@ -31,25 +31,24 @@ namespace ospray {
   /*! abstraction for a remotely-held 'managed object'. the handle
     refers to both 'owner' (the machine that has it) as well as to a
     local ID (by which that owner can look it up). Note that other
-    ranks may also have copies of that object. 
+    ranks may also have copies of that object.
 
     note that the 'null handle' is '0', not -1. This allows an app
     to test the handled resturend from ospNewXXX calls for null just
     as if they were pointers (and thus, 'null' objects are
     consistent between local and mpi rendering)
   */
-  struct ObjectHandle {
+  union OSPRAY_SDK_INTERFACE ObjectHandle {
     static ObjectHandle alloc();
     void free();
 
-    inline ObjectHandle(const int64 i = 0) : i64(i) {};
-    inline ObjectHandle(const ObjectHandle &other) : i64(other.i64) {};
-    inline ObjectHandle &operator=(const ObjectHandle &other) { i64=other.i64; return *this; }
+    inline ObjectHandle(const int64 i = 0) { i64 = i; }
+    inline ObjectHandle(const ObjectHandle &other) { i64 = other.i64; }
+    inline ObjectHandle &operator=(const ObjectHandle &other)
+    { i64 = other.i64; return *this; }
 
-    union {
-      struct { int32 ID; int32 owner; } i32;
-      int64 i64;
-    };
+    struct { int32 ID; int32 owner; } i32;
+    int64 i64;
 
     /*! look up an object by handle, and return it. must be a defiend handle */
     ManagedObject *lookup() const;
@@ -78,12 +77,13 @@ namespace ospray {
     /*! cast to int64 to allow fast operations with this type */
     inline operator int64() const { return i64; }
 
-    static const ObjectHandle nullHandle;
   };
 
-  inline bool operator==(const ObjectHandle &a, const ObjectHandle &b) 
-  { return a.i64==b.i64; }
-  inline bool operator!=(const ObjectHandle &a, const ObjectHandle &b) 
-  { return a.i64!=b.i64; }
+  extern const ObjectHandle nullHandle;
+
+  inline bool operator==(const ObjectHandle &a, const ObjectHandle &b)
+  { return a.i64 == b.i64; }
+  inline bool operator!=(const ObjectHandle &a, const ObjectHandle &b)
+  { return a.i64 != b.i64; }
 
 } // ::ospray

@@ -30,27 +30,27 @@ using namespace ospray;
 using namespace ospcommon;
 
 MultiSceneParser::MultiSceneParser(cpp::Renderer renderer) :
-  m_renderer(renderer)
+  renderer(renderer)
 {
 }
 
 bool MultiSceneParser::parse(int ac, const char **&av)
 {
-  TriangleMeshSceneParser triangleMeshParser(m_renderer);
+  TriangleMeshSceneParser triangleMeshParser(renderer);
 #ifdef OSPRAY_TACHYON_SUPPORT
-  TachyonSceneParser      tachyonParser(m_renderer);
+  TachyonSceneParser      tachyonParser(renderer);
 #endif
-  ParticleSceneParser     particleParser(m_renderer);
-  StreamLineSceneParser   streamlineParser(m_renderer);
+  ParticleSceneParser     particleParser(renderer);
+  StreamLineSceneParser   streamlineParser(renderer);
 #ifndef _WIN32
-  VolumeSceneParser       volumeParser(m_renderer);
+  VolumeSceneParser       volumeParser(renderer);
 #endif
 
   bool gotTriangleMeshScene = triangleMeshParser.parse(ac, av);
 #ifdef OSPRAY_TACHYON_SUPPORT
   bool gotTachyonScene      = tachyonParser.parse(ac, av);
 #endif
-  bool gotPartileScene      = particleParser.parse(ac, av);
+  bool gotParticleScene      = particleParser.parse(ac, av);
   bool gotStreamLineScene   = streamlineParser.parse(ac, av);
 #ifndef _WIN32
   bool gotVolumeScene       = volumeParser.parse(ac, av);
@@ -64,7 +64,7 @@ bool MultiSceneParser::parse(int ac, const char **&av)
   else if (gotTachyonScene)
     parser = &tachyonParser;
 #endif
-  else if (gotPartileScene)
+  else if (gotParticleScene)
     parser = &particleParser;
   else if (gotStreamLineScene)
     parser = &streamlineParser;
@@ -74,8 +74,11 @@ bool MultiSceneParser::parse(int ac, const char **&av)
 #endif
 
   if (parser) {
-    m_model = parser->model();
-    m_bbox  = parser->bbox();
+    sceneModel = parser->model();
+    sceneBbox  = parser->bbox();
+  } else {
+    sceneModel = cpp::Model();
+    sceneModel.commit();
   }
 
   return parser != nullptr;
@@ -83,10 +86,10 @@ bool MultiSceneParser::parse(int ac, const char **&av)
 
 cpp::Model MultiSceneParser::model() const
 {
-  return m_model;
+  return sceneModel;
 }
 
 box3f MultiSceneParser::bbox() const
 {
-  return m_bbox;
+  return sceneBbox;
 }

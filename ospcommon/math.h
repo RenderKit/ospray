@@ -184,8 +184,8 @@ namespace ospcommon
   template<typename T> __forceinline T clamp(const T& x, const T& lower = T(zero), const T& upper = T(one)) { return max(min(x,upper),lower); }
   template<typename T> __forceinline T clampz(const T& x, const T& upper) { return max(T(zero), min(x,upper)); }
 
-  template<typename T> __forceinline T  deg2rad ( const T& x )  { return x * T(1.74532925199432957692e-2f); }
-  template<typename T> __forceinline T  rad2deg ( const T& x )  { return x * T(5.72957795130823208768e1f); }
+  template<typename T> __forceinline T  deg2rad ( const T& x )  { return x * T(1.745329251994329576923690768489e-2); }
+  template<typename T> __forceinline T  rad2deg ( const T& x )  { return x * T(5.7295779513082320876798154814105e1); }
   template<typename T> __forceinline T  sin2cos ( const T& x )  { return sqrt(max(T(zero),T(one)-x*x)); }
   template<typename T> __forceinline T  cos2sin ( const T& x )  { return sin2cos(x); }
 

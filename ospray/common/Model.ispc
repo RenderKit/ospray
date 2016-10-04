@@ -40,13 +40,22 @@ export void Model_init(void *uniform _model,
   if (model->embreeSceneHandle)
     rtcDeleteScene(model->embreeSceneHandle);
 
+  uniform RTCSceneFlags scene_flags = RTC_SCENE_STATIC;
+#ifdef OSPRAY_USE_HIGH_QUALITY_BVH
+  scene_flags |= RTC_SCENE_HIGH_QUALITY;
+#endif
+
+  uniform RTCAlgorithmFlags traversal_flags =
+      RTC_INTERSECT_UNIFORM | RTC_INTERSECT_VARYING;
+
+#if (RTCORE_VERSION_MAJOR >= 2 && RTCORE_VERSION_MINOR >= 10 && defined(OSPRAY_USE_EMBREE_STREAMS))
+    traversal_flags |= RTC_INTERSECT_STREAM;
+#endif
+
   model->embreeSceneHandle = rtcDeviceNewScene((RTCDevice)embreeDevice,
-                                               //RTC_SCENE_STATIC|RTC_SCENE_HIGH_QUALITY,
-                                               RTC_SCENE_STATIC,//|RTC_SCENE_COMPACT,
-                                               //RTC_SCENE_DYNAMIC,
-                                               //RTC_SCENE_DYNAMIC|RTC_SCENE_COMPACT,
-                                               RTC_INTERSECT_UNIFORM|RTC_INTERSECT_VARYING);
-  
+                                               scene_flags,
+                                               traversal_flags);
+
   if (model->geometry) delete[] model->geometry;
   model->geometryCount = numGeometries;
   if (numGeometries > 0)

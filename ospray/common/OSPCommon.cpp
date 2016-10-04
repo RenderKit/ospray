@@ -15,19 +15,22 @@
 // ======================================================================== //
 
 #include "OSPCommon.h"
-#ifdef OSPRAY_USE_INTERNAL_TASKING
-#  include "common/tasking/TaskSys.h"
+#if defined(OSPRAY_TASKING_TBB)
+# include <tbb/task_scheduler_init.h>
+#elif defined(OSPRAY_TASKING_CILK)
+# include <cilk/cilk_api.h>
+#elif defined(OSPRAY_TASKING_OMP)
+# include <omp.h>
+#elif defined(OSPRAY_TASKING_INTERNAL)
+# include "common/tasking/TaskSys.h"
 #endif
-#include "common/tasking/async.h"
 // embree
 #include "embree2/rtcore.h"
 #include "ospcommon/sysinfo.h"
-//stl
-#include <thread>
 
 namespace ospray {
 
-  RTCDevice g_embreeDevice = NULL;
+  RTCDevice g_embreeDevice = nullptr;
 
   /*! 64-bit malloc. allows for alloc'ing memory larger than 64 bits */
   extern "C" void *malloc64(size_t size)
@@ -45,8 +48,7 @@ namespace ospray {
       numbers mean increasing verbosity of log messages */
   uint32_t logLevel = 0;
   bool debugMode = false;
-  int32_t numThreads = -1; //!< for default (==maximum) number of
-                           //   OSPRay/Embree threads
+  int numThreads = -1;
 
   WarnOnce::WarnOnce(const std::string &s) 
     : s(s) 
@@ -126,7 +128,16 @@ namespace ospray {
       }
     }
 
-#ifdef OSPRAY_TASKING_INTERNAL
+#if defined(OSPRAY_TASKING_TBB)
+    static tbb::task_scheduler_init tbb_init(numThreads);
+    UNUSED(tbb_init);
+#elif defined(OSPRAY_TASKING_CILK)
+    __cilkrts_set_param("nworkers", std::to_string(numThreads).c_str());
+#elif defined(OSPRAY_TASKING_OMP)
+    if (numThreads > 0) {
+      omp_set_num_threads(numThreads);
+    }
+#elif defined(OSPRAY_TASKING_INTERNAL)
     try {
       ospray::Task::initTaskSystem(debugMode ? 0 : numThreads);
     } catch (const std::runtime_error &e) {

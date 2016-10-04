@@ -77,7 +77,7 @@ namespace ospray {
       }
       // PRINT(len);
       
-      for (int i=0;i<numParticles;i++) {
+      for (uint32_t i = 0; i < numParticles; i++) {
         Particle p;
         int rc = fread(&p,sizeof(p),1,file);
         if (rc != 1) {
@@ -132,7 +132,7 @@ namespace ospray {
       }
       // PRINT(len);
       
-      for (int i=0;i<numParticles;i++) {
+      for (uint32_t i = 0; i < numParticles; i++) {
         double attrib;
         int rc = fread(&attrib,sizeof(attrib),1,file);
         if (rc != 1) {
@@ -146,8 +146,9 @@ namespace ospray {
       }
       
       std::stringstream attrs;
-      for (std::map<std::string,std::vector<float> *>::const_iterator it=model->attribute.begin();
-           it != model->attribute.end();it++) {
+      for (auto it = model->attribute.begin();
+           it != model->attribute.end();
+           it++) {
         attrs << "," << it->first;
       }
         
@@ -178,7 +179,7 @@ namespace ospray {
       }
       // PRINT(len);
       
-      for (int i=0;i<numParticles;i++) {
+      for (uint32_t i = 0; i < numParticles; i++) {
         float attrib;
         int rc = fread(&attrib,sizeof(attrib),1,file);
         if (rc != 1) {
@@ -218,7 +219,7 @@ namespace ospray {
       std::string variable;
       std::string filename;
       std::string varType = var->getProp("type");
-      for (int i=0;i<var->child.size();i++) {
+      for (uint32_t i = 0; i < var->child.size(); i++) {
         xml::Node *n = var->child[i];
         if (n->name == "index") {
           index = atoi(n->content.c_str());
@@ -236,6 +237,9 @@ namespace ospray {
           end = atol(n->content.c_str());
         }
       }
+
+      (void)index;
+      (void)patch;
 
       if (numParticles > 0
           && variable == "p.x"
@@ -278,7 +282,7 @@ namespace ospray {
       assert(doc->child.size() == 1);
       xml::Node *node = doc->child[0];
       assert(node->name == "Uintah_Output");
-      for (int i=0;i<node->child.size();i++) {
+      for (uint32_t i = 0; i < node->child.size(); i++) {
         xml::Node *c = node->child[i];
         assert(c->name == "Variable");
         parse__Variable(model,basePath,c);
@@ -289,10 +293,10 @@ namespace ospray {
                                      const std::string &basePath, xml::Node *node)
     {
       assert(node->name == "Data");
-      for (int i=0;i<node->child.size();i++) {
+      for (uint32_t i = 0; i < node->child.size(); i++) {
         xml::Node *c = node->child[i];
         assert(c->name == "Datafile");
-        for (int j=0;j<c->prop.size();j++) {
+        for (uint32_t j = 0; j < c->prop.size(); j++) {
           xml::Prop *p = c->prop[j];
           if (p->name == "href") {
             try {
@@ -310,11 +314,12 @@ namespace ospray {
         }
       }
     }
-    void parse__Uintah_TimeStep_Meta(Model *model,
-                                     const std::string &basePath, xml::Node *node)
+    void parse__Uintah_TimeStep_Meta(Model */*model*/,
+                                     const std::string &/*basePath*/,
+                                     xml::Node *node)
     {
       assert(node->name == "Meta");
-      for (int i=0;i<node->child.size();i++) {
+      for (uint32_t i = 0; i < node->child.size(); i++) {
         xml::Node *c = node->child[i];
         if (c->name == "endianness") {
           if (c->content == "big_endian") {
@@ -328,7 +333,7 @@ namespace ospray {
                                 const std::string &basePath, xml::Node *node)
     {
       assert(node->name == "Uintah_timestep");
-      for (int i=0;i<node->child.size();i++) {
+      for (uint32_t i = 0; i < node->child.size(); i++) {
         xml::Node *c = node->child[i];
         if (c->name == "Meta") {
           parse__Uintah_TimeStep_Meta(model,basePath,c);
@@ -363,8 +368,8 @@ namespace ospray {
                 << model->atom.size() << " particles (" << attrs.str() << ")" << std::endl;
 
       box3f bounds = empty;
-      for (int i=0;i<model->atom.size();i++) {
-        bounds.extend(model->atom[i].position);
+      for (const auto & atom : model->atom) {
+        bounds.extend(atom.position);
       }
       std::cout << "#osp:mpm: bounds of particle centers: " << bounds << std::endl;
       delete doc;

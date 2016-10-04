@@ -65,10 +65,10 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
 
     lightContrib = lightContrib * transparency;
 
-    /*! Compute simple volumetric effect. */
-    if (ne(medium.transmission, make_vec3f(1.f)))
-      lightContrib = lightContrib * powf(medium.transmission,
-                                         shadowRay.t - shadowRay.t0);
+    // compute attenuation with Beer's law
+    if (ne(medium.attenuation, 0.f))
+      lightContrib = lightContrib
+                     * expf(medium.attenuation * (shadowRay.t - shadowRay.t0));
 
     if (reduce_max(lightContrib) <= self->minContribution)
       return lightContrib;
@@ -90,9 +90,9 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
 }
 
 ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
-                             const vec2f &pixel, // normalized, i.e. in [0..1]
-                             Ray &ray,
-                             varying RandomTEA* uniform rng)
+                                    const vec2f &pixel, // normalized, i.e. in [0..1]
+                                    Ray &ray,
+                                    varying RandomTEA* uniform rng)
 {
   ScreenSample sample;
   sample.alpha = 1.f;
@@ -109,10 +109,6 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
   lastDg.P = ray.org;
   lastDg.Ns = ray.dir;
   lastDg.Ng = ray.dir;
-
-  DifferentialGeometry previousDg;
-
-  bool insideSolid = false;// Quick fix for glass absorption.
 
   do {
     traceRay(self->super.model, ray);
@@ -140,8 +136,8 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     // add light from virtual lights by intersecting them
     for (uniform int i = 0; i < self->numLights; i++) {
       const uniform Light *uniform l = self->lights[i];
-      Light_EvalRes le = l->eval(l, lastDg, ray.dir);
-      if (le.dist <= maxLightDist)
+      Light_EvalRes le = l->eval(l, lastDg, ray.dir, maxLightDist);
+      if (reduce_max(le.radiance) > 0.0f)
         L = L + Lw * le.radiance * misHeuristic(lastBSDFPdf, le.pdf);
     }
 
@@ -228,29 +224,14 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     Lw = Lw * fs.weight;
 
-    // compute simple volumetric effect
-    const vec3f transmission = currentMedium.transmission;
-    if (ne(transmission,make_vec3f(1.f))) {
-      Lw = Lw * powf(transmission, ray.t);
-    }
-
-    if (insideSolid) {// For absorbing translucent materials.
-      foreach_unique(uniMat in dg.material) {
-        uniform PathTraceMaterial* uniform m = (uniform PathTraceMaterial *)uniMat;
-        if (m != NULL) {
-          Lw = Lw * m->getAbsorption(m, previousDg, ray.t);
-        }
-      }
+    // compute attenuation with Beer's law
+    if (ne(currentMedium.attenuation, 0.f)) {
+      Lw = Lw * expf(currentMedium.attenuation * ray.t);
     }
 
     // update currentMedium if we hit a medium interface 
     // TODO: support nested dielectrics
     if (fs.type & BSDF_TRANSMISSION) {
-
-      // This is a quick fix for glass. This only works if all solid objects are disjoint 
-      // (some space is between them and they don't overlap).
-      insideSolid = !insideSolid;
-
       foreach_unique(uniMat in dg.material) {
         uniform PathTraceMaterial* uniform m = (uniform PathTraceMaterial *)uniMat;
         if (m != NULL) {
@@ -265,8 +246,6 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       lastBSDFPdf = fs.pdf;
       lastDg = dg;
     }
-
-    previousDg = dg;
 
     // continue the path
     straightPath &= eq(ray.dir, fs.wi);
@@ -330,14 +309,6 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
 }
 
 
-
-
-unmasked void *uniform PathTracer_beginFrame(uniform Renderer *uniform _self,
-                                    uniform FrameBuffer *uniform fb)
-{
-  _self->fb = fb;
-  return NULL;
-}
 
 
 void PathTracer_renderTileJob(uniform PathTracer *uniform self,
@@ -404,11 +375,9 @@ export void* uniform PathTracer_create(void *uniform cppE)
 {
   uniform PathTracer *uniform self = uniform new uniform PathTracer;
   Renderer_Constructor(&self->super,cppE);
-  self->super.renderTile   = PathTracer_renderTile;
-  self->super.beginFrame   = PathTracer_beginFrame;
+  self->super.renderTile = PathTracer_renderTile;
 
   PathTracer_set(self, 20, 0.01f, inf, NULL, NULL, 0);
-
   precomputeZOrder();
 
   return self;

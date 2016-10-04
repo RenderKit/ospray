@@ -24,7 +24,7 @@
 namespace ospray {
 
   /*! abstract frame buffer class */
-  struct FrameBuffer : public ManagedObject {
+  struct OSPRAY_SDK_INTERFACE FrameBuffer : public ManagedObject {
     /*! app-mappable format of the color buffer. make sure that this
         matches the definition on the ISPC side */
     typedef OSPFrameBufferFormat ColorBufferFormat;
@@ -75,12 +75,18 @@ namespace ospray {
     /*! buffer format of the color buffer */
     ColorBufferFormat colorBufferFormat;
 
+    //! This marks the global number of frames that have been rendered since
+    //! the last ospFramebufferClear() has been called.
+    int32 frameID;
+
     /*! how often has been accumulated into that tile
         Note that it is up to the application to properly
         reset the accumulationIDs (using ospClearAccum(fb)) if anything
         changes that requires clearing the accumulation buffer. */
     virtual int32 accumID(const vec2i &tile) = 0;
     virtual float tileError(const vec2i &tile) = 0;
+
+    void beginFrame();
 
     //! returns error of frame
     virtual float endFrame(const float errorThreshold) = 0;
@@ -96,4 +102,23 @@ namespace ospray {
   void writePFM(const std::string &fileName, const vec2i &size,
                 const int channel, const float *pixels);
 
+  // manages error per tile and adaptive regions, for variance estimation / stopping
+  class TileError {
+    public:
+      TileError(const vec2i &numTiles);
+      ~TileError();
+      void clear();
+      float operator[](const vec2i &tile) const;
+      void update(const vec2i &tile, const float error);
+#ifdef OSPRAY_MPI
+      void sync(); // broadcast tileErrorBuffer to all workers
+#endif
+      float refine(const float errorThreshold);
+
+    private:
+      vec2i numTiles;
+      int tiles;
+      float *tileErrorBuffer; /*!< holds error per tile, for variance estimation / stopping */
+      std::vector<box2i> errorRegion; // image regions (in #tiles) which do not yet estimate the error on tile base
+  };
 } // ::ospray

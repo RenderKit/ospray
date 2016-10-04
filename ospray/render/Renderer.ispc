@@ -212,6 +212,7 @@ export void Renderer_renderTile(void *uniform _self,
                                 uniform Tile &tile,
                                 uniform int jobID)
 {
+  //print("Renderer_renderTile\n");
   uniform Renderer *uniform self = (uniform Renderer *uniform)_self;
   self->renderTile(self, perFrameData, tile, jobID);
 }

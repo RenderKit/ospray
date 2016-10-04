@@ -21,7 +21,7 @@
 
 namespace ospray {
 
-  /*! \defgroup geometry_slices Slices ("slices") 
+  /*! \defgroup geometry_slices Slices ("slices")
 
     \ingroup ospray_supported_geometries
 
@@ -47,8 +47,8 @@ namespace ospray {
     Implements the \ref geometry_slices geometry
 
   */
-  struct Slices : public Geometry {
-    //! \brief common function to help printf-debugging 
+  struct OSPRAY_SDK_INTERFACE Slices : public Geometry {
+    //! \brief common function to help printf-debugging
     virtual std::string toString() const { return "ospray::Slices"; }
 
     /*! \brief integrates this geometry's primitives into the respective

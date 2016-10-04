@@ -662,7 +662,6 @@ namespace ospray {
             t.v0 = tm->triangle[i].x;
             t.v1 = tm->triangle[i].y;
             t.v2 = tm->triangle[i].z;
-
             mesh->triangle[i] = t;
 
             assert(mesh->triangle[i].v0 >= 0
@@ -700,7 +699,6 @@ namespace ospray {
             }
           }
           model.mesh.push_back(mesh);
-
           if (tm->material.size() == 1) {
             mesh->material = tm->material[0].ptr->general;
           } else {

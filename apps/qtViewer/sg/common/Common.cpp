@@ -35,29 +35,21 @@
 namespace ospray {
   namespace sg {
 
-    //! parse vec3i from std::string (typically an xml-node's content string) 
-    vec3i parseVec3i(const std::string &text) 
-    { 
-      vec3i ret; 
-      int rc = sscanf(text.c_str(),"%i %i %i",&ret.x,&ret.y,&ret.z); 
-      assert(rc == 3); 
-      return ret; 
-    }
-    
-    //! parse vec2i from std::string (typically an xml-node's content string) 
-    vec2i parseVec2i(const std::string &text) 
-    { 
-      vec2i ret; 
-      int rc = sscanf(text.c_str(),"%i %i",&ret.x,&ret.y); 
-      assert(rc == 2); 
-      return ret; 
-    }
-
     const unsigned char * mapFile(const std::string &fileName)
     {
       FILE *file = fopen(fileName.c_str(), "rb");
-      if (!file)
-        THROW_SG_ERROR("could not open binary file");
+      if (!file) {
+        std::cout << "========================================================" << std::endl;
+        std::cout << "WARNING: The ospray/sg .xml file you were trying to open" << std::endl;
+        std::cout << "does ***NOT*** come with an accompanying .xmlbin file." << std::endl;
+        std::cout << "Note this _may_ be OK in some cases, but if you do get" << std::endl;
+        std::cout << "undefined behavior or core dumps please make sure that" << std::endl;
+        std::cout << "you are not missing this file (ie, a common cause is to" << std::endl;
+        std::cout << "use a zipped .xmlbin file that we cannot directly use." << std::endl;
+        std::cout << "========================================================" << std::endl;
+        return NULL;
+      }
+        // THROW_SG_ERROR("could not open binary file");
       fseek(file, 0, SEEK_END);
       ssize_t fileSize =
 #ifdef _WIN32

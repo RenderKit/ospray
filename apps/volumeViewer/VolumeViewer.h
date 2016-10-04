@@ -131,6 +131,23 @@ public slots:
   //! Set gradient shading flag on all volumes.
   void setGradientShadingEnabled(bool value);
 
+  //! Set gradient shading flag on all volumes.
+  void setPreIntegration(bool value);
+
+  //! Set gradient shading flag on all volumes.
+  void setSingleShade(bool value);
+
+  void setShadows(bool value);
+
+  void setAdaptiveScalar(double value);
+
+  void setAdaptiveMaxSamplingRate(double value);
+
+  void setAdaptiveBacktrack(double value);
+
+  //! Set gradient shading flag on all volumes.
+  void setAdaptiveSampling(bool value);
+
   //! Set sampling rate on all volumes.
   void setSamplingRate(double value);
 
@@ -142,6 +159,12 @@ public slots:
 
   //! Set isosurfaces on all volumes.
   void setIsovalues(std::vector<float> isovalues);
+
+  void setPlane(bool st);
+
+  void setAOSamples(int value);
+
+  void setAOWeight(double value);
 
 protected:
 
@@ -219,5 +242,9 @@ protected:
 
   //! Create and configure the user interface widgets and callbacks.
   void initUserInterfaceWidgets();
+
+  bool usePlane;
+
+  OSPGeometry planeMesh;
 
 };

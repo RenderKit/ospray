@@ -44,13 +44,13 @@ static void warnMaterial(const std::string &type)
 
 TriangleMeshSceneParser::TriangleMeshSceneParser(cpp::Renderer renderer,
                                                  std::string geometryType) :
-  m_renderer(renderer),
-  m_geometryType(geometryType),
-  m_alpha(false),
-  m_createDefaultMaterial(true),
-  m_maxObjectsToConsider((uint32_t)-1),
-  m_forceInstancing(false),
-  m_msgModel(new miniSG::Model)
+  renderer(renderer),
+  geometryType(geometryType),
+  alpha(false),
+  shouldCreateDefaultMaterial(true),
+  maxObjectsToConsider((uint32_t)-1),
+  forceInstancing(false),
+  msgModel(new miniSG::Model)
 {
 }
 
@@ -61,77 +61,83 @@ bool TriangleMeshSceneParser::parse(int ac, const char **&av)
   for (int i = 1; i < ac; i++) {
     const std::string arg = av[i];
     if (arg == "--max-objects") {
-      m_maxObjectsToConsider = atoi(av[++i]);
+      maxObjectsToConsider = atoi(av[++i]);
     } else if (arg == "--force-instancing") {
-      m_forceInstancing = true;
+      forceInstancing = true;
     } else if (arg == "--alpha") {
-      m_alpha = true;
+      alpha = true;
     } else if (arg == "--no-default-material") {
-      m_createDefaultMaterial = false;
+      shouldCreateDefaultMaterial = false;
+    } else if (arg == "--trianglemesh-type") {
+      geometryType = av[++i];
     } else {
       FileName fn = arg;
       if (fn.ext() == "stl") {
-        miniSG::importSTL(*m_msgModel,fn);
+        miniSG::importSTL(*msgModel,fn);
         loadedScene = true;
       } else if (fn.ext() == "msg") {
-        miniSG::importMSG(*m_msgModel,fn);
+        miniSG::importMSG(*msgModel,fn);
         loadedScene = true;
       } else if (fn.ext() == "tri") {
-        miniSG::importTRI(*m_msgModel,fn);
+        miniSG::importTRI(*msgModel,fn);
         loadedScene = true;
       } else if (fn.ext() == "xml") {
-        miniSG::importRIVL(*m_msgModel,fn);
+        miniSG::importRIVL(*msgModel,fn);
         loadedScene = true;
       } else if (fn.ext() == "obj") {
-        miniSG::importOBJ(*m_msgModel,fn);
+        miniSG::importOBJ(*msgModel,fn);
         loadedScene = true;
       } else if (fn.ext() == "hbp") {
-        miniSG::importHBP(*m_msgModel,fn);
+        miniSG::importHBP(*msgModel,fn);
         loadedScene = true;
       } else if (fn.ext() == "x3d") {
-        miniSG::importX3D(*m_msgModel,fn);
+        miniSG::importX3D(*msgModel,fn);
         loadedScene = true;
       } else if (fn.ext() == "astl") {
-        miniSG::importSTL(m_msgAnimation,fn);
+        miniSG::importSTL(msgAnimation,fn);
         loadedScene = true;
       }
     }
   }
 
-  if (loadedScene) finalize();
+  if (loadedScene) {
+    sceneModel = make_unique<cpp::Model>();
+    finalize();
+  }
+
   return loadedScene;
 }
 
 cpp::Model TriangleMeshSceneParser::model() const
 {
-  return m_model;
+  return sceneModel.get() == nullptr ? cpp::Model() : *sceneModel;
 }
 
 ospcommon::box3f TriangleMeshSceneParser::bbox() const
 {
-  return m_msgModel.ptr->getBBox();
+  return msgModel.ptr->getBBox();
 }
 
 cpp::Material
-TriangleMeshSceneParser::createDefaultMaterial(cpp::Renderer renderer)
+TriangleMeshSceneParser::createDefaultMaterial(cpp::Renderer ren)
 {
-  if(!m_createDefaultMaterial) return nullptr;
+  if(!shouldCreateDefaultMaterial) return nullptr;
 
   static auto ospMat = cpp::Material(nullptr);
 
   if (ospMat.handle()) return ospMat;
 
-  ospMat = renderer.newMaterial("OBJMaterial");
+  ospMat = ren.newMaterial("OBJMaterial");
 
   ospMat.set("Kd", .8f, 0.f, 0.f);
   ospMat.commit();
   return ospMat;
 }
 
-cpp::Material TriangleMeshSceneParser::createMaterial(cpp::Renderer renderer,
+cpp::Material TriangleMeshSceneParser::createMaterial(cpp::Renderer ren,
                                                       miniSG::Material *mat)
 {
-  if (mat == nullptr) return createDefaultMaterial(renderer);
+  if (mat == nullptr) return createDefaultMaterial(ren);
 
   static std::map<miniSG::Material *, cpp::Material> alreadyCreatedMaterials;
 
@@ -144,10 +150,10 @@ cpp::Material TriangleMeshSceneParser::createMaterial(cpp::Renderer renderer,
 
   cpp::Material ospMat;
   try {
-    ospMat = alreadyCreatedMaterials[mat] = renderer.newMaterial(type);
+    ospMat = alreadyCreatedMaterials[mat] = ren.newMaterial(type);
   } catch (const std::runtime_error &/*e*/) {
     warnMaterial(type);
-    return createDefaultMaterial(renderer);
+    return createDefaultMaterial(ren);
   }
 
   const bool isOBJMaterial = !strcmp(type, "OBJMaterial");
@@ -204,36 +210,36 @@ void TriangleMeshSceneParser::finalize()
   // contain instances
   bool doesInstancing = 0;
 
-  if (m_forceInstancing) {
+  if (forceInstancing) {
     doesInstancing = true;
-  } else if (m_msgModel->instance.size() > m_msgModel->mesh.size()) {
+  } else if (msgModel->instance.size() > msgModel->mesh.size()) {
     doesInstancing = true;
   } else {
     doesInstancing = false;
   }
 
-  if (m_msgModel->instance.size() > m_maxObjectsToConsider) {
-    m_msgModel->instance.resize(m_maxObjectsToConsider);
+  if (msgModel->instance.size() > maxObjectsToConsider) {
+    msgModel->instance.resize(maxObjectsToConsider);
 
     if (!doesInstancing) {
-      m_msgModel->mesh.resize(m_maxObjectsToConsider);
+      msgModel->mesh.resize(maxObjectsToConsider);
     }
   }
 
   std::vector<OSPModel> instanceModels;
 
-  for (size_t i=0;i<m_msgModel->mesh.size();i++) {
-    Ref<miniSG::Mesh> msgMesh = m_msgModel->mesh[i];
+  for (size_t i=0;i<msgModel->mesh.size();i++) {
+    Ref<miniSG::Mesh> msgMesh = msgModel->mesh[i];
 
     // create ospray mesh
-    auto ospMesh = m_alpha ? cpp::Geometry("alpha_aware_triangle_mesh") :
-                             cpp::Geometry(m_geometryType);
+    auto ospMesh = alpha ? cpp::Geometry("alpha_aware_triangle_mesh") :
+                             cpp::Geometry(geometryType);
 
     // check if we have to transform the vertices:
     if (doesInstancing == false &&
-        m_msgModel->instance[i] != miniSG::Instance(i)) {
+        msgModel->instance[i] != miniSG::Instance(i)) {
       for (size_t vID = 0; vID < msgMesh->position.size(); vID++) {
-        msgMesh->position[vID] = xfmPoint(m_msgModel->instance[i].xfm,
+        msgMesh->position[vID] = xfmPoint(msgModel->instance[i].xfm,
                                           msgMesh->position[vID]);
       }
     }
@@ -291,7 +297,7 @@ void TriangleMeshSceneParser::finalize()
     // add triangle material id array to mesh
     if (msgMesh->materialList.empty()) {
       // we have a single material for this mesh...
-      auto singleMaterial = createMaterial(m_renderer, msgMesh->material.ptr);
+      auto singleMaterial = createMaterial(renderer, msgMesh->material.ptr);
       ospMesh.setMaterial(singleMaterial);
     } else {
       // we have an entire material list, assign that list
@@ -299,7 +305,7 @@ void TriangleMeshSceneParser::finalize()
       std::vector<OSPTexture2D> alphaMaps;
       std::vector<float> alphas;
       for (size_t i = 0; i < msgMesh->materialList.size(); i++) {
-        auto m = createMaterial(m_renderer, msgMesh->materialList[i].ptr);
+        auto m = createMaterial(renderer, msgMesh->materialList[i].ptr);
         auto handle = m.handle();
         materialList.push_back(handle);
 
@@ -334,7 +340,7 @@ void TriangleMeshSceneParser::finalize()
 
       // only set these if alpha aware mode enabled
       // this currently doesn't work on the MICs!
-      if(m_alpha) {
+      if(alpha) {
         auto ospAlphaMapList = cpp::Data(alphaMaps.size(),
                                          OSP_OBJECT,
                                          &alphaMaps[0]);
@@ -355,18 +361,18 @@ void TriangleMeshSceneParser::finalize()
       model_i.commit();
       instanceModels.push_back(model_i.handle());
     } else {
-      m_model.addGeometry(ospMesh);
+      sceneModel->addGeometry(ospMesh);
     }
   }
 
   if (doesInstancing) {
-    for (size_t i = 0; i < m_msgModel->instance.size(); i++) {
+    for (size_t i = 0; i < msgModel->instance.size(); i++) {
       OSPGeometry inst =
-          ospNewInstance(instanceModels[m_msgModel->instance[i].meshID],
-          reinterpret_cast<osp::affine3f&>(m_msgModel->instance[i].xfm));
-      m_model.addGeometry(inst);
+          ospNewInstance(instanceModels[msgModel->instance[i].meshID],
+          reinterpret_cast<osp::affine3f&>(msgModel->instance[i].xfm));
+      sceneModel->addGeometry(inst);
     }
   }
 
-  m_model.commit();
+  sceneModel->commit();
 }

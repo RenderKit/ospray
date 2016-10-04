@@ -26,12 +26,12 @@ struct PerspectiveCamera {
     'inherit' from Camera */
   Camera super;
 
-  vec3f org;    //!< position of camera
+  vec3f org;    //!< position of camera, already contains shift when STEREO_{LEFT|RIGHT}
   vec3f dir_00; //!< direction of ray with screenSample=(0,0); scaled to focusDistance
   vec3f dir_du; //!< delta of ray direction between two pixels in X; scaled to focusDistance
   vec3f dir_dv; //!< delta of ray direction between two pixels in Y; scaled to focusDistance
-  vec2f imageStart; //!< where the viewable tile begins [0..1]
-  vec2f imageEnd; //!< where the viewable tile ends [0..1]
   float scaledAperture; //!< radius of aperture, divided by horizontal image plane size
   float aspect; //!< image plane size x / y
+  bool side_by_side; //!< stereo mode SIDE_BY_SIDE
+  vec3f ipd_offset; //!< shift of camera position for left/right eye (only when SIDE_BY_SIDE)
 };

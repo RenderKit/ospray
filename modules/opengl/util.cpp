@@ -188,8 +188,8 @@ namespace ospray {
                                              const float *ospDepthBuffer,
                                              const osp::vec2i &frameBufferSize)
     {
-      ospray::vec3f cameraDir = (ospray::vec3f&)cameraDir;
-      ospray::vec3f cameraUp = (ospray::vec3f&)cameraUp;
+      ospray::vec3f cameraDir = (ospray::vec3f&)_cameraDir;
+      ospray::vec3f cameraUp = (ospray::vec3f&)_cameraUp;
       // this should later be done in ISPC...
       
       const size_t ospDepthBufferWidth =  (size_t)frameBufferSize.x;

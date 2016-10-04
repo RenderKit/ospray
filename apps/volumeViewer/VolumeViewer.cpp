@@ -53,7 +53,8 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
     transferFunctionEditor(NULL),
     isosurfaceEditor(NULL),
     autoRotateAction(NULL),
-    autoRotationRate(0.025f)
+    autoRotationRate(0.025f),
+    usePlane(true)
 {
   // Default window size.
   resize(1024, 768);
@@ -313,6 +314,124 @@ void VolumeViewer::setGradientShadingEnabled(bool value)
   render();
 }
 
+//! Set gradient shading flag on all volumes.
+void VolumeViewer::setPreIntegration(bool value)
+{
+  for(size_t i=0; i<modelStates.size(); i++)
+    for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
+      ospSet1i(modelStates[i].volumes[j]->handle, "preIntegration", value);
+      ospCommit(modelStates[i].volumes[j]->handle);
+    }
+
+  render();
+}
+
+//! Set gradient shading flag on all volumes.
+void VolumeViewer::setSingleShade(bool value)
+{
+  for(size_t i=0; i<modelStates.size(); i++)
+    for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
+      ospSet1i(modelStates[i].volumes[j]->handle, "singleShade", value);
+      ospCommit(modelStates[i].volumes[j]->handle);
+  }
+
+  render();
+}
+
+void VolumeViewer::setShadows(bool value)
+{
+  ospSet1i(renderer, "shadowsEnabled", value);  
+  if(rendererInitialized)
+    ospCommit(renderer);
+
+  render();
+}
+
+void VolumeViewer::setPlane(bool st)
+{
+  usePlane = st;
+  if (planeMesh)
+  {
+    for(size_t i=0; i<modelStates.size(); i++) 
+    {
+      ospCommit(modelStates[i].model);
+      if (usePlane)
+        ospAddGeometry(modelStates[i].model, planeMesh);
+      else
+        ospRemoveGeometry(modelStates[i].model, planeMesh);
+      ospCommit(modelStates[i].model);
+    }
+  }
+  render();
+}
+
+//! Set gradient shading flag on all volumes.
+void VolumeViewer::setAOWeight(double value)
+{
+  ospSet1f(renderer, "aoWeight", value);  
+  if(rendererInitialized)
+    ospCommit(renderer);
+  render();
+}
+
+//! Set gradient shading flag on all volumes.
+void VolumeViewer::setAOSamples(int value)
+{
+  ospSet1i(renderer, "aoSamples", value);  
+  if(rendererInitialized)
+    ospCommit(renderer);
+  render();
+}
+
+
+//! Set gradient shading flag on all volumes.
+void VolumeViewer::setAdaptiveScalar(double value)
+{
+  for(size_t i=0; i<modelStates.size(); i++)
+    for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
+      ospSet1f(modelStates[i].volumes[j]->handle, "adaptiveScalar", value);
+      ospCommit(modelStates[i].volumes[j]->handle);
+  }
+  render();
+}
+
+
+//! Set gradient shading flag on all volumes.
+void VolumeViewer::setAdaptiveMaxSamplingRate(double value)
+{
+  for(size_t i=0; i<modelStates.size(); i++)
+    for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
+      ospSet1f(modelStates[i].volumes[j]->handle, "adaptiveMaxSamplingRate", value);
+      ospCommit(modelStates[i].volumes[j]->handle);
+  }
+  render();
+}
+
+
+//! Set gradient shading flag on all volumes.
+void VolumeViewer::setAdaptiveBacktrack(double value)
+{
+  for(size_t i=0; i<modelStates.size(); i++)
+    for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
+      ospSet1f(modelStates[i].volumes[j]->handle, "adaptiveBacktrack", value);
+      ospCommit(modelStates[i].volumes[j]->handle);
+  }
+
+  render();
+}
+
+//! Set gradient shading flag on all volumes.
+void VolumeViewer::setAdaptiveSampling(bool value)
+{
+    for(size_t i=0; i<modelStates.size(); i++)
+      for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
+        ospSet1i(modelStates[i].volumes[j]->handle, "adaptiveSampling", value);
+        ospCommit(modelStates[i].volumes[j]->handle);
+  }
+
+  render();
+}
+
 void VolumeViewer::setSamplingRate(double value)
 {
   for(size_t i=0; i<modelStates.size(); i++)
@@ -524,10 +643,12 @@ void VolumeViewer::initObjects(const std::string &renderer_type)
   // Create OSPRay ambient and directional lights. GUI elements will modify their parameters.
   ambientLight = ospNewLight(renderer, "AmbientLight");
   exitOnCondition(ambientLight == NULL, "could not create ambient light");
+  ospSet3f(ambientLight, "color", 0.02f, 0.04f, 0.1f);
   ospCommit(ambientLight);
 
   directionalLight = ospNewLight(renderer, "DirectionalLight");
   exitOnCondition(directionalLight == NULL, "could not create directional light");
+  ospSet3f(directionalLight, "color", 1.f, 0.8f, 0.4f);
   ospCommit(directionalLight);
 
   // Set the light sources on the renderer.
@@ -546,25 +667,54 @@ void VolumeViewer::initObjects(const std::string &renderer_type)
   for (size_t i=0 ; i < objectFileFilenames.size() ; i++)
     importObjectsFromFile(objectFileFilenames[i]);
 
+
   boundingBox = ospcommon::empty;
   if (!modelStates.empty()) {
     for (size_t i=0; i<modelStates[0].volumes.size(); i++) 
       boundingBox.extend(modelStates[0].volumes[i]->boundingBox);
   }
   PRINT(boundingBox);
-  // // Get the bounding box of all volumes of the first model.
-  // if(modelStates.size() > 0 && modelStates[0].volumes.size() > 0) {
-  //   ospGetVec3f(modelStates[0].volumes[0], "boundingBoxMin", (osp::vec3f*)&boundingBox.lower);
-  //   ospGetVec3f(modelStates[0].volumes[0], "boundingBoxMax", (osp::vec3f*)&boundingBox.upper);
 
-  //   for (size_t i=1; i<modelStates[0].volumes.size(); i++) {
-  //     ospcommon::box3f volumeBoundingBox;
-  //     ospGetVec3f(modelStates[0].volumes[i], "boundingBoxMin", (osp::vec3f*)&volumeBoundingBox.lower);
-  //     ospGetVec3f(modelStates[0].volumes[i], "boundingBoxMax", (osp::vec3f*)&volumeBoundingBox.upper);
+  //add plane
+  OSPMaterial planeMaterial = ospNewMaterial(renderer,"default");
+  ospSet3f(planeMaterial,"Kd",.5,.5,.5);
+  ospSet3f(planeMaterial,"Ks",0,0,0);
+  ospSet1f(planeMaterial,"Ns",0);
+  ospCommit(planeMaterial);
 
-  //     boundingBox.extend(volumeBoundingBox);
-  //   }
-  // }
+  osp::vec3f *vertices = new osp::vec3f[4];
+  float ps = 100000.f;
+  float py = boundingBox.upper.y+1.f;
+#if 1
+  vertices[0] = osp::vec3f{-ps, -ps, -py};
+  vertices[1] = osp::vec3f{-ps,  ps, -py};
+  vertices[2] = osp::vec3f{ ps, -ps, -py};
+  vertices[3] = osp::vec3f{ ps,  ps, -py};
+#else
+  vertices[0] = osp::vec3f{-ps, py, -ps};
+  vertices[1] = osp::vec3f{-ps, py, ps};
+  vertices[2] = osp::vec3f{ps, py, -ps};
+  vertices[3] = osp::vec3f{ps, py, ps};
+#endif
+
+  planeMesh = ospNewGeometry("triangles");
+  OSPData position = ospNewData(4, OSP_FLOAT3, &vertices[0]);
+  ospCommit(position);
+  ospSetData(planeMesh, "vertex", position);
+
+  osp::vec3i *triangles = new osp::vec3i[2];
+  triangles[0] = osp::vec3i{0,1,2};
+  triangles[1] = osp::vec3i{1,2,3};
+
+  OSPData index = ospNewData(2, OSP_INT3, &triangles[0]);
+  ospCommit(index);
+  ospSetData(planeMesh, "index", index); 
+  delete[] triangles;
+
+  ospSetMaterial(planeMesh, planeMaterial);
+  ospCommit(planeMesh);
+  setPlane(usePlane);
+  ospRelease(index);
 }
 
 void VolumeViewer::initUserInterfaceWidgets()

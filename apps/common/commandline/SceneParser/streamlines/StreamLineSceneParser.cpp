@@ -73,8 +73,8 @@ struct Triangles {
   box3f getBounds() const
   {
     box3f bounds = empty;
-    for (int i=0;i<vertex.size();i++)
-      bounds.extend(vertex[i]);
+    for (const auto &v : vertex)
+      bounds.extend(v);
     return bounds;
   }
 };
@@ -82,9 +82,7 @@ struct Triangles {
 struct StreamLines {
   std::vector<vec3fa> vertex;
   std::vector<int>    index;
-  float radius;
-
-  StreamLines() : radius(0.001f) {}
+  float radius {0.001f};
 
   void parsePNT(const FileName &fn)
   {
@@ -132,6 +130,7 @@ struct StreamLines {
 
     int numStreamlines;
     int rc = fread(&numStreamlines, sizeof(int), 1, file);
+    (void)rc;
     Assert(rc == 1);
 
     for(int s=0; s<numStreamlines; s++) {
@@ -196,8 +195,8 @@ struct StreamLines {
   box3f getBounds() const
   {
     box3f bounds = empty;
-    for (int i=0;i<vertex.size();i++)
-      bounds.extend(vertex[i]);
+    for (const auto &v : vertex)
+      bounds.extend(v);
     return bounds;
   }
 };
@@ -326,7 +325,7 @@ void parseOSX(StreamLines *streamLines,
   if (doc->child.size() != 1 || doc->child[0]->name != "OSPRay")
     throw std::runtime_error("could not parse osx file: Not in OSPRay format!?");
   xml::Node *root_element = doc->child[0];
-  for (int childID=0;childID<root_element->child.size();childID++) {
+  for (uint32_t childID = 0; childID < root_element->child.size(); childID++) {
     xml::Node *node = root_element->child[childID];
     if (node->name == "Info") {
       // ignore
@@ -335,13 +334,13 @@ void parseOSX(StreamLines *streamLines,
 
     if (node->name == "Model") {
       xml::Node *model_node = node;
-      for (int childID=0;childID<model_node->child.size();childID++) {
+      for (uint32_t childID = 0; childID < model_node->child.size(); childID++) {
         xml::Node *node = model_node->child[childID];
 
         if (node->name == "StreamLines") {
 
           xml::Node *sl_node = node;
-          for (int childID=0;childID<sl_node->child.size();childID++) {
+          for (uint32_t childID = 0; childID < sl_node->child.size(); childID++) {
             xml::Node *node = sl_node->child[childID];
             if (node->name == "vertex") {
               osxParseVec3fas(streamLines->vertex,node->content);
@@ -357,7 +356,7 @@ void parseOSX(StreamLines *streamLines,
 
         if (node->name == "TriangleMesh") {
           xml::Node *tris_node = node;
-          for (int childID=0;childID<tris_node->child.size();childID++) {
+          for (uint32_t childID = 0; childID < tris_node->child.size(); childID++) {
             xml::Node *node = tris_node->child[childID];
             if (node->name == "vertex") {
               osxParseVec3fas(triangles->vertex,node->content);
@@ -390,16 +389,13 @@ void exportOSX(const char *fn,StreamLines *streamLines, Triangles *triangles)
       fprintf(file,"<StreamLines>\n");
       {
         fprintf(file,"<vertex>\n");
-        for (int i=0;i<streamLines->vertex.size();i++)
-          fprintf(file,"%f %f %f\n",
-                  streamLines->vertex[i].x,
-                  streamLines->vertex[i].y,
-                  streamLines->vertex[i].z);
+        for (const auto &v : streamLines->vertex)
+          fprintf(file,"%f %f %f\n", v.x, v.y, v.z);
         fprintf(file,"</vertex>\n");
 
         fprintf(file,"<index>\n");
-        for (int i=0;i<streamLines->index.size();i++)
-          fprintf(file,"%i ",streamLines->index[i]);
+        for (const auto & i : streamLines->index)
+          fprintf(file,"%i ",i);
         fprintf(file,"\n</index>\n");
       }
       fprintf(file,"</StreamLines>\n");
@@ -408,27 +404,18 @@ void exportOSX(const char *fn,StreamLines *streamLines, Triangles *triangles)
       fprintf(file,"<TriangleMesh>\n");
       {
         fprintf(file,"<vertex>\n");
-        for (int i=0;i<triangles->vertex.size();i++)
-          fprintf(file,"%f %f %f\n",
-                  triangles->vertex[i].x,
-                  triangles->vertex[i].y,
-                  triangles->vertex[i].z);
+        for (const auto &v : triangles->vertex)
+          fprintf(file,"%f %f %f\n", v.x, v.y, v.z);
         fprintf(file,"</vertex>\n");
 
         fprintf(file,"<color>\n");
-        for (int i=0;i<triangles->color.size();i++)
-          fprintf(file,"%f %f %f\n",
-                  triangles->color[i].x,
-                  triangles->color[i].y,
-                  triangles->color[i].z);
+        for (const auto &c : triangles->color)
+          fprintf(file,"%f %f %f\n", c.x, c.y, c.z);
         fprintf(file,"</color>\n");
 
         fprintf(file,"<index>\n");
-        for (int i=0;i<triangles->index.size();i++)
-          fprintf(file,"%i %i %i\n",
-                  triangles->index[i].x,
-                  triangles->index[i].y,
-                  triangles->index[i].z);
+        for (const auto &i : triangles->index)
+          fprintf(file,"%i %i %i\n", i.x, i.y, i.z);
         fprintf(file,"</index>\n");
 
       }
@@ -443,7 +430,7 @@ void exportOSX(const char *fn,StreamLines *streamLines, Triangles *triangles)
 // Class definitions //////////////////////////////////////////////////////////
 
 StreamLineSceneParser::StreamLineSceneParser(cpp::Renderer renderer) :
-  m_renderer(renderer)
+  renderer(renderer)
 {
 }
 
@@ -502,9 +489,11 @@ bool StreamLineSceneParser::parse(int ac, const char **&av)
   }
 
   if (loadedScene) {
-    m_model = ospNewModel();
+    sceneModel = make_unique<cpp::Model>();
 
-    OSPMaterial mat = ospNewMaterial(m_renderer.handle(), "default");
+    auto &model = *sceneModel;
+
+    OSPMaterial mat = ospNewMaterial(renderer.handle(), "default");
     if (mat) {
       ospSet3f(mat, "kd", .7, .7, .7);
       ospCommit(mat);
@@ -525,7 +514,7 @@ bool StreamLineSceneParser::parse(int ac, const char **&av)
       if (mat)
         ospSetMaterial(geom,mat);
       ospCommit(geom);
-      ospAddGeometry(m_model.handle(), geom);
+      ospAddGeometry(model.handle(), geom);
       bounds.extend(streamLines->getBounds());
     }
 
@@ -543,19 +532,19 @@ bool StreamLineSceneParser::parse(int ac, const char **&av)
       ospSetObject(geom, "vertex.color", color);
       ospSetMaterial(geom, mat);
       ospCommit(geom);
-      ospAddGeometry(m_model.handle(), geom);
+      ospAddGeometry(model.handle(), geom);
       bounds.extend(triangles->getBounds());
     }
 
     if (swc && !swc->bounds.empty()) {
       OSPMaterial material[3];
       material[0] = mat;
-      material[1] = ospNewMaterial(m_renderer.handle(), "default");
+      material[1] = ospNewMaterial(renderer.handle(), "default");
       if (material[1]) {
         ospSet3f(material[1], "kd", .0, .7, .0); // OBJ renderer, green
         ospCommit(material[1]);
       }
-      material[2] = ospNewMaterial(m_renderer.handle(), "default");
+      material[2] = ospNewMaterial(renderer.handle(), "default");
       if (material[2]) {
         ospSet3f(material[2], "kd", .7, .0, .7); // OBJ renderer, magenta
         ospCommit(material[2]);
@@ -575,8 +564,7 @@ bool StreamLineSceneParser::parse(int ac, const char **&av)
           ospSetMaterial(spheres[i], material[i]);
 
         ospCommit(spheres[i]);
-        ospAddGeometry(m_model.handle(), spheres[i]);
-
+        ospAddGeometry(model.handle(), spheres[i]);
 
         cylinders[i] = ospNewGeometry("cylinders");
         Assert(cylinders[i]);
@@ -589,14 +577,14 @@ bool StreamLineSceneParser::parse(int ac, const char **&av)
           ospSetMaterial(cylinders[i], material[i]);
 
         ospCommit(cylinders[i]);
-        ospAddGeometry(m_model.handle(), cylinders[i]);
+        ospAddGeometry(model.handle(), cylinders[i]);
       }
 
       bounds.extend(swc->getBounds());
     }
 
-    m_model.commit();
-    m_bbox = bounds;
+    model.commit();
+    sceneBbox = bounds;
   }
 
   if (streamLines) delete streamLines;
@@ -608,10 +596,10 @@ bool StreamLineSceneParser::parse(int ac, const char **&av)
 
 cpp::Model StreamLineSceneParser::model() const
 {
-  return m_model;
+  return sceneModel.get() == nullptr ? cpp::Model() : *sceneModel;
 }
 
 box3f StreamLineSceneParser::bbox() const
 {
-  return m_bbox;
+  return sceneBbox;
 }

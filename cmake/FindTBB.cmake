@@ -14,7 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(TBB_VERSION_REQUIRED "3.0")
+SET(TBB_MAJOR_VERSION_REQUIRED "3.0")
 
 IF (NOT TBB_ROOT)
   SET(TBB_ROOT $ENV{TBB_ROOT})
@@ -118,7 +118,7 @@ ENDIF()
 SET(TBB_ROOT_LAST ${TBB_ROOT} CACHE INTERNAL "Last value of TBB_ROOT to detect changes")
 
 SET(TBB_ERROR_MESSAGE
-  "Threading Building Blocks (TBB) with minimum version ${TBB_VERSION_REQUIRED} not found.
+  "Threading Building Blocks (TBB) with minimum version ${TBB_MAJOR_VERSION_REQUIRED}.0 not found.
 OSPRay uses TBB as default tasking system. Please make sure you have the TBB headers installed as well (the package is typically named 'libtbb-dev' or 'tbb-devel') and/or hint the location of TBB in TBB_ROOT.
 Alternatively, you can try to use OpenMP as tasking system by setting OSPRAY_TASKING_SYSTEM=OpenMP")
 
@@ -132,13 +132,13 @@ FIND_PACKAGE_HANDLE_STANDARD_ARGS(TBB
 IF (TBB_INCLUDE_DIR)
   FILE(READ ${TBB_INCLUDE_DIR}/tbb/tbb_stddef.h TBB_STDDEF_H)
 
-  STRING(REGEX MATCH "#define TBB_VERSION_MAJOR ([0-9])" DUMMY "${TBB_STDDEF_H}")
+  STRING(REGEX MATCH "#define TBB_VERSION_MAJOR ([0-9]+)" DUMMY "${TBB_STDDEF_H}")
   SET(TBB_VERSION_MAJOR ${CMAKE_MATCH_1})
 
-  STRING(REGEX MATCH "#define TBB_VERSION_MINOR ([0-9])" DUMMY "${TBB_STDDEF_H}")
+  STRING(REGEX MATCH "#define TBB_VERSION_MINOR ([0-9]+)" DUMMY "${TBB_STDDEF_H}")
   SET(TBB_VERSION "${TBB_VERSION_MAJOR}.${CMAKE_MATCH_1}")
 
-  IF (TBB_VERSION VERSION_LESS TBB_VERSION_REQUIRED)
+  IF (TBB_VERSION_MAJOR VERSION_LESS TBB_VERSION_REQUIRED)
     MESSAGE(FATAL_ERROR ${TBB_ERROR_MESSAGE})
   ENDIF()
 
@@ -172,25 +172,3 @@ MARK_AS_ADVANCED(TBB_LIBRARY)
 MARK_AS_ADVANCED(TBB_LIBRARY_DEBUG)
 MARK_AS_ADVANCED(TBB_LIBRARY_MALLOC)
 MARK_AS_ADVANCED(TBB_LIBRARY_MALLOC_DEBUG)
-
-
-##############################################################
-# redistribute TBB
-##############################################################
-
-IF (WIN32)
-  SET(TBB_DLL_HINTS
-    ${TBB_ROOT}/../redist/${TBB_ARCH}_win/tbb/${TBB_VCVER}
-    ${TBB_ROOT}/../redist/${TBB_ARCH}/tbb/${TBB_VCVER}
-  )
-  FIND_FILE(TBB_DLL tbb.dll HINTS ${TBB_DLL_HINTS})
-  FIND_FILE(TBB_DLL_MALLOC tbbmalloc.dll PATHS HINTS ${TBB_DLL_HINTS})
-  MARK_AS_ADVANCED(TBB_DLL)
-  MARK_AS_ADVANCED(TBB_DLL_MALLOC)
-  INSTALL(PROGRAMS ${TBB_DLL} ${TBB_DLL_MALLOC} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT apps) # 3rd party?
-ELSEIF (OSPRAY_ZIP_MODE)
-  INSTALL(PROGRAMS ${TBB_LIBRARY} ${TBB_LIBRARY_MALLOC} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib) # /intel64?
-  IF(OSPRAY_MIC AND TBB_FOUND_MIC)
-    INSTALL(PROGRAMS ${TBB_LIBRARIES_MIC} DESTINATION ${CMAKE_INSTALL_LIBDIR}/mic COMPONENT lib_mic)
-  ENDIF()
-ENDIF()

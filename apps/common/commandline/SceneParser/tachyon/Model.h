@@ -17,8 +17,8 @@
 #pragma once
 
 // ospray
-#include "common/vec.h"
-#include "common/box.h"
+#include "ospcommon/vec.h"
+#include "ospcommon/box.h"
 // std
 #include <map>
 #include <vector>

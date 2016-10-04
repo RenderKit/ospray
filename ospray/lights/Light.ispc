@@ -18,11 +18,10 @@
 
 Light_EvalRes Light_eval(const uniform Light* uniform,
                          const DifferentialGeometry&,
-                         const vec3f&)
+                         const vec3f&,
+                         const float)
 {
   Light_EvalRes res;
   res.radiance = make_vec3f(0.f);
-  res.dist = inf;
-  res.pdf = 0.f;
   return res;
 }

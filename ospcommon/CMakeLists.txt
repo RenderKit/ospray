@@ -15,17 +15,15 @@
 ## ======================================================================== ##
 
 SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+SET(THREADS_PREFER_PTHREAD_FLAG TRUE)
 FIND_PACKAGE(Threads REQUIRED)
+SET(LINK_LIBS ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})
 
-SET(LINK_LIBS
-  ${CMAKE_THREAD_LIBS_INIT}
-  ${CMAKE_DL_LIBS}
-)
 IF (WIN32)
   LIST(APPEND LINK_LIBS ws2_32)
 ENDIF()
 
-OSPRAY_CREATE_LIBRARY(common
+OSPRAY_CREATE_LIBRARY(ospray_common
   common.cpp
   FileName.cpp
   sysinfo.cpp
