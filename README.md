@@ -1,7 +1,7 @@
 OSPRay
 ======
 
-This is release v1.0.0 of OSPRay. For changes and new features see the
+This is release v1.1.0 of OSPRay. For changes and new features see the
 [changelog](CHANGELOG.md). Also visit http://www.ospray.org for more
 information.
 
@@ -216,6 +216,3 @@ at the [OSPRay Demos and Examples] page.
 [imgTutorial2]: https://ospray.github.io/images/tutorial_accumulatedframe.png
 [imgQtViewer]: https://ospray.github.io/images/QtViewer.jpg
 [imgVolumeViewer]: https://ospray.github.io/images/VolumeViewer.png
-[imgSpotLight]: https://ospray.github.io/images/spot_light.png
-[imgQuadLight]: https://ospray.github.io/images/quad_light.png
-[imgHDRILight]: https://ospray.github.io/images/hdri_light.png
