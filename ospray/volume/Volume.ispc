@@ -86,6 +86,12 @@ export void Volume_setSamplingRate(void *uniform _self, const uniform float valu
   self->samplingRate = value;
 }
 
+export void Volume_setSpecular(void *uniform _self, const uniform vec3f &value)
+{
+  uniform Volume *uniform self = (uniform Volume *uniform)_self;
+  self->specular = value;
+}
+
 export void Volume_setTransferFunction(void *uniform _self, void *uniform value)
 {
   uniform Volume *uniform self = (uniform Volume *uniform)_self;

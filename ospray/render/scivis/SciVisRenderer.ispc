@@ -106,7 +106,7 @@ inline void shadeMaterials(const varying DifferentialGeometry &dg,
     foreach_unique (mat in scivisMaterial) {
       // textures modify (mul) values, see
       //   http://paulbourke.net/dataformats/mtl/
-      info.d = mat->d * get1f(mat->map_d, dg.st, 1.f) * dg.color.w;
+      info.d = mat->d * get1f(mat->map_d, dg.st, 1.f);
       info.Kd = mat->Kd * make_vec3f(dg.color);
       if (mat->map_Kd) {
         vec4f Kd_from_map = get4f(mat->map_Kd, dg.st);
@@ -415,7 +415,7 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
           dg.Ng = gradient;  
           if (dot(ray.dir,dg.Ng) >= 0.f) dg.Ng = neg(dg.Ng); //face forward
           dg.Ns = dg.Ng;
-          dg.P = singleCoordinates + dg.Ns*renderer->volumeEpsilon;
+          dg.P = coordinates + dg.Ns*renderer->volumeEpsilon;
 
          //sampleColor = shadedColor;
 
@@ -425,14 +425,14 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
           initShadingInfo(info);
 
           //hardcode volume spec for now
-          info.Ks = make_vec3f(.3f)*sampleOpacity;
+          info.Ks = volume->specular*sampleOpacity;
           info.Ns = 20.0f;
-          info.local_opacity=1.f;
+          info.local_opacity=sampleOpacity;
           dg.material = 0;
           shadeMaterials(dg, info);
 
           vec3f litColor = make_vec3f(0.0f);
-          shadeLights(renderer, ray, dg, info, 1, litColor, rayOffset, sampleID, quality);
+          shadeLights(renderer, ray, dg, info, 0, litColor, rayOffset, sampleID, quality);
           sampleColor = litColor;
         }
       }
@@ -478,10 +478,7 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
     initShadingInfo(info);
 
     //hardcode volume spec for now
-    float specScalar = singleMax*1.0f;
-    if (specScalar > 1.f)
-      specScalar = 1.f;
-    info.Ks = make_vec3f(.3f)*specScalar;
+    info.Ks = volume->specular*singleMax;
     info.Ns = 20.0f;
     info.local_opacity=intervalColor.w;
     dg.material = 0;

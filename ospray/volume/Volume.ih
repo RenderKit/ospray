@@ -66,6 +66,8 @@ struct Volume {
   //! Recommended sampling rate for the renderer.
   uniform float samplingRate;
 
+  uniform vec3f specular;
+
   //! Color and opacity transfer function.
   TransferFunction *uniform transferFunction;
 
