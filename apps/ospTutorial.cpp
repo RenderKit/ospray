@@ -112,12 +112,20 @@ int main(int ac, const char **av) {
   ospCommit(world);
 
 
-  // create and setup renderer
+  // create renderer
   OSPRenderer renderer = ospNewRenderer("scivis"); // choose Scientific Visualization renderer
-  ospSet1f(renderer, "aoWeight", 1.0f);            // with full Ambient Occlusion
+  
+  // create and setup light for Ambient Occlusion
+  OSPLight light = ospNewLight(renderer, "ambient");
+  ospCommit(light);
+  OSPData lights = ospNewData(1, OSP_LIGHT, &light);
+  ospCommit(lights);
+
+  // complete setup of renderer
   ospSet1i(renderer, "aoSamples", 1);
   ospSetObject(renderer, "model",  world);
   ospSetObject(renderer, "camera", camera);
+  ospSetObject(renderer, "lights", lights);
   ospCommit(renderer);
 
 
