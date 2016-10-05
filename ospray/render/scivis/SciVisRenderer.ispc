@@ -191,8 +191,7 @@ inline void shadeAO(const uniform SciVisRenderer *uniform self,
     if (self->aoRayLength > 0.f)
       ao *= calculateAO(self, sampleID, dg);
     // Blend AO w/ diffuse term
-    vec3f aoColor = make_vec3f(0.5f, 0.7f, 1.f);
-    color = color + info.local_opacity * info.Kd * ao*aoColor;
+    color = color + info.local_opacity * info.Kd * ao;
   }
 }
 
