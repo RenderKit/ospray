@@ -46,8 +46,8 @@ struct SciVisRenderer
   int   maxDepth;
 
   int   aoSamples;
-  float aoRayLength;
-  float aoWeight;
+  float aoDistance;
+  vec3f aoColor;
 };
 
 struct SciVisShadingInfo
@@ -142,7 +142,7 @@ inline float calculateAO(const uniform SciVisRenderer *uniform self,
   varying RandomTEA* const uniform rng = &rng_state;
   RandomTEA__Constructor(rng, (self->super.fb->size.x * iy) + ix, accumID);
 
-  float hits = 0.f;
+  float occlusion = 0.f;
   const linear3f localToWorld = frame(dg.Ns);
 
   for (uniform int i = 0; i < self->aoSamples; i++) {
@@ -152,22 +152,19 @@ inline float calculateAO(const uniform SciVisRenderer *uniform self,
 
     Ray ao_ray;
     setRay(ao_ray, dg.P + (1e-3f * dg.Ns), ao_dir,
-           self->super.epsilon, self->aoRayLength);
-    //shade volumes
-    if (dot(ao_ray.dir, dg.Ns) < 0.05f || isOccluded(self->super.model,ao_ray))
-      hits+=1.f;
-    else
-    {
+           self->super.epsilon, self->aoDistance);
+    if (dot(ao_ray.dir, dg.Ns) < 0.05f) // check below surface
+      occlusion += 1.f;
+    else if (isOccluded(self->super.model, ao_ray))
+      occlusion += 1.f;
+    else { // check for occlusion by volumes as well, slow!
       const float epsilon = self->volumeEpsilon*10.f;
       const float rayOffset = epsilon*s.x + epsilon;
       if (SciVisRenderer_intersectVolumes(self, ao_ray, rayOffset))
       {
-        //hits++;
         ao_ray.geomID = -1;
-        // ao_ray.dir = neg(ao_ray.dir);
-        // ao_ray.t0 = rayOffset;
-        // ao_ray.t = -1;
-        hits += (1.f- lightAlpha(self, ao_ray, self->super.model,
+        ao_ray.t = min(ao_ray.t, self->aoDistance);
+        occlusion += (1.f- lightAlpha(self, ao_ray, self->super.model,
                                                  1.0f,
                                                  self->maxDepth,
                                                  rayOffset, sampleID,0.1f));
@@ -176,7 +173,7 @@ inline float calculateAO(const uniform SciVisRenderer *uniform self,
   }
 
   // the cosTheta of cosineSampleHemispherePDF and dot(dg.Ns, ao_dir) cancel
-  return 1.0f - (float)hits/self->aoSamples;
+  return 1.0f - occlusion/self->aoSamples;
 }
 
 inline void shadeAO(const uniform SciVisRenderer *uniform self,
@@ -186,12 +183,12 @@ inline void shadeAO(const uniform SciVisRenderer *uniform self,
                     varying vec3f &color)
 {
   // Calculate AO contribution as ambient term
-  if (self->aoSamples > 0 && self->aoWeight > 0.f) {
-    float ao = self->aoWeight;
-    if (self->aoRayLength > 0.f)
+  if (self->aoSamples > 0 && reduce_max(self->aoColor) > 0.f) {
+    float ao = 1.0f;
+    if (self->aoDistance > 0.f)
       ao *= calculateAO(self, sampleID, dg);
     // Blend AO w/ diffuse term
-    color = color + info.local_opacity * info.Kd * ao;
+    color = color + (info.local_opacity * ao) * info.Kd * self->aoColor;
   }
 }
 
@@ -863,8 +860,8 @@ export void SciVisRenderer_set(void *uniform _self,
                                const uniform bool shadowsEnabled,
                                const uniform int maxDepth,
                                const uniform int aoSamples,
-                               const uniform float aoRayLength,
-                               const uniform float aoWeight,
+                               const uniform float aoDistance,
+                               const uniform vec3f &aoColor,
                                void **uniform lights,
                                const uniform uint32 numLights,
                                const uniform bool oneSidedLighting
@@ -875,10 +872,10 @@ export void SciVisRenderer_set(void *uniform _self,
   self->shadowsEnabled = shadowsEnabled;
   self->maxDepth = maxDepth;
   self->aoSamples = aoSamples;
-  self->aoRayLength = aoRayLength;
+  self->aoDistance = aoDistance;
 
   // already factor in parts of cosineSampleHemispherePDF
-  self->aoWeight = aoWeight * pi;
+  self->aoColor = aoColor * pi;
 
   self->lights = (const uniform Light *uniform *uniform)lights;
   self->numLights = numLights;
@@ -891,7 +888,7 @@ export void *uniform SciVisRenderer_create(void *uniform cppE)
   Renderer_Constructor(&self->super,cppE);
   self->super.renderSample = SciVisRenderer_renderSample;
   self->super.beginFrame = SciVisRenderer_beginFrame;
-  SciVisRenderer_set(self, true, 10, 4, infinity, 0.25f, NULL, 0, true);
+  SciVisRenderer_set(self, true, 10, 4, infinity, make_vec3f(0.25f), NULL, 0, true);
 
   return self;
 }

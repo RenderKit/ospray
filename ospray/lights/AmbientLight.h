@@ -31,6 +31,10 @@ namespace ospray {
       //! Copy understood parameters into member parameters
       virtual void commit();
 
+      vec3f getRadiance() const {
+        return color * intensity;
+      }
+
     private:
       vec3f color;                  //!< RGB color of the light
       float intensity;              //!< Amount of light emitted
