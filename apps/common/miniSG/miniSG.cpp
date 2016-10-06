@@ -44,7 +44,9 @@ namespace ospray {
       // setParam( "Ka", vec3f(0.f) );
     }
 
-    Texture2D *loadTexture(const std::string &_path, const std::string &fileNameBase, const bool prefereLinear)
+    Texture2D *loadTexture(const std::string &_path,
+                           const std::string &fileNameBase,
+                           const bool prefereLinear)
     {
       std::string path = _path;
       FileName fileName = path+"/"+fileNameBase;

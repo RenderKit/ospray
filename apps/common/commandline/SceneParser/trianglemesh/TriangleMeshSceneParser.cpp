@@ -204,8 +204,9 @@ cpp::Material TriangleMeshSceneParser::createMaterial(cpp::Renderer ren,
   return ospMat;
 }
 
-cpp::Geometry TriangleMeshSceneParser::add_model(miniSG::Model *msgModel,
-                                                 miniSG::Mesh *msgMesh)
+cpp::Geometry
+TriangleMeshSceneParser::createOSPRayGeometry(miniSG::Model *msgModel,
+                                              miniSG::Mesh  *msgMesh)
 {
   // create ospray mesh
   auto ospMesh = alpha ? cpp::Geometry("alpha_aware_triangle_mesh") :
@@ -331,15 +332,9 @@ void TriangleMeshSceneParser::finalize()
 {
   // code does not yet do instancing ... check that the model doesn't
   // contain instances
-  bool doesInstancing = 0;
+  bool doesInstancing = forceInstancing ||
+                        msgModel->instance.size() > msgModel->mesh.size();
 
-  if (forceInstancing) {
-    doesInstancing = true;
-  } else if (msgModel->instance.size() > msgModel->mesh.size()) {
-    doesInstancing = true;
-  } else {
-    doesInstancing = false;
-  }
 
   if (msgModel->instance.size() > maxObjectsToConsider) {
     msgModel->instance.resize(maxObjectsToConsider);
@@ -362,7 +357,7 @@ void TriangleMeshSceneParser::finalize()
       }
     }
 
-    auto ospMesh = add_model(msgModel.ptr, msgMesh.ptr);
+    auto ospMesh = createOSPRayGeometry(msgModel.ptr, msgMesh.ptr);
 
     if (doesInstancing) {
       cpp::Model model_i;
