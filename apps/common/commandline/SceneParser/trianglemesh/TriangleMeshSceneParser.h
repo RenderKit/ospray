@@ -55,5 +55,7 @@ private:
   ospcommon::Ref<ospray::miniSG::Model> msgModel;
   std::vector<ospray::miniSG::Model *> msgAnimation;
 
+  ospray::cpp::Geometry add_model(ospray::miniSG::Model *msgModel,
+                                  ospray::miniSG::Mesh *msgMesh);
   void finalize();
 };

@@ -204,6 +204,129 @@ cpp::Material TriangleMeshSceneParser::createMaterial(cpp::Renderer ren,
   return ospMat;
 }
 
+cpp::Geometry TriangleMeshSceneParser::add_model(miniSG::Model *msgModel,
+                                                 miniSG::Mesh *msgMesh)
+{
+  // create ospray mesh
+  auto ospMesh = alpha ? cpp::Geometry("alpha_aware_triangle_mesh") :
+                         cpp::Geometry(geometryType);
+
+  // add position array to mesh
+  OSPData position = ospNewData(msgMesh->position.size(),
+                                OSP_FLOAT3A,
+                                &msgMesh->position[0]);
+  ospMesh.set("position", position);
+
+  // add triangle index array to mesh
+  if (!msgMesh->triangleMaterialId.empty()) {
+    OSPData primMatID = ospNewData(msgMesh->triangleMaterialId.size(),
+                                   OSP_INT,
+                                   &msgMesh->triangleMaterialId[0]);
+    ospMesh.set("prim.materialID", primMatID);
+  }
+
+  // add triangle index array to mesh
+  OSPData index = ospNewData(msgMesh->triangle.size(),
+                             OSP_INT3,
+                             &msgMesh->triangle[0]);
+  assert(msgMesh->triangle.size() > 0);
+  ospMesh.set("index", index);
+
+  // add normal array to mesh
+  if (!msgMesh->normal.empty()) {
+    OSPData normal = ospNewData(msgMesh->normal.size(),
+                                OSP_FLOAT3A,
+                                &msgMesh->normal[0]);
+    assert(msgMesh->normal.size() > 0);
+    ospMesh.set("vertex.normal", normal);
+  }
+
+  // add color array to mesh
+  if (!msgMesh->color.empty()) {
+    OSPData color = ospNewData(msgMesh->color.size(),
+                               OSP_FLOAT3A,
+                               &msgMesh->color[0]);
+    assert(msgMesh->color.size() > 0);
+    ospMesh.set("vertex.color", color);
+  }
+
+  // add texcoord array to mesh
+  if (!msgMesh->texcoord.empty()) {
+    OSPData texcoord = ospNewData(msgMesh->texcoord.size(),
+                                  OSP_FLOAT2,
+                                  &msgMesh->texcoord[0]);
+    assert(msgMesh->texcoord.size() > 0);
+    ospMesh.set("vertex.texcoord", texcoord);
+  }
+
+  ospMesh.set("alpha_type", 0);
+  ospMesh.set("alpha_component", 4);
+
+  // add triangle material id array to mesh
+  if (msgMesh->materialList.empty()) {
+    // we have a single material for this mesh...
+    auto singleMaterial = createMaterial(renderer, msgMesh->material.ptr);
+    ospMesh.setMaterial(singleMaterial);
+  } else {
+    // we have an entire material list, assign that list
+    std::vector<OSPMaterial> materialList;
+    std::vector<OSPTexture2D> alphaMaps;
+    std::vector<float> alphas;
+    for (size_t i = 0; i < msgMesh->materialList.size(); i++) {
+      auto m = createMaterial(renderer, msgMesh->materialList[i].ptr);
+      auto handle = m.handle();
+      materialList.push_back(handle);
+
+      for (auto it = msgMesh->materialList[i]->params.begin();
+           it != msgMesh->materialList[i]->params.end();
+           it++) {
+        const char *name = it->first.c_str();
+        const miniSG::Material::Param *p = it->second.ptr;
+        if(p->type == miniSG::Material::Param::TEXTURE) {
+          if(!strcmp(name, "map_kd") || !strcmp(name, "map_Kd")) {
+            miniSG::Texture2D *tex = (miniSG::Texture2D*)p->ptr;
+            OSPTexture2D ospTex = createTexture2D(tex);
+            ospCommit(ospTex);
+            alphaMaps.push_back(ospTex);
+          }
+        } else if(p->type == miniSG::Material::Param::FLOAT) {
+          if(!strcmp(name, "d")) alphas.push_back(p->f[0]);
+        }
+      }
+
+      while(materialList.size() > alphaMaps.size()) {
+        alphaMaps.push_back(nullptr);
+      }
+      while(materialList.size() > alphas.size()) {
+        alphas.push_back(0.f);
+      }
+    }
+
+    auto ospMaterialList = cpp::Data(materialList.size(),
+                                     OSP_OBJECT,
+                                     &materialList[0]);
+    ospMesh.set("materialList", ospMaterialList);
+
+    // only set these if alpha aware mode enabled
+    // this currently doesn't work on the MICs!
+    if(alpha) {
+      auto ospAlphaMapList = cpp::Data(alphaMaps.size(),
+                                       OSP_OBJECT,
+                                       &alphaMaps[0]);
+      ospMesh.set("alpha_maps", ospAlphaMapList);
+
+      auto ospAlphaList = cpp::Data(alphas.size(),
+                                    OSP_OBJECT,
+                                    &alphas[0]);
+      ospMesh.set("alphas", ospAlphaList);
+    }
+  }
+
+  ospMesh.commit();
+
+  return ospMesh;
+}
+
 void TriangleMeshSceneParser::finalize()
 {
   // code does not yet do instancing ... check that the model doesn't
@@ -228,132 +351,18 @@ void TriangleMeshSceneParser::finalize()
 
   std::vector<OSPModel> instanceModels;
 
-  for (size_t i=0;i<msgModel->mesh.size();i++) {
+  for (size_t i = 0; i < msgModel->mesh.size(); i++) {
     Ref<miniSG::Mesh> msgMesh = msgModel->mesh[i];
 
-    // create ospray mesh
-    auto ospMesh = alpha ? cpp::Geometry("alpha_aware_triangle_mesh") :
-                             cpp::Geometry(geometryType);
-
     // check if we have to transform the vertices:
-    if (doesInstancing == false &&
-        msgModel->instance[i] != miniSG::Instance(i)) {
+    if (!doesInstancing && msgModel->instance[i] != miniSG::Instance(i)) {
       for (size_t vID = 0; vID < msgMesh->position.size(); vID++) {
         msgMesh->position[vID] = xfmPoint(msgModel->instance[i].xfm,
                                           msgMesh->position[vID]);
       }
     }
 
-    // add position array to mesh
-    OSPData position = ospNewData(msgMesh->position.size(),
-                                  OSP_FLOAT3A,
-                                  &msgMesh->position[0]);
-    ospMesh.set("position", position);
-
-    // add triangle index array to mesh
-    if (!msgMesh->triangleMaterialId.empty()) {
-      OSPData primMatID = ospNewData(msgMesh->triangleMaterialId.size(),
-                                     OSP_INT,
-                                     &msgMesh->triangleMaterialId[0]);
-      ospMesh.set("prim.materialID", primMatID);
-    }
-
-    // add triangle index array to mesh
-    OSPData index = ospNewData(msgMesh->triangle.size(),
-                               OSP_INT3,
-                               &msgMesh->triangle[0]);
-    assert(msgMesh->triangle.size() > 0);
-    ospMesh.set("index", index);
-
-    // add normal array to mesh
-    if (!msgMesh->normal.empty()) {
-      OSPData normal = ospNewData(msgMesh->normal.size(),
-                                  OSP_FLOAT3A,
-                                  &msgMesh->normal[0]);
-      assert(msgMesh->normal.size() > 0);
-      ospMesh.set("vertex.normal", normal);
-    }
-
-    // add color array to mesh
-    if (!msgMesh->color.empty()) {
-      OSPData color = ospNewData(msgMesh->color.size(),
-                                 OSP_FLOAT3A,
-                                 &msgMesh->color[0]);
-      assert(msgMesh->color.size() > 0);
-      ospMesh.set("vertex.color", color);
-    }
-    // add texcoord array to mesh
-    if (!msgMesh->texcoord.empty()) {
-      OSPData texcoord = ospNewData(msgMesh->texcoord.size(),
-                                    OSP_FLOAT2,
-                                    &msgMesh->texcoord[0]);
-      assert(msgMesh->texcoord.size() > 0);
-      ospMesh.set("vertex.texcoord", texcoord);
-    }
-
-    ospMesh.set("alpha_type", 0);
-    ospMesh.set("alpha_component", 4);
-
-    // add triangle material id array to mesh
-    if (msgMesh->materialList.empty()) {
-      // we have a single material for this mesh...
-      auto singleMaterial = createMaterial(renderer, msgMesh->material.ptr);
-      ospMesh.setMaterial(singleMaterial);
-    } else {
-      // we have an entire material list, assign that list
-      std::vector<OSPMaterial> materialList;
-      std::vector<OSPTexture2D> alphaMaps;
-      std::vector<float> alphas;
-      for (size_t i = 0; i < msgMesh->materialList.size(); i++) {
-        auto m = createMaterial(renderer, msgMesh->materialList[i].ptr);
-        auto handle = m.handle();
-        materialList.push_back(handle);
-
-        for (miniSG::Material::ParamMap::const_iterator it =
-             msgMesh->materialList[i]->params.begin();
-             it != msgMesh->materialList[i]->params.end(); it++) {
-          const char *name = it->first.c_str();
-          const miniSG::Material::Param *p = it->second.ptr;
-          if(p->type == miniSG::Material::Param::TEXTURE) {
-            if(!strcmp(name, "map_kd") || !strcmp(name, "map_Kd")) {
-              miniSG::Texture2D *tex = (miniSG::Texture2D*)p->ptr;
-              OSPTexture2D ospTex = createTexture2D(tex);
-              ospCommit(ospTex);
-              alphaMaps.push_back(ospTex);
-            }
-          } else if(p->type == miniSG::Material::Param::FLOAT) {
-            if(!strcmp(name, "d")) alphas.push_back(p->f[0]);
-          }
-        }
-
-        while(materialList.size() > alphaMaps.size()) {
-          alphaMaps.push_back(nullptr);
-        }
-        while(materialList.size() > alphas.size()) {
-          alphas.push_back(0.f);
-        }
-      }
-      auto ospMaterialList = cpp::Data(materialList.size(),
-                                       OSP_OBJECT,
-                                       &materialList[0]);
-      ospMesh.set("materialList", ospMaterialList);
-
-      // only set these if alpha aware mode enabled
-      // this currently doesn't work on the MICs!
-      if(alpha) {
-        auto ospAlphaMapList = cpp::Data(alphaMaps.size(),
-                                         OSP_OBJECT,
-                                         &alphaMaps[0]);
-        ospMesh.set("alpha_maps", ospAlphaMapList);
-
-        auto ospAlphaList = cpp::Data(alphas.size(),
-                                      OSP_OBJECT,
-                                      &alphas[0]);
-        ospMesh.set("alphas", ospAlphaList);
-      }
-    }
-
-    ospMesh.commit();
+    auto ospMesh = add_model(msgModel.ptr, msgMesh.ptr);
 
     if (doesInstancing) {
       cpp::Model model_i;
