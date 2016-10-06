@@ -167,9 +167,12 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       if (mm != NULL)
         bsdf = mm->getBSDF(mm, &ctx, dg, ray, currentMedium);
 
+    // terminate path when we don't have any BSDF
+    if (!bsdf)
+      break;
+
     // direct lighting including shadows and MIS
-    if (bsdf && (bsdf->type & BSDF_SMOOTH))
-    {
+    if (bsdf->type & BSDF_SMOOTH) {
       uniform int numLights = self->lights ? min(MAX_LIGHTS, self->numLights) : 0;
       for (uniform int i = 0; i < numLights; i++)
       {
@@ -225,9 +228,8 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     Lw = Lw * fs.weight;
 
     // compute attenuation with Beer's law
-    if (ne(currentMedium.attenuation, 0.f)) {
+    if (reduce_min(currentMedium.attenuation) < 0.f)
       Lw = Lw * expf(currentMedium.attenuation * ray.t);
-    }
 
     // update currentMedium if we hit a medium interface 
     // TODO: support nested dielectrics
