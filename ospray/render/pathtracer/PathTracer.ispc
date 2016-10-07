@@ -164,8 +164,10 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     uniform PathTraceMaterial* m = (uniform PathTraceMaterial*)dg.material;
     foreach_unique(mm in m)
-      if (mm != NULL)
+      if (mm != NULL) {
         bsdf = mm->getBSDF(mm, &ctx, dg, ray, currentMedium);
+        L = L + Lw * mm->emission;
+      }
 
     // terminate path when we don't have any BSDF
     if (!bsdf)
@@ -234,11 +236,9 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     // update currentMedium if we hit a medium interface 
     // TODO: support nested dielectrics
     if (fs.type & BSDF_TRANSMISSION) {
-      foreach_unique(uniMat in dg.material) {
-        uniform PathTraceMaterial* uniform m = (uniform PathTraceMaterial *)uniMat;
-        if (m != NULL) {
-          m->selectNextMedium(m, currentMedium);
-        }
+      foreach_unique(mm in m) {
+        if (mm != NULL)
+          mm->selectNextMedium(mm, currentMedium);
       }
     }
 

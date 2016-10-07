@@ -53,9 +53,11 @@ struct PathTraceMaterial
   PathTraceMaterial_GetBSDFFunc getBSDF;
   PathTraceMaterial_GetTransparencyFunc getTransparency;
   PathTraceMaterial_SelectNextMediumFunc selectNextMedium;
+  vec3f emission;// simple constant (spatially and angular) emission, returns radiance; TODO SV-EDFs
 };
 
 void PathTraceMaterial_Constructor(uniform PathTraceMaterial* uniform self,
                                    uniform PathTraceMaterial_GetBSDFFunc getBSDF,
                                    uniform PathTraceMaterial_GetTransparencyFunc getTransparency = NULL,
                                    uniform PathTraceMaterial_SelectNextMediumFunc selectNextMedium = NULL);
+                                   // const uniform vec3f emission = { 0.f, 0.f, 0.f }; fails, ISPC issue #1231

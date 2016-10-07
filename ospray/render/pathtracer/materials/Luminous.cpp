@@ -14,27 +14,37 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "Material.ih"
+#include "common/Material.h"
+#include "Luminous_ispc.h"
 
-vec3f PathTraceMaterial_getTransparency(const uniform PathTraceMaterial* uniform self,
-                                        const DifferentialGeometry& dg,
-                                        const Ray& ray,
-                                        const Medium& currentMedium)
-{
-  return make_vec3f(0.0f);
-}
+namespace ospray {
+  namespace pathtracer {
+    struct Luminous : public ospray::Material {
+      Luminous()
+      {
+        ispcEquivalent = ispc::PathTracer_Luminous_create();
+      }
 
-void PathTraceMaterial_selectNextMedium(const uniform PathTraceMaterial* uniform self,
-                                        Medium& currentMedium)
-{ /* do nothing by default */ }
+      //! \brief common function to help printf-debugging
+      /*! Every derived class should overrride this! */
+      virtual std::string toString() const
+      {
+        return "ospray::pathtracer::Luminous";
+      }
 
-void PathTraceMaterial_Constructor(uniform PathTraceMaterial* uniform self,
-                                   uniform PathTraceMaterial_GetBSDFFunc getBSDF,
-                                   uniform PathTraceMaterial_GetTransparencyFunc getTransparency,
-                                   uniform PathTraceMaterial_SelectNextMediumFunc selectNextMedium)
-{
-  self->getBSDF = getBSDF;
-  self->getTransparency = getTransparency ? getTransparency : PathTraceMaterial_getTransparency;
-  self->selectNextMedium = selectNextMedium ? selectNextMedium : PathTraceMaterial_selectNextMedium;
-  self->emission = make_vec3f(0.f);
+      //! \brief commit the material's parameters
+      virtual void commit() {
+        const vec3f radiance = getParam3f("color", vec3f(1.f)) *
+                               getParam1f("intensity", 1.f);
+        const float transparency = getParam1f("transparency", 0.f);
+
+        ispc::PathTracer_Luminous_set(getIE()
+            , (const ispc::vec3f&)radiance
+            , transparency
+            );
+      }
+    };
+
+    OSP_REGISTER_MATERIAL(Luminous, PathTracer_Luminous);
+  }
 }
