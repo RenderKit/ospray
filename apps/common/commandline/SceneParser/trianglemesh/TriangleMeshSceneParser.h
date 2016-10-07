@@ -51,6 +51,7 @@ private:
   // if turned on, we'll put each triangle mesh into its own instance,
   // no matter what
   bool forceInstancing;
+  bool forceNoInstancing;
 
   ospcommon::Ref<ospray::miniSG::Model> msgModel;
   std::vector<ospray::miniSG::Model *> msgAnimation;

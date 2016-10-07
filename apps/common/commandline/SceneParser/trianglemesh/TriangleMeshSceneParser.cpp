@@ -50,6 +50,7 @@ TriangleMeshSceneParser::TriangleMeshSceneParser(cpp::Renderer renderer,
   shouldCreateDefaultMaterial(true),
   maxObjectsToConsider((uint32_t)-1),
   forceInstancing(false),
+  forceNoInstancing(false),
   msgModel(new miniSG::Model)
 {
 }
@@ -64,6 +65,8 @@ bool TriangleMeshSceneParser::parse(int ac, const char **&av)
       maxObjectsToConsider = atoi(av[++i]);
     } else if (arg == "--force-instancing") {
       forceInstancing = true;
+    } else if (arg == "--force-no-instancing") {
+      forceNoInstancing = true;
     } else if (arg == "--alpha") {
       alpha = true;
     } else if (arg == "--no-default-material") {
@@ -330,46 +333,57 @@ TriangleMeshSceneParser::createOSPRayGeometry(miniSG::Model *msgModel,
 
 void TriangleMeshSceneParser::finalize()
 {
+  if (forceInstancing && forceNoInstancing) {
+    throw std::runtime_error("You can't force BOTH instancing and"
+                             " no-instancing!");
+  }
+
   // code does not yet do instancing ... check that the model doesn't
   // contain instances
   bool doesInstancing = forceInstancing ||
-                        msgModel->instance.size() > msgModel->mesh.size();
+                        (msgModel->instance.size() > msgModel->mesh.size()
+                         && !forceNoInstancing);
 
-
-  if (msgModel->instance.size() > maxObjectsToConsider) {
+  if (msgModel->instance.size() > maxObjectsToConsider)
     msgModel->instance.resize(maxObjectsToConsider);
 
-    if (!doesInstancing) {
-      msgModel->mesh.resize(maxObjectsToConsider);
-    }
-  }
+  if (!doesInstancing) {
+    for (size_t i = 0; i < msgModel->instance.size(); i++) {
+      auto &msgInstance = msgModel->instance[i];
+      auto &msgMesh     = msgModel->mesh[msgInstance.meshID];
 
-  std::vector<OSPModel> instanceModels;
+      // check if we have to transform the vertices:
+      if (msgInstance != miniSG::Instance(i)) {
+        auto positionCopy = msgMesh->position;
 
-  for (size_t i = 0; i < msgModel->mesh.size(); i++) {
-    Ref<miniSG::Mesh> msgMesh = msgModel->mesh[i];
+        for (size_t vID = 0; vID < msgMesh->position.size(); vID++) {
+          msgMesh->position[vID] = xfmPoint(msgModel->instance[i].xfm,
+                                            msgMesh->position[vID]);
+        }
 
-    // check if we have to transform the vertices:
-    if (!doesInstancing && msgModel->instance[i] != miniSG::Instance(i)) {
-      for (size_t vID = 0; vID < msgMesh->position.size(); vID++) {
-        msgMesh->position[vID] = xfmPoint(msgModel->instance[i].xfm,
-                                          msgMesh->position[vID]);
+        sceneModel->addGeometry(createOSPRayGeometry(msgModel.ptr,
+                                                     msgMesh.ptr).handle());
+
+        msgMesh->position = positionCopy;
+      } else {
+        sceneModel->addGeometry(createOSPRayGeometry(msgModel.ptr,
+                                                     msgMesh.ptr).handle());
       }
     }
+  } else {
+    std::vector<OSPModel> instanceModels;
 
-    auto ospMesh = createOSPRayGeometry(msgModel.ptr, msgMesh.ptr);
+    for (size_t i = 0; i < msgModel->mesh.size(); i++) {
+      Ref<miniSG::Mesh> msgMesh = msgModel->mesh[i];
 
-    if (doesInstancing) {
+      auto ospMesh = createOSPRayGeometry(msgModel.ptr, msgMesh.ptr);
+
       cpp::Model model_i;
       model_i.addGeometry(ospMesh);
       model_i.commit();
       instanceModels.push_back(model_i.handle());
-    } else {
-      sceneModel->addGeometry(ospMesh);
     }
-  }
 
-  if (doesInstancing) {
     for (size_t i = 0; i < msgModel->instance.size(); i++) {
       OSPGeometry inst =
           ospNewInstance(instanceModels[msgModel->instance[i].meshID],

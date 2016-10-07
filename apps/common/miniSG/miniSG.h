@@ -185,7 +185,7 @@ namespace ospray {
       std::string           name;     /*!< symbolic name of mesh, can be empty */
       std::vector<vec3fa>   position; /*!< vertex positions */
       std::vector<vec3fa>   normal;   /*!< vertex normals; empty if none present */
-      std::vector<vec3fa>   color ;   /*!< vertex colors; empty if none present */
+      std::vector<vec3fa>   color;    /*!< vertex colors; empty if none present */
       std::vector<vec2f>    texcoord; /*!< vertex texcoords; empty if none present */
       std::vector<Triangle> triangle; /*!< triangles' vertex IDs */
       std::vector<Ref<Material>> materialList; /*!< entire list of
@@ -230,11 +230,11 @@ namespace ospray {
 
     struct Model : public RefCount {
       /*! list of meshes that the scene is composed of */
-      std::vector<Ref<Mesh>>     mesh;
+      std::vector<Ref<Mesh>>   mesh;
       /*! \brief list of instances (if available). */
-      std::vector<Instance>       instance;
+      std::vector<Instance>    instance;
       /*! \brief list of camera defined in the model (usually empty) */
-      std::vector<Ref<Camera>>   camera;
+      std::vector<Ref<Camera>> camera;
 
       //! return number of meshes in this model
       inline size_t numMeshes() const { return mesh.size(); }
