@@ -57,9 +57,10 @@ TriangleMeshSceneParser::TriangleMeshSceneParser(cpp::Renderer renderer,
 
 bool TriangleMeshSceneParser::parse(int ac, const char **&av)
 {
-  bool loadedScene = false;
+  bool total_loadedScene = false;
 
   for (int i = 1; i < ac; i++) {
+    bool loadedScene = false;
     const std::string arg = av[i];
     if (arg == "--max-objects") {
       maxObjectsToConsider = atoi(av[++i]);
@@ -101,24 +102,33 @@ bool TriangleMeshSceneParser::parse(int ac, const char **&av)
         loadedScene = true;
       }
     }
+    if (loadedScene)
+    {
+      msgModels.push_back(msgModel);
+      sceneModels.push_back(cpp::Model());
+      msgModel = new miniSG::Model;
+      total_loadedScene = true;
+    }
   }
 
-  if (loadedScene) {
-    sceneModel = make_unique<cpp::Model>();
+  if (total_loadedScene) {
     finalize();
   }
 
-  return loadedScene;
+  return total_loadedScene;
 }
 
-cpp::Model TriangleMeshSceneParser::model() const
+std::deque<cpp::Model> TriangleMeshSceneParser::model() const
 {
-  return sceneModel.get() == nullptr ? cpp::Model() : *sceneModel;
+  return sceneModels;
 }
 
-ospcommon::box3f TriangleMeshSceneParser::bbox() const
+std::deque<ospcommon::box3f> TriangleMeshSceneParser::bbox() const
 {
-  return msgModel.ptr->getBBox();
+  std::deque<ospcommon::box3f> bboxes;
+  for(auto model : msgModels)
+    bboxes.push_back(model.ptr->getBBox());
+  return bboxes;
 }
 
 cpp::Material
@@ -338,59 +348,64 @@ void TriangleMeshSceneParser::finalize()
                              " no-instancing!");
   }
 
-  // code does not yet do instancing ... check that the model doesn't
-  // contain instances
-  bool doesInstancing = forceInstancing ||
-                        (msgModel->instance.size() > msgModel->mesh.size()
-                         && !forceNoInstancing);
+  for (size_t modeli = 0; modeli < msgModels.size(); modeli++)
+  {
+    ospcommon::Ref<ospray::miniSG::Model> msgModel = msgModels[modeli];
+    ospray::cpp::Model* sceneModel = &sceneModels[modeli];
+    // code does not yet do instancing ... check that the model doesn't
+    // contain instances
+    bool doesInstancing = forceInstancing ||
+                          (msgModel->instance.size() > msgModel->mesh.size()
+                           && !forceNoInstancing);
 
-  if (msgModel->instance.size() > maxObjectsToConsider)
-    msgModel->instance.resize(maxObjectsToConsider);
+    if (msgModel->instance.size() > maxObjectsToConsider)
+      msgModel->instance.resize(maxObjectsToConsider);
 
-  if (!doesInstancing) {
-    for (size_t i = 0; i < msgModel->instance.size(); i++) {
-      auto &msgInstance = msgModel->instance[i];
-      auto &msgMesh     = msgModel->mesh[msgInstance.meshID];
+    if (!doesInstancing) {
+      for (size_t i = 0; i < msgModel->instance.size(); i++) {
+        auto &msgInstance = msgModel->instance[i];
+        auto &msgMesh     = msgModel->mesh[msgInstance.meshID];
 
-      // check if we have to transform the vertices:
-      if (msgInstance != miniSG::Instance(i)) {
-        auto positionCopy = msgMesh->position;
+        // check if we have to transform the vertices:
+        if (msgInstance != miniSG::Instance(i)) {
+          auto positionCopy = msgMesh->position;
 
-        for (size_t vID = 0; vID < msgMesh->position.size(); vID++) {
-          msgMesh->position[vID] = xfmPoint(msgModel->instance[i].xfm,
-                                            msgMesh->position[vID]);
+          for (size_t vID = 0; vID < msgMesh->position.size(); vID++) {
+            msgMesh->position[vID] = xfmPoint(msgModel->instance[i].xfm,
+                                              msgMesh->position[vID]);
+          }
+
+          sceneModel->addGeometry(createOSPRayGeometry(msgModel.ptr,
+                                                       msgMesh.ptr).handle());
+
+          msgMesh->position = positionCopy;
+        } else {
+          sceneModel->addGeometry(createOSPRayGeometry(msgModel.ptr,
+                                                       msgMesh.ptr).handle());
         }
+      }
+    } else {
+      std::vector<OSPModel> instanceModels;
 
-        sceneModel->addGeometry(createOSPRayGeometry(msgModel.ptr,
-                                                     msgMesh.ptr).handle());
+      for (size_t i = 0; i < msgModel->mesh.size(); i++) {
+        Ref<miniSG::Mesh> msgMesh = msgModel->mesh[i];
 
-        msgMesh->position = positionCopy;
-      } else {
-        sceneModel->addGeometry(createOSPRayGeometry(msgModel.ptr,
-                                                     msgMesh.ptr).handle());
+        auto ospMesh = createOSPRayGeometry(msgModel.ptr, msgMesh.ptr);
+
+        cpp::Model model_i;
+        model_i.addGeometry(ospMesh);
+        model_i.commit();
+        instanceModels.push_back(model_i.handle());
+      }
+
+      for (size_t i = 0; i < msgModel->instance.size(); i++) {
+        OSPGeometry inst =
+            ospNewInstance(instanceModels[msgModel->instance[i].meshID],
+            reinterpret_cast<osp::affine3f&>(msgModel->instance[i].xfm));
+        sceneModel->addGeometry(inst);
       }
     }
-  } else {
-    std::vector<OSPModel> instanceModels;
 
-    for (size_t i = 0; i < msgModel->mesh.size(); i++) {
-      Ref<miniSG::Mesh> msgMesh = msgModel->mesh[i];
-
-      auto ospMesh = createOSPRayGeometry(msgModel.ptr, msgMesh.ptr);
-
-      cpp::Model model_i;
-      model_i.addGeometry(ospMesh);
-      model_i.commit();
-      instanceModels.push_back(model_i.handle());
-    }
-
-    for (size_t i = 0; i < msgModel->instance.size(); i++) {
-      OSPGeometry inst =
-          ospNewInstance(instanceModels[msgModel->instance[i].meshID],
-          reinterpret_cast<osp::affine3f&>(msgModel->instance[i].xfm));
-      sceneModel->addGeometry(inst);
-    }
+    sceneModel->commit();
   }
-
-  sceneModel->commit();
 }

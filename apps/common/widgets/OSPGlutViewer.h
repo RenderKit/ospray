@@ -30,6 +30,8 @@
 
 #include "common/widgets/Glut3dExport.h"
 
+#include <deque>
+
 namespace ospray {
 
   /*! mini scene graph viewer widget. \internal Note that all handling
@@ -40,8 +42,8 @@ namespace ospray {
   {
   public:
 
-    OSPGlutViewer(const ospcommon::box3f &worldBounds, 
-                  cpp::Model model,
+    OSPGlutViewer(const std::deque<ospcommon::box3f> &worldBounds, 
+                  std::deque<cpp::Model> model,
                   cpp::Renderer renderer, 
                   cpp::Camera camera);
 
@@ -58,6 +60,7 @@ namespace ospray {
     virtual void keypress(char key, const ospcommon::vec2i &where) override;
     virtual void mouseButton(int32_t whichButton, bool released,
                              const ospcommon::vec2i &pos) override;
+    virtual void updateAnimation(double deltaSeconds);
 
     void display() override;
 
@@ -65,7 +68,8 @@ namespace ospray {
 
     // Data //
 
-    cpp::Model       sceneModel;
+    std::deque<cpp::Model>       sceneModels;
+    std::deque<ospcommon::box3f> worldBounds;
     cpp::FrameBuffer frameBuffer;
     cpp::Renderer    renderer;
     cpp::Camera      camera;
@@ -82,6 +86,11 @@ namespace ospray {
     glut3D::Glut3DWidget::ViewPort glutViewPort;
 
     std::atomic<bool> resetAccum;
+    double frameTimer;
+    double animationTimer;
+    double animationFrameDelta;
+    size_t animationFrameId;
+    bool animationPaused;
   };
 
 }// namespace ospray

@@ -27,13 +27,13 @@ namespace ospray {
   using std::mutex;
   using namespace ospcommon;
 
-  ScriptedOSPGlutViewer::ScriptedOSPGlutViewer(const box3f   &worldBounds,
-                                               cpp::Model     model,
+  ScriptedOSPGlutViewer::ScriptedOSPGlutViewer(const std::deque<box3f>   &worldBounds,
+                                               std::deque<cpp::Model>     model,
                                                cpp::Renderer  renderer,
                                                cpp::Camera    camera,
                                                std::string    scriptFileName)
     : OSPGlutViewer(worldBounds, model, renderer, camera),
-      scriptHandler(model.handle(), renderer.handle(), camera.handle(), this),
+      scriptHandler(model[0].handle(), renderer.handle(), camera.handle(), this),
       frameID(0)
   {
     if (!scriptFileName.empty())
@@ -63,6 +63,9 @@ namespace ospray {
     // NOTE: consume a new renderer if one has been queued by another thread
     switchRenderers();
 
+    updateAnimation(ospcommon::getSysTime()-frameTimer);
+    frameTimer = ospcommon::getSysTime();
+
     if (resetAccum) {
       frameBuffer.clear(OSP_FB_ACCUM);
       resetAccum = false;
@@ -72,6 +75,8 @@ namespace ospray {
     //}
 
     ++frameID;
+
+
 
     if (viewPort.modified) {
       static bool once = true;

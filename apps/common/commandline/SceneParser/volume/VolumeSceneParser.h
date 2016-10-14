@@ -33,8 +33,8 @@ public:
 
   bool parse(int ac, const char **&av) override;
 
-  ospray::cpp::Model model() const override;
-  ospcommon::box3f   bbox()  const override;
+  std::deque<ospray::cpp::Model> model() const override;
+  std::deque<ospcommon::box3f>   bbox()  const override;
 
 private:
 

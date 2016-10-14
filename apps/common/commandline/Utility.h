@@ -38,8 +38,8 @@ inline void parseForLoadingModules(int ac, const char**& av)
   }
 }
 
-using ParsedOSPObjects = std::tuple<ospcommon::box3f,
-                                    ospray::cpp::Model,
+using ParsedOSPObjects = std::tuple<std::deque<ospcommon::box3f>,
+                                    std::deque<ospray::cpp::Model>,
                                     ospray::cpp::Renderer,
                                     ospray::cpp::Camera>;
 
