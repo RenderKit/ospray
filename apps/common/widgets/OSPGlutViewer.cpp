@@ -318,6 +318,8 @@ void OSPGlutViewer::updateAnimation(double deltaSeconds)
 {
   if (sceneModels.size() < 2)
     return;
+  if (animationPaused)
+    return;
   animationTimer += deltaSeconds;
   if (animationTimer > animationFrameDelta)
   {
