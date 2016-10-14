@@ -271,7 +271,10 @@ namespace ospray {
             continue;
           }
 
-          if (!cur) throw std::runtime_error("invalid material file: newmtl expected first");
+          if (!cur) {
+            std::cout << "#osp:sg:importOBJ: Ignoring line >> " << line << " <<" << endl;
+            continue;
+          }//throw std::runtime_error("invalid material file: newmtl expected first");
 
           if (!strncmp(token, "illum_4",7)) { 
             /*! iw: hack for VMD-exported OBJ files, working ardouna

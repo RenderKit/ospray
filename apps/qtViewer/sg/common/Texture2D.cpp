@@ -31,6 +31,13 @@ namespace ospray {
 
       Texture2D *tex = NULL;
       const std::string ext = fileName.ext();
+
+#ifdef OSPRAY_SG_LIBPNG
+      if (ext == "png") {
+      }
+#endif
+
+      
       if (ext == "ppm") {
         try {
           int rc, peekchar;
