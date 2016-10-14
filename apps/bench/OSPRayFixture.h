@@ -23,6 +23,8 @@
 #include <ospray_cpp/Model.h>
 #include <ospray_cpp/Renderer.h>
 
+#include <deque>
+
 namespace bench {
 void writePPM(const std::string &fileName, const int sizeX, const int sizeY,
               const uint32_t *pixel);
@@ -36,7 +38,7 @@ struct OSPRayFixture {
   // warm up frames = 10
   // benchmark frames = 100
   OSPRayFixture(ospray::cpp::Renderer renderer, ospray::cpp::Camera camera,
-                ospray::cpp::Model model);
+                 ospray::cpp::Model model);
   // Benchmark the scene, passing no params (or 0 for warmUpFrames or benchFrames) will
   // use the default configuration stored in the fixture, e.g. what was parsed from
   // the command line.

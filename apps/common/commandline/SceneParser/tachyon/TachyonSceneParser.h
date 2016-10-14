@@ -26,12 +26,12 @@ public:
 
   bool parse(int ac, const char **&av) override;
 
-  ospray::cpp::Model model() const override;
-  ospcommon::box3f   bbox()  const override;
+  std::deque<ospray::cpp::Model> model() const override;
+  std::deque<ospcommon::box3f>   bbox()  const override;
 
 private:
 
   ospray::cpp::Renderer renderer;
-  ospray::cpp::Model    sceneModel;
-  ospcommon::box3f      sceneBbox;
+  std::deque<ospray::cpp::Model>    sceneModels;
+  std::deque<ospcommon::box3f>      sceneBboxs;
 };

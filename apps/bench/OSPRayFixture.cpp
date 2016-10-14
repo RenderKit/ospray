@@ -48,7 +48,7 @@ void writePPM(const std::string &fileName, const int sizeX, const int sizeY,
 }
 }
 
-OSPRayFixture::OSPRayFixture(cpp::Renderer r, cpp::Camera c, cpp::Model m)
+OSPRayFixture::OSPRayFixture(cpp::Renderer r, cpp::Camera c,  cpp::Model m)
   : renderer(r), camera(c), model(m), width(DEFAULT_WIDTH), height(DEFAULT_HEIGHT),
   defaultBenchFrames(DEFAULT_BENCH_FRAMES), defaultWarmupFrames(DEFAULT_WARMUP_FRAMES)
 {

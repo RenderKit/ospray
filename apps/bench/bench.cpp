@@ -190,11 +190,11 @@ void parseCommandLine(int argc, const char *argv[])
 
   auto ospObjs = parseWithDefaultParsers(argc, argv);
 
-  Model model;
+  std::deque<Model> model;
   Renderer renderer;
   Camera camera;
   std::tie(std::ignore, model, renderer, camera) = ospObjs;
-  cmdlineFixture = std::make_shared<OSPRayFixture>(renderer, camera, model);
+  cmdlineFixture = std::make_shared<OSPRayFixture>(renderer, camera, model[0]);
   if (width > 0 || height > 0) {
     cmdlineFixture->setFrameBuffer(width, height);
   }

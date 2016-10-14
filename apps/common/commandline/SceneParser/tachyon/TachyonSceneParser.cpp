@@ -176,8 +176,8 @@ bool TachyonSceneParser::parse(int ac, const char **&av)
         TimeStep ts(arg);
         importFile(ts.tm, arg);
         ts.om = specifyModel(ts.tm);
-        sceneModel = ts.om;
-        sceneBbox  = ts.tm.getBounds();
+        sceneModels.push_back(ts.om);
+        sceneBboxs.push_back(ts.tm.getBounds());
         break;
       }
     }
@@ -186,12 +186,12 @@ bool TachyonSceneParser::parse(int ac, const char **&av)
   return loadedScene;
 }
 
-cpp::Model TachyonSceneParser::model() const
+std::deque<cpp::Model> TachyonSceneParser::model() const
 {
-  return sceneModel;
+  return sceneModels;
 }
 
-box3f TachyonSceneParser::bbox() const
+std::deque<box3f> TachyonSceneParser::bbox() const
 {
-  return sceneBbox;
+  return sceneBboxs;
 }
