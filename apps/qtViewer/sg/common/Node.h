@@ -68,13 +68,13 @@ namespace ospray {
     template<typename T>
     struct ParamT : public sg::Param {
       ParamT(const std::string &name, const T &t) : Param(name), value(t) {};
-      virtual OSPDataType getOSPDataType() const;
+      virtual OSPDataType getOSPDataType() const override;
       virtual void write(XMLWriter &) { NOTIMPLEMENTED; };
       T value;
     };
 
     /*! class that encapsulate all the context/state required for
-        rendering any object */
+      rendering any object */
     struct RenderContext {
       World         *world;      //!< world we're rendering into
       Integrator    *integrator; //!< integrator used to create materials etc
@@ -178,7 +178,7 @@ namespace ospray {
 #define OSP_REGISTER_SG_NODE(InternalClassName)                         \
     extern "C" ospray::sg::Node *ospray_create_sg_node__##InternalClassName() \
     {                                                                   \
-      return new ospray::sg::InternalClassName;                        \
+      return new ospray::sg::InternalClassName;                         \
     }
 
   } // ::ospray::sg

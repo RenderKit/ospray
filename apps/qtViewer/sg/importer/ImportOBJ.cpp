@@ -36,7 +36,13 @@ namespace ospray {
     using std::endl;
 
     Ref<Texture2D> loadTexture(const std::string &path, const std::string &fileName, const bool prefereLinear = false)
-    { return Texture2D::load(path+"/"+fileName, prefereLinear); }
+    {
+      FileName texFileName = path+"/"+fileName;
+      Ref<Texture2D> tex = Texture2D::load(texFileName, prefereLinear);
+      if (!tex)
+        std::cout << "could not load texture " << texFileName << " !" << endl;
+      return tex;
+    }
 
     /*! Three-index vertex, indexing start at 0, -1 means invalid vertex. */
     struct Vertex {
@@ -101,6 +107,7 @@ namespace ospray {
       float z = getFloat(token);
       return vec3f(x,y,z);
     }
+
     
     class OBJLoader
     {
@@ -117,6 +124,21 @@ namespace ospray {
  
       /*! Public methods. */
       void loadMTL(const FileName& fileName);
+      
+      template<typename T>
+      inline T parse(const char *&token);
+
+      /*! try to parse given token stream as a float-type with given
+        keyword; and if successful, assign to material. returns true
+        if matched, false if not */
+      template<typename T>
+      bool tryToMatch(const char *&token, const char *keyWord, Material *mat);
+      
+      /*! try to parse given token stream as a float-type with given
+        keyword; and if successful, load the texture and assign to
+        material. returns true if matched, false if not */
+      bool tryToMatchTexture(const char *&token, const char *keyWord, Material *mat,
+                             bool preferLinear=false);
 
     private:
 
@@ -141,6 +163,14 @@ namespace ospray {
       Vertex getInt3(const char*& token);
       uint32_t getVertex(std::map<Vertex,uint32_t>& vertexMap, TriangleMesh *mesh, const Vertex& i);
     };
+
+    
+    template<> inline vec3f OBJLoader::parse(const char *&token)
+    { return getVec3f(token); }
+    template<> inline float OBJLoader::parse(const char *&token)
+    { return getFloat(token); }
+    template<> inline std::string OBJLoader::parse(const char *&token)
+    { return std::string(token); }
 
     OBJLoader::OBJLoader(World *world, const FileName &fileName) 
       : world(world),
@@ -229,6 +259,38 @@ namespace ospray {
     {
     }
 
+
+    /*! try to parse given token stream as a float-type with given
+      keyword; and if successful, assign to material. returns true
+      if matched, false if not */
+    template<typename T>
+    bool OBJLoader::tryToMatch(const char *&token, const char *keyWord, Material *mat)
+    {
+      if (strncasecmp(token, keyWord, strlen(keyWord)))
+        return false;
+      
+      parseSep(token+=strlen(keyWord));
+      mat->setParam(keyWord, parse<T>(token));
+
+      return true;
+    }
+    
+      /*! try to parse given token stream as a float-type with given
+        keyword; and if successful, load the texture and assign to
+        material. returns true if matched, false if not */
+    bool OBJLoader::tryToMatchTexture(const char *&token,
+                                      const char *keyWord,
+                                      Material *mat,
+                                      bool preferLinear)
+    {
+      if (strncasecmp(token, keyWord, strlen(keyWord)))
+        return false;
+
+      parseSep(token+=strlen(keyWord));
+      mat->setParam(keyWord, loadTexture(path,parse<std::string>(token),preferLinear));
+      return true;
+    }
+
     /* load material file */
     void OBJLoader::loadMTL(const FileName &fileName)
     {
@@ -278,37 +340,31 @@ namespace ospray {
 
           if (!strncmp(token, "illum_4",7)) { 
             /*! iw: hack for VMD-exported OBJ files, working ardouna
-                bug in VMD's OBJ exporter (VMD writes "illum_4" (with
-                an underscore) rather than "illum 4" (with a
-                whitespace) */
+              bug in VMD's OBJ exporter (VMD writes "illum_4" (with
+              an underscore) rather than "illum 4" (with a
+              whitespace) */
             parseSep(token += 7);  
             continue; 
           }
 
-          if (!strncmp(token, "illum", 5)) { parseSep(token += 5);  continue; }
+          if (tryToMatch<float>(token,"illum",cur)) continue;
+          if (tryToMatch<float>(token,"d",cur)) continue;
+          if (tryToMatch<float>(token,"Ns",cur)) continue;
+          if (tryToMatch<float>(token,"Ni",cur)) continue;
+          if (tryToMatch<vec3f>(token,"Ka",cur)) continue;
+          if (tryToMatch<vec3f>(token,"Kd",cur)) continue;
+          if (tryToMatch<vec3f>(token,"Ks",cur)) continue;
+          if (tryToMatch<vec3f>(token,"Tf",cur)) continue;
+          if (tryToMatch<vec3f>(token,"color",cur)) continue;
+          if (tryToMatchTexture(token,"map_d",cur,true)) continue;
+          if (tryToMatchTexture(token,"map_Ns",cur,true)) continue;
+          if (tryToMatchTexture(token,"map_Ka",cur)) continue;
+          if (tryToMatchTexture(token,"map_Kd",cur)) continue;
+          if (tryToMatchTexture(token,"map_Ks",cur)) continue;
+          if (tryToMatchTexture(token,"map_Refl",cur)) continue;
+          if (tryToMatchTexture(token,"map_Bump",cur)) continue;
+          if (tryToMatchTexture(token,"map_Kd",cur)) continue;
 
-          if (!strncmp(token, "d",  1)) { parseSep(token += 1);  cur->setParam("d", getFloat(token));  continue; }
-          if (!strncmp(token, "Ns", 2)) { parseSep(token += 2);  cur->setParam("Ns", getFloat(token));  continue; }
-          if (!strncmp(token, "Ni", 2)) { parseSep(token += 2);  cur->setParam("Ni", getFloat(token));  continue; }
-
-          if (!strncmp(token, "Ka", 2)) { parseSep(token += 2);  cur->setParam("Ka", getVec3f(token)); continue; }
-          if (!strncmp(token, "Kd", 2)) { parseSep(token += 2);  cur->setParam("Kd", getVec3f(token)); continue; }
-          if (!strncmp(token, "Ks", 2)) { parseSep(token += 2);  cur->setParam("Ks", getVec3f(token)); continue; }
-          if (!strncmp(token, "Tf", 2)) { parseSep(token += 2);  cur->setParam("Tf", getVec3f(token)); continue; }
-          
-          if (!strncmp(token, "map_d" , 5)) { parseSepOpt(token += 5);  cur->setParam("map_d", loadTexture(path, std::string(token), true));  continue; }
-          if (!strncmp(token, "map_Ns" , 6)) { parseSepOpt(token += 6); cur->setParam("map_Ns", loadTexture(path, std::string(token), true));  continue; }
-          if (!strncmp(token, "map_Ka" , 6)) { parseSepOpt(token += 6); cur->setParam("map_Ka", loadTexture(path, std::string(token)));  continue; }
-          if (!strncmp(token, "map_Kd" , 6)) { parseSepOpt(token += 6); cur->setParam("map_Kd", loadTexture(path, std::string(token)));  continue; }
-          if (!strncmp(token, "map_Ks" , 6)) { parseSepOpt(token += 6); cur->setParam("map_Ks", loadTexture(path, std::string(token)));  continue; }
-          /*! the following are extensions to the standard */
-          if (!strncmp(token, "map_Refl" , 8)) { parseSepOpt(token += 8);  cur->setParam("map_Refl", loadTexture(path, std::string(token)));  continue; }
-          if (!strncmp(token, "map_Bump" , 8) || !strncmp(token, "map_bump", 8)) { parseSepOpt(token += 8);  cur->setParam("map_Bump", loadTexture(path, std::string(token), true));  continue; }
-
-          if (!strncmp(token, "bumpMap" , 7)) { parseSepOpt(token += 7);  cur->setParam("map_Bump", loadTexture(path, std::string(token), true));  continue; }
-          if (!strncmp(token, "colorMap" , 8)) { parseSepOpt(token += 8);  cur->setParam("map_Kd", loadTexture(path, std::string(token)));  continue; }
-
-          if (!strncmp(token, "color", 5)) { parseSep(token += 5);  cur->setParam("color", getVec3f(token)); continue; }
           if (!strncmp(token, "type", 4)) { parseSep(token += 4);  cur->type = std::string(token); continue; }
 
           // add anything else as float param
@@ -358,7 +414,7 @@ namespace ospray {
     }
 
     uint32_t OBJLoader::getVertex(std::map<Vertex,uint32_t>& vertexMap, 
-                                TriangleMesh *mesh, const Vertex& i)
+                                  TriangleMesh *mesh, const Vertex& i)
     {
       const std::map<Vertex, uint32_t>::iterator& entry = vertexMap.find(i);
       if (entry != vertexMap.end()) return(entry->second);
@@ -397,22 +453,22 @@ namespace ospray {
 
       // merge three indices into one
       for (size_t j=0; j < curGroup.size(); j++) {
-          /* iterate over all faces */
-          const std::vector<Vertex>& face = curGroup[j];
-          Vertex i0 = face[0], i1 = Vertex(-1), i2 = face[1];
+        /* iterate over all faces */
+        const std::vector<Vertex>& face = curGroup[j];
+        Vertex i0 = face[0], i1 = Vertex(-1), i2 = face[1];
           
-          /* triangulate the face with a triangle fan */
-          for (size_t k=2; k < face.size(); k++) {
-            i1 = i2; i2 = face[k];
-            int32_t v0 = getVertex(vertexMap, mesh, i0);
-            int32_t v1 = getVertex(vertexMap, mesh, i1);
-            int32_t v2 = getVertex(vertexMap, mesh, i2);
-            if (v0 < 0 || v1 < 0 || v2 < 0)
-              continue;
+        /* triangulate the face with a triangle fan */
+        for (size_t k=2; k < face.size(); k++) {
+          i1 = i2; i2 = face[k];
+          int32_t v0 = getVertex(vertexMap, mesh, i0);
+          int32_t v1 = getVertex(vertexMap, mesh, i1);
+          int32_t v2 = getVertex(vertexMap, mesh, i2);
+          if (v0 < 0 || v1 < 0 || v2 < 0)
+            continue;
 
-            vec3i tri(v0,v1,v2);
-            mesh->index.cast<DataVector3i>()->push_back(tri); //Vec3i(v0, v1, v2));
-          }
+          vec3i tri(v0,v1,v2);
+          mesh->index.cast<DataVector3i>()->push_back(tri); //Vec3i(v0, v1, v2));
+        }
       }
       curGroup.clear();
     }

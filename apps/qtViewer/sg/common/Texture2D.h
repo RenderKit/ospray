@@ -27,6 +27,9 @@ namespace ospray {
 
     /*! \brief C++ wrapper for a 2D Texture */
     struct Texture2D : public Node {
+      /*! constructor */
+      Texture2D();
+      
       /*! \brief returns a std::string with the c++ name of this class */
       virtual    std::string toString() const { return "ospray::viewer::sg::Texture2D"; };
 

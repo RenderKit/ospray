@@ -24,6 +24,9 @@ namespace ospray {
 
     /*! \brief Base class for all Material Types */
     struct Material : public Node {
+      /*! constructor */
+      Material();
+      
       /*! \brief returns a std::string with the c++ name of this class */
       virtual    std::string toString() const { return "ospray::viewer::sg::Material"; };
       

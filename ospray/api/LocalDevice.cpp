@@ -601,6 +601,8 @@ namespace ospray {
     {
       Geometry *geometry = (Geometry*)_geometry;
       Material *material = (Material*)_material;
+      assert(geometry);
+      assert(material);
       geometry->setMaterial(material);
     }
 
