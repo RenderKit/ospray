@@ -147,8 +147,14 @@ namespace ospray {
       
       if (voxelType != "float" && voxelType != "uchar") 
         throw std::runtime_error("unknown StructuredVolume.voxelType (currently only supporting 'float')");
-      
-      if (!transferFunction) 
+
+      if (!transferFunction) {
+        const std::string xfName = node->getProp("transferFunction");
+        TransferFunction *xf = dynamic_cast<TransferFunction*>(findNamedNode(xfName));
+        if (xf)
+          setTransferFunction(xf);
+      }
+      if (!transferFunction)
         setTransferFunction(new TransferFunction);
       
       std::cout << "#osp:sg: created StructuredVolume from XML file, dimensions = " 
@@ -172,11 +178,8 @@ namespace ospray {
       if (!volume)
         THROW_SG_ERROR("could not allocate volume");
       
-      PING; PRINT(voxelType);
       ospSetString(volume,"voxelType",voxelType.c_str());
-      PING; PRINT(dimensions);
       ospSetVec3i(volume,"dimensions",(const osp::vec3i&)dimensions);
-      PING;
       
       FileName realFileName = fileNameOfCorrespondingXmlDoc.path()+fileName;
       FILE *file = fopen(realFileName.c_str(),"rb");
