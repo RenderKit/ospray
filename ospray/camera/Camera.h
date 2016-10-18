@@ -39,6 +39,10 @@ namespace ospray {
     vec3f  dir;      // main direction of the camera in world-space
     vec3f  up;       // up direction of the camera in world-space
     float  nearClip; // near clipping distance
+    // definition of the image region, may even be outside of [0..1]^2
+    // to simulate sensor shift
+    vec2f  imageStart; // lower left corner
+    vec2f  imageEnd; // upper right corner
   };
 
   /*! \brief registers a internal ospray::'ClassName' camera under

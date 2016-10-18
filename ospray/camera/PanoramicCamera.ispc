@@ -23,10 +23,12 @@ void PanoramicCamera_initRay(uniform Camera *uniform _self,
 {
   uniform PanoramicCamera *uniform self = (uniform PanoramicCamera *uniform)_self;
 
+  const vec2f screen = Camera_subRegion(_self, sample.screen);
+
   const vec3f org = self->pos;
 
-  const float phi = two_pi * sample.screen.x;
-  const float theta = -M_PI * sample.screen.y;
+  const float phi = two_pi * screen.x;
+  const float theta = -M_PI * screen.y;
 
   float sinTheta, cosTheta;
   sincos(theta, &sinTheta, &cosTheta);
@@ -53,11 +55,9 @@ export void *uniform PanoramicCamera_create(void *uniform cppE)
 
 export void PanoramicCamera_set(void *uniform _self, 
                                 const uniform vec3f &pos,
-                                const uniform linear3f &frame,
-                                const uniform float nearClip)
+                                const uniform linear3f &frame)
 {
   uniform PanoramicCamera *uniform self = (uniform PanoramicCamera *uniform)_self;
   self->pos = pos;
   self->frame = frame;
-  self->super.nearClip = nearClip;
 }

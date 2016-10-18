@@ -18,6 +18,8 @@
 #include "Camera.h"
 // embree 
 #include "../common/Library.h"
+// ispc-side stuff
+#include "Camera_ispc.h"
 // stl 
 #include <map>
 
@@ -38,15 +40,16 @@ namespace ospray {
                 << type << "' for the first time" << std::endl;
 
     std::string creatorName = "ospray_create_camera__"+std::string(type);
-    creatorFct creator = (creatorFct)getSymbol(creatorName); //dlsym(RTLD_DEFAULT,creatorName.c_str());
+    creatorFct creator = (creatorFct)getSymbol(creatorName);
     cameraRegistry[type] = creator;
     if (creator == NULL) {
       if (ospray::logLevel >= 1) 
         std::cout << "#ospray: could not find camera type '" << type << "'" << std::endl;
       return NULL;
     }
-    Camera *camera = (*creator)();  camera->managedObjectType = OSP_CAMERA;
-    return(camera);
+    Camera *camera = (*creator)();
+    camera->managedObjectType = OSP_CAMERA;
+    return camera;
   }
 
   void Camera::commit()
@@ -56,6 +59,13 @@ namespace ospray {
     dir      = getParam3f("dir", vec3f(0.f, 0.f, 1.f));
     up       = getParam3f("up", vec3f(0.f, 1.f, 0.f));
     nearClip = getParam1f("near_clip", getParam1f("nearClip", 1e-6f));
+
+    imageStart = getParam2f("image_start", getParam2f("imageStart", vec2f(0.f)));
+    imageEnd   = getParam2f("image_end", getParam2f("imageEnd", vec2f(1.f)));
+
+    ispc::Camera_set(getIE(), nearClip,
+                    (const ispc::vec2f&)imageStart,
+                    (const ispc::vec2f&)imageEnd);
   }
 
 } // ::ospray

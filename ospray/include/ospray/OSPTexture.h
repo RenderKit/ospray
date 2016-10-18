@@ -27,6 +27,8 @@ typedef enum {
   OSP_TEXTURE_RGB32F,
   OSP_TEXTURE_R8,
   OSP_TEXTURE_R32F,
+  /*! denotes an invalid texture ID, so we can properly initialize parameters */
+  OSP_TEXTURE_FORMAT_INVALID,
 /* TODO
   OSP_LogLuv,
   OSP_RGBA16F

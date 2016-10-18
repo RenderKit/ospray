@@ -36,4 +36,5 @@ void PathTraceMaterial_Constructor(uniform PathTraceMaterial* uniform self,
   self->getBSDF = getBSDF;
   self->getTransparency = getTransparency ? getTransparency : PathTraceMaterial_getTransparency;
   self->selectNextMedium = selectNextMedium ? selectNextMedium : PathTraceMaterial_selectNextMedium;
+  self->emission = make_vec3f(0.f);
 }

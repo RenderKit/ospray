@@ -304,7 +304,7 @@ namespace ospray {
           if (!strncmp(token, "map_Ks" , 6)) { parseSepOpt(token += 6); cur->setParam("map_Ks", loadTexture(path, std::string(token)),Material::Param::TEXTURE);  continue; }
           /*! the following are extensions to the standard */
           if (!strncmp(token, "map_Refl" , 8)) { parseSepOpt(token += 8);  cur->setParam("map_Refl", loadTexture(path, std::string(token)),Material::Param::TEXTURE);  continue; }
-          if (!strncmp(token, "map_Bump" , 8)) { parseSepOpt(token += 8);  cur->setParam("map_Bump", loadTexture(path, std::string(token), true),Material::Param::TEXTURE);  continue; }
+          if (!strncmp(token, "map_Bump" , 8) || !strncmp(token, "map_bump" , 8)) { parseSepOpt(token += 8);  cur->setParam("map_Bump", loadTexture(path, std::string(token), true),Material::Param::TEXTURE);  continue; }
 
           if (!strncmp(token, "bumpMap" , 7)) { parseSepOpt(token += 7);  cur->setParam("map_Bump", loadTexture(path, std::string(token), true),Material::Param::TEXTURE);  continue; }
           if (!strncmp(token, "colorMap" , 8)) { parseSepOpt(token += 8);  cur->setParam("map_Kd", loadTexture(path, std::string(token)),Material::Param::TEXTURE);  continue; }

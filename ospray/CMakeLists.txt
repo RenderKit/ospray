@@ -25,10 +25,8 @@ MARK_AS_ADVANCED(EXP_NEW_BB_VOLUME_KERNELS)
 
 # NOTE(jda) - PThread hint used by both Embree and OSPRay
 SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+SET(THREADS_PREFER_PTHREAD_FLAG TRUE) # for gcc6
 FIND_PACKAGE(Threads REQUIRED)
-IF ("${CMAKE_THREAD_LIBS_INIT}" STREQUAL "")
-  SET(CMAKE_THREAD_LIBS_INIT -lpthread)
-ENDIF()
 
 # -------------------------------------------------------
 # redistribute TBB
@@ -39,6 +37,7 @@ IF (OSPRAY_TASKING_TBB)
     SET(TBB_DLL_HINTS
       ${TBB_ROOT}/../redist/${TBB_ARCH}_win/tbb/${TBB_VCVER}
       ${TBB_ROOT}/../redist/${TBB_ARCH}/tbb/${TBB_VCVER}
+      ${TBB_ROOT}/bin/${TBB_ARCH}/${TBB_VCVER}
     )
     FIND_FILE(TBB_DLL tbb.dll HINTS ${TBB_DLL_HINTS})
     FIND_FILE(TBB_DLL_MALLOC tbbmalloc.dll PATHS HINTS ${TBB_DLL_HINTS})
@@ -110,6 +109,7 @@ SET(OSPRAY_SOURCES
   fb/Tile.h
 
   camera/Camera.cpp
+  camera/Camera.ispc
   camera/PerspectiveCamera.ispc
   camera/PerspectiveCamera.cpp
   camera/OrthographicCamera.ispc
@@ -213,6 +213,8 @@ SET(OSPRAY_SOURCES
   render/pathtracer/materials/Plastic.cpp
   render/pathtracer/materials/Matte.ispc
   render/pathtracer/materials/Matte.cpp
+  render/pathtracer/materials/Luminous.ispc
+  render/pathtracer/materials/Luminous.cpp
 
   api/API.cpp
   api/Device.cpp

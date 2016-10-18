@@ -181,13 +181,16 @@ bool ParticleSceneParser::parse(int ac, const char **&av)
   return loadedScene;
 }
 
-ospray::cpp::Model ParticleSceneParser::model() const
+std::deque<cpp::Model> ParticleSceneParser::model() const
 {
-  return sceneModel.get() == nullptr ? cpp::Model() : *sceneModel;
+  std::deque<cpp::Model> models;
+  models.push_back(sceneModel.get() == nullptr ? cpp::Model() : *sceneModel);
+  return models;
 }
 
-ospcommon::box3f ParticleSceneParser::bbox() const
+std::deque<box3f> ParticleSceneParser::bbox() const
 {
-  return sceneBbox;
+  std::deque<box3f> boxes;
+  boxes.push_back(sceneBbox);
+  return boxes;
 }
-

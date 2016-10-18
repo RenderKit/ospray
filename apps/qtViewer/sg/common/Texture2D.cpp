@@ -19,18 +19,35 @@
 namespace ospray {
   namespace sg {
 
+    /*! constructor */
+    Texture2D::Texture2D()
+      : size(-1),
+        texel(NULL),
+        texelType(OSP_TEXTURE_FORMAT_INVALID),
+        ospTexture(NULL)
+    {
+    }
+      
+
     //! \brief load texture from given file. 
     /*! \detailed if file does not exist, or cannot be loaded for
       some reason, return NULL. Multiple loads from the same file
       will return the *same* texture object */
     Ref<Texture2D> Texture2D::load(const FileName &fileName, const bool prefereLinear)
-    { 
+    {
       static std::map<std::string,Texture2D*> textureCache;
       if (textureCache.find(fileName.str()) != textureCache.end()) 
         return textureCache[fileName.str()];
 
       Texture2D *tex = NULL;
       const std::string ext = fileName.ext();
+
+#ifdef OSPRAY_SG_LIBPNG
+      if (ext == "png") {
+      }
+#endif
+
+      
       if (ext == "ppm") {
         try {
           int rc, peekchar;
@@ -45,7 +62,8 @@ namespace ospray {
           
           // read format specifier:
           int format=0;
-          fscanf(file,"P%i\n",&format);
+          if (fscanf(file,"P%i\n",&format) != 1)
+            throw std::runtime_error("#osp:sg: could not parse PPM type");
           if (format != 6) 
             throw std::runtime_error("#osp:sg: can currently load only binary P6 subformats for PPM texture files. "
                                      "Please report this bug at ospray.github.io.");
@@ -53,7 +71,8 @@ namespace ospray {
           // skip all comment lines
           peekchar = getc(file);
           while (peekchar == '#') {
-            fgets(lineBuf,LINESZ,file);
+            if (!fgets(lineBuf,LINESZ,file))
+              throw std::runtime_error("could not fgets");
             peekchar = getc(file);
           } ungetc(peekchar,file);
         
@@ -67,7 +86,8 @@ namespace ospray {
           // skip all comment lines
           peekchar = getc(file);
           while (peekchar == '#') {
-            fgets(lineBuf,LINESZ,file);
+            if (!fgets(lineBuf,LINESZ,file))
+              throw std::runtime_error("could not fgets");
             peekchar = getc(file);
           } ungetc(peekchar,file);
         
@@ -87,7 +107,8 @@ namespace ospray {
           tex->size      = vec2i(width,height);
           tex->texelType = prefereLinear ? OSP_TEXTURE_RGB8 : OSP_TEXTURE_SRGB;
           tex->texel     = new unsigned char[width*height*3];
-          fread(tex->texel,width*height*3,1,file);
+          if (!fread(tex->texel,width*height*3,1,file))
+            throw std::runtime_error("could not fread");
           // flip in y, because OSPRay's textures have the origin at the lower left corner
           unsigned char *texels = (unsigned char *)tex->texel;
           for (int y=0; y < height/2; y++)
@@ -103,15 +124,17 @@ namespace ospray {
     
     void Texture2D::render(RenderContext &ctx)
     {
-      if (ospTexture) return;
+      if (ospTexture)
+        return;
       
       ospTexture = ospNewTexture2D((osp::vec2i&)size,
                                    texelType,
                                    texel,
                                    0);
-      ospCommit(ospTexture);
-      
-      if(!ospTexture) std::cerr << "Warning: Could not create Texture2D\n";
+      if(!ospTexture)
+        std::cerr << "Warning: Could not create Texture2D\n";
+      else
+        ospCommit(ospTexture);
     }
 
   } // ::ospray::sg

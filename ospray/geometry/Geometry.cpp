@@ -36,6 +36,11 @@ namespace ospray {
     c++-side's material gets changed */
   void Geometry::setMaterial(Material *mat)
   {
+    if (!mat) {
+      std::cout << "#osp: warning - tried to set NULL material; ignoring"
+        "#osp: warning. (note this means that object may not get any material at all!)" << std::endl;
+      return;
+    }
     material = mat;
     if (!getIE()) 
       std::cout << "#osp: warning - geometry does not have an ispc equivalent!" << std::endl;

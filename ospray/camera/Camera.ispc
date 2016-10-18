@@ -14,30 +14,16 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "Camera.ih"
 
-#include "Light.h"
 
-namespace ospray {
-
-  //! an AmbientLight is a constant light that is present everywhere
-  class OSPRAY_SDK_INTERFACE AmbientLight : public Light {
-    public:
-      AmbientLight();
-
-      //! toString is used to aid in printf debugging
-      virtual std::string toString() const { return "ospray::AmbientLight"; }
-
-      //! Copy understood parameters into member parameters
-      virtual void commit();
-
-      vec3f getRadiance() const {
-        return color * intensity;
-      }
-
-    private:
-      vec3f color;                  //!< RGB color of the light
-      float intensity;              //!< Amount of light emitted
-  };
-
+export void Camera_set(void *uniform _self,
+                       const uniform float nearClip,
+                       const uniform vec2f &imageStart,
+                       const uniform vec2f &imageEnd)
+{
+  uniform Camera *uniform self = (uniform Camera *uniform)_self;
+  self->nearClip = nearClip;
+  self->subImage.lower = imageStart;
+  self->subImage.upper = imageEnd;
 }

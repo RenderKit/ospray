@@ -19,8 +19,8 @@
 ##############################################################
 
 SET(OSPRAY_VERSION_MAJOR 1)
-SET(OSPRAY_VERSION_MINOR 0)
-SET(OSPRAY_VERSION_PATCH 1)
+SET(OSPRAY_VERSION_MINOR 1)
+SET(OSPRAY_VERSION_PATCH 0)
 SET(OSPRAY_VERSION_GITHASH 0)
 IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
   FIND_PACKAGE(Git)
@@ -98,7 +98,10 @@ INCLUDE(package)
 OPTION(OSPRAY_USE_EXTERNAL_EMBREE
        "Use a pre-built Embree instead of the internally built version" ON)
 
-OPTION(OSPRAY_USE_EMBREE_STREAMS "Enable Streams if using Embree 2.10.0+" OFF)
+OPTION(OSPRAY_USE_EMBREE_STREAMS "Enable Streams if using Embree v2.10 or later")
+
+OPTION(OSPRAY_USE_HIGH_QUALITY_BVH
+       "Takes slighly longer to build but offers higher ray tracing performance; recommended when using Embree v2.11 or later")
 
 OPTION(OSPRAY_VOLUME_VOXELRANGE_IN_APP "Move 'voxelrange' computations to app?")
 MARK_AS_ADVANCED(OSPRAY_VOLUME_VOXELRANGE_IN_APP)

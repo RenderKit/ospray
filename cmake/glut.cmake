@@ -21,9 +21,9 @@ IF (APPLE)
 ELSEIF (WIN32)
 # FindGLUT.cmake is broken for Windows in CMake until 3.0: does not support PATH
   IF (GLUT_ROOT_PATH)
-    MESSAGE(WARNING "Warning: GLUT_ROOT_PATH is depreciated.")
-    SET(DEPRECIATED_WIN32_INCLUDE ${GLUT_ROOT_PATH}/include)
-    SET(DEPRECIATED_WIN32_RELEASE ${GLUT_ROOT_PATH}/Release)
+    MESSAGE(WARNING "Warning: GLUT_ROOT_PATH is deprecated.")
+    SET(DEPRECATED_WIN32_INCLUDE ${GLUT_ROOT_PATH}/include)
+    SET(DEPRECATED_WIN32_RELEASE ${GLUT_ROOT_PATH}/Release)
   ENDIF()
   FIND_PATH(GLUT_INCLUDE_DIR
     NAMES GL/glut.h
@@ -31,7 +31,7 @@ ELSEIF (WIN32)
     ${PROJECT_SOURCE_DIR}/../freeglut/include
     ${PROJECT_SOURCE_DIR}/../freeglut-MSVC-3.0.0-2.mp/include ${PROJECT_SOURCE_DIR}/../freeglut-MSVC-3.0.0-2.mp/freeglut/include
     ${PROJECT_SOURCE_DIR}/../freeglut-MSVC-2.8.1-1.mp/include ${PROJECT_SOURCE_DIR}/../freeglut-MSVC-2.8.1-1.mp/freeglut/include
-    ${DEPRECIATED_WIN32_INCLUDE}
+    ${DEPRECATED_WIN32_INCLUDE}
   )
   # detect and select x64
   IF (CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -39,7 +39,7 @@ ELSEIF (WIN32)
   ENDIF()
   FIND_LIBRARY(GLUT_glut_LIBRARY
     NAMES freeglut glut glut32
-    HINTS ${GLUT_INCLUDE_DIR}/../lib/${ARCH} ${FREEGLUT_ROOT_PATH}/lib/${ARCH} ${DEPRECIATED_WIN32_RELEASE}
+    HINTS ${GLUT_INCLUDE_DIR}/../lib/${ARCH} ${FREEGLUT_ROOT_PATH}/lib/${ARCH} ${DEPRECATED_WIN32_RELEASE}
   )
   SET(GLUT_LIBRARIES ${GLUT_glut_LIBRARY})
   MARK_AS_ADVANCED(

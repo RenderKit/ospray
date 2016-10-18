@@ -14,30 +14,37 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
-#include "Light.h"
+#include "common/Material.h"
+#include "Luminous_ispc.h"
 
 namespace ospray {
-
-  //! an AmbientLight is a constant light that is present everywhere
-  class OSPRAY_SDK_INTERFACE AmbientLight : public Light {
-    public:
-      AmbientLight();
-
-      //! toString is used to aid in printf debugging
-      virtual std::string toString() const { return "ospray::AmbientLight"; }
-
-      //! Copy understood parameters into member parameters
-      virtual void commit();
-
-      vec3f getRadiance() const {
-        return color * intensity;
+  namespace pathtracer {
+    struct Luminous : public ospray::Material {
+      Luminous()
+      {
+        ispcEquivalent = ispc::PathTracer_Luminous_create();
       }
 
-    private:
-      vec3f color;                  //!< RGB color of the light
-      float intensity;              //!< Amount of light emitted
-  };
+      //! \brief common function to help printf-debugging
+      /*! Every derived class should overrride this! */
+      virtual std::string toString() const
+      {
+        return "ospray::pathtracer::Luminous";
+      }
 
+      //! \brief commit the material's parameters
+      virtual void commit() {
+        const vec3f radiance = getParam3f("color", vec3f(1.f)) *
+                               getParam1f("intensity", 1.f);
+        const float transparency = getParam1f("transparency", 0.f);
+
+        ispc::PathTracer_Luminous_set(getIE()
+            , (const ispc::vec3f&)radiance
+            , transparency
+            );
+      }
+    };
+
+    OSP_REGISTER_MATERIAL(Luminous, PathTracer_Luminous);
+  }
 }

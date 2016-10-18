@@ -20,6 +20,26 @@ namespace ospcommon {
   // -------------------------------------------------------
   // parsing from strings
   // -------------------------------------------------------
+  int toInt(const char *ptr)
+  {
+    assert(ptr);
+    int v;
+    int rc = sscanf(ptr,"%i",&v); 
+    (void)rc;
+    assert(rc == 1);
+    return v;
+  }
+  
+  float toFloat(const char *ptr)
+  {
+    assert(ptr);
+    float v;
+    int rc = sscanf(ptr,"%f",&v); 
+    (void)rc;
+    assert(rc == 1);
+    return v;
+  }
+
   vec2f toVec2f(const char *ptr)
   {
     assert(ptr);

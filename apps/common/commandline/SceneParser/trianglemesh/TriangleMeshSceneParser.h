@@ -29,8 +29,8 @@ public:
 
   bool parse(int ac, const char **&av) override;
 
-  ospray::cpp::Model model() const override;
-  ospcommon::box3f   bbox()  const override;
+  std::deque<ospray::cpp::Model> model() const override;
+  std::deque<ospcommon::box3f>   bbox()  const override;
 
 private:
 
@@ -40,7 +40,7 @@ private:
 
   ospray::cpp::Renderer renderer;
 
-  std::unique_ptr<ospray::cpp::Model> sceneModel;
+  std::deque<ospray::cpp::Model> sceneModels;
 
   std::string geometryType;
 
@@ -51,9 +51,13 @@ private:
   // if turned on, we'll put each triangle mesh into its own instance,
   // no matter what
   bool forceInstancing;
+  bool forceNoInstancing;
 
   ospcommon::Ref<ospray::miniSG::Model> msgModel;
+  std::deque<ospcommon::Ref<ospray::miniSG::Model> > msgModels;
   std::vector<ospray::miniSG::Model *> msgAnimation;
 
+  ospray::cpp::Geometry createOSPRayGeometry(ospray::miniSG::Model *msgModel,
+                                             ospray::miniSG::Mesh  *msgMesh);
   void finalize();
 };

@@ -14,11 +14,13 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "ospray/common/OSPCommon.h"
 #include "OSPRayScriptHandler.h"
 #include "ospcommon/vec.h"
 #include "ospcommon/box.h"
 #include "chaiscript/chaiscript_stdlib.hpp"
 #include "chaiscript/utility/utility.hpp"
+#include "tfn_lib/tfn_lib.h"
 
 using std::runtime_error;
 
@@ -148,6 +150,66 @@ void ospCommit(OSPObject object)
   ::ospCommit(object);
 }
 
+ospray::cpp::TransferFunction loadTransferFunction(const std::string &fname) {
+  using namespace ospcommon;
+  tfn::TransferFunction fcn(fname);
+  ospray::cpp::TransferFunction transferFunction("piecewise_linear");
+  auto colorsData = ospray::cpp::Data(fcn.rgbValues.size(), OSP_FLOAT3,
+                                      fcn.rgbValues.data());
+  transferFunction.set("colors", colorsData);
+
+  const float tf_scale = fcn.opacityScaling;
+  // Sample the opacity values, taking 256 samples to match the volume viewer
+  // the volume viewer does the sampling a bit differently so we match that
+  // instead of what's done in createDefault
+  std::vector<float> opacityValues;
+  const int N_OPACITIES = 256;
+  size_t lo = 0;
+  size_t hi = 1;
+  for (int i = 0; i < N_OPACITIES; ++i) {
+    const float x = float(i) / float(N_OPACITIES - 1);
+    float opacity = 0;
+    if (i == 0) {
+      opacity = fcn.opacityValues[0].y;
+    } else if (i == N_OPACITIES - 1) {
+      opacity = fcn.opacityValues.back().y;
+    } else {
+      // If we're over this val, find the next segment
+      if (x > fcn.opacityValues[lo].x) {
+        for (size_t j = lo; j < fcn.opacityValues.size() - 1; ++j) {
+          if (x <= fcn.opacityValues[j + 1].x) {
+            lo = j;
+            hi = j + 1;
+            break;
+          }
+        }
+      }
+      const float delta = x - fcn.opacityValues[lo].x;
+      const float interval = fcn.opacityValues[hi].x - fcn.opacityValues[lo].x;
+      if (delta == 0 || interval == 0) {
+        opacity = fcn.opacityValues[lo].y;
+      } else {
+        opacity = fcn.opacityValues[lo].y + delta / interval
+          * (fcn.opacityValues[hi].y - fcn.opacityValues[lo].y);
+      }
+    }
+    opacityValues.push_back(tf_scale * opacity);
+  }
+
+  auto opacityValuesData = ospray::cpp::Data(opacityValues.size(),
+                                             OSP_FLOAT,
+                                             opacityValues.data());
+  transferFunction.set("opacities", opacityValuesData);
+  transferFunction.set("valueRange", vec2f(fcn.dataValueMin, fcn.dataValueMax));
+  transferFunction.commit();
+  return transferFunction;
+}
+
+// Get an string environment variable
+std::string getEnvString(const std::string &var) {
+  return ospray::getEnvVar<std::string>(var).second;
+}
+
 }
 
 // OSPRayScriptHandler definitions ////////////////////////////////////////////
@@ -211,6 +273,8 @@ OSPRayScriptHandler::OSPRayScriptHandler(OSPModel    model,
   ss << "ospSet3i(object, id, int, int, int)"       << endl;
   ss << "ospSetVoidPtr(object, id, ptr)"            << endl;
   ss << "ospCommit(object)"                         << endl;
+  ss << "TransferFunction loadTransferFunction(file)" << endl;
+  ss << "string getEnvString(env_var)" << endl;
   ss << endl;
 
   helpText = ss.str();
@@ -327,6 +391,10 @@ void OSPRayScriptHandler::registerScriptObjects()
   chai.add_global(chaiscript::var(model),    "m");
   chai.add_global(chaiscript::var(renderer), "r");
   chai.add_global(chaiscript::var(camera),   "c");
+  chai.add_global_const(chaiscript::const_var(static_cast<int>(OSP_FB_COLOR)), "OSP_FB_COLOR");
+  chai.add_global_const(chaiscript::const_var(static_cast<int>(OSP_FB_ACCUM)), "OSP_FB_ACCUM");
+  chai.add_global_const(chaiscript::const_var(static_cast<int>(OSP_FB_DEPTH)), "OSP_FB_DEPTH");
+  chai.add_global_const(chaiscript::const_var(static_cast<int>(OSP_FB_VARIANCE)), "OSP_FB_VARIANCE");
   for (auto &m : script::SCRIPT_MODULES) {
     m.registerModule(chai);
   }
@@ -623,6 +691,8 @@ void OSPRayScriptHandler::registerScriptFunctions()
   chai.add(chaiscript::fun(&chaiospray::ospSet3i),      "ospSet3i"     );
   chai.add(chaiscript::fun(&chaiospray::ospSetVoidPtr), "ospSetVoidPtr");
   chai.add(chaiscript::fun(&chaiospray::ospCommit),     "ospCommit"    );
+  chai.add(chaiscript::fun(&chaiospray::loadTransferFunction), "loadTransferFunction");
+  chai.add(chaiscript::fun(&chaiospray::getEnvString), "getEnvString");
 }
 
 }// namespace ospray

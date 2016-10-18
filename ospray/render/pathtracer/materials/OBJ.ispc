@@ -60,7 +60,7 @@ const varying BSDF* uniform OBJ_getBSDF(const uniform PathTraceMaterial* uniform
     vec2f rotNormal = self->rot_Bump * make_vec2f(localNormal.x, localNormal.y);
     localNormal.x = rotNormal.x; localNormal.y = rotNormal.y;
     // transform to world space and align to tangents/texture coordinates
-    linear3f f = make_LinearSpace3f(normalize(dg.dPds), normalize(dg.dPdt), dg.Ng);
+    linear3f f = make_LinearSpace3f(normalize(dg.dPds), normalize(dg.dPdt), dg.Ns);
     shadingNormal = f * localNormal;
     // in general f is not ortho-normal, thus need to re-normalize
     shadingNormal = normalize(shadingNormal);

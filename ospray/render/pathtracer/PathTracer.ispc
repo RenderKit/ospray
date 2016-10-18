@@ -110,8 +110,6 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
   lastDg.Ns = ray.dir;
   lastDg.Ng = ray.dir;
 
-  DifferentialGeometry previousDg;
-
   do {
     traceRay(self->super.model, ray);
 
@@ -166,12 +164,17 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     uniform PathTraceMaterial* m = (uniform PathTraceMaterial*)dg.material;
     foreach_unique(mm in m)
-      if (mm != NULL)
+      if (mm != NULL) {
         bsdf = mm->getBSDF(mm, &ctx, dg, ray, currentMedium);
+        L = L + Lw * mm->emission;
+      }
+
+    // terminate path when we don't have any BSDF
+    if (!bsdf)
+      break;
 
     // direct lighting including shadows and MIS
-    if (bsdf && (bsdf->type & BSDF_SMOOTH))
-    {
+    if (bsdf->type & BSDF_SMOOTH) {
       uniform int numLights = self->lights ? min(MAX_LIGHTS, self->numLights) : 0;
       for (uniform int i = 0; i < numLights; i++)
       {
@@ -227,18 +230,15 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     Lw = Lw * fs.weight;
 
     // compute attenuation with Beer's law
-    if (ne(currentMedium.attenuation, 0.f)) {
+    if (reduce_min(currentMedium.attenuation) < 0.f)
       Lw = Lw * expf(currentMedium.attenuation * ray.t);
-    }
 
     // update currentMedium if we hit a medium interface 
     // TODO: support nested dielectrics
     if (fs.type & BSDF_TRANSMISSION) {
-      foreach_unique(uniMat in dg.material) {
-        uniform PathTraceMaterial* uniform m = (uniform PathTraceMaterial *)uniMat;
-        if (m != NULL) {
-          m->selectNextMedium(m, currentMedium);
-        }
+      foreach_unique(mm in m) {
+        if (mm != NULL)
+          mm->selectNextMedium(mm, currentMedium);
       }
     }
 
@@ -248,8 +248,6 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       lastBSDFPdf = fs.pdf;
       lastDg = dg;
     }
-
-    previousDg = dg;
 
     // continue the path
     straightPath &= eq(ray.dir, fs.wi);

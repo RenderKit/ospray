@@ -44,10 +44,52 @@ export void Volume_setGradientShadingEnabled(void *uniform _self, const uniform 
   self->gradientShadingEnabled = value;
 }
 
+export void Volume_setPreIntegration(void *uniform _self, const uniform bool &value)
+{
+  uniform Volume *uniform self = (uniform Volume *uniform)_self;
+  self->preIntegration = value;
+}
+
+export void Volume_setSingleShade(void *uniform _self, const uniform bool &value)
+{
+  uniform Volume *uniform self = (uniform Volume *uniform)_self;
+  self->singleShade = value;
+}
+
+export void Volume_setAdaptiveSampling(void *uniform _self, const uniform bool &value)
+{
+  uniform Volume *uniform self = (uniform Volume *uniform)_self;
+  self->adaptiveSampling = value;
+}
+
+export void Volume_setAdaptiveScalar(void *uniform _self, const uniform float &value)
+{
+  uniform Volume *uniform self = (uniform Volume *uniform)_self;
+  self->adaptiveScalar = value;
+}
+
+export void Volume_setAdaptiveMaxSamplingRate(void *uniform _self, const uniform float &value)
+{
+  uniform Volume *uniform self = (uniform Volume *uniform)_self;
+  self->adaptiveMaxSamplingRate = value;
+}
+
+export void Volume_setAdaptiveBacktrack(void *uniform _self, const uniform float &value)
+{
+  uniform Volume *uniform self = (uniform Volume *uniform)_self;
+  self->adaptiveBacktrack = value;
+}
+
 export void Volume_setSamplingRate(void *uniform _self, const uniform float value)
 {
   uniform Volume *uniform self = (uniform Volume *uniform)_self;
   self->samplingRate = value;
+}
+
+export void Volume_setSpecular(void *uniform _self, const uniform vec3f &value)
+{
+  uniform Volume *uniform self = (uniform Volume *uniform)_self;
+  self->specular = value;
 }
 
 export void Volume_setTransferFunction(void *uniform _self, void *uniform value)

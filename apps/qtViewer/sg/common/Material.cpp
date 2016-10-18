@@ -22,28 +22,35 @@
 namespace ospray {
   namespace sg {
 
+    /*! constructor */
+    Material::Material()
+      : ospMaterial(NULL),
+        name(""),
+        type("")
+    {
+    }
+
     void Material::render(RenderContext &ctx)
     {
       if (ospMaterial) return;
       
       ospMaterial = ospNewMaterial(ctx.integrator->getOSPHandle(), type.c_str());
-      
+
       //We failed to create a material of the given type, handle it
       if (!ospMaterial) {
         std::cerr << "Warning: Could not create material type '" << type << "'. Replacing with default material." << std::endl;
         //Replace with default
         static OSPMaterial defaultMaterial = NULL;
-        if (defaultMaterial) {
-          ospMaterial = defaultMaterial;
-          return;
+        if (!defaultMaterial) {
+          defaultMaterial = ospNewMaterial(ctx.integrator->getOSPHandle(), "default");
+          vec3f kd(.7f);
+          vec3f ks(.3f);
+          ospSet3fv(defaultMaterial, "Kd", &kd.x);
+          ospSet3fv(defaultMaterial, "Ks", &ks.x);
+          ospSet1f(defaultMaterial, "Ns", 99.f);
+          ospCommit(defaultMaterial);
         }
-        defaultMaterial = ospNewMaterial(ctx.integrator->getOSPHandle(), "OBJMaterial");
-        vec3f kd(.7f);
-        vec3f ks(.3f);
-        ospSet3fv(defaultMaterial, "Kd", &kd.x);
-        ospSet3fv(defaultMaterial, "Ks", &ks.x);
-        ospSet1f(defaultMaterial, "Ns", 99.f);
-        ospCommit(defaultMaterial);
+        ospMaterial = defaultMaterial;
         return;
       }
 
@@ -92,7 +99,19 @@ namespace ospray {
             ospSet3fv(ospMaterial, itr->second->getName().c_str(), &p->value.x);
           }
           break;
+        case OSP_TEXTURE:
+          {
+            ParamT<Ref<Texture2D>> *p = (ParamT<Ref<Texture2D>>*)itr->second.ptr;
+            Texture2D *tex = p->value.ptr;
+            if (tex) {
+              tex->render(ctx);
+              if (tex->ospTexture)
+                ospSetObject(ospMaterial, itr->second->getName().c_str(), p->value->ospTexture);
+            }
+          }
+          break;
         default: //Catch not yet implemented data types
+          PRINT(itr->second->getOSPDataType());
           std::cerr << "Warning: parameter '" << itr->second->getName() << "' of material '" << name << "' had an invalid data type and will be ignored." << std::endl;
         }
       }

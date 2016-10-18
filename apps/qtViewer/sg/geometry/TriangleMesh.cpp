@@ -96,6 +96,29 @@ namespace ospray {
       if (index && index->notEmpty())
         ospSetData(ospGeometry,"index",index->getOSP());
 
+#if 1
+      OSPMaterial mat = NULL;
+      // try to generate ospray material from the sg material stored with this object
+      if (material) {
+        material->render(ctx);
+        mat = material->ospMaterial;
+      }
+      
+      // if object couldt generate a valid material, create a default one
+      if (!mat) {
+        std::cout << "#osp:sg: no material on object, creating default one" << std::endl;
+        mat = ospNewMaterial(ctx.integrator?ctx.integrator->getOSPHandle():NULL,"default");
+        assert(mat);
+        vec3f kd(.7f);
+        vec3f ks(.3f);
+        ospSet3fv(mat,"kd",&kd.x);
+        ospSet3fv(mat,"ks",&ks.x);
+        ospSet1f(mat,"Ns",99.f);
+        ospCommit(mat);
+      }
+      assert(mat);
+      ospSetMaterial(ospGeometry,mat);
+#else
       // assign a default material (for now.... eventually we might
       // want to do a 'real' material
       OSPMaterial mat = ospNewMaterial(ctx.integrator?ctx.integrator->getOSPHandle():NULL,"default");
@@ -108,6 +131,7 @@ namespace ospray {
         ospCommit(mat);
       }
       ospSetMaterial(ospGeometry,mat);
+#endif
 
       ospCommit(ospGeometry);
       ospAddGeometry(ctx.world->ospModel,ospGeometry);
@@ -156,7 +180,7 @@ namespace ospray {
       
       std::vector<OSPMaterial> ospMaterials;
       for (size_t i = 0; i < materialList.size(); i++) {
-        assert(materialList[i] != NULL);
+        assert(materialList[i].ptr != NULL);
         //If the material hasn't already been 'rendered' ensure that it is.
         materialList[i]->render(ctx);
         //Push the 'rendered' material onto the list

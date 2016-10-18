@@ -16,7 +16,6 @@ rem limitations under the License.                                           rem
 rem ======================================================================== rem
 
 setlocal
-rem set TBB_PATH_LOCAL=%cd%\tbb
 
 md build_release
 cd build_release
@@ -24,12 +23,11 @@ cd build_release
 rem set release settings
 cmake -L ^
 -G "Visual Studio 12 2013 Win64" ^
--T "Intel C++ Compiler 16.0" ^
+-T "Intel C++ Compiler 17.0" ^
 -D OSPRAY_ZIP_MODE=OFF ^
 -D OSPRAY_BUILD_ISA=ALL ^
 -D OSPRAY_BUILD_MIC_SUPPORT=OFF ^
 -D OSPRAY_USE_EXTERNAL_EMBREE=ON ^
--D embree_DIR=..\..\embree\lib\cmake\embree-2.9.0 ^
 -D USE_IMAGE_MAGICK=OFF ^
 -D CMAKE_INSTALL_INCLUDEDIR=include ^
 -D CMAKE_INSTALL_LIBDIR=lib ^
@@ -37,15 +35,17 @@ cmake -L ^
 -D CMAKE_INSTALL_DOCDIR=doc ^
 -D CMAKE_INSTALL_BINDIR=bin ^
 ..
-rem -D TBB_ROOT=%TBB_PATH_LOCAL% ^
+if %ERRORLEVEL% GEQ 1 goto abort
 
 rem compile and create installers
 # option '--clean-first' somehow conflicts with options after '--' for msbuild
 cmake --build . --config Release --target PACKAGE -- /m /nologo
+if %ERRORLEVEL% GEQ 1 goto abort
 
 rem create ZIP files
 cmake -D OSPRAY_ZIP_MODE=ON ..
 cmake --build . --config Release --target PACKAGE -- /m /nologo
+if %ERRORLEVEL% GEQ 1 goto abort
 
 cd ..
 

@@ -167,9 +167,21 @@ namespace ospray {
 
   size_t sizeOf(const OSPDataType type) {
     switch (type) {
-    case OSP_VOID_PTR:  return sizeof(void *);
-    case OSP_OBJECT:    return sizeof(void *);
-    case OSP_DATA:      return sizeof(void *);
+    case OSP_VOID_PTR:
+    case OSP_OBJECT:
+    case OSP_CAMERA:
+    case OSP_DATA:
+    case OSP_FRAMEBUFFER:
+    case OSP_GEOMETRY:
+    case OSP_LIGHT:
+    case OSP_MATERIAL:
+    case OSP_MODEL:
+    case OSP_RENDERER:
+    case OSP_TEXTURE:
+    case OSP_TRANSFER_FUNCTION:
+    case OSP_VOLUME:
+    case OSP_PIXEL_OP:
+    case OSP_STRING:    return sizeof(void *);
     case OSP_CHAR:      return sizeof(int8);
     case OSP_UCHAR:     return sizeof(uint8);
     case OSP_UCHAR2:    return sizeof(vec2uc);
@@ -198,7 +210,6 @@ namespace ospray {
     case OSP_FLOAT4:    return sizeof(vec4f);
     case OSP_FLOAT3A:   return sizeof(vec3fa);
     case OSP_DOUBLE:    return sizeof(double);
-    default: break;
     };
 
     std::stringstream error;
@@ -213,8 +224,8 @@ namespace ospray {
     if (strcmp(string, "double") == 0) return(OSP_DOUBLE);
     if (strcmp(string, "float" ) == 0) return(OSP_FLOAT);
     if (strcmp(string, "float2") == 0) return(OSP_FLOAT2);
-    if (strcmp(string, "float3") == 0) return(OSP_FLOAT2);
-    if (strcmp(string, "float4") == 0) return(OSP_FLOAT2);
+    if (strcmp(string, "float3") == 0) return(OSP_FLOAT3);
+    if (strcmp(string, "float4") == 0) return(OSP_FLOAT4);
     if (strcmp(string, "int"   ) == 0) return(OSP_INT);
     if (strcmp(string, "int2"  ) == 0) return(OSP_INT2);
     if (strcmp(string, "int3"  ) == 0) return(OSP_INT3);

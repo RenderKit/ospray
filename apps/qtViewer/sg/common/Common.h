@@ -63,16 +63,6 @@ namespace ospray {
         'integrator' */
     struct Integrator;
 
-    /*! @{ helper functions for parsing xml nodes */
-
-    //! parse vec3i from std::string (typically an xml-node's content string) 
-    vec2i parseVec2i(const std::string &text);
-
-    //! parse vec3i from std::string (typically an xml-node's content string) 
-    vec3i parseVec3i(const std::string &text);
-
-    /*! @} */
-
     //! map the given file to memory and return that pointer
     const unsigned char * mapFile(const std::string &fileName);
 

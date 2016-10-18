@@ -1,6 +1,53 @@
 Version History
 ---------------
 
+### Changes in v1.1.0:
+
+-   New "scivis" renderer features
+    -   Single sided lighting (enabled by default)
+    -   Many new volume rendering specific features
+        -   Adaptive sampling to help improve the correctness of
+            rendering high frequency volume data
+        -   Pre-integration of transfer function for higher fidelity
+            images
+        -   Ambient occlusion
+        -   Volumes can cast shadows
+        -   Smooth shading in volumes
+        -   Single shading point option for accelerated shading
+-   Add preliminary support for adaptive accumulation in the MPI device
+-   Camera specific features
+    -   Initial support for stereo rendering with the perspective camera
+    -   Option `architectural` in perspective camera, rectifying
+        vertical edges to appear parallel
+    -   Rendering a subsection of the full view with
+        `imageStart`/`imageEnd` supported by all cameras
+-   This will be our last release supporting the first generation Intel®
+    Xeon Phi™ coprocessor (codename Knights Corner)
+    -   Future major and minor releases will be upgraded to the latest
+        version of Embree, which no longer supports Knights Corner
+    -   Depending on user feedback, patch releases are still made to
+        fix bugs
+-   Enhanced output statistics in `ospBenchmark` application
+-   Many fixes to the OSPRay SDK
+    -   Improved CMake detection of compile-time enabled features
+    -   Now distribute OSPRay configuration and ISPC CMake macros
+    -   Improved SDK support on Windows
+-   OSPRay library can now be compiled with `-Wall` and `-Wextra` enabled
+    -   Tested with GCC v5.3.1 and Clang v3.8
+    -   Sample applications and modules have not been fixed yet, thus
+        applications which build OSPRay as a CMake subproject should
+        disable them with `-DOSPRAY_ENABLE_APPS=OFF` and
+        `-DOSPRAY_ENABLE_MODULES=OFF`
+-   Minor bug fixes, improvements, and cleanups
+    -   Regard shading normal when bump mapping
+    -   Fix internal CMake naming inconsistencies in macros
+    -   Fix missing API calls in C++ wrapper classes
+    -   Fix crashes on MIC
+    -   Fix thread count initialization bug with TBB
+    -   CMake optimizations for faster configuration times
+    -   Enhanced support for scripting in both `ospGlutViewer` and
+        `ospBenchmark` applications
+
 ### Changes in v1.0.0:
 
 -   New OSPRay 'SDK'
@@ -16,7 +63,7 @@ Version History
             where multiple wrappers will share the same underlying
             handle when assigned, copied, or moved
         -   New OSPRay objects are only created when a class instance is
-            explicity constructed
+            explicitly constructed
         -   C++ users are encouraged to use these over the `ospray.h`
             API
 -   Complete rework of sample applications
@@ -33,13 +80,13 @@ Version History
             Intel C++ compiler (icc))
     -   Enhanced support of sample applications on Windows
 -   New minimum ISPC version is 1.9.0
--   Support of Intel® AVX-512 for second generation Intel® Xeon Phi™
+-   Support of Intel® AVX-512 for second generation Intel Xeon Phi
     processor (codename Knights Landing) is now a part of the
     `OSPRAY_BUILD_ISA` CMake build configuration
     -   Compiling AVX-512 requires icc to be enabled as a build option
 -   Enhanced error messages when `ospLoadModule()` fails
 -   Added `OSP_FB_RGBA32F` support in the `DistributedFrameBuffer`
--   Updated Glass shader in the PathTracer
+-   Updated Glass shader in the path tracer
 -   Many miscellaneous cleanups, bugfixes, and improvements
 
 ### Changes in v0.10.1:
@@ -78,7 +125,7 @@ Version History
 -   OSPRay can now use a newer, pre-installed Embree enabled by the new
     `OSPRAY_USE_EXTERNAL_EMBREE` CMake option
 -   New `ospcommon` library used to separately provide math types and OS
-    abstractions for both OSPRay and sample apps
+    abstractions for both OSPRay and sample applications
     -   Removes extra dependencies on internal Embree math types and
         utility functions
     -   `ospray.h` header is now C99 compatible
@@ -136,7 +183,7 @@ changes.
     standard library versions (GCC v4.8.0)
 -   Optimization of volume sampling resulting in volume rendering
     speedups of up to 1.5x
--   Updates to pathtracer
+-   Updates to path tracer
     -   Reworked material system
     -   Added texture transformations and colored transparency in OBJ
         material

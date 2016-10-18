@@ -53,21 +53,22 @@ static void writePPM(const string &fileName, const int sizeX, const int sizeY,
 
 namespace ospray {
 
-OSPGlutViewer::OSPGlutViewer(const box3f &worldBounds, cpp::Model model,
+OSPGlutViewer::OSPGlutViewer(const std::deque<box3f> &worldBounds, std::deque<cpp::Model> model,
                              cpp::Renderer renderer, cpp::Camera camera)
   : Glut3DWidget(Glut3DWidget::FRAMEBUFFER_NONE),
-    sceneModel(model),
+    sceneModels(model),
     frameBuffer(nullptr),
     renderer(renderer),
     camera(camera),
     queuedRenderer(nullptr),
     alwaysRedraw(true),
-    fullScreen(false)
+    fullScreen(false),
+    worldBounds(worldBounds)
 {
-  setWorldBounds(worldBounds);
+  setWorldBounds(worldBounds[0]);
 
-  renderer.set("world",  sceneModel);
-  renderer.set("model",  sceneModel);
+  renderer.set("world",  sceneModels[0]);
+  renderer.set("model",  sceneModels[0]);
   renderer.set("camera", camera);
   renderer.commit();
 
@@ -77,6 +78,11 @@ OSPGlutViewer::OSPGlutViewer(const box3f &worldBounds, cpp::Model model,
 #endif
 
   resetAccum = false;
+  frameTimer = ospcommon::getSysTime();
+  animationTimer = 0.;
+  animationFrameDelta = .15;
+  animationFrameId = 0;
+  animationPaused = false;
 }
 
 void OSPGlutViewer::setRenderer(OSPRenderer renderer)
@@ -142,6 +148,15 @@ void OSPGlutViewer::reshape(const vec2i &newSize)
 void OSPGlutViewer::keypress(char key, const vec2i &where)
 {
   switch (key) {
+  case ' ':
+    animationPaused = !animationPaused;
+    break;
+  case '=':
+    animationFrameDelta = max(animationFrameDelta-0.01, 0.0001); 
+    break;
+  case '-':
+    animationFrameDelta = min(animationFrameDelta+0.01, 1.0); 
+    break;
   case 'R':
     alwaysRedraw = !alwaysRedraw;
     forceRedraw();
@@ -175,6 +190,9 @@ void OSPGlutViewer::keypress(char key, const vec2i &where)
     }
     viewPort.modified = true;
     forceRedraw();
+    break;
+  case 'c':
+    viewPort.modified = true;//Reset accumulation
     break;
   case 'f':
     toggleFullscreen();
@@ -293,6 +311,27 @@ void OSPGlutViewer::switchRenderers()
     renderer = queuedRenderer;
     queuedRenderer = nullptr;
     frameBuffer.clear(OSP_FB_ACCUM);
+  }
+}
+
+void OSPGlutViewer::updateAnimation(double deltaSeconds)
+{
+  if (sceneModels.size() < 2)
+    return;
+  if (animationPaused)
+    return;
+  animationTimer += deltaSeconds;
+  if (animationTimer > animationFrameDelta)
+  {
+    animationFrameId++;
+    //set animation time to remainder off of delta 
+    animationTimer = animationTimer - int(animationTimer/deltaSeconds)*deltaSeconds;
+
+    size_t dataFrameId = animationFrameId%sceneModels.size();
+    renderer.set("world",  sceneModels[dataFrameId]);
+    renderer.set("model",  sceneModels[dataFrameId]);
+    renderer.commit();
+    resetAccumulation();
   }
 }
 

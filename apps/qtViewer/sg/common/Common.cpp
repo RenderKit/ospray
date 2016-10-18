@@ -35,26 +35,6 @@
 namespace ospray {
   namespace sg {
 
-    //! parse vec3i from std::string (typically an xml-node's content string) 
-    vec3i parseVec3i(const std::string &text) 
-    { 
-      vec3i ret; 
-      int rc = sscanf(text.c_str(),"%i %i %i",&ret.x,&ret.y,&ret.z); 
-      (void)rc;
-      assert(rc == 3); 
-      return ret; 
-    }
-    
-    //! parse vec2i from std::string (typically an xml-node's content string) 
-    vec2i parseVec2i(const std::string &text) 
-    { 
-      vec2i ret; 
-      int rc = sscanf(text.c_str(),"%i %i",&ret.x,&ret.y); 
-      (void)rc;
-      assert(rc == 2);
-      return ret; 
-    }
-
     const unsigned char * mapFile(const std::string &fileName)
     {
       FILE *file = fopen(fileName.c_str(), "rb");

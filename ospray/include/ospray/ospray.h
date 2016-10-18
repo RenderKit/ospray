@@ -249,7 +249,7 @@ extern "C" {
 #endif
 
   //! initialize the ospray engine (for single-node user application)
-  OSPRAY_INTERFACE void ospInit(int *ac, const char **av);
+  OSPRAY_INTERFACE void ospInit(int *argc, const char **argv);
 
   //! \brief allows for switching the MPI mode btween collaborative, mastered, and independent
   OSPRAY_INTERFACE void ospdApiMode(OSPDApiMode);
@@ -334,7 +334,7 @@ extern "C" {
 
   //! \brief create a new transfer function of given type
   /*! \detailed return 'NULL' if that type is not known */
-  OSPRAY_INTERFACE OSPTransferFunction ospNewTransferFunction(const char * type);
+  OSPRAY_INTERFACE OSPTransferFunction ospNewTransferFunction(const char *type);
 
   //! \brief create a new Texture2D with the given parameters
   /*! \detailed return 'NULL' if the texture could not be created with the given parameters */
@@ -369,7 +369,7 @@ extern "C" {
 
     Valid flags that can be OR'ed together into the flags value:
     - OSP_DATA_SHARED_BUFFER: indicates that the buffer can be shared with the app.
-    In this case the calling program guarantees that the 'init' pointer will remain
+    In this case the calling program guarantees that the 'source' pointer will remain
     valid for the duration that this data array is being used.
   */
   OSPRAY_INTERFACE OSPData ospNewData(size_t numItems,

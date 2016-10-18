@@ -594,12 +594,16 @@ bool StreamLineSceneParser::parse(int ac, const char **&av)
   return loadedScene;
 }
 
-cpp::Model StreamLineSceneParser::model() const
+std::deque<cpp::Model> StreamLineSceneParser::model() const
 {
-  return sceneModel.get() == nullptr ? cpp::Model() : *sceneModel;
+  std::deque<ospray::cpp::Model> models;
+  models.push_back(sceneModel.get() == nullptr ? cpp::Model() : *sceneModel);
+  return models;
 }
 
-box3f StreamLineSceneParser::bbox() const
+std::deque<box3f> StreamLineSceneParser::bbox() const
 {
-  return sceneBbox;
+  std::deque<ospcommon::box3f> boxes;
+  boxes.push_back(sceneBbox);
+  return boxes;
 }

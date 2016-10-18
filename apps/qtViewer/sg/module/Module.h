@@ -29,16 +29,22 @@ namespace ospray {
         load a scene graph module */
     void loadModule(const std::string &moduleName);
 
-    /*! use this macro in a loadable module to register a new node
-        type (defined in this module) to the scene graph */
-#define OSPRAY_SG_REGISTER_NODE(className) \
-    void foo() { notImplemented(); }
-
     /*! use this macro in a loadable module to properly define this
         module to the scene graph. Make sure to follow this
         declaration with a function body that does the actual
-        initialization of this module. */
-#define OSPRAY_SG_DECLARE_MODULE(moduleName) \
+        initialization of this module. OLD NAMING SCHEME */
+#define OSPRAY_SG_DECLARE_MODULE(moduleName)            \
+    extern "C" void ospray_sg_##moduleName##_init()
+
+    
+    /*! use this macro in a loadable module to properly define this
+        module to the scene graph. Make sure to follow this
+        declaration with a function body that does the actual
+        initialization of this module. 
+
+        Note: NEW NAMING SCHEME to make it consistent with
+        OSP_SG_REGISTER_NODE macro */
+#define OSP_SG_REGISTER_MODULE(moduleName)            \
     extern "C" void ospray_sg_##moduleName##_init()
 
   }

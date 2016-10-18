@@ -120,7 +120,8 @@ namespace ospray {
         throw std::runtime_error("could not parse .dat.xyz header in input file "+fileName);
       
       char line[10000]; 
-      fgets(line,10000,file); // description line
+      if (!fgets(line,10000,file))
+        throw std::runtime_error("could not fgets");
 
       std::cout << "#" << fileName << " (.dat.xyz format): expecting " << numAtoms << " atoms" << std::endl;
       for (int i=0;i<numAtoms;i++) {

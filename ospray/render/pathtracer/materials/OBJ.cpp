@@ -25,12 +25,12 @@ namespace ospray {
       //! \brief common function to help printf-debugging 
       /*! Every derived class should overrride this! */
       virtual std::string toString() const { return "ospray::pathtracer::OBJMaterial"; }
-      
+
       //! \brief commit the material's parameters
       virtual void commit() {
         if (getIE() == NULL)
           ispcEquivalent = ispc::PathTracer_OBJ_create();
-       
+
           Texture2D *map_d  = (Texture2D*)getParamObject("map_d", NULL);
           affine2f xform_d  = getTextureTransform("map_d");
           Texture2D *map_Kd = (Texture2D*)getParamObject("map_Kd", getParamObject("map_kd",  getParamObject("colorMap", NULL)));

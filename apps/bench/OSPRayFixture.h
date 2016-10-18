@@ -23,6 +23,8 @@
 #include <ospray_cpp/Model.h>
 #include <ospray_cpp/Renderer.h>
 
+#include <deque>
+
 namespace bench {
 void writePPM(const std::string &fileName, const int sizeX, const int sizeY,
               const uint32_t *pixel);
@@ -36,7 +38,7 @@ struct OSPRayFixture {
   // warm up frames = 10
   // benchmark frames = 100
   OSPRayFixture(ospray::cpp::Renderer renderer, ospray::cpp::Camera camera,
-                ospray::cpp::Model model);
+                 ospray::cpp::Model model);
   // Benchmark the scene, passing no params (or 0 for warmUpFrames or benchFrames) will
   // use the default configuration stored in the fixture, e.g. what was parsed from
   // the command line.
@@ -45,8 +47,9 @@ struct OSPRayFixture {
   // for you.
   void saveImage(const std::string &fname);
   // Change the framebuffer dimensions for the benchmark. If either is 0, the previously
-  // set width or height will be used accordingly.
-  void setFrameBufferDims(const int w = 0, const int h = 0);
+  // set width or height will be used accordingly. Can also change the framebuffer flags used
+  // to enable/disable accumulation.
+  void setFrameBuffer(const int w = 0, const int h = 0, const int fbFlags = OSP_FB_COLOR | OSP_FB_ACCUM);
 
   ospray::cpp::Renderer renderer;
   ospray::cpp::Camera camera;
@@ -62,5 +65,6 @@ private:
 
   int width;
   int height;
+  int framebufferFlags;
 };
 

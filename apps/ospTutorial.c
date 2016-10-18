@@ -54,7 +54,7 @@ void writePPM(const char *fileName,
 }
 
 
-int main(int ac, const char **av) {
+int main(int argc, const char **argv) {
   // image size
   osp_vec2i imgSize;
   imgSize.x = 1024; // width
@@ -79,7 +79,7 @@ int main(int ac, const char **av) {
 
 
   // initialize OSPRay; OSPRay parses (and removes) its commandline parameters, e.g. "--osp:debug"
-  ospInit(&ac, av);
+  ospInit(&argc, argv);
 
   // create and setup camera
   OSPCamera camera = ospNewCamera("perspective");
@@ -112,12 +112,20 @@ int main(int ac, const char **av) {
   ospCommit(world);
 
 
-  // create and setup renderer
+  // create renderer
   OSPRenderer renderer = ospNewRenderer("scivis"); // choose Scientific Visualization renderer
-  ospSet1f(renderer, "aoWeight", 1.0f);            // with full Ambient Occlusion
+
+  // create and setup light for Ambient Occlusion
+  OSPLight light = ospNewLight(renderer, "ambient");
+  ospCommit(light);
+  OSPData lights = ospNewData(1, OSP_LIGHT, &light, 0);
+  ospCommit(lights);
+
+  // complete setup of renderer
   ospSet1i(renderer, "aoSamples", 1);
   ospSetObject(renderer, "model",  world);
   ospSetObject(renderer, "camera", camera);
+  ospSetObject(renderer, "lights", lights);
   ospCommit(renderer);
 
 
