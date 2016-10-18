@@ -423,10 +423,10 @@ namespace ospray {
     }
 
     MPIDevice::~MPIDevice() {
-      printf("shutting down mpi device\n");
-      rtcDeleteDevice(g_embreeDevice);
+      std::cout << "shutting down mpi device" << std::endl;
       work::CommandFinalize work;
       processWork(&work);
+      rtcDeleteDevice(g_embreeDevice);
     }
 
 
@@ -1034,9 +1034,7 @@ namespace ospray {
         }
       }
       // TODO: In mastered mode we want to selectively run commands maybe!?
-      //else {
-        work->run();
-      //}
+      work->run();
     }
 
     ObjectHandle MPIDevice::allocateHandle() const {

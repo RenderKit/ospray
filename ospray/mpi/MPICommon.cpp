@@ -60,15 +60,22 @@ namespace ospray {
     }
 
 
-    //TODO: put in management class
-    work::SerialBuffer sendBuffer(1024*2*16);
+    // TODO: put in management class
+    // The management class should be a shared ptr counted global so that anyone
+    // using it can clone the ptr and keep it alive as long as needed. This will
+    // let us avoid the static/global destruction ordering issue that was causing
+    // the segfault.
+    static work::SerialBuffer *sendBuffer = nullptr;//(1024*2*16);
     Address sendAddress;
     size_t sendSizeIndex=0;
     size_t sendWorkIndex=0;
     int sendNumMessages = 0;
     void send(const Address& addr, work::Work* work)
     {
-      work::SerialBuffer& buf = sendBuffer;
+      if (!sendBuffer) {
+        sendBuffer = new work::SerialBuffer(1024 * 2 * 16);
+      }
+      work::SerialBuffer& buf = *sendBuffer;
       int indicator = -1;
       // MPI_CALL(Bcast(&indicator, 1, MPI_INT, MPI_ROOT, mpi::worker.comm));
       // The packed buffer format is:
@@ -82,7 +89,7 @@ namespace ospray {
         buf << size_t(0) << int(1);
         sendWorkIndex = buf.getIndex();
       }
-      buf  << work->getTag() << *work;
+      buf << work->getTag() << *work;
       sendNumMessages++;
       // TODO: This is assuming we're always sending to the same place
       if (sendAddress.group != NULL && sendAddress != addr) {
@@ -113,7 +120,7 @@ namespace ospray {
       sendNumMessages=0;
     }
 
-    work::SerialBuffer recvBuffer(1024*2*16);
+    static work::SerialBuffer recvBuffer(1024*2*16);
     void recv(const Address& addr, std::vector<work::Work*>& workCommands)
     {
       work::SerialBuffer& buf = recvBuffer;
@@ -144,7 +151,7 @@ namespace ospray {
 
     void flush()
     {
-      internalSendBuffer(sendAddress, sendBuffer);
+      internalSendBuffer(sendAddress, *sendBuffer);
     }
 
     void barrier(const Group& group) { flush(); MPI_Barrier(group.comm); }
