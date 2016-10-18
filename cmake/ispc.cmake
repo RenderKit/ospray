@@ -68,14 +68,7 @@ IF(NOT ISPC_VERSION)
   MARK_AS_ADVANCED(ISPC_EXECUTABLE)
 ENDIF()
 
-# warn about recommended ISPC version on KNC
-IF (OSPRAY_MIC AND NOT ISPC_VERSION VERSION_EQUAL ISPC_VERSION_RECOMMENDED_KNC)
-  OSPRAY_WARN_ONCE(KNC_ISPC_VERSION
-    "Use of ISPC v${ISPC_VERSION_RECOMMENDED_KNC} is recommended on KNC.")
-ENDIF()
-
 GET_FILENAME_COMPONENT(ISPC_DIR ${ISPC_EXECUTABLE} PATH)
-
 
 
 # ##################################################################
@@ -91,20 +84,8 @@ MACRO (OSPRAY_ISPC_COMPILE)
   SET(ISPC_ADDITIONAL_ARGS "")
   SET(ISPC_TARGETS ${OSPRAY_ISPC_TARGET_LIST})
 
-  IF (THIS_IS_MIC)
-    SET(ISPC_TARGET_EXT .cpp)
-    SET(ISPC_TARGET_ARGS generic-16)
-    SET(ISPC_ADDITIONAL_ARGS
-      ${ISPC_ADDITIONAL_ARGS}
-      -DOSPRAY_TARGET_MIC
-      --opt=force-aligned-memory
-      --emit-c++
-      --c++-include-file=${PROJECT_SOURCE_DIR}/ospray/common/ISPC_KNC_Backend.h
-    )
-  ELSE()
-    SET(ISPC_TARGET_EXT ${CMAKE_CXX_OUTPUT_EXTENSION})
-    STRING(REPLACE ";" "," ISPC_TARGET_ARGS "${ISPC_TARGETS}")
-  ENDIF()
+  SET(ISPC_TARGET_EXT ${CMAKE_CXX_OUTPUT_EXTENSION})
+  STRING(REPLACE ";" "," ISPC_TARGET_ARGS "${ISPC_TARGETS}")
 
   IF (CMAKE_SIZEOF_VOID_P EQUAL 8)
     SET(ISPC_ARCHITECTURE "x86-64")
@@ -166,23 +147,21 @@ MACRO (OSPRAY_ISPC_COMPILE)
     SET(results "${outdir}/${fname}.dev${ISPC_TARGET_EXT}")
 
     # if we have multiple targets add additional object files
-    IF (NOT THIS_IS_MIC)
-      LIST(LENGTH ISPC_TARGETS NUM_TARGETS)
-      IF (NUM_TARGETS EQUAL 1)
-        # workaround link issues to Embree ISPC exports:
-        # we add a 2nd target to force ISPC to add the ISA suffix during name
-        # mangling
-        SET(ISPC_TARGET_ARGS "${ISPC_TARGETS},sse2") 
-        LIST(APPEND ISPC_TARGETS sse2)
-      ENDIF()
-      FOREACH(target ${ISPC_TARGETS})
-        # in v1.9.0 ISPC changed the ISA suffix of avx512knl-i32x16 to just 'avx512knl'
-        IF (${target} STREQUAL "avx512knl-i32x16" AND NOT ISPC_VERSION VERSION_LESS "1.9.0")
-          SET(target "avx512knl")
-        ENDIF()
-        SET(results ${results} "${outdir}/${fname}.dev_${target}${ISPC_TARGET_EXT}")
-      ENDFOREACH()
+    LIST(LENGTH ISPC_TARGETS NUM_TARGETS)
+    IF (NUM_TARGETS EQUAL 1)
+      # workaround link issues to Embree ISPC exports:
+      # we add a 2nd target to force ISPC to add the ISA suffix during name
+      # mangling
+      SET(ISPC_TARGET_ARGS "${ISPC_TARGETS},sse2")
+      LIST(APPEND ISPC_TARGETS sse2)
     ENDIF()
+    FOREACH(target ${ISPC_TARGETS})
+      # in v1.9.0 ISPC changed the ISA suffix of avx512knl-i32x16 to just 'avx512knl'
+      IF (${target} STREQUAL "avx512knl-i32x16" AND NOT ISPC_VERSION VERSION_LESS "1.9.0")
+        SET(target "avx512knl")
+      ENDIF()
+      SET(results ${results} "${outdir}/${fname}.dev_${target}${ISPC_TARGET_EXT}")
+    ENDFOREACH()
 
     ADD_CUSTOM_COMMAND(
       OUTPUT ${results} ${ISPC_TARGET_DIR}/${fname}_ispc.h

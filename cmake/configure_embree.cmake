@@ -51,12 +51,6 @@ IF(OSPRAY_USE_EXTERNAL_EMBREE)
   FIND_PACKAGE(embree ${EMBREE_VERSION_REQUIRED} REQUIRED)
   SET(LAST_CONFIG_USED_EXTERNAL_EMBREE ON CACHE INTERNAL "" FORCE)
 
-  IF(OSPRAY_MIC AND NOT EMBREE_VERSION VERSION_LESS "2.10.0")
-    MESSAGE(FATAL_ERROR "The found Embree version ${EMBREE_VERSION} does not"
-            " support KNC anymore. Either disable the OSPRAY_BUILD_MIC_SUPPORT"
-            " option or use an Embree v2.9 or earlier.")
-  ENDIF()
-
   # NOTE(jda) - EMBREE_LIBRARIES is not defined until at lest v2.10.0, for now
   #             create a "faked" EMBREE_LIBRARIES until we set our min version
   #             to >= 2.10.0 of Embree
@@ -115,19 +109,15 @@ ELSE(OSPRAY_USE_EXTERNAL_EMBREE)
 
   # NOTE(jda) - Embree assumes that OSPRAY_TASKING_TBB will be defined correctly
   #             in CONFIGURE_TASKING_SYSTEM()
-  # NOTE(jda) - Only do the Embree include once (Xeon), it will build both
-  #             Xeon and MIC code if both are enabled.
-  IF (NOT THIS_IS_MIC)
-    SET(EMBREE_ISA_SUPPORTS_AVX    TRUE)
-    SET(EMBREE_ISA_SUPPORTS_AVX2   TRUE)
-    SET(EMBREE_ISA_SUPPORTS_AVX512 TRUE)
+  SET(EMBREE_ISA_SUPPORTS_AVX    TRUE)
+  SET(EMBREE_ISA_SUPPORTS_AVX2   TRUE)
+  SET(EMBREE_ISA_SUPPORTS_AVX512 TRUE)
 
-    # Configure OSPRay ISA before building internal Embree so we know what ISA
-    # for Embree to build.
-    OSPRAY_CONFIGURE_ISPC_ISA()
+  # Configure OSPRay ISA before building internal Embree so we know what ISA
+  # for Embree to build.
+  OSPRAY_CONFIGURE_ISPC_ISA()
 
-    INCLUDE(build_embree)
-  ENDIF()
+  INCLUDE(build_embree)
   SET(EMBREE_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/ospray/embree-v2.7.1/include)
   SET(EMBREE_LIBRARY embree)
   SET(EMBREE_LIBRARIES ${EMBREE_LIBRARY})
@@ -140,8 +130,4 @@ ENDIF(OSPRAY_USE_EXTERNAL_EMBREE)
 IF (OSPRAY_USE_EXTERNAL_EMBREE AND NOT WIN32 AND OSPRAY_ZIP_MODE)
   INSTALL(PROGRAMS ${EMBREE_LIBRARY}
           DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib) # /intel64?
-  IF(OSPRAY_MIC)
-    INSTALL(PROGRAMS ${EMBREE_LIBRARY_XEONPHI}
-            DESTINATION ${CMAKE_INSTALL_LIBDIR}/mic COMPONENT lib_mic)
-  ENDIF()
 ENDIF()
