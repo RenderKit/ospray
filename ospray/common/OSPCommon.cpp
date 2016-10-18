@@ -92,14 +92,10 @@ namespace ospray {
 
   void init(int *_ac, const char ***_av)
   {
-#ifndef OSPRAY_TARGET_MIC
-    // If we're not on a MIC, check for SSE4.1 as minimum supported ISA. Will
-    // be increased to SSE4.2 in future.
     int cpuFeatures = ospcommon::getCPUFeatures();
     if ((cpuFeatures & ospcommon::CPU_FEATURE_SSE41) == 0)
       throw std::runtime_error("Error. OSPRay only runs on CPUs that support"
                                " at least SSE4.1.");
-#endif
 
     if (_ac && _av) {
       int &ac = *_ac;

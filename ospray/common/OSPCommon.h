@@ -101,13 +101,6 @@ namespace ospray {
 #endif
 #define OSPRAY_SDK_INTERFACE OSPRAY_INTERFACE
 
-// for MIC, disable the 'variable declared bbut never referenced'
-// warning, else the ISPC-generated code produces _far_ too many such
-// outputs
-#if defined(__INTEL_COMPILER) && defined(__MIC__)
-#pragma warning(disable:177 ) // variable declared but was never referenced
-#endif
-
 namespace embree {
   void* alignedMalloc(size_t size, size_t align);
   void alignedFree(void* ptr);
@@ -123,15 +116,6 @@ namespace embree {
   void operator delete(void* ptr) { alignedFree(ptr); }                 \
   void* operator new[](size_t size) { return alignedMalloc(size,align); } \
   void operator delete[](void* ptr) { alignedFree(ptr); }               \
-
-// #if defined(__MIC__)
-// #pragma message("using aligned opeartor new (this is knc, right!?)...")
-// void* operator new(size_t size) { return embree::alignedMalloc(size); }
-// void operator delete(void* ptr) { embree::alignedFree(ptr); }
-// void* operator new[](size_t size) throws { return embree::alignedMalloc(size); }
-// void operator delete[](void* ptr) { embree::alignedFree(ptr); }
-// #endif
-
 
 //! main namespace for all things ospray (for internal code)
 namespace ospray {

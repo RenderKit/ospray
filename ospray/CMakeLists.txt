@@ -82,7 +82,6 @@ SET(OSPRAY_SOURCES
   common/OSPCommon.ispc
   common/OSPCommon.cpp
   common/Core.cpp
-  common/ISPC_KNC_Backend.h
   common/ISPC_KNL_Backend.h
   common/Managed.cpp
   common/ObjectHandle.cpp
