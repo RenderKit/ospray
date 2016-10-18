@@ -54,7 +54,7 @@ void writePPM(const char *fileName,
 }
 
 
-int main(int ac, const char **av) {
+int main(int argc, const char **argv) {
   // image size
   osp::vec2i imgSize;
   imgSize.x = 1024; // width
@@ -79,7 +79,7 @@ int main(int ac, const char **av) {
 
 
   // initialize OSPRay; OSPRay parses (and removes) its commandline parameters, e.g. "--osp:debug"
-  ospInit(&ac, av);
+  ospInit(&argc, argv);
 
   // create and setup camera
   OSPCamera camera = ospNewCamera("perspective");

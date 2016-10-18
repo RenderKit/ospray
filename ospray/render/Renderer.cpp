@@ -45,8 +45,8 @@ namespace ospray {
       if (maxDepthTexture->type != OSP_TEXTURE_R32F
           || !(maxDepthTexture->flags & OSP_TEXTURE_FILTER_NEAREST)) {
         static WarnOnce warning("expected maxDepthTexture provided to the "
-                                "renderer to be type OSP_FLOAT and have the "
-                                "OSP_TEXTURE_FILTER_NEAREST flag");
+                                "renderer to be type OSP_TEXTURE_R32F and have "
+                                "the OSP_TEXTURE_FILTER_NEAREST flag");
       }
     }
 

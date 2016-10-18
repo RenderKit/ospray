@@ -24,7 +24,7 @@ namespace ospray {
 
   struct FrameBuffer;
 
-  /*! \brief base abstraction for a a "Pixel Op" to be performed for
+  /*! \brief base abstraction for a "Pixel Op" to be performed for
       every pixel that gets written into a frame buffer.
 
       A PixelOp is basically a "hook" that allows to inject arbitrary
