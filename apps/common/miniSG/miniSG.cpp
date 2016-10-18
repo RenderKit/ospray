@@ -51,13 +51,6 @@ namespace ospray {
       std::string path = _path;
       FileName fileName = path+"/"+fileNameBase;
 
-      if (fileNameBase.size() > 0) {
-        if (fileNameBase.substr(0,1) == "/") {// Absolute path.
-          fileName = fileNameBase;
-          path = "";
-        }
-      }
-
       static std::map<std::string,Texture2D*> textureCache;
       if (textureCache.find(fileName.str()) != textureCache.end())
         return textureCache[fileName.str()];
@@ -65,11 +58,20 @@ namespace ospray {
       Texture2D *tex = nullptr;
       const std::string ext = fileName.ext();
       if (ext == "ppm") {
-        try {
+        try { 
           int rc, peekchar;
 
           // open file
           FILE *file = fopen(fileName.str().c_str(),"rb");
+          if (!file)
+          {
+              if (fileNameBase.size() > 0) {
+                if (fileNameBase.substr(0,1) == "/") {// Absolute path.
+                  fileName = fileNameBase;
+                  path = "";
+                }
+              }
+          }
           const int LINESZ=10000;
           char lineBuf[LINESZ+1];
 

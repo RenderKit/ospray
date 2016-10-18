@@ -80,7 +80,7 @@ OSPGlutViewer::OSPGlutViewer(const std::deque<box3f> &worldBounds, std::deque<cp
   resetAccum = false;
   frameTimer = ospcommon::getSysTime();
   animationTimer = 0.;
-  animationFrameDelta = .15;
+  animationFrameDelta = .1;
   animationFrameId = 0;
   animationPaused = false;
 }

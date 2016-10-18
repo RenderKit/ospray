@@ -265,7 +265,7 @@ namespace ospray {
             // if (cur) g_device->rtCommit(cur);
             std::string name(token);
             material[name] = cur = new Material; //g_device->rtNewMaterial("obj");
-            //            model.material.push_back(cur);
+                       // model.mesh.materialList.push_back(cur);
             cur->name = name;
             cur->type = "OBJ";
             continue;
@@ -300,7 +300,7 @@ namespace ospray {
           if (!strncmp(token, "map_d" , 5)) { parseSepOpt(token += 5);  cur->setParam("map_d", loadTexture(path, std::string(token), true),Material::Param::TEXTURE);  continue; }
           if (!strncmp(token, "map_Ns" , 6)) { parseSepOpt(token += 6); cur->setParam("map_Ns", loadTexture(path, std::string(token), true),Material::Param::TEXTURE);  continue; }
           if (!strncmp(token, "map_Ka" , 6)) { parseSepOpt(token += 6); cur->setParam("map_Ka", loadTexture(path, std::string(token)),Material::Param::TEXTURE);  continue; }
-          if (!strncmp(token, "map_Kd" , 6)) { parseSepOpt(token += 6); cur->setParam("map_Kd", loadTexture(path, std::string(token)),Material::Param::TEXTURE);  continue; }
+          if (!strncmp(token, "map_Kd" , 6)) { parseSepOpt(token += 6); cur->setParam("map_Kd", loadTexture(path, std::string(token)),Material::Param::TEXTURE); continue; }
           if (!strncmp(token, "map_Ks" , 6)) { parseSepOpt(token += 6); cur->setParam("map_Ks", loadTexture(path, std::string(token)),Material::Param::TEXTURE);  continue; }
           /*! the following are extensions to the standard */
           if (!strncmp(token, "map_Refl" , 8)) { parseSepOpt(token += 8);  cur->setParam("map_Refl", loadTexture(path, std::string(token)),Material::Param::TEXTURE);  continue; }
@@ -392,6 +392,7 @@ namespace ospray {
       model.mesh.push_back(mesh);
       model.instance.push_back(Instance(model.mesh.size()-1));
       mesh->material = curMaterial;
+      // mesh->materialList.push_back(curMaterial);
       // merge three indices into one
       for (size_t j=0; j < curGroup.size(); j++)
         {

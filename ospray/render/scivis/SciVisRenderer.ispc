@@ -183,13 +183,13 @@ inline void shadeAO(const uniform SciVisRenderer *uniform self,
                     varying vec3f &color)
 {
   // Calculate AO contribution as ambient term
+  float ao = 1.0f;
   if (self->aoSamples > 0 && reduce_max(self->aoColor) > 0.f) {
-    float ao = 1.0f;
     if (self->aoDistance > 0.f)
       ao *= calculateAO(self, sampleID, dg);
     // Blend AO w/ diffuse term
-    color = color + (info.local_opacity * ao) * info.Kd * self->aoColor;
   }
+  color = color + (info.local_opacity * ao) * info.Kd * self->aoColor;
 }
 
 inline void shadeLights(const uniform SciVisRenderer *uniform self,
