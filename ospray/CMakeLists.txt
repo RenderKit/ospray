@@ -48,10 +48,6 @@ IF (OSPRAY_TASKING_TBB)
   ELSEIF (OSPRAY_ZIP_MODE)
     INSTALL(PROGRAMS ${TBB_LIBRARY} ${TBB_LIBRARY_MALLOC} ${TBB_LIBRARY_DEBUG} ${TBB_LIBRARY_MALLOC_DEBUG}
             DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib) # /intel64?
-    IF(OSPRAY_MIC AND TBB_FOUND_MIC)
-      INSTALL(PROGRAMS ${TBB_LIBRARIES_MIC}
-              DESTINATION ${CMAKE_INSTALL_LIBDIR}/mic COMPONENT lib_mic)
-    ENDIF()
   ENDIF()
 ENDIF()
 
@@ -86,7 +82,6 @@ SET(OSPRAY_SOURCES
   common/OSPCommon.ispc
   common/OSPCommon.cpp
   common/Core.cpp
-  common/ISPC_KNC_Backend.h
   common/ISPC_KNL_Backend.h
   common/Managed.cpp
   common/ObjectHandle.cpp
@@ -384,40 +379,10 @@ IF (OSPRAY_MPI)
   )
 ENDIF()
 
-# -------------------------------------------------------
-# COI components
-# -------------------------------------------------------
-IF (OSPRAY_BUILD_COI_DEVICE)
-  FIND_LIBRARY(LIBCOI_DEVICE libcoi_device.so
-    PATHS
-    /opt/mpss/*/sysroots/k1om-mpss-linux/usr/lib64
-    /opt/intel/mic/coi/device-linux-release/lib
-    )
-  FIND_LIBRARY(LIBCOI_HOST libcoi_host.so
-    PATHS
-    /opt/mpss/*/sysroots/k1om-mpss-linux/usr/lib64
-    /opt/intel/mic/coi/host-linux-release/lib
-    )
-  MARK_AS_ADVANCED(LIBCOI_DEVICE)
-  MARK_AS_ADVANCED(LIBCOI_HOST)
-  SET(OSPRAY_MIC_COI ON PARENT_SCOPE)
-  # NOTE(jda) - hardcoded paths (!)...use a find_package() here?
-  INCLUDE_DIRECTORIES(/opt/intel/mic/coi/include)
-  INCLUDE_DIRECTORIES(/usr/include/intel-coi)
-  IF (NOT THIS_IS_MIC)
-    SET(OSPRAY_COI_COMPONENTS api/COIDeviceHost.cpp)
-  ENDIF()
-  SET(OSPRAY_SOURCES ${OSPRAY_SOURCES} ${OSPRAY_COI_COMPONENTS})
-ENDIF()
-
 ##############################################################
 # build the ospray library (using flags and compilers as configured by
 # CONFIGURE_OSPRAY() and/or CONFIGURE_MPI()
 ##############################################################
-
-IF (THIS_IS_MIC)
-  ADD_DEFINITIONS(-DOSPRAY_TARGET_MIC)
-ENDIF()
 
 SET(OSPRAY_LIBS
   ospray_common
@@ -425,17 +390,10 @@ SET(OSPRAY_LIBS
   ${CMAKE_DL_LIBS}
 )
 
-IF (THIS_IS_MIC)
-  LIST(APPEND OSPRAY_LIBS
-    ${EMBREE_LIBRARY_XEONPHI}
-    ${TASKING_SYSTEM_LIBS_MIC}
-  )
-ELSE()
-  LIST(APPEND OSPRAY_LIBS
-    ${EMBREE_LIBRARIES}
-    ${TASKING_SYSTEM_LIBS}
-  )
-ENDIF()
+LIST(APPEND OSPRAY_LIBS
+  ${EMBREE_LIBRARIES}
+  ${TASKING_SYSTEM_LIBS}
+)
 
 IF (WIN32)
   LIST(APPEND OSPRAY_LIBS ws2_32)
@@ -449,26 +407,19 @@ IF (WIN32 AND OSPRAY_BUILD_ISA STREQUAL "ALL")
                        "/DEF:${PROJECT_SOURCE_DIR}/ospray/ospray.def")
 ENDIF()
 
-
-IF(NOT THIS_IS_MIC)
-  # build ospTutorial, for testing
-  ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial.cpp)
-  OSPRAY_EXE_LINK_LIBRARIES(ospTutorial ospray ospray_common)
-  # C version
-  ADD_EXECUTABLE(ospTutorialC ../apps/ospTutorial.c)
-  OSPRAY_EXE_LINK_LIBRARIES(ospTutorialC ospray ospray_common)
-ENDIF()
+# build ospTutorial, for testing
+ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial.cpp)
+OSPRAY_EXE_LINK_LIBRARIES(ospTutorial ospray ospray_common)
+# C version
+ADD_EXECUTABLE(ospTutorialC ../apps/ospTutorial.c)
+OSPRAY_EXE_LINK_LIBRARIES(ospTutorialC ospray ospray_common)
 
 
 ##############################################################
 # MPI DEVICE - mpi worker
 ##############################################################
 IF (OSPRAY_MPI)
-  IF (THIS_IS_MIC)
-    OSPRAY_LIBRARY_LINK_LIBRARIES(ospray ${MPI_LIBRARY_MIC})
-  ELSE()
-    OSPRAY_LIBRARY_LINK_LIBRARIES(ospray ${MPI_CXX_LIBRARIES})
-  ENDIF()
+  OSPRAY_LIBRARY_LINK_LIBRARIES(ospray ${MPI_CXX_LIBRARIES})
 
   OSPRAY_CREATE_APPLICATION(ospray_mpi_worker
     mpi/MPIWorker.cpp
@@ -478,33 +429,6 @@ IF (OSPRAY_MPI)
   )
 ENDIF()
 
-
-##############################################################
-# COI DEVICE
-##############################################################
-IF (OSPRAY_BUILD_COI_DEVICE)
-  IF (THIS_IS_MIC)
-    # ------------------------------------------------------------
-    # dev-side of COI device: lib dev-side libospray to coi dev libs,...
-    # ------------------------------------------------------------
-    OSPRAY_LIBRARY_LINK_LIBRARIES(ospray ${LIBCOI_DEVICE})
-    # ... and add the coi worker executable
-    OSPRAY_CREATE_APPLICATION(ospray_coi_worker
-      api/COIDeviceWorker.cpp
-    LINK
-      ospray
-      ospray_common
-      ${LIBCOI_DEVICE}
-    )
-  ELSE()
-    # ------------------------------------------------------------
-    # host-side of COI device: just link libospray to coi host libs
-    # ------------------------------------------------------------
-    OSPRAY_LIBRARY_LINK_LIBRARIES(ospray ${LIBCOI_HOST})
-    # note: no need to add the host-side libcoi to the install
-    # targets; it's already done above
-  ENDIF()
-ENDIF()
 
 ##############################################################
 # Configure find_package files

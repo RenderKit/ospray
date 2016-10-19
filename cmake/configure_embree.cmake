@@ -18,7 +18,7 @@
 # Find or build Embree
 # -------------------------------------------------------
 
-SET(EMBREE_VERSION_REQUIRED 2.7.1)
+SET(EMBREE_VERSION_REQUIRED 2.10.0)
 
 # Do a check to see if we can find the system Embree
 IF(NOT DEFINED LAST_CONFIG_USED_EXTERNAL_EMBREE)
@@ -27,7 +27,7 @@ IF(NOT DEFINED LAST_CONFIG_USED_EXTERNAL_EMBREE)
     MESSAGE(WARNING
             "We did not find Embree installed on your system. If you would"
             " like to use a newer version of Embree than the one in the"
-            " OSPRay source tree (v2.7.1), please download and extract or"
+            " OSPRay source tree (v2.10.0), please download and extract or"
             " compile Embree from source, set the 'embree_DIR' environment"
             " variable to where it is installed, and re-enable the"
             " OSPRAY_USE_EXTERNAL_EMBREE CMake option.")
@@ -50,12 +50,6 @@ IF(OSPRAY_USE_EXTERNAL_EMBREE)
 
   FIND_PACKAGE(embree ${EMBREE_VERSION_REQUIRED} REQUIRED)
   SET(LAST_CONFIG_USED_EXTERNAL_EMBREE ON CACHE INTERNAL "" FORCE)
-
-  IF(OSPRAY_MIC AND NOT EMBREE_VERSION VERSION_LESS "2.10.0")
-    MESSAGE(FATAL_ERROR "The found Embree version ${EMBREE_VERSION} does not"
-            " support KNC anymore. Either disable the OSPRAY_BUILD_MIC_SUPPORT"
-            " option or use an Embree v2.9 or earlier.")
-  ENDIF()
 
   # NOTE(jda) - EMBREE_LIBRARIES is not defined until at lest v2.10.0, for now
   #             create a "faked" EMBREE_LIBRARIES until we set our min version
@@ -115,20 +109,16 @@ ELSE(OSPRAY_USE_EXTERNAL_EMBREE)
 
   # NOTE(jda) - Embree assumes that OSPRAY_TASKING_TBB will be defined correctly
   #             in CONFIGURE_TASKING_SYSTEM()
-  # NOTE(jda) - Only do the Embree include once (Xeon), it will build both
-  #             Xeon and MIC code if both are enabled.
-  IF (NOT THIS_IS_MIC)
-    SET(EMBREE_ISA_SUPPORTS_AVX    TRUE)
-    SET(EMBREE_ISA_SUPPORTS_AVX2   TRUE)
-    SET(EMBREE_ISA_SUPPORTS_AVX512 TRUE)
+  SET(EMBREE_ISA_SUPPORTS_AVX    TRUE)
+  SET(EMBREE_ISA_SUPPORTS_AVX2   TRUE)
+  SET(EMBREE_ISA_SUPPORTS_AVX512 TRUE)
 
-    # Configure OSPRay ISA before building internal Embree so we know what ISA
-    # for Embree to build.
-    OSPRAY_CONFIGURE_ISPC_ISA()
+  # Configure OSPRay ISA before building internal Embree so we know what ISA
+  # for Embree to build.
+  OSPRAY_CONFIGURE_ISPC_ISA()
 
-    INCLUDE(build_embree)
-  ENDIF()
-  SET(EMBREE_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/ospray/embree-v2.7.1/include)
+  INCLUDE(build_embree)
+  SET(EMBREE_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/ospray/embree-v2.12.0/include)
   SET(EMBREE_LIBRARY embree)
   SET(EMBREE_LIBRARIES ${EMBREE_LIBRARY})
   SET(EMBREE_LIBRARY_XEONPHI embree_xeonphi)
@@ -140,8 +130,4 @@ ENDIF(OSPRAY_USE_EXTERNAL_EMBREE)
 IF (OSPRAY_USE_EXTERNAL_EMBREE AND NOT WIN32 AND OSPRAY_ZIP_MODE)
   INSTALL(PROGRAMS ${EMBREE_LIBRARY}
           DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib) # /intel64?
-  IF(OSPRAY_MIC)
-    INSTALL(PROGRAMS ${EMBREE_LIBRARY_XEONPHI}
-            DESTINATION ${CMAKE_INSTALL_LIBDIR}/mic COMPONENT lib_mic)
-  ENDIF()
 ENDIF()

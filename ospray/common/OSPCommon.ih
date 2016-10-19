@@ -27,11 +27,7 @@ typedef unsigned int8  uint8;
 
 #define LOG(x)
 
-#if defined(__MIC__)
-inline void* uniform align_ptr(void* uniform ptr) {
-  return (void* uniform) ((((uniform int64)ptr) + 63) & (-64));
-}
-#elif defined(__AVX__)
+#if defined(__AVX__)
 inline void* uniform align_ptr(void* uniform ptr) {
   return (void* uniform) ((((uniform int64)ptr) + 31) & (-32));
 }
