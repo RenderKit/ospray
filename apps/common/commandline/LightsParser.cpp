@@ -38,7 +38,7 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
   int HDRI_up = 1;//y
   float HDRI_intensity = 1;
   const char * HDRI_file_name;
-  vec4f ambient(.85,.9,1,.2);
+  vec4f ambient(.85,.9,1,.2*3.14);
 
   for (int i = 1; i < ac; i++) {
     const std::string arg = av[i];

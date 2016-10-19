@@ -19,6 +19,7 @@
 #include <fstream>
 #include <cmath>
 #include <string>
+#include <sstream>
 
 /*! the boeing 777 model does not actually have a 'mtl' file; instead,
   as materials it has a single RBG diffuse color that's encoded in
@@ -304,7 +305,17 @@ namespace ospray {
           if (!strncmp(token, "map_Ks" , 6)) { parseSepOpt(token += 6); cur->setParam("map_Ks", loadTexture(path, std::string(token)),Material::Param::TEXTURE);  continue; }
           /*! the following are extensions to the standard */
           if (!strncmp(token, "map_Refl" , 8)) { parseSepOpt(token += 8);  cur->setParam("map_Refl", loadTexture(path, std::string(token)),Material::Param::TEXTURE);  continue; }
-          if (!strncmp(token, "map_Bump" , 8) || !strncmp(token, "map_bump" , 8)) { parseSepOpt(token += 8);  cur->setParam("map_Bump", loadTexture(path, std::string(token), true),Material::Param::TEXTURE);  continue; }
+          if (!strncmp(token, "map_Bump" , 8) || !strncmp(token, "map_bump" , 8))
+            { parseSepOpt(token += 8);  
+              std::stringstream ss(token);
+              std::string param;
+              ss >> param;
+              if (param[0] == '-')
+              {
+                ss >> param;
+                parseSepOpt(token += ss.tellg());
+              }
+              cur->setParam("map_Bump", loadTexture(path, std::string(token), true),Material::Param::TEXTURE);  continue; }
 
           if (!strncmp(token, "bumpMap" , 7)) { parseSepOpt(token += 7);  cur->setParam("map_Bump", loadTexture(path, std::string(token), true),Material::Param::TEXTURE);  continue; }
           if (!strncmp(token, "colorMap" , 8)) { parseSepOpt(token += 8);  cur->setParam("map_Kd", loadTexture(path, std::string(token)),Material::Param::TEXTURE);  continue; }

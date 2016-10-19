@@ -43,8 +43,6 @@ Light_SampleRes AmbientLight_sample(const uniform Light* uniform super,
   res.pdf = cosineSampleHemispherePDF(localDir);
   res.dist = inf;
   res.weight = self->radiance * rcp(res.pdf);
-  float w = res.weight.x;
-  print("weight: % \n", w);
 
   return res;
 }

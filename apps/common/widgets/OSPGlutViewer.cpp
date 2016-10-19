@@ -70,6 +70,7 @@ OSPGlutViewer::OSPGlutViewer(const std::deque<box3f> &worldBounds, std::deque<cp
   renderer.set("world",  sceneModels[0]);
   renderer.set("model",  sceneModels[0]);
   renderer.set("camera", camera);
+  renderer.set("aoDistance", (worldBounds[0].upper.x - worldBounds[0].lower.x)/4.f);
   renderer.commit();
 
 #if 0
