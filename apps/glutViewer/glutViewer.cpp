@@ -22,6 +22,10 @@
 # include "common/widgets/OSPGlutViewer.h"
 #endif
 
+ospcommon::vec3f translate;
+ospcommon::vec3f scale;
+bool lockFirstFrame = false;
+
 std::string scriptFileFromCommandLine(int ac, const char **&av)
 {
   std::string scriptFileName;
@@ -30,6 +34,17 @@ std::string scriptFileFromCommandLine(int ac, const char **&av)
     const std::string arg = av[i];
     if (arg == "--script" || arg == "-s") {
       scriptFileName = av[++i];
+    }
+    else if (arg == "--translate") {
+      translate.x = atof(av[++i]);
+      translate.y = atof(av[++i]);
+      translate.z = atof(av[++i]);
+    } else if (arg == "--scale") {
+      scale.x = atof(av[++i]);
+      scale.y = atof(av[++i]);
+      scale.z = atof(av[++i]);
+    } else if (arg == "--lockFirstFrame") {
+      lockFirstFrame = true;
     }
   }
 
@@ -58,6 +73,9 @@ int main(int ac, const char **av)
 #else
   ospray::OSPGlutViewer window(bbox, model, renderer, camera);
 #endif
+  window.setScale(scale);
+  window.setLockFirstAnimationFrame(lockFirstFrame);
+  window.setTranslation(translate);
   window.create("ospGlutViewer: OSPRay Mini-Scene Graph test viewer");
 
   ospray::glut3D::runGLUT();

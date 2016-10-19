@@ -63,7 +63,9 @@ OSPGlutViewer::OSPGlutViewer(const std::deque<box3f> &worldBounds, std::deque<cp
     queuedRenderer(nullptr),
     alwaysRedraw(true),
     fullScreen(false),
-    worldBounds(worldBounds)
+    worldBounds(worldBounds),
+    lockFirstAnimationFrame(false)
+
 {
   setWorldBounds(worldBounds[0]);
 
@@ -322,15 +324,40 @@ void OSPGlutViewer::updateAnimation(double deltaSeconds)
   if (animationPaused)
     return;
   animationTimer += deltaSeconds;
+  int framesSize = sceneModels.size()-1;
+  int frameStart = (lockFirstAnimationFrame ? 1 : 0);
+
   if (animationTimer > animationFrameDelta)
   {
     animationFrameId++;
     //set animation time to remainder off of delta 
     animationTimer = animationTimer - int(animationTimer/deltaSeconds)*deltaSeconds;
 
-    size_t dataFrameId = animationFrameId%sceneModels.size();
-    renderer.set("world",  sceneModels[dataFrameId]);
-    renderer.set("model",  sceneModels[dataFrameId]);
+    size_t dataFrameId = animationFrameId%framesSize+frameStart;
+    if (lockFirstAnimationFrame)
+    {
+      ospcommon::affine3f xfm = ospcommon::one;
+      // ospcommon::vec3f translate(0,-11,0);
+      // vec3f scale(300, 300, 300);
+      xfm = xfm*ospcommon::affine3f::translate(translate)*ospcommon::affine3f::scale(scale);
+      OSPGeometry dynInst =
+              ospNewInstance((OSPModel)sceneModels[dataFrameId].object(),
+              (osp::affine3f&)xfm);
+      ospray::cpp::Model worldModel = ospNewModel();
+      ospcommon::affine3f staticXFM = ospcommon::one;
+      OSPGeometry staticInst =
+              ospNewInstance((OSPModel)sceneModels[0].object(),
+              (osp::affine3f&)staticXFM);
+      //Carson: TODO: creating new world model every frame unecessary
+      worldModel.addGeometry(staticInst);
+      worldModel.addGeometry(dynInst);
+      worldModel.commit();
+      renderer.set("model",  worldModel);
+    }
+    else
+    {
+      renderer.set("model",  sceneModels[dataFrameId]);
+    }
     renderer.commit();
     resetAccumulation();
   }
