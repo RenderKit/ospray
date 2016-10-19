@@ -29,13 +29,21 @@
 #include "sg/geometry/TriangleMesh.h"
 #include <cmath>
 
+#ifdef _WIN32
+#include <string.h>
+int strncasecmp(const char *s1, const char *s2, size_t n)
+{ return _strnicmp(s1, s2, n); }
+#endif
+
 namespace ospray {
   namespace sg {
     using std::string;
     using std::cout;
     using std::endl;
 
-    Ref<Texture2D> loadTexture(const std::string &path, const std::string &fileName, const bool prefereLinear = false)
+    Ref<Texture2D> loadTexture(const std::string &path,
+                               const std::string &fileName,
+                               const bool prefereLinear = false)
     {
       FileName texFileName = path+"/"+fileName;
       Ref<Texture2D> tex = Texture2D::load(texFileName, prefereLinear);
@@ -64,7 +72,8 @@ namespace ospray {
       size_t len = strlen(token);
       if (len == 0) return token;
       char* pe = (char*)(token + len - 1);
-      while ((*pe == ' ' || *pe == '\t' || *pe == '\r') && pe >= token) *pe-- = 0;
+      while ((*pe == ' ' || *pe == '\t' || *pe == '\r') && pe >= token)
+        *pe-- = 0;
       return token;
     }
     
@@ -137,8 +146,8 @@ namespace ospray {
       /*! try to parse given token stream as a float-type with given
         keyword; and if successful, load the texture and assign to
         material. returns true if matched, false if not */
-      bool tryToMatchTexture(const char *&token, const char *keyWord, Material *mat,
-                             bool preferLinear=false);
+      bool tryToMatchTexture(const char *&token, const char *keyWord,
+                             Material *mat, bool preferLinear=false);
 
     private:
 
@@ -161,7 +170,9 @@ namespace ospray {
       int fix_vn(int index);
       void flushFaceGroup();
       Vertex getInt3(const char*& token);
-      uint32_t getVertex(std::map<Vertex,uint32_t>& vertexMap, TriangleMesh *mesh, const Vertex& i);
+      uint32_t getVertex(std::map<Vertex,uint32_t>& vertexMap,
+                         TriangleMesh *mesh,
+                         const Vertex& i);
     };
 
     
@@ -211,13 +222,16 @@ namespace ospray {
           if (token[0] == 0) continue;
 
           /*! parse position */
-          if (token[0] == 'v' && isSep(token[1]))                    { v.push_back(getVec3f(token += 2)); continue; }
+          if (token[0] == 'v' && isSep(token[1]))
+          { v.push_back(getVec3f(token += 2)); continue; }
 
           /* parse normal */
-          if (token[0] == 'v' && token[1] == 'n' && isSep(token[2])) { vn.push_back(getVec3f(token += 3)); continue; }
+          if (token[0] == 'v' && token[1] == 'n' && isSep(token[2]))
+          { vn.push_back(getVec3f(token += 3)); continue; }
 
           /* parse texcoord */
-          if (token[0] == 'v' && token[1] == 't' && isSep(token[2])) { vt.push_back(getVec2f(token += 3)); continue; }
+          if (token[0] == 'v' && token[1] == 't' && isSep(token[2]))
+          { vt.push_back(getVec2f(token += 3)); continue; }
 
           /*! parse face */
           if (token[0] == 'f' && isSep(token[1]))
@@ -238,8 +252,10 @@ namespace ospray {
             {
               flushFaceGroup();
               std::string name(parseSep(token += 6));
-              if (material.find(name) == material.end()) curMaterial = defaultMaterial;
-              else curMaterial = material[name];
+              if (material.find(name) == material.end())
+                curMaterial = defaultMaterial;
+              else
+                curMaterial = material[name];
               continue;
             }
 
@@ -264,7 +280,9 @@ namespace ospray {
       keyword; and if successful, assign to material. returns true
       if matched, false if not */
     template<typename T>
-    bool OBJLoader::tryToMatch(const char *&token, const char *keyWord, Material *mat)
+    bool OBJLoader::tryToMatch(const char *&token,
+                               const char *keyWord,
+                               Material *mat)
     {
       if (strncasecmp(token, keyWord, strlen(keyWord)))
         return false;
@@ -287,7 +305,8 @@ namespace ospray {
         return false;
 
       parseSep(token+=strlen(keyWord));
-      mat->setParam(keyWord, loadTexture(path,parse<std::string>(token),preferLinear));
+      mat->setParam(keyWord,
+                    loadTexture(path,parse<std::string>(token),preferLinear));
       return true;
     }
 
@@ -334,7 +353,8 @@ namespace ospray {
           }
 
           if (!cur) {
-            std::cout << "#osp:sg:importOBJ: Ignoring line >> " << line << " <<" << endl;
+            std::cout << "#osp:sg:importOBJ: Ignoring line >> " << line << " <<"
+                      << endl;
             continue;
           }//throw std::runtime_error("invalid material file: newmtl expected first");
 
@@ -365,7 +385,11 @@ namespace ospray {
           if (tryToMatchTexture(token,"map_Bump",cur)) continue;
           if (tryToMatchTexture(token,"map_Kd",cur)) continue;
 
-          if (!strncmp(token, "type", 4)) { parseSep(token += 4);  cur->type = std::string(token); continue; }
+          if (!strncmp(token, "type", 4)) {
+            parseSep(token += 4);
+            cur->type = std::string(token);
+            continue;
+          }
 
           // add anything else as float param
           const char * ident = token;
@@ -379,9 +403,12 @@ namespace ospray {
     }
 
     /*! handles relative indices and starts indexing from 0 */
-    int OBJLoader::fix_v (int index) { return(index > 0 ? index - 1 : (index == 0 ? 0 : (int) v .size() + index)); }
-    int OBJLoader::fix_vt(int index) { return(index > 0 ? index - 1 : (index == 0 ? 0 : (int) vt.size() + index)); }
-    int OBJLoader::fix_vn(int index) { return(index > 0 ? index - 1 : (index == 0 ? 0 : (int) vn.size() + index)); }
+    int OBJLoader::fix_v (int index)
+    { return(index > 0 ? index - 1 : (index == 0 ? 0 : (int) v .size() + index)); }
+    int OBJLoader::fix_vt(int index)
+    { return(index > 0 ? index - 1 : (index == 0 ? 0 : (int) vt.size() + index)); }
+    int OBJLoader::fix_vn(int index)
+    { return(index > 0 ? index - 1 : (index == 0 ? 0 : (int) vn.size() + index)); }
 
     /*! Parse differently formated triplets like: n0, n0/n1/n2, n0//n2, n0/n1.          */
     /*! All indices are converted to C-style (from 0). Missing entries are assigned -1. */

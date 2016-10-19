@@ -100,11 +100,7 @@ namespace ospray {
           if (fb->tileError(tileId) <= renderer->errorThreshold)
             return;
 
-#ifdef __MIC__
-#  define MAX_TILE_SIZE 32
-#else
-#  define MAX_TILE_SIZE 128
-#endif
+#define MAX_TILE_SIZE 128
 
 #if TILE_SIZE>MAX_TILE_SIZE
           Tile *tilePtr = new Tile(tileId, fb->size, accumID);

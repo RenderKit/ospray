@@ -127,9 +127,7 @@ namespace ospray {
           delete w;
           w = nullptr;
         }
-        //printf("done running all work in msg\n");
       }
-
     }
     void processWorkerCommand(const int command)
     {

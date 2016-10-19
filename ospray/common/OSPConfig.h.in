@@ -24,7 +24,6 @@
     dimension) */
 #define RENDERTILE_PIXELS_PER_JOB @OSPRAY_PIXELS_PER_JOB@
 
-#cmakedefine OSPRAY_MIC_COI
 #cmakedefine OSPRAY_MPI
 #cmakedefine OSPRAY_USE_EMBREE_STREAMS
 #cmakedefine OSPRAY_USE_HIGH_QUALITY_BVH

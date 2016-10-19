@@ -573,6 +573,8 @@ namespace ospray {
       work::LoadModule work(name);
       processWork(&work);
       // FIXME: actually we should return an error code here...
+      // TODO: If some fail? Can we assume if the master succeeds in loading
+      // that all have succeeded in loading? I don't think so.
       return 0;
     }
 

@@ -631,12 +631,7 @@ namespace ospray {
       LoadModule::LoadModule(){}
       LoadModule::LoadModule(const std::string &name) : name(name){}
       void LoadModule::run() {
-#if THIS_IS_MIC
-        // embree automatically puts this into "lib<name>.so" format
-        const std::string libName = "ospray_module_" + name + "_mic";
-#else
         const std::string libName = "ospray_module_" + name;
-#endif
         loadLibrary(libName);
 
         const std::string initSymName = "ospray_init_module_" + name;

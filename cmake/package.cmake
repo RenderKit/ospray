@@ -83,9 +83,6 @@ SET(CPACK_PACKAGE_CONTACT ospray@googlegroups.com)
 SET(CPACK_COMPONENT_LIB_DISPLAY_NAME "Library")
 SET(CPACK_COMPONENT_LIB_DESCRIPTION "The OSPRay library including documentation.")
 
-SET(CPACK_COMPONENT_LIB_MIC_NAME "Xeon Phi Library")
-SET(CPACK_COMPONENT_LIB_MIC_DESCRIPTION "The OSPRay library for the Intel Xeon Phi coprocessor.")
-
 SET(CPACK_COMPONENT_DEVEL_DISPLAY_NAME "Development")
 SET(CPACK_COMPONENT_DEVEL_DESCRIPTION "Header files for C and C++ required to develop applications with OSPRay.")
 
@@ -94,7 +91,6 @@ SET(CPACK_COMPONENT_APPS_DESCRIPTION "Viewer applications and tutorials demonstr
 
 # dependencies between components
 SET(CPACK_COMPONENT_DEVEL_DEPENDS lib)
-SET(CPACK_COMPONENT_LIB_MIC_DEPENDS lib)
 SET(CPACK_COMPONENT_APPS_DEPENDS lib)
 SET(CPACK_COMPONENT_LIB_REQUIRED ON) # always install the libs
 
