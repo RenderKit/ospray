@@ -193,13 +193,8 @@ namespace ospray {
     running = true;
 
     if (numThreads != 0) {
-#if defined(__MIC__)
-      numThreads = std::min(numThreads,
-                            (size_t)std::thread::hardware_concurrency()-4);
-#else
       numThreads = std::min(numThreads,
                             (size_t)std::thread::hardware_concurrency());
-#endif
     }
 
     /* generate all threads */

@@ -592,12 +592,7 @@ namespace ospray {
     int MPIDevice::loadModule(const char *name)
     {
 
-#if THIS_IS_MIC
-      // embree automatically puts this into "lib<name>.so" format
-      std::string libName = "ospray_module_"+std::string(name)+"_mic";
-#else
       std::string libName = "ospray_module_"+std::string(name)+"";
-#endif
       loadLibrary(libName);
 
       std::string initSymName = "ospray_init_module_"+std::string(name);

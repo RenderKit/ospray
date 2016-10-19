@@ -10,6 +10,7 @@ tags
 *.gz
 *.rpm
 *.zip
+*.bak
 deps
 tbb
 embree

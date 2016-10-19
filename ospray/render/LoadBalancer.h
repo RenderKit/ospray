@@ -57,31 +57,4 @@ namespace ospray {
     std::string toString() const override;
   };
 
-  //! tiled load balancer for local rendering on the given machine
-  /*! a tiled load balancer that orchestrates (multi-threaded)
-    rendering on a local machine, without any cross-node
-    communication/load balancing at all (even if there are multiple
-    application ranks each doing local rendering on their own)  */
-  struct OSPRAY_SDK_INTERFACE InterleavedTiledLoadBalancer : public TiledLoadBalancer
-  {
-    size_t deviceID;
-    size_t numDevices;
-
-    InterleavedTiledLoadBalancer(size_t deviceID, size_t numDevices)
-      : deviceID(deviceID), numDevices(numDevices)
-    {
-      if (ospray::debugMode || ospray::logLevel) {
-        std::cout << "=========================================" << std::endl;
-        std::cout << "INTERLEAVED LOAD BALANCER" << std::endl;
-        std::cout << "=========================================" << std::endl;
-      }
-    }
-
-    std::string toString() const override;
-
-    float renderFrame(Renderer *tiledRenderer,
-                      FrameBuffer *fb,
-                      const uint32 channelFlags) override;
-  };
-
 } // ::ospray

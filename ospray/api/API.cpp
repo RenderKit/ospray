@@ -56,12 +56,6 @@ namespace ospray {
   }
 #endif
 
-#ifdef OSPRAY_MIC_COI
-  namespace coi {
-    ospray::api::Device *createCoiDevice(int *ac, const char **av);
-  }
-#endif
-
 } // ::ospray
 
 std::string getPidString() {
@@ -126,15 +120,7 @@ extern "C" void ospInit(int *_ac, const char **_av)
       }
 
       if (std::string(_av[i]) == "--osp:coi") {
-#ifdef __MIC__
-        throw std::runtime_error("The COI device can only be created on the host");
-#elif defined(OSPRAY_MIC_COI)
-        removeArgs(*_ac,(char **&)_av,i,1);
-        ospray::api::Device::current
-          = ospray::coi::createCoiDevice(_ac,_av);
-#else
-        throw std::runtime_error("OSPRay's COI support not compiled in");
-#endif
+        throw std::runtime_error("OSPRay's COI device is no longer supported!");
         --i;
         continue;
       }
