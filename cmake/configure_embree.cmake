@@ -18,7 +18,7 @@
 # Find or build Embree
 # -------------------------------------------------------
 
-SET(EMBREE_VERSION_REQUIRED 2.7.1)
+SET(EMBREE_VERSION_REQUIRED 2.10.0)
 
 # Do a check to see if we can find the system Embree
 IF(NOT DEFINED LAST_CONFIG_USED_EXTERNAL_EMBREE)
@@ -27,7 +27,7 @@ IF(NOT DEFINED LAST_CONFIG_USED_EXTERNAL_EMBREE)
     MESSAGE(WARNING
             "We did not find Embree installed on your system. If you would"
             " like to use a newer version of Embree than the one in the"
-            " OSPRay source tree (v2.7.1), please download and extract or"
+            " OSPRay source tree (v2.10.0), please download and extract or"
             " compile Embree from source, set the 'embree_DIR' environment"
             " variable to where it is installed, and re-enable the"
             " OSPRAY_USE_EXTERNAL_EMBREE CMake option.")
@@ -118,7 +118,7 @@ ELSE(OSPRAY_USE_EXTERNAL_EMBREE)
   OSPRAY_CONFIGURE_ISPC_ISA()
 
   INCLUDE(build_embree)
-  SET(EMBREE_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/ospray/embree-v2.7.1/include)
+  SET(EMBREE_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/ospray/embree-v2.12.0/include)
   SET(EMBREE_LIBRARY embree)
   SET(EMBREE_LIBRARIES ${EMBREE_LIBRARY})
   SET(EMBREE_LIBRARY_XEONPHI embree_xeonphi)
