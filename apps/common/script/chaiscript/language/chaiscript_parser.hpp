@@ -147,7 +147,7 @@ namespace chaiscript
         }
 
         size_t remaining() const {
-          return std::distance(m_pos, m_end);
+          return static_cast<size_t>(std::distance(m_pos, m_end));
         }
 
         char operator*() const {
@@ -218,6 +218,10 @@ namespace chaiscript
         //We share precedence here but then separate them later
         m_operators.emplace_back(AST_Node_Type::Multiplication);
         m_operator_matches.emplace_back(std::initializer_list<std::string>({"*", "/", "%"}));
+
+        // Prefix placeholder
+        m_operators.emplace_back(AST_Node_Type::Prefix);
+        m_operator_matches.emplace_back(std::initializer_list<std::string>({}));
 
         for (auto & elem : m_alphabet) {
           std::fill(std::begin(elem), std::end(elem), false);
@@ -621,11 +625,11 @@ namespace chaiscript
 
         if (float_)
         {
-          return const_var(std::stof(t_val.substr(0,i)));
+          return const_var(parse_num<float>(t_val.substr(0,i)));
         } else if (long_) {
-          return const_var(std::stold(t_val.substr(0,i)));
+          return const_var(parse_num<long double>(t_val.substr(0,i)));
         } else {
-          return const_var(std::stod(t_val.substr(0,i)));
+          return const_var(parse_num<double>(t_val.substr(0,i)));
         }
       }
 
@@ -2160,7 +2164,7 @@ namespace chaiscript
       /// Reads a unary prefixed expression from input
       bool Prefix() {
         const auto prev_stack_top = m_match_stack.size();
-        const std::vector<std::string> prefix_opers{"++", "--", "-", "+", "!", "~", "&"};
+        const std::vector<std::string> prefix_opers{"++", "--", "-", "+", "!", "~"};
 
         for (const auto &oper : prefix_opers)
         {
@@ -2197,7 +2201,7 @@ namespace chaiscript
         bool retval = false;
         const auto prev_stack_top = m_match_stack.size();
 
-        if (t_precedence < m_operators.size()) {
+        if (m_operators[t_precedence] != AST_Node_Type::Prefix) {
           if (Operator(t_precedence+1)) {
             retval = true;
             if (Operator_Helper(t_precedence)) {
@@ -2213,8 +2217,8 @@ namespace chaiscript
 
                 switch (m_operators[t_precedence]) {
                   case(AST_Node_Type::Ternary_Cond) :
-                    m_match_stack.erase(m_match_stack.begin() + m_match_stack.size() - 2,
-                        m_match_stack.begin() + m_match_stack.size() - 1);
+                    m_match_stack.erase(advance_copy(m_match_stack.begin(), m_match_stack.size() - 2),
+                                        advance_copy(m_match_stack.begin(), m_match_stack.size() - 1));
                     if (Symbol(":")) {
                       if (!Operator(t_precedence+1)) {
                         throw exception::eval_error("Incomplete "
@@ -2239,7 +2243,8 @@ namespace chaiscript
                   case(AST_Node_Type::Bitwise_Or) :
                   case(AST_Node_Type::Comparison) :
                     assert(m_match_stack.size() > 1);
-                    m_match_stack.erase(m_match_stack.begin() + m_match_stack.size() - 2, m_match_stack.begin() + m_match_stack.size() - 1);
+                    m_match_stack.erase(advance_copy(m_match_stack.begin(), m_match_stack.size() - 2), 
+                                        advance_copy(m_match_stack.begin(), m_match_stack.size() - 1));
                     build_match<eval::Binary_Operator_AST_Node>(prev_stack_top, oper->text);
                     break;
 
@@ -2256,8 +2261,7 @@ namespace chaiscript
               } while (Operator_Helper(t_precedence));
             }
           }
-        }
-        else {
+        } else {
           return Value();
         }
 
