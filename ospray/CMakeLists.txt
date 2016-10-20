@@ -398,7 +398,6 @@ IF (OSPRAY_BUILD_COI_DEVICE)
     )
   MARK_AS_ADVANCED(LIBCOI_DEVICE)
   MARK_AS_ADVANCED(LIBCOI_HOST)
-  SET(OSPRAY_MIC_COI ON PARENT_SCOPE)
   # NOTE(jda) - hardcoded paths (!)...use a find_package() here?
   INCLUDE_DIRECTORIES(/opt/intel/mic/coi/include)
   INCLUDE_DIRECTORIES(/usr/include/intel-coi)
@@ -468,11 +467,11 @@ IF (OSPRAY_MPI)
     OSPRAY_LIBRARY_LINK_LIBRARIES(ospray ${MPI_CXX_LIBRARIES})
   ENDIF()
 
-  OSPRAY_CREATE_APPLICATION(ospray_mpi_worker
+  OSPRAY_CREATE_APPLICATION(ospray_mpi_worker${OSPRAY_EXE_SUFFIX}
     mpi/MPIWorker.cpp
   LINK
-    ospray
-    ospray_common
+    ospray${OSPRAY_LIB_SUFFIX}
+    ospray_common${OSPRAY_LIB_SUFFIX}
   )
 ENDIF()
 
@@ -490,8 +489,8 @@ IF (OSPRAY_BUILD_COI_DEVICE)
     OSPRAY_CREATE_APPLICATION(ospray_coi_worker
       api/COIDeviceWorker.cpp
     LINK
-      ospray
-      ospray_common
+      ospray${OSPRAY_LIB_SUFFIX}
+      ospray_common${OSPRAY_LIB_SUFFIX}
       ${LIBCOI_DEVICE}
     )
   ELSE()

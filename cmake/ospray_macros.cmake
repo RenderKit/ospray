@@ -157,12 +157,15 @@ ENDMACRO()
 
 ## Target creation macros ##
 
-MACRO(OSPRAY_ADD_SUBDIRECTORY subdirectory)
+# NOTE(jda) - Must be a function and not a macro so the include() for
+#             MIC doesn't have side effects on future subdirectories
+FUNCTION(OSPRAY_ADD_SUBDIRECTORY subdirectory)
   SET(OSPRAY_EXE_SUFFIX "")
   SET(OSPRAY_LIB_SUFFIX "")
   SET(OSPRAY_ISPC_SUFFIX ".o")
   SET(THIS_IS_MIC OFF)
   SET(__XEON__ ON)
+  SET(OSPRAY_TARGET_MIC OFF)
 
   ADD_SUBDIRECTORY(${subdirectory} builddir/${subdirectory}/intel64)
 
@@ -174,11 +177,11 @@ MACRO(OSPRAY_ADD_SUBDIRECTORY subdirectory)
     SET(THIS_IS_MIC ON)
     SET(__XEON__ OFF)
     INCLUDE(icc_xeonphi)
-    SET(OSPRAY_TARGET_MIC ON PARENT_SCOPE)
+    SET(OSPRAY_TARGET_MIC ON)
 
     ADD_SUBDIRECTORY(${subdirectory} builddir/${subdirectory}/mic)
   ENDIF()
-ENDMACRO()
+ENDFUNCTION()
 
 MACRO(OSPRAY_ADD_EXECUTABLE name)
   ADD_EXECUTABLE(${name}${OSPRAY_EXE_SUFFIX} ${ARGN})
@@ -310,7 +313,7 @@ MACRO(OSPRAY_CREATE_LIBRARY LIBRARY_NAME)
       LIST(APPEND ${CURRENT_LIST} ${arg})
     ENDIF ()
   ENDFOREACH()
- 
+
   OSPRAY_ADD_LIBRARY(${LIBRARY_NAME} SHARED ${LIBRARY_SOURCES})
   OSPRAY_LIBRARY_LINK_LIBRARIES(${LIBRARY_NAME} ${LINK_LIBS})
   OSPRAY_SET_LIBRARY_VERSION(${LIBRARY_NAME})
