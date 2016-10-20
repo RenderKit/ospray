@@ -358,7 +358,7 @@ OSPRAY_INSTALL_SDK_HEADERS(
 IF (OSPRAY_MPI)
   # if mpi mode is enabled, we have to configure the right mpi
   # compiler etc.
-  CONFIGURE_MPI()
+  OSPRAY_CONFIGURE_MPI()
 
   SET(OSPRAY_SOURCES ${OSPRAY_SOURCES}
     mpi/buffers.h
