@@ -51,13 +51,6 @@ namespace ospray {
       std::string path = _path;
       FileName fileName = path+"/"+fileNameBase;
 
-      if (fileNameBase.size() > 0) {
-        if (fileNameBase.substr(0,1) == "/") {// Absolute path.
-          fileName = fileNameBase;
-          path = "";
-        }
-      }
-
       static std::map<std::string,Texture2D*> textureCache;
       if (textureCache.find(fileName.str()) != textureCache.end())
         return textureCache[fileName.str()];
@@ -65,11 +58,64 @@ namespace ospray {
       Texture2D *tex = nullptr;
       const std::string ext = fileName.ext();
       if (ext == "ppm") {
-        try {
+        try { 
+            #ifdef USE_IMAGEMAGICK
+            if (1)
+            {
+                Magick::Image image(fileName.str().c_str());
+                tex = new Texture2D;
+                tex->width    = image.columns();
+                tex->height   = image.rows();
+                tex->channels = image.matte() ? 4 : 3;
+                const bool hdr = image.depth() > 8;
+                tex->depth    = hdr ? 4 : 1;
+                tex->prefereLinear = prefereLinear;
+                float rcpMaxRGB = 1.0f/float(MaxRGB);
+                const Magick::PixelPacket* pixels = image.getConstPixels(0,0,tex->width,tex->height);
+                if (!pixels) {
+                  std::cerr << "#osp:minisg: failed to load texture '"+fileName.str()+"'" << std::endl;
+                  delete tex;
+                  tex = nullptr;
+                } else {
+                  tex->data = new unsigned char[tex->width*tex->height*tex->channels*tex->depth];
+                  // convert pixels and flip image (because OSPRay's textures have the origin at the lower left corner)
+                  for (size_t y=0; y<tex->height; y++) {
+                    for (size_t x=0; x<tex->width; x++) {
+                      const Magick::PixelPacket &pixel = pixels[y*tex->width+x];
+                      if (hdr) {
+                        float *dst = &((float*)tex->data)[(x+(tex->height-1-y)*tex->width)*tex->channels];
+                        *dst++ = pixel.red * rcpMaxRGB;
+                        *dst++ = pixel.green * rcpMaxRGB;
+                        *dst++ = pixel.blue * rcpMaxRGB;
+                        if (tex->channels == 4)
+                          *dst++ = pixel.opacity * rcpMaxRGB;
+                      } else {
+                        unsigned char *dst = &((unsigned char*)tex->data)[(x+(tex->height-1-y)*tex->width)*tex->channels];
+                        *dst++ = pixel.red;
+                        *dst++ = pixel.green;
+                        *dst++ = pixel.blue;
+                        if (tex->channels == 4)
+                          *dst++ = pixel.opacity;
+                      }
+                    }
+                  }
+                }
+            } else 
+            #endif
+        {
           int rc, peekchar;
 
           // open file
           FILE *file = fopen(fileName.str().c_str(),"rb");
+          if (!file)
+          {
+              if (fileNameBase.size() > 0) {
+                if (fileNameBase.substr(0,1) == "/") {// Absolute path.
+                  fileName = fileNameBase;
+                  path = "";
+                }
+              }
+          }
           const int LINESZ=10000;
           char lineBuf[LINESZ+1];
 
@@ -131,6 +177,7 @@ namespace ospray {
           for (int y = 0; y < height/2; y++)
             for (int x = 0; x < width*3; x++)
               std::swap(texels[y*width*3+x], texels[(height-1-y)*width*3+x]);
+      }
         } catch(std::runtime_error e) {
           std::cerr << e.what() << std::endl;
         }

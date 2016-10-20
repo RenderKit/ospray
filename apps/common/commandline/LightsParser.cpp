@@ -38,6 +38,7 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
   int HDRI_up = 1;//y
   float HDRI_intensity = 1;
   const char * HDRI_file_name;
+  vec4f ambient(.85,.9,1,.2*3.14);
 
   for (int i = 1; i < ac; i++) {
     const std::string arg = av[i];
@@ -52,6 +53,11 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
       }
     } else if (arg == "--sun-int") {
         defaultDirLight_intensity = atof(av[++i]);
+    } else if (arg == "--ambient") {
+        ambient.x = atof(av[++i]);
+        ambient.y = atof(av[++i]);
+        ambient.z = atof(av[++i]);
+        ambient.w = atof(av[++i]);
     } else if (arg == "--hdri-light") {
       hasHDRI = true;
         if (i+2 >= ac)
@@ -124,6 +130,16 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
     ospLight.commit();
     lights.push_back(ospLight.handle());
   }
+
+  auto ospLight = renderer.newLight("ambient");
+  if (ospLight.handle() == nullptr) {
+    throw std::runtime_error("Failed to create a 'AmbientLight'!");
+  }
+  ospLight.set("name", "ambient");
+  ospLight.set("color", ambient.x, ambient.y, ambient.z);
+  ospLight.set("intensity", ambient.w);
+  ospLight.commit();
+  lights.push_back(ospLight.handle());
 
   auto lightArray = ospray::cpp::Data(lights.size(), OSP_OBJECT, lights.data());
   //lightArray.commit();

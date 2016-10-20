@@ -32,11 +32,11 @@ namespace chaiscript
       CHAISCRIPT_CONSTEXPR Type_Info(bool t_is_const, bool t_is_reference, bool t_is_pointer, bool t_is_void, 
           bool t_is_arithmetic, const std::type_info *t_ti, const std::type_info *t_bare_ti)
         : m_type_info(t_ti), m_bare_type_info(t_bare_ti),
-          m_flags((t_is_const << is_const_flag)
-                + (t_is_reference << is_reference_flag)
-                + (t_is_pointer << is_pointer_flag)
-                + (t_is_void << is_void_flag)
-                + (t_is_arithmetic << is_arithmetic_flag))
+          m_flags((static_cast<unsigned int>(t_is_const) << is_const_flag)
+                + (static_cast<unsigned int>(t_is_reference) << is_reference_flag)
+                + (static_cast<unsigned int>(t_is_pointer) << is_pointer_flag)
+                + (static_cast<unsigned int>(t_is_void) << is_void_flag)
+                + (static_cast<unsigned int>(t_is_arithmetic) << is_arithmetic_flag))
       {
       }
 
@@ -58,6 +58,16 @@ namespace chaiscript
       CHAISCRIPT_CONSTEXPR bool operator<(const Type_Info &ti) const CHAISCRIPT_NOEXCEPT
       {
         return m_type_info < ti.m_type_info;
+      }
+
+      CHAISCRIPT_CONSTEXPR bool operator!=(const Type_Info &ti) const CHAISCRIPT_NOEXCEPT
+      {
+        return !(operator==(ti));
+      }
+
+      CHAISCRIPT_CONSTEXPR bool operator!=(const std::type_info &ti) const CHAISCRIPT_NOEXCEPT
+      {
+        return !(operator==(ti));
       }
 
       CHAISCRIPT_CONSTEXPR bool operator==(const Type_Info &ti) const CHAISCRIPT_NOEXCEPT
@@ -160,6 +170,11 @@ namespace chaiscript
               &typeid(std::shared_ptr<T> ), 
               &typeid(typename Bare_Type<T>::type));
         }
+      };
+
+    template<typename T>
+      struct Get_Type_Info<std::shared_ptr<T> &> : Get_Type_Info<std::shared_ptr<T>>
+      {
       };
 
     template<typename T>

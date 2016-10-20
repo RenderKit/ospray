@@ -53,6 +53,9 @@ namespace ospray {
     void resetView();
     void printViewport();
     void saveScreenshot(const std::string &basename);
+    void setScale(const ospcommon::vec3f& v )  {scale = v;}
+    void setTranslation(const ospcommon::vec3f& v)  {translate = v;}
+    void setLockFirstAnimationFrame(bool st) {lockFirstAnimationFrame = st;}
 
   protected:
 
@@ -91,6 +94,9 @@ namespace ospray {
     double animationFrameDelta;
     size_t animationFrameId;
     bool animationPaused;
+    bool lockFirstAnimationFrame;  //use for static scene
+    ospcommon::vec3f translate;
+    ospcommon::vec3f scale;
   };
 
 }// namespace ospray

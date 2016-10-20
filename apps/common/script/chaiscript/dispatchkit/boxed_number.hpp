@@ -43,16 +43,19 @@ namespace chaiscript
 // this is OK, so we're disabling size/and sign type warnings
 #ifdef CHAISCRIPT_MSVC
 #pragma warning(push)
-#pragma warning(disable : 4244 4018 4389 4146 4365 4267)
+#pragma warning(disable : 4244 4018 4389 4146 4365 4267 4242)
 #endif
 
 
 #ifdef __GNUC__
 #pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunknown-pragmas"
+#pragma GCC diagnostic ignored "-Wpragmas"
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 #pragma GCC diagnostic ignored "-Wconversion"
 #pragma GCC diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic ignored "-Wfloat-conversion"
 #endif
 
   /// \brief Represents any numeric type, generically. Used internally for generic operations between POD values

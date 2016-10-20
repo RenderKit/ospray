@@ -355,7 +355,7 @@ OSPRAY_INSTALL_SDK_HEADERS(
 IF (OSPRAY_MPI)
   # if mpi mode is enabled, we have to configure the right mpi
   # compiler etc.
-  CONFIGURE_MPI()
+  OSPRAY_CONFIGURE_MPI()
 
   SET(OSPRAY_SOURCES ${OSPRAY_SOURCES}
     mpi/buffers.h
@@ -422,11 +422,11 @@ OSPRAY_EXE_LINK_LIBRARIES(ospTutorialC ospray ospray_common)
 IF (OSPRAY_MPI)
   OSPRAY_LIBRARY_LINK_LIBRARIES(ospray ${MPI_CXX_LIBRARIES})
 
-  OSPRAY_CREATE_APPLICATION(ospray_mpi_worker
+  OSPRAY_CREATE_APPLICATION(ospray_mpi_worker${OSPRAY_EXE_SUFFIX}
     mpi/MPIWorker.cpp
   LINK
-    ospray
-    ospray_common
+    ospray${OSPRAY_LIB_SUFFIX}
+    ospray_common${OSPRAY_LIB_SUFFIX}
   )
 ENDIF()
 
