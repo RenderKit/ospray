@@ -24,75 +24,56 @@
 #include "embree2/rtcore_geometry.isph"
 #include "embree2/rtcore_geometry_user.isph"
 
+
+
+// special 64-bit safe code:
 #define BITS 20
 
-inline vec3i gather64_vec3i(const int *uniform const base, 
-                            const uniform int stride, 
-                            const varying int index)
-{
-  vec3i v;
-
-  // special 64-bit safe code:
-  const int index_lo = index & ((1<<BITS)-1);
-  const int index_hi = index - index_lo;
-  // varying offset of lower bits:
-  const varying int scaledIndexLo = stride * index_lo;
-  foreach_unique(hi in index_hi) {
-    //uniform offset for upper bits:
-    uniform int64 scaledIndexHi = (int64)hi * (int64)stride;
-    // properly shifted base address (shifted by 64-bits)
-    const int *uniform base_hi = base + scaledIndexHi;
-    
-    v.x = base_hi[scaledIndexLo+0];
-    v.y = base_hi[scaledIndexLo+1];
-    v.z = base_hi[scaledIndexLo+2];
-  }
-  return v;
+#define __define_gather(T)                                                     \
+inline T gather_##T(const uniform bool huge,                                   \
+                      const T *uniform const base,                             \
+                      const varying int index)                                 \
+{                                                                              \
+  T v;                                                                         \
+  if (huge) {                                                                  \
+    const int index_lo = index & ((1<<BITS)-1);                                \
+    const int index_hi = index - index_lo;                                     \
+    foreach_unique(hi in index_hi)                                             \
+      v = (base+hi)[index_lo];                                                 \
+  } else                                                                       \
+    v = base[index];                                                           \
+  return v;                                                                    \
 }
 
-inline vec3f gather64_vec3f(const float *uniform const base, 
-                            const uniform int stride, 
-                            const varying int index)
-{
-  vec3f v;
+#define __define_gather_vec3_stride(T, S)                                      \
+inline vec3##S gather_vec3##S(const uniform bool huge,                         \
+                                const T *uniform const base,                   \
+                                const uniform int stride,                      \
+                                const varying int index)                       \
+{                                                                              \
+  vec3##S v;                                                                   \
+                                                                               \
+  const int index_lo = index & ((1<<BITS)-1);                                  \
+  const int index_hi = index - index_lo;                                       \
+  /* varying offset of lower bits */                                           \
+  const varying int scaledIndexLo = stride * index_lo;                         \
+  foreach_unique(hi in index_hi) {                                             \
+    /* uniform offset for upper bits */                                        \
+    uniform int64 scaledIndexHi = (int64)hi * stride;                          \
+    /* properly shifted base address (shifted by 64-bits) */                   \
+    const T *uniform base_hi = base + scaledIndexHi;                           \
+                                                                               \
+    v.x = base_hi[scaledIndexLo+0];                                            \
+    v.y = base_hi[scaledIndexLo+1];                                            \
+    v.z = base_hi[scaledIndexLo+2];                                            \
+  }                                                                            \
+  return v;                                                                    \
+}                                                                              \
 
-  // special 64-bit safe code:
-  const int index_lo = index & ((1<<BITS)-1);
-  const int index_hi = index - index_lo;
-  // varying offset of lower bits:
-  const varying int scaledIndexLo = stride * index_lo;
-  foreach_unique(hi in index_hi) {
-    //uniform offset for upper bits:
-    uniform int64 scaledIndexHi = (int64)hi * (int64)stride;
-    // properly shifted base address (shifted by 64-bits)
-    const float *uniform base_hi = base + scaledIndexHi;
-    
-    v.x = base_hi[scaledIndexLo+0];
-    v.y = base_hi[scaledIndexLo+1];
-    v.z = base_hi[scaledIndexLo+2];
-  }
-  return v;
-}
-
-inline vec4f gather64_vec4f(const vec4f *uniform const base, 
-                            const varying int index)
-{
-  vec4f v;
-
-  // special 64-bit safe code:
-  const int index_lo = index & ((1<<BITS)-1);
-  const int index_hi = index - index_lo;
-  // varying offset of lower bits:
-  const varying int scaledIndexLo = index_lo;
-  foreach_unique(hi in index_hi) {
-    //uniform offset for upper bits:
-    uniform int64 scaledIndexHi = (int64)hi;
-    // properly shifted base address (shifted by 64-bits)
-    const vec4f *uniform base_hi = base + scaledIndexHi;
-    v = base_hi[scaledIndexLo];
-  }
-  return v;
-}
+__define_gather(vec2f);
+__define_gather(vec4f);
+__define_gather_vec3_stride(float, f);
+__define_gather_vec3_stride(int, i);
 
 static void TriangleMesh_postIntersect(uniform Geometry *uniform _self,
                                        uniform Model    *uniform model,
@@ -102,80 +83,56 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform _self,
 {
   uniform TriangleMesh *uniform self = (uniform TriangleMesh *uniform)_self;
   dg.Ng = dg.Ns = ray.Ng;
-#if 1
-  const varying vec3i index = gather64_vec3i(self->index,self->idxSize,ray.primID);
-#else
-  const varying int indexBase = self->idxSize * ray.primID;
-  const varying vec3i index = make_vec3i(self->index[indexBase+0],
-                                         self->index[indexBase+1],
-                                         self->index[indexBase+2]);
-#endif
+  const uniform bool huge_mesh = self->huge_mesh;
+  const vec3i index = gather_vec3i(huge_mesh, self->index, self->idxSize, ray.primID);
+  vec3f bary = make_vec3f(1.0f - ray.u - ray.v, ray.u, ray.v);
 
-  const uniform float *uniform normal = self->normal;
-  const uniform int32 norSize = self->norSize;
-  if ((flags & DG_NS) && normal) {
-#if 1
-    dg.Ns
-      = (1.f-ray.u-ray.v) * gather64_vec3f(normal,self->norSize,index.x)
-      + ray.u * gather64_vec3f(normal,self->norSize,index.y)
-      + ray.v * gather64_vec3f(normal,self->norSize,index.z);
-#else
-    const uniform vec3f *const varying n0ptr = (const uniform vec3f *)&normal[index.x * norSize];
-    const uniform vec3f *const varying n1ptr = (const uniform vec3f *)&normal[index.y * norSize];
-    const uniform vec3f *const varying n2ptr = (const uniform vec3f *)&normal[index.z * norSize];
-    dg.Ns
-      = (1.f-ray.u-ray.v) * *n0ptr
-      + ray.u * *n1ptr
-      + ray.v * *n2ptr;
-#endif
+  if (flags & DG_NS && self->normal) {
+    const uniform float *uniform normal = self->normal;
+    const uniform int32 norSize = self->norSize;
+    const vec3f a = gather_vec3f(huge_mesh, normal, norSize, index.x);
+    const vec3f b = gather_vec3f(huge_mesh, normal, norSize, index.y);
+    const vec3f c = gather_vec3f(huge_mesh, normal, norSize, index.z);
+    dg.Ns = interpolate(bary, a, b, c);
   }
 
-  if ((flags & DG_COLOR)) {
-    uniform vec4f *uniform color = self->color;
-    if (color) {
-
-#if 1
-      dg.color
-        = (1.f-ray.u-ray.v) * gather64_vec4f(color,index.x)
-        + ray.u * gather64_vec4f(color,index.y)
-        + ray.v * gather64_vec4f(color,index.z);
-#else
-      dg.color
-        = (1.f-ray.u-ray.v) * (color[index.x])
-        + ray.u * (color[index.y])
-        + ray.v * (color[index.z]);
-#endif
-    }
+  if (flags & DG_COLOR && self->color) {
+    const uniform vec4f *uniform color = self->color;
+    const vec4f a = gather_vec4f(huge_mesh, color, index.x);
+    const vec4f b = gather_vec4f(huge_mesh, color, index.y);
+    const vec4f c = gather_vec4f(huge_mesh, color, index.z);
+    dg.color = interpolate(bary, a, b, c);
   }
 
   if (flags & DG_TEXCOORD && self->texcoord) {
-    //calculate texture coordinate using barycentric coordinates
     const uniform vec2f *uniform texcoord = self->texcoord;
-    dg.st
-      = (1.f-ray.u-ray.v) * (texcoord[index.x])
-      + ray.u * (texcoord[index.y])
-      + ray.v * (texcoord[index.z]);
-  } else {
+    const vec2f a = gather_vec2f(huge_mesh, texcoord, index.x);
+    const vec2f b = gather_vec2f(huge_mesh, texcoord, index.y);
+    const vec2f c = gather_vec2f(huge_mesh, texcoord, index.z);
+    dg.st = interpolate(bary, a, b, c);
+  } else
     dg.st = make_vec2f(0.0f, 0.0f);
-  }
 
   if (flags & DG_TANGENTS) {
     uniform bool fallback = true;
     if (self->texcoord) {
       const uniform vec2f *uniform texcoord = self->texcoord;
-      const vec2f dst02 = texcoord[index.x] - texcoord[index.z];
-      const vec2f dst12 = texcoord[index.y] - texcoord[index.z];
+      const vec2f a = gather_vec2f(huge_mesh, texcoord, index.x);
+      const vec2f b = gather_vec2f(huge_mesh, texcoord, index.y);
+      const vec2f c = gather_vec2f(huge_mesh, texcoord, index.z);
+      const vec2f dst02 = a - c;
+      const vec2f dst12 = b - c;
       const float det = dst02.x * dst12.y - dst02.y * dst12.x;
 
       if (det != 0.f) {
         const float invDet = rcp(det);
         const uniform float *uniform vertex = self->vertex;
         const uniform int32 vtxSize = self->vtxSize;
-        const vec3f *const varying v0ptr = (const uniform vec3f *)&vertex[index.x * vtxSize];
-        const vec3f *const varying v1ptr = (const uniform vec3f *)&vertex[index.y * vtxSize];
-        const vec3f *const varying v2ptr = (const uniform vec3f *)&vertex[index.z * vtxSize];
-        const vec3f dp02 = *v0ptr - *v2ptr;
-        const vec3f dp12 = *v1ptr - *v2ptr;
+        const vec3f a = gather_vec3f(huge_mesh, vertex, vtxSize, index.x);
+        const vec3f b = gather_vec3f(huge_mesh, vertex, vtxSize, index.y);
+        const vec3f c = gather_vec3f(huge_mesh, vertex, vtxSize, index.z);
+        const vec3f dp02 = a - c;
+        const vec3f dp12 = b - c;
         dg.dPds = (dst12.y * dp02 - dst02.y * dp12) * invDet;
         dg.dPdt = (dst02.x * dp12 - dst12.x * dp02) * invDet;
         fallback = false;
@@ -222,8 +179,8 @@ void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
                               uniform int32   geom_materialID,
                               uniform Material *uniform material,
                               uniform Material *uniform *uniform materialList,
-                              uniform uint32 *uniform prim_materialID
-                              )
+                              uniform uint32 *uniform prim_materialID,
+                              uniform bool huge_mesh)
 {
   Geometry_Constructor(&mesh->geometry,cppEquivalent,
                        TriangleMesh_postIntersect,
@@ -241,13 +198,14 @@ void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
   mesh->prim_materialID = prim_materialID;
   mesh->materialList = materialList;
   mesh->geom_materialID = geom_materialID;
+  mesh->huge_mesh = huge_mesh;
 }
 
 export void *uniform TriangleMesh_create(void *uniform cppEquivalent)
 {
   uniform TriangleMesh *uniform mesh = uniform new uniform TriangleMesh;
   TriangleMesh_Constructor(mesh, cppEquivalent,
-                           NULL, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, -1, NULL, NULL, NULL);
+                           NULL, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, -1, NULL, NULL, NULL, false);
   return mesh;
 }
 
@@ -266,8 +224,8 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
                                       uniform int32   geom_materialID,
                                       void *uniform material,
                                       void *uniform _materialList,
-                                      uniform uint32 *uniform prim_materialID
-                                      )
+                                      uniform uint32 *uniform prim_materialID,
+                                      uniform bool huge_mesh)
 {
   uniform TriangleMesh *uniform mesh = (uniform TriangleMesh *uniform)_mesh;
   uniform Model *uniform model = (uniform Model *uniform)_model;
@@ -286,5 +244,6 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
                            geom_materialID,
                            (Material*uniform)material,
                            (Material*uniform*uniform)materialList,
-                           prim_materialID);
+                           prim_materialID,
+                           huge_mesh);
 }

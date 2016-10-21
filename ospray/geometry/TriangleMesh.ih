@@ -33,5 +33,6 @@ struct TriangleMesh {
   uniform uint32   *prim_materialID;     // per-primitive material ID
   uniform Material *uniform *materialList;  // list of materials, if multiple materials are assigned to this mesh.
   uniform int32     geom_materialID;     // per-object material ID
+  uniform bool      huge_mesh;     // need 64-bit addressing
 };
 

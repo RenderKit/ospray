@@ -721,6 +721,21 @@ __define_lerp4(uc)
 #undef __define_lerp3
 #undef __define_lerp4
 
+#define __define_interpolate_uv(univar,T) \
+inline T interpolate(const vec3f &f, const univar T a, const univar T b, const univar T c) \
+{ \
+  return f.x*a + f.y*b + f.z*c; \
+}
+#define __define_interpolate(T) \
+  __define_interpolate_uv(uniform,T) \
+  __define_interpolate_uv(varying,T)
+
+__define_interpolate(vec2f)
+__define_interpolate(vec3f)
+__define_interpolate(vec4f)
+#undef __define_interpolate_uv
+#undef __define_interpolate
+
 inline vec2i make_vec2i(const vec2f &a)
 { return make_vec2i((int)a.x, (int)a.y); }
 
