@@ -1,7 +1,7 @@
 OSPRay
 ======
 
-This is release v1.1.0 of OSPRay. For changes and new features see the
+This is release v1.1.1 of OSPRay. For changes and new features see the
 [changelog](CHANGELOG.md). Also visit http://www.ospray.org for more
 information.
 
@@ -212,7 +212,19 @@ at the [OSPRay Demos and Examples] page.
 [news/updates]: https://ospray.github.io/news.html
 [getting OSPRay]: https://ospray.github.io/getting_ospray.html
 [OSPRay Demos and Examples]: https://ospray.github.io/demos.html
+[tutorial]: #tutorial
+[camera]: #cameras
+[volume]: #volumes
 [imgTutorial1]: https://ospray.github.io/images/tutorial_firstframe.png
 [imgTutorial2]: https://ospray.github.io/images/tutorial_accumulatedframe.png
 [imgQtViewer]: https://ospray.github.io/images/QtViewer.jpg
 [imgVolumeViewer]: https://ospray.github.io/images/VolumeViewer.png
+[imgSpotLight]: https://ospray.github.io/images/spot_light.png
+[imgQuadLight]: https://ospray.github.io/images/quad_light.png
+[imgHDRILight]: https://ospray.github.io/images/hdri_light.png
+[imgCameraPerspective]: https://ospray.github.io/images/camera_perspective.jpg { width=60% }
+[imgCameraArchitectural]: https://ospray.github.io/images/camera_architectual.jpg { width=60% }
+[imgCameraStereo]: https://ospray.github.io/images/camera_stereo.jpg { width=90% }
+[imgCameraOrthographic]: https://ospray.github.io/images/camera_orthographic.jpg { width=60% }
+[imgCameraPanoramic]: https://ospray.github.io/images/camera_panoramic.jpg { width=90% }
+[imgNormalMap]: https://ospray.github.io/images/normalmap_frustum.png { width=60% }
