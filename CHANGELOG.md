@@ -1,6 +1,12 @@
 Version History
 ---------------
 
+### Changes in v1.1.1:
+
+-   Fixed support of first generation Intel® Xeon Phi™ coprocessor
+    (codename Knights Corner) and the COI device
+-   Fix normalization bug that caused rendering artifacts
+
 ### Changes in v1.1.0:
 
 -   New "scivis" renderer features
@@ -21,8 +27,8 @@ Version History
         vertical edges to appear parallel
     -   Rendering a subsection of the full view with
         `imageStart`/`imageEnd` supported by all cameras
--   This will be our last release supporting the first generation Intel®
-    Xeon Phi™ coprocessor (codename Knights Corner)
+-   This will be our last release supporting the first generation Intel
+    Xeon Phi coprocessor (codename Knights Corner)
     -   Future major and minor releases will be upgraded to the latest
         version of Embree, which no longer supports Knights Corner
     -   Depending on user feedback, patch releases are still made to
