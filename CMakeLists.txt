@@ -37,7 +37,6 @@ SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 INCLUDE(ospray_macros)
 INCLUDE(ospray_options)
 INCLUDE(ispc)
-INCLUDE(mpi)
 
 IF(NOT WIN32)
   INCLUDE(cmake/doxygen.cmake)

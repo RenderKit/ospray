@@ -266,6 +266,10 @@ export void Renderer_pick(void *uniform _self,
   CameraSample cameraSample;
   cameraSample.screen.x = screenPos.x;
   cameraSample.screen.y = screenPos.y;
+  // use center of lens and shutter time
+  cameraSample.lens.x = 0.0f;
+  cameraSample.lens.y = 0.0f;
+  cameraSample.time = 0.5f;
 
   Ray ray;
   camera->initRay(camera, ray, cameraSample);
