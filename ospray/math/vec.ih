@@ -584,7 +584,7 @@ inline vec3f normalize(const vec3f v, float &len)
 { len = sqrtf(dot(v,v)); return v * rcpf(len); }
 
 inline vec3f safe_normalize(const vec3f v)
-{ return v * (1.f/sqrtf(max(1e-8f,dot(v,v)))); }
+{ return v * (1.f/sqrtf(max(1e-37f,dot(v,v)))); }
 
 /*! differentiated normalization */
 inline varying vec3f dnormalize(const varying vec3f& p, const varying vec3f& dp)
@@ -720,6 +720,21 @@ __define_lerp4(uc)
 #undef __define_lerp2
 #undef __define_lerp3
 #undef __define_lerp4
+
+#define __define_interpolate_uv(univar,T) \
+inline T interpolate(const vec3f &f, const univar T a, const univar T b, const univar T c) \
+{ \
+  return f.x*a + f.y*b + f.z*c; \
+}
+#define __define_interpolate(T) \
+  __define_interpolate_uv(uniform,T) \
+  __define_interpolate_uv(varying,T)
+
+__define_interpolate(vec2f)
+__define_interpolate(vec3f)
+__define_interpolate(vec4f)
+#undef __define_interpolate_uv
+#undef __define_interpolate
 
 inline vec2i make_vec2i(const vec2f &a)
 { return make_vec2i((int)a.x, (int)a.y); }

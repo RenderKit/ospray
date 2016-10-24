@@ -374,7 +374,7 @@ extern "C" {
   */
   OSPRAY_INTERFACE OSPData ospNewData(size_t numItems,
                                       OSPDataType,
-                                      const void *source OSP_DEFAULT_VAL(=NULL),
+                                      const void *source,
                                       const uint32_t dataCreationFlags OSP_DEFAULT_VAL(=0));
 
   /*! \} */
