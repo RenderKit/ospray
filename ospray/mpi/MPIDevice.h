@@ -217,9 +217,7 @@ namespace ospray {
 
       ObjectHandle allocateHandle() const;
 
-      // TODO: We should have a clone of the shared_ptr to the send/recv buffer
-      // management object.
-
+      std::shared_ptr<mpi::BufferedMPIComm> bufferedComm;
     };
 
     // ==================================================================

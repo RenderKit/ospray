@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <memory>
 #include <mpi.h>
 #include "common/OSPCommon.h"
 #include "mpi/Work.h"

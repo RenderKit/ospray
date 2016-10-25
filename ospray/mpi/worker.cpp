@@ -119,9 +119,10 @@ namespace ospray {
 
       TiledLoadBalancer::instance = new mpi::staticLoadBalancer::Slave;
 
+      std::shared_ptr<mpi::BufferedMPIComm> bufferedComm = mpi::BufferedMPIComm::get();
       while (1) {
         std::vector<work::Work*> workCommands;
-        mpi::recv(mpi::Address(&mpi::app, (int32)mpi::RECV_ALL), workCommands);
+        bufferedComm->recv(mpi::Address(&mpi::app, (int32)mpi::RECV_ALL), workCommands);
         for (work::Work *&w : workCommands) {
           w->run();
           delete w;

@@ -376,7 +376,7 @@ namespace ospray {
     extern void embreeErrorFunc(const RTCError code, const char* str);
 
     MPIDevice::MPIDevice(int *_ac, const char **_av, OSPDApiMode apiMode)
-      : currentApiMode(apiMode)
+      : currentApiMode(apiMode), bufferedComm(mpi::BufferedMPIComm::get())
     {
       UNUSED(_ac, _av);
       auto logLevelFromEnv = getEnvVar<int>("OSPRAY_LOG_LEVEL");
@@ -835,7 +835,7 @@ namespace ospray {
                                 OSPRenderer _renderer,
                                 const uint32 fbChannelFlags)
     {
-      mpi::flush();
+      bufferedComm->flush();
       work::RenderFrame work(_fb, _renderer, fbChannelFlags);
       processWork(&work);
       // TODO WILL: What do we return here? This call will
@@ -1029,10 +1029,10 @@ namespace ospray {
     void MPIDevice::processWork(work::Work* work)
     {
       if (currentApiMode == OSPD_MODE_MASTERED) {
-        mpi::send(mpi::Address(&mpi::worker,(int32)mpi::SEND_ALL), work);
+        bufferedComm->send(mpi::Address(&mpi::worker,(int32)mpi::SEND_ALL), work);
         // TODO: Maybe instead of this we can have a concept of "flushing" work units
         if (dynamic_cast<work::CommandFinalize*>(work)) {
-          mpi::flush();
+          bufferedComm->flush();
         }
       }
       // TODO: In mastered mode we want to selectively run commands maybe!?
