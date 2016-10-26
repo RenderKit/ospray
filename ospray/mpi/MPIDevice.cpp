@@ -508,7 +508,7 @@ namespace ospray {
       cmd.send((int32)flags);
       size_t size = init?ospray::sizeOf(format)*nitems:0;
       cmd.send(size);
-      if (init) {
+      if (size) {
         cmd.send(init,size);
         if (format == OSP_OBJECT) {
           // no need to do anything special here: while we have to
