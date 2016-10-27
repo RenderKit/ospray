@@ -18,9 +18,9 @@
 
 #include "OSPCommon.h"
 
-namespace ospray {
+#include <map>
 
-  inline size_t rdtsc() { return ospcommon::rdtsc(); }
+namespace ospray {
 
   /*! function for "pretty" large numbers, printing 10000000 as "10M" instead */
   inline std::string prettyNumber(const size_t s) {
@@ -76,6 +76,51 @@ namespace ospray {
     auto *str = getenv(var.c_str());
     bool found = (str != nullptr);
     return {found, found ? std::string(str) : std::string{}};
+  }
+
+  template <typename OSPRAY_CLASS, OSPDataType OSP_TYPE>
+  inline OSPRAY_CLASS *createInstanceHelper(const std::string &type)
+  {
+    // Function pointer type for creating a concrete instance of a subtype of
+    // this class.
+    using creationFunctionPointer = OSPRAY_CLASS*(*)();
+
+    // Function pointers corresponding to each subtype.
+    static std::map<std::string, creationFunctionPointer> symbolRegistry;
+
+    // Find the creation function for the subtype if not already known.
+    if (symbolRegistry.count(type) == 0) {
+
+      if (ospray::logLevel >= 2)  {
+        std::cout << "#ospray: trying to look up object type '"
+                  << type << "' for the first time" << std::endl;
+      }
+
+      auto type_string = stringForType(OSP_TYPE);
+
+      // Construct the name of the creation function to look for.
+      std::string creationFunctionName = "ospray_create_" + type_string
+                                         +  "__" + type;
+
+      // Look for the named function.
+      symbolRegistry[type] =
+          (creationFunctionPointer)getSymbol(creationFunctionName);
+
+      // The named function may not be found if the requested subtype is not
+      // known.
+      if (!symbolRegistry[type] && ospray::logLevel >= 1) {
+        std::cerr << "  WARNING: unrecognized object type '" + type
+                  << "'." << std::endl;
+      }
+    }
+
+    // Create a concrete instance of the requested subtype.
+    auto *object = symbolRegistry[type] ? (*symbolRegistry[type])() : nullptr;
+
+    // Denote the subclass type in the ManagedObject base class.
+    if (object) object->managedObjectType = OSP_TYPE;
+
+    return object;
   }
 
 }// namespace ospray

@@ -170,6 +170,9 @@ namespace ospray {
   /*! Convert a type string to an OSPDataType. */
   OSPRAY_INTERFACE OSPDataType typeForString(const char *string);
 
+  /*! Convert a type string to an OSPDataType. */
+  OSPRAY_INTERFACE std::string stringForType(OSPDataType type);
+
   /*! size of OSPTextureFormat */
   OSPRAY_INTERFACE size_t sizeOf(const OSPTextureFormat);
 

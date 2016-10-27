@@ -238,6 +238,60 @@ namespace ospray {
     return(OSP_UNKNOWN);
   }
 
+  std::string stringForType(OSPDataType type)
+  {
+    switch (type) {
+    case OSP_VOID_PTR:          return "void_ptr";
+    case OSP_OBJECT:            return "object";
+    case OSP_CAMERA:            return "camera";
+    case OSP_DATA:              return "data";
+    case OSP_FRAMEBUFFER:       return "framebuffer";
+    case OSP_GEOMETRY:          return "geometry";
+    case OSP_LIGHT:             return "light";
+    case OSP_MATERIAL:          return "material";
+    case OSP_MODEL:             return "model";
+    case OSP_RENDERER:          return "renderer";
+    case OSP_TEXTURE:           return "texture";
+    case OSP_TRANSFER_FUNCTION: return "transfer_function";
+    case OSP_VOLUME:            return "volume";
+    case OSP_PIXEL_OP:          return "pixel_op";
+    case OSP_STRING:            return "string";
+    case OSP_CHAR:              return "char";
+    case OSP_UCHAR:             return "uchar";
+    case OSP_UCHAR2:            return "uchar2";
+    case OSP_UCHAR3:            return "uchar3";
+    case OSP_UCHAR4:            return "uchar4";
+    case OSP_USHORT:            return "ushort";
+    case OSP_INT:               return "int";
+    case OSP_INT2:              return "int2";
+    case OSP_INT3:              return "int3";
+    case OSP_INT4:              return "int4";
+    case OSP_UINT:              return "uint";
+    case OSP_UINT2:             return "uint2";
+    case OSP_UINT3:             return "uint3";
+    case OSP_UINT4:             return "uint4";
+    case OSP_LONG:              return "long";
+    case OSP_LONG2:             return "long2";
+    case OSP_LONG3:             return "long3";
+    case OSP_LONG4:             return "long4";
+    case OSP_ULONG:             return "ulong";
+    case OSP_ULONG2:            return "ulong2";
+    case OSP_ULONG3:            return "ulong3";
+    case OSP_ULONG4:            return "ulong4";
+    case OSP_FLOAT:             return "float";
+    case OSP_FLOAT2:            return "float2";
+    case OSP_FLOAT3:            return "float3";
+    case OSP_FLOAT4:            return "float4";
+    case OSP_FLOAT3A:           return "float3a";
+    case OSP_DOUBLE:            return "double";
+    };
+
+    std::stringstream error;
+    error << __FILE__ << ":" << __LINE__ << ": unknown OSPDataType "
+          << (int)type;
+    throw std::runtime_error(error.str());
+  }
+
   size_t sizeOf(const OSPTextureFormat type) {
     switch (type) {
       case OSP_TEXTURE_RGBA8:
