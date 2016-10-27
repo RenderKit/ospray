@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "common/OSPCommon.h"
+#include "common/Util.h"
 #include "include/ospray/ospray.h"
 #include "render/Renderer.h"
 #include "camera/Camera.h"

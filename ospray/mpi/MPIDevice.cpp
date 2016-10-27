@@ -21,6 +21,7 @@
 #include "common/Model.h"
 #include "common/Data.h"
 #include "common/Library.h"
+#include "common/Util.h"
 #include "geometry/TriangleMesh.h"
 #include "render/Renderer.h"
 #include "camera/Camera.h"
