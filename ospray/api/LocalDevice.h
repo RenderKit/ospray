@@ -30,14 +30,14 @@ namespace ospray {
     struct LocalDevice : public Device {
 
       /*! constructor */
-      LocalDevice(int *_ac=NULL, const char **_av=NULL);
+      LocalDevice(int *_ac = nullptr, const char **_av = nullptr);
 
       ~LocalDevice();
 
       /*! create a new frame buffer */
       OSPFrameBuffer frameBufferCreate(const vec2i &size,
-                                               const OSPFrameBufferFormat mode,
-                                               const uint32 channels) override;
+                                       const OSPFrameBufferFormat mode,
+                                       const uint32 channels) override;
 
       /*! map frame buffer */
       const void *frameBufferMap(OSPFrameBuffer fb,

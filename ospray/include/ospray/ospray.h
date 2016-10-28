@@ -174,6 +174,7 @@ namespace osp {
   typedef uint64_t uint64;
 
   struct ManagedObject    { uint64 ID; virtual ~ManagedObject() {} };
+  struct Device           : public ManagedObject {};
   struct FrameBuffer      : public ManagedObject {};
   struct Renderer         : public ManagedObject {};
   struct Camera           : public ManagedObject {};
@@ -188,6 +189,7 @@ namespace osp {
   struct PixelOp          : public ManagedObject {};
 } // ::osp
 
+typedef osp::Device            *OSPDevice;
 typedef osp::FrameBuffer       *OSPFrameBuffer;
 typedef osp::Renderer          *OSPRenderer;
 typedef osp::Camera            *OSPCamera;
@@ -224,6 +226,7 @@ typedef struct { osp_linear3f l; osp_vec3f p; }             osp_affine3f;
   OSPGeometry can still be passed to a function that expects a
   OSPObject, etc */
 typedef struct _OSPManagedObject *OSPManagedObject,
+  *OSPDevice,
   *OSPRenderer,
   *OSPCamera,
   *OSPFrameBuffer,
@@ -248,8 +251,20 @@ typedef struct _OSPManagedObject *OSPManagedObject,
 extern "C" {
 #endif
 
-  //! initialize the ospray engine (for single-node user application)
+  //! initialize the ospray engine (for single-node user application) using
+  //! commandline arguments...equivalent to doing ospCreateDevice() followed by
+  //! ospSetCurrentDevice()
   OSPRAY_INTERFACE void ospInit(int *argc, const char **argv);
+
+  //! initialize the ospray engine (for single-node user application) using
+  //! explicit device string.
+  OSPRAY_INTERFACE OSPDevice ospCreateDevice(const char *deviceType OSP_DEFAULT_VAL(="default"));
+
+  //! set current device the API responds to
+  OSPRAY_INTERFACE void ospSetCurrentDevice(OSPDevice device);
+
+  //! get the currently set device
+  OSPRAY_INTERFACE OSPDevice ospGetCurrentDevice();
 
   //! \brief allows for switching the MPI mode btween collaborative, mastered, and independent
   OSPRAY_INTERFACE void ospdApiMode(OSPDApiMode);

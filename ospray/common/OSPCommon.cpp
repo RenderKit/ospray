@@ -167,6 +167,7 @@ namespace ospray {
     case OSP_OBJECT:
     case OSP_CAMERA:
     case OSP_DATA:
+    case OSP_DEVICE:
     case OSP_FRAMEBUFFER:
     case OSP_GEOMETRY:
     case OSP_LIGHT:
@@ -245,6 +246,7 @@ namespace ospray {
     case OSP_OBJECT:            return "object";
     case OSP_CAMERA:            return "camera";
     case OSP_DATA:              return "data";
+    case OSP_DEVICE:            return "device";
     case OSP_FRAMEBUFFER:       return "framebuffer";
     case OSP_GEOMETRY:          return "geometry";
     case OSP_LIGHT:             return "light";

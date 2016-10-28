@@ -386,6 +386,8 @@ namespace ospray {
         }
       }
 
+      ospray::init();
+
       TiledLoadBalancer::instance = new mpi::staticLoadBalancer::Master;
     }
 
@@ -1114,6 +1116,9 @@ namespace ospray {
 
       return result.success ? *value = strdup(result.value), true : false;
     }
+
+    OSP_REGISTER_DEVICE(MPIDevice, mpi_device);
+    OSP_REGISTER_DEVICE(MPIDevice, mpi);
 
   } // ::ospray::mpi
 } // ::ospray

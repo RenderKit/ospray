@@ -166,6 +166,21 @@ extern "C" void ospInit(int *_ac, const char **_av)
   }
 }
 
+extern "C" OSPDevice ospCreateDevice(const char *deviceType)
+{
+  return (OSPDevice)ospray::api::Device::createDevice(deviceType);
+}
+
+extern "C" void ospSetCurrentDevice(OSPDevice device)
+{
+  ospray::api::Device::current = (ospray::api::Device*)device;
+}
+
+extern "C" OSPDevice ospGetCurrentDevice()
+{
+  return (OSPDevice)ospray::api::Device::current.ptr;
+}
+
 
 /*! destroy a given frame buffer.
 

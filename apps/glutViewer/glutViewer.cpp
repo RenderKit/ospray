@@ -42,13 +42,19 @@ std::string scriptFileFromCommandLine(int ac, const char **&av)
 
 int main(int ac, const char **av)
 {
+#if 0
   ospInit(&ac,av);
+#else
+  auto device = ospCreateDevice();
+  ospSetCurrentDevice(device);
+#endif
+
   ospray::glut3D::initGLUT(&ac,av);
 
   auto ospObjs = parseWithDefaultParsers(ac, av);
 
-  std::deque<ospcommon::box3f>      bbox;
-  std::deque<ospray::cpp::Model>    model;
+  std::deque<ospcommon::box3f>    bbox;
+  std::deque<ospray::cpp::Model>  model;
   ospray::cpp::Renderer renderer;
   ospray::cpp::Camera   camera;
 

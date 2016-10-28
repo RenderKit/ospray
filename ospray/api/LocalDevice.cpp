@@ -73,6 +73,8 @@ namespace ospray {
         assert(erc == RTC_NO_ERROR);
       }
 
+      ospray::init();
+
       TiledLoadBalancer::instance = new LocalTiledLoadBalancer;
     }
 
@@ -87,12 +89,13 @@ namespace ospray {
                                    const uint32 channels)
     {
       FrameBuffer::ColorBufferFormat colorBufferFormat = mode;
-      bool hasDepthBuffer = (channels & OSP_FB_DEPTH)!=0;
-      bool hasAccumBuffer = (channels & OSP_FB_ACCUM)!=0;
-      bool hasVarianceBuffer = (channels & OSP_FB_VARIANCE)!=0;
+      bool hasDepthBuffer    = (channels & OSP_FB_DEPTH) != 0;
+      bool hasAccumBuffer    = (channels & OSP_FB_ACCUM) != 0;
+      bool hasVarianceBuffer = (channels & OSP_FB_VARIANCE) != 0;
 
       FrameBuffer *fb = new LocalFrameBuffer(size,colorBufferFormat,
-                                             hasDepthBuffer,hasAccumBuffer,
+                                             hasDepthBuffer,
+                                             hasAccumBuffer,
                                              hasVarianceBuffer);
       fb->refInc();
       return (OSPFrameBuffer)fb;
@@ -628,6 +631,11 @@ namespace ospray {
 
       volume->computeSamples(results, worldCoordinates, count);
     }
+
+    OSP_REGISTER_DEVICE(LocalDevice, local_device);
+    OSP_REGISTER_DEVICE(LocalDevice, local);
+    OSP_REGISTER_DEVICE(LocalDevice, default_device);
+    OSP_REGISTER_DEVICE(LocalDevice, default);
 
   } // ::ospray::api
 } // ::ospray

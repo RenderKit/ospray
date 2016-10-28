@@ -135,7 +135,7 @@ namespace ospray {
 
   typedef ::int64_t index_t;
 
-  void init(int *ac, const char ***av);
+  void init(int *ac = nullptr, const char ***av = nullptr);
 
   /*! for debugging. compute a checksum for given area range... */
   OSPRAY_INTERFACE void *computeCheckSum(const void *ptr, size_t numBytes);

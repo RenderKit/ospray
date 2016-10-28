@@ -17,8 +17,11 @@
 // ospray
 #include "Device.h"
 #include "common/OSPCommon.h"
+#include "common/Util.h"
 // embree
 #include "embree2/rtcore.h"
+
+#include <map>
 
 namespace ospray {
 
@@ -28,8 +31,9 @@ namespace ospray {
 
     Ref<Device> Device::current = nullptr;
 
-    Device::Device() {
-//      rtcSetErrorFunction(error_handler); need to call rtcInit first
+    Device *Device::createDevice(const char *type)
+    {
+      return createInstanceHelper<Device, OSP_DEVICE>(type);
     }
 
   } // ::ospray::api
