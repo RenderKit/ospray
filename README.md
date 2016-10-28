@@ -195,25 +195,45 @@ function. For an example see the [tutorial](#tutorial). The following
 parameters (which are prefixed by convention with "`--osp:`") are
 understood:
 
-+--------------------------+------------------------------------------------+
-| Parameter                | Description                                    |
-+==========================+================================================+
-| `--osp:debug`            | enables various extra checks and debug output, |
-|                          | and disables multi-threading                   |
-+--------------------------+------------------------------------------------+
-| `--osp:numthreads <n>`   | use `n` threads instead of per default using   |
-|                          | all detected hardware threads                  |
-+--------------------------+------------------------------------------------+
-| `--osp:loglevel <n>`     | set logging level, default `0`; increasing `n` |
-|                          | means increasingly verbose log messages        |
-+--------------------------+------------------------------------------------+
-| `--osp:verbose`          | shortcut for `--osp:loglevel 1`                |
-+--------------------------+------------------------------------------------+
-| `--osp:vv`               | shortcut for `--osp:loglevel 2`                |
-+--------------------------+------------------------------------------------+
-| `--osp:mpi`              | enables MPI mode for parallel rendering, to be |
-|                          | used in conjunction with `mpirun`              |
-+--------------------------+------------------------------------------------+
+<table style="width:97%;">
+<caption>Command line parameters accepted by OSPRay's <code>ospInit</code>.</caption>
+<colgroup>
+<col width="33%" />
+<col width="63%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Parameter</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code>--osp:debug</code></td>
+<td align="left">enables various extra checks and debug output, and disables multi-threading</td>
+</tr>
+<tr class="even">
+<td align="left"><code>--osp:numthreads &lt;n&gt;</code></td>
+<td align="left">use <code>n</code> threads instead of per default using all detected hardware threads</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>--osp:loglevel &lt;n&gt;</code></td>
+<td align="left">set logging level, default <code>0</code>; increasing <code>n</code> means increasingly verbose log messages</td>
+</tr>
+<tr class="even">
+<td align="left"><code>--osp:verbose</code></td>
+<td align="left">shortcut for <code>--osp:loglevel 1</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>--osp:vv</code></td>
+<td align="left">shortcut for <code>--osp:loglevel 2</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>--osp:mpi</code></td>
+<td align="left">enables MPI mode for parallel rendering, to be used in conjunction with <code>mpirun</code></td>
+</tr>
+</tbody>
+</table>
 
 : Command line parameters accepted by OSPRay's `ospInit`.
 
@@ -526,28 +546,55 @@ representations in the application this geometry allows a flexible way
 of specifying the data of center position and radius within a
 [data](#data) array:
 
-+----------+------------------+-----------+-------------------------------------+
-| Type     | Name             | Default   | Description                         |
-+==========+==================+===========+=====================================+
-| float    | radius           | 0.01      | radius of all spheres (if           |
-|          |                  |           | `offset_radius` is not used)        |
-+----------+------------------+-----------+-------------------------------------+
-| OSPData  | spheres          | NULL      | memory holding the [data](#data) of |
-|          |                  |           | all spheres                         |
-+----------+------------------+-----------+-------------------------------------+
-| int      | bytes\_per\_sphe | 16        | size (in bytes) of each sphere      |
-|          | re               |           | within the `spheres` array          |
-+----------+------------------+-----------+-------------------------------------+
-| int      | offset\_center   | 0         | offset (in bytes) of each sphere's  |
-|          |                  |           | "vec3f center" position (in         |
-|          |                  |           | object-space) within the `spheres`  |
-|          |                  |           | array                               |
-+----------+------------------+-----------+-------------------------------------+
-| int      | offset\_radius   | -1        | offset (in bytes) of each sphere's  |
-|          |                  |           | "float radius" within the `spheres` |
-|          |                  |           | array (`-1` means disabled and use  |
-|          |                  |           | `radius`)                           |
-+----------+------------------+-----------+-------------------------------------+
+<table style="width:97%;">
+<caption>Parameters defining a spheres geometry.</caption>
+<colgroup>
+<col width="12%" />
+<col width="22%" />
+<col width="13%" />
+<col width="48%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="right">Default</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">float</td>
+<td align="left">radius</td>
+<td align="right">0.01</td>
+<td align="left">radius of all spheres (if <code>offset_radius</code> is not used)</td>
+</tr>
+<tr class="even">
+<td align="left">OSPData</td>
+<td align="left">spheres</td>
+<td align="right">NULL</td>
+<td align="left">memory holding the <a href="#data">data</a> of all spheres</td>
+</tr>
+<tr class="odd">
+<td align="left">int</td>
+<td align="left">bytes_per_sphe re</td>
+<td align="right">16</td>
+<td align="left">size (in bytes) of each sphere within the <code>spheres</code> array</td>
+</tr>
+<tr class="even">
+<td align="left">int</td>
+<td align="left">offset_center</td>
+<td align="right">0</td>
+<td align="left">offset (in bytes) of each sphere's &quot;vec3f center&quot; position (in object-space) within the <code>spheres</code> array</td>
+</tr>
+<tr class="odd">
+<td align="left">int</td>
+<td align="left">offset_radius</td>
+<td align="right">-1</td>
+<td align="left">offset (in bytes) of each sphere's &quot;float radius&quot; within the <code>spheres</code> array (<code>-1</code> means disabled and use <code>radius</code>)</td>
+</tr>
+</tbody>
+</table>
 
 : Parameters defining a spheres geometry.
 
@@ -562,35 +609,61 @@ flexible way of specifying the data of offsets for start position, end
 position and radius within a [data](#data) array. All parameters are
 listed in the table below.
 
-+----------+--------------------+-----------+-----------------------------------+
-| Type     | Name               | Default   | Description                       |
-+==========+====================+===========+===================================+
-| float    | radius             | 0.01      | radius of all cylinders (if       |
-|          |                    |           | `offset_radius` is not used)      |
-+----------+--------------------+-----------+-----------------------------------+
-| OSPData  | cylinders          | NULL      | memory holding the [data](#data)  |
-|          |                    |           | of all cylinders                  |
-+----------+--------------------+-----------+-----------------------------------+
-| int      | bytes\_per\_cylind | 28        | size (in bytes) of each cylinder  |
-|          | er                 |           | within the `cylinders` array      |
-+----------+--------------------+-----------+-----------------------------------+
-| int      | offset\_v0         | 0         | offset (in bytes) of each         |
-|          |                    |           | cylinder's "vec3f v0" position    |
-|          |                    |           | (the start vertex, in             |
-|          |                    |           | object-space) within the          |
-|          |                    |           | `cylinders` array                 |
-+----------+--------------------+-----------+-----------------------------------+
-| int      | offset\_v1         | 12        | offset (in bytes) of each         |
-|          |                    |           | cylinder's "vec3f v1" position    |
-|          |                    |           | (the end vertex, in object-space) |
-|          |                    |           | within the `cylinders` array      |
-+----------+--------------------+-----------+-----------------------------------+
-| int      | offset\_radius     | -1        | offset (in bytes) of each         |
-|          |                    |           | cylinder's "float radius" within  |
-|          |                    |           | the `cylinders` array (`-1` means |
-|          |                    |           | disabled and use `radius`         |
-|          |                    |           | instead)                          |
-+----------+--------------------+-----------+-----------------------------------+
+<table style="width:97%;">
+<caption>Parameters defining a cylinders geometry.</caption>
+<colgroup>
+<col width="12%" />
+<col width="25%" />
+<col width="13%" />
+<col width="46%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="right">Default</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">float</td>
+<td align="left">radius</td>
+<td align="right">0.01</td>
+<td align="left">radius of all cylinders (if <code>offset_radius</code> is not used)</td>
+</tr>
+<tr class="even">
+<td align="left">OSPData</td>
+<td align="left">cylinders</td>
+<td align="right">NULL</td>
+<td align="left">memory holding the <a href="#data">data</a> of all cylinders</td>
+</tr>
+<tr class="odd">
+<td align="left">int</td>
+<td align="left">bytes_per_cylind er</td>
+<td align="right">28</td>
+<td align="left">size (in bytes) of each cylinder within the <code>cylinders</code> array</td>
+</tr>
+<tr class="even">
+<td align="left">int</td>
+<td align="left">offset_v0</td>
+<td align="right">0</td>
+<td align="left">offset (in bytes) of each cylinder's &quot;vec3f v0&quot; position (the start vertex, in object-space) within the <code>cylinders</code> array</td>
+</tr>
+<tr class="odd">
+<td align="left">int</td>
+<td align="left">offset_v1</td>
+<td align="right">12</td>
+<td align="left">offset (in bytes) of each cylinder's &quot;vec3f v1&quot; position (the end vertex, in object-space) within the <code>cylinders</code> array</td>
+</tr>
+<tr class="even">
+<td align="left">int</td>
+<td align="left">offset_radius</td>
+<td align="right">-1</td>
+<td align="left">offset (in bytes) of each cylinder's &quot;float radius&quot; within the <code>cylinders</code> array (<code>-1</code> means disabled and use <code>radius</code> instead)</td>
+</tr>
+</tbody>
+</table>
 
 : Parameters defining a cylinders geometry.
 
@@ -712,31 +785,67 @@ created by passing the type string "`scivis`" or "`raytracer`" to
 understood by all renderers the SciVis renderer supports the following
 special parameters:
 
-+--------------+-------------------+-----------+--------------------------------+
-| Type         | Name              | Default   | Description                    |
-+==============+===================+===========+================================+
-| bool         | shadowsEnabled    | false     | whether to compute (hard)      |
-|              |                   |           | shadows                        |
-+--------------+-------------------+-----------+--------------------------------+
-| int          | aoSamples         | 0         | number of rays per sample to   |
-|              |                   |           | compute ambient occlusion      |
-+--------------+-------------------+-----------+--------------------------------+
-| float        | aoDistance        | 10^20^    | maximum distance to consider   |
-|              |                   |           | for ambient occlusion          |
-+--------------+-------------------+-----------+--------------------------------+
-| bool         | oneSidedLighting  | true      | if true back-facing surfaces   |
-|              |                   |           | (wrt. light) receive no        |
-|              |                   |           | illumination                   |
-+--------------+-------------------+-----------+--------------------------------+
-| vec3f        | bgColor           | white     | background color (RGB)         |
-+--------------+-------------------+-----------+--------------------------------+
-| bool         | backgroundEnabled | true      | whether to color the           |
-|              |                   |           | background with `bgColor`      |
-+--------------+-------------------+-----------+--------------------------------+
-| OSPTexture2D | maxDepthTexture   | NULL      | screen-sized float             |
-|              |                   |           | [texture](#texture) with       |
-|              |                   |           | maximum far distance per pixel |
-+--------------+-------------------+-----------+--------------------------------+
+<table style="width:97%;">
+<caption>Special parameters understood by the SciVis renderer.</caption>
+<colgroup>
+<col width="17%" />
+<col width="24%" />
+<col width="13%" />
+<col width="41%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="right">Default</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">bool</td>
+<td align="left">shadowsEnabled</td>
+<td align="right">false</td>
+<td align="left">whether to compute (hard) shadows</td>
+</tr>
+<tr class="even">
+<td align="left">int</td>
+<td align="left">aoSamples</td>
+<td align="right">0</td>
+<td align="left">number of rays per sample to compute ambient occlusion</td>
+</tr>
+<tr class="odd">
+<td align="left">float</td>
+<td align="left">aoDistance</td>
+<td align="right">10<sup>20</sup></td>
+<td align="left">maximum distance to consider for ambient occlusion</td>
+</tr>
+<tr class="even">
+<td align="left">bool</td>
+<td align="left">oneSidedLighting</td>
+<td align="right">true</td>
+<td align="left">if true back-facing surfaces (wrt. light) receive no illumination</td>
+</tr>
+<tr class="odd">
+<td align="left">vec3f</td>
+<td align="left">bgColor</td>
+<td align="right">white</td>
+<td align="left">background color (RGB)</td>
+</tr>
+<tr class="even">
+<td align="left">bool</td>
+<td align="left">backgroundEnabled</td>
+<td align="right">true</td>
+<td align="left">whether to color the background with <code>bgColor</code></td>
+</tr>
+<tr class="odd">
+<td align="left">OSPTexture2D</td>
+<td align="left">maxDepthTexture</td>
+<td align="right">NULL</td>
+<td align="left">screen-sized float <a href="#texture">texture</a> with maximum far distance per pixel</td>
+</tr>
+</tbody>
+</table>
 
 : Special parameters understood by the SciVis renderer.
 
@@ -758,22 +867,43 @@ realistic materials. In addition to the [general parameters](#renderer)
 understood by all renderers the path tracer supports the following
 special parameters:
 
-+--------------+-----------------+-----------+----------------------------------+
-| Type         | Name            | Default   | Description                      |
-+==============+=================+===========+==================================+
-| float        | minContribution | 0.01      | sample contributions below this  |
-|              |                 |           | value will be neglected to       |
-|              |                 |           | speed-up rendering               |
-+--------------+-----------------+-----------+----------------------------------+
-| float        | maxContribution | ∞         | samples are clamped to this      |
-|              |                 |           | value before they are            |
-|              |                 |           | accumulated into the framebuffer |
-+--------------+-----------------+-----------+----------------------------------+
-| OSPTexture2D | backplate       | NULL      | [texture](#texture) image used   |
-|              |                 |           | as background, replacing visible |
-|              |                 |           | lights in infinity (e.g. the     |
-|              |                 |           | [HDRI light](#hdri-light))       |
-+--------------+-----------------+-----------+----------------------------------+
+<table style="width:97%;">
+<caption>Special parameters understood by the path tracer.</caption>
+<colgroup>
+<col width="17%" />
+<col width="21%" />
+<col width="13%" />
+<col width="44%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="right">Default</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">float</td>
+<td align="left">minContribution</td>
+<td align="right">0.01</td>
+<td align="left">sample contributions below this value will be neglected to speed-up rendering</td>
+</tr>
+<tr class="even">
+<td align="left">float</td>
+<td align="left">maxContribution</td>
+<td align="right">∞</td>
+<td align="left">samples are clamped to this value before they are accumulated into the framebuffer</td>
+</tr>
+<tr class="odd">
+<td align="left">OSPTexture2D</td>
+<td align="left">backplate</td>
+<td align="right">NULL</td>
+<td align="left"><a href="#texture">texture</a> image used as background, replacing visible lights in infinity (e.g. the <a href="#hdri-light">HDRI light</a>)</td>
+</tr>
+</tbody>
+</table>
 
 : Special parameters understood by the path tracer.
 
@@ -873,24 +1003,48 @@ created by passing the type string "`spot`" to `ospNewLight`. In
 addition to the [general parameters](#lights) understood by all lights
 the spot light supports the special parameters listed in the table.
 
-+-----------+----------------+-----------------------------------------------+
-| Type      | Name           | Description                                   |
-+===========+================+===============================================+
-| vec3f(a)  | position       | the center of the spot light, in world-space  |
-+-----------+----------------+-----------------------------------------------+
-| vec3f(a)  | direction      | main emission direction of the spot           |
-+-----------+----------------+-----------------------------------------------+
-| float     | openingAngle   | full opening angle (in degree) of the spot;   |
-|           |                | outside of this cone is no illumination       |
-+-----------+----------------+-----------------------------------------------+
-| float     | penumbraAngle  | size (angle in degree) of the "penumbra", the |
-|           |                | region between the rim (of the illumination   |
-|           |                | cone) and full intensity of the spot; should  |
-|           |                | be smaller than half of `openingAngle`        |
-+-----------+----------------+-----------------------------------------------+
-| float     | radius         | the size of the spot light, the radius of a   |
-|           |                | disk with normal `direction`                  |
-+-----------+----------------+-----------------------------------------------+
+<table style="width:97%;">
+<caption>Special parameters accepted by the spot light.</caption>
+<colgroup>
+<col width="13%" />
+<col width="20%" />
+<col width="63%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">vec3f(a)</td>
+<td align="left">position</td>
+<td align="left">the center of the spot light, in world-space</td>
+</tr>
+<tr class="even">
+<td align="left">vec3f(a)</td>
+<td align="left">direction</td>
+<td align="left">main emission direction of the spot</td>
+</tr>
+<tr class="odd">
+<td align="left">float</td>
+<td align="left">openingAngle</td>
+<td align="left">full opening angle (in degree) of the spot; outside of this cone is no illumination</td>
+</tr>
+<tr class="even">
+<td align="left">float</td>
+<td align="left">penumbraAngle</td>
+<td align="left">size (angle in degree) of the &quot;penumbra&quot;, the region between the rim (of the illumination cone) and full intensity of the spot; should be smaller than half of <code>openingAngle</code></td>
+</tr>
+<tr class="odd">
+<td align="left">float</td>
+<td align="left">radius</td>
+<td align="left">the size of the spot light, the radius of a disk with normal <code>direction</code></td>
+</tr>
+</tbody>
+</table>
 
 : Special parameters accepted by the spot light.
 
@@ -934,17 +1088,38 @@ illuminating it from infinity. It is created by passing the type string
 `intensity`](#lights) the HDRI light supports the following special
 parameters:
 
-+---------------+--------+---------------------------------------------------+
-| Type          | Name   | Description                                       |
-+===============+========+===================================================+
-| vec3f(a)      | up     | up direction of the light in world-space          |
-+---------------+--------+---------------------------------------------------+
-| vec3f(a)      | dir    | direction to which the center of the texture will |
-|               |        | be mapped to (analog to [panoramic                |
-|               |        | camera](#panoramic-camera))                       |
-+---------------+--------+---------------------------------------------------+
-| OSPTexture2D  | map    | environment map in latitude / longitude format    |
-+---------------+--------+---------------------------------------------------+
+<table style="width:97%;">
+<caption>Special parameters accepted by the HDRI light.</caption>
+<colgroup>
+<col width="19%" />
+<col width="9%" />
+<col width="68%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">vec3f(a)</td>
+<td align="left">up</td>
+<td align="left">up direction of the light in world-space</td>
+</tr>
+<tr class="even">
+<td align="left">vec3f(a)</td>
+<td align="left">dir</td>
+<td align="left">direction to which the center of the texture will be mapped to (analog to <a href="#panoramic-camera">panoramic camera</a>)</td>
+</tr>
+<tr class="odd">
+<td align="left">OSPTexture2D</td>
+<td align="left">map</td>
+<td align="left">environment map in latitude / longitude format</td>
+</tr>
+</tbody>
+</table>
 
 : Special parameters accepted by the HDRI light.
 
@@ -1034,8 +1209,7 @@ corner; thus a convexity will look green towards the top of the texture
 image (see also the example image of a normal map). If this is not the
 case flip the normal map vertically or invert its green channel.
 
-![Normal map representing an exalted square pyramidal
-frustum.](https://ospray.github.io/images/normalmap_frustum.png){width="60%"}
+<img src="https://ospray.github.io/images/normalmap_frustum.png" alt="Normal map representing an exalted square pyramidal frustum." style="width:60.0%" />
 
 All parameters (except `Tf`) can be textured by passing a
 [texture](#texture) handle, prefixed with "`map_`". The fetched texels
@@ -1178,29 +1352,58 @@ rendering, but no motion blur. It is created by passing the type string
 parameters](#cameras) understood by all cameras the perspective camera
 supports the special parameters listed in the table below.
 
-+--------+-------------------------+-----------------------------------------+
-| Type   | Name                    | Description                             |
-+========+=========================+=========================================+
-| float  | fovy                    | the field of view (angle in degree) of  |
-|        |                         | the frame's height                      |
-+--------+-------------------------+-----------------------------------------+
-| float  | aspect                  | ratio of width by height of the frame   |
-+--------+-------------------------+-----------------------------------------+
-| float  | apertureRadius          | size of the aperture, controls the      |
-|        |                         | depth of field                          |
-+--------+-------------------------+-----------------------------------------+
-| float  | focusDistance           | distance at where the image is sharpest |
-|        |                         | when depth of field is enabled          |
-+--------+-------------------------+-----------------------------------------+
-| bool   | architectural           | vertical edges are projected to be      |
-|        |                         | parallel                                |
-+--------+-------------------------+-----------------------------------------+
-| int    | stereoMode              | 0: no stereo (default), 1: left eye, 2: |
-|        |                         | right eye, 3: side-by-side              |
-+--------+-------------------------+-----------------------------------------+
-| float  | interpupillaryDistance  | distance between left and right eye     |
-|        |                         | when stereo is enabled                  |
-+--------+-------------------------+-----------------------------------------+
+<table style="width:97%;">
+<caption>Parameters accepted by the perspective camera.</caption>
+<colgroup>
+<col width="9%" />
+<col width="32%" />
+<col width="55%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">float</td>
+<td align="left">fovy</td>
+<td align="left">the field of view (angle in degree) of the frame's height</td>
+</tr>
+<tr class="even">
+<td align="left">float</td>
+<td align="left">aspect</td>
+<td align="left">ratio of width by height of the frame</td>
+</tr>
+<tr class="odd">
+<td align="left">float</td>
+<td align="left">apertureRadius</td>
+<td align="left">size of the aperture, controls the depth of field</td>
+</tr>
+<tr class="even">
+<td align="left">float</td>
+<td align="left">focusDistance</td>
+<td align="left">distance at where the image is sharpest when depth of field is enabled</td>
+</tr>
+<tr class="odd">
+<td align="left">bool</td>
+<td align="left">architectural</td>
+<td align="left">vertical edges are projected to be parallel</td>
+</tr>
+<tr class="even">
+<td align="left">int</td>
+<td align="left">stereoMode</td>
+<td align="left">0: no stereo (default), 1: left eye, 2: right eye, 3: side-by-side</td>
+</tr>
+<tr class="odd">
+<td align="left">float</td>
+<td align="left">interpupillaryDistance</td>
+<td align="left">distance between left and right eye when stereo is enabled</td>
+</tr>
+</tbody>
+</table>
 
 : Parameters accepted by the perspective camera.
 
@@ -1219,15 +1422,11 @@ plane and thus the plane of focus is oriented parallel to the front of
 buildings, the whole façade appears sharp, as can be seen in the example
 images below.
 
-![Example image created with the perspective camera, featuring depth of
-field.](https://ospray.github.io/images/camera_perspective.jpg){width="60%"}
+<img src="https://ospray.github.io/images/camera_perspective.jpg" alt="Example image created with the perspective camera, featuring depth of field." style="width:60.0%" />
 
-![Enabling the `architectural` flag corrects the perspective projection
-distortion, resulting in parallel vertical
-edges.](https://ospray.github.io/images/camera_architectual.jpg){width="60%"}
+<img src="https://ospray.github.io/images/camera_architectual.jpg" alt="Enabling the architectural flag corrects the perspective projection distortion, resulting in parallel vertical edges." style="width:60.0%" />
 
-![Example 3D stereo image using `stereoMode`
-side-by-side.](https://ospray.github.io/images/camera_stereo.jpg){width="90%"}
+<img src="https://ospray.github.io/images/camera_stereo.jpg" alt="Example 3D stereo image using stereoMode side-by-side." style="width:90.0%" />
 
 #### Orthographic Camera
 
@@ -1251,8 +1450,7 @@ the scene that is captured in the image, can be controlled with the
 and `imageEnd`, and both methods can be combined. In any case, the
 `aspect` ratio needs to be set accordingly to get an undistorted image.
 
-![Example image created with the orthographic
-camera.](https://ospray.github.io/images/camera_orthographic.jpg){width="60%"}
+<img src="https://ospray.github.io/images/camera_orthographic.jpg" alt="Example image created with the orthographic camera." style="width:60.0%" />
 
 #### Panoramic Camera
 
@@ -1263,8 +1461,7 @@ of 2:1. A panoramic camera is created by passing the type string
 "`panoramic`" to `ospNewCamera`. It is placed and oriented in the scene
 by using the [general parameters](#cameras) understood by all cameras.
 
-![Latitude / longitude map created with the panoramic
-camera.](https://ospray.github.io/images/camera_panoramic.jpg){width="90%"}
+<img src="https://ospray.github.io/images/camera_panoramic.jpg" alt="Latitude / longitude map created with the panoramic camera." style="width:90.0%" />
 
 ### Picking
 
