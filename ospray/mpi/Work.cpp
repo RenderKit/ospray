@@ -310,7 +310,7 @@ namespace ospray {
         : handle(handle), nItems(nItems), format(format), localData(nullptr), flags(flags)
       {
         // TODO: Is this check ok for ParaView e.g. what Carson is changing in 2e81c005 ?
-        if (init) {
+        if (init && nItems) {
           if (flags & OSP_DATA_SHARED_BUFFER) {
             localData = init;
           } else {
