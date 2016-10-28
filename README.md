@@ -75,7 +75,7 @@ following prerequisites:
     latest binary release of ISPC (currently 1.9.1) from the [ISPC
     downloads page](https://ispc.github.io/downloads.html). The build
     system looks for ISPC in the `PATH` and in the directory right "next
-    to" the checked-out OSPRay sources.[^1] Alternatively set the CMake
+    to" the checked-out OSPRay sources.[1] Alternatively set the CMake
     variable `ISPC_EXECUTABLE` to the location of the ISPC compiler.
 -   Per default OSPRay uses the [Intel® Threading Building
     Blocks](https://www.threadingbuildingblocks.org/) (TBB) as tasking
@@ -945,7 +945,7 @@ OSPLight ospNewLight(OSPRenderer renderer, const char *type);
 
 The call returns `NULL` if that type of camera is not known by the
 renderer, or else an `OSPLight` handle to the created light source. All
-light sources[^2] accept the following parameters:
+light sources[2] accept the following parameters:
 
 | Type     | Name      | Description                       |
 |:---------|:----------|:----------------------------------|
@@ -1057,7 +1057,7 @@ tracer](#path-tracer)).
 
 #### Quad Light
 
-The quad[^3] light is a planar, procedural area light source emitting
+The quad[3] light is a planar, procedural area light source emitting
 uniformly on one side into the half space. It is created by passing the
 type string "`quad`" to `ospNewLight`. In addition to the [general
 parameters](#lights) understood by all lights the spot light supports
@@ -1200,7 +1200,7 @@ Note that currently only the path tracer implements colored transparency
 with `Tf` and normal mapping to simulate small geometric features via
 `map_Bump`. The normals $n$ in the normal map are wrt. the local
 tangential shading coordinate system and are encoded as $½(n+1)$, thus a
-texel $(0.5, 0.5, 1)$[^4] represents the unperturbed shading normal
+texel $(0.5, 0.5, 1)$[4] represents the unperturbed shading normal
 $(0, 0, 1)$. Because of this encoding a linear [texture](#texture)
 format is recommended for the normal map. Note that the orientation of
 normal maps is important for a visually consistent look: by convention
@@ -1620,7 +1620,7 @@ float ospRenderFrame(OSPFrameBuffer, OSPRenderer,
 ```
 
 The third parameter specifies what channel(s) of the framebuffer is
-written to[^5]. What to render and how to render it depends on the
+written to[5]. What to render and how to render it depends on the
 renderer's parameters. If the framebuffer supports accumulation (i.e. it
 was created with `OSP_FB_ACCUM`) then successive calls to
 `ospRenderFrame` will progressively refine the rendered image. If
@@ -1637,7 +1637,7 @@ Tutorial
 --------
 
 A minimal working example demonstrating how to use OSPRay can be found
-at `apps/ospTutorial.cpp`[^6]. On Linux build it in the build\_directory
+at `apps/ospTutorial.cpp`[6]. On Linux build it in the build\_directory
 with
 
     g++ ../apps/ospTutorial.cpp -I ../ospray/include -I .. -I ../ospray/embree/common \
@@ -1686,18 +1686,18 @@ Several ready-to-run demos, models and data sets for OSPRay can be found
 at the [OSPRay Demos and Examples](http://www.ospray.org/demos.html)
 page.
 
-[^1]: For example, if OSPRay is in `~/Projects/ospray`, ISPC will also
-    be searched in `~/Projects/ispc-v1.9.1-linux` and
-    `~/Projects/ispc-v1.9.0-linux`
+[1] For example, if OSPRay is in `~/Projects/ospray`, ISPC will also be
+searched in `~/Projects/ispc-v1.9.1-linux` and
+`~/Projects/ispc-v1.9.0-linux`
 
-[^2]: The [HDRI Light](#hdri-light) is an exception, it knows about
-    `intensity`, but not about `color`.
+[2] The [HDRI Light](#hdri-light) is an exception, it knows about
+`intensity`, but not about `color`.
 
-[^3]: actually a parallelogram
+[3] actually a parallelogram
 
-[^4]: respectively $(127, 127, 255)$ for 8 bit textures
+[4] respectively $(127, 127, 255)$ for 8 bit textures
 
-[^5]: This is currently not implemented, i.e. all channels of the
-    framebuffer are always updated.
+[5] This is currently not implemented, i.e. all channels of the
+framebuffer are always updated.
 
-[^6]: A C99 version is available at `apps/ospTutorial.c`.
+[6] A C99 version is available at `apps/ospTutorial.c`.
