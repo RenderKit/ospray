@@ -65,14 +65,13 @@ OSPGlutViewer::OSPGlutViewer(const std::deque<box3f> &worldBounds, std::deque<cp
     fullScreen(false),
     worldBounds(worldBounds),
     lockFirstAnimationFrame(false)
-
 {
-  setWorldBounds(worldBounds[0]);
-
+  if (!worldBounds.empty()) {
+    setWorldBounds(worldBounds[0]);
+  }
   renderer.set("world",  sceneModels[0]);
   renderer.set("model",  sceneModels[0]);
   renderer.set("camera", camera);
-  renderer.set("aoDistance", (worldBounds[0].upper.x - worldBounds[0].lower.x)/4.f);
   renderer.commit();
 
 #if 0
@@ -132,6 +131,11 @@ void OSPGlutViewer::saveScreenshot(const std::string &basename)
        << endl;
 }
 
+void OSPGlutViewer::setWorldBounds(const box3f &worldBounds) {
+  Glut3DWidget::setWorldBounds(worldBounds);
+  renderer.set("aoDistance", (worldBounds.upper.x - worldBounds.lower.x)/4.f);
+  renderer.commit();
+}
 void OSPGlutViewer::reshape(const vec2i &newSize)
 {
   Glut3DWidget::reshape(newSize);
