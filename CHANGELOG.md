@@ -56,7 +56,7 @@ Version History
 
 ### Changes in v1.0.0:
 
--   New OSPRay 'SDK'
+-   New OSPRay SDK
     -   OSPRay internal headers are now installed, enabling applications
         to extend OSPRay from a binary install
     -   CMake macros for OSPRay and ISPC configuration now a part of
@@ -193,7 +193,7 @@ changes.
     -   Reworked material system
     -   Added texture transformations and colored transparency in OBJ
         material
-    -   Support for alpha and depth components of framebuffer 
+    -   Support for alpha and depth components of framebuffer
 -   Added thinlens camera, i.e. support for depth of field
 -   Tasking system has been updated to use Intel Threading Building
     Blocks (Intel TBB)
