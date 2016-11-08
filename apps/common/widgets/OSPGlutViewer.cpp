@@ -262,7 +262,6 @@ void OSPGlutViewer::display()
   }
 
   ++frameID;
-  ++accumCounter;
 
   if (viewPort.modified) {
     Assert2(camera.handle(),"ospray camera is null");
