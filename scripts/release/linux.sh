@@ -130,7 +130,7 @@ make -j `nproc` preinstall
 #   don't verify link dependencies for CentOS6
 if [ -z $OSPRAY_RELEASE_NO_VERIFY ]; then
   check_symbols libospray.so GLIBC   2 4 0
-  check_symbols libospray.so GLIBCXX 3 4 5
+  check_symbols libospray.so GLIBCXX 3 4 11
   check_symbols libospray.so CXXABI  1 3 0
 fi
 
