@@ -716,7 +716,7 @@ void VolumeViewer::initObjects(const std::string &renderer_type)
   setPlane(usePlane);
   ospRelease(index);
 
-  osp::vec3f specular = osp::vec3f{0.15f,0.15f,0.15f};
+  osp::vec3f specular = osp::vec3f{0.135f,0.135f,0.135f};
   for(size_t i=0; i<modelStates.size(); i++)
     for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
       ospSet3fv(modelStates[i].volumes[j]->handle, "specular", &specular.x);

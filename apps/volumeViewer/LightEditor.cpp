@@ -55,9 +55,9 @@ LightEditor::LightEditor(OSPLight ambientLight, OSPLight directionalLight) : amb
 
   // Set default light parameters.
   ambientLightIntensitySpinBox.setValue(0.1);  //doesn't seem to fire if it's 0 first
-  ambientLightIntensitySpinBox.setValue(0.3);
+  ambientLightIntensitySpinBox.setValue(0.2);
 
-  directionalLightIntensitySpinBox.setValue(1.5);
+  directionalLightIntensitySpinBox.setValue(1.7);
   directionalLightAzimuthSlider.setValue(0.8 * (directionalLightAzimuthSlider.minimum() + directionalLightAzimuthSlider.maximum())); // 45 degrees azimuth
   directionalLightElevationSlider.setValue(0.65 * (directionalLightElevationSlider.minimum() + directionalLightElevationSlider.maximum())); // 45 degrees elevation
 }
