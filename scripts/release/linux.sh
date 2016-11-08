@@ -88,6 +88,13 @@ for dep in $DEP_TARBALLS ; do
 done
 export embree_DIR=$DEP_DIR/$DEP_EMBREE
 
+# fetch docu pdf (in correct version)
+BRANCH=$CI_BUILD_REF_NAME
+if [ -z $BRANCH ]; then
+  BRANCH=`git rev-parse --abbrev-ref HEAD`
+fi
+wget -N --progress=dot:mega -c http://sdvis.org/ospray/download/OSPRay_readme_$BRANCH.pdf
+
 cd $ROOT_DIR
 
 #### Build OSPRay ####
@@ -97,6 +104,9 @@ cd build_release
 
 # Clean out build directory to be sure we are doing a fresh build
 rm -rf *
+
+# CPack expects the docu pdf in the build dir
+cp $DEP_DIR/OSPRay_readme_$BRANCH.pdf readme.pdf
 
 
 # set release and RPM settings

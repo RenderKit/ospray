@@ -20,6 +20,9 @@ setlocal
 md build_release
 cd build_release
 
+# fetch docu pdf (in correct version)
+python -c "from urllib import urlretrieve; urlretrieve('http://sdvis.org/ospray/download/OSPRay_readme_%CI_BUILD_REF_NAME%.pdf', 'readme.pdf')
+
 rem set release settings
 cmake -L ^
 -G "Visual Studio 12 2013 Win64" ^
