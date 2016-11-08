@@ -28,7 +28,7 @@ struct Viewport
 {
   Viewport() : from(0,-1,0),
                at(0,0,0),
-               up(0,0,1),
+               up(0,0,-1),
                aspect(1.f),
                fovY(60.f),
                modified(true)

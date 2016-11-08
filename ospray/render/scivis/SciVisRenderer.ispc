@@ -151,14 +151,14 @@ inline float calculateAO(const uniform SciVisRenderer *uniform self,
     const vec3f ao_dir = localToWorld * local_ao_dir;
 
     Ray ao_ray;
-    setRay(ao_ray, dg.P + (1e-3f * dg.Ns), ao_dir,
+    setRay(ao_ray, dg.P + (self->super.epsilon * dg.Ns), ao_dir,
            self->super.epsilon, self->aoDistance);
     if (dot(ao_ray.dir, dg.Ns) < 0.05f) // check below surface
       occlusion += 1.f;
     else if (isOccluded(self->super.model, ao_ray))
       occlusion += 1.f;
     else { // check for occlusion by volumes as well, slow!
-      const float epsilon = self->volumeEpsilon*10.f;
+      const float epsilon = self->super.epsilon;
       const float rayOffset = epsilon*s.x + epsilon;
       if (SciVisRenderer_intersectVolumes(self, ao_ray, rayOffset))
       {
