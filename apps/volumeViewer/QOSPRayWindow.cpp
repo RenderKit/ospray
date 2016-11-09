@@ -124,7 +124,7 @@ void QOSPRayWindow::setWorldBounds(const ospcommon::box3f &worldBounds)
 
 void QOSPRayWindow::paintGL()
 {
-  if(!renderingEnabled || !frameBuffer || !renderer)
+  if(!renderingEnabled || !frameBuffer || !renderer || !QApplication::activeWindow())
     return;
 
   // if we're benchmarking and we've completed the required number of warm-up frames, start the timer

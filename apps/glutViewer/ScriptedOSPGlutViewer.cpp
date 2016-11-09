@@ -38,6 +38,7 @@ namespace ospray {
   {
     if (!scriptFileName.empty())
       scriptHandler.runScriptFromFile(scriptFileName);
+    glutViewPort = viewPort;
   }
 
   int ScriptedOSPGlutViewer::getFrameID() const {
@@ -71,19 +72,9 @@ namespace ospray {
       resetAccum = false;
     }
 
-    fps.startRender();
-    //}
-
     ++frameID;
 
-
-
     if (viewPort.modified) {
-      static bool once = true;
-      if(once) {
-        glutViewPort = viewPort;
-        once = false;
-      }
       Assert2(camera.handle(),"ospray camera is null");
       camera.set("pos", viewPort.from);
       auto dir = viewPort.at - viewPort.from;
@@ -95,7 +86,7 @@ namespace ospray {
       viewPort.modified = false;
       frameBuffer.clear(OSP_FB_ACCUM);
     }
-
+    fps.startRender();
     renderer.renderFrame(frameBuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
 
     // set the glut3d widget's frame buffer to the opsray frame buffer,

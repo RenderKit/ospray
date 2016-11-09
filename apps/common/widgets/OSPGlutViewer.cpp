@@ -85,6 +85,7 @@ OSPGlutViewer::OSPGlutViewer(const std::deque<box3f> &worldBounds, std::deque<cp
   animationFrameDelta = .1;
   animationFrameId = 0;
   animationPaused = false;
+  glutViewPort = viewPort;
 }
 
 void OSPGlutViewer::setRenderer(OSPRenderer renderer)
@@ -241,9 +242,7 @@ void OSPGlutViewer::mouseButton(int32_t whichButton,
 
 void OSPGlutViewer::display()
 {
-  if (!frameBuffer.handle() || !renderer.handle()) return;
-
-  static int frameID = 0;
+  if (!frameBuffer.handle() || !renderer.handle() ) return;
 
   //{
   // note that the order of 'start' and 'end' here is
@@ -262,17 +261,9 @@ void OSPGlutViewer::display()
     resetAccum = false;
   }
 
-  fps.startRender();
-  //}
-
   ++frameID;
 
   if (viewPort.modified) {
-    static bool once = true;
-    if(once) {
-      glutViewPort = viewPort;
-      once = false;
-    }
     Assert2(camera.handle(),"ospray camera is null");
     camera.set("pos", viewPort.from);
     auto dir = viewPort.at - viewPort.from;
@@ -285,6 +276,7 @@ void OSPGlutViewer::display()
     viewPort.modified = false;
     frameBuffer.clear(OSP_FB_ACCUM);
   }
+  fps.startRender();
 
   renderer.renderFrame(frameBuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
 

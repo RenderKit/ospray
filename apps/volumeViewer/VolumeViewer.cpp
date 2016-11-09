@@ -643,12 +643,12 @@ void VolumeViewer::initObjects(const std::string &renderer_type)
   // Create OSPRay ambient and directional lights. GUI elements will modify their parameters.
   ambientLight = ospNewLight(renderer, "AmbientLight");
   exitOnCondition(ambientLight == NULL, "could not create ambient light");
-  ospSet3f(ambientLight, "color", 0.02f, 0.04f, 0.1f);
+  ospSet3f(ambientLight, "color", 0.3f, 0.5f, 1.f);
   ospCommit(ambientLight);
 
   directionalLight = ospNewLight(renderer, "DirectionalLight");
   exitOnCondition(directionalLight == NULL, "could not create directional light");
-  ospSet3f(directionalLight, "color", 1.f, 0.8f, 0.4f);
+  ospSet3f(directionalLight, "color", 1.f, 0.9f, 0.4f);
   ospCommit(directionalLight);
 
   // Set the light sources on the renderer.
@@ -686,10 +686,10 @@ void VolumeViewer::initObjects(const std::string &renderer_type)
   float ps = 100000.f;
   float py = boundingBox.upper.y+1.f;
 #if 1
-  vertices[0] = osp::vec3f{-ps, -ps, -py};
-  vertices[1] = osp::vec3f{-ps,  ps, -py};
-  vertices[2] = osp::vec3f{ ps, -ps, -py};
-  vertices[3] = osp::vec3f{ ps,  ps, -py};
+  vertices[0] = osp::vec3f{-ps, -ps, py};
+  vertices[1] = osp::vec3f{-ps,  ps, py};
+  vertices[2] = osp::vec3f{ ps, -ps, py};
+  vertices[3] = osp::vec3f{ ps,  ps, py};
 #else
   vertices[0] = osp::vec3f{-ps, py, -ps};
   vertices[1] = osp::vec3f{-ps, py, ps};
@@ -715,6 +715,13 @@ void VolumeViewer::initObjects(const std::string &renderer_type)
   ospCommit(planeMesh);
   setPlane(usePlane);
   ospRelease(index);
+
+  osp::vec3f specular = osp::vec3f{0.135f,0.135f,0.135f};
+  for(size_t i=0; i<modelStates.size(); i++)
+    for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
+      ospSet3fv(modelStates[i].volumes[j]->handle, "specular", &specular.x);
+      ospCommit(modelStates[i].volumes[j]->handle);
+  }
 }
 
 void VolumeViewer::initUserInterfaceWidgets()
