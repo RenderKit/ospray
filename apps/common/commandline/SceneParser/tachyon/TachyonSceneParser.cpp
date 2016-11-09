@@ -39,9 +39,27 @@ struct TimeStep
 
 // Helper functions ///////////////////////////////////////////////////////////
 
-OSPModel specifyModel(tachyon::Model &tm)
+OSPModel specifyModel(tachyon::Model &tm, cpp::Renderer &renderer)
 {
   OSPModel ospModel = ospNewModel();
+
+  // TODO: This should create an array of OBJMaterials
+  OSPData materialData = NULL;
+  if (!tm.textureVec.empty()) {
+    cout << "#osp:tachyon: specifying " << tm.numTextures() << " materials..." << endl;
+    std::vector<OSPMaterial> materials;
+    for (size_t i = 0; i < tm.textureVec.size(); ++i) {
+      cpp::Material m = renderer.newMaterial("OBJMaterial");
+      const tachyon::Texture &tex = tm.textureVec[i];
+      m.set("Kd", tex.diffuse * tex.color);
+      m.set("Ks", tex.specular * tex.color);
+      m.set("shininess", tex.phong.size);
+      m.commit();
+      materials.push_back(m.handle());
+    }
+    materialData = ospNewData(materials.size(), OSP_OBJECT, materials.data());
+    ospCommit(materialData);
+  }
 
   if (tm.numSpheres()) {
     OSPData sphereData = ospNewData(tm.numSpheres()*sizeof(Sphere)/sizeof(float),
@@ -53,6 +71,9 @@ OSPModel specifyModel(tachyon::Model &tm)
     ospSet1i(sphereGeom,"offset_materialID",0*sizeof(float));
     ospSet1i(sphereGeom,"offset_center",1*sizeof(float));
     ospSet1i(sphereGeom,"offset_radius",4*sizeof(float));
+    if (materialData) {
+      ospSetData(sphereGeom, "materialList", materialData);
+    }
     ospCommit(sphereGeom);
     ospAddGeometry(ospModel,sphereGeom);
   }
@@ -68,6 +89,9 @@ OSPModel specifyModel(tachyon::Model &tm)
     ospSet1i(cylinderGeom,"offset_v0",1*sizeof(float));
     ospSet1i(cylinderGeom,"offset_v1",4*sizeof(float));
     ospSet1i(cylinderGeom,"offset_radius",7*sizeof(float));
+    if (materialData) {
+      ospSetData(cylinderGeom, "materialList", materialData);
+    }
     ospCommit(cylinderGeom);
     ospAddGeometry(ospModel,cylinderGeom);
   }
@@ -113,36 +137,33 @@ OSPModel specifyModel(tachyon::Model &tm)
     ospAddGeometry(ospModel,geom);
   }
 
-
-  cout << "#osp:tachyon: specifying " << tm.numTextures() << " materials..." << endl;
-  {
-    OSPData data = ospNewData(tm.numTextures()*sizeof(Texture),
-                              OSP_UCHAR,tm.getTexturesPtr());
-    ospCommit(data);
-    ospSetData(ospModel,"textureArray",data);
-  }
-
   cout << "#osp:tachyon: specifying " << tm.numPointLights()
        << " point lights..." << endl;
-  if (tm.numPointLights() > 0)
-  {
-    OSPData data
-      = ospNewData(tm.numPointLights()*sizeof(PointLight),
-                   OSP_UCHAR,tm.getPointLightsPtr());
-    ospCommit(data);
-    ospSetData(ospModel,"pointLights",data);
+  std::vector<OSPLight> lights;
+  for (size_t i = 0; i < tm.pointLightVec.size(); ++i) {
+    cpp::Light l = renderer.newLight("PointLight");
+    const tachyon::PointLight &pl = tm.pointLightVec[i];
+    l.set("color", pl.color);
+    l.set("position", pl.center);
+    l.commit();
+    lights.push_back(l.handle());
   }
 
   cout << "#osp:tachyon: specifying " << tm.numDirLights()
        << " dir lights..." << endl;
-  if (tm.numDirLights() > 0)
-  {
-    OSPData data
-      = ospNewData(tm.numDirLights()*sizeof(DirLight),
-                   OSP_UCHAR,tm.getDirLightsPtr());
-    ospCommit(data);
-    ospSetData(ospModel,"dirLights",data);
+  for (size_t i = 0; i < tm.dirLightVec.size(); ++i) {
+    cpp::Light l = renderer.newLight("DirectionalLight");
+    const tachyon::DirLight &dl = tm.dirLightVec[i];
+    l.set("color", dl.color);
+    l.set("direction", dl.direction);
+    l.commit();
+    lights.push_back(l.handle());
   }
+  OSPData lightData = ospNewData(lights.size(), OSP_OBJECT, lights.data());
+  ospCommit(lightData);
+  renderer.set("lights", lightData);
+  renderer.set("shadowsEnabled", 1);
+  renderer.commit();
 
   std::cout << "=======================================" << std::endl;
   std::cout << "Tachyon Renderer: Done specifying model" << std::endl;
@@ -175,10 +196,9 @@ bool TachyonSceneParser::parse(int ac, const char **&av)
         loadedScene = true;
         TimeStep ts(arg);
         importFile(ts.tm, arg);
-        ts.om = specifyModel(ts.tm);
+        ts.om = specifyModel(ts.tm, renderer);
         sceneModels.push_back(ts.om);
         sceneBboxs.push_back(ts.tm.getBounds());
-        break;
       }
     }
   }
