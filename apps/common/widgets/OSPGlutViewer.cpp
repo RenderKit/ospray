@@ -256,6 +256,9 @@ void OSPGlutViewer::display()
   // NOTE: consume a new renderer if one has been queued by another thread
   switchRenderers();
 
+  updateAnimation(ospcommon::getSysTime()-frameTimer);
+  frameTimer = ospcommon::getSysTime();
+
   if (resetAccum) {
     frameBuffer.clear(OSP_FB_ACCUM);
     resetAccum = false;
