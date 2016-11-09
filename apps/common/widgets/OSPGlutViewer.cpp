@@ -328,8 +328,8 @@ void OSPGlutViewer::updateAnimation(double deltaSeconds)
   if (animationPaused)
     return;
   animationTimer += deltaSeconds;
-  int framesSize = sceneModels.size()-1;
-  int frameStart = (lockFirstAnimationFrame ? 1 : 0);
+  const int framesSize = sceneModels.size();
+  const int frameStart = (lockFirstAnimationFrame ? 1 : 0);
 
   if (animationTimer > animationFrameDelta)
   {
