@@ -52,8 +52,8 @@ OSPModel specifyModel(tachyon::Model &tm, cpp::Renderer &renderer)
       cpp::Material m = renderer.newMaterial("OBJMaterial");
       const tachyon::Texture &tex = tm.textureVec[i];
       m.set("Kd", tex.diffuse * tex.color);
-      m.set("Ks", tex.specular * tex.color);
-      m.set("shininess", tex.phong.size);
+      m.set("Ks", tex.phong.plastic * tex.color);
+      m.set("Ns", tex.phong.size);
       m.commit();
       materials.push_back(m.handle());
     }
@@ -163,6 +163,7 @@ OSPModel specifyModel(tachyon::Model &tm, cpp::Renderer &renderer)
   ospCommit(lightData);
   renderer.set("lights", lightData);
   renderer.set("shadowsEnabled", 1);
+  renderer.set("epsilon", 1e-4);
   renderer.commit();
 
   std::cout << "=======================================" << std::endl;
