@@ -35,5 +35,5 @@ private:
   ospray::cpp::Renderer renderer;
   ospcommon::box3f      sceneBbox;
 
-  std::unique_ptr<ospray::cpp::Model> sceneModel;
+  std::deque<ospray::cpp::Model> modelTimeStep;
 };

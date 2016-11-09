@@ -93,7 +93,6 @@ bool ParticleSceneParser::parse(int ac, const char **&av)
   std::vector<particle::Model *> particleModel;
   std::vector<DeferredLoadJob *> deferredLoadingListXYZ;
   FileName defFileName = "";
-  std::vector<OSPModel> modelTimeStep;
   int timeStep = 0;
 
   for (int i = 1; i < ac; i++) {
@@ -136,10 +135,6 @@ bool ParticleSceneParser::parse(int ac, const char **&av)
   }
 
   if (loadedScene) {
-    sceneModel = make_unique<cpp::Model>();
-
-    auto &model = *sceneModel;
-
     //TODO: this needs parallelized as it was in ospParticleViewer...
     for (uint32_t i = 0; i < deferredLoadingListXYZ.size(); ++i) {
       FileName defFileName = deferredLoadingListXYZ[i]->defFileName;
@@ -173,19 +168,14 @@ bool ParticleSceneParser::parse(int ac, const char **&av)
 
       modelTimeStep.push_back(model);
     }
-
-    model = modelTimeStep[timeStep];
     sceneBbox  = particleModel[0]->getBBox();
   }
-
   return loadedScene;
 }
 
 std::deque<cpp::Model> ParticleSceneParser::model() const
 {
-  std::deque<cpp::Model> models;
-  models.push_back(sceneModel.get() == nullptr ? cpp::Model() : *sceneModel);
-  return models;
+  return modelTimeStep;
 }
 
 std::deque<box3f> ParticleSceneParser::bbox() const
