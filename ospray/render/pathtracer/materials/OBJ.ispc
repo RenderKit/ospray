@@ -55,7 +55,7 @@ const varying BSDF* uniform OBJ_getBSDF(const uniform PathTraceMaterial* uniform
   vec3f shadingNormal;
   if (valid(self->map_Bump)) {
     // get normal from texture
-    vec3f localNormal = get3f(self->map_Bump, dg.st, make_vec3f(.5f, .5f, 1.f)) * 2.f - 1.f;
+    vec3f localNormal = getNormal(self->map_Bump, dg.st);
     // rotate in 2D (tangent space) to account for tc transformations
     vec2f rotNormal = self->rot_Bump * make_vec2f(localNormal.x, localNormal.y);
     localNormal.x = rotNormal.x; localNormal.y = rotNormal.y;
