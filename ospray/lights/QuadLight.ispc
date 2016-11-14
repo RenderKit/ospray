@@ -40,7 +40,7 @@ Light_SampleRes QuadLight_sample(const uniform Light* uniform super,
   const QuadLight* uniform self = (QuadLight* uniform)super;
   Light_SampleRes res;
 
-  // res position on light with density ppdf = 1/area
+  // sample position on light with density ppdf = 1/area
   // TODO: use solid angle sampling
   const vec3f pos = self->position + self->edge1 * s.x + self->edge2 * s.y;
 

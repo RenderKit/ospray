@@ -47,14 +47,14 @@ Light_SampleRes PointLight_sample(const uniform Light* uniform super,
   res.dir = dir * invdist;
   res.dist = dist2 * invdist;
 
-  res.pdf = inf; // per default we always take this res
+  res.pdf = inf; // per default we always take this sample
 
   // convert from power to radiance by attenuating by distance^2
   res.weight = self->power * sqr(invdist);
   const float sinTheta = self->radius * invdist;
 
   if ((self->radius > 0.f) & (sinTheta > 0.005f)) {
-    // res surface of sphere as seen by hit point -> cone of directions
+    // sample surface of sphere as seen by hit point -> cone of directions
     // for very small cones treat as point light, because float precision is not good enough
     if (sinTheta < 1.f) {
       const float cosTheta = sqrt(1.f - sinTheta * sinTheta);
