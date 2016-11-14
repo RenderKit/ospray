@@ -207,8 +207,8 @@ static vec3f Texture2D_N_##NAME(const uniform Texture2D *uniform self, \
 
 __define_tex_getN(RGB8, (255.f/127.f));
 __define_tex_getN(RGBA8, (255.f/127.f));
-__define_tex_getN(RGB32F, 2f);
-__define_tex_getN(RGBA32F, 2f);
+__define_tex_getN(RGB32F, 2.f);
+__define_tex_getN(RGBA32F, 2.f);
 
 
 static uniform Texture2D_getN Texture2D_getN_addr(const uniform uint32 type,

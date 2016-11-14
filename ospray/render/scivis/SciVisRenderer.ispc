@@ -52,14 +52,12 @@ struct SciVisRenderer
 
 struct SciVisShadingInfo
 {
-  float d ;
-  float Ns;
+  float d;
   vec3f Kd;
   vec3f Ks;
-  float local_opacity;
-  float path_opacity;
+  float Ns;
 
-  vec3f geometryColor;
+  float local_opacity;
 };
 
 inline float lightAlpha(const uniform SciVisRenderer *uniform self,
@@ -83,9 +81,8 @@ inline void initShadingInfo(varying SciVisShadingInfo &info)
   info.Ns = 0.f;
   info.Kd = make_vec3f(0.f);
   info.Ks = make_vec3f(0.f);
-  info.local_opacity = 0.f;
 
-  info.geometryColor = make_vec3f(0.f);
+  info.local_opacity = 0.f;
 }
 
 // Material functions //
@@ -95,8 +92,6 @@ inline void shadeMaterials(const varying DifferentialGeometry &dg,
 {
   uniform SciVisMaterial *scivisMaterial =
       (uniform SciVisMaterial *)dg.material;
-
-  info.geometryColor = make_vec3f(dg.color);
 
   // Get each term from the material //
   if (!scivisMaterial) {
@@ -115,11 +110,6 @@ inline void shadeMaterials(const varying DifferentialGeometry &dg,
       }
       info.Ks = mat->Ks * get3f(mat->map_Ks, dg.st, make_vec3f(1.f));
       info.Ns = mat->Ns * get1f(mat->map_Ns, dg.st, 1.f);
-
-      if (mat->volume) {
-        const float sample = mat->volume->computeSample(mat->volume, dg.P);
-        info.geometryColor = info.geometryColor * mat->volume->transferFunction->getColorForValue(mat->volume->transferFunction, sample);
-      }
     }
   }
   // BRDF normalization
