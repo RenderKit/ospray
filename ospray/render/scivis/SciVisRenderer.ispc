@@ -207,7 +207,7 @@ inline void shadeLights(const uniform SciVisRenderer *uniform self,
   //calculate shading for all lights
   for (uniform int i = 0; self->lights && i < self->numLights; i++) {
     const uniform Light *uniform l = self->lights[i];
-    const vec2f s = make_vec2f(0.5f);
+    const vec2f s = make_vec2f(0.0f); // sample center of area lights
     const Light_SampleRes light = l->sample(l, dg, s);
 
     if (reduce_max(light.weight) > 0.f) { // any potential contribution?
@@ -279,7 +279,7 @@ inline vec4f SciVisRenderer_computeVolumeSample(SciVisRenderer *uniform renderer
 
     // Compute lighting.
     vec3f shadedColor = make_vec3f(0.f);
-    const vec2f s = make_vec2f(0.5f);
+    const vec2f s = make_vec2f(0.0f); // sample center of area lights
 
     for (uniform uint32 i=0; i<renderer->numLights; i++) {
       const Light_SampleRes light =

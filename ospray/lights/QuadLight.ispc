@@ -35,10 +35,15 @@ struct QuadLight
 
 Light_SampleRes QuadLight_sample(const uniform Light* uniform super,
                                  const DifferentialGeometry& dg,
-                                 const vec2f& s)
+                                 const vec2f& sp)
 {
   const QuadLight* uniform self = (QuadLight* uniform)super;
   Light_SampleRes res;
+
+  // (0, 0) should sample center --> add 0.5 CranleyPatterson rotation
+  vec2f s;
+  s.x = sp.x > 0.5f ? sp.x - 0.5f : sp.x + 0.5f;
+  s.y = sp.y > 0.5f ? sp.y - 0.5f : sp.y + 0.5f;
 
   // sample position on light with density ppdf = 1/area
   // TODO: use solid angle sampling
