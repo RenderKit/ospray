@@ -872,7 +872,9 @@ inline void set(uniform vec3f &v, const uniform uint32 dim, const uniform float 
 { (&v.x)[dim] = f; }
 
 /*! get vector 'v's value in dimension 'd' */
-inline float get(const uniform vec3f &v, const uniform uint32 dim)
+inline uniform float get(const uniform vec3f &v, const uniform uint32 dim)
+{ return (&v.x)[dim]; }
+inline float get(const vec3f &v, const uniform uint32 dim)
 { return (&v.x)[dim]; }
 
 
