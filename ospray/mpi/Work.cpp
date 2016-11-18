@@ -484,7 +484,6 @@ namespace ospray {
         fb->clear(channels);
       }
       void ClearFrameBuffer::runOnMaster() {
-        PING;
         run();
       }
       size_t ClearFrameBuffer::getTag() const {
@@ -502,7 +501,6 @@ namespace ospray {
         : fbHandle((ObjectHandle&)fb), rendererHandle((ObjectHandle&)renderer), channels(channels)
       {}
       void RenderFrame::run() {
-        PING;
         FrameBuffer *fb = (FrameBuffer*)fbHandle.lookup();
         Renderer *renderer = (Renderer*)rendererHandle.lookup();
         Assert(renderer);
@@ -525,7 +523,6 @@ namespace ospray {
 #endif
       }
       void RenderFrame::runOnMaster() {
-        PING;
         Renderer *renderer = (Renderer*)rendererHandle.lookup();
         FrameBuffer *fb = (FrameBuffer*)fbHandle.lookup();
         Assert(renderer);
@@ -609,7 +606,6 @@ namespace ospray {
         handle.assign(fb);
       }
       void CreateFrameBuffer::runOnMaster() {
-        PING;
         run();
       }
       size_t CreateFrameBuffer::getTag() const {

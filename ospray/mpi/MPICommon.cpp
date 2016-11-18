@@ -62,7 +62,6 @@ namespace ospray {
     std::shared_ptr<BufferedMPIComm> BufferedMPIComm::global = nullptr;
     BufferedMPIComm::BufferedMPIComm(size_t bufSize) : sendBuffer(bufSize), recvBuffer(bufSize){}
     BufferedMPIComm::~BufferedMPIComm() {
-      PING;
       flush();
     }
     void BufferedMPIComm::send(const Address& addr, work::Work* work) {
@@ -89,7 +88,6 @@ namespace ospray {
       // size we should flush here if the sendbuffer has reached a certain size.
       sendAddress = addr;
       if (sendBuffer.getIndex() >= 1800000000LL) {
-        std::cout << "auto-flushing buffer after reaching 1.8GB" << std::endl;
         flush();
       }
     }
