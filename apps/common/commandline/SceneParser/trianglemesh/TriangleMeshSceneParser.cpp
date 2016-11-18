@@ -349,6 +349,8 @@ void TriangleMeshSceneParser::finalize()
                              " no-instancing!");
   }
 
+  using namespace std::chrono;
+  auto start_make_scene = high_resolution_clock::now();
   for (size_t modeli = 0; modeli < msgModels.size(); modeli++)
   {
     ospcommon::Ref<ospray::miniSG::Model> msgModel = msgModels[modeli];
@@ -409,4 +411,7 @@ void TriangleMeshSceneParser::finalize()
 
     sceneModel->commit();
   }
+  auto end_make_scene = high_resolution_clock::now();
+  std::cout << "Loading scene took " << duration_cast<milliseconds>(end_make_scene - start_make_scene).count()
+    << "ms\n";
 }
