@@ -362,6 +362,7 @@ IF (OSPRAY_MPI)
   SET(OSPRAY_SOURCES ${OSPRAY_SOURCES}
     mpi/buffers.h
     mpi/command.h
+    mpi/command.cpp
 
     mpi/MPIDevice.cpp
     mpi/MPICommon.cpp
