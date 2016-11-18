@@ -80,11 +80,18 @@ namespace ospray {
       }
       sendBuffer << work->getTag() << *work;
       sendNumMessages++;
+
       // TODO: This is assuming we're always sending to the same place
       if (sendAddress.group != NULL && sendAddress != addr) {
         throw std::runtime_error("Can't send to different addresses currently!");
       }
+      // TODO WILL: Instead of making data/setregion commands flushing based on their
+      // size we should flush here if the sendbuffer has reached a certain size.
       sendAddress = addr;
+      if (sendBuffer.getIndex() >= 1800000000LL) {
+        std::cout << "auto-flushing buffer after reaching 1.8GB" << std::endl;
+        flush();
+      }
     }
     void BufferedMPIComm::recv(const Address& addr, std::vector<work::Work*>& work) {
       //TODO: assert current mode is syncronized

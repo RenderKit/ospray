@@ -268,7 +268,6 @@ namespace ospray {
             OSPDataType format, void *initData, int flags);
         void run() override;
         size_t getTag() const override;
-        bool flushing() const override;
         void serialize(SerialBuffer &b) const override;
         void deserialize(SerialBuffer &b) override;
       };
@@ -302,7 +301,6 @@ namespace ospray {
                   OSPDataType type);
         void run() override;
         size_t getTag() const override;
-        bool flushing() const override;
         void serialize(SerialBuffer &b) const override;
         void deserialize(SerialBuffer &b) override;
       };

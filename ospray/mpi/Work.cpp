@@ -360,10 +360,6 @@ namespace ospray {
       size_t NewData::getTag() const {
         return TAG;
       }
-      bool NewData::flushing() const {
-        // NewData will flush if the size of the data being set is >= 256MB
-        return (!data.empty() || localData) && nItems * ospray::sizeOf(format) >= 256000000LL;
-      }
       void NewData::serialize(SerialBuffer &b) const {
         b << (int64)handle << nItems << (int32)format << flags << data;
       }
@@ -425,10 +421,6 @@ namespace ospray {
       }
       size_t SetRegion::getTag() const {
         return TAG;
-      }
-      bool SetRegion::flushing() const {
-        // Set region will flush if the size of the data being set is >= 256MB
-        return data.size() >= 256000000LL;
       }
       void SetRegion::serialize(SerialBuffer &b) const {
         b << (int64)handle << regionStart << regionSize << (int32)type << data;
