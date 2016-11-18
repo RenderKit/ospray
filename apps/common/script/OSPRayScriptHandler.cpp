@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "ospray/common/OSPCommon.h"
+#include "ospray/common/Util.h"
 #include "OSPRayScriptHandler.h"
 #include "ospcommon/vec.h"
 #include "ospcommon/box.h"

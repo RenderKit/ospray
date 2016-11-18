@@ -56,6 +56,8 @@ namespace ospray {
     void setScale(const ospcommon::vec3f& v )  {scale = v;}
     void setTranslation(const ospcommon::vec3f& v)  {translate = v;}
     void setLockFirstAnimationFrame(bool st) {lockFirstAnimationFrame = st;}
+    // We override this so we can update the AO ray length
+    void setWorldBounds(const ospcommon::box3f &worldBounds);
 
   protected:
 
@@ -97,6 +99,7 @@ namespace ospray {
     bool lockFirstAnimationFrame;  //use for static scene
     ospcommon::vec3f translate;
     ospcommon::vec3f scale;
+    int frameID={0};
   };
 
 }// namespace ospray

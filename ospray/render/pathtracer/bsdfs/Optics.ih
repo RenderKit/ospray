@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include "render/pathtracer/samplers/Sample.ih"
 #include "math/sampling.ih"
 #include "math/LinearSpace.ih"
 

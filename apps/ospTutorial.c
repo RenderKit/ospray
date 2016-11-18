@@ -92,7 +92,7 @@ int main(int argc, const char **argv) {
 
   // create and setup model and mesh
   OSPGeometry mesh = ospNewGeometry("triangles");
-  OSPData data = ospNewData(4, OSP_FLOAT3A, vertex, 0); // OSP_FLOAT3 format is also supported for vertex positions (currently not on MIC)
+  OSPData data = ospNewData(4, OSP_FLOAT3A, vertex, 0); // OSP_FLOAT3 format is also supported for vertex positions
   ospCommit(data);
   ospSetData(mesh, "vertex", data);
 

@@ -90,6 +90,7 @@ SET(OSPRAY_SOURCES
   common/Model.cpp
   common/Material.cpp
   common/Thread.cpp
+  common/Util.h
 
   common/tasking/parallel_for.h
   common/tasking/async.h
@@ -249,6 +250,7 @@ OSPRAY_INSTALL_SDK_HEADERS(
   common/Ray.ih
   common/Texture.h
   common/Thread.h
+  common/Util.h
   DESTINATION common
 )
 

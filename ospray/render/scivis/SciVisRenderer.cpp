@@ -62,7 +62,7 @@ namespace ospray {
                           getParam1f("aoOcclusionDistance"/*old name*/, 1e20f));
       // "aoWeight" is deprecated, use an ambient light instead
       if (!ambientLights)
-        aoColor = vec3f(getParam1f("aoWeight", 0.25f));
+        aoColor = vec3f(getParam1f("aoWeight", 0.f));
       const bool oneSidedLighting = getParam1i("oneSidedLighting", 1);
 
       ispc::SciVisRenderer_set(getIE(),

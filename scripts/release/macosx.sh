@@ -31,9 +31,9 @@ ROOT_DIR=$PWD
 DEP_DIR=$ROOT_DIR/deps
 
 DEP_LOCATION=http://sdvis.org/ospray/download/dependencies/osx
-DEP_EMBREE=embree-2.11.0.x86_64.macosx
+DEP_EMBREE=embree-2.12.0.x86_64.macosx
 DEP_ISPC=ispc-v1.9.1-osx
-DEP_TBB=tbb44_20160413oss
+DEP_TBB=tbb2017_20161004oss
 DEP_TARBALLS="$DEP_EMBREE.tar.gz $DEP_ISPC.tar.gz ${DEP_TBB}_osx.tgz"
 
 
@@ -63,6 +63,13 @@ for dep in $DEP_TARBALLS ; do
 done
 export embree_DIR=$DEP_DIR/$DEP_EMBREE
 
+# fetch docu pdf (in correct version)
+BRANCH=$CI_BUILD_REF_NAME
+if [ -z $BRANCH ]; then
+  BRANCH=`git rev-parse --abbrev-ref HEAD`
+fi
+wget -N --progress=dot:mega -c http://sdvis.org/ospray/download/OSPRay_readme_$BRANCH.pdf
+
 cd $ROOT_DIR
 
 #### Build OSPRay ####
@@ -72,6 +79,9 @@ cd build_release
 
 # Clean out build directory to be sure we are doing a fresh build
 rm -rf *
+
+# CPack expects the docu pdf in the build dir
+cp $DEP_DIR/OSPRay_readme_$BRANCH.pdf readme.pdf
 
 
 # set release and installer settings

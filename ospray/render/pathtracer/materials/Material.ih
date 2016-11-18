@@ -20,7 +20,6 @@
 #include "common/DifferentialGeometry.ih"
 #include "common/Ray.ih"
 #include "Medium.ih"
-#include "render/pathtracer/samplers/Sample.ih"
 #include "render/pathtracer/bsdfs/BSDF.ih"
 #include "render/pathtracer/bsdfs/ShadingContext.ih"
 

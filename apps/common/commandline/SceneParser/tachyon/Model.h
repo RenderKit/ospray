@@ -128,7 +128,6 @@ namespace ospray {
 
       void exportToEmbree(const std::string &fileName);
       
-    private:
       box3f bounds;
       std::vector<Triangle>      triangleVec;
       std::vector<Cylinder>      cylinderVec;

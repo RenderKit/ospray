@@ -16,6 +16,7 @@
 
 // ospray 
 #include "Geometry.h"
+#include "common/Util.h"
 #include "common/Library.h"
 // stl 
 #include <map>
@@ -23,10 +24,6 @@
 #include "Geometry_ispc.h"
 
 namespace ospray {
-
-  typedef Geometry *(*creatorFct)();
-
-  std::map<std::string, creatorFct> geometryRegistry;
 
   //! set given geometry's material. 
   /*! all material assignations should go through this function; the
@@ -58,24 +55,7 @@ namespace ospray {
     ospLoadModule first. */
   Geometry *Geometry::createGeometry(const char *type)
   {
-    std::map<std::string, Geometry *(*)()>::iterator it = geometryRegistry.find(type);
-    if (it != geometryRegistry.end())
-      return it->second ? (it->second)() : NULL;
-    
-    if (ospray::logLevel >= 2) 
-      std::cout << "#ospray: trying to look up geometry type '" 
-                << type << "' for the first time" << std::endl;
-
-    std::string creatorName = "ospray_create_geometry__"+std::string(type);
-    creatorFct creator = (creatorFct)getSymbol(creatorName);
-    geometryRegistry[type] = creator;
-    if (creator == NULL) {
-      if (ospray::logLevel >= 1) 
-        std::cout << "#ospray: could not find geometry type '" << type << "'" << std::endl;
-      return NULL;
-    }
-    Geometry *geometry = (*creator)();  geometry->managedObjectType = OSP_GEOMETRY;
-    return(geometry);
+    return createInstanceHelper<Geometry, OSP_GEOMETRY>(type);
   }
 
 } // ::ospray

@@ -65,14 +65,13 @@ OSPGlutViewer::OSPGlutViewer(const std::deque<box3f> &worldBounds, std::deque<cp
     fullScreen(false),
     worldBounds(worldBounds),
     lockFirstAnimationFrame(false)
-
 {
-  setWorldBounds(worldBounds[0]);
-
+  if (!worldBounds.empty()) {
+    setWorldBounds(worldBounds[0]);
+  }
   renderer.set("world",  sceneModels[0]);
   renderer.set("model",  sceneModels[0]);
   renderer.set("camera", camera);
-  renderer.set("aoDistance", (worldBounds[0].upper.x - worldBounds[0].lower.x)/4.f);
   renderer.commit();
 
 #if 0
@@ -86,6 +85,7 @@ OSPGlutViewer::OSPGlutViewer(const std::deque<box3f> &worldBounds, std::deque<cp
   animationFrameDelta = .1;
   animationFrameId = 0;
   animationPaused = false;
+  glutViewPort = viewPort;
 }
 
 void OSPGlutViewer::setRenderer(OSPRenderer renderer)
@@ -132,6 +132,11 @@ void OSPGlutViewer::saveScreenshot(const std::string &basename)
        << endl;
 }
 
+void OSPGlutViewer::setWorldBounds(const box3f &worldBounds) {
+  Glut3DWidget::setWorldBounds(worldBounds);
+  renderer.set("aoDistance", (worldBounds.upper.x - worldBounds.lower.x)/4.f);
+  renderer.commit();
+}
 void OSPGlutViewer::reshape(const vec2i &newSize)
 {
   Glut3DWidget::reshape(newSize);
@@ -237,9 +242,7 @@ void OSPGlutViewer::mouseButton(int32_t whichButton,
 
 void OSPGlutViewer::display()
 {
-  if (!frameBuffer.handle() || !renderer.handle()) return;
-
-  static int frameID = 0;
+  if (!frameBuffer.handle() || !renderer.handle() ) return;
 
   //{
   // note that the order of 'start' and 'end' here is
@@ -253,22 +256,17 @@ void OSPGlutViewer::display()
   // NOTE: consume a new renderer if one has been queued by another thread
   switchRenderers();
 
+  updateAnimation(ospcommon::getSysTime()-frameTimer);
+  frameTimer = ospcommon::getSysTime();
+
   if (resetAccum) {
     frameBuffer.clear(OSP_FB_ACCUM);
     resetAccum = false;
   }
 
-  fps.startRender();
-  //}
-
   ++frameID;
 
   if (viewPort.modified) {
-    static bool once = true;
-    if(once) {
-      glutViewPort = viewPort;
-      once = false;
-    }
     Assert2(camera.handle(),"ospray camera is null");
     camera.set("pos", viewPort.from);
     auto dir = viewPort.at - viewPort.from;
@@ -281,6 +279,7 @@ void OSPGlutViewer::display()
     viewPort.modified = false;
     frameBuffer.clear(OSP_FB_ACCUM);
   }
+  fps.startRender();
 
   renderer.renderFrame(frameBuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
 
@@ -324,8 +323,8 @@ void OSPGlutViewer::updateAnimation(double deltaSeconds)
   if (animationPaused)
     return;
   animationTimer += deltaSeconds;
-  int framesSize = sceneModels.size()-1;
-  int frameStart = (lockFirstAnimationFrame ? 1 : 0);
+  const int framesSize = sceneModels.size();
+  const int frameStart = (lockFirstAnimationFrame ? 1 : 0);
 
   if (animationTimer > animationFrameDelta)
   {
