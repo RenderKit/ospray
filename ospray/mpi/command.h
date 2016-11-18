@@ -84,6 +84,8 @@ namespace ospray {
             // send custom work units around? Yes probably actually.
   } CommandTag;
 
+  const char* commandToString(CommandTag tag);
+
   namespace nwlayer {
     struct InitCmd {
     };

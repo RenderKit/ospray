@@ -67,7 +67,13 @@ namespace ospray {
         friend SerialBuffer& operator>>(SerialBuffer& b, Work &work);
 
         virtual void run();
+        // Run the master-side variant of this command in master/worker mode
+        // The default just does nothing
+        virtual void runOnMaster();
         virtual size_t getTag() const = 0;
+        // Check whether this work unit should flush the command buffer,
+        // the default returns false
+        virtual bool flushing() const;
 
         // Have the child work unit write its data to the buffer
         virtual void serialize(SerialBuffer &b) const = 0;
@@ -171,7 +177,8 @@ namespace ospray {
         NewObject() {}
         NewObject(const char* type, ObjectHandle handle) : type(type), handle(handle) {}
         void run() override {}
-        size_t getTag() const {
+        void runOnMaster() override {}
+        size_t getTag() const override {
           return TAG;
         }
         void serialize(SerialBuffer &b) const override {
@@ -185,6 +192,10 @@ namespace ospray {
       // new objects of each type.
       template<>
       void NewObject<Renderer>::run();
+      // For the renderer stored error threshold we need to make
+      // the renderer on the master as well.
+      template<>
+      void NewObject<Renderer>::runOnMaster();
       template<>
       void NewObject<Model>::run();
       template<>
@@ -193,6 +204,9 @@ namespace ospray {
       void NewObject<Camera>::run();
       template<>
       void NewObject<Volume>::run();
+      // We need to make volumes on master so we can set the string param
+      template<>
+      void NewObject<Volume>::runOnMaster();
       template<>
       void NewObject<TransferFunction>::run();
       template<>
@@ -220,7 +234,7 @@ namespace ospray {
           : type(type), rendererHandle((ObjectHandle&)renderer), handle(handle)
         {}
         void run() override {}
-        size_t getTag() const {
+        size_t getTag() const override {
           return TAG;
         }
         void serialize(SerialBuffer &b) const override {
@@ -253,7 +267,8 @@ namespace ospray {
         NewData(ObjectHandle handle, size_t nItems,
             OSPDataType format, void *initData, int flags);
         void run() override;
-        size_t getTag() const;
+        size_t getTag() const override;
+        bool flushing() const override;
         void serialize(SerialBuffer &b) const override;
         void deserialize(SerialBuffer &b) override;
       };
@@ -270,7 +285,7 @@ namespace ospray {
         NewTexture2d(ObjectHandle handle, vec2i dimensions,
             OSPTextureFormat format, void *texture, uint32 flags);
         void run() override;
-        size_t getTag() const;
+        size_t getTag() const override;
         void serialize(SerialBuffer &b) const override;
         void deserialize(SerialBuffer &b) override;
       };
@@ -286,7 +301,8 @@ namespace ospray {
         SetRegion(OSPVolume volume, vec3i start, vec3i size, const void *src,
                   OSPDataType type);
         void run() override;
-        size_t getTag() const;
+        size_t getTag() const override;
+        bool flushing() const override;
         void serialize(SerialBuffer &b) const override;
         void deserialize(SerialBuffer &b) override;
       };
@@ -298,7 +314,10 @@ namespace ospray {
         CommitObject();
         CommitObject(ObjectHandle handle);
         void run() override;
-        size_t getTag() const;
+        // TODO: Which objects should the master commit?
+        void runOnMaster() override;
+        size_t getTag() const override;
+        bool flushing() const override;
         void serialize(SerialBuffer &b) const override;
         void deserialize(SerialBuffer &b) override;
       };
@@ -311,7 +330,8 @@ namespace ospray {
         ClearFrameBuffer();
         ClearFrameBuffer(OSPFrameBuffer fb, uint32 channels);
         void run() override;
-        size_t getTag() const;
+        void runOnMaster() override;
+        size_t getTag() const override;
         void serialize(SerialBuffer &b) const override;
         void deserialize(SerialBuffer &b) override;
       };
@@ -325,7 +345,9 @@ namespace ospray {
         RenderFrame();
         RenderFrame(OSPFrameBuffer fb, OSPRenderer renderer, uint32 channels);
         void run() override;
-        size_t getTag() const;
+        void runOnMaster() override;
+        size_t getTag() const override;
+        bool flushing() const override;
         void serialize(SerialBuffer &b) const override;
         void deserialize(SerialBuffer &b) override;
       };
@@ -352,7 +374,7 @@ namespace ospray {
           : modelHandle((const ObjectHandle&)model), objectHandle((const ObjectHandle&)t)
         {}
         void run() override {}
-        size_t getTag() const {
+        size_t getTag() const override {
           return TAG;
         }
         void serialize(SerialBuffer &b) const override {
@@ -389,7 +411,7 @@ namespace ospray {
           : modelHandle((const ObjectHandle&)model), objectHandle((const ObjectHandle&)t)
         {}
         void run() override {}
-        size_t getTag() const {
+        size_t getTag() const override {
           return TAG;
         }
         void serialize(SerialBuffer &b) const override {
@@ -415,7 +437,8 @@ namespace ospray {
         CreateFrameBuffer(ObjectHandle handle, vec2i dimensions,
             OSPFrameBufferFormat format, uint32 channels);
         void run() override;
-        size_t getTag() const;
+        void runOnMaster() override;
+        size_t getTag() const override;
         void serialize(SerialBuffer &b) const override;
         void deserialize(SerialBuffer &b) override;
       };
@@ -476,6 +499,12 @@ namespace ospray {
           Assert(obj);
           obj->findParam(name.c_str(), true)->set(val);
         }
+        void runOnMaster() override {
+          ManagedObject *obj = handle.lookup();
+          if (dynamic_cast<Renderer*>(obj) || dynamic_cast<Volume*>(obj)) {
+            obj->findParam(name.c_str(), true)->set(val);
+          }
+        }
         size_t getTag() const override {
           return TAG;
         }
@@ -490,6 +519,8 @@ namespace ospray {
       // set the param so we need to provide a different run.
       template<>
       void SetParam<std::string>::run();
+      template<>
+      void SetParam<std::string>::runOnMaster();
 
       // both SetMaterial and SetObject take more different forms than the other
       // set operations since it doesn't take a name at all so
@@ -592,6 +623,7 @@ namespace ospray {
         LoadModule(const std::string &name);
         void run() override;
         size_t getTag() const override;
+        bool flushing() const override;
         void serialize(SerialBuffer &b) const override;
         void deserialize(SerialBuffer &b) override;
       };
@@ -601,7 +633,9 @@ namespace ospray {
 
         CommandFinalize();
         void run() override;
+        void runOnMaster() override;
         size_t getTag() const override;
+        bool flushing() const override;
         void serialize(SerialBuffer &b) const override;
         void deserialize(SerialBuffer &b) override;
       };

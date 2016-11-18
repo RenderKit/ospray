@@ -124,6 +124,7 @@ namespace ospray {
         std::vector<work::Work*> workCommands;
         bufferedComm->recv(mpi::Address(&mpi::app, (int32)mpi::RECV_ALL), workCommands);
         for (work::Work *&w : workCommands) {
+          std::cout << "Working Running: " << commandToString(CommandTag(w->getTag())) << std::endl;
           w->run();
           delete w;
           w = nullptr;

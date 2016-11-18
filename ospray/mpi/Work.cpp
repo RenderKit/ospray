@@ -187,6 +187,8 @@ namespace ospray {
       }
 
       void Work::run() {}
+      void Work::runOnMaster() {}
+      bool Work::flushing() const { return false; }
 
       void decode_buffer(SerialBuffer &buf, std::vector<Work*> &cmds, const int numMessages) {
         //std::cout << "decoding " << numMessages << " messages\n";
@@ -212,6 +214,10 @@ namespace ospray {
           throw std::runtime_error("unknown renderer type '" + type + "'");
         }
         handle.assign(renderer);
+      }
+      template<>
+      void NewObject<Renderer>::runOnMaster() {
+        run();
       }
       template<>
       void NewObject<Model>::run() {
@@ -244,6 +250,10 @@ namespace ospray {
         }
         volume->refInc();
         handle.assign(volume);
+      }
+      template<>
+      void NewObject<Volume>::runOnMaster() {
+        run();
       }
       template<>
       void NewObject<TransferFunction>::run() {
@@ -350,6 +360,10 @@ namespace ospray {
       size_t NewData::getTag() const {
         return TAG;
       }
+      bool NewData::flushing() const {
+        // NewData will flush if the size of the data being set is >= 256MB
+        return (!data.empty() || localData) && nItems * ospray::sizeOf(format) >= 256000000LL;
+      }
       void NewData::serialize(SerialBuffer &b) const {
         b << (int64)handle << nItems << (int32)format << flags << data;
       }
@@ -392,6 +406,7 @@ namespace ospray {
         : handle((ObjectHandle&)volume), regionStart(start), regionSize(size), type(type)
       {
         size_t bytes = ospray::sizeOf(type) * size.x * size.y * size.z;
+        // TODO: With the MPI batching this limitation should be lifted
         if (bytes > 2000000000LL) {
           throw std::runtime_error("MPI ospSetRegion does not support region sizes > 2GB");
         }
@@ -411,6 +426,10 @@ namespace ospray {
       size_t SetRegion::getTag() const {
         return TAG;
       }
+      bool SetRegion::flushing() const {
+        // Set region will flush if the size of the data being set is >= 256MB
+        return data.size() >= 256000000LL;
+      }
       void SetRegion::serialize(SerialBuffer &b) const {
         b << (int64)handle << regionStart << regionSize << (int32)type << data;
       }
@@ -424,24 +443,37 @@ namespace ospray {
       CommitObject::CommitObject(ObjectHandle handle) : handle(handle) {}
       void CommitObject::run() {
         ManagedObject *obj = handle.lookup();
-        Assert(obj);
-        obj->commit();
+        if (obj) {
+          obj->commit();
 
-        // TODO: Do we need this hack anymore?
-        // It looks like yes? or at least glutViewer segfaults if we don't do this
-        // hack, to stay compatible with earlier version
-        Model *model = dynamic_cast<Model*>(obj);
-        if (model) {
-          model->finalize();
+          // TODO: Do we need this hack anymore?
+          // It looks like yes? or at least glutViewer segfaults if we don't do this
+          // hack, to stay compatible with earlier version
+          Model *model = dynamic_cast<Model*>(obj);
+          if (model) {
+            model->finalize();
+          }
+        } else {
+          std::cout << "Warning(actually this is ok?) "
+            << mpi::world.rank << " did not have obj to commit\n";
         }
-
         // TODO: Work units should not be directly making MPI calls.
         // What should be responsible for this barrier?
         // MPI_Barrier(MPI_COMM_WORLD);
         mpi::barrier(mpi::world);
       }
+      void CommitObject::runOnMaster() {
+        ManagedObject *obj = handle.lookup();
+        if (dynamic_cast<Renderer*>(obj)) {
+          obj->commit();
+        }
+        mpi::barrier(mpi::world);
+      }
       size_t CommitObject::getTag() const {
         return TAG;
+      }
+      bool CommitObject::flushing() const {
+        return true;
       }
       void CommitObject::serialize(SerialBuffer &b) const {
         b << (int64)handle;
@@ -459,6 +491,10 @@ namespace ospray {
         Assert(fb);
         fb->clear(channels);
       }
+      void ClearFrameBuffer::runOnMaster() {
+        PING;
+        run();
+      }
       size_t ClearFrameBuffer::getTag() const {
         return TAG;
       }
@@ -474,10 +510,11 @@ namespace ospray {
         : fbHandle((ObjectHandle&)fb), rendererHandle((ObjectHandle&)renderer), channels(channels)
       {}
       void RenderFrame::run() {
+        PING;
         FrameBuffer *fb = (FrameBuffer*)fbHandle.lookup();
         Renderer *renderer = (Renderer*)rendererHandle.lookup();
+        Assert(renderer);
         Assert(fb);
-        mpi::flush();
         // TODO: This function execution must run differently
         // if we're the master vs. the worker in master/worker
         // mode. Actually, if the Master has the Master load balancer,
@@ -495,8 +532,19 @@ namespace ospray {
         }
 #endif
       }
+      void RenderFrame::runOnMaster() {
+        PING;
+        Renderer *renderer = (Renderer*)rendererHandle.lookup();
+        FrameBuffer *fb = (FrameBuffer*)fbHandle.lookup();
+        Assert(renderer);
+        Assert(fb);
+        TiledLoadBalancer::instance->renderFrame(renderer, fb, channels);
+      }
       size_t RenderFrame::getTag() const {
         return TAG;
+      }
+      bool RenderFrame::flushing() const {
+        return true;
       }
       void RenderFrame::serialize(SerialBuffer &b) const {
         b << (int64)fbHandle << (int64)rendererHandle << channels;
@@ -568,6 +616,10 @@ namespace ospray {
         fb->refInc();
         handle.assign(fb);
       }
+      void CreateFrameBuffer::runOnMaster() {
+        PING;
+        run();
+      }
       size_t CreateFrameBuffer::getTag() const {
         return TAG;
       }
@@ -585,6 +637,13 @@ namespace ospray {
         ManagedObject *obj = handle.lookup();
         Assert(obj);
         obj->findParam(name.c_str(), true)->set(val.c_str());
+      }
+      template<>
+      void SetParam<std::string>::runOnMaster() {
+        ManagedObject *obj = handle.lookup();
+        if (dynamic_cast<Renderer*>(obj) || dynamic_cast<Volume*>(obj)) {
+          obj->findParam(name.c_str(), true)->set(val.c_str());
+        }
       }
 
       SetPixelOp::SetPixelOp(){}
@@ -646,6 +705,9 @@ namespace ospray {
       size_t LoadModule::getTag() const {
         return TAG;
       }
+      bool LoadModule::flushing() const {
+        return true;
+      }
       void LoadModule::serialize(SerialBuffer &b) const {
         b << name;
       }
@@ -665,8 +727,14 @@ namespace ospray {
         // be exiting.
         std::exit(0);
       }
+      void CommandFinalize::runOnMaster() {
+        async::shutdown();
+      }
       size_t CommandFinalize::getTag() const {
         return TAG;
+      }
+      bool CommandFinalize::flushing() const {
+        return true;
       }
       void CommandFinalize::serialize(SerialBuffer &b) const {}
       void CommandFinalize::deserialize(SerialBuffer &b) {}

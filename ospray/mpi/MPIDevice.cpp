@@ -1029,15 +1029,18 @@ namespace ospray {
 
     void MPIDevice::processWork(work::Work* work)
     {
+      std::cout << "Master Sending: " << commandToString(CommandTag(work->getTag())) << std::endl;
       if (currentApiMode == OSPD_MODE_MASTERED) {
         bufferedComm->send(mpi::Address(&mpi::worker,(int32)mpi::SEND_ALL), work);
         // TODO: Maybe instead of this we can have a concept of "flushing" work units
-        if (dynamic_cast<work::CommandFinalize*>(work)) {
+        if (work->flushing()) {
           bufferedComm->flush();
         }
+        // Run the master side variant of the work unit
+        work->runOnMaster();
+      } else {
+        work->run();
       }
-      // TODO: In mastered mode we want to selectively run commands maybe!?
-      work->run();
     }
 
     ObjectHandle MPIDevice::allocateHandle() const {
