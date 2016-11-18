@@ -537,13 +537,15 @@ namespace ospray {
           : handle(handle), name(name), val((ObjectHandle&)obj)
         {
           Assert(handle != nullHandle);
-          Assert(val != nullHandle);
         }
         void run() override {
           ManagedObject *obj = handle.lookup();
-          ManagedObject *param = val.lookup();
           Assert(obj);
-          Assert(param);
+          ManagedObject *param = NULL;
+          if (val != NULL_HANDLE) {
+            param = val.lookup();
+            Assert(param);
+          }
           obj->findParam(name.c_str(), true)->set(param);
         }
         size_t getTag() const override {
