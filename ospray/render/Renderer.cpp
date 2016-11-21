@@ -59,8 +59,8 @@ namespace ospray {
       }
 
       ispc::Renderer_set(getIE(),
-                         model ?  model->getIE() : NULL,
-                         camera ?  camera->getIE() : NULL,
+                         model ? model->getIE() : NULL,
+                         camera ? camera->getIE() : NULL,
                          epsilon,
                          spp,
                          backgroundEnabled,

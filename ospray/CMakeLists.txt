@@ -192,6 +192,7 @@ SET(OSPRAY_SOURCES
 
   render/pathtracer/PathTracer.ispc
   render/pathtracer/PathTracer.cpp
+  render/pathtracer/GeometryLight.ispc
   render/pathtracer/materials/Material.ispc
   render/pathtracer/materials/OBJ.ispc
   render/pathtracer/materials/OBJ.cpp

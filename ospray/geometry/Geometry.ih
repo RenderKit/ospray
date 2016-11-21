@@ -51,10 +51,10 @@ struct Geometry {
   uniform Material *uniform material;
 
   //! model that this geometry is part of
-  uniform Model    *uniform model;
+  uniform Model *uniform model;
 
   //! ID that 'model' knows this geometry under
-  uniform int32             geomID;
+  uniform int32 geomID;
 };
 
 //! constructor for ispc-side Geometry object

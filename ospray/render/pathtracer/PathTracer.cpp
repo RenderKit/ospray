@@ -20,15 +20,23 @@
 // ospray
 #include "common/Data.h"
 #include "lights/Light.h"
+#include "geometry/Instance.h"
 // ispc exports
 #include "PathTracer_ispc.h"
+#include "Material_ispc.h"
+#include "GeometryLight_ispc.h"
 // std
 #include <map>
 
 namespace ospray {
-  PathTracer::PathTracer() : Renderer()
+  PathTracer::PathTracer() : Renderer(), geometryLights(0)
   {
     ispcEquivalent = ispc::PathTracer_create(this);
+  }
+
+  PathTracer::~PathTracer()
+  {
+    destroyGeometryLights();
   }
 
   /*! \brief create a material of given type */
@@ -50,14 +58,44 @@ namespace ospray {
     return material;
   }
 
+
+  void PathTracer::generateGeometryLights(const Model * const model
+      , const affine3f& xfm
+      )
+  {
+    for(auto &geo : model->geometry) {
+      // recurse instances
+      const Ref<Instance> inst = geo.dynamicCast<Instance>();
+      if (inst) {
+        const affine3f instXfm = xfm * inst->xfm;
+        generateGeometryLights(inst->instancedScene.ptr, instXfm);
+      } else
+        if (geo->material && geo->material->getIE()
+            && ispc::PathTraceMaterial_isEmissive(geo->material->getIE()))
+          lightArray.push_back(ispc::GeometryLight_create(geo->getIE(),
+                (const ispc::AffineSpace3f&)xfm));
+    }
+  }
+
+  void PathTracer::destroyGeometryLights()
+  {
+    for (size_t i = 0; i < geometryLights; i++)
+      ispc::delete_uniform(lightArray[i]);
+  }
+
   void PathTracer::commit()
   {
     Renderer::commit();
 
-    lightData = (Data*)getParamData("lights");
-
+    destroyGeometryLights();
     lightArray.clear();
 
+    if (model) {
+      generateGeometryLights(model, affine3f(one));
+      geometryLights = lightArray.size();
+    }
+
+    lightData = (Data*)getParamData("lights");
     if (lightData) {
       for (uint32_t i = 0; i < lightData->size(); i++)
         lightArray.push_back(((Light**)lightData->data)[i]->getIE());

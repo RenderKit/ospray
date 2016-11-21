@@ -38,3 +38,9 @@ void PathTraceMaterial_Constructor(uniform PathTraceMaterial* uniform self,
   self->selectNextMedium = selectNextMedium ? selectNextMedium : PathTraceMaterial_selectNextMedium;
   self->emission = make_vec3f(0.f);
 }
+
+export uniform bool PathTraceMaterial_isEmissive(void *uniform _mat)
+{
+  uniform PathTraceMaterial *uniform mat = (uniform PathTraceMaterial *uniform)_mat;
+  return reduce_max(mat->emission) > 0.f;
+}
