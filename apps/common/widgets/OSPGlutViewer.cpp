@@ -82,7 +82,7 @@ OSPGlutViewer::OSPGlutViewer(const std::deque<box3f> &worldBounds, std::deque<cp
   resetAccum = false;
   frameTimer = ospcommon::getSysTime();
   animationTimer = 0.;
-  animationFrameDelta = .1;
+  animationFrameDelta = .03;
   animationFrameId = 0;
   animationPaused = false;
   glutViewPort = viewPort;
@@ -323,8 +323,10 @@ void OSPGlutViewer::updateAnimation(double deltaSeconds)
   if (animationPaused)
     return;
   animationTimer += deltaSeconds;
-  const int framesSize = sceneModels.size();
+  int framesSize = sceneModels.size();
   const int frameStart = (lockFirstAnimationFrame ? 1 : 0);
+  if (lockFirstAnimationFrame)
+    framesSize--;
 
   if (animationTimer > animationFrameDelta)
   {
@@ -336,8 +338,6 @@ void OSPGlutViewer::updateAnimation(double deltaSeconds)
     if (lockFirstAnimationFrame)
     {
       ospcommon::affine3f xfm = ospcommon::one;
-      // ospcommon::vec3f translate(0,-11,0);
-      // vec3f scale(300, 300, 300);
       xfm = xfm*ospcommon::affine3f::translate(translate)*ospcommon::affine3f::scale(scale);
       OSPGeometry dynInst =
               ospNewInstance((OSPModel)sceneModels[dataFrameId].object(),
