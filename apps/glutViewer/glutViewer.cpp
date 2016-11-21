@@ -35,17 +35,6 @@ std::string scriptFileFromCommandLine(int ac, const char **&av)
     if (arg == "--script" || arg == "-s") {
       scriptFileName = av[++i];
     }
-    else if (arg == "--translate") {
-      translate.x = atof(av[++i]);
-      translate.y = atof(av[++i]);
-      translate.z = atof(av[++i]);
-    } else if (arg == "--scale") {
-      scale.x = atof(av[++i]);
-      scale.y = atof(av[++i]);
-      scale.z = atof(av[++i]);
-    } else if (arg == "--lockFirstFrame") {
-      lockFirstFrame = true;
-    }
   }
 
   return scriptFileName;
@@ -64,6 +53,21 @@ int main(int ac, const char **av)
   ospray::cpp::Camera   camera;
 
   std::tie(bbox, model, renderer, camera) = ospObjs;
+
+  for (int i = 1; i < ac; i++) {
+    const std::string arg = av[i];
+    if (arg == "--translate") {
+      translate.x = atof(av[++i]);
+      translate.y = atof(av[++i]);
+      translate.z = atof(av[++i]);
+    } else if (arg == "--scale") {
+      scale.x = atof(av[++i]);
+      scale.y = atof(av[++i]);
+      scale.z = atof(av[++i]);
+    } else if (arg == "--lockFirstFrame") {
+      lockFirstFrame = true;
+    }
+  }
 
 #ifdef OSPRAY_APPS_ENABLE_SCRIPTING
   auto scriptFileName = scriptFileFromCommandLine(ac, av);
