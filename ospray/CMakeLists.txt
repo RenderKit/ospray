@@ -76,6 +76,7 @@ SET(OSPRAY_SOURCES
   include/ospray/OSPTexture.h
 
   math/box.ispc
+  math/Distribution1D.ispc
   math/Distribution2D.ispc
 
   common/ospray.rc
@@ -302,6 +303,7 @@ OSPRAY_INSTALL_SDK_HEADERS(
   #FIXME: check if all of these are used...
   math/AffineSpace.ih
   math/box.ih
+  math/Distribution1D.ih
   math/Distribution2D.ih
   math/LinearSpace.ih
   math/math.ih

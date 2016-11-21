@@ -14,29 +14,28 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
 #include "Distribution1D.ih"
-#include "math/vec.ih"
 
-struct Distribution2D 
+uniform float Distribution1D_create(const uniform int size, uniform float* uniform cdf)
 {
-  vec2i size;
-  vec2f rcpSize;        // 1/size
-  uniform float* cdf_x; // size.x*size.y elements
-  uniform float* cdf_y; // size.y elements
-};
+  // accumulate the function
+  // using varying float and exclusive_scan_add(float v) is much slower
+  uniform float sum = cdf[0];
+  for (uniform int i = 1; i < size; i++)
+    cdf[i] = sum += cdf[i];
 
-// consumes array 'importance' of size size.x*size.y, ownership is transferred to Distribution2D
-uniform Distribution2D* uniform Distribution2D_create(const uniform vec2i size, uniform float* uniform importance);
-void Distribution2D_destroy(uniform Distribution2D* uniform);
+  // compute reciprocal sum
+  const uniform float rcpSum = 1.0f/sum;
+  // next representable number in float greater than 1.0f
+  const uniform float nextAfter1 = 0x1.000002p+0f;
 
-struct Sample2D
-{
-  vec2f uv;
-  float pdf;
-};
+  // normalize
+  foreach(i = 0 ... size) {
+    const float c = cdf[i];
+    // handle cornercases (sum=0 -> rcpSum=inf; correct termination of sampling with s=1.0f)
+    const float q = c >= sum ? nextAfter1 : c * rcpSum;
+    cdf[i] = q;
+  }
 
-// inline?
-Sample2D Distribution2D_sample(const uniform Distribution2D* uniform, const vec2f &s);
-float  Distribution2D_pdf(const uniform Distribution2D* uniform, const vec2f &uv);
+  return sum;
+}

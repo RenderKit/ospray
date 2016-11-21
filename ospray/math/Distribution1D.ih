@@ -16,27 +16,45 @@
 
 #pragma once
 
-#include "Distribution1D.ih"
-#include "math/vec.ih"
+// input: importance in 'cdf'
+// output: cdf of importance in 'cdf'
+//         return sum
+uniform float Distribution1D_create(const uniform int size, uniform float* uniform cdf);
 
-struct Distribution2D 
-{
-  vec2i size;
-  vec2f rcpSize;        // 1/size
-  uniform float* cdf_x; // size.x*size.y elements
-  uniform float* cdf_y; // size.y elements
-};
-
-// consumes array 'importance' of size size.x*size.y, ownership is transferred to Distribution2D
-uniform Distribution2D* uniform Distribution2D_create(const uniform vec2i size, uniform float* uniform importance);
-void Distribution2D_destroy(uniform Distribution2D* uniform);
-
-struct Sample2D
-{
-  vec2f uv;
+struct Sample1D {
+  int idx; // relative to start
+  float frac;
   float pdf;
 };
 
-// inline?
-Sample2D Distribution2D_sample(const uniform Distribution2D* uniform, const vec2f &s);
-float  Distribution2D_pdf(const uniform Distribution2D* uniform, const vec2f &uv);
+inline Sample1D Distribution1D_sample(
+  const uniform int size,
+  const uniform float* uniform cdf,
+  // we may sample different rows within one gang: use a varying offset 'start' instead of a varying pointer 'cdf'
+  const int start,
+  const float s)
+{
+  // find minimum index where cdf[i-1] <= s < cdf[i]
+  int first = start;
+  int len = size;
+
+  while (len > 0) {
+    const int half = len >> 1;
+    const int mid = first + half;
+    if (s < cdf[mid]) {
+      len = half;
+    } else {
+      first = mid + 1;
+      len -= half + 1;
+    }
+  }
+
+  Sample1D ret;
+  ret.idx = first - start;
+  const float bef = first == start ? 0.0f : cdf[first-1];
+  const float dcdf = cdf[first] - bef;
+  ret.pdf = dcdf * size;
+  ret.frac = (s - bef) * rcp(dcdf); // rescale
+
+  return ret;
+}
