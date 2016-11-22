@@ -31,7 +31,15 @@ namespace std
 }
 #endif
 #else
-#include <x86intrin.h>
+// #include <x86intrin.h>
+# include <emmintrin.h>
+# include <xmmintrin.h>
+# ifdef __SSE4_1__
+#  include <smmintrin.h>
+# endif
+# ifdef __AVX__
+#  include <immintrin.h>
+# endif
 #endif
 
 namespace ospcommon
