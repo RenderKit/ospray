@@ -78,12 +78,8 @@ namespace ospray {
     materialListData = getParamData("materialList");
     geom_materialID = getParam1i("geom.materialID",-1);
 
-    Assert2(vertexData != NULL,
-            "triangle mesh geometry does not have either 'position'"
-            " or 'vertex' array");
-    Assert2(indexData != NULL, 
-            "triangle mesh geometry does not have either 'index'"
-            " or 'triangle' array");
+    Assert2(vertexData, "triangle mesh must have 'vertex' array");
+    Assert2(indexData, "triangle mesh must have 'index' array");
 
     this->index = (int*)indexData->data;
     this->vertex = (float*)vertexData->data;
