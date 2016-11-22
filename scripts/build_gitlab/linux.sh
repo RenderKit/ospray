@@ -19,8 +19,6 @@
 mkdir build
 cd build
 
-cmake \
-  -D OSPRAY_BUILD_ISA=ALL \
-..
+cmake -DOSPRAY_BUILD_ISA=ALL "$@" ..
 
 make -j`nproc`

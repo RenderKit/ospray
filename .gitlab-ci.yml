@@ -80,6 +80,23 @@ build-sles-gcc:
     - gcc
     - build
 
+build-debug:
+  type: build
+  script:
+    - scripts/build_gitlab/linux.sh -DCMAKE_BUILD_TYPE=Debug
+  tags:
+    - linux
+    - build
+
+build-mpi:
+  type: build
+  script:
+    - scripts/build_gitlab/linux.sh -DOSPRAY_BUILD_MPI_DEVICE=ON
+  tags:
+    - linux
+    - mpi
+    - build
+
 build-osx-clang:
   type: build
   script:
