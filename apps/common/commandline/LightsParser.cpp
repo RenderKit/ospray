@@ -34,9 +34,8 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
 {
   std::vector<OSPLight> lights;
   
-  bool hasHDRI = false;
   int HDRI_up = 1;//y
-  float HDRI_intensity = 1;
+  float HDRI_intensity = 0.f;
   const char * HDRI_file_name;
   vec4f ambient(.85,.9,1,.2*3.14);
 
@@ -59,7 +58,6 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
         ambient.z = atof(av[++i]);
         ambient.w = atof(av[++i]);
     } else if (arg == "--hdri-light") {
-      hasHDRI = true;
         if (i+2 >= ac)
           throw std::runtime_error("Not enough arguments! Usage:\n\t"
               "--hdri-light <intensity> <image file>.(pfm|ppm)");
@@ -88,7 +86,7 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
   }// Done reading commandline args.
   
   // HDRI environment light.
-  if (hasHDRI) {
+  if (HDRI_intensity > 0.f) {
     auto ospHdri = renderer.newLight("hdri");
     ospHdri.set("name", "hdri light");
     if (HDRI_up == 0) {// up = x
@@ -108,16 +106,17 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
       std::cout << "Failed to load hdri-light texture '" << imageFile << "'" << std::endl;
     } else {
       std::cout << "Successfully loaded hdri-light texture '" << imageFile << "'" << std::endl;
+      OSPTexture2D ospLightMap = ospray::miniSG::createTexture2D(lightMap);
+      ospHdri.set( "map", ospLightMap);
+      ospHdri.commit();
+      lights.push_back(ospHdri.handle());
     }
-    OSPTexture2D ospLightMap = ospray::miniSG::createTexture2D(lightMap);
-    ospHdri.set( "map", ospLightMap);
-    ospHdri.commit();
-    lights.push_back(ospHdri.handle());
   }
 
   //TODO: Need to figure out where we're going to read lighting data from
   
-  if (defaultDirLight_direction != vec3f(0.f)) {
+  if (defaultDirLight_direction != vec3f(0.f)
+      && defaultDirLight_intensity > 0.f) {
     auto ospLight = renderer.newLight("directional");
     if (ospLight.handle() == nullptr) {
       throw std::runtime_error("Failed to create a 'DirectionalLight'!");
@@ -131,15 +130,17 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
     lights.push_back(ospLight.handle());
   }
 
-  auto ospLight = renderer.newLight("ambient");
-  if (ospLight.handle() == nullptr) {
-    throw std::runtime_error("Failed to create a 'AmbientLight'!");
+  if (ambient.w > 0.f && reduce_max(ambient) > 0.f) {
+    auto ospLight = renderer.newLight("ambient");
+    if (ospLight.handle() == nullptr) {
+      throw std::runtime_error("Failed to create a 'AmbientLight'!");
+    }
+    ospLight.set("name", "ambient");
+    ospLight.set("color", ambient.x, ambient.y, ambient.z);
+    ospLight.set("intensity", ambient.w);
+    ospLight.commit();
+    lights.push_back(ospLight.handle());
   }
-  ospLight.set("name", "ambient");
-  ospLight.set("color", ambient.x, ambient.y, ambient.z);
-  ospLight.set("intensity", ambient.w);
-  ospLight.commit();
-  lights.push_back(ospLight.handle());
 
   auto lightArray = ospray::cpp::Data(lights.size(), OSP_OBJECT, lights.data());
   //lightArray.commit();
