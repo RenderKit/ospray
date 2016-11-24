@@ -26,27 +26,31 @@
 #include "embree2/rtcore_geometry_user.isph"
 
 struct Spheres {
-  uniform Geometry super; //!< inherited geometry fields
+  /*! inherit from "Geometry" class: */
+  Geometry   super; 
 
-  uniform uint8 *uniform data;
-  uniform Material *uniform *materialList;
-
-  float radius;
-  int   materialID;
-  int   offset_center;
-  int   offset_radius;
-  int   offset_materialID;
-  int   offset_colorID;
-
-  uint8 *color_data;
-  int    color_stride;
-  int    color_offset;
+  /*! data array that contains the sphere data (possibly but not
+      necessarily including the color, whic hcould be in color_data);
+      all of offset and stride values point into here.  */
+  uint8     *data;
   
-  int32 numSpheres;
-  int32 bytesPerSphere;
-};
+  /*! list of multiple  materials, in case of per-sphere materials */
+  Material **materialList;
 
-typedef uniform float uniform_float;
+  float      radius;
+  int        materialID;
+  int        offset_center;
+  int        offset_radius;
+  int        offset_materialID;
+  int        offset_colorID; 
+
+  uint8     *color_data;
+  int        color_stride;
+  int        color_offset;
+  
+  int32      numSpheres;
+  int32      bytesPerSphere;
+};
 
 static void Spheres_postIntersect(uniform Geometry *uniform geometry,
                                   uniform Model *uniform model,
