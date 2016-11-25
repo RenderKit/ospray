@@ -14,28 +14,31 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "Geometry.ih"
+#pragma once
 
-export void Geometry_setMaterial(void *uniform _geo, 
-                                 void *uniform _mat)
-{
-  uniform Geometry *uniform geo = (uniform Geometry *uniform)_geo;
-  geo->material = (uniform Material *uniform)_mat;
-}
+#include "math/vec.ih"
 
-//! constructor for ispc-side Geometry object
-static void Geometry_Constructor(uniform Geometry *uniform geometry,
-                                 void *uniform cppEquivalent,
-                                 uniform Geometry_postIntersectFct postIntersect,
-                                 uniform Model *uniform model,
-                                 uniform int32  geomID,
-                                 uniform Material *uniform material
-                                 )
+struct AreaSampler;
+struct Geometry;
+
+struct AreaSampler_SampleRes
 {
-  geometry->cppEquivalent = cppEquivalent;
-  geometry->model    = model;
-  geometry->material = material;
-  geometry->geomID   = geomID;
-  geometry->postIntersect = postIntersect;
-  geometry->generateAreaSampler = NULL;
-}
+  vec3f pos;    //!< sampled point, in world-space
+  vec3f normal; //!< normal at the sampled point
+  float pdf;    //!< probability density to sample that point
+};
+
+typedef AreaSampler_SampleRes (*AreaSampler_SampleFunc)(
+    const uniform AreaSampler* uniform
+    , const vec2f& s /*! random numbers to generate the sample >*/
+    );
+
+typedef void (*AreaSampler_DestroyFunc)(
+    const uniform AreaSampler* uniform
+    );
+
+struct AreaSampler
+{
+  AreaSampler_SampleFunc sample;
+  AreaSampler_DestroyFunc destroy;
+};

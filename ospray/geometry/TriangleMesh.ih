@@ -20,7 +20,7 @@
 
 //! ispc-equivalent of the ospray::TriangleMesh geometry
 struct TriangleMesh {
-  uniform Geometry  geometry; //!< inherited geometry fields
+  uniform Geometry  super; //!< inherited geometry fields
   uniform int32     numTriangles; //!< number of triangles
   uniform int32     idxSize; //!< stride of triangle indices, in int32 elements
   uniform int32     vtxSize; //!< stride of vertex positions, in float32 elements

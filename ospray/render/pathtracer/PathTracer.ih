@@ -35,4 +35,5 @@ struct PathTracer {
 
   const uniform Light *uniform *uniform lights;
   uint32 numLights;
+  uint32 numGeoLights;
 };

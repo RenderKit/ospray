@@ -71,16 +71,19 @@ namespace ospray {
         generateGeometryLights(inst->instancedScene.ptr, instXfm);
       } else
         if (geo->material && geo->material->getIE()
-            && ispc::PathTraceMaterial_isEmissive(geo->material->getIE()))
-          lightArray.push_back(ispc::GeometryLight_create(geo->getIE(),
-                (const ispc::AffineSpace3f&)xfm));
+            && ispc::PathTraceMaterial_isEmissive(geo->material->getIE())) {
+          void* light = ispc::GeometryLight_create(geo->getIE(),
+              (const ispc::AffineSpace3f&)xfm);
+          if (light)
+            lightArray.push_back(light);
+        }
     }
   }
 
   void PathTracer::destroyGeometryLights()
   {
     for (size_t i = 0; i < geometryLights; i++)
-      ispc::delete_uniform(lightArray[i]);
+      ispc::GeometryLight_destroy(lightArray[i]);
   }
 
   void PathTracer::commit()
@@ -110,7 +113,7 @@ namespace ospray {
 
     ispc::PathTracer_set(getIE(), maxDepth, minContribution, maxRadiance,
                          backplate ? backplate->getIE() : NULL,
-                         lightPtr, lightArray.size());
+                         lightPtr, lightArray.size(), geometryLights);
   }
 
   OSP_REGISTER_RENDERER(PathTracer,pathtracer);

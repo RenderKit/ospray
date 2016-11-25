@@ -133,8 +133,8 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       }
     }
 
-    // add light from virtual lights by intersecting them
-    for (uniform int i = 0; i < self->numLights; i++) {
+    // add light from *virtual* lights by intersecting them
+    for (uniform int i = self->numGeoLights; i < self->numLights; i++) {
       const uniform Light *uniform l = self->lights[i];
       Light_EvalRes le = l->eval(l, lastDg, ray.dir, maxLightDist);
       if (reduce_max(le.radiance) > 0.0f)
@@ -145,7 +145,8 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       break;
 
     // terminate after evaluation of lights and before next shading to always have both samples for MIS
-    if (depth >= self->maxDepth)
+    // except if we have geometry lights (which we still need to evaluate for MIS)
+    if (depth >= self->maxDepth && self->numGeoLights == 0)
       break;
 
     ////////////////////////////////////
@@ -156,18 +157,29 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         DG_MATERIALID|
         DG_NS|DG_NG|DG_FACEFORWARD|DG_NORMALIZE|DG_TEXCOORD|DG_COLOR|DG_TANGENTS
         );
+    uniform PathTraceMaterial* m = (uniform PathTraceMaterial*)dg.material;
+
+    // evaluate geometry lights
+    foreach_unique(mm in m)
+      if (mm != NULL && reduce_max(mm->emission) > 0.f) {
+        // convert pdf wrt. area to pdf wrt. solid angle
+        const float cosd = dot(dg.Ng, ray.dir);
+        float le_pdf = /*XXX instance->pdf */ sqr(ray.t) / abs(cosd);
+        L = L + Lw * mm->emission * misHeuristic(lastBSDFPdf, le_pdf);
+      }
+
+    // terminate after evaluation of lights and before next shading to always have both samples for MIS
+    if (depth >= self->maxDepth)
+      break;
 
     // shade surface
     uniform ShadingContext ctx;
     ShadingContext_Constructor(&ctx);
     const varying BSDF* bsdf = NULL;
 
-    uniform PathTraceMaterial* m = (uniform PathTraceMaterial*)dg.material;
     foreach_unique(mm in m)
-      if (mm != NULL) {
+      if (mm != NULL)
         bsdf = mm->getBSDF(mm, &ctx, dg, ray, currentMedium);
-        L = L + Lw * mm->emission;
-      }
 
     // terminate path when we don't have any BSDF
     if (!bsdf)
@@ -212,7 +224,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     // sample BSDF
     vec2f s  = RandomTEA__getFloats(rng);
-    vec2f ss = RandomTEA__getFloats(rng); // FIXME: should be only one component
+    vec2f ss = RandomTEA__getFloats(rng); // TODO use other component to select one light
     BSDF_SampleRes fs;
     foreach_unique(f in bsdf)
       if (f != NULL)
@@ -361,7 +373,8 @@ export void PathTracer_set(void *uniform _self,
                            const uniform float maxRadiance,
                            void *uniform backplate,
                            void **uniform lights,
-                           const uniform uint32 numLights)
+                           const uniform uint32 numLights,
+                           const uniform uint32 numGeoLights)
 {
   uniform PathTracer *uniform self = (uniform PathTracer *uniform)_self;
 
@@ -371,6 +384,7 @@ export void PathTracer_set(void *uniform _self,
   self->backplate = (uniform Texture2D *uniform)backplate;
   self->lights = (const uniform Light *uniform *uniform)lights;
   self->numLights = numLights;
+  self->numGeoLights = numGeoLights;
 }
 
 export void* uniform PathTracer_create(void *uniform cppE)
@@ -379,7 +393,7 @@ export void* uniform PathTracer_create(void *uniform cppE)
   Renderer_Constructor(&self->super,cppE);
   self->super.renderTile = PathTracer_renderTile;
 
-  PathTracer_set(self, 20, 0.01f, inf, NULL, NULL, 0);
+  PathTracer_set(self, 20, 0.01f, inf, NULL, NULL, 0, 0);
   precomputeZOrder();
 
   return self;

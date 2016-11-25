@@ -136,5 +136,5 @@ inline vec3f uniformSampleTriangle(const vec3f &a, const vec3f &b, const vec3f &
 
 inline float uniformSampleTrianglePDF(const vec3f &a, const vec3f &b, const vec3f &c)
 {
-  return 2.0f * rcp(abs(length(cross(a-c, b-c))));
+  return 2.0f * rcp(length(cross(a-c, b-c)));
 }

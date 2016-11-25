@@ -19,6 +19,8 @@
 #include "../common/Material.ih"
 #include "../common/Ray.ih"
 #include "../common/DifferentialGeometry.ih"
+#include "AreaSampler.ih"
+#include "math/AffineSpace.ih"
 
 /*! Geometries are supposed to fill certain members of DifferentialGeometry:
     calculate Ng, Ns, st, color, and materialID if the respective bit DG_NG,
@@ -38,11 +40,17 @@ typedef void (*Geometry_postIntersectFct)(uniform Geometry *uniform self,
                                           const varying Ray &ray,
                                           uniform int64 flags);
 
+typedef uniform AreaSampler *uniform (*Geometry_generateAreaSamplerFct)(
+    uniform Geometry *uniform
+    , const uniform affine3f &xfm
+    );
+
 /*! ispc-side equivalent of a geometry */
 struct Geometry {
   /*! 'virtual' post-intersect function that fills in a
     DifferentialGeometry struct, see above prototype for details */
   Geometry_postIntersectFct postIntersect;
+  Geometry_generateAreaSamplerFct generateAreaSampler;
 
   //! pointer back to the C++-equivalent of this class
   void *uniform cppEquivalent;

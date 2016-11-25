@@ -24,15 +24,12 @@
    explicit importance sampling (currently wrt. the surface area).
 */
 
-
 struct GeometryLight
 {
   Light super; // inherited light fields
 
-  uniform Geometry *uniform geometry; // reference to represented geometry
-  affine3f xfm; // instance transformation
+  AreaSampler * uniform areaSampler;
   vec3f radiance; // RGB color and intensity of the GeometryLight
-  float ppdf; // probability to sample point on light = 1/area
 };
 
 
@@ -41,19 +38,17 @@ struct GeometryLight
 
 Light_SampleRes GeometryLight_sample(const uniform Light* uniform super,
                                      const DifferentialGeometry& dg,
-                                     const vec2f& sp)
+                                     const vec2f& s)
 {
   const GeometryLight* uniform self = (GeometryLight* uniform)super;
   Light_SampleRes res;
 
-/*
-  // sample position on light with density ppdf = 1/area
-  geometry->sample(); // should already be wrt. solid angle
-  const vec3f pos;
-  const vec3f normal;
+  // sample position on light
+  // TODO should already be wrt. solid angle
+  AreaSampler_SampleRes as = self->areaSampler->sample(self->areaSampler, s);
 
   // extant light vector from the hit point
-  const vec3f dir = pos - dg.P;
+  const vec3f dir = as.pos - dg.P;
   const float dist = length(dir);
 
   // normalized light vector
@@ -61,11 +56,11 @@ Light_SampleRes GeometryLight_sample(const uniform Light* uniform super,
   res.dist = dist;
 
   // convert to pdf wrt. solid angle
-  const float cosd = dot(normal, res.dir);
-  res.pdf = self->ppdf * sqr(dist) / abs(cosd);
+  const float cosd = dot(as.normal, res.dir);
+  res.pdf = as.pdf * sqr(dist) / abs(cosd);
 
   res.weight = self->radiance * rcp(res.pdf);
-*/
+
   return res;
 }
 
@@ -99,16 +94,20 @@ export void* uniform GeometryLight_create(void* uniform _geo, const uniform affi
   uniform Geometry *uniform geo = (uniform Geometry *uniform)_geo;
   uniform PathTraceMaterial *uniform mat = (uniform PathTraceMaterial *uniform)geo->material;
 
-  self->geometry = geo;
-  self->xfm = xfm;
+  if (geo->generateAreaSampler)
+    self->areaSampler = geo->generateAreaSampler(geo, xfm);
+  else {
+    print("#osp:pt generateAreaSampler not implemented! Cannot use importance sampling for that geometry with emissive material!\n");
+    return NULL;
+  }
   self->radiance = mat->emission;
 
   return self;
 }
-/*
+
 export void GeometryLight_destroy(void* uniform _self)
 {
   uniform GeometryLight* uniform self = (uniform GeometryLight* uniform)_self;
-  delete(self);
+  self->areaSampler->destroy(self->areaSampler);
+  delete self;
 }
-*/

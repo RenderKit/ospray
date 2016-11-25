@@ -18,6 +18,8 @@
 #include "TriangleMesh.ih"
 #include "common/Model.ih"
 #include "math/LinearSpace.ih"
+#include "math/Distribution1D.ih"
+#include "math/sampling.ih"
 
 // embree
 #include "embree2/rtcore.isph"
@@ -168,6 +170,94 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform _self,
   }
 }
 
+struct TriangleMesh_AreaSampler
+{
+  AreaSampler super;
+  uniform TriangleMesh *uniform mesh;
+  uniform float *uniform distribution;
+  affine3f xfm;
+  float pdf; // probability to sample point on surface = 1/area
+};
+
+AreaSampler_SampleRes TriangleMesh_AreaSampler_sample(
+    const uniform AreaSampler* uniform _self
+    , const vec2f& s
+    )
+{
+  uniform TriangleMesh_AreaSampler *uniform self =
+    (uniform TriangleMesh_AreaSampler *uniform)_self;
+  uniform TriangleMesh *uniform mesh = self->mesh;
+
+  AreaSampler_SampleRes res;
+
+  const Sample1D sample = Distribution1D_sample(mesh->numTriangles, self->distribution, 0, s.x);
+  res.pdf = self->pdf; // == sample.pdf/mesh->numTriangles * uniformSampleTrianglePDF(worldspace);
+
+
+  // gather vertices
+  const uniform bool huge_mesh = mesh->huge_mesh;
+  const vec3i index = gather_vec3i(huge_mesh, mesh->index, mesh->idxSize, sample.idx);
+  const uniform float *uniform vertex = mesh->vertex;
+  const uniform int32 vtxSize = mesh->vtxSize;
+  const vec3f a = gather_vec3f(huge_mesh, vertex, vtxSize, index.x);
+  const vec3f b = gather_vec3f(huge_mesh, vertex, vtxSize, index.y);
+  const vec3f c = gather_vec3f(huge_mesh, vertex, vtxSize, index.z);
+
+  // XXX have to rescale s.x
+  const vec2f ns = make_vec2f(sample.frac, s.y);
+  const vec3f localPos = uniformSampleTriangle(a, b, c, ns);
+
+  res.pos = xfmPoint(self->xfm, localPos);
+
+  const vec3f e1 = a-c;
+  const vec3f e2 = b-c;
+  res.normal = normalize(cross(xfmVector(self->xfm, e1), xfmVector(self->xfm, e2)));
+
+  return res;
+}
+
+void TriangleMesh_AreaSampler_destroy(const uniform AreaSampler* uniform _self)
+{
+  uniform TriangleMesh_AreaSampler *uniform self =
+    (uniform TriangleMesh_AreaSampler *uniform)_self;
+
+  delete[] self->distribution;
+  delete self;
+}
+
+uniform AreaSampler *uniform TriangleMesh_generateAreaSampler(
+    uniform Geometry *uniform _self
+    , const uniform affine3f &xfm
+    )
+{
+  uniform TriangleMesh *uniform self = (uniform TriangleMesh *uniform)_self;
+  uniform TriangleMesh_AreaSampler *uniform areaSampler =
+    uniform new uniform TriangleMesh_AreaSampler;
+
+  areaSampler->super.sample = TriangleMesh_AreaSampler_sample;
+  areaSampler->super.destroy = TriangleMesh_AreaSampler_destroy;
+  areaSampler->mesh = self;
+  areaSampler->xfm = xfm;
+
+  const uniform int32 tris = self->numTriangles;
+  areaSampler->distribution = uniform new uniform float[tris];
+  uniform int *uniform index = self->index;
+  const uniform int32 idxSize = self->idxSize;
+  const uniform float *uniform vertex = self->vertex;
+  const uniform int64 vtxSize = self->vtxSize;
+  for(uniform int32 i = 0; i < tris; i++, index += idxSize) {
+    const uniform vec3f a = *((vec3f*)(vertex + vtxSize * *index));
+    const uniform vec3f b = *((vec3f*)(vertex + vtxSize * *(index+1)));
+    const uniform vec3f c = *((vec3f*)(vertex + vtxSize * *(index+2)));
+    const uniform vec3f e1 = xfmVector(xfm, a-c);
+    const uniform vec3f e2 = xfmVector(xfm, b-c);
+    areaSampler->distribution[i] = length(cross(e1, e2)); // 2x area
+  }
+  areaSampler->pdf = 2.f/Distribution1D_create(tris, areaSampler->distribution);
+
+  return (uniform AreaSampler *uniform)areaSampler;
+}
+
 
 //! constructor for ispc-side TriangleMesh object
 void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
@@ -189,10 +279,11 @@ void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
                               uniform uint32 *uniform prim_materialID,
                               uniform bool huge_mesh)
 {
-  Geometry_Constructor(&mesh->geometry,cppEquivalent,
+  Geometry_Constructor(&mesh->super,cppEquivalent,
                        TriangleMesh_postIntersect,
                        model,geomID,
                        material);
+  mesh->super.generateAreaSampler = TriangleMesh_generateAreaSampler;
   mesh->numTriangles = numTriangles;
   mesh->index        = index;
   mesh->vertex       = vertex;
@@ -238,7 +329,7 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
   uniform Model *uniform model = (uniform Model *uniform)_model;
   uniform Material *uniform *uniform materialList = (uniform Material *uniform *uniform)_materialList;
   TriangleMesh_Constructor(mesh,
-                           mesh->geometry.cppEquivalent,
+                           mesh->super.cppEquivalent,
                            model,
                            geomID,
                            numTriangles,
