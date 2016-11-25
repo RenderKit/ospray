@@ -27,11 +27,12 @@ namespace ospray {
     virtual void commit();
     virtual Material *createMaterial(const char *type);
 
-    void generateGeometryLights(const Model * const model, const affine3f& xfm);
+    void generateGeometryLights(const Model *const, const affine3f&, float *const areaPDF);
     void destroyGeometryLights();
 
     std::vector<void*> lightArray; // the 'IE's of the XXXLights
     size_t geometryLights; // number of GeometryLights at beginning of lightArray
+    std::vector<float> areaPDF; // pdfs wrt. area of regular (not instanced) geometry lights
     Data *lightData;
   };
 }

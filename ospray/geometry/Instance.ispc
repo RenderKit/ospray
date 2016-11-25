@@ -17,23 +17,12 @@
 // ospray
 #include "math/vec.ih"
 #include "math/box.ih"
-#include "math/AffineSpace.ih"
 #include "common/Ray.ih"
-#include "common/Model.ih"
-#include "geometry/Geometry.ih"
+#include "Instance.ih"
 // embree
 #include "embree2/rtcore.isph"
 #include "embree2/rtcore_scene.isph"
 #include "embree2/rtcore_geometry_user.isph"
-
-struct Instance {
-  uniform Geometry geometry; //!< inherited geometry fields
-  uniform Model *uniform model; //!< instanced model
-  AffineSpace3f xfm; //!< instantiation matrix
-  AffineSpace3f rcp_xfm; //!< rcp(instantiation matrix)
-};
-
-
 
 static void Instance_postIntersect(uniform Geometry *uniform _self,
                                    uniform Model *uniform parentModel,
@@ -65,20 +54,23 @@ static void Instance_postIntersect(uniform Geometry *uniform _self,
 
 export void *uniform InstanceGeometry_create(void *uniform cppE)
 {
-  uniform Instance *uniform inst = uniform new uniform Instance;
-  inst->geometry.cppEquivalent = cppE;
-  inst->geometry.postIntersect = Instance_postIntersect;
+  Instance *uniform self = uniform new Instance;
+  self->geometry.cppEquivalent = cppE;
+  self->geometry.postIntersect = Instance_postIntersect;
+  self->areaPDF = NULL;
 
-  return inst;
+  return self;
 }
 
 export void InstanceGeometry_set(void *uniform _self, 
                                  const uniform AffineSpace3f &xfm,
                                  const uniform AffineSpace3f &rcp_xfm,
-                                 void *uniform _model)
+                                 void *uniform _model,
+                                 float *uniform areaPDF)
 {
-  uniform Instance *uniform self = (uniform Instance *uniform)_self;
+  Instance *uniform self = (Instance *uniform)_self;
   self->model   = (uniform Model *uniform)_model;
   self->xfm     = xfm;
   self->rcp_xfm = rcp_xfm;
+  self->areaPDF = areaPDF;
 }

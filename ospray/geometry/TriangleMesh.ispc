@@ -176,7 +176,6 @@ struct TriangleMesh_AreaSampler
   uniform TriangleMesh *uniform mesh;
   uniform float *uniform distribution;
   affine3f xfm;
-  float pdf; // probability to sample point on surface = 1/area
 };
 
 AreaSampler_SampleRes TriangleMesh_AreaSampler_sample(
@@ -191,8 +190,7 @@ AreaSampler_SampleRes TriangleMesh_AreaSampler_sample(
   AreaSampler_SampleRes res;
 
   const Sample1D sample = Distribution1D_sample(mesh->numTriangles, self->distribution, 0, s.x);
-  res.pdf = self->pdf; // == sample.pdf/mesh->numTriangles * uniformSampleTrianglePDF(worldspace);
-
+  // Note that sample.pdf/mesh->numTriangles * uniformSampleTrianglePDF(worldspace) == areaSampler->super.pdf
 
   // gather vertices
   const uniform bool huge_mesh = mesh->huge_mesh;
@@ -230,9 +228,9 @@ uniform AreaSampler *uniform TriangleMesh_generateAreaSampler(
     , const uniform affine3f &xfm
     )
 {
-  uniform TriangleMesh *uniform self = (uniform TriangleMesh *uniform)_self;
-  uniform TriangleMesh_AreaSampler *uniform areaSampler =
-    uniform new uniform TriangleMesh_AreaSampler;
+  TriangleMesh *uniform self = (TriangleMesh *uniform)_self;
+  TriangleMesh_AreaSampler *uniform areaSampler =
+    uniform new TriangleMesh_AreaSampler;
 
   areaSampler->super.sample = TriangleMesh_AreaSampler_sample;
   areaSampler->super.destroy = TriangleMesh_AreaSampler_destroy;
@@ -253,9 +251,9 @@ uniform AreaSampler *uniform TriangleMesh_generateAreaSampler(
     const uniform vec3f e2 = xfmVector(xfm, b-c);
     areaSampler->distribution[i] = length(cross(e1, e2)); // 2x area
   }
-  areaSampler->pdf = 2.f/Distribution1D_create(tris, areaSampler->distribution);
+  areaSampler->super.pdf = 2.f/Distribution1D_create(tris, areaSampler->distribution);
 
-  return (uniform AreaSampler *uniform)areaSampler;
+  return (AreaSampler *uniform)areaSampler;
 }
 
 

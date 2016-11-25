@@ -59,21 +59,23 @@ namespace ospray {
   }
 
 
-  void PathTracer::generateGeometryLights(const Model * const model
+  void PathTracer::generateGeometryLights(const Model *const model
       , const affine3f& xfm
+      , float *const areaPDF
       )
   {
-    for(auto &geo : model->geometry) {
+    for(int i = 0; i < model->geometry.size(); i++) {
+      auto &geo = model->geometry[i];
       // recurse instances
-      const Ref<Instance> inst = geo.dynamicCast<Instance>();
+      Ref<Instance> inst = geo.dynamicCast<Instance>();
       if (inst) {
         const affine3f instXfm = xfm * inst->xfm;
-        generateGeometryLights(inst->instancedScene.ptr, instXfm);
+        generateGeometryLights(inst->instancedScene.ptr, instXfm, &(inst->areaPDF[0]));
       } else
         if (geo->material && geo->material->getIE()
             && ispc::PathTraceMaterial_isEmissive(geo->material->getIE())) {
           void* light = ispc::GeometryLight_create(geo->getIE(),
-              (const ispc::AffineSpace3f&)xfm);
+              (const ispc::AffineSpace3f&)xfm, areaPDF+i);
           if (light)
             lightArray.push_back(light);
         }
@@ -94,7 +96,8 @@ namespace ospray {
     lightArray.clear();
 
     if (model) {
-      generateGeometryLights(model, affine3f(one));
+      areaPDF.resize(model->geometry.size());
+      generateGeometryLights(model, affine3f(one), &areaPDF[0]);
       geometryLights = lightArray.size();
     }
 
@@ -103,6 +106,8 @@ namespace ospray {
       for (uint32_t i = 0; i < lightData->size(); i++)
         lightArray.push_back(((Light**)lightData->data)[i]->getIE());
     }
+    PRINT(lightArray.size());
+    PRINT(geometryLights);
 
     void **lightPtr = lightArray.empty() ? NULL : &lightArray[0];
 
@@ -113,7 +118,8 @@ namespace ospray {
 
     ispc::PathTracer_set(getIE(), maxDepth, minContribution, maxRadiance,
                          backplate ? backplate->getIE() : NULL,
-                         lightPtr, lightArray.size(), geometryLights);
+                         lightPtr, lightArray.size(), geometryLights,
+                         &areaPDF[0]);
   }
 
   OSP_REGISTER_RENDERER(PathTracer,pathtracer);

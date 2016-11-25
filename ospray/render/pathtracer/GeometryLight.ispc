@@ -57,7 +57,7 @@ Light_SampleRes GeometryLight_sample(const uniform Light* uniform super,
 
   // convert to pdf wrt. solid angle
   const float cosd = dot(as.normal, res.dir);
-  res.pdf = as.pdf * sqr(dist) / abs(cosd);
+  res.pdf = self->areaSampler->pdf * sqr(dist) / abs(cosd);
 
   res.weight = self->radiance * rcp(res.pdf);
 
@@ -67,7 +67,8 @@ Light_SampleRes GeometryLight_sample(const uniform Light* uniform super,
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
 
-export void* uniform GeometryLight_create(void* uniform _geo, const uniform affine3f &xfm)
+export void* uniform GeometryLight_create(void* uniform _geo,
+    const uniform affine3f &xfm, float *uniform areaPDF)
 {
   GeometryLight* uniform self = uniform new GeometryLight;
 
@@ -83,9 +84,13 @@ export void* uniform GeometryLight_create(void* uniform _geo, const uniform affi
   else {
     print("#osp:pt generateAreaSampler not implemented! Cannot use importance "
         "sampling for that geometry with emissive material!\n");
+    // set pdf to inf, indicating that this emissive geometry cannot be
+    // sampled, but hit (and thus MIS weight will be 1)
+    *areaPDF = inf;
     return NULL;
   }
   self->radiance = mat->emission;
+  *areaPDF = self->areaSampler->pdf;
 
   return self;
 }

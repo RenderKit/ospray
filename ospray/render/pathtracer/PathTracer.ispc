@@ -19,6 +19,7 @@
 
 #include "render/pathtracer/materials/Medium.ih"
 #include "render/pathtracer/materials/Material.ih"
+#include "geometry/Instance.ih"
 #include "math/random.ih"
 #include "fb/LocalFB.ih"
 
@@ -162,9 +163,20 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     // evaluate geometry lights
     foreach_unique(mm in m)
       if (mm != NULL && reduce_max(mm->emission) > 0.f) {
+        float area_pdf;
+        // XXX same hack as in Model.ih; to get areaPDF of hit geometry instance
+        if (ray.instID < 0) { // a regular geometry
+          area_pdf = self->areaPDF[ray.geomID];
+        } else { // an instance
+          foreach_unique(instID in ray.instID) {
+            Instance *uniform inst = (Instance *uniform)self->super.model->geometry[instID];
+            area_pdf = inst->areaPDF[ray.geomID];
+          }
+        }
+
         // convert pdf wrt. area to pdf wrt. solid angle
         const float cosd = dot(dg.Ng, ray.dir);
-        float le_pdf = /*XXX instance->pdf */ sqr(ray.t) / abs(cosd);
+        const float le_pdf = area_pdf * sqr(ray.t) / abs(cosd);
         L = L + Lw * mm->emission * misHeuristic(lastBSDFPdf, le_pdf);
       }
 
@@ -374,9 +386,10 @@ export void PathTracer_set(void *uniform _self,
                            void *uniform backplate,
                            void **uniform lights,
                            const uniform uint32 numLights,
-                           const uniform uint32 numGeoLights)
+                           const uniform uint32 numGeoLights,
+                           void *uniform areaPDF)
 {
-  uniform PathTracer *uniform self = (uniform PathTracer *uniform)_self;
+  PathTracer *uniform self = (PathTracer *uniform)_self;
 
   self->maxDepth = maxDepth;
   self->minContribution = minContribution;
@@ -385,6 +398,7 @@ export void PathTracer_set(void *uniform _self,
   self->lights = (const uniform Light *uniform *uniform)lights;
   self->numLights = numLights;
   self->numGeoLights = numGeoLights;
+  self->areaPDF = (float *uniform)areaPDF;
 }
 
 export void* uniform PathTracer_create(void *uniform cppE)
@@ -393,7 +407,7 @@ export void* uniform PathTracer_create(void *uniform cppE)
   Renderer_Constructor(&self->super,cppE);
   self->super.renderTile = PathTracer_renderTile;
 
-  PathTracer_set(self, 20, 0.01f, inf, NULL, NULL, 0, 0);
+  PathTracer_set(self, 20, 0.01f, inf, NULL, NULL, 0, 0, NULL);
   precomputeZOrder();
 
   return self;
