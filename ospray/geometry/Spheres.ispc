@@ -30,7 +30,7 @@ struct Spheres {
   Geometry   super; 
 
   /*! data array that contains the sphere data (possibly but not
-      necessarily including the color, whic hcould be in color_data);
+      necessarily including the color, which could be in color_data);
       all of offset and stride values point into here.  */
   uint8     *data;
   

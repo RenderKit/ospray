@@ -28,7 +28,7 @@ struct GeometryLight
 {
   Light super; // inherited light fields
 
-  AreaSampler * uniform areaSampler;
+  AreaSampler *areaSampler;
   vec3f radiance; // RGB color and intensity of the GeometryLight
 };
 
@@ -64,40 +64,25 @@ Light_SampleRes GeometryLight_sample(const uniform Light* uniform super,
   return res;
 }
 
-Light_EvalRes GeometryLight_eval(const uniform Light* uniform super,
-                             const DifferentialGeometry& dg,
-                             const vec3f& dir,
-                             const float maxDist)
-{
-  uniform GeometryLight* uniform self = (uniform GeometryLight* uniform)super;
-  Light_EvalRes res;
-  res.radiance = make_vec3f(0.f);
-/*
-  res.radiance = self->radiance;
-  res.pdf = self->ppdf * sqr(dist) * rcosd;
-*/
-
-  return res;
-}
-
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
 
 export void* uniform GeometryLight_create(void* uniform _geo, const uniform affine3f &xfm)
 {
-  uniform GeometryLight* uniform self = uniform new uniform GeometryLight;
+  GeometryLight* uniform self = uniform new GeometryLight;
 
   Light_Constructor(&self->super);
   self->super.sample = GeometryLight_sample;
-  self->super.eval = GeometryLight_eval;
+  self->super.eval = NULL; // geometry lights are hit and explicitely handled
 
-  uniform Geometry *uniform geo = (uniform Geometry *uniform)_geo;
-  uniform PathTraceMaterial *uniform mat = (uniform PathTraceMaterial *uniform)geo->material;
+  Geometry *uniform geo = (Geometry *uniform)_geo;
+  PathTraceMaterial *uniform mat = (PathTraceMaterial *uniform)geo->material;
 
   if (geo->generateAreaSampler)
     self->areaSampler = geo->generateAreaSampler(geo, xfm);
   else {
-    print("#osp:pt generateAreaSampler not implemented! Cannot use importance sampling for that geometry with emissive material!\n");
+    print("#osp:pt generateAreaSampler not implemented! Cannot use importance "
+        "sampling for that geometry with emissive material!\n");
     return NULL;
   }
   self->radiance = mat->emission;
