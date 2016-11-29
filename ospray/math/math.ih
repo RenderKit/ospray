@@ -25,6 +25,7 @@
 #define inf     floatbits(0x7F800000)
 #define pos_inf floatbits(0x7F800000)
 #define neg_inf floatbits(0xFF800000)
+#define flt_min 0x1.0p-126f
 
 #define M_PI     3.14159265358979323846f
 #define pi       3.14159265358979323846f
