@@ -151,7 +151,7 @@ inline float calculateAO(const uniform SciVisRenderer *uniform self,
     const vec3f ao_dir = localToWorld * local_ao_dir;
 
     Ray ao_ray;
-    setRay(ao_ray, dg.P + (1e-3f * dg.Ns), ao_dir,
+    setRay(ao_ray, dg.P + (self->super.epsilon * dg.Ns), ao_dir,
            self->super.epsilon, self->aoRayLength);
     //shade volumes
     if (dot(ao_ray.dir, dg.Ns) < 0.05f || isOccluded(self->super.model,ao_ray))
