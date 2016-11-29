@@ -54,8 +54,6 @@ ENDMACRO()
 ## Macro configure ISA targets for ispc ##
 MACRO(OSPRAY_CONFIGURE_ISPC_ISA)
 
-  OSPRAY_CONFIGURE_COMPILER()
-
   # the arch we're targeting for the non-MIC/non-xeon phi part of ospray
   SET(OSPRAY_BUILD_ISA "ALL" CACHE STRING
       "Target ISA (SSE, AVX, AVX2, AVX512, or ALL)")
@@ -157,12 +155,15 @@ ENDMACRO()
 
 ## Target creation macros ##
 
-MACRO(OSPRAY_ADD_SUBDIRECTORY subdirectory)
+# NOTE(jda) - Must be a function and not a macro so the include() for
+#             MIC doesn't have side effects on future subdirectories
+FUNCTION(OSPRAY_ADD_SUBDIRECTORY subdirectory)
   SET(OSPRAY_EXE_SUFFIX "")
   SET(OSPRAY_LIB_SUFFIX "")
   SET(OSPRAY_ISPC_SUFFIX ".o")
   SET(THIS_IS_MIC OFF)
   SET(__XEON__ ON)
+  SET(OSPRAY_TARGET_MIC OFF)
 
   ADD_SUBDIRECTORY(${subdirectory} builddir/${subdirectory}/intel64)
 
@@ -174,11 +175,11 @@ MACRO(OSPRAY_ADD_SUBDIRECTORY subdirectory)
     SET(THIS_IS_MIC ON)
     SET(__XEON__ OFF)
     INCLUDE(icc_xeonphi)
-    SET(OSPRAY_TARGET_MIC ON PARENT_SCOPE)
+    SET(OSPRAY_TARGET_MIC ON)
 
     ADD_SUBDIRECTORY(${subdirectory} builddir/${subdirectory}/mic)
   ENDIF()
-ENDMACRO()
+ENDFUNCTION()
 
 MACRO(OSPRAY_ADD_EXECUTABLE name)
   ADD_EXECUTABLE(${name}${OSPRAY_EXE_SUFFIX} ${ARGN})
@@ -310,7 +311,7 @@ MACRO(OSPRAY_CREATE_LIBRARY LIBRARY_NAME)
       LIST(APPEND ${CURRENT_LIST} ${arg})
     ENDIF ()
   ENDFOREACH()
- 
+
   OSPRAY_ADD_LIBRARY(${LIBRARY_NAME} SHARED ${LIBRARY_SOURCES})
   OSPRAY_LIBRARY_LINK_LIBRARIES(${LIBRARY_NAME} ${LINK_LIBS})
   OSPRAY_SET_LIBRARY_VERSION(${LIBRARY_NAME})
@@ -496,4 +497,54 @@ MACRO(OSPRAY_CONFIGURE_TASKING_SYSTEM)
       # Do nothing, will fall back to scalar code (useful for debugging)
     ENDIF()
   ENDIF(OSPRAY_TASKING_TBB)
+ENDMACRO()
+
+## MPI configuration macro ##
+
+MACRO(OSPRAY_CONFIGURE_MPI)
+  IF (WIN32) # FindMPI does not find Intel MPI on Windows, we need to help here
+    FIND_PACKAGE(MPI)
+
+    # need to strip quotes, otherwise CMake treats it as relative path
+    STRING(REGEX REPLACE "^\"|\"$" "" MPI_CXX_INCLUDE_PATH ${MPI_CXX_INCLUDE_PATH})
+
+    IF (NOT MPI_CXX_FOUND)
+      # try again, hinting the compiler wrappers
+      SET(MPI_CXX_COMPILER mpicxx.bat)
+      SET(MPI_C_COMPILER mpicc.bat)
+      FIND_PACKAGE(MPI)
+
+      IF (NOT MPI_CXX_LIBRARIES)
+        SET(MPI_LIB_PATH ${MPI_CXX_INCLUDE_PATH}\\..\\lib)
+
+        SET(MPI_LIB "MPI_LIB-NOTFOUND" CACHE FILEPATH "Cleared" FORCE)
+        FIND_LIBRARY(MPI_LIB NAMES impi HINTS ${MPI_LIB_PATH})
+        SET(MPI_C_LIB ${MPI_LIB})
+        SET(MPI_C_LIBRARIES ${MPI_LIB} CACHE STRING "MPI C libraries to link against" FORCE)
+
+        SET(MPI_LIB "MPI_LIB-NOTFOUND" CACHE FILEPATH "Cleared" FORCE)
+        FIND_LIBRARY(MPI_LIB NAMES impicxx HINTS ${MPI_LIB_PATH})
+        SET(MPI_CXX_LIBRARIES ${MPI_C_LIB} ${MPI_LIB} CACHE STRING "MPI CXX libraries to link against" FORCE)
+        SET(MPI_LIB "MPI_LIB-NOTFOUND" CACHE INTERNAL "Scratch variable for MPI lib detection" FORCE)
+      ENDIF()
+    ENDIF()
+  ELSE()
+    FIND_PACKAGE(MPI REQUIRED)
+    IF(MPI_CXX_FOUND)
+      GET_FILENAME_COMPONENT(DIR ${MPI_LIBRARY} PATH)
+      SET(MPI_LIBRARY_MIC ${DIR}/../../mic/lib/libmpi.so CACHE FILEPATH "")
+    ENDIF()
+  ENDIF()
+
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_CXX_COMPILE_FLAGS}")
+  SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_CXX_LINK_FLAGS}")
+
+  INCLUDE_DIRECTORIES(SYSTEM ${MPI_CXX_INCLUDE_PATH})
+ENDMACRO()
+
+# Keep backwards compatible CONFIGURE_MPI() macro, but warn of deprecation
+MACRO(CONFIGURE_MPI)
+  OSPRAY_WARN_ONCE(CONFIGURE_MPI_DEPRECATION
+                   "CONFIGURE_MPI() is deprecated, use new OSPRAY_CONFIGURE_MPI().")
+  OSPRAY_CONFIGURE_MPI()
 ENDMACRO()

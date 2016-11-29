@@ -151,7 +151,7 @@ inline float calculateAO(const uniform SciVisRenderer *uniform self,
     const vec3f ao_dir = localToWorld * local_ao_dir;
 
     Ray ao_ray;
-    setRay(ao_ray, dg.P + (1e-3f * dg.Ns), ao_dir,
+    setRay(ao_ray, dg.P + (self->super.epsilon * dg.Ns), ao_dir,
            self->super.epsilon, self->aoRayLength);
     //shade volumes
     if (dot(ao_ray.dir, dg.Ns) < 0.05f || isOccluded(self->super.model,ao_ray))
@@ -191,8 +191,7 @@ inline void shadeAO(const uniform SciVisRenderer *uniform self,
     if (self->aoRayLength > 0.f)
       ao *= calculateAO(self, sampleID, dg);
     // Blend AO w/ diffuse term
-    vec3f aoColor = make_vec3f(0.5f, 0.7f, 1.f);
-    color = color + info.local_opacity * info.Kd * ao*aoColor;
+    color = color + info.local_opacity * info.Kd * ao;
   }
 }
 
@@ -223,10 +222,7 @@ inline void shadeLights(const uniform SciVisRenderer *uniform self,
       else
         cosNL = abs(cosNL);
       const float cosLR = max(0.f, dot(light.dir, R));
-      vec3f specular  = info.Ks * powf(cosLR, info.Ns*.3f);
-      specular.x  = clamp(specular.x);
-      specular.y  = clamp(specular.y);
-      specular.z  = clamp(specular.z);
+      vec3f specular = info.Ks * powf(cosLR, info.Ns);
       const vec3f brdf = info.Kd * cosNL + specular;
       const vec3f light_contrib = info.local_opacity
                                   * brdf * light.weight;
@@ -315,6 +311,7 @@ inline vec4f SciVisRenderer_computeVolumeSample(SciVisRenderer *uniform renderer
     shadeMaterials(dg, info);
 
     vec3f litColor = make_vec3f(0.0f);
+    info.Ns *= 0.3f;
     shadeLights(renderer, ray, dg, info, 1, litColor, rayOffset, sampleID,1.f);
     sampleColor = litColor;
   }
@@ -432,6 +429,7 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
           shadeMaterials(dg, info);
 
           vec3f litColor = make_vec3f(0.0f);
+          info.Ns *= 0.3f;
           shadeLights(renderer, ray, dg, info, 0, litColor, rayOffset, sampleID, quality);
           sampleColor = litColor;
         }
@@ -486,6 +484,7 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
 
     vec3f litColor = make_vec3f(0.0f);
     shadeAO(renderer, sampleID, dg, info, litColor);
+    info.Ns *= 0.3f;
     shadeLights(renderer, ray, dg, info, 0, litColor, rayOffset, sampleID, quality);
     intervalColor = make_vec4f(litColor,intervalColor.w);
   }

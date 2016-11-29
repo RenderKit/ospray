@@ -584,7 +584,7 @@ inline vec3f normalize(const vec3f v, float &len)
 { len = sqrtf(dot(v,v)); return v * rcpf(len); }
 
 inline vec3f safe_normalize(const vec3f v)
-{ return v * (1.f/sqrt(max(1e-6f,dot(v,v)))); }
+{ return v * (1.f/sqrtf(max(flt_min,dot(v,v)))); }
 
 /*! differentiated normalization */
 inline varying vec3f dnormalize(const varying vec3f& p, const varying vec3f& dp)

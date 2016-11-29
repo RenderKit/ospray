@@ -60,8 +60,9 @@ namespace ospray {
     }
 
     numSpheres = sphereData->numBytes / bytesPerSphere;
-    std::cout << "#osp: creating 'spheres' geometry, #spheres = " << numSpheres
-              << std::endl;
+    if (logLevel >= 2) 
+      std::cout << "#osp: creating 'spheres' geometry, #spheres = "
+        << numSpheres << std::endl;
 
     if (numSpheres >= (1ULL << 30)) {
       throw std::runtime_error("#ospray::Spheres: too many spheres in this "

@@ -19,8 +19,8 @@
 ##############################################################
 
 SET(OSPRAY_VERSION_MAJOR 1)
-SET(OSPRAY_VERSION_MINOR 0)
-SET(OSPRAY_VERSION_PATCH 1)
+SET(OSPRAY_VERSION_MINOR 1)
+SET(OSPRAY_VERSION_PATCH 2)
 SET(OSPRAY_VERSION_GITHASH 0)
 IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
   FIND_PACKAGE(Git)
@@ -95,6 +95,9 @@ INCLUDE(package)
 # OSPRay specific build options and configuration selection
 ##############################################################
 
+OSPRAY_CONFIGURE_COMPILER()
+OSPRAY_CONFIGURE_TASKING_SYSTEM()
+
 OPTION(OSPRAY_USE_EXTERNAL_EMBREE
        "Use a pre-built Embree instead of the internally built version" ON)
 
@@ -118,6 +121,7 @@ ELSE()
     # Build COI device?
     OPTION(OSPRAY_BUILD_COI_DEVICE
            "Build COI Device for OSPRay's MIC support?" ON)
+    SET(OSPRAY_MIC_COI ${OSPRAY_BUILD_COI_DEVICE})
   ENDIF()
 ENDIF()
 
@@ -134,9 +138,6 @@ SET(OSPRAY_PIXELS_PER_JOB 64 CACHE INT
 
 MARK_AS_ADVANCED(OSPRAY_TILE_SIZE)
 MARK_AS_ADVANCED(OSPRAY_PIXELS_PER_JOB)
-
-OSPRAY_CONFIGURE_COMPILER()
-OSPRAY_CONFIGURE_TASKING_SYSTEM()
 
 # Must be before ISA config
 INCLUDE(configure_embree)
