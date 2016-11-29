@@ -106,8 +106,6 @@ namespace ospray {
       for (uint32_t i = 0; i < lightData->size(); i++)
         lightArray.push_back(((Light**)lightData->data)[i]->getIE());
     }
-    PRINT(lightArray.size());
-    PRINT(geometryLights);
 
     void **lightPtr = lightArray.empty() ? NULL : &lightArray[0];
 
