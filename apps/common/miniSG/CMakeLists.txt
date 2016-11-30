@@ -20,9 +20,6 @@ IF (APPLE)
   # but then it no longer works with the mac-version of Qt, so we currently
   # pick qt compatiblity over magick compatibility.
   SET(USE_IMAGE_MAGICK OFF)
-ELSE()
-  OPTION(USE_IMAGE_MAGICK "Use ImageMagick for ModelViewer's Texture loaders.")
-  MARK_AS_ADVANCED(USE_IMAGE_MAGICK)
 ENDIF()
 
 IF (USE_IMAGE_MAGICK)
