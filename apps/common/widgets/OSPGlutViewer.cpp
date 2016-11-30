@@ -86,6 +86,7 @@ OSPGlutViewer::OSPGlutViewer(const std::deque<box3f> &worldBounds, std::deque<cp
   animationFrameId = 0;
   animationPaused = false;
   glutViewPort = viewPort;
+  scale = vec3f(1,1,1);
 }
 
 void OSPGlutViewer::setRenderer(OSPRenderer renderer)
