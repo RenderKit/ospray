@@ -75,10 +75,8 @@ namespace ospray {
       const float r = offset_radius < 0 ? radius : *(float*)(cylinderPtr + offset_radius);
       const vec3f v0 = *(vec3f*)(cylinderPtr + offset_v0);
       const vec3f v1 = *(vec3f*)(cylinderPtr + offset_v1);
-      bounds.extend(v0 - r);
-      bounds.extend(v0 + r);
-      bounds.extend(v1 - r);
-      bounds.extend(v1 + r);
+      bounds.extend(box3f(v0 - r, v0 + r));
+      bounds.extend(box3f(v1 - r, v1 + r));
     }
 
     ispc::CylindersGeometry_set(getIE(),model->getIE(),

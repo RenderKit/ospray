@@ -52,6 +52,11 @@ namespace ospray {
               << "#verts=" << numVertices << ", "
               << "#segments=" << numSegments << ", "
               << "radius=" << radius << std::endl;
+
+    bounds = empty;
+    if (vertex)
+      for (uint32_t i = 0; i < numVertices; i++)
+        bounds.extend(box3f(vertex[i] - radius, vertex[i] + radius));
     
     ispc::StreamLineGeometry_set(getIE(),model->getIE(),radius,
                                  (ispc::vec3fa*)vertex,numVertices,
