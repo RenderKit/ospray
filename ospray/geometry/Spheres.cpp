@@ -89,6 +89,15 @@ namespace ospray {
       _materialList = (void*)ispcMaterials;
     }
 
+    const char* spherePtr = (const char*)sphereData->data;
+    bounds = empty;
+    for (uint32_t i = 0; i < numSpheres; i++, spherePtr += bytesPerSphere) {
+      const float r = offset_radius < 0 ? radius : *(float*)(spherePtr + offset_radius);
+      const vec3f center = *(vec3f*)(spherePtr + offset_center);
+      bounds.extend(center - r);
+      bounds.extend(center + r);
+    }
+
     ispc::SpheresGeometry_set(getIE(),model->getIE(),
                               sphereData->data,_materialList,
                               colorData?(unsigned char*)colorData->data:NULL,

@@ -69,6 +69,18 @@ namespace ospray {
       _materialList = (void*)ispcMaterials;
     }
 
+    const char* cylinderPtr = (const char*)cylinderData->data;
+    bounds = empty;
+    for (uint32_t i = 0; i < numCylinders; i++, cylinderPtr += bytesPerCylinder) {
+      const float r = offset_radius < 0 ? radius : *(float*)(cylinderPtr + offset_radius);
+      const vec3f v0 = *(vec3f*)(cylinderPtr + offset_v0);
+      const vec3f v1 = *(vec3f*)(cylinderPtr + offset_v1);
+      bounds.extend(v0 - r);
+      bounds.extend(v0 + r);
+      bounds.extend(v1 - r);
+      bounds.extend(v1 + r);
+    }
+
     ispc::CylindersGeometry_set(getIE(),model->getIE(),
                                 cylinderData->data,_materialList,
                                 colorData?(ispc::vec4f*)colorData->data:NULL,
