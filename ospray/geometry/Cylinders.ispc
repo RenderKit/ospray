@@ -71,24 +71,21 @@ void Cylinders_intersect(uniform Cylinders *uniform geometry,
   uniform vec3f v1 = *((uniform vec3f*)(cylinderPtr+geometry->offset_v1));
   const vec3f A = v0 - ray.org;
   const vec3f B = v1 - ray.org;
-  const float r = radius;
 
-  const vec3f O = make_vec3f(0.f);
   const vec3f V = ray.dir;
-
   const vec3f AB = B - A;
-  const vec3f AO = O - A;
   
-  const vec3f AOxAB  = cross(AO,AB); // cross product
-  const vec3f VxAB   = cross(V,AB); // cross product
-  const float ab2    = dot(AB,AB); // dot product
-  const float a      = dot(VxAB,VxAB); // dot product
-  const float b      = 2 * dot(VxAB,AOxAB); // dot product
-  const float c      = dot(AOxAB,AOxAB) - (r*r * ab2);
+  const vec3f AOxAB  = cross(AB,A);
+  const vec3f VxAB   = cross(V,AB);
+  const float ab2    = dot(AB,AB);
+  const float a      = dot(VxAB,VxAB);
+  const float b      = 2 * dot(VxAB,AOxAB);
+  const float c      = dot(AOxAB,AOxAB) - (sqr(radius) * ab2);
 
   // clip to near and far cap of cylinder
-  const float tA = dot(AB,A) * rcp(dot(V,AB));
-  const float tB = dot(AB,B) * rcp(dot(V,AB));
+  const float rVAB = rcp(dot(V,AB));
+  const float tA = dot(AB,A) * rVAB;
+  const float tB = dot(AB,B) * rVAB;
   const float tAB0 = max(ray.t0,min(tA,tB));
   const float tAB1 = min(ray.t, max(tA,tB));
 
