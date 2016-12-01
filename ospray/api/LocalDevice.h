@@ -29,10 +29,14 @@ namespace ospray {
 
     struct LocalDevice : public Device {
 
-      /*! constructor */
-      LocalDevice(int *_ac = nullptr, const char **_av = nullptr);
-
+      LocalDevice() = default;
       ~LocalDevice();
+
+      // ManagedObject Implementation /////////////////////////////////////////
+
+      void commit() override;
+
+      // Device Implementation ////////////////////////////////////////////////
 
       /*! create a new frame buffer */
       OSPFrameBuffer frameBufferCreate(const vec2i &size,

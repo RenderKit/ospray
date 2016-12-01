@@ -46,6 +46,9 @@ int main(int ac, const char **av)
   ospInit(&ac,av);
 #else
   auto device = ospCreateDevice();
+
+  // set device parameters...
+
   ospSetCurrentDevice(device);
 #endif
 

@@ -162,8 +162,10 @@ extern "C" void ospInit(int *_ac, const char **_av)
 
   // no device created on cmd line, yet, so default to localdevice
   if (!ospray::api::Device::current) {
-    ospray::api::Device::current = new ospray::api::LocalDevice(_ac,_av);
+    ospray::api::Device::current = new ospray::api::LocalDevice;
   }
+
+  ospray::api::Device::current->commit();
 }
 
 extern "C" OSPDevice ospCreateDevice(const char *deviceType)
@@ -171,9 +173,14 @@ extern "C" OSPDevice ospCreateDevice(const char *deviceType)
   return (OSPDevice)ospray::api::Device::createDevice(deviceType);
 }
 
-extern "C" void ospSetCurrentDevice(OSPDevice device)
+extern "C" void ospSetCurrentDevice(OSPDevice _device)
 {
-  ospray::api::Device::current = (ospray::api::Device*)device;
+  auto *device = (ospray::api::Device*)_device;
+
+  if (!device->isCommitted())
+    device->commit();
+
+  ospray::api::Device::current = device;
 }
 
 extern "C" OSPDevice ospGetCurrentDevice()

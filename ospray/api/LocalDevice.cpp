@@ -45,7 +45,12 @@ namespace ospray {
       throw std::runtime_error("embree internal error '" +std::string(str)+"'");
     }
 
-    LocalDevice::LocalDevice(int */*_ac*/, const char **/*_av*/)
+    LocalDevice::~LocalDevice()
+    {
+      rtcDeleteDevice(g_embreeDevice);
+    }
+
+    void LocalDevice::commit()
     {
       auto logLevelFromEnv = getEnvVar<int>("OSPRAY_LOG_LEVEL");
       if (logLevelFromEnv.first && logLevel == 0)
@@ -76,11 +81,8 @@ namespace ospray {
       ospray::init();
 
       TiledLoadBalancer::instance = new LocalTiledLoadBalancer;
-    }
 
-    LocalDevice::~LocalDevice()
-    {
-      rtcDeleteDevice(g_embreeDevice);
+      Device::commit();
     }
 
     OSPFrameBuffer

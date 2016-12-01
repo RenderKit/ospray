@@ -36,5 +36,15 @@ namespace ospray {
       return createInstanceHelper<Device, OSP_DEVICE>(type);
     }
 
+    void Device::commit()
+    {
+      committed = true;
+    }
+
+    bool Device::isCommitted()
+    {
+      return committed;
+    }
+
   } // ::ospray::api
 } // ::ospray

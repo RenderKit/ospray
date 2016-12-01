@@ -210,6 +210,13 @@ namespace ospray {
         UNUSED(results, volume, worldCoordinates, count);
         NOT_IMPLEMENTED;
       }
+
+      virtual void commit() override;
+      bool isCommitted();
+
+    private:
+
+      bool committed {false};
     };
 
     /*! \brief registers a internal ospray::<ClassName> renderer under
