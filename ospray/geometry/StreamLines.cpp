@@ -47,7 +47,8 @@ namespace ospray {
     numVertices = vertexData->numItems;
     color       = colorData ? (const vec4f*)colorData->data : NULL;
 
-    std::cout << "#osp: creating streamlines geometry, "
+    if (logLevel >= 2) 
+      std::cout << "#osp: creating streamlines geometry, "
               << "#verts=" << numVertices << ", "
               << "#segments=" << numSegments << ", "
               << "radius=" << radius << std::endl;

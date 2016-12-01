@@ -30,6 +30,7 @@ struct Texture2D {
   vec2f         halfTexel; // 0.5/size, needed for bilinear filtering and clamp-to-edge
   Texture2D_get get;
   void         *data;
+  bool          hasAlpha; // 4 channel texture?
 };
 
 // XXX won't work with MIPmapping: clean implementation with clamping on integer coords needed then 

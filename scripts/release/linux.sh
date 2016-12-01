@@ -23,15 +23,23 @@ function check_symbols
 {
   for sym in `nm $1 | grep $2_`
   do
-    version=(`echo $sym | sed 's/.*@@\(.*\)$/\1/p' | grep -E -o "[0-9]+"`)
+    version=(`echo $sym | sed 's/.*@@\(.*\)$/\1/g' | grep -E -o "[0-9]+"`)
     if [ ${#version[@]} -ne 0 ]; then
-      #echo "version0 = " ${version[0]}
-      #echo "version1 = " ${version[1]}
+      if [ ${#version[@]} -eq 1 ]; then version[1]=0; fi
+      if [ ${#version[@]} -eq 2 ]; then version[2]=0; fi
       if [ ${version[0]} -gt $3 ]; then
         echo "Error: problematic $2 symbol " $sym
         exit 1
       fi
+      if [ ${version[0]} -lt $3 ]; then continue; fi
+
       if [ ${version[1]} -gt $4 ]; then
+        echo "Error: problematic $2 symbol " $sym
+        exit 1
+      fi
+      if [ ${version[1]} -lt $4 ]; then continue; fi
+
+      if [ ${version[2]} -gt $5 ]; then
         echo "Error: problematic $2 symbol " $sym
         exit 1
       fi
@@ -80,6 +88,13 @@ for dep in $DEP_TARBALLS ; do
 done
 export embree_DIR=$DEP_DIR/$DEP_EMBREE
 
+# fetch docu pdf (in correct version)
+BRANCH=$CI_BUILD_REF_NAME
+if [ -z $BRANCH ]; then
+  BRANCH=`git rev-parse --abbrev-ref HEAD`
+fi
+wget -N --progress=dot:mega -c http://sdvis.org/ospray/download/OSPRay_readme_$BRANCH.pdf
+
 cd $ROOT_DIR
 
 #### Build OSPRay ####
@@ -89,6 +104,9 @@ cd build_release
 
 # Clean out build directory to be sure we are doing a fresh build
 rm -rf *
+
+# CPack expects the docu pdf in the build dir
+cp $DEP_DIR/OSPRay_readme_$BRANCH.pdf readme.pdf
 
 
 # set release and RPM settings
@@ -111,9 +129,9 @@ make -j `nproc` preinstall
 # if we define 'OSPRAY_RELEASE_NO_VERIFY' to anything, then we
 #   don't verify link dependencies for CentOS6
 if [ -z $OSPRAY_RELEASE_NO_VERIFY ]; then
-  check_symbols libospray.so GLIBC   2 4
-  check_symbols libospray.so GLIBCXX 3 4
-  check_symbols libospray.so CXXABI  1 3
+  check_symbols libospray.so GLIBC   2 4 0
+  check_symbols libospray.so GLIBCXX 3 4 11
+  check_symbols libospray.so CXXABI  1 3 0
 fi
 
 make -j `nproc` package

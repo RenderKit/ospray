@@ -36,9 +36,14 @@ inline uniform TextureParam make_TextureParam(uniform Texture2D * uniform tex, c
   return t;
 }
 
-inline bool valid(const uniform TextureParam uniform &tex)
+inline uniform bool valid(const uniform TextureParam uniform &tex)
 {
   return tex.map;
+}
+
+inline uniform bool hasAlpha(const uniform TextureParam uniform &tex)
+{
+  return valid(tex) ? tex.map->hasAlpha : false;
 }
 
 inline float get1f(const uniform TextureParam uniform &tex,

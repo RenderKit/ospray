@@ -15,7 +15,10 @@
 // ======================================================================== //
 
 #include "miniSG.h"
+#include "stb_image.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 #ifdef USE_IMAGEMAGICK
 //#define MAGICKCORE_QUANTUM_DEPTH 16
 //#define MAGICKCORE_HDRI_ENABLE 1
@@ -242,6 +245,56 @@ namespace ospray {
                 *dst++ = pixel.blue;
                 if (tex->channels == 4)
                   *dst++ = pixel.opacity;
+              }
+            }
+          }
+        }
+#else
+        int width,height,n;
+        const bool hdr = stbi_is_hdr(fileName.str().c_str()); 
+        unsigned char* pixels = nullptr;
+        if (hdr)
+          pixels = (unsigned char*)stbi_loadf(fileName.str().c_str(), &width, &height, &n, 0);
+        else
+          pixels = stbi_load(fileName.str().c_str(),&width,&height,&n,0);
+        if (n < 3)  //TODO: it seems that grayscale bump maps with > 8 bit crash
+        {
+            std::cout << "WARNING: ignoring texture with < 3 channels.  Turn on USE_IMAGEMAGICK to fully utilize this scenes textures\n";
+            return tex;
+        }
+        tex = new Texture2D;
+        tex->width    = width;
+        tex->height   = height;
+        tex->channels = n;
+        tex->depth    = hdr ? 4 : 1;
+        tex->prefereLinear = prefereLinear;
+        unsigned char MaxRGB = 1;
+        float rcpMaxRGB = 1.0f/float(MaxRGB);
+        if (!pixels) {
+          std::cerr << "#osp:minisg: failed to load texture '"+fileName.str()+"'" << std::endl;
+          delete tex;
+          tex = nullptr;
+        } else {
+          tex->data = new unsigned char[tex->width*tex->height*tex->channels*tex->depth];
+          // convert pixels and flip image (because OSPRay's textures have the origin at the lower left corner)
+          for (size_t y=0; y<tex->height; y++) {
+            for (size_t x=0; x<tex->width; x++) {
+              const unsigned char *pixel = &pixels[(y*tex->width+x)*tex->channels];
+              if (hdr) {
+                printf("loading hdr image\n");
+                float *dst = &((float*)tex->data)[(x+(tex->height-1-y)*tex->width)*tex->channels];
+                *dst++ = pixel[0] * rcpMaxRGB;
+                *dst++ = pixel[1] * rcpMaxRGB;
+                *dst++ = pixel[2] * rcpMaxRGB;
+                if (tex->channels == 4)
+                  *dst++ = pixel[3] * rcpMaxRGB;
+              } else {
+                unsigned char *dst = &((unsigned char*)tex->data)[((tex->height-1-y)*tex->width+x)*tex->channels];
+                *dst++ = pixel[0];
+                *dst++ = pixel[1];
+                *dst++ = pixel[2];
+                if (tex->channels == 4)
+                  *dst++ = pixel[3];
               }
             }
           }

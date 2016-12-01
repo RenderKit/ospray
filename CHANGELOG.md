@@ -1,6 +1,11 @@
 Version History
 ---------------
 
+### Changes in v1.1.2:
+
+-   Various bugfixes related to normalization, epsilons and debug
+    messages
+
 ### Changes in v1.1.1:
 
 -   Fixed support of first generation Intel® Xeon Phi™ coprocessor
