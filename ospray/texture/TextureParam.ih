@@ -43,7 +43,7 @@ inline uniform bool valid(const uniform TextureParam uniform &tex)
 
 inline uniform bool hasAlpha(const uniform TextureParam uniform &tex)
 {
-  return tex.map->hasAlpha;
+  return valid(tex) ? tex.map->hasAlpha : false;
 }
 
 inline float get1f(const uniform TextureParam uniform &tex,
