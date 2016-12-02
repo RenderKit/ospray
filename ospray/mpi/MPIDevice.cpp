@@ -192,7 +192,6 @@ namespace ospray {
     createMPI_ListenForWorkers(int *ac, const char **av,
                                const char *fileNameToStorePortIn)
     {
-      ospray::init(ac,&av);
       mpi::init(ac,av);
 
       if (world.rank < 1) {
@@ -274,7 +273,6 @@ namespace ospray {
     {
       int rc;
 
-      ospray::init(ac,&av);
       mpi::init(ac,av);
 
       Assert(launchCommand);

@@ -18,7 +18,6 @@
 #include "api/Device.h"
 // embree
 #include "embree2/rtcore.h"
-#include "ospcommon/sysinfo.h"
 
 namespace ospray {
 
@@ -76,11 +75,6 @@ namespace ospray {
 
   void init(int *_ac, const char ***_av)
   {
-    int cpuFeatures = ospcommon::getCPUFeatures();
-    if ((cpuFeatures & ospcommon::CPU_FEATURE_SSE41) == 0)
-      throw std::runtime_error("Error. OSPRay only runs on CPUs that support"
-                               " at least SSE4.1.");
-
     auto &device = ospray::api::Device::current;
 
     if (_ac && _av) {

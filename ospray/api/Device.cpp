@@ -18,6 +18,7 @@
 #include "Device.h"
 #include "common/OSPCommon.h"
 #include "common/Util.h"
+#include "ospcommon/sysinfo.h"
 // tasking system internals
 #if defined(OSPRAY_TASKING_TBB)
 # include <tbb/task_scheduler_init.h>
@@ -55,7 +56,11 @@ namespace ospray {
 
     void Device::commit()
     {
-      ospray::init();
+      int cpuFeatures = ospcommon::getCPUFeatures();
+      if ((cpuFeatures & ospcommon::CPU_FEATURE_SSE41) == 0)
+        throw std::runtime_error("Error. OSPRay only runs on CPUs that support"
+                                 " at least SSE4.1.");
+
 
       auto OSPRAY_DEBUG = getEnvVar<int>("OSPRAY_DEBUG");
       debugMode = OSPRAY_DEBUG.first ? OSPRAY_DEBUG.second :
