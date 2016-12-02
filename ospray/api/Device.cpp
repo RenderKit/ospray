@@ -42,6 +42,7 @@ namespace ospray {
 
     Ref<Device> Device::current = nullptr;
 
+    RTCDevice Device::embreeDevice = nullptr;
     uint32_t Device::logLevel = 0;
 
     Device::~Device()

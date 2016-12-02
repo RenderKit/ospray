@@ -79,15 +79,15 @@ namespace ospray {
     */
     void runWorker()
     {
-      auto device = ospray::api::Device::current.dynamicCast<mpi::MPIDevice>();
+      auto &device = ospray::api::Device::current;
 
-      auto numThreads = device->numThreads;
+      auto numThreads = device ? device->numThreads : -1;
 
       // initialize embree. (we need to do this here rather than in
       // ospray::init() because in mpi-mode the latter is also called
       // in the host-stubs, where it shouldn't.
       std::stringstream embreeConfig;
-      if (device->debugMode)
+      if (device && device->debugMode)
         embreeConfig << " threads=1,verbose=2";
       else if(numThreads > 0)
         embreeConfig << " threads=" << numThreads;

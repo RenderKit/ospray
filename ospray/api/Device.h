@@ -218,7 +218,9 @@ namespace ospray {
 
       // Public Data //
 
-      RTCDevice embreeDevice {nullptr};
+      // NOTE(jda) - Keep embreeDevice static until runWorker() in MPI mode can
+      //             safely assume that a device exists.
+      static RTCDevice embreeDevice;
       int numThreads {-1};
       /*! whether we're running in debug mode (cmdline: --osp:debug) */
       bool debugMode {false};
