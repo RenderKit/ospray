@@ -158,8 +158,6 @@ namespace ospray {
 
   /*! logging level (cmdline: --osp:loglevel \<n\>) */
   extern uint32_t logLevel;
-  /*! whether we're running in debug mode (cmdline: --osp:debug) */
-  extern bool debugMode;
 
   /*! size of OSPDataType */
   OSPRAY_INTERFACE size_t sizeOf(const OSPDataType);

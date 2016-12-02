@@ -219,7 +219,9 @@ namespace ospray {
       // Public Data //
 
       RTCDevice embreeDevice {nullptr};
-      int numThreads = -1;
+      int numThreads {-1};
+      /*! whether we're running in debug mode (cmdline: --osp:debug) */
+      bool debugMode {false};
 
     private:
 

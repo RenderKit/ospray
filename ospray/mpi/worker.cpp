@@ -87,7 +87,7 @@ namespace ospray {
       // ospray::init() because in mpi-mode the latter is also called
       // in the host-stubs, where it shouldn't.
       std::stringstream embreeConfig;
-      if (debugMode)
+      if (device->debugMode)
         embreeConfig << " threads=1,verbose=2";
       else if(numThreads > 0)
         embreeConfig << " threads=" << numThreads;

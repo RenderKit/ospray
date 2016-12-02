@@ -366,7 +366,7 @@ namespace ospray {
       Assert(type != nullptr && "invalid render type identifier");
       PixelOp *pixelOp = PixelOp::createPixelOp(type);
       if (!pixelOp) {
-        if (ospray::debugMode) {
+        if (debugMode) {
           throw std::runtime_error("unknown pixelOp type '" +
                                    std::string(type) + "'");
         }
@@ -393,7 +393,7 @@ namespace ospray {
       Assert(type != nullptr && "invalid render type identifier");
       Renderer *renderer = Renderer::createRenderer(type);
       if (!renderer) {
-        if (ospray::debugMode) {
+        if (debugMode) {
           throw std::runtime_error("unknown renderer type '" +
                                    std::string(type) + "'");
         }
@@ -449,7 +449,7 @@ namespace ospray {
       Assert(type != nullptr && "invalid camera type identifier");
       Camera *camera = Camera::createCamera(type);
       if (!camera) {
-        if (ospray::debugMode) {
+        if (debugMode) {
           throw std::runtime_error("unknown camera type '"
                                    + std::string(type) + "'");
         }
@@ -466,7 +466,7 @@ namespace ospray {
       Assert(type != nullptr && "invalid volume type identifier");
       Volume *volume = Volume::createInstance(type);
       if (!volume) {
-        if (ospray::debugMode) {
+        if (debugMode) {
           throw std::runtime_error("unknown volume type '" +
                                    std::string(type) + "'");
         }
@@ -483,7 +483,7 @@ namespace ospray {
       Assert(type != nullptr && "invalid transfer function type identifier");
       auto *transferFunction = TransferFunction::createInstance(type);
       if (!transferFunction) {
-        if (ospray::debugMode) {
+        if (debugMode) {
           throw std::runtime_error("unknown transfer function type '" +
                                    std::string(type) + "'");
         }

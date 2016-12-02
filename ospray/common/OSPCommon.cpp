@@ -37,7 +37,6 @@ namespace ospray {
   /*! logging level - '0' means 'no logging at all', increasing
       numbers mean increasing verbosity of log messages */
   uint32_t logLevel = 0;
-  bool debugMode = false;
 
   WarnOnce::WarnOnce(const std::string &s) 
     : s(s) 
@@ -94,7 +93,7 @@ namespace ospray {
       for (int i=1;i<ac;) {
         std::string parm = av[i];
         if (parm == "--osp:debug") {
-          debugMode = true;
+          device->debugMode = true;
           device->numThreads = 1;
           removeArgs(ac,av,i,1);
         } else if (parm == "--osp:verbose") {
