@@ -73,7 +73,7 @@ namespace ospray {
     ac -= howMany;
   }
 
-  void init(int *_ac, const char ***_av)
+  void initFromCommandLine(int *_ac, const char ***_av)
   {
     auto &device = ospray::api::Device::current;
 

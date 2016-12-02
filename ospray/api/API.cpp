@@ -80,9 +80,7 @@ extern "C" void ospInit(int *_ac, const char **_av)
                              "(did you call ospInit twice?)");
   }
 
-  /* call ospray::init to properly parse common args like
-     --osp:verbose, --osp:debug etc */
-  ospray::init(_ac,&_av);
+  ospray::initFromCommandLine(_ac,&_av);
 
   auto OSP_MPI_LAUNCH = getEnvVar<std::string>("OSPRAY_MPI_LAUNCH");
 
