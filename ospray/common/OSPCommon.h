@@ -156,9 +156,6 @@ namespace ospray {
 #endif
 #endif
 
-  /*! logging level (cmdline: --osp:loglevel \<n\>) */
-  extern uint32_t logLevel;
-
   /*! size of OSPDataType */
   OSPRAY_INTERFACE size_t sizeOf(const OSPDataType);
 
@@ -176,6 +173,8 @@ namespace ospray {
   private:
     const std::string s;
   };
+
+  uint32_t logLevel();
 
 } // ::ospray
 

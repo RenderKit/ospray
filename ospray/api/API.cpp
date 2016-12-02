@@ -30,7 +30,7 @@
 #endif
 
 #if 1
-# define LOG(a) if (ospray::logLevel > 2) { std::cout << "#ospray: " << a << std::endl << std::flush; fflush(0); }
+# define LOG(a) if (ospray::logLevel() > 2) { std::cout << "#ospray: " << a << std::endl << std::flush; fflush(0); }
 #else
 # define LOG(a) /*ignore*/
 #endif
@@ -348,7 +348,7 @@ extern "C" OSPRenderer ospNewRenderer(const char *_type)
       type[i] = '_';
   }
   OSPRenderer renderer = ospray::api::Device::current->newRenderer(type.c_str());
-  if ((ospray::logLevel > 0) && (renderer == NULL)) {
+  if ((ospray::logLevel() > 0) && (renderer == NULL)) {
     std::cerr << "#ospray: could not create renderer '" << type << "'" << std::endl;
   }
   return renderer;
@@ -363,7 +363,7 @@ extern "C" OSPGeometry ospNewGeometry(const char *type)
   Assert(type != NULL && "invalid geometry type identifier in ospNewGeometry");
   LOG("ospNewGeometry(" << type << ")");
   OSPGeometry geometry = ospray::api::Device::current->newGeometry(type);
-  if ((ospray::logLevel > 0) && (geometry == NULL))
+  if ((ospray::logLevel() > 0) && (geometry == NULL))
     std::cerr << "#ospray: could not create geometry '" << type << "'" << std::endl;
   LOG("DONE ospNewGeometry(" << type << ") >> " << (int *)geometry);
   return geometry;
@@ -379,7 +379,7 @@ extern "C" OSPMaterial ospNewMaterial(OSPRenderer renderer, const char *type)
   Assert2(type != NULL, "invalid material type identifier in ospNewMaterial");
   LOG("ospNewMaterial(" << renderer << ", " << type << ")");
   OSPMaterial material = ospray::api::Device::current->newMaterial(renderer, type);
-  if ((ospray::logLevel > 0) && (material == NULL))
+  if ((ospray::logLevel() > 0) && (material == NULL))
     std::cerr << "#ospray: could not create material '" << type << "'" << std::endl;
   return material;
 }
@@ -390,7 +390,7 @@ extern "C" OSPLight ospNewLight(OSPRenderer renderer, const char *type)
   Assert2(type != NULL, "invalid light type identifier in ospNewLight");
   LOG("ospNewLight(" << renderer << ", " << type << ")");
   OSPLight light = ospray::api::Device::current->newLight(renderer, type);
-  if ((ospray::logLevel > 0) && (light == NULL))
+  if ((ospray::logLevel() > 0) && (light == NULL))
     std::cerr << "#ospray: could not create light '" << type << "'" << std::endl;
   return light;
 }
@@ -404,7 +404,7 @@ extern "C" OSPCamera ospNewCamera(const char *type)
   Assert(type != NULL && "invalid camera type identifier in ospNewCamera");
   LOG("ospNewCamera(" << type << ")");
   OSPCamera camera = ospray::api::Device::current->newCamera(type);
-  if ((ospray::logLevel > 0) && (camera == NULL))
+  if ((ospray::logLevel() > 0) && (camera == NULL))
     std::cerr << "#ospray: could not create camera '" << type << "'" << std::endl;
   return camera;
 }
@@ -428,14 +428,14 @@ extern "C" OSPVolume ospNewVolume(const char *type)
   Assert(type != NULL && "invalid volume type identifier in ospNewVolume");
   LOG("ospNewVolume(" << type << ")");
   OSPVolume volume = ospray::api::Device::current->newVolume(type);
-  if (ospray::logLevel > 0) {
+  if (ospray::logLevel() > 0) {
     if (volume)
       cout << "ospNewVolume: " << type << endl;
       // cout << "ospNewVolume: " << ((ospray::Volume*)volume)->toString() << endl;
     else
       std::cerr << "#ospray: could not create volume '" << type << "'" << std::endl;
   }
-  if ((ospray::logLevel > 0) && (volume == NULL))
+  if ((ospray::logLevel() > 0) && (volume == NULL))
     std::cerr << "#ospray: could not create volume '" << type << "'" << std::endl;
   return volume;
 }
@@ -448,13 +448,13 @@ extern "C" OSPTransferFunction ospNewTransferFunction(const char *type)
   Assert(type != NULL && "invalid transfer function type identifier in ospNewTransferFunction");
   LOG("ospNewTransferFunction(" << type << ")");
   OSPTransferFunction transferFunction = ospray::api::Device::current->newTransferFunction(type);
-  if(ospray::logLevel > 0) {
+  if(ospray::logLevel() > 0) {
     if(transferFunction)
       cout << "ospNewTransferFunction(" << type << ")" << endl;
     else
       std::cerr << "#ospray: could not create transfer function '" << type << "'" << std::endl;
   }
-  if ((ospray::logLevel > 0) && (transferFunction == NULL))
+  if ((ospray::logLevel() > 0) && (transferFunction == NULL))
     std::cerr << "#ospray: could not create transferFunction '" << type << "'" << std::endl;
   return transferFunction;
 }

@@ -130,7 +130,7 @@ namespace ospray {
         case ospray::CMD_NEW_PIXELOP: {
           const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
-          if (worker.rank == 0 && logLevel > 2) {
+          if (worker.rank == 0 && logLevel() > 2) {
             cout << "creating new pixelOp \"" << type << "\" ID "
                  << handle << endl;
           }
@@ -142,7 +142,7 @@ namespace ospray {
         case ospray::CMD_NEW_RENDERER: {
           const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
-          if (worker.rank == 0 && logLevel > 2) {
+          if (worker.rank == 0 && logLevel() > 2) {
             cout << "creating new renderer \"" << type << "\" ID "
                  << handle << endl;
           }
@@ -154,7 +154,7 @@ namespace ospray {
         case ospray::CMD_NEW_CAMERA: {
           const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
-          if (worker.rank == 0 && logLevel > 2) {
+          if (worker.rank == 0 && logLevel() > 2) {
             cout << "creating new camera \"" << type << "\" ID "
                  << (void*)(int64)handle << endl;
           }
@@ -167,7 +167,7 @@ namespace ospray {
           // Assert(type != NULL && "invalid volume type identifier");
           const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
-          if (worker.rank == 0 && logLevel > 2) {
+          if (worker.rank == 0 && logLevel() > 2) {
             cout << "creating new volume \"" << type << "\" ID "
                  << (void*)(int64)handle << endl;
           }
@@ -184,7 +184,7 @@ namespace ospray {
         case ospray::CMD_NEW_TRANSFERFUNCTION: {
           const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
-          if (worker.rank == 0 && logLevel > 2) {
+          if (worker.rank == 0 && logLevel() > 2) {
             cout << "creating new transfer function \"" << type << "\" ID "
                  << (void*)(int64)handle << endl;
           }
@@ -203,7 +203,7 @@ namespace ospray {
           const ObjectHandle rendererHandle = cmd.get_handle();
           const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
-          if (worker.rank == 0 && logLevel > 2) {
+          if (worker.rank == 0 && logLevel() > 2) {
             cout << "creating new material \"" << type << "\" ID "
                  << (void*)(int64)handle << endl;
           }
@@ -230,7 +230,7 @@ namespace ospray {
             Assert(material);
             handle.assign(material);
             if (worker.rank == 0) {
-              if (logLevel > 2)
+              if (logLevel() > 2)
                 cout << "#w: new material " << handle << " "
                      << material->toString() << endl;
               MPI_Send(&sumFail,1,MPI_INT,0,0,mpi::app.comm);
@@ -239,7 +239,7 @@ namespace ospray {
             // at least one client could not load/create material ...
             if (material) material->refDec();
             if (worker.rank == 0) {
-              if (logLevel > 2)
+              if (logLevel() > 2)
                 cout << "#w: could not create material " << handle << " "
                      << material->toString() << endl;
               MPI_Send(&sumFail,1,MPI_INT,0,0,mpi::app.comm);
@@ -251,7 +251,7 @@ namespace ospray {
           const ObjectHandle rendererHandle = cmd.get_handle();
           const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
-          if (worker.rank == 0 && logLevel > 2) {
+          if (worker.rank == 0 && logLevel() > 2) {
             cout << "creating new light \"" << type << "\" ID "
                  << (void*)(int64)handle << endl;
           }
@@ -277,7 +277,7 @@ namespace ospray {
             Assert(light);
             handle.assign(light);
             if (worker.rank == 0) {
-              if (logLevel > 2)
+              if (logLevel() > 2)
                 cout << "#w: new light " << handle << " "
                      << light->toString() << endl;
               MPI_Send(&sumFail,1,MPI_INT,0,0,mpi::app.comm);
@@ -286,7 +286,7 @@ namespace ospray {
             // at least one client could not load/create light ...
             if (light) light->refDec();
             if (worker.rank == 0) {
-              if (logLevel > 2)
+              if (logLevel() > 2)
                 cout << "#w: could not create light " << handle << " "
                      << light->toString() << endl;
               MPI_Send(&sumFail,1,MPI_INT,0,0,mpi::app.comm);
@@ -298,7 +298,7 @@ namespace ospray {
           // Assert(type != NULL && "invalid volume type identifier");
           const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
-          if (worker.rank == 0 && logLevel > 2) {
+          if (worker.rank == 0 && logLevel() > 2) {
             cout << "creating new geometry \"" << type << "\" ID "
                  << (void*)(int64)handle << endl;
           }
@@ -311,7 +311,7 @@ namespace ospray {
           cmd.free(type);
           Assert(geometry);
           handle.assign(geometry);
-          if (worker.rank == 0 && logLevel > 2) {
+          if (worker.rank == 0 && logLevel() > 2) {
             cout << "#w: new geometry " << handle << " "
                  << geometry->toString() << endl;
           }
@@ -363,7 +363,7 @@ namespace ospray {
           Model *model = new Model;
           Assert(model);
           handle.assign(model);
-          if (logLevel > 2)
+          if (logLevel() > 2)
             cout << "#w: new model " << handle << endl;
         } break;
         case ospray::CMD_NEW_TRIANGLEMESH: {
@@ -484,7 +484,7 @@ namespace ospray {
           const ObjectHandle handle = cmd.get_handle();
           ManagedObject *obj = handle.lookup();
           Assert(obj);
-          if (logLevel > 2) {
+          if (logLevel() > 2) {
             cout << "#w: committing " << handle << " " << obj->toString()
                  << endl;
           }

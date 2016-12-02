@@ -34,10 +34,6 @@ namespace ospray {
     return ospcommon::alignedFree(ptr);
   }
 
-  /*! logging level - '0' means 'no logging at all', increasing
-      numbers mean increasing verbosity of log messages */
-  uint32_t logLevel = 0;
-
   WarnOnce::WarnOnce(const std::string &s) 
     : s(s) 
   {
@@ -97,13 +93,13 @@ namespace ospray {
           device->numThreads = 1;
           removeArgs(ac,av,i,1);
         } else if (parm == "--osp:verbose") {
-          logLevel = 1;
+          device->logLevel = 1;
           removeArgs(ac,av,i,1);
         } else if (parm == "--osp:vv") {
-          logLevel = 2;
+          device->logLevel = 2;
           removeArgs(ac,av,i,1);
         } else if (parm == "--osp:loglevel") {
-          logLevel = atoi(av[i+1]);
+          device->logLevel = atoi(av[i+1]);
           removeArgs(ac,av,i,2);
         } else if (parm == "--osp:numthreads" || parm == "--osp:num-threads") {
           device->numThreads = atoi(av[i+1]);
@@ -283,6 +279,11 @@ namespace ospray {
     error << __FILE__ << ":" << __LINE__ << ": unknown OSPTextureFormat "
           << (int)type;
     throw std::runtime_error(error.str());
+  }
+
+  uint32_t logLevel()
+  {
+    return ospray::api::Device::current->logLevel;
   }
 
 } // ::ospray

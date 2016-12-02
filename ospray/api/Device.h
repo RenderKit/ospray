@@ -222,6 +222,10 @@ namespace ospray {
       int numThreads {-1};
       /*! whether we're running in debug mode (cmdline: --osp:debug) */
       bool debugMode {false};
+      /*! logging level (cmdline: --osp:loglevel \<n\>) */
+      // NOTE(jda) - Keep logLevel static because the device factory function
+      //             needs to have a valid value for the initial Device creation
+      static uint32_t logLevel;
 
     private:
 

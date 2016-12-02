@@ -43,7 +43,7 @@ namespace ospray {
     if (it != materialRegistry.end())
       return it->second ? (it->second)() : NULL;
     
-    if (ospray::logLevel >= 2) 
+    if (ospray::logLevel() >= 2)
       std::cout << "#ospray: trying to look up material type '" 
                 << type << "' for the first time..." << std::endl;
 
@@ -51,7 +51,7 @@ namespace ospray {
     creatorFct creator = (creatorFct)getSymbol(creatorName);
     materialRegistry[type] = creator;
     if (creator == NULL) {
-      if (ospray::logLevel >= 1) 
+      if (ospray::logLevel() >= 1)
         std::cout << "#ospray: could not find material type '" << type << "'" << std::endl;
       return NULL;
     }

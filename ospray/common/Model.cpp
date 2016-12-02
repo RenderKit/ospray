@@ -44,7 +44,7 @@ namespace ospray {
 
   void Model::finalize()
   {
-    if (logLevel >= 2) {
+    if (logLevel() >= 2) {
       std::cout << "======================================================="
                 << std::endl;
       std::cout << "Finalizing model, has " 
@@ -62,7 +62,7 @@ namespace ospray {
     // for now, only implement triangular geometry...
     for (size_t i=0; i < geometry.size(); i++) {
 
-      if (logLevel >= 2) {
+      if (logLevel() >= 2) {
         std::cout << "======================================================="
                   << std::endl;
         std::cout << "Finalizing geometry " << i << std::endl;
