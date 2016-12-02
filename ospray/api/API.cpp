@@ -103,7 +103,9 @@ extern "C" void ospInit(int *_ac, const char **_av)
     // etc to come.
     for (int i = 1; i < *_ac; i++) {
 
-      if (std::string(_av[i]) == "--osp:mpi") {
+      std::string av(_av[i]);
+
+      if (av == "--osp:mpi") {
 #ifdef OSPRAY_MPI
         removeArgs(*_ac,(char **&)_av,i,1);
         ospray::api::Device::current
@@ -115,13 +117,13 @@ extern "C" void ospInit(int *_ac, const char **_av)
         continue;
       }
 
-      if (std::string(_av[i]) == "--osp:coi") {
+      if (av == "--osp:coi") {
         throw std::runtime_error("OSPRay's COI device is no longer supported!");
         --i;
         continue;
       }
 
-      if (std::string(_av[i]) == "--osp:mpi-launch") {
+      if (av == "--osp:mpi-launch") {
 #ifdef OSPRAY_MPI
         if (i+2 > *_ac)
           throw std::runtime_error("--osp:mpi-launch expects an argument");
@@ -137,7 +139,7 @@ extern "C" void ospInit(int *_ac, const char **_av)
       }
 
       const char *listenArgName = "--osp:mpi-listen";
-      if (!strncmp(_av[i],listenArgName,strlen(listenArgName))) {
+      if (!strncmp(_av[i], listenArgName, strlen(listenArgName))) {
 #ifdef OSPRAY_MPI
         const char *fileNameToStorePortIn = NULL;
         if (strlen(_av[i]) > strlen(listenArgName)) {
