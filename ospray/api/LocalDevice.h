@@ -29,8 +29,8 @@ namespace ospray {
 
     struct LocalDevice : public Device {
 
-      LocalDevice() = default;
-      ~LocalDevice();
+      LocalDevice()  = default;
+      ~LocalDevice() = default;
 
       // ManagedObject Implementation /////////////////////////////////////////
 

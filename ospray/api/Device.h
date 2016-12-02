@@ -19,6 +19,8 @@
 #include "common/OSPCommon.h"
 #include "common/Managed.h"
 #include "ospray/ospray.h"
+// embree
+#include "embree2/rtcore.h"
 
 /*! \file device.h Defines the abstract base class for OSPRay
     "devices" that implement the OSPRay API */
@@ -32,7 +34,7 @@ namespace ospray {
       /*! singleton that points to currently active device */
       static Ref<Device> current;
 
-      virtual ~Device() = default;
+      virtual ~Device();
 
       /*! \brief creates an abstract device class of given type */
       static Device *createDevice(const char *type);
@@ -213,6 +215,10 @@ namespace ospray {
 
       virtual void commit() override;
       bool isCommitted();
+
+      // Public Data //
+
+      RTCDevice embreeDevice {nullptr};
 
     private:
 

@@ -57,8 +57,6 @@ void sleep(unsigned int seconds)
 
 namespace ospray {
 
-  extern RTCDevice g_embreeDevice;
-
   namespace mpi {
     using std::cout;
     using std::endl;
@@ -100,7 +98,7 @@ namespace ospray {
       };
 
       RTCDevice embreeDevice = rtcNewDevice(embreeConfig.str().c_str());
-      g_embreeDevice = embreeDevice;
+      device->embreeDevice = embreeDevice;
       EmbreeDeviceScopeGuard guard;
       guard.embreeDevice = embreeDevice;
 

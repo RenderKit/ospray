@@ -31,6 +31,11 @@ namespace ospray {
 
     Ref<Device> Device::current = nullptr;
 
+    Device::~Device()
+    {
+      if (embreeDevice) rtcDeleteDevice(embreeDevice);
+    }
+
     Device *Device::createDevice(const char *type)
     {
       return createInstanceHelper<Device, OSP_DEVICE>(type);

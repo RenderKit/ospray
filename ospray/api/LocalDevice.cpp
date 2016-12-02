@@ -34,7 +34,6 @@
 #include <algorithm>
 
 namespace ospray {
-  extern RTCDevice g_embreeDevice;
 
   namespace api {
 
@@ -43,11 +42,6 @@ namespace ospray {
       std::cerr << "#osp: embree internal error " << code << " : " << str
                 << std::endl;
       throw std::runtime_error("embree internal error '" +std::string(str)+"'");
-    }
-
-    LocalDevice::~LocalDevice()
-    {
-      rtcDeleteDevice(g_embreeDevice);
     }
 
     void LocalDevice::commit()
@@ -66,11 +60,11 @@ namespace ospray {
         embreeConfig << " threads=1,verbose=2";
       else if(numThreads > 0)
         embreeConfig << " threads=" << numThreads;
-      g_embreeDevice = rtcNewDevice(embreeConfig.str().c_str());
+      embreeDevice = rtcNewDevice(embreeConfig.str().c_str());
 
-      rtcDeviceSetErrorFunction(g_embreeDevice, embreeErrorFunc);
+      rtcDeviceSetErrorFunction(embreeDevice, embreeErrorFunc);
 
-      RTCError erc = rtcDeviceGetError(g_embreeDevice);
+      RTCError erc = rtcDeviceGetError(embreeDevice);
       if (erc != RTC_NO_ERROR) {
         // why did the error function not get called !?
         std::cerr << "#osp:init: embree internal error number " << (int)erc

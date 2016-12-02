@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 // ospray
+#include "api/Device.h"
 #include "Model.h"
 // embree
 #include "embree2/rtcore.h"
@@ -29,9 +30,10 @@ namespace ospray {
   using std::cout;
   using std::endl;
 
-  extern RTCDevice g_embreeDevice;
-
-  extern "C" void *ospray_getEmbreeDevice() { return g_embreeDevice; }
+  extern "C" void *ospray_getEmbreeDevice()
+  {
+    return api::Device::current->embreeDevice;
+  }
 
   Model::Model()
   {
@@ -39,15 +41,20 @@ namespace ospray {
     this->ispcEquivalent = ispc::Model_create(this);
     this->embreeSceneHandle = NULL;
   }
+
   void Model::finalize()
   {
     if (logLevel >= 2) {
-      std::cout << "=======================================================" << std::endl;
+      std::cout << "======================================================="
+                << std::endl;
       std::cout << "Finalizing model, has " 
-           << geometry.size() << " geometries and " << volume.size() << " volumes" << std::endl << std::flush;
+           << geometry.size() << " geometries and " << volume.size()
+           << " volumes" << std::endl;
     }
 
-    ispc::Model_init(getIE(), g_embreeDevice, geometry.size(), volume.size());
+    RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
+
+    ispc::Model_init(getIE(), embreeDevice, geometry.size(), volume.size());
     embreeSceneHandle = (RTCScene)ispc::Model_getEmbreeSceneHandle(getIE());
 
     bounds = empty;
@@ -56,8 +63,9 @@ namespace ospray {
     for (size_t i=0; i < geometry.size(); i++) {
 
       if (logLevel >= 2) {
-        std::cout << "=======================================================" << std::endl;
-        std::cout << "Finalizing geometry " << i << std::endl << std::flush;
+        std::cout << "======================================================="
+                  << std::endl;
+        std::cout << "Finalizing geometry " << i << std::endl;
       }
 
       geometry[i]->finalize(this);
