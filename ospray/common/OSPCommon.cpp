@@ -90,7 +90,6 @@ namespace ospray {
         std::string parm = av[i];
         if (parm == "--osp:debug") {
           device->debugMode = true;
-          device->numThreads = 1;
           removeArgs(ac,av,i,1);
         } else if (parm == "--osp:verbose") {
           device->logLevel = 1;

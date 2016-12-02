@@ -49,6 +49,8 @@ int main(int ac, const char **av)
 
   // set device parameters...
   //ospDeviceSet1i(device, "numThreads", 1);
+  //ospDeviceSet1i(device, "logLevel", 2);
+  //ospDeviceSet1i(device, "debug", 1);
 
   ospSetCurrentDevice(device);
 #endif

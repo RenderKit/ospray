@@ -55,9 +55,22 @@ namespace ospray {
 
     void Device::commit()
     {
+      auto OSPRAY_DEBUG = getEnvVar<int>("OSPRAY_DEBUG");
+      debugMode = OSPRAY_DEBUG.first ? OSPRAY_DEBUG.second :
+                                       getParam1i("debug", 0);
+
+      auto OSPRAY_LOG_LEVEL = getEnvVar<int>("OSPRAY_LOG_LEVEL");
+      logLevel = OSPRAY_LOG_LEVEL.first ? OSPRAY_LOG_LEVEL.second :
+                                          getParam1i("logLevel", 0);
+
       auto OSPRAY_THREADS = getEnvVar<int>("OSPRAY_THREADS");
       numThreads = OSPRAY_THREADS.first ? OSPRAY_THREADS.second :
                                           getParam1i("numThreads", -1);
+
+      if (debugMode) {
+        logLevel   = 2;
+        numThreads = 1;
+      }
 
 #if defined(OSPRAY_TASKING_TBB)
       static tbb::task_scheduler_init tbb_init(numThreads);
