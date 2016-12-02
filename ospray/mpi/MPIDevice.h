@@ -34,10 +34,14 @@ namespace ospray {
 
       typedef ospray::CommandTag CommandTag;
 
-      /*! constructor */
-      MPIDevice(// AppMode appMode, OSPMode ospMode,
-                int *_ac=NULL, const char **_av=NULL);
-      virtual ~MPIDevice();
+      MPIDevice() = default;
+      ~MPIDevice();
+
+      // ManagedObject Implementation /////////////////////////////////////////
+
+      void commit() override;
+
+      // Device Implementation ////////////////////////////////////////////////
 
       /*! create a new frame buffer */
       OSPFrameBuffer
@@ -200,7 +204,7 @@ namespace ospray {
       /*! switch API mode for distriubted API extensions */
       void apiMode(OSPDApiMode mode) override;
 
-      OSPDApiMode currentApiMode;
+      OSPDApiMode currentApiMode {OSPD_MODE_MASTERED};
 
       /*! sample a volume */
       void sampleVolume(float **results,

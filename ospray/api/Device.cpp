@@ -55,6 +55,8 @@ namespace ospray {
 
     void Device::commit()
     {
+      ospray::init();
+
       auto OSPRAY_DEBUG = getEnvVar<int>("OSPRAY_DEBUG");
       debugMode = OSPRAY_DEBUG.first ? OSPRAY_DEBUG.second :
                                        getParam1i("debug", 0);

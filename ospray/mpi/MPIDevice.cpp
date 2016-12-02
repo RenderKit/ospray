@@ -128,7 +128,7 @@ namespace ospray {
 
         // now, root proc(s) will return, initialize the MPI device, then
         // return to the app
-        return new mpi::MPIDevice(ac,av);
+        return new mpi::MPIDevice;
       } else {
         // we're the workers
         MPI_Comm_split(mpi::world.comm,0,mpi::world.rank,&worker.comm);
@@ -169,7 +169,7 @@ namespace ospray {
         } else {
           cout << "#osp:mpi: distributed mode detected, "
                << "returning device on all ranks!" << endl;
-          return new mpi::MPIDevice(ac,av);
+          return new mpi::MPIDevice;
         }
       }
       // nobody should ever come here ...
@@ -257,7 +257,7 @@ namespace ospray {
 
       if (app.rank >= 1)
         return NULL;
-      return new mpi::MPIDevice(ac,av);
+      return new mpi::MPIDevice;
     }
 
     /*! in this mode ("separate worker group" mode)
@@ -340,7 +340,7 @@ namespace ospray {
         return NULL;
       }
       MPI_Barrier(app.comm);
-      return new mpi::MPIDevice(ac,av);
+      return new mpi::MPIDevice;
     }
 
     void initDistributedAPI(int *ac, char ***av, OSPDRenderMode mpiMode)
@@ -364,16 +364,16 @@ namespace ospray {
                                                     (const char**)*av,
                                                     false);
     }
-    
-    MPIDevice::MPIDevice(// AppMode appMode, OSPMode ospMode,
-                         int *_ac, const char **_av)
-      : currentApiMode(OSPD_MODE_MASTERED)
-    {
-      UNUSED(_ac, _av);
-      auto logLevelFromEnv = getEnvVar<int>("OSPRAY_LOG_LEVEL");
-      if (logLevelFromEnv.first && logLevel == 0)
-        logLevel = logLevelFromEnv.second;
 
+    MPIDevice::~MPIDevice()
+    {
+      cmd.newCommand(CMD_FINALIZE);
+      cmd.flush();
+      async::shutdown();
+    }
+
+    void MPIDevice::commit()
+    {
       if (mpi::world.size != 1) {
         if (mpi::world.rank < 0) {
           PRINT(mpi::world.rank);
@@ -386,18 +386,8 @@ namespace ospray {
         }
       }
 
-      ospray::init();
-
       TiledLoadBalancer::instance = new mpi::staticLoadBalancer::Master;
     }
-
-    MPIDevice::~MPIDevice()
-    {
-      cmd.newCommand(CMD_FINALIZE);
-      cmd.flush();
-      async::shutdown();
-    }
-
 
     OSPFrameBuffer 
     MPIDevice::frameBufferCreate(const vec2i &size, 

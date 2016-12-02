@@ -46,9 +46,7 @@ namespace ospray {
 
     void LocalDevice::commit()
     {
-      auto logLevelFromEnv = getEnvVar<int>("OSPRAY_LOG_LEVEL");
-      if (logLevelFromEnv.first && logLevel == 0)
-        logLevel = logLevelFromEnv.second;
+      Device::commit();
 
       // -------------------------------------------------------
       // initialize embree. (we need to do this here rather than in
@@ -72,11 +70,7 @@ namespace ospray {
         assert(erc == RTC_NO_ERROR);
       }
 
-      ospray::init();
-
       TiledLoadBalancer::instance = new LocalTiledLoadBalancer;
-
-      Device::commit();
     }
 
     OSPFrameBuffer
