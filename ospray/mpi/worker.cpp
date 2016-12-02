@@ -81,6 +81,8 @@ namespace ospray {
     {
       auto device = ospray::api::Device::current.dynamicCast<mpi::MPIDevice>();
 
+      auto numThreads = device->numThreads;
+
       // initialize embree. (we need to do this here rather than in
       // ospray::init() because in mpi-mode the latter is also called
       // in the host-stubs, where it shouldn't.

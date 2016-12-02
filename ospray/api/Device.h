@@ -219,6 +219,7 @@ namespace ospray {
       // Public Data //
 
       RTCDevice embreeDevice {nullptr};
+      int numThreads = -1;
 
     private:
 

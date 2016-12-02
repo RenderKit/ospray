@@ -160,9 +160,6 @@ namespace ospray {
   extern uint32_t logLevel;
   /*! whether we're running in debug mode (cmdline: --osp:debug) */
   extern bool debugMode;
-  /*! number of Embree threads to use, 0 for the default
-      number. (cmdline: --osp:numthreads \<n\>) */
-  extern int numThreads;
 
   /*! size of OSPDataType */
   OSPRAY_INTERFACE size_t sizeOf(const OSPDataType);

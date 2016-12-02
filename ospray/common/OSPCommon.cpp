@@ -15,15 +15,7 @@
 // ======================================================================== //
 
 #include "OSPCommon.h"
-#if defined(OSPRAY_TASKING_TBB)
-# include <tbb/task_scheduler_init.h>
-#elif defined(OSPRAY_TASKING_CILK)
-# include <cilk/cilk_api.h>
-#elif defined(OSPRAY_TASKING_OMP)
-# include <omp.h>
-#elif defined(OSPRAY_TASKING_INTERNAL)
-# include "common/tasking/TaskSys.h"
-#endif
+#include "api/Device.h"
 // embree
 #include "embree2/rtcore.h"
 #include "ospcommon/sysinfo.h"
@@ -46,7 +38,6 @@ namespace ospray {
       numbers mean increasing verbosity of log messages */
   uint32_t logLevel = 0;
   bool debugMode = false;
-  int numThreads = -1;
 
   WarnOnce::WarnOnce(const std::string &s) 
     : s(s) 
@@ -95,6 +86,8 @@ namespace ospray {
       throw std::runtime_error("Error. OSPRay only runs on CPUs that support"
                                " at least SSE4.1.");
 
+    auto &device = ospray::api::Device::current;
+
     if (_ac && _av) {
       int &ac = *_ac;
       char ** &av = *(char ***)_av;
@@ -102,7 +95,7 @@ namespace ospray {
         std::string parm = av[i];
         if (parm == "--osp:debug") {
           debugMode = true;
-          numThreads = 1;
+          device->numThreads = 1;
           removeArgs(ac,av,i,1);
         } else if (parm == "--osp:verbose") {
           logLevel = 1;
@@ -114,30 +107,13 @@ namespace ospray {
           logLevel = atoi(av[i+1]);
           removeArgs(ac,av,i,2);
         } else if (parm == "--osp:numthreads" || parm == "--osp:num-threads") {
-          numThreads = atoi(av[i+1]);
+          device->numThreads = atoi(av[i+1]);
           removeArgs(ac,av,i,2);
         } else {
           ++i;
         }
       }
     }
-
-#if defined(OSPRAY_TASKING_TBB)
-    static tbb::task_scheduler_init tbb_init(numThreads);
-    UNUSED(tbb_init);
-#elif defined(OSPRAY_TASKING_CILK)
-    __cilkrts_set_param("nworkers", std::to_string(numThreads).c_str());
-#elif defined(OSPRAY_TASKING_OMP)
-    if (numThreads > 0) {
-      omp_set_num_threads(numThreads);
-    }
-#elif defined(OSPRAY_TASKING_INTERNAL)
-    try {
-      ospray::Task::initTaskSystem(debugMode ? 0 : numThreads);
-    } catch (const std::runtime_error &e) {
-      std::cerr << "WARNING: " << e.what() << std::endl;
-    }
-#endif
   }
 
   void error_handler(const RTCError code, const char *str)

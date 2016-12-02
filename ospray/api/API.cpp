@@ -80,11 +80,6 @@ extern "C" void ospInit(int *_ac, const char **_av)
                              "(did you call ospInit twice?)");
   }
 
-  auto OSPRAY_THREADS = getEnvVar<int>("OSPRAY_THREADS");
-  if (OSPRAY_THREADS.first) {
-    numThreads = OSPRAY_THREADS.second;
-  }
-
   /* call ospray::init to properly parse common args like
      --osp:verbose, --osp:debug etc */
   ospray::init(_ac,&_av);
