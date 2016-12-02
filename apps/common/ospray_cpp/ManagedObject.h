@@ -59,6 +59,9 @@ namespace ospray {
       // ospcommon::vec4
       virtual void set(const std::string &name, const ospcommon::vec4f &v) = 0;
 
+      // C-string
+      virtual void set(const std::string &name, const char *v) = 0;
+
       // void*
       virtual void set(const std::string &name, void *v) = 0;
 
@@ -108,6 +111,8 @@ namespace ospray {
       void set(const std::string &name, const ospcommon::vec3f &v) override;
 
       void set(const std::string &name, const ospcommon::vec4f &v) override;
+
+      void set(const std::string &name, const char *v) override;
 
       void set(const std::string &name, void *v) override;
 
@@ -247,6 +252,12 @@ namespace ospray {
                                                const ospcommon::vec4f &v)
     {
       ospSetVec4f(ospObject, name.c_str(), (const osp::vec4f&)v);
+    }
+
+    template <typename OSP_TYPE>
+    inline void ManagedObject_T<OSP_TYPE>::set(const std::string &name, const char *v)
+    {
+      ospSetString(ospObject, name.c_str(), v);
     }
 
     template <typename OSP_TYPE>
