@@ -56,9 +56,8 @@ namespace ospray {
     void Device::commit()
     {
       auto OSPRAY_THREADS = getEnvVar<int>("OSPRAY_THREADS");
-      if (OSPRAY_THREADS.first) {
-        numThreads = OSPRAY_THREADS.second;
-      }
+      numThreads = OSPRAY_THREADS.first ? OSPRAY_THREADS.second :
+                                          getParam1i("numThreads", -1);
 
 #if defined(OSPRAY_TASKING_TBB)
       static tbb::task_scheduler_init tbb_init(numThreads);

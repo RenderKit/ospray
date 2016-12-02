@@ -239,7 +239,7 @@ namespace ospray {
       ManagedObject *object = (ManagedObject *)_object;
       Assert(object != nullptr  && "invalid object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
-      object->findParam(bufName,1)->set(s);
+      object->findParam(bufName, true)->set(s);
     }
 
     /*! assign (named) string parameter to an object */
@@ -250,7 +250,7 @@ namespace ospray {
       ManagedObject *object = (ManagedObject *)_object;
       Assert(object != nullptr  && "invalid object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
-      object->findParam(bufName,1)->set(v);
+      object->findParam(bufName, true)->set(v);
     }
 
     /*! assign (named) int parameter to an object */
@@ -262,7 +262,7 @@ namespace ospray {
       Assert(object != nullptr  && "invalid object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
 
-      object->findParam(bufName,1)->set(f);
+      object->findParam(bufName, true)->set(f);
     }
     /*! assign (named) float parameter to an object */
     void LocalDevice::setFloat(OSPObject _object,
@@ -273,7 +273,7 @@ namespace ospray {
       Assert(object != nullptr  && "invalid object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
 
-      ManagedObject::Param *param = object->findParam(bufName,1);
+      ManagedObject::Param *param = object->findParam(bufName, true);
       param->set(f);
     }
 
@@ -295,7 +295,7 @@ namespace ospray {
       Assert(object != nullptr  && "invalid object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
 
-      object->findParam(bufName, 1)->set(v);
+      object->findParam(bufName, true)->set(v);
     }
 
     /*! assign (named) vec3f parameter to an object */
@@ -307,7 +307,7 @@ namespace ospray {
       Assert(object != nullptr  && "invalid object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
 
-      object->findParam(bufName,1)->set(v);
+      object->findParam(bufName, true)->set(v);
     }
 
     /*! assign (named) vec3f parameter to an object */
@@ -319,7 +319,7 @@ namespace ospray {
       Assert(object != nullptr  && "invalid object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
 
-      object->findParam(bufName,1)->set(v);
+      object->findParam(bufName, true)->set(v);
     }
 
     /*! assign (named) vec2f parameter to an object */
@@ -331,7 +331,7 @@ namespace ospray {
       Assert(object != nullptr  && "invalid object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
 
-      object->findParam(bufName, 1)->set(v);
+      object->findParam(bufName, true)->set(v);
     }
 
     /*! assign (named) vec3i parameter to an object */
@@ -343,7 +343,7 @@ namespace ospray {
       Assert(object != nullptr  && "invalid object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
 
-      object->findParam(bufName,1)->set(v);
+      object->findParam(bufName, true)->set(v);
     }
 
     /*! assign (named) data item as a parameter to an object */

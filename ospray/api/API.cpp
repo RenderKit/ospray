@@ -500,6 +500,20 @@ extern "C" void ospCommit(OSPObject object)
   ospray::api::Device::current->commit(object);
 }
 
+extern "C" void ospDeviceSetString(OSPDevice _object,
+                                   const char *id,
+                                   const char *s)
+{
+  ManagedObject *object = (ManagedObject *)_object;
+  object->findParam(id, true)->set(s);
+}
+
+extern "C" void ospDeviceSet1i(OSPDevice _object, const char *id, int32_t x)
+{
+  ManagedObject *object = (ManagedObject *)_object;
+  object->findParam(id, true)->set(x);
+}
+
 extern "C" void ospSetString(OSPObject _object, const char *id, const char *s)
 {
   ASSERT_DEVICE();

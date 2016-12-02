@@ -48,6 +48,7 @@ int main(int ac, const char **av)
   auto device = ospCreateDevice();
 
   // set device parameters...
+  //ospDeviceSet1i(device, "numThreads", 1);
 
   ospSetCurrentDevice(device);
 #endif

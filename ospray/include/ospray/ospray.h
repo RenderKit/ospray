@@ -266,6 +266,12 @@ extern "C" {
   //! get the currently set device
   OSPRAY_INTERFACE OSPDevice ospGetCurrentDevice();
 
+  /*! add a c-string (zero-terminated char *) parameter to a Device */
+  OSPRAY_INTERFACE void ospDeviceSetString(OSPDevice, const char *id, const char *s);
+
+  /*! add 1-int parameter to given Device */
+  OSPRAY_INTERFACE void ospDeviceSet1i(OSPDevice, const char *id, int32_t x);
+
   //! \brief allows for switching the MPI mode btween collaborative, mastered, and independent
   OSPRAY_INTERFACE void ospdApiMode(OSPDApiMode);
 
