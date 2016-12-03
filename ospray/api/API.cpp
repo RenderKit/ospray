@@ -29,6 +29,10 @@
 #  include <process.h> // for getpid
 #endif
 
+#ifdef OSPRAY_MPI
+#  include "mpi/MPIDevice.h"
+#endif
+
 #if 1
 # define LOG(a) if (ospray::logLevel() > 2) { std::cout << "#ospray: " << a << std::endl << std::flush; fflush(0); }
 #else
@@ -44,14 +48,14 @@ namespace ospray {
 
 #ifdef OSPRAY_MPI
   namespace mpi {
-    ospray::api::Device *createMPI_ListenForWorkers(int *ac, const char **av,
-                                                    const char *fileNameToStorePortIn);
-    ospray::api::Device *createMPI_LaunchWorkerGroup(int *ac, const char **av,
-                                                     const char *launchCommand);
-    ospray::api::Device *createMPI_runOnExistingRanks(int *ac, const char **av,
-                                                      bool ranksBecomeWorkers);
-    ospray::api::Device *createMPI_RanksBecomeWorkers(int *ac, const char **av)
-    { return createMPI_runOnExistingRanks(ac,av,true); }
+    void createMPI_ListenForWorkers(int *ac, const char **av,
+                                    const char *fileNameToStorePortIn);
+    void createMPI_LaunchWorkerGroup(int *ac, const char **av,
+                                     const char *launchCommand);
+    void createMPI_runOnExistingRanks(int *ac, const char **av,
+                                      bool ranksBecomeWorkers);
+    void createMPI_RanksBecomeWorkers(int *ac, const char **av)
+    { createMPI_runOnExistingRanks(ac,av,true); }
 
     void initDistributedAPI(int *ac, char ***av, OSPDRenderMode mpiMode);
   }
@@ -88,9 +92,8 @@ extern "C" void ospInit(int *_ac, const char **_av)
 #ifdef OSPRAY_MPI
     std::cout << "#osp: launching ospray mpi ring -"
               << " make sure that mpd is running" << std::endl;
-    ospray::api::Device::current
-      = mpi::createMPI_LaunchWorkerGroup(_ac,_av,
-                                         OSP_MPI_LAUNCH.second.c_str());
+    mpi::createMPI_LaunchWorkerGroup(_ac,_av, OSP_MPI_LAUNCH.second.c_str());
+    ospray::api::Device::current = new mpi::MPIDevice;
 #else
     throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif
@@ -106,8 +109,8 @@ extern "C" void ospInit(int *_ac, const char **_av)
       if (av == "--osp:mpi") {
 #ifdef OSPRAY_MPI
         removeArgs(*_ac,(char **&)_av,i,1);
-        ospray::api::Device::current
-          = mpi::createMPI_RanksBecomeWorkers(_ac,_av);
+        mpi::createMPI_RanksBecomeWorkers(_ac,_av);
+        ospray::api::Device::current = new mpi::MPIDevice;
 #else
         throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif
@@ -127,8 +130,8 @@ extern "C" void ospInit(int *_ac, const char **_av)
           throw std::runtime_error("--osp:mpi-launch expects an argument");
         const char *launchCommand = strdup(_av[i+1]);
         removeArgs(*_ac,(char **&)_av,i,2);
-        ospray::api::Device::current
-          = mpi::createMPI_LaunchWorkerGroup(_ac,_av,launchCommand);
+        mpi::createMPI_LaunchWorkerGroup(_ac,_av,launchCommand);
+        ospray::api::Device::current = new mpi::MPIDevice;
 #else
         throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif
@@ -139,13 +142,13 @@ extern "C" void ospInit(int *_ac, const char **_av)
       const char *listenArgName = "--osp:mpi-listen";
       if (!strncmp(_av[i], listenArgName, strlen(listenArgName))) {
 #ifdef OSPRAY_MPI
-        const char *fileNameToStorePortIn = NULL;
+        const char *fileNameToStorePortIn = nullptr;
         if (strlen(_av[i]) > strlen(listenArgName)) {
           fileNameToStorePortIn = strdup(_av[i]+strlen(listenArgName)+1);
         }
         removeArgs(*_ac,(char **&)_av,i,1);
-        ospray::api::Device::current
-          = mpi::createMPI_ListenForWorkers(_ac,_av,fileNameToStorePortIn);
+        mpi::createMPI_ListenForWorkers(_ac,_av,fileNameToStorePortIn);
+        ospray::api::Device::current = new mpi::MPIDevice;
 #else
         throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif

@@ -79,8 +79,8 @@ namespace ospray {
         - this fct is called from ospInit (with ranksBecomeWorkers=true) or
           from ospdMpiInit (w/ ranksBecomeWorkers = false)
     */
-    ospray::api::Device *createMPI_runOnExistingRanks(int *ac, const char **av, 
-                                                      bool ranksBecomeWorkers)
+    void createMPI_runOnExistingRanks(int *ac, const char **av,
+                                      bool ranksBecomeWorkers)
     {
       MPI_Status status;
       mpi::init(ac,av);
@@ -125,10 +125,6 @@ namespace ospray {
         // - app process(es) are in one intercomm ("app"); workers all in
         //   another ("worker")
         // - all processes (incl app) have barrier'ed, and thus now in sync.
-
-        // now, root proc(s) will return, initialize the MPI device, then
-        // return to the app
-        return new mpi::MPIDevice;
       } else {
         // we're the workers
         MPI_Comm_split(mpi::world.comm,0,mpi::world.rank,&worker.comm);
@@ -169,11 +165,9 @@ namespace ospray {
         } else {
           cout << "#osp:mpi: distributed mode detected, "
                << "returning device on all ranks!" << endl;
-          return new mpi::MPIDevice;
         }
       }
       // nobody should ever come here ...
-      return NULL;
     }
 
 
@@ -186,11 +180,10 @@ namespace ospray {
       - the ospray frontend will store the port its waiting on connections for
         in the
       filename passed to this function; or will print it to stdout if this is
-      NULL
+      nullptr
     */
-    ospray::api::Device *
-    createMPI_ListenForWorkers(int *ac, const char **av,
-                               const char *fileNameToStorePortIn)
+    void createMPI_ListenForWorkers(int *ac, const char **av,
+                                    const char *fileNameToStorePortIn)
     {
       mpi::init(ac,av);
 
@@ -252,11 +245,8 @@ namespace ospray {
         cout << "======================================================="
              << endl;
       }
-      MPI_Barrier(app.comm);
 
-      if (app.rank >= 1)
-        return NULL;
-      return new mpi::MPIDevice;
+      MPI_Barrier(app.comm);
     }
 
     /*! in this mode ("separate worker group" mode)
@@ -268,8 +258,8 @@ namespace ospray {
       stdout, will parse that output for this string, and create an mpi connection to 
       this port to establish the service
     */
-    ospray::api::Device *createMPI_LaunchWorkerGroup(int *ac, const char **av, 
-                                                     const char *launchCommand)
+    void createMPI_LaunchWorkerGroup(int *ac, const char **av,
+                                     const char *launchCommand)
     {
       int rc;
 
@@ -334,11 +324,11 @@ namespace ospray {
           cout << "======================================================="
                << endl;
         }
+
         MPI_Barrier(app.comm);
-        return NULL;
       }
+
       MPI_Barrier(app.comm);
-      return new mpi::MPIDevice;
     }
 
     void initDistributedAPI(int *ac, char ***av, OSPDRenderMode mpiMode)
@@ -357,10 +347,8 @@ namespace ospray {
                                  "'mpirun'?)");
       }
 
-      ospray::api::Device::current
-        = ospray::mpi::createMPI_runOnExistingRanks(ac,
-                                                    (const char**)*av,
-                                                    false);
+      ospray::api::Device::current = new MPIDevice;
+      ospray::mpi::createMPI_runOnExistingRanks(ac, (const char**)*av, false);
     }
 
     MPIDevice::~MPIDevice()
@@ -372,6 +360,8 @@ namespace ospray {
 
     void MPIDevice::commit()
     {
+      Device::commit();
+
       if (mpi::world.size != 1) {
         if (mpi::world.rank < 0) {
           PRINT(mpi::world.rank);
@@ -385,6 +375,11 @@ namespace ospray {
       }
 
       TiledLoadBalancer::instance = new mpi::staticLoadBalancer::Master;
+
+#if 0
+      int argc = 2;
+      const char *argv[] = {"ospray_mpi_worker", "--osp:mpi"};
+#endif
     }
 
     OSPFrameBuffer 
@@ -426,7 +421,7 @@ namespace ospray {
       switch (channel) {
       case OSP_FB_COLOR: return fb->mapColorBuffer();
       case OSP_FB_DEPTH: return fb->mapDepthBuffer();
-      default: return NULL;
+      default: return nullptr;
       }
     }
 
@@ -707,8 +702,8 @@ namespace ospray {
                               const char *bufName,
                               OSPObject _value)
     {
-      Assert(_target != NULL);
-      Assert(bufName != NULL);
+      Assert(_target != nullptr);
+      Assert(bufName != nullptr);
       const ObjectHandle tgtObjectHandle = (const ObjectHandle&)_target;
       const ObjectHandle valObjectHandle = (const ObjectHandle&)_value;
 
@@ -722,7 +717,7 @@ namespace ospray {
     /*! create a new pixelOp object (out of list of registered pixelOps) */
     OSPPixelOp MPIDevice::newPixelOp(const char *type)
     {
-      Assert(type != NULL);
+      Assert(type != nullptr);
 
       ObjectHandle handle = ObjectHandle::alloc();
 
@@ -736,8 +731,8 @@ namespace ospray {
     /*! set a frame buffer's pixel op object */
     void MPIDevice::setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op)
     {
-      Assert(_fb != NULL);
-      Assert(_op != NULL);
+      Assert(_fb != nullptr);
+      Assert(_op != nullptr);
 
       cmd.newCommand(CMD_SET_PIXELOP);
       cmd.send((const ObjectHandle&)_fb);
@@ -748,7 +743,7 @@ namespace ospray {
     /*! create a new renderer object (out of list of registered renderers) */
     OSPRenderer MPIDevice::newRenderer(const char *type)
     {
-      Assert(type != NULL);
+      Assert(type != nullptr);
 
       ObjectHandle handle = ObjectHandle::alloc();
 
@@ -766,7 +761,7 @@ namespace ospray {
     /*! create a new camera object (out of list of registered cameras) */
     OSPCamera MPIDevice::newCamera(const char *type)
     {
-      Assert(type != NULL);
+      Assert(type != nullptr);
 
       ObjectHandle handle = ObjectHandle::alloc();
 
@@ -780,7 +775,7 @@ namespace ospray {
     /*! create a new volume object (out of list of registered volumes) */
     OSPVolume MPIDevice::newVolume(const char *type)
     {
-      Assert(type != NULL);
+      Assert(type != nullptr);
 
       ObjectHandle handle = ObjectHandle::alloc();
 
@@ -794,7 +789,7 @@ namespace ospray {
     /*! create a new geometry object (out of list of registered geometries) */
     OSPGeometry MPIDevice::newGeometry(const char *type)
     {
-      Assert(type != NULL);
+      Assert(type != nullptr);
 
       ObjectHandle handle = ObjectHandle::alloc();
       
@@ -808,10 +803,10 @@ namespace ospray {
     /*! have given renderer create a new material */
     OSPMaterial MPIDevice::newMaterial(OSPRenderer _renderer, const char *type)
     {
-      if (type == NULL)
+      if (type == nullptr)
         throw std::runtime_error("#osp:mpi:newMaterial: NULL material type");
       
-      if (_renderer == NULL) 
+      if (_renderer == nullptr)
         throw std::runtime_error("#osp:mpi:newMaterial: NULL renderer handle");
 
       ObjectHandle handle = ObjectHandle::alloc();
@@ -832,7 +827,7 @@ namespace ospray {
         return (OSPMaterial)(int64)handle;
       else {
         handle.free();
-        return (OSPMaterial)NULL;
+        return (OSPMaterial)nullptr;
       }
     }
 
@@ -840,7 +835,7 @@ namespace ospray {
         registered transfer function types) */
     OSPTransferFunction MPIDevice::newTransferFunction(const char *type)
     {
-      Assert(type != NULL);
+      Assert(type != nullptr);
 
       ObjectHandle handle = ObjectHandle::alloc();
 
@@ -855,7 +850,7 @@ namespace ospray {
     /*! have given renderer create a new Light */
     OSPLight MPIDevice::newLight(OSPRenderer _renderer, const char *type)
     {
-      if (type == NULL)
+      if (type == nullptr)
         throw std::runtime_error("#osp:mpi:newLight: NULL light type");
 
       ObjectHandle handle = ObjectHandle::alloc();
@@ -877,9 +872,9 @@ namespace ospray {
         return (OSPLight)(int64)handle;
       else {
         handle.free();
-        return (OSPLight)NULL;
+        return (OSPLight)nullptr;
       }
-      return NULL;
+      return nullptr;
     }
 
     /*! clear the specified channel(s) of the frame buffer specified in
