@@ -47,7 +47,6 @@ namespace ospray {
       return. */
     OSPRAY_INTERFACE void runWorker();
 
-
     /*! in this mode ("ospray on ranks" mode, or "ranks" mode), the
         user has launched the app across all ranks using mpirun "<all
         rank> <app>"; no new processes need to get launched.
@@ -170,6 +169,10 @@ namespace ospray {
       // nobody should ever come here ...
     }
 
+    void createMPI_RanksBecomeWorkers(int *ac, const char **av)
+    {
+      createMPI_runOnExistingRanks(ac,av,true);
+    }
 
     /*! in this mode ("separate worker group" mode)
       - the user may or may not have launched MPI explicitly for his app
@@ -353,14 +356,53 @@ namespace ospray {
 
     MPIDevice::~MPIDevice()
     {
-      cmd.newCommand(CMD_FINALIZE);
-      cmd.flush();
-      async::shutdown();
+      // NOTE(jda) - Seems that there are no MPI Devices on worker ranks...this
+      //             will likely change for data-distributed API settings?
+      if (mpi::world.rank == 0) {
+        cmd.newCommand(CMD_FINALIZE);
+        cmd.flush();
+        async::shutdown();
+      }
     }
 
     void MPIDevice::commit()
     {
       Device::commit();
+
+      int _ac = 2;
+      const char *_av[] = {"ospray_mpi_worker", "--osp:mpi"};
+
+      std::string mode = getParamString("mpiMode", "mpi");
+
+      if (mode == "mpi") {
+        createMPI_RanksBecomeWorkers(&_ac,_av);
+      }
+      else if(mode == "mpi-launch") {
+        std::string launchCommand = getParamString("launchCommand", "");
+
+        if (launchCommand.empty()) {
+          throw std::runtime_error("You must provide the launchCommand "
+                                   "parameter in mpi-launch mode!");
+        }
+
+        createMPI_LaunchWorkerGroup(&_ac,_av,launchCommand.c_str());
+      }
+      else if (mode == "mpi-listen") {
+        std::string fileNameToStorePortIn =
+            getParamString("fileNameToStorePortIn", "");
+
+        if (fileNameToStorePortIn.empty()) {
+          throw std::runtime_error("You must provide the fileNameToStorePortIn "
+                                   "parameter in mpi-listen mode!");
+        }
+
+        createMPI_ListenForWorkers(&_ac,_av,fileNameToStorePortIn.c_str());
+      }
+      else {
+        throw std::runtime_error("Invalid MPI mode!");
+      }
+
+      TiledLoadBalancer::instance = new mpi::staticLoadBalancer::Master;
 
       if (mpi::world.size != 1) {
         if (mpi::world.rank < 0) {
@@ -373,13 +415,6 @@ namespace ospray {
                                    "start.");
         }
       }
-
-      TiledLoadBalancer::instance = new mpi::staticLoadBalancer::Master;
-
-#if 0
-      int argc = 2;
-      const char *argv[] = {"ospray_mpi_worker", "--osp:mpi"};
-#endif
     }
 
     OSPFrameBuffer 
