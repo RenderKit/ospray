@@ -57,6 +57,7 @@ typedef SampleAreaRes (*Geometry_SampleAreaFct)(
     const Geometry *const uniform
     , const int32 primID //!< primitive to sample
     , const uniform affine3f &xfm //!< instance transformation (obj2world)
+    , const uniform affine3f &rcp_xfm //!< inverse transformation (world2obj)
     , const vec2f& s //!< random numbers to generate the sample
     );
 

@@ -173,6 +173,7 @@ SampleAreaRes TriangleMesh_sampleArea(
     const Geometry *uniform const _self
     , const int32 primID
     , const uniform affine3f &xfm
+    , const uniform affine3f &
     , const vec2f& s
     )
 {
