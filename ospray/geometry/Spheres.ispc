@@ -48,7 +48,6 @@ struct Spheres {
   int        color_stride;
   int        color_offset;
   
-  int32      numSpheres;
   int32      bytesPerSphere;
 };
 
@@ -208,7 +207,7 @@ export void SpheresGeometry_set(void  *uniform _self,
   self->color_data = color_data;
   self->color_stride = color_stride;
   self->color_offset = color_offset;
-  self->numSpheres = numSpheres;
+  self->super.primitives = numSpheres;
   self->radius = radius;
   self->data = (uniform uint8 *uniform)data;
   self->materialID = materialID;

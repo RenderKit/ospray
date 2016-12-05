@@ -136,7 +136,6 @@ SET(OSPRAY_SOURCES
 
   geometry/Geometry.ispc
   geometry/Geometry.cpp
-  geometry/AreaSampler.ih
   geometry/TriangleMesh.ispc
   geometry/TriangleMesh.cpp
   geometry/StreamLines.cpp
@@ -278,7 +277,6 @@ OSPRAY_INSTALL_SDK_HEADERS(
   geometry/Cylinders.h
   geometry/Geometry.h
   geometry/Geometry.ih
-  geometry/AreaSampler.ih
   geometry/Instance.h
   geometry/Isosurfaces.h
   geometry/Slices.h

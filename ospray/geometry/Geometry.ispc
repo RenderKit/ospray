@@ -33,9 +33,11 @@ static void Geometry_Constructor(uniform Geometry *uniform geometry,
                                  )
 {
   geometry->cppEquivalent = cppEquivalent;
+  geometry->primitives = 0;
   geometry->model    = model;
   geometry->material = material;
   geometry->geomID   = geomID;
   geometry->postIntersect = postIntersect;
-  geometry->generateAreaSampler = NULL;
+  geometry->sampleArea = NULL;
+  geometry->getAreas = NULL;
 }

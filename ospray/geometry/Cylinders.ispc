@@ -26,7 +26,7 @@
 #include "embree2/rtcore_geometry_user.isph"
 
 struct Cylinders {
-  uniform Geometry geometry; //!< inherited geometry fields
+  uniform Geometry super; //!< inherited geometry fields
 
   uniform uint8 *uniform data;
   uniform Material *uniform *materialList;
@@ -39,7 +39,6 @@ struct Cylinders {
   int   offset_radius;
   int   offset_materialID;
   int   offset_colorID;
-  int32 numCylinders;
   int32 bytesPerCylinder;
 };
 
@@ -111,7 +110,7 @@ void Cylinders_intersect(uniform Cylinders *uniform geometry,
 
   if (hit) {
     ray.primID = primID;
-    ray.geomID = geometry->geometry.geomID;
+    ray.geomID = geometry->super.geomID;
     ray.instID = -1;
     // cannot easily be moved to postIntersect
     // we need hit in object space, in postIntersect it is in world-space
@@ -153,7 +152,7 @@ static void Cylinders_postIntersect(uniform Geometry *uniform geometry,
 export void *uniform Cylinders_create(void *uniform cppEquivalent)
 {
   uniform Cylinders *uniform geom = uniform new uniform Cylinders;
-  Geometry_Constructor(&geom->geometry,cppEquivalent,
+  Geometry_Constructor(&geom->super,cppEquivalent,
                        Cylinders_postIntersect,
                        NULL,0,NULL);
   return geom;
@@ -179,11 +178,11 @@ export void CylindersGeometry_set(void           *uniform _geom,
 
   uniform uint32 geomID = rtcNewUserGeometry(model->embreeSceneHandle,numCylinders);
   
-  geom->geometry.model = model;
-  geom->geometry.geomID = geomID;
+  geom->super.model = model;
+  geom->super.geomID = geomID;
+  geom->super.primitives = numCylinders;
   geom->materialList = (Material **)materialList;
   geom->color = color;
-  geom->numCylinders = numCylinders;
   geom->radius = radius;
   geom->data = (uniform uint8 *uniform)data;
   geom->materialID = materialID;
