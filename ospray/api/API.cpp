@@ -193,8 +193,11 @@ extern "C" void ospSetCurrentDevice(OSPDevice _device)
 {
   auto *device = (ospray::api::Device*)_device;
 
-  if (!device->isCommitted())
-    device->commit();
+  if (!device->isCommitted()) {
+    std::cerr << "ERROR: You must commit the device before using it!"
+              << std::endl;
+    std::exit(1);
+  }
 
   ospray::api::Device::current = device;
 }
@@ -519,6 +522,12 @@ extern "C" void ospCommit(OSPObject object)
   ASSERT_DEVICE();
   Assert(object && "invalid object handle to commit to");
   ospray::api::Device::current->commit(object);
+}
+
+extern "C" void ospDeviceCommit(OSPDevice _object)
+{
+  auto *object = (ospray::api::Device *)_object;
+  object->commit();
 }
 
 extern "C" void ospDeviceSetString(OSPDevice _object,

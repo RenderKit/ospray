@@ -272,6 +272,9 @@ extern "C" {
   /*! add 1-int parameter to given Device */
   OSPRAY_INTERFACE void ospDeviceSet1i(OSPDevice, const char *id, int32_t x);
 
+  /*! Commit parameters on a given device */
+  OSPRAY_INTERFACE void ospDeviceCommit(OSPDevice);
+
   //! \brief allows for switching the MPI mode btween collaborative, mastered, and independent
   OSPRAY_INTERFACE void ospdApiMode(OSPDApiMode);
 

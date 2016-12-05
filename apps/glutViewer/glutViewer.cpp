@@ -52,6 +52,7 @@ int main(int ac, const char **av)
   //ospDeviceSet1i(device, "numThreads", 1);
   //ospDeviceSet1i(device, "logLevel", 2);
   //ospDeviceSet1i(device, "debug", 1);
+  ospDeviceCommit(device);
 
   ospSetCurrentDevice(device);
 #endif
