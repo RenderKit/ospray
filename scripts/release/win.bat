@@ -28,6 +28,7 @@ cmake -L ^
 -G "Visual Studio 12 2013 Win64" ^
 -T "Intel C++ Compiler 17.0" ^
 -D OSPRAY_ZIP_MODE=OFF ^
+-D OSPRAY_INSTALL_DEPENDENCIES=OFF ^
 -D OSPRAY_BUILD_ISA=ALL ^
 -D OSPRAY_USE_EXTERNAL_EMBREE=ON ^
 -D USE_IMAGE_MAGICK=OFF ^
@@ -45,7 +46,8 @@ cmake --build . --config Release --target PACKAGE -- /m /nologo
 if %ERRORLEVEL% GEQ 1 goto abort
 
 rem create ZIP files
-cmake -D OSPRAY_ZIP_MODE=ON ..
+cmake -D OSPRAY_ZIP_MODE=ON ^
+-D OSPRAY_INSTALL_DEPENDENCIES=ON ..
 cmake --build . --config Release --target PACKAGE -- /m /nologo
 if %ERRORLEVEL% GEQ 1 goto abort
 
