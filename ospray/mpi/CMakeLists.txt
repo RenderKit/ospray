@@ -14,45 +14,43 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-INCLUDE_DIRECTORIES(
-  ${CMAKE_CURRENT_LIST_DIR}
-  ${CMAKE_CURRENT_LIST_DIR}/script
-)
+# if mpi mode is enabled, we have to configure the right mpi
+# compiler etc.
+OSPRAY_CONFIGURE_MPI()
 
-# --------------------------------------------
-# main executable
-# --------------------------------------------
+OSPRAY_CREATE_LIBRARY(ospray_mpi
+  buffers.h
+  command.h
 
-SET(APP_SRCS
-  glutViewer.cpp
-)
+  MPIDevice.cpp
+  MPICommon.cpp
+  MPILoadBalancer.cpp
+  worker.cpp
 
-IF(OSPRAY_APPS_ENABLE_SCRIPTING)
-  LIST(APPEND APP_SRCS
-    ScriptedOSPGlutViewer.cpp
-    ScriptedOSPGlutViewer.h
-    GlutViewerScriptHandler.cpp
-    GlutViewerScriptHandler.h
-  )
-ENDIF()
+  async/Messaging.cpp
+  async/SimpleSendRecvMessaging.cpp
+  async/MultiIsendIrecvMessaging.cpp
+  async/BatchedIsendIrecvMessaging.cpp
+  async/CommLayer.cpp
 
-SET(LIBS
+  DistributedFrameBuffer.cpp
+  DistributedFrameBuffer.ispc
+  DistributedFrameBuffer_TileTypes.cpp
+
+LINK
   ospray
-  ospray_commandline
   ospray_common
-  ospray_glut3d
-  ospray_minisg
-  ospray_importer
-  ${OPENGL_LIBRARIES}
-  ${GLUT_LIBRARIES}
+  ${MPI_CXX_LIBRARIES}
 )
 
-IF (OSPRAY_MPI)
-  LIST(APPEND LIBS ospray_mpi)
-ENDIF()
+##############################################################
+# MPI DEVICE - mpi worker
+##############################################################
 
-IF (OSPRAY_APPS_ENABLE_SCRIPTING)
-  LIST(APPEND LIBS ospray_script)
-ENDIF()
-
-OSPRAY_CREATE_APPLICATION(ospGlutViewer ${APP_SRCS} LINK ${LIBS})
+OSPRAY_CREATE_APPLICATION(ospray_mpi_worker
+  MPIWorker.cpp
+LINK
+  ospray
+  ospray_common
+  ospray_mpi
+)

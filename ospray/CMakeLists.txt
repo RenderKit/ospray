@@ -358,36 +358,6 @@ OSPRAY_INSTALL_SDK_HEADERS(
   DESTINATION volume
 )
 
-# -------------------------------------------------------
-# MPI components
-# -------------------------------------------------------
-IF (OSPRAY_MPI)
-  # if mpi mode is enabled, we have to configure the right mpi
-  # compiler etc.
-  OSPRAY_CONFIGURE_MPI()
-
-  SET(OSPRAY_SOURCES ${OSPRAY_SOURCES}
-    mpi/buffers.h
-    mpi/command.h
-
-    mpi/MPIDevice.cpp
-    mpi/MPICommon.cpp
-    mpi/MPILoadBalancer.cpp
-    mpi/worker.cpp
-
-    mpi/async/Messaging.cpp
-    mpi/async/SimpleSendRecvMessaging.cpp
-    mpi/async/MultiIsendIrecvMessaging.cpp
-    mpi/async/BatchedIsendIrecvMessaging.cpp
-    mpi/async/CommLayer.cpp
-
-    mpi/DistributedFrameBuffer.cpp
-    mpi/DistributedFrameBuffer.ispc
-    mpi/DistributedFrameBuffer_TileTypes.cpp
-
-  )
-ENDIF()
-
 ##############################################################
 # build the ospray library (using flags and compilers as configured by
 # CONFIGURE_OSPRAY() and/or CONFIGURE_MPI()
@@ -397,9 +367,6 @@ SET(OSPRAY_LIBS
   ospray_common
   ${CMAKE_THREAD_LIBS_INIT}
   ${CMAKE_DL_LIBS}
-)
-
-LIST(APPEND OSPRAY_LIBS
   ${EMBREE_LIBRARIES}
   ${TASKING_SYSTEM_LIBS}
 )
@@ -416,28 +383,25 @@ IF (WIN32 AND OSPRAY_BUILD_ISA STREQUAL "ALL")
                        "/DEF:${PROJECT_SOURCE_DIR}/ospray/ospray.def")
 ENDIF()
 
+# -------------------------------------------------------
+# MPI components
+# -------------------------------------------------------
+IF (OSPRAY_MPI)
+  ADD_SUBDIRECTORY(mpi)
+ENDIF()
+
 # build ospTutorial, for testing
 ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial.cpp)
 OSPRAY_EXE_LINK_LIBRARIES(ospTutorial ospray ospray_common)
+IF (OSPRAY_MPI)
+  OSPRAY_EXE_LINK_LIBRARIES(ospTutorial ospray_mpi)
+ENDIF()
 # C version
 ADD_EXECUTABLE(ospTutorialC ../apps/ospTutorial.c)
 OSPRAY_EXE_LINK_LIBRARIES(ospTutorialC ospray ospray_common)
-
-
-##############################################################
-# MPI DEVICE - mpi worker
-##############################################################
 IF (OSPRAY_MPI)
-  OSPRAY_LIBRARY_LINK_LIBRARIES(ospray ${MPI_CXX_LIBRARIES})
-
-  OSPRAY_CREATE_APPLICATION(ospray_mpi_worker${OSPRAY_EXE_SUFFIX}
-    mpi/MPIWorker.cpp
-  LINK
-    ospray${OSPRAY_LIB_SUFFIX}
-    ospray_common${OSPRAY_LIB_SUFFIX}
-  )
+  OSPRAY_EXE_LINK_LIBRARIES(ospTutorialC ospray_mpi)
 ENDIF()
-
 
 ##############################################################
 # Configure find_package files
