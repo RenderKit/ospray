@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "common/ospray_cpp/Device.h"
 #include "common/commandline/Utility.h"
 
 #ifdef OSPRAY_APPS_ENABLE_SCRIPTING
@@ -44,6 +45,16 @@ int main(int ac, const char **av)
 {
 #if 1
   ospInit(&ac,av);
+#elif 1
+  ospray::cpp::Device device("default");
+  //ospray::cpp::Device device("mpi");
+
+  //device.set("numThreads", 1);
+  //device.set("logLevel", 2);
+  //device.set("debug", 1);
+  device.commit();
+
+  device.setCurrent();
 #else
   auto device = ospCreateDevice();
   //auto device = ospCreateDevice("mpi");
