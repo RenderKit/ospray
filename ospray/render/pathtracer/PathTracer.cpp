@@ -64,7 +64,7 @@ namespace ospray {
       , float *const areaPDF
       )
   {
-    for(int i = 0; i < model->geometry.size(); i++) {
+    for(size_t i = 0; i < model->geometry.size(); i++) {
       auto &geo = model->geometry[i];
       // recurse instances
       Ref<Instance> inst = geo.dynamicCast<Instance>();
