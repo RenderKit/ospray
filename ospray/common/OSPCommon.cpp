@@ -206,6 +206,7 @@ namespace ospray {
     case OSP_FLOAT4:    return sizeof(vec4f);
     case OSP_FLOAT3A:   return sizeof(vec3fa);
     case OSP_DOUBLE:    return sizeof(double);
+    case OSP_UNKNOWN:   break;
     };
 
     std::stringstream error;
@@ -284,6 +285,7 @@ namespace ospray {
     case OSP_FLOAT4:            return "float4";
     case OSP_FLOAT3A:           return "float3a";
     case OSP_DOUBLE:            return "double";
+    case OSP_UNKNOWN:           break;
     };
 
     std::stringstream error;
@@ -295,13 +297,14 @@ namespace ospray {
   size_t sizeOf(const OSPTextureFormat type) {
     switch (type) {
       case OSP_TEXTURE_RGBA8:
-      case OSP_TEXTURE_SRGBA:   return sizeof(uint32);
-      case OSP_TEXTURE_RGBA32F: return sizeof(vec4f);
+      case OSP_TEXTURE_SRGBA:          return sizeof(uint32);
+      case OSP_TEXTURE_RGBA32F:        return sizeof(vec4f);
       case OSP_TEXTURE_RGB8:
-      case OSP_TEXTURE_SRGB:    return sizeof(vec3uc);
-      case OSP_TEXTURE_RGB32F:  return sizeof(vec3f);
-      case OSP_TEXTURE_R8:      return sizeof(uint8);
-      case OSP_TEXTURE_R32F:    return sizeof(float);
+      case OSP_TEXTURE_SRGB:           return sizeof(vec3uc);
+      case OSP_TEXTURE_RGB32F:         return sizeof(vec3f);
+      case OSP_TEXTURE_R8:             return sizeof(uint8);
+      case OSP_TEXTURE_R32F:           return sizeof(float);
+      case OSP_TEXTURE_FORMAT_INVALID: break;
     }
 
     std::stringstream error;

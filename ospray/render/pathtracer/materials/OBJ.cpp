@@ -28,18 +28,17 @@ namespace ospray {
 
       //! \brief commit the material's parameters
       virtual void commit() {
-        if (getIE() == NULL)
-          ispcEquivalent = ispc::PathTracer_OBJ_create();
+        if (getIE() == nullptr) ispcEquivalent = ispc::PathTracer_OBJ_create();
 
-          Texture2D *map_d  = (Texture2D*)getParamObject("map_d", NULL);
+          Texture2D *map_d  = (Texture2D*)getParamObject("map_d", nullptr);
           affine2f xform_d  = getTextureTransform("map_d");
-          Texture2D *map_Kd = (Texture2D*)getParamObject("map_Kd", getParamObject("map_kd",  getParamObject("colorMap", NULL)));
+          Texture2D *map_Kd = (Texture2D*)getParamObject("map_Kd", getParamObject("map_kd",  getParamObject("colorMap", nullptr)));
           affine2f xform_Kd = getTextureTransform("map_Kd") * getTextureTransform("map_kd") * getTextureTransform("colorMap"); 
-          Texture2D *map_Ks = (Texture2D*)getParamObject("map_Ks", getParamObject("map_ks", NULL));
+          Texture2D *map_Ks = (Texture2D*)getParamObject("map_Ks", getParamObject("map_ks", nullptr));
           affine2f xform_Ks = getTextureTransform("map_Ks") * getTextureTransform("map_ks"); 
-          Texture2D *map_Ns = (Texture2D*)getParamObject("map_Ns", getParamObject("map_ns", NULL));
+          Texture2D *map_Ns = (Texture2D*)getParamObject("map_Ns", getParamObject("map_ns", nullptr));
           affine2f xform_Ns = getTextureTransform("map_Ns") * getTextureTransform("map_ns"); 
-          Texture2D *map_Bump = (Texture2D*)getParamObject("map_Bump", getParamObject("map_bump", getParamObject("normalMap", getParamObject("bumpMap", NULL))));
+          Texture2D *map_Bump = (Texture2D*)getParamObject("map_Bump", getParamObject("map_bump", getParamObject("normalMap", getParamObject("bumpMap", nullptr))));
           affine2f xform_Bump = getTextureTransform("map_Bump") * getTextureTransform("map_bump") * getTextureTransform("normalMap") * getTextureTransform("BumpMap"); 
           linear2f rot_Bump   = xform_Bump.l.orthogonal().transposed();
 
@@ -58,16 +57,16 @@ namespace ospray {
           }
 
           ispc::PathTracer_OBJ_set(ispcEquivalent,
-             map_d ? map_d->getIE() : NULL, (const ispc::AffineSpace2f&)xform_d,
+             map_d ? map_d->getIE() : nullptr, (const ispc::AffineSpace2f&)xform_d,
              d,
-             map_Kd ? map_Kd->getIE() : NULL, (const ispc::AffineSpace2f&)xform_Kd,
+             map_Kd ? map_Kd->getIE() : nullptr, (const ispc::AffineSpace2f&)xform_Kd,
              (const ispc::vec3f&)Kd,
-             map_Ks ? map_Ks->getIE() : NULL, (const ispc::AffineSpace2f&)xform_Ks,
+             map_Ks ? map_Ks->getIE() : nullptr, (const ispc::AffineSpace2f&)xform_Ks,
              (const ispc::vec3f&)Ks,
-             map_Ns ? map_Ns->getIE() : NULL, (const ispc::AffineSpace2f&)xform_Ns,
+             map_Ns ? map_Ns->getIE() : nullptr, (const ispc::AffineSpace2f&)xform_Ns,
              Ns,
              (const ispc::vec3f&)Tf,
-             map_Bump ? map_Bump->getIE() : NULL, (const ispc::AffineSpace2f&)xform_Bump,
+             map_Bump ? map_Bump->getIE() : nullptr, (const ispc::AffineSpace2f&)xform_Bump,
              (const ispc::LinearSpace2f&)rot_Bump);
       }
     };
