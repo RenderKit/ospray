@@ -96,14 +96,29 @@ extern "C" void ospInit(int *_ac, const char **_av)
   }
 
   if (_ac && _av) {
-    // we're only supporting local rendering for now - network device
-    // etc to come.
     for (int i = 1; i < *_ac; i++) {
-
       std::string av(_av[i]);
 
       if (av == "--osp:coi") {
         throw std::runtime_error("OSPRay's COI device is no longer supported!");
+        --i;
+        continue;
+      }
+
+      auto deviceSwitch = av.substr(0, 13);
+      if (deviceSwitch == "--osp:device:") {
+        removeArgs(*_ac,(char **&)_av,i,1);
+        auto deviceName = av.substr(13);
+        auto *device = ospray::api::Device::createDevice(deviceName.c_str());
+
+        if (device == nullptr) {
+          throw std::runtime_error("Failed to create device of type '"
+                                   + deviceName + "'! Perhaps you spelled the "
+                                   "device name wrong or didn't link the "
+                                   "library which defines the device?");
+        }
+
+        ospray::api::Device::current = device;
         --i;
         continue;
       }
