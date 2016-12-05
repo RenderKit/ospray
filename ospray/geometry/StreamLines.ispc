@@ -26,12 +26,11 @@
 #include "embree2/rtcore_geometry_user.isph"
 
 struct StreamLines {
-  uniform Geometry geometry; //!< inherited geometry fields
+  uniform Geometry super; //!< inherited geometry fields
   float           radius;
   uniform vec3fa *vertex;
   int32           numVertices;
   uniform uint32 *index;
-  int32           numSegments;
   uniform vec4f  *color;
 };
 
@@ -137,7 +136,7 @@ void StreamLines_intersect(uniform StreamLines *uniform geometry,
   hit |= intersectShiftedSphere(ray,B,geometry->radius,primID | (1<<30));
 
   if (hit) {
-    ray.geomID = geometry->geometry.geomID;
+    ray.geomID = geometry->super.geomID;
     ray.primID = primID; // original primID needed for vertex coloring
     ray.instID = -1;
     const vec3f P = ray.t * ray.dir;
@@ -170,7 +169,7 @@ static void StreamLines_postIntersect(uniform Geometry *uniform geometry,
 export void *uniform StreamLineGeometry_create(void           *uniform cppEquivalent)
 {
   uniform StreamLines *uniform geom = uniform new uniform StreamLines;
-  Geometry_Constructor(&geom->geometry,cppEquivalent,
+  Geometry_Constructor(&geom->super,cppEquivalent,
                        StreamLines_postIntersect,
                        NULL,0,NULL);
   return geom;
@@ -190,11 +189,11 @@ StreamLineGeometry_set(void           *uniform _geom,
   uniform Model *uniform model = (uniform Model *uniform)_model;
   uniform uint32 geomID = rtcNewUserGeometry(model->embreeSceneHandle,numSegments);
 
-  geom->geometry.model  = model;
-  geom->geometry.geomID = geomID;
+  geom->super.model  = model;
+  geom->super.geomID = geomID;
   geom->vertex = vertex;
   geom->index = index;
-  geom->numSegments = numSegments;
+  geom->super.primitives = numSegments;
   geom->numVertices = numVertices;
   geom->color = color;
   geom->radius = radius;
