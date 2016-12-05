@@ -42,7 +42,7 @@ std::string scriptFileFromCommandLine(int ac, const char **&av)
 
 int main(int ac, const char **av)
 {
-#if 0
+#if 1
   ospInit(&ac,av);
 #else
   auto device = ospCreateDevice();
