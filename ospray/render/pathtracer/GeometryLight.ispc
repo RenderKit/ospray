@@ -84,11 +84,9 @@ export void* uniform GeometryLight_create(void* uniform _geo,
   Geometry *uniform geo = (Geometry *uniform)_geo;
 
   if (!geo->sampleArea || !geo->getAreas) {
-    print("#osp:pt Geometry does not implement area sampling! Cannot use "
-        "importance sampling for that geometry with emissive material!\n");
-    // set pdf to inf, indicating that this emissive geometry cannot be sampled,
-    // but only be hit (and thus MIS weight for BSDF samples will be 1)
-    *areaPDF = inf;
+    // set pdf to zero, indicating that this emissive geometry cannot be
+    // sampled, but only be hit (and thus MIS weight for BSDF samples will be 1)
+    *areaPDF = 0.f;
     return NULL;
   }
 
