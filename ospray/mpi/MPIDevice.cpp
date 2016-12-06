@@ -334,26 +334,6 @@ namespace ospray {
       MPI_Barrier(app.comm);
     }
 
-    void initDistributedAPI(int *ac, char ***av, OSPDRenderMode mpiMode)
-    {
-      UNUSED(mpiMode);
-      int initialized = false;
-      MPI_CALL(Initialized(&initialized));
-      if (initialized) 
-        throw std::runtime_error("OSPRay MPI Error: MPI already Initialized "
-                                 "when calling ospMpiInit()");
-      
-      ospray::mpi::init(ac,(const char **)*av);
-      if (mpi::world.size < 2) {
-        throw std::runtime_error("#osp:mpi: trying to run distributed API mode"
-                                 " with a single rank? (did you forget the "
-                                 "'mpirun'?)");
-      }
-
-      ospray::api::Device::current = new MPIDevice;
-      ospray::mpi::createMPI_runOnExistingRanks(ac, (const char**)*av, false);
-    }
-
     MPIDevice::~MPIDevice()
     {
       // NOTE(jda) - Seems that there are no MPI Devices on worker ranks...this

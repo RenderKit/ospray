@@ -275,19 +275,6 @@ extern "C" {
   /*! Commit parameters on a given device */
   OSPRAY_INTERFACE void ospDeviceCommit(OSPDevice);
 
-  //! \brief allows for switching the MPI mode btween collaborative, mastered, and independent
-  OSPRAY_INTERFACE void ospdApiMode(OSPDApiMode);
-
-  //! the 'lid to the pot' of ospdMpiInit().
-  /*! does both an osp shutdown and an mpi shutdown for the mpi group
-      created with ospdMpiInit */
-  OSPRAY_INTERFACE
-  void ospdMpiInit(int *ac, char ***av, OSPDRenderMode mode OSP_DEFAULT_VAL(=OSPD_Z_COMPOSITE));
-
-  /*! the 'lid to the pot' of ospdMpiInit(). shuts down both ospray
-      *and* the MPI layer created with ospdMpiInit */
-  OSPRAY_INTERFACE void ospdMpiShutdown();
-
   //! load plugin 'name' from shard lib libospray_module_<name>.so
   /*! returns 0 if the module could be loaded, else it returns an error code > 0 */
   OSPRAY_INTERFACE int32_t ospLoadModule(const char *pluginName);

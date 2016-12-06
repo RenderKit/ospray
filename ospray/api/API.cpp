@@ -36,19 +36,9 @@
 
 /*! \file api.cpp implements the public ospray api functions by
   routing them to a respective \ref device */
-namespace ospray {
 
-  using std::endl;
-  using std::cout;
-
-#ifdef OSPRAY_MPI
-  namespace mpi
-  {
-    void initDistributedAPI(int *ac, char ***av, OSPDRenderMode mpiMode);
-  }
-#endif
-
-} // ::ospray
+using std::endl;
+using std::cout;
 
 std::string getPidString() {
   char s[100];
@@ -296,7 +286,6 @@ extern "C" OSPData ospNewData(size_t nitems, OSPDataType format, const void *ini
 /*! add a data array to another object */
 extern "C" void ospSetData(OSPObject object, const char *bufName, OSPData data)
 {
-  // assert(!rendering);
   ASSERT_DEVICE();
   LOG("ospSetData(...,\"" << bufName << "\",...)");
   return ospray::api::Device::current->setObject(object,bufName,(OSPObject)data);
@@ -504,15 +493,12 @@ extern "C" float ospRenderFrame(OSPFrameBuffer fb,
   nom = 0.95f*nom + t_frame;
   std::cout << "done rendering, time per frame = " << (t_frame*1000.f) << "ms, avg'ed fps = " << (den/nom) << std::endl;
 #else
-  // rendering = true;
   return ospray::api::Device::current->renderFrame(fb,renderer,fbChannelFlags);
-  // rendering = false;
 #endif
 }
 
 extern "C" void ospCommit(OSPObject object)
 {
-  // assert(!rendering);
   LOG("ospCommit(...)");
   ASSERT_DEVICE();
   Assert(object && "invalid object handle to commit to");
@@ -732,33 +718,6 @@ extern "C" void ospPick(OSPPickResult *result,
   *result = ospray::api::Device::current->pick(renderer,
                                                (const vec2f&)screenPos);
 }
-
-//! \brief allows for switching the MPI scope from "per rank" to "all ranks"
-// extern "C" void ospdApiMode(OSPDApiMode mode)
-// {
-//   ASSERT_DEVICE();
-//   ospray::api::Device::current->apiMode(mode);
-// }
-
-#ifdef OSPRAY_MPI
-//! \brief initialize the ospray engine (for use with MPI-parallel app)
-/*! \detailed Note the application must call this function "INSTEAD OF"
-  MPI_Init(), NOT "in addition to" */
-extern "C" void ospdMpiInit(int *ac, char ***av, OSPDRenderMode mode)
-{
-  if (!ospray::api::Device::current) {
-    throw std::runtime_error("#osp:mpi: OSPRay already initialized!?");
-  }
-  ospray::mpi::initDistributedAPI(ac,av,mode);
-}
-
-//! the 'lid to the pot' of ospdMpiInit().
-/*! does both an osp shutdown and an mpi shutdown for the mpi group
-  created with ospdMpiInit */
-extern "C" void ospdMpiShutdown()
-{
-}
-#endif
 
 extern "C" void ospSampleVolume(float **results,
                                 OSPVolume volume,
