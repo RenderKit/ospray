@@ -19,10 +19,6 @@
 #include "math/box.ih"
 #include "common/Ray.ih"
 #include "Instance.ih"
-// embree
-#include "embree2/rtcore.isph"
-#include "embree2/rtcore_scene.isph"
-#include "embree2/rtcore_geometry_user.isph"
 
 static void Instance_postIntersect(uniform Geometry *uniform _self,
                                    uniform Model *uniform parentModel,

@@ -53,7 +53,6 @@ void Slices_intersect(uniform Slices *uniform slices,
       !isnan(slices->volume->computeSample(slices->volume, ray.org + tIntersect*ray.dir))) {
     ray.geomID = slices->super.geomID;
     ray.primID = primID;
-    ray.instID = -1;
     ray.t = tIntersect;
     ray.Ng = make_vec3f(slices->planes[primID]);
   }
