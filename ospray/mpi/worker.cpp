@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "mpi/MPICommon.h"
+#include "mpi/common/MPICommon.h"
 #include "mpi/MPIDevice.h"
 #include "mpi/CommandStream.h"
 #include "common/Model.h"
@@ -30,7 +30,7 @@
 #include "fb/LocalFB.h"
 #include "mpi/async/CommLayer.h"
 #include "mpi/fb/DistributedFrameBuffer.h"
-#include "mpi/MPILoadBalancer.h"
+#include "mpi/render/MPILoadBalancer.h"
 #include "transferFunction/TransferFunction.h"
 
 #include "mpi/MPIDevice.h"

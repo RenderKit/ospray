@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 // ospray
-#include "mpi/MPILoadBalancer.h"
+#include "mpi/render/MPILoadBalancer.h"
 #include "render/Renderer.h"
 #include "fb/LocalFB.h"
 #include "mpi/fb/DistributedFrameBuffer.h"

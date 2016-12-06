@@ -16,7 +16,7 @@
 
 #undef NDEBUG // do all assertions in this file
 
-#include "mpi/MPICommon.h"
+#include "mpi/common/MPICommon.h"
 #include "mpi/MPIDevice.h"
 #include "common/Model.h"
 #include "common/Data.h"
@@ -26,7 +26,7 @@
 #include "render/Renderer.h"
 #include "camera/Camera.h"
 #include "volume/Volume.h"
-#include "mpi/MPILoadBalancer.h"
+#include "mpi/render/MPILoadBalancer.h"
 #include "fb/LocalFB.h"
 #include "mpi/async/CommLayer.h"
 #include "mpi/fb/DistributedFrameBuffer.h"

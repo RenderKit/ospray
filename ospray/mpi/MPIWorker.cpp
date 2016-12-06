@@ -14,8 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "mpi/MPICommon.h"
-#include "mpi/MPIDevice.h"
+#include "mpi/common/MPICommon.h"
 
 #include "ospray/ospray.h"
 

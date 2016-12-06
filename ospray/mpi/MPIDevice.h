@@ -16,9 +16,9 @@
 
 #pragma once
 
-#include "MPICommon.h"
 #include "api/Device.h"
-#include "mpi/command.h"
+#include "mpi/common/MPICommon.h"
+#include "mpi/common/command.h"
 #include "CommandStream.h"
 #include "common/Managed.h"
 

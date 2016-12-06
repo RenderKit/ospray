@@ -25,7 +25,7 @@
     something similarly
 */
 
-#include "mpi/Core.h"
+#include "mpi/common/Core.h"
 #ifdef OSPRAY_MPI
 # include "mpi/MPIDevice.h"
 #endif
