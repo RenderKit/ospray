@@ -321,8 +321,6 @@ TriangleMeshSceneParser::createOSPRayGeometry(miniSG::Model *msgModel,
                                      &materialList[0]);
     ospMesh.set("materialList", ospMaterialList);
 
-    // only set these if alpha aware mode enabled
-    // this currently doesn't work on the MICs!
     if(alpha) {
       auto ospAlphaMapList = cpp::Data(alphaMaps.size(),
                                        OSP_OBJECT,
