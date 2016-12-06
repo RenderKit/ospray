@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "mpi/async/CommLayer.h"
+#include "mpi/common/async/CommLayer.h"
 #include "fb/LocalFB.h"
 #include "common/Thread.h"
 #include <queue>

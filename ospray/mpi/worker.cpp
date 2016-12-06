@@ -15,8 +15,8 @@
 // ======================================================================== //
 
 #include "mpi/common/MPICommon.h"
+#include "mpi/common/CommandStream.h"
 #include "mpi/MPIDevice.h"
-#include "mpi/CommandStream.h"
 #include "common/Model.h"
 #include "common/Data.h"
 #include "common/Library.h"
@@ -28,12 +28,10 @@
 #include "lights/Light.h"
 #include "texture/Texture2D.h"
 #include "fb/LocalFB.h"
-#include "mpi/async/CommLayer.h"
+#include "mpi/common/async/CommLayer.h"
 #include "mpi/fb/DistributedFrameBuffer.h"
 #include "mpi/render/MPILoadBalancer.h"
 #include "transferFunction/TransferFunction.h"
-
-#include "mpi/MPIDevice.h"
 
 // std
 #include <algorithm>

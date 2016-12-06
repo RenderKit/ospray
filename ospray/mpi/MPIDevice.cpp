@@ -28,7 +28,7 @@
 #include "volume/Volume.h"
 #include "mpi/render/MPILoadBalancer.h"
 #include "fb/LocalFB.h"
-#include "mpi/async/CommLayer.h"
+#include "mpi/common/async/CommLayer.h"
 #include "mpi/fb/DistributedFrameBuffer.h"
 // std
 #ifndef _WIN32

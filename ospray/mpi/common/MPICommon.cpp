@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #include "mpi/common/MPICommon.h"
-#include "mpi/async/CommLayer.h"
+#include "mpi/common/async/CommLayer.h"
 
 namespace ospray {
   namespace mpi {

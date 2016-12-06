@@ -19,7 +19,7 @@
 #include "api/Device.h"
 #include "mpi/common/MPICommon.h"
 #include "mpi/common/command.h"
-#include "CommandStream.h"
+#include "mpi/common/CommandStream.h"
 #include "common/Managed.h"
 
 /*! \file mpidevice.h Implements the "mpi" device for mpi rendering */
