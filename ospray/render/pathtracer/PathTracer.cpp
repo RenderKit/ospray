@@ -83,7 +83,7 @@ namespace ospray {
               , areaPDF+i);
           if (light)
             lightArray.push_back(light);
-          else if (logLevel >= 1)
+          else if (logLevel() >= 1)
             std::cout << "#osp:pt Geometry " << geo->toString() <<
               " does not implement area sampling! Cannot use importance "
               "sampling for that geometry with emissive material!" << std::endl;
