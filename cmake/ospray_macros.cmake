@@ -170,14 +170,11 @@ ENDMACRO()
 
 ## Target creation macros ##
 
-# NOTE(jda) - Must be a function and not a macro so the include() for
-#             MIC doesn't have side effects on future subdirectories
 FUNCTION(OSPRAY_ADD_SUBDIRECTORY subdirectory)
   SET(OSPRAY_EXE_SUFFIX "")
   SET(OSPRAY_LIB_SUFFIX "")
   SET(OSPRAY_ISPC_SUFFIX ".o")
   SET(__XEON__ ON)
-  SET(OSPRAY_TARGET_MIC OFF)
 
   ADD_SUBDIRECTORY(${subdirectory} builddir/${subdirectory}/intel64)
 ENDFUNCTION()
@@ -221,8 +218,6 @@ MACRO(OSPRAY_EXE_LINK_LIBRARIES name)
 ENDMACRO()
 
 ## Target install macros for OSPRay libraries ##
-# use vanilla INSTALL for apps -- these don't have MIC parts and should also not
-# go into COMPONENT lib
 
 MACRO(OSPRAY_INSTALL_LIBRARY name)
   # NOTE(jda) - Check if CMAKE_INSTALL_LIB/BINDIR is set, and use
@@ -256,7 +251,6 @@ ENDMACRO()
 # worker, because these go into install component 'lib'
 MACRO(OSPRAY_INSTALL_EXE _name)
   SET(name ${_name}${OSPRAY_EXE_SUFFIX})
-  # use OSPRAY_LIB_SUFFIX for COMPONENT to get lib_mic and not lib.mic
   INSTALL(TARGETS ${name} ${ARGN} 
     DESTINATION ${CMAKE_INSTALL_BINDIR}
     COMPONENT lib${OSPRAY_LIB_SUFFIX}
