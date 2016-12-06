@@ -579,44 +579,61 @@ namespace ospray {
 
     Ref<miniSG::Node> importRIVL(const std::string &fileName)
     {
-      string xmlFileName = fileName;
-      string binFileName = fileName+".bin";
+      string binFileName = fileName + ".bin";
 
-      FILE *file = fopen(binFileName.c_str(),"rb");
-      if (!file)
-        perror("could not open binary file");
-      fseek(file,0,SEEK_END);
+      FILE *file = fopen(binFileName.c_str(), "rb");
+      if (!file) perror(("could not open binary file: " + binFileName).c_str());
+      fseek(file, 0, SEEK_END);
       ssize_t fileSize =
 #ifdef _WIN32
-        _ftelli64(file);
+      _ftelli64(file);
 #else
-        ftell(file);
+      ftell(file);
 #endif
       fclose(file);
       
 #ifdef _WIN32
-      HANDLE fileHandle = CreateFile(binFileName.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-      if (fileHandle == nullptr)
-        fprintf(stderr, "could not open file '%s' (error %lu)\n", binFileName.c_str(), GetLastError());
-      HANDLE fileMappingHandle = CreateFileMapping(fileHandle, nullptr, PAGE_READONLY, 0, 0, nullptr);
-      if (fileMappingHandle == nullptr)
-        fprintf(stderr, "could not create file mapping (error %lu)\n", GetLastError());
+      HANDLE fileHandle = CreateFile(binFileName.c_str(),
+                                     GENERIC_READ,
+                                     FILE_SHARE_READ,
+                                     nullptr,
+                                     OPEN_EXISTING,
+                                     FILE_ATTRIBUTE_NORMAL,
+                                     nullptr);
+      if (fileHandle == nullptr) {
+        fprintf(stderr,
+                "could not open file '%s' (error %lu)\n",
+                binFileName.c_str(),
+                GetLastError());
+      }
+      HANDLE fileMappingHandle = CreateFileMapping(fileHandle,
+                                                   nullptr,
+                                                   PAGE_READONLY,
+                                                   0,
+                                                   0,
+                                                   nullptr);
+      if (fileMappingHandle == nullptr) {
+        fprintf(stderr,
+                "could not create file mapping (error %lu)\n",
+                GetLastError());
+      }
 #else
       int fd = ::open(binFileName.c_str(), O_LARGEFILE | O_RDONLY);
-      if (fd == -1)
-        perror("could not open file");
+      if (fd == -1) perror(("could not open file: " + binFileName).c_str());
 #endif
 
       binBasePtr = (unsigned char *)
 #ifdef _WIN32
         MapViewOfFile(fileMappingHandle, FILE_MAP_READ, 0, 0, fileSize);
 #else
-        mmap(nullptr,fileSize,PROT_READ,MAP_SHARED,fd,0);
+        mmap(nullptr, fileSize, PROT_READ, MAP_SHARED, fd, 0);
 #endif
 
       xml::XMLDoc *doc = xml::readXML(fileName);
-      if (doc->child.size() != 1 || doc->child[0]->name != "BGFscene") 
-        throw std::runtime_error("could not parse RIVL file: Not in RIVL format!?");
+      if (doc->child.size() != 1 || doc->child[0]->name != "BGFscene") {
+        throw std::runtime_error("could not parse RIVL file: "
+                                 "Not in RIVL format!?");
+      }
       xml::Node *root_element = doc->child[0];
       Ref<Node> node = parseBGFscene(root_element);
       return node;
