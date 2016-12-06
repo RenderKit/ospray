@@ -582,7 +582,9 @@ namespace ospray {
       string binFileName = fileName + ".bin";
 
       FILE *file = fopen(binFileName.c_str(), "rb");
-      if (!file) perror(("could not open binary file: " + binFileName).c_str());
+      if (!file) {
+        throw std::runtime_error("could not open binary file: " + binFileName);
+      }
       fseek(file, 0, SEEK_END);
       ssize_t fileSize =
 #ifdef _WIN32
@@ -619,7 +621,9 @@ namespace ospray {
       }
 #else
       int fd = ::open(binFileName.c_str(), O_LARGEFILE | O_RDONLY);
-      if (fd == -1) perror(("could not open file: " + binFileName).c_str());
+      if (fd == -1) {
+        throw std::runtime_error("could not open file: " + binFileName);
+      }
 #endif
 
       binBasePtr = (unsigned char *)
