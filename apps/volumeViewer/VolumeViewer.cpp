@@ -26,12 +26,19 @@
 #include "PreferencesDialog.h"
 #include "ProbeWidget.h"
 #include "OpenGLAnnotationRenderer.h"
+#include "commandline/SceneParser/trianglemesh/TriangleMeshSceneParser.h"
+#include <common/miniSG/miniSG.h>
+#include "ospcommon/FileName.h"
+
 
 // #ifdef OSPRAY_VOLUME_VOXELRANGE_IN_APP
 // #include "../../modules/loaders/VolumeFile.h"
 // #endif
 
 #include "importer/Importer.h"
+
+using namespace ospray;
+using namespace ospcommon;
 
 VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
                            std::string renderer_type,
@@ -185,7 +192,7 @@ void VolumeViewer::addGeometry(std::string filename)
 
   // Get filename if not specified.
   if(filename.empty())
-    filename = QFileDialog::getOpenFileName(this, tr("Load geometry"), ".", "Geometry files (*.ply *.dds)").toStdString();
+    filename = QFileDialog::getOpenFileName(this, tr("Load geometry"), ".", "Geometry files (*)").toStdString();
 
   if(filename.empty())
     return;
@@ -195,38 +202,101 @@ void VolumeViewer::addGeometry(std::string filename)
 
   // If successful, commit the triangle mesh and add it to all models.
   // if(TriangleMeshFile::importTriangleMesh(filename, triangleMesh) != NULL) {
-  ospray::importer::Group *newStuff = ospray::importer::import(filename);
-  if (!newStuff) return;
-  if (newStuff->geometry.size() != 1) return;
-  
-  OSPGeometry triangleMesh = newStuff->geometry[0]->handle;
+  ospcommon::FileName fn = filename;
+  ospray::miniSG::Model* msgModel = new miniSG::Model;
+  bool loadedSGScene = false;
+  if (fn.ext() == "stl") {
+    miniSG::importSTL(*msgModel,fn);
+    loadedSGScene = true;
+  } else if (fn.ext() == "msg") {
+    miniSG::importMSG(*msgModel,fn);
+    loadedSGScene = true;
+  } else if (fn.ext() == "tri") {
+    miniSG::importTRI(*msgModel,fn);
+    loadedSGScene = true;
+  } else if (fn.ext() == "xml") {
+    miniSG::importRIVL(*msgModel,fn);
+    loadedSGScene = true;
+  } else if (fn.ext() == "obj") {
+    miniSG::importOBJ(*msgModel,fn);
+    loadedSGScene = true;
+  } else if (fn.ext() == "hbp") {
+    miniSG::importHBP(*msgModel,fn);
+    loadedSGScene = true;
+  } else if (fn.ext() == "x3d") {
+    miniSG::importX3D(*msgModel,fn);
+    loadedSGScene = true;
+  } else if (fn.ext() == "astl") {
+        // miniSG::importSTL(msgAnimation,fn);
+        // loadedSGScene = true;
+  } else {
+    ospray::importer::Group *newStuff = ospray::importer::import(filename);
+    if (!newStuff) return;
+    if (newStuff->geometry.size() != 1) return;
+
+    OSPGeometry triangleMesh = newStuff->geometry[0]->handle;
   // For now: if this is a DDS geometry, assume it is a horizon and its color should be mapped through the first volume's transfer function.
-  if(QString(filename.c_str()).endsWith(".dds") && modelStates.size() > 0 && modelStates[0].volumes.size() > 0) {
-    
-    OSPMaterial material = ospNewMaterial(renderer, "default");
-    ospSet3f(material, "Kd", 1,1,1);
-    ospSetObject(material, "volume", modelStates[0].volumes[0]->handle);
-    ospCommit(material);
-    
-    ospSetMaterial(triangleMesh, material);
-  }
-  
-  ospCommit(triangleMesh);
-  
+    if(QString(filename.c_str()).endsWith(".dds") && modelStates.size() > 0 && modelStates[0].volumes.size() > 0) {
+
+      OSPMaterial material = ospNewMaterial(renderer, "default");
+      ospSet3f(material, "Kd", 1,1,1);
+      ospSetObject(material, "volume", modelStates[0].volumes[0]->handle);
+      ospCommit(material);
+
+      ospSetMaterial(triangleMesh, material);
+      ospCommit(triangleMesh);
+
   // Create an instance of the geometry and add the instance to the main model(s)--this prevents the geometry
   // from being rebuilt every time the main model is committed (e.g. when slices / isosurfaces are manipulated)
-  OSPModel modelInstance = ospNewModel();
-  ospAddGeometry(modelInstance, triangleMesh);
-  ospCommit(modelInstance);
-  
-  ospcommon::affine3f xfm = ospcommon::one;
-  OSPGeometry triangleMeshInstance = ospNewInstance(modelInstance, (osp::affine3f&)xfm);
-  ospCommit(triangleMeshInstance);
-  
-  for(size_t i=0; i<modelStates.size(); i++) {
-    ospAddGeometry(modelStates[i].model, triangleMeshInstance);
-    ospCommit(modelStates[i].model);
+      OSPModel modelInstance = ospNewModel();
+      ospAddGeometry(modelInstance, triangleMesh);
+      ospCommit(modelInstance);
+
+      ospcommon::affine3f xfm = ospcommon::one;
+      OSPGeometry triangleMeshInstance = ospNewInstance(modelInstance, (osp::affine3f&)xfm);
+      ospCommit(triangleMeshInstance);
+
+      for(size_t i=0; i<modelStates.size(); i++) {
+        ospAddGeometry(modelStates[i].model, triangleMeshInstance);
+        ospCommit(modelStates[i].model);
+      }
+    }
   }
+  if (loadedSGScene)
+  {
+    std::vector<OSPModel> instanceModels;
+
+    for (size_t i = 0; i < msgModel->mesh.size(); i++) {
+      Ref<miniSG::Mesh> msgMesh = msgModel->mesh[i];
+      TriangleMeshSceneParser parser(ospray::cpp::Renderer(), "triangles");
+      auto ospMesh = parser.createOSPRayGeometry(msgModel, msgMesh.ptr);
+
+      OSPMaterial mat = ospNewMaterial(renderer, "OBJMaterial");
+      ospSet3f(mat,"Kd",.8f,.8f,.8f);
+      ospCommit(mat);
+      ospSetMaterial(ospMesh.handle(), mat);
+      ospCommit(ospMesh.handle());
+
+      cpp::Model model_i;
+      model_i.addGeometry(ospMesh);
+      model_i.commit();
+      instanceModels.push_back(model_i.handle());
+    }
+
+    for (size_t i = 0; i < msgModel->instance.size(); i++) {
+      msgModel->instance[i].xfm = msgModel->instance[i].xfm*ospcommon::affine3f::translate(ospcommon::vec3f(16,16,.1));  // hack for landing gear
+      OSPGeometry inst =
+      ospNewInstance(instanceModels[msgModel->instance[i].meshID],
+        reinterpret_cast<osp::affine3f&>(msgModel->instance[i].xfm));
+      ospCommit(inst);
+        // sceneModel->addGeometry(inst);
+      for(size_t i=0; i<modelStates.size(); i++) {
+        ospAddGeometry(modelStates[i].model, inst);
+        ospCommit(modelStates[i].model);
+      }
+    }
+  }
+  
   
   // Force render.
   render();

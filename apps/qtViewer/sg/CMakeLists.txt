@@ -16,7 +16,7 @@
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
-ADD_LIBRARY(ospray_sg STATIC
+ADD_LIBRARY(ospray_sg SHARED
   # scene graph nodes
   SceneGraph.cpp
   Renderer.cpp
@@ -41,7 +41,7 @@ ADD_LIBRARY(ospray_sg STATIC
   # scene graph importers
   importer/Importer.cpp
   importer/ImportSpheres.cpp
-  importer/ImportOSP.cpp
+  importer/ImportOSG.cpp
   importer/ImportOBJ.cpp
   importer/ImportPLY.cpp
   importer/ImportRIVL.cpp

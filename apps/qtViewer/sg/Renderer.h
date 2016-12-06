@@ -20,6 +20,7 @@
 
 namespace ospray {
   namespace sg {
+    class FrameBuffer;
     struct Renderer : public RefCount {
       Renderer();
 

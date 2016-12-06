@@ -45,7 +45,7 @@ namespace ospray {
     //! constructor
     StructuredVolume::StructuredVolume()
       : dimensions(-1), voxelType("<undefined>"),
-        mappedPointer(nullptr), volume(nullptr)
+        mappedPointer(nullptr)
     {}
 
     /*! \brief returns a std::string with the c++ name of this class */
@@ -122,7 +122,7 @@ namespace ospray {
 
     //! constructor
     StructuredVolumeFromFile::StructuredVolumeFromFile()
-      : dimensions(-1), fileName(""), voxelType("<undefined>"), volume(nullptr)
+      : dimensions(-1), fileName(""), voxelType("<undefined>")
     {}
 
     /*! \brief returns a std::string with the c++ name of this class */
@@ -244,7 +244,7 @@ namespace ospray {
 
     //! constructor
     StackedRawSlices::StackedRawSlices()
-      : baseName(""), voxelType("uint8_t"), dimensions(-1), volume(nullptr)
+      : baseName(""), voxelType("uint8_t"), dimensions(-1)
     {}
 
     /*! \brief returns a std::string with the c++ name of this class */

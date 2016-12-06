@@ -14,6 +14,13 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+INCLUDE_DIRECTORIES(
+  ${CMAKE_SOURCE_DIR}/ospray/include
+  ${CMAKE_SOURCE_DIR}/ospray
+  ${CMAKE_SOURCE_DIR}
+  ${CMAKE_SOURCE_DIR}/apps/qtViewer
+  )
+
 OSPRAY_CREATE_LIBRARY(ospray_importer
   importOSP.cpp
   importRAW.cpp
@@ -23,4 +30,6 @@ OSPRAY_CREATE_LIBRARY(ospray_importer
 LINK
   ospray_common
   ospray
+  ospray_sg
+  ospray_sg_amr
 )

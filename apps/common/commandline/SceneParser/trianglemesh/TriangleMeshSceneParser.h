@@ -31,6 +31,9 @@ public:
 
   std::deque<ospray::cpp::Model> model() const override;
   std::deque<ospcommon::box3f>   bbox()  const override;
+  ospray::cpp::Geometry createOSPRayGeometry(ospray::miniSG::Model *msgModel,
+                                             ospray::miniSG::Mesh  *msgMesh);
+ 
 
 private:
 
@@ -57,7 +60,5 @@ private:
   std::deque<ospcommon::Ref<ospray::miniSG::Model> > msgModels;
   std::vector<ospray::miniSG::Model *> msgAnimation;
 
-  ospray::cpp::Geometry createOSPRayGeometry(ospray::miniSG::Model *msgModel,
-                                             ospray::miniSG::Mesh  *msgMesh);
   void finalize();
 };

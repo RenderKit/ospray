@@ -26,6 +26,7 @@
 // scene graph
 #include "sg/module/Module.h"
 #include "sg/importer/Importer.h"
+#include "sg/common/FrameBuffer.h"
 
 #include <fstream>
 #include <stdexcept>
@@ -172,8 +173,8 @@ namespace ospray {
           }
         } else {
           FileName fn = arg;
-          if (fn.ext() == "osp" || fn.ext() == "pkd") {
-            world = sg::loadOSP(fn.str());
+          if (fn.ext() == "osg" || fn.ext() == "pkd") {
+            world = sg::loadOSG(fn.str());
             // } else if (fn.ext() == "atom") {
             //   world = sg::AlphaSpheres::importOspAtomFile(fn.str());
           } else if ((fn.ext() == "ply") || 

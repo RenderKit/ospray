@@ -29,7 +29,6 @@
 #include "sg/common/Integrator.h"
 #include "sg/camera/PerspectiveCamera.h"
 #include "sg/common/Data.h"
-#include "sg/common/FrameBuffer.h"
 
 // ospcommon
 #include "ospcommon/FileName.h"
@@ -161,7 +160,7 @@ namespace ospray {
     /*! import an X3D-format model, and add its contents to the given world */
     void importX3D(const Ref<World> &world, const FileName &fileName);
 
-    Ref<sg::World> loadOSP(const std::string &fileName);
+    Ref<sg::World> loadOSG(const std::string &fileName);
 
     /*! @{ some simple testing geometry */
     World *createTestSphere();
