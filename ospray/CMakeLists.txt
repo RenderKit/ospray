@@ -86,7 +86,6 @@ SET(OSPRAY_SOURCES
   common/ospray.rc
   common/OSPCommon.ispc
   common/OSPCommon.cpp
-  common/Core.cpp
   common/ISPC_KNL_Backend.h
   common/Managed.cpp
   common/ObjectHandle.cpp
@@ -130,8 +129,6 @@ SET(OSPRAY_SOURCES
   volume/StructuredVolume.cpp
   volume/Volume.ispc
   volume/Volume.cpp
-  volume/DataDistributedBlockedVolume.ispc
-  volume/DataDistributedBlockedVolume.cpp
 
   transferFunction/LinearTransferFunction.ispc
   transferFunction/LinearTransferFunction.cpp
@@ -189,11 +186,6 @@ SET(OSPRAY_SOURCES
   render/scivis/SciVisMaterial.ih
   render/scivis/SciVisRenderer.cpp
   render/scivis/SciVisMaterial.cpp
-  render/volume/RaycastVolumeMaterial.cpp
-  render/volume/RaycastVolumeMaterial.ih
-  render/volume/RaycastVolumeMaterial.ispc
-  render/volume/RaycastVolumeRenderer.cpp
-  render/volume/RaycastVolumeRenderer.ispc
 
   render/pathtracer/PathTracer.ispc
   render/pathtracer/PathTracer.cpp

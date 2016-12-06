@@ -106,16 +106,13 @@ namespace ospray {
   class TileError {
     public:
       TileError(const vec2i &numTiles);
-      ~TileError();
+      virtual ~TileError();
       void clear();
       float operator[](const vec2i &tile) const;
       void update(const vec2i &tile, const float error);
-#ifdef OSPRAY_MPI
-      void sync(); // broadcast tileErrorBuffer to all workers
-#endif
       float refine(const float errorThreshold);
 
-    private:
+    protected:
       vec2i numTiles;
       int tiles;
       float *tileErrorBuffer; /*!< holds error per tile, for variance estimation / stopping */

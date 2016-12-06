@@ -29,7 +29,7 @@
 #include "texture/Texture2D.h"
 #include "fb/LocalFB.h"
 #include "mpi/async/CommLayer.h"
-#include "mpi/DistributedFrameBuffer.h"
+#include "mpi/fb/DistributedFrameBuffer.h"
 #include "mpi/MPILoadBalancer.h"
 #include "transferFunction/TransferFunction.h"
 

@@ -16,11 +16,11 @@
 
 #include <limits>
 // ospray
-#include "volume/DataDistributedBlockedVolume.h"
+#include "mpi/volume/DataDistributedBlockedVolume.h"
 #include "volume/GhostBlockBrickedVolume.h"
-#include "common/Core.h"
 #include "transferFunction/TransferFunction.h"
 #include "volume/GhostBlockBrickedVolume.h"
+#include "mpi/Core.h"
 #if EXP_DATA_PARALLEL
 #include "mpi/MPICommon.h"
 #endif

@@ -29,7 +29,7 @@
 #include "mpi/MPILoadBalancer.h"
 #include "fb/LocalFB.h"
 #include "mpi/async/CommLayer.h"
-#include "mpi/DistributedFrameBuffer.h"
+#include "mpi/fb/DistributedFrameBuffer.h"
 // std
 #ifndef _WIN32
 #  include <unistd.h> // for fork()

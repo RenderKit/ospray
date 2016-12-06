@@ -23,14 +23,9 @@
 #include "volume/Volume.h"
 #include "transferFunction/TransferFunction.h"
 #include "LocalDevice.h"
-#include "common/Core.h"
 
 #ifdef _WIN32
 #  include <process.h> // for getpid
-#endif
-
-#ifdef OSPRAY_MPI
-#  include "mpi/MPIDevice.h"
 #endif
 
 #if 1
@@ -85,7 +80,7 @@ extern "C" void ospInit(int *_ac, const char **_av)
     std::cout << "#osp: launching ospray mpi ring -"
               << " make sure that mpd is running" << std::endl;
 
-    auto *mpiDevice = new mpi::MPIDevice;
+    auto *mpiDevice = ospray::api::Device::createDevice("mpi");
     ospray::api::Device::current = mpiDevice;
     mpiDevice->findParam("mpiMode", true)->set("mpi-launch");
     mpiDevice->findParam("launchCommand", true)
@@ -126,7 +121,7 @@ extern "C" void ospInit(int *_ac, const char **_av)
       if (av == "--osp:mpi") {
 #ifdef OSPRAY_MPI
         removeArgs(*_ac,(char **&)_av,i,1);
-        auto *mpiDevice = new mpi::MPIDevice;
+        auto *mpiDevice = ospray::api::Device::createDevice("mpi");
         ospray::api::Device::current = mpiDevice;
 #else
         throw std::runtime_error("OSPRay MPI support not compiled in");
@@ -142,7 +137,7 @@ extern "C" void ospInit(int *_ac, const char **_av)
         const char *launchCommand = strdup(_av[i+1]);
         removeArgs(*_ac,(char **&)_av,i,2);
 
-        auto *mpiDevice = new mpi::MPIDevice;
+        auto *mpiDevice = ospray::api::Device::createDevice("mpi");
         ospray::api::Device::current = mpiDevice;
         mpiDevice->findParam("mpiMode", true)->set("mpi-launch");
         mpiDevice->findParam("launchCommand", true)->set(launchCommand);
@@ -162,7 +157,7 @@ extern "C" void ospInit(int *_ac, const char **_av)
         }
         removeArgs(*_ac,(char **&)_av,i,1);
 
-        auto *mpiDevice = new mpi::MPIDevice;
+        auto *mpiDevice = ospray::api::Device::createDevice("mpi");
         ospray::api::Device::current = mpiDevice;
         mpiDevice->findParam("mpiMode", true)->set("mpi-listen");
         mpiDevice->findParam("fileNameToStorePortIn", true)

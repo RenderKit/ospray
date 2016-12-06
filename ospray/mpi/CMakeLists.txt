@@ -22,6 +22,7 @@ OSPRAY_CREATE_LIBRARY(ospray_mpi
   buffers.h
   command.h
 
+  Core.cpp
   MPIDevice.cpp
   MPICommon.cpp
   MPILoadBalancer.cpp
@@ -33,9 +34,18 @@ OSPRAY_CREATE_LIBRARY(ospray_mpi
   async/BatchedIsendIrecvMessaging.cpp
   async/CommLayer.cpp
 
-  DistributedFrameBuffer.cpp
-  DistributedFrameBuffer.ispc
-  DistributedFrameBuffer_TileTypes.cpp
+  fb/DistributedFrameBuffer.cpp
+  fb/DistributedFrameBuffer.ispc
+  fb/DistributedFrameBuffer_TileTypes.cpp
+
+  render/volume/RaycastVolumeMaterial.cpp
+  render/volume/RaycastVolumeMaterial.ih
+  render/volume/RaycastVolumeMaterial.ispc
+  render/volume/RaycastVolumeRenderer.cpp
+  render/volume/RaycastVolumeRenderer.ispc
+
+  volume/DataDistributedBlockedVolume.ispc
+  volume/DataDistributedBlockedVolume.cpp
 
 LINK
   ospray

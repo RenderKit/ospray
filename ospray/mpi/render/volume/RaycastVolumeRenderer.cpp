@@ -17,16 +17,16 @@
 // ospray
 #include "lights/Light.h"
 #include "common/Data.h"
-#include "common/Core.h"
 #include "common/tasking/parallel_for.h"
-#include "render/volume/RaycastVolumeRenderer.h"
+#include "mpi/Core.h"
+#include "RaycastVolumeRenderer.h"
 #include "RaycastVolumeMaterial.h"
 
 // ispc exports
 #include "RaycastVolumeRenderer_ispc.h"
 #if EXP_DATA_PARALLEL
-# include "mpi/DistributedFrameBuffer.h"
-# include "volume/DataDistributedBlockedVolume.h"
+# include "mpi/fb/DistributedFrameBuffer.h"
+# include "mpi/volume/DataDistributedBlockedVolume.h"
 # include "render/LoadBalancer.h"
 #endif
 

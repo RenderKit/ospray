@@ -33,6 +33,13 @@ namespace ospray {
   struct MasterTileMessage_FB;
   struct WriteTileMessage;
 
+  class DistributedTileError : public TileError {
+    public:
+      DistributedTileError(const vec2i &numTiles);
+      ~DistributedTileError() = default;
+      void sync(); // broadcast tileErrorBuffer to all workers
+  };
+
   struct DistributedFrameBuffer
     : public mpi::async::CommLayer::Object,
       public virtual FrameBuffer
@@ -146,7 +153,7 @@ namespace ospray {
 
     int32 *tileAccumID; //< holds accumID per tile, for adaptive accumulation
     //!< holds error per tile and adaptive regions, for variance estimation / stopping
-    TileError tileErrorRegion;
+    DistributedTileError tileErrorRegion;
 
 
     /*! local frame buffer on the master used for storing the final
