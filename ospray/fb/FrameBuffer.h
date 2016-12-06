@@ -103,7 +103,7 @@ namespace ospray {
                 const int channel, const float *pixels);
 
   // manages error per tile and adaptive regions, for variance estimation / stopping
-  class TileError {
+  class OSPRAY_SDK_INTERFACE TileError {
     public:
       TileError(const vec2i &numTiles);
       virtual ~TileError();

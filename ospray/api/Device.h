@@ -30,7 +30,7 @@ namespace ospray {
   namespace api {
 
     /*! abstract base class of all 'devices' that implement the ospray API */
-    struct Device : public ManagedObject {
+    struct OSPRAY_SDK_INTERFACE Device : public ManagedObject {
       /*! singleton that points to currently active device */
       static Ref<Device> current;
 
