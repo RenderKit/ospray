@@ -232,7 +232,6 @@ OSPRAY_INSTALL_SDK_HEADERS(
 )
 
 OSPRAY_INSTALL_SDK_HEADERS(
-  common/Core.h
   common/Data.h
   common/DifferentialGeometry.ih
   common/Library.h
