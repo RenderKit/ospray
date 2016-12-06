@@ -59,6 +59,8 @@ namespace ospray {
 
       if (strcmp(voxelType, "uchar") == 0)
         voxelSize = sizeof(unsigned char);
+      else if (strcmp(voxelType, "ushort") == 0)
+        voxelSize = sizeof(unsigned short);
       else if (strcmp(voxelType, "float") == 0)
         voxelSize = sizeof(float);
       else if (strcmp(voxelType, "double") == 0)
