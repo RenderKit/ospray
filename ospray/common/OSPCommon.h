@@ -174,7 +174,7 @@ namespace ospray {
     const std::string s;
   };
 
-  uint32_t logLevel();
+  uint32_t OSPRAY_INTERFACE logLevel();
 
 } // ::ospray
 
