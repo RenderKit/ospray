@@ -61,6 +61,7 @@ namespace ospray {
 
   void PathTracer::generateGeometryLights(const Model *const model
       , const affine3f& xfm
+      , const affine3f& rcp_xfm
       , float *const areaPDF
       )
   {
@@ -70,14 +71,22 @@ namespace ospray {
       Ref<Instance> inst = geo.dynamicCast<Instance>();
       if (inst) {
         const affine3f instXfm = xfm * inst->xfm;
-        generateGeometryLights(inst->instancedScene.ptr, instXfm, &(inst->areaPDF[0]));
+        const affine3f rcpXfm = rcp(instXfm);
+        generateGeometryLights(inst->instancedScene.ptr, instXfm, rcpXfm,
+            &(inst->areaPDF[0]));
       } else
         if (geo->material && geo->material->getIE()
             && ispc::PathTraceMaterial_isEmissive(geo->material->getIE())) {
-          void* light = ispc::GeometryLight_create(geo->getIE(),
-              (const ispc::AffineSpace3f&)xfm, areaPDF+i);
+          void* light = ispc::GeometryLight_create(geo->getIE()
+              , (const ispc::AffineSpace3f&)xfm
+              , (const ispc::AffineSpace3f&)rcp_xfm
+              , areaPDF+i);
           if (light)
             lightArray.push_back(light);
+          else if (logLevel >= 1)
+            std::cout << "#osp:pt Geometry " << geo->toString() <<
+              " does not implement area sampling! Cannot use importance "
+              "sampling for that geometry with emissive material!" << std::endl;
         }
     }
   }
@@ -97,7 +106,7 @@ namespace ospray {
 
     if (model) {
       areaPDF.resize(model->geometry.size());
-      generateGeometryLights(model, affine3f(one), &areaPDF[0]);
+      generateGeometryLights(model, affine3f(one), affine3f(one), &areaPDF[0]);
       geometryLights = lightArray.size();
     }
 

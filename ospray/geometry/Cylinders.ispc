@@ -111,7 +111,6 @@ void Cylinders_intersect(uniform Cylinders *uniform geometry,
   if (hit) {
     ray.primID = primID;
     ray.geomID = geometry->super.geomID;
-    ray.instID = -1;
     // cannot easily be moved to postIntersect
     // we need hit in object space, in postIntersect it is in world-space
     const vec3f P = ray.t*ray.dir - A;

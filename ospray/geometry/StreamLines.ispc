@@ -138,7 +138,6 @@ void StreamLines_intersect(uniform StreamLines *uniform geometry,
   if (hit) {
     ray.geomID = geometry->super.geomID;
     ray.primID = primID; // original primID needed for vertex coloring
-    ray.instID = -1;
     const vec3f P = ray.t * ray.dir;
     float s = dot(P-A,B-A) * rcpf(dot(B-A,B-A));
     s = min(max(s,0.f),1.f);
