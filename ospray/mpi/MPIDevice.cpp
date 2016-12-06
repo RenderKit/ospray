@@ -45,7 +45,7 @@ namespace ospray {
     /*! it's up to the proper init routine to decide which processes
       call this function and which ones don't. This function will not
       return. */
-    OSPRAY_INTERFACE void runWorker();
+    OSPRAY_MPI_INTERFACE void runWorker();
 
     /*! in this mode ("ospray on ranks" mode, or "ranks" mode), the
         user has launched the app across all ranks using mpirun "<all

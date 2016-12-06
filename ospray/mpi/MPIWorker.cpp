@@ -25,7 +25,7 @@ namespace ospray {
     using std::cout;
     using std::endl;
 
-    OSPRAY_INTERFACE void runWorker();
+    OSPRAY_MPI_INTERFACE void runWorker();
 
     void workerMain(int ac, const char **av)
     {

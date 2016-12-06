@@ -20,9 +20,9 @@
 namespace ospray {
   namespace mpi {
 
-    OSPRAY_INTERFACE Group world;
-    OSPRAY_INTERFACE Group app;
-    OSPRAY_INTERFACE Group worker;
+    OSPRAY_MPI_INTERFACE Group world;
+    OSPRAY_MPI_INTERFACE Group app;
+    OSPRAY_MPI_INTERFACE Group worker;
 
     void init(int *ac, const char **av)
     {
