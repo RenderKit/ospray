@@ -148,6 +148,72 @@ static void Cylinders_postIntersect(uniform Geometry *uniform geometry,
   }
 }
 
+SampleAreaRes Cylinders_sampleArea(
+    const Geometry *uniform const _self
+    , const int32 primID
+    , const uniform affine3f &xfm
+    , const uniform affine3f &rcp_xfm
+    , const vec2f& s
+    )
+{
+  const Cylinders *const uniform self = (const Cylinders *uniform)_self;
+  uint8 *cylinderPtr = self->data + self->bytesPerCylinder*primID;
+  float radius = self->radius;
+  if (self->offset_radius >= 0)
+    radius = *((float *)(cylinderPtr + self->offset_radius));
+  vec3f v0 = *((vec3f *)(cylinderPtr + self->offset_v0));
+  vec3f v1 = *((vec3f *)(cylinderPtr + self->offset_v1));
+
+  linear3f frame = frame(v1-v0);
+  frame.vy = normalize(frame.vy);
+  const float phi = two_pi * s.x;
+  float sinPhi, cosPhi;
+  sincos(phi, &sinPhi, &cosPhi);
+  const vec3f localNormal = (cosPhi*radius)*frame.vx + (sinPhi*radius)*frame.vy;
+  const vec3f localPos = v0 + localNormal + s.y*frame.vz;
+
+  SampleAreaRes res;
+  res.pos = xfmPoint(xfm, localPos);
+  res.normal = normalize(xfmVector(transposed(rcp_xfm.l), localNormal));
+
+  return res;
+}
+
+void Cylinders_getAreas(
+    const Geometry *const uniform _self
+    , const uniform affine3f &xfm
+    , float *const uniform area
+    )
+{
+  Cylinders *uniform self = (Cylinders *uniform)_self;
+
+  // detect (non-uniform) scaling; get length of transformed unit-vectors
+  const uniform vec3f scaling3 =
+    make_vec3f(length(xfm.l.vx), length(xfm.l.vy), length(xfm.l.vz));
+  const uniform float min_scaling = reduce_min(scaling3);
+  const uniform float max_scaling = reduce_max(scaling3);
+  if ((max_scaling - min_scaling) > 1e-4f*min_scaling)
+    print("#osp:Cylinders_getAreas: Non-uniform scaling in instance "
+        "transformation detected! Importance sampling for emissive "
+        "materials and thus resulting image may be wrong.\n");
+  // use average as approximation to closest uniform scaling
+  const uniform float scaling = reduce_add(scaling3)/3.f;
+
+  uniform float radius = self->radius;
+  uint8 *uniform cylinderPtr = self->data;
+  const uniform int64 stride = self->bytesPerCylinder;
+  // TODO vectorize this loop, with foreach or ProgramCount & ProgramIndex
+  for(uniform int32 i = 0; i < self->super.primitives; i++, cylinderPtr += stride) {
+    if (self->offset_radius >= 0)
+      radius = *((float *uniform)(cylinderPtr + self->offset_radius));
+    const uniform float circ = two_pi * radius * scaling;
+    uniform vec3f v0 = *((vec3f *uniform)(cylinderPtr + self->offset_v0));
+    uniform vec3f v1 = *((vec3f *uniform)(cylinderPtr + self->offset_v1));
+    area[i] = circ * length(v0 - v1) * scaling;
+  }
+}
+
+
 export void *uniform Cylinders_create(void *uniform cppEquivalent)
 {
   uniform Cylinders *uniform geom = uniform new uniform Cylinders;
@@ -157,7 +223,7 @@ export void *uniform Cylinders_create(void *uniform cppEquivalent)
   return geom;
 }
 
-export void CylindersGeometry_set(void           *uniform _geom,
+export void CylindersGeometry_set(void           *uniform _self,
                                   void           *uniform _model,
                                   void           *uniform data,
                                   void           *uniform materialList,
@@ -172,28 +238,30 @@ export void CylindersGeometry_set(void           *uniform _geom,
                                   int             uniform offset_materialID,
                                   int             uniform offset_colorID)
 {
-  uniform Cylinders *uniform geom = (uniform Cylinders *uniform)_geom;
-  uniform Model *uniform model = (uniform Model *uniform)_model;
+  Cylinders *uniform self = (Cylinders *uniform)_self;
+  Model *uniform model = (Model *uniform)_model;
 
   uniform uint32 geomID = rtcNewUserGeometry(model->embreeSceneHandle,numCylinders);
   
-  geom->super.model = model;
-  geom->super.geomID = geomID;
-  geom->super.primitives = numCylinders;
-  geom->materialList = (Material **)materialList;
-  geom->color = color;
-  geom->radius = radius;
-  geom->data = (uniform uint8 *uniform)data;
-  geom->materialID = materialID;
-  geom->bytesPerCylinder = bytesPerCylinder;
+  self->super.model = model;
+  self->super.geomID = geomID;
+  self->super.primitives = numCylinders;
+  self->super.getAreas = Cylinders_getAreas;
+  self->super.sampleArea = Cylinders_sampleArea;
+  self->materialList = (Material **)materialList;
+  self->color = color;
+  self->radius = radius;
+  self->data = (uniform uint8 *uniform)data;
+  self->materialID = materialID;
+  self->bytesPerCylinder = bytesPerCylinder;
 
-  geom->offset_v0         = offset_v0;
-  geom->offset_v1         = offset_v1;
-  geom->offset_radius     = offset_radius;
-  geom->offset_materialID = offset_materialID;
-  geom->offset_colorID    = offset_colorID;
+  self->offset_v0         = offset_v0;
+  self->offset_v1         = offset_v1;
+  self->offset_radius     = offset_radius;
+  self->offset_materialID = offset_materialID;
+  self->offset_colorID    = offset_colorID;
 
-  rtcSetUserData(model->embreeSceneHandle,geomID,geom);
+  rtcSetUserData(model->embreeSceneHandle, geomID, self);
   rtcSetBoundsFunction(model->embreeSceneHandle,geomID,
                        (uniform RTCBoundsFunc)&Cylinders_bounds);
   rtcSetIntersectFunction(model->embreeSceneHandle,geomID,
