@@ -225,8 +225,9 @@ void StreamLines_getAreas(
   // spheres at vertices
   const uniform float sphereArea = four_pi * sqr(self->radius * scaling);
   const uniform int32 spheres = self->numVertices;
+  // initialize with zero per default (i.e. deactivate sampling)
   foreach(i = 0 ... spheres)
-    area[i] = sphereArea;
+    area[i] = 0.f;
 
   // cylinders for segments; area of a cylinder with unit-length
   const uniform float cyl1Area = two_pi * self->radius * sqr(scaling);
@@ -236,6 +237,9 @@ void StreamLines_getAreas(
     const uniform vec3f v0 = make_vec3f(self->vertex[idx]);
     const uniform vec3f v1 = make_vec3f(self->vertex[idx+1]);
     area[i] = cyl1Area * length(v0 - v1);
+    // only set area for spheres which are actually part of a segment
+    area[idx] = sphereArea;
+    area[idx+1] = sphereArea;
   }
 }
 
