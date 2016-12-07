@@ -215,8 +215,11 @@ extern "C" OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size,
 //! load module \<name\> from shard lib libospray_module_\<name\>.so, or
 extern "C" int32_t ospLoadModule(const char *moduleName)
 {
-  ASSERT_DEVICE();
-  return ospray::api::Device::current->loadModule(moduleName);
+  if (ospray::api::Device::current) {
+    return ospray::api::Device::current->loadModule(moduleName);
+  } else {
+    return loadLocalModule(moduleName);
+  }
 }
 
 extern "C" const void *ospMapFrameBuffer(OSPFrameBuffer fb,

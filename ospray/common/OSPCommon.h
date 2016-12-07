@@ -174,7 +174,9 @@ namespace ospray {
     const std::string s;
   };
 
-  uint32_t OSPRAY_INTERFACE logLevel();
+  OSPRAY_INTERFACE uint32_t logLevel();
+
+  OSPRAY_INTERFACE int loadLocalModule(const std::string &name);
 
 } // ::ospray
 
