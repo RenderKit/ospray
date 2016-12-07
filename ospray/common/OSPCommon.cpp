@@ -15,22 +15,11 @@
 // ======================================================================== //
 
 #include "OSPCommon.h"
-#if defined(OSPRAY_TASKING_TBB)
-# include <tbb/task_scheduler_init.h>
-#elif defined(OSPRAY_TASKING_CILK)
-# include <cilk/cilk_api.h>
-#elif defined(OSPRAY_TASKING_OMP)
-# include <omp.h>
-#elif defined(OSPRAY_TASKING_INTERNAL)
-# include "common/tasking/TaskSys.h"
-#endif
+#include "api/Device.h"
 // embree
 #include "embree2/rtcore.h"
-#include "ospcommon/sysinfo.h"
 
 namespace ospray {
-
-  RTCDevice g_embreeDevice = nullptr;
 
   /*! 64-bit malloc. allows for alloc'ing memory larger than 64 bits */
   extern "C" void *malloc64(size_t size)
@@ -43,12 +32,6 @@ namespace ospray {
   {
     return ospcommon::alignedFree(ptr);
   }
-
-  /*! logging level - '0' means 'no logging at all', increasing
-      numbers mean increasing verbosity of log messages */
-  uint32_t logLevel = 0;
-  bool debugMode = false;
-  int numThreads = -1;
 
   WarnOnce::WarnOnce(const std::string &s) 
     : s(s) 
@@ -90,12 +73,9 @@ namespace ospray {
     ac -= howMany;
   }
 
-  void init(int *_ac, const char ***_av)
+  void initFromCommandLine(int *_ac, const char ***_av)
   {
-    int cpuFeatures = ospcommon::getCPUFeatures();
-    if ((cpuFeatures & ospcommon::CPU_FEATURE_SSE41) == 0)
-      throw std::runtime_error("Error. OSPRay only runs on CPUs that support"
-                               " at least SSE4.1.");
+    auto &device = ospray::api::Device::current;
 
     if (_ac && _av) {
       int &ac = *_ac;
@@ -103,43 +83,25 @@ namespace ospray {
       for (int i=1;i<ac;) {
         std::string parm = av[i];
         if (parm == "--osp:debug") {
-          debugMode = true;
-          numThreads = 1;
+          device->debugMode = true;
           removeArgs(ac,av,i,1);
         } else if (parm == "--osp:verbose") {
-          logLevel = 1;
+          device->logLevel = 1;
           removeArgs(ac,av,i,1);
         } else if (parm == "--osp:vv") {
-          logLevel = 2;
+          device->logLevel = 2;
           removeArgs(ac,av,i,1);
         } else if (parm == "--osp:loglevel") {
-          logLevel = atoi(av[i+1]);
+          device->logLevel = atoi(av[i+1]);
           removeArgs(ac,av,i,2);
         } else if (parm == "--osp:numthreads" || parm == "--osp:num-threads") {
-          numThreads = atoi(av[i+1]);
+          device->numThreads = atoi(av[i+1]);
           removeArgs(ac,av,i,2);
         } else {
           ++i;
         }
       }
     }
-
-#if defined(OSPRAY_TASKING_TBB)
-    static tbb::task_scheduler_init tbb_init(numThreads);
-    UNUSED(tbb_init);
-#elif defined(OSPRAY_TASKING_CILK)
-    __cilkrts_set_param("nworkers", std::to_string(numThreads).c_str());
-#elif defined(OSPRAY_TASKING_OMP)
-    if (numThreads > 0) {
-      omp_set_num_threads(numThreads);
-    }
-#elif defined(OSPRAY_TASKING_INTERNAL)
-    try {
-      ospray::Task::initTaskSystem(debugMode ? 0 : numThreads);
-    } catch (const std::runtime_error &e) {
-      std::cerr << "WARNING: " << e.what() << std::endl;
-    }
-#endif
   }
 
   void error_handler(const RTCError code, const char *str)
@@ -167,6 +129,7 @@ namespace ospray {
     case OSP_OBJECT:
     case OSP_CAMERA:
     case OSP_DATA:
+    case OSP_DEVICE:
     case OSP_FRAMEBUFFER:
     case OSP_GEOMETRY:
     case OSP_LIGHT:
@@ -246,6 +209,7 @@ namespace ospray {
     case OSP_OBJECT:            return "object";
     case OSP_CAMERA:            return "camera";
     case OSP_DATA:              return "data";
+    case OSP_DEVICE:            return "device";
     case OSP_FRAMEBUFFER:       return "framebuffer";
     case OSP_GEOMETRY:          return "geometry";
     case OSP_LIGHT:             return "light";
@@ -311,6 +275,11 @@ namespace ospray {
     error << __FILE__ << ":" << __LINE__ << ": unknown OSPTextureFormat "
           << (int)type;
     throw std::runtime_error(error.str());
+  }
+
+  uint32_t logLevel()
+  {
+    return ospray::api::Device::current->logLevel;
   }
 
 } // ::ospray

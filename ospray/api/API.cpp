@@ -23,41 +23,22 @@
 #include "volume/Volume.h"
 #include "transferFunction/TransferFunction.h"
 #include "LocalDevice.h"
-#include "common/Core.h"
 
 #ifdef _WIN32
 #  include <process.h> // for getpid
 #endif
 
 #if 1
-# define LOG(a) if (ospray::logLevel > 2) { std::cout << "#ospray: " << a << std::endl << std::flush; fflush(0); }
+# define LOG(a) if (ospray::logLevel() > 2) { std::cout << "#ospray: " << a << std::endl << std::flush; fflush(0); }
 #else
 # define LOG(a) /*ignore*/
 #endif
 
 /*! \file api.cpp implements the public ospray api functions by
   routing them to a respective \ref device */
-namespace ospray {
 
-  using std::endl;
-  using std::cout;
-
-#ifdef OSPRAY_MPI
-  namespace mpi {
-    ospray::api::Device *createMPI_ListenForWorkers(int *ac, const char **av,
-                                                    const char *fileNameToStorePortIn);
-    ospray::api::Device *createMPI_LaunchWorkerGroup(int *ac, const char **av,
-                                                     const char *launchCommand);
-    ospray::api::Device *createMPI_runOnExistingRanks(int *ac, const char **av,
-                                                      bool ranksBecomeWorkers);
-    ospray::api::Device *createMPI_RanksBecomeWorkers(int *ac, const char **av)
-    { return createMPI_runOnExistingRanks(ac,av,true); }
-
-    void initDistributedAPI(int *ac, char ***av, OSPDRenderMode mpiMode);
-  }
-#endif
-
-} // ::ospray
+using std::endl;
+using std::cout;
 
 std::string getPidString() {
   char s[100];
@@ -80,14 +61,7 @@ extern "C" void ospInit(int *_ac, const char **_av)
                              "(did you call ospInit twice?)");
   }
 
-  auto OSPRAY_THREADS = getEnvVar<int>("OSPRAY_THREADS");
-  if (OSPRAY_THREADS.first) {
-    numThreads = OSPRAY_THREADS.second;
-  }
-
-  /* call ospray::init to properly parse common args like
-     --osp:verbose, --osp:debug etc */
-  ospray::init(_ac,&_av);
+  ospray::initFromCommandLine(_ac,&_av);
 
   auto OSP_MPI_LAUNCH = getEnvVar<std::string>("OSPRAY_MPI_LAUNCH");
 
@@ -95,24 +69,50 @@ extern "C" void ospInit(int *_ac, const char **_av)
 #ifdef OSPRAY_MPI
     std::cout << "#osp: launching ospray mpi ring -"
               << " make sure that mpd is running" << std::endl;
-    ospray::api::Device::current
-      = mpi::createMPI_LaunchWorkerGroup(_ac,_av,
-                                         OSP_MPI_LAUNCH.second.c_str());
+
+    auto *mpiDevice = ospray::api::Device::createDevice("mpi");
+    ospray::api::Device::current = mpiDevice;
+    mpiDevice->findParam("mpiMode", true)->set("mpi-launch");
+    mpiDevice->findParam("launchCommand", true)
+             ->set(OSP_MPI_LAUNCH.second.c_str());
 #else
     throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif
   }
 
   if (_ac && _av) {
-    // we're only supporting local rendering for now - network device
-    // etc to come.
     for (int i = 1; i < *_ac; i++) {
+      std::string av(_av[i]);
 
-      if (std::string(_av[i]) == "--osp:mpi") {
+      if (av == "--osp:coi") {
+        throw std::runtime_error("OSPRay's COI device is no longer supported!");
+        --i;
+        continue;
+      }
+
+      auto deviceSwitch = av.substr(0, 13);
+      if (deviceSwitch == "--osp:device:") {
+        removeArgs(*_ac,(char **&)_av,i,1);
+        auto deviceName = av.substr(13);
+        auto *device = ospray::api::Device::createDevice(deviceName.c_str());
+
+        if (device == nullptr) {
+          throw std::runtime_error("Failed to create device of type '"
+                                   + deviceName + "'! Perhaps you spelled the "
+                                   "device name wrong or didn't link the "
+                                   "library which defines the device?");
+        }
+
+        ospray::api::Device::current = device;
+        --i;
+        continue;
+      }
+
+      if (av == "--osp:mpi") {
 #ifdef OSPRAY_MPI
         removeArgs(*_ac,(char **&)_av,i,1);
-        ospray::api::Device::current
-          = mpi::createMPI_RanksBecomeWorkers(_ac,_av);
+        auto *mpiDevice = ospray::api::Device::createDevice("mpi");
+        ospray::api::Device::current = mpiDevice;
 #else
         throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif
@@ -120,20 +120,17 @@ extern "C" void ospInit(int *_ac, const char **_av)
         continue;
       }
 
-      if (std::string(_av[i]) == "--osp:coi") {
-        throw std::runtime_error("OSPRay's COI device is no longer supported!");
-        --i;
-        continue;
-      }
-
-      if (std::string(_av[i]) == "--osp:mpi-launch") {
+      if (av == "--osp:mpi-launch") {
 #ifdef OSPRAY_MPI
         if (i+2 > *_ac)
           throw std::runtime_error("--osp:mpi-launch expects an argument");
         const char *launchCommand = strdup(_av[i+1]);
         removeArgs(*_ac,(char **&)_av,i,2);
-        ospray::api::Device::current
-          = mpi::createMPI_LaunchWorkerGroup(_ac,_av,launchCommand);
+
+        auto *mpiDevice = ospray::api::Device::createDevice("mpi");
+        ospray::api::Device::current = mpiDevice;
+        mpiDevice->findParam("mpiMode", true)->set("mpi-launch");
+        mpiDevice->findParam("launchCommand", true)->set(launchCommand);
 #else
         throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif
@@ -142,15 +139,19 @@ extern "C" void ospInit(int *_ac, const char **_av)
       }
 
       const char *listenArgName = "--osp:mpi-listen";
-      if (!strncmp(_av[i],listenArgName,strlen(listenArgName))) {
+      if (!strncmp(_av[i], listenArgName, strlen(listenArgName))) {
 #ifdef OSPRAY_MPI
-        const char *fileNameToStorePortIn = NULL;
+        const char *fileNameToStorePortIn = nullptr;
         if (strlen(_av[i]) > strlen(listenArgName)) {
           fileNameToStorePortIn = strdup(_av[i]+strlen(listenArgName)+1);
         }
         removeArgs(*_ac,(char **&)_av,i,1);
-        ospray::api::Device::current
-          = mpi::createMPI_ListenForWorkers(_ac,_av,fileNameToStorePortIn);
+
+        auto *mpiDevice = ospray::api::Device::createDevice("mpi");
+        ospray::api::Device::current = mpiDevice;
+        mpiDevice->findParam("mpiMode", true)->set("mpi-listen");
+        mpiDevice->findParam("fileNameToStorePortIn", true)
+                 ->set(fileNameToStorePortIn);
 #else
         throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif
@@ -162,8 +163,33 @@ extern "C" void ospInit(int *_ac, const char **_av)
 
   // no device created on cmd line, yet, so default to localdevice
   if (!ospray::api::Device::current) {
-    ospray::api::Device::current = new ospray::api::LocalDevice(_ac,_av);
+    ospray::api::Device::current = new ospray::api::LocalDevice;
   }
+
+  ospray::api::Device::current->commit();
+}
+
+extern "C" OSPDevice ospCreateDevice(const char *deviceType)
+{
+  return (OSPDevice)ospray::api::Device::createDevice(deviceType);
+}
+
+extern "C" void ospSetCurrentDevice(OSPDevice _device)
+{
+  auto *device = (ospray::api::Device*)_device;
+
+  if (!device->isCommitted()) {
+    std::cerr << "ERROR: You must commit the device before using it!"
+              << std::endl;
+    std::exit(1);
+  }
+
+  ospray::api::Device::current = device;
+}
+
+extern "C" OSPDevice ospGetCurrentDevice()
+{
+  return (OSPDevice)ospray::api::Device::current.ptr;
 }
 
 
@@ -260,7 +286,6 @@ extern "C" OSPData ospNewData(size_t nitems, OSPDataType format, const void *ini
 /*! add a data array to another object */
 extern "C" void ospSetData(OSPObject object, const char *bufName, OSPData data)
 {
-  // assert(!rendering);
   ASSERT_DEVICE();
   LOG("ospSetData(...,\"" << bufName << "\",...)");
   return ospray::api::Device::current->setObject(object,bufName,(OSPObject)data);
@@ -331,7 +356,7 @@ extern "C" OSPRenderer ospNewRenderer(const char *_type)
       type[i] = '_';
   }
   OSPRenderer renderer = ospray::api::Device::current->newRenderer(type.c_str());
-  if ((ospray::logLevel > 0) && (renderer == NULL)) {
+  if ((ospray::logLevel() > 0) && (renderer == NULL)) {
     std::cerr << "#ospray: could not create renderer '" << type << "'" << std::endl;
   }
   return renderer;
@@ -346,7 +371,7 @@ extern "C" OSPGeometry ospNewGeometry(const char *type)
   Assert(type != NULL && "invalid geometry type identifier in ospNewGeometry");
   LOG("ospNewGeometry(" << type << ")");
   OSPGeometry geometry = ospray::api::Device::current->newGeometry(type);
-  if ((ospray::logLevel > 0) && (geometry == NULL))
+  if ((ospray::logLevel() > 0) && (geometry == NULL))
     std::cerr << "#ospray: could not create geometry '" << type << "'" << std::endl;
   LOG("DONE ospNewGeometry(" << type << ") >> " << (int *)geometry);
   return geometry;
@@ -362,7 +387,7 @@ extern "C" OSPMaterial ospNewMaterial(OSPRenderer renderer, const char *type)
   Assert2(type != NULL, "invalid material type identifier in ospNewMaterial");
   LOG("ospNewMaterial(" << renderer << ", " << type << ")");
   OSPMaterial material = ospray::api::Device::current->newMaterial(renderer, type);
-  if ((ospray::logLevel > 0) && (material == NULL))
+  if ((ospray::logLevel() > 0) && (material == NULL))
     std::cerr << "#ospray: could not create material '" << type << "'" << std::endl;
   return material;
 }
@@ -373,7 +398,7 @@ extern "C" OSPLight ospNewLight(OSPRenderer renderer, const char *type)
   Assert2(type != NULL, "invalid light type identifier in ospNewLight");
   LOG("ospNewLight(" << renderer << ", " << type << ")");
   OSPLight light = ospray::api::Device::current->newLight(renderer, type);
-  if ((ospray::logLevel > 0) && (light == NULL))
+  if ((ospray::logLevel() > 0) && (light == NULL))
     std::cerr << "#ospray: could not create light '" << type << "'" << std::endl;
   return light;
 }
@@ -387,7 +412,7 @@ extern "C" OSPCamera ospNewCamera(const char *type)
   Assert(type != NULL && "invalid camera type identifier in ospNewCamera");
   LOG("ospNewCamera(" << type << ")");
   OSPCamera camera = ospray::api::Device::current->newCamera(type);
-  if ((ospray::logLevel > 0) && (camera == NULL))
+  if ((ospray::logLevel() > 0) && (camera == NULL))
     std::cerr << "#ospray: could not create camera '" << type << "'" << std::endl;
   return camera;
 }
@@ -411,14 +436,14 @@ extern "C" OSPVolume ospNewVolume(const char *type)
   Assert(type != NULL && "invalid volume type identifier in ospNewVolume");
   LOG("ospNewVolume(" << type << ")");
   OSPVolume volume = ospray::api::Device::current->newVolume(type);
-  if (ospray::logLevel > 0) {
+  if (ospray::logLevel() > 0) {
     if (volume)
       cout << "ospNewVolume: " << type << endl;
       // cout << "ospNewVolume: " << ((ospray::Volume*)volume)->toString() << endl;
     else
       std::cerr << "#ospray: could not create volume '" << type << "'" << std::endl;
   }
-  if ((ospray::logLevel > 0) && (volume == NULL))
+  if ((ospray::logLevel() > 0) && (volume == NULL))
     std::cerr << "#ospray: could not create volume '" << type << "'" << std::endl;
   return volume;
 }
@@ -431,13 +456,13 @@ extern "C" OSPTransferFunction ospNewTransferFunction(const char *type)
   Assert(type != NULL && "invalid transfer function type identifier in ospNewTransferFunction");
   LOG("ospNewTransferFunction(" << type << ")");
   OSPTransferFunction transferFunction = ospray::api::Device::current->newTransferFunction(type);
-  if(ospray::logLevel > 0) {
+  if(ospray::logLevel() > 0) {
     if(transferFunction)
       cout << "ospNewTransferFunction(" << type << ")" << endl;
     else
       std::cerr << "#ospray: could not create transfer function '" << type << "'" << std::endl;
   }
-  if ((ospray::logLevel > 0) && (transferFunction == NULL))
+  if ((ospray::logLevel() > 0) && (transferFunction == NULL))
     std::cerr << "#ospray: could not create transferFunction '" << type << "'" << std::endl;
   return transferFunction;
 }
@@ -468,19 +493,36 @@ extern "C" float ospRenderFrame(OSPFrameBuffer fb,
   nom = 0.95f*nom + t_frame;
   std::cout << "done rendering, time per frame = " << (t_frame*1000.f) << "ms, avg'ed fps = " << (den/nom) << std::endl;
 #else
-  // rendering = true;
   return ospray::api::Device::current->renderFrame(fb,renderer,fbChannelFlags);
-  // rendering = false;
 #endif
 }
 
 extern "C" void ospCommit(OSPObject object)
 {
-  // assert(!rendering);
   LOG("ospCommit(...)");
   ASSERT_DEVICE();
   Assert(object && "invalid object handle to commit to");
   ospray::api::Device::current->commit(object);
+}
+
+extern "C" void ospDeviceCommit(OSPDevice _object)
+{
+  auto *object = (ospray::api::Device *)_object;
+  object->commit();
+}
+
+extern "C" void ospDeviceSetString(OSPDevice _object,
+                                   const char *id,
+                                   const char *s)
+{
+  ManagedObject *object = (ManagedObject *)_object;
+  object->findParam(id, true)->set(s);
+}
+
+extern "C" void ospDeviceSet1i(OSPDevice _object, const char *id, int32_t x)
+{
+  ManagedObject *object = (ManagedObject *)_object;
+  object->findParam(id, true)->set(x);
 }
 
 extern "C" void ospSetString(OSPObject _object, const char *id, const char *s)
@@ -676,33 +718,6 @@ extern "C" void ospPick(OSPPickResult *result,
   *result = ospray::api::Device::current->pick(renderer,
                                                (const vec2f&)screenPos);
 }
-
-//! \brief allows for switching the MPI scope from "per rank" to "all ranks"
-// extern "C" void ospdApiMode(OSPDApiMode mode)
-// {
-//   ASSERT_DEVICE();
-//   ospray::api::Device::current->apiMode(mode);
-// }
-
-#ifdef OSPRAY_MPI
-//! \brief initialize the ospray engine (for use with MPI-parallel app)
-/*! \detailed Note the application must call this function "INSTEAD OF"
-  MPI_Init(), NOT "in addition to" */
-extern "C" void ospdMpiInit(int *ac, char ***av, OSPDRenderMode mode)
-{
-  if (!ospray::api::Device::current) {
-    throw std::runtime_error("#osp:mpi: OSPRay already initialized!?");
-  }
-  ospray::mpi::initDistributedAPI(ac,av,mode);
-}
-
-//! the 'lid to the pot' of ospdMpiInit().
-/*! does both an osp shutdown and an mpi shutdown for the mpi group
-  created with ospdMpiInit */
-extern "C" void ospdMpiShutdown()
-{
-}
-#endif
 
 extern "C" void ospSampleVolume(float **results,
                                 OSPVolume volume,

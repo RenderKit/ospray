@@ -135,7 +135,7 @@ namespace ospray {
 
   typedef ::int64_t index_t;
 
-  void init(int *ac, const char ***av);
+  void initFromCommandLine(int *ac = nullptr, const char ***av = nullptr);
 
   /*! for debugging. compute a checksum for given area range... */
   OSPRAY_INTERFACE void *computeCheckSum(const void *ptr, size_t numBytes);
@@ -156,14 +156,6 @@ namespace ospray {
 #endif
 #endif
 
-  /*! logging level (cmdline: --osp:loglevel \<n\>) */
-  extern uint32_t logLevel;
-  /*! whether we're running in debug mode (cmdline: --osp:debug) */
-  extern bool debugMode;
-  /*! number of Embree threads to use, 0 for the default
-      number. (cmdline: --osp:numthreads \<n\>) */
-  extern int numThreads;
-
   /*! size of OSPDataType */
   OSPRAY_INTERFACE size_t sizeOf(const OSPDataType);
 
@@ -181,6 +173,8 @@ namespace ospray {
   private:
     const std::string s;
   };
+
+  uint32_t OSPRAY_INTERFACE logLevel();
 
 } // ::ospray
 

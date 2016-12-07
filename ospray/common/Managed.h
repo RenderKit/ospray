@@ -106,7 +106,7 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE ManagedObject : public RefCount
   {
     /*! \brief constructor */
-    ManagedObject();
+    ManagedObject() = default;
 
     /*! \brief destructor, frees the ISPC-side allocated memory pointed to by
      * ispcEquivalent, thus derived classes do not need to and must not delete
@@ -123,7 +123,7 @@ namespace ospray {
     virtual std::string toString() const;
 
     /*! return the ISPC equivalent of this class */
-    void  *getIE() const { return ispcEquivalent; }
+    void *getIE() const { return ispcEquivalent; }
 
     // ------------------------------------------------------------------
     // everything related to finding/getting/setting parameters
@@ -286,14 +286,14 @@ namespace ospray {
     std::vector<Param *> paramList;
 
     /*! \brief a global ID that can be used for referencing an object remotely*/
-    id_t ID;
+    id_t ID {(id_t)-1};
 
     /*! \brief ISPC-side eqivalent of this C++-side class, if available
      *         (nullptr if not) */
-    void *ispcEquivalent;
+    void *ispcEquivalent {nullptr};
 
     /*! \brief subtype of this ManagedObject */
-    OSPDataType managedObjectType;
+    OSPDataType managedObjectType {OSP_UNKNOWN};
 
   };
 

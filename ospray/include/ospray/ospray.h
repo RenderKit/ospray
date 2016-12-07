@@ -174,6 +174,7 @@ namespace osp {
   typedef uint64_t uint64;
 
   struct ManagedObject    { uint64 ID; virtual ~ManagedObject() {} };
+  struct Device           : public ManagedObject {};
   struct FrameBuffer      : public ManagedObject {};
   struct Renderer         : public ManagedObject {};
   struct Camera           : public ManagedObject {};
@@ -188,6 +189,7 @@ namespace osp {
   struct PixelOp          : public ManagedObject {};
 } // ::osp
 
+typedef osp::Device            *OSPDevice;
 typedef osp::FrameBuffer       *OSPFrameBuffer;
 typedef osp::Renderer          *OSPRenderer;
 typedef osp::Camera            *OSPCamera;
@@ -224,6 +226,7 @@ typedef struct { osp_linear3f l; osp_vec3f p; }             osp_affine3f;
   OSPGeometry can still be passed to a function that expects a
   OSPObject, etc */
 typedef struct _OSPManagedObject *OSPManagedObject,
+  *OSPDevice,
   *OSPRenderer,
   *OSPCamera,
   *OSPFrameBuffer,
@@ -248,21 +251,29 @@ typedef struct _OSPManagedObject *OSPManagedObject,
 extern "C" {
 #endif
 
-  //! initialize the ospray engine (for single-node user application)
+  //! initialize the ospray engine (for single-node user application) using
+  //! commandline arguments...equivalent to doing ospCreateDevice() followed by
+  //! ospSetCurrentDevice()
   OSPRAY_INTERFACE void ospInit(int *argc, const char **argv);
 
-  //! \brief allows for switching the MPI mode btween collaborative, mastered, and independent
-  OSPRAY_INTERFACE void ospdApiMode(OSPDApiMode);
+  //! initialize the ospray engine (for single-node user application) using
+  //! explicit device string.
+  OSPRAY_INTERFACE OSPDevice ospCreateDevice(const char *deviceType OSP_DEFAULT_VAL(="default"));
 
-  //! the 'lid to the pot' of ospdMpiInit().
-  /*! does both an osp shutdown and an mpi shutdown for the mpi group
-      created with ospdMpiInit */
-  OSPRAY_INTERFACE
-  void ospdMpiInit(int *ac, char ***av, OSPDRenderMode mode OSP_DEFAULT_VAL(=OSPD_Z_COMPOSITE));
+  //! set current device the API responds to
+  OSPRAY_INTERFACE void ospSetCurrentDevice(OSPDevice device);
 
-  /*! the 'lid to the pot' of ospdMpiInit(). shuts down both ospray
-      *and* the MPI layer created with ospdMpiInit */
-  OSPRAY_INTERFACE void ospdMpiShutdown();
+  //! get the currently set device
+  OSPRAY_INTERFACE OSPDevice ospGetCurrentDevice();
+
+  /*! add a c-string (zero-terminated char *) parameter to a Device */
+  OSPRAY_INTERFACE void ospDeviceSetString(OSPDevice, const char *id, const char *s);
+
+  /*! add 1-int parameter to given Device */
+  OSPRAY_INTERFACE void ospDeviceSet1i(OSPDevice, const char *id, int32_t x);
+
+  /*! Commit parameters on a given device */
+  OSPRAY_INTERFACE void ospDeviceCommit(OSPDevice);
 
   //! load plugin 'name' from shard lib libospray_module_<name>.so
   /*! returns 0 if the module could be loaded, else it returns an error code > 0 */

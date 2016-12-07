@@ -14,45 +14,54 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-INCLUDE_DIRECTORIES(
-  ${CMAKE_CURRENT_LIST_DIR}
-  ${CMAKE_CURRENT_LIST_DIR}/script
-)
+# if mpi mode is enabled, we have to configure the right mpi
+# compiler etc.
+OSPRAY_CONFIGURE_MPI()
 
-# --------------------------------------------
-# main executable
-# --------------------------------------------
+OSPRAY_CREATE_LIBRARY(ospray_mpi
 
-SET(APP_SRCS
-  glutViewer.cpp
-)
+  MPIDevice.cpp
+  worker.cpp
 
-IF(OSPRAY_APPS_ENABLE_SCRIPTING)
-  LIST(APPEND APP_SRCS
-    ScriptedOSPGlutViewer.cpp
-    ScriptedOSPGlutViewer.h
-    GlutViewerScriptHandler.cpp
-    GlutViewerScriptHandler.h
-  )
-ENDIF()
+  common/buffers.h
+  common/command.h
+  common/CommandStream.h
+  common/Core.cpp
+  common/MPICommon.cpp
+  common/async/Messaging.cpp
+  common/async/SimpleSendRecvMessaging.cpp
+  common/async/MultiIsendIrecvMessaging.cpp
+  common/async/BatchedIsendIrecvMessaging.cpp
+  common/async/CommLayer.cpp
 
-SET(LIBS
+  fb/DistributedFrameBuffer.cpp
+  fb/DistributedFrameBuffer.ispc
+  fb/DistributedFrameBuffer_TileTypes.cpp
+
+  render/MPILoadBalancer.cpp
+  render/volume/RaycastVolumeMaterial.cpp
+  render/volume/RaycastVolumeMaterial.ih
+  render/volume/RaycastVolumeMaterial.ispc
+  render/volume/RaycastVolumeRenderer.cpp
+  render/volume/RaycastVolumeRenderer.ispc
+
+  volume/DataDistributedBlockedVolume.ispc
+  volume/DataDistributedBlockedVolume.cpp
+
+LINK
   ospray
-  ospray_commandline
   ospray_common
-  ospray_glut3d
-  ospray_minisg
-  ospray_importer
-  ${OPENGL_LIBRARIES}
-  ${GLUT_LIBRARIES}
+  ${MPI_CXX_LIBRARIES}
 )
 
-IF (OSPRAY_MPI)
-  LIST(APPEND LIBS ospray_mpi)
-ENDIF()
+##############################################################
+# MPI DEVICE - mpi worker
+##############################################################
 
-IF (OSPRAY_APPS_ENABLE_SCRIPTING)
-  LIST(APPEND LIBS ospray_script)
-ENDIF()
-
-OSPRAY_CREATE_APPLICATION(ospGlutViewer ${APP_SRCS} LINK ${LIBS})
+OSPRAY_CREATE_APPLICATION(ospray_mpi_worker
+  MPIWorker.cpp
+LINK
+  ospray
+  ospray_common
+  ospray_mpi
+)

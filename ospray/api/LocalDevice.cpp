@@ -34,7 +34,6 @@
 #include <algorithm>
 
 namespace ospray {
-  extern RTCDevice g_embreeDevice;
 
   namespace api {
 
@@ -45,11 +44,9 @@ namespace ospray {
       throw std::runtime_error("embree internal error '" +std::string(str)+"'");
     }
 
-    LocalDevice::LocalDevice(int */*_ac*/, const char **/*_av*/)
+    void LocalDevice::commit()
     {
-      auto logLevelFromEnv = getEnvVar<int>("OSPRAY_LOG_LEVEL");
-      if (logLevelFromEnv.first && logLevel == 0)
-        logLevel = logLevelFromEnv.second;
+      Device::commit();
 
       // -------------------------------------------------------
       // initialize embree. (we need to do this here rather than in
@@ -61,11 +58,11 @@ namespace ospray {
         embreeConfig << " threads=1,verbose=2";
       else if(numThreads > 0)
         embreeConfig << " threads=" << numThreads;
-      g_embreeDevice = rtcNewDevice(embreeConfig.str().c_str());
+      embreeDevice = rtcNewDevice(embreeConfig.str().c_str());
 
-      rtcDeviceSetErrorFunction(g_embreeDevice, embreeErrorFunc);
+      rtcDeviceSetErrorFunction(embreeDevice, embreeErrorFunc);
 
-      RTCError erc = rtcDeviceGetError(g_embreeDevice);
+      RTCError erc = rtcDeviceGetError(embreeDevice);
       if (erc != RTC_NO_ERROR) {
         // why did the error function not get called !?
         std::cerr << "#osp:init: embree internal error number " << (int)erc
@@ -76,23 +73,19 @@ namespace ospray {
       TiledLoadBalancer::instance = new LocalTiledLoadBalancer;
     }
 
-    LocalDevice::~LocalDevice()
-    {
-      rtcDeleteDevice(g_embreeDevice);
-    }
-
     OSPFrameBuffer
     LocalDevice::frameBufferCreate(const vec2i &size,
                                    const OSPFrameBufferFormat mode,
                                    const uint32 channels)
     {
       FrameBuffer::ColorBufferFormat colorBufferFormat = mode;
-      bool hasDepthBuffer = (channels & OSP_FB_DEPTH)!=0;
-      bool hasAccumBuffer = (channels & OSP_FB_ACCUM)!=0;
-      bool hasVarianceBuffer = (channels & OSP_FB_VARIANCE)!=0;
+      bool hasDepthBuffer    = (channels & OSP_FB_DEPTH) != 0;
+      bool hasAccumBuffer    = (channels & OSP_FB_ACCUM) != 0;
+      bool hasVarianceBuffer = (channels & OSP_FB_VARIANCE) != 0;
 
       FrameBuffer *fb = new LocalFrameBuffer(size,colorBufferFormat,
-                                             hasDepthBuffer,hasAccumBuffer,
+                                             hasDepthBuffer,
+                                             hasAccumBuffer,
                                              hasVarianceBuffer);
       fb->refInc();
       return (OSPFrameBuffer)fb;
@@ -240,7 +233,7 @@ namespace ospray {
       ManagedObject *object = (ManagedObject *)_object;
       Assert(object != nullptr  && "invalid object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
-      object->findParam(bufName,1)->set(s);
+      object->findParam(bufName, true)->set(s);
     }
 
     /*! assign (named) string parameter to an object */
@@ -251,7 +244,7 @@ namespace ospray {
       ManagedObject *object = (ManagedObject *)_object;
       Assert(object != nullptr  && "invalid object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
-      object->findParam(bufName,1)->set(v);
+      object->findParam(bufName, true)->set(v);
     }
 
     /*! assign (named) int parameter to an object */
@@ -263,7 +256,7 @@ namespace ospray {
       Assert(object != nullptr  && "invalid object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
 
-      object->findParam(bufName,1)->set(f);
+      object->findParam(bufName, true)->set(f);
     }
     /*! assign (named) float parameter to an object */
     void LocalDevice::setFloat(OSPObject _object,
@@ -274,7 +267,7 @@ namespace ospray {
       Assert(object != nullptr  && "invalid object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
 
-      ManagedObject::Param *param = object->findParam(bufName,1);
+      ManagedObject::Param *param = object->findParam(bufName, true);
       param->set(f);
     }
 
@@ -296,7 +289,7 @@ namespace ospray {
       Assert(object != nullptr  && "invalid object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
 
-      object->findParam(bufName, 1)->set(v);
+      object->findParam(bufName, true)->set(v);
     }
 
     /*! assign (named) vec3f parameter to an object */
@@ -308,7 +301,7 @@ namespace ospray {
       Assert(object != nullptr  && "invalid object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
 
-      object->findParam(bufName,1)->set(v);
+      object->findParam(bufName, true)->set(v);
     }
 
     /*! assign (named) vec3f parameter to an object */
@@ -320,7 +313,7 @@ namespace ospray {
       Assert(object != nullptr  && "invalid object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
 
-      object->findParam(bufName,1)->set(v);
+      object->findParam(bufName, true)->set(v);
     }
 
     /*! assign (named) vec2f parameter to an object */
@@ -332,7 +325,7 @@ namespace ospray {
       Assert(object != nullptr  && "invalid object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
 
-      object->findParam(bufName, 1)->set(v);
+      object->findParam(bufName, true)->set(v);
     }
 
     /*! assign (named) vec3i parameter to an object */
@@ -344,7 +337,7 @@ namespace ospray {
       Assert(object != nullptr  && "invalid object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
 
-      object->findParam(bufName,1)->set(v);
+      object->findParam(bufName, true)->set(v);
     }
 
     /*! assign (named) data item as a parameter to an object */
@@ -367,7 +360,7 @@ namespace ospray {
       Assert(type != nullptr && "invalid render type identifier");
       PixelOp *pixelOp = PixelOp::createPixelOp(type);
       if (!pixelOp) {
-        if (ospray::debugMode) {
+        if (debugMode) {
           throw std::runtime_error("unknown pixelOp type '" +
                                    std::string(type) + "'");
         }
@@ -394,7 +387,7 @@ namespace ospray {
       Assert(type != nullptr && "invalid render type identifier");
       Renderer *renderer = Renderer::createRenderer(type);
       if (!renderer) {
-        if (ospray::debugMode) {
+        if (debugMode) {
           throw std::runtime_error("unknown renderer type '" +
                                    std::string(type) + "'");
         }
@@ -450,7 +443,7 @@ namespace ospray {
       Assert(type != nullptr && "invalid camera type identifier");
       Camera *camera = Camera::createCamera(type);
       if (!camera) {
-        if (ospray::debugMode) {
+        if (debugMode) {
           throw std::runtime_error("unknown camera type '"
                                    + std::string(type) + "'");
         }
@@ -467,7 +460,7 @@ namespace ospray {
       Assert(type != nullptr && "invalid volume type identifier");
       Volume *volume = Volume::createInstance(type);
       if (!volume) {
-        if (ospray::debugMode) {
+        if (debugMode) {
           throw std::runtime_error("unknown volume type '" +
                                    std::string(type) + "'");
         }
@@ -484,7 +477,7 @@ namespace ospray {
       Assert(type != nullptr && "invalid transfer function type identifier");
       auto *transferFunction = TransferFunction::createInstance(type);
       if (!transferFunction) {
-        if (ospray::debugMode) {
+        if (debugMode) {
           throw std::runtime_error("unknown transfer function type '" +
                                    std::string(type) + "'");
         }
@@ -628,6 +621,11 @@ namespace ospray {
 
       volume->computeSamples(results, worldCoordinates, count);
     }
+
+    OSP_REGISTER_DEVICE(LocalDevice, local_device);
+    OSP_REGISTER_DEVICE(LocalDevice, local);
+    OSP_REGISTER_DEVICE(LocalDevice, default_device);
+    OSP_REGISTER_DEVICE(LocalDevice, default);
 
   } // ::ospray::api
 } // ::ospray

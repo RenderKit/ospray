@@ -20,11 +20,6 @@
 
 namespace ospray {
 
-  /*! \brief constructor */
-  ManagedObject::ManagedObject()
-    : ID(-1), ispcEquivalent(nullptr), managedObjectType(OSP_UNKNOWN)
-  {}
-
   /*! \brief destructor */
   ManagedObject::~ManagedObject() 
   {

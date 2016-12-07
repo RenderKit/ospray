@@ -32,7 +32,7 @@ static void precomputedHalton_create() {
     precomputedHalton[1][i] = radicalInverse(i,3);
     precomputedHalton[2][i] = radicalInverse(i,5);
   }
-};
+}
 
 uniform bool z_order_initialized = false;
 

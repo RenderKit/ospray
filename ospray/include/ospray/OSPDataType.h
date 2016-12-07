@@ -26,6 +26,9 @@ typedef enum {
   //! Object reference type.
   OSP_OBJECT,
 
+  //! Object reference type.
+  OSP_DEVICE,
+
   //! Object reference subtypes.
   OSP_CAMERA = 10,
   OSP_DATA,
