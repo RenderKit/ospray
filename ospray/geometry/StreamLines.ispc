@@ -20,6 +20,7 @@
 #include "common/Ray.ih"
 #include "common/Model.ih"
 #include "geometry/Geometry.ih"
+#include "math/sampling.ih"
 // embree
 #include "embree2/rtcore.isph"
 #include "embree2/rtcore_scene.isph"
@@ -157,6 +158,88 @@ static void StreamLines_postIntersect(uniform Geometry *uniform self,
   }
 }
 
+// For simplicity streamlines are modelled of segments, each consisting of one
+// cylinder and two spheres. Sampling would put (too much) effort towards the
+// vertices, where often two spheres and two cylinders overlap. Furthermore,
+// sampling such a mixed "primitive" is more complex. Thus, choose a different
+// representation for area sampling, i.e. one cylinder per segment and one
+// sphere per vertex.
+SampleAreaRes StreamLines_sampleArea(
+    const Geometry *uniform const _self
+    , const int32 areaPrimID
+    , const uniform affine3f &xfm
+    , const uniform affine3f &rcp_xfm
+    , const vec2f& s
+    )
+{
+  const StreamLines *const uniform self = (const StreamLines *uniform)_self;
+  const uniform float radius = self->radius;
+
+  vec3f localNormal;
+  vec3f localPos;
+  if (areaPrimID < self->numVertices) { // sphere
+    localNormal = uniformSampleSphere(radius, s);
+    const vec3f center = make_vec3f(self->vertex[areaPrimID]);
+    localPos = center + localNormal;
+  } else { // cylinder
+    const uint32 idx = self->index[areaPrimID - self->numVertices];
+    const vec3f v0 = make_vec3f(self->vertex[idx]);
+    const vec3f v1 = make_vec3f(self->vertex[idx+1]);
+
+    linear3f frame = frame(v1-v0);
+    frame.vy = normalize(frame.vy);
+    const float phi = two_pi * s.x;
+    float sinPhi, cosPhi;
+    sincos(phi, &sinPhi, &cosPhi);
+    localNormal = (cosPhi*radius)*frame.vx + (sinPhi*radius)*frame.vy;
+    localPos = v0 + localNormal + s.y*frame.vz;
+  }
+
+  SampleAreaRes res;
+  res.pos = xfmPoint(xfm, localPos);
+  res.normal = normalize(xfmVector(transposed(rcp_xfm.l), localNormal));
+
+  return res;
+}
+
+void StreamLines_getAreas(
+    const Geometry *const uniform _self
+    , const uniform affine3f &xfm
+    , float *const uniform area
+    )
+{
+  StreamLines *uniform self = (StreamLines *uniform)_self;
+
+  // detect (non-uniform) scaling; get length of transformed unit-vectors
+  const uniform vec3f scaling3 =
+    make_vec3f(length(xfm.l.vx), length(xfm.l.vy), length(xfm.l.vz));
+  const uniform float min_scaling = reduce_min(scaling3);
+  const uniform float max_scaling = reduce_max(scaling3);
+  if ((max_scaling - min_scaling) > 1e-4f*min_scaling)
+    print("#osp:StreamLines_getAreas: Non-uniform scaling in instance "
+        "transformation detected! Importance sampling for emissive "
+        "materials and thus resulting image may be wrong.\n");
+  // use average as approximation to closest uniform scaling
+  const uniform float scaling = reduce_add(scaling3)/3.f;
+
+  // spheres at vertices
+  const uniform float sphereArea = four_pi * sqr(self->radius * scaling);
+  const uniform int32 spheres = self->numVertices;
+  foreach(i = 0 ... spheres)
+    area[i] = sphereArea;
+
+  // cylinders for segments; area of a cylinder with unit-length
+  const uniform float cyl1Area = two_pi * self->radius * sqr(scaling);
+  // TODO vectorize this loop, with foreach or ProgramCount & ProgramIndex
+  for(uniform int32 i = spheres; i < self->super.primitives; i++) {
+    const uniform uint32 idx = self->index[i - spheres];
+    const uniform vec3f v0 = make_vec3f(self->vertex[idx]);
+    const uniform vec3f v1 = make_vec3f(self->vertex[idx+1]);
+    area[i] = cyl1Area * length(v0 - v1);
+  }
+}
+
+
 export void *uniform StreamLines_create(void *uniform cppEquivalent)
 {
   StreamLines *uniform geom = uniform new StreamLines;
@@ -184,7 +267,10 @@ StreamLines_set(void *uniform _self,
   self->super.geomID = geomID;
   self->vertex = vertex;
   self->index = index;
-  self->super.primitives = numSegments;
+  // XXX different representation for area sampling, see above
+  self->super.primitives = numVertices + numSegments;
+  self->super.getAreas = StreamLines_getAreas;
+  self->super.sampleArea = StreamLines_sampleArea;
   self->numVertices = numVertices;
   self->color = color;
   self->radius = radius;
