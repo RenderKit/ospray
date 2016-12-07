@@ -1,9 +1,9 @@
 OSPRay
 ======
 
-This is release v1.2.0 of OSPRay. For changes and new features see the
-[changelog](CHANGELOG.md). Also visit http://www.ospray.org for more
-information.
+This is release v1.2.0 (devel) of OSPRay. For changes and new features
+see the [changelog](CHANGELOG.md). Also visit http://www.ospray.org for
+more information.
 
 OSPRay Overview
 ===============
@@ -274,12 +274,11 @@ void ospSetDeviceString(OSPDevice device ,const char *id, const char*val);
 to set parameters on the device. The following are parameters which can
 be set on all devices:
 
-| Type | Name       | Description                                  |
-|:-----|:-----------|:---------------------------------------------|
-| int  | numThreads | number of threads which OSPRay should use    |
-| int  | logLevel   | logging level                                |
-| int  | debug      | set debug mode; equivalent to logLevel 2 and |
-|      |            | numThreads 1                                 |
+| Type | Name       | Description                                               |
+|:-----|:-----------|:----------------------------------------------------------|
+| int  | numThreads | number of threads which OSPRay should use                 |
+| int  | logLevel   | logging level                                             |
+| int  | debug      | set debug mode; equivalent to logLevel 2 and numThreads 1 |
 
 : Parameters shared by all devices.
 
@@ -288,12 +287,11 @@ environment variables for easy changes to OSPRay's behavior without
 needing to change the application (variables are prefixed by convention
 with "`OSPRAY_`"):
 
-| Variable           | Description                           |
-|:-------------------|:--------------------------------------|
-| OSPRAY\_THREADS    | equivalent to `--osp:numthreads`      |
-| OSPRAY\_LOG\_LEVEL | equivalent to `--osp:loglevel`        |
-| OSPRAY\_DEBUG      | equivalent to both `--osp:loglevel` 2 |
-|                    | and `--osp:numthreads` 1              |
+| Variable           | Description                                                    |
+|:-------------------|:---------------------------------------------------------------|
+| OSPRAY\_THREADS    | equivalent to `--osp:numthreads`                               |
+| OSPRAY\_LOG\_LEVEL | equivalent to `--osp:loglevel`                                 |
+| OSPRAY\_DEBUG      | equivalent to both `--osp:loglevel` 2 and `--osp:numthreads` 1 |
 
 : Environment variables interpreted by OSPRay.
 
