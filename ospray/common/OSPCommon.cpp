@@ -83,19 +83,19 @@ namespace ospray {
       for (int i=1;i<ac;) {
         std::string parm = av[i];
         if (parm == "--osp:debug") {
-          device->debugMode = true;
+          device->findParam("debug", true)->set(true);
           removeArgs(ac,av,i,1);
         } else if (parm == "--osp:verbose") {
-          device->logLevel = 1;
+          device->findParam("logLevel", true)->set(1);
           removeArgs(ac,av,i,1);
         } else if (parm == "--osp:vv") {
-          device->logLevel = 2;
+          device->findParam("logLevel", true)->set(2);
           removeArgs(ac,av,i,1);
         } else if (parm == "--osp:loglevel") {
-          device->logLevel = atoi(av[i+1]);
+          device->findParam("logLevel", true)->set(atoi(av[i+1]));
           removeArgs(ac,av,i,2);
         } else if (parm == "--osp:numthreads" || parm == "--osp:num-threads") {
-          device->numThreads = atoi(av[i+1]);
+          device->findParam("numThreads", true)->set(atoi(av[i+1]));
           removeArgs(ac,av,i,2);
         } else {
           ++i;

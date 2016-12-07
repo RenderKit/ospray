@@ -61,8 +61,6 @@ extern "C" void ospInit(int *_ac, const char **_av)
                              "(did you call ospInit twice?)");
   }
 
-  ospray::initFromCommandLine(_ac,&_av);
-
   auto OSP_MPI_LAUNCH = getEnvVar<std::string>("OSPRAY_MPI_LAUNCH");
 
   if (OSP_MPI_LAUNCH.first) {
@@ -165,6 +163,8 @@ extern "C" void ospInit(int *_ac, const char **_av)
   if (!ospray::api::Device::current) {
     ospray::api::Device::current = new ospray::api::LocalDevice;
   }
+
+  ospray::initFromCommandLine(_ac,&_av);
 
   ospray::api::Device::current->commit();
 }
