@@ -44,30 +44,31 @@ struct Cylinders {
 
 typedef uniform float uniform_float;
 
-unmasked void Cylinders_bounds(uniform Cylinders *uniform geometry,
+unmasked void Cylinders_bounds(Cylinders *uniform self,
     uniform size_t primID,
     uniform box3fa &bbox)
 {
-  uniform uint8 *uniform cylinderPtr = geometry->data + geometry->bytesPerCylinder*primID;
-  uniform bool offr = geometry->offset_radius >= 0;
-  uniform float radius = offr ? *((uniform float *)(cylinderPtr+geometry->offset_radius)) : geometry->radius;
-  uniform vec3f v0 = *((uniform vec3f*)(cylinderPtr+geometry->offset_v0));
-  uniform vec3f v1 = *((uniform vec3f*)(cylinderPtr+geometry->offset_v1));
-  bbox = make_box3fa(min(v0,v1)-make_vec3f(radius),
-                     max(v0,v1)+make_vec3f(radius));
+  uniform uint8 *uniform cylinderPtr = self->data + self->bytesPerCylinder*primID;
+  uniform bool offr = self->offset_radius >= 0;
+  uniform float radius = offr ? *((float *uniform)(cylinderPtr + self->offset_radius)) : self->radius;
+  uniform vec3f v0 = *((vec3f *uniform)(cylinderPtr + self->offset_v0));
+  uniform vec3f v1 = *((vec3f *uniform)(cylinderPtr + self->offset_v1));
+  // TODO less conservative bounds
+  bbox = make_box3fa(min(v0,v1) - radius,
+                     max(v0,v1) + radius);
 }
 
-void Cylinders_intersect(uniform Cylinders *uniform geometry,
+void Cylinders_intersect(Cylinders *uniform self,
                          varying Ray &ray,
                          uniform size_t primID)
 {
-  uniform uint8 *uniform cylinderPtr = geometry->data + geometry->bytesPerCylinder*primID;
-  uniform float radius = geometry->radius;
-  if (geometry->offset_radius >= 0) {
-    radius = *((uniform float *)(cylinderPtr+geometry->offset_radius));
+  uniform uint8 *uniform cylinderPtr = self->data + self->bytesPerCylinder*primID;
+  uniform float radius = self->radius;
+  if (self->offset_radius >= 0) {
+    radius = *((float *uniform)(cylinderPtr + self->offset_radius));
   }
-  uniform vec3f v0 = *((uniform vec3f*)(cylinderPtr+geometry->offset_v0));
-  uniform vec3f v1 = *((uniform vec3f*)(cylinderPtr+geometry->offset_v1));
+  uniform vec3f v0 = *((vec3f *uniform)(cylinderPtr + self->offset_v0));
+  uniform vec3f v1 = *((vec3f *uniform)(cylinderPtr + self->offset_v1));
   const vec3f A = v0 - ray.org;
   const vec3f B = v1 - ray.org;
 
@@ -110,7 +111,7 @@ void Cylinders_intersect(uniform Cylinders *uniform geometry,
 
   if (hit) {
     ray.primID = primID;
-    ray.geomID = geometry->super.geomID;
+    ray.geomID = self->super.geomID;
     // cannot easily be moved to postIntersect
     // we need hit in object space, in postIntersect it is in world-space
     const vec3f P = ray.t*ray.dir - A;
@@ -120,13 +121,13 @@ void Cylinders_intersect(uniform Cylinders *uniform geometry,
 }
 
 
-static void Cylinders_postIntersect(uniform Geometry *uniform geometry,
-                                       uniform Model *uniform model,
-                                       varying DifferentialGeometry &dg,
-                                       const varying Ray &ray,
-                                       uniform int64 flags)
+static void Cylinders_postIntersect(Geometry *uniform _self,
+                                    Model *uniform model,
+                                    varying DifferentialGeometry &dg,
+                                    const varying Ray &ray,
+                                    uniform int64 flags)
 {
-  uniform Cylinders *uniform self = (uniform Cylinders *uniform)geometry;
+  uniform Cylinders *uniform self = (uniform Cylinders *uniform)_self;
   dg.Ng = dg.Ns = ray.Ng;
 
   if ((flags & DG_COLOR) && self->color) {

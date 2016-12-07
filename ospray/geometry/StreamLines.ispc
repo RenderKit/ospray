@@ -34,21 +34,20 @@ struct StreamLines {
   uniform vec4f  *color;
 };
 
-void StreamLines_bounds(uniform StreamLines *uniform geometry,
+void StreamLines_bounds(uniform StreamLines *uniform self,
                         uniform size_t primID,
                         uniform box3fa &bbox)
 {
-  uniform uint32 index  = geometry->index[primID];
-  const uniform vec3f A = make_vec3f(geometry->vertex[index]);
-  const uniform vec3f B = make_vec3f(geometry->vertex[index+1]);
-  bbox.lower = make_vec3fa(min(A,B)-make_vec3f(geometry->radius));
-  bbox.upper = make_vec3fa(max(A,B)+make_vec3f(geometry->radius));
+  const uniform uint32 index  = self->index[primID];
+  const uniform vec3f A = make_vec3f(self->vertex[index]);
+  const uniform vec3f B = make_vec3f(self->vertex[index+1]);
+  bbox = make_box3fa(min(A,B) - self->radius,
+                     max(A,B) + self->radius);
 }
 
 inline bool intersectShiftedSphere(varying Ray &ray,
                                    const vec3f &A, 
-                                   const uniform float r,
-                                   const uniform int32 primIDtoStore)
+                                   const uniform float r)
 {
   const float a = dot(ray.dir,ray.dir);
   const float b = -2.f*dot(ray.dir,A);
@@ -63,11 +62,9 @@ inline bool intersectShiftedSphere(varying Ray &ray,
   const float t_out= (- b + srad) *rcpf(2.f*a);
 
   if (t_in > ray.t0 && t_in < ray.t) {
-    ray.primID = primIDtoStore;
     ray.t = t_in;
     return true;
   } else if (t_out > ray.t0 && t_out < ray.t) {
-    ray.primID = primIDtoStore;
     ray.t = t_out;
     return true;
   }
@@ -76,25 +73,23 @@ inline bool intersectShiftedSphere(varying Ray &ray,
 
 inline bool intersectShiftedCylinder(varying Ray &ray,
                                      const vec3f &A, const vec3f &B,
-                                     const uniform float r,
-                                     const uniform int32 primIDtoStore)
+                                     const uniform float r)
 {
-  const vec3f O = make_vec3f(0.f);
   const vec3f V = ray.dir;
 
   const vec3f AB = B - A;
-  const vec3f AO = O - A;
   
-  const vec3f AOxAB  = cross(AO,AB); // cross product
-  const vec3f VxAB   = cross(V,AB); // cross product
-  const float ab2    = dot(AB,AB); // dot product
-  const float a      = dot(VxAB,VxAB); // dot product
-  const float b      = 2 * dot(VxAB,AOxAB); // dot product
-  const float c      = dot(AOxAB,AOxAB) - (r*r * ab2);
+  const vec3f AOxAB = cross(AB,A);
+  const vec3f VxAB  = cross(V,AB);
+  const float ab2   = dot(AB,AB);
+  const float a     = dot(VxAB,VxAB);
+  const float b     = 2 * dot(VxAB,AOxAB);
+  const float c     = dot(AOxAB,AOxAB) - (sqr(r) * ab2);
 
   // clip to near and far cap of cylinder
-  const float tA = dot(AB,A) * rcp(dot(V,AB));
-  const float tB = dot(AB,B) * rcp(dot(V,AB));
+  const float rVAB = rcp(dot(V,AB));
+  const float tA = dot(AB,A) * rVAB;
+  const float tB = dot(AB,B) * rVAB;
   const float tAB0 = max(ray.t0,min(tA,tB));
   const float tAB1 = min(ray.t, max(tA,tB));
 
@@ -110,34 +105,31 @@ inline bool intersectShiftedCylinder(varying Ray &ray,
   const float t_out= (- b + srad) *rcpf(2.f*a);
 
   if (t_in >= tAB0 && t_in <= tAB1) {
-    ray.primID = primIDtoStore;
     ray.t = t_in;
     return true;
   } else if (t_out >= tAB0 && t_out <= tAB1) {
-    ray.primID = primIDtoStore;
     ray.t = t_out;
     return true;
   }
   return false;
 }
 
-void StreamLines_intersect(uniform StreamLines *uniform geometry,
+void StreamLines_intersect(uniform StreamLines *uniform self,
                            varying Ray &ray,
                            uniform size_t primID)
 {
-  const uniform uint32 idx = geometry->index[primID];
-  const vec3f A = make_vec3f(geometry->vertex[idx])   - ray.org;
-  const vec3f B = make_vec3f(geometry->vertex[idx+1]) - ray.org;
+  const uniform uint32 idx = self->index[primID];
+  const vec3f A = make_vec3f(self->vertex[idx])   - ray.org;
+  const vec3f B = make_vec3f(self->vertex[idx+1]) - ray.org;
 
   bool hit = 0;
-  
-  hit |= intersectShiftedCylinder(ray,A,B,geometry->radius,primID);
-  hit |= intersectShiftedSphere(ray,A,geometry->radius,primID | (1<<29));
-  hit |= intersectShiftedSphere(ray,B,geometry->radius,primID | (1<<30));
+  hit |= intersectShiftedCylinder(ray,A,B,self->radius);
+  hit |= intersectShiftedSphere(ray,A,self->radius);
+  hit |= intersectShiftedSphere(ray,B,self->radius);
 
   if (hit) {
-    ray.geomID = geometry->super.geomID;
-    ray.primID = primID; // original primID needed for vertex coloring
+    ray.geomID = self->super.geomID;
+    ray.primID = primID;
     const vec3f P = ray.t * ray.dir;
     float s = dot(P-A,B-A) * rcpf(dot(B-A,B-A));
     s = min(max(s,0.f),1.f);
@@ -147,7 +139,7 @@ void StreamLines_intersect(uniform StreamLines *uniform geometry,
   }
 }
 
-static void StreamLines_postIntersect(uniform Geometry *uniform geometry,
+static void StreamLines_postIntersect(uniform Geometry *uniform self,
                                        uniform Model *uniform model,
                                        varying DifferentialGeometry &dg,
                                        const varying Ray &ray,
@@ -156,7 +148,7 @@ static void StreamLines_postIntersect(uniform Geometry *uniform geometry,
   dg.Ng = dg.Ns = ray.Ng;
 
   if ((flags & DG_COLOR)) {
-    uniform StreamLines *uniform self = (uniform StreamLines *uniform)geometry;
+    uniform StreamLines *uniform self = (uniform StreamLines *uniform)self;
     uniform vec4f *uniform color = self->color;
     if (color) {
       const varying uint32 index  = self->index[ray.primID];
@@ -165,9 +157,9 @@ static void StreamLines_postIntersect(uniform Geometry *uniform geometry,
   }
 }
 
-export void *uniform StreamLineGeometry_create(void           *uniform cppEquivalent)
+export void *uniform StreamLines_create(void *uniform cppEquivalent)
 {
-  uniform StreamLines *uniform geom = uniform new uniform StreamLines;
+  StreamLines *uniform geom = uniform new StreamLines;
   Geometry_Constructor(&geom->super,cppEquivalent,
                        StreamLines_postIntersect,
                        NULL,0,NULL);
@@ -175,7 +167,7 @@ export void *uniform StreamLineGeometry_create(void           *uniform cppEquiva
 }
 
 export void *uniform 
-StreamLineGeometry_set(void           *uniform _geom,
+StreamLines_set(void *uniform _self,
                        void           *uniform _model,
                        float           uniform radius,
                        uniform vec3fa *uniform vertex,
@@ -184,19 +176,19 @@ StreamLineGeometry_set(void           *uniform _geom,
                        int32           uniform numSegments,
                        uniform vec4f  *uniform color)
 {
-  uniform StreamLines *uniform geom = (uniform StreamLines *uniform)_geom;
-  uniform Model *uniform model = (uniform Model *uniform)_model;
+  StreamLines *uniform self = (StreamLines *uniform)_self;
+  Model *uniform model = (Model *uniform)_model;
   uniform uint32 geomID = rtcNewUserGeometry(model->embreeSceneHandle,numSegments);
 
-  geom->super.model  = model;
-  geom->super.geomID = geomID;
-  geom->vertex = vertex;
-  geom->index = index;
-  geom->super.primitives = numSegments;
-  geom->numVertices = numVertices;
-  geom->color = color;
-  geom->radius = radius;
-  rtcSetUserData(model->embreeSceneHandle,geomID,geom);
+  self->super.model  = model;
+  self->super.geomID = geomID;
+  self->vertex = vertex;
+  self->index = index;
+  self->super.primitives = numSegments;
+  self->numVertices = numVertices;
+  self->color = color;
+  self->radius = radius;
+  rtcSetUserData(model->embreeSceneHandle, geomID, self);
   rtcSetBoundsFunction(model->embreeSceneHandle,geomID,
                        (uniform RTCBoundsFunc)&StreamLines_bounds);
   rtcSetIntersectFunction(model->embreeSceneHandle,geomID,

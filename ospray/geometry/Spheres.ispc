@@ -124,7 +124,7 @@ unmasked void Spheres_bounds(uniform Spheres *uniform self,
     self->radius;
   uniform vec3f center =
     *((uniform vec3f*uniform)(spherePtr+self->offset_center));
-  bbox = make_box3fa(center-make_vec3f(radius),center+make_vec3f(radius));
+  bbox = make_box3fa(center - radius, center + radius);
 }
 
 void Spheres_intersect(uniform Spheres *uniform self,
