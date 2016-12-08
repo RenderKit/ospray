@@ -184,11 +184,11 @@ To access the OSPRay API you first need to include the OSPRay header
 
 where the API is compatible with C99 and C++.
 
-In order to use the API, OSPRay must initialized with a 'device'. A
-'device' is the object which implements the API. Creating and
-initializing a device can be done in either of two ways.
+In order to use the API, OSPRay must initialized with a "device". A
+device is the object which implements the API. Creating and initializing
+a device can be done in either of two ways.
 
-The first is to do so by giving OSPRay the command line from main() by
+The first is to do so by giving OSPRay the command line from `main()` by
 calling
 
 ``` {.cpp}
@@ -238,8 +238,8 @@ convention with "`--osp:`") are understood:
 <td align="left">enables MPI mode for parallel rendering, to be used in conjunction with <code>mpirun</code></td>
 </tr>
 <tr class="odd">
-<td align="left"><code>--osp:device:[name]</code></td>
-<td align="left">use [name] as the type of device for OSPRay to create; ex: --osp:device:default gives you the default local device and --osp:device:mpi gives you the MPI device</td>
+<td align="left"><code>--osp:device:&lt;name&gt;</code></td>
+<td align="left">use <code>name</code> as the type of device for OSPRay to create; e.g. <code>--osp:device:default</code> gives you the default local device and <code>--osp:device:mpi</code> gives you the MPI device</td>
 </tr>
 </tbody>
 </table>
@@ -255,30 +255,30 @@ in later sections). The first step is to create the device with
 OSPDevice ospCreateDevice(const char *type);
 ```
 
-where the 'type' string maps to a specific device implementation. OSPRay
-always provides the 'default' device, which maps to a local CPU
-rendering device. If it is enabled in the build, you can also use 'mpi'
-to access the MPI multi-node rendering device. Once a device is created,
-you can call
+where the `type` string maps to a specific device implementation. OSPRay
+always provides the "`default`" device, which maps to a local CPU
+rendering device. If it is enabled in the build, you can also use
+"`mpi`" to access the MPI multi-node rendering device. Once a device is
+created, you can call
 
 ``` {.cpp}
-void ospSetDevice1i(OSPDevice device, const char *id, int val);
+void ospSetDevice1i(OSPDevice, const char *id, int val);
 ```
 
 or
 
 ``` {.cpp}
-void ospSetDeviceString(OSPDevice device ,const char *id, const char*val);
+void ospSetDeviceString(OSPDevice, const char *id, const char *val);
 ```
 
-to set parameters on the device. The following are parameters which can
-be set on all devices:
+to set parameters on the device. The following parameters can be set on
+all devices:
 
 | Type | Name       | Description                                               |
 |:-----|:-----------|:----------------------------------------------------------|
 | int  | numThreads | number of threads which OSPRay should use                 |
 | int  | logLevel   | logging level                                             |
-| int  | debug      | set debug mode; equivalent to logLevel 2 and numThreads 1 |
+| int  | debug      | set debug mode; equivalent to logLevel=2 and numThreads=1 |
 
 : Parameters shared by all devices.
 
@@ -287,11 +287,11 @@ environment variables for easy changes to OSPRay's behavior without
 needing to change the application (variables are prefixed by convention
 with "`OSPRAY_`"):
 
-| Variable           | Description                                                    |
-|:-------------------|:---------------------------------------------------------------|
-| OSPRAY\_THREADS    | equivalent to `--osp:numthreads`                               |
-| OSPRAY\_LOG\_LEVEL | equivalent to `--osp:loglevel`                                 |
-| OSPRAY\_DEBUG      | equivalent to both `--osp:loglevel` 2 and `--osp:numthreads` 1 |
+| Variable           | Description                                                   |
+|:-------------------|:--------------------------------------------------------------|
+| OSPRAY\_THREADS    | equivalent to `--osp:numthreads`                              |
+| OSPRAY\_LOG\_LEVEL | equivalent to `--osp:loglevel`                                |
+| OSPRAY\_DEBUG      | equivalent to both OSPRAY\_LOG\_LEVEL=2 and OSPRAY\_THREADS=1 |
 
 : Environment variables interpreted by OSPRay.
 
