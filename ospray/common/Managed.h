@@ -123,7 +123,7 @@ namespace ospray {
     virtual std::string toString() const;
 
     /*! return the ISPC equivalent of this class */
-    void *getIE() const { return ispcEquivalent; }
+    void *getIE() const;
 
     // ------------------------------------------------------------------
     // everything related to finding/getting/setting parameters
@@ -184,7 +184,7 @@ namespace ospray {
       /*! actual type of this parameter */
       OSPDataType type;
       /*! name under which this parameter is registered */
-      const char *name;
+      std::string name;
     };
 
     /*! \brief find a given parameter, or add it if not exists (and so
@@ -192,16 +192,17 @@ namespace ospray {
     Param *findParam(const char *name, bool addIfNotExist = false);
 
     /*! \brief check if a given parameter is available */
-    bool hasParam(const char *name)
-    { return findParam(name,false) != nullptr; }
+    bool hasParam(const char *name);
 
     /*! \brief set given parameter to given data array */
-    void   setParam(const char *name, ManagedObject *data);
+    void setParam(const char *name, ManagedObject *data);
+
+    void removeParam(const char *name);
 
     /*! set a parameter with given name to given value, create param if not
      *  existing */
     template<typename T>
-    inline void set(const char *name, const T &t) { findParam(name,1)->set(t); }
+    void set(const char *name, const T &t);
 
     /*! @{ */
     /*! \brief find the named parameter, and return its object value if
@@ -214,8 +215,7 @@ namespace ospray {
     ManagedObject *getParamObject(const char *name,
                                   ManagedObject *valIfNotFound = nullptr);
 
-    Data *getParamData(const char *name, Data *valIfNotFound = nullptr)
-    { return (Data*)getParamObject(name,(ManagedObject*)valIfNotFound); }
+    Data *getParamData(const char *name, Data *valIfNotFound = nullptr);
 
     vec4f  getParam4f(const char *name, const vec4f  valIfNotFound);
     vec3fa getParam3f(const char *name, const vec3fa valIfNotFound);
@@ -283,7 +283,7 @@ namespace ospray {
     std::set<ManagedObject *> objectsListeningForChanges;
 
     /*! \brief list of parameters attached to this object */
-    std::vector<Param *> paramList;
+    std::vector<std::unique_ptr<Param>> paramList;
 
     /*! \brief a global ID that can be used for referencing an object remotely*/
     id_t ID {(id_t)-1};
@@ -297,6 +297,29 @@ namespace ospray {
 
   };
 
+  // Inlined ManagedObject definitions ////////////////////////////////////////
+
+  inline void* ManagedObject::getIE() const
+  {
+    return ispcEquivalent;
+  }
+
+  inline bool ManagedObject::hasParam(const char *name)
+  {
+    return findParam(name,false) != nullptr;
+  }
+
+  inline Data*
+  ManagedObject::getParamData(const char *name, Data *valIfNotFound)
+  {
+    return (Data*)getParamObject(name,(ManagedObject*)valIfNotFound);
+  }
+
+  template<typename T>
+  inline void ManagedObject::set(const char *name, const T &t)
+  {
+    findParam(name, true)->set(t);
+  }
 
 #define OSP_REGISTER_OBJECT(Object, object_name, InternalClass, external_name) \
   extern "C" OSPRAY_DLLEXPORT                                                  \

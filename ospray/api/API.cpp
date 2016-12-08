@@ -679,6 +679,12 @@ extern "C" void ospSetVoidPtr(OSPObject _object, const char *id, void *v)
   ospray::api::Device::current->setVoidPtr(_object,id,v);
 }
 
+extern "C" void ospRemoveParam(OSPObject _object, const char *id)
+{
+  ASSERT_DEVICE();
+  ospray::api::Device::current->removeParam(_object, id);
+}
+
 extern "C" void ospRelease(OSPObject _object)
 {
   ASSERT_DEVICE();

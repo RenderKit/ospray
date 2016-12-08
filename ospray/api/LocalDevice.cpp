@@ -247,6 +247,14 @@ namespace ospray {
       object->findParam(bufName, true)->set(v);
     }
 
+    void LocalDevice::removeParam(OSPObject _object, const char *name)
+    {
+      ManagedObject *object = (ManagedObject *)_object;
+      Assert(object != nullptr  && "invalid object handle");
+      Assert(bufName != nullptr && "invalid identifier for object parameter");
+      object->removeParam(name);
+    }
+
     /*! assign (named) int parameter to an object */
     void LocalDevice::setInt(OSPObject _object,
                              const char *bufName,

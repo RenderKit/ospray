@@ -569,6 +569,10 @@ extern "C" {
   /*! add 4-float parameter to given object */
   OSPRAY_INTERFACE void ospSetVec4f(OSPObject, const char *id, const osp::vec4f &v);
 #endif
+
+  /*! remove a named parameter on the given object */
+  OSPRAY_INTERFACE void ospRemoveParam(OSPObject, const char *id);
+
   /*! @} end of ospray_params */
 
   // -------------------------------------------------------

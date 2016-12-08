@@ -28,7 +28,7 @@ namespace ospray {
     ispcEquivalent = nullptr;
   }
 
-  /*! \brief commit the object's outstanding changes (such as changed parameters etc) */
+  /*! \brief commit the object's outstanding changes (i.e. changed parameters etc) */
   void ManagedObject::commit() 
   {}
 
@@ -72,8 +72,8 @@ namespace ospray {
   {
     Assert2(this,"trying to set null parameter");
     clear();
-    this->s  = strdup(str);
-    type     = OSP_STRING;
+    this->s = strdup(str);
+    type    = OSP_STRING;
   }
 
   void ManagedObject::Param::set(void *ptr)
@@ -81,7 +81,7 @@ namespace ospray {
     Assert2(this,"trying to set null parameter");
     clear();
     (void*&)this->ptr = ptr;
-    type     = OSP_VOID_PTR;
+    type = OSP_VOID_PTR;
   }
 
   void ManagedObject::Param::clear()
@@ -95,15 +95,14 @@ namespace ospray {
     ptr = nullptr;
   }
 
-  ManagedObject::Param::Param(const char *name)  
-    : ptr(nullptr), type(OSP_FLOAT), name(nullptr)
+  ManagedObject::Param::Param(const char *_name)
+    : ptr(nullptr), type(OSP_FLOAT), name(strdup(_name))
   {
     Assert(name);
     f[0] = 0;
     f[1] = 0;
     f[2] = 0;
     f[3] = 0;
-    if (name) this->name = strdup(name);
   }
 
   void *ManagedObject::getVoidPtr(const char *name, void * valIfNotFound)
@@ -117,12 +116,20 @@ namespace ospray {
   ManagedObject::Param *ManagedObject::findParam(const char *name,
                                                  bool addIfNotExist)
   {
-    for (size_t i=0 ; i < paramList.size() ; i++) {
-      if (!strcmp(paramList[i]->name,name)) return paramList[i];
+    auto foundParam =
+        std::find_if(paramList.begin(), paramList.end(),
+          [&](const std::unique_ptr<Param> &p) {
+            return p->name == name;
+          });
+
+    if (foundParam != paramList.end())
+      return foundParam->get();
+    else if (addIfNotExist) {
+      paramList.push_back(ospray::make_unique<ManagedObject::Param>(name));
+      return paramList[paramList.size()-1].get();
     }
-    if (!addIfNotExist) return nullptr;
-    paramList.push_back(new Param(name));
-    return paramList[paramList.size()-1];
+    else
+      return nullptr;
   }
 
 #define define_getparam(T,ABB,TARGETTYPE,FIELD)                     \
@@ -149,29 +156,35 @@ namespace ospray {
   
   void ManagedObject::setParam(const char *name, ManagedObject *data)
   {
-    ManagedObject::Param *p = findParam(name,true);
-    p->set(data);
+    findParam(name,true)->set(data);
   }
 
-  /*!< call 'dependencyGotChanged' on each of the objects in 'objectsListeningForChanges' */
+  void ManagedObject::removeParam(const char *name)
+  {
+    auto foundParam =
+        std::find_if(paramList.begin(), paramList.end(),
+          [&](const std::unique_ptr<Param> &p) {
+            return p->name == name;
+          });
+
+    if (foundParam != paramList.end()) paramList.erase(foundParam);
+  }
+
   void ManagedObject::notifyListenersThatObjectGotChanged() 
   {
-    for (auto it = objectsListeningForChanges.begin();
-         it != objectsListeningForChanges.end(); it++)  {
-      ManagedObject *object = *it;
+    for (auto *object : objectsListeningForChanges)
       object->dependencyGotChanged(this);
-    }
   }
 
   void ManagedObject::emitMessage(const std::string &kind,
-                           const std::string &message) const
+                                  const std::string &message) const
   {
     std::cerr << "  " + toString()
               << "  " + kind + ": " + message + "." << std::endl;
   }
 
   void ManagedObject::exitOnCondition(bool condition,
-                               const std::string &message) const
+                                      const std::string &message) const
   {
     if (!condition)
       return;
@@ -180,13 +193,12 @@ namespace ospray {
   }
 
   void ManagedObject::warnOnCondition(bool condition,
-                               const std::string &message) const
+                                      const std::string &message) const
   {
     if (!condition)
       return;
 
     emitMessage("WARNING", message);
   }
-
 
 } // ::ospray

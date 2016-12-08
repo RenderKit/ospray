@@ -69,6 +69,8 @@ namespace ospray {
     CMD_SET_VEC3I,
     CMD_SET_VEC4F,
 
+    CMD_REMOVE_PARAM,
+
     CMD_SET_PIXELOP,
     CMD_NEW_PIXELOP,
 

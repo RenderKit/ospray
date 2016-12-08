@@ -112,6 +112,8 @@ namespace ospray {
       /*! add untyped void pointer to object - this will *ONLY* work in local rendering!  */
       virtual void setVoidPtr(OSPObject object, const char *bufName, void *v) = 0;
 
+      virtual void removeParam(OSPObject object, const char *name) = 0;
+
       /*! create a new renderer object (out of list of registered renderers) */
       virtual OSPRenderer newRenderer(const char *type) = 0;
 

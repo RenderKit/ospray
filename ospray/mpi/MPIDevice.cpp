@@ -533,6 +533,19 @@ namespace ospray {
                                "object is not allowed in MPI mode");
     }
 
+    void MPIDevice::removeParam(OSPObject object, const char *name)
+    {
+      Assert(object != nullptr  && "invalid object handle");
+      Assert(name != nullptr && "invalid identifier for object parameter");
+
+      const ObjectHandle handle = (const ObjectHandle&)object;
+
+      cmd.newCommand(CMD_REMOVE_PARAM);
+      cmd.send((const ObjectHandle &)object);
+      cmd.send(name);
+      cmd.flush();
+    }
+
     /*! Copy data into the given object. */
     int MPIDevice::setRegion(OSPVolume _volume, const void *source,
                              const vec3i &index, const vec3i &count)
