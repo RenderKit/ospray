@@ -26,9 +26,6 @@ namespace ospray {
     // it is OK to potentially delete nullptr, nothing bad happens ==> no need to check
     ispc::delete_uniform(ispcEquivalent);
     ispcEquivalent = nullptr;
-
-    for (auto *ptr : paramList)
-      delete ptr;
   }
 
   /*! \brief commit the object's outstanding changes (i.e. changed parameters etc) */
@@ -121,15 +118,15 @@ namespace ospray {
   {
     auto foundParam =
         std::find_if(paramList.begin(), paramList.end(),
-          [&](Param *p) {
+          [&](const std::shared_ptr<Param> &p) {
             return p->name == name;
           });
 
     if (foundParam != paramList.end())
-      return *foundParam;
+      return foundParam->get();
     else if (addIfNotExist) {
-      paramList.push_back(new Param(name));
-      return paramList[paramList.size()-1];
+      paramList.push_back(std::make_shared<Param>(name));
+      return paramList[paramList.size()-1].get();
     }
     else
       return nullptr;
@@ -166,14 +163,12 @@ namespace ospray {
   {
     auto foundParam =
         std::find_if(paramList.begin(), paramList.end(),
-          [&](Param *p) {
+          [&](const std::shared_ptr<Param> &p) {
             return p->name == name;
           });
 
     if (foundParam != paramList.end()) {
-      auto *ptr = *foundParam;
       paramList.erase(foundParam);
-      delete ptr;
     }
   }
 

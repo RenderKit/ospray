@@ -283,7 +283,10 @@ namespace ospray {
     std::set<ManagedObject *> objectsListeningForChanges;
 
     /*! \brief list of parameters attached to this object */
-    std::vector<Param *> paramList;
+    // NOTE(jda) - Use std::shared_ptr because copy/move of a ManagedObject
+    //             would end up copying parameters, where destruction of each
+    //             copy should only result in freeing the parameters *once*
+    std::vector<std::shared_ptr<Param>> paramList;
 
     /*! \brief a global ID that can be used for referencing an object remotely*/
     id_t ID {(id_t)-1};
