@@ -71,6 +71,9 @@ namespace ospray {
       // ManagedObject&
       virtual void set(const std::string &name, const ManagedObject &v) = 0;
 
+      // Remove parameter on the object
+      virtual void remove(const std::string &name) = 0;
+
       //! Commit to ospray
       virtual void commit() const = 0;
 
@@ -119,6 +122,8 @@ namespace ospray {
       void set(const std::string &name, OSPObject v) override;
 
       void set(const std::string &name, const ManagedObject &v) override;
+
+      void remove(const std::string &name) override;
 
       void commit() const override;
 
@@ -277,6 +282,12 @@ namespace ospray {
     ManagedObject_T<OSP_TYPE>::set(const std::string &name, const ManagedObject &v)
     {
       ospSetObject(ospObject, name.c_str(), v.object());
+    }
+
+    template <typename OSP_TYPE>
+    inline void ManagedObject_T<OSP_TYPE>::remove(const std::string &name)
+    {
+      ospRemoveParam(ospObject, name.c_str());
     }
 
     template <typename OSP_TYPE>
