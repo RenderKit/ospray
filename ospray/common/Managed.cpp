@@ -26,6 +26,9 @@ namespace ospray {
     // it is OK to potentially delete nullptr, nothing bad happens ==> no need to check
     ispc::delete_uniform(ispcEquivalent);
     ispcEquivalent = nullptr;
+
+    for (auto *ptr : paramList)
+      delete ptr;
   }
 
   /*! \brief commit the object's outstanding changes (i.e. changed parameters etc) */
@@ -105,7 +108,7 @@ namespace ospray {
     f[3] = 0;
   }
 
-  void *ManagedObject::getVoidPtr(const char *name, void * valIfNotFound)
+  void *ManagedObject::getVoidPtr(const char *name, void *valIfNotFound)
   {
     Param *param = findParam(name);                                     
     if (!param) return valIfNotFound;                                   
@@ -118,15 +121,15 @@ namespace ospray {
   {
     auto foundParam =
         std::find_if(paramList.begin(), paramList.end(),
-          [&](const std::unique_ptr<Param> &p) {
+          [&](Param *p) {
             return p->name == name;
           });
 
     if (foundParam != paramList.end())
-      return foundParam->get();
+      return *foundParam;
     else if (addIfNotExist) {
-      paramList.push_back(ospray::make_unique<ManagedObject::Param>(name));
-      return paramList[paramList.size()-1].get();
+      paramList.push_back(new Param(name));
+      return paramList[paramList.size()-1];
     }
     else
       return nullptr;
@@ -163,11 +166,15 @@ namespace ospray {
   {
     auto foundParam =
         std::find_if(paramList.begin(), paramList.end(),
-          [&](const std::unique_ptr<Param> &p) {
+          [&](Param *p) {
             return p->name == name;
           });
 
-    if (foundParam != paramList.end()) paramList.erase(foundParam);
+    if (foundParam != paramList.end()) {
+      auto *ptr = *foundParam;
+      paramList.erase(foundParam);
+      delete ptr;
+    }
   }
 
   void ManagedObject::notifyListenersThatObjectGotChanged() 

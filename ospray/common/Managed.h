@@ -283,7 +283,7 @@ namespace ospray {
     std::set<ManagedObject *> objectsListeningForChanges;
 
     /*! \brief list of parameters attached to this object */
-    std::vector<std::unique_ptr<Param>> paramList;
+    std::vector<Param *> paramList;
 
     /*! \brief a global ID that can be used for referencing an object remotely*/
     id_t ID {(id_t)-1};
