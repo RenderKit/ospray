@@ -199,10 +199,9 @@ namespace ospray {
         NOT_IMPLEMENTED;
       }
 
-      /*! switch API mode for distriubted API extensions */
-      virtual void apiMode(OSPDApiMode mode)
+      /*! switch API mode for distributed API extensions */
+      virtual void apiMode(OSPDApiMode)
       { 
-        UNUSED(mode);
         NOT_IMPLEMENTED;
       }
 

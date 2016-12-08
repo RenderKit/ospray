@@ -773,7 +773,7 @@ namespace ospray {
 
           const OSPDApiMode newMode = (OSPDApiMode)cmd.get_int32();
           assert(device);
-          assert(device->currentApiMode == OSPD_MODE_MASTERED);
+          //assert(device->currentApiMode == OSPD_MODE_MASTERED);
           printf("rank %i: master telling me to switch to %s mode.\n",
                  mpi::world.rank,
                  apiModeName(newMode));

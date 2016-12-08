@@ -251,7 +251,7 @@ namespace ospray {
     {
       ManagedObject *object = (ManagedObject *)_object;
       Assert(object != nullptr  && "invalid object handle");
-      Assert(bufName != nullptr && "invalid identifier for object parameter");
+      Assert(name != nullptr && "invalid identifier for object parameter");
       object->removeParam(name);
     }
 
