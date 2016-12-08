@@ -101,7 +101,7 @@ namespace ospray {
   ManagedObject::Param::Param(const char *_name)
     : ptr(nullptr), type(OSP_FLOAT), name(strdup(_name))
   {
-    Assert(name);
+    Assert(_name);
     f[0] = 0;
     f[1] = 0;
     f[2] = 0;
