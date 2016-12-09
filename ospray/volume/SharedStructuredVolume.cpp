@@ -57,6 +57,11 @@ SharedStructuredVolume::~SharedStructuredVolume()
                                                    (const ispc::vec3i&)index,
                                                    (const ispc::vec3i&)count);
       break;
+    case OSP_SHORT:
+      ispc::SharedStructuredVolume_setRegion_int16(getIE(),source,
+                                                   (const ispc::vec3i&)index,
+                                                   (const ispc::vec3i&)count);
+      break;
     case OSP_USHORT:
       ispc::SharedStructuredVolume_setRegion_uint16(getIE(),source,
                                                    (const ispc::vec3i&)index,
