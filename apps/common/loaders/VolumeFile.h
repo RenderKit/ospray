@@ -51,6 +51,35 @@ inline void extendVoxelRange(ospcommon::vec2f &voxelRange, const T *voxel, size_
   }
 }
 
+//! Convenient wrapper that will do the template dispatch for you based on the voxelType passed
+inline void extendVoxelRange(ospcommon::vec2f &voxelRange
+    , const OSPDataType voxelType
+    , const unsigned char *voxels
+    , const size_t numVoxels
+    )
+{
+  switch (voxelType) {
+    case OSP_UCHAR:
+      extendVoxelRange(voxelRange, (unsigned char*)voxels, numVoxels);
+      break;
+    case OSP_SHORT:
+      extendVoxelRange(voxelRange, (short*)voxels, numVoxels);
+      break;
+    case OSP_USHORT:
+      extendVoxelRange(voxelRange, (unsigned short*)voxels, numVoxels);
+      break;
+    case OSP_FLOAT:
+      extendVoxelRange(voxelRange, (float*)voxels, numVoxels);
+      break;
+    case OSP_DOUBLE:
+      extendVoxelRange(voxelRange, (double*)voxels, numVoxels);
+      break;
+    default:
+      std::cerr << "ERROR: unsupported voxel type " << stringForType(voxelType) << std::endl;
+      exit(1);
+  }
+}
+
 
 
 //! \brief The VolumeFile class is an abstraction for the concrete

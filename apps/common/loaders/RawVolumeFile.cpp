@@ -53,18 +53,9 @@ OSPVolume RawVolumeFile::importVolume(OSPVolume volume)
   char *voxelType;  
   exitOnCondition(!ospGetString(volume, "voxelType", &voxelType),
                   "no voxel type specified");
+  const OSPDataType ospVoxelType = typeForString(voxelType);
+  const size_t voxelSize = sizeOf(ospVoxelType);
 
-  // Voxel size in bytes.
-  size_t voxelSize;
-
-  if (strcmp(voxelType, "uchar") == 0)
-    voxelSize = sizeof(unsigned char);
-  else if (strcmp(voxelType, "float") == 0)
-    voxelSize = sizeof(float);
-  else if (strcmp(voxelType, "double") == 0)
-    voxelSize = sizeof(double);
-  else
-    exitOnCondition(true, "unsupported voxel type");
 
   // Check if a subvolume of the volume has been specified.
   // Subvolume params: subvolumeOffsets, subvolumeDimensions, subvolumeSteps.
@@ -150,24 +141,8 @@ ospcommon::vec2f voxelRange(+std::numeric_limits<float>::infinity(),
       exitOnCondition(voxelsRead != slicesToRead*voxelCount,
                       "end of volume file reached before read completed");
 
-      if (strcmp(voxelType, "uchar") == 0) {
-        extendVoxelRange(voxelRange,
-                         (unsigned char *)voxelData,
+      extendVoxelRange(voxelRange, ospVoxelType, voxelData,
                          volumeDimensions.x*volumeDimensions.y);
-      }
-      else if (strcmp(voxelType, "float") == 0) {
-        extendVoxelRange(voxelRange,
-                         (float *)voxelData,
-                         volumeDimensions.x*volumeDimensions.y);
-      }
-      else if (strcmp(voxelType, "double") == 0) {
-        extendVoxelRange(voxelRange,
-                         (double *)voxelData,
-                         volumeDimensions.x*volumeDimensions.y);
-      }
-      else {
-        exitOnCondition(true, "unsupported voxel type");
-      }
 
       ospcommon::vec3i region_lo(0, 0, z);
       ospcommon::vec3i region_sz(volumeDimensions.x,
