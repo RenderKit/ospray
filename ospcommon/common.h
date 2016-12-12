@@ -81,9 +81,8 @@ namespace ospcommon {
   OSPCOMMON_INTERFACE void *getSymbol(const std::string &name);
 
   /*! added pretty-print function for large numbers, printing 10000000 as "10M" instead */
-  inline std::string prettyNumber(const size_t s) {
-    const double val = s;
-    const double absVal = abs(s);
+  inline std::string prettyDouble(const double val) {
+    const double absVal = abs(val);
     char result[100];
 
     if      (absVal >= 1e+15f) sprintf(result,"%.1fE",val/1e18f);
@@ -97,6 +96,21 @@ namespace ospcommon {
     else if (absVal <= 1e-06f) sprintf(result,"%.1fn",val*1e09f);
     else if (absVal <= 1e-03f) sprintf(result,"%.1fu",val*1e06f);
     else if (absVal <= 1e-00f) sprintf(result,"%.1fm",val*1e03f);
+    else sprintf(result,"%f",(float)val);
+    return result;
+  }
+
+  /*! added pretty-print function for large numbers, printing 10000000 as "10M" instead */
+  inline std::string prettyNumber(const size_t s) {
+    const double val = s;
+    char result[100];
+
+    if      (val >= 1e+15f) sprintf(result,"%.1fE",val/1e18f);
+    else if (val >= 1e+15f) sprintf(result,"%.1fP",val/1e15f);
+    else if (val >= 1e+12f) sprintf(result,"%.1fT",val/1e12f);
+    else if (val >= 1e+09f) sprintf(result,"%.1fG",val/1e09f);
+    else if (val >= 1e+06f) sprintf(result,"%.1fM",val/1e06f);
+    else if (val >= 1e+03f) sprintf(result,"%.1fK",val/1e03f);
     else sprintf(result,"%lu",s);
     return result;
   }
