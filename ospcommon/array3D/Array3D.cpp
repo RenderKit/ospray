@@ -72,6 +72,9 @@ namespace ospcommon {
     template<typename T>
     Array3D<T> *mmapRAW(const std::string &fileName, const vec3i &dims)
     {
+#ifdef _WIN32
+      throw std::runtime_error("mmap not supported under windows");
+#else
       FILE *file = fopen(fileName.c_str(),"rb");
       fseek(file,0,SEEK_END);
       size_t actualFileSize = ftell(file);
@@ -95,6 +98,7 @@ namespace ospcommon {
       ActualArray3D<T> *volume = new ActualArray3D<T>(dims,mem);
 
       return volume;
+#endif
     }
     
     // ActualArray3D //
