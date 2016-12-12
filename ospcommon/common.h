@@ -17,8 +17,6 @@
 #pragma once
 
 #include "platform.h"
-// c runtime
-#include <math.h>
 // std
 #include <stdexcept>
 
@@ -29,7 +27,6 @@ typedef unsigned long long id_t;
 #   define _USE_MATH_DEFINES
 # endif
 # include <cmath>
-# include <math.h>
 # ifdef _M_X64
 typedef long long ssize_t;
 # else
@@ -39,6 +36,8 @@ typedef int ssize_t;
 // ----------- NOT windows -----------
 # include "unistd.h"
 #endif
+
+#include "math.h"
 
 #include <stdint.h>
 
@@ -83,7 +82,7 @@ namespace ospcommon {
   /*! added pretty-print function for large numbers, printing 10000000 as "10M" instead */
   inline std::string prettyNumber(const size_t s) {
     const double val = s;
-    const double absVal = abs(s);
+    const double absVal = ospcommon::abs(val);
     char result[100];
 
     if      (absVal >= 1e+15f) sprintf(result,"%.1fE",val/1e18f);
