@@ -31,6 +31,7 @@ OSPRAY_CREATE_LIBRARY(ospray_common
   library.cpp
   thread.cpp
   vec.cpp
+  array3D/Array3D.cpp
 
   AffineSpace.h
   box.h
