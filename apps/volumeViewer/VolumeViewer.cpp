@@ -21,7 +21,6 @@
 // #include "loaders/TriangleMeshFile.h"
 #include "TransferFunctionEditor.h"
 #include "IsosurfaceEditor.h"
-#include "LightEditor.h"
 #include "SliceEditor.h"
 #include "PreferencesDialog.h"
 #include "ProbeWidget.h"
@@ -61,8 +60,18 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
     isosurfaceEditor(NULL),
     autoRotateAction(NULL),
     autoRotationRate(0.025f),
-    usePlane(true)
+    usePlane(-1),
+    samplingRate(-1),
+    adaptiveMaxSamplingRate(-1),
+    preferencesDialog(nullptr),
+    spp(-1),
+    shadows(-1),
+    preIntegration(-1),
+    aoSamples(-1),
+    adaptiveSampling(-1),
+    gradientShadingEnabled(-1)
 {
+  std::cout << __PRETTY_FUNCTION__ << std::endl;
   // Default window size.
   resize(1024, 768);
 
@@ -85,6 +94,15 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
 
   // Show the window.
   show();
+
+  setGradientShadingEnabled(true);
+  setAOSamples(1);
+  setAdaptiveSampling(true);
+  setPreIntegration(true);
+  setShadows(true);
+  setSPP(1);
+  setPlane(1);
+
 }
 
 ospcommon::box3f VolumeViewer::getBoundingBox()
@@ -333,6 +351,14 @@ void VolumeViewer::keyPressEvent(QKeyEvent * event)
   if (event->key() == Qt::Key_Escape){
     close();
   }
+  else if (event->key() == Qt::Key_P){
+    std::cout << "View parameters (use on command line to reproduce view): " << std::endl
+            << "  " << *(osprayWindow->getViewport()) << std::endl;
+  }
+  else if (event->key() == Qt::Key_L){
+    std::cout << "Light parameters (use on command line to reproduce view): " << std::endl
+            << "  " << *lightEditor << std::endl;
+  }
 }
 
 void VolumeViewer::commitVolumes()
@@ -375,25 +401,37 @@ void VolumeViewer::setSubsamplingInteractionEnabled(bool value)
 
 void VolumeViewer::setGradientShadingEnabled(bool value)
 {
-  for(size_t i=0; i<modelStates.size(); i++)
-    for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
-      ospSet1i(modelStates[i].volumes[j]->handle, "gradientShadingEnabled", value);
-      ospCommit(modelStates[i].volumes[j]->handle);
-    }
+  if (gradientShadingEnabled != value)
+  {
+    for(size_t i=0; i<modelStates.size(); i++)
+      for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
+        ospSet1i(modelStates[i].volumes[j]->handle, "gradientShadingEnabled", value);
+        ospCommit(modelStates[i].volumes[j]->handle);
+      }
 
-  render();
+      render();
+      gradientShadingEnabled = value;
+      if (preferencesDialog)
+        preferencesDialog->setGradientShadingEnabled(value);
+    }
 }
 
 //! Set gradient shading flag on all volumes.
 void VolumeViewer::setPreIntegration(bool value)
 {
-  for(size_t i=0; i<modelStates.size(); i++)
-    for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
-      ospSet1i(modelStates[i].volumes[j]->handle, "preIntegration", value);
-      ospCommit(modelStates[i].volumes[j]->handle);
-    }
+  if (preIntegration != value)
+  {
+    for(size_t i=0; i<modelStates.size(); i++)
+      for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
+        ospSet1i(modelStates[i].volumes[j]->handle, "preIntegration", value);
+        ospCommit(modelStates[i].volumes[j]->handle);
+      }
 
-  render();
+      render();
+      preIntegration = value;
+      if (preferencesDialog)
+        preferencesDialog->setPreIntegration(value);
+  }
 }
 
 //! Set gradient shading flag on all volumes.
@@ -410,29 +448,40 @@ void VolumeViewer::setSingleShade(bool value)
 
 void VolumeViewer::setShadows(bool value)
 {
-  ospSet1i(renderer, "shadowsEnabled", value);  
-  if(rendererInitialized)
-    ospCommit(renderer);
+  if (shadows != value)
+  {
+    ospSet1i(renderer, "shadowsEnabled", value);  
+    if(rendererInitialized)
+      ospCommit(renderer);
 
-  render();
+    render();
+    shadows = value;
+    if (preferencesDialog)
+      preferencesDialog->setShadows(value);
+  }
 }
 
 void VolumeViewer::setPlane(bool st)
 {
-  usePlane = st;
-  if (planeMesh)
+  if (usePlane != st)
   {
-    for(size_t i=0; i<modelStates.size(); i++) 
+    usePlane = st;
+    if (planeMesh)
     {
-      ospCommit(modelStates[i].model);
-      if (usePlane)
-        ospAddGeometry(modelStates[i].model, planeMesh);
-      else
-        ospRemoveGeometry(modelStates[i].model, planeMesh);
-      ospCommit(modelStates[i].model);
+      for(size_t i=0; i<modelStates.size(); i++) 
+      {
+        ospCommit(modelStates[i].model);
+        if (usePlane)
+          ospAddGeometry(modelStates[i].model, planeMesh);
+        else
+          ospRemoveGeometry(modelStates[i].model, planeMesh);
+        ospCommit(modelStates[i].model);
+      }
     }
+    render();
+    if (preferencesDialog)
+      preferencesDialog->setPlane(st);
   }
-  render();
 }
 
 //! Set gradient shading flag on all volumes.
@@ -447,12 +496,31 @@ void VolumeViewer::setAOWeight(double value)
 //! Set gradient shading flag on all volumes.
 void VolumeViewer::setAOSamples(int value)
 {
-  ospSet1i(renderer, "aoSamples", value);  
-  if(rendererInitialized)
-    ospCommit(renderer);
-  render();
+  if (aoSamples != value)
+  {
+    ospSet1i(renderer, "aoSamples", value);  
+    if(rendererInitialized)
+      ospCommit(renderer);
+    render();
+    aoSamples = value;
+    if (preferencesDialog)
+      preferencesDialog->setAOSamples(value);
+  }
 }
 
+void VolumeViewer::setSPP(int value)
+{
+  if (spp != value)
+  {
+    ospSet1i(renderer, "spp", value);  
+    if(rendererInitialized)
+      ospCommit(renderer);
+    render();
+    spp = value;
+    if (preferencesDialog)
+      preferencesDialog->setSPP(value);
+  }
+}
 
 //! Set gradient shading flag on all volumes.
 void VolumeViewer::setAdaptiveScalar(double value)
@@ -469,12 +537,18 @@ void VolumeViewer::setAdaptiveScalar(double value)
 //! Set gradient shading flag on all volumes.
 void VolumeViewer::setAdaptiveMaxSamplingRate(double value)
 {
-  for(size_t i=0; i<modelStates.size(); i++)
-    for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
-      ospSet1f(modelStates[i].volumes[j]->handle, "adaptiveMaxSamplingRate", value);
-      ospCommit(modelStates[i].volumes[j]->handle);
+  if (adaptiveMaxSamplingRate != value)
+  {
+    for(size_t i=0; i<modelStates.size(); i++)
+      for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
+        ospSet1f(modelStates[i].volumes[j]->handle, "adaptiveMaxSamplingRate", value);
+        ospCommit(modelStates[i].volumes[j]->handle);
+    }
+    render();
+    adaptiveMaxSamplingRate = value;
+    if (preferencesDialog)
+      preferencesDialog->setAdaptiveMaxSamplingRate(value);
   }
-  render();
 }
 
 
@@ -493,17 +567,25 @@ void VolumeViewer::setAdaptiveBacktrack(double value)
 //! Set gradient shading flag on all volumes.
 void VolumeViewer::setAdaptiveSampling(bool value)
 {
+  if (value != adaptiveSampling)
+  {
     for(size_t i=0; i<modelStates.size(); i++)
       for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
         ospSet1i(modelStates[i].volumes[j]->handle, "adaptiveSampling", value);
         ospCommit(modelStates[i].volumes[j]->handle);
-  }
+      }
 
-  render();
+      render();
+      adaptiveSampling = value;
+      if (preferencesDialog)
+        preferencesDialog->setAdaptiveSampling(value);
+  }
 }
 
 void VolumeViewer::setSamplingRate(double value)
 {
+  if (samplingRate != value)
+  {
   for(size_t i=0; i<modelStates.size(); i++)
     for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
       ospSet1f(modelStates[i].volumes[j]->handle, "samplingRate", value);
@@ -511,6 +593,10 @@ void VolumeViewer::setSamplingRate(double value)
     }
 
   render();
+  samplingRate = value;
+  if (preferencesDialog)
+    preferencesDialog->setSamplingRate(value);
+}
 }
 
 void VolumeViewer::setVolumeClippingBox(ospcommon::box3f value)
@@ -796,14 +882,17 @@ void VolumeViewer::initObjects(const std::string &renderer_type)
 
 void VolumeViewer::initUserInterfaceWidgets()
 {
+  std::cout << __PRETTY_FUNCTION__ << std::endl;
   // Create a toolbar at the top of the window.
   QToolBar *toolbar = addToolBar("toolbar");
 
   // Add preferences widget and callback.
-  PreferencesDialog *preferencesDialog = new PreferencesDialog(this, boundingBox);
+  preferencesDialog = new PreferencesDialog(this, boundingBox);
   QAction *showPreferencesAction = new QAction("Preferences", this);
   connect(showPreferencesAction, SIGNAL(triggered()), preferencesDialog, SLOT(show()));
   toolbar->addAction(showPreferencesAction);
+  preferencesDialog->setSamplingRate(samplingRate);
+  preferencesDialog->setAdaptiveMaxSamplingRate(adaptiveMaxSamplingRate);
 
   // Add the "auto rotate" widget and callback.
   autoRotateAction = new QAction("Auto rotate", this);
@@ -862,7 +951,7 @@ void VolumeViewer::initUserInterfaceWidgets()
 
   // Create the light editor dock widget, this widget modifies the light directly.
   QDockWidget *lightEditorDockWidget = new QDockWidget("Lights", this);
-  LightEditor *lightEditor = new LightEditor(ambientLight, directionalLight);
+  lightEditor = new LightEditor(ambientLight, directionalLight);
   lightEditorDockWidget->setWidget(lightEditor);
   connect(lightEditor, SIGNAL(lightsChanged()), this, SLOT(render()));
   addDockWidget(Qt::LeftDockWidgetArea, lightEditorDockWidget);

@@ -28,6 +28,17 @@ public:
 
   LightEditor(OSPLight ambientLight, OSPLight directionalLight);
 
+  friend std::ostream& operator<< (std::ostream& out, LightEditor& v)
+  {
+    return out << "--ambientLight " << v.ambientLightIntensitySpinBox.value() << " --directionalLight "
+        << v.directionalLightIntensitySpinBox.value() << " " << v.directionalLightAzimuthSlider.value()
+        << " " << v.directionalLightElevationSlider.value();
+  }
+  void setAmbientLightIntensity(float v) { ambientLightIntensitySpinBox.setValue(v); }
+  void setDirectionalLightIntensity(float v) { directionalLightIntensitySpinBox.setValue(v); }
+  void setDirectionalLightAzimuth(float v) { directionalLightAzimuthSlider.setValue(v); }
+  void setDirectionalLightElevation(float v) { directionalLightElevationSlider.setValue(v); }
+
 signals:
 
   void lightsChanged();
@@ -37,7 +48,7 @@ protected slots:
   void ambientLightChanged();
   void directionalLightChanged();
 
-protected:
+public:
 
   //! OSPRay ambient light.
   OSPLight ambientLight;
