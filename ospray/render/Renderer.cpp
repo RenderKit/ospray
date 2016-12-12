@@ -29,6 +29,10 @@ namespace ospray {
   using std::cout;
   using std::endl;
 
+  /*! \brief common function to help printf-debugging */
+  std::string Renderer::toString() const 
+  { return "ospray::Renderer"; }
+
   void Renderer::commit()
   {
     epsilon = getParam1f("epsilon", 1e-6f);
