@@ -41,6 +41,24 @@ std::string scriptFileFromCommandLine(int ac, const char **&av)
   return scriptFileName;
 }
 
+void parseExtraParametersFromComandLine(int ac, const char **&av)
+{
+  for (int i = 1; i < ac; i++) {
+    const std::string arg = av[i];
+    if (arg == "--translate") {
+      translate.x = atof(av[++i]);
+      translate.y = atof(av[++i]);
+      translate.z = atof(av[++i]);
+    } else if (arg == "--scale") {
+      scale.x = atof(av[++i]);
+      scale.y = atof(av[++i]);
+      scale.z = atof(av[++i]);
+    } else if (arg == "--lockFirstFrame") {
+      lockFirstFrame = true;
+    }
+  }
+}
+
 int main(int ac, const char **av)
 {
 #if 1
@@ -79,20 +97,7 @@ int main(int ac, const char **av)
 
   std::tie(bbox, model, renderer, camera) = ospObjs;
 
-  for (int i = 1; i < ac; i++) {
-    const std::string arg = av[i];
-    if (arg == "--translate") {
-      translate.x = atof(av[++i]);
-      translate.y = atof(av[++i]);
-      translate.z = atof(av[++i]);
-    } else if (arg == "--scale") {
-      scale.x = atof(av[++i]);
-      scale.y = atof(av[++i]);
-      scale.z = atof(av[++i]);
-    } else if (arg == "--lockFirstFrame") {
-      lockFirstFrame = true;
-    }
-  }
+  parseExtraParametersFromComandLine(ac, av);
 
 #ifdef OSPRAY_APPS_ENABLE_SCRIPTING
   auto scriptFileName = scriptFileFromCommandLine(ac, av);
