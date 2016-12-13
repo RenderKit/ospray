@@ -89,7 +89,7 @@ namespace ospcommon {
     else if (absVal >= 1e+12f) sprintf(result,"%.1f%c",val/1e12f,'T');
     else if (absVal >= 1e+09f) sprintf(result,"%.1f%c",val/1e09f,'G');
     else if (absVal >= 1e+06f) sprintf(result,"%.1f%c",val/1e06f,'M');
-    else if (absVal >= 1e+03f) sprintf(result,"%.1f%c",val/1e03f,'K');
+    else if (absVal >= 1e+03f) sprintf(result,"%.1f%c",val/1e03f,'k');
     else if (absVal <= 1e-12f) sprintf(result,"%.1f%c",val*1e15f,'f');
     else if (absVal <= 1e-09f) sprintf(result,"%.1f%c",val*1e12f,'p');
     else if (absVal <= 1e-06f) sprintf(result,"%.1f%c",val*1e09f,'n');
@@ -104,12 +104,12 @@ namespace ospcommon {
     const double val = s;
     char result[100];
 
-    if      (val >= 1e+15f) sprintf(result,"%.1fE",val/1e18f);
-    else if (val >= 1e+15f) sprintf(result,"%.1fP",val/1e15f);
-    else if (val >= 1e+12f) sprintf(result,"%.1fT",val/1e12f);
-    else if (val >= 1e+09f) sprintf(result,"%.1fG",val/1e09f);
-    else if (val >= 1e+06f) sprintf(result,"%.1fM",val/1e06f);
-    else if (val >= 1e+03f) sprintf(result,"%.1fK",val/1e03f);
+    if      (val >= 1e+15f) sprintf(result,"%.1f%c",val/1e18f,'E');
+    else if (val >= 1e+15f) sprintf(result,"%.1f%c",val/1e15f,'P');
+    else if (val >= 1e+12f) sprintf(result,"%.1f%c",val/1e12f,'T');
+    else if (val >= 1e+09f) sprintf(result,"%.1f%c",val/1e09f,'G');
+    else if (val >= 1e+06f) sprintf(result,"%.1f%c",val/1e06f,'M');
+    else if (val >= 1e+03f) sprintf(result,"%.1f%c",val/1e03f,'k');
     else sprintf(result,"%lu",s);
     return result;
   }

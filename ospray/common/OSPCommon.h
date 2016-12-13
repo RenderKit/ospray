@@ -101,10 +101,6 @@ namespace ospray {
 #endif
 #define OSPRAY_SDK_INTERFACE OSPRAY_INTERFACE
 
-namespace embree {
-  void* alignedMalloc(size_t size, size_t align);
-  void alignedFree(void* ptr);
-}
 #define ALIGNED_STRUCT                                           \
   void* operator new(size_t size) { return alignedMalloc(size); }       \
   void operator delete(void* ptr) { alignedFree(ptr); }      \
