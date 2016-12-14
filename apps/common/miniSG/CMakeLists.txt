@@ -33,7 +33,7 @@ IF (USE_IMAGE_MAGICK)
   ENDIF()
 ENDIF()
 
-ADD_LIBRARY(ospray_minisg STATIC
+OSPRAY_CREATE_LIBRARY(ospray_minisg SHARED
   miniSG.cpp
   importer.cpp
   importOBJ.cpp
@@ -43,9 +43,8 @@ ADD_LIBRARY(ospray_minisg STATIC
   importTRI.cpp
   importX3D.cpp
   importRIVL.cpp
-)
-
-TARGET_LINK_LIBRARIES(ospray_minisg
+LINK 
+  ospray_minisg
   ospray_xml
   ospray_common
   ospray

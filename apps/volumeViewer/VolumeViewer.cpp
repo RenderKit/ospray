@@ -71,7 +71,6 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
     adaptiveSampling(-1),
     gradientShadingEnabled(-1)
 {
-  std::cout << __PRETTY_FUNCTION__ << std::endl;
   // Default window size.
   resize(1024, 768);
 
@@ -882,7 +881,6 @@ void VolumeViewer::initObjects(const std::string &renderer_type)
 
 void VolumeViewer::initUserInterfaceWidgets()
 {
-  std::cout << __PRETTY_FUNCTION__ << std::endl;
   // Create a toolbar at the top of the window.
   QToolBar *toolbar = addToolBar("toolbar");
 
