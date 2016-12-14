@@ -121,11 +121,17 @@ inline void intersectBox(const Ray& ray,
                          float& t0,
                          float& t1)
 {
-  const vec3f mins = (box.lower - ray.org) * rcp(ray.dir);
-  const vec3f maxs = (box.upper - ray.org) * rcp(ray.dir);
-
-  t0 = reduce_max(make_vec4f(min(mins, maxs), ray.t0));
-  t1 = reduce_min(make_vec4f(max(mins, maxs), ray.t0));
+ const vec3f mins = (box.lower - ray.org) * rcp(ray.dir);
+ const vec3f maxs = (box.upper - ray.org) * rcp(ray.dir);
+  t0 = max(max(ray.t0, 
+               min(mins.x,maxs.x)),
+           max(min(mins.y,maxs.y),
+               min(mins.z,maxs.z)));
+  
+  t1 = min(min(ray.t, 
+               max(mins.x,maxs.x)),
+           min(max(mins.y,maxs.y),
+               max(mins.z,maxs.z)));
 }
 
 /*! helper function that performs a ray-box test */
