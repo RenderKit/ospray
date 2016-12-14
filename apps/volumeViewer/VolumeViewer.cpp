@@ -319,8 +319,8 @@ void VolumeViewer::setPreIntegration(bool value)
 {
   for(size_t i=0; i<modelStates.size(); i++)
     for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
-      ospSet1i(modelStates[i].volumes[j]->handle, "preIntegration", value);
-      ospCommit(modelStates[i].volumes[j]->handle);
+      ospSet1i(transferFunction, "preIntegration", value);
+      ospCommit(transferFunction);
     }
 
   render();

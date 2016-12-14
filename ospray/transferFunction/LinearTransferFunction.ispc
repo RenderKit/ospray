@@ -104,7 +104,7 @@ LinearTransferFunction_getIntegratedOpacityForValue(const void *uniform _self,
   // Cast to the actual TransferFunction subtype.
   const LinearTransferFunction *uniform self
     = (const LinearTransferFunction *uniform) _self;
-  //if (!self->super.preIntegration || !self->super.preIntegrationComputed)
+  if (!self->super.preIntegration || !self->super.preIntegrationComputed)
     return LinearTransferFunction_getOpacityForValue(_self, value1); 
   if (value1 > value2)
   {
@@ -189,7 +189,7 @@ LinearTransferFunction_getIntegratedColorForValue(const void *uniform _self,
   const LinearTransferFunction *uniform self
     = (const LinearTransferFunction *uniform) _self;
 
-  // if (!self->super.preIntegration || !self->super.preIntegrationComputed)
+  if (!self->super.preIntegration || !self->super.preIntegrationComputed)
     return LinearTransferFunction_getColorForValue(_self, value1); 
   //TODO: use lookup table, but for now I don't notice much of a slowdown
   // Return (0,0,0) for NaN values.
@@ -509,6 +509,8 @@ export void LinearTransferFunction_setOpacityValues(void *uniform _self,
   //   selfy->opacityValues[i] = source[i];
 
   // Precompute the min / max opacity ranges.
+  LinearTransferFunction_precomputeMinMaxOpacityRanges(_self);
+
   self->super.preIntegrationComputed = false;
 }
 
