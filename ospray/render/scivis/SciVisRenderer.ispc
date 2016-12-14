@@ -352,17 +352,10 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
     // Look up the opacity associated with the volume sample.
     vec3f sampleColor;
     float sampleOpacity;
-    if (volume->preIntegration)
-    {
-      sampleOpacity = volume->transferFunction->getIntegratedOpacityForValue(volume->transferFunction,
-                                                     lastSample, sample);
-    }
-    else
-    {
-      sampleOpacity = volume->transferFunction->getOpacityForValue(volume->transferFunction,
-                                                     sample);
-    }
-
+        sampleOpacity = volume->transferFunction->getOpacityForValue(volume->transferFunction,
+                                                      sample);
+    //sampleOpacity = volume->transferFunction->getIntegratedOpacityForValue(volume->transferFunction,
+    //                                                 lastSample, sample);
     if (volume->adaptiveSampling && sampleOpacity > adaptiveBacktrack && ray.t0 > tSkipped)  // adaptive backtack
     {
       tSkipped = ray.t0;
@@ -380,7 +373,7 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
 
     if (!isShadowRay)
     {
-      if (volume->preIntegration)
+      if (0)//(volume->transferFunction->preIntegration)
       {
         sampleColor = volume->transferFunction->getIntegratedColorForValue(volume->transferFunction,  lastSample,  sample);
         lastSample = sample;
