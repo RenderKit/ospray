@@ -17,8 +17,6 @@
 #pragma once
 
 #include "platform.h"
-// c runtime
-#include <math.h>
 // std
 #include <stdexcept>
 
@@ -29,7 +27,6 @@ typedef unsigned long long id_t;
 #   define _USE_MATH_DEFINES
 # endif
 # include <cmath>
-# include <math.h>
 # ifdef _M_X64
 typedef long long ssize_t;
 # else
@@ -39,6 +36,8 @@ typedef int ssize_t;
 // ----------- NOT windows -----------
 # include "unistd.h"
 #endif
+
+#include "math.h"
 
 #include <stdint.h>
 
@@ -81,20 +80,37 @@ namespace ospcommon {
   OSPCOMMON_INTERFACE void *getSymbol(const std::string &name);
 
   /*! added pretty-print function for large numbers, printing 10000000 as "10M" instead */
-  inline std::string prettyNumber(const size_t s) {
-    double val = s;
+  inline std::string prettyDouble(const double val) {
+    const double absVal = abs(val);
     char result[100];
-    if (val >= 1e12f) {
-      sprintf(result,"%.1fT",val/1e12f);
-    } else if (val >= 1e9f) {
-      sprintf(result,"%.1fG",val/1e9f);
-    } else if (val >= 1e6f) {
-      sprintf(result,"%.1fM",val/1e6f);
-    } else if (val >= 1e3f) {
-      sprintf(result,"%.1fK",val/1e3f);
-    } else {
-      sprintf(result,"%lu",s);
-    }
+
+    if      (absVal >= 1e+15f) sprintf(result,"%.1f%c",val/1e18f,'E');
+    else if (absVal >= 1e+15f) sprintf(result,"%.1f%c",val/1e15f,'P');
+    else if (absVal >= 1e+12f) sprintf(result,"%.1f%c",val/1e12f,'T');
+    else if (absVal >= 1e+09f) sprintf(result,"%.1f%c",val/1e09f,'G');
+    else if (absVal >= 1e+06f) sprintf(result,"%.1f%c",val/1e06f,'M');
+    else if (absVal >= 1e+03f) sprintf(result,"%.1f%c",val/1e03f,'k');
+    else if (absVal <= 1e-12f) sprintf(result,"%.1f%c",val*1e15f,'f');
+    else if (absVal <= 1e-09f) sprintf(result,"%.1f%c",val*1e12f,'p');
+    else if (absVal <= 1e-06f) sprintf(result,"%.1f%c",val*1e09f,'n');
+    else if (absVal <= 1e-03f) sprintf(result,"%.1f%c",val*1e06f,'u');
+    else if (absVal <= 1e-00f) sprintf(result,"%.1f%c",val*1e03f,'m');
+    else sprintf(result,"%f",(float)val);
+    return result;
+  }
+
+  /*! added pretty-print function for large numbers, printing 10000000 as "10M" instead */
+  inline std::string prettyNumber(const size_t s) {
+    const double val = s;
+    char result[100];
+
+    if      (val >= 1e+15f) sprintf(result,"%.1f%c",val/1e18f,'E');
+    else if (val >= 1e+15f) sprintf(result,"%.1f%c",val/1e15f,'P');
+    else if (val >= 1e+12f) sprintf(result,"%.1f%c",val/1e12f,'T');
+    else if (val >= 1e+09f) sprintf(result,"%.1f%c",val/1e09f,'G');
+    else if (val >= 1e+06f) sprintf(result,"%.1f%c",val/1e06f,'M');
+    else if (val >= 1e+03f) sprintf(result,"%.1f%c",val/1e03f,'k');
+    else sprintf(result,"%lu",s);
     return result;
   }
 

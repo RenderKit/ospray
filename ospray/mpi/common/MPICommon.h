@@ -19,6 +19,19 @@
 #include <mpi.h>
 #include "common/OSPCommon.h"
 
+#ifdef _WIN32
+#  ifdef ospray_mpi_EXPORTS
+#    define OSPRAY_MPI_INTERFACE __declspec(dllexport)
+#  else
+#    define OSPRAY_MPI_INTERFACE __declspec(dllimport)
+#  endif
+#  define OSPRAY_MPI_DLLEXPORT __declspec(dllexport)
+#else
+#  define OSPRAY_MPI_INTERFACE
+#  define OSPRAY_MPI_DLLEXPORT
+#endif
+#define OSPRAY_SDK_MPI_INTERFACE OSPRAY_MPI_INTERFACE
+
 // IMPI on Windows defines MPI_CALL already, erroneously
 #ifdef MPI_CALL
 # undef MPI_CALL
@@ -78,16 +91,16 @@ namespace ospray {
       void barrier() { MPI_CALL(Barrier(comm)); }
     };
 
-    OSPRAY_INTERFACE extern Group world; //! MPI_COMM_WORLD
-    OSPRAY_INTERFACE extern Group app; /*! for workers: intracommunicator to app
+    OSPRAY_MPI_INTERFACE extern Group world; //! MPI_COMM_WORLD
+    OSPRAY_MPI_INTERFACE extern Group app; /*! for workers: intracommunicator to app
                         for app: intercommunicator among app processes
                       */
-    OSPRAY_INTERFACE extern Group worker; /*!< group of all ospray workers (often the
+    OSPRAY_MPI_INTERFACE extern Group worker; /*!< group of all ospray workers (often the
                            world root is reserved for either app or
                            load balancing, and not part of the worker
                            group */
 
-    OSPRAY_INTERFACE void init(int *ac, const char **av);
+    OSPRAY_MPI_INTERFACE void init(int *ac, const char **av);
   }
 
 } // ::ospray

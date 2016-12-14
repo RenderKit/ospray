@@ -24,8 +24,6 @@
 #include "math/sampling.ih"
 #include "math/LinearSpace.ih"
 
-#include "volume/DataDistributedBlockedVolume.ih"
-
 #include "SciVisMaterial.ih"
 
 #define ALPHA_THRESHOLD (.05f)

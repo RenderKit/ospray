@@ -18,6 +18,10 @@ ADD_DEFINITIONS(-DPICO_BENCH_NO_DECLVAL)
 SET(LIBS ospray ospray_commandline ospray_common ospray_minisg
   ospray_importer ospray_tfn)
 
+IF (OSPRAY_MPI)
+  LIST(APPEND LIBS ospray_mpi)
+ENDIF()
+
 IF (OSPRAY_APPS_ENABLE_SCRIPTING)
   ADD_DEFINITIONS(-DOSPRAY_APPS_ENABLE_SCRIPTING)
   INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/apps/common/script)

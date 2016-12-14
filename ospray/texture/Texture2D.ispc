@@ -253,6 +253,7 @@ export void *uniform Texture2D_create(uniform vec2i &size, void *uniform data,
   self->data = data;
   self->get = Texture2D_get_addr(type, flags & OSP_TEXTURE_FILTER_NEAREST);
   self->getNormal = Texture2D_getN_addr(type, flags & OSP_TEXTURE_FILTER_NEAREST);
+  self->hasAlpha = type == OSP_TEXTURE_RGBA8 || type == OSP_TEXTURE_SRGBA || type == OSP_TEXTURE_RGBA32F;
 
   return self;
 }

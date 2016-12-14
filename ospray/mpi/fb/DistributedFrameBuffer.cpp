@@ -84,6 +84,22 @@ namespace ospray {
     MASTER_WRITE_TILE_NONE,
   };
 
+  // DistributedTileError definitions /////////////////////////////////////////
+
+  DistributedTileError::DistributedTileError(const vec2i &numTiles)
+    : TileError(numTiles)
+  {
+  }
+
+  void DistributedTileError::sync()
+  {
+    if (tiles <= 0)
+      return;
+
+    int rc = MPI_Bcast(tileErrorBuffer, tiles, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    mpi::checkMpiError(rc);
+  }
+
   // DistributedFrameBuffer definitions ///////////////////////////////////////
 
   DFB::DistributedFrameBuffer(mpi::async::CommLayer *comm,

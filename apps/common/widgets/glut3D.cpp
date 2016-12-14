@@ -16,11 +16,6 @@
 // ======================================================================== //
 
 #include "glut3D.h"
-#ifdef __APPLE__
-#include "GLUT/glut.h"
-#else
-#include "GL/glut.h"
-#endif
 
 #ifdef _WIN32
 #  ifndef WIN32_LEAN_AND_MEAN

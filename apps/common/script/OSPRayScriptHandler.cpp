@@ -146,6 +146,11 @@ void ospSetVoidPtr(OSPObject _object, const string &id, void *v)
   ::ospSetVoidPtr(_object, id.c_str(), v);
 }
 
+void ospRemoveParam(OSPObject _object, const string &id)
+{
+  ::ospRemoveParam(_object, id.c_str());
+}
+
 void ospCommit(OSPObject object)
 {
   ::ospCommit(object);
@@ -263,19 +268,20 @@ OSPRayScriptHandler::OSPRayScriptHandler(OSPModel    model,
   ss << "r --> Renderer" << endl << endl;
 
   ss << "OSPRay API functions available:" << endl << endl;
-  ss << "ospLoadModule(module_name)"                << endl;
-  ss << "ospSetString(object, id, string)"          << endl;
-  ss << "ospSetObject(object, id, object)"          << endl;
-  ss << "ospSet1f(object, id, float)"               << endl;
-  ss << "ospSet2f(object, id, float, float)"        << endl;
-  ss << "ospSet3f(object, id, float, float, float)" << endl;
-  ss << "ospSet1i(object, id, int)"                 << endl;
-  ss << "ospSet2i(object, id, int, int)"            << endl;
-  ss << "ospSet3i(object, id, int, int, int)"       << endl;
-  ss << "ospSetVoidPtr(object, id, ptr)"            << endl;
-  ss << "ospCommit(object)"                         << endl;
+  ss << "ospLoadModule(module_name)"                  << endl;
+  ss << "ospSetString(object, id, string)"            << endl;
+  ss << "ospSetObject(object, id, object)"            << endl;
+  ss << "ospSet1f(object, id, float)"                 << endl;
+  ss << "ospSet2f(object, id, float, float)"          << endl;
+  ss << "ospSet3f(object, id, float, float, float)"   << endl;
+  ss << "ospSet1i(object, id, int)"                   << endl;
+  ss << "ospSet2i(object, id, int, int)"              << endl;
+  ss << "ospSet3i(object, id, int, int, int)"         << endl;
+  ss << "ospSetVoidPtr(object, id, ptr)"              << endl;
+  ss << "ospRemoveParam(object, id)"                  << endl;
+  ss << "ospCommit(object)"                           << endl;
   ss << "TransferFunction loadTransferFunction(file)" << endl;
-  ss << "string getEnvString(env_var)" << endl;
+  ss << "string getEnvString(env_var)"                << endl;
   ss << endl;
 
   helpText = ss.str();
@@ -431,6 +437,7 @@ void OSPRayScriptHandler::registerScriptTypes()
        {chaiscript::fun(static_cast<void (ospray::cpp::ManagedObject::*)(const std::string &, const ospcommon::vec3f&)>(&ospray::cpp::ManagedObject::set)), "set"},
        {chaiscript::fun(static_cast<void (ospray::cpp::ManagedObject::*)(const std::string &, const ospcommon::vec4f&)>(&ospray::cpp::ManagedObject::set)), "set"},
        {chaiscript::fun(static_cast<void (ospray::cpp::ManagedObject::*)(const std::string &, const ospray::cpp::ManagedObject &)>(&ospray::cpp::ManagedObject::set)), "set"},
+       {chaiscript::fun(static_cast<void (ospray::cpp::ManagedObject::*)(const std::string &)>(&ospray::cpp::ManagedObject::remove)), "remove"},
        {chaiscript::fun(&ospray::cpp::ManagedObject::commit), "commit"},
        {chaiscript::fun(&ospray::cpp::ManagedObject::object), "handle"}
      }
@@ -681,19 +688,20 @@ void OSPRayScriptHandler::registerScriptTypes()
 
 void OSPRayScriptHandler::registerScriptFunctions()
 {
-  chai.add(chaiscript::fun(&chaiospray::ospLoadModule), "ospLoadModule");
-  chai.add(chaiscript::fun(&chaiospray::ospSetString),  "ospSetString" );
-  chai.add(chaiscript::fun(&chaiospray::ospSetObject),  "ospSetObject" );
-  chai.add(chaiscript::fun(&chaiospray::ospSet1f),      "ospSet1f"     );
-  chai.add(chaiscript::fun(&chaiospray::ospSet1i),      "ospSet1i"     );
-  chai.add(chaiscript::fun(&chaiospray::ospSet2f),      "ospSet2f"     );
-  chai.add(chaiscript::fun(&chaiospray::ospSet2i),      "ospSet2i"     );
-  chai.add(chaiscript::fun(&chaiospray::ospSet3f),      "ospSet3f"     );
-  chai.add(chaiscript::fun(&chaiospray::ospSet3i),      "ospSet3i"     );
-  chai.add(chaiscript::fun(&chaiospray::ospSetVoidPtr), "ospSetVoidPtr");
-  chai.add(chaiscript::fun(&chaiospray::ospCommit),     "ospCommit"    );
+  chai.add(chaiscript::fun(&chaiospray::ospLoadModule),        "ospLoadModule"       );
+  chai.add(chaiscript::fun(&chaiospray::ospSetString),         "ospSetString"        );
+  chai.add(chaiscript::fun(&chaiospray::ospSetObject),         "ospSetObject"        );
+  chai.add(chaiscript::fun(&chaiospray::ospSet1f),             "ospSet1f"            );
+  chai.add(chaiscript::fun(&chaiospray::ospSet1i),             "ospSet1i"            );
+  chai.add(chaiscript::fun(&chaiospray::ospSet2f),             "ospSet2f"            );
+  chai.add(chaiscript::fun(&chaiospray::ospSet2i),             "ospSet2i"            );
+  chai.add(chaiscript::fun(&chaiospray::ospSet3f),             "ospSet3f"            );
+  chai.add(chaiscript::fun(&chaiospray::ospSet3i),             "ospSet3i"            );
+  chai.add(chaiscript::fun(&chaiospray::ospSetVoidPtr),        "ospSetVoidPtr"       );
+  chai.add(chaiscript::fun(&chaiospray::ospRemoveParam),       "ospRemoveParam"      );
+  chai.add(chaiscript::fun(&chaiospray::ospCommit),            "ospCommit"           );
   chai.add(chaiscript::fun(&chaiospray::loadTransferFunction), "loadTransferFunction");
-  chai.add(chaiscript::fun(&chaiospray::getEnvString), "getEnvString");
+  chai.add(chaiscript::fun(&chaiospray::getEnvString),         "getEnvString"        );
 }
 
 }// namespace ospray

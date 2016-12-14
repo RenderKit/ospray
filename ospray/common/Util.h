@@ -91,7 +91,7 @@ namespace ospray {
     // Find the creation function for the subtype if not already known.
     if (symbolRegistry.count(type) == 0) {
 
-      if (ospray::logLevel >= 2)  {
+      if (ospray::logLevel() >= 2)  {
         std::cout << "#ospray: trying to look up object type '"
                   << type << "' for the first time" << std::endl;
       }
@@ -108,7 +108,7 @@ namespace ospray {
 
       // The named function may not be found if the requested subtype is not
       // known.
-      if (!symbolRegistry[type] && ospray::logLevel >= 1) {
+      if (!symbolRegistry[type] && ospray::logLevel() >= 1) {
         std::cerr << "  WARNING: unrecognized object type '" + type
                   << "'." << std::endl;
       }

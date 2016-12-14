@@ -15,22 +15,11 @@
 // ======================================================================== //
 
 #include "OSPCommon.h"
-#if defined(OSPRAY_TASKING_TBB)
-# include <tbb/task_scheduler_init.h>
-#elif defined(OSPRAY_TASKING_CILK)
-# include <cilk/cilk_api.h>
-#elif defined(OSPRAY_TASKING_OMP)
-# include <omp.h>
-#elif defined(OSPRAY_TASKING_INTERNAL)
-# include "common/tasking/TaskSys.h"
-#endif
+#include "api/Device.h"
 // embree
 #include "embree2/rtcore.h"
-#include "ospcommon/sysinfo.h"
 
 namespace ospray {
-
-  RTCDevice g_embreeDevice = nullptr;
 
   /*! 64-bit malloc. allows for alloc'ing memory larger than 64 bits */
   extern "C" void *malloc64(size_t size)
@@ -43,12 +32,6 @@ namespace ospray {
   {
     return ospcommon::alignedFree(ptr);
   }
-
-  /*! logging level - '0' means 'no logging at all', increasing
-      numbers mean increasing verbosity of log messages */
-  uint32_t logLevel = 0;
-  bool debugMode = false;
-  int numThreads = -1;
 
   WarnOnce::WarnOnce(const std::string &s) 
     : s(s) 
@@ -90,12 +73,9 @@ namespace ospray {
     ac -= howMany;
   }
 
-  void init(int *_ac, const char ***_av)
+  void initFromCommandLine(int *_ac, const char ***_av)
   {
-    int cpuFeatures = ospcommon::getCPUFeatures();
-    if ((cpuFeatures & ospcommon::CPU_FEATURE_SSE41) == 0)
-      throw std::runtime_error("Error. OSPRay only runs on CPUs that support"
-                               " at least SSE4.1.");
+    auto &device = ospray::api::Device::current;
 
     if (_ac && _av) {
       int &ac = *_ac;
@@ -103,43 +83,25 @@ namespace ospray {
       for (int i=1;i<ac;) {
         std::string parm = av[i];
         if (parm == "--osp:debug") {
-          debugMode = true;
-          numThreads = 1;
+          device->findParam("debug", true)->set(true);
           removeArgs(ac,av,i,1);
         } else if (parm == "--osp:verbose") {
-          logLevel = 1;
+          device->findParam("logLevel", true)->set(1);
           removeArgs(ac,av,i,1);
         } else if (parm == "--osp:vv") {
-          logLevel = 2;
+          device->findParam("logLevel", true)->set(2);
           removeArgs(ac,av,i,1);
         } else if (parm == "--osp:loglevel") {
-          logLevel = atoi(av[i+1]);
+          device->findParam("logLevel", true)->set(atoi(av[i+1]));
           removeArgs(ac,av,i,2);
         } else if (parm == "--osp:numthreads" || parm == "--osp:num-threads") {
-          numThreads = atoi(av[i+1]);
+          device->findParam("numThreads", true)->set(atoi(av[i+1]));
           removeArgs(ac,av,i,2);
         } else {
           ++i;
         }
       }
     }
-
-#if defined(OSPRAY_TASKING_TBB)
-    static tbb::task_scheduler_init tbb_init(numThreads);
-    UNUSED(tbb_init);
-#elif defined(OSPRAY_TASKING_CILK)
-    __cilkrts_set_param("nworkers", std::to_string(numThreads).c_str());
-#elif defined(OSPRAY_TASKING_OMP)
-    if (numThreads > 0) {
-      omp_set_num_threads(numThreads);
-    }
-#elif defined(OSPRAY_TASKING_INTERNAL)
-    try {
-      ospray::Task::initTaskSystem(debugMode ? 0 : numThreads);
-    } catch (const std::runtime_error &e) {
-      std::cerr << "WARNING: " << e.what() << std::endl;
-    }
-#endif
   }
 
   void error_handler(const RTCError code, const char *str)
@@ -167,6 +129,7 @@ namespace ospray {
     case OSP_OBJECT:
     case OSP_CAMERA:
     case OSP_DATA:
+    case OSP_DEVICE:
     case OSP_FRAMEBUFFER:
     case OSP_GEOMETRY:
     case OSP_LIGHT:
@@ -183,6 +146,7 @@ namespace ospray {
     case OSP_UCHAR2:    return sizeof(vec2uc);
     case OSP_UCHAR3:    return sizeof(vec3uc);
     case OSP_UCHAR4:    return sizeof(vec4uc);
+    case OSP_SHORT:     return sizeof(int16);
     case OSP_USHORT:    return sizeof(uint16);
     case OSP_INT:       return sizeof(int32);
     case OSP_INT2:      return sizeof(vec2i);
@@ -206,6 +170,7 @@ namespace ospray {
     case OSP_FLOAT4:    return sizeof(vec4f);
     case OSP_FLOAT3A:   return sizeof(vec3fa);
     case OSP_DOUBLE:    return sizeof(double);
+    case OSP_UNKNOWN:   break;
     };
 
     std::stringstream error;
@@ -230,6 +195,7 @@ namespace ospray {
     if (strcmp(string, "uchar2") == 0) return(OSP_UCHAR2);
     if (strcmp(string, "uchar3") == 0) return(OSP_UCHAR3);
     if (strcmp(string, "uchar4") == 0) return(OSP_UCHAR4);
+    if (strcmp(string, "short" ) == 0) return(OSP_SHORT);
     if (strcmp(string, "ushort") == 0) return(OSP_USHORT);
     if (strcmp(string, "uint"  ) == 0) return(OSP_UINT);
     if (strcmp(string, "uint2" ) == 0) return(OSP_UINT2);
@@ -245,6 +211,7 @@ namespace ospray {
     case OSP_OBJECT:            return "object";
     case OSP_CAMERA:            return "camera";
     case OSP_DATA:              return "data";
+    case OSP_DEVICE:            return "device";
     case OSP_FRAMEBUFFER:       return "framebuffer";
     case OSP_GEOMETRY:          return "geometry";
     case OSP_LIGHT:             return "light";
@@ -261,6 +228,7 @@ namespace ospray {
     case OSP_UCHAR2:            return "uchar2";
     case OSP_UCHAR3:            return "uchar3";
     case OSP_UCHAR4:            return "uchar4";
+    case OSP_SHORT:             return "short";
     case OSP_USHORT:            return "ushort";
     case OSP_INT:               return "int";
     case OSP_INT2:              return "int2";
@@ -284,6 +252,7 @@ namespace ospray {
     case OSP_FLOAT4:            return "float4";
     case OSP_FLOAT3A:           return "float3a";
     case OSP_DOUBLE:            return "double";
+    case OSP_UNKNOWN:           break;
     };
 
     std::stringstream error;
@@ -295,19 +264,52 @@ namespace ospray {
   size_t sizeOf(const OSPTextureFormat type) {
     switch (type) {
       case OSP_TEXTURE_RGBA8:
-      case OSP_TEXTURE_SRGBA:   return sizeof(uint32);
-      case OSP_TEXTURE_RGBA32F: return sizeof(vec4f);
+      case OSP_TEXTURE_SRGBA:          return sizeof(uint32);
+      case OSP_TEXTURE_RGBA32F:        return sizeof(vec4f);
       case OSP_TEXTURE_RGB8:
-      case OSP_TEXTURE_SRGB:    return sizeof(vec3uc);
-      case OSP_TEXTURE_RGB32F:  return sizeof(vec3f);
-      case OSP_TEXTURE_R8:      return sizeof(uint8);
-      case OSP_TEXTURE_R32F:    return sizeof(float);
+      case OSP_TEXTURE_SRGB:           return sizeof(vec3uc);
+      case OSP_TEXTURE_RGB32F:         return sizeof(vec3f);
+      case OSP_TEXTURE_R8:             return sizeof(uint8);
+      case OSP_TEXTURE_R32F:           return sizeof(float);
+      case OSP_TEXTURE_FORMAT_INVALID: break;
     }
 
     std::stringstream error;
     error << __FILE__ << ":" << __LINE__ << ": unknown OSPTextureFormat "
           << (int)type;
     throw std::runtime_error(error.str());
+  }
+
+  uint32_t logLevel()
+  {
+    return ospray::api::Device::current->logLevel;
+  }
+
+  int loadLocalModule(const std::string &name)
+  {
+    std::string libName = "ospray_module_" + name;
+    loadLibrary(libName);
+
+    std::string initSymName = "ospray_init_module_" + name;
+    void*initSym = getSymbol(initSymName);
+    if (!initSym) {
+      throw std::runtime_error("#osp:api: could not find module initializer "
+                               +initSymName);
+    }
+
+    void (*initMethod)() = (void(*)())initSym;
+
+    //NOTE(jda) - don't use magic numbers!
+    if (!initMethod)
+      return 2;
+
+    try {
+      initMethod();
+    } catch (...) {
+      return 3;
+    }
+
+    return 0;
   }
 
 } // ::ospray

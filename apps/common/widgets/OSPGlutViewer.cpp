@@ -113,7 +113,9 @@ void OSPGlutViewer::toggleFullscreen()
 
 void OSPGlutViewer::resetView()
 {
+  auto oldAspect = viewPort.aspect;
   viewPort = glutViewPort;
+  viewPort.aspect = oldAspect;
 }
 
 void OSPGlutViewer::printViewport()

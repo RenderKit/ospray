@@ -70,6 +70,8 @@ namespace ospray {
       case OSP_STEREO_SIDE_BY_SIDE:
         aspect *= 0.5f;
         break;
+      case OSP_STEREO_NONE:
+        break;
     }
     
     float imgPlane_size_y = 2.f*tanf(deg2rad(0.5f*fovy));

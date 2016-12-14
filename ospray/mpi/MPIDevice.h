@@ -16,10 +16,10 @@
 
 #pragma once
 
-#include "MPICommon.h"
 #include "api/Device.h"
-#include "mpi/command.h"
-#include "CommandStream.h"
+#include "mpi/common/MPICommon.h"
+#include "mpi/common/command.h"
+#include "mpi/common/CommandStream.h"
 #include "common/Managed.h"
 
 /*! \file mpidevice.h Implements the "mpi" device for mpi rendering */
@@ -34,10 +34,14 @@ namespace ospray {
 
       typedef ospray::CommandTag CommandTag;
 
-      /*! constructor */
-      MPIDevice(// AppMode appMode, OSPMode ospMode,
-                int *_ac=NULL, const char **_av=NULL);
-      virtual ~MPIDevice();
+      MPIDevice() = default;
+      ~MPIDevice();
+
+      // ManagedObject Implementation /////////////////////////////////////////
+
+      void commit() override;
+
+      // Device Implementation ////////////////////////////////////////////////
 
       /*! create a new frame buffer */
       OSPFrameBuffer
@@ -155,6 +159,8 @@ namespace ospray {
       /*! add untyped void pointer to object - this will *ONLY* work in local rendering!  */
       void setVoidPtr(OSPObject object, const char *bufName, void *v) override;
 
+      void removeParam(OSPObject object, const char *name) override;
+
       /*! create a new renderer object (out of list of registered renderers) */
       OSPRenderer newRenderer(const char *type) override;
 
@@ -200,7 +206,7 @@ namespace ospray {
       /*! switch API mode for distriubted API extensions */
       void apiMode(OSPDApiMode mode) override;
 
-      OSPDApiMode currentApiMode;
+      OSPDApiMode currentApiMode {OSPD_MODE_MASTERED};
 
       /*! sample a volume */
       void sampleVolume(float **results,

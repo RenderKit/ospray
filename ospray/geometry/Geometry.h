@@ -55,7 +55,7 @@ namespace ospray {
 
     /*! \brief integrates this geometry's primitives into the respective
         model's acceleration structure */
-    virtual void finalize(Model *model) { UNUSED(model); }
+    virtual void finalize(Model *) { }
 
     /*! \brief creates an abstract geometry class of given type
 

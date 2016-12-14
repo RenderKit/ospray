@@ -106,6 +106,7 @@ inline void BlockBrickedVolume_getVoxel_##type(void *uniform _self,           \
 }
 
 template_getVoxel(uint8);
+template_getVoxel(int16);
 template_getVoxel(uint16);
 template_getVoxel(float);
 template_getVoxel(double);
@@ -170,6 +171,7 @@ void BlockBrickedVolume_setRegion_##type(BlockBrickedVolume *uniform self,    \
 }
 
 template_setRegion(uint8);
+template_setRegion(int16);
 template_setRegion(uint16);
 template_setRegion(float);
 template_setRegion(double);
@@ -191,6 +193,11 @@ void BlockBrickedVolume_Constructor(BlockBrickedVolume *uniform volume,
     volume->voxelSize = sizeof(uniform uint8);
     volume->super.getVoxel = BlockBrickedVolume_getVoxel_uint8;
     volume->setRegion = &BlockBrickedVolume_setRegion_uint8;
+  }
+  else if (volume->voxelType == OSP_SHORT) {
+    volume->voxelSize      = sizeof(uniform int16);
+    volume->super.getVoxel = BlockBrickedVolume_getVoxel_int16;
+    volume->setRegion      = &BlockBrickedVolume_setRegion_int16;
   }
   else if (volume->voxelType == OSP_USHORT) {
     volume->voxelSize      = sizeof(uniform uint16);

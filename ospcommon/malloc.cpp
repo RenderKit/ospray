@@ -31,7 +31,7 @@
 #include <windows.h>
 #include <malloc.h>
 
-namespace embree
+namespace ospcommon
 {
   void* os_malloc(size_t bytes, const int additional_flags) 
   {
