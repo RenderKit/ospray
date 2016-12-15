@@ -59,6 +59,9 @@ namespace ospray {
       // ospcommon::vec4
       virtual void set(const std::string &name, const ospcommon::vec4f &v) = 0;
 
+      // C-string
+      virtual void set(const std::string &name, const char *v) = 0;
+
       // void*
       virtual void set(const std::string &name, void *v) = 0;
 
@@ -67,6 +70,9 @@ namespace ospray {
      
       // ManagedObject&
       virtual void set(const std::string &name, const ManagedObject &v) = 0;
+
+      // Remove parameter on the object
+      virtual void remove(const std::string &name) = 0;
 
       //! Commit to ospray
       virtual void commit() const = 0;
@@ -109,11 +115,15 @@ namespace ospray {
 
       void set(const std::string &name, const ospcommon::vec4f &v) override;
 
+      void set(const std::string &name, const char *v) override;
+
       void set(const std::string &name, void *v) override;
 
       void set(const std::string &name, OSPObject v) override;
 
       void set(const std::string &name, const ManagedObject &v) override;
+
+      void remove(const std::string &name) override;
 
       void commit() const override;
 
@@ -250,6 +260,12 @@ namespace ospray {
     }
 
     template <typename OSP_TYPE>
+    inline void ManagedObject_T<OSP_TYPE>::set(const std::string &name, const char *v)
+    {
+      ospSetString(ospObject, name.c_str(), v);
+    }
+
+    template <typename OSP_TYPE>
     inline void ManagedObject_T<OSP_TYPE>::set(const std::string &name, void *v)
     {
       ospSetVoidPtr(ospObject, name.c_str(), v);
@@ -266,6 +282,12 @@ namespace ospray {
     ManagedObject_T<OSP_TYPE>::set(const std::string &name, const ManagedObject &v)
     {
       ospSetObject(ospObject, name.c_str(), v.object());
+    }
+
+    template <typename OSP_TYPE>
+    inline void ManagedObject_T<OSP_TYPE>::remove(const std::string &name)
+    {
+      ospRemoveParam(ospObject, name.c_str());
     }
 
     template <typename OSP_TYPE>

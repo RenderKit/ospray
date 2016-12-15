@@ -60,8 +60,9 @@ namespace ospray {
     }
 
     numSpheres = sphereData->numBytes / bytesPerSphere;
-    std::cout << "#osp: creating 'spheres' geometry, #spheres = " << numSpheres
-              << std::endl;
+    if (logLevel() >= 2)
+      std::cout << "#osp: creating 'spheres' geometry, #spheres = "
+        << numSpheres << std::endl;
 
     if (numSpheres >= (1ULL << 30)) {
       throw std::runtime_error("#ospray::Spheres: too many spheres in this "
@@ -86,6 +87,14 @@ namespace ospray {
         ispcMaterials[i] = m?m->getIE():NULL;
       }
       _materialList = (void*)ispcMaterials;
+    }
+
+    const char* spherePtr = (const char*)sphereData->data;
+    bounds = empty;
+    for (uint32_t i = 0; i < numSpheres; i++, spherePtr += bytesPerSphere) {
+      const float r = offset_radius < 0 ? radius : *(float*)(spherePtr + offset_radius);
+      const vec3f center = *(vec3f*)(spherePtr + offset_center);
+      bounds.extend(box3f(center - r, center + r));
     }
 
     ispc::SpheresGeometry_set(getIE(),model->getIE(),

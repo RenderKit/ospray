@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "common/ospray_cpp/Device.h"
 #include "common/commandline/Utility.h"
 
 #ifdef OSPRAY_APPS_ENABLE_SCRIPTING
@@ -35,7 +36,16 @@ std::string scriptFileFromCommandLine(int ac, const char **&av)
     if (arg == "--script" || arg == "-s") {
       scriptFileName = av[++i];
     }
-    else if (arg == "--translate") {
+  }
+
+  return scriptFileName;
+}
+
+void parseExtraParametersFromComandLine(int ac, const char **&av)
+{
+  for (int i = 1; i < ac; i++) {
+    const std::string arg = av[i];
+    if (arg == "--translate") {
       translate.x = atof(av[++i]);
       translate.y = atof(av[++i]);
       translate.z = atof(av[++i]);
@@ -47,23 +57,47 @@ std::string scriptFileFromCommandLine(int ac, const char **&av)
       lockFirstFrame = true;
     }
   }
-
-  return scriptFileName;
 }
 
 int main(int ac, const char **av)
 {
+#if 1
   ospInit(&ac,av);
+#elif 1
+  ospray::cpp::Device device("default");
+  //ospray::cpp::Device device("mpi");
+
+  //device.set("numThreads", 1);
+  //device.set("logLevel", 2);
+  //device.set("debug", 1);
+  device.commit();
+
+  device.setCurrent();
+#else
+  auto device = ospCreateDevice();
+  //auto device = ospCreateDevice("mpi");
+
+  // set device parameters...
+  //ospDeviceSet1i(device, "numThreads", 1);
+  //ospDeviceSet1i(device, "logLevel", 2);
+  //ospDeviceSet1i(device, "debug", 1);
+  ospDeviceCommit(device);
+
+  ospSetCurrentDevice(device);
+#endif
+
   ospray::glut3D::initGLUT(&ac,av);
 
   auto ospObjs = parseWithDefaultParsers(ac, av);
 
-  std::deque<ospcommon::box3f>      bbox;
-  std::deque<ospray::cpp::Model>    model;
+  std::deque<ospcommon::box3f>   bbox;
+  std::deque<ospray::cpp::Model> model;
   ospray::cpp::Renderer renderer;
   ospray::cpp::Camera   camera;
 
   std::tie(bbox, model, renderer, camera) = ospObjs;
+
+  parseExtraParametersFromComandLine(ac, av);
 
 #ifdef OSPRAY_APPS_ENABLE_SCRIPTING
   auto scriptFileName = scriptFileFromCommandLine(ac, av);

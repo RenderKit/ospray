@@ -20,15 +20,23 @@
 // ospray
 #include "common/Data.h"
 #include "lights/Light.h"
+#include "geometry/Instance.h"
 // ispc exports
 #include "PathTracer_ispc.h"
+#include "Material_ispc.h"
+#include "GeometryLight_ispc.h"
 // std
 #include <map>
 
 namespace ospray {
-  PathTracer::PathTracer() : Renderer()
+  PathTracer::PathTracer() : Renderer(), geometryLights(0)
   {
     ispcEquivalent = ispc::PathTracer_create(this);
+  }
+
+  PathTracer::~PathTracer()
+  {
+    destroyGeometryLights();
   }
 
   /*! \brief create a material of given type */
@@ -50,14 +58,59 @@ namespace ospray {
     return material;
   }
 
+
+  void PathTracer::generateGeometryLights(const Model *const model
+      , const affine3f& xfm
+      , const affine3f& rcp_xfm
+      , float *const areaPDF
+      )
+  {
+    for(size_t i = 0; i < model->geometry.size(); i++) {
+      auto &geo = model->geometry[i];
+      // recurse instances
+      Ref<Instance> inst = geo.dynamicCast<Instance>();
+      if (inst) {
+        const affine3f instXfm = xfm * inst->xfm;
+        const affine3f rcpXfm = rcp(instXfm);
+        generateGeometryLights(inst->instancedScene.ptr, instXfm, rcpXfm,
+            &(inst->areaPDF[0]));
+      } else
+        if (geo->material && geo->material->getIE()
+            && ispc::PathTraceMaterial_isEmissive(geo->material->getIE())) {
+          void* light = ispc::GeometryLight_create(geo->getIE()
+              , (const ispc::AffineSpace3f&)xfm
+              , (const ispc::AffineSpace3f&)rcp_xfm
+              , areaPDF+i);
+          if (light)
+            lightArray.push_back(light);
+          else if (logLevel() >= 1)
+            std::cout << "#osp:pt Geometry " << geo->toString() <<
+              " does not implement area sampling! Cannot use importance "
+              "sampling for that geometry with emissive material!" << std::endl;
+        }
+    }
+  }
+
+  void PathTracer::destroyGeometryLights()
+  {
+    for (size_t i = 0; i < geometryLights; i++)
+      ispc::GeometryLight_destroy(lightArray[i]);
+  }
+
   void PathTracer::commit()
   {
     Renderer::commit();
 
-    lightData = (Data*)getParamData("lights");
-
+    destroyGeometryLights();
     lightArray.clear();
 
+    if (model) {
+      areaPDF.resize(model->geometry.size());
+      generateGeometryLights(model, affine3f(one), affine3f(one), &areaPDF[0]);
+      geometryLights = lightArray.size();
+    }
+
+    lightData = (Data*)getParamData("lights");
     if (lightData) {
       for (uint32_t i = 0; i < lightData->size(); i++)
         lightArray.push_back(((Light**)lightData->data)[i]->getIE());
@@ -72,7 +125,8 @@ namespace ospray {
 
     ispc::PathTracer_set(getIE(), maxDepth, minContribution, maxRadiance,
                          backplate ? backplate->getIE() : NULL,
-                         lightPtr, lightArray.size());
+                         lightPtr, lightArray.size(), geometryLights,
+                         &areaPDF[0]);
   }
 
   OSP_REGISTER_RENDERER(PathTracer,pathtracer);

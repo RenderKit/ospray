@@ -19,7 +19,20 @@
 #include <memory>
 #include <mpi.h>
 #include "common/OSPCommon.h"
-#include "mpi/Work.h"
+#include "mpi/common/Work.h"
+
+#ifdef _WIN32
+#  ifdef ospray_mpi_EXPORTS
+#    define OSPRAY_MPI_INTERFACE __declspec(dllexport)
+#  else
+#    define OSPRAY_MPI_INTERFACE __declspec(dllimport)
+#  endif
+#  define OSPRAY_MPI_DLLEXPORT __declspec(dllexport)
+#else
+#  define OSPRAY_MPI_INTERFACE
+#  define OSPRAY_MPI_DLLEXPORT
+#endif
+#define OSPRAY_SDK_MPI_INTERFACE OSPRAY_MPI_INTERFACE
 
 // IMPI on Windows defines MPI_CALL already, erroneously
 #ifdef MPI_CALL
@@ -125,17 +138,20 @@ namespace ospray {
     //     MPI_Status  status;  //! status for MPI_Test
     // };
 
-    OSPRAY_INTERFACE extern Group world; //! MPI_COMM_WORLD
-    OSPRAY_INTERFACE extern Group app; /*! for workers: intracommunicator to app
-                        for app: intercommunicator among app processes
-                      */
-    OSPRAY_INTERFACE extern Group worker; /*!< group of all ospray workers (often the
-                           world root is reserved for either app or
-                           load balancing, and not part of the worker
-                           group */
+    //! MPI_COMM_WORLD
+    OSPRAY_MPI_INTERFACE extern Group world;
+    /*! for workers: intracommunicator to app
+      for app: intercommunicator among app processes
+      */
+    OSPRAY_MPI_INTERFACE extern Group app;
+    /*!< group of all ospray workers (often the
+      world root is reserved for either app or
+      load balancing, and not part of the worker
+      group */
+    OSPRAY_MPI_INTERFACE extern Group worker;
 
     // Initialize OSPRay's MPI groups
-    OSPRAY_INTERFACE void init(int *ac, const char **av);
+    OSPRAY_MPI_INTERFACE void init(int *ac, const char **av);
 
     // Maangement class for the MPI send/recv buffers. Objects interesting
     // in sending/receiving messages through the MPI layer must go through this object
@@ -175,11 +191,11 @@ namespace ospray {
     };
 
     // OSPRAY_INTERFACE void send(const Address& address, void* msgPtr, int32 msgSize);
-    OSPRAY_INTERFACE void send(const Address& addr, work::Work* work);
-    OSPRAY_INTERFACE void recv(const Address& addr, std::vector<work::Work*>& work);  //TODO: callback?
+    OSPRAY_MPI_INTERFACE void send(const Address& addr, work::Work* work);
+    OSPRAY_MPI_INTERFACE void recv(const Address& addr, std::vector<work::Work*>& work);  //TODO: callback?
     // OSPRAY_INTERFACE void send(const Address& addr, )
-    OSPRAY_INTERFACE void flush();
-    OSPRAY_INTERFACE void barrier(const Group& group);
+    OSPRAY_MPI_INTERFACE void flush();
+    OSPRAY_MPI_INTERFACE void barrier(const Group& group);
   }
 
 } // ::ospray

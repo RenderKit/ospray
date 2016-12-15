@@ -22,11 +22,18 @@
 namespace ospray {
   struct PathTracer : public Renderer {
     PathTracer();
+    virtual ~PathTracer();
     virtual std::string toString() const { return "ospray::PathTracer"; }
     virtual void commit();
     virtual Material *createMaterial(const char *type);
 
+    void generateGeometryLights(const Model *const, const affine3f& xfm,
+        const affine3f& rcp_xfm, float *const areaPDF);
+    void destroyGeometryLights();
+
     std::vector<void*> lightArray; // the 'IE's of the XXXLights
+    size_t geometryLights; // number of GeometryLights at beginning of lightArray
+    std::vector<float> areaPDF; // pdfs wrt. area of regular (not instanced) geometry lights
     Data *lightData;
   };
 }

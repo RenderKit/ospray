@@ -17,8 +17,7 @@
 // ospray 
 #include "Camera.h"
 #include "common/Util.h"
-// embree 
-#include "../common/Library.h"
+#include "common/Library.h"
 // ispc-side stuff
 #include "Camera_ispc.h"
 // stl 

@@ -34,6 +34,7 @@ struct Texture2D {
   Texture2D_get get;
   Texture2D_getN getNormal;
   void         *data;
+  bool          hasAlpha; // 4 channel texture?
 };
 
 // XXX won't work with MIPmapping: clean implementation with clamping on integer coords needed then 

@@ -83,10 +83,12 @@ namespace ospray {
                     RTC_MATRIX_COLUMN_MAJOR,
                     (const float *)&xfm);
     AffineSpace3f rcp_xfm = rcp(xfm);
+    areaPDF.resize(instancedScene->geometry.size());
     ispc::InstanceGeometry_set(getIE(),
                                (ispc::AffineSpace3f&)xfm,
                                (ispc::AffineSpace3f&)rcp_xfm,
-                               instancedScene->getIE());
+                               instancedScene->getIE(),
+                               &areaPDF[0]);
   }
 
   OSP_REGISTER_GEOMETRY(Instance,instance);

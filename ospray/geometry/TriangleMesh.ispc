@@ -18,6 +18,7 @@
 #include "TriangleMesh.ih"
 #include "common/Model.ih"
 #include "math/LinearSpace.ih"
+#include "math/sampling.ih"
 
 // embree
 #include "embree2/rtcore.isph"
@@ -53,19 +54,26 @@ inline vec3##S gather_vec3##S(const uniform bool huge,                         \
 {                                                                              \
   vec3##S v;                                                                   \
                                                                                \
-  const int index_lo = index & ((1<<BITS)-1);                                  \
-  const int index_hi = index - index_lo;                                       \
-  /* varying offset of lower bits */                                           \
-  const varying int scaledIndexLo = stride * index_lo;                         \
-  foreach_unique(hi in index_hi) {                                             \
-    /* uniform offset for upper bits */                                        \
-    uniform int64 scaledIndexHi = (int64)hi * stride;                          \
-    /* properly shifted base address (shifted by 64-bits) */                   \
-    const T *uniform base_hi = base + scaledIndexHi;                           \
+  if (huge) {                                                                  \
+    const int index_lo = index & ((1<<BITS)-1);                                \
+    const int index_hi = index - index_lo;                                     \
+    /* varying offset of lower bits */                                         \
+    const varying int scaledIndexLo = stride * index_lo;                       \
+    foreach_unique(hi in index_hi) {                                           \
+      /* uniform offset for upper bits */                                      \
+      uniform int64 scaledIndexHi = (int64)hi * stride;                        \
+      /* properly shifted base address (shifted by 64-bits) */                 \
+      const T *uniform base_hi = base + scaledIndexHi;                         \
                                                                                \
-    v.x = base_hi[scaledIndexLo+0];                                            \
-    v.y = base_hi[scaledIndexLo+1];                                            \
-    v.z = base_hi[scaledIndexLo+2];                                            \
+      v.x = base_hi[scaledIndexLo+0];                                          \
+      v.y = base_hi[scaledIndexLo+1];                                          \
+      v.z = base_hi[scaledIndexLo+2];                                          \
+    }                                                                          \
+  } else {                                                                     \
+    const varying int scaledIndex = stride * index;                            \
+    v.x = base[scaledIndex+0];                                                 \
+    v.y = base[scaledIndex+1];                                                 \
+    v.z = base[scaledIndex+2];                                                 \
   }                                                                            \
   return v;                                                                    \
 }                                                                              \
@@ -81,7 +89,7 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform _self,
                                        const varying Ray &ray,
                                        uniform int64 flags)
 {
-  uniform TriangleMesh *uniform self = (uniform TriangleMesh *uniform)_self;
+  TriangleMesh *uniform self = (TriangleMesh *uniform)_self;
   dg.Ng = dg.Ns = ray.Ng;
   const uniform bool huge_mesh = self->huge_mesh;
   const vec3i index = gather_vec3i(huge_mesh, self->index, self->idxSize, ray.primID);
@@ -161,6 +169,60 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform _self,
   }
 }
 
+SampleAreaRes TriangleMesh_sampleArea(
+    const Geometry *uniform const _self
+    , const int32 primID
+    , const uniform affine3f &xfm
+    , const uniform affine3f &
+    , const vec2f& s
+    )
+{
+  const TriangleMesh *const uniform self = (const TriangleMesh *uniform)_self;
+  SampleAreaRes res;
+
+  // gather vertices
+  const uniform bool huge_mesh = self->huge_mesh;
+  const vec3i index = gather_vec3i(huge_mesh, self->index, self->idxSize, primID);
+  const uniform float *uniform vertex = self->vertex;
+  const uniform int32 vtxSize = self->vtxSize;
+  const vec3f a = gather_vec3f(huge_mesh, vertex, vtxSize, index.x);
+  const vec3f b = gather_vec3f(huge_mesh, vertex, vtxSize, index.y);
+  const vec3f c = gather_vec3f(huge_mesh, vertex, vtxSize, index.z);
+
+  const vec3f localPos = uniformSampleTriangle(a, b, c, s);
+  res.pos = xfmPoint(xfm, localPos);
+
+  const vec3f e1 = a-c;
+  const vec3f e2 = b-c;
+  res.normal = normalize(cross(xfmVector(xfm, e1), xfmVector(xfm, e2)));
+
+  return res;
+}
+
+void TriangleMesh_getAreas(
+    const Geometry *const uniform _self
+    , const uniform affine3f &xfm
+    , float *const uniform area
+    )
+{
+  TriangleMesh *uniform self = (TriangleMesh *uniform)_self;
+
+  const uniform int32 tris = self->super.primitives;
+  int *uniform index = self->index;
+  const uniform int32 idxSize = self->idxSize;
+  const float *const uniform vertex = self->vertex;
+  const uniform int64 vtxSize = self->vtxSize;
+  // TODO vectorize this loop, with foreach or ProgramCount & ProgramIndex
+  for(uniform int32 i = 0; i < tris; i++, index += idxSize) {
+    const uniform vec3f a = *((vec3f*)(vertex + vtxSize * *index));
+    const uniform vec3f b = *((vec3f*)(vertex + vtxSize * *(index+1)));
+    const uniform vec3f c = *((vec3f*)(vertex + vtxSize * *(index+2)));
+    const uniform vec3f e1 = xfmVector(xfm, a-c);
+    const uniform vec3f e2 = xfmVector(xfm, b-c);
+    area[i] = 0.5f * length(cross(e1, e2));
+  }
+}
+
 
 //! constructor for ispc-side TriangleMesh object
 void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
@@ -182,11 +244,13 @@ void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
                               uniform uint32 *uniform prim_materialID,
                               uniform bool huge_mesh)
 {
-  Geometry_Constructor(&mesh->geometry,cppEquivalent,
+  Geometry_Constructor(&mesh->super,cppEquivalent,
                        TriangleMesh_postIntersect,
                        model,geomID,
                        material);
-  mesh->numTriangles = numTriangles;
+  mesh->super.getAreas = TriangleMesh_getAreas;
+  mesh->super.sampleArea = TriangleMesh_sampleArea;
+  mesh->super.primitives = numTriangles;
   mesh->index        = index;
   mesh->vertex       = vertex;
   mesh->normal       = normal;
@@ -203,7 +267,7 @@ void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
 
 export void *uniform TriangleMesh_create(void *uniform cppEquivalent)
 {
-  uniform TriangleMesh *uniform mesh = uniform new uniform TriangleMesh;
+  TriangleMesh *uniform mesh = uniform new TriangleMesh;
   TriangleMesh_Constructor(mesh, cppEquivalent,
                            NULL, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, -1, NULL, NULL, NULL, false);
   return mesh;
@@ -231,7 +295,7 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
   uniform Model *uniform model = (uniform Model *uniform)_model;
   uniform Material *uniform *uniform materialList = (uniform Material *uniform *uniform)_materialList;
   TriangleMesh_Constructor(mesh,
-                           mesh->geometry.cppEquivalent,
+                           mesh->super.cppEquivalent,
                            model,
                            geomID,
                            numTriangles,

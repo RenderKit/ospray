@@ -17,7 +17,6 @@
 # ISPC versions to look for, in decending order (newest first)
 SET(ISPC_VERSION_WORKING "1.9.1" "1.9.0")
 LIST(GET ISPC_VERSION_WORKING -1 ISPC_VERSION_REQUIRED)
-SET(ISPC_VERSION_RECOMMENDED_KNC "1.9.0")
 
 IF (NOT ISPC_EXECUTABLE)
   # try sibling folder as hint for path of ISPC

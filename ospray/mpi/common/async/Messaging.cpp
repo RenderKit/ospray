@@ -14,10 +14,10 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "mpi/async/Messaging.h"
-#include "mpi/async/SimpleSendRecvMessaging.h"
-#include "mpi/async/MultiIsendIrecvMessaging.h"
-#include "mpi/async/BatchedIsendIrecvMessaging.h"
+#include "mpi/common/async/Messaging.h"
+#include "mpi/common/async/SimpleSendRecvMessaging.h"
+#include "mpi/common/async/MultiIsendIrecvMessaging.h"
+#include "mpi/common/async/BatchedIsendIrecvMessaging.h"
 
 namespace ospray {
   namespace mpi {

@@ -57,11 +57,11 @@ namespace ospray {
   {
     static int numPrints = 0;
     numPrints++;
-    if (logLevel >= 2) 
+    if (logLevel() >= 2)
       if (numPrints == 5)
         cout << "(all future printouts for triangle mesh creation will be emitted)" << endl;
     
-    if (logLevel >= 2) 
+    if (logLevel() >= 2)
       if (numPrints < 5)
         std::cout << "ospray: finalizing triangle mesh ..." << std::endl;
 
@@ -78,12 +78,8 @@ namespace ospray {
     materialListData = getParamData("materialList");
     geom_materialID = getParam1i("geom.materialID",-1);
 
-    Assert2(vertexData != NULL,
-            "triangle mesh geometry does not have either 'position'"
-            " or 'vertex' array");
-    Assert2(indexData != NULL, 
-            "triangle mesh geometry does not have either 'index'"
-            " or 'triangle' array");
+    Assert2(vertexData, "triangle mesh must have 'vertex' array");
+    Assert2(indexData, "triangle mesh must have 'index' array");
 
     // check whether we need 64-bit addressing
     bool huge_mesh = false;
@@ -203,7 +199,7 @@ namespace ospray {
     for (uint32_t i = 0; i < numVerts*numCompsInVtx; i+=numCompsInVtx)
       bounds.extend(*(vec3f*)(vertex + i));
 
-    if (logLevel >= 2) 
+    if (logLevel() >= 2)
       if (numPrints < 5) {
         cout << "  created triangle mesh (" << numTris << " tris "
              << ", " << numVerts << " vertices)" << endl;

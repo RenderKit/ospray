@@ -14,8 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "mpi/MPICommon.h"
-#include "mpi/CommandStream.h"
+#include "mpi/common/MPICommon.h"
+#include "mpi/common/CommandStream.h"
+#include "mpi/MPIDevice.h"
 #include "common/Model.h"
 #include "common/Data.h"
 #include "common/Library.h"
@@ -27,12 +28,10 @@
 #include "lights/Light.h"
 #include "texture/Texture2D.h"
 #include "fb/LocalFB.h"
-#include "mpi/async/CommLayer.h"
-#include "mpi/DistributedFrameBuffer.h"
-#include "mpi/MPILoadBalancer.h"
+#include "mpi/common/async/CommLayer.h"
+#include "mpi/fb/DistributedFrameBuffer.h"
+#include "mpi/render/MPILoadBalancer.h"
 #include "transferFunction/TransferFunction.h"
-
-#include "mpi/MPIDevice.h"
 
 // std
 #include <algorithm>
@@ -56,14 +55,11 @@ void sleep(unsigned int seconds)
 
 namespace ospray {
 
-  extern RTCDevice g_embreeDevice;
-
   namespace mpi {
     using std::cout;
     using std::endl;
 
-    OSPRAY_INTERFACE void runWorker();
-    OSPRAY_INTERFACE void processWorkerCommand(const int command);
+    OSPRAY_MPI_INTERFACE void runWorker();
 
     void embreeErrorFunc(const RTCError code, const char* str)
     {
@@ -81,11 +77,15 @@ namespace ospray {
     */
     void runWorker()
     {
+      auto &device = ospray::api::Device::current;
+
+      auto numThreads = device ? device->numThreads : -1;
+
       // initialize embree. (we need to do this here rather than in
       // ospray::init() because in mpi-mode the latter is also called
       // in the host-stubs, where it shouldn't.
       std::stringstream embreeConfig;
-      if (debugMode)
+      if (device && device->debugMode)
         embreeConfig << " threads=1,verbose=2";
       else if(numThreads > 0)
         embreeConfig << " threads=" << numThreads;
@@ -98,7 +98,7 @@ namespace ospray {
       };
 
       RTCDevice embreeDevice = rtcNewDevice(embreeConfig.str().c_str());
-      g_embreeDevice = embreeDevice;
+      device->embreeDevice = embreeDevice;
       EmbreeDeviceScopeGuard guard;
       guard.embreeDevice = embreeDevice;
 
@@ -128,11 +128,20 @@ namespace ospray {
           delete w;
           w = nullptr;
         }
+        /*
+
+          // ==================================================================
+        case ospray::CMD_REMOVE_PARAM: {
+          // ==================================================================
+          const ObjectHandle handle = cmd.get_handle();
+          const char *name = cmd.get_charPtr();
+          ManagedObject *obj = handle.lookup();
+          Assert(obj);
+          obj->removeParam(name);
+          cmd.free(name);
+        } break;
+        */
       }
-    }
-    void processWorkerCommand(const int command)
-    {
-      assert(0 && "deprecated");
     }
 
   } // ::ospray::api

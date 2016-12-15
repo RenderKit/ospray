@@ -51,11 +51,11 @@ MACRO(OSPRAY_CHECK_COMPILER_SUPPORT ISA)
       OSPRAY_WARN_ONCE(MISSING_AVX512
                        "OSPRay only supports KNL on Linux. "
                        "Disabling KNL ISA target.")
-      SET(OSPRAY_EMBREE_ENABLE_${ISA} false)
+      SET(OSPRAY_EMBREE_ENABLE_${ISA} FALSE)
     ELSEIF ((NOT OSPRAY_COMPILER_ICC) AND (NOT OSPRAY_USE_EXTERNAL_EMBREE))
       OSPRAY_WARN_ONCE(MISSING_AVX512
                        "You must use ICC to compile AVX512 when using OSPRAY_USE_EXTERNAL_EMBREE=OFF. Either install and use an AVX512 compatible Embree, or switch to using the Intel Compiler.")
-      SET(OSPRAY_EMBREE_ENABLE_${ISA} false)
+      SET(OSPRAY_EMBREE_ENABLE_${ISA} FALSE)
     ENDIF()
   ELSEIF (OSPRAY_EMBREE_ENABLE_${ISA} AND NOT OSPRAY_COMPILER_SUPPORTS_${ISA})
     OSPRAY_WARN_ONCE(MISSING_${ISA}
@@ -63,7 +63,7 @@ MACRO(OSPRAY_CHECK_COMPILER_SUPPORT ISA)
                      "GCC for ${ISA}. Disabling ${ISA}.\nTo compile for "
                      "${ISA}, please switch to either 'ICC'-compiler, or "
                      "upgrade your GCC version.")
-    SET(OSPRAY_EMBREE_ENABLE_${ISA} false)
+    SET(OSPRAY_EMBREE_ENABLE_${ISA} FALSE)
   ENDIF()
 ENDMACRO()
 
@@ -74,10 +74,10 @@ MACRO(OSPRAY_CONFIGURE_ISPC_ISA)
       "Target ISA (SSE, AVX, AVX2, AVX512, or ALL)")
   STRING(TOUPPER ${OSPRAY_BUILD_ISA} OSPRAY_BUILD_ISA)
 
-  SET(OSPRAY_EMBREE_ENABLE_SSE    true)
-  SET(OSPRAY_EMBREE_ENABLE_AVX    true)
-  SET(OSPRAY_EMBREE_ENABLE_AVX2   true)
-  SET(OSPRAY_EMBREE_ENABLE_AVX512 true)
+  SET(OSPRAY_EMBREE_ENABLE_SSE    TRUE)
+  SET(OSPRAY_EMBREE_ENABLE_AVX    TRUE)
+  SET(OSPRAY_EMBREE_ENABLE_AVX2   TRUE)
+  SET(OSPRAY_EMBREE_ENABLE_AVX512 TRUE)
 
   OSPRAY_CHECK_COMPILER_SUPPORT(AVX)
   OSPRAY_CHECK_COMPILER_SUPPORT(AVX2)
@@ -142,7 +142,7 @@ MACRO(OSPRAY_CONFIGURE_ISPC_ISA)
     ENDIF()
 
     SET(OSPRAY_ISPC_TARGET_LIST avx2)
-    SET(OSPRAY_EMBREE_ENABLE_AVX512 false)
+    SET(OSPRAY_EMBREE_ENABLE_AVX512 FALSE)
 
   ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX")
 
@@ -154,14 +154,14 @@ MACRO(OSPRAY_CONFIGURE_ISPC_ISA)
     ENDIF()
 
     SET(OSPRAY_ISPC_TARGET_LIST avx)
-    SET(OSPRAY_EMBREE_ENABLE_AVX512 false)
-    SET(OSPRAY_EMBREE_ENABLE_AVX2   false)
+    SET(OSPRAY_EMBREE_ENABLE_AVX512 FALSE)
+    SET(OSPRAY_EMBREE_ENABLE_AVX2   FALSE)
 
   ELSEIF (OSPRAY_BUILD_ISA STREQUAL "SSE")
     SET(OSPRAY_ISPC_TARGET_LIST sse4)
-    SET(OSPRAY_EMBREE_ENABLE_AVX512 false)
-    SET(OSPRAY_EMBREE_ENABLE_AVX2   false)
-    SET(OSPRAY_EMBREE_ENABLE_AVX    false)
+    SET(OSPRAY_EMBREE_ENABLE_AVX512 FALSE)
+    SET(OSPRAY_EMBREE_ENABLE_AVX2   FALSE)
+    SET(OSPRAY_EMBREE_ENABLE_AVX    FALSE)
   ELSE ()
     MESSAGE(ERROR "Invalid OSPRAY_BUILD_ISA value. "
                   "Please select one of SSE, AVX, AVX2, AVX512, or ALL.")
@@ -170,14 +170,11 @@ ENDMACRO()
 
 ## Target creation macros ##
 
-# NOTE(jda) - Must be a function and not a macro so the include() for
-#             MIC doesn't have side effects on future subdirectories
 FUNCTION(OSPRAY_ADD_SUBDIRECTORY subdirectory)
   SET(OSPRAY_EXE_SUFFIX "")
   SET(OSPRAY_LIB_SUFFIX "")
   SET(OSPRAY_ISPC_SUFFIX ".o")
   SET(__XEON__ ON)
-  SET(OSPRAY_TARGET_MIC OFF)
 
   ADD_SUBDIRECTORY(${subdirectory} builddir/${subdirectory}/intel64)
 ENDFUNCTION()
@@ -221,8 +218,6 @@ MACRO(OSPRAY_EXE_LINK_LIBRARIES name)
 ENDMACRO()
 
 ## Target install macros for OSPRay libraries ##
-# use vanilla INSTALL for apps -- these don't have MIC parts and should also not
-# go into COMPONENT lib
 
 MACRO(OSPRAY_INSTALL_LIBRARY name)
   # NOTE(jda) - Check if CMAKE_INSTALL_LIB/BINDIR is set, and use
@@ -256,7 +251,6 @@ ENDMACRO()
 # worker, because these go into install component 'lib'
 MACRO(OSPRAY_INSTALL_EXE _name)
   SET(name ${_name}${OSPRAY_EXE_SUFFIX})
-  # use OSPRAY_LIB_SUFFIX for COMPONENT to get lib_mic and not lib.mic
   INSTALL(TARGETS ${name} ${ARGN} 
     DESTINATION ${CMAKE_INSTALL_BINDIR}
     COMPONENT lib${OSPRAY_LIB_SUFFIX}

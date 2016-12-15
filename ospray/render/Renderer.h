@@ -45,15 +45,15 @@ namespace ospray {
       ospLoadModule first. */
     static Renderer *createRenderer(const char *identifier);
 
-    virtual void commit();
+    virtual void commit() override;
 
     /*! \brief common function to help printf-debugging */
-    virtual std::string toString() const { return "ospray::Renderer"; }
-
+    virtual std::string toString() const override;
+    
     /*! \brief render one frame, and put it into given frame buffer */
     virtual float renderFrame(FrameBuffer *fb,
-                             const uint32 fbChannelFlags);
-
+                              const uint32 fbChannelFlags);
+    
     //! \brief called to initialize a new frame
     /*! this function gets called exactly once (on each node) at the
       beginning of each frame, and allows the renderer to do whatever
@@ -101,7 +101,6 @@ namespace ospray {
       should be set to nearest-neighbor interpolation:
       (OSP_TEXTURE_FILTER_NEAREST). */
     Ref<Texture2D> maxDepthTexture;
-
   };
 
   // Inlined function definitions /////////////////////////////////////////////

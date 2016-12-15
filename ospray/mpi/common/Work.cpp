@@ -16,12 +16,11 @@
 
 #include <vector>
 
-#include "mpi/MPICommon.h"
+#include "mpi/common/MPICommon.h"
 #include "ospray/common/ObjectHandle.h"
-#include "mpi/DistributedFrameBuffer.h"
-#include "mpi/MPILoadBalancer.h"
-
-#include "Work.h"
+#include "mpi/fb/DistributedFrameBuffer.h"
+#include "mpi/render/MPILoadBalancer.h"
+#include "mpi/common/Work.h"
 
 namespace ospray {
   namespace mpi {

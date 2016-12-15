@@ -25,12 +25,18 @@ namespace ospray {
       'n' items of a given type */
   struct OSPRAY_SDK_INTERFACE Data : public ManagedObject
   {
-    virtual void commit() { notifyListenersThatObjectGotChanged(); }
-
-    virtual std::string toString() const { return "ospray::Data"; }
-
+    /*! constructor */
     Data(size_t numItems, OSPDataType type, void *data, int flags);
+    
+    /*! destructor */
     virtual ~Data();
+
+    /*! commit this object - for this object type, make sure that all
+        listeners that have registered know that we have changed */
+    virtual void commit();
+
+    /*! pretty-print this object, for debugging purposes */
+    virtual std::string toString() const { return "ospray::Data"; }
 
     /*! return number of items in this data buffer */
     inline size_t size() const { return numItems; }

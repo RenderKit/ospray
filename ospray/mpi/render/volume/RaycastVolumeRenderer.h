@@ -27,11 +27,8 @@ namespace ospray {
 
   public:
 
-    //! Constructor.
-    RaycastVolumeRenderer();
-
-    //! Destructor.
-    ~RaycastVolumeRenderer();
+    RaycastVolumeRenderer()  = default;
+    ~RaycastVolumeRenderer() = default;
 
     //! Create a material of the given type.
     Material* createMaterial(const char *type) override;
@@ -62,14 +59,6 @@ namespace ospray {
   };
 
   // Inlined function definitions /////////////////////////////////////////////
-
-  inline RaycastVolumeRenderer::RaycastVolumeRenderer()
-  {
-  }
-
-  inline RaycastVolumeRenderer::~RaycastVolumeRenderer()
-  {
-  }
 
   inline std::string RaycastVolumeRenderer::toString() const
   {

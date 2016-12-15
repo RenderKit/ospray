@@ -19,7 +19,7 @@
 /*! \file ospray/device/nwlayer.h \brief Defines the basic network layer abstraction */
 
 #include "include/ospray/ospray.h"
-#include "mpi/buffers.h"
+#include "mpi/common/buffers.h"
 
 namespace ospray {
   // namespace nwlayer {
@@ -71,6 +71,8 @@ namespace ospray {
     CMD_SET_VEC3F,
     CMD_SET_VEC3I,
     CMD_SET_VEC4F,
+
+    CMD_REMOVE_PARAM,
 
     CMD_SET_PIXELOP,
     CMD_NEW_PIXELOP,

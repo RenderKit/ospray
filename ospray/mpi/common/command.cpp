@@ -1,4 +1,4 @@
-#include "ospray/mpi/command.h"
+#include "mpi/common/command.h"
 
 namespace ospray {
 const char* commandToString(CommandTag tag) {

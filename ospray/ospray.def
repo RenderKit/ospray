@@ -74,3 +74,6 @@ print_box___REFs_5B__c_unbox3f_5D_sse4
 print_box___REFs_5B__c_unbox3fa_5D_avx
 print_box___REFs_5B__c_unbox3fa_5D_avx2
 print_box___REFs_5B__c_unbox3fa_5D_sse4
+precomputedHalton
+precomputedHalton_initialized
+z_order

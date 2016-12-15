@@ -16,7 +16,7 @@
 
 #undef NDEBUG // do all assertions in this file
 
-#include "mpi/MPICommon.h"
+#include "mpi/common/MPICommon.h"
 #include "mpi/MPIDevice.h"
 #include "common/Model.h"
 #include "common/Data.h"
@@ -26,11 +26,11 @@
 #include "render/Renderer.h"
 #include "camera/Camera.h"
 #include "volume/Volume.h"
-#include "mpi/MPILoadBalancer.h"
+#include "mpi/render/MPILoadBalancer.h"
 #include "fb/LocalFB.h"
-#include "mpi/async/CommLayer.h"
-#include "mpi/DistributedFrameBuffer.h"
-#include "Work.h"
+#include "mpi/common/async/CommLayer.h"
+#include "mpi/fb/DistributedFrameBuffer.h"
+#include "mpi/common/Work.h"
 // std
 #ifndef _WIN32
 #  include <unistd.h> // for fork()
@@ -41,15 +41,14 @@ namespace ospray {
   using std::cout;
   using std::endl;
 
-  extern RTCDevice g_embreeDevice;
+  //extern RTCDevice g_embreeDevice;
 
   namespace mpi {
     //! this runs an ospray worker process.
     /*! it's up to the proper init routine to decide which processes
       call this function and which ones don't. This function will not
       return. */
-    OSPRAY_INTERFACE void runWorker();
-
+    OSPRAY_MPI_INTERFACE void runWorker();
 
     /*! in this mode ("ospray on ranks" mode, or "ranks" mode), the
         user has launched the app across all ranks using mpirun "<all
@@ -82,8 +81,8 @@ namespace ospray {
         - this fct is called from ospInit (with ranksBecomeWorkers=true) or
           from ospdMpiInit (w/ ranksBecomeWorkers = false)
     */
-    ospray::api::Device *createMPI_runOnExistingRanks(int *ac, const char **av,
-                                                      bool ranksBecomeWorkers)
+    void createMPI_runOnExistingRanks(int *ac, const char **av,
+                                      bool ranksBecomeWorkers)
     {
       MPI_Status status;
       mpi::init(ac,av);
@@ -128,15 +127,6 @@ namespace ospray {
         // - app process(es) are in one intercomm ("app"); workers all in
         //   another ("worker")
         // - all processes (incl app) have barrier'ed, and thus now in sync.
-
-        // now, root proc(s) will return, initialize the MPI device, then
-        // return to the app
-        // TODO: Need to set right API mode
-        if (ranksBecomeWorkers) {
-          return new mpi::MPIDevice(ac,av);
-        } else {
-          return new mpi::MPIDevice(ac,av, OSPD_MODE_COLLABORATIVE);
-        }
       } else {
         // we're the workers
         MPI_Comm_split(mpi::world.comm,0,mpi::world.rank,&worker.comm);
@@ -177,13 +167,14 @@ namespace ospray {
         } else {
           cout << "#osp:mpi: distributed mode detected, "
                << "returning device on all ranks!" << endl;
-          return new mpi::MPIDevice(ac,av, OSPD_MODE_COLLABORATIVE);
         }
       }
-      // nobody should ever come here ...
-      return NULL;
     }
 
+    void createMPI_RanksBecomeWorkers(int *ac, const char **av)
+    {
+      createMPI_runOnExistingRanks(ac,av,true);
+    }
 
     /*! in this mode ("separate worker group" mode)
       - the user may or may not have launched MPI explicitly for his app
@@ -194,13 +185,11 @@ namespace ospray {
       - the ospray frontend will store the port its waiting on connections for
         in the
       filename passed to this function; or will print it to stdout if this is
-      NULL
+      nullptr
     */
-    ospray::api::Device *
-    createMPI_ListenForWorkers(int *ac, const char **av,
-                               const char *fileNameToStorePortIn)
+    void createMPI_ListenForWorkers(int *ac, const char **av,
+                                    const char *fileNameToStorePortIn)
     {
-      ospray::init(ac,&av);
       mpi::init(ac,av);
 
       if (world.rank < 1) {
@@ -261,11 +250,8 @@ namespace ospray {
         cout << "======================================================="
              << endl;
       }
-      MPI_Barrier(app.comm);
 
-      if (app.rank >= 1)
-        return NULL;
-      return new mpi::MPIDevice(ac,av);
+      MPI_Barrier(app.comm);
     }
 
     /*! in this mode ("separate worker group" mode)
@@ -277,12 +263,11 @@ namespace ospray {
       stdout, will parse that output for this string, and create an mpi connection to
       this port to establish the service
     */
-    ospray::api::Device *createMPI_LaunchWorkerGroup(int *ac, const char **av,
-                                                     const char *launchCommand)
+    void createMPI_LaunchWorkerGroup(int *ac, const char **av,
+                                     const char *launchCommand)
     {
       int rc;
 
-      ospray::init(ac,&av);
       mpi::init(ac,av);
 
       Assert(launchCommand);
@@ -344,45 +329,63 @@ namespace ospray {
           cout << "======================================================="
                << endl;
         }
+
         MPI_Barrier(app.comm);
-        return NULL;
       }
+
       MPI_Barrier(app.comm);
-      return new mpi::MPIDevice(ac,av);
     }
 
-    void initDistributedAPI(int *ac, char ***av, OSPDRenderMode mpiMode)
+    MPIDevice::~MPIDevice()
     {
-      PING;
-      int initialized = false;
-      MPI_CALL(Initialized(&initialized));
-      if (initialized)
-        throw std::runtime_error("OSPRay MPI Error: MPI already Initialized "
-                                 "when calling ospMpiInit()");
+      // NOTE(jda) - Seems that there are no MPI Devices on worker ranks...this
+      //             will likely change for data-distributed API settings?
+      if (mpi::world.rank == 0) {
+        std::cout << "shutting down mpi device" << std::endl;
+        work::CommandFinalize work;
+        processWork(&work);
+        //rtcDeleteDevice(g_embreeDevice);
+      }
+    }
 
-      ospray::mpi::init(ac,(const char **)*av);
-      if (mpi::world.size < 2) {
-        throw std::runtime_error("#osp:mpi: trying to run distributed API mode"
-                                 " with a single rank? (did you forget the "
-                                 "'mpirun'?)");
+    void MPIDevice::commit()
+    {
+      Device::commit();
+
+      int _ac = 2;
+      const char *_av[] = {"ospray_mpi_worker", "--osp:mpi"};
+
+      std::string mode = getParamString("mpiMode", "mpi");
+
+      if (mode == "mpi") {
+        createMPI_RanksBecomeWorkers(&_ac,_av);
+      }
+      else if(mode == "mpi-launch") {
+        std::string launchCommand = getParamString("launchCommand", "");
+
+        if (launchCommand.empty()) {
+          throw std::runtime_error("You must provide the launchCommand "
+                                   "parameter in mpi-launch mode!");
+        }
+
+        createMPI_LaunchWorkerGroup(&_ac,_av,launchCommand.c_str());
+      }
+      else if (mode == "mpi-listen") {
+        std::string fileNameToStorePortIn =
+            getParamString("fileNameToStorePortIn", "");
+
+        if (fileNameToStorePortIn.empty()) {
+          throw std::runtime_error("You must provide the fileNameToStorePortIn "
+                                   "parameter in mpi-listen mode!");
+        }
+
+        createMPI_ListenForWorkers(&_ac,_av,fileNameToStorePortIn.c_str());
+      }
+      else {
+        throw std::runtime_error("Invalid MPI mode!");
       }
 
-      ospray::api::Device::current
-        = ospray::mpi::createMPI_runOnExistingRanks(ac,
-                                                    (const char**)*av,
-                                                    false);
-    }
-
-    // WILL: Just use the worker's error func
-    extern void embreeErrorFunc(const RTCError code, const char* str);
-
-    MPIDevice::MPIDevice(int *_ac, const char **_av, OSPDApiMode apiMode)
-      : currentApiMode(apiMode), bufferedComm(mpi::BufferedMPIComm::get())
-    {
-      UNUSED(_ac, _av);
-      auto logLevelFromEnv = getEnvVar<int>("OSPRAY_LOG_LEVEL");
-      if (logLevelFromEnv.first && logLevel == 0)
-        logLevel = logLevelFromEnv.second;
+      TiledLoadBalancer::instance = new mpi::staticLoadBalancer::Master;
 
       if (mpi::world.size != 1) {
         if (mpi::world.rank < 0) {
@@ -395,44 +398,10 @@ namespace ospray {
                                    "start.");
         }
       }
-
-      if (apiMode == OSPD_MODE_MASTERED) {
-        TiledLoadBalancer::instance = new mpi::staticLoadBalancer::Master;
-      } else {
-        TiledLoadBalancer::instance = new mpi::staticLoadBalancer::Slave;
-      }
-
-      // initialize embree. (we need to do this here rather than in
-      // ospray::init() because in mpi-mode the latter is also called
-      // in the host-stubs, where it shouldn't.
-      std::stringstream embreeConfig;
-      if (debugMode)
-        embreeConfig << " threads=1,verbose=2";
-      else if(numThreads > 0)
-        embreeConfig << " threads=" << numThreads;
-      g_embreeDevice = rtcNewDevice(embreeConfig.str().c_str());
-
-      rtcDeviceSetErrorFunction(g_embreeDevice, embreeErrorFunc);
-
-      RTCError erc = rtcDeviceGetError(g_embreeDevice);
-      if (erc != RTC_NO_ERROR) {
-        // why did the error function not get called !?
-        std::cerr << "#osp:init: embree internal error number " << (int)erc
-                  << std::endl;
-        assert(erc == RTC_NO_ERROR);
-      }
     }
 
-    MPIDevice::~MPIDevice() {
-      std::cout << "shutting down mpi device" << std::endl;
-      work::CommandFinalize work;
-      processWork(&work);
-      rtcDeleteDevice(g_embreeDevice);
-    }
-
-
-    OSPFrameBuffer
-    MPIDevice::frameBufferCreate(const vec2i &size,
+    OSPFrameBuffer 
+    MPIDevice::frameBufferCreate(const vec2i &size, 
                                  const OSPFrameBufferFormat mode,
                                  const uint32 channels)
     {
@@ -453,7 +422,7 @@ namespace ospray {
       switch (channel) {
       case OSP_FB_COLOR: return fb->mapColorBuffer();
       case OSP_FB_DEPTH: return fb->mapDepthBuffer();
-      default: return NULL;
+      default: return nullptr;
       }
     }
 
@@ -534,6 +503,22 @@ namespace ospray {
       UNUSED(_object, bufName, v);
       throw std::runtime_error("setting a void pointer as parameter to an "
                                "object is not allowed in MPI mode");
+    }
+
+    void MPIDevice::removeParam(OSPObject object, const char *name)
+    {
+      // TODO IMPLEMENT WORK UNIT FOR REMOVEPARAM
+      /*
+      Assert(object != nullptr  && "invalid object handle");
+      Assert(name != nullptr && "invalid identifier for object parameter");
+
+      const ObjectHandle handle = (const ObjectHandle&)object;
+
+      cmd.newCommand(CMD_REMOVE_PARAM);
+      cmd.send((const ObjectHandle &)object);
+      cmd.send(name);
+      cmd.flush();
+      */
     }
 
     /*! Copy data into the given object. */
@@ -670,8 +655,8 @@ namespace ospray {
                               const char *bufName,
                               OSPObject _value)
     {
-      Assert(_target != NULL);
-      Assert(bufName != NULL);
+      Assert(_target != nullptr);
+      Assert(bufName != nullptr);
       work::SetParam<OSPObject> work((ObjectHandle&)_target, bufName, _value);
       processWork(&work);
     }
@@ -679,7 +664,7 @@ namespace ospray {
     /*! create a new pixelOp object (out of list of registered pixelOps) */
     OSPPixelOp MPIDevice::newPixelOp(const char *type)
     {
-      Assert(type != NULL);
+      Assert(type != nullptr);
 
       ObjectHandle handle = allocateHandle();
       work::NewObject<PixelOp> work(type, handle);
@@ -690,8 +675,8 @@ namespace ospray {
     /*! set a frame buffer's pixel op object */
     void MPIDevice::setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op)
     {
-      Assert(_fb != NULL);
-      Assert(_op != NULL);
+      Assert(_fb != nullptr);
+      Assert(_op != nullptr);
       work::SetPixelOp work(_fb, _op);
       processWork(&work);
     }
@@ -699,7 +684,7 @@ namespace ospray {
     /*! create a new renderer object (out of list of registered renderers) */
     OSPRenderer MPIDevice::newRenderer(const char *type)
     {
-      Assert(type != NULL);
+      Assert(type != nullptr);
 
       ObjectHandle handle = allocateHandle();
       work::NewObject<Renderer> work(type, handle);
@@ -724,7 +709,7 @@ namespace ospray {
     /*! create a new camera object (out of list of registered cameras) */
     OSPCamera MPIDevice::newCamera(const char *type)
     {
-      Assert(type != NULL);
+      Assert(type != nullptr);
       ObjectHandle handle = allocateHandle();
       work::NewObject<Camera> work(type, handle);
       processWork(&work);
@@ -734,7 +719,7 @@ namespace ospray {
     /*! create a new volume object (out of list of registered volumes) */
     OSPVolume MPIDevice::newVolume(const char *type)
     {
-      Assert(type != NULL);
+      Assert(type != nullptr);
 
       ObjectHandle handle = allocateHandle();
       work::NewObject<Volume> work(type, handle);
@@ -745,7 +730,7 @@ namespace ospray {
     /*! create a new geometry object (out of list of registered geometries) */
     OSPGeometry MPIDevice::newGeometry(const char *type)
     {
-      Assert(type != NULL);
+      Assert(type != nullptr);
 
       ObjectHandle handle = allocateHandle();
       work::NewObject<Geometry> work(type, handle);
@@ -756,10 +741,10 @@ namespace ospray {
     /*! have given renderer create a new material */
     OSPMaterial MPIDevice::newMaterial(OSPRenderer _renderer, const char *type)
     {
-      if (type == NULL)
+      if (type == nullptr)
         throw std::runtime_error("#osp:mpi:newMaterial: NULL material type");
-
-      if (_renderer == NULL)
+      
+      if (_renderer == nullptr)
         throw std::runtime_error("#osp:mpi:newMaterial: NULL renderer handle");
 
       ObjectHandle handle = allocateHandle();
@@ -774,7 +759,7 @@ namespace ospray {
         registered transfer function types) */
     OSPTransferFunction MPIDevice::newTransferFunction(const char *type)
     {
-      Assert(type != NULL);
+      Assert(type != nullptr);
 
       ObjectHandle handle = allocateHandle();
       work::NewObject<TransferFunction> work(type, handle);
@@ -786,7 +771,7 @@ namespace ospray {
     /*! have given renderer create a new Light */
     OSPLight MPIDevice::newLight(OSPRenderer _renderer, const char *type)
     {
-      if (type == NULL)
+      if (type == nullptr)
         throw std::runtime_error("#osp:mpi:newLight: NULL light type");
 
       ObjectHandle handle = allocateHandle();
@@ -1053,6 +1038,9 @@ namespace ospray {
       }
       return handle;
     }
+
+    OSP_REGISTER_DEVICE(MPIDevice, mpi_device);
+    OSP_REGISTER_DEVICE(MPIDevice, mpi);
 
   } // ::ospray::mpi
 } // ::ospray

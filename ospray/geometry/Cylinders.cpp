@@ -50,8 +50,9 @@ namespace ospray {
                                " data specified");
     }
     numCylinders = cylinderData->numBytes / bytesPerCylinder;
-    std::cout << "#osp: creating 'cylinders' geometry, #cylinders = "
-              << numCylinders << std::endl;
+    if (logLevel() >= 2)
+      std::cout << "#osp: creating 'cylinders' geometry, #cylinders = "
+        << numCylinders << std::endl;
 
     if (_materialList) {
       free(_materialList);
@@ -66,6 +67,16 @@ namespace ospray {
         ispcMaterials[i] = m?m->getIE():NULL;
       }
       _materialList = (void*)ispcMaterials;
+    }
+
+    const char* cylinderPtr = (const char*)cylinderData->data;
+    bounds = empty;
+    for (uint32_t i = 0; i < numCylinders; i++, cylinderPtr += bytesPerCylinder) {
+      const float r = offset_radius < 0 ? radius : *(float*)(cylinderPtr + offset_radius);
+      const vec3f v0 = *(vec3f*)(cylinderPtr + offset_v0);
+      const vec3f v1 = *(vec3f*)(cylinderPtr + offset_v1);
+      bounds.extend(box3f(v0 - r, v0 + r));
+      bounds.extend(box3f(v1 - r, v1 + r));
     }
 
     ispc::CylindersGeometry_set(getIE(),model->getIE(),
