@@ -31,5 +31,5 @@ LINK
   ospray_common
   ospray
   ospray_sg
-  ospray_sg_amr
+  #ospray_sg_amr
 )
