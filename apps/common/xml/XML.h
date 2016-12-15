@@ -133,14 +133,6 @@ namespace ospray {
       exception */
     OSPRAY_XML_INTERFACE std::shared_ptr<XMLDoc> readXML(const std::string &fn);
 
-      
-    /*! @{ */
-    //! \brief helper function(s) to convert data tyeps into strings 
-    std::string toString(const int64_t value);
-    std::string toString(const float value);
-    std::string toString(const ospcommon::vec3f &value);
-    /*! @} */
-    
     /*! helper class for writing sg nodes in XML format */
     struct Writer {
       Writer(FILE *xml, FILE *bin);
