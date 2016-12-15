@@ -59,20 +59,19 @@ namespace ospray {
       mpi::async::CommLayer::WORLD->group = worldGroup;
     }
 
+    // The max size for an MPI Bcast is actually 2GB, but we cut it at 1.8GB
+    const size_t BufferedMPIComm::MAX_BCAST = 1800000000LL;
     std::shared_ptr<BufferedMPIComm> BufferedMPIComm::global = nullptr;
     BufferedMPIComm::BufferedMPIComm(size_t bufSize) : sendBuffer(bufSize), recvBuffer(bufSize){}
     BufferedMPIComm::~BufferedMPIComm() {
       flush();
     }
     void BufferedMPIComm::send(const Address& addr, work::Work* work) {
-      int indicator = -1;
-      // MPI_CALL(Bcast(&indicator, 1, MPI_INT, MPI_ROOT, mpi::worker.comm));
       // The packed buffer format is:
       // size_t: size of message
-      // int: num works
+      // int: number of work units being sent
       // [(size_t, X)...]: message tag headers followed by their data
       if (sendBuffer.getIndex() == 0) {
-        sendBuffer << indicator;
         sendSizeIndex = sendBuffer.getIndex();
         sendBuffer << size_t(0) << int(1);
         sendWorkIndex = sendBuffer.getIndex();
@@ -87,7 +86,7 @@ namespace ospray {
       // TODO WILL: Instead of making data/setregion commands flushing based on their
       // size we should flush here if the sendbuffer has reached a certain size.
       sendAddress = addr;
-      if (sendBuffer.getIndex() >= 1800000000LL) {
+      if (sendBuffer.getIndex() >= MAX_BCAST) {
         flush();
       }
     }
@@ -99,16 +98,19 @@ namespace ospray {
         std::runtime_error("mpi::recv on individual ranks not yet implemented");
       }
       MPI_Bcast(recvBuffer.getData(), 2048, MPI_BYTE, 0, addr.group->comm);
-      int command = 0;
-      recvBuffer >> command >> bufSize >> recvNumMessages;
-      assert(command == -1 && "error fetching work, mpi out of sync");
+      recvBuffer >> bufSize >> recvNumMessages;
 
-      if (bufSize > 2048 - 12) {
-        //std::cout << "need more room for big msg" << std::endl;
+      if (bufSize > 2048) {
         recvBuffer.clear();
         recvBuffer.reserve(bufSize);
-        MPI_Bcast(recvBuffer.getData(), bufSize, MPI_BYTE, 0, addr.group->comm);
+        // If we have more than 2KB receive the data in batches as big as we can send with bcast
+        for (size_t i = 2048; i < bufSize;) {
+          size_t to_recv = std::min(bufSize - i, MAX_BCAST);
+          MPI_CALL(Bcast(recvBuffer.getPtr(i), to_recv, MPI_BYTE, 0, addr.group->comm));
+          i += to_recv;
+        }
       }
+      recvBuffer.setIndex(12);
       work::decode_buffer(recvBuffer, work, recvNumMessages);
       recvBuffer.clear();
     }
@@ -129,14 +131,18 @@ namespace ospray {
       buf.setIndex(sendSizeIndex);
       buf << sz << sendNumMessages;
       buf.setIndex(endIndex);
-      // MPI_CALL(Bcast(&sz, 1, MPI_AINT, MPI_ROOT, mpi::worker.comm));
+
       // Now send the buffer
       if (addr.rank != SEND_ALL) {
         std::runtime_error("mpi::send to individuals not yet implemented");
       }
       MPI_CALL(Bcast(buf.getData(), 2048, MPI_BYTE, MPI_ROOT, addr.group->comm));
-      if (sz > 2048-12) {
-        MPI_CALL(Bcast(buf.getPtr(sendWorkIndex), sz, MPI_BYTE, MPI_ROOT, addr.group->comm));
+
+      // If we have more than 2KB send the data in batches as big as we can send with bcast
+      for (size_t i = 2048; i < sz;) {
+        size_t to_send = std::min(sz - i, MAX_BCAST);
+        MPI_CALL(Bcast(buf.getPtr(i), to_send, MPI_BYTE, MPI_ROOT, addr.group->comm));
+        i += to_send;
       }
       buf.clear();
       sendNumMessages = 0;

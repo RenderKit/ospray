@@ -157,10 +157,13 @@ namespace ospray {
     // in sending/receiving messages through the MPI layer must go through this object
     // to easily buffer operations.
     class OSPRAY_MPI_INTERFACE BufferedMPIComm {
+      const static size_t MAX_BCAST;
       // TODO: Sending to multiple addresses
       work::SerialBuffer sendBuffer;
       Address sendAddress;
+      // TODO WILL: I think this sendsizeindex is redundant, it will always be 0.
       size_t sendSizeIndex = 0;
+      // TODO WILL: Won't the send work index always be 12?
       size_t sendWorkIndex = 0;
       int sendNumMessages = 0;
       work::SerialBuffer recvBuffer;

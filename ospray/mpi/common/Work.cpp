@@ -197,7 +197,7 @@ namespace ospray {
         for (size_t i = 0; i < numMessages; ++i) {
           size_t type = 0;
           buf >> type;
-          //std::cout << "Decoding message of type " << type << "\n";
+          std::cout << "Decoding message[" << i << "] = " << commandToString(CommandTag(type)) << "\n";
           Work::WorkMap::const_iterator fnd = Work::WORK_MAP.find(type);
           if (fnd != Work::WORK_MAP.end()) {
             Work *w = (*fnd->second)();
@@ -207,6 +207,24 @@ namespace ospray {
             std::cout << "Unknown tag: " << type << "\n";
           }
         }
+      }
+
+      void debug_log_messages(SerialBuffer &buf, const int numMessages) {
+        size_t start_idx = buf.getIndex();
+        for (size_t i = 0; i < numMessages; ++i) {
+          size_t type = 0;
+          buf >> type;
+          std::cout << "DBG Message[" << i << "] = " << commandToString(CommandTag(type)) << "\n";
+          Work::WorkMap::const_iterator fnd = Work::WORK_MAP.find(type);
+          if (fnd != Work::WORK_MAP.end()) {
+            Work *w = (*fnd->second)();
+            buf >> *w;
+            delete w;
+          } else {
+            std::cout << "Unknown tag: " << type << "\n";
+          }
+        }
+        buf.setIndex(startIndex);
       }
 
       template<>
