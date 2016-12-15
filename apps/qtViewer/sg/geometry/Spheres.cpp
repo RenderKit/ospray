@@ -63,11 +63,9 @@ namespace ospray {
     void Spheres::setFromXML(const xml::Node *const node,
                              const unsigned char *binBasePtr)
     {
-      size_t num = node->getPropl("num");
-      size_t ofs = node->getPropl("ofs");
+      size_t num = std::stoll(node->getProp("num"));
+      size_t ofs = std::stoll(node->getProp("ofs","-1"));
       float  rad = atof(node->getProp("radius").c_str());
-      PRINT(num);
-      PRINT(rad);
 
       Spheres::Sphere s(vec3f(0.f),rad,0);
       if (ofs == (size_t)-1) {

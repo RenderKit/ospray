@@ -26,6 +26,23 @@ namespace ospray {
     std::string toString(const ospcommon::vec3f &v)
     { std::stringstream ss; ss << v.x << " " << v.y << " " << v.z; return ss.str(); }
 
+    /*! checks if given node has given property */
+    bool Node::hasProp(const std::string &name) const
+    {
+      for (size_t i = 0; i < prop.size(); i++)
+        if (prop[i]->name == name) return true;
+      return false;
+    }
+
+    /*! return value of property with given name if present, else return 'fallbackValue' */
+    std::string Node::getProp(const std::string &name, const std::string &fallbackValue) const
+    {
+      for (size_t i = 0; i < prop.size(); i++)
+        if (prop[i]->name == name) return prop[i]->value; 
+      return fallbackValue;
+    }
+
+    
     Node::~Node()
     {
       for (size_t i = 0; i < prop.size(); i++) delete prop[i];
