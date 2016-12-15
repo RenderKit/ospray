@@ -55,10 +55,6 @@ namespace ospray {
     CMD_RELEASE,
     CMD_REMOVE_VOLUME,
 
-    CMD_GET_TYPE=300,//deprecated? It's in the worker but not in MPIDevice
-    CMD_GET_VALUE,//in MPI only used for getting strings, and this add more
-                  // difficult questions. Who do you get it from? Locally?
-                  // first worker in master/worker? Who from in Collaborative?
     CMD_SET_MATERIAL,
     CMD_SET_REGION,
     CMD_SET_REGION_DATA,
@@ -78,12 +74,8 @@ namespace ospray {
     CMD_NEW_PIXELOP,
 
     CMD_API_MODE,//TODO
-    CMD_SAMPLE_VOLUME,//Who do you sample it from? Is this API deprecated?
 
     CMD_FINALIZE,
-
-    CMD_USER//Is this ever used? Would it be useful for modules to
-            // send custom work units around? Yes probably actually.
   } CommandTag;
 
   const char* commandToString(CommandTag tag);

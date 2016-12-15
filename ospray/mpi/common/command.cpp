@@ -26,8 +26,6 @@ const char* commandToString(CommandTag tag) {
     case CMD_LOAD_MODULE: return "CMD_LOAD_MODULE";
     case CMD_RELEASE: return "CMD_RELEASE";
     case CMD_REMOVE_VOLUME: return "CMD_REMOVE_VOLUME";
-    case CMD_GET_TYPE: return "CMD_GET_TYPE";
-    case CMD_GET_VALUE: return "CMD_GET_VALUE";
     case CMD_SET_MATERIAL: return "CMD_SET_MATERIAL";
     case CMD_SET_REGION: return "CMD_SET_REGION";
     case CMD_SET_REGION_DATA: return "CMD_SET_REGION_DATA";
@@ -44,9 +42,7 @@ const char* commandToString(CommandTag tag) {
     case CMD_REMOVE_PARAM: return "CMD_REMOVE_PARAM";
     case CMD_NEW_PIXELOP: return "CMD_NEW_PIXELOP";
     case CMD_API_MODE: return "CMD_API_MODE";
-    case CMD_SAMPLE_VOLUME: return "CMD_SAMPLE_VOLUME";
     case CMD_FINALIZE: return "CMD_FINALIZE";
-    case CMD_USER: return "CMD_USER";
     default: return "Unrecognized CommandTag";
   }
 }
