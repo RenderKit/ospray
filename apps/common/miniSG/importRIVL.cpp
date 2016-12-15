@@ -408,23 +408,23 @@ namespace ospray {
             std::string childType = child->name;
             if (childType == "text") {
             } else if (childType == "vertex") {
-              size_t ofs      = std::stoll(node->getProp("ofs"));
-              size_t num      = std::stoll(node->getProp("num"));
+              size_t ofs      = std::stoll(child->getProp("ofs"));
+              size_t num      = std::stoll(child->getProp("num"));
               mesh->numVertices = num;
               mesh->vertex = (vec3f*)(binBasePtr+ofs);
             } else if (childType == "normal") {
-              size_t ofs      = std::stoll(node->getProp("ofs"));
-              size_t num      = std::stoll(node->getProp("num"));
+              size_t ofs      = std::stoll(child->getProp("ofs"));
+              size_t num      = std::stoll(child->getProp("num"));
               mesh->numNormals = num;
               mesh->normal = (vec3f*)(binBasePtr+ofs);
             } else if (childType == "texcoord") {
-              size_t ofs      = std::stoll(node->getProp("ofs"));
-              size_t num      = std::stoll(node->getProp("num"));
+              size_t ofs      = std::stoll(child->getProp("ofs"));
+              size_t num      = std::stoll(child->getProp("num"));
               mesh->numTexCoords = num;
               mesh->texCoord = (vec2f*)(binBasePtr+ofs);
             } else if (childType == "prim") {
-              size_t ofs      = std::stoll(node->getProp("ofs"));
-              size_t num      = std::stoll(node->getProp("num"));
+              size_t ofs      = std::stoll(child->getProp("ofs"));
+              size_t num      = std::stoll(child->getProp("num"));
               mesh->numTriangles = num;
               mesh->triangle = (vec4i*)(binBasePtr+ofs);
             } else if (childType == "materiallist") {
