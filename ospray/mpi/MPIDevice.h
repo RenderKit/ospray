@@ -33,7 +33,7 @@ namespace ospray {
 
       // typedef ospray::CommandTag CommandTag;
 
-      MPIDevice() = default;
+      MPIDevice();
       ~MPIDevice();
 
       // ManagedObject Implementation /////////////////////////////////////////

@@ -156,7 +156,7 @@ namespace ospray {
     // Maangement class for the MPI send/recv buffers. Objects interesting
     // in sending/receiving messages through the MPI layer must go through this object
     // to easily buffer operations.
-    class OSPRAY_INTERFACE BufferedMPIComm {
+    class OSPRAY_MPI_INTERFACE BufferedMPIComm {
       // TODO: Sending to multiple addresses
       work::SerialBuffer sendBuffer;
       Address sendAddress;

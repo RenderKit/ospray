@@ -335,6 +335,8 @@ namespace ospray {
 
       MPI_Barrier(app.comm);
     }
+    
+    MPIDevice::MPIDevice() : bufferedComm(std::make_shared<BufferedMPIComm>()){}
 
     MPIDevice::~MPIDevice()
     {
