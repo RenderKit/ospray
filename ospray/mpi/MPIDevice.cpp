@@ -507,18 +507,10 @@ namespace ospray {
 
     void MPIDevice::removeParam(OSPObject object, const char *name)
     {
-      // TODO IMPLEMENT WORK UNIT FOR REMOVEPARAM
-      /*
       Assert(object != nullptr  && "invalid object handle");
       Assert(name != nullptr && "invalid identifier for object parameter");
-
-      const ObjectHandle handle = (const ObjectHandle&)object;
-
-      cmd.newCommand(CMD_REMOVE_PARAM);
-      cmd.send((const ObjectHandle &)object);
-      cmd.send(name);
-      cmd.flush();
-      */
+      work::RemoveParam work((ObjectHandle&)object, name);
+      processWork(&work);
     }
 
     /*! Copy data into the given object. */

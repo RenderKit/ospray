@@ -588,6 +588,20 @@ namespace ospray {
         }
       };
 
+      struct RemoveParam : Work {
+        const static size_t TAG = CMD_REMOVE_PARAM;
+        ObjectHandle handle;
+        std::string name;
+
+        RemoveParam();
+        RemoveParam(ObjectHandle handle, const char *name);
+        void run() override;
+        void runOnMaster() override;
+        size_t getTag() const override;
+        void serialize(SerialBuffer &b) const override;
+        void deserialize(SerialBuffer &b) override;
+      };
+
       struct SetPixelOp : Work {
         const static size_t TAG = CMD_SET_PIXELOP;
         ObjectHandle fbHandle;

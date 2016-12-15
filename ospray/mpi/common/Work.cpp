@@ -73,6 +73,8 @@ namespace ospray {
         { REGISTER_WORK_UNIT(SetParam<vec3i>) },
         { REGISTER_WORK_UNIT(SetParam<vec4f>) },
 
+        { REGISTER_WORK_UNIT(RemoveParam) },
+
         { REGISTER_WORK_UNIT(CommandFinalize) }
       };
 #undef REGISTER_WORK_UNIT
@@ -119,6 +121,7 @@ namespace ospray {
       const size_t SetParam<T>::TAG;
       const size_t SetParam<OSPMaterial>::TAG;
       const size_t SetParam<OSPObject>::TAG;
+      const size_t RemoveParam::TAG;
       const size_t SetPixelOp::TAG;
       const size_t CommandRelease::TAG;
       const size_t LoadModule::TAG;
@@ -631,6 +634,31 @@ namespace ospray {
         if (dynamic_cast<Renderer*>(obj) || dynamic_cast<Volume*>(obj)) {
           obj->findParam(name.c_str(), true)->set(val.c_str());
         }
+      }
+
+      RemoveParam::RemoveParam(){}
+      RemoveParam::RemoveParam(ObjectHandle handle, const char *name) : handle(handle), name(name) {
+        Assert(handle != nullHandle);
+      }
+      void RemoveParam::run() {
+        ManagedObject *obj = handle.lookup();
+        Assert(obj);
+        obj->removeParam(name.c_str());
+      }
+      void RemoveParam::runOnMaster() {
+        ManagedObject *obj = handle.lookup();
+        if (dynamic_cast<Renderer*>(obj) || dynamic_cast<Volume*>(obj)) {
+          obj->removeParam(name.c_str());
+        }
+      }
+      size_t RemoveParam::getTag() const {
+        return TAG;
+      }
+      void RemoveParam::serialize(SerialBuffer &b) const {
+        b << (int64)handle << name;
+      }
+      void RemoveParam::deserialize(SerialBuffer &b) {
+        b >> handle.i64 >> name;
       }
 
       SetPixelOp::SetPixelOp(){}

@@ -41,6 +41,7 @@ const char* commandToString(CommandTag tag) {
     case CMD_SET_VEC3I: return "CMD_SET_VEC3I";
     case CMD_SET_VEC4F: return "CMD_SET_VEC4F";
     case CMD_SET_PIXELOP: return "CMD_SET_PIXELOP";
+    case CMD_REMOVE_PARAM: return "CMD_REMOVE_PARAM";
     case CMD_NEW_PIXELOP: return "CMD_NEW_PIXELOP";
     case CMD_API_MODE: return "CMD_API_MODE";
     case CMD_SAMPLE_VOLUME: return "CMD_SAMPLE_VOLUME";

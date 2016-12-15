@@ -128,19 +128,6 @@ namespace ospray {
           delete w;
           w = nullptr;
         }
-        /*
-
-          // ==================================================================
-        case ospray::CMD_REMOVE_PARAM: {
-          // ==================================================================
-          const ObjectHandle handle = cmd.get_handle();
-          const char *name = cmd.get_charPtr();
-          ManagedObject *obj = handle.lookup();
-          Assert(obj);
-          obj->removeParam(name);
-          cmd.free(name);
-        } break;
-        */
       }
     }
 
