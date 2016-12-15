@@ -325,58 +325,42 @@ void parseOSX(StreamLines *streamLines,
   assert(doc);
   if (doc->child.size() != 1 || doc->child[0]->name != "OSPRay")
     throw std::runtime_error("could not parse osx file: Not in OSPRay format!?");
-  xml::Node *root_element = doc->child[0];
-  for (uint32_t childID = 0; childID < root_element->child.size(); childID++) {
-    xml::Node *node = root_element->child[childID];
-    if (node->name == "Info") {
-      // ignore
-      continue;
-    }
-
-    if (node->name == "Model") {
-      xml::Node *model_node = node;
-      for (uint32_t childID = 0; childID < model_node->child.size(); childID++) {
-        xml::Node *node = model_node->child[childID];
-
-        if (node->name == "StreamLines") {
-
-          xml::Node *sl_node = node;
-          for (uint32_t childID = 0; childID < sl_node->child.size(); childID++) {
-            xml::Node *node = sl_node->child[childID];
-            if (node->name == "vertex") {
-              osxParseVec3fas(streamLines->vertex,node->content);
-              continue;
-            };
-            if (node->name == "index") {
-              osxParseInts(streamLines->index,node->content);
-              continue;
-            };
-          }
-          continue;
-        }
-
-        if (node->name == "TriangleMesh") {
-          xml::Node *tris_node = node;
-          for (uint32_t childID = 0; childID < tris_node->child.size(); childID++) {
-            xml::Node *node = tris_node->child[childID];
-            if (node->name == "vertex") {
-              osxParseVec3fas(triangles->vertex,node->content);
-              continue;
-            };
-            if (node->name == "color") {
-              osxParseVec3fas(triangles->color,node->content);
-              continue;
-            };
-            if (node->name == "index") {
-              osxParseVec3is(triangles->index,node->content);
-              continue;
-            };
-          }
-          continue;
-        }
+  const xml::Node &root_element = *doc->child[0];
+  xml::for_each_child_of(root_element,[&](const xml::Node &node){
+      if (node.name == "Info") {
+        // ignore
       }
-    }
-  }
+      else if (node.name == "Model") {
+        const xml::Node &model_node = node;
+        xml::for_each_child_of(model_node,[&](const xml::Node &node){
+            if (node.name == "StreamLines") {
+              const xml::Node &sl_node = node;
+              xml::for_each_child_of(sl_node,[&](const xml::Node &node){
+                  if (node.name == "vertex") {
+                    osxParseVec3fas(streamLines->vertex,node.content);
+                  }
+                  else if (node.name == "index") {
+                    osxParseInts(streamLines->index,node.content);
+                  };
+                });
+            }
+            else if (node.name == "TriangleMesh") {
+              const xml::Node &tris_node = node;
+              xml::for_each_child_of(tris_node,[&](const xml::Node &node){
+                  if (node.name == "vertex") {
+                    osxParseVec3fas(triangles->vertex,node.content);
+                  }
+                  else if (node.name == "color") {
+                    osxParseVec3fas(triangles->color,node.content);
+                  }
+                  else if (node.name == "index") {
+                    osxParseVec3is(triangles->index,node.content);
+                  }
+                });
+            }
+          });
+      }
+    });
 }
 
 void exportOSX(const char *fn,StreamLines *streamLines, Triangles *triangles)

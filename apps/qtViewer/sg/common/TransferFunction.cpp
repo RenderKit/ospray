@@ -121,50 +121,48 @@ namespace ospray {
     {
       setDefaultValues();
 
-      const std::string name = node->getProp("name");
+      const std::string name = node->getProp("name","");
       if (name != "")
         registerNamedNode(name,this);
-
-      for (uint32_t ii = 0; ii != node->child.size(); ii++) {
-        const xml::Node *child = node->child[ii];
-        // -------------------------------------------------------
-        // colors
-        // -------------------------------------------------------
-        if (child->name == "colors" || child->name == "color") {
-          colorArray.clear();
-          char *cont = strdup(child->content.c_str());
-          assert(cont);
-
-          const char *c = strtok(cont,",\n");
-          while (c) {
-            PRINT(c);
-            colorArray.push_back(std::pair<float,vec3f>(colorArray.size(),toVec3f(c)));
-            c = strtok(nullptr,",\n");
+      
+      xml::for_each_child_of(*node,[&](const xml::Node &child) {
+          // -------------------------------------------------------
+          // colors
+          // -------------------------------------------------------
+          if (child.name == "colors" || child.name == "color") {
+            colorArray.clear();
+            char *cont = strdup(child.content.c_str());
+            assert(cont);
+            
+            const char *c = strtok(cont,",\n");
+            while (c) {
+              colorArray.push_back(std::pair<float,vec3f>(colorArray.size(),toVec3f(c)));
+              c = strtok(nullptr,",\n");
+            }
+            
+            free(cont);
           }
 
-          free(cont);
-        }
+          // -------------------------------------------------------
+          // alpha
+          // -------------------------------------------------------
+          if (child.name == "alphas" || child.name == "alpha") {
+            alphaArray.clear();
+            char *cont = strdup(child.content.c_str());
 
-        // -------------------------------------------------------
-        // alpha
-        // -------------------------------------------------------
-        if (child->name == "alphas" || child->name == "alpha") {
-          alphaArray.clear();
-          char *cont = strdup(child->content.c_str());
+            assert(cont);
+            const char *c = strtok(cont,",\n");
+            while (c) {
+              vec2f cp = toVec2f(c);
+              alphaArray.push_back(std::pair<float,float>(cp.x,cp.y));
+              c = strtok(nullptr,",\n");
+            }
 
-          assert(cont);
-          const char *c = strtok(cont,",\n");
-          while (c) {
-            vec2f cp = toVec2f(c);
-            alphaArray.push_back(std::pair<float,float>(cp.x,cp.y));
-            c = strtok(nullptr,",\n");
+            free(cont);
           }
-
-          free(cont);
-        }
-      }
+        });
     }
-
+    
     //! \brief Initialize this node's value from given corresponding XML node 
     void TransferFunction::setDefaultValues()
     {

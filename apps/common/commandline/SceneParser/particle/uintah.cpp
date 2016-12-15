@@ -209,7 +209,8 @@ namespace ospray {
 
 
     void parse__Variable(Model *model,
-                         const std::string &basePath, xml::Node *var)
+                         const std::string &basePath,
+                         const xml::Node &var)
     {
       size_t index = -1;
       size_t start = -1;
@@ -218,26 +219,25 @@ namespace ospray {
       size_t numParticles = 0;
       std::string variable;
       std::string filename;
-      std::string varType = var->getProp("type");
-      for (uint32_t i = 0; i < var->child.size(); i++) {
-        xml::Node *n = var->child[i];
-        if (n->name == "index") {
-          index = atoi(n->content.c_str());
-        } else if (n->name == "variable") {
-          variable = n->content;
-        } else if (n->name == "numParticles") {
-          numParticles = atol(n->content.c_str());
-        } else if (n->name == "patch") {
-          patch = atol(n->content.c_str());
-        } else if (n->name == "filename") {
-          filename = n->content;
-        } else if (n->name == "start") {
-          start = atol(n->content.c_str());
-        } else if (n->name == "end") {
-          end = atol(n->content.c_str());
-        }
-      }
-
+      std::string varType = var.getProp("type");
+      xml::for_each_child_of(var,[&](const xml::Node &child){
+          if (child.name == "index") {
+            index = atoi(child.content.c_str());
+          } else if (child.name == "variable") {
+            variable = child.content;
+          } else if (child.name == "numParticles") {
+            numParticles = atol(child.content.c_str());
+          } else if (child.name == "patch") {
+            patch = atol(child.content.c_str());
+          } else if (child.name == "filename") {
+            filename = child.content;
+          } else if (child.name == "start") {
+            start = atol(child.content.c_str());
+          } else if (child.name == "end") {
+            end = atol(child.content.c_str());
+          }
+        });
+      
       (void)index;
       (void)patch;
 
@@ -280,64 +280,63 @@ namespace ospray {
       }
       assert(doc);
       assert(doc->child.size() == 1);
-      xml::Node *node = doc->child[0];
-      assert(node->name == "Uintah_Output");
-      for (uint32_t i = 0; i < node->child.size(); i++) {
-        xml::Node *c = node->child[i];
-        assert(c->name == "Variable");
-        parse__Variable(model,basePath,c);
-      }
+      const xml::Node &node = *doc->child[0];
+      assert(node.name == "Uintah_Output");
+      xml::for_each_child_of(node,[&](const xml::Node &child){
+          assert(child.name == "Variable");
+          parse__Variable(model,basePath,child);
+        });
     }
     
     void parse__Uintah_TimeStep_Data(Model *model,
-                                     const std::string &basePath, xml::Node *node)
+                                     const std::string &basePath, const xml::Node &node)
     {
-      assert(node->name == "Data");
-      for (uint32_t i = 0; i < node->child.size(); i++) {
-        xml::Node *c = node->child[i];
-        assert(c->name == "Datafile");
-        try {
-          parse__Uintah_Datafile(model,basePath+"/"+node->getProp("href"));
-        } catch (std::runtime_error e) {
-          static bool warned = false;
-          if (!warned) {
-            std::cerr << "#osp:uintah: error in parsing timestep data: " << e.what() << std::endl;
-            std::cerr << "#osp:uintah: continuing parsing, but parts of the data will be missing" << std::endl;
-            std::cerr << "#osp:uintah: (only printing first instance of this error; there may be more)" << std::endl;
-            warned = true;
+      assert(node.name == "Data");
+      xml::for_each_child_of(node,[&](const xml::Node &child){
+          assert(child.name == "Datafile");
+          try {
+            parse__Uintah_Datafile(model,basePath+"/"+node.getProp("href"));
+          } catch (std::runtime_error e) {
+            static bool warned = false;
+            if (!warned) {
+              std::cerr << "#osp:uintah: error in parsing timestep data: " << e.what() << std::endl;
+              std::cerr << "#osp:uintah: continuing parsing, but parts of the data will be missing" << std::endl;
+              std::cerr << "#osp:uintah: (only printing first instance of this error; there may be more)" << std::endl;
+              warned = true;
+            }
           }
-        }
-      }
+        });
     }
+    
     void parse__Uintah_TimeStep_Meta(Model */*model*/,
                                      const std::string &/*basePath*/,
-                                     xml::Node *node)
+                                     const xml::Node &node)
     {
-      assert(node->name == "Meta");
-      for (uint32_t i = 0; i < node->child.size(); i++) {
-        xml::Node *c = node->child[i];
-        if (c->name == "endianness") {
-          if (c->content == "big_endian") {
-            std::cout << "#osp:uintah: SWITCHING TO BIG_ENDIANNESS" << std::endl;
-            big_endian = true;
+      assert(node.name == "Meta");
+      xml::for_each_child_of(node,[&](const xml::Node &child){
+          if (child.name == "endianness") {
+            if (child.content == "big_endian") {
+              std::cout << "#osp:uintah: SWITCHING TO BIG_ENDIANNESS" << std::endl;
+              big_endian = true;
+            }
           }
-        }
-      }
+        });
     }
+    
     void parse__Uintah_timestep(Model *model,
-                                const std::string &basePath, xml::Node *node)
+                                const std::string &basePath, const xml::Node &node)
     {
-      assert(node->name == "Uintah_timestep");
-      for (uint32_t i = 0; i < node->child.size(); i++) {
-        xml::Node *c = node->child[i];
-        if (c->name == "Meta") {
-          parse__Uintah_TimeStep_Meta(model,basePath,c);
-        }
-        if (c->name == "Data") {
-          parse__Uintah_TimeStep_Data(model,basePath,c);
-        }
-      }
+      assert(node.name == "Uintah_timestep");
+      xml::for_each_child_of(node,[&](const xml::Node &child){
+          if (child.name == "Meta") {
+            parse__Uintah_TimeStep_Meta(model,basePath,child);
+          }
+          if (child.name == "Data") {
+            parse__Uintah_TimeStep_Data(model,basePath,child);
+          }
+        });
     }
+    
     Model *parse__Uintah_timestep_xml(const std::string &s)
     {
       Model *model = new Model;
@@ -351,7 +350,7 @@ namespace ospray {
       assert(doc->child.size() == 1);
       assert(doc->child[0]->name == "Uintah_timestep");
       std::string basePath = FileName(s).path();
-      parse__Uintah_timestep(model, basePath, doc->child[0]);
+      parse__Uintah_timestep(model, basePath, *doc->child[0]);
 
       std::stringstream attrs;
       for (std::map<std::string,std::vector<float> *>::const_iterator it=model->attribute.begin();

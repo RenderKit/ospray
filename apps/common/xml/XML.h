@@ -48,9 +48,6 @@ namespace ospray {
     struct Node {
       //! constructor
       Node(XMLDoc *doc) : name(""), content(""), doc(doc) {}
-      
-      //! destructor
-      virtual ~Node();
 
       /*! checks if given node has given property */
       bool hasProp(const std::string &name) const;
@@ -77,7 +74,7 @@ namespace ospray {
       std::map<std::string,std::string> properties;
 
       /*! list of child nodes */
-      std::vector<Node *> child;
+      std::vector<std::shared_ptr<Node> > child;
 
       //! pointer to parent doc 
       /*! \detailed this points back to the parent xml doc that
@@ -97,12 +94,37 @@ namespace ospray {
       FileName fileName;
     };
 
+    /*! iterator that iterates through all properties of a given node,
+      calling the given functor (usually a lambda) with name and
+      value.
 
+      use via 
+      xml::for_each_prop(node,[&](const std::string &name, 
+                                  const std::string &value){
+         doSomthingWith(name,value);
+      });
+    */
     template<typename Lambda>
     inline void for_each_prop(const Node &node, const Lambda &functor)
     {
       for (auto it = node.properties.begin(); it != node.properties.end(); it++)
         functor(it->first,it->second);
+    }
+
+    /*! iterator that iterates through all properties of a given node,
+      calling the given functor (usually a lambda) with name and
+      value.
+
+      use via 
+      xml::for_each_child_of(node,[&](const xml::Node &child){
+         doSomthingWith(name,value);
+      });
+    */
+    template<typename Lambda>
+    inline void for_each_child_of(const Node &node, const Lambda &functor)
+    {
+      for (auto it = node.child.begin(); it != node.child.end(); it++)
+        functor(**it);
     }
     
     /*! parse an XML file with given file name, and return a pointer
