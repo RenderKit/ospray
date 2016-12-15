@@ -193,24 +193,22 @@ namespace ospray {
       bool Work::flushing() const { return false; }
 
       void decode_buffer(SerialBuffer &buf, std::vector<Work*> &cmds, const int numMessages) {
-        //std::cout << "decoding " << numMessages << " messages\n";
         for (size_t i = 0; i < numMessages; ++i) {
           size_t type = 0;
           buf >> type;
-          std::cout << "Decoding message[" << i << "] = " << commandToString(CommandTag(type)) << "\n";
           Work::WorkMap::const_iterator fnd = Work::WORK_MAP.find(type);
           if (fnd != Work::WORK_MAP.end()) {
             Work *w = (*fnd->second)();
             buf >> *w;
             cmds.push_back(w);
           } else {
-            std::cout << "Unknown tag: " << type << "\n";
+            throw std::runtime_error("Unknown work message tag: " + std::to_string(type));
           }
         }
       }
 
       void debug_log_messages(SerialBuffer &buf, const int numMessages) {
-        size_t start_idx = buf.getIndex();
+        size_t startIndex = buf.getIndex();
         for (size_t i = 0; i < numMessages; ++i) {
           size_t type = 0;
           buf >> type;
@@ -221,7 +219,7 @@ namespace ospray {
             buf >> *w;
             delete w;
           } else {
-            std::cout << "Unknown tag: " << type << "\n";
+            throw std::runtime_error("Unknown work message tag: " + std::to_string(type));
           }
         }
         buf.setIndex(startIndex);

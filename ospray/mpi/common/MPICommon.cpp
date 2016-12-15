@@ -62,6 +62,7 @@ namespace ospray {
     // The max size for an MPI Bcast is actually 2GB, but we cut it at 1.8GB
     const size_t BufferedMPIComm::MAX_BCAST = 1800000000LL;
     std::shared_ptr<BufferedMPIComm> BufferedMPIComm::global = nullptr;
+    std::mutex BufferedMPIComm::globalCommAlloc;
     BufferedMPIComm::BufferedMPIComm(size_t bufSize) : sendBuffer(bufSize), recvBuffer(bufSize){}
     BufferedMPIComm::~BufferedMPIComm() {
       flush();
@@ -150,10 +151,12 @@ namespace ospray {
     std::shared_ptr<BufferedMPIComm> BufferedMPIComm::get() {
       // Create the global buffered comm if we haven't already or if it's been
       // destroyed and we need it again.
-      // TODO: WILL: Although the ptr and use count are atomics, this
-      // check and assignment will be a race condition between threads.
       if (!global || global.use_count() == 0) {
-        global = std::make_shared<BufferedMPIComm>();
+        std::lock_guard<std::mutex> lock(globalCommAlloc);
+        // Did someone else already allocate it by the time we got the mutex?
+        if (!global || global.use_count() == 0) {
+          global = std::make_shared<BufferedMPIComm>();
+        }
       }
       return global;
     }

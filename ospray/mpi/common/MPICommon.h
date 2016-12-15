@@ -171,6 +171,7 @@ namespace ospray {
       // TODO: Do we really want to go through a singleton for this?
       // I guess it makes it easiest to provide global batching of all messages.
       static std::shared_ptr<BufferedMPIComm> global;
+      static std::mutex globalCommAlloc;
 
     public:
       BufferedMPIComm(size_t bufSize = 1024 * 2 * 16);
