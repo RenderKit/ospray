@@ -55,20 +55,18 @@ namespace ospray {
           nodeList.push_back(txt.ptr);
 
           int height = -1, width = -1, ofs = -1, channels = -1, depth = -1;
-          for (uint32_t pID = 0; pID < node->prop.size(); pID++) {
-            xml::Prop *prop = node->prop[pID];
-            if (prop->name == "ofs") {
-              ofs = atol(prop->value.c_str());
-            } else if (prop->name == "width") {
-              width = atol(prop->value.c_str());
-            } else if (prop->name == "height") {
-              height = atol(prop->value.c_str());
-            } else if (prop->name == "channels") {
-              channels = atol(prop->value.c_str());
-            } else if (prop->name == "depth") {
-              depth = atol(prop->value.c_str());
-            }
-          }
+          xml::for_each_prop(*node,[&](const std::string &name, const std::string &value){
+              if (name == "ofs") 
+                ofs = atol(value.c_str());
+              else if (name == "width") 
+                width = atol(value.c_str());
+              else if (name == "height") 
+                height = atol(value.c_str());
+              else if (name == "channels") 
+                channels = atol(value.c_str());
+              else if (name == "depth") 
+                depth = atol(value.c_str());
+            });
           assert(ofs != size_t(-1) && "Offset not properly parsed for Texture2D nodes");
           assert(width != size_t(-1) && "Width not properly parsed for Texture2D nodes");
           assert(height != size_t(-1) && "Height not properly parsed for Texture2D nodes");
@@ -112,29 +110,8 @@ namespace ospray {
           mat->ospMaterial = NULL;
           nodeList.push_back(mat.ptr);
 
-          // sg::Material *mat = RIVLmat.ptr->general.ptr;
-
-          std::string name;
-          std::string type;
-
-          for (int pID=0;pID<node->prop.size();pID++) {
-            xml::Prop *prop = node->prop[pID];
-            // for (xmlAttr *attr = node->properties; attr; attr = attr->next) {
-            if (prop->name == "name") {
-              // xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
-              name = prop->value;//(const char*)value;
-              mat->name = name;
-              // mat->setParam("name", name.c_str());
-              // mat->name = name;
-              //xmlFree(value);
-            } else if (prop->name == "type") {
-              // xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
-              type = prop->value; //(const char*)value;
-              mat->type = type;
-              // mat->setParam("type", type.c_str());
-              //xmlFree(value);
-            }
-          }
+          mat->name = node->getProp("name","");
+          mat->type = node->getProp("type","");
 
           for (int childID=0;childID<node->child.size();childID++) {//xmlNode *child=node->children; child; child=child->next) {
             xml::Node *child = node->child[childID];
@@ -144,19 +121,12 @@ namespace ospray {
               std::string childName;
               std::string childType;
 
-              for (int pID=0;pID<child->prop.size();pID++) {
-                xml::Prop *prop = child->prop[pID];
-                // for (xmlAttr *attr = child->properties; attr; attr = attr->next) {
-                if (prop->name == "name") {
-                  // xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
-                  childName = prop->value; //(const char*)value;
-                  //xmlFree(value);
-                } else if (prop->name == "type") {
-                  // xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
-                  childType = prop->value; //(const char*)value;
-                  //xmlFree(value);
-                }
-              }
+              xml::for_each_prop(*child,[&](const std::string &name, const std::string &value){
+                if (name == "name") 
+                  childName = value; 
+                else if (name == "type") 
+                  childType = value; 
+                });
 
               //Get the data out of the node
               // xmlChar *value = xmlNodeListGetString(node->doc, child->children, 1);
@@ -166,7 +136,6 @@ namespace ospray {
               //TODO: UGLY! Find a better way.
               if (!childType.compare("float")) {
                 mat->setParam(childName,(float)atof(s));
-                // mat->setParam(childName.c_str(), (float)atof(s));
               } else if (!childType.compare("float2")) {
                 float x = atof(s);
                 s = NEXT_TOK;
@@ -220,14 +189,10 @@ namespace ospray {
               free(value);
             } else if (!childNodeType.compare("textures")) {
               int num = -1;
-              for (int pID=0;pID<child->prop.size();pID++) {
-                xml::Prop *prop = child->prop[pID];
-                // for (xmlAttr *attr = child->properties; attr; attr = attr->next) {
-                if (prop->name == "num") {
-                  num = atol(prop->value.c_str());
-                  //xmlFree(value);
-                }
-              }
+              xml::for_each_prop(*child,[&](const std::string &name, const std::string &value){
+                if (name == "num") 
+                  num = atol(value.c_str());
+                });
 
               // xmlChar *value = xmlNodaeListGetString(node->doc, child->children, 1);
 
@@ -260,18 +225,14 @@ namespace ospray {
           nodeList.push_back(xfm.ptr);
 
           // find child ID
-          for (int pID=0;pID<node->prop.size();pID++) {
-            xml::Prop *prop = node->prop[pID];
-            // for (xmlAttr* attr = node->properties; attr; attr = attr->next)
-            if (prop->name == "child") {
-              // xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
-              size_t childID = atoi(prop->value.c_str());//(char*)value);
-              sg::Node *child = (sg::Node *)nodeList[childID].ptr;
-              assert(child);
-              xfm->node = child;
-              //xmlFree(value);
-            }
-          }
+          xml::for_each_prop(*node,[&](const std::string &name, const std::string &value){
+              if (name == "child") {
+                size_t childID = atoi(value.c_str());//(char*)value);
+                sg::Node *child = (sg::Node *)nodeList[childID].ptr;
+                assert(child);
+                xfm->node = child;
+              }
+            });
 
           // parse xfm matrix
           int numRead = sscanf((char*)node->content.c_str(),
@@ -306,20 +267,12 @@ namespace ospray {
             } else if (childType == "vertex") {
               size_t ofs = -1, num = -1;
               // scan parameters ...
-              for (int pID=0;pID<child->prop.size();pID++) {
-                xml::Prop *prop = child->prop[pID];
-                // for (xmlAttr* attr = child->properties; attr; attr = attr->next)
-                if (prop->name == "ofs") {
-                  //xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
-                  ofs = atol(prop->value.c_str()); //(char*)value);
-                  //xmlFree(value);
-                }
-                else if (prop->name == "num") {
-                  // xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
-                  num = atol(prop->value.c_str()); //(char*)value);
-                  //xmlFree(value);
-                }
-              }
+              xml::for_each_prop(*child,[&](const std::string &name, const std::string &value){
+                  if (name == "ofs") 
+                    ofs = atol(value.c_str());
+                  else if (name == "num") 
+                    num = atol(value.c_str());
+                });
               assert(ofs != size_t(-1));
               assert(num != size_t(-1));
               mesh->vertex = make_aligned<DataArray3f>((char*)binBasePtr+ofs, num);
@@ -328,20 +281,12 @@ namespace ospray {
             } else if (childType == "normal") {
               size_t ofs = -1, num = -1;
               // scan parameters ...
-              for (int pID=0;pID<child->prop.size();pID++) {
-                xml::Prop *prop = child->prop[pID];
-                // for (xmlAttr* attr = child->properties; attr; attr = attr->next)
-                if (prop->name == "ofs"){ //!strcmp((const char*)attr->name,"ofs")) {
-                  // xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
-                  ofs = atol(prop->value.c_str()); //(char*)value);
-                  //xmlFree(value);
-                }
-                else if (prop->name == "num") {//!strcmp((const char*)attr->name,"num")) {
-                  // xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
-                  num = atol(prop->value.c_str()); //(char*)value);
-                  //xmlFree(value);
-                }
-              }
+              xml::for_each_prop(*child,[&](const std::string &name, const std::string &value){
+                  if (name == "ofs") 
+                    ofs = atol(value.c_str());
+                  else if (name == "num")
+                    num = atol(value.c_str());
+                });
               assert(ofs != size_t(-1));
               assert(num != size_t(-1));
               mesh->normal = new DataArray3f((vec3f*)((char*)binBasePtr+ofs),num,false);
@@ -350,22 +295,12 @@ namespace ospray {
             } else if (childType == "texcoord") {
               size_t ofs = -1, num = -1;
               // scan parameters ...
-              for (int pID=0;pID<child->prop.size();pID++) {
-                xml::Prop *prop = child->prop[pID];
-                // for (xmlAttr* attr = child->properties; attr; attr = attr->next)
-                if (prop->name == "ofs") {//!strcmp((const char*)attr->name,"ofs")) {
-                  // xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
-                  // ofs = atol((char*)value);
-                  ofs = atol(prop->value.c_str()); //(char*)value);
-                  //xmlFree(value);
-                }
-                else if (prop->name == "num") {//!strcmp((const char*)attr->name,"num")) {
-                  // xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
-                  // num = atol((char*)value);
-                  num = atol(prop->value.c_str()); //(char*)value);
-                  //xmlFree(value);
-                }
-              }
+              xml::for_each_prop(*child,[&](const std::string &name, const std::string &value){
+                  if (name == "ofs") 
+                    ofs = atol(value.c_str());
+                  else if (name == "num")
+                    num = atol(value.c_str());
+                });
               assert(ofs != size_t(-1));
               assert(num != size_t(-1));
               // mesh->numTexCoords = num;
@@ -374,32 +309,12 @@ namespace ospray {
             } else if (childType == "prim") {
               size_t ofs = -1, num = -1;
               // scan parameters ...
-              for (int pID=0;pID<child->prop.size();pID++) {
-                xml::Prop *prop = child->prop[pID];
-                // for (xmlAttr* attr = child->properties; attr; attr = attr->next)
-                if (prop->name == "ofs") {//!strcmp((const char*)attr->name,"ofs")) {
-                  // xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
-                  // ofs = atol((char*)value);
-                  ofs = atol(prop->value.c_str()); //(char*)value);
-                  //xmlFree(value);
-                }
-                else if (prop->name == "num") {//!strcmp((const char*)attr->name,"num")) {
-                  // xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
-                  // num = atol((char*)value);
-                  num = atol(prop->value.c_str()); //(char*)value);
-                  //xmlFree(value);
-                }
-                // if (prop->name == "ofs") {//!strcmp((const char*)attr->name,"ofs")) {
-                //   xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
-                //   ofs = atol((char*)value);
-                //   //xmlFree(value);
-                // }
-                // else if (prop->name == "num") {//!strcmp((const char*)attr->name,"num")) {
-                //   xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
-                //   num = atol((char*)value);
-                //   //xmlFree(value);
-                // }
-              }
+              xml::for_each_prop(*child,[&](const std::string &name, const std::string &value){
+                  if (name == "ofs") 
+                    ofs = atol(value.c_str());
+                  else if (name == "num")
+                    num = atol(value.c_str());
+                });
               assert(ofs != size_t(-1));
               assert(num != size_t(-1));
               mesh->index = make_aligned<DataArray4i>((char*)binBasePtr+ofs, num);

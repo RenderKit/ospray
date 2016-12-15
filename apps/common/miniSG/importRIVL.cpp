@@ -207,37 +207,12 @@ namespace ospray {
           txt.ptr->texData = new miniSG::Texture2D;
           nodeList.push_back(txt.ptr);
 
-          int height = -1, width = -1, ofs = -1, channels = -1, depth = -1;
-          std::string format;
-
-          for (size_t pID = 0; pID < node->prop.size(); pID++) {
-            xml::Prop *prop = node->prop[pID];
-            if (prop->name == "ofs") {
-              ofs = atol(prop->value.c_str());
-            } else if (prop->name == "width") {
-              width = atol(prop->value.c_str());
-            } else if (prop->name == "height") {
-              height = atol(prop->value.c_str());
-            } else if (prop->name == "channels") {
-              channels = atol(prop->value.c_str());
-            } else if (prop->name == "depth") {
-              depth = atol(prop->value.c_str());
-            } else if (prop->name == "format") {
-              format = prop->value.c_str();
-            }
-          }
-          assert(ofs != -1
-                 && "Offset not properly parsed for Texture2D nodes");
-          assert(width != -1
-                 && "Width not properly parsed for Texture2D nodes");
-          assert(height != -1
-                 && "Height not properly parsed for Texture2D nodes");
-          assert(channels != -1
-                 && "Channel count not properly parsed for Texture2D nodes");
-          assert(depth != -1
-                 && "Depth not properly parsed for Texture2D nodes");
-          assert(strcmp(format.c_str(), "") != 0
-                 && "Format not properly parsed for Texture2D nodes");
+          int height   = std::stol(node->getProp("height"));
+          int width    = std::stol(node->getProp("width"));
+          int ofs      = std::stol(node->getProp("ofs"));
+          int channels = std::stol(node->getProp("channels"));
+          int depth    = std::stol(node->getProp("depth"));
+          std::string format = node->getProp("format");
 
           txt.ptr->texData->channels = channels;
           txt.ptr->texData->depth = depth;
@@ -271,37 +246,16 @@ namespace ospray {
 
           miniSG::Material *mat = RIVLmat.ptr->general.ptr;
 
-          std::string name;
-          std::string type;
-
-          for (size_t pID = 0; pID < node->prop.size(); pID++) {
-            xml::Prop *prop = node->prop[pID];
-            if (prop->name == "name") {
-              name = prop->value;
-              mat->setParam("name", name.c_str());
-              mat->name = name;
-            } else if (prop->name == "type") {
-              type = prop->value;
-              mat->setParam("type", type.c_str());
-            }
-          }
+          std::string name = node->getProp("name");
+          std::string type = node->getProp("type");
 
           for (size_t childID = 0; childID < node->child.size(); childID++) {
             xml::Node *child = node->child[childID];
             std::string childNodeType = child->name;
 
             if (!childNodeType.compare("param")) {
-              std::string childName;
-              std::string childType;
-
-              for (size_t pID = 0; pID < child->prop.size(); pID++) {
-                xml::Prop *prop = child->prop[pID];
-                if (prop->name == "name") {
-                  childName = prop->value;
-                } else if (prop->name == "type") { 
-                  childType = prop->value;
-                }
-              }
+              std::string childName = child->getProp("name");
+              std::string childType = child->getProp("type");
 
               //Get the data out of the node
               char *value = strdup(child->content.c_str());
@@ -366,13 +320,7 @@ namespace ospray {
               }
               free(value);
             } else if (!childNodeType.compare("textures")) {
-              int num = -1;
-              for (size_t pID = 0; pID < child->prop.size(); pID++) {
-                xml::Prop *prop = child->prop[pID];
-                if (prop->name == "num") {
-                  num = atol(prop->value.c_str());
-                }
-              }
+              int num = std::stoll(child->getProp("num","-1"));
 
               if (child->content == "") {
               } else {
@@ -424,15 +372,10 @@ namespace ospray {
           nodeList.push_back(xfm.ptr);
 
           // find child ID
-          for (size_t pID = 0;pID < node->prop.size(); pID++) {
-            xml::Prop *prop = node->prop[pID];
-            if (prop->name == "child") {
-              size_t childID = atoi(prop->value.c_str());
-              miniSG::Node *child = nodeList[childID].ptr;
-              assert(child);
-              xfm->child = child;
-            }   
-          }    
+          size_t childID = std::stoll(node->getProp("child"));
+          miniSG::Node *child = nodeList[childID].ptr;
+          assert(child);
+          xfm->child = child;
             
           // parse xfm matrix
           int numRead = sscanf((char*)node->content.c_str(),
@@ -465,67 +408,23 @@ namespace ospray {
             std::string childType = child->name;
             if (childType == "text") {
             } else if (childType == "vertex") {
-              size_t ofs = -1, num = -1;
-              // scan parameters ...
-              for (size_t pID = 0; pID < child->prop.size(); pID++) {
-                xml::Prop *prop = child->prop[pID];
-                if (prop->name == "ofs") {
-                  ofs = atol(prop->value.c_str());
-                }       
-                else if (prop->name == "num") {
-                  num = atol(prop->value.c_str());
-                }       
-              }
-              assert(ofs != size_t(-1));
-              assert(num != size_t(-1));
+              size_t ofs      = std::stoll(node->getProp("ofs"));
+              size_t num      = std::stoll(node->getProp("num"));
               mesh->numVertices = num;
               mesh->vertex = (vec3f*)(binBasePtr+ofs);
             } else if (childType == "normal") {
-              size_t ofs = -1, num = -1;
-              // scan parameters ...
-              for (size_t pID = 0; pID < child->prop.size(); pID++) {
-                xml::Prop *prop = child->prop[pID];
-                if (prop->name == "ofs"){
-                  ofs = atol(prop->value.c_str());
-                }       
-                else if (prop->name == "num") {
-                  num = atol(prop->value.c_str());
-                }       
-              }
-              assert(ofs != size_t(-1));
-              assert(num != size_t(-1));
+              size_t ofs      = std::stoll(node->getProp("ofs"));
+              size_t num      = std::stoll(node->getProp("num"));
               mesh->numNormals = num;
               mesh->normal = (vec3f*)(binBasePtr+ofs);
             } else if (childType == "texcoord") {
-              size_t ofs = -1, num = -1;
-              // scan parameters ...
-              for (size_t pID = 0; pID < child->prop.size(); pID++) {
-                xml::Prop *prop = child->prop[pID];
-                if (prop->name == "ofs") {
-                  ofs = atol(prop->value.c_str());
-                }       
-                else if (prop->name == "num") {
-                  num = atol(prop->value.c_str());
-                }       
-              }
-              assert(ofs != size_t(-1));
-              assert(num != size_t(-1));
+              size_t ofs      = std::stoll(node->getProp("ofs"));
+              size_t num      = std::stoll(node->getProp("num"));
               mesh->numTexCoords = num;
               mesh->texCoord = (vec2f*)(binBasePtr+ofs);
             } else if (childType == "prim") {
-              size_t ofs = -1, num = -1;
-              // scan parameters ...
-              for (size_t pID = 0; pID < child->prop.size(); pID++) {
-                xml::Prop *prop = child->prop[pID];
-                if (prop->name == "ofs") {
-                  ofs = atol(prop->value.c_str());
-                }       
-                else if (prop->name == "num") {
-                  num = atol(prop->value.c_str());
-                }       
-              }
-              assert(ofs != size_t(-1));
-              assert(num != size_t(-1));
+              size_t ofs      = std::stoll(node->getProp("ofs"));
+              size_t num      = std::stoll(node->getProp("num"));
               mesh->numTriangles = num;
               mesh->triangle = (vec4i*)(binBasePtr+ofs);
             } else if (childType == "materiallist") {

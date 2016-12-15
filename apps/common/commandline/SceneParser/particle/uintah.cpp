@@ -296,20 +296,15 @@ namespace ospray {
       for (uint32_t i = 0; i < node->child.size(); i++) {
         xml::Node *c = node->child[i];
         assert(c->name == "Datafile");
-        for (uint32_t j = 0; j < c->prop.size(); j++) {
-          xml::Prop *p = c->prop[j];
-          if (p->name == "href") {
-            try {
-              parse__Uintah_Datafile(model,basePath+"/"+p->value);
-            } catch (std::runtime_error e) {
-              static bool warned = false;
-              if (!warned) {
-                std::cerr << "#osp:uintah: error in parsing timestep data: " << e.what() << std::endl;
-                std::cerr << "#osp:uintah: continuing parsing, but parts of the data will be missing" << std::endl;
-                std::cerr << "#osp:uintah: (only printing first instance of this error; there may be more)" << std::endl;
-                warned = true;
-              }
-            }
+        try {
+          parse__Uintah_Datafile(model,basePath+"/"+node->getProp("href"));
+        } catch (std::runtime_error e) {
+          static bool warned = false;
+          if (!warned) {
+            std::cerr << "#osp:uintah: error in parsing timestep data: " << e.what() << std::endl;
+            std::cerr << "#osp:uintah: continuing parsing, but parts of the data will be missing" << std::endl;
+            std::cerr << "#osp:uintah: (only printing first instance of this error; there may be more)" << std::endl;
+            warned = true;
           }
         }
       }

@@ -29,23 +29,26 @@ namespace ospray {
     /*! checks if given node has given property */
     bool Node::hasProp(const std::string &name) const
     {
-      for (size_t i = 0; i < prop.size(); i++)
-        if (prop[i]->name == name) return true;
-      return false;
+      return (properties.find(name) != properties.end());
     }
 
     /*! return value of property with given name if present, else return 'fallbackValue' */
     std::string Node::getProp(const std::string &name, const std::string &fallbackValue) const
     {
-      for (size_t i = 0; i < prop.size(); i++)
-        if (prop[i]->name == name) return prop[i]->value; 
-      return fallbackValue;
+      if (!hasProp(name)) return fallbackValue;
+      return properties.find(name)->second;
     }
 
+    /*! return value of property with given name if present; and throw an exception if not */
+    std::string Node::getProp(const std::string &name) const
+    {
+      if (!hasProp(name))
+        throw std::runtime_error("given xml::Node does have the queried property '"+name+"'");
+      return properties.find(name)->second;
+    }
     
     Node::~Node()
     {
-      for (size_t i = 0; i < prop.size(); i++) delete prop[i];
       for (size_t i = 0; i < child.size(); i++) delete child[i];
     }
 
@@ -154,15 +157,15 @@ namespace ospray {
       while (isWhite(*s)) ++s;
     }
 
-    bool parseProp(char *&s, Prop &prop)
+    bool parseProp(char *&s, std::string &name, std::string &value)
     {
-      if (!parseIdentifier(s,prop.name))
+      if (!parseIdentifier(s,name))
         return false;
       skipWhites(s);
       consume(s,'=');
       skipWhites(s);
       expect(s,'"','\'');
-      parseString(s,prop.value);
+      parseString(s,value);
       return true;
     }
 
@@ -176,9 +179,9 @@ namespace ospray {
 
         skipWhites(s);
 
-        Prop prop;
-        while (parseProp(s,prop)) {
-          node->prop.push_back(new Prop(prop));
+        std::string name, value;
+        while (parseProp(s,name,value)) {
+          node->properties[name] = value;
           skipWhites(s);
         }
 
@@ -242,8 +245,8 @@ namespace ospray {
 
       skipWhites(s);
 
-      Prop headerProp;
-      while (parseProp(s,headerProp)) {
+      std::string name, value;
+      while (parseProp(s,name,value)) {
         // ignore header prop
         skipWhites(s);
       }

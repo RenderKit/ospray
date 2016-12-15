@@ -24,6 +24,7 @@
 #include <stack>
 #include <vector>
 #include <memory>
+#include <map>
 
 #ifdef _WIN32
 #  ifdef ospray_xml_EXPORTS
@@ -42,13 +43,6 @@ namespace ospray {
     using ospcommon::FileName;
     struct XMLDoc;
 
-    /*! 'prop'erties in xml nodes are the 'name="value"' inside the
-      <node name1="value1" name2="value2"> ... </node> description */
-    struct Prop {
-      std::string name;
-      std::string value;
-    };
-
     /*! a XML node, consisting of a name, a list of properties, and a
       set of child nodes */
     struct Node {
@@ -61,8 +55,11 @@ namespace ospray {
       /*! checks if given node has given property */
       bool hasProp(const std::string &name) const;
 
+      /*! return value of property with given name if present; and throw an exception if not */
+      std::string getProp(const std::string &name) const;
+      
       /*! return value of property with given name if present, else return 'fallbackValue' */
-      std::string getProp(const std::string &name, const std::string &fallbackValue="") const;
+      std::string getProp(const std::string &name, const std::string &fallbackValue) const;
 
       /*! name of the xml node (i.e., the thing that's in
           "<name>....</name>") */
@@ -72,8 +69,12 @@ namespace ospray {
           "<name>..." and "...</name>" */
       std::string content;
 
-      /*! list of xml node properties properties */
-      std::vector<Prop *> prop;
+      /*! \brief list of xml node properties properties.  '
+
+        \detailed prop'erties in xml nodes are the 'name="value"'
+        inside the <node name1="value1" name2="value2"> ... </node>
+        description */
+      std::map<std::string,std::string> properties;
 
       /*! list of child nodes */
       std::vector<Node *> child;
@@ -95,6 +96,14 @@ namespace ospray {
       //! the name (and path etc) of the file that this doc was read from
       FileName fileName;
     };
+
+
+    template<typename Lambda>
+    inline void for_each_prop(const Node &node, const Lambda &functor)
+    {
+      for (auto it = node.properties.begin(); it != node.properties.end(); it++)
+        functor(it->first,it->second);
+    }
     
     /*! parse an XML file with given file name, and return a pointer
       to it.  In case of any error, this function will free all
