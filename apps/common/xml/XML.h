@@ -23,6 +23,7 @@
 // stl
 #include <stack>
 #include <vector>
+#include <memory>
 
 #ifdef _WIN32
 #  ifdef ospray_xml_EXPORTS
@@ -109,7 +110,9 @@ namespace ospray {
       //! pointer to parent doc 
       /*! \detailed this points back to the parent xml doc that
           conatined this node. note this is intentionally NOT a ref to
-          avoid cyclical dependencies */
+          avoid cyclical dependencies. Ie, do NOT use this unless
+          you're sure that the XMLDoc node that contained the given
+          node is still around! */
       XMLDoc *doc;
     };
 
@@ -126,7 +129,7 @@ namespace ospray {
       to it.  In case of any error, this function will free all
       already-allocated data, and throw a std::runtime_error
       exception */
-    OSPRAY_XML_INTERFACE XMLDoc *readXML(const std::string &fn);
+    OSPRAY_XML_INTERFACE std::shared_ptr<XMLDoc> readXML(const std::string &fn);
 
       
     /*! @{ */

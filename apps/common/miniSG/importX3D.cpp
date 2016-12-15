@@ -217,7 +217,7 @@ namespace ospray {
     void importX3D(Model &model, 
                    const ospcommon::FileName &fileName)
     {
-      xml::XMLDoc *doc = xml::readXML(fileName);
+      std::shared_ptr<xml::XMLDoc> doc = xml::readXML(fileName);
       assert(doc);
       PRINT(doc->child[0]->name);
       if (doc->child.size() != 1 || doc->child[0]->name != "X3D") 

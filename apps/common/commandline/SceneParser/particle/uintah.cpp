@@ -264,7 +264,7 @@ namespace ospray {
     {
       std::string basePath = FileName(fileName).path();
 
-      xml::XMLDoc *doc = NULL;
+      std::shared_ptr<xml::XMLDoc> doc = NULL;
       try {
         doc = xml::readXML(fileName);
       } catch (std::runtime_error e) {
@@ -287,8 +287,8 @@ namespace ospray {
         assert(c->name == "Variable");
         parse__Variable(model,basePath,c);
       }
-      delete doc;
     }
+    
     void parse__Uintah_TimeStep_Data(Model *model,
                                      const std::string &basePath, xml::Node *node)
     {
@@ -347,7 +347,7 @@ namespace ospray {
     {
       Model *model = new Model;
       Model::defaultRadius = .002f;
-      xml::XMLDoc *doc = xml::readXML(s);
+      std::shared_ptr<xml::XMLDoc> doc = xml::readXML(s);
 
       char *dumpFileName = getenv("OSPRAY_PARTICLE_DUMP_FILE");
       if (dumpFileName)
@@ -372,7 +372,6 @@ namespace ospray {
         bounds.extend(atom.position);
       }
       std::cout << "#osp:mpm: bounds of particle centers: " << bounds << std::endl;
-      delete doc;
       return model;
     }
 

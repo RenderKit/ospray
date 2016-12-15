@@ -41,11 +41,12 @@ struct Triangles {
     SVVertex vertex[3];
   };
 
-  vec3f lerpf(float x, float x0,float x1,vec3f y0, vec3f y1)
+  vec3f lerpf(float x, float x0, float x1, vec3f y0, vec3f y1)
   {
     float f = (x-x0)/(x1-x0);
     return f*y1+(1-f)*y0;
   }
+  
   vec3f colorOf(const float f)
   {
     if (f < .5f)
@@ -320,7 +321,7 @@ void parseOSX(StreamLines *streamLines,
               Triangles *triangles,
               const std::string &fn)
 {
-  xml::XMLDoc *doc = xml::readXML(fn);
+  std::shared_ptr<xml::XMLDoc> doc = xml::readXML(fn);
   assert(doc);
   if (doc->child.size() != 1 || doc->child[0]->name != "OSPRay")
     throw std::runtime_error("could not parse osx file: Not in OSPRay format!?");

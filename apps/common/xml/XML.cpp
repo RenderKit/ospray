@@ -296,7 +296,7 @@ namespace ospray {
       state.pop();
     }
 
-    XMLDoc *readXML(const std::string &fn)
+    std::shared_ptr<XMLDoc> readXML(const std::string &fn)
     {
       FILE *file = fopen(fn.c_str(),"r");
       if (!file) {
@@ -316,11 +316,11 @@ namespace ospray {
       mem[numBytes] = 0;
       auto rc = fread(mem,1,numBytes,file);
       (void)rc;
-      XMLDoc *xml = new XMLDoc;
+      std::shared_ptr<XMLDoc> xml = std::make_shared<XMLDoc>();
       xml->fileName = fn;
       bool valid = false;
       try {
-        valid = parseXML(xml,mem);
+        valid = parseXML(xml.get(),mem);
       } catch (std::runtime_error e) {
         delete[] mem;
         fclose(file);
@@ -330,8 +330,7 @@ namespace ospray {
       fclose(file);
 
       if (!valid) {
-        delete xml;
-        return nullptr;
+        return nullptr;                        
       }
       return xml;
     }

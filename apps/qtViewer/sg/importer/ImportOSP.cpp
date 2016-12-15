@@ -184,7 +184,7 @@ namespace ospray {
 
     Ref<sg::World> loadOSP(const std::string &fileName)
     {
-      xml::XMLDoc *doc = NULL;
+      std::shared_ptr<xml::XMLDoc> doc;
       // Ref<xml::XMLDoc> doc = NULL;
       cout << "#osp:sg: starting to read OSPRay XML file '" << fileName << "'" << endl;
       doc = xml::readXML(fileName);

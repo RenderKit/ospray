@@ -588,7 +588,7 @@ namespace ospray {
       fseek(file, 0, SEEK_END);
       ssize_t fileSize =
 #ifdef _WIN32
-      _ftelli64(file);
+        _ftelli64(file);
 #else
       ftell(file);
 #endif
@@ -630,10 +630,10 @@ namespace ospray {
 #ifdef _WIN32
         MapViewOfFile(fileMappingHandle, FILE_MAP_READ, 0, 0, fileSize);
 #else
-        mmap(nullptr, fileSize, PROT_READ, MAP_SHARED, fd, 0);
+      mmap(nullptr, fileSize, PROT_READ, MAP_SHARED, fd, 0);
 #endif
 
-      xml::XMLDoc *doc = xml::readXML(fileName);
+      std::shared_ptr<xml::XMLDoc> doc = xml::readXML(fileName);
       if (doc->child.size() != 1 || doc->child[0]->name != "BGFscene") {
         throw std::runtime_error("could not parse RIVL file: "
                                  "Not in RIVL format!?");
