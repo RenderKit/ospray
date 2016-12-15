@@ -138,3 +138,25 @@ inline float uniformSampleTrianglePDF(const vec3f &a, const vec3f &b, const vec3
 {
   return 2.0f * rcp(length(cross(a-c, b-c)));
 }
+
+
+/// uniform sampling of sphere
+////////////////////////////////////////////////////////////////////////////////
+
+inline vec3f uniformSampleSphere(const float radius, const vec2f s)
+{
+  const float phi = two_pi * s.x;
+  const float cosTheta = radius * (1.f - 2.f*s.y);
+  const float sinTheta = 2.f*radius * sqrt(s.y*(1.f - s.y));
+  return cartesian(phi, sinTheta, cosTheta);
+}
+
+inline float uniformSampleSpherePDF(const float radius)
+{
+  return rcp(four_pi * sqr(radius));
+}
+
+inline uniform float uniformSampleSpherePDF(const uniform float radius)
+{
+  return rcp(four_pi * sqr(radius));
+}

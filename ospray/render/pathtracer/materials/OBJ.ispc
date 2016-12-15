@@ -126,6 +126,10 @@ vec3f OBJ_getTransparency(const uniform PathTraceMaterial* uniform super,
 
   /*! cut-out opacity */
   float d = self->d * get1f(self->map_d, dg.st, 1.f);
+  if (hasAlpha(self->map_Kd)) {
+    vec4f Kd_from_map = get4f(self->map_Kd,dg.st);
+    d *= Kd_from_map.w;
+  }
 
   /*! transmission component */
   vec3f T = self->Tf * d + make_vec3f(1.f - d);

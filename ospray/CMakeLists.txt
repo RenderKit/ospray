@@ -43,11 +43,15 @@ IF (OSPRAY_TASKING_TBB)
     FIND_FILE(TBB_DLL_MALLOC tbbmalloc.dll PATHS HINTS ${TBB_DLL_HINTS})
     MARK_AS_ADVANCED(TBB_DLL)
     MARK_AS_ADVANCED(TBB_DLL_MALLOC)
-    INSTALL(PROGRAMS ${TBB_DLL} ${TBB_DLL_MALLOC}
-            DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT apps) # 3rd party?
+    IF (OSPRAY_INSTALL_DEPENDENCIES)
+      INSTALL(PROGRAMS ${TBB_DLL} ${TBB_DLL_MALLOC}
+              DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT apps) # 3rd party?
+    ENDIF()
   ELSEIF (OSPRAY_ZIP_MODE)
-    INSTALL(PROGRAMS ${TBB_LIBRARY} ${TBB_LIBRARY_MALLOC} ${TBB_LIBRARY_DEBUG} ${TBB_LIBRARY_MALLOC_DEBUG}
-            DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib) # /intel64?
+    IF (OSPRAY_INSTALL_DEPENDENCIES)
+      INSTALL(PROGRAMS ${TBB_LIBRARY} ${TBB_LIBRARY_MALLOC} ${TBB_LIBRARY_DEBUG} ${TBB_LIBRARY_MALLOC_DEBUG}
+              DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib) # /intel64?
+    ENDIF()
   ENDIF()
 ENDIF()
 
@@ -82,7 +86,6 @@ SET(OSPRAY_SOURCES
   common/ospray.rc
   common/OSPCommon.ispc
   common/OSPCommon.cpp
-  common/Core.cpp
   common/ISPC_KNL_Backend.h
   common/Managed.cpp
   common/ObjectHandle.cpp
@@ -126,8 +129,6 @@ SET(OSPRAY_SOURCES
   volume/StructuredVolume.cpp
   volume/Volume.ispc
   volume/Volume.cpp
-  volume/DataDistributedBlockedVolume.ispc
-  volume/DataDistributedBlockedVolume.cpp
 
   transferFunction/LinearTransferFunction.ispc
   transferFunction/LinearTransferFunction.cpp
@@ -136,7 +137,6 @@ SET(OSPRAY_SOURCES
 
   geometry/Geometry.ispc
   geometry/Geometry.cpp
-  geometry/AreaSampler.ih
   geometry/TriangleMesh.ispc
   geometry/TriangleMesh.cpp
   geometry/StreamLines.cpp
@@ -186,11 +186,6 @@ SET(OSPRAY_SOURCES
   render/scivis/SciVisMaterial.ih
   render/scivis/SciVisRenderer.cpp
   render/scivis/SciVisMaterial.cpp
-  render/volume/RaycastVolumeMaterial.cpp
-  render/volume/RaycastVolumeMaterial.ih
-  render/volume/RaycastVolumeMaterial.ispc
-  render/volume/RaycastVolumeRenderer.cpp
-  render/volume/RaycastVolumeRenderer.ispc
 
   render/pathtracer/PathTracer.ispc
   render/pathtracer/PathTracer.cpp
@@ -237,7 +232,6 @@ OSPRAY_INSTALL_SDK_HEADERS(
 )
 
 OSPRAY_INSTALL_SDK_HEADERS(
-  common/Core.h
   common/Data.h
   common/DifferentialGeometry.ih
   common/Library.h
@@ -278,7 +272,6 @@ OSPRAY_INSTALL_SDK_HEADERS(
   geometry/Cylinders.h
   geometry/Geometry.h
   geometry/Geometry.ih
-  geometry/AreaSampler.ih
   geometry/Instance.h
   geometry/Isosurfaces.h
   geometry/Slices.h
@@ -356,36 +349,6 @@ OSPRAY_INSTALL_SDK_HEADERS(
   DESTINATION volume
 )
 
-# -------------------------------------------------------
-# MPI components
-# -------------------------------------------------------
-IF (OSPRAY_MPI)
-  # if mpi mode is enabled, we have to configure the right mpi
-  # compiler etc.
-  OSPRAY_CONFIGURE_MPI()
-
-  SET(OSPRAY_SOURCES ${OSPRAY_SOURCES}
-    mpi/buffers.h
-    mpi/command.h
-
-    mpi/MPIDevice.cpp
-    mpi/MPICommon.cpp
-    mpi/MPILoadBalancer.cpp
-    mpi/worker.cpp
-
-    mpi/async/Messaging.cpp
-    mpi/async/SimpleSendRecvMessaging.cpp
-    mpi/async/MultiIsendIrecvMessaging.cpp
-    mpi/async/BatchedIsendIrecvMessaging.cpp
-    mpi/async/CommLayer.cpp
-
-    mpi/DistributedFrameBuffer.cpp
-    mpi/DistributedFrameBuffer.ispc
-    mpi/DistributedFrameBuffer_TileTypes.cpp
-
-  )
-ENDIF()
-
 ##############################################################
 # build the ospray library (using flags and compilers as configured by
 # CONFIGURE_OSPRAY() and/or CONFIGURE_MPI()
@@ -395,9 +358,6 @@ SET(OSPRAY_LIBS
   ospray_common
   ${CMAKE_THREAD_LIBS_INIT}
   ${CMAKE_DL_LIBS}
-)
-
-LIST(APPEND OSPRAY_LIBS
   ${EMBREE_LIBRARIES}
   ${TASKING_SYSTEM_LIBS}
 )
@@ -414,28 +374,25 @@ IF (WIN32 AND OSPRAY_BUILD_ISA STREQUAL "ALL")
                        "/DEF:${PROJECT_SOURCE_DIR}/ospray/ospray.def")
 ENDIF()
 
+# -------------------------------------------------------
+# MPI components
+# -------------------------------------------------------
+IF (OSPRAY_MPI)
+  ADD_SUBDIRECTORY(mpi)
+ENDIF()
+
 # build ospTutorial, for testing
 ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial.cpp)
 OSPRAY_EXE_LINK_LIBRARIES(ospTutorial ospray ospray_common)
+IF (OSPRAY_MPI)
+  OSPRAY_EXE_LINK_LIBRARIES(ospTutorial ospray_mpi)
+ENDIF()
 # C version
 ADD_EXECUTABLE(ospTutorialC ../apps/ospTutorial.c)
 OSPRAY_EXE_LINK_LIBRARIES(ospTutorialC ospray ospray_common)
-
-
-##############################################################
-# MPI DEVICE - mpi worker
-##############################################################
 IF (OSPRAY_MPI)
-  OSPRAY_LIBRARY_LINK_LIBRARIES(ospray ${MPI_CXX_LIBRARIES})
-
-  OSPRAY_CREATE_APPLICATION(ospray_mpi_worker${OSPRAY_EXE_SUFFIX}
-    mpi/MPIWorker.cpp
-  LINK
-    ospray${OSPRAY_LIB_SUFFIX}
-    ospray_common${OSPRAY_LIB_SUFFIX}
-  )
+  OSPRAY_EXE_LINK_LIBRARIES(ospTutorialC ospray_mpi)
 ENDIF()
-
 
 ##############################################################
 # Configure find_package files

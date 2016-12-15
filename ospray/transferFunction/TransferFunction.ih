@@ -24,6 +24,8 @@ struct TransferFunction {
 
   //! The value range covered by the transfer function.
   vec2f valueRange;
+  uniform bool preIntegration;
+  uniform bool preIntegrationComputed;
 
   //! Interpolated color for the given value.
   varying vec3f (*getColorForValue)(const void *uniform transferFunction, 

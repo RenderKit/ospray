@@ -27,7 +27,8 @@ namespace ospray {
     virtual void commit();
     virtual Material *createMaterial(const char *type);
 
-    void generateGeometryLights(const Model *const, const affine3f&, float *const areaPDF);
+    void generateGeometryLights(const Model *const, const affine3f& xfm,
+        const affine3f& rcp_xfm, float *const areaPDF);
     void destroyGeometryLights();
 
     std::vector<void*> lightArray; // the 'IE's of the XXXLights

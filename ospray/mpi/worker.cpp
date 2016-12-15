@@ -14,9 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "mpi/MPICommon.h"
+#include "mpi/common/MPICommon.h"
+#include "mpi/common/CommandStream.h"
 #include "mpi/MPIDevice.h"
-#include "mpi/CommandStream.h"
 #include "common/Model.h"
 #include "common/Data.h"
 #include "common/Library.h"
@@ -28,12 +28,10 @@
 #include "lights/Light.h"
 #include "texture/Texture2D.h"
 #include "fb/LocalFB.h"
-#include "mpi/async/CommLayer.h"
-#include "mpi/DistributedFrameBuffer.h"
-#include "mpi/MPILoadBalancer.h"
+#include "mpi/common/async/CommLayer.h"
+#include "mpi/fb/DistributedFrameBuffer.h"
+#include "mpi/render/MPILoadBalancer.h"
 #include "transferFunction/TransferFunction.h"
-
-#include "mpi/MPIDevice.h"
 
 // std
 #include <algorithm>
@@ -57,13 +55,11 @@ void sleep(unsigned int seconds)
 
 namespace ospray {
 
-  extern RTCDevice g_embreeDevice;
-
   namespace mpi {
     using std::cout;
     using std::endl;
 
-    OSPRAY_INTERFACE void runWorker();
+    OSPRAY_MPI_INTERFACE void runWorker();
 
     void embreeErrorFunc(const RTCError code, const char* str)
     {
@@ -81,13 +77,15 @@ namespace ospray {
     */
     void runWorker()
     {
-      auto device = ospray::api::Device::current.dynamicCast<mpi::MPIDevice>();
+      auto &device = ospray::api::Device::current;
+
+      auto numThreads = device ? device->numThreads : -1;
 
       // initialize embree. (we need to do this here rather than in
       // ospray::init() because in mpi-mode the latter is also called
       // in the host-stubs, where it shouldn't.
       std::stringstream embreeConfig;
-      if (debugMode)
+      if (device && device->debugMode)
         embreeConfig << " threads=1,verbose=2";
       else if(numThreads > 0)
         embreeConfig << " threads=" << numThreads;
@@ -100,7 +98,7 @@ namespace ospray {
       };
 
       RTCDevice embreeDevice = rtcNewDevice(embreeConfig.str().c_str());
-      g_embreeDevice = embreeDevice;
+      device->embreeDevice = embreeDevice;
       EmbreeDeviceScopeGuard guard;
       guard.embreeDevice = embreeDevice;
 
@@ -130,7 +128,7 @@ namespace ospray {
         case ospray::CMD_NEW_PIXELOP: {
           const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
-          if (worker.rank == 0 && logLevel > 2) {
+          if (worker.rank == 0 && logLevel() > 2) {
             cout << "creating new pixelOp \"" << type << "\" ID "
                  << handle << endl;
           }
@@ -142,7 +140,7 @@ namespace ospray {
         case ospray::CMD_NEW_RENDERER: {
           const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
-          if (worker.rank == 0 && logLevel > 2) {
+          if (worker.rank == 0 && logLevel() > 2) {
             cout << "creating new renderer \"" << type << "\" ID "
                  << handle << endl;
           }
@@ -154,7 +152,7 @@ namespace ospray {
         case ospray::CMD_NEW_CAMERA: {
           const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
-          if (worker.rank == 0 && logLevel > 2) {
+          if (worker.rank == 0 && logLevel() > 2) {
             cout << "creating new camera \"" << type << "\" ID "
                  << (void*)(int64)handle << endl;
           }
@@ -167,7 +165,7 @@ namespace ospray {
           // Assert(type != NULL && "invalid volume type identifier");
           const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
-          if (worker.rank == 0 && logLevel > 2) {
+          if (worker.rank == 0 && logLevel() > 2) {
             cout << "creating new volume \"" << type << "\" ID "
                  << (void*)(int64)handle << endl;
           }
@@ -184,7 +182,7 @@ namespace ospray {
         case ospray::CMD_NEW_TRANSFERFUNCTION: {
           const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
-          if (worker.rank == 0 && logLevel > 2) {
+          if (worker.rank == 0 && logLevel() > 2) {
             cout << "creating new transfer function \"" << type << "\" ID "
                  << (void*)(int64)handle << endl;
           }
@@ -203,7 +201,7 @@ namespace ospray {
           const ObjectHandle rendererHandle = cmd.get_handle();
           const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
-          if (worker.rank == 0 && logLevel > 2) {
+          if (worker.rank == 0 && logLevel() > 2) {
             cout << "creating new material \"" << type << "\" ID "
                  << (void*)(int64)handle << endl;
           }
@@ -230,7 +228,7 @@ namespace ospray {
             Assert(material);
             handle.assign(material);
             if (worker.rank == 0) {
-              if (logLevel > 2)
+              if (logLevel() > 2)
                 cout << "#w: new material " << handle << " "
                      << material->toString() << endl;
               MPI_Send(&sumFail,1,MPI_INT,0,0,mpi::app.comm);
@@ -239,7 +237,7 @@ namespace ospray {
             // at least one client could not load/create material ...
             if (material) material->refDec();
             if (worker.rank == 0) {
-              if (logLevel > 2)
+              if (logLevel() > 2)
                 cout << "#w: could not create material " << handle << " "
                      << material->toString() << endl;
               MPI_Send(&sumFail,1,MPI_INT,0,0,mpi::app.comm);
@@ -251,7 +249,7 @@ namespace ospray {
           const ObjectHandle rendererHandle = cmd.get_handle();
           const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
-          if (worker.rank == 0 && logLevel > 2) {
+          if (worker.rank == 0 && logLevel() > 2) {
             cout << "creating new light \"" << type << "\" ID "
                  << (void*)(int64)handle << endl;
           }
@@ -277,7 +275,7 @@ namespace ospray {
             Assert(light);
             handle.assign(light);
             if (worker.rank == 0) {
-              if (logLevel > 2)
+              if (logLevel() > 2)
                 cout << "#w: new light " << handle << " "
                      << light->toString() << endl;
               MPI_Send(&sumFail,1,MPI_INT,0,0,mpi::app.comm);
@@ -286,7 +284,7 @@ namespace ospray {
             // at least one client could not load/create light ...
             if (light) light->refDec();
             if (worker.rank == 0) {
-              if (logLevel > 2)
+              if (logLevel() > 2)
                 cout << "#w: could not create light " << handle << " "
                      << light->toString() << endl;
               MPI_Send(&sumFail,1,MPI_INT,0,0,mpi::app.comm);
@@ -298,7 +296,7 @@ namespace ospray {
           // Assert(type != NULL && "invalid volume type identifier");
           const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
-          if (worker.rank == 0 && logLevel > 2) {
+          if (worker.rank == 0 && logLevel() > 2) {
             cout << "creating new geometry \"" << type << "\" ID "
                  << (void*)(int64)handle << endl;
           }
@@ -311,7 +309,7 @@ namespace ospray {
           cmd.free(type);
           Assert(geometry);
           handle.assign(geometry);
-          if (worker.rank == 0 && logLevel > 2) {
+          if (worker.rank == 0 && logLevel() > 2) {
             cout << "#w: new geometry " << handle << " "
                  << geometry->toString() << endl;
           }
@@ -363,7 +361,7 @@ namespace ospray {
           Model *model = new Model;
           Assert(model);
           handle.assign(model);
-          if (logLevel > 2)
+          if (logLevel() > 2)
             cout << "#w: new model " << handle << endl;
         } break;
         case ospray::CMD_NEW_TRIANGLEMESH: {
@@ -484,7 +482,7 @@ namespace ospray {
           const ObjectHandle handle = cmd.get_handle();
           ManagedObject *obj = handle.lookup();
           Assert(obj);
-          if (logLevel > 2) {
+          if (logLevel() > 2) {
             cout << "#w: committing " << handle << " " << obj->toString()
                  << endl;
           }
@@ -735,6 +733,17 @@ namespace ospray {
         } break;
 
           // ==================================================================
+        case ospray::CMD_REMOVE_PARAM: {
+          // ==================================================================
+          const ObjectHandle handle = cmd.get_handle();
+          const char *name = cmd.get_charPtr();
+          ManagedObject *obj = handle.lookup();
+          Assert(obj);
+          obj->removeParam(name);
+          cmd.free(name);
+        } break;
+
+          // ==================================================================
         case ospray::CMD_LOAD_MODULE: {
           // ==================================================================
           const char *name = cmd.get_charPtr();
@@ -764,7 +773,7 @@ namespace ospray {
 
           const OSPDApiMode newMode = (OSPDApiMode)cmd.get_int32();
           assert(device);
-          assert(device->currentApiMode == OSPD_MODE_MASTERED);
+          //assert(device->currentApiMode == OSPD_MODE_MASTERED);
           printf("rank %i: master telling me to switch to %s mode.\n",
                  mpi::world.rank,
                  apiModeName(newMode));

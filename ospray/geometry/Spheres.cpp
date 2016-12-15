@@ -60,7 +60,7 @@ namespace ospray {
     }
 
     numSpheres = sphereData->numBytes / bytesPerSphere;
-    if (logLevel >= 2) 
+    if (logLevel() >= 2)
       std::cout << "#osp: creating 'spheres' geometry, #spheres = "
         << numSpheres << std::endl;
 

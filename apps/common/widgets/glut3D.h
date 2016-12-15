@@ -43,7 +43,6 @@ namespace ospray {
     /*! switch over to GLUT for control flow. This functoin will not return */
     OSPRAY_GLUT3D_INTERFACE void runGLUT();
 
-
     using ospcommon::AffineSpace3fa;
 
     /*! helper class that allows for easily computing (smoothed) frame rate */
@@ -51,15 +50,14 @@ namespace ospray {
       OSPRAY_GLUT3D_INTERFACE FPSCounter();
       OSPRAY_GLUT3D_INTERFACE void startRender();
       OSPRAY_GLUT3D_INTERFACE void doneRender();
-      OSPRAY_GLUT3D_INTERFACE double getFPS() const { return smooth_den / smooth_nom; }
+      OSPRAY_GLUT3D_INTERFACE double getFPS() const
+      { return smooth_den / smooth_nom; }
 
     private:
       double smooth_nom;
       double smooth_den;
       double frameStartTime;
     };
-
-
 
     struct Glut3DWidget;
     
@@ -126,9 +124,6 @@ namespace ospray {
       MoveMode(Glut3DWidget *widget) : Manipulator(widget) {}
     };
 
-
-
-
     /*! a GLUT-based 3D viewer widget that includes simple sample code
       for manipulating a 3D viewPort with the mouse.
 
@@ -183,15 +178,18 @@ namespace ospray {
 
         OSPRAY_GLUT3D_INTERFACE ViewPort();
       };
+
       // static InspectCenter INSPECT_CENTER;
       Manipulator *inspectCenterManipulator;
       Manipulator *moveModeManipulator;
 
       /*! current manipulator */
       Manipulator *manipulator;
-      OSPRAY_GLUT3D_INTERFACE Glut3DWidget(FrameBufferMode frameBufferMode,
-                                           ManipulatorMode initialManipulator=INSPECT_CENTER_MODE,
-                                           int allowedManipulators=INSPECT_CENTER_MODE|MOVE_MODE);
+
+      OSPRAY_GLUT3D_INTERFACE
+      Glut3DWidget(FrameBufferMode frameBufferMode,
+                   ManipulatorMode initialManipulator=INSPECT_CENTER_MODE,
+                   int allowedManipulators=INSPECT_CENTER_MODE|MOVE_MODE);
 
       /*! set a default camera position that views given bounds from the
         top left front */
@@ -201,7 +199,8 @@ namespace ospray {
       /*! set window title */
       OSPRAY_GLUT3D_INTERFACE void setTitle(const char *title);
       /*! set window title */
-      OSPRAY_GLUT3D_INTERFACE void setTitle(const std::string &title) { setTitle(title.c_str()); }
+      OSPRAY_GLUT3D_INTERFACE void setTitle(const std::string &title)
+      { setTitle(title.c_str()); }
       /*! set viewport to given values */
       OSPRAY_GLUT3D_INTERFACE void setViewPort(const vec3f from,
                                                const vec3f at,

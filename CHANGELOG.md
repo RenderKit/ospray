@@ -1,6 +1,16 @@
 Version History
 ---------------
 
+### Changes in v1.2.0 (devel):
+
+-   Removed SciVis renderer parameter `aoWeight`, the intensity (and now
+    color as well) of AO is controlled via "`ambient`" lights. If
+    `aoSamples` is zero (the default) then ambient lights cause ambient
+    illumination (without occlusion).
+-   Implement normal mapping for SciVis renderer.
+-   Initial support of emissive (and illuminating) geometries in the
+    path tracer via new material "`Luminous`".
+
 ### Changes in v1.1.2:
 
 -   Various bugfixes related to normalization, epsilons and debug
@@ -25,7 +35,8 @@ Version History
         -   Volumes can cast shadows
         -   Smooth shading in volumes
         -   Single shading point option for accelerated shading
--   Add preliminary support for adaptive accumulation in the MPI device
+-   Added preliminary support for adaptive accumulation in the MPI
+    device
 -   Camera specific features
     -   Initial support for stereo rendering with the perspective camera
     -   Option `architectural` in perspective camera, rectifying

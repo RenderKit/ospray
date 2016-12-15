@@ -82,6 +82,8 @@ namespace ospray {
         + (size_t)regionSize.z;
       if (voxelType == "uchar")
         computeVoxelRange((unsigned char *)source, numVoxelsInRegion);
+      else if (voxelType == "short")
+        computeVoxelRange((short *)source, numVoxelsInRegion);
       else if (voxelType == "ushort")
         computeVoxelRange((unsigned short *)source, numVoxelsInRegion);
       else if (voxelType == "float")

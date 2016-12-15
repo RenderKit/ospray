@@ -76,9 +76,7 @@ OPTION(OSPRAY_ENABLE_APPS "Enable the 'apps' subtree in the build." ON)
 MARK_AS_ADVANCED(OSPRAY_ENABLE_APPS)
 
 IF (OSPRAY_ENABLE_APPS)
-  # NOTE(jda) - Don't use OSPRAY_ADD_SUBDIRECTORY() macro as we don't have any
-  #             KNC code in the apps subdirectory to compile.
-  ADD_SUBDIRECTORY(apps)
+  OSPRAY_ADD_SUBDIRECTORY(apps)
 ENDIF()
 
 # create a configure file that both ospray and ispc can read the cmake config
