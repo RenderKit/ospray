@@ -239,9 +239,9 @@ struct StockleyWhealCannon {
       else { // cylinder with sphere at end
         int idx;
         switch (type) {
-          case 3: idx = 1; break; // basal dendrite
-          case 4: idx = 2; break; // apical dendrite
-          default: idx = 0; break; // soma / axon
+        case 3: idx = 1; break; // basal dendrite
+        case 4: idx = 2; break; // apical dendrite
+        default: idx = 0; break; // soma / axon
         }
         spheres[idx].push_back(Sphere{v, radius});
         cylinders[idx].push_back(Cylinder{filePoints[parent-1], v, radius});
@@ -464,13 +464,11 @@ bool StreamLineSceneParser::parse(int ac, const char **&av)
       }
     } else if (arg == "--streamline-radius") {
       streamLines->radius = atof(av[++i]);
-#if 1
-    }
-#else
+#if 0
     } else if (arg == "--streamline-export") {
       exportOSX(av[++i], streamLines, triangles);
-    }
 #endif
+    }
   }
 
   if (loadedScene) {
