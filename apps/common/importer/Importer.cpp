@@ -42,11 +42,9 @@ namespace ospray {
       if (fileName.ext() == "osp") {
         importOSP(fn, group);
       } else if (fileName.ext() == "osg") {
-        ospLoadModule("amr");  //Carson TODO: this does not appear to be linking it in.. have to explitily link in cmake... why?
         Ref<sg::World> world = new sg::World;
         world = sg::loadOSG(fn);
         Ref<sg::Volume> volumeNode;
-        // Ref<sg::ChomboVolume> chomboNode;
         for (auto node : world.ptr->node)
         {
           std::cout << "found node: " << node.ptr->toString() << std::endl;
