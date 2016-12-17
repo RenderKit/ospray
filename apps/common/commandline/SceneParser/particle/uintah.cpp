@@ -264,7 +264,7 @@ namespace ospray {
     {
       std::string basePath = FileName(fileName).path();
 
-      std::shared_ptr<xml::XMLDoc> doc = NULL;
+      std::shared_ptr<xml::XMLDoc> doc;
       try {
         doc = xml::readXML(fileName);
       } catch (std::runtime_error e) {
