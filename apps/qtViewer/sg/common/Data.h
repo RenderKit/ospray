@@ -93,39 +93,39 @@ namespace ospray {
       DataArray2f(vec2f *base, size_t size, bool mine=true)
         : DataArrayT<vec2f,OSP_FLOAT2>(base,size,mine)
       {}
-      virtual vec2f  get2f(index_t idx)  const { return this->base[idx]; }
+      virtual vec2f  get2f(index_t idx)  const { assert(base); return this->base[idx]; }
     };
     struct DataArray3f : public DataArrayT<vec3f,OSP_FLOAT3> {
       DataArray3f(vec3f *base, size_t size, bool mine=true)
         : DataArrayT<vec3f,OSP_FLOAT3>(base,size,mine)
       {}
-      virtual vec3f  get3f(index_t idx)  const { return this->base[idx]; }
+      virtual vec3f  get3f(index_t idx)  const { assert(base); return this->base[idx]; }
     };
     struct DataArray3fa : public DataArrayT<vec3fa,OSP_FLOAT3A> {
       DataArray3fa(vec3fa *base, size_t size, bool mine=true)
         : DataArrayT<vec3fa,OSP_FLOAT3A>(base,size,mine)
       {}
-      virtual vec3fa  get3fa(index_t idx)  const { return this->base[idx]; }
+      virtual vec3fa  get3fa(index_t idx)  const { assert(base); return this->base[idx]; }
     };
 
     struct DataArray1i : public DataArrayT<int32_t,OSP_INT> {
       DataArray1i(int32_t *base, size_t size, bool mine=true)
         : DataArrayT<int32_t,OSP_INT>(base,size,mine)
         {}
-      virtual int32_t get1i(index_t idx) const { return this->base[idx]; }
+      virtual int32_t get1i(index_t idx) const { assert(base); return this->base[idx]; }
     };
 
     struct DataArray3i : public DataArrayT<vec3i,OSP_INT3> {
       DataArray3i(vec3i *base, size_t size, bool mine=true)
         : DataArrayT<vec3i,OSP_INT3>(base,size,mine)
       {}
-      virtual vec3i  get3i(index_t idx)  const { return this->base[idx]; }
+      virtual vec3i  get3i(index_t idx)  const { assert(base); return this->base[idx]; }
     };
     struct DataArray4i : public DataArrayT<vec4i,OSP_INT4> {
       DataArray4i(vec4i *base, size_t size, bool mine=true)
         : DataArrayT<vec4i,OSP_INT4>(base,size,mine)
       {}
-      virtual vec4i  get4i(index_t idx)  const { return this->base[idx]; }
+      virtual vec4i  get4i(index_t idx)  const { assert(base); return this->base[idx]; }
     };
 
     // -------------------------------------------------------
@@ -143,16 +143,16 @@ namespace ospray {
     };
 
     struct DataVector2f : public DataVectorT<vec2f,OSP_FLOAT2> {
-      virtual vec2f  get2f(index_t idx)  const { return this->v[idx]; }
+      virtual vec2f  get2f(index_t idx)  const { assert(idx<v.size()); return this->v[idx]; }
     };
     struct DataVector3f : public DataVectorT<vec3f,OSP_FLOAT3> {
-      virtual vec3f  get3f(index_t idx)  const { return this->v[idx]; }
+      virtual vec3f  get3f(index_t idx)  const { assert(idx<v.size()); return this->v[idx]; }
     };
     struct DataVector3fa : public DataVectorT<vec3fa,OSP_FLOAT3A> {
-      virtual vec3fa  get3fa(index_t idx)  const { return this->v[idx]; }
+      virtual vec3fa  get3fa(index_t idx)  const { assert(idx<v.size()); return this->v[idx]; }
     };
     struct DataVector3i : public DataVectorT<vec3i,OSP_INT3> {
-      virtual vec3i  get3i(index_t idx)  const { return this->v[idx]; }
+      virtual vec3i  get3i(index_t idx)  const { assert(idx<v.size()); return this->v[idx]; }
     };
 
     template<typename T>

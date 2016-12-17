@@ -34,9 +34,6 @@ namespace ospray {
 
     void *binBasePtr;
 
-
-
-
     void parseTextureNode(const xml::Node &node)
     {
       Ref<sg::Texture2D> txt = new sg::Texture2D;
@@ -242,23 +239,31 @@ namespace ospray {
       nodeList.push_back(mesh.ptr);
 
       xml::for_each_child_of(node,[&](const xml::Node &child){
+          assert(binBasePtr);
+          PRINT(binBasePtr);
           if (child.name == "text") {
           } else if (child.name == "vertex") {
             size_t ofs      = std::stoll(child.getProp("ofs"));
             size_t num      = std::stoll(child.getProp("num"));
+            PRINT(ofs);
+            PRINT(num);
             mesh->vertex = make_aligned<DataArray3f>((char*)binBasePtr+ofs, num);
+            PRINT(mesh->vertex->data);
           } else if (child.name == "normal") {
             size_t ofs      = std::stoll(child.getProp("ofs"));
             size_t num      = std::stoll(child.getProp("num"));
             mesh->normal = new DataArray3f((vec3f*)((char*)binBasePtr+ofs),num,false);
+            PRINT(mesh->normal->data);
           } else if (child.name == "texcoord") {
             size_t ofs      = std::stoll(child.getProp("ofs"));
             size_t num      = std::stoll(child.getProp("num"));
             mesh->texcoord = new DataArray2f((vec2f*)((char*)binBasePtr+ofs),num,false);
+            PRINT(mesh->texcoord->data);
           } else if (child.name == "prim") {
             size_t ofs      = std::stoll(child.getProp("ofs"));
             size_t num      = std::stoll(child.getProp("num"));
             mesh->index = make_aligned<DataArray4i>((char*)binBasePtr+ofs, num);
+            PRINT(mesh->index->data);
           } else if (child.name == "materiallist") {
             char* value = strdup(child.content.c_str());
             for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(NULL," \t\n\r")) {
@@ -337,8 +342,14 @@ namespace ospray {
     {
       string xmlFileName = fileName;
       string binFileName = fileName+".bin";
-      const unsigned char * const binBasePtr = mapFile(binFileName);
-
+      binBasePtr = (void *)mapFile(binFileName);
+      if (binBasePtr == nullptr) {
+        std::cerr << "#osp:sg: WARNING: mapped file is NULL!!!!" << std::endl;
+        std::cerr << "#osp:sg: WARNING: mapped file is NULL!!!!" << std::endl;
+        std::cerr << "#osp:sg: WARNING: mapped file is NULL!!!!" << std::endl;
+        std::cerr << "#osp:sg: WARNING: mapped file is NULL!!!!" << std::endl;
+        std::cerr << "#osp:sg: WARNING: mapped file is NULL!!!!" << std::endl;
+      }
       std::shared_ptr<xml::XMLDoc> doc = xml::readXML(fileName);
       if (doc->child.size() != 1 || doc->child[0]->name != "BGFscene")
         throw std::runtime_error("could not parse RIVL file: Not in RIVL format!?");
