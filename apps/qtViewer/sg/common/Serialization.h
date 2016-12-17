@@ -44,7 +44,7 @@ namespace ospray {
         Ref<Instantiation> parentWorld;
         affine3f           xfm;
 
-        Instantiation() : parentWorld(NULL), xfm(one) {}
+        Instantiation() : xfm(one) {}
       };
       /*! describes one object that we encountered */
       struct Object : public RefCount {
