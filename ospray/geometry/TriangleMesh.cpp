@@ -162,7 +162,10 @@ namespace ospray {
 
     eMesh = rtcNewTriangleMesh(embreeSceneHandle,RTC_GEOMETRY_STATIC,
                                numTris,numVerts);
-#ifndef NDEBUG
+#if 0
+    // iw: turning this off for now: we should have a special cmd line
+    //flag to enable this; not do it every time ...
+    //#ifndef NDEBUG
     {
       cout << "#osp/trimesh: Verifying index buffer ... " << endl;
       for (int i=0;i<numTris*numCompsInTri;i+=numCompsInTri) {

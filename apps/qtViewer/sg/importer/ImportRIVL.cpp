@@ -244,18 +244,26 @@ namespace ospray {
           } else if (child.name == "vertex") {
             size_t ofs      = std::stoll(child.getProp("ofs"));
             size_t num      = std::stoll(child.getProp("num"));
+            if (!binBasePtr)
+              throw std::runtime_error("xml file mapping to binary file, but binary file not present");
             mesh->vertex = make_aligned<DataArray3f>((char*)binBasePtr+ofs, num);
           } else if (child.name == "normal") {
             size_t ofs      = std::stoll(child.getProp("ofs"));
             size_t num      = std::stoll(child.getProp("num"));
+            if (!binBasePtr)
+              throw std::runtime_error("xml file mapping to binary file, but binary file not present");
             mesh->normal = new DataArray3f((vec3f*)((char*)binBasePtr+ofs),num,false);
           } else if (child.name == "texcoord") {
             size_t ofs      = std::stoll(child.getProp("ofs"));
             size_t num      = std::stoll(child.getProp("num"));
+            if (!binBasePtr)
+              throw std::runtime_error("xml file mapping to binary file, but binary file not present");
             mesh->texcoord = new DataArray2f((vec2f*)((char*)binBasePtr+ofs),num,false);
           } else if (child.name == "prim") {
             size_t ofs      = std::stoll(child.getProp("ofs"));
             size_t num      = std::stoll(child.getProp("num"));
+            if (!binBasePtr)
+              throw std::runtime_error("xml file mapping to binary file, but binary file not present");
             mesh->index = make_aligned<DataArray4i>((char*)binBasePtr+ofs, num);
           } else if (child.name == "materiallist") {
             char* value = strdup(child.content.c_str());
@@ -328,9 +336,6 @@ namespace ospray {
             //throw std::runtime_error("unknown node type '"+node.name+"' in RIVL model");
           }
         });
-      PING;
-      PRINT(lastNode);
-      PRINT(lastNode->toString());
       world->node.push_back(lastNode);
     }
 

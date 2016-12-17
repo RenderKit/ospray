@@ -98,6 +98,7 @@ namespace ospray {
         material->render(ctx);
         mat = material->ospMaterial;
       }
+      PING; PRINT(mat);
       
       // if object couldt generate a valid material, create a default one
       if (!mat) {
@@ -160,11 +161,19 @@ namespace ospray {
       }
       primMatIDs = ospNewData(materialIDs.size(), OSP_INT, &materialIDs[0], 0);
       ospSetData(ospGeometry,"prim.materialID",primMatIDs);
+
+      OSPMaterial mat = NULL;
+      // try to generate ospray material from the sg material stored with this object
+      if (material) {
+        material->render(ctx);
+        mat = material->ospMaterial;
+      }
       
-      // assign a default material (for now.... eventually we might
-      // want to do a 'real' material
-      OSPMaterial mat = ospNewMaterial(ctx.integrator?ctx.integrator->getOSPHandle():NULL,"default");
-      if (mat) {
+      // if object couldt generate a valid material, create a default one
+      if (!mat) {
+        std::cout << "#osp:sg: no material on object, creating default one" << std::endl;
+        mat = ospNewMaterial(ctx.integrator?ctx.integrator->getOSPHandle():NULL,"default");
+        assert(mat);
         vec3f kd(.7f);
         vec3f ks(.3f);
         ospSet3fv(mat,"kd",&kd.x);
@@ -172,7 +181,11 @@ namespace ospray {
         ospSet1f(mat,"Ns",99.f);
         ospCommit(mat);
       }
-      
+      assert(mat);
+      ospSetMaterial(ospGeometry,mat);
+
+#if 0
+      // THIS CODE DOESN"T WORK RIGHT NOW!!!!
       std::vector<OSPMaterial> ospMaterials;
       for (size_t i = 0; i < materialList.size(); i++) {
         assert(materialList[i].ptr != NULL);
@@ -185,7 +198,8 @@ namespace ospray {
       
       OSPData materialData = ospNewData(materialList.size(), OSP_OBJECT, &ospMaterials[0], 0);
       ospSetData(ospGeometry, "materialList", materialData);
-
+#endif
+      
       ospCommit(ospGeometry);
       ospAddGeometry(ctx.world->ospModel,ospGeometry);
       //std::cout << "#qtViewer 'rendered' mesh\n";

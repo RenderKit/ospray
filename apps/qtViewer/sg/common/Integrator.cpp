@@ -22,6 +22,12 @@
 namespace ospray {
   namespace sg {
 
+    /*! \brief returns a std::string with the c++ name of this class */
+    std::string Integrator::toString() const
+    {
+      return "ospray::sg::Integrator(type='"+type+"')";
+    }
+
     void Integrator::commit()
     {
       if (!ospRenderer) {

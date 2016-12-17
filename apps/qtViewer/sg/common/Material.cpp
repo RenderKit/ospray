@@ -33,7 +33,9 @@ namespace ospray {
     void Material::render(RenderContext &ctx)
     {
       if (ospMaterial) return;
-      
+
+      PING;
+      PRINT(ctx.integrator->toString());
       ospMaterial = ospNewMaterial(ctx.integrator->getOSPHandle(), type.c_str());
 
       //We failed to create a material of the given type, handle it
@@ -105,8 +107,10 @@ namespace ospray {
             Texture2D *tex = p->value.ptr;
             if (tex) {
               tex->render(ctx);
-              if (tex->ospTexture)
+              if (tex->ospTexture) {
+                std::cout << "setting texture " << p->value->toString() << " to mat value " << itr->second->getName() << std::endl;
                 ospSetObject(ospMaterial, itr->second->getName().c_str(), p->value->ospTexture);
+              }
             }
           }
           break;
