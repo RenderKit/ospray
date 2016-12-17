@@ -126,18 +126,6 @@ namespace ospray {
     void importX3D(const Ref<World> &world, const FileName &fileName);
 
     Ref<sg::World> loadOSP(const std::string &fileName);
-
-    /*! @{ some simple testing geometry */
-    World *createTestSphere();
-
-    /*! create a sphere geometry representing a cube of numSpheresPerCubeSize^3 spheres */
-    World *createTestSphereCube(size_t numSpheresPerCubeSize);
-    /*! create a sphere geometry representing a cube of numSpheresPerCubeSize^3 *alpha*-spheres */
-    World *createTestAlphaSphereCube(size_t numSpheresPerCubeSize);
-    World *createTestCoordFrame();
-
-    World *importCosmicWeb(const char *fileName, size_t maxParticles);
-
     /*! @} */
 
   } // ::ospray::sg
