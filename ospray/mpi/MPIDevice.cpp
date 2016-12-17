@@ -451,6 +451,8 @@ namespace ospray {
     {
       Assert(_object);
       const ObjectHandle handle = (const ObjectHandle&)_object;
+      std::cout << mpi::world.rank << " dispatching commit for handle "
+        << handle.i64 << "\n";
       // TODO: Where should this barrier be performed now?
       //MPI_Barrier(MPI_COMM_WORLD);
       work::CommitObject work(handle);

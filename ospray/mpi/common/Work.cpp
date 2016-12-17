@@ -127,18 +127,25 @@ namespace ospray {
       const size_t LoadModule::TAG;
       const size_t CommandFinalize::TAG;
 
-      SerialBuffer::SerialBuffer(size_t sz) : buffer(sz, 0), index(0) {}
+      SerialBuffer::SerialBuffer(size_t sz) : buffer(sz, 255), index(0) {}
       unsigned char* SerialBuffer::getPtr() {
         return &buffer[index];
       }
       void SerialBuffer::write(unsigned char* data, size_t size) {
+        // TODO: This should not call reserve, it should only grow if we
+        // actually need more space. Also it should use a different growing
+        // strategy than just allocating 1k extra than requested
         reserve(size);
         memcpy(getPtr(), data, size);
         index += size;
         // bytesAvailable += size;
       }
       void SerialBuffer::read(unsigned char* data, size_t size) {
-        assert(buffer.size() - getIndex() >= size);
+        if (buffer.size() - getIndex() < size) {
+          PRINT(buffer.size());
+          PRINT(getIndex());
+          throw std::runtime_error("SerialBuffer is out of room for read of size " + std::to_string(size));
+        }
         memcpy(data, getPtr(), size);
         index += size;
         // bytesAvailable -= size;
@@ -156,6 +163,7 @@ namespace ospray {
             << buffer.size() << " bytes but need " << index + size << "\n";
             */
           // allocates over requested so we don't get a lot of small reallocations
+          // TODO: This should not allocate more than requested
           buffer.resize(getIndex() + size + 1024);  
           // bytesAvailable += size + 1024;
         }
@@ -196,6 +204,7 @@ namespace ospray {
         for (size_t i = 0; i < numMessages; ++i) {
           size_t type = 0;
           buf >> type;
+          std::cout << "DBG Message[" << i << "] = " << commandToString(CommandTag(type)) << "\n";
           Work::WorkMap::const_iterator fnd = Work::WORK_MAP.find(type);
           if (fnd != Work::WORK_MAP.end()) {
             Work *w = (*fnd->second)();
@@ -241,6 +250,7 @@ namespace ospray {
       void NewObject<Model>::run() {
         Model *model = new Model;
         handle.assign(model);
+        std::cout << "rank " << mpi::world.rank << " NewModel given handle " << handle.i64 << "\n";
       }
       template<>
       void NewObject<Geometry>::run() {
@@ -253,6 +263,7 @@ namespace ospray {
         // since in the distributed mode no app has a reference to this object?
         geometry->refInc();
         handle.assign(geometry);
+        std::cout << "rank " << mpi::world.rank << " NewGeometry given handle " << handle.i64 << "\n";
       }
       template<>
       void NewObject<Camera>::run() {
@@ -450,11 +461,14 @@ namespace ospray {
       }
 
       CommitObject::CommitObject(){}
-      CommitObject::CommitObject(ObjectHandle handle) : handle(handle) {}
+      CommitObject::CommitObject(ObjectHandle handle) : handle(handle) {
+        std::cout << mpi::world.rank << " commit object ctor for handle " << handle.i64 << "\n";
+      }
       void CommitObject::run() {
         ManagedObject *obj = handle.lookup();
         if (obj) {
           obj->commit();
+          std::cout << mpi::world.rank << " commit'd object for handle " << handle.i64 << "\n";
 
           // TODO: Do we need this hack anymore?
           // It looks like yes? or at least glutViewer segfaults if we don't do this
@@ -465,7 +479,7 @@ namespace ospray {
           }
         } else {
           std::cout << "Warning(actually this is ok?) "
-            << mpi::world.rank << " did not have obj to commit\n";
+            << mpi::world.rank << " did not have obj to commit for handle " << handle.i64 << "\n";
         }
         // TODO: Work units should not be directly making MPI calls.
         // What should be responsible for this barrier?
@@ -490,6 +504,7 @@ namespace ospray {
       }
       void CommitObject::deserialize(SerialBuffer &b) {
         b >> handle.i64;
+        std::cout << mpi::world.rank << " deserialized commit handle " << handle.i64 << "\n";
       }
 
       ClearFrameBuffer::ClearFrameBuffer(){}
