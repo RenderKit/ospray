@@ -91,8 +91,6 @@ namespace ospray {
           } else if (arg == "--1k" || arg == "-1k") {
             frameResolution.x = 1024;
             frameResolution.y = 1024;
-          } else if (arg == "--test-sphere") {
-            world = sg::createTestSphere();
           } else if (arg == "--show-fps" || arg == "-fps" || arg == "--fps") {
             showFPS = true;
           } else if (arg == "--module") {

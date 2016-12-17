@@ -40,7 +40,6 @@ ADD_LIBRARY(ospray_sg STATIC
 
   # scene graph importers
   importer/Importer.cpp
-  importer/ImportSpheres.cpp
   importer/ImportOSP.cpp
   importer/ImportOBJ.cpp
   importer/ImportPLY.cpp
