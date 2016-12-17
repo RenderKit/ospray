@@ -61,65 +61,64 @@ namespace ospray {
       }
       
       //Forward all params on to the ospMaterial...
-      for (ParamMap::const_iterator itr = param.begin(); itr != param.end(); ++itr) {
-        switch(itr->second->getOSPDataType()) {
-        case OSP_INT:
-        case OSP_UINT:
-          {
-            ParamT<int> *p = (ParamT<int>*)itr->second.ptr;
-            if(itr->second->getName().find("map_") != std::string::npos) {
-              //Handle textures!
-              assert(textures[p->value]->ospTexture != NULL && "Texture should not be null at this point.");
-              ospSetObject(ospMaterial, itr->second->getName().c_str(), textures[p->value]->ospTexture);
-            } else {
-              ospSet1i(ospMaterial, itr->second->getName().c_str(), p->value);
-            }
-          }
-          break;
-        case OSP_INT3:
-        case OSP_UINT3:
-          {
-            ParamT<vec3i> *p = (ParamT<vec3i>*)itr->second.ptr;
-            ospSet3i(ospMaterial, itr->second->getName().c_str(), p->value.x, p->value.y, p->value.z);
-          }
-          break;
-        case OSP_FLOAT:
-          {
-            ParamT<float> *p = (ParamT<float>*)itr->second.ptr;
-            ospSet1f(ospMaterial, itr->second->getName().c_str(), p->value);
-          }
-          break;
-        case OSP_FLOAT2:
-          {
-            ParamT<vec2f> *p = (ParamT<vec2f>*)itr->second.ptr;
-            ospSet2fv(ospMaterial, itr->second->getName().c_str(), &p->value.x);
-          }
-          break;
-        case OSP_FLOAT3:
-          {
-            ParamT<vec3f> *p = (ParamT<vec3f>*)itr->second.ptr;
-            ospSet3fv(ospMaterial, itr->second->getName().c_str(), &p->value.x);
-          }
-          break;
-        case OSP_TEXTURE:
-          {
-            ParamT<Ref<Texture2D>> *p = (ParamT<Ref<Texture2D>>*)itr->second.ptr;
-            Texture2D *tex = p->value.ptr;
-            if (tex) {
-              tex->render(ctx);
-              if (tex->ospTexture) {
-                std::cout << "setting texture " << p->value->toString() << " to mat value " << itr->second->getName() << std::endl;
-                ospSetObject(ospMaterial, itr->second->getName().c_str(), p->value->ospTexture);
+      for_each_param([&](const std::shared_ptr<Param> &param){
+          switch(param->getOSPDataType()) {
+          case OSP_INT:
+          case OSP_UINT:
+            {
+              ParamT<int> *p = (ParamT<int>*)param.get();
+              if(param->getName().find("map_") != std::string::npos) {
+                //Handle textures!
+                assert(textures[p->value]->ospTexture != NULL && "Texture should not be null at this point.");
+                ospSetObject(ospMaterial, param->getName().c_str(), textures[p->value]->ospTexture);
+              } else {
+                ospSet1i(ospMaterial, param->getName().c_str(), p->value);
               }
             }
+            break;
+          case OSP_INT3:
+          case OSP_UINT3:
+            {
+              ParamT<vec3i> *p = (ParamT<vec3i>*)param.get();
+              ospSet3i(ospMaterial, param->getName().c_str(), p->value.x, p->value.y, p->value.z);
+            }
+            break;
+          case OSP_FLOAT:
+            {
+              ParamT<float> *p = (ParamT<float>*)param.get();
+              ospSet1f(ospMaterial, param->getName().c_str(), p->value);
+            }
+            break;
+          case OSP_FLOAT2:
+            {
+              ParamT<vec2f> *p = (ParamT<vec2f>*)param.get();
+              ospSet2fv(ospMaterial, param->getName().c_str(), &p->value.x);
+            }
+            break;
+          case OSP_FLOAT3:
+            {
+              ParamT<vec3f> *p = (ParamT<vec3f>*)param.get();
+              ospSet3fv(ospMaterial, param->getName().c_str(), &p->value.x);
+            }
+            break;
+          case OSP_TEXTURE:
+            {
+              ParamT<Ref<Texture2D>> *p = (ParamT<Ref<Texture2D>>*)param.get();
+              Texture2D *tex = p->value.ptr;
+              if (tex) {
+                tex->render(ctx);
+                if (tex->ospTexture) {
+                  std::cout << "setting texture " << p->value->toString() << " to mat value " << param->getName() << std::endl;
+                  ospSetObject(ospMaterial, param->getName().c_str(), p->value->ospTexture);
+                }
+              }
+            }
+            break;
+          default: //Catch not yet implemented data types
+            PRINT(param->getOSPDataType());
+            std::cerr << "Warning: parameter '" << param->getName() << "' of material '" << name << "' had an invalid data type and will be ignored." << std::endl;
           }
-          break;
-        default: //Catch not yet implemented data types
-          PRINT(itr->second->getOSPDataType());
-          std::cerr << "Warning: parameter '" << itr->second->getName() << "' of material '" << name << "' had an invalid data type and will be ignored." << std::endl;
-        }
-      }
-        
+        });
 
       ospCommit(ospMaterial);
     }

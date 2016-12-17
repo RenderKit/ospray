@@ -78,24 +78,28 @@ namespace ospray {
         assert(node.child.size() == 1);
         sg::Node *value = parseNode(*node.child[0]);
         assert(value != NULL);
-        sg::DataBuffer *dataNode = dynamic_cast<sg::DataBuffer *>(value);
+        Ref<sg::DataBuffer> dataNode = dynamic_cast<sg::DataBuffer *>(value);
         assert(dataNode);
-        target->addParam(new ParamT<Ref<DataBuffer> >(name,dataNode));
+        target->setParam(name,dataNode);
+        // target->addParam(new ParamT<Ref<DataBuffer> >(name,dataNode));
         return true;
       }
       if (node.name == "object") {
         assert(node.child.size() == 1);
-        sg::Node *value = parseNode(*node.child[0]);
-        assert(value != NULL);
-        target->addParam(new ParamT<Ref<sg::Node> >(name,value));
+        Ref<sg::Node> value = parseNode(*node.child[0]);
+        assert(value);
+        target->setParam(name,value);
+        // target->addParam(new ParamT<Ref<sg::Node> >(name,value));
         return true;
       }
       if (node.name == "int") {
-        target->addParam(new ParamT<int32_t>(name,atoi(node.content.c_str())));
+        // target->addParam(new ParamT<int32_t>(name,atoi(node.content.c_str())));
+        target->setParam(name,std::stoi(node.content));
         return true;
       }
       if (node.name == "float") {
-        target->addParam(new ParamT<float>(name,atof(node.content.c_str())));
+        // target->addParam(new ParamT<float>(name,atof(node.content.c_str())));
+        target->setParam(name,std::stof(node.content));
         return true;
       }
       return false;

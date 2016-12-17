@@ -56,12 +56,12 @@ namespace ospray {
     // ==================================================================
     // sg node implementations
     // ==================================================================
-    void Node::addParam(sg::Param *p)
-    {
-      assert(p);
-      assert(p->getName() != "");
-      param[p->getName()] = p;
-    }    
+    // void Node::addParam(sg::Param *p)
+    // {
+    //   assert(p);
+    //   assert(p->getName() != "");
+    //   param[p->getName()] = p;
+    // }    
 
     void Node::setFromXML(const xml::Node *const node, 
                           const unsigned char *binBasePtr)
