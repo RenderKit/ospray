@@ -45,7 +45,7 @@ namespace ospray {
 
     /*! a XML node, consisting of a name, a list of properties, and a
       set of child nodes */
-    struct Node {
+    struct OSPRAY_XML_INTERFACE Node {
       //! constructor
       Node(XMLDoc *doc) : name(""), content(""), doc(doc) {}
 
@@ -86,7 +86,7 @@ namespace ospray {
     };
 
     /*! a entire xml document */
-    struct XMLDoc : public Node {
+    struct OSPRAY_XML_INTERFACE XMLDoc : public Node {
       //! constructor
       XMLDoc() : Node(this) {}
 

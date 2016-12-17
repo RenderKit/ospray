@@ -27,14 +27,12 @@ namespace ospray {
     { std::stringstream ss; ss << v.x << " " << v.y << " " << v.z; return ss.str(); }
 
     /*! checks if given node has given property */
-    OSPRAY_XML_INTERFACE
     bool Node::hasProp(const std::string &name) const
     {
       return (properties.find(name) != properties.end());
     }
 
     /*! return value of property with given name if present, else return 'fallbackValue' */
-    OSPRAY_XML_INTERFACE
     std::string Node::getProp(const std::string &name, const std::string &fallbackValue) const
     {
       if (!hasProp(name)) return fallbackValue;
@@ -42,7 +40,6 @@ namespace ospray {
     }
 
     /*! return value of property with given name if present; and throw an exception if not */
-    OSPRAY_XML_INTERFACE
     std::string Node::getProp(const std::string &name) const
     {
       if (!hasProp(name))
