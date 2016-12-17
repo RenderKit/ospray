@@ -26,7 +26,7 @@ namespace ospray {
 
     /*! 'render' the nodes */
     void Group::render(RenderContext &ctx)
-    { 
+    {
       for (uint32_t i = 0; i < child.size(); i++) {
         assert(child[i]);
         child[i]->render(ctx); 
@@ -36,10 +36,12 @@ namespace ospray {
     box3f Group::getBounds()
     {
       box3f bounds = empty;
+      depth++;
       for (uint32_t i = 0; i < child.size(); i++) {
         assert(child[i].ptr);
         bounds.extend(child[i]->getBounds());
       }
+      --depth;
       return bounds;
     }
 

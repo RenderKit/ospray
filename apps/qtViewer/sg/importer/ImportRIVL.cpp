@@ -328,6 +328,9 @@ namespace ospray {
             //throw std::runtime_error("unknown node type '"+node.name+"' in RIVL model");
           }
         });
+      PING;
+      PRINT(lastNode);
+      PRINT(lastNode->toString());
       world->node.push_back(lastNode);
     }
 
@@ -349,6 +352,7 @@ namespace ospray {
       const xml::Node &root_element = *doc->child[0];
       World *world = new World;
       parseBGFscene(world,root_element);
+      PRINT(world->getBounds());
       return world;
     }
 

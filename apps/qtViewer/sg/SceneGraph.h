@@ -16,20 +16,22 @@
 
 #pragma once
 
-#ifndef OSP_SG_INCLUDED
-#define OSP_SG_INCLUDED 1
 // std
 #include <map>
 
 // sg components
 #include "sg/common/Node.h"
-#include "sg/geometry/Geometry.h"
-#include "sg/geometry/Spheres.h"
-#include "sg/volume/Volume.h"
 #include "sg/common/Integrator.h"
-#include "sg/camera/PerspectiveCamera.h"
 #include "sg/common/Data.h"
 #include "sg/common/FrameBuffer.h"
+#include "sg/common/Transform.h"
+
+#include "sg/camera/PerspectiveCamera.h"
+
+#include "sg/geometry/Geometry.h"
+#include "sg/geometry/Spheres.h"
+
+#include "sg/volume/Volume.h"
 
 // ospcommon
 #include "ospcommon/FileName.h"
@@ -83,23 +85,6 @@ namespace ospray {
       Ref<World>    world;
     };
 
-    //! a transformation node
-    struct Transform : public sg::Node {
-      //! \brief constructor
-      Transform(const AffineSpace3f &xfm=one, sg::Node *node = NULL) 
-        : Node(), xfm(xfm), node(node) 
-      {}
-
-      /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const override { return "ospray::sg::Transform"; }
-
-      //! \brief the actual (affine) transformation matrix
-      AffineSpace3f xfm;
-
-      //! child node we're transforming
-      Ref<sg::Node> node;
-    };
-
     /*! a light node - the generic light node */
     struct Light : public sg::Node {
       //! \brief constructor
@@ -114,7 +99,6 @@ namespace ospray {
 
     World *readXML(const std::string &fileName);
     World *importRIVL(const std::string &fileName);
-    World *importSpheres(const std::string &fileName);
 
     /*! import an OBJ wavefront model, and add its contents to the given world */
     void importOBJ(const Ref<World> &world, const FileName &fileName);
@@ -131,4 +115,3 @@ namespace ospray {
   } // ::ospray::sg
 } // ::ospray
   
-#endif

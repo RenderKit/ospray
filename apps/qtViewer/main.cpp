@@ -35,6 +35,9 @@ namespace ospray {
     using std::cout;
     using std::endl;
 
+    /*! verbosity level */
+    int verbosity = 0;
+    
     static const std::string DEFAULT_INTEGRATOR_NAME = "scivis"; //ao2";
     // static const std::string DEFAULT_INTEGRATOR_NAME = "eyeLight_geomID";
     
@@ -98,6 +101,8 @@ namespace ospray {
           } else if (arg == "--renderer") {
             integratorFromCommandLine = argv[++argID];
           } else if (arg == "-v") {
+            verbosity = 1;
+          } else if (arg == "--view-file") {
             std::ifstream fin(argv[++argID]);
             if (!fin.is_open())
             {
@@ -172,24 +177,16 @@ namespace ospray {
           FileName fn = arg;
           if (fn.ext() == "osp" || fn.ext() == "pkd") {
             world = sg::loadOSP(fn.str());
-            // } else if (fn.ext() == "atom") {
-            //   world = sg::AlphaSpheres::importOspAtomFile(fn.str());
           } else if ((fn.ext() == "ply") || 
                      ((fn.ext() == "gz") && (fn.dropExt().ext() == "ply"))) {
             sg::importPLY(world,fn);
           } else if (fn.ext() == "obj") {
             sg::importOBJ(world,fn);
-            // } else if (fn.ext() == "x3d") {
-            //   sg::importX3D(world,fn);
           } else if (fn.ext() == "xml") {
             std::cout << "#osp:qtv: reading RIVL file " << arg << std::endl;
             world = sg::importRIVL(arg);
           } else 
             sg::importFile(world,fn);
-            
-          // throw std::runtime_error("unsupported file format in '"+fn.str()+"'");
-          // std::cout << "#osp:qtv: reading RIVL file " << arg << std::endl;
-          //world = sg::importRIVL(arg);
         }
       }
 
@@ -199,6 +196,8 @@ namespace ospray {
       }
       // set the current world ...
       std::cout << "#osp:qtv: setting world ..." << std::endl;
+      if (verbosity >= 1)
+        std::cout << "#osp:qtv: world bounds is " << world->getBounds() << std::endl;
       renderer->setWorld(world);
 
       // -------------------------------------------------------

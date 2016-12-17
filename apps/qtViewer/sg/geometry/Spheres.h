@@ -17,7 +17,7 @@
 #pragma once
 
 #include "sg/common/Node.h"
-#include "sg/common/TransferFunction.h"
+#include "sg/transferFunction/TransferFunction.h"
 #include "sg/geometry/Geometry.h"
 
 namespace ospray {
