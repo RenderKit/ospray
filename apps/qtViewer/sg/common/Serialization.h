@@ -58,8 +58,8 @@ namespace ospray {
           NULL if object isn't instanced (or only instanced once) */
         std::shared_ptr<Instantiation> instantiation;
 
-        Object(const std::shared_ptr<sg::Node> &node=nullptr, //const sg::Node *node=nullptr,
-               std::shared_ptr<Instantiation> inst=nullptr)
+        Object(const std::shared_ptr<sg::Node> &node, //const sg::Node *node=nullptr,
+               std::shared_ptr<Instantiation> inst)
           : node(node), instantiation(inst) 
         {};
       };
