@@ -161,7 +161,7 @@ namespace ospray {
         ospray::sg::TransferFunction node */
     struct QOSPTransferFunctionEditor : public QTransferFunctionEditor
     {
-      QOSPTransferFunctionEditor(Ref<sg::TransferFunction> sgNode)
+      QOSPTransferFunctionEditor(std::shared_ptr<sg::TransferFunction> sgNode)
         : sgNode(sgNode)
       {
         // sgNode->render();
@@ -171,7 +171,7 @@ namespace ospray {
       virtual void updateAlphaMap();
 
       //! the node we are editing
-      Ref<sg::TransferFunction> sgNode;
+      std::shared_ptr<sg::TransferFunction> sgNode;
     };
 
   }

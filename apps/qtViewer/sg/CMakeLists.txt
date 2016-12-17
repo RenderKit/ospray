@@ -26,6 +26,7 @@ ADD_LIBRARY(ospray_sg STATIC
 
   camera/PerspectiveCamera.cpp
 
+  common/Serialization.cpp
   common/Common.cpp
   common/Node.cpp
   common/Integrator.cpp

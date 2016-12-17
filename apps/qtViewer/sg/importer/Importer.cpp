@@ -34,7 +34,7 @@ namespace ospray {
 
     /*! import a given file. throws a sg::RuntimeError if this could not be done */
 
-    void importFile(Ref<sg::World> &world, const FileName &fileName)
+    void importFile(std::shared_ptr<sg::World> &world, const FileName &fileName)
     {
       ImporterFunction importer = importerForExtension[fileName.ext()];
       if (importer) {

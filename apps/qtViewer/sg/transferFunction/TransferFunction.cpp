@@ -121,9 +121,9 @@ namespace ospray {
     {
       setDefaultValues();
 
-      const std::string name = node->getProp("name","");
-      if (name != "")
-        registerNamedNode(name,this);
+      // const std::string name = node->getProp("name","");
+      // if (name != "")
+      //   registerNamedNode(name,this);
       
       xml::for_each_child_of(*node,[&](const xml::Node &child) {
           // -------------------------------------------------------

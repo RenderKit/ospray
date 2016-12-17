@@ -34,7 +34,7 @@ namespace ospray {
 
     FPSCounter fps;
 
-    OSPRayRenderWidget::OSPRayRenderWidget(Ref<sg::Renderer> renderer)
+    OSPRayRenderWidget::OSPRayRenderWidget(std::shared_ptr<sg::Renderer> renderer)
       : QAffineSpaceManipulator(QAffineSpaceManipulator::INSPECT),
         sgRenderer(renderer)
     {
@@ -45,7 +45,8 @@ namespace ospray {
           QAffineSpaceManipulator::setMoveSpeed(moveSpeed);
         }
       }
-      Ref<sg::PerspectiveCamera> camera = renderer->camera.cast<sg::PerspectiveCamera>();
+      std::shared_ptr<sg::PerspectiveCamera> camera
+        = std::dynamic_pointer_cast<sg::PerspectiveCamera>(renderer->camera);
       if (camera) {
         frame->sourcePoint = camera->getFrom();
         frame->targetPoint = camera->getAt();
@@ -56,7 +57,7 @@ namespace ospray {
       }
     }
 
-    void OSPRayRenderWidget::setWorld(Ref<sg::World> world)
+    void OSPRayRenderWidget::setWorld(std::shared_ptr<sg::World> world)
     {
       assert(sgRenderer);
       sgRenderer->setWorld(world);
@@ -104,10 +105,12 @@ namespace ospray {
     //! the QT callback that tells us that the image got resize
     void OSPRayRenderWidget::resize(int width, int height)
     {
-      sgRenderer->frameBuffer = new sg::FrameBuffer(vec2i(width,height));
+      sgRenderer->frameBuffer = std::make_shared<sg::FrameBuffer>(vec2i(width,height));
       sgRenderer->resetAccumulation();
 
-      Ref<sg::PerspectiveCamera> camera = sgRenderer->camera.cast<sg::PerspectiveCamera>();
+      std::shared_ptr<sg::PerspectiveCamera> camera 
+        = std::dynamic_pointer_cast<sg::PerspectiveCamera>(sgRenderer->camera);
+
       camera->setAspect(width/float(height));
       camera->commit();
     }
@@ -119,7 +122,9 @@ namespace ospray {
       if (!sgRenderer->camera) return;
 
       sgRenderer->resetAccumulation();
-      Ref<sg::PerspectiveCamera> camera = sgRenderer->camera.cast<sg::PerspectiveCamera>();
+      std::shared_ptr<sg::PerspectiveCamera> camera
+        = std::dynamic_pointer_cast<sg::PerspectiveCamera>(sgRenderer->camera);
+
       assert(camera);
       const vec3f from = frame->sourcePoint;
       const vec3f at   = frame->targetPoint;
@@ -154,10 +159,10 @@ namespace ospray {
     {
       QWidget *xfEditorsPage = NULL;
       // make a list of all transfer function nodes in the scene graph
-      std::vector<Ref<sg::TransferFunction> > xferFuncs;
+      std::vector<std::shared_ptr<sg::TransferFunction> > xferFuncs;
       for (int i=0;i<sgRenderer->uniqueNodes.size();i++) {
-        sg::TransferFunction *xf = dynamic_cast<sg::TransferFunction *>
-          (sgRenderer->uniqueNodes.object[i]->node.ptr);
+        std::shared_ptr<sg::TransferFunction> xf =
+          std::dynamic_pointer_cast<sg::TransferFunction>(sgRenderer->uniqueNodes.object[i]->node);
         if (xf) xferFuncs.push_back(xf);
       }
       std::cout << "#osp:qtv: found " << xferFuncs.size()
@@ -194,7 +199,7 @@ namespace ospray {
           // add combo box and stacked widget entries
           pageComboBox->addItem(tr(name.c_str()));
 
-          TransferFunction *xf = xferFuncs[i].ptr;
+          std::shared_ptr<TransferFunction> xf = xferFuncs[i];
           assert(xf);
           // create a transfer function editor for this transfer function node
           QOSPTransferFunctionEditor *xfEd
@@ -223,8 +228,9 @@ namespace ospray {
       QStackedWidget *stackedWidget = new QStackedWidget;
       layout->addWidget(stackedWidget);
 
-      Ref<sg::PerspectiveCamera> camera = renderWidget->sgRenderer->camera.cast<sg::PerspectiveCamera>();
-      QLightManipulator *lManipulator = new QLightManipulator(sgRenderer, camera->getUp());
+      std::shared_ptr<sg::PerspectiveCamera> camera
+        = std::dynamic_pointer_cast<sg::PerspectiveCamera>(renderWidget->sgRenderer->camera);
+      QLightManipulator *lManipulator = new QLightManipulator(sgRenderer.get(), camera->getUp());
       //stackedWidget->addWidget(lManipulator);
       layout->addWidget(lManipulator);
 
@@ -368,7 +374,7 @@ namespace ospray {
       }
     }
 
-    ModelViewer::ModelViewer(Ref<sg::Renderer> sgRenderer, bool fullscreen)
+    ModelViewer::ModelViewer(std::shared_ptr<sg::Renderer> sgRenderer, bool fullscreen)
       : editorWidgetStack(NULL),
         transferFunctionEditor(NULL),
         lightEditor(NULL),
@@ -410,7 +416,7 @@ namespace ospray {
       }
     }
 
-    void ModelViewer::setWorld(Ref<sg::World> world)
+    void ModelViewer::setWorld(std::shared_ptr<sg::World> world)
     {
       renderWidget->setWorld(world);
     }
@@ -430,7 +436,8 @@ namespace ospray {
     //! print the camera on the command line (triggered by toolbar/menu).
     void ModelViewer::printCameraAction()
     {
-      Ref<sg::PerspectiveCamera> camera = renderWidget->sgRenderer->camera.cast<sg::PerspectiveCamera>();
+      std::shared_ptr<sg::PerspectiveCamera> camera
+        = std::dynamic_pointer_cast<sg::PerspectiveCamera>(renderWidget->sgRenderer->camera);
       vec3f from = camera->getFrom();
       vec3f up   = camera->getUp();
       vec3f at   = camera->getAt();

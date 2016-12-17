@@ -54,7 +54,7 @@ namespace ospray {
     vec2i frameResolution(-1,-1);
 
     /*! camera as specified on the command line */
-    Ref<sg::PerspectiveCamera> cameraFromCommandLine = NULL;
+    std::shared_ptr<sg::PerspectiveCamera> cameraFromCommandLine = NULL;
     vec3f upFromCommandLine(0,0,0);
 
     /*! renderer as specified on the command line */
@@ -75,8 +75,8 @@ namespace ospray {
       // init qt
       QApplication *app = new QApplication(argc, (char **)argv);
       
-      Ref<sg::World> world = new sg::World;
-      Ref<sg::Renderer> renderer = new sg::Renderer;
+      std::shared_ptr<sg::World> world = std::make_shared<sg::World>();
+      std::shared_ptr<sg::Renderer> renderer = std::make_shared<sg::Renderer>();
       bool fullscreen = false;
 
       for (int argID=1;argID<argc;argID++) {
@@ -111,7 +111,7 @@ namespace ospray {
                                        "\" for reading");
             }
 
-            if (!cameraFromCommandLine) cameraFromCommandLine = new sg::PerspectiveCamera;
+            if (!cameraFromCommandLine) cameraFromCommandLine = std::make_shared<sg::PerspectiveCamera>();
 
             auto x = 0.f;
             auto y = 0.f;
@@ -148,14 +148,14 @@ namespace ospray {
               }
             }
           } else if (arg == "-vi") {
-            if (!cameraFromCommandLine) cameraFromCommandLine = new sg::PerspectiveCamera;
+            if (!cameraFromCommandLine) cameraFromCommandLine = std::make_shared<sg::PerspectiveCamera>();
             assert(argID+3<argc);
             float x = atof(argv[++argID]);
             float y = atof(argv[++argID]);
             float z = atof(argv[++argID]);
             cameraFromCommandLine->setAt(vec3f(x,y,z));
           } else if (arg == "-vp") {
-            if (!cameraFromCommandLine) cameraFromCommandLine = new sg::PerspectiveCamera;
+            if (!cameraFromCommandLine) cameraFromCommandLine = std::make_shared<sg::PerspectiveCamera>();
             assert(argID+3<argc);
             float x = atof(argv[++argID]);
             float y = atof(argv[++argID]);
@@ -205,12 +205,12 @@ namespace ospray {
       // -------------------------------------------------------
       {
         // first, check if one is specified in the scene file.
-        Ref<sg::Integrator> integrator = renderer->getLastDefinedIntegrator();
+        std::shared_ptr<sg::Integrator> integrator = renderer->getLastDefinedIntegrator();
         if (!integrator) {
           std::string integratorName = integratorFromCommandLine;
           if (integratorName == "")
             integratorName = DEFAULT_INTEGRATOR_NAME;
-          integrator = new sg::Integrator(integratorName);
+          integrator = std::make_shared<sg::Integrator>(integratorName);
         }
         renderer->setIntegrator(integrator);
         integrator->setSPP(spp);
@@ -223,7 +223,7 @@ namespace ospray {
       {
         // activate the last camera defined in the scene graph (if set)
         if (cameraFromCommandLine) {
-          renderer->setCamera(cameraFromCommandLine.cast<sg::Camera>());
+          renderer->setCamera(std::dynamic_pointer_cast<sg::Camera>(cameraFromCommandLine));
         } else {
           renderer->setCamera(renderer->getLastDefinedCamera());
         }
@@ -275,7 +275,7 @@ namespace ospray {
         if (!renderer->frameBuffer) {
           cout << "#osp:qtv: creating default framebuffer (" 
                << frameResolution.x << "x" << frameResolution.y << ")" << endl;
-          renderer->frameBuffer = new sg::FrameBuffer(frameResolution);
+          renderer->frameBuffer = std::make_shared<sg::FrameBuffer>(frameResolution);
         }
         renderer->frameBuffer->commit(); 
         renderer->frameBuffer->clear();

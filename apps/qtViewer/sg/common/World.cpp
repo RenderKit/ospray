@@ -22,8 +22,8 @@ namespace ospray {
     box3f World::getBounds() 
     {
       box3f bounds = empty;
-      for (auto &n : node)
-        bounds.extend(n->getBounds());
+      for (auto node : nodes)
+        bounds.extend(node->getBounds());
       return bounds;
     }
 
@@ -33,8 +33,8 @@ namespace ospray {
       sg::Serialization::State savedState = state;
       {
         //state->serialization->object.push_back(Serialization::);
-        for (size_t i=0; i<node.size(); i++)
-          node[i]->serialize(state);
+        for (auto node: nodes)
+          node->serialize(state);
       }
       state = savedState;
     }
@@ -46,9 +46,8 @@ namespace ospray {
       if (ospModel)
         throw std::runtime_error("World::ospModel alrady exists!?");
       ospModel = ospNewModel();
-      for (size_t i=0;i<node.size();i++) {
-        node[i]->render(ctx);
-      }
+      for (auto node: nodes) 
+        node->render(ctx);
       ospCommit(ospModel);
     }
 

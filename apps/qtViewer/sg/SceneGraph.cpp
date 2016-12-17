@@ -27,33 +27,25 @@ namespace ospray {
     /*! 'render' the nodes */
     void Group::render(RenderContext &ctx)
     {
-      for (uint32_t i = 0; i < child.size(); i++) {
-        assert(child[i]);
-        child[i]->render(ctx); 
+      for (auto child : children) {
+        assert(child);
+        child->render(ctx); 
       }
     }
     
     box3f Group::getBounds()
     {
       box3f bounds = empty;
-      for (uint32_t i = 0; i < child.size(); i++) {
-        assert(child[i].ptr);
-        bounds.extend(child[i]->getBounds());
+      for (auto child : children) {
+        assert(child);
+        bounds.extend(child->getBounds());
       }
       return bounds;
     }
 
-    void Serialization::serialize(Ref<sg::World> world, Serialization::Mode mode)
-    {
-      clear(); 
-      Serialization::State state;
-      state.serialization = this;
-      world.ptr->serialize(state);
-    }
-
     void Node::serialize(sg::Serialization::State &state)
     { 
-      state.serialization->object.push_back(new Serialization::Object(this,state.instantiation.ptr));
+      state.serialization->object.push_back(std::make_shared<Serialization::Object>(shared_from_this(),state.instantiation));
     }
 
   } // ::ospray::sg

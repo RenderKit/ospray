@@ -75,14 +75,16 @@ namespace ospray {
     };
 
     /*! class that encapsulate all the context/state required for
-      rendering any object */
+      rendering any object. note we INTENTIONALLY do not use
+      shared_ptrs here because certain nodes want to set these values
+      to 'this', which isn't valid for shared_ptrs */
     struct RenderContext {
-      World         *world;      //!< world we're rendering into
-      Integrator    *integrator; //!< integrator used to create materials etc
-      const affine3f xfm;        //!< affine geometry transform matrix
+      sg::World      *world;      //!< world we're rendering into
+      sg::Integrator *integrator; //!< integrator used to create materials etc
+      const affine3f  xfm;        //!< affine geometry transform matrix
 
       //! create a new context
-      RenderContext() : world(NULL), integrator(NULL), xfm(one) {};
+      RenderContext() : xfm(one) {};
 
       //! create a new context with new transformation matrix
       RenderContext(const RenderContext &other, const affine3f &newXfm)
@@ -91,13 +93,11 @@ namespace ospray {
     };
 
     /*! \brief base node of all scene graph nodes */
-    struct Node : public RefCount
+    struct Node : public std::enable_shared_from_this<Node>
     {
       Node() : lastModified(1), lastCommitted(0) {};
 
       virtual    std::string toString() const = 0;
-      std::shared_ptr<sg::Param> getParam(const std::string &name) const;
-      // void       addParam(sg::Param *p);
 
       //! \brief Initialize this node's value from given XML node
       /*!
@@ -115,13 +115,16 @@ namespace ospray {
         existant) that contains additional binary data that the xml
         node fields may point into
       */
-      virtual void setFromXML(const xml::Node *const node, 
+      virtual void setFromXML(const xml::Node &node, 
                               const unsigned char *binBasePtr);
 
       //! just for convenience; add a typed 'setParam' function
       template<typename T>
       inline void setParam(const std::string &name, const T &t)
       { params[name] = std::make_shared<ParamT<T>>(name,t); }
+
+      // /*! query given parameter */
+      // std::shared_ptr<sg::Param> getParam(const std::string &name) const;
 
       template<typename Lambda>
       inline void for_each_param(const Lambda &functor)
@@ -166,9 +169,9 @@ namespace ospray {
     // list of all named nodes - for now use this as a global
     // variable, but eventually we'll need tofind a better way for
     // storing this ... maybe in the world!?
-    extern std::map<std::string,Ref<sg::Node> > namedNodes;
-    sg::Node *findNamedNode(const std::string &name);
-    void registerNamedNode(const std::string &name, Ref<sg::Node> node);
+    extern std::map<std::string,std::shared_ptr<sg::Node> > namedNodes;
+    std::shared_ptr<sg::Node> findNamedNode(const std::string &name);
+    void registerNamedNode(const std::string &name, const std::shared_ptr<sg::Node> &node);
 
 
     /*! \brief registers a internal ospray::<ClassName> renderer under
@@ -181,9 +184,10 @@ namespace ospray {
       of this renderer.
     */
 #define OSP_REGISTER_SG_NODE(InternalClassName)                         \
-    extern "C" ospray::sg::Node *ospray_create_sg_node__##InternalClassName() \
+    extern "C" std::shared_ptr<ospray::sg::Node>                        \
+    ospray_create_sg_node__##InternalClassName()                        \
     {                                                                   \
-      return new ospray::sg::InternalClassName;                         \
+      return std::make_shared<ospray::sg::InternalClassName>();         \
     }
 
   } // ::ospray::sg
