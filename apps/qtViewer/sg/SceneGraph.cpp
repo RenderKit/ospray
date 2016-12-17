@@ -24,6 +24,24 @@
 namespace ospray {
   namespace sg {
 
+    /*! 'render' the nodes */
+    void Group::render(RenderContext &ctx)
+    { 
+      for (uint32_t i = 0; i < child.size(); i++) {
+        assert(child[i]);
+        child[i]->render(ctx); 
+      }
+    }
+    
+    box3f Group::getBounds()
+    {
+      box3f bounds = empty;
+      for (uint32_t i = 0; i < child.size(); i++) {
+        assert(child[i].ptr);
+        bounds.extend(child[i]->getBounds());
+      }
+      return bounds;
+    }
 
     void Serialization::serialize(Ref<sg::World> world, Serialization::Mode mode)
     {

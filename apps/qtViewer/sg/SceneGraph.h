@@ -42,58 +42,22 @@ namespace ospray {
      graph.  \note will not do anything by itself. */
     struct Info : public sg::Node {
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const { return "ospray::sg::Info"; };
+      virtual    std::string toString() const override { return "ospray::sg::Info"; };
 
       std::string permissions;
       std::string acks;
       std::string description;
     };
 
-    // /*! data array */
-    // struct Data : public sg::Node {
-    //   /*! \brief returns a std::string with the c++ name of this class */
-    //   virtual    std::string toString() const { return "ospray::sg::Data"; };
-
-    //   OSPDataType dataType;
-    //   size_t      numItems;
-    //   void       *data;
-    // };
-
-    // /*! data array */
-    // template<typename T>
-    // struct DataVector : public sg::Data {
-    //   /*! \brief returns a std::string with the c++ name of this class */
-    //   virtual    std::string toString() const { return "ospray::sg::DataArray<T>"; };
-      
-    //   std::vector<T> t;
-    // };
-
     struct Group : public sg::Node {
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const { return "ospray::sg::Group"; };
-
-      std::vector<Ref<sg::Node> > child;
+      virtual    std::string toString() const override { return "ospray::sg::Group"; };
 
       /*! 'render' the nodes */
-      virtual void render(RenderContext &ctx)
-      { 
-        for (uint32_t i = 0; i < child.size(); i++) {
-          assert(child[i]);
-          PRINT(child[i].ptr);
-          child[i]->render(ctx); 
-        }
-      }
-
-      virtual box3f getBounds()
-      {
-        box3f bounds = empty;
-        for (uint32_t i = 0; i < child.size(); i++) {
-          assert(child[i].ptr);
-          bounds.extend(child[i]->getBounds());
-        }
-        return bounds;
-      }
-
+      virtual void render(RenderContext &ctx) override;
+      virtual box3f getBounds() override;
+      
+      std::vector<Ref<sg::Node> > child;
     };
 
     /*! a geometry node - the generic geometry node */
@@ -101,19 +65,19 @@ namespace ospray {
       GenericGeometry(const std::string &type) : Geometry(type) {};
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const { return "ospray::sg::GenericGeometry"; }
+      virtual    std::string toString() const override { return "ospray::sg::GenericGeometry"; }
+      virtual box3f getBounds() override { return bounds; };
 
       /*! geometry type, i.e., 'spheres', 'cylinders', 'trianglemesh', ... */
       const std::string type; 
       box3f bounds;
-      virtual box3f getBounds() { return bounds; };
     };
 
     /*! a instance of another model */
     struct Instance : public sg::Geometry {
       Instance() : Geometry("Instance") {};
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const { return "ospray::sg::Instance"; }
+      virtual    std::string toString() const override { return "ospray::sg::Instance"; }
 
       //! the model we're instancing
       Ref<World>    world;
@@ -127,7 +91,7 @@ namespace ospray {
       {}
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const { return "ospray::sg::Transform"; }
+      virtual    std::string toString() const override { return "ospray::sg::Transform"; }
 
       //! \brief the actual (affine) transformation matrix
       AffineSpace3f xfm;
@@ -142,7 +106,7 @@ namespace ospray {
       Light(const std::string &type) : type(type) {};
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const { return "ospray::sg::Light"; }
+      virtual    std::string toString() const override { return "ospray::sg::Light"; }
 
       /*! \brief light type, i.e., 'DirectionalLight', 'PointLight', ... */
       const std::string type; 

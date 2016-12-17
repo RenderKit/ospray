@@ -77,7 +77,8 @@ namespace ospray {
     struct DataArrayT : public DataBuffer {
       DataArrayT(T *base, size_t size, bool mine=true)
         : DataBuffer((OSPDataType)TID),  size(size), mine(mine), base(base)
-      {}
+      {
+      }
       virtual void        *getBase()  const { return (void*)base; }
       virtual size_t       getSize()  const { return size; }
       virtual ~DataArrayT() { if (mine && base) delete base; }
@@ -158,20 +159,14 @@ namespace ospray {
     template<typename T>
     T* make_aligned(void *data, size_t num)
     {
-      PING;
       typedef typename T::ElementType ElementType;
       if ((size_t)data & 0x3) {
         // Data *not* aligned correctly, copy into a new buffer appropriately...
         char *m = new char[num * sizeof(ElementType)];
         memcpy(m, data, num * sizeof(ElementType));
-        T *t = new T((ElementType*)m, num, true);
-        PRINT(t);
-        return t;
+        return new T((ElementType*)m, num, true);
       } else {
-        T *t = new T((ElementType*)data, num, false);
-        PING;
-        PRINT(t);
-        return t;
+        return new T((ElementType*)data, num, false);
       }
     }
 

@@ -240,30 +240,23 @@ namespace ospray {
 
       xml::for_each_child_of(node,[&](const xml::Node &child){
           assert(binBasePtr);
-          PRINT(binBasePtr);
           if (child.name == "text") {
           } else if (child.name == "vertex") {
             size_t ofs      = std::stoll(child.getProp("ofs"));
             size_t num      = std::stoll(child.getProp("num"));
-            PRINT(ofs);
-            PRINT(num);
             mesh->vertex = make_aligned<DataArray3f>((char*)binBasePtr+ofs, num);
-            PRINT(mesh->vertex->data);
           } else if (child.name == "normal") {
             size_t ofs      = std::stoll(child.getProp("ofs"));
             size_t num      = std::stoll(child.getProp("num"));
             mesh->normal = new DataArray3f((vec3f*)((char*)binBasePtr+ofs),num,false);
-            PRINT(mesh->normal->data);
           } else if (child.name == "texcoord") {
             size_t ofs      = std::stoll(child.getProp("ofs"));
             size_t num      = std::stoll(child.getProp("num"));
             mesh->texcoord = new DataArray2f((vec2f*)((char*)binBasePtr+ofs),num,false);
-            PRINT(mesh->texcoord->data);
           } else if (child.name == "prim") {
             size_t ofs      = std::stoll(child.getProp("ofs"));
             size_t num      = std::stoll(child.getProp("num"));
             mesh->index = make_aligned<DataArray4i>((char*)binBasePtr+ofs, num);
-            PRINT(mesh->index->data);
           } else if (child.name == "materiallist") {
             char* value = strdup(child.content.c_str());
             for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(NULL," \t\n\r")) {
