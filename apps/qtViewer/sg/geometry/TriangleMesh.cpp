@@ -188,7 +188,6 @@ namespace ospray {
       // THIS CODE DOESN"T WORK RIGHT NOW!!!!
       std::vector<OSPMaterial> ospMaterials;
       for (size_t i = 0; i < materialList.size(); i++) {
-        assert(materialList[i].ptr != NULL);
         //If the material hasn't already been 'rendered' ensure that it is.
         materialList[i]->render(ctx);
         //Push the 'rendered' material onto the list
