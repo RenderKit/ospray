@@ -40,12 +40,14 @@ namespace ospray {
             instantiation vector */
         DONT_FOLLOW_INSTANCES
       } Mode;
+      
       struct Instantiation : public RefCount {
         Ref<Instantiation> parentWorld;
         affine3f           xfm;
 
         Instantiation() : xfm(one) {}
       };
+      
       /*! describes one object that we encountered */
       struct Object : public RefCount {
         /*! the node itself */
