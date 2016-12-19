@@ -311,6 +311,8 @@ void osxParseVec3fas(std::vector<vec3fa> &vec, const std::string &content)
     v.z = atof(tok);
     tok = strtok(NULL,delim);
 
+    v.w = 1.f;
+
     vec.push_back(v);
   }
   free(s);
