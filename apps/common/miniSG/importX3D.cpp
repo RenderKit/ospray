@@ -59,6 +59,8 @@ namespace ospray {
         if (!tok) break;
         v.z = atof(tok);
 
+        v.w = 1.f;
+
         vec.push_back(v);
 
         tok = strtok(NULL,delim);
