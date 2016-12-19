@@ -21,14 +21,6 @@
 #include <string>
 #include <sstream>
 
-/*! the boeing 777 model does not actually have a 'mtl' file; instead,
-  as materials it has a single RBG diffuse color that's encoded in
-  the material name used in 'usematerial' (eg, "usematerial
-  Material255_0_0" is red). If this flag is turned on, we'll detect
-  this case and create 'proper' obj materials in this parser, so any
-  following tools don't have to care about this.*/
-#define BOING_HACK 1
-
 namespace ospray {
   namespace miniSG {
     using std::cout;
@@ -279,7 +271,7 @@ namespace ospray {
           }
 
           if (!strncmp(token, "illum_4",7)) { 
-            /*! iw: hack for VMD-exported OBJ files, working ardouna
+            /*! iw: hack for VMD-exported OBJ files, working around a
                 bug in VMD's OBJ exporter (VMD writes "illum_4" (with
                 an underscore) rather than "illum 4" (with a
                 whitespace) */
@@ -305,17 +297,18 @@ namespace ospray {
           if (!strncmp(token, "map_Ks" , 6)) { parseSepOpt(token += 6); cur->setParam("map_Ks", loadTexture(path, std::string(token)),Material::Param::TEXTURE);  continue; }
           /*! the following are extensions to the standard */
           if (!strncmp(token, "map_Refl" , 8)) { parseSepOpt(token += 8);  cur->setParam("map_Refl", loadTexture(path, std::string(token)),Material::Param::TEXTURE);  continue; }
-          if (!strncmp(token, "map_Bump" , 8) || !strncmp(token, "map_bump" , 8))
-            { parseSepOpt(token += 8);  
-              std::stringstream ss(token);
-              std::string param;
+          if (!strncmp(token, "map_Bump" , 8) || !strncmp(token, "map_bump" , 8)) {
+            parseSepOpt(token += 8);  
+            std::stringstream ss(token);
+            std::string param;
+            ss >> param;
+            if (param[0] == '-') {
               ss >> param;
-              if (param[0] == '-')
-              {
-                ss >> param;
-                parseSepOpt(token += ss.tellg());
-              }
-              cur->setParam("map_Bump", loadTexture(path, std::string(token), true),Material::Param::TEXTURE);  continue; }
+              parseSepOpt(token += ss.tellg());
+            }
+            cur->setParam("map_Bump", loadTexture(path, std::string(token), true),Material::Param::TEXTURE);
+            continue;
+          }
 
           if (!strncmp(token, "bumpMap" , 7)) { parseSepOpt(token += 7);  cur->setParam("map_Bump", loadTexture(path, std::string(token), true),Material::Param::TEXTURE);  continue; }
           if (!strncmp(token, "colorMap" , 8)) { parseSepOpt(token += 8);  cur->setParam("map_Kd", loadTexture(path, std::string(token)),Material::Param::TEXTURE);  continue; }

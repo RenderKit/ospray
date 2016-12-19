@@ -170,6 +170,36 @@ cpp::Material TriangleMeshSceneParser::createMaterial(cpp::Renderer ren,
   }
 
   const bool isOBJMaterial = !strcmp(type, "OBJMaterial");
+  bool workaround3DMax = false;
+  float Tf_prime = 0.f;
+
+  // workaround strange behavior of 3DMax exporter (fully transparent scenes)
+  // detect d==Tf==1-Tr, correct to d’=1, Tf’=1-d
+  if (isOBJMaterial) {
+    auto itTr = mat->params.find("Tr");
+    auto end = mat->params.end();
+    if (itTr != end) {
+      auto itd = mat->params.find("d");
+      auto itTf = mat->params.find("Tf");
+      if (itTf != end && itd != end) {
+        const miniSG::Material::Param *pd = itd->second.ptr;
+        const miniSG::Material::Param *pTr = itTr->second.ptr;
+        const miniSG::Material::Param *pTf = itTf->second.ptr;
+        if (pd->type == miniSG::Material::Param::FLOAT &&
+            pTf->type == miniSG::Material::Param::FLOAT_3 &&
+            pTr->type == miniSG::Material::Param::FLOAT) {
+          float d(pd->f[0]);
+          vec3f Tf(pTf->f[0], pTf->f[1], pTf->f[2]);
+          float Tr(pTr->f[0]);
+          if (reduce_max(abs(Tf + Tr - 1.0f)) < 1e-6f &&
+              reduce_max(abs(Tf - d)) < 1e-6f) {
+            workaround3DMax = true;
+            Tf_prime = 1.f - d;
+          }
+        }
+      }
+    }
+  }
 
   for (auto it =  mat->params.begin(); it !=  mat->params.end(); ++it) {
     const char *name = it->first.c_str();
@@ -189,10 +219,15 @@ cpp::Material TriangleMeshSceneParser::createMaterial(cpp::Renderer ren,
           f < 1.f) {
         f = 1.f/(1.f - f) - 1.f;
       }
+      if (workaround3DMax && !strcmp(name, "d"))
+        f = 1.0f;
       ospMat.set(name, f);
     } break;
     case miniSG::Material::Param::FLOAT_3:
-     ospMat.set(name, p->f[0], p->f[1], p->f[2]);
+      if (workaround3DMax && !strcmp(name, "Tf"))
+        ospMat.set(name, Tf_prime, Tf_prime, Tf_prime);
+      else
+        ospMat.set(name, p->f[0], p->f[1], p->f[2]);
       break;
     case miniSG::Material::Param::STRING:
       ospMat.set(name, p->s);
