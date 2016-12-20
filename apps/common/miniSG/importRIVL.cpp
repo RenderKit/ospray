@@ -597,7 +597,6 @@ namespace ospray {
             mesh->position[i].x = tm->vertex[i].x;
             mesh->position[i].y = tm->vertex[i].y;
             mesh->position[i].z = tm->vertex[i].z;
-            mesh->position[i].w = 0;
           }
           if (tm->numNormals > 0) {
             mesh->normal.resize(tm->numVertices);
@@ -605,7 +604,6 @@ namespace ospray {
               mesh->normal[i].x = tm->normal[i].x;
               mesh->normal[i].y = tm->normal[i].y;
               mesh->normal[i].z = tm->normal[i].z;
-              mesh->normal[i].w = 0;
             }
           }
           if (tm->numTexCoords > 0) {

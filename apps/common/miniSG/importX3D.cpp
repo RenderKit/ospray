@@ -42,29 +42,40 @@ namespace ospray {
       
     }
     
+    static const char *delim = "\n\t\r, ";
+
+    vec3f parseVec3f(char * &tok)
+    {
+      vec3f v;
+      v.x = atof(tok);
+
+      tok = strtok(NULL,delim);
+      if (!tok) return v;
+      v.y = atof(tok);
+
+      tok = strtok(NULL,delim);
+      if (!tok) return v;
+      v.z = atof(tok);
+
+      tok = strtok(NULL,delim);
+      return v;
+    }
+
     void parseVectorOfVec3fas(std::vector<vec3fa> &vec, const std::string &str)
     {
       char *s = strdup(str.c_str());
-      const char *delim = "\n\t\r, ";
       char *tok = strtok(s,delim);
-      while (tok) {
-        vec3fa v;
-        v.x = atof(tok);
-
-        tok = strtok(NULL,delim);
-        if (!tok) break;
-        v.y = atof(tok);
-        
-        tok = strtok(NULL,delim);
-        if (!tok) break;
-        v.z = atof(tok);
-
-        v.w = 1.f;
-
-        vec.push_back(v);
-
-        tok = strtok(NULL,delim);
-      }
+      while (tok)
+        vec.push_back(parseVec3f(tok));
+      free(s);
+    }
+    
+    void parseVectorOfColors(std::vector<vec4f> &vec, const std::string &str)
+    {
+      char *s = strdup(str.c_str());
+      char *tok = strtok(s,delim);
+      while (tok)
+        vec.push_back(vec4f(parseVec3f(tok), 1.f));
       free(s);
     }
     
@@ -80,7 +91,6 @@ namespace ospray {
       assert(coordIndex != "");
 
       char *s = strdup(coordIndex.c_str()); coordIndex = "";
-      const char *delim = "\n\t\r, ";
       char *tok = strtok(s,delim);
       std::vector<int> ID;
       while (tok) {
@@ -112,9 +122,7 @@ namespace ospray {
             parseVectorOfVec3fas(mesh->normal,node.getProp("vector"));
           }
           else if (node.name == "Color") {
-            /* ignore for now */
-            parseVectorOfVec3fas(mesh->color,node.getProp("color"));
-            // warnIgnore("'Color' (in IndexedFaceSet)");
+            parseVectorOfColors(mesh->color,node.getProp("color"));
           }
           else
             std::cout << "importX3D: unknown child type '" << node.name

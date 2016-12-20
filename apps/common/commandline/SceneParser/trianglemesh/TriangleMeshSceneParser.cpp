@@ -293,7 +293,7 @@ TriangleMeshSceneParser::createOSPRayGeometry(miniSG::Model *msgModel,
   // add color array to mesh
   if (!msgMesh->color.empty()) {
     OSPData color = ospNewData(msgMesh->color.size(),
-                               OSP_FLOAT3A,
+                               OSP_FLOAT4,
                                &msgMesh->color[0]);
     assert(msgMesh->color.size() > 0);
     ospMesh.set("vertex.color", color);

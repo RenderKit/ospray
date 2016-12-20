@@ -43,6 +43,11 @@ namespace ospcommon {
     template<typename OT>
     explicit inline vec_t(const vec_t<OT,2> &o) : x(o.x), y(o.y) {}
     
+    inline const T& operator [](const size_t idx) const
+    { assert(idx < 2); return (&x)[idx]; }
+    inline       T& operator [](const size_t idx)
+    { assert(idx < 2); return (&x)[idx]; }
+
     /*! return result of reduce_add() across all components */
     inline scalar_t sum() const { return x+y; }
     /*! return result of reduce_mul() across all components */
@@ -58,7 +63,7 @@ namespace ospcommon {
     typedef T Scalar;
 
     inline vec_t() = default;
-    inline vec_t(scalar_t s) : x(s), y(s), z(s) {}
+    inline explicit vec_t(scalar_t s) : x(s), y(s), z(s) {}
     inline vec_t(scalar_t x, scalar_t y, scalar_t z) : x(x), y(y), z(z) {}
     inline vec_t(const vec_t<T,3> &o) : x(o.x), y(o.y), z(o.z) {}
 
@@ -69,8 +74,6 @@ namespace ospcommon {
     { assert(axis < 3); return (&x)[axis]; }
     inline       T& operator []( const size_t axis )
     { assert(axis < 3); return (&x)[axis]; }
-
-    // inline vec_t(const vec_t<T,3,1> &o) : x(o.x), y(o.y), z(o.z) {}
 
     /*! return result of reduce_add() across all components */
     inline scalar_t sum() const { return x+y+z; }
@@ -87,10 +90,10 @@ namespace ospcommon {
     typedef T Scalar;
 
     inline vec_t() = default;
-    inline vec_t(scalar_t s) : x(s), y(s), z(s) {}
+    inline explicit vec_t(scalar_t s) : x(s), y(s), z(s) {}
     inline vec_t(scalar_t x, scalar_t y, scalar_t z) : x(x), y(y), z(z) {}
     inline vec_t(const vec_t<T,3> &o) : x(o.x), y(o.y), z(o.z) {}
-    inline vec_t(const vec_t<T,3,1> &o) : x(o.x), y(o.y), z(o.z), w(o.w) {}
+    inline vec_t(const vec_t<T,3,1> &o) : x(o.x), y(o.y), z(o.z) {}
 
     inline const T& operator []( const size_t axis ) const
     { assert(axis < 3); return (&x)[axis]; }
@@ -105,7 +108,7 @@ namespace ospcommon {
     inline operator vec_t<T,3>() const { return vec_t<T,3>(x,y,z); }
 
     T x, y, z;
-    union { float w; unsigned u; int a; };
+    T padding_;
   };
 
   template<typename T>
@@ -115,13 +118,18 @@ namespace ospcommon {
     typedef T Scalar;
 
     inline vec_t() = default;
-    inline vec_t(scalar_t s) : x(s), y(s), z(s), w(s) {}
+    inline explicit vec_t(scalar_t s) : x(s), y(s), z(s), w(s) {}
     inline vec_t(scalar_t x, scalar_t y, scalar_t z, scalar_t w)
             : x(x), y(y), z(z), w(w) {}
     inline vec_t(const vec_t<T,4> &o) : x(o.x), y(o.y), z(o.z), w(o.w) {}
+    inline vec_t(const vec_t<T,3> &o, const T w) : x(o.x), y(o.y), z(o.z), w(w) {}
     template<typename OT>
-    explicit inline vec_t(const vec_t<OT,4> &o) : x(x), y(y), z(o.z), w(o.w) {}
-    
+    explicit inline vec_t(const vec_t<OT,4> &o) : x(o.x), y(o.y), z(o.z), w(o.w) {}
+
+    inline const T& operator [](const size_t idx) const
+    { assert(idx < 4); return (&x)[idx]; }
+    inline       T& operator [](const size_t idx)
+    { assert(idx < 4); return (&x)[idx]; }
 
     /*! return result of reduce_add() across all components */
     inline scalar_t sum() const { return x+y+z+w; }
