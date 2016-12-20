@@ -195,7 +195,7 @@ namespace ospray {
         vec4ui _vec4ui;
 
         ManagedObject *ptr;
-        std::string   *s;
+        std::string   s;
       };
 
       /*! actual type of this parameter */
