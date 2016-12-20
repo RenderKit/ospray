@@ -72,9 +72,9 @@ namespace ospray {
   {
     Assert2(this,"trying to set null parameter");
     clear();
-    new(&s) std::string;
-    s = strdup(str);
-    type = OSP_STRING;
+    s = new std::string;
+    *s = strdup(str);
+    type    = OSP_STRING;
   }
 
   void ManagedObject::Param::set(void *ptr)
@@ -90,8 +90,8 @@ namespace ospray {
     Assert2(this,"trying to clear null parameter");
     if (type == OSP_OBJECT && ptr)
       ptr->refDec();
-    if (type == OSP_STRING)
-      s.clear();
+    if (type == OSP_STRING && s)
+      delete s;
     type = OSP_OBJECT;
     ptr  = nullptr;
   }
@@ -156,7 +156,7 @@ namespace ospray {
     Param *param = findParam(name);
     if (!param) return valIfNotFound;
     if (param->type != OSP_STRING) return valIfNotFound;
-    return param->s.c_str();
+    return param->s->c_str();
   }
 
   void ManagedObject::removeParam(const char *name)
