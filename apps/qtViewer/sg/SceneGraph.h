@@ -23,7 +23,6 @@
 #include "sg/common/Node.h"
 #include "sg/common/Integrator.h"
 #include "sg/common/Data.h"
-#include "sg/common/FrameBuffer.h"
 #include "sg/common/Transform.h"
 
 #include "sg/camera/PerspectiveCamera.h"
@@ -109,7 +108,7 @@ namespace ospray {
     /*! import an X3D-format model, and add its contents to the given world */
     void importX3D(const Ref<World> &world, const FileName &fileName);
 
-    Ref<sg::World> loadOSP(const std::string &fileName);
+    Ref<sg::World> loadOSG(const std::string &fileName);
     /*! @} */
 
   } // ::ospray::sg
