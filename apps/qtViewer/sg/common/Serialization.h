@@ -40,6 +40,7 @@ namespace ospray {
             instantiation vector */
         DONT_FOLLOW_INSTANCES
       } Mode;
+      
       struct Instantiation : public RefCount {
         std::shared_ptr<Instantiation> parentWorld;
         affine3f           xfm;

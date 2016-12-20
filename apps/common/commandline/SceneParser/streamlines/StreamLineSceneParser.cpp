@@ -29,12 +29,12 @@ using std::endl;
 
 struct Triangles {
   std::vector<vec3fa> vertex;
-  std::vector<vec3fa> color; // vertex color, from sv's 'v' value
+  std::vector<vec4f>  color; // vertex color, from sv's 'v' value
   std::vector<vec3i>  index;
 
   struct SVVertex {
     float v;
-    vec3f pos; //float x,y,z;
+    vec3f pos;
   };
 
   struct SVTriangle {
@@ -47,12 +47,12 @@ struct Triangles {
     return f*y1+(1-f)*y0;
   }
   
-  vec3f colorOf(const float f)
+  vec4f colorOf(const float f)
   {
     if (f < .5f)
-      return vec3f(lerpf(f, 0.f,.5f,vec3f(0),vec3f(0,1,0)));
+      return vec4f(lerpf(f, 0.f,.5f,vec3f(0),vec3f(0,1,0)), 1.f);
     else
-      return vec3f(lerpf(f, .5f,1.f,vec3f(0,1,0),vec3f(1,0,0)));
+      return vec4f(lerpf(f, .5f,1.f,vec3f(0,1,0),vec3f(1,0,0)), 1.f);
   }
   void parseSV(const FileName &fn)
   {
@@ -256,10 +256,11 @@ struct StockleyWhealCannon {
   }
 };
 
+static const char *delim = "\n\t\r ";
+
 void osxParseInts(std::vector<int> &vec, const std::string &content)
 {
   char *s = strdup(content.c_str());
-  const char *delim = "\n\t\r ";
   char *tok = strtok(s,delim);
   while (tok) {
     vec.push_back(atol(tok));
@@ -268,51 +269,53 @@ void osxParseInts(std::vector<int> &vec, const std::string &content)
   free(s);
 }
 
+template<typename T> T ato(const char *);
+template<> inline int ato<int>(const char *s) { return atol(s); }
+template<> inline float ato<float>(const char *s) { return atof(s); }
+
+template<typename T>
+vec_t<T,3> osxParseVec3(char * &tok) {
+  vec_t<T,3> v;
+
+  assert(tok);
+  v.x = ato<T>(tok);
+  tok = strtok(NULL,delim);
+
+  assert(tok);
+  v.y = ato<T>(tok);
+  tok = strtok(NULL,delim);
+
+  assert(tok);
+  v.z = ato<T>(tok);
+  tok = strtok(NULL,delim);
+
+  return v;
+}
+
 void osxParseVec3is(std::vector<vec3i> &vec, const std::string &content)
 {
   char *s = strdup(content.c_str());
-  const char *delim = "\n\t\r ";
   char *tok = strtok(s,delim);
-  while (tok) {
-    vec3i v;
-    assert(tok);
-    v.x = atol(tok);
-    tok = strtok(NULL,delim);
-
-    assert(tok);
-    v.y = atol(tok);
-    tok = strtok(NULL,delim);
-
-    assert(tok);
-    v.z = atol(tok);
-    tok = strtok(NULL,delim);
-
-    vec.push_back(v);
-  }
+  while (tok)
+    vec.push_back(osxParseVec3<int>(tok));
   free(s);
 }
 
 void osxParseVec3fas(std::vector<vec3fa> &vec, const std::string &content)
 {
   char *s = strdup(content.c_str());
-  const char *delim = "\n\t\r ";
   char *tok = strtok(s,delim);
-  while (tok) {
-    vec3fa v;
-    assert(tok);
-    v.x = atof(tok);
-    tok = strtok(NULL,delim);
+  while (tok)
+    vec.push_back(osxParseVec3<float>(tok));
+  free(s);
+}
 
-    assert(tok);
-    v.y = atof(tok);
-    tok = strtok(NULL,delim);
-
-    assert(tok);
-    v.z = atof(tok);
-    tok = strtok(NULL,delim);
-
-    vec.push_back(v);
-  }
+void osxParseColors(std::vector<vec4f> &vec, const std::string &content)
+{
+  char *s = strdup(content.c_str());
+  char *tok = strtok(s,delim);
+  while (tok)
+    vec.push_back(vec4f(osxParseVec3<float>(tok), 1.f));
   free(s);
 }
 
@@ -351,7 +354,7 @@ void parseOSX(StreamLines *streamLines,
                     osxParseVec3fas(triangles->vertex,node.content);
                   }
                   else if (node.name == "color") {
-                    osxParseVec3fas(triangles->color,node.content);
+                    osxParseColors(triangles->color,node.content);
                   }
                   else if (node.name == "index") {
                     osxParseVec3is(triangles->index,node.content);
@@ -509,7 +512,7 @@ bool StreamLineSceneParser::parse(int ac, const char **&av)
       OSPData index  = ospNewData(triangles->index.size(),
                                   OSP_INT3, &triangles->index[0]);
       OSPData color  = ospNewData(triangles->color.size(),
-                                  OSP_FLOAT3A, &triangles->color[0]);
+                                  OSP_FLOAT4, &triangles->color[0]);
       ospSetObject(geom, "vertex", vertex);
       ospSetObject(geom, "index", index);
       ospSetObject(geom, "vertex.color", color);

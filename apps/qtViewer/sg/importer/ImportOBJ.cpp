@@ -361,7 +361,7 @@ namespace ospray {
           }//throw std::runtime_error("invalid material file: newmtl expected first");
 
           if (!strncmp(token, "illum_4",7)) { 
-            /*! iw: hack for VMD-exported OBJ files, working ardouna
+            /*! iw: hack for VMD-exported OBJ files, working around a
               bug in VMD's OBJ exporter (VMD writes "illum_4" (with
               an underscore) rather than "illum 4" (with a
               whitespace) */
@@ -377,15 +377,17 @@ namespace ospray {
           if (tryToMatch<vec3f>(token,"Kd",cur)) continue;
           if (tryToMatch<vec3f>(token,"Ks",cur)) continue;
           if (tryToMatch<vec3f>(token,"Tf",cur)) continue;
-          if (tryToMatch<vec3f>(token,"color",cur)) continue;
+
           if (tryToMatchTexture(token,"map_d",cur,true)) continue;
           if (tryToMatchTexture(token,"map_Ns",cur,true)) continue;
           if (tryToMatchTexture(token,"map_Ka",cur)) continue;
           if (tryToMatchTexture(token,"map_Kd",cur)) continue;
           if (tryToMatchTexture(token,"map_Ks",cur)) continue;
+
+          /*! the following are extensions to the standard */
+          if (tryToMatch<vec3f>(token,"color",cur)) continue;
           if (tryToMatchTexture(token,"map_Refl",cur)) continue;
           if (tryToMatchTexture(token,"map_Bump",cur)) continue;
-          if (tryToMatchTexture(token,"map_Kd",cur)) continue;
 
           if (!strncmp(token, "type", 4)) {
             parseSep(token += 4);

@@ -19,9 +19,10 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+
 #ifdef USE_IMAGEMAGICK
-//#define MAGICKCORE_QUANTUM_DEPTH 16
-//#define MAGICKCORE_HDRI_ENABLE 1
+#define MAGICKCORE_QUANTUM_DEPTH 16
+#define MAGICKCORE_HDRI_ENABLE 1
 # include <Magick++.h>
 using namespace Magick;
 #  ifndef MaxRGB

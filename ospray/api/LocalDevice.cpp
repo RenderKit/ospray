@@ -359,7 +359,7 @@ namespace ospray {
       Assert(target != nullptr  && "invalid target object handle");
       Assert(bufName != nullptr && "invalid identifier for object parameter");
 
-      target->setParam(bufName,value);
+      target->set(bufName,value);
     }
 
     /*! create a new pixelOp object (out of list of registered pixelOps) */

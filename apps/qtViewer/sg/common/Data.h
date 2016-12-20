@@ -113,6 +113,12 @@ namespace ospray {
       {}
       virtual vec3fa  get3fa(index_t idx)  const { assert(base); return this->base[idx]; }
     };
+    struct DataArray4f : public DataArrayT<vec4f,OSP_FLOAT4> {
+      DataArray4f(vec4f *base, size_t size, bool mine=true)
+        : DataArrayT<vec4f,OSP_FLOAT4>(base,size,mine)
+      {}
+      virtual vec4f  get4f(index_t idx)  const { assert(base); return this->base[idx]; }
+    };
 
     struct DataArray1i : public DataArrayT<int32_t,OSP_INT> {
       DataArray1i(int32_t *base, size_t size, bool mine=true)
@@ -156,6 +162,9 @@ namespace ospray {
     };
     struct DataVector3fa : public DataVectorT<vec3fa,OSP_FLOAT3A> {
       virtual vec3fa  get3fa(index_t idx)  const { assert(idx<v.size()); return this->v[idx]; }
+    };
+    struct DataVector4f : public DataVectorT<vec4f,OSP_FLOAT4> {
+      virtual vec4f  get4f(index_t idx)  const { assert(idx<v.size()); return this->v[idx]; }
     };
     struct DataVector3i : public DataVectorT<vec3i,OSP_INT3> {
       virtual vec3i  get3i(index_t idx)  const { assert(idx<v.size()); return this->v[idx]; }
