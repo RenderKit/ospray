@@ -121,7 +121,7 @@ OSPModel specifyModel(tachyon::Model &tm, cpp::Renderer &renderer)
       ospSetData(geom,"vertex.normal",data);
     }
     if (va->color.size()) {
-      OSPData data = ospNewData(va->color.size(),OSP_FLOAT3A,&va->color[0]);
+      OSPData data = ospNewData(va->color.size(),OSP_FLOAT4,&va->color[0]);
       ospCommit(data);
       ospSetData(geom,"vertex.color",data);
     }

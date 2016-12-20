@@ -14,47 +14,42 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#undef NDEBUG
+#pragma once
 
-// scene graph
-#include "SceneGraph.h"
-#include "sg/common/Texture2D.h"
-#include "sg/geometry/Spheres.h"
+// sg components
+#include "sg/common/Node.h"
 
 namespace ospray {
   namespace sg {
 
-    /*! 'render' the nodes */
-    void Group::render(RenderContext &ctx)
-    {
-      for (uint32_t i = 0; i < child.size(); i++) {
-        assert(child[i]);
-        child[i]->render(ctx); 
-      }
-    }
-    
-    box3f Group::getBounds()
-    {
-      box3f bounds = empty;
-      for (uint32_t i = 0; i < child.size(); i++) {
-        assert(child[i].ptr);
-        bounds.extend(child[i]->getBounds());
-      }
-      return bounds;
-    }
+    //! a transformation node
+    struct Transform : public sg::Node {
+      //! \brief constructor
+      Transform(const AffineSpace3f &xfm=ospcommon::one, Ref<sg::Node> node=NULL) 
+        : Node(), xfm(xfm), node(node) 
+      {}
 
-    void Serialization::serialize(Ref<sg::World> world, Serialization::Mode mode)
-    {
-      clear(); 
-      Serialization::State state;
-      state.serialization = this;
-      world.ptr->serialize(state);
-    }
+      /*! \brief returns a std::string with the c++ name of this class */
+      virtual    std::string toString() const override;
 
-    void Node::serialize(sg::Serialization::State &state)
-    { 
-      state.serialization->object.push_back(new Serialization::Object(this,state.instantiation.ptr));
-    }
+      /*! \brief 'render' the object for the first time */
+      virtual void render(RenderContext &ctx) override;
+
+      /*! \brief return bounding box in world coordinates.
+
+        This function can be used by the viewer(s) for calibrating
+        camera motion, setting default camera position, etc. Nodes
+        for which that does not apply can simpy return
+        box3f(empty) */
+      virtual box3f getBounds() override;
+
+      //! \brief the actual (affine) transformation matrix
+      AffineSpace3f xfm;
+
+      //! child node we're transforming
+      Ref<sg::Node> node;
+    };
 
   } // ::ospray::sg
 } // ::ospray
+  

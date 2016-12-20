@@ -77,7 +77,7 @@ namespace ospray {
     };
     struct VertexArray : public Primitive {
       std::vector<vec3fa> coord;
-      std::vector<vec3fa> color;
+      std::vector<vec4f>  color;
       std::vector<vec3fa> normal;
       std::vector<vec3i>  triangle;
       /*! for smoothtris (which we put into a vertex array), each

@@ -999,10 +999,10 @@ namespace ospray {
 
       ManagedObject *object = ((ObjectHandle&)_object).lookup();
       ManagedObject::Param *param = object->findParam(name);
-      bool foundParameter = (param == NULL || param->type != OSP_STRING) ? false : true;
+      bool foundParameter = (param != NULL && param->type == OSP_STRING);
       if (foundParameter) {
         *value = new char[2048];
-        strncpy(*value, param->s, 2048);
+        strncpy(*value, param->s->c_str(), 2048);
         return true;
       }
       return false;

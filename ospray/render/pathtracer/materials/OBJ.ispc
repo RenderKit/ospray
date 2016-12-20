@@ -71,17 +71,17 @@ const varying BSDF* uniform OBJ_getBSDF(const uniform PathTraceMaterial* uniform
   varying linear3f* uniform shadingFrame = LinearSpace3f_create(ctx, frame(shadingNormal));
 
   /*! cut-out opacity */
-  float d = self->d * get1f(self->map_d, dg.st, 1.f);
+  float d = self->d * get1f(self->map_d, dg.st, 1.f) * dg.color.w;
 
   /*! diffuse component */
   vec3f Kd = self->Kd;
   if (valid(self->map_Kd)) {
-    vec4f Kd_from_map = get4f(self->map_Kd,dg.st);
+    vec4f Kd_from_map = get4f(self->map_Kd, dg.st);
     Kd = Kd * make_vec3f(Kd_from_map);
     d *= Kd_from_map.w;
   }
   Kd = Kd * d * make_vec3f(dg.color);
-  if (ne(Kd,make_vec3f(0.0f)))
+  if (reduce_max(Kd) > 0.0f)
     MultiBSDF_add(bsdf, Lambert_create(ctx, shadingFrame, Kd), luminance(Kd));
 
   /*! transmission component */
@@ -92,10 +92,30 @@ const varying BSDF* uniform OBJ_getBSDF(const uniform PathTraceMaterial* uniform
   /*! specular component */
   float Ns = self->Ns * get1f(self->map_Ns, dg.st, 1.0f);
   vec3f Ks = d * self->Ks * get3f(self->map_Ks, dg.st, make_vec3f(1.f));
-  if (ne(Ks,make_vec3f(0.0f)))
+  if (reduce_max(Ks) > 0.0f)
     MultiBSDF_add(bsdf, Specular_create(ctx, shadingFrame, Ks, Ns), luminance(Ks));
 
   return bsdf;
+}
+
+vec3f OBJ_getTransparency(const uniform PathTraceMaterial* uniform super,
+                          const DifferentialGeometry& dg,
+                          const Ray& ray,
+                          const Medium& currentMedium)
+{
+  uniform const OBJ* uniform self = (uniform const OBJ* uniform)super;
+
+  /*! cut-out opacity */
+  float d = self->d * get1f(self->map_d, dg.st, 1.f) * dg.color.w;
+  if (hasAlpha(self->map_Kd)) {
+    vec4f Kd_from_map = get4f(self->map_Kd, dg.st);
+    d *= Kd_from_map.w;
+  }
+
+  /*! transmission component */
+  vec3f T = self->Tf * d + make_vec3f(1.f - d);
+
+  return T;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -115,26 +135,6 @@ export void PathTracer_OBJ_set(
   self->map_Ks = make_TextureParam((uniform Texture2D*)map_Ks, xform_Ks); self->Ks = Ks;
   self->map_Ns = make_TextureParam((uniform Texture2D*)map_Ns, xform_Ns); self->Ns = Ns; self->Tf = Tf;
   self->map_Bump = make_TextureParam((uniform Texture2D*)map_Bump, xform_Bump); self->rot_Bump = rot_Bump;
-}
-
-vec3f OBJ_getTransparency(const uniform PathTraceMaterial* uniform super,
-                          const DifferentialGeometry& dg,
-                          const Ray& ray,
-                          const Medium& currentMedium)
-{
-  uniform const OBJ* uniform self = (uniform const OBJ* uniform)super;
-
-  /*! cut-out opacity */
-  float d = self->d * get1f(self->map_d, dg.st, 1.f);
-  if (hasAlpha(self->map_Kd)) {
-    vec4f Kd_from_map = get4f(self->map_Kd,dg.st);
-    d *= Kd_from_map.w;
-  }
-
-  /*! transmission component */
-  vec3f T = self->Tf * d + make_vec3f(1.f - d);
-
-  return T;
 }
 
 void OBJ_Constructor(uniform OBJ* uniform self)

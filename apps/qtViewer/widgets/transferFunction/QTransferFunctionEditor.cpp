@@ -18,7 +18,7 @@
 #include "QTransferFunctionEditor.h"
 #include <algorithm>
 // scene graph components
-#include "sg/common/TransferFunction.h"
+#include "sg/transferFunction/TransferFunction.h"
 
 namespace ospray {
   namespace viewer {

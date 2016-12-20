@@ -57,23 +57,18 @@ namespace ospray {
     */
     void TriangleMesh::setFromXML(const xml::Node *const node, const unsigned char *binBasePtr) 
     {
-      for (size_t childID=0;childID<node->child.size();childID++) {
-        xml::Node *child = node->child[childID];
-
-        if (child->name == "vertex") {
-          size_t num = child->getPropl("num");
-          size_t ofs = child->getPropl("ofs");
-          vertex = new DataArray3f((vec3f*)((char*)binBasePtr+ofs),num,false);
-          continue;
-        } 
-
-        if (child->name == "index") {
-          size_t num = child->getPropl("num");
-          size_t ofs = child->getPropl("ofs");
-          index = new DataArray3i((vec3i*)((char*)binBasePtr+ofs),num,false);
-          continue;
-        } 
-      }      
+      xml::for_each_child_of(*node,[&](const xml::Node &child){
+          if (child.name == "vertex") {
+            size_t num = std::stoll(child.getProp("num"));
+            size_t ofs = std::stoll(child.getProp("ofs"));
+            vertex = new DataArray3f((vec3f*)((char*)binBasePtr+ofs),num,false);
+          } 
+          else if (child.name == "index") {
+            size_t num = std::stoll(child.getProp("num"));
+            size_t ofs = std::stoll(child.getProp("ofs"));
+            index = new DataArray3i((vec3i*)((char*)binBasePtr+ofs),num,false);
+          } 
+        });
     }
 
     /*! 'render' the nodes */
@@ -103,6 +98,7 @@ namespace ospray {
         material->render(ctx);
         mat = material->ospMaterial;
       }
+      PING; PRINT(mat);
       
       // if object couldt generate a valid material, create a default one
       if (!mat) {
@@ -165,11 +161,19 @@ namespace ospray {
       }
       primMatIDs = ospNewData(materialIDs.size(), OSP_INT, &materialIDs[0], 0);
       ospSetData(ospGeometry,"prim.materialID",primMatIDs);
+
+      OSPMaterial mat = NULL;
+      // try to generate ospray material from the sg material stored with this object
+      if (material) {
+        material->render(ctx);
+        mat = material->ospMaterial;
+      }
       
-      // assign a default material (for now.... eventually we might
-      // want to do a 'real' material
-      OSPMaterial mat = ospNewMaterial(ctx.integrator?ctx.integrator->getOSPHandle():NULL,"default");
-      if (mat) {
+      // if object couldt generate a valid material, create a default one
+      if (!mat) {
+        std::cout << "#osp:sg: no material on object, creating default one" << std::endl;
+        mat = ospNewMaterial(ctx.integrator?ctx.integrator->getOSPHandle():NULL,"default");
+        assert(mat);
         vec3f kd(.7f);
         vec3f ks(.3f);
         ospSet3fv(mat,"kd",&kd.x);
@@ -177,10 +181,13 @@ namespace ospray {
         ospSet1f(mat,"Ns",99.f);
         ospCommit(mat);
       }
-      
+      assert(mat);
+      ospSetMaterial(ospGeometry,mat);
+
+#if 0
+      // THIS CODE DOESN"T WORK RIGHT NOW!!!!
       std::vector<OSPMaterial> ospMaterials;
       for (size_t i = 0; i < materialList.size(); i++) {
-        assert(materialList[i].ptr != NULL);
         //If the material hasn't already been 'rendered' ensure that it is.
         materialList[i]->render(ctx);
         //Push the 'rendered' material onto the list
@@ -190,7 +197,8 @@ namespace ospray {
       
       OSPData materialData = ospNewData(materialList.size(), OSP_OBJECT, &ospMaterials[0], 0);
       ospSetData(ospGeometry, "materialList", materialData);
-
+#endif
+      
       ospCommit(ospGeometry);
       ospAddGeometry(ctx.world->ospModel,ospGeometry);
       //std::cout << "#qtViewer 'rendered' mesh\n";

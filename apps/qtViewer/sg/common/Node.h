@@ -21,6 +21,7 @@
 #include "sg/common/RuntimeError.h"
 // stl
 #include <map>
+#include <memory>
 // xml
 #include "../../../common/xml/XML.h"
 // ospcommon
@@ -51,11 +52,11 @@ namespace ospray {
 
       \note This is only the abstract base class, actual instantiations are
       the in the 'ParamT' template. */
-    struct Param : public RefCount {
+    struct Param {
       /*! constructor. the passed name alwasys remains constant */
       Param(const std::string &name) : name(name) {};
       /*! return name of this parameter. the value is in the derived class */
-      inline const std::string &getName() const { return name; }
+      inline const std::string getName() const { return name; }
       virtual void write(XMLWriter &) { NOTIMPLEMENTED; };
       /*! returns the ospray data type that this node corresponds to */
       virtual OSPDataType getOSPDataType() const = 0;
@@ -95,8 +96,8 @@ namespace ospray {
       Node() : lastModified(1), lastCommitted(0) {};
 
       virtual    std::string toString() const = 0;
-      sg::Param *getParam(const std::string &name) const;
-      void       addParam(sg::Param *p);
+      std::shared_ptr<sg::Param> getParam(const std::string &name) const;
+      // void       addParam(sg::Param *p);
 
       //! \brief Initialize this node's value from given XML node
       /*!
@@ -120,7 +121,12 @@ namespace ospray {
       //! just for convenience; add a typed 'setParam' function
       template<typename T>
       inline void setParam(const std::string &name, const T &t)
-      { param[name] = new ParamT<T>(name,t); }
+      { params[name] = std::make_shared<ParamT<T>>(name,t); }
+
+      template<typename Lambda>
+      inline void for_each_param(const Lambda &functor)
+      { for (auto it=params.begin(); it!=params.end(); ++it) functor(it->second); }
+    
 
       /*! serialize the scene graph - add object to the serialization,
         but don't do anything else to the node(s) */
@@ -150,8 +156,7 @@ namespace ospray {
     protected:
       TimeStamp lastModified;
       TimeStamp lastCommitted;
-      typedef std::map<std::string, Ref<Param> > ParamMap;
-      ParamMap param;
+      std::map<std::string, std::shared_ptr<Param>> params;
     };
 
     /*! read a given scene graph node from its correspondoing xml node represenation */
