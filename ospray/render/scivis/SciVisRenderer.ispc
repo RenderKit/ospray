@@ -198,7 +198,8 @@ inline void shadeLights(const uniform SciVisRenderer *uniform self,
                         const varying DifferentialGeometry &dg,
                         const varying SciVisShadingInfo &info,
                         const varying int path_depth,
-                        varying vec3f &color, const varying float &rayOffset,
+                        varying vec3f &color,
+                        const varying float &rayOffset,
                         const varying vec3i &sampleID,
                         const uniform float &quality)
 {

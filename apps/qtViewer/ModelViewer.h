@@ -32,6 +32,7 @@ namespace ospray {
     //! right of the window. contains a set of individual editors, all
     //! maintained in a stack
     struct EditorWidgetStack : public QWidget {
+      
       EditorWidgetStack()
       {
         pageComboBox  = new QComboBox;
@@ -41,6 +42,7 @@ namespace ospray {
         layout->addWidget(stackedWidget);
         setLayout(layout);
       }
+      
       void addPage(const std::string &name, QWidget *widget)
       {
         assert(currentPages.find(name) == currentPages.end());
@@ -55,8 +57,6 @@ namespace ospray {
       QComboBox *pageComboBox;
       QStackedWidget *stackedWidget;
     };
-
-
 
 
     // =======================================================
@@ -89,15 +89,12 @@ namespace ospray {
       //! we can not accumulate)
       bool isDirty;
 
-      sg::Serialization serialization;
       //! the world we're displaying
       Ref<sg::World> world;
 
       //! whether to display the frame rate
       bool showFPS;
     };
-
-
 
 
     /*! \brief main QT window of the model viewer */
@@ -109,49 +106,49 @@ namespace ospray {
 
       void toggleUpAxis(int axis);
 
-      public slots:
-        //! signals that the render widget changed one of the inputs
-        //! (most likely, that the camera position got changed)
-        void cameraChanged();
+    public slots:
+      //! signals that the render widget changed one of the inputs
+      //! (most likely, that the camera position got changed)
+      void cameraChanged();
 
-        //! print the camera on the command line (triggered by toolbar/menu).
-        void printCameraAction();
-        //! take a screen shot
-        void screenShotAction();
+      //! print the camera on the command line (triggered by toolbar/menu).
+      void printCameraAction();
+      //! take a screen shot
+      void screenShotAction();
 
-        void render();
+      void render();
 
-        void setWorld(Ref<sg::World> newWorld);
+      void setWorld(Ref<sg::World> newWorld);
 
-        /*! enable/disable display of frame rate */
-        void showFrameRate(bool showFPS) { this->renderWidget->showFPS = showFPS; }
+      /*! enable/disable display of frame rate */
+      void showFrameRate(bool showFPS) { this->renderWidget->showFPS = showFPS; }
 
-        //! Catches that the light manipulator has changed our default light
-        void lightChanged();
+      //! Catches that the light manipulator has changed our default light
+      void lightChanged();
 
     protected:
-        //! create the lower-side time step slider (for models that have
-        //! time steps; won't do anything for models that don't)
-        void createTimeSlider();
-        //! create the widet on the side that'll host all the editing widgets
-        void createEditorWidgetStack();
-        //! create a transfer fucntion editor
-        void createTransferFunctionEditor();
-        //! create a light manipulator
-        void createLightManipulator();
-        //! use escape to quit
-        virtual void keyPressEvent(QKeyEvent *event);
+      //! create the lower-side time step slider (for models that have
+      //! time steps; won't do anything for models that don't)
+      void createTimeSlider();
+      //! create the widet on the side that'll host all the editing widgets
+      void createEditorWidgetStack();
+      //! create a transfer fucntion editor
+      void createTransferFunctionEditor();
+      //! create a light manipulator
+      void createLightManipulator();
+      //! use escape to quit
+      virtual void keyPressEvent(QKeyEvent *event);
 
-        // -------------------------------------------------------
-        // qt gui components
-        // -------------------------------------------------------
-        EditorWidgetStack        *editorWidgetStack;
-        QDockWidget              *editorWidgetDock;
-        QToolBar                 *toolBar;
-        QTransferFunctionEditor  *transferFunctionEditor;
-        QLightManipulator        *lightEditor;
+      // -------------------------------------------------------
+      // qt gui components
+      // -------------------------------------------------------
+      EditorWidgetStack        *editorWidgetStack;
+      QDockWidget              *editorWidgetDock;
+      QToolBar                 *toolBar;
+      QTransferFunctionEditor  *transferFunctionEditor;
+      QLightManipulator        *lightEditor;
 
-        Ref<sg::Renderer> sgRenderer;
+      Ref<sg::Renderer> sgRenderer;
 
     public:
       OSPRayRenderWidget       *renderWidget;

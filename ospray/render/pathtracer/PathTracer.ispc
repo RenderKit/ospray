@@ -24,7 +24,6 @@
 #include "fb/LocalFB.ih"
 
 #define PDF_CULLING 0.0f
-//#define USE_DGCOLOR
 
 
 inline float misHeuristic(float pdf1, float pdf2)
@@ -216,9 +215,6 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
           if (f != NULL)
             fe = f->eval(f, wo, ls.dir);
 
-#ifdef USE_DGCOLOR
-        fe.value = fe.value * make_vec3f(dg.color);
-#endif
         // skip when zero contribution from material
         if (reduce_max(fe.value) <= 0.0f)
           continue;
@@ -241,11 +237,6 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     foreach_unique(f in bsdf)
       if (f != NULL)
         fs = f->sample(f, wo, s, ss.x);
-
-#ifdef USE_DGCOLOR
-    if ((type & GLOSSY_REFLECTION) == NONE) // only colorize diffuse component
-      fs.weight = fs.weight * make_vec3f(dg.color);
-#endif
 
     // terminate path when zero contribution from material
     if (reduce_max(fs.weight) <= 0.0f | fs.pdf <= PDF_CULLING)

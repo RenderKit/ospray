@@ -46,7 +46,7 @@ namespace ospray {
           vec3f Kd = getParam3f("Kd", getParam3f("kd", getParam3f("color", vec3f(0.8f))));
           vec3f Ks = getParam3f("Ks", getParam3f("ks", vec3f(0.f)));
           const float Ns = getParam1f("Ns", getParam1f("ns", 10.f));
-          vec3f Tf = vec3f(1.0-d)*getParam3f("Tf", getParam3f("tf", vec3f(0.0f)));
+          vec3f Tf = getParam3f("Tf", getParam3f("tf", vec3f(0.0f)));
 
           const float color_total = reduce_max(Kd + Ks + Tf);
           if (color_total > 1.0) {

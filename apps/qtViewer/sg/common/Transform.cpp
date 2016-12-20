@@ -14,61 +14,47 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#undef NDEBUG
-
-// scene graph
-#include "Integrator.h"
+// sg components
+#include "Transform.h"
 
 namespace ospray {
   namespace sg {
 
     /*! \brief returns a std::string with the c++ name of this class */
-    std::string Integrator::toString() const
+    std::string Transform::toString() const
+    { return "ospray::sg::Transform"; }
+    
+    /*! \brief 'render' the object for the first time */
+    void Transform::render(RenderContext &ctx)
     {
-      return "ospray::sg::Integrator(type='"+type+"')";
+      RenderContext newCtx(ctx,xfm);
+      if (node) node->render(newCtx);
     }
-
-    void Integrator::commit()
+    
+    /*! \brief return bounding box in world coordinates.
+      
+      This function can be used by the viewer(s) for calibrating
+      camera motion, setting default camera position, etc. Nodes
+      for which that does not apply can simpy return
+      box3f(empty) */
+    box3f Transform::getBounds()
     {
-      if (!ospRenderer) {
-        ospRenderer = ospNewRenderer(type.c_str());
-
-        // Set renderer defaults (if not using 'aoX' renderers)
-        if (type[0] != 'a' && type[1] != 'o')
-        {
-          ospSet1i(ospRenderer, "aoSamples", 1);
-          ospSet1i(ospRenderer, "shadowsEnabled", 1);
-        }
-
-        if (!ospRenderer)
-          throw std::runtime_error("#osp:sg:SceneGraph: could not create renderer (of type '"+type+"')");
-      }
-      if (lastCommitted >= lastModified) return;
-
-      ospSet1i(ospRenderer,"spp",spp);
-
-      // set world, camera, ...
-      if (world ) { 
-        world->commit();
-        ospSetObject(ospRenderer,"world", world->ospModel);
-        ospSetObject(ospRenderer,"model", world->ospModel);
-      }
-      if (camera) {
-        camera->commit();
-        ospSetObject(ospRenderer,"camera",camera->ospCamera);
-      }
-
-      lastCommitted = rdtsc();
-      ospCommit(ospRenderer);
-      assert(ospRenderer); 
-   }
-
-    void Integrator::setSPP(size_t spp) { 
-      this->spp = spp;
-      if (ospRenderer) {
-        ospSet1i(ospRenderer,"spp",spp);
-      }
+      assert(node);
+      const box3f nodeBounds = node->getBounds();
+      const vec3f lo = nodeBounds.lower;
+      const vec3f hi = nodeBounds.upper;
+      box3f bounds = ospcommon::empty;
+      bounds.extend(xfmPoint(xfm,vec3f(lo.x,lo.y,lo.z)));
+      bounds.extend(xfmPoint(xfm,vec3f(hi.x,lo.y,lo.z)));
+      bounds.extend(xfmPoint(xfm,vec3f(lo.x,hi.y,lo.z)));
+      bounds.extend(xfmPoint(xfm,vec3f(hi.x,hi.y,lo.z)));
+      bounds.extend(xfmPoint(xfm,vec3f(lo.x,lo.y,hi.z)));
+      bounds.extend(xfmPoint(xfm,vec3f(hi.x,lo.y,hi.z)));
+      bounds.extend(xfmPoint(xfm,vec3f(lo.x,hi.y,hi.z)));
+      bounds.extend(xfmPoint(xfm,vec3f(hi.x,hi.y,hi.z)));
+      return bounds;
     }
 
   } // ::ospray::sg
 } // ::ospray
+  

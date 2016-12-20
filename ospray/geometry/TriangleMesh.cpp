@@ -78,8 +78,12 @@ namespace ospray {
     materialListData = getParamData("materialList");
     geom_materialID = getParam1i("geom.materialID",-1);
 
-    Assert2(vertexData, "triangle mesh must have 'vertex' array");
-    Assert2(indexData, "triangle mesh must have 'index' array");
+    if (!vertexData)
+      throw std::runtime_error("triangle mesh must have 'vertex' array");
+    if (!indexData)
+      throw std::runtime_error("triangle mesh must have 'index' array");
+    if (colorData && colorData->type != OSP_FLOAT4)
+      throw std::runtime_error("vertex.color must have data type OSP_FLOAT4");
 
     // check whether we need 64-bit addressing
     bool huge_mesh = false;
@@ -162,7 +166,10 @@ namespace ospray {
 
     eMesh = rtcNewTriangleMesh(embreeSceneHandle,RTC_GEOMETRY_STATIC,
                                numTris,numVerts);
-#ifndef NDEBUG
+#if 0
+    // iw: turning this off for now: we should have a special cmd line
+    //flag to enable this; not do it every time ...
+    //#ifndef NDEBUG
     {
       cout << "#osp/trimesh: Verifying index buffer ... " << endl;
       for (int i=0;i<numTris*numCompsInTri;i+=numCompsInTri) {

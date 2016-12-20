@@ -17,7 +17,7 @@
 #pragma once
 
 // sg
-#include "sg/common/TransferFunction.h"
+#include "sg/transferFunction/TransferFunction.h"
 
 namespace ospray {
   namespace sg {

@@ -502,7 +502,7 @@ namespace ospray {
           const ObjectHandle val = cmd.get_handle();
           ManagedObject *obj = handle.lookup();
           Assert(obj);
-          obj->setParam(name,val.lookup());
+          obj->set(name,val.lookup());
           cmd.free(name);
         } break;
         case ospray::CMD_RELEASE: {
@@ -574,7 +574,7 @@ namespace ospray {
                 struct ReturnValue { int success; char value[2048]; } result;
                 if (foundParameter) {
                   result.success = 1;
-                  strncpy(result.value,param->s,2048);
+                  strncpy(result.value,param->s->c_str(),2048);
                 } else
                   result.success = 0;
                 cmd.send(&result, sizeof(ReturnValue), 0, mpi::app.comm);

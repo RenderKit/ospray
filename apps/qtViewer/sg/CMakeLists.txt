@@ -20,18 +20,21 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   # scene graph nodes
   SceneGraph.cpp
   Renderer.cpp
-  common/TransferFunction.cpp
+
   geometry/Spheres.cpp
   geometry/TriangleMesh.cpp
+
+  camera/PerspectiveCamera.cpp
 
   common/Common.cpp
   common/Node.cpp
   common/Integrator.cpp
   common/World.cpp
   common/Texture2D.cpp
-  camera/PerspectiveCamera.cpp
   common/Material.cpp
-
+  common/Transform.cpp
+  
+  transferFunction/TransferFunction.cpp
   volume/Volume.cpp
 
   module/Module.cpp
@@ -40,7 +43,6 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
 
   # scene graph importers
   importer/Importer.cpp
-  importer/ImportSpheres.cpp
   importer/ImportOSG.cpp
   importer/ImportOBJ.cpp
   importer/ImportPLY.cpp

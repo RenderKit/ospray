@@ -65,7 +65,7 @@ namespace ospray {
               "needs mapped binary data (sg::StructuredVolume)");
       voxelType = node->getProp("voxelType");
       if (node->hasProp("ofs"))
-        mappedPointer = binBasePtr + node->getPropl("ofs");
+        mappedPointer = binBasePtr + std::stoll(node->getProp("ofs","0"));
       dimensions = toVec3i(node->getProp("dimensions").c_str());
 
       if (voxelType != "float" && voxelType != "uint8") 
@@ -258,11 +258,12 @@ namespace ospray {
       //! \brief Initialize this node's value from given XML node 
     void StackedRawSlices::setFromXML(const xml::Node *const node, const unsigned char *binBasePtr)
     {
-      voxelType = node->getProp("voxelType");
+      voxelType       = node->getProp("voxelType");
       sliceResolution = toVec2i(node->getProp("sliceResolution").c_str());
-      baseName = node->getProp("baseName");
-      firstSliceID = node->getPropl("firstSliceID");
-      numSlices = node->getPropl("numSlices");
+      baseName        = node->getProp("baseName");
+      firstSliceID    = std::stoll(node->getProp("firstSliceID","0"));
+      numSlices       = std::stoll(node->getProp("numSlices"));
+      
       if (voxelType != "uint8_t") 
         throw std::runtime_error("unknown StackedRawSlices.voxelType (currently only supporting 'uint8_t')");
           
