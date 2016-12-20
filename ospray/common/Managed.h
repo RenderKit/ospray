@@ -157,42 +157,42 @@ namespace ospray {
 
       /*! set parameter to given value and type
         @{ */
-      void set(const float  &v) { clear(); type = OSP_FLOAT; _float = v; }
-      void set(const int    &v) { clear(); type = OSP_INT;   _int   = v; }
-      void set(const uint32 &v) { clear(); type = OSP_UINT;  _uint  = v; }
+      void set(const float  &v) { clear(); type = OSP_FLOAT; u_float = v; }
+      void set(const int    &v) { clear(); type = OSP_INT;   u_int   = v; }
+      void set(const uint32 &v) { clear(); type = OSP_UINT;  u_uint  = v; }
 
-      void set(const vec2f  &v) { clear(); type = OSP_FLOAT2;  _vec2f = v;  }
-      void set(const vec3f  &v) { clear(); type = OSP_FLOAT3;  _vec3f = v;  }
-      void set(const vec3fa &v) { clear(); type = OSP_FLOAT3A; _vec3fa = v; }
-      void set(const vec4f  &v) { clear(); type = OSP_FLOAT4;  _vec4f = v;  }
+      void set(const vec2f  &v) { clear(); type = OSP_FLOAT2;  u_vec2f  = v; }
+      void set(const vec3f  &v) { clear(); type = OSP_FLOAT3;  u_vec3f  = v; }
+      void set(const vec3fa &v) { clear(); type = OSP_FLOAT3A; u_vec3fa = v; }
+      void set(const vec4f  &v) { clear(); type = OSP_FLOAT4;  u_vec4f  = v; }
 
-      void set(const vec2i &v) { clear(); type = OSP_INT2; _vec2i = v; }
-      void set(const vec3i &v) { clear(); type = OSP_INT3; _vec3i = v; }
-      void set(const vec4i &v) { clear(); type = OSP_INT4; _vec4i = v; }
+      void set(const vec2i &v) { clear(); type = OSP_INT2; u_vec2i = v; }
+      void set(const vec3i &v) { clear(); type = OSP_INT3; u_vec3i = v; }
+      void set(const vec4i &v) { clear(); type = OSP_INT4; u_vec4i = v; }
 
-      void set(const vec2ui &v) { clear(); type = OSP_UINT2; _vec2ui = v; }
-      void set(const vec3ui &v) { clear(); type = OSP_UINT3; _vec3ui = v; }
-      void set(const vec4ui &v) { clear(); type = OSP_UINT4; _vec4ui = v; }
+      void set(const vec2ui &v) { clear(); type = OSP_UINT2; u_vec2ui = v; }
+      void set(const vec3ui &v) { clear(); type = OSP_UINT3; u_vec3ui = v; }
+      void set(const vec4ui &v) { clear(); type = OSP_UINT4; u_vec4ui = v; }
       /*! @} */
 
       union {
-        float    _float;
-        int      _int;
-        uint32_t _uint;
-        int64_t  _int64;
+        float    u_float;
+        int      u_int;
+        uint32_t u_uint;
+        int64_t  u_int64;
 
-        vec2f  _vec2f;
-        vec3f  _vec3f;
-        vec3fa _vec3fa;
-        vec4f  _vec4f;
+        vec2f  u_vec2f;
+        vec3f  u_vec3f;
+        vec3fa u_vec3fa;
+        vec4f  u_vec4f;
 
-        vec2i _vec2i;
-        vec3i _vec3i;
-        vec4i _vec4i;
+        vec2i u_vec2i;
+        vec3i u_vec3i;
+        vec4i u_vec4i;
 
-        vec2ui _vec2ui;
-        vec3ui _vec3ui;
-        vec4ui _vec4ui;
+        vec2ui u_vec2ui;
+        vec3ui u_vec3ui;
+        vec4ui u_vec4ui;
 
         ManagedObject *ptr;
         std::string   s;

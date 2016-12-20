@@ -158,7 +158,7 @@ namespace ospray {
 #ifndef OSPRAY_VOLUME_VOXELRANGE_IN_APP
       ManagedObject::Param *param = ddBlock[i].cppVolume->findParam("voxelRange");
       if (param != NULL && param->type == OSP_FLOAT2){
-        vec2f blockRange = param->_vec2f;
+        vec2f blockRange = param->u_vec2f;
         voxelRange.x = std::min(voxelRange.x, blockRange.x);
         voxelRange.y = std::max(voxelRange.y, blockRange.y);
       }

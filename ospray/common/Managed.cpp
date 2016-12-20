@@ -139,14 +139,14 @@ namespace ospray {
   }
   
   define_getparam(ManagedObject *, Object, OSP_OBJECT, ptr)
-  define_getparam(int32,  1i, OSP_INT,     _int)
-  define_getparam(vec3i,  3i, OSP_INT3,    _vec3i)
-  define_getparam(vec3f,  3f, OSP_FLOAT3,  _vec3f)
-  define_getparam(vec3fa, 3f, OSP_FLOAT3A, _vec3fa)
-  define_getparam(vec4f,  4f, OSP_FLOAT4,  _vec4f)
-  define_getparam(vec2f,  2f, OSP_FLOAT2,  _vec2f)
-  define_getparam(float,  1f, OSP_FLOAT,   _float)
-  define_getparam(float,  f,  OSP_FLOAT,   _float)
+  define_getparam(int32,  1i, OSP_INT,     u_int)
+  define_getparam(vec3i,  3i, OSP_INT3,    u_vec3i)
+  define_getparam(vec3f,  3f, OSP_FLOAT3,  u_vec3f)
+  define_getparam(vec3fa, 3f, OSP_FLOAT3A, u_vec3fa)
+  define_getparam(vec4f,  4f, OSP_FLOAT4,  u_vec4f)
+  define_getparam(vec2f,  2f, OSP_FLOAT2,  u_vec2f)
+  define_getparam(float,  1f, OSP_FLOAT,   u_float)
+  define_getparam(float,  f,  OSP_FLOAT,   u_float)
 
 #undef define_getparam
 
