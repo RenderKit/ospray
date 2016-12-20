@@ -211,9 +211,6 @@ namespace ospray {
     /*! \brief check if a given parameter is available */
     bool hasParam(const char *name);
 
-    /*! \brief set given parameter to given data array */
-    void setParam(const char *name, ManagedObject *data);
-
     void removeParam(const char *name);
 
     /*! set a parameter with given name to given value, create param if not

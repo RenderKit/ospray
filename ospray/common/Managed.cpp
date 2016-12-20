@@ -158,11 +158,6 @@ namespace ospray {
     if (param->type != OSP_STRING) return valIfNotFound;
     return param->s.c_str();
   }
-  
-  void ManagedObject::setParam(const char *name, ManagedObject *data)
-  {
-    findParam(name,true)->set(data);
-  }
 
   void ManagedObject::removeParam(const char *name)
   {

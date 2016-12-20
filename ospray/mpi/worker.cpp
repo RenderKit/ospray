@@ -502,7 +502,7 @@ namespace ospray {
           const ObjectHandle val = cmd.get_handle();
           ManagedObject *obj = handle.lookup();
           Assert(obj);
-          obj->setParam(name,val.lookup());
+          obj->set(name,val.lookup());
           cmd.free(name);
         } break;
         case ospray::CMD_RELEASE: {
