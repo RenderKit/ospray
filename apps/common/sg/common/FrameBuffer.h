@@ -23,7 +23,7 @@ namespace ospray {
   namespace sg {
 
     struct FrameBuffer : public sg::Node {
-      const osp::vec2i size;
+      const vec2i size;
       OSPFrameBuffer ospFrameBuffer;
 
       FrameBuffer(const vec2i &size) 

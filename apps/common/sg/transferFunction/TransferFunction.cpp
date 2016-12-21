@@ -78,7 +78,7 @@ namespace ospray {
     //! \brief commit the current field values to ospray
     void TransferFunction::commit() 
     {
-      ospSetVec2f(ospTransferFunction,"valueRange",valueRange);
+      ospSetVec2f(ospTransferFunction,"valueRange",osp::vec2f{valueRange.x,valueRange.y});
       if (ospColorData == nullptr) {
         // for now, no resampling - just use the colors ...
         vec3f *colors = (vec3f*)alloca(sizeof(vec3f)*colorArray.size());
