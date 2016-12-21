@@ -40,6 +40,7 @@ namespace ospray {
 
       if (fileName.ext() == "osp") {
         importOSP(fn, group);
+#ifndef _WIN32
       } else if (fileName.ext() == "osg") {
           Ref<sg::World> world = new sg::World;
           world = sg::loadOSG(fn);
@@ -75,6 +76,7 @@ namespace ospray {
           msgVolume->bounds = volumeNode->getBounds();
           msgVolume->handle = volumeNode->volume;
           group->volume.push_back(msgVolume);
+#endif
       } else if (fileName.ext() == "bob") {
         importRM(fn, group);
       } else {
