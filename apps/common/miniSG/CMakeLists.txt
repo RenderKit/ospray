@@ -44,7 +44,6 @@ OSPRAY_CREATE_LIBRARY(ospray_minisg SHARED
   importX3D.cpp
   importRIVL.cpp
 LINK 
-  ospray_minisg
   ospray_xml
   ospray_common
   ospray

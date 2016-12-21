@@ -28,7 +28,12 @@ ADD_SUBDIRECTORY(common/ospray_cpp)
 ADD_SUBDIRECTORY(common/tfn_lib)
 ADD_SUBDIRECTORY(common/miniSG)
 ADD_SUBDIRECTORY(common/xml)
-ADD_SUBDIRECTORY(common/sg)
+
+# NOTE(jda): Disable sg and qtViewer on Windows until sg properly exports
+#            symbols.
+IF (NOT WIN32)
+  ADD_SUBDIRECTORY(common/sg)
+ENDIF()
 
 # benchmark application which has no windowing framework dependencies
 OPTION(OSPRAY_APPS_BENCHMARK "Build ospBenchmark application." ON)
@@ -68,7 +73,7 @@ ENDIF()
 # NOTE(jda) - Disable Qt based viewers when on OS X using ICC due to
 #             unresolved issues
 # qt-based viewer for geometry (and soon volumes)
-IF(NOT (APPLE AND OSPRAY_COMPILER_ICC))
+IF(NOT (APPLE AND OSPRAY_COMPILER_ICC) AND NOT WIN32)
   OPTION(OSPRAY_APPS_QTVIEWER "Build ospQtViewer (Qt-based model viewer)" ON)
   IF (OSPRAY_APPS_QTVIEWER)
     ADD_SUBDIRECTORY(qtViewer)
