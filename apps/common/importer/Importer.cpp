@@ -20,11 +20,9 @@
 #include "ospcommon/FileName.h"
 
 // scene graph
-#ifdef OSPRAY_APPS_QTVIEWER
 #include "sg/module/Module.h"
 #include "sg/importer/Importer.h"
 #include "sg/Renderer.h"
-#endif
 
 #include <string>
 
@@ -43,7 +41,6 @@ namespace ospray {
       if (fileName.ext() == "osp") {
         importOSP(fn, group);
       } else if (fileName.ext() == "osg") {
-        #ifdef OSPRAY_APPS_QTVIEWER
           Ref<sg::World> world = new sg::World;
           world = sg::loadOSG(fn);
           Ref<sg::Volume> volumeNode;
@@ -78,10 +75,6 @@ namespace ospray {
           msgVolume->bounds = volumeNode->getBounds();
           msgVolume->handle = volumeNode->volume;
           group->volume.push_back(msgVolume);
-        #else
-          throw std::runtime_error("need to enable OSPRAY_APPS_QTVIEWER to load OSG files");
-        #endif
-
       } else if (fileName.ext() == "bob") {
         importRM(fn, group);
       } else {

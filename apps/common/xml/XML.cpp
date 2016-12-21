@@ -43,7 +43,8 @@ namespace ospray {
     std::string Node::getProp(const std::string &name) const
     {
       if (!hasProp(name))
-        throw std::runtime_error("given xml::Node does have the queried property '"+name+"'");
+        return "";
+      // throw std::runtime_error("given xml::Node does have the queried property '"+name+"'");
       return properties.find(name)->second;
     }
 
