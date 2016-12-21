@@ -19,6 +19,7 @@
 #include <ospray/ospray.h>
 #include <QtGui>
 #include <stdexcept>
+#include <iostream>
 
 class LightEditor : public QWidget {
 
