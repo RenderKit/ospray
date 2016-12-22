@@ -31,11 +31,11 @@ public:
 
   std::deque<ospray::cpp::Model> model() const override;
   std::deque<ospcommon::box3f>   bbox()  const override;
-  ospray::cpp::Geometry createOSPRayGeometry(ospray::miniSG::Model *msgModel,
-                                             ospray::miniSG::Mesh  *msgMesh);
- 
 
 private:
+
+  ospray::cpp::Geometry createOSPRayGeometry(ospray::miniSG::Model *msgModel,
+                                             ospray::miniSG::Mesh  *msgMesh);
 
   ospray::cpp::Material createDefaultMaterial(ospray::cpp::Renderer renderer);
   ospray::cpp::Material createMaterial(ospray::cpp::Renderer renderer,
