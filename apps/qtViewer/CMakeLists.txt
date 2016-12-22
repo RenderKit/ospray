@@ -30,8 +30,6 @@ FIND_PACKAGE(OpenGL REQUIRED)
 INCLUDE(${QT_USE_FILE})
 SET(LIBS ${LIBS} Qt4::QtGui Qt4::QtOpenGL ${OPENGL_LIBRARIES})
 
-ADD_SUBDIRECTORY(sg)
-
 SET(SRCS ${SRCS}
   # qt helper widgets
   widgets/affineSpaceManipulator/HelperGeometry.cpp

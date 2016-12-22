@@ -23,7 +23,7 @@ namespace ospray {
   namespace sg {
 
     struct FrameBuffer : public sg::Node {
-      vec2i size;
+      const vec2i size;
       OSPFrameBuffer ospFrameBuffer;
 
       FrameBuffer(const vec2i &size) 
@@ -65,7 +65,8 @@ namespace ospray {
 
     inline void FrameBuffer::createFB() 
     {
-      ospFrameBuffer = ospNewFrameBuffer((const osp::vec2i&)size, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
+      osp::vec2i sizet;
+      ospFrameBuffer = ospNewFrameBuffer((osp::vec2i)sizet, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
     }
     
     inline void FrameBuffer::destroyFB() 

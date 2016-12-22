@@ -135,12 +135,20 @@ namespace ospray {
       }
       return integrator;
     }
-    
+
     void parseWorldNode(sg::World *world,
                         const xml::Node &node,
                         const unsigned char *binBasePtr)
     {
       for (auto c : node.child) {
+        //TODO: Carson: better way to do this?
+        std::cout << "loading node: " << c->name << std::endl;
+        if (c->name.find("Chombo") != std::string::npos)
+        {
+          std::cout << "loading amr\n";
+          ospLoadModule("amr"); 
+          ospLoadModule("sg_amr");  
+        }
         Ref<sg::Node> newNode = createNodeFrom(*c,binBasePtr);
         world->node.push_back(newNode);
       }
@@ -172,7 +180,7 @@ namespace ospray {
       return NULL;
     }
 
-    Ref<sg::World> loadOSP(const std::string &fileName)
+    Ref<sg::World> loadOSG(const std::string &fileName)
     {
       std::shared_ptr<xml::XMLDoc> doc;
       // Ref<xml::XMLDoc> doc = NULL;
@@ -205,4 +213,3 @@ namespace ospray {
 
   } // ::ospray::sg
 } // ::ospray
-

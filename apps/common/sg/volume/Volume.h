@@ -24,7 +24,7 @@ namespace ospray {
 
     /*! a geometry node - the generic geometry node */
     struct Volume : public sg::Node {
-      Volume() {};
+      Volume() : volume(nullptr) {};
 
       /*! \brief returns a std::string with the c++ name of this class */
       virtual    std::string toString() const;
@@ -38,6 +38,9 @@ namespace ospray {
       static bool useDataDistributedVolume;
 
       SG_NODE_DECLARE_MEMBER(Ref<TransferFunction>,transferFunction,TransferFunction);    
+
+      //! ospray volume object handle
+      public: OSPVolume volume;
     };
 
     /*! a plain old structured volume */
@@ -61,9 +64,6 @@ namespace ospray {
       SG_NODE_DECLARE_MEMBER(std::string,voxelType,ScalarType)
 
       const unsigned char *mappedPointer;
-
-      //! ospray volume object handle
-      OSPVolume volume;
     };
 
     /*! a plain old structured volume */
@@ -91,8 +91,6 @@ namespace ospray {
       /*! \detailed we need this to properly resolve relative file names */
       FileName fileNameOfCorrespondingXmlDoc;
 
-      //! ospray volume object handle
-      OSPVolume volume;
     };
 
     /*! a structured volume whose input comes from a set of stacked RAW files */
@@ -122,10 +120,6 @@ namespace ospray {
 
       //! actual dimensions after the data is loaded in - to be computed from sliceResolutiona nd numSlices
       SG_NODE_DECLARE_MEMBER(vec3i,dimensions,Dimensions);    
-
-      //! ospray volume object handle
-      OSPVolume volume;
-
     };
     
   } // ::ospray::sg

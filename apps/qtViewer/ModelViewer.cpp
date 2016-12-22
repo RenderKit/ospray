@@ -21,6 +21,8 @@
 // sg
 #include "sg/SceneGraph.h"
 #include "sg/Renderer.h"
+
+#include "sg/common/FrameBuffer.h"
 // std
 #include <sstream>
 
