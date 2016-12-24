@@ -24,6 +24,25 @@ namespace ospray {
     OSPRAY_MPI_INTERFACE Group app;
     OSPRAY_MPI_INTERFACE Group worker;
 
+    /*! constructor. sets the 'comm', 'rank', and 'size' fields */
+    Group::Group(MPI_Comm initComm)
+      : comm(initComm)
+    {
+      if (initComm != MPI_COMM_NULL) {
+        MPI_CALL(Comm_rank(comm,&rank));
+        MPI_CALL(Comm_size(comm,&size));
+      }
+    }
+      
+
+    /*! do an MPI_Comm_dup, and return duplicated communicator */
+    Group Group::dup() const
+    {
+      MPI_Comm duped;
+      MPI_CALL(Comm_dup(comm,&duped));
+      return Group(duped);
+    }
+        
     void init(int *ac, const char **av)
     {
       int initialized = false;
