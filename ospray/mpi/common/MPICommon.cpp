@@ -26,14 +26,26 @@ namespace ospray {
 
     /*! constructor. sets the 'comm', 'rank', and 'size' fields */
     Group::Group(MPI_Comm initComm)
-      : comm(initComm)
     {
-      if (initComm != MPI_COMM_NULL) {
-        MPI_CALL(Comm_rank(comm,&rank));
-        MPI_CALL(Comm_size(comm,&size));
+      setTo(initComm);
+    }
+
+      /*! set to given intercomm, and properly set size, root, etc */
+    void Group::setTo(MPI_Comm comm)
+    {
+      this->comm = comm;
+      if (comm == MPI_COMM_NULL) {
+        rank = size = -1;
+      } else {
+        int isInter;
+        MPI_CALL(Comm_test_inter(comm,&isInter));
+        if (isInter)
+          makeInterComm(comm);
+        else
+          makeIntraComm(comm);
       }
     }
-      
+    
 
     /*! do an MPI_Comm_dup, and return duplicated communicator */
     Group Group::dup() const
