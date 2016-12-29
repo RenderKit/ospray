@@ -30,8 +30,8 @@ public:
   Geometry(const Geometry &copy);
   Geometry(OSPGeometry existing);
 
-  void setMaterial(Material &m);
-  void setMaterial(OSPMaterial m);
+  void setMaterial(Material &m) const;
+  void setMaterial(OSPMaterial m) const;
 };
 
 // Inlined function definitions ///////////////////////////////////////////////
@@ -56,12 +56,12 @@ inline Geometry::Geometry(OSPGeometry existing) :
 {
 }
 
-inline void Geometry::setMaterial(Material &m)
+inline void Geometry::setMaterial(Material &m) const
 {
   setMaterial(m.handle());
 }
 
-inline void Geometry::setMaterial(OSPMaterial m)
+inline void Geometry::setMaterial(OSPMaterial m) const
 {
   ospSetMaterial(handle(), m);
 }

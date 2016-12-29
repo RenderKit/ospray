@@ -40,16 +40,16 @@ public:
 
   ~FrameBuffer();
 
-  void setPixelOp(PixelOp &p);
-  void setPixelOp(OSPPixelOp p);
+  void setPixelOp(PixelOp &p) const;
+  void setPixelOp(OSPPixelOp p) const;
 
-  const void *map(OSPFrameBufferChannel channel);
-  void unmap(void *ptr);
-  void clear(uint32_t channel);
+  const void *map(OSPFrameBufferChannel channel) const;
+  void unmap(void *ptr) const;
+  void clear(uint32_t channel) const;
 
 private:
 
-  void free();
+  void free() const;
 
   bool owner = true;
 };
@@ -100,32 +100,32 @@ inline FrameBuffer::~FrameBuffer()
   free();
 }
 
-inline void FrameBuffer::setPixelOp(PixelOp &p)
+inline void FrameBuffer::setPixelOp(PixelOp &p) const
 {
   setPixelOp(p.handle());
 }
 
-inline void FrameBuffer::setPixelOp(OSPPixelOp p)
+inline void FrameBuffer::setPixelOp(OSPPixelOp p) const
 {
   ospSetPixelOp(handle(), p);
 }
 
-inline const void *FrameBuffer::map(OSPFrameBufferChannel channel)
+inline const void *FrameBuffer::map(OSPFrameBufferChannel channel) const
 {
   return ospMapFrameBuffer(handle(), channel);
 }
 
-inline void FrameBuffer::unmap(void *ptr)
+inline void FrameBuffer::unmap(void *ptr) const
 {
   ospUnmapFrameBuffer(ptr, handle());
 }
 
-inline void FrameBuffer::clear(uint32_t channel)
+inline void FrameBuffer::clear(uint32_t channel) const
 {
   ospFrameBufferClear(handle(), channel);
 }
 
-inline void FrameBuffer::free()
+inline void FrameBuffer::free() const
 {
   if (owner && handle()) {
     ospFreeFrameBuffer(handle());
