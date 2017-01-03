@@ -14,7 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-IF(OSPRAY_BUILD_MPI_DEVICE)
+IF(OSPRAY_MODULE_MPI)
   OPTION(OSPRAY_EXP_DATA_PARALLEL "Experimental data-parallel compositing mode" ON)
   OPTION(OSPRAY_PIN_ASYNC "Pin async mpi comm threads?" OFF)
   MARK_AS_ADVANCED(OSPRAY_PIN_ASYNC)
@@ -374,23 +374,16 @@ IF (WIN32 AND OSPRAY_BUILD_ISA STREQUAL "ALL")
                        "/DEF:${PROJECT_SOURCE_DIR}/ospray/ospray.def")
 ENDIF()
 
-# -------------------------------------------------------
-# MPI components
-# -------------------------------------------------------
-IF (OSPRAY_MPI)
-  ADD_SUBDIRECTORY(mpi)
-ENDIF()
-
 # build ospTutorial, for testing
 ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial.cpp)
 OSPRAY_EXE_LINK_LIBRARIES(ospTutorial ospray ospray_common)
-IF (OSPRAY_MPI)
+IF (OSPRAY_MODULE_MPI)
   OSPRAY_EXE_LINK_LIBRARIES(ospTutorial ospray_mpi)
 ENDIF()
 # C version
 ADD_EXECUTABLE(ospTutorialC ../apps/ospTutorial.c)
 OSPRAY_EXE_LINK_LIBRARIES(ospTutorialC ospray ospray_common)
-IF (OSPRAY_MPI)
+IF (OSPRAY_MODULE_MPI)
   OSPRAY_EXE_LINK_LIBRARIES(ospTutorialC ospray_mpi)
 ENDIF()
 

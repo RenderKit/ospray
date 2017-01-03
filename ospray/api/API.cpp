@@ -107,6 +107,7 @@ extern "C" void ospInit(int *_ac, const char **_av)
       }
 
       if (av == "--osp:mpi") {
+        ospLoadModule("mpi");
 #ifdef OSPRAY_MPI
         removeArgs(*_ac,(char **&)_av,i,1);
         auto *mpiDevice = ospray::api::Device::createDevice("mpi");
