@@ -42,7 +42,6 @@ typedef int ssize_t;
 
 #if 1
 #include "ospcommon/AffineSpace.h"
-#include "ospcommon/intrinsics.h"
 #include "ospcommon/RefCount.h"
 #include "ospcommon/malloc.h"
 #else
