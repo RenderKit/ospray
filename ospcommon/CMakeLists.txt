@@ -33,6 +33,11 @@ OSPRAY_CREATE_LIBRARY(ospray_common
   vec.cpp
   array3D/Array3D.cpp
 
+  tasking/parallel_for.h
+  tasking/async.h
+  tasking/TaskingTypeTraits.h
+  tasking/TaskSys.cpp
+  
   AffineSpace.h
   box.h
   constants.h
@@ -64,5 +69,23 @@ OSPRAY_INSTALL_SDK_HEADERS(
   sysinfo.h
   thread.h
   vec.h
+
+  tasking/parallel_for.h
+  tasking/async.h
+  tasking/TaskingTypeTraits.h
+
   DESTINATION ../ospcommon #NOTE: this is "next" to the SDK/ directory
 )
+
+
+SET(INCLUDED_AS_AN_OSPCOMMON_COMPONENT ON)
+SET(OSPCOMMON_ALREADY_BUILT_COMPONENTS "")
+MACRO(OSPCOMMON_BUILD_COMPONENT comp)
+  IF (";${comp};" MATCHES ";${OSPCOMMON_ALREADY_BUILT_COMPONENTS};")
+    # component already built; nothing to do!
+  ELSE()
+    ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/ospcommon/${comp} ${CMAKE_BINARY_DIR}/comps/${comp})
+    SET(OSPCOMMON_ALREADY_BUILT_COMPONENTS ${OSPCOMMON_ALREADY_BUILT_COMPONENTS} ${comp})
+  ENDIF()
+ENDMACRO()
+

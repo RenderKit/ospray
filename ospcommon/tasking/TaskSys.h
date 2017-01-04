@@ -16,11 +16,16 @@
 
 #pragma once
 
-#include "common/OSPCommon.h"
+#include "../platform.h"
+#include "../sysinfo.h"
+#include "../RefCount.h"
+// std
+#include <mutex>
+#include <condition_variable>
 
-namespace ospray {
+namespace ospcommon {
 
-  struct OSPRAY_SDK_INTERFACE __aligned(64) Task : public RefCount {
+  struct OSPCOMMON_INTERFACE __aligned(64) Task : public RefCount {
 
     Task(const char *name = "no name");
     virtual ~Task();
@@ -89,16 +94,16 @@ namespace ospray {
     //! is a) scheduled and b) all dependencies are fulfilled
     void activate();
 
-    __aligned(64) AtomicInt numJobsCompleted;
-    __aligned(64) AtomicInt numJobsStarted;
+    __aligned(64) std::atomic_int numJobsCompleted;
+    __aligned(64) std::atomic_int numJobsStarted;
     size_t    numJobsInTask;
 
     typedef enum { INITIALIZING, SCHEDULED, ACTIVE, COMPLETED } Status;
-    Mutex __aligned(64) mutex;
+    std::mutex __aligned(64) mutex;
     Status volatile __aligned(64) status;
-    AtomicInt __aligned(64) numMissingDependencies;
-    Condition __aligned(64) allDependenciesFulfilledCond;
-    Condition __aligned(64) allJobsCompletedCond;
+    std::atomic_int __aligned(64) numMissingDependencies;
+    std::condition_variable __aligned(64) allDependenciesFulfilledCond;
+    std::condition_variable __aligned(64) allJobsCompletedCond;
 
     __aligned(64) Task *volatile next;
     const char *name;
@@ -125,4 +130,4 @@ namespace ospray {
     return name;
   }
 
-}//namespace ospray
+} // ::ospcommon

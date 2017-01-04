@@ -22,6 +22,15 @@
 namespace ospcommon {
   namespace array3D { 
 
+    /*! compute - in 64 bit - the number of voxels in a vec3i */
+    inline size_t longProduct(const vec3i &dims)
+    { return dims.x*size_t(dims.y)*dims.z; }
+
+    /*! compute - in 64 bit - the linear array index of vec3i index in
+        a vec3i sized array */
+    inline size_t longIndex(const vec3i &idx, const vec3i &dims)
+    { return idx.x + size_t(dims.x)*(idx.y + size_t(dims.y)*idx.z); }
+
     /*! a template that calls the given functor (typically a lambda) for
       every vec3i(ix,iy,iz) with 0<=ix<xize.x, 0<=iy<size.y, and
       0<=iz<size.z) 

@@ -17,7 +17,7 @@
 // ospray
 #include "lights/Light.h"
 #include "common/Data.h"
-#include "common/tasking/parallel_for.h"
+#include "ospcommon/tasking/parallel_for.h"
 #include "mpi/common/Core.h"
 #include "RaycastVolumeRenderer.h"
 #include "RaycastVolumeMaterial.h"

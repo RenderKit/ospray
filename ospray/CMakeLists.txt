@@ -96,10 +96,10 @@ SET(OSPRAY_SOURCES
   common/Thread.cpp
   common/Util.h
 
-  common/tasking/parallel_for.h
-  common/tasking/async.h
-  common/tasking/TaskingTypeTraits.h
-  common/tasking/TaskSys.cpp
+#  common/tasking/parallel_for.h
+#  common/tasking/async.h
+#  common/tasking/TaskingTypeTraits.h
+#  common/tasking/TaskSys.cpp
 
   fb/FrameBuffer.ispc
   fb/FrameBuffer.cpp

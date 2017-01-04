@@ -16,7 +16,7 @@
 
 //ospray
 #include "volume/BlockBrickedVolume.h"
-#include "common/tasking/parallel_for.h"
+#include "ospcommon/tasking/parallel_for.h"
 #include "BlockBrickedVolume_ispc.h"
 
 namespace ospray {
@@ -103,11 +103,13 @@ namespace ospray {
     void *finalSource = const_cast<void*>(source);
     const bool upsampling = scaleRegion(source, finalSource, finalRegionSize, finalRegionCoords);
     // Copy voxel data into the volume.
-    const int NTASKS = finalRegionSize.y * finalRegionSize.z;
-    parallel_for(NTASKS, [&](int taskIndex){
-        ispc::BlockBrickedVolume_setRegion(ispcEquivalent, finalSource, (const ispc::vec3i&)finalRegionCoords,
-            (const ispc::vec3i&)finalRegionSize, taskIndex);
-    });
+    const size_t NTASKS = finalRegionSize.y * finalRegionSize.z;
+    parallel_for(NTASKS, [&](size_t taskIndex){
+        ispc::BlockBrickedVolume_setRegion(ispcEquivalent,
+                                           finalSource,
+                                           (const ispc::vec3i&)finalRegionCoords,
+                                           (const ispc::vec3i&)finalRegionSize, taskIndex);
+      });
 
     // If we're upsampling finalSource points at the chunk of data allocated by scaleRegion
     // to hold the upsampled volume data and we must free it.

@@ -17,7 +17,7 @@
 // own
 #include "LoadBalancer.h"
 #include "Renderer.h"
-#include "common/tasking/parallel_for.h"
+#include "ospcommon/tasking/parallel_for.h"
 // ospc
 #include "ospcommon/sysinfo.h"
 
