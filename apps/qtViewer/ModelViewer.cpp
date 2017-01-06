@@ -40,6 +40,7 @@ namespace ospray {
       : QAffineSpaceManipulator(QAffineSpaceManipulator::INSPECT),
         sgRenderer(renderer)
     {
+      PING;
       if (renderer->world) {
         box3f worldBounds = renderer->world->getBounds();
         if (!worldBounds.empty()) {
@@ -58,6 +59,11 @@ namespace ospray {
       }
     }
 
+    OSPRayRenderWidget::~OSPRayRenderWidget()
+    {
+      PING;
+    }
+    
     void OSPRayRenderWidget::setWorld(Ref<sg::World> world)
     {
       assert(sgRenderer);
@@ -88,7 +94,18 @@ namespace ospray {
 
       vec2i size = sgRenderer->frameBuffer->getSize();
       unsigned char *fbMem = sgRenderer->frameBuffer->map();
+      PING;
+      PRINT((int*)fbMem);
       glDrawPixels(size.x, size.y, GL_RGBA, GL_UNSIGNED_BYTE, fbMem);
+      PING;
+      QImage image = QImage(fbMem,
+                            size.x,
+                            size.y,
+                            QImage::Format_ARGB32).rgbSwapped().mirrored();
+      // QImage fb = QImage(fbMem,size.x,size.y,QImage::Format_RGB32).rgbSwapped().mirrored();
+      image.save("/tmp/test.ppm");
+      PING;
+
       sgRenderer->frameBuffer->unmap(fbMem);
 
       if (autoRotateSpeed != 0.f) {

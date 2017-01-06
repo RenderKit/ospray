@@ -23,57 +23,38 @@ namespace ospray {
   namespace sg {
 
     struct FrameBuffer : public sg::Node {
-      const vec2i size;
-      OSPFrameBuffer ospFrameBuffer;
 
-      FrameBuffer(const vec2i &size) 
-        : size(size), 
-          ospFrameBuffer(NULL) 
-      { createFB(); };
+      /*! constructor allocates an OSP frame buffer object */
+      FrameBuffer(const vec2i &size);
 
-      unsigned char *map() { return (unsigned char *)ospMapFrameBuffer(ospFrameBuffer, OSP_FB_COLOR); }
-      void unmap(unsigned char *mem) { ospUnmapFrameBuffer(mem,ospFrameBuffer); }
+      /*! destructor - relasess the OSP frame buffer object */
+      virtual ~FrameBuffer();
 
-      void clear() 
-      {
-        ospFrameBufferClear(ospFrameBuffer,OSP_FB_ACCUM|OSP_FB_COLOR);
-      }
+      unsigned char *map();
+      void unmap(unsigned char *mem);
 
-      void clearAccum() 
-      {
-        ospFrameBufferClear(ospFrameBuffer,OSP_FB_ACCUM);
-      }
+      void clear();
+
+      void clearAccum();
       
-      vec2i getSize() const { return size; }
-
-      virtual ~FrameBuffer() { destroyFB(); }
+      vec2i getSize() const;
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const { return "ospray::sg::FrameBuffer"; }
+      virtual    std::string toString() const;
+
+      OSPFrameBuffer getOSPHandle() const { return ospFrameBuffer; }
       
     private:
+    
       // create the ospray framebuffer for this class
       void createFB();
 
       // destroy the ospray framebuffer created via createFB()
       void destroyFB();
+
+      OSPFrameBuffer ospFrameBuffer;
+      const vec2i size;
     };
 
-    // -------------------------------------------------------
-    // IMPLEMENTTATION
-    // -------------------------------------------------------
-
-    inline void FrameBuffer::createFB() 
-    {
-      osp::vec2i sizet;
-      ospFrameBuffer = ospNewFrameBuffer((osp::vec2i)sizet, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
-    }
-    
-    inline void FrameBuffer::destroyFB() 
-    {
-      ospFreeFrameBuffer(ospFrameBuffer); 
-    }
-
-    
   } // ::ospray::sg
 } // ::ospray
