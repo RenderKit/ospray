@@ -21,6 +21,7 @@
 #include "mpi/common/command.h"
 #include "mpi/common/Work.h"
 #include "common/Managed.h"
+#include "mpi/common/BufferedMPIComm.h"
 
 /*! \file MPIDevice.h Implements the "mpi" device for mpi rendering */
 

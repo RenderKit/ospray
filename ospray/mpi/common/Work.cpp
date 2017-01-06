@@ -164,7 +164,7 @@ namespace ospray {
             */
           // allocates over requested so we don't get a lot of small reallocations
           // TODO: This should not allocate more than requested
-          buffer.resize(getIndex() + size + 1024);  
+          buffer.resize(getIndex() + size + 1024);
           // bytesAvailable += size + 1024;
         }
       }
@@ -396,6 +396,9 @@ namespace ospray {
         int32 fmt;
         b >> handle.i64 >> nItems >> fmt >> flags >> data;
         format = (OSPDataType)fmt;
+        std::cout << mpi::world.rank << " deserialized newdata, handle = " << handle.i64
+          << ", nItems = " << nItems << ", fmt = " << fmt << ", flags = "
+          << flags << ", data.size() = " << data.size() << "\n";
       }
 
       NewTexture2d::NewTexture2d() {}

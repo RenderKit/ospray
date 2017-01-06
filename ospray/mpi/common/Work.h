@@ -20,6 +20,7 @@
 #include <type_traits>
 #include <unordered_map>
 
+#include "MPICommon.h"
 #include "command.h"
 #include "common/Model.h"
 #include "common/Data.h"
@@ -187,6 +188,7 @@ namespace ospray {
         }
         void deserialize(SerialBuffer &b) override {
           b >> handle.i64 >> type;
+          std::cout << mpi::world.rank << " deserialized new object " << type << "\n";
         }
       };
       // Specializations of the run method for actually creating the
@@ -243,6 +245,8 @@ namespace ospray {
         }
         void deserialize(SerialBuffer &b) override {
           b >> rendererHandle.i64 >> handle.i64 >> type;
+          std::cout << "rank " << mpi::world.rank << " deserialized newrendererobject, render handle = "
+            << rendererHandle.i64 << ", obj handle = " << handle.i64 << ", type = " << type << "\n";
         }
       };
       // TODO: I don't do any of the sending back # of failures to
@@ -512,6 +516,8 @@ namespace ospray {
         }
         void deserialize(SerialBuffer &b) override {
           b >> handle.i64 >> name >> val;
+          std::cout << "rank " << mpi::world.rank << " deserailized set param, handle = "
+            << handle.i64 << ", name = " << name << ", val = " << val <<"\n";
         }
       };
       // run for setString needs to know to pass the C string to
@@ -586,6 +592,8 @@ namespace ospray {
         }
         void deserialize(SerialBuffer &b) override {
           b >> handle.i64 >> name >> val.i64;
+          std::cout << mpi::world.rank << " deserialized setparam<object>, handle = "
+            << handle.i64 << ", name = " << name << " val handle = " << val.i64 << "\n";
         }
       };
 
