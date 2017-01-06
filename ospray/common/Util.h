@@ -120,6 +120,10 @@ namespace ospray {
     // Denote the subclass type in the ManagedObject base class.
     if (object) object->managedObjectType = OSP_TYPE;
 
+    if (!object)
+      throw std::runtime_error("Could not find object of type: " 
+        + type + ".  Make sure you have the correct OSPRay libraries linked.");
+
     return object;
   }
 

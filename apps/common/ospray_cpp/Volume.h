@@ -33,12 +33,12 @@ public:
 
   void setRegion(void *source,
                  const ospcommon::vec3i &regionCoords,
-                 const ospcommon::vec3i &regionSize);
+                 const ospcommon::vec3i &regionSize) const;
 
   void sampleVolume(float **results,
                     const ospcommon::vec3f *worldCoordinates,
-                    size_t count);
-  std::vector<float> sampleVolume(const std::vector<ospcommon::vec3f> &points);
+                    size_t count) const;
+  std::vector<float> sampleVolume(const std::vector<ospcommon::vec3f> &points) const;
 };
 
 // Inlined function definitions ///////////////////////////////////////////////
@@ -65,7 +65,7 @@ inline Volume::Volume(OSPVolume existing) :
 
 inline void Volume::setRegion(void *source,
                               const ospcommon::vec3i &regionCoords,
-                              const ospcommon::vec3i &regionSize)
+                              const ospcommon::vec3i &regionSize) const
 {
   ospSetRegion(handle(),
                source,
@@ -75,7 +75,7 @@ inline void Volume::setRegion(void *source,
 
 inline void Volume::sampleVolume(float **results,
                                  const ospcommon::vec3f *worldCoordinates,
-                                 size_t count)
+                                 size_t count) const
 {
   ospSampleVolume(results,
                   handle(),
@@ -84,7 +84,7 @@ inline void Volume::sampleVolume(float **results,
 }
 
 inline std::vector<float>
-Volume::sampleVolume(const std::vector<ospcommon::vec3f> &points)
+Volume::sampleVolume(const std::vector<ospcommon::vec3f> &points) const
 {
   float *results = nullptr;
   auto numPoints = points.size();

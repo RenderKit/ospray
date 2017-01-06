@@ -16,7 +16,7 @@
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
-ADD_LIBRARY(ospray_sg STATIC
+OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   # scene graph nodes
   SceneGraph.cpp
   Renderer.cpp
@@ -26,7 +26,7 @@ ADD_LIBRARY(ospray_sg STATIC
 
   camera/PerspectiveCamera.cpp
 
-  common/Serialization.cpp
+  common/Serialization.h
   common/Common.cpp
   common/Node.cpp
   common/Integrator.cpp
@@ -44,13 +44,11 @@ ADD_LIBRARY(ospray_sg STATIC
 
   # scene graph importers
   importer/Importer.cpp
-  importer/ImportOSP.cpp
+  importer/ImportOSG.cpp
   importer/ImportOBJ.cpp
   importer/ImportPLY.cpp
   importer/ImportRIVL.cpp
-)
-
-TARGET_LINK_LIBRARIES(ospray_sg
+LINK
   ospray
   ospray_common
   ospray_xml

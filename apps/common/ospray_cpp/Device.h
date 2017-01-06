@@ -32,12 +32,12 @@ public:
   Device(const Device &copy);
   Device(OSPDevice existing = nullptr);
 
-  void set(const std::string &name, const std::string &v);
-  void set(const std::string &name, int v);
+  void set(const std::string &name, const std::string &v) const;
+  void set(const std::string &name, int v) const;
 
-  void commit();
+  void commit() const;
 
-  void setCurrent();
+  void setCurrent() const;
 
 private:
 
@@ -66,22 +66,22 @@ inline Device::Device(OSPDevice existing) :
 {
 }
 
-inline void Device::set(const std::string &name, const std::string &v)
+inline void Device::set(const std::string &name, const std::string &v) const
 {
   ospDeviceSetString(handle, name.c_str(), v.c_str());
 }
 
-inline void Device::set(const std::string &name, int v)
+inline void Device::set(const std::string &name, int v) const
 {
   ospDeviceSet1i(handle, name.c_str(), v);
 }
 
-inline void Device::commit()
+inline void Device::commit() const
 {
   ospDeviceCommit(handle);
 }
 
-inline void Device::setCurrent()
+inline void Device::setCurrent() const
 {
   ospSetCurrentDevice(handle);
 }

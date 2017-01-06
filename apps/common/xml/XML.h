@@ -74,7 +74,7 @@ namespace ospray {
       std::map<std::string,std::string> properties;
 
       /*! list of child nodes */
-      std::vector<std::shared_ptr<Node> > child;
+      std::vector<std::shared_ptr<Node>> child;
 
       //! pointer to parent doc 
       /*! \detailed this points back to the parent xml doc that

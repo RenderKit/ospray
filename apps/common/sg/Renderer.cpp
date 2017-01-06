@@ -16,6 +16,8 @@
 
 #include "Renderer.h"
 
+#include "sg/common/FrameBuffer.h"
+
 namespace ospray {
   namespace sg {
     using std::cout;

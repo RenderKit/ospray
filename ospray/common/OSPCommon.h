@@ -42,7 +42,6 @@ typedef int ssize_t;
 
 #if 1
 #include "ospcommon/AffineSpace.h"
-#include "ospcommon/intrinsics.h"
 #include "ospcommon/RefCount.h"
 #include "ospcommon/malloc.h"
 #else
@@ -157,6 +156,9 @@ namespace ospray {
 
   /*! Convert a type string to an OSPDataType. */
   OSPRAY_INTERFACE OSPDataType typeForString(const char *string);
+  /*! Convert a type string to an OSPDataType. */
+  inline OSPDataType typeForString(const std::string &s)
+  { return typeForString(s.c_str()); }
 
   /*! Convert a type string to an OSPDataType. */
   OSPRAY_INTERFACE std::string stringForType(OSPDataType type);

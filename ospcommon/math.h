@@ -68,7 +68,8 @@ namespace ospcommon
   {
     const __m128 a = _mm_set_ss(x);
     const __m128 r = _mm_rcp_ps(a);
-#if defined(__AVX2__)
+// NOTE(jda) - turn off AVX2 optimizations for GCC 6.x w/ -mavx2 flag
+#if 0//defined(__AVX2__)
     return _mm_cvtss_f32(_mm_mul_ps(r,_mm_fnmadd_ps(r, a, _mm_set_ss(2.0f))));
 #else
     return _mm_cvtss_f32(_mm_mul_ps(r,_mm_sub_ps(_mm_set_ss(2.0f), _mm_mul_ps(r, a))));
@@ -197,7 +198,8 @@ namespace ospcommon
   template<typename T> __forceinline T  sin2cos ( const T& x )  { return sqrt(max(T(zero),T(one)-x*x)); }
   template<typename T> __forceinline T  cos2sin ( const T& x )  { return sin2cos(x); }
 
-#if defined(__AVX2__)
+// NOTE(jda) - turn off AVX2 optimizations for GCC 6.x w/ -mavx2 flag
+#if 0//defined(__AVX2__)
   __forceinline float madd  ( const float a, const float b, const float c) { return _mm_cvtss_f32(_mm_fmadd_ss(_mm_set_ss(a),_mm_set_ss(b),_mm_set_ss(c))); }
   __forceinline float msub  ( const float a, const float b, const float c) { return _mm_cvtss_f32(_mm_fmsub_ss(_mm_set_ss(a),_mm_set_ss(b),_mm_set_ss(c))); }
   __forceinline float nmadd ( const float a, const float b, const float c) { return _mm_cvtss_f32(_mm_fnmadd_ss(_mm_set_ss(a),_mm_set_ss(b),_mm_set_ss(c))); }

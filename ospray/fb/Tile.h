@@ -67,7 +67,7 @@ namespace ospray {
         accumID(accumId)
     {
       region.lower = tile * TILE_SIZE;
-      region.upper = min(region.lower + TILE_SIZE, fbsize);
+      region.upper = ospcommon::min(region.lower + TILE_SIZE, fbsize);
     }
   };
 
