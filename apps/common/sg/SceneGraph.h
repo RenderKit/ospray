@@ -108,9 +108,7 @@ namespace ospray {
     std::shared_ptr<sg::World> loadOSP(const std::string &fileName);
     std::shared_ptr<sg::World> readXML(const std::string &fileName);
     std::shared_ptr<sg::World> importRIVL(const std::string &fileName);
-#if 0
     std::shared_ptr<sg::World> loadOSG(const std::string &fileName);
-#endif
     /*! @} */
 
   } // ::ospray::sg

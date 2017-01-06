@@ -40,7 +40,8 @@ namespace ospray {
 
       if (fileName.ext() == "osp") {
         importOSP(fn, group);
-#ifndef _WIN32
+#if 0 // NOTE(jda) - this can only be re-enabled once the importer stuff is off of Ref<>
+//#ifndef _WIN32
       } else if (fileName.ext() == "osg") {
           Ref<sg::World> world = new sg::World;
           world = sg::loadOSG(fn);
