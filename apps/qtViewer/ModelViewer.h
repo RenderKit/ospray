@@ -64,7 +64,8 @@ namespace ospray {
     // =======================================================
     struct OSPRayRenderWidget : public QAffineSpaceManipulator {
       OSPRayRenderWidget(Ref<sg::Renderer> renderer);
-
+      virtual ~OSPRayRenderWidget();
+      
       Ref<sg::Renderer> sgRenderer;
 
       // -------------------------------------------------------
