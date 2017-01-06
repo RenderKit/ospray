@@ -204,7 +204,6 @@ namespace ospray {
         for (size_t i = 0; i < numMessages; ++i) {
           size_t type = 0;
           buf >> type;
-          std::cout << "DBG Message[" << i << "] = " << commandToString(CommandTag(type)) << "\n";
           Work::WorkMap::const_iterator fnd = Work::WORK_MAP.find(type);
           if (fnd != Work::WORK_MAP.end()) {
             Work *w = (*fnd->second)();
@@ -250,7 +249,6 @@ namespace ospray {
       void NewObject<Model>::run() {
         Model *model = new Model;
         handle.assign(model);
-        std::cout << "rank " << mpi::world.rank << " NewModel given handle " << handle.i64 << "\n";
       }
       template<>
       void NewObject<Geometry>::run() {
@@ -263,7 +261,6 @@ namespace ospray {
         // since in the distributed mode no app has a reference to this object?
         geometry->refInc();
         handle.assign(geometry);
-        std::cout << "rank " << mpi::world.rank << " NewGeometry given handle " << handle.i64 << "\n";
       }
       template<>
       void NewObject<Camera>::run() {
@@ -396,9 +393,6 @@ namespace ospray {
         int32 fmt;
         b >> handle.i64 >> nItems >> fmt >> flags >> data;
         format = (OSPDataType)fmt;
-        std::cout << mpi::world.rank << " deserialized newdata, handle = " << handle.i64
-          << ", nItems = " << nItems << ", fmt = " << fmt << ", flags = "
-          << flags << ", data.size() = " << data.size() << "\n";
       }
 
       NewTexture2d::NewTexture2d() {}
@@ -464,14 +458,11 @@ namespace ospray {
       }
 
       CommitObject::CommitObject(){}
-      CommitObject::CommitObject(ObjectHandle handle) : handle(handle) {
-        std::cout << mpi::world.rank << " commit object ctor for handle " << handle.i64 << "\n";
-      }
+      CommitObject::CommitObject(ObjectHandle handle) : handle(handle) {}
       void CommitObject::run() {
         ManagedObject *obj = handle.lookup();
         if (obj) {
           obj->commit();
-          std::cout << mpi::world.rank << " commit'd object for handle " << handle.i64 << "\n";
 
           // TODO: Do we need this hack anymore?
           // It looks like yes? or at least glutViewer segfaults if we don't do this
@@ -481,8 +472,8 @@ namespace ospray {
             model->finalize();
           }
         } else {
-          std::cout << "Warning(actually this is ok?) "
-            << mpi::world.rank << " did not have obj to commit for handle " << handle.i64 << "\n";
+          throw std::runtime_error("Error: rank " + std::to_string(mpi::world.rank)
+              + " did not have object to commit!");
         }
         // TODO: Work units should not be directly making MPI calls.
         // What should be responsible for this barrier?
@@ -507,7 +498,6 @@ namespace ospray {
       }
       void CommitObject::deserialize(SerialBuffer &b) {
         b >> handle.i64;
-        std::cout << mpi::world.rank << " deserialized commit handle " << handle.i64 << "\n";
       }
 
       ClearFrameBuffer::ClearFrameBuffer(){}
@@ -706,8 +696,7 @@ namespace ospray {
         Assert(po);
         fb->pixelOp = po->createInstance(fb, fb->pixelOp.ptr);
         if (!fb->pixelOp) {
-          std::cout << "#osp:mpi: WARNING: PixelOp did not create an instance!"
-            << std::endl;
+          std::cout << "#osp:mpi: WARNING: PixelOp did not create an instance!" << std::endl;
         }
       }
       size_t SetPixelOp::getTag() const {
