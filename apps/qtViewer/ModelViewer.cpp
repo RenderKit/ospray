@@ -90,6 +90,7 @@ namespace ospray {
       vec2i size = sgRenderer->frameBuffer->getSize();
       unsigned char *fbMem = sgRenderer->frameBuffer->map();
       glDrawPixels(size.x, size.y, GL_RGBA, GL_UNSIGNED_BYTE, fbMem);
+
       sgRenderer->frameBuffer->unmap(fbMem);
 
       if (autoRotateSpeed != 0.f) {
