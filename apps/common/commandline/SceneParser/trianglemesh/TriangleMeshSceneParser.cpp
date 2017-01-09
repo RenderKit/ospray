@@ -453,7 +453,7 @@ void TriangleMeshSceneParser::finalize()
     sceneModel->commit();
   }
   auto end_make_scene = high_resolution_clock::now();
-  std::cout << "Buiding OSPRay models took "
+  std::cout << "Building OSPRay models took "
     << duration_cast<milliseconds>(end_make_scene - start_make_scene).count()
     << "ms\n";
 }
