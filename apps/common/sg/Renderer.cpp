@@ -34,7 +34,6 @@ namespace ospray {
       if (!camera) return 3;
       if (!world) return 4;
 
-      assert(frameBuffer->ospFrameBuffer);
       assert(integrator->ospRenderer);
 
       if (!world->ospModel) {
