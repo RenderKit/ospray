@@ -14,47 +14,68 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
-// sg components
-#include "sg/common/Node.h"
+#include "sg/common/FrameBuffer.h"
 
 namespace ospray {
   namespace sg {
 
-    struct FrameBuffer : public sg::Node {
+    FrameBuffer::FrameBuffer(const vec2i &size)
+      : size(size)
+    {
+      createFB();
+    }
 
-      /*! constructor allocates an OSP frame buffer object */
-      FrameBuffer(const vec2i &size);
+    FrameBuffer::~FrameBuffer()
+    {
+      destroyFB();
+    }
 
-      /*! destructor - relasess the OSP frame buffer object */
-      virtual ~FrameBuffer();
+    unsigned char *FrameBuffer::map()
+    {
+      return (unsigned char *)ospMapFrameBuffer(ospFrameBuffer, OSP_FB_COLOR);
+    }
 
-      unsigned char *map();
-      void unmap(unsigned char *mem);
+    void FrameBuffer::unmap(unsigned char *mem)
+    {
+      ospUnmapFrameBuffer(mem,ospFrameBuffer);
+    }
 
-      void clear();
+    void FrameBuffer::clear()
+    {
+      ospFrameBufferClear(ospFrameBuffer,OSP_FB_ACCUM|OSP_FB_COLOR);
+    }
 
-      void clearAccum();
-      
-      vec2i getSize() const;
+    void FrameBuffer::clearAccum()
+    {
+      ospFrameBufferClear(ospFrameBuffer,OSP_FB_ACCUM);
+    }
 
-      /*! \brief returns a std::string with the c++ name of this class */
-      virtual std::string toString() const;
+    vec2i FrameBuffer::getSize() const
+    {
+      return size;
+    }
 
-      OSPFrameBuffer getOSPHandle() const;
-      
-    private:
-    
-      // create the ospray framebuffer for this class
-      void createFB();
+    std::string FrameBuffer::toString() const
+    {
+      return "ospray::sg::FrameBuffer";
+    }
 
-      // destroy the ospray framebuffer created via createFB()
-      void destroyFB();
+    OSPFrameBuffer FrameBuffer::getOSPHandle() const
+    {
+      return ospFrameBuffer;
+    }
 
-      OSPFrameBuffer ospFrameBuffer {nullptr};
-      const vec2i size;
-    };
+    void ospray::sg::FrameBuffer::createFB()
+    {
+      osp::vec2i sizet;
+      ospFrameBuffer = ospNewFrameBuffer((osp::vec2i)sizet, OSP_FB_SRGBA,
+                                         OSP_FB_COLOR | OSP_FB_ACCUM);
+    }
+
+    void ospray::sg::FrameBuffer::destroyFB()
+    {
+      ospFreeFrameBuffer(ospFrameBuffer);
+    }
 
   } // ::ospray::sg
 } // ::ospray
