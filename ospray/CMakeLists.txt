@@ -378,13 +378,13 @@ ENDIF()
 ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial.cpp)
 OSPRAY_EXE_LINK_LIBRARIES(ospTutorial ospray ospray_common)
 IF (OSPRAY_MODULE_MPI)
-  OSPRAY_EXE_LINK_LIBRARIES(ospTutorial ospray_mpi)
+  OSPRAY_EXE_LINK_LIBRARIES(ospTutorial ospray_module_mpi)
 ENDIF()
 # C version
 ADD_EXECUTABLE(ospTutorialC ../apps/ospTutorial.c)
 OSPRAY_EXE_LINK_LIBRARIES(ospTutorialC ospray ospray_common)
 IF (OSPRAY_MODULE_MPI)
-  OSPRAY_EXE_LINK_LIBRARIES(ospTutorialC ospray_mpi)
+  OSPRAY_EXE_LINK_LIBRARIES(ospTutorialC ospray_module_mpi)
 ENDIF()
 
 ##############################################################

@@ -1032,6 +1032,10 @@ namespace ospray {
     OSP_REGISTER_DEVICE(MPIDevice, mpi_device);
     OSP_REGISTER_DEVICE(MPIDevice, mpi);
 
+    extern "C" void ospray_init_module_mpi() {
+      std::cout << "#osp:mpi: loading 'mpi' module" << std::endl;
+    }
+
   } // ::ospray::mpi
 } // ::ospray
 
