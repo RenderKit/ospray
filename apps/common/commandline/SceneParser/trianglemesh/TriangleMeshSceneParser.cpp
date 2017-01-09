@@ -58,8 +58,11 @@ TriangleMeshSceneParser::TriangleMeshSceneParser(cpp::Renderer renderer,
 
 bool TriangleMeshSceneParser::parse(int ac, const char **&av)
 {
+  std::cout << "Pulling scene files from disk and parsing args\n";
   bool total_loadedScene = false;
 
+  using namespace std::chrono;
+  auto start_parse = high_resolution_clock::now();
   for (int i = 1; i < ac; i++) {
     bool loadedScene = false;
     const std::string arg = av[i];
@@ -111,6 +114,11 @@ bool TriangleMeshSceneParser::parse(int ac, const char **&av)
       total_loadedScene = true;
     }
   }
+
+  auto end_parse = high_resolution_clock::now();
+  std::cout << "Parsing args and loading models from disk took "
+    << duration_cast<milliseconds>(end_parse - start_parse).count()
+    << "ms\n";
 
   if (total_loadedScene) {
     finalize();
@@ -445,6 +453,7 @@ void TriangleMeshSceneParser::finalize()
     sceneModel->commit();
   }
   auto end_make_scene = high_resolution_clock::now();
-  std::cout << "Loading scene took " << duration_cast<milliseconds>(end_make_scene - start_make_scene).count()
+  std::cout << "Buiding OSPRay models took "
+    << duration_cast<milliseconds>(end_make_scene - start_make_scene).count()
     << "ms\n";
 }
