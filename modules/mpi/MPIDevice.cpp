@@ -87,9 +87,7 @@ namespace ospray {
       MPI_Status status;
       mpi::init(ac,av);
       printf("#o: initMPI::OSPonRanks: %i/%i\n",world.rank,world.size);
-
       MPI_Barrier(MPI_COMM_WORLD);
-
       if (world.size <= 1) {
         throw std::runtime_error("No MPI workers found.\n#osp:mpi: Fatal Error "
                                  "- OSPRay told to run in MPI mode, but there "

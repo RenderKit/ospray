@@ -33,6 +33,7 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   common/Texture2D.cpp
   common/Material.cpp
   common/Transform.cpp
+  common/FrameBuffer.cpp
   
   transferFunction/TransferFunction.cpp
   volume/Volume.cpp
