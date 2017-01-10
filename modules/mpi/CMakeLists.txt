@@ -20,8 +20,7 @@ IF (OSPRAY_MODULE_MPI)
 
   INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/..)
 
-  OSPRAY_CREATE_LIBRARY(ospray_mpi
-
+  OSPRAY_CREATE_LIBRARY(ospray_module_mpi
     MPIDevice.cpp
     worker.cpp
 
@@ -65,9 +64,7 @@ IF (OSPRAY_MODULE_MPI)
   LINK
     ospray
     ospray_common
-    ospray_mpi
+    ospray_module_mpi
   )
-
-  ADD_SUBDIRECTORY(module)
 
 ENDIF (OSPRAY_MODULE_MPI)

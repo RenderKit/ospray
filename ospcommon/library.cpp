@@ -123,7 +123,7 @@ namespace ospcommon {
     // we cannot get a function from ospray.dll, because this would create a
     // cyclic dependency between ospray.dll and ospray_common.dll
 
-    // only works when ospray_common is liked statically into ospray
+    // only works when ospray_common is linked statically into ospray
     const void * functionInOSPRayDLL = ospcommon::getSymbol;
     // get handle to current dll via a known function
     MEMORY_BASIC_INFORMATION mbi;

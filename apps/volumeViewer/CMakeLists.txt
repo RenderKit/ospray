@@ -29,10 +29,6 @@ SET(LIBS ${LIBS} ospray_tfn)
 SET(LIBS ${LIBS} ospray_minisg)
 SET(LIBS ${LIBS} ospray_commandline)
 
-IF (OSPRAY_MPI)
-  SET(LIBS ${LIBS} ospray_mpi)
-ENDIF()
-
 # link optional loaders-based modules if built
 IF (OSPRAY_MODULE_SEISMIC)
   SET(LIBS ${LIBS} ospray_module_seismic)

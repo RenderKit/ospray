@@ -1132,3 +1132,8 @@ namespace ospray {
   } // ::ospray::mpi
 } // ::ospray
 
+extern "C" OSPRAY_DLLEXPORT void ospray_init_module_mpi()
+{
+    std::cout << "#mpi: initializing ospray MPI plugin" << std::endl;
+}
+

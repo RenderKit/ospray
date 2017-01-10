@@ -39,10 +39,3 @@ FOREACH(plugin ${plugins})
     ADD_SUBDIRECTORY(${plugin})
   ENDIF (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${plugin}/CMakeLists.txt)
 ENDFOREACH(plugin ${plugins})
-
-# -------------------------------------------------------
-# MPI components
-# -------------------------------------------------------
-#IF (OSPRAY_MPI)
-#  ADD_SUBDIRECTORY(mpi)
-#ENDIF()
