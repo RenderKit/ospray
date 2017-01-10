@@ -92,7 +92,7 @@ build-debug:
 build-mpi:
   type: build
   script:
-    - scripts/build_gitlab/linux.sh -DOSPRAY_BUILD_MPI_DEVICE=ON
+    - scripts/build_gitlab/linux.sh -DOSPRAY_MODULE_MPI=ON
   tags:
     - linux
     - mpi
