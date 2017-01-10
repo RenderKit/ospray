@@ -364,15 +364,13 @@ SET(OSPRAY_LIBS
 
 IF (WIN32)
   LIST(APPEND OSPRAY_LIBS ws2_32)
+  # export ISPC SDK symbols on Windows
+  IF (OSPRAY_BUILD_ISA STREQUAL "ALL")
+    LIST(APPEND OSPRAY_SOURCES ospray.def)
+  ENDIF()
 ENDIF()
 
 OSPRAY_CREATE_LIBRARY(ospray ${OSPRAY_SOURCES} LINK ${OSPRAY_LIBS})
-
-# export ISPC SDK symbols on Windows
-IF (WIN32 AND OSPRAY_BUILD_ISA STREQUAL "ALL")
- SET_TARGET_PROPERTIES(ospray PROPERTIES LINK_FLAGS
-                       "/DEF:${PROJECT_SOURCE_DIR}/ospray/ospray.def")
-ENDIF()
 
 # build ospTutorial, for testing
 ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial.cpp)
