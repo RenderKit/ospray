@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -123,7 +123,7 @@ namespace ospcommon {
     // we cannot get a function from ospray.dll, because this would create a
     // cyclic dependency between ospray.dll and ospray_common.dll
 
-    // only works when ospray_common is liked statically into ospray
+    // only works when ospray_common is linked statically into ospray
     const void * functionInOSPRayDLL = ospcommon::getSymbol;
     // get handle to current dll via a known function
     MEMORY_BASIC_INFORMATION mbi;
