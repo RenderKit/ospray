@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,46 +14,19 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "HDRILight.h"
-#include "HDRILight_ispc.h"
+#include "Serialization.h"
+#include "World.h"
 
 namespace ospray {
+  namespace sg {
 
-  HDRILight::HDRILight()
-    : up(0.f, 1.f, 0.f)
-    , dir(0.f, 0.f, 1.f)
-    , map(NULL)
-    , intensity(1.f)
-  {
-    ispcEquivalent = ispc::HDRILight_create();
-  }
+    void Serialization::serialize(std::shared_ptr<sg::World> world, Serialization::Mode mode)
+    {
+      clear(); 
+      Serialization::State state;
+      state.serialization = this;
+      world->serialize(state);
+    }
 
-  HDRILight::~HDRILight()
-  {
-    ispc::HDRILight_destroy(getIE());
-    ispcEquivalent = NULL;
-  }
-
-  //!< Copy understood parameters into class members
-  void HDRILight::commit()
-  {
-    up = getParam3f("up", vec3f(0.f, 1.f, 0.f));
-    dir = getParam3f("dir", vec3f(0.f, 0.f, 1.f));
-    intensity = getParam1f("intensity", 1.f);
-    map  = (Texture2D*)getParamObject("map", NULL);
-
-    linear3f frame;
-    frame.vx = normalize(-dir);
-    frame.vy = normalize(cross(frame.vx, up));
-    frame.vz = cross(frame.vx, frame.vy);
-
-    ispc::HDRILight_set(
-        getIE(),
-        (const ispc::LinearSpace3f&)frame,
-        map ? map->getIE() : NULL,
-        intensity);
-  }
-
-  OSP_REGISTER_LIGHT(HDRILight, hdri);
-//  OSP_REGISTER_LIGHT(HDRILight, HDRILight);
-}
+  } // ::ospray::sg
+} // ::ospray

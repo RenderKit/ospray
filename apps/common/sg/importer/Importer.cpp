@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -34,7 +34,7 @@ namespace ospray {
 
     /*! import a given file. throws a sg::RuntimeError if this could not be done */
 
-    void importFile(Ref<sg::World> &world, const FileName &fileName)
+    void importFile(std::shared_ptr<sg::World> &world, const FileName &fileName)
     {
       ImporterFunction importer = importerForExtension[fileName.ext()];
       if (importer) {

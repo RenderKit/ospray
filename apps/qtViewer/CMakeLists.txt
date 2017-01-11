@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2016 Intel Corporation                                    ##
+## Copyright 2009-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -19,10 +19,6 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
 SET(LIBS ${LIBS} ${GLUT_LIBRARIES} ${OPENGL_LIBRARIES})
-
-IF (OSPRAY_MODULE_MPI)
-  LIST(APPEND LIBS ospray_module_mpi)
-ENDIF()
 
 FIND_PACKAGE(Qt4 REQUIRED QtGui QtOpenGL) 
 SET(QT_USE_QTOPENGL TRUE)

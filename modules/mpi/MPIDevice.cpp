@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -1032,10 +1032,11 @@ namespace ospray {
     OSP_REGISTER_DEVICE(MPIDevice, mpi_device);
     OSP_REGISTER_DEVICE(MPIDevice, mpi);
 
-    extern "C" void ospray_init_module_mpi() {
-      std::cout << "#osp:mpi: loading 'mpi' module" << std::endl;
-    }
-
   } // ::ospray::mpi
 } // ::ospray
+
+extern "C" OSPRAY_DLLEXPORT void ospray_init_module_mpi()
+{
+    std::cout << "#mpi: initializing ospray MPI plugin" << std::endl;
+}
 

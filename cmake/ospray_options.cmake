@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2016 Intel Corporation                                    ##
+## Copyright 2009-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -112,6 +112,7 @@ OPTION(OSPRAY_USE_HIGH_QUALITY_BVH
 OPTION(OSPRAY_VOLUME_VOXELRANGE_IN_APP "Move 'voxelrange' computations to app?")
 MARK_AS_ADVANCED(OSPRAY_VOLUME_VOXELRANGE_IN_APP)
 
+# TODO should move to module/mpi/CMakeLists.txt
 OPTION(OSPRAY_MODULE_MPI "MPI parallel device" OFF)
 
 SET(OSPRAY_MPI ${OSPRAY_MODULE_MPI})

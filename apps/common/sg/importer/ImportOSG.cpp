@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -56,7 +56,7 @@ namespace ospray {
       sg::Node *newNode = creator();
       assert(newNode);
       try {
-        newNode->setFromXML(&node,binBasePtr);
+        newNode->setFromXML(node, binBasePtr);
         return newNode;
       } catch (std::runtime_error e) {
         delete newNode;
@@ -76,17 +76,17 @@ namespace ospray {
       if (name == "") return false;
       if (node.name == "data") {
         assert(node.child.size() == 1);
-        sg::Node *value = parseNode(*node.child[0]);
+        auto value = std::shared_ptr<sg::Node>(parseNode(*node.child[0]));
         assert(value != NULL);
-        Ref<sg::DataBuffer> dataNode = dynamic_cast<sg::DataBuffer *>(value);
-        assert(dataNode);
+        auto dataNode = std::dynamic_pointer_cast<sg::DataBuffer>(value);
+        assert(dataNode.get());
         target->setParam(name,dataNode);
         // target->addParam(new ParamT<Ref<DataBuffer> >(name,dataNode));
         return true;
       }
       if (node.name == "object") {
         assert(node.child.size() == 1);
-        Ref<sg::Node> value = parseNode(*node.child[0]);
+        auto value = std::shared_ptr<sg::Node>(parseNode(*node.child[0]));
         assert(value);
         target->setParam(name,value);
         // target->addParam(new ParamT<Ref<sg::Node> >(name,value));
@@ -149,8 +149,8 @@ namespace ospray {
           ospLoadModule("amr"); 
           ospLoadModule("sg_amr");  
         }
-        Ref<sg::Node> newNode = createNodeFrom(*c,binBasePtr);
-        world->node.push_back(newNode);
+        auto newNode = std::shared_ptr<sg::Node>(createNodeFrom(*c,binBasePtr));
+        world->add(newNode);
       }
     }
     
@@ -180,7 +180,7 @@ namespace ospray {
       return NULL;
     }
 
-    Ref<sg::World> loadOSG(const std::string &fileName)
+    std::shared_ptr<sg::World> loadOSG(const std::string &fileName)
     {
       std::shared_ptr<xml::XMLDoc> doc;
       // Ref<xml::XMLDoc> doc = NULL;
@@ -200,11 +200,11 @@ namespace ospray {
         throw std::runtime_error("not an ospray xml file (document root node is '"+doc->child[0]->name+"', should be 'ospray'");
 
       std::shared_ptr<xml::Node> root = doc->child[0];
-      Ref<sg::World> world = new World;//parseOSPRaySection(root->child[0]); 
+      auto world = std::make_shared<sg::World>();//parseOSPRaySection(root->child[0]);
       if (root->child.size() == 1 && root->child[0]->name == "World") {
-        parseWorldNode(world.ptr,*root->child[0],binBasePtr);
+        parseWorldNode(world.get(),*root->child[0],binBasePtr);
       } else {
-        parseWorldNode(world.ptr,*root,binBasePtr);
+        parseWorldNode(world.get(),*root,binBasePtr);
       }
       
       cout << "#osp:sg: done parsing OSP file" << endl;

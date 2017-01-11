@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -21,17 +21,14 @@
 #include "common/OSPCommon.h"
 
 #ifdef _WIN32
-#  ifdef ospray_mpi_EXPORTS
+#  ifdef ospray_module_mpi_EXPORTS
 #    define OSPRAY_MPI_INTERFACE __declspec(dllexport)
 #  else
 #    define OSPRAY_MPI_INTERFACE __declspec(dllimport)
 #  endif
-#  define OSPRAY_MPI_DLLEXPORT __declspec(dllexport)
 #else
 #  define OSPRAY_MPI_INTERFACE
-#  define OSPRAY_MPI_DLLEXPORT
 #endif
-#define OSPRAY_SDK_MPI_INTERFACE OSPRAY_MPI_INTERFACE
 
 // IMPI on Windows defines MPI_CALL already, erroneously
 #ifdef MPI_CALL

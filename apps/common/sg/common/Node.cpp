@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -25,9 +25,9 @@ namespace ospray {
         // ==================================================================
     // parameter type specializations
     // ==================================================================
-    template<> OSPDataType ParamT<Ref<DataBuffer> >::getOSPDataType() const
+    template<> OSPDataType ParamT<std::shared_ptr<DataBuffer> >::getOSPDataType() const
     { return OSP_DATA; }
-    template<> OSPDataType ParamT<Ref<Node> >::getOSPDataType() const
+    template<> OSPDataType ParamT<std::shared_ptr<Node> >::getOSPDataType() const
     { return OSP_OBJECT; }
 
     template<> OSPDataType ParamT<float>::getOSPDataType() const
@@ -50,7 +50,7 @@ namespace ospray {
 
     template<> OSPDataType ParamT<const char *>::getOSPDataType() const
     { return OSP_STRING; }
-    template<> OSPDataType ParamT<Ref<Texture2D> >::getOSPDataType() const
+    template<> OSPDataType ParamT<std::shared_ptr<Texture2D> >::getOSPDataType() const
     { return OSP_TEXTURE; }
 
     // ==================================================================
@@ -63,11 +63,11 @@ namespace ospray {
     //   param[p->getName()] = p;
     // }    
 
-    void Node::setFromXML(const xml::Node *const node, 
+    void Node::setFromXML(const xml::Node &node,
                           const unsigned char *binBasePtr)
     { 
       throw std::runtime_error(toString()+":setFromXML() not implemented for XML node type "
-                               +node->name); 
+                               +node.name); 
     };
 
     // ==================================================================
@@ -78,16 +78,17 @@ namespace ospray {
     // list of all named nodes - for now use this as a global
     // variable, but eventually we'll need tofind a better way for
     // storing this
-    std::map<std::string,Ref<sg::Node> > namedNodes;
+    std::map<std::string,std::shared_ptr<sg::Node> > namedNodes;
 
-    sg::Node *findNamedNode(const std::string &name)
-    { 
-      if (namedNodes.find(name) != namedNodes.end()) 
-        return namedNodes[name].ptr; 
-      return NULL; 
+    std::shared_ptr<sg::Node> findNamedNode(const std::string &name)
+    {
+      auto it = namedNodes.find(name);
+      if (it != namedNodes.end()) 
+        return it->second;                         
+      return {};
     }
 
-    void registerNamedNode(const std::string &name, Ref<sg::Node> node)
+    void registerNamedNode(const std::string &name, const std::shared_ptr<sg::Node> &node)
     {
       namedNodes[name] = node; 
     }

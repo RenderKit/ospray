@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2016 Intel Corporation                                    ##
+## Copyright 2009-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -46,10 +46,6 @@ SET(LIBS
   ${OPENGL_LIBRARIES}
   ${GLUT_LIBRARIES}
 )
-
-IF (OSPRAY_MODULE_MPI)
-  LIST(APPEND LIBS ospray_module_mpi)
-ENDIF()
 
 IF (OSPRAY_APPS_ENABLE_SCRIPTING)
   LIST(APPEND LIBS ospray_script)
