@@ -85,7 +85,7 @@ namespace ospray {
       auto it = namedNodes.find(name);
       if (it != namedNodes.end()) 
         return it->second;                         
-      return nullptr; 
+      return {};
     }
 
     void registerNamedNode(const std::string &name, const std::shared_ptr<sg::Node> &node)

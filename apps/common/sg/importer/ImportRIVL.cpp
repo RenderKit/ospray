@@ -30,7 +30,7 @@ namespace ospray {
     using std::endl;
     using std::string;
 
-    std::vector<std::shared_ptr<sg::Node> > nodeList;
+    std::vector<std::shared_ptr<sg::Node>> nodeList;
 
     void *binBasePtr;
 
@@ -342,7 +342,7 @@ namespace ospray {
             parseGroupNode(node);
             lastNode = nodeList.back();
           } else {
-            nodeList.push_back(NULL);
+            nodeList.push_back({});
             //throw std::runtime_error("unknown node type '"+node.name+"' in RIVL model");
           }
         });
