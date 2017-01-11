@@ -35,20 +35,19 @@ namespace ospray {
       /*! \brief returns a std::string with the c++ name of this class */
       virtual    std::string toString() const override;
       
-      /*! renderer type, i.e., 'ao', 'obj', 'pathtracer', ... */
-      const std::string type; 
-      
       /*! update the current node's fields to ospray - the node must
         already have been 'render'ed once before this can be called */
-      virtual void commit();
+      virtual void commit() override;
       
       void setSPP(size_t spp);
 
       OSPRenderer getOSPHandle() const { return ospRenderer; }
 
-      SG_NODE_DECLARE_MEMBER(Ref<sg::Camera>,camera,Camera);
-      SG_NODE_DECLARE_MEMBER(Ref<sg::World>,world,World);
+      SG_NODE_DECLARE_MEMBER(std::shared_ptr<sg::Camera>,camera,Camera);
+      SG_NODE_DECLARE_MEMBER(std::shared_ptr<sg::World>,world,World);
 
+      /*! renderer type, i.e., 'ao', 'obj', 'pathtracer', ... */
+      const std::string type; 
     public:
       OSPRenderer ospRenderer;
       size_t spp;

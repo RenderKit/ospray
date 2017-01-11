@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,38 +14,18 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#undef NDEBUG
-
-// scene graph
-#include "SceneGraph.h"
-#include "sg/common/Texture2D.h"
-#include "sg/geometry/Spheres.h"
+#include "Serialization.h"
+#include "World.h"
 
 namespace ospray {
   namespace sg {
 
-    /*! 'render' the nodes */
-    void Group::render(RenderContext &ctx)
+    void Serialization::serialize(std::shared_ptr<sg::World> world, Serialization::Mode mode)
     {
-      for (auto child : children) {
-        assert(child);
-        child->render(ctx); 
-      }
-    }
-    
-    box3f Group::getBounds()
-    {
-      box3f bounds = empty;
-      for (auto child : children) {
-        assert(child);
-        bounds.extend(child->getBounds());
-      }
-      return bounds;
-    }
-
-    void Node::serialize(sg::Serialization::State &state)
-    { 
-      state.serialization->object.push_back(std::make_shared<Serialization::Object>(shared_from_this(),state.instantiation));
+      clear(); 
+      Serialization::State state;
+      state.serialization = this;
+      world->serialize(state);
     }
 
   } // ::ospray::sg

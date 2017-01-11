@@ -103,13 +103,13 @@ namespace ospray {
             break;
           case OSP_TEXTURE:
             {
-              ParamT<Ref<Texture2D>> *p = (ParamT<Ref<Texture2D>>*)param.get();
-              Texture2D *tex = p->value.ptr;
+              ParamT<std::shared_ptr<Texture2D>> *p = (ParamT<std::shared_ptr<Texture2D>> *)param.get();
+              std::shared_ptr<Texture2D> tex = p->value;
               if (tex) {
                 tex->render(ctx);
                 if (tex->ospTexture) {
-                  std::cout << "setting texture " << p->value->toString() << " to mat value " << param->getName() << std::endl;
-                  ospSetObject(ospMaterial, param->getName().c_str(), p->value->ospTexture);
+                  std::cout << "setting texture " << tex->toString() << " to mat value " << param->getName() << std::endl;
+                  ospSetObject(ospMaterial, param->getName().c_str(), tex->ospTexture);
                 }
               }
             }

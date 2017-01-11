@@ -61,12 +61,12 @@ namespace ospray {
           if (child.name == "vertex") {
             size_t num = std::stoll(child.getProp("num"));
             size_t ofs = std::stoll(child.getProp("ofs"));
-            vertex = new DataArray3f((vec3f*)((char*)binBasePtr+ofs),num,false);
+            vertex = std::make_shared<DataArray3f>((vec3f*)((char*)binBasePtr+ofs),num,false);
           } 
           else if (child.name == "index") {
             size_t num = std::stoll(child.getProp("num"));
             size_t ofs = std::stoll(child.getProp("ofs"));
-            index = new DataArray3i((vec3i*)((char*)binBasePtr+ofs),num,false);
+            index = std::make_shared<DataArray3i>((vec3i*)((char*)binBasePtr+ofs),num,false);
           } 
         });
     }

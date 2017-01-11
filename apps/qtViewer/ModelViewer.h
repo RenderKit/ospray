@@ -63,21 +63,20 @@ namespace ospray {
     //! render widget that renders through ospray
     // =======================================================
     struct OSPRayRenderWidget : public QAffineSpaceManipulator {
-      OSPRayRenderWidget(Ref<sg::Renderer> renderer);
-      virtual ~OSPRayRenderWidget();
-      
-      Ref<sg::Renderer> sgRenderer;
+      OSPRayRenderWidget(std::shared_ptr<sg::Renderer> renderer);
+
+      std::shared_ptr<sg::Renderer> sgRenderer;
 
       // -------------------------------------------------------
       // render widget callbacks
       // -------------------------------------------------------
 
-      // Ref<sg::Renderer> sgRenderer;
+      // std::shared_ptr<sg::Renderer> sgRenderer;
 
       virtual void redraw();
       virtual void resize(int width, int height);
 
-      void setWorld(Ref<sg::World> world);
+      void setWorld(std::shared_ptr<sg::World> world);
 
       // -------------------------------------------------------
       // internal state
@@ -91,7 +90,7 @@ namespace ospray {
       bool isDirty;
 
       //! the world we're displaying
-      Ref<sg::World> world;
+      std::shared_ptr<sg::World> world;
 
       //! whether to display the frame rate
       bool showFPS;
@@ -103,7 +102,7 @@ namespace ospray {
       Q_OBJECT
 
     public:
-      ModelViewer(Ref<sg::Renderer> sgRenderer, bool fullscreen);
+      ModelViewer(std::shared_ptr<sg::Renderer> sgRenderer, bool fullscreen);
 
       void toggleUpAxis(int axis);
 
@@ -119,7 +118,7 @@ namespace ospray {
 
       void render();
 
-      void setWorld(Ref<sg::World> newWorld);
+      void setWorld(std::shared_ptr<sg::World> newWorld);
 
       /*! enable/disable display of frame rate */
       void showFrameRate(bool showFPS) { this->renderWidget->showFPS = showFPS; }
@@ -128,28 +127,28 @@ namespace ospray {
       void lightChanged();
 
     protected:
-      //! create the lower-side time step slider (for models that have
-      //! time steps; won't do anything for models that don't)
-      void createTimeSlider();
-      //! create the widet on the side that'll host all the editing widgets
-      void createEditorWidgetStack();
-      //! create a transfer fucntion editor
-      void createTransferFunctionEditor();
-      //! create a light manipulator
-      void createLightManipulator();
-      //! use escape to quit
-      virtual void keyPressEvent(QKeyEvent *event);
+        //! create the lower-side time step slider (for models that have
+        //! time steps; won't do anything for models that don't)
+        void createTimeSlider();
+        //! create the widet on the side that'll host all the editing widgets
+        void createEditorWidgetStack();
+        //! create a transfer fucntion editor
+        void createTransferFunctionEditor();
+        //! create a light manipulator
+        void createLightManipulator();
+        //! use escape to quit
+        virtual void keyPressEvent(QKeyEvent *event);
 
-      // -------------------------------------------------------
-      // qt gui components
-      // -------------------------------------------------------
-      EditorWidgetStack        *editorWidgetStack;
-      QDockWidget              *editorWidgetDock;
-      QToolBar                 *toolBar;
-      QTransferFunctionEditor  *transferFunctionEditor;
-      QLightManipulator        *lightEditor;
+        // -------------------------------------------------------
+        // qt gui components
+        // -------------------------------------------------------
+        EditorWidgetStack        *editorWidgetStack;
+        QDockWidget              *editorWidgetDock;
+        QToolBar                 *toolBar;
+        QTransferFunctionEditor  *transferFunctionEditor;
+        QLightManipulator        *lightEditor;
 
-      Ref<sg::Renderer> sgRenderer;
+        std::shared_ptr<sg::Renderer> sgRenderer;
 
     public:
       OSPRayRenderWidget       *renderWidget;

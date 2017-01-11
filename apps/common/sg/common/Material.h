@@ -38,7 +38,7 @@ namespace ospray {
       //! indicates the type of material/shader the renderer should use for these parameters
       std::string type;
       //! vector of textures used by the material
-      std::vector< Ref< Texture2D > > textures;
+      std::vector<std::shared_ptr<Texture2D>> textures;
       
       OSPMaterial ospMaterial;
     };

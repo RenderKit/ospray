@@ -26,16 +26,16 @@ namespace ospray {
       Geometry(const std::string &type) : type(type) {};
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const { return "ospray::sg::Geometry"; }
+      virtual    std::string toString() const override { return "ospray::sg::Geometry"; }
 
       //! return bounding box of all primitives
-      virtual box3f getBounds() = 0;
+      virtual box3f getBounds() override = 0;
 
       /*! geometry type, i.e., 'spheres', 'cylinders', 'trianglemesh', ... */
       const std::string type; 
       
       /*! material for this geometry */
-      Ref<Material> material;
+      std::shared_ptr<Material> material;
     };
     
   } // ::ospray::sg

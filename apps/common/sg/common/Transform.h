@@ -25,7 +25,7 @@ namespace ospray {
     //! a transformation node
     struct Transform : public sg::Node {
       //! \brief constructor
-      Transform(const AffineSpace3f &xfm=ospcommon::one, Ref<sg::Node> node=NULL) 
+      Transform(const AffineSpace3f &xfm, const std::shared_ptr<sg::Node> &node) 
         : Node(), xfm(xfm), node(node) 
       {}
 
@@ -47,7 +47,7 @@ namespace ospray {
       AffineSpace3f xfm;
 
       //! child node we're transforming
-      Ref<sg::Node> node;
+      std::shared_ptr<sg::Node> node;
     };
 
   } // ::ospray::sg
