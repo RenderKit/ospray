@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -40,9 +40,9 @@ namespace ospray {
       vec2i getSize() const;
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const;
+      virtual std::string toString() const;
 
-      OSPFrameBuffer getOSPHandle() const { return ospFrameBuffer; }
+      OSPFrameBuffer getOSPHandle() const;
       
     private:
     
@@ -52,7 +52,7 @@ namespace ospray {
       // destroy the ospray framebuffer created via createFB()
       void destroyFB();
 
-      OSPFrameBuffer ospFrameBuffer;
+      OSPFrameBuffer ospFrameBuffer {nullptr};
       const vec2i size;
     };
 
