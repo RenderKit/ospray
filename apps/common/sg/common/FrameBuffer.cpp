@@ -67,9 +67,9 @@ namespace ospray {
 
     void ospray::sg::FrameBuffer::createFB()
     {
-      osp::vec2i sizet;
-      ospFrameBuffer = ospNewFrameBuffer((osp::vec2i)sizet, OSP_FB_SRGBA,
-                                         OSP_FB_COLOR | OSP_FB_ACCUM);
+      ospFrameBuffer =
+          ospNewFrameBuffer((const osp::vec2i &)size, OSP_FB_SRGBA,
+                            OSP_FB_COLOR | OSP_FB_ACCUM);
     }
 
     void ospray::sg::FrameBuffer::destroyFB()
