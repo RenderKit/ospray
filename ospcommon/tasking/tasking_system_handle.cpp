@@ -24,7 +24,7 @@
 #elif defined(OSPRAY_TASKING_OMP)
 # include <omp.h>
 #elif defined(OSPRAY_TASKING_INTERNAL)
-# include "common/tasking/TaskSys.h"
+# include "TaskSys.h"
 #endif
 
 #include "../common.h"
@@ -45,7 +45,7 @@ namespace ospcommon {
        if (numThreads > 0) omp_set_num_threads(numThreads);
 #elif defined(OSPRAY_TASKING_INTERNAL)
        try {
-         ospray::Task::initTaskSystem(debugMode ? 0 : numThreads);
+         Task::initTaskSystem(numThreads < 0 ? -1 : numThreads);
        } catch (const std::runtime_error &e) {
          std::cerr << "WARNING: " << e.what() << std::endl;
        }

@@ -55,7 +55,7 @@ namespace ospcommon {
     struct OSPCOMMON_INTERFACE LocalTask : public Task {
       const TASK_T &t;
       LocalTask(const TASK_T& fcn) : Task("LocalTask"), t(fcn) {}
-      void run(int taskIndex) override { t(taskIndex); }
+      void run(size_t taskIndex) override { t(taskIndex); }
     };
 
     Ref<LocalTask> task = new LocalTask(fcn);
