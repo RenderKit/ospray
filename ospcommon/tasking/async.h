@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include "../common.h"
+
 #include "TaskingTypeTraits.h"
 
 #ifdef OSPRAY_TASKING_TBB
@@ -43,7 +45,7 @@ namespace ospcommon {
                   "'void TASK_T::operator()'.");
 
 #ifdef OSPRAY_TASKING_TBB
-    struct /*OSPRAY_SDK_INTERFACE*/ LocalTBBTask : public tbb::task
+    struct OSPCOMMON_INTERFACE LocalTBBTask : public tbb::task
     {
       TASK_T func;
       tbb::task* execute() override { func(); return nullptr; }
@@ -54,7 +56,7 @@ namespace ospcommon {
 #elif defined(OSPRAY_TASKING_CILK)
     cilk_spawn fcn();
 #elif defined(OSPRAY_TASKING_INTERNAL)
-    struct OSPRAY_SDK_INTERFACE LocalTask : public Task {
+    struct OSPCOMMON_INTERFACE LocalTask : public Task {
       TASK_T t;
       LocalTask(const TASK_T& fcn) : Task("LocalTask"), t(std::move(fcn)) {}
       void run(size_t) override { t(); }

@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include "../common.h"
+
 #include "TaskingTypeTraits.h"
 
 #ifdef OSPRAY_TASKING_TBB
@@ -34,9 +36,9 @@ namespace ospcommon {
   inline void parallel_for(int nTasks, const TASK_T& fcn)
   {
     static_assert(has_operator_method_with_integral_param<TASK_T>::value,
-                  "ospray::parallel_for() requires the implementation of method "
-                  "'void TASK_T::operator(P taskIndex), where P is of type "
-                  "short, int, uint, or size_t.");
+                  "ospcommon::parallel_for() requires the implementation of "
+                  "method 'void TASK_T::operator(P taskIndex), where P is of "
+                  "type short, int, uint, or size_t.");
 
 #ifdef OSPRAY_TASKING_TBB
     tbb::parallel_for(0, nTasks, 1, fcn);
@@ -50,7 +52,7 @@ namespace ospcommon {
       fcn(taskIndex);
     }
 #elif defined(OSPRAY_TASKING_INTERNAL)
-    struct OSPRAY_SDK_INTERFACE LocalTask : public Task {
+    struct OSPCOMMON_INTERFACE LocalTask : public Task {
       const TASK_T &t;
       LocalTask(const TASK_T& fcn) : Task("LocalTask"), t(fcn) {}
       void run(int taskIndex) override { t(taskIndex); }
@@ -65,16 +67,15 @@ namespace ospcommon {
 #endif
   }
 
-  // NOTE(jda) - Allow serial version of parallel_for() without the need to change
-  //             the entire tasking system backend (which can trigger rebuild of
-  //             Embree).
+  // NOTE(jda) - Allow serial version of parallel_for() without the need to
+  //             change the entire tasking system backend
   template<typename TASK_T>
   inline void serial_for(int nTasks, const TASK_T& fcn)
   {
     static_assert(has_operator_method_with_integral_param<TASK_T>::value,
-                  "ospray::serial_for() requires the implementation of method "
-                  "'void TASK_T::operator(P taskIndex), where P is of type "
-                  "short, int, uint, or size_t.");
+                  "ospcommon::serial_for() requires the implementation of "
+                  "method 'void TASK_T::operator(P taskIndex), where P is of "
+                  "type short, int, uint, or size_t.");
 
     for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
       fcn(taskIndex);
