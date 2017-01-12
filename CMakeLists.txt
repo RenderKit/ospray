@@ -32,12 +32,13 @@ IF(POLICY CMP0054)
 ENDIF()
 
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
+SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/ospcommon/cmake)
 
 ##############################################################
 # CMake modules and macro files
 ##############################################################
 
-INCLUDE(ospray_macros)
+INCLUDE(macros)
 INCLUDE(ospray_options)
 INCLUDE(ispc)
 

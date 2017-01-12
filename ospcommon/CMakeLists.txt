@@ -17,7 +17,7 @@
 SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 SET(THREADS_PREFER_PTHREAD_FLAG TRUE)
 FIND_PACKAGE(Threads REQUIRED)
-SET(LINK_LIBS ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})
+SET(LINK_LIBS ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS} ${TASKING_SYSTEM_LIBS})
 
 IF (WIN32)
   LIST(APPEND LINK_LIBS ws2_32)
@@ -35,6 +35,7 @@ OSPRAY_CREATE_LIBRARY(ospray_common
 
   tasking/parallel_for.h
   tasking/async.h
+  tasking/tasking_system_handle.cpp
   tasking/TaskingTypeTraits.h
   tasking/TaskSys.cpp
   
