@@ -62,7 +62,16 @@ namespace ospcommon {
 
   void initTaskingSystem(int numThreads)
   {
+#if defined(OSPRAY_TASKING_TBB)
+    if (!g_tasking_handle.get())
+      g_tasking_handle = make_unique<tasking_system_handle>(numThreads);
+    else {
+      g_tasking_handle->tbb_init.terminate();
+      g_tasking_handle->tbb_init.initialize(numThreads);
+    }
+#else
     g_tasking_handle = make_unique<tasking_system_handle>(numThreads);
+#endif
   }
 
 }// namespace ospcommon
