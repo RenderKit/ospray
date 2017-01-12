@@ -213,7 +213,7 @@ extern "C" OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size,
   return ospray::api::Device::current->frameBufferCreate((vec2i&)size, mode, channels);
 }
 
-//! load module \<name\> from shard lib libospray_module_\<name\>.so, or
+//! load module \<name\> from shard lib libospray_module_\<name\>.so
 extern "C" int32_t ospLoadModule(const char *moduleName)
 {
   if (ospray::api::Device::current) {

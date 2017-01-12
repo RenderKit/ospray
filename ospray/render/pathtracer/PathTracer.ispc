@@ -42,7 +42,7 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
                         Ray &shadowRay,
                         Medium medium)
 {
-  int max_depth = self->maxDepth;
+  uniform int max_depth = self->maxDepth;
   const float org_t_max = shadowRay.t;
 
   while (1) {
