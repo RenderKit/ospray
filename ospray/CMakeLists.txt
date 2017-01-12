@@ -96,11 +96,6 @@ SET(OSPRAY_SOURCES
   common/Thread.cpp
   common/Util.h
 
-#  common/tasking/parallel_for.h
-#  common/tasking/async.h
-#  common/tasking/TaskingTypeTraits.h
-#  common/tasking/TaskSys.cpp
-
   fb/FrameBuffer.ispc
   fb/FrameBuffer.cpp
   fb/LocalFB.ispc
@@ -249,14 +244,6 @@ OSPRAY_INSTALL_SDK_HEADERS(
   common/Thread.h
   common/Util.h
   DESTINATION common
-)
-
-OSPRAY_INSTALL_SDK_HEADERS(
-  common/tasking/async.h
-  common/tasking/parallel_for.h
-  common/tasking/TaskingTypeTraits.h
-  common/tasking/TaskSys.h
-  DESTINATION common/tasking
 )
 
 OSPRAY_INSTALL_SDK_HEADERS(

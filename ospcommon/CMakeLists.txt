@@ -71,13 +71,17 @@ OSPRAY_INSTALL_SDK_HEADERS(
   thread.h
   vec.h
 
+  DESTINATION ../ospcommon #NOTE: this is "next" to the SDK/ directory
+)
+
+OSPRAY_INSTALL_SDK_HEADERS(
   tasking/parallel_for.h
   tasking/async.h
   tasking/tasking_system_handle.h
-  tasking/TaskingSys.h
+  tasking/TaskSys.h
   tasking/TaskingTypeTraits.h
 
-  DESTINATION ../ospcommon #NOTE: this is "next" to the SDK/ directory
+  DESTINATION ../ospcommon/tasking #NOTE: this is "next" to the SDK/ directory
 )
 
 

@@ -60,7 +60,7 @@ INSTALL(FILES
   ${CMAKE_SOURCE_DIR}/cmake/ispc.cmake
   ${CMAKE_SOURCE_DIR}/cmake/gcc.cmake
   ${CMAKE_SOURCE_DIR}/cmake/msvc.cmake
-  ${CMAKE_SOURCE_DIR}/cmake/ospray_macros.cmake
+  ${CMAKE_SOURCE_DIR}/ospcommon/cmake/macros.cmake#NOTE(jda) - hack!
   DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/ospray-${OSPRAY_VERSION}"
   COMPONENT devel
 )
