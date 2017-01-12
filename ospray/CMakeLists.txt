@@ -96,10 +96,10 @@ SET(OSPRAY_SOURCES
   common/Thread.cpp
   common/Util.h
 
-  common/tasking/parallel_for.h
-  common/tasking/async.h
-  common/tasking/TaskingTypeTraits.h
-  common/tasking/TaskSys.cpp
+#  common/tasking/parallel_for.h
+#  common/tasking/async.h
+#  common/tasking/TaskingTypeTraits.h
+#  common/tasking/TaskSys.cpp
 
   fb/FrameBuffer.ispc
   fb/FrameBuffer.cpp
@@ -359,7 +359,6 @@ SET(OSPRAY_LIBS
   ${CMAKE_THREAD_LIBS_INIT}
   ${CMAKE_DL_LIBS}
   ${EMBREE_LIBRARIES}
-  ${TASKING_SYSTEM_LIBS}
 )
 
 IF (WIN32)

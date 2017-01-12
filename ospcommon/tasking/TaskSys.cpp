@@ -16,13 +16,19 @@
 
 #include "TaskSys.h"
 //ospray
-#include "ospcommon/sysinfo.h"
-#include "ospcommon/thread.h"
+#include "../sysinfo.h"
+#include "../thread.h"
 //stl
+#include <algorithm>
 #include <thread>
 #include <vector>
 
-namespace ospray {
+#define SCOPED_LOCK(x) \
+  std::lock_guard<std::mutex>  lock(x); \
+  (void)lock;
+
+namespace ospcommon {
+  
   struct TaskSys {
     bool initialized {false};
     bool running {false};
@@ -37,8 +43,8 @@ namespace ospray {
     __aligned(64) Task *volatile activeListFirst {nullptr};
     __aligned(64) Task *volatile activeListLast {nullptr};
 
-    Mutex     __aligned(64) mutex;
-    Condition __aligned(64) tasksAvailable;
+    std::mutex     __aligned(64) mutex;
+    std::condition_variable __aligned(64) tasksAvailable;
 
     void threadFunction();
 
@@ -203,4 +209,5 @@ namespace ospray {
                                      (void*)-1,4*1024*1024,-1));
     }
   }
-}//namespace ospray
+  
+} // ::ospcommon

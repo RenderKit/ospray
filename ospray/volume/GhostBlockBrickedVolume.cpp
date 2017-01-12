@@ -16,7 +16,7 @@
 
 //ospray
 #include "volume/GhostBlockBrickedVolume.h"
-#include "common/tasking/parallel_for.h"
+#include "ospcommon/tasking/parallel_for.h"
 #include "GhostBlockBrickedVolume_ispc.h"
 
 namespace ospray {
