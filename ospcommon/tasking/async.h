@@ -25,7 +25,7 @@
 #elif defined(OSPRAY_TASKING_CILK)
 #  include <cilk/cilk.h>
 #elif defined(OSPRAY_TASKING_INTERNAL)
-#  include "common/tasking/TaskSys.h"
+#  include "TaskSys.h"
 #endif
 
 namespace ospcommon {
@@ -38,7 +38,7 @@ namespace ospcommon {
   //             later with a hint enum, using a default value for the priority
   //             to not require specifying it.
   template<typename TASK_T>
-  inline void async(const TASK_T& fcn)
+  inline void async(TASK_T&& fcn)
   {
     static_assert(has_operator_method<TASK_T>::value,
                   "ospray::async() requires the implementation of method "
@@ -49,20 +49,23 @@ namespace ospcommon {
     {
       TASK_T func;
       tbb::task* execute() override { func(); return nullptr; }
-      LocalTBBTask( const TASK_T& f ) : func(f) {}
+      LocalTBBTask(TASK_T&& f) : func(std::forward<TASK_T>(f)) {}
     };
 
-    tbb::task::enqueue(*new(tbb::task::allocate_root())LocalTBBTask(fcn));
+    auto *tbb_node =
+        new(tbb::task::allocate_root())LocalTBBTask(std::forward<TASK_T>(fcn));
+    tbb::task::enqueue(*tbb_node);
 #elif defined(OSPRAY_TASKING_CILK)
     cilk_spawn fcn();
 #elif defined(OSPRAY_TASKING_INTERNAL)
     struct OSPCOMMON_INTERFACE LocalTask : public Task {
       TASK_T t;
-      LocalTask(const TASK_T& fcn) : Task("LocalTask"), t(std::move(fcn)) {}
+      LocalTask(TASK_T&& fcn)
+        : Task("LocalTask"), t(std::forward<TASK_T>(fcn)) {}
       void run(size_t) override { t(); }
     };
 
-    Ref<LocalTask> task = new LocalTask(fcn);
+    Ref<LocalTask> task = new LocalTask(std::forward<TASK_T>(fcn));
     task->schedule(1, Task::FRONT_OF_QUEUE);
 #else// OpenMP or Debug --> synchronous!
     fcn();
