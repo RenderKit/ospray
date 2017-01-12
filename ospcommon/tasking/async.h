@@ -45,7 +45,7 @@ namespace ospcommon {
                   "'void TASK_T::operator()'.");
 
 #ifdef OSPRAY_TASKING_TBB
-    struct OSPCOMMON_INTERFACE LocalTBBTask : public tbb::task
+    struct LocalTBBTask : public tbb::task
     {
       TASK_T func;
       tbb::task* execute() override { func(); return nullptr; }
@@ -58,7 +58,7 @@ namespace ospcommon {
 #elif defined(OSPRAY_TASKING_CILK)
     cilk_spawn fcn();
 #elif defined(OSPRAY_TASKING_INTERNAL)
-    struct OSPCOMMON_INTERFACE LocalTask : public Task {
+    struct LocalTask : public Task {
       TASK_T t;
       LocalTask(TASK_T&& fcn)
         : Task("LocalTask"), t(std::forward<TASK_T>(fcn)) {}

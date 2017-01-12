@@ -52,7 +52,7 @@ namespace ospcommon {
       fcn(taskIndex);
     }
 #elif defined(OSPRAY_TASKING_INTERNAL)
-    struct OSPCOMMON_INTERFACE LocalTask : public Task {
+    struct LocalTask : public Task {
       const TASK_T &t;
       LocalTask(const TASK_T& fcn) : Task("LocalTask"), t(fcn) {}
       void run(size_t taskIndex) override { t(taskIndex); }
