@@ -520,7 +520,6 @@ namespace ospray {
 
       char *typeString = nullptr;
       getString(_volume, "voxelType", &typeString);
-      std::cout << "got type string " << typeString << "\n";
       OSPDataType type = typeForString(typeString);
       delete[] typeString;
 
