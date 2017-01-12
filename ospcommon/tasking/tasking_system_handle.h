@@ -16,8 +16,10 @@
 
 #pragma once
 
+#include "../common.h"
+
 namespace ospcommon {
 
-  void initTaskingSystem(int numThreads = -1);
+  void OSPCOMMON_INTERFACE initTaskingSystem(int numThreads = -1);
 
 }// namespace ospcommon
