@@ -19,6 +19,7 @@
 #include "../sysinfo.h"
 #include "../thread.h"
 //stl
+#include <algorithm>
 #include <thread>
 #include <vector>
 
