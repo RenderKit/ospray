@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -27,10 +27,10 @@ namespace ospray {
   namespace sg {
 
     struct ImportState {
-      Ref<sg::World> world;
+      std::shared_ptr<sg::World> world;
       // std::vector<std::string> searchPaths;
 
-      ImportState(Ref<sg::World> world)
+      ImportState(std::shared_ptr<sg::World> world)
         : world(world)
       {}
     };
@@ -43,7 +43,7 @@ namespace ospray {
     void declareImporterForFileExtension(const std::string &fileExtension,
                                          ImporterFunction importer);
     /*! import a given file. throws a sg::RuntimeError if this could not be done */
-    void importFile(Ref<sg::World> &world, const FileName &fileName);
+    void importFile(std::shared_ptr<sg::World> &world, const FileName &fileName);
 
   }
 }

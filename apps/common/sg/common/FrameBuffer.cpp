@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -30,27 +30,27 @@ namespace ospray {
     {
       destroyFB();
     }
-    
+
     unsigned char *FrameBuffer::map()
     {
       return (unsigned char *)ospMapFrameBuffer(ospFrameBuffer, OSP_FB_COLOR);
     }
-    
+
     void FrameBuffer::unmap(unsigned char *mem)
     {
       ospUnmapFrameBuffer(mem,ospFrameBuffer);
     }
 
-    void FrameBuffer::clear() 
+    void FrameBuffer::clear()
     {
       ospFrameBufferClear(ospFrameBuffer,OSP_FB_ACCUM|OSP_FB_COLOR);
     }
-    
-    void FrameBuffer::clearAccum() 
+
+    void FrameBuffer::clearAccum()
     {
       ospFrameBufferClear(ospFrameBuffer,OSP_FB_ACCUM);
     }
-    
+
     vec2i FrameBuffer::getSize() const
     {
       return size;
@@ -62,14 +62,21 @@ namespace ospray {
       return "ospray::sg::FrameBuffer";
     }
     
-    void FrameBuffer::createFB() 
+    OSPFrameBuffer FrameBuffer::getOSPHandle() const
     {
-      ospFrameBuffer = ospNewFrameBuffer((osp::vec2i&)size, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
+      return ospFrameBuffer;
     }
-    
-    void FrameBuffer::destroyFB() 
+
+    void ospray::sg::FrameBuffer::createFB()
     {
-      ospFreeFrameBuffer(ospFrameBuffer); 
+      ospFrameBuffer =
+          ospNewFrameBuffer((const osp::vec2i &)size, OSP_FB_SRGBA,
+                            OSP_FB_COLOR | OSP_FB_ACCUM);
+    }
+
+    void ospray::sg::FrameBuffer::destroyFB()
+    {
+      ospFreeFrameBuffer(ospFrameBuffer);
     }
 
   } // ::ospray::sg

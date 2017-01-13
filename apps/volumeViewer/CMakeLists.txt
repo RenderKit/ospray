@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2016 Intel Corporation                                    ##
+## Copyright 2009-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -28,10 +28,6 @@ SET(LIBS ${LIBS} ospray_module_opengl_util)
 SET(LIBS ${LIBS} ospray_tfn)
 SET(LIBS ${LIBS} ospray_minisg)
 SET(LIBS ${LIBS} ospray_commandline)
-
-IF (OSPRAY_MPI)
-  SET(LIBS ${LIBS} ospray_mpi)
-ENDIF()
 
 # link optional loaders-based modules if built
 IF (OSPRAY_MODULE_SEISMIC)

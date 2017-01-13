@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2016 Intel Corporation                                    ##
+## Copyright 2009-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -32,12 +32,13 @@ IF(POLICY CMP0054)
 ENDIF()
 
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
+SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/ospcommon/cmake)
 
 ##############################################################
 # CMake modules and macro files
 ##############################################################
 
-INCLUDE(ospray_macros)
+INCLUDE(macros)
 INCLUDE(ospray_options)
 INCLUDE(ispc)
 

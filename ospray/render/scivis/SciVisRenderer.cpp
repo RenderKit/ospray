@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -63,6 +63,7 @@ namespace ospray {
       // "aoWeight" is deprecated, use an ambient light instead
       if (!ambientLights)
         aoColor = vec3f(getParam1f("aoWeight", 0.f));
+      const bool aoTransparencyEnabled = getParam1i("aoTransparencyEnabled", 0);
       const bool oneSidedLighting = getParam1i("oneSidedLighting", 1);
 
       ispc::SciVisRenderer_set(getIE(),
@@ -71,6 +72,7 @@ namespace ospray {
                                aoSamples,
                                aoDistance,
                                (ispc::vec3f&)aoColor,
+                               aoTransparencyEnabled,
                                lightPtr,
                                lightArray.size(),
                                oneSidedLighting);
