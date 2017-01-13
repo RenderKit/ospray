@@ -14,16 +14,18 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include <limits>
+// ours
+#include "DataDistributedBlockedVolume.h"
+
 // ospray
-#include "mpi/volume/DataDistributedBlockedVolume.h"
-#include "volume/GhostBlockBrickedVolume.h"
-#include "transferFunction/TransferFunction.h"
-#include "volume/GhostBlockBrickedVolume.h"
-#include "mpi/common/Core.h"
-#if EXP_DATA_PARALLEL
-#include "mpi/common/MPICommon.h"
-#endif
+#include "ospray/volume/GhostBlockBrickedVolume.h"
+#include "ospray/transferFunction/TransferFunction.h"
+#include "ospray/volume/GhostBlockBrickedVolume.h"
+
+// comps
+#include "components/mpiCommon/Core.h"
+#include "components/mpiCommon/MPICommon.h"
+
 // ispc exports:
 #include "DataDistributedBlockedVolume_ispc.h"
 

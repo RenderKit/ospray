@@ -16,8 +16,13 @@
 
 #undef NDEBUG // do all assertions in this file
 
-#include "mpi/common/MPICommon.h"
-#include "mpi/MPIDevice.h"
+// ours
+#include "MPIDevice.h"
+#include "render/MPILoadBalancer.h"
+#include "fb/DistributedFrameBuffer.h"
+// components
+#include "components/mpiCommon/async/CommLayer.h"
+// ospray
 #include "common/Model.h"
 #include "common/Data.h"
 #include "common/Library.h"
@@ -26,10 +31,7 @@
 #include "render/Renderer.h"
 #include "camera/Camera.h"
 #include "volume/Volume.h"
-#include "mpi/render/MPILoadBalancer.h"
 #include "fb/LocalFB.h"
-#include "mpi/common/async/CommLayer.h"
-#include "mpi/fb/DistributedFrameBuffer.h"
 // std
 #ifndef _WIN32
 #  include <unistd.h> // for fork()

@@ -14,20 +14,24 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+// ours
+// components
+#include "components/mpiCommon/Core.h"
 // ospray
 #include "lights/Light.h"
 #include "common/Data.h"
-#include "ospcommon/tasking/parallel_for.h"
-#include "mpi/common/Core.h"
 #include "RaycastVolumeRenderer.h"
 #include "RaycastVolumeMaterial.h"
+// ospcommon
+#include "ospcommon/tasking/parallel_for.h"
 
+// ours
 // ispc exports
 #include "RaycastVolumeRenderer_ispc.h"
 #if EXP_DATA_PARALLEL
-# include "mpi/fb/DistributedFrameBuffer.h"
-# include "mpi/volume/DataDistributedBlockedVolume.h"
-# include "render/LoadBalancer.h"
+# include "../../fb/DistributedFrameBuffer.h"
+# include "../../volume/DataDistributedBlockedVolume.h"
+# include "../../render/LoadBalancer.h"
 #endif
 
 #define TILE_CACHE_SAFE_MUTEX 0

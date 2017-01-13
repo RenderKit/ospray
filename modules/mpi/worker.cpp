@@ -14,9 +14,15 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "mpi/common/MPICommon.h"
-#include "mpi/common/CommandStream.h"
-#include "mpi/MPIDevice.h"
+// ours
+#include "MPIDevice.h"
+#include "fb/DistributedFrameBuffer.h"
+#include "render/MPILoadBalancer.h"
+// ospray components
+#include "components/mpiCommon/MPICommon.h"
+#include "components/mpiCommon/CommandStream.h"
+#include "components/mpiCommon/async/CommLayer.h"
+// ospray
 #include "common/Model.h"
 #include "common/Data.h"
 #include "common/Library.h"
@@ -28,9 +34,6 @@
 #include "lights/Light.h"
 #include "texture/Texture2D.h"
 #include "fb/LocalFB.h"
-#include "mpi/common/async/CommLayer.h"
-#include "mpi/fb/DistributedFrameBuffer.h"
-#include "mpi/render/MPILoadBalancer.h"
 #include "transferFunction/TransferFunction.h"
 
 // std

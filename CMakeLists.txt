@@ -49,25 +49,23 @@ ENDIF()
 ##############################################################
 # the OSPRay 'common' library
 ##############################################################
-
 OSPRAY_ADD_SUBDIRECTORY(ospcommon)
+
+##############################################################
+# OSPRay components
+#
+# 'components' work similar to 'pacakges' in linux distributions: each
+# component is its own little piece that builds some applications,
+# libraries, etc, and may have dependencies to other components.
+##############################################################
+INCLUDE(components/configure.cmake)
+OSPRAY_ADD_SUBDIRECTORY(components)
 
 ##############################################################
 # the OSPRay library
 ##############################################################
 
 OSPRAY_ADD_SUBDIRECTORY(ospray)
-
-##############################################################
-# OSPRay modules
-##############################################################
-
-OPTION(OSPRAY_ENABLE_MODULES "Enable the 'modules' subtree in the build." ON)
-MARK_AS_ADVANCED(OSPRAY_ENABLE_MODULES)
-
-IF (OSPRAY_ENABLE_MODULES)
-  OSPRAY_ADD_SUBDIRECTORY(modules)
-ENDIF()
 
 ##############################################################
 # OSPRay sample apps; at the end: they may need modules
@@ -79,6 +77,18 @@ MARK_AS_ADVANCED(OSPRAY_ENABLE_APPS)
 IF (OSPRAY_ENABLE_APPS)
   OSPRAY_ADD_SUBDIRECTORY(apps)
 ENDIF()
+
+##############################################################
+# OSPRay modules
+# modules are OPTTIONAL and EXTERNAL packages that
+# users can link into ospray. they can use any and all pieces of
+# ospray but obviously no ospray parts may ever depend on a
+# module (which by definition is OPTIONAL) - so those go
+# AT THE BACK, only AFTER ALL OTHER PARTS OF OSPRAY ARE BUILT
+##############################################################
+OSPRAY_ADD_SUBDIRECTORY(modules)
+
+
 
 # create a configure file that both ospray and ispc can read the cmake config
 # from needs to be at the end, after all cache variables have been set

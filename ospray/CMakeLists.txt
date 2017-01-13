@@ -14,12 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-IF(OSPRAY_MODULE_MPI)
-  OPTION(OSPRAY_EXP_DATA_PARALLEL "Experimental data-parallel compositing mode" ON)
-  OPTION(OSPRAY_PIN_ASYNC "Pin async mpi comm threads?" OFF)
-  MARK_AS_ADVANCED(OSPRAY_PIN_ASYNC)
-ENDIF()
-
 OPTION(EXP_NEW_BB_VOLUME_KERNELS "Experimental new block/bricked volume layout" ON)
 MARK_AS_ADVANCED(EXP_NEW_BB_VOLUME_KERNELS)
 

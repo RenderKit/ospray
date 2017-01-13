@@ -19,7 +19,7 @@
 /*! \file ospray/device/nwlayer.h \brief Defines the basic network layer abstraction */
 
 #include "include/ospray/ospray.h"
-#include "mpi/common/buffers.h"
+#include "buffers.h"
 
 namespace ospray {
   // namespace nwlayer {

@@ -16,7 +16,9 @@
 
 #pragma once
 
-#include "mpi/common/MPICommon.h"
+// ospray components
+#include "components/mpiCommon/MPICommon.h"
+// ours
 #include "render/LoadBalancer.h"
 
 namespace ospray {

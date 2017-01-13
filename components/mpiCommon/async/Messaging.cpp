@@ -14,10 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "mpi/common/async/Messaging.h"
-#include "mpi/common/async/SimpleSendRecvMessaging.h"
-#include "mpi/common/async/MultiIsendIrecvMessaging.h"
-#include "mpi/common/async/BatchedIsendIrecvMessaging.h"
+// ours
+#include "Messaging.h"
+#include "BatchedIsendIrecvMessaging.h"
 
 namespace ospray {
   namespace mpi {
@@ -40,13 +39,13 @@ namespace ospray {
       void initAsync()
       {
         if (AsyncMessagingImpl::global == NULL) {
-#if 1
+// #if 1
           AsyncMessagingImpl::global = new BatchedIsendIrecvImpl;
-#elif 1
-          AsyncMessagingImpl::global = new MultiIsendIrecvImpl;
-#else
-          AsyncMessagingImpl::global = new SimpleSendRecvImpl;
-#endif
+// #elif 1
+//           AsyncMessagingImpl::global = new MultiIsendIrecvImpl;
+// #else
+//           AsyncMessagingImpl::global = new SimpleSendRecvImpl;
+// #endif
           AsyncMessagingImpl::global->init();
         }
 

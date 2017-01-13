@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "mpi/common/MPICommon.h"
-#include "mpi/common/async/CommLayer.h"
+#include "MPICommon.h"
+#include "async/CommLayer.h"
 
 namespace ospray {
   namespace mpi {

@@ -17,9 +17,9 @@
 #pragma once
 
 #include "api/Device.h"
-#include "mpi/common/MPICommon.h"
-#include "mpi/common/command.h"
-#include "mpi/common/CommandStream.h"
+#include "components/mpiCommon/MPICommon.h"
+#include "components/mpiCommon/command.h"
+#include "components/mpiCommon/CommandStream.h"
 #include "common/Managed.h"
 
 /*! \file mpidevice.h Implements the "mpi" device for mpi rendering */
