@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -107,6 +107,7 @@ extern "C" void ospInit(int *_ac, const char **_av)
       }
 
       if (av == "--osp:mpi") {
+        ospLoadModule("mpi");
 #ifdef OSPRAY_MPI
         removeArgs(*_ac,(char **&)_av,i,1);
         auto *mpiDevice = ospray::api::Device::createDevice("mpi");
@@ -212,7 +213,7 @@ extern "C" OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size,
   return ospray::api::Device::current->frameBufferCreate((vec2i&)size, mode, channels);
 }
 
-//! load module \<name\> from shard lib libospray_module_\<name\>.so, or
+//! load module \<name\> from shard lib libospray_module_\<name\>.so
 extern "C" int32_t ospLoadModule(const char *moduleName)
 {
   if (ospray::api::Device::current) {

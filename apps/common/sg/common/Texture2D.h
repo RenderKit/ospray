@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -18,6 +18,7 @@
 
 // sg
 #include "sg/common/Node.h"
+#include "sg/common/Data.h"
 // ospcommon
 #include "ospcommon/FileName.h"
 
@@ -29,25 +30,28 @@ namespace ospray {
     struct Texture2D : public Node {
       /*! constructor */
       Texture2D();
+      virtual ~Texture2D();
       
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const { return "ospray::viewer::sg::Texture2D"; };
+      virtual    std::string toString() const override { return "ospray::viewer::sg::Texture2D"; };
 
       //! \brief load texture from given file. 
       /*! \detailed if file does not exist, or cannot be loaded for
           some reason, return NULL. Multiple loads from the same file
           will return the *same* texture object */
-      static Ref<Texture2D> load(const FileName &fileName, const bool prefereLinear = false);
-      virtual void render(RenderContext &ctx);
+      static std::shared_ptr<Texture2D> load(const FileName &fileName, const bool prefereLinear = false);
+      virtual void render(RenderContext &ctx) override;
 
       //! texture size, in pixels
       vec2i       size;
-      //! pixel data, in whatever format specified in 'texelType'
-      void       *texel;
       //! format of each texel
       OSPTextureFormat texelType;
       
       OSPTexture2D ospTexture;
+      std::shared_ptr<sg::DataArray1uc> texelData;
+    // private:
+    //   //! pixel data, in whatever format specified in 'texelType'
+    //   unsigned char       *texel;
     };
 
   } // ::ospray::sg

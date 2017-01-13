@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2016 Intel Corporation                                    ##
+## Copyright 2009-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,7 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-IF(OSPRAY_BUILD_MPI_DEVICE)
+IF(OSPRAY_MODULE_MPI)
   OPTION(OSPRAY_EXP_DATA_PARALLEL "Experimental data-parallel compositing mode" ON)
   OPTION(OSPRAY_PIN_ASYNC "Pin async mpi comm threads?" OFF)
   MARK_AS_ADVANCED(OSPRAY_PIN_ASYNC)
@@ -95,11 +95,6 @@ SET(OSPRAY_SOURCES
   common/Material.cpp
   common/Thread.cpp
   common/Util.h
-
-#  common/tasking/parallel_for.h
-#  common/tasking/async.h
-#  common/tasking/TaskingTypeTraits.h
-#  common/tasking/TaskSys.cpp
 
   fb/FrameBuffer.ispc
   fb/FrameBuffer.cpp
@@ -252,14 +247,6 @@ OSPRAY_INSTALL_SDK_HEADERS(
 )
 
 OSPRAY_INSTALL_SDK_HEADERS(
-  common/tasking/async.h
-  common/tasking/parallel_for.h
-  common/tasking/TaskingTypeTraits.h
-  common/tasking/TaskSys.h
-  DESTINATION common/tasking
-)
-
-OSPRAY_INSTALL_SDK_HEADERS(
   fb/FrameBuffer.h
   fb/FrameBuffer.ih
   fb/PixelOp.h
@@ -359,40 +346,24 @@ SET(OSPRAY_LIBS
   ${CMAKE_THREAD_LIBS_INIT}
   ${CMAKE_DL_LIBS}
   ${EMBREE_LIBRARIES}
-  ${TASKING_SYSTEM_LIBS}
 )
 
 IF (WIN32)
   LIST(APPEND OSPRAY_LIBS ws2_32)
+  # export ISPC SDK symbols on Windows
+  IF (OSPRAY_BUILD_ISA STREQUAL "ALL")
+    LIST(APPEND OSPRAY_SOURCES ospray.def)
+  ENDIF()
 ENDIF()
 
 OSPRAY_CREATE_LIBRARY(ospray ${OSPRAY_SOURCES} LINK ${OSPRAY_LIBS})
 
-# export ISPC SDK symbols on Windows
-IF (WIN32 AND OSPRAY_BUILD_ISA STREQUAL "ALL")
- SET_TARGET_PROPERTIES(ospray PROPERTIES LINK_FLAGS
-                       "/DEF:${PROJECT_SOURCE_DIR}/ospray/ospray.def")
-ENDIF()
-
-# -------------------------------------------------------
-# MPI components
-# -------------------------------------------------------
-IF (OSPRAY_MPI)
-  ADD_SUBDIRECTORY(mpi)
-ENDIF()
-
 # build ospTutorial, for testing
 ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial.cpp)
 OSPRAY_EXE_LINK_LIBRARIES(ospTutorial ospray ospray_common)
-IF (OSPRAY_MPI)
-  OSPRAY_EXE_LINK_LIBRARIES(ospTutorial ospray_mpi)
-ENDIF()
 # C version
 ADD_EXECUTABLE(ospTutorialC ../apps/ospTutorial.c)
 OSPRAY_EXE_LINK_LIBRARIES(ospTutorialC ospray ospray_common)
-IF (OSPRAY_MPI)
-  OSPRAY_EXE_LINK_LIBRARIES(ospTutorialC ospray_mpi)
-ENDIF()
 
 ##############################################################
 # Configure find_package files

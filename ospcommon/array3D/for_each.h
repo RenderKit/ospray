@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -15,6 +15,8 @@
 // ======================================================================== //
 
 #pragma once
+
+#include "../box.h"
 
 /*! \file array3D/for_each Helper templates to do 3D iterations via
   lambda functions */
@@ -54,10 +56,17 @@ namespace ospcommon {
     template<typename Functor>
     inline void for_each(const vec3i &lower, const vec3i &upper, const Functor &functor) {
       for (int iz=lower.z;iz<upper.z;iz++)
-        for (int iy=lower.y;iz<upper.y;iy++)
-          for (int ix=lower.x;iz<upper.x;ix++)
+        for (int iy=lower.y;iy<upper.y;iy++)
+          for (int ix=lower.x;ix<upper.x;ix++)
             functor(vec3i(ix,iy,iz));
     }
 
-  }
-}
+    /*! iterate through all indices in [lower,upper), EXCLUSING the
+        'upper' value */
+    template<typename Functor>
+    inline void for_each(const box3i &coords, const Functor &functor) {
+      for_each(coords.lower,coords.upper,functor);
+    }
+
+  } // ::ospcommon::array3D
+} // ::ospcommon

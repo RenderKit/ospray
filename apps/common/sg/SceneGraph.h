@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -58,7 +58,7 @@ namespace ospray {
       virtual void render(RenderContext &ctx) override;
       virtual box3f getBounds() override;
       
-      std::vector<Ref<sg::Node> > child;
+      std::vector<std::shared_ptr<sg::Node> > children;
     };
 
     /*! a geometry node - the generic geometry node */
@@ -81,7 +81,7 @@ namespace ospray {
       virtual    std::string toString() const override { return "ospray::sg::Instance"; }
 
       //! the model we're instancing
-      Ref<World>    world;
+      std::shared_ptr<World>    world;
     };
 
     /*! a light node - the generic light node */
@@ -96,19 +96,19 @@ namespace ospray {
       const std::string type; 
     };
 
-    World *readXML(const std::string &fileName);
-    World *importRIVL(const std::string &fileName);
-
     /*! import an OBJ wavefront model, and add its contents to the given world */
-    void importOBJ(const Ref<World> &world, const FileName &fileName);
+    void importOBJ(const std::shared_ptr<World> &world, const FileName &fileName);
 
     /*! import an PLY model, and add its contents to the given world */
-    void importPLY(Ref<World> &world, const FileName &fileName);
+    void importPLY(std::shared_ptr<World> &world, const FileName &fileName);
 
     /*! import an X3D-format model, and add its contents to the given world */
-    void importX3D(const Ref<World> &world, const FileName &fileName);
+    void importX3D(const std::shared_ptr<World> &world, const FileName &fileName);
 
-    Ref<sg::World> loadOSG(const std::string &fileName);
+    std::shared_ptr<sg::World> loadOSP(const std::string &fileName);
+    std::shared_ptr<sg::World> readXML(const std::string &fileName);
+    std::shared_ptr<sg::World> importRIVL(const std::string &fileName);
+    std::shared_ptr<sg::World> loadOSG(const std::string &fileName);
     /*! @} */
 
   } // ::ospray::sg

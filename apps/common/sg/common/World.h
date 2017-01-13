@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -28,16 +28,13 @@ namespace ospray {
       World() : ospModel(NULL) {};
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const { return "ospray::viewer::sg::World"; }
+      virtual    std::string toString() const override { return "ospray::viewer::sg::World"; }
 
       //! serialize into given serialization state 
-      virtual void serialize(sg::Serialization::State &serialization);
+      virtual void serialize(sg::Serialization::State &serialization) override;
 
-      std::vector<Ref<Node> > node;
-
-      OSPModel ospModel;
       /*! 'render' the object for the first time */
-      virtual void render(RenderContext &ctx);
+      virtual void render(RenderContext &ctx) override;
 
       /*! \brief return bounding box in world coordinates.
 
@@ -45,14 +42,19 @@ namespace ospray {
         camera motion, setting default camera position, etc. Nodes
         for which that does not apply can simpy return
         box3f(embree::empty) */
-      virtual box3f getBounds();
+      virtual box3f getBounds() override;
 
       template<typename T>
-      inline void add(const Ref<T> &t) { add(t.ptr); }
-      template<typename T>
-      inline void add(T *t) { node.push_back(t); }
+      inline void add(const std::shared_ptr<T> &t) {
+        assert(t);
+        std::shared_ptr<sg::Node> asNode = std::dynamic_pointer_cast<Node>(t);
+        assert(asNode);
+        nodes.push_back(asNode);
+      }
+
+      std::vector<std::shared_ptr<sg::Node> > nodes;
+      OSPModel ospModel;
     };
-      
     
   } // ::ospray::sg
 } // ::ospray

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -34,13 +34,12 @@ namespace ospray {
       if (!camera) return 3;
       if (!world) return 4;
 
-      assert(frameBuffer->ospFrameBuffer);
       assert(integrator->ospRenderer);
 
       if (!world->ospModel) {
         RenderContext rootContext;
         // geometries need the integrator to create materials
-        rootContext.integrator = integrator.ptr;
+        rootContext.integrator = integrator.get();
         world->render(rootContext);
         assert(world->ospModel);
       }
@@ -78,10 +77,10 @@ namespace ospray {
     }
 
     //! create a default camera
-    Ref<sg::Camera> Renderer::createDefaultCamera(vec3f up)
+    std::shared_ptr<sg::Camera> Renderer::createDefaultCamera(vec3f up)
     {
       // create a default camera
-      Ref<sg::PerspectiveCamera> camera = new sg::PerspectiveCamera;
+      std::shared_ptr<sg::PerspectiveCamera> camera = std::make_shared<sg::PerspectiveCamera>();
       if (world) {
       
         // now, determine world bounds to automatically focus the camera
@@ -100,10 +99,10 @@ namespace ospray {
         }
       }
       camera->commit();
-      return camera.cast<sg::Camera>();
+      return std::dynamic_pointer_cast<sg::Camera>(camera);
     }
 
-    void Renderer::setCamera(const Ref<sg::Camera> &camera) 
+    void Renderer::setCamera(const std::shared_ptr<sg::Camera> &camera) 
     {
       this->camera = camera;
       if (camera) 
@@ -120,16 +119,16 @@ namespace ospray {
       resetAccumulation();
     }
 
-    void Renderer::setIntegrator(const Ref<sg::Integrator> &integrator) 
+    void Renderer::setIntegrator(const std::shared_ptr<sg::Integrator> &integrator) 
     {      
       this->integrator = integrator;
       if (integrator) {
-        integrator.ptr->commit();
+        integrator->commit();
       }
       resetAccumulation();
     }
 
-    void Renderer::setWorld(const Ref<World> &world)
+    void Renderer::setWorld(const std::shared_ptr<World> &world)
     {
       this->world = world;
       allNodes.clear();
@@ -141,31 +140,29 @@ namespace ospray {
         std::cout << "#osp:sg:renderer: no world defined, yet\n#ospQTV: (did you forget to pass a scene file name on the command line?)" << std::endl;
 
       resetAccumulation();
-      std::cout << "#osp:sg:renderer: new world with " << world->node.size() << " nodes" << endl;
+      std::cout << "#osp:sg:renderer: new world with " << world->nodes.size() << " nodes" << endl;
     }
 
     //! find the last camera in the scene graph
-    sg::Camera *Renderer::getLastDefinedCamera() const
+    std::shared_ptr<sg::Camera> Renderer::getLastDefinedCamera() const
     {
-      for (size_t i=0;i<uniqueNodes.size();i++) {
-        sg::Camera *asCamera
-          = dynamic_cast<sg::Camera*>(uniqueNodes.object[i]->node.ptr);
-        if (asCamera != NULL)
-          return asCamera;
+      std::shared_ptr<sg::Camera> lastCamera;
+      for (auto node : uniqueNodes.object) {
+        std::shared_ptr<sg::Camera> asCamera = std::dynamic_pointer_cast<sg::Camera>(node);
+        if (asCamera) lastCamera = asCamera;
       }
-      return NULL;
+      return lastCamera;
     }
     
     //! find the last integrator in the scene graph
-    sg::Integrator *Renderer::getLastDefinedIntegrator() const
+    std::shared_ptr<sg::Integrator> Renderer::getLastDefinedIntegrator() const
     {
-      for (size_t i=0;i<uniqueNodes.size();i++) {
-        sg::Integrator *asIntegrator
-          = dynamic_cast<sg::Integrator*>(uniqueNodes.object[i]->node.ptr);
-        if (asIntegrator != NULL)
-          return asIntegrator;
+      std::shared_ptr<sg::Integrator> lastIntegrator;
+      for (auto node : uniqueNodes.object) {
+        std::shared_ptr<sg::Integrator> asIntegrator = std::dynamic_pointer_cast<sg::Integrator>(node);
+        if (asIntegrator) lastIntegrator = asIntegrator;
       }
-      return NULL;
+      return lastIntegrator;
     }
     
   }

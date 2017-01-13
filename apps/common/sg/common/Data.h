@@ -1,5 +1,5 @@
-﻿// ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// ======================================================================== //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -90,6 +90,11 @@ namespace ospray {
       T     *base;
     };
 
+    struct DataArray1uc : public DataArrayT<unsigned char,OSP_UCHAR> {
+      DataArray1uc(unsigned char *base, size_t size, bool mine=true)
+        : DataArrayT<unsigned char,OSP_UCHAR>(base,size,mine)
+      {}
+    };
     struct DataArray2f : public DataArrayT<vec2f,OSP_FLOAT2> {
       DataArray2f(vec2f *base, size_t size, bool mine=true)
         : DataArrayT<vec2f,OSP_FLOAT2>(base,size,mine)
@@ -166,16 +171,16 @@ namespace ospray {
     };
 
     template<typename T>
-    T* make_aligned(void *data, size_t num)
+    std::shared_ptr<T> make_aligned(void *data, size_t num)
     {
       typedef typename T::ElementType ElementType;
       if ((size_t)data & 0x3) {
         // Data *not* aligned correctly, copy into a new buffer appropriately...
         char *m = new char[num * sizeof(ElementType)];
         memcpy(m, data, num * sizeof(ElementType));
-        return new T((ElementType*)m, num, true);
+        return std::make_shared<T>((ElementType*)m, num, true);
       } else {
-        return new T((ElementType*)data, num, false);
+        return std::make_shared<T>((ElementType*)data, num, false);
       }
     }
 

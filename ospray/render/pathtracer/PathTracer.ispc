@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -42,7 +42,7 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
                         Ray &shadowRay,
                         Medium medium)
 {
-  int max_depth = self->maxDepth;
+  uniform int max_depth = self->maxDepth;
   const float org_t_max = shadowRay.t;
 
   while (1) {
