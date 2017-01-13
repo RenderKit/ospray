@@ -514,6 +514,14 @@ namespace ospcommon {
   OSPCOMMON_INTERFACE vec3i toVec3i(const char *ptr);
   OSPCOMMON_INTERFACE vec4i toVec4i(const char *ptr);
 
+  template<typename T, int N>
+  inline size_t arg_max(const vec_t<T,N> &v) {
+    size_t maxIdx = 0;
+    for (size_t i=1;i<N;i++)
+      if (v[i] > v[maxIdx]) maxIdx = i;
+    return maxIdx;
+  }
+  
 
 } // ::ospcommon
 
