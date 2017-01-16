@@ -89,7 +89,7 @@ ENDIF()
 OPTION(OSPRAY_ZIP_MODE "Use tarball/zip CPack generator instead of RPM" ON)
 MARK_AS_ADVANCED(OSPRAY_ZIP_MODE)
 
-OPTION(OSPRAY_INSTALL_DEPENDENCIES "Install OSPRay dependencies in binary packages and install" OFF)
+OPTION(OSPRAY_INSTALL_DEPENDENCIES "Install OSPRay dependencies in binary packages and install")
 MARK_AS_ADVANCED(OSPRAY_INSTALL_DEPENDENCIES)
 
 INCLUDE(package)
@@ -113,7 +113,7 @@ OPTION(OSPRAY_VOLUME_VOXELRANGE_IN_APP "Move 'voxelrange' computations to app?")
 MARK_AS_ADVANCED(OSPRAY_VOLUME_VOXELRANGE_IN_APP)
 
 # TODO should move to module/mpi/CMakeLists.txt
-OPTION(OSPRAY_MODULE_MPI "MPI parallel device" OFF)
+OPTION(OSPRAY_MODULE_MPI "MPI parallel device")
 
 SET(OSPRAY_MPI ${OSPRAY_MODULE_MPI})
 

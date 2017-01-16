@@ -85,7 +85,7 @@ INCLUDE_DIRECTORIES(${OPENGL_INCLUDE_DIR} ${GLUT_INCLUDE_DIR})
 # redistribute freeglut on Windows
 ##############################################################
 
-IF (WIN32)
+IF (WIN32 AND OSPRAY_INSTALL_DEPENDENCIES)
   FIND_FILE(GLUT_DLL
     NAMES freeglut.dll
     HINTS ${GLUT_INCLUDE_DIR}/../bin/${ARCH} ${FREEGLUT_ROOT_PATH}/bin/${ARCH}
