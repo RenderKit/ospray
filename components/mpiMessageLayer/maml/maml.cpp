@@ -19,20 +19,40 @@
 
 namespace maml {
 
-    /*! create a new message with given amount of bytes in storage */
+  std::mutex messageMutex;
+  
+  /*! create a new message with given amount of bytes in storage */
   Message::Message(size_t size)
-    : data(new unsigned char [size]), size(size),
+    : data(NULL), size(size),
       comm(MPI_COMM_NULL), rank(-1), tag(0)
   {
+    //new unsigned char [size]
+    assert(size > 0);
+
+    // { std::lock_guard<std::mutex> lock(messageMutex);
+    //   static size_t sumAlloc = 0;
+    //   sumAlloc += size;
+    //   PRINT(size);
+    //   PRINT(sumAlloc);
+      data = (unsigned char *)malloc(size);
+      // PRINT((int*)data);
+    // }
+    
+    assert(data);
   }
   
   /*! create a new message with given amount of storage, and copy
     memory from the given address to it */
   Message::Message(const void *copyMem, size_t size)
-    : data(new unsigned char [size]), size(size),
+    : data(NULL), size(size),
       comm(MPI_COMM_NULL), rank(-1), tag(0)
   {
     assert(copyMem);
+
+    assert(size > 0);
+    data = (unsigned char *) malloc(size); //new unsigned char [size]
+    assert(data);
+      
     memcpy(data,copyMem,size);
   }
 
@@ -41,16 +61,24 @@ namespace maml {
         it */
   Message::Message(MPI_Comm comm, int rank,
                    const void *copyMem, size_t size)
-    : data(new unsigned char [size]), size(size),
+    : data(NULL), size(size),
       comm(comm), rank(rank), tag(0)
   {
     assert(copyMem);
+    assert( size > 0);
+
+    //    data = new unsigned char [size];
+    data = (unsigned char *)malloc(size);
+    assert(data);
     memcpy(data,copyMem,size);
   }
     
   /*! destruct message and free allocated memory */
   Message::~Message() {
-    if (data) delete[] data;
+    if (data) {
+      // delete[] data;
+      free(data); //printf("currently NOT deleting the messages!\n");
+    }
   }
   
   
@@ -144,6 +172,7 @@ namespace maml {
   void sendTo(MPI_Comm comm, int rank, std::shared_ptr<Message> msg)
   {
     assert(msg);
+    assert(rank >= 0);
     msg->rank = rank;
     msg->comm = comm;
     msg->tag  = 0;

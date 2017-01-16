@@ -241,12 +241,12 @@ namespace maml {
   {
     std::unique_lock<std::mutex> lock(flushMutex);
 
-    if (!flushed)
-      { std::lock_guard<std::mutex> outboxLock(outboxMutex);
-        std::cout << "#maml: flushing (" << outbox.size() << " messages in outbox)!" << std::endl;
-      }
+    // if (!flushed)
+    //   { std::lock_guard<std::mutex> outboxLock(outboxMutex);
+        // std::cout << "#maml: flushing (" << outbox.size() << " messages in outbox)!" << std::endl;
+      // }
     flushCondition.wait(lock, [this]{return flushed;});
-    std::cout << "#maml: flushed..." << std::endl;
+    // std::cout << "#maml: flushed..." << std::endl;
   }
   
   /*! start the service; from this point on maml is free to use MPI

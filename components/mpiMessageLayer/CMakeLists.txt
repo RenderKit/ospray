@@ -18,7 +18,7 @@ ELSE()
   INCLUDE_DIRECTORIES(${MAML_DIR})
   INCLUDE_DIRECTORIES(${MAML_DIR}/include)
   
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+#  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
   INCLUDE(ospcommon/FindTBB.cmake)
   
@@ -56,22 +56,20 @@ TARGET_LINK_LIBRARIES(${MAML_LIBRARY}
   ospray_mpi_common
   )
 
-IF (NOT INCLUDED_AS_AN_OSPRAY_COMPONENT)
-  # ------------------------------------------------------------------
-  # tests and examples
-  # ------------------------------------------------------------------
-  ADD_EXECUTABLE(mamlTest
-    apps/mamlTest.cpp
-    )
-  TARGET_LINK_LIBRARIES(mamlTest
-    ${MAML_LIBRARY}
-    )
+# ------------------------------------------------------------------
+# tests and examples
+# ------------------------------------------------------------------
+ADD_EXECUTABLE(mamlTest
+  apps/mamlTest.cpp
+  )
+TARGET_LINK_LIBRARIES(mamlTest
+  ${MAML_LIBRARY}
+  )
 
-  ADD_EXECUTABLE(mamlTestMessageSwarm
-    apps/testMessageSwarm.cpp
-    )
-  TARGET_LINK_LIBRARIES(mamlTestMessageSwarm
-    ${MAML_LIBRARY}
-    )
-ENDIF()
+ADD_EXECUTABLE(mamlTestMessageSwarm
+  apps/testMessageSwarm.cpp
+  )
+TARGET_LINK_LIBRARIES(mamlTestMessageSwarm
+  ${MAML_LIBRARY}
+  )
 
