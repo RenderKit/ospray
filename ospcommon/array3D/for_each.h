@@ -16,11 +16,22 @@
 
 #pragma once
 
+#include "../box.h"
+
 /*! \file array3D/for_each Helper templates to do 3D iterations via
   lambda functions */
 
 namespace ospcommon {
   namespace array3D { 
+
+    /*! compute - in 64 bit - the number of voxels in a vec3i */
+    inline size_t longProduct(const vec3i &dims)
+    { return dims.x*size_t(dims.y)*dims.z; }
+
+    /*! compute - in 64 bit - the linear array index of vec3i index in
+        a vec3i sized array */
+    inline size_t longIndex(const vec3i &idx, const vec3i &dims)
+    { return idx.x + size_t(dims.x)*(idx.y + size_t(dims.y)*idx.z); }
 
     /*! a template that calls the given functor (typically a lambda) for
       every vec3i(ix,iy,iz) with 0<=ix<xize.x, 0<=iy<size.y, and
@@ -45,10 +56,17 @@ namespace ospcommon {
     template<typename Functor>
     inline void for_each(const vec3i &lower, const vec3i &upper, const Functor &functor) {
       for (int iz=lower.z;iz<upper.z;iz++)
-        for (int iy=lower.y;iz<upper.y;iy++)
-          for (int ix=lower.x;iz<upper.x;ix++)
+        for (int iy=lower.y;iy<upper.y;iy++)
+          for (int ix=lower.x;ix<upper.x;ix++)
             functor(vec3i(ix,iy,iz));
     }
 
-  }
-}
+    /*! iterate through all indices in [lower,upper), EXCLUSING the
+        'upper' value */
+    template<typename Functor>
+    inline void for_each(const box3i &coords, const Functor &functor) {
+      for_each(coords.lower,coords.upper,functor);
+    }
+
+  } // ::ospcommon::array3D
+} // ::ospcommon

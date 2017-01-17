@@ -14,17 +14,18 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "sg/common/FrameBuffer.h"
+#include "FrameBuffer.h"
 
 namespace ospray {
   namespace sg {
 
-    FrameBuffer::FrameBuffer(const vec2i &size)
-      : size(size)
+    FrameBuffer::FrameBuffer(const vec2i &size) 
+      : size(size), 
+        ospFrameBuffer(NULL) 
     {
       createFB();
-    }
-
+    };
+    
     FrameBuffer::~FrameBuffer()
     {
       destroyFB();
@@ -54,12 +55,13 @@ namespace ospray {
     {
       return size;
     }
-
+    
+    /*! \brief returns a std::string with the c++ name of this class */
     std::string FrameBuffer::toString() const
     {
       return "ospray::sg::FrameBuffer";
     }
-
+    
     OSPFrameBuffer FrameBuffer::getOSPHandle() const
     {
       return ospFrameBuffer;

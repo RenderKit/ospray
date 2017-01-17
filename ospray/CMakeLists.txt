@@ -32,7 +32,7 @@ FIND_PACKAGE(Threads REQUIRED)
 # redistribute TBB
 # -------------------------------------------------------
 
-IF (OSPRAY_TASKING_TBB)
+IF (OSPRAY_TASKING_TBB AND OSPRAY_INSTALL_DEPENDENCIES)
   IF (WIN32)
     SET(TBB_DLL_HINTS
       ${TBB_ROOT}/../redist/${TBB_ARCH}_win/tbb/${TBB_VCVER}
@@ -43,15 +43,11 @@ IF (OSPRAY_TASKING_TBB)
     FIND_FILE(TBB_DLL_MALLOC tbbmalloc.dll PATHS HINTS ${TBB_DLL_HINTS})
     MARK_AS_ADVANCED(TBB_DLL)
     MARK_AS_ADVANCED(TBB_DLL_MALLOC)
-    IF (OSPRAY_INSTALL_DEPENDENCIES)
-      INSTALL(PROGRAMS ${TBB_DLL} ${TBB_DLL_MALLOC}
-              DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT apps) # 3rd party?
-    ENDIF()
-  ELSEIF (OSPRAY_ZIP_MODE)
-    IF (OSPRAY_INSTALL_DEPENDENCIES)
-      INSTALL(PROGRAMS ${TBB_LIBRARY} ${TBB_LIBRARY_MALLOC} ${TBB_LIBRARY_DEBUG} ${TBB_LIBRARY_MALLOC_DEBUG}
-              DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib) # /intel64?
-    ENDIF()
+    INSTALL(PROGRAMS ${TBB_DLL} ${TBB_DLL_MALLOC}
+            DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT lib) # 3rd party?
+  ELSE()
+    INSTALL(PROGRAMS ${TBB_LIBRARY} ${TBB_LIBRARY_MALLOC}
+            DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib) # /intel64?
   ENDIF()
 ENDIF()
 
@@ -95,11 +91,6 @@ SET(OSPRAY_SOURCES
   common/Material.cpp
   common/Thread.cpp
   common/Util.h
-
-  common/tasking/parallel_for.h
-  common/tasking/async.h
-  common/tasking/TaskingTypeTraits.h
-  common/tasking/TaskSys.cpp
 
   fb/FrameBuffer.ispc
   fb/FrameBuffer.cpp
@@ -252,14 +243,6 @@ OSPRAY_INSTALL_SDK_HEADERS(
 )
 
 OSPRAY_INSTALL_SDK_HEADERS(
-  common/tasking/async.h
-  common/tasking/parallel_for.h
-  common/tasking/TaskingTypeTraits.h
-  common/tasking/TaskSys.h
-  DESTINATION common/tasking
-)
-
-OSPRAY_INSTALL_SDK_HEADERS(
   fb/FrameBuffer.h
   fb/FrameBuffer.ih
   fb/PixelOp.h
@@ -359,7 +342,6 @@ SET(OSPRAY_LIBS
   ${CMAKE_THREAD_LIBS_INIT}
   ${CMAKE_DL_LIBS}
   ${EMBREE_LIBRARIES}
-  ${TASKING_SYSTEM_LIBS}
 )
 
 IF (WIN32)

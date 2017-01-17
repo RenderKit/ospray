@@ -19,7 +19,7 @@
 #include "render/Renderer.h"
 #include "fb/LocalFB.h"
 #include "mpi/fb/DistributedFrameBuffer.h"
-#include "common/tasking/parallel_for.h"
+#include "ospcommon/tasking/parallel_for.h"
 
 #include <algorithm>
 

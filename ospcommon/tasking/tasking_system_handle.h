@@ -16,45 +16,10 @@
 
 #pragma once
 
-// sg components
-#include "sg/common/Node.h"
+#include "../common.h"
 
-namespace ospray {
-  namespace sg {
+namespace ospcommon {
 
-    struct FrameBuffer : public sg::Node {
+  void OSPCOMMON_INTERFACE initTaskingSystem(int numThreads = -1);
 
-      /*! constructor allocates an OSP frame buffer object */
-      FrameBuffer(const vec2i &size);
-
-      /*! destructor - relasess the OSP frame buffer object */
-      virtual ~FrameBuffer();
-
-      unsigned char *map();
-      void unmap(unsigned char *mem);
-
-      void clear();
-
-      void clearAccum();
-      
-      vec2i getSize() const;
-
-      /*! \brief returns a std::string with the c++ name of this class */
-      virtual std::string toString() const;
-
-      OSPFrameBuffer getOSPHandle() const;
-      
-    // private:
-    
-      // create the ospray framebuffer for this class
-      void createFB();
-
-      // destroy the ospray framebuffer created via createFB()
-      void destroyFB();
-
-      OSPFrameBuffer ospFrameBuffer {nullptr};
-      const vec2i size;
-    };
-
-  } // ::ospray::sg
-} // ::ospray
+}// namespace ospcommon
