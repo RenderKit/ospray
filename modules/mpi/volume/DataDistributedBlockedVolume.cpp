@@ -155,23 +155,8 @@ namespace ospray {
 
       ddBlock[i].ispcVolume = ddBlock[i].cppVolume->getIE();
 
-#ifndef OSPRAY_VOLUME_VOXELRANGE_IN_APP
-      ManagedObject::Param *param = ddBlock[i].cppVolume->findParam("voxelRange");
-      if (param != NULL && param->type == OSP_FLOAT2){
-        vec2f blockRange = param->u_vec2f;
-        voxelRange.x = std::min(voxelRange.x, blockRange.x);
-        voxelRange.y = std::max(voxelRange.y, blockRange.y);
-      }
-#endif
     }
 
-#ifndef OSPRAY_VOLUME_VOXELRANGE_IN_APP
-    // Do a reduction here to worker 0 since it will be queried for the voxel range by the display node
-    vec2f globalVoxelRange = voxelRange;
-    MPI_CALL(Reduce(&voxelRange.x, &globalVoxelRange.x, 1, MPI_FLOAT, MPI_MIN, 0, mpi::worker.comm));
-    MPI_CALL(Reduce(&voxelRange.y, &globalVoxelRange.y, 1, MPI_FLOAT, MPI_MAX, 0, mpi::worker.comm));
-    set("voxelRange", globalVoxelRange);
-#endif
     return true;
   }
 
