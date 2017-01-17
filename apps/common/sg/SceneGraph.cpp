@@ -56,5 +56,8 @@ namespace ospray {
       state.serialization->object.push_back(new Serialization::Object(this,state.instantiation.ptr));
     }
 
+    
+    OSP_REGISTER_SG_NODE(Group);
+
   } // ::ospray::sg
 } // ::ospray

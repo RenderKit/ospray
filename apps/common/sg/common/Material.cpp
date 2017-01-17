@@ -28,6 +28,9 @@ namespace ospray {
         name(""),
         type("")
     {
+      add(createNode("ospMaterial", "OSPMaterial"));
+      add(createNode("name", "string"));
+      add(createNode("type", "string"));
     }
 
     void Material::render(RenderContext &ctx)
@@ -122,6 +125,8 @@ namespace ospray {
 
       ospCommit(ospMaterial);
     }
+
+    OSP_REGISTER_SG_NODE(Material);
 
   }
 }

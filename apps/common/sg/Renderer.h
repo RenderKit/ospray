@@ -73,6 +73,25 @@ namespace ospray {
       //! accumulation ID
       size_t accumID;
     };
+
+
+    struct RendererNode : public Node
+    {
+      RendererNode() {
+      add(createNode("world", "World"));
+      add(createNode("camera", "PerspectiveCamera"));
+      add(createNode("framebuffer", "FrameBuffer"));
+      add(createNode("lights"));
+
+      //TODO: move these to seperate SciVisRenderer
+      add(createNode("shadowsEnabled", "bool"));
+      add(createNode("maxDepth", "int"));
+      add(createNode("aoSamples", "int"));
+      add(createNode("aoDistance", "float"));
+      add(createNode("aoWeight", "float"));
+      add(createNode("oneSidedLighting", "bool"));
+      }
+    };
   }
 }
 

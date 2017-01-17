@@ -23,6 +23,8 @@ namespace ospray {
       : size(size)
     {
       createFB();
+
+      add(createNode("size", "vec2i", size));
     }
 
     FrameBuffer::~FrameBuffer()
@@ -76,6 +78,7 @@ namespace ospray {
     {
       ospFreeFrameBuffer(ospFrameBuffer);
     }
+    OSP_REGISTER_SG_NODE(FrameBuffer);
 
   } // ::ospray::sg
 } // ::ospray

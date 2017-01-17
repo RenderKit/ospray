@@ -52,5 +52,6 @@ namespace ospray {
       ospCommit(ospModel);
     }
 
+    OSP_REGISTER_SG_NODE(World);
   }
 }

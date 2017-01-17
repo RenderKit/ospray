@@ -70,11 +70,21 @@ namespace ospray {
                                +node->name); 
     };
 
+
+    void Node::build()
+    {
+        std::cout << "node: " << name << std::endl;
+        for (auto child : children)
+            child.second->build();
+    }
+
+
     // ==================================================================
     // global struff
     // ==================================================================
 
     
+    OSP_REGISTER_SG_NODE(Node);
     // list of all named nodes - for now use this as a global
     // variable, but eventually we'll need tofind a better way for
     // storing this
@@ -92,5 +102,44 @@ namespace ospray {
       namedNodes[name] = node; 
     }
 
+    typedef sg::Node *(*creatorFct)();
+    
+    std::map<std::string, creatorFct> nodeRegistry;
+
+    Node::NodeH createNode(std::string name, std::string type, SGVar var)
+    {
+      std::map<std::string, creatorFct>::iterator it = nodeRegistry.find(type);
+      creatorFct creator = NULL;
+      if (it == nodeRegistry.end()) {
+        std::string creatorName = "ospray_create_sg_node__"+std::string(type);
+        creator = (creatorFct)getSymbol(creatorName);
+        if (!creator)
+          throw std::runtime_error("unknown ospray scene graph node '"+type+"'");
+        else
+          std::cout << "#osp:sg: creating at least one instance of node type '" << type << "'" << std::endl;
+        nodeRegistry[type] = creator;
+      } else creator = it->second;
+      assert(creator);
+      sg::Node *newNode = creator();
+      assert(newNode);
+      newNode->setName(name);
+      newNode->setType(type);
+      newNode->setValue(var);
+      return Node::NodeH(newNode);
+    }
+
+    OSP_REGISTER_SG_NODE(Light);
+    OSP_REGISTER_SG_NODE(DirectionalLight);
+    OSP_REGISTER_SG_NODE_NAME(NodeParam<vec3f>, vec3f);
+    OSP_REGISTER_SG_NODE_NAME(NodeParam<vec2f>, vec2f);
+    OSP_REGISTER_SG_NODE_NAME(NodeParam<vec2i>, vec2i);
+    OSP_REGISTER_SG_NODE_NAME(NodeParam<float>, float);
+    OSP_REGISTER_SG_NODE_NAME(NodeParam<int>, int);
+    OSP_REGISTER_SG_NODE_NAME(NodeParam<bool>, bool);
+    OSP_REGISTER_SG_NODE_NAME(NodeParam<std::string>, string);
+    OSP_REGISTER_SG_NODE_NAME(NodeParam<box3f>, box3f);
+    OSP_REGISTER_SG_NODE_NAME(NodeParam<OSPModel>, OSPModel);
+    OSP_REGISTER_SG_NODE_NAME(NodeParam<OSPMaterial>, OSPMaterial);
+    OSP_REGISTER_SG_NODE_NAME(NodeParam<OSPGeometry>, OSPGeometry);
   }
 }

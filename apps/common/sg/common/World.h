@@ -25,7 +25,10 @@ namespace ospray {
 
     /*! a world node */
     struct World : public sg::Node {
-      World() : ospModel(NULL) {};
+      World() : ospModel(NULL) {
+        add(createNode("bounds", "box3f"));
+        add(createNode("model", "OSPModel"));
+      };
 
       /*! \brief returns a std::string with the c++ name of this class */
       virtual    std::string toString() const { return "ospray::viewer::sg::World"; }
@@ -47,10 +50,10 @@ namespace ospray {
         box3f(embree::empty) */
       virtual box3f getBounds();
 
-      template<typename T>
-      inline void add(const Ref<T> &t) { add(t.ptr); }
-      template<typename T>
-      inline void add(T *t) { node.push_back(t); }
+      // template<typename T>
+      // inline void add(const Ref<T> &t) { add(t.ptr); }
+      // template<typename T>
+      // inline void add(T *t) { node.push_back(t); }
     };
       
     

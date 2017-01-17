@@ -84,17 +84,17 @@ namespace ospray {
       Ref<World>    world;
     };
 
-    /*! a light node - the generic light node */
-    struct Light : public sg::Node {
-      //! \brief constructor
-      Light(const std::string &type) : type(type) {};
+    // /*! a light node - the generic light node */
+    // struct Light : public sg::Node {
+    //   //! \brief constructor
+    //   Light(const std::string &type) : type(type) {};
 
-      /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const override { return "ospray::sg::Light"; }
+    //   ! \brief returns a std::string with the c++ name of this class 
+    //   virtual    std::string toString() const override { return "ospray::sg::Light"; }
 
-      /*! \brief light type, i.e., 'DirectionalLight', 'PointLight', ... */
-      const std::string type; 
-    };
+    //   /*! \brief light type, i.e., 'DirectionalLight', 'PointLight', ... */
+    //   const std::string type; 
+    // };
 
     World *readXML(const std::string &fileName);
     World *importRIVL(const std::string &fileName);

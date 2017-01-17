@@ -24,7 +24,13 @@ namespace ospray {
         from(0,-1,0), at(0,0,0), up(0,0,1), aspect(1),
         fovy(60)
     {
-      create();
+      create(); 
+
+      add(createNode("from", "vec3f", from));
+      add(createNode("at", "vec3f", at));
+      add(createNode("up", "vec3f", up));
+      add(createNode("aspect", "float", aspect));
+      add(createNode("fovy", "float", fovy));
     }
 
     void PerspectiveCamera::commit() 
@@ -39,6 +45,7 @@ namespace ospray {
       ospSetf(ospCamera,"fovy",fovy);
       ospCommit(ospCamera);      
     }
+    OSP_REGISTER_SG_NODE(PerspectiveCamera);
     
   } // ::ospray::sg
 } // ::ospray

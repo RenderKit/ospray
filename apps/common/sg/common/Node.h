@@ -26,10 +26,31 @@
 #include "../../../common/xml/XML.h"
 // ospcommon
 #include "ospcommon/vec.h"
+#include "mapbox/variant.hpp"
+
+using namespace mapbox::util;
 
 namespace ospray {
 
   namespace sg {
+
+    // struct SGVar
+    // {
+    //   SGVar(int v) { vfloat=v;}
+    //   SGVar(std::string v) {vstring=v;}
+    //   operator float() { return vfloat; }
+    //   operator std::string() { return vstring; }
+    //   union 
+    //   {
+    //     float vfloat;
+    //     std::string vstring;
+    //   };
+    // };
+    typedef variant<ospcommon::vec3f, ospcommon::vec2f, ospcommon::vec2i, ospcommon::box3f, std::string,
+     float, bool, int, 
+     OSPModel, OSPGeometry, OSPMaterial, OSPFrameBuffer, OSPDataType>
+      SGVar;
+
 
     /*! forward decl of entity that nodes can write to when writing XML files */
     struct XMLWriter;
@@ -93,9 +114,9 @@ namespace ospray {
     /*! \brief base node of all scene graph nodes */
     struct Node : public RefCount
     {
-      Node() : lastModified(1), lastCommitted(0) {};
+      Node() : lastModified(1), lastCommitted(0), name("NULL"), type("Node") {};
 
-      virtual    std::string toString() const = 0;
+      virtual    std::string toString() const {}
       std::shared_ptr<sg::Param> getParam(const std::string &name) const;
       // void       addParam(sg::Param *p);
 
@@ -152,16 +173,48 @@ namespace ospray {
       //! return when this node was last committed
       inline TimeStamp getLastCommitted() const { return lastCommitted; };
 
+      class NodeH
+      {
+      public:
+        NodeH(Ref<sg::Node> n=nullptr) : node(n) {}
+        Ref<sg::Node> node;
+        NodeH operator[] (std::string c) { return node->getChild(c);}
+        NodeH operator+= (NodeH n) { node->add(n); return n;}
+        Ref<sg::Node> operator-> ()
+        {
+          return node;
+        }
+      };
+
       std::string name;
+      std::string type;
+
+      NodeH getChild(std::string name) { return children[name]; }
+      std::vector<NodeH> getChildrenByType(std::string) { std::vector<NodeH> result; return result;}
+      std::vector<NodeH> getChildren() { std::vector<NodeH> result; 
+          for (auto child : children)
+            result.push_back(child.second);
+          return result; }
+      NodeH operator[] (std::string c) { return getChild(c);}
+      std::map<std::string, NodeH > children;
+      SGVar getValue() { return value; }
+      void setValue(SGVar val) { value = val; }
+      virtual void add(Ref<sg::Node> node) { children[node->name] = NodeH(node); }
+      virtual void add(NodeH node) { children[node->name] = node; }
+      virtual void build();
+      void setName(std::string v) { name = v; }
+      std::string getName() { return name; }
+      std::string getType() { return type; }
+      void setType(std::string v) { type = v; }
     protected:
+      SGVar value;
       TimeStamp lastModified;
       TimeStamp lastCommitted;
-      std::map<std::string, std::shared_ptr<Param>> params;
+      std::map<std::string, std::shared_ptr<sg::Param> > params;
     };
 
     /*! read a given scene graph node from its correspondoing xml node represenation */
     sg::Node *parseNode(xml::Node *node);
-
 
     // list of all named nodes - for now use this as a global
     // variable, but eventually we'll need tofind a better way for
@@ -170,6 +223,22 @@ namespace ospray {
     sg::Node *findNamedNode(const std::string &name);
     void registerNamedNode(const std::string &name, Ref<sg::Node> node);
 
+    typedef Node::NodeH NodeH;
+    Node::NodeH createNode(std::string name, std::string type="Node", SGVar var=0);
+    // , std::shared_ptr<sg::Param>=std::make_shared<sg::Param>("none")
+
+
+    template <typename T>
+    struct NodeParam : public Node {
+      NodeParam() { setValue(T()); }
+    };
+
+    struct Light : public Node {
+      Light() { add(sg::createNode("color", "vec3f", ospcommon::vec3f(1,1,1))); }
+    };
+    struct DirectionalLight : public Light {
+      DirectionalLight() { add(sg::createNode("direction", "vec3f", ospcommon::vec3f(-.3f,-.2f,.6f))); }
+    };
 
     /*! \brief registers a internal ospray::<ClassName> renderer under
       the externally accessible name "external_name"
@@ -182,6 +251,12 @@ namespace ospray {
     */
 #define OSP_REGISTER_SG_NODE(InternalClassName)                         \
     extern "C" ospray::sg::Node *ospray_create_sg_node__##InternalClassName() \
+    {                                                                   \
+      return new ospray::sg::InternalClassName;                         \
+    }
+
+#define OSP_REGISTER_SG_NODE_NAME(InternalClassName,Name)               \
+    extern "C" ospray::sg::Node *ospray_create_sg_node__##Name()        \
     {                                                                   \
       return new ospray::sg::InternalClassName;                         \
     }

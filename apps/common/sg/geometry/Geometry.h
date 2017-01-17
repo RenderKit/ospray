@@ -23,7 +23,10 @@ namespace ospray {
 
     /*! a geometry node - the generic geometry node */
     struct Geometry : public sg::Node {
-      Geometry(const std::string &type) : type(type) {};
+      Geometry(const std::string &type) : type(type) {
+        add(createNode("material", "Material"));
+        add(createNode("type", "string"));
+      };
 
       /*! \brief returns a std::string with the c++ name of this class */
       virtual    std::string toString() const { return "ospray::sg::Geometry"; }

@@ -166,6 +166,7 @@ namespace ospray {
       }
       return NULL;
     }
+    OSP_REGISTER_SG_NODE_NAME(RendererNode, Renderer);
     
   }
 }

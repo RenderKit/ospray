@@ -28,7 +28,13 @@ namespace ospray {
     struct TriangleMesh : public sg::Geometry {
 
       //! constructor
-      TriangleMesh() : Geometry("trianglemesh"), ospGeometry(NULL) {};
+      TriangleMesh() : Geometry("trianglemesh"), ospGeometry(NULL) {
+        // add(createNode("vertex", "DataBuffer"));
+        // add(createNode("normal", "DataBuffer"));
+        // add(createNode("color", "DataBuffer"));
+        // add(createNode("texcoord", "DataBuffer"));
+        // add(createNode("index", "DataBuffer"));
+      };
       
       /*! \brief returns a std::string with the c++ name of this class */
       virtual    std::string toString() const { return "ospray::sg::Geometry"; }
