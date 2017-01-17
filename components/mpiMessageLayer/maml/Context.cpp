@@ -255,7 +255,6 @@ namespace maml {
     has been called */
   void Context::start()
   {
-    // std::lock_guard<std::mutex> m0(mutex);
     std::lock_guard<std::mutex> m1(canDoMPIMutex);
     canDoMPICalls = true;
     canDoMPICondition.notify_one();
@@ -268,11 +267,8 @@ namespace maml {
     if they are already in flight */
   void Context::stop()
   {
-    // std::lock_guard<std::mutex> m0(mutex);
     std::lock_guard<std::mutex> m1(canDoMPIMutex);
     canDoMPICalls = false;
   }
 
-
-  
 } // ::maml
