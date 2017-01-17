@@ -406,7 +406,7 @@ namespace ospray {
       }
       void NewTexture2d::run() {
         Texture2D *texture = Texture2D::createTexture(dimensions, format, data.data(),
-                                                      flags & ~OSP_DATA_SHARED_BUFFER);
+                                                      flags & ~OSP_TEXTURE_SHARED_BUFFER);
         Assert(texture);
         handle.assign(texture);
       }
