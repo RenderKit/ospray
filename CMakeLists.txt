@@ -14,6 +14,9 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+set(CMAKE_DISABLE_SOURCE_CHANGES ON)
+set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
+
 PROJECT(OSPRay)
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
@@ -31,8 +34,16 @@ IF(POLICY CMP0054)
   CMAKE_POLICY(SET CMP0054 OLD) # since 3.1
 ENDIF()
 
+# tell all included directories that they are included from ospray
+# main...
+SET(THIS_IS_OSPRAY ON)
+
+# configure directories for components we are going to include
+SET(OSPRAY_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+SET(COMPONENTS_DIR ${OSPRAY_DIR}/components)
+SET(OSPCOMMON_DIR ${COMPONENTS_DIR}/ospcommon)
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/ospcommon/cmake)
+SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${OSPCOMMON_DIR}/cmake)
 
 ##############################################################
 # CMake modules and macro files
@@ -49,7 +60,7 @@ ENDIF()
 ##############################################################
 # the OSPRay 'common' library
 ##############################################################
-OSPRAY_ADD_SUBDIRECTORY(ospcommon)
+OSPRAY_ADD_SUBDIRECTORY(${OSPCOMMON_DIR})
 
 ##############################################################
 # OSPRay components
