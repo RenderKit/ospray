@@ -42,9 +42,9 @@ namespace ospray {
           recvThread(this),
           shouldExit(false)
       {
-        sendThread.start();
-        procThread.start();
-        recvThread.start();
+        sendThread.handle = std::thread([this](){this->sendThread.run();});
+        procThread.handle = std::thread([this](){this->procThread.run();});
+        recvThread.handle = std::thread([this](){this->recvThread.run();});
       }
 
       void BatchedIsendIrecvImpl::SendThread::run()
@@ -182,9 +182,9 @@ namespace ospray {
         std::cout << "#osp:mpi:BatchIsendIrecvMessaging:Group shutting down"
                   << std::endl;
         shouldExit.store(true);
-        sendThread.join();
-        recvThread.join();
-        procThread.join();
+        sendThread.handle.join();
+        recvThread.handle.join();
+        procThread.handle.join();
       }
 
       void BatchedIsendIrecvImpl::init()

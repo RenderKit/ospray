@@ -17,7 +17,7 @@
 #pragma once
 
 #include <mpi.h>
-#include "common/OSPCommon.h"
+#include "ospcommon/common.h"
 
 #ifdef _WIN32
 #  ifdef ospray_module_mpi_EXPORTS

@@ -26,6 +26,8 @@ namespace ospray {
   namespace mpi {
     namespace async {
 
+#define SCOPED_LOCK(a) std::lock_guard<std::mutex> _lock(a)
+      
       CommLayer *CommLayer::WORLD = nullptr;
 
       CommLayer::Object::Object(CommLayer *comm, ObjectID myID)

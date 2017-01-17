@@ -26,6 +26,7 @@
 #include <netdb.h> 
 #include <string.h>
 #include <assert.h>
+#include <sstream>
 
 #define INVALID_SOCKET -1
 

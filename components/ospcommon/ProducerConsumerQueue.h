@@ -20,9 +20,11 @@
     a mutex-protected producer-consumer queue that different threads
     can write into / pull from */
 
-#include "OSPCommon.h"
+#include "ospcommon/common.h"
 // stl
 #include <queue>
+#include <mutex>
+#include <condition_variable>
 
 namespace ospray {
 
@@ -64,10 +66,10 @@ namespace ospray {
     /*! the actual queue that holds the data */
     std::deque<T> content;
     /*! mutex to allow thread-safe access */
-    Mutex mutex;
+    std::mutex mutex;
     /*! condition that is triggered when queue is not empty. 'get'
         requests can wait on this */
-    Condition notEmptyCond;
+    std::condition_variable notEmptyCond;
   };
 
 
@@ -94,7 +96,7 @@ namespace ospray {
   {
     bool wasEmpty = false;
     {
-      SCOPED_LOCK(mutex);
+      std::lock_guard<std::mutex> lock(mutex);
       wasEmpty = content.empty();
       content.push_back(t);
     }
@@ -108,7 +110,7 @@ namespace ospray {
   {
     bool wasEmpty = false;
     {
-      SCOPED_LOCK(mutex);
+      std::lock_guard<std::mutex> lock(mutex);
       wasEmpty = content.empty();
       for (size_t i = 0; i < numTs; i++)
         content.push_back(t[i]);

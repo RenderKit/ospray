@@ -20,6 +20,11 @@
 
 namespace ospray {
   namespace mpi {
+
+    typedef int32_t int32;
+    typedef uint32_t uint32;
+    typedef int64_t int64;
+    typedef uint64_t uint64;
     
     //! abstraction for any other peer node that we might want to communicate with
     struct Address {

@@ -10,6 +10,7 @@ OSPRAY_CREATE_LIBRARY(ospray_mpi_common
   async/BatchedIsendIrecvMessaging.cpp
   
   LINK
-  
+
+  ${MPI_LIBRARIES}
   ospray_common
   )

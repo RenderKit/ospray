@@ -16,13 +16,15 @@
 
 #pragma once
 
-// ospray
+// ours
 #include "Messaging.h"
-#include "common/Thread.h"
-#include "common/ProducerConsumerQueue.h"
+// ospcommon
+#include "ospcommon/ProducerConsumerQueue.h"
 // stl
 #include <deque>
 #include <vector>
+#include <thread>
+#include <atomic>
 
 namespace ospray {
   namespace mpi {
@@ -32,8 +34,12 @@ namespace ospray {
         struct Group;
         struct Message;
 
+        struct ThreadBase {
+          std::thread handle;
+        };
+        
         /*! message _sender_ thread */
-        struct SendThread : public Thread {
+        struct SendThread : public ThreadBase {
           SendThread(Group *group) : group(group) {
 #ifdef OSPRAY_PIN_ASYNC
             embree::setAffinity(58); // 58
@@ -45,7 +51,7 @@ namespace ospray {
         };
         /*! message _probing_ thread - continuously probes for newly
             incoming messages, and puts them into recv queue */
-        struct RecvThread : public Thread {
+        struct RecvThread : public ThreadBase {
           RecvThread(Group *group) : group(group) {
 #ifdef OSPRAY_PIN_ASYNC
             embree::setAffinity(55); // 55
@@ -56,7 +62,7 @@ namespace ospray {
           Group *group;
         };
         /*! message _processing_ thread */
-        struct ProcThread : public Thread {
+        struct ProcThread : public ThreadBase {
           ProcThread(Group *group) : group(group) {
 #ifdef OSPRAY_PIN_ASYNC
             embree::setAffinity(57); // 56

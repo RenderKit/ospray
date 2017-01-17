@@ -15,6 +15,7 @@
 ## ======================================================================== ##
 
 OSPRAY_CONFIGURE_MPI()
+OSPRAY_BUILD_COMPONENT(mpiCommon)
 
 OSPRAY_CREATE_LIBRARY(ospray_mpi_service
 

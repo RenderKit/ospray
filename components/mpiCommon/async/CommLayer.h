@@ -18,6 +18,8 @@
 
 #include "Messaging.h"
 #include <map>
+#include <mutex>
+
 /*! \file ospray/mpi/async/CommLayer.h Extends the asynchronous
   messaging protocal (that can send messages asynchronously from one
   rank to another) by a communication layer that allows sending from
@@ -117,7 +119,7 @@ namespace ospray {
         static int32 workerRank(int clientID) { return 1+clientID; }
         bool IamTheMaster() const { return group->rank == masterRank(); }
         //! mutex to protect the registry
-        Mutex mutex;
+        std::mutex mutex;
         
         /*! registry that allows to lookup objects by handle. objects
           have to register themselves in order to be reachable */
