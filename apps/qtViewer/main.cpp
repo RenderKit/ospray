@@ -183,8 +183,8 @@ namespace ospray {
           }
         } else {
           FileName fn = arg;
-          if (fn.ext() == "osg" || fn.ext() == "pkd") {
-            world = sg::loadOSG(fn.str());
+          if (fn.ext() == "osp" || fn.ext() == "osg" || fn.ext() == "pkd") {
+            world = sg::loadOSP(fn.str());
             // } else if (fn.ext() == "atom") {
             //   world = sg::AlphaSpheres::importOspAtomFile(fn.str());
           } else if ((fn.ext() == "ply") || 

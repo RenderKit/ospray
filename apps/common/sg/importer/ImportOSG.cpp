@@ -1,3 +1,7 @@
+#if 0
+
+DO NOT USE - THIS CODE IS BROKEN BECAUSE IT DOESN'T USE THE SHARED_PTRS YET!!!!
+
 // ======================================================================== //
 // Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
@@ -39,7 +43,7 @@ namespace ospray {
     /*! create a node of given type if registered (and tell it to
       parse itself from that xml node), or throw an exception if
       unkown node type */
-    sg::Node *createNodeFrom(const xml::Node &node, const unsigned char *binBasePtr)
+    std::shared_ptr<sg::Node> createNodeFrom(const xml::Node &node, const unsigned char *binBasePtr)
     {
       std::map<std::string, creatorFct>::iterator it = sgNodeRegistry.find(node.name);
       creatorFct creator = NULL;
@@ -68,7 +72,7 @@ namespace ospray {
     // XLM parser
     // ==================================================================
 
-    sg::Node *parseNode(const xml::Node &node);
+    std::shared_ptr<sg::Node> parseNode(const xml::Node &node);
 
     bool parseParam(sg::Node *target, const xml::Node &node)
     {
@@ -213,3 +217,5 @@ namespace ospray {
 
   } // ::ospray::sg
 } // ::ospray
+#endif
+

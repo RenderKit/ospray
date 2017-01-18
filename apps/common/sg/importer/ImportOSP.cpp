@@ -18,6 +18,7 @@
 
 // header
 #include "SceneGraph.h"
+#include "Importer.h"
 // stl
 #include <map>
 // xml
@@ -205,5 +206,14 @@ namespace ospray {
       return world;
     }
 
+    // int registerOSP()
+    // {
+    //   PING;
+    //   declareImporterForFileExtension("osp",loadOSP);
+    //   return 1;
+    // }
+    
+    // int _registerOSP = registerOSP();
+    
   } // ::ospray::sg
 } // ::ospray
