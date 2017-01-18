@@ -261,6 +261,7 @@ export void Renderer_pick(void *uniform _self,
                                uniform bool &hit)
 {
   uniform Renderer *uniform self   = (uniform Renderer *uniform)_self;
+  uniform FrameBuffer *uniform fb  = self->fb;
   uniform Camera   *uniform camera = self->camera;
   uniform Model    *uniform model  = self->model;
 
@@ -274,6 +275,15 @@ export void Renderer_pick(void *uniform _self,
 
   Ray ray;
   camera->initRay(camera, ray, cameraSample);
+
+  if (self->maxDepthTexture) {
+    // always sample center of pixel
+    const vec2f pixel = floor(screenPos * make_vec2f(fb->size.x, fb->size.y));
+    const vec2f depthTexCoord = (pixel + 0.5f) * fb->rcpSize;
+    const float tMax = get1f(self->maxDepthTexture, depthTexCoord);
+    ray.t = min(ray.t, tMax);
+  }
+
   traceRay(model, ray);
 
   vec3f p = ray.org + ray.dir * ray.t;
