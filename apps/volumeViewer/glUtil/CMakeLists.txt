@@ -14,16 +14,16 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-OPTION(OSPRAY_MODULE_OPENGL_UTIL "Build OpenGL utility functionality" ON)
+FIND_PACKAGE(OpenGL REQUIRED)
 
-IF(OSPRAY_MODULE_OPENGL_UTIL)
-  FIND_PACKAGE(OpenGL REQUIRED)
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray)
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
-  INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray)
-  INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
+LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/modules/opengl)
 
-  LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/modules/opengl)
-
-  OSPRAY_CREATE_LIBRARY(ospray_module_opengl_util util.cpp
-    LINK ospray ${OPENGL_LIBRARIES})
-ENDIF()
+OSPRAY_CREATE_LIBRARY(ospray_opengl_util
+  util.cpp
+  LINK
+  ospray
+  ${OPENGL_LIBRARIES}
+  )

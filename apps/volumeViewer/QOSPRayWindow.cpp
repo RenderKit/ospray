@@ -17,7 +17,7 @@
 #include <string>
 
 #include "QOSPRayWindow.h"
-#include "modules/opengl/util.h"
+#include "glUtil/util.h"
 
 #ifdef __APPLE__
   #include <OpenGL/glu.h>

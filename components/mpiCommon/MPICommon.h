@@ -73,7 +73,7 @@ namespace ospray {
       Group dup() const;
 
       /*! perform a MPI_barrier on this communicator */
-      void barrier() { MPI_CALL(Barrier(comm)); }
+      void barrier() const { MPI_CALL(Barrier(comm)); }
       
       /*! whether the current process/thread is a member of this
         gorup */
