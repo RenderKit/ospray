@@ -111,7 +111,7 @@ unmasked void Renderer_default_renderTile(uniform Renderer *uniform self,
         cameraSample.lens.y = precomputedHalton5(startSampleID+s);
 
         camera->initRay(camera,screenSample.ray,cameraSample);
-        screenSample.ray.t = tMax;
+        screenSample.ray.t = min(tMax,screenSample.ray.t);
 
         self->renderSample(self,perFrameData,screenSample);
         col = col + screenSample.rgb;
