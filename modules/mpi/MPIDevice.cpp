@@ -22,6 +22,8 @@
 #include "common/Data.h"
 #include "common/Library.h"
 #include "common/Util.h"
+#include "ospcommon/sysinfo.h"
+#include "ospcommon/FileName.h"
 #include "geometry/TriangleMesh.h"
 #include "render/Renderer.h"
 #include "camera/Camera.h"
@@ -33,6 +35,7 @@
 // std
 #ifndef _WIN32
 #  include <unistd.h> // for fork()
+#  include <dlfcn.h>
 #endif
 
 
@@ -1132,8 +1135,21 @@ namespace ospray {
   } // ::ospray::mpi
 } // ::ospray
 
-extern "C" OSPRAY_DLLEXPORT void ospray_init_module_mpi()
-{
-    std::cout << "#mpi: initializing ospray MPI plugin" << std::endl;
+extern "C" OSPRAY_DLLEXPORT void ospray_init_module_mpi() {
+#ifndef _WIN32
+  using namespace ospcommon;
+#if defined(__MACOSX__)
+  const std::string fullName = "libospray_module_mpi.dylib";
+#else
+  const std::string fullName = "libospray_module_mpi.so";
+#endif
+  void *lib = dlopen(fullName.c_str(), RTLD_NOW | RTLD_NOLOAD | RTLD_GLOBAL);
+  if (!lib) {
+    FileName executable = getExecutableFileName();
+    lib = dlopen((executable.path() + fullName).c_str(), RTLD_NOW | RTLD_NOLOAD | RTLD_GLOBAL);
+  }
+  Assert(lib);
+#endif
+  std::cout << "#mpi: initializing ospray MPI plugin" << std::endl;
 }
 
