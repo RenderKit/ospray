@@ -69,8 +69,6 @@ namespace ospray {
         async_beginFrame();
 
         auto *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
-        // TODO WILL: Is it ok that all call begin frame? In master/worker
-        // before only the master would call this.
         dfb->beginFrame();
         dfb->startNewFrame(renderer->errorThreshold);
 

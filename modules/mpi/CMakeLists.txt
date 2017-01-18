@@ -26,7 +26,6 @@ IF (OSPRAY_MODULE_MPI)
 
     common/buffers.h
     common/command.h
-    common/CommandStream.h
     common/Work.cpp
     common/Core.cpp
     common/MPICommon.cpp

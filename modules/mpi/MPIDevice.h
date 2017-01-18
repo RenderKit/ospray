@@ -28,12 +28,6 @@
 namespace ospray {
   namespace mpi {
     struct MPIDevice : public api::Device {
-      // typedef ospray::mpi::CommandStream CommandStream;
-
-      // CommandStream cmd;
-
-      // typedef ospray::CommandTag CommandTag;
-
       MPIDevice();
       ~MPIDevice();
 

@@ -15,7 +15,6 @@
 // ======================================================================== //
 
 #include "mpi/common/MPICommon.h"
-#include "mpi/common/CommandStream.h"
 #include "mpi/MPIDevice.h"
 #include "common/Model.h"
 #include "common/Data.h"
@@ -109,8 +108,6 @@ namespace ospray {
         std::cerr << "#osp:init: embree internal error number "
                   << (int)rtcDeviceGetError(embreeDevice) << std::endl;
       }
-
-      // CommandStream cmd;
 
       char hostname[HOST_NAME_MAX];
       gethostname(hostname,HOST_NAME_MAX);

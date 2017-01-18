@@ -451,16 +451,6 @@ namespace ospray {
       const ObjectHandle handle = (const ObjectHandle&)_object;
       work::CommitObject work(handle);
       processWork(&work);
-      /*
-      cmd.send(handle);
-      cmd.flush();
-
-      if (handle.defined()){
-        handle.lookup()->commit();
-      }
-
-      MPI_Barrier(MPI_COMM_WORLD);
-      */
     }
 
     /*! add a new geometry to a model */
@@ -562,17 +552,6 @@ namespace ospray {
       Assert(bufName);
       work::SetParam<float> work((ObjectHandle&)_object, bufName, f);
       processWork(&work);
-      /*
-      const ObjectHandle handle = (const ObjectHandle&)_object;
-      if (handle.defined()){
-        handle.lookup()->set(bufName, f);
-      }
-
-      cmd.newCommand(CMD_SET_FLOAT);
-      cmd.send((const ObjectHandle &)_object);
-      cmd.send(bufName);
-      cmd.send(f);
-      */
     }
 
     /*! assign (named) int parameter to an object */
@@ -678,20 +657,6 @@ namespace ospray {
       ObjectHandle handle = allocateHandle();
       work::NewObject<Renderer> work(type, handle);
       processWork(&work);
-      /*
-      // TODO WILL: What to do about the special treatment of the renderer
-      // here for holding the error threshold!?
-      ObjectHandle handle = ObjectHandle::alloc();
-
-      // create renderer to hold some parameters locally (in particular
-      // errorThreshold)
-      ObjectHandle::assign(handle, new Renderer);
-
-      cmd.newCommand(CMD_NEW_RENDERER);
-      cmd.send(handle);
-      cmd.send(type);
-      cmd.flush();
-      */
       return (OSPRenderer)(int64)handle;
     }
 
@@ -972,17 +937,6 @@ namespace ospray {
       Assert2(worldCoordinates, "invalid worldCoordinates");
 
       Assert2(0, "not implemented");
-      // cmd.newCommand(CMD_SAMPLE_VOLUME);
-      // cmd.send((const ObjectHandle &) volume);
-      // cmd.send(count);
-      // cmd.send(worldCoordinates, count * sizeof(osp::vec3f));
-      // cmd.flush();
-
-      // *results = (float *)malloc(count * sizeof(float));
-      // Assert(*results);
-
-      // // for data-distributed volumes this will need to be updated...
-      // cmd.get_data(count * sizeof(float), *results, 0, mpi::worker.comm);
     }
 
     int MPIDevice::getString(OSPObject _object, const char *name, char **value)
