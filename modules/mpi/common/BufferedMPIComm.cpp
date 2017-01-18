@@ -27,17 +27,20 @@ namespace ospray {
       flush();
     }
     void BufferedMPIComm::send(const Address& addr, work::Work* work) {
-      // The packed buffer format is:
-      // size_t: size of message
-      // int: number of work units being sent
-      // [(size_t, X)...]: message tag headers followed by their data
-      if (sendBuffer.getIndex() == 0) {
-        sendSizeIndex = sendBuffer.getIndex();
-        sendBuffer << size_t(0) << int(1);
-        sendWorkIndex = sendBuffer.getIndex();
+      {
+        std::lock_guard<std::mutex> lock(sendMutex);
+        // The packed buffer format is:
+        // size_t: size of message
+        // int: number of work units being sent
+        // [(size_t, X)...]: message tag headers followed by their data
+        if (sendBuffer.getIndex() == 0) {
+          sendSizeIndex = sendBuffer.getIndex();
+          sendBuffer << size_t(0) << int(1);
+          sendWorkIndex = sendBuffer.getIndex();
+        }
+        sendBuffer << work->getTag() << *work;
+        sendNumMessages++;
       }
-      sendBuffer << work->getTag() << *work;
-      sendNumMessages++;
 
       // TODO: This is assuming we're always sending to the same place
       if (sendAddress.group != NULL && sendAddress != addr) {
@@ -64,7 +67,7 @@ namespace ospray {
         recvBuffer.reserve(bufSize);
         // If we have more than 2KB receive the data in batches as big as we can send with bcast
         for (size_t i = 2048; i < bufSize;) {
-          int to_recv = std::min(bufSize - i, MAX_BCAST);
+          const int to_recv = std::min(bufSize - i, MAX_BCAST);
           MPI_CALL(Bcast(recvBuffer.getPtr(i), to_recv, MPI_BYTE, 0, addr.group->comm));
           i += to_recv;
         }
@@ -84,6 +87,7 @@ namespace ospray {
       if (sendNumMessages == 0) {
         return;
       }
+      std::lock_guard<std::mutex> lock(sendMutex);
       const size_t sz = buf.getIndex();
       // set size in msg header
       buf.setIndex(sendSizeIndex);
@@ -98,7 +102,7 @@ namespace ospray {
 
       // If we have more than 2KB send the data in batches as big as we can send with bcast
       for (size_t i = 2048; i < sz;) {
-        int to_send = std::min(sz - i, MAX_BCAST);
+        const int to_send = std::min(sz - i, MAX_BCAST);
         MPI_CALL(Bcast(buf.getPtr(i), to_send, MPI_BYTE, MPI_ROOT, addr.group->comm));
         i += to_send;
       }

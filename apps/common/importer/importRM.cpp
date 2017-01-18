@@ -181,7 +181,9 @@ namespace ospray {
       ospSetVec3i(volume->handle, "dimensions", (osp::vec3i&)dims);
       ospSetString(volume->handle,"voxelType", "uchar");
 
-      const int numThreads = ospcommon::getNumberOfLogicalThreads();
+      // Note: API is not thread safe, even w/ the locking around the ospSetRegion call
+      // the MPI backend has issues.
+      const int numThreads = 1;
 
       double t0 = ospcommon::getSysTime();
 

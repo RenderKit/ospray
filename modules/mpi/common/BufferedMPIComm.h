@@ -37,6 +37,7 @@ namespace ospray {
       size_t sendWorkIndex = 0;
       int sendNumMessages = 0;
       work::SerialBuffer recvBuffer;
+      std::mutex sendMutex;
 
       // TODO: Do we really want to go through a singleton for this?
       // I guess it makes it easiest to provide global batching of all messages.
