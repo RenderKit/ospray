@@ -68,7 +68,7 @@ unmasked void Renderer_default_renderTile(uniform Renderer *uniform self,
 
     CameraSample cameraSample;
 
-    const float spp_inv = 1.f / spp;
+    const uniform float spp_inv = 1.f / spp;
 
     const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
     const uniform int end   = begin     + RENDERTILE_PIXELS_PER_JOB;
@@ -111,7 +111,7 @@ unmasked void Renderer_default_renderTile(uniform Renderer *uniform self,
         cameraSample.lens.y = precomputedHalton5(startSampleID+s);
 
         camera->initRay(camera,screenSample.ray,cameraSample);
-        screenSample.ray.t = tMax;
+        screenSample.ray.t = min(screenSample.ray.t, tMax);
 
         self->renderSample(self,perFrameData,screenSample);
         col = col + screenSample.rgb;
@@ -163,7 +163,8 @@ unmasked void Renderer_default_renderTile(uniform Renderer *uniform self,
         depthTexCoord.x = (screenSample.sampleID.x + 0.5f) * fb->rcpSize.x;
         depthTexCoord.y = (screenSample.sampleID.y + 0.5f) * fb->rcpSize.y;
 
-        screenSample.ray.t = get1f(self->maxDepthTexture, depthTexCoord);
+        const float tMax = get1f(self->maxDepthTexture, depthTexCoord);
+        screenSample.ray.t = min(screenSample.ray.t, tMax);
       }
 
       self->renderSample(self,perFrameData,screenSample);
