@@ -54,9 +54,9 @@ namespace ospcommon {
     }
 
     template<typename T>
-    Array3D<T> *loadRAW(const std::string &fileName, const vec3i &dims)
+    std::shared_ptr<Array3D<T>> loadRAW(const std::string &fileName, const vec3i &dims)
     {
-      ActualArray3D<T> *volume = new ActualArray3D<T>(dims);
+      std::shared_ptr<ActualArray3D<T>> volume = std::make_shared<ActualArray3D<T>>(dims);
       FILE *file = fopen(fileName.c_str(),"rb");
       if (!file)
         throw std::runtime_error("ospray::amr::loadRaw(): could not open '"+fileName+"'");
@@ -70,7 +70,7 @@ namespace ospcommon {
     }
     
     template<typename T>
-    Array3D<T> *mmapRAW(const std::string &fileName, const vec3i &dims)
+    std::shared_ptr<Array3D<T>> mmapRAW(const std::string &fileName, const vec3i &dims)
     {
 #ifdef _WIN32
       throw std::runtime_error("mmap not supported under windows");
@@ -95,7 +95,7 @@ namespace ospcommon {
                        ,fd,0);
       assert(mem != NULL && (long long)mem != -1LL);
 
-      ActualArray3D<T> *volume = new ActualArray3D<T>(dims,mem);
+      std::shared_ptr<ActualArray3D<T>> volume = std::make_shared<ActualArray3D<T>>(dims,mem);
 
       return volume;
 #endif
@@ -112,7 +112,7 @@ namespace ospcommon {
     // Array3DAccessor //
 
     template<typename in_t, typename out_t>
-    Array3DAccessor<in_t, out_t>::Array3DAccessor(const Array3D<in_t> *actual) :
+    Array3DAccessor<in_t, out_t>::Array3DAccessor(std::shared_ptr<Array3D<in_t>> actual) :
       actual(actual)
     {}
     
@@ -137,7 +137,7 @@ namespace ospcommon {
     // Array3DRepeater //
 
     template<typename T>
-    Array3DRepeater<T>::Array3DRepeater(const Array3D<T> *actual, 
+    Array3DRepeater<T>::Array3DRepeater(const std::shared_ptr<Array3D<T>> &actual, 
                                         const vec3i &repeatedSize) :
       actual(actual), repeatedSize(repeatedSize)
     {}
@@ -172,35 +172,34 @@ namespace ospcommon {
     // explicit instantiations section
     // -------------------------------------------------------
 
-    typedef uint8_t uint8;
     
-    template struct Array3D<uint8>;
+    template struct Array3D<uint8_t>;
     template struct Array3D<float>;
     template struct Array3D<double>;
-    template struct ActualArray3D<uint8>;
+    template struct ActualArray3D<uint8_t>;
     template struct ActualArray3D<float>;
     template struct ActualArray3D<double>;
 
-    template struct Array3DAccessor<uint8,uint8>;
-    template struct Array3DAccessor<float,uint8>;
-    template struct Array3DAccessor<double,uint8>;
-    template struct Array3DAccessor<uint8,float>;
+    template struct Array3DAccessor<uint8_t,uint8_t>;
+    template struct Array3DAccessor<float,uint8_t>;
+    template struct Array3DAccessor<double,uint8_t>;
+    template struct Array3DAccessor<uint8_t,float>;
     template struct Array3DAccessor<float,float>;
     template struct Array3DAccessor<double,float>;
-    template struct Array3DAccessor<uint8,double>;
+    template struct Array3DAccessor<uint8_t,double>;
     template struct Array3DAccessor<float,double>;
     template struct Array3DAccessor<double,double>;
 
-    template struct Array3DRepeater<uint8>;
+    template struct Array3DRepeater<uint8_t>;
     template struct Array3DRepeater<float>;
 
-    template Array3D<uint8>  *loadRAW(const std::string &fileName, const vec3i &dims);
-    template Array3D<float>  *loadRAW(const std::string &fileName, const vec3i &dims);
-    template Array3D<double> *loadRAW(const std::string &fileName, const vec3i &dims);
+    template std::shared_ptr<Array3D<uint8_t>> loadRAW(const std::string &fileName, const vec3i &dims);
+    template std::shared_ptr<Array3D<float>>   loadRAW(const std::string &fileName, const vec3i &dims);
+    template std::shared_ptr<Array3D<double>>  loadRAW(const std::string &fileName, const vec3i &dims);
 
-    template Array3D<uint8>  *mmapRAW(const std::string &fileName, const vec3i &dims);
-    template Array3D<float>  *mmapRAW(const std::string &fileName, const vec3i &dims);
-    template Array3D<double> *mmapRAW(const std::string &fileName, const vec3i &dims);
+    template std::shared_ptr<Array3D<uint8_t>> mmapRAW(const std::string &fileName, const vec3i &dims);
+    template std::shared_ptr<Array3D<float>>   mmapRAW(const std::string &fileName, const vec3i &dims);
+    template std::shared_ptr<Array3D<double>>  mmapRAW(const std::string &fileName, const vec3i &dims);
 
   } // ::ospcommon::array3D
 } // ::ospcommon
