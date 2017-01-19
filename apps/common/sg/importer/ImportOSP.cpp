@@ -172,7 +172,7 @@ namespace ospray {
       if (node.name == "Integrator")
         return parseIntegratorNode(node);
       std::cout << "warning: unknown sg::Node type '" << node.name << "'" << std::endl;
-      return NULL;
+      return nullptr;
     }
 
     std::shared_ptr<sg::World> loadOSP(const std::string &fileName)
