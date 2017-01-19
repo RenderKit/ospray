@@ -211,6 +211,12 @@ SET(OSPRAY_SOURCES
 # -------------------------------------------------------
 
 OSPRAY_INSTALL_SDK_HEADERS(
+  api/Device.h
+  api/LocalDevice.h
+  DESTINATION api
+)
+
+OSPRAY_INSTALL_SDK_HEADERS(
   camera/Camera.h
   camera/Camera.ih
   camera/OrthographicCamera.h
