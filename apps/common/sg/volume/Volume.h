@@ -88,6 +88,7 @@ namespace ospray {
       SG_NODE_DECLARE_MEMBER(std::string,fileName,FileName);    
       SG_NODE_DECLARE_MEMBER(std::string,voxelType,ScalarType);    
 
+    public:
       //! \brief file name of the xml doc when the node was loaded/parsed from xml 
       /*! \detailed we need this to properly resolve relative file names */
       FileName fileNameOfCorrespondingXmlDoc;

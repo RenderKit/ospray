@@ -175,6 +175,43 @@ namespace ospray {
       return std::shared_ptr<sg::Node>();
     }
 
+    std::shared_ptr<sg::World> importOSPVolumeViewerFile(std::shared_ptr<xml::XMLDoc> doc)
+    {
+      std::shared_ptr<sg::World> world = std::make_shared<sg::World>();
+      std::shared_ptr<sg::StructuredVolumeFromFile> volume
+        = std::make_shared<sg::StructuredVolumeFromFile>();
+
+      vec3i dimensions(-1);
+      std::string fileName = "";
+      std::string voxelType = "";
+      xml::for_each_child_of(*doc->child[0],[&](const xml::Node &child){
+          if (child.name == "dimensions")
+            dimensions = toVec3i(child.content.c_str());
+          else if (child.name == "voxelType")
+            voxelType = child.content;
+          else if (child.name == "filename")
+            fileName = child.content;
+          else if (child.name == "samplingRate") {
+            std::cout << "#osp.sg: cowardly refusing to parse 'samplingRate'" << std::endl;
+            std::cout << "#osp.sg: (note this should be OK)" << std::endl;
+          } else
+            throw std::runtime_error("unknown old-style osp file component volume::" + child.name);
+        });
+      std::cout << "#osp.sg: parsed old-style osp file as: " << std::endl;
+      std::cout << "  fileName   = " << fileName << std::endl;
+      std::cout << "  voxelType  = " << voxelType << std::endl;
+      std::cout << "  dimensions = " << dimensions << std::endl;
+      std::cout << "  path       = " << doc->fileName.path() << std::endl;
+      volume->setTransferFunction(std::make_shared<TransferFunction>());
+      volume->fileNameOfCorrespondingXmlDoc = doc->fileName;
+      volume->setFileName(fileName);
+      volume->setDimensions(dimensions);
+      volume->setScalarType(voxelType);
+      
+      world->add(volume);
+      return world;
+    }
+
     std::shared_ptr<sg::World> loadOSP(const std::string &fileName)
     {
       std::shared_ptr<xml::XMLDoc> doc;
@@ -182,6 +219,23 @@ namespace ospray {
       cout << "#osp:sg: starting to read OSPRay XML file '" << fileName << "'" << endl;
       doc = xml::readXML(fileName);
       cout << "#osp:sg: XML file read, starting to parse content..." << endl;
+      assert(doc);
+
+      if (doc->child.empty())
+        throw std::runtime_error("ospray xml input file does not contain any nodes!?");
+
+#if 1
+      PRINT(doc->child[0]->name);
+      /* TEMPORARY FIX while we transition old volumeViewer .osp files
+         (that are not in scene graph format) to actual scene graph */
+      if (doc->child[0]->name == "volume") {
+        std::cout << "#osp.sg: Seems the file we are parsing is actually not a " << endl;
+        std::cout << "#osp.sg: ospray scene graph file, but rather a (older) " << endl;
+        std::cout << "#osp.sg: ospVolumeViewer input file. Herocically trying to " << endl;
+        std::cout << "#osp.sg: convert this to scene graph while loading. " << endl;
+        return importOSPVolumeViewerFile(doc);
+      }
+#endif
 
       const std::string binFileName = fileName+"bin";
       const unsigned char * const binBasePtr = mapFile(binFileName);
@@ -206,14 +260,5 @@ namespace ospray {
       return world;
     }
 
-    // int registerOSP()
-    // {
-    //   PING;
-    //   declareImporterForFileExtension("osp",loadOSP);
-    //   return 1;
-    // }
-    
-    // int _registerOSP = registerOSP();
-    
   } // ::ospray::sg
 } // ::ospray
