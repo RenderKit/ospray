@@ -32,6 +32,7 @@ struct TriangleMesh {
   uint32   *prim_materialID;     // per-primitive material ID
   Material *uniform *materialList;  // list of materials, if multiple materials are assigned to this mesh.
   int32     geom_materialID;     // per-object material ID
+  bool      has_alpha;     // 4th color component is valid
   bool      huge_mesh;     // need 64-bit addressing
 };
 
