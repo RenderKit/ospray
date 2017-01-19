@@ -17,3 +17,4 @@ embree
 ispc
 ospray-doc
 modules
+!modules/mpi
