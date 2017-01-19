@@ -26,9 +26,11 @@ IF (OSPRAY_MODULE_MPI)
 
     common/buffers.h
     common/command.h
-    common/CommandStream.h
+    common/Work.cpp
     common/Core.cpp
     common/MPICommon.cpp
+    common/BufferedMPIComm.cpp
+    common/command.cpp
     common/async/Messaging.cpp
     common/async/SimpleSendRecvMessaging.cpp
     common/async/MultiIsendIrecvMessaging.cpp

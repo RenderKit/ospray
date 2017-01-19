@@ -69,11 +69,14 @@ namespace ospray {
         async_beginFrame();
 
         auto *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
+        dfb->beginFrame();
         dfb->startNewFrame(renderer->errorThreshold);
 
         void *perFrameData = renderer->beginFrame(fb);
 
         const int ALLTASKS = fb->getTotalTiles();
+        // TODO WILL: In collaborative mode rank 0 should join the worker group
+        // as well so this worker should actually just be worker as before
         int NTASKS = ALLTASKS / worker.size;
 
         // NOTE(jda) - If all tiles do not divide evenly among all worker ranks

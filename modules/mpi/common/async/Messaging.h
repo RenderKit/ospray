@@ -22,18 +22,7 @@
 namespace ospray {
   namespace mpi {
     
-    //! abstraction for any other peer node that we might want to communicate with
-    struct Address {
-      //! group that this peer is in
-      Group *group;
-      //! this peer's rank in this group
-      int32  rank;
-        
-      Address(Group *group=NULL, int32 rank=-1)
-        : group(group), rank(rank)
-      {}
-      inline bool isValid() const { return group != NULL && rank >= 0; }
-    };
+
 
     // void initMPI(int &ac, char **&av);
     
@@ -100,5 +89,7 @@ namespace ospray {
       /*! @} */
 
     } // ::ospray::mpi::async
+
+
   } // ::ospray::mpi
 } // ::ospray

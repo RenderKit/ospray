@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <memory>
 #include <mpi.h>
 #include "common/OSPCommon.h"
 
@@ -89,16 +90,76 @@ namespace ospray {
       int size {-1};
     };
 
-    OSPRAY_MPI_INTERFACE extern Group world; //! MPI_COMM_WORLD
-    OSPRAY_MPI_INTERFACE extern Group app; /*! for workers: intracommunicator to app
-                        for app: intercommunicator among app processes
-                      */
-    OSPRAY_MPI_INTERFACE extern Group worker; /*!< group of all ospray workers (often the
-                           world root is reserved for either app or
-                           load balancing, and not part of the worker
-                           group */
+    // //! abstraction for any other peer node that we might want to communicate with
+    struct Address {
+      //! group that this peer is in
+      Group *group;
+      //! this peer's rank in this group
+      int32  rank;
+        
+      Address(Group *group=NULL, int32 rank=-1)
+        : group(group), rank(rank)
+      {}
+      inline bool isValid() const { return group != NULL && rank >= 0; }
+    };
+    inline bool operator==(const Address &a, const Address &b) {
+      return a.group == b.group && a.rank == b.rank;
+    }
+    inline bool operator!=(const Address &a, const Address &b) {
+      return !(a == b);
+    }
 
+    //special flags for sending and reciving from all ranks instead of individuals
+    const int32 SEND_ALL=-1;
+    const int32 RECV_ALL=-1;
+
+    //     //! abstraction for any other peer node that we might want to communicate with
+    // struct Address {
+    //   //! group that this peer is in
+    //   Group *group;
+    //   //! this peer's rank in this group
+    //   int32  rank;
+        
+    //   Address(Group *group=NULL, int32 rank=-1)
+    //     : group(group), rank(rank)
+    //   {}
+    //   inline bool isValid() const { return group != NULL && rank >= 0; }
+    // };
+
+    // struct Message {
+    //     Address     addr;
+    //     void       *ptr;
+    //     int32       size;
+    //     MPI_Request request; //! request for MPI_Test
+    //     int         done;    //! done flag for MPI_Test
+    //     MPI_Status  status;  //! status for MPI_Test
+    // };
+
+    //! MPI_COMM_WORLD
+    OSPRAY_MPI_INTERFACE extern Group world;
+    /*! for workers: intracommunicator to app
+      for app: intercommunicator among app processes
+      */
+    OSPRAY_MPI_INTERFACE extern Group app;
+    /*!< group of all ospray workers (often the
+      world root is reserved for either app or
+      load balancing, and not part of the worker
+      group */
+    OSPRAY_MPI_INTERFACE extern Group worker;
+
+    // Initialize OSPRay's MPI groups
     OSPRAY_MPI_INTERFACE void init(int *ac, const char **av);
+
+    namespace work {
+      struct Work;
+    }
+
+    // OSPRAY_INTERFACE void send(const Address& address, void* msgPtr, int32 msgSize);
+    OSPRAY_MPI_INTERFACE void send(const Address& addr, work::Work* work);
+    OSPRAY_MPI_INTERFACE void recv(const Address& addr, std::vector<work::Work*>& work);  //TODO: callback?
+    // OSPRAY_INTERFACE void send(const Address& addr, )
+    OSPRAY_MPI_INTERFACE void flush();
+    OSPRAY_MPI_INTERFACE void barrier(const Group& group);
   }
 
 } // ::ospray
