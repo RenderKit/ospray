@@ -20,6 +20,7 @@
 #include "Range.h"
 #include "for_each.h"
 #include <sstream>
+#include <vector>
 
 namespace ospcommon {
   namespace array3D {
