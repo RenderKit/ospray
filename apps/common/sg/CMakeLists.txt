@@ -28,6 +28,7 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
 
   common/Common.cpp
   common/Node.cpp
+  common/Light.cpp
   common/Integrator.cpp
   common/World.cpp
   common/Texture2D.cpp

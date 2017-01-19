@@ -26,8 +26,8 @@ namespace ospray {
     {
       create(); 
 
-      add(createNode("from", "vec3f", from));
-      add(createNode("at", "vec3f", at));
+      add(createNode("pos", "vec3f", from));
+      add(createNode("dir", "vec3f", at));
       add(createNode("up", "vec3f", up));
       add(createNode("aspect", "float", aspect));
       add(createNode("fovy", "float", fovy));
@@ -45,6 +45,19 @@ namespace ospray {
       ospSetf(ospCamera,"fovy",fovy);
       ospCommit(ospCamera);      
     }
+
+    void PerspectiveCamera::postCommit(RenderContext &ctx)
+    {
+      if (!ospCamera) create(); 
+      
+      ospSetVec3f(ospCamera,"pos",(const osp::vec3f&)getChild("pos")->getValue<vec3f>());
+      ospSetVec3f(ospCamera,"dir",(const osp::vec3f&)getChild("dir")->getValue<vec3f>());
+      ospSetVec3f(ospCamera,"up",(const osp::vec3f&)getChild("up")->getValue<vec3f>());
+      ospSetf(ospCamera,"aspect",getChild("aspect")->getValue<float>());
+      ospSetf(ospCamera,"fovy",getChild("fovy")->getValue<float>());
+      ospCommit(ospCamera);  
+    }
+
     OSP_REGISTER_SG_NODE(PerspectiveCamera);
     
   } // ::ospray::sg

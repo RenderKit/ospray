@@ -21,8 +21,10 @@
 namespace ospray {
   namespace sg {
     class FrameBuffer;
-    struct Renderer : public RefCount {
-      Renderer();
+    struct Renderer : public Node {
+      Renderer(); 
+      virtual void preTraverse(RenderContext &ctx, const std::string& operation);
+      virtual void postTraverse(RenderContext &ctx, const std::string& operation);
 
       /*! re-start accumulation (for progressive rendering). make sure
           that this function gets called at lesat once every time that
@@ -53,6 +55,9 @@ namespace ospray {
       /*! render a frame. return 0 if successful, any non-zero number if not */
       virtual int renderFrame();
 
+      void preCommit(RenderContext &ctx);
+      void postCommit(RenderContext &ctx);
+
       // =======================================================
       // state variables
       // =======================================================
@@ -60,6 +65,8 @@ namespace ospray {
       Ref<sg::Camera>      camera;
       Ref<sg::FrameBuffer> frameBuffer;
       Ref<sg::Integrator>  integrator;
+      OSPRenderer ospRenderer;
+      TimeStamp frameMTime;
       // Ref<Frame>  frame;
 
       // state variables
@@ -70,27 +77,9 @@ namespace ospray {
           time they are instanced */
       Serialization allNodes;
 
+      OSPRenderer getOSPHandle() const { return ospRenderer; }
       //! accumulation ID
       size_t accumID;
-    };
-
-
-    struct RendererNode : public Node
-    {
-      RendererNode() {
-      add(createNode("world", "World"));
-      add(createNode("camera", "PerspectiveCamera"));
-      add(createNode("framebuffer", "FrameBuffer"));
-      add(createNode("lights"));
-
-      //TODO: move these to seperate SciVisRenderer
-      add(createNode("shadowsEnabled", "bool"));
-      add(createNode("maxDepth", "int"));
-      add(createNode("aoSamples", "int"));
-      add(createNode("aoDistance", "float"));
-      add(createNode("aoWeight", "float"));
-      add(createNode("oneSidedLighting", "bool"));
-      }
     };
   }
 }

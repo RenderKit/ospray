@@ -204,6 +204,104 @@ namespace ospray {
       //std::cout << "#qtViewer 'rendered' mesh\n";
     }
 
+    void TriangleMesh::preRender(RenderContext &ctx)
+    {
+      ospAddGeometry(ctx.world->ospModel,ospGeometry);
+    }
+
+    void TriangleMesh::postCommit(RenderContext &ctx)
+    {
+         if (ospGeometry) return;
+
+      assert(ctx.world);
+      assert(ctx.world->ospModel);
+
+      ospGeometry = ospNewGeometry("trianglemesh");
+      // set vertex data
+      if (vertex && vertex->notEmpty())
+        ospSetData(ospGeometry,"vertex",vertex->getOSP());
+      if (normal && normal->notEmpty())
+        ospSetData(ospGeometry,"vertex.normal",normal->getOSP());
+      if (texcoord && texcoord->notEmpty())
+        ospSetData(ospGeometry,"vertex.texcoord",texcoord->getOSP());
+      // set index data
+      if (index && index->notEmpty())
+        ospSetData(ospGeometry,"index",index->getOSP());
+
+#if 1
+      OSPMaterial mat = NULL;
+      // try to generate ospray material from the sg material stored with this object
+      if (material) {
+        material->render(ctx);
+        mat = material->ospMaterial;
+      }
+      PING; PRINT(mat);
+      
+      // if object couldt generate a valid material, create a default one
+      if (!mat) {
+        std::cout << "#osp:sg: no material on object, creating default one" << std::endl;
+        mat = ospNewMaterial(ctx.ospRenderer?ctx.ospRenderer:NULL,"default");
+        assert(mat);
+        vec3f kd(.7f);
+        vec3f ks(.3f);
+        ospSet3fv(mat,"kd",&kd.x);
+        ospSet3fv(mat,"ks",&ks.x);
+        ospSet1f(mat,"Ns",99.f);
+        ospCommit(mat);
+      }
+      assert(mat);
+      ospSetMaterial(ospGeometry,mat);
+#else
+      // assign a default material (for now.... eventually we might
+      // want to do a 'real' material
+      OSPMaterial mat = ospNewMaterial(ctx.integrator?ctx.integrator->getOSPHandle():NULL,"default");
+      if (mat) {
+        vec3f kd(.7f);
+        vec3f ks(.3f);
+        ospSet3fv(mat,"kd",&kd.x);
+        ospSet3fv(mat,"ks",&ks.x);
+        ospSet1f(mat,"Ns",99.f);
+        ospCommit(mat);
+      }
+      ospSetMaterial(ospGeometry,mat);
+#endif
+
+      ospCommit(ospGeometry);
+      std::cout << __PRETTY_FUNCTION__ << std::endl;
+
+
+// {  //tutorial data test
+//   // triangle mesh data
+//   float vertex[] = { -1.0f, -1.0f, 3.0f, 0.f,
+//                      -1.0f,  1.0f, 3.0f, 0.f,
+//                       1.0f, -1.0f, 3.0f, 0.f,
+//                       0.1f,  0.1f, 0.3f, 0.f };
+//   float color[] =  { 0.9f, 0.5f, 0.5f, 1.0f,
+//                      0.8f, 0.8f, 0.8f, 1.0f,
+//                      0.8f, 0.8f, 0.8f, 1.0f,
+//                      0.5f, 0.9f, 0.5f, 1.0f };
+//   int32_t index[] = { 0, 1, 2,
+//                       1, 2, 3 };
+
+//         // create and setup model and mesh
+//   OSPGeometry mesh = ospNewGeometry("triangles");
+//   OSPData data = ospNewData(4, OSP_FLOAT3A, vertex); // OSP_FLOAT3 format is also supported for vertex positions
+//   ospCommit(data);
+//   ospSetData(mesh, "vertex", data);
+
+//   data = ospNewData(4, OSP_FLOAT4, color);
+//   ospCommit(data);
+//   ospSetData(mesh, "vertex.color", data);
+
+//   data = ospNewData(2, OSP_INT3, index); // OSP_INT4 format is also supported for triangle indices
+//   ospCommit(data);
+//   ospSetData(mesh, "index", data);
+
+//   ospCommit(mesh);
+//   ospGeometry = mesh;
+//   }
+}
+
     OSP_REGISTER_SG_NODE(TriangleMesh);
 
   } // ::ospray::sg

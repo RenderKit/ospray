@@ -152,6 +152,7 @@ namespace ospray {
     private:
 
       FileName path;
+      FileName fullPath;
 
       /*! Geometry buffer. */
       std::vector<vec3f> v;
@@ -186,7 +187,8 @@ namespace ospray {
     OBJLoader::OBJLoader(World *world, const FileName &fileName) 
       : world(world),
         curMaterial(NULL),
-        path(fileName.path())
+        path(fileName.path()),
+        fullPath(fileName)
     {
       /* open file */
       std::ifstream cin;
@@ -472,13 +474,19 @@ namespace ospray {
       if (curGroup.empty()) return;
 
       std::map<Vertex, uint32_t> vertexMap;
-      TriangleMesh *mesh = new TriangleMesh;
+      // TriangleMesh *mesh = new TriangleMesh;
+      //scenegraph
+      world->add(createNode(fullPath.name(), "TriangleMesh"));
+      TriangleMesh* mesh = static_cast<TriangleMesh*>(world->getChild(fullPath.name()).node.ptr);
+      //TODO: add vertices etc as nodes
+
       mesh->vertex = new DataVector3f;
       mesh->normal = new DataVector3f;
       mesh->texcoord = new DataVector2f;
       mesh->index =  new DataVector3i;
       mesh->material = curMaterial;
       world->node.push_back(mesh);
+
 
       // merge three indices into one
       for (size_t j=0; j < curGroup.size(); j++) {

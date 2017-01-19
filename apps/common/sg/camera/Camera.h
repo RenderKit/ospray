@@ -34,12 +34,20 @@ namespace ospray {
         if (ospCamera) destroy();
         ospCamera = ospNewCamera(type.c_str());
         commit();
+        setValue((OSPObject)ospCamera);
       };
       virtual void commit() {}
       virtual void destroy() {
         if (!ospCamera) return;
         ospRelease(ospCamera);
         ospCamera = 0;
+      }
+
+      virtual void postCommit(RenderContext &ctx)
+      {
+        if (!ospCamera)
+          create();
+        ospCommit(ospCamera);
       }
 
       OSPCamera ospCamera;

@@ -46,10 +46,15 @@ namespace ospray {
     //     std::string vstring;
     //   };
     // };
-    typedef variant<ospcommon::vec3f, ospcommon::vec2f, ospcommon::vec2i, ospcommon::box3f, std::string,
-     float, bool, int, 
-     OSPModel, OSPGeometry, OSPMaterial, OSPFrameBuffer, OSPDataType>
-      SGVar;
+    struct NullType {
+    };
+    bool operator==(const NullType& lhs, const NullType& rhs);
+    typedef variant<NullType, 
+      // OSPRenderer, OSPModel, OSPCamera, OSPGeometry, OSPMaterial, OSPFrameBuffer, OSPDataType,
+      OSPObject,
+      ospcommon::vec3f, ospcommon::vec2f, ospcommon::vec2i, ospcommon::box3f, std::string,
+      float, bool, int> SGVar;
+    bool isValid(SGVar var);
 
 
     /*! forward decl of entity that nodes can write to when writing XML files */
@@ -101,20 +106,27 @@ namespace ospray {
       World         *world;      //!< world we're rendering into
       Integrator    *integrator; //!< integrator used to create materials etc
       const affine3f xfm;        //!< affine geometry transform matrix
+      OSPRenderer ospRenderer;
+      int level;
 
       //! create a new context
-      RenderContext() : world(NULL), integrator(NULL), xfm(one) {};
+      RenderContext() : world(NULL), integrator(NULL), xfm(one),level(0) {};
 
       //! create a new context with new transformation matrix
       RenderContext(const RenderContext &other, const affine3f &newXfm)
-        : world(other.world), integrator(other.integrator), xfm(newXfm)
+        : world(other.world), integrator(other.integrator), xfm(newXfm),level(0)
       {}
+
+      TimeStamp MTime;
+      TimeStamp getMTime() { return MTime; }
+      TimeStamp childMTime;
+      TimeStamp getChildMTime() { return childMTime; }
     };
 
     /*! \brief base node of all scene graph nodes */
     struct Node : public RefCount
     {
-      Node() : lastModified(1), lastCommitted(0), name("NULL"), type("Node") {};
+      Node() : lastModified(TimeStamp::now()), childrenMTime(TimeStamp::now()), lastCommitted(0), name("NULL"), type("Node") {};
 
       virtual    std::string toString() const {}
       std::shared_ptr<sg::Param> getParam(const std::string &name) const;
@@ -157,7 +169,7 @@ namespace ospray {
       virtual void render(RenderContext &ctx) {};
 
       /*! \brief 'commit' updates */
-      virtual void commit() {};
+      virtual void commit() {} 
 
       /*! \brief return bounding box in world coordinates.
 
@@ -169,9 +181,13 @@ namespace ospray {
 
       //! return when this node was last modified
       inline TimeStamp getLastModified()  const { return lastModified; };
+      inline TimeStamp getChildrenLastModified() { return childrenMTime;}
 
       //! return when this node was last committed
       inline TimeStamp getLastCommitted() const { return lastCommitted; };
+
+      inline void modified() { lastModified = TimeStamp::now(); if (parent.isValid()) parent->setChildrenModified(lastModified);}
+      void setChildrenModified(TimeStamp t) { if (t >childrenMTime) {childrenMTime = t; if (parent.isValid()) parent->setChildrenModified(childrenMTime);} }
 
       class NodeH
       {
@@ -179,10 +195,14 @@ namespace ospray {
         NodeH(Ref<sg::Node> n=nullptr) : node(n) {}
         Ref<sg::Node> node;
         NodeH operator[] (std::string c) { return node->getChild(c);}
-        NodeH operator+= (NodeH n) { node->add(n); return n;}
+        NodeH operator+= (NodeH n) { node->add(n); n->setParent(*this); return n;}
         Ref<sg::Node> operator-> ()
         {
           return node;
+        }
+        bool isValid() const
+        {
+          return node.ptr != nullptr;
         }
       };
 
@@ -196,12 +216,21 @@ namespace ospray {
             result.push_back(child.second);
           return result; }
       NodeH operator[] (std::string c) { return getChild(c);}
+      NodeH getParent() { return parent; }
+      void setParent(const NodeH& p) { parent = p; }
       std::map<std::string, NodeH > children;
-      SGVar getValue() { return value; }
-      void setValue(SGVar val) { value = val; }
-      virtual void add(Ref<sg::Node> node) { children[node->name] = NodeH(node); }
-      virtual void add(NodeH node) { children[node->name] = node; }
-      virtual void build();
+      const SGVar getValue() { return value; }
+      template<typename T> const T& getValue() { return value.get<T>(); }
+      void setValue(SGVar val) { if (val != value) modified(); value = val; }
+      virtual void add(Ref<sg::Node> node) { children[node->name] = NodeH(node); node->setParent(NodeH(this)); }
+      virtual void add(NodeH node) { children[node->name] = node; node->setParent(NodeH(this)); }
+      virtual void traverse(RenderContext &ctx, const std::string& operation);
+      virtual void preTraverse(RenderContext &ctx, const std::string& operation);
+      virtual void postTraverse(RenderContext &ctx, const std::string& operation);
+      virtual void preCommit(RenderContext &ctx) {}
+      virtual void postCommit(RenderContext &ctx);
+      virtual void preRender(RenderContext &ctx) {}
+      virtual void postRender(RenderContext &ctx) {}
       void setName(std::string v) { name = v; }
       std::string getName() { return name; }
       std::string getType() { return type; }
@@ -209,8 +238,10 @@ namespace ospray {
     protected:
       SGVar value;
       TimeStamp lastModified;
+      TimeStamp childrenMTime;
       TimeStamp lastCommitted;
       std::map<std::string, std::shared_ptr<sg::Param> > params;
+      NodeH parent;
     };
 
     /*! read a given scene graph node from its correspondoing xml node represenation */
@@ -224,20 +255,47 @@ namespace ospray {
     void registerNamedNode(const std::string &name, Ref<sg::Node> node);
 
     typedef Node::NodeH NodeH;
-    Node::NodeH createNode(std::string name, std::string type="Node", SGVar var=0);
+    Node::NodeH createNode(std::string name, std::string type="Node", SGVar var=NullType());
     // , std::shared_ptr<sg::Param>=std::make_shared<sg::Param>("none")
 
+    template <typename T>
+    struct NodeParamCommit
+    {
+      static void commit(Node* n);
+    };
+
+    template <typename T>
+    void NodeParamCommit<T>::commit(Node* n) {
+      // ospSet1f(parent->getValue<OSPObject>(), getName().c_str(), getValue<float>());
+    }
+
+    template <>
+    inline void NodeParamCommit<float>::commit(Node* n) {
+      ospSet1f(n->getParent()->getValue<OSPObject>(), n->getName().c_str(), n->getValue<float>());
+    }
+    template <>
+    inline void NodeParamCommit<bool>::commit(Node* n) {
+      ospSet1i(n->getParent()->getValue<OSPObject>(), n->getName().c_str(), n->getValue<bool>());
+    }
+    template <>
+    inline void NodeParamCommit<int>::commit(Node* n) {
+      ospSet1i(n->getParent()->getValue<OSPObject>(), n->getName().c_str(), n->getValue<int>());
+    }
+    template <>
+    inline void NodeParamCommit<vec3f>::commit(Node* n) {
+      ospSet3fv(n->getParent()->getValue<OSPObject>(), n->getName().c_str(), &n->getValue<vec3f>().x);
+    }
 
     template <typename T>
     struct NodeParam : public Node {
       NodeParam() { setValue(T()); }
-    };
-
-    struct Light : public Node {
-      Light() { add(sg::createNode("color", "vec3f", ospcommon::vec3f(1,1,1))); }
-    };
-    struct DirectionalLight : public Light {
-      DirectionalLight() { add(sg::createNode("direction", "vec3f", ospcommon::vec3f(-.3f,-.2f,.6f))); }
+      virtual void postCommit(RenderContext &ctx) { 
+          if (parent.isValid())
+          {
+            if (parent->getValue().is<OSPObject>() == true) //TODO: generalize to other types of ManagedObject
+              NodeParamCommit<T>::commit(this);
+          }
+      }
     };
 
     /*! \brief registers a internal ospray::<ClassName> renderer under

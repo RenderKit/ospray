@@ -53,6 +53,8 @@ namespace ospray {
     template<> OSPDataType ParamT<Ref<Texture2D> >::getOSPDataType() const
     { return OSP_TEXTURE; }
 
+    bool operator==(const NullType& lhs, const NullType& rhs) {return true;}
+
     // ==================================================================
     // sg node implementations
     // ==================================================================
@@ -71,17 +73,66 @@ namespace ospray {
     };
 
 
-    void Node::build()
+    void Node::traverse(RenderContext &ctx, const std::string& operation)
     {
-        std::cout << "node: " << name << std::endl;
+        //TODO: make child m time propagate
+        TimeStamp childMTime = 1;
+        ctx.childMTime = childMTime;
+        preTraverse(ctx, operation);
+        ctx.level++;
         for (auto child : children)
-            child.second->build();
+        {
+            child.second->traverse(ctx,operation);
+        }
+        ctx.level--;
+        ctx.childMTime = getChildrenLastModified();
+        postTraverse(ctx, operation);
+    }
+
+    void Node::preTraverse(RenderContext &ctx, const std::string& operation)
+    {
+      if (operation == "print")
+      {
+        for (int i=0;i<ctx.level;i++)
+          std::cout << "  ";
+        std::cout << name << " : " << type << "\n";
+      }
+      else if (operation == "commit")
+      {
+        preCommit(ctx);
+      }
+      else if (operation == "render")
+      {
+        preRender(ctx);
+      }
+    }
+
+    void Node::postTraverse(RenderContext &ctx, const std::string& operation)
+    {
+      if (operation == "commit" && (getLastModified() >= getLastCommitted() || getChildrenLastModified() >= getLastCommitted()))
+      {
+        postCommit(ctx);
+        lastCommitted = TimeStamp::now();
+      }
+      else if (operation == "render")
+      {
+        postRender(ctx);
+      }
+    }
+
+    void Node::postCommit(RenderContext &ctx)
+    {            
+        // for (int i=0;i<ctx.level;i++)
+          // std::cout << "  ";
+        // std::cout << "commit: " << name << " : " << type << "\n";
     }
 
 
     // ==================================================================
     // global struff
     // ==================================================================
+
+    bool valid(SGVar var) { return var.which() > 0; }
 
     
     OSP_REGISTER_SG_NODE(Node);
@@ -124,12 +175,11 @@ namespace ospray {
       assert(newNode);
       newNode->setName(name);
       newNode->setType(type);
-      newNode->setValue(var);
+      if (valid(var))
+          newNode->setValue(var);
       return Node::NodeH(newNode);
     }
 
-    OSP_REGISTER_SG_NODE(Light);
-    OSP_REGISTER_SG_NODE(DirectionalLight);
     OSP_REGISTER_SG_NODE_NAME(NodeParam<vec3f>, vec3f);
     OSP_REGISTER_SG_NODE_NAME(NodeParam<vec2f>, vec2f);
     OSP_REGISTER_SG_NODE_NAME(NodeParam<vec2i>, vec2i);
@@ -138,8 +188,9 @@ namespace ospray {
     OSP_REGISTER_SG_NODE_NAME(NodeParam<bool>, bool);
     OSP_REGISTER_SG_NODE_NAME(NodeParam<std::string>, string);
     OSP_REGISTER_SG_NODE_NAME(NodeParam<box3f>, box3f);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<OSPModel>, OSPModel);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<OSPMaterial>, OSPMaterial);
-    OSP_REGISTER_SG_NODE_NAME(NodeParam<OSPGeometry>, OSPGeometry);
+    OSP_REGISTER_SG_NODE_NAME(NodeParam<OSPObject>, OSPObject);
+    // OSP_REGISTER_SG_NODE_NAME(NodeParam<OSPMaterial>, OSPMaterial);
+    // OSP_REGISTER_SG_NODE_NAME(NodeParam<OSPGeometry>, OSPGeometry);
+
   }
 }

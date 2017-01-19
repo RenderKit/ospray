@@ -27,7 +27,7 @@ namespace ospray {
     struct World : public sg::Node {
       World() : ospModel(NULL) {
         add(createNode("bounds", "box3f"));
-        add(createNode("model", "OSPModel"));
+        add(createNode("model", "OSPObject", (OSPModel*)NULL));
       };
 
       /*! \brief returns a std::string with the c++ name of this class */
@@ -49,6 +49,10 @@ namespace ospray {
         for which that does not apply can simpy return
         box3f(embree::empty) */
       virtual box3f getBounds();
+      virtual void preCommit(RenderContext &ctx);
+      virtual void postCommit(RenderContext &ctx);
+      virtual void preRender(RenderContext &ctx);
+      virtual void postRender(RenderContext &ctx);
 
       // template<typename T>
       // inline void add(const Ref<T> &t) { add(t.ptr); }

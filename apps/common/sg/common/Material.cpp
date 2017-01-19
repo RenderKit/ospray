@@ -28,7 +28,7 @@ namespace ospray {
         name(""),
         type("")
     {
-      add(createNode("ospMaterial", "OSPMaterial"));
+      add(createNode("ospMaterial", "OSPObject"));
       add(createNode("name", "string"));
       add(createNode("type", "string"));
     }
@@ -40,6 +40,7 @@ namespace ospray {
       PING;
       PRINT(ctx.integrator->toString());
       ospMaterial = ospNewMaterial(ctx.integrator->getOSPHandle(), type.c_str());
+      setValue((OSPObject)ospMaterial);
 
       //We failed to create a material of the given type, handle it
       if (!ospMaterial) {

@@ -23,9 +23,24 @@ namespace ospray {
     using std::cout;
     using std::endl;
 
+
     Renderer::Renderer()
-      // : ospFrameBuffer(NULL)
-    {}
+    {
+        add(createNode("world", "World"));
+        add(createNode("camera", "PerspectiveCamera"));
+        add(createNode("frameBuffer", "FrameBuffer"));
+        add(createNode("lights"));
+
+      //TODO: move these to seperate SciVisRenderer
+        add(createNode("shadowsEnabled", "bool", true));
+        add(createNode("maxDepth", "int", 5));
+        add(createNode("aoSamples", "int", 1));
+        add(createNode("aoDistance", "float", 1.f));
+        add(createNode("aoWeight", "float", 1.f));
+        add(createNode("oneSidedLighting", "bool",true));
+
+        ospRenderer = nullptr;
+      }
 
     int Renderer::renderFrame()
     { 
@@ -166,7 +181,77 @@ namespace ospray {
       }
       return NULL;
     }
-    OSP_REGISTER_SG_NODE_NAME(RendererNode, Renderer);
+
+    void Renderer::preTraverse(RenderContext &ctx, const std::string& operation)
+    {
+      Node::preTraverse(ctx, operation);
+    }
+
+    void Renderer::postTraverse(RenderContext &ctx, const std::string& operation)
+    {
+      Node::postTraverse(ctx, operation);
+      if (operation == "render")
+      {
+
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+
+        ospSetObject(ospRenderer,"world", getChild("world")->getValue<OSPObject>());
+        ospSetObject(ospRenderer,"model", getChild("world")->getValue<OSPObject>());
+        ospSetObject(ospRenderer,"camera", getChild("camera")->getValue<OSPObject>());
+        ospCommit(ospRenderer);
+
+        // create and setup light for Ambient Occlusion
+        std::vector<OSPLight> lights;
+        for( auto lightNode : getChild("lights")->getChildren())
+        {
+          lights.push_back((OSPLight)lightNode->getValue<OSPObject>());
+        }
+        OSPData lightsd = ospNewData(lights.size(), OSP_LIGHT, &lights[0]);
+        ospCommit(lightsd);
+
+        // complete setup of renderer
+        std::cout << "setting world: " << getChild("world")->getValue<OSPObject>() << "\n";
+        ospSetObject(ospRenderer, "model",  getChild("world")->getValue<OSPObject>());
+        ospSetObject(ospRenderer, "lights", lightsd);
+        ospCommit(ospRenderer);
+        if (getChild("camera")->getChildrenLastModified() > frameMTime
+          || getChild("lights")->getChildrenLastModified() > frameMTime
+          || getChild("world")->getChildrenLastModified() > frameMTime
+          || getLastModified() > frameMTime
+          )
+        {
+          ospFrameBufferClear((OSPFrameBuffer)getChild("frameBuffer")->getValue<OSPObject>(), OSP_FB_COLOR | OSP_FB_ACCUM);
+          frameMTime = TimeStamp::now();
+        }
+
+        std::cout << "rendering fb: " << getChild("frameBuffer")->getValue<OSPObject>() << "\n";
+        ospRenderFrame((OSPFrameBuffer)getChild("frameBuffer")->getValue<OSPObject>(),
+                       ospRenderer,
+                       OSP_FB_COLOR | OSP_FB_ACCUM);
+        accumID++;
+      }
+    }
+
+    void Renderer::preCommit(RenderContext &ctx)
+    {
+      if (getChild("frameBuffer")["size"]->getLastModified() > getChild("camera")["aspect"]->getLastCommitted())
+        getChild("camera")["aspect"]->setValue(
+          getChild("frameBuffer")["size"]->getValue<vec2i>().x/float(getChild("frameBuffer")["size"]->getValue().get<vec2i>().y));
+        if (!ospRenderer)
+        {
+          ospRenderer = ospNewRenderer("scivis");
+          ospCommit(ospRenderer);
+          setValue((OSPObject)ospRenderer);
+        }
+        ctx.ospRenderer = ospRenderer;
+    }
+
+    void Renderer::postCommit(RenderContext &ctx)
+    {
+      ospCommit(ospRenderer);
+    }
+
+    OSP_REGISTER_SG_NODE(Renderer);
     
   }
 }

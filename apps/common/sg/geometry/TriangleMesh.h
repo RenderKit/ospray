@@ -42,6 +42,10 @@ namespace ospray {
       //! return bounding box of all primitives
       virtual box3f getBounds();
 
+      void preRender(RenderContext &ctx);
+
+      void postCommit(RenderContext &ctx);
+
       /*! 'render' the nodes */
       virtual void render(RenderContext &ctx);
 

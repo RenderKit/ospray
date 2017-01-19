@@ -19,7 +19,7 @@
 namespace ospray {
   namespace sg {
 
-    FrameBuffer::FrameBuffer(const vec2i &size)
+    FrameBuffer::FrameBuffer(vec2i size)
       : size(size)
     {
       createFB();
@@ -30,6 +30,20 @@ namespace ospray {
     FrameBuffer::~FrameBuffer()
     {
       destroyFB();
+    }
+
+    void FrameBuffer::postCommit(RenderContext &ctx)
+    {
+      // std::cout << __PRETTY_FUNCTION__ << std::endl;
+      // std::cout << "Last modified: "  << getLastModified() 
+      //   << " last committed: " << getLastCommitted()
+      //   << " size last modified: " << getChild("size")->getLastModified() 
+      //   << " childMTime: " << ctx.getChildMTime()
+      //   << "\n";
+      size = getChild("size")->getValue<vec2i>();
+      destroyFB();
+      createFB();
+      ospCommit(ospFrameBuffer);
     }
 
     unsigned char *FrameBuffer::map()
@@ -69,9 +83,10 @@ namespace ospray {
 
     void ospray::sg::FrameBuffer::createFB()
     {
-      osp::vec2i sizet;
-      ospFrameBuffer = ospNewFrameBuffer((osp::vec2i)sizet, OSP_FB_SRGBA,
+      ospFrameBuffer = ospNewFrameBuffer((osp::vec2i&)size, OSP_FB_SRGBA,
                                          OSP_FB_COLOR | OSP_FB_ACCUM);
+      setValue((OSPObject)ospFrameBuffer);
+      std::cout << "creating fb : " << getValue<OSPObject>() << " " << size << "\n";
     }
 
     void ospray::sg::FrameBuffer::destroyFB()

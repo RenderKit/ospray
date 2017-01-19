@@ -28,6 +28,7 @@ namespace ospray {
     struct TimeStamp {
       //! \brief constructor 
       TimeStamp(uint64_t t) : t(t) {};
+      TimeStamp() { t=now(); };
       
       //! \brief returns global time(stamp) at time of calling
       static inline TimeStamp now() { return ospcommon::rdtsc(); }

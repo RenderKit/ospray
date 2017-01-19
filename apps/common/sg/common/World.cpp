@@ -52,6 +52,35 @@ namespace ospray {
       ospCommit(ospModel);
     }
 
+    void World::preCommit(RenderContext &ctx)
+    {
+      ctx.world = this;
+      // if (!ospModel)
+      // {
+        ospModel = ospNewModel();
+        ospCommit(ospModel);
+        setValue((OSPObject)ospModel);
+      // }
+    }
+
+    void World::postCommit(RenderContext &ctx)
+    {
+      ospCommit(ospModel);
+    }
+
+    void World::preRender(RenderContext &ctx)
+    {
+      ospCommit(ospModel);
+      ctx.world = this;
+      std::cout << "rendering model: " << getValue<OSPObject>() << "\n";
+      std::cout << "rendering model2: " << ospModel << "\n";
+    }
+
+    void World::postRender(RenderContext &ctx)
+    {
+      ospCommit(ospModel);
+    }
+
     OSP_REGISTER_SG_NODE(World);
   }
 }
