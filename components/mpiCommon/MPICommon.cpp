@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "mpi/common/MPICommon.h"
-#include "mpi/common/async/CommLayer.h"
+#include "MPICommon.h"
+#include "async/CommLayer.h"
 #include "BufferedMPIComm.h"
 
 namespace ospray {
@@ -66,8 +66,10 @@ namespace ospray {
         int required = MPI_THREAD_MULTIPLE;
         int provided = 0;
         MPI_CALL(Init_thread(ac,(char ***)&av,required,&provided));
-        if (provided != required)
-          throw std::runtime_error("MPI implementation does not offer multi-threading capabilities");
+        if (provided != required) {
+          throw std::runtime_error("MPI implementation does not offer "
+                                   "multi-threading capabilities");
+        }
       }
       else
       {

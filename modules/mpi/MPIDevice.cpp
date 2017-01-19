@@ -16,7 +16,7 @@
 
 #undef NDEBUG // do all assertions in this file
 
-#include "mpi/common/MPICommon.h"
+#include "mpiCommon/MPICommon.h"
 #include "mpi/MPIDevice.h"
 #include "common/Model.h"
 #include "common/Data.h"
@@ -30,9 +30,9 @@
 #include "volume/Volume.h"
 #include "mpi/render/MPILoadBalancer.h"
 #include "fb/LocalFB.h"
-#include "mpi/common/async/CommLayer.h"
+#include "mpiCommon/async/CommLayer.h"
 #include "mpi/fb/DistributedFrameBuffer.h"
-#include "mpi/common/Work.h"
+#include "mpi/common/OSPWork.h"
 // std
 #ifndef _WIN32
 #  include <unistd.h> // for fork()

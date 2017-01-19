@@ -16,7 +16,7 @@
 
 #include <vector>
 
-#include "mpi/common/MPICommon.h"
+#include "mpiCommon/MPICommon.h"
 #include "ospray/common/ObjectHandle.h"
 #include "mpi/fb/DistributedFrameBuffer.h"
 #include "mpi/render/MPILoadBalancer.h"
@@ -25,10 +25,6 @@
 namespace ospray {
   namespace mpi {
     namespace work {
-      template<typename T>
-      Work* make_work_unit() {
-        return new T();
-      }
 #define REGISTER_WORK_UNIT(W) W::TAG, make_work_unit<W>
       const Work::WorkMap Work::WORK_MAP = {
         { REGISTER_WORK_UNIT(NewObject<Renderer>) },

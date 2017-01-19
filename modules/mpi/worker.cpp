@@ -18,9 +18,9 @@
 #include "MPIDevice.h"
 #include "fb/DistributedFrameBuffer.h"
 #include "render/MPILoadBalancer.h"
+#include "mpi/common/OSPWork.h"
 // ospray components
 #include "components/mpiCommon/MPICommon.h"
-#include "components/mpiCommon/CommandStream.h"
 #include "components/mpiCommon/async/CommLayer.h"
 // ospray
 #include "common/Model.h"

@@ -23,10 +23,6 @@
 #include <thread>
 #include <vector>
 
-#define SCOPED_LOCK(x) \
-  std::lock_guard<std::mutex>  lock(x); \
-  (void)lock;
-
 namespace ospcommon {
   
   struct TaskSys {

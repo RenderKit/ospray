@@ -18,6 +18,7 @@
 
 #include "platform.h"
 // std
+#include <mutex>
 #include <stdexcept>
 
 #ifdef _WIN32
@@ -69,7 +70,13 @@ typedef int ssize_t;
 #endif
 #define NOTIMPLEMENTED    throw std::runtime_error(std::string(__PRETTY_FUNCTION__)+": not implemented...");
 
+#define SCOPED_LOCK(x) \
+  std::lock_guard<std::mutex> _lock(x); \
+  (void)_lock;
+
 namespace ospcommon {
+
+  using byte_t = unsigned char;
 
   /*! return system time in seconds */
   OSPCOMMON_INTERFACE double getSysTime();

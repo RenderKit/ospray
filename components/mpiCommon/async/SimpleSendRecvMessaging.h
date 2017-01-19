@@ -19,7 +19,7 @@
 // ospray
 #include "Messaging.h"
 #include "common/Thread.h"
-#include "common/ProducerConsumerQueue.h"
+#include "ospcommon/ProducerConsumerQueue.h"
 // stl
 #include <deque>
 #include <vector>

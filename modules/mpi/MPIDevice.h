@@ -19,7 +19,7 @@
 #include "api/Device.h"
 #include "components/mpiCommon/MPICommon.h"
 #include "components/mpiCommon/command.h"
-#include "components/mpiCommon/CommandStream.h"
+#include "components/mpiCommon/BufferedMPIComm.h"
 #include "common/Managed.h"
 
 /*! \file mpidevice.h Implements the "mpi" device for mpi rendering */
@@ -28,13 +28,8 @@ namespace ospray {
   namespace mpi {
 
     struct MPIDevice : public api::Device {
-      typedef ospray::mpi::CommandStream CommandStream;
 
-      CommandStream cmd;
-
-      typedef ospray::CommandTag CommandTag;
-
-      MPIDevice() = default;
+      MPIDevice();
       ~MPIDevice();
 
       // ManagedObject Implementation /////////////////////////////////////////
@@ -218,6 +213,8 @@ namespace ospray {
 
       /*! This only exists to support getting the voxel type for setRegion */
       int getString(OSPObject object, const char *name, char **value);
+
+      std::shared_ptr<BufferedMPIComm> bufferedComm;
 
     };
 

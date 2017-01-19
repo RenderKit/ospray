@@ -16,8 +16,12 @@
 
 #pragma once
 
+// std
 #include <memory>
+#include <vector>
+// mpi
 #include <mpi.h>
+// ospcommon
 #include "ospcommon/common.h"
 
 #ifdef _WIN32
@@ -95,12 +99,12 @@ namespace ospray {
       //! group that this peer is in
       Group *group;
       //! this peer's rank in this group
-      int32  rank;
+      int rank;
         
-      Address(Group *group=NULL, int32 rank=-1)
+      Address(Group *group=nullptr, int rank=-1)
         : group(group), rank(rank)
       {}
-      inline bool isValid() const { return group != NULL && rank >= 0; }
+      inline bool isValid() const { return group != nullptr && rank >= 0; }
     };
     inline bool operator==(const Address &a, const Address &b) {
       return a.group == b.group && a.rank == b.rank;
@@ -110,30 +114,8 @@ namespace ospray {
     }
 
     //special flags for sending and reciving from all ranks instead of individuals
-    const int32 SEND_ALL=-1;
-    const int32 RECV_ALL=-1;
-
-    //     //! abstraction for any other peer node that we might want to communicate with
-    // struct Address {
-    //   //! group that this peer is in
-    //   Group *group;
-    //   //! this peer's rank in this group
-    //   int32  rank;
-        
-    //   Address(Group *group=NULL, int32 rank=-1)
-    //     : group(group), rank(rank)
-    //   {}
-    //   inline bool isValid() const { return group != NULL && rank >= 0; }
-    // };
-
-    // struct Message {
-    //     Address     addr;
-    //     void       *ptr;
-    //     int32       size;
-    //     MPI_Request request; //! request for MPI_Test
-    //     int         done;    //! done flag for MPI_Test
-    //     MPI_Status  status;  //! status for MPI_Test
-    // };
+    const int SEND_ALL=-1;
+    const int RECV_ALL=-1;
 
     //! MPI_COMM_WORLD
     OSPRAY_MPI_INTERFACE extern Group world;
