@@ -79,7 +79,7 @@ namespace ospray {
 
   };
 
-  extern const ObjectHandle nullHandle;
+  OSPRAY_SDK_INTERFACE extern const ObjectHandle nullHandle;
 
   inline bool operator==(const ObjectHandle &a, const ObjectHandle &b)
   { return a.i64 == b.i64; }

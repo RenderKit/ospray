@@ -29,6 +29,7 @@ namespace ospray {
     kind of command it is to execute. CommandIDs are only useful
     inside \see Command structures. */
   typedef enum {
+    CMD_INVALID = -555,
     CMD_NEW_RENDERER=0,
     CMD_FRAMEBUFFER_CREATE,
     CMD_RENDER_FRAME,
@@ -41,7 +42,6 @@ namespace ospray {
     CMD_NEW_GEOMETRY,
     CMD_NEW_MATERIAL,
     CMD_NEW_LIGHT,
-    CMD_NEW_TRIANGLEMESH,
     CMD_NEW_CAMERA,
     CMD_NEW_VOLUME,
     CMD_NEW_TRANSFERFUNCTION,
@@ -55,10 +55,9 @@ namespace ospray {
     CMD_RELEASE,
     CMD_REMOVE_VOLUME,
 
-    CMD_GET_TYPE=300,
-    CMD_GET_VALUE,
     CMD_SET_MATERIAL,
     CMD_SET_REGION,
+    CMD_SET_REGION_DATA,
     CMD_SET_OBJECT,
     CMD_SET_STRING,
     CMD_SET_INT,
@@ -74,13 +73,12 @@ namespace ospray {
     CMD_SET_PIXELOP,
     CMD_NEW_PIXELOP,
 
-    CMD_API_MODE,
-    CMD_SAMPLE_VOLUME,
+    CMD_API_MODE,//TODO
 
     CMD_FINALIZE,
-
-    CMD_USER
   } CommandTag;
+
+  const char* commandToString(CommandTag tag);
 
   namespace nwlayer {
     struct InitCmd {

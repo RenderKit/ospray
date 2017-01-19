@@ -69,5 +69,7 @@ namespace ospray {
       }
 
     } // ::ospray::mpi::async
+
+
   } // ::ospray::mpi
 } // ::ospray

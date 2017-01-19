@@ -87,3 +87,15 @@ IF(NOT (APPLE AND OSPRAY_COMPILER_ICC))
     ADD_SUBDIRECTORY(volumeViewer)
   ENDIF()
 ENDIF()
+
+# -------------------------------------------------------
+# redistribute QT on Windows
+# -------------------------------------------------------
+IF (OSPRAY_INSTALL_DEPENDENCIES AND WIN32 AND
+    (OSPRAY_APPS_QTVIEWER OR OSPRAY_APPS_VOLUMEVIEWER))
+  FOREACH(QT_COMPONENT QTCORE QTGUI QTOPENGL)
+    STRING(REGEX REPLACE lib$ dll QT_DLL ${QT_${QT_COMPONENT}_LIBRARY_RELEASE})
+    INSTALL(PROGRAMS ${QT_DLL}
+            DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT apps) # 3rd party?
+  ENDFOREACH()
+ENDIF()

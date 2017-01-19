@@ -206,6 +206,8 @@ namespace ospray {
         for (uint32_t i = 0; i < myGroups.size(); i++)
           myGroups[i]->shutdown();
 
+        printf("#osp:mpi:BatchedIsendIrecvMessaging finalizing %i/%i\n",
+               mpi::world.rank,mpi::world.size);
         MPI_CALL(Finalize());
       }
 

@@ -18,6 +18,7 @@
 
 // header
 #include "SceneGraph.h"
+#include "Importer.h"
 // stl
 #include <map>
 // xml
@@ -171,7 +172,7 @@ namespace ospray {
       if (node.name == "Integrator")
         return parseIntegratorNode(node);
       std::cout << "warning: unknown sg::Node type '" << node.name << "'" << std::endl;
-      return NULL;
+      return std::shared_ptr<sg::Node>();
     }
 
     std::shared_ptr<sg::World> loadOSP(const std::string &fileName)
@@ -205,5 +206,14 @@ namespace ospray {
       return world;
     }
 
+    // int registerOSP()
+    // {
+    //   PING;
+    //   declareImporterForFileExtension("osp",loadOSP);
+    //   return 1;
+    // }
+    
+    // int _registerOSP = registerOSP();
+    
   } // ::ospray::sg
 } // ::ospray

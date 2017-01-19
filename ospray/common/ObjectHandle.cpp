@@ -91,6 +91,6 @@ namespace ospray {
     return(nullHandle);
   }
     
-  const ObjectHandle nullHandle(0);
+  OSPRAY_SDK_INTERFACE const ObjectHandle nullHandle(0);
 
 } // ::ospray

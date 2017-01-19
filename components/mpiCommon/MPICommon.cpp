@@ -14,8 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "MPICommon.h"
-#include "async/CommLayer.h"
+#include "mpi/common/MPICommon.h"
+#include "mpi/common/async/CommLayer.h"
+#include "BufferedMPIComm.h"
 
 namespace ospray {
   namespace mpi {
@@ -68,6 +69,16 @@ namespace ospray {
         if (provided != required)
           throw std::runtime_error("MPI implementation does not offer multi-threading capabilities");
       }
+      else
+      {
+        printf("running ospray in pre-initialized mpi mode\n");
+        int provided;
+        MPI_Query_thread(&provided);
+        int requested = MPI_THREAD_MULTIPLE;
+        if (provided != requested)
+          throw std::runtime_error("ospray requires mpi to be initialized with "
+            "MPI_THREAD_MULTIPLE if initialized before calling ospray");
+      }
       world.comm = MPI_COMM_WORLD;
       MPI_CALL(Comm_rank(MPI_COMM_WORLD,&world.rank));
       MPI_CALL(Comm_size(MPI_COMM_WORLD,&world.size));
@@ -80,5 +91,20 @@ namespace ospray {
       mpi::async::CommLayer::WORLD->group = worldGroup;
     }
 
+    void send(const Address& addr, work::Work* work) {
+      BufferedMPIComm::get()->send(addr, work);
+    }
+
+    void recv(const Address& addr, std::vector<work::Work*>& work) {
+      BufferedMPIComm::get()->recv(addr, work);
+    }
+
+    void flush() {
+      BufferedMPIComm::get()->flush();
+    }
+
+    void barrier(const Group& group) {
+      BufferedMPIComm::get()->barrier(group);
+    }
   } // ::ospray::mpi
 } // ::ospray
