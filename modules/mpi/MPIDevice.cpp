@@ -44,8 +44,6 @@ namespace ospray {
   using std::cout;
   using std::endl;
 
-  //extern RTCDevice g_embreeDevice;
-
   namespace mpi {
     //! this runs an ospray worker process.
     /*! it's up to the proper init routine to decide which processes
@@ -347,7 +345,6 @@ namespace ospray {
         std::cout << "shutting down mpi device" << std::endl;
         work::CommandFinalize work;
         processWork(&work);
-        //rtcDeleteDevice(g_embreeDevice);
       }
     }
 
