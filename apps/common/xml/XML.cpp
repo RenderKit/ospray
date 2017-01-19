@@ -79,6 +79,23 @@ namespace ospray {
       expect(s,w);
       ++s;
     }
+    
+    inline void consumeComment(char *&s)
+    {
+      PING;
+      PRINT(s);
+      consume(s,'<');
+      consume(s,'!');
+      while (!((s[0] == 0) ||
+               (s[0] == '-' && s[1] == '-' && s[2] == '>')))
+        ++s;
+      consume(s,'-');
+      consume(s,'-');
+      consume(s,'>');
+      PING;
+      PRINT(s);
+    }
+    
     inline void consume(char *&s, const char *word)
     {
       const char *in = word;
@@ -165,8 +182,35 @@ namespace ospray {
       return true;
     }
 
+    bool skipComment(char *&s)
+    {
+      if (*s == '<' && s[1] == '!') {
+        PING;
+        PRINT(s[0]);
+        PRINT(s[1]);
+        consumeComment(s);
+        return true;
+        // skipWhites(s);
+        // return parseNode(s,doc);
+      }
+      return false;
+    }
+
+        
+
+    
     std::shared_ptr<Node> parseNode(char *&s, XMLDoc *doc)
     {
+      // if (*s == '<' && s[1] == '!') {
+      // PING;
+      // PRINT(s[0]);
+      // PRINT(s[1]);
+      //   consumeComment(s);
+      //   skipWhites(s);
+      //   return parseNode(s,doc);
+      // }
+
+        
       consume(s,'<');
       std::shared_ptr<Node> node = std::make_shared<Node>(doc);
 
@@ -190,6 +234,8 @@ namespace ospray {
 
       while (1) {
         skipWhites(s);
+        if (skipComment(s))
+          continue;
         if (*s == '<' && s[1] == '/') {
           consume(s,"</");
           std::string name = "";
@@ -255,6 +301,11 @@ namespace ospray {
       }
       skipWhites(s);
       while (*s != 0) {
+        if (skipComment(s)) {
+          skipWhites(s);
+          continue;
+        }
+
         std::shared_ptr<Node> node = parseNode(s, doc.get());
         doc->child.push_back(node);
         skipWhites(s);
