@@ -19,7 +19,7 @@
 #include <memory>
 #include <mpi.h>
 #include "common/OSPCommon.h"
-#include "mpiCommon/Work.h"
+#include "mpiCommon/SerialBuffer.h"
 
 namespace ospray {
   namespace mpi {

@@ -18,7 +18,7 @@
 
 #include "mpiCommon/MPICommon.h"
 #include "mpiCommon/command.h"
-#include "mpiCommon/Work.h"
+#include "mpiCommon/SerialBuffer.h"
 #include "common/Model.h"
 #include "common/Data.h"
 #include "common/Library.h"

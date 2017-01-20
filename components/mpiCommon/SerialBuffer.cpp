@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "Work.h"
+#include "SerialBuffer.h"
 
 namespace ospray {
   namespace mpi {
