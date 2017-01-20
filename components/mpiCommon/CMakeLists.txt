@@ -22,7 +22,6 @@ OSPRAY_CREATE_LIBRARY(ospray_mpi_common
   command.cpp
 
   BufferedMPIComm.cpp
-  Core.cpp
   MPICommon.cpp
   Work.h
 

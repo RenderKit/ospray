@@ -1,3 +1,19 @@
+## ======================================================================== ##
+## Copyright 2009-2017 Intel Corporation                                    ##
+##                                                                          ##
+## Licensed under the Apache License, Version 2.0 (the "License");          ##
+## you may not use this file except in compliance with the License.         ##
+## You may obtain a copy of the License at                                  ##
+##                                                                          ##
+##     http://www.apache.org/licenses/LICENSE-2.0                           ##
+##                                                                          ##
+## Unless required by applicable law or agreed to in writing, software      ##
+## distributed under the License is distributed on an "AS IS" BASIS,        ##
+## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. ##
+## See the License for the specific language governing permissions and      ##
+## limitations under the License.                                           ##
+## ======================================================================== ##
+
 # lits of components that have already been built. we use this for
 # dependencies tracking: any part of ospray that 'depends' on a given
 # component can simply call 'OSPRAY_BUILD_COMPONENT(...)' without
@@ -18,15 +34,15 @@ MACRO(OSPRAY_BUILD_COMPONENT comp)
     # component already built; nothing to do!
   ELSE()
     
-    # TODO: check if the directory exists, and if not, check it out and/or warn user about it missing
+    # TODO: check if the directory exists, and if not, check it out and/or
+    #       warn user about it missing
     SET(INCLUDED_AS_AN_OSPRAY_COMPONENT ON)
-    SET(OSPRAY_LIST_OF_ALREADY_BUILT_COMPONENTS ${OSPRAY_LIST_OF_ALREADY_BUILT_COMPONENTS} ${comp}
-      CACHE INTERNAL "" FORCE)
+    SET(OSPRAY_LIST_OF_ALREADY_BUILT_COMPONENTS
+        ${OSPRAY_LIST_OF_ALREADY_BUILT_COMPONENTS} ${comp}
+        CACHE INTERNAL "" FORCE)
     ADD_SUBDIRECTORY(${COMPONENTS_DIR}/${comp}
       ${CMAKE_BINARY_DIR}/built_components/${comp}
       EXCLUDE_FROM_ALL)
 
   ENDIF()
 ENDMACRO()
-
-

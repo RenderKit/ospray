@@ -14,9 +14,6 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-// ours
-// components
-#include "components/mpiCommon/Core.h"
 // ospray
 #include "lights/Light.h"
 #include "common/Data.h"

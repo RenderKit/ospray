@@ -23,7 +23,6 @@
 #include "ospray/volume/GhostBlockBrickedVolume.h"
 
 // comps
-#include "components/mpiCommon/Core.h"
 #include "components/mpiCommon/MPICommon.h"
 
 // ispc exports:
