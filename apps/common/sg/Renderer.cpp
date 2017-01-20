@@ -35,6 +35,7 @@ namespace ospray {
         add(createNode("shadowsEnabled", "bool", true));
         add(createNode("maxDepth", "int", 5));
         add(createNode("aoSamples", "int", 1));
+        add(createNode("spp", "int", 1));
         add(createNode("aoDistance", "float", 1.f));
         add(createNode("aoWeight", "float", 1.f));
         add(createNode("oneSidedLighting", "bool",true));
@@ -193,8 +194,6 @@ namespace ospray {
       if (operation == "render")
       {
 
-        std::cout << __PRETTY_FUNCTION__ << std::endl;
-
         ospSetObject(ospRenderer,"world", getChild("world")->getValue<OSPObject>());
         ospSetObject(ospRenderer,"model", getChild("world")->getValue<OSPObject>());
         ospSetObject(ospRenderer,"camera", getChild("camera")->getValue<OSPObject>());
@@ -210,21 +209,24 @@ namespace ospray {
         ospCommit(lightsd);
 
         // complete setup of renderer
-        std::cout << "setting world: " << getChild("world")->getValue<OSPObject>() << "\n";
         ospSetObject(ospRenderer, "model",  getChild("world")->getValue<OSPObject>());
         ospSetObject(ospRenderer, "lights", lightsd);
         ospCommit(ospRenderer);
+        // if (getChildrenLastModified() > frameMTime)
+        //TODO: some child is kicking off modified every frame.  Should figure out which and ignore it
         if (getChild("camera")->getChildrenLastModified() > frameMTime
           || getChild("lights")->getChildrenLastModified() > frameMTime
           || getChild("world")->getChildrenLastModified() > frameMTime
           || getLastModified() > frameMTime
+          || getChild("shadowsEnabled")->getLastModified() > frameMTime
+          || getChild("aoSamples")->getLastModified() > frameMTime
+          || getChild("spp")->getLastModified() > frameMTime
           )
         {
           ospFrameBufferClear((OSPFrameBuffer)getChild("frameBuffer")->getValue<OSPObject>(), OSP_FB_COLOR | OSP_FB_ACCUM);
           frameMTime = TimeStamp::now();
         }
 
-        std::cout << "rendering fb: " << getChild("frameBuffer")->getValue<OSPObject>() << "\n";
         ospRenderFrame((OSPFrameBuffer)getChild("frameBuffer")->getValue<OSPObject>(),
                        ospRenderer,
                        OSP_FB_COLOR | OSP_FB_ACCUM);
@@ -237,13 +239,13 @@ namespace ospray {
       if (getChild("frameBuffer")["size"]->getLastModified() > getChild("camera")["aspect"]->getLastCommitted())
         getChild("camera")["aspect"]->setValue(
           getChild("frameBuffer")["size"]->getValue<vec2i>().x/float(getChild("frameBuffer")["size"]->getValue().get<vec2i>().y));
-        if (!ospRenderer)
-        {
+      if (!ospRenderer)
+      {
           ospRenderer = ospNewRenderer("scivis");
           ospCommit(ospRenderer);
           setValue((OSPObject)ospRenderer);
-        }
-        ctx.ospRenderer = ospRenderer;
+      }
+      ctx.ospRenderer = ospRenderer;
     }
 
     void Renderer::postCommit(RenderContext &ctx)

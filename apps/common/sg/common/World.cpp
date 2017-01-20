@@ -72,8 +72,6 @@ namespace ospray {
     {
       ospCommit(ospModel);
       ctx.world = this;
-      std::cout << "rendering model: " << getValue<OSPObject>() << "\n";
-      std::cout << "rendering model2: " << ospModel << "\n";
     }
 
     void World::postRender(RenderContext &ctx)
