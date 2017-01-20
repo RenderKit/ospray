@@ -25,7 +25,7 @@
 #include "ospcommon/common.h"
 
 #ifdef _WIN32
-#  ifdef ospray_module_mpi_EXPORTS
+#  ifdef ospray_mpi_common_EXPORTS
 #    define OSPRAY_MPI_INTERFACE __declspec(dllexport)
 #  else
 #    define OSPRAY_MPI_INTERFACE __declspec(dllimport)
