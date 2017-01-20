@@ -341,6 +341,8 @@ namespace ospray {
         ObjectHandle fbHandle;
         ObjectHandle rendererHandle;
         uint32 channels;
+        // Variance result for adaptive accumulation
+        float varianceResult;
 
         RenderFrame();
         RenderFrame(OSPFrameBuffer fb, OSPRenderer renderer, uint32 channels);
