@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -20,6 +20,8 @@
 #include "ospcommon/FileName.h"
 // ospray api
 #include "ospray/ospray.h"
+// ospray
+#include "ospray/common/OSPCommon.h"
 
 namespace ospray {
   namespace importer {
@@ -52,19 +54,10 @@ namespace ospray {
       ospcommon::vec3i volumeDimensions = volume->dimensions;
       assert(volumeDimensions != vec3i(0) && volumeDimensions != vec3i(-1));
 
-      // Voxel type string.
       const char *voxelType = volume->voxelType.c_str();
-      // Voxel size in bytes.
-      size_t voxelSize;
+      const OSPDataType ospVoxelType = typeForString(voxelType);
+      const size_t voxelSize = sizeOf(ospVoxelType);
 
-      if (strcmp(voxelType, "uchar") == 0)
-        voxelSize = sizeof(unsigned char);
-      else if (strcmp(voxelType, "float") == 0)
-        voxelSize = sizeof(float);
-      else if (strcmp(voxelType, "double") == 0)
-        voxelSize = sizeof(double);
-      else
-        exitOnCondition(true, "unsupported voxel type");
       ospSetString(volume->handle,"voxelType",voxelType);
 
       // Check if a subvolume of the volume has been specified.
@@ -226,7 +219,7 @@ namespace ospray {
               // The end of the file may have been reached unexpectedly.
               exitOnCondition(voxelsRead != chunkVoxels, "end of volume file reached before read completed");
 
-              extendVoxelRange(volume->voxelRange, voxelSize, voxelData, voxelsRead);
+              extendVoxelRange(volume->voxelRange, ospVoxelType, voxelData, voxelsRead);
               ospcommon::vec3i region_lo(chunkx * chunkDimensions.x, chunky * chunkDimensions.y,
                   chunkz * chunkDimensions.z);
 
@@ -243,7 +236,7 @@ namespace ospray {
                   chunkz * chunkDimensions.z);
               ospcommon::vec3i region_sz(remainderVoxels.x, chunkDimensions.y, chunkDimensions.z);
 
-              extendVoxelRange(volume->voxelRange, voxelSize, voxelData, voxelsRead);
+              extendVoxelRange(volume->voxelRange, ospVoxelType, voxelData, voxelsRead);
               ospSetRegion(volume->handle, voxelData, (osp::vec3i&)region_lo, (osp::vec3i&)region_sz);
             }
           }
@@ -257,7 +250,7 @@ namespace ospray {
                 chunkz * chunkDimensions.z);
             ospcommon::vec3i region_sz(chunkDimensions.x, remainderVoxels.y, chunkDimensions.z);
 
-            extendVoxelRange(volume->voxelRange, voxelSize, voxelData, voxelsRead);
+            extendVoxelRange(volume->voxelRange, ospVoxelType, voxelData, voxelsRead);
             ospSetRegion(volume->handle, voxelData, (osp::vec3i&)region_lo, (osp::vec3i&)region_sz);
           }
         }
@@ -270,7 +263,7 @@ namespace ospray {
           ospcommon::vec3i region_lo(0, 0, numChunks.z * chunkDimensions.z);
           ospcommon::vec3i region_sz(chunkDimensions.x, chunkDimensions.y, remainderVoxels.z);
 
-          extendVoxelRange(volume->voxelRange, voxelSize, voxelData, voxelsRead);
+          extendVoxelRange(volume->voxelRange, ospVoxelType, voxelData, voxelsRead);
           ospSetRegion(volume->handle, voxelData, (osp::vec3i&)region_lo, (osp::vec3i&)region_sz);
         }
         ospSet2f(volume->handle,"voxelRange",volume->voxelRange.x,volume->voxelRange.y);

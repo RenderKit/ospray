@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -22,7 +22,7 @@
 namespace ospray {
 
   /*! local frame buffer - frame buffer that exists on local machine */
-  struct LocalFrameBuffer : public FrameBuffer {
+  struct OSPRAY_SDK_INTERFACE LocalFrameBuffer : public FrameBuffer {
     void      *colorBuffer; /*!< format depends on
                                FrameBuffer::colorBufferFormat, may be
                                NULL */
@@ -37,7 +37,7 @@ namespace ospray {
                      bool hasDepthBuffer,
                      bool hasAccumBuffer,
                      bool hasVarianceBuffer,
-                     void *colorBufferToUse=NULL);
+                     void *colorBufferToUse=nullptr);
     virtual ~LocalFrameBuffer();
 
     //! \brief common function to help printf-debugging

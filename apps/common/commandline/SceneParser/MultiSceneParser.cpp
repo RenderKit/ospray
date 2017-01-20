@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -74,22 +74,22 @@ bool MultiSceneParser::parse(int ac, const char **&av)
 #endif
 
   if (parser) {
-    sceneModel = parser->model();
-    sceneBbox  = parser->bbox();
+    sceneModels = parser->model();
+    sceneBboxes = parser->bbox();
   } else {
-    sceneModel = cpp::Model();
-    sceneModel.commit();
+    sceneModels.push_back(cpp::Model());
+    sceneModels[0].commit();
   }
 
   return parser != nullptr;
 }
 
-cpp::Model MultiSceneParser::model() const
+std::deque<cpp::Model> MultiSceneParser::model() const
 {
-  return sceneModel;
+  return sceneModels;
 }
 
-box3f MultiSceneParser::bbox() const
+std::deque<box3f> MultiSceneParser::bbox() const
 {
-  return sceneBbox;
+  return sceneBboxes;
 }

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -115,9 +115,9 @@ inline void postIntersect(uniform Model *uniform model,
 #define  DG_NS_NORMALIZE   (DG_NS | DG_NORMALIZE)
 
   if ((flags & DG_NG_NORMALIZE) == DG_NG_NORMALIZE)
-    dg.Ng = safe_normalize(dg.Ng);
+    dg.Ng = normalize(dg.Ng);
   if ((flags & DG_NS_NORMALIZE) == DG_NS_NORMALIZE)
-    dg.Ns = safe_normalize(dg.Ns);
+    dg.Ns = normalize(dg.Ns);
   
   if ((flags & DG_NG_FACEFORWARD) == DG_NG_FACEFORWARD)
     if (dot(ray.dir,dg.Ng) >= 0.f) dg.Ng = neg(dg.Ng);

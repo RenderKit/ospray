@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -82,14 +82,19 @@ bool VolumeSceneParser::parse(int ac, const char **&av)
   return loadedScene;
 }
 
-cpp::Model VolumeSceneParser::model() const
+std::deque<cpp::Model> VolumeSceneParser::model() const
 {
-  return sceneModel.get() == nullptr ? cpp::Model() : *sceneModel;
+  std::deque<cpp::Model> models;
+  models.push_back(sceneModel == nullptr ? cpp::Model() : *sceneModel);
+  return models;
+  // return sceneModel.get() == nullptr ? cpp::Model() : *sceneModel;
 }
 
-ospcommon::box3f VolumeSceneParser::bbox() const
+std::deque<box3f> VolumeSceneParser::bbox() const
 {
-  return sceneBbox;
+  std::deque<ospcommon::box3f> boxes;
+  boxes.push_back(sceneBbox);
+  return boxes;
 }
 
 void VolumeSceneParser::importObjectsFromFile(const std::string &filename,

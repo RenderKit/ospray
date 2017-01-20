@@ -1,9 +1,9 @@
 OSPRay
 ======
 
-This is release v1.1.2 of OSPRay. For changes and new features see the
-[changelog](CHANGELOG.md). Also visit http://www.ospray.org for more
-information.
+This is release v1.2.0 (devel) of OSPRay. For changes and new features
+see the [changelog](CHANGELOG.md). Also visit http://www.ospray.org for
+more information.
 
 OSPRay Overview
 ===============
@@ -158,9 +158,9 @@ Documentation
 =============
 
 The following [API
-documentation](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation")
+documentation](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
 of OSPRay can also be found as a [pdf
-document](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation")
+document](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
 (2.6MB).
 
 For a deeper explanation of the concepts, design, features and
@@ -182,18 +182,23 @@ To access the OSPRay API you first need to include the OSPRay header
 #include "ospray/ospray.h"
 ```
 
-The API is compatible with C99 and C++. Then initialize the OSPRay
-rendering engine with
+where the API is compatible with C99 and C++.
+
+In order to use the API, OSPRay must initialized with a "device". A
+device is the object which implements the API. Creating and initializing
+a device can be done in either of two ways.
+
+The first is to do so by giving OSPRay the command line from `main()` by
+calling
 
 ``` {.cpp}
 void ospInit(int *argc, const char **argv);
 ```
 
-OSPRay parses (and removes) its known command line parameters, so you
-could just pass `argc` and `argv` from you application's `main`
-function. For an example see the [tutorial](#tutorial). The following
-parameters (which are prefixed by convention with "`--osp:`") are
-understood:
+OSPRay parses (and removes) its known command line parameters from your
+application's `main` function. For an example see the
+[tutorial](#tutorial). The following parameters (which are prefixed by
+convention with "`--osp:`") are understood:
 
 <table style="width:97%;">
 <caption>Command line parameters accepted by OSPRay's <code>ospInit</code>.</caption>
@@ -232,19 +237,61 @@ understood:
 <td align="left"><code>--osp:mpi</code></td>
 <td align="left">enables MPI mode for parallel rendering, to be used in conjunction with <code>mpirun</code></td>
 </tr>
+<tr class="odd">
+<td align="left"><code>--osp:device:&lt;name&gt;</code></td>
+<td align="left">use <code>name</code> as the type of device for OSPRay to create; e.g. <code>--osp:device:default</code> gives you the default local device and <code>--osp:device:mpi</code> gives you the MPI device</td>
+</tr>
 </tbody>
 </table>
 
 : Command line parameters accepted by OSPRay's `ospInit`.
 
-As an alternative to command line parameters (which still have
-precedence) OSPRay can also be configured by environment variables
-(which are prefixed by convention with "`OSPRAY_`"):
+The second method of initialization is to explicitly create the device
+yourself, and possibly set parameters. This method looks almost
+identical to how other objects are created and used by OSPRay (described
+in later sections). The first step is to create the device with
 
-| Variable           | Description                      |
-|:-------------------|:---------------------------------|
-| OSPRAY\_THREADS    | equivalent to `--osp:numthreads` |
-| OSPRAY\_LOG\_LEVEL | equivalent to `--osp:loglevel`   |
+``` {.cpp}
+OSPDevice ospCreateDevice(const char *type);
+```
+
+where the `type` string maps to a specific device implementation. OSPRay
+always provides the "`default`" device, which maps to a local CPU
+rendering device. If it is enabled in the build, you can also use
+"`mpi`" to access the MPI multi-node rendering device. Once a device is
+created, you can call
+
+``` {.cpp}
+void ospSetDevice1i(OSPDevice, const char *id, int val);
+```
+
+or
+
+``` {.cpp}
+void ospSetDeviceString(OSPDevice, const char *id, const char *val);
+```
+
+to set parameters on the device. The following parameters can be set on
+all devices:
+
+| Type | Name       | Description                                               |
+|:-----|:-----------|:----------------------------------------------------------|
+| int  | numThreads | number of threads which OSPRay should use                 |
+| int  | logLevel   | logging level                                             |
+| int  | debug      | set debug mode; equivalent to logLevel=2 and numThreads=1 |
+
+: Parameters shared by all devices.
+
+Finally, OSPRay's generic device parameters can be overridden via
+environment variables for easy changes to OSPRay's behavior without
+needing to change the application (variables are prefixed by convention
+with "`OSPRAY_`"):
+
+| Variable           | Description                                                   |
+|:-------------------|:--------------------------------------------------------------|
+| OSPRAY\_THREADS    | equivalent to `--osp:numthreads`                              |
+| OSPRAY\_LOG\_LEVEL | equivalent to `--osp:loglevel`                                |
+| OSPRAY\_DEBUG      | equivalent to both OSPRAY\_LOG\_LEVEL=2 and OSPRAY\_THREADS=1 |
 
 : Environment variables interpreted by OSPRay.
 
@@ -758,15 +805,15 @@ The call returns `NULL` if that type of renderer is not known, or else
 an `OSPRenderer` handle to the created renderer. General parameters of
 all renderers are
 
-| Type         | Name              | Description                                               |
-|:-------------|:------------------|:----------------------------------------------------------|
-| OSPModel     | model             | the [model](#model) to render                             |
-| OSPCamera    | camera            | the [camera](#cameras) to be used for rendering           |
-| OSPLight\[\] | lights            | [data](#data) array with handles of the [lights](#lights) |
-| float        | epsilon           | ray epsilon to avoid self-intersections, default 10^-6^   |
-| int          | spp               | samples per pixel, default 1                              |
-| int          | maxDepth          | maximum ray recursion depth                               |
-| float        | varianceThreshold | threshold for adaptive accumulation                       |
+| Type         | Name              | Description                                                                         |
+|:-------------|:------------------|:------------------------------------------------------------------------------------|
+| OSPModel     | model             | the [model](#model) to render                                                       |
+| OSPCamera    | camera            | the [camera](#cameras) to be used for rendering                                     |
+| OSPLight\[\] | lights            | [data](#data) array with handles of the [lights](#lights)                           |
+| float        | epsilon           | ray epsilon to avoid self-intersections, relative to scene diameter, default 10^-6^ |
+| int          | spp               | samples per pixel, default 1                                                        |
+| int          | maxDepth          | maximum ray recursion depth                                                         |
+| float        | varianceThreshold | threshold for adaptive accumulation                                                 |
 
 : Parameters understood by all renderers.
 
@@ -779,18 +826,19 @@ variance below the `varianceThreshold`. This feature requires a
 ### SciVis Renderer
 
 The SciVis renderer is a fast ray tracer for scientific visualization
-which supports volume rendering and ambient occlusion. It is created by
-passing the type string "`scivis`" or "`raytracer`" to `ospNewRenderer`.
-In addition to the [general parameters](#renderer) understood by all
-renderers the SciVis renderer supports the following special parameters:
+which supports volume rendering and ambient occlusion (AO). It is
+created by passing the type string "`scivis`" or "`raytracer`" to
+`ospNewRenderer`. In addition to the [general parameters](#renderer)
+understood by all renderers the SciVis renderer supports the following
+special parameters:
 
 <table style="width:97%;">
 <caption>Special parameters understood by the SciVis renderer.</caption>
 <colgroup>
 <col width="17%" />
-<col width="26%" />
+<col width="24%" />
 <col width="13%" />
-<col width="39%" />
+<col width="41%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -815,35 +863,29 @@ renderers the SciVis renderer supports the following special parameters:
 </tr>
 <tr class="odd">
 <td align="left">float</td>
-<td align="left">aoOcclusionDistanc e</td>
+<td align="left">aoDistance</td>
 <td align="right">10<sup>20</sup></td>
 <td align="left">maximum distance to consider for ambient occlusion</td>
 </tr>
 <tr class="even">
-<td align="left">float</td>
-<td align="left">aoWeight</td>
-<td align="right">0.25</td>
-<td align="left">amount of ambient occlusion added in shading</td>
-</tr>
-<tr class="odd">
 <td align="left">bool</td>
 <td align="left">oneSidedLighting</td>
 <td align="right">true</td>
 <td align="left">if true back-facing surfaces (wrt. light) receive no illumination</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">vec3f</td>
 <td align="left">bgColor</td>
 <td align="right">white</td>
 <td align="left">background color (RGB)</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">bool</td>
 <td align="left">backgroundEnabled</td>
 <td align="right">true</td>
 <td align="left">whether to color the background with <code>bgColor</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">OSPTexture2D</td>
 <td align="left">maxDepthTexture</td>
 <td align="right">NULL</td>
@@ -853,6 +895,10 @@ renderers the SciVis renderer supports the following special parameters:
 </table>
 
 : Special parameters understood by the SciVis renderer.
+
+Note that the intensity (and color) of AO is controlled via an [ambient
+light](#ambient-light). If `aoSamples` is zero (the default) then
+ambient lights cause ambient illumination (without occlusion).
 
 The SciVis renderer supports depth composition with images of other
 renderers, for example to incorporate help geometries of a 3D UI that
@@ -1079,7 +1125,7 @@ Light.](https://ospray.github.io/images/quad_light.png)
 The emission side is determined by the cross product of `edge1`×`edge2`.
 Note that only renderers that use stochastic sampling (like the path
 tracer) will compute soft shadows from the quad light. Other renderers
-will just sample the `position` of the quad light, which results in hard
+will just sample the center of the quad light, which results in hard
 shadows.
 
 #### HDRI Light
@@ -1138,6 +1184,15 @@ with constant radiance (determined by combining the [parameters `color`
 and `intensity`](#lights)). It is created by passing the type string
 "`ambient`" to `ospNewLight`.
 
+Note that the [SciVis renderer](#scivis-renderer) uses ambient lights to
+control the color and intensity of the computed ambient occlusion (AO).
+
+#### Emissive Objects
+
+The [path tracer](#path-tracer) will consider illumination by
+[geometries](#geometries) which have a light emitting material assigned
+(for example the [Luminous](#luminous) material).
+
 ### Materials
 
 Materials describe how light interacts with surfaces, they give objects
@@ -1190,17 +1245,20 @@ the contrast in the final images is low (for example, the corners of a
 white room would hardly be discernible).
 
 Note that currently only the path tracer implements colored transparency
-with `Tf` and normal mapping to simulate small geometric features via
+with `Tf`.
+
+Normal mapping can simulate small geometric features via the texture
 `map_Bump`. The normals $n$ in the normal map are wrt. the local
 tangential shading coordinate system and are encoded as $½(n+1)$, thus a
 texel $(0.5, 0.5, 1)$[^4] represents the unperturbed shading normal
-$(0, 0, 1)$. Because of this encoding a linear [texture](#texture)
-format is recommended for the normal map. Note that the orientation of
-normal maps is important for a visually consistent look: by convention
-OSPRay uses a coordinate system with the origin in the lower left
-corner; thus a convexity will look green towards the top of the texture
-image (see also the example image of a normal map). If this is not the
-case flip the normal map vertically or invert its green channel.
+$(0, 0, 1)$. Because of this encoding an sRGB gamma [texture](#texture)
+format is ignored and normals are always fetched as linear from a normal
+map. Note that the orientation of normal maps is important for a
+visually consistent look: by convention OSPRay uses a coordinate system
+with the origin in the lower left corner; thus a convexity will look
+green towards the top of the texture image (see also the example image
+of a normal map). If this is not the case flip the normal map vertically
+or invert its green channel.
 
 <img src="https://ospray.github.io/images/normalmap_frustum.png" alt="Normal map representing an exalted square pyramidal frustum." style="width:60.0%" />
 
@@ -1234,6 +1292,15 @@ For convenience, the rather counterintuitive physical attenuation
 coefficients will be calculated from the user inputs in such a way, that
 the `attenuationColor` will be the result when white light traveled
 trough a glass of thickness `attenuationDistance`.
+
+#### Luminous
+
+The [path tracer](#path-tracer) supports the Luminous material which
+emits light uniformly in all directions and which can thus be used to
+turn any geometric object into a light source. It is created by passing
+the type string "`Luminous`" to `ospNewMaterial`. The amount of constant
+radiance that is emitted is determined by combining the general
+parameters of lights: [`color` and `intensity`](#lights).
 
 ### Texture
 

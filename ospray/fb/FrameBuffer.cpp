@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,9 +16,6 @@
 
 #include "FrameBuffer.h"
 #include "FrameBuffer_ispc.h"
-#ifdef OSPRAY_MPI
-  #include "mpi/MPICommon.h"
-#endif
 
 namespace ospray {
 
@@ -89,7 +86,6 @@ namespace ospray {
     fclose(file);
   }
 
-
   TileError::TileError(const vec2i &_numTiles)
     : numTiles(_numTiles)
     , tiles(_numTiles.x * _numTiles.y)
@@ -131,17 +127,6 @@ namespace ospray {
     if (tiles > 0)
       tileErrorBuffer[tile.y * numTiles.x + tile.x] = err;
   }
-
-#ifdef OSPRAY_MPI
-  void TileError::sync()
-  {
-    if (tiles <= 0)
-      return;
-
-    int rc = MPI_Bcast(tileErrorBuffer, tiles, MPI_FLOAT, 0, MPI_COMM_WORLD); 
-    mpi::checkMpiError(rc);
-  }
-#endif
 
   float TileError::refine(const float errorThreshold)
   {

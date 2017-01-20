@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,7 +16,7 @@
 
 //ospray
 #include "volume/BlockBrickedVolume.h"
-#include "common/tasking/parallel_for.h"
+#include "ospcommon/tasking/parallel_for.h"
 #include "BlockBrickedVolume_ispc.h"
 
 namespace ospray {
@@ -82,6 +82,8 @@ namespace ospray {
         + (size_t)regionSize.z;
       if (voxelType == "uchar")
         computeVoxelRange((unsigned char *)source, numVoxelsInRegion);
+      else if (voxelType == "short")
+        computeVoxelRange((short *)source, numVoxelsInRegion);
       else if (voxelType == "ushort")
         computeVoxelRange((unsigned short *)source, numVoxelsInRegion);
       else if (voxelType == "float")
@@ -101,11 +103,13 @@ namespace ospray {
     void *finalSource = const_cast<void*>(source);
     const bool upsampling = scaleRegion(source, finalSource, finalRegionSize, finalRegionCoords);
     // Copy voxel data into the volume.
-    const int NTASKS = finalRegionSize.y * finalRegionSize.z;
-    parallel_for(NTASKS, [&](int taskIndex){
-        ispc::BlockBrickedVolume_setRegion(ispcEquivalent, finalSource, (const ispc::vec3i&)finalRegionCoords,
-            (const ispc::vec3i&)finalRegionSize, taskIndex);
-    });
+    const size_t NTASKS = finalRegionSize.y * finalRegionSize.z;
+    parallel_for(NTASKS, [&](size_t taskIndex){
+        ispc::BlockBrickedVolume_setRegion(ispcEquivalent,
+                                           finalSource,
+                                           (const ispc::vec3i&)finalRegionCoords,
+                                           (const ispc::vec3i&)finalRegionSize, taskIndex);
+      });
 
     // If we're upsampling finalSource points at the chunk of data allocated by scaleRegion
     // to hold the upsampled volume data and we must free it.

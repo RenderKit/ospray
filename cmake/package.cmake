@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2016 Intel Corporation                                    ##
+## Copyright 2009-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -83,9 +83,6 @@ SET(CPACK_PACKAGE_CONTACT ospray@googlegroups.com)
 SET(CPACK_COMPONENT_LIB_DISPLAY_NAME "Library")
 SET(CPACK_COMPONENT_LIB_DESCRIPTION "The OSPRay library including documentation.")
 
-SET(CPACK_COMPONENT_LIB_MIC_NAME "Xeon Phi Library")
-SET(CPACK_COMPONENT_LIB_MIC_DESCRIPTION "The OSPRay library for the Intel Xeon Phi coprocessor.")
-
 SET(CPACK_COMPONENT_DEVEL_DISPLAY_NAME "Development")
 SET(CPACK_COMPONENT_DEVEL_DESCRIPTION "Header files for C and C++ required to develop applications with OSPRay.")
 
@@ -94,7 +91,6 @@ SET(CPACK_COMPONENT_APPS_DESCRIPTION "Viewer applications and tutorials demonstr
 
 # dependencies between components
 SET(CPACK_COMPONENT_DEVEL_DEPENDS lib)
-SET(CPACK_COMPONENT_LIB_MIC_DEPENDS lib)
 SET(CPACK_COMPONENT_APPS_DEPENDS lib)
 SET(CPACK_COMPONENT_LIB_REQUIRED ON) # always install the libs
 
@@ -172,7 +168,6 @@ ELSE()
     ELSE()
       # needs to use COMPONENT names in original capitalization (i.e. lowercase)
       SET(CPACK_RPM_lib_PACKAGE_REQUIRES ${TBB_REQ})
-      SET(CPACK_RPM_lib_mic_PACKAGE_REQUIRES "ospray-lib = ${OSPRAY_VERSION}")
       SET(CPACK_RPM_apps_PACKAGE_REQUIRES "ospray-lib >= ${OSPRAY_VERSION}, qt = 4")
       SET(CPACK_RPM_devel_PACKAGE_REQUIRES "ospray-lib = ${OSPRAY_VERSION}")
       #SET(CPACK_RPM_PACKAGE_DEBUG ON)
@@ -180,7 +175,7 @@ ELSE()
     SET(CPACK_GENERATOR RPM)
     SET(CPACK_RPM_PACKAGE_RELEASE 1) # scripts/release_linux.sh assumes "1"
     SET(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}-${CPACK_RPM_PACKAGE_RELEASE}.x86_64")
-    SET(CPACK_COMPONENTS_ALL lib lib_mic devel apps)
+    SET(CPACK_COMPONENTS_ALL lib devel apps)
     SET(CPACK_RPM_COMPONENT_INSTALL ON)
     SET(CPACK_RPM_PACKAGE_LICENSE "ASL 2.0") # Apache Software License, Version 2.0
     SET(CPACK_RPM_PACKAGE_GROUP "Development/Libraries")
@@ -191,8 +186,6 @@ ELSE()
     # post install and uninstall scripts
     SET(CPACK_RPM_lib_POST_INSTALL_SCRIPT_FILE ${PROJECT_SOURCE_DIR}/scripts/rpm_ldconfig.sh)
     SET(CPACK_RPM_lib_POST_UNINSTALL_SCRIPT_FILE ${PROJECT_SOURCE_DIR}/scripts/rpm_ldconfig.sh)
-    SET(CPACK_RPM_lib_mic_POST_INSTALL_SCRIPT_FILE ${PROJECT_SOURCE_DIR}/scripts/rpm_ldconfig.sh)
-    SET(CPACK_RPM_lib_mic_POST_UNINSTALL_SCRIPT_FILE ${PROJECT_SOURCE_DIR}/scripts/rpm_ldconfig.sh)
   ENDIF()
   
 ENDIF()

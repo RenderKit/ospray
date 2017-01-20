@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -30,6 +30,10 @@ namespace ospray {
 
       //! Copy understood parameters into member parameters
       virtual void commit();
+
+      vec3f getRadiance() const {
+        return color * intensity;
+      }
 
     private:
       vec3f color;                  //!< RGB color of the light

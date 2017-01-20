@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -57,11 +57,11 @@ namespace ospray {
   {
     static int numPrints = 0;
     numPrints++;
-    if (logLevel >= 2) 
+    if (logLevel() >= 2)
       if (numPrints == 5)
         cout << "(all future printouts for triangle mesh creation will be emitted)" << endl;
     
-    if (logLevel >= 2) 
+    if (logLevel() >= 2)
       if (numPrints < 5)
         std::cout << "ospray: finalizing triangle mesh ..." << std::endl;
 
@@ -78,8 +78,25 @@ namespace ospray {
     materialListData = getParamData("materialList");
     geom_materialID = getParam1i("geom.materialID",-1);
 
-    Assert2(vertexData, "triangle mesh must have 'vertex' array");
-    Assert2(indexData, "triangle mesh must have 'index' array");
+    if (!vertexData)
+      throw std::runtime_error("triangle mesh must have 'vertex' array");
+    if (!indexData)
+      throw std::runtime_error("triangle mesh must have 'index' array");
+    if (colorData && colorData->type != OSP_FLOAT4 && colorData->type != OSP_FLOAT3A)
+      throw std::runtime_error("vertex.color must have data type OSP_FLOAT4 or OSP_FLOAT3A");
+
+    // check whether we need 64-bit addressing
+    bool huge_mesh = false;
+    if (indexData->numBytes > UINT32_MAX)
+      huge_mesh = true;
+    if (vertexData->numBytes > UINT32_MAX)
+      huge_mesh = true;
+    if (normalData && normalData->numBytes > UINT32_MAX)
+      huge_mesh = true;
+    if (colorData && colorData->numBytes > UINT32_MAX)
+      huge_mesh = true;
+    if (texcoordData && texcoordData->numBytes > UINT32_MAX)
+      huge_mesh = true;
 
     this->index = (int*)indexData->data;
     this->vertex = (float*)vertexData->data;
@@ -149,7 +166,10 @@ namespace ospray {
 
     eMesh = rtcNewTriangleMesh(embreeSceneHandle,RTC_GEOMETRY_STATIC,
                                numTris,numVerts);
-#ifndef NDEBUG
+#if 0
+    // iw: turning this off for now: we should have a special cmd line
+    //flag to enable this; not do it every time ...
+    //#ifndef NDEBUG
     {
       cout << "#osp/trimesh: Verifying index buffer ... " << endl;
       for (int i=0;i<numTris*numCompsInTri;i+=numCompsInTri) {
@@ -186,7 +206,7 @@ namespace ospray {
     for (uint32_t i = 0; i < numVerts*numCompsInVtx; i+=numCompsInVtx)
       bounds.extend(*(vec3f*)(vertex + i));
 
-    if (logLevel >= 2) 
+    if (logLevel() >= 2)
       if (numPrints < 5) {
         cout << "  created triangle mesh (" << numTris << " tris "
              << ", " << numVerts << " vertices)" << endl;
@@ -206,7 +226,9 @@ namespace ospray {
                            geom_materialID,
                            getMaterial()?getMaterial()->getIE():NULL,
                            ispcMaterialPtrs,
-                           (uint32_t*)prim_materialID);
+                           (uint32_t*)prim_materialID,
+                           colorData && colorData->type == OSP_FLOAT4,
+                           huge_mesh);
   }
 
   OSP_REGISTER_GEOMETRY(TriangleMesh,triangles);

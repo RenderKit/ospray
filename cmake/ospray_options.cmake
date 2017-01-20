@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2016 Intel Corporation                                    ##
+## Copyright 2009-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -19,8 +19,8 @@
 ##############################################################
 
 SET(OSPRAY_VERSION_MAJOR 1)
-SET(OSPRAY_VERSION_MINOR 1)
-SET(OSPRAY_VERSION_PATCH 2)
+SET(OSPRAY_VERSION_MINOR 2)
+SET(OSPRAY_VERSION_PATCH 0)
 SET(OSPRAY_VERSION_GITHASH 0)
 IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
   FIND_PACKAGE(Git)
@@ -50,8 +50,8 @@ IF (WIN32)
 ELSE()
   IF(NOT CMAKE_BUILD_TYPE)
     SET(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the build type." FORCE)
-    SET_PROPERTY(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${CONFIGURATION_TYPES})
   ENDIF()
+  SET_PROPERTY(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${CONFIGURATION_TYPES})
 ENDIF()
 
 IF("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
@@ -89,6 +89,9 @@ ENDIF()
 OPTION(OSPRAY_ZIP_MODE "Use tarball/zip CPack generator instead of RPM" ON)
 MARK_AS_ADVANCED(OSPRAY_ZIP_MODE)
 
+OPTION(OSPRAY_INSTALL_DEPENDENCIES "Install OSPRay dependencies in binary packages and install")
+MARK_AS_ADVANCED(OSPRAY_INSTALL_DEPENDENCIES)
+
 INCLUDE(package)
 
 ##############################################################
@@ -109,26 +112,10 @@ OPTION(OSPRAY_USE_HIGH_QUALITY_BVH
 OPTION(OSPRAY_VOLUME_VOXELRANGE_IN_APP "Move 'voxelrange' computations to app?")
 MARK_AS_ADVANCED(OSPRAY_VOLUME_VOXELRANGE_IN_APP)
 
-# Configure MIC support
-IF (WIN32)
-  SET(OSPRAY_BUILD_MIC_SUPPORT OFF CACHE INTERNAL
-      "OSPRay with KNC not supported on Windows.")
-ELSE()
-  OPTION(OSPRAY_BUILD_MIC_SUPPORT "Build OSPRay with KNC Support?")
-  IF (OSPRAY_BUILD_MIC_SUPPORT AND NOT OSPRAY_COMPILER_ICC)
-    MESSAGE(FATAL_ERROR "MIC support requires the Intel Compiler.")
-  ELSEIF (OSPRAY_BUILD_MIC_SUPPORT)
-    # Build COI device?
-    OPTION(OSPRAY_BUILD_COI_DEVICE
-           "Build COI Device for OSPRay's MIC support?" ON)
-    SET(OSPRAY_MIC_COI ${OSPRAY_BUILD_COI_DEVICE})
-  ENDIF()
-ENDIF()
+# TODO should move to module/mpi/CMakeLists.txt
+OPTION(OSPRAY_MODULE_MPI "MPI parallel device")
 
-OPTION(OSPRAY_BUILD_MPI_DEVICE "Add MPI Remote/Distributed rendering support?")
-
-SET(OSPRAY_MIC ${OSPRAY_BUILD_MIC_SUPPORT})
-SET(OSPRAY_MPI ${OSPRAY_BUILD_MPI_DEVICE})
+SET(OSPRAY_MPI ${OSPRAY_MODULE_MPI})
 
 SET(OSPRAY_TILE_SIZE 64 CACHE INT "Tile size")
 SET_PROPERTY(CACHE OSPRAY_TILE_SIZE PROPERTY STRINGS 8 16 32 64 128 256 512)

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -31,17 +31,17 @@ public:
   Model(const Model &copy);
   Model(OSPModel existing);
 
-  void addGeometry(Geometry &v);
-  void addGeometry(OSPGeometry v);
+  void addGeometry(Geometry &v) const;
+  void addGeometry(OSPGeometry v) const;
 
-  void removeGeometry(Geometry &v);
-  void removeGeometry(OSPGeometry v);
+  void removeGeometry(Geometry &v) const;
+  void removeGeometry(OSPGeometry v) const;
 
-  void addVolume(Volume &v);
-  void addVolume(OSPVolume v);
+  void addVolume(Volume &v) const;
+  void addVolume(OSPVolume v) const;
 
-  void removeVolume(Volume &v);
-  void removeVolume(OSPVolume v);
+  void removeVolume(Volume &v) const;
+  void removeVolume(OSPVolume v) const;
 };
 
 // Inlined function definitions ///////////////////////////////////////////////
@@ -66,42 +66,42 @@ inline Model::Model(OSPModel existing) :
 {
 }
 
-inline void Model::addGeometry(Geometry &v)
+inline void Model::addGeometry(Geometry &v) const
 {
   addGeometry(v.handle());
 }
 
-inline void Model::addGeometry(OSPGeometry v)
+inline void Model::addGeometry(OSPGeometry v) const
 {
   ospAddGeometry(handle(), v);
 }
 
-inline void Model::removeGeometry(Geometry &v)
+inline void Model::removeGeometry(Geometry &v) const
 {
   removeGeometry(v.handle());
 }
 
-inline void Model::removeGeometry(OSPGeometry v)
+inline void Model::removeGeometry(OSPGeometry v) const
 {
   ospRemoveGeometry(handle(), v);
 }
 
-inline void Model::addVolume(Volume &v)
+inline void Model::addVolume(Volume &v) const
 {
   addVolume(v.handle());
 }
 
-inline void Model::addVolume(OSPVolume v)
+inline void Model::addVolume(OSPVolume v) const
 {
   ospAddVolume(handle(), v);
 }
 
-inline void Model::removeVolume(Volume &v)
+inline void Model::removeVolume(Volume &v) const
 {
   removeVolume(v.handle());
 }
 
-inline void Model::removeVolume(OSPVolume v)
+inline void Model::removeVolume(OSPVolume v) const
 {
   ospRemoveVolume(handle(), v);
 }

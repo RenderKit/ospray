@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,6 +16,7 @@
 
 // ospray
 #include "common/Library.h"
+#include "common/Util.h"
 #include "volume/Volume.h"
 #include "Volume_ispc.h"
 #include "transferFunction/TransferFunction.h"
@@ -24,10 +25,6 @@
 #include <map>
 
 namespace ospray {
-
-  Volume::~Volume()
-  {
-  }
 
   bool Volume::isDataDistributed() const
   {
@@ -41,38 +38,7 @@ namespace ospray {
 
   Volume *Volume::createInstance(const std::string &type)
   {
-    // Function pointer type for creating a concrete instance of a subtype of
-    // this class.
-    typedef Volume *(*creationFunctionPointer)();
-
-    // Function pointers corresponding to each subtype.
-    static std::map<std::string, creationFunctionPointer> symbolRegistry;
-
-    // Find the creation function for the subtype if not already known.
-    if (symbolRegistry.count(type) == 0) {
-
-      // Construct the name of the creation function to look for.
-      std::string creationFunctionName = "ospray_create_volume__" + type;
-
-      // Look for the named function.
-      symbolRegistry[type] =
-          (creationFunctionPointer)getSymbol(creationFunctionName);
-
-      // The named function may not be found if the requested subtype is not
-      // known.
-      if (!symbolRegistry[type] && ospray::logLevel >= 1) {
-        std::cerr << "  ospray::Volume  WARNING: unrecognized subtype '" + type
-                  << "'." << std::endl;
-      }
-    }
-
-    // Create a concrete instance of the requested subtype.
-    Volume *volume = (symbolRegistry[type]) ? (*symbolRegistry[type])() : NULL;
-
-    // Denote the subclass type in the ManagedObject base class.
-    if (volume) volume->managedObjectType = OSP_VOLUME;
-
-    return volume;
+    return createInstanceHelper<Volume, OSP_VOLUME>(type);
   }
 
   void Volume::computeSamples(float **results,

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -54,6 +54,11 @@ SharedStructuredVolume::~SharedStructuredVolume()
     switch (getVoxelType()) {
     case OSP_UCHAR:
       ispc::SharedStructuredVolume_setRegion_uint8(getIE(),source,
+                                                   (const ispc::vec3i&)index,
+                                                   (const ispc::vec3i&)count);
+      break;
+    case OSP_SHORT:
+      ispc::SharedStructuredVolume_setRegion_int16(getIE(),source,
                                                    (const ispc::vec3i&)index,
                                                    (const ispc::vec3i&)count);
       break;

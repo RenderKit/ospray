@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -124,7 +124,7 @@ void QOSPRayWindow::setWorldBounds(const ospcommon::box3f &worldBounds)
 
 void QOSPRayWindow::paintGL()
 {
-  if(!renderingEnabled || !frameBuffer || !renderer)
+  if(!renderingEnabled || !frameBuffer || !renderer || !QApplication::activeWindow())
     return;
 
   // if we're benchmarking and we've completed the required number of warm-up frames, start the timer

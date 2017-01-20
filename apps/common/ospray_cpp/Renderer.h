@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -32,12 +32,12 @@ public:
   Renderer(const Renderer &copy);
   Renderer(OSPRenderer existing = nullptr);
 
-  Material newMaterial(const std::string &type);
-  Light    newLight(const std::string &type);
+  Material newMaterial(const std::string &type) const;
+  Light    newLight(const std::string &type) const;
 
-  float renderFrame(const FrameBuffer &fb, uint32_t channels);
+  float renderFrame(const FrameBuffer &fb, uint32_t channels) const;
 
-  OSPPickResult pick(const ospcommon::vec2f &screenPos);
+  OSPPickResult pick(const ospcommon::vec2f &screenPos) const;
 };
 
 // Inlined function definitions ///////////////////////////////////////////////
@@ -62,7 +62,7 @@ inline Renderer::Renderer(OSPRenderer existing) :
 {
 }
 
-inline Material Renderer::newMaterial(const std::string &type)
+inline Material Renderer::newMaterial(const std::string &type) const
 {
   auto mat = Material(ospNewMaterial(handle(), type.c_str()));
 
@@ -73,17 +73,17 @@ inline Material Renderer::newMaterial(const std::string &type)
   return mat;
 }
 
-inline Light Renderer::newLight(const std::string &type)
+inline Light Renderer::newLight(const std::string &type) const
 {
   return Light(ospNewLight(handle(), type.c_str()));
 }
 
-inline float Renderer::renderFrame(const FrameBuffer &fb, uint32_t channels)
+inline float Renderer::renderFrame(const FrameBuffer &fb, uint32_t channels) const
 {
   return ospRenderFrame(fb.handle(), handle(), channels);
 }
 
-inline OSPPickResult Renderer::pick(const ospcommon::vec2f &screenPos)
+inline OSPPickResult Renderer::pick(const ospcommon::vec2f &screenPos) const
 {
   OSPPickResult result;
   ospPick(&result, handle(), (const osp::vec2f&)screenPos);

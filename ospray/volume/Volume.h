@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -56,7 +56,7 @@ namespace ospray {
 #endif
 
     //! Destructor.
-    virtual ~Volume();
+    virtual ~Volume() = default;
 
     //! \brief Returns whether the volume is a data-distributed volume
     virtual bool isDataDistributed() const;

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -20,7 +20,6 @@
 #include "common/DifferentialGeometry.ih"
 #include "common/Ray.ih"
 #include "Medium.ih"
-#include "render/pathtracer/samplers/Sample.ih"
 #include "render/pathtracer/bsdfs/BSDF.ih"
 #include "render/pathtracer/bsdfs/ShadingContext.ih"
 
@@ -53,9 +52,11 @@ struct PathTraceMaterial
   PathTraceMaterial_GetBSDFFunc getBSDF;
   PathTraceMaterial_GetTransparencyFunc getTransparency;
   PathTraceMaterial_SelectNextMediumFunc selectNextMedium;
+  vec3f emission;// simple constant (spatially and angular) emission, returns radiance; TODO SV-EDFs
 };
 
 void PathTraceMaterial_Constructor(uniform PathTraceMaterial* uniform self,
                                    uniform PathTraceMaterial_GetBSDFFunc getBSDF,
                                    uniform PathTraceMaterial_GetTransparencyFunc getTransparency = NULL,
                                    uniform PathTraceMaterial_SelectNextMediumFunc selectNextMedium = NULL);
+                                   // const uniform vec3f emission = { 0.f, 0.f, 0.f }; fails, ISPC issue #1231

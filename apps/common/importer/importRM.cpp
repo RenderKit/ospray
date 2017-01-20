@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -181,7 +181,9 @@ namespace ospray {
       ospSetVec3i(volume->handle, "dimensions", (osp::vec3i&)dims);
       ospSetString(volume->handle,"voxelType", "uchar");
 
-      const int numThreads = ospcommon::getNumberOfLogicalThreads();
+      // Note: API is not thread safe, even w/ the locking around the ospSetRegion call
+      // the MPI backend has issues.
+      const int numThreads = 1;
 
       double t0 = ospcommon::getSysTime();
 

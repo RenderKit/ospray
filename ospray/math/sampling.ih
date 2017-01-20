@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -136,5 +136,27 @@ inline vec3f uniformSampleTriangle(const vec3f &a, const vec3f &b, const vec3f &
 
 inline float uniformSampleTrianglePDF(const vec3f &a, const vec3f &b, const vec3f &c)
 {
-  return 2.0f * rcp(abs(length(cross(a-c, b-c))));
+  return 2.0f * rcp(length(cross(a-c, b-c)));
+}
+
+
+/// uniform sampling of sphere
+////////////////////////////////////////////////////////////////////////////////
+
+inline vec3f uniformSampleSphere(const float radius, const vec2f s)
+{
+  const float phi = two_pi * s.x;
+  const float cosTheta = radius * (1.f - 2.f*s.y);
+  const float sinTheta = 2.f*radius * sqrt(s.y*(1.f - s.y));
+  return cartesian(phi, sinTheta, cosTheta);
+}
+
+inline float uniformSampleSpherePDF(const float radius)
+{
+  return rcp(four_pi * sqr(radius));
+}
+
+inline uniform float uniformSampleSpherePDF(const uniform float radius)
+{
+  return rcp(four_pi * sqr(radius));
 }

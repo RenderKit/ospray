@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -19,6 +19,7 @@
 #include <ospray/ospray.h>
 #include <QtGui>
 #include <stdexcept>
+#include <iostream>
 
 class LightEditor : public QWidget {
 
@@ -27,6 +28,17 @@ Q_OBJECT
 public:
 
   LightEditor(OSPLight ambientLight, OSPLight directionalLight);
+
+  friend std::ostream& operator<< (std::ostream& out, LightEditor& v)
+  {
+    return out << "--ambientLight " << v.ambientLightIntensitySpinBox.value() << " --directionalLight "
+        << v.directionalLightIntensitySpinBox.value() << " " << v.directionalLightAzimuthSlider.value()
+        << " " << v.directionalLightElevationSlider.value();
+  }
+  void setAmbientLightIntensity(float v) { ambientLightIntensitySpinBox.setValue(v); }
+  void setDirectionalLightIntensity(float v) { directionalLightIntensitySpinBox.setValue(v); }
+  void setDirectionalLightAzimuth(float v) { directionalLightAzimuthSlider.setValue(v); }
+  void setDirectionalLightElevation(float v) { directionalLightElevationSlider.setValue(v); }
 
 signals:
 
@@ -37,7 +49,7 @@ protected slots:
   void ambientLightChanged();
   void directionalLightChanged();
 
-protected:
+public:
 
   //! OSPRay ambient light.
   OSPLight ambientLight;

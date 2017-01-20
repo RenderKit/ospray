@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -104,7 +104,7 @@ inline BSDF_SampleRes Dielectric_sample(const varying BSDF* uniform super,
 
   float glass_epsilon = 1.0e-6;
   // We want the actual ray direction into the surface.
-  vec3f d = make_vec3f(-wo.x, -wo.y, -wo.z);
+  vec3f d = neg(wo);
   vec3f N = self->dgeom.Ns; //getN(super);
   vec3f shapeN = self->dgeom.Ng;// For testing if the ray entered/exited the geometry.
   float eta = 1.0 / self->eta;// ior(outside) / ior(inside)
@@ -116,10 +116,10 @@ inline BSDF_SampleRes Dielectric_sample(const varying BSDF* uniform super,
 
   if (be_careful) {
     if (dot(d,N) > 0) {
-      N = make_vec3f(-N.x, -N.y, -N.z);
+      N = neg(N);
     }
     if (dot(d,shapeN) > 0) {
-      shapeN = make_vec3f(-shapeN.x, -shapeN.y, -shapeN.z);
+      shapeN = neg(shapeN);
     }
   }
 

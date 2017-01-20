@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -19,6 +19,7 @@
 #include "ospcommon/box.h"
 #include "QOSPRayWindow.h"
 #include "SliceWidget.h"
+#include "LightEditor.h"
 #include <QtGui>
 #include <string>
 #include <vector>
@@ -27,16 +28,17 @@ class TransferFunctionEditor;
 class IsosurfaceEditor;
 class ProbeWidget;
 class OpenGLAnnotationRenderer;
+class PreferencesDialog;
 
 //! OSPRay model and its volumes / geometries
 struct ModelState {
 
   struct Volume {
-    Volume(OSPVolume handle, 
-           const ospcommon::box3f &boundingBox, 
-           const ospcommon::vec2f &voxelRange) 
-      : handle(handle), 
-        boundingBox(boundingBox), 
+    Volume(OSPVolume handle,
+           const ospcommon::box3f &boundingBox,
+           const ospcommon::vec2f &voxelRange)
+      : handle(handle),
+        boundingBox(boundingBox),
         voxelRange(voxelRange)
     {
       assert(!boundingBox.empty());
@@ -130,26 +132,32 @@ public slots:
 
   //! Set gradient shading flag on all volumes.
   void setGradientShadingEnabled(bool value);
+  bool getGradientShadingEnabled() { return gradientShadingEnabled; }
 
   //! Set gradient shading flag on all volumes.
   void setPreIntegration(bool value);
+  bool getPreIntegration() { return preIntegration; }
 
   //! Set gradient shading flag on all volumes.
   void setSingleShade(bool value);
 
   void setShadows(bool value);
+  bool getShadows() { return shadows; }
 
   void setAdaptiveScalar(double value);
 
   void setAdaptiveMaxSamplingRate(double value);
+  float getAdaptiveMaxSamplingRate() { return adaptiveMaxSamplingRate; }
 
   void setAdaptiveBacktrack(double value);
 
   //! Set gradient shading flag on all volumes.
   void setAdaptiveSampling(bool value);
+  bool getAdaptiveSampling() { return adaptiveSampling; }
 
   //! Set sampling rate on all volumes.
   void setSamplingRate(double value);
+  bool getSamplingRate() { return samplingRate; }
 
   //! Set volume clipping box on all volumes.
   void setVolumeClippingBox(ospcommon::box3f value);
@@ -161,10 +169,17 @@ public slots:
   void setIsovalues(std::vector<float> isovalues);
 
   void setPlane(bool st);
+  bool getPlane() { return usePlane; }
 
   void setAOSamples(int value);
+  int getAOSamples() { return aoSamples; }
+
+  void setSPP(int value);
+  int getSPP() { return spp; }
 
   void setAOWeight(double value);
+
+  LightEditor* getLightEditor() { return lightEditor; }
 
 protected:
 
@@ -243,8 +258,19 @@ protected:
   //! Create and configure the user interface widgets and callbacks.
   void initUserInterfaceWidgets();
 
-  bool usePlane;
+  int usePlane;
 
   OSPGeometry planeMesh;
+
+  LightEditor* lightEditor;
+  float samplingRate;
+  float adaptiveMaxSamplingRate;
+  PreferencesDialog* preferencesDialog;
+  int spp;
+  int aoSamples;
+  int shadows;
+  int preIntegration;
+  int adaptiveSampling;
+  int gradientShadingEnabled;
 
 };

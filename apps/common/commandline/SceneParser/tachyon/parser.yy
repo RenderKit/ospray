@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -160,7 +160,14 @@ vertexarray_body
 | vertexarray_body TOKEN_Normals vec3f_vector
 { $$ = $1; $1->normal = *$3; delete $3; }
 | vertexarray_body TOKEN_Colors vec3f_vector
-{ $$ = $1; $1->color = *$3; delete $3; }
+{
+  $$ = $1;
+  $1->color = std::vector<vec4f>($3->size(), vec4f(1));
+  for (size_t i = 0; i < $3->size(); ++i) {
+    $1->color[i] = vec4f((*$3)[i], 1.0);
+  }
+  delete $3;
+}
 | vertexarray_body texture
 { $$ = $1; $1->textureID = ospray::tachyon::parserModel->addTexture($2); }
 | vertexarray_body TOKEN_TriStrip Int int_vector

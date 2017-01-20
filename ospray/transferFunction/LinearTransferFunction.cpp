@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -36,6 +36,8 @@ namespace ospray {
     // Retrieve the color and opacity values.
     colorValues   = getParamData("colors", NULL);  
     opacityValues = getParamData("opacities", NULL);
+    ispc::LinearTransferFunction_setPreIntegration(ispcEquivalent,
+                                       getParam1i("preIntegration", 0));
 
     // Set the color values.
     if (colorValues) 
@@ -49,6 +51,9 @@ namespace ospray {
                                                     opacityValues->numItems, 
                                                     (float *)opacityValues->data);
     }
+
+    if (getParam1i("preIntegration", 0))
+      ispc::LinearTransferFunction_precomputePreIntegratedValues(ispcEquivalent);
 
     // Set the value range that the transfer function covers.
     vec2f valueRange = getParam2f("valueRange", vec2f(0.0f, 1.0f));  

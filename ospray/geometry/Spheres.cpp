@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -60,7 +60,7 @@ namespace ospray {
     }
 
     numSpheres = sphereData->numBytes / bytesPerSphere;
-    if (logLevel >= 2) 
+    if (logLevel() >= 2)
       std::cout << "#osp: creating 'spheres' geometry, #spheres = "
         << numSpheres << std::endl;
 
@@ -87,6 +87,14 @@ namespace ospray {
         ispcMaterials[i] = m?m->getIE():NULL;
       }
       _materialList = (void*)ispcMaterials;
+    }
+
+    const char* spherePtr = (const char*)sphereData->data;
+    bounds = empty;
+    for (uint32_t i = 0; i < numSpheres; i++, spherePtr += bytesPerSphere) {
+      const float r = offset_radius < 0 ? radius : *(float*)(spherePtr + offset_radius);
+      const vec3f center = *(vec3f*)(spherePtr + offset_center);
+      bounds.extend(box3f(center - r, center + r));
     }
 
     ispc::SpheresGeometry_set(getIE(),model->getIE(),

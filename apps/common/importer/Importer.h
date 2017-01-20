@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -20,6 +20,8 @@
 #include "ospray/ospray.h"
 // ospcommon
 #include "ospcommon/box.h"
+// ospray
+#include "ospray/common/OSPCommon.h"
 // std
 #include <vector>
 
@@ -49,26 +51,31 @@ namespace ospray {
       }
     }
 
-    //! Convenient wrapper that will do the template dispatch for you based on the voxelSize passed
-    //! voxelSize = 1 -> unsigned char
-    //! voxelSize = 2 -> uint16_t
-    //! voxelSize = 4 -> float
-    //! voxelSize = 8 -> double
-    inline void extendVoxelRange(ospcommon::vec2f &voxelRange, const size_t voxelSize, const unsigned char *voxels,
-        const size_t numVoxels)
+    //! Convenient wrapper that will do the template dispatch for you based on the voxelType passed
+    inline void extendVoxelRange(ospcommon::vec2f &voxelRange
+        , const OSPDataType voxelType
+        , const unsigned char *voxels
+        , const size_t numVoxels
+        )
     {
-      switch (voxelSize) {
-        case sizeof(unsigned char):
+      switch (voxelType) {
+        case OSP_UCHAR:
           extendVoxelRange(voxelRange, (unsigned char*)voxels, numVoxels);
           break;
-        case sizeof(float):
+        case OSP_SHORT:
+          extendVoxelRange(voxelRange, (short*)voxels, numVoxels);
+          break;
+        case OSP_USHORT:
+          extendVoxelRange(voxelRange, (unsigned short*)voxels, numVoxels);
+          break;
+        case OSP_FLOAT:
           extendVoxelRange(voxelRange, (float*)voxels, numVoxels);
           break;
-        case sizeof(double):
+        case OSP_DOUBLE:
           extendVoxelRange(voxelRange, (double*)voxels, numVoxels);
           break;
         default:
-          std::cerr << "ERROR: unsupported voxel type with size " << voxelSize << std::endl;
+          std::cerr << "ERROR: unsupported voxel type " << stringForType(voxelType) << std::endl;
           exit(1);
       }
     }

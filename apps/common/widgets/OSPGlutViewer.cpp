@@ -1,6 +1,6 @@
 // ======================================================================== //
 // Copyright 2016 SURVICE Engineering Company                               //
-// Copyright 2016 Intel Corporation                                         //
+// Copyright 2017 Intel Corporation                                         //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -53,21 +53,24 @@ static void writePPM(const string &fileName, const int sizeX, const int sizeY,
 
 namespace ospray {
 
-OSPGlutViewer::OSPGlutViewer(const box3f &worldBounds, cpp::Model model,
+OSPGlutViewer::OSPGlutViewer(const std::deque<box3f> &worldBounds, std::deque<cpp::Model> model,
                              cpp::Renderer renderer, cpp::Camera camera)
   : Glut3DWidget(Glut3DWidget::FRAMEBUFFER_NONE),
-    sceneModel(model),
+    sceneModels(model),
     frameBuffer(nullptr),
     renderer(renderer),
     camera(camera),
     queuedRenderer(nullptr),
     alwaysRedraw(true),
-    fullScreen(false)
+    fullScreen(false),
+    worldBounds(worldBounds),
+    lockFirstAnimationFrame(false)
 {
-  setWorldBounds(worldBounds);
-
-  renderer.set("world",  sceneModel);
-  renderer.set("model",  sceneModel);
+  if (!worldBounds.empty()) {
+    setWorldBounds(worldBounds[0]);
+  }
+  renderer.set("world",  sceneModels[0]);
+  renderer.set("model",  sceneModels[0]);
   renderer.set("camera", camera);
   renderer.commit();
 
@@ -77,6 +80,13 @@ OSPGlutViewer::OSPGlutViewer(const box3f &worldBounds, cpp::Model model,
 #endif
 
   resetAccum = false;
+  frameTimer = ospcommon::getSysTime();
+  animationTimer = 0.;
+  animationFrameDelta = .03;
+  animationFrameId = 0;
+  animationPaused = false;
+  glutViewPort = viewPort;
+  scale = vec3f(1,1,1);
 }
 
 void OSPGlutViewer::create(const char*  title,
@@ -111,7 +121,9 @@ void OSPGlutViewer::toggleFullscreen()
 
 void OSPGlutViewer::resetView()
 {
+  auto oldAspect = viewPort.aspect;
   viewPort = glutViewPort;
+  viewPort.aspect = oldAspect;
 }
 
 void OSPGlutViewer::printViewport()
@@ -131,6 +143,11 @@ void OSPGlutViewer::saveScreenshot(const std::string &basename)
        << endl;
 }
 
+void OSPGlutViewer::setWorldBounds(const box3f &worldBounds) {
+  Glut3DWidget::setWorldBounds(worldBounds);
+  renderer.set("aoDistance", (worldBounds.upper.x - worldBounds.lower.x)/4.f);
+  renderer.commit();
+}
 void OSPGlutViewer::reshape(const vec2i &newSize)
 {
   Glut3DWidget::reshape(newSize);
@@ -150,6 +167,15 @@ void OSPGlutViewer::reshape(const vec2i &newSize)
 void OSPGlutViewer::keypress(char key, const vec2i &where)
 {
   switch (key) {
+  case ' ':
+    animationPaused = !animationPaused;
+    break;
+  case '=':
+    animationFrameDelta = max(animationFrameDelta-0.01, 0.0001); 
+    break;
+  case '-':
+    animationFrameDelta = min(animationFrameDelta+0.01, 1.0); 
+    break;
   case 'R':
     alwaysRedraw = !alwaysRedraw;
     forceRedraw();
@@ -227,9 +253,7 @@ void OSPGlutViewer::mouseButton(int32_t whichButton,
 
 void OSPGlutViewer::display()
 {
-  if (!frameBuffer.handle() || !renderer.handle()) return;
-
-  static int frameID = 0;
+  if (!frameBuffer.handle() || !renderer.handle() ) return;
 
   //{
   // note that the order of 'start' and 'end' here is
@@ -243,22 +267,17 @@ void OSPGlutViewer::display()
   // NOTE: consume a new renderer if one has been queued by another thread
   switchRenderers();
 
+  updateAnimation(ospcommon::getSysTime()-frameTimer);
+  frameTimer = ospcommon::getSysTime();
+
   if (resetAccum) {
     frameBuffer.clear(OSP_FB_ACCUM);
     resetAccum = false;
   }
 
-  fps.startRender();
-  //}
-
   ++frameID;
 
   if (viewPort.modified) {
-    static bool once = true;
-    if(once) {
-      glutViewPort = viewPort;
-      once = false;
-    }
     Assert2(camera.handle(),"ospray camera is null");
     camera.set("pos", viewPort.from);
     auto dir = viewPort.at - viewPort.from;
@@ -271,6 +290,7 @@ void OSPGlutViewer::display()
     viewPort.modified = false;
     frameBuffer.clear(OSP_FB_ACCUM);
   }
+  fps.startRender();
 
   renderer.renderFrame(frameBuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
 
@@ -304,6 +324,52 @@ void OSPGlutViewer::switchRenderers()
     renderer = queuedRenderer;
     queuedRenderer = nullptr;
     frameBuffer.clear(OSP_FB_ACCUM);
+  }
+}
+
+void OSPGlutViewer::updateAnimation(double deltaSeconds)
+{
+  if (sceneModels.size() < 2)
+    return;
+  if (animationPaused)
+    return;
+  animationTimer += deltaSeconds;
+  int framesSize = sceneModels.size();
+  const int frameStart = (lockFirstAnimationFrame ? 1 : 0);
+  if (lockFirstAnimationFrame)
+    framesSize--;
+
+  if (animationTimer > animationFrameDelta)
+  {
+    animationFrameId++;
+    //set animation time to remainder off of delta 
+    animationTimer = animationTimer - int(animationTimer/deltaSeconds)*deltaSeconds;
+
+    size_t dataFrameId = animationFrameId%framesSize+frameStart;
+    if (lockFirstAnimationFrame)
+    {
+      ospcommon::affine3f xfm = ospcommon::one;
+      xfm = xfm*ospcommon::affine3f::translate(translate)*ospcommon::affine3f::scale(scale);
+      OSPGeometry dynInst =
+              ospNewInstance((OSPModel)sceneModels[dataFrameId].object(),
+              (osp::affine3f&)xfm);
+      ospray::cpp::Model worldModel = ospNewModel();
+      ospcommon::affine3f staticXFM = ospcommon::one;
+      OSPGeometry staticInst =
+              ospNewInstance((OSPModel)sceneModels[0].object(),
+              (osp::affine3f&)staticXFM);
+      //Carson: TODO: creating new world model every frame unecessary
+      worldModel.addGeometry(staticInst);
+      worldModel.addGeometry(dynInst);
+      worldModel.commit();
+      renderer.set("model",  worldModel);
+    }
+    else
+    {
+      renderer.set("model",  sceneModels[dataFrameId]);
+    }
+    renderer.commit();
+    resetAccumulation();
   }
 }
 

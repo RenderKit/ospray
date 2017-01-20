@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -48,8 +48,8 @@ export void Model_init(void *uniform _model,
   uniform RTCAlgorithmFlags traversal_flags =
       RTC_INTERSECT_UNIFORM | RTC_INTERSECT_VARYING;
 
-#if (RTCORE_VERSION_MAJOR >= 2 && RTCORE_VERSION_MINOR >= 10 && defined(OSPRAY_USE_EMBREE_STREAMS))
-    traversal_flags |= RTC_INTERSECT_STREAM;
+#ifdef OSPRAY_USE_EMBREE_STREAMS
+  traversal_flags |= RTC_INTERSECT_STREAM;
 #endif
 
   model->embreeSceneHandle = rtcDeviceNewScene((RTCDevice)embreeDevice,

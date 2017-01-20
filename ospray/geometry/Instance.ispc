@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -17,23 +17,8 @@
 // ospray
 #include "math/vec.ih"
 #include "math/box.ih"
-#include "math/AffineSpace.ih"
 #include "common/Ray.ih"
-#include "common/Model.ih"
-#include "geometry/Geometry.ih"
-// embree
-#include "embree2/rtcore.isph"
-#include "embree2/rtcore_scene.isph"
-#include "embree2/rtcore_geometry_user.isph"
-
-struct Instance {
-  uniform Geometry geometry; //!< inherited geometry fields
-  uniform Model *uniform model; //!< instanced model
-  AffineSpace3f          xfm;   //!< instantiation matrix
-  AffineSpace3f          rcp_xfm;   //!< rcp(instantiation matrix)
-};
-
-
+#include "Instance.ih"
 
 static void Instance_postIntersect(uniform Geometry *uniform _self,
                                    uniform Model *uniform parentModel,
@@ -54,9 +39,8 @@ static void Instance_postIntersect(uniform Geometry *uniform _self,
     instancedGeometry->postIntersect(instancedGeometry,instancedModel,
                                      dg,ray,flags);
   }
-  // XXX this is wrong when the transformation contains non-uniform scaling!
-  dg.Ns = xfmVector(self->xfm,dg.Ns);
-  dg.Ng = xfmVector(self->xfm,dg.Ng);
+  dg.Ns = xfmVector(transposed(self->rcp_xfm.l), dg.Ns);
+  dg.Ng = xfmVector(transposed(self->rcp_xfm.l), dg.Ng);
 
   if (flags & DG_TANGENTS) {
     dg.dPds = xfmVector(self->xfm,dg.dPds);
@@ -66,20 +50,23 @@ static void Instance_postIntersect(uniform Geometry *uniform _self,
 
 export void *uniform InstanceGeometry_create(void *uniform cppE)
 {
-  uniform Instance *uniform inst = uniform new uniform Instance;
-  inst->geometry.cppEquivalent = cppE;
-  inst->geometry.postIntersect = Instance_postIntersect;
+  Instance *uniform self = uniform new Instance;
+  self->geometry.cppEquivalent = cppE;
+  self->geometry.postIntersect = Instance_postIntersect;
+  self->areaPDF = NULL;
 
-  return inst;
+  return self;
 }
 
 export void InstanceGeometry_set(void *uniform _self, 
                                  const uniform AffineSpace3f &xfm,
                                  const uniform AffineSpace3f &rcp_xfm,
-                                 void *uniform _model)
+                                 void *uniform _model,
+                                 float *uniform areaPDF)
 {
-  uniform Instance *uniform self = (uniform Instance *uniform)_self;
+  Instance *uniform self = (Instance *uniform)_self;
   self->model   = (uniform Model *uniform)_model;
   self->xfm     = xfm;
-  self->rcp_xfm = xfm;
+  self->rcp_xfm = rcp_xfm;
+  self->areaPDF = areaPDF;
 }

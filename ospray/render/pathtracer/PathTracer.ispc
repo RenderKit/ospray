@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -19,11 +19,11 @@
 
 #include "render/pathtracer/materials/Medium.ih"
 #include "render/pathtracer/materials/Material.ih"
+#include "geometry/Instance.ih"
 #include "math/random.ih"
 #include "fb/LocalFB.ih"
 
 #define PDF_CULLING 0.0f
-//#define USE_DGCOLOR
 
 
 inline float misHeuristic(float pdf1, float pdf2)
@@ -42,7 +42,7 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
                         Ray &shadowRay,
                         Medium medium)
 {
-  int max_depth = self->maxDepth;
+  uniform int max_depth = self->maxDepth;
   const float org_t_max = shadowRay.t;
 
   while (1) {
@@ -133,8 +133,8 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       }
     }
 
-    // add light from virtual lights by intersecting them
-    for (uniform int i = 0; i < self->numLights; i++) {
+    // add light from *virtual* lights by intersecting them
+    for (uniform int i = self->numGeoLights; i < self->numLights; i++) {
       const uniform Light *uniform l = self->lights[i];
       Light_EvalRes le = l->eval(l, lastDg, ray.dir, maxLightDist);
       if (reduce_max(le.radiance) > 0.0f)
@@ -145,7 +145,8 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       break;
 
     // terminate after evaluation of lights and before next shading to always have both samples for MIS
-    if (depth >= self->maxDepth)
+    // except if we have geometry lights (which we still need to evaluate for MIS)
+    if (depth >= self->maxDepth && self->numGeoLights == 0)
       break;
 
     ////////////////////////////////////
@@ -156,20 +157,47 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         DG_MATERIALID|
         DG_NS|DG_NG|DG_FACEFORWARD|DG_NORMALIZE|DG_TEXCOORD|DG_COLOR|DG_TANGENTS
         );
+    uniform PathTraceMaterial* m = (uniform PathTraceMaterial*)dg.material;
+
+    // evaluate geometry lights
+    foreach_unique(mm in m)
+      if (mm != NULL && reduce_max(mm->emission) > 0.f) {
+        float area_pdf;
+        // XXX same hack as in Model.ih; to get areaPDF of hit geometry instance
+        if (ray.instID < 0) { // a regular geometry
+          area_pdf = self->areaPDF[ray.geomID];
+        } else { // an instance
+          foreach_unique(instID in ray.instID) {
+            Instance *uniform inst = (Instance *uniform)self->super.model->geometry[instID];
+            area_pdf = inst->areaPDF[ray.geomID];
+          }
+        }
+
+        // convert pdf wrt. area to pdf wrt. solid angle
+        const float cosd = dot(dg.Ng, ray.dir);
+        const float le_pdf = area_pdf * sqr(ray.t) / abs(cosd);
+        L = L + Lw * mm->emission * misHeuristic(lastBSDFPdf, le_pdf);
+      }
+
+    // terminate after evaluation of lights and before next shading to always have both samples for MIS
+    if (depth >= self->maxDepth)
+      break;
 
     // shade surface
     uniform ShadingContext ctx;
     ShadingContext_Constructor(&ctx);
     const varying BSDF* bsdf = NULL;
 
-    uniform PathTraceMaterial* m = (uniform PathTraceMaterial*)dg.material;
     foreach_unique(mm in m)
       if (mm != NULL)
         bsdf = mm->getBSDF(mm, &ctx, dg, ray, currentMedium);
 
+    // terminate path when we don't have any BSDF
+    if (!bsdf)
+      break;
+
     // direct lighting including shadows and MIS
-    if (bsdf && (bsdf->type & BSDF_SMOOTH))
-    {
+    if (bsdf->type & BSDF_SMOOTH) {
       uniform int numLights = self->lights ? min(MAX_LIGHTS, self->numLights) : 0;
       for (uniform int i = 0; i < numLights; i++)
       {
@@ -187,9 +215,6 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
           if (f != NULL)
             fe = f->eval(f, wo, ls.dir);
 
-#ifdef USE_DGCOLOR
-        fe.value = fe.value * make_vec3f(dg.color);
-#endif
         // skip when zero contribution from material
         if (reduce_max(fe.value) <= 0.0f)
           continue;
@@ -207,16 +232,11 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     // sample BSDF
     vec2f s  = RandomTEA__getFloats(rng);
-    vec2f ss = RandomTEA__getFloats(rng); // FIXME: should be only one component
+    vec2f ss = RandomTEA__getFloats(rng); // TODO use other component to select one light
     BSDF_SampleRes fs;
     foreach_unique(f in bsdf)
       if (f != NULL)
         fs = f->sample(f, wo, s, ss.x);
-
-#ifdef USE_DGCOLOR
-    if ((type & GLOSSY_REFLECTION) == NONE) // only colorize diffuse component
-      fs.weight = fs.weight * make_vec3f(dg.color);
-#endif
 
     // terminate path when zero contribution from material
     if (reduce_max(fs.weight) <= 0.0f | fs.pdf <= PDF_CULLING)
@@ -225,18 +245,15 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     Lw = Lw * fs.weight;
 
     // compute attenuation with Beer's law
-    if (ne(currentMedium.attenuation, 0.f)) {
+    if (reduce_min(currentMedium.attenuation) < 0.f)
       Lw = Lw * expf(currentMedium.attenuation * ray.t);
-    }
 
     // update currentMedium if we hit a medium interface 
     // TODO: support nested dielectrics
     if (fs.type & BSDF_TRANSMISSION) {
-      foreach_unique(uniMat in dg.material) {
-        uniform PathTraceMaterial* uniform m = (uniform PathTraceMaterial *)uniMat;
-        if (m != NULL) {
-          m->selectNextMedium(m, currentMedium);
-        }
+      foreach_unique(mm in m) {
+        if (mm != NULL)
+          mm->selectNextMedium(mm, currentMedium);
       }
     }
 
@@ -359,9 +376,11 @@ export void PathTracer_set(void *uniform _self,
                            const uniform float maxRadiance,
                            void *uniform backplate,
                            void **uniform lights,
-                           const uniform uint32 numLights)
+                           const uniform uint32 numLights,
+                           const uniform uint32 numGeoLights,
+                           void *uniform areaPDF)
 {
-  uniform PathTracer *uniform self = (uniform PathTracer *uniform)_self;
+  PathTracer *uniform self = (PathTracer *uniform)_self;
 
   self->maxDepth = maxDepth;
   self->minContribution = minContribution;
@@ -369,6 +388,8 @@ export void PathTracer_set(void *uniform _self,
   self->backplate = (uniform Texture2D *uniform)backplate;
   self->lights = (const uniform Light *uniform *uniform)lights;
   self->numLights = numLights;
+  self->numGeoLights = numGeoLights;
+  self->areaPDF = (float *uniform)areaPDF;
 }
 
 export void* uniform PathTracer_create(void *uniform cppE)
@@ -377,7 +398,7 @@ export void* uniform PathTracer_create(void *uniform cppE)
   Renderer_Constructor(&self->super,cppE);
   self->super.renderTile = PathTracer_renderTile;
 
-  PathTracer_set(self, 20, 0.01f, inf, NULL, NULL, 0);
+  PathTracer_set(self, 20, 0.01f, inf, NULL, NULL, 0, 0, NULL);
   precomputeZOrder();
 
   return self;

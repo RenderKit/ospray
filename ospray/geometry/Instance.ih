@@ -1,0 +1,35 @@
+// ======================================================================== //
+// Copyright 2009-2017 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+#include "geometry/Geometry.ih"
+#include "common/Model.ih"
+#include "math/AffineSpace.ih"
+
+struct Instance {
+  uniform Geometry geometry; //!< inherited geometry fields
+  uniform Model *uniform model; //!< instanced model
+  AffineSpace3f xfm; //!< instantiation matrix
+  AffineSpace3f rcp_xfm; //!< rcp(instantiation matrix)
+
+  // XXX hack: there is no concept of instance data, but PT needs pdfs (wrt.
+  // area) of geometry light instances
+  float *uniform areaPDF;
+};
+
+
+

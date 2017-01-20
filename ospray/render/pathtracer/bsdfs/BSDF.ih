@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -72,6 +72,10 @@ inline BSDF_EvalRes make_BSDF_EvalRes_zero()
 typedef BSDF_EvalRes (*BSDF_EvalFunc)(const varying BSDF* uniform self,
                                       const vec3f& wo, const vec3f& wi);
 
+// Note: the pdf of Dirac delta distributions is represented with inf. This is
+// possible, because in weight we already cancel the Dirac delta (but still
+// account for a changed pdf by e.g. discrete events such as component
+// selection).
 struct BSDF_SampleRes
 {
   vec3f weight; //!< radiance multiplied by dot(wi,N)/pdf

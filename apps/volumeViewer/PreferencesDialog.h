@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -31,6 +31,19 @@ public:
 
   PreferencesDialog(VolumeViewer *volumeViewer, ospcommon::box3f boundingBox);
 
+  void setSamplingRate(float v);
+  void setAdaptiveMaxSamplingRate(float v);
+public slots:
+
+void setGradientShadingEnabled(bool v);
+void setSPP(int v);
+void setAOSamples(int v);
+void setPreIntegration(bool v);
+void setShadows(bool v);
+void setAdaptiveSampling(bool v);
+void setPlane(bool v);
+
+
 protected slots:
 
   void updateVolumeClippingBox();
@@ -38,6 +51,15 @@ protected slots:
 protected:
 
   VolumeViewer *volumeViewer;
+  QDoubleSpinBox* samplingRateSpinBox;
+  QDoubleSpinBox* adaptiveMaxSamplingRateSB;
+  QSpinBox* sppSB;
+  QSpinBox* aoSamplesSB;
+  QCheckBox* preIntegrationCB;
+  QCheckBox* adaptiveSamplingCB;
+  QCheckBox* shadowsCB;
+  QCheckBox* gradientShadingEnabledCheckBox;
+  QCheckBox* planeCB;
 
   std::vector<QDoubleSpinBox *> volumeClippingBoxSpinBoxes;
 };

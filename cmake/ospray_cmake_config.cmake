@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2016 Intel Corporation                                    ##
+## Copyright 2009-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -60,7 +60,7 @@ INSTALL(FILES
   ${CMAKE_SOURCE_DIR}/cmake/ispc.cmake
   ${CMAKE_SOURCE_DIR}/cmake/gcc.cmake
   ${CMAKE_SOURCE_DIR}/cmake/msvc.cmake
-  ${CMAKE_SOURCE_DIR}/cmake/ospray_macros.cmake
+  ${CMAKE_SOURCE_DIR}/ospcommon/cmake/macros.cmake#NOTE(jda) - hack!
   DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/ospray-${OSPRAY_VERSION}"
   COMPONENT devel
 )

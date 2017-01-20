@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -19,9 +19,7 @@
 #include "Geometry.h"
 
 namespace ospray {
-  /*! @{ \ingroup ospray_module_streamlines */
-
-  /*! \defgroup geometry_spheres Spheres ("spheres")
+  /*! @{ \defgroup geometry_spheres Spheres ("spheres")
 
     \ingroup ospray_supported_geometries
 
@@ -55,13 +53,27 @@ namespace ospray {
 
   */
   struct OSPRAY_SDK_INTERFACE Spheres : public Geometry {
+
+    /*! constructor */
+    Spheres();
+
+    /*! destructor */
+    ~Spheres();
+    
     //! \brief common function to help printf-debugging
     virtual std::string toString() const { return "ospray::Spheres"; }
+    
     /*! \brief integrates this geometry's primitives into the respective
       model's acceleration structure */
     virtual void finalize(Model *model);
 
-    float radius;   //!< default radius, if no per-sphere radius was specified.
+
+    // -------------------------------------------------------
+    // member variables
+    // -------------------------------------------------------
+    
+    /*! default radius, if no per-sphere radius was specified. */
+    float radius;   
     int32 materialID;
 
     size_t numSpheres;
@@ -74,20 +86,21 @@ namespace ospray {
     Ref<Data> sphereData;
     Ref<Data> materialList;
     void     *_materialList;
+    
     /*! data array from which we read the per-sphere color data; if
-        NULL we do not have per-sphere data */
+      NULL we do not have per-sphere data */
     Ref<Data> colorData;
+    
     /*! stride in colorData array for accessing i'th sphere's
-        color. color of sphere i will be read as 3 floats from
-        'colorOffset+i*colorStride */
+      color. color of sphere i will be read as 3 floats from
+      'colorOffset+i*colorStride */
     size_t    colorStride;
+    
     /*! offset in colorData array for accessing i'th sphere's
-        color. color of sphere i will be read as 3 floats from
-        'colorOffset+i*colorStride */
+      color. color of sphere i will be read as 3 floats from
+      'colorOffset+i*colorStride */
     size_t    colorOffset;
 
-    Spheres();
-    ~Spheres();
   };
   /*! @} */
 

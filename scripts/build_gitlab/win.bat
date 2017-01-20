@@ -1,6 +1,6 @@
 @echo off
 rem ======================================================================== rem
-rem Copyright 2015-2016 Intel Corporation                                    rem
+rem Copyright 2015-2017 Intel Corporation                                    rem
 rem                                                                          rem
 rem Licensed under the Apache License, Version 2.0 (the "License");          rem
 rem you may not use this file except in compliance with the License.         rem
@@ -24,8 +24,7 @@ cmake -L ^
 -G "%~1" ^
 -T "%~2" ^
 -D OSPRAY_BUILD_ISA=ALL ^
--D OSPRAY_BUILD_MIC_SUPPORT=OFF ^
--D OSPRAY_BUILD_MPI_DEVICE=ON ^
+-D OSPRAY_MODULE_MPI=ON ^
 -D OSPRAY_USE_EXTERNAL_EMBREE=ON ^
 -D USE_IMAGE_MAGICK=OFF ^
 ..

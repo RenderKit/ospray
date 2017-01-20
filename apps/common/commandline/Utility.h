@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -38,8 +38,8 @@ inline void parseForLoadingModules(int ac, const char**& av)
   }
 }
 
-using ParsedOSPObjects = std::tuple<ospcommon::box3f,
-                                    ospray::cpp::Model,
+using ParsedOSPObjects = std::tuple<std::deque<ospcommon::box3f>,
+                                    std::deque<ospray::cpp::Model>,
                                     ospray::cpp::Renderer,
                                     ospray::cpp::Camera>;
 

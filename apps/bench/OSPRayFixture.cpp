@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2016 Intel Corporation                                         //
+// Copyright 2017 Intel Corporation                                         //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -48,7 +48,7 @@ void writePPM(const std::string &fileName, const int sizeX, const int sizeY,
 }
 }
 
-OSPRayFixture::OSPRayFixture(cpp::Renderer r, cpp::Camera c, cpp::Model m)
+OSPRayFixture::OSPRayFixture(cpp::Renderer r, cpp::Camera c,  cpp::Model m)
   : renderer(r), camera(c), model(m), width(DEFAULT_WIDTH), height(DEFAULT_HEIGHT),
   defaultBenchFrames(DEFAULT_BENCH_FRAMES), defaultWarmupFrames(DEFAULT_WARMUP_FRAMES)
 {

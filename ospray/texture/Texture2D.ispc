@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -160,9 +160,11 @@ static vec4f Texture2D_bilinear_##FMT(const uniform Texture2D *uniform self, \
   return bilerp(cs.frac, c00, c01, c10, c11);                                \
 }
 
-#define __define_tex_get_case(FMT) \
-  case OSP_TEXTURE_##FMT: return filter_nearest ?  &Texture2D_nearest_##FMT : \
-                                                   &Texture2D_bilinear_##FMT;
+#define __define_tex_case(NAME, FMT) \
+  case OSP_TEXTURE_##FMT: return filter_nearest ?  &NAME##_nearest_##FMT : \
+                                                   &NAME##_bilinear_##FMT;
+#define __define_tex_get_case(FMT) __define_tex_case(Texture2D, FMT)
+#define __define_tex_getN_case(FMT) __define_tex_case(Texture2D_N, FMT)
 
 #define __foreach_fetcher(FCT) \
   FCT(RGBA8)                   \
@@ -182,11 +184,54 @@ static uniform Texture2D_get Texture2D_get_addr(const uniform uint32 type,
   switch (type) {
     __foreach_fetcher(__define_tex_get_case)
   }
-  return 0;
+  return NULL;
+};
+
+
+static vec3f Texture2D_Normal_neutral(const uniform Texture2D *uniform self,
+                                      const vec2f &)
+{
+  return make_vec3f(0.f, 0.f, 1.f);
+}
+
+#define __define_tex_getN_flt(NAME, C)                                 \
+static vec3f Texture2D_N_##NAME(const uniform Texture2D *uniform self, \
+    const vec2f &p)                                                    \
+{                                                                      \
+  return make_vec3f(Texture2D_##NAME(self, p)) * C - 1.f;              \
+}
+
+#define __define_tex_getN(FMT, C)          \
+  __define_tex_getN_flt(nearest_##FMT, C)  \
+  __define_tex_getN_flt(bilinear_##FMT, C)
+
+__define_tex_getN(RGB8, (255.f/127.f));
+__define_tex_getN(RGBA8, (255.f/127.f));
+__define_tex_getN(RGB32F, 2.f);
+__define_tex_getN(RGBA32F, 2.f);
+
+
+static uniform Texture2D_getN Texture2D_getN_addr(const uniform uint32 type,
+    const uniform bool filter_nearest)
+{
+  switch (type) {
+    case OSP_TEXTURE_SRGBA: /* fallthrough, sRGB ignored for normals */
+      __define_tex_getN_case(RGBA8)
+    case OSP_TEXTURE_SRGB: /* fallthrough, sRGB ignored for normals */
+      __define_tex_getN_case(RGB8)
+      __define_tex_getN_case(RGBA32F)
+      __define_tex_getN_case(RGB32F)
+  }
+  return &Texture2D_Normal_neutral;
 };
 
 #undef __define_tex_get
+#undef __define_tex_getN
+#undef __define_tex_getN_flt
 #undef __define_tex_get_addr
+#undef __define_tex_case
+#undef __define_tex_get_case
+#undef __define_tex_getN_case
 #undef __foreach_fetcher
 
 
@@ -197,7 +242,7 @@ export void *uniform Texture2D_create(uniform vec2i &size, void *uniform data,
     uniform uint32 type, uniform uint32 flags)
 {
   uniform Texture2D *uniform self = uniform new uniform Texture2D;
-  self->size      = size;
+  self->size = size;
 
   // Due to float rounding frac(x) can be exactly 1.0f (e.g. for very small
   // negative x), although it should be strictly smaller than 1.0f. We handle
@@ -207,6 +252,7 @@ export void *uniform Texture2D_create(uniform vec2i &size, void *uniform data,
   self->halfTexel = make_vec2f(0.5f/size.x, 0.5f/size.y);
   self->data = data;
   self->get = Texture2D_get_addr(type, flags & OSP_TEXTURE_FILTER_NEAREST);
+  self->getNormal = Texture2D_getN_addr(type, flags & OSP_TEXTURE_FILTER_NEAREST);
   self->hasAlpha = type == OSP_TEXTURE_RGBA8 || type == OSP_TEXTURE_SRGBA || type == OSP_TEXTURE_RGBA32F;
 
   return self;

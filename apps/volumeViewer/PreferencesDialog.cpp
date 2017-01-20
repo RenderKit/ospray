@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -35,15 +35,15 @@ PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer, ospcommon::box3
   formLayout->addRow("Subsample during interaction", subsamplingInteractionEnabledCheckBox);
 
   // gradient shading flag
-  QCheckBox *gradientShadingEnabledCheckBox = new QCheckBox();
+  gradientShadingEnabledCheckBox = new QCheckBox();
   connect(gradientShadingEnabledCheckBox, SIGNAL(toggled(bool)), volumeViewer, SLOT(setGradientShadingEnabled(bool)));
   formLayout->addRow("Volume gradient shading (lighting)", gradientShadingEnabledCheckBox);
 
-  QCheckBox *adaptiveSamplingCB = new QCheckBox();
+  adaptiveSamplingCB = new QCheckBox();
   connect(adaptiveSamplingCB, SIGNAL(toggled(bool)), volumeViewer, SLOT(setAdaptiveSampling(bool)));
   formLayout->addRow("Adaptive sampling", adaptiveSamplingCB);
 
-  QCheckBox *preIntegrationCB = new QCheckBox();
+  preIntegrationCB = new QCheckBox();
   connect(preIntegrationCB, SIGNAL(toggled(bool)), volumeViewer, SLOT(setPreIntegration(bool)));
   formLayout->addRow("PreIntegration", preIntegrationCB);
 
@@ -51,13 +51,14 @@ PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer, ospcommon::box3
   connect(singleShadeCB, SIGNAL(toggled(bool)), volumeViewer, SLOT(setSingleShade(bool)));
   formLayout->addRow("Single Shading Calculation", singleShadeCB);
 
-  QCheckBox *shadowsCB = new QCheckBox();
+  shadowsCB = new QCheckBox();
   connect(shadowsCB, SIGNAL(toggled(bool)), volumeViewer, SLOT(setShadows(bool)));
   formLayout->addRow("Shadows", shadowsCB);
 
-  QCheckBox *planeCB = new QCheckBox();
+  planeCB = new QCheckBox();
   connect(planeCB, SIGNAL(toggled(bool)), volumeViewer, SLOT(setPlane(bool)));
   formLayout->addRow("Plane", planeCB);
+
 
   QDoubleSpinBox *adaptiveScalarSB = new QDoubleSpinBox();
   adaptiveScalarSB->setDecimals(4);
@@ -66,9 +67,9 @@ PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer, ospcommon::box3
   connect(adaptiveScalarSB, SIGNAL(valueChanged(double)), volumeViewer, SLOT(setAdaptiveScalar(double)));
   formLayout->addRow("Adaptive scalar", adaptiveScalarSB);
 
-  QDoubleSpinBox *adaptiveMaxSamplingRateSB = new QDoubleSpinBox();
+  adaptiveMaxSamplingRateSB = new QDoubleSpinBox();
   adaptiveMaxSamplingRateSB->setDecimals(3);
-  adaptiveMaxSamplingRateSB->setRange(0.01, 2.0);
+  adaptiveMaxSamplingRateSB->setRange(0.01, 16.0);
   adaptiveMaxSamplingRateSB->setSingleStep(0.01);
   connect(adaptiveMaxSamplingRateSB, SIGNAL(valueChanged(double)), volumeViewer, SLOT(setAdaptiveMaxSamplingRate(double)));
   formLayout->addRow("Adaptive max sampling rate", adaptiveMaxSamplingRateSB);
@@ -81,9 +82,9 @@ PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer, ospcommon::box3
   formLayout->addRow("Adaptive backtrack", adaptiveBacktrackSB);
 
   // sampling rate selection
-  QDoubleSpinBox *samplingRateSpinBox = new QDoubleSpinBox();
+  samplingRateSpinBox = new QDoubleSpinBox();
   samplingRateSpinBox->setDecimals(3);
-  samplingRateSpinBox->setRange(0.01, 2.0);
+  samplingRateSpinBox->setRange(0.01, 16.0);
   samplingRateSpinBox->setSingleStep(0.01);
   connect(samplingRateSpinBox, SIGNAL(valueChanged(double)), volumeViewer, SLOT(setSamplingRate(double)));
   formLayout->addRow("Sampling rate", samplingRateSpinBox);
@@ -95,10 +96,15 @@ PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer, ospcommon::box3
   connect(aoWeightSB, SIGNAL(valueChanged(double)), volumeViewer, SLOT(setAOWeight(double)));
   formLayout->addRow("AOWeight", aoWeightSB);
 
-  QSpinBox *aoSamplesSB = new QSpinBox();
+  aoSamplesSB = new QSpinBox();
   aoSamplesSB->setRange(0, 64);
   connect(aoSamplesSB, SIGNAL(valueChanged(int)), volumeViewer, SLOT(setAOSamples(int)));
   formLayout->addRow("AOSamples", aoSamplesSB);
+
+  sppSB = new QSpinBox();
+  sppSB->setRange(-4, 2048);
+  connect(sppSB, SIGNAL(valueChanged(int)), volumeViewer, SLOT(setSPP(int)));
+  formLayout->addRow("spp", sppSB);
 
   // volume clipping box
   for(size_t i=0; i<6; i++) {
@@ -138,18 +144,64 @@ PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer, ospcommon::box3
 
   // set default values. this will trigger signal / slot executions.
   subsamplingInteractionEnabledCheckBox->setChecked(false);
-  gradientShadingEnabledCheckBox->setChecked(true);
+  gradientShadingEnabledCheckBox->setChecked(volumeViewer->getGradientShadingEnabled());
   singleShadeCB->setChecked(true);
-  adaptiveSamplingCB->setChecked(true);
-  preIntegrationCB->setChecked(true);
-  shadowsCB->setChecked(true);
-  planeCB->setChecked(true);
+  adaptiveSamplingCB->setChecked(volumeViewer->getAdaptiveSampling());
+  preIntegrationCB->setChecked(volumeViewer->getPreIntegration());
+  shadowsCB->setChecked(volumeViewer->getShadows());
+  planeCB->setChecked(volumeViewer->getPlane());
   adaptiveScalarSB->setValue(15.f);
-  adaptiveMaxSamplingRateSB->setValue(0.7f);
+  adaptiveMaxSamplingRateSB->setValue(volumeViewer->getAdaptiveMaxSamplingRate());
   adaptiveBacktrackSB->setValue(0.02f);
-  samplingRateSpinBox->setValue(0.07);
+  samplingRateSpinBox->setValue(volumeViewer->getSamplingRate());
   aoWeightSB->setValue(0.4f);
-  aoSamplesSB->setValue(1);
+  aoSamplesSB->setValue(volumeViewer->getAOSamples());
+  sppSB->setValue(volumeViewer->getSPP());
+}
+
+void PreferencesDialog::setGradientShadingEnabled(bool v)
+{
+  if (gradientShadingEnabledCheckBox)
+    gradientShadingEnabledCheckBox->setChecked(v);
+}
+
+void PreferencesDialog::setSPP(int v)
+{
+  sppSB->setValue(v);
+}
+
+void PreferencesDialog::setAOSamples(int v)
+{
+  aoSamplesSB->setValue(v);
+}
+
+void PreferencesDialog::setPreIntegration(bool v)
+{
+  preIntegrationCB->setChecked(v);
+}
+
+void PreferencesDialog::setShadows(bool v)
+{
+  shadowsCB->setChecked(v);
+}
+
+void PreferencesDialog::setAdaptiveSampling(bool v)
+{
+  adaptiveSamplingCB->setChecked(v);
+}
+
+void PreferencesDialog::setPlane(bool v)
+{
+  planeCB->setChecked(v);
+}
+
+void PreferencesDialog::setSamplingRate(float v)
+{
+  samplingRateSpinBox->setValue(v);
+}
+void PreferencesDialog::setAdaptiveMaxSamplingRate(float v)
+{
+  adaptiveMaxSamplingRateSB->setValue(v);
 }
 
 void PreferencesDialog::updateVolumeClippingBox()

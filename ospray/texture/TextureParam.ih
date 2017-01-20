@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -91,3 +91,8 @@ inline vec4f get4f(const uniform TextureParam uniform &tex,
   return get4f(tex.map, tex.xform * uv);
 }
 
+inline vec3f getNormal(const uniform TextureParam uniform &tex,
+                       const varying vec2f uv)
+{
+  return getNormal(tex.map, tex.xform * uv);
+}

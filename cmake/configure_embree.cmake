@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2016 Intel Corporation                                    ##
+## Copyright 2009-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -18,7 +18,7 @@
 # Find or build Embree
 # -------------------------------------------------------
 
-SET(EMBREE_VERSION_REQUIRED 2.7.1)
+SET(EMBREE_VERSION_REQUIRED 2.10.0)
 
 # Do a check to see if we can find the system Embree
 IF(NOT DEFINED LAST_CONFIG_USED_EXTERNAL_EMBREE)
@@ -27,7 +27,7 @@ IF(NOT DEFINED LAST_CONFIG_USED_EXTERNAL_EMBREE)
     MESSAGE(WARNING
             "We did not find Embree installed on your system. If you would"
             " like to use a newer version of Embree than the one in the"
-            " OSPRay source tree (v2.7.1), please download and extract or"
+            " OSPRay source tree (v2.10.0), please download and extract or"
             " compile Embree from source, set the 'embree_DIR' environment"
             " variable to where it is installed, and re-enable the"
             " OSPRAY_USE_EXTERNAL_EMBREE CMake option.")
@@ -44,6 +44,8 @@ IF(OSPRAY_USE_EXTERNAL_EMBREE)
     UNSET(EMBREE_LIBRARIES)
     UNSET(EMBREE_LIBRARY)
     UNSET(EMBREE_LIBRARY_XEONPHI)
+    UNSET(EMBREE_MAX_ISA)
+    UNSET(EMBREE_MAX_ISA CACHE)
   ENDIF()
 
   # Find existing Embree on the machine #######################################
@@ -51,11 +53,15 @@ IF(OSPRAY_USE_EXTERNAL_EMBREE)
   FIND_PACKAGE(embree ${EMBREE_VERSION_REQUIRED} REQUIRED)
   SET(LAST_CONFIG_USED_EXTERNAL_EMBREE ON CACHE INTERNAL "" FORCE)
 
-  IF(OSPRAY_MIC AND NOT EMBREE_VERSION VERSION_LESS "2.10.0")
-    MESSAGE(FATAL_ERROR "The found Embree version ${EMBREE_VERSION} does not"
-            " support KNC anymore. Either disable the OSPRAY_BUILD_MIC_SUPPORT"
-            " option or use an Embree v2.9 or earlier.")
-  ENDIF()
+  # Check for required Embree features  #######################################
+
+  OSPRAY_CHECK_EMBREE_FEATURE(ISPC_SUPPORT ISPC)
+  OSPRAY_CHECK_EMBREE_FEATURE(INTERSECTION_FILTER "intersection filter")
+  OSPRAY_CHECK_EMBREE_FEATURE(INTERSECTION_FILTER_RESTORE "intersection filter")
+  OSPRAY_CHECK_EMBREE_FEATURE(GEOMETRY_TRIANGLES "triangle geometries")
+  OSPRAY_CHECK_EMBREE_FEATURE(GEOMETRY_USER "user geometries")
+  OSPRAY_CHECK_EMBREE_FEATURE(RAY_PACKETS "ray packets")
+  OSPRAY_CHECK_EMBREE_FEATURE(BACKFACE_CULLING "backface culling" OFF)
 
   # NOTE(jda) - EMBREE_LIBRARIES is not defined until at lest v2.10.0, for now
   #             create a "faked" EMBREE_LIBRARIES until we set our min version
@@ -75,26 +81,35 @@ IF(OSPRAY_USE_EXTERNAL_EMBREE)
     ENDIF()
   ENDIF()
 
+  SET(EMBREE_ISA_SUPPORTS_SSE4   FALSE)
   SET(EMBREE_ISA_SUPPORTS_AVX    FALSE)
   SET(EMBREE_ISA_SUPPORTS_AVX2   FALSE)
   SET(EMBREE_ISA_SUPPORTS_AVX512 FALSE)
 
   # Workaround - name changed from EMBREE_ISA to EMBREE_MAX_ISA in 2.10 -> 2.11
-  IF (DEFINED EMBREE_ISA)
-    SET(EMBREE_ISA_NAME EMBREE_ISA)
-  ELSE ()
-    SET(EMBREE_ISA_NAME EMBREE_MAX_ISA)
+  IF (NOT DEFINED EMBREE_MAX_ISA)
+    SET(EMBREE_MAX_ISA ${EMBREE_ISA})
   ENDIF()
 
-  IF (${${EMBREE_ISA_NAME}} STREQUAL "AVX")
-    SET(EMBREE_ISA_SUPPORTS_AVX TRUE)
-  ELSEIF (${${EMBREE_ISA_NAME}} STREQUAL "AVX2")
+  IF (${EMBREE_MAX_ISA} STREQUAL "SSE4.1")
+    SET(EMBREE_ISA_SUPPORTS_SSE4 TRUE)
+  ELSEIF (${EMBREE_MAX_ISA} STREQUAL "AVX")
+    SET(EMBREE_ISA_SUPPORTS_SSE4 TRUE)
+    SET(EMBREE_ISA_SUPPORTS_AVX  TRUE)
+  ELSEIF (${EMBREE_MAX_ISA} STREQUAL "AVX2")
+    SET(EMBREE_ISA_SUPPORTS_SSE4 TRUE)
     SET(EMBREE_ISA_SUPPORTS_AVX  TRUE)
     SET(EMBREE_ISA_SUPPORTS_AVX2 TRUE)
-  ELSEIF (${${EMBREE_ISA_NAME}} STREQUAL "AVX512KNL")
+  ELSEIF (${EMBREE_MAX_ISA} STREQUAL "AVX512KNL")
+    SET(EMBREE_ISA_SUPPORTS_SSE4   TRUE)
     SET(EMBREE_ISA_SUPPORTS_AVX    TRUE)
     SET(EMBREE_ISA_SUPPORTS_AVX2   TRUE)
     SET(EMBREE_ISA_SUPPORTS_AVX512 TRUE)
+  ENDIF()
+
+  IF(NOT EMBREE_ISA_SUPPORTS_SSE4)
+      MESSAGE(FATAL_ERROR
+              "Your Embree build needs to support at least SSE4.1!")
   ENDIF()
 
   # Configure OSPRay ISA last after we've detected what we got w/ Embree
@@ -115,20 +130,17 @@ ELSE(OSPRAY_USE_EXTERNAL_EMBREE)
 
   # NOTE(jda) - Embree assumes that OSPRAY_TASKING_TBB will be defined correctly
   #             in CONFIGURE_TASKING_SYSTEM()
-  # NOTE(jda) - Only do the Embree include once (Xeon), it will build both
-  #             Xeon and MIC code if both are enabled.
-  IF (NOT THIS_IS_MIC)
-    SET(EMBREE_ISA_SUPPORTS_AVX    TRUE)
-    SET(EMBREE_ISA_SUPPORTS_AVX2   TRUE)
-    SET(EMBREE_ISA_SUPPORTS_AVX512 TRUE)
+  SET(EMBREE_ISA_SUPPORTS_SSE4   TRUE)
+  SET(EMBREE_ISA_SUPPORTS_AVX    TRUE)
+  SET(EMBREE_ISA_SUPPORTS_AVX2   TRUE)
+  SET(EMBREE_ISA_SUPPORTS_AVX512 TRUE)
 
-    # Configure OSPRay ISA before building internal Embree so we know what ISA
-    # for Embree to build.
-    OSPRAY_CONFIGURE_ISPC_ISA()
+  # Configure OSPRay ISA before building internal Embree so we know what ISA
+  # for Embree to build.
+  OSPRAY_CONFIGURE_ISPC_ISA()
 
-    INCLUDE(build_embree)
-  ENDIF()
-  SET(EMBREE_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/ospray/embree-v2.7.1/include)
+  INCLUDE(build_embree)
+  SET(EMBREE_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/ospray/embree-v2.12.0/include)
   SET(EMBREE_LIBRARY embree)
   SET(EMBREE_LIBRARIES ${EMBREE_LIBRARY})
   SET(EMBREE_LIBRARY_XEONPHI embree_xeonphi)
@@ -136,12 +148,21 @@ ELSE(OSPRAY_USE_EXTERNAL_EMBREE)
 
 ENDIF(OSPRAY_USE_EXTERNAL_EMBREE)
 
-# NOTE(jda) - Windows not yet handled...
-IF (OSPRAY_USE_EXTERNAL_EMBREE AND NOT WIN32 AND OSPRAY_ZIP_MODE)
-  INSTALL(PROGRAMS ${EMBREE_LIBRARY}
-          DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib) # /intel64?
-  IF(OSPRAY_MIC)
-    INSTALL(PROGRAMS ${EMBREE_LIBRARY_XEONPHI}
-            DESTINATION ${CMAKE_INSTALL_LIBDIR}/mic COMPONENT lib_mic)
+IF (OSPRAY_INSTALL_DEPENDENCIES)
+  IF (WIN32)
+    GET_FILENAME_COMPONENT(EMBREE_LIB_DIR ${EMBREE_LIBRARY} PATH)
+    SET(EMBREE_DLL_HINTS
+      ${EMBREE_LIB_DIR}
+      ${EMBREE_LIB_DIR}/../bin
+      ${embree_DIR}/../../../bin
+      ${embree_DIR}/../bin
+    )
+    FIND_FILE(EMBREE_DLL embree.dll HINTS ${EMBREE_DLL_HINTS})
+    MARK_AS_ADVANCED(EMBREE_DLL)
+    INSTALL(PROGRAMS ${EMBREE_DLL}
+            DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT lib)
+  ELSE()
+    INSTALL(PROGRAMS ${EMBREE_LIBRARY}
+            DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib) # /intel64?
   ENDIF()
 ENDIF()

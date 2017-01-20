@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,7 +16,6 @@
 
 //ospray
 #include "common/Data.h"
-#include "common/Core.h"
 #include "common/Library.h"
 #include "volume/StructuredVolume.h"
 #include "GridAccelerator_ispc.h"
@@ -83,6 +82,11 @@ namespace ospray {
         out = malloc(sizeof(unsigned char) * size_t(scaledRegionSize.x) *
             size_t(scaledRegionSize.y) * size_t(scaledRegionSize.z));
         upsampleRegion((unsigned char *)source, (unsigned char *)out, regionSize, scaledRegionSize);
+      }
+      else if (voxelType == "short") {
+        out = malloc(sizeof(short) * size_t(scaledRegionSize.x) *
+            size_t(scaledRegionSize.y) * size_t(scaledRegionSize.z));
+        upsampleRegion((unsigned short *)source, (unsigned short *)out, regionSize, scaledRegionSize);
       }
       else if (voxelType == "ushort") {
         out = malloc(sizeof(unsigned short) * size_t(scaledRegionSize.x) *

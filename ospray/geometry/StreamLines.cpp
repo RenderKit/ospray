@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -27,7 +27,7 @@ namespace ospray {
 
   StreamLines::StreamLines()
   {
-    this->ispcEquivalent = ispc::StreamLineGeometry_create(this);
+    this->ispcEquivalent = ispc::StreamLines_create(this);
   }
 
   void StreamLines::finalize(Model *model) 
@@ -47,13 +47,18 @@ namespace ospray {
     numVertices = vertexData->numItems;
     color       = colorData ? (const vec4f*)colorData->data : NULL;
 
-    if (logLevel >= 2) 
+    if (logLevel() >= 2)
       std::cout << "#osp: creating streamlines geometry, "
               << "#verts=" << numVertices << ", "
               << "#segments=" << numSegments << ", "
               << "radius=" << radius << std::endl;
+
+    bounds = empty;
+    if (vertex)
+      for (uint32_t i = 0; i < numVertices; i++)
+        bounds.extend(box3f(vertex[i] - radius, vertex[i] + radius));
     
-    ispc::StreamLineGeometry_set(getIE(),model->getIE(),radius,
+    ispc::StreamLines_set(getIE(),model->getIE(),radius,
                                  (ispc::vec3fa*)vertex,numVertices,
                                  (uint32_t*)index,numSegments,
                                  (ispc::vec4f*)color);

@@ -1,6 +1,6 @@
 // ======================================================================== //
 // Copyright 2016 SURVICE Engineering Company                               //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,11 +16,6 @@
 // ======================================================================== //
 
 #include "glut3D.h"
-#ifdef __APPLE__
-#include "GLUT/glut.h"
-#else
-#include "GL/glut.h"
-#endif
 
 #ifdef _WIN32
 #  ifndef WIN32_LEAN_AND_MEAN

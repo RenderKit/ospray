@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -17,8 +17,14 @@
 // ospray
 #include "Device.h"
 #include "common/OSPCommon.h"
+#include "common/Util.h"
+#include "ospcommon/sysinfo.h"
+// tasking system internals
+#include "ospcommon/tasking/tasking_system_handle.h"
 // embree
 #include "embree2/rtcore.h"
+
+#include <map>
 
 namespace ospray {
 
@@ -28,8 +34,53 @@ namespace ospray {
 
     Ref<Device> Device::current = nullptr;
 
-    Device::Device() {
-//      rtcSetErrorFunction(error_handler); need to call rtcInit first
+    RTCDevice Device::embreeDevice = nullptr;
+    uint32_t Device::logLevel = 0;
+
+    Device::~Device()
+    {
+      if (embreeDevice) rtcDeleteDevice(embreeDevice);
+    }
+
+    Device *Device::createDevice(const char *type)
+    {
+      return createInstanceHelper<Device, OSP_DEVICE>(type);
+    }
+
+    void Device::commit()
+    {
+      int cpuFeatures = ospcommon::getCPUFeatures();
+
+      if ((cpuFeatures & ospcommon::CPU_FEATURE_SSE41) == 0) {
+        throw std::runtime_error("Error. OSPRay only runs on CPUs that support"
+                                 " at least SSE4.1.");
+      }
+
+      auto OSPRAY_DEBUG = getEnvVar<int>("OSPRAY_DEBUG");
+      debugMode = OSPRAY_DEBUG.first ? OSPRAY_DEBUG.second :
+                                       getParam1i("debug", 0);
+
+      auto OSPRAY_LOG_LEVEL = getEnvVar<int>("OSPRAY_LOG_LEVEL");
+      logLevel = OSPRAY_LOG_LEVEL.first ? OSPRAY_LOG_LEVEL.second :
+                                          getParam1i("logLevel", 0);
+
+      auto OSPRAY_THREADS = getEnvVar<int>("OSPRAY_THREADS");
+      numThreads = OSPRAY_THREADS.first ? OSPRAY_THREADS.second :
+                                          getParam1i("numThreads", -1);
+
+      if (debugMode) {
+        logLevel   = 2;
+        numThreads = 1;
+      }
+
+      initTaskingSystem(numThreads);
+
+      committed = true;
+    }
+
+    bool Device::isCommitted()
+    {
+      return committed;
     }
 
   } // ::ospray::api

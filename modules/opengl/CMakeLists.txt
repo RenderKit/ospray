@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2016 Intel Corporation                                    ##
+## Copyright 2009-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -16,7 +16,7 @@
 
 OPTION(OSPRAY_MODULE_OPENGL_UTIL "Build OpenGL utility functionality" ON)
 
-IF(NOT THIS_IS_MIC AND OSPRAY_MODULE_OPENGL_UTIL)
+IF(OSPRAY_MODULE_OPENGL_UTIL)
   FIND_PACKAGE(OpenGL REQUIRED)
 
   INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray)

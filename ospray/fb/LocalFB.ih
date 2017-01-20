@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -20,16 +20,7 @@
 #include "fb/FrameBuffer.ih"
 #include "render/util.ih"
 
-// we assume aligned memory access on KNC
-// ==> need to pad framebuffer width to multiple of 16
-// may test for undocumented #ifdef ISPC_FORCE_ALIGNED_MEMORY
-#ifdef OSPRAY_TARGET_MIC
-  #define FB_PADDED
-  #define FB_STRIDE stride
-#else
-  #define FB_STRIDE super.size.x
-#endif
-
+#define FB_STRIDE super.size.x
 
 /*! a Local FrameBuffer that stores all pixel values (color, depth,
     accum) in a plain 2D array of pixels (one array per component) */
@@ -42,7 +33,4 @@ struct LocalFB
   uniform vec4f *varianceBuffer; // accumulates every other sample, for variance estimation / stopping
   uniform int32 *tileAccumID; //< holds accumID per tile, for adaptive accumulation
   vec2i          numTiles;
-#ifdef FB_PADDED
-  int32          stride; // on MIC framebuffer width is padded to be multiple of 16
-#endif
 };

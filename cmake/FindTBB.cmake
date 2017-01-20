@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2016 Intel Corporation                                    ##
+## Copyright 2009-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -30,9 +30,6 @@ IF (NOT TBB_ROOT STREQUAL TBB_ROOT_LAST)
   UNSET(TBB_LIBRARY_DEBUG CACHE)
   UNSET(TBB_LIBRARY_MALLOC CACHE)
   UNSET(TBB_LIBRARY_MALLOC_DEBUG CACHE)
-  UNSET(TBB_INCLUDE_DIR_MIC CACHE)
-  UNSET(TBB_LIBRARY_MIC CACHE)
-  UNSET(TBB_LIBRARY_MALLOC_MIC CACHE)
 ENDIF()
 
 IF (WIN32)
@@ -105,14 +102,6 @@ ELSE ()
     FIND_LIBRARY(TBB_LIBRARY_MALLOC libtbbmalloc.so.2 HINTS ${TBB_ROOT}/lib/intel64/gcc4.4)
     FIND_LIBRARY(TBB_LIBRARY_MALLOC_DEBUG libtbbmalloc_debug.so.2 HINTS ${TBB_ROOT}/lib/intel64/gcc4.4)
   ENDIF()
-
-  FIND_PATH(TBB_INCLUDE_DIR_MIC tbb/task_scheduler_init.h PATHS ${TBB_ROOT}/include NO_DEFAULT_PATH)
-  FIND_LIBRARY(TBB_LIBRARY_MIC libtbb.so.2 PATHS ${TBB_ROOT}/lib/mic NO_DEFAULT_PATH)
-  FIND_LIBRARY(TBB_LIBRARY_MALLOC_MIC libtbbmalloc.so.2 PATHS ${TBB_ROOT}/lib/mic NO_DEFAULT_PATH)
-
-  MARK_AS_ADVANCED(TBB_INCLUDE_DIR_MIC)
-  MARK_AS_ADVANCED(TBB_LIBRARY_MIC)
-  MARK_AS_ADVANCED(TBB_LIBRARY_MALLOC_MIC)
 ENDIF()
 
 SET(TBB_ROOT_LAST ${TBB_ROOT} CACHE INTERNAL "Last value of TBB_ROOT to detect changes")
@@ -159,12 +148,6 @@ IF (TBB_FOUND)
         debug ${TBB_LIBRARY_DEBUG} debug ${TBB_LIBRARY_MALLOC_DEBUG}
     )
   ENDIF()
-ENDIF()
-
-IF (TBB_INCLUDE_DIR AND TBB_LIBRARY_MIC AND TBB_LIBRARY_MALLOC_MIC)
-  SET(TBB_FOUND_MIC TRUE)
-  SET(TBB_INCLUDE_DIRS_MIC ${TBB_INCLUDE_DIR_MIC})
-  SET(TBB_LIBRARIES_MIC ${TBB_LIBRARY_MIC} ${TBB_LIBRARY_MALLOC_MIC})
 ENDIF()
 
 MARK_AS_ADVANCED(TBB_INCLUDE_DIR)

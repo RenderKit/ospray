@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2016 Intel Corporation                                    ##
+## Copyright 2009-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -20,13 +20,11 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
 SET(LIBS ${LIBS} ${GLUT_LIBRARIES} ${OPENGL_LIBRARIES})
 
-FIND_PACKAGE(Qt4 REQUIRED) 
+FIND_PACKAGE(Qt4 REQUIRED QtGui QtOpenGL) 
 SET(QT_USE_QTOPENGL TRUE)
 FIND_PACKAGE(OpenGL REQUIRED)
 INCLUDE(${QT_USE_FILE})
-SET(LIBS ${LIBS} ${QT_LIBRARIES} ${OPENGL_LIBRARIES})
-
-ADD_SUBDIRECTORY(sg)
+SET(LIBS ${LIBS} Qt4::QtGui Qt4::QtOpenGL ${OPENGL_LIBRARIES})
 
 SET(SRCS ${SRCS}
   # qt helper widgets
