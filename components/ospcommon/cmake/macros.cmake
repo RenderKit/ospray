@@ -176,7 +176,6 @@ FUNCTION(OSPRAY_ADD_SUBDIRECTORY subdirectory)
   SET(OSPRAY_ISPC_SUFFIX ".o")
   SET(__XEON__ ON)
 
-  #ADD_SUBDIRECTORY(${subdirectory} builddir/${subdirectory}/intel64)
   ADD_SUBDIRECTORY(${subdirectory})
 ENDFUNCTION()
 
