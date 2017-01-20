@@ -23,7 +23,7 @@ OSPRAY_CREATE_LIBRARY(ospray_mpi_common
 
   BufferedMPIComm.cpp
   MPICommon.cpp
-  Work.h
+  Work.cpp
 
   async/Messaging.cpp
   async/SimpleSendRecvMessaging.cpp

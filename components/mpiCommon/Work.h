@@ -27,7 +27,8 @@ namespace ospray {
   namespace mpi {
     namespace work {
 
-      struct SerialBuffer {
+      struct OSPRAY_MPI_INTERFACE SerialBuffer
+      {
         std::vector<byte_t> buffer;
         size_t index;
         // size_t bytesAvailable;
@@ -53,18 +54,19 @@ namespace ospray {
         //        used - it's a self allocating buffer
       };
 
-      struct Work {
+      struct OSPRAY_MPI_INTERFACE Work
+      {
         friend SerialBuffer& operator<<(SerialBuffer& b, const Work &work);
         friend SerialBuffer& operator>>(SerialBuffer& b, Work &work);
 
-        virtual void run();
+        virtual void run() {}
         // Run the master-side variant of this command in master/worker mode
         // The default just does nothing
-        virtual void runOnMaster();
+        virtual void runOnMaster() {}
         virtual size_t getTag() const = 0;
         // Check whether this work unit should flush the command buffer,
         // the default returns false
-        virtual bool flushing() const;
+        virtual bool flushing() const { return false; }
 
         // Have the child work unit write its data to the buffer
         virtual void serialize(SerialBuffer &b) const = 0;
@@ -78,11 +80,15 @@ namespace ospray {
       // Child work classes should can implement these but should probably
       // just go through serialize/deserialize so we can generically serialize
       // work units into a buffer.
-      SerialBuffer& operator<<(SerialBuffer& b, const Work &work);
-      SerialBuffer& operator>>(SerialBuffer& b, Work &work);
+      OSPRAY_MPI_INTERFACE SerialBuffer& operator<<(SerialBuffer &b,
+                                                    const Work &work);
+      OSPRAY_MPI_INTERFACE SerialBuffer& operator>>(SerialBuffer &b,
+                                                    Work &work);
 
-      SerialBuffer& operator<<(SerialBuffer &buf, const std::string &rh);
-      SerialBuffer& operator>>(SerialBuffer &buf, std::string &rh);
+      OSPRAY_MPI_INTERFACE SerialBuffer& operator<<(SerialBuffer &buf,
+                                                    const std::string &rh);
+      OSPRAY_MPI_INTERFACE SerialBuffer& operator>>(SerialBuffer &buf,
+                                                    std::string &rh);
 
       // We can't take types which aren't POD or which are pointers
       // because there's no sensible way to serialize/deserialize them.
@@ -91,27 +97,33 @@ namespace ospray {
       // trivially_copyable so we can't use that as a filter test
       template<typename T>
       typename std::enable_if<!std::is_pointer<T>::value, SerialBuffer&>::type
-      operator<<(SerialBuffer &buf, const T &rh) {
+      inline operator<<(SerialBuffer &buf, const T &rh)
+      {
         buf.write((byte_t*)&rh, sizeof(T));
         return buf;
       }
+
       template<typename T>
       typename std::enable_if<!std::is_pointer<T>::value, SerialBuffer&>::type
-      operator>>(SerialBuffer &buf, T &rh) {
+      inline operator>>(SerialBuffer &buf, T &rh)
+      {
         buf.read((byte_t*)&rh, sizeof(T));
         return buf;
       }
 
       template<typename T>
       typename std::enable_if<!std::is_pointer<T>::value, SerialBuffer&>::type
-      operator<<(SerialBuffer &buf, const std::vector<T> &rh) {
+      inline operator<<(SerialBuffer &buf, const std::vector<T> &rh)
+      {
         buf << rh.size();
         buf.write((byte_t*)rh.data(), rh.size() * sizeof(T));
         return buf;
       }
+
       template<typename T>
       typename std::enable_if<!std::is_pointer<T>::value, SerialBuffer&>::type
-      operator>>(SerialBuffer &buf, std::vector<T> &rh) {
+      inline operator>>(SerialBuffer &buf, std::vector<T> &rh)
+      {
         size_t size;
         buf >> size;
         rh = std::vector<T>(size, T());
@@ -121,13 +133,15 @@ namespace ospray {
 
       // Decode the commands in the buffer, appending them to the cmds vector.
       // TODO: Should we be using std::shared_ptr here instead of raw pointers?
-      void decode_buffer(SerialBuffer &buf,
-                         std::vector<Work*> &cmds,
-                         const int numMessages);
-      void debug_log_messages(SerialBuffer &buf, const int numMessages);
+      OSPRAY_MPI_INTERFACE void decode_buffer(SerialBuffer &buf,
+                                              std::vector<Work*> &cmds,
+                                              const int numMessages);
+      OSPRAY_MPI_INTERFACE void debug_log_messages(SerialBuffer &buf,
+                                                   const int numMessages);
 
       template<typename T>
-      inline Work* make_work_unit() {
+      inline Work* make_work_unit()
+      {
         return new T();
       }
 

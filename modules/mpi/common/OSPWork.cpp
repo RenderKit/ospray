@@ -25,7 +25,9 @@
 namespace ospray {
   namespace mpi {
     namespace work {
+
 #define REGISTER_WORK_UNIT(W) W::TAG, make_work_unit<W>
+
       const Work::WorkMap Work::WORK_MAP = {
         { REGISTER_WORK_UNIT(NewObject<Renderer>) },
         { REGISTER_WORK_UNIT(NewObject<Model>) },
@@ -73,6 +75,7 @@ namespace ospray {
 
         { REGISTER_WORK_UNIT(CommandFinalize) }
       };
+
 #undef REGISTER_WORK_UNIT
 
       // All the tags so they can be linked in properly
@@ -122,112 +125,6 @@ namespace ospray {
       const size_t CommandRelease::TAG;
       const size_t LoadModule::TAG;
       const size_t CommandFinalize::TAG;
-
-      SerialBuffer::SerialBuffer(size_t sz) : buffer(sz, 255), index(0) {}
-      unsigned char* SerialBuffer::getPtr() {
-        return &buffer[index];
-      }
-      void SerialBuffer::write(unsigned char* data, size_t size) {
-        // TODO: This should not call reserve, it should only grow if we
-        // actually need more space. Also it should use a different growing
-        // strategy than just allocating 1k extra than requested
-        reserve(size);
-        memcpy(getPtr(), data, size);
-        index += size;
-        // bytesAvailable += size;
-      }
-      void SerialBuffer::read(unsigned char* data, size_t size) {
-        if (buffer.size() - getIndex() < size) {
-          PRINT(buffer.size());
-          PRINT(getIndex());
-          throw std::runtime_error("SerialBuffer is out of room for read of size " + std::to_string(size));
-        }
-        memcpy(data, getPtr(), size);
-        index += size;
-        // bytesAvailable -= size;
-      }
-      void SerialBuffer::clear() {
-        index = 0;
-        // bytesAvailable = 0;
-      }
-      void SerialBuffer::reserve(size_t size)
-      {
-        if ((buffer.size() - getIndex()) < size)
-        {
-          /*
-          std::cout << "warning: reallocating SerialBuffer, had "
-            << buffer.size() << " bytes but need " << index + size << "\n";
-            */
-          // allocates over requested so we don't get a lot of small reallocations
-          // TODO: This should not allocate more than requested
-          buffer.resize(getIndex() + size + 1024);
-          // bytesAvailable += size + 1024;
-        }
-      }
-      // size_t SerialBuffer::size() const {
-      //   return bytesAvailable;
-      // }
-      // bool SerialBuffer::empty() const {
-      //   return bytesAvailable == 0;
-      // }
-
-      SerialBuffer& operator<<(SerialBuffer &buf, const std::string &rh) {
-        buf << rh.size();
-        buf.write((unsigned char*)rh.c_str(), rh.size());
-        return buf;
-      }
-      SerialBuffer& operator>>(SerialBuffer &buf, std::string &rh) {
-        size_t size;
-        buf >> size;
-        rh = std::string(size, ' ');
-        buf.read((unsigned char*)&rh[0], size);
-        return buf;
-      }
-      SerialBuffer& operator<<(SerialBuffer &b, const Work &work) {
-        work.serialize(b);
-        return b;
-      }
-      SerialBuffer& operator>>(SerialBuffer &b, Work &work) {
-        work.deserialize(b);
-        return b;
-      }
-
-      void Work::run() {}
-      void Work::runOnMaster() {}
-      bool Work::flushing() const { return false; }
-
-      void decode_buffer(SerialBuffer &buf, std::vector<Work*> &cmds, const int numMessages) {
-        for (size_t i = 0; i < numMessages; ++i) {
-          size_t type = 0;
-          buf >> type;
-          Work::WorkMap::const_iterator fnd = Work::WORK_MAP.find(type);
-          if (fnd != Work::WORK_MAP.end()) {
-            Work *w = (*fnd->second)();
-            buf >> *w;
-            cmds.push_back(w);
-          } else {
-            throw std::runtime_error("Unknown work message tag: " + std::to_string(type));
-          }
-        }
-      }
-
-      void debug_log_messages(SerialBuffer &buf, const int numMessages) {
-        size_t startIndex = buf.getIndex();
-        for (size_t i = 0; i < numMessages; ++i) {
-          size_t type = 0;
-          buf >> type;
-          std::cout << "DBG Message[" << i << "] = " << commandToString(CommandTag(type)) << "\n";
-          Work::WorkMap::const_iterator fnd = Work::WORK_MAP.find(type);
-          if (fnd != Work::WORK_MAP.end()) {
-            Work *w = (*fnd->second)();
-            buf >> *w;
-            delete w;
-          } else {
-            throw std::runtime_error("Unknown work message tag: " + std::to_string(type));
-          }
-        }
-        buf.setIndex(startIndex);
-      }
 
       template<>
       void NewObject<Renderer>::run() {
