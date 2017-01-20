@@ -997,7 +997,8 @@ extern "C" OSPRAY_DLLEXPORT void ospray_init_module_mpi() {
   void *lib = dlopen(fullName.c_str(), RTLD_NOW | RTLD_NOLOAD | RTLD_GLOBAL);
   if (!lib) {
     FileName executable = getExecutableFileName();
-    lib = dlopen((executable.path() + fullName).c_str(), RTLD_NOW | RTLD_NOLOAD | RTLD_GLOBAL);
+    lib = dlopen((executable.path() + fullName).c_str(),
+                 RTLD_NOW | RTLD_NOLOAD | RTLD_GLOBAL);
   }
   Assert(lib);
 #endif

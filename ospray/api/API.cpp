@@ -56,9 +56,11 @@ using namespace ospray;
 
 inline ospray::api::Device *createMpiDevice()
 {
-  auto *device = ospray::api::Device::createDevice("mpi");
+  ospray::api::Device *device = nullptr;
 
-  if (!device) {
+  try {
+    device = ospray::api::Device::createDevice("mpi");
+  } catch (const std::runtime_error &) {
     ospLoadModule("mpi");
     device = ospray::api::Device::createDevice("mpi");
   }
@@ -100,16 +102,16 @@ extern "C" void ospInit(int *_ac, const char **_av)
       if (deviceSwitch == "--osp:device:") {
         removeArgs(*_ac,(char **&)_av,i,1);
         auto deviceName = av.substr(13);
-        auto *device = ospray::api::Device::createDevice(deviceName.c_str());
 
-        if (device == nullptr) {
+        try {
+          auto *device = ospray::api::Device::createDevice(deviceName.c_str());
+          ospray::api::Device::current = device;
+        } catch (const std::runtime_error &) {
           throw std::runtime_error("Failed to create device of type '"
                                    + deviceName + "'! Perhaps you spelled the "
                                    "device name wrong or didn't link the "
                                    "library which defines the device?");
         }
-
-        ospray::api::Device::current = device;
         --i;
         continue;
       }
