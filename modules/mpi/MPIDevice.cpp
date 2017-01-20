@@ -774,28 +774,11 @@ namespace ospray {
                                 const uint32 fbChannelFlags)
     {
       bufferedComm->flush();
+      // Note: render frame is flushing so the work error result will be set,
+      // since the master participates in rendering
       work::RenderFrame work(_fb, _renderer, fbChannelFlags);
       processWork(&work);
-      // TODO WILL: What do we return here? This call will
-      // need to wait for all to finish rendering and we need
-      // a result back.
-      return 0.f;
-      /*
-      // TODO WILL: What to do about the local renderer?
-      const ObjectHandle fb_handle = (const ObjectHandle&)_fb;
-      const ObjectHandle renderer_handle = (const ObjectHandle&)_renderer;
-
-      cmd.newCommand(CMD_RENDER_FRAME);
-      cmd.send(fb_handle);
-      cmd.send(renderer_handle);
-      cmd.send((int32)fbChannelFlags);
-      cmd.flush();
-
-      FrameBuffer *fb = (FrameBuffer *)fb_handle.lookup();
-      Renderer *renderer = (Renderer *)renderer_handle.lookup();
-
-      return TiledLoadBalancer::instance->renderFrame(renderer,fb,fbChannelFlags);
-      */
+      return work.varianceResult;
     }
 
     //! release (i.e., reduce refcount of) given object

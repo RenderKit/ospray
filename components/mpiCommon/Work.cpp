@@ -518,9 +518,10 @@ namespace ospray {
         b >> handle.i64 >> channels;
       }
 
-      RenderFrame::RenderFrame() {}
+      RenderFrame::RenderFrame() : varianceResult(0.f) {}
       RenderFrame::RenderFrame(OSPFrameBuffer fb, OSPRenderer renderer, uint32 channels)
-        : fbHandle((ObjectHandle&)fb), rendererHandle((ObjectHandle&)renderer), channels(channels)
+        : fbHandle((ObjectHandle&)fb), rendererHandle((ObjectHandle&)renderer), channels(channels),
+        varianceResult(0.f)
       {}
       void RenderFrame::run() {
         FrameBuffer *fb = (FrameBuffer*)fbHandle.lookup();
@@ -535,7 +536,7 @@ namespace ospray {
         // We need some way to pick the right function to call, either to the
         // renderer or directly to the load balancer to render the frame
 #if 1
-        renderer->renderFrame(fb, channels);
+        varianceResult = renderer->renderFrame(fb, channels);
 #else
         if (mpi::world.rank > 0) {
           renderer->renderFrame(fb, channels);
@@ -549,7 +550,7 @@ namespace ospray {
         FrameBuffer *fb = (FrameBuffer*)fbHandle.lookup();
         Assert(renderer);
         Assert(fb);
-        TiledLoadBalancer::instance->renderFrame(renderer, fb, channels);
+        varianceResult = TiledLoadBalancer::instance->renderFrame(renderer, fb, channels);
       }
       size_t RenderFrame::getTag() const {
         return TAG;
