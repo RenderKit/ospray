@@ -773,7 +773,6 @@ namespace ospray {
                                 OSPRenderer _renderer,
                                 const uint32 fbChannelFlags)
     {
-      bufferedComm->flush();
       // Note: render frame is flushing so the work error result will be set,
       // since the master participates in rendering
       work::RenderFrame work(_fb, _renderer, fbChannelFlags);
