@@ -79,6 +79,14 @@ OSPGlutViewer::OSPGlutViewer(const box3f &worldBounds, cpp::Model model,
   resetAccum = false;
 }
 
+void OSPGlutViewer::create(const char*  title,
+                           const vec2i& size,
+                                 bool   fullScreen)
+{
+  windowTitle = std::string(title);
+  Glut3DWidget::create(title, size, fullScreen);
+}
+
 void OSPGlutViewer::setRenderer(OSPRenderer renderer)
 {
   lock_guard<mutex> lock{rendererMutex};
@@ -277,7 +285,7 @@ void OSPGlutViewer::display()
   // that pointer is no longer valid, so set it to null
   ucharFB = nullptr;
 
-  std::string title("OSPRay GLUT Viewer");
+  std::string title = windowTitle;
 
   if (alwaysRedraw) {
     title += " (" + std::to_string((long double)fps.getFPS()) + " fps)";
