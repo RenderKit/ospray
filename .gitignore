@@ -16,7 +16,6 @@ tbb
 embree
 ispc
 ospray-doc
-/*
 !/modules
 /modules/*
 !/modules/mpi
