@@ -44,7 +44,8 @@ namespace ospray {
         messages from other nodes, and then routes them to the
         respective object(s).
       */
-      struct CommLayer : public async::Consumer { 
+      OSPRAY_MPI_INTERFACE struct CommLayer : public async::Consumer
+      {
         typedef int32 ObjectID; 
 
         static CommLayer *WORLD;
@@ -54,8 +55,9 @@ namespace ospray {
                      void *message,
                      int32 size) override;
         
-        struct Address {
-          Address(int32 rank=-1,ObjectID objectID=-1) 
+        struct Address
+        {
+          Address(int32 rank = -1, ObjectID objectID = -1)
             : rank(rank), objectID(objectID)
           {}
 
@@ -65,7 +67,8 @@ namespace ospray {
 
         /*! a common header used for all messages sent over the
           commlayer, to enable proper routing at the remote node. */
-        struct Message {
+        struct Message
+        {
           /*! @{ internal header - do not use from the
             application. Note we have to have this field inside the
             messsage, because the messaging protocal doesn't send
@@ -87,7 +90,8 @@ namespace ospray {
         };
 
         /*! abstraction for an object that can send and receive messages */
-        struct Object {
+        struct Object
+        {
           Object(CommLayer *comm, ObjectID myID);
 
           /*! function that will be called by the commlayer as soon as
@@ -112,12 +116,13 @@ namespace ospray {
         void registerObject(Object *object, ObjectID ID);
 
         //! convenience function that returns our rank in the comm group 
-        int32 rank() const { return group->rank; }
+        inline int32 rank() const { return group->rank; }
 
-        int32 numWorkers() const { return group->size - 1; }
-        static int32 masterRank() { return 0; }
-        static int32 workerRank(int clientID) { return 1+clientID; }
-        bool IamTheMaster() const { return group->rank == masterRank(); }
+        inline int32 numWorkers() const { return group->size - 1; }
+        inline static int32 masterRank() { return 0; }
+        inline static int32 workerRank(int clientID) { return 1 + clientID; }
+        inline bool IamTheMaster() const { return group->rank == masterRank(); }
+
         //! mutex to protect the registry
         std::mutex mutex;
         
@@ -129,7 +134,6 @@ namespace ospray {
           remote nodes */
         async::Group *group; 
       };
-
     } // ::ospray::mpi::async
   } // ::ospray::mpi
 } // ::ospray

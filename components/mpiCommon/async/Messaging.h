@@ -26,12 +26,9 @@ namespace ospray {
     typedef int64_t int64;
     typedef uint64_t uint64;
     
-
-
-    // void initMPI(int &ac, char **&av);
-    
     namespace async {
-      struct Message {
+      struct Message
+      {
         Address     addr;
         void       *ptr;
         int32       size;
@@ -47,11 +44,13 @@ namespace ospray {
           it!), and that it should strive to process this message as
           quickly as it possibly can (using a separate worker
           thread(s) if need be */
-      struct Consumer {
+      OSPRAY_MPI_INTERFACE struct Consumer
+      {
         virtual void process(const Address &source, void *message, int32 size) = 0;
       };
     
-      struct Group : public mpi::Group {
+      OSPRAY_MPI_INTERFACE struct Group : public mpi::Group
+      {
         //! message consumer (may be NULL)
 
         Group(// const std::string &name, 
@@ -68,7 +67,8 @@ namespace ospray {
       // extern Group *WORLD;
 
       //! abstraction - internally used - implement the messaging MPI
-      struct AsyncMessagingImpl {
+      OSPRAY_MPI_INTERFACE struct AsyncMessagingImpl
+      {
         virtual void init() = 0;
         virtual void shutdown() = 0;
         virtual Group *createGroup(MPI_Comm comm,
@@ -79,17 +79,16 @@ namespace ospray {
         static AsyncMessagingImpl *global;
       };
 
-
       /*! @{ The actual asynchronous messaging API */
-      Group *createGroup(MPI_Comm comm,
-                         Consumer *consumer,
-                         int32 tag = MPI_ANY_TAG);
-      void shutdown();
+      OSPRAY_MPI_INTERFACE Group *createGroup(MPI_Comm comm,
+                                              Consumer *consumer,
+                                              int32 tag = MPI_ANY_TAG);
+      OSPRAY_MPI_INTERFACE void shutdown();
 
       /*! send a asynchronous message to the address specified. the
           'group' in said address HAS to be a group created via
           'async::Group' */
-      void send(const Address &dest, void *msgPtr, int32 msgSize);
+      OSPRAY_MPI_INTERFACE void send(const Address &dest, void *msgPtr, int32 msgSize);
       /*! @} */
 
     } // ::ospray::mpi::async
