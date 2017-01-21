@@ -32,6 +32,7 @@
 #include "mpi/render/MPILoadBalancer.h"
 #include "fb/LocalFB.h"
 #include "mpi/fb/DistributedFrameBuffer.h"
+#include "common/OSPWork.h"
 // std
 #ifndef _WIN32
 #  include <unistd.h> // for fork()
@@ -43,6 +44,7 @@ namespace ospray {
   using std::endl;
 
   namespace mpi {
+
     //! this runs an ospray worker process.
     /*! it's up to the proper init routine to decide which processes
       call this function and which ones don't. This function will not
@@ -968,7 +970,8 @@ namespace ospray {
   } // ::ospray::mpi
 } // ::ospray
 
-extern "C" OSPRAY_DLLEXPORT void ospray_init_module_mpi() {
+extern "C" OSPRAY_DLLEXPORT void ospray_init_module_mpi()
+{
 #ifndef _WIN32
   using namespace ospcommon;
 #if defined(__MACOSX__)
@@ -984,6 +987,7 @@ extern "C" OSPRAY_DLLEXPORT void ospray_init_module_mpi() {
   }
   Assert(lib);
 #endif
+  ospray::mpi::work::initWorkMap();
   std::cout << "#mpi: initializing ospray MPI plugin" << std::endl;
 }
 

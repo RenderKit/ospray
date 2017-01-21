@@ -28,53 +28,56 @@ namespace ospray {
 
 #define REGISTER_WORK_UNIT(W) W::TAG, make_work_unit<W>
 
-      const Work::WorkMap Work::WORK_MAP = {
-        { REGISTER_WORK_UNIT(NewObject<Renderer>) },
-        { REGISTER_WORK_UNIT(NewObject<Model>) },
-        { REGISTER_WORK_UNIT(NewObject<Geometry>) },
-        { REGISTER_WORK_UNIT(NewObject<Camera>) },
-        { REGISTER_WORK_UNIT(NewObject<Volume>) },
-        { REGISTER_WORK_UNIT(NewObject<TransferFunction>) },
-        { REGISTER_WORK_UNIT(NewObject<PixelOp>) },
+      void initWorkMap()
+      {
+        Work::WORK_MAP = {
+          { REGISTER_WORK_UNIT(NewObject<Renderer>) },
+          { REGISTER_WORK_UNIT(NewObject<Model>) },
+          { REGISTER_WORK_UNIT(NewObject<Geometry>) },
+          { REGISTER_WORK_UNIT(NewObject<Camera>) },
+          { REGISTER_WORK_UNIT(NewObject<Volume>) },
+          { REGISTER_WORK_UNIT(NewObject<TransferFunction>) },
+          { REGISTER_WORK_UNIT(NewObject<PixelOp>) },
 
-        { REGISTER_WORK_UNIT(NewRendererObject<Material>) },
-        { REGISTER_WORK_UNIT(NewRendererObject<Light>) },
+          { REGISTER_WORK_UNIT(NewRendererObject<Material>) },
+          { REGISTER_WORK_UNIT(NewRendererObject<Light>) },
 
-        { REGISTER_WORK_UNIT(NewData) },
-        { REGISTER_WORK_UNIT(NewTexture2d) },
+          { REGISTER_WORK_UNIT(NewData) },
+          { REGISTER_WORK_UNIT(NewTexture2d) },
 
-        { REGISTER_WORK_UNIT(CommitObject) },
-        { REGISTER_WORK_UNIT(CommandRelease) },
+          { REGISTER_WORK_UNIT(CommitObject) },
+          { REGISTER_WORK_UNIT(CommandRelease) },
 
-        { REGISTER_WORK_UNIT(LoadModule) },
+          { REGISTER_WORK_UNIT(LoadModule) },
 
-        { REGISTER_WORK_UNIT(AddObject<OSPGeometry>) },
-        { REGISTER_WORK_UNIT(AddObject<OSPVolume>) },
-        { REGISTER_WORK_UNIT(RemoveObject<OSPGeometry>) },
-        { REGISTER_WORK_UNIT(RemoveObject<OSPVolume>) },
+          { REGISTER_WORK_UNIT(AddObject<OSPGeometry>) },
+          { REGISTER_WORK_UNIT(AddObject<OSPVolume>) },
+          { REGISTER_WORK_UNIT(RemoveObject<OSPGeometry>) },
+          { REGISTER_WORK_UNIT(RemoveObject<OSPVolume>) },
 
-        { REGISTER_WORK_UNIT(CreateFrameBuffer) },
-        { REGISTER_WORK_UNIT(ClearFrameBuffer) },
-        { REGISTER_WORK_UNIT(RenderFrame) },
+          { REGISTER_WORK_UNIT(CreateFrameBuffer) },
+          { REGISTER_WORK_UNIT(ClearFrameBuffer) },
+          { REGISTER_WORK_UNIT(RenderFrame) },
 
-        { REGISTER_WORK_UNIT(SetRegion) },
-        { REGISTER_WORK_UNIT(SetPixelOp) },
+          { REGISTER_WORK_UNIT(SetRegion) },
+          { REGISTER_WORK_UNIT(SetPixelOp) },
 
-        { REGISTER_WORK_UNIT(SetParam<OSPMaterial>) },
-        { REGISTER_WORK_UNIT(SetParam<OSPObject>) },
-        { REGISTER_WORK_UNIT(SetParam<std::string>) },
-        { REGISTER_WORK_UNIT(SetParam<int>) },
-        { REGISTER_WORK_UNIT(SetParam<float>) },
-        { REGISTER_WORK_UNIT(SetParam<vec2f>) },
-        { REGISTER_WORK_UNIT(SetParam<vec2i>) },
-        { REGISTER_WORK_UNIT(SetParam<vec3f>) },
-        { REGISTER_WORK_UNIT(SetParam<vec3i>) },
-        { REGISTER_WORK_UNIT(SetParam<vec4f>) },
+          { REGISTER_WORK_UNIT(SetParam<OSPMaterial>) },
+          { REGISTER_WORK_UNIT(SetParam<OSPObject>) },
+          { REGISTER_WORK_UNIT(SetParam<std::string>) },
+          { REGISTER_WORK_UNIT(SetParam<int>) },
+          { REGISTER_WORK_UNIT(SetParam<float>) },
+          { REGISTER_WORK_UNIT(SetParam<vec2f>) },
+          { REGISTER_WORK_UNIT(SetParam<vec2i>) },
+          { REGISTER_WORK_UNIT(SetParam<vec3f>) },
+          { REGISTER_WORK_UNIT(SetParam<vec3i>) },
+          { REGISTER_WORK_UNIT(SetParam<vec4f>) },
 
-        { REGISTER_WORK_UNIT(RemoveParam) },
+          { REGISTER_WORK_UNIT(RemoveParam) },
 
-        { REGISTER_WORK_UNIT(CommandFinalize) }
-      };
+          { REGISTER_WORK_UNIT(CommandFinalize) }
+        };
+      }
 
 #undef REGISTER_WORK_UNIT
 

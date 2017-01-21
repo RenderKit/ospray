@@ -35,6 +35,9 @@
 namespace ospray {
   namespace mpi {
     namespace work {
+
+      void initWorkMap();
+
       template<typename T>
       struct NewObjectTag;
       template<>

@@ -20,6 +20,8 @@ namespace ospray {
   namespace mpi {
     namespace work {
 
+      Work::WorkMap Work::WORK_MAP;
+
       SerialBuffer::SerialBuffer(size_t sz) : buffer(sz, 255), index(0)
       {
       }

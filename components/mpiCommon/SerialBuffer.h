@@ -74,7 +74,9 @@ namespace ospray {
         virtual void deserialize(SerialBuffer &b) = 0;
 
         using WorkMap = std::unordered_map<size_t, Work* (*)()>;
-        const static WorkMap WORK_MAP;
+        // NOTE(jda) - No longer const as this is now populated on mpi module
+        //             load
+        static WorkMap WORK_MAP;
       };
 
       // NOTE(jda) - I'd rather use constexpr here to give a name to value in
