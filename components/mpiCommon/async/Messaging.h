@@ -44,12 +44,12 @@ namespace ospray {
           it!), and that it should strive to process this message as
           quickly as it possibly can (using a separate worker
           thread(s) if need be */
-      OSPRAY_MPI_INTERFACE struct Consumer
+      struct Consumer
       {
         virtual void process(const Address &source, void *message, int32 size) = 0;
       };
     
-      OSPRAY_MPI_INTERFACE struct Group : public mpi::Group
+      struct OSPRAY_MPI_INTERFACE Group : public mpi::Group
       {
         //! message consumer (may be NULL)
 
@@ -64,10 +64,8 @@ namespace ospray {
         int32      tag;
       };
 
-      // extern Group *WORLD;
-
       //! abstraction - internally used - implement the messaging MPI
-      OSPRAY_MPI_INTERFACE struct AsyncMessagingImpl
+      struct OSPRAY_MPI_INTERFACE AsyncMessagingImpl
       {
         virtual void init() = 0;
         virtual void shutdown() = 0;

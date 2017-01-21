@@ -44,9 +44,9 @@ namespace ospray {
         messages from other nodes, and then routes them to the
         respective object(s).
       */
-      OSPRAY_MPI_INTERFACE struct CommLayer : public async::Consumer
+      struct OSPRAY_MPI_INTERFACE CommLayer : public async::Consumer
       {
-        typedef int32 ObjectID; 
+        using ObjectID = int32;
 
         static CommLayer *WORLD;
 
@@ -90,7 +90,7 @@ namespace ospray {
         };
 
         /*! abstraction for an object that can send and receive messages */
-        struct Object
+        struct OSPRAY_MPI_INTERFACE Object
         {
           Object(CommLayer *comm, ObjectID myID);
 
