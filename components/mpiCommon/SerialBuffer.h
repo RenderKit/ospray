@@ -77,18 +77,14 @@ namespace ospray {
         const static WorkMap WORK_MAP;
       };
 
-      // Child work classes should can implement these but should probably
-      // just go through serialize/deserialize so we can generically serialize
-      // work units into a buffer.
-      OSPRAY_MPI_INTERFACE SerialBuffer& operator<<(SerialBuffer &b,
-                                                    const Work &work);
-      OSPRAY_MPI_INTERFACE SerialBuffer& operator>>(SerialBuffer &b,
-                                                    Work &work);
-
-      OSPRAY_MPI_INTERFACE SerialBuffer& operator<<(SerialBuffer &buf,
-                                                    const std::string &rh);
-      OSPRAY_MPI_INTERFACE SerialBuffer& operator>>(SerialBuffer &buf,
-                                                    std::string &rh);
+      // NOTE(jda) - I'd rather use constexpr here to give a name to value in
+      //             the enable_if, but alas that's only supported in VS2015+...
+      template <typename T>
+      using enable_SerialBuffer_operator_t =
+        typename std::enable_if<!std::is_pointer<T>::value &&
+                                !std::is_same<T, Work>::value &&
+                                !std::is_same<T, std::string>::value,
+                                SerialBuffer&>::type;
 
       // We can't take types which aren't POD or which are pointers
       // because there's no sensible way to serialize/deserialize them.
@@ -96,7 +92,7 @@ namespace ospray {
       // copy-able data they don't meet the template constraints to be pod or
       // trivially_copyable so we can't use that as a filter test
       template<typename T>
-      typename std::enable_if<!std::is_pointer<T>::value, SerialBuffer&>::type
+      enable_SerialBuffer_operator_t<T>
       inline operator<<(SerialBuffer &buf, const T &rh)
       {
         buf.write((byte_t*)&rh, sizeof(T));
@@ -104,7 +100,7 @@ namespace ospray {
       }
 
       template<typename T>
-      typename std::enable_if<!std::is_pointer<T>::value, SerialBuffer&>::type
+      enable_SerialBuffer_operator_t<T>
       inline operator>>(SerialBuffer &buf, T &rh)
       {
         buf.read((byte_t*)&rh, sizeof(T));
@@ -128,6 +124,37 @@ namespace ospray {
         buf >> size;
         rh = std::vector<T>(size, T());
         buf.read((byte_t*)rh.data(), rh.size() * sizeof(T));
+        return buf;
+      }
+
+      // Child work classes should can implement these but should probably
+      // just go through serialize/deserialize so we can generically serialize
+      // work units into a buffer.
+      inline SerialBuffer& operator<<(SerialBuffer &b, const Work &work)
+      {
+        work.serialize(b);
+        return b;
+      }
+
+      inline SerialBuffer& operator>>(SerialBuffer &b, Work &work)
+      {
+        work.deserialize(b);
+        return b;
+      }
+
+      inline SerialBuffer &operator<<(SerialBuffer &buf, const std::string &rh)
+      {
+        buf << rh.size();
+        buf.write((byte_t*)rh.c_str(), rh.size());
+        return buf;
+      }
+
+      inline SerialBuffer &operator>>(SerialBuffer &buf, std::string &rh)
+      {
+        size_t size;
+        buf >> size;
+        rh = std::string(size, ' ');
+        buf.read((byte_t*)&rh[0], size);
         return buf;
       }
 

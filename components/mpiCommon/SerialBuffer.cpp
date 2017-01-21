@@ -114,34 +114,6 @@ namespace ospray {
         buf.setIndex(startIndex);
       }
 
-      SerialBuffer &operator<<(SerialBuffer &buf, const std::string &rh)
-      {
-        buf << rh.size();
-        buf.write((byte_t*)rh.c_str(), rh.size());
-        return buf;
-      }
-
-      SerialBuffer &operator>>(SerialBuffer &buf, std::string &rh)
-      {
-        size_t size;
-        buf >> size;
-        rh = std::string(size, ' ');
-        buf.read((byte_t*)&rh[0], size);
-        return buf;
-      }
-
-      SerialBuffer &operator<<(SerialBuffer &b, const Work &work)
-      {
-        work.serialize(b);
-        return b;
-      }
-
-      SerialBuffer &operator>>(SerialBuffer &b, Work &work)
-      {
-        work.deserialize(b);
-        return b;
-      }
-
     }// namespace work
   }// namespace mpi
 }// namespace ospray
