@@ -236,7 +236,6 @@ OSPRAY_INSTALL_SDK_HEADERS(
   common/Ray.h
   common/Ray.ih
   common/Texture.h
-  common/Thread.h
   common/Util.h
   DESTINATION common
 )
