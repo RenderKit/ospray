@@ -16,12 +16,15 @@
 
 #pragma once
 
+// mpicommon
+#include "mpiCommon/MPICommon.h"
+#include "mpiCommon/command.h"
+#include "mpiCommon/BufferedMPIComm.h"
+// ospray
 #include "api/Device.h"
-#include "mpi/common/MPICommon.h"
-#include "mpi/common/command.h"
-#include "mpi/common/Work.h"
 #include "common/Managed.h"
-#include "mpi/common/BufferedMPIComm.h"
+// ospray::mpi
+#include "mpi/common/OSPWork.h"
 
 /*! \file MPIDevice.h Implements the "mpi" device for mpi rendering */
 

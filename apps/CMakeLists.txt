@@ -64,7 +64,7 @@ ENDIF()
 OPTION(OSPRAY_APPS_GLUTVIEWER "Build ospGlutViewer application." ON)
 
 IF(OSPRAY_APPS_GLUTVIEWER)
-  INCLUDE(${PROJECT_SOURCE_DIR}/cmake/glut.cmake)
+  INCLUDE(glut)
   # common utility classes for GLUT-based 3D viewer widget
   ADD_SUBDIRECTORY(common/widgets)
   ADD_SUBDIRECTORY(glutViewer)

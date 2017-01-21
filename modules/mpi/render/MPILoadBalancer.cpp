@@ -14,21 +14,19 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+// ours
+#include "MPILoadBalancer.h"
+#include "../fb/DistributedFrameBuffer.h"
 // ospray
-#include "mpi/render/MPILoadBalancer.h"
-#include "render/Renderer.h"
-#include "fb/LocalFB.h"
-#include "mpi/fb/DistributedFrameBuffer.h"
+#include "ospray/fb/LocalFB.h"
+#include "ospray/render/Renderer.h"
+// ospcommon
 #include "ospcommon/tasking/parallel_for.h"
-
+// std
 #include <algorithm>
 
 namespace ospray {
   namespace mpi {
-
-    // for profiling
-    extern "C" void async_beginFrame();
-    extern "C" void async_endFrame();
 
     using std::cout;
     using std::endl;
@@ -40,7 +38,6 @@ namespace ospray {
                                 const uint32 channelFlags)
       {
         UNUSED(channelFlags);
-        async_beginFrame();
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
         assert(dfb);
 
@@ -51,8 +48,6 @@ namespace ospray {
            frame buffer will be writing tiles here, without us doing
            anything ourselves */
         dfb->waitUntilFinished();
-
-        async_endFrame();
 
         return dfb->endFrame(renderer->errorThreshold);
       }
@@ -66,8 +61,6 @@ namespace ospray {
                                FrameBuffer *fb,
                                const uint32 channelFlags)
       {
-        async_beginFrame();
-
         auto *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
         dfb->beginFrame();
         dfb->startNewFrame(renderer->errorThreshold);
@@ -120,8 +113,6 @@ namespace ospray {
 
         dfb->waitUntilFinished();
         renderer->endFrame(perFrameData,channelFlags);
-
-        async_endFrame();
 
         return inf; // irrelevant on slave
       }

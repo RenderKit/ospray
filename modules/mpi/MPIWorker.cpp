@@ -14,8 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "mpi/common/MPICommon.h"
-
+// ospray components
+#include "components/mpiCommon/MPICommon.h"
+// ospray API
 #include "ospray/ospray.h"
 
 namespace ospray {

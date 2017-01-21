@@ -13,7 +13,17 @@
 ## See the License for the specific language governing permissions and      ##
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
+
+OPTION(OSPRAY_MODULE_MPI "MPI parallel device" OFF)
+
 IF (OSPRAY_MODULE_MPI)
+
+  OSPRAY_BUILD_COMPONENT(mpiCommon)
+  
+  OPTION(OSPRAY_EXP_DATA_PARALLEL "Experimental data-parallel compositing mode" ON)
+  OPTION(OSPRAY_PIN_ASYNC "Pin async mpi comm threads?" OFF)
+  MARK_AS_ADVANCED(OSPRAY_PIN_ASYNC)
+  
   # if mpi mode is enabled, we have to configure the right mpi
   # compiler etc.
   OSPRAY_CONFIGURE_MPI()
@@ -24,18 +34,7 @@ IF (OSPRAY_MODULE_MPI)
     MPIDevice.cpp
     worker.cpp
 
-    common/buffers.h
-    common/command.h
-    common/Work.cpp
-    common/Core.cpp
-    common/MPICommon.cpp
-    common/BufferedMPIComm.cpp
-    common/command.cpp
-    common/async/Messaging.cpp
-    common/async/SimpleSendRecvMessaging.cpp
-    common/async/MultiIsendIrecvMessaging.cpp
-    common/async/BatchedIsendIrecvMessaging.cpp
-    common/async/CommLayer.cpp
+    common/OSPWork.cpp
 
     fb/DistributedFrameBuffer.cpp
     fb/DistributedFrameBuffer.ispc
@@ -51,8 +50,10 @@ IF (OSPRAY_MODULE_MPI)
     volume/DataDistributedBlockedVolume.ispc
     volume/DataDistributedBlockedVolume.cpp
 
-  LINK
+ LINK
+    
     ospray
+    ospray_mpi_common
     ospray_common
     ${MPI_CXX_LIBRARIES}
   )
@@ -64,8 +65,8 @@ IF (OSPRAY_MODULE_MPI)
   OSPRAY_CREATE_APPLICATION(ospray_mpi_worker
     MPIWorker.cpp
   LINK
-    ospray
-    ospray_common
+#    ospray
+#    ospray_common
     ospray_module_mpi
   )
 

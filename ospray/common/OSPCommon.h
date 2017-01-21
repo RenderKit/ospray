@@ -73,10 +73,6 @@ namespace ospray {
 
   using namespace ospcommon;
 }
-
-#define SCOPED_LOCK(x) \
-  ospray::LockGuard lock(x); \
-  (void)lock;
 #endif
 
 // ospray

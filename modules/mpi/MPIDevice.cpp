@@ -16,7 +16,8 @@
 
 #undef NDEBUG // do all assertions in this file
 
-#include "mpi/common/MPICommon.h"
+#include "mpiCommon/MPICommon.h"
+#include "mpiCommon/async/CommLayer.h"
 #include "mpi/MPIDevice.h"
 #include "common/Model.h"
 #include "common/Data.h"
@@ -30,21 +31,20 @@
 #include "volume/Volume.h"
 #include "mpi/render/MPILoadBalancer.h"
 #include "fb/LocalFB.h"
-#include "mpi/common/async/CommLayer.h"
 #include "mpi/fb/DistributedFrameBuffer.h"
-#include "mpi/common/Work.h"
+#include "common/OSPWork.h"
 // std
 #ifndef _WIN32
 #  include <unistd.h> // for fork()
 #  include <dlfcn.h>
 #endif
 
-
 namespace ospray {
   using std::cout;
   using std::endl;
 
   namespace mpi {
+
     //! this runs an ospray worker process.
     /*! it's up to the proper init routine to decide which processes
       call this function and which ones don't. This function will not
@@ -775,7 +775,6 @@ namespace ospray {
                                 OSPRenderer _renderer,
                                 const uint32 fbChannelFlags)
     {
-      bufferedComm->flush();
       // Note: render frame is flushing so the work error result will be set,
       // since the master participates in rendering
       work::RenderFrame work(_fb, _renderer, fbChannelFlags);
@@ -971,7 +970,8 @@ namespace ospray {
   } // ::ospray::mpi
 } // ::ospray
 
-extern "C" OSPRAY_DLLEXPORT void ospray_init_module_mpi() {
+extern "C" OSPRAY_DLLEXPORT void ospray_init_module_mpi()
+{
 #ifndef _WIN32
   using namespace ospcommon;
 #if defined(__MACOSX__)
@@ -982,10 +982,12 @@ extern "C" OSPRAY_DLLEXPORT void ospray_init_module_mpi() {
   void *lib = dlopen(fullName.c_str(), RTLD_NOW | RTLD_NOLOAD | RTLD_GLOBAL);
   if (!lib) {
     FileName executable = getExecutableFileName();
-    lib = dlopen((executable.path() + fullName).c_str(), RTLD_NOW | RTLD_NOLOAD | RTLD_GLOBAL);
+    lib = dlopen((executable.path() + fullName).c_str(),
+                 RTLD_NOW | RTLD_NOLOAD | RTLD_GLOBAL);
   }
   Assert(lib);
 #endif
+  ospray::mpi::work::initWorkMap();
   std::cout << "#mpi: initializing ospray MPI plugin" << std::endl;
 }
 

@@ -54,6 +54,20 @@ std::string getPidString() {
 
 using namespace ospray;
 
+inline ospray::api::Device *createMpiDevice()
+{
+  ospray::api::Device *device = nullptr;
+
+  try {
+    device = ospray::api::Device::createDevice("mpi");
+  } catch (const std::runtime_error &) {
+    ospLoadModule("mpi");
+    device = ospray::api::Device::createDevice("mpi");
+  }
+
+  return device;
+}
+
 extern "C" void ospInit(int *_ac, const char **_av)
 {
   if (ospray::api::Device::current) {
@@ -64,18 +78,14 @@ extern "C" void ospInit(int *_ac, const char **_av)
   auto OSP_MPI_LAUNCH = getEnvVar<std::string>("OSPRAY_MPI_LAUNCH");
 
   if (OSP_MPI_LAUNCH.first) {
-#ifdef OSPRAY_MPI
     std::cout << "#osp: launching ospray mpi ring -"
               << " make sure that mpd is running" << std::endl;
 
-    auto *mpiDevice = ospray::api::Device::createDevice("mpi");
+    auto *mpiDevice = createMpiDevice();
     ospray::api::Device::current = mpiDevice;
     mpiDevice->findParam("mpiMode", true)->set("mpi-launch");
     mpiDevice->findParam("launchCommand", true)
              ->set(OSP_MPI_LAUNCH.second.c_str());
-#else
-    throw std::runtime_error("OSPRay MPI support not compiled in");
-#endif
   }
 
   if (_ac && _av) {
@@ -92,68 +102,55 @@ extern "C" void ospInit(int *_ac, const char **_av)
       if (deviceSwitch == "--osp:device:") {
         removeArgs(*_ac,(char **&)_av,i,1);
         auto deviceName = av.substr(13);
-        auto *device = ospray::api::Device::createDevice(deviceName.c_str());
 
-        if (device == nullptr) {
+        try {
+          auto *device = ospray::api::Device::createDevice(deviceName.c_str());
+          ospray::api::Device::current = device;
+        } catch (const std::runtime_error &) {
           throw std::runtime_error("Failed to create device of type '"
                                    + deviceName + "'! Perhaps you spelled the "
                                    "device name wrong or didn't link the "
                                    "library which defines the device?");
         }
-
-        ospray::api::Device::current = device;
         --i;
         continue;
       }
 
       if (av == "--osp:mpi") {
-        ospLoadModule("mpi");
-#ifdef OSPRAY_MPI
         removeArgs(*_ac,(char **&)_av,i,1);
-        auto *mpiDevice = ospray::api::Device::createDevice("mpi");
+        auto *mpiDevice = createMpiDevice();
         ospray::api::Device::current = mpiDevice;
-#else
-        throw std::runtime_error("OSPRay MPI support not compiled in");
-#endif
         --i;
         continue;
       }
 
       if (av == "--osp:mpi-launch") {
-#ifdef OSPRAY_MPI
         if (i+2 > *_ac)
           throw std::runtime_error("--osp:mpi-launch expects an argument");
         const char *launchCommand = strdup(_av[i+1]);
         removeArgs(*_ac,(char **&)_av,i,2);
 
-        auto *mpiDevice = ospray::api::Device::createDevice("mpi");
+        auto *mpiDevice = createMpiDevice();
         ospray::api::Device::current = mpiDevice;
         mpiDevice->findParam("mpiMode", true)->set("mpi-launch");
         mpiDevice->findParam("launchCommand", true)->set(launchCommand);
-#else
-        throw std::runtime_error("OSPRay MPI support not compiled in");
-#endif
         --i;
         continue;
       }
 
       const char *listenArgName = "--osp:mpi-listen";
       if (!strncmp(_av[i], listenArgName, strlen(listenArgName))) {
-#ifdef OSPRAY_MPI
         const char *fileNameToStorePortIn = nullptr;
         if (strlen(_av[i]) > strlen(listenArgName)) {
           fileNameToStorePortIn = strdup(_av[i]+strlen(listenArgName)+1);
         }
         removeArgs(*_ac,(char **&)_av,i,1);
 
-        auto *mpiDevice = ospray::api::Device::createDevice("mpi");
+        auto *mpiDevice = createMpiDevice();
         ospray::api::Device::current = mpiDevice;
         mpiDevice->findParam("mpiMode", true)->set("mpi-listen");
         mpiDevice->findParam("fileNameToStorePortIn", true)
                  ->set(fileNameToStorePortIn);
-#else
-        throw std::runtime_error("OSPRay MPI support not compiled in");
-#endif
         --i;
         continue;
       }
