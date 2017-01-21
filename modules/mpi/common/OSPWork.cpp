@@ -30,7 +30,7 @@ namespace ospray {
 
       void initWorkMap()
       {
-        Work::WORK_MAP = {
+        Work::WORK_MAP = Work::WorkMap{
           { REGISTER_WORK_UNIT(NewObject<Renderer>) },
           { REGISTER_WORK_UNIT(NewObject<Model>) },
           { REGISTER_WORK_UNIT(NewObject<Geometry>) },
