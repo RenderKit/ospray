@@ -42,83 +42,26 @@ namespace ospcommon
   /*! destroy handle of a thread */
   OSPCOMMON_INTERFACE void destroyThread(thread_t tid);
 
-  // /*! type for handle to thread local storage */
-  // typedef struct opaque_tls_t* tls_t;
+  struct OSPCOMMON_INTERFACE Thread
+  {
+    Thread() = default;
 
-  // /*! creates thread local storage */
-  // tls_t createTls();
+    /*! the actual run function that the newly started thread will execute */
+    virtual void run() = 0;
 
-  // /*! set thea thread local storage pointer */
-  // void setTls(tls_t tls, void* const ptr);
+    /*! start thread execution */
+    void start(int threadID=-1);
+    /*! join the specific thread, waiting for its termination */
+    void join();
 
-  // /*! return the thread local storage pointer */
-  // void* getTls(tls_t tls);
+    friend void ospray_Thread_runThread(void *arg);
+  private:
+    /*! after starting, the thread will try to pin itself to this
+        thread ID (if > -1). note that changing the value _after_ the
+        thread got started will not have any effect */
+    int desiredThreadID {-1};
+    //! the thread ID reported by embree's createThread
+    ospcommon::thread_t tid;
+  };
 
-  // /*! destroys thread local storage identifier */
-  // void destroyTls(tls_t tls);
-
-
-//   /*! manages thread local variables */
-//   template<typename Type>
-//   struct ThreadLocalData
-//   {
-//   public:
-
-//     __forceinline ThreadLocalData (void* init) 
-//       : ptr(nullptr), init(init) {}
-
-//     __forceinline ~ThreadLocalData () {
-//       clear();
-//     }
-
-//     __forceinline void clear() 
-//     {
-//       if (ptr) destroyTls(ptr); ptr = nullptr;
-//       for (size_t i=0; i<threads.size(); i++)
-// 	delete threads[i];
-//       threads.clear();
-//     }
-
-//     /*! disallow copy */
-//     //ThreadLocalData(const ThreadLocalData&) = delete;
-//     //ThreadLocalData& operator=(const ThreadLocalData&) = delete;
-
-//     __forceinline void reset()
-//     {
-//       for (size_t i=0; i<threads.size(); i++)
-// 	threads[i]->reset();
-//     }
-    
-//     __forceinline Type* get() const
-//     {
-//       if (ptr == nullptr) {
-// 	Lock<AtomicMutex> lock(mutex);
-// 	if (ptr == nullptr) ptr = createTls();
-//       }
-//       Type* lptr = (Type*) getTls(ptr);
-//       if (unlikely(lptr == nullptr)) {
-// 	setTls(ptr,lptr = new Type(init));
-// 	Lock<AtomicMutex> lock(mutex);
-// 	threads.push_back(lptr);
-//       }
-//       return lptr;
-//     }
-
-//     __forceinline const Type& operator  *( void ) const { return *get(); }
-//     __forceinline       Type& operator  *( void )       { return *get(); }
-//     __forceinline const Type* operator ->( void ) const { return  get(); }
-//     __forceinline       Type* operator ->( void )       { return  get(); }
-    
-    
-//   private:
-//     mutable tls_t ptr;
-//     void* init;
-//     mutable AtomicMutex mutex;
-//   public:
-//     mutable std::vector<Type*> threads;
-//   };
-
-// #if defined(__MIC__)
-//   void printThreadInfo();
-// #endif
 }

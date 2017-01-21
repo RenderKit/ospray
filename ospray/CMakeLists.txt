@@ -83,7 +83,6 @@ SET(OSPRAY_SOURCES
   common/Model.ispc
   common/Model.cpp
   common/Material.cpp
-  common/Thread.cpp
   common/Util.h
 
   fb/FrameBuffer.ispc

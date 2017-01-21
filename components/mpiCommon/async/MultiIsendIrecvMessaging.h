@@ -18,7 +18,7 @@
 
 // ospray
 #include "Messaging.h"
-#include "common/Thread.h"
+#include "ospcommon/thread.h"
 #include "ospcommon/ProducerConsumerQueue.h"
 // stl
 #include <deque>
@@ -28,29 +28,34 @@
 namespace ospray {
   namespace mpi {
     namespace async {
-      struct MultiIsendIrecvImpl : public AsyncMessagingImpl {
-        
+      struct MultiIsendIrecvImpl : public AsyncMessagingImpl
+      {
         struct Group;
         struct Message;
 
         /*! message _sender_ thread */
-        struct SendThread : public Thread {
-          SendThread(Group *group) : group(group) {};
+        struct SendThread : public ospcommon::Thread
+        {
+          SendThread(Group *group) : group(group) {}
           virtual void run();
 
           Group *group;
         };
+
         /*! message _probing_ thread - continuously probes for newly
             incoming messages, and puts them into recv queue */
-        struct RecvThread : public Thread {
-          RecvThread(Group *group) : group(group) {};
+        struct RecvThread : public ospcommon::Thread
+        {
+          RecvThread(Group *group) : group(group) {}
 
           virtual void run();
           Group *group;
         };
+
         /*! message _processing_ thread */
-        struct ProcThread : public Thread {
-          ProcThread(Group *group) : group(group) {};
+        struct ProcThread : public ospcommon::Thread
+        {
+          ProcThread(Group *group) : group(group) {}
           virtual void run();
 
           Group *group;
@@ -59,15 +64,16 @@ namespace ospray {
         /*! an 'action' (either a send or a receive, or a
             processmessage) to be performed by a thread; what action
             it is depends on the queue it is in */
-        struct Action {
+        struct Action
+        {
           void   *data;
           int32   size;
           Address addr;
           MPI_Request request;
         };
 
-        struct Group : public mpi::async::Group {
-
+        struct Group : public mpi::async::Group
+        {
           Group(MPI_Comm comm, Consumer *consumer, int32 tag = MPI_ANY_TAG);
           void shutdown();
 
