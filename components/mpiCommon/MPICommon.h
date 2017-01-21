@@ -43,8 +43,6 @@
 #define MPI_CALL(a) { int rc = MPI_##a; if (rc != MPI_SUCCESS) throw std::runtime_error("MPI call returned error"); }
 
 namespace ospray {
-
-  /*! Helper class for MPI Programming */
   namespace mpi {
 
     inline void checkMpiError(int rc)
@@ -56,8 +54,8 @@ namespace ospray {
     //! abstraction for an MPI group. 
     /*! it's the responsiblity of the respective mpi setup routines to
       fill in the proper values */
-    struct Group {
-
+    struct Group
+    {
       /*! constructor. sets the 'comm', 'rank', and 'size' fields */
       Group(MPI_Comm initComm=MPI_COMM_NULL);
       
@@ -95,27 +93,31 @@ namespace ospray {
     };
 
     // //! abstraction for any other peer node that we might want to communicate with
-    struct Address {
+    struct Address
+    {
       //! group that this peer is in
       Group *group;
       //! this peer's rank in this group
       int rank;
         
-      Address(Group *group=nullptr, int rank=-1)
-        : group(group), rank(rank)
-      {}
+      Address(Group *group = nullptr, int rank = -1)
+        : group(group), rank(rank) {}
       inline bool isValid() const { return group != nullptr && rank >= 0; }
     };
-    inline bool operator==(const Address &a, const Address &b) {
+
+    inline bool operator==(const Address &a, const Address &b)
+    {
       return a.group == b.group && a.rank == b.rank;
     }
-    inline bool operator!=(const Address &a, const Address &b) {
+
+    inline bool operator!=(const Address &a, const Address &b)
+    {
       return !(a == b);
     }
 
     //special flags for sending and reciving from all ranks instead of individuals
-    const int SEND_ALL=-1;
-    const int RECV_ALL=-1;
+    const int SEND_ALL = -1;
+    const int RECV_ALL = -1;
 
     //! MPI_COMM_WORLD
     OSPRAY_MPI_INTERFACE extern Group world;
@@ -138,10 +140,11 @@ namespace ospray {
 
     // OSPRAY_INTERFACE void send(const Address& address, void* msgPtr, int32 msgSize);
     OSPRAY_MPI_INTERFACE void send(const Address& addr, work::Work* work);
-    OSPRAY_MPI_INTERFACE void recv(const Address& addr, std::vector<work::Work*>& work);  //TODO: callback?
+    //TODO: callback?
+    OSPRAY_MPI_INTERFACE void recv(const Address& addr, std::vector<work::Work*>& work);
     // OSPRAY_INTERFACE void send(const Address& addr, )
     OSPRAY_MPI_INTERFACE void flush();
     OSPRAY_MPI_INTERFACE void barrier(const Group& group);
-  }
 
+  }// ::ospray::mpi
 } // ::ospray

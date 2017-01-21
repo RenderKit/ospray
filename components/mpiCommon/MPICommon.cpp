@@ -46,7 +46,6 @@ namespace ospray {
           makeIntraComm(comm);
       }
     }
-    
 
     /*! do an MPI_Comm_dup, and return duplicated communicator */
     Group Group::dup() const
@@ -93,19 +92,23 @@ namespace ospray {
       mpi::async::CommLayer::WORLD->group = worldGroup;
     }
 
-    void send(const Address& addr, work::Work* work) {
+    void send(const Address& addr, work::Work* work)
+    {
       BufferedMPIComm::get()->send(addr, work);
     }
 
-    void recv(const Address& addr, std::vector<work::Work*>& work) {
+    void recv(const Address& addr, std::vector<work::Work*>& work)
+    {
       BufferedMPIComm::get()->recv(addr, work);
     }
 
-    void flush() {
+    void flush()
+    {
       BufferedMPIComm::get()->flush();
     }
 
-    void barrier(const Group& group) {
+    void barrier(const Group& group)
+    {
       BufferedMPIComm::get()->barrier(group);
     }
   } // ::ospray::mpi
