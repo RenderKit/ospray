@@ -65,6 +65,7 @@ namespace ospray {
         throw std::runtime_error(err.str());
       }
     }
+    
     inline void expect(char *&s, const char w0, const char w1)
     {
       if (*s != w0 && *s != w1) {
@@ -74,6 +75,7 @@ namespace ospray {
         throw std::runtime_error(err.str());
       }
     }
+    
     inline void consume(char *&s, const char w)
     {
       expect(s,w);
@@ -82,8 +84,6 @@ namespace ospray {
     
     inline void consumeComment(char *&s)
     {
-      PING;
-      PRINT(s);
       consume(s,'<');
       consume(s,'!');
       while (!((s[0] == 0) ||
@@ -92,8 +92,6 @@ namespace ospray {
       consume(s,'-');
       consume(s,'-');
       consume(s,'>');
-      PING;
-      PRINT(s);
     }
     
     inline void consume(char *&s, const char *word)
@@ -185,32 +183,15 @@ namespace ospray {
     bool skipComment(char *&s)
     {
       if (*s == '<' && s[1] == '!') {
-        PING;
-        PRINT(s[0]);
-        PRINT(s[1]);
         consumeComment(s);
         return true;
-        // skipWhites(s);
-        // return parseNode(s,doc);
       }
       return false;
     }
 
-        
-
     
     std::shared_ptr<Node> parseNode(char *&s, XMLDoc *doc)
     {
-      // if (*s == '<' && s[1] == '!') {
-      // PING;
-      // PRINT(s[0]);
-      // PRINT(s[1]);
-      //   consumeComment(s);
-      //   skipWhites(s);
-      //   return parseNode(s,doc);
-      // }
-
-        
       consume(s,'<');
       std::shared_ptr<Node> node = std::make_shared<Node>(doc);
 
