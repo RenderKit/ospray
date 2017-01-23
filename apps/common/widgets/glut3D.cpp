@@ -483,9 +483,9 @@ namespace ospray {
             auto& ay = viewPortFromCmdLine->at.y;
             auto& az = viewPortFromCmdLine->at.z;
 
-            auto& ux = upVectorFromCmdLine.x;
-            auto& uy = upVectorFromCmdLine.y;
-            auto& uz = upVectorFromCmdLine.z;
+            auto& ux = viewPortFromCmdLine->up.x;
+            auto& uy = viewPortFromCmdLine->up.y;
+            auto& uz = viewPortFromCmdLine->up.z;
 
             auto& fov = viewPortFromCmdLine->openingAngle;
 

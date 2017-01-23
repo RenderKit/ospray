@@ -47,6 +47,10 @@ namespace ospray {
                   cpp::Renderer renderer, 
                   cpp::Camera camera);
 
+    void create(const char* title,
+                const ospcommon::vec2i& size = ospray::glut3D::Glut3DWidget::defaultInitSize,
+                      bool fullScreen = false);
+
     void setRenderer(OSPRenderer renderer);
     void resetAccumulation();
     void toggleFullscreen();
@@ -91,6 +95,9 @@ namespace ospray {
     glut3D::Glut3DWidget::ViewPort glutViewPort;
 
     std::atomic<bool> resetAccum;
+
+    std::string windowTitle;
+
     double frameTimer;
     double animationTimer;
     double animationFrameDelta;
