@@ -225,7 +225,6 @@ namespace ospray {
         throw std::runtime_error("ospray xml input file does not contain any nodes!?");
 
 #if 1
-      PRINT(doc->child[0]->name);
       /* TEMPORARY FIX while we transition old volumeViewer .osp files
          (that are not in scene graph format) to actual scene graph */
       if (doc->child[0]->name == "volume") {
