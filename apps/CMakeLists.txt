@@ -41,16 +41,9 @@ IF(OSPRAY_APPS_BENCHMARK)
   ADD_SUBDIRECTORY(bench)
 ENDIF()
 
-# determine if we can enable scripting features (can't with icc)
-IF(NOT OSPRAY_COMPILER_ICC)
-  OPTION(OSPRAY_APPS_ENABLE_SCRIPTING
-         "Enable scripting features in viewer apps."
-         ON)
-ELSE()
-  OPTION(OSPRAY_APPS_ENABLE_SCRIPTING
-         "Enable scripting features in viewer apps, may not compile with ICC"
-         OFF)
-ENDIF()
+OPTION(OSPRAY_APPS_ENABLE_SCRIPTING
+       "Enable scripting features in viewer apps, may not compile with ICC"
+       OFF)
 MARK_AS_ADVANCED(OSPRAY_APPS_ENABLE_SCRIPTING)
 
 IF(OSPRAY_APPS_ENABLE_SCRIPTING)
