@@ -16,28 +16,42 @@
 
 #pragma once
 
-#include <ospray_cpp/ManagedObject.h>
+#include <ospray/ospray_cpp/ManagedObject.h>
 
 namespace ospray {
 namespace cpp    {
 
-class Light : public ManagedObject_T<OSPLight>
+class TransferFunction : public ManagedObject_T<OSPTransferFunction>
 {
 public:
 
-  Light(const Light &copy);
-  Light(OSPLight existing);
+  TransferFunction();
+  TransferFunction(const std::string &type);
+  TransferFunction(const TransferFunction &copy);
+  TransferFunction(OSPTransferFunction existing);
 };
 
 // Inlined function definitions ///////////////////////////////////////////////
 
-inline Light::Light(const Light &copy) :
-  ManagedObject_T<OSPLight>(copy.handle())
+inline TransferFunction::TransferFunction() {}
+
+inline TransferFunction::TransferFunction(const std::string &type)
+{
+  OSPTransferFunction c = ospNewTransferFunction(type.c_str());
+  if (c) {
+    ospObject = c;
+  } else {
+    throw std::runtime_error("Failed to create OSPTransferFunction!");
+  }
+}
+
+inline TransferFunction::TransferFunction(const TransferFunction &copy) :
+  ManagedObject_T<OSPTransferFunction>(copy.handle())
 {
 }
 
-inline Light::Light(OSPLight existing) :
-  ManagedObject_T<OSPLight>(existing)
+inline TransferFunction::TransferFunction(OSPTransferFunction existing) :
+  ManagedObject_T<OSPTransferFunction>(existing)
 {
 }
 

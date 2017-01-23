@@ -18,7 +18,7 @@
 
 #include <common/commandline/CommandLineExport.h>
 #include <common/commandline/CommandLineParser.h>
-#include <ospray_cpp/Renderer.h>
+#include <ospray/ospray_cpp/Renderer.h>
 
 #include <string>
 

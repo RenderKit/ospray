@@ -16,7 +16,7 @@
 
 #include "LightsParser.h"
 
-#include <ospray_cpp/Data.h>
+#include <ospray/ospray_cpp/Data.h>
 
 #include <vector>
 

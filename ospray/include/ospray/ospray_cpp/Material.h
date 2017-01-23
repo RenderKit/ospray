@@ -16,39 +16,29 @@
 
 #pragma once
 
-#include <ospray_cpp/ManagedObject.h>
+#include <ospray/ospray_cpp/ManagedObject.h>
 
 namespace ospray {
 namespace cpp    {
 
-class Camera : public ManagedObject_T<OSPCamera>
+class Material : public ManagedObject_T<OSPMaterial>
 {
 public:
 
-  Camera(const std::string &type);
-  Camera(const Camera &copy);
-  Camera(OSPCamera existing = nullptr);
+  Material() = default;
+  Material(const Material &copy);
+  Material(OSPMaterial existing);
 };
 
 // Inlined function definitions ///////////////////////////////////////////////
 
-inline Camera::Camera(const std::string &type)
-{
-  OSPCamera c = ospNewCamera(type.c_str());
-  if (c) {
-    ospObject = c;
-  } else {
-    throw std::runtime_error("Failed to create OSPCamera!");
-  }
-}
-
-inline Camera::Camera(const Camera &copy) :
-  ManagedObject_T<OSPCamera>(copy.handle())
+inline Material::Material(const Material &copy) :
+  ManagedObject_T<OSPMaterial>(copy.handle())
 {
 }
 
-inline Camera::Camera(OSPCamera existing) :
-  ManagedObject_T<OSPCamera>(existing)
+inline Material::Material(OSPMaterial existing) :
+  ManagedObject_T<OSPMaterial>(existing)
 {
 }
 

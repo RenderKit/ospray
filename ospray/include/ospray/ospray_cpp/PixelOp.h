@@ -16,44 +16,43 @@
 
 #pragma once
 
-#include <ospray_cpp/ManagedObject.h>
+#include <ospray/ospray_cpp/ManagedObject.h>
 
 namespace ospray {
 namespace cpp    {
 
-class TransferFunction : public ManagedObject_T<OSPTransferFunction>
+class PixelOp : public ManagedObject_T<OSPPixelOp>
 {
 public:
 
-  TransferFunction();
-  TransferFunction(const std::string &type);
-  TransferFunction(const TransferFunction &copy);
-  TransferFunction(OSPTransferFunction existing);
+  PixelOp() = default;
+  PixelOp(const std::string &type);
+  PixelOp(const PixelOp &copy);
+  PixelOp(OSPPixelOp existing);
 };
 
 // Inlined function definitions ///////////////////////////////////////////////
 
-inline TransferFunction::TransferFunction() {}
-
-inline TransferFunction::TransferFunction(const std::string &type)
+inline PixelOp::PixelOp(const std::string &type)
 {
-  OSPTransferFunction c = ospNewTransferFunction(type.c_str());
+  OSPPixelOp c = ospNewPixelOp(type.c_str());
   if (c) {
     ospObject = c;
   } else {
-    throw std::runtime_error("Failed to create OSPTransferFunction!");
+    throw std::runtime_error("Failed to create OSPPixelOp!");
   }
 }
 
-inline TransferFunction::TransferFunction(const TransferFunction &copy) :
-  ManagedObject_T<OSPTransferFunction>(copy.handle())
+inline PixelOp::PixelOp(const PixelOp &copy) :
+  ManagedObject_T<OSPPixelOp>(copy.handle())
 {
 }
 
-inline TransferFunction::TransferFunction(OSPTransferFunction existing) :
-  ManagedObject_T<OSPTransferFunction>(existing)
+inline PixelOp::PixelOp(OSPPixelOp existing) :
+  ManagedObject_T<OSPPixelOp>(existing)
 {
 }
+
 
 }// namespace cpp
 }// namespace ospray

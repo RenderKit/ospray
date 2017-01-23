@@ -16,43 +16,41 @@
 
 #pragma once
 
-#include <ospray_cpp/ManagedObject.h>
+#include <ospray/ospray_cpp/ManagedObject.h>
 
 namespace ospray {
 namespace cpp    {
 
-class PixelOp : public ManagedObject_T<OSPPixelOp>
+class Camera : public ManagedObject_T<OSPCamera>
 {
 public:
 
-  PixelOp() = default;
-  PixelOp(const std::string &type);
-  PixelOp(const PixelOp &copy);
-  PixelOp(OSPPixelOp existing);
+  Camera(const std::string &type);
+  Camera(const Camera &copy);
+  Camera(OSPCamera existing = nullptr);
 };
 
 // Inlined function definitions ///////////////////////////////////////////////
 
-inline PixelOp::PixelOp(const std::string &type)
+inline Camera::Camera(const std::string &type)
 {
-  OSPPixelOp c = ospNewPixelOp(type.c_str());
+  OSPCamera c = ospNewCamera(type.c_str());
   if (c) {
     ospObject = c;
   } else {
-    throw std::runtime_error("Failed to create OSPPixelOp!");
+    throw std::runtime_error("Failed to create OSPCamera!");
   }
 }
 
-inline PixelOp::PixelOp(const PixelOp &copy) :
-  ManagedObject_T<OSPPixelOp>(copy.handle())
+inline Camera::Camera(const Camera &copy) :
+  ManagedObject_T<OSPCamera>(copy.handle())
 {
 }
 
-inline PixelOp::PixelOp(OSPPixelOp existing) :
-  ManagedObject_T<OSPPixelOp>(existing)
+inline Camera::Camera(OSPCamera existing) :
+  ManagedObject_T<OSPCamera>(existing)
 {
 }
-
 
 }// namespace cpp
 }// namespace ospray

@@ -18,7 +18,7 @@
 
 #include <common/commandline/CommandLineExport.h>
 #include <common/commandline/CommandLineParser.h>
-#include <ospray_cpp/Model.h>
+#include <ospray/ospray_cpp/Model.h>
 #include <ospcommon/box.h>
 #include <deque>
 

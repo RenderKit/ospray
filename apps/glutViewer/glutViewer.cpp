@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "common/ospray_cpp/Device.h"
+#include <ospray/ospray_cpp/Device.h>
 #include "common/commandline/Utility.h"
 
 #ifdef OSPRAY_APPS_ENABLE_SCRIPTING

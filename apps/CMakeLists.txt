@@ -24,7 +24,6 @@ INCLUDE_DIRECTORIES(
 # common utilities
 ADD_SUBDIRECTORY(common/commandline)
 ADD_SUBDIRECTORY(common/importer)
-ADD_SUBDIRECTORY(common/ospray_cpp)
 ADD_SUBDIRECTORY(common/tfn_lib)
 ADD_SUBDIRECTORY(common/miniSG)
 ADD_SUBDIRECTORY(common/xml)

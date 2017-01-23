@@ -18,7 +18,7 @@
 
 #include <common/commandline/CommandLineExport.h>
 #include <common/commandline/SceneParser/SceneParser.h>
-#include <ospray_cpp/Renderer.h>
+#include <ospray/ospray_cpp/Renderer.h>
 #include <common/miniSG/miniSG.h>
 
 class OSPRAY_COMMANDLINE_INTERFACE TriangleMeshSceneParser : public SceneParser

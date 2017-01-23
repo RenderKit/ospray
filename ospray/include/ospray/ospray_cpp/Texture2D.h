@@ -16,36 +16,28 @@
 
 #pragma once
 
-#include <ospray_cpp/ManagedObject.h>
+#include <ospray/ospray_cpp/ManagedObject.h>
 
 namespace ospray {
 namespace cpp    {
 
-class Data : public ManagedObject_T<OSPData>
+class Texture2D : public ManagedObject_T<OSPTexture2D>
 {
 public:
 
-  Data(size_t numItems, OSPDataType format,
-       const void *init = nullptr, int flags = 0);
-  Data(const Data &copy);
-  Data(OSPData existing);
+  Texture2D(const Texture2D &copy);
+  Texture2D(OSPTexture2D existing);
 };
 
 // Inlined function definitions ///////////////////////////////////////////////
 
-inline Data::Data(size_t numItems, OSPDataType format,
-                  const void *init, int flags)
-{
-  ospObject = ospNewData(numItems, format, init, flags);
-}
-
-inline Data::Data(const Data &copy) :
-  ManagedObject_T<OSPData>(copy.handle())
+inline Texture2D::Texture2D(const Texture2D &copy) :
+  ManagedObject_T<OSPTexture2D>(copy.handle())
 {
 }
 
-inline Data::Data(OSPData existing) :
-  ManagedObject_T<OSPData>(existing)
+inline Texture2D::Texture2D(OSPTexture2D existing) :
+  ManagedObject_T<OSPTexture2D>(existing)
 {
 }
 

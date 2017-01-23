@@ -19,7 +19,7 @@
 
 #include <common/commandline/CommandLineExport.h>
 #include <common/commandline/CommandLineParser.h>
-#include <ospray_cpp/Camera.h>
+#include <ospray/ospray_cpp/Camera.h>
 
 #include <string>
 

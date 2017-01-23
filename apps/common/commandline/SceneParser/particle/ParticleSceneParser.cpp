@@ -20,7 +20,7 @@
 #include "Model.h"
 #include "uintah.h"
 
-#include <ospray_cpp/Data.h>
+#include <ospray/ospray_cpp/Data.h>
 
 using namespace ospray;
 using namespace ospcommon;

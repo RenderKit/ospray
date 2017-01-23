@@ -19,9 +19,9 @@
 #include <chrono>
 #include "pico_bench/pico_bench.h"
 
-#include <ospray_cpp/Camera.h>
-#include <ospray_cpp/Model.h>
-#include <ospray_cpp/Renderer.h>
+#include <ospray/ospray_cpp/Camera.h>
+#include <ospray/ospray_cpp/Model.h>
+#include <ospray/ospray_cpp/Renderer.h>
 
 #include <deque>
 

@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include <ospray_cpp/ManagedObject.h>
-#include <ospray_cpp/PixelOp.h>
+#include <ospray/ospray_cpp/ManagedObject.h>
+#include <ospray/ospray_cpp/PixelOp.h>
 
 namespace ospray {
 namespace cpp    {

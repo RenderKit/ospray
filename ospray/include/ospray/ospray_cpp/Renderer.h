@@ -16,10 +16,10 @@
 
 #pragma once
 
-#include <ospray_cpp/FrameBuffer.h>
-#include <ospray_cpp/Light.h>
-#include <ospray_cpp/ManagedObject.h>
-#include <ospray_cpp/Material.h>
+#include <ospray/ospray_cpp/FrameBuffer.h>
+#include <ospray/ospray_cpp/Light.h>
+#include <ospray/ospray_cpp/ManagedObject.h>
+#include <ospray/ospray_cpp/Material.h>
 
 namespace ospray {
 namespace cpp    {

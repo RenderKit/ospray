@@ -16,7 +16,7 @@
 
 #include "TriangleMeshSceneParser.h"
 
-#include <ospray_cpp/Data.h>
+#include <ospray/ospray_cpp/Data.h>
 #include <common/miniSG/miniSG.h>
 
 using namespace ospray;

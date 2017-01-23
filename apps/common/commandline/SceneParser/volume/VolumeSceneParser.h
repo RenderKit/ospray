@@ -18,8 +18,8 @@
 
 #include <common/commandline/CommandLineExport.h>
 #include <common/commandline/SceneParser/SceneParser.h>
-#include <ospray_cpp/Renderer.h>
-#include <ospray_cpp/TransferFunction.h>
+#include <ospray/ospray_cpp/Renderer.h>
+#include <ospray/ospray_cpp/TransferFunction.h>
 #include <common/miniSG/miniSG.h>
 
 #include <limits>

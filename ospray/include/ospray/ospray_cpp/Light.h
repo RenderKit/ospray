@@ -16,28 +16,28 @@
 
 #pragma once
 
-#include <ospray_cpp/ManagedObject.h>
+#include <ospray/ospray_cpp/ManagedObject.h>
 
 namespace ospray {
 namespace cpp    {
 
-class Texture2D : public ManagedObject_T<OSPTexture2D>
+class Light : public ManagedObject_T<OSPLight>
 {
 public:
 
-  Texture2D(const Texture2D &copy);
-  Texture2D(OSPTexture2D existing);
+  Light(const Light &copy);
+  Light(OSPLight existing);
 };
 
 // Inlined function definitions ///////////////////////////////////////////////
 
-inline Texture2D::Texture2D(const Texture2D &copy) :
-  ManagedObject_T<OSPTexture2D>(copy.handle())
+inline Light::Light(const Light &copy) :
+  ManagedObject_T<OSPLight>(copy.handle())
 {
 }
 
-inline Texture2D::Texture2D(OSPTexture2D existing) :
-  ManagedObject_T<OSPTexture2D>(existing)
+inline Light::Light(OSPLight existing) :
+  ManagedObject_T<OSPLight>(existing)
 {
 }
 

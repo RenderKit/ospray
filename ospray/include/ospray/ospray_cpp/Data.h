@@ -16,54 +16,37 @@
 
 #pragma once
 
-#include <ospray_cpp/ManagedObject.h>
-#include <ospray_cpp/Material.h>
+#include <ospray/ospray_cpp/ManagedObject.h>
 
 namespace ospray {
 namespace cpp    {
 
-class Geometry : public ManagedObject_T<OSPGeometry>
+class Data : public ManagedObject_T<OSPData>
 {
 public:
 
-  Geometry(const std::string &type);
-  Geometry(const Geometry &copy);
-  Geometry(OSPGeometry existing);
-
-  void setMaterial(Material &m) const;
-  void setMaterial(OSPMaterial m) const;
+  Data(size_t numItems, OSPDataType format,
+       const void *init = nullptr, int flags = 0);
+  Data(const Data &copy);
+  Data(OSPData existing);
 };
 
 // Inlined function definitions ///////////////////////////////////////////////
 
-inline Geometry::Geometry(const std::string &type)
+inline Data::Data(size_t numItems, OSPDataType format,
+                  const void *init, int flags)
 {
-  OSPGeometry c = ospNewGeometry(type.c_str());
-  if (c) {
-    ospObject = c;
-  } else {
-    throw std::runtime_error("Failed to create OSPGeometry!");
-  }
+  ospObject = ospNewData(numItems, format, init, flags);
 }
 
-inline Geometry::Geometry(const Geometry &copy) :
-  ManagedObject_T<OSPGeometry>(copy.handle())
+inline Data::Data(const Data &copy) :
+  ManagedObject_T<OSPData>(copy.handle())
 {
 }
 
-inline Geometry::Geometry(OSPGeometry existing) :
-  ManagedObject_T<OSPGeometry>(existing)
+inline Data::Data(OSPData existing) :
+  ManagedObject_T<OSPData>(existing)
 {
-}
-
-inline void Geometry::setMaterial(Material &m) const
-{
-  setMaterial(m.handle());
-}
-
-inline void Geometry::setMaterial(OSPMaterial m) const
-{
-  ospSetMaterial(handle(), m);
 }
 
 }// namespace cpp
