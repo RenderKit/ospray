@@ -295,13 +295,6 @@ IF (TASKING_TBB)
 ENDIF()
 
 ##############################################################
-# Output paths
-##############################################################
-SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
-SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
-SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
-
-##############################################################
 # Directories to compile
 ##############################################################
 
