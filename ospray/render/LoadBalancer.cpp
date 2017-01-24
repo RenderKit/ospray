@@ -26,7 +26,7 @@ namespace ospray {
   using std::cout;
   using std::endl;
 
-  TiledLoadBalancer *TiledLoadBalancer::instance = nullptr;
+  std::unique_ptr<TiledLoadBalancer> TiledLoadBalancer::instance {};
 
   /*! render a frame via the tiled load balancer */
   float LocalTiledLoadBalancer::renderFrame(Renderer *renderer,

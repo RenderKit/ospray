@@ -29,7 +29,7 @@ namespace ospray {
   struct TileRenderer;
   struct OSPRAY_SDK_INTERFACE TiledLoadBalancer
   {
-    static TiledLoadBalancer *instance;
+    static std::unique_ptr<TiledLoadBalancer> instance;
     virtual std::string toString() const = 0;
     virtual float renderFrame(Renderer *tiledRenderer,
                               FrameBuffer *fb,

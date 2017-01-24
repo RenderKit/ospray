@@ -114,7 +114,7 @@ namespace ospray {
       printf("#w: running MPI worker process %i/%i on pid %i@%s\n",
              worker.rank,worker.size,getpid(),hostname);
 
-      TiledLoadBalancer::instance = new mpi::staticLoadBalancer::Slave;
+      TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Slave>();
 
       auto bufferedComm = mpi::BufferedMPIComm::get();
       while (1) {
@@ -129,5 +129,5 @@ namespace ospray {
       }
     }
 
-  } // ::ospray::api
+  } // ::ospray::mpi
 } // ::ospray

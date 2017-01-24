@@ -46,36 +46,36 @@ float Distribution2D_pdf(const uniform Distribution2D* uniform self, const vec2f
   return pdf_x * pdf_y;
 }
 
-void Distribution2D_destroy(uniform Distribution2D* uniform self)
+void Distribution2D_destroy(Distribution2D* uniform self)
 { 
   delete[] self->cdf_x;
   delete[] self->cdf_y;
   delete self;
 }
 
-uniform Distribution2D* uniform Distribution2D_create(const uniform vec2i size, uniform float* uniform f)
+Distribution2D* uniform Distribution2D_create(const uniform vec2i size, float* uniform cdf_x, float* uniform f_y)
 {
-  uniform Distribution2D* uniform self = uniform new uniform Distribution2D;
+  Distribution2D* uniform self = uniform new Distribution2D;
 
   self->size = size;
   self->rcpSize = make_vec2f(1.0f/size.x, 1.0f/size.y);
+  self->cdf_x = cdf_x;
 
-  // create cdf for sampling rows
-  uniform float* uniform cdf_y = uniform new uniform float[size.y];
-
-  // compute y distribution and initialize row distributions
-  uniform int i = 0;
-  for (uniform int y = 0; y < size.y; y++)
-  {
-    // initialize distribution for current row
-    cdf_y[y] = Distribution1D_create(size.x, f + y*size.x);
-  }
-
-  // initializes the y distribution
-  Distribution1D_create(size.y, cdf_y);
-
-  self->cdf_x = f;
-  self->cdf_y = cdf_y;
+  // initialize the y distribution
+  Distribution1D_create(size.y, f_y);
+  self->cdf_y = f_y;
 
   return self;
+}
+
+Distribution2D* uniform Distribution2D_create(const uniform vec2i size, float* uniform f)
+{
+  // create cdf for sampling rows
+  float* uniform row_importance = uniform new float[size.y];
+
+  // compute y distribution and initialize row distributions
+  for (uniform int y = 0; y < size.y; y++)
+    row_importance[y] = Distribution1D_create(size.x, f + y*size.x);
+
+  return Distribution2D_create(size, f, row_importance);
 }

@@ -70,7 +70,7 @@ namespace ospray {
         assert(erc == RTC_NO_ERROR);
       }
 
-      TiledLoadBalancer::instance = new LocalTiledLoadBalancer;
+      TiledLoadBalancer::instance = make_unique<LocalTiledLoadBalancer>();
     }
 
     OSPFrameBuffer

@@ -221,6 +221,8 @@ namespace ospray {
       ObjectHandle allocateHandle() const;
 
       std::shared_ptr<mpi::BufferedMPIComm> bufferedComm;
+
+      bool initialized {false};
     };
 
     // ==================================================================
