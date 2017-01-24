@@ -17,8 +17,6 @@
 #include <algorithm>
 // own
 #include "VolumeViewer.h"
-// #include "loaders/ObjectFile.h"
-// #include "loaders/TriangleMeshFile.h"
 #include "TransferFunctionEditor.h"
 #include "IsosurfaceEditor.h"
 #include "SliceEditor.h"
@@ -28,11 +26,6 @@
 #include "commandline/SceneParser/trianglemesh/TriangleMeshSceneParser.h"
 #include <common/miniSG/miniSG.h>
 #include "ospcommon/FileName.h"
-
-
-// #ifdef OSPRAY_VOLUME_VOXELRANGE_IN_APP
-// #include "../../modules/loaders/VolumeFile.h"
-// #endif
 
 #include "importer/Importer.h"
 
@@ -133,11 +126,6 @@ void VolumeViewer::setModel(size_t index)
     // Update transfer function and isosurface editor data value range with the voxel range of the current model's first volume.
     OSPVolume volume = modelStates[index].volumes[0]->handle;
     ospcommon::vec2f voxelRange = modelStates[index].volumes[0]->voxelRange;
-    // #ifdef OSPRAY_VOLUME_VOXELRANGE_IN_APP
-    //   voxelRange = VolumeFile::voxelRangeOf[volume];
-    // #else
-    //   ospGetVec2f(modelStates[index].volumes[0], "voxelRange", (osp::vec2f*)&voxelRange);
-    // #endif
     
     if(voxelRange != ospcommon::vec2f(0.f)) {
       transferFunctionEditor->setDataValueRange(voxelRange);

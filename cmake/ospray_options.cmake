@@ -110,9 +110,6 @@ OPTION(OSPRAY_USE_EMBREE_STREAMS "Enable Streams if using Embree v2.10 or later"
 OPTION(OSPRAY_USE_HIGH_QUALITY_BVH
        "Takes slighly longer to build but offers higher ray tracing performance; recommended when using Embree v2.11 or later")
 
-OPTION(OSPRAY_VOLUME_VOXELRANGE_IN_APP "Move 'voxelrange' computations to app?")
-MARK_AS_ADVANCED(OSPRAY_VOLUME_VOXELRANGE_IN_APP)
-
 SET(OSPRAY_TILE_SIZE 64 CACHE INT "Tile size")
 SET_PROPERTY(CACHE OSPRAY_TILE_SIZE PROPERTY STRINGS 8 16 32 64 128 256 512)
 

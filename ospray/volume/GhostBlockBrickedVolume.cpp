@@ -72,44 +72,23 @@ namespace ospray {
     // previously specified.
     Assert2(source,"nullptr source in GhostBlockBrickedVolume::setRegion()");
 
-#ifndef OSPRAY_VOLUME_VOXELRANGE_IN_APP
-    if (findParam("voxelRange") == NULL) {
-      // Compute the voxel value range for float voxels if none was
-      // previously specified.
-      const size_t numVoxelsInRegion
-        = (size_t)regionSize.x *
-        + (size_t)regionSize.y *
-        + (size_t)regionSize.z;
-      if (voxelType == "uchar")
-        computeVoxelRange((unsigned char *)source, numVoxelsInRegion);
-      else if (voxelType == "ushort")
-        computeVoxelRange((unsigned short *)source, numVoxelsInRegion);
-      else if (voxelType == "short")
-        computeVoxelRange((short *)source, numVoxelsInRegion);
-      else if (voxelType == "float")
-        computeVoxelRange((float *)source, numVoxelsInRegion);
-      else if (voxelType == "double")
-        computeVoxelRange((double *) source, numVoxelsInRegion);
-      else {
-        throw std::runtime_error("invalid voxelType in "
-                                 "GhostBlockBrickedVolume::setRegion()");
-      }
-    }
-#endif
-
     vec3i finalRegionSize = regionSize;
     vec3i finalRegionCoords = regionCoords;
     void *finalSource = const_cast<void*>(source);
-    const bool upsampling = scaleRegion(source, finalSource, finalRegionSize, finalRegionCoords);
+    const bool upsampling = scaleRegion(source, finalSource,
+                                        finalRegionSize, finalRegionCoords);
     // Copy voxel data into the volume.
     const int NTASKS = finalRegionSize.y * finalRegionSize.z;
     parallel_for(NTASKS, [&](int taskIndex){
-        ispc::GBBV_setRegion(ispcEquivalent, finalSource, (const ispc::vec3i&)finalRegionCoords,
-            (const ispc::vec3i&)finalRegionSize, taskIndex);
+        ispc::GBBV_setRegion(ispcEquivalent,
+                             finalSource,
+                             (const ispc::vec3i&)finalRegionCoords,
+                             (const ispc::vec3i&)finalRegionSize,
+                             taskIndex);
     });
 
-    // If we're upsampling finalSource points at the chunk of data allocated by scaleRegion
-    // to hold the upsampled volume data and we must free it.
+    // If we're upsampling finalSource points at the chunk of data allocated by
+    // scaleRegion to hold the upsampled volume data and we must free it.
     if (upsampling) {
       free(finalSource);
     }
