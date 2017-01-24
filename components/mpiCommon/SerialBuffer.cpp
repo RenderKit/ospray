@@ -72,6 +72,9 @@ namespace ospray {
           // allocates over requested so we don't get a lot of small reallocations
           // TODO: This should not allocate more than requested
           buffer.resize(getIndex() + size + 1024);
+
+          /* iw - why not use buffer.reserve(getIndex()+size) !? */
+          
           // bytesAvailable += size + 1024;
         }
       }

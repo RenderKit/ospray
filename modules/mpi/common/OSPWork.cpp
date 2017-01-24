@@ -130,24 +130,31 @@ namespace ospray {
       const size_t CommandFinalize::TAG;
 
       template<>
-      void NewObject<Renderer>::run() {
+      void NewObject<Renderer>::run()
+      {
         Renderer *renderer = Renderer::createRenderer(type.c_str());
         if (!renderer) {
           throw std::runtime_error("unknown renderer type '" + type + "'");
         }
         handle.assign(renderer);
       }
+      
       template<>
-      void NewObject<Renderer>::runOnMaster() {
+      void NewObject<Renderer>::runOnMaster()
+      {
         run();
       }
+      
       template<>
-      void NewObject<Model>::run() {
+      void NewObject<Model>::run()
+      {
         Model *model = new Model;
         handle.assign(model);
       }
+      
       template<>
-      void NewObject<Geometry>::run() {
+      void NewObject<Geometry>::run()
+      {
         Geometry *geometry = Geometry::createGeometry(type.c_str());
         if (!geometry) {
           throw std::runtime_error("unknown geometry type '" + type + "'");
@@ -158,14 +165,18 @@ namespace ospray {
         geometry->refInc();
         handle.assign(geometry);
       }
+      
       template<>
-      void NewObject<Camera>::run() {
+      void NewObject<Camera>::run()
+      {
         Camera *camera = Camera::createCamera(type.c_str());
         Assert(camera);
         handle.assign(camera);
       }
+      
       template<>
-      void NewObject<Volume>::run() {
+      void NewObject<Volume>::run()
+      {
         Volume *volume = Volume::createInstance(type.c_str());
         if (!volume) {
           throw std::runtime_error("unknown volume type '" + type + "'");
@@ -173,12 +184,16 @@ namespace ospray {
         volume->refInc();
         handle.assign(volume);
       }
+      
       template<>
-      void NewObject<Volume>::runOnMaster() {
+      void NewObject<Volume>::runOnMaster()
+      {
         run();
       }
+      
       template<>
-      void NewObject<TransferFunction>::run() {
+      void NewObject<TransferFunction>::run()
+      {
         TransferFunction *tfn = TransferFunction::createInstance(type.c_str());
         if (!tfn) {
           throw std::runtime_error("unknown transfer functon type '" + type + "'");
@@ -196,7 +211,8 @@ namespace ospray {
       }
 
       template<>
-      void NewRendererObject<Material>::run() {
+      void NewRendererObject<Material>::run()
+      {
         Renderer *renderer = (Renderer*)rendererHandle.lookup();
         Material *material = nullptr;
         if (renderer) {
@@ -215,8 +231,10 @@ namespace ospray {
         }
         handle.assign(material);
       }
+      
       template<>
-      void NewRendererObject<Light>::run() {
+      void NewRendererObject<Light>::run()
+      {
         Renderer *renderer = (Renderer*)rendererHandle.lookup();
         Light *light = nullptr;
         if (renderer) {
@@ -236,10 +254,16 @@ namespace ospray {
         handle.assign(light);
       }
 
-      NewData::NewData(){}
+      NewData::NewData()
+      {}
+      
       NewData::NewData(ObjectHandle handle, size_t nItems,
-          OSPDataType format, void *init, int flags)
-        : handle(handle), nItems(nItems), format(format), localData(nullptr), flags(flags)
+                       OSPDataType format, void *init, int flags)
+        : handle(handle),
+          nItems(nItems),
+          format(format),
+          localData(nullptr),
+          flags(flags)
       {
         // TODO: Is this check ok for ParaView e.g. what Carson is changing in 2e81c005 ?
         if (init && nItems) {
@@ -251,7 +275,9 @@ namespace ospray {
           }
         }
       }
-      void NewData::run() {
+      
+      void NewData::run()
+      {
         Data *ospdata = nullptr;
         if (!data.empty()) {
           ospdata = new Data(nItems, format, data.data(), flags);
@@ -279,40 +305,59 @@ namespace ospray {
           }
         }
       }
-      size_t NewData::getTag() const {
+      
+      size_t NewData::getTag() const
+      {
         return TAG;
       }
-      void NewData::serialize(SerialBuffer &b) const {
+      
+      void NewData::serialize(SerialBuffer &b) const
+      {
         b << (int64)handle << nItems << (int32)format << flags << data;
       }
-      void NewData::deserialize(SerialBuffer &b) {
+      
+      void NewData::deserialize(SerialBuffer &b)
+      {
         int32 fmt;
         b >> handle.i64 >> nItems >> fmt >> flags >> data;
         format = (OSPDataType)fmt;
       }
 
-      NewTexture2d::NewTexture2d() {}
+      NewTexture2d::NewTexture2d()
+      {}
+      
       NewTexture2d::NewTexture2d(ObjectHandle handle, vec2i dimensions,
-          OSPTextureFormat format, void *texture, uint32 flags)
-        : handle(handle), dimensions(dimensions), format(format), flags(flags)
+                                 OSPTextureFormat format, void *texture, uint32 flags)
+        : handle(handle),
+          dimensions(dimensions),
+          format(format),
+          flags(flags)
       {
         size_t sz = ospray::sizeOf(format) * dimensions.x * dimensions.y;
         data.resize(sz);
         std::memcpy(data.data(), texture, sz);
       }
-      void NewTexture2d::run() {
+      
+      void NewTexture2d::run()
+      {
         Texture2D *texture = Texture2D::createTexture(dimensions, format, data.data(),
                                                       flags & ~OSP_TEXTURE_SHARED_BUFFER);
         Assert(texture);
         handle.assign(texture);
       }
-      size_t NewTexture2d::getTag() const {
+      
+      size_t NewTexture2d::getTag() const
+      {
         return TAG;
       }
-      void NewTexture2d::serialize(SerialBuffer &b) const {
+      
+      void NewTexture2d::serialize(SerialBuffer &b) const
+      {
         b << (int64)handle << dimensions << (int32)format << flags << data;
       }
-      void NewTexture2d::deserialize(SerialBuffer &b) {
+      
+      void NewTexture2d::deserialize(SerialBuffer &b)
+      {
         int32 fmt;
         b >> handle.i64 >> dimensions >> fmt >> flags >> data;
         format = (OSPTextureFormat)fmt;

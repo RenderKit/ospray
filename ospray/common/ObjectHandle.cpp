@@ -78,6 +78,11 @@ namespace ospray {
     if (i64 == 0) return NULL;
 
     auto it = objectByHandle.find(i64);
+#ifndef NDEBUG
+    if (it == objectByHandle.end()) {
+      throw std::runtime_error("trying to look up object handle "+std::to_string(i64)+" that isn't defined!");
+    }
+#endif
     Assert(it != objectByHandle.end());
     return it->second.ptr;
   }

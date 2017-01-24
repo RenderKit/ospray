@@ -775,10 +775,15 @@ namespace ospray {
                                 OSPRenderer _renderer,
                                 const uint32 fbChannelFlags)
     {
+      PING;
+      
       // Note: render frame is flushing so the work error result will be set,
       // since the master participates in rendering
+      PING;
       work::RenderFrame work(_fb, _renderer, fbChannelFlags);
+      PING;
       processWork(&work);
+      PING;
       return work.varianceResult;
     }
 
@@ -945,6 +950,8 @@ namespace ospray {
         if (work->flushing()) {
           bufferedComm->flush();
         }
+
+        std::cout << "running work..." << std::endl;
         // Run the master side variant of the work unit
         work->runOnMaster();
       } else {

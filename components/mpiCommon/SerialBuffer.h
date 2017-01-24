@@ -34,18 +34,27 @@ namespace ospray {
         // size_t bytesAvailable;
 
         SerialBuffer(size_t sz = 1024 * 32);
+        
         // get data at current index  WARNING: if realloced, ptrs invalidated
         byte_t* getPtr();
+        
         // get data at index  WARNING: if realloced, ptrs invalidated
         byte_t* getPtr(size_t ind) { return &buffer.at(ind); }
+        
         // return data at index 0 WARNING: if realloced, ptrs invalidated
         byte_t* getData() { return buffer.data(); }
+        
         void write(byte_t* data, size_t size);
+        
         void read(byte_t* data, size_t size);
+        
         //reserve size elements from current index
         void reserve(size_t size);
+        
         void clear();  //resets index to 0, does not actually clear out memory
+        
         size_t getIndex() { return index; }
+        
         void setIndex(size_t i) { index = i; }
         // size_t size() const;
         // bool empty() const;
@@ -60,20 +69,25 @@ namespace ospray {
         friend SerialBuffer& operator>>(SerialBuffer& b, Work &work);
 
         virtual void run() {}
-        // Run the master-side variant of this command in master/worker mode
-        // The default just does nothing
+        
+        /*! Run the master-side variant of this command in master/worker mode
+          The default just does nothing */
         virtual void runOnMaster() {}
+        
         virtual size_t getTag() const = 0;
-        // Check whether this work unit should flush the command buffer,
-        // the default returns false
+        
+        /*! Check whether this work unit should flush the command
+        buffer, the default returns false */
         virtual bool flushing() const { return false; }
 
-        // Have the child work unit write its data to the buffer
+        //! Have the child work unit write its data to the buffer
         virtual void serialize(SerialBuffer &b) const = 0;
-        // Have the child work unit read its data from the buffer
+        
+        //! Have the child work unit read its data from the buffer
         virtual void deserialize(SerialBuffer &b) = 0;
 
         using WorkMap = std::unordered_map<size_t, Work* (*)()>;
+        
         // NOTE(jda) - No longer const as this is now populated on mpi module
         //             load
         static WorkMap WORK_MAP;

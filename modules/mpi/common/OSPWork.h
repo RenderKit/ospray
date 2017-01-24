@@ -40,30 +40,37 @@ namespace ospray {
 
       template<typename T>
       struct NewObjectTag;
+      
       template<>
       struct NewObjectTag<Renderer> {
         const static size_t TAG = CMD_NEW_RENDERER;
       };
+      
       template<>
       struct NewObjectTag<Model> {
         const static size_t TAG = CMD_NEW_MODEL;
       };
+      
       template<>
       struct NewObjectTag<Geometry> {
         const static size_t TAG = CMD_NEW_GEOMETRY;
       };
+      
       template<>
       struct NewObjectTag<Camera> {
         const static size_t TAG = CMD_NEW_CAMERA;
       };
+      
       template<>
       struct NewObjectTag<Volume> {
         const static size_t TAG = CMD_NEW_VOLUME;
       };
+      
       template<>
       struct NewObjectTag<TransferFunction> {
         const static size_t TAG = CMD_NEW_TRANSFERFUNCTION;
       };
+      
       template<>
       struct NewObjectTag<PixelOp> {
         const static size_t TAG = CMD_NEW_PIXELOP;
@@ -354,34 +361,42 @@ namespace ospray {
       // other end.
       template<typename T>
       struct ParamTag;
+      
       template<>
       struct ParamTag<std::string> {
         const static size_t TAG = CMD_SET_STRING;
       };
+      
       template<>
       struct ParamTag<int> {
         const static size_t TAG = CMD_SET_INT;
       };
+      
       template<>
       struct ParamTag<float> {
         const static size_t TAG = CMD_SET_FLOAT;
       };
+      
       template<>
       struct ParamTag<vec2f> {
         const static size_t TAG = CMD_SET_VEC2F;
       };
+      
       template<>
       struct ParamTag<vec2i> {
         const static size_t TAG = CMD_SET_VEC2I;
       };
+      
       template<>
       struct ParamTag<vec3f> {
         const static size_t TAG = CMD_SET_VEC3F;
       };
+      
       template<>
       struct ParamTag<vec3i> {
         const static size_t TAG = CMD_SET_VEC3I;
       };
+      
       template<>
       struct ParamTag<vec4f> {
         const static size_t TAG = CMD_SET_VEC4F;
@@ -389,22 +404,20 @@ namespace ospray {
 
       template<typename T>
       struct SetParam : Work {
-        const static size_t TAG = ParamTag<T>::TAG;
-        ObjectHandle handle;
-        std::string name;
-        T val;
-
         SetParam(){}
+        
         SetParam(ObjectHandle handle, const char *name, const T &val)
           : handle(handle), name(name), val(val)
         {
           Assert(handle != nullHandle);
         }
+        
         void run() override {
           ManagedObject *obj = handle.lookup();
           Assert(obj);
           obj->findParam(name.c_str(), true)->set(val);
         }
+        
         void runOnMaster() override {
           ManagedObject *obj = handle.lookup();
           if (dynamic_cast<Renderer*>(obj) || dynamic_cast<Volume*>(obj)) {
@@ -420,11 +433,18 @@ namespace ospray {
         void deserialize(SerialBuffer &b) override {
           b >> handle.i64 >> name >> val;
         }
+
+        const static size_t TAG = ParamTag<T>::TAG;
+        ObjectHandle handle;
+        std::string name;
+        T val;
       };
+      
       // run for setString needs to know to pass the C string to
       // set the param so we need to provide a different run.
       template<>
       void SetParam<std::string>::run();
+      
       template<>
       void SetParam<std::string>::runOnMaster();
 
@@ -438,12 +458,14 @@ namespace ospray {
         ObjectHandle material;
 
         SetParam(){}
+        
         SetParam(ObjectHandle handle, OSPMaterial val)
           : handle(handle), material((ObjectHandle&)val)
         {
           Assert(handle != nullHandle);
           Assert(material != nullHandle);
         }
+        
         void run() override {
           Geometry *obj = (Geometry*)handle.lookup();
           Material *mat = (Material*)material.lookup();
@@ -451,12 +473,15 @@ namespace ospray {
           Assert(mat);
           obj->setMaterial(mat);
         }
+        
         size_t getTag() const override {
           return TAG;
         }
+        
         void serialize(SerialBuffer &b) const override {
           b << (int64)handle << (int64)material;
         }
+        
         void deserialize(SerialBuffer &b) override {
           b >> handle.i64 >> material.i64;
         }
@@ -470,11 +495,13 @@ namespace ospray {
         ObjectHandle val;
 
         SetParam(){}
+        
         SetParam(ObjectHandle handle, const char *name, OSPObject &obj)
           : handle(handle), name(name), val((ObjectHandle&)obj)
         {
           Assert(handle != nullHandle);
         }
+        
         void run() override {
           ManagedObject *obj = handle.lookup();
           Assert(obj);
@@ -485,12 +512,15 @@ namespace ospray {
           }
           obj->findParam(name.c_str(), true)->set(param);
         }
+        
         size_t getTag() const override {
           return TAG;
         }
+        
         void serialize(SerialBuffer &b) const override {
           b << (int64)handle << name << (int64)val;
         }
+        
         void deserialize(SerialBuffer &b) override {
           b >> handle.i64 >> name >> val.i64;
         }
