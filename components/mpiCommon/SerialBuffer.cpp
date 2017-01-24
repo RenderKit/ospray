@@ -20,7 +20,7 @@ namespace ospray {
   namespace mpi {
     namespace work {
 
-      Work::WorkMap Work::WORK_MAP;
+      // Work::WorkMap Work::WORK_MAP;
 
       SerialBuffer::SerialBuffer(size_t sz) : buffer(sz, 255), index(0)
       {
@@ -79,6 +79,7 @@ namespace ospray {
         }
       }
 
+#if 0
       void decode_buffer(SerialBuffer &buf,
                          std::vector<Work*> &cmds,
                          const int numMessages)
@@ -97,7 +98,9 @@ namespace ospray {
           }
         }
       }
+#endif
 
+#if 0
       void debug_log_messages(SerialBuffer &buf, const int numMessages)
       {
         size_t startIndex = buf.getIndex();
@@ -118,6 +121,7 @@ namespace ospray {
         }
         buf.setIndex(startIndex);
       }
+#endif
 
     }// namespace work
   }// namespace mpi

@@ -444,7 +444,7 @@ namespace ospray {
     OSPModel MPIDevice::newModel()
     {
       ObjectHandle handle = allocateHandle();
-      work::NewObject<Model> work("", handle);
+      work::NewModel work("", handle);
       processWork(&work);
       return (OSPModel)(int64)handle;
     }
@@ -463,7 +463,7 @@ namespace ospray {
     {
       Assert(_model);
       Assert(_geometry);
-      work::AddObject<OSPGeometry> work(_model, _geometry);
+      work::AddGeometry work(_model, _geometry);
       processWork(&work);
     }
 
@@ -472,7 +472,7 @@ namespace ospray {
     {
       Assert(_model);
       Assert(_volume);
-      work::AddObject<OSPVolume> work(_model, _volume);
+      work::AddVolume work(_model, _volume);
       processWork(&work);
     }
 
@@ -640,7 +640,7 @@ namespace ospray {
       Assert(type != nullptr);
 
       ObjectHandle handle = allocateHandle();
-      work::NewObject<PixelOp> work(type, handle);
+      work::NewPixelOp work(type, handle);
       processWork(&work);
       return (OSPPixelOp)(int64)handle;
     }
@@ -660,7 +660,7 @@ namespace ospray {
       Assert(type != nullptr);
 
       ObjectHandle handle = allocateHandle();
-      work::NewObject<Renderer> work(type, handle);
+      work::NewRenderer work(type, handle);
       processWork(&work);
       return (OSPRenderer)(int64)handle;
     }
@@ -670,7 +670,7 @@ namespace ospray {
     {
       Assert(type != nullptr);
       ObjectHandle handle = allocateHandle();
-      work::NewObject<Camera> work(type, handle);
+      work::NewCamera work(type, handle);
       processWork(&work);
       return (OSPCamera)(int64)handle;
     }
@@ -681,7 +681,7 @@ namespace ospray {
       Assert(type != nullptr);
 
       ObjectHandle handle = allocateHandle();
-      work::NewObject<Volume> work(type, handle);
+      work::NewVolume work(type, handle);
       processWork(&work);
       return (OSPVolume)(int64)handle;
     }
@@ -692,7 +692,7 @@ namespace ospray {
       Assert(type != nullptr);
 
       ObjectHandle handle = allocateHandle();
-      work::NewObject<Geometry> work(type, handle);
+      work::NewGeometry work(type, handle);
       processWork(&work);
       return (OSPGeometry)(int64)handle;
     }
@@ -707,7 +707,7 @@ namespace ospray {
         throw std::runtime_error("#osp:mpi:newMaterial: NULL renderer handle");
 
       ObjectHandle handle = allocateHandle();
-      work::NewRendererObject<Material> work(type, _renderer, handle);
+      work::NewMaterial work(type, _renderer, handle);
       processWork(&work);
       // TODO: Should we be tracking number of failures? Shouldn't they
       // all fail or not fail?
@@ -721,7 +721,7 @@ namespace ospray {
       Assert(type != nullptr);
 
       ObjectHandle handle = allocateHandle();
-      work::NewObject<TransferFunction> work(type, handle);
+      work::NewTransferFunction work(type, handle);
       processWork(&work);
       return (OSPTransferFunction)(int64)handle;
     }
@@ -734,7 +734,7 @@ namespace ospray {
         throw std::runtime_error("#osp:mpi:newLight: NULL light type");
 
       ObjectHandle handle = allocateHandle();
-      work::NewRendererObject<Light> work(type, _renderer, handle);
+      work::NewLight work(type, _renderer, handle);
       processWork(&work);
       // TODO: Should we be tracking number of failures? Shouldn't they
       // all fail or not fail?
@@ -763,14 +763,14 @@ namespace ospray {
     /*! remove an existing geometry from a model */
     void MPIDevice::removeGeometry(OSPModel _model, OSPGeometry _geometry)
     {
-      work::RemoveObject<OSPGeometry> work(_model, _geometry);
+      work::RemoveGeometry work(_model, _geometry);
       processWork(&work);
     }
 
     /*! remove an existing volume from a model */
     void MPIDevice::removeVolume(OSPModel _model, OSPVolume _volume)
     {
-      work::RemoveObject<OSPVolume> work(_model, _volume);
+      work::RemoveVolume work(_model, _volume);
       processWork(&work);
     }
 
@@ -812,7 +812,7 @@ namespace ospray {
     //! assign given material to given geometry
     void MPIDevice::setMaterial(OSPGeometry _geometry, OSPMaterial _material)
     {
-      work::SetParam<OSPMaterial> work((ObjectHandle&)_geometry, _material);
+      work::SetMaterial work((ObjectHandle&)_geometry, _material);
       processWork(&work);
     }
 
@@ -842,83 +842,83 @@ namespace ospray {
       };
     }
 
-    /*! switch API mode for distriubted API extensions */
-    void MPIDevice::apiMode(OSPDApiMode newMode)
-    {
-      printf("rank %i asked to go from %s mode to %s mode\n",
-             mpi::world.rank,apiModeName(currentApiMode),apiModeName(newMode));
-      switch (currentApiMode) {
-        // ==================================================================
-        // ==================================================================
-      case OSPD_MODE_INDEPENDENT: {
-        switch (newMode) {
-        case OSPD_MODE_COLLABORATIVE:
-        case OSPD_MODE_INDEPENDENT:
-          currentApiMode = newMode;
-          // It's probably worth making this an explicit sync point
-          // between app/worker ranks. TODO: What comm to barrier on?
-          // MPI_Barrier(MPI_COMM_WORLD);
-          mpi::barrier(mpi::world);
-          break;
-        case OSPD_MODE_MASTERED:
-          NOTIMPLEMENTED;
-        }
-      } break;
-        // ==================================================================
-        // currently in default (mastered) mode where master tells workers what
-        // to do
-        // ==================================================================
-      case OSPD_MODE_MASTERED: {
-        // first: tell workers to switch to new mode: they're in
-        // mastered mode and thus waiting for *us* to tell them what
-        // to do, so let's do it.
-        switch (newMode) {
-        case OSPD_MODE_MASTERED: {
-          // nothing to do, actually, the workers are already in this
-          // mode, no use sending this request again
-          printf("rank %i remaining in mastered mode\n",mpi::world.rank);
-        } break;
-        case OSPD_MODE_INDEPENDENT:
-        case OSPD_MODE_COLLABORATIVE: {
-          printf("rank %i telling clients to switch to %s mode.\n",
-                 mpi::world.rank,apiModeName(newMode));
-          // cmd.newCommand(CMD_API_MODE);
-          // cmd.send((int32)newMode);
-          // cmd.flush();
-          currentApiMode = newMode;
-          // and just to be sure, do a barrier here -- not acutally needed
-          // AFAICT.
-          mpi::barrier(mpi::world);
-          // MPI_Barrier(MPI_COMM_WORLD);
-        } break;
-        default:
-          NOTIMPLEMENTED;
-        };
-      } break;
-        // ==================================================================
-        // ==================================================================
-      case OSPD_MODE_COLLABORATIVE: {
-        switch (newMode) {
-        case OSPD_MODE_COLLABORATIVE:
-        case OSPD_MODE_INDEPENDENT:
-          currentApiMode = newMode;
-          // It's probably worth making this an explicit sync point
-          // between app/worker ranks. TODO: What comm to barrier on?
-          mpi::barrier(mpi::world);
-          // MPI_Barrier(MPI_COMM_WORLD);
-          break;
-        case OSPD_MODE_MASTERED:
-          NOTIMPLEMENTED;
-        }
-      } break;
+    // /*! switch API mode for distriubted API extensions */
+    // void MPIDevice::apiMode(OSPDApiMode newMode)
+    // {
+    //   printf("rank %i asked to go from %s mode to %s mode\n",
+    //          mpi::world.rank,apiModeName(currentApiMode),apiModeName(newMode));
+    //   switch (currentApiMode) {
+    //     // ==================================================================
+    //     // ==================================================================
+    //   case OSPD_MODE_INDEPENDENT: {
+    //     switch (newMode) {
+    //     case OSPD_MODE_COLLABORATIVE:
+    //     case OSPD_MODE_INDEPENDENT:
+    //       currentApiMode = newMode;
+    //       // It's probably worth making this an explicit sync point
+    //       // between app/worker ranks. TODO: What comm to barrier on?
+    //       // MPI_Barrier(MPI_COMM_WORLD);
+    //       mpi::barrier(mpi::world);
+    //       break;
+    //     case OSPD_MODE_MASTERED:
+    //       NOTIMPLEMENTED;
+    //     }
+    //   } break;
+    //     // ==================================================================
+    //     // currently in default (mastered) mode where master tells workers what
+    //     // to do
+    //     // ==================================================================
+    //   case OSPD_MODE_MASTERED: {
+    //     // first: tell workers to switch to new mode: they're in
+    //     // mastered mode and thus waiting for *us* to tell them what
+    //     // to do, so let's do it.
+    //     switch (newMode) {
+    //     case OSPD_MODE_MASTERED: {
+    //       // nothing to do, actually, the workers are already in this
+    //       // mode, no use sending this request again
+    //       printf("rank %i remaining in mastered mode\n",mpi::world.rank);
+    //     } break;
+    //     case OSPD_MODE_INDEPENDENT:
+    //     case OSPD_MODE_COLLABORATIVE: {
+    //       printf("rank %i telling clients to switch to %s mode.\n",
+    //              mpi::world.rank,apiModeName(newMode));
+    //       // cmd.newCommand(CMD_API_MODE);
+    //       // cmd.send((int32)newMode);
+    //       // cmd.flush();
+    //       currentApiMode = newMode;
+    //       // and just to be sure, do a barrier here -- not acutally needed
+    //       // AFAICT.
+    //       mpi::barrier(mpi::world);
+    //       // MPI_Barrier(MPI_COMM_WORLD);
+    //     } break;
+    //     default:
+    //       NOTIMPLEMENTED;
+    //     };
+    //   } break;
+    //     // ==================================================================
+    //     // ==================================================================
+    //   case OSPD_MODE_COLLABORATIVE: {
+    //     switch (newMode) {
+    //     case OSPD_MODE_COLLABORATIVE:
+    //     case OSPD_MODE_INDEPENDENT:
+    //       currentApiMode = newMode;
+    //       // It's probably worth making this an explicit sync point
+    //       // between app/worker ranks. TODO: What comm to barrier on?
+    //       mpi::barrier(mpi::world);
+    //       // MPI_Barrier(MPI_COMM_WORLD);
+    //       break;
+    //     case OSPD_MODE_MASTERED:
+    //       NOTIMPLEMENTED;
+    //     }
+    //   } break;
 
-        // ==================================================================
-        // this mode should not exit - implementation error
-        // ==================================================================
-      default:
-        NOTIMPLEMENTED;
-      };
-    }
+    //     // ==================================================================
+    //     // this mode should not exit - implementation error
+    //     // ==================================================================
+    //   default:
+    //     NOTIMPLEMENTED;
+    //   };
+    // }
 
     void MPIDevice::sampleVolume(float **results,
                                  OSPVolume volume,
@@ -984,22 +984,22 @@ namespace ospray {
 
 extern "C" OSPRAY_DLLEXPORT void ospray_init_module_mpi()
 {
-#ifndef _WIN32
-  using namespace ospcommon;
-#if defined(__MACOSX__)
-  const std::string fullName = "libospray_module_mpi.dylib";
-#else
-  const std::string fullName = "libospray_module_mpi.so";
-#endif
-  void *lib = dlopen(fullName.c_str(), RTLD_NOW | RTLD_NOLOAD | RTLD_GLOBAL);
-  if (!lib) {
-    FileName executable = getExecutableFileName();
-    lib = dlopen((executable.path() + fullName).c_str(),
-                 RTLD_NOW | RTLD_NOLOAD | RTLD_GLOBAL);
-  }
-  Assert(lib);
-#endif
-  ospray::mpi::work::initWorkMap();
+// #ifndef _WIN32
+//   using namespace ospcommon;
+// #if defined(__MACOSX__)
+//   const std::string fullName = "libospray_module_mpi.dylib";
+// #else
+//   const std::string fullName = "libospray_module_mpi.so";
+// #endif
+//   void *lib = dlopen(fullName.c_str(), RTLD_NOW | RTLD_NOLOAD | RTLD_GLOBAL);
+//   if (!lib) {
+//     FileName executable = getExecutableFileName();
+//     lib = dlopen((executable.path() + fullName).c_str(),
+//                  RTLD_NOW | RTLD_NOLOAD | RTLD_GLOBAL);
+//   }
+//   Assert(lib);
+// #endif
+  // initWorkMap();
   std::cout << "#mpi: initializing ospray MPI plugin" << std::endl;
 }
 

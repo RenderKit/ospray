@@ -18,10 +18,12 @@
 
 namespace ospray {
   namespace mpi {
+
+    struct Work {
+    };
     
     // The max size for an MPI Bcast is actually 2GB, but we cut it at 1.8GB
-    const size_t BufferedMPIComm::MAX_BCAST = 66000L;
-    // const size_t BufferedMPIComm::MAX_BCAST = 1800000000LL;
+    const size_t BufferedMPIComm::MAX_BCAST = 1800000000LL;
     
     std::shared_ptr<BufferedMPIComm> BufferedMPIComm::global = nullptr;
     
@@ -79,20 +81,20 @@ namespace ospray {
       if (addr.rank != RECV_ALL) {
         std::runtime_error("mpi::recv on individual ranks not yet implemented");
       }
-      printf("client recv 2048 bytes\n");
+      // printf("client recv 2048 bytes\n");
       MPI_Bcast(recvBuffer.getData(), 2048, MPI_BYTE, 0, addr.group->comm);
-      printf("DONE client recv 2048 bytes\n");
+      // printf("DONE client recv 2048 bytes\n");
       recvBuffer >> bufSize >> recvNumMessages;
-      printf(" client received %i bufsize, %i messages\n",bufSize,recvNumMessages);
+      // printf(" client received %i bufsize, %i messages\n",bufSize,recvNumMessages);
 
       if (bufSize > 2048) {
         recvBuffer.reserve(bufSize);
         // If we have more than 2KB receive the data in batches as big as we can send with bcast
         for (size_t i = 2048; i < bufSize;) {
           const int to_recv = std::min(bufSize - i, MAX_BCAST);
-          printf(" client recv: to_recv %i bytes at off %i\n",to_recv,i);
+          // printf(" client recv: to_recv %i bytes at off %i\n",to_recv,i);
           MPI_CALL(Bcast(recvBuffer.getPtr(i), to_recv, MPI_BYTE, 0, addr.group->comm));
-          printf(" DONE client recv: to_recv %i bytes at off %i\n",to_recv,i);
+          // printf(" DONE client recv: to_recv %i bytes at off %i\n",to_recv,i);
           i += to_recv;
         }
       }
@@ -129,16 +131,16 @@ namespace ospray {
         std::runtime_error("mpi::send to individuals not yet implemented");
       }
       
-      printf("mpi.send: 2048 bytes (buffer size is %i)\n",buf.buffer.size());
+      // printf("mpi.send: 2048 bytes (buffer size is %i)\n",buf.buffer.size());
       MPI_CALL(Bcast(buf.getData(), 2048, MPI_BYTE, MPI_ROOT, addr.group->comm));
-      printf("DONE mpi.send: 2048 bytes (buffer size is %i)\n",buf.buffer.size());
+      // printf("DONE mpi.send: 2048 bytes (buffer size is %i)\n",buf.buffer.size());
 
       // If we have more than 2KB send the data in batches as big as we can send with bcast
       for (size_t i = 2048; i < sz;) {
         const int to_send = std::min(sz - i, MAX_BCAST);
-        printf("mpi.send: to_send=%i bytes, ofs=%i (buffer size is %i)\n",to_send,i,buf.buffer.size());
+        // printf("mpi.send: to_send=%i bytes, ofs=%i (buffer size is %i)\n",to_send,i,buf.buffer.size());
         MPI_CALL(Bcast(buf.getPtr(i), to_send, MPI_BYTE, MPI_ROOT, addr.group->comm));
-        printf("DONE mpi.send: to_send=%i bytes, ofs=%i (buffer size is %i)\n",to_send,i,buf.buffer.size());
+        // printf("DONE mpi.send: to_send=%i bytes, ofs=%i (buffer size is %i)\n",to_send,i,buf.buffer.size());
         i += to_send;
       }
       buf.clear();

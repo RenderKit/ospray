@@ -26,6 +26,15 @@ namespace ospray {
   namespace mpi {
     namespace work {
 
+      /*! create a work unit of given type */
+      template<typename T>
+      inline Work* make_work_unit()
+      {
+        return new T();
+      }
+
+
+#if 0      
 #define REGISTER_WORK_UNIT(W) W::TAG, make_work_unit<W>
 
       void initWorkMap()
@@ -80,54 +89,54 @@ namespace ospray {
       }
 
 #undef REGISTER_WORK_UNIT
-
-      // All the tags so they can be linked in properly
-      const size_t NewObjectTag<Renderer>::TAG;
-      const size_t NewObjectTag<Model>::TAG;
-      const size_t NewObjectTag<Geometry>::TAG;
-      const size_t NewObjectTag<Camera>::TAG;
-      const size_t NewObjectTag<Volume>::TAG;
-      const size_t NewObjectTag<TransferFunction>::TAG;
-      const size_t NewObjectTag<PixelOp>::TAG;
-      template<typename T>
-      const size_t NewObject<T>::TAG;
-      // should they init here or in the header? Header probably?
-      const size_t NewRendererObjectTag<Material>::TAG;
-      const size_t NewRendererObjectTag<Light>::TAG;
-      template<typename T>
-      const size_t NewRendererObject<T>::TAG;
-      const size_t NewData::TAG;
-      const size_t NewTexture2d::TAG;
-      const size_t SetRegion::TAG;
-      const size_t CommitObject::TAG;
-      const size_t ClearFrameBuffer::TAG;
-      const size_t RenderFrame::TAG;
-      const size_t AddObjectTag<OSPGeometry>::TAG;
-      const size_t AddObjectTag<OSPVolume>::TAG;
-      template<typename T>
-      const size_t AddObject<T>::TAG;
-      const size_t RemoveObjectTag<OSPGeometry>::TAG;
-      const size_t RemoveObjectTag<OSPVolume>::TAG;
-      template<typename T>
-      const size_t RemoveObject<T>::TAG;
-      const size_t CreateFrameBuffer::TAG;
-      const size_t ParamTag<std::string>::TAG;
-      const size_t ParamTag<int>::TAG;
-      const size_t ParamTag<float>::TAG;
-      const size_t ParamTag<vec2f>::TAG;
-      const size_t ParamTag<vec2i>::TAG;
-      const size_t ParamTag<vec3f>::TAG;
-      const size_t ParamTag<vec3i>::TAG;
-      const size_t ParamTag<vec4f>::TAG;
-      template<typename T>
-      const size_t SetParam<T>::TAG;
-      const size_t SetParam<OSPMaterial>::TAG;
-      const size_t SetParam<OSPObject>::TAG;
-      const size_t RemoveParam::TAG;
-      const size_t SetPixelOp::TAG;
-      const size_t CommandRelease::TAG;
-      const size_t LoadModule::TAG;
-      const size_t CommandFinalize::TAG;
+      
+      // // All the tags so they can be linked in properly
+      // const size_t NewObjectTag<Renderer>::TAG;
+      // const size_t NewObjectTag<Model>::TAG;
+      // const size_t NewObjectTag<Geometry>::TAG;
+      // const size_t NewObjectTag<Camera>::TAG;
+      // const size_t NewObjectTag<Volume>::TAG;
+      // const size_t NewObjectTag<TransferFunction>::TAG;
+      // const size_t NewObjectTag<PixelOp>::TAG;
+      // template<typename T>
+      // const size_t NewObject<T>::TAG;
+      // // should they init here or in the header? Header probably?
+      // const size_t NewRendererObjectTag<Material>::TAG;
+      // const size_t NewRendererObjectTag<Light>::TAG;
+      // template<typename T>
+      // const size_t NewRendererObject<T>::TAG;
+      // const size_t NewData::TAG;
+      // const size_t NewTexture2d::TAG;
+      // const size_t SetRegion::TAG;
+      // const size_t CommitObject::TAG;
+      // const size_t ClearFrameBuffer::TAG;
+      // const size_t RenderFrame::TAG;
+      // const size_t AddObjectTag<OSPGeometry>::TAG;
+      // const size_t AddObjectTag<OSPVolume>::TAG;
+      // template<typename T>
+      // const size_t AddObject<T>::TAG;
+      // const size_t RemoveObjectTag<OSPGeometry>::TAG;
+      // const size_t RemoveObjectTag<OSPVolume>::TAG;
+      // template<typename T>
+      // const size_t RemoveObject<T>::TAG;
+      // const size_t CreateFrameBuffer::TAG;
+      // const size_t ParamTag<std::string>::TAG;
+      // const size_t ParamTag<int>::TAG;
+      // const size_t ParamTag<float>::TAG;
+      // const size_t ParamTag<vec2f>::TAG;
+      // const size_t ParamTag<vec2i>::TAG;
+      // const size_t ParamTag<vec3f>::TAG;
+      // const size_t ParamTag<vec3i>::TAG;
+      // const size_t ParamTag<vec4f>::TAG;
+      // template<typename T>
+      // const size_t SetParam<T>::TAG;
+      // const size_t SetParam<OSPMaterial>::TAG;
+      // const size_t SetParam<OSPObject>::TAG;
+      // const size_t RemoveParam::TAG;
+      // const size_t SetPixelOp::TAG;
+      // const size_t CommandRelease::TAG;
+      // const size_t LoadModule::TAG;
+      // const size_t CommandFinalize::TAG;
 
       template<>
       void NewObject<Renderer>::run()
@@ -718,6 +727,8 @@ namespace ospray {
       }
       void CommandFinalize::serialize(SerialBuffer &b) const {}
       void CommandFinalize::deserialize(SerialBuffer &b) {}
+
+#endif
     }
   }
 }

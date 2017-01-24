@@ -19,12 +19,12 @@
 // mpicommon
 #include "mpiCommon/MPICommon.h"
 #include "mpiCommon/command.h"
-#include "mpiCommon/BufferedMPIComm.h"
 // ospray
 #include "api/Device.h"
 #include "common/Managed.h"
 // ospray::mpi
-#include "mpi/common/OSPWork.h"
+#include "common/BufferedMPIComm.h"
+#include "common/OSPWork.h"
 
 /*! \file MPIDevice.h Implements the "mpi" device for mpi rendering */
 
@@ -200,8 +200,8 @@ namespace ospray {
       OSPTexture2D newTexture2D(const vec2i &size, const OSPTextureFormat,
                                 void *data, const uint32 flags) override;
 
-      /*! switch API mode for distriubted API extensions */
-      void apiMode(OSPDApiMode mode) override;
+      // /*! switch API mode for distriubted API extensions */
+      // void apiMode(OSPDApiMode mode) override;
 
       OSPDApiMode currentApiMode {OSPD_MODE_MASTERED};
 
@@ -223,14 +223,16 @@ namespace ospray {
       std::shared_ptr<mpi::BufferedMPIComm> bufferedComm;
 
       bool initialized {false};
+
+      void initWorkMap();
     };
 
     // ==================================================================
     // Helper functions
     // ==================================================================
 
-    /*! return a string represenging the given API Mode */
-    const char *apiModeName(int mode);
+    // /*! return a string represenging the given API Mode */
+    // const char *apiModeName(int mode);
 
   } // ::ospray::mpi
 } // ::ospray

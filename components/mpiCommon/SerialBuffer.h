@@ -63,44 +63,44 @@ namespace ospray {
         //        used - it's a self allocating buffer
       };
 
-      struct OSPRAY_MPI_INTERFACE Work
-      {
-        friend SerialBuffer& operator<<(SerialBuffer& b, const Work &work);
-        friend SerialBuffer& operator>>(SerialBuffer& b, Work &work);
+      // struct OSPRAY_MPI_INTERFACE Work
+      // {
+      //   friend SerialBuffer& operator<<(SerialBuffer& b, const Work &work);
+      //   friend SerialBuffer& operator>>(SerialBuffer& b, Work &work);
 
-        virtual void run() {}
+      //   virtual void run() {}
         
-        /*! Run the master-side variant of this command in master/worker mode
-          The default just does nothing */
-        virtual void runOnMaster() {}
+      //   /*! Run the master-side variant of this command in master/worker mode
+      //     The default just does nothing */
+      //   virtual void runOnMaster() {}
         
-        virtual size_t getTag() const = 0;
+      //   virtual size_t getTag() const = 0;
         
-        /*! Check whether this work unit should flush the command
-        buffer, the default returns false */
-        virtual bool flushing() const { return false; }
+      //   /*! Check whether this work unit should flush the command
+      //   buffer, the default returns false */
+      //   virtual bool flushing() const { return false; }
 
-        //! Have the child work unit write its data to the buffer
-        virtual void serialize(SerialBuffer &b) const = 0;
+      //   //! Have the child work unit write its data to the buffer
+      //   virtual void serialize(SerialBuffer &b) const = 0;
         
-        //! Have the child work unit read its data from the buffer
-        virtual void deserialize(SerialBuffer &b) = 0;
+      //   //! Have the child work unit read its data from the buffer
+      //   virtual void deserialize(SerialBuffer &b) = 0;
 
-        using WorkMap = std::unordered_map<size_t, Work* (*)()>;
+      //   using WorkMap = std::unordered_map<size_t, Work* (*)()>;
         
-        // NOTE(jda) - No longer const as this is now populated on mpi module
-        //             load
-        static WorkMap WORK_MAP;
-      };
+      //   // NOTE(jda) - No longer const as this is now populated on mpi module
+      //   //             load
+      //   static WorkMap WORK_MAP;
+      // };
 
-      // NOTE(jda) - I'd rather use constexpr here to give a name to value in
-      //             the enable_if, but alas that's only supported in VS2015+...
-      template <typename T>
-      using enable_SerialBuffer_operator_t =
-        typename std::enable_if<!std::is_pointer<T>::value &&
-                                !std::is_same<T, Work>::value &&
-                                !std::is_same<T, std::string>::value,
-                                SerialBuffer&>::type;
+      // // NOTE(jda) - I'd rather use constexpr here to give a name to value in
+      // //             the enable_if, but alas that's only supported in VS2015+...
+      // template <typename T>
+      // using enable_SerialBuffer_operator_t =
+      //   typename std::enable_if<!std::is_pointer<T>::value &&
+      //                           !std::is_same<T, Work>::value &&
+      //                           !std::is_same<T, std::string>::value,
+      //                           SerialBuffer&>::type;
 
       // We can't take types which aren't POD or which are pointers
       // because there's no sensible way to serialize/deserialize them.
@@ -108,24 +108,24 @@ namespace ospray {
       // copy-able data they don't meet the template constraints to be pod or
       // trivially_copyable so we can't use that as a filter test
       template<typename T>
-      enable_SerialBuffer_operator_t<T>
-      inline operator<<(SerialBuffer &buf, const T &rh)
+      // enable_SerialBuffer_operator_t<T>
+      inline SerialBuffer &operator<<(SerialBuffer &buf, const T &rh)
       {
         buf.write((byte_t*)&rh, sizeof(T));
         return buf;
       }
 
       template<typename T>
-      enable_SerialBuffer_operator_t<T>
-      inline operator>>(SerialBuffer &buf, T &rh)
+      // enable_SerialBuffer_operator_t<T>
+      inline SerialBuffer &operator>>(SerialBuffer &buf, T &rh)
       {
         buf.read((byte_t*)&rh, sizeof(T));
         return buf;
       }
 
       template<typename T>
-      typename std::enable_if<!std::is_pointer<T>::value, SerialBuffer&>::type
-      inline operator<<(SerialBuffer &buf, const std::vector<T> &rh)
+      // typename std::enable_if<!std::is_pointer<T>::value, SerialBuffer&>::type
+      inline SerialBuffer &operator<<(SerialBuffer &buf, const std::vector<T> &rh)
       {
         buf << rh.size();
         buf.write((byte_t*)rh.data(), rh.size() * sizeof(T));
@@ -133,8 +133,8 @@ namespace ospray {
       }
 
       template<typename T>
-      typename std::enable_if<!std::is_pointer<T>::value, SerialBuffer&>::type
-      inline operator>>(SerialBuffer &buf, std::vector<T> &rh)
+      // typename std::enable_if<!std::is_pointer<T>::value, SerialBuffer&>::type
+      inline SerialBuffer &operator>>(SerialBuffer &buf, std::vector<T> &rh)
       {
         size_t size;
         buf >> size;
@@ -143,20 +143,20 @@ namespace ospray {
         return buf;
       }
 
-      // Child work classes should can implement these but should probably
-      // just go through serialize/deserialize so we can generically serialize
-      // work units into a buffer.
-      inline SerialBuffer& operator<<(SerialBuffer &b, const Work &work)
-      {
-        work.serialize(b);
-        return b;
-      }
+      // // Child work classes should can implement these but should probably
+      // // just go through serialize/deserialize so we can generically serialize
+      // // work units into a buffer.
+      // inline SerialBuffer &operator<<(SerialBuffer &b, const Work &work)
+      // {
+      //   work.serialize(b);
+      //   return b;
+      // }
 
-      inline SerialBuffer& operator>>(SerialBuffer &b, Work &work)
-      {
-        work.deserialize(b);
-        return b;
-      }
+      // inline SerialBuffer &operator>>(SerialBuffer &b, Work &work)
+      // {
+      //   work.deserialize(b);
+      //   return b;
+      // }
 
       inline SerialBuffer &operator<<(SerialBuffer &buf, const std::string &rh)
       {
@@ -176,17 +176,12 @@ namespace ospray {
 
       // Decode the commands in the buffer, appending them to the cmds vector.
       // TODO: Should we be using std::shared_ptr here instead of raw pointers?
-      OSPRAY_MPI_INTERFACE void decode_buffer(SerialBuffer &buf,
-                                              std::vector<Work*> &cmds,
-                                              const int numMessages);
-      OSPRAY_MPI_INTERFACE void debug_log_messages(SerialBuffer &buf,
-                                                   const int numMessages);
+      // OSPRAY_MPI_INTERFACE void decode_buffer(SerialBuffer &buf,
+      //                                         std::vector<Work*> &cmds,
+      //                                         const int numMessages);
+      // OSPRAY_MPI_INTERFACE void debug_log_messages(SerialBuffer &buf,
+      //                                              const int numMessages);
 
-      template<typename T>
-      inline Work* make_work_unit()
-      {
-        return new T();
-      }
 
     }// namespace work
   }// namespace mpi

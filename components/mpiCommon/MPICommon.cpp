@@ -16,7 +16,6 @@
 
 #include "MPICommon.h"
 #include "async/CommLayer.h"
-#include "BufferedMPIComm.h"
 
 namespace ospray {
   namespace mpi {
@@ -25,6 +24,27 @@ namespace ospray {
     OSPRAY_MPI_INTERFACE Group app;
     OSPRAY_MPI_INTERFACE Group worker;
 
+    /*! for mpi versions that do not support MPI_THREAD_MULTIPLE
+        (default openmpi, for example) it is not allows to perform
+        concurrnt MPI_... calls from differnt threads. To avoid this,
+        _all_ threads inside ospray should lock this global mutex
+        before doing any MPI calls. Furthermore, this mutex will get
+        unlocked _only_ while ospray is executing api call (we'll
+        always lock it before we return to the calling app), thus we
+        can make sure that no ospray mpi calls will ever interfere
+        with the app */
+    std::mutex mpiSerializerMutex;
+
+    /*! helper functions that lock resp unlock the mpi serializer mutex */
+    void lockMPI()
+    { mpiSerializerMutex.lock(); }
+
+    /*! helper functions that lock resp unlock the mpi serializer mutex */
+    void unlockMPI()
+    { mpiSerializerMutex.unlock(); }
+    
+    
+    
     /*! constructor. sets the 'comm', 'rank', and 'size' fields */
     Group::Group(MPI_Comm initComm)
     {
@@ -62,7 +82,7 @@ namespace ospray {
 
       if (!initialized) {
         // MPI_Init(ac,(char ***)&av);
-        int required = MPI_THREAD_MULTIPLE;
+        int required = MPI_THREAD_SERIALIZED;
         int provided = 0;
         MPI_CALL(Init_thread(ac,(char ***)&av,required,&provided));
         if (provided != required) {
@@ -75,10 +95,10 @@ namespace ospray {
         printf("running ospray in pre-initialized mpi mode\n");
         int provided;
         MPI_Query_thread(&provided);
-        int requested = MPI_THREAD_MULTIPLE;
+        int requested = MPI_THREAD_SERIALIZED;
         if (provided != requested)
           throw std::runtime_error("ospray requires mpi to be initialized with "
-            "MPI_THREAD_MULTIPLE if initialized before calling ospray");
+            "MPI_THREAD_SERIAL if initialized before calling ospray");
       }
       world.comm = MPI_COMM_WORLD;
       MPI_CALL(Comm_rank(MPI_COMM_WORLD,&world.rank));
@@ -90,26 +110,30 @@ namespace ospray {
                                   mpi::async::CommLayer::WORLD,
                                   290374);
       mpi::async::CommLayer::WORLD->group = worldGroup;
+
+      // by default, all MPI comm gets locked down, unless we
+      // explicitly enable it
+      lockMPI();
     }
 
-    void send(const Address& addr, work::Work* work)
-    {
-      BufferedMPIComm::get()->send(addr, work);
-    }
+    // void send(const Address& addr, work::Work* work)
+    // {
+    //   BufferedMPIComm::get()->send(addr, work);
+    // }
 
-    void recv(const Address& addr, std::vector<work::Work*>& work)
-    {
-      BufferedMPIComm::get()->recv(addr, work);
-    }
+    // void recv(const Address& addr, std::vector<work::Work*>& work)
+    // {
+    //   BufferedMPIComm::get()->recv(addr, work);
+    // }
 
-    void flush()
-    {
-      BufferedMPIComm::get()->flush();
-    }
+    // void flush()
+    // {
+    //   BufferedMPIComm::get()->flush();
+    // }
 
-    void barrier(const Group& group)
-    {
-      BufferedMPIComm::get()->barrier(group);
-    }
+    // void barrier(const Group& group)
+    // {
+    //   BufferedMPIComm::get()->barrier(group);
+    // }
   } // ::ospray::mpi
 } // ::ospray

@@ -21,7 +21,7 @@ OSPRAY_CREATE_LIBRARY(ospray_mpi_common
   buffers.h
   command.cpp
 
-  BufferedMPIComm.cpp
+#  BufferedMPIComm.cpp
   MPICommon.cpp
   SerialBuffer.cpp
 

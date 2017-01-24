@@ -20,6 +20,7 @@
 #include <mpi.h>
 #include "common/OSPCommon.h"
 #include "mpiCommon/SerialBuffer.h"
+#include "OSPWork.h"
 
 namespace ospray {
   namespace mpi {
@@ -63,12 +64,6 @@ namespace ospray {
       work::SerialBuffer sendBuffer;
       
       Address sendAddress;
-      
-      // TODO WILL: I think this sendsizeindex is redundant, it will always be 0
-      size_t sendSizeIndex = 0;
-      
-      // TODO WILL: Won't the send work index always be 12?
-      size_t sendWorkIndex = 0;
       
       int sendNumMessages = 0;
       

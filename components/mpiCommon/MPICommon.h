@@ -45,6 +45,27 @@
 namespace ospray {
   namespace mpi {
 
+    /*! for mpi versions that do not support MPI_THREAD_MULTIPLE
+        (default openmpi, for example) it is not allows to perform
+        concurrnt MPI_... calls from differnt threads. To avoid this,
+        _all_ threads inside ospray should lock this global mutex
+        before doing any MPI calls. Furthermore, this mutex will get
+        unlocked _only_ while ospray is executing api call (we'll
+        always lock it before we return to the calling app), thus we
+        can make sure that no ospray mpi calls will ever interfere
+        with the app */
+    extern std::mutex mpiSerializerMutex;
+
+    /*! helper functions that lock resp unlock the mpi serializer mutex */
+    void lockMPI();
+
+    /*! helper functions that lock resp unlock the mpi serializer mutex */
+    void unlockMPI();
+    
+    /*! use this macro as a lock-guard inside any scope you want to
+        perform MPI calls in */
+#define SERIALIZE_MPI std::lock_guard<std::mutex>(ospray::mpi::mpiSerializerMutex);
+    
     inline void checkMpiError(int rc)
     {
       if (rc != MPI_SUCCESS)
@@ -134,17 +155,17 @@ namespace ospray {
     // Initialize OSPRay's MPI groups
     OSPRAY_MPI_INTERFACE void init(int *ac, const char **av);
 
-    namespace work {
-      struct Work;
-    }
+    // namespace work {
+    //   struct Work;
+    // }
 
     // OSPRAY_INTERFACE void send(const Address& address, void* msgPtr, int32 msgSize);
-    OSPRAY_MPI_INTERFACE void send(const Address& addr, work::Work* work);
-    //TODO: callback?
-    OSPRAY_MPI_INTERFACE void recv(const Address& addr, std::vector<work::Work*>& work);
+    // OSPRAY_MPI_INTERFACE void send(const Address& addr, work::Work* work);
+    // //TODO: callback?
+    // OSPRAY_MPI_INTERFACE void recv(const Address& addr, std::vector<work::Work*>& work);
     // OSPRAY_INTERFACE void send(const Address& addr, )
     OSPRAY_MPI_INTERFACE void flush();
-    OSPRAY_MPI_INTERFACE void barrier(const Group& group);
+    // OSPRAY_MPI_INTERFACE void barrier(const Group& group);
 
   }// ::ospray::mpi
 } // ::ospray
