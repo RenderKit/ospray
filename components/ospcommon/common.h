@@ -20,6 +20,7 @@
 // std
 #include <mutex>
 #include <stdexcept>
+#include <algorithm> // std::min etc on windows
 
 #ifdef _WIN32
 // ----------- windows only -----------

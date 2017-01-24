@@ -279,8 +279,13 @@ namespace ospray {
       {
         return std::make_shared<T>();
       }
+
+      template<typename T>
+      CreateWorkFct createMakeWorkFct()
+      { return make_work_unit<T>; }
       
-#define REGISTER_WORK_UNIT(W) workTypeRegistry[W::tag] = &make_work_unit<W>;
+#define REGISTER_WORK_UNIT(W) workTypeRegistry[W::tag] = createMakeWorkFct<W>();
+      
       void registerOSPWorkItems(std::map<Work::tag_t,CreateWorkFct> &workTypeRegistry)
       {
         REGISTER_WORK_UNIT(NewRenderer);
