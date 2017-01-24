@@ -69,7 +69,8 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
     preIntegration(-1),
     aoSamples(-1),
     adaptiveSampling(-1),
-    gradientShadingEnabled(-1)
+    gradientShadingEnabled(-1),
+    renderInBackground(0)
 {
   // Default window size.
   resize(1024, 768);

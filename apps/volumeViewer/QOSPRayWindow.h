@@ -91,6 +91,7 @@ public:
   void setRotationRate(float rotationRate);
   void setBenchmarkParameters(int benchmarkWarmUpFrames, int benchmarkFrames, const std::string &benchmarkFilename);
   virtual void setWorldBounds(const ospcommon::box3f &worldBounds);
+  void setRenderInBackground(bool st) { renderInBackground = st; }
 
   Viewport * getViewport() { return &viewport; }
 
@@ -165,8 +166,10 @@ protected:
   OSPRenderer renderer;
   OSPCamera camera;
   OSPTexture2D maxDepthTexture;
+  bool renderInBackground;
 
   std::string writeFramesFilename;
   void writeFrameBufferToFile(std::string filename, const uint32_t *pixelData);
+  bool benchWarmupStarted;
 
 };
