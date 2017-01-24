@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include "mpiCommon/MPICommon.h"
+
 namespace ospray {
   namespace mpi {
 

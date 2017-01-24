@@ -31,7 +31,7 @@ namespace ospray {
 
       /*! receive some block of data - whatever the sender has sent -
         and give us size and pointer to this data */
-      virtual size_t recv(void *&mem) = 0;
+      virtual size_t read(void *&mem) = 0;
     };
 
 
@@ -55,7 +55,7 @@ namespace ospray {
 
       /*! receive some block of data - whatever the sender has sent -
         and give us size and pointer to this data */
-      virtual size_t recv(void *&mem) override
+      virtual size_t read(void *&mem) override
       {
         if (buffer) delete[] buffer;
 

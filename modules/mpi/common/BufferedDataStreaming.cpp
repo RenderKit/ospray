@@ -14,9 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
-#include "DataStreaming.h"
+#include "BufferedDataStreaming.h"
 
 namespace ospray {
   namespace mpi {
@@ -24,7 +22,7 @@ namespace ospray {
     void BufferedFabric::ReadStream::read(void *mem, size_t size)
     {
       uint8_t *writePtr  = (uint8_t*)mem;
-      uint8_t  numStillMissing = size;
+      size_t   numStillMissing = size;
           
       while (numStillMissing > 0) {
         // fill in what we already have
@@ -37,31 +35,32 @@ namespace ospray {
         if (numStillMissing > 0)
           // read some more ... we HAVE to fulfill this 'read()'
           // request, so have to read here
-          numAvailable = fabric->read(buffer);
+          numAvailable = fabric->read((void*&)buffer);
       }
     }
 
     void BufferedFabric::WriteStream::write(void *mem, size_t size)
-        {
-          size_t stillToWrite = size;
-          uint8_t *readPtr = (uint8_t*)mem;
-          while (stillToWrite) {
-            size_t numWeCanWrite = std::min(stillToWrite,MAX_BUFFER_SIZE-numInBuffer);
-            memcpy(buffer+numInBuffer,readPtr,numWeCanWrite);
+    {
+      size_t stillToWrite = size;
+      uint8_t *readPtr = (uint8_t*)mem;
+      while (stillToWrite) {
+        size_t numWeCanWrite = std::min(stillToWrite,size_t(maxBufferSize-numInBuffer));
+        memcpy(buffer+numInBuffer,readPtr,numWeCanWrite);
 
-            readPtr += numWeCanWrite;
-            numInBuffer += numWeCanWrite;
+        readPtr += numWeCanWrite;
+        numInBuffer += numWeCanWrite;
 
-            if (numInBuffer == maxBufferSize)
-              flush();
-          }
-        }
+        if (numInBuffer == maxBufferSize)
+          flush();
+      }
+    }
 
     void BufferedFabric::WriteStream::flush()
-        {
-          fabric->send(buffer,numInBuffer);
-          numInBuffer = 0;
-        };
+    {
+      if (numInBuffer > 0)
+        fabric->send(buffer,numInBuffer);
+      numInBuffer = 0;
+    };
 
   } // ::ospray::mpi
 } // ::ospray

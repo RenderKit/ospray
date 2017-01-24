@@ -44,6 +44,7 @@
 
 namespace ospray {
   namespace mpi {
+    using namespace ospcommon;
 
     /*! for mpi versions that do not support MPI_THREAD_MULTIPLE
         (default openmpi, for example) it is not allows to perform
@@ -66,11 +67,7 @@ namespace ospray {
         perform MPI calls in */
 #define SERIALIZE_MPI std::lock_guard<std::mutex>(ospray::mpi::mpiSerializerMutex);
     
-    inline void checkMpiError(int rc)
-    {
-      if (rc != MPI_SUCCESS)
-        throw std::runtime_error("MPI Error");
-    }
+    void checkMpiError(int rc);
 
     //! abstraction for an MPI group. 
     /*! it's the responsiblity of the respective mpi setup routines to

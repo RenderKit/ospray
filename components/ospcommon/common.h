@@ -76,7 +76,7 @@ typedef int ssize_t;
 
 namespace ospcommon {
 
-  using byte_t = unsigned char;
+  typedef unsigned char byte_t;
 
   /*! return system time in seconds */
   OSPCOMMON_INTERFACE double getSysTime();

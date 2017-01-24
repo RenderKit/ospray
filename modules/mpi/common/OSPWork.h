@@ -260,8 +260,8 @@ namespace ospray {
         NewMaterial(const char* type, OSPRenderer renderer, ObjectHandle handle)
           : type(type), rendererHandle((ObjectHandle&)renderer), handle(handle)
         {}
-        
-        virtual void run() override {}
+
+        virtual void run() override;
 
         /*! serializes itself on the given serial buffer - will write
           all data into this buffer in a way that it can afterwards
@@ -271,9 +271,8 @@ namespace ospray {
         
         /*! de-serialize from a buffer that an object of this type has
           serialized itself in */
-        virtual void deserialize(ReadStream &b) override {
-          b >> rendererHandle.i64 >> handle.i64 >> type;
-        }
+        virtual void deserialize(ReadStream &b) override
+        { b >> rendererHandle.i64 >> handle.i64 >> type; }
 
         // const static size_t TAG = NewRendererObjectTag<T>::TAG;
         std::string  type;
@@ -287,7 +286,7 @@ namespace ospray {
           : type(type), rendererHandle((ObjectHandle&)renderer), handle(handle)
         {}
         
-        virtual void run() override {}
+        virtual void run() override;
 
         /*! serializes itself on the given serial buffer - will write
           all data into this buffer in a way that it can afterwards
@@ -297,9 +296,8 @@ namespace ospray {
         
         /*! de-serialize from a buffer that an object of this type has
           serialized itself in */
-        virtual void deserialize(ReadStream &b) override {
-          b >> rendererHandle.i64 >> handle.i64 >> type;
-        }
+        virtual void deserialize(ReadStream &b) override
+        { b >> rendererHandle.i64 >> handle.i64 >> type; }
 
         // const static size_t TAG = NewRendererObjectTag<T>::TAG;
         std::string  type;
@@ -464,7 +462,7 @@ namespace ospray {
           : modelHandle((const ObjectHandle&)model), objectHandle((const ObjectHandle&)t)
         {}
         
-        virtual void run() override {}
+        virtual void run() override;
 
         /*! serializes itself on the given serial buffer - will write
           all data into this buffer in a way that it can afterwards
@@ -489,7 +487,7 @@ namespace ospray {
           : modelHandle((const ObjectHandle&)model), objectHandle((const ObjectHandle&)t)
         {}
         
-        virtual void run() override {}
+        virtual void run() override;
 
         /*! serializes itself on the given serial buffer - will write
           all data into this buffer in a way that it can afterwards
@@ -514,7 +512,7 @@ namespace ospray {
             objectHandle((const ObjectHandle&)t)
         {}
         
-        virtual void run() override {}
+        virtual void run() override;
 
         /*! serializes itself on the given serial buffer - will write
           all data into this buffer in a way that it can afterwards
@@ -538,7 +536,7 @@ namespace ospray {
             objectHandle((const ObjectHandle&)t)
         {}
         
-        virtual void run() override {}
+        virtual void run() override;
 
         /*! serializes itself on the given serial buffer - will write
           all data into this buffer in a way that it can afterwards
