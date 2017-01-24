@@ -350,7 +350,12 @@ namespace ospray {
 
     void MPIDevice::commit()
     {
+      if (initialized)// NOTE (jda) - doesn't make sense to commit again?
+        return;
+
       Device::commit();
+
+      initialized = true;
 
       int _ac = 2;
       const char *_av[] = {"ospray_mpi_worker", "--osp:mpi"};
