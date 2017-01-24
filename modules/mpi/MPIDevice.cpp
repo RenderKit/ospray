@@ -390,7 +390,7 @@ namespace ospray {
         throw std::runtime_error("Invalid MPI mode!");
       }
 
-      TiledLoadBalancer::instance = new mpi::staticLoadBalancer::Master;
+      TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Master>();
 
       if (mpi::world.size != 1) {
         if (mpi::world.rank < 0) {
