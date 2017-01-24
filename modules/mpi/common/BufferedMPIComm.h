@@ -28,55 +28,55 @@ namespace ospray {
     /*! Mangement class for the MPI send/recv buffers. Objects
      interesting in sending/receiving messages through the MPI layer
      must go through this object to easily buffer operations. */
-    class OSPRAY_MPI_INTERFACE BufferedMPIComm
-    {
-    public:
-      BufferedMPIComm(size_t bufSize = 1024 * 2 * 16);
+    // class OSPRAY_MPI_INTERFACE BufferedMPIComm
+    // {
+    // public:
+    //   BufferedMPIComm(size_t bufSize = 1024 * 2 * 16);
       
-      ~BufferedMPIComm();
+    //   ~BufferedMPIComm();
       
-      /*! Send a work unit message to some address.
-        TODO: Sending to multiple addresses */
-      void send(const Address& addr, work::Work* work);
+    //   /*! Send a work unit message to some address.
+    //     TODO: Sending to multiple addresses */
+    //   void send(const Address& addr, work::Work* work);
       
-      /*! Receive a work unit message from some address, filling the work
-        vector with the received work units. */
-      void recv(const Address& addr, std::vector<work::Work*>& work);
+    //   /*! Receive a work unit message from some address, filling the work
+    //     vector with the received work units. */
+    //   void recv(const Address& addr, std::vector<work::Work*>& work);
       
-      /*! Flush the current send buffer. */
-      void flush();
+    //   /*! Flush the current send buffer. */
+    //   void flush();
       
-      /*! Perform a barrier on the passed MPI Group. */
-      void barrier(const Group& group);
+    //   /*! Perform a barrier on the passed MPI Group. */
+    //   void barrier(const Group& group);
       
-      // The management class works through a shared ptr global so anyone
-      // using it can clone the ptr and keep it alive as long as needed.
-      static std::shared_ptr<BufferedMPIComm> get();
+    //   // The management class works through a shared ptr global so anyone
+    //   // using it can clone the ptr and keep it alive as long as needed.
+    //   static std::shared_ptr<BufferedMPIComm> get();
 
-    private:
-      // Actually send the data in the buffer to the address specified.
-      void send(const Address& addr, work::SerialBuffer& buf);
+    // private:
+    //   // // Actually send the data in the buffer to the address specified.
+    //   // void send(const Address& addr, work::SerialBuffer& buf);
 
 
-      const static size_t MAX_BCAST;
+    //   const static size_t MAX_BCAST;
       
-      // TODO: Sending to multiple addresses
-      work::SerialBuffer sendBuffer;
+    //   // TODO: Sending to multiple addresses
+    //   work::SerialBuffer sendBuffer;
       
-      Address sendAddress;
+    //   Address sendAddress;
       
-      int sendNumMessages = 0;
+    //   int sendNumMessages = 0;
       
-      work::SerialBuffer recvBuffer;
+    //   work::SerialBuffer recvBuffer;
       
-      std::mutex sendMutex;
+    //   std::mutex sendMutex;
 
-      // TODO: Do we really want to go through a singleton for this?
-      // I guess it makes it easiest to provide global batching of all messages.
-      static std::shared_ptr<BufferedMPIComm> global;
+    //   // TODO: Do we really want to go through a singleton for this?
+    //   // I guess it makes it easiest to provide global batching of all messages.
+    //   static std::shared_ptr<BufferedMPIComm> global;
       
-      static std::mutex globalCommAlloc;
-    };
+    //   static std::mutex globalCommAlloc;
+    // };
   }
 }
 

@@ -31,7 +31,7 @@
 #include "mpi/fb/DistributedFrameBuffer.h"
 #include "mpi/render/MPILoadBalancer.h"
 #include "transferFunction/TransferFunction.h"
-
+#include "common/OSPWork.h"
 // std
 #include <algorithm>
 
@@ -67,6 +67,19 @@ namespace ospray {
       throw std::runtime_error("embree internal error '"+std::string(str)+"'");
     }
 
+    std::shared_ptr<work::Work> readWork(std::map<work::Work::tag_t,work::CreateWorkFct> &registry,
+                                         std::shared_ptr<ReadStream> &readStream)
+    {
+      work::Work::tag_t tag;
+      *readStream >> tag;
+
+      auto make_work = registry.find(tag);
+      assert(make_work != registry.end());
+      std::shared_ptr<work::Work> work = make_work->second();
+      assert(work);
+      work->deserialize(*readStream);
+      return work;
+    }
 
     /*! it's up to the proper init
       routine to decide which processes call this function and which
@@ -116,18 +129,25 @@ namespace ospray {
 
       TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Slave>();
 
-      auto bufferedComm = mpi::BufferedMPIComm::get();
+      std::shared_ptr<Fabric> mpiFabric
+        = std::make_shared<MPIBcastFabric>(mpi::app);
+      
+      std::shared_ptr<ReadStream> readStream
+        = std::make_shared<BufferedFabric::ReadStream>(mpiFabric);
+      std::shared_ptr<WriteStream> writeStream
+        = std::make_shared<BufferedFabric::WriteStream>(mpiFabric);
+
+      // create registry of work item types
+      std::map<work::Work::tag_t,work::CreateWorkFct> workTypeRegistry;
+      work::registerOSPWorkItems(workTypeRegistry);
+      
       while (1) {
-        std::vector<work::Work*> workCommands;
-        bufferedComm->recv(mpi::Address(&mpi::app, (int32)mpi::RECV_ALL),
-                           workCommands);
-        for (work::Work *&w : workCommands) {
-          w->run();
-          delete w;
-          w = nullptr;
-        }
+        std::shared_ptr<work::Work> work = readWork(workTypeRegistry,readStream);
+        work->run();
       }
     }
 
+
+    
   } // ::ospray::mpi
 } // ::ospray

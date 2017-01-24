@@ -33,6 +33,8 @@
 #include "fb/LocalFB.h"
 #include "mpi/fb/DistributedFrameBuffer.h"
 #include "common/OSPWork.h"
+#include "common/BufferedDataStreaming.h"
+
 // std
 #ifndef _WIN32
 #  include <unistd.h> // for fork()
@@ -335,7 +337,13 @@ namespace ospray {
       MPI_Barrier(app.comm);
     }
     
-    MPIDevice::MPIDevice() : bufferedComm(std::make_shared<BufferedMPIComm>()){}
+    MPIDevice::MPIDevice()
+    //      : bufferedComm(std::make_shared<BufferedMPIComm>())
+      : mpiFabric(std::make_shared<MPIBcastFabric>(mpi::worker)),
+        readStream(std::make_shared<BufferedFabric::ReadStream>(mpiFabric)),
+        writeStream(std::make_shared<BufferedFabric::WriteStream>(mpiFabric))
+    {
+    }
 
     MPIDevice::~MPIDevice()
     {
@@ -949,19 +957,16 @@ namespace ospray {
 
     void MPIDevice::processWork(work::Work* work)
     {
-      if (currentApiMode == OSPD_MODE_MASTERED) {
-        bufferedComm->send(mpi::Address(&mpi::worker,(int32)mpi::SEND_ALL), work);
-        // TODO: Maybe instead of this we can have a concept of "flushing" work units
-        if (work->flushing()) {
-          bufferedComm->flush();
-        }
+      work->serialize(*writeStream);
+      if (work->flushing()) 
+        writeStream->flush();
 
-        std::cout << "running work..." << std::endl;
-        // Run the master side variant of the work unit
-        work->runOnMaster();
-      } else {
-        work->run();
-      }
+      std::cout << "running work..." << std::endl;
+      // Run the master side variant of the work unit
+      work->runOnMaster();
+      // } else {
+      //   work->run();
+      // }
     }
 
     ObjectHandle MPIDevice::allocateHandle() const {

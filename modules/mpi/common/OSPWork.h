@@ -14,51 +14,105 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+/*! \file OSPWork.h implements everything require to encode and
+  serialize work items that represent api calls 
+
+  this code currently lives only in the mpi device, but shuld in
+  theory also be applicable to other sorts of 'fabrics' for conveying
+  such encoded work items
+*/
+
 #pragma once
 
+#include <ospray/ospray.h>
 #include "mpiCommon/MPICommon.h"
-#include "mpiCommon/command.h"
-#include "mpiCommon/SerialBuffer.h"
-#include "common/Model.h"
-#include "common/Data.h"
-#include "common/Library.h"
-#include "common/Model.h"
-#include "geometry/TriangleMesh.h"
-#include "render/Renderer.h"
-#include "camera/Camera.h"
-#include "volume/Volume.h"
-#include "lights/Light.h"
-#include "texture/Texture2D.h"
-#include "transferFunction/TransferFunction.h"
+// #include "mpiCommon/command.h"
+// #include "mpiCommon/SerialBuffer.h"
 #include "common/ObjectHandle.h"
+#include "DataStreaming.h"
 
 namespace ospray {
   namespace mpi {
     namespace work {
 
+      /*! the command ID is a numerical value that corresponds to a
+        given command type, and that lets the receiver figure out what
+        kind of command it is to execute. CommandIDs are only useful
+        inside \see Command structures. */
+      typedef enum {
+        CMD_INVALID = -555,
+        CMD_NEW_RENDERER=0,
+        CMD_FRAMEBUFFER_CREATE,
+        CMD_RENDER_FRAME,
+        CMD_FRAMEBUFFER_CLEAR,
+        CMD_FRAMEBUFFER_MAP,
+        CMD_FRAMEBUFFER_UNMAP,
+
+        CMD_NEW_DATA = 100,
+        CMD_NEW_MODEL,
+        CMD_NEW_GEOMETRY,
+        CMD_NEW_MATERIAL,
+        CMD_NEW_LIGHT,
+        CMD_NEW_CAMERA,
+        CMD_NEW_VOLUME,
+        CMD_NEW_TRANSFERFUNCTION,
+        CMD_NEW_TEXTURE2D,
+
+        CMD_ADD_GEOMETRY=200,
+        CMD_REMOVE_GEOMETRY,
+        CMD_ADD_VOLUME,
+        CMD_COMMIT,
+        CMD_LOAD_MODULE,
+        CMD_RELEASE,
+        CMD_REMOVE_VOLUME,
+
+        CMD_SET_MATERIAL,
+        CMD_SET_REGION,
+        CMD_SET_REGION_DATA,
+        CMD_SET_OBJECT,
+        CMD_SET_STRING,
+        CMD_SET_INT,
+        CMD_SET_FLOAT,
+        CMD_SET_VEC2F,
+        CMD_SET_VEC2I,
+        CMD_SET_VEC3F,
+        CMD_SET_VEC3I,
+        CMD_SET_VEC4F,
+
+        CMD_REMOVE_PARAM,
+
+        CMD_SET_PIXELOP,
+        CMD_NEW_PIXELOP,
+
+        CMD_API_MODE,//TODO
+
+        CMD_FINALIZE,
+      } CommandTag;
+
+      
       /*! abstract interface for a work item. a work item can
-          serialize itself, de-serialize itself, and return a tag that
-          allows the unbuffering code form figuring out what kind of
-          work this is */
+        serialize itself, de-serialize itself, and return a tag that
+        allows the unbuffering code form figuring out what kind of
+        work this is */
       struct Work {
         /*! type we use for representing tags */
         typedef uint32_t tag_t;
         
         /*! return a tag that the buffering code can use to encode
-            what kind of work this is */
+          what kind of work this is */
         virtual tag_t getTag()                    const = 0;
 
         // /*! for debugging only - return some string of what this is */
         // virtual const char *toString()            const = 0;
 
         /*! serializes itself on the given serial buffer - will write
-            all data into this buffer in a way that it can afterwards
-            un-serialize itself 'on the other side'*/
-        virtual void serialize(SerialBuffer &b)   const = 0;
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        virtual void serialize(WriteStream &b)   const = 0;
 
         /*! de-serialize from a buffer that an object of this type has
-            serialized itself in */
-        virtual void deserialize(SerialBuffer &b)       = 0;
+          serialized itself in */
+        virtual void deserialize(ReadStream &b)       = 0;
 
         /*! returns whether this objects needs flushing of the buffered command stream */
         virtual bool flushing()     { return false; }
@@ -70,14 +124,17 @@ namespace ospray {
         virtual void runOnMaster()  {}
       };
 
+      typedef std::shared_ptr<Work> (*CreateWorkFct)();
+
+      void registerOSPWorkItems(std::map<Work::tag_t,CreateWorkFct> &workTypeRegistry);
 
       /*! templated base class that allows to implemnt common
-          functoinality of a work item (name, tag, flush bit) though
-          inheritance */
+        functoinality of a work item (name, tag, flush bit) though
+        inheritance */
       template<int TAG, bool NEEDS_FLUSHING=false>
       struct BaseWork : public Work {
         /*! return a tag that the buffering code can use to encode
-            what kind of work this is */
+          what kind of work this is */
         virtual Work::tag_t getTag()                 const override
         { return tag; }
 
@@ -103,27 +160,29 @@ namespace ospray {
         virtual void runOnMaster() override {}
         
         /*! serializes itself on the given serial buffer - will write
-            all data into this buffer in a way that it can afterwards
-            un-serialize itself 'on the other side'*/
-        virtual void serialize(SerialBuffer &b) const override 
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        virtual void serialize(WriteStream &b) const override 
         { b << (int64)handle << type; }
         
         /*! de-serialize from a buffer that an object of this type ha
-            serialized itself in */
-        virtual void deserialize(SerialBuffer &b) override 
+          serialized itself in */
+        virtual void deserialize(ReadStream &b) override 
         { b >> handle.i64 >> type; }
         
         std::string  type;
         ObjectHandle handle;
+
+        enum { tag = T::TAG };
       };
 
       /*! !{ speclialized NewObjectT into creating a light, model, etc object */
-      struct ObjectType_Model    { enum { TAG = CMD_NEW_MODEL }; };
-      struct ObjectType_Renderer { enum { TAG = CMD_NEW_RENDERER }; };
-      struct ObjectType_Camera { enum { TAG = CMD_NEW_CAMERA }; };
-      struct ObjectType_Volume { enum { TAG = CMD_NEW_VOLUME }; };
-      struct ObjectType_Geometry { enum { TAG = CMD_NEW_GEOMETRY }; };
-      struct ObjectType_PixelOp  { enum { TAG = CMD_NEW_PIXELOP }; };
+      struct ObjectType_Model             { enum { TAG = CMD_NEW_MODEL }; };
+      struct ObjectType_Renderer          { enum { TAG = CMD_NEW_RENDERER }; };
+      struct ObjectType_Camera            { enum { TAG = CMD_NEW_CAMERA }; };
+      struct ObjectType_Volume            { enum { TAG = CMD_NEW_VOLUME }; };
+      struct ObjectType_Geometry          { enum { TAG = CMD_NEW_GEOMETRY }; };
+      struct ObjectType_PixelOp           { enum { TAG = CMD_NEW_PIXELOP }; };
       struct ObjectType_TransferFunction  { enum { TAG = CMD_NEW_TRANSFERFUNCTION }; };
       /*! @} */
       typedef NewObjectT<ObjectType_Model>    NewModel;
@@ -181,12 +240,12 @@ namespace ospray {
       //   /*! serializes itself on the given serial buffer - will write
       //       all data into this buffer in a way that it can afterwards
       //       un-serialize itself 'on the other side'*/
-      //   virtual void serialize(SerialBuffer &b) const override
+      //   virtual void serialize(WriteStream &b) const override
       //   { b << (int64)rendererHandle << (int64)handle << type; }
         
       //   /*! de-serialize from a buffer that an object of this type has
       //       serialized itself in */
-      //   virtual void deserialize(SerialBuffer &b) override {
+      //   virtual void deserialize(ReadStream &b) override {
       //     b >> rendererHandle.i64 >> handle.i64 >> type;
       //   }
 
@@ -205,14 +264,14 @@ namespace ospray {
         virtual void run() override {}
 
         /*! serializes itself on the given serial buffer - will write
-            all data into this buffer in a way that it can afterwards
-            un-serialize itself 'on the other side'*/
-        virtual void serialize(SerialBuffer &b) const override
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        virtual void serialize(WriteStream &b) const override
         { b << (int64)rendererHandle << (int64)handle << type; }
         
         /*! de-serialize from a buffer that an object of this type has
-            serialized itself in */
-        virtual void deserialize(SerialBuffer &b) override {
+          serialized itself in */
+        virtual void deserialize(ReadStream &b) override {
           b >> rendererHandle.i64 >> handle.i64 >> type;
         }
 
@@ -231,14 +290,14 @@ namespace ospray {
         virtual void run() override {}
 
         /*! serializes itself on the given serial buffer - will write
-            all data into this buffer in a way that it can afterwards
-            un-serialize itself 'on the other side'*/
-        virtual void serialize(SerialBuffer &b) const override
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        virtual void serialize(WriteStream &b) const override
         { b << (int64)rendererHandle << (int64)handle << type; }
         
         /*! de-serialize from a buffer that an object of this type has
-            serialized itself in */
-        virtual void deserialize(SerialBuffer &b) override {
+          serialized itself in */
+        virtual void deserialize(ReadStream &b) override {
           b >> rendererHandle.i64 >> handle.i64 >> type;
         }
 
@@ -265,13 +324,13 @@ namespace ospray {
         virtual void run() override;
 
         /*! serializes itself on the given serial buffer - will write
-            all data into this buffer in a way that it can afterwards
-            un-serialize itself 'on the other side'*/
-        virtual void serialize(SerialBuffer &b) const override;
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        virtual void serialize(WriteStream &b) const override;
 
         /*! de-serialize from a buffer that an object of this type has
-            serialized itself in */
-        virtual void deserialize(SerialBuffer &b) override;
+          serialized itself in */
+        virtual void deserialize(ReadStream &b) override;
 
         ObjectHandle       handle;
         size_t             nItems;
@@ -287,18 +346,18 @@ namespace ospray {
       struct NewTexture2d : BaseWork<CMD_NEW_TEXTURE2D> {
         NewTexture2d();
         NewTexture2d(ObjectHandle handle, vec2i dimensions,
-            OSPTextureFormat format, void *texture, uint32 flags);
+                     OSPTextureFormat format, void *texture, uint32 flags);
         
         virtual void run() override;
 
         /*! serializes itself on the given serial buffer - will write
-            all data into this buffer in a way that it can afterwards
-            un-serialize itself 'on the other side'*/
-        virtual void serialize(SerialBuffer &b) const override;
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        virtual void serialize(WriteStream &b) const override;
 
         /*! de-serialize from a buffer that an object of this type has
-            serialized itself in */
-        virtual void deserialize(SerialBuffer &b) override;
+          serialized itself in */
+        virtual void deserialize(ReadStream &b) override;
 
         ObjectHandle      handle;
         vec2i             dimensions;
@@ -317,13 +376,13 @@ namespace ospray {
         virtual void run() override;
 
         /*! serializes itself on the given serial buffer - will write
-            all data into this buffer in a way that it can afterwards
-            un-serialize itself 'on the other side'*/
-        virtual void serialize(SerialBuffer &b) const override;
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        virtual void serialize(WriteStream &b) const override;
 
         /*! de-serialize from a buffer that an object of this type has
-            serialized itself in */
-        virtual void deserialize(SerialBuffer &b) override;
+          serialized itself in */
+        virtual void deserialize(ReadStream &b) override;
 
         ObjectHandle handle;
         vec3i regionStart, regionSize;
@@ -341,13 +400,13 @@ namespace ospray {
         virtual void runOnMaster() override;
 
         /*! serializes itself on the given serial buffer - will write
-            all data into this buffer in a way that it can afterwards
-            un-serialize itself 'on the other side'*/
-        virtual void serialize(SerialBuffer &b) const override;
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        virtual void serialize(WriteStream &b) const override;
 
         /*! de-serialize from a buffer that an object of this type has
-            serialized itself in */
-        virtual void deserialize(SerialBuffer &b) override;
+          serialized itself in */
+        virtual void deserialize(ReadStream &b) override;
 
         ObjectHandle handle;
       };
@@ -362,13 +421,13 @@ namespace ospray {
         virtual void runOnMaster() override;
 
         /*! serializes itself on the given serial buffer - will write
-            all data into this buffer in a way that it can afterwards
-            un-serialize itself 'on the other side'*/
-        virtual void serialize(SerialBuffer &b) const override;
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        virtual void serialize(WriteStream &b) const override;
 
         /*! de-serialize from a buffer that an object of this type has
-            serialized itself in */
-        virtual void deserialize(SerialBuffer &b) override;
+          serialized itself in */
+        virtual void deserialize(ReadStream &b) override;
 
         ObjectHandle handle;
         uint32 channels;
@@ -383,13 +442,13 @@ namespace ospray {
         virtual void runOnMaster() override;
 
         /*! serializes itself on the given serial buffer - will write
-            all data into this buffer in a way that it can afterwards
-            un-serialize itself 'on the other side'*/
-        virtual void serialize(SerialBuffer &b) const override;
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        virtual void serialize(WriteStream &b) const override;
 
         /*! de-serialize from a buffer that an object of this type has
-            serialized itself in */
-        virtual void deserialize(SerialBuffer &b) override;
+          serialized itself in */
+        virtual void deserialize(ReadStream &b) override;
 
         ObjectHandle fbHandle;
         ObjectHandle rendererHandle;
@@ -408,14 +467,14 @@ namespace ospray {
         virtual void run() override {}
 
         /*! serializes itself on the given serial buffer - will write
-            all data into this buffer in a way that it can afterwards
-            un-serialize itself 'on the other side'*/
-        virtual void serialize(SerialBuffer &b) const override
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        virtual void serialize(WriteStream &b) const override
         { b << (int64)modelHandle << (int64)objectHandle; }
 
         /*! de-serialize from a buffer that an object of this type has
-            serialized itself in */
-        virtual void deserialize(SerialBuffer &b) override
+          serialized itself in */
+        virtual void deserialize(ReadStream &b) override
         { b >> modelHandle.i64 >> objectHandle.i64; }
         
         ObjectHandle modelHandle;
@@ -433,14 +492,14 @@ namespace ospray {
         virtual void run() override {}
 
         /*! serializes itself on the given serial buffer - will write
-            all data into this buffer in a way that it can afterwards
-            un-serialize itself 'on the other side'*/
-        virtual void serialize(SerialBuffer &b) const override
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        virtual void serialize(WriteStream &b) const override
         { b << (int64)modelHandle << (int64)objectHandle; }
 
         /*! de-serialize from a buffer that an object of this type has
-            serialized itself in */
-        virtual void deserialize(SerialBuffer &b) override
+          serialized itself in */
+        virtual void deserialize(ReadStream &b) override
         { b >> modelHandle.i64 >> objectHandle.i64; }
         
         ObjectHandle modelHandle;
@@ -458,14 +517,14 @@ namespace ospray {
         virtual void run() override {}
 
         /*! serializes itself on the given serial buffer - will write
-            all data into this buffer in a way that it can afterwards
-            un-serialize itself 'on the other side'*/
-        virtual void serialize(SerialBuffer &b) const override
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        virtual void serialize(WriteStream &b) const override
         { b << (int64)modelHandle << (int64)objectHandle; }
 
         /*! de-serialize from a buffer that an object of this type has
-            serialized itself in */
-        virtual void deserialize(SerialBuffer &b) override
+          serialized itself in */
+        virtual void deserialize(ReadStream &b) override
         { b >> modelHandle.i64 >> objectHandle.i64; }
 
         ObjectHandle modelHandle;
@@ -482,14 +541,14 @@ namespace ospray {
         virtual void run() override {}
 
         /*! serializes itself on the given serial buffer - will write
-            all data into this buffer in a way that it can afterwards
-            un-serialize itself 'on the other side'*/
-        virtual void serialize(SerialBuffer &b) const override
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        virtual void serialize(WriteStream &b) const override
         { b << (int64)modelHandle << (int64)objectHandle; }
 
         /*! de-serialize from a buffer that an object of this type has
-            serialized itself in */
-        virtual void deserialize(SerialBuffer &b) override
+          serialized itself in */
+        virtual void deserialize(ReadStream &b) override
         { b >> modelHandle.i64 >> objectHandle.i64; }
 
         ObjectHandle modelHandle;
@@ -504,20 +563,20 @@ namespace ospray {
       struct CreateFrameBuffer : public BaseWork<CMD_FRAMEBUFFER_CREATE> {
         CreateFrameBuffer();
         CreateFrameBuffer(ObjectHandle handle, vec2i dimensions,
-            OSPFrameBufferFormat format, uint32 channels);
+                          OSPFrameBufferFormat format, uint32 channels);
         
         virtual void run() override;
         
         virtual void runOnMaster() override;
 
         /*! serializes itself on the given serial buffer - will write
-            all data into this buffer in a way that it can afterwards
-            un-serialize itself 'on the other side'*/
-        virtual void serialize(SerialBuffer &b) const override;
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        virtual void serialize(WriteStream &b) const override;
 
         /*! de-serialize from a buffer that an object of this type has
-            serialized itself in */
-        virtual void deserialize(SerialBuffer &b) override;
+          serialized itself in */
+        virtual void deserialize(ReadStream &b) override;
 
         ObjectHandle handle;
         vec2i dimensions;
@@ -581,31 +640,19 @@ namespace ospray {
         {
           Assert(handle != nullHandle);
         }
-        
-        virtual void run() override
-        {
-          ManagedObject *obj = handle.lookup();
-          Assert(obj);
-          obj->findParam(name.c_str(), true)->set(val);
-        }
-        
-        virtual void runOnMaster() override
-        {
-          ManagedObject *obj = handle.lookup();
-          if (dynamic_cast<Renderer*>(obj) || dynamic_cast<Volume*>(obj)) {
-            obj->findParam(name.c_str(), true)->set(val);
-          }
-        }
 
+        virtual void run()         override;
+        virtual void runOnMaster() override;
+        
         /*! serializes itself on the given serial buffer - will write
-            all data into this buffer in a way that it can afterwards
-            un-serialize itself 'on the other side'*/
-        virtual void serialize(SerialBuffer &b) const override
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        virtual void serialize(WriteStream &b) const override
         { b << (int64)handle << name << val; }
 
         /*! de-serialize from a buffer that an object of this type has
-            serialized itself in */
-        virtual void deserialize(SerialBuffer &b) override
+          serialized itself in */
+        virtual void deserialize(ReadStream &b) override
         { b >> handle.i64 >> name >> val; }
 
         const static size_t TAG = ParamTag<T>::TAG;
@@ -635,26 +682,17 @@ namespace ospray {
           Assert(material != nullHandle);
         }
         
-        virtual void run() override
-        {
-          Geometry *geom = (Geometry*)handle.lookup();
-          Material *mat = (Material*)material.lookup();
-          Assert(geom);
-          Assert(mat);
-          /* might we worthwhile doing a dyncast here to check if that
-             is actually a proper geometry .. */
-          geom->setMaterial(mat);
-        }
+        virtual void run() override;
         
         /*! serializes itself on the given serial buffer - will write
-            all data into this buffer in a way that it can afterwards
-            un-serialize itself 'on the other side'*/
-        virtual void serialize(SerialBuffer &b) const override
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        virtual void serialize(WriteStream &b) const override
         { b << (int64)handle << (int64)material; }
 
         /*! de-serialize from a buffer that an object of this type has
-            serialized itself in */
-        virtual void deserialize(SerialBuffer &b) override
+          serialized itself in */
+        virtual void deserialize(ReadStream &b) override
         { b >> handle.i64 >> material.i64; }
 
         ObjectHandle handle;
@@ -687,15 +725,15 @@ namespace ospray {
         }
         
         /*! serializes itself on the given serial buffer - will write
-            all data into this buffer in a way that it can afterwards
-            un-serialize itself 'on the other side'*/
-        virtual void serialize(SerialBuffer &b) const override
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        virtual void serialize(WriteStream &b) const override
         { b << (int64)handle << name << (int64)val; }
         
 
         /*! de-serialize from a buffer that an object of this type has
-            serialized itself in */
-        virtual void deserialize(SerialBuffer &b) override
+          serialized itself in */
+        virtual void deserialize(ReadStream &b) override
         { b >> handle.i64 >> name >> val.i64; }
 
         ObjectHandle handle;
@@ -712,13 +750,13 @@ namespace ospray {
         virtual void runOnMaster() override;
 
         /*! serializes itself on the given serial buffer - will write
-            all data into this buffer in a way that it can afterwards
-            un-serialize itself 'on the other side'*/
-        virtual void serialize(SerialBuffer &b) const override;
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        virtual void serialize(WriteStream &b) const override;
 
         /*! de-serialize from a buffer that an object of this type has
-            serialized itself in */
-        virtual void deserialize(SerialBuffer &b) override;
+          serialized itself in */
+        virtual void deserialize(ReadStream &b) override;
 
         ObjectHandle handle;
         std::string name;
@@ -731,13 +769,13 @@ namespace ospray {
         virtual void run() override;
 
         /*! serializes itself on the given serial buffer - will write
-            all data into this buffer in a way that it can afterwards
-            un-serialize itself 'on the other side'*/
-        virtual void serialize(SerialBuffer &b) const override;
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        virtual void serialize(WriteStream &b) const override;
 
         /*! de-serialize from a buffer that an object of this type has
-            serialized itself in */
-        virtual void deserialize(SerialBuffer &b) override;
+          serialized itself in */
+        virtual void deserialize(ReadStream &b) override;
 
         ObjectHandle fbHandle;
         ObjectHandle poHandle;
@@ -750,13 +788,13 @@ namespace ospray {
         void run() override;
 
         /*! serializes itself on the given serial buffer - will write
-            all data into this buffer in a way that it can afterwards
-            un-serialize itself 'on the other side'*/
-        virtual void serialize(SerialBuffer &b) const override;
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        virtual void serialize(WriteStream &b) const override;
 
         /*! de-serialize from a buffer that an object of this type has
-            serialized itself in */
-        virtual void deserialize(SerialBuffer &b) override;
+          serialized itself in */
+        virtual void deserialize(ReadStream &b) override;
 
         ObjectHandle handle;
       };
@@ -769,13 +807,13 @@ namespace ospray {
         virtual void run() override;
 
         /*! serializes itself on the given serial buffer - will write
-            all data into this buffer in a way that it can afterwards
-            un-serialize itself 'on the other side'*/
-        virtual void serialize(SerialBuffer &b) const override;
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        virtual void serialize(WriteStream &b) const override;
 
         /*! de-serialize from a buffer that an object of this type has
-            serialized itself in */
-        virtual void deserialize(SerialBuffer &b) override;
+          serialized itself in */
+        virtual void deserialize(ReadStream &b) override;
 
         std::string name;
       };
@@ -788,15 +826,15 @@ namespace ospray {
         virtual void runOnMaster() override;
 
         /*! serializes itself on the given serial buffer - will write
-            all data into this buffer in a way that it can afterwards
-            un-serialize itself 'on the other side'*/
-        virtual void serialize(SerialBuffer &b) const override;
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        virtual void serialize(WriteStream &b) const override;
 
         /*! de-serialize from a buffer that an object of this type has
-            serialized itself in */
-        virtual void deserialize(SerialBuffer &b) override;
+          serialized itself in */
+        virtual void deserialize(ReadStream &b) override;
       };
       
-    }// namespace work
-  }// namespace mpi
-}// namespace ospray
+    } // ::ospray::mpi::work
+  } // ::ospray::mpi
+} // ::ospray

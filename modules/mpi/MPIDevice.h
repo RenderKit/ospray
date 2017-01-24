@@ -18,12 +18,13 @@
 
 // mpicommon
 #include "mpiCommon/MPICommon.h"
-#include "mpiCommon/command.h"
+// #include "mpiCommon/command.h"
 // ospray
 #include "api/Device.h"
 #include "common/Managed.h"
 // ospray::mpi
-#include "common/BufferedMPIComm.h"
+#include "common/BufferedDataStreaming.h"
+// #include "common/BufferedMPIComm.h"
 #include "common/OSPWork.h"
 
 /*! \file MPIDevice.h Implements the "mpi" device for mpi rendering */
@@ -220,7 +221,13 @@ namespace ospray {
 
       ObjectHandle allocateHandle() const;
 
-      std::shared_ptr<mpi::BufferedMPIComm> bufferedComm;
+      //      std::shared_ptr<mpi::BufferedMPIComm> bufferedComm;
+
+      /*! @{ read and write stream for the work commands */
+      std::shared_ptr<Fabric>      mpiFabric;
+      std::shared_ptr<ReadStream>  readStream;
+      std::shared_ptr<WriteStream> writeStream;
+      /*! @} */
 
       bool initialized {false};
 

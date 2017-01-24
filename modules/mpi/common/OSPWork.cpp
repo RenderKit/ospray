@@ -22,16 +22,157 @@
 #include "mpi/fb/DistributedFrameBuffer.h"
 #include "mpi/render/MPILoadBalancer.h"
 
+#include "common/Model.h"
+#include "common/Data.h"
+#include "common/Library.h"
+#include "common/Model.h"
+#include "geometry/TriangleMesh.h"
+#include "render/Renderer.h"
+#include "camera/Camera.h"
+#include "volume/Volume.h"
+#include "lights/Light.h"
+#include "texture/Texture2D.h"
+#include "transferFunction/TransferFunction.h"
+
 namespace ospray {
   namespace mpi {
     namespace work {
 
+      const char* commandToString(CommandTag tag) {
+        switch (tag) {
+        case CMD_INVALID: return "CMD_INVALID";
+        case CMD_NEW_RENDERER: return "CMD_NEW_RENDERER";
+        case CMD_FRAMEBUFFER_CREATE: return "CMD_FRAMEBUFFER_CREATE";
+        case CMD_RENDER_FRAME: return "CMD_RENDER_FRAME";
+        case CMD_FRAMEBUFFER_CLEAR: return "CMD_FRAMEBUFFER_CLEAR";
+        case CMD_FRAMEBUFFER_MAP: return "CMD_FRAMEBUFFER_MAP";
+        case CMD_FRAMEBUFFER_UNMAP: return "CMD_FRAMEBUFFER_UNMAP";
+        case CMD_NEW_DATA: return "CMD_NEW_DATA";
+        case CMD_NEW_MODEL: return "CMD_NEW_MODEL";
+        case CMD_NEW_GEOMETRY: return "CMD_NEW_GEOMETRY";
+        case CMD_NEW_MATERIAL: return "CMD_NEW_MATERIAL";
+        case CMD_NEW_LIGHT: return "CMD_NEW_LIGHT";
+        case CMD_NEW_CAMERA: return "CMD_NEW_CAMERA";
+        case CMD_NEW_VOLUME: return "CMD_NEW_VOLUME";
+        case CMD_NEW_TRANSFERFUNCTION: return "CMD_NEW_TRANSFERFUNCTION";
+        case CMD_NEW_TEXTURE2D: return "CMD_NEW_TEXTURE2D";
+        case CMD_ADD_GEOMETRY: return "CMD_ADD_GEOMETRY";
+        case CMD_REMOVE_GEOMETRY: return "CMD_REMOVE_GEOMETRY";
+        case CMD_ADD_VOLUME: return "CMD_ADD_VOLUME";
+        case CMD_COMMIT: return "CMD_COMMIT";
+        case CMD_LOAD_MODULE: return "CMD_LOAD_MODULE";
+        case CMD_RELEASE: return "CMD_RELEASE";
+        case CMD_REMOVE_VOLUME: return "CMD_REMOVE_VOLUME";
+        case CMD_SET_MATERIAL: return "CMD_SET_MATERIAL";
+        case CMD_SET_REGION: return "CMD_SET_REGION";
+        case CMD_SET_REGION_DATA: return "CMD_SET_REGION_DATA";
+        case CMD_SET_OBJECT: return "CMD_SET_OBJECT";
+        case CMD_SET_STRING: return "CMD_SET_STRING";
+        case CMD_SET_INT: return "CMD_SET_INT";
+        case CMD_SET_FLOAT: return "CMD_SET_FLOAT";
+        case CMD_SET_VEC2F: return "CMD_SET_VEC2F";
+        case CMD_SET_VEC2I: return "CMD_SET_VEC2I";
+        case CMD_SET_VEC3F: return "CMD_SET_VEC3F";
+        case CMD_SET_VEC3I: return "CMD_SET_VEC3I";
+        case CMD_SET_VEC4F: return "CMD_SET_VEC4F";
+        case CMD_SET_PIXELOP: return "CMD_SET_PIXELOP";
+        case CMD_REMOVE_PARAM: return "CMD_REMOVE_PARAM";
+        case CMD_NEW_PIXELOP: return "CMD_NEW_PIXELOP";
+        case CMD_API_MODE: return "CMD_API_MODE";
+        case CMD_FINALIZE: return "CMD_FINALIZE";
+        default: return "Unrecognized CommandTag";
+        }
+      }
+
+
+      void SetMaterial::run() 
+      {
+        Geometry *geom = (Geometry*)handle.lookup();
+        Material *mat = (Material*)material.lookup();
+        Assert(geom);
+        Assert(mat);
+        /* might we worthwhile doing a dyncast here to check if that
+           is actually a proper geometry .. */
+        geom->setMaterial(mat);
+      }
+
+      
+      template<typename T>
+      void SetParam<T>::run() 
+      {
+        ManagedObject *obj = handle.lookup();
+        Assert(obj);
+        obj->findParam(name.c_str(), true)->set(val);
+      }
+      
+      template<typename T>
+      void SetParam<T>::runOnMaster() 
+      {
+        ManagedObject *obj = handle.lookup();
+        if (dynamic_cast<Renderer*>(obj) || dynamic_cast<Volume*>(obj)) {
+          obj->findParam(name.c_str(), true)->set(val);
+        }
+      }
+
+
+      
       /*! create a work unit of given type */
       template<typename T>
-      inline Work* make_work_unit()
+      inline std::shared_ptr<Work> make_work_unit()
       {
-        return new T();
+        return std::make_shared<T>();
       }
+      
+#define REGISTER_WORK_UNIT(W) workTypeRegistry[W::tag] = &make_work_unit<W>;
+      void registerOSPWorkItems(std::map<Work::tag_t,CreateWorkFct> &workTypeRegistry)
+      {
+        REGISTER_WORK_UNIT(NewRenderer);
+        REGISTER_WORK_UNIT(NewModel);
+        REGISTER_WORK_UNIT(NewGeometry);
+        REGISTER_WORK_UNIT(NewCamera);
+        REGISTER_WORK_UNIT(NewVolume);
+        REGISTER_WORK_UNIT(NewTransferFunction);
+        REGISTER_WORK_UNIT(NewPixelOp);
+
+        REGISTER_WORK_UNIT(NewMaterial);
+        REGISTER_WORK_UNIT(NewLight);
+
+        REGISTER_WORK_UNIT(NewData);
+        REGISTER_WORK_UNIT(NewTexture2d);
+
+        REGISTER_WORK_UNIT(CommitObject);
+        REGISTER_WORK_UNIT(CommandRelease);
+
+        REGISTER_WORK_UNIT(LoadModule);
+
+        REGISTER_WORK_UNIT(AddGeometry);
+        REGISTER_WORK_UNIT(AddVolume);
+        REGISTER_WORK_UNIT(RemoveGeometry);
+        REGISTER_WORK_UNIT(RemoveVolume);
+
+        REGISTER_WORK_UNIT(CreateFrameBuffer);
+        REGISTER_WORK_UNIT(ClearFrameBuffer);
+        REGISTER_WORK_UNIT(RenderFrame);
+
+        REGISTER_WORK_UNIT(SetRegion);
+        REGISTER_WORK_UNIT(SetPixelOp);
+
+        REGISTER_WORK_UNIT(SetMaterial);
+        REGISTER_WORK_UNIT(SetParam<OSPObject>);
+        REGISTER_WORK_UNIT(SetParam<std::string>);
+        REGISTER_WORK_UNIT(SetParam<int>);
+        REGISTER_WORK_UNIT(SetParam<float>);
+        REGISTER_WORK_UNIT(SetParam<vec2f>);
+        REGISTER_WORK_UNIT(SetParam<vec2i>);
+        REGISTER_WORK_UNIT(SetParam<vec3f>);
+        REGISTER_WORK_UNIT(SetParam<vec3i>);
+        REGISTER_WORK_UNIT(SetParam<vec4f>);
+
+        REGISTER_WORK_UNIT(RemoveParam);
+
+        REGISTER_WORK_UNIT(CommandFinalize) };
+    }
+#undef  REGISTER_WORK_UNIT
 
 
 #if 0      
@@ -423,7 +564,7 @@ namespace ospray {
           }
         } else {
           throw std::runtime_error("Error: rank " + std::to_string(mpi::world.rank)
-              + " did not have object to commit!");
+                                   + " did not have object to commit!");
         }
         // TODO: Work units should not be directly making MPI calls.
         // What should be responsible for this barrier?
@@ -475,7 +616,7 @@ namespace ospray {
       RenderFrame::RenderFrame() : varianceResult(0.f) {}
       RenderFrame::RenderFrame(OSPFrameBuffer fb, OSPRenderer renderer, uint32 channels)
         : fbHandle((ObjectHandle&)fb), rendererHandle((ObjectHandle&)renderer), channels(channels),
-        varianceResult(0.f)
+          varianceResult(0.f)
       {}
       void RenderFrame::run() {
         FrameBuffer *fb = (FrameBuffer*)fbHandle.lookup();
@@ -543,9 +684,9 @@ namespace ospray {
         Assert(model);
         Assert(geometry);
         auto it = std::find_if(model->geometry.begin(), model->geometry.end(),
-            [&](const Ref<Geometry> &g) {
-              return geometry == &*g;
-            });
+                               [&](const Ref<Geometry> &g) {
+                                 return geometry == &*g;
+                               });
         if (it != model->geometry.end()) {
           model->geometry.erase(it);
         }
@@ -558,9 +699,9 @@ namespace ospray {
         Assert(volume);
         model->volume.push_back(volume);
         auto it = std::find_if(model->volume.begin(), model->volume.end(),
-            [&](const Ref<Volume> &v) {
-              return volume == &*v;
-            });
+                               [&](const Ref<Volume> &v) {
+                                 return volume == &*v;
+                               });
         if (it != model->volume.end()) {
           model->volume.erase(it);
         }
@@ -568,7 +709,7 @@ namespace ospray {
 
       CreateFrameBuffer::CreateFrameBuffer() {}
       CreateFrameBuffer::CreateFrameBuffer(ObjectHandle handle, vec2i dimensions,
-          OSPFrameBufferFormat format, uint32 channels)
+                                           OSPFrameBufferFormat format, uint32 channels)
         : handle(handle), dimensions(dimensions), format(format), channels(channels)
       {}
       void CreateFrameBuffer::run() {
@@ -576,7 +717,7 @@ namespace ospray {
         const bool hasAccumBuffer = channels & OSP_FB_ACCUM;
         const bool hasVarianceBuffer = channels & OSP_FB_VARIANCE;
         FrameBuffer *fb = new DistributedFrameBuffer(ospray::mpi::async::CommLayer::WORLD,
-            dimensions, handle, format, hasDepthBuffer, hasAccumBuffer, hasVarianceBuffer);
+                                                     dimensions, handle, format, hasDepthBuffer, hasAccumBuffer, hasVarianceBuffer);
 
         // TODO: Only the master does this increment, though should the workers do it too?
         fb->refInc();
@@ -729,7 +870,6 @@ namespace ospray {
       void CommandFinalize::deserialize(SerialBuffer &b) {}
 
 #endif
-    }
   }
 }
 
