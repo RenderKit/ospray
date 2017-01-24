@@ -36,7 +36,6 @@
 #define EXP_DATA_PARALLEL 1
 #endif
 #endif
-#cmakedefine OSPRAY_VOLUME_VOXELRANGE_IN_APP
 #cmakedefine OSPRAY_PIN_ASYNC
 
 /*! if defined, we'll be using the novel block-bricked volume layout
