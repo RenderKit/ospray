@@ -30,6 +30,7 @@
 // #include "mpiCommon/SerialBuffer.h"
 #include "common/ObjectHandle.h"
 #include "DataStreaming.h"
+#include <map>
 
 namespace ospray {
   namespace mpi {

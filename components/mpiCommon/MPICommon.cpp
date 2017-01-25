@@ -87,11 +87,20 @@ namespace ospray {
       int initialized = false;
       MPI_CALL(Initialized(&initialized));
 
+      PING;
+      PRINT(initialized);
+      
       if (!initialized) {
         // MPI_Init(ac,(char ***)&av);
         int required = MPI_THREAD_SERIALIZED;
         int provided = 0;
+        PING;
+        PRINT(required);
+        PRINT(ac);
+        PRINT(av);
         MPI_CALL(Init_thread(ac,(char ***)&av,required,&provided));
+        PRINT(provided);
+        PING;
         if (provided != required) {
           throw std::runtime_error("MPI implementation does not offer "
                                    "multi-threading capabilities");
