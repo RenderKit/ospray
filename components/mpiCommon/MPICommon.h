@@ -85,10 +85,12 @@ namespace ospray {
     {
       /*! constructor. sets the 'comm', 'rank', and 'size' fields */
       Group(MPI_Comm initComm=MPI_COMM_NULL);
-      Group(const Group &other)
-        : comm(other.comm), rank(other.rank), size(other.size), containsMe(other.containsMe)
-      {}
-          
+      Group(const Group &other);
+
+      inline bool valid() const
+      {
+        return comm != MPI_COMM_NULL; 
+      }
       // this is the RIGHT naming convention - old code has them all inside out.
       void makeIntraComm() 
       { MPI_Comm_rank(comm,&rank); MPI_Comm_size(comm,&size); containsMe = true; }

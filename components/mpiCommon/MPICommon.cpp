@@ -37,7 +37,7 @@ namespace ospray {
 
     /*! the value of the 'whoHasTheLock' parameter of the last
         succeeding lockMPI() call */
-    const char *g_whoHasTheMPILock = NULL;
+    const char *g_whoHasTheMPILock = "<nobody - never been locked>";
     
     /*! the value of the 'whoHasTheLock' parameter of the last
         succeeding lockMPI() call */
@@ -56,6 +56,7 @@ namespace ospray {
     /*! helper functions that lock resp unlock the mpi serializer mutex */
     void unlockMPI()
     {
+      g_whoHasTheMPILock = "<nobody>";
       mpiSerializerMutex.unlock();
     }
     
@@ -66,6 +67,14 @@ namespace ospray {
     {
       setTo(initComm);
     }
+
+    /*! constructor. sets the 'comm', 'rank', and 'size' fields */
+    Group::Group(const Group &other)
+      : comm(other.comm), rank(other.rank), size(other.size), containsMe(other.containsMe)
+    {
+      std::cout << "copy-const'ed mpi group from " << (int*)other.comm << std::endl;
+    }
+
 
     void checkMpiError(int rc)
     {
@@ -78,6 +87,11 @@ namespace ospray {
     void Group::setTo(MPI_Comm comm)
     {
       this->comm = comm;
+      PING;
+      PRINT(comm);
+      PRINT((int*)comm);
+      PRINT((int*)MPI_COMM_NULL);
+      PRINT((int*)MPI_COMM_WORLD);
       if (comm == MPI_COMM_NULL) {
         rank = size = -1;
       } else {

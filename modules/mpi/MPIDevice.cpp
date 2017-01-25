@@ -108,6 +108,9 @@ namespace ospray {
                app.rank,app.size,world.rank,world.size);
 
         MPI_Intercomm_create(app.comm, 0, world.comm, 1, 1, &worker.comm);
+        std::cout << "master: Made 'worker' intercomm (through intercomm_create): " << (int*)worker.comm << std::endl;
+        PRINT(worker.valid());
+        
         // worker.makeIntracomm();
         worker.makeInterComm();
 
@@ -132,6 +135,9 @@ namespace ospray {
         // we're the workers
         MPI_Comm_split(mpi::world.comm,0,mpi::world.rank,&worker.comm);
         worker.makeIntraComm();
+        std::cout << "master: Made 'worker' intercomm (through split): " << (int*)worker.comm << std::endl;
+        PRINT(worker.valid());
+
         // worker.makeIntercomm();
         printf("#w: worker process %i/%i (global %i/%i)\n",
                worker.rank,worker.size,world.rank,world.size);
@@ -339,10 +345,9 @@ namespace ospray {
     
     MPIDevice::MPIDevice()
     //      : bufferedComm(std::make_shared<BufferedMPIComm>())
-      : mpiFabric(std::make_shared<MPIBcastFabric>(mpi::worker)),
-        readStream(std::make_shared<BufferedFabric::ReadStream>(mpiFabric)),
-        writeStream(std::make_shared<BufferedFabric::WriteStream>(mpiFabric))
     {
+      /* do _NOT_ try to set up the fabric, streams, etc, here - MPI
+         comms are _NOT_ yet properly set up */
     }
 
     MPIDevice::~MPIDevice()
@@ -398,8 +403,6 @@ namespace ospray {
         throw std::runtime_error("Invalid MPI mode!");
       }
 
-      TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Master>();
-
       if (mpi::world.size != 1) {
         if (mpi::world.rank < 0) {
           PRINT(mpi::world.rank);
@@ -411,6 +414,14 @@ namespace ospray {
                                    "start.");
         }
       }
+
+      /* set up fabric and stuff - by now all the communicators should
+         be properly set up */
+      mpiFabric   = std::make_shared<MPIBcastFabric>(mpi::worker);
+      readStream  = std::make_shared<BufferedFabric::ReadStream>(mpiFabric);
+      writeStream = std::make_shared<BufferedFabric::WriteStream>(mpiFabric);
+      
+      TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Master>();
     }
 
     OSPFrameBuffer 
@@ -852,83 +863,6 @@ namespace ospray {
       };
     }
 
-    // /*! switch API mode for distriubted API extensions */
-    // void MPIDevice::apiMode(OSPDApiMode newMode)
-    // {
-    //   printf("rank %i asked to go from %s mode to %s mode\n",
-    //          mpi::world.rank,apiModeName(currentApiMode),apiModeName(newMode));
-    //   switch (currentApiMode) {
-    //     // ==================================================================
-    //     // ==================================================================
-    //   case OSPD_MODE_INDEPENDENT: {
-    //     switch (newMode) {
-    //     case OSPD_MODE_COLLABORATIVE:
-    //     case OSPD_MODE_INDEPENDENT:
-    //       currentApiMode = newMode;
-    //       // It's probably worth making this an explicit sync point
-    //       // between app/worker ranks. TODO: What comm to barrier on?
-    //       // MPI_Barrier(MPI_COMM_WORLD);
-    //       mpi::barrier(mpi::world);
-    //       break;
-    //     case OSPD_MODE_MASTERED:
-    //       NOTIMPLEMENTED;
-    //     }
-    //   } break;
-    //     // ==================================================================
-    //     // currently in default (mastered) mode where master tells workers what
-    //     // to do
-    //     // ==================================================================
-    //   case OSPD_MODE_MASTERED: {
-    //     // first: tell workers to switch to new mode: they're in
-    //     // mastered mode and thus waiting for *us* to tell them what
-    //     // to do, so let's do it.
-    //     switch (newMode) {
-    //     case OSPD_MODE_MASTERED: {
-    //       // nothing to do, actually, the workers are already in this
-    //       // mode, no use sending this request again
-    //       printf("rank %i remaining in mastered mode\n",mpi::world.rank);
-    //     } break;
-    //     case OSPD_MODE_INDEPENDENT:
-    //     case OSPD_MODE_COLLABORATIVE: {
-    //       printf("rank %i telling clients to switch to %s mode.\n",
-    //              mpi::world.rank,apiModeName(newMode));
-    //       // cmd.newCommand(CMD_API_MODE);
-    //       // cmd.send((int32)newMode);
-    //       // cmd.flush();
-    //       currentApiMode = newMode;
-    //       // and just to be sure, do a barrier here -- not acutally needed
-    //       // AFAICT.
-    //       mpi::barrier(mpi::world);
-    //       // MPI_Barrier(MPI_COMM_WORLD);
-    //     } break;
-    //     default:
-    //       NOTIMPLEMENTED;
-    //     };
-    //   } break;
-    //     // ==================================================================
-    //     // ==================================================================
-    //   case OSPD_MODE_COLLABORATIVE: {
-    //     switch (newMode) {
-    //     case OSPD_MODE_COLLABORATIVE:
-    //     case OSPD_MODE_INDEPENDENT:
-    //       currentApiMode = newMode;
-    //       // It's probably worth making this an explicit sync point
-    //       // between app/worker ranks. TODO: What comm to barrier on?
-    //       mpi::barrier(mpi::world);
-    //       // MPI_Barrier(MPI_COMM_WORLD);
-    //       break;
-    //     case OSPD_MODE_MASTERED:
-    //       NOTIMPLEMENTED;
-    //     }
-    //   } break;
-
-    //     // ==================================================================
-    //     // this mode should not exit - implementation error
-    //     // ==================================================================
-    //   default:
-    //     NOTIMPLEMENTED;
-    //   };
-    // }
 
     void MPIDevice::sampleVolume(float **results,
                                  OSPVolume volume,

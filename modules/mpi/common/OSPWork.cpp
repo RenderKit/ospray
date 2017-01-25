@@ -121,6 +121,8 @@ namespace ospray {
       
       void CommitObject::runOnMaster()
       {
+        if (!handle.defined()) return;
+        
         ManagedObject *obj = handle.lookup();
         if (dynamic_cast<Renderer*>(obj)) {
           obj->commit();
@@ -753,13 +755,22 @@ namespace ospray {
         b >> handle.i64 >> name;
       }
 
-      SetPixelOp::SetPixelOp(){}
-      SetPixelOp::SetPixelOp(OSPFrameBuffer fb, OSPPixelOp op)
-        : fbHandle((ObjectHandle&)fb), poHandle((ObjectHandle&)op)
+      // =======================================================
+      // ospSetPixelOp
+      // =======================================================
+      
+      SetPixelOp::SetPixelOp()
       {}
-      void SetPixelOp::run() {
+      
+      SetPixelOp::SetPixelOp(OSPFrameBuffer fb, OSPPixelOp op)
+        : fbHandle((ObjectHandle&)fb),
+          poHandle((ObjectHandle&)op)
+      {}
+      
+      void SetPixelOp::run()
+      {
         FrameBuffer *fb = (FrameBuffer*)fbHandle.lookup();
-        PixelOp *po = (PixelOp*)poHandle.lookup();
+        PixelOp     *po = (PixelOp*)poHandle.lookup();
         Assert(fb);
         Assert(po);
         fb->pixelOp = po->createInstance(fb, fb->pixelOp.ptr);
@@ -768,30 +779,53 @@ namespace ospray {
         }
       }
 
-      void SetPixelOp::serialize(WriteStream &b) const {
+      void SetPixelOp::serialize(WriteStream &b) const
+      {
         b << (int64)fbHandle << (int64)poHandle;
       }
-      void SetPixelOp::deserialize(ReadStream &b) {
+      
+      void SetPixelOp::deserialize(ReadStream &b)
+      {
         b >> fbHandle.i64 >> poHandle.i64;
       }
 
-      CommandRelease::CommandRelease() {}
-      CommandRelease::CommandRelease(ObjectHandle handle) : handle(handle){}
-      void CommandRelease::run() {
+      // =======================================================
+      // ospRelease
+      // =======================================================
+      
+      CommandRelease::CommandRelease()
+      {}
+      
+      CommandRelease::CommandRelease(ObjectHandle handle)
+        : handle(handle)
+      {}
+      
+      void CommandRelease::run()
+      {
         ManagedObject *obj = handle.lookup();
         Assert(obj);
         handle.freeObject();
       }
 
-      void CommandRelease::serialize(WriteStream &b) const {
+      void CommandRelease::serialize(WriteStream &b) const
+      {
         b << (int64)handle;
       }
-      void CommandRelease::deserialize(ReadStream &b) {
+      
+      void CommandRelease::deserialize(ReadStream &b)
+      {
         b >> handle.i64;
       }
 
-      CommandFinalize::CommandFinalize(){}
-      void CommandFinalize::run() {
+      // =======================================================
+      // ospFinalize
+      // =======================================================
+      
+      CommandFinalize::CommandFinalize()
+      {}
+      
+      void CommandFinalize::run()
+      {
         async::shutdown();
         // TODO: Is it ok to call exit again here?
         // should we be calling exit? When the MPIDevice is
@@ -802,12 +836,17 @@ namespace ospray {
         // be exiting.
         std::exit(0);
       }
-      void CommandFinalize::runOnMaster() {
+      
+      void CommandFinalize::runOnMaster()
+      {
         async::shutdown();
       }
-      void CommandFinalize::serialize(WriteStream &b) const {}
-      void CommandFinalize::deserialize(ReadStream &b) {}
-
+      
+      void CommandFinalize::serialize(WriteStream &b) const
+      {}
+      
+      void CommandFinalize::deserialize(ReadStream &b)
+      {}
 
     } // ::ospray::mpi::work
   } // ::ospray::mpi

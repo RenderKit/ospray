@@ -23,7 +23,11 @@ namespace ospray {
     MPIBcastFabric::MPIBcastFabric(const mpi::Group &group)
       : group(group),
         buffer(nullptr)
-    {}
+    {
+      if (!group.valid())
+        throw std::runtime_error("#osp:mpi: trying to set up a MPI fabric "
+                                 "with a invalid MPI communicator");
+    }
 
     /*! receive some block of data - whatever the sender has sent -
       and give us size and pointer to this data */
@@ -52,8 +56,12 @@ namespace ospray {
       uint32_t sz32 = size;
       PING;
       lockMPI("MPIBcastFabric::send");
+      PRINT((int*)MPI_COMM_WORLD);
+      PRINT((int*)group.comm);
       PING; std::cout << "locking MPI!!!" << std::endl;
       PRINT(whoHasTheMPILock());
+      PRINT(group.rank);
+      PRINT(group.size);
       MPI_CALL(Bcast(&sz32,1,MPI_INT,MPI_ROOT,group.comm));
       PRINT(sz32);
       MPI_CALL(Bcast(mem,sz32,MPI_BYTE,MPI_ROOT,group.comm));
