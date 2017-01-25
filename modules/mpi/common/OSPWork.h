@@ -157,7 +157,7 @@ namespace ospray {
         NewObjectT() {}
         NewObjectT(const char* type, ObjectHandle handle) : type(type), handle(handle) {}
         
-        virtual void run()         override {}
+        virtual void run()         override { throw std::runtime_error("newobjectt not defined for "+std::string(__PRETTY_FUNCTION__)); }
         virtual void runOnMaster() override {}
         
         /*! serializes itself on the given serial buffer - will write

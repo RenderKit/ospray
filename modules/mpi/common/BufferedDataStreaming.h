@@ -49,8 +49,12 @@ namespace ospray {
       {
         assert(size < (1LL<<30));
         uint32_t sz32 = size;
+        PING;
+        lockMPI();
         MPI_CALL(Bcast(&sz32,1,MPI_INT,MPI_ROOT,group.comm));
+        PRINT(sz32);
         MPI_CALL(Bcast(mem,sz32,MPI_BYTE,MPI_ROOT,group.comm));
+        unlockMPI();
       }
 
       /*! receive some block of data - whatever the sender has sent -
@@ -60,9 +64,13 @@ namespace ospray {
         if (buffer) delete[] buffer;
 
         uint32_t sz32 = 0;
+        lockMPI();
         MPI_CALL(Bcast(&sz32,1,MPI_INT,0,group.comm));
+        PING;
+        PRINT(sz32);
         buffer = new uint8_t[sz32];
         MPI_CALL(Bcast(buffer,sz32,MPI_BYTE,0,group.comm));
+        unlockMPI();
         mem = buffer;
         return sz32;
       }
@@ -83,7 +91,7 @@ namespace ospray {
          te next block will automatically get read from the fabric */ 
       struct ReadStream : public ospray::mpi::ReadStream {
         ReadStream(std::shared_ptr<Fabric> fabric)
-          : fabric(fabric)
+          : fabric(fabric), buffer(nullptr), numAvailable(0)
         {}
         
         virtual void read(void *mem, size_t size) override;

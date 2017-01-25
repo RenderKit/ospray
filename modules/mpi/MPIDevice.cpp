@@ -451,9 +451,11 @@ namespace ospray {
     /*! create a new model */
     OSPModel MPIDevice::newModel()
     {
+      PING;
       ObjectHandle handle = allocateHandle();
       work::NewModel work("", handle);
       processWork(&work);
+      PRINT((int64)handle);
       return (OSPModel)(int64)handle;
     }
 

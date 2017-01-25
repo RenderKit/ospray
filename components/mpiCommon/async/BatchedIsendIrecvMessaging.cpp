@@ -63,13 +63,17 @@ namespace ospray {
           }
           for (uint32_t i = 0; i < numActions; i++) {
             Action *action = actions[i];
+            lockMPI();
             MPI_CALL(Isend(action->data,action->size,MPI_BYTE,
                            action->addr.rank,g->tag,g->comm,&request[i]));
+            unlockMPI();
           }
 
           // TODO: Is it ok to wait even if we're exiting? Maybe we'd just get send
           // failed statuses back?
+          lockMPI();
           MPI_CALL(Waitall(numActions,request,MPI_STATUSES_IGNORE));
+          unlockMPI();
           
           for (uint32_t i = 0; i < numActions; i++) {
             Action *action = actions[i];
@@ -102,7 +106,9 @@ namespace ospray {
             // usleep(280);
             int msgAvail = 0;
             while (!msgAvail) {
+              lockMPI();
               MPI_CALL(Iprobe(MPI_ANY_SOURCE,g->tag,g->comm,&msgAvail,&status));
+              unlockMPI();
               if (g->shouldExit.load()){
                 return;
               }
@@ -119,37 +125,49 @@ namespace ospray {
             }
             Action *action = new Action;
             action->addr = Address(g,status.MPI_SOURCE);
+            lockMPI();
             MPI_CALL(Get_count(&status,MPI_BYTE,&action->size));
+            unlockMPI();
 
             action->data = malloc(action->size);
+            lockMPI();
             MPI_CALL(Irecv(action->data,action->size,MPI_BYTE,
                            status.MPI_SOURCE,status.MPI_TAG,
                            g->comm,&request[numRequests]));
+            unlockMPI();
             actions[numRequests++] = action;
           }
           // ... and add all the other ones that are outstanding, up
           // to max window size
           while (numRequests < RECV_WINDOW_SIZE) {
             int msgAvail;
+            lockMPI();
             MPI_CALL(Iprobe(MPI_ANY_SOURCE,g->tag,g->comm,&msgAvail,&status));
+            unlockMPI();
             if (!msgAvail)
               break;
             
             Action *action = new Action;
             action->addr = Address(g,status.MPI_SOURCE);
+            lockMPI();
             MPI_CALL(Get_count(&status,MPI_BYTE,&action->size));
+            unlockMPI();
 
             action->data = malloc(action->size);
+            lockMPI();
             MPI_CALL(Irecv(action->data,action->size,MPI_BYTE,
                            status.MPI_SOURCE,status.MPI_TAG,
                            g->comm,&request[numRequests]));
+            unlockMPI();
             actions[numRequests++] = action;
           }
 
           // TODO: Is it ok to wait even if we're exiting? Maybe we'd just get send
           // failed statuses back?
           // now, have certain number of messages available...
+          lockMPI();
           MPI_CALL(Waitall(numRequests,request,MPI_STATUSES_IGNORE));
+          unlockMPI();
 
           // OK, all actions are valid now
           g->recvQueue.putSome(&actions[0],numRequests);

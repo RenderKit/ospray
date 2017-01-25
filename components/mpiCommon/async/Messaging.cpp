@@ -28,9 +28,11 @@ namespace ospray {
       Group::Group(MPI_Comm comm, Consumer *consumer, int32 tag)
         :  consumer(consumer), tag(tag)
       {
+        lockMPI();
         MPI_CALL(Comm_dup(comm,&this->comm));
         MPI_CALL(Comm_rank(comm,&rank));
         MPI_CALL(Comm_size(comm,&size));
+        unlockMPI();
       }
 
       Group *WORLD = NULL;

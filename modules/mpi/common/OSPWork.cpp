@@ -356,8 +356,10 @@ namespace ospray {
       template<>
       void NewModel::run()
       {
+        PING;
         Model *model = new Model;
         handle.assign(model);
+        PING;
       }
       
       template<>

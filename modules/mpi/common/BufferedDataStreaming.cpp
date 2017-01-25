@@ -23,19 +23,21 @@ namespace ospray {
     {
       uint8_t *writePtr  = (uint8_t*)mem;
       size_t   numStillMissing = size;
-          
+
       while (numStillMissing > 0) {
         // fill in what we already have
         size_t numWeCanDeliver = std::min(numAvailable,numStillMissing);
+        if (numWeCanDeliver == 0) {
+          // read some more ... we HAVE to fulfill this 'read()'
+          // request, so have to read here
+          numAvailable = fabric->read((void*&)buffer);
+          continue;
+        }
+        
         memcpy(writePtr,buffer,numWeCanDeliver);
         buffer += numWeCanDeliver;
         numStillMissing -= numWeCanDeliver;
         numAvailable    -= numWeCanDeliver;
-
-        if (numStillMissing > 0)
-          // read some more ... we HAVE to fulfill this 'read()'
-          // request, so have to read here
-          numAvailable = fabric->read((void*&)buffer);
       }
     }
 
@@ -49,6 +51,7 @@ namespace ospray {
 
         readPtr += numWeCanWrite;
         numInBuffer += numWeCanWrite;
+        stillToWrite -= numWeCanWrite;
 
         if (numInBuffer == maxBufferSize)
           flush();

@@ -80,7 +80,7 @@ namespace ospray {
         and reset accumID.
       */
       void frameBufferClear(OSPFrameBuffer _fb,
-                                    const uint32 fbChannelFlags) override;
+                            const uint32 fbChannelFlags) override;
 
       /*! create a new model */
       OSPModel newModel() override;
@@ -109,7 +109,7 @@ namespace ospray {
 
       /*! Copy data into the given volume. */
       int setRegion(OSPVolume object, const void *source,
-                            const vec3i &index, const vec3i &count) override;
+                    const vec3i &index, const vec3i &count) override;
 
       /*! assign (named) string parameter to an object */
       void setString(OSPObject object,
@@ -176,8 +176,8 @@ namespace ospray {
 
       /*! call a renderer to render a frame buffer */
       float renderFrame(OSPFrameBuffer _sc,
-                               OSPRenderer _renderer,
-                               const uint32 fbChannelFlags) override;
+                        OSPRenderer _renderer,
+                        const uint32 fbChannelFlags) override;
 
       /*! load module */
       int loadModule(const char *name) override;
