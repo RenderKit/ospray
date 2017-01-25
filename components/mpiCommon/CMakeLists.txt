@@ -18,16 +18,9 @@ OSPRAY_CONFIGURE_MPI()
 
 OSPRAY_CREATE_LIBRARY(ospray_mpi_common
 
-  buffers.h
-  command.cpp
-
-#  BufferedMPIComm.cpp
   MPICommon.cpp
-  SerialBuffer.cpp
 
   async/Messaging.cpp
-#  async/SimpleSendRecvMessaging.cpp
-#  async/MultiIsendIrecvMessaging.cpp
   async/BatchedIsendIrecvMessaging.cpp
   async/CommLayer.cpp
   
