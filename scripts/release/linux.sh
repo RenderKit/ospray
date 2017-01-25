@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2014-2016 Intel Corporation                                    ##
+## Copyright 2014-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -112,12 +112,12 @@ cp $DEP_DIR/OSPRay_readme_$BRANCH.pdf readme.pdf
 # set release and RPM settings
 cmake \
 -D OSPRAY_BUILD_ISA=ALL \
--D OSPRAY_INSTALL_DEPENDENCIES=OFF \
 -D OSPRAY_USE_EXTERNAL_EMBREE=ON \
 -D TBB_ROOT=$DEP_DIR/$DEP_TBB \
 -D ISPC_EXECUTABLE=$DEP_DIR/$DEP_ISPC/ispc \
 -D USE_IMAGE_MAGICK=OFF \
 -D OSPRAY_ZIP_MODE=OFF \
+-D OSPRAY_INSTALL_DEPENDENCIES=OFF \
 -D CMAKE_INSTALL_PREFIX=/usr \
 ..
 

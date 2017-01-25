@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -40,7 +40,8 @@ namespace ospray {
 
       if (fileName.ext() == "osp") {
         importOSP(fn, group);
-#ifndef _WIN32
+#if 0 // NOTE(jda) - this can only be re-enabled once the importer stuff is off of Ref<>
+//#ifndef _WIN32
       } else if (fileName.ext() == "osg") {
           Ref<sg::World> world = new sg::World;
           world = sg::loadOSG(fn);

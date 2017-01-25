@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -82,8 +82,8 @@ namespace ospray {
       throw std::runtime_error("triangle mesh must have 'vertex' array");
     if (!indexData)
       throw std::runtime_error("triangle mesh must have 'index' array");
-    if (colorData && colorData->type != OSP_FLOAT4)
-      throw std::runtime_error("vertex.color must have data type OSP_FLOAT4");
+    if (colorData && colorData->type != OSP_FLOAT4 && colorData->type != OSP_FLOAT3A)
+      throw std::runtime_error("vertex.color must have data type OSP_FLOAT4 or OSP_FLOAT3A");
 
     // check whether we need 64-bit addressing
     bool huge_mesh = false;
@@ -227,6 +227,7 @@ namespace ospray {
                            getMaterial()?getMaterial()->getIE():NULL,
                            ispcMaterialPtrs,
                            (uint32_t*)prim_materialID,
+                           colorData && colorData->type == OSP_FLOAT4,
                            huge_mesh);
   }
 

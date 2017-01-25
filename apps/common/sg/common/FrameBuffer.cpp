@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,17 +14,18 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "sg/common/FrameBuffer.h"
+#include "FrameBuffer.h"
 
 namespace ospray {
   namespace sg {
 
-    FrameBuffer::FrameBuffer(const vec2i &size)
-      : size(size)
+    FrameBuffer::FrameBuffer(const vec2i &size) 
+      : size(size), 
+        ospFrameBuffer(NULL) 
     {
       createFB();
-    }
-
+    };
+    
     FrameBuffer::~FrameBuffer()
     {
       destroyFB();
@@ -54,12 +55,13 @@ namespace ospray {
     {
       return size;
     }
-
+    
+    /*! \brief returns a std::string with the c++ name of this class */
     std::string FrameBuffer::toString() const
     {
       return "ospray::sg::FrameBuffer";
     }
-
+    
     OSPFrameBuffer FrameBuffer::getOSPHandle() const
     {
       return ospFrameBuffer;
@@ -67,9 +69,9 @@ namespace ospray {
 
     void ospray::sg::FrameBuffer::createFB()
     {
-      osp::vec2i sizet;
-      ospFrameBuffer = ospNewFrameBuffer((osp::vec2i)sizet, OSP_FB_SRGBA,
-                                         OSP_FB_COLOR | OSP_FB_ACCUM);
+      ospFrameBuffer =
+          ospNewFrameBuffer((const osp::vec2i &)size, OSP_FB_SRGBA,
+                            OSP_FB_COLOR | OSP_FB_ACCUM);
     }
 
     void ospray::sg::FrameBuffer::destroyFB()

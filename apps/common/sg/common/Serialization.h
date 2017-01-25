@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -42,7 +42,7 @@ namespace ospray {
       } Mode;
       
       struct Instantiation : public RefCount {
-        Ref<Instantiation> parentWorld;
+        std::shared_ptr<Instantiation> parentWorld;
         affine3f           xfm;
 
         Instantiation() : xfm(one) {}
@@ -50,15 +50,17 @@ namespace ospray {
       
       /*! describes one object that we encountered */
       struct Object : public RefCount {
-        /*! the node itself */
-        Ref<sg::Node>      node;  
+        /*! the node itself - this is intentionally NOT a shared_ptr
+            since nodes call this with 'this', for which we have no
+            shared_ptr info */
+        std::shared_ptr<sg::Node> node;  
 
         /*! the instantiation info when we traversed this node. May be
           NULL if object isn't instanced (or only instanced once) */
-        Ref<Instantiation> instantiation;
-        // std::vector<Ref<Instantiation> > instantiation;
+        std::shared_ptr<Instantiation> instantiation;
 
-        Object(sg::Node *node=NULL, Instantiation *inst=NULL)
+        Object(const std::shared_ptr<sg::Node> &node, //const sg::Node *node=nullptr,
+               std::shared_ptr<Instantiation> inst)
           : node(node), instantiation(inst) 
         {};
       };
@@ -66,11 +68,11 @@ namespace ospray {
       /*! the node that maintains all the traversal state when
           traversing the scene graph */
       struct State {
-        Ref<Instantiation> instantiation;
+        std::shared_ptr<Instantiation> instantiation;
         Serialization *serialization;
       };
 
-      void serialize(Ref<sg::World> world, Serialization::Mode mode);
+      void serialize(std::shared_ptr<sg::World> world, Serialization::Mode mode);
       
       /*! clear all old objects */
       void clear() {  object.clear(); }
@@ -79,10 +81,9 @@ namespace ospray {
 
       /*! the vector containing all the objects encountered when
           serializing the entire scene graph */
-      std::vector<Ref<Object> > object;
+      std::vector<std::shared_ptr<Object> > object;
     };
     
-
   } // ::ospray::sg
 } // ::ospray
 

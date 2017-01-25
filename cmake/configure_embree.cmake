@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2016 Intel Corporation                                    ##
+## Copyright 2009-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -148,8 +148,21 @@ ELSE(OSPRAY_USE_EXTERNAL_EMBREE)
 
 ENDIF(OSPRAY_USE_EXTERNAL_EMBREE)
 
-# NOTE(jda) - Windows not yet handled...
-IF (OSPRAY_USE_EXTERNAL_EMBREE AND NOT WIN32 AND OSPRAY_INSTALL_DEPENDENCIES)
-  INSTALL(PROGRAMS ${EMBREE_LIBRARY}
-          DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib) # /intel64?
+IF (OSPRAY_INSTALL_DEPENDENCIES)
+  IF (WIN32)
+    GET_FILENAME_COMPONENT(EMBREE_LIB_DIR ${EMBREE_LIBRARY} PATH)
+    SET(EMBREE_DLL_HINTS
+      ${EMBREE_LIB_DIR}
+      ${EMBREE_LIB_DIR}/../bin
+      ${embree_DIR}/../../../bin
+      ${embree_DIR}/../bin
+    )
+    FIND_FILE(EMBREE_DLL embree.dll HINTS ${EMBREE_DLL_HINTS})
+    MARK_AS_ADVANCED(EMBREE_DLL)
+    INSTALL(PROGRAMS ${EMBREE_DLL}
+            DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT lib)
+  ELSE()
+    INSTALL(PROGRAMS ${EMBREE_LIBRARY}
+            DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib) # /intel64?
+  ENDIF()
 ENDIF()

@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2016 Intel Corporation                                    ##
+## Copyright 2009-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -22,6 +22,7 @@ SET(OSPRAY_VERSION_MAJOR 1)
 SET(OSPRAY_VERSION_MINOR 2)
 SET(OSPRAY_VERSION_PATCH 0)
 SET(OSPRAY_VERSION_GITHASH 0)
+SET(THIS_IS_OSPRAY ON)
 IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
   FIND_PACKAGE(Git)
   IF(GIT_FOUND)
@@ -31,7 +32,7 @@ IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
       OUTPUT_VARIABLE "OSPRAY_VERSION_GITHASH"
       ERROR_QUIET
       OUTPUT_STRIP_TRAILING_WHITESPACE)
-  ENDIF()
+  ENDIF() 
 ENDIF()
 
 SET(OSPRAY_VERSION
@@ -89,7 +90,7 @@ ENDIF()
 OPTION(OSPRAY_ZIP_MODE "Use tarball/zip CPack generator instead of RPM" ON)
 MARK_AS_ADVANCED(OSPRAY_ZIP_MODE)
 
-OPTION(OSPRAY_INSTALL_DEPENDENCIES "Install OSPRay dependencies in binary packages and install" OFF)
+OPTION(OSPRAY_INSTALL_DEPENDENCIES "Install OSPRay dependencies in binary packages and install")
 MARK_AS_ADVANCED(OSPRAY_INSTALL_DEPENDENCIES)
 
 INCLUDE(package)
@@ -108,14 +109,6 @@ OPTION(OSPRAY_USE_EMBREE_STREAMS "Enable Streams if using Embree v2.10 or later"
 
 OPTION(OSPRAY_USE_HIGH_QUALITY_BVH
        "Takes slighly longer to build but offers higher ray tracing performance; recommended when using Embree v2.11 or later")
-
-OPTION(OSPRAY_VOLUME_VOXELRANGE_IN_APP "Move 'voxelrange' computations to app?")
-MARK_AS_ADVANCED(OSPRAY_VOLUME_VOXELRANGE_IN_APP)
-
-# TODO should move to module/mpi/CMakeLists.txt
-OPTION(OSPRAY_MODULE_MPI "MPI parallel device" OFF)
-
-SET(OSPRAY_MPI ${OSPRAY_MODULE_MPI})
 
 SET(OSPRAY_TILE_SIZE 64 CACHE INT "Tile size")
 SET_PROPERTY(CACHE OSPRAY_TILE_SIZE PROPERTY STRINGS 8 16 32 64 128 256 512)

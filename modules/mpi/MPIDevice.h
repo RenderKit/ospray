@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,25 +16,22 @@
 
 #pragma once
 
+// mpicommon
+#include "mpiCommon/MPICommon.h"
+#include "mpiCommon/command.h"
+#include "mpiCommon/BufferedMPIComm.h"
+// ospray
 #include "api/Device.h"
-#include "mpi/common/MPICommon.h"
-#include "mpi/common/command.h"
-#include "mpi/common/CommandStream.h"
 #include "common/Managed.h"
+// ospray::mpi
+#include "mpi/common/OSPWork.h"
 
-/*! \file mpidevice.h Implements the "mpi" device for mpi rendering */
+/*! \file MPIDevice.h Implements the "mpi" device for mpi rendering */
 
 namespace ospray {
   namespace mpi {
-
     struct MPIDevice : public api::Device {
-      typedef ospray::mpi::CommandStream CommandStream;
-
-      CommandStream cmd;
-
-      typedef ospray::CommandTag CommandTag;
-
-      MPIDevice() = default;
+      MPIDevice();
       ~MPIDevice();
 
       // ManagedObject Implementation /////////////////////////////////////////
@@ -45,11 +42,11 @@ namespace ospray {
 
       /*! create a new frame buffer */
       OSPFrameBuffer
-      frameBufferCreate(const vec2i &size, 
+      frameBufferCreate(const vec2i &size,
                         const OSPFrameBufferFormat mode,
                         const uint32 channels) override;
 
-      /*! create a new transfer function object (out of list of 
+      /*! create a new transfer function object (out of list of
         registered transfer function types) */
       OSPTransferFunction newTransferFunction(const char *type) override;
 
@@ -66,17 +63,17 @@ namespace ospray {
 
       /*! set a frame buffer's pixel op object */
       void setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op) override;
-      
+
       /*! create a new pixelOp object (out of list of registered pixelOps) */
       OSPPixelOp newPixelOp(const char *type) override;
-        
+
       /*! clear the specified channel(s) of the frame buffer specified in 'whichChannels'
-        
+
         if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to
-        '0,0,0,0'.  
+        '0,0,0,0'.
 
         if whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to
-        +inf.  
+        +inf.
 
         if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0,
         and reset accumID.
@@ -178,7 +175,7 @@ namespace ospray {
 
       /*! call a renderer to render a frame buffer */
       float renderFrame(OSPFrameBuffer _sc,
-                               OSPRenderer _renderer, 
+                               OSPRenderer _renderer,
                                const uint32 fbChannelFlags) override;
 
       /*! load module */
@@ -214,11 +211,18 @@ namespace ospray {
                         const vec3f *worldCoordinates,
                         const size_t &count) override;
 
+      void processWork(work::Work* work);
+
     private:
 
       /*! This only exists to support getting the voxel type for setRegion */
       int getString(OSPObject object, const char *name, char **value);
 
+      ObjectHandle allocateHandle() const;
+
+      std::shared_ptr<mpi::BufferedMPIComm> bufferedComm;
+
+      bool initialized {false};
     };
 
     // ==================================================================

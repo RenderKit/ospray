@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -104,6 +104,29 @@ Light_EvalRes HDRILight_eval(const uniform Light* uniform super,
   return res;
 }
 
+// bin i represents the average contribution of (i-0.5, i+0.5) when we sample
+// the texture bilinearly at i
+// for i==0 we have a wrap-around, which is wanted for x (phi), but actually
+// not for y (theta), because then light (importance) from the south-pole is
+// leaking to the north-pole
+// however, sin(theta) is zero then, thus we will never sample there
+task unmasked void HDRILight_calcRowImportance(const HDRILight* uniform const self
+    , float* uniform const importance
+    , float* uniform const row_importance
+    )
+{
+  const uniform int y = taskIndex;
+  const uniform float fy = y * self->rcpSize.y;
+  const uniform int width = self->map->size.x;
+  const uniform float sinTheta = sin(fy * M_PI);
+  foreach(x = 0 ... width) {
+    const vec2f coord = make_vec2f(x * self->rcpSize.x, fy);
+    // using bilinear filtering is indeed what we want
+    const vec3f col = get3f(self->map, coord);
+    importance[y*width + x] = sinTheta * luminance(col);
+  }
+  row_importance[y] = Distribution1D_create(width, importance + y*width);
+}
 
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
@@ -114,7 +137,7 @@ export void HDRILight_set(void* uniform super,
                           void* uniform map,
                           uniform float intensity)
 {
-  uniform HDRILight* uniform self = (uniform HDRILight* uniform)super;
+  HDRILight* uniform self = (HDRILight* uniform)super;
 
   if (self->distribution != NULL) {
     Distribution2D_destroy(self->distribution);
@@ -129,30 +152,17 @@ export void HDRILight_set(void* uniform super,
     self->intensity = intensity;
 
     self->rcpSize = 1.f/self->map->sizef;
-    const uniform int width  = self->map->size.x;
     const uniform int height = self->map->size.y;
 
-    // calculate importance
-    // bin i represents the average contribution of (i-0.5, i+0.5) when we sample the texture bilinearly at i
-    // for i==0 we have a wrap-around, which is wanted for x (phi), but actually not for y (theta),
-    // because then light (importance) from the south-pole is leaking to the north-pole
-    // however, sin(theta) is zero then, thus we will never sample there
-    uniform float* uniform importance = uniform new uniform float[width*height];
-    for (uniform int y = 0; y < height; y++) {
-      uniform float fy = y*self->rcpSize.y;
-      uniform float sinTheta = sin(fy * M_PI);
-      for (uniform int x = 0; x < width; x++) {
-        const uniform vec2f coord = make_vec2f(x*self->rcpSize.x, fy);
-        const vec3f col = get3f(self->map, coord); // using bilinear filtering is indeed what we want
-        const uniform vec3f colu = make_vec3f(extract(col.x, 0), extract(col.y, 0), extract(col.z, 0));
-
-        importance[y*width+x] = sinTheta * luminance(colu);
-      }
-    }
+    // calculate importance in parallel
+    float* uniform cdf_x = uniform new float[self->map->size.x * height];
+    float* uniform row_importance = uniform new float[height];
+    launch[height] HDRILight_calcRowImportance(self, cdf_x, row_importance);
+    sync;
 
     // create distribution
-    self->distribution = Distribution2D_create(self->map->size, importance);
-    // no delete[] importance: ownership was transferred to Distribution2D
+    self->distribution = Distribution2D_create(self->map->size, cdf_x, row_importance);
+    // no delete[] (row_)importance: ownership was transferred to Distribution2D
 
     self->super.sample = HDRILight_sample;
     self->super.eval = HDRILight_eval;
@@ -165,7 +175,7 @@ export void HDRILight_set(void* uniform super,
 //! Create an ispc-side HDRILight object
 export void *uniform HDRILight_create()
 {
-  uniform HDRILight* uniform self = uniform new uniform HDRILight;
+  HDRILight* uniform self = uniform new HDRILight;
 
   Light_Constructor(&self->super);
   self->super.sample = HDRILight_sample_dummy;
@@ -179,7 +189,7 @@ export void *uniform HDRILight_create()
 //! Destroy an ispc-side HDRILight object
 export void HDRILight_destroy(void* uniform super)
 {
-  uniform HDRILight* uniform self = (uniform HDRILight* uniform)super;
+  HDRILight* uniform self = (HDRILight* uniform)super;
   Distribution2D_destroy(self->distribution);
   delete self;
 }

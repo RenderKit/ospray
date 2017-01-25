@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -118,11 +118,14 @@ namespace ospray {
     auto *object = symbolRegistry[type] ? (*symbolRegistry[type])() : nullptr;
 
     // Denote the subclass type in the ManagedObject base class.
-    if (object) object->managedObjectType = OSP_TYPE;
-
-    if (!object)
+    if (object) {
+      object->managedObjectType = OSP_TYPE;
+    }
+    else {
+      symbolRegistry.erase(type);
       throw std::runtime_error("Could not find object of type: " 
         + type + ".  Make sure you have the correct OSPRay libraries linked.");
+    }
 
     return object;
   }

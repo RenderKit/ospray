@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -103,13 +103,13 @@ namespace ospray {
             break;
           case OSP_TEXTURE:
             {
-              ParamT<Ref<Texture2D>> *p = (ParamT<Ref<Texture2D>>*)param.get();
-              Texture2D *tex = p->value.ptr;
+              ParamT<std::shared_ptr<Texture2D>> *p = (ParamT<std::shared_ptr<Texture2D>> *)param.get();
+              std::shared_ptr<Texture2D> tex = p->value;
               if (tex) {
                 tex->render(ctx);
                 if (tex->ospTexture) {
-                  std::cout << "setting texture " << p->value->toString() << " to mat value " << param->getName() << std::endl;
-                  ospSetObject(ospMaterial, param->getName().c_str(), p->value->ospTexture);
+                  std::cout << "setting texture " << tex->toString() << " to mat value " << param->getName() << std::endl;
+                  ospSetObject(ospMaterial, param->getName().c_str(), tex->ospTexture);
                 }
               }
             }

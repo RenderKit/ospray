@@ -1,6 +1,6 @@
 // ======================================================================== //
 // Copyright 2016 SURVICE Engineering Company                               //
-// Copyright 2016 Intel Corporation                                         //
+// Copyright 2017 Intel Corporation                                         //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -87,6 +87,14 @@ OSPGlutViewer::OSPGlutViewer(const std::deque<box3f> &worldBounds, std::deque<cp
   animationPaused = false;
   glutViewPort = viewPort;
   scale = vec3f(1,1,1);
+}
+
+void OSPGlutViewer::create(const char*  title,
+                           const vec2i& size,
+                                 bool   fullScreen)
+{
+  windowTitle = std::string(title);
+  Glut3DWidget::create(title, size, fullScreen);
 }
 
 void OSPGlutViewer::setRenderer(OSPRenderer renderer)
@@ -297,7 +305,7 @@ void OSPGlutViewer::display()
   // that pointer is no longer valid, so set it to null
   ucharFB = nullptr;
 
-  std::string title("OSPRay GLUT Viewer");
+  std::string title = windowTitle;
 
   if (alwaysRedraw) {
     title += " (" + std::to_string((long double)fps.getFPS()) + " fps)";

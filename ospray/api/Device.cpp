@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -20,15 +20,7 @@
 #include "common/Util.h"
 #include "ospcommon/sysinfo.h"
 // tasking system internals
-#if defined(OSPRAY_TASKING_TBB)
-# include <tbb/task_scheduler_init.h>
-#elif defined(OSPRAY_TASKING_CILK)
-# include <cilk/cilk_api.h>
-#elif defined(OSPRAY_TASKING_OMP)
-# include <omp.h>
-#elif defined(OSPRAY_TASKING_INTERNAL)
-# include "common/tasking/TaskSys.h"
-#endif
+#include "ospcommon/tasking/tasking_system_handle.h"
 // embree
 #include "embree2/rtcore.h"
 
@@ -58,10 +50,11 @@ namespace ospray {
     void Device::commit()
     {
       int cpuFeatures = ospcommon::getCPUFeatures();
-      if ((cpuFeatures & ospcommon::CPU_FEATURE_SSE41) == 0)
+
+      if ((cpuFeatures & ospcommon::CPU_FEATURE_SSE41) == 0) {
         throw std::runtime_error("Error. OSPRay only runs on CPUs that support"
                                  " at least SSE4.1.");
-
+      }
 
       auto OSPRAY_DEBUG = getEnvVar<int>("OSPRAY_DEBUG");
       debugMode = OSPRAY_DEBUG.first ? OSPRAY_DEBUG.second :
@@ -80,22 +73,7 @@ namespace ospray {
         numThreads = 1;
       }
 
-#if defined(OSPRAY_TASKING_TBB)
-      static tbb::task_scheduler_init tbb_init(numThreads);
-      UNUSED(tbb_init);
-#elif defined(OSPRAY_TASKING_CILK)
-      __cilkrts_set_param("nworkers", std::to_string(numThreads).c_str());
-#elif defined(OSPRAY_TASKING_OMP)
-      if (numThreads > 0) {
-        omp_set_num_threads(numThreads);
-      }
-#elif defined(OSPRAY_TASKING_INTERNAL)
-      try {
-        ospray::Task::initTaskSystem(debugMode ? 0 : numThreads);
-      } catch (const std::runtime_error &e) {
-        std::cerr << "WARNING: " << e.what() << std::endl;
-      }
-#endif
+      initTaskingSystem(numThreads);
 
       committed = true;
     }

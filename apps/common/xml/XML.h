@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -74,7 +74,7 @@ namespace ospray {
       std::map<std::string,std::string> properties;
 
       /*! list of child nodes */
-      std::vector<std::shared_ptr<Node> > child;
+      std::vector<std::shared_ptr<Node>> child;
 
       //! pointer to parent doc 
       /*! \detailed this points back to the parent xml doc that

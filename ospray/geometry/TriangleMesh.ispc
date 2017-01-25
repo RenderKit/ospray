@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -110,6 +110,8 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform _self,
     const vec4f b = gather_vec4f(huge_mesh, color, index.y);
     const vec4f c = gather_vec4f(huge_mesh, color, index.z);
     dg.color = interpolate(bary, a, b, c);
+    if (!self->has_alpha)
+      dg.color.w = 1.f;
   }
 
   if (flags & DG_TEXCOORD && self->texcoord) {
@@ -242,6 +244,7 @@ void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
                               uniform Material *uniform material,
                               uniform Material *uniform *uniform materialList,
                               uniform uint32 *uniform prim_materialID,
+                              uniform bool has_alpha,
                               uniform bool huge_mesh)
 {
   Geometry_Constructor(&mesh->super,cppEquivalent,
@@ -262,6 +265,7 @@ void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
   mesh->prim_materialID = prim_materialID;
   mesh->materialList = materialList;
   mesh->geom_materialID = geom_materialID;
+  mesh->has_alpha = has_alpha;
   mesh->huge_mesh = huge_mesh;
 }
 
@@ -269,7 +273,7 @@ export void *uniform TriangleMesh_create(void *uniform cppEquivalent)
 {
   TriangleMesh *uniform mesh = uniform new TriangleMesh;
   TriangleMesh_Constructor(mesh, cppEquivalent,
-                           NULL, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, -1, NULL, NULL, NULL, false);
+                           NULL, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, -1, NULL, NULL, NULL, true, false);
   return mesh;
 }
 
@@ -289,6 +293,7 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
                                       void *uniform material,
                                       void *uniform _materialList,
                                       uniform uint32 *uniform prim_materialID,
+                                      uniform bool has_alpha,
                                       uniform bool huge_mesh)
 {
   uniform TriangleMesh *uniform mesh = (uniform TriangleMesh *uniform)_mesh;
@@ -309,5 +314,6 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
                            (Material*uniform)material,
                            (Material*uniform*uniform)materialList,
                            prim_materialID,
+                           has_alpha,
                            huge_mesh);
 }
