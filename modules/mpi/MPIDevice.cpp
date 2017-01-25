@@ -176,6 +176,7 @@ namespace ospray {
                << "returning device on all ranks!" << endl;
         }
       }
+      PING;
     }
 
     void createMPI_RanksBecomeWorkers(int *ac, const char **av)
