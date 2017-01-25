@@ -19,6 +19,48 @@
 namespace ospray {
   namespace mpi {
 
+    /*! constructor - create a new broascast fabric that uses the given communicator */
+    MPIBcastFabric::MPIBcastFabric(const mpi::Group &group)
+      : group(group),
+        buffer(nullptr)
+    {}
+
+    /*! receive some block of data - whatever the sender has sent -
+      and give us size and pointer to this data */
+    size_t MPIBcastFabric::read(void *&mem) 
+    {
+      if (buffer) delete[] buffer;
+
+      uint32_t sz32 = 0;
+      lockMPI("MPIBcastFabric::read");
+      MPI_CALL(Bcast(&sz32,1,MPI_INT,0,group.comm));
+      PING;
+      PRINT(sz32);
+      buffer = new uint8_t[sz32];
+      MPI_CALL(Bcast(buffer,sz32,MPI_BYTE,0,group.comm));
+      unlockMPI();
+      mem = buffer;
+      return sz32;
+    }
+
+    /*! send exact number of bytes - the fabric can do that through
+      multiple smaller messages, but all bytes have to be
+      delivered */
+    void   MPIBcastFabric::send(void *mem, size_t size) 
+    {
+      assert(size < (1LL<<30));
+      uint32_t sz32 = size;
+      PING;
+      lockMPI("MPIBcastFabric::send");
+      PING; std::cout << "locking MPI!!!" << std::endl;
+      PRINT(whoHasTheMPILock());
+      MPI_CALL(Bcast(&sz32,1,MPI_INT,MPI_ROOT,group.comm));
+      PRINT(sz32);
+      MPI_CALL(Bcast(mem,sz32,MPI_BYTE,MPI_ROOT,group.comm));
+      unlockMPI();
+    }
+
+    
     void BufferedFabric::ReadStream::read(void *mem, size_t size)
     {
       uint8_t *writePtr  = (uint8_t*)mem;

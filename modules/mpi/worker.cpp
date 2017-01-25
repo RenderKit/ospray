@@ -129,9 +129,11 @@ namespace ospray {
 
       TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Slave>();
 
+      // -------------------------------------------------------
+      // setting up read/write streams
+      // -------------------------------------------------------
       std::shared_ptr<Fabric> mpiFabric
         = std::make_shared<MPIBcastFabric>(mpi::app);
-      
       std::shared_ptr<ReadStream> readStream
         = std::make_shared<BufferedFabric::ReadStream>(mpiFabric);
       std::shared_ptr<WriteStream> writeStream
@@ -142,7 +144,9 @@ namespace ospray {
       work::registerOSPWorkItems(workTypeRegistry);
       
       while (1) {
+        PING;
         std::shared_ptr<work::Work> work = readWork(workTypeRegistry,readStream);
+        PRINT(work->getTag());
         work->run();
       }
     }

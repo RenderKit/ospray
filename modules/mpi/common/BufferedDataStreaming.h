@@ -37,43 +37,18 @@ namespace ospray {
 
     /*! a specific fabric based on PMI */
     struct MPIBcastFabric : public Fabric {
-      MPIBcastFabric(const mpi::Group &group)
-        : group(group),
-          buffer(nullptr)
-      {}
+
+      /*! constructor - create a new broascast fabric that uses the given communicator */
+      MPIBcastFabric(const mpi::Group &group);
       
       /*! send exact number of bytes - the fabric can do that through
         multiple smaller messages, but all bytes have to be
         delivered */
-      virtual void   send(void *mem, size_t size) override
-      {
-        assert(size < (1LL<<30));
-        uint32_t sz32 = size;
-        PING;
-        lockMPI();
-        MPI_CALL(Bcast(&sz32,1,MPI_INT,MPI_ROOT,group.comm));
-        PRINT(sz32);
-        MPI_CALL(Bcast(mem,sz32,MPI_BYTE,MPI_ROOT,group.comm));
-        unlockMPI();
-      }
+      virtual void   send(void *mem, size_t size) override;
 
       /*! receive some block of data - whatever the sender has sent -
         and give us size and pointer to this data */
-      virtual size_t read(void *&mem) override
-      {
-        if (buffer) delete[] buffer;
-
-        uint32_t sz32 = 0;
-        lockMPI();
-        MPI_CALL(Bcast(&sz32,1,MPI_INT,0,group.comm));
-        PING;
-        PRINT(sz32);
-        buffer = new uint8_t[sz32];
-        MPI_CALL(Bcast(buffer,sz32,MPI_BYTE,0,group.comm));
-        unlockMPI();
-        mem = buffer;
-        return sz32;
-      }
+      virtual size_t read(void *&mem) override;
       
       uint8_t *buffer;
       mpi::Group group;

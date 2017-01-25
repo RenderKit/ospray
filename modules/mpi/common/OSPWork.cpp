@@ -224,16 +224,24 @@ namespace ospray {
       // CMD_SET_PARAM<...>
       // =======================================================
       template<>
-      void SetParam<std::string>::run() {
+      void SetParam<std::string>::run()
+      {
         ManagedObject *obj = handle.lookup();
         Assert(obj);
         obj->findParam(name.c_str(), true)->set(val.c_str());
       }
     
       template<>
-      void SetParam<std::string>::runOnMaster() {
+      void SetParam<std::string>::runOnMaster()
+      {
+        PING;
+        if (!handle.defined())
+          return;
+        
         ManagedObject *obj = handle.lookup();
         if (dynamic_cast<Renderer*>(obj) || dynamic_cast<Volume*>(obj)) {
+          PRINT(name);
+          PRINT(val);
           obj->findParam(name.c_str(), true)->set(val.c_str());
         }
       }
@@ -258,6 +266,7 @@ namespace ospray {
       void SetParam<T>::run() 
       {
         ManagedObject *obj = handle.lookup();
+        PING;
         Assert(obj);
         obj->findParam(name.c_str(), true)->set(val);
       }
@@ -265,6 +274,11 @@ namespace ospray {
       template<typename T>
       void SetParam<T>::runOnMaster() 
       {
+        PING;
+        if (!handle.defined())
+          return;
+        PING;
+        
         ManagedObject *obj = handle.lookup();
         if (dynamic_cast<Renderer*>(obj) || dynamic_cast<Volume*>(obj)) {
           obj->findParam(name.c_str(), true)->set(val);
@@ -375,13 +389,18 @@ namespace ospray {
         geometry->refInc();
         handle.assign(geometry);
       }
-      
+     
       template<>
       void NewCamera::run()
       {
+        PING;
         Camera *camera = Camera::createCamera(type.c_str());
+        PING;
         Assert(camera);
+        PING;
+        PRINT(handle);
         handle.assign(camera);
+        PING;
       }
       
       template<>

@@ -78,12 +78,14 @@ namespace ospray {
     if (i64 == 0) return NULL;
 
     auto it = objectByHandle.find(i64);
-#ifndef NDEBUG
     if (it == objectByHandle.end()) {
-      throw std::runtime_error("trying to look up object handle "+std::to_string(i64)+" that isn't defined!");
-    }
+#ifndef NDEBUG
+      // iw - made this into a warning only; the original code had
+      // this throw an actual exceptoin, but that may be overkill
+      std::cout << "#osp: WARNING: ospray is trying to look up object handle "+std::to_string(i64)+" that isn't defined!" << std::endl;
 #endif
-    Assert(it != objectByHandle.end());
+      return nullptr;
+    }
     return it->second.ptr;
   }
 

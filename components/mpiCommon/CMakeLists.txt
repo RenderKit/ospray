@@ -26,8 +26,8 @@ OSPRAY_CREATE_LIBRARY(ospray_mpi_common
   SerialBuffer.cpp
 
   async/Messaging.cpp
-  async/SimpleSendRecvMessaging.cpp
-  async/MultiIsendIrecvMessaging.cpp
+#  async/SimpleSendRecvMessaging.cpp
+#  async/MultiIsendIrecvMessaging.cpp
   async/BatchedIsendIrecvMessaging.cpp
   async/CommLayer.cpp
   

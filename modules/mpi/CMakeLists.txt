@@ -67,10 +67,10 @@ IF (OSPRAY_MODULE_MPI)
   OSPRAY_CREATE_APPLICATION(ospray_mpi_worker
     MPIWorker.cpp
   LINK
-    ospray
-    ospray_common
+#    ospray
+#    ospray_common
     ospray_module_mpi
-    ${MPI_CXX_LIBRARIES}
+#    ${MPI_CXX_LIBRARIES}
   )
 
 ENDIF (OSPRAY_MODULE_MPI)

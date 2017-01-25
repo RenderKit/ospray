@@ -57,11 +57,20 @@ namespace ospray {
         with the app */
     extern std::mutex mpiSerializerMutex;
 
-    /*! helper functions that lock resp unlock the mpi serializer mutex */
-    void lockMPI();
+    /*! helper functions that lock resp unlock the mpi serializer
+      mutex the 'whohasthelock' variable is only for debugging - it
+      allows for querying who acutally has the lock; the value of that
+      parameter is only for human consumptoin, though - we do not
+      defined in any way what this value is supposed to be
+     */
+    void lockMPI(const char *whoHasTheLock);
 
     /*! helper functions that lock resp unlock the mpi serializer mutex */
     void unlockMPI();
+
+    /*! the value of the 'whoHasTheLock' parameter of the last
+        succeeding lockMPI() call */
+    const char *whoHasTheMPILock();
     
     /*! use this macro as a lock-guard inside any scope you want to
         perform MPI calls in */

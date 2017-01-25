@@ -39,7 +39,12 @@ namespace ospray {
       /*! the command ID is a numerical value that corresponds to a
         given command type, and that lets the receiver figure out what
         kind of command it is to execute. CommandIDs are only useful
-        inside \see Command structures. */
+        inside \see Command structures.
+
+        note the hardcoded IDs have no practical relevance; we use
+        this only to more quickly identify the offending command if
+        something went wrong and all we have is the last command id.
+      */
       typedef enum {
         CMD_INVALID = -555,
         CMD_NEW_RENDERER=0,
@@ -67,10 +72,11 @@ namespace ospray {
         CMD_RELEASE,
         CMD_REMOVE_VOLUME,
 
-        CMD_SET_MATERIAL,
+        CMD_SET_MATERIAL=220,
         CMD_SET_REGION,
         CMD_SET_REGION_DATA,
-        CMD_SET_OBJECT,
+        
+        CMD_SET_OBJECT=230,
         CMD_SET_STRING,
         CMD_SET_INT,
         CMD_SET_FLOAT,
@@ -80,7 +86,7 @@ namespace ospray {
         CMD_SET_VEC3I,
         CMD_SET_VEC4F,
 
-        CMD_REMOVE_PARAM,
+        CMD_REMOVE_PARAM=250,
 
         CMD_SET_PIXELOP,
         CMD_NEW_PIXELOP,
@@ -146,11 +152,11 @@ namespace ospray {
       };
 
 
-      // All of the simple CMD_NEW_* can be implemented with the same
-      // template. The more unique ones like NEW_DATA, NEW_TEXTURE2D
-      // or render specific objects like lights and materials require
-      // some more special treatment to handle sending the data or
-      // other params around as well.
+      /*! All of the simple CMD_NEW_* can be implemented with the same
+       template. The more unique ones like NEW_DATA, NEW_TEXTURE2D or
+       render specific objects like lights and materials require some
+       more special treatment to handle sending the data or other
+       params around as well. */
       template<typename T>
       struct NewObjectT : BaseWork<T::TAG> {
 

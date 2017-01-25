@@ -35,13 +35,29 @@ namespace ospray {
         with the app */
     std::mutex mpiSerializerMutex;
 
+    /*! the value of the 'whoHasTheLock' parameter of the last
+        succeeding lockMPI() call */
+    const char *g_whoHasTheMPILock = NULL;
+    
+    /*! the value of the 'whoHasTheLock' parameter of the last
+        succeeding lockMPI() call */
+    const char *whoHasTheMPILock()
+    {
+      return g_whoHasTheMPILock;
+    }
+    
     /*! helper functions that lock resp unlock the mpi serializer mutex */
-    void lockMPI()
-    { mpiSerializerMutex.lock(); }
+    void lockMPI(const char *whoHasTheLock)
+    {
+      mpiSerializerMutex.lock();
+      g_whoHasTheMPILock = whoHasTheLock;
+    }
 
     /*! helper functions that lock resp unlock the mpi serializer mutex */
     void unlockMPI()
-    { mpiSerializerMutex.unlock(); }
+    {
+      mpiSerializerMutex.unlock();
+    }
     
     
     
@@ -129,7 +145,23 @@ namespace ospray {
 
       // by default, all MPI comm gets locked down, unless we
       // explicitly enable it
+
+#if 1
+      /* "eventually", if we want to play nicely with apps we have to
+         make sure that mpi calls are locked by default, get
+         (temporarily) unlocked only during ospray API calls (when the
+         app can expect that we do something), and re-locking it when
+         the ospray call is done - this is the only way we can
+         guarantee that nobody in ospray (say, an async messaging
+         thread) is doing any mpi calls at the same time as the
+         applicatoin (which would be bad). for now, i'm NOT yet doing
+         this to find some other bugs, but eventually we have to do
+         this - and once we do, we have to do the lock/unlock for
+         every api call. */
+      std::cout << "FOR NOW, WE DO _NOT_ LOCK MPI CALLS UPON STARTUP - EVENTUALLY WE HAVE TO DO THIS!!!" << std::endl;
+#else
       lockMPI();
+#endif
     }
 
     // void send(const Address& addr, work::Work* work)

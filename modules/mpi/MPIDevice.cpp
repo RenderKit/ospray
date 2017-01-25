@@ -963,9 +963,10 @@ namespace ospray {
       if (work->flushing()) 
         writeStream->flush();
 
-      std::cout << "running work..." << std::endl;
+      std::cout << "MPIDevice:: work->ronOnMaster ..." << work->getTag() << std::endl;
       // Run the master side variant of the work unit
       work->runOnMaster();
+      std::cout << "DONE MPIDevice:: work->ronOnMaster ..." << work->getTag() << std::endl;
       // } else {
       //   work->run();
       // }

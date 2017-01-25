@@ -90,11 +90,14 @@ extern "C" void ospInit(int *_ac, const char **_av)
 
     auto *mpiDevice = createMpiDevice();
     ospray::api::Device::current = mpiDevice;
+    PING;
     mpiDevice->findParam("mpiMode", true)->set("mpi-launch");
+    PING;
     mpiDevice->findParam("launchCommand", true)
              ->set(OSP_MPI_LAUNCH.second.c_str());
+    PING;
   }
-
+  PING;
   if (_ac && _av) {
     for (int i = 1; i < *_ac; i++) {
       std::string av(_av[i]);
@@ -109,7 +112,7 @@ extern "C" void ospInit(int *_ac, const char **_av)
       if (deviceSwitch == "--osp:device:") {
         removeArgs(*_ac,(char **&)_av,i,1);
         auto deviceName = av.substr(13);
-
+        
         try {
           auto *device = ospray::api::Device::createDevice(deviceName.c_str());
           ospray::api::Device::current = device;
