@@ -93,13 +93,24 @@ namespace ospray {
       }
       // this is the RIGHT naming convention - old code has them all inside out.
       void makeIntraComm() 
-      { MPI_Comm_rank(comm,&rank); MPI_Comm_size(comm,&size); containsMe = true; }
+      {
+        lockMPI("Group::makeIntraComm");
+        MPI_Comm_rank(comm,&rank);
+        MPI_Comm_size(comm,&size);
+        unlockMPI();
+        containsMe = true;
+      }
       void makeIntraComm(MPI_Comm comm)
       { this->comm = comm; makeIntraComm(); }
       void makeInterComm(MPI_Comm comm)
       { this->comm = comm; makeInterComm(); }
       void makeInterComm()
-      { containsMe = false; rank = MPI_ROOT; MPI_Comm_remote_size(comm,&size); }
+      {
+        lockMPI("Group::makeInterComm");
+        containsMe = false; rank = MPI_ROOT;
+        MPI_Comm_remote_size(comm,&size);
+        unlockMPI();
+      }
 
       /*! set to given intercomm, and properly set size, root, etc */
       void setTo(MPI_Comm comm);
@@ -108,7 +119,7 @@ namespace ospray {
       Group dup() const;
 
       /*! perform a MPI_barrier on this communicator */
-      void barrier() const { MPI_CALL(Barrier(comm)); }
+      void barrier() const ;
       
       /*! whether the current process/thread is a member of this
         gorup */

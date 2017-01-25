@@ -55,6 +55,7 @@ namespace ospray {
       assert(size < (1LL<<30));
       uint32_t sz32 = size;
       PING;
+      PRINT(whoHasTheMPILock());
       lockMPI("MPIBcastFabric::send");
       PRINT((int*)MPI_COMM_WORLD);
       PRINT((int*)group.comm);

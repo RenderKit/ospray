@@ -90,7 +90,10 @@ namespace ospray {
       MPI_Status status;
       mpi::init(ac,av);
       printf("#o: initMPI::OSPonRanks: %i/%i\n",world.rank,world.size);
+      lockMPI("createMPI_runOnExistingRanks");
       MPI_Barrier(MPI_COMM_WORLD);
+      unlockMPI();
+      PRINT(world.size);
       if (world.size <= 1) {
         throw std::runtime_error("No MPI workers found.\n#osp:mpi: Fatal Error "
                                  "- OSPRay told to run in MPI mode, but there "
@@ -99,9 +102,13 @@ namespace ospray {
                                  "application?)");
       }
 
+      PING;
+
       if (world.rank == 0) {
         // we're the root
+        lockMPI("createMPI_runOnExistingRanks - comm split");
         MPI_Comm_split(mpi::world.comm,1,mpi::world.rank,&app.comm);
+        unlockMPI();
         app.makeIntraComm();
         // app.makeIntercomm();
         printf("#w: app process %i/%i (global %i/%i)\n",
