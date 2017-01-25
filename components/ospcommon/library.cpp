@@ -52,10 +52,10 @@ namespace ospcommon {
 #else
     std::string fullName = "lib"+file+".so";
 #endif
-    lib = dlopen(fullName.c_str(), RTLD_NOW);
+    lib = dlopen(fullName.c_str(), RTLD_GLOBAL|RTLD_NOW);
     if (!lib) {
       FileName executable = getExecutableFileName();
-      lib = dlopen((executable.path() + fullName).c_str(), RTLD_NOW);
+      lib = dlopen((executable.path() + fullName).c_str(), RTLD_GLOBAL|RTLD_NOW);
     }
 #endif
 

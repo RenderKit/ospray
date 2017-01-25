@@ -287,11 +287,14 @@ namespace ospray {
 
   int loadLocalModule(const std::string &name)
   {
+    PING;
     std::string libName = "ospray_module_" + name;
+    PRINT(libName);
     loadLibrary(libName);
 
     std::string initSymName = "ospray_init_module_" + name;
     void*initSym = getSymbol(initSymName);
+    PRINT(initSym);
     if (!initSym) {
       throw std::runtime_error("#osp:api: could not find module initializer "
                                +initSymName);
@@ -304,6 +307,7 @@ namespace ospray {
       return 2;
 
     try {
+      PING;
       initMethod();
     } catch (...) {
       return 3;
