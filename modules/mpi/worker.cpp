@@ -58,6 +58,8 @@ namespace ospray {
     using std::cout;
     using std::endl;
 
+    bool logMPI = 0;
+
     OSPRAY_MPI_INTERFACE void runWorker();
 
     void embreeErrorFunc(const RTCError code, const char* str)
@@ -70,17 +72,16 @@ namespace ospray {
     std::shared_ptr<work::Work> readWork(std::map<work::Work::tag_t,work::CreateWorkFct> &registry,
                                          std::shared_ptr<ReadStream> &readStream)
     {
-      PING;
       work::Work::tag_t tag;
       *readStream >> tag;
 
-      printf("#osp.mpi(w): got work %i: %s\n",
-             tag,work::commandTagToString((work::CommandTag)tag));
-
+      if(logMPI)
+        printf("#osp.mpi(w): got work %i: %s\n",
+               tag,work::commandTagToString((work::CommandTag)tag));
+      
       auto make_work = registry.find(tag);
       assert(make_work != registry.end());
       std::shared_ptr<work::Work> work = make_work->second();
-      if (!work) throw std::runtime_error("#osp.mpi.worker: could not parse work item");
       assert(work);
       work->deserialize(*readStream);
       return work;
@@ -155,14 +156,14 @@ namespace ospray {
       std::map<work::Work::tag_t,work::CreateWorkFct> workTypeRegistry;
       work::registerOSPWorkItems(workTypeRegistry);
 
-      bool logMPI = checkIfWeNeedToDoMPIDebugOutputs() || 1;
+      logMPI = checkIfWeNeedToDoMPIDebugOutputs();
       while (1) {
         std::shared_ptr<work::Work> work = readWork(workTypeRegistry,readStream);
-        if (logMPI || device->debugMode)
+        if (logMPI)
           std::cout << "#osp.mpi.worker: procesing work "
                     << work::commandTagToString((work::CommandTag)work->getTag()) << std::endl;
         work->run();
-        if (logMPI || device->debugMode)
+        if (logMPI)
           std::cout << "#osp.mpi.worker: done w/ work "
                     << work::commandTagToString((work::CommandTag)work->getTag()) << std::endl;
       }

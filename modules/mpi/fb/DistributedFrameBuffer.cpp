@@ -125,7 +125,6 @@ namespace ospray {
       frameIsActive(false),
       frameIsDone(false)
   {
-    PING;
     assert(comm);
     this->ispcEquivalent = ispc::DFB_create(this);
     ispc::DFB_set(getIE(), numPixels.x, numPixels.y, colorBufferFormat);
@@ -367,7 +366,6 @@ namespace ospray {
         /*! if the master has RGBA8 or SRGBA format, we're sending him a tile
           of the proper data */
         MasterTileMessage_RGBA_I8 *mtm = new MasterTileMessage_RGBA_I8;
-        PRINT((int*)mtm->color[0][0]);
         mtm->command = MASTER_WRITE_TILE_I8;
         mtm->coords  = tile->begin;
         mtm->error   = tile->error;

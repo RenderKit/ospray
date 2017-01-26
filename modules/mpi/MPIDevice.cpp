@@ -93,7 +93,6 @@ namespace ospray {
       lockMPI("createMPI_runOnExistingRanks");
       MPI_Barrier(MPI_COMM_WORLD);
       unlockMPI();
-      PRINT(world.size);
       if (world.size <= 1) {
         throw std::runtime_error("No MPI workers found.\n#osp:mpi: Fatal Error "
                                  "- OSPRay told to run in MPI mode, but there "
@@ -101,8 +100,6 @@ namespace ospray {
                                  "you forget an 'mpirun' in front of your "
                                  "application?)");
       }
-
-      PING;
 
       if (world.rank == 0) {
         // we're the root
@@ -116,7 +113,6 @@ namespace ospray {
 
         MPI_Intercomm_create(app.comm, 0, world.comm, 1, 1, &worker.comm);
         std::cout << "master: Made 'worker' intercomm (through intercomm_create): " << (int*)worker.comm << std::endl;
-        PRINT(worker.valid());
         
         // worker.makeIntracomm();
         worker.makeInterComm();
@@ -143,8 +139,6 @@ namespace ospray {
         MPI_Comm_split(mpi::world.comm,0,mpi::world.rank,&worker.comm);
         worker.makeIntraComm();
         std::cout << "master: Made 'worker' intercomm (through split): " << (int*)worker.comm << std::endl;
-        PRINT(worker.valid());
-
         // worker.makeIntercomm();
         printf("#w: worker process %i/%i (global %i/%i)\n",
                worker.rank,worker.size,world.rank,world.size);
@@ -183,7 +177,6 @@ namespace ospray {
                << "returning device on all ranks!" << endl;
         }
       }
-      PING;
     }
 
     void createMPI_RanksBecomeWorkers(int *ac, const char **av)
@@ -413,8 +406,6 @@ namespace ospray {
 
       if (mpi::world.size != 1) {
         if (mpi::world.rank < 0) {
-          PRINT(mpi::world.rank);
-          PRINT(mpi::world.size);
           throw std::runtime_error("OSPRay MPI startup error. Use \"mpirun "
                                    "-n 1 <command>\" when calling an "
                                    "application that tries to spawn to start "
@@ -473,11 +464,9 @@ namespace ospray {
     /*! create a new model */
     OSPModel MPIDevice::newModel()
     {
-      PING;
       ObjectHandle handle = allocateHandle();
       work::NewModel work("", handle);
       processWork(&work);
-      PRINT((int64)handle);
       return (OSPModel)(int64)handle;
     }
 
@@ -487,15 +476,12 @@ namespace ospray {
       Assert(_object);
       const ObjectHandle handle = (const ObjectHandle&)_object;
       work::CommitObject work(handle);
-      PING;
       processWork(&work);
-      PING;
     }
 
     /*! add a new geometry to a model */
     void MPIDevice::addGeometry(OSPModel _model, OSPGeometry _geometry)
     {
-      PING;
       Assert(_model);
       Assert(_geometry);
       work::AddGeometry work(_model, _geometry);
@@ -815,15 +801,10 @@ namespace ospray {
                                 OSPRenderer _renderer,
                                 const uint32 fbChannelFlags)
     {
-      PING;
-      
       // Note: render frame is flushing so the work error result will be set,
       // since the master participates in rendering
-      PING;
       work::RenderFrame work(_fb, _renderer, fbChannelFlags);
-      PING;
       processWork(&work);
-      PING;
       return work.varianceResult;
     }
 
@@ -860,23 +841,6 @@ namespace ospray {
       processWork(&work);
       return (OSPTexture2D)(int64)handle;
     }
-
-    /*! return a string represenging the given API Mode */
-    const char *apiModeName(int mode)
-    {
-      switch (mode) {
-      case OSPD_MODE_INDEPENDENT:
-        return "OSPD_MODE_INDEPENDENT";
-      case OSPD_MODE_MASTERED:
-        return "OSPD_MODE_MASTERED";
-      case OSPD_MODE_COLLABORATIVE:
-        return "OSPD_MODE_COLLABORATIVE";
-      default:
-        PRINT(mode);
-        NOTIMPLEMENTED;
-      };
-    }
-
 
     void MPIDevice::sampleVolume(float **results,
                                  OSPVolume volume,

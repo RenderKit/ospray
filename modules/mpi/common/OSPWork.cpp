@@ -99,7 +99,6 @@ namespace ospray {
       
       void CommitObject::run()
       {
-        PING;
         ManagedObject *obj = handle.lookup();
         PRINT(obj->toString());
         if (obj) {
@@ -109,11 +108,9 @@ namespace ospray {
           // It looks like yes? or at least glutViewer segfaults if we don't do this
           // hack, to stay compatible with earlier version
           Model *model = dynamic_cast<Model*>(obj);
-          PING;
           if (model) {
             model->finalize();
           }
-          PING;
         } else {
           throw std::runtime_error("Error: rank " + std::to_string(mpi::world.rank)
                                    + " did not have object to commit!");
@@ -129,7 +126,6 @@ namespace ospray {
         
         mpi::app.barrier();
         // mpi::world.barrier();
-        PING;
       }
       
       void CommitObject::runOnMaster()
@@ -143,7 +139,6 @@ namespace ospray {
         }
         mpi::worker.barrier();
         // mpi::world.barrier();
-        PING;
       }
       
       void CommitObject::serialize(WriteStream &b) const
@@ -174,17 +169,13 @@ namespace ospray {
           format(format),
           channels(channels)
       {
-        PING;
       }
     
       void CreateFrameBuffer::run()
       {
-        PING;
         const bool hasDepthBuffer = channels & OSP_FB_DEPTH;
         const bool hasAccumBuffer = channels & OSP_FB_ACCUM;
         const bool hasVarianceBuffer = channels & OSP_FB_VARIANCE;
-        PING;
-        PRINT(dimensions);
         assert(dimensions.x > 0);
         assert(dimensions.y > 0);
         FrameBuffer *fb
@@ -195,32 +186,24 @@ namespace ospray {
         
         // TODO: Only the master does this increment, though should the workers do it too?
         fb->refInc();
-        PING;
         handle.assign(fb);
-        PING;
       }
       
       void CreateFrameBuffer::runOnMaster()
       {
-        PING;
         run();
-        PING;
       }
       
       void CreateFrameBuffer::serialize(WriteStream &b) const
       {
-        PING;
         b << (int64)handle << dimensions << (int32)format << channels;
-        PING;
       }
       
       void CreateFrameBuffer::deserialize(ReadStream &b)
       {
-        PING;
         int32 fmt;
         b >> handle.i64 >> dimensions >> fmt >> channels;
         format = (OSPFrameBufferFormat)fmt;
-        PING;
       }
 
       // =======================================================
@@ -272,7 +255,6 @@ namespace ospray {
       template<>
       void SetParam<std::string>::runOnMaster()
       {
-        PING;
         if (!handle.defined())
           return;
         
@@ -405,10 +387,8 @@ namespace ospray {
       template<>
       void NewModel::run()
       {
-        PING;
         Model *model = new Model;
         handle.assign(model);
-        PING;
       }
       
       template<>
@@ -428,14 +408,10 @@ namespace ospray {
       template<>
       void NewCamera::run()
       {
-        PING;
         Camera *camera = Camera::createCamera(type.c_str());
-        PING;
         Assert(camera);
-        PING;
         PRINT(handle);
         handle.assign(camera);
-        PING;
       }
       
       template<>
@@ -767,7 +743,6 @@ namespace ospray {
         Assert(model);
         Assert(geometry);
         model->geometry.push_back(geometry);
-        PING;
         PRINT(model->geometry.size());
       }
 
