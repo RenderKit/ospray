@@ -91,6 +91,7 @@ namespace ospray {
     {
       char *envVar = getenv("OSPRAY_MPI_DEBUG");
       if (!envVar) return false;
+      PING; PRINT(envVar);
       return atoi(envVar) > 0;
     }
     

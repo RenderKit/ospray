@@ -46,7 +46,8 @@ namespace ospray {
   using std::endl;
 
   namespace mpi {
-
+    extern bool logMPI;
+    
     //! this runs an ospray worker process.
     /*! it's up to the proper init routine to decide which processes
       call this function and which ones don't. This function will not
@@ -871,8 +872,9 @@ namespace ospray {
 
     void MPIDevice::processWork(work::Work* work)
     {
-      printf("#osp.mpi.master: processing work item %s\n",
-             work::commandTagToString((work::CommandTag)work->getTag()));
+      if (logMPI)
+        printf("#osp.mpi.master: processing work item %s\n",
+               work::commandTagToString((work::CommandTag)work->getTag()));
       work::Work::tag_t tag = work->getTag();
       writeStream->write(&tag,sizeof(tag));
       work->serialize(*writeStream);
@@ -882,8 +884,9 @@ namespace ospray {
 
       // Run the master side variant of the work unit
       work->runOnMaster();
-      printf("#osp.mpi.master: done work item %s\n",
-             work::commandTagToString((work::CommandTag)work->getTag()));
+      if (logMPI)
+        printf("#osp.mpi.master: done work item %s\n",
+               work::commandTagToString((work::CommandTag)work->getTag()));
     }
 
     ObjectHandle MPIDevice::allocateHandle() const

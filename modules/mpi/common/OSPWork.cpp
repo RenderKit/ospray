@@ -100,7 +100,6 @@ namespace ospray {
       void CommitObject::run()
       {
         ManagedObject *obj = handle.lookup();
-        PRINT(obj->toString());
         if (obj) {
           obj->commit();
 
@@ -132,7 +131,6 @@ namespace ospray {
       {
         if (handle.defined()) {
           ManagedObject *obj = handle.lookup();
-          PRINT(obj->toString());
           if (dynamic_cast<Renderer*>(obj)) {
             obj->commit();
           }
@@ -182,8 +180,6 @@ namespace ospray {
           = new DistributedFrameBuffer(ospray::mpi::async::CommLayer::WORLD,
                                        dimensions, handle, format, hasDepthBuffer,
                                        hasAccumBuffer, hasVarianceBuffer);
-        PRINT(fb);
-        
         // TODO: Only the master does this increment, though should the workers do it too?
         fb->refInc();
         handle.assign(fb);
@@ -260,8 +256,6 @@ namespace ospray {
         
         ManagedObject *obj = handle.lookup();
         if (dynamic_cast<Renderer*>(obj) || dynamic_cast<Volume*>(obj)) {
-          PRINT(name);
-          PRINT(val);
           obj->findParam(name.c_str(), true)->set(val.c_str());
         }
       }
@@ -410,7 +404,6 @@ namespace ospray {
       {
         Camera *camera = Camera::createCamera(type.c_str());
         Assert(camera);
-        PRINT(handle);
         handle.assign(camera);
       }
       
@@ -743,7 +736,6 @@ namespace ospray {
         Assert(model);
         Assert(geometry);
         model->geometry.push_back(geometry);
-        PRINT(model->geometry.size());
       }
 
       void AddVolume::run()
