@@ -108,6 +108,12 @@ SET(OSPRAY_PIXELS_PER_JOB 64 CACHE STRING
 MARK_AS_ADVANCED(OSPRAY_PIXELS_PER_JOB)
 
 
+# make Embree's INSTALLs happy
+INCLUDE(GNUInstallDirs)
+
+# Must be before ISA config and package
+INCLUDE(configure_embree)
+
 ##############################################################
 # create binary packages; before any INSTALL() invocation/definition
 ##############################################################
@@ -138,11 +144,3 @@ IF (OSPRAY_INSTALL_DEPENDENCIES)
             DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
   ENDIF()
 ENDIF()
-
-
-##############################################################
-# Setup Embree, must be after package configuration
-##############################################################
-
-# Must be before ISA config
-INCLUDE(configure_embree)
