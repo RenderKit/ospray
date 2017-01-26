@@ -60,7 +60,7 @@ ENDIF()
 ##############################################################
 # the OSPRay 'common' library
 ##############################################################
-OSPRAY_ADD_SUBDIRECTORY(${OSPCOMMON_DIR})
+ADD_SUBDIRECTORY(${OSPCOMMON_DIR})
 
 ##############################################################
 # OSPRay components
@@ -70,13 +70,13 @@ OSPRAY_ADD_SUBDIRECTORY(${OSPCOMMON_DIR})
 # libraries, etc, and may have dependencies to other components.
 ##############################################################
 INCLUDE(components/configure.cmake)
-OSPRAY_ADD_SUBDIRECTORY(components)
+ADD_SUBDIRECTORY(components)
 
 ##############################################################
 # the OSPRay library
 ##############################################################
 
-OSPRAY_ADD_SUBDIRECTORY(ospray)
+ADD_SUBDIRECTORY(ospray)
 
 ##############################################################
 # OSPRay sample apps; at the end: they may need modules
@@ -86,7 +86,7 @@ OPTION(OSPRAY_ENABLE_APPS "Enable the 'apps' subtree in the build." ON)
 MARK_AS_ADVANCED(OSPRAY_ENABLE_APPS)
 
 IF (OSPRAY_ENABLE_APPS)
-  OSPRAY_ADD_SUBDIRECTORY(apps)
+  ADD_SUBDIRECTORY(apps)
 ENDIF()
 
 ##############################################################
@@ -97,7 +97,7 @@ ENDIF()
 # module (which by definition is OPTIONAL) - so those go
 # AT THE BACK, only AFTER ALL OTHER PARTS OF OSPRAY ARE BUILT
 ##############################################################
-OSPRAY_ADD_SUBDIRECTORY(modules)
+ADD_SUBDIRECTORY(modules)
 
 
 

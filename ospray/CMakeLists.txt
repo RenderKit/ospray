@@ -385,10 +385,10 @@ OSPRAY_CREATE_LIBRARY(ospray ${OSPRAY_SOURCES} LINK ${OSPRAY_LIBS})
 
 # build ospTutorial, for testing
 ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial.cpp)
-OSPRAY_EXE_LINK_LIBRARIES(ospTutorial ospray ospray_common)
+TARGET_LINK_LIBRARIES(ospTutorial ospray ospray_common)
 # C version
 ADD_EXECUTABLE(ospTutorialC ../apps/ospTutorial.c)
-OSPRAY_EXE_LINK_LIBRARIES(ospTutorialC ospray ospray_common)
+TARGET_LINK_LIBRARIES(ospTutorialC ospray ospray_common)
 
 ##############################################################
 # Configure find_package files
