@@ -126,6 +126,7 @@ namespace ospray {
           MPI_Recv(&reply,1,MPI_INT,i,i,worker.comm,&status);
           Assert(reply == i);
         }
+        PING;
 
         MPI_Barrier(MPI_COMM_WORLD);
         // -------------------------------------------------------
@@ -151,11 +152,13 @@ namespace ospray {
         // app.containsMe = false;
 
         // replying to test-message
+        PING;
         printf("#w: worker %i trying to receive tag %i...\n",
                worker.rank,worker.rank);
         int reply;
         MPI_Recv(&reply,1,MPI_INT,0,worker.rank,app.comm,&status);
         MPI_Send(&reply,1,MPI_INT,0,worker.rank,app.comm);
+        PING;
 
         MPI_Barrier(MPI_COMM_WORLD);
         // -------------------------------------------------------

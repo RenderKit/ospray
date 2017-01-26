@@ -77,7 +77,7 @@ namespace ospray {
 
       static size_t numWorkReceived = 0;
       if(logMPI)
-        printf("#osp.mpi.worker(w): got work #%li, tag %i: %s\n",
+        printf("#osp.mpi.worker: got work #%li, tag %i: %s\n",
                numWorkReceived++,
                tag,work::commandTagToString((work::CommandTag)tag).c_str());
       
@@ -163,7 +163,7 @@ namespace ospray {
       while (1) {
         std::shared_ptr<work::Work> work = readWork(workTypeRegistry,readStream);
         if (logMPI)
-          std::cout << "#osp.mpi.worker: procesing work "
+          std::cout << "#osp.mpi.worker: processing work "
                     << work::commandTagToString((work::CommandTag)work->getTag()) << std::endl;
         work->run();
         if (logMPI)
