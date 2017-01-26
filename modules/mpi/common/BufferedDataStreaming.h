@@ -67,7 +67,9 @@ namespace ospray {
       struct ReadStream : public ospray::mpi::ReadStream {
         ReadStream(std::shared_ptr<Fabric> fabric)
           : fabric(fabric), buffer(nullptr), numAvailable(0)
-        {}
+        {
+          if (!fabric) throw std::runtime_error("invalid fabric on BufferedFabric::ReadStream");
+        }
         
         virtual void read(void *mem, size_t size) override;
 
@@ -82,12 +84,15 @@ namespace ospray {
         flush(), or when the maximum size of the buffer gets
         reached */
       struct WriteStream : public ospray::mpi::WriteStream {
-        WriteStream(std::shared_ptr<Fabric> fabric, size_t maxBufferSize = 1LL*1024*1024)
+        WriteStream(std::shared_ptr<Fabric> fabric,
+                    size_t maxBufferSize = 1LL*1024*1024)
           : fabric(fabric),
             maxBufferSize(maxBufferSize),
             numInBuffer(0),
             buffer(new uint8_t[maxBufferSize])
-        {}
+        {
+          if (!fabric) throw std::runtime_error("invalid fabric on BufferedFabric::WriteStream");
+        }
         ~WriteStream()
         { delete buffer; }
         

@@ -40,6 +40,10 @@ namespace ospray {
       // init async layer
       void initAsync()
       {
+#if 0
+        std::cout << "disbaling async messaging for now" << std::endl;
+        return;
+#endif
         if (AsyncMessagingImpl::global == NULL) {
           AsyncMessagingImpl::global = new BatchedIsendIrecvImpl;
           AsyncMessagingImpl::global->init();
@@ -48,17 +52,35 @@ namespace ospray {
 
       Group *createGroup(MPI_Comm comm, Consumer *consumer, int32 tag)
       {
+#if 0
+        std::cout << "disbaling async messaging for now" << std::endl;
+        return NULL;
+#endif
         initAsync();
         return AsyncMessagingImpl::global->createGroup(comm,consumer,tag);
       }
 
+      void flushMessages()
+      {
+        AsyncMessagingImpl::global->flush();
+      }
+      
       void shutdown()
       {
+#if 0
+        std::cout << "disbaling async messaging for now" << std::endl;
+        return;
+#endif
         AsyncMessagingImpl::global->shutdown();
       }
 
       void send(const Address &dest, void *msgPtr, int32 msgSize)
       {
+#if 0
+        std::cout << "disbaling async messaging for now" << std::endl;
+        return;
+#endif
+        printf("#mpi: sending message of size %i to %i\n",msgSize,dest.rank);
         AsyncMessagingImpl::global->send(dest,msgPtr,msgSize);
       }
 

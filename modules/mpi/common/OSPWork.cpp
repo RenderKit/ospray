@@ -38,28 +38,29 @@ namespace ospray {
   namespace mpi {
     namespace work {
 
-      const char* commandToString(CommandTag tag) {
+      const char* commandTagToString(CommandTag tag)
+      {
         switch (tag) {
-        case CMD_INVALID: return "CMD_INVALID";
-        case CMD_NEW_RENDERER: return "CMD_NEW_RENDERER";
-        case CMD_FRAMEBUFFER_CREATE: return "CMD_FRAMEBUFFER_CREATE";
-        case CMD_RENDER_FRAME: return "CMD_RENDER_FRAME";
-        case CMD_FRAMEBUFFER_CLEAR: return "CMD_FRAMEBUFFER_CLEAR";
-        case CMD_FRAMEBUFFER_MAP: return "CMD_FRAMEBUFFER_MAP";
-        case CMD_FRAMEBUFFER_UNMAP: return "CMD_FRAMEBUFFER_UNMAP";
-        case CMD_NEW_DATA: return "CMD_NEW_DATA";
-        case CMD_NEW_MODEL: return "CMD_NEW_MODEL";
-        case CMD_NEW_GEOMETRY: return "CMD_NEW_GEOMETRY";
-        case CMD_NEW_MATERIAL: return "CMD_NEW_MATERIAL";
-        case CMD_NEW_LIGHT: return "CMD_NEW_LIGHT";
-        case CMD_NEW_CAMERA: return "CMD_NEW_CAMERA";
-        case CMD_NEW_VOLUME: return "CMD_NEW_VOLUME";
+        case CMD_INVALID:              return "CMD_INVALID";
+        case CMD_NEW_RENDERER:         return "CMD_NEW_RENDERER";
+        case CMD_FRAMEBUFFER_CREATE:   return "CMD_FRAMEBUFFER_CREATE";
+        case CMD_RENDER_FRAME:         return "CMD_RENDER_FRAME";
+        case CMD_FRAMEBUFFER_CLEAR:    return "CMD_FRAMEBUFFER_CLEAR";
+        case CMD_FRAMEBUFFER_MAP:      return "CMD_FRAMEBUFFER_MAP";
+        case CMD_FRAMEBUFFER_UNMAP:    return "CMD_FRAMEBUFFER_UNMAP";
+        case CMD_NEW_DATA:             return "CMD_NEW_DATA";
+        case CMD_NEW_MODEL:            return "CMD_NEW_MODEL";
+        case CMD_NEW_GEOMETRY:         return "CMD_NEW_GEOMETRY";
+        case CMD_NEW_MATERIAL:         return "CMD_NEW_MATERIAL";
+        case CMD_NEW_LIGHT:            return "CMD_NEW_LIGHT";
+        case CMD_NEW_CAMERA:           return "CMD_NEW_CAMERA";
+        case CMD_NEW_VOLUME:           return "CMD_NEW_VOLUME";
         case CMD_NEW_TRANSFERFUNCTION: return "CMD_NEW_TRANSFERFUNCTION";
-        case CMD_NEW_TEXTURE2D: return "CMD_NEW_TEXTURE2D";
-        case CMD_ADD_GEOMETRY: return "CMD_ADD_GEOMETRY";
-        case CMD_REMOVE_GEOMETRY: return "CMD_REMOVE_GEOMETRY";
-        case CMD_ADD_VOLUME: return "CMD_ADD_VOLUME";
-        case CMD_COMMIT: return "CMD_COMMIT";
+        case CMD_NEW_TEXTURE2D:        return "CMD_NEW_TEXTURE2D";
+        case CMD_ADD_GEOMETRY:         return "CMD_ADD_GEOMETRY";
+        case CMD_REMOVE_GEOMETRY:      return "CMD_REMOVE_GEOMETRY";
+        case CMD_ADD_VOLUME:           return "CMD_ADD_VOLUME";
+        case CMD_COMMIT:               return "CMD_COMMIT";
         case CMD_LOAD_MODULE: return "CMD_LOAD_MODULE";
         case CMD_RELEASE: return "CMD_RELEASE";
         case CMD_REMOVE_VOLUME: return "CMD_REMOVE_VOLUME";
@@ -98,7 +99,9 @@ namespace ospray {
       
       void CommitObject::run()
       {
+        PING;
         ManagedObject *obj = handle.lookup();
+        PRINT(obj->toString());
         if (obj) {
           obj->commit();
 
@@ -106,9 +109,11 @@ namespace ospray {
           // It looks like yes? or at least glutViewer segfaults if we don't do this
           // hack, to stay compatible with earlier version
           Model *model = dynamic_cast<Model*>(obj);
+          PING;
           if (model) {
             model->finalize();
           }
+          PING;
         } else {
           throw std::runtime_error("Error: rank " + std::to_string(mpi::world.rank)
                                    + " did not have object to commit!");
@@ -116,18 +121,29 @@ namespace ospray {
         // TODO: Work units should not be directly making MPI calls.
         // What should be responsible for this barrier?
         // MPI_Barrier(MPI_COMM_WORLD);
-        mpi::world.barrier();
+
+        /// iw: nah, perfectly OK to do MPI calls, as long as they
+        /// don't get into each other's ways, nad make sure there's no
+        /// cyclical dependencies (ie, that the server unit actually
+        /// does get flushed etcpp)
+        
+        mpi::app.barrier();
+        // mpi::world.barrier();
+        PING;
       }
       
       void CommitObject::runOnMaster()
       {
-        if (!handle.defined()) return;
-        
-        ManagedObject *obj = handle.lookup();
-        if (dynamic_cast<Renderer*>(obj)) {
-          obj->commit();
+        if (handle.defined()) {
+          ManagedObject *obj = handle.lookup();
+          PRINT(obj->toString());
+          if (dynamic_cast<Renderer*>(obj)) {
+            obj->commit();
+          }
         }
-        mpi::world.barrier();
+        mpi::worker.barrier();
+        // mpi::world.barrier();
+        PING;
       }
       
       void CommitObject::serialize(WriteStream &b) const
@@ -145,7 +161,9 @@ namespace ospray {
       // =======================================================
 
       CreateFrameBuffer::CreateFrameBuffer()
-      {}
+        : dimensions(vec2i(-1))
+      {
+      }
       
       CreateFrameBuffer::CreateFrameBuffer(ObjectHandle handle,
                                            vec2i dimensions,
@@ -155,36 +173,54 @@ namespace ospray {
           dimensions(dimensions),
           format(format),
           channels(channels)
-      {}
+      {
+        PING;
+      }
     
       void CreateFrameBuffer::run()
       {
+        PING;
         const bool hasDepthBuffer = channels & OSP_FB_DEPTH;
         const bool hasAccumBuffer = channels & OSP_FB_ACCUM;
         const bool hasVarianceBuffer = channels & OSP_FB_VARIANCE;
-        FrameBuffer *fb = new DistributedFrameBuffer(ospray::mpi::async::CommLayer::WORLD,
-                                                     dimensions, handle, format, hasDepthBuffer, hasAccumBuffer, hasVarianceBuffer);
-
+        PING;
+        PRINT(dimensions);
+        assert(dimensions.x > 0);
+        assert(dimensions.y > 0);
+        FrameBuffer *fb
+          = new DistributedFrameBuffer(ospray::mpi::async::CommLayer::WORLD,
+                                       dimensions, handle, format, hasDepthBuffer,
+                                       hasAccumBuffer, hasVarianceBuffer);
+        PRINT(fb);
+        
         // TODO: Only the master does this increment, though should the workers do it too?
         fb->refInc();
+        PING;
         handle.assign(fb);
+        PING;
       }
       
       void CreateFrameBuffer::runOnMaster()
       {
+        PING;
         run();
+        PING;
       }
       
       void CreateFrameBuffer::serialize(WriteStream &b) const
       {
+        PING;
         b << (int64)handle << dimensions << (int32)format << channels;
+        PING;
       }
       
       void CreateFrameBuffer::deserialize(ReadStream &b)
       {
+        PING;
         int32 fmt;
         b >> handle.i64 >> dimensions >> fmt >> channels;
         format = (OSPFrameBufferFormat)fmt;
+        PING;
       }
 
       // =======================================================
@@ -268,7 +304,6 @@ namespace ospray {
       void SetParam<T>::run() 
       {
         ManagedObject *obj = handle.lookup();
-        PING;
         Assert(obj);
         obj->findParam(name.c_str(), true)->set(val);
       }
@@ -276,10 +311,8 @@ namespace ospray {
       template<typename T>
       void SetParam<T>::runOnMaster() 
       {
-        PING;
         if (!handle.defined())
           return;
-        PING;
         
         ManagedObject *obj = handle.lookup();
         if (dynamic_cast<Renderer*>(obj) || dynamic_cast<Volume*>(obj)) {
@@ -483,11 +516,19 @@ namespace ospray {
         handle.assign(light);
       }
 
+
+      // =======================================================
+      // ospNewData
+      // =======================================================
+
       NewData::NewData()
       {}
       
-      NewData::NewData(ObjectHandle handle, size_t nItems,
-                       OSPDataType format, void *init, int flags)
+      NewData::NewData(ObjectHandle handle,
+                       size_t nItems,
+                       OSPDataType format,
+                       void *init,
+                       int flags)
         : handle(handle),
           nItems(nItems),
           format(format),
@@ -499,6 +540,7 @@ namespace ospray {
           if (flags & OSP_DATA_SHARED_BUFFER) {
             localData = init;
           } else {
+            std::cout << "#osp.mpi: warning - newdata currently creates a std::ector copy of input data..." << std::endl;
             data.resize(ospray::sizeOf(format) * nItems);
             std::memcpy(data.data(), init, data.size());
           }
@@ -524,7 +566,7 @@ namespace ospray {
              what the core expects are pointers; to make the core
              happy we translate all data items back to pointers at
              this stage */
-          ObjectHandle *asHandle = (ObjectHandle*)ospdata->data;
+          ObjectHandle   *asHandle = (ObjectHandle*)ospdata->data;
           ManagedObject **asObjPtr = (ManagedObject**)ospdata->data;
           for (size_t i = 0; i < nItems; ++i) {
             if (asHandle[i] != NULL_HANDLE) {
@@ -537,6 +579,13 @@ namespace ospray {
       
       void NewData::serialize(WriteStream &b) const
       {
+        std::cout << "#osp.mpi: Warning - newdata serialize currently uses a std::vector ... " << std::endl;
+        /* note there are two issues with this: first is that when
+           sharing data buffer we'd hvae only localdata set (not the
+           this->data vector; second is that even _if_ we use the data
+           vector we're (temporarily) doubling memory consumptoin
+           because we copy all data into the std::vector first, just
+           so we can send it.... */
         b << (int64)handle << nItems << (int32)format << flags << data;
       }
       
@@ -546,6 +595,10 @@ namespace ospray {
         b >> handle.i64 >> nItems >> fmt >> flags >> data;
         format = (OSPDataType)fmt;
       }
+
+
+
+      
 
       NewTexture2d::NewTexture2d()
       {}
@@ -615,32 +668,57 @@ namespace ospray {
         type = (OSPDataType)ty;
       }
 
-      ClearFrameBuffer::ClearFrameBuffer(){}
+
+      // =======================================================
+      // ospFrameBufferClear
+      // =======================================================
+
+      ClearFrameBuffer::ClearFrameBuffer()
+      {}
+      
       ClearFrameBuffer::ClearFrameBuffer(OSPFrameBuffer fb, uint32 channels)
         : handle((ObjectHandle&)fb), channels(channels)
       {}
-      void ClearFrameBuffer::run() {
+      
+      void ClearFrameBuffer::run()
+      {
         FrameBuffer *fb = (FrameBuffer*)handle.lookup();
         Assert(fb);
         fb->clear(channels);
       }
-      void ClearFrameBuffer::runOnMaster() {
+      
+      void ClearFrameBuffer::runOnMaster()
+      {
         run();
       }
 
-      void ClearFrameBuffer::serialize(WriteStream &b) const {
+      void ClearFrameBuffer::serialize(WriteStream &b) const
+      {
         b << (int64)handle << channels;
       }
-      void ClearFrameBuffer::deserialize(ReadStream &b) {
+      
+      void ClearFrameBuffer::deserialize(ReadStream &b)
+      {
         b >> handle.i64 >> channels;
       }
 
-      RenderFrame::RenderFrame() : varianceResult(0.f) {}
+      // =======================================================
+      // ospRenderFrame
+      // =======================================================
+      
+      RenderFrame::RenderFrame()
+        : varianceResult(0.f)
+      {}
+      
       RenderFrame::RenderFrame(OSPFrameBuffer fb, OSPRenderer renderer, uint32 channels)
-        : fbHandle((ObjectHandle&)fb), rendererHandle((ObjectHandle&)renderer), channels(channels),
+        : fbHandle((ObjectHandle&)fb),
+          rendererHandle((ObjectHandle&)renderer),
+          channels(channels),
           varianceResult(0.f)
       {}
-      void RenderFrame::run() {
+      
+      void RenderFrame::run()
+      {
         FrameBuffer *fb = (FrameBuffer*)fbHandle.lookup();
         Renderer *renderer = (Renderer*)rendererHandle.lookup();
         Assert(renderer);
@@ -662,17 +740,23 @@ namespace ospray {
         }
 #endif
       }
-      void RenderFrame::runOnMaster() {
+      
+      void RenderFrame::runOnMaster()
+      {
         Renderer *renderer = (Renderer*)rendererHandle.lookup();
         FrameBuffer *fb = (FrameBuffer*)fbHandle.lookup();
         Assert(renderer);
         Assert(fb);
         varianceResult = TiledLoadBalancer::instance->renderFrame(renderer, fb, channels);
       }
-      void RenderFrame::serialize(WriteStream &b) const {
+      
+      void RenderFrame::serialize(WriteStream &b) const
+      {
         b << (int64)fbHandle << (int64)rendererHandle << channels;
       }
-      void RenderFrame::deserialize(ReadStream &b) {
+      
+      void RenderFrame::deserialize(ReadStream &b)
+      {
         b >> fbHandle.i64 >> rendererHandle.i64 >> channels;
       }
 

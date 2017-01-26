@@ -47,14 +47,14 @@ namespace ospray {
       */
       typedef enum {
         CMD_INVALID = -555,
-        CMD_NEW_RENDERER=0,
+        CMD_NEW_RENDERER=100,
         CMD_FRAMEBUFFER_CREATE,
         CMD_RENDER_FRAME,
         CMD_FRAMEBUFFER_CLEAR,
         CMD_FRAMEBUFFER_MAP,
         CMD_FRAMEBUFFER_UNMAP,
 
-        CMD_NEW_DATA = 100,
+        CMD_NEW_DATA = 200,
         CMD_NEW_MODEL,
         CMD_NEW_GEOMETRY,
         CMD_NEW_MATERIAL,
@@ -64,7 +64,7 @@ namespace ospray {
         CMD_NEW_TRANSFERFUNCTION,
         CMD_NEW_TEXTURE2D,
 
-        CMD_ADD_GEOMETRY=200,
+        CMD_ADD_GEOMETRY=300,
         CMD_REMOVE_GEOMETRY,
         CMD_ADD_VOLUME,
         CMD_COMMIT,
@@ -72,11 +72,11 @@ namespace ospray {
         CMD_RELEASE,
         CMD_REMOVE_VOLUME,
 
-        CMD_SET_MATERIAL=220,
+        CMD_SET_MATERIAL=400,
         CMD_SET_REGION,
         CMD_SET_REGION_DATA,
         
-        CMD_SET_OBJECT=230,
+        CMD_SET_OBJECT=500,
         CMD_SET_STRING,
         CMD_SET_INT,
         CMD_SET_FLOAT,
@@ -96,6 +96,7 @@ namespace ospray {
         CMD_FINALIZE,
       } CommandTag;
 
+      const char* commandTagToString(CommandTag tag);
       
       /*! abstract interface for a work item. a work item can
         serialize itself, de-serialize itself, and return a tag that

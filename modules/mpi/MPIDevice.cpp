@@ -450,7 +450,8 @@ namespace ospray {
     {
       ObjectHandle handle = (const ObjectHandle &)_fb;
       FrameBuffer *fb = (FrameBuffer *)handle.lookup();
-
+      assert(fb);
+      
       switch (channel) {
       case OSP_FB_COLOR: return fb->mapColorBuffer();
       case OSP_FB_DEPTH: return fb->mapDepthBuffer();
@@ -464,6 +465,8 @@ namespace ospray {
     {
       ObjectHandle handle = (const ObjectHandle &)_fb;
       FrameBuffer *fb = (FrameBuffer *)handle.lookup();
+      assert(fb);
+      
       fb->unmap(mapped);
     }
 
@@ -484,7 +487,9 @@ namespace ospray {
       Assert(_object);
       const ObjectHandle handle = (const ObjectHandle&)_object;
       work::CommitObject work(handle);
+      PING;
       processWork(&work);
+      PING;
     }
 
     /*! add a new geometry to a model */
@@ -901,20 +906,23 @@ namespace ospray {
 
     void MPIDevice::processWork(work::Work* work)
     {
+      printf("#osp.mpi.master: processing work item %s\n",
+             work::commandTagToString((work::CommandTag)work->getTag()));
+      work::Work::tag_t tag = work->getTag();
+      writeStream->write(&tag,sizeof(tag));
       work->serialize(*writeStream);
+      
       if (work->flushing()) 
         writeStream->flush();
 
-      std::cout << "MPIDevice:: work->ronOnMaster ..." << work->getTag() << std::endl;
       // Run the master side variant of the work unit
       work->runOnMaster();
-      std::cout << "DONE MPIDevice:: work->ronOnMaster ..." << work->getTag() << std::endl;
-      // } else {
-      //   work->run();
-      // }
+      printf("#osp.mpi.master: done work item %s\n",
+             work::commandTagToString((work::CommandTag)work->getTag()));
     }
 
-    ObjectHandle MPIDevice::allocateHandle() const {
+    ObjectHandle MPIDevice::allocateHandle() const
+    {
       ObjectHandle handle = nullHandle;
       switch (currentApiMode) {
         case OSPD_MODE_MASTERED:

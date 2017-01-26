@@ -79,6 +79,12 @@ namespace ospray {
             Action *action = actions[i];
             free(action->data);
             delete action;
+            
+            { std::lock_guard<std::mutex> lock(g->flushMutex);
+              g->numMessagesDoneSending++;
+              if (g->numMessagesDoneSending == g->numMessagesAskedToSend)
+                g->isFlushedCondition.notify_one();
+            }
           }
         }
       }
@@ -233,7 +239,9 @@ namespace ospray {
                                                        Consumer *consumer,
                                                        int32 tag)
       {
+        assert(consumer);
         Group *g = new Group(comm,consumer,tag);
+        assert(g);
         myGroups.push_back(g);
         return g;
       }
@@ -247,10 +255,32 @@ namespace ospray {
         action->data   = msgPtr;
         action->size   = msgSize;
 
+        
         Group *g = (Group *)dest.group;
+        { std::lock_guard<std::mutex> lock(g->flushMutex);
+          g->numMessagesAskedToSend++;
+        }
         g->sendQueue.put(action);
       }
 
+      /*! flushes all outgoing messages. note this currently does NOT
+          check if there's message incomgin during the flushign ... */
+      void BatchedIsendIrecvImpl::flush()
+      {
+        for (auto g : myGroups) {
+          assert(g);
+          g->flush();
+        }
+      }
+
+      void BatchedIsendIrecvImpl::Group::flush()
+      {
+        std::unique_lock<std::mutex> lock(flushMutex);
+        isFlushedCondition.wait(lock,[&]{
+            return (numMessagesDoneSending == numMessagesAskedToSend);
+          });
+      }
+      
     } // ::ospray::mpi::async
   } // ::ospray::mpi
 } // ::ospray

@@ -50,6 +50,42 @@ namespace ospray {
     }
     /*! @} */
 
+
+    /*! @{ stream operators into/out of read/write streams, for std::vectors of data 
+
+      \warning This code is often _expensive_ - if this, is for
+      example, a std::vector<byte>, then we'll do a buf.write for each
+      and every one of these vector entries. for cases like the, what
+      the caller _should_ do is to manually write first the size, and
+      then _all_ items in a single block. Still, it is good to have
+      this in here for correctness, so I'll leave it in here - the
+      alternative would be to explciitly 'throw' an execptoin in there
+      to prevent the user from using this slow-path in the firs
+      tplace. Finally - last comment on this - we might actually want to do add some templates 
+     */
+    template<typename T>
+    inline WriteStream &operator<<(WriteStream &buf, const std::vector<T> &rh)
+    {
+      size_t sz = rh.size();
+      buf << sz;
+      for (size_t i=0; i<sz; i++)
+        buf << (const T &)rh[i];
+      return buf;
+    }
+
+    template<typename T>
+    inline ReadStream &operator>>(ReadStream &buf, std::vector<T> &rh)
+    {
+      size_t sz;
+      buf >> sz;
+      rh.resize(sz);
+      for (size_t i=0; i<sz; i++)
+        buf >> rh[i];
+      return buf;
+    }
+    /*! @} */
+
+    
       
     /*! @{ serialize operations for strings */
     inline WriteStream &operator<<(WriteStream &buf, const std::string &rh)

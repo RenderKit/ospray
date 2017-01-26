@@ -42,9 +42,6 @@ namespace ospray {
         /*! message _sender_ thread */
         struct SendThread : public ThreadBase {
           SendThread(Group *group) : group(group) {
-#ifdef OSPRAY_PIN_ASYNC
-            embree::setAffinity(58); // 58
-#endif
           }
           virtual void run();
 
@@ -57,9 +54,6 @@ namespace ospray {
         {
           RecvThread(Group *group) : group(group)
           {
-#ifdef OSPRAY_PIN_ASYNC
-            embree::setAffinity(55); // 55
-#endif
           }
 
           virtual void run();
@@ -95,7 +89,8 @@ namespace ospray {
         {
           Group(MPI_Comm comm, Consumer *consumer, int32 tag = MPI_ANY_TAG);
           void shutdown();
-
+          void flush();
+          
           /*! the queue new send requests are put into; the send
               thread pulls from this and sends ad infinitum */
 
@@ -109,8 +104,14 @@ namespace ospray {
           ProcThread procThread;
           RecvThread recvThread;
           std::atomic<bool> shouldExit;
+
+          std::mutex flushMutex;
+          std::condition_variable isFlushedCondition;
+          size_t numMessagesDoneSending { 0 };
+          size_t numMessagesAskedToSend { 0 };
         };
 
+        virtual void flush();
         virtual void init();
         virtual void shutdown();
         virtual async::Group *createGroup(MPI_Comm comm,
@@ -120,6 +121,7 @@ namespace ospray {
 
         std::vector<Group *> myGroups;
       };
+
     }
   }
 }

@@ -49,7 +49,8 @@ namespace ospray {
     /*! helper functions that lock resp unlock the mpi serializer mutex */
     void lockMPI(const char *whoWantsTheLock)
     {
-      PING; PRINT(whoWantsTheLock); PRINT(g_whoHasTheMPILock);
+      // PING; PRINT(whoWantsTheLock); PRINT(g_whoHasTheMPILock);
+      // PRINT(world.rank);
       mpiSerializerMutex.lock();
       g_whoHasTheMPILock = whoWantsTheLock;
     }
@@ -57,6 +58,7 @@ namespace ospray {
     /*! helper functions that lock resp unlock the mpi serializer mutex */
     void unlockMPI()
     {
+      // std::cout << "mpi unlocked by " << g_whoHasTheMPILock << std::endl;
       g_whoHasTheMPILock = "<nobody>";
       mpiSerializerMutex.unlock();
     }
@@ -130,20 +132,13 @@ namespace ospray {
       MPI_CALL(Initialized(&initialized));
       unlockMPI();
       
-      PING;
-      PRINT(initialized);
-      
       if (!initialized) {
         // MPI_Init(ac,(char ***)&av);
         int required = MPI_THREAD_SERIALIZED;
         int provided = 0;
-        PING;
-        PRINT(required);
-        PRINT(ac);
-        PRINT(av);
+        lockMPI("MPI_init_thread");
         MPI_CALL(Init_thread(ac,(char ***)&av,required,&provided));
-        PRINT(provided);
-        PING;
+        unlockMPI();
         if (provided != required) {
           throw std::runtime_error("MPI implementation does not offer "
                                    "multi-threading capabilities");
@@ -160,16 +155,19 @@ namespace ospray {
           throw std::runtime_error("ospray requires mpi to be initialized with "
             "MPI_THREAD_SERIAL if initialized before calling ospray");
       }
+      lockMPI("mpi::init()");
       world.comm = MPI_COMM_WORLD;
       MPI_CALL(Comm_rank(MPI_COMM_WORLD,&world.rank));
       MPI_CALL(Comm_size(MPI_COMM_WORLD,&world.size));
-
+      unlockMPI();
+      
       std::cout << "#osp.mpi: starting up the async messaging layer ...!" << std::endl;
       mpi::async::CommLayer::WORLD = new mpi::async::CommLayer;
       mpi::async::Group *worldGroup =
           mpi::async::createGroup(MPI_COMM_WORLD,
                                   mpi::async::CommLayer::WORLD,
                                   290374);
+      assert(worldGroup);
       mpi::async::CommLayer::WORLD->group = worldGroup;
       std::cout << "#osp.mpi: async messaging layer started ... (even though mpi device not yet set up!)" << std::endl;
 

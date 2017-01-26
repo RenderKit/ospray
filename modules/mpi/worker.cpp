@@ -70,17 +70,29 @@ namespace ospray {
     std::shared_ptr<work::Work> readWork(std::map<work::Work::tag_t,work::CreateWorkFct> &registry,
                                          std::shared_ptr<ReadStream> &readStream)
     {
+      PING;
       work::Work::tag_t tag;
       *readStream >> tag;
+
+      printf("#osp.mpi(w): got work %i: %s\n",
+             tag,work::commandTagToString((work::CommandTag)tag));
 
       auto make_work = registry.find(tag);
       assert(make_work != registry.end());
       std::shared_ptr<work::Work> work = make_work->second();
+      if (!work) throw std::runtime_error("#osp.mpi.worker: could not parse work item");
       assert(work);
       work->deserialize(*readStream);
       return work;
     }
 
+    bool checkIfWeNeedToDoMPIDebugOutputs()
+    {
+      char *envVar = getenv("OSPRAY_MPI_DEBUG");
+      if (!envVar) return false;
+      return atoi(envVar) > 0;
+    }
+    
     /*! it's up to the proper init
       routine to decide which processes call this function and which
       ones don't. This function will not return.
@@ -142,12 +154,17 @@ namespace ospray {
       // create registry of work item types
       std::map<work::Work::tag_t,work::CreateWorkFct> workTypeRegistry;
       work::registerOSPWorkItems(workTypeRegistry);
-      
+
+      bool logMPI = checkIfWeNeedToDoMPIDebugOutputs() || 1;
       while (1) {
-        PING;
         std::shared_ptr<work::Work> work = readWork(workTypeRegistry,readStream);
-        PRINT(work->getTag());
+        if (logMPI || device->debugMode)
+          std::cout << "#osp.mpi.worker: procesing work "
+                    << work::commandTagToString((work::CommandTag)work->getTag()) << std::endl;
         work->run();
+        if (logMPI || device->debugMode)
+          std::cout << "#osp.mpi.worker: done w/ work "
+                    << work::commandTagToString((work::CommandTag)work->getTag()) << std::endl;
       }
     }
 
