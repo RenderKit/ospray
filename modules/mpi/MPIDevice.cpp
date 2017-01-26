@@ -495,6 +495,7 @@ namespace ospray {
     /*! add a new geometry to a model */
     void MPIDevice::addGeometry(OSPModel _model, OSPGeometry _geometry)
     {
+      PING;
       Assert(_model);
       Assert(_geometry);
       work::AddGeometry work(_model, _geometry);

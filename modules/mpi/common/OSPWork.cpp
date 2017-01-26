@@ -767,6 +767,8 @@ namespace ospray {
         Assert(model);
         Assert(geometry);
         model->geometry.push_back(geometry);
+        PING;
+        PRINT(model->geometry.size());
       }
 
       void AddVolume::run()

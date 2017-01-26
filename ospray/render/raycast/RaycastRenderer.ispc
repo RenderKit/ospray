@@ -202,6 +202,7 @@ void RaycastRenderer_renderSample_eyeLight_primID(uniform Renderer *uniform _sel
     sample.rgb = make_vec3f(0.f);
   else {
     const float c = dot(normalize(sample.ray.Ng),sample.ray.dir);
+    print("HIT %\n",sample.ray.primID);
     sample.rgb = make_vec3f(.3f+.8f*abs(c))*make_random_color(sample.ray.primID);
   }
 }

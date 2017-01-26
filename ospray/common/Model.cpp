@@ -78,6 +78,7 @@ namespace ospray {
       ispc::Model_setVolume(getIE(), i, volume[i]->getIE());
     
     rtcCommit(embreeSceneHandle);
+    PING;
   }
 
 } // ::ospray

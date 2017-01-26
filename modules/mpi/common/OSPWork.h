@@ -488,7 +488,7 @@ namespace ospray {
       };
 
       
-      struct AddGeometry : BaseWork<CMD_ADD_VOLUME> {
+      struct AddGeometry : BaseWork<CMD_ADD_GEOMETRY> {
         
         AddGeometry(){}
         AddGeometry(OSPModel model, const OSPGeometry &t)

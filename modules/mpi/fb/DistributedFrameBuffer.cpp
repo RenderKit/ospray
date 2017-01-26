@@ -27,8 +27,8 @@
 #  include <windows.h> // for Sleep
 #endif
 
-#define DBG(a) a
-// #define DBG(a) /* ignore */
+//#define DBG(a) a
+#define DBG(a) /* ignore */
 
 using std::cout;
 using std::endl;
@@ -367,6 +367,7 @@ namespace ospray {
         /*! if the master has RGBA8 or SRGBA format, we're sending him a tile
           of the proper data */
         MasterTileMessage_RGBA_I8 *mtm = new MasterTileMessage_RGBA_I8;
+        PRINT((int*)mtm->color[0][0]);
         mtm->command = MASTER_WRITE_TILE_I8;
         mtm->coords  = tile->begin;
         mtm->error   = tile->error;
@@ -406,7 +407,6 @@ namespace ospray {
 
   void DFB::incoming(mpi::async::CommLayer::Message *_msg)
   {
-    printf("#osp.dfb: incoming message of type %li\n",_msg->command);
     if (!frameIsActive) {
       SCOPED_LOCK(mutex);
       if (!frameIsActive) {
