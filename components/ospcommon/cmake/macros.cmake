@@ -170,19 +170,6 @@ ENDMACRO()
 
 ## Target creation macros ##
 
-FUNCTION(OSPRAY_ADD_SUBDIRECTORY subdirectory)
-  SET(OSPRAY_EXE_SUFFIX "")
-  SET(OSPRAY_LIB_SUFFIX "")
-  SET(OSPRAY_ISPC_SUFFIX ".o")
-  SET(__XEON__ ON)
-
-  ADD_SUBDIRECTORY(${subdirectory})
-ENDFUNCTION()
-
-MACRO(OSPRAY_ADD_EXECUTABLE name)
-  ADD_EXECUTABLE(${name}${OSPRAY_EXE_SUFFIX} ${ARGN})
-ENDMACRO()
-
 MACRO(OSPRAY_ADD_LIBRARY name type)
   SET(ISPC_SOURCES "")
   SET(OTHER_SOURCES "")
@@ -195,31 +182,12 @@ MACRO(OSPRAY_ADD_LIBRARY name type)
     ENDIF ()
   ENDFOREACH()
   OSPRAY_ISPC_COMPILE(${ISPC_SOURCES})
-  ADD_LIBRARY(${name}${OSPRAY_LIB_SUFFIX} ${type}
-              ${ISPC_OBJECTS} ${OTHER_SOURCES} ${ISPC_SOURCES})
-ENDMACRO()
-
-## Target linking macros ##
-
-MACRO(OSPRAY_TARGET_LINK_LIBRARIES name)
-  SET(LINK_LIBS "")
-
-  SET(LINK_LIBS ${ARGN})
-
-  TARGET_LINK_LIBRARIES(${name} ${LINK_LIBS})
-ENDMACRO()
-
-MACRO(OSPRAY_LIBRARY_LINK_LIBRARIES name)
-  OSPRAY_TARGET_LINK_LIBRARIES(${name}${OSPRAY_LIB_SUFFIX} ${ARGN})
-ENDMACRO()
-
-MACRO(OSPRAY_EXE_LINK_LIBRARIES name)
-  OSPRAY_TARGET_LINK_LIBRARIES(${name}${OSPRAY_EXE_SUFFIX} ${ARGN})
+  ADD_LIBRARY(${name} ${type} ${ISPC_OBJECTS} ${OTHER_SOURCES} ${ISPC_SOURCES})
 ENDMACRO()
 
 ## Target install macros for OSPRay libraries ##
 
-MACRO(OSPRAY_INSTALL_LIBRARY name)
+MACRO(OSPRAY_INSTALL_LIBRARY name component)
   # NOTE(jda) - Check if CMAKE_INSTALL_LIB/BINDIR is set, and use
   #             CMAKE_INSTALL_PREFIX if it's not defined. It may not be defined
   #             in a client project who calls this macro in their CMakeLists.
@@ -235,94 +203,103 @@ MACRO(OSPRAY_INSTALL_LIBRARY name)
     SET(LOCAL_BIN_INSTALL_DIR ${CMAKE_INSTALL_BINDIR})
   ENDIF()
 
-  INSTALL(TARGETS ${name}${OSPRAY_LIB_SUFFIX} ${ARGN}
+  INSTALL(TARGETS ${name}
     LIBRARY DESTINATION ${LOCAL_LIB_INSTALL_DIR}
-      COMPONENT lib${OSPRAY_LIB_SUFFIX}
+      COMPONENT ${component}
     # on Windows put the dlls into bin
     RUNTIME DESTINATION ${LOCAL_BIN_INSTALL_DIR}
-      COMPONENT lib
+      COMPONENT ${component}
     # ... and the import lib into the devel package
     ARCHIVE DESTINATION ${LOCAL_LIB_INSTALL_DIR}
       COMPONENT devel
   )
 ENDMACRO()
 
-# only use for executables required for OSPRay functionality, e.g. the MPI
-# worker, because these go into install component 'lib'
-MACRO(OSPRAY_INSTALL_EXE _name)
-  SET(name ${_name}${OSPRAY_EXE_SUFFIX})
-  INSTALL(TARGETS ${name} ${ARGN} 
-    DESTINATION ${CMAKE_INSTALL_BINDIR}
-    COMPONENT lib${OSPRAY_LIB_SUFFIX}
-  )
-ENDMACRO()
-
 ## Target versioning macro ##
 
-MACRO(OSPRAY_SET_LIBRARY_VERSION _name)
-  SET(name ${_name}${OSPRAY_LIB_SUFFIX})
+MACRO(OSPRAY_SET_LIBRARY_VERSION name)
   SET_TARGET_PROPERTIES(${name}
     PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
 ENDMACRO()
 
-## Conveniance macro for creating OSPRay libraries ##
-# Usage
-#
-#   OSPRAY_CREATE_LIBRARY(<name> source1 [source2 ...]
-#                         [LINK lib1 [lib2 ...]])
-#
-# will create and install shared library <name> from 'sources' with
-# version OSPRAY_[SO]VERSION and optionally link against 'libs'
 
-MACRO(OSPRAY_CREATE_LIBRARY LIBRARY_NAME)
-  SET(LIBRARY_SOURCES "")
-  SET(LINK_LIBS "")
+# Helper function to return arguments of OSPRAY_CREATE_ in separate
+# variables, prefixed with PREFIX
+FUNCTION(OSPRAY_SPLIT_CREATE_ARGS PREFIX)
+  SET(SOURCES "")
+  SET(LIBS "")
+  SET(COMPONENT ${OSPRAY_DEFAULT_COMPONENT})
+  SET(CURRENT_LIST SOURCES)
 
-  SET(CURRENT_LIST LIBRARY_SOURCES)
   FOREACH(arg ${ARGN})
     IF (${arg} STREQUAL "LINK")
-      SET(CURRENT_LIST LINK_LIBS)
+      SET(CURRENT_LIST LIBS)
+    ELSEIF (${arg} STREQUAL "COMPONENT")
+      SET(CURRENT_LIST COMPONENT)
     ELSE()
       LIST(APPEND ${CURRENT_LIST} ${arg})
     ENDIF ()
   ENDFOREACH()
 
+  LIST(LENGTH COMPONENT COMPONENTS)
+  IF (COMPONENTS EQUAL 0)
+    MESSAGE(WARNING "No COMPONENT for installation specified!")
+    SET(COMPONENT ${CMAKE_INSTALL_DEFAULT_COMPONENT_NAME})
+  ELSE()
+    LIST(GET COMPONENT -1 COMPONENT)
+  ENDIF()
+
+  SET(${PREFIX}_SOURCES ${SOURCES} PARENT_SCOPE)
+  SET(${PREFIX}_LIBS ${LIBS} PARENT_SCOPE)
+  SET(${PREFIX}_COMPONENT ${COMPONENT} PARENT_SCOPE)
+ENDFUNCTION()
+
+## Conveniance macro for creating OSPRay libraries ##
+# Usage
+#
+#   OSPRAY_CREATE_LIBRARY(<name> source1 [source2 ...]
+#                         [LINK lib1 [lib2 ...]]
+#                         [COMPONENT component])
+#
+# will create and install shared library <name> from 'sources' with
+# version OSPRAY_[SO]VERSION and optionally link against 'libs'.
+# Per default the application will be installed in component
+# OSPRAY_DEFAULT_COMPONENT which can be overridden individually with
+# COMPONENT.
+
+MACRO(OSPRAY_CREATE_LIBRARY LIBRARY_NAME)
+  OSPRAY_SPLIT_CREATE_ARGS(LIBRARY ${ARGN})
+
   OSPRAY_ADD_LIBRARY(${LIBRARY_NAME} SHARED ${LIBRARY_SOURCES})
-  OSPRAY_LIBRARY_LINK_LIBRARIES(${LIBRARY_NAME} ${LINK_LIBS})
+  TARGET_LINK_LIBRARIES(${LIBRARY_NAME} ${LIBRARY_LIBS})
   OSPRAY_SET_LIBRARY_VERSION(${LIBRARY_NAME})
-  OSPRAY_INSTALL_LIBRARY(${LIBRARY_NAME})
+  OSPRAY_INSTALL_LIBRARY(${LIBRARY_NAME} ${LIBRARY_COMPONENT})
 ENDMACRO()
 
 ## Conveniance macro for creating OSPRay applications ##
 # Usage
 #
 #   OSPRAY_CREATE_APPLICATION(<name> source1 [source2 ...]
-#                             [LINK lib1 [lib2 ...]])
+#                             [LINK lib1 [lib2 ...]]
+#                             [COMPONENT component])
 #
 # will create and install application <name> from 'sources' with version
-# OSPRAY_VERSION and optionally link against 'libs'
+# OSPRAY_VERSION and optionally link against 'libs'.
+# Per default the application will be installed in component
+# OSPRAY_DEFAULT_COMPONENT which can be overridden individually with
+# COMPONENT.
 
 MACRO(OSPRAY_CREATE_APPLICATION APP_NAME)
-  SET(APP_SOURCES "")
-  SET(LINK_LIBS "")
+  OSPRAY_SPLIT_CREATE_ARGS(APP ${ARGN})
 
-  SET(CURRENT_LIST APP_SOURCES)
-  FOREACH(arg ${ARGN})
-    IF (${arg} STREQUAL "LINK")
-      SET(CURRENT_LIST LINK_LIBS)
-    ELSE()
-      LIST(APPEND ${CURRENT_LIST} ${arg})
-    ENDIF ()
-  ENDFOREACH()
- 
   ADD_EXECUTABLE(${APP_NAME} ${APP_SOURCES})
-  TARGET_LINK_LIBRARIES(${APP_NAME} ${LINK_LIBS})
+  TARGET_LINK_LIBRARIES(${APP_NAME} ${APP_LIBS})
   IF (WIN32)
     SET_TARGET_PROPERTIES(${APP_NAME} PROPERTIES VERSION ${OSPRAY_VERSION})
   ENDIF()
   INSTALL(TARGETS ${APP_NAME}
     DESTINATION ${CMAKE_INSTALL_BINDIR}
-    COMPONENT apps
+    COMPONENT ${APP_COMPONENT}
   )
 ENDMACRO()
 

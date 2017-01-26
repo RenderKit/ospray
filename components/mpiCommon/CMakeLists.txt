@@ -23,9 +23,11 @@ OSPRAY_CREATE_LIBRARY(ospray_mpi_common
   async/Messaging.cpp
   async/BatchedIsendIrecvMessaging.cpp
   async/CommLayer.cpp
-  
-  LINK
+
+LINK
 
   ${MPI_LIBRARIES}
   ospray_common
+
+COMPONENT mpi
 )
