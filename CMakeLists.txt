@@ -34,10 +34,6 @@ IF(POLICY CMP0054)
   CMAKE_POLICY(SET CMP0054 OLD) # since 3.1
 ENDIF()
 
-# tell all included directories that they are included from ospray
-# main...
-SET(THIS_IS_OSPRAY ON)
-
 # configure directories for components we are going to include
 SET(OSPRAY_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 SET(COMPONENTS_DIR ${OSPRAY_DIR}/components)

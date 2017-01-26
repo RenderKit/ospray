@@ -22,7 +22,6 @@ SET(OSPRAY_VERSION_MAJOR 1)
 SET(OSPRAY_VERSION_MINOR 2)
 SET(OSPRAY_VERSION_PATCH 0)
 SET(OSPRAY_VERSION_GITHASH 0)
-SET(THIS_IS_OSPRAY ON)
 IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
   FIND_PACKAGE(Git)
   IF(GIT_FOUND)
@@ -108,9 +107,6 @@ SET(OSPRAY_PIXELS_PER_JOB 64 CACHE STRING
     "Must be multiple of largest vector width *and* <= OSPRAY_TILE_SIZE")
 MARK_AS_ADVANCED(OSPRAY_PIXELS_PER_JOB)
 
-# Must be before ISA config
-INCLUDE(configure_embree)
-
 
 ##############################################################
 # create binary packages; before any INSTALL() invocation/definition
@@ -123,7 +119,6 @@ OPTION(OSPRAY_INSTALL_DEPENDENCIES "Install OSPRay dependencies in binary packag
 MARK_AS_ADVANCED(OSPRAY_INSTALL_DEPENDENCIES)
 
 INCLUDE(package)
-
 
 IF (OSPRAY_INSTALL_DEPENDENCIES)
   IF (WIN32)
@@ -143,3 +138,11 @@ IF (OSPRAY_INSTALL_DEPENDENCIES)
             DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib) # /intel64?
   ENDIF()
 ENDIF()
+
+
+##############################################################
+# Setup Embree, must be after package configuration
+##############################################################
+
+# Must be before ISA config
+INCLUDE(configure_embree)
