@@ -38,7 +38,7 @@ namespace ospray {
   namespace mpi {
     namespace work {
 
-      const char* commandTagToString(CommandTag tag)
+      std::string commandTagToString(CommandTag tag)
       {
         switch (tag) {
         case CMD_INVALID:              return "CMD_INVALID";
@@ -61,27 +61,29 @@ namespace ospray {
         case CMD_REMOVE_GEOMETRY:      return "CMD_REMOVE_GEOMETRY";
         case CMD_ADD_VOLUME:           return "CMD_ADD_VOLUME";
         case CMD_COMMIT:               return "CMD_COMMIT";
-        case CMD_LOAD_MODULE: return "CMD_LOAD_MODULE";
-        case CMD_RELEASE: return "CMD_RELEASE";
-        case CMD_REMOVE_VOLUME: return "CMD_REMOVE_VOLUME";
-        case CMD_SET_MATERIAL: return "CMD_SET_MATERIAL";
-        case CMD_SET_REGION: return "CMD_SET_REGION";
-        case CMD_SET_REGION_DATA: return "CMD_SET_REGION_DATA";
-        case CMD_SET_OBJECT: return "CMD_SET_OBJECT";
-        case CMD_SET_STRING: return "CMD_SET_STRING";
-        case CMD_SET_INT: return "CMD_SET_INT";
-        case CMD_SET_FLOAT: return "CMD_SET_FLOAT";
-        case CMD_SET_VEC2F: return "CMD_SET_VEC2F";
-        case CMD_SET_VEC2I: return "CMD_SET_VEC2I";
-        case CMD_SET_VEC3F: return "CMD_SET_VEC3F";
-        case CMD_SET_VEC3I: return "CMD_SET_VEC3I";
-        case CMD_SET_VEC4F: return "CMD_SET_VEC4F";
-        case CMD_SET_PIXELOP: return "CMD_SET_PIXELOP";
-        case CMD_REMOVE_PARAM: return "CMD_REMOVE_PARAM";
-        case CMD_NEW_PIXELOP: return "CMD_NEW_PIXELOP";
-        case CMD_API_MODE: return "CMD_API_MODE";
-        case CMD_FINALIZE: return "CMD_FINALIZE";
-        default: return "Unrecognized CommandTag";
+        case CMD_LOAD_MODULE:          return "CMD_LOAD_MODULE";
+        case CMD_RELEASE:              return "CMD_RELEASE";
+        case CMD_REMOVE_VOLUME:        return "CMD_REMOVE_VOLUME";
+        case CMD_SET_MATERIAL:         return "CMD_SET_MATERIAL";
+        case CMD_SET_REGION:           return "CMD_SET_REGION";
+        case CMD_SET_REGION_DATA:      return "CMD_SET_REGION_DATA";
+        case CMD_SET_OBJECT:           return "CMD_SET_OBJECT";
+        case CMD_SET_STRING:           return "CMD_SET_STRING";
+        case CMD_SET_INT:              return "CMD_SET_INT";
+        case CMD_SET_FLOAT:            return "CMD_SET_FLOAT";
+        case CMD_SET_VEC2F:            return "CMD_SET_VEC2F";
+        case CMD_SET_VEC2I:            return "CMD_SET_VEC2I";
+        case CMD_SET_VEC3F:            return "CMD_SET_VEC3F";
+        case CMD_SET_VEC3I:            return "CMD_SET_VEC3I";
+        case CMD_SET_VEC4F:            return "CMD_SET_VEC4F";
+        case CMD_SET_PIXELOP:          return "CMD_SET_PIXELOP";
+        case CMD_REMOVE_PARAM:         return "CMD_REMOVE_PARAM";
+        case CMD_NEW_PIXELOP:          return "CMD_NEW_PIXELOP";
+        case CMD_API_MODE:             return "CMD_API_MODE";
+        case CMD_FINALIZE:             return "CMD_FINALIZE";
+        default:
+          PRINT(tag);
+          return "Unrecognized CommandTag #"+std::to_string((int)tag);
         }
       }
 

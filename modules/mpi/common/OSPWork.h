@@ -96,7 +96,7 @@ namespace ospray {
         CMD_FINALIZE,
       } CommandTag;
 
-      const char* commandTagToString(CommandTag tag);
+      std::string commandTagToString(CommandTag tag);
       
       /*! abstract interface for a work item. a work item can
         serialize itself, de-serialize itself, and return a tag that

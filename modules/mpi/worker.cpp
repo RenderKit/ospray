@@ -75,9 +75,11 @@ namespace ospray {
       work::Work::tag_t tag;
       *readStream >> tag;
 
+      static size_t numWorkReceived = 0;
       if(logMPI)
-        printf("#osp.mpi(w): got work %i: %s\n",
-               tag,work::commandTagToString((work::CommandTag)tag));
+        printf("#osp.mpi.worker(w): got work #%li, tag %i: %s\n",
+               numWorkReceived++,
+               tag,work::commandTagToString((work::CommandTag)tag).c_str());
       
       auto make_work = registry.find(tag);
       assert(make_work != registry.end());
@@ -106,7 +108,7 @@ namespace ospray {
       auto &device = ospray::api::Device::current;
 
       auto numThreads = device ? device->numThreads : -1;
-
+      
       // initialize embree. (we need to do this here rather than in
       // ospray::init() because in mpi-mode the latter is also called
       // in the host-stubs, where it shouldn't.

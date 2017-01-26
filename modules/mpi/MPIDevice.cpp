@@ -345,11 +345,16 @@ namespace ospray {
       MPI_Barrier(app.comm);
     }
     
+    bool checkIfWeNeedToDoMPIDebugOutputs();
+    
     MPIDevice::MPIDevice()
     //      : bufferedComm(std::make_shared<BufferedMPIComm>())
     {
       /* do _NOT_ try to set up the fabric, streams, etc, here - MPI
          comms are _NOT_ yet properly set up */
+
+      // check if env variables etc compel us to do logging...
+      logMPI = checkIfWeNeedToDoMPIDebugOutputs();
     }
 
     MPIDevice::~MPIDevice()
@@ -872,10 +877,15 @@ namespace ospray {
 
     void MPIDevice::processWork(work::Work* work)
     {
-      if (logMPI)
-        printf("#osp.mpi.master: processing work item %s\n",
-               work::commandTagToString((work::CommandTag)work->getTag()));
+      if (logMPI) {
+        static size_t numWorkSent = 0;
+        printf("#osp.mpi.master: processing/sending work item #%li: %s\n",
+               numWorkSent++,
+               work::commandTagToString((work::CommandTag)work->getTag()).c_str());
+      }
       work::Work::tag_t tag = work->getTag();
+      if (tag == 1)
+        throw std::runtime_error("inavlid tag!?");
       writeStream->write(&tag,sizeof(tag));
       work->serialize(*writeStream);
       
@@ -886,7 +896,7 @@ namespace ospray {
       work->runOnMaster();
       if (logMPI)
         printf("#osp.mpi.master: done work item %s\n",
-               work::commandTagToString((work::CommandTag)work->getTag()));
+               work::commandTagToString((work::CommandTag)work->getTag()).c_str());
     }
 
     ObjectHandle MPIDevice::allocateHandle() const

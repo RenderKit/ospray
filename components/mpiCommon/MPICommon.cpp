@@ -49,8 +49,6 @@ namespace ospray {
     /*! helper functions that lock resp unlock the mpi serializer mutex */
     void lockMPI(const char *whoWantsTheLock)
     {
-      // PING; PRINT(whoWantsTheLock); PRINT(g_whoHasTheMPILock);
-      // PRINT(world.rank);
       mpiSerializerMutex.lock();
       g_whoHasTheMPILock = whoWantsTheLock;
     }
@@ -96,11 +94,6 @@ namespace ospray {
     void Group::setTo(MPI_Comm comm)
     {
       this->comm = comm;
-      PING;
-      PRINT(comm);
-      PRINT((int*)comm);
-      PRINT((int*)MPI_COMM_NULL);
-      PRINT((int*)MPI_COMM_WORLD);
       if (comm == MPI_COMM_NULL) {
         rank = size = -1;
       } else {
