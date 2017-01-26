@@ -381,7 +381,7 @@ IF (WIN32)
   ENDIF()
 ENDIF()
 
-OSPRAY_CREATE_LIBRARY(ospray ${OSPRAY_SOURCES} LINK ${OSPRAY_LIBS})
+OSPRAY_CREATE_LIBRARY(ospray ${OSPRAY_SOURCES} LINK ${OSPRAY_LIBS} COMPONENT lib)
 
 # build ospTutorial, for testing
 ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial.cpp)

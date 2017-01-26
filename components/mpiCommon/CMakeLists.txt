@@ -17,7 +17,6 @@
 OSPRAY_CONFIGURE_MPI()
 
 OSPRAY_CREATE_LIBRARY(ospray_mpi_common
-
   buffers.h
   command.cpp
 
@@ -30,9 +29,11 @@ OSPRAY_CREATE_LIBRARY(ospray_mpi_common
   async/MultiIsendIrecvMessaging.cpp
   async/BatchedIsendIrecvMessaging.cpp
   async/CommLayer.cpp
-  
-  LINK
+
+LINK
 
   ${MPI_LIBRARIES}
   ospray_common
+
+COMPONENT mpi
 )

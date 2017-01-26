@@ -83,6 +83,35 @@ IF (WIN32)
   ADD_DEFINITIONS(-DNOMINMAX)
 ENDIF()
 
+
+##############################################################
+# OSPRay specific build options and configuration selection
+##############################################################
+
+OSPRAY_CONFIGURE_COMPILER()
+OSPRAY_CONFIGURE_TASKING_SYSTEM()
+
+OPTION(OSPRAY_USE_EXTERNAL_EMBREE
+       "Use a pre-built Embree instead of the internally built version" ON)
+
+OPTION(OSPRAY_USE_EMBREE_STREAMS "Enable use of Embree's stream intersection")
+MARK_AS_ADVANCED(OSPRAY_USE_EMBREE_STREAMS) # feature not implemented yet
+
+OPTION(OSPRAY_USE_HIGH_QUALITY_BVH
+       "Takes slighly longer to build but offers higher ray tracing performance; recommended when using Embree v2.11 or later")
+
+SET(OSPRAY_TILE_SIZE 64 CACHE STRING "Tile size")
+SET_PROPERTY(CACHE OSPRAY_TILE_SIZE PROPERTY STRINGS 8 16 32 64 128 256 512)
+MARK_AS_ADVANCED(OSPRAY_TILE_SIZE)
+
+SET(OSPRAY_PIXELS_PER_JOB 64 CACHE STRING
+    "Must be multiple of largest vector width *and* <= OSPRAY_TILE_SIZE")
+MARK_AS_ADVANCED(OSPRAY_PIXELS_PER_JOB)
+
+# Must be before ISA config
+INCLUDE(configure_embree)
+
+
 ##############################################################
 # create binary packages; before any INSTALL() invocation/definition
 ##############################################################
@@ -95,29 +124,22 @@ MARK_AS_ADVANCED(OSPRAY_INSTALL_DEPENDENCIES)
 
 INCLUDE(package)
 
-##############################################################
-# OSPRay specific build options and configuration selection
-##############################################################
 
-OSPRAY_CONFIGURE_COMPILER()
-OSPRAY_CONFIGURE_TASKING_SYSTEM()
-
-OPTION(OSPRAY_USE_EXTERNAL_EMBREE
-       "Use a pre-built Embree instead of the internally built version" ON)
-
-OPTION(OSPRAY_USE_EMBREE_STREAMS "Enable Streams if using Embree v2.10 or later")
-
-OPTION(OSPRAY_USE_HIGH_QUALITY_BVH
-       "Takes slighly longer to build but offers higher ray tracing performance; recommended when using Embree v2.11 or later")
-
-SET(OSPRAY_TILE_SIZE 64 CACHE INT "Tile size")
-SET_PROPERTY(CACHE OSPRAY_TILE_SIZE PROPERTY STRINGS 8 16 32 64 128 256 512)
-
-SET(OSPRAY_PIXELS_PER_JOB 64 CACHE INT
-    "Must be multiple of largest vector width *and* <= OSPRAY_TILE_SIZE")
-
-MARK_AS_ADVANCED(OSPRAY_TILE_SIZE)
-MARK_AS_ADVANCED(OSPRAY_PIXELS_PER_JOB)
-
-# Must be before ISA config
-INCLUDE(configure_embree)
+IF (OSPRAY_INSTALL_DEPENDENCIES)
+  IF (WIN32)
+    GET_FILENAME_COMPONENT(EMBREE_LIB_DIR ${EMBREE_LIBRARY} PATH)
+    SET(EMBREE_DLL_HINTS
+      ${EMBREE_LIB_DIR}
+      ${EMBREE_LIB_DIR}/../bin
+      ${embree_DIR}/../../../bin
+      ${embree_DIR}/../bin
+    )
+    FIND_FILE(EMBREE_DLL embree.dll HINTS ${EMBREE_DLL_HINTS})
+    MARK_AS_ADVANCED(EMBREE_DLL)
+    INSTALL(PROGRAMS ${EMBREE_DLL}
+            DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT lib)
+  ELSE()
+    INSTALL(PROGRAMS ${EMBREE_LIBRARY}
+            DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib) # /intel64?
+  ENDIF()
+ENDIF()

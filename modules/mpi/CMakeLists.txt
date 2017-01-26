@@ -18,6 +18,8 @@ OPTION(OSPRAY_MODULE_MPI "MPI parallel device" OFF)
 
 IF (OSPRAY_MODULE_MPI)
 
+  SET(OSPRAY_DEFAULT_COMPONENT mpi)
+
   OSPRAY_BUILD_COMPONENT(mpiCommon)
   
   OPTION(OSPRAY_EXP_DATA_PARALLEL "Experimental data-parallel compositing mode" ON)
@@ -50,8 +52,8 @@ IF (OSPRAY_MODULE_MPI)
     volume/DataDistributedBlockedVolume.ispc
     volume/DataDistributedBlockedVolume.cpp
 
- LINK
-    
+  LINK
+
     ospray
     ospray_mpi_common
     ospray_common
@@ -65,8 +67,6 @@ IF (OSPRAY_MODULE_MPI)
   OSPRAY_CREATE_APPLICATION(ospray_mpi_worker
     MPIWorker.cpp
   LINK
-#    ospray
-#    ospray_common
     ospray_module_mpi
   )
 

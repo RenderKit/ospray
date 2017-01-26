@@ -14,6 +14,8 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+SET(OSPRAY_DEFAULT_COMPONENT apps)
+
 INCLUDE_DIRECTORIES(
   ${CMAKE_SOURCE_DIR}/ospray/include
   ${CMAKE_SOURCE_DIR}
@@ -22,6 +24,7 @@ INCLUDE_DIRECTORIES(
 )
 
 # common utilities
+# TODO build only when needed
 ADD_SUBDIRECTORY(common/commandline)
 ADD_SUBDIRECTORY(common/importer)
 ADD_SUBDIRECTORY(common/tfn_lib)
