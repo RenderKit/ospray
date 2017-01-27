@@ -383,9 +383,14 @@ namespace ospray {
       template<>
       void NewModel::run()
       {
+        PING; 
         Model *model = new Model;
         handle.assign(model);
       }
+      template<>
+      void NewModel::runOnMaster()
+      { PING; /* do nothing */ }
+
       
       template<>
       void NewGeometry::run()
@@ -400,7 +405,10 @@ namespace ospray {
         geometry->refInc();
         handle.assign(geometry);
       }
-     
+      template<>
+      void NewGeometry::runOnMaster()
+      { /* do nothing */ }
+
       template<>
       void NewCamera::run()
       {
@@ -408,6 +416,9 @@ namespace ospray {
         Assert(camera);
         handle.assign(camera);
       }
+      template<>
+      void NewCamera::runOnMaster()
+      { /* do nothing */ }
       
       template<>
       void NewVolume::run()
@@ -418,8 +429,7 @@ namespace ospray {
         }
         volume->refInc();
         handle.assign(volume);
-      }
-      
+      }      
       template<>
       void NewVolume::runOnMaster()
       {
@@ -437,6 +447,10 @@ namespace ospray {
         handle.assign(tfn);
       }
       template<>
+      void NewTransferFunction::runOnMaster()
+      { /* do nothing */ }
+
+      template<>
       void NewPixelOp::run() {
         PixelOp *pixelOp = PixelOp::createPixelOp(type.c_str());
         if (!pixelOp) {
@@ -444,6 +458,9 @@ namespace ospray {
         }
         handle.assign(pixelOp);
       }
+      template<>
+      void NewPixelOp::runOnMaster()
+      { /* do nothing */ }
 
       void NewMaterial::run()
       {
@@ -486,6 +503,7 @@ namespace ospray {
         }
         handle.assign(light);
       }
+      
 
 
       // =======================================================
