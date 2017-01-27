@@ -20,7 +20,7 @@ setlocal
 md build_release
 cd build_release
 
-# fetch docu pdf (in correct version)
+rem fetch docu pdf (in correct version)
 python -c "from urllib import urlretrieve; urlretrieve('http://sdvis.org/ospray/download/OSPRay_readme_%CI_BUILD_REF_NAME%.pdf', 'readme.pdf')
 
 rem set release settings
@@ -42,13 +42,14 @@ cmake -L ^
 if %ERRORLEVEL% GEQ 1 goto abort
 
 rem compile and create installers
-# option '--clean-first' somehow conflicts with options after '--' for msbuild
+rem option '--clean-first' somehow conflicts with options after '--' for msbuild
 cmake --build . --config Release --target PACKAGE -- /m /nologo
 if %ERRORLEVEL% GEQ 1 goto abort
 
 rem create ZIP files
 cmake -D OSPRAY_ZIP_MODE=ON ^
--D OSPRAY_INSTALL_DEPENDENCIES=ON ..
+-D OSPRAY_INSTALL_DEPENDENCIES=ON ^
+..
 cmake --build . --config Release --target PACKAGE -- /m /nologo
 if %ERRORLEVEL% GEQ 1 goto abort
 
