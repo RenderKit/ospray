@@ -21,7 +21,7 @@
 namespace ospray {
   namespace sg {
     class FrameBuffer;
-    struct Renderer : public RefCount {
+    struct Renderer {
       Renderer();
 
       /*! re-start accumulation (for progressive rendering). make sure

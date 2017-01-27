@@ -23,7 +23,7 @@
 namespace ospray {
   namespace viewer {
     
-    QLightManipulator::QLightManipulator(Ref<sg::Renderer> renderer, vec3f up)
+    QLightManipulator::QLightManipulator(std::shared_ptr<sg::Renderer> renderer, vec3f up)
     {
       sgRenderer = renderer;
       upVector = up;

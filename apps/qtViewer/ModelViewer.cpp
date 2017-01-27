@@ -233,7 +233,7 @@ namespace ospray {
 
       std::shared_ptr<sg::PerspectiveCamera> camera
         = std::dynamic_pointer_cast<sg::PerspectiveCamera>(renderWidget->sgRenderer->camera);
-      QLightManipulator *lManipulator = new QLightManipulator(sgRenderer.get(), camera->getUp());
+      QLightManipulator *lManipulator = new QLightManipulator(sgRenderer, camera->getUp());
       //stackedWidget->addWidget(lManipulator);
       layout->addWidget(lManipulator);
 
