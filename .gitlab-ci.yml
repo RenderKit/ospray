@@ -191,6 +191,7 @@ release-osx-clang:
     - clang
     - release
     - osx
+    - mpi
   only:
     - devel
     - master
