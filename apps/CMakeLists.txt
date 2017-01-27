@@ -30,12 +30,7 @@ ADD_SUBDIRECTORY(common/importer)
 ADD_SUBDIRECTORY(common/tfn_lib)
 ADD_SUBDIRECTORY(common/miniSG)
 ADD_SUBDIRECTORY(common/xml)
-
-# NOTE(jda): Disable sg and qtViewer on Windows until sg properly exports
-#            symbols.
-IF (NOT WIN32)
-  ADD_SUBDIRECTORY(common/sg)
-ENDIF()
+ADD_SUBDIRECTORY(common/sg)
 
 # benchmark application which has no windowing framework dependencies
 OPTION(OSPRAY_APPS_BENCHMARK "Build ospBenchmark application." ON)

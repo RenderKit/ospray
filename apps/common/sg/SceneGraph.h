@@ -35,6 +35,16 @@
 // ospcommon
 #include "ospcommon/FileName.h"
 
+#ifdef _WIN32
+#  ifdef ospray_sg_EXPORTS
+#    define OSPSG_INTERFACE __declspec(dllexport)
+#  else
+#    define OSPSG_INTERFACE __declspec(dllimport)
+#  endif
+#else
+#  define OSPSG_INTERFACE
+#endif
+
 namespace ospray {
   namespace sg {
     using ospcommon::FileName;
@@ -97,18 +107,18 @@ namespace ospray {
     };
 
     /*! import an OBJ wavefront model, and add its contents to the given world */
-    void importOBJ(const std::shared_ptr<World> &world, const FileName &fileName);
+    OSPSG_INTERFACE void importOBJ(const std::shared_ptr<World> &world, const FileName &fileName);
 
     /*! import an PLY model, and add its contents to the given world */
-    void importPLY(std::shared_ptr<World> &world, const FileName &fileName);
+    OSPSG_INTERFACE void importPLY(std::shared_ptr<World> &world, const FileName &fileName);
 
     /*! import an X3D-format model, and add its contents to the given world */
-    void importX3D(const std::shared_ptr<World> &world, const FileName &fileName);
+    OSPSG_INTERFACE void importX3D(const std::shared_ptr<World> &world, const FileName &fileName);
 
-    std::shared_ptr<sg::World> loadOSP(const std::string &fileName);
-    std::shared_ptr<sg::World> readXML(const std::string &fileName);
-    std::shared_ptr<sg::World> importRIVL(const std::string &fileName);
-    std::shared_ptr<sg::World> loadOSG(const std::string &fileName);
+    OSPSG_INTERFACE std::shared_ptr<sg::World> loadOSP(const std::string &fileName);
+    OSPSG_INTERFACE std::shared_ptr<sg::World> readXML(const std::string &fileName);
+    OSPSG_INTERFACE std::shared_ptr<sg::World> importRIVL(const std::string &fileName);
+    OSPSG_INTERFACE std::shared_ptr<sg::World> loadOSG(const std::string &fileName);
     /*! @} */
 
   } // ::ospray::sg

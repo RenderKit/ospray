@@ -209,6 +209,7 @@ release-windows:
     - msvc
     - release
     - win7
+    - mpi
   only:
     - devel
     - master
