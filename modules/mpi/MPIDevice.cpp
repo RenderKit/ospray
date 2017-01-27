@@ -973,22 +973,7 @@ namespace ospray {
 
 extern "C" OSPRAY_DLLEXPORT void ospray_init_module_mpi()
 {
-// #ifndef _WIN32
-//   using namespace ospcommon;
-// #if defined(__MACOSX__)
-//   const std::string fullName = "libospray_module_mpi.dylib";
-// #else
-//   const std::string fullName = "libospray_module_mpi.so";
-// #endif
-//   void *lib = dlopen(fullName.c_str(), RTLD_NOW | RTLD_NOLOAD | RTLD_GLOBAL);
-//   if (!lib) {
-//     FileName executable = getExecutableFileName();
-//     lib = dlopen((executable.path() + fullName).c_str(),
-//                  RTLD_NOW | RTLD_NOLOAD | RTLD_GLOBAL);
-//   }
-//   Assert(lib);
-// #endif
-  // initWorkMap();
+//  ospray::mpi::work::initWorkMap();
   std::cout << "#mpi: initializing ospray MPI plugin" << std::endl;
 }
 
