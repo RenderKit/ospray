@@ -252,6 +252,7 @@ namespace ospray {
 
     void importOSP(const FileName &fileName, Group *existingGroupToAddTo)
     {
+      std::cout << __PRETTY_FUNCTION__ << std::endl;
       // The XML document container.
       tinyxml2::XMLDocument xml(true, tinyxml2::COLLAPSE_WHITESPACE);
       

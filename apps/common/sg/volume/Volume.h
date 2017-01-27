@@ -23,8 +23,8 @@ namespace ospray {
   namespace sg {
 
     /*! a geometry node - the generic geometry node */
-    struct Volume : public sg::Node {
-      Volume() : volume(nullptr) {};
+    struct Volume : public sg::Renderable {
+      Volume() : volume(nullptr) { add(createNode("transferFunction", "TransferFunction")); };
 
       /*! \brief returns a std::string with the c++ name of this class */
       virtual    std::string toString() const;
@@ -34,6 +34,8 @@ namespace ospray {
 
       //! serialize into given serialization state 
       virtual void serialize(sg::Serialization::State &state);
+
+      virtual void preRender(RenderContext &ctx) override;
 
       static bool useDataDistributedVolume;
 
@@ -59,6 +61,8 @@ namespace ospray {
 
       /*! \brief 'render' the object to ospray */
       virtual void render(RenderContext &ctx);
+      
+      virtual void postCommit(RenderContext &ctx) override;
 
       SG_NODE_DECLARE_MEMBER(vec3i,dimensions,Dimensions)
       SG_NODE_DECLARE_MEMBER(std::string,voxelType,ScalarType)
@@ -82,6 +86,9 @@ namespace ospray {
 
       /*! \brief 'render' the object to ospray */
       virtual void render(RenderContext &ctx);
+
+      virtual void postCommit(RenderContext &ctx) override;
+
 
       SG_NODE_DECLARE_MEMBER(vec3i,dimensions,Dimensions);    
       SG_NODE_DECLARE_MEMBER(std::string,fileName,FileName);    

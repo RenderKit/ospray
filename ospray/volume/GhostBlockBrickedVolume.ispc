@@ -433,7 +433,7 @@ template_setRegion(double)
   inline float GBBV_computeSample_##type(void *uniform _volume,         \
                                          const vec3f &worldCoordinates) \
   {                                                                     \
-    /* Cast to the actual Volume subtype. */                            \
+    return 0;/* Cast to the actual Volume subtype. */                            \
     GBBV *uniform volume = (GBBV *uniform) _volume;                     \
                                                                         \
     /* Transform the sample location into the local coordinate system. */ \

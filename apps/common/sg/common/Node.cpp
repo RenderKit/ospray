@@ -101,10 +101,6 @@ namespace ospray {
       {
         preCommit(ctx);
       }
-      else if (operation == "render")
-      {
-        preRender(ctx);
-      }
     }
 
     void Node::postTraverse(RenderContext &ctx, const std::string& operation)
@@ -114,10 +110,6 @@ namespace ospray {
         postCommit(ctx);
         lastCommitted = TimeStamp::now();
       }
-      else if (operation == "render")
-      {
-        postRender(ctx);
-      }
     }
 
     void Node::postCommit(RenderContext &ctx)
@@ -125,6 +117,24 @@ namespace ospray {
         // for (int i=0;i<ctx.level;i++)
           // std::cout << "  ";
         // std::cout << "commit: " << name << " : " << type << "\n";
+    }
+
+    void Renderable::preTraverse(RenderContext &ctx, const std::string& operation)
+    {
+      Node::preTraverse(ctx,operation);
+      if (operation == "render")
+      {
+        preRender(ctx);
+      }
+    }
+
+    void Renderable::postTraverse(RenderContext &ctx, const std::string& operation)
+    {
+      Node::postTraverse(ctx,operation);
+      if (operation == "render")
+      {
+        postRender(ctx);
+      }
     }
 
 

@@ -39,6 +39,8 @@ namespace ospray {
       //! \brief creates ospray-side object(s) for this node
       virtual void render(RenderContext &ctx);
 
+      void postCommit(RenderContext &ctx);
+
       //! \brief Initialize this node's value from given corresponding XML node 
       virtual void setFromXML(const xml::Node *const node, 
                               const unsigned char *binBasePtr);

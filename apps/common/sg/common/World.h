@@ -24,9 +24,9 @@ namespace ospray {
   namespace sg {
 
     /*! a world node */
-    struct World : public sg::Node {
-      World() : ospModel(NULL) {
-        add(createNode("bounds", "box3f"));
+    struct World : public sg::Renderable {
+      World() : Renderable(), ospModel(NULL) {
+        // add(createNode("bounds", "box3f"));
         add(createNode("model", "OSPObject", (OSPModel*)NULL));
       };
 

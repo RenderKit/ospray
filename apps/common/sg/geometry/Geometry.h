@@ -22,7 +22,7 @@ namespace ospray {
   namespace sg {
 
     /*! a geometry node - the generic geometry node */
-    struct Geometry : public sg::Node {
+    struct Geometry : public sg::Renderable {
       Geometry(const std::string &type) : type(type) {
         add(createNode("material", "Material"));
         add(createNode("type", "string"));
@@ -32,7 +32,7 @@ namespace ospray {
       virtual    std::string toString() const { return "ospray::sg::Geometry"; }
 
       //! return bounding box of all primitives
-      virtual box3f getBounds() = 0;
+      // virtual box3f getBounds() = 0;
 
       /*! geometry type, i.e., 'spheres', 'cylinders', 'trianglemesh', ... */
       const std::string type; 

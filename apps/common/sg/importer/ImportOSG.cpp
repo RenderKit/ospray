@@ -55,6 +55,8 @@ namespace ospray {
       assert(creator);
       sg::Node *newNode = creator();
       assert(newNode);
+      newNode->setType(node.name);
+      newNode->setName(node.getProp("name"));
       try {
         newNode->setFromXML(&node,binBasePtr);
         return newNode;
@@ -151,6 +153,8 @@ namespace ospray {
         }
         Ref<sg::Node> newNode = createNodeFrom(*c,binBasePtr);
         world->node.push_back(newNode);
+        world->add(newNode);
+        std::cout << "adding node to world: " << newNode->getName() << " " << newNode->getType() << "\n";
       }
     }
     

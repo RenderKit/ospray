@@ -341,8 +341,18 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
   float maxSamplingRate = volume->adaptiveMaxSamplingRate*quality; //2.f nyquist frequency
   float adaptiveBacktrack = volume->adaptiveBacktrack*oneOverQuality;
   // maxSamplingRate = 0.125;
+  int i=0;
   while (ray.t0 < tEnd && intervalColor.w < maxOpacity)
   {
+    if (i++ > 256)
+    {
+      print("inf loop % %\n",ray.t0,tEnd);
+    }
+    if (tEnd - ray.t0 > 100000.f)
+    {
+      print("BAD!\n");
+      break;
+    }
     // Sample the volume at the hit point in world coordinates.
     const vec3f coordinates = ray.org + ray.t0 * ray.dir;
     const float sample = volume->computeSample(volume, coordinates);
@@ -355,20 +365,20 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
     float sampleOpacity;
     sampleOpacity = volume->transferFunction->getIntegratedOpacityForValue(volume->transferFunction,
                                                     lastSample, sample);
-    if (volume->adaptiveSampling && sampleOpacity > adaptiveBacktrack && ray.t0 > tSkipped)  // adaptive backtack
-    {
-      tSkipped = ray.t0;
-      //adaptively refine sampling rate
-      float newSamplingRate = min(adaptiveScalar*sampleOpacity,maxSamplingRate);
-      if (newSamplingRate > samplingRate + 0.01f)
-      {
-        samplingRate = newSamplingRate;
-        ray.t0 = max(ray.t0-ray.time, tBegin);
-        volume->intersectAdaptive(volume, ray, samplingRate);
-        lastSample = -1;
-        continue;
-      }
-    }
+    // if (volume->adaptiveSampling && sampleOpacity > adaptiveBacktrack && ray.t0 > tSkipped)  // adaptive backtack
+    // {
+    //   tSkipped = ray.t0;
+    //   //adaptively refine sampling rate
+    //   float newSamplingRate = min(adaptiveScalar*sampleOpacity,maxSamplingRate);
+    //   if (newSamplingRate > samplingRate + 0.01f)
+    //   {
+    //     samplingRate = newSamplingRate;
+    //     ray.t0 = max(ray.t0-ray.time, tBegin);
+    //     volume->intersectAdaptive(volume, ray, samplingRate);
+    //     lastSample = -1;
+    //     continue;
+    //   }
+    // }
 
     if (!isShadowRay)
     {
@@ -650,14 +660,14 @@ inline float lightAlpha(const uniform SciVisRenderer *uniform self,
       // print("found volume intersection!\n");
       // Provide ray offset for use with isosurface geometries (this value
       // ignored elsewhere).
-      ray.time = -rayOffset * volume->samplingStep;
+      ray.time = rayOffset * volume->samplingStep;
       ray.t = volumeT;
       float tBegin = max(volumeT0,0.f);
       float tEnd = volumeT+self->volumeEpsilon;
       foreach_unique (v in volume)
       {
-        vec4f volumeColor = SciVisRenderer_computeVolumeInterval(self, v, ray, tBegin, tEnd, 1.f, 1, rayOffset, sampleID, quality*.5f);
-        material_opacity = volumeColor.w;
+        //vec4f volumeColor = SciVisRenderer_computeVolumeInterval(self, v, ray, tBegin, tEnd, 0.98f, 1, rayOffset, sampleID, quality*.5f);
+        //material_opacity = volumeColor.w;
       }  
     }
 

@@ -35,6 +35,7 @@ namespace ospray {
 
   void GhostBlockBrickedVolume::commit()
   {
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
     // The ISPC volume container should already exist. We (currently)
     // require 'dimensions' etc to be set first, followed by call(s)
     // to 'setRegion', and only a final commit at the

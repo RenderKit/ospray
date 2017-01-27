@@ -37,6 +37,7 @@ namespace ospray {
     // //! \brief Sets a new 'texture map' to be used for the color mapping
     void TransferFunction::setColorMap(const std::vector<vec3f> &colorArray)
     {
+      std::cout << __PRETTY_FUNCTION__ << std::endl;
       if (ospColorData) { ospRelease(ospColorData); ospColorData = nullptr; }
       this->colorArray.clear();
       for (uint32_t i = 0; i < colorArray.size(); ++i)
@@ -112,13 +113,62 @@ namespace ospray {
     {
       if (!ospTransferFunction) {
         ospTransferFunction = ospNewTransferFunction("piecewise_linear");
+        ospHandle = ospTransferFunction;
       }
       commit();
+    }
+
+    void TransferFunction::postCommit(RenderContext &ctx)
+    {
+      ospTransferFunction = nullptr;
+      if (!ospTransferFunction) {
+        ospTransferFunction = ospNewTransferFunction("piecewise_linear");
+        ospHandle = ospTransferFunction;
+      }
+      // ospSetVec2f(ospTransferFunction,"valueRange",osp::vec2f{valueRange.x,valueRange.y});
+      if (ospColorData == nullptr && colorArray.size()) {
+        std::cout << colorArray.size() << std::endl;
+        // for now, no resampling - just use the colors ...
+        vec3f *colors = (vec3f*)alloca(sizeof(vec3f)*colorArray.size());
+        for (uint32_t i = 0; i < colorArray.size(); i++)
+          colors[i] = colorArray[i].second;
+        ospColorData = ospNewData(colorArray.size(),OSP_FLOAT3,colors); 
+        ospCommit(ospColorData);
+        ospSetData(ospTransferFunction,"colors",ospColorData);
+        lastModified = TimeStamp::now();
+      }
+      if (ospAlphaData == nullptr && alphaArray.size()) {
+        std::cout << alphaArray.size() << std::endl;
+        float *alpha = (float*)alloca(sizeof(float)*numSamples);
+        float x0 = alphaArray.front().first;
+        float dx = (alphaArray.back().first - x0) / (numSamples-1);
+
+        for (int i=0;i<numSamples;i++)
+          alpha[i] = getInterpolatedAlphaValue(i * dx);
+
+        ospAlphaData = ospNewData(numSamples,OSP_FLOAT,alpha); 
+        ospCommit(ospAlphaData);
+        ospSetData(ospTransferFunction,"opacities",ospAlphaData);
+        lastModified = TimeStamp::now();
+      }
+    //   std::vector<ospcommon::vec3f> carray;
+    //   std::vector<float> oarray;
+    //   for (int i=0;i<256;i++)
+    //   {
+    //   carray.push_back(ospcommon::vec3f(0,0,0));     
+    //   oarray.push_back(0.f);
+    // }
+      // OSPData cdata = ospNewData(carray.size(), OSP_FLOAT3, carray.data());
+      // OSPData odata = ospNewData(oarray.size(), OSP_FLOAT, oarray.data());
+      // ospSetData(ospTransferFunction, "colors", cdata);
+      // ospSetData(ospTransferFunction, "opacities", odata);
+      ospCommit(ospTransferFunction);
     }
 
     void TransferFunction::setFromXML(const xml::Node *const node, 
                                       const unsigned char *binBasePtr) 
     {
+      std::cout << __PRETTY_FUNCTION__ << std::endl;
       setDefaultValues();
 
       const std::string name = node->getProp("name","");
@@ -177,12 +227,17 @@ namespace ospray {
       colorArray.clear();
       for (int i=0;i<7;i++)
         colorArray.push_back(std::pair<float,vec3f>(i,vec3f(col[i][0],col[i][1],col[i][2])));
+      // int i=0;
+      //   colorArray.push_back(std::pair<float,vec3f>(i,vec3f(col[i][0],col[i][1],col[i][2])));
+      //   i=1;
+      //   colorArray.push_back(std::pair<float,vec3f>(i,vec3f(col[i][0],col[i][1],col[i][2])));
+
       
       alphaArray.clear();
-      alphaArray.push_back(std::pair<float,float>(0.f,0.f));
-      alphaArray.push_back(std::pair<float,float>(1.f,1.f));
-      // for (int i=0;i<colorArray.size();i++)
-      //   alphaArray.push_back(std::pair<float,float>(i,1.f)); //i/float(colorArray.size()-1));
+      // alphaArray.push_back(std::pair<float,float>(0.f,0.f));
+      // alphaArray.push_back(std::pair<float,float>(1.f,1.f));
+      for (int i=0;i<colorArray.size();i++)
+        alphaArray.push_back(std::pair<float,float>(i,1.f)); //i/float(colorArray.size()-1));
     }
 
     std::string TransferFunction::toString() const

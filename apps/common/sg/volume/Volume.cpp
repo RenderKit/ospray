@@ -37,7 +37,17 @@ namespace ospray {
       if (transferFunction) 
         transferFunction->serialize(state);
     }
+
+    void Volume::preRender(RenderContext &ctx)
+    {
+      if (volume)
+        ospAddVolume(ctx.world->ospModel,volume);
+    }
     
+
+
+
+
     // =======================================================
     // structured volume class
     // =======================================================
@@ -68,7 +78,9 @@ namespace ospray {
         mappedPointer = binBasePtr + std::stoll(node->getProp("ofs","0"));
       dimensions = toVec3i(node->getProp("dimensions").c_str());
 
-      if (voxelType != "float" && voxelType != "uint8") 
+      if (voxelType == "uint8")
+        voxelType = "uchar";
+      if (voxelType != "float" && voxelType != "uint8" && voxelType != "uchar") 
         throw std::runtime_error("unknown StructuredVolume.voxelType (currently only supporting 'float' and 'uint8')");
 
       if (!transferFunction) 
@@ -111,6 +123,40 @@ namespace ospray {
       ospCommit(volume);
       ospAddVolume(ctx.world->ospModel,volume);
     }
+
+    void StructuredVolume::postCommit(RenderContext &ctx)
+    {
+      if (volume) return;
+
+      if (dimensions.x <= 0 || dimensions.y <= 0 || dimensions.z <= 0)
+        throw std::runtime_error("StructuredVolume::render(): invalid volume dimensions");
+      
+      volume = ospNewVolume(useDataDistributedVolume 
+                            ? "data_distributed_volume"
+                            : "block_bricked_volume");
+      if (!volume)
+        THROW_SG_ERROR("could not allocate volume");
+
+      ospSetString(volume,"voxelType",voxelType.c_str());
+      std::cout << "setting voxelType: " << voxelType << "\n";
+      ospSetVec3i(volume,"dimensions",(const osp::vec3i&)dimensions);
+      size_t nPerSlice = (size_t)dimensions.x*(size_t)dimensions.y;
+      assert(mappedPointer != nullptr);
+
+      for (int z=0;z<dimensions.z;z++) {
+        float *slice = (float*)(((unsigned char *)mappedPointer)+z*nPerSlice*sizeof(float));
+        vec3i region_lo(0,0,z), region_sz(dimensions.x,dimensions.y,1);
+        ospSetRegion(volume,slice,
+                     (const osp::vec3i&)region_lo,
+                     (const osp::vec3i&)region_sz);
+      }
+
+      transferFunction->render(ctx);
+
+      ospSetObject(volume,"transferFunction",transferFunction->getOSPHandle());
+      ospCommit(volume);
+    }
+
 
     OSP_REGISTER_SG_NODE(StructuredVolume);
 
@@ -230,6 +276,85 @@ namespace ospray {
       ospSetObject(volume,"transferFunction",transferFunction->getOSPHandle());
       ospCommit(volume);
       ospAddVolume(ctx.world->ospModel,volume);
+    }
+
+    void StructuredVolumeFromFile::postCommit(RenderContext &ctx)
+    {
+      if (volume) return;
+      
+      if (dimensions.x <= 0 || dimensions.y <= 0 || dimensions.z <= 0)
+        throw std::runtime_error("StructuredVolume::render(): invalid volume dimensions");
+
+      bool useBlockBricked = 1;
+
+      if (useDataDistributedVolume) 
+        volume = ospNewVolume("data_distributed_volume");
+      else
+        volume = ospNewVolume(useBlockBricked ? "block_bricked_volume" : "shared_structured_volume");
+      if (!volume)
+        THROW_SG_ERROR("could not allocate volume");
+      
+      ospSetString(volume,"voxelType",voxelType.c_str());
+      ospSetVec3i(volume,"dimensions",(const osp::vec3i&)dimensions);
+      
+      FileName realFileName = fileNameOfCorrespondingXmlDoc.path()+fileName;
+      FILE *file = fopen(realFileName.c_str(),"rb");
+      if (!file) 
+        throw std::runtime_error("StructuredVolumeFromFile::render(): could not open file '"
+                                 +realFileName.str()+"' (expanded from xml file '"
+                                 +fileNameOfCorrespondingXmlDoc.str()
+                                 +"' and file name '"+fileName+"')");
+
+      if (useBlockBricked || useDataDistributedVolume) {
+        size_t nPerSlice = (size_t)dimensions.x * (size_t)dimensions.y;
+        if (voxelType == "float") {
+          float *slice = new float[nPerSlice];
+          for (int z=0;z<dimensions.z;z++) {
+            size_t nRead = fread(slice,sizeof(float),nPerSlice,file);
+            if (nRead != nPerSlice)
+              throw std::runtime_error("StructuredVolume::render(): read incomplete slice data ... partial file or wrong format!?");
+            const vec3i region_lo(0,0,z),region_sz(dimensions.x,dimensions.y,1);
+            ospSetRegion(volume,slice,(const osp::vec3i&)region_lo,(const osp::vec3i&)region_sz);
+          }
+          delete[] slice;
+        } else {
+          uint8_t *slice = new uint8_t[nPerSlice];
+          for (int z=0;z<dimensions.z;z++) {
+            size_t nRead = fread(slice,sizeof(uint8_t),nPerSlice,file);
+            if (nRead != nPerSlice)
+              throw std::runtime_error("StructuredVolume::render(): read incomplete slice data ... partial file or wrong format!?");
+            const vec3i region_lo(0,0,z), region_sz(dimensions.x,dimensions.y,1);
+            ospSetRegion(volume,slice,
+                         (const osp::vec3i&)region_lo,
+                         (const osp::vec3i&)region_sz);
+          }
+          delete[] slice;
+        }
+      } else {
+        size_t nVoxels = (size_t)dimensions.x * (size_t)dimensions.y * (size_t)dimensions.z;
+        float *voxels = new float[nVoxels];
+        size_t nRead = fread(voxels,sizeof(float),nVoxels,file);
+        if (nRead != nVoxels)
+          THROW_SG_ERROR("read incomplete data (truncated file or wrong format?!)");
+        OSPData data = ospNewData(nVoxels,OSP_FLOAT,voxels,OSP_DATA_SHARED_BUFFER);
+        ospSetData(volume,"voxelData",data);
+      }
+      fclose(file);
+
+      // osp::vec3i zeros={0,0,0};
+      // uint8_t* data = new uint8_t[dimensions.x*dimensions.y*dimensions.z];
+      // for (size_t i=0;i<dimensions.x*dimensions.y*dimensions.z;i++)
+      //   data[i]=0;
+      // ospSetRegion(volume, data, (const osp::vec3i&)zeros,(const osp::vec3i&)dimensions);
+
+      // transferFunction->render(ctx);
+      // OSPTransferFunction tf = ospNewTransferFunction("piecewise_linear");
+      // ospCommit(tf);
+      // ospSetObject(volume,"transferFunction",tf);
+      ospSetObject(volume,"transferFunction",getChild("transferFunction")->getOSPHandle());
+      ospSet1i(volume,"adaptiveSampling", 0);
+      // ospSetObject(volume,"transferFunction",transferFunction->getOSPHandle());
+      ospCommit(volume);
     }
 
     OSP_REGISTER_SG_NODE(StructuredVolumeFromFile);

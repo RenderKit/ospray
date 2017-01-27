@@ -126,7 +126,8 @@ namespace ospray {
     /*! \brief base node of all scene graph nodes */
     struct Node : public RefCount
     {
-      Node() : lastModified(TimeStamp::now()), childrenMTime(TimeStamp::now()), lastCommitted(0), name("NULL"), type("Node") {};
+      Node() : lastModified(TimeStamp::now()), childrenMTime(TimeStamp::now()), lastCommitted(0), name("NULL"), type("Node"),
+      ospHandle(nullptr) {};
 
       virtual    std::string toString() const {}
       std::shared_ptr<sg::Param> getParam(const std::string &name) const;
@@ -194,7 +195,7 @@ namespace ospray {
       public:
         NodeH(Ref<sg::Node> n=nullptr) : node(n) {}
         Ref<sg::Node> node;
-        NodeH operator[] (std::string c) { return node->getChild(c);}
+        NodeH& operator[] (std::string c) { return node->getChild(c);}
         NodeH operator+= (NodeH n) { node->add(n); n->setParent(*this); return n;}
         Ref<sg::Node> operator-> ()
         {
@@ -209,14 +210,15 @@ namespace ospray {
       std::string name;
       std::string type;
 
-      NodeH getChild(std::string name) { return children[name]; }
+      NodeH& getChild(std::string name) { return children[name]; }
       std::vector<NodeH> getChildrenByType(std::string) { std::vector<NodeH> result; return result;}
       std::vector<NodeH> getChildren() { std::vector<NodeH> result; 
           for (auto child : children)
             result.push_back(child.second);
           return result; }
-      NodeH operator[] (std::string c) { return getChild(c);}
+      NodeH& operator[] (std::string c) { return getChild(c);}
       NodeH getParent() { return parent; }
+      OSPObject getOSPHandle() { return ospHandle; }
       void setParent(const NodeH& p) { parent = p; }
       std::map<std::string, NodeH > children;
       const SGVar getValue() { return value; }
@@ -229,13 +231,12 @@ namespace ospray {
       virtual void postTraverse(RenderContext &ctx, const std::string& operation);
       virtual void preCommit(RenderContext &ctx) {}
       virtual void postCommit(RenderContext &ctx);
-      virtual void preRender(RenderContext &ctx) {}
-      virtual void postRender(RenderContext &ctx) {}
       void setName(std::string v) { name = v; }
       std::string getName() { return name; }
       std::string getType() { return type; }
       void setType(std::string v) { type = v; }
     protected:
+      OSPObject ospHandle;
       SGVar value;
       TimeStamp lastModified;
       TimeStamp childrenMTime;
@@ -296,6 +297,20 @@ namespace ospray {
               NodeParamCommit<T>::commit(this);
           }
       }
+    };
+
+    struct Renderable : public Node
+    {
+      Renderable() { add(createNode("bounds", "box3f")); }
+      virtual box3f getBounds() { return bbox; }
+      virtual box3f extendBounds(box3f b) { bbox.extend(b); }
+      virtual void preTraverse(RenderContext &ctx, const std::string& operation);
+      virtual void postTraverse(RenderContext &ctx, const std::string& operation);
+      virtual void preCommit(RenderContext &ctx) { bbox = empty; }
+      virtual void preRender(RenderContext &ctx) {}
+      virtual void postRender(RenderContext &ctx) {}
+    protected:
+      box3f bbox;
     };
 
     /*! \brief registers a internal ospray::<ClassName> renderer under
