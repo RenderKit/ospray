@@ -37,7 +37,6 @@ namespace ospray {
     // //! \brief Sets a new 'texture map' to be used for the color mapping
     void TransferFunction::setColorMap(const std::vector<vec3f> &colorArray)
     {
-      std::cout << __PRETTY_FUNCTION__ << std::endl;
       if (ospColorData) { ospRelease(ospColorData); ospColorData = nullptr; }
       this->colorArray.clear();
       for (uint32_t i = 0; i < colorArray.size(); ++i)
@@ -73,7 +72,7 @@ namespace ospray {
     void TransferFunction::setValueRange(const vec2f &range)
     { 
       valueRange = range; 
-      lastModified = TimeStamp::now();
+      // lastModified = TimeStamp::now();
     }
 
     //! \brief commit the current field values to ospray
@@ -88,7 +87,7 @@ namespace ospray {
         ospColorData = ospNewData(colorArray.size(),OSP_FLOAT3,colors); 
         ospCommit(ospColorData);
         ospSetData(ospTransferFunction,"colors",ospColorData);
-        lastModified = TimeStamp::now();
+        // lastModified = TimeStamp::now();
       }
       if (ospAlphaData == nullptr) {
         float *alpha = (float*)alloca(sizeof(float)*numSamples);
@@ -101,7 +100,7 @@ namespace ospray {
         ospAlphaData = ospNewData(numSamples,OSP_FLOAT,alpha); 
         ospCommit(ospAlphaData);
         ospSetData(ospTransferFunction,"opacities",ospAlphaData);
-        lastModified = TimeStamp::now();
+        // lastModified = TimeStamp::now();
       }
       if (lastModified > lastCommitted) {
         lastCommitted = rdtsc();
@@ -113,19 +112,18 @@ namespace ospray {
     {
       if (!ospTransferFunction) {
         ospTransferFunction = ospNewTransferFunction("piecewise_linear");
-        ospHandle = ospTransferFunction;
+        setValue((OSPObject)ospTransferFunction);
       }
       commit();
     }
 
-    void TransferFunction::postCommit(RenderContext &ctx)
+    void TransferFunction::preCommit(RenderContext &ctx)
     {
-      ospTransferFunction = nullptr;
       if (!ospTransferFunction) {
         ospTransferFunction = ospNewTransferFunction("piecewise_linear");
-        ospHandle = ospTransferFunction;
+        setValue((OSPObject)ospTransferFunction);
       }
-      // ospSetVec2f(ospTransferFunction,"valueRange",osp::vec2f{valueRange.x,valueRange.y});
+      ospSetVec2f(ospTransferFunction,"valueRange",osp::vec2f{valueRange.x,valueRange.y});
       if (ospColorData == nullptr && colorArray.size()) {
         std::cout << colorArray.size() << std::endl;
         // for now, no resampling - just use the colors ...
@@ -135,7 +133,7 @@ namespace ospray {
         ospColorData = ospNewData(colorArray.size(),OSP_FLOAT3,colors); 
         ospCommit(ospColorData);
         ospSetData(ospTransferFunction,"colors",ospColorData);
-        lastModified = TimeStamp::now();
+        // lastModified = TimeStamp::now();
       }
       if (ospAlphaData == nullptr && alphaArray.size()) {
         std::cout << alphaArray.size() << std::endl;
@@ -149,26 +147,14 @@ namespace ospray {
         ospAlphaData = ospNewData(numSamples,OSP_FLOAT,alpha); 
         ospCommit(ospAlphaData);
         ospSetData(ospTransferFunction,"opacities",ospAlphaData);
-        lastModified = TimeStamp::now();
+        // lastModified = TimeStamp::now();
       }
-    //   std::vector<ospcommon::vec3f> carray;
-    //   std::vector<float> oarray;
-    //   for (int i=0;i<256;i++)
-    //   {
-    //   carray.push_back(ospcommon::vec3f(0,0,0));     
-    //   oarray.push_back(0.f);
-    // }
-      // OSPData cdata = ospNewData(carray.size(), OSP_FLOAT3, carray.data());
-      // OSPData odata = ospNewData(oarray.size(), OSP_FLOAT, oarray.data());
-      // ospSetData(ospTransferFunction, "colors", cdata);
-      // ospSetData(ospTransferFunction, "opacities", odata);
       ospCommit(ospTransferFunction);
     }
 
     void TransferFunction::setFromXML(const xml::Node *const node, 
                                       const unsigned char *binBasePtr) 
     {
-      std::cout << __PRETTY_FUNCTION__ << std::endl;
       setDefaultValues();
 
       const std::string name = node->getProp("name","");
@@ -227,17 +213,9 @@ namespace ospray {
       colorArray.clear();
       for (int i=0;i<7;i++)
         colorArray.push_back(std::pair<float,vec3f>(i,vec3f(col[i][0],col[i][1],col[i][2])));
-      // int i=0;
-      //   colorArray.push_back(std::pair<float,vec3f>(i,vec3f(col[i][0],col[i][1],col[i][2])));
-      //   i=1;
-      //   colorArray.push_back(std::pair<float,vec3f>(i,vec3f(col[i][0],col[i][1],col[i][2])));
-
-      
       alphaArray.clear();
-      // alphaArray.push_back(std::pair<float,float>(0.f,0.f));
-      // alphaArray.push_back(std::pair<float,float>(1.f,1.f));
-      for (int i=0;i<colorArray.size();i++)
-        alphaArray.push_back(std::pair<float,float>(i,1.f)); //i/float(colorArray.size()-1));
+      alphaArray.push_back(std::pair<float,float>(0.f,0.f));
+      alphaArray.push_back(std::pair<float,float>(1.f,1.f));
     }
 
     std::string TransferFunction::toString() const

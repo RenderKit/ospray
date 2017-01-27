@@ -186,6 +186,7 @@ namespace ospray {
 
       //! return when this node was last committed
       inline TimeStamp getLastCommitted() const { return lastCommitted; };
+      inline void committed() {lastCommitted=TimeStamp::now();}
 
       inline void modified() { lastModified = TimeStamp::now(); if (parent.isValid()) parent->setChildrenModified(lastModified);}
       void setChildrenModified(TimeStamp t) { if (t >childrenMTime) {childrenMTime = t; if (parent.isValid()) parent->setChildrenModified(childrenMTime);} }
@@ -218,6 +219,7 @@ namespace ospray {
           return result; }
       NodeH& operator[] (std::string c) { return getChild(c);}
       NodeH getParent() { return parent; }
+      //TODO: to get the handle, should actually call getValue on valid node
       OSPObject getOSPHandle() { return ospHandle; }
       void setParent(const NodeH& p) { parent = p; }
       std::map<std::string, NodeH > children;

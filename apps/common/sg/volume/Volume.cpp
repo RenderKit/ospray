@@ -138,7 +138,6 @@ namespace ospray {
         THROW_SG_ERROR("could not allocate volume");
 
       ospSetString(volume,"voxelType",voxelType.c_str());
-      std::cout << "setting voxelType: " << voxelType << "\n";
       ospSetVec3i(volume,"dimensions",(const osp::vec3i&)dimensions);
       size_t nPerSlice = (size_t)dimensions.x*(size_t)dimensions.y;
       assert(mappedPointer != nullptr);
@@ -278,10 +277,12 @@ namespace ospray {
       ospAddVolume(ctx.world->ospModel,volume);
     }
 
-    void StructuredVolumeFromFile::postCommit(RenderContext &ctx)
+    void StructuredVolumeFromFile::preCommit(RenderContext &ctx)
     {
-      if (volume) return;
-      
+      if (volume) 
+      {
+        return;
+      }
       if (dimensions.x <= 0 || dimensions.y <= 0 || dimensions.z <= 0)
         throw std::runtime_error("StructuredVolume::render(): invalid volume dimensions");
 
@@ -293,6 +294,9 @@ namespace ospray {
         volume = ospNewVolume(useBlockBricked ? "block_bricked_volume" : "shared_structured_volume");
       if (!volume)
         THROW_SG_ERROR("could not allocate volume");
+
+      ospHandle = volume;
+      setValue((OSPObject)volume);
       
       ospSetString(volume,"voxelType",voxelType.c_str());
       ospSetVec3i(volume,"dimensions",(const osp::vec3i&)dimensions);
@@ -340,28 +344,17 @@ namespace ospray {
         ospSetData(volume,"voxelData",data);
       }
       fclose(file);
+    }
 
-      // osp::vec3i zeros={0,0,0};
-      // uint8_t* data = new uint8_t[dimensions.x*dimensions.y*dimensions.z];
-      // for (size_t i=0;i<dimensions.x*dimensions.y*dimensions.z;i++)
-      //   data[i]=0;
-      // ospSetRegion(volume, data, (const osp::vec3i&)zeros,(const osp::vec3i&)dimensions);
-
-      // transferFunction->render(ctx);
-      // OSPTransferFunction tf = ospNewTransferFunction("piecewise_linear");
-      // ospCommit(tf);
-      // ospSetObject(volume,"transferFunction",tf);
-      ospSetObject(volume,"transferFunction",getChild("transferFunction")->getOSPHandle());
-      ospSet1i(volume,"adaptiveSampling", 0);
-      // ospSetObject(volume,"transferFunction",transferFunction->getOSPHandle());
-      ospCommit(volume);
+    void StructuredVolumeFromFile::postCommit(RenderContext &ctx)
+    {
+      // std::cout << "post tf: " << getChild("transferFunction")->getValue<OSPObject>() << std::endl;
+      ospSetObject(volume,"transferFunction",getChild("transferFunction")->getValue<OSPObject>());
+        // ospSetObject(volume,"transferFunction",getChild("transferFunction")->getValue<OSPObject>());
+        ospCommit(volume);
     }
 
     OSP_REGISTER_SG_NODE(StructuredVolumeFromFile);
-
-
-
-
 
     // =======================================================
     // stacked slices volume class

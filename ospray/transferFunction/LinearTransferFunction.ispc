@@ -390,7 +390,6 @@ export void *uniform LinearTransferFunction_createInstance()
 
 void LinearTransferFunction_precomputePreIntegratedOpacityValues(void* uniform _self)
 {
-print("precomputePreIntegratedOpacity\n");
   // Cast to the actual TransferFunction subtype.
   LinearTransferFunction *uniform self
     = (LinearTransferFunction *uniform) _self;
@@ -411,12 +410,10 @@ print("precomputePreIntegratedOpacity\n");
       self->opacityPITable[j*self->opacityValueCount+i] = val;
     }
   }
-print("precomputePreIntegratedOpacity done\n");
 }
 
 void LinearTransferFunction_precomputePreIntegratedColorValues(void* uniform _self)
 {
-print("precomputePreIntegratedColor\n");
   // Cast to the actual TransferFunction subtype.
   LinearTransferFunction *uniform self
     = (LinearTransferFunction *uniform) _self;
@@ -449,7 +446,6 @@ print("precomputePreIntegratedColor\n");
       self->colorPITable[j*self->colorValueCount+i] = val;
     }
   }
-print("precomputePreIntegratedColor done\n");
 }
 
 export void LinearTransferFunction_destroy(void *uniform _self) 
@@ -532,7 +528,7 @@ export void LinearTransferFunction_precomputePreIntegratedValues(void *uniform _
     // Cast to the actual TransferFunction subtype.
   LinearTransferFunction *uniform self
     = (LinearTransferFunction *uniform) _self;
-  //LinearTransferFunction_precomputePreIntegratedColorValues(_self);
-  //LinearTransferFunction_precomputePreIntegratedOpacityValues(_self);
-  //self->super.preIntegrationComputed = true;
+  LinearTransferFunction_precomputePreIntegratedColorValues(_self);
+  LinearTransferFunction_precomputePreIntegratedOpacityValues(_self);
+  self->super.preIntegrationComputed = true;
 }

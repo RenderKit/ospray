@@ -24,7 +24,20 @@ namespace ospray {
 
     /*! a geometry node - the generic geometry node */
     struct Volume : public sg::Renderable {
-      Volume() : volume(nullptr) { add(createNode("transferFunction", "TransferFunction")); };
+      Volume() : volume(nullptr) { 
+        add(createNode("transferFunction", "TransferFunction"));
+        add(createNode("gradientShadingEnabled", "bool", true));
+        add(createNode("preIntegration", "bool", true));
+        add(createNode("singleSahde", "bool", true));
+        add(createNode("adaptiveSampling", "bool", true));
+        add(createNode("adaptiveScalar", "float", 15.f));
+        add(createNode("adaptiveBacktrack", "float", 0.03f));
+        add(createNode("samplingRate", "float", 0.125f));
+        add(createNode("adaptiveMaxSamplingRate", "float", 2.f));
+        add(createNode("volumeClippingBoxLower", "vec3f", vec3f(0.f)));
+        add(createNode("volumeClippingBoxUpper", "vec3f", vec3f(0.f)));
+        add(createNode("specular", "vec3f", vec3f(0.3f)));
+      };
 
       /*! \brief returns a std::string with the c++ name of this class */
       virtual    std::string toString() const;
@@ -87,6 +100,7 @@ namespace ospray {
       /*! \brief 'render' the object to ospray */
       virtual void render(RenderContext &ctx);
 
+      virtual void preCommit(RenderContext &ctx) override;
       virtual void postCommit(RenderContext &ctx) override;
 
 
