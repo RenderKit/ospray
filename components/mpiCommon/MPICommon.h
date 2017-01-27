@@ -20,7 +20,10 @@
 #include <memory>
 #include <vector>
 // mpi
+
+#define OMPI_SKIP_MPICXX 1
 #include <mpi.h>
+
 // ospcommon
 #include "ospcommon/common.h"
 

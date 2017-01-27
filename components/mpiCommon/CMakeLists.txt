@@ -26,7 +26,7 @@ OSPRAY_CREATE_LIBRARY(ospray_mpi_common
 
 LINK
 
-  ${MPI_LIBRARIES}
+  ${MPI_C_LIBRARIES}
   ospray_common
 
 COMPONENT mpi
