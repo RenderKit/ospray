@@ -36,7 +36,8 @@ namespace ospray {
   WarnOnce::WarnOnce(const std::string &s) 
     : s(s) 
   {
-    std::cout << "Warning: " << s << " (only reporting first occurrence)"
+    std::cout << "Warning: " << s
+      //<< " (only reporting first occurrence)"
               << std::endl;
   }
   
@@ -45,8 +46,8 @@ namespace ospray {
   {
     long *end = (long *)((char *)ptr + (numBytes - (numBytes%8)));
     long *mem = (long *)ptr;
-    long sum = 0;
-    long i = 0;
+    long sum  = 0;
+    long i    = 0;
 
     while (mem < end) {
       sum += (i+13) * *mem;
@@ -287,14 +288,11 @@ namespace ospray {
 
   int loadLocalModule(const std::string &name)
   {
-    PING;
     std::string libName = "ospray_module_" + name;
-    PRINT(libName);
     loadLibrary(libName);
 
     std::string initSymName = "ospray_init_module_" + name;
     void*initSym = getSymbol(initSymName);
-    PRINT(initSym);
     if (!initSym) {
       throw std::runtime_error("#osp:api: could not find module initializer "
                                +initSymName);
@@ -307,7 +305,6 @@ namespace ospray {
       return 2;
 
     try {
-      PING;
       initMethod();
     } catch (...) {
       return 3;

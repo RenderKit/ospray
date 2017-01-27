@@ -162,8 +162,20 @@ namespace ospray {
   /*! size of OSPTextureFormat */
   OSPRAY_INTERFACE size_t sizeOf(const OSPTextureFormat);
 
-  struct OSPRAY_SDK_INTERFACE WarnOnce {
-    WarnOnce(const std::string &s);
+
+  /*! little helper class that prints out a warning string upon the
+    first time it is encountered.
+
+    Usage:
+
+    if (someThisBadHappens) {
+       static WarnOnce warning("something bad happened, at least once!");
+       ...
+    }
+  */
+  struct OSPRAY_SDK_INTERFACE WarnOnce
+  {
+    WarnOnce(const std::string &warning);
   private:
     const std::string s;
   };

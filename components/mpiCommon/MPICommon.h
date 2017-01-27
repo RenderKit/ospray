@@ -48,17 +48,12 @@
 namespace ospray {
   namespace mpi {
     using namespace ospcommon;
-
-    /*! for mpi versions that do not support MPI_THREAD_MULTIPLE
-        (default openmpi, for example) it is not allows to perform
-        concurrnt MPI_... calls from differnt threads. To avoid this,
-        _all_ threads inside ospray should lock this global mutex
-        before doing any MPI calls. Furthermore, this mutex will get
-        unlocked _only_ while ospray is executing api call (we'll
-        always lock it before we return to the calling app), thus we
-        can make sure that no ospray mpi calls will ever interfere
-        with the app */
-    extern std::mutex mpiSerializerMutex;
+    
+    /*! global variable that turns on logging of MPI communication
+      (for debugging) _may_ eventually turn this into a real logLevel,
+      but for now tihs is cleaner here thatn in the MPI device
+    */
+    OSPRAY_MPI_INTERFACE extern bool logMPI;
 
     /*! helper functions that lock resp unlock the mpi serializer
       mutex the 'whohasthelock' variable is only for debugging - it
@@ -66,14 +61,14 @@ namespace ospray {
       parameter is only for human consumptoin, though - we do not
       defined in any way what this value is supposed to be
      */
-    void lockMPI(const char *whoHasTheLock);
+    OSPRAY_MPI_INTERFACE void lockMPI(const char *whoHasTheLock);
 
     /*! helper functions that lock resp unlock the mpi serializer mutex */
-    void unlockMPI();
+    OSPRAY_MPI_INTERFACE void unlockMPI();
 
     /*! the value of the 'whoHasTheLock' parameter of the last
         succeeding lockMPI() call */
-    const char *whoHasTheMPILock();
+    OSPRAY_MPI_INTERFACE const char *whoHasTheMPILock();
     
     /*! use this macro as a lock-guard inside any scope you want to
         perform MPI calls in */

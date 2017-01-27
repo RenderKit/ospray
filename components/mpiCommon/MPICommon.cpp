@@ -20,6 +20,12 @@
 namespace ospray {
   namespace mpi {
 
+    /*! global variable that turns on logging of MPI communication
+      (for debugging) _may_ eventually turn this into a real logLevel,
+      but for now tihs is cleaner here thatn in the MPI device
+     */
+    OSPRAY_MPI_INTERFACE bool logMPI = 0;
+
     OSPRAY_MPI_INTERFACE Group world;
     OSPRAY_MPI_INTERFACE Group app;
     OSPRAY_MPI_INTERFACE Group worker;
@@ -152,16 +158,27 @@ namespace ospray {
       MPI_CALL(Comm_rank(MPI_COMM_WORLD,&world.rank));
       MPI_CALL(Comm_size(MPI_COMM_WORLD,&world.size));
       unlockMPI();
-      
-      std::cout << "#osp.mpi: starting up the async messaging layer ...!" << std::endl;
-      mpi::async::CommLayer::WORLD = new mpi::async::CommLayer;
-      mpi::async::Group *worldGroup =
+
+      {
+        /*! iw, jan 2017: this entire code block should eventually get
+            removed once we switch to the new asyn messaging library;
+            in particular the asyn messaging should be turned on by
+            whoever needs it (eg, DFB, display wall, etc); not in
+            general as soon as one initializes mpicommon ... (_and_
+            the messaging code isn't exactly up to snuff wrt to
+            cleanliness etc as it should be*/
+        if (logMPI)
+          std::cout << "#osp.mpi: starting up the async messaging layer ...!" << std::endl;
+        mpi::async::CommLayer::WORLD = new mpi::async::CommLayer;
+        mpi::async::Group *worldGroup =
           mpi::async::createGroup(MPI_COMM_WORLD,
                                   mpi::async::CommLayer::WORLD,
                                   290374);
-      assert(worldGroup);
-      mpi::async::CommLayer::WORLD->group = worldGroup;
-      std::cout << "#osp.mpi: async messaging layer started ... (even though mpi device not yet set up!)" << std::endl;
+        assert(worldGroup);
+        mpi::async::CommLayer::WORLD->group = worldGroup;
+        if (logMPI)
+          std::cout << "#osp.mpi: async messaging layer started ... " << std::endl;
+      }
 
       // by default, all MPI comm gets locked down, unless we
       // explicitly enable it
@@ -178,7 +195,8 @@ namespace ospray {
          this to find some other bugs, but eventually we have to do
          this - and once we do, we have to do the lock/unlock for
          every api call. */
-      std::cout << "FOR NOW, WE DO _NOT_ LOCK MPI CALLS UPON STARTUP - EVENTUALLY WE HAVE TO DO THIS!!!" << std::endl;
+      if (logMPI)
+        std::cout << "#osp.mpi: FOR NOW, WE DO _NOT_ LOCK MPI CALLS UPON STARTUP - EVENTUALLY WE HAVE TO DO THIS!!!" << std::endl;
 #else
       lockMPI();
 #endif

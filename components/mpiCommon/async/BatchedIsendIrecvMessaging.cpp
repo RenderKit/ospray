@@ -203,8 +203,10 @@ namespace ospray {
 
       void BatchedIsendIrecvImpl::Group::shutdown()
       {
-        std::cout << "#osp:mpi:BatchIsendIrecvMessaging:Group shutting down"
-                  << std::endl;
+        if (logMPI) {
+          std::cout << "#osp:mpi:BatchIsendIrecvMessaging:Group shutting down"
+                    << std::endl;
+        }
         shouldExit.store(true);
         sendThread.handle.join();
         recvThread.handle.join();
@@ -214,24 +216,30 @@ namespace ospray {
       void BatchedIsendIrecvImpl::init()
       {
         mpi::world.barrier();
-        printf("#osp:mpi:BatchedIsendIrecvMessaging started up %i/%i\n",
-               mpi::world.rank,mpi::world.size);
-        fflush(0);
+        if (logMPI) {
+          printf("#osp:mpi:BatchedIsendIrecvMessaging started up %i/%i\n",
+                 mpi::world.rank,mpi::world.size);
+          fflush(0);
+        }
         mpi::world.barrier();
       }
 
       void BatchedIsendIrecvImpl::shutdown()
       {
         mpi::world.barrier();
-        printf("#osp:mpi:BatchedIsendIrecvMessaging shutting down %i/%i\n",
-               mpi::world.rank,mpi::world.size);
-        fflush(0);
+        if (logMPI) {
+          printf("#osp:mpi:BatchedIsendIrecvMessaging shutting down %i/%i\n",
+                 mpi::world.rank,mpi::world.size);
+          fflush(0);
+        }
         mpi::world.barrier();
         for (uint32_t i = 0; i < myGroups.size(); i++)
           myGroups[i]->shutdown();
 
-        printf("#osp:mpi:BatchedIsendIrecvMessaging finalizing %i/%i\n",
-               mpi::world.rank,mpi::world.size);
+        if (logMPI) {
+          printf("#osp:mpi:BatchedIsendIrecvMessaging finalizing %i/%i\n",
+                 mpi::world.rank,mpi::world.size);
+        }
         MPI_CALL(Finalize());
       }
 

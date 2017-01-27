@@ -548,7 +548,7 @@ namespace ospray {
           if (flags & OSP_DATA_SHARED_BUFFER) {
             localData = init;
           } else {
-            std::cout << "#osp.mpi: warning - newdata currently creates a std::ector copy of input data..." << std::endl;
+            static WarnOnce warning("#osp.mpi: warning - newdata currently creates a std::vector copy of input data...");
             data.resize(ospray::sizeOf(format) * nItems);
             std::memcpy(data.data(), init, data.size());
           }
@@ -587,7 +587,7 @@ namespace ospray {
       
       void NewData::serialize(WriteStream &b) const
       {
-        std::cout << "#osp.mpi: Warning - newdata serialize currently uses a std::vector ... " << std::endl;
+        static WarnOnce warning("#osp.mpi: Warning - newdata serialize currently uses a std::vector ... ");
         /* note there are two issues with this: first is that when
            sharing data buffer we'd hvae only localdata set (not the
            this->data vector; second is that even _if_ we use the data

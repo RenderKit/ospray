@@ -119,22 +119,31 @@ namespace ospray {
                app.rank,app.size,world.rank,world.size);
 
         MPI_Intercomm_create(app.comm, 0, world.comm, 1, 1, &worker.comm);
-        std::cout << "master: Made 'worker' intercomm (through intercomm_create): " << (int*)worker.comm << std::endl;
+        if (logMPI)
+          std::cout << "master: Made 'worker' intercomm (through intercomm_create): " << (int*)worker.comm << std::endl;
         
         // worker.makeIntracomm();
         worker.makeInterComm();
 
-        printf("#m: ping-ponging a test message to every worker...\n");
-        for (int i=0;i<worker.size;i++) {
-          printf("#m: sending tag %i to worker %i\n",i,i);
-          MPI_Send(&i,1,MPI_INT,i,i,worker.comm);
-          int reply;
-          MPI_Recv(&reply,1,MPI_INT,i,i,worker.comm,&status);
-          Assert(reply == i);
-        }
-        PING;
 
-        MPI_Barrier(MPI_COMM_WORLD);
+        // ------------------------------------------------------------------
+        // do some simple hand-shake test, just to make sure MPI is
+        // working correctly
+        // ------------------------------------------------------------------
+        {
+          if (logMPI)
+            printf("#m: ping-ponging a test message to every worker...\n");
+          for (int i=0;i<worker.size;i++) {
+            if (logMPI)
+              printf("#m: sending tag %i to worker %i\n",i,i);
+            MPI_Send(&i,1,MPI_INT,i,i,worker.comm);
+            int reply;
+            MPI_Recv(&reply,1,MPI_INT,i,i,worker.comm,&status);
+            Assert(reply == i);
+          }
+          MPI_Barrier(MPI_COMM_WORLD);
+        }
+        
         // -------------------------------------------------------
         // at this point, all processes should be set up and synced. in
         // particular:
@@ -146,7 +155,8 @@ namespace ospray {
         // we're the workers
         MPI_Comm_split(mpi::world.comm,0,mpi::world.rank,&worker.comm);
         worker.makeIntraComm();
-        std::cout << "master: Made 'worker' intercomm (through split): " << (int*)worker.comm << std::endl;
+        if (logMPI)
+          std::cout << "master: Made 'worker' intercomm (through split): " << (int*)worker.comm << std::endl;
         // worker.makeIntercomm();
         printf("#w: worker process %i/%i (global %i/%i)\n",
                worker.rank,worker.size,world.rank,world.size);
@@ -157,16 +167,23 @@ namespace ospray {
         // worker.containsMe = true;
         // app.containsMe = false;
 
-        // replying to test-message
-        PING;
-        printf("#w: worker %i trying to receive tag %i...\n",
-               worker.rank,worker.rank);
-        int reply;
-        MPI_Recv(&reply,1,MPI_INT,0,worker.rank,app.comm,&status);
-        MPI_Send(&reply,1,MPI_INT,0,worker.rank,app.comm);
-        PING;
+        // ------------------------------------------------------------------
+        // do some simple hand-shake test, just to make sure MPI is
+        // working correctly
+        // ------------------------------------------------------------------
+        {
+          // replying to test-message
+          if (logMPI)
+            printf("#w: start-up ping-pong: worker %i trying to receive tag %i...\n",
+                   worker.rank,worker.rank);
+          int reply;
+          MPI_Recv(&reply,1,MPI_INT,0,worker.rank,app.comm,&status);
+          MPI_Send(&reply,1,MPI_INT,0,worker.rank,app.comm);
+          
+          MPI_Barrier(MPI_COMM_WORLD);
+        }
 
-        MPI_Barrier(MPI_COMM_WORLD);
+        
         // -------------------------------------------------------
         // at this point, all processes should be set up and synced. in
         // particular:
@@ -368,14 +385,13 @@ namespace ospray {
         std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
       
         size_t numThreads = std::thread::hardware_concurrency();
-        PRINT(numThreads);
-
         cpu_set_t cpuSet;
         CPU_ZERO(&cpuSet);
         for (int i=0;i<numThreads;i++)
           CPU_SET(i,&cpuSet);
         int rc = sched_setaffinity(getpid(),sizeof(cpuSet),&cpuSet);
-        PRINT(rc);
+        if (rc == 0)
+          std::cout << "Success! Turned affinity mask _on_ again for " << numThreads << " threads" << std::endl;
       }
 #endif
     }

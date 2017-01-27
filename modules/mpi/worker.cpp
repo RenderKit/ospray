@@ -65,7 +65,7 @@ namespace ospray {
     using std::cout;
     using std::endl;
 
-    bool logMPI = 0;
+    extern bool logMPI;
 
     OSPRAY_MPI_INTERFACE void runWorker();
 
