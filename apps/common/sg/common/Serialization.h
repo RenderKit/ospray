@@ -18,7 +18,6 @@
 
 #include "sg/common/Common.h"
 // ospcommon
-#include "ospcommon/RefCount.h"
 #include "ospcommon/AffineSpace.h"
 // std
 #include <vector>
@@ -41,7 +40,7 @@ namespace ospray {
         DONT_FOLLOW_INSTANCES
       } Mode;
       
-      struct Instantiation : public RefCount {
+      struct Instantiation {
         std::shared_ptr<Instantiation> parentWorld;
         affine3f           xfm;
 
@@ -49,7 +48,7 @@ namespace ospray {
       };
       
       /*! describes one object that we encountered */
-      struct Object : public RefCount {
+      struct Object {
         /*! the node itself - this is intentionally NOT a shared_ptr
             since nodes call this with 'this', for which we have no
             shared_ptr info */
