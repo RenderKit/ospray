@@ -33,6 +33,9 @@ namespace ospray {
       //! 'render' the nodes
       virtual void render(RenderContext &ctx);
 
+      virtual void preCommit(RenderContext &ctx);
+      virtual void postCommit(RenderContext &ctx);
+
       //! a logical name, of no other useful meaning whatsoever
       std::string name; 
       //! indicates the type of material/shader the renderer should use for these parameters

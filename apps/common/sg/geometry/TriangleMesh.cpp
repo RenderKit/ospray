@@ -114,6 +114,7 @@ namespace ospray {
       }
       assert(mat);
       ospSetMaterial(ospGeometry,mat);
+      // ospSetMaterial(ospGeometry,(OSPMaterial)getChild("material")->getValue<OSPObject>());
 #else
       // assign a default material (for now.... eventually we might
       // want to do a 'real' material
@@ -211,7 +212,12 @@ namespace ospray {
 
     void TriangleMesh::postCommit(RenderContext &ctx)
     {
-         if (ospGeometry) return;
+      std::cout << __PRETTY_FUNCTION__ << std::endl;
+       if (ospGeometry)
+       {
+         ospCommit(ospGeometry);
+         return;
+       } 
 
       assert(ctx.world);
       assert(ctx.world->ospModel);
@@ -227,6 +233,8 @@ namespace ospray {
       // set index data
       if (index && index->notEmpty())
         ospSetData(ospGeometry,"index",index->getOSP());
+
+
 
 #if 1
       OSPMaterial mat = NULL;
@@ -250,7 +258,8 @@ namespace ospray {
         ospCommit(mat);
       }
       assert(mat);
-      ospSetMaterial(ospGeometry,mat);
+      // ospSetMaterial(ospGeometry,mat);
+      ospSetMaterial(ospGeometry, (OSPMaterial)getChild("material")->getValue<OSPObject>());
 #else
       // assign a default material (for now.... eventually we might
       // want to do a 'real' material

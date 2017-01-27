@@ -34,6 +34,7 @@ namespace ospray {
         // add(createNode("color", "DataBuffer"));
         // add(createNode("texcoord", "DataBuffer"));
         // add(createNode("index", "DataBuffer"));
+        add(createNode("material", "Material"));
       };
       
       /*! \brief returns a std::string with the c++ name of this class */

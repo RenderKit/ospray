@@ -28,9 +28,40 @@ namespace ospray {
         name(""),
         type("")
     {
-      add(createNode("ospMaterial", "OSPObject"));
-      add(createNode("name", "string"));
-      add(createNode("type", "string"));
+      add(createNode("type", "string", std::string("default")));
+      vec3f kd(.6f);
+      vec3f ks(.8f);
+      add(createNode("Kd", "vec3f",kd));
+      add(createNode("Ks", "vec3f",ks));
+      add(createNode("Ns", "float",4.f));
+    }
+
+    void Material::preCommit(RenderContext &ctx)
+    {
+      if (ospMaterial != nullptr) return;
+      OSPMaterial mat = ospNewMaterial(ctx.ospRenderer, type.c_str());
+      if (!mat)
+      {
+          std::cerr << "Warning: Could not create material type '" << type << "'. Replacing with default material." << std::endl;
+          static OSPMaterial defaultMaterial = NULL;
+          if (!defaultMaterial) {
+            defaultMaterial = ospNewMaterial(ctx.integrator->getOSPHandle(), "default");
+            vec3f kd(.7f);
+            vec3f ks(.3f);
+            ospSet3fv(defaultMaterial, "Kd", &kd.x);
+            ospSet3fv(defaultMaterial, "Ks", &ks.x);
+            ospSet1f(defaultMaterial, "Ns", 99.f);
+            ospCommit(defaultMaterial);
+          }
+          mat = defaultMaterial;
+        }
+      setValue((OSPObject)mat);
+      ospMaterial = mat;
+    }
+
+    void Material::postCommit(RenderContext &ctx)
+    {
+      ospCommit(ospMaterial);
     }
 
     void Material::render(RenderContext &ctx)

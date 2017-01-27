@@ -59,7 +59,7 @@ namespace ospray {
       // {
         ospModel = ospNewModel();
         ospCommit(ospModel);
-        setValue((OSPObject)ospModel);
+        value = (OSPObject)ospModel;
       // }
     }
 
