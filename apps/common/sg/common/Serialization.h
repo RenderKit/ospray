@@ -80,7 +80,7 @@ namespace ospray {
 
       /*! the vector containing all the objects encountered when
           serializing the entire scene graph */
-      std::vector<std::shared_ptr<Object> > object;
+      std::vector<std::shared_ptr<Serialization::Object> > object;
     };
     
   } // ::ospray::sg
