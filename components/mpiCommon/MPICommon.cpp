@@ -73,7 +73,6 @@ namespace ospray {
     Group::Group(const Group &other)
       : comm(other.comm), rank(other.rank), size(other.size), containsMe(other.containsMe)
     {
-      std::cout << "copy-const'ed mpi group from " << (int*)other.comm << std::endl;
     }
 
     void Group::barrier() const

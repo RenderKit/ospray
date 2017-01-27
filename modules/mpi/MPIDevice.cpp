@@ -41,6 +41,12 @@
 #  include <dlfcn.h>
 #endif
 
+#ifdef OPEN_MPI
+# include <thread>
+//# define _GNU_SOURCE
+# include <sched.h>
+#endif
+
 namespace ospray {
   using std::cout;
   using std::endl;
@@ -348,11 +354,40 @@ namespace ospray {
       MPI_Barrier(app.comm);
     }
     
+
     bool checkIfWeNeedToDoMPIDebugOutputs();
+    void checkIfThisIsOpenMPIAndIfSoTurnAllCPUsBackOn()
+    {
+#ifdef OPEN_MPI
+      {
+        std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+        std::cout << "Seems this is openmpi, which, by default, effectively " << std::endl;
+        std::cout << "disables threading by setting a CPU affinity mask that" << std::endl;
+        std::cout << "leaves only a single CPU core per proc to run on ...." << std::endl;
+        std::cout << "Being nasty and turning all CPU cores back on again :-)" << std::endl;
+        std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+      
+        size_t numThreads = std::thread::hardware_concurrency();
+        PRINT(numThreads);
+
+        cpu_set_t cpuSet;
+        CPU_ZERO(&cpuSet);
+        for (int i=0;i<numThreads;i++)
+          CPU_SET(i,&cpuSet);
+        int rc = sched_setaffinity(getpid(),sizeof(cpuSet),&cpuSet);
+        PRINT(rc);
+      }
+#endif
+    }
     
     MPIDevice::MPIDevice()
     //      : bufferedComm(std::make_shared<BufferedMPIComm>())
     {
+      checkIfThisIsOpenMPIAndIfSoTurnAllCPUsBackOn();
+
+      
+
+      
       /* do _NOT_ try to set up the fabric, streams, etc, here - MPI
          comms are _NOT_ yet properly set up */
 

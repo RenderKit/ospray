@@ -35,6 +35,13 @@
 // std
 #include <algorithm>
 
+#ifdef OPEN_MPI
+# include <thread>
+//# define _GNU_SOURCE
+# include <sched.h>
+#endif
+
+
 #ifdef _WIN32
 #  include <windows.h> // for Sleep and gethostname
 #  include <process.h> // for getpid
@@ -97,6 +104,8 @@ namespace ospray {
       return atoi(envVar) > 0;
     }
     
+    void checkIfThisIsOpenMPIAndIfSoTurnAllCPUsBackOn();
+    
     /*! it's up to the proper init
       routine to decide which processes call this function and which
       ones don't. This function will not return.
@@ -105,6 +114,8 @@ namespace ospray {
     */
     void runWorker()
     {
+      checkIfThisIsOpenMPIAndIfSoTurnAllCPUsBackOn();
+      
       auto &device = ospray::api::Device::current;
 
       auto numThreads = device ? device->numThreads : -1;
