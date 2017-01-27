@@ -161,7 +161,10 @@ build-windows-icc:
 release-linux-icc:
   type: deploy
   script:
+    - module load cmake
+    - module load gcc
     - module load intel
+    - module load qt
     - export CC=icc
     - export CXX=icpc
     - scripts/release/linux.sh
@@ -169,6 +172,7 @@ release-linux-icc:
     - icc
     - release
     - centos6
+    - mpi
   only:
     - devel
     - master
@@ -187,6 +191,7 @@ release-osx-clang:
     - clang
     - release
     - osx
+    - mpi
   only:
     - devel
     - master
@@ -204,6 +209,7 @@ release-windows:
     - msvc
     - release
     - win7
+    - mpi
   only:
     - devel
     - master

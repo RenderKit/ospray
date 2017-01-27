@@ -188,29 +188,14 @@ ENDMACRO()
 ## Target install macros for OSPRay libraries ##
 
 MACRO(OSPRAY_INSTALL_LIBRARY name component)
-  # NOTE(jda) - Check if CMAKE_INSTALL_LIB/BINDIR is set, and use
-  #             CMAKE_INSTALL_PREFIX if it's not defined. It may not be defined
-  #             in a client project who calls this macro in their CMakeLists.
-  IF(NOT DEFINED CMAKE_INSTALL_LIBDIR)
-    SET(LOCAL_LIB_INSTALL_DIR ${CMAKE_INSTALL_PREFIX})
-  ELSE()
-    SET(LOCAL_LIB_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR})
-  ENDIF()
-
-  IF(NOT DEFINED CMAKE_INSTALL_BINDIR)
-    SET(LOCAL_BIN_INSTALL_DIR ${CMAKE_INSTALL_PREFIX})
-  ELSE()
-    SET(LOCAL_BIN_INSTALL_DIR ${CMAKE_INSTALL_BINDIR})
-  ENDIF()
-
   INSTALL(TARGETS ${name}
-    LIBRARY DESTINATION ${LOCAL_LIB_INSTALL_DIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
       COMPONENT ${component}
     # on Windows put the dlls into bin
-    RUNTIME DESTINATION ${LOCAL_BIN_INSTALL_DIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
       COMPONENT ${component}
     # ... and the import lib into the devel package
-    ARCHIVE DESTINATION ${LOCAL_LIB_INSTALL_DIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
       COMPONENT devel
   )
 ENDMACRO()
