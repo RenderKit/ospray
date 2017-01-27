@@ -121,6 +121,44 @@ namespace ospcommon {
     return result;
   }
 
+  template <typename T>
+  inline std::pair<bool, T> getEnvVar(const std::string &/*var*/)
+  {
+    static_assert(!std::is_same<T, float>::value &&
+                  !std::is_same<T, int>::value &&
+                  !std::is_same<T, std::string>::value,
+                  "You can only get an int, float, or std::string "
+                  "when using ospray::getEnvVar<T>()!");
+    return {false, {}};
+  }
+
+  template <>
+  inline std::pair<bool, float>
+  getEnvVar<float>(const std::string &var)
+  {
+    auto *str = getenv(var.c_str());
+    bool found = (str != nullptr);
+    return {found, found ? atof(str) : float{}};
+  }
+
+  template <>
+  inline std::pair<bool, int>
+  getEnvVar<int>(const std::string &var)
+  {
+    auto *str = getenv(var.c_str());
+    bool found = (str != nullptr);
+    return {found, found ? atoi(str) : int{}};
+  }
+
+  template <>
+  inline std::pair<bool, std::string>
+  getEnvVar<std::string>(const std::string &var)
+  {
+    auto *str = getenv(var.c_str());
+    bool found = (str != nullptr);
+    return {found, found ? std::string(str) : std::string{}};
+  }
+
   // NOTE(jda) - Implement make_unique() as it didn't show up until C++14...
   template<typename T, typename ...Args>
   inline std::unique_ptr<T> make_unique(Args&& ...args)

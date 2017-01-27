@@ -14,14 +14,6 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#if MPI_IMAGE_COMPOSITING
-#  define OSP_COMPOSITING_TEST 1
-#endif
-
-#if OSP_COMPOSITING_TEST
-# include "mpi/MPICommon.h"
-#endif
-
 // ospray
 #include "TriangleMesh.h"
 #include "common/Model.h"
