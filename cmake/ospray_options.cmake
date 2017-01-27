@@ -90,9 +90,6 @@ ENDIF()
 OSPRAY_CONFIGURE_COMPILER()
 OSPRAY_CONFIGURE_TASKING_SYSTEM()
 
-OPTION(OSPRAY_USE_EXTERNAL_EMBREE
-       "Use a pre-built Embree instead of the internally built version" ON)
-
 OPTION(OSPRAY_USE_EMBREE_STREAMS "Enable use of Embree's stream intersection")
 MARK_AS_ADVANCED(OSPRAY_USE_EMBREE_STREAMS) # feature not implemented yet
 

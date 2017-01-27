@@ -26,9 +26,10 @@
 // ispc exports
 #include "RaycastVolumeRenderer_ispc.h"
 #if EXP_DATA_PARALLEL
+# include "mpiCommon/MPICommon.h"
 # include "../../fb/DistributedFrameBuffer.h"
 # include "../../volume/DataDistributedBlockedVolume.h"
-# include "../../render/LoadBalancer.h"
+# include "render/LoadBalancer.h"
 #endif
 
 #define TILE_CACHE_SAFE_MUTEX 0
@@ -137,7 +138,7 @@ namespace ospray {
       blockWasVisible[i] = false;
 
     bool renderForeAndBackground =
-        (taskIndex % core::getWorkerCount()) == core::getWorkerRank();
+        (taskIndex % mpi::getWorkerCount()) == mpi::getWorkerRank();
 
     const int numJobs = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
 
@@ -150,7 +151,7 @@ namespace ospray {
                                      dpv->ddBlock,
                                      blockWasVisible,
                                      tileID,
-                                     ospray::core::getWorkerRank(),
+                                     mpi::getWorkerRank(),
                                      renderForeAndBackground,
                                      tid);
     });

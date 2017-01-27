@@ -23,6 +23,7 @@
 #include <mpi.h>
 // ospcommon
 #include "ospcommon/common.h"
+#include "OSPMPIConfig.h"
 
 #ifdef _WIN32
 #  ifdef ospray_mpi_common_EXPORTS
@@ -145,6 +146,21 @@ namespace ospray {
     // OSPRAY_INTERFACE void send(const Address& addr, )
     OSPRAY_MPI_INTERFACE void flush();
     OSPRAY_MPI_INTERFACE void barrier(const Group& group);
+
+    inline int getWorkerCount()
+    {
+      return mpi::worker.size;
+    }
+
+    inline int getWorkerRank()
+    {
+      return mpi::worker.rank;
+    }
+
+    inline bool isMpiParallel()
+    {
+      return getWorkerCount() > 0;
+    }
 
   }// ::ospray::mpi
 } // ::ospray
