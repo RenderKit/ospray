@@ -351,7 +351,6 @@ namespace ospray {
 
     std::shared_ptr<sg::World> importRIVL(const std::string &fileName)
     {
-      PING;
       string xmlFileName = fileName;
       string binFileName = fileName+".bin";
       binBasePtr = (void *)mapFile(binFileName);
