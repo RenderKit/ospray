@@ -14,36 +14,4 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-OSPRAY_BUILD_COMPONENT(mpiCommon)
-
-OSPRAY_CONFIGURE_MPI()
-
-SET(MAML_LIBRARY ospray_mpi_maml)
-
-# ------------------------------------------------------------------
-# The MAML library itself
-# ------------------------------------------------------------------
-OSPRAY_CREATE_LIBRARY(${MAML_LIBRARY}
-  maml/maml.cpp
-  maml/Context.cpp
-LINK
-  ospray_mpi_common
-COMPONENT mpi
-)
-
-# ------------------------------------------------------------------
-# tests and examples
-# ------------------------------------------------------------------
-ADD_EXECUTABLE(mamlTest
-  apps/mamlTest.cpp
-)
-TARGET_LINK_LIBRARIES(mamlTest
-  ${MAML_LIBRARY}
-)
-
-ADD_EXECUTABLE(mamlTestMessageSwarm
-  apps/testMessageSwarm.cpp
-)
-TARGET_LINK_LIBRARIES(mamlTestMessageSwarm
-  ${MAML_LIBRARY}
-)
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/components/mpiService)

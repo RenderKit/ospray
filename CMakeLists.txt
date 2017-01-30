@@ -66,7 +66,6 @@ ADD_SUBDIRECTORY(${OSPCOMMON_DIR})
 # libraries, etc, and may have dependencies to other components.
 ##############################################################
 INCLUDE(components/configure.cmake)
-ADD_SUBDIRECTORY(components)
 
 ##############################################################
 # the OSPRay library
