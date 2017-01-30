@@ -57,6 +57,7 @@ namespace ospray {
       ctx.world = this;
       // if (!ospModel)
       // {
+      std::cout << __PRETTY_FUNCTION__ << std::endl;
         ospModel = ospNewModel();
         ospCommit(ospModel);
         value = (OSPObject)ospModel;
@@ -70,13 +71,13 @@ namespace ospray {
 
     void World::preRender(RenderContext &ctx)
     {
-      ospCommit(ospModel);
+      // ospCommit(ospModel);
       ctx.world = this;
     }
 
     void World::postRender(RenderContext &ctx)
     {
-      ospCommit(ospModel);
+      // ospCommit(ospModel);
     }
 
     OSP_REGISTER_SG_NODE(World);

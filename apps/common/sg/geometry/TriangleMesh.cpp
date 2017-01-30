@@ -207,7 +207,7 @@ namespace ospray {
 
     void TriangleMesh::preRender(RenderContext &ctx)
     {
-      ospAddGeometry(ctx.world->ospModel,ospGeometry);
+      // ospAddGeometry(ctx.world->ospModel,ospGeometry);
     }
 
     void TriangleMesh::postCommit(RenderContext &ctx)
@@ -216,6 +216,7 @@ namespace ospray {
        if (ospGeometry)
        {
          ospCommit(ospGeometry);
+         ospAddGeometry(ctx.world->ospModel,ospGeometry);
          return;
        } 
 
@@ -240,7 +241,7 @@ namespace ospray {
       OSPMaterial mat = NULL;
       // try to generate ospray material from the sg material stored with this object
       if (material) {
-        material->render(ctx);
+        // material->render(ctx);
         mat = material->ospMaterial;
       }
       PING; PRINT(mat);
@@ -276,6 +277,8 @@ namespace ospray {
 #endif
 
       ospCommit(ospGeometry);
+
+      ospAddGeometry(ctx.world->ospModel,ospGeometry);
       std::cout << __PRETTY_FUNCTION__ << std::endl;
 
 

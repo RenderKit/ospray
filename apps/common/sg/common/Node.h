@@ -27,6 +27,7 @@
 // ospcommon
 #include "ospcommon/vec.h"
 #include "mapbox/variant.hpp"
+#include <mutex>
 
 using namespace mapbox::util;
 
@@ -126,7 +127,7 @@ namespace ospray {
     /*! \brief base node of all scene graph nodes */
     struct Node : public RefCount
     {
-      Node() : lastModified(TimeStamp::now()), childrenMTime(TimeStamp::now()), lastCommitted(0), name("NULL"), type("Node"),
+      Node() : lastModified(1), childrenMTime(1), lastCommitted(0), name("NULL"), type("Node"),
       ospHandle(nullptr) {};
 
       virtual    std::string toString() const {}
@@ -211,9 +212,9 @@ namespace ospray {
       std::string name;
       std::string type;
 
-      NodeH& getChild(std::string name) { return children[name]; }
-      std::vector<NodeH> getChildrenByType(std::string) { std::vector<NodeH> result; return result;}
-      std::vector<NodeH> getChildren() { std::vector<NodeH> result; 
+      NodeH& getChild(std::string name) { std::lock_guard<std::mutex> lock{mutex}; return children[name]; }
+      std::vector<NodeH> getChildrenByType(std::string) { std::lock_guard<std::mutex> lock{mutex}; std::vector<NodeH> result; return result;}
+      std::vector<NodeH> getChildren() { std::lock_guard<std::mutex> lock{mutex}; std::vector<NodeH> result; 
           for (auto child : children)
             result.push_back(child.second);
           return result; }
@@ -221,13 +222,13 @@ namespace ospray {
       NodeH getParent() { return parent; }
       //TODO: to get the handle, should actually call getValue on valid node
       OSPObject getOSPHandle() { return ospHandle; }
-      void setParent(const NodeH& p) { parent = p; }
+      void setParent(const NodeH& p) { std::lock_guard<std::mutex> lock{mutex}; parent = p; }
       std::map<std::string, NodeH > children;
-      const SGVar getValue() { return value; }
-      template<typename T> const T& getValue() { return value.get<T>(); }
-      void setValue(SGVar val) { if (val != value) modified(); value = val; }
-      virtual void add(Ref<sg::Node> node) { children[node->name] = NodeH(node); node->setParent(NodeH(this)); }
-      virtual void add(NodeH node) { children[node->name] = node; node->setParent(NodeH(this)); }
+      const SGVar getValue() { std::lock_guard<std::mutex> lock{mutex}; return value; }
+      template<typename T> const T& getValue() { std::lock_guard<std::mutex> lock{mutex}; return value.get<T>(); }
+      void setValue(SGVar val) { std::lock_guard<std::mutex> lock{mutex}; if (val != value) modified(); value = val; }
+      virtual void add(Ref<sg::Node> node) { std::lock_guard<std::mutex> lock{mutex}; children[node->name] = NodeH(node); node->setParent(NodeH(this)); }
+      virtual void add(NodeH node) { add(node.node); }
       virtual void traverse(RenderContext &ctx, const std::string& operation);
       virtual void preTraverse(RenderContext &ctx, const std::string& operation);
       virtual void postTraverse(RenderContext &ctx, const std::string& operation);
@@ -245,6 +246,7 @@ namespace ospray {
       TimeStamp lastCommitted;
       std::map<std::string, std::shared_ptr<sg::Param> > params;
       NodeH parent;
+      std::mutex mutex;
     };
 
     /*! read a given scene graph node from its correspondoing xml node represenation */
@@ -291,7 +293,7 @@ namespace ospray {
 
     template <typename T>
     struct NodeParam : public Node {
-      NodeParam() { setValue(T()); }
+      NodeParam() : Node() { setValue(T()); }
       virtual void postCommit(RenderContext &ctx) { 
           if (parent.isValid())
           {

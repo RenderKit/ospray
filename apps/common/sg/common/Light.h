@@ -28,12 +28,18 @@ struct Light : public sg::Node {
   //! \brief constructor
   Light() : type("none"), ospLight(nullptr) {};
   Light(const std::string &type) : type(type), ospLight(nullptr) {};
+  
   virtual void preCommit(RenderContext &ctx)
   {
   	if (!ospLight)
-	  ospLight = ospNewLight(ctx.ospRenderer, type.c_str());
-	ospCommit(ospLight);
-	setValue((OSPObject)ospLight);
+  	  ospLight = ospNewLight(ctx.ospRenderer, type.c_str());
+  	ospCommit(ospLight);
+  	setValue((OSPObject)ospLight);
+  }
+
+  virtual void postCommit(RenderContext &ctx)
+  {
+    ospCommit(ospLight);
   }
 
   //! \brief returns a std::string with the c++ name of this class 

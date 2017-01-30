@@ -183,55 +183,12 @@ namespace ospray {
       return NULL;
     }
 
-    void Renderer::preTraverse(RenderContext &ctx, const std::string& operation)
+    void Renderer::postRender(RenderContext &ctx)
     {
-      Node::preTraverse(ctx, operation);
-    }
-
-    void Renderer::postTraverse(RenderContext &ctx, const std::string& operation)
-    {
-      Node::postTraverse(ctx, operation);
-      if (operation == "render")
-      {
-
-        ospSetObject(ospRenderer,"world", getChild("world")->getValue<OSPObject>());
-        ospSetObject(ospRenderer,"model", getChild("world")->getValue<OSPObject>());
-        ospSetObject(ospRenderer,"camera", getChild("camera")->getValue<OSPObject>());
-        ospCommit(ospRenderer);
-
-        // create and setup light for Ambient Occlusion
-        std::vector<OSPLight> lights;
-        for( auto lightNode : getChild("lights")->getChildren())
-        {
-          lights.push_back((OSPLight)lightNode->getValue<OSPObject>());
-        }
-        OSPData lightsd = ospNewData(lights.size(), OSP_LIGHT, &lights[0]);
-        ospCommit(lightsd);
-
-        // complete setup of renderer
-        ospSetObject(ospRenderer, "model",  getChild("world")->getValue<OSPObject>());
-        ospSetObject(ospRenderer, "lights", lightsd);
-        ospCommit(ospRenderer);
-        // if (getChildrenLastModified() > frameMTime)
-        //TODO: some child is kicking off modified every frame.  Should figure out which and ignore it
-        if (getChild("camera")->getChildrenLastModified() > frameMTime
-          || getChild("lights")->getChildrenLastModified() > frameMTime
-          || getChild("world")->getChildrenLastModified() > frameMTime
-          || getLastModified() > frameMTime
-          || getChild("shadowsEnabled")->getLastModified() > frameMTime
-          || getChild("aoSamples")->getLastModified() > frameMTime
-          || getChild("spp")->getLastModified() > frameMTime
-          )
-        {
-          ospFrameBufferClear((OSPFrameBuffer)getChild("frameBuffer")->getValue<OSPObject>(), OSP_FB_COLOR | OSP_FB_ACCUM);
-          frameMTime = TimeStamp::now();
-        }
-
-        ospRenderFrame((OSPFrameBuffer)getChild("frameBuffer")->getValue<OSPObject>(),
-                       ospRenderer,
-                       OSP_FB_COLOR | OSP_FB_ACCUM);
-        accumID++;
-      }
+      ospRenderFrame((OSPFrameBuffer)getChild("frameBuffer")->getValue<OSPObject>(),
+                     ospRenderer,
+                     OSP_FB_COLOR | OSP_FB_ACCUM);
+      accumID++;
     }
 
     void Renderer::preCommit(RenderContext &ctx)
@@ -250,6 +207,40 @@ namespace ospray {
 
     void Renderer::postCommit(RenderContext &ctx)
     {
+      std::cout << "renderer commit\n";
+      ospSetObject(ospRenderer,"world", getChild("world")->getValue<OSPObject>());
+      ospSetObject(ospRenderer,"model", getChild("world")->getValue<OSPObject>());
+      ospSetObject(ospRenderer,"camera", getChild("camera")->getValue<OSPObject>());
+      ospCommit(ospRenderer);
+
+      // create and setup light for Ambient Occlusion
+      std::vector<OSPLight> lights;
+      for( auto lightNode : getChild("lights")->getChildren())
+      {
+        lights.push_back((OSPLight)lightNode->getValue<OSPObject>());
+      }
+      OSPData lightsd = ospNewData(lights.size(), OSP_LIGHT, &lights[0]);
+      ospCommit(lightsd);
+
+      // complete setup of renderer
+      ospSetObject(ospRenderer, "model",  getChild("world")->getValue<OSPObject>());
+      ospSetObject(ospRenderer, "lights", lightsd);
+      ospCommit(ospRenderer);
+      // if (getChildrenLastModified() > frameMTime)
+      //TODO: some child is kicking off modified every frame.  Should figure out which and ignore it
+      if (getChild("camera")->getChildrenLastModified() > frameMTime
+        || getChild("lights")->getChildrenLastModified() > frameMTime
+        || getChild("world")->getChildrenLastModified() > frameMTime
+        || getLastModified() > frameMTime
+        || getChild("shadowsEnabled")->getLastModified() > frameMTime
+        || getChild("aoSamples")->getLastModified() > frameMTime
+        || getChild("spp")->getLastModified() > frameMTime
+        )
+      {
+        ospFrameBufferClear((OSPFrameBuffer)getChild("frameBuffer")->getValue<OSPObject>(), OSP_FB_COLOR | OSP_FB_ACCUM);
+        frameMTime = TimeStamp::now();
+      }
+
       ospCommit(ospRenderer);
     }
 

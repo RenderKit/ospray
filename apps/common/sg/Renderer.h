@@ -21,10 +21,9 @@
 namespace ospray {
   namespace sg {
     class FrameBuffer;
-    struct Renderer : public Node {
+    struct Renderer : public Renderable {
       Renderer(); 
-      virtual void preTraverse(RenderContext &ctx, const std::string& operation);
-      virtual void postTraverse(RenderContext &ctx, const std::string& operation);
+      virtual void postRender(RenderContext &ctx);
 
       /*! re-start accumulation (for progressive rendering). make sure
           that this function gets called at lesat once every time that
