@@ -34,16 +34,14 @@ COMPONENT mpi
 # ------------------------------------------------------------------
 # tests and examples
 # ------------------------------------------------------------------
-ADD_EXECUTABLE(mamlTest
+OSPRAY_CREATE_OPTIONAL_APPLICATION(mamlTest
   apps/mamlTest.cpp
-)
-TARGET_LINK_LIBRARIES(mamlTest
+LINK
   ${MAML_LIBRARY}
 )
 
-ADD_EXECUTABLE(mamlTestMessageSwarm
+OSPRAY_CREATE_OPTIONAL_APPLICATION(mamlTestMessageSwarm
   apps/testMessageSwarm.cpp
-)
-TARGET_LINK_LIBRARIES(mamlTestMessageSwarm
+LINK
   ${MAML_LIBRARY}
 )

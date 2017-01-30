@@ -33,6 +33,7 @@ MACRO(OSPRAY_BUILD_COMPONENT comp)
   IF (";${OSPRAY_LIST_OF_ALREADY_BUILT_COMPONENTS};" MATCHES ";${comp};")
     # component already built; nothing to do!
   ELSE()
+
     SET(CURRENT_COMPONENT_DIR ${COMPONENTS_DIR}/${comp})
     IF(NOT EXISTS ${CURRENT_COMPONENT_DIR})
       MESSAGE(FATAL_ERROR "Could not find component '${comp}'!")
@@ -43,8 +44,7 @@ MACRO(OSPRAY_BUILD_COMPONENT comp)
         ${OSPRAY_LIST_OF_ALREADY_BUILT_COMPONENTS} ${comp}
         CACHE INTERNAL "" FORCE)
     ADD_SUBDIRECTORY(${CURRENT_COMPONENT_DIR}
-      ${CMAKE_BINARY_DIR}/built_components/${comp}
-      EXCLUDE_FROM_ALL)
+      ${CMAKE_BINARY_DIR}/built_components/${comp})
 
     IF(EXISTS ${CURRENT_COMPONENT_DIR}/include.cmake)
       INCLUDE(${CURRENT_COMPONENT_DIR}/include.cmake)
