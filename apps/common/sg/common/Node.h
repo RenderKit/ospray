@@ -130,6 +130,36 @@ namespace ospray {
       Node() : lastModified(1), childrenMTime(1), lastCommitted(0), name("NULL"), type("Node"),
       ospHandle(nullptr) {};
 
+
+      /*! 
+        NodeH is a handle to a sg::Node.  It has the benefit of supporting some operators without
+          requiring dereferencing a pointer.
+      */
+      class NodeH
+      {
+      public:
+        NodeH(Ref<sg::Node> n=nullptr) : node(n) {}
+
+        Ref<sg::Node> node;
+
+        //! return child with name c
+        NodeH& operator[] (std::string c) { return node->getChild(c);}
+
+        //! add child node n to this node
+        NodeH operator+= (NodeH n) { node->add(n); n->setParent(*this); return n;}
+
+        Ref<sg::Node> operator-> ()
+        {
+          return node;
+        }
+
+        //! is this handle pointing to a null value?
+        bool isValid() const
+        {
+          return node.ptr != nullptr;
+        }
+      };
+
       virtual    std::string toString() const {}
       std::shared_ptr<sg::Param> getParam(const std::string &name) const;
       // void       addParam(sg::Param *p);
@@ -192,53 +222,76 @@ namespace ospray {
       inline void modified() { lastModified = TimeStamp::now(); if (parent.isValid()) parent->setChildrenModified(lastModified);}
       void setChildrenModified(TimeStamp t) { if (t >childrenMTime) {childrenMTime = t; if (parent.isValid()) parent->setChildrenModified(childrenMTime);} }
 
-      class NodeH
-      {
-      public:
-        NodeH(Ref<sg::Node> n=nullptr) : node(n) {}
-        Ref<sg::Node> node;
-        NodeH& operator[] (std::string c) { return node->getChild(c);}
-        NodeH operator+= (NodeH n) { node->add(n); n->setParent(*this); return n;}
-        Ref<sg::Node> operator-> ()
-        {
-          return node;
-        }
-        bool isValid() const
-        {
-          return node.ptr != nullptr;
-        }
-      };
-
       std::string name;
       std::string type;
 
+      //! return named child node
       NodeH& getChild(std::string name) { std::lock_guard<std::mutex> lock{mutex}; return children[name]; }
-      std::vector<NodeH> getChildrenByType(std::string) { std::lock_guard<std::mutex> lock{mutex}; std::vector<NodeH> result; return result;}
+
+      //! return all children of type
+      std::vector<NodeH> getChildrenByType(std::string t) { std::lock_guard<std::mutex> lock{mutex}; std::vector<NodeH> result; return result;}
+
+      //! return vector of child handles
       std::vector<NodeH> getChildren() { std::lock_guard<std::mutex> lock{mutex}; std::vector<NodeH> result; 
           for (auto child : children)
             result.push_back(child.second);
           return result; }
+
+      //! return child c
       NodeH& operator[] (std::string c) { return getChild(c);}
+
+      //! return the parent node 
       NodeH getParent() { return parent; }
-      //TODO: to get the handle, should actually call getValue on valid node
+      //! returns handle to ospObject, however should actually call getValue on valid node instead
       OSPObject getOSPHandle() { return ospHandle; }
+
+      //! sets the parent
       void setParent(const NodeH& p) { std::lock_guard<std::mutex> lock{mutex}; parent = p; }
-      std::map<std::string, NodeH > children;
+
+      //! get the value of the node, whithout template conversion
       const SGVar getValue() { std::lock_guard<std::mutex> lock{mutex}; return value; }
+
+      //! returns the value of the node in the desired type
       template<typename T> const T& getValue() { std::lock_guard<std::mutex> lock{mutex}; return value.get<T>(); }
+
+      //! set the value of the node.  Requires strict typecast
       void setValue(SGVar val) { std::lock_guard<std::mutex> lock{mutex}; if (val != value) modified(); value = val; }
+
+      //! add node as child of this one
       virtual void add(Ref<sg::Node> node) { std::lock_guard<std::mutex> lock{mutex}; children[node->name] = NodeH(node); node->setParent(NodeH(this)); }
+
+      //! add node as child of this one
       virtual void add(NodeH node) { add(node.node); }
+
+      //! traverse this node and childrend with given operation, such as print,commit,render or custom operations
       virtual void traverse(RenderContext &ctx, const std::string& operation);
+
+      //! called before traversing children
       virtual void preTraverse(RenderContext &ctx, const std::string& operation);
+
+      //! called after traversing children
       virtual void postTraverse(RenderContext &ctx, const std::string& operation);
+
+      //! called before committing children during traversal
       virtual void preCommit(RenderContext &ctx) {}
+
+      //! called after committing children during traversal
       virtual void postCommit(RenderContext &ctx);
+
+      //! name of the node, ie material007.  Should be unique among children
       void setName(std::string v) { name = v; }
-      std::string getName() { return name; }
-      std::string getType() { return type; }
+
+      //! set type of node, ie Material
       void setType(std::string v) { type = v; }
+
+      //! get name of the node, ie material007
+      std::string getName() { return name; }
+
+      //! type of node, ie Material
+      std::string getType() { return type; }
+
     protected:
+      std::map<std::string, NodeH > children;
       OSPObject ospHandle;
       SGVar value;
       TimeStamp lastModified;
@@ -303,6 +356,7 @@ namespace ospray {
       }
     };
 
+    //! a Node with bounds and a render operation
     struct Renderable : public Node
     {
       Renderable() { add(createNode("bounds", "box3f")); }

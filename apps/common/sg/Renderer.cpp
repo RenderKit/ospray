@@ -207,7 +207,6 @@ namespace ospray {
 
     void Renderer::postCommit(RenderContext &ctx)
     {
-      std::cout << "renderer commit\n";
       ospSetObject(ospRenderer,"world", getChild("world")->getValue<OSPObject>());
       ospSetObject(ospRenderer,"model", getChild("world")->getValue<OSPObject>());
       ospSetObject(ospRenderer,"camera", getChild("camera")->getValue<OSPObject>());

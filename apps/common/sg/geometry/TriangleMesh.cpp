@@ -212,7 +212,6 @@ namespace ospray {
 
     void TriangleMesh::postCommit(RenderContext &ctx)
     {
-      std::cout << __PRETTY_FUNCTION__ << std::endl;
        if (ospGeometry)
        {
          ospCommit(ospGeometry);
@@ -235,9 +234,6 @@ namespace ospray {
       if (index && index->notEmpty())
         ospSetData(ospGeometry,"index",index->getOSP());
 
-
-
-#if 1
       OSPMaterial mat = NULL;
       // try to generate ospray material from the sg material stored with this object
       if (material) {
@@ -261,57 +257,10 @@ namespace ospray {
       assert(mat);
       // ospSetMaterial(ospGeometry,mat);
       ospSetMaterial(ospGeometry, (OSPMaterial)getChild("material")->getValue<OSPObject>());
-#else
-      // assign a default material (for now.... eventually we might
-      // want to do a 'real' material
-      OSPMaterial mat = ospNewMaterial(ctx.integrator?ctx.integrator->getOSPHandle():NULL,"default");
-      if (mat) {
-        vec3f kd(.7f);
-        vec3f ks(.3f);
-        ospSet3fv(mat,"kd",&kd.x);
-        ospSet3fv(mat,"ks",&ks.x);
-        ospSet1f(mat,"Ns",99.f);
-        ospCommit(mat);
-      }
-      ospSetMaterial(ospGeometry,mat);
-#endif
 
       ospCommit(ospGeometry);
 
       ospAddGeometry(ctx.world->ospModel,ospGeometry);
-      std::cout << __PRETTY_FUNCTION__ << std::endl;
-
-
-// {  //tutorial data test
-//   // triangle mesh data
-//   float vertex[] = { -1.0f, -1.0f, 3.0f, 0.f,
-//                      -1.0f,  1.0f, 3.0f, 0.f,
-//                       1.0f, -1.0f, 3.0f, 0.f,
-//                       0.1f,  0.1f, 0.3f, 0.f };
-//   float color[] =  { 0.9f, 0.5f, 0.5f, 1.0f,
-//                      0.8f, 0.8f, 0.8f, 1.0f,
-//                      0.8f, 0.8f, 0.8f, 1.0f,
-//                      0.5f, 0.9f, 0.5f, 1.0f };
-//   int32_t index[] = { 0, 1, 2,
-//                       1, 2, 3 };
-
-//         // create and setup model and mesh
-//   OSPGeometry mesh = ospNewGeometry("triangles");
-//   OSPData data = ospNewData(4, OSP_FLOAT3A, vertex); // OSP_FLOAT3 format is also supported for vertex positions
-//   ospCommit(data);
-//   ospSetData(mesh, "vertex", data);
-
-//   data = ospNewData(4, OSP_FLOAT4, color);
-//   ospCommit(data);
-//   ospSetData(mesh, "vertex.color", data);
-
-//   data = ospNewData(2, OSP_INT3, index); // OSP_INT4 format is also supported for triangle indices
-//   ospCommit(data);
-//   ospSetData(mesh, "index", data);
-
-//   ospCommit(mesh);
-//   ospGeometry = mesh;
-//   }
 }
 
     OSP_REGISTER_SG_NODE(TriangleMesh);
