@@ -38,10 +38,6 @@ namespace ospcommon {
 #ifdef _WIN32
     std::string fullName = file+".dll";
     lib = LoadLibrary(fullName.c_str());
-    if (!lib) {
-      FileName executable = getExecutableFileName();
-      lib = LoadLibrary((executable.path() + fullName).c_str());
-    }
 #else
 #if defined(__MACOSX__)
     std::string fullName = "lib"+file+".dylib";
@@ -49,6 +45,7 @@ namespace ospcommon {
     std::string fullName = "lib"+file+".so";
 #endif
     lib = dlopen(fullName.c_str(), RTLD_NOW | RTLD_GLOBAL);
+#endif
 
     // iw: do NOT use this 'hack' that tries to find the
     // library in another location: first it shouldn't be used in
@@ -58,12 +55,6 @@ namespace ospcommon {
     // whatever error messaes there were - depedencies, missing
     // symbols, etc - get overwritten by that second dlopen,
     // which almost always returns 'file not found')
-   
-    // if (!lib) {
-    //   FileName executable = getExecutableFileName();
-    //   lib = dlopen((executable.path() + fullName).c_str(), RTLD_NOW | RTLD_GLOBAL);
-    // }
-#endif
 
     if (lib == NULL) {
 #ifdef _WIN32
