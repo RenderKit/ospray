@@ -86,40 +86,48 @@ namespace ospcommon {
   OSPCOMMON_INTERFACE void loadLibrary(const std::string &name);
   OSPCOMMON_INTERFACE void *getSymbol(const std::string &name);
 
+
+#ifdef __WIN32
+#  define osp_snprintf sprintf_s
+#else
+#  define osp_snprintf snprintf
+#endif
+  
   /*! added pretty-print function for large numbers, printing 10000000 as "10M" instead */
   inline std::string prettyDouble(const double val) {
     const double absVal = abs(val);
     char result[1000];
 
-    if      (absVal >= 1e+15f) snprintf(result,1000,"%.1f%c",val/1e18f,'E');
-    else if (absVal >= 1e+15f) snprintf(result,1000,"%.1f%c",val/1e15f,'P');
-    else if (absVal >= 1e+12f) snprintf(result,1000,"%.1f%c",val/1e12f,'T');
-    else if (absVal >= 1e+09f) snprintf(result,1000,"%.1f%c",val/1e09f,'G');
-    else if (absVal >= 1e+06f) snprintf(result,1000,"%.1f%c",val/1e06f,'M');
-    else if (absVal >= 1e+03f) snprintf(result,1000,"%.1f%c",val/1e03f,'k');
-    else if (absVal <= 1e-12f) snprintf(result,1000,"%.1f%c",val*1e15f,'f');
-    else if (absVal <= 1e-09f) snprintf(result,1000,"%.1f%c",val*1e12f,'p');
-    else if (absVal <= 1e-06f) snprintf(result,1000,"%.1f%c",val*1e09f,'n');
-    else if (absVal <= 1e-03f) snprintf(result,1000,"%.1f%c",val*1e06f,'u');
-    else if (absVal <= 1e-00f) snprintf(result,1000,"%.1f%c",val*1e03f,'m');
-    else snprintf(result,1000,"%f",(float)val);
+    if      (absVal >= 1e+15f) osp_snprintf(result,1000,"%.1f%c",val/1e18f,'E');
+    else if (absVal >= 1e+15f) osp_snprintf(result,1000,"%.1f%c",val/1e15f,'P');
+    else if (absVal >= 1e+12f) osp_snprintf(result,1000,"%.1f%c",val/1e12f,'T');
+    else if (absVal >= 1e+09f) osp_snprintf(result,1000,"%.1f%c",val/1e09f,'G');
+    else if (absVal >= 1e+06f) osp_snprintf(result,1000,"%.1f%c",val/1e06f,'M');
+    else if (absVal >= 1e+03f) osp_snprintf(result,1000,"%.1f%c",val/1e03f,'k');
+    else if (absVal <= 1e-12f) osp_snprintf(result,1000,"%.1f%c",val*1e15f,'f');
+    else if (absVal <= 1e-09f) osp_snprintf(result,1000,"%.1f%c",val*1e12f,'p');
+    else if (absVal <= 1e-06f) osp_snprintf(result,1000,"%.1f%c",val*1e09f,'n');
+    else if (absVal <= 1e-03f) osp_snprintf(result,1000,"%.1f%c",val*1e06f,'u');
+    else if (absVal <= 1e-00f) osp_snprintf(result,1000,"%.1f%c",val*1e03f,'m');
+    else osp_snprintf(result,1000,"%f",(float)val);
     return result;
   }
 
   /*! added pretty-print function for large numbers, printing 10000000 as "10M" instead */
   inline std::string prettyNumber(const size_t s) {
     const double val = s;
-    char result[100];
+    char result[1000];
 
-    if      (val >= 1e+15f) sprintf(result,"%.1f%c",val/1e18f,'E');
-    else if (val >= 1e+15f) sprintf(result,"%.1f%c",val/1e15f,'P');
-    else if (val >= 1e+12f) sprintf(result,"%.1f%c",val/1e12f,'T');
-    else if (val >= 1e+09f) sprintf(result,"%.1f%c",val/1e09f,'G');
-    else if (val >= 1e+06f) sprintf(result,"%.1f%c",val/1e06f,'M');
-    else if (val >= 1e+03f) sprintf(result,"%.1f%c",val/1e03f,'k');
-    else sprintf(result,"%lu",s);
+    if      (val >= 1e+15f) osp_snprintf(result,1000,"%.1f%c",val/1e18f,'E');
+    else if (val >= 1e+15f) osp_snprintf(result,1000,"%.1f%c",val/1e15f,'P');
+    else if (val >= 1e+12f) osp_snprintf(result,1000,"%.1f%c",val/1e12f,'T');
+    else if (val >= 1e+09f) osp_snprintf(result,1000,"%.1f%c",val/1e09f,'G');
+    else if (val >= 1e+06f) osp_snprintf(result,1000,"%.1f%c",val/1e06f,'M');
+    else if (val >= 1e+03f) osp_snprintf(result,1000,"%.1f%c",val/1e03f,'k');
+    else osp_snprintf(result,1000,"%lu",s);
     return result;
   }
+#undef osp_snprintf
 
   template <typename T>
   inline std::pair<bool, T> getEnvVar(const std::string &/*var*/)
