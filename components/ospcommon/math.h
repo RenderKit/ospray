@@ -63,7 +63,6 @@ namespace ospcommon
   __forceinline float sign ( const float x ) { return x<0?-1.0f:1.0f; }
   __forceinline float sqr  ( const float x ) { return x*x; }
 
-#ifndef __MIC__
   __forceinline float rcp  ( const float x ) 
   {
     const __m128 a = _mm_set_ss(x);
@@ -88,17 +87,10 @@ namespace ospcommon
   __forceinline float rsqrt( const float x ) { 
     const __m128 a = _mm_set_ss(x);
     const __m128 r = _mm_rsqrt_ps(a);
-    const __m128 c = _mm_add_ps(_mm_mul_ps(_mm_set_ps(1.5f, 1.5f, 1.5f, 1.5f), r),
-                                _mm_mul_ps(_mm_mul_ps(_mm_mul_ps(a, _mm_set_ps(-0.5f, -0.5f, -0.5f, -0.5f)), r), _mm_mul_ps(r, r)));
+    const __m128 c = _mm_add_ps(_mm_mul_ps(_mm_set_ps1(1.5f), r),
+                                _mm_mul_ps(_mm_mul_ps(_mm_mul_ps(a, _mm_set_ps1(-0.5f)), r), _mm_mul_ps(r, r)));
     return _mm_cvtss_f32(c);
   }
-#else
-  __forceinline float rcp  ( const float x ) { return 1.0f/x; }
-  __forceinline float signmsk ( const float x ) { return cast_i2f(cast_f2i(x)&0x80000000); }
-  __forceinline float xorf( const float x, const float y ) { return cast_i2f(cast_f2i(x) ^ cast_f2i(y)); }
-  __forceinline float andf( const float x, const float y ) { return cast_i2f(cast_f2i(x) & cast_f2i(y)); }
-  __forceinline float rsqrt( const float x ) { return 1.0f/sqrtf(x); }
-#endif
 
 #ifndef _WIN32
   __forceinline float abs  ( const float x ) { return ::fabsf(x); }

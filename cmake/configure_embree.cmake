@@ -23,8 +23,8 @@ IF(NOT DEFINED EMBREE_INCLUDE_DIRS)
   MESSAGE(FATAL_ERROR
           "We did not find Embree installed on your system. OSPRay requires an"
           " Embree installation >= v${EMBREE_VERSION_REQUIRED}, please download"
-          " and extract or compile Embree from source, then the 'embree_DIR'"
-          " environment variable to where it is installed.")
+          " and extract Embree or compile Embree from source, then set the"
+          " 'embree_DIR' variable to where it is installed.")
 ENDIF()
 
 # Check for required Embree features  #######################################

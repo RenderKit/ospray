@@ -56,7 +56,6 @@ INSTALL(FILES
   ${ospray_MODULE_INSTALL_FILES}
   ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/clang.cmake
   ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/icc.cmake
-  ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/icc_xeonphi.cmake
   ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/ispc.cmake
   ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/gcc.cmake
   ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/msvc.cmake

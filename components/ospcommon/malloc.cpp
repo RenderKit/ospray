@@ -80,11 +80,7 @@ namespace ospcommon
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(__MIC__)
-#define USE_HUGE_PAGES 1
-#else
 #define USE_HUGE_PAGES 0
-#endif
 
 namespace ospcommon
 {
@@ -98,9 +94,6 @@ namespace ospcommon
     } else {
       bytes = (bytes+4095)&ssize_t(-4096);
     }
-#endif
-#if __MIC__
-    flags |= MAP_POPULATE;
 #endif
     char* ptr = (char*) mmap(0, bytes, PROT_READ | PROT_WRITE, flags, -1, 0);
     if (ptr == NULL || ptr == MAP_FAILED) throw std::bad_alloc();
@@ -117,9 +110,6 @@ namespace ospcommon
     } else {
       bytes = (bytes+4095)&ssize_t(-4096);
     }
-#endif
-#if __MIC__
-    flags |= MAP_POPULATE;
 #endif
 
     char* ptr = (char*) mmap(0, bytes, PROT_READ | PROT_WRITE, flags, -1, 0);

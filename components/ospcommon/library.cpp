@@ -34,11 +34,7 @@ namespace ospcommon {
 
   Library::Library(const std::string& name)
   {
-#ifdef OSPRAY_TARGET_MIC
-    std::string file = name+"_mic";
-#else
     std::string file = name;
-#endif
 #ifdef _WIN32
     std::string fullName = file+".dll";
     lib = LoadLibrary(fullName.c_str());
@@ -55,9 +51,9 @@ namespace ospcommon {
     lib = dlopen(fullName.c_str(), RTLD_NOW | RTLD_GLOBAL);
 
     // iw: do NOT use this 'hack' that tries to find the
-    // library in another location: first it shuldn't be used in
+    // library in another location: first it shouldn't be used in
     // the first place (if you want a shared library, put it
-    // into your LD_LIBRARY_PAHT!; second, it messes up the 'real'
+    // into your LD_LIBRARY_PATH!; second, it messes up the 'real'
     // errors when the first library couldn't be opened (because
     // whatever error messaes there were - depedencies, missing
     // symbols, etc - get overwritten by that second dlopen,

@@ -254,10 +254,6 @@ namespace ospcommon
   /*! creates a hardware thread running on specific core */
   thread_t createThread(thread_func f, void* arg, size_t stack_size, ssize_t threadID)
   {
-#ifdef __MIC__
-    threadID++; // start counting at 1 on MIC
-#endif
-
     /* set stack size */
     pthread_attr_t attr;
     pthread_attr_init(&attr);
