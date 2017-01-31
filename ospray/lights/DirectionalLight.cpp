@@ -29,6 +29,7 @@ namespace ospray {
 
   //! Commit parameters understood by the DirectionalLight
   void DirectionalLight::commit() {
+    Light::commit();
     direction = getParam3f("direction", vec3f(0.f, 0.f, 1.f));
     color     = getParam3f("color", vec3f(1.f));
     intensity = getParam1f("intensity", 1.f);

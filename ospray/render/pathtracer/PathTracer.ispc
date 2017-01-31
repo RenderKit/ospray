@@ -136,9 +136,11 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     // add light from *virtual* lights by intersecting them
     for (uniform int i = self->numGeoLights; i < self->numLights; i++) {
       const uniform Light *uniform l = self->lights[i];
-      Light_EvalRes le = l->eval(l, lastDg, ray.dir, maxLightDist);
-      if (reduce_max(le.radiance) > 0.0f)
-        L = L + Lw * le.radiance * misHeuristic(lastBSDFPdf, le.pdf);
+      if (!straightPath || l->isVisible) {
+        Light_EvalRes le = l->eval(l, lastDg, ray.dir, maxLightDist);
+        if (reduce_max(le.radiance) > 0.0f)
+          L = L + Lw * le.radiance * misHeuristic(lastBSDFPdf, le.pdf);
+      }
     }
 
     if (noHit(ray))

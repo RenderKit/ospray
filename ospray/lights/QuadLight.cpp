@@ -37,6 +37,7 @@ namespace ospray {
 
   //!< Copy understood parameters into class members
   void QuadLight::commit() {
+    Light::commit();
     position  = getParam3f("position", vec3f(0.f));
     edge1     = getParam3f("edge1", vec3f(1.f, 0.f, 0.f));
     edge2     = getParam3f("edge2", vec3f(0.f, 1.f, 0.f));

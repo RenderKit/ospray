@@ -27,6 +27,7 @@ namespace ospray {
 
   //! Commit parameters understood by the AmbientLight
   void AmbientLight::commit() {
+    Light::commit();
     color     = getParam3f("color", vec3f(1.f));
     intensity = getParam1f("intensity", 1.f);
 

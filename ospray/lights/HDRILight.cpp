@@ -37,6 +37,7 @@ namespace ospray {
   //!< Copy understood parameters into class members
   void HDRILight::commit()
   {
+    Light::commit();
     up = getParam3f("up", vec3f(0.f, 1.f, 0.f));
     dir = getParam3f("dir", vec3f(0.f, 0.f, 1.f));
     intensity = getParam1f("intensity", 1.f);

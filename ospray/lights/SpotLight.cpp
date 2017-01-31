@@ -39,6 +39,7 @@ namespace ospray {
 
   //!< Copy understood parameters into class members
   void SpotLight::commit() {
+    Light::commit();
     position  = getParam3f("position", vec3f(0.f));
     direction = getParam3f("direction", vec3f(0.f, 0.f, 1.f));
     color     = getParam3f("color", vec3f(1.f));

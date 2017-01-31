@@ -29,6 +29,7 @@ namespace ospray {
 
   //! Commit parameters understood by the PointLight
   void PointLight::commit() {
+    Light::commit();
     position  = getParam3f("position", vec3f(0.f));
     color     = getParam3f("color", vec3f(1.f));
     intensity = getParam1f("intensity", 1.f);
