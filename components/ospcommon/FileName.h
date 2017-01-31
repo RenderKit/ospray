@@ -21,7 +21,7 @@
 namespace ospcommon
 {
   /*! Convenience class for handling file names and paths. */
-  class FileName
+  class OSPCOMMON_INTERFACE FileName
   {
   public:
 
