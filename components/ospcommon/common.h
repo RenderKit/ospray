@@ -89,20 +89,20 @@ namespace ospcommon {
   /*! added pretty-print function for large numbers, printing 10000000 as "10M" instead */
   inline std::string prettyDouble(const double val) {
     const double absVal = abs(val);
-    char result[100];
+    char result[1000];
 
-    if      (absVal >= 1e+15f) sprintf(result,"%.1f%c",val/1e18f,'E');
-    else if (absVal >= 1e+15f) sprintf(result,"%.1f%c",val/1e15f,'P');
-    else if (absVal >= 1e+12f) sprintf(result,"%.1f%c",val/1e12f,'T');
-    else if (absVal >= 1e+09f) sprintf(result,"%.1f%c",val/1e09f,'G');
-    else if (absVal >= 1e+06f) sprintf(result,"%.1f%c",val/1e06f,'M');
-    else if (absVal >= 1e+03f) sprintf(result,"%.1f%c",val/1e03f,'k');
-    else if (absVal <= 1e-12f) sprintf(result,"%.1f%c",val*1e15f,'f');
-    else if (absVal <= 1e-09f) sprintf(result,"%.1f%c",val*1e12f,'p');
-    else if (absVal <= 1e-06f) sprintf(result,"%.1f%c",val*1e09f,'n');
-    else if (absVal <= 1e-03f) sprintf(result,"%.1f%c",val*1e06f,'u');
-    else if (absVal <= 1e-00f) sprintf(result,"%.1f%c",val*1e03f,'m');
-    else sprintf(result,"%f",(float)val);
+    if      (absVal >= 1e+15f) snprintf(result,1000,"%.1f%c",val/1e18f,'E');
+    else if (absVal >= 1e+15f) snprintf(result,1000,"%.1f%c",val/1e15f,'P');
+    else if (absVal >= 1e+12f) snprintf(result,1000,"%.1f%c",val/1e12f,'T');
+    else if (absVal >= 1e+09f) snprintf(result,1000,"%.1f%c",val/1e09f,'G');
+    else if (absVal >= 1e+06f) snprintf(result,1000,"%.1f%c",val/1e06f,'M');
+    else if (absVal >= 1e+03f) snprintf(result,1000,"%.1f%c",val/1e03f,'k');
+    else if (absVal <= 1e-12f) snprintf(result,1000,"%.1f%c",val*1e15f,'f');
+    else if (absVal <= 1e-09f) snprintf(result,1000,"%.1f%c",val*1e12f,'p');
+    else if (absVal <= 1e-06f) snprintf(result,1000,"%.1f%c",val*1e09f,'n');
+    else if (absVal <= 1e-03f) snprintf(result,1000,"%.1f%c",val*1e06f,'u');
+    else if (absVal <= 1e-00f) snprintf(result,1000,"%.1f%c",val*1e03f,'m');
+    else snprintf(result,1000,"%f",(float)val);
     return result;
   }
 
@@ -138,7 +138,7 @@ namespace ospcommon {
   {
     auto *str = getenv(var.c_str());
     bool found = (str != nullptr);
-    return {found, found ? atof(str) : float{}};
+    return {found, found ? (float)atof(str) : 0.f};
   }
 
   template <>
@@ -147,7 +147,7 @@ namespace ospcommon {
   {
     auto *str = getenv(var.c_str());
     bool found = (str != nullptr);
-    return {found, found ? atoi(str) : int{}};
+    return {found, found ? atoi(str) : 0};
   }
 
   template <>
