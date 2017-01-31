@@ -116,7 +116,7 @@ namespace ospray {
       commit();
     }
 
-    void TransferFunction::setFromXML(const xml::Node *const node, 
+    void TransferFunction::setFromXML(const xml::Node &node, 
                                       const unsigned char *binBasePtr) 
     {
       setDefaultValues();
@@ -125,7 +125,7 @@ namespace ospray {
       // if (name != "")
       //   registerNamedNode(name,this);
       
-      xml::for_each_child_of(*node,[&](const xml::Node &child) {
+      xml::for_each_child_of(node,[&](const xml::Node &child) {
           // -------------------------------------------------------
           // colors
           // -------------------------------------------------------

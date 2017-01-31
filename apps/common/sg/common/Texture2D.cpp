@@ -135,7 +135,6 @@ namespace ospray {
     
     void Texture2D::render(RenderContext &ctx)
     {
-      PING;
       if (ospTexture)
         return;
       

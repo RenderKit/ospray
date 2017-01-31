@@ -34,14 +34,14 @@ namespace ospray {
       void setDefaultValues();
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual std::string toString() const;
+      virtual std::string toString() const override;
 
       //! \brief creates ospray-side object(s) for this node
-      virtual void render(RenderContext &ctx);
+      virtual void render(RenderContext &ctx) override;
 
       //! \brief Initialize this node's value from given corresponding XML node 
-      virtual void setFromXML(const xml::Node *const node, 
-                              const unsigned char *binBasePtr);
+      virtual void setFromXML(const xml::Node &node, 
+                              const unsigned char *binBasePtr) override;
       virtual void commit();
       
       void setValueRange(const vec2f &range);
