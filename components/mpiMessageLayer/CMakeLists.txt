@@ -34,14 +34,16 @@ COMPONENT mpi
 # ------------------------------------------------------------------
 # tests and examples
 # ------------------------------------------------------------------
-OSPRAY_CREATE_OPTIONAL_APPLICATION(mamlTest
+OSPRAY_CREATE_APPLICATION(mamlTest
   apps/mamlTest.cpp
 LINK
   ${MAML_LIBRARY}
+EXCLUDE_FROM_ALL
 )
 
-OSPRAY_CREATE_OPTIONAL_APPLICATION(mamlTestMessageSwarm
+OSPRAY_CREATE_APPLICATION(mamlTestMessageSwarm
   apps/testMessageSwarm.cpp
 LINK
   ${MAML_LIBRARY}
+EXCLUDE_FROM_ALL
 )
