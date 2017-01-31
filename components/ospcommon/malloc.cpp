@@ -36,15 +36,15 @@ namespace ospcommon
   void* os_malloc(size_t bytes, const int additional_flags) 
   {
     int flags = MEM_COMMIT|MEM_RESERVE|additional_flags;
-    char* ptr = (char*) VirtualAlloc(NULL,bytes,flags,PAGE_READWRITE);
-    if (ptr == NULL) throw std::bad_alloc();
+    char* ptr = (char*) VirtualAlloc(nullptr,bytes,flags,PAGE_READWRITE);
+    if (ptr == nullptr) throw std::bad_alloc();
     return ptr;
   }
 
   void* os_reserve(size_t bytes)
   {
-    char* ptr = (char*) VirtualAlloc(NULL,bytes,MEM_RESERVE,PAGE_READWRITE);
-    if (ptr == NULL) throw std::bad_alloc();
+    char* ptr = (char*) VirtualAlloc(nullptr,bytes,MEM_RESERVE,PAGE_READWRITE);
+    if (ptr == nullptr) throw std::bad_alloc();
     return ptr;
   }
 
@@ -96,7 +96,7 @@ namespace ospcommon
     }
 #endif
     char* ptr = (char*) mmap(0, bytes, PROT_READ | PROT_WRITE, flags, -1, 0);
-    if (ptr == NULL || ptr == MAP_FAILED) throw std::bad_alloc();
+    if (ptr == nullptr || ptr == MAP_FAILED) throw std::bad_alloc();
     return ptr;
   }
 
@@ -113,7 +113,7 @@ namespace ospcommon
 #endif
 
     char* ptr = (char*) mmap(0, bytes, PROT_READ | PROT_WRITE, flags, -1, 0);
-    if (ptr == NULL || ptr == MAP_FAILED) throw std::bad_alloc();
+    if (ptr == nullptr || ptr == MAP_FAILED) throw std::bad_alloc();
     return ptr;
   }
 

@@ -39,7 +39,7 @@ namespace ospcommon {
     SYSTEMTIME tp; GetSystemTime(&tp);
     return double(tp.wSecond) + double(tp.wMilliseconds) / 1E3;
 #else
-    struct timeval tp; gettimeofday(&tp,NULL); 
+    struct timeval tp; gettimeofday(&tp,nullptr); 
     return double(tp.tv_sec) + double(tp.tv_usec)/1E6; 
 #endif
   }

@@ -56,7 +56,7 @@ namespace ospcommon {
     // symbols, etc - get overwritten by that second dlopen,
     // which almost always returns 'file not found')
 
-    if (lib == NULL) {
+    if (lib == nullptr) {
 #ifdef _WIN32
       // TODO: Must use GetLastError and FormatMessage on windows
       // to log out the error that occurred when calling LoadLibrary
@@ -81,11 +81,11 @@ namespace ospcommon {
   }
 
 
-  LibraryRepository* LibraryRepository::instance = NULL;
+  LibraryRepository* LibraryRepository::instance = nullptr;
 
   LibraryRepository* LibraryRepository::getInstance()
   {
-    if (instance == NULL)
+    if (instance == nullptr)
       instance = new LibraryRepository;
 
     return instance;
@@ -101,8 +101,8 @@ namespace ospcommon {
 
   void* LibraryRepository::getSymbol(const std::string& name) const
   {
-    void *sym = NULL;
-    for (auto lib = repo.cbegin(); sym == NULL && lib != repo.end(); ++lib)
+    void *sym = nullptr;
+    for (auto lib = repo.cbegin(); sym == nullptr && lib != repo.end(); ++lib)
       sym = lib->second->getSymbol(name);
 
     return sym;

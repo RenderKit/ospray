@@ -74,14 +74,14 @@ namespace ospcommon
       groupAffinity.Reserved[0] = 0;
       groupAffinity.Reserved[1] = 0;
       groupAffinity.Reserved[2] = 0;
-      if (!pSetThreadGroupAffinity(thread, &groupAffinity, NULL))
+      if (!pSetThreadGroupAffinity(thread, &groupAffinity, nullptr))
         WARNING("SetThreadGroupAffinity failed"); // on purpose only a warning
   
       PROCESSOR_NUMBER processorNumber;
       processorNumber.Group = group;
       processorNumber.Number = number;
       processorNumber.Reserved = 0;
-      if (!pSetThreadIdealProcessorEx(thread, &processorNumber, NULL))
+      if (!pSetThreadIdealProcessorEx(thread, &processorNumber, nullptr))
         WARNING("SetThreadIdealProcessorEx failed"); // on purpose only a warning
     } 
     else 
@@ -113,7 +113,7 @@ namespace ospcommon
     _mm_setcsr(_mm_getcsr() | /*FTZ:*/ (1<<15) | /*DAZ:*/ (1<<6));
     parg->f(parg->arg);
     delete parg;
-    return NULL;
+    return nullptr;
   }
 
 #if !defined(PTHREADS_WIN32)
@@ -121,8 +121,8 @@ namespace ospcommon
   /*! creates a hardware thread running on specific core */
   thread_t createThread(thread_func f, void* arg, size_t stack_size, ssize_t threadID)
   {
-    HANDLE thread = CreateThread(NULL, stack_size, (LPTHREAD_START_ROUTINE)threadStartup, new ThreadStartupData(f,arg), 0, NULL);
-    if (thread == NULL) throw std::runtime_error("ospcommon::CreateThread failed");
+    HANDLE thread = CreateThread(nullptr, stack_size, (LPTHREAD_START_ROUTINE)threadStartup, new ThreadStartupData(f,arg), 0, nullptr);
+    if (thread == nullptr) throw std::runtime_error("ospcommon::CreateThread failed");
     if (threadID >= 0) setAffinity(thread, threadID);
     return thread_t(thread);
   }
@@ -248,7 +248,7 @@ namespace ospcommon
 
     parg->f(parg->arg);
     delete parg;
-    return NULL;
+    return nullptr;
   }
 
   /*! creates a hardware thread running on specific core */
@@ -285,7 +285,7 @@ namespace ospcommon
 
   /*! waits until the given thread has terminated */
   void join(thread_t tid) {
-    if (pthread_join(*(pthread_t*)tid, NULL) != 0)
+    if (pthread_join(*(pthread_t*)tid, nullptr) != 0)
       throw std::runtime_error("ospcommon::pthread_join failed");
     delete (pthread_t*)tid;
   }

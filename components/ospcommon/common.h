@@ -58,11 +58,11 @@ typedef int ssize_t;
 # define AssertError(errMsg) /* nothing */
 #else
 # define Assert(expr)                                                   \
-  ((void)((expr) ? 0 : ((void)ospcommon::doAssertion(__FILE__, __LINE__, #expr, NULL), 0)))
+  ((void)((expr) ? 0 : ((void)ospcommon::doAssertion(__FILE__, __LINE__, #expr, nullptr), 0)))
 # define Assert2(expr,expl)                                             \
   ((void)((expr) ? 0 : ((void)ospcommon::doAssertion(__FILE__, __LINE__, #expr, expl), 0)))
 # define AssertError(errMsg)                            \
-  doAssertion(__FILE__,__LINE__, (errMsg), NULL)
+  doAssertion(__FILE__,__LINE__, (errMsg), nullptr)
 #endif
 
 #ifdef _WIN32
