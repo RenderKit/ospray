@@ -87,7 +87,7 @@ namespace ospcommon {
   OSPCOMMON_INTERFACE void *getSymbol(const std::string &name);
 
 
-#ifdef __WIN32
+#ifdef __WIN32__
 #  define osp_snprintf sprintf_s
 #else
 #  define osp_snprintf snprintf
