@@ -33,7 +33,6 @@ MACRO(OSPRAY_BUILD_COMPONENT comp)
   IF (";${OSPRAY_LIST_OF_ALREADY_BUILT_COMPONENTS};" MATCHES ";${comp};")
     # component already built; nothing to do!
   ELSE()
-
     SET(CURRENT_COMPONENT_DIR ${COMPONENTS_DIR}/${comp})
     IF(NOT EXISTS ${CURRENT_COMPONENT_DIR})
       MESSAGE(FATAL_ERROR "Could not find component '${comp}'!")
@@ -43,8 +42,17 @@ MACRO(OSPRAY_BUILD_COMPONENT comp)
     SET(OSPRAY_LIST_OF_ALREADY_BUILT_COMPONENTS
         ${OSPRAY_LIST_OF_ALREADY_BUILT_COMPONENTS} ${comp}
         CACHE INTERNAL "" FORCE)
+
+    # make sure that components explicitly set their install COMPONENT
+    # otherwise they would inherit the default COMPONENT of the
+    # requesting target, leading to inconsistent behaviour
+    SET(DEFAULT_COMPONENT ${OSPRAY_DEFAULT_COMPONENT})
+    UNSET(OSPRAY_DEFAULT_COMPONENT)
+
     ADD_SUBDIRECTORY(${CURRENT_COMPONENT_DIR}
       ${CMAKE_BINARY_DIR}/built_components/${comp})
+
+    SET(OSPRAY_DEFAULT_COMPONENT ${DEFAULT_COMPONENT})
 
     IF(EXISTS ${CURRENT_COMPONENT_DIR}/include.cmake)
       INCLUDE(${CURRENT_COMPONENT_DIR}/include.cmake)

@@ -54,10 +54,10 @@ ELSE()
     Quaternion.h
     RefCount.h
     vec.h
-    LINK
+  LINK
     ${LINK_LIBS}
-    COMPONENT lib
-    )
+  COMPONENT lib
+  )
 
   OSPRAY_INSTALL_SDK_HEADERS(
     AffineSpace.h

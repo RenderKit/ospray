@@ -61,7 +61,7 @@ ADD_SUBDIRECTORY(${OSPCOMMON_DIR})
 ##############################################################
 # OSPRay components
 #
-# 'components' work similar to 'pacakges' in linux distributions: each
+# 'components' work similar to 'packages' in linux distributions: each
 # component is its own little piece that builds some applications,
 # libraries, etc, and may have dependencies to other components.
 ##############################################################
