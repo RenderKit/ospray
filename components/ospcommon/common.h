@@ -42,7 +42,7 @@ typedef int ssize_t;
 
 #include <stdint.h>
 
-#ifdef _WIN32
+#ifdef WIN32
 #  ifdef ospray_common_EXPORTS
 #    define OSPCOMMON_INTERFACE __declspec(dllexport)
 #  else
