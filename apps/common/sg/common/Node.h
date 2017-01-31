@@ -160,6 +160,16 @@ namespace ospray {
         }
       };
 
+      enum NodeFlags
+      {
+        none=0,
+        required=1,
+        valid_min_max=1>>1,
+        valid_whitelist=1>>2,
+        valid_blacklist=1>>3
+      };
+
+
       virtual    std::string toString() const {}
       std::shared_ptr<sg::Param> getParam(const std::string &name) const;
       // void       addParam(sg::Param *p);
@@ -290,7 +300,52 @@ namespace ospray {
       //! type of node, ie Material
       std::string getType() { return type; }
 
+      void setFlags(NodeFlags f) { flags = f; }
+      NodeFlags getFlags() { return flags; }
+
+      void setMinMax(const SGVar& minv, const SGVar& maxv) {
+        minmax.resize(2);
+        minmax[0]=minv;
+        minmax[1]=maxv;
+      }
+
+      void setWhiteList(std::vector<SGVar> values)
+      {
+        whitelist = values;
+      }
+
+      void setBlackList(std::vector<SGVar> values)
+      {
+        blacklist = values;
+      }
+
+      virtual bool isValid()
+      {
+        if (flags & NodeFlags::valid_min_max && minmax.size()>1)
+        {
+          if (!isValidMinMax())
+            return false;
+        }
+        if (flags & NodeFlags::valid_blacklist)
+        {
+          if (std::find(blacklist.begin(), blacklist.end(), value) != blacklist.end())
+            return false;
+        }
+        if (flags & NodeFlags::valid_whitelist)
+        {
+          if (std::find(whitelist.begin(), whitelist.end(), value) == whitelist.end())
+            return false;
+        }
+        return true;
+      }
+
+      virtual bool isValidMinMax() {return true;}
+
+
     protected:
+      std::vector<SGVar> minmax;
+      std::vector<SGVar> whitelist;
+      std::vector<SGVar> blacklist;
       std::map<std::string, NodeH > children;
       OSPObject ospHandle;
       SGVar value;
@@ -300,6 +355,7 @@ namespace ospray {
       std::map<std::string, std::shared_ptr<sg::Param> > params;
       NodeH parent;
       std::mutex mutex;
+      NodeFlags flags;
     };
 
     /*! read a given scene graph node from its correspondoing xml node represenation */
@@ -313,13 +369,14 @@ namespace ospray {
     void registerNamedNode(const std::string &name, Ref<sg::Node> node);
 
     typedef Node::NodeH NodeH;
-    Node::NodeH createNode(std::string name, std::string type="Node", SGVar var=NullType());
+    Node::NodeH createNode(std::string name, std::string type="Node", SGVar var=NullType(), sg::Node::NodeFlags flags=sg::Node::NodeFlags::none);
     // , std::shared_ptr<sg::Param>=std::make_shared<sg::Param>("none")
 
     template <typename T>
     struct NodeParamCommit
     {
       static void commit(Node* n);
+      static bool compare(const SGVar& min, const SGVar& max, const SGVar& value);
     };
 
     template <typename T>
@@ -327,6 +384,22 @@ namespace ospray {
       // ospSet1f(parent->getValue<OSPObject>(), getName().c_str(), getValue<float>());
     }
 
+    template <typename T>
+    bool NodeParamCommit<T>::compare(const SGVar& min, const SGVar& max, const SGVar& value) {
+      // std::cout << "wakka\n";
+    }
+
+    template<typename T>
+    bool NodeParamCommitComparison(const SGVar& min, const SGVar& max, const SGVar& value)
+    {
+      if (value.get<T>() < min.get<T>() || value.get<T>() > max.get<T>())
+        return false;
+    }
+
+    template <>
+    inline bool NodeParamCommit<float>::compare(const SGVar& min, const SGVar& max, const SGVar& value) {
+      NodeParamCommitComparison<float>(min,max,value);
+    }
     template <>
     inline void NodeParamCommit<float>::commit(Node* n) {
       ospSet1f(n->getParent()->getValue<OSPObject>(), n->getName().c_str(), n->getValue<float>());
@@ -336,8 +409,22 @@ namespace ospray {
       ospSet1i(n->getParent()->getValue<OSPObject>(), n->getName().c_str(), n->getValue<bool>());
     }
     template <>
+    inline bool NodeParamCommit<int>::compare(const SGVar& min, const SGVar& max, const SGVar& value) {
+      NodeParamCommitComparison<int>(min,max,value);
+    }
+    template <>
     inline void NodeParamCommit<int>::commit(Node* n) {
       ospSet1i(n->getParent()->getValue<OSPObject>(), n->getName().c_str(), n->getValue<int>());
+    }
+    template <>
+    inline bool NodeParamCommit<vec3f>::compare(const SGVar& min, const SGVar& max, const SGVar& value) {
+      const vec3f v1 = min.get<vec3f>();
+      const vec3f v2 = max.get<vec3f>();
+      const vec3f v = value.get<vec3f>();
+      return !(v1.x > v.x || v2.x > v.x
+        || v1.y > v.y || v2.y > v.y
+        || v1.z > v.z || v2.z > v.z
+        );
     }
     template <>
     inline void NodeParamCommit<vec3f>::commit(Node* n) {
@@ -347,12 +434,18 @@ namespace ospray {
     template <typename T>
     struct NodeParam : public Node {
       NodeParam() : Node() { setValue(T()); }
-      virtual void postCommit(RenderContext &ctx) { 
+      virtual void postCommit(RenderContext &ctx) override { 
           if (parent.isValid())
           {
             if (parent->getValue().is<OSPObject>() == true) //TODO: generalize to other types of ManagedObject
               NodeParamCommit<T>::commit(this);
           }
+      }
+      virtual bool isValidMinMax() override
+      {
+        if (minmax.size()<2 || !(flags & NodeFlags::valid_min_max))
+          return true;
+        return NodeParamCommit<T>::compare(minmax[0], minmax[1], value);
       }
     };
 
