@@ -53,10 +53,20 @@ namespace ospcommon {
     std::string fullName = "lib"+file+".so";
 #endif
     lib = dlopen(fullName.c_str(), RTLD_NOW | RTLD_GLOBAL);
-    if (!lib) {
-      FileName executable = getExecutableFileName();
-      lib = dlopen((executable.path() + fullName).c_str(), RTLD_NOW | RTLD_GLOBAL);
-    }
+
+    // iw: do NOT use this 'hack' that tries to find the
+    // library in another location: first it shuldn't be used in
+    // the first place (if you want a shared library, put it
+    // into your LD_LIBRARY_PAHT!; second, it messes up the 'real'
+    // errors when the first library couldn't be opened (because
+    // whatever error messaes there were - depedencies, missing
+    // symbols, etc - get overwritten by that second dlopen,
+    // which almost always returns 'file not found')
+   
+    // if (!lib) {
+    //   FileName executable = getExecutableFileName();
+    //   lib = dlopen((executable.path() + fullName).c_str(), RTLD_NOW | RTLD_GLOBAL);
+    // }
 #endif
 
     if (lib == NULL) {
