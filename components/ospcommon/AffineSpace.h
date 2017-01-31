@@ -29,7 +29,7 @@ namespace ospcommon {
   ////////////////////////////////////////////////////////////////////////////////
 
   template<typename L>
-  struct AffineSpaceT
+  struct OSPCOMMON_INTERFACE AffineSpaceT
   {
     L l;           /*< linear part of affine space */
     VectorT p;     /*< affine part of affine space */

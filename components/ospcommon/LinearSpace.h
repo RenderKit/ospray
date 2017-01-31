@@ -159,7 +159,7 @@ namespace ospcommon {
   /// 3D Linear Transform (3x3 Matrix)
   ////////////////////////////////////////////////////////////////////////////////
 
-  template<typename T> struct LinearSpace3
+  template<typename T> struct OSPCOMMON_INTERFACE LinearSpace3
   {
     typedef T Vector;
     typedef typename T::scalar_t Scalar;
