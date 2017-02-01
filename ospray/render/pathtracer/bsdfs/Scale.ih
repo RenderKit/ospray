@@ -1,0 +1,66 @@
+// ======================================================================== //
+// Copyright 2009-2017 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+#include "BSDF.ih"
+
+struct Scale
+{
+  BSDF super;
+
+  const varying BSDF* uniform base;
+  float factor;
+};
+
+inline BSDF_EvalRes Scale_eval(const varying BSDF* uniform super,
+    const vec3f& wo, const vec3f& wi)
+{
+  const varying Scale* uniform self = (const varying Scale* uniform)super;
+
+  BSDF_EvalRes res = self->base->eval(self->base, wo, wi);
+  res.value = res.value * self->factor;
+
+  return res;
+}
+
+inline BSDF_SampleRes Scale_sample(const varying BSDF* uniform super,
+    const vec3f& wo, const vec2f& s, float ss)
+{
+  const varying Scale* uniform self = (const varying Scale* uniform)super;
+
+  BSDF_SampleRes res = self->base->sample(self->base, wo, s, ss);
+  res.weight = res.weight * self->factor;
+
+  return res;
+}
+
+inline void Scale_Constructor(varying Scale* uniform self, const varying linear3f* uniform frame,
+    const varying BSDF* uniform base, float factor)
+{
+  BSDF_Constructor(&self->super, base->type, Scale_eval, Scale_sample, frame);
+  self->base = base;
+  self->factor = factor;
+}
+
+inline varying BSDF* uniform Scale_create(uniform ShadingContext* uniform ctx,
+    const varying BSDF* uniform base, float factor)
+{
+  varying Scale* uniform self = (varying Scale* uniform)ShadingContext_alloc(ctx, sizeof(Scale));
+  Scale_Constructor(self, LinearSpace3f_create(ctx, make_LinearSpace3f_varying_identity()), base, factor);
+  return &self->super;
+}
+
