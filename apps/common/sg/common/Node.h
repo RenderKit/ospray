@@ -126,11 +126,14 @@ namespace ospray {
 
     enum NodeFlags
     {
-      none=0,
-      required=1,  //! this node is required to be valid by its parent
-      valid_min_max=2,  //! validity determined by minmax range
-      valid_whitelist=4, //! validity determined by whitelist
-      valid_blacklist=8  //! validity determined by blacklist
+      none=0 << 0,
+      required=1 << 1,  //! this node is required to be valid by its parent
+      valid_min_max=1 << 2,  //! validity determined by minmax range
+      valid_whitelist=1 << 3, //! validity determined by whitelist
+      valid_blacklist=1 << 4,  //! validity determined by blacklist
+      gui_slider=1 << 5,
+      gui_color=1<<6,
+      gui_combo=1<<7
     };
 
     /*! \brief base node of all scene graph nodes */
@@ -310,6 +313,8 @@ namespace ospray {
         minmax[0]=minv;
         minmax[1]=maxv;
       }
+      SGVar getMin() { return minmax[0]; }
+      SGVar getMax() { return minmax[1]; }
 
       void setWhiteList(std::vector<SGVar> values)
       {
