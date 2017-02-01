@@ -33,11 +33,8 @@ namespace ospray {
   {
   public:
 
-    //! Constructor.
-    TransferFunction() {};
-
-    //! Destructor.
-    virtual ~TransferFunction() {};
+    TransferFunction() = default;
+    virtual ~TransferFunction() = default;
 
     //! Allocate storage and populate the transfer function.
     virtual void commit() = 0;
@@ -46,7 +43,7 @@ namespace ospray {
     static TransferFunction *createInstance(const std::string &type);
 
     //! A string description of this class.
-    virtual std::string toString() const { return("ospray::TransferFunction"); }
+    virtual std::string toString() const;
 
   protected:
 

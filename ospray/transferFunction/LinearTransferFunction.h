@@ -20,8 +20,6 @@
 #include "common/Data.h"
 #include "transferFunction/TransferFunction.h"
 #include "LinearTransferFunction_ispc.h"
-// std
-#include <vector>
 
 namespace ospray {
 
@@ -32,19 +30,14 @@ namespace ospray {
   {
   public:
 
-    //! Constructor.
-    LinearTransferFunction() {}
+    LinearTransferFunction() = default;
+    ~LinearTransferFunction();
 
-    //! Destructor.
-    virtual ~LinearTransferFunction();
+    void commit();
 
-    //! Allocate storage and populate the transfer function.
-    virtual void commit();
+    std::string toString() const;
 
-    //! A string description of this class.
-    virtual std::string toString() const { return("ospray::LinearTransferFunction"); }
-
-  protected:
+  private:
 
     //! Data array that stores the color map.
     Ref<Data> colorValues;
@@ -53,7 +46,7 @@ namespace ospray {
     Ref<Data> opacityValues;
 
     //! Create the equivalent ISPC transfer function.
-    virtual void createEquivalentISPC();
+    void createEquivalentISPC();
 
   };
 

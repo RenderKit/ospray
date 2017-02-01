@@ -28,5 +28,10 @@ namespace ospray {
     return createInstanceHelper<TransferFunction, OSP_TRANSFER_FUNCTION>(type);
   }
 
+  std::string TransferFunction::toString() const
+  {
+    return("ospray::TransferFunction");
+  }
+
 } // ::ospray
 
