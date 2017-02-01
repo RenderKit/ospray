@@ -17,7 +17,7 @@
 #include "common/Data.h"
 #include "common/OSPCommon.h"
 #include "transferFunction/LinearTransferFunction.h"
-#include "TransferFunction_ispc.h"
+#include "LinearTransferFunction_ispc.h"
 
 namespace ospray {
 
@@ -36,13 +36,14 @@ namespace ospray {
     colorValues   = getParamData("colors", nullptr);
     opacityValues = getParamData("opacities", nullptr);
     ispc::LinearTransferFunction_setPreIntegration(ispcEquivalent,
-                                       getParam1i("preIntegration", 0));
+                                               getParam1i("preIntegration", 0));
 
     // Set the color values.
-    if (colorValues) 
+    if (colorValues) {
       ispc::LinearTransferFunction_setColorValues(ispcEquivalent, 
                                                   colorValues->numItems, 
                                                   (ispc::vec3f*)colorValues->data);
+    }
 
     // Set the opacity values.
     if (opacityValues) {
@@ -54,10 +55,7 @@ namespace ospray {
     if (getParam1i("preIntegration", 0))
       ispc::LinearTransferFunction_precomputePreIntegratedValues(ispcEquivalent);
 
-    // Set the value range that the transfer function covers.
-    vec2f valueRange = getParam2f("valueRange", vec2f(0.0f, 1.0f));  
-    ispc::TransferFunction_setValueRange(ispcEquivalent,
-                                         (const ispc::vec2f &)valueRange);
+    TransferFunction::commit();
 
     // Notify listeners that the transfer function has changed.
     notifyListenersThatObjectGotChanged();

@@ -19,7 +19,6 @@
 // ospray
 #include "common/Data.h"
 #include "transferFunction/TransferFunction.h"
-#include "LinearTransferFunction_ispc.h"
 
 namespace ospray {
 

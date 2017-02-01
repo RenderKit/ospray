@@ -15,22 +15,27 @@
 // ======================================================================== //
 
 // ospray
-#include "common/Library.h"
 #include "transferFunction/TransferFunction.h"
 #include "common/Util.h"
-// std
-#include <map>
+#include "TransferFunction_ispc.h"
 
 namespace ospray {
 
-  TransferFunction *TransferFunction::createInstance(const std::string &type) 
+  void TransferFunction::commit()
+  {
+    vec2f valueRange = getParam2f("valueRange", vec2f(0.0f, 1.0f));
+    ispc::TransferFunction_setValueRange(ispcEquivalent,
+                                         (const ispc::vec2f &)valueRange);
+  }
+
+  TransferFunction *TransferFunction::createInstance(const std::string &type)
   {
     return createInstanceHelper<TransferFunction, OSP_TRANSFER_FUNCTION>(type);
   }
 
   std::string TransferFunction::toString() const
   {
-    return("ospray::TransferFunction");
+    return "ospray::TransferFunction";
   }
 
 } // ::ospray

@@ -37,7 +37,7 @@ namespace ospray {
     virtual ~TransferFunction() = default;
 
     //! Allocate storage and populate the transfer function.
-    virtual void commit() = 0;
+    virtual void commit();
 
     //! Create a transfer function of the given type.
     static TransferFunction *createInstance(const std::string &type);
