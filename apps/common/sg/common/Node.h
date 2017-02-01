@@ -124,12 +124,21 @@ namespace ospray {
       TimeStamp getChildMTime() { return childMTime; }
     };
 
+    enum NodeFlags
+    {
+      none=0,
+      required=1,  //! this node is required to be valid by its parent
+      valid_min_max=2,  //! validity determined by minmax range
+      valid_whitelist=4, //! validity determined by whitelist
+      valid_blacklist=8  //! validity determined by blacklist
+    };
+
     /*! \brief base node of all scene graph nodes */
     struct Node : public RefCount
     {
-      Node() : lastModified(1), childrenMTime(1), lastCommitted(0), name("NULL"), type("Node"),
+      Node() : lastModified(1), childrenMTime(1), lastCommitted(0), name("NULL"), 
+      type("Node"), valid(false),
       ospHandle(nullptr) {};
-
 
       /*! 
         NodeH is a handle to a sg::Node.  It has the benefit of supporting some operators without
@@ -160,14 +169,6 @@ namespace ospray {
         }
       };
 
-      enum NodeFlags
-      {
-        none=0,
-        required=1,
-        valid_min_max=1>>1,
-        valid_whitelist=1>>2,
-        valid_blacklist=1>>3
-      };
 
 
       virtual    std::string toString() const {}
@@ -301,6 +302,7 @@ namespace ospray {
       std::string getType() { return type; }
 
       void setFlags(NodeFlags f) { flags = f; }
+      void setFlags(int f) { flags = static_cast<NodeFlags>(f); }
       NodeFlags getFlags() { return flags; }
 
       void setMinMax(const SGVar& minv, const SGVar& maxv) {
@@ -319,11 +321,13 @@ namespace ospray {
         blacklist = values;
       }
 
-      virtual bool isValid()
+      virtual bool isValid() { return valid; }
+
+      virtual bool computeValid()
       {
-        if (flags & NodeFlags::valid_min_max && minmax.size()>1)
+        if ((flags & NodeFlags::valid_min_max) && minmax.size()>1)
         {
-          if (!isValidMinMax())
+          if (!computeValidMinMax())
             return false;
         }
         if (flags & NodeFlags::valid_blacklist)
@@ -339,7 +343,7 @@ namespace ospray {
         return true;
       }
 
-      virtual bool isValidMinMax() {return true;}
+      virtual bool computeValidMinMax() {return true;}
 
 
     protected:
@@ -356,6 +360,7 @@ namespace ospray {
       NodeH parent;
       std::mutex mutex;
       NodeFlags flags;
+      bool valid;
     };
 
     /*! read a given scene graph node from its correspondoing xml node represenation */
@@ -369,7 +374,7 @@ namespace ospray {
     void registerNamedNode(const std::string &name, Ref<sg::Node> node);
 
     typedef Node::NodeH NodeH;
-    Node::NodeH createNode(std::string name, std::string type="Node", SGVar var=NullType(), sg::Node::NodeFlags flags=sg::Node::NodeFlags::none);
+    Node::NodeH createNode(std::string name, std::string type="Node", SGVar var=NullType(), int flags=sg::NodeFlags::none);
     // , std::shared_ptr<sg::Param>=std::make_shared<sg::Param>("none")
 
     template <typename T>
@@ -394,11 +399,12 @@ namespace ospray {
     {
       if (value.get<T>() < min.get<T>() || value.get<T>() > max.get<T>())
         return false;
+      return true;
     }
 
     template <>
     inline bool NodeParamCommit<float>::compare(const SGVar& min, const SGVar& max, const SGVar& value) {
-      NodeParamCommitComparison<float>(min,max,value);
+      return NodeParamCommitComparison<float>(min,max,value);
     }
     template <>
     inline void NodeParamCommit<float>::commit(Node* n) {
@@ -410,7 +416,7 @@ namespace ospray {
     }
     template <>
     inline bool NodeParamCommit<int>::compare(const SGVar& min, const SGVar& max, const SGVar& value) {
-      NodeParamCommitComparison<int>(min,max,value);
+      return NodeParamCommitComparison<int>(min,max,value);
     }
     template <>
     inline void NodeParamCommit<int>::commit(Node* n) {
@@ -421,9 +427,9 @@ namespace ospray {
       const vec3f v1 = min.get<vec3f>();
       const vec3f v2 = max.get<vec3f>();
       const vec3f v = value.get<vec3f>();
-      return !(v1.x > v.x || v2.x > v.x
-        || v1.y > v.y || v2.y > v.y
-        || v1.z > v.z || v2.z > v.z
+      return !(v1.x > v.x || v2.x < v.x
+        || v1.y > v.y || v2.y < v.y
+        || v1.z > v.z || v2.z < v.z
         );
     }
     template <>
@@ -441,7 +447,7 @@ namespace ospray {
               NodeParamCommit<T>::commit(this);
           }
       }
-      virtual bool isValidMinMax() override
+      virtual bool computeValidMinMax() override
       {
         if (minmax.size()<2 || !(flags & NodeFlags::valid_min_max))
           return true;

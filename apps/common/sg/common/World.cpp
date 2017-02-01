@@ -57,7 +57,6 @@ namespace ospray {
       ctx.world = this;
       // if (!ospModel)
       // {
-      std::cout << __PRETTY_FUNCTION__ << std::endl;
         ospModel = ospNewModel();
         ospCommit(ospModel);
         value = (OSPObject)ospModel;

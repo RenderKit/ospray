@@ -82,6 +82,7 @@ namespace ospray {
         ctx.level++;
         for (auto child : children)
         {
+          if (isValid())
             child.second->traverse(ctx,operation);
         }
         ctx.level--;
@@ -104,6 +105,10 @@ namespace ospray {
       {
         preCommit(ctx);
       }
+      else if (operation == "verify")
+      {
+        valid = computeValid();
+      }
     }
 
     void Node::postTraverse(RenderContext &ctx, const std::string& operation)
@@ -112,6 +117,14 @@ namespace ospray {
       {
         postCommit(ctx);
         lastCommitted = TimeStamp::now();
+      }
+      else if (operation == "verify")
+      {
+        for (auto child : children)
+        {
+          if (child.second->getFlags() & NodeFlags::required)
+            valid &= child.second->isValid();
+        }
       }
     }
 
@@ -170,7 +183,7 @@ namespace ospray {
     
     std::map<std::string, creatorFct> nodeRegistry;
 
-    Node::NodeH createNode(std::string name, std::string type, SGVar var, sg::Node::NodeFlags flags)
+    Node::NodeH createNode(std::string name, std::string type, SGVar var, int flags)
     {
       std::map<std::string, creatorFct>::iterator it = nodeRegistry.find(type);
       creatorFct creator = NULL;
