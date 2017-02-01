@@ -31,16 +31,15 @@ namespace ospray {
 
     // Function pointers corresponding to each subtype.
     static std::map<std::string, creationFunctionPointer> symbolRegistry;
+    const auto type_string = stringForType(OSP_TYPE);
 
     // Find the creation function for the subtype if not already known.
     if (symbolRegistry.count(type) == 0) {
 
       if (ospray::logLevel() >= 2)  {
-        std::cout << "#ospray: trying to look up object type '"
+        std::cout << "#ospray: trying to look up " << type_string << " type '"
                   << type << "' for the first time" << std::endl;
       }
-
-      auto type_string = stringForType(OSP_TYPE);
 
       // Construct the name of the creation function to look for.
       std::string creationFunctionName = "ospray_create_" + type_string
@@ -53,8 +52,8 @@ namespace ospray {
       // The named function may not be found if the requested subtype is not
       // known.
       if (!symbolRegistry[type] && ospray::logLevel() >= 1) {
-        std::cerr << "  WARNING: unrecognized object type '" + type
-                  << "'." << std::endl;
+        std::cerr << "  WARNING: unrecognized " << type_string << " type '"
+                  << type << "'." << std::endl;
       }
     }
 
@@ -67,7 +66,7 @@ namespace ospray {
     }
     else {
       symbolRegistry.erase(type);
-      throw std::runtime_error("Could not find object of type: " 
+      throw std::runtime_error("Could not find " + type_string + " of type: " 
         + type + ".  Make sure you have the correct OSPRay libraries linked.");
     }
 
