@@ -20,6 +20,8 @@
 #include "sg/common/Serialization.h"
 #include "sg/camera/Camera.h"
 
+#include <cfloat>
+
 namespace ospray {
   namespace sg {
 
@@ -54,8 +56,10 @@ struct Light : public sg::Node {
 struct AmbientLight : public Light {
   //! \brief constructor
   AmbientLight() : Light("AmbientLight") { 
-  	add(createNode("color", "vec3f", vec3f(.7f,.8f,1.f)));
-  	add(createNode("intensity", "float", 0.2f));
+  	add(createNode("color", "vec3f", vec3f(.7f,.8f,1.f),NodeFlags::required | NodeFlags::valid_min_max));
+    getChild("color")->setMinMax(vec3f(0), vec3f(1));
+  	add(createNode("intensity", "float", 0.2f,NodeFlags::required | NodeFlags::valid_min_max));
+    getChild("intensity")->setMinMax(0.f,FLT_MAX);
   }
 };
 
@@ -64,9 +68,12 @@ struct DirectionalLight : public Light {
   //! \brief constructor
   DirectionalLight() : Light("DirectionalLight") { 
   	add(createNode("direction", "vec3f", vec3f(-.3,.2,.4)));
-  	add(createNode("color", "vec3f", vec3f(1.f)));
-  	add(createNode("intensity", "float", 3.f));
-  	add(createNode("angularDiameter", "float", 0.f));
+  	add(createNode("color", "vec3f", vec3f(1.f),NodeFlags::required | NodeFlags::valid_min_max));
+    getChild("color")->setMinMax(vec3f(0), vec3f(1));
+  	add(createNode("intensity", "float", 3.f,NodeFlags::required | NodeFlags::valid_min_max));
+    getChild("intensity")->setMinMax(0.f,FLT_MAX);
+  	add(createNode("angularDiameter", "float", 0.f,NodeFlags::required | NodeFlags::valid_min_max));
+    getChild("angularDiameter")->setMinMax(0.f,FLT_MAX);
   }
 };
 

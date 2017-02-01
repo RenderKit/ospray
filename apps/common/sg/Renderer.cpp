@@ -17,6 +17,8 @@
 #include "Renderer.h"
 
 #include "sg/common/FrameBuffer.h"
+#include <climits>
+#include <cfloat>
 
 namespace ospray {
   namespace sg {
@@ -33,12 +35,16 @@ namespace ospray {
 
       //TODO: move these to seperate SciVisRenderer
         add(createNode("shadowsEnabled", "bool", true));
-        add(createNode("maxDepth", "int", 5));
-        add(createNode("aoSamples", "int", 1));
-        add(createNode("spp", "int", 1));
-        add(createNode("aoDistance", "float", 1.f));
+        add(createNode("maxDepth", "int", 5, NodeFlags::required | NodeFlags::valid_min_max));
+        getChild("maxDepth")->setMinMax(0,999);
+        add(createNode("aoSamples", "int", 1, NodeFlags::required | NodeFlags::valid_min_max));
+        getChild("aoSamples")->setMinMax(0,INT_MAX);
+        add(createNode("spp", "int", 1, NodeFlags::required));
+        add(createNode("aoDistance", "float", 1.f, NodeFlags::required | NodeFlags::valid_min_max));
+        getChild("aoDistance")->setMinMax(float(1e-31),FLT_MAX);
         add(createNode("aoWeight", "float", 1.f));
-        add(createNode("oneSidedLighting", "bool",true));
+        getChild("aoWeight")->setMinMax(0.f,FLT_MAX);
+        add(createNode("oneSidedLighting", "bool",true, NodeFlags::required));
 
         ospRenderer = nullptr;
       }
