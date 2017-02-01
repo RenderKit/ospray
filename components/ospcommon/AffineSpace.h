@@ -38,7 +38,7 @@ namespace ospcommon {
     // Constructors, Assignment, Cast, Copy Operations
     ////////////////////////////////////////////////////////////////////////////////
 
-    inline AffineSpaceT           ( )                           { }
+    inline AffineSpaceT           ( ) = default;
     inline AffineSpaceT           ( const AffineSpaceT& other ) { l = other.l; p = other.p; }
     inline AffineSpaceT           ( const L           & other ) { l = other  ; p = VectorT(zero); }
     inline AffineSpaceT& operator=( const AffineSpaceT& other ) { l = other.l; p = other.p; return *this; }

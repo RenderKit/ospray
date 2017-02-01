@@ -27,11 +27,11 @@ namespace ospcommon {
 
   template<typename T> struct LinearSpace2
   {
-    typedef T Vector;
-    typedef typename T::scalar_t Scalar;
+    using Vector = T;
+    using Scalar = typename T::scalar_t;
     
     /*! default matrix constructor */
-    inline LinearSpace2           ( ) {}
+    inline LinearSpace2           ( ) = default;
     inline LinearSpace2           ( const LinearSpace2& other ) { vx = other.vx; vy = other.vy; }
     inline LinearSpace2& operator=( const LinearSpace2& other ) { vx = other.vx; vy = other.vy; return *this; }
 
@@ -159,13 +159,13 @@ namespace ospcommon {
   /// 3D Linear Transform (3x3 Matrix)
   ////////////////////////////////////////////////////////////////////////////////
 
-  template<typename T> struct OSPCOMMON_INTERFACE LinearSpace3
+  template<typename T> struct LinearSpace3
   {
-    typedef T Vector;
-    typedef typename T::scalar_t Scalar;
+    using Vector = T;
+    using Scalar = typename T::scalar_t;
 
     /*! default matrix constructor */
-    inline LinearSpace3           ( ) {}
+    inline LinearSpace3           ( ) = default;
     inline LinearSpace3           ( const LinearSpace3& other ) { vx = other.vx; vy = other.vy; vz = other.vz; }
     inline LinearSpace3& operator=( const LinearSpace3& other ) { vx = other.vx; vy = other.vy; vz = other.vz; return *this; }
 
@@ -303,15 +303,15 @@ namespace ospcommon {
   /// Output Operators
   ////////////////////////////////////////////////////////////////////////////////
 
-  template<typename T> static std::ostream& operator<<(std::ostream& cout, const LinearSpace3<T>& m) {
+  template<typename T> inline std::ostream& operator<<(std::ostream& cout, const LinearSpace3<T>& m) {
     return cout << "{ vx = " << m.vx << ", vy = " << m.vy << ", vz = " << m.vz << "}";
   }
 
   /*! Shortcuts for common linear spaces. */
-  typedef LinearSpace2<vec2f>  LinearSpace2f;
-  typedef LinearSpace3<vec3f>  LinearSpace3f;
-  typedef LinearSpace3<vec3fa> LinearSpace3fa;
+  using LinearSpace2f  = LinearSpace2<vec2f> ;
+  using LinearSpace3f  = LinearSpace3<vec3f> ;
+  using LinearSpace3fa = LinearSpace3<vec3fa>;
 
-  typedef LinearSpace2f linear2f;
-  typedef LinearSpace3f linear3f;
+  using linear2f = LinearSpace2f;
+  using linear3f = LinearSpace3f;
 } // ::ospcommon
