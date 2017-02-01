@@ -37,13 +37,14 @@ namespace ospray {
         add(createNode("shadowsEnabled", "bool", true));
         add(createNode("maxDepth", "int", 5, NodeFlags::required | NodeFlags::valid_min_max));
         getChild("maxDepth")->setMinMax(0,999);
-        add(createNode("aoSamples", "int", 1, NodeFlags::required | NodeFlags::valid_min_max));
-        getChild("aoSamples")->setMinMax(0,INT_MAX);
-        add(createNode("spp", "int", 1, NodeFlags::required));
+        add(createNode("aoSamples", "int", 1, NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
+        getChild("aoSamples")->setMinMax(0,128);
+        add(createNode("spp", "int", 1, NodeFlags::required | NodeFlags::gui_slider));
+        getChild("spp")->setMinMax(-8,128);
         add(createNode("aoDistance", "float", 1.f, NodeFlags::required | NodeFlags::valid_min_max));
         getChild("aoDistance")->setMinMax(float(1e-31),FLT_MAX);
-        add(createNode("aoWeight", "float", 1.f));
-        getChild("aoWeight")->setMinMax(0.f,FLT_MAX);
+        // add(createNode("aoWeight", "float", 1.f, NodeFlags::required | NodeFlags::valid_min_max, NodeFlags::gui_slider));
+        // getChild("aoWeight")->setMinMax(0.f,4.f);
         add(createNode("oneSidedLighting", "bool",true, NodeFlags::required));
 
         ospRenderer = nullptr;
