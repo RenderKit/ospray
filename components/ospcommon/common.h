@@ -42,7 +42,7 @@ typedef int ssize_t;
 
 #include <stdint.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 #  ifdef ospray_common_EXPORTS
 #    define OSPCOMMON_INTERFACE __declspec(dllexport)
 #  else
@@ -87,7 +87,7 @@ namespace ospcommon {
   OSPCOMMON_INTERFACE void *getSymbol(const std::string &name);
 
 
-#ifdef __WIN32__
+#ifdef _WIN32
 #  define osp_snprintf sprintf_s
 #else
 #  define osp_snprintf snprintf
