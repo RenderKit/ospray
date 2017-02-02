@@ -533,6 +533,12 @@ extern "C" void ospDeviceSet1i(OSPDevice _object, const char *id, int32_t x)
   object->findParam(id, true)->set(x);
 }
 
+extern "C" void ospDeviceSetErrorMsgFunc(OSPDevice object,
+                                         OSPErrorMsgFunc callback)
+{
+  auto *device = (ospray::api::Device *)object;
+}
+
 extern "C" void ospSetString(OSPObject _object, const char *id, const char *s)
 {
   ASSERT_DEVICE();

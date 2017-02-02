@@ -18,16 +18,20 @@
 #include "AmbientLight_ispc.h"
 
 namespace ospray {
+
   AmbientLight::AmbientLight()
-    : color(1.f)
-    , intensity(1.f)
   {
     ispcEquivalent = ispc::AmbientLight_create();
   }
 
-  //! Commit parameters understood by the AmbientLight
+  std::string AmbientLight::toString() const
+  {
+    return "ospray::AmbientLight";
+  }
+
   void AmbientLight::commit() {
     Light::commit();
+
     color     = getParam3f("color", vec3f(1.f));
     intensity = getParam1f("intensity", 1.f);
 
@@ -35,6 +39,12 @@ namespace ospray {
     ispc::AmbientLight_set(getIE(), (ispc::vec3f&)radiance);
   }
 
+  vec3f AmbientLight::getRadiance() const
+  {
+    return color * intensity;
+  }
+
   OSP_REGISTER_LIGHT(AmbientLight, AmbientLight);
   OSP_REGISTER_LIGHT(AmbientLight, ambient);
-}
+
+}// ::ospray

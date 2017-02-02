@@ -40,22 +40,28 @@ namespace ospray {
   TriangleMesh::TriangleMesh() 
     : eMesh(RTC_INVALID_ID)
   {
-    this->ispcMaterialPtrs = NULL;
+    this->ispcMaterialPtrs = nullptr;
     this->ispcEquivalent = ispc::TriangleMesh_create(this);
   }
 
+  std::string TriangleMesh::toString() const
+  {
+    return "ospray::TriangleMesh";
+  }
 
   void TriangleMesh::finalize(Model *model)
   {
     static int numPrints = 0;
     numPrints++;
-    if (logLevel() >= 2)
+    if (logLevel() >= 2) {
       if (numPrints == 5)
         cout << "(all future printouts for triangle mesh creation will be emitted)" << endl;
+    }
     
-    if (logLevel() >= 2)
+    if (logLevel() >= 2) {
       if (numPrints < 5)
         std::cout << "ospray: finalizing triangle mesh ..." << std::endl;
+    }
 
     Assert(model && "invalid model pointer");
 
@@ -92,17 +98,17 @@ namespace ospray {
 
     this->index = (int*)indexData->data;
     this->vertex = (float*)vertexData->data;
-    this->normal = normalData ? (float*)normalData->data : NULL;
-    this->color  = colorData ? (vec4f*)colorData->data : NULL;
-    this->texcoord = texcoordData ? (vec2f*)texcoordData->data : NULL;
-    this->prim_materialID  = prim_materialIDData ? (uint32_t*)prim_materialIDData->data : NULL;
-    this->materialList  = materialListData ? (ospray::Material**)materialListData->data : NULL;
+    this->normal = normalData ? (float*)normalData->data : nullptr;
+    this->color  = colorData ? (vec4f*)colorData->data : nullptr;
+    this->texcoord = texcoordData ? (vec2f*)texcoordData->data : nullptr;
+    this->prim_materialID  = prim_materialIDData ? (uint32_t*)prim_materialIDData->data : nullptr;
+    this->materialList  = materialListData ? (ospray::Material**)materialListData->data : nullptr;
     
     if (materialList && !ispcMaterialPtrs) {
       const int num_materials = materialListData->numItems;
       ispcMaterialPtrs = new void*[num_materials];
       for (int i = 0; i < num_materials; i++) {
-        assert(this->materialList[i] != NULL && "Materials in list should never be NULL");
+        assert(this->materialList[i] != nullptr && "Materials in list should never be NULL");
         this->ispcMaterialPtrs[i] = this->materialList[i]->getIE();
       }
     } 
@@ -198,12 +204,13 @@ namespace ospray {
     for (uint32_t i = 0; i < numVerts*numCompsInVtx; i+=numCompsInVtx)
       bounds.extend(*(vec3f*)(vertex + i));
 
-    if (logLevel() >= 2)
+    if (logLevel() >= 2) {
       if (numPrints < 5) {
         cout << "  created triangle mesh (" << numTris << " tris "
              << ", " << numVerts << " vertices)" << endl;
         cout << "  mesh bounds " << bounds << endl;
       } 
+    }
 
     ispc::TriangleMesh_set(getIE(),model->getIE(),eMesh,
                            numTris,
@@ -216,7 +223,7 @@ namespace ospray {
                            (ispc::vec4f*)color,
                            (ispc::vec2f*)texcoord,
                            geom_materialID,
-                           getMaterial()?getMaterial()->getIE():NULL,
+                           getMaterial()?getMaterial()->getIE():nullptr,
                            ispcMaterialPtrs,
                            (uint32_t*)prim_materialID,
                            colorData && colorData->type == OSP_FLOAT4,

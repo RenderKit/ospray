@@ -25,16 +25,14 @@ namespace ospray {
   /*! \brief A concrete implementation of the TransferFunction class for
     piecewise linear transfer functions.
   */
-  class OSPRAY_SDK_INTERFACE LinearTransferFunction : public TransferFunction
+  struct OSPRAY_SDK_INTERFACE LinearTransferFunction : public TransferFunction
   {
-  public:
-
     LinearTransferFunction() = default;
-    ~LinearTransferFunction();
+    virtual ~LinearTransferFunction();
 
-    void commit();
+    virtual void commit() override;
 
-    std::string toString() const;
+    virtual std::string toString() const override;
 
   private:
 

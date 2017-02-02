@@ -33,12 +33,8 @@
 
 // ospray
 #include "render/Renderer.h"
-#include "texture/Texture2D.h"
 
 namespace ospray {
-
-  struct Camera;
-  struct Model;
 
   /*! \brief Simple 16-sample Ambient Occlusion Renderer
     
@@ -57,20 +53,13 @@ namespace ospray {
     samples in the first frame, the next 8 in the second, then
     rotation of the first 8 in the third, etc.
    */
-  struct SimpleAO : public Renderer {
-    
-    //! \brief Constructor
+  struct SimpleAO : public Renderer
+  {
     SimpleAO(int defaultNumSamples);
-
-    /*! \brief common function to help printf-debugging */
-    virtual std::string toString() const;
-
-    /*! \brief create a material of given type */
-    virtual ospray::Material *createMaterial(const char *type);
-
-    /*! \brief commit the object's outstanding changes
-     *         (such as changed parameters etc) */
-    virtual void commit();
+    virtual ~SimpleAO() = default;
+    virtual std::string toString() const override;
+    virtual ospray::Material *createMaterial(const char *type) override;
+    virtual void commit() override;
 
     int defaultNumSamples;
   };

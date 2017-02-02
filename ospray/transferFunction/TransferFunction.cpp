@@ -28,14 +28,14 @@ namespace ospray {
                                          (const ispc::vec2f &)valueRange);
   }
 
-  TransferFunction *TransferFunction::createInstance(const std::string &type)
-  {
-    return createInstanceHelper<TransferFunction, OSP_TRANSFER_FUNCTION>(type);
-  }
-
   std::string TransferFunction::toString() const
   {
     return "ospray::TransferFunction";
+  }
+
+  TransferFunction *TransferFunction::createInstance(const std::string &type)
+  {
+    return createInstanceHelper<TransferFunction, OSP_TRANSFER_FUNCTION>(type);
   }
 
 } // ::ospray

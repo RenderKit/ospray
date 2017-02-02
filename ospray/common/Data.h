@@ -33,13 +33,15 @@ namespace ospray {
 
     /*! commit this object - for this object type, make sure that all
         listeners that have registered know that we have changed */
-    virtual void commit();
+    virtual void commit() override;
 
     /*! pretty-print this object, for debugging purposes */
-    virtual std::string toString() const { return "ospray::Data"; }
+    virtual std::string toString() const override;
 
     /*! return number of items in this data buffer */
-    inline size_t size() const { return numItems; }
+    size_t size() const;
+
+    // Data members //
 
     void       *data;     /*!< pointer to data */
     size_t      numItems; /*!< number of items */

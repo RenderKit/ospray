@@ -23,14 +23,12 @@ namespace ospray {
 
   GhostBlockBrickedVolume::~GhostBlockBrickedVolume()
   {
-    if (ispcEquivalent) {
-      ispc::GBBV_freeVolume(ispcEquivalent);
-    }
+    if (ispcEquivalent) ispc::GBBV_freeVolume(ispcEquivalent);
   }
 
   std::string GhostBlockBrickedVolume::toString() const
   {
-    return("ospray::GhostBlockBrickedVolume<" + voxelType + ">");
+    return "ospray::GhostBlockBrickedVolume<" + voxelType + ">";
   }
 
   void GhostBlockBrickedVolume::commit()

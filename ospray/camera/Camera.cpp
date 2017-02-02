@@ -30,6 +30,11 @@ namespace ospray {
     return createInstanceHelper<Camera, OSP_CAMERA>(type);
   }
 
+  std::string Camera::toString() const
+  {
+    return "ospray::Camera";
+  }
+
   void Camera::commit()
   {
     // "parse" the general expected parameters

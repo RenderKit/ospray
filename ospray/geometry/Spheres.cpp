@@ -28,18 +28,22 @@ namespace ospray {
   Spheres::Spheres()
   {
     this->ispcEquivalent = ispc::Spheres_create(this);
-    _materialList = NULL;
   }
 
   Spheres::~Spheres()
   {
     if (_materialList) {
       free(_materialList);
-      _materialList = NULL;
+      _materialList = nullptr;
     }
   }
 
-  void Spheres::finalize(Model *model) 
+  std::string Spheres::toString() const
+  {
+    return "ospray::Spheres";
+  }
+
+  void Spheres::finalize(Model *model)
   {
     radius            = getParam1f("radius",0.01f);
     materialID        = getParam1i("materialID",0);
@@ -54,15 +58,16 @@ namespace ospray {
     colorOffset       = getParam1i("color_offset",0);
     colorStride       = getParam1i("color_stride",4*sizeof(float));
 
-    if (sphereData.ptr == NULL) {
+    if (sphereData.ptr == nullptr) {
       throw std::runtime_error("#ospray:geometry/spheres: no 'spheres' data "
                                "specified");
     }
 
     numSpheres = sphereData->numBytes / bytesPerSphere;
-    if (logLevel() >= 2)
+    if (logLevel() >= 2) {
       std::cout << "#osp: creating 'spheres' geometry, #spheres = "
         << numSpheres << std::endl;
+    }
 
     if (numSpheres >= (1ULL << 30)) {
       throw std::runtime_error("#ospray::Spheres: too many spheres in this "
@@ -76,7 +81,7 @@ namespace ospray {
 
     if (_materialList) {
       free(_materialList);
-      _materialList = NULL;
+      _materialList = nullptr;
     }
 
     if (materialList) {
@@ -84,7 +89,7 @@ namespace ospray {
                                              materialList->numItems);
       for (uint32_t i = 0; i < materialList->numItems; i++) {
         Material *m = ((Material**)materialList->data)[i];
-        ispcMaterials[i] = m?m->getIE():NULL;
+        ispcMaterials[i] = m?m->getIE():nullptr;
       }
       _materialList = (void*)ispcMaterials;
     }
@@ -99,7 +104,7 @@ namespace ospray {
 
     ispc::SpheresGeometry_set(getIE(),model->getIE(),
                               sphereData->data,_materialList,
-                              colorData?(unsigned char*)colorData->data:NULL,
+                              colorData?(unsigned char*)colorData->data:nullptr,
                               colorOffset, colorStride,
                               numSpheres,bytesPerSphere,
                               radius,materialID,

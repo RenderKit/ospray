@@ -36,8 +36,8 @@ namespace ospray {
   WarnOnce::WarnOnce(const std::string &s) 
     : s(s) 
   {
-    std::cout << "Warning: " << s << " (only reporting first occurrence)"
-              << std::endl;
+    std::string msg = "Warning: " + s + " (only reporting first occurrence)\n";
+    postErrorMsg(msg);
   }
   
   /*! for debugging. compute a checksum for given area range... */
@@ -310,6 +310,11 @@ namespace ospray {
     }
 
     return 0;
+  }
+
+  void postErrorMsg(const std::string &msg)
+  {
+    ospray::api::Device::current->error_fcn(msg.c_str());
   }
 
 } // ::ospray

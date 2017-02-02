@@ -42,6 +42,11 @@ namespace ospray {
     this->embreeSceneHandle = NULL;
   }
 
+  std::string Model::toString() const
+  {
+    return "ospray::Model";
+  }
+
   void Model::finalize()
   {
     if (logLevel() >= 2) {

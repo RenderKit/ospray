@@ -79,25 +79,25 @@ namespace ospray {
     Implements the \ref geometry_streamlines geometry
 
   */
-  struct OSPRAY_SDK_INTERFACE StreamLines : public Geometry {
-    //! \brief common function to help printf-debugging
-    virtual std::string toString() const { return "ospray::StreamLines"; }
-    /*! \brief integrates this geometry's primitives into the respective
-      model's acceleration structure */
-    virtual void finalize(Model *model);
+  struct OSPRAY_SDK_INTERFACE StreamLines : public Geometry
+  {
+    StreamLines();
+    virtual ~StreamLines() = default;
+    virtual std::string toString() const override;
+    virtual void finalize(Model *model) override;
+
+    // Data members //
 
     Ref<Data> vertexData;  //!< refcounted data array for vertex data
     Ref<Data> indexData; //!< refcounted data array for segment data
     Ref<Data> colorData;  //!< refcounted data array for vertex color data
 
-    const vec3fa *vertex;
-    size_t        numVertices;
-    const uint32 *index;
-    size_t        numSegments;
-    const vec4f  *color;
-    float         radius;
-
-    StreamLines();
+    const vec3fa *vertex {nullptr};
+    size_t        numVertices {0};
+    const uint32 *index {nullptr};
+    size_t        numSegments {0};
+    const vec4f  *color {nullptr};
+    float         radius {0.f};
   };
   /*! @} */
 

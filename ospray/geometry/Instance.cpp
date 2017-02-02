@@ -29,7 +29,12 @@ namespace ospray {
     this->ispcEquivalent = ispc::InstanceGeometry_create(this);
   }
 
-  void Instance::finalize(Model *model) 
+  std::string Instance::toString() const
+  {
+    return "ospray::Instance";
+  }
+
+  void Instance::finalize(Model *model)
   {
     xfm.l.vx = getParam3f("xfm.l.vx",vec3f(1.f,0.f,0.f));
     xfm.l.vy = getParam3f("xfm.l.vy",vec3f(0.f,1.f,0.f));

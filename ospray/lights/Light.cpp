@@ -32,6 +32,11 @@ namespace ospray {
     ispc::Light_set(getIE(), isVisible);
   }
 
+  std::string Light::toString() const
+  {
+    return "ospray::Light";
+  }
+
   //! Create a new Light object of given type
   Light *Light::createLight(const char *type)
   {

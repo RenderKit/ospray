@@ -172,6 +172,8 @@ namespace ospray {
 
   OSPRAY_INTERFACE int loadLocalModule(const std::string &name);
 
+  OSPRAY_INTERFACE void postErrorMsg(const std::string &msg);
+
 } // ::ospray
 
 #ifdef _WIN32

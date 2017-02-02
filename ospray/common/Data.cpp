@@ -67,4 +67,14 @@ namespace ospray {
     notifyListenersThatObjectGotChanged();
   }
 
+  std::string Data::toString() const
+  {
+    return "ospray::Data";
+  }
+
+  size_t ospray::Data::size() const
+  {
+    return numItems;
+  }
+
 } // ::ospray

@@ -29,7 +29,8 @@
 #include <map>
 
 namespace ospray {
-  PathTracer::PathTracer() : Renderer(), geometryLights(0)
+
+  PathTracer::PathTracer()
   {
     ispcEquivalent = ispc::PathTracer_create(this);
   }
@@ -39,7 +40,11 @@ namespace ospray {
     destroyGeometryLights();
   }
 
-  /*! \brief create a material of given type */
+  std::string PathTracer::toString() const
+  {
+    return "ospray::PathTracer";
+  }
+
   Material *PathTracer::createMaterial(const char *type)
   {
     std::string ptType = std::string("PathTracer_")+type;
@@ -52,7 +57,6 @@ namespace ospray {
           " (replacing with OBJMaterial)" << std::endl;
       numOccurrances[T] ++;
       material = Material::createMaterial("PathTracer_OBJMaterial");
-      // throw std::runtime_error("invalid path tracer material "+std::string(type));
     }
     material->refInc();
     return material;
@@ -116,20 +120,20 @@ namespace ospray {
         lightArray.push_back(((Light**)lightData->data)[i]->getIE());
     }
 
-    void **lightPtr = lightArray.empty() ? NULL : &lightArray[0];
+    void **lightPtr = lightArray.empty() ? nullptr : &lightArray[0];
 
     const int32 maxDepth = getParam1i("maxDepth", 20);
     const float minContribution = getParam1f("minContribution", 0.01f);
-    const float maxRadiance = getParam1f("maxContribution", getParam1f("maxRadiance", inf));
-    Texture2D *backplate = (Texture2D*)getParamObject("backplate", NULL);
+    const float maxRadiance = getParam1f("maxContribution",
+                                         getParam1f("maxRadiance", inf));
+    Texture2D *backplate = (Texture2D*)getParamObject("backplate", nullptr);
 
     ispc::PathTracer_set(getIE(), maxDepth, minContribution, maxRadiance,
-                         backplate ? backplate->getIE() : NULL,
+                         backplate ? backplate->getIE() : nullptr,
                          lightPtr, lightArray.size(), geometryLights,
                          &areaPDF[0]);
   }
 
   OSP_REGISTER_RENDERER(PathTracer,pathtracer);
   OSP_REGISTER_RENDERER(PathTracer,pt);
-}
-
+}// ::ospray

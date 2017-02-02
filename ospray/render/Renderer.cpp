@@ -16,22 +16,18 @@
 
 // ospray
 #include "Renderer.h"
-#include "../common/Library.h"
 #include "common/Util.h"
-// stl
-#include <map>
 // ispc exports
 #include "Renderer_ispc.h"
 // ospray
 #include "LoadBalancer.h"
 
 namespace ospray {
-  using std::cout;
-  using std::endl;
 
-  /*! \brief common function to help printf-debugging */
   std::string Renderer::toString() const 
-  { return "ospray::Renderer"; }
+  {
+    return "ospray::Renderer";
+  }
 
   void Renderer::commit()
   {

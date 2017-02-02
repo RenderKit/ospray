@@ -28,7 +28,11 @@ namespace ospray {
   Cylinders::Cylinders()
   {
     this->ispcEquivalent = ispc::Cylinders_create(this);
-    _materialList = NULL;
+  }
+
+  std::string Cylinders::toString() const
+  {
+    return "ospray::Cylinders";
   }
 
   void Cylinders::finalize(Model *model)
@@ -45,18 +49,19 @@ namespace ospray {
     materialList      = getParamData("materialList");
     colorData         = getParamData("color");
 
-    if (cylinderData.ptr == NULL || bytesPerCylinder == 0) {
+    if (cylinderData.ptr == nullptr || bytesPerCylinder == 0) {
       throw std::runtime_error("#ospray:geometry/cylinders: no 'cylinders'"
                                " data specified");
     }
     numCylinders = cylinderData->numBytes / bytesPerCylinder;
-    if (logLevel() >= 2)
+    if (logLevel() >= 2) {
       std::cout << "#osp: creating 'cylinders' geometry, #cylinders = "
         << numCylinders << std::endl;
+    }
 
     if (_materialList) {
       free(_materialList);
-      _materialList = NULL;
+      _materialList = nullptr;
     }
 
     if (materialList) {
@@ -64,7 +69,7 @@ namespace ospray {
           (void**) malloc(sizeof(void*) * materialList->numItems);
       for (uint32_t i = 0; i < materialList->numItems; i++) {
         Material *m = ((Material**)materialList->data)[i];
-        ispcMaterials[i] = m?m->getIE():NULL;
+        ispcMaterials[i] = m?m->getIE():nullptr;
       }
       _materialList = (void*)ispcMaterials;
     }
@@ -81,7 +86,7 @@ namespace ospray {
 
     ispc::CylindersGeometry_set(getIE(),model->getIE(),
                                 cylinderData->data,_materialList,
-                                colorData?(ispc::vec4f*)colorData->data:NULL,
+                                colorData?(ispc::vec4f*)colorData->data:nullptr,
                                 numCylinders,bytesPerCylinder,
                                 radius,materialID,
                                 offset_v0,offset_v1,

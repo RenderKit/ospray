@@ -23,11 +23,9 @@
 
 namespace ospray {
 
-SharedStructuredVolume::SharedStructuredVolume() : voxelData(nullptr) {}
-
-SharedStructuredVolume::~SharedStructuredVolume()
-{
-  // No longer listen for changes to voxelData.
+  SharedStructuredVolume::~SharedStructuredVolume()
+  {
+    // No longer listen for changes to voxelData.
     if(voxelData) voxelData->unregisterListener(this);
   }
 

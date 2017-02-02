@@ -58,14 +58,12 @@ namespace ospray {
     as visualizing primitive ID, geometry ID, shading normals,
     eyelight shading, etc */
   template<void *(*SHADE_MODE)(void*)>
-  struct RaycastRenderer : public Renderer {
-
-    /*! \brief constructor */
+  struct RaycastRenderer : public Renderer
+  {
     RaycastRenderer();
+    virtual ~RaycastRenderer() = default;
 
-    //! \brief common function to help printf-debugging
-    /*! \detailed Every derived class should overrride this! */
-    virtual std::string toString() const;
+    virtual std::string toString() const override;
   };
 
 } // ::ospray
