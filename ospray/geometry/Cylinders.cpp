@@ -54,10 +54,8 @@ namespace ospray {
                                " data specified");
     }
     numCylinders = cylinderData->numBytes / bytesPerCylinder;
-    if (logLevel() >= 2) {
-      std::cout << "#osp: creating 'cylinders' geometry, #cylinders = "
-        << numCylinders << std::endl;
-    }
+    postErrorMsg("#osp: creating 'cylinders' geometry, #cylinders = "
+                 + std::to_string(numCylinders) + '\n', 2);
 
     if (_materialList) {
       free(_materialList);

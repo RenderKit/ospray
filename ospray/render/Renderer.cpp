@@ -35,7 +35,7 @@ namespace ospray {
     spp = getParam1i("spp", 1);
     errorThreshold = getParam1f("varianceThreshold", 0.f);
     backgroundEnabled = getParam1i("backgroundEnabled", 1);
-    maxDepthTexture = (Texture2D*)getParamObject("maxDepthTexture", NULL);
+    maxDepthTexture = (Texture2D*)getParamObject("maxDepthTexture", nullptr);
     model = (Model*)getParamObject("model", getParamObject("world"));
 
     if (maxDepthTexture) {
@@ -59,13 +59,13 @@ namespace ospray {
       }
 
       ispc::Renderer_set(getIE(),
-                         model ? model->getIE() : NULL,
-                         camera ? camera->getIE() : NULL,
+                         model ? model->getIE() : nullptr,
+                         camera ? camera->getIE() : nullptr,
                          epsilon,
                          spp,
                          backgroundEnabled,
                          (ispc::vec3f&)bgColor,
-                         maxDepthTexture ? maxDepthTexture->getIE() : NULL);
+                         maxDepthTexture ? maxDepthTexture->getIE() : nullptr);
     }
   }
 

@@ -57,7 +57,7 @@ namespace ospray {
     VolumeVector volume;
 
     //! \brief the embree scene handle for this geometry
-    RTCScene embreeSceneHandle;
+    RTCScene embreeSceneHandle {nullptr};
     box3f bounds;
   };
 

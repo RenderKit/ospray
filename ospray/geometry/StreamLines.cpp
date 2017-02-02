@@ -52,12 +52,12 @@ namespace ospray {
     numVertices = vertexData->numItems;
     color       = colorData ? (const vec4f*)colorData->data : nullptr;
 
-    if (logLevel() >= 2) {
-      std::cout << "#osp: creating streamlines geometry, "
-              << "#verts=" << numVertices << ", "
-              << "#segments=" << numSegments << ", "
-              << "radius=" << radius << std::endl;
-    }
+    std::stringstream msg;
+    msg << "#osp: creating streamlines geometry, "
+        << "#verts=" << numVertices << ", "
+        << "#segments=" << numSegments << ", "
+        << "radius=" << radius << std::endl;
+    postErrorMsg(msg, 2);
 
     bounds = empty;
     if (vertex) {

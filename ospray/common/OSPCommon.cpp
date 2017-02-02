@@ -312,9 +312,15 @@ namespace ospray {
     return 0;
   }
 
-  void postErrorMsg(const std::string &msg)
+  void postErrorMsg(const std::stringstream &msg, uint32_t postAtLogLevel)
   {
-    ospray::api::Device::current->error_fcn(msg.c_str());
+    postErrorMsg(msg.str(), postAtLogLevel);
+  }
+
+  void postErrorMsg(const std::string &msg, uint32_t postAtLogLevel)
+  {
+    if (logLevel() >= postAtLogLevel)
+      ospray::api::Device::current->error_fcn(msg.c_str());
   }
 
 } // ::ospray

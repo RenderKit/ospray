@@ -53,17 +53,12 @@ namespace ospray {
 
     const box3f b = instancedScene->bounds;
     if (b.empty()) {
-#if 1
       // for now, let's just issue a warning since not all ospray
       // geometries do properly set the boudning box yet. as soon as
       // this gets fixed we will actually switch to reporting an error
       static WarnOnce warning("creating an instance to a model that does not"
                               " have a valid bounding box. epsilons for"
                               " ray offsets may be wrong");
-#else
-      throw std::runtime_error("trying to instantiate a model that does"
-                               " not have a valid bounding box");
-#endif
     }
     const vec3f v000(b.lower.x,b.lower.y,b.lower.z);
     const vec3f v001(b.upper.x,b.lower.y,b.lower.z);

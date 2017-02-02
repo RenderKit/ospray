@@ -172,7 +172,11 @@ namespace ospray {
 
   OSPRAY_INTERFACE int loadLocalModule(const std::string &name);
 
-  OSPRAY_INTERFACE void postErrorMsg(const std::string &msg);
+  OSPRAY_INTERFACE void postErrorMsg(const std::stringstream &msg,
+                                     uint32_t postAtLogLevel = 0);
+
+  OSPRAY_INTERFACE void postErrorMsg(const std::string &msg,
+                                     uint32_t postAtLogLevel = 0);
 
 } // ::ospray
 
