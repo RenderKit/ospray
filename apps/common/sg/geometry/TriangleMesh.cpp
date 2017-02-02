@@ -39,7 +39,7 @@ namespace ospray {
       return bounds;
     }
 
-    //! \brief Initialize this node's value from given XML node 
+    //! \brief Initialize this node's value from given XML node
     /*!
       \detailed This allows a plug-and-play concept where a XML
       file can specify all kind of nodes wihout needing to know
@@ -47,27 +47,27 @@ namespace ospray {
       create a proper C++ instance of the given node type (the
       OSP_REGISTER_SG_NODE() macro will allow it to do so), and can
       tell the node to parse itself from the given XML content and
-      XML children 
-        
+      XML children
+
       \param node The XML node specifying this node's fields
 
       \param binBasePtr A pointer to an accompanying binary file (if
       existant) that contains additional binary data that the xml
       node fields may point into
     */
-    void TriangleMesh::setFromXML(const xml::Node *const node, const unsigned char *binBasePtr) 
+    void TriangleMesh::setFromXML(const xml::Node *const node, const unsigned char *binBasePtr)
     {
       xml::for_each_child_of(*node,[&](const xml::Node &child){
           if (child.name == "vertex") {
             size_t num = std::stoll(child.getProp("num"));
             size_t ofs = std::stoll(child.getProp("ofs"));
             vertex = new DataArray3f((vec3f*)((char*)binBasePtr+ofs),num,false);
-          } 
+          }
           else if (child.name == "index") {
             size_t num = std::stoll(child.getProp("num"));
             size_t ofs = std::stoll(child.getProp("ofs"));
             index = new DataArray3i((vec3i*)((char*)binBasePtr+ofs),num,false);
-          } 
+          }
         });
     }
 
@@ -99,7 +99,7 @@ namespace ospray {
         mat = material->ospMaterial;
       }
       PING; PRINT(mat);
-      
+
       // if object couldt generate a valid material, create a default one
       if (!mat) {
         std::cout << "#osp:sg: no material on object, creating default one" << std::endl;
@@ -155,7 +155,7 @@ namespace ospray {
       // set index array
       if (index && index->notEmpty())
         ospSetData(ospGeometry,"index",index->getOSP());
-      
+
       Triangle *triangles = (Triangle*)index->getBase();
       for(size_t i = 0; i < index->getSize(); i++) {
         materialIDs.push_back(triangles[i].materialID >> 16);
@@ -169,7 +169,7 @@ namespace ospray {
         material->render(ctx);
         mat = material->ospMaterial;
       }
-      
+
       // if object couldt generate a valid material, create a default one
       if (!mat) {
         std::cout << "#osp:sg: no material on object, creating default one" << std::endl;
@@ -195,19 +195,21 @@ namespace ospray {
         ospMaterials.push_back(materialList[i]->ospMaterial);
         //std::cout << "#qtViewer 'rendered' material " << materialList[i]->name << std::endl;
       }
-      
+
       OSPData materialData = ospNewData(materialList.size(), OSP_OBJECT, &ospMaterials[0], 0);
       ospSetData(ospGeometry, "materialList", materialData);
 #endif
-      
+
       ospCommit(ospGeometry);
       ospAddGeometry(ctx.world->ospModel,ospGeometry);
-      //std::cout << "#qtViewer 'rendered' mesh\n";
     }
 
     void TriangleMesh::preRender(RenderContext &ctx)
     {
-      // ospAddGeometry(ctx.world->ospModel,ospGeometry);
+      if (ospModel)
+      {
+        ospAddGeometry(ctx.world->ospModel,ospGeometryInstance);
+      }
     }
 
     void TriangleMesh::postCommit(RenderContext &ctx)
@@ -215,14 +217,16 @@ namespace ospray {
        if (ospGeometry)
        {
          ospCommit(ospGeometry);
-         ospAddGeometry(ctx.world->ospModel,ospGeometry);
+         ospCommit(ospModel);
+         // ospAddGeometry(ctx.world->ospModel,ospGeometry);
          return;
-       } 
+       }
 
       assert(ctx.world);
       assert(ctx.world->ospModel);
 
       ospGeometry = ospNewGeometry("trianglemesh");
+      ospModel = ospNewModel();
       // set vertex data
       if (vertex && vertex->notEmpty())
         ospSetData(ospGeometry,"vertex",vertex->getOSP());
@@ -241,7 +245,7 @@ namespace ospray {
         mat = material->ospMaterial;
       }
       PING; PRINT(mat);
-      
+
       // if object couldt generate a valid material, create a default one
       if (!mat) {
         std::cout << "#osp:sg: no material on object, creating default one" << std::endl;
@@ -257,10 +261,15 @@ namespace ospray {
       assert(mat);
       // ospSetMaterial(ospGeometry,mat);
       ospSetMaterial(ospGeometry, (OSPMaterial)getChild("material")->getValue<OSPObject>());
-
       ospCommit(ospGeometry);
+      ospAddGeometry(ospModel,ospGeometry);
+      ospCommit(ospModel);
+      ospcommon::affine3f xfm = ospcommon::one;
+      ospGeometryInstance = ospNewInstance(ospModel, 
+        (osp::affine3f&)xfm);
+      ospCommit(ospGeometryInstance);
 
-      ospAddGeometry(ctx.world->ospModel,ospGeometry);
+      //ospAddGeometry(ctx.world->ospModel,ospGeometry);
 }
 
     OSP_REGISTER_SG_NODE(TriangleMesh);

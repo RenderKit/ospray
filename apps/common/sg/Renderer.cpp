@@ -34,6 +34,8 @@ namespace ospray {
         add(createNode("lights"));
 
       //TODO: move these to seperate SciVisRenderer
+        add(createNode("rendererType", "string", std::string("scivis"), NodeFlags::required | NodeFlags::gui_combo));
+        getChild("rendererType")->setWhiteList(std::vector<SGVar>()={std::string("scivis"),std::string("pathtracer")});
         add(createNode("shadowsEnabled", "bool", true));
         add(createNode("maxDepth", "int", 5, NodeFlags::required | NodeFlags::valid_min_max));
         getChild("maxDepth")->setMinMax(0,999);
@@ -51,7 +53,7 @@ namespace ospray {
       }
 
     int Renderer::renderFrame()
-    { 
+    {
       if (!integrator) return 1;
       if (!frameBuffer) return 2;
       if (!camera) return 3;
@@ -78,7 +80,7 @@ namespace ospray {
                      integrator->getOSPHandle(),
                      OSP_FB_COLOR|OSP_FB_ACCUM);
       accumID++;
-      
+
       return 0;
     }
 
@@ -95,7 +97,7 @@ namespace ospray {
         accumID = 0;
         // cout << "resetting accum" << endl;
         if (frameBuffer)
-        frameBuffer->clear(); 
+        frameBuffer->clear();
       }
     }
 
@@ -105,7 +107,7 @@ namespace ospray {
       // create a default camera
       Ref<sg::PerspectiveCamera> camera = new sg::PerspectiveCamera;
       if (world) {
-      
+
         // now, determine world bounds to automatically focus the camera
         box3f worldBounds = world->getBounds();
         if (worldBounds == box3f(empty)) {
@@ -125,16 +127,16 @@ namespace ospray {
       return camera.cast<sg::Camera>();
     }
 
-    void Renderer::setCamera(const Ref<sg::Camera> &camera) 
+    void Renderer::setCamera(const Ref<sg::Camera> &camera)
     {
       this->camera = camera;
-      if (camera) 
+      if (camera)
         this->camera->commit();
       // if (this->camera) {
       //   this->camera->commit();
       // }
       if (integrator)
-        integrator->setCamera(camera); 
+        integrator->setCamera(camera);
 // camera && integrator && integrator->ospRenderer) {
 //         ospSetObject(integrator->ospRenderer,"camera",camera->ospCamera);
 //         ospCommit(integrator->ospRenderer);
@@ -142,8 +144,8 @@ namespace ospray {
       resetAccumulation();
     }
 
-    void Renderer::setIntegrator(const Ref<sg::Integrator> &integrator) 
-    {      
+    void Renderer::setIntegrator(const Ref<sg::Integrator> &integrator)
+    {
       this->integrator = integrator;
       if (integrator) {
         integrator.ptr->commit();
@@ -159,7 +161,7 @@ namespace ospray {
       if (world) {
         allNodes.serialize(world,sg::Serialization::DONT_FOLLOW_INSTANCES);
         uniqueNodes.serialize(world,sg::Serialization::DO_FOLLOW_INSTANCES);
-      } else 
+      } else
         std::cout << "#osp:sg:renderer: no world defined, yet\n#ospQTV: (did you forget to pass a scene file name on the command line?)" << std::endl;
 
       resetAccumulation();
@@ -177,7 +179,7 @@ namespace ospray {
       }
       return NULL;
     }
-    
+
     //! find the last integrator in the scene graph
     sg::Integrator *Renderer::getLastDefinedIntegrator() const
     {
@@ -192,10 +194,17 @@ namespace ospray {
 
     void Renderer::postRender(RenderContext &ctx)
     {
+      ospSetObject(ospRenderer,"model", getChild("world")->getValue<OSPObject>());
+      ospCommit(ospRenderer);
       ospRenderFrame((OSPFrameBuffer)getChild("frameBuffer")->getValue<OSPObject>(),
                      ospRenderer,
                      OSP_FB_COLOR | OSP_FB_ACCUM);
       accumID++;
+    }
+
+    void Renderer::preRender(RenderContext& ctx)
+    {
+      ctx.ospRenderer = ospRenderer;
     }
 
     void Renderer::preCommit(RenderContext &ctx)
@@ -203,9 +212,11 @@ namespace ospray {
       if (getChild("frameBuffer")["size"]->getLastModified() > getChild("camera")["aspect"]->getLastCommitted())
         getChild("camera")["aspect"]->setValue(
           getChild("frameBuffer")["size"]->getValue<vec2i>().x/float(getChild("frameBuffer")["size"]->getValue().get<vec2i>().y));
-      if (!ospRenderer)
+      if (!ospRenderer || getChild("rendererType")->getValue<std::string>() != createdType)
       {
-          ospRenderer = ospNewRenderer("scivis");
+          std::cout << "creating renderer of type: " << getChild("rendererType")->getValue<std::string>() << std::endl;
+          ospRenderer = ospNewRenderer(getChild("rendererType")->getValue<std::string>().c_str());
+          createdType = getChild("rendererType")->getValue<std::string>();
           ospCommit(ospRenderer);
           setValue((OSPObject)ospRenderer);
       }
@@ -214,7 +225,6 @@ namespace ospray {
 
     void Renderer::postCommit(RenderContext &ctx)
     {
-      ospSetObject(ospRenderer,"world", getChild("world")->getValue<OSPObject>());
       ospSetObject(ospRenderer,"model", getChild("world")->getValue<OSPObject>());
       ospSetObject(ospRenderer,"camera", getChild("camera")->getValue<OSPObject>());
       ospCommit(ospRenderer);
@@ -251,6 +261,6 @@ namespace ospray {
     }
 
     OSP_REGISTER_SG_NODE(Renderer);
-    
+
   }
 }

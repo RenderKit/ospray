@@ -19,7 +19,7 @@
 namespace ospray {
   namespace sg {
 
-    box3f World::getBounds() 
+    box3f World::getBounds()
     {
       box3f bounds = empty;
       for (auto &n : node)
@@ -27,7 +27,7 @@ namespace ospray {
       return bounds;
     }
 
-    //! serialize into given serialization state 
+    //! serialize into given serialization state
     void sg::World::serialize(sg::Serialization::State &state)
     {
       sg::Serialization::State savedState = state;
@@ -70,13 +70,12 @@ namespace ospray {
 
     void World::preRender(RenderContext &ctx)
     {
-      // ospCommit(ospModel);
-      ctx.world = this;
+      preCommit(ctx);
     }
 
     void World::postRender(RenderContext &ctx)
     {
-      // ospCommit(ospModel);
+       ospCommit(ospModel);
     }
 
     OSP_REGISTER_SG_NODE(World);

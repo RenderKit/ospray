@@ -314,8 +314,6 @@ void VolumeViewer::addGeometry(std::string filename)
       }
     }
   }
-  
-  
   // Force render.
   render();
 }

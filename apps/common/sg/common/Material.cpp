@@ -29,13 +29,13 @@ namespace ospray {
         type("")
     {
       add(createNode("type", "string", std::string("default")));
-      vec3f kd(.6f);
-      vec3f ks(164.f/255.f,118.f/255.f,70.f/255.f);
+      vec3f kd(10.f/255.f,68.f/255.f,117.f/255.f);
+      vec3f ks(208.f/255.f,140.f/255.f,82.f/255.f);
       add(createNode("Kd", "vec3f",kd, NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_color));
       getChild("Kd")->setMinMax(vec3f(0), vec3f(1));
       add(createNode("Ks", "vec3f",ks, NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_color));
       getChild("Ks")->setMinMax(vec3f(0), vec3f(1));
-      add(createNode("Ns", "float",30.f, NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
+      add(createNode("Ns", "float",10.f, NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
       getChild("Ns")->setMinMax(0.f, 100.f);
     }
 

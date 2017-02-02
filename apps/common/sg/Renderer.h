@@ -23,7 +23,8 @@ namespace ospray {
     class FrameBuffer;
     struct Renderer : public Renderable {
       Renderer(); 
-      virtual void postRender(RenderContext &ctx);
+      virtual void preRender(RenderContext &ctx) override;
+      virtual void postRender(RenderContext &ctx) override;
 
       /*! re-start accumulation (for progressive rendering). make sure
           that this function gets called at lesat once every time that
@@ -66,6 +67,7 @@ namespace ospray {
       Ref<sg::Integrator>  integrator;
       OSPRenderer ospRenderer;
       TimeStamp frameMTime;
+      std::string createdType=std::string("none");
       // Ref<Frame>  frame;
 
       // state variables

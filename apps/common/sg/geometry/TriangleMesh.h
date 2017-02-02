@@ -69,6 +69,8 @@ namespace ospray {
       virtual void setFromXML(const xml::Node *const node, const unsigned char *binBasePtr);
 
       OSPGeometry         ospGeometry;
+      OSPGeometry         ospGeometryInstance;
+      OSPModel ospModel;
       
       // to allow memory-mapping triangle arrays (or in general,
       // sharing data with an application) we use data arrays, not std::vector's
