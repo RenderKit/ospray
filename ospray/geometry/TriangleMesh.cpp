@@ -58,7 +58,7 @@ namespace ospray {
                    "will be omitted)\n", 2);
     }
     
-    if (numPrints < 5) postErrorMsg("ospray: finalizing triangle mesh ...\n");
+    if (numPrints < 5) postErrorMsg("ospray: finalizing trianglemesh ...\n", 2);
 
     Assert(model && "invalid model pointer");
 
