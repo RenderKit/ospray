@@ -73,6 +73,9 @@ namespace ospray {
     {
       // init ospray
       ospInit(&argc,argv);
+      auto device = ospGetCurrentDevice();
+      ospDeviceSetErrorMsgFunc(device,
+                               [](const char *msg) { std::cout << msg; });
       // init qt
       QApplication *app = new QApplication(argc, (char **)argv);
       

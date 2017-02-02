@@ -522,6 +522,7 @@ extern "C" void ospDeviceSetErrorMsgFunc(OSPDevice object,
                                          OSPErrorMsgFunc callback)
 {
   auto *device = (ospray::api::Device *)object;
+  device->error_fcn = callback;
 }
 
 extern "C" void ospSetString(OSPObject _object, const char *id, const char *s)

@@ -36,10 +36,10 @@ namespace ospray {
     // Find the creation function for the subtype if not already known.
     if (symbolRegistry.count(type) == 0) {
 
-      if (ospray::logLevel() >= 2)  {
-        std::cout << "#ospray: trying to look up " << type_string << " type '"
-                  << type << "' for the first time" << std::endl;
-      }
+      std::stringstream msg;
+      msg << "#ospray: trying to look up " << type_string << " type '"
+          << type << "' for the first time" << std::endl;
+      postErrorMsg(msg, 2);
 
       // Construct the name of the creation function to look for.
       std::string creationFunctionName = "ospray_create_" + type_string
@@ -51,9 +51,11 @@ namespace ospray {
 
       // The named function may not be found if the requested subtype is not
       // known.
-      if (!symbolRegistry[type] && ospray::logLevel() >= 1) {
-        std::cerr << "  WARNING: unrecognized " << type_string << " type '"
-                  << type << "'." << std::endl;
+      if (!symbolRegistry[type]) {
+        std::stringstream msg;
+        msg << "  WARNING: unrecognized " << type_string << " type '"
+            << type << "'." << std::endl;
+        postErrorMsg(msg, 1);
       }
     }
 

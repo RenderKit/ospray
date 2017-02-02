@@ -94,6 +94,17 @@ namespace ospray {
         } else if (parm == "--osp:loglevel") {
           device->findParam("logLevel", true)->set(atoi(av[i+1]));
           removeArgs(ac,av,i,2);
+        } else if (parm == "--osp:logoutput") {
+          std::string dst = av[i+1];
+
+          if (dst == "cout")
+            device->error_fcn = [](const char *msg){ std::cout << msg; };
+          else if (dst == "cerr")
+            device->error_fcn = [](const char *msg){ std::cerr << msg; };
+          else
+            postErrorMsg("You must use 'cout' or 'cerr' for --osp:logoutput!");
+
+          removeArgs(ac,av,i,2);
         } else if (parm == "--osp:numthreads" || parm == "--osp:num-threads") {
           device->findParam("numThreads", true)->set(atoi(av[i+1]));
           removeArgs(ac,av,i,2);

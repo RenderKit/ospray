@@ -56,6 +56,8 @@ int main(int argc, char *argv[])
 {
   // Initialize OSPRay.
   ospInit(&argc, (const char **) argv);
+  auto device = ospGetCurrentDevice();
+  ospDeviceSetErrorMsgFunc(device, [](const char *msg) { std::cout << msg; });
 
   // Initialize Qt.
   QApplication *app = new QApplication(argc, argv);
