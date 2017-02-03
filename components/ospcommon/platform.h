@@ -31,17 +31,21 @@
 #include <cstring>
 #include <stdint.h>
 
+#ifdef _WIN32
+  #include <intrin.h>
+  #include <windows.h>
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Makros
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifdef __WIN32__
+#ifdef _WIN32
 #undef __noinline
 #define __noinline             __declspec(noinline)
 //#define __forceinline        __forceinline
 //#define __restrict           __restrict
-#if defined(__INTEL_COMPILER)
+#ifdef __INTEL_COMPILER
 #define __restrict__           __restrict
 #else
 #define __restrict__           //__restrict // causes issues with MSVC
@@ -115,6 +119,10 @@
 #define _UNUSED_N2(N, ...) _UNUSED_N3(N, __VA_ARGS__)
 #define UNUSED(...) _UNUSED_N2(NUM_ARGS(__VA_ARGS__), __VA_ARGS__)
 
+#if defined(__x86_64__) || defined(__ia64__) || defined(_M_X64)
+  #define __X86_64__
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////
 /// Basic Types
 ////////////////////////////////////////////////////////////////////////////////
@@ -123,8 +131,8 @@
 typedef float real;
 
 /* windows does not have ssize_t */
-#if defined(__WIN32__)
-#if defined(__X86_64__)
+#ifdef __WIN32
+#ifdef __X86_64__
 typedef int64_t ssize_t;
 #else
 typedef int32_t ssize_t;
@@ -175,36 +183,3 @@ typedef int32_t ssize_t;
 #pragma clang diagnostic ignored "-Wunused-local-typedef"
 #pragma clang diagnostic ignored "-Wunused-function"
 #endif
-
-////////////////////////////////////////////////////////////////////////////////
-/// Some macros for static profiling
-////////////////////////////////////////////////////////////////////////////////
-
-#if defined (__GNUC__) 
-#define IACA_SSC_MARK( MARK_ID )						\
-__asm__ __volatile__ (									\
-					  "\n\t  movl $"#MARK_ID", %%ebx"	\
-					  "\n\t  .byte 0x64, 0x67, 0x90"	\
-					  : : : "memory" );
-
-#define IACA_UD_BYTES __asm__ __volatile__ ("\n\t .byte 0x0F, 0x0B");
-
-#else
-#define IACA_UD_BYTES {__asm _emit 0x0F \
-	__asm _emit 0x0B}
-
-#define IACA_SSC_MARK(x) {__asm  mov ebx, x\
-	__asm  _emit 0x64 \
-	__asm  _emit 0x67 \
-	__asm  _emit 0x90 }
-
-#define IACA_VC64_START __writegsbyte(111, 111);
-#define IACA_VC64_END   __writegsbyte(222, 222);
-
-#endif
-
-#define IACA_START {IACA_UD_BYTES \
-					IACA_SSC_MARK(111)}
-#define IACA_END {IACA_SSC_MARK(222) \
-					IACA_UD_BYTES}
-  
