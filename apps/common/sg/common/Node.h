@@ -28,6 +28,7 @@
 #include "ospcommon/vec.h"
 #include "mapbox/variant.hpp"
 #include <mutex>
+#include <typeinfo>
 
 using namespace mapbox::util;
 
@@ -516,7 +517,8 @@ namespace ospray {
     extern "C" std::shared_ptr<ospray::sg::Node>                        \
     ospray_create_sg_node__##InternalClassName()                        \
     {                                                                   \
-      return std::shared_ptr<ospray::sg::InternalClassName>(new  ##InternalClassName());         \
+      std::cout << "creating Node of type: " << typeid(ospray::sg::InternalClassName).name() << std::endl; \
+      return std::shared_ptr<ospray::sg::InternalClassName>(new  ospray::sg::InternalClassName);         \
     }
 
 #define OSP_REGISTER_SG_NODE_NAME(InternalClassName,Name)               \
