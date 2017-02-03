@@ -41,7 +41,7 @@ namespace ospray {
     //   SGVar(std::string v) {vstring=v;}
     //   operator float() { return vfloat; }
     //   operator std::string() { return vstring; }
-    //   union 
+    //   union
     //   {
     //     float vfloat;
     //     std::string vstring;
@@ -50,7 +50,7 @@ namespace ospray {
     struct NullType {
     };
     bool operator==(const NullType& lhs, const NullType& rhs);
-    typedef variant<NullType, 
+    typedef variant<NullType,
       // OSPRenderer, OSPModel, OSPCamera, OSPGeometry, OSPMaterial, OSPFrameBuffer, OSPDataType,
       OSPObject,
       ospcommon::vec3f, ospcommon::vec2f, ospcommon::vec2i, ospcommon::box3f, std::string,
@@ -139,11 +139,11 @@ namespace ospray {
     /*! \brief base node of all scene graph nodes */
     struct Node : public RefCount
     {
-      Node() : lastModified(1), childrenMTime(1), lastCommitted(0), name("NULL"), 
+      Node() : lastModified(1), childrenMTime(1), lastCommitted(0), name("NULL"),
       type("Node"), valid(false),
       ospHandle(nullptr) {};
 
-      /*! 
+      /*!
         NodeH is a handle to a sg::Node.  It has the benefit of supporting some operators without
           requiring dereferencing a pointer.
       */
@@ -166,9 +166,9 @@ namespace ospray {
         }
 
         //! is this handle pointing to a null value?
-        bool isValid() const
+        bool isNULL() const
         {
-          return node.ptr != nullptr;
+          return node.ptr == nullptr;
         }
       };
 
@@ -194,7 +194,7 @@ namespace ospray {
         existant) that contains additional binary data that the xml
         node fields may point into
       */
-      virtual void setFromXML(const xml::Node *const node, 
+      virtual void setFromXML(const xml::Node *const node,
                               const unsigned char *binBasePtr);
 
       //! just for convenience; add a typed 'setParam' function
@@ -205,7 +205,7 @@ namespace ospray {
       template<typename Lambda>
       inline void for_each_param(const Lambda &functor)
       { for (auto it=params.begin(); it!=params.end(); ++it) functor(it->second); }
-    
+
 
       /*! serialize the scene graph - add object to the serialization,
         but don't do anything else to the node(s) */
@@ -215,7 +215,7 @@ namespace ospray {
       virtual void render(RenderContext &ctx) {};
 
       /*! \brief 'commit' updates */
-      virtual void commit() {} 
+      virtual void commit() {}
 
       /*! \brief return bounding box in world coordinates.
 
@@ -233,8 +233,8 @@ namespace ospray {
       inline TimeStamp getLastCommitted() const { return lastCommitted; };
       inline void committed() {lastCommitted=TimeStamp::now();}
 
-      inline void modified() { lastModified = TimeStamp::now(); if (parent.isValid()) parent->setChildrenModified(lastModified);}
-      void setChildrenModified(TimeStamp t) { if (t >childrenMTime) {childrenMTime = t; if (parent.isValid()) parent->setChildrenModified(childrenMTime);} }
+      inline void modified() { lastModified = TimeStamp::now(); if (!parent.isNULL()) parent->setChildrenModified(lastModified);}
+      void setChildrenModified(TimeStamp t) { if (t >childrenMTime) {childrenMTime = t; if (!parent.isNULL()) parent->setChildrenModified(childrenMTime);} }
 
       std::string name;
       std::string type;
@@ -242,11 +242,33 @@ namespace ospray {
       //! return named child node
       NodeH& getChild(std::string name) { std::lock_guard<std::mutex> lock{mutex}; return children[name]; }
 
+      //! return named child node
+      NodeH getChildRecursive(std::string name) { 
+        mutex.lock();
+        Node* n = this;
+        auto f = n->children.find(name);
+        if (f != n->children.end())
+        {
+          mutex.unlock();
+          return f->second;
+        }
+        for (auto child : children)
+        {
+          mutex.unlock();
+          NodeH r = child.second->getChildRecursive(name);
+          if (!r.isNULL())
+            return r;
+          mutex.lock();
+        }
+        mutex.unlock();
+        return NodeH();
+      }
+
       //! return all children of type
       std::vector<NodeH> getChildrenByType(std::string t) { std::lock_guard<std::mutex> lock{mutex}; std::vector<NodeH> result; return result;}
 
       //! return vector of child handles
-      std::vector<NodeH> getChildren() { std::lock_guard<std::mutex> lock{mutex}; std::vector<NodeH> result; 
+      std::vector<NodeH> getChildren() { std::lock_guard<std::mutex> lock{mutex}; std::vector<NodeH> result;
           for (auto child : children)
             result.push_back(child.second);
           return result; }
@@ -254,7 +276,7 @@ namespace ospray {
       //! return child c
       NodeH& operator[] (std::string c) { return getChild(c);}
 
-      //! return the parent node 
+      //! return the parent node
       NodeH getParent() { return parent; }
       //! returns handle to ospObject, however should actually call getValue on valid node instead
       OSPObject getOSPHandle() { return ospHandle; }
@@ -445,8 +467,8 @@ namespace ospray {
     template <typename T>
     struct NodeParam : public Node {
       NodeParam() : Node() { setValue(T()); }
-      virtual void postCommit(RenderContext &ctx) override { 
-          if (parent.isValid())
+      virtual void postCommit(RenderContext &ctx) override {
+          if (!parent.isNULL())
           {
             if (parent->getValue().is<OSPObject>() == true) //TODO: generalize to other types of ManagedObject
               NodeParamCommit<T>::commit(this);
