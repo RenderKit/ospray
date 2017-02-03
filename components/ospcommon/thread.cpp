@@ -22,7 +22,7 @@
 #include <iostream>
 #include <xmmintrin.h>
 
-#if defined(PTHREADS_WIN32)
+#ifdef PTHREADS_WIN32
 #pragma comment (lib, "pthreadVC.lib")
 #endif
 
@@ -144,25 +144,6 @@ namespace ospcommon
     CloseHandle(HANDLE(tid));
   }
 
-  // /*! creates thread local storage */
-  // tls_t createTls() {
-  //   return tls_t(size_t(TlsAlloc()));
-  // }
-
-  // /*! set the thread local storage pointer */
-  // void setTls(tls_t tls, void* const ptr) {
-  //   TlsSetValue(DWORD(size_t(tls)), ptr);
-  // }
-
-  // /*! return the thread local storage pointer */
-  // void* getTls(tls_t tls) {
-  //   return TlsGetValue(DWORD(size_t(tls)));
-  // }
-
-  // /*! destroys thread local storage identifier */
-  // void destroyTls(tls_t tls) {
-  //   TlsFree(DWORD(size_t(tls)));
-  // }
 #endif
 }
 
@@ -172,7 +153,7 @@ namespace ospcommon
 /// Linux Platform
 ////////////////////////////////////////////////////////////////////////////////
 
-#if defined(__LINUX__)
+#ifdef __linux__
 namespace ospcommon
 {
   /*! set affinity of the calling thread */
@@ -192,7 +173,7 @@ namespace ospcommon
 /// MacOSX Platform
 ////////////////////////////////////////////////////////////////////////////////
 
-#if defined(__MACOSX__)
+#ifdef __APPLE__
 
 #include <mach/thread_act.h>
 #include <mach/thread_policy.h>
@@ -215,14 +196,10 @@ namespace ospcommon
 /// Unix Platform
 ////////////////////////////////////////////////////////////////////////////////
 
-#if defined(__UNIX__) || defined(PTHREADS_WIN32)
+#if !defined(_WIN32) || defined(PTHREADS_WIN32)
 
 #include <pthread.h>
 #include <sched.h>
-
-#if defined(__USE_NUMA__)
-#include <numa.h>
-#endif
 
 namespace ospcommon
 {
@@ -241,7 +218,7 @@ namespace ospcommon
   {
     _mm_setcsr(_mm_getcsr() | /*FTZ:*/ (1<<15) | /*DAZ:*/ (1<<6));
 
-#if !defined(__LINUX__)
+#if !defined(__linux__)
     if (parg->affinity >= 0)
 	setAffinity(parg->affinity);
 #endif
@@ -265,7 +242,7 @@ namespace ospcommon
       throw std::runtime_error("ospcommon::pthread_create failed");
 
     /* set affinity */
-#if defined(__LINUX__)
+#ifdef __linux__
     if (threadID >= 0) {
       cpu_set_t cset;
       CPU_ZERO(&cset);

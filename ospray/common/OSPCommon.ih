@@ -27,16 +27,6 @@ typedef unsigned int8  uint8;
 
 #define LOG(x)
 
-#if defined(__AVX__)
-inline void* uniform align_ptr(void* uniform ptr) {
-  return (void* uniform) ((((uniform int64)ptr) + 31) & (-32));
-}
-#else
-inline void* uniform align_ptr(void* uniform ptr) {
-  return (void* uniform) ((((uniform int64)ptr) + 15) & (-16));
-}
-#endif
-
 #define PRINT(x) print(#x" = %\n", x)
 #define PRINT3(x) print(#x" = (%, %, %)\n", get(x,0), get(x,1), get(x,2))
 // prints first unmasked element
