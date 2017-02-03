@@ -76,14 +76,15 @@ namespace ospray {
     void Node::traverse(RenderContext &ctx, const std::string& operation)
     {
         //TODO: make child m time propagate
+        if (operation != "verify" && !isValid())
+          return;
         TimeStamp childMTime = 1;
         ctx.childMTime = childMTime;
         preTraverse(ctx, operation);
         ctx.level++;
         for (auto child : children)
         {
-          if (isValid())
-            child.second->traverse(ctx,operation);
+          child.second->traverse(ctx,operation);
         }
         ctx.level--;
         ctx.childMTime = getChildrenLastModified();
@@ -105,6 +106,10 @@ namespace ospray {
       else if (operation == "verify")
       {
         valid = computeValid();
+      }
+      else if (operation == "modified")
+      {
+        modified();
       }
     }
 

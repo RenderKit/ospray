@@ -34,8 +34,8 @@ namespace ospray {
         add(createNode("lights"));
 
       //TODO: move these to seperate SciVisRenderer
-        add(createNode("rendererType", "string", std::string("scivis"), NodeFlags::required | NodeFlags::gui_combo));
-        getChild("rendererType")->setWhiteList(std::vector<SGVar>()={std::string("scivis"),std::string("pathtracer")});
+        add(createNode("rendererType", "string", std::string("scivis"), NodeFlags::required | NodeFlags::valid_whitelist | NodeFlags::gui_combo));
+        getChild("rendererType")->setWhiteList(std::vector<SGVar>()={std::string("scivis"),std::string("pathtracer"),std::string("pt")});
         add(createNode("shadowsEnabled", "bool", true));
         add(createNode("maxDepth", "int", 5, NodeFlags::required | NodeFlags::valid_min_max));
         getChild("maxDepth")->setMinMax(0,999);
@@ -43,7 +43,7 @@ namespace ospray {
         getChild("aoSamples")->setMinMax(0,128);
         add(createNode("spp", "int", 1, NodeFlags::required | NodeFlags::gui_slider));
         getChild("spp")->setMinMax(-8,128);
-        add(createNode("aoDistance", "float", 1.f, NodeFlags::required | NodeFlags::valid_min_max));
+        add(createNode("aoDistance", "float", 10000.f, NodeFlags::required | NodeFlags::valid_min_max));
         getChild("aoDistance")->setMinMax(float(1e-31),FLT_MAX);
         // add(createNode("aoWeight", "float", 1.f, NodeFlags::required | NodeFlags::valid_min_max, NodeFlags::gui_slider));
         // getChild("aoWeight")->setMinMax(0.f,4.f);
@@ -212,11 +212,14 @@ namespace ospray {
       if (getChild("frameBuffer")["size"]->getLastModified() > getChild("camera")["aspect"]->getLastCommitted())
         getChild("camera")["aspect"]->setValue(
           getChild("frameBuffer")["size"]->getValue<vec2i>().x/float(getChild("frameBuffer")["size"]->getValue().get<vec2i>().y));
-      if (!ospRenderer || getChild("rendererType")->getValue<std::string>() != createdType)
+      std::string rendererType = getChild("rendererType")->getValue<std::string>();
+      if (!ospRenderer || rendererType != createdType)
       {
-          std::cout << "creating renderer of type: " << getChild("rendererType")->getValue<std::string>() << std::endl;
-          ospRenderer = ospNewRenderer(getChild("rendererType")->getValue<std::string>().c_str());
-          createdType = getChild("rendererType")->getValue<std::string>();
+          std::cout << "creating renderer of type: " << rendererType << std::endl;
+          traverse(ctx, "modified");
+          ospRenderer = ospNewRenderer(rendererType.c_str());
+          assert(ospRenderer);
+          createdType = rendererType;
           ospCommit(ospRenderer);
           setValue((OSPObject)ospRenderer);
       }

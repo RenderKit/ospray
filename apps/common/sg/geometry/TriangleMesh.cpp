@@ -208,7 +208,8 @@ namespace ospray {
     {
       if (ospModel)
       {
-        ospAddGeometry(ctx.world->ospModel,ospGeometryInstance);
+        if (getChild("visible")->getValue() == true)
+          ospAddGeometry(ctx.world->ospModel,ospGeometryInstance);
       }
     }
 
@@ -216,6 +217,7 @@ namespace ospray {
     {
        if (ospGeometry)
        {
+         ospSetMaterial(ospGeometry, (OSPMaterial)getChild("material")->getValue<OSPObject>());
          ospCommit(ospGeometry);
          ospCommit(ospModel);
          // ospAddGeometry(ctx.world->ospModel,ospGeometry);

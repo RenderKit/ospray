@@ -44,6 +44,7 @@ namespace ospray {
       std::vector< Ref< Texture2D > > textures;
       
       OSPMaterial ospMaterial;
+      OSPRenderer ospRenderer;
     };
 
   } // ::ospray::sg

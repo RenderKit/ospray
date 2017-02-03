@@ -73,7 +73,7 @@ struct DirectionalLight : public Light {
     getChild("color")->setMinMax(vec3f(0), vec3f(1));
   	add(createNode("intensity", "float", 3.f,NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
     getChild("intensity")->setMinMax(0.f,4.f);
-  	add(createNode("angularDiameter", "float", 0.f,NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
+  	add(createNode("angularDiameter", "float", 0.0f,NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
     getChild("angularDiameter")->setMinMax(0.f,4.f);
   }
 };

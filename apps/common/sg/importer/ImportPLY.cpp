@@ -357,8 +357,15 @@ namespace ospray {
 
     void importPLY(Ref<World> &world, const FileName &fileName)
     {
+      std::cout << __PRETTY_FUNCTION__ << std::endl;
       Ref<sg::TriangleMesh> mesh = ply::readFile(fileName.str());
+      std::cout << __PRETTY_FUNCTION__ << "imported " << std::endl;
       world->node.push_back(mesh.cast<Node>());
+      std::cout << "adding ply file to world\n";
+      mesh->setName("ply");
+      mesh->setType("TriangleMesh");
+      // Ref<Node> node = mesh.cast<Node>();
+      world->add(mesh.cast<Node>());
     }
 
   } // ::ospray::sg
