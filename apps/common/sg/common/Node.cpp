@@ -22,6 +22,9 @@ namespace ospray {
   namespace sg {
 
 
+    std::vector<std::shared_ptr<sg::Node> > Node::nodes;
+    std::map<Node*,size_t> Node::nodesMap;
+
         // ==================================================================
     // parameter type specializations
     // ==================================================================
@@ -181,12 +184,49 @@ namespace ospray {
       namedNodes[name] = node; 
     }
 
-    typedef sg::Node *(*creatorFct)();
+    //     typedef std::shared_ptr<sg::Node> (*creatorFct)();
+    
+    // std::map<std::string, creatorFct> sgNodeRegistry;
+
+    // /*! create a node of given type if registered (and tell it to
+    //   parse itself from that xml node), or throw an exception if
+    //   unkown node type */
+    // std::shared_ptr<sg::Node> createNodeFrom(const xml::Node &node, const unsigned char *binBasePtr)
+    // {
+    //   std::map<std::string, creatorFct>::iterator it = sgNodeRegistry.find(node.name);
+    //   creatorFct creator = NULL;
+    //   if (it == sgNodeRegistry.end()) {
+    //     const std::string creatorName = "ospray_create_sg_node__"+std::string(node.name);
+    //     creator = (creatorFct)getSymbol(creatorName);
+    //     if (!creator)
+    //       throw std::runtime_error("unknown ospray scene graph node '"+node.name+"'");
+    //     else
+    //       std::cout << "#osp:sg: creating at least one instance of node type '" << node.name << "'" << std::endl;
+    //     sgNodeRegistry[node.name] = creator;
+    //   }
+    //   else
+    //     creator = it->second;
+      
+    //   assert(creator);
+    //   std::shared_ptr<sg::Node> newNode = creator();
+    //   if (!newNode)
+    //     throw std::runtime_error("could not create scene graph node");
+      
+    //   newNode->setFromXML(node,binBasePtr);
+    //   if (node.hasProp("name"))
+    //     registerNamedNode(node.getProp("name"),newNode);
+    //   return newNode;
+    // }
+
+
+    typedef std::shared_ptr<sg::Node> (*creatorFct)();
     
     std::map<std::string, creatorFct> nodeRegistry;
 
+
     Node::NodeH createNode(std::string name, std::string type, SGVar var, int flags)
     {
+  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
       std::map<std::string, creatorFct>::iterator it = nodeRegistry.find(type);
       creatorFct creator = NULL;
       if (it == nodeRegistry.end()) {
@@ -213,6 +253,9 @@ namespace ospray {
       if (valid(var))
           newNode->setValue(var);
   std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
+      Node::nodes.push_back(newNode);
+      Node::nodesMap[newNode.get()] = Node::nodes.size();
+      std::cout << "new node count: " << newNode.use_count() << std::endl;
       return Node::NodeH(newNode);
     }
 

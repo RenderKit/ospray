@@ -45,7 +45,7 @@ namespace ospray {
 
     void Node::serialize(sg::Serialization::State &state)
     { 
-      state.serialization->object.push_back(std::make_shared<Serialization::Object>(shared_from_this(),state.instantiation));
+      // state.serialization->object.push_back(std::make_shared<Serialization::Object>(shared_from_this(),state.instantiation));
     }
 
     

@@ -41,14 +41,14 @@ namespace ospray {
 
     void World::render(RenderContext &ctx)
     {
-      ctx.world = std::dynamic_pointer_cast<World>(shared_from_this());//this;
+      // ctx.world = std::dynamic_pointer_cast<World>(shared_from_this());//this;
 
-      if (ospModel)
-        throw std::runtime_error("World::ospModel alrady exists!?");
-      ospModel = ospNewModel();
-      for (auto node: nodes) 
-        node->render(ctx);
-      ospCommit(ospModel);
+      // if (ospModel)
+      //   throw std::runtime_error("World::ospModel alrady exists!?");
+      // ospModel = ospNewModel();
+      // for (auto node: nodes) 
+      //   node->render(ctx);
+      // ospCommit(ospModel);
     }
 
     void World::preCommit(RenderContext &ctx)

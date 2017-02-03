@@ -28,7 +28,9 @@ namespace ospray {
 
     Renderer::Renderer()
     {
+  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
         add(createNode("world", "World"));
+  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
         add(createNode("camera", "PerspectiveCamera"));
         add(createNode("frameBuffer", "FrameBuffer"));
         add(createNode("lights"));
@@ -50,6 +52,7 @@ namespace ospray {
         add(createNode("oneSidedLighting", "bool",true, NodeFlags::required));
 
         ospRenderer = nullptr;
+  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
       }
 
     int Renderer::renderFrame()

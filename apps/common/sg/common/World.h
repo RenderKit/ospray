@@ -27,7 +27,9 @@ namespace ospray {
     struct World : public sg::Renderable {
       World() : Renderable(), ospModel(NULL) {
         // add(createNode("bounds", "box3f"));
-        add(createNode("model", "OSPObject", (OSPModel*)NULL));
+  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
+//        add(createNode("model", "OSPObject", (OSPModel*)NULL));
+  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
       };
 
       /*! \brief returns a std::string with the c++ name of this class */

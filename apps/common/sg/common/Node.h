@@ -152,27 +152,34 @@ namespace ospray {
       class NodeH
       {
       public:
-        NodeH() : node(nullptr) {}
-        NodeH(std::shared_ptr<sg::Node> n) : node(n) {}
-        NodeH(sg::Node* n) : node(std::shared_ptr<Node>(n)) {}
+        NodeH() : nid(0) {}
+        NodeH(std::shared_ptr<sg::Node> n) { nid = Node::nodesMap[n.get()]; }
+        NodeH(sg::Node* n) { nid = Node::nodesMap[n]; }
 
-        std::shared_ptr<sg::Node> node;
+        // sg::Node* node;
+        size_t nid;
 
         //! return child with name c
-        NodeH& operator[] (std::string c) { return node->getChild(c);}
+        NodeH& operator[] (std::string c) { return Node::nodes[nid]->getChild(c);}
 
         //! add child node n to this node
-        NodeH operator+= (NodeH n) { node->add(n); n->setParent(*this); return n;}
+        NodeH operator+= (NodeH n) { Node::nodes[nid]->add(n); n->setParent(*this); return n;}
 
-        std::shared_ptr<sg::Node> operator-> ()
+        sg::Node* operator-> ()
         {
-          return node;
+          return Node::nodes[nid].get();
+        }
+
+        sg::Node* get()
+        { return isNULL()? Node::nodes[nid].get() : nullptr; }
+        std::shared_ptr<sg::Node> getSPtr() { 
+          return isNULL()? Node::nodes[nid] : nullptr;
         }
 
         //! is this handle pointing to a null value?
         bool isNULL() const
         {
-          return node.get() == nullptr;
+          return nid == 0;
         }
       };
 
@@ -245,7 +252,13 @@ namespace ospray {
 
 
       //! return named child node
-      NodeH& getChild(std::string name) { std::lock_guard<std::mutex> lock{mutex}; return children[name]; }
+      NodeH& getChild(std::string name) { 
+        std::lock_guard<std::mutex> lock{mutex}; 
+        std::cout << "getChild name: " << name << std::endl;
+        if (children.find(name) == children.end())
+          std::cout << "couldn't find child!\n";
+        return children[name]; 
+      }
 
       //! return named child node
       NodeH getChildRecursive(std::string name) { 
@@ -299,10 +312,10 @@ namespace ospray {
       void setValue(SGVar val) { std::lock_guard<std::mutex> lock{mutex}; if (val != value) modified(); value = val; }
 
       //! add node as child of this one
-      virtual void add(std::shared_ptr<Node> node) { std::lock_guard<std::mutex> lock{mutex}; children[node->name] = NodeH(node); node->setParent(NodeH(this)); }
+      virtual void add(std::shared_ptr<Node> node) { std::lock_guard<std::mutex> lock{mutex}; children[node->name] = NodeH(node); node->setParent(this); }
 
       //! add node as child of this one
-      virtual void add(NodeH node) { add(node.node); }
+      virtual void add(NodeH node) { add(node.get()); }
 
       //! traverse this node and childrend with given operation, such as print,commit,render or custom operations
       virtual void traverse(RenderContext &ctx, const std::string& operation);
@@ -378,6 +391,8 @@ namespace ospray {
       virtual bool computeValidMinMax() {return true;}
 
 
+      static std::vector<std::shared_ptr<sg::Node> > nodes;
+      static std::map<Node*,size_t> nodesMap;
     protected:
       std::string name;
       std::string type;
@@ -518,13 +533,14 @@ namespace ospray {
     ospray_create_sg_node__##InternalClassName()                        \
     {                                                                   \
       std::cout << "creating Node of type: " << typeid(ospray::sg::InternalClassName).name() << std::endl; \
-      return std::shared_ptr<ospray::sg::InternalClassName>(new  ospray::sg::InternalClassName);         \
+      return std::make_shared<ospray::sg::InternalClassName>();         \
     }
 
 #define OSP_REGISTER_SG_NODE_NAME(InternalClassName,Name)               \
     extern "C" std::shared_ptr<ospray::sg::Node> ospray_create_sg_node__##Name()        \
     {                                                                   \
-      return std::make_shared<ospray::sg::InternalClassName>();                         \
+      std::cout << "creating Node of type: " << typeid(ospray::sg::InternalClassName).name() << std::endl; \
+      return std::make_shared<ospray::sg::InternalClassName>();         \
     }
 
   } // ::ospray::sg
