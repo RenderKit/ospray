@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -42,13 +42,14 @@ namespace ospray {
   */
 
   //! Implements a simple panoramic camera (see \subpage panoramic_camera)
-  struct OSPRAY_SDK_INTERFACE PanoramicCamera : public Camera {
+  struct OSPRAY_SDK_INTERFACE PanoramicCamera : public Camera
+  {
     /*! \brief constructor \internal also creates the ispc-side data structure */
     PanoramicCamera();
-    //! \brief common function to help printf-debugging
-    /*! Every derived class should overrride this! */
-    virtual std::string toString() const { return "ospray::PanoramicCamera"; }
-    virtual void commit();
+    virtual ~PanoramicCamera() = default;
+
+    virtual std::string toString() const override;
+    virtual void commit() override;
   };
 
 } // ::ospray

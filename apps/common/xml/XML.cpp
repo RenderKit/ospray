@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -65,6 +65,7 @@ namespace ospray {
         throw std::runtime_error(err.str());
       }
     }
+    
     inline void expect(char *&s, const char w0, const char w1)
     {
       if (*s != w0 && *s != w1) {
@@ -74,11 +75,25 @@ namespace ospray {
         throw std::runtime_error(err.str());
       }
     }
+    
     inline void consume(char *&s, const char w)
     {
       expect(s,w);
       ++s;
     }
+    
+    inline void consumeComment(char *&s)
+    {
+      consume(s,'<');
+      consume(s,'!');
+      while (!((s[0] == 0) ||
+               (s[0] == '-' && s[1] == '-' && s[2] == '>')))
+        ++s;
+      consume(s,'-');
+      consume(s,'-');
+      consume(s,'>');
+    }
+    
     inline void consume(char *&s, const char *word)
     {
       const char *in = word;
@@ -165,6 +180,16 @@ namespace ospray {
       return true;
     }
 
+    bool skipComment(char *&s)
+    {
+      if (*s == '<' && s[1] == '!') {
+        consumeComment(s);
+        return true;
+      }
+      return false;
+    }
+
+    
     std::shared_ptr<Node> parseNode(char *&s, XMLDoc *doc)
     {
       consume(s,'<');
@@ -190,6 +215,8 @@ namespace ospray {
 
       while (1) {
         skipWhites(s);
+        if (skipComment(s))
+          continue;
         if (*s == '<' && s[1] == '/') {
           consume(s,"</");
           std::string name = "";
@@ -255,6 +282,11 @@ namespace ospray {
       }
       skipWhites(s);
       while (*s != 0) {
+        if (skipComment(s)) {
+          skipWhites(s);
+          continue;
+        }
+
         std::shared_ptr<Node> node = parseNode(s, doc.get());
         doc->child.push_back(node);
         skipWhites(s);

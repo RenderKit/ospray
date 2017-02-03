@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2016 Intel Corporation                                    ##
+## Copyright 2009-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -23,4 +23,4 @@
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${OSPRAY_CMAKE_ROOT})
 
 include(${OSPRAY_CMAKE_ROOT}/ispc.cmake)
-include(${OSPRAY_CMAKE_ROOT}/ospray_macros.cmake)
+include(${OSPRAY_CMAKE_ROOT}/macros.cmake)

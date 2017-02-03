@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -24,9 +24,9 @@
 // mini scene graph for loading the model
 #include "common/miniSG/miniSG.h"
 
-#include <ospray_cpp/Camera.h>
-#include <ospray_cpp/Model.h>
-#include <ospray_cpp/Renderer.h>
+#include <ospray/ospray_cpp/Camera.h>
+#include <ospray/ospray_cpp/Model.h>
+#include <ospray/ospray_cpp/Renderer.h>
 
 #include "common/widgets/Glut3dExport.h"
 
@@ -46,6 +46,10 @@ namespace ospray {
                   std::deque<cpp::Model> model,
                   cpp::Renderer renderer, 
                   cpp::Camera camera);
+
+    void create(const char* title,
+                const ospcommon::vec2i& size = ospray::glut3D::Glut3DWidget::defaultInitSize,
+                      bool fullScreen = false);
 
     void setRenderer(OSPRenderer renderer);
     void resetAccumulation();
@@ -91,6 +95,9 @@ namespace ospray {
     glut3D::Glut3DWidget::ViewPort glutViewPort;
 
     std::atomic<bool> resetAccum;
+
+    std::string windowTitle;
+
     double frameTimer;
     double animationTimer;
     double animationFrameDelta;

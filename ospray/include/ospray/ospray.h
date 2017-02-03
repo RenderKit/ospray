@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -271,6 +271,12 @@ extern "C" {
 
   /*! add 1-int parameter to given Device */
   OSPRAY_INTERFACE void ospDeviceSet1i(OSPDevice, const char *id, int32_t x);
+
+  /*! Error callback function type */
+  typedef void (*OSPErrorMsgFunc)(const char* str);
+
+  /*! Set callback for given Device to call when an error message occurs*/
+  OSPRAY_INTERFACE void ospDeviceSetErrorMsgFunc(OSPDevice, OSPErrorMsgFunc);
 
   /*! Commit parameters on a given device */
   OSPRAY_INTERFACE void ospDeviceCommit(OSPDevice);

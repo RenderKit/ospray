@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -39,8 +39,9 @@ namespace ospray {
 
     void embreeErrorFunc(const RTCError code, const char* str)
     {
-      std::cerr << "#osp: embree internal error " << code << " : " << str
-                << std::endl;
+      std::stringstream msg;
+      msg << "#osp: embree internal error " << code << " : " << str << '\n';
+      postErrorMsg(msg.str());
       throw std::runtime_error("embree internal error '" +std::string(str)+"'");
     }
 
@@ -65,12 +66,13 @@ namespace ospray {
       RTCError erc = rtcDeviceGetError(embreeDevice);
       if (erc != RTC_NO_ERROR) {
         // why did the error function not get called !?
-        std::cerr << "#osp:init: embree internal error number " << (int)erc
-                  << std::endl;
+        std::stringstream msg;
+        msg << "#osp:init: embree internal error number " << erc << '\n';
+        postErrorMsg(msg.str());
         assert(erc == RTC_NO_ERROR);
       }
 
-      TiledLoadBalancer::instance = new LocalTiledLoadBalancer;
+      TiledLoadBalancer::instance = make_unique<LocalTiledLoadBalancer>();
     }
 
     OSPFrameBuffer
@@ -548,12 +550,11 @@ namespace ospray {
       try {
         return renderer->renderFrame(fb, fbChannelFlags);
       } catch (const std::runtime_error &e) {
-        std::cerr << "======================================================="
-                  << std::endl;
-        std::cerr << "# >>> ospray fatal error <<< " << std::endl << e.what()
-                  << std::endl;
-        std::cerr << "======================================================="
-                  << std::endl;
+        std::string msg = "=================================================\n";
+        msg += "# >>> ospray fatal error <<< \n";
+        msg += e.what() + '\n';
+        msg += "=================================================\n";
+        postErrorMsg(msg);
         exit(1);
       }
     }

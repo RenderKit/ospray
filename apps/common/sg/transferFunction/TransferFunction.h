@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -34,16 +34,16 @@ namespace ospray {
       void setDefaultValues();
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual std::string toString() const;
+      virtual std::string toString() const override;
 
       //! \brief creates ospray-side object(s) for this node
-      virtual void render(RenderContext &ctx);
+      virtual void render(RenderContext &ctx) override;
 
       void preCommit(RenderContext &ctx);
 
       //! \brief Initialize this node's value from given corresponding XML node 
-      virtual void setFromXML(const xml::Node *const node, 
-                              const unsigned char *binBasePtr);
+      virtual void setFromXML(const xml::Node &node, 
+                              const unsigned char *binBasePtr) override;
       virtual void commit();
       
       void setValueRange(const vec2f &range);

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -56,6 +56,8 @@ int main(int argc, char *argv[])
 {
   // Initialize OSPRay.
   ospInit(&argc, (const char **) argv);
+  auto device = ospGetCurrentDevice();
+  ospDeviceSetErrorMsgFunc(device, [](const char *msg) { std::cout << msg; });
 
   // Initialize Qt.
   QApplication *app = new QApplication(argc, argv);

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,16 +14,17 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include <limits>
+// ours
+#include "DataDistributedBlockedVolume.h"
+
 // ospray
-#include "mpi/volume/DataDistributedBlockedVolume.h"
-#include "volume/GhostBlockBrickedVolume.h"
-#include "transferFunction/TransferFunction.h"
-#include "volume/GhostBlockBrickedVolume.h"
-#include "mpi/common/Core.h"
-#if EXP_DATA_PARALLEL
-#include "mpi/common/MPICommon.h"
-#endif
+#include "ospray/volume/GhostBlockBrickedVolume.h"
+#include "ospray/transferFunction/TransferFunction.h"
+#include "ospray/volume/GhostBlockBrickedVolume.h"
+
+// comps
+#include "components/mpiCommon/MPICommon.h"
+
 // ispc exports:
 #include "DataDistributedBlockedVolume_ispc.h"
 
@@ -155,24 +156,9 @@ namespace ospray {
 
       ddBlock[i].ispcVolume = ddBlock[i].cppVolume->getIE();
 
-#ifndef OSPRAY_VOLUME_VOXELRANGE_IN_APP
-      ManagedObject::Param *param = ddBlock[i].cppVolume->findParam("voxelRange");
-      if (param != NULL && param->type == OSP_FLOAT2){
-        vec2f blockRange = param->u_vec2f;
-        voxelRange.x = std::min(voxelRange.x, blockRange.x);
-        voxelRange.y = std::max(voxelRange.y, blockRange.y);
-      }
-#endif
     }
 
-#ifndef OSPRAY_VOLUME_VOXELRANGE_IN_APP
-    // Do a reduction here to worker 0 since it will be queried for the voxel range by the display node
-    vec2f globalVoxelRange = voxelRange;
-    MPI_CALL(Reduce(&voxelRange.x, &globalVoxelRange.x, 1, MPI_FLOAT, MPI_MIN, 0, mpi::worker.comm));
-    MPI_CALL(Reduce(&voxelRange.y, &globalVoxelRange.y, 1, MPI_FLOAT, MPI_MAX, 0, mpi::worker.comm));
-    set("voxelRange", globalVoxelRange);
-#endif
-    return 0;
+    return true;
   }
 
   void DataDistributedBlockedVolume::createEquivalentISPC()
@@ -217,11 +203,11 @@ namespace ospray {
            ddBlocks.x,ddBlocks.y,ddBlocks.z);
     printf("=======================================================\n");
 
-    if (!ospray::core::isMpiParallel()) {
+    if (!ospray::mpi::isMpiParallel()) {
       throw std::runtime_error("data parallel volume, but not in mpi parallel "
                                "mode...");
     }
-    uint64_t numWorkers = ospray::core::getWorkerCount();
+    uint64_t numWorkers = mpi::getWorkerCount();
     // PRINT(numDDBlocks);
     // PRINT(numWorkers);
 
@@ -244,8 +230,8 @@ namespace ospray {
             block->numOwners = nextBlockFirstOwner - block->firstOwner; // + 1;
           }
           block->isMine 
-            = (ospray::core::getWorkerRank() >= block->firstOwner)
-            && (ospray::core::getWorkerRank() <
+            = (ospray::mpi::getWorkerRank() >= block->firstOwner)
+            && (ospray::mpi::getWorkerRank() <
                 (block->firstOwner + block->numOwners));
           block->domain.lower = vec3i(ix,iy,iz) * blockSize;
           block->domain.upper = min(block->domain.lower+blockSize,dimensions);
@@ -275,8 +261,8 @@ namespace ospray {
               volume->findParam("scaleFactor",1)->set(scaleFactor);
             }
             
-            printf("rank %li owns block %i,%i,%i (ID %i), dims %i %i %i\n",
-                   (size_t)core::getWorkerRank(),ix,iy,iz,
+            printf("worker rank %li owns block %i,%i,%i (ID %i), dims %i %i %i\n",
+                   (size_t)mpi::getWorkerRank(),ix,iy,iz,
                    blockID,blockDims.x,blockDims.y,blockDims.z);
             block->cppVolume = volume;
             block->ispcVolume = NULL; //volume->getIE();

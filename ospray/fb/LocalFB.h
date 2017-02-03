@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -42,7 +42,7 @@ namespace ospray {
 
     //! \brief common function to help printf-debugging
     /*! \detailed Every derived class should overrride this! */
-    std::string toString() const override;
+    virtual std::string toString() const override;
 
     void setTile(Tile &tile) override;
     int32 accumID(const vec2i &tile) override;

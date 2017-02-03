@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -63,7 +63,7 @@ namespace ospray {
   {
     auto it = objectByHandle.find(i64);
     Assert(it != objectByHandle.end());
-    it->second = NULL;
+    it->second = nullptr;
     objectByHandle.erase(it);
   }
 
@@ -75,7 +75,7 @@ namespace ospray {
 
   ManagedObject *ObjectHandle::lookup() const
   {
-    if (i64 == 0) return NULL;
+    if (i64 == 0) return nullptr;
 
     auto it = objectByHandle.find(i64);
     Assert(it != objectByHandle.end());
@@ -91,6 +91,6 @@ namespace ospray {
     return(nullHandle);
   }
     
-  const ObjectHandle nullHandle(0);
+  OSPRAY_SDK_INTERFACE const ObjectHandle nullHandle(0);
 
 } // ::ospray

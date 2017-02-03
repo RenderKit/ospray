@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -17,16 +17,11 @@
 // own
 #include "LoadBalancer.h"
 #include "Renderer.h"
-#include "common/tasking/parallel_for.h"
-// ospc
-#include "ospcommon/sysinfo.h"
+#include "ospcommon/tasking/parallel_for.h"
 
 namespace ospray {
 
-  using std::cout;
-  using std::endl;
-
-  TiledLoadBalancer *TiledLoadBalancer::instance = nullptr;
+  std::unique_ptr<TiledLoadBalancer> TiledLoadBalancer::instance {};
 
   /*! render a frame via the tiled load balancer */
   float LocalTiledLoadBalancer::renderFrame(Renderer *renderer,

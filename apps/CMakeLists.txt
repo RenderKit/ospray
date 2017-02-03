@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2016 Intel Corporation                                    ##
+## Copyright 2009-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,6 +14,8 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+SET(OSPRAY_DEFAULT_COMPONENT apps)
+
 INCLUDE_DIRECTORIES(
   ${CMAKE_SOURCE_DIR}/ospray/include
   ${CMAKE_SOURCE_DIR}
@@ -22,18 +24,13 @@ INCLUDE_DIRECTORIES(
 )
 
 # common utilities
+# TODO build only when needed
 ADD_SUBDIRECTORY(common/commandline)
 ADD_SUBDIRECTORY(common/importer)
-ADD_SUBDIRECTORY(common/ospray_cpp)
 ADD_SUBDIRECTORY(common/tfn_lib)
 ADD_SUBDIRECTORY(common/miniSG)
 ADD_SUBDIRECTORY(common/xml)
-
-# NOTE(jda): Disable sg and qtViewer on Windows until sg properly exports
-#            symbols.
-IF (NOT WIN32)
-  ADD_SUBDIRECTORY(common/sg)
-ENDIF()
+ADD_SUBDIRECTORY(common/sg)
 
 # benchmark application which has no windowing framework dependencies
 OPTION(OSPRAY_APPS_BENCHMARK "Build ospBenchmark application." ON)
@@ -42,16 +39,9 @@ IF(OSPRAY_APPS_BENCHMARK)
   ADD_SUBDIRECTORY(bench)
 ENDIF()
 
-# determine if we can enable scripting features (can't with icc)
-IF(NOT OSPRAY_COMPILER_ICC)
-  OPTION(OSPRAY_APPS_ENABLE_SCRIPTING
-         "Enable scripting features in viewer apps."
-         ON)
-ELSE()
-  OPTION(OSPRAY_APPS_ENABLE_SCRIPTING
-         "Enable scripting features in viewer apps, may not compile with ICC"
-         OFF)
-ENDIF()
+OPTION(OSPRAY_APPS_ENABLE_SCRIPTING
+       "Enable scripting features in viewer apps, may not compile with ICC"
+       OFF)
 MARK_AS_ADVANCED(OSPRAY_APPS_ENABLE_SCRIPTING)
 
 IF(OSPRAY_APPS_ENABLE_SCRIPTING)
@@ -64,7 +54,7 @@ ENDIF()
 OPTION(OSPRAY_APPS_GLUTVIEWER "Build ospGlutViewer application." ON)
 
 IF(OSPRAY_APPS_GLUTVIEWER)
-  INCLUDE(${PROJECT_SOURCE_DIR}/cmake/glut.cmake)
+  INCLUDE(glut)
   # common utility classes for GLUT-based 3D viewer widget
   ADD_SUBDIRECTORY(common/widgets)
   ADD_SUBDIRECTORY(glutViewer)
@@ -86,4 +76,16 @@ IF(NOT (APPLE AND OSPRAY_COMPILER_ICC))
   IF(OSPRAY_APPS_VOLUMEVIEWER)
     ADD_SUBDIRECTORY(volumeViewer)
   ENDIF()
+ENDIF()
+
+# -------------------------------------------------------
+# redistribute QT on Windows
+# -------------------------------------------------------
+IF (OSPRAY_INSTALL_DEPENDENCIES AND WIN32 AND
+    (OSPRAY_APPS_QTVIEWER OR OSPRAY_APPS_VOLUMEVIEWER))
+  FOREACH(QT_COMPONENT QTCORE QTGUI QTOPENGL)
+    STRING(REGEX REPLACE lib$ dll QT_DLL ${QT_${QT_COMPONENT}_LIBRARY_RELEASE})
+    INSTALL(PROGRAMS ${QT_DLL}
+            DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT redist)
+  ENDFOREACH()
 ENDIF()

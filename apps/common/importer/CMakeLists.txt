@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2016 Intel Corporation                                    ##
+## Copyright 2009-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -21,12 +21,6 @@ INCLUDE_DIRECTORIES(
   ${CMAKE_SOURCE_DIR}/apps/qtViewer
   )
 
-SET(LIBS ospray_common ospray)
-
-IF(NOT WIN32)
-  LIST(APPEND LIBS ospray_sg)
-ENDIF()
-
 OSPRAY_CREATE_LIBRARY(ospray_importer
   importOSP.cpp
   importRAW.cpp
@@ -34,5 +28,7 @@ OSPRAY_CREATE_LIBRARY(ospray_importer
   Importer.cpp
   TinyXML2.cpp
 LINK
-  ${LIBS}
+  ospray_common
+  ospray
+  ospray_sg
 )

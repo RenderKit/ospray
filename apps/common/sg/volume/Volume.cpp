@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -66,17 +66,18 @@ namespace ospray {
     box3f StructuredVolume::getBounds()
     { return box3f(vec3f(0.f),vec3f(getDimensions())); }
 
-      //! \brief Initialize this node's value from given XML node 
-    void StructuredVolume::setFromXML(const xml::Node *const node, 
+    //! \brief Initialize this node's value from given XML node 
+
+    void StructuredVolume::setFromXML(const xml::Node &node,
                                       const unsigned char *binBasePtr)
     {
       Assert2(binBasePtr,
               "mapped binary file is nullptr, in XML node that "
               "needs mapped binary data (sg::StructuredVolume)");
-      voxelType = node->getProp("voxelType");
-      if (node->hasProp("ofs"))
-        mappedPointer = binBasePtr + std::stoll(node->getProp("ofs","0"));
-      dimensions = toVec3i(node->getProp("dimensions").c_str());
+      voxelType = node.getProp("voxelType");
+      if (node.hasProp("ofs"))
+        mappedPointer = binBasePtr + std::stoll(node.getProp("ofs","0"));
+      dimensions = toVec3i(node.getProp("dimensions").c_str());
 
       if (voxelType == "uint8")
         voxelType = "uchar";
@@ -84,7 +85,7 @@ namespace ospray {
         throw std::runtime_error("unknown StructuredVolume.voxelType (currently only supporting 'float' and 'uint8')");
 
       if (!transferFunction) 
-        setTransferFunction(new TransferFunction);
+        setTransferFunction(std::make_shared<TransferFunction>());
 
       std::cout << "#osp:sg: created StructuredVolume from XML file, dimensions = " 
                 << getDimensions() << std::endl;
@@ -178,29 +179,29 @@ namespace ospray {
     box3f StructuredVolumeFromFile::getBounds()
     { return box3f(vec3f(0.f),vec3f(getDimensions())); }
 
-      //! \brief Initialize this node's value from given XML node 
-    void StructuredVolumeFromFile::setFromXML(const xml::Node *const node, 
+    //! \brief Initialize this node's value from given XML node 
+    void StructuredVolumeFromFile::setFromXML(const xml::Node &node,
                                               const unsigned char *binBasePtr)
     {
-      voxelType = node->getProp("voxelType");
+      voxelType = node.getProp("voxelType");
       if (voxelType == "uint8") voxelType = "uchar";
-      dimensions = toVec3i(node->getProp("dimensions").c_str());
-      fileName = node->getProp("fileName");
+      dimensions = toVec3i(node.getProp("dimensions").c_str());
+      fileName = node.getProp("fileName");
       if (fileName == "") throw std::runtime_error("sg::StructuredVolumeFromFile: no 'fileName' specified");
 
-      fileNameOfCorrespondingXmlDoc = node->doc->fileName;
+      fileNameOfCorrespondingXmlDoc = node.doc->fileName;
       
       if (voxelType != "float" && voxelType != "uchar") 
         throw std::runtime_error("unknown StructuredVolume.voxelType (currently only supporting 'float')");
 
       if (!transferFunction) {
-        const std::string xfName = node->getProp("transferFunction");
-        TransferFunction *xf = dynamic_cast<TransferFunction*>(findNamedNode(xfName));
+        const std::string xfName = node.getProp("transferFunction");
+        std::shared_ptr<TransferFunction> xf = std::dynamic_pointer_cast<TransferFunction>(findNamedNode(xfName));
         if (xf)
           setTransferFunction(xf);
       }
-      if (!transferFunction)
-        setTransferFunction(new TransferFunction);
+      if (!transferFunction) 
+        setTransferFunction(std::make_shared<TransferFunction>());
       
       std::cout << "#osp:sg: created StructuredVolume from XML file, dimensions = " 
                 << getDimensions() << std::endl;
@@ -373,20 +374,21 @@ namespace ospray {
     box3f StackedRawSlices::getBounds()
     { return box3f(vec3f(0.f),vec3f(getDimensions())); }
 
-      //! \brief Initialize this node's value from given XML node 
-    void StackedRawSlices::setFromXML(const xml::Node *const node, const unsigned char *binBasePtr)
+    //! \brief Initialize this node's value from given XML node 
+    void StackedRawSlices::setFromXML(const xml::Node &node,
+                                      const unsigned char *binBasePtr)
     {
-      voxelType       = node->getProp("voxelType");
-      sliceResolution = toVec2i(node->getProp("sliceResolution").c_str());
-      baseName        = node->getProp("baseName");
-      firstSliceID    = std::stoll(node->getProp("firstSliceID","0"));
-      numSlices       = std::stoll(node->getProp("numSlices"));
+      voxelType       = node.getProp("voxelType");
+      sliceResolution = toVec2i(node.getProp("sliceResolution").c_str());
+      baseName        = node.getProp("baseName");
+      firstSliceID    = std::stoll(node.getProp("firstSliceID","0"));
+      numSlices       = std::stoll(node.getProp("numSlices"));
       
       if (voxelType != "uint8_t") 
         throw std::runtime_error("unknown StackedRawSlices.voxelType (currently only supporting 'uint8_t')");
           
       if (!transferFunction) 
-        setTransferFunction(new TransferFunction);
+        setTransferFunction(std::make_shared<TransferFunction>());
     }
     
     /*! \brief 'render' the object to ospray */

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -17,7 +17,7 @@
 #include <string>
 
 #include "QOSPRayWindow.h"
-#include "modules/opengl/util.h"
+#include "glUtil/util.h"
 
 #ifdef __APPLE__
   #include <OpenGL/glu.h>

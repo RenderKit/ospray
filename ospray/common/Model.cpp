@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -39,18 +39,20 @@ namespace ospray {
   {
     managedObjectType = OSP_MODEL;
     this->ispcEquivalent = ispc::Model_create(this);
-    this->embreeSceneHandle = NULL;
+  }
+
+  std::string Model::toString() const
+  {
+    return "ospray::Model";
   }
 
   void Model::finalize()
   {
-    if (logLevel() >= 2) {
-      std::cout << "======================================================="
-                << std::endl;
-      std::cout << "Finalizing model, has " 
-           << geometry.size() << " geometries and " << volume.size()
-           << " volumes" << std::endl;
-    }
+    std::stringstream msg;
+    msg << "=======================================================\n";
+    msg << "Finalizing model, has " << geometry.size()
+        << " geometries and " << volume.size() << " volumes" << std::endl;
+    postErrorMsg(msg, 2);
 
     RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
 
@@ -59,14 +61,12 @@ namespace ospray {
 
     bounds = empty;
 
-    // for now, only implement triangular geometry...
-    for (size_t i=0; i < geometry.size(); i++) {
+    for (size_t i = 0; i < geometry.size(); i++) {
 
-      if (logLevel() >= 2) {
-        std::cout << "======================================================="
-                  << std::endl;
-        std::cout << "Finalizing geometry " << i << std::endl;
-      }
+       std::stringstream msg;
+       msg << "=======================================================\n"
+           << "Finalizing geometry " << i << std::endl;
+       postErrorMsg(msg, 2);
 
       geometry[i]->finalize(this);
 

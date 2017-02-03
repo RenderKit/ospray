@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2016 Intel Corporation                                    ##
+## Copyright 2009-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -26,6 +26,7 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
 
   camera/PerspectiveCamera.cpp
 
+  common/Serialization.cpp
   common/Common.cpp
   common/Node.cpp
   common/Light.cpp
@@ -45,6 +46,7 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
 
   # scene graph importers
   importer/Importer.cpp
+  importer/ImportOSP.cpp
   importer/ImportOSG.cpp
   importer/ImportOBJ.cpp
   importer/ImportPLY.cpp

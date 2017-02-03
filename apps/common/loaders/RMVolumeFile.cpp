@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -20,7 +20,7 @@
 // std::
 #include <stdio.h>
 #include <string.h>
-#ifdef __LINUX__
+#ifdef __linux__
 # include <sched.h>
 #endif
 #include <stdint.h>
@@ -127,7 +127,7 @@ struct RMLoaderThreads {
       
 
       int cpu = -1;
-#ifdef __LINUX__
+#ifdef __linux__
       cpu = sched_getcpu();
 #endif
       printf("[b%i:%i,%i,%i,(%i)]",blockID,I,J,K,cpu); fflush(0);
@@ -164,7 +164,7 @@ OSPVolume RMVolumeFile::importVolume(OSPVolume volume)
   ospSetVec3i(volume, "dimensions", (osp::vec3i&)dims);
   ospSetString(volume,"voxelType", "uchar");
   
-#ifdef __LINUX__
+#ifdef __linux__
   int numThreads = ospcommon::getNumberOfLogicalThreads(); //20;
 #else
   int numThreads = 1;

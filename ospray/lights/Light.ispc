@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -25,3 +25,15 @@ Light_EvalRes Light_eval(const uniform Light* uniform,
   res.radiance = make_vec3f(0.f);
   return res;
 }
+
+
+// Exports (called from C++)
+//////////////////////////////////////////////////////////////////////////////
+
+//! Set the parameters of an ispc-side Light object
+export void Light_set(void* uniform _self, const uniform bool isVisible)
+{
+  Light* uniform self = (Light* uniform)_self;
+  self->isVisible = isVisible;
+}
+

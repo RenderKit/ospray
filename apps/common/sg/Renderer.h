@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -33,21 +33,21 @@ namespace ospray {
           etc) */
       void resetAccumulation();
 
-      void setWorld(const Ref<sg::World> &world);
-      void setCamera(const Ref<sg::Camera> &camera);
-      void setIntegrator(const Ref<sg::Integrator> &integrator);
+      void setWorld(const std::shared_ptr<sg::World> &world);
+      void setCamera(const std::shared_ptr<sg::Camera> &camera);
+      void setIntegrator(const std::shared_ptr<sg::Integrator> &integrator);
 
       // -------------------------------------------------------
       // query functions
       // -------------------------------------------------------
       
       //! find the last camera in the scene graph
-      sg::Camera *getLastDefinedCamera() const;
+      std::shared_ptr<sg::Camera> getLastDefinedCamera() const;
       //! find the last integrator in the scene graph
-      sg::Integrator *getLastDefinedIntegrator() const;
+      std::shared_ptr<sg::Integrator> getLastDefinedIntegrator() const;
       
       //! create a default camera
-      Ref<sg::Camera> createDefaultCamera(vec3f up=vec3f(0,1,0));
+      std::shared_ptr<sg::Camera> createDefaultCamera(vec3f up=vec3f(0,1,0));
 
       // //! set a default camera
       // void setDefaultCamera() { setCamera(createDefaultCamera()); }
@@ -61,14 +61,14 @@ namespace ospray {
       // =======================================================
       // state variables
       // =======================================================
-      Ref<sg::World>       world;
-      Ref<sg::Camera>      camera;
-      Ref<sg::FrameBuffer> frameBuffer;
-      Ref<sg::Integrator>  integrator;
+      std::shared_ptr<sg::World>       world;
+      std::shared_ptr<sg::Camera>      camera;
+      std::shared_ptr<sg::FrameBuffer> frameBuffer;
+      std::shared_ptr<sg::Integrator>  integrator;
       OSPRenderer ospRenderer;
       TimeStamp frameMTime;
       std::string createdType=std::string("none");
-      // Ref<Frame>  frame;
+      // std::shared_ptr<Frame>  frame;
 
       // state variables
       /*! all _unique_ nodes (i.e, even instanced nodes are listed

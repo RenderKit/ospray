@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2016 Intel Corporation                                    ##
+## Copyright 2009-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,12 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-IF(OSPRAY_MODULE_MPI)
-  OPTION(OSPRAY_EXP_DATA_PARALLEL "Experimental data-parallel compositing mode" ON)
-  OPTION(OSPRAY_PIN_ASYNC "Pin async mpi comm threads?" OFF)
-  MARK_AS_ADVANCED(OSPRAY_PIN_ASYNC)
-ENDIF()
-
 OPTION(EXP_NEW_BB_VOLUME_KERNELS "Experimental new block/bricked volume layout" ON)
 MARK_AS_ADVANCED(EXP_NEW_BB_VOLUME_KERNELS)
 
@@ -32,7 +26,7 @@ FIND_PACKAGE(Threads REQUIRED)
 # redistribute TBB
 # -------------------------------------------------------
 
-IF (OSPRAY_TASKING_TBB)
+IF (OSPRAY_TASKING_TBB AND OSPRAY_INSTALL_DEPENDENCIES)
   IF (WIN32)
     SET(TBB_DLL_HINTS
       ${TBB_ROOT}/../redist/${TBB_ARCH}_win/tbb/${TBB_VCVER}
@@ -43,15 +37,11 @@ IF (OSPRAY_TASKING_TBB)
     FIND_FILE(TBB_DLL_MALLOC tbbmalloc.dll PATHS HINTS ${TBB_DLL_HINTS})
     MARK_AS_ADVANCED(TBB_DLL)
     MARK_AS_ADVANCED(TBB_DLL_MALLOC)
-    IF (OSPRAY_INSTALL_DEPENDENCIES)
-      INSTALL(PROGRAMS ${TBB_DLL} ${TBB_DLL_MALLOC}
-              DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT apps) # 3rd party?
-    ENDIF()
-  ELSEIF (OSPRAY_ZIP_MODE)
-    IF (OSPRAY_INSTALL_DEPENDENCIES)
-      INSTALL(PROGRAMS ${TBB_LIBRARY} ${TBB_LIBRARY_MALLOC} ${TBB_LIBRARY_DEBUG} ${TBB_LIBRARY_MALLOC_DEBUG}
-              DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib) # /intel64?
-    ENDIF()
+    INSTALL(PROGRAMS ${TBB_DLL} ${TBB_DLL_MALLOC}
+            DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT redist)
+  ELSE()
+    INSTALL(PROGRAMS ${TBB_LIBRARY} ${TBB_LIBRARY_MALLOC}
+            DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
   ENDIF()
 ENDIF()
 
@@ -79,6 +69,20 @@ SET(OSPRAY_SOURCES
   include/ospray/OSPDataType.h
   include/ospray/OSPTexture.h
 
+  include/ospray/ospray_cpp/Camera.h
+  include/ospray/ospray_cpp/Data.h
+  include/ospray/ospray_cpp/FrameBuffer.h
+  include/ospray/ospray_cpp/Geometry.h
+  include/ospray/ospray_cpp/Light.h
+  include/ospray/ospray_cpp/ManagedObject.h
+  include/ospray/ospray_cpp/Material.h
+  include/ospray/ospray_cpp/Model.h
+  include/ospray/ospray_cpp/PixelOp.h
+  include/ospray/ospray_cpp/Renderer.h
+  include/ospray/ospray_cpp/Texture2D.h
+  include/ospray/ospray_cpp/TransferFunction.h
+  include/ospray/ospray_cpp/Volume.h
+
   math/box.ispc
   math/Distribution1D.ispc
   math/Distribution2D.ispc
@@ -93,13 +97,7 @@ SET(OSPRAY_SOURCES
   common/Model.ispc
   common/Model.cpp
   common/Material.cpp
-  common/Thread.cpp
   common/Util.h
-
-  common/tasking/parallel_for.h
-  common/tasking/async.h
-  common/tasking/TaskingTypeTraits.h
-  common/tasking/TaskSys.cpp
 
   fb/FrameBuffer.ispc
   fb/FrameBuffer.cpp
@@ -209,6 +207,8 @@ SET(OSPRAY_SOURCES
   render/pathtracer/materials/Matte.cpp
   render/pathtracer/materials/Luminous.ispc
   render/pathtracer/materials/Luminous.cpp
+  render/pathtracer/materials/Mix.ispc
+  render/pathtracer/materials/Mix.cpp
 
   api/API.cpp
   api/Device.cpp
@@ -218,6 +218,12 @@ SET(OSPRAY_SOURCES
 # -------------------------------------------------------
 # Install API headers
 # -------------------------------------------------------
+
+OSPRAY_INSTALL_SDK_HEADERS(
+  api/Device.h
+  api/LocalDevice.h
+  DESTINATION api
+)
 
 OSPRAY_INSTALL_SDK_HEADERS(
   camera/Camera.h
@@ -246,17 +252,8 @@ OSPRAY_INSTALL_SDK_HEADERS(
   common/Ray.h
   common/Ray.ih
   common/Texture.h
-  common/Thread.h
   common/Util.h
   DESTINATION common
-)
-
-OSPRAY_INSTALL_SDK_HEADERS(
-  common/tasking/async.h
-  common/tasking/parallel_for.h
-  common/tasking/TaskingTypeTraits.h
-  common/tasking/TaskSys.h
-  DESTINATION common/tasking
 )
 
 OSPRAY_INSTALL_SDK_HEADERS(
@@ -349,6 +346,23 @@ OSPRAY_INSTALL_SDK_HEADERS(
   DESTINATION volume
 )
 
+OSPRAY_INSTALL_SDK_HEADERS(
+  include/ospray/ospray_cpp/Camera.h
+  include/ospray/ospray_cpp/Data.h
+  include/ospray/ospray_cpp/FrameBuffer.h
+  include/ospray/ospray_cpp/Geometry.h
+  include/ospray/ospray_cpp/Light.h
+  include/ospray/ospray_cpp/ManagedObject.h
+  include/ospray/ospray_cpp/Material.h
+  include/ospray/ospray_cpp/Model.h
+  include/ospray/ospray_cpp/PixelOp.h
+  include/ospray/ospray_cpp/Renderer.h
+  include/ospray/ospray_cpp/Texture2D.h
+  include/ospray/ospray_cpp/TransferFunction.h
+  include/ospray/ospray_cpp/Volume.h
+  DESTINATION ../ospray_cpp
+)
+
 ##############################################################
 # build the ospray library (using flags and compilers as configured by
 # CONFIGURE_OSPRAY() and/or CONFIGURE_MPI()
@@ -359,7 +373,6 @@ SET(OSPRAY_LIBS
   ${CMAKE_THREAD_LIBS_INIT}
   ${CMAKE_DL_LIBS}
   ${EMBREE_LIBRARIES}
-  ${TASKING_SYSTEM_LIBS}
 )
 
 IF (WIN32)
@@ -370,14 +383,14 @@ IF (WIN32)
   ENDIF()
 ENDIF()
 
-OSPRAY_CREATE_LIBRARY(ospray ${OSPRAY_SOURCES} LINK ${OSPRAY_LIBS})
+OSPRAY_CREATE_LIBRARY(ospray ${OSPRAY_SOURCES} LINK ${OSPRAY_LIBS} COMPONENT lib)
 
 # build ospTutorial, for testing
 ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial.cpp)
-OSPRAY_EXE_LINK_LIBRARIES(ospTutorial ospray ospray_common)
+TARGET_LINK_LIBRARIES(ospTutorial ospray ospray_common)
 # C version
 ADD_EXECUTABLE(ospTutorialC ../apps/ospTutorial.c)
-OSPRAY_EXE_LINK_LIBRARIES(ospTutorialC ospray ospray_common)
+TARGET_LINK_LIBRARIES(ospTutorialC ospray ospray_common)
 
 ##############################################################
 # Configure find_package files

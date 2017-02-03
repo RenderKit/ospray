@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -40,20 +40,19 @@ namespace ospray {
       };
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const;
+      virtual    std::string toString() const override;
 
       //! return bounding box of all primitives
-      virtual box3f getBounds() = 0;
+      virtual box3f getBounds() override = 0;
 
       //! serialize into given serialization state 
-      virtual void serialize(sg::Serialization::State &state);
+      virtual void serialize(sg::Serialization::State &state) override;
 
       virtual void preRender(RenderContext &ctx) override;
 
       static bool useDataDistributedVolume;
 
-      SG_NODE_DECLARE_MEMBER(Ref<TransferFunction>,transferFunction,TransferFunction);    
-
+      SG_NODE_DECLARE_MEMBER(std::shared_ptr<TransferFunction>,transferFunction,TransferFunction);    
       //! ospray volume object handle
       public: OSPVolume volume;
     };
@@ -64,13 +63,14 @@ namespace ospray {
       StructuredVolume();
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const;
+      virtual    std::string toString() const override;
 
       //! return bounding box of all primitives
-      virtual box3f getBounds();
+      virtual box3f getBounds() override;
 
       //! \brief Initialize this node's value from given XML node 
-      virtual void setFromXML(const xml::Node *const node, const unsigned char *binBasePtr);
+      virtual void setFromXML(const xml::Node &node,
+                              const unsigned char *binBasePtr) override;
 
       /*! \brief 'render' the object to ospray */
       virtual void render(RenderContext &ctx);
@@ -89,16 +89,17 @@ namespace ospray {
       StructuredVolumeFromFile();
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const;
+      virtual    std::string toString() const override;
 
       //! return bounding box of all primitives
-      virtual box3f getBounds();
+      virtual box3f getBounds() override;
 
       //! \brief Initialize this node's value from given XML node 
-      virtual void setFromXML(const xml::Node *const node, const unsigned char *binBasePtr);
+      virtual void setFromXML(const xml::Node &node,
+                              const unsigned char *binBasePtr) override;
 
       /*! \brief 'render' the object to ospray */
-      virtual void render(RenderContext &ctx);
+      virtual void render(RenderContext &ctx) override;
 
       virtual void preCommit(RenderContext &ctx) override;
       virtual void postCommit(RenderContext &ctx) override;
@@ -108,6 +109,7 @@ namespace ospray {
       SG_NODE_DECLARE_MEMBER(std::string,fileName,FileName);    
       SG_NODE_DECLARE_MEMBER(std::string,voxelType,ScalarType);    
 
+    public:
       //! \brief file name of the xml doc when the node was loaded/parsed from xml 
       /*! \detailed we need this to properly resolve relative file names */
       FileName fileNameOfCorrespondingXmlDoc;
@@ -120,16 +122,17 @@ namespace ospray {
       StackedRawSlices();
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const;
+      virtual    std::string toString() const override;
 
       //! return bounding box of all primitives
-      virtual box3f getBounds();
+      virtual box3f getBounds() override;
 
       //! \brief Initialize this node's value from given XML node 
-      virtual void setFromXML(const xml::Node *const node, const unsigned char *binBasePtr);
+      virtual void setFromXML(const xml::Node &node,
+                              const unsigned char *binBasePtr) override;
 
       /*! \brief 'render' the object to ospray */
-      virtual void render(RenderContext &ctx);
+      virtual void render(RenderContext &ctx) override;
 
       /*! resolution (X x Y) of each slice */
       SG_NODE_DECLARE_MEMBER(vec2i,sliceResolution,SliceResolution);    

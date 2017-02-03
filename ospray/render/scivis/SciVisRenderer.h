@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -53,9 +53,10 @@ namespace ospray {
     struct SciVisRenderer : public Renderer
     {
       SciVisRenderer();
-      std::string toString() const override;
-      void commit() override;
-      Material *createMaterial(const char *type) override;
+      virtual ~SciVisRenderer() = default;
+      virtual std::string toString() const override;
+      virtual void commit() override;
+      virtual Material *createMaterial(const char *type) override;
 
       std::vector<void*> lightArray; // the 'IE's of the XXXLights
       Data *lightData;

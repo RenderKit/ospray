@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -44,18 +44,19 @@ namespace ospray {
   */
 
   //! Implements a simple perspective camera (see \subpage perspective_camera)
-  struct OSPRAY_SDK_INTERFACE PerspectiveCamera : public Camera {
+  struct OSPRAY_SDK_INTERFACE PerspectiveCamera : public Camera
+  {
     /*! \brief constructor \internal also creates the ispc-side data structure */
     PerspectiveCamera();
+    virtual ~PerspectiveCamera() = default;
+
     //! \brief common function to help printf-debugging
     /*! Every derived class should overrride this! */
-    virtual std::string toString() const { return "ospray::PerspectiveCamera"; }
-    virtual void commit();
+    virtual std::string toString() const override;
+    virtual void commit() override;
 
-  public:
-    // ------------------------------------------------------------------
-    // the parameters we 'parsed' from our parameters
-    // ------------------------------------------------------------------
+    // Data members //
+
     float fovy;
     float aspect;
     float apertureRadius;

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -18,11 +18,24 @@
 #include "Light.h"
 #include "common/Library.h"
 #include "common/Util.h"
-
+// ispc exports
+#include "Light_ispc.h"
 //system
 #include <map>
 
 namespace ospray {
+
+  void Light::commit()
+  {
+    isVisible = getParam1i("isVisible", true);
+
+    ispc::Light_set(getIE(), isVisible);
+  }
+
+  std::string Light::toString() const
+  {
+    return "ospray::Light";
+  }
 
   //! Create a new Light object of given type
   Light *Light::createLight(const char *type)

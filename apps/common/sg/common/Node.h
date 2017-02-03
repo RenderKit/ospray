@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -102,16 +102,17 @@ namespace ospray {
     };
 
     /*! class that encapsulate all the context/state required for
-      rendering any object */
+      rendering any object. note we INTENTIONALLY do not use
+      shared_ptrs here because certain nodes want to set these values
+      to 'this', which isn't valid for shared_ptrs */
     struct RenderContext {
-      World         *world;      //!< world we're rendering into
-      Integrator    *integrator; //!< integrator used to create materials etc
-      const affine3f xfm;        //!< affine geometry transform matrix
+      std::shared_ptr<sg::World>      world;      //!< world we're rendering into
+      std::shared_ptr<sg::Integrator> integrator; //!< integrator used to create materials etc
+      const affine3f  xfm;        //!< affine geometry transform matrix
       OSPRenderer ospRenderer;
       int level;
-
       //! create a new context
-      RenderContext() : world(NULL), integrator(NULL), xfm(one),level(0) {};
+      RenderContext() : xfm(one) {};
 
       //! create a new context with new transformation matrix
       RenderContext(const RenderContext &other, const affine3f &newXfm)
@@ -137,7 +138,7 @@ namespace ospray {
     };
 
     /*! \brief base node of all scene graph nodes */
-    struct Node : public RefCount
+    struct Node : public std::enable_shared_from_this<Node>
     {
       Node() : lastModified(1), childrenMTime(1), lastCommitted(0), name("NULL"),
       type("Node"), valid(false),
@@ -150,9 +151,11 @@ namespace ospray {
       class NodeH
       {
       public:
-        NodeH(Ref<sg::Node> n=nullptr) : node(n) {}
+        NodeH() : node(nullptr) {}
+        NodeH(std::shared_ptr<sg::Node> n) : node(n) {}
+        NodeH(sg::Node* n) : node(std::shared_ptr<Node>(n)) {}
 
-        Ref<sg::Node> node;
+        std::shared_ptr<sg::Node> node;
 
         //! return child with name c
         NodeH& operator[] (std::string c) { return node->getChild(c);}
@@ -160,7 +163,7 @@ namespace ospray {
         //! add child node n to this node
         NodeH operator+= (NodeH n) { node->add(n); n->setParent(*this); return n;}
 
-        Ref<sg::Node> operator-> ()
+        std::shared_ptr<sg::Node> operator-> ()
         {
           return node;
         }
@@ -168,7 +171,7 @@ namespace ospray {
         //! is this handle pointing to a null value?
         bool isNULL() const
         {
-          return node.ptr == nullptr;
+          return node.get() == nullptr;
         }
       };
 
@@ -194,13 +197,16 @@ namespace ospray {
         existant) that contains additional binary data that the xml
         node fields may point into
       */
-      virtual void setFromXML(const xml::Node *const node,
+      virtual void setFromXML(const xml::Node &node, 
                               const unsigned char *binBasePtr);
 
       //! just for convenience; add a typed 'setParam' function
       template<typename T>
       inline void setParam(const std::string &name, const T &t)
       { params[name] = std::make_shared<ParamT<T>>(name,t); }
+
+      // /*! query given parameter */
+      // std::shared_ptr<sg::Param> getParam(const std::string &name) const;
 
       template<typename Lambda>
       inline void for_each_param(const Lambda &functor)
@@ -294,7 +300,7 @@ namespace ospray {
       void setValue(SGVar val) { std::lock_guard<std::mutex> lock{mutex}; if (val != value) modified(); value = val; }
 
       //! add node as child of this one
-      virtual void add(Ref<sg::Node> node) { std::lock_guard<std::mutex> lock{mutex}; children[node->name] = NodeH(node); node->setParent(NodeH(this)); }
+      virtual void add(std::shared_ptr<Node> node) { std::lock_guard<std::mutex> lock{mutex}; children[node->name] = NodeH(node); node->setParent(NodeH(this)); }
 
       //! add node as child of this one
       virtual void add(NodeH node) { add(node.node); }
@@ -396,9 +402,9 @@ namespace ospray {
     // list of all named nodes - for now use this as a global
     // variable, but eventually we'll need tofind a better way for
     // storing this ... maybe in the world!?
-    extern std::map<std::string,Ref<sg::Node> > namedNodes;
-    sg::Node *findNamedNode(const std::string &name);
-    void registerNamedNode(const std::string &name, Ref<sg::Node> node);
+    extern std::map<std::string,std::shared_ptr<sg::Node> > namedNodes;
+    std::shared_ptr<sg::Node> findNamedNode(const std::string &name);
+    void registerNamedNode(const std::string &name, const std::shared_ptr<sg::Node> &node);
 
     typedef Node::NodeH NodeH;
     Node::NodeH createNode(std::string name, std::string type="Node", SGVar var=NullType(), int flags=sg::NodeFlags::none);
@@ -507,9 +513,10 @@ namespace ospray {
       of this renderer.
     */
 #define OSP_REGISTER_SG_NODE(InternalClassName)                         \
-    extern "C" ospray::sg::Node *ospray_create_sg_node__##InternalClassName() \
+    extern "C" std::shared_ptr<ospray::sg::Node>                        \
+    ospray_create_sg_node__##InternalClassName()                        \
     {                                                                   \
-      return new ospray::sg::InternalClassName;                         \
+      return std::make_shared<ospray::sg::InternalClassName>();         \
     }
 
 #define OSP_REGISTER_SG_NODE_NAME(InternalClassName,Name)               \

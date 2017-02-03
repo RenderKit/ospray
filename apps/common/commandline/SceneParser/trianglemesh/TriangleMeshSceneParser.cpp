@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,7 +16,7 @@
 
 #include "TriangleMeshSceneParser.h"
 
-#include <ospray_cpp/Data.h>
+#include <ospray/ospray_cpp/Data.h>
 #include <common/miniSG/miniSG.h>
 
 using namespace ospray;
@@ -174,7 +174,7 @@ cpp::Material TriangleMeshSceneParser::createMaterial(cpp::Renderer ren,
   float Tf_prime = 0.f;
 
   // workaround strange behavior of 3DMax exporter (fully transparent scenes)
-  // detect d==Tf==1-Tr, correct to d’=1, Tf’=1-d
+  // detect d==Tf==1-Tr, correct to d'=1, Tf'=1-d
   if (isOBJMaterial) {
     auto itTr = mat->params.find("Tr");
     auto end = mat->params.end();

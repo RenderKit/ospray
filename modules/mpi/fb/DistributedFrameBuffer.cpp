@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -18,8 +18,8 @@
 #include "DistributedFrameBuffer_TileTypes.h"
 #include "DistributedFrameBuffer_ispc.h"
 
-#include "common/tasking/async.h"
-#include "common/tasking/parallel_for.h"
+#include "ospcommon/tasking/async.h"
+#include "ospcommon/tasking/parallel_for.h"
 
 #ifdef _WIN32
 #  include <windows.h> // for Sleep

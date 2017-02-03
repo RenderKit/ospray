@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -117,12 +117,13 @@ static void Isosurfaces_postIntersect(uniform Geometry *uniform geometry,
       dg.Ns = neg(ray.dir); //make_vec3f(1.f,0.f,0.f);
   }
 
+  dg.Ng = dg.Ns;
 
   if ((flags & DG_COLOR)) {
-    TransferFunction *uniform xf = self->volume->transferFunction;
-    const vec3f sampleColor = xf->getColorForValue(xf, self->isovalues[ray.primID]);
-    const float sampleOpacity = 1.f; // later allow "opacity" parameter on isosurfaces.
-    dg.color = make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, sampleOpacity);
+   TransferFunction *uniform xf = self->volume->transferFunction;
+   const vec3f sampleColor = xf->getColorForValue(xf, self->isovalues[ray.primID]);
+   const float sampleOpacity = 1.f; // later allow "opacity" parameter on isosurfaces.
+   dg.color = make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, sampleOpacity);
   }
 }
 

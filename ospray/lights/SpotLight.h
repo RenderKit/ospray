@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -22,24 +22,21 @@ namespace ospray {
 
   /*! a SpotLight is a singular light emitting from a point uniformly into a
    *  cone of directions bounded by halfAngle */
-  class OSPRAY_SDK_INTERFACE SpotLight : public Light {
-    public:
-      SpotLight();
+  struct OSPRAY_SDK_INTERFACE SpotLight : public Light
+  {
+    SpotLight();
+    virtual ~SpotLight() = default;
+    virtual std::string toString() const override;
+    virtual void commit() override;
 
-      //! toString is used to aid in printf debugging
-      virtual std::string toString() const { return "ospray::SpotLight"; }
-
-      //! Copy understood parameters into class members
-      virtual void commit();
-
-    private:
-      vec3f position;         //!< world-space position of the light
-      vec3f direction;        //!< Direction that the SpotLight is pointing
-      vec3f color;            //!< RGB color of the SpotLight
-      float intensity;        //!< Amount of light emitted
-      float openingAngle;     //!< Full opening angle of spot light, in degree. If angle from hit to light is greater than 1/2 * this, the light does not influence shading for that point
-      float penumbraAngle;    //!< Angle, in degree, of the "penumbra", the region between the rim and full intensity of the spot. Should be smaller than half of the openingAngle.
-      float radius;           //!< Radius of ExtendedSpotLight
+  private:
+    vec3f position {0.f};           //!< world-space position of the light
+    vec3f direction {0.f, 0.f, 1.f};//!< Direction that the SpotLight is pointing
+    vec3f color {1.f};              //!< RGB color of the SpotLight
+    float intensity {1.f};          //!< Amount of light emitted
+    float openingAngle {180.f};     //!< Full opening angle of spot light, in degree. If angle from hit to light is greater than 1/2 * this, the light does not influence shading for that point
+    float penumbraAngle {5.f};      //!< Angle, in degree, of the "penumbra", the region between the rim and full intensity of the spot. Should be smaller than half of the openingAngle.
+    float radius {0.f};             //!< Radius of ExtendedSpotLight
   };
 
 }

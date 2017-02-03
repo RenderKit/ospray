@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -47,21 +47,20 @@ namespace ospray {
     Implements the \ref geometry_slices geometry
 
   */
-  struct OSPRAY_SDK_INTERFACE Slices : public Geometry {
-    //! \brief common function to help printf-debugging
-    virtual std::string toString() const { return "ospray::Slices"; }
+  struct OSPRAY_SDK_INTERFACE Slices : public Geometry
+  {
+    Slices();
+    virtual ~Slices() = default;
+    virtual std::string toString() const override;
+    virtual void finalize(Model *model) override;
 
-    /*! \brief integrates this geometry's primitives into the respective
-      model's acceleration structure */
-    virtual void finalize(Model *model);
+    // Data members //
 
     Ref<Data> planesData; //!< refcounted data array for planes data
     Ref<Volume> volume;
 
     size_t       numPlanes;
     const vec4f *planes;
-
-    Slices();
   };
   /*! @} */
 

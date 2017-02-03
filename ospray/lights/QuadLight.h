@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -22,22 +22,19 @@ namespace ospray {
 
   /*! a QuadLight is a virtual area light uniformly emitting from a rectangular
    * area into the positive half space */
-  class OSPRAY_SDK_INTERFACE QuadLight : public Light {
-    public:
-      QuadLight();
+  struct OSPRAY_SDK_INTERFACE QuadLight : public Light
+  {
+    QuadLight();
+    virtual ~QuadLight() = default;
+    virtual std::string toString() const override;
+    virtual void commit() override;
 
-      //! toString is used to aid in printf debugging
-      virtual std::string toString() const { return "ospray::QuadLight"; }
-
-      //! Copy understood parameters into class members
-      virtual void commit();
-
-    private:
-      vec3f position;         //!< world-space corner position of the light
-      vec3f edge1;            //!< vectors to adjacent corners
-      vec3f edge2;            //!< vectors to adjacent corners
-      vec3f color;            //!< RGB color of the QuadLight
-      float intensity;        //!< Amount of light emitted
+  private:
+    vec3f position {0.f};       //!< world-space corner position of the light
+    vec3f edge1 {1.f, 0.f, 0.f};//!< vectors to adjacent corners
+    vec3f edge2 {0.f, 1.f, 0.f};//!< vectors to adjacent corners
+    vec3f color {1.f};          //!< RGB color of the QuadLight
+    float intensity {1.f};      //!< Amount of light emitted
   };
 
-}
+}// ::ospray

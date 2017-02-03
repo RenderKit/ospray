@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -34,8 +34,10 @@ namespace ospray {
     tile renderer, but this abstraction level also allows for frame
     compositing or even projection/splatting based approaches
    */
-  struct OSPRAY_SDK_INTERFACE Renderer : public ManagedObject {
-    Renderer() : spp(1), errorThreshold(0.0f) {}
+  struct OSPRAY_SDK_INTERFACE Renderer : public ManagedObject
+  {
+    Renderer() = default;
+    virtual ~Renderer() = default;
 
     /*! \brief creates an abstract renderer class of given type
 
@@ -46,13 +48,10 @@ namespace ospray {
     static Renderer *createRenderer(const char *identifier);
 
     virtual void commit() override;
-
-    /*! \brief common function to help printf-debugging */
     virtual std::string toString() const override;
     
     /*! \brief render one frame, and put it into given frame buffer */
-    virtual float renderFrame(FrameBuffer *fb,
-                              const uint32 fbChannelFlags);
+    virtual float renderFrame(FrameBuffer *fb, const uint32 fbChannelFlags);
     
     //! \brief called to initialize a new frame
     /*! this function gets called exactly once (on each node) at the
@@ -80,20 +79,20 @@ namespace ospray {
 
     virtual OSPPickResult pick(const vec2f &screenPos);
 
-    Model *model;
-    FrameBuffer *currentFB;
+    Model *model {nullptr};
+    FrameBuffer *currentFB {nullptr};
 
     /*! \brief parameter to prevent self-intersection issues, will be scaled with diameter of the scene */
-    float epsilon;
+    float epsilon {1e-6f};
 
     /*! \brief number of samples to be used per pixel in a tile */
-    int32 spp;
+    int32 spp {1};
 
     /*! adaptive accumulation: variance-based error to reach */
-    float errorThreshold;
+    float errorThreshold {0.f};
 
     /*! \brief whether the background should be rendered (e.g. for compositing the background may be disabled) */
-    bool backgroundEnabled;
+    bool backgroundEnabled {true};
 
     /*! \brief maximum depth texture provided as an optional parameter to the renderer, used for early ray termination
 

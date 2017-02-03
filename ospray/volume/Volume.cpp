@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -21,8 +21,6 @@
 #include "Volume_ispc.h"
 #include "transferFunction/TransferFunction.h"
 #include "common/Data.h"
-// stl
-#include <map>
 
 namespace ospray {
 
@@ -33,7 +31,7 @@ namespace ospray {
 
   std::string Volume::toString() const
   {
-    return("ospray::Volume");
+    return "ospray::Volume";
   }
 
   Volume *Volume::createInstance(const std::string &type)
@@ -41,21 +39,25 @@ namespace ospray {
     return createInstanceHelper<Volume, OSP_VOLUME>(type);
   }
 
+  void Volume::commit()
+  {
+  }
+
   void Volume::computeSamples(float **results,
                               const vec3f *worldCoordinates,
                               const size_t &count)
   {
     // The ISPC volume container must exist at this point.
-    assert(ispcEquivalent != NULL);
+    assert(ispcEquivalent != nullptr);
 
     // Allocate memory for returned volume samples
     *results = (float *)malloc(count * sizeof(float));
-    exitOnCondition(*results == NULL, "error allocating memory");
+    exitOnCondition(*results == nullptr, "error allocating memory");
 
     // Allocate memory for ISPC-computed volume samples using Embree's new to
     // enforce alignment
     float *ispcResults = new float[count];
-    exitOnCondition(ispcResults == NULL, "error allocating memory");
+    exitOnCondition(ispcResults == nullptr, "error allocating memory");
 
     // Compute the sample values.
     ispc::Volume_computeSamples(ispcEquivalent,
@@ -71,7 +73,7 @@ namespace ospray {
   void Volume::finish()
   {
     // The ISPC volume container must exist at this point.
-    assert(ispcEquivalent != NULL);
+    assert(ispcEquivalent != nullptr);
 
     // Make the volume bounding box visible to the application.
     ispc::box3f boundingBox;
@@ -119,8 +121,8 @@ namespace ospray {
 
     // Set the transfer function.
     TransferFunction *transferFunction =
-        (TransferFunction *) getParamObject("transferFunction", NULL);
-    exitOnCondition(transferFunction == NULL, "no transfer function specified");
+        (TransferFunction *) getParamObject("transferFunction", nullptr);
+    exitOnCondition(transferFunction == nullptr, "no transfer function specified");
     ispc::Volume_setTransferFunction(ispcEquivalent, transferFunction->getIE());
 
     // Set the volume clipping box (empty by default for no clipping).

@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2015-2016 Intel Corporation                                    ##
+## Copyright 2015-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -35,10 +35,12 @@ wget -O readme.pdf --progress=dot:mega -c http://sdvis.org/ospray/download/OSPRa
 cmake -L \
 -G "Visual Studio 12 2013 Win64" \
 -T "Intel C++ Compiler 17.0" \
--D OSPRAY_ZIP_MODE=OFF \
 -D OSPRAY_BUILD_ISA=ALL \
 -D OSPRAY_USE_EXTERNAL_EMBREE=ON \
+-D OSPRAY_MODULE_MPI=ON \
 -D USE_IMAGE_MAGICK=OFF \
+-D OSPRAY_ZIP_MODE=OFF \
+-D OSPRAY_INSTALL_DEPENDENCIES=OFF \
 -D CMAKE_INSTALL_INCLUDEDIR=include \
 -D CMAKE_INSTALL_LIBDIR=lib \
 -D CMAKE_INSTALL_DATAROOTDIR= \
@@ -51,7 +53,9 @@ cmake -L \
 cmake --build . --config Release --target PACKAGE -- -m -nologo
 
 # create ZIP files
-cmake -D OSPRAY_ZIP_MODE=ON ..
+cmake -D OSPRAY_ZIP_MODE=ON \
+-D OSPRAY_INSTALL_DEPENDENCIES=ON \
+..
 cmake --build . --config Release --target PACKAGE -- -m -nologo
 
 cd ..

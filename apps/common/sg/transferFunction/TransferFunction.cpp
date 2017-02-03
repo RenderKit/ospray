@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -152,16 +152,16 @@ namespace ospray {
       ospCommit(ospTransferFunction);
     }
 
-    void TransferFunction::setFromXML(const xml::Node *const node, 
+    void TransferFunction::setFromXML(const xml::Node& node, 
                                       const unsigned char *binBasePtr) 
     {
       setDefaultValues();
 
-      const std::string name = node->getProp("name","");
-      if (name != "")
-        registerNamedNode(name,this);
+      // const std::string name = node->getProp("name","");
+      // if (name != "")
+      //   registerNamedNode(name,this);
       
-      xml::for_each_child_of(*node,[&](const xml::Node &child) {
+      xml::for_each_child_of(node,[&](const xml::Node &child) {
           // -------------------------------------------------------
           // colors
           // -------------------------------------------------------

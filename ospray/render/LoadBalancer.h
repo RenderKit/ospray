@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -25,11 +25,9 @@
 
 namespace ospray {
 
-
-  struct TileRenderer;
   struct OSPRAY_SDK_INTERFACE TiledLoadBalancer
   {
-    static TiledLoadBalancer *instance;
+    static std::unique_ptr<TiledLoadBalancer> instance;
     virtual std::string toString() const = 0;
     virtual float renderFrame(Renderer *tiledRenderer,
                               FrameBuffer *fb,

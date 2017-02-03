@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -36,8 +36,8 @@ namespace ospray {
   WarnOnce::WarnOnce(const std::string &s) 
     : s(s) 
   {
-    std::cout << "Warning: " << s << " (only reporting first occurrence)"
-              << std::endl;
+    std::string msg = "Warning: " + s + " (only reporting first occurrence)\n";
+    postErrorMsg(msg);
   }
   
   /*! for debugging. compute a checksum for given area range... */
@@ -54,16 +54,6 @@ namespace ospray {
       ++mem;
     }
     return (void *)sum;
-  }
-
-  void doAssertion(const char *file, int line,
-                   const char *expr, const char *expl) {
-    if (expl)
-      fprintf(stderr,"%s:%i: Assertion failed: \"%s\":\nAdditional Info: %s\n", 
-              file, line, expr, expl);
-    else
-      fprintf(stderr,"%s:%i: Assertion failed: \"%s\".\n", file, line, expr);
-    abort();
   }
 
   void removeArgs(int &ac, char **&av, int where, int howMany)
@@ -93,6 +83,17 @@ namespace ospray {
           removeArgs(ac,av,i,1);
         } else if (parm == "--osp:loglevel") {
           device->findParam("logLevel", true)->set(atoi(av[i+1]));
+          removeArgs(ac,av,i,2);
+        } else if (parm == "--osp:logoutput") {
+          std::string dst = av[i+1];
+
+          if (dst == "cout")
+            device->error_fcn = [](const char *msg){ std::cout << msg; };
+          else if (dst == "cerr")
+            device->error_fcn = [](const char *msg){ std::cerr << msg; };
+          else
+            postErrorMsg("You must use 'cout' or 'cerr' for --osp:logoutput!");
+
           removeArgs(ac,av,i,2);
         } else if (parm == "--osp:numthreads" || parm == "--osp:num-threads") {
           device->findParam("numThreads", true)->set(atoi(av[i+1]));
@@ -310,6 +311,17 @@ namespace ospray {
     }
 
     return 0;
+  }
+
+  void postErrorMsg(const std::stringstream &msg, uint32_t postAtLogLevel)
+  {
+    postErrorMsg(msg.str(), postAtLogLevel);
+  }
+
+  void postErrorMsg(const std::string &msg, uint32_t postAtLogLevel)
+  {
+    if (logLevel() >= postAtLogLevel)
+      ospray::api::Device::current->error_fcn(msg.c_str());
   }
 
 } // ::ospray

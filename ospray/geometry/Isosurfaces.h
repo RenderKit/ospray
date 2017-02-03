@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -49,15 +49,13 @@ namespace ospray {
   */
   struct OSPRAY_SDK_INTERFACE Isosurfaces : public Geometry
   {
-    //! constructor
     Isosurfaces();
+    virtual ~Isosurfaces() = default;
 
-    //! \brief common function to help printf-debugging
-    virtual std::string toString() const { return "ospray::Isosurfaces"; }
+    virtual std::string toString() const override;
+    virtual void finalize(Model *model) override;
 
-    /*! \brief integrates this geometry's primitives into the respective
-      model's acceleration structure */
-    virtual void finalize(Model *model);
+    // Data members //
 
     Ref<Data> isovaluesData; //!< refcounted data array for isovalues data
     Ref<Volume> volume;

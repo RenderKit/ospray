@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -42,7 +42,7 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
                         Ray &shadowRay,
                         Medium medium)
 {
-  int max_depth = self->maxDepth;
+  uniform int max_depth = self->maxDepth;
   const float org_t_max = shadowRay.t;
 
   while (1) {
@@ -136,9 +136,11 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     // add light from *virtual* lights by intersecting them
     for (uniform int i = self->numGeoLights; i < self->numLights; i++) {
       const uniform Light *uniform l = self->lights[i];
-      Light_EvalRes le = l->eval(l, lastDg, ray.dir, maxLightDist);
-      if (reduce_max(le.radiance) > 0.0f)
-        L = L + Lw * le.radiance * misHeuristic(lastBSDFPdf, le.pdf);
+      if (!straightPath || l->isVisible) {
+        Light_EvalRes le = l->eval(l, lastDg, ray.dir, maxLightDist);
+        if (reduce_max(le.radiance) > 0.0f)
+          L = L + Lw * le.radiance * misHeuristic(lastBSDFPdf, le.pdf);
+      }
     }
 
     if (noHit(ray))

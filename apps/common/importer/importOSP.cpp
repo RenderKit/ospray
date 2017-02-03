@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -91,13 +91,13 @@ namespace ospray {
                       Group *group,
                       const tinyxml2::XMLNode *root)
     {
-      const char *dpFromEnv = getenv("OSPRAY_DATA_PARALLEL");
+      auto dpFromEnv = getEnvVar<std::string>("OSPRAY_DATA_PARALLEL");
       
       Volume *volume = new Volume;
-      if (dpFromEnv) {
+      if (dpFromEnv.first) {
         // Create the OSPRay object.
         osp::vec3i blockDims;
-        int rc = sscanf(dpFromEnv, "%dx%dx%d",
+        int rc = sscanf(dpFromEnv.second.c_str(), "%dx%dx%d",
                         &blockDims.x, &blockDims.y, &blockDims.z);
         if (rc != 3) {
           throw std::runtime_error("could not parse OSPRAY_DATA_PARALLEL "
@@ -109,10 +109,16 @@ namespace ospray {
           throw std::runtime_error("#loaders.ospObjectFile: could not create "
                                    "volume ...");
         }
-        ospSetVec3i(volume->handle,"num_dp_blocks",blockDims);
+        ospSetVec3i(volume->handle, "num_dp_blocks", blockDims);
       } else {
         // Create the OSPRay object.
-        volume->handle = ospNewVolume("block_bricked_volume");
+        std::string volumeType = "block_bricked_volume";
+
+        auto volTypeFromEnv = getEnvVar<std::string>("OSPRAY_USE_VOLUME_TYPE");
+        if (volTypeFromEnv.first)
+          volumeType = volTypeFromEnv.second;
+
+        volume->handle = ospNewVolume(volumeType.c_str());
       }
 
       if (volume->handle == nullptr) {

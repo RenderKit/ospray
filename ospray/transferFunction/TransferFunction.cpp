@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -15,15 +15,25 @@
 // ======================================================================== //
 
 // ospray
-#include "common/Library.h"
 #include "transferFunction/TransferFunction.h"
 #include "common/Util.h"
-// std
-#include <map>
+#include "TransferFunction_ispc.h"
 
 namespace ospray {
 
-  TransferFunction *TransferFunction::createInstance(const std::string &type) 
+  void TransferFunction::commit()
+  {
+    vec2f valueRange = getParam2f("valueRange", vec2f(0.0f, 1.0f));
+    ispc::TransferFunction_setValueRange(ispcEquivalent,
+                                         (const ispc::vec2f &)valueRange);
+  }
+
+  std::string TransferFunction::toString() const
+  {
+    return "ospray::TransferFunction";
+  }
+
+  TransferFunction *TransferFunction::createInstance(const std::string &type)
   {
     return createInstanceHelper<TransferFunction, OSP_TRANSFER_FUNCTION>(type);
   }

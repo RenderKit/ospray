@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -19,32 +19,22 @@
 // ospray
 #include "common/Data.h"
 #include "transferFunction/TransferFunction.h"
-#include "LinearTransferFunction_ispc.h"
-// std
-#include <vector>
 
 namespace ospray {
 
   /*! \brief A concrete implementation of the TransferFunction class for
     piecewise linear transfer functions.
   */
-  class OSPRAY_SDK_INTERFACE LinearTransferFunction : public TransferFunction
+  struct OSPRAY_SDK_INTERFACE LinearTransferFunction : public TransferFunction
   {
-  public:
-
-    //! Constructor.
-    LinearTransferFunction() {}
-
-    //! Destructor.
+    LinearTransferFunction() = default;
     virtual ~LinearTransferFunction();
 
-    //! Allocate storage and populate the transfer function.
-    virtual void commit();
+    virtual void commit() override;
 
-    //! A string description of this class.
-    virtual std::string toString() const { return("ospray::LinearTransferFunction"); }
+    virtual std::string toString() const override;
 
-  protected:
+  private:
 
     //! Data array that stores the color map.
     Ref<Data> colorValues;
@@ -53,7 +43,7 @@ namespace ospray {
     Ref<Data> opacityValues;
 
     //! Create the equivalent ISPC transfer function.
-    virtual void createEquivalentISPC();
+    void createEquivalentISPC();
 
   };
 

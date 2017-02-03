@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -24,22 +24,15 @@ namespace ospray {
   //!  with 64-bit addressing in which the voxel data is laid out in
   //!  memory in multiple pages each in brick order.
   //!
-  class OSPRAY_SDK_INTERFACE GhostBlockBrickedVolume : public StructuredVolume {
-  public:
+  struct OSPRAY_SDK_INTERFACE GhostBlockBrickedVolume : public StructuredVolume
+  {
+    virtual ~GhostBlockBrickedVolume();
+    virtual std::string toString() const override;
+    virtual void commit() override;
 
-    ~GhostBlockBrickedVolume();
-
-    //! A string description of this class.
-    std::string toString() const override;
-
-    //! Allocate storage and populate the volume, called through the OSPRay API.
-    void commit() override;
-
-    //! Copy voxels into the volume at the given index (non-zero return value
-    //! indicates success).
-    int setRegion(const void *source,
-                  const vec3i &index,
-                  const vec3i &count) override;
+    virtual int setRegion(const void *source,
+                          const vec3i &index,
+                          const vec3i &count) override;
 
   private:
 

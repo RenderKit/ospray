@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -31,16 +31,13 @@ namespace ospray {
       };
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const { return "ospray::viewer::sg::World"; }
+      virtual    std::string toString() const override { return "ospray::viewer::sg::World"; }
 
       //! serialize into given serialization state 
-      virtual void serialize(sg::Serialization::State &serialization);
+      virtual void serialize(sg::Serialization::State &serialization) override;
 
-      std::vector<Ref<Node> > node;
-
-      OSPModel ospModel;
       /*! 'render' the object for the first time */
-      virtual void render(RenderContext &ctx);
+      virtual void render(RenderContext &ctx) override;
 
       /*! \brief return bounding box in world coordinates.
 
@@ -48,18 +45,20 @@ namespace ospray {
         camera motion, setting default camera position, etc. Nodes
         for which that does not apply can simpy return
         box3f(embree::empty) */
-      virtual box3f getBounds();
+      virtual box3f getBounds() override;
       virtual void preCommit(RenderContext &ctx);
       virtual void postCommit(RenderContext &ctx);
       virtual void preRender(RenderContext &ctx);
       virtual void postRender(RenderContext &ctx);
+
+      OSPModel ospModel;
+      std::vector<std::shared_ptr<Node> > nodes;
 
       // template<typename T>
       // inline void add(const Ref<T> &t) { add(t.ptr); }
       // template<typename T>
       // inline void add(T *t) { node.push_back(t); }
     };
-      
     
   } // ::ospray::sg
 } // ::ospray

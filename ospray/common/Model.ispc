@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -40,10 +40,7 @@ export void Model_init(void *uniform _model,
   if (model->embreeSceneHandle)
     rtcDeleteScene(model->embreeSceneHandle);
 
-  uniform RTCSceneFlags scene_flags = RTC_SCENE_STATIC;
-#ifdef OSPRAY_USE_HIGH_QUALITY_BVH
-  scene_flags |= RTC_SCENE_HIGH_QUALITY;
-#endif
+  uniform RTCSceneFlags scene_flags = RTC_SCENE_STATIC | RTC_SCENE_HIGH_QUALITY;
 
   uniform RTCAlgorithmFlags traversal_flags =
       RTC_INTERSECT_UNIFORM | RTC_INTERSECT_VARYING;

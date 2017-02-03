@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -58,14 +58,12 @@ namespace ospray {
     as visualizing primitive ID, geometry ID, shading normals,
     eyelight shading, etc */
   template<void *(*SHADE_MODE)(void*)>
-  struct RaycastRenderer : public Renderer {
-
-    /*! \brief constructor */
+  struct RaycastRenderer : public Renderer
+  {
     RaycastRenderer();
+    virtual ~RaycastRenderer() = default;
 
-    //! \brief common function to help printf-debugging
-    /*! \detailed Every derived class should overrride this! */
-    virtual std::string toString() const;
+    virtual std::string toString() const override;
   };
 
 } // ::ospray

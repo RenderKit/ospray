@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -40,10 +40,13 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE Model : public ManagedObject
   {
     Model();
+    virtual ~Model() = default;
 
     //! \brief common function to help printf-debugging
-    virtual std::string toString() const { return "ospray::Model"; }
+    virtual std::string toString() const override;
     virtual void finalize();
+
+    // Data members //
 
     using GeometryVector = std::vector<Ref<Geometry>>;
     using VolumeVector   = std::vector<Ref<Volume>>;
@@ -53,15 +56,8 @@ namespace ospray {
     //! \brief vector of all volumes used in this model
     VolumeVector volume;
 
-// #if EXP_DATA_PARALLEL
-//     /*! list of all pieces of data parallel volumes, including those
-//         that we do NOT own. note that some of these pieces may be
-//         owned by multiple owners */
-//     std::vector<Ref<Volume::DataParallelPiece> > dpVolumePieces;
-// #endif
-
     //! \brief the embree scene handle for this geometry
-    RTCScene embreeSceneHandle;
+    RTCScene embreeSceneHandle {nullptr};
     box3f bounds;
   };
 

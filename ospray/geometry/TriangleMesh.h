@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -71,10 +71,10 @@ namespace ospray {
    */
   struct OSPRAY_SDK_INTERFACE TriangleMesh : public Geometry
   {
-
     TriangleMesh();
-    virtual std::string toString() const { return "ospray::TriangleMesh"; }
-    virtual void finalize(Model *model);
+    virtual ~TriangleMesh() = default;
+    virtual std::string toString() const override;
+    virtual void finalize(Model *model) override;
 
     const int    *index;  //!< mesh's triangle index array
     const float  *vertex; //!< mesh's vertex array

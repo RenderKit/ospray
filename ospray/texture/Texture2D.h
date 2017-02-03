@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -22,13 +22,11 @@
 namespace ospray {
 
   /*! \brief A Texture defined through a 2D Image. */
-  struct OSPRAY_SDK_INTERFACE Texture2D : public ManagedObject {
-
-    //! \brief common function to help printf-debugging
-    /*! Every derived class should overrride this! */
-    virtual std::string toString() const { return "ospray::Texture2D"; }
-
+  struct OSPRAY_SDK_INTERFACE Texture2D : public ManagedObject
+  {
     virtual ~Texture2D();
+
+    virtual std::string toString() const override;
 
     /*! \brief creates a Texture2D object with the given parameter */
     static Texture2D *createTexture(const vec2i &size, const OSPTextureFormat,

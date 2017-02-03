@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,13 +14,14 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "sg/common/FrameBuffer.h"
+#include "FrameBuffer.h"
 
 namespace ospray {
   namespace sg {
 
     FrameBuffer::FrameBuffer(vec2i size)
-      : size(size)
+      : size(size),
+        ospFrameBuffer(NULL) 
     {
       createFB();
 
@@ -70,12 +71,13 @@ namespace ospray {
     {
       return size;
     }
-
+    
+    /*! \brief returns a std::string with the c++ name of this class */
     std::string FrameBuffer::toString() const
     {
       return "ospray::sg::FrameBuffer";
     }
-
+    
     OSPFrameBuffer FrameBuffer::getOSPHandle() const
     {
       return ospFrameBuffer;

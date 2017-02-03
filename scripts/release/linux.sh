@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2014-2016 Intel Corporation                                    ##
+## Copyright 2014-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -53,9 +53,9 @@ ROOT_DIR=$PWD
 DEP_DIR=$ROOT_DIR/deps
 
 DEP_LOCATION=http://sdvis.org/ospray/download/dependencies/linux
-DEP_EMBREE=embree-2.12.0.x86_64.linux
+DEP_EMBREE=embree-2.13.0.x86_64.linux
 DEP_ISPC=ispc-v1.9.1-linux
-DEP_TBB=tbb2017_20161004oss
+DEP_TBB=tbb2017_20161128oss
 DEP_TARBALLS="$DEP_EMBREE.tar.gz $DEP_ISPC.tar.gz ${DEP_TBB}_lin.tgz"
 
 
@@ -112,12 +112,13 @@ cp $DEP_DIR/OSPRay_readme_$BRANCH.pdf readme.pdf
 # set release and RPM settings
 cmake \
 -D OSPRAY_BUILD_ISA=ALL \
--D OSPRAY_INSTALL_DEPENDENCIES=OFF \
 -D OSPRAY_USE_EXTERNAL_EMBREE=ON \
+-D OSPRAY_MODULE_MPI=ON \
 -D TBB_ROOT=$DEP_DIR/$DEP_TBB \
 -D ISPC_EXECUTABLE=$DEP_DIR/$DEP_ISPC/ispc \
 -D USE_IMAGE_MAGICK=OFF \
 -D OSPRAY_ZIP_MODE=OFF \
+-D OSPRAY_INSTALL_DEPENDENCIES=OFF \
 -D CMAKE_INSTALL_PREFIX=/usr \
 ..
 

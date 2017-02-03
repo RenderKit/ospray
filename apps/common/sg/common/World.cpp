@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -22,8 +22,8 @@ namespace ospray {
     box3f World::getBounds()
     {
       box3f bounds = empty;
-      for (auto &n : node)
-        bounds.extend(n->getBounds());
+      for (auto node : nodes)
+        bounds.extend(node->getBounds());
       return bounds;
     }
 
@@ -33,28 +33,27 @@ namespace ospray {
       sg::Serialization::State savedState = state;
       {
         //state->serialization->object.push_back(Serialization::);
-        for (size_t i=0; i<node.size(); i++)
-          node[i]->serialize(state);
+        for (auto node: nodes)
+          node->serialize(state);
       }
       state = savedState;
     }
 
     void World::render(RenderContext &ctx)
     {
-      ctx.world = this;
+      ctx.world = std::dynamic_pointer_cast<World>(shared_from_this());//this;
 
       if (ospModel)
         throw std::runtime_error("World::ospModel alrady exists!?");
       ospModel = ospNewModel();
-      for (size_t i=0;i<node.size();i++) {
-        node[i]->render(ctx);
-      }
+      for (auto node: nodes) 
+        node->render(ctx);
       ospCommit(ospModel);
     }
 
     void World::preCommit(RenderContext &ctx)
     {
-      ctx.world = this;
+      ctx.world = std::shared_ptr<World>(this);
       // if (!ospModel)
       // {
         ospModel = ospNewModel();

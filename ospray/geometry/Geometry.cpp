@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -25,34 +25,40 @@
 
 namespace ospray {
 
-  //! set given geometry's material. 
-  /*! all material assignations should go through this function; the
-    'material' field itself is private). This allows the
-    respective geometry's derived instance to always properly set
-    the material field of the ISCP-equivalent whenever the
-    c++-side's material gets changed */
+  Geometry::Geometry() { managedObjectType = OSP_GEOMETRY; }
+
   void Geometry::setMaterial(Material *mat)
   {
     if (!mat) {
-      std::cout << "#osp: warning - tried to set NULL material; ignoring"
-        "#osp: warning. (note this means that object may not get any material at all!)" << std::endl;
+      std::stringstream msg;
+      msg << "#osp: warning - tried to set NULL material; ignoring"
+          << "#osp: warning. (note this means that object may not get any "
+          << "material at all!)" << std::endl;
+      postErrorMsg(msg.str());
       return;
     }
     material = mat;
     if (!getIE()) 
-      std::cout << "#osp: warning - geometry does not have an ispc equivalent!" << std::endl;
+      postErrorMsg("#osp: warning - geometry does not have an ispc equivalent!\n");
     else {
       ispc::Geometry_setMaterial(this->getIE(),mat?mat->getIE():NULL);
     }
   }
 
+  Material *Geometry::getMaterial() const
+  {
+    return material.ptr;
+  }
 
-  /*! \brief creates an abstract geometry class of given type 
-    
-    The respective geometry type must be a registered geometry type
-    in either ospray proper or any already loaded module. For
-    geometry types specified in special modules, make sure to call
-    ospLoadModule first. */
+  std::string Geometry::toString() const
+  {
+    return "ospray::Geometry";
+  }
+
+  void Geometry::finalize(Model *)
+  {
+  }
+
   Geometry *Geometry::createGeometry(const char *type)
   {
     return createInstanceHelper<Geometry, OSP_GEOMETRY>(type);

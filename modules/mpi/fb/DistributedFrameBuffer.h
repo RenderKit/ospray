@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,9 +16,12 @@
 
 #pragma once
 
-#include "mpi/common/async/CommLayer.h"
-#include "fb/LocalFB.h"
-#include "common/Thread.h"
+// ours
+// ospray components
+#include "components/mpiCommon/async/CommLayer.h"
+// ospray
+#include "ospray/fb/LocalFB.h"
+// std
 #include <queue>
 
 namespace ospray {

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -13,14 +13,6 @@
 // See the License for the specific language governing permissions and      //
 // limitations under the License.                                           //
 // ======================================================================== //
-
-#if MPI_IMAGE_COMPOSITING
-#  define OSP_COMPOSITING_TEST 1
-#endif
-
-#if OSP_COMPOSITING_TEST
-# include "mpi/MPICommon.h"
-#endif
 
 // ospray
 #include "TriangleMesh.h"
@@ -48,22 +40,25 @@ namespace ospray {
   TriangleMesh::TriangleMesh() 
     : eMesh(RTC_INVALID_ID)
   {
-    this->ispcMaterialPtrs = NULL;
+    this->ispcMaterialPtrs = nullptr;
     this->ispcEquivalent = ispc::TriangleMesh_create(this);
   }
 
+  std::string TriangleMesh::toString() const
+  {
+    return "ospray::TriangleMesh";
+  }
 
   void TriangleMesh::finalize(Model *model)
   {
     static int numPrints = 0;
     numPrints++;
-    if (logLevel() >= 2)
-      if (numPrints == 5)
-        cout << "(all future printouts for triangle mesh creation will be emitted)" << endl;
+    if (numPrints == 5) {
+      postErrorMsg("(all future printouts for triangle mesh creation "
+                   "will be omitted)\n", 2);
+    }
     
-    if (logLevel() >= 2)
-      if (numPrints < 5)
-        std::cout << "ospray: finalizing triangle mesh ..." << std::endl;
+    if (numPrints < 5) postErrorMsg("ospray: finalizing trianglemesh ...\n", 2);
 
     Assert(model && "invalid model pointer");
 
@@ -82,8 +77,8 @@ namespace ospray {
       throw std::runtime_error("triangle mesh must have 'vertex' array");
     if (!indexData)
       throw std::runtime_error("triangle mesh must have 'index' array");
-    if (colorData && colorData->type != OSP_FLOAT4)
-      throw std::runtime_error("vertex.color must have data type OSP_FLOAT4");
+    if (colorData && colorData->type != OSP_FLOAT4 && colorData->type != OSP_FLOAT3A)
+      throw std::runtime_error("vertex.color must have data type OSP_FLOAT4 or OSP_FLOAT3A");
 
     // check whether we need 64-bit addressing
     bool huge_mesh = false;
@@ -100,17 +95,17 @@ namespace ospray {
 
     this->index = (int*)indexData->data;
     this->vertex = (float*)vertexData->data;
-    this->normal = normalData ? (float*)normalData->data : NULL;
-    this->color  = colorData ? (vec4f*)colorData->data : NULL;
-    this->texcoord = texcoordData ? (vec2f*)texcoordData->data : NULL;
-    this->prim_materialID  = prim_materialIDData ? (uint32_t*)prim_materialIDData->data : NULL;
-    this->materialList  = materialListData ? (ospray::Material**)materialListData->data : NULL;
+    this->normal = normalData ? (float*)normalData->data : nullptr;
+    this->color  = colorData ? (vec4f*)colorData->data : nullptr;
+    this->texcoord = texcoordData ? (vec2f*)texcoordData->data : nullptr;
+    this->prim_materialID  = prim_materialIDData ? (uint32_t*)prim_materialIDData->data : nullptr;
+    this->materialList  = materialListData ? (ospray::Material**)materialListData->data : nullptr;
     
     if (materialList && !ispcMaterialPtrs) {
       const int num_materials = materialListData->numItems;
       ispcMaterialPtrs = new void*[num_materials];
       for (int i = 0; i < num_materials; i++) {
-        assert(this->materialList[i] != NULL && "Materials in list should never be NULL");
+        assert(this->materialList[i] != nullptr && "Materials in list should never be NULL");
         this->ispcMaterialPtrs[i] = this->materialList[i]->getIE();
       }
     } 
@@ -206,12 +201,13 @@ namespace ospray {
     for (uint32_t i = 0; i < numVerts*numCompsInVtx; i+=numCompsInVtx)
       bounds.extend(*(vec3f*)(vertex + i));
 
-    if (logLevel() >= 2)
-      if (numPrints < 5) {
-        cout << "  created triangle mesh (" << numTris << " tris "
-             << ", " << numVerts << " vertices)" << endl;
-        cout << "  mesh bounds " << bounds << endl;
-      } 
+    if (numPrints < 5) {
+      std::stringstream msg;
+      msg << "  created triangle mesh (" << numTris << " tris "
+          << ", " << numVerts << " vertices)" << endl;
+      msg << "  mesh bounds " << bounds << endl;
+      postErrorMsg(msg, 2);
+    }
 
     ispc::TriangleMesh_set(getIE(),model->getIE(),eMesh,
                            numTris,
@@ -224,9 +220,10 @@ namespace ospray {
                            (ispc::vec4f*)color,
                            (ispc::vec2f*)texcoord,
                            geom_materialID,
-                           getMaterial()?getMaterial()->getIE():NULL,
+                           getMaterial()?getMaterial()->getIE():nullptr,
                            ispcMaterialPtrs,
                            (uint32_t*)prim_materialID,
+                           colorData && colorData->type == OSP_FLOAT4,
                            huge_mesh);
   }
 

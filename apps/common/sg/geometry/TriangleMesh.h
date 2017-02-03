@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -77,19 +77,19 @@ namespace ospray {
       // sharing data with an application) we use data arrays, not std::vector's
 
       //! vertex (position) array
-      Ref<DataBuffer> vertex;
+      std::shared_ptr<DataBuffer> vertex;
       
       //! vertex normal array. empty means 'not present'
-      Ref<DataBuffer> normal;
+      std::shared_ptr<DataBuffer> normal;
       
       //! vertex color array. empty means 'not present'
-      Ref<DataBuffer> color;
+      std::shared_ptr<DataBuffer> color;
 
       //! vertex texture coordinate array. empty means 'not present'
-      Ref<DataBuffer> texcoord;
+      std::shared_ptr<DataBuffer> texcoord;
 
       //! triangle indices
-      Ref<DataBuffer> index;
+      std::shared_ptr<DataBuffer> index;
     };
 
 
@@ -118,26 +118,26 @@ namespace ospray {
         list; if empty, all trianlges should use the
         Geometry::material no matter what Triangle::materialID is set
        */
-      std::vector<Ref<sg::Material> > materialList;
+      std::vector<std::shared_ptr<sg::Material> > materialList;
       std::vector<uint32_t> materialIDs;
 
       // to allow memory-mapping triangle arrays (or in general,
       // sharing data with an application) we use data arrays, not std::vector's
 
       //! vertex (position) array
-      Ref<DataBuffer> vertex;
+      std::shared_ptr<DataBuffer> vertex;
       
       //! vertex normal array. empty means 'not present'
-      Ref<DataBuffer> normal;
+      std::shared_ptr<DataBuffer> normal;
       
       //! vertex color array. empty means 'not present'
-      Ref<DataBuffer> color;
+      std::shared_ptr<DataBuffer> color;
 
       //! vertex texture coordinate array. empty means 'not present'
-      Ref<DataBuffer> texcoord;
+      std::shared_ptr<DataBuffer> texcoord;
 
       //! triangle indices
-      Ref<DataBuffer> index;
+      std::shared_ptr<DataBuffer> index;
       
       //! material IDs
       OSPData primMatIDs;
