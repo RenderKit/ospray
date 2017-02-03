@@ -163,7 +163,6 @@ namespace ospray {
     bool valid(SGVar var) { return var.which() > 0; }
 
     
-    OSP_REGISTER_SG_NODE(Node);
     // list of all named nodes - for now use this as a global
     // variable, but eventually we'll need tofind a better way for
     // storing this
@@ -201,16 +200,21 @@ namespace ospray {
         nodeRegistry[type] = creator;
       } else creator = it->second;
       assert(creator);
-      sg::Node *newNode = creator();
+  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
+      std::shared_ptr<sg::Node> newNode(creator());
+  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
       assert(newNode);
+  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
       newNode->setName(name);
       newNode->setType(type);
       newNode->setFlags(flags);
       if (valid(var))
           newNode->setValue(var);
+  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
       return Node::NodeH(newNode);
     }
 
+    OSP_REGISTER_SG_NODE(Node);
     OSP_REGISTER_SG_NODE_NAME(NodeParam<vec3f>, vec3f);
     OSP_REGISTER_SG_NODE_NAME(NodeParam<vec2f>, vec2f);
     OSP_REGISTER_SG_NODE_NAME(NodeParam<vec2i>, vec2i);

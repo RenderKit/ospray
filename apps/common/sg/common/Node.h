@@ -520,9 +520,9 @@ namespace ospray {
     }
 
 #define OSP_REGISTER_SG_NODE_NAME(InternalClassName,Name)               \
-    extern "C" ospray::sg::Node *ospray_create_sg_node__##Name()        \
+    extern "C" std::shared_ptr<ospray::sg::Node> ospray_create_sg_node__##Name()        \
     {                                                                   \
-      return new ospray::sg::InternalClassName;                         \
+      return std::make_shared<ospray::sg::InternalClassName>();                         \
     }
 
   } // ::ospray::sg
