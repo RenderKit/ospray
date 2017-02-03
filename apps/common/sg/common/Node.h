@@ -242,8 +242,6 @@ namespace ospray {
       inline void modified() { lastModified = TimeStamp::now(); if (!parent.isNULL()) parent->setChildrenModified(lastModified);}
       void setChildrenModified(TimeStamp t) { if (t >childrenMTime) {childrenMTime = t; if (!parent.isNULL()) parent->setChildrenModified(childrenMTime);} }
 
-      std::string name;
-      std::string type;
 
       //! return named child node
       NodeH& getChild(std::string name) { std::lock_guard<std::mutex> lock{mutex}; return children[name]; }
@@ -380,6 +378,8 @@ namespace ospray {
 
 
     protected:
+      std::string name;
+      std::string type;
       std::vector<SGVar> minmax;
       std::vector<SGVar> whitelist;
       std::vector<SGVar> blacklist;
@@ -516,7 +516,7 @@ namespace ospray {
     extern "C" std::shared_ptr<ospray::sg::Node>                        \
     ospray_create_sg_node__##InternalClassName()                        \
     {                                                                   \
-      return std::make_shared<ospray::sg::InternalClassName>();         \
+      return std::shared_ptr<ospray::sg::InternalClassName>(new ospray_create_sg_node__##InternalClassName());         \
     }
 
 #define OSP_REGISTER_SG_NODE_NAME(InternalClassName,Name)               \

@@ -201,9 +201,11 @@ namespace ospray {
       } else creator = it->second;
       assert(creator);
   std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
-      std::shared_ptr<sg::Node> newNode(creator());
+      sg::Node* nnode = creator();
   std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
-      assert(newNode);
+      std::shared_ptr<sg::Node> newNode(nnode);
+  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
+      assert(newNode.get());
   std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
       newNode->setName(name);
       newNode->setType(type);
