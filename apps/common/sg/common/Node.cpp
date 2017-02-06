@@ -23,7 +23,7 @@ namespace ospray {
 
 
     std::vector<std::shared_ptr<sg::Node> > Node::nodes;
-    std::map<Node*,size_t> Node::nodesMap;
+    std::map<size_t,size_t> Node::nodesMap;
 
         // ==================================================================
     // parameter type specializations
@@ -40,7 +40,7 @@ namespace ospray {
     template<> OSPDataType ParamT<vec3f>::getOSPDataType() const
     { return OSP_FLOAT3; }
     template<> OSPDataType ParamT<vec4f>::getOSPDataType() const
-    { return OSP_FLOAT4; } 
+    { return OSP_FLOAT4; }
 
     template<> OSPDataType ParamT<int32_t>::getOSPDataType() const
     { return OSP_INT; }
@@ -66,13 +66,13 @@ namespace ospray {
     //   assert(p);
     //   assert(p->getName() != "");
     //   param[p->getName()] = p;
-    // }    
+    // }
 
     void Node::setFromXML(const xml::Node &node,
                           const unsigned char *binBasePtr)
-    { 
+    {
       throw std::runtime_error(toString()+":setFromXML() not implemented for XML node type "
-                               +node.name); 
+                               +node.name);
     };
 
 
@@ -134,7 +134,7 @@ namespace ospray {
     }
 
     void Node::postCommit(RenderContext &ctx)
-    {            
+    {
         // for (int i=0;i<ctx.level;i++)
           // std::cout << "  ";
         // std::cout << "commit: " << name << " : " << type << "\n";
@@ -165,7 +165,7 @@ namespace ospray {
 
     bool valid(SGVar var) { return var.which() > 0; }
 
-    
+
     // list of all named nodes - for now use this as a global
     // variable, but eventually we'll need tofind a better way for
     // storing this
@@ -174,18 +174,18 @@ namespace ospray {
     std::shared_ptr<sg::Node> findNamedNode(const std::string &name)
     {
       auto it = namedNodes.find(name);
-      if (it != namedNodes.end()) 
-        return it->second;                         
+      if (it != namedNodes.end())
+        return it->second;
       return {};
     }
 
     void registerNamedNode(const std::string &name, const std::shared_ptr<sg::Node> &node)
     {
-      namedNodes[name] = node; 
+      namedNodes[name] = node;
     }
 
     //     typedef std::shared_ptr<sg::Node> (*creatorFct)();
-    
+
     // std::map<std::string, creatorFct> sgNodeRegistry;
 
     // /*! create a node of given type if registered (and tell it to
@@ -206,12 +206,12 @@ namespace ospray {
     //   }
     //   else
     //     creator = it->second;
-      
+
     //   assert(creator);
     //   std::shared_ptr<sg::Node> newNode = creator();
     //   if (!newNode)
     //     throw std::runtime_error("could not create scene graph node");
-      
+
     //   newNode->setFromXML(node,binBasePtr);
     //   if (node.hasProp("name"))
     //     registerNamedNode(node.getProp("name"),newNode);
@@ -220,18 +220,18 @@ namespace ospray {
 
 
     typedef std::shared_ptr<sg::Node> (*creatorFct)();
-    
+
     std::map<std::string, creatorFct> nodeRegistry;
 
 
     Node::NodeH createNode(std::string name, std::string type, SGVar var, int flags)
     {
-  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
+  //std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
       std::map<std::string, creatorFct>::iterator it = nodeRegistry.find(type);
       creatorFct creator = NULL;
       if (it == nodeRegistry.end()) {
         std::string creatorName = "ospray_create_sg_node__"+std::string(type);
-        std::cout << "creator name: " << creatorName << std::endl;
+        //std::cout << "creator name: " << creatorName << std::endl;
         creator = (creatorFct)getSymbol(creatorName);
         if (!creator)
           throw std::runtime_error("unknown ospray scene graph node '"+type+"'");
@@ -240,22 +240,22 @@ namespace ospray {
         nodeRegistry[type] = creator;
       } else creator = it->second;
       assert(creator);
-  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
+  //std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
       // sg::Node* nnode = creator();
-  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
+  //std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
       std::shared_ptr<sg::Node> newNode = creator();
-  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
+  //std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
       assert(newNode.get());
-  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
+  //std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
       newNode->setName(name);
       newNode->setType(type);
       newNode->setFlags(flags);
       if (valid(var))
           newNode->setValue(var);
-  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
+  //std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
       Node::nodes.push_back(newNode);
-      Node::nodesMap[newNode.get()] = Node::nodes.size();
-      std::cout << "new node count: " << newNode.use_count() << std::endl;
+      Node::nodesMap[(size_t)newNode.get()] = Node::nodes.size();
+     // std::cout << "new node count: " << newNode.use_count() <<  " set to " << Node::nodes.size() << " " << (size_t)newNode.get() << std::endl;
       return Node::NodeH(newNode);
     }
 

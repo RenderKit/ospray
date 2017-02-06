@@ -153,28 +153,29 @@ namespace ospray {
       {
       public:
         NodeH() : nid(0) {}
-        NodeH(std::shared_ptr<sg::Node> n) { nid = Node::nodesMap[n.get()]; }
-        NodeH(sg::Node* n) { nid = Node::nodesMap[n]; }
+        NodeH(std::shared_ptr<sg::Node> n) { nid = Node::nodesMap[(size_t)n.get()]; }
+        // NodeH(sg::Node* n) { nid = Node::nodesMap[(size_t)n]; }
 
         // sg::Node* node;
         size_t nid;
 
         //! return child with name c
-        NodeH& operator[] (std::string c) { return Node::nodes[nid]->getChild(c);}
+        NodeH& operator[] (std::string c) { return get()->getChild(c);}
 
         //! add child node n to this node
-        NodeH operator+= (NodeH n) { Node::nodes[nid]->add(n); n->setParent(*this); return n;}
+        NodeH operator+= (NodeH n) { get()->add(n); n->setParent(*this); return n;}
 
-        sg::Node* operator-> ()
+        std::shared_ptr<sg::Node> operator-> ()
         {
-          return Node::nodes[nid].get();
+          return get();
         }
 
-        sg::Node* get()
-        { return isNULL()? Node::nodes[nid].get() : nullptr; }
-        std::shared_ptr<sg::Node> getSPtr() { 
-          return isNULL()? Node::nodes[nid] : nullptr;
-        }
+        std::shared_ptr<sg::Node> get()
+        { return isNULL()? nullptr : Node::nodes[nid-1].get() ; }
+
+        // std::shared_ptr<sg::Node> getSPtr() {
+        //   return isNULL()? nullptr : Node::nodes[nid-1];
+        // }
 
         //! is this handle pointing to a null value?
         bool isNULL() const
@@ -205,7 +206,7 @@ namespace ospray {
         existant) that contains additional binary data that the xml
         node fields may point into
       */
-      virtual void setFromXML(const xml::Node &node, 
+      virtual void setFromXML(const xml::Node &node,
                               const unsigned char *binBasePtr);
 
       //! just for convenience; add a typed 'setParam' function
@@ -252,16 +253,15 @@ namespace ospray {
 
 
       //! return named child node
-      NodeH& getChild(std::string name) { 
-        std::lock_guard<std::mutex> lock{mutex}; 
-        std::cout << "getChild name: " << name << std::endl;
+      NodeH& getChild(std::string name) {
+        std::lock_guard<std::mutex> lock{mutex};
         if (children.find(name) == children.end())
           std::cout << "couldn't find child!\n";
-        return children[name]; 
+        return children[name];
       }
 
       //! return named child node
-      NodeH getChildRecursive(std::string name) { 
+      NodeH getChildRecursive(std::string name) {
         mutex.lock();
         Node* n = this;
         auto f = n->children.find(name);
@@ -315,7 +315,7 @@ namespace ospray {
       virtual void add(std::shared_ptr<Node> node) { std::lock_guard<std::mutex> lock{mutex}; children[node->name] = NodeH(node); node->setParent(this); }
 
       //! add node as child of this one
-      virtual void add(NodeH node) { add(node.get()); }
+      virtual void add(NodeH node) { std::lock_guard<std::mutex> lock{mutex}; children[node->name] = node; node->setParent(this); }
 
       //! traverse this node and childrend with given operation, such as print,commit,render or custom operations
       virtual void traverse(RenderContext &ctx, const std::string& operation);
@@ -392,7 +392,7 @@ namespace ospray {
 
 
       static std::vector<std::shared_ptr<sg::Node> > nodes;
-      static std::map<Node*,size_t> nodesMap;
+      static std::map<size_t,size_t> nodesMap;  // ptr, id
     protected:
       std::string name;
       std::string type;
