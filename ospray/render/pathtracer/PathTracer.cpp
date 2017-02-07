@@ -127,11 +127,19 @@ namespace ospray {
     const float maxRadiance = getParam1f("maxContribution",
                                          getParam1f("maxRadiance", inf));
     Texture2D *backplate = (Texture2D*)getParamObject("backplate", nullptr);
+    const vec4f shadowCatcherPlane = getParam4f("shadowCatcherPlane", vec4f(0.f));
 
-    ispc::PathTracer_set(getIE(), maxDepth, minContribution, maxRadiance,
-                         backplate ? backplate->getIE() : nullptr,
-                         lightPtr, lightArray.size(), geometryLights,
-                         &areaPDF[0]);
+    ispc::PathTracer_set(getIE()
+        , maxDepth
+        , minContribution
+        , maxRadiance
+        , backplate ? backplate->getIE() : nullptr
+        , (ispc::vec4f&)shadowCatcherPlane
+        , lightPtr
+        , lightArray.size()
+        , geometryLights
+        , &areaPDF[0]
+        );
   }
 
   OSP_REGISTER_RENDERER(PathTracer,pathtracer);

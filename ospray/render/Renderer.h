@@ -94,9 +94,12 @@ namespace ospray {
     /*! \brief whether the background should be rendered (e.g. for compositing the background may be disabled) */
     bool backgroundEnabled {true};
 
+    /*! \brief the background color */
+    vec3f bgColor {1.f};
+
     /*! \brief maximum depth texture provided as an optional parameter to the renderer, used for early ray termination
 
-      The texture format should be OSP_FLOAT and texture filtering
+      The texture format should be OSP_TEXTURE_R32F and texture filtering
       should be set to nearest-neighbor interpolation:
       (OSP_TEXTURE_FILTER_NEAREST). */
     Ref<Texture2D> maxDepthTexture;

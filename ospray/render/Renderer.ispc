@@ -234,14 +234,15 @@ export void Renderer_endFrame(void *uniform _self,
   self->endFrame(self, perFrameData);
 }
 
-export void Renderer_set(void *uniform _self,
-                         void *uniform _model,
-                         void *uniform _camera,
-                         const uniform float epsilon,
-                         const uniform int32 spp,
-                         const uniform bool backgroundEnabled,
-                         const uniform vec3f &bgColor,
-                         void *uniform _maxDepthTexture)
+export void Renderer_set(void *uniform _self
+    , void *uniform _model
+    , void *uniform _camera
+    , const uniform float epsilon
+    , const uniform int32 spp
+    , const uniform bool backgroundEnabled
+    , const uniform vec3f &bgColor
+    , void *uniform _maxDepthTexture
+    )
 {
   uniform Renderer *uniform self = (uniform Renderer *uniform)_self;
   self->model  = (uniform Model *uniform)_model;

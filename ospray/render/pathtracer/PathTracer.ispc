@@ -110,12 +110,82 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
   lastDg.Ns = ray.dir;
   lastDg.Ng = ray.dir;
 
+  float shadowCatcherDist = -inf;
+  if (self->shadowCatcher)
+    shadowCatcherDist = intersectPlane(ray, self->shadowCatcherPlane);
+
   do {
+    if (shadowCatcherDist > ray.t0) // valid hit can hide other geometry
+      ray.t = min(shadowCatcherDist, ray.t);
+
     traceRay(self->super.model, ray);
+
+    DifferentialGeometry dg;
 
     // record depth of primary rays
     if (depth == 0)
       sample.z = ray.t;
+
+
+    ////////////////////////////////////
+    // Shadow Catcher
+
+    if (straightPath) {
+      // TODO use MIS as well
+      // consider real (flagged) geometries with material and move into
+      // light loop (will also handle MIS)
+      if (shadowCatcherDist <= ray.t && shadowCatcherDist > ray.t0) {
+        // "postIntersect" of shadowCatcher plane
+        dg.P = ray.org + shadowCatcherDist * ray.dir;
+        dg.Ns = dg.Ng = make_vec3f(self->shadowCatcherPlane);
+        if (dot(ray.dir, dg.Ng) >= 0.f)
+          dg.Ns = dg.Ng = neg(dg.Ng);
+
+        vec3f unshaded = make_vec3f(0.f); // illumination without occluders
+        vec3f shaded = make_vec3f(0.f); // illumination including shadows
+        uniform int numLights = self->lights ? min(MAX_LIGHTS, self->numLights) : 0;
+        for (uniform int i = 0; i < numLights; i++) {
+          const uniform Light *uniform light = self->lights[i];
+
+          Light_SampleRes ls = light->sample(light, dg, RandomTEA__getFloats(rng));
+
+          // skip when zero contribution from light
+          if (reduce_max(ls.weight) <= 0.0f | ls.pdf <= PDF_CULLING)
+            continue;
+
+          // evaluate a white diffuse BRDF
+          const float brdf = clamp(dot(ls.dir, dg.Ns));// * one_over_pi cancels anyway
+
+          // skip when zero contribution from material
+          if (brdf <= 0.0f)
+            continue;
+
+          // test for shadows
+          Ray shadow_ray;
+          setRay(shadow_ray, dg.P, ls.dir,
+              self->super.epsilon, ls.dist - self->super.epsilon);
+          shadow_ray.time = ray.time;
+
+          const vec3f unshaded_light_contrib = Lw * ls.weight * brdf;// * misHeuristic(ls.pdf, brdf);
+          unshaded = unshaded + unshaded_light_contrib;
+          shaded = shaded + transparentShadow(self, unshaded_light_contrib, shadow_ray, currentMedium);
+        }
+        const vec3f ratio = reduce_max(unshaded) == 0.f ? Lw : Lw * shaded * rcp(unshaded);
+#ifdef COLORED_SHADOW_HACK
+        const float rm = reduce_min(ratio);
+        sample.alpha = 1.0f - rm;
+        L = ratio - rm;
+#else
+        // alpha blend-in black shadow
+        sample.alpha = 1.0f - luminance(ratio);
+        L = make_vec3f(0.f);
+#endif
+        break;
+      }
+
+      // update dist for potential next intersection (if transparent) 
+      shadowCatcherDist -= ray.t;
+    }
 
     const vec3f wo = neg(ray.dir);
 
@@ -154,7 +224,6 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     ////////////////////////////////////
     // handle next surface interaction
 
-    DifferentialGeometry dg;
     postIntersect(self->super.model, dg, ray,
         DG_MATERIALID|
         DG_NS|DG_NG|DG_FACEFORWARD|DG_NORMALIZE|DG_TEXCOORD|DG_COLOR|DG_TANGENTS
@@ -201,8 +270,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     // direct lighting including shadows and MIS
     if (bsdf->type & BSDF_SMOOTH) {
       uniform int numLights = self->lights ? min(MAX_LIGHTS, self->numLights) : 0;
-      for (uniform int i = 0; i < numLights; i++)
-      {
+      for (uniform int i = 0; i < numLights; i++) {
         const uniform Light *uniform light = self->lights[i];
 
         Light_SampleRes ls = light->sample(light, dg, RandomTEA__getFloats(rng));
@@ -274,7 +342,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
   sample.rgb = L;
   if (isnan(L.x) || isnan(L.y) || isnan(L.z)){
-    sample.rgb = make_vec3f(0.0f,0.0f,0.0f);
+    sample.rgb = make_vec3f(0.f);
     sample.alpha = 1.0f;
   }
   return sample;
@@ -372,15 +440,17 @@ unmasked void PathTracer_renderTile(uniform Renderer *uniform _self,
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
 
-export void PathTracer_set(void *uniform _self,
-                           const uniform int32 maxDepth,
-                           const uniform float minContribution,
-                           const uniform float maxRadiance,
-                           void *uniform backplate,
-                           void **uniform lights,
-                           const uniform uint32 numLights,
-                           const uniform uint32 numGeoLights,
-                           void *uniform areaPDF)
+export void PathTracer_set(void *uniform _self
+    , const uniform int32 maxDepth
+    , const uniform float minContribution
+    , const uniform float maxRadiance
+    , void *uniform backplate
+    , const uniform vec4f &shadowCatcherPlane
+    , void **uniform lights
+    , const uniform uint32 numLights
+    , const uniform uint32 numGeoLights
+    , void *uniform areaPDF
+    )
 {
   PathTracer *uniform self = (PathTracer *uniform)_self;
 
@@ -388,6 +458,13 @@ export void PathTracer_set(void *uniform _self,
   self->minContribution = minContribution;
   self->maxRadiance = maxRadiance;
   self->backplate = (uniform Texture2D *uniform)backplate;
+
+  uniform vec3f normal = make_vec3f(shadowCatcherPlane);
+  const uniform float l = length(normal);
+  self->shadowCatcher = l > 0.f;
+  const uniform float rl = rcp(l);
+  self->shadowCatcherPlane = make_vec4f(normal*rl, shadowCatcherPlane.w*rl);
+
   self->lights = (const uniform Light *uniform *uniform)lights;
   self->numLights = numLights;
   self->numGeoLights = numGeoLights;
@@ -400,7 +477,7 @@ export void* uniform PathTracer_create(void *uniform cppE)
   Renderer_Constructor(&self->super,cppE);
   self->super.renderTile = PathTracer_renderTile;
 
-  PathTracer_set(self, 20, 0.01f, inf, NULL, NULL, 0, 0, NULL);
+  PathTracer_set(self, 20, 0.01f, inf, NULL, make_vec4f(0.f), NULL, 0, 0, NULL);
   precomputeZOrder();
 
   return self;
