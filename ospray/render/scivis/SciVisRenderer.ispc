@@ -160,7 +160,7 @@ inline float calculateAO(const uniform SciVisRenderer *uniform self,
     setRay(ao_ray, dg.P + (self->super.epsilon * dg.Ns), ao_dir,
            self->super.epsilon, self->aoDistance);
 
-    if (self->aoTransparencyEnabled) {
+    if (self->aoTransparencyEnabled || self->super.model->volumeCount) {
       const float rayOffset = self->super.epsilon*(1.f + s.x);
       occlusion += (1.f - lightAlpha(self, ao_ray, self->super.model, 1.0f,
             rayOffset, sampleID, 0.1f));
@@ -454,7 +454,7 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
 
     //hardcode volume spec for now
     info.Ks = volume->specular*singleMax;
-    info.Ns = 20.0f;
+    info.Ns = 30.0f;
     info.local_opacity=intervalColor.w;
     dg.material = 0;
     shadeMaterials(dg, info);
@@ -651,7 +651,7 @@ inline float lightAlpha(const uniform SciVisRenderer *uniform self,
       float tEnd = volumeT+self->volumeEpsilon;
       foreach_unique (v in volume)
       {
-        vec4f volumeColor = SciVisRenderer_computeVolumeInterval(self, v, ray, tBegin, tEnd, 0.95f, 1, rayOffset, sampleID, quality*.5f);
+        vec4f volumeColor = SciVisRenderer_computeVolumeInterval(self, v, ray, tBegin, tEnd, 0.98f, 1, rayOffset, sampleID, quality*.5f);
         material_opacity = volumeColor.w;
       }  
     }
@@ -827,7 +827,7 @@ SciVisRenderer_beginFrame(uniform Renderer *uniform _self,
     for (uniform int32 i = 0; i < model->volumeCount; i++)
       boundingBox = box_extend(boundingBox, model->volumes[i]->boundingBox);
 
-    self->volumeEpsilon = 1e-4f * length(box_size(boundingBox));
+    self->volumeEpsilon = 1e-3f * length(box_size(boundingBox));
   }
 
   return NULL;
