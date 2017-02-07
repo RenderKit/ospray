@@ -392,7 +392,7 @@ void GridAccelerator_intersectAdaptive(GridAccelerator *uniform accelerator,
     // Advance the ray so the next hit point will be outside the empty cell.
     const float dist = ceil(abs(exitDist - ray.t0) / step) * step;
     ray.t0 += dist;
-    ray.time = max(dist,step);
+    ray.time = dist;
   }
 }
 

@@ -355,7 +355,7 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
       {
         samplingRate = newSamplingRate;
         const float ot0 = ray.t0;
-        ray.t0 = max(max(ray.t0-max(ray.time*1.4f,volume->samplingStep),tSkipped), tBegin);
+        ray.t0 = max(max(ray.t0-max(ray.time,volume->samplingStep),tSkipped), tBegin);
         //Carson: TODO: skipping past ray.time shouldnt be necessary and avoided 
         //but currently greatly reduces artifacts from low to high opacity 
         //regions.  issue with space skipping?
@@ -388,7 +388,7 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
 
           // Setup differential geometry for the volume sample point.
           DifferentialGeometry dg;
-          dg.Ng = gradient;  
+          dg.Ng = gradient;
           if (dot(ray.dir,dg.Ng) >= 0.f) dg.Ng = neg(dg.Ng); //face forward
           dg.Ns = dg.Ng;
           dg.P = coordinates + dg.Ns*renderer->volumeEpsilon;
@@ -645,7 +645,7 @@ inline float lightAlpha(const uniform SciVisRenderer *uniform self,
       // print("found volume intersection!\n");
       // Provide ray offset for use with isosurface geometries (this value
       // ignored elsewhere).
-      ray.time = rayOffset * volume->samplingStep;
+      ray.time = -rayOffset * volume->samplingStep;
       ray.t = volumeT;
       float tBegin = max(volumeT0,0.f);
       float tEnd = volumeT+self->volumeEpsilon;
