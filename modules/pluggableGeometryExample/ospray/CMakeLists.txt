@@ -49,6 +49,9 @@ OSPRAY_CREATE_LIBRARY(ospray_module_bilinear_patches
   # on a previously computed ray-prim intersection)
   geometry/BilinearPatches.ispc
 
+  # and finally, the module init code (not doing much, but must be there)
+  moduleInit.cpp
+  
   # this depends on ospray core:
   LINK
   ospray

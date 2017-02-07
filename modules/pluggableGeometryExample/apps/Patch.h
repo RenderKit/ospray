@@ -49,6 +49,14 @@ namespace ospray {
         patches */
     void readPatchesFromFile(std::vector<Patch> &patches,
                              const std::string &patchFileName);
+
+    /*! create a list of patches from the list of given file names
+        (each fiename is supposed to a patch file. if no patches could
+        be read, create a simple test case. 'bounds' will be the world
+        bouding box of all control points in the returned patch
+        list */
+    std::vector<Patch> readPatchesFromFiles(const std::vector<std::string> &fileNames,
+                                            box3f &worldBounds);
     
   } // ::ospray::bilinearPatch
 } // ::ospray

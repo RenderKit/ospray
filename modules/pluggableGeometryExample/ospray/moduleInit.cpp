@@ -16,6 +16,8 @@
 
 /*! \file ospray/moduleInit \brief Defines the module initialization callback */
 
+#include "geometry/BilinearPatches.h"
+
 /*! _everything_ in the ospray core universe should _always_ be in the
   'ospray' namespace. */
 namespace ospray {
@@ -25,7 +27,7 @@ namespace ospray {
     library and init function, the naming for this namespace doesn't
     particularlly matter. E.g., 'bilinearPatch', 'module_blp',
     'bilinar_patch' etc would all work equally well. */
-  namespace bilinearPatch {
+  namespace blp {
     
     /*! the actual module initialization function. This function gets
         called exactly once, when the module gets first loaded through
@@ -47,9 +49,9 @@ namespace ospray {
         name of the module and shared library containing this module
         (see comments regarding library name in CMakeLists.txt)
     */
-    extern "C" void ospray_module_init_bilinear_patches()
+    extern "C" void ospray_init_module_bilinear_patches()
     {
-      printf("#osp: initializing the 'bilinear_patches' module\n");
+      std::cout << "#osp: initializing the 'bilinear_patches' module" << std::endl;
       /* nothing to do, actually - this is only an example */
     }
     

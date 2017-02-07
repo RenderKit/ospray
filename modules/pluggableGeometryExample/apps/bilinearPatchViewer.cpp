@@ -18,6 +18,14 @@
 #include "CommandLine.h"
 #include "Patch.h"
 
+#include <ospray/ospray_cpp/Device.h>
+#include <ospray/ospray_cpp/Geometry.h>
+#include <ospray/ospray_cpp/Data.h>
+#include <ospray/ospray_cpp/Material.h>
+#include "common/commandline/Utility.h"
+#include "common/widgets/OSPGlutViewer.h"
+
+
 /*! _everything_ in the ospray core universe should _always_ be in the
   'ospray' namespace. */
 namespace ospray {
@@ -29,6 +37,10 @@ namespace ospray {
     'bilinar_patch' etc would all work equally well. */
   namespace bilinearPatch {
 
+    ospcommon::vec3f translate;
+    ospcommon::vec3f scale;
+    bool lockFirstFrame = false;
+
     // use ospcommon for vec3f etc
     using namespace ospcommon;
     
@@ -37,33 +49,51 @@ namespace ospray {
       // initialize ospray (this also takes all ospray-related args
       // off the command-line)
       ospInit(&ac,av);
+
+      ospray::glut3D::initGLUT(&ac,av);
+
+      std::deque<ospcommon::box3f>   bbox;
+      std::deque<ospray::cpp::Model> models;
+      ospray::cpp::Renderer renderer;
+      ospray::cpp::Camera   camera;
+
+
       
       // parse the commandline; complain about anything we do not
       // recognize
       CommandLine args(ac,av);
-      if (args.inputFiles.empty())
-        throw std::runtime_error("no input files specified");
 
-      // import the patches from the sample files
-      std::vector<Patch> patches;
-      for (auto fileName : args.inputFiles)
-        readPatchesFromFile(patches,fileName);
+      // import the patches from the sample files (creates a default
+      // patch if no files were specified)
+      box3f worldBounds;
+      std::vector<Patch> patches = readPatchesFromFiles(args.inputFiles,worldBounds);
 
-      box3f bounds = empty;
-      for (auto patch : patches) {
-        bounds.extend(patch.v00);
-        bounds.extend(patch.v01);
-        bounds.extend(patch.v10);
-        bounds.extend(patch.v11);
-      }
-      std::cout << "##################################################################" << std::endl;
-      std::cout << "#osp:blp: done parsing input files" << std::endl;
-      std::cout << "#osp:blp: found a total of  " << patches.size() << " patches ..." << std::endl;
-      std::cout << "#osp:blp: ... with world bounds of " << bounds << std::endl;
-      std::cout << "##################################################################" << std::endl;
+      ospLoadModule("bilinear_patches");
 
-      // create the actual viewer ....
-      throw std::runtime_error("creating actual viewer not implemented yet ...");
+      ospray::cpp::Data data(patches.size()*12,OSP_FLOAT,patches.data());
+      ospray::cpp::Geometry geometry("bilinear_patches");
+      ospray::cpp::Material material;
+      geometry.setMaterial(material);
+      geometry.set("patches",data);
+      geometry.commit();
+      
+      ospray::cpp::Model model;
+      model.addGeometry(geometry);
+      model.commit();
+      
+      models.push_back(model);
+      bbox.push_back(worldBounds);
+
+      renderer = ospray::cpp::Renderer("scivis");
+        
+      ospray::OSPGlutViewer window(bbox, models, renderer, camera);
+      
+      window.setScale(scale);
+      window.setLockFirstAnimationFrame(lockFirstFrame);
+      window.setTranslation(translate);
+      window.create("ospGlutViewer: OSPRay Mini-Scene Graph test viewer");
+      
+      ospray::glut3D::runGLUT();
     }
         
   } // ::ospray::bilinearPatch
