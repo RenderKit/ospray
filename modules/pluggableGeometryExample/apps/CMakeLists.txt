@@ -23,7 +23,10 @@
 # the module gets properly oaded on all worker nodes, even if those
 # live on different nodes, accelerator cards, memory spaces, etc.
 OSPRAY_CREATE_APPLICATION(ospBilinearPatchViewer
+  # the actual viewer
   bilinearPatchViewer.cpp
+  # helper code to parse demo files
+  Patch.cpp
   
   LINK
   ospray

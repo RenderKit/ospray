@@ -14,9 +14,11 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include <ospray/ospray.h>
-#include "CommandLine.h"
-#include "Patch.h"
+#pragma once
+
+#include <ospcommon/vec.h>
+#include <ospcommon/box.h>
+#include <stdexcept>
 
 /*! _everything_ in the ospray core universe should _always_ be in the
   'ospray' namespace. */
@@ -32,39 +34,24 @@ namespace ospray {
     // use ospcommon for vec3f etc
     using namespace ospcommon;
     
-    extern "C" int main(int ac, const char **av)
+    /*! helper class to parse command-line arguments */
+    struct CommandLine {
+      CommandLine(int ac, const char **av);
+      std::vector<std::string> inputFiles;
+    };
+
+    inline CommandLine::CommandLine(int ac, const char **av)
     {
-      // initialize ospray (this also takes all ospray-related args
-      // off the command-line)
-      ospInit(&ac,av);
-      
-      // parse the commandline; complain about anything we do not
-      // recognize
-      CommandLine args(ac,av);
-      if (args.inputFiles.empty())
-        throw std::runtime_error("no input files specified");
-
-      // import the patches from the sample files
-      std::vector<Patch> patches;
-      for (auto fileName : args.inputFiles)
-        readPatchesFromFile(patches,fileName);
-
-      box3f bounds = empty;
-      for (auto patch : patches) {
-        bounds.extend(patch.v00);
-        bounds.extend(patch.v01);
-        bounds.extend(patch.v10);
-        bounds.extend(patch.v11);
+      for (int i=1;i<ac;i++) {
+        const std::string arg = av[i];
+        if (arg[0] == '-') {
+          throw std::runtime_error("un-handled cmdline argument '"+arg+"'");
+        } else {
+          // no arg: must be an input file
+          inputFiles.push_back(arg);
+        }
       }
-      std::cout << "##################################################################" << std::endl;
-      std::cout << "#osp:blp: done parsing input files" << std::endl;
-      std::cout << "#osp:blp: found a total of  " << patches.size() << " patches ..." << std::endl;
-      std::cout << "#osp:blp: ... with world bounds of " << bounds << std::endl;
-      std::cout << "##################################################################" << std::endl;
-
-      // create the actual viewer ....
-      throw std::runtime_error("creating actual viewer not implemented yet ...");
     }
-        
+    
   } // ::ospray::bilinearPatch
 } // ::ospray
