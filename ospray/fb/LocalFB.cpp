@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -37,7 +37,7 @@ namespace ospray {
     else {
       switch (colorBufferFormat) {
       case OSP_FB_NONE:
-        colorBuffer = NULL;
+        colorBuffer = nullptr;
         break;
       case OSP_FB_RGBA8:
       case OSP_FB_SRGBA:
@@ -51,25 +51,21 @@ namespace ospray {
       }
     }
 
-    if (hasDepthBuffer)
-      depthBuffer = (float*)alignedMalloc(sizeof(float)*size.x*size.y);
-    else
-      depthBuffer = NULL;
+    depthBuffer = hasDepthBuffer  ?
+                  (float*)alignedMalloc(sizeof(float)*size.x*size.y) :
+                  nullptr;
 
-    if (hasAccumBuffer)
-      accumBuffer = (vec4f*)alignedMalloc(sizeof(vec4f)*size.x*size.y);
-    else
-      accumBuffer = NULL;
+    accumBuffer = hasAccumBuffer ?
+                  (vec4f*)alignedMalloc(sizeof(vec4f)*size.x*size.y) :
+                  nullptr;
 
     const size_t bytes = sizeof(int32)*getTotalTiles();
     tileAccumID = (int32*)alignedMalloc(bytes);
     memset(tileAccumID, 0, bytes);
 
-    if (hasVarianceBuffer) {
-      varianceBuffer = (vec4f*)alignedMalloc(sizeof(vec4f)*size.x*size.y);
-    } else {
-      varianceBuffer = NULL;
-    }
+    varianceBuffer = hasVarianceBuffer ?
+                     (vec4f*)alignedMalloc(sizeof(vec4f)*size.x*size.y) :
+                     nullptr;
 
     ispcEquivalent = ispc::LocalFrameBuffer_create(this,size.x,size.y,
                                                    colorBufferFormat,

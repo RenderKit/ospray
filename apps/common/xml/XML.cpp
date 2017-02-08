@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -26,10 +26,26 @@ namespace ospray {
     std::string toString(const ospcommon::vec3f &v)
     { std::stringstream ss; ss << v.x << " " << v.y << " " << v.z; return ss.str(); }
 
-    Node::~Node()
+    /*! checks if given node has given property */
+    bool Node::hasProp(const std::string &name) const
     {
-      for (size_t i = 0; i < prop.size(); i++) delete prop[i];
-      for (size_t i = 0; i < child.size(); i++) delete child[i];
+      return (properties.find(name) != properties.end());
+    }
+
+    /*! return value of property with given name if present, else return 'fallbackValue' */
+    std::string Node::getProp(const std::string &name, const std::string &fallbackValue) const
+    {
+      if (!hasProp(name)) return fallbackValue;
+      return properties.find(name)->second;
+    }
+
+    /*! return value of property with given name if present; and throw an exception if not */
+    std::string Node::getProp(const std::string &name) const
+    {
+      if (!hasProp(name))
+        return "";
+      // throw std::runtime_error("given xml::Node does have the queried property '"+name+"'");
+      return properties.find(name)->second;
     }
 
     inline bool isWhite(char s) {
@@ -49,6 +65,7 @@ namespace ospray {
         throw std::runtime_error(err.str());
       }
     }
+    
     inline void expect(char *&s, const char w0, const char w1)
     {
       if (*s != w0 && *s != w1) {
@@ -58,11 +75,25 @@ namespace ospray {
         throw std::runtime_error(err.str());
       }
     }
+    
     inline void consume(char *&s, const char w)
     {
       expect(s,w);
       ++s;
     }
+    
+    inline void consumeComment(char *&s)
+    {
+      consume(s,'<');
+      consume(s,'!');
+      while (!((s[0] == 0) ||
+               (s[0] == '-' && s[1] == '-' && s[2] == '>')))
+        ++s;
+      consume(s,'-');
+      consume(s,'-');
+      consume(s,'>');
+    }
+    
     inline void consume(char *&s, const char *word)
     {
       const char *in = word;
@@ -137,81 +168,89 @@ namespace ospray {
       while (isWhite(*s)) ++s;
     }
 
-    bool parseProp(char *&s, Prop &prop)
+    bool parseProp(char *&s, std::string &name, std::string &value)
     {
-      if (!parseIdentifier(s,prop.name))
+      if (!parseIdentifier(s,name))
         return false;
       skipWhites(s);
       consume(s,'=');
       skipWhites(s);
       expect(s,'"','\'');
-      parseString(s,prop.value);
+      parseString(s,value);
       return true;
     }
 
-    Node *parseNode(char *&s, XMLDoc *doc)
+    bool skipComment(char *&s)
+    {
+      if (*s == '<' && s[1] == '!') {
+        consumeComment(s);
+        return true;
+      }
+      return false;
+    }
+
+    
+    std::shared_ptr<Node> parseNode(char *&s, XMLDoc *doc)
     {
       consume(s,'<');
-      Node *node = new Node(doc);
-      try {
-        if (!parseIdentifier(s,node->name))
-          throw std::runtime_error("XML error: could not parse node name");
+      std::shared_ptr<Node> node = std::make_shared<Node>(doc);
 
+      if (!parseIdentifier(s,node->name))
+        throw std::runtime_error("XML error: could not parse node name");
+
+      skipWhites(s);
+
+      std::string name, value;
+      while (parseProp(s,name,value)) {
+        node->properties[name] = value;
         skipWhites(s);
-
-        Prop prop;
-        while (parseProp(s,prop)) {
-          node->prop.push_back(new Prop(prop));
-          skipWhites(s);
-        }
-
-        if (*s == '/') {
-          consume(s,"/>");
-          return node;
-        }
-
-        consume(s,">");
-
-        while (1) {
-          skipWhites(s);
-          if (*s == '<' && s[1] == '/') {
-            consume(s,"</");
-            std::string name = "";
-            parseIdentifier(s,name);
-            if (name != node->name)
-              throw std::runtime_error("invalid XML node - started with'<"
-                                       + node->name +
-                                       "...'>, but ended with '</"+name+">");
-            consume(s,">");
-            break;
-            // either end of current node
-          } else if (*s == '<') {
-            // child node
-            Node *child = parseNode(s, doc);
-            node->child.push_back(child);
-          } else if (*s == 0) {
-            std::cout << "#osp:xml: warning: xml file ended with still-open"
-                         " nodes (this typically indicates a partial xml file)"
-                      << std::endl;
-            return node;
-          } else {
-            if (node->content != "") {
-              throw std::runtime_error("invalid XML node - two different"
-                                       " contents!?");
-            }
-            // content
-            char *begin = s;
-            while (*s != '<' && *s != 0) ++s;
-            char *end = s;
-            while (isspace(end[-1])) --end;
-            node->content = makeString(begin,end);
-          }
-        }
-        return node;
-      } catch (std::runtime_error e) {
-        delete node;
-        throw e;
       }
+
+      if (*s == '/') {
+        consume(s,"/>");
+        return node;
+      }
+
+      consume(s,">");
+
+      while (1) {
+        skipWhites(s);
+        if (skipComment(s))
+          continue;
+        if (*s == '<' && s[1] == '/') {
+          consume(s,"</");
+          std::string name = "";
+          parseIdentifier(s,name);
+          if (name != node->name)
+            throw std::runtime_error("invalid XML node - started with'<"
+                                     + node->name +
+                                     "...'>, but ended with '</"+name+">");
+          consume(s,">");
+          break;
+          // either end of current node
+        } else if (*s == '<') {
+          // child node
+          std::shared_ptr<Node> child = parseNode(s, doc);
+          node->child.push_back(child);
+        } else if (*s == 0) {
+          std::cout << "#osp:xml: warning: xml file ended with still-open"
+            " nodes (this typically indicates a partial xml file)"
+                    << std::endl;
+          return node;
+        } else {
+          if (node->content != "") {
+            throw std::runtime_error("invalid XML node - two different"
+                                     " contents!?");
+          }
+          // content
+          char *begin = s;
+          while (*s != '<' && *s != 0) ++s;
+          char *end = s;
+          while (isspace(end[-1])) --end;
+          node->content = makeString(begin,end);
+        }
+      }
+      return node;
     }
 
     bool parseHeader(char *&s)
@@ -225,8 +264,8 @@ namespace ospray {
 
       skipWhites(s);
 
-      Prop headerProp;
-      while (parseProp(s,headerProp)) {
+      std::string name, value;
+      while (parseProp(s,name,value)) {
         // ignore header prop
         skipWhites(s);
       }
@@ -235,7 +274,7 @@ namespace ospray {
       return true;
     }
 
-    bool parseXML(XMLDoc *xml, char *s)
+    void parseXML(std::shared_ptr<XMLDoc> doc, char *s)
     {
       if (s[0] == '<' && s[1] == '?') {
         if (!parseHeader(s))
@@ -243,16 +282,18 @@ namespace ospray {
       }
       skipWhites(s);
       while (*s != 0) {
-        Node *node = parseNode(s, xml);
-        if (node)
-          xml->child.push_back(node);
+        if (skipComment(s)) {
+          skipWhites(s);
+          continue;
+        }
+
+        std::shared_ptr<Node> node = parseNode(s, doc.get());
+        doc->child.push_back(node);
         skipWhites(s);
       }
 
       if (*s != 0)
         throw std::runtime_error("un-parsed junk at end of file");
-      ++s;
-      return xml;
     }
 
     void Writer::spaces()
@@ -296,7 +337,7 @@ namespace ospray {
       state.pop();
     }
 
-    XMLDoc *readXML(const std::string &fn)
+    std::shared_ptr<XMLDoc> readXML(const std::string &fn)
     {
       FILE *file = fopen(fn.c_str(),"r");
       if (!file) {
@@ -313,27 +354,22 @@ namespace ospray {
 #endif
       fseek(file,0,SEEK_SET);
       char *mem = new char[numBytes+1];
-      mem[numBytes] = 0;
-      auto rc = fread(mem,1,numBytes,file);
-      (void)rc;
-      XMLDoc *xml = new XMLDoc;
-      xml->fileName = fn;
-      bool valid = false;
       try {
-        valid = parseXML(xml,mem);
+        mem[numBytes] = 0;
+        auto rc = fread(mem,1,numBytes,file);
+        (void)rc;
+        std::shared_ptr<XMLDoc> doc = std::make_shared<XMLDoc>();
+        doc->fileName = fn;
+        bool valid = false;
+        parseXML(doc,mem);
+        delete[] mem;
+        fclose(file);
+        return doc;
       } catch (std::runtime_error e) {
         delete[] mem;
         fclose(file);
         throw e;
       }
-      delete[] mem;
-      fclose(file);
-
-      if (!valid) {
-        delete xml;
-        return nullptr;
-      }
-      return xml;
     }
 
     Writer::Writer(FILE *xml, FILE *bin)

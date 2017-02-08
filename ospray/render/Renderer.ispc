@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -68,7 +68,7 @@ unmasked void Renderer_default_renderTile(uniform Renderer *uniform self,
 
     CameraSample cameraSample;
 
-    const float spp_inv = 1.f / spp;
+    const uniform float spp_inv = 1.f / spp;
 
     const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
     const uniform int end   = begin     + RENDERTILE_PIXELS_PER_JOB;
@@ -111,7 +111,7 @@ unmasked void Renderer_default_renderTile(uniform Renderer *uniform self,
         cameraSample.lens.y = precomputedHalton5(startSampleID+s);
 
         camera->initRay(camera,screenSample.ray,cameraSample);
-        screenSample.ray.t = tMax;
+        screenSample.ray.t = min(screenSample.ray.t, tMax);
 
         self->renderSample(self,perFrameData,screenSample);
         col = col + screenSample.rgb;
@@ -163,7 +163,8 @@ unmasked void Renderer_default_renderTile(uniform Renderer *uniform self,
         depthTexCoord.x = (screenSample.sampleID.x + 0.5f) * fb->rcpSize.x;
         depthTexCoord.y = (screenSample.sampleID.y + 0.5f) * fb->rcpSize.y;
 
-        screenSample.ray.t = get1f(self->maxDepthTexture, depthTexCoord);
+        const float tMax = get1f(self->maxDepthTexture, depthTexCoord);
+        screenSample.ray.t = min(screenSample.ray.t, tMax);
       }
 
       self->renderSample(self,perFrameData,screenSample);
@@ -260,6 +261,7 @@ export void Renderer_pick(void *uniform _self,
                                uniform bool &hit)
 {
   uniform Renderer *uniform self   = (uniform Renderer *uniform)_self;
+  uniform FrameBuffer *uniform fb  = self->fb;
   uniform Camera   *uniform camera = self->camera;
   uniform Model    *uniform model  = self->model;
 
@@ -273,6 +275,15 @@ export void Renderer_pick(void *uniform _self,
 
   Ray ray;
   camera->initRay(camera, ray, cameraSample);
+
+  if (self->maxDepthTexture) {
+    // always sample center of pixel
+    const vec2f pixel = floor(screenPos * make_vec2f(fb->size.x, fb->size.y));
+    const vec2f depthTexCoord = (pixel + 0.5f) * fb->rcpSize;
+    const float tMax = get1f(self->maxDepthTexture, depthTexCoord);
+    ray.t = min(ray.t, tMax);
+  }
+
   traceRay(model, ray);
 
   vec3f p = ray.org + ray.dir * ray.t;

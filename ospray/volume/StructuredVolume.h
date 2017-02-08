@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -17,7 +17,7 @@
 #pragma once
 
 // ospray
-#include "common/tasking/parallel_for.h"
+#include "ospcommon/tasking/parallel_for.h"
 #include "volume/Volume.h"
 // stl
 #include <algorithm>
@@ -39,11 +39,8 @@ namespace ospray {
   class OSPRAY_SDK_INTERFACE StructuredVolume : public Volume {
   public:
 
-    //! Constructor.
-    StructuredVolume();
-
-    //! Destructor.
-    virtual ~StructuredVolume();
+    StructuredVolume() = default;
+    virtual ~StructuredVolume() = default;
 
     //! A string description of this class.
     virtual std::string toString() const override;
@@ -65,20 +62,21 @@ namespace ospray {
     //! Complete volume initialization (only on first commit).
     virtual void finish() override;
 
-#ifndef OSPRAY_VOLUME_VOXELRANGE_IN_APP
     template<typename T>
-    void computeVoxelRange(const T* source, const size_t &count);
-#endif
+    void upsampleRegion(const T *source,
+                        T *out,
+                        const vec3i &regionSize,
+                        const vec3i &scaledRegionSize);
 
-    template<typename T>
-    void upsampleRegion(const T *source, T *out, const vec3i &regionSize, const vec3i &scaledRegionSize);
-
-    /*! Scale up the region we're setting in ospSetRegion. Will return the scaled region size and coordinates
-        through the regionSize and regionCoords passed for the unscaled region (from ospSetRegion),
-        and return true if we actually upsampled the data. If we upsample the data the caller
-        is responsible for calling free on the out data parameter to release the scaled volume data.
+    /*! Scale up the region we're setting in ospSetRegion. Will return the
+        scaled region size and coordinates through the regionSize and
+        regionCoords passed for the unscaled region (from ospSetRegion),
+        and return true if we actually upsampled the data. If we upsample the
+        data the caller is responsible for calling free on the out data
+        parameter to release the scaled volume data.
      */
-    bool scaleRegion(const void *source, void *&out, vec3i &regionSize, vec3i &regionCoords);
+    bool scaleRegion(const void *source, void *&out,
+                     vec3i &regionSize, vec3i &regionCoords);
 
     //! build the accelerator - allows child class (data distributed) to avoid
     //! building..
@@ -97,63 +95,44 @@ namespace ospray {
     vec3f gridSpacing;
 
     //! Indicate that the volume is fully initialized.
-    bool finished;
+    bool finished {false};
 
     //! Voxel value range (will be computed if not provided as a parameter).
-    vec2f voxelRange;
+    vec2f voxelRange {FLT_MAX, -FLT_MAX};
 
     //! Voxel type.
     std::string voxelType;
 
-    /*! Scale factor for the volume, mostly for internal use or data scaling benchmarking.
-       Note that this must be set **before** calling 'ospSetRegion' on the volume as the
-       scaling is applied in that function.
+    /*! Scale factor for the volume, mostly for internal use or data scaling
+        benchmarking. Note that this must be set **before** calling
+        'ospSetRegion' on the volume as the scaling is applied in that function.
      */
     vec3f scaleFactor;
   };
 
 // Inlined member functions ///////////////////////////////////////////////////
 
-#ifndef OSPRAY_VOLUME_VOXELRANGE_IN_APP
   template<typename T>
-  inline void StructuredVolume::computeVoxelRange(const T* source,
-                                                  const size_t &count)
+  inline void StructuredVolume::upsampleRegion(const T *source,
+                                               T *out,
+                                               const vec3i &regionSize,
+                                               const vec3i &scaledRegionSize)
   {
-    const size_t blockSize = 1000000;
-    int numBlocks = divRoundUp(count, blockSize);
-    vec2f* blockRange = STACK_BUFFER(vec2f, numBlocks);
-
-    //NOTE(jda) - shouldn't this be a simple reduction (TBB/OMP)?
-    parallel_for(numBlocks, [&](int taskIndex){
-      size_t myBegin = taskIndex *blockSize;
-      size_t myEnd   = std::min(myBegin+blockSize,count);
-      vec2f myVoxelRange(source[myBegin]);
-
-      for (size_t i = myBegin; i < myEnd ; i++) {
-        myVoxelRange.x = std::min(myVoxelRange.x, (float)source[i]);
-        myVoxelRange.y = std::max(myVoxelRange.y, (float)source[i]);
-      }
-
-      blockRange[taskIndex] = myVoxelRange;
-    });
-
-    for (int i = 0; i < numBlocks; i++) {
-      voxelRange.x = std::min(voxelRange.x, blockRange[i].x);
-      voxelRange.y = std::max(voxelRange.y, blockRange[i].y);
-    }
-  }
-#endif
-  template<typename T>
-  void StructuredVolume::upsampleRegion(const T *source, T *out, const vec3i &regionSize, const vec3i &scaledRegionSize){
-    for (int z = 0; z < scaledRegionSize.z; ++z){
-      parallel_for(scaledRegionSize.x * scaledRegionSize.y, [&](int taskID){
+    for (int z = 0; z < scaledRegionSize.z; ++z) {
+      parallel_for(scaledRegionSize.x * scaledRegionSize.y, [&](int taskID) {
         int x = taskID % scaledRegionSize.x;
         int y = taskID / scaledRegionSize.x;
-        const int idx = static_cast<int>(z / scaleFactor.z) * regionSize.x * regionSize.y
-            + static_cast<int>(y / scaleFactor.y) * regionSize.x + static_cast<int>(x / scaleFactor.x);
-        out[z * scaledRegionSize.y * scaledRegionSize.x + y * scaledRegionSize.x + x] = source[idx];
+        const int idx =
+            static_cast<int>(z / scaleFactor.z) * regionSize.x * regionSize.y
+            + static_cast<int>(y / scaleFactor.y) * regionSize.x
+            + static_cast<int>(x / scaleFactor.x);
+
+        const auto outIdx = z * scaledRegionSize.y * scaledRegionSize.x
+                            + y * scaledRegionSize.x + x;
+        out[outIdx] = source[idx];
       });
     }
   }
+
 } // ::ospray
 

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -25,11 +25,9 @@
 
 namespace ospray {
 
-
-  struct TileRenderer;
-  struct TiledLoadBalancer
+  struct OSPRAY_SDK_INTERFACE TiledLoadBalancer
   {
-    static TiledLoadBalancer *instance;
+    static std::unique_ptr<TiledLoadBalancer> instance;
     virtual std::string toString() const = 0;
     virtual float renderFrame(Renderer *tiledRenderer,
                               FrameBuffer *fb,
@@ -55,33 +53,6 @@ namespace ospray {
                       const uint32 channelFlags) override;
 
     std::string toString() const override;
-  };
-
-  //! tiled load balancer for local rendering on the given machine
-  /*! a tiled load balancer that orchestrates (multi-threaded)
-    rendering on a local machine, without any cross-node
-    communication/load balancing at all (even if there are multiple
-    application ranks each doing local rendering on their own)  */
-  struct OSPRAY_SDK_INTERFACE InterleavedTiledLoadBalancer : public TiledLoadBalancer
-  {
-    size_t deviceID;
-    size_t numDevices;
-
-    InterleavedTiledLoadBalancer(size_t deviceID, size_t numDevices)
-      : deviceID(deviceID), numDevices(numDevices)
-    {
-      if (ospray::debugMode || ospray::logLevel) {
-        std::cout << "=========================================" << std::endl;
-        std::cout << "INTERLEAVED LOAD BALANCER" << std::endl;
-        std::cout << "=========================================" << std::endl;
-      }
-    }
-
-    std::string toString() const override;
-
-    float renderFrame(Renderer *tiledRenderer,
-                      FrameBuffer *fb,
-                      const uint32 channelFlags) override;
   };
 
 } // ::ospray

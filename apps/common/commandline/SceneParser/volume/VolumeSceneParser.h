@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -18,8 +18,8 @@
 
 #include <common/commandline/CommandLineExport.h>
 #include <common/commandline/SceneParser/SceneParser.h>
-#include <ospray_cpp/Renderer.h>
-#include <ospray_cpp/TransferFunction.h>
+#include <ospray/ospray_cpp/Renderer.h>
+#include <ospray/ospray_cpp/TransferFunction.h>
 #include <common/miniSG/miniSG.h>
 
 #include <limits>
@@ -33,8 +33,8 @@ public:
 
   bool parse(int ac, const char **&av) override;
 
-  ospray::cpp::Model model() const override;
-  ospcommon::box3f   bbox()  const override;
+  std::deque<ospray::cpp::Model> model() const override;
+  std::deque<ospcommon::box3f>   bbox()  const override;
 
 private:
 

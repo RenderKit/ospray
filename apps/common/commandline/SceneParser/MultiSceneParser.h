@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -18,7 +18,7 @@
 
 #include <common/commandline/CommandLineExport.h>
 #include <common/commandline/SceneParser/SceneParser.h>
-#include <ospray_cpp/Renderer.h>
+#include <ospray/ospray_cpp/Renderer.h>
 
 class OSPRAY_COMMANDLINE_INTERFACE MultiSceneParser : public SceneParser
 {
@@ -27,14 +27,14 @@ public:
 
   bool parse(int ac, const char **&av) override;
 
-  ospray::cpp::Model model() const override;
-  ospcommon::box3f   bbox()  const override;
+  std::deque<ospray::cpp::Model> model() const override;
+  std::deque<ospcommon::box3f>   bbox()  const override;
 
 protected:
 
   ospray::cpp::Renderer renderer;
-  ospray::cpp::Model    sceneModel;
-  ospcommon::box3f      sceneBbox;
+  std::deque<ospray::cpp::Model>    sceneModels;
+  std::deque<ospcommon::box3f>      sceneBboxes;
 
 private:
 

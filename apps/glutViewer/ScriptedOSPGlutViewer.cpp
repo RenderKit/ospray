@@ -1,5 +1,5 @@
-﻿// ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// ======================================================================== //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -27,17 +27,18 @@ namespace ospray {
   using std::mutex;
   using namespace ospcommon;
 
-  ScriptedOSPGlutViewer::ScriptedOSPGlutViewer(const box3f   &worldBounds,
-                                               cpp::Model     model,
+  ScriptedOSPGlutViewer::ScriptedOSPGlutViewer(const std::deque<box3f>   &worldBounds,
+                                               std::deque<cpp::Model>     model,
                                                cpp::Renderer  renderer,
                                                cpp::Camera    camera,
                                                std::string    scriptFileName)
     : OSPGlutViewer(worldBounds, model, renderer, camera),
-      scriptHandler(model.handle(), renderer.handle(), camera.handle(), this),
+      scriptHandler(model[0].handle(), renderer.handle(), camera.handle(), this),
       frameID(0)
   {
     if (!scriptFileName.empty())
       scriptHandler.runScriptFromFile(scriptFileName);
+    glutViewPort = viewPort;
   }
 
   int ScriptedOSPGlutViewer::getFrameID() const {
@@ -63,22 +64,17 @@ namespace ospray {
     // NOTE: consume a new renderer if one has been queued by another thread
     switchRenderers();
 
+    updateAnimation(ospcommon::getSysTime()-frameTimer);
+    frameTimer = ospcommon::getSysTime();
+
     if (resetAccum) {
       frameBuffer.clear(OSP_FB_ACCUM);
       resetAccum = false;
     }
 
-    fps.startRender();
-    //}
-
     ++frameID;
 
     if (viewPort.modified) {
-      static bool once = true;
-      if(once) {
-        glutViewPort = viewPort;
-        once = false;
-      }
       Assert2(camera.handle(),"ospray camera is null");
       camera.set("pos", viewPort.from);
       auto dir = viewPort.at - viewPort.from;
@@ -90,7 +86,7 @@ namespace ospray {
       viewPort.modified = false;
       frameBuffer.clear(OSP_FB_ACCUM);
     }
-
+    fps.startRender();
     renderer.renderFrame(frameBuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
 
     // set the glut3d widget's frame buffer to the opsray frame buffer,

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -15,8 +15,8 @@
 // ======================================================================== //
 
 // ospray
+#include "api/Device.h"
 #include "Model.h"
-#include "geometry/TriangleMesh.h"
 // embree
 #include "embree2/rtcore.h"
 #include "embree2/rtcore_scene.h"
@@ -24,42 +24,45 @@
 // ispc exports
 #include "Model_ispc.h"
 
-
 namespace ospray {
 
-  using std::cout;
-  using std::endl;
-
-  extern RTCDevice g_embreeDevice;
-
-  extern "C" void *ospray_getEmbreeDevice() { return g_embreeDevice; }
+  extern "C" void *ospray_getEmbreeDevice()
+  {
+    return api::Device::current->embreeDevice;
+  }
 
   Model::Model()
   {
     managedObjectType = OSP_MODEL;
     this->ispcEquivalent = ispc::Model_create(this);
-    this->embreeSceneHandle = NULL;
   }
+
+  std::string Model::toString() const
+  {
+    return "ospray::Model";
+  }
+
   void Model::finalize()
   {
-    if (logLevel >= 2) {
-      std::cout << "=======================================================" << std::endl;
-      std::cout << "Finalizing model, has " 
-           << geometry.size() << " geometries and " << volume.size() << " volumes" << std::endl << std::flush;
-    }
+    std::stringstream msg;
+    msg << "=======================================================\n";
+    msg << "Finalizing model, has " << geometry.size()
+        << " geometries and " << volume.size() << " volumes" << std::endl;
+    postErrorMsg(msg, 2);
 
-    ispc::Model_init(getIE(), g_embreeDevice, geometry.size(), volume.size());
+    RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
+
+    ispc::Model_init(getIE(), embreeDevice, geometry.size(), volume.size());
     embreeSceneHandle = (RTCScene)ispc::Model_getEmbreeSceneHandle(getIE());
 
     bounds = empty;
 
-    // for now, only implement triangular geometry...
-    for (size_t i=0; i < geometry.size(); i++) {
+    for (size_t i = 0; i < geometry.size(); i++) {
 
-      if (logLevel >= 2) {
-        std::cout << "=======================================================" << std::endl;
-        std::cout << "Finalizing geometry " << i << std::endl << std::flush;
-      }
+       std::stringstream msg;
+       msg << "=======================================================\n"
+           << "Finalizing geometry " << i << std::endl;
+       postErrorMsg(msg, 2);
 
       geometry[i]->finalize(this);
 

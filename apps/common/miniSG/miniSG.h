@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -29,6 +29,16 @@
 #include <vector>
 #include <map>
 
+#ifdef _WIN32
+#  ifdef ospray_minisg_EXPORTS
+#    define OSPMINISG_INTERFACE __declspec(dllexport)
+#  else
+#    define OSPMINISG_INTERFACE __declspec(dllimport)
+#  endif
+#else
+#  define OSPMINISG_INTERFACE
+#endif
+
 namespace ospray {
   namespace miniSG {
     using namespace ospcommon;
@@ -49,9 +59,9 @@ namespace ospray {
       void *data;   //Pointer to binary texture data
     };
     
-    Texture2D *loadTexture(const std::string &path, const std::string &fileName, const bool prefereLinear = false);
+    OSPMINISG_INTERFACE Texture2D *loadTexture(const std::string &path, const std::string &fileName, const bool prefereLinear = false);
 
-    struct Material : public RefCount {
+    struct OSPMINISG_INTERFACE Material : public RefCount {
       struct Param : public RefCount {
         typedef enum {
           INT,
@@ -90,9 +100,6 @@ namespace ospray {
           clear();
           s = strdup(v);
           type = STRING;
-          // char *str = (char*)malloc(strlen(v));
-          // strcpy(str, v);
-          // s = str;
         }
 
         void set(void *v, DataType t = UNKNOWN) { clear(); type = t; ptr = v; }
@@ -117,9 +124,9 @@ namespace ospray {
           type = INT;
         }
         union {
-          float      f[4];
-          int32_t      i[4];
-          uint32_t     ui[4];
+          float       f[4];
+          int32_t     i[4];
+          uint32_t    ui[4];
           const char *s;
           void       *ptr;
         };
@@ -151,16 +158,19 @@ namespace ospray {
 
       //At least we can be lazy when setting parameters
       template< typename T >
-        void setParam(const char *name, T v) {
-          //Clean up old parameter
-          ParamMap::iterator it = params.find(name);
-          if(it != params.end() ) params.erase(it);
-          Param *p = new Param;
-          p->set(v);
-          params[name] = p;
-        }
+      void setParam(const char *name, T v)
+      {
+        //Clean up old parameter
+        ParamMap::iterator it = params.find(name);
+        if(it != params.end() ) params.erase(it);
+        Param *p = new Param;
+        p->set(v);
+        params[name] = p;
+      }
 
-      void setParam(const char *name, void *v, Param::DataType t = Param::TEXTURE) {
+      void setParam(const char *name, void *v,
+                    Param::DataType t = Param::TEXTURE)
+      {
         ParamMap::iterator it = params.find(name);
         if(it != params.end() ) params.erase(it);
         Param *p = new Param;
@@ -185,10 +195,10 @@ namespace ospray {
       std::string           name;     /*!< symbolic name of mesh, can be empty */
       std::vector<vec3fa>   position; /*!< vertex positions */
       std::vector<vec3fa>   normal;   /*!< vertex normals; empty if none present */
-      std::vector<vec3fa>   color ;   /*!< vertex colors; empty if none present */
+      std::vector<vec4f>    color;    /*!< vertex colors; empty if none present */
       std::vector<vec2f>    texcoord; /*!< vertex texcoords; empty if none present */
       std::vector<Triangle> triangle; /*!< triangles' vertex IDs */
-      std::vector<Ref<Material> > materialList; /*!< entire list of
+      std::vector<Ref<Material>> materialList; /*!< entire list of
                                              materials, in case the
                                              mesh has per-primitive
                                              material IDs (list may be
@@ -210,7 +220,7 @@ namespace ospray {
       int size() const { return triangle.size(); }
       Ref<Material> material;
       box3f getBBox();
-      Mesh() : bounds(ospcommon::empty) {};
+      Mesh() : bounds(ospcommon::empty) {}
     };
 
     struct Instance : public RefCount {
@@ -225,16 +235,16 @@ namespace ospray {
       OSPGeometry ospGeometry;
     };
 
-    bool operator==(const Instance &a, const Instance &b);
-    bool operator!=(const Instance &a, const Instance &b);
+    OSPMINISG_INTERFACE bool operator==(const Instance &a, const Instance &b);
+    OSPMINISG_INTERFACE bool operator!=(const Instance &a, const Instance &b);
 
-    struct Model : public RefCount {
+    struct OSPMINISG_INTERFACE Model : public RefCount {
       /*! list of meshes that the scene is composed of */
-      std::vector<Ref<Mesh> >     mesh;
+      std::vector<Ref<Mesh>>   mesh;
       /*! \brief list of instances (if available). */
-      std::vector<Instance>       instance;
+      std::vector<Instance>    instance;
       /*! \brief list of camera defined in the model (usually empty) */
-      std::vector<Ref<Camera> >   camera;
+      std::vector<Ref<Camera>> camera;
 
       //! return number of meshes in this model
       inline size_t numMeshes() const { return mesh.size(); }
@@ -245,31 +255,32 @@ namespace ospray {
     };
 
     /*! import a wavefront OBJ file, and add it to the specified model */
-    void importOBJ(Model &model, const FileName &fileName);
+    OSPMINISG_INTERFACE void importOBJ(Model &model, const FileName &fileName);
 
     /*! import a HBP file, and add it to the specified model */
-    void importHBP(Model &model, const FileName &fileName);
+    OSPMINISG_INTERFACE void importHBP(Model &model, const FileName &fileName);
 
     /*! import a TRI file (format:vec3fa[3][numTris]), and add it to the specified model */
-    void importTRI(Model &model, const FileName &fileName);
+    OSPMINISG_INTERFACE void importTRI(Model &model, const FileName &fileName);
 
     /*! import a wavefront OBJ file, and add it to the specified model */
-    void importRIVL(Model &model, const FileName &fileName);
+    OSPMINISG_INTERFACE void importRIVL(Model &model, const FileName &fileName);
 
     /*! import a STL file, and add it to the specified model */
-    void importSTL(Model &model, const FileName &fileName);
+    OSPMINISG_INTERFACE void importSTL(Model &model, const FileName &fileName);
 
     /*! import a list of STL files */
-    void importSTL(std::vector<Model *> &animation, const FileName &fileName);
+    OSPMINISG_INTERFACE void importSTL(std::vector<Model *> &animation, const FileName &fileName);
 
     /*! import a list of X3D files */
-    void importX3D(Model &model, const FileName &fileName);
+    OSPMINISG_INTERFACE void importX3D(Model &model, const FileName &fileName);
 
     /*! import a MiniSG MSG file, and add it to the specified model */
-    void importMSG(Model &model, const FileName &fileName);
+    OSPMINISG_INTERFACE void importMSG(Model &model, const FileName &fileName);
 
-    void error(const std::string &err);
+    OSPMINISG_INTERFACE void error(const std::string &err);
 
-    OSPTexture2D createTexture2D(Texture2D *msgTex);
+    OSPMINISG_INTERFACE OSPTexture2D createTexture2D(Texture2D *msgTex);
+
   } // ::ospray::miniSG
 } // ::ospray

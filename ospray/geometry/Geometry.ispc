@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -33,8 +33,11 @@ static void Geometry_Constructor(uniform Geometry *uniform geometry,
                                  )
 {
   geometry->cppEquivalent = cppEquivalent;
+  geometry->primitives = 0;
   geometry->model    = model;
   geometry->material = material;
   geometry->geomID   = geomID;
   geometry->postIntersect = postIntersect;
+  geometry->sampleArea = NULL;
+  geometry->getAreas = NULL;
 }

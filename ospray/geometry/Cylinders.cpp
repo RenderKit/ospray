@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -28,7 +28,11 @@ namespace ospray {
   Cylinders::Cylinders()
   {
     this->ispcEquivalent = ispc::Cylinders_create(this);
-    _materialList = NULL;
+  }
+
+  std::string Cylinders::toString() const
+  {
+    return "ospray::Cylinders";
   }
 
   void Cylinders::finalize(Model *model)
@@ -45,18 +49,19 @@ namespace ospray {
     materialList      = getParamData("materialList");
     colorData         = getParamData("color");
 
-    if (cylinderData.ptr == NULL || bytesPerCylinder == 0) {
+    if (cylinderData.ptr == nullptr || bytesPerCylinder == 0) {
       throw std::runtime_error("#ospray:geometry/cylinders: no 'cylinders'"
                                " data specified");
     }
     numCylinders = cylinderData->numBytes / bytesPerCylinder;
-    if (logLevel >= 2) 
-      std::cout << "#osp: creating 'cylinders' geometry, #cylinders = "
+    std::stringstream msg;
+    msg << "#osp: creating 'cylinders' geometry, #cylinders = "
         << numCylinders << std::endl;
+    postErrorMsg(msg, 2);
 
     if (_materialList) {
       free(_materialList);
-      _materialList = NULL;
+      _materialList = nullptr;
     }
 
     if (materialList) {
@@ -64,14 +69,24 @@ namespace ospray {
           (void**) malloc(sizeof(void*) * materialList->numItems);
       for (uint32_t i = 0; i < materialList->numItems; i++) {
         Material *m = ((Material**)materialList->data)[i];
-        ispcMaterials[i] = m?m->getIE():NULL;
+        ispcMaterials[i] = m?m->getIE():nullptr;
       }
       _materialList = (void*)ispcMaterials;
     }
 
+    const char* cylinderPtr = (const char*)cylinderData->data;
+    bounds = empty;
+    for (uint32_t i = 0; i < numCylinders; i++, cylinderPtr += bytesPerCylinder) {
+      const float r = offset_radius < 0 ? radius : *(float*)(cylinderPtr + offset_radius);
+      const vec3f v0 = *(vec3f*)(cylinderPtr + offset_v0);
+      const vec3f v1 = *(vec3f*)(cylinderPtr + offset_v1);
+      bounds.extend(box3f(v0 - r, v0 + r));
+      bounds.extend(box3f(v1 - r, v1 + r));
+    }
+
     ispc::CylindersGeometry_set(getIE(),model->getIE(),
                                 cylinderData->data,_materialList,
-                                colorData?(ispc::vec4f*)colorData->data:NULL,
+                                colorData?(ispc::vec4f*)colorData->data:nullptr,
                                 numCylinders,bytesPerCylinder,
                                 radius,materialID,
                                 offset_v0,offset_v1,

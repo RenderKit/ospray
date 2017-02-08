@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2014-2016 Intel Corporation                                    ##
+## Copyright 2014-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -53,9 +53,9 @@ ROOT_DIR=$PWD
 DEP_DIR=$ROOT_DIR/deps
 
 DEP_LOCATION=http://sdvis.org/ospray/download/dependencies/linux
-DEP_EMBREE=embree-2.11.0.x86_64.linux
+DEP_EMBREE=embree-2.13.0.x86_64.linux
 DEP_ISPC=ispc-v1.9.1-linux
-DEP_TBB=tbb44_20160413oss
+DEP_TBB=tbb2017_20161128oss
 DEP_TARBALLS="$DEP_EMBREE.tar.gz $DEP_ISPC.tar.gz ${DEP_TBB}_lin.tgz"
 
 
@@ -112,14 +112,13 @@ cp $DEP_DIR/OSPRay_readme_$BRANCH.pdf readme.pdf
 # set release and RPM settings
 cmake \
 -D OSPRAY_BUILD_ISA=ALL \
--D OSPRAY_BUILD_MIC_SUPPORT=OFF \
--D OSPRAY_BUILD_COI_DEVICE=OFF \
--D OSPRAY_BUILD_MPI_DEVICE=OFF \
 -D OSPRAY_USE_EXTERNAL_EMBREE=ON \
+-D OSPRAY_MODULE_MPI=ON \
 -D TBB_ROOT=$DEP_DIR/$DEP_TBB \
 -D ISPC_EXECUTABLE=$DEP_DIR/$DEP_ISPC/ispc \
 -D USE_IMAGE_MAGICK=OFF \
 -D OSPRAY_ZIP_MODE=OFF \
+-D OSPRAY_INSTALL_DEPENDENCIES=OFF \
 -D CMAKE_INSTALL_PREFIX=/usr \
 ..
 
@@ -150,6 +149,7 @@ tar czf ospray-${OSPRAY_VERSION}.x86_64.rpm.tar.gz ospray-*-${OSPRAY_VERSION}-1.
 # change settings for zip mode
 cmake \
 -D OSPRAY_ZIP_MODE=ON \
+-D OSPRAY_INSTALL_DEPENDENCIES=ON \
 -D CMAKE_INSTALL_INCLUDEDIR=include \
 -D CMAKE_INSTALL_LIBDIR=lib \
 -D CMAKE_INSTALL_DOCDIR=doc \

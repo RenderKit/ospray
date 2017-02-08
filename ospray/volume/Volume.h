@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -30,10 +30,8 @@ namespace ospray {
     createInstance().  This type string must be registered either in
     OSPRay proper, or in a loaded module using OSP_REGISTER_VOLUME.
   */
-  class OSPRAY_SDK_INTERFACE Volume : public ManagedObject
+  struct OSPRAY_SDK_INTERFACE Volume : public ManagedObject
   {
-  public:
-
 #if EXP_DATA_PARALLEL
     struct OSPRAY_SDK_INTERFACE DataParallelPiece : public RefCount {
       /*! world space bounding box of this piece. it is assumed that
@@ -56,19 +54,19 @@ namespace ospray {
 #endif
 
     //! Destructor.
-    virtual ~Volume();
+    virtual ~Volume() = default;
 
     //! \brief Returns whether the volume is a data-distributed volume
     virtual bool isDataDistributed() const;
 
     //! A string description of this class.
-    virtual std::string toString() const;
+    virtual std::string toString() const override;
 
     //! Create a volume container of the given type.
     static Volume *createInstance(const std::string &type);
 
     //! Allocate storage and populate the volume.
-    virtual void commit() = 0;
+    virtual void commit() override;
 
     //! Copy voxels into the volume at the given index (non-zero return value
     //!  indicates success).

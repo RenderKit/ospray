@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 
 // Licensed under the Apache License, Version 2.0 (the "License");          //
@@ -18,7 +18,7 @@
 #include "QTransferFunctionEditor.h"
 #include <algorithm>
 // scene graph components
-#include "sg/common/TransferFunction.h"
+#include "sg/transferFunction/TransferFunction.h"
 
 namespace ospray {
   namespace viewer {

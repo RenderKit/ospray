@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -32,6 +32,7 @@ namespace ospray {
     //! right of the window. contains a set of individual editors, all
     //! maintained in a stack
     struct EditorWidgetStack : public QWidget {
+      
       EditorWidgetStack()
       {
         pageComboBox  = new QComboBox;
@@ -41,6 +42,7 @@ namespace ospray {
         layout->addWidget(stackedWidget);
         setLayout(layout);
       }
+      
       void addPage(const std::string &name, QWidget *widget)
       {
         assert(currentPages.find(name) == currentPages.end());
@@ -57,26 +59,24 @@ namespace ospray {
     };
 
 
-
-
     // =======================================================
     //! render widget that renders through ospray
     // =======================================================
     struct OSPRayRenderWidget : public QAffineSpaceManipulator {
-      OSPRayRenderWidget(Ref<sg::Renderer> renderer);
+      OSPRayRenderWidget(std::shared_ptr<sg::Renderer> renderer);
 
-      Ref<sg::Renderer> sgRenderer;
+      std::shared_ptr<sg::Renderer> sgRenderer;
 
       // -------------------------------------------------------
       // render widget callbacks
       // -------------------------------------------------------
 
-      // Ref<sg::Renderer> sgRenderer;
+      // std::shared_ptr<sg::Renderer> sgRenderer;
 
       virtual void redraw();
       virtual void resize(int width, int height);
 
-      void setWorld(Ref<sg::World> world);
+      void setWorld(std::shared_ptr<sg::World> world);
 
       // -------------------------------------------------------
       // internal state
@@ -89,15 +89,12 @@ namespace ospray {
       //! we can not accumulate)
       bool isDirty;
 
-      sg::Serialization serialization;
       //! the world we're displaying
-      Ref<sg::World> world;
+      std::shared_ptr<sg::World> world;
 
       //! whether to display the frame rate
       bool showFPS;
     };
-
-
 
 
     /*! \brief main QT window of the model viewer */
@@ -105,29 +102,29 @@ namespace ospray {
       Q_OBJECT
 
     public:
-      ModelViewer(Ref<sg::Renderer> sgRenderer, bool fullscreen);
+      ModelViewer(std::shared_ptr<sg::Renderer> sgRenderer, bool fullscreen);
 
       void toggleUpAxis(int axis);
 
-      public slots:
-        //! signals that the render widget changed one of the inputs
-        //! (most likely, that the camera position got changed)
-        void cameraChanged();
+    public slots:
+      //! signals that the render widget changed one of the inputs
+      //! (most likely, that the camera position got changed)
+      void cameraChanged();
 
-        //! print the camera on the command line (triggered by toolbar/menu).
-        void printCameraAction();
-        //! take a screen shot
-        void screenShotAction();
+      //! print the camera on the command line (triggered by toolbar/menu).
+      void printCameraAction();
+      //! take a screen shot
+      void screenShotAction();
 
-        void render();
+      void render();
 
-        void setWorld(Ref<sg::World> newWorld);
+      void setWorld(std::shared_ptr<sg::World> newWorld);
 
-        /*! enable/disable display of frame rate */
-        void showFrameRate(bool showFPS) { this->renderWidget->showFPS = showFPS; }
+      /*! enable/disable display of frame rate */
+      void showFrameRate(bool showFPS) { this->renderWidget->showFPS = showFPS; }
 
-        //! Catches that the light manipulator has changed our default light
-        void lightChanged();
+      //! Catches that the light manipulator has changed our default light
+      void lightChanged();
 
     protected:
         //! create the lower-side time step slider (for models that have
@@ -151,7 +148,7 @@ namespace ospray {
         QTransferFunctionEditor  *transferFunctionEditor;
         QLightManipulator        *lightEditor;
 
-        Ref<sg::Renderer> sgRenderer;
+        std::shared_ptr<sg::Renderer> sgRenderer;
 
     public:
       OSPRayRenderWidget       *renderWidget;

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -173,13 +173,6 @@ export void *uniform LocalFrameBuffer_create(void *uniform cClassPtr,
   self->varianceBuffer = (uniform vec4f *uniform)varianceBuffer;
   self->numTiles = (self->super.size+(TILE_SIZE-1))/TILE_SIZE;
   self->tileAccumID = (uniform int32 *uniform)tileAccumID;
-
-#ifdef FB_PADDED
-  self->stride = (size_x+15)&~15; // pad to 16
-  // on COI/MIC depth buffer is allocated locally without stride
-  // disable it (cannot be mapped anyway on COI) to avoid writing over the end
-  self->depthBuffer = NULL;
-#endif
 
   return self;
 }

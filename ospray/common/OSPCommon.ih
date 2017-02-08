@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -27,23 +27,11 @@ typedef unsigned int8  uint8;
 
 #define LOG(x)
 
-#if defined(__MIC__)
-inline void* uniform align_ptr(void* uniform ptr) {
-  return (void* uniform) ((((uniform int64)ptr) + 63) & (-64));
-}
-#elif defined(__AVX__)
-inline void* uniform align_ptr(void* uniform ptr) {
-  return (void* uniform) ((((uniform int64)ptr) + 31) & (-32));
-}
-#else
-inline void* uniform align_ptr(void* uniform ptr) {
-  return (void* uniform) ((((uniform int64)ptr) + 15) & (-16));
-}
-#endif
-
 #define PRINT(x) print(#x" = %\n", x)
+#define PRINT3(x) print(#x" = (%, %, %)\n", get(x,0), get(x,1), get(x,2))
 // prints first unmasked element
-#define PRINT0(x) print(#x"[%] = %\n", count_trailing_zeros(lanemask()), extract(x, count_trailing_zeros(lanemask())))
+#define PRINTU(x) print(#x"[%] = %\n", count_trailing_zeros(lanemask()), extract(x, count_trailing_zeros(lanemask())))
+#define PRINT3U(x) print(#x"[%] = (%, %, %)\n", count_trailing_zeros(lanemask()), extract(get(x,0), count_trailing_zeros(lanemask())), extract(get(x,1), count_trailing_zeros(lanemask())), extract(get(x,2), count_trailing_zeros(lanemask())))
 
 /*! ispc copy of embree error handling callback */
 void error_handler(const RTCError code, const int8* str);

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -30,10 +30,15 @@ namespace ospray {
     this->ispcEquivalent = ispc::Slices_create(this);
   }
 
-  void Slices::finalize(Model *model) 
+  std::string Slices::toString() const
   {
-    planesData = getParamData("planes", NULL);
-    volume     = (Volume *)getParamObject("volume", NULL);
+    return "ospray::Slices";
+  }
+
+  void Slices::finalize(Model *model)
+  {
+    planesData = getParamData("planes", nullptr);
+    volume     = (Volume *)getParamObject("volume", nullptr);
 
     Assert(planesData);
     Assert(volume);
@@ -41,7 +46,8 @@ namespace ospray {
     numPlanes = planesData->numItems;
     planes    = (const vec4f*)planesData->data;
 
-    ispc::Slices_set(getIE(), model->getIE(), numPlanes, (ispc::vec4f*)planes, volume->getIE());
+    ispc::Slices_set(getIE(), model->getIE(), numPlanes,
+                     (ispc::vec4f*)planes, volume->getIE());
   }
 
   OSP_REGISTER_GEOMETRY(Slices, slices);

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -20,7 +20,7 @@
 #include "Model.h"
 #include "uintah.h"
 
-#include <ospray_cpp/Data.h>
+#include <ospray/ospray_cpp/Data.h>
 
 using namespace ospray;
 using namespace ospcommon;
@@ -93,7 +93,6 @@ bool ParticleSceneParser::parse(int ac, const char **&av)
   std::vector<particle::Model *> particleModel;
   std::vector<DeferredLoadJob *> deferredLoadingListXYZ;
   FileName defFileName = "";
-  std::vector<OSPModel> modelTimeStep;
   int timeStep = 0;
 
   for (int i = 1; i < ac; i++) {
@@ -136,10 +135,6 @@ bool ParticleSceneParser::parse(int ac, const char **&av)
   }
 
   if (loadedScene) {
-    sceneModel = make_unique<cpp::Model>();
-
-    auto &model = *sceneModel;
-
     //TODO: this needs parallelized as it was in ospParticleViewer...
     for (uint32_t i = 0; i < deferredLoadingListXYZ.size(); ++i) {
       FileName defFileName = deferredLoadingListXYZ[i]->defFileName;
@@ -173,21 +168,19 @@ bool ParticleSceneParser::parse(int ac, const char **&av)
 
       modelTimeStep.push_back(model);
     }
-
-    model = modelTimeStep[timeStep];
     sceneBbox  = particleModel[0]->getBBox();
   }
-
   return loadedScene;
 }
 
-ospray::cpp::Model ParticleSceneParser::model() const
+std::deque<cpp::Model> ParticleSceneParser::model() const
 {
-  return sceneModel.get() == nullptr ? cpp::Model() : *sceneModel;
+  return modelTimeStep;
 }
 
-ospcommon::box3f ParticleSceneParser::bbox() const
+std::deque<box3f> ParticleSceneParser::bbox() const
 {
-  return sceneBbox;
+  std::deque<box3f> boxes;
+  boxes.push_back(sceneBbox);
+  return boxes;
 }
-

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -24,11 +24,13 @@
 // mini scene graph for loading the model
 #include "common/miniSG/miniSG.h"
 
-#include <ospray_cpp/Camera.h>
-#include <ospray_cpp/Model.h>
-#include <ospray_cpp/Renderer.h>
+#include <ospray/ospray_cpp/Camera.h>
+#include <ospray/ospray_cpp/Model.h>
+#include <ospray/ospray_cpp/Renderer.h>
 
 #include "common/widgets/Glut3dExport.h"
+
+#include <deque>
 
 namespace ospray {
 
@@ -40,10 +42,14 @@ namespace ospray {
   {
   public:
 
-    OSPGlutViewer(const ospcommon::box3f &worldBounds, 
-                  cpp::Model model,
+    OSPGlutViewer(const std::deque<ospcommon::box3f> &worldBounds, 
+                  std::deque<cpp::Model> model,
                   cpp::Renderer renderer, 
                   cpp::Camera camera);
+
+    void create(const char* title,
+                const ospcommon::vec2i& size = ospray::glut3D::Glut3DWidget::defaultInitSize,
+                      bool fullScreen = false);
 
     void setRenderer(OSPRenderer renderer);
     void resetAccumulation();
@@ -51,6 +57,11 @@ namespace ospray {
     void resetView();
     void printViewport();
     void saveScreenshot(const std::string &basename);
+    void setScale(const ospcommon::vec3f& v )  {scale = v;}
+    void setTranslation(const ospcommon::vec3f& v)  {translate = v;}
+    void setLockFirstAnimationFrame(bool st) {lockFirstAnimationFrame = st;}
+    // We override this so we can update the AO ray length
+    void setWorldBounds(const ospcommon::box3f &worldBounds) override;
 
   protected:
 
@@ -58,6 +69,7 @@ namespace ospray {
     virtual void keypress(char key, const ospcommon::vec2i &where) override;
     virtual void mouseButton(int32_t whichButton, bool released,
                              const ospcommon::vec2i &pos) override;
+    virtual void updateAnimation(double deltaSeconds);
 
     void display() override;
 
@@ -65,7 +77,8 @@ namespace ospray {
 
     // Data //
 
-    cpp::Model       sceneModel;
+    std::deque<cpp::Model>       sceneModels;
+    std::deque<ospcommon::box3f> worldBounds;
     cpp::FrameBuffer frameBuffer;
     cpp::Renderer    renderer;
     cpp::Camera      camera;
@@ -82,6 +95,18 @@ namespace ospray {
     glut3D::Glut3DWidget::ViewPort glutViewPort;
 
     std::atomic<bool> resetAccum;
+
+    std::string windowTitle;
+
+    double frameTimer;
+    double animationTimer;
+    double animationFrameDelta;
+    size_t animationFrameId;
+    bool animationPaused;
+    bool lockFirstAnimationFrame;  //use for static scene
+    ospcommon::vec3f translate;
+    ospcommon::vec3f scale;
+    int frameID={0};
   };
 
 }// namespace ospray

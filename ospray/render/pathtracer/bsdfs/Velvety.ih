@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -42,7 +42,7 @@ inline BSDF_EvalRes Velvety_eval(const varying BSDF* uniform super,
   const float sinThetaO = sqrt(1.0f - cosThetaO * cosThetaO);
   const float horizonScatter = pow(sinThetaO, self->f);
   res.pdf = cosineSampleHemispherePDF(cosThetaI);
-  res.value =  mul(horizonScatter * cosThetaI * one_over_pi, self->R);
+  res.value =  (horizonScatter * cosThetaI * one_over_pi) * self->R;
   return res;
 }
 

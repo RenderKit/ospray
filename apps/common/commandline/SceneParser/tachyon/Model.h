@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -77,7 +77,7 @@ namespace ospray {
     };
     struct VertexArray : public Primitive {
       std::vector<vec3fa> coord;
-      std::vector<vec3fa> color;
+      std::vector<vec4f>  color;
       std::vector<vec3fa> normal;
       std::vector<vec3i>  triangle;
       /*! for smoothtris (which we put into a vertex array), each
@@ -128,7 +128,6 @@ namespace ospray {
 
       void exportToEmbree(const std::string &fileName);
       
-    private:
       box3f bounds;
       std::vector<Triangle>      triangleVec;
       std::vector<Cylinder>      cylinderVec;

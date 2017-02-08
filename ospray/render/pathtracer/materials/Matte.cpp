@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -26,7 +26,7 @@ namespace ospray {
 
       //! \brief commit the material's parameters
       virtual void commit() {
-        if (getIE() != NULL) return;
+        if (getIE() != nullptr) return;
 
         const vec3f reflectance = getParam3f("reflectance",vec3f(1.f));
         // const float rcpRoughness = rcpf(roughness);

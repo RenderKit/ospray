@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -27,8 +27,7 @@
 #include "embree2/rtcore_geometry_user.isph"
 
 struct Isosurfaces {
-  uniform Geometry geometry; //!< inherited geometry fields
-  uniform int32 numIsovalues;
+  uniform Geometry super; //!< inherited geometry fields
   uniform float *uniform isovalues;
   uniform Volume *uniform volume;
 };
@@ -62,7 +61,7 @@ void Isosurfaces_intersect(uniform Isosurfaces *uniform self,
   while(1) {
 
     // Advance the ray.
-    volume->intersectIsosurface(volume, self->isovalues, self->numIsovalues, rayCopy);
+    volume->intersectIsosurface(volume, self->isovalues, self->super.primitives, rayCopy);
 
     if (rayCopy.t0 > rayCopy.t)
       return;
@@ -75,7 +74,7 @@ void Isosurfaces_intersect(uniform Isosurfaces *uniform self,
     int isovalueID;
 
     if (!isnan(sample0+sample)) {
-      for (uniform int i=0; i<self->numIsovalues; i++) {
+      for (uniform int i=0; i<self->super.primitives; i++) {
         if ((self->isovalues[i] - sample0) * (self->isovalues[i] - sample) <= 0.f) {
           const float rcpSamp = rcpf(sample - sample0);
           float tIso = infinity;
@@ -92,9 +91,8 @@ void Isosurfaces_intersect(uniform Isosurfaces *uniform self,
 
       // If we found a hit, update ray information and return.
       if (tHit <= rayCopy.t) {
-        ray.geomID = self->geometry.geomID;
+        ray.geomID = self->super.geomID;
         ray.primID = isovalueID;
-        ray.instID = -1;
         ray.t = tHit;
         return;
       }
@@ -119,12 +117,13 @@ static void Isosurfaces_postIntersect(uniform Geometry *uniform geometry,
       dg.Ns = neg(ray.dir); //make_vec3f(1.f,0.f,0.f);
   }
 
+  dg.Ng = dg.Ns;
 
   if ((flags & DG_COLOR)) {
-    TransferFunction *uniform xf = self->volume->transferFunction;
-    const vec3f sampleColor = xf->getColorForValue(xf, self->isovalues[ray.primID]);
-    const float sampleOpacity = 1.f; // later allow "opacity" parameter on isosurfaces.
-    dg.color = make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, sampleOpacity);
+   TransferFunction *uniform xf = self->volume->transferFunction;
+   const vec3f sampleColor = xf->getColorForValue(xf, self->isovalues[ray.primID]);
+   const float sampleOpacity = 1.f; // later allow "opacity" parameter on isosurfaces.
+   dg.color = make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, sampleOpacity);
   }
 }
 
@@ -132,7 +131,7 @@ export void *uniform Isosurfaces_create(void *uniform cppEquivalent)
 {
   uniform Isosurfaces *uniform isosurfaces = uniform new uniform Isosurfaces;
 
-  Geometry_Constructor(&isosurfaces->geometry, cppEquivalent, Isosurfaces_postIntersect, NULL, 0, NULL);
+  Geometry_Constructor(&isosurfaces->super, cppEquivalent, Isosurfaces_postIntersect, NULL, 0, NULL);
 
   return isosurfaces;
 }
@@ -149,9 +148,9 @@ export void *uniform Isosurfaces_set(void          *uniform _isosurfaces,
 
   uniform uint32 geomID = rtcNewUserGeometry(model->embreeSceneHandle, 1);
 
-  isosurfaces->geometry.model = model;
-  isosurfaces->geometry.geomID = geomID;
-  isosurfaces->numIsovalues = numIsovalues;
+  isosurfaces->super.model = model;
+  isosurfaces->super.geomID = geomID;
+  isosurfaces->super.primitives = numIsovalues;
   isosurfaces->isovalues = isovalues;
   isosurfaces->volume = volume;
 

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -19,18 +19,18 @@
 #include <thread>
 #include <mutex>
 
-#include <ospray_cpp/Camera.h>
-#include <ospray_cpp/Data.h>
-#include <ospray_cpp/FrameBuffer.h>
-#include <ospray_cpp/Geometry.h>
-#include <ospray_cpp/Light.h>
-#include <ospray_cpp/Material.h>
-#include <ospray_cpp/Model.h>
-#include <ospray_cpp/PixelOp.h>
-#include <ospray_cpp/Renderer.h>
-#include <ospray_cpp/Texture2D.h>
-#include <ospray_cpp/TransferFunction.h>
-#include <ospray_cpp/Volume.h>
+#include <ospray/ospray_cpp/Camera.h>
+#include <ospray/ospray_cpp/Data.h>
+#include <ospray/ospray_cpp/FrameBuffer.h>
+#include <ospray/ospray_cpp/Geometry.h>
+#include <ospray/ospray_cpp/Light.h>
+#include <ospray/ospray_cpp/Material.h>
+#include <ospray/ospray_cpp/Model.h>
+#include <ospray/ospray_cpp/PixelOp.h>
+#include <ospray/ospray_cpp/Renderer.h>
+#include <ospray/ospray_cpp/Texture2D.h>
+#include <ospray/ospray_cpp/TransferFunction.h>
+#include <ospray/ospray_cpp/Volume.h>
 
 // ChaiScript
 #include "chaiscript/chaiscript.hpp"

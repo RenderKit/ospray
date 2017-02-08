@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -29,29 +29,30 @@ using std::endl;
 
 struct Triangles {
   std::vector<vec3fa> vertex;
-  std::vector<vec3fa> color; // vertex color, from sv's 'v' value
+  std::vector<vec4f>  color; // vertex color, from sv's 'v' value
   std::vector<vec3i>  index;
 
   struct SVVertex {
     float v;
-    vec3f pos; //float x,y,z;
+    vec3f pos;
   };
 
   struct SVTriangle {
     SVVertex vertex[3];
   };
 
-  vec3f lerpf(float x, float x0,float x1,vec3f y0, vec3f y1)
+  vec3f lerpf(float x, float x0, float x1, vec3f y0, vec3f y1)
   {
     float f = (x-x0)/(x1-x0);
     return f*y1+(1-f)*y0;
   }
-  vec3f colorOf(const float f)
+  
+  vec4f colorOf(const float f)
   {
     if (f < .5f)
-      return vec3f(lerpf(f, 0.f,.5f,vec3f(0),vec3f(0,1,0)));
+      return vec4f(lerpf(f, 0.f,.5f,vec3f(0),vec3f(0,1,0)), 1.f);
     else
-      return vec3f(lerpf(f, .5f,1.f,vec3f(0,1,0),vec3f(1,0,0)));
+      return vec4f(lerpf(f, .5f,1.f,vec3f(0,1,0),vec3f(1,0,0)), 1.f);
   }
   void parseSV(const FileName &fn)
   {
@@ -238,9 +239,9 @@ struct StockleyWhealCannon {
       else { // cylinder with sphere at end
         int idx;
         switch (type) {
-          case 3: idx = 1; break; // basal dendrite
-          case 4: idx = 2; break; // apical dendrite
-          default: idx = 0; break; // soma / axon
+        case 3: idx = 1; break; // basal dendrite
+        case 4: idx = 2; break; // apical dendrite
+        default: idx = 0; break; // soma / axon
         }
         spheres[idx].push_back(Sphere{v, radius});
         cylinders[idx].push_back(Cylinder{filePoints[parent-1], v, radius});
@@ -255,10 +256,11 @@ struct StockleyWhealCannon {
   }
 };
 
+static const char *delim = "\n\t\r ";
+
 void osxParseInts(std::vector<int> &vec, const std::string &content)
 {
   char *s = strdup(content.c_str());
-  const char *delim = "\n\t\r ";
   char *tok = strtok(s,delim);
   while (tok) {
     vec.push_back(atol(tok));
@@ -267,51 +269,53 @@ void osxParseInts(std::vector<int> &vec, const std::string &content)
   free(s);
 }
 
+template<typename T> T ato(const char *);
+template<> inline int ato<int>(const char *s) { return atol(s); }
+template<> inline float ato<float>(const char *s) { return atof(s); }
+
+template<typename T>
+vec_t<T,3> osxParseVec3(char * &tok) {
+  vec_t<T,3> v;
+
+  assert(tok);
+  v.x = ato<T>(tok);
+  tok = strtok(NULL,delim);
+
+  assert(tok);
+  v.y = ato<T>(tok);
+  tok = strtok(NULL,delim);
+
+  assert(tok);
+  v.z = ato<T>(tok);
+  tok = strtok(NULL,delim);
+
+  return v;
+}
+
 void osxParseVec3is(std::vector<vec3i> &vec, const std::string &content)
 {
   char *s = strdup(content.c_str());
-  const char *delim = "\n\t\r ";
   char *tok = strtok(s,delim);
-  while (tok) {
-    vec3i v;
-    assert(tok);
-    v.x = atol(tok);
-    tok = strtok(NULL,delim);
-
-    assert(tok);
-    v.y = atol(tok);
-    tok = strtok(NULL,delim);
-
-    assert(tok);
-    v.z = atol(tok);
-    tok = strtok(NULL,delim);
-
-    vec.push_back(v);
-  }
+  while (tok)
+    vec.push_back(osxParseVec3<int>(tok));
   free(s);
 }
 
 void osxParseVec3fas(std::vector<vec3fa> &vec, const std::string &content)
 {
   char *s = strdup(content.c_str());
-  const char *delim = "\n\t\r ";
   char *tok = strtok(s,delim);
-  while (tok) {
-    vec3fa v;
-    assert(tok);
-    v.x = atof(tok);
-    tok = strtok(NULL,delim);
+  while (tok)
+    vec.push_back(osxParseVec3<float>(tok));
+  free(s);
+}
 
-    assert(tok);
-    v.y = atof(tok);
-    tok = strtok(NULL,delim);
-
-    assert(tok);
-    v.z = atof(tok);
-    tok = strtok(NULL,delim);
-
-    vec.push_back(v);
-  }
+void osxParseColors(std::vector<vec4f> &vec, const std::string &content)
+{
+  char *s = strdup(content.c_str());
+  char *tok = strtok(s,delim);
+  while (tok)
+    vec.push_back(vec4f(osxParseVec3<float>(tok), 1.f));
   free(s);
 }
 
@@ -320,62 +324,46 @@ void parseOSX(StreamLines *streamLines,
               Triangles *triangles,
               const std::string &fn)
 {
-  xml::XMLDoc *doc = xml::readXML(fn);
+  std::shared_ptr<xml::XMLDoc> doc = xml::readXML(fn);
   assert(doc);
   if (doc->child.size() != 1 || doc->child[0]->name != "OSPRay")
     throw std::runtime_error("could not parse osx file: Not in OSPRay format!?");
-  xml::Node *root_element = doc->child[0];
-  for (uint32_t childID = 0; childID < root_element->child.size(); childID++) {
-    xml::Node *node = root_element->child[childID];
-    if (node->name == "Info") {
-      // ignore
-      continue;
-    }
-
-    if (node->name == "Model") {
-      xml::Node *model_node = node;
-      for (uint32_t childID = 0; childID < model_node->child.size(); childID++) {
-        xml::Node *node = model_node->child[childID];
-
-        if (node->name == "StreamLines") {
-
-          xml::Node *sl_node = node;
-          for (uint32_t childID = 0; childID < sl_node->child.size(); childID++) {
-            xml::Node *node = sl_node->child[childID];
-            if (node->name == "vertex") {
-              osxParseVec3fas(streamLines->vertex,node->content);
-              continue;
-            };
-            if (node->name == "index") {
-              osxParseInts(streamLines->index,node->content);
-              continue;
-            };
-          }
-          continue;
-        }
-
-        if (node->name == "TriangleMesh") {
-          xml::Node *tris_node = node;
-          for (uint32_t childID = 0; childID < tris_node->child.size(); childID++) {
-            xml::Node *node = tris_node->child[childID];
-            if (node->name == "vertex") {
-              osxParseVec3fas(triangles->vertex,node->content);
-              continue;
-            };
-            if (node->name == "color") {
-              osxParseVec3fas(triangles->color,node->content);
-              continue;
-            };
-            if (node->name == "index") {
-              osxParseVec3is(triangles->index,node->content);
-              continue;
-            };
-          }
-          continue;
-        }
+  const xml::Node &root_element = *doc->child[0];
+  xml::for_each_child_of(root_element,[&](const xml::Node &node){
+      if (node.name == "Info") {
+        // ignore
       }
-    }
-  }
+      else if (node.name == "Model") {
+        const xml::Node &model_node = node;
+        xml::for_each_child_of(model_node,[&](const xml::Node &node){
+            if (node.name == "StreamLines") {
+              const xml::Node &sl_node = node;
+              xml::for_each_child_of(sl_node,[&](const xml::Node &node){
+                  if (node.name == "vertex") {
+                    osxParseVec3fas(streamLines->vertex,node.content);
+                  }
+                  else if (node.name == "index") {
+                    osxParseInts(streamLines->index,node.content);
+                  };
+                });
+            }
+            else if (node.name == "TriangleMesh") {
+              const xml::Node &tris_node = node;
+              xml::for_each_child_of(tris_node,[&](const xml::Node &node){
+                  if (node.name == "vertex") {
+                    osxParseVec3fas(triangles->vertex,node.content);
+                  }
+                  else if (node.name == "color") {
+                    osxParseColors(triangles->color,node.content);
+                  }
+                  else if (node.name == "index") {
+                    osxParseVec3is(triangles->index,node.content);
+                  }
+                });
+            }
+          });
+      }
+    });
 }
 
 void exportOSX(const char *fn,StreamLines *streamLines, Triangles *triangles)
@@ -479,13 +467,11 @@ bool StreamLineSceneParser::parse(int ac, const char **&av)
       }
     } else if (arg == "--streamline-radius") {
       streamLines->radius = atof(av[++i]);
-#if 1
-    }
-#else
+#if 0
     } else if (arg == "--streamline-export") {
       exportOSX(av[++i], streamLines, triangles);
-    }
 #endif
+    }
   }
 
   if (loadedScene) {
@@ -526,7 +512,7 @@ bool StreamLineSceneParser::parse(int ac, const char **&av)
       OSPData index  = ospNewData(triangles->index.size(),
                                   OSP_INT3, &triangles->index[0]);
       OSPData color  = ospNewData(triangles->color.size(),
-                                  OSP_FLOAT3A, &triangles->color[0]);
+                                  OSP_FLOAT4, &triangles->color[0]);
       ospSetObject(geom, "vertex", vertex);
       ospSetObject(geom, "index", index);
       ospSetObject(geom, "vertex.color", color);
@@ -594,12 +580,16 @@ bool StreamLineSceneParser::parse(int ac, const char **&av)
   return loadedScene;
 }
 
-cpp::Model StreamLineSceneParser::model() const
+std::deque<cpp::Model> StreamLineSceneParser::model() const
 {
-  return sceneModel.get() == nullptr ? cpp::Model() : *sceneModel;
+  std::deque<ospray::cpp::Model> models;
+  models.push_back(sceneModel.get() == nullptr ? cpp::Model() : *sceneModel);
+  return models;
 }
 
-box3f StreamLineSceneParser::bbox() const
+std::deque<box3f> StreamLineSceneParser::bbox() const
 {
-  return sceneBbox;
+  std::deque<ospcommon::box3f> boxes;
+  boxes.push_back(sceneBbox);
+  return boxes;
 }

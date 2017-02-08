@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -30,6 +30,12 @@ namespace ospray {
   {
     ispcEquivalent = ispc::PerspectiveCamera_create(this);
   }
+
+  std::string PerspectiveCamera::toString() const
+  {
+    return "ospray::PerspectiveCamera";
+  }
+
   void PerspectiveCamera::commit()
   {
     Camera::commit();
@@ -69,6 +75,8 @@ namespace ospray {
         break;
       case OSP_STEREO_SIDE_BY_SIDE:
         aspect *= 0.5f;
+        break;
+      case OSP_STEREO_NONE:
         break;
     }
     

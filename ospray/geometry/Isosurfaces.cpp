@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -30,10 +30,15 @@ namespace ospray {
     this->ispcEquivalent = ispc::Isosurfaces_create(this);
   }
 
-  void Isosurfaces::finalize(Model *model) 
+  std::string Isosurfaces::toString() const
   {
-    isovaluesData = getParamData("isovalues", NULL);
-    volume        = (Volume *)getParamObject("volume", NULL);
+    return "ospray::Isosurfaces";
+  }
+
+  void Isosurfaces::finalize(Model *model)
+  {
+    isovaluesData = getParamData("isovalues", nullptr);
+    volume        = (Volume *)getParamObject("volume", nullptr);
 
     Assert(isovaluesData);
     Assert(isovaluesData->numItems > 0);
@@ -42,7 +47,8 @@ namespace ospray {
     numIsovalues = isovaluesData->numItems;
     isovalues    = (float*)isovaluesData->data;
 
-    ispc::Isosurfaces_set(getIE(), model->getIE(), numIsovalues, isovalues, volume->getIE());
+    ispc::Isosurfaces_set(getIE(), model->getIE(), numIsovalues,
+                          isovalues, volume->getIE());
   }
 
   OSP_REGISTER_GEOMETRY(Isosurfaces, isosurfaces);

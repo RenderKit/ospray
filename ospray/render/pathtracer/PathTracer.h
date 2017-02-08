@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -20,14 +20,24 @@
 #include "common/Material.h"
 
 namespace ospray {
-  struct PathTracer : public Renderer {
+
+  struct PathTracer : public Renderer
+  {
     PathTracer();
-    virtual std::string toString() const { return "ospray::PathTracer"; }
-    virtual void commit();
-    virtual Material *createMaterial(const char *type);
+    virtual ~PathTracer();
+    virtual std::string toString() const override;
+    virtual void commit() override;
+    virtual Material *createMaterial(const char *type) override;
+
+    void generateGeometryLights(const Model *const, const affine3f& xfm,
+                                const affine3f& rcp_xfm, float *const areaPDF);
+    void destroyGeometryLights();
 
     std::vector<void*> lightArray; // the 'IE's of the XXXLights
+    size_t geometryLights {0}; // number of GeometryLights at beginning of lightArray
+    std::vector<float> areaPDF; // pdfs wrt. area of regular (not instanced) geometry lights
     Data *lightData;
   };
-}
+
+}// ::ospray
 

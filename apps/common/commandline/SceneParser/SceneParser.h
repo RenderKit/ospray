@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -18,13 +18,14 @@
 
 #include <common/commandline/CommandLineExport.h>
 #include <common/commandline/CommandLineParser.h>
-#include <ospray_cpp/Model.h>
+#include <ospray/ospray_cpp/Model.h>
 #include <ospcommon/box.h>
+#include <deque>
 
 class OSPRAY_COMMANDLINE_INTERFACE SceneParser : public CommandLineParser
 {
 public:
   virtual ~SceneParser() = default;
-  virtual ospray::cpp::Model model() const = 0;
-  virtual ospcommon::box3f   bbox()  const = 0;
+  virtual std::deque<ospray::cpp::Model> model() const = 0;
+  virtual std::deque<ospcommon::box3f>   bbox()  const = 0;
 };

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,8 +16,8 @@
 
 // ospray 
 #include "Camera.h"
-// embree 
-#include "../common/Library.h"
+#include "common/Util.h"
+#include "common/Library.h"
 // ispc-side stuff
 #include "Camera_ispc.h"
 // stl 
@@ -25,31 +25,14 @@
 
 namespace ospray {
 
-  typedef Camera *(*creatorFct)();
-
-  std::map<std::string, creatorFct> cameraRegistry;
-
   Camera *Camera::createCamera(const char *type)
   {
-    std::map<std::string, Camera *(*)()>::iterator it = cameraRegistry.find(type);
-    if (it != cameraRegistry.end())
-      return it->second ? (it->second)() : NULL;
-    
-    if (ospray::logLevel >= 2) 
-      std::cout << "#ospray: trying to look up camera type '" 
-                << type << "' for the first time" << std::endl;
+    return createInstanceHelper<Camera, OSP_CAMERA>(type);
+  }
 
-    std::string creatorName = "ospray_create_camera__"+std::string(type);
-    creatorFct creator = (creatorFct)getSymbol(creatorName);
-    cameraRegistry[type] = creator;
-    if (creator == NULL) {
-      if (ospray::logLevel >= 1) 
-        std::cout << "#ospray: could not find camera type '" << type << "'" << std::endl;
-      return NULL;
-    }
-    Camera *camera = (*creator)();
-    camera->managedObjectType = OSP_CAMERA;
-    return camera;
+  std::string Camera::toString() const
+  {
+    return "ospray::Camera";
   }
 
   void Camera::commit()

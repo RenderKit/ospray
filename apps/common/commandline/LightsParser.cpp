@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2016 Intel Corporation                                         //
+// Copyright 2017 Intel Corporation                                         //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,7 +16,7 @@
 
 #include "LightsParser.h"
 
-#include <ospray_cpp/Data.h>
+#include <ospray/ospray_cpp/Data.h>
 
 #include <vector>
 
@@ -34,10 +34,10 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
 {
   std::vector<OSPLight> lights;
   
-  bool hasHDRI = false;
   int HDRI_up = 1;//y
-  float HDRI_intensity = 1;
+  float HDRI_intensity = 0.f;
   const char * HDRI_file_name;
+  vec4f ambient(.85,.9,1,.2*3.14);
 
   for (int i = 1; i < ac; i++) {
     const std::string arg = av[i];
@@ -52,8 +52,12 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
       }
     } else if (arg == "--sun-int") {
         defaultDirLight_intensity = atof(av[++i]);
+    } else if (arg == "--ambient") {
+        ambient.x = atof(av[++i]);
+        ambient.y = atof(av[++i]);
+        ambient.z = atof(av[++i]);
+        ambient.w = atof(av[++i]);
     } else if (arg == "--hdri-light") {
-      hasHDRI = true;
         if (i+2 >= ac)
           throw std::runtime_error("Not enough arguments! Usage:\n\t"
               "--hdri-light <intensity> <image file>.(pfm|ppm)");
@@ -82,7 +86,7 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
   }// Done reading commandline args.
   
   // HDRI environment light.
-  if (hasHDRI) {
+  if (HDRI_intensity > 0.f) {
     auto ospHdri = renderer.newLight("hdri");
     ospHdri.set("name", "hdri light");
     if (HDRI_up == 0) {// up = x
@@ -102,16 +106,17 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
       std::cout << "Failed to load hdri-light texture '" << imageFile << "'" << std::endl;
     } else {
       std::cout << "Successfully loaded hdri-light texture '" << imageFile << "'" << std::endl;
+      OSPTexture2D ospLightMap = ospray::miniSG::createTexture2D(lightMap);
+      ospHdri.set( "map", ospLightMap);
+      ospHdri.commit();
+      lights.push_back(ospHdri.handle());
     }
-    OSPTexture2D ospLightMap = ospray::miniSG::createTexture2D(lightMap);
-    ospHdri.set( "map", ospLightMap);
-    ospHdri.commit();
-    lights.push_back(ospHdri.handle());
   }
 
   //TODO: Need to figure out where we're going to read lighting data from
   
-  if (defaultDirLight_direction != vec3f(0.f)) {
+  if (defaultDirLight_direction != vec3f(0.f)
+      && defaultDirLight_intensity > 0.f) {
     auto ospLight = renderer.newLight("directional");
     if (ospLight.handle() == nullptr) {
       throw std::runtime_error("Failed to create a 'DirectionalLight'!");
@@ -121,6 +126,18 @@ bool DefaultLightsParser::parse(int ac, const char **&av)
     ospLight.set("direction", defaultDirLight_direction);
     ospLight.set("intensity", defaultDirLight_intensity);
     ospLight.set("angularDiameter", 0.53f);
+    ospLight.commit();
+    lights.push_back(ospLight.handle());
+  }
+
+  if (ambient.w > 0.f && reduce_max(ambient) > 0.f) {
+    auto ospLight = renderer.newLight("ambient");
+    if (ospLight.handle() == nullptr) {
+      throw std::runtime_error("Failed to create a 'AmbientLight'!");
+    }
+    ospLight.set("name", "ambient");
+    ospLight.set("color", ambient.x, ambient.y, ambient.z);
+    ospLight.set("intensity", ambient.w);
     ospLight.commit();
     lights.push_back(ospLight.handle());
   }

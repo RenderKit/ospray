@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -29,15 +29,19 @@ namespace ospray {
 
     struct LocalDevice : public Device {
 
-      /*! constructor */
-      LocalDevice(int *_ac=NULL, const char **_av=NULL);
+      LocalDevice()  = default;
+      ~LocalDevice() = default;
 
-      ~LocalDevice();
+      // ManagedObject Implementation /////////////////////////////////////////
+
+      void commit() override;
+
+      // Device Implementation ////////////////////////////////////////////////
 
       /*! create a new frame buffer */
       OSPFrameBuffer frameBufferCreate(const vec2i &size,
-                                               const OSPFrameBufferFormat mode,
-                                               const uint32 channels) override;
+                                       const OSPFrameBufferFormat mode,
+                                       const uint32 channels) override;
 
       /*! map frame buffer */
       const void *frameBufferMap(OSPFrameBuffer fb,
@@ -130,6 +134,8 @@ namespace ospray {
 
       /*! add untyped void pointer to object - this will *ONLY* work in local rendering!  */
       void setVoidPtr(OSPObject object, const char *bufName, void *v) override;
+
+      void removeParam(OSPObject object, const char *name) override;
 
       /*! create a new renderer object (out of list of registered renderers) */
       OSPRenderer newRenderer(const char *type) override;

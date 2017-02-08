@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -22,21 +22,18 @@ namespace ospray {
 
   /*! a DirectionalLight is a singular light which is infinitely distant and
    *  thus projects parallel rays of light across the entire scene */
-  class OSPRAY_SDK_INTERFACE DirectionalLight : public Light {
-    public:
-      DirectionalLight();
+  struct OSPRAY_SDK_INTERFACE DirectionalLight : public Light
+  {
+    DirectionalLight();
+    virtual ~DirectionalLight() = default;
+    virtual std::string toString() const;
+    virtual void commit();
 
-      //! toString is used to aid in printf debugging
-      virtual std::string toString() const { return "ospray::DirectionalLight"; }
-
-      //! Copy understood parameters into member parameters
-      virtual void commit();
-
-    private:
-      vec3f direction;      //!< Direction of the emitted rays
-      vec3f color;          //!< RGB color of the emitted light
-      float intensity;      //!< Amount of light emitted
-      float angularDiameter;//!< Apparent size of the distant light, in degree (e.g. 0.53 for the sun)
+  private:
+    vec3f direction {0.f, 0.f, 1.f};//!< Direction of the emitted rays
+    vec3f color {1.f};              //!< RGB color of the emitted light
+    float intensity {1.f};          //!< Amount of light emitted
+    float angularDiameter {0.f};    //!< Apparent size of the distant light, in degree (e.g. 0.53 for the sun)
   };
 
-}
+}// ::ospray

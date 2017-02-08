@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -27,8 +27,7 @@
 #include "embree2/rtcore_geometry_user.isph"
 
 struct Slices {
-  uniform Geometry geometry; //!< inherited geometry fields
-  uniform int32 numPlanes;
+  uniform Geometry super; //!< inherited geometry fields
   uniform vec4f *uniform planes;
   uniform Volume *uniform volume;
 };
@@ -52,9 +51,8 @@ void Slices_intersect(uniform Slices *uniform slices,
   // slice intersections ignored where NaNs exist in the volume
   if (!isnan(tIntersect) && tIntersect >= max(ray.t0, tBox0) && tIntersect <= min(ray.t, tBox1) &&
       !isnan(slices->volume->computeSample(slices->volume, ray.org + tIntersect*ray.dir))) {
-    ray.geomID = slices->geometry.geomID;
+    ray.geomID = slices->super.geomID;
     ray.primID = primID;
-    ray.instID = -1;
     ray.t = tIntersect;
     ray.Ng = make_vec3f(slices->planes[primID]);
   }
@@ -82,7 +80,7 @@ export void *uniform Slices_create(void *uniform cppEquivalent)
 {
   uniform Slices *uniform slices = uniform new uniform Slices;
 
-  Geometry_Constructor(&slices->geometry, cppEquivalent, Slices_postIntersect, NULL, 0, NULL);
+  Geometry_Constructor(&slices->super, cppEquivalent, Slices_postIntersect, NULL, 0, NULL);
 
   return slices;
 }
@@ -99,9 +97,9 @@ export void *uniform Slices_set(void          *uniform _slices,
 
   uniform uint32 geomID = rtcNewUserGeometry(model->embreeSceneHandle, numPlanes);
 
-  slices->geometry.model  = model;
-  slices->geometry.geomID = geomID;
-  slices->numPlanes = numPlanes;
+  slices->super.model  = model;
+  slices->super.geomID = geomID;
+  slices->super.primitives = numPlanes;
   slices->planes = planes;
   slices->volume = volume;
 

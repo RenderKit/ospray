@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -36,4 +36,11 @@ void PathTraceMaterial_Constructor(uniform PathTraceMaterial* uniform self,
   self->getBSDF = getBSDF;
   self->getTransparency = getTransparency ? getTransparency : PathTraceMaterial_getTransparency;
   self->selectNextMedium = selectNextMedium ? selectNextMedium : PathTraceMaterial_selectNextMedium;
+  self->emission = make_vec3f(0.f);
+}
+
+export uniform bool PathTraceMaterial_isEmissive(void *uniform _mat)
+{
+  uniform PathTraceMaterial *uniform mat = (uniform PathTraceMaterial *uniform)_mat;
+  return reduce_max(mat->emission) > 0.f;
 }

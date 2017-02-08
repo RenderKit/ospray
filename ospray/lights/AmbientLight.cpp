@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -18,23 +18,33 @@
 #include "AmbientLight_ispc.h"
 
 namespace ospray {
+
   AmbientLight::AmbientLight()
-    : color(1.f)
-    , intensity(1.f)
   {
     ispcEquivalent = ispc::AmbientLight_create();
   }
 
-  //! Commit parameters understood by the AmbientLight
+  std::string AmbientLight::toString() const
+  {
+    return "ospray::AmbientLight";
+  }
+
   void AmbientLight::commit() {
+    Light::commit();
+
     color     = getParam3f("color", vec3f(1.f));
     intensity = getParam1f("intensity", 1.f);
 
-    vec3f radiance = color * intensity;
-    
+    vec3f radiance = getRadiance();
     ispc::AmbientLight_set(getIE(), (ispc::vec3f&)radiance);
+  }
+
+  vec3f AmbientLight::getRadiance() const
+  {
+    return color * intensity;
   }
 
   OSP_REGISTER_LIGHT(AmbientLight, AmbientLight);
   OSP_REGISTER_LIGHT(AmbientLight, ambient);
-}
+
+}// ::ospray

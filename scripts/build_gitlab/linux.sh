@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2015-2016 Intel Corporation                                    ##
+## Copyright 2015-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -19,8 +19,6 @@
 mkdir build
 cd build
 
-cmake \
-  -D OSPRAY_BUILD_ISA=ALL \
-..
+cmake -DOSPRAY_BUILD_ISA=ALL "$@" ..
 
 make -j`nproc`

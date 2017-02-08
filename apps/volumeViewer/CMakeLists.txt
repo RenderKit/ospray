@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2016 Intel Corporation                                    ##
+## Copyright 2009-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,28 +14,28 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-IF (NOT OSPRAY_MODULE_OPENGL_UTIL)
-  message(FATAL_ERROR "The 'OpenGL util' module must be enabled to build the 'ospVolumeViewer' application.")
-ENDIF()
-
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
+
+ADD_SUBDIRECTORY(glUtil)
 
 # setup dependencies
 SET(LIBS ${LIBS} ospray)
 SET(LIBS ${LIBS} ospray_common)
 SET(LIBS ${LIBS} ospray_importer)
-SET(LIBS ${LIBS} ospray_module_opengl_util)
+SET(LIBS ${LIBS} ospray_opengl_util)
 SET(LIBS ${LIBS} ospray_tfn)
+SET(LIBS ${LIBS} ospray_minisg)
+SET(LIBS ${LIBS} ospray_commandline)
 
 # link optional loaders-based modules if built
 IF (OSPRAY_MODULE_SEISMIC)
   SET(LIBS ${LIBS} ospray_module_seismic)
 ENDIF (OSPRAY_MODULE_SEISMIC)
 
-FIND_PACKAGE(Qt4 REQUIRED) 
+FIND_PACKAGE(Qt4 REQUIRED QtGui QtOpenGL)
 SET(QT_USE_QTOPENGL TRUE)
 INCLUDE(${QT_USE_FILE})
-SET(LIBS ${LIBS} ${QT_LIBRARIES})
+SET(LIBS ${LIBS} Qt4::QtGui Qt4::QtOpenGL)
 
 FIND_PACKAGE(OpenGL REQUIRED)
 INCLUDE_DIRECTORIES(${OPENGL_INCLUDE_DIRS})

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -19,6 +19,13 @@
 // ospcommon
 #include "ospcommon/FileName.h"
 
+// scene graph
+#include "sg/module/Module.h"
+#include "sg/importer/Importer.h"
+#include "sg/Renderer.h"
+
+#include <string>
+
 namespace ospray {
   namespace importer {
 
@@ -33,6 +40,44 @@ namespace ospray {
 
       if (fileName.ext() == "osp") {
         importOSP(fn, group);
+#if 0 // NOTE(jda) - this can only be re-enabled once the importer stuff is off of Ref<>
+//#ifndef _WIN32
+      } else if (fileName.ext() == "osg") {
+          Ref<sg::World> world = new sg::World;
+          world = sg::loadOSG(fn);
+          Ref<sg::Volume> volumeNode;
+          for (auto node : world.ptr->node)
+          {
+            std::cout << "found node: " << node.ptr->toString() << std::endl;
+            if (node->toString().find("Chombo") != std::string::npos)
+              volumeNode = Ref<sg::Volume>((sg::Volume*)node.ptr);
+          }
+          if (!volumeNode)
+          {
+            throw std::runtime_error("#ospray:importer: no volume found in osg file");
+          }
+          sg::RenderContext ctx;
+          Ref<sg::Integrator>  integrator;
+          integrator = new sg::Integrator("scivis");
+          ctx.integrator = integrator.ptr;
+          integrator->commit();
+          assert(ctx.world);
+          if (!world) {
+            std::cout << "#osp:qtv: no world defined. exiting." << std::endl;
+            exit(1);
+          }
+
+          world->render(ctx);
+          assert(world->ospModel);
+
+          OSPVolume volume = volumeNode->volume;
+          assert(volume);
+
+          Volume* msgVolume = new Volume;
+          msgVolume->bounds = volumeNode->getBounds();
+          msgVolume->handle = volumeNode->volume;
+          group->volume.push_back(msgVolume);
+#endif
       } else if (fileName.ext() == "bob") {
         importRM(fn, group);
       } else {

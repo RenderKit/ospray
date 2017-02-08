@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -27,7 +27,7 @@ namespace ospray {
 
       //! \brief commit the material's parameters
       virtual void commit() {
-        if (getIE() != NULL) return;
+        if (getIE() != nullptr) return;
 
         const float etaInside = getParamf("etaInside", getParamf("eta", 1.5f));
         const float etaOutside = getParamf("etaOutside", 1.f);;

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -28,7 +28,7 @@ struct Viewport
 {
   Viewport() : from(0,-1,0),
                at(0,0,0),
-               up(0,0,1),
+               up(0,0,-1),
                aspect(1.f),
                fovY(60.f),
                modified(true)

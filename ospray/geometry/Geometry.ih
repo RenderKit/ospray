@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -19,6 +19,7 @@
 #include "../common/Material.ih"
 #include "../common/Ray.ih"
 #include "../common/DifferentialGeometry.ih"
+#include "math/AffineSpace.ih"
 
 /*! Geometries are supposed to fill certain members of DifferentialGeometry:
     calculate Ng, Ns, st, color, and materialID if the respective bit DG_NG,
@@ -38,23 +39,51 @@ typedef void (*Geometry_postIntersectFct)(uniform Geometry *uniform self,
                                           const varying Ray &ray,
                                           uniform int64 flags);
 
+struct SampleAreaRes
+{
+  vec3f pos;    //!< sampled point, in world-space
+  vec3f normal; //!< geometry normal Ng at the sampled point
+};
+
+typedef void (*Geometry_GetAreasFct)(
+    const Geometry *const uniform
+    , const uniform affine3f &xfm //!< instance transformation (obj2world)
+    , float *const uniform area //!< array to return area per primitive
+    // in world-space
+    );
+
+// sample the given primitive uniformly wrt. area
+typedef SampleAreaRes (*Geometry_SampleAreaFct)(
+    const Geometry *const uniform
+    , const int32 primID //!< primitive to sample
+    , const uniform affine3f &xfm //!< instance transformation (obj2world)
+    , const uniform affine3f &rcp_xfm //!< inverse transformation (world2obj)
+    , const vec2f& s //!< random numbers to generate the sample
+    );
+
 /*! ispc-side equivalent of a geometry */
 struct Geometry {
   /*! 'virtual' post-intersect function that fills in a
     DifferentialGeometry struct, see above prototype for details */
   Geometry_postIntersectFct postIntersect;
 
+  Geometry_GetAreasFct getAreas;
+  Geometry_SampleAreaFct sampleArea;
+
   //! pointer back to the C++-equivalent of this class
   void *uniform cppEquivalent;
 
+  //! number of primitives this geometry has
+  uniform int32 primitives;
+
   //! material attached to this geometry
-  uniform Material *uniform material;
+  Material *uniform material;
 
   //! model that this geometry is part of
-  uniform Model    *uniform model;
+  Model *uniform model;
 
   //! ID that 'model' knows this geometry under
-  uniform int32             geomID;
+  uniform int32 geomID;
 };
 
 //! constructor for ispc-side Geometry object

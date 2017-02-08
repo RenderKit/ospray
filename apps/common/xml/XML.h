@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -23,6 +23,8 @@
 // stl
 #include <stack>
 #include <vector>
+#include <memory>
+#include <map>
 
 #ifdef _WIN32
 #  ifdef ospray_xml_EXPORTS
@@ -41,57 +43,21 @@ namespace ospray {
     using ospcommon::FileName;
     struct XMLDoc;
 
-    /*! 'prop'erties in xml nodes are the 'name="value"' inside the
-      <node name1="value1" name2="value2"> ... </node> description */
-    struct Prop {
-      std::string name;
-      std::string value;
-    };
-
     /*! a XML node, consisting of a name, a list of properties, and a
       set of child nodes */
-    struct Node {
+    struct OSPRAY_XML_INTERFACE Node {
       //! constructor
       Node(XMLDoc *doc) : name(""), content(""), doc(doc) {}
+
+      /*! checks if given node has given property */
+      bool hasProp(const std::string &name) const;
+
+      /*! return value of property with given name if present; and throw an exception if not */
+      std::string getProp(const std::string &name) const;
       
-      //! destructor
-      virtual ~Node();
-
-      inline bool hasProp(const std::string &name) const {
-        for (size_t i = 0; i < prop.size(); i++)
-          if (prop[i]->name == name) return true;
-        return false;
-      }
-
       /*! return value of property with given name if present, else return 'fallbackValue' */
-      inline std::string getProp(const std::string &name, const std::string &fallbackValue="") const {
-        for (size_t i = 0; i < prop.size(); i++)
-          if (prop[i]->name == name) return prop[i]->value; 
-        return fallbackValue;
-      }
+      std::string getProp(const std::string &name, const std::string &fallbackValue) const;
 
-      /*! find properly with given name, and return as long ('l')
-        int. return undefined if prop does not exist */
-      inline size_t getPropl(const std::string &name, const size_t defaultValue=0) const
-      {
-        const std::string val = getProp(name);
-        if (val.empty()) 
-          return defaultValue;
-        else 
-          return atol(val.c_str()); 
-      }
-      
-      /*! find properly with given name, and return as long ('l')
-        int. return undefined if prop does not exist */
-      inline float getPropf(const std::string &name, const float defaultValue=0.f) const
-      {
-        const std::string val = getProp(name);
-        if (val.empty()) 
-          return defaultValue;
-        else 
-          return atof(val.c_str()); 
-      }
-      
       /*! name of the xml node (i.e., the thing that's in
           "<name>....</name>") */
       std::string name;
@@ -100,42 +66,73 @@ namespace ospray {
           "<name>..." and "...</name>" */
       std::string content;
 
-      /*! list of xml node properties properties */
-      std::vector<Prop *> prop;
+      /*! \brief list of xml node properties properties.  '
+
+        \detailed prop'erties in xml nodes are the 'name="value"'
+        inside the <node name1="value1" name2="value2"> ... </node>
+        description */
+      std::map<std::string,std::string> properties;
 
       /*! list of child nodes */
-      std::vector<Node *> child;
+      std::vector<std::shared_ptr<Node>> child;
 
       //! pointer to parent doc 
       /*! \detailed this points back to the parent xml doc that
           conatined this node. note this is intentionally NOT a ref to
-          avoid cyclical dependencies */
+          avoid cyclical dependencies. Ie, do NOT use this unless
+          you're sure that the XMLDoc node that contained the given
+          node is still around! */
       XMLDoc *doc;
     };
 
     /*! a entire xml document */
-    struct XMLDoc : public Node {
+    struct OSPRAY_XML_INTERFACE XMLDoc : public Node {
       //! constructor
       XMLDoc() : Node(this) {}
 
       //! the name (and path etc) of the file that this doc was read from
       FileName fileName;
     };
+
+    /*! iterator that iterates through all properties of a given node,
+      calling the given functor (usually a lambda) with name and
+      value.
+
+      use via 
+      xml::for_each_prop(node,[&](const std::string &name, 
+                                  const std::string &value){
+         doSomthingWith(name,value);
+      });
+    */
+    template<typename Lambda>
+    inline void for_each_prop(const Node &node, const Lambda &functor)
+    {
+      for (auto it = node.properties.begin(); it != node.properties.end(); it++)
+        functor(it->first,it->second);
+    }
+
+    /*! iterator that iterates through all properties of a given node,
+      calling the given functor (usually a lambda) with name and
+      value.
+
+      use via 
+      xml::for_each_child_of(node,[&](const xml::Node &child){
+         doSomthingWith(name,value);
+      });
+    */
+    template<typename Lambda>
+    inline void for_each_child_of(const Node &node, const Lambda &functor)
+    {
+      for (auto it = node.child.begin(); it != node.child.end(); it++)
+        functor(**it);
+    }
     
     /*! parse an XML file with given file name, and return a pointer
       to it.  In case of any error, this function will free all
       already-allocated data, and throw a std::runtime_error
       exception */
-    OSPRAY_XML_INTERFACE XMLDoc *readXML(const std::string &fn);
+    OSPRAY_XML_INTERFACE std::shared_ptr<XMLDoc> readXML(const std::string &fn);
 
-      
-    /*! @{ */
-    //! \brief helper function(s) to convert data tyeps into strings 
-    std::string toString(const int64_t value);
-    std::string toString(const float value);
-    std::string toString(const ospcommon::vec3f &value);
-    /*! @} */
-    
     /*! helper class for writing sg nodes in XML format */
     struct Writer {
       Writer(FILE *xml, FILE *bin);

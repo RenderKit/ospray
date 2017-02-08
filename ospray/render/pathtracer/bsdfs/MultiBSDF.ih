@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -63,7 +63,7 @@ inline BSDF_EvalRes MultiBSDF_eval(const varying BSDF* uniform super,
       const varying BSDF* uniform curBsdf = self->bsdfs[i];
       BSDF_EvalRes cur = curBsdf->eval(curBsdf, wo, wi);
       res.value = res.value + cur.value;
-      res.pdf = res.pdf + cur.pdf * self->importances[i];
+      res.pdf += cur.pdf * self->importances[i];
     }
   }
 
@@ -108,6 +108,7 @@ inline BSDF_SampleRes MultiBSDF_sample(const varying BSDF* uniform super,
     if (eq(res.weight, make_vec3f(0.0f)) | (res.pdf == 0.0f))
       return make_BSDF_SampleRes_zero();
 
+    // XXX why not also eval smooth BSDF when specular one was sampled?
     if (res.type & BSDF_SPECULAR)
     {
       // scale by rcp(selection pdf)
@@ -126,7 +127,7 @@ inline BSDF_SampleRes MultiBSDF_sample(const varying BSDF* uniform super,
         const varying BSDF* uniform curBsdf = self->bsdfs[i];
         BSDF_EvalRes cur = curBsdf->eval(curBsdf, wo, res.wi);
         value = value + cur.value;
-        res.pdf = res.pdf + cur.pdf * self->importances[i];
+        res.pdf += cur.pdf * self->importances[i];
       }
     }
 

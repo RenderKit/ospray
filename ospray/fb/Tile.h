@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -67,7 +67,7 @@ namespace ospray {
         accumID(accumId)
     {
       region.lower = tile * TILE_SIZE;
-      region.upper = min(region.lower + TILE_SIZE, fbsize);
+      region.upper = ospcommon::min(region.lower + TILE_SIZE, fbsize);
     }
   };
 

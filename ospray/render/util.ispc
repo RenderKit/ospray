@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -32,7 +32,7 @@ static void precomputedHalton_create() {
     precomputedHalton[1][i] = radicalInverse(i,3);
     precomputedHalton[2][i] = radicalInverse(i,5);
   }
-};
+}
 
 uniform bool z_order_initialized = false;
 

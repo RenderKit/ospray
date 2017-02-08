@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -18,17 +18,21 @@
 #include "DirectionalLight_ispc.h"
 
 namespace ospray {
+
   DirectionalLight::DirectionalLight()
-    : direction(0.f, 0.f, 1.f)
-    , color(1.f)
-    , intensity(1.f)
-    , angularDiameter(0.f)
   {
     ispcEquivalent = ispc::DirectionalLight_create();
   }
 
+  std::string DirectionalLight::toString() const
+  {
+    return "ospray::DirectionalLight";
+  }
+
   //! Commit parameters understood by the DirectionalLight
-  void DirectionalLight::commit() {
+  void DirectionalLight::commit()
+  {
+    Light::commit();
     direction = getParam3f("direction", vec3f(0.f, 0.f, 1.f));
     color     = getParam3f("color", vec3f(1.f));
     intensity = getParam1f("intensity", 1.f);
@@ -40,11 +44,13 @@ namespace ospray {
     angularDiameter = clamp(angularDiameter, 0.f, 180.f);
     const float cosAngle = ospcommon::cos(deg2rad(0.5f*angularDiameter));
 
-    ispc::DirectionalLight_set(getIE(), (ispc::vec3f&)direction, (ispc::vec3f&)radiance, cosAngle);
+    ispc::DirectionalLight_set(getIE(), (ispc::vec3f&)direction,
+                               (ispc::vec3f&)radiance, cosAngle);
   }
 
   OSP_REGISTER_LIGHT(DirectionalLight, DirectionalLight);
   OSP_REGISTER_LIGHT(DirectionalLight, DistantLight);
   OSP_REGISTER_LIGHT(DirectionalLight, distant);
   OSP_REGISTER_LIGHT(DirectionalLight, directional);
-}
+
+}// ::ospray

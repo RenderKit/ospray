@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -26,7 +26,7 @@
 #include "embree2/rtcore_geometry_user.isph"
 
 struct Cylinders {
-  uniform Geometry geometry; //!< inherited geometry fields
+  uniform Geometry super; //!< inherited geometry fields
 
   uniform uint8 *uniform data;
   uniform Material *uniform *materialList;
@@ -39,56 +39,53 @@ struct Cylinders {
   int   offset_radius;
   int   offset_materialID;
   int   offset_colorID;
-  int32 numCylinders;
   int32 bytesPerCylinder;
 };
 
 typedef uniform float uniform_float;
 
-unmasked void Cylinders_bounds(uniform Cylinders *uniform geometry,
+unmasked void Cylinders_bounds(Cylinders *uniform self,
     uniform size_t primID,
     uniform box3fa &bbox)
 {
-  uniform uint8 *uniform cylinderPtr = geometry->data + geometry->bytesPerCylinder*primID;
-  uniform bool offr = geometry->offset_radius >= 0;
-  uniform float radius = offr ? *((uniform float *)(cylinderPtr+geometry->offset_radius)) : geometry->radius;
-  uniform vec3f v0 = *((uniform vec3f*)(cylinderPtr+geometry->offset_v0));
-  uniform vec3f v1 = *((uniform vec3f*)(cylinderPtr+geometry->offset_v1));
-  bbox = make_box3fa(min(v0,v1)-make_vec3f(radius),
-                     max(v0,v1)+make_vec3f(radius));
+  uniform uint8 *uniform cylinderPtr = self->data + self->bytesPerCylinder*primID;
+  uniform bool offr = self->offset_radius >= 0;
+  uniform float radius = offr ? *((float *uniform)(cylinderPtr + self->offset_radius)) : self->radius;
+  uniform vec3f v0 = *((vec3f *uniform)(cylinderPtr + self->offset_v0));
+  uniform vec3f v1 = *((vec3f *uniform)(cylinderPtr + self->offset_v1));
+  // TODO less conservative bounds
+  bbox = make_box3fa(min(v0,v1) - radius,
+                     max(v0,v1) + radius);
 }
 
-void Cylinders_intersect(uniform Cylinders *uniform geometry,
+void Cylinders_intersect(Cylinders *uniform self,
                          varying Ray &ray,
                          uniform size_t primID)
 {
-  uniform uint8 *uniform cylinderPtr = geometry->data + geometry->bytesPerCylinder*primID;
-  uniform float radius = geometry->radius;
-  if (geometry->offset_radius >= 0) {
-    radius = *((uniform float *)(cylinderPtr+geometry->offset_radius));
+  uniform uint8 *uniform cylinderPtr = self->data + self->bytesPerCylinder*primID;
+  uniform float radius = self->radius;
+  if (self->offset_radius >= 0) {
+    radius = *((float *uniform)(cylinderPtr + self->offset_radius));
   }
-  uniform vec3f v0 = *((uniform vec3f*)(cylinderPtr+geometry->offset_v0));
-  uniform vec3f v1 = *((uniform vec3f*)(cylinderPtr+geometry->offset_v1));
+  uniform vec3f v0 = *((vec3f *uniform)(cylinderPtr + self->offset_v0));
+  uniform vec3f v1 = *((vec3f *uniform)(cylinderPtr + self->offset_v1));
   const vec3f A = v0 - ray.org;
   const vec3f B = v1 - ray.org;
-  const float r = radius;
 
-  const vec3f O = make_vec3f(0.f);
   const vec3f V = ray.dir;
-
   const vec3f AB = B - A;
-  const vec3f AO = O - A;
   
-  const vec3f AOxAB  = cross(AO,AB); // cross product
-  const vec3f VxAB   = cross(V,AB); // cross product
-  const float ab2    = dot(AB,AB); // dot product
-  const float a      = dot(VxAB,VxAB); // dot product
-  const float b      = 2 * dot(VxAB,AOxAB); // dot product
-  const float c      = dot(AOxAB,AOxAB) - (r*r * ab2);
+  const vec3f AOxAB  = cross(AB,A);
+  const vec3f VxAB   = cross(V,AB);
+  const float ab2    = dot(AB,AB);
+  const float a      = dot(VxAB,VxAB);
+  const float b      = 2 * dot(VxAB,AOxAB);
+  const float c      = dot(AOxAB,AOxAB) - (sqr(radius) * ab2);
 
   // clip to near and far cap of cylinder
-  const float tA = dot(AB,A) * rcp(dot(V,AB));
-  const float tB = dot(AB,B) * rcp(dot(V,AB));
+  const float rVAB = rcp(dot(V,AB));
+  const float tA = dot(AB,A) * rVAB;
+  const float tB = dot(AB,B) * rVAB;
   const float tAB0 = max(ray.t0,min(tA,tB));
   const float tAB1 = min(ray.t, max(tA,tB));
 
@@ -114,8 +111,7 @@ void Cylinders_intersect(uniform Cylinders *uniform geometry,
 
   if (hit) {
     ray.primID = primID;
-    ray.geomID = geometry->geometry.geomID;
-    ray.instID = -1;
+    ray.geomID = self->super.geomID;
     // cannot easily be moved to postIntersect
     // we need hit in object space, in postIntersect it is in world-space
     const vec3f P = ray.t*ray.dir - A;
@@ -125,13 +121,13 @@ void Cylinders_intersect(uniform Cylinders *uniform geometry,
 }
 
 
-static void Cylinders_postIntersect(uniform Geometry *uniform geometry,
-                                       uniform Model *uniform model,
-                                       varying DifferentialGeometry &dg,
-                                       const varying Ray &ray,
-                                       uniform int64 flags)
+static void Cylinders_postIntersect(Geometry *uniform _self,
+                                    Model *uniform model,
+                                    varying DifferentialGeometry &dg,
+                                    const varying Ray &ray,
+                                    uniform int64 flags)
 {
-  uniform Cylinders *uniform self = (uniform Cylinders *uniform)geometry;
+  uniform Cylinders *uniform self = (uniform Cylinders *uniform)_self;
   dg.Ng = dg.Ns = ray.Ng;
 
   if ((flags & DG_COLOR) && self->color) {
@@ -153,16 +149,82 @@ static void Cylinders_postIntersect(uniform Geometry *uniform geometry,
   }
 }
 
+SampleAreaRes Cylinders_sampleArea(
+    const Geometry *uniform const _self
+    , const int32 primID
+    , const uniform affine3f &xfm
+    , const uniform affine3f &rcp_xfm
+    , const vec2f& s
+    )
+{
+  const Cylinders *const uniform self = (const Cylinders *uniform)_self;
+  uint8 *cylinderPtr = self->data + self->bytesPerCylinder*primID;
+  float radius = self->radius;
+  if (self->offset_radius >= 0)
+    radius = *((float *)(cylinderPtr + self->offset_radius));
+  vec3f v0 = *((vec3f *)(cylinderPtr + self->offset_v0));
+  vec3f v1 = *((vec3f *)(cylinderPtr + self->offset_v1));
+
+  linear3f frame = frame(v1-v0);
+  frame.vy = normalize(frame.vy);
+  const float phi = two_pi * s.x;
+  float sinPhi, cosPhi;
+  sincos(phi, &sinPhi, &cosPhi);
+  const vec3f localNormal = (cosPhi*radius)*frame.vx + (sinPhi*radius)*frame.vy;
+  const vec3f localPos = v0 + localNormal + s.y*frame.vz;
+
+  SampleAreaRes res;
+  res.pos = xfmPoint(xfm, localPos);
+  res.normal = normalize(xfmVector(transposed(rcp_xfm.l), localNormal));
+
+  return res;
+}
+
+void Cylinders_getAreas(
+    const Geometry *const uniform _self
+    , const uniform affine3f &xfm
+    , float *const uniform area
+    )
+{
+  Cylinders *uniform self = (Cylinders *uniform)_self;
+
+  // detect (non-uniform) scaling; get length of transformed unit-vectors
+  const uniform vec3f scaling3 =
+    make_vec3f(length(xfm.l.vx), length(xfm.l.vy), length(xfm.l.vz));
+  const uniform float min_scaling = reduce_min(scaling3);
+  const uniform float max_scaling = reduce_max(scaling3);
+  if ((max_scaling - min_scaling) > 1e-4f*min_scaling)
+    print("#osp:Cylinders_getAreas: Non-uniform scaling in instance "
+        "transformation detected! Importance sampling for emissive "
+        "materials and thus resulting image may be wrong.\n");
+  // use average as approximation to closest uniform scaling
+  const uniform float scaling = reduce_add(scaling3)/3.f;
+
+  uniform float radius = self->radius;
+  uint8 *uniform cylinderPtr = self->data;
+  const uniform int64 stride = self->bytesPerCylinder;
+  // TODO vectorize this loop, with foreach or ProgramCount & ProgramIndex
+  for(uniform int32 i = 0; i < self->super.primitives; i++, cylinderPtr += stride) {
+    if (self->offset_radius >= 0)
+      radius = *((float *uniform)(cylinderPtr + self->offset_radius));
+    const uniform float circ = two_pi * radius * scaling;
+    uniform vec3f v0 = *((vec3f *uniform)(cylinderPtr + self->offset_v0));
+    uniform vec3f v1 = *((vec3f *uniform)(cylinderPtr + self->offset_v1));
+    area[i] = circ * length(v0 - v1) * scaling;
+  }
+}
+
+
 export void *uniform Cylinders_create(void *uniform cppEquivalent)
 {
   uniform Cylinders *uniform geom = uniform new uniform Cylinders;
-  Geometry_Constructor(&geom->geometry,cppEquivalent,
+  Geometry_Constructor(&geom->super,cppEquivalent,
                        Cylinders_postIntersect,
                        NULL,0,NULL);
   return geom;
 }
 
-export void CylindersGeometry_set(void           *uniform _geom,
+export void CylindersGeometry_set(void           *uniform _self,
                                   void           *uniform _model,
                                   void           *uniform data,
                                   void           *uniform materialList,
@@ -177,28 +239,30 @@ export void CylindersGeometry_set(void           *uniform _geom,
                                   int             uniform offset_materialID,
                                   int             uniform offset_colorID)
 {
-  uniform Cylinders *uniform geom = (uniform Cylinders *uniform)_geom;
-  uniform Model *uniform model = (uniform Model *uniform)_model;
+  Cylinders *uniform self = (Cylinders *uniform)_self;
+  Model *uniform model = (Model *uniform)_model;
 
   uniform uint32 geomID = rtcNewUserGeometry(model->embreeSceneHandle,numCylinders);
   
-  geom->geometry.model = model;
-  geom->geometry.geomID = geomID;
-  geom->materialList = (Material **)materialList;
-  geom->color = color;
-  geom->numCylinders = numCylinders;
-  geom->radius = radius;
-  geom->data = (uniform uint8 *uniform)data;
-  geom->materialID = materialID;
-  geom->bytesPerCylinder = bytesPerCylinder;
+  self->super.model = model;
+  self->super.geomID = geomID;
+  self->super.primitives = numCylinders;
+  self->super.getAreas = Cylinders_getAreas;
+  self->super.sampleArea = Cylinders_sampleArea;
+  self->materialList = (Material **)materialList;
+  self->color = color;
+  self->radius = radius;
+  self->data = (uniform uint8 *uniform)data;
+  self->materialID = materialID;
+  self->bytesPerCylinder = bytesPerCylinder;
 
-  geom->offset_v0         = offset_v0;
-  geom->offset_v1         = offset_v1;
-  geom->offset_radius     = offset_radius;
-  geom->offset_materialID = offset_materialID;
-  geom->offset_colorID    = offset_colorID;
+  self->offset_v0         = offset_v0;
+  self->offset_v1         = offset_v1;
+  self->offset_radius     = offset_radius;
+  self->offset_materialID = offset_materialID;
+  self->offset_colorID    = offset_colorID;
 
-  rtcSetUserData(model->embreeSceneHandle,geomID,geom);
+  rtcSetUserData(model->embreeSceneHandle, geomID, self);
   rtcSetBoundsFunction(model->embreeSceneHandle,geomID,
                        (uniform RTCBoundsFunc)&Cylinders_bounds);
   rtcSetIntersectFunction(model->embreeSceneHandle,geomID,

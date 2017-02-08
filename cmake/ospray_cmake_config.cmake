@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2016 Intel Corporation                                    ##
+## Copyright 2009-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -50,17 +50,18 @@ FOREACH(ospray_MODULE_FILENAME ${ospray_MODULE_FILES})
 
 ENDFOREACH(ospray_MODULE_FILENAME ${ospray_MODULE_FILES})
 
-LIST(APPEND ospray_MODULE_INSTALL_FILES ${CMAKE_SOURCE_DIR}/cmake/FindTBB.cmake)
+LIST(APPEND ospray_MODULE_INSTALL_FILES
+  ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/FindTBB.cmake
+)
 
 INSTALL(FILES
   ${ospray_MODULE_INSTALL_FILES}
-  ${CMAKE_SOURCE_DIR}/cmake/clang.cmake
-  ${CMAKE_SOURCE_DIR}/cmake/icc.cmake
-  ${CMAKE_SOURCE_DIR}/cmake/icc_xeonphi.cmake
-  ${CMAKE_SOURCE_DIR}/cmake/ispc.cmake
-  ${CMAKE_SOURCE_DIR}/cmake/gcc.cmake
-  ${CMAKE_SOURCE_DIR}/cmake/msvc.cmake
-  ${CMAKE_SOURCE_DIR}/cmake/ospray_macros.cmake
+  ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/clang.cmake
+  ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/icc.cmake
+  ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/ispc.cmake
+  ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/gcc.cmake
+  ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/msvc.cmake
+  ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/macros.cmake#NOTE(jda) - hack!
   DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/ospray-${OSPRAY_VERSION}"
   COMPONENT devel
 )

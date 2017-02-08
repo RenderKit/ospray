@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -25,15 +25,23 @@ namespace ospray {
       'n' items of a given type */
   struct OSPRAY_SDK_INTERFACE Data : public ManagedObject
   {
-    virtual void commit() { notifyListenersThatObjectGotChanged(); }
-
-    virtual std::string toString() const { return "ospray::Data"; }
-
+    /*! constructor */
     Data(size_t numItems, OSPDataType type, void *data, int flags);
+    
+    /*! destructor */
     virtual ~Data();
 
+    /*! commit this object - for this object type, make sure that all
+        listeners that have registered know that we have changed */
+    virtual void commit() override;
+
+    /*! pretty-print this object, for debugging purposes */
+    virtual std::string toString() const override;
+
     /*! return number of items in this data buffer */
-    inline size_t size() const { return numItems; }
+    size_t size() const;
+
+    // Data members //
 
     void       *data;     /*!< pointer to data */
     size_t      numItems; /*!< number of items */

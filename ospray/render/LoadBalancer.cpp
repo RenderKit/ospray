@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -17,16 +17,11 @@
 // own
 #include "LoadBalancer.h"
 #include "Renderer.h"
-#include "common/tasking/parallel_for.h"
-// ospc
-#include "ospcommon/sysinfo.h"
+#include "ospcommon/tasking/parallel_for.h"
 
 namespace ospray {
 
-  using std::cout;
-  using std::endl;
-
-  TiledLoadBalancer *TiledLoadBalancer::instance = nullptr;
+  std::unique_ptr<TiledLoadBalancer> TiledLoadBalancer::instance {};
 
   /*! render a frame via the tiled load balancer */
   float LocalTiledLoadBalancer::renderFrame(Renderer *renderer,
@@ -65,65 +60,6 @@ namespace ospray {
   std::string LocalTiledLoadBalancer::toString() const
   {
     return "ospray::LocalTiledLoadBalancer";
-  }
-
-  /*! render a frame via the tiled load balancer */
-  std::string InterleavedTiledLoadBalancer::toString() const
-  {
-    return "ospray::InterleavedTiledLoadBalancer";
-  }
-
-  float InterleavedTiledLoadBalancer::renderFrame(Renderer *renderer,
-                                                  FrameBuffer *fb,
-                                                  const uint32 channelFlags)
-  {
-    Assert(renderer);
-    Assert(fb);
-
-    void *perFrameData = renderer->beginFrame(fb);
-
-    int numTiles_total = fb->getTotalTiles();
-
-    const int NTASKS = (numTiles_total / numDevices)
-                       + (numTiles_total % numDevices > deviceID);
-
-    parallel_for(NTASKS, [&](int taskIndex) {
-      int tileIndex = deviceID + numDevices * taskIndex;
-      const size_t numTiles_x = fb->getNumTiles().x;
-      const size_t tile_y = tileIndex / numTiles_x;
-      const size_t tile_x = tileIndex - tile_y*numTiles_x;
-      const vec2i tileID(tile_x, tile_y);
-      const int32 accumID = fb->accumID(tileID);
-
-      if (fb->tileError(tileID) <= renderer->errorThreshold)
-        return;
-
-#ifdef __MIC__
-#  define MAX_TILE_SIZE 32
-#else
-#  define MAX_TILE_SIZE 128
-#endif
-
-#if TILE_SIZE>MAX_TILE_SIZE
-      Tile *tilePtr = new Tile(tileID, fb->size, accumID);
-      Tile &tile = *tilePtr;
-#else
-      Tile __aligned(64) tile(tileID, fb->size, accumID);
-#endif
-
-      parallel_for(numJobs(renderer->spp, accumID), [&](int tIdx) {
-        renderer->renderTile(perFrameData, tile, tIdx);
-      });
-
-      fb->setTile(tile);
-#if TILE_SIZE>MAX_TILE_SIZE
-      delete tilePtr;
-#endif
-    });
-
-    renderer->endFrame(perFrameData,channelFlags);
-
-    return fb->endFrame(renderer->errorThreshold);
   }
 
 } // ::ospray

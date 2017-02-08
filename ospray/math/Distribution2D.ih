@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "Distribution1D.ih"
 #include "math/vec.ih"
 
 struct Distribution2D 
@@ -27,8 +28,10 @@ struct Distribution2D
 };
 
 // consumes array 'importance' of size size.x*size.y, ownership is transferred to Distribution2D
-uniform Distribution2D* uniform Distribution2D_create(const uniform vec2i size, uniform float* uniform importance);
-void Distribution2D_destroy(uniform Distribution2D* uniform);
+Distribution2D* uniform Distribution2D_create(const uniform vec2i size, float* uniform importance);
+// consumes arrays 'cdf_x' of size size.x*size.y and 'row_importance' of size size.y, ownership is transferred to Distribution2D
+Distribution2D* uniform Distribution2D_create(const uniform vec2i size, float* uniform cdf_x, float* uniform row_importance);
+void Distribution2D_destroy(Distribution2D* uniform);
 
 struct Sample2D
 {
@@ -37,5 +40,5 @@ struct Sample2D
 };
 
 // inline?
-Sample2D Distribution2D_sample(const uniform Distribution2D* uniform, const vec2f &s);
-float  Distribution2D_pdf(const uniform Distribution2D* uniform, const vec2f &uv);
+Sample2D Distribution2D_sample(const Distribution2D* uniform, const vec2f &s);
+float  Distribution2D_pdf(const Distribution2D* uniform, const vec2f &uv);

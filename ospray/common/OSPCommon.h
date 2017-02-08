@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -42,7 +42,6 @@ typedef int ssize_t;
 
 #if 1
 #include "ospcommon/AffineSpace.h"
-#include "ospcommon/intrinsics.h"
 #include "ospcommon/RefCount.h"
 #include "ospcommon/malloc.h"
 #else
@@ -74,10 +73,6 @@ namespace ospray {
 
   using namespace ospcommon;
 }
-
-#define SCOPED_LOCK(x) \
-  ospray::LockGuard lock(x); \
-  (void)lock;
 #endif
 
 // ospray
@@ -101,17 +96,6 @@ namespace ospray {
 #endif
 #define OSPRAY_SDK_INTERFACE OSPRAY_INTERFACE
 
-// for MIC, disable the 'variable declared bbut never referenced'
-// warning, else the ISPC-generated code produces _far_ too many such
-// outputs
-#if defined(__INTEL_COMPILER) && defined(__MIC__)
-#pragma warning(disable:177 ) // variable declared but was never referenced
-#endif
-
-namespace embree {
-  void* alignedMalloc(size_t size, size_t align);
-  void alignedFree(void* ptr);
-}
 #define ALIGNED_STRUCT                                           \
   void* operator new(size_t size) { return alignedMalloc(size); }       \
   void operator delete(void* ptr) { alignedFree(ptr); }      \
@@ -123,15 +107,6 @@ namespace embree {
   void operator delete(void* ptr) { alignedFree(ptr); }                 \
   void* operator new[](size_t size) { return alignedMalloc(size,align); } \
   void operator delete[](void* ptr) { alignedFree(ptr); }               \
-
-// #if defined(__MIC__)
-// #pragma message("using aligned opeartor new (this is knc, right!?)...")
-// void* operator new(size_t size) { return embree::alignedMalloc(size); }
-// void operator delete(void* ptr) { embree::alignedFree(ptr); }
-// void* operator new[](size_t size) throws { return embree::alignedMalloc(size); }
-// void operator delete[](void* ptr) { embree::alignedFree(ptr); }
-// #endif
-
 
 //! main namespace for all things ospray (for internal code)
 namespace ospray {
@@ -151,12 +126,11 @@ namespace ospray {
 
   typedef ::int64_t index_t;
 
-  void init(int *ac, const char ***av);
+  void initFromCommandLine(int *ac = nullptr, const char ***av = nullptr);
 
   /*! for debugging. compute a checksum for given area range... */
   OSPRAY_INTERFACE void *computeCheckSum(const void *ptr, size_t numBytes);
 
-  OSPRAY_INTERFACE void doAssertion(const char *file, int line, const char *expr, const char *expl);
 #ifndef Assert
 #ifdef NDEBUG
 # define Assert(expr) /* nothing */
@@ -172,21 +146,17 @@ namespace ospray {
 #endif
 #endif
 
-  inline size_t rdtsc() { return ospcommon::rdtsc(); }
-
-  /*! logging level (cmdline: --osp:loglevel \<n\>) */
-  extern uint32_t logLevel;
-  /*! whether we're running in debug mode (cmdline: --osp:debug) */
-  extern bool debugMode;
-  /*! number of Embree threads to use, 0 for the default
-      number. (cmdline: --osp:numthreads \<n\>) */
-  extern int numThreads;
-
   /*! size of OSPDataType */
   OSPRAY_INTERFACE size_t sizeOf(const OSPDataType);
 
   /*! Convert a type string to an OSPDataType. */
   OSPRAY_INTERFACE OSPDataType typeForString(const char *string);
+  /*! Convert a type string to an OSPDataType. */
+  inline OSPDataType typeForString(const std::string &s)
+  { return typeForString(s.c_str()); }
+
+  /*! Convert a type string to an OSPDataType. */
+  OSPRAY_INTERFACE std::string stringForType(OSPDataType type);
 
   /*! size of OSPTextureFormat */
   OSPRAY_INTERFACE size_t sizeOf(const OSPTextureFormat);
@@ -197,61 +167,15 @@ namespace ospray {
     const std::string s;
   };
 
-  /*! added pretty-print function for large numbers, printing 10000000 as "10M" instead */
-  inline std::string prettyNumber(const size_t s) {
-    double val = s;
-    char result[100];
-    if (val >= 1e12f) {
-      sprintf(result,"%.1fT",val/1e12f);
-    } else if (val >= 1e9f) {
-      sprintf(result,"%.1fG",val/1e9f);
-    } else if (val >= 1e6f) {
-      sprintf(result,"%.1fM",val/1e6f);
-    } else if (val >= 1e3f) {
-      sprintf(result,"%.1fK",val/1e3f);
-    } else {
-      sprintf(result,"%lu",s);
-    }
-    return result;
-  }
+  OSPRAY_INTERFACE uint32_t logLevel();
 
-  template <typename T>
-  inline std::pair<bool, T> getEnvVar(const std::string &/*var*/)
-  {
-    static_assert(!std::is_same<T, float>::value &&
-                  !std::is_same<T, int>::value &&
-                  !std::is_same<T, std::string>::value,
-                  "You can only get an int, float, or std::string "
-                  "when using ospray::getEnvVar<T>()!");
-    return {false, {}};
-  }
+  OSPRAY_INTERFACE int loadLocalModule(const std::string &name);
 
-  template <>
-  inline std::pair<bool, float>
-  getEnvVar<float>(const std::string &var)
-  {
-    auto *str = getenv(var.c_str());
-    bool found = (str != nullptr);
-    return {found, found ? atof(str) : float{}};
-  }
+  OSPRAY_INTERFACE void postErrorMsg(const std::stringstream &msg,
+                                     uint32_t postAtLogLevel = 0);
 
-  template <>
-  inline std::pair<bool, int>
-  getEnvVar<int>(const std::string &var)
-  {
-    auto *str = getenv(var.c_str());
-    bool found = (str != nullptr);
-    return {found, found ? atoi(str) : int{}};
-  }
-
-  template <>
-  inline std::pair<bool, std::string>
-  getEnvVar<std::string>(const std::string &var)
-  {
-    auto *str = getenv(var.c_str());
-    bool found = (str != nullptr);
-    return {found, found ? std::string(str) : std::string{}};
-  }
+  OSPRAY_INTERFACE void postErrorMsg(const std::string &msg,
+                                     uint32_t postAtLogLevel = 0);
 
 } // ::ospray
 

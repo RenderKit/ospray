@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -40,27 +40,27 @@ inline uniform AffineSpace3f make_AffineSpace3f(const uniform vec3f vx,
 
 /*! apply given affine transformation to given _point_ v */
 inline uniform vec3f xfmPoint(const uniform AffineSpace3f a, const uniform vec3f v)
-{ return a.p + v.x*a.l.vx + v.y*a.l.vy + v.z*a.l.vz; }
+{ return a.p + xfmVector(a.l, v); }
 
 /*! apply given affine transformation to given _point_ v */
 inline varying vec3f xfmPoint(const uniform AffineSpace3f a, const varying vec3f v) 
-{ return a.p + v.x*a.l.vx + v.y*a.l.vy + v.z*a.l.vz; }
+{ return a.p + xfmVector(a.l, v); }
 
 /*! apply given affine transformation to given _point_ v */
 inline varying vec3f xfmPoint(const varying AffineSpace3f a, const varying vec3f v) 
-{ return a.p + v.x*a.l.vx + v.y*a.l.vy + v.z*a.l.vz; }
+{ return a.p + xfmVector(a.l, v); }
 
 /*! apply affine transform to given _vector_ v, i.e., _without_ the translation */
 inline uniform vec3f xfmVector(const uniform AffineSpace3f a, const uniform vec3f v)
-{ return v.x*a.l.vx + v.y*a.l.vy + v.z*a.l.vz; }
+{ return xfmVector(a.l, v); }
 
 /*! apply affine transform to given _vector_ v, i.e., _without_ the translation */
 inline varying vec3f xfmVector(const uniform AffineSpace3f a, const varying vec3f v) 
-{ return v.x*a.l.vx + v.y*a.l.vy + v.z*a.l.vz; }
+{ return xfmVector(a.l, v); }
 
 /*! apply affine transform to given _vector_ v, i.e., _without_ the translation */
 inline varying vec3f xfmVector(const varying AffineSpace3f a, const varying vec3f v) 
-{ return v.x*a.l.vx + v.y*a.l.vy + v.z*a.l.vz; }
+{ return xfmVector(a.l, v); }
 
 /*! short-hand name for AffineSpace3f */
 typedef AffineSpace3f affine3f;

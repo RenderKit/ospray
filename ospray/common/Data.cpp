@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -58,6 +58,23 @@ namespace ospray {
       for (uint32_t i = 0; i < numItems; i++) if (child[i]) child[i]->refDec();
     }
     if (!(flags & OSP_DATA_SHARED_BUFFER)) alignedFree(data);
+  }
+
+  /*! commit this object - for this object type, make sure that all
+    listeners that have registered know that we have changed */
+  void Data::commit()
+  {
+    notifyListenersThatObjectGotChanged();
+  }
+
+  std::string Data::toString() const
+  {
+    return "ospray::Data";
+  }
+
+  size_t ospray::Data::size() const
+  {
+    return numItems;
   }
 
 } // ::ospray

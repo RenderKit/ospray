@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -29,7 +29,12 @@ namespace ospray {
     this->ispcEquivalent = ispc::InstanceGeometry_create(this);
   }
 
-  void Instance::finalize(Model *model) 
+  std::string Instance::toString() const
+  {
+    return "ospray::Instance";
+  }
+
+  void Instance::finalize(Model *model)
   {
     xfm.l.vx = getParam3f("xfm.l.vx",vec3f(1.f,0.f,0.f));
     xfm.l.vy = getParam3f("xfm.l.vy",vec3f(0.f,1.f,0.f));
@@ -48,17 +53,12 @@ namespace ospray {
 
     const box3f b = instancedScene->bounds;
     if (b.empty()) {
-#if 1
       // for now, let's just issue a warning since not all ospray
       // geometries do properly set the boudning box yet. as soon as
       // this gets fixed we will actually switch to reporting an error
       static WarnOnce warning("creating an instance to a model that does not"
                               " have a valid bounding box. epsilons for"
                               " ray offsets may be wrong");
-#else
-      throw std::runtime_error("trying to instantiate a model that does"
-                               " not have a valid bounding box");
-#endif
     }
     const vec3f v000(b.lower.x,b.lower.y,b.lower.z);
     const vec3f v001(b.upper.x,b.lower.y,b.lower.z);
@@ -83,10 +83,12 @@ namespace ospray {
                     RTC_MATRIX_COLUMN_MAJOR,
                     (const float *)&xfm);
     AffineSpace3f rcp_xfm = rcp(xfm);
+    areaPDF.resize(instancedScene->geometry.size());
     ispc::InstanceGeometry_set(getIE(),
                                (ispc::AffineSpace3f&)xfm,
                                (ispc::AffineSpace3f&)rcp_xfm,
-                               instancedScene->getIE());
+                               instancedScene->getIE(),
+                               &areaPDF[0]);
   }
 
   OSP_REGISTER_GEOMETRY(Instance,instance);

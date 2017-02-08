@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -20,18 +20,19 @@
 
 //! ispc-equivalent of the ospray::TriangleMesh geometry
 struct TriangleMesh {
-  uniform Geometry  geometry; //!< inherited geometry fields
-  uniform int32     numTriangles; //!< number of triangles
-  uniform int32     idxSize; //!< stride of triangle indices, in int32 elements
-  uniform int32     vtxSize; //!< stride of vertex positions, in float32 elements
-  uniform int32     norSize; //!< stride of normals, in float32 elements
-  uniform int      *index;  //!< mesh's triangle index array
-  uniform float    *vertex; //!< mesh's vertex position array
-  uniform float    *normal; //!< mesh's vertex normal array
-  uniform vec4f    *color;  //!< mesh's vertex color array
-  uniform vec2f    *texcoord; //!< mesh's texture coordinate array
-  uniform uint32   *prim_materialID;     // per-primitive material ID
-  uniform Material *uniform *materialList;  // list of materials, if multiple materials are assigned to this mesh.
-  uniform int32     geom_materialID;     // per-object material ID
+  Geometry  super; //!< inherited geometry fields
+  int32     idxSize; //!< stride of triangle indices, in int32 elements
+  int32     vtxSize; //!< stride of vertex positions, in float32 elements
+  int32     norSize; //!< stride of normals, in float32 elements
+  int      *index;  //!< mesh's triangle index array
+  float    *vertex; //!< mesh's vertex position array
+  float    *normal; //!< mesh's vertex normal array
+  vec4f    *color;  //!< mesh's vertex color array
+  vec2f    *texcoord; //!< mesh's texture coordinate array
+  uint32   *prim_materialID;     // per-primitive material ID
+  Material *uniform *materialList;  // list of materials, if multiple materials are assigned to this mesh.
+  int32     geom_materialID;     // per-object material ID
+  bool      has_alpha;     // 4th color component is valid
+  bool      huge_mesh;     // need 64-bit addressing
 };
 

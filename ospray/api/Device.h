@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,8 +16,14 @@
 
 #pragma once
 
+// ospray
 #include "common/OSPCommon.h"
+#include "common/Managed.h"
 #include "ospray/ospray.h"
+// embree
+#include "embree2/rtcore.h"
+// std
+#include <functional>
 
 /*! \file device.h Defines the abstract base class for OSPRay
     "devices" that implement the OSPRay API */
@@ -27,13 +33,15 @@ namespace ospray {
   namespace api {
 
     /*! abstract base class of all 'devices' that implement the ospray API */
-    struct Device : public RefCount {
+    struct OSPRAY_SDK_INTERFACE Device : public ManagedObject {
       /*! singleton that points to currently active device */
       static Ref<Device> current;
 
-      Device();
+      Device() = default;
+      virtual ~Device();
 
-      virtual ~Device() {};
+      /*! \brief creates an abstract device class of given type */
+      static Device *createDevice(const char *type);
 
       /*! create a new frame buffer/swap chain of given type */
       virtual OSPFrameBuffer 
@@ -71,7 +79,8 @@ namespace ospray {
       virtual void removeVolume(OSPModel _model, OSPVolume _volume) = 0;
 
       /*! create a new data buffer */
-      virtual OSPData newData(size_t nitems, OSPDataType format, void *init, int flags) = 0;
+      virtual OSPData newData(size_t nitems, OSPDataType format,
+                              void *init, int flags) = 0;
 
       /*! Copy data into the given volume. */
       virtual int setRegion(OSPVolume object, const void *source, 
@@ -107,6 +116,8 @@ namespace ospray {
       /*! add untyped void pointer to object - this will *ONLY* work in local rendering!  */
       virtual void setVoidPtr(OSPObject object, const char *bufName, void *v) = 0;
 
+      virtual void removeParam(OSPObject object, const char *name) = 0;
+
       /*! create a new renderer object (out of list of registered renderers) */
       virtual OSPRenderer newRenderer(const char *type) = 0;
 
@@ -125,7 +136,8 @@ namespace ospray {
       /*! create a new volume object (out of list of registered volumes) */
       virtual OSPVolume newVolume(const char *type) = 0;
       
-      /*! create a new transfer function object (out of list of registered transfer function types) */
+      /*! create a new transfer function object (out of list of registered
+       *  transfer function types) */
       virtual OSPTransferFunction newTransferFunction(const char *type) = 0;
 
       /*! have given renderer create a new material */
@@ -138,15 +150,15 @@ namespace ospray {
       /*! have given renderer create a new Light */
       virtual OSPLight newLight(OSPRenderer _renderer, const char *type) = 0;
 
-      /*! clear the specified channel(s) of the frame buffer specified in 'whichChannels'
+      /*! clear the specified channel(s) in 'fbChannelFlags'
         
-        if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to
+        if fbChannelFlags&OSP_FB_COLOR!=0, clear the color buffer to
         '0,0,0,0'.  
 
-        if whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to
+        if fbChannelFlags&OSP_FB_DEPTH!=0, clear the depth buffer to
         +inf.  
 
-        if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0,
+        if fbChannelFlags&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0,
         and reset accumID.
       */
       virtual void frameBufferClear(OSPFrameBuffer _fb,
@@ -154,8 +166,8 @@ namespace ospray {
 
       /*! call a renderer to render a frame buffer */
       virtual float renderFrame(OSPFrameBuffer _sc,
-                               OSPRenderer _renderer, 
-                               const uint32 fbChannelFlags) = 0;
+                                OSPRenderer _renderer,
+                                const uint32 fbChannelFlags) = 0;
 
 
   
@@ -191,10 +203,9 @@ namespace ospray {
         NOT_IMPLEMENTED;
       }
 
-      /*! switch API mode for distriubted API extensions */
-      virtual void apiMode(OSPDApiMode mode)
+      /*! switch API mode for distributed API extensions */
+      virtual void apiMode(OSPDApiMode)
       { 
-        UNUSED(mode);
         NOT_IMPLEMENTED;
       }
 
@@ -206,7 +217,42 @@ namespace ospray {
         UNUSED(results, volume, worldCoordinates, count);
         NOT_IMPLEMENTED;
       }
+
+      virtual void commit() override;
+      bool isCommitted();
+
+      // Public Data //
+
+      // NOTE(jda) - Keep embreeDevice static until runWorker() in MPI mode can
+      //             safely assume that a device exists.
+      static RTCDevice embreeDevice;
+      int numThreads {-1};
+      /*! whether we're running in debug mode (cmdline: --osp:debug) */
+      bool debugMode {false};
+      /*! logging level (cmdline: --osp:loglevel \<n\>) */
+      // NOTE(jda) - Keep logLevel static because the device factory function
+      //             needs to have a valid value for the initial Device creation
+      static uint32_t logLevel;
+
+      std::function<void(const char *)> error_fcn{[](const char*){}};
+
+    private:
+
+      bool committed {false};
     };
+
+    /*! \brief registers a internal ospray::<ClassName> renderer under
+        the externally accessible name "external_name"
+
+        \internal This currently works by defining a extern "C" function
+        with a given predefined name that creates a new instance of this
+        renderer. By having this symbol in the shared lib ospray can
+        lateron always get a handle to this fct and create an instance
+        of this renderer.
+    */
+    #define OSP_REGISTER_DEVICE(InternalClass, external_name) \
+      OSP_REGISTER_OBJECT(::ospray::api::Device, device, InternalClass, external_name)
+
   } // ::ospray::api
 } // ::ospray
 

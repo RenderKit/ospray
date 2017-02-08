@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2016 Intel Corporation                                    ##
+## Copyright 2009-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,10 +14,13 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+SET(OSPRAY_DEFAULT_COMPONENT modules)
+
 INCLUDE_DIRECTORIES(
   ${PROJECT_BINARY_DIR}
   ${CMAKE_SOURCE_DIR}/ospray/include
   ${CMAKE_SOURCE_DIR}/ospray
+  ${CMAKE_SOURCE_DIR}/
   ${CMAKE_SOURCE_DIR}/apps
   ${CMAKE_SOURCE_DIR}/apps/common
   ${CMAKE_SOURCE_DIR}

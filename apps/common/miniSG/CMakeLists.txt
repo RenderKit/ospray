@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2016 Intel Corporation                                    ##
+## Copyright 2009-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -33,7 +33,7 @@ IF (USE_IMAGE_MAGICK)
   ENDIF()
 ENDIF()
 
-ADD_LIBRARY(ospray_minisg STATIC
+OSPRAY_CREATE_LIBRARY(ospray_minisg
   miniSG.cpp
   importer.cpp
   importOBJ.cpp
@@ -43,9 +43,7 @@ ADD_LIBRARY(ospray_minisg STATIC
   importTRI.cpp
   importX3D.cpp
   importRIVL.cpp
-)
-
-TARGET_LINK_LIBRARIES(ospray_minisg
+LINK 
   ospray_xml
   ospray_common
   ospray

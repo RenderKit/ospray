@@ -80,6 +80,24 @@ build-sles-gcc:
     - gcc
     - build
 
+build-debug:
+  type: build
+  script:
+    - scripts/build_gitlab/linux.sh -DCMAKE_BUILD_TYPE=Debug
+  tags:
+    - gcc
+    - linux
+    - build
+
+build-mpi:
+  type: build
+  script:
+    - scripts/build_gitlab/linux.sh -DOSPRAY_MODULE_MPI=ON
+  tags:
+    - linux
+    - mpi
+    - build
+
 build-osx-clang:
   type: build
   script:
@@ -143,7 +161,10 @@ build-windows-icc:
 release-linux-icc:
   type: deploy
   script:
+    - module load cmake
+    - module load gcc
     - module load intel
+    - module load qt
     - export CC=icc
     - export CXX=icpc
     - scripts/release/linux.sh
@@ -151,10 +172,11 @@ release-linux-icc:
     - icc
     - release
     - centos6
+    - mpi
   only:
     - devel
     - master
-    - release-1.1.x
+    - release-1.2.x
   artifacts:
     paths:
       - build_release/*.gz
@@ -169,10 +191,11 @@ release-osx-clang:
     - clang
     - release
     - osx
+    - mpi
   only:
     - devel
     - master
-    - release-1.1.x
+    - release-1.2.x
   artifacts:
     paths:
       - build_release/*.gz
@@ -186,10 +209,11 @@ release-windows:
     - msvc
     - release
     - win7
+    - mpi
   only:
     - devel
     - master
-    - release-1.1.x
+    - release-1.2.x
   artifacts:
     paths:
       - build_release\ospray*.zip

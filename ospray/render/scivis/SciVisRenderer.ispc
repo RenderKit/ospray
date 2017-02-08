@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -24,8 +24,6 @@
 #include "math/sampling.ih"
 #include "math/LinearSpace.ih"
 
-#include "volume/DataDistributedBlockedVolume.ih"
-
 #include "SciVisMaterial.ih"
 
 #define ALPHA_THRESHOLD (.05f)
@@ -46,26 +44,25 @@ struct SciVisRenderer
   int   maxDepth;
 
   int   aoSamples;
-  float aoRayLength;
-  float aoWeight;
+  float aoDistance;
+  vec3f aoColor;
+  bool  aoTransparencyEnabled;
 };
 
 struct SciVisShadingInfo
 {
-  float d ;
-  float Ns;
+  float d;
   vec3f Kd;
   vec3f Ks;
-  float local_opacity;
-  float path_opacity;
+  float Ns;
+  vec3f shadingNormal;
 
-  vec3f geometryColor;
+  float local_opacity;
 };
 
 inline float lightAlpha(const uniform SciVisRenderer *uniform self,
                         Ray &ray, uniform Model *uniform model,
                         const float weight,
-                        int remaining_depth,
                         const varying float &rayOffset,
                         const varying vec3i &sampleID,
                         const uniform float &quality);
@@ -83,9 +80,8 @@ inline void initShadingInfo(varying SciVisShadingInfo &info)
   info.Ns = 0.f;
   info.Kd = make_vec3f(0.f);
   info.Ks = make_vec3f(0.f);
-  info.local_opacity = 0.f;
 
-  info.geometryColor = make_vec3f(0.f);
+  info.local_opacity = 0.f;
 }
 
 // Material functions //
@@ -96,7 +92,7 @@ inline void shadeMaterials(const varying DifferentialGeometry &dg,
   uniform SciVisMaterial *scivisMaterial =
       (uniform SciVisMaterial *)dg.material;
 
-  info.geometryColor = make_vec3f(dg.color);
+  info.shadingNormal = dg.Ns;
 
   // Get each term from the material //
   if (!scivisMaterial) {
@@ -106,7 +102,7 @@ inline void shadeMaterials(const varying DifferentialGeometry &dg,
     foreach_unique (mat in scivisMaterial) {
       // textures modify (mul) values, see
       //   http://paulbourke.net/dataformats/mtl/
-      info.d = mat->d * get1f(mat->map_d, dg.st, 1.f);
+      info.d = mat->d * get1f(mat->map_d, dg.st, 1.f) * dg.color.w;
       info.Kd = mat->Kd * make_vec3f(dg.color);
       if (mat->map_Kd) {
         vec4f Kd_from_map = get4f(mat->map_Kd, dg.st);
@@ -115,10 +111,14 @@ inline void shadeMaterials(const varying DifferentialGeometry &dg,
       }
       info.Ks = mat->Ks * get3f(mat->map_Ks, dg.st, make_vec3f(1.f));
       info.Ns = mat->Ns * get1f(mat->map_Ns, dg.st, 1.f);
-
-      if (mat->volume) {
-        const float sample = mat->volume->computeSample(mat->volume, dg.P);
-        info.geometryColor = info.geometryColor * mat->volume->transferFunction->getColorForValue(mat->volume->transferFunction, sample);
+      // normal mapping
+      if (mat->map_Bump) {
+        // get normal from texture
+        vec3f localNormal = getNormal(mat->map_Bump, dg.st);
+        // transform to world space and align to tangents/texture coordinates
+        linear3f f = make_LinearSpace3f(normalize(dg.dPds), normalize(dg.dPdt), dg.Ns);
+        // in general f is not ortho-normal, thus need to re-normalize
+        info.shadingNormal = normalize(f * localNormal);
       }
     }
   }
@@ -131,7 +131,8 @@ inline void shadeMaterials(const varying DifferentialGeometry &dg,
 
 inline float calculateAO(const uniform SciVisRenderer *uniform self,
                          const varying vec3i &sampleID,
-                         const varying DifferentialGeometry &dg)
+                         const varying DifferentialGeometry &dg,
+                         const varying vec3f &shadingNormal)
 {
   const int accumID = sampleID.z;
   const int ix = sampleID.x;
@@ -142,41 +143,33 @@ inline float calculateAO(const uniform SciVisRenderer *uniform self,
   varying RandomTEA* const uniform rng = &rng_state;
   RandomTEA__Constructor(rng, (self->super.fb->size.x * iy) + ix, accumID);
 
-  float hits = 0.f;
-  const linear3f localToWorld = frame(dg.Ns);
+  float occlusion = 0.f;
+  const linear3f localToWorld = frame(shadingNormal);
 
   for (uniform int i = 0; i < self->aoSamples; i++) {
     const vec2f s = RandomTEA__getFloats(rng);
     const vec3f local_ao_dir = cosineSampleHemisphere(s);
     const vec3f ao_dir = localToWorld * local_ao_dir;
 
+    if (dot(ao_dir, dg.Ns) < 0.05f) { // check below surface
+      occlusion += 1.f;
+      continue;
+    }
+
     Ray ao_ray;
     setRay(ao_ray, dg.P + (self->super.epsilon * dg.Ns), ao_dir,
-           self->super.epsilon, self->aoRayLength);
-    //shade volumes
-    if (dot(ao_ray.dir, dg.Ns) < 0.05f || isOccluded(self->super.model,ao_ray))
-      hits+=1.f;
-    else
-    {
-      const float epsilon = self->volumeEpsilon*10.f;
-      const float rayOffset = epsilon*s.x + epsilon;
-      if (SciVisRenderer_intersectVolumes(self, ao_ray, rayOffset))
-      {
-        //hits++;
-        ao_ray.geomID = -1;
-        // ao_ray.dir = neg(ao_ray.dir);
-        // ao_ray.t0 = rayOffset;
-        // ao_ray.t = -1;
-        hits += (1.f- lightAlpha(self, ao_ray, self->super.model,
-                                                 1.0f,
-                                                 self->maxDepth,
-                                                 rayOffset, sampleID,0.1f));
-      }
-    }
+           self->super.epsilon, self->aoDistance);
+
+    if (self->aoTransparencyEnabled || self->super.model->volumeCount) {
+      const float rayOffset = self->super.epsilon*(1.f + s.x);
+      occlusion += (1.f - lightAlpha(self, ao_ray, self->super.model, 1.0f,
+            rayOffset, sampleID, 0.1f));
+    } else if (isOccluded(self->super.model, ao_ray))
+      occlusion += 1.f;
   }
 
-  // the cosTheta of cosineSampleHemispherePDF and dot(dg.Ns, ao_dir) cancel
-  return 1.0f - (float)hits/self->aoSamples;
+  // the cosTheta of cosineSampleHemispherePDF and dot(shadingNormal, ao_dir) cancel
+  return 1.0f - occlusion/self->aoSamples;
 }
 
 inline void shadeAO(const uniform SciVisRenderer *uniform self,
@@ -186,35 +179,35 @@ inline void shadeAO(const uniform SciVisRenderer *uniform self,
                     varying vec3f &color)
 {
   // Calculate AO contribution as ambient term
-  if (self->aoSamples > 0 && self->aoWeight > 0.f) {
-    float ao = self->aoWeight;
-    if (self->aoRayLength > 0.f)
-      ao *= calculateAO(self, sampleID, dg);
+  float ao = 1.0f;
+  if (self->aoSamples > 0 && reduce_max(self->aoColor) > 0.f) {
+    if (self->aoDistance > 0.f)
+      ao *= calculateAO(self, sampleID, dg, info.shadingNormal);
     // Blend AO w/ diffuse term
-    color = color + info.local_opacity * info.Kd * ao;
   }
+  color = color + (info.local_opacity * ao) * info.Kd * self->aoColor;
 }
 
 inline void shadeLights(const uniform SciVisRenderer *uniform self,
                         const varying Ray &ray,
                         const varying DifferentialGeometry &dg,
                         const varying SciVisShadingInfo &info,
-                        const varying int path_depth,
-                        varying vec3f &color, const varying float &rayOffset,
+                        varying vec3f &color,
+                        const varying float &rayOffset,
                         const varying vec3i &sampleID,
                         const uniform float &quality)
 {
-  const vec3f R = ray.dir - ((2.f * dot(ray.dir, dg.Ns)) * dg.Ns);
+  const vec3f R = ray.dir - ((2.f * dot(ray.dir, info.shadingNormal)) * info.shadingNormal);
   const vec3f P = dg.P + self->super.epsilon * dg.Ng;
 
   //calculate shading for all lights
   for (uniform int i = 0; self->lights && i < self->numLights; i++) {
     const uniform Light *uniform l = self->lights[i];
-    const vec2f s = make_vec2f(0.5f);
+    const vec2f s = make_vec2f(0.0f); // sample center of area lights
     const Light_SampleRes light = l->sample(l, dg, s);
 
     if (reduce_max(light.weight) > 0.f) { // any potential contribution?
-      float cosNL = dot(light.dir, dg.Ns);
+      float cosNL = dot(light.dir, info.shadingNormal);
       if (self->oneSidedLighting) {
         if (cosNL < 0.0f)
           continue;
@@ -236,7 +229,6 @@ inline void shadeLights(const uniform SciVisRenderer *uniform self,
           const float light_alpha = lightAlpha(self, shadowRay,
                                                self->super.model,
                                                max_contrib,
-                                               self->maxDepth - path_depth,
                                                rayOffset, sampleID, quality);
           color = color + light_alpha * light_contrib;
         }
@@ -282,7 +274,7 @@ inline vec4f SciVisRenderer_computeVolumeSample(SciVisRenderer *uniform renderer
 
     // Compute lighting.
     vec3f shadedColor = make_vec3f(0.f);
-    const vec2f s = make_vec2f(0.5f);
+    const vec2f s = make_vec2f(0.0f); // sample center of area lights
 
     for (uniform uint32 i=0; i<renderer->numLights; i++) {
       const Light_SampleRes light =
@@ -312,7 +304,7 @@ inline vec4f SciVisRenderer_computeVolumeSample(SciVisRenderer *uniform renderer
 
     vec3f litColor = make_vec3f(0.0f);
     info.Ns *= 0.3f;
-    shadeLights(renderer, ray, dg, info, 1, litColor, rayOffset, sampleID,1.f);
+    shadeLights(renderer, ray, dg, info, litColor, rayOffset, sampleID,1.f);
     sampleColor = litColor;
   }
 
@@ -335,13 +327,12 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
   float tSkipped = -1;  //for adaptive, skip adapting sampling rate up to this value
   vec4f intervalColor = make_vec4f(0.f);
   volume->intersect(volume, ray);
-  uniform float oneOverQuality = (1.f/quality);
+  const uniform float oneOverQuality = (1.f/quality);
   float samplingRate = volume->samplingRate*quality;
   float lastSample = -1.f;
-  float adaptiveScalar = volume->adaptiveScalar*quality;
-  float maxSamplingRate = volume->adaptiveMaxSamplingRate*quality; //2.f nyquist frequency
-  float adaptiveBacktrack = volume->adaptiveBacktrack*oneOverQuality;
-  // maxSamplingRate = 0.125;
+  const float adaptiveScalar = volume->adaptiveScalar*quality;
+  const float maxSamplingRate = volume->adaptiveMaxSamplingRate*quality; //2.f nyquist frequency
+  const float adaptiveBacktrack = volume->adaptiveBacktrack*oneOverQuality;
   while (ray.t0 < tEnd && intervalColor.w < maxOpacity)
   {
     // Sample the volume at the hit point in world coordinates.
@@ -354,44 +345,32 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
     // Look up the opacity associated with the volume sample.
     vec3f sampleColor;
     float sampleOpacity;
-    if (volume->preIntegration)
-    {
-      sampleOpacity = volume->transferFunction->getIntegratedOpacityForValue(volume->transferFunction,
-                                                     lastSample, sample);
-    }
-    else
-    {
-      sampleOpacity = volume->transferFunction->getOpacityForValue(volume->transferFunction,
-                                                     sample);
-    }
-
+    sampleOpacity = volume->transferFunction->getIntegratedOpacityForValue(volume->transferFunction,
+                                                    lastSample, sample);
     if (volume->adaptiveSampling && sampleOpacity > adaptiveBacktrack && ray.t0 > tSkipped)  // adaptive backtack
     {
-      tSkipped = ray.t0;
       //adaptively refine sampling rate
-      float newSamplingRate = min(adaptiveScalar*sampleOpacity,maxSamplingRate);
+      const float newSamplingRate = min(adaptiveScalar*sampleOpacity,maxSamplingRate);
       if (newSamplingRate > samplingRate + 0.01f)
       {
         samplingRate = newSamplingRate;
-        ray.t0 = max(ray.t0-ray.time, tBegin);
+        const float ot0 = ray.t0;
+        ray.t0 = max(max(ray.t0-max(ray.time,volume->samplingStep),tSkipped), tBegin);
+        //Carson: TODO: skipping past ray.time shouldnt be necessary and avoided 
+        //but currently greatly reduces artifacts from low to high opacity 
+        //regions.  issue with space skipping?
+        tSkipped = ot0;
         volume->intersectAdaptive(volume, ray, samplingRate);
         lastSample = -1;
         continue;
       }
+      tSkipped = ray.t0;
     }
 
     if (!isShadowRay)
     {
-      if (volume->preIntegration)
-      {
-        sampleColor = volume->transferFunction->getIntegratedColorForValue(volume->transferFunction,  lastSample,  sample);
-        lastSample = sample;
-      }
-      else
-      {
-        sampleColor = volume->transferFunction->getColorForValue(volume->transferFunction,
-                                                     sample);
-      }
+      sampleColor = volume->transferFunction->getIntegratedColorForValue(volume->transferFunction,  lastSample,  sample);
+      lastSample = sample;
 
       // Compute gradient shading, if enabled.
       if(volume->gradientShadingEnabled) 
@@ -409,12 +388,10 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
 
           // Setup differential geometry for the volume sample point.
           DifferentialGeometry dg;
-          dg.Ng = gradient;  
+          dg.Ng = gradient;
           if (dot(ray.dir,dg.Ng) >= 0.f) dg.Ng = neg(dg.Ng); //face forward
           dg.Ns = dg.Ng;
           dg.P = coordinates + dg.Ns*renderer->volumeEpsilon;
-
-         //sampleColor = shadedColor;
 
           dg.color = make_vec4f(sampleColor, 1);
           dg.Ng = dg.Ns;
@@ -430,7 +407,7 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
 
           vec3f litColor = make_vec3f(0.0f);
           info.Ns *= 0.3f;
-          shadeLights(renderer, ray, dg, info, 0, litColor, rayOffset, sampleID, quality);
+          shadeLights(renderer, ray, dg, info, litColor, rayOffset, sampleID, quality);
           sampleColor = litColor;
         }
       }
@@ -477,7 +454,7 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
 
     //hardcode volume spec for now
     info.Ks = volume->specular*singleMax;
-    info.Ns = 20.0f;
+    info.Ns = 30.0f;
     info.local_opacity=intervalColor.w;
     dg.material = 0;
     shadeMaterials(dg, info);
@@ -485,7 +462,7 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
     vec3f litColor = make_vec3f(0.0f);
     shadeAO(renderer, sampleID, dg, info, litColor);
     info.Ns *= 0.3f;
-    shadeLights(renderer, ray, dg, info, 0, litColor, rayOffset, sampleID, quality);
+    shadeLights(renderer, ray, dg, info, litColor, rayOffset, sampleID, quality);
     intervalColor = make_vec4f(litColor,intervalColor.w);
   }
   return intervalColor;
@@ -498,7 +475,7 @@ vec4f SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
 {
   vec3f color        = make_vec3f(0.f);
   float path_opacity = 1.f;
-  int   path_depth   = 0;
+  uniform int path_depth = 0;
   float first_hit_dist = 0.f;
 
   while (1) {
@@ -522,7 +499,7 @@ vec4f SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
     postIntersect(self->super.model,
                   dg,
                   ray,
-                  DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|
+                  DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_TANGENTS|
                   DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
 
     SciVisShadingInfo info;
@@ -534,7 +511,7 @@ vec4f SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
 
     if (info.local_opacity > 0.01f) { // worth shading?
       shadeAO(self, sampleID, dg, info, color);
-      shadeLights(self, ray, dg, info, path_depth, color, rayOffset,sampleID,1.f);
+      shadeLights(self, ray, dg, info, color, rayOffset,sampleID, 1.f);
     }
 
     // Kill path when reached max depth or if remaining contribution too low
@@ -614,13 +591,13 @@ SciVisRenderer_intersectVolumes(const uniform SciVisRenderer *uniform renderer,
 inline float lightAlpha(const uniform SciVisRenderer *uniform self,
                         Ray &ray, uniform Model *uniform model,
                         const float weight,
-                        int remaining_depth,
                         const varying float &rayOffset,
                         const varying vec3i &sampleID,
                         const uniform float &quality)
 {
   float alpha = 1.f;
   const float org_t_max = ray.t;
+  uniform int remaining_depth = self->maxDepth;
 
   while (1) {
     // Get first intersected volume for each ray and set the ray bounds.
@@ -674,7 +651,7 @@ inline float lightAlpha(const uniform SciVisRenderer *uniform self,
       float tEnd = volumeT+self->volumeEpsilon;
       foreach_unique (v in volume)
       {
-        vec4f volumeColor = SciVisRenderer_computeVolumeInterval(self, v, ray, tBegin, tEnd, 1.f, 1, rayOffset, sampleID, quality*.5f);
+        vec4f volumeColor = SciVisRenderer_computeVolumeInterval(self, v, ray, tBegin, tEnd, 0.98f, 1, rayOffset, sampleID, quality*.5f);
         material_opacity = volumeColor.w;
       }  
     }
@@ -764,7 +741,7 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
           //volume->intersect(v, ray);
 
           //interval sampling
-          volumeColor = SciVisRenderer_computeVolumeInterval(renderer, v, ray, tBegin, tEnd, .99f - color.w, 0, rayOffset, sampleID, 1.f);
+          volumeColor = SciVisRenderer_computeVolumeInterval(renderer, v, ray, tBegin, tEnd, .98f - color.w, 0, rayOffset, sampleID, 1.f);
         }
 
         // Volume contribution.
@@ -850,7 +827,7 @@ SciVisRenderer_beginFrame(uniform Renderer *uniform _self,
     for (uniform int32 i = 0; i < model->volumeCount; i++)
       boundingBox = box_extend(boundingBox, model->volumes[i]->boundingBox);
 
-    self->volumeEpsilon = 1e-4f * length(box_size(boundingBox));
+    self->volumeEpsilon = 1e-3f * length(box_size(boundingBox));
   }
 
   return NULL;
@@ -863,8 +840,9 @@ export void SciVisRenderer_set(void *uniform _self,
                                const uniform bool shadowsEnabled,
                                const uniform int maxDepth,
                                const uniform int aoSamples,
-                               const uniform float aoRayLength,
-                               const uniform float aoWeight,
+                               const uniform float aoDistance,
+                               const uniform vec3f &aoColor,
+                               const uniform bool aoTransparencyEnabled,
                                void **uniform lights,
                                const uniform uint32 numLights,
                                const uniform bool oneSidedLighting
@@ -875,10 +853,11 @@ export void SciVisRenderer_set(void *uniform _self,
   self->shadowsEnabled = shadowsEnabled;
   self->maxDepth = maxDepth;
   self->aoSamples = aoSamples;
-  self->aoRayLength = aoRayLength;
+  self->aoDistance = aoDistance;
+  self->aoTransparencyEnabled = aoTransparencyEnabled;
 
   // already factor in parts of cosineSampleHemispherePDF
-  self->aoWeight = aoWeight * pi;
+  self->aoColor = aoColor * pi;
 
   self->lights = (const uniform Light *uniform *uniform)lights;
   self->numLights = numLights;
@@ -891,7 +870,7 @@ export void *uniform SciVisRenderer_create(void *uniform cppE)
   Renderer_Constructor(&self->super,cppE);
   self->super.renderSample = SciVisRenderer_renderSample;
   self->super.beginFrame = SciVisRenderer_beginFrame;
-  SciVisRenderer_set(self, true, 10, 4, infinity, 0.25f, NULL, 0, true);
+  SciVisRenderer_set(self, false, 10, 4, infinity, make_vec3f(0.25f), false, NULL, 0, true);
 
   return self;
 }

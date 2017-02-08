@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -62,7 +62,7 @@ Light_SampleRes SpotLight_sample(const uniform Light* uniform super,
   if (self->radius > 0.)
     res.pdf = self->diskPdf * dist2 * abs(cosAngle);
   else
-    res.pdf = inf; // we always take this res
+    res.pdf = inf; // we always take this sample
 
   // convert from power to radiance by attenuating by distance^2; attenuate by angle
   res.weight = self->power * (sqr(invdist) * angularAttenuation);

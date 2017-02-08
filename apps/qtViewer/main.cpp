@@ -1,6 +1,6 @@
 // ======================================================================== //
 // Copyright 2016 SURVICE Engineering Company                               //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -26,6 +26,7 @@
 // scene graph
 #include "sg/module/Module.h"
 #include "sg/importer/Importer.h"
+#include "sg/common/FrameBuffer.h"
 
 #include <fstream>
 #include <stdexcept>
@@ -35,6 +36,9 @@ namespace ospray {
     using std::cout;
     using std::endl;
 
+    /*! verbosity level */
+    int verbosity = 0;
+    
     static const std::string DEFAULT_INTEGRATOR_NAME = "scivis"; //ao2";
     // static const std::string DEFAULT_INTEGRATOR_NAME = "eyeLight_geomID";
     
@@ -51,7 +55,7 @@ namespace ospray {
     vec2i frameResolution(-1,-1);
 
     /*! camera as specified on the command line */
-    Ref<sg::PerspectiveCamera> cameraFromCommandLine = NULL;
+    std::shared_ptr<sg::PerspectiveCamera> cameraFromCommandLine;
     vec3f upFromCommandLine(0,0,0);
 
     /*! renderer as specified on the command line */
@@ -69,11 +73,14 @@ namespace ospray {
     {
       // init ospray
       ospInit(&argc,argv);
+      auto device = ospGetCurrentDevice();
+      ospDeviceSetErrorMsgFunc(device,
+                               [](const char *msg) { std::cout << msg; });
       // init qt
       QApplication *app = new QApplication(argc, (char **)argv);
       
-      Ref<sg::World> world = new sg::World;
-      Ref<sg::Renderer> renderer = new sg::Renderer;
+      auto world = std::make_shared<sg::World>();
+      auto renderer = std::make_shared<sg::Renderer>();
       bool fullscreen = false;
 
       for (int argID=1;argID<argc;argID++) {
@@ -84,15 +91,15 @@ namespace ospray {
           } else if (arg == "--size") {
             frameResolution.x = atoi(argv[++argID]);
             frameResolution.y = atoi(argv[++argID]);
-          } else if (arg == "-spp" || arg == "--spp" || arg == "--samples-per-pixel") {
+          } else if (arg == "-spp" ||
+                     arg == "--spp" ||
+                     arg == "--samples-per-pixel") {
             spp = atoi(argv[++argID]);
           } else if (arg == "--data-distributed" || arg == "--data-parallel") {
             sg::Volume::useDataDistributedVolume = true;
           } else if (arg == "--1k" || arg == "-1k") {
             frameResolution.x = 1024;
             frameResolution.y = 1024;
-          } else if (arg == "--test-sphere") {
-            world = sg::createTestSphere();
           } else if (arg == "--show-fps" || arg == "-fps" || arg == "--fps") {
             showFPS = true;
           } else if (arg == "--module") {
@@ -100,6 +107,8 @@ namespace ospray {
           } else if (arg == "--renderer") {
             integratorFromCommandLine = argv[++argID];
           } else if (arg == "-v") {
+            verbosity = 1;
+          } else if (arg == "--view-file") {
             std::ifstream fin(argv[++argID]);
             if (!fin.is_open())
             {
@@ -108,7 +117,8 @@ namespace ospray {
                                        "\" for reading");
             }
 
-            if (!cameraFromCommandLine) cameraFromCommandLine = new sg::PerspectiveCamera;
+            if (!cameraFromCommandLine)
+              cameraFromCommandLine = std::make_shared<sg::PerspectiveCamera>();
 
             auto x = 0.f;
             auto y = 0.f;
@@ -145,14 +155,16 @@ namespace ospray {
               }
             }
           } else if (arg == "-vi") {
-            if (!cameraFromCommandLine) cameraFromCommandLine = new sg::PerspectiveCamera;
+            if (!cameraFromCommandLine)
+              cameraFromCommandLine = std::make_shared<sg::PerspectiveCamera>();
             assert(argID+3<argc);
             float x = atof(argv[++argID]);
             float y = atof(argv[++argID]);
             float z = atof(argv[++argID]);
             cameraFromCommandLine->setAt(vec3f(x,y,z));
           } else if (arg == "-vp") {
-            if (!cameraFromCommandLine) cameraFromCommandLine = new sg::PerspectiveCamera;
+            if (!cameraFromCommandLine)
+              cameraFromCommandLine = std::make_shared<sg::PerspectiveCamera>();
             assert(argID+3<argc);
             float x = atof(argv[++argID]);
             float y = atof(argv[++argID]);
@@ -164,15 +176,17 @@ namespace ospray {
             float y = atof(argv[++argID]);
             float z = atof(argv[++argID]);
             upFromCommandLine = vec3f(x,y,z);
-            if (cameraFromCommandLine) cameraFromCommandLine->setUp(vec3f(x,y,z));
+            if (cameraFromCommandLine)
+              cameraFromCommandLine->setUp(vec3f(x,y,z));
           } else if (arg == "--fullscreen" || arg == "-fs"){
             fullscreen = true;
           } else {
-            throw std::runtime_error("#osp:qtv: unknown cmdline param '"+arg+"'");
+            throw std::runtime_error("#osp:qtv: unknown cmdline param '" +
+                                     arg + "'");
           }
         } else {
           FileName fn = arg;
-          if (fn.ext() == "osp" || fn.ext() == "pkd") {
+          if (fn.ext() == "osp" || fn.ext() == "osg" || fn.ext() == "pkd") {
             world = sg::loadOSP(fn.str());
             // } else if (fn.ext() == "atom") {
             //   world = sg::AlphaSpheres::importOspAtomFile(fn.str());
@@ -181,17 +195,11 @@ namespace ospray {
             sg::importPLY(world,fn);
           } else if (fn.ext() == "obj") {
             sg::importOBJ(world,fn);
-            // } else if (fn.ext() == "x3d") {
-            //   sg::importX3D(world,fn);
           } else if (fn.ext() == "xml") {
             std::cout << "#osp:qtv: reading RIVL file " << arg << std::endl;
             world = sg::importRIVL(arg);
           } else 
             sg::importFile(world,fn);
-            
-          // throw std::runtime_error("unsupported file format in '"+fn.str()+"'");
-          // std::cout << "#osp:qtv: reading RIVL file " << arg << std::endl;
-          //world = sg::importRIVL(arg);
         }
       }
 
@@ -201,6 +209,10 @@ namespace ospray {
       }
       // set the current world ...
       std::cout << "#osp:qtv: setting world ..." << std::endl;
+      if (verbosity >= 1) {
+        std::cout << "#osp:qtv: world bounds is " << world->getBounds()
+                  << std::endl;
+      }
       renderer->setWorld(world);
 
       // -------------------------------------------------------
@@ -208,12 +220,12 @@ namespace ospray {
       // -------------------------------------------------------
       {
         // first, check if one is specified in the scene file.
-        Ref<sg::Integrator> integrator = renderer->getLastDefinedIntegrator();
+        auto integrator = renderer->getLastDefinedIntegrator();
         if (!integrator) {
           std::string integratorName = integratorFromCommandLine;
           if (integratorName == "")
             integratorName = DEFAULT_INTEGRATOR_NAME;
-          integrator = new sg::Integrator(integratorName);
+          integrator = std::make_shared<sg::Integrator>(integratorName);
         }
         renderer->setIntegrator(integrator);
         integrator->setSPP(spp);
@@ -226,7 +238,7 @@ namespace ospray {
       {
         // activate the last camera defined in the scene graph (if set)
         if (cameraFromCommandLine) {
-          renderer->setCamera(cameraFromCommandLine.cast<sg::Camera>());
+          renderer->setCamera(std::dynamic_pointer_cast<sg::Camera>(cameraFromCommandLine));
         } else {
           renderer->setCamera(renderer->getLastDefinedCamera());
         }
@@ -253,14 +265,20 @@ namespace ospray {
         }
 
         if (frameResolution.x > 0) {
-          cout << "#osp:qtv: trying to set render size to " << frameResolution.x << "x" << frameResolution.y << " pixels" << endl;
+          cout << "#osp:qtv: trying to set render size to "
+               << frameResolution.x << "x" << frameResolution.y << " pixels"
+               << endl;
           
-          float frame_width  = modelViewer->width() - modelViewer->renderWidget->width();
-          float frame_height = modelViewer->height() - modelViewer->renderWidget->height();
+          float frame_width  = modelViewer->width()
+                               - modelViewer->renderWidget->width();
+          float frame_height = modelViewer->height()
+                               - modelViewer->renderWidget->height();
           modelViewer->resize(frameResolution.x+frame_width,
                               frameResolution.y+frame_height);
-          cout << "#osp:qtv: now rendering at " << modelViewer->renderWidget->width()
-               << "x" << modelViewer->renderWidget->height() << " pixels." << endl;
+          cout << "#osp:qtv: now rendering at "
+               << modelViewer->renderWidget->width()
+               << "x" << modelViewer->renderWidget->height() << " pixels."
+               << endl;
         }
 
         // let qt run...
@@ -272,13 +290,15 @@ namespace ospray {
       } else {
         cout << "#osp:qtv: setting up in render-to-file mode" << endl;
         if (frameResolution == vec2i(-1, -1)) {
-          cout << "#osp:qtv: Warning! no resolution specified, defaulting to 1280x720" << endl;
+          cout << "#osp:qtv: Warning! "
+               << "no resolution specified, defaulting to 1280x720" << endl;
           frameResolution = vec2i(1280, 720);
         }
         if (!renderer->frameBuffer) {
           cout << "#osp:qtv: creating default framebuffer (" 
                << frameResolution.x << "x" << frameResolution.y << ")" << endl;
-          renderer->frameBuffer = new sg::FrameBuffer(frameResolution);
+          renderer->frameBuffer =
+              std::make_shared<sg::FrameBuffer>(frameResolution);
         }
         renderer->frameBuffer->commit(); 
         renderer->frameBuffer->clear();

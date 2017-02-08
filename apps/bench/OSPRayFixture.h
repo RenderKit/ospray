@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2016 Intel Corporation                                         //
+// Copyright 2017 Intel Corporation                                         //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -19,9 +19,11 @@
 #include <chrono>
 #include "pico_bench/pico_bench.h"
 
-#include <ospray_cpp/Camera.h>
-#include <ospray_cpp/Model.h>
-#include <ospray_cpp/Renderer.h>
+#include <ospray/ospray_cpp/Camera.h>
+#include <ospray/ospray_cpp/Model.h>
+#include <ospray/ospray_cpp/Renderer.h>
+
+#include <deque>
 
 namespace bench {
 void writePPM(const std::string &fileName, const int sizeX, const int sizeY,
@@ -36,7 +38,7 @@ struct OSPRayFixture {
   // warm up frames = 10
   // benchmark frames = 100
   OSPRayFixture(ospray::cpp::Renderer renderer, ospray::cpp::Camera camera,
-                ospray::cpp::Model model);
+                 ospray::cpp::Model model);
   // Benchmark the scene, passing no params (or 0 for warmUpFrames or benchFrames) will
   // use the default configuration stored in the fixture, e.g. what was parsed from
   // the command line.

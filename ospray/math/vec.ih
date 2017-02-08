@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -467,11 +467,6 @@ __define_binary_operator( operator-, - );
 __define_binary_operator( operator*, * );
 __define_binary_operator( operator/, / );
 
-// define old functional operators as used in the embree path tracer, deprecated
-__define_binary_operator( add, + );
-__define_binary_operator( sub, - );
-__define_binary_operator( mul, * );
-
 #undef __define_binary_operator
 
 inline float reduce_mul(const vec3f v)
@@ -542,8 +537,8 @@ inline float dot(const vec3f a, const vec3f b)
 inline uniform float length(const uniform vec3f a) { return sqrtf(dot(a,a)); }
 inline varying float length(const varying vec3f a) { return sqrtf(dot(a,a)); }
 
-inline uniform float distance(const uniform vec3f a, const uniform vec3f b) { return length(sub(a,b)); }
-inline varying float distance(const varying vec3f a, const uniform vec3f b) { return length(sub(a,b)); }
+inline uniform float distance(const uniform vec3f a, const uniform vec3f b) { return length(a - b); }
+inline varying float distance(const varying vec3f a, const uniform vec3f b) { return length(a - b); }
 
 
 inline uniform float dot(const uniform vec3fa a, const uniform vec3fa b) { return a.x*b.x+a.y*b.y+a.z*b.z; }
@@ -552,8 +547,8 @@ inline varying float dot(const varying vec3fa a, const varying vec3fa b) { retur
 inline uniform float length(const uniform vec3fa a) { return sqrtf(dot(a,a)); }
 inline varying float length(const varying vec3fa a) { return sqrtf(dot(a,a)); }
 
-inline uniform float distance(const uniform vec3fa a, const uniform vec3fa b) { return length(sub(a,b)); }
-inline varying float distance(const varying vec3fa a, const uniform vec3fa b) { return length(sub(a,b)); }
+inline uniform float distance(const uniform vec3fa a, const uniform vec3fa b) { return length(a - b); }
+inline varying float distance(const varying vec3fa a, const uniform vec3fa b) { return length(a - b); }
 
 // ------------------------------------------------------------------
 // cross product
@@ -721,6 +716,21 @@ __define_lerp4(uc)
 #undef __define_lerp3
 #undef __define_lerp4
 
+#define __define_interpolate_uv(univar,T) \
+inline T interpolate(const vec3f &f, const univar T a, const univar T b, const univar T c) \
+{ \
+  return f.x*a + f.y*b + f.z*c; \
+}
+#define __define_interpolate(T) \
+  __define_interpolate_uv(uniform,T) \
+  __define_interpolate_uv(varying,T)
+
+__define_interpolate(vec2f)
+__define_interpolate(vec3f)
+__define_interpolate(vec4f)
+#undef __define_interpolate_uv
+#undef __define_interpolate
+
 inline vec2i make_vec2i(const vec2f &a)
 { return make_vec2i((int)a.x, (int)a.y); }
 
@@ -800,34 +810,55 @@ inline uniform vec3f nextafter(const uniform vec3i &a, const uniform vec3i &b)
 { return(make_vec3f(nextafter(a.x, b.x), nextafter(a.y, b.y), nextafter(a.z, b.z))); }
 
 inline varying float reduce_min(const varying vec3f &a)
-{ return(min(min(a.x, a.y), a.z)); }
-
-inline varying float reduce_min(const varying vec4f &a)
-{ return(min(min(min(a.x, a.y), a.z), a.w)); }
+{ return min(min(a.x, a.y), a.z); }
 
 inline uniform float reduce_min(const uniform vec3f &a)
-{ return(min(min(a.x, a.y), a.z)); }
+{ return min(min(a.x, a.y), a.z); }
+
+inline uniform float reduce_min(const uniform vec3i &a)
+{ return min(min(a.x, a.y), a.z); }
+
+inline varying float reduce_min(const varying vec3i &a)
+{ return min(min(a.x, a.y), a.z); }
+
+inline varying float reduce_min(const varying vec4f &a)
+{ return min(min(a.x, a.y), min(a.z, a.w)); }
+
+inline uniform float reduce_min(const uniform vec4f &a)
+{ return min(min(a.x, a.y), min(a.z, a.w)); }
 
 inline uniform float reduce_max(const uniform vec3i &a)
-{ return(max(max(a.x, a.y), a.z)); }
+{ return max(max(a.x, a.y), a.z); }
+
+inline varying float reduce_max(const varying vec3i &a)
+{ return max(max(a.x, a.y), a.z); }
+
+inline varying float reduce_max(const varying vec3f &a)
+{ return max(max(a.x, a.y), a.z); }
 
 inline uniform float reduce_max(const uniform vec3f &a)
-{ return(max(max(a.x, a.y), a.z)); }
+{ return max(max(a.x, a.y), a.z); }
+
+inline varying float reduce_max(const varying vec4f &a)
+{ return max(max(a.x, a.y), max(a.z, a.w)); }
+
+inline uniform float reduce_max(const uniform vec4f &a)
+{ return max(max(a.x, a.y), max(a.z, a.w)); }
 
 inline uniform float reduce_add(const uniform vec3f &a)
-{ return(a.x+a.y+a.z); }
+{ return a.x+a.y+a.z; }
 
 inline uniform float reduce_avg(const uniform vec3f &a)
-{ return((a.x+a.y+a.z)*(1.0f/3.0f)); }
+{ return reduce_add(a)*(1.0f/3.0f); }
 
 inline uniform float luminance(const uniform vec3f& c)
 { return 0.212671f*c.x + 0.715160f*c.y + 0.072169f*c.z; }
 
 inline varying vec3f pow(const varying vec3f &a, const varying float b)
-{ return(make_vec3f(pow(a.x, b), pow(a.y, b), pow(a.z, b))); }
+{ return make_vec3f(pow(a.x, b), pow(a.y, b), pow(a.z, b)); }
 
 inline varying vec4f pow(const varying vec4f &a, const varying float b)
-{ return(make_vec4f(pow(a.x, b), pow(a.y, b), pow(a.z, b), pow(a.w, b))); }
+{ return make_vec4f(pow(a.x, b), pow(a.y, b), pow(a.z, b), pow(a.w, b)); }
 
 inline uniform bool isnan(uniform vec3f v)
 { return isnan(v.x+v.y+v.z); }
@@ -857,7 +888,9 @@ inline void set(uniform vec3f &v, const uniform uint32 dim, const uniform float 
 { (&v.x)[dim] = f; }
 
 /*! get vector 'v's value in dimension 'd' */
-inline float get(const uniform vec3f &v, const uniform uint32 dim)
+inline uniform float get(const uniform vec3f &v, const uniform uint32 dim)
+{ return (&v.x)[dim]; }
+inline float get(const vec3f &v, const uniform uint32 dim)
 { return (&v.x)[dim]; }
 
 

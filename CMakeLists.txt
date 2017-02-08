@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2016 Intel Corporation                                    ##
+## Copyright 2009-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,12 +14,18 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+set(CMAKE_DISABLE_SOURCE_CHANGES ON)
+set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
+
 PROJECT(OSPRay)
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 CMAKE_POLICY(SET CMP0003 NEW) # since 2.6
 IF(POLICY CMP0015)
   CMAKE_POLICY(SET CMP0015 NEW) # since 2.8.1
+ENDIF()
+IF(POLICY CMP0020)
+  CMAKE_POLICY(SET CMP0020 NEW) # since 2.8.11
 ENDIF()
 IF(POLICY CMP0042)
   CMAKE_POLICY(SET CMP0042 NEW) # since 3.0
@@ -28,13 +34,18 @@ IF(POLICY CMP0054)
   CMAKE_POLICY(SET CMP0054 OLD) # since 3.1
 ENDIF()
 
+# configure directories for components we are going to include
+SET(OSPRAY_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+SET(COMPONENTS_DIR ${OSPRAY_DIR}/components)
+SET(OSPCOMMON_DIR ${COMPONENTS_DIR}/ospcommon)
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
+SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${OSPCOMMON_DIR}/cmake)
 
 ##############################################################
 # CMake modules and macro files
 ##############################################################
 
-INCLUDE(ospray_macros)
+INCLUDE(macros)
 INCLUDE(ospray_options)
 INCLUDE(ispc)
 
@@ -45,25 +56,22 @@ ENDIF()
 ##############################################################
 # the OSPRay 'common' library
 ##############################################################
+ADD_SUBDIRECTORY(${OSPCOMMON_DIR})
 
-OSPRAY_ADD_SUBDIRECTORY(ospcommon)
+##############################################################
+# OSPRay components
+#
+# 'components' work similar to 'packages' in linux distributions: each
+# component is its own little piece that builds some applications,
+# libraries, etc, and may have dependencies to other components.
+##############################################################
+INCLUDE(components/configure.cmake)
 
 ##############################################################
 # the OSPRay library
 ##############################################################
 
-OSPRAY_ADD_SUBDIRECTORY(ospray)
-
-##############################################################
-# OSPRay modules
-##############################################################
-
-OPTION(OSPRAY_ENABLE_MODULES "Enable the 'modules' subtree in the build." ON)
-MARK_AS_ADVANCED(OSPRAY_ENABLE_MODULES)
-
-IF (OSPRAY_ENABLE_MODULES)
-  OSPRAY_ADD_SUBDIRECTORY(modules)
-ENDIF()
+ADD_SUBDIRECTORY(ospray)
 
 ##############################################################
 # OSPRay sample apps; at the end: they may need modules
@@ -73,10 +81,20 @@ OPTION(OSPRAY_ENABLE_APPS "Enable the 'apps' subtree in the build." ON)
 MARK_AS_ADVANCED(OSPRAY_ENABLE_APPS)
 
 IF (OSPRAY_ENABLE_APPS)
-  # NOTE(jda) - Don't use OSPRAY_ADD_SUBDIRECTORY() macro as we don't have any
-  #             KNC code in the apps subdirectory to compile.
   ADD_SUBDIRECTORY(apps)
 ENDIF()
+
+##############################################################
+# OSPRay modules
+# modules are OPTTIONAL and EXTERNAL packages that
+# users can link into ospray. they can use any and all pieces of
+# ospray but obviously no ospray parts may ever depend on a
+# module (which by definition is OPTIONAL) - so those go
+# AT THE BACK, only AFTER ALL OTHER PARTS OF OSPRAY ARE BUILT
+##############################################################
+ADD_SUBDIRECTORY(modules)
+
+
 
 # create a configure file that both ospray and ispc can read the cmake config
 # from needs to be at the end, after all cache variables have been set

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -161,7 +161,7 @@ namespace ospray {
         ospray::sg::TransferFunction node */
     struct QOSPTransferFunctionEditor : public QTransferFunctionEditor
     {
-      QOSPTransferFunctionEditor(Ref<sg::TransferFunction> sgNode)
+      QOSPTransferFunctionEditor(std::shared_ptr<sg::TransferFunction> sgNode)
         : sgNode(sgNode)
       {
         // sgNode->render();
@@ -171,7 +171,7 @@ namespace ospray {
       virtual void updateAlphaMap();
 
       //! the node we are editing
-      Ref<sg::TransferFunction> sgNode;
+      std::shared_ptr<sg::TransferFunction> sgNode;
     };
 
   }

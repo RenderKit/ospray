@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -45,6 +45,14 @@ inline uniform LinearSpace3f make_LinearSpace3f_identity()
   return make_LinearSpace3f(make_vec3f(1.f,0.f,0.f),
                             make_vec3f(0.f,1.f,0.f),
                             make_vec3f(0.f,0.f,1.f));
+}
+
+inline varying LinearSpace3f make_LinearSpace3f_varying_identity()
+{
+  const float one = 1.0f;
+  return make_LinearSpace3f(make_vec3f(one,0.f,0.f),
+                            make_vec3f(0.f,one,0.f),
+                            make_vec3f(0.f,0.f,one));
 }
 
 ////////////////////////////////////////////////////////////////////////////////

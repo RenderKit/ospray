@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -334,7 +334,6 @@ void GridAccelerator_intersectAdaptive(GridAccelerator *uniform accelerator,
                                          1 - (intbits(ray.dir.z) >> 31));
 
   while (ray.t0 < ray.t) {
-
     // Compute the hit point in the local coordinate system.
     vec3f localCoordinates;
     volume->transformWorldToLocal(volume,
@@ -391,7 +390,9 @@ void GridAccelerator_intersectAdaptive(GridAccelerator *uniform accelerator,
                                min(maximum.y, maximum.z));
 
     // Advance the ray so the next hit point will be outside the empty cell.
-    ray.t0 += ceil(abs(exitDist - ray.t0) / step) * step;
+    const float dist = ceil(abs(exitDist - ray.t0) / step) * step;
+    ray.t0 += dist;
+    ray.time = dist;
   }
 }
 

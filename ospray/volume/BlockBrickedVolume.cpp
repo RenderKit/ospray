@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,16 +16,14 @@
 
 //ospray
 #include "volume/BlockBrickedVolume.h"
-#include "common/tasking/parallel_for.h"
+#include "ospcommon/tasking/parallel_for.h"
 #include "BlockBrickedVolume_ispc.h"
 
 namespace ospray {
 
   BlockBrickedVolume::~BlockBrickedVolume()
   {
-    if (ispcEquivalent) {
-      ispc::BlockBrickedVolume_freeVolume(ispcEquivalent);
-    }
+    if (ispcEquivalent) ispc::BlockBrickedVolume_freeVolume(ispcEquivalent);
   }
 
   std::string BlockBrickedVolume::toString() const
@@ -72,43 +70,23 @@ namespace ospray {
     // previously specified.
     Assert2(source,"nullptr source in BlockBrickedVolume::setRegion()");
 
-#ifndef OSPRAY_VOLUME_VOXELRANGE_IN_APP
-    if (findParam("voxelRange") == nullptr) {
-      // Compute the voxel value range for float voxels if none was
-      // previously specified.
-      const size_t numVoxelsInRegion
-        = (size_t)regionSize.x *
-        + (size_t)regionSize.y *
-        + (size_t)regionSize.z;
-      if (voxelType == "uchar")
-        computeVoxelRange((unsigned char *)source, numVoxelsInRegion);
-      else if (voxelType == "ushort")
-        computeVoxelRange((unsigned short *)source, numVoxelsInRegion);
-      else if (voxelType == "float")
-        computeVoxelRange((float *)source, numVoxelsInRegion);
-      else if (voxelType == "double")
-        computeVoxelRange((double *) source, numVoxelsInRegion);
-      else {
-        throw std::runtime_error("invalid voxelType in "
-                                 "BlockBrickedVolume::setRegion()");
-      }
-      set("voxelRange", voxelRange);
-    }
-#endif
-
     vec3i finalRegionSize = regionSize;
     vec3i finalRegionCoords = regionCoords;
     void *finalSource = const_cast<void*>(source);
-    const bool upsampling = scaleRegion(source, finalSource, finalRegionSize, finalRegionCoords);
+    const bool upsampling = scaleRegion(source, finalSource,
+                                        finalRegionSize, finalRegionCoords);
     // Copy voxel data into the volume.
-    const int NTASKS = finalRegionSize.y * finalRegionSize.z;
-    parallel_for(NTASKS, [&](int taskIndex){
-        ispc::BlockBrickedVolume_setRegion(ispcEquivalent, finalSource, (const ispc::vec3i&)finalRegionCoords,
-            (const ispc::vec3i&)finalRegionSize, taskIndex);
+    const size_t NTASKS = finalRegionSize.y * finalRegionSize.z;
+    parallel_for(NTASKS, [&](size_t taskIndex) {
+      ispc::BlockBrickedVolume_setRegion(ispcEquivalent,
+                                         finalSource,
+                                         (const ispc::vec3i&)finalRegionCoords,
+                                         (const ispc::vec3i&)finalRegionSize,
+                                         taskIndex);
     });
 
-    // If we're upsampling finalSource points at the chunk of data allocated by scaleRegion
-    // to hold the upsampled volume data and we must free it.
+    // If we're upsampling finalSource points at the chunk of data allocated by
+    // scaleRegion to hold the upsampled volume data and we must free it.
     if (upsampling) {
       free(finalSource);
     }

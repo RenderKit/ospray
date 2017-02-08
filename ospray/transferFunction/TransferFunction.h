@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -29,27 +29,15 @@ namespace ospray {
     registered in OSPRay proper, or in a loaded module using
     OSP_REGISTER_TRANSFER_FUNCTION.
   */
-  class OSPRAY_SDK_INTERFACE TransferFunction : public ManagedObject
+  struct OSPRAY_SDK_INTERFACE TransferFunction : public ManagedObject
   {
-  public:
-
-    //! Constructor.
-    TransferFunction() {};
-
-    //! Destructor.
-    virtual ~TransferFunction() {};
-
-    //! Allocate storage and populate the transfer function.
-    virtual void commit() = 0;
+    TransferFunction() = default;
+    virtual ~TransferFunction() = default;
+    virtual void commit() override;
+    virtual std::string toString() const override;
 
     //! Create a transfer function of the given type.
     static TransferFunction *createInstance(const std::string &type);
-
-    //! A string description of this class.
-    virtual std::string toString() const { return("ospray::TransferFunction"); }
-
-  protected:
-
   };
 
 /*! \brief Define a function to create an instance of the InternalClass

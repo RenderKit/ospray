@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2016 Intel Corporation                                         //
+// Copyright 2017 Intel Corporation                                         //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -190,11 +190,11 @@ void parseCommandLine(int argc, const char *argv[])
 
   auto ospObjs = parseWithDefaultParsers(argc, argv);
 
-  Model model;
+  std::deque<Model> model;
   Renderer renderer;
   Camera camera;
   std::tie(std::ignore, model, renderer, camera) = ospObjs;
-  cmdlineFixture = std::make_shared<OSPRayFixture>(renderer, camera, model);
+  cmdlineFixture = std::make_shared<OSPRayFixture>(renderer, camera, model[0]);
   if (width > 0 || height > 0) {
     cmdlineFixture->setFrameBuffer(width, height);
   }

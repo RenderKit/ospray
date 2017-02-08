@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -24,17 +24,18 @@ namespace ospray {
   //! base camera class abstraction
   /*! the base class itself does not do anything useful; look into
       perspectivecamera etc for that */
-  struct OSPRAY_SDK_INTERFACE Camera : public ManagedObject {
-    //! \brief common function to help printf-debugging
-    /*! Every derived class should overrride this! */
-    virtual std::string toString() const { return "ospray::Camera (base class)"; }
-    virtual void commit();
+  struct OSPRAY_SDK_INTERFACE Camera : public ManagedObject
+  {
+    virtual ~Camera() = default;
+
+    virtual std::string toString() const override;
+
+    virtual void commit() override;
+
     static Camera *createCamera(const char *identifier);
 
-  public:
-    // ------------------------------------------------------------------
-    // parameters that each camera has, 'parsed' from params
-    // ------------------------------------------------------------------
+    // Data members //
+
     vec3f  pos;      // position of the camera in world-space
     vec3f  dir;      // main direction of the camera in world-space
     vec3f  up;       // up direction of the camera in world-space

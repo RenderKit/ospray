@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -20,10 +20,6 @@
 namespace ospray {
 
   HDRILight::HDRILight()
-    : up(0.f, 1.f, 0.f)
-    , dir(0.f, 0.f, 1.f)
-    , map(NULL)
-    , intensity(1.f)
   {
     ispcEquivalent = ispc::HDRILight_create();
   }
@@ -31,16 +27,21 @@ namespace ospray {
   HDRILight::~HDRILight()
   {
     ispc::HDRILight_destroy(getIE());
-    ispcEquivalent = NULL;
+    ispcEquivalent = nullptr;
   }
 
-  //!< Copy understood parameters into class members
+  std::string HDRILight::toString() const
+  {
+    return "ospray::HDRILight";
+  }
+
   void HDRILight::commit()
   {
+    Light::commit();
     up = getParam3f("up", vec3f(0.f, 1.f, 0.f));
     dir = getParam3f("dir", vec3f(0.f, 0.f, 1.f));
     intensity = getParam1f("intensity", 1.f);
-    map  = (Texture2D*)getParamObject("map", NULL);
+    map  = (Texture2D*)getParamObject("map", nullptr);
 
     linear3f frame;
     frame.vx = normalize(-dir);
@@ -50,7 +51,7 @@ namespace ospray {
     ispc::HDRILight_set(
         getIE(),
         (const ispc::LinearSpace3f&)frame,
-        map ? map->getIE() : NULL,
+        map ? map->getIE() : nullptr,
         intensity);
   }
 

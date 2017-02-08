@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,24 +16,12 @@
 
 //ospray
 #include "common/Data.h"
-#include "common/Core.h"
 #include "common/Library.h"
 #include "volume/StructuredVolume.h"
 #include "GridAccelerator_ispc.h"
 #include "StructuredVolume_ispc.h"
 
-// stl
-#include <map>
-
 namespace ospray {
-
-  StructuredVolume::StructuredVolume() :
-    finished(false),
-    voxelRange(FLT_MAX, -FLT_MAX)
-  {
-  }
-
-  StructuredVolume::~StructuredVolume() {}
 
   std::string StructuredVolume::toString() const
   {
@@ -72,9 +60,13 @@ namespace ospray {
     }
   }
 
-  bool StructuredVolume::scaleRegion(const void *source, void *&out, vec3i &regionSize, vec3i &regionCoords){
+  bool StructuredVolume::scaleRegion(const void *source, void *&out,
+                                     vec3i &regionSize, vec3i &regionCoords)
+  {
     this->scaleFactor = getParam3f("scaleFactor", vec3f(-1.f));
-    const bool upsampling = scaleFactor.x > 0 && scaleFactor.y > 0 && scaleFactor.z > 0;
+    const bool upsampling = scaleFactor.x > 0
+                            && scaleFactor.y > 0
+                            && scaleFactor.z > 0;
     vec3i scaledRegionSize = vec3i(scaleFactor * vec3f(regionSize));
     vec3i scaledRegionCoords = vec3i(scaleFactor * vec3f(regionCoords));
 
@@ -82,22 +74,32 @@ namespace ospray {
       if (voxelType == "uchar") {
         out = malloc(sizeof(unsigned char) * size_t(scaledRegionSize.x) *
             size_t(scaledRegionSize.y) * size_t(scaledRegionSize.z));
-        upsampleRegion((unsigned char *)source, (unsigned char *)out, regionSize, scaledRegionSize);
+        upsampleRegion((unsigned char *)source, (unsigned char *)out,
+                       regionSize, scaledRegionSize);
+      }
+      else if (voxelType == "short") {
+        out = malloc(sizeof(short) * size_t(scaledRegionSize.x) *
+            size_t(scaledRegionSize.y) * size_t(scaledRegionSize.z));
+        upsampleRegion((unsigned short *)source, (unsigned short *)out,
+                       regionSize, scaledRegionSize);
       }
       else if (voxelType == "ushort") {
         out = malloc(sizeof(unsigned short) * size_t(scaledRegionSize.x) *
             size_t(scaledRegionSize.y) * size_t(scaledRegionSize.z));
-        upsampleRegion((unsigned short *)source, (unsigned short *)out, regionSize, scaledRegionSize);
+        upsampleRegion((unsigned short *)source, (unsigned short *)out,
+                       regionSize, scaledRegionSize);
       }
       else if (voxelType == "float") {
         out = malloc(sizeof(float) * size_t(scaledRegionSize.x) *
             size_t(scaledRegionSize.y) * size_t(scaledRegionSize.z));
-        upsampleRegion((float *)source, (float *)out, regionSize, scaledRegionSize);
+        upsampleRegion((float *)source, (float *)out, regionSize,
+                       scaledRegionSize);
       }
       else if (voxelType == "double") {
         out = malloc(sizeof(double) * size_t(scaledRegionSize.x) *
             size_t(scaledRegionSize.y) * size_t(scaledRegionSize.z));
-        upsampleRegion((double *)source, (double *)out, regionSize, scaledRegionSize);
+        upsampleRegion((double *)source, (double *)out, regionSize,
+                       scaledRegionSize);
       }
       regionSize = scaledRegionSize;
       regionCoords = scaledRegionCoords;

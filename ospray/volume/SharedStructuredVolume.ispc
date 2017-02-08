@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -86,6 +86,7 @@ inline void SSV_getVoxel_##type##_64(void *uniform _self,                    \
 }
 
 template_getVoxel(uint8);
+template_getVoxel(int16);
 template_getVoxel(uint16);
 template_getVoxel(float);
 template_getVoxel(double);
@@ -114,6 +115,7 @@ inline float accessArrayWithOffset(const type *uniform basePtr,              \
 }                                                                            \
   
 template_accessArray(uint8);
+template_accessArray(int16);
 template_accessArray(uint16);
 template_accessArray(float);
 template_accessArray(double);
@@ -254,6 +256,7 @@ inline float SSV_computeSample_##type##_64_32(void *uniform _self,           \
 }
 
 template_computeSample(uint8)
+template_computeSample(int16)
 template_computeSample(uint16)
 template_computeSample(float)
 template_computeSample(double)
@@ -272,6 +275,8 @@ void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform self,
 
   if (voxelType == OSP_UCHAR)
     bytesPerVoxel = sizeof(uniform uint8);
+  else if (voxelType == OSP_SHORT)
+    bytesPerVoxel = sizeof(uniform int16);
   else if (voxelType == OSP_USHORT)
     bytesPerVoxel = sizeof(uniform uint16);
   else if (voxelType == OSP_FLOAT)
@@ -303,6 +308,9 @@ void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform self,
     if (voxelType == OSP_UCHAR) {
       self->super.getVoxel = SSV_getVoxel_uint8_32;
       self->super.super.computeSample = SSV_computeSample_uint8_32;
+    } else if (voxelType == OSP_SHORT) {
+      self->super.getVoxel = SSV_getVoxel_int16_32;
+      self->super.super.computeSample = SSV_computeSample_float_32;
     } else if (voxelType == OSP_USHORT) {
       self->super.getVoxel = SSV_getVoxel_uint16_32;
       self->super.super.computeSample = SSV_computeSample_float_32;
@@ -322,6 +330,9 @@ void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform self,
     if (voxelType == OSP_UCHAR) {
       self->super.getVoxel = SSV_getVoxel_uint8_64_32;
       self->super.super.computeSample = SSV_computeSample_uint8_64_32;
+    } else if (voxelType == OSP_SHORT) {
+      self->super.getVoxel = SSV_getVoxel_int16_64_32;
+      self->super.super.computeSample = SSV_computeSample_int16_64_32;
     } else if (voxelType == OSP_USHORT) {
       self->super.getVoxel = SSV_getVoxel_uint16_64_32;
       self->super.super.computeSample = SSV_computeSample_uint16_64_32;
@@ -339,6 +350,8 @@ void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform self,
 
     if (voxelType == OSP_UCHAR)
       self->super.getVoxel = SSV_getVoxel_uint8_64;
+    else if (voxelType == OSP_SHORT)
+      self->super.getVoxel = SSV_getVoxel_int16_64;
     else if (voxelType == OSP_USHORT)
       self->super.getVoxel = SSV_getVoxel_uint16_64;
     else if (voxelType == OSP_FLOAT)
@@ -391,6 +404,7 @@ export void SharedStructuredVolume_setRegion_##type                          \
 }
 
 template_setRegion(uint8);
+template_setRegion(int16);
 template_setRegion(uint16);
 template_setRegion(float);
 template_setRegion(double);

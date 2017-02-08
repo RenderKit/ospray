@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -73,14 +73,14 @@ namespace ospray {
       
     public:
       //! constructor
-      QLightManipulator(Ref<sg::Renderer> renderer, vec3f up);
+      QLightManipulator(std::shared_ptr<sg::Renderer> renderer, vec3f up);
       QLightManipulator(){}
       ~QLightManipulator();
 
     protected:
       LightInfo lightInfo;
       //The renderer we'll be using. Non-owning pointer
-      Ref<sg::Renderer> sgRenderer;
+      std::shared_ptr<sg::Renderer> sgRenderer;
       
       //All text boxes and labels
       QLabel *intensityLabel;

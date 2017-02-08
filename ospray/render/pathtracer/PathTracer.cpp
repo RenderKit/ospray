@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -20,18 +20,31 @@
 // ospray
 #include "common/Data.h"
 #include "lights/Light.h"
+#include "geometry/Instance.h"
 // ispc exports
 #include "PathTracer_ispc.h"
+#include "Material_ispc.h"
+#include "GeometryLight_ispc.h"
 // std
 #include <map>
 
 namespace ospray {
-  PathTracer::PathTracer() : Renderer()
+
+  PathTracer::PathTracer()
   {
     ispcEquivalent = ispc::PathTracer_create(this);
   }
 
-  /*! \brief create a material of given type */
+  PathTracer::~PathTracer()
+  {
+    destroyGeometryLights();
+  }
+
+  std::string PathTracer::toString() const
+  {
+    return "ospray::PathTracer";
+  }
+
   Material *PathTracer::createMaterial(const char *type)
   {
     std::string ptType = std::string("PathTracer_")+type;
@@ -39,49 +52,96 @@ namespace ospray {
     if (!material) {
       std::map<std::string,int> numOccurrances;
       const std::string T = type;
-      if (numOccurrances[T] == 0)
-        std::cout << "#osp:PT: does not know material type '" << type << "'" <<
+      if (numOccurrances[T] == 0) {
+        std::stringstream msg;
+        msg << "#osp:PT: does not know material type '" << type << "'" <<
           " (replacing with OBJMaterial)" << std::endl;
-      numOccurrances[T] ++;
+        postErrorMsg(msg);
+      }
+      numOccurrances[T]++;
       material = Material::createMaterial("PathTracer_OBJMaterial");
-      // throw std::runtime_error("invalid path tracer material "+std::string(type));
     }
     material->refInc();
     return material;
+  }
+
+
+  void PathTracer::generateGeometryLights(const Model *const model
+      , const affine3f& xfm
+      , const affine3f& rcp_xfm
+      , float *const areaPDF
+      )
+  {
+    for(size_t i = 0; i < model->geometry.size(); i++) {
+      auto &geo = model->geometry[i];
+      // recurse instances
+      Ref<Instance> inst = geo.dynamicCast<Instance>();
+      if (inst) {
+        const affine3f instXfm = xfm * inst->xfm;
+        const affine3f rcpXfm = rcp(instXfm);
+        generateGeometryLights(inst->instancedScene.ptr, instXfm, rcpXfm,
+            &(inst->areaPDF[0]));
+      } else
+        if (geo->material && geo->material->getIE()
+            && ispc::PathTraceMaterial_isEmissive(geo->material->getIE())) {
+          void* light = ispc::GeometryLight_create(geo->getIE()
+              , (const ispc::AffineSpace3f&)xfm
+              , (const ispc::AffineSpace3f&)rcp_xfm
+              , areaPDF+i);
+
+          if (light)
+            lightArray.push_back(light);
+          else {
+            std::stringstream msg;
+            msg << "#osp:pt Geometry " << geo->toString() <<
+              " does not implement area sampling! Cannot use importance "
+              "sampling for that geometry with emissive material!" << std::endl;
+            postErrorMsg(msg, 1);
+          }
+        }
+    }
+  }
+
+  void PathTracer::destroyGeometryLights()
+  {
+    for (size_t i = 0; i < geometryLights; i++)
+      ispc::GeometryLight_destroy(lightArray[i]);
   }
 
   void PathTracer::commit()
   {
     Renderer::commit();
 
-    lightData = (Data*)getParamData("lights");
-
+    destroyGeometryLights();
     lightArray.clear();
 
+    if (model) {
+      areaPDF.resize(model->geometry.size());
+      generateGeometryLights(model, affine3f(one), affine3f(one), &areaPDF[0]);
+      geometryLights = lightArray.size();
+    }
+
+    lightData = (Data*)getParamData("lights");
     if (lightData) {
       for (uint32_t i = 0; i < lightData->size(); i++)
         lightArray.push_back(((Light**)lightData->data)[i]->getIE());
     }
 
-    void **lightPtr = lightArray.empty() ? NULL : &lightArray[0];
+    void **lightPtr = lightArray.empty() ? nullptr : &lightArray[0];
 
     const int32 maxDepth = getParam1i("maxDepth", 20);
     const float minContribution = getParam1f("minContribution", 0.01f);
-    const float maxRadiance = getParam1f("maxContribution", getParam1f("maxRadiance", inf));
-    Texture2D *backplate = (Texture2D*)getParamObject("backplate", NULL);
+    const float maxRadiance = getParam1f("maxContribution",
+                                         getParam1f("maxRadiance", inf));
+    Texture2D *backplate = (Texture2D*)getParamObject("backplate", nullptr);
 
     ispc::PathTracer_set(getIE(), maxDepth, minContribution, maxRadiance,
-                         backplate ? backplate->getIE() : NULL,
-                         lightPtr, lightArray.size());
+                         backplate ? backplate->getIE() : nullptr,
+                         lightPtr, lightArray.size(), geometryLights,
+                         &areaPDF[0]);
   }
 
   OSP_REGISTER_RENDERER(PathTracer,pathtracer);
   OSP_REGISTER_RENDERER(PathTracer,pt);
 
-  extern "C" void ospray_init_module_pathtracer()
-  {
-    printf("Loaded plugin 'pathtracer' ...\n");
-  }
-
-}
-
+}// ::ospray

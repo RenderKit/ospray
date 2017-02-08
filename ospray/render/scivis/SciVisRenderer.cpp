@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -20,6 +20,7 @@
 // ospray
 #include "common/Data.h"
 #include "lights/Light.h"
+#include "lights/AmbientLight.h"
 //sys
 #include <vector>
 // ispc exports
@@ -35,29 +36,43 @@ namespace ospray {
       lightData = (Data*)getParamData("lights");
 
       lightArray.clear();
+      vec3f aoColor = vec3f(0.f);
+      bool ambientLights = false;
 
       if (lightData) {
         for (uint32_t i = 0; i < lightData->size(); i++)
-          lightArray.push_back(((Light**)lightData->data)[i]->getIE());
+        {
+          const Light* const light = ((Light**)lightData->data)[i];
+          // extract color from ambient lights and remove them
+          const AmbientLight* const ambient = dynamic_cast<const AmbientLight*>(light);
+          if (ambient) {
+            ambientLights = true;
+            aoColor += ambient->getRadiance();
+          } else
+            lightArray.push_back(light->getIE());
+        }
       }
 
       void **lightPtr = lightArray.empty() ? nullptr : &lightArray[0];
 
       const bool shadowsEnabled = getParam1i("shadowsEnabled", 0);
-
       const int32 maxDepth = getParam1i("maxDepth", 10);
-
-      int   numAOSamples = getParam1i("aoSamples", 0);
-      float rayLength    = getParam1f("aoOcclusionDistance", 1e20f);
-      float aoWeight     = getParam1f("aoWeight", 0.25f);
+      int aoSamples = getParam1i("aoSamples", 0);
+      float aoDistance = getParam1f("aoDistance",
+                          getParam1f("aoOcclusionDistance"/*old name*/, 1e20f));
+      // "aoWeight" is deprecated, use an ambient light instead
+      if (!ambientLights)
+        aoColor = vec3f(getParam1f("aoWeight", 0.f));
+      const bool aoTransparencyEnabled = getParam1i("aoTransparencyEnabled", 0);
       const bool oneSidedLighting = getParam1i("oneSidedLighting", 1);
 
       ispc::SciVisRenderer_set(getIE(),
                                shadowsEnabled,
                                maxDepth,
-                               numAOSamples,
-                               rayLength,
-                               aoWeight,
+                               aoSamples,
+                               aoDistance,
+                               (ispc::vec3f&)aoColor,
+                               aoTransparencyEnabled,
                                lightPtr,
                                lightArray.size(),
                                oneSidedLighting);
@@ -68,10 +83,8 @@ namespace ospray {
       ispcEquivalent = ispc::SciVisRenderer_create(this);
     }
 
-    /*! \brief create a material of given type */
-    Material *SciVisRenderer::createMaterial(const char *type)
+    Material *SciVisRenderer::createMaterial(const char *)
     {
-      UNUSED(type);
       return new SciVisMaterial;
     }
 

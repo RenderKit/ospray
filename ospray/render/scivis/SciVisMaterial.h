@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -24,19 +24,20 @@
 namespace ospray {
   namespace scivis {
 
-    typedef vec3f Color;
+    using Color = vec3f;
     
     /*! implements the Material used by the \ref ospray_render_scivis */
     struct SciVisMaterial : public Material
     {
       SciVisMaterial();
+      virtual ~SciVisMaterial() = default;
 
       //! \brief common function to help printf-debugging
       /*! Every derived class should overrride this! */
-      std::string toString() const override;
+      virtual std::string toString() const override;
 
       //! \brief commit the material's parameters
-      void commit() override;
+      virtual void commit() override;
 
       /*! opacity: 0 (transparent), 1 (opaque) */
       Texture2D *map_d;   float d;
@@ -64,5 +65,5 @@ namespace ospray {
       return "ospray::scivis::SciVisMaterial";
     }
 
-  } // ::ospray::obj
+  } // ::ospray::scivis
 } // ::ospray

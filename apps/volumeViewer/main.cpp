@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -35,7 +35,7 @@ void printUsage(const char *exeName)
               << "                                               saving the final frame to <img file>\n"
               << "    --dt <dt>                                  use ray cast sample step size 'dt'\n"
               << "    --module <moduleName>                      load the module 'moduleName'\n"
-              << "    --ply <filename>                           load PLY geometry from 'filename'\n"
+              << "    --geometry <filename>                      load geometry from 'filename'\n"
               << "    --rotate <rate>                            automatically rotate view according to 'rate'\n"
               << "    --fps,--show-framerate                     show the frame rate in the window title bar\n"
               << "    --fullscreen                               enter fullscreen mode\n"
@@ -56,6 +56,8 @@ int main(int argc, char *argv[])
 {
   // Initialize OSPRay.
   ospInit(&argc, (const char **) argv);
+  auto device = ospGetCurrentDevice();
+  ospDeviceSetErrorMsgFunc(device, [](const char *msg) { std::cout << msg; });
 
   // Initialize Qt.
   QApplication *app = new QApplication(argc, argv);
@@ -84,7 +86,19 @@ int main(int argc, char *argv[])
   bool ownModelPerObject = false;
   std::string renderer = "scivis";//"dvr";
   std::string writeFramesFilename;
-  bool usePlane = false;
+  bool usePlane = true;
+  float ambientLightIntensity = 0.2f;
+  float directionalLightIntensity = 1.7f;
+  float directionalLightAzimuth = 80;
+  float directionalLightElevation = 65;
+  float samplingRate = .125f;
+  float maxSamplingRate = 2.f;
+  int spp = 1;
+  bool noshadows = false;
+  int aoSamples = 1;
+  bool preIntegration = true;
+  bool gradientShading = true;
+  bool adaptiveSampling = true;
 
   std::vector<std::string> inFileName;
   // Parse the optional command line arguments.
@@ -93,53 +107,58 @@ int main(int argc, char *argv[])
     const std::string arg = argv[i];
 
     if (arg == "--dt") {
-
       if (i + 1 >= argc) throw std::runtime_error("missing <dt> argument");
       dt = atof(argv[++i]);
       std::cout << "got dt = " << dt << std::endl;
-
-    } else if (arg == "--ply") {
-
+    } else if (arg == "--geometry") {
       if (i + 1 >= argc) throw std::runtime_error("missing <filename> argument");
       plyFilenames.push_back(std::string(argv[++i]));
       std::cout << "got PLY filename = " << plyFilenames.back() << std::endl;
-
+    } else if (arg == "--samplingRate") {
+      if (i + 1 >= argc) throw std::runtime_error("missing argument");
+      samplingRate = atof(argv[++i]);
+    } else if (arg == "--ao-samples" || arg == "-ao") {
+      if (i + 1 >= argc) throw std::runtime_error("missing argument");
+      aoSamples = atoi(argv[++i]);
+    } else if (arg == "--gradientShading" ) {
+      if (i + 1 >= argc) throw std::runtime_error("missing argument");
+      gradientShading = atoi(argv[++i]);
+    } else if (arg == "--adaptiveSampling" ) {
+      if (i + 1 >= argc) throw std::runtime_error("missing argument");
+      adaptiveSampling = atoi(argv[++i]);
+    } else if (arg == "--noshadows" || arg == "-ns") {
+      noshadows = true;
+    } else if (arg == "--nopreintegration") {
+      preIntegration = false;
+    } else if (arg == "--spp" || arg == "-spp") {
+      if (i + 1 >= argc) throw std::runtime_error("missing argument");
+      spp = atoi(argv[++i]);
+    } else if (arg == "--maxSamplingRate") {
+      if (i + 1 >= argc) throw std::runtime_error("missing argument");
+      maxSamplingRate = atof(argv[++i]);
     } else if (arg == "--rotate") {
-
       if (i + 1 >= argc) throw std::runtime_error("missing <rate> argument");
       rotationRate = atof(argv[++i]);
       std::cout << "got rotationRate = " << rotationRate << std::endl;
-
-    } else if (arg == "--plane") {
-      usePlane = true;
+    } else if (arg == "--noplane") {
+      usePlane = false;
     } else if (arg == "--slice") {
-
       if (i + 1 >= argc) throw std::runtime_error("missing <filename> argument");
       sliceFilenames.push_back(std::string(argv[++i]));
       std::cout << "got slice filename = " << sliceFilenames.back() << std::endl;
-
     } else if (arg == "--show-framerate" || arg == "--fps") {
-
       showFrameRate = true;
       std::cout << "set show frame rate" << std::endl;
-
     } else if (arg == "--fullscreen") {
-
       fullScreen = true;
       std::cout << "go full screen" << std::endl;
-
     } else if (arg == "--own-model-per-object") {
-
       ownModelPerObject = true;
-
     } else if (arg == "--transferfunction") {
-
       if (i + 1 >= argc) throw std::runtime_error("missing <filename> argument");
       transferFunctionFilename = std::string(argv[++i]);
       std::cout << "got transferFunctionFilename = " << transferFunctionFilename << std::endl;
-
     } else if (arg == "--benchmark") {
-
       if (i + 3 >= argc) throw std::runtime_error("missing <warm-up frames> <frames> <filename> arguments");
       benchmarkWarmUpFrames = atoi(argv[++i]);
       benchmarkFrames = atoi(argv[++i]);
@@ -147,26 +166,26 @@ int main(int argc, char *argv[])
       std::cout << "got benchmarkWarmUpFrames = "
         << benchmarkWarmUpFrames << ", benchmarkFrames = "
         << benchmarkFrames << ", benchmarkFilename = " << benchmarkFilename << std::endl;
-
     }  else if (arg == "-r" || arg == "--renderer") {
-
       renderer = argv[++i];
-
     } else if (arg == "--viewsize") {
-
       if (i + 1 >= argc) throw std::runtime_error("missing <width>x<height> argument");
       std::string arg2(argv[++i]);
       size_t pos = arg2.find("x");
-
       if (pos != std::string::npos) {
-
         arg2.replace(pos, 1, " ");
         std::stringstream ss(arg2);
         ss >> viewSizeWidth >> viewSizeHeight;
         std::cout << "got viewSizeWidth = " << viewSizeWidth << ", viewSizeHeight = " << viewSizeHeight << std::endl;
-
       } else throw std::runtime_error("improperly formatted <width>x<height> argument");
-
+    } else if (arg == "--ambientLight") {
+      if (i + 1 >= argc) throw std::runtime_error("missing light argument");
+      ambientLightIntensity = atof(argv[++i]);
+    } else if (arg == "--directionalLight") {
+      if (i + 3 >= argc) throw std::runtime_error("missing light argument");
+      directionalLightIntensity = atof(argv[++i]);
+      directionalLightAzimuth = atof(argv[++i]);
+      directionalLightElevation = atof(argv[++i]);
     } else if (arg == "-vu") {
 
       if (i + 3 >= argc) throw std::runtime_error("missing <x> <y> <z> arguments");
@@ -235,6 +254,21 @@ int main(int argc, char *argv[])
                                                 showFrameRate,
                                                 fullScreen,
                                                 writeFramesFilename);
+
+  volumeViewer->getLightEditor()->setAmbientLightIntensity(ambientLightIntensity);
+  volumeViewer->getLightEditor()->setDirectionalLightIntensity(directionalLightIntensity);
+  volumeViewer->getLightEditor()->setDirectionalLightAzimuth(directionalLightAzimuth);
+  volumeViewer->getLightEditor()->setDirectionalLightElevation(directionalLightElevation);
+
+  volumeViewer->setSamplingRate(samplingRate);
+  volumeViewer->setAdaptiveMaxSamplingRate(maxSamplingRate);
+  volumeViewer->setAdaptiveSampling(adaptiveSampling);
+
+  volumeViewer->setSPP(spp);
+  volumeViewer->setShadows(!noshadows);
+  volumeViewer->setAOSamples(aoSamples);
+  volumeViewer->setPreIntegration(preIntegration);
+  volumeViewer->setGradientShadingEnabled(gradientShading);
 
   // Display the first model.
   volumeViewer->setModel(0);

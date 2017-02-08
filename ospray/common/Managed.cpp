@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -20,11 +20,6 @@
 
 namespace ospray {
 
-  /*! \brief constructor */
-  ManagedObject::ManagedObject()
-    : ID(-1), ispcEquivalent(nullptr), managedObjectType(OSP_UNKNOWN)
-  {}
-
   /*! \brief destructor */
   ManagedObject::~ManagedObject() 
   {
@@ -33,9 +28,10 @@ namespace ospray {
     ispcEquivalent = nullptr;
   }
 
-  /*! \brief commit the object's outstanding changes (such as changed parameters etc) */
+  /*! \brief commit the object's outstanding changes (i.e. changed parameters etc) */
   void ManagedObject::commit() 
-  {}
+  {
+  }
 
   //! \brief common function to help printf-debugging 
   /*! \detailed Every derived class should overrride this! */
@@ -77,8 +73,9 @@ namespace ospray {
   {
     Assert2(this,"trying to set null parameter");
     clear();
-    this->s  = strdup(str);
-    type     = OSP_STRING;
+    s = new std::string;
+    *s = strdup(str);
+    type    = OSP_STRING;
   }
 
   void ManagedObject::Param::set(void *ptr)
@@ -86,7 +83,7 @@ namespace ospray {
     Assert2(this,"trying to set null parameter");
     clear();
     (void*&)this->ptr = ptr;
-    type     = OSP_VOID_PTR;
+    type = OSP_VOID_PTR;
   }
 
   void ManagedObject::Param::clear()
@@ -94,24 +91,19 @@ namespace ospray {
     Assert2(this,"trying to clear null parameter");
     if (type == OSP_OBJECT && ptr)
       ptr->refDec();
-    if (type == OSP_STRING && ptr)
-      free(ptr);
+    if (type == OSP_STRING && s)
+      delete s;
     type = OSP_OBJECT;
-    ptr = nullptr;
+    ptr  = nullptr;
   }
 
-  ManagedObject::Param::Param(const char *name)  
-    : ptr(nullptr), type(OSP_FLOAT), name(nullptr)
+  ManagedObject::Param::Param(const char *_name)
+    : ptr(nullptr), type(OSP_FLOAT), name(strdup(_name))
   {
-    Assert(name);
-    f[0] = 0;
-    f[1] = 0;
-    f[2] = 0;
-    f[3] = 0;
-    if (name) this->name = strdup(name);
+    Assert(_name);
   }
 
-  void *ManagedObject::getVoidPtr(const char *name, void * valIfNotFound)
+  void *ManagedObject::getVoidPtr(const char *name, void *valIfNotFound)
   {
     Param *param = findParam(name);                                     
     if (!param) return valIfNotFound;                                   
@@ -122,12 +114,20 @@ namespace ospray {
   ManagedObject::Param *ManagedObject::findParam(const char *name,
                                                  bool addIfNotExist)
   {
-    for (size_t i=0 ; i < paramList.size() ; i++) {
-      if (!strcmp(paramList[i]->name,name)) return paramList[i];
+    auto foundParam =
+        std::find_if(paramList.begin(), paramList.end(),
+          [&](const std::shared_ptr<Param> &p) {
+            return p->name == name;
+          });
+
+    if (foundParam != paramList.end())
+      return foundParam->get();
+    else if (addIfNotExist) {
+      paramList.push_back(std::make_shared<Param>(name));
+      return paramList[paramList.size()-1].get();
     }
-    if (!addIfNotExist) return nullptr;
-    paramList.push_back(new Param(name));
-    return paramList[paramList.size()-1];
+    else
+      return nullptr;
   }
 
 #define define_getparam(T,ABB,TARGETTYPE,FIELD)                     \
@@ -140,43 +140,54 @@ namespace ospray {
   }
   
   define_getparam(ManagedObject *, Object, OSP_OBJECT, ptr)
-  define_getparam(int32,  1i, OSP_INT,    i)
-  define_getparam(vec3i,  3i, OSP_INT3,   i)
-  define_getparam(vec3f,  3f, OSP_FLOAT3, f)
-  define_getparam(vec3fa, 3f, OSP_FLOAT3, f)
-  define_getparam(vec4f,  4f, OSP_FLOAT4, f)
-  define_getparam(vec2f,  2f, OSP_FLOAT2, f)
-  define_getparam(float,  1f, OSP_FLOAT,  f)
-  define_getparam(float,  f,  OSP_FLOAT,  f)
-  define_getparam(const char *, String, OSP_STRING, ptr)
+  define_getparam(int32,  1i, OSP_INT,     u_int)
+  define_getparam(vec3i,  3i, OSP_INT3,    u_vec3i)
+  define_getparam(vec3f,  3f, OSP_FLOAT3,  u_vec3f)
+  define_getparam(vec3fa, 3f, OSP_FLOAT3A, u_vec3fa)
+  define_getparam(vec4f,  4f, OSP_FLOAT4,  u_vec4f)
+  define_getparam(vec2f,  2f, OSP_FLOAT2,  u_vec2f)
+  define_getparam(float,  1f, OSP_FLOAT,   u_float)
+  define_getparam(float,  f,  OSP_FLOAT,   u_float)
 
 #undef define_getparam
-  
-  void ManagedObject::setParam(const char *name, ManagedObject *data)
+
+  const char *ManagedObject::getParamString(const char *name,
+                                            const char *valIfNotFound)
   {
-    ManagedObject::Param *p = findParam(name,true);
-    p->set(data);
+    Param *param = findParam(name);
+    if (!param) return valIfNotFound;
+    if (param->type != OSP_STRING) return valIfNotFound;
+    return param->s->c_str();
   }
 
-  /*!< call 'dependencyGotChanged' on each of the objects in 'objectsListeningForChanges' */
-  void ManagedObject::notifyListenersThatObjectGotChanged() 
+  void ManagedObject::removeParam(const char *name)
   {
-    for (auto it = objectsListeningForChanges.begin();
-         it != objectsListeningForChanges.end(); it++)  {
-      ManagedObject *object = *it;
-      object->dependencyGotChanged(this);
+    auto foundParam =
+        std::find_if(paramList.begin(), paramList.end(),
+          [&](const std::shared_ptr<Param> &p) {
+            return p->name == name;
+          });
+
+    if (foundParam != paramList.end()) {
+      paramList.erase(foundParam);
     }
   }
 
-  void ManagedObject::emitMessage(const std::string &kind,
-                           const std::string &message) const
+  void ManagedObject::notifyListenersThatObjectGotChanged() 
   {
-    std::cerr << "  " + toString()
-              << "  " + kind + ": " + message + "." << std::endl;
+    for (auto *object : objectsListeningForChanges)
+      object->dependencyGotChanged(this);
+  }
+
+  void ManagedObject::emitMessage(const std::string &kind,
+                                  const std::string &message) const
+  {
+    std::string msg = "  " + toString() + "  " + kind + ": " + message + ".\n";
+    postErrorMsg(msg);
   }
 
   void ManagedObject::exitOnCondition(bool condition,
-                               const std::string &message) const
+                                      const std::string &message) const
   {
     if (!condition)
       return;
@@ -185,13 +196,12 @@ namespace ospray {
   }
 
   void ManagedObject::warnOnCondition(bool condition,
-                               const std::string &message) const
+                                      const std::string &message) const
   {
     if (!condition)
       return;
 
     emitMessage("WARNING", message);
   }
-
 
 } // ::ospray

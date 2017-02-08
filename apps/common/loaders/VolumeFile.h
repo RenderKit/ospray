@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -48,6 +48,35 @@ inline void extendVoxelRange(ospcommon::vec2f &voxelRange, const T *voxel, size_
   for (size_t i=0;i<num;i++) {
     voxelRange.x = std::min(voxelRange.x,(float)voxel[i]);
     voxelRange.y = std::max(voxelRange.y,(float)voxel[i]);
+  }
+}
+
+//! Convenient wrapper that will do the template dispatch for you based on the voxelType passed
+inline void extendVoxelRange(ospcommon::vec2f &voxelRange
+    , const OSPDataType voxelType
+    , const unsigned char *voxels
+    , const size_t numVoxels
+    )
+{
+  switch (voxelType) {
+    case OSP_UCHAR:
+      extendVoxelRange(voxelRange, (unsigned char*)voxels, numVoxels);
+      break;
+    case OSP_SHORT:
+      extendVoxelRange(voxelRange, (short*)voxels, numVoxels);
+      break;
+    case OSP_USHORT:
+      extendVoxelRange(voxelRange, (unsigned short*)voxels, numVoxels);
+      break;
+    case OSP_FLOAT:
+      extendVoxelRange(voxelRange, (float*)voxels, numVoxels);
+      break;
+    case OSP_DOUBLE:
+      extendVoxelRange(voxelRange, (double*)voxels, numVoxels);
+      break;
+    default:
+      std::cerr << "ERROR: unsupported voxel type " << stringForType(voxelType) << std::endl;
+      exit(1);
   }
 }
 

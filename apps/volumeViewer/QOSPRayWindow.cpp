@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -17,7 +17,9 @@
 #include <string>
 
 #include "QOSPRayWindow.h"
-#include "modules/opengl/util.h"
+#include "glUtil/util.h"
+
+#include "ospcommon/common.h"
 
 #ifdef __APPLE__
   #include <OpenGL/glu.h>
@@ -60,7 +62,13 @@ QOSPRayWindow::QOSPRayWindow(QMainWindow *parent,
   this->renderer = renderer;
 
   // setup camera
-  camera = ospNewCamera("perspective");
+  auto cameraFromEnv = ospcommon::getEnvVar<std::string>("OSPRAY_USE_CAMERA_TYPE");
+
+  if (cameraFromEnv.first) {
+    camera = ospNewCamera(cameraFromEnv.second.c_str());
+  } else {
+    camera = ospNewCamera("perspective");
+  }
 
   if(!camera)
     throw std::runtime_error("QOSPRayWindow: could not create camera type 'perspective'");
@@ -124,7 +132,7 @@ void QOSPRayWindow::setWorldBounds(const ospcommon::box3f &worldBounds)
 
 void QOSPRayWindow::paintGL()
 {
-  if(!renderingEnabled || !frameBuffer || !renderer)
+  if(!renderingEnabled || !frameBuffer || !renderer || !QApplication::activeWindow())
     return;
 
   // if we're benchmarking and we've completed the required number of warm-up frames, start the timer

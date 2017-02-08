@@ -10,9 +10,12 @@ tags
 *.gz
 *.rpm
 *.zip
+*.bak
 deps
 tbb
 embree
 ispc
 ospray-doc
-modules
+!/modules
+/modules/*
+!/modules/mpi

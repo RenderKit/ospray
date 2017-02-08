@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -18,9 +18,9 @@
 /* This is a small example tutorial how to use OSPRay in an application.
  *
  * On Linux build it in the build_directory with
- *   gcc -std=c99 ../apps/ospTutorial.c -I ../ospray/include -I .. -I ../ospray/embree/common ./libospray.so -Wl,-rpath,. -o ospTutorialC
+ *   gcc -std=c99 ../apps/ospTutorial.c -I ../ospray/include -I .. ./libospray.so -Wl,-rpath,. -o ospTutorialC
  * On Windows build it in the build_directory\$Configuration with
- *   cl ..\..\apps\ospTutorial.c /EHsc -I ..\..\ospray\include -I ..\.. -I ..\..\ospray\embree\common ospray.lib
+ *   cl ..\..\apps\ospTutorial.c /EHsc -I ..\..\ospray\include -I ..\.. ospray.lib
  */
 
 #include <stdint.h>
@@ -54,7 +54,7 @@ void writePPM(const char *fileName,
 }
 
 
-int main(int ac, const char **av) {
+int main(int argc, const char **argv) {
   // image size
   osp_vec2i imgSize;
   imgSize.x = 1024; // width
@@ -79,7 +79,7 @@ int main(int ac, const char **av) {
 
 
   // initialize OSPRay; OSPRay parses (and removes) its commandline parameters, e.g. "--osp:debug"
-  ospInit(&ac, av);
+  ospInit(&argc, argv);
 
   // create and setup camera
   OSPCamera camera = ospNewCamera("perspective");
@@ -92,7 +92,7 @@ int main(int ac, const char **av) {
 
   // create and setup model and mesh
   OSPGeometry mesh = ospNewGeometry("triangles");
-  OSPData data = ospNewData(4, OSP_FLOAT3A, vertex, 0); // OSP_FLOAT3 format is also supported for vertex positions (currently not on MIC)
+  OSPData data = ospNewData(4, OSP_FLOAT3A, vertex, 0); // OSP_FLOAT3 format is also supported for vertex positions
   ospCommit(data);
   ospSetData(mesh, "vertex", data);
 
@@ -112,12 +112,20 @@ int main(int ac, const char **av) {
   ospCommit(world);
 
 
-  // create and setup renderer
+  // create renderer
   OSPRenderer renderer = ospNewRenderer("scivis"); // choose Scientific Visualization renderer
-  ospSet1f(renderer, "aoWeight", 1.0f);            // with full Ambient Occlusion
+
+  // create and setup light for Ambient Occlusion
+  OSPLight light = ospNewLight(renderer, "ambient");
+  ospCommit(light);
+  OSPData lights = ospNewData(1, OSP_LIGHT, &light, 0);
+  ospCommit(lights);
+
+  // complete setup of renderer
   ospSet1i(renderer, "aoSamples", 1);
   ospSetObject(renderer, "model",  world);
   ospSetObject(renderer, "camera", camera);
+  ospSetObject(renderer, "lights", lights);
   ospCommit(renderer);
 
 

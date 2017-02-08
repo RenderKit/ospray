@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -24,11 +24,15 @@ struct Texture2D;
 typedef varying vec4f (*Texture2D_get)(const uniform Texture2D *uniform self,
                                        const varying vec2f &p);
 
+typedef varying vec3f (*Texture2D_getN)(const uniform Texture2D *uniform self,
+                                        const varying vec2f &p);
+
 struct Texture2D {
   vec2i         size;
   vec2f         sizef;     // size, as floats; slightly smaller than 'size' to avoid range checks
   vec2f         halfTexel; // 0.5/size, needed for bilinear filtering and clamp-to-edge
   Texture2D_get get;
+  Texture2D_getN getNormal;
   void         *data;
   bool          hasAlpha; // 4 channel texture?
 };
@@ -85,6 +89,15 @@ inline vec4f get4f(const uniform Texture2D *uniform self,
 {
   return self->get(self, where);
 }
+
+/*! helper function that returns the sampled values interpreted as a normal */
+inline vec3f getNormal(const uniform Texture2D *uniform self,
+                       const varying vec2f where)
+{
+  if (self == NULL) return make_vec3f(0.f, 0.f, 1.f);
+  else return self->getNormal(self, where);
+}
+
 
 /*! helper function: get1f() with a default value if the texture is NULL */
 inline float get1f(const uniform Texture2D *uniform self,

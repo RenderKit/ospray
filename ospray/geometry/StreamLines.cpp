@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -27,14 +27,19 @@ namespace ospray {
 
   StreamLines::StreamLines()
   {
-    this->ispcEquivalent = ispc::StreamLineGeometry_create(this);
+    this->ispcEquivalent = ispc::StreamLines_create(this);
   }
 
-  void StreamLines::finalize(Model *model) 
+  std::string StreamLines::toString() const
+  {
+    return "ospray::StreamLines";
+  }
+
+  void StreamLines::finalize(Model *model)
   {
     radius     = getParam1f("radius",0.01f);
-    vertexData = getParamData("vertex",NULL);
-    indexData  = getParamData("index",NULL);
+    vertexData = getParamData("vertex",nullptr);
+    indexData  = getParamData("index",nullptr);
     colorData  = getParamData("vertex.color",getParamData("color"));
 
     Assert(radius > 0.f);
@@ -45,18 +50,24 @@ namespace ospray {
     numSegments = indexData->numItems;
     vertex      = (const vec3fa*)vertexData->data;
     numVertices = vertexData->numItems;
-    color       = colorData ? (const vec4f*)colorData->data : NULL;
+    color       = colorData ? (const vec4f*)colorData->data : nullptr;
 
-    if (logLevel >= 2) 
-      std::cout << "#osp: creating streamlines geometry, "
-              << "#verts=" << numVertices << ", "
-              << "#segments=" << numSegments << ", "
-              << "radius=" << radius << std::endl;
+    std::stringstream msg;
+    msg << "#osp: creating streamlines geometry, "
+        << "#verts=" << numVertices << ", "
+        << "#segments=" << numSegments << ", "
+        << "radius=" << radius << std::endl;
+    postErrorMsg(msg, 2);
+
+    bounds = empty;
+    if (vertex) {
+      for (uint32_t i = 0; i < numVertices; i++)
+        bounds.extend(box3f(vertex[i] - radius, vertex[i] + radius));
+    }
     
-    ispc::StreamLineGeometry_set(getIE(),model->getIE(),radius,
-                                 (ispc::vec3fa*)vertex,numVertices,
-                                 (uint32_t*)index,numSegments,
-                                 (ispc::vec4f*)color);
+    ispc::StreamLines_set(getIE(),model->getIE(),radius, (ispc::vec3fa*)vertex,
+                          numVertices, (uint32_t*)index,numSegments,
+                          (ispc::vec4f*)color);
   }
 
   OSP_REGISTER_GEOMETRY(StreamLines,streamlines);

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -24,17 +24,18 @@
 namespace ospray {
 
   /*! abstract frame buffer class */
-  struct OSPRAY_SDK_INTERFACE FrameBuffer : public ManagedObject {
+  struct OSPRAY_SDK_INTERFACE FrameBuffer : public ManagedObject
+  {
     /*! app-mappable format of the color buffer. make sure that this
         matches the definition on the ISPC side */
-    typedef OSPFrameBufferFormat ColorBufferFormat;
+    using ColorBufferFormat = OSPFrameBufferFormat;
 
-    const vec2i size;
     FrameBuffer(const vec2i &size,
                 ColorBufferFormat colorBufferFormat,
                 bool hasDepthBuffer,
                 bool hasAccumBuffer,
                 bool hasVarianceBuffer = false);
+    virtual ~FrameBuffer() = default;
 
     virtual const void *mapDepthBuffer() = 0;
     virtual const void *mapColorBuffer() = 0;
@@ -46,23 +47,35 @@ namespace ospray {
     virtual void clear(const uint32 fbChannelFlags) = 0;
 
     //! get number of pixels per tile, in x and y direction
-    vec2i getTileSize()  const { return vec2i(TILE_SIZE); }
+    vec2i getTileSize() const;
 
     //! return number of tiles in x and y direction
-    vec2i getNumTiles()  const { return numTiles; }
+    vec2i getNumTiles() const;
 
-    int getTotalTiles()  const { return numTiles.x * numTiles.y; }
+    int getTotalTiles() const;
 
     //! get number of pixels in x and y diretion
-    vec2i getNumPixels() const { return size; }
+    vec2i getNumPixels() const;
 
-    vec2i numTiles;
-    vec2i maxValidPixelID;
+    /*! how often has been accumulated into that tile
+        Note that it is up to the application to properly
+        reset the accumulationIDs (using ospClearAccum(fb)) if anything
+        changes that requires clearing the accumulation buffer. */
+    virtual int32 accumID(const vec2i &tile) = 0;
+    virtual float tileError(const vec2i &tile) = 0;
+
+    void beginFrame();
+
+    //! returns error of frame
+    virtual float endFrame(const float errorThreshold) = 0;
 
     //! \brief common function to help printf-debugging
     /*! \detailed Every derived class should overrride this! */
-    virtual std::string toString() const
-    { return "ospray::FrameBuffer"; }
+    virtual std::string toString() const override;
+
+    const vec2i size;
+    vec2i numTiles;
+    vec2i maxValidPixelID;
 
     /*! indicates whether the app requested this frame buffer to have
         an (application-mappable) depth buffer */
@@ -79,43 +92,21 @@ namespace ospray {
     //! the last ospFramebufferClear() has been called.
     int32 frameID;
 
-    /*! how often has been accumulated into that tile
-        Note that it is up to the application to properly
-        reset the accumulationIDs (using ospClearAccum(fb)) if anything
-        changes that requires clearing the accumulation buffer. */
-    virtual int32 accumID(const vec2i &tile) = 0;
-    virtual float tileError(const vec2i &tile) = 0;
-
-    void beginFrame();
-
-    //! returns error of frame
-    virtual float endFrame(const float errorThreshold) = 0;
-
     Ref<PixelOp::Instance> pixelOp;
   };
 
-  /*! helper function for debugging. write out given pixels in PPM
-      format. Pixels are supposed to come in as RGBA, 4x8 bit */
-  void writePPM(const std::string &fileName, const vec2i &size, uint32 *pixels);
-
-  //! helper function to write a (float) image as (flipped) PFM file
-  void writePFM(const std::string &fileName, const vec2i &size,
-                const int channel, const float *pixels);
-
   // manages error per tile and adaptive regions, for variance estimation / stopping
-  class TileError {
+  class OSPRAY_SDK_INTERFACE TileError
+  {
     public:
       TileError(const vec2i &numTiles);
-      ~TileError();
+      virtual ~TileError();
       void clear();
       float operator[](const vec2i &tile) const;
       void update(const vec2i &tile, const float error);
-#ifdef OSPRAY_MPI
-      void sync(); // broadcast tileErrorBuffer to all workers
-#endif
       float refine(const float errorThreshold);
 
-    private:
+    protected:
       vec2i numTiles;
       int tiles;
       float *tileErrorBuffer; /*!< holds error per tile, for variance estimation / stopping */

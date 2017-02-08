@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -69,6 +69,7 @@ struct Ray {
   void *uniform userData;
 };
 
+// XXX why not inf??
 #define infinity (1e20f)
 
 /*! returns whether a ray has hit anything or not */
@@ -120,37 +121,17 @@ inline void intersectBox(const Ray& ray,
                          float& t0,
                          float& t1)
 {
-  const vec3f mins = mul(sub(box.lower, ray.org), rcp(ray.dir));
-  const vec3f maxs = mul(sub(box.upper, ray.org), rcp(ray.dir));
-  
-  t0 = max(max(ray.t0, 
-               min(mins.x,maxs.x)),
-           max(min(mins.y,maxs.y),
-               min(mins.z,maxs.z)));
-  
-  t1 = min(min(ray.t, 
-               max(mins.x,maxs.x)),
-           min(max(mins.y,maxs.y),
-               max(mins.z,maxs.z)));
+  const vec3f mins = (box.lower - ray.org) * rcp(ray.dir);
+  const vec3f maxs = (box.upper - ray.org) * rcp(ray.dir);
+  t0 = reduce_max(make_vec4f(min(mins, maxs), ray.t0));
+  t1 = reduce_min(make_vec4f(max(mins, maxs), ray.t));
 }
 
 /*! helper function that performs a ray-box test */
 inline void intersectBox(const Ray& ray,
-                         const uniform box3fa& _box,
+                         const uniform box3fa& box,
                          float& t0,
                          float& t1)
 {
-  const uniform box3f box = make_box3f(_box);
-  const vec3f mins = mul(sub(box.lower, ray.org), rcp(ray.dir));
-  const vec3f maxs = mul(sub(box.upper, ray.org), rcp(ray.dir));
-  
-  t0 = max(max(ray.t0, 
-               min(mins.x,maxs.x)),
-           max(min(mins.y,maxs.y),
-               min(mins.z,maxs.z)));
-  
-  t1 = min(min(ray.t, 
-               max(mins.x,maxs.x)),
-           min(max(mins.y,maxs.y),
-               max(mins.z,maxs.z)));
+  intersectBox(ray, make_box3f(box), t0, t1);
 }
