@@ -802,7 +802,13 @@ void VolumeViewer::initObjects(const std::string &renderer_type)
   ospSetData(renderer, "lights", ospNewData(lights.size(), OSP_OBJECT, &lights[0]));
 
   // Create an OSPRay transfer function.
-  transferFunction = ospNewTransferFunction("piecewise_linear");
+  auto tfFromEnv = getEnvVar<std::string>("OSPRAY_USE_TF_TYPE");
+
+  if (tfFromEnv.first) {
+    transferFunction = ospNewTransferFunction(tfFromEnv.second.c_str());
+  } else {
+    transferFunction = ospNewTransferFunction("piecewise_linear");
+  }
   exitOnCondition(transferFunction == NULL, "could not create OSPRay transfer function object");
   ospCommit(transferFunction);
 
