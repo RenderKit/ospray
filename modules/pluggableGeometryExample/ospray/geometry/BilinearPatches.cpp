@@ -60,6 +60,7 @@ namespace ospray {
 
       /* assert that some valid input data is available */
       if (!this->patchesData) {
+        
         std::cout << "#osp.blp: Warning: no input patches provided "
                   << "for bilinear_patches geometry" << std::endl;
         return;

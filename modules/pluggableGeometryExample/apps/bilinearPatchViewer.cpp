@@ -54,8 +54,8 @@ namespace ospray {
 
       std::deque<ospcommon::box3f>   bbox;
       std::deque<ospray::cpp::Model> models;
-      ospray::cpp::Renderer renderer;
-      ospray::cpp::Camera   camera;
+      ospray::cpp::Renderer renderer("ao");
+      ospray::cpp::Camera   camera = ospNewCamera("perspective");
 
 
       
@@ -72,8 +72,6 @@ namespace ospray {
 
       ospray::cpp::Data data(patches.size()*12,OSP_FLOAT,patches.data());
       ospray::cpp::Geometry geometry("bilinear_patches");
-      ospray::cpp::Material material;
-      geometry.setMaterial(material);
       geometry.set("patches",data);
       geometry.commit();
       
@@ -84,8 +82,6 @@ namespace ospray {
       models.push_back(model);
       bbox.push_back(worldBounds);
 
-      renderer = ospray::cpp::Renderer("scivis");
-        
       ospray::OSPGlutViewer window(bbox, models, renderer, camera);
       
       window.setScale(scale);

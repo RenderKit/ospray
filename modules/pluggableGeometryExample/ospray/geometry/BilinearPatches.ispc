@@ -51,7 +51,7 @@ static void BilinearPatches_postIntersect(uniform Geometry *uniform geometry,
                                   uniform int64 flags)
 {
   BilinearPatches *uniform self = (BilinearPatches *uniform)geometry;
-  dg.Ng = dg.Ns = ray.Ng;
+  dg.Ng = dg.Ns = normalize(ray.Ng);
 
   if (flags & DG_MATERIALID) {
     dg.materialID = 0;
@@ -101,6 +101,7 @@ unmasked void BilinearPatches_bounds(BilinearPatches *uniform self,
                                      uniform size_t primID,
                                      uniform box3fa &bbox)
 {
+  print("bounds\n");
   Patch *uniform patch = self->patchArray+primID;
   bbox = box_extend(box_extend(box_extend(box_extend(make_box3fa_empty(),make_vec3fa(patch->v00)),
                                           make_vec3fa(patch->v01)),
@@ -148,8 +149,8 @@ bool recursiveBisection(varying Ray &ray,
   const float t1 = dot(p01-ray.org,frame.vz);
   const float t2 = dot(p10-ray.org,frame.vz);
   const float t3 = dot(p11-ray.org,frame.vz);
-  const float min_t = min(min(t0,t1),min(t2,t3));
-  if (min_t > 0.f) return false;
+  // const float min_t = min(min(t0,t1),min(t2,t3));
+  // if (min_t > 0.f) return false;
   const float max_t = max(max(t0,t1),max(t2,t3));
   if (max_t < 0.f) return false;
   
@@ -173,17 +174,18 @@ bool recursiveBisection(varying Ray &ray,
     ray.Ng = cross(pu1-pu0,pv1-pv0);
     return true;
   } else {
-    const uniform vec3f p0c = 0.5f*(p01-p00);
-    const uniform vec3f p1c = 0.5f*(p11-p10);
-    const uniform vec3f pc0 = 0.5f*(p10-p00);
-    const uniform vec3f pc1 = 0.5f*(p11-p01);
+    const uniform vec3f p0c = 0.5f*(p01+p00);
+    const uniform vec3f p1c = 0.5f*(p11+p10);
+    const uniform vec3f pc0 = 0.5f*(p10+p00);
+    const uniform vec3f pc1 = 0.5f*(p11+p01);
     const uniform vec3f pcc = 0.25f*(p00+p01+p10+p11);
     
     bool hit = false;
     hit |= recursiveBisection(ray,frame, p00,p0c,pc0,pcc, u0,uc, v0,vc, recursionsLeft-1);
-    hit |= recursiveBisection(ray,frame, p01,p0c,pc1,pcc, u1,uc, v0,vc, recursionsLeft-1);
-    hit |= recursiveBisection(ray,frame, p10,p1c,pc0,pcc, u0,uc, v1,vc, recursionsLeft-1);
-    hit |= recursiveBisection(ray,frame, p11,p1c,pc1,pcc, u1,uc, v1,vc, recursionsLeft-1);
+    hit |= recursiveBisection(ray,frame, pc0,pcc,p10,p1c, u0,uc, vc,v1, recursionsLeft-1);
+
+    hit |= recursiveBisection(ray,frame, p0c,p01,pcc,pc1, uc,u1, v0,vc, recursionsLeft-1);
+    hit |= recursiveBisection(ray,frame, pcc,pc1,p1c,p11, uc,u1, vc,v1, recursionsLeft-1);
     return hit;
   }
 }
@@ -204,10 +206,13 @@ void BilinearPatches_intersect(BilinearPatches *uniform self,
   // orthogonal to the ray
   const LinearSpace3f coordSys = frame(ray.dir);
 
-  recursiveBisection(ray,coordSys,
-                     patch->v00,patch->v01,patch->v10,patch->v11,
-                     0.f,1.f, 0.f,1.f,
-                     /* number of bisections */ 10);
+  if (recursiveBisection(ray,coordSys,
+                         patch->v00,patch->v01,patch->v10,patch->v11,
+                         0.f,1.f, 0.f,1.f,
+                         /* number of bisections */ 10)) {
+    ray.geomID = self->super.geomID;
+    ray.primID = primID;
+  }
 }
 
 

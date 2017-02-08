@@ -81,9 +81,9 @@ namespace ospray {
 
       if (patches.empty()) {
         std::cout << "#osp.blp: no input files specified - creating default path" << std::endl;
-        patches.push_back(Patch(vec3f(0.f,0.f,0.f),
+        patches.push_back(Patch(vec3f(0.f,1.f,0.f),
+                                vec3f(0.f,0.f,1.f),
                                 vec3f(1.f,0.f,0.f),
-                                vec3f(0.f,1.f,0.f),
                                 vec3f(1.f,1.f,1.f)));
       }
 

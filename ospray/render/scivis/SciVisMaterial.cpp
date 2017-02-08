@@ -23,6 +23,7 @@ namespace ospray {
 
     SciVisMaterial::SciVisMaterial()
     {
+      PING;
       ispcEquivalent = ispc::SciVisMaterial_create(this);
     }
 
