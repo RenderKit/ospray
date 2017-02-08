@@ -38,7 +38,9 @@ ELSE()
     vec.cpp
     array3D/Array3D.cpp
 
+    tasking/parallel_for.inl
     tasking/parallel_for.h
+    tasking/async.inl
     tasking/async.h
     tasking/tasking_system_handle.cpp
     tasking/TaskingTypeTraits.h

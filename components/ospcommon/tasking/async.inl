@@ -16,39 +16,45 @@
 
 #pragma once
 
-#include "../common.h"
-
-#include "TaskingTypeTraits.h"
-#include "parallel_for.inl"
+#ifdef OSPRAY_TASKING_TBB
+#  include <tbb/task.h>
+#elif defined(OSPRAY_TASKING_CILK)
+#  include <cilk/cilk.h>
+#elif defined(OSPRAY_TASKING_INTERNAL)
+#  include "TaskSys.h"
+#endif
 
 namespace ospcommon {
 
-  // NOTE(jda) - This abstraction wraps "fork-join" parallelism, with an implied
-  //             synchronizsation after all of the tasks have run.
   template<typename TASK_T>
-  inline void parallel_for(int nTasks, TASK_T&& fcn)
+  inline void async_impl(TASK_T&& fcn)
   {
-    static_assert(has_operator_method_with_integral_param<TASK_T>::value,
-                  "ospcommon::parallel_for() requires the implementation of "
-                  "method 'void TASK_T::operator(P taskIndex), where P is of "
-                  "type short, int, uint, or size_t.");
+#ifdef OSPRAY_TASKING_TBB
+    struct LocalTBBTask : public tbb::task
+    {
+      TASK_T func;
+      tbb::task* execute() override { func(); return nullptr; }
+      LocalTBBTask(TASK_T&& f) : func(std::forward<TASK_T>(f)) {}
+    };
 
-    parallel_for_impl(nTasks, std::forward<TASK_T>(fcn));
+    auto *tbb_node =
+        new(tbb::task::allocate_root())LocalTBBTask(std::forward<TASK_T>(fcn));
+    tbb::task::enqueue(*tbb_node);
+#elif defined(OSPRAY_TASKING_CILK)
+    cilk_spawn fcn();
+#elif defined(OSPRAY_TASKING_INTERNAL)
+    struct LocalTask : public Task {
+      TASK_T t;
+      LocalTask(TASK_T&& fcn)
+        : Task("LocalTask"), t(std::forward<TASK_T>(fcn)) {}
+      void run(size_t) override { t(); }
+    };
+
+    Ref<LocalTask> task = new LocalTask(std::forward<TASK_T>(fcn));
+    task->schedule(1, Task::FRONT_OF_QUEUE);
+#else// OpenMP or Debug --> synchronous!
+    fcn();
+#endif
   }
 
-  // NOTE(jda) - Allow serial version of parallel_for() without the need to
-  //             change the entire tasking system backend
-  template<typename TASK_T>
-  inline void serial_for(int nTasks, const TASK_T& fcn)
-  {
-    static_assert(has_operator_method_with_integral_param<TASK_T>::value,
-                  "ospcommon::serial_for() requires the implementation of "
-                  "method 'void TASK_T::operator(P taskIndex), where P is of "
-                  "type short, int, uint, or size_t.");
-
-    for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
-      fcn(taskIndex);
-    }
-  }
-
-} //::ospcommon
+} // ::ospcommon

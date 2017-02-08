@@ -16,39 +16,44 @@
 
 #pragma once
 
-#include "../common.h"
-
-#include "TaskingTypeTraits.h"
-#include "parallel_for.inl"
+#ifdef OSPRAY_TASKING_TBB
+#  include <tbb/parallel_for.h>
+#elif defined(OSPRAY_TASKING_CILK)
+#  include <cilk/cilk.h>
+#elif defined(OSPRAY_TASKING_INTERNAL)
+#  include "ospcommon/tasking/TaskSys.h"
+#endif
 
 namespace ospcommon {
 
-  // NOTE(jda) - This abstraction wraps "fork-join" parallelism, with an implied
-  //             synchronizsation after all of the tasks have run.
   template<typename TASK_T>
-  inline void parallel_for(int nTasks, TASK_T&& fcn)
+  inline void parallel_for_impl(int nTasks, TASK_T&& fcn)
   {
-    static_assert(has_operator_method_with_integral_param<TASK_T>::value,
-                  "ospcommon::parallel_for() requires the implementation of "
-                  "method 'void TASK_T::operator(P taskIndex), where P is of "
-                  "type short, int, uint, or size_t.");
-
-    parallel_for_impl(nTasks, std::forward<TASK_T>(fcn));
-  }
-
-  // NOTE(jda) - Allow serial version of parallel_for() without the need to
-  //             change the entire tasking system backend
-  template<typename TASK_T>
-  inline void serial_for(int nTasks, const TASK_T& fcn)
-  {
-    static_assert(has_operator_method_with_integral_param<TASK_T>::value,
-                  "ospcommon::serial_for() requires the implementation of "
-                  "method 'void TASK_T::operator(P taskIndex), where P is of "
-                  "type short, int, uint, or size_t.");
-
+#ifdef OSPRAY_TASKING_TBB
+    tbb::parallel_for(0, nTasks, 1, fcn);
+#elif defined(OSPRAY_TASKING_CILK)
+    cilk_for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
+      fcn(taskIndex);
+    }
+#elif defined(OSPRAY_TASKING_OMP)
+# pragma omp parallel for schedule(dynamic)
     for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
       fcn(taskIndex);
     }
+#elif defined(OSPRAY_TASKING_INTERNAL)
+    struct LocalTask : public Task {
+      const TASK_T &t;
+      LocalTask(const TASK_T& fcn) : Task("LocalTask"), t(fcn) {}
+      void run(size_t taskIndex) override { t(taskIndex); }
+    };
+
+    Ref<LocalTask> task = new LocalTask(fcn);
+    task->scheduleAndWait(nTasks);
+#else // Debug (no tasking system)
+    for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
+      fcn(taskIndex);
+    }
+#endif
   }
 
 } //::ospcommon
