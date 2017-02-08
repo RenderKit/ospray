@@ -158,7 +158,13 @@ void VolumeSceneParser::importTransferFunction(const std::string &filename)
   tfn::TransferFunction fcn(filename);
   auto colorsData = ospray::cpp::Data(fcn.rgbValues.size(), OSP_FLOAT3,
                                       fcn.rgbValues.data());
-  transferFunction = cpp::TransferFunction("piecewise_linear");
+  auto tfFromEnv = getEnvVar<std::string>("OSPRAY_USE_TF_TYPE");
+
+  if (tfFromEnv.first) {
+    transferFunction = cpp::TransferFunction(tfFromEnv.second);
+  } else {
+    transferFunction = cpp::TransferFunction("piecewise_linear");
+  }
   transferFunction.set("colors", colorsData);
 
   tf_scale = fcn.opacityScaling;
@@ -210,7 +216,13 @@ void VolumeSceneParser::importTransferFunction(const std::string &filename)
 }
 void VolumeSceneParser::createDefaultTransferFunction()
 {
-  transferFunction = cpp::TransferFunction("piecewise_linear");
+  auto tfFromEnv = getEnvVar<std::string>("OSPRAY_USE_TF_TYPE");
+
+  if (tfFromEnv.first) {
+    transferFunction = cpp::TransferFunction(tfFromEnv.second);
+  } else {
+    transferFunction = cpp::TransferFunction("piecewise_linear");
+  }
 
   // Add colors
   std::vector<vec4f> colors;

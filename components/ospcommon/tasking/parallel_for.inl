@@ -14,32 +14,46 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "common/Material.h"
-#include "ThinGlass_ispc.h"
+#pragma once
 
-namespace ospray {
-  namespace pathtracer {
-    struct ThinGlass : public ospray::Material {
-      //! \brief common function to help printf-debugging
-      /*! Every derived class should overrride this! */
-      virtual std::string toString() const { return "ospray::pathtracer::ThinGlass"; }
+#ifdef OSPRAY_TASKING_TBB
+#  include <tbb/parallel_for.h>
+#elif defined(OSPRAY_TASKING_CILK)
+#  include <cilk/cilk.h>
+#elif defined(OSPRAY_TASKING_INTERNAL)
+#  include "ospcommon/tasking/TaskSys.h"
+#endif
 
-      //! \brief commit the material's parameters
-      virtual void commit() {
-        if (getIE() != nullptr) return;
+namespace ospcommon {
 
-        const vec3f& transmission
-          = getParam3f("transmission", vec3f(1.f));
-        const float eta
-          = getParamf("eta", 1.5f);
-        const float thickness
-          = getParamf("thickness",1.f);
-
-        ispcEquivalent = ispc::PathTracer_ThinGlass_create
-          (eta,(const ispc::vec3f&)transmission,thickness);
-      }
+  template<typename TASK_T>
+  inline void parallel_for_impl(int nTasks, TASK_T&& fcn)
+  {
+#ifdef OSPRAY_TASKING_TBB
+    tbb::parallel_for(0, nTasks, 1, fcn);
+#elif defined(OSPRAY_TASKING_CILK)
+    cilk_for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
+      fcn(taskIndex);
+    }
+#elif defined(OSPRAY_TASKING_OMP)
+# pragma omp parallel for schedule(dynamic)
+    for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
+      fcn(taskIndex);
+    }
+#elif defined(OSPRAY_TASKING_INTERNAL)
+    struct LocalTask : public Task {
+      const TASK_T &t;
+      LocalTask(const TASK_T& fcn) : Task("LocalTask"), t(fcn) {}
+      void run(size_t taskIndex) override { t(taskIndex); }
     };
 
-    OSP_REGISTER_MATERIAL(ThinGlass,PathTracer_ThinGlass);
+    Ref<LocalTask> task = new LocalTask(fcn);
+    task->scheduleAndWait(nTasks);
+#else // Debug (no tasking system)
+    for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
+      fcn(taskIndex);
+    }
+#endif
   }
-}
+
+} //::ospcommon

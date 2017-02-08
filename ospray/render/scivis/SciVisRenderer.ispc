@@ -160,7 +160,7 @@ inline float calculateAO(const uniform SciVisRenderer *uniform self,
     setRay(ao_ray, dg.P + (self->super.epsilon * dg.Ns), ao_dir,
            self->super.epsilon, self->aoDistance);
 
-    if (self->aoTransparencyEnabled) {
+    if (self->aoTransparencyEnabled || self->super.model->volumeCount) {
       const float rayOffset = self->super.epsilon*(1.f + s.x);
       occlusion += (1.f - lightAlpha(self, ao_ray, self->super.model, 1.0f,
             rayOffset, sampleID, 0.1f));
@@ -327,13 +327,12 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
   float tSkipped = -1;  //for adaptive, skip adapting sampling rate up to this value
   vec4f intervalColor = make_vec4f(0.f);
   volume->intersect(volume, ray);
-  uniform float oneOverQuality = (1.f/quality);
+  const uniform float oneOverQuality = (1.f/quality);
   float samplingRate = volume->samplingRate*quality;
   float lastSample = -1.f;
-  float adaptiveScalar = volume->adaptiveScalar*quality;
-  float maxSamplingRate = volume->adaptiveMaxSamplingRate*quality; //2.f nyquist frequency
-  float adaptiveBacktrack = volume->adaptiveBacktrack*oneOverQuality;
-  // maxSamplingRate = 0.125;
+  const float adaptiveScalar = volume->adaptiveScalar*quality;
+  const float maxSamplingRate = volume->adaptiveMaxSamplingRate*quality; //2.f nyquist frequency
+  const float adaptiveBacktrack = volume->adaptiveBacktrack*oneOverQuality;
   while (ray.t0 < tEnd && intervalColor.w < maxOpacity)
   {
     // Sample the volume at the hit point in world coordinates.
@@ -350,17 +349,22 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
                                                     lastSample, sample);
     if (volume->adaptiveSampling && sampleOpacity > adaptiveBacktrack && ray.t0 > tSkipped)  // adaptive backtack
     {
-      tSkipped = ray.t0;
       //adaptively refine sampling rate
-      float newSamplingRate = min(adaptiveScalar*sampleOpacity,maxSamplingRate);
+      const float newSamplingRate = min(adaptiveScalar*sampleOpacity,maxSamplingRate);
       if (newSamplingRate > samplingRate + 0.01f)
       {
         samplingRate = newSamplingRate;
-        ray.t0 = max(ray.t0-ray.time, tBegin);
+        const float ot0 = ray.t0;
+        ray.t0 = max(max(ray.t0-max(ray.time,volume->samplingStep),tSkipped), tBegin);
+        //Carson: TODO: skipping past ray.time shouldnt be necessary and avoided 
+        //but currently greatly reduces artifacts from low to high opacity 
+        //regions.  issue with space skipping?
+        tSkipped = ot0;
         volume->intersectAdaptive(volume, ray, samplingRate);
         lastSample = -1;
         continue;
       }
+      tSkipped = ray.t0;
     }
 
     if (!isShadowRay)
@@ -384,12 +388,10 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
 
           // Setup differential geometry for the volume sample point.
           DifferentialGeometry dg;
-          dg.Ng = gradient;  
+          dg.Ng = gradient;
           if (dot(ray.dir,dg.Ng) >= 0.f) dg.Ng = neg(dg.Ng); //face forward
           dg.Ns = dg.Ng;
           dg.P = coordinates + dg.Ns*renderer->volumeEpsilon;
-
-         //sampleColor = shadedColor;
 
           dg.color = make_vec4f(sampleColor, 1);
           dg.Ng = dg.Ns;
@@ -452,7 +454,7 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
 
     //hardcode volume spec for now
     info.Ks = volume->specular*singleMax;
-    info.Ns = 20.0f;
+    info.Ns = 30.0f;
     info.local_opacity=intervalColor.w;
     dg.material = 0;
     shadeMaterials(dg, info);
@@ -649,7 +651,7 @@ inline float lightAlpha(const uniform SciVisRenderer *uniform self,
       float tEnd = volumeT+self->volumeEpsilon;
       foreach_unique (v in volume)
       {
-        vec4f volumeColor = SciVisRenderer_computeVolumeInterval(self, v, ray, tBegin, tEnd, 0.95f, 1, rayOffset, sampleID, quality*.5f);
+        vec4f volumeColor = SciVisRenderer_computeVolumeInterval(self, v, ray, tBegin, tEnd, 0.98f, 1, rayOffset, sampleID, quality*.5f);
         material_opacity = volumeColor.w;
       }  
     }
@@ -825,7 +827,7 @@ SciVisRenderer_beginFrame(uniform Renderer *uniform _self,
     for (uniform int32 i = 0; i < model->volumeCount; i++)
       boundingBox = box_extend(boundingBox, model->volumes[i]->boundingBox);
 
-    self->volumeEpsilon = 1e-4f * length(box_size(boundingBox));
+    self->volumeEpsilon = 1e-3f * length(box_size(boundingBox));
   }
 
   return NULL;

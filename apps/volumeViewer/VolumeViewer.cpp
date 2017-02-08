@@ -15,7 +15,6 @@
 // ======================================================================== //
 
 #include <algorithm>
-// own
 #include "VolumeViewer.h"
 #include "TransferFunctionEditor.h"
 #include "IsosurfaceEditor.h"
@@ -408,16 +407,13 @@ void VolumeViewer::setPreIntegration(bool value)
 {
   if (preIntegration != value)
   {
-    for(size_t i=0; i<modelStates.size(); i++)
-      for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
-        ospSet1i(modelStates[i].volumes[j]->handle, "preIntegration", value);
-        ospCommit(modelStates[i].volumes[j]->handle);
-      }
+    ospSet1i(transferFunction, "preIntegration", value);
+    ospCommit(transferFunction);
 
-      render();
-      preIntegration = value;
-      if (preferencesDialog)
-        preferencesDialog->setPreIntegration(value);
+    render();
+    preIntegration = value;
+    if (preferencesDialog)
+      preferencesDialog->setPreIntegration(value);
   }
 }
 
@@ -802,7 +798,13 @@ void VolumeViewer::initObjects(const std::string &renderer_type)
   ospSetData(renderer, "lights", ospNewData(lights.size(), OSP_OBJECT, &lights[0]));
 
   // Create an OSPRay transfer function.
-  transferFunction = ospNewTransferFunction("piecewise_linear");
+  auto tfFromEnv = getEnvVar<std::string>("OSPRAY_USE_TF_TYPE");
+
+  if (tfFromEnv.first) {
+    transferFunction = ospNewTransferFunction(tfFromEnv.second.c_str());
+  } else {
+    transferFunction = ospNewTransferFunction("piecewise_linear");
+  }
   exitOnCondition(transferFunction == NULL, "could not create OSPRay transfer function object");
   ospCommit(transferFunction);
 
