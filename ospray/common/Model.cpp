@@ -24,11 +24,7 @@
 // ispc exports
 #include "Model_ispc.h"
 
-
 namespace ospray {
-
-  using std::cout;
-  using std::endl;
 
   extern "C" void *ospray_getEmbreeDevice()
   {

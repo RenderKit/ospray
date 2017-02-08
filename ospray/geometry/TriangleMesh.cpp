@@ -29,8 +29,6 @@
 #define RTC_INVALID_ID RTC_INVALID_GEOMETRY_ID
 
 namespace ospray {
-  using std::cout;
-  using std::endl;
 
   inline bool inRange(int64 i, int64 i0, int64 i1)
   {
@@ -143,51 +141,8 @@ namespace ospray {
       throw std::runtime_error("unsupported trianglemesh.vertex.normal data type");
     }
 
-#if OSP_COMPOSITING_TEST
-    int ourSize = mpi::worker.size;
-    int myRank = mpi::worker.rank;
-    if (ourSize > 1) {
-
-    long begin = (numTris * myRank) / ourSize;
-    long end   = (numTris * (myRank+1)) / ourSize;
-    numTris = end-begin;
-    this->index += numCompsInTri*begin;
-    if (prim_materialID) prim_materialID += begin;
-    printf("#osp:trianglemesh: hack to test compositing: have %li tris on rank %i/%i\n",
-           numTris,myRank,ourSize);
-    }
-#endif
-
-
     eMesh = rtcNewTriangleMesh(embreeSceneHandle,RTC_GEOMETRY_STATIC,
                                numTris,numVerts);
-#if 0
-    // iw: turning this off for now: we should have a special cmd line
-    //flag to enable this; not do it every time ...
-    //#ifndef NDEBUG
-    {
-      cout << "#osp/trimesh: Verifying index buffer ... " << endl;
-      for (int i=0;i<numTris*numCompsInTri;i+=numCompsInTri) {
-        if (!inRange(index[i+0],0,numVerts) || 
-            !inRange(index[i+1],0,numVerts) || 
-            !inRange(index[i+2],0,numVerts))
-        {
-          PRINT(numTris);
-          PRINT(i);
-          PRINT(index[i]);
-          PRINT(numVerts);
-          throw std::runtime_error("vertex index not in range! (broken input model, refusing to handle that)");
-        }
-      }
-      cout << "#osp/trimesh: Verifying vertex buffer ... " << endl;
-      for (int i=0;i<numVerts*numCompsInVtx;i+=numCompsInVtx) {
-        if (std::isnan(vertex[i+0]) || 
-            std::isnan(vertex[i+1]) || 
-            std::isnan(vertex[i+2]))
-          throw std::runtime_error("NaN in vertex coordinate! (broken input model, refusing to handle that)");
-      }
-    }    
-#endif
 
     rtcSetBuffer(embreeSceneHandle,eMesh,RTC_VERTEX_BUFFER,
                  (void*)this->vertex,0,
@@ -204,8 +159,8 @@ namespace ospray {
     if (numPrints < 5) {
       std::stringstream msg;
       msg << "  created triangle mesh (" << numTris << " tris "
-          << ", " << numVerts << " vertices)" << endl;
-      msg << "  mesh bounds " << bounds << endl;
+          << ", " << numVerts << " vertices)" << std::endl;
+      msg << "  mesh bounds " << bounds << std::endl;
       postErrorMsg(msg, 2);
     }
 

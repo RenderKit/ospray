@@ -88,12 +88,16 @@ namespace ospray {
               , (const ispc::AffineSpace3f&)xfm
               , (const ispc::AffineSpace3f&)rcp_xfm
               , areaPDF+i);
+
           if (light)
             lightArray.push_back(light);
-          else if (logLevel() >= 1)
-            std::cout << "#osp:pt Geometry " << geo->toString() <<
+          else {
+            std::stringstream msg;
+            msg << "#osp:pt Geometry " << geo->toString() <<
               " does not implement area sampling! Cannot use importance "
               "sampling for that geometry with emissive material!" << std::endl;
+            postErrorMsg(msg, 1);
+          }
         }
     }
   }
@@ -139,4 +143,5 @@ namespace ospray {
 
   OSP_REGISTER_RENDERER(PathTracer,pathtracer);
   OSP_REGISTER_RENDERER(PathTracer,pt);
+
 }// ::ospray
