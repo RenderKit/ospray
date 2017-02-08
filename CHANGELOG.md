@@ -1,15 +1,41 @@
 Version History
 ---------------
 
-### Changes in v1.2.0 (devel):
+### Changes in v1.2.0:
 
+-   Added support for volumes with voxelType `short` (16-bit signed
+    integers). Applications need to recompile, because `OSPDataType` has
+    been re-enumerated
 -   Removed SciVis renderer parameter `aoWeight`, the intensity (and now
     color as well) of AO is controlled via "`ambient`" lights. If
     `aoSamples` is zero (the default) then ambient lights cause ambient
-    illumination (without occlusion).
--   Implement normal mapping for SciVis renderer.
--   Initial support of emissive (and illuminating) geometries in the
-    path tracer via new material "`Luminous`".
+    illumination (without occlusion)
+-   New SciVis renderer parameter `aoTransparencyEnabled`, controlling
+    whether object transparency is respected when computing ambient
+    occlusion (disabled by default, as it is considerable slower)
+-   Implement normal mapping for SciVis renderer
+-   Support of emissive (and illuminating) geometries in the path tracer
+    via new material "`Luminous`"
+-   Lights can optionally made invisible by using the new parameter
+    `isVisible` (only relevant for path tracer)
+-   OSPRay Devices are now extendable through modules and the SDK.
+    -   Devices can be created and set current, creating an alternative
+        method for initializing the API
+    -   New API functions for committing parameters on Devices
+-   Removed support for the first generation Intel® Xeon Phi™ coprocessor
+    (codename Knights Corner)
+-   Other minor improvements, updates, and bugfixes:
+    -   Updated Embree required version to v2.13.0 for added features
+        and performance
+    -   New API function `ospDeviceSetErrorMsgFunc()` to specify a
+        callback for handling message outputs from OSPRay
+    -   Add ability to remove user set parameter values with new
+        `ospRemoveParam()` API function
+    -   The MPI device is now provided via a module, removing the need
+        for having separately compiled versions of OSPRay with and
+        without MPI
+    -   OSPRay build dependencies now only get installed if
+        `OSPRAY_INSTALL_DEPENDENCIES` CMake variable is enabled
 
 ### Changes in v1.1.2:
 
@@ -18,7 +44,7 @@ Version History
 
 ### Changes in v1.1.1:
 
--   Fixed support of first generation Intel® Xeon Phi™ coprocessor
+-   Fixed support of first generation Intel Xeon Phi coprocessor
     (codename Knights Corner) and the COI device
 -   Fix normalization bug that caused rendering artifacts
 
@@ -138,7 +164,7 @@ Version History
     integers)
 -   `OSPTexture2D` now supports sRGB formats -- actually most images are
     stored in sRGB. As a consequence the API call `ospNewTexture2D()`
-    needed to change to accept the new `OSPTextureFormat` parameter.
+    needed to change to accept the new `OSPTextureFormat` parameter
 -   Similarly, OSPRay's framebuffer types now also distinguishes between
     linear and sRGB 8-bit formats. The new types are `OSP_FB_NONE`,
     `OSP_FB_RGBA8`, `OSP_FB_SRGBA`, and `OSP_FB_RGBA32F`
