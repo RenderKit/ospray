@@ -105,7 +105,7 @@ LinearTransferFunction_getIntegratedOpacityForValue(const void *uniform _self,
   const LinearTransferFunction *uniform self
     = (const LinearTransferFunction *uniform) _self;
   if (!self->super.preIntegration || !self->super.preIntegrationComputed)
-    return LinearTransferFunction_getOpacityForValue(_self, value1); 
+    return LinearTransferFunction_getOpacityForValue(_self, value2); 
   if (value1 > value2)
   {
    float tmpVal = value1;
@@ -175,7 +175,6 @@ LinearTransferFunction_getIntegratedOpacityForValue(const void *uniform _self,
   // }
   // ret = ret / (2.f+numAdded);
 
-  //return ret;
   if (index2 - index1 > 1)
     ret += self->opacityPITable[(index1+1)+(index2-1)*self->opacityValueCount];
   return  (ret + interpval1 + interpval2)/(index2-index1+1);
@@ -190,7 +189,7 @@ LinearTransferFunction_getIntegratedColorForValue(const void *uniform _self,
     = (const LinearTransferFunction *uniform) _self;
 
   if (!self->super.preIntegration || !self->super.preIntegrationComputed)
-    return LinearTransferFunction_getColorForValue(_self, value1); 
+    return LinearTransferFunction_getColorForValue(_self, value2); 
   //TODO: use lookup table, but for now I don't notice much of a slowdown
   // Return (0,0,0) for NaN values.
   if (isnan(value1) || isnan(value2)) 
