@@ -16,8 +16,6 @@
 
 #pragma once
 
-#include "../common.h"
-
 #include "TaskingTypeTraits.h"
 #include "async.inl"
 
