@@ -264,11 +264,9 @@ inline bool GBBV_getGhostIndices(GBBV *uniform volume,
   vec3i blockIndex = make_vec3i(intDiv(voxelIdxInVolume.x),
                                 intDiv(voxelIdxInVolume.y),
                                 intDiv(voxelIdxInVolume.z));
-  vec3i oldBlockIndex = blockIndex;;
 
   // Compute the 3D offset of the brick within the block containing the voxel.
   vec3i voxelIdxInBlock = voxelIdxInVolume - blockIndex * make_vec3i(BLOCK_WIDTH-1);
-  vec3i oldIdxInBlock = voxelIdxInBlock;
 
   bool valid = false;
   if ((voxelIdxInBlock.x == 0) && (delta.x == 1)) {
@@ -305,7 +303,7 @@ inline bool GBBV_getGhostIndices(GBBV *uniform volume,
     (brickIdxInBlock.y << (BRICK_BIT_Y_HI)) |
     (brickIdxInBlock.z << (BRICK_BIT_Z_HI));
 
-  return valid && (blockIndex.x >=0) && (blockIndex.y >= 0) && (blockIndex.z >= 0);
+  return valid && (blockIndex.x >= 0) && (blockIndex.y >= 0) && (blockIndex.z >= 0);
 }
 
 /*! read a _typed_ value from an address that's given by an

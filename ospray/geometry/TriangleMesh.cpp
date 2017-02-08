@@ -80,15 +80,15 @@ namespace ospray {
 
     // check whether we need 64-bit addressing
     bool huge_mesh = false;
-    if (indexData->numBytes > UINT32_MAX)
+    if (indexData->numBytes > INT32_MAX)
       huge_mesh = true;
-    if (vertexData->numBytes > UINT32_MAX)
+    if (vertexData->numBytes > INT32_MAX)
       huge_mesh = true;
-    if (normalData && normalData->numBytes > UINT32_MAX)
+    if (normalData && normalData->numBytes > INT32_MAX)
       huge_mesh = true;
-    if (colorData && colorData->numBytes > UINT32_MAX)
+    if (colorData && colorData->numBytes > INT32_MAX)
       huge_mesh = true;
-    if (texcoordData && texcoordData->numBytes > UINT32_MAX)
+    if (texcoordData && texcoordData->numBytes > INT32_MAX)
       huge_mesh = true;
 
     this->index = (int*)indexData->data;
