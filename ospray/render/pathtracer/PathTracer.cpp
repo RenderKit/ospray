@@ -52,10 +52,13 @@ namespace ospray {
     if (!material) {
       std::map<std::string,int> numOccurrances;
       const std::string T = type;
-      if (numOccurrances[T] == 0)
-        std::cout << "#osp:PT: does not know material type '" << type << "'" <<
+      if (numOccurrances[T] == 0) {
+        std::stringstream msg;
+        msg << "#osp:PT: does not know material type '" << type << "'" <<
           " (replacing with OBJMaterial)" << std::endl;
-      numOccurrances[T] ++;
+        postErrorMsg(msg);
+      }
+      numOccurrances[T]++;
       material = Material::createMaterial("PathTracer_OBJMaterial");
     }
     material->refInc();
