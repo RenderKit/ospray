@@ -1,9 +1,9 @@
 OSPRay
 ======
 
-This is release v1.2.0 (devel) of OSPRay. For changes and new features
-see the [changelog](CHANGELOG.md). Also visit http://www.ospray.org for
-more information.
+This is release v1.2.0 of OSPRay. For changes and new features see the
+[changelog](CHANGELOG.md). Also visit http://www.ospray.org for more
+information.
 
 OSPRay Overview
 ===============
@@ -84,9 +84,8 @@ following prerequisites:
     Alternatively you can set CMake variable `OSPRAY_TASKING_SYSTEM` to
     `OpenMP`, `Internal`, or `Cilk` (icc only).
 -   OSPRay also heavily uses [Embree](https://embree.github.io/),
-    installing version 2.12 is recommended. If Embree is not found by
-    CMake its location can be hinted with the variable `embree_DIR`. As
-    a fallback OSPRay also includes its own copy of Embree.
+    installing version 2.13 or newer is required. If Embree is not found
+    by CMake its location can be hinted with the variable `embree_DIR`.
 
 Depending on your Linux distribution you can install these dependencies
 using `yum` or `apt-get`. Some of these packages might already be
@@ -186,7 +185,10 @@ where the API is compatible with C99 and C++.
 
 In order to use the API, OSPRay must initialized with a "device". A
 device is the object which implements the API. Creating and initializing
-a device can be done in either of two ways.
+a device can be done in either of two ways: command line arguments or
+manually instantiating a device.
+
+### Initialization via command line arguments
 
 The first is to do so by giving OSPRay the command line from `main()` by
 calling
@@ -238,6 +240,10 @@ convention with "`--osp:`") are understood:
 <td align="left">enables MPI mode for parallel rendering, to be used in conjunction with <code>mpirun</code></td>
 </tr>
 <tr class="odd">
+<td align="left"><code>--osp:logoutput</code></td>
+<td align="left">convenience for setting where error/status messages go; valid values are <code>cerr</code> and <code>cout</code></td>
+</tr>
+<tr class="even">
 <td align="left"><code>--osp:device:&lt;name&gt;</code></td>
 <td align="left">use <code>name</code> as the type of device for OSPRay to create; e.g. <code>--osp:device:default</code> gives you the default local device and <code>--osp:device:mpi</code> gives you the MPI device</td>
 </tr>
@@ -245,6 +251,8 @@ convention with "`--osp:`") are understood:
 </table>
 
 : Command line parameters accepted by OSPRay's `ospInit`.
+
+### Initialization via manual device instantiation
 
 The second method of initialization is to explicitly create the device
 yourself, and possibly set parameters. This method looks almost
@@ -310,18 +318,38 @@ to OSPRay API calls, where users can set/change parameters and recommit
 the device. If changes are made to the device that is already set as the
 current device, it does not need to be set as current again.
 
+### Useful environment variables
+
 Finally, OSPRay's generic device parameters can be overridden via
 environment variables for easy changes to OSPRay's behavior without
 needing to change the application (variables are prefixed by convention
 with "`OSPRAY_`"):
 
-| Variable           | Description                                                   |
-|:-------------------|:--------------------------------------------------------------|
-| OSPRAY\_THREADS    | equivalent to `--osp:numthreads`                              |
-| OSPRAY\_LOG\_LEVEL | equivalent to `--osp:loglevel`                                |
-| OSPRAY\_DEBUG      | equivalent to both OSPRAY\_LOG\_LEVEL=2 and OSPRAY\_THREADS=1 |
+| Variable            | Description                                                   |
+|:--------------------|:--------------------------------------------------------------|
+| OSPRAY\_THREADS     | equivalent to `--osp:numthreads`                              |
+| OSPRAY\_LOG\_LEVEL  | equivalent to `--osp:loglevel`                                |
+| OSPRAY\_LOG\_OUTPUT | equivalent to `--osp:logoutput`                               |
+| OSPRAY\_DEBUG       | equivalent to both OSPRAY\_LOG\_LEVEL=2 and OSPRAY\_THREADS=1 |
 
 : Environment variables interpreted by OSPRay.
+
+### Handling error and status messages from OSPRay
+
+Applications may be interested in messages which OSPRay emits, whether
+for debugging or logging events. Applications can call
+
+``` {.cpp}
+void ospDeviceSetErrorMsgFunc(OSPDevice, OSPErrorMsgFunc callback);
+```
+
+in order to set the callback OSPRay will use to emit error messages. By
+default, OSPRay uses a callback which does nothing, so any output
+desired by an application will require that a callback be provided. Note
+that callbacks for C++ std::cout and std::cerr can be alternatively set
+through ospInit() or OSPRAY\_LOG\_OUTPUT environment variable.
+
+### Loading OSPRay extensions at runtime
 
 OSPRay's functionality can be extended via plugins, which are
 implemented in shared libraries. To load plugin `name` from
@@ -551,17 +579,27 @@ summarized in the table below. If `voxelRange` is not provided for a
 volume OSPRay will compute it based on the voxel data, which may result
 in slower data updates.
 
-| Type   | Name        | Description                                                |
-|:-------|:------------|:-----------------------------------------------------------|
-| vec3i  | dimensions  | number of voxels in each dimension $(x, y, z)$             |
-| string | voxelType   | data type of each voxel, currently supported are:          |
-|       |            | "uchar" (8 bit unsigned integer)                           |
-|       |            | "ushort" (16 bit unsigned integer)                         |
-|       |            | "float" (32 bit single precision floating point)           |
-|       |            | "double" (64 bit double precision floating point)          |
-| vec2f  | voxelRange  | minimum and maximum of the scalar values                   |
-| vec3f  | gridOrigin  | origin of the grid in world-space, default $(0, 0, 0)$     |
-| vec3f  | gridSpacing | size of the grid cells in world-space, default $(1, 1, 1)$ |
+| Type   | Name                    | Description                                                              |
+|:-------|:------------------------|:-------------------------------------------------------------------------|
+| vec3i  | dimensions              | number of voxels in each dimension $(x, y, z)$                           |
+| string | voxelType               | data type of each voxel, currently supported are:                        |
+|       |                        | "uchar" (8 bit unsigned integer)                                         |
+|       |                        | "ushort" (16 bit unsigned integer)                                       |
+|       |                        | "float" (32 bit single precision floating point)                         |
+|       |                        | "double" (64 bit double precision floating point)                        |
+| vec2f  | voxelRange              | minimum and maximum of the scalar values                                 |
+| vec3f  | gridOrigin              | origin of the grid in world-space, default $(0, 0, 0)$                   |
+| vec3f  | gridSpacing             | size of the grid cells in world-space, default $(1, 1, 1)$               |
+| bool   | gradientShadingEnabled  | volume is rendered with surface shading according to normalized gradient |
+| bool   | preIntegration          | enable using pre-integration for transferFunction lookups                |
+| bool   | singleShade             | shade only at the point of maximum intensity                             |
+| bool   | adaptiveSampling        | adapt ray step size based on opacity                                     |
+| float  | adaptiveScalar          | modifier for adaptive step size                                          |
+| float  | adaptiveMaxSamplingRate | maximum sampling rate for adaptive sampling                              |
+| float  | samplingRate            | sampling rate of the volume. This is the minumum step size for adaptive. |
+| vec3f  | specular                | specular component for shading                                           |
+| vec3f  | volumeClippingBoxLower  | clip the volume values in object coordinates                             |
+| vec3f  | volumeClippingBoxUpper  | clip the volume values in object coordinates                             |
 
 : Parameters to configure a structured volume.
 
@@ -1040,10 +1078,11 @@ The call returns `NULL` if that type of camera is not known by the
 renderer, or else an `OSPLight` handle to the created light source. All
 light sources[^2] accept the following parameters:
 
-| Type     | Name      | Description                       |
-|:---------|:----------|:----------------------------------|
-| vec3f(a) | color     | color of the light                |
-| float    | intensity | intensity of the light (a factor) |
+| Type     | Name      | Default | Description                            |
+|:---------|:----------|:--------|:---------------------------------------|
+| vec3f(a) | color     | white   | color of the light                     |
+| float    | intensity | 1       | intensity of the light (a factor)      |
+| bool     | isVisible | true    | whether the light can be directly seen |
 
 : Parameters accepted by the all lights.
 
@@ -1666,13 +1705,11 @@ A minimal working example demonstrating how to use OSPRay can be found
 at `apps/ospTutorial.cpp`[^6]. On Linux build it in the build\_directory
 with
 
-    g++ ../apps/ospTutorial.cpp -I ../ospray/include -I .. -I ../ospray/embree/common \
-      ./libospray.so -Wl,-rpath,. -o ospTutorial
+    g++ ../apps/ospTutorial.cpp -I ../ospray/include -I .. ./libospray.so -Wl,-rpath,. -o ospTutorial
 
 On Windows build it in the build\_directory\\\$Configuration with
 
-    cl ..\..\apps\ospTutorial.cpp /EHsc -I ..\..\ospray\include -I ..\..  ^
-      -I ..\..\ospray\embree\common ospray.lib
+    cl ..\..\apps\ospTutorial.cpp /EHsc -I ..\..\ospray\include -I ..\.. ospray.lib
 
 Running `ospTutorial` will create two images of two triangles, rendered
 with the Scientific Visualization renderer with full Ambient Occlusion.
