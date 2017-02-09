@@ -24,7 +24,9 @@ namespace ospray {
         ospFrameBuffer(NULL) 
     {
       createFB();
-
+    }
+    void FrameBuffer::init()
+    {
       add(createNode("size", "vec2i", size));
     }
 

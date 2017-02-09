@@ -23,6 +23,7 @@ namespace ospray {
     class FrameBuffer;
     struct Renderer : public Renderable {
       Renderer(); 
+      virtual void init() override;
       virtual void preRender(RenderContext &ctx) override;
       virtual void postRender(RenderContext &ctx) override;
 

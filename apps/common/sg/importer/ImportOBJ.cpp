@@ -482,8 +482,9 @@ namespace ospray {
       std::map<Vertex, uint32_t> vertexMap;
       // TriangleMesh *mesh = new TriangleMesh;
       //scenegraph
-      world->add(createNode(fullPath.name(), "TriangleMesh"));
-      std::shared_ptr<TriangleMesh> mesh = std::make_shared<TriangleMesh>();
+
+      std::shared_ptr<TriangleMesh> mesh = std::static_pointer_cast<TriangleMesh>(createNode(fullPath.name(), "TriangleMesh").get());
+      world->add(mesh);
       mesh->vertex = std::make_shared<DataVector3f>();
       mesh->normal = std::make_shared<DataVector3f>();
       mesh->texcoord = std::make_shared<DataVector2f>();

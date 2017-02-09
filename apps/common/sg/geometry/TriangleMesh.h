@@ -28,7 +28,10 @@ namespace ospray {
     struct TriangleMesh : public sg::Geometry {
 
       //! constructor
-      TriangleMesh() : Geometry("trianglemesh"), ospGeometry(NULL) {
+      TriangleMesh() : Geometry("trianglemesh"), ospGeometry(NULL) {}
+
+      virtual void init() override
+      {
         // add(createNode("vertex", "DataBuffer"));
         // add(createNode("normal", "DataBuffer"));
         // add(createNode("color", "DataBuffer"));

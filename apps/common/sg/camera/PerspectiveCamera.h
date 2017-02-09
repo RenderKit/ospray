@@ -23,6 +23,7 @@ namespace ospray {
 
     struct PerspectiveCamera : public sg::Camera {     
       PerspectiveCamera();
+      virtual void init() override;
 
       virtual void commit();
       virtual void postCommit(RenderContext &ctx);

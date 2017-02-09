@@ -23,7 +23,9 @@ namespace ospray {
 
     /*! a geometry node - the generic geometry node */
     struct Geometry : public sg::Renderable {
-      Geometry(const std::string &type) : type(type) {
+      Geometry(const std::string &type) : type(type) {}
+      virtual void init() override
+      {
         add(createNode("material", "Material"));
         add(createNode("type", "string"));
       };

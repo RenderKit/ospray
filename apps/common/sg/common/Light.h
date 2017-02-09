@@ -55,7 +55,10 @@ struct Light : public sg::Node {
 /*! a light node - the generic light node */
 struct AmbientLight : public Light {
   //! \brief constructor
-  AmbientLight() : Light("AmbientLight") { 
+  AmbientLight() : Light("AmbientLight") {}
+
+  virtual void init() override
+  { 
   	add(createNode("color", "vec3f", vec3f(.7f,.8f,1.f),NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_color));
     getChild("color")->setMinMax(vec3f(0), vec3f(1));
   	add(createNode("intensity", "float", 0.2f,NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
@@ -66,7 +69,10 @@ struct AmbientLight : public Light {
 /*! a light node - the generic light node */
 struct DirectionalLight : public Light {
   //! \brief constructor
-  DirectionalLight() : Light("DirectionalLight") { 
+  DirectionalLight() : Light("DirectionalLight") {}
+
+  virtual void init() override
+  { 
   	add(createNode("direction", "vec3f", vec3f(-.3,.2,.4), NodeFlags::required | NodeFlags::gui_slider));
     getChild("direction")->setMinMax(vec3f(-1), vec3f(1));
   	add(createNode("color", "vec3f", vec3f(1.f),NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_color));

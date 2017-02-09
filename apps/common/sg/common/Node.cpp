@@ -83,10 +83,12 @@ namespace ospray {
           return;
         TimeStamp childMTime = 1;
         ctx.childMTime = childMTime;
+          std::cout << "pretraversing: " << getName() << std::endl;
         preTraverse(ctx, operation);
         ctx.level++;
         for (auto child : children)
         {
+          std::cout << "traversing child: " << child.second->getName() << std::endl;
           child.second->traverse(ctx,operation);
         }
         ctx.level--;
@@ -242,21 +244,24 @@ namespace ospray {
       assert(creator);
   //std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
       // sg::Node* nnode = creator();
-  //std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
+  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
       std::shared_ptr<sg::Node> newNode = creator();
-  //std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
+      Node::nodes.push_back(newNode);
+      Node::nodesMap[(size_t)newNode.get()] = Node::nodes.size();
+      newNode->init();
+  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
       assert(newNode.get());
-  //std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
+  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
       newNode->setName(name);
       newNode->setType(type);
       newNode->setFlags(flags);
       if (valid(var))
           newNode->setValue(var);
-  //std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
-      Node::nodes.push_back(newNode);
-      Node::nodesMap[(size_t)newNode.get()] = Node::nodes.size();
+  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
+      NodeH result = Node::NodeH(newNode);
      // std::cout << "new node count: " << newNode.use_count() <<  " set to " << Node::nodes.size() << " " << (size_t)newNode.get() << std::endl;
-      return Node::NodeH(newNode);
+  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
+      return result;
     }
 
     OSP_REGISTER_SG_NODE(Node);

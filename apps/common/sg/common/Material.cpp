@@ -28,6 +28,9 @@ namespace ospray {
         name(""),
         type(""),
         ospRenderer(NULL)
+    {}
+
+    void Material::init()
     {
       add(createNode("type", "string", std::string("default")));
       vec3f kd(10.f/255.f,68.f/255.f,117.f/255.f);

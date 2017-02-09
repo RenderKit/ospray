@@ -28,16 +28,22 @@ namespace ospray {
 
     Renderer::Renderer()
     {
+        ospRenderer = nullptr;
+    }
+
+    void Renderer::init()
+    {
+        add(createNode("bounds", "box3f"));
+        add(createNode("rendererType", "string", std::string("scivis"), NodeFlags::required | NodeFlags::valid_whitelist | NodeFlags::gui_combo));
+        getChild("rendererType")->setWhiteList(std::vector<SGVar>()={std::string("scivis"),std::string("pathtracer"),std::string("pt")});
   std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
-        add(createNode("world", "World"));
+       add(createNode("world", "World"));
   std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
         add(createNode("camera", "PerspectiveCamera"));
         add(createNode("frameBuffer", "FrameBuffer"));
         add(createNode("lights"));
 
       //TODO: move these to seperate SciVisRenderer
-        add(createNode("rendererType", "string", std::string("scivis"), NodeFlags::required | NodeFlags::valid_whitelist | NodeFlags::gui_combo));
-        getChild("rendererType")->setWhiteList(std::vector<SGVar>()={std::string("scivis"),std::string("pathtracer"),std::string("pt")});
         add(createNode("shadowsEnabled", "bool", true));
         add(createNode("maxDepth", "int", 5, NodeFlags::required | NodeFlags::valid_min_max));
         getChild("maxDepth")->setMinMax(0,999);
@@ -51,7 +57,6 @@ namespace ospray {
         // getChild("aoWeight")->setMinMax(0.f,4.f);
         add(createNode("oneSidedLighting", "bool",true, NodeFlags::required));
 
-        ospRenderer = nullptr;
   std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
       }
 
@@ -130,7 +135,7 @@ namespace ospray {
       return std::dynamic_pointer_cast<sg::Camera>(camera);
     }
 
-    void Renderer::setCamera(const std::shared_ptr<sg::Camera> &camera) 
+    void Renderer::setCamera(const std::shared_ptr<sg::Camera> &camera)
     {
       this->camera = camera;
       if (camera)
@@ -147,8 +152,8 @@ namespace ospray {
       resetAccumulation();
     }
 
-    void Renderer::setIntegrator(const std::shared_ptr<sg::Integrator> &integrator) 
-    {      
+    void Renderer::setIntegrator(const std::shared_ptr<sg::Integrator> &integrator)
+    {
       this->integrator = integrator;
       if (integrator) {
         integrator->commit();
@@ -211,9 +216,10 @@ namespace ospray {
     void Renderer::preCommit(RenderContext &ctx)
     {
       if (getChild("frameBuffer")["size"]->getLastModified() > getChild("camera")["aspect"]->getLastCommitted())
-        getChild("camera")["aspect"]->setValue(
-          getChild("frameBuffer")["size"]->getValue<vec2i>().x/float(getChild("frameBuffer")["size"]->getValue().get<vec2i>().y));
-      std::string rendererType = getChild("rendererType")->getValue<std::string>();
+       getChild("camera")["aspect"]->setValue(
+         getChild("frameBuffer")["size"]->getValue<vec2i>().x/float(getChild("frameBuffer")["size"]->getValue().get<vec2i>().y));
+     std::string rendererType = getChild("rendererType")->getValue<std::string>();
+   // std::string rendererType = "scivis";
       if (!ospRenderer || rendererType != createdType)
       {
           std::cout << "creating renderer of type: " << rendererType << std::endl;

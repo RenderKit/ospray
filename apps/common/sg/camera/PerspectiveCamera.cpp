@@ -25,7 +25,9 @@ namespace ospray {
         fovy(60)
     {
       create(); 
-
+    }
+    void PerspectiveCamera::init()
+    {
       add(createNode("pos", "vec3f", from));
       add(createNode("dir", "vec3f", at,NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
       getChild("dir")->setMinMax(vec3f(-1), vec3f(1));

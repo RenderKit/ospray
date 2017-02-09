@@ -26,6 +26,7 @@ namespace ospray {
     struct Material : public Node {
       /*! constructor */
       Material();
+      virtual void init() override;
       
       /*! \brief returns a std::string with the c++ name of this class */
       virtual    std::string toString() const { return "ospray::viewer::sg::Material"; };
