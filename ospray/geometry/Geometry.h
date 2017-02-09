@@ -36,8 +36,8 @@ namespace ospray {
     that together form a single model with a single accel structure */
   struct OSPRAY_SDK_INTERFACE Geometry : public ManagedObject
   {
-    //! constructor
-    Geometry() : bounds(empty) { managedObjectType = OSP_GEOMETRY; }
+    Geometry();
+    virtual ~Geometry() = default;
 
     //! set given geometry's material.
     /*! all material assignations should go through this function; the
@@ -48,14 +48,14 @@ namespace ospray {
     virtual void setMaterial(Material *mat);
 
     //! get material assigned to this geometry 
-    virtual Material *getMaterial() const { return material.ptr; }
+    virtual Material *getMaterial() const;
 
     //! \brief common function to help printf-debugging
-    virtual std::string toString() const { return "ospray::Geometry"; }
+    virtual std::string toString() const override;
 
     /*! \brief integrates this geometry's primitives into the respective
         model's acceleration structure */
-    virtual void finalize(Model *) { }
+    virtual void finalize(Model *);
 
     /*! \brief creates an abstract geometry class of given type
 
@@ -65,7 +65,7 @@ namespace ospray {
       ospLoadModule first. */
     static Geometry *createGeometry(const char *type);
 
-    box3f bounds;
+    box3f bounds {empty};
 
     //! material associated to this geometry
     /*! this field is private to make sure it is only set through

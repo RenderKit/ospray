@@ -31,17 +31,3 @@ ENDIF()
 # enable -static-intel and avoid to export ICC specific symbols from OSPRay
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-intel")
 SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--exclude-libs=ALL")
-
-# these flags apply ONLY to how embree is built; the rest of the ospray C++ code is ISA-agnostic
-SET(OSPRAY_ARCH_SSE3    "-xsse3")
-SET(OSPRAY_ARCH_SSSE3   "-xssse3")
-SET(OSPRAY_ARCH_SSE41   "-xsse4.1")
-SET(OSPRAY_ARCH_SSE42   "-xsse4.2")
-SET(OSPRAY_ARCH_SSE     "-xsse4.2")
-SET(OSPRAY_ARCH_AVX     "-xAVX")
-SET(OSPRAY_ARCH_AVX2    "-xCORE-AVX2")
-SET(OSPRAY_ARCH_AVX512  "-xMIC-AVX512")
-
-SET(OSPRAY_COMPILER_SUPPORTS_AVX  TRUE)
-SET(OSPRAY_COMPILER_SUPPORTS_AVX2 TRUE)
-SET(OSPRAY_COMPILER_SUPPORTS_AVX512 TRUE)

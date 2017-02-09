@@ -44,18 +44,17 @@ namespace ospray {
   */
 
   //! Implements a simple orthographic camera (see \subpage orthographic_camera)
-  struct OSPRAY_SDK_INTERFACE OrthographicCamera : public Camera {
+  struct OSPRAY_SDK_INTERFACE OrthographicCamera : public Camera
+  {
     /*! \brief constructor \internal also creates the ispc-side data structure */
     OrthographicCamera();
-    //! \brief common function to help printf-debugging
-    /*! Every derived class should overrride this! */
-    virtual std::string toString() const { return "ospray::OrthographicCamera"; }
-    virtual void commit();
+    ~OrthographicCamera() = default;
 
-  public:
-    // ------------------------------------------------------------------
-    // the parameters we 'parsed' from our parameters
-    // ------------------------------------------------------------------
+    virtual std::string toString() const override;
+    virtual void commit() override;
+
+    // Data members //
+
     float  height; // size of the camera's image plane in y, in world coordinates
     float  aspect;
   };

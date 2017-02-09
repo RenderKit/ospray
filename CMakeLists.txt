@@ -34,10 +34,6 @@ IF(POLICY CMP0054)
   CMAKE_POLICY(SET CMP0054 OLD) # since 3.1
 ENDIF()
 
-# tell all included directories that they are included from ospray
-# main...
-SET(THIS_IS_OSPRAY ON)
-
 # configure directories for components we are going to include
 SET(OSPRAY_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 SET(COMPONENTS_DIR ${OSPRAY_DIR}/components)
@@ -65,12 +61,11 @@ ADD_SUBDIRECTORY(${OSPCOMMON_DIR})
 ##############################################################
 # OSPRay components
 #
-# 'components' work similar to 'pacakges' in linux distributions: each
+# 'components' work similar to 'packages' in linux distributions: each
 # component is its own little piece that builds some applications,
 # libraries, etc, and may have dependencies to other components.
 ##############################################################
 INCLUDE(components/configure.cmake)
-ADD_SUBDIRECTORY(components)
 
 ##############################################################
 # the OSPRay library

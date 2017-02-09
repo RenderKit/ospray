@@ -68,6 +68,15 @@ namespace ospray {
       numThreads = OSPRAY_THREADS.first ? OSPRAY_THREADS.second :
                                           getParam1i("numThreads", -1);
 
+      auto OSPRAY_LOG_OUTPUT = getEnvVar<std::string>("OSPRAY_LOG_OUTPUT");
+      if (OSPRAY_LOG_OUTPUT.first) {
+        auto &dst = OSPRAY_LOG_OUTPUT.second;
+        if (dst == "cout")
+          error_fcn = [](const char *msg){ std::cout << msg; };
+        else if (dst == "cerr")
+          error_fcn = [](const char *msg){ std::cerr << msg; };
+      }
+
       if (debugMode) {
         logLevel   = 2;
         numThreads = 1;

@@ -131,7 +131,6 @@ namespace ospray {
   /*! for debugging. compute a checksum for given area range... */
   OSPRAY_INTERFACE void *computeCheckSum(const void *ptr, size_t numBytes);
 
-  OSPRAY_INTERFACE void doAssertion(const char *file, int line, const char *expr, const char *expl);
 #ifndef Assert
 #ifdef NDEBUG
 # define Assert(expr) /* nothing */
@@ -171,6 +170,12 @@ namespace ospray {
   OSPRAY_INTERFACE uint32_t logLevel();
 
   OSPRAY_INTERFACE int loadLocalModule(const std::string &name);
+
+  OSPRAY_INTERFACE void postErrorMsg(const std::stringstream &msg,
+                                     uint32_t postAtLogLevel = 0);
+
+  OSPRAY_INTERFACE void postErrorMsg(const std::string &msg,
+                                     uint32_t postAtLogLevel = 0);
 
 } // ::ospray
 

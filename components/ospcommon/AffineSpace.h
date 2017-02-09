@@ -38,7 +38,7 @@ namespace ospcommon {
     // Constructors, Assignment, Cast, Copy Operations
     ////////////////////////////////////////////////////////////////////////////////
 
-    inline AffineSpaceT           ( )                           { }
+    inline AffineSpaceT           ( ) = default;
     inline AffineSpaceT           ( const AffineSpaceT& other ) { l = other.l; p = other.p; }
     inline AffineSpaceT           ( const L           & other ) { l = other  ; p = VectorT(zero); }
     inline AffineSpaceT& operator=( const AffineSpaceT& other ) { l = other.l; p = other.p; return *this; }
@@ -134,25 +134,26 @@ namespace ospcommon {
   // Output Operators
   ////////////////////////////////////////////////////////////////////////////////
 
-  template<typename L> static std::ostream& operator<<(std::ostream& cout, const AffineSpaceT<L>& m) {
+  template<typename L> inline std::ostream& operator<<(std::ostream& cout, const AffineSpaceT<L>& m) {
     return cout << "{ l = " << m.l << ", p = " << m.p << " }";
   }
 
   ////////////////////////////////////////////////////////////////////////////////
-  // Template Instantiations
+  // Type Aliases
   ////////////////////////////////////////////////////////////////////////////////
 
-  typedef AffineSpaceT<LinearSpace2f> AffineSpace2f;
-  typedef AffineSpaceT<LinearSpace3f> AffineSpace3f;
-  typedef AffineSpaceT<LinearSpace3fa> AffineSpace3fa;
-  typedef AffineSpaceT<Quaternion3f > OrthonormalSpace3f;
+  using AffineSpace2f      = AffineSpaceT<LinearSpace2f>;
+  using AffineSpace3f      = AffineSpaceT<LinearSpace3f>;
+  using AffineSpace3fa     = AffineSpaceT<LinearSpace3fa>;
+  using OrthonormalSpace3f = AffineSpaceT<Quaternion3f >;
 
-  typedef AffineSpace2f affine2f;
-  typedef AffineSpace3f affine3f;
+  using affine2f = AffineSpace2f;
+  using affine3f = AffineSpace3f;
 
   ////////////////////////////////////////////////////////////////////////////////
   /*! Template Specialization for 2D: return matrix for rotation around point (rotation around arbitrarty vector is not meaningful in 2D) */
-  template<> inline AffineSpace2f AffineSpace2f::rotate(const vec2f& p, const float& r) { return translate(+p) * AffineSpace2f(LinearSpace2f::rotate(r)) * translate(-p); }
+  template<> inline AffineSpace2f AffineSpace2f::rotate(const vec2f& p, const float& r)
+  { return translate(+p) * AffineSpace2f(LinearSpace2f::rotate(r)) * translate(-p); }
 
 #undef VectorT
 #undef ScalarT

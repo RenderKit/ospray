@@ -30,7 +30,8 @@ namespace ospray {
 
   /*! \brief commit the object's outstanding changes (i.e. changed parameters etc) */
   void ManagedObject::commit() 
-  {}
+  {
+  }
 
   //! \brief common function to help printf-debugging 
   /*! \detailed Every derived class should overrride this! */
@@ -181,8 +182,8 @@ namespace ospray {
   void ManagedObject::emitMessage(const std::string &kind,
                                   const std::string &message) const
   {
-    std::cerr << "  " + toString()
-              << "  " + kind + ": " + message + "." << std::endl;
+    std::string msg = "  " + toString() + "  " + kind + ": " + message + ".\n";
+    postErrorMsg(msg);
   }
 
   void ManagedObject::exitOnCondition(bool condition,

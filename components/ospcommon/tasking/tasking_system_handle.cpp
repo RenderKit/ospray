@@ -27,6 +27,7 @@
 # include "TaskSys.h"
 #endif
 
+#include "../intrinsics.h"
 #include "../common.h"
 
 namespace ospcommon {
@@ -62,6 +63,9 @@ namespace ospcommon {
 
   void initTaskingSystem(int numThreads)
   {
+    _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
+    _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
+
 #if defined(OSPRAY_TASKING_TBB)
     if (!g_tasking_handle.get())
       g_tasking_handle = make_unique<tasking_system_handle>(numThreads);

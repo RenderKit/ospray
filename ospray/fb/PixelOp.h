@@ -43,7 +43,7 @@ namespace ospray {
   {
     struct OSPRAY_SDK_INTERFACE Instance : public RefCount
     {
-      FrameBuffer *fb;
+      virtual ~Instance() = default;
       /*! gets called every time the frame buffer got 'commit'ted */
       virtual void  commitNotify() {}
       /*! gets called once at the beginning of the frame */
@@ -71,7 +71,13 @@ namespace ospray {
       //! \brief common function to help printf-debugging
       /*! Every derived class should overrride this! */
       virtual std::string toString() const;
+
+      // Data members //
+
+      FrameBuffer *fb;
     };
+
+    virtual ~PixelOp() = default;
 
     //! \brief create an instance of this pixel op
     virtual Instance *createInstance(FrameBuffer *fb, PixelOp::Instance *prev);

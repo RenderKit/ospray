@@ -29,7 +29,8 @@
 #include <map>
 
 namespace ospray {
-  PathTracer::PathTracer() : Renderer(), geometryLights(0)
+
+  PathTracer::PathTracer()
   {
     ispcEquivalent = ispc::PathTracer_create(this);
   }
@@ -39,7 +40,11 @@ namespace ospray {
     destroyGeometryLights();
   }
 
-  /*! \brief create a material of given type */
+  std::string PathTracer::toString() const
+  {
+    return "ospray::PathTracer";
+  }
+
   Material *PathTracer::createMaterial(const char *type)
   {
     std::string ptType = std::string("PathTracer_")+type;
@@ -47,12 +52,14 @@ namespace ospray {
     if (!material) {
       std::map<std::string,int> numOccurrances;
       const std::string T = type;
-      if (numOccurrances[T] == 0)
-        std::cout << "#osp:PT: does not know material type '" << type << "'" <<
+      if (numOccurrances[T] == 0) {
+        std::stringstream msg;
+        msg << "#osp:PT: does not know material type '" << type << "'" <<
           " (replacing with OBJMaterial)" << std::endl;
-      numOccurrances[T] ++;
+        postErrorMsg(msg);
+      }
+      numOccurrances[T]++;
       material = Material::createMaterial("PathTracer_OBJMaterial");
-      // throw std::runtime_error("invalid path tracer material "+std::string(type));
     }
     material->refInc();
     return material;
@@ -81,12 +88,16 @@ namespace ospray {
               , (const ispc::AffineSpace3f&)xfm
               , (const ispc::AffineSpace3f&)rcp_xfm
               , areaPDF+i);
+
           if (light)
             lightArray.push_back(light);
-          else if (logLevel() >= 1)
-            std::cout << "#osp:pt Geometry " << geo->toString() <<
+          else {
+            std::stringstream msg;
+            msg << "#osp:pt Geometry " << geo->toString() <<
               " does not implement area sampling! Cannot use importance "
               "sampling for that geometry with emissive material!" << std::endl;
+            postErrorMsg(msg, 1);
+          }
         }
     }
   }
@@ -116,20 +127,29 @@ namespace ospray {
         lightArray.push_back(((Light**)lightData->data)[i]->getIE());
     }
 
-    void **lightPtr = lightArray.empty() ? NULL : &lightArray[0];
+    void **lightPtr = lightArray.empty() ? nullptr : &lightArray[0];
 
     const int32 maxDepth = getParam1i("maxDepth", 20);
     const float minContribution = getParam1f("minContribution", 0.01f);
-    const float maxRadiance = getParam1f("maxContribution", getParam1f("maxRadiance", inf));
-    Texture2D *backplate = (Texture2D*)getParamObject("backplate", NULL);
+    const float maxRadiance = getParam1f("maxContribution",
+                                         getParam1f("maxRadiance", inf));
+    Texture2D *backplate = (Texture2D*)getParamObject("backplate", nullptr);
+    const vec4f shadowCatcherPlane = getParam4f("shadowCatcherPlane", vec4f(0.f));
 
-    ispc::PathTracer_set(getIE(), maxDepth, minContribution, maxRadiance,
-                         backplate ? backplate->getIE() : NULL,
-                         lightPtr, lightArray.size(), geometryLights,
-                         &areaPDF[0]);
+    ispc::PathTracer_set(getIE()
+        , maxDepth
+        , minContribution
+        , maxRadiance
+        , backplate ? backplate->getIE() : nullptr
+        , (ispc::vec4f&)shadowCatcherPlane
+        , lightPtr
+        , lightArray.size()
+        , geometryLights
+        , &areaPDF[0]
+        );
   }
 
   OSP_REGISTER_RENDERER(PathTracer,pathtracer);
   OSP_REGISTER_RENDERER(PathTracer,pt);
-}
 
+}// ::ospray

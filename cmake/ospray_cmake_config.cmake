@@ -50,13 +50,14 @@ FOREACH(ospray_MODULE_FILENAME ${ospray_MODULE_FILES})
 
 ENDFOREACH(ospray_MODULE_FILENAME ${ospray_MODULE_FILES})
 
-LIST(APPEND ospray_MODULE_INSTALL_FILES ${CMAKE_SOURCE_DIR}/cmake/FindTBB.cmake)
+LIST(APPEND ospray_MODULE_INSTALL_FILES
+  ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/FindTBB.cmake
+)
 
 INSTALL(FILES
   ${ospray_MODULE_INSTALL_FILES}
   ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/clang.cmake
   ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/icc.cmake
-  ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/icc_xeonphi.cmake
   ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/ispc.cmake
   ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/gcc.cmake
   ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/msvc.cmake

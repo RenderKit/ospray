@@ -351,7 +351,6 @@ namespace ospray {
 
     std::shared_ptr<sg::World> importRIVL(const std::string &fileName)
     {
-      PING;
       string xmlFileName = fileName;
       string binFileName = fileName+".bin";
       binBasePtr = (void *)mapFile(binFileName);
@@ -367,10 +366,8 @@ namespace ospray {
         throw std::runtime_error("could not parse RIVL file: Not in RIVL format!?");
       const xml::Node &root_element = *doc->child[0];
       std::shared_ptr<World> world = std::make_shared<World>();
-      PING;
       parseBGFscene(world,root_element);
       PRINT(world->getBounds());
-      PING;
       return world;
     }
 

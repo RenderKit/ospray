@@ -14,6 +14,8 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+SET(OSPRAY_DEFAULT_COMPONENT modules)
+
 INCLUDE_DIRECTORIES(
   ${PROJECT_BINARY_DIR}
   ${CMAKE_SOURCE_DIR}/ospray/include

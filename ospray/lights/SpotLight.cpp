@@ -26,19 +26,19 @@
 namespace ospray {
 
   SpotLight::SpotLight()
-    : position(0.f)
-    , direction(0.f, 0.f, 1.f)
-    , color(1.f)
-    , intensity(1.f)
-    , openingAngle(180.f)
-    , penumbraAngle(5.f)
-    , radius(0.f)
   {
     ispcEquivalent = ispc::SpotLight_create();
   }
 
+  std::string SpotLight::toString() const
+  {
+    return "ospray::SpotLight";
+  }
+
   //!< Copy understood parameters into class members
-  void SpotLight::commit() {
+  void SpotLight::commit()
+  {
+    Light::commit();
     position  = getParam3f("position", vec3f(0.f));
     direction = getParam3f("direction", vec3f(0.f, 0.f, 1.f));
     color     = getParam3f("color", vec3f(1.f));

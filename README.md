@@ -1,9 +1,9 @@
 OSPRay
 ======
 
-This is release v1.2.0 (devel) of OSPRay. For changes and new features
-see the [changelog](CHANGELOG.md). Also visit http://www.ospray.org for
-more information.
+This is release v1.2.0 of OSPRay. For changes and new features see the
+[changelog](CHANGELOG.md). Also visit http://www.ospray.org for more
+information.
 
 OSPRay Overview
 ===============
@@ -22,8 +22,9 @@ compute nodes in HPC systems.
 
 OSPRay internally builds on top of [Embree](https://embree.github.io/)
 and [ISPC (Intel® SPMD Program Compiler)](https://ispc.github.io/), and
-fully utilizes modern instruction sets like Intel® SSE, AVX, AVX2, and
-AVX-512 to achieve high rendering performance.
+fully utilizes modern instruction sets like Intel® SSE4, AVX, AVX2, and
+AVX-512 to achieve high rendering performance, thus a CPU with support
+for at least SSE4.1 is required to run OSPRay.
 
 OSPRay Support and Contact
 --------------------------
@@ -64,28 +65,27 @@ following prerequisites:
         git clone https://github.com/ospray/ospray.git
 
 -   To build OSPRay you need [CMake](http://www.cmake.org), any form of
-    C++11 compiler (we recommend using the [Intel® C++
-    compiler (icc)](https://software.intel.com/en-us/c-compilers), but
-    also support GCC and Clang), and standard Linux development tools.
-    To build the demo viewers, you should also have some version of
-    OpenGL and the GL Utility Toolkit (GLUT or freeglut), as well as Qt
-    4.6 or higher.
--   Additionally you require a copy of the [Intel® SPMD Program
-    Compiler (ISPC)](http://ispc.github.io). Please obtain a copy of the
-    latest binary release of ISPC (currently 1.9.1) from the [ISPC
-    downloads page](https://ispc.github.io/downloads.html). The build
-    system looks for ISPC in the `PATH` and in the directory right "next
-    to" the checked-out OSPRay sources.[^1] Alternatively set the CMake
-    variable `ISPC_EXECUTABLE` to the location of the ISPC compiler.
+    C++11 compiler (we recommend using GCC, but also support Clang and
+    the [Intel® C++ compiler
+    (ICC)](https://software.intel.com/en-us/c-compilers)), and standard
+    Linux development tools. To build the demo viewers, you should also
+    have some version of OpenGL and the GL Utility Toolkit (GLUT or
+    freeglut), as well as Qt 4.6 or higher.
+-   Additionally you require a copy of the [Intel® SPMD Program Compiler
+    (ISPC)](http://ispc.github.io). Please obtain a copy of the latest
+    binary release of ISPC (currently 1.9.1) from the [ISPC downloads
+    page](https://ispc.github.io/downloads.html). The build system looks
+    for ISPC in the `PATH` and in the directory right "next to" the
+    checked-out OSPRay sources.[^1] Alternatively set the CMake variable
+    `ISPC_EXECUTABLE` to the location of the ISPC compiler.
 -   Per default OSPRay uses the [Intel® Threading Building
     Blocks](https://www.threadingbuildingblocks.org/) (TBB) as tasking
     system, which we recommend for performance and flexibility reasons.
     Alternatively you can set CMake variable `OSPRAY_TASKING_SYSTEM` to
     `OpenMP`, `Internal`, or `Cilk` (icc only).
 -   OSPRay also heavily uses [Embree](https://embree.github.io/),
-    installing version 2.12 is recommended. If Embree is not found by
-    CMake its location can be hinted with the variable `embree_DIR`. As
-    a fallback OSPRay also includes its own copy of Embree.
+    installing version 2.13 or newer is required. If Embree is not found
+    by CMake its location can be hinted with the variable `embree_DIR`.
 
 Depending on your Linux distribution you can install these dependencies
 using `yum` or `apt-get`. Some of these packages might already be
@@ -126,10 +126,9 @@ CMake is easy:
 
 -   The compiler CMake will use will default to whatever the `CC` and
     `CXX` environment variables point to. Should you want to specify a
-    different compiler, run cmake manually while specifying the
-    desired compiler. The default compiler on most linux machines is
-    `gcc`, but it can be pointed to `clang` instead by executing the
-    following:
+    different compiler, run cmake manually while specifying the desired
+    compiler. The default compiler on most linux machines is `gcc`, but
+    it can be pointed to `clang` instead by executing the following:
 
         user@mymachine[~/Projects/ospray/release]: cmake
             -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang ..
@@ -149,8 +148,8 @@ CMake is easy:
 
         user@mymachine[~/Projects/ospray/release]: make
 
--   You should now have `libospray.so` as well as a set of
-    sample viewers. You can test your version of OSPRay using any of the
+-   You should now have `libospray.so` as well as a set of sample
+    viewers. You can test your version of OSPRay using any of the
     examples on the [OSPRay Demos and
     Examples](http://www.ospray.org/demos.html) page.
 
@@ -186,7 +185,10 @@ where the API is compatible with C99 and C++.
 
 In order to use the API, OSPRay must initialized with a "device". A
 device is the object which implements the API. Creating and initializing
-a device can be done in either of two ways.
+a device can be done in either of two ways: command line arguments or
+manually instantiating a device.
+
+### Initialization via command line arguments
 
 The first is to do so by giving OSPRay the command line from `main()` by
 calling
@@ -204,7 +206,7 @@ convention with "`--osp:`") are understood:
 <caption>Command line parameters accepted by OSPRay's <code>ospInit</code>.</caption>
 <colgroup>
 <col width="33%" />
-<col width="63%" />
+<col width="64%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -238,6 +240,10 @@ convention with "`--osp:`") are understood:
 <td align="left">enables MPI mode for parallel rendering, to be used in conjunction with <code>mpirun</code></td>
 </tr>
 <tr class="odd">
+<td align="left"><code>--osp:logoutput</code></td>
+<td align="left">convenience for setting where error/status messages go; valid values are <code>cerr</code> and <code>cout</code></td>
+</tr>
+<tr class="even">
 <td align="left"><code>--osp:device:&lt;name&gt;</code></td>
 <td align="left">use <code>name</code> as the type of device for OSPRay to create; e.g. <code>--osp:device:default</code> gives you the default local device and <code>--osp:device:mpi</code> gives you the MPI device</td>
 </tr>
@@ -245,6 +251,8 @@ convention with "`--osp:`") are understood:
 </table>
 
 : Command line parameters accepted by OSPRay's `ospInit`.
+
+### Initialization via manual device instantiation
 
 The second method of initialization is to explicitly create the device
 yourself, and possibly set parameters. This method looks almost
@@ -262,13 +270,13 @@ rendering device. If it is enabled in the build, you can also use
 created, you can call
 
 ``` {.cpp}
-void ospSetDevice1i(OSPDevice, const char *id, int val);
+void ospDeviceSet1i(OSPDevice, const char *id, int val);
 ```
 
 or
 
 ``` {.cpp}
-void ospSetDeviceString(OSPDevice, const char *id, const char *val);
+void ospDeviceSetString(OSPDevice, const char *id, const char *val);
 ```
 
 to set parameters on the device. The following parameters can be set on
@@ -282,18 +290,66 @@ all devices:
 
 : Parameters shared by all devices.
 
+Once parameters are set on the created device, the device must be
+committed with
+
+``` {.cpp}
+void ospDeviceCommit(OSPDevice);
+```
+
+To use the newly committed device, you must call
+
+``` {.cpp}
+void ospSetCurrentDevice(OSPDevice);
+```
+
+This then sets the given device as the object which will respond to all
+other OSPRay API calls.
+
+Users can change parameters on the device after initialization (from
+either method above), by calling
+
+``` {.cpp}
+OSPDevice ospGetCurrentDevice();
+```
+
+This function returns the handle to the device currently used to respond
+to OSPRay API calls, where users can set/change parameters and recommit
+the device. If changes are made to the device that is already set as the
+current device, it does not need to be set as current again.
+
+### Useful environment variables
+
 Finally, OSPRay's generic device parameters can be overridden via
 environment variables for easy changes to OSPRay's behavior without
 needing to change the application (variables are prefixed by convention
 with "`OSPRAY_`"):
 
-| Variable           | Description                                                   |
-|:-------------------|:--------------------------------------------------------------|
-| OSPRAY\_THREADS    | equivalent to `--osp:numthreads`                              |
-| OSPRAY\_LOG\_LEVEL | equivalent to `--osp:loglevel`                                |
-| OSPRAY\_DEBUG      | equivalent to both OSPRAY\_LOG\_LEVEL=2 and OSPRAY\_THREADS=1 |
+| Variable            | Description                                                   |
+|:--------------------|:--------------------------------------------------------------|
+| OSPRAY\_THREADS     | equivalent to `--osp:numthreads`                              |
+| OSPRAY\_LOG\_LEVEL  | equivalent to `--osp:loglevel`                                |
+| OSPRAY\_LOG\_OUTPUT | equivalent to `--osp:logoutput`                               |
+| OSPRAY\_DEBUG       | equivalent to both OSPRAY\_LOG\_LEVEL=2 and OSPRAY\_THREADS=1 |
 
 : Environment variables interpreted by OSPRay.
+
+### Handling error and status messages from OSPRay
+
+Applications may be interested in messages which OSPRay emits, whether
+for debugging or logging events. Applications can call
+
+``` {.cpp}
+void ospDeviceSetErrorMsgFunc(OSPDevice, OSPErrorMsgFunc callback);
+```
+
+in order to set the callback OSPRay will use to emit error messages. By
+default, OSPRay uses a callback which does nothing, so any output
+desired by an application will require that a callback be provided. Note
+that callbacks for C++ std::cout and std::cerr can be alternatively set
+through ospInit() or OSPRAY\_LOG\_OUTPUT environment variable.
+
+### Loading OSPRay extensions at runtime
 
 OSPRay's functionality can be extended via plugins, which are
 implemented in shared libraries. To load plugin `name` from
@@ -391,6 +447,16 @@ void ospSetVec3i(OSPObject, const char *id, const vec3i &v);
 void ospSetVec4f(OSPObject, const char *id, const vec4f &v);
 ```
 
+Users can also remove parameters that have been explicitly set via an
+ospSet call. Any parameters which have been removed will go back to
+their default value during the next commit unless a new parameter was
+set after the parameter was removed. The following API function removes
+the named parameter from the given object:
+
+``` {.cpp}
+void ospRemoveParam(OSPObject, const char *id);
+```
+
 ### Data
 
 There is also the possibility to aggregate many values of the same type
@@ -416,6 +482,7 @@ the table below.
 
 | Type/Name               | Description                                   |
 |:------------------------|:----------------------------------------------|
+| OSP\_DEVICE             | API device object reference                   |
 | OSP\_VOID\_PTR          | void pointer                                  |
 | OSP\_DATA               | data reference                                |
 | OSP\_OBJECT             | generic object reference                      |
@@ -512,17 +579,27 @@ summarized in the table below. If `voxelRange` is not provided for a
 volume OSPRay will compute it based on the voxel data, which may result
 in slower data updates.
 
-| Type   | Name        | Description                                                |
-|:-------|:------------|:-----------------------------------------------------------|
-| vec3i  | dimensions  | number of voxels in each dimension $(x, y, z)$             |
-| string | voxelType   | data type of each voxel, currently supported are:          |
-|       |            | "uchar" (8 bit unsigned integer)                           |
-|       |            | "ushort" (16 bit unsigned integer)                         |
-|       |            | "float" (32 bit single precision floating point)           |
-|       |            | "double" (64 bit double precision floating point)          |
-| vec2f  | voxelRange  | minimum and maximum of the scalar values                   |
-| vec3f  | gridOrigin  | origin of the grid in world-space, default $(0, 0, 0)$     |
-| vec3f  | gridSpacing | size of the grid cells in world-space, default $(1, 1, 1)$ |
+| Type   | Name                    | Description                                                              |
+|:-------|:------------------------|:-------------------------------------------------------------------------|
+| vec3i  | dimensions              | number of voxels in each dimension $(x, y, z)$                           |
+| string | voxelType               | data type of each voxel, currently supported are:                        |
+|       |                        | "uchar" (8 bit unsigned integer)                                         |
+|       |                        | "ushort" (16 bit unsigned integer)                                       |
+|       |                        | "float" (32 bit single precision floating point)                         |
+|       |                        | "double" (64 bit double precision floating point)                        |
+| vec2f  | voxelRange              | minimum and maximum of the scalar values                                 |
+| vec3f  | gridOrigin              | origin of the grid in world-space, default $(0, 0, 0)$                   |
+| vec3f  | gridSpacing             | size of the grid cells in world-space, default $(1, 1, 1)$               |
+| bool   | gradientShadingEnabled  | volume is rendered with surface shading according to normalized gradient |
+| bool   | preIntegration          | enable using pre-integration for transferFunction lookups                |
+| bool   | singleShade             | shade only at the point of maximum intensity                             |
+| bool   | adaptiveSampling        | adapt ray step size based on opacity                                     |
+| float  | adaptiveScalar          | modifier for adaptive step size                                          |
+| float  | adaptiveMaxSamplingRate | maximum sampling rate for adaptive sampling                              |
+| float  | samplingRate            | sampling rate of the volume. This is the minumum step size for adaptive. |
+| vec3f  | specular                | specular component for shading                                           |
+| vec3f  | volumeClippingBoxLower  | clip the volume values in object coordinates                             |
+| vec3f  | volumeClippingBoxUpper  | clip the volume values in object coordinates                             |
 
 : Parameters to configure a structured volume.
 
@@ -573,13 +650,13 @@ A traditional triangle mesh (indexed face set) geometry is created by
 calling `ospNewGeometry` with type string "`triangles`". Once created, a
 triangle mesh recognizes the following parameters:
 
-| Type         | Name            | Description                                              |
-|:-------------|:----------------|:---------------------------------------------------------|
-| vec3f(a)\[\] | vertex          | [data](#data) array of vertex positions                  |
-| vec3f(a)\[\] | vertex.normal   | [data](#data) array of vertex normals                    |
-| vec4f\[\]    | vertex.color    | [data](#data) array of vertex colors (RGBA)              |
-| vec2f\[\]    | vertex.texcoord | [data](#data) array of vertex texture coordinates        |
-| vec3i(a)\[\] | index           | [data](#data) array of triangle indices (into vertex.\*) |
+| Type                 | Name            | Description                                              |
+|:---------------------|:----------------|:---------------------------------------------------------|
+| vec3f(a)\[\]         | vertex          | [data](#data) array of vertex positions                  |
+| vec3f(a)\[\]         | vertex.normal   | [data](#data) array of vertex normals                    |
+| vec4f\[\]/vec3fa\[\] | vertex.color    | [data](#data) array of vertex colors (RGBA/RGB)          |
+| vec2f\[\]            | vertex.texcoord | [data](#data) array of vertex texture coordinates        |
+| vec3i(a)\[\]         | index           | [data](#data) array of triangle indices (into vertex.\*) |
 
 : Parameters defining a triangle mesh geometry.
 
@@ -593,13 +670,13 @@ representations in the application this geometry allows a flexible way
 of specifying the data of center position and radius within a
 [data](#data) array:
 
-<table style="width:97%;">
+<table style="width:99%;">
 <caption>Parameters defining a spheres geometry.</caption>
 <colgroup>
+<col width="11%" />
+<col width="23%" />
 <col width="12%" />
-<col width="22%" />
-<col width="13%" />
-<col width="48%" />
+<col width="51%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -624,7 +701,7 @@ of specifying the data of center position and radius within a
 </tr>
 <tr class="odd">
 <td align="left">int</td>
-<td align="left">bytes_per_sphe re</td>
+<td align="left">bytes_per_sphere</td>
 <td align="right">16</td>
 <td align="left">size (in bytes) of each sphere within the <code>spheres</code> array</td>
 </tr>
@@ -656,13 +733,13 @@ flexible way of specifying the data of offsets for start position, end
 position and radius within a [data](#data) array. All parameters are
 listed in the table below.
 
-<table style="width:97%;">
+<table style="width:99%;">
 <caption>Parameters defining a cylinders geometry.</caption>
 <colgroup>
-<col width="12%" />
+<col width="11%" />
 <col width="25%" />
-<col width="13%" />
-<col width="46%" />
+<col width="12%" />
+<col width="48%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -687,7 +764,7 @@ listed in the table below.
 </tr>
 <tr class="odd">
 <td align="left">int</td>
-<td align="left">bytes_per_cylind er</td>
+<td align="left">bytes_per_cylinder</td>
 <td align="right">28</td>
 <td align="left">size (in bytes) of each cylinder within the <code>cylinders</code> array</td>
 </tr>
@@ -726,7 +803,7 @@ this geometry are listed in the table below.
 |:-----------|:-------------|:-------------------------------------------------------------|
 | float      | radius       | radius of all stream lines, default 0.01                     |
 | vec3fa\[\] | vertex       | [data](#data) array of all vertices for *all* stream lines   |
-| vec3fa\[\] | vertex.color | [data](#data) array of corresponding vertex colors           |
+| vec4f\[\]  | vertex.color | [data](#data) array of corresponding vertex colors (RGBA)    |
 | int32\[\]  | index        | [data](#data) array of indices to the first vertex of a link |
 
 : Parameters defining a streamlines geometry.
@@ -832,13 +909,13 @@ created by passing the type string "`scivis`" or "`raytracer`" to
 understood by all renderers the SciVis renderer supports the following
 special parameters:
 
-<table style="width:97%;">
+<table style="width:99%;">
 <caption>Special parameters understood by the SciVis renderer.</caption>
 <colgroup>
-<col width="17%" />
-<col width="24%" />
+<col width="18%" />
+<col width="28%" />
 <col width="13%" />
-<col width="41%" />
+<col width="38%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -869,23 +946,29 @@ special parameters:
 </tr>
 <tr class="even">
 <td align="left">bool</td>
+<td align="left">aoTransparencyEnabled</td>
+<td align="right">false</td>
+<td align="left">whether object transparency is respected when computing ambient occlusion (slower)</td>
+</tr>
+<tr class="odd">
+<td align="left">bool</td>
 <td align="left">oneSidedLighting</td>
 <td align="right">true</td>
 <td align="left">if true back-facing surfaces (wrt. light) receive no illumination</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">vec3f</td>
 <td align="left">bgColor</td>
 <td align="right">white</td>
 <td align="left">background color (RGB)</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">bool</td>
 <td align="left">backgroundEnabled</td>
 <td align="right">true</td>
 <td align="left">whether to color the background with <code>bgColor</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">OSPTexture2D</td>
 <td align="left">maxDepthTexture</td>
 <td align="right">NULL</td>
@@ -915,13 +998,13 @@ realistic materials. In addition to the [general parameters](#renderer)
 understood by all renderers the path tracer supports the following
 special parameters:
 
-<table style="width:97%;">
+<table style="width:99%;">
 <caption>Special parameters understood by the path tracer.</caption>
 <colgroup>
 <col width="17%" />
 <col width="21%" />
 <col width="13%" />
-<col width="44%" />
+<col width="46%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -995,10 +1078,11 @@ The call returns `NULL` if that type of camera is not known by the
 renderer, or else an `OSPLight` handle to the created light source. All
 light sources[^2] accept the following parameters:
 
-| Type     | Name      | Description                       |
-|:---------|:----------|:----------------------------------|
-| vec3f(a) | color     | color of the light                |
-| float    | intensity | intensity of the light (a factor) |
+| Type     | Name      | Default | Description                            |
+|:---------|:----------|:--------|:---------------------------------------|
+| vec3f(a) | color     | white   | color of the light                     |
+| float    | intensity | 1       | intensity of the light (a factor)      |
+| bool     | isVisible | true    | whether the light can be directly seen |
 
 : Parameters accepted by the all lights.
 
@@ -1051,12 +1135,12 @@ created by passing the type string "`spot`" to `ospNewLight`. In
 addition to the [general parameters](#lights) understood by all lights
 the spot light supports the special parameters listed in the table.
 
-<table style="width:97%;">
+<table style="width:98%;">
 <caption>Special parameters accepted by the spot light.</caption>
 <colgroup>
 <col width="13%" />
 <col width="20%" />
-<col width="63%" />
+<col width="64%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -1136,38 +1220,11 @@ illuminating it from infinity. It is created by passing the type string
 `intensity`](#lights) the HDRI light supports the following special
 parameters:
 
-<table style="width:97%;">
-<caption>Special parameters accepted by the HDRI light.</caption>
-<colgroup>
-<col width="19%" />
-<col width="9%" />
-<col width="68%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th align="left">Type</th>
-<th align="left">Name</th>
-<th align="left">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">vec3f(a)</td>
-<td align="left">up</td>
-<td align="left">up direction of the light in world-space</td>
-</tr>
-<tr class="even">
-<td align="left">vec3f(a)</td>
-<td align="left">dir</td>
-<td align="left">direction to which the center of the texture will be mapped to (analog to <a href="#panoramic-camera">panoramic camera</a>)</td>
-</tr>
-<tr class="odd">
-<td align="left">OSPTexture2D</td>
-<td align="left">map</td>
-<td align="left">environment map in latitude / longitude format</td>
-</tr>
-</tbody>
-</table>
+| Type         | Name | Description                                                                                                      |
+|:-------------|:-----|:-----------------------------------------------------------------------------------------------------------------|
+| vec3f(a)     | up   | up direction of the light in world-space                                                                         |
+| vec3f(a)     | dir  | direction to which the center of the texture will be mapped to (analog to [panoramic camera](#panoramic-camera)) |
+| OSPTexture2D | map  | environment map in latitude / longitude format                                                                   |
 
 : Special parameters accepted by the HDRI light.
 
@@ -1403,58 +1460,15 @@ rendering, but no motion blur. It is created by passing the type string
 parameters](#cameras) understood by all cameras the perspective camera
 supports the special parameters listed in the table below.
 
-<table style="width:97%;">
-<caption>Parameters accepted by the perspective camera.</caption>
-<colgroup>
-<col width="9%" />
-<col width="32%" />
-<col width="55%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th align="left">Type</th>
-<th align="left">Name</th>
-<th align="left">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">float</td>
-<td align="left">fovy</td>
-<td align="left">the field of view (angle in degree) of the frame's height</td>
-</tr>
-<tr class="even">
-<td align="left">float</td>
-<td align="left">aspect</td>
-<td align="left">ratio of width by height of the frame</td>
-</tr>
-<tr class="odd">
-<td align="left">float</td>
-<td align="left">apertureRadius</td>
-<td align="left">size of the aperture, controls the depth of field</td>
-</tr>
-<tr class="even">
-<td align="left">float</td>
-<td align="left">focusDistance</td>
-<td align="left">distance at where the image is sharpest when depth of field is enabled</td>
-</tr>
-<tr class="odd">
-<td align="left">bool</td>
-<td align="left">architectural</td>
-<td align="left">vertical edges are projected to be parallel</td>
-</tr>
-<tr class="even">
-<td align="left">int</td>
-<td align="left">stereoMode</td>
-<td align="left">0: no stereo (default), 1: left eye, 2: right eye, 3: side-by-side</td>
-</tr>
-<tr class="odd">
-<td align="left">float</td>
-<td align="left">interpupillaryDistance</td>
-<td align="left">distance between left and right eye when stereo is enabled</td>
-</tr>
-</tbody>
-</table>
+| Type  | Name                   | Description                                                            |
+|:------|:-----------------------|:-----------------------------------------------------------------------|
+| float | fovy                   | the field of view (angle in degree) of the frame's height              |
+| float | aspect                 | ratio of width by height of the frame                                  |
+| float | apertureRadius         | size of the aperture, controls the depth of field                      |
+| float | focusDistance          | distance at where the image is sharpest when depth of field is enabled |
+| bool  | architectural          | vertical edges are projected to be parallel                            |
+| int   | stereoMode             | 0: no stereo (default), 1: left eye, 2: right eye, 3: side-by-side     |
+| float | interpupillaryDistance | distance between left and right eye when stereo is enabled             |
 
 : Parameters accepted by the perspective camera.
 
@@ -1691,13 +1705,11 @@ A minimal working example demonstrating how to use OSPRay can be found
 at `apps/ospTutorial.cpp`[^6]. On Linux build it in the build\_directory
 with
 
-    g++ ../apps/ospTutorial.cpp -I ../ospray/include -I .. -I ../ospray/embree/common \
-      ./libospray.so -Wl,-rpath,. -o ospTutorial
+    g++ ../apps/ospTutorial.cpp -I ../ospray/include -I .. ./libospray.so -Wl,-rpath,. -o ospTutorial
 
 On Windows build it in the build\_directory\\\$Configuration with
 
-    cl ..\..\apps\ospTutorial.cpp /EHsc -I ..\..\ospray\include -I ..\..  ^
-      -I ..\..\ospray\embree\common ospray.lib
+    cl ..\..\apps\ospTutorial.cpp /EHsc -I ..\..\ospray\include -I ..\.. ospray.lib
 
 Running `ospTutorial` will create two images of two triangles, rendered
 with the Scientific Visualization renderer with full Ambient Occlusion.

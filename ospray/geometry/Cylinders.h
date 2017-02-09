@@ -57,12 +57,15 @@ namespace ospray {
     Implements the \ref geometry_cylinders geometry
 
   */
-  struct OSPRAY_SDK_INTERFACE Cylinders : public Geometry {
+  struct OSPRAY_SDK_INTERFACE Cylinders : public Geometry
+  {
+    Cylinders();
+    virtual ~Cylinders() = default;
     //! \brief common function to help printf-debugging
-    virtual std::string toString() const { return "ospray::Cylinders"; }
+    virtual std::string toString() const override;
     /*! \brief integrates this geometry's primitives into the respective
         model's acceleration structure */
-    virtual void finalize(Model *model);
+    virtual void finalize(Model *model) override;
 
     float radius;   //!< default radius, if no per-cylinder radius was specified.
     int32 materialID;
@@ -77,10 +80,8 @@ namespace ospray {
 
     Ref<Data> cylinderData;
     Ref<Data> materialList;
-    void     *_materialList;
+    void     *_materialList {nullptr};
     Ref<Data> colorData; /*!< cylinder color array (vec3fa) */
-
-    Cylinders();
   };
 /*! @} */
 

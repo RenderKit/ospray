@@ -279,10 +279,7 @@ namespace ospray {
     //! Warning condition.
     void warnOnCondition(bool condition, const std::string &message) const;
 
-
-    // -------------------------------------------------------
-    // member variables
-    // -------------------------------------------------------
+    // Data members //
 
     //! \brief List of managed objects that want to get notified
     //! whenever this object get changed (ie, committed). */

@@ -22,7 +22,7 @@
 #include <iostream>
 #include <xmmintrin.h>
 
-#if defined(PTHREADS_WIN32)
+#ifdef PTHREADS_WIN32
 #pragma comment (lib, "pthreadVC.lib")
 #endif
 
@@ -74,14 +74,14 @@ namespace ospcommon
       groupAffinity.Reserved[0] = 0;
       groupAffinity.Reserved[1] = 0;
       groupAffinity.Reserved[2] = 0;
-      if (!pSetThreadGroupAffinity(thread, &groupAffinity, NULL))
+      if (!pSetThreadGroupAffinity(thread, &groupAffinity, nullptr))
         WARNING("SetThreadGroupAffinity failed"); // on purpose only a warning
   
       PROCESSOR_NUMBER processorNumber;
       processorNumber.Group = group;
       processorNumber.Number = number;
       processorNumber.Reserved = 0;
-      if (!pSetThreadIdealProcessorEx(thread, &processorNumber, NULL))
+      if (!pSetThreadIdealProcessorEx(thread, &processorNumber, nullptr))
         WARNING("SetThreadIdealProcessorEx failed"); // on purpose only a warning
     } 
     else 
@@ -113,7 +113,7 @@ namespace ospcommon
     _mm_setcsr(_mm_getcsr() | /*FTZ:*/ (1<<15) | /*DAZ:*/ (1<<6));
     parg->f(parg->arg);
     delete parg;
-    return NULL;
+    return nullptr;
   }
 
 #if !defined(PTHREADS_WIN32)
@@ -121,8 +121,8 @@ namespace ospcommon
   /*! creates a hardware thread running on specific core */
   thread_t createThread(thread_func f, void* arg, size_t stack_size, ssize_t threadID)
   {
-    HANDLE thread = CreateThread(NULL, stack_size, (LPTHREAD_START_ROUTINE)threadStartup, new ThreadStartupData(f,arg), 0, NULL);
-    if (thread == NULL) throw std::runtime_error("ospcommon::CreateThread failed");
+    HANDLE thread = CreateThread(nullptr, stack_size, (LPTHREAD_START_ROUTINE)threadStartup, new ThreadStartupData(f,arg), 0, nullptr);
+    if (thread == nullptr) throw std::runtime_error("ospcommon::CreateThread failed");
     if (threadID >= 0) setAffinity(thread, threadID);
     return thread_t(thread);
   }
@@ -144,25 +144,6 @@ namespace ospcommon
     CloseHandle(HANDLE(tid));
   }
 
-  // /*! creates thread local storage */
-  // tls_t createTls() {
-  //   return tls_t(size_t(TlsAlloc()));
-  // }
-
-  // /*! set the thread local storage pointer */
-  // void setTls(tls_t tls, void* const ptr) {
-  //   TlsSetValue(DWORD(size_t(tls)), ptr);
-  // }
-
-  // /*! return the thread local storage pointer */
-  // void* getTls(tls_t tls) {
-  //   return TlsGetValue(DWORD(size_t(tls)));
-  // }
-
-  // /*! destroys thread local storage identifier */
-  // void destroyTls(tls_t tls) {
-  //   TlsFree(DWORD(size_t(tls)));
-  // }
 #endif
 }
 
@@ -172,7 +153,7 @@ namespace ospcommon
 /// Linux Platform
 ////////////////////////////////////////////////////////////////////////////////
 
-#if defined(__LINUX__)
+#ifdef __linux__
 namespace ospcommon
 {
   /*! set affinity of the calling thread */
@@ -192,7 +173,7 @@ namespace ospcommon
 /// MacOSX Platform
 ////////////////////////////////////////////////////////////////////////////////
 
-#if defined(__MACOSX__)
+#ifdef __APPLE__
 
 #include <mach/thread_act.h>
 #include <mach/thread_policy.h>
@@ -215,14 +196,10 @@ namespace ospcommon
 /// Unix Platform
 ////////////////////////////////////////////////////////////////////////////////
 
-#if defined(__UNIX__) || defined(PTHREADS_WIN32)
+#if !defined(_WIN32) || defined(PTHREADS_WIN32)
 
 #include <pthread.h>
 #include <sched.h>
-
-#if defined(__USE_NUMA__)
-#include <numa.h>
-#endif
 
 namespace ospcommon
 {
@@ -241,23 +218,19 @@ namespace ospcommon
   {
     _mm_setcsr(_mm_getcsr() | /*FTZ:*/ (1<<15) | /*DAZ:*/ (1<<6));
 
-#if !defined(__LINUX__)
+#if !defined(__linux__)
     if (parg->affinity >= 0)
 	setAffinity(parg->affinity);
 #endif
 
     parg->f(parg->arg);
     delete parg;
-    return NULL;
+    return nullptr;
   }
 
   /*! creates a hardware thread running on specific core */
   thread_t createThread(thread_func f, void* arg, size_t stack_size, ssize_t threadID)
   {
-#ifdef __MIC__
-    threadID++; // start counting at 1 on MIC
-#endif
-
     /* set stack size */
     pthread_attr_t attr;
     pthread_attr_init(&attr);
@@ -269,7 +242,7 @@ namespace ospcommon
       throw std::runtime_error("ospcommon::pthread_create failed");
 
     /* set affinity */
-#if defined(__LINUX__)
+#ifdef __linux__
     if (threadID >= 0) {
       cpu_set_t cset;
       CPU_ZERO(&cset);
@@ -289,7 +262,7 @@ namespace ospcommon
 
   /*! waits until the given thread has terminated */
   void join(thread_t tid) {
-    if (pthread_join(*(pthread_t*)tid, NULL) != 0)
+    if (pthread_join(*(pthread_t*)tid, nullptr) != 0)
       throw std::runtime_error("ospcommon::pthread_join failed");
     delete (pthread_t*)tid;
   }

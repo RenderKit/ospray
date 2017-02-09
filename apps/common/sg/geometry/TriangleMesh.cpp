@@ -98,7 +98,6 @@ namespace ospray {
         material->render(ctx);
         mat = material->ospMaterial;
       }
-      PING; PRINT(mat);
       
       // if object couldt generate a valid material, create a default one
       if (!mat) {

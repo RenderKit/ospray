@@ -24,11 +24,7 @@
 // ispc exports
 #include "Model_ispc.h"
 
-
 namespace ospray {
-
-  using std::cout;
-  using std::endl;
 
   extern "C" void *ospray_getEmbreeDevice()
   {
@@ -39,18 +35,20 @@ namespace ospray {
   {
     managedObjectType = OSP_MODEL;
     this->ispcEquivalent = ispc::Model_create(this);
-    this->embreeSceneHandle = NULL;
+  }
+
+  std::string Model::toString() const
+  {
+    return "ospray::Model";
   }
 
   void Model::finalize()
   {
-    if (logLevel() >= 2) {
-      std::cout << "======================================================="
-                << std::endl;
-      std::cout << "Finalizing model, has " 
-           << geometry.size() << " geometries and " << volume.size()
-           << " volumes" << std::endl;
-    }
+    std::stringstream msg;
+    msg << "=======================================================\n";
+    msg << "Finalizing model, has " << geometry.size()
+        << " geometries and " << volume.size() << " volumes" << std::endl;
+    postErrorMsg(msg, 2);
 
     RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
 
@@ -59,14 +57,12 @@ namespace ospray {
 
     bounds = empty;
 
-    // for now, only implement triangular geometry...
-    for (size_t i=0; i < geometry.size(); i++) {
+    for (size_t i = 0; i < geometry.size(); i++) {
 
-      if (logLevel() >= 2) {
-        std::cout << "======================================================="
-                  << std::endl;
-        std::cout << "Finalizing geometry " << i << std::endl;
-      }
+       std::stringstream msg;
+       msg << "=======================================================\n"
+           << "Finalizing geometry " << i << std::endl;
+       postErrorMsg(msg, 2);
 
       geometry[i]->finalize(this);
 

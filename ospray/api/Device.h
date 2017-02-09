@@ -22,6 +22,8 @@
 #include "ospray/ospray.h"
 // embree
 #include "embree2/rtcore.h"
+// std
+#include <functional>
 
 /*! \file device.h Defines the abstract base class for OSPRay
     "devices" that implement the OSPRay API */
@@ -35,6 +37,7 @@ namespace ospray {
       /*! singleton that points to currently active device */
       static Ref<Device> current;
 
+      Device() = default;
       virtual ~Device();
 
       /*! \brief creates an abstract device class of given type */
@@ -230,6 +233,8 @@ namespace ospray {
       // NOTE(jda) - Keep logLevel static because the device factory function
       //             needs to have a valid value for the initial Device creation
       static uint32_t logLevel;
+
+      std::function<void(const char *)> error_fcn{[](const char*){}};
 
     private:
 

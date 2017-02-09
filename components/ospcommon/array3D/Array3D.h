@@ -56,7 +56,7 @@ namespace ospcommon {
     template<typename value_t>
     struct ActualArray3D : public Array3D<value_t> {
 
-      ActualArray3D(const vec3i &dims, void *externalMem=NULL);
+      ActualArray3D(const vec3i &dims, void *externalMem=nullptr);
       virtual ~ActualArray3D() { if (valuesAreMine) delete[] value; }
 
       /*! return size (ie, "dimensions") of volume */
@@ -300,7 +300,7 @@ namespace ospcommon {
     template<typename T>
     inline T ActualArray3D<T>::get(const vec3i &_where) const
     {
-      assert(value != NULL);
+      assert(value != nullptr);
       const vec3i where = max(vec3i(0),min(_where,dims - vec3i(1)));
       size_t index = where.x+size_t(dims.x)*(where.y+size_t(dims.y)*(where.z));
       assert(value);
@@ -317,7 +317,7 @@ namespace ospcommon {
 
     template<typename T>
     ActualArray3D<T>::ActualArray3D(const vec3i &dims, void *externalMem)
-      : dims(dims), value((T*)externalMem), valuesAreMine(externalMem == NULL)
+      : dims(dims), value((T*)externalMem), valuesAreMine(externalMem == nullptr)
     {
       try {
         if (!value) {
@@ -335,7 +335,7 @@ namespace ospcommon {
     template<typename T>
     inline void ActualArray3D<T>::set(const vec3i &where, const T &t)
     {
-      assert(value != NULL);
+      assert(value != nullptr);
       assert(where.x < size().x);
       assert(where.y < size().y);
       assert(where.z < size().z);

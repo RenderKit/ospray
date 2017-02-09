@@ -31,15 +31,8 @@ namespace std
 }
 #endif
 #else
-// #include <x86intrin.h>
 # include <emmintrin.h>
 # include <xmmintrin.h>
-# ifdef __SSE4_1__
-#  include <smmintrin.h>
-# endif
-# ifdef __AVX__
-#  include <immintrin.h>
-# endif
 #endif
 
 namespace ospcommon
@@ -63,17 +56,11 @@ namespace ospcommon
   __forceinline float sign ( const float x ) { return x<0?-1.0f:1.0f; }
   __forceinline float sqr  ( const float x ) { return x*x; }
 
-#ifndef __MIC__
   __forceinline float rcp  ( const float x ) 
   {
     const __m128 a = _mm_set_ss(x);
     const __m128 r = _mm_rcp_ps(a);
-// NOTE(jda) - turn off AVX2 optimizations for GCC 6.x w/ -mavx2 flag
-#if 0//defined(__AVX2__)
-    return _mm_cvtss_f32(_mm_mul_ps(r,_mm_fnmadd_ps(r, a, _mm_set_ss(2.0f))));
-#else
     return _mm_cvtss_f32(_mm_mul_ps(r,_mm_sub_ps(_mm_set_ss(2.0f), _mm_mul_ps(r, a))));
-#endif
   }
 
   __forceinline float signmsk ( const float x ) { 
@@ -88,17 +75,10 @@ namespace ospcommon
   __forceinline float rsqrt( const float x ) { 
     const __m128 a = _mm_set_ss(x);
     const __m128 r = _mm_rsqrt_ps(a);
-    const __m128 c = _mm_add_ps(_mm_mul_ps(_mm_set_ps(1.5f, 1.5f, 1.5f, 1.5f), r),
-                                _mm_mul_ps(_mm_mul_ps(_mm_mul_ps(a, _mm_set_ps(-0.5f, -0.5f, -0.5f, -0.5f)), r), _mm_mul_ps(r, r)));
+    const __m128 c = _mm_add_ps(_mm_mul_ps(_mm_set_ps1(1.5f), r),
+                                _mm_mul_ps(_mm_mul_ps(_mm_mul_ps(a, _mm_set_ps1(-0.5f)), r), _mm_mul_ps(r, r)));
     return _mm_cvtss_f32(c);
   }
-#else
-  __forceinline float rcp  ( const float x ) { return 1.0f/x; }
-  __forceinline float signmsk ( const float x ) { return cast_i2f(cast_f2i(x)&0x80000000); }
-  __forceinline float xorf( const float x, const float y ) { return cast_i2f(cast_f2i(x) ^ cast_f2i(y)); }
-  __forceinline float andf( const float x, const float y ) { return cast_i2f(cast_f2i(x) & cast_f2i(y)); }
-  __forceinline float rsqrt( const float x ) { return 1.0f/sqrtf(x); }
-#endif
 
 #ifndef _WIN32
   __forceinline float abs  ( const float x ) { return ::fabsf(x); }
@@ -147,24 +127,6 @@ namespace ospcommon
   __forceinline double floor( const double x ) { return ::floor (x); }
   __forceinline double ceil ( const double x ) { return ::ceil (x); }
 
-#if defined(__SSE4_1__)
-  __forceinline float mini(float a, float b) { 
-    const __m128i ai = _mm_castps_si128(_mm_set_ss(a));
-    const __m128i bi = _mm_castps_si128(_mm_set_ss(b));
-    const __m128i ci = _mm_min_epi32(ai,bi);
-    return _mm_cvtss_f32(_mm_castsi128_ps(ci));
-  }
-#endif
-
-#if defined(__SSE4_1__)
-  __forceinline float maxi(float a, float b) { 
-    const __m128i ai = _mm_castps_si128(_mm_set_ss(a));
-    const __m128i bi = _mm_castps_si128(_mm_set_ss(b));
-    const __m128i ci = _mm_max_epi32(ai,bi);
-    return _mm_cvtss_f32(_mm_castsi128_ps(ci));
-  }
-#endif
-
   __forceinline     int min(int     a, int     b) { return a<b ? a:b; }
   __forceinline int64_t min(int64_t a, int64_t b) { return a<b ? a:b; }
   __forceinline  size_t min(size_t  a, size_t  b) { return a<b ? a:b; }
@@ -185,7 +147,7 @@ namespace ospcommon
   template<typename T> __forceinline T max(const T& a, const T& b, const T& c, const T& d) { return max(max(a,b),max(c,d)); }
   template<typename T> __forceinline T max(const T& a, const T& b, const T& c, const T& d, const T& e) { return max(max(max(a,b),max(c,d)),e); }
 
-#if defined(__MACOSX__)
+#ifdef __APPLE__
   __forceinline ssize_t min(ssize_t a, ssize_t b) { return a<b ? a:b; }
   __forceinline ssize_t max(ssize_t a, ssize_t b) { return a<b ? b:a; }
 #endif
@@ -198,22 +160,14 @@ namespace ospcommon
   template<typename T> __forceinline T  sin2cos ( const T& x )  { return sqrt(max(T(zero),T(one)-x*x)); }
   template<typename T> __forceinline T  cos2sin ( const T& x )  { return sin2cos(x); }
 
-// NOTE(jda) - turn off AVX2 optimizations for GCC 6.x w/ -mavx2 flag
-#if 0//defined(__AVX2__)
-  __forceinline float madd  ( const float a, const float b, const float c) { return _mm_cvtss_f32(_mm_fmadd_ss(_mm_set_ss(a),_mm_set_ss(b),_mm_set_ss(c))); }
-  __forceinline float msub  ( const float a, const float b, const float c) { return _mm_cvtss_f32(_mm_fmsub_ss(_mm_set_ss(a),_mm_set_ss(b),_mm_set_ss(c))); }
-  __forceinline float nmadd ( const float a, const float b, const float c) { return _mm_cvtss_f32(_mm_fnmadd_ss(_mm_set_ss(a),_mm_set_ss(b),_mm_set_ss(c))); }
-  __forceinline float nmsub ( const float a, const float b, const float c) { return _mm_cvtss_f32(_mm_fnmsub_ss(_mm_set_ss(a),_mm_set_ss(b),_mm_set_ss(c))); }
-#else
   __forceinline float madd  ( const float a, const float b, const float c) { return a*b+c; }
   __forceinline float msub  ( const float a, const float b, const float c) { return a*b-c; }
   __forceinline float nmadd ( const float a, const float b, const float c) { return -a*b+c;}
   __forceinline float nmsub ( const float a, const float b, const float c) { return -a*b-c; }
-#endif
 
   /*! random functions */
   template<typename T> T random() { return T(0); }
-#if defined(_WIN32)
+#ifdef _WIN32
   template<> __forceinline int      random() { return int(rand()) ^ (int(rand()) << 8) ^ (int(rand()) << 16); }
   template<> __forceinline uint32_t random() { return uint32_t(rand()) ^ (uint32_t(rand()) << 8) ^ (uint32_t(rand()) << 16); }
 #else

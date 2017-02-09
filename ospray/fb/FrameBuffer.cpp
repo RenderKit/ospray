@@ -37,54 +37,34 @@ namespace ospray {
     Assert(size.x > 0 && size.y > 0);
   }
 
+  vec2i FrameBuffer::getTileSize() const
+  {
+    return vec2i(TILE_SIZE);
+  }
+
+  vec2i FrameBuffer::getNumTiles() const
+  {
+    return numTiles;
+  }
+
+  int FrameBuffer::getTotalTiles() const
+  {
+    return numTiles.x * numTiles.y;
+  }
+
+  vec2i FrameBuffer::getNumPixels() const
+  {
+    return size;
+  }
+
   void FrameBuffer::beginFrame()
   {
     frameID++;
     ispc::FrameBuffer_set_frameID(getIE(), frameID);
   }
 
-  /*! helper function for debugging. write out given pixels in PPM format */
-  void writePPM(const std::string &fileName,
-                const vec2i &size,
-                const uint32 *pixels)
-  {
-    FILE *file = fopen(fileName.c_str(),"w");
-    if (!file) {
-      std::cout << "#osp:fb: could not open file " << fileName << std::endl;
-      return;
-    }
-    fprintf(file,"P6\n%i %i\n255\n",size.x,size.y);
-    for (int i=0;i<size.x*size.y;i++) {
-      char *ptr = (char*)&pixels[i];
-      fwrite(ptr,1,3,file);
-    }
-    fclose(file);
-  }
-
-  // helper function to write a (float) image as (flipped) PFM file
-  void writePFM(const std::string &fileName,
-                const vec2i &size,
-                const int channel,
-                const float *pixel)
-  {
-    FILE *file = fopen(fileName.c_str(),"w");
-    if (!file) {
-      std::cout << "#osp:fb: could not open file " << fileName << std::endl;
-      return;
-    }
-    fprintf(file, "PF\n%i %i\n-1.0\n", size.x, size.y);
-    float *out = STACK_BUFFER(float, 3*size.x);
-    for (int y = 0; y < size.y; y++) {
-      const float *in = (const float *)&pixel[(size.y-1-y)*size.x*channel];
-      for (int x = 0; x < size.x; x++) {
-        out[3*x + 0] = in[channel*x + 0];
-        out[3*x + 1] = in[channel*x + 1];
-        out[3*x + 2] = in[channel*x + 2];
-      }
-      fwrite(out, 3*size.x, sizeof(float), file);
-    }
-    fclose(file);
-  }
+  std::string FrameBuffer::toString() const
+  { return "ospray::FrameBuffer"; }
 
   TileError::TileError(const vec2i &_numTiles)
     : numTiles(_numTiles)

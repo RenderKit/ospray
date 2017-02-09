@@ -38,10 +38,10 @@ IF (OSPRAY_TASKING_TBB AND OSPRAY_INSTALL_DEPENDENCIES)
     MARK_AS_ADVANCED(TBB_DLL)
     MARK_AS_ADVANCED(TBB_DLL_MALLOC)
     INSTALL(PROGRAMS ${TBB_DLL} ${TBB_DLL_MALLOC}
-            DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT lib) # 3rd party?
+            DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT redist)
   ELSE()
     INSTALL(PROGRAMS ${TBB_LIBRARY} ${TBB_LIBRARY_MALLOC}
-            DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib) # /intel64?
+            DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
   ENDIF()
 ENDIF()
 
@@ -207,6 +207,8 @@ SET(OSPRAY_SOURCES
   render/pathtracer/materials/Matte.cpp
   render/pathtracer/materials/Luminous.ispc
   render/pathtracer/materials/Luminous.cpp
+  render/pathtracer/materials/Mix.ispc
+  render/pathtracer/materials/Mix.cpp
 
   api/API.cpp
   api/Device.cpp

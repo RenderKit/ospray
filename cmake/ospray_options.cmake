@@ -19,10 +19,9 @@
 ##############################################################
 
 SET(OSPRAY_VERSION_MAJOR 1)
-SET(OSPRAY_VERSION_MINOR 2)
+SET(OSPRAY_VERSION_MINOR 3)
 SET(OSPRAY_VERSION_PATCH 0)
 SET(OSPRAY_VERSION_GITHASH 0)
-SET(THIS_IS_OSPRAY ON)
 IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
   FIND_PACKAGE(Git)
   IF(GIT_FOUND)
@@ -91,14 +90,8 @@ ENDIF()
 OSPRAY_CONFIGURE_COMPILER()
 OSPRAY_CONFIGURE_TASKING_SYSTEM()
 
-OPTION(OSPRAY_USE_EXTERNAL_EMBREE
-       "Use a pre-built Embree instead of the internally built version" ON)
-
 OPTION(OSPRAY_USE_EMBREE_STREAMS "Enable use of Embree's stream intersection")
 MARK_AS_ADVANCED(OSPRAY_USE_EMBREE_STREAMS) # feature not implemented yet
-
-OPTION(OSPRAY_USE_HIGH_QUALITY_BVH
-       "Takes slighly longer to build but offers higher ray tracing performance; recommended when using Embree v2.11 or later")
 
 SET(OSPRAY_TILE_SIZE 64 CACHE STRING "Tile size")
 SET_PROPERTY(CACHE OSPRAY_TILE_SIZE PROPERTY STRINGS 8 16 32 64 128 256 512)
@@ -108,9 +101,12 @@ SET(OSPRAY_PIXELS_PER_JOB 64 CACHE STRING
     "Must be multiple of largest vector width *and* <= OSPRAY_TILE_SIZE")
 MARK_AS_ADVANCED(OSPRAY_PIXELS_PER_JOB)
 
-# Must be before ISA config
-INCLUDE(configure_embree)
 
+# make Embree's INSTALLs happy
+INCLUDE(GNUInstallDirs)
+
+# Must be before ISA config and package
+INCLUDE(configure_embree)
 
 ##############################################################
 # create binary packages; before any INSTALL() invocation/definition
@@ -124,7 +120,6 @@ MARK_AS_ADVANCED(OSPRAY_INSTALL_DEPENDENCIES)
 
 INCLUDE(package)
 
-
 IF (OSPRAY_INSTALL_DEPENDENCIES)
   IF (WIN32)
     GET_FILENAME_COMPONENT(EMBREE_LIB_DIR ${EMBREE_LIBRARY} PATH)
@@ -137,9 +132,9 @@ IF (OSPRAY_INSTALL_DEPENDENCIES)
     FIND_FILE(EMBREE_DLL embree.dll HINTS ${EMBREE_DLL_HINTS})
     MARK_AS_ADVANCED(EMBREE_DLL)
     INSTALL(PROGRAMS ${EMBREE_DLL}
-            DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT lib)
+            DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT redist)
   ELSE()
     INSTALL(PROGRAMS ${EMBREE_LIBRARY}
-            DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib) # /intel64?
+            DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
   ENDIF()
 ENDIF()

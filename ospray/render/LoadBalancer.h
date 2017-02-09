@@ -25,8 +25,6 @@
 
 namespace ospray {
 
-
-  struct TileRenderer;
   struct OSPRAY_SDK_INTERFACE TiledLoadBalancer
   {
     static std::unique_ptr<TiledLoadBalancer> instance;

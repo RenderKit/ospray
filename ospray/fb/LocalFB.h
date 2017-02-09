@@ -42,7 +42,7 @@ namespace ospray {
 
     //! \brief common function to help printf-debugging
     /*! \detailed Every derived class should overrride this! */
-    std::string toString() const override;
+    virtual std::string toString() const override;
 
     void setTile(Tile &tile) override;
     int32 accumID(const vec2i &tile) override;

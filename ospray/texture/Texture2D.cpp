@@ -25,6 +25,11 @@ namespace ospray {
       delete[] (unsigned char *)data;
   }
 
+  std::string Texture2D::toString() const
+  {
+    return "ospray::Texture2D";
+  }
+
   Texture2D *Texture2D::createTexture(const vec2i &size,
       const OSPTextureFormat type, void *data, const int flags) 
   {
@@ -46,7 +51,8 @@ namespace ospray {
       memcpy(tx->data, data, bytes);
     }
 
-    tx->ispcEquivalent = ispc::Texture2D_create((ispc::vec2i&)size, tx->data, type, flags);
+    tx->ispcEquivalent = ispc::Texture2D_create((ispc::vec2i&)size,
+                                                tx->data, type, flags);
 
     return tx;
   }

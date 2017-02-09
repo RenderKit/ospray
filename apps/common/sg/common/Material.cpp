@@ -34,8 +34,6 @@ namespace ospray {
     {
       if (ospMaterial) return;
 
-      PING;
-      PRINT(ctx.integrator->toString());
       ospMaterial = ospNewMaterial(ctx.integrator->getOSPHandle(), type.c_str());
 
       //We failed to create a material of the given type, handle it
