@@ -40,8 +40,9 @@ ELSE()
 
     tasking/parallel_for.inl
     tasking/parallel_for.h
-    tasking/async.inl
     tasking/async.h
+    tasking/schedule.inl
+    tasking/schedule.h
     tasking/tasking_system_handle.cpp
     tasking/TaskingTypeTraits.h
     tasking/TaskSys.cpp
