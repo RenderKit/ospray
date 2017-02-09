@@ -21,23 +21,18 @@
 namespace ospray {
 
   //! an AmbientLight is a constant light that is present everywhere
-  class OSPRAY_SDK_INTERFACE AmbientLight : public Light {
-    public:
-      AmbientLight();
+  struct OSPRAY_SDK_INTERFACE AmbientLight : public Light
+  {
+    AmbientLight();
+    virtual ~AmbientLight() = default;
+    virtual std::string toString() const override;
+    virtual void commit() override;
 
-      //! toString is used to aid in printf debugging
-      virtual std::string toString() const { return "ospray::AmbientLight"; }
+    vec3f getRadiance() const;
 
-      //! Copy understood parameters into member parameters
-      virtual void commit();
-
-      vec3f getRadiance() const {
-        return color * intensity;
-      }
-
-    private:
-      vec3f color;                  //!< RGB color of the light
-      float intensity;              //!< Amount of light emitted
+  private:
+    vec3f color {1.f};    //!< RGB color of the light
+    float intensity {1.f};//!< Amount of light emitted
   };
 
 }

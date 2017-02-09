@@ -31,150 +31,21 @@
 #include <cstring>
 #include <stdint.h>
 
-////////////////////////////////////////////////////////////////////////////////
-/// detect platform
-////////////////////////////////////////////////////////////////////////////////
-
-/* detect 32 or 64 platform */
-#if defined(__x86_64__) || defined(__ia64__) || defined(_M_X64)
-#define __X86_64__
-#endif
-
-/* detect Linux platform */
-#if defined(linux) || defined(__linux__) || defined(__LINUX__)
-#  if !defined(__LINUX__)
-#     define __LINUX__
-#  endif
-#  if !defined(__UNIX__)
-#     define __UNIX__
-#  endif
-#endif
-
-/* detect FreeBSD platform */
-#if defined(__FreeBSD__) || defined(__FREEBSD__)
-#  if !defined(__FREEBSD__)
-#     define __FREEBSD__
-#  endif
-#  if !defined(__UNIX__)
-#     define __UNIX__
-#  endif
-#endif
-
-/* detect Windows 95/98/NT/2000/XP/Vista/7 platform */
-#if (defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)) && !defined(__CYGWIN__)
-#  if !defined(__WIN32__)
-#     define __WIN32__
-#  endif
-#endif
-
-/* detect Cygwin platform */
-#if defined(__CYGWIN__)
-#  if !defined(__UNIX__)
-#     define __UNIX__
-#  endif
-#endif
-
-/* detect MAC OS X platform */
-#if defined(__APPLE__) || defined(MACOSX) || defined(__MACOSX__)
-#  if !defined(__MACOSX__)
-#     define __MACOSX__
-#  endif
-#  if !defined(__UNIX__)
-#     define __UNIX__
-#  endif
-#endif
-
-/* try to detect other Unix systems */
-#if defined(__unix__) || defined (unix) || defined(__unix) || defined(_unix)
-#  if !defined(__UNIX__)
-#     define __UNIX__
-#  endif
-#endif
-
-#if defined (_DEBUG)
-#define DEBUG
-#endif
-
-////////////////////////////////////////////////////////////////////////////////
-/// ISA configuration
-////////////////////////////////////////////////////////////////////////////////
-
-#if defined(_MSC_VER) && !defined(__INTEL_COMPILER) && !defined(__clang__)
-  #define __SSE__
-  #define __SSE2__
-#endif
-
-#if defined(__WIN32__) && !defined(__clang__)
-#if defined(CONFIG_SSE41)
-  #if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
-    #define __SSE3__
-    #define __SSSE3__
-    #define __SSE4_1__
-  #endif
-#endif
-#if defined(CONFIG_SSE42)
-  #if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
-    #define __SSE3__
-    #define __SSSE3__
-    #define __SSE4_1__
-    #define __SSE4_2__
-  #endif
-#endif
-#if defined(CONFIG_AVX)
-  #if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
-    #define __SSE3__
-    #define __SSSE3__
-    #define __SSE4_1__
-    #define __SSE4_2__
-    #if !defined(__AVX__)
-      #define __AVX__
-    #endif
-  #endif
-#endif
-#if defined(CONFIG_AVX2)
-  #if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
-    #define __SSE3__
-    #define __SSSE3__
-    #define __SSE4_1__
-    #define __SSE4_2__
-    #if !defined(__AVX__)
-      #define __AVX__
-    #endif
-    #if !defined(__AVX2__)
-      #define __AVX2__
-    #endif
-  #endif
-#endif
-#if defined(CONFIG_AVX512)
-  #if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
-    #define __SSE3__
-    #define __SSSE3__
-    #define __SSE4_1__
-    #define __SSE4_2__
-    #if !defined(__AVX__)
-      #define __AVX__
-    #endif
-    #if !defined(__AVX2__)
-      #define __AVX2__
-    #endif
-    #if !defined(__AVX512F__)
-      #define __AVX512F__
-    #endif
-  #endif
-#endif
-
+#ifdef _WIN32
+  #include <intrin.h>
+  #include <windows.h>
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Makros
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifdef __WIN32__
+#ifdef _WIN32
 #undef __noinline
 #define __noinline             __declspec(noinline)
 //#define __forceinline        __forceinline
 //#define __restrict           __restrict
-#if defined(__INTEL_COMPILER)
+#ifdef __INTEL_COMPILER
 #define __restrict__           __restrict
 #else
 #define __restrict__           //__restrict // causes issues with MSVC
@@ -197,7 +68,7 @@
 #endif
 
 #ifdef __GNUC__
-  #define MAYBE_UNUSED __attribute__((used))
+  #define MAYBE_UNUSED __attribute__((unused))
 #else
   #define MAYBE_UNUSED
 #endif
@@ -225,14 +96,8 @@
 
 #define THROW_RUNTIME_ERROR(str) \
   throw std::runtime_error(std::string(__FILE__) + " (" + std::to_string((long long)__LINE__) + "): " + std::string(str));
-
-#if defined(__MIC__)
-#define FATAL(x) { std::cerr << "Error in " << __FUNCTION__ << " : " << x << std::endl << std::flush; exit(1); }
-#define WARNING(x) std::cerr << "Warning:" << std::string(x) << std::endl
-#else
 #define FATAL(x) THROW_RUNTIME_ERROR(x)
 #define WARNING(x) std::cerr << "Warning:" << std::string(x) << std::endl
-#endif
 
 #define NOT_IMPLEMENTED FATAL(std::string(__FUNCTION__) + " not implemented")
 
@@ -254,6 +119,10 @@
 #define _UNUSED_N2(N, ...) _UNUSED_N3(N, __VA_ARGS__)
 #define UNUSED(...) _UNUSED_N2(NUM_ARGS(__VA_ARGS__), __VA_ARGS__)
 
+#if defined(__x86_64__) || defined(__ia64__) || defined(_M_X64)
+  #define __X86_64__
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////
 /// Basic Types
 ////////////////////////////////////////////////////////////////////////////////
@@ -262,8 +131,8 @@
 typedef float real;
 
 /* windows does not have ssize_t */
-#if defined(__WIN32__)
-#if defined(__X86_64__)
+#ifdef __WIN32
+#ifdef __X86_64__
 typedef int64_t ssize_t;
 #else
 typedef int32_t ssize_t;
@@ -314,36 +183,3 @@ typedef int32_t ssize_t;
 #pragma clang diagnostic ignored "-Wunused-local-typedef"
 #pragma clang diagnostic ignored "-Wunused-function"
 #endif
-
-////////////////////////////////////////////////////////////////////////////////
-/// Some macros for static profiling
-////////////////////////////////////////////////////////////////////////////////
-
-#if defined (__GNUC__) 
-#define IACA_SSC_MARK( MARK_ID )						\
-__asm__ __volatile__ (									\
-					  "\n\t  movl $"#MARK_ID", %%ebx"	\
-					  "\n\t  .byte 0x64, 0x67, 0x90"	\
-					  : : : "memory" );
-
-#define IACA_UD_BYTES __asm__ __volatile__ ("\n\t .byte 0x0F, 0x0B");
-
-#else
-#define IACA_UD_BYTES {__asm _emit 0x0F \
-	__asm _emit 0x0B}
-
-#define IACA_SSC_MARK(x) {__asm  mov ebx, x\
-	__asm  _emit 0x64 \
-	__asm  _emit 0x67 \
-	__asm  _emit 0x90 }
-
-#define IACA_VC64_START __writegsbyte(111, 111);
-#define IACA_VC64_END   __writegsbyte(222, 222);
-
-#endif
-
-#define IACA_START {IACA_UD_BYTES \
-					IACA_SSC_MARK(111)}
-#define IACA_END {IACA_SSC_MARK(222) \
-					IACA_UD_BYTES}
-  

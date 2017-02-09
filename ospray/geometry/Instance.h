@@ -41,19 +41,17 @@ namespace ospray {
     \ref ospray::Instance class.
   */
 
-  typedef affine3f AffineSpace3f;
-
   /*! \brief A Single Instance
 
    */
   struct OSPRAY_SDK_INTERFACE Instance : public Geometry
   {
     Instance();
-    //! \brief common function to help printf-debugging
-    virtual std::string toString() const { return "ospray::Instance"; }
-    /*! \brief integrates this geometry's primitives into the respective
-        model's acceleration structure */
-    virtual void finalize(Model *model);
+    virtual ~Instance() = default;
+    virtual std::string toString() const override;
+    virtual void finalize(Model *model) override;
+
+    // Data members //
 
     /*! transformation matrix associated with that instance's geometry. may be embree::one */
     AffineSpace3f xfm;

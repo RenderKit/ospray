@@ -39,7 +39,7 @@ namespace ospray {
       if (!world->ospModel) {
         RenderContext rootContext;
         // geometries need the integrator to create materials
-        rootContext.integrator = integrator.get();
+        rootContext.integrator = integrator;
         world->render(rootContext);
         assert(world->ospModel);
       }
@@ -147,8 +147,8 @@ namespace ospray {
     std::shared_ptr<sg::Camera> Renderer::getLastDefinedCamera() const
     {
       std::shared_ptr<sg::Camera> lastCamera;
-      for (auto node : uniqueNodes.object) {
-        std::shared_ptr<sg::Camera> asCamera = std::dynamic_pointer_cast<sg::Camera>(node);
+      for (std::shared_ptr<Serialization::Object> obj : uniqueNodes.object) {
+        std::shared_ptr<sg::Camera> asCamera = std::dynamic_pointer_cast<sg::Camera>(obj->node);
         if (asCamera) lastCamera = asCamera;
       }
       return lastCamera;
@@ -158,8 +158,8 @@ namespace ospray {
     std::shared_ptr<sg::Integrator> Renderer::getLastDefinedIntegrator() const
     {
       std::shared_ptr<sg::Integrator> lastIntegrator;
-      for (auto node : uniqueNodes.object) {
-        std::shared_ptr<sg::Integrator> asIntegrator = std::dynamic_pointer_cast<sg::Integrator>(node);
+      for (std::shared_ptr<Serialization::Object> obj : uniqueNodes.object) {
+        std::shared_ptr<sg::Integrator> asIntegrator = std::dynamic_pointer_cast<sg::Integrator>(obj->node);
         if (asIntegrator) lastIntegrator = asIntegrator;
       }
       return lastIntegrator;

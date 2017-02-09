@@ -21,15 +21,20 @@
 namespace ospray {
 
   //! Base class for Light objects
-  struct OSPRAY_SDK_INTERFACE Light : public ManagedObject {
+  struct OSPRAY_SDK_INTERFACE Light : public ManagedObject
+  {
+    virtual ~Light() = default;
+
     //! Create a light of the given type
     static Light *createLight(const char *type);
 
     //! Copy understood parameters into class members
-    virtual void commit() {}
+    virtual void commit() override;
 
     //! toString is used to aid in printf debugging
-    virtual std::string toString() const { return "ospray::Light"; }
+    virtual std::string toString() const override;
+
+    bool isVisible; //!< either directly in camera, or via a straight path
   };
 
 #define OSP_REGISTER_LIGHT(InternalClass, external_name) \

@@ -73,14 +73,14 @@ namespace ospray {
       
     public:
       //! constructor
-      QLightManipulator(Ref<sg::Renderer> renderer, vec3f up);
+      QLightManipulator(std::shared_ptr<sg::Renderer> renderer, vec3f up);
       QLightManipulator(){}
       ~QLightManipulator();
 
     protected:
       LightInfo lightInfo;
       //The renderer we'll be using. Non-owning pointer
-      Ref<sg::Renderer> sgRenderer;
+      std::shared_ptr<sg::Renderer> sgRenderer;
       
       //All text boxes and labels
       QLabel *intensityLabel;

@@ -26,7 +26,7 @@ namespace ospray {
 
       //! \brief commit the material's parameters
       virtual void commit() {
-        if (getIE() != NULL) return;
+        if (getIE() != nullptr) return;
 
         const vec3f& reflectance
           = getParam3f("reflectance",getParam3f("color",vec3f(1.f)));

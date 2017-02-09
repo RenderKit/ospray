@@ -115,6 +115,13 @@ inline void setRay(Ray &ray, const vec3f &ray_org, const vec3f &ray_dir,
   ray.instID = -1;
 }
 
+/*! helper function that performs a ray-plane test */
+inline float intersectPlane(const Ray& ray, const uniform vec4f& plane)
+{
+  const uniform vec3f normal = make_vec3f(plane);
+  return (plane.w - dot(ray.org, normal)) * rcpf(dot(ray.dir, normal));
+}
+
 /*! helper function that performs a ray-box test */
 inline void intersectBox(const Ray& ray,
                          const uniform box3f& box,

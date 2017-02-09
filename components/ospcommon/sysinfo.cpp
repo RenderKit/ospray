@@ -32,37 +32,6 @@ namespace ospcommon
     return ss.str();
   }
 
-  std::string getPlatformName() 
-  {
-#if defined(__LINUX__) && !defined(__X86_64__)
-    return "Linux (32bit)";
-#elif defined(__LINUX__) && defined(__X86_64__)
-    return "Linux (64bit)";
-#elif defined(__FREEBSD__) && !defined(__X86_64__)
-    return "FreeBSD (32bit)";
-#elif defined(__FREEBSD__) && defined(__X86_64__)
-    return "FreeBSD (64bit)";
-#elif defined(__CYGWIN__) && !defined(__X86_64__)
-    return "Cygwin (32bit)";
-#elif defined(__CYGWIN__) && defined(__X86_64__)
-    return "Cygwin (64bit)";
-#elif defined(__WIN32__) && !defined(__X86_64__)
-    return "Windows (32bit)";
-#elif defined(__WIN32__) && defined(__X86_64__)
-    return "Windows (64bit)";
-#elif defined(__MACOSX__) && !defined(__X86_64__)
-    return "Mac OS X (32bit)";
-#elif defined(__MACOSX__) && defined(__X86_64__)
-    return "Mac OS X (64bit)";
-#elif defined(__UNIX__) && !defined(__X86_64__)
-    return "Unix (32bit)";
-#elif defined(__UNIX__) && defined(__X86_64__)
-    return "Unix (64bit)";
-#else
-    return "Unknown";
-#endif
-  }
-
   std::string getCompilerName()
   {
 #if defined(__INTEL_COMPILER)
@@ -408,7 +377,7 @@ namespace ospcommon
 /// Linux Platform
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifdef __LINUX__
+#ifdef __linux__
 
 #include <stdio.h>
 #include <unistd.h>
@@ -431,7 +400,7 @@ namespace ospcommon
 /// Mac OS X Platform
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifdef __MACOSX__
+#ifdef __APPLE__
 
 #include <mach-o/dyld.h>
 
@@ -452,7 +421,7 @@ namespace ospcommon
 /// Unix Platform
 ////////////////////////////////////////////////////////////////////////////////
 
-#if defined(__UNIX__)
+#ifndef _WIN32
 
 #include <unistd.h>
 #include <sys/ioctl.h>
@@ -474,7 +443,7 @@ namespace ospcommon
   }
 
   double getSeconds() {
-    struct timeval tp; gettimeofday(&tp,NULL);
+    struct timeval tp; gettimeofday(&tp,nullptr);
     return double(tp.tv_sec) + double(tp.tv_usec)/1E6;
   }
 }

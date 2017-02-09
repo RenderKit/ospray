@@ -18,13 +18,8 @@
 #include "LoadBalancer.h"
 #include "Renderer.h"
 #include "ospcommon/tasking/parallel_for.h"
-// ospc
-#include "ospcommon/sysinfo.h"
 
 namespace ospray {
-
-  using std::cout;
-  using std::endl;
 
   std::unique_ptr<TiledLoadBalancer> TiledLoadBalancer::instance {};
 

@@ -63,7 +63,7 @@ namespace ospray {
   {
     auto it = objectByHandle.find(i64);
     Assert(it != objectByHandle.end());
-    it->second = NULL;
+    it->second = nullptr;
     objectByHandle.erase(it);
   }
 
@@ -75,7 +75,7 @@ namespace ospray {
 
   ManagedObject *ObjectHandle::lookup() const
   {
-    if (i64 == 0) return NULL;
+    if (i64 == 0) return nullptr;
 
     auto it = objectByHandle.find(i64);
     if (it == objectByHandle.end()) {

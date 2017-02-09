@@ -21,9 +21,6 @@
 #include "GridAccelerator_ispc.h"
 #include "StructuredVolume_ispc.h"
 
-// stl
-#include <map>
-
 namespace ospray {
 
   std::string StructuredVolume::toString() const

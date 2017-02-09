@@ -207,6 +207,8 @@ SET(OSPRAY_SOURCES
   render/pathtracer/materials/Matte.cpp
   render/pathtracer/materials/Luminous.ispc
   render/pathtracer/materials/Luminous.cpp
+  render/pathtracer/materials/Mix.ispc
+  render/pathtracer/materials/Mix.cpp
 
   api/API.cpp
   api/Device.cpp

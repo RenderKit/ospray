@@ -91,9 +91,9 @@ namespace ospcommon {
       int fd = ::open(fileName.c_str(), O_LARGEFILE | O_RDONLY);
       assert(fd >= 0);
 
-      void *mem = mmap(NULL,fileSize,PROT_READ,MAP_SHARED// |MAP_HUGETLB
+      void *mem = mmap(nullptr,fileSize,PROT_READ,MAP_SHARED// |MAP_HUGETLB
                        ,fd,0);
-      assert(mem != NULL && (long long)mem != -1LL);
+      assert(mem != nullptr && (long long)mem != -1LL);
 
       std::shared_ptr<ActualArray3D<T>> volume = std::make_shared<ActualArray3D<T>>(dims,mem);
 

@@ -53,9 +53,10 @@ namespace ospray {
     struct SciVisRenderer : public Renderer
     {
       SciVisRenderer();
-      std::string toString() const override;
-      void commit() override;
-      Material *createMaterial(const char *type) override;
+      virtual ~SciVisRenderer() = default;
+      virtual std::string toString() const override;
+      virtual void commit() override;
+      virtual Material *createMaterial(const char *type) override;
 
       std::vector<void*> lightArray; // the 'IE's of the XXXLights
       Data *lightData;

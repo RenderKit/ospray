@@ -21,21 +21,18 @@
 namespace ospray {
 
   //! a PointLight is a singular light emitting from a point uniformly into all directions
-  class OSPRAY_SDK_INTERFACE PointLight : public Light {
-    public:
-      PointLight();
+  struct OSPRAY_SDK_INTERFACE PointLight : public Light
+  {
+    PointLight();
+    virtual ~PointLight() = default;
+    virtual std::string toString() const override;
+    virtual void commit() override;
 
-      //! toString is used to aid in printf debugging
-      virtual std::string toString() const { return "ospray::PointLight"; }
-
-      //! Copy understood parameters into member parameters
-      virtual void commit();
-
-    private:
-      vec3f position;               //!< world-space position of the light
-      vec3f color;                  //!< RGB color of the light
-      float intensity;              //!< Amount of light emitted
-      float radius;                 //!< Radius of SphereLight
+  private:
+    vec3f position {0.f}; //!< world-space position of the light
+    vec3f color {1.f};    //!< RGB color of the light
+    float intensity {1.f};//!< Amount of light emitted
+    float radius {0.f};   //!< Radius of SphereLight
   };
 
-}
+}// ::ospray

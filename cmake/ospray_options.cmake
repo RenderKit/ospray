@@ -19,7 +19,7 @@
 ##############################################################
 
 SET(OSPRAY_VERSION_MAJOR 1)
-SET(OSPRAY_VERSION_MINOR 2)
+SET(OSPRAY_VERSION_MINOR 3)
 SET(OSPRAY_VERSION_PATCH 0)
 SET(OSPRAY_VERSION_GITHASH 0)
 IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
@@ -90,14 +90,8 @@ ENDIF()
 OSPRAY_CONFIGURE_COMPILER()
 OSPRAY_CONFIGURE_TASKING_SYSTEM()
 
-OPTION(OSPRAY_USE_EXTERNAL_EMBREE
-       "Use a pre-built Embree instead of the internally built version" ON)
-
 OPTION(OSPRAY_USE_EMBREE_STREAMS "Enable use of Embree's stream intersection")
 MARK_AS_ADVANCED(OSPRAY_USE_EMBREE_STREAMS) # feature not implemented yet
-
-OPTION(OSPRAY_USE_HIGH_QUALITY_BVH
-       "Takes slighly longer to build but offers higher ray tracing performance; recommended when using Embree v2.11 or later")
 
 SET(OSPRAY_TILE_SIZE 64 CACHE STRING "Tile size")
 SET_PROPERTY(CACHE OSPRAY_TILE_SIZE PROPERTY STRINGS 8 16 32 64 128 256 512)

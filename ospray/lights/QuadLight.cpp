@@ -22,21 +22,21 @@
 #  include <math.h> // M_PI
 #endif
 
-
 namespace ospray {
 
   QuadLight::QuadLight()
-    : position(0.f)
-    , edge1(1.f, 0.f, 0.f)
-    , edge2(0.f, 1.f, 0.f)
-    , color(1.f)
-    , intensity(1.f)
   {
     ispcEquivalent = ispc::QuadLight_create();
   }
 
-  //!< Copy understood parameters into class members
-  void QuadLight::commit() {
+  std::string QuadLight::toString() const
+  {
+    return "ospray::QuadLight";
+  }
+
+  void QuadLight::commit()
+  {
+    Light::commit();
     position  = getParam3f("position", vec3f(0.f));
     edge1     = getParam3f("edge1", vec3f(1.f, 0.f, 0.f));
     edge2     = getParam3f("edge2", vec3f(0.f, 1.f, 0.f));
@@ -54,4 +54,5 @@ namespace ospray {
 
   OSP_REGISTER_LIGHT(QuadLight, QuadLight);
   OSP_REGISTER_LIGHT(QuadLight, quad); // actually a parallelogram
-}
+
+}// ::ospray

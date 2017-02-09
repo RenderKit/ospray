@@ -79,8 +79,8 @@ namespace ospray {
       shared_ptrs here because certain nodes want to set these values
       to 'this', which isn't valid for shared_ptrs */
     struct RenderContext {
-      sg::World      *world;      //!< world we're rendering into
-      sg::Integrator *integrator; //!< integrator used to create materials etc
+      std::shared_ptr<sg::World>      world;      //!< world we're rendering into
+      std::shared_ptr<sg::Integrator> integrator; //!< integrator used to create materials etc
       const affine3f  xfm;        //!< affine geometry transform matrix
 
       //! create a new context
@@ -186,7 +186,7 @@ namespace ospray {
 #define OSP_REGISTER_SG_NODE(InternalClassName)                         \
     extern "C" std::shared_ptr<ospray::sg::Node>                        \
     ospray_create_sg_node__##InternalClassName()                        \
-    {                  PING;                                             \
+    {                                                                   \
       return std::make_shared<ospray::sg::InternalClassName>();         \
     }
 

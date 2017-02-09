@@ -16,22 +16,18 @@
 
 // ospray
 #include "Renderer.h"
-#include "../common/Library.h"
 #include "common/Util.h"
-// stl
-#include <map>
 // ispc exports
 #include "Renderer_ispc.h"
 // ospray
 #include "LoadBalancer.h"
 
 namespace ospray {
-  using std::cout;
-  using std::endl;
 
-  /*! \brief common function to help printf-debugging */
   std::string Renderer::toString() const 
-  { return "ospray::Renderer"; }
+  {
+    return "ospray::Renderer";
+  }
 
   void Renderer::commit()
   {
@@ -39,19 +35,18 @@ namespace ospray {
     spp = getParam1i("spp", 1);
     errorThreshold = getParam1f("varianceThreshold", 0.f);
     backgroundEnabled = getParam1i("backgroundEnabled", 1);
-    maxDepthTexture = (Texture2D*)getParamObject("maxDepthTexture", NULL);
+    maxDepthTexture = (Texture2D*)getParamObject("maxDepthTexture", nullptr);
     model = (Model*)getParamObject("model", getParamObject("world"));
 
     if (maxDepthTexture) {
       if (maxDepthTexture->type != OSP_TEXTURE_R32F
           || !(maxDepthTexture->flags & OSP_TEXTURE_FILTER_NEAREST)) {
-        static WarnOnce warning("expected maxDepthTexture provided to the "
-                                "renderer to be type OSP_TEXTURE_R32F and have "
+        static WarnOnce warning("maxDepthTexture provided to the renderer "
+                                "needs to be of type OSP_TEXTURE_R32F and have "
                                 "the OSP_TEXTURE_FILTER_NEAREST flag");
       }
     }
 
-    vec3f bgColor;
     bgColor = getParam3f("bgColor", vec3f(1.f));
 
     if (getIE()) {
@@ -62,14 +57,15 @@ namespace ospray {
         epsilon *= diameter;
       }
 
-      ispc::Renderer_set(getIE(),
-                         model ? model->getIE() : NULL,
-                         camera ? camera->getIE() : NULL,
-                         epsilon,
-                         spp,
-                         backgroundEnabled,
-                         (ispc::vec3f&)bgColor,
-                         maxDepthTexture ? maxDepthTexture->getIE() : NULL);
+      ispc::Renderer_set(getIE()
+          , model ? model->getIE() : nullptr
+          , camera ? camera->getIE() : nullptr
+          , epsilon
+          , spp
+          , backgroundEnabled
+          , (ispc::vec3f&)bgColor
+          , maxDepthTexture ? maxDepthTexture->getIE() : nullptr
+          );
     }
   }
 

@@ -88,6 +88,9 @@ int main(int ac, const char **av)
 
   ospray::glut3D::initGLUT(&ac,av);
 
+  auto device = ospGetCurrentDevice();
+  ospDeviceSetErrorMsgFunc(device, [](const char *msg) { std::cout << msg; });
+
   auto ospObjs = parseWithDefaultParsers(ac, av);
 
   std::deque<ospcommon::box3f>   bbox;

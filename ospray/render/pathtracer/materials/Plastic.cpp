@@ -26,7 +26,7 @@ namespace ospray {
 
       //! \brief commit the material's parameters
       virtual void commit() {
-        if (getIE() != NULL) return;
+        if (getIE() != nullptr) return;
 
         const vec3f pigmentColor = getParam3f("pigmentColor",vec3f(1.f));
         const float eta          = getParamf("eta",1.4f);
