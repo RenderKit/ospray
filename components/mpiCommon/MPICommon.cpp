@@ -141,7 +141,7 @@ namespace ospray {
           throw std::runtime_error("MPI implementation does not offer "
                                    "multi-threading capabilities");
         }
-        std::cout << "#osp.mpi: MPI_Init successful!" << std::endl;
+        if (logMPI) std::cout << "#osp.mpi: MPI_Init successful!" << std::endl;
       }
       else
       {

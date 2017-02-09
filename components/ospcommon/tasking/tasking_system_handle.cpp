@@ -27,6 +27,8 @@
 # include "TaskSys.h"
 #endif
 
+#include <thread>
+
 #include "../intrinsics.h"
 #include "../common.h"
 
@@ -76,6 +78,17 @@ namespace ospcommon {
 #else
     g_tasking_handle = make_unique<tasking_system_handle>(numThreads);
 #endif
+
+    if (numThreads <= 0) numThreads = std::thread::hardware_concurrency();
+
+    cpu_set_t cpuSet;
+    CPU_ZERO(&cpuSet);
+
+    for (int i = 0; i < numThreads; i++)
+      CPU_SET(i,&cpuSet);
+
+    int rc = sched_setaffinity(getpid(), sizeof(cpuSet), &cpuSet);
+    if (rc != 0) throw std::runtime_error("Error setting thread affinity!");
   }
 
 }// namespace ospcommon

@@ -60,12 +60,7 @@ void sleep(unsigned int seconds)
 #endif
 
 namespace ospray {
-
   namespace mpi {
-    using std::cout;
-    using std::endl;
-
-    extern bool logMPI;
 
     OSPRAY_MPI_INTERFACE void runWorker();
 
@@ -83,10 +78,11 @@ namespace ospray {
       *readStream >> tag;
 
       static size_t numWorkReceived = 0;
-      if(logMPI)
+      if(logMPI) {
         printf("#osp.mpi.worker: got work #%li, tag %i: %s\n",
                numWorkReceived++,
                tag,work::commandTagToString((work::CommandTag)tag).c_str());
+      }
       
       auto make_work = registry.find(tag);
       assert(make_work != registry.end());
@@ -104,8 +100,6 @@ namespace ospray {
       return atoi(envVar) > 0;
     }
     
-    void checkIfThisIsOpenMPIAndIfSoTurnAllCPUsBackOn();
-    
     /*! it's up to the proper init
       routine to decide which processes call this function and which
       ones don't. This function will not return.
@@ -114,8 +108,6 @@ namespace ospray {
     */
     void runWorker()
     {
-      checkIfThisIsOpenMPIAndIfSoTurnAllCPUsBackOn();
-      
       auto &device = ospray::api::Device::current;
 
       auto numThreads = device ? device->numThreads : -1;
@@ -151,8 +143,10 @@ namespace ospray {
 
       char hostname[HOST_NAME_MAX];
       gethostname(hostname,HOST_NAME_MAX);
-      printf("#w: running MPI worker process %i/%i on pid %i@%s\n",
-             worker.rank,worker.size,getpid(),hostname);
+      if (logMPI) {
+        printf("#w: running MPI worker process %i/%i on pid %i@%s\n",
+               worker.rank,worker.size,getpid(),hostname);
+      }
 
       TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Slave>();
 
@@ -173,13 +167,17 @@ namespace ospray {
       logMPI = checkIfWeNeedToDoMPIDebugOutputs();
       while (1) {
         std::shared_ptr<work::Work> work = readWork(workTypeRegistry,readStream);
-        if (logMPI)
+        if (logMPI) {
           std::cout << "#osp.mpi.worker: processing work "
-                    << work::commandTagToString((work::CommandTag)work->getTag()) << std::endl;
+                    << work::commandTagToString((work::CommandTag)work->getTag())
+                    << std::endl;
+        }
         work->run();
-        if (logMPI)
+        if (logMPI) {
           std::cout << "#osp.mpi.worker: done w/ work "
-                    << work::commandTagToString((work::CommandTag)work->getTag()) << std::endl;
+                    << work::commandTagToString((work::CommandTag)work->getTag())
+                    << std::endl;
+        }
       }
     }
 

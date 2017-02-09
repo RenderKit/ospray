@@ -52,7 +52,6 @@ namespace ospray {
   using std::endl;
 
   namespace mpi {
-    extern bool logMPI;
     
     //! this runs an ospray worker process.
     /*! it's up to the proper init routine to decide which processes
@@ -96,7 +95,9 @@ namespace ospray {
     {
       MPI_Status status;
       mpi::init(ac,av);
-      printf("#o: initMPI::OSPonRanks: %i/%i\n",world.rank,world.size);
+      if (logMPI) {
+        printf("#o: initMPI::OSPonRanks: %i/%i\n",world.rank,world.size);
+      }
       lockMPI("createMPI_runOnExistingRanks");
       MPI_Barrier(MPI_COMM_WORLD);
       unlockMPI();
@@ -114,13 +115,16 @@ namespace ospray {
         MPI_Comm_split(mpi::world.comm,1,mpi::world.rank,&app.comm);
         unlockMPI();
         app.makeIntraComm();
-        // app.makeIntercomm();
-        printf("#w: app process %i/%i (global %i/%i)\n",
-               app.rank,app.size,world.rank,world.size);
+        if (logMPI) {
+          printf("#w: app process %i/%i (global %i/%i)\n",
+                 app.rank,app.size,world.rank,world.size);
+        }
 
         MPI_Intercomm_create(app.comm, 0, world.comm, 1, 1, &worker.comm);
-        if (logMPI)
-          std::cout << "master: Made 'worker' intercomm (through intercomm_create): " << (int*)worker.comm << std::endl;
+        if (logMPI) {
+          std::cout << "master: Made 'worker' intercomm (through intercomm_create): "
+                    << (int*)worker.comm << std::endl;
+        }
         
         // worker.makeIntracomm();
         worker.makeInterComm();
@@ -133,6 +137,7 @@ namespace ospray {
         {
           if (logMPI)
             printf("#m: ping-ponging a test message to every worker...\n");
+
           for (int i=0;i<worker.size;i++) {
             if (logMPI)
               printf("#m: sending tag %i to worker %i\n",i,i);
@@ -155,17 +160,16 @@ namespace ospray {
         // we're the workers
         MPI_Comm_split(mpi::world.comm,0,mpi::world.rank,&worker.comm);
         worker.makeIntraComm();
-        if (logMPI)
-          std::cout << "master: Made 'worker' intercomm (through split): " << (int*)worker.comm << std::endl;
-        // worker.makeIntercomm();
-        printf("#w: worker process %i/%i (global %i/%i)\n",
-               worker.rank,worker.size,world.rank,world.size);
+        if (logMPI) {
+          std::cout << "master: Made 'worker' intercomm (through split): "
+                    << (int*)worker.comm << std::endl;
+
+          printf("#w: worker process %i/%i (global %i/%i)\n",
+                 worker.rank,worker.size,world.rank,world.size);
+        }
 
         MPI_Intercomm_create(worker.comm, 0, world.comm, 0, 1, &app.comm);
         app.makeInterComm();
-        // app.makeIntracomm();
-        // worker.containsMe = true;
-        // app.containsMe = false;
 
         // ------------------------------------------------------------------
         // do some simple hand-shake test, just to make sure MPI is
@@ -173,9 +177,10 @@ namespace ospray {
         // ------------------------------------------------------------------
         {
           // replying to test-message
-          if (logMPI)
+          if (logMPI) {
             printf("#w: start-up ping-pong: worker %i trying to receive tag %i...\n",
                    worker.rank,worker.rank);
+          }
           int reply;
           MPI_Recv(&reply,1,MPI_INT,0,worker.rank,app.comm,&status);
           MPI_Send(&reply,1,MPI_INT,0,worker.rank,app.comm);
@@ -199,8 +204,10 @@ namespace ospray {
           throw std::runtime_error("should never reach here!");
           /* no return here - 'runWorker' will never return */
         } else {
-          cout << "#osp:mpi: distributed mode detected, "
-               << "returning device on all ranks!" << endl;
+          if (logMPI) {
+            cout << "#osp:mpi: distributed mode detected, "
+                 << "returning device on all ranks!" << endl;
+          }
         }
       }
     }
@@ -226,7 +233,7 @@ namespace ospray {
     {
       mpi::init(ac,av);
 
-      if (world.rank < 1) {
+      if (logMPI && world.rank < 1) {
         cout << "======================================================="
              << endl;
         cout << "initializing OSPRay MPI in 'listening for workers' mode"
@@ -238,7 +245,6 @@ namespace ospray {
 
       app.comm = world.comm;
       app.makeIntraComm();
-      // app.makeIntercomm();
 
       char appPortName[MPI_MAX_PORT_NAME];
       if (world.rank == 0) {
@@ -251,22 +257,25 @@ namespace ospray {
         for (char *s = fixedPortName; *s; ++s)
           if (*s == '$') *s = '%';
 
-        cout << "#a: ospray app started, waiting for service connect"  << endl;
-        cout << "#a: at port " << fixedPortName << endl;
+        if (logMPI) {
+          cout << "#a: ospray app started, waiting for service connect" << endl;
+          cout << "#a: at port " << fixedPortName << endl;
+        }
 
         if (fileNameToStorePortIn) {
           FILE *file = fopen(fileNameToStorePortIn,"w");
           Assert2(file,"could not open file to store listen port in");
           fprintf(file,"%s",fixedPortName);
           fclose(file);
-          cout << "#a: (ospray port name store in file '"
-               << fileNameToStorePortIn << "')" << endl;
+          if (logMPI) {
+            cout << "#a: (ospray port name store in file '"
+                 << fileNameToStorePortIn << "')" << endl;
+          }
         }
       }
       rc = MPI_Comm_accept(appPortName,MPI_INFO_NULL,0,app.comm,&worker.comm);
       Assert(rc == MPI_SUCCESS);
       worker.makeInterComm();
-      // worker.makeIntracomm();
 
       if (app.rank == 0) {
         cout << "======================================================="
@@ -312,20 +321,24 @@ namespace ospray {
 
       char appPortName[MPI_MAX_PORT_NAME];
       if (app.rank == 0 || app.size == -1) {
-        cout << "======================================================="
-             << endl;
-        cout << "initializing OSPRay MPI in 'launching new workers' mode"
-             << endl;
-        cout << "using launch script '" << launchCommand << "'" << endl;
+        if (logMPI) {
+          cout << "======================================================="
+               << endl;
+          cout << "initializing OSPRay MPI in 'launching new workers' mode"
+               << endl;
+          cout << "using launch script '" << launchCommand << "'" << endl;
+        }
         rc = MPI_Open_port(MPI_INFO_NULL, appPortName);
         Assert(rc == MPI_SUCCESS);
 
         // fix port name: replace all '$'s by '%'s to allow using it on the
         //                cmdline...
         char *fixedPortName = strdup(appPortName);
-        cout << "with port " << fixedPortName <<  endl;
-        cout << "======================================================="
-             << endl;
+        if (logMPI) {
+          cout << "with port " << fixedPortName <<  endl;
+          cout << "======================================================="
+               << endl;
+        }
         for (char *s = fixedPortName; *s; ++s)
           if (*s == '$') *s = '%';
 
@@ -337,8 +350,10 @@ namespace ospray {
         if (fork()) {
           auto result = system(systemCommand);
           (void)result;
-          cout << "OSPRay worker process has died - killing application"
-               << endl;
+          if (logMPI) {
+            cout << "OSPRay worker process has died - killing application"
+                 << endl;
+          }
           exit(0);
         }
 #endif
@@ -372,37 +387,10 @@ namespace ospray {
     
 
     bool checkIfWeNeedToDoMPIDebugOutputs();
-    void checkIfThisIsOpenMPIAndIfSoTurnAllCPUsBackOn()
-    {
-#ifdef OPEN_MPI
-      {
-        std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
-        std::cout << "Seems this is openmpi, which, by default, effectively " << std::endl;
-        std::cout << "disables threading by setting a CPU affinity mask that" << std::endl;
-        std::cout << "leaves only a single CPU core per proc to run on ...." << std::endl;
-        std::cout << "Being nasty and turning all CPU cores back on again :-)" << std::endl;
-        std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
-      
-        size_t numThreads = std::thread::hardware_concurrency();
-        cpu_set_t cpuSet;
-        CPU_ZERO(&cpuSet);
-        for (int i=0;i<numThreads;i++)
-          CPU_SET(i,&cpuSet);
-        int rc = sched_setaffinity(getpid(),sizeof(cpuSet),&cpuSet);
-        if (rc == 0)
-          std::cout << "Success! Turned affinity mask _on_ again for " << numThreads << " threads" << std::endl;
-      }
-#endif
-    }
-    
+
     MPIDevice::MPIDevice()
     //      : bufferedComm(std::make_shared<BufferedMPIComm>())
     {
-      checkIfThisIsOpenMPIAndIfSoTurnAllCPUsBackOn();
-
-      
-
-      
       /* do _NOT_ try to set up the fabric, streams, etc, here - MPI
          comms are _NOT_ yet properly set up */
 
@@ -415,7 +403,7 @@ namespace ospray {
       // NOTE(jda) - Seems that there are no MPI Devices on worker ranks...this
       //             will likely change for data-distributed API settings?
       if (mpi::world.rank == 0) {
-        std::cout << "shutting down mpi device" << std::endl;
+        if(logMPI) std::cout << "shutting down mpi device" << std::endl;
         work::CommandFinalize work;
         processWork(&work);
       }
@@ -947,9 +935,10 @@ namespace ospray {
 
       // Run the master side variant of the work unit
       work->runOnMaster();
-      if (logMPI)
+      if (logMPI) {
         printf("#osp.mpi.master: done work item %s\n",
                work::commandTagToString((work::CommandTag)work->getTag()).c_str());
+      }
     }
 
     ObjectHandle MPIDevice::allocateHandle() const
@@ -973,7 +962,4 @@ namespace ospray {
 
 extern "C" OSPRAY_DLLEXPORT void ospray_init_module_mpi()
 {
-//  ospray::mpi::work::initWorkMap();
-  std::cout << "#mpi: initializing ospray MPI plugin" << std::endl;
 }
-
