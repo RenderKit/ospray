@@ -46,16 +46,16 @@ namespace ospcommon {
   struct has_operator_method_with_integral_param
   {
     template <typename P>
-    using T_PARAM = void(T::*)(P) const;
+    using t_param    = void(T::*)(P) const;
     using byte_t     = unsigned char;
-    using OPERATOR_T = decltype(&T::operator());
+    using operator_t = decltype(&T::operator());
 
-    using param_is_byte     = std::is_same<T_PARAM<byte_t>  , OPERATOR_T>;
-    using param_is_short    = std::is_same<T_PARAM<short>   , OPERATOR_T>;
-    using param_is_int      = std::is_same<T_PARAM<int>     , OPERATOR_T>;
-    using param_is_unsigned = std::is_same<T_PARAM<unsigned>, OPERATOR_T>;
-    using param_is_long     = std::is_same<T_PARAM<long>    , OPERATOR_T>;
-    using param_is_size_t   = std::is_same<T_PARAM<size_t>  , OPERATOR_T>;
+    using param_is_byte     = std::is_same<t_param<byte_t>  , operator_t>;
+    using param_is_short    = std::is_same<t_param<short>   , operator_t>;
+    using param_is_int      = std::is_same<t_param<int>     , operator_t>;
+    using param_is_unsigned = std::is_same<t_param<unsigned>, operator_t>;
+    using param_is_long     = std::is_same<t_param<long>    , operator_t>;
+    using param_is_size_t   = std::is_same<t_param<size_t>  , operator_t>;
 
     static const bool value = has_operator_method<T>::value &&
       (param_is_byte::value     ||
