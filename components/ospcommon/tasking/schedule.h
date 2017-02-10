@@ -17,36 +17,25 @@
 #pragma once
 
 #include "TaskingTypeTraits.h"
-#include "parallel_for.inl"
+#include "schedule.inl"
 
 namespace ospcommon {
 
-  // NOTE(jda) - This abstraction wraps "fork-join" parallelism, with an implied
-  //             synchronizsation after all of the tasks have run.
-  template<typename TASK_T>
-  inline void parallel_for(int nTasks, TASK_T&& fcn)
-  {
-    static_assert(has_operator_method_with_integral_param<TASK_T>::value,
-                  "ospcommon::parallel_for() requires the implementation of "
-                  "method 'void TASK_T::operator(P taskIndex), where P is of "
-                  "type unsigned char, short, int, uint, long, or size_t.");
+  // NOTE(jda) - This abstraction takes a lambda which should take captured
+  //             variables by *value* to ensure no captured references race
+  //             with the task itself.
 
-    parallel_for_impl(nTasks, std::forward<TASK_T>(fcn));
+  // NOTE(jda) - No priority is associated with this call, but could be added
+  //             later with a hint enum, using a default value for the priority
+  //             to not require specifying it.
+  template<typename TASK_T>
+  inline void schedule(TASK_T&& fcn)
+  {
+    static_assert(has_operator_method<TASK_T>::value,
+                  "ospcommon::schedule() requires the implementation of method "
+                  "'void TASK_T::operator()'.");
+
+    schedule_impl(std::forward<TASK_T>(fcn));
   }
 
-  // NOTE(jda) - Allow serial version of parallel_for() without the need to
-  //             change the entire tasking system backend
-  template<typename TASK_T>
-  inline void serial_for(int nTasks, const TASK_T& fcn)
-  {
-    static_assert(has_operator_method_with_integral_param<TASK_T>::value,
-                  "ospcommon::serial_for() requires the implementation of "
-                  "method 'void TASK_T::operator(P taskIndex), where P is of "
-                  "type unsigned char, short, int, uint, long, or size_t.");
-
-    for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
-      fcn(taskIndex);
-    }
-  }
-
-} //::ospcommon
+} // ::ospcommon

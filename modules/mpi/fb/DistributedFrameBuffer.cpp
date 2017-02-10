@@ -18,8 +18,8 @@
 #include "DistributedFrameBuffer_TileTypes.h"
 #include "DistributedFrameBuffer_ispc.h"
 
-#include "ospcommon/tasking/async.h"
 #include "ospcommon/tasking/parallel_for.h"
+#include "ospcommon/tasking/schedule.h"
 
 #include "mpiCommon/async/Messaging.h"
 
@@ -415,7 +415,7 @@ namespace ospray {
       }
     }
 
-    async([=]() {
+    schedule([=]() {
       switch (_msg->command) {
       case MASTER_WRITE_TILE_NONE:
         this->processMessage((MasterTileMessage_NONE*)_msg);

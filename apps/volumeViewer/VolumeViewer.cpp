@@ -467,7 +467,6 @@ void VolumeViewer::setPlane(bool st)
   }
 }
 
-//! Set gradient shading flag on all volumes.
 void VolumeViewer::setAOWeight(double value)
 {
   ospSet1f(renderer, "aoWeight", value);  
@@ -476,7 +475,6 @@ void VolumeViewer::setAOWeight(double value)
   render();
 }
 
-//! Set gradient shading flag on all volumes.
 void VolumeViewer::setAOSamples(int value)
 {
   if (aoSamples != value)
@@ -777,6 +775,7 @@ void VolumeViewer::initObjects(const std::string &renderer_type)
   {
     ospSet1i(renderer, "aoSamples", 1);
     ospSet1i(renderer, "shadowsEnabled", 1);
+    ospSet1i(renderer, "aoTransparencyEnabled", 1);
   }
 
   // Create OSPRay ambient and directional lights. GUI elements will modify their parameters.

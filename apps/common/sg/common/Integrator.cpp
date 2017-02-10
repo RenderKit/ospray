@@ -38,6 +38,7 @@ namespace ospray {
         {
           ospSet1i(ospRenderer, "aoSamples", 1);
           ospSet1i(ospRenderer, "shadowsEnabled", 1);
+          ospSet1i(ospRenderer, "aoTransparencyEnabled", 1);
         }
 
         if (!ospRenderer)
