@@ -775,7 +775,7 @@ void VolumeViewer::initObjects(const std::string &renderer_type)
   {
     ospSet1i(renderer, "aoSamples", 1);
     ospSet1i(renderer, "shadowsEnabled", 1);
-    ospSet1i(renderer, "aoTransparencyEnabled", 0);
+    ospSet1i(renderer, "aoTransparencyEnabled", 1);
   }
 
   // Create OSPRay ambient and directional lights. GUI elements will modify their parameters.
