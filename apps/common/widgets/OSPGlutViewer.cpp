@@ -294,7 +294,7 @@ void OSPGlutViewer::display()
 
   renderer.renderFrame(frameBuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
 
-  // set the glut3d widget's frame buffer to the opsray frame buffer,
+  // set the glut3d widget's frame buffer to the OSPRay frame buffer,
   // then display
   ucharFB = (uint32_t *)frameBuffer.map(OSP_FB_COLOR);
   frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;

@@ -114,7 +114,7 @@ namespace ospray {
 
     // Set the recommended sampling rate for ray casting based renderers.
     ispc::Volume_setSamplingRate(ispcEquivalent,
-                                 getParam1f("samplingRate", 1.25f));
+                                 getParam1f("samplingRate", 0.125f));
 
     vec3f specular = getParam3f("specular", vec3f(0.3f));
     ispc::Volume_setSpecular(ispcEquivalent, (const ispc::vec3f &)specular);
