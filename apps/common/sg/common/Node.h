@@ -335,7 +335,17 @@ namespace ospray {
       template<typename T> const T& getValue() { std::lock_guard<std::mutex> lock{mutex}; return value.get<T>(); }
 
       //! set the value of the node.  Requires strict typecast
-      void setValue(SGVar val) { std::lock_guard<std::mutex> lock{mutex}; if (val != value) modified(); value = val; }
+      void setValue(SGVar val) { 
+        if (val != value) 
+        {
+          {
+          std::lock_guard<std::mutex> lock{mutex}; 
+          if (val != value) 
+            value = val;
+          }
+          modified();
+        }
+      }
 
       //! add node as child of this one
       virtual void add(std::shared_ptr<Node> node) {

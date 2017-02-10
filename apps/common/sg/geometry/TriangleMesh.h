@@ -48,10 +48,7 @@ namespace ospray {
       virtual void setChildrenModified(TimeStamp t) override
       {
       Node::setChildrenModified(t);
-        std::cout << "wakka modified\n" << std::endl;
-        // ospcommon::FileName file(getChild("fileName")->getValue<std::string>());
-        std::cout << "wakka modified " << getChild("fileName")->getName() << std::endl;
-        ospcommon::FileName file("/bertha/teapot.obj");
+        ospcommon::FileName file(getChild("fileName")->getValue<std::string>());
       if (file.str() == loadedFileName)
         return;
         std::cout << "attempting importing file: " << file.str() << std::endl;
