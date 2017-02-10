@@ -50,6 +50,7 @@ namespace ospray {
       Node::setChildrenModified(t);
         std::cout << "wakka modified\n" << std::endl;
         // ospcommon::FileName file(getChild("fileName")->getValue<std::string>());
+        std::cout << "wakka modified " << getChild("fileName")->getName() << std::endl;
         ospcommon::FileName file("/bertha/teapot.obj");
       if (file.str() == loadedFileName)
         return;
