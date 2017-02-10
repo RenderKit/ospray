@@ -160,7 +160,7 @@ inline float calculateAO(const uniform SciVisRenderer *uniform self,
     setRay(ao_ray, dg.P + (self->super.epsilon * dg.Ns), ao_dir,
            self->super.epsilon, self->aoDistance);
 
-    if (self->aoTransparencyEnabled || self->super.model->volumeCount) {
+    if (self->aoTransparencyEnabled) {
       const float rayOffset = self->super.epsilon*(1.f + s.x);
       occlusion += (1.f - lightAlpha(self, ao_ray, self->super.model, 1.0f,
             rayOffset, sampleID, 0.2f));
