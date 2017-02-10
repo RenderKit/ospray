@@ -805,9 +805,7 @@ void SciVisRenderer_renderSample(uniform Renderer *uniform _self,
   }
 
   // Store the result in the sample.
-  sample.rgb.x = color.x;
-  sample.rgb.y = color.y;
-  sample.rgb.z = color.z;
+  sample.rgb = make_vec3f(color);
   sample.alpha = color.w;
   sample.z = depth;
 }
