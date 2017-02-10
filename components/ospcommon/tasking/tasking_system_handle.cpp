@@ -90,8 +90,6 @@ namespace ospcommon {
 
     int rc = sched_setaffinity(getpid(), sizeof(cpuSet), &cpuSet);
     if (rc != 0) throw std::runtime_error("Error setting thread affinity!");
-#else
-#  warning "Thread affinity not yet set for non-Linux OS environments"
 #endif
   }
 
