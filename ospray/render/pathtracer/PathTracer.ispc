@@ -170,7 +170,8 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
           unshaded = unshaded + unshaded_light_contrib;
           shaded = shaded + transparentShadow(self, unshaded_light_contrib, shadow_ray, currentMedium);
         }
-        const vec3f ratio = reduce_max(unshaded) == 0.f ? Lw : Lw * shaded * rcp(unshaded);
+        // order of args important to filter NaNs (in case unshaded.X is zero)
+        const vec3f ratio = min(Lw * shaded * rcp(unshaded), Lw);
 #ifdef COLORED_SHADOW_HACK
         const float rm = reduce_min(ratio);
         sample.alpha = 1.0f - rm;
