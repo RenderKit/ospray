@@ -72,6 +72,8 @@ namespace ospray {
     void World::preRender(RenderContext &ctx)
     {
       preCommit(ctx);
+      if (getChild("visible")->getValue() == true)
+        ospAddGeometry(ospModel,ospInstance);
     }
 
     void World::postRender(RenderContext &ctx)
@@ -80,10 +82,15 @@ namespace ospray {
        ctx.world = oldWorld;
        if (oldWorld && oldWorld.get() != this)
        {
+        vec3f scale = getChild("scale")->getValue<vec3f>();
+        vec3f rotation = getChild("rotation")->getValue<vec3f>();
+        vec3f translation = getChild("position")->getValue<vec3f>();
         ospcommon::affine3f xfm = ospcommon::one;
-        OSPGeometry ospInstance = ospNewInstance(ospModel,(osp::affine3f&)xfm);
+        xfm = xfm*ospcommon::affine3f::translate(translation)*ospcommon::affine3f::rotate(vec3f(0,1,0),rotation.x)*ospcommon::affine3f::scale(scale);
+        
+        ospInstance = ospNewInstance(ospModel,(osp::affine3f&)xfm);
         ospCommit(ospInstance);
-        ospAddGeometry(ctx.world->ospModel,ospInstance);
+        // ospAddGeometry(ospModel,ospInstance);
        }
     }
 

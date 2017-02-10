@@ -215,34 +215,34 @@ namespace ospray {
 
     void TriangleMesh::preRender(RenderContext &ctx)
     {
-      if (ospModel)
-      {
-        if (getChild("visible")->getValue() == true)
-          ospAddGeometry(ctx.world->ospModel,ospGeometryInstance);
-      }
+      // if (ospModel)
+      // {
+      //   if (getChild("visible")->getValue() == true)
+      //     ospAddGeometry(ctx.world->ospModel,ospGeometryInstance);
+      // }
     }
 
     void TriangleMesh::postCommit(RenderContext &ctx)
     {
        if (ospGeometry)
        {
-        vec3f scale = getChild("scale")->getValue<vec3f>();
-        vec3f rotation = getChild("rotation")->getValue<vec3f>();
-        vec3f translation = getChild("position")->getValue<vec3f>();
-        ospcommon::affine3f xfm = ospcommon::one;
-        xfm = xfm*ospcommon::affine3f::translate(translation)*
-        ospcommon::affine3f::rotate(vec3f(1,0,0),rotation.x)*
-        ospcommon::affine3f::rotate(vec3f(0,1,0),rotation.y)*
-        ospcommon::affine3f::rotate(vec3f(0,0,1),rotation.z)*
-        ospcommon::affine3f::scale(scale);
+        // vec3f scale = getChild("scale")->getValue<vec3f>();
+        // vec3f rotation = getChild("rotation")->getValue<vec3f>();
+        // vec3f translation = getChild("position")->getValue<vec3f>();
+        // ospcommon::affine3f xfm = ospcommon::one;
+        // xfm = xfm*ospcommon::affine3f::translate(translation)*
+        // ospcommon::affine3f::rotate(vec3f(1,0,0),rotation.x)*
+        // ospcommon::affine3f::rotate(vec3f(0,1,0),rotation.y)*
+        // ospcommon::affine3f::rotate(vec3f(0,0,1),rotation.z)*
+        // ospcommon::affine3f::scale(scale);
         
-        ospGeometryInstance = ospNewInstance(ospModel, 
-          (osp::affine3f&)xfm);
-        ospCommit(ospGeometryInstance);
+        // ospGeometryInstance = ospNewInstance(ospModel, 
+        //   (osp::affine3f&)xfm);
+        // ospCommit(ospGeometryInstance);
 
         ospSetMaterial(ospGeometry, (OSPMaterial)getChild("material")->getValue<OSPObject>());
         ospCommit(ospGeometry);
-        ospCommit(ospModel);
+        // ospCommit(ospModel);
         return;
       }
 
@@ -287,16 +287,16 @@ namespace ospray {
       // ospSetMaterial(ospGeometry,mat);
       ospSetMaterial(ospGeometry, (OSPMaterial)getChild("material")->getValue<OSPObject>());
       ospCommit(ospGeometry);
-      ospAddGeometry(ospModel,ospGeometry);
-      ospCommit(ospModel);
-      vec3f scale = getChild("scale")->getValue<vec3f>();
-      vec3f rotation = getChild("rotation")->getValue<vec3f>();
-      vec3f translation = getChild("position")->getValue<vec3f>();
-      ospcommon::affine3f xfm = ospcommon::one;
-      xfm = xfm*ospcommon::affine3f::translate(translation)*ospcommon::affine3f::rotate(vec3f(0,1,0),rotation.x)*ospcommon::affine3f::scale(scale);
-      ospGeometryInstance = ospNewInstance(ospModel, 
-        (osp::affine3f&)xfm);
-      ospCommit(ospGeometryInstance);
+      ospAddGeometry(ctx.world->ospModel,ospGeometry);
+      // ospCommit(ospModel);
+      // vec3f scale = getChild("scale")->getValue<vec3f>();
+      // vec3f rotation = getChild("rotation")->getValue<vec3f>();
+      // vec3f translation = getChild("position")->getValue<vec3f>();
+      // ospcommon::affine3f xfm = ospcommon::one;
+      // xfm = xfm*ospcommon::affine3f::translate(translation)*ospcommon::affine3f::rotate(vec3f(0,1,0),rotation.x)*ospcommon::affine3f::scale(scale);
+      // ospGeometryInstance = ospNewInstance(ospModel, 
+        // (osp::affine3f&)xfm);
+      // ospCommit(ospGeometryInstance);
 
       //ospAddGeometry(ctx.world->ospModel,ospGeometry);
 }

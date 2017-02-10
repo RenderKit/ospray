@@ -82,11 +82,7 @@ namespace ospray {
         // add(createNode("texcoord", "DataBuffer"));
         // add(createNode("index", "DataBuffer"));
         add(createNode("material", "Material"));
-        add(createNode("visible", "bool", true));
-        add(createNode("position", "vec3f"));
-        add(createNode("rotation", "vec3f", vec3f(0), NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
-        getChild("rotation")->setMinMax(-vec3f(2*3.15f),vec3f(2*3.15f));
-        add(createNode("scale", "vec3f", vec3f(1.f)));
+
       };
       
       /*! \brief returns a std::string with the c++ name of this class */

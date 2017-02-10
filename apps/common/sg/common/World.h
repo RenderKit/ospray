@@ -30,6 +30,16 @@ namespace ospray {
 //        add(createNode("model", "OSPObject", (OSPModel*)NULL));
       };
 
+      virtual init() override 
+      {
+        add(createNode("bounds", "box3f"));
+        add(createNode("visible", "bool", true));
+        add(createNode("position", "vec3f"));
+        add(createNode("rotation", "vec3f", vec3f(0), NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
+        getChild("rotation")->setMinMax(-vec3f(2*3.15f),vec3f(2*3.15f));
+        add(createNode("scale", "vec3f", vec3f(1.f)));
+      }
+
       /*! \brief returns a std::string with the c++ name of this class */
       virtual    std::string toString() const override { return "ospray::viewer::sg::World"; }
 
@@ -52,6 +62,7 @@ namespace ospray {
       virtual void postRender(RenderContext &ctx);
 
       OSPModel ospModel;
+      OSPGeometry ospInstance;
       std::vector<std::shared_ptr<Node> > nodes;
       std::shared_ptr<sg::World> oldWorld;
 
