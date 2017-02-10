@@ -79,6 +79,7 @@ namespace ospcommon {
     g_tasking_handle = make_unique<tasking_system_handle>(numThreads);
 #endif
 
+#ifdef __linux__
     if (numThreads <= 0) numThreads = std::thread::hardware_concurrency();
 
     cpu_set_t cpuSet;
@@ -89,6 +90,9 @@ namespace ospcommon {
 
     int rc = sched_setaffinity(getpid(), sizeof(cpuSet), &cpuSet);
     if (rc != 0) throw std::runtime_error("Error setting thread affinity!");
+#else
+#  warning "Thread affinity not yet set for non-Linux OS environments"
+#endif
   }
 
 }// namespace ospcommon
