@@ -83,7 +83,6 @@ namespace ospray {
         ospcommon::affine3f xfm = ospcommon::one;
         OSPGeometry ospInstance = ospNewInstance(ospModel,(osp::affine3f&)xfm);
         ospCommit(ospInstance);
-        std::cout << "adding world instance\n";
         ospAddGeometry(ctx.world->ospModel,ospInstance);
        }
     }

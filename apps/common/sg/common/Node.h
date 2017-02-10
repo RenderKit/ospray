@@ -268,7 +268,7 @@ namespace ospray {
           parent->setChildrenModified(lastModified);
         }
       }
-      void setChildrenModified(TimeStamp t) { 
+      virtual void setChildrenModified(TimeStamp t) { 
         if (t >childrenMTime) 
         {
           childrenMTime = t; 

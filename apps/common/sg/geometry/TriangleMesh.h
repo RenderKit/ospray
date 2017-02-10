@@ -45,18 +45,23 @@ namespace ospray {
       // // traverse(ctx, "verify");
       // traverse(ctx, "print");
       }
-      virtual void modified() override
+      virtual void setChildrenModified(TimeStamp t) override
       {
-      Node::modified();
-              ospcommon::FileName file = getChild("fileName")->getValue<std::string>();
-      // if (file.str() == loadedFileName)
-        // return;
+      Node::setChildrenModified(t);
+        std::cout << "wakka modified\n" << std::endl;
+        // ospcommon::FileName file(getChild("fileName")->getValue<std::string>());
+        ospcommon::FileName file("/bertha/teapot.obj");
+      if (file.str() == loadedFileName)
+        return;
+        std::cout << "attempting importing file: " << file.str() << std::endl;
       if (loadedFileName != "" || file.str() == "")
         return; //TODO: support dynamic re-loading, need to clear children first
       loadedFileName = "";
-      std::cout << "importing file: " << file.str() << std::endl;
       if (file.ext() == "obj")
+      {
+        std::cout << "importing file: " << file.str() << std::endl;
         sg::importOBJ(std::static_pointer_cast<sg::World>(shared_from_this()), file);
+      }
       loadedFileName = file.str();
       }
        virtual void preCommit(RenderContext &ctx) override;

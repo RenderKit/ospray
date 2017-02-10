@@ -483,6 +483,7 @@ namespace ospray {
       // TriangleMesh *mesh = new TriangleMesh;
       //scenegraph
 
+std::cout << "adding triangleMesh\n";
       std::shared_ptr<TriangleMesh> mesh = std::static_pointer_cast<TriangleMesh>(createNode(fullPath.name(), "TriangleMesh").get());
       world->add(mesh);
       mesh->vertex = std::make_shared<DataVector3f>();
