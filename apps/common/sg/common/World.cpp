@@ -53,6 +53,7 @@ namespace ospray {
 
     void World::preCommit(RenderContext &ctx)
     {
+      oldWorld = ctx.world;
       ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
       // if (!ospModel)
       // {
@@ -65,6 +66,7 @@ namespace ospray {
     void World::postCommit(RenderContext &ctx)
     {
       ospCommit(ospModel);
+      ctx.world = oldWorld;
     }
 
     void World::preRender(RenderContext &ctx)
@@ -75,6 +77,15 @@ namespace ospray {
     void World::postRender(RenderContext &ctx)
     {
        ospCommit(ospModel);
+       ctx.world = oldWorld;
+       if (oldWorld && oldWorld.get() != this)
+       {
+        ospcommon::affine3f xfm = ospcommon::one;
+        OSPGeometry ospInstance = ospNewInstance(ospModel,(osp::affine3f&)xfm);
+        ospCommit(ospInstance);
+        std::cout << "adding world instance\n";
+        ospAddGeometry(ctx.world->ospModel,ospInstance);
+       }
     }
 
     OSP_REGISTER_SG_NODE(World);

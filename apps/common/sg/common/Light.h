@@ -79,8 +79,25 @@ struct DirectionalLight : public Light {
     getChild("color")->setMinMax(vec3f(0), vec3f(1));
   	add(createNode("intensity", "float", 3.f,NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
     getChild("intensity")->setMinMax(0.f,4.f);
-  	add(createNode("angularDiameter", "float", 0.0f,NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
+  	add(createNode("angularDiameter", "float", 0.01f,NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
     getChild("angularDiameter")->setMinMax(0.f,4.f);
+  }
+};
+
+/*! a light node - the generic light node */
+struct PointLight : public Light {
+  //! \brief constructor
+  PointLight() : Light("PointLight") {}
+
+  virtual void init() override
+  { 
+    add(createNode("color", "vec3f", vec3f(1.f),NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_color));
+    getChild("color")->setMinMax(vec3f(0), vec3f(1));
+    add(createNode("position", "vec3f", vec3f(0.f),NodeFlags::required | NodeFlags::valid_min_max));
+    add(createNode("intensity", "float", 3.f,NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
+    getChild("intensity")->setMinMax(0.f,4.f);
+    add(createNode("radius", "float", 1.0f,NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
+    getChild("radius")->setMinMax(0.f,4.f);
   }
 };
 

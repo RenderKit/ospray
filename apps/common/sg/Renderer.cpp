@@ -36,9 +36,7 @@ namespace ospray {
         add(createNode("bounds", "box3f"));
         add(createNode("rendererType", "string", std::string("scivis"), NodeFlags::required | NodeFlags::valid_whitelist | NodeFlags::gui_combo));
         getChild("rendererType")->setWhiteList(std::vector<SGVar>()={std::string("scivis"),std::string("pathtracer"),std::string("pt")});
-  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
-       add(createNode("world", "World"));
-  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
+        add(createNode("world", "World"));
         add(createNode("camera", "PerspectiveCamera"));
         add(createNode("frameBuffer", "FrameBuffer"));
         add(createNode("lights"));
@@ -53,11 +51,7 @@ namespace ospray {
         getChild("spp")->setMinMax(-8,128);
         add(createNode("aoDistance", "float", 10000.f, NodeFlags::required | NodeFlags::valid_min_max));
         getChild("aoDistance")->setMinMax(float(1e-31),FLT_MAX);
-        // add(createNode("aoWeight", "float", 1.f, NodeFlags::required | NodeFlags::valid_min_max, NodeFlags::gui_slider));
-        // getChild("aoWeight")->setMinMax(0.f,4.f);
         add(createNode("oneSidedLighting", "bool",true, NodeFlags::required));
-
-  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
       }
 
     int Renderer::renderFrame()
@@ -218,11 +212,9 @@ namespace ospray {
       if (getChild("frameBuffer")["size"]->getLastModified() > getChild("camera")["aspect"]->getLastCommitted())
        getChild("camera")["aspect"]->setValue(
          getChild("frameBuffer")["size"]->getValue<vec2i>().x/float(getChild("frameBuffer")["size"]->getValue().get<vec2i>().y));
-     std::string rendererType = getChild("rendererType")->getValue<std::string>();
-   // std::string rendererType = "scivis";
+      std::string rendererType = getChild("rendererType")->getValue<std::string>();
       if (!ospRenderer || rendererType != createdType)
       {
-          std::cout << "creating renderer of type: " << rendererType << std::endl;
           traverse(ctx, "modified");
           ospRenderer = ospNewRenderer(rendererType.c_str());
           assert(ospRenderer);

@@ -21,6 +21,13 @@
 namespace ospray {
   namespace sg {
 
+    void Importer::preCommit(RenderContext &ctx)
+    {
+      World::preCommit(ctx);
+    }
+
+    OSP_REGISTER_SG_NODE(Importer);
+
     //! return the bounding box of all primitives
     box3f TriangleMesh::getBounds()
     {
@@ -74,6 +81,7 @@ namespace ospray {
     /*! 'render' the nodes */
     void TriangleMesh::render(RenderContext &ctx)
     {
+      std::cout << __PRETTY_FUNCTION__ << std::endl;
       if (ospGeometry) return;
 
       assert(ctx.world);
@@ -92,28 +100,28 @@ namespace ospray {
         ospSetData(ospGeometry,"index",index->getOSP());
 
 #if 1
-      OSPMaterial mat = NULL;
-      // try to generate ospray material from the sg material stored with this object
-      if (material) {
-        material->render(ctx);
-        mat = material->ospMaterial;
-      }
-      //PING; PRINT(mat);
+      // OSPMaterial mat = NULL;
+      // // try to generate ospray material from the sg material stored with this object
+      // if (material) {
+      //   material->render(ctx);
+      //   mat = material->ospMaterial;
+      // }
+      // //PING; PRINT(mat);
 
-      // if object couldt generate a valid material, create a default one
-      if (!mat) {
-        std::cout << "#osp:sg: no material on object, creating default one" << std::endl;
-        mat = ospNewMaterial(ctx.integrator?ctx.integrator->getOSPHandle():NULL,"default");
-        assert(mat);
-        vec3f kd(.7f);
-        vec3f ks(.3f);
-        ospSet3fv(mat,"kd",&kd.x);
-        ospSet3fv(mat,"ks",&ks.x);
-        ospSet1f(mat,"Ns",99.f);
-        ospCommit(mat);
-      }
-      assert(mat);
-      ospSetMaterial(ospGeometry,mat);
+      // // if object couldt generate a valid material, create a default one
+      // if (!mat) {
+      //   std::cout << "#osp:sg: no material on object, creating default one" << std::endl;
+      //   mat = ospNewMaterial(ctx.integrator?ctx.integrator->getOSPHandle():NULL,"default");
+      //   assert(mat);
+      //   vec3f kd(.7f);
+      //   vec3f ks(.3f);
+      //   ospSet3fv(mat,"kd",&kd.x);
+      //   ospSet3fv(mat,"ks",&ks.x);
+      //   ospSet1f(mat,"Ns",99.f);
+      //   ospCommit(mat);
+      // }
+      // assert(mat);
+      // ospSetMaterial(ospGeometry,mat);
       // ospSetMaterial(ospGeometry,(OSPMaterial)getChild("material")->getValue<OSPObject>());
 #else
       // assign a default material (for now.... eventually we might
@@ -137,6 +145,7 @@ namespace ospray {
     /*! 'render' the nodes */
     void PTMTriangleMesh::render(RenderContext &ctx)
     {
+      std::cout << __PRETTY_FUNCTION__ << std::endl;
       if (ospGeometry) return;
 
       assert(ctx.world);
@@ -163,27 +172,27 @@ namespace ospray {
       primMatIDs = ospNewData(materialIDs.size(), OSP_INT, &materialIDs[0], 0);
       ospSetData(ospGeometry,"prim.materialID",primMatIDs);
 
-      OSPMaterial mat = NULL;
-      // try to generate ospray material from the sg material stored with this object
-      if (material) {
-        material->render(ctx);
-        mat = material->ospMaterial;
-      }
+      // OSPMaterial mat = NULL;
+      // // try to generate ospray material from the sg material stored with this object
+      // if (material) {
+      //   material->render(ctx);
+      //   mat = material->ospMaterial;
+      // }
 
-      // if object couldt generate a valid material, create a default one
-      if (!mat) {
-        std::cout << "#osp:sg: no material on object, creating default one" << std::endl;
-        mat = ospNewMaterial(ctx.integrator?ctx.integrator->getOSPHandle():NULL,"default");
-        assert(mat);
-        vec3f kd(.7f);
-        vec3f ks(.3f);
-        ospSet3fv(mat,"kd",&kd.x);
-        ospSet3fv(mat,"ks",&ks.x);
-        ospSet1f(mat,"Ns",99.f);
-        ospCommit(mat);
-      }
-      assert(mat);
-      ospSetMaterial(ospGeometry,mat);
+      // // if object couldt generate a valid material, create a default one
+      // if (!mat) {
+      //   std::cout << "#osp:sg: no material on object, creating default one" << std::endl;
+      //   mat = ospNewMaterial(ctx.integrator?ctx.integrator->getOSPHandle():NULL,"default");
+      //   assert(mat);
+      //   vec3f kd(.7f);
+      //   vec3f ks(.3f);
+      //   ospSet3fv(mat,"kd",&kd.x);
+      //   ospSet3fv(mat,"ks",&ks.x);
+      //   ospSet1f(mat,"Ns",99.f);
+      //   ospCommit(mat);
+      // }
+      // assert(mat);
+      // ospSetMaterial(ospGeometry,mat);
 
 #if 0
       // THIS CODE DOESN"T WORK RIGHT NOW!!!!
@@ -217,12 +226,25 @@ namespace ospray {
     {
        if (ospGeometry)
        {
-         ospSetMaterial(ospGeometry, (OSPMaterial)getChild("material")->getValue<OSPObject>());
-         ospCommit(ospGeometry);
-         ospCommit(ospModel);
-         // ospAddGeometry(ctx.world->ospModel,ospGeometry);
-         return;
-       }
+        vec3f scale = getChild("scale")->getValue<vec3f>();
+        vec3f rotation = getChild("rotation")->getValue<vec3f>();
+        vec3f translation = getChild("position")->getValue<vec3f>();
+        ospcommon::affine3f xfm = ospcommon::one;
+        xfm = xfm*ospcommon::affine3f::translate(translation)*
+        ospcommon::affine3f::rotate(vec3f(1,0,0),rotation.x)*
+        ospcommon::affine3f::rotate(vec3f(0,1,0),rotation.y)*
+        ospcommon::affine3f::rotate(vec3f(0,0,1),rotation.z)*
+        ospcommon::affine3f::scale(scale);
+        
+        ospGeometryInstance = ospNewInstance(ospModel, 
+          (osp::affine3f&)xfm);
+        ospCommit(ospGeometryInstance);
+
+        ospSetMaterial(ospGeometry, (OSPMaterial)getChild("material")->getValue<OSPObject>());
+        ospCommit(ospGeometry);
+        ospCommit(ospModel);
+        return;
+      }
 
       assert(ctx.world);
       assert(ctx.world->ospModel);
@@ -240,33 +262,38 @@ namespace ospray {
       if (index && index->notEmpty())
         ospSetData(ospGeometry,"index",index->getOSP());
 
-      OSPMaterial mat = NULL;
-      // try to generate ospray material from the sg material stored with this object
-      if (material) {
-        // material->render(ctx);
-        mat = material->ospMaterial;
-      }
-      PING; PRINT(mat);
+      // OSPMaterial mat = NULL;
+      // // try to generate ospray material from the sg material stored with this object
+      // if (material) {
+      //   // material->render(ctx);
+      //   mat = material->ospMaterial;
+      // }
+      // PING; PRINT(mat);
 
-      // if object couldt generate a valid material, create a default one
-      if (!mat) {
-        std::cout << "#osp:sg: no material on object, creating default one" << std::endl;
-        mat = ospNewMaterial(ctx.ospRenderer?ctx.ospRenderer:NULL,"default");
-        assert(mat);
-        vec3f kd(.7f);
-        vec3f ks(.3f);
-        ospSet3fv(mat,"kd",&kd.x);
-        ospSet3fv(mat,"ks",&ks.x);
-        ospSet1f(mat,"Ns",99.f);
-        ospCommit(mat);
-      }
-      assert(mat);
+      // // if object couldt generate a valid material, create a default one
+      // if (!mat) {
+      //   std::cout << "#osp:sg: no material on object, creating default one" << std::endl;
+      //   std::cout << getName() << " " << ctx.ospRenderer << std::endl;
+      //   mat = ospNewMaterial(ctx.ospRenderer?ctx.ospRenderer:NULL,"default");
+      //   assert(mat);
+      //   vec3f kd(.7f);
+      //   vec3f ks(.3f);
+      //   ospSet3fv(mat,"kd",&kd.x);
+      //   ospSet3fv(mat,"ks",&ks.x);
+      //   ospSet1f(mat,"Ns",99.f);
+      //   ospCommit(mat);
+      // }
+      // assert(mat);
       // ospSetMaterial(ospGeometry,mat);
       ospSetMaterial(ospGeometry, (OSPMaterial)getChild("material")->getValue<OSPObject>());
       ospCommit(ospGeometry);
       ospAddGeometry(ospModel,ospGeometry);
       ospCommit(ospModel);
+      vec3f scale = getChild("scale")->getValue<vec3f>();
+      vec3f rotation = getChild("rotation")->getValue<vec3f>();
+      vec3f translation = getChild("position")->getValue<vec3f>();
       ospcommon::affine3f xfm = ospcommon::one;
+      xfm = xfm*ospcommon::affine3f::translate(translation)*ospcommon::affine3f::rotate(vec3f(0,1,0),rotation.x)*ospcommon::affine3f::scale(scale);
       ospGeometryInstance = ospNewInstance(ospModel, 
         (osp::affine3f&)xfm);
       ospCommit(ospGeometryInstance);

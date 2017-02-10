@@ -83,12 +83,10 @@ namespace ospray {
           return;
         TimeStamp childMTime = 1;
         ctx.childMTime = childMTime;
-          std::cout << "pretraversing: " << getName() << std::endl;
         preTraverse(ctx, operation);
         ctx.level++;
         for (auto child : children)
         {
-          std::cout << "traversing child: " << child.second->getName() << std::endl;
           child.second->traverse(ctx,operation);
         }
         ctx.level--;
@@ -228,12 +226,10 @@ namespace ospray {
 
     Node::NodeH createNode(std::string name, std::string type, SGVar var, int flags)
     {
-  //std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
       std::map<std::string, creatorFct>::iterator it = nodeRegistry.find(type);
       creatorFct creator = NULL;
       if (it == nodeRegistry.end()) {
         std::string creatorName = "ospray_create_sg_node__"+std::string(type);
-        //std::cout << "creator name: " << creatorName << std::endl;
         creator = (creatorFct)getSymbol(creatorName);
         if (!creator)
           throw std::runtime_error("unknown ospray scene graph node '"+type+"'");
@@ -242,25 +238,17 @@ namespace ospray {
         nodeRegistry[type] = creator;
       } else creator = it->second;
       assert(creator);
-  //std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
-      // sg::Node* nnode = creator();
-  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
       std::shared_ptr<sg::Node> newNode = creator();
       Node::nodes.push_back(newNode);
       Node::nodesMap[(size_t)newNode.get()] = Node::nodes.size();
       newNode->init();
-  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
       assert(newNode.get());
-  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
       newNode->setName(name);
       newNode->setType(type);
       newNode->setFlags(flags);
       if (valid(var))
           newNode->setValue(var);
-  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
       NodeH result = Node::NodeH(newNode);
-     // std::cout << "new node count: " << newNode.use_count() <<  " set to " << Node::nodes.size() << " " << (size_t)newNode.get() << std::endl;
-  std::cout << __PRETTY_FUNCTION__ << ":" << __LINE__ << std::endl;
       return result;
     }
 

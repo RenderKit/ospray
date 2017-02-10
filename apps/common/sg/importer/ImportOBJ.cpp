@@ -521,7 +521,6 @@ namespace ospray {
       std::cout << "ospray::sg::importOBJ: importing from " << fileName << endl;
       OBJLoader loader(world,fileName);
     }
-
   }
 } // ::ospray
 

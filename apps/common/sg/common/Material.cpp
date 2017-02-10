@@ -32,7 +32,7 @@ namespace ospray {
 
     void Material::init()
     {
-      add(createNode("type", "string", std::string("default")));
+      add(createNode("type", "string", std::string("OBJMaterial")));
       vec3f kd(10.f/255.f,68.f/255.f,117.f/255.f);
       vec3f ks(208.f/255.f,140.f/255.f,82.f/255.f);
       add(createNode("Kd", "vec3f",kd, NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_color));
@@ -45,6 +45,8 @@ namespace ospray {
 
     void Material::preCommit(RenderContext &ctx)
     {
+      std::cout << __PRETTY_FUNCTION__ << std::endl;
+      assert(ctx.ospRenderer);
       if (ospMaterial != nullptr && ospRenderer == ctx.ospRenderer) return;
       OSPMaterial mat = ospNewMaterial(ctx.ospRenderer, getChild("type")->getValue<std::string>().c_str());
       if (!mat)
@@ -62,6 +64,7 @@ namespace ospray {
           }
           mat = defaultMaterial;
         }
+      std::cout << __PRETTY_FUNCTION__ << std::endl;
       setValue((OSPObject)mat);
       ospMaterial = mat;
       ospRenderer = ctx.ospRenderer;

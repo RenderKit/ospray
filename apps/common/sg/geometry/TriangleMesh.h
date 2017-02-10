@@ -19,9 +19,50 @@
 #include "sg/common/Node.h"
 #include "sg/geometry/Geometry.h"
 #include "sg/common/Data.h"
+#include "sg/common/World.h"
+#include "common/sg/SceneGraph.h"
 
 namespace ospray {
   namespace sg {
+
+    struct Importer : public sg::World {
+      Importer() : World() {}
+
+      virtual void init() override
+      {
+        Renderable::init();
+        add(createNode("fileName", "string"));
+      //         // World::preCommit(ctx);
+      // ospcommon::FileName file = getChild("fileName")->getValue<std::string>();
+      // // if (file.str() == loadedFileName)
+      //   // return;
+      // if (loadedFileName != "")
+      //   return; //TODO: support dynamic re-loading, need to clear children first
+      // loadedFileName = "";
+      // if (file.ext() == "obj")
+      //   sg::importOBJ(std::static_pointer_cast<sg::World>(shared_from_this()), file);
+      // loadedFileName = file.str();
+      // // traverse(ctx, "verify");
+      // traverse(ctx, "print");
+      }
+      virtual void modified() override
+      {
+      Node::modified();
+              ospcommon::FileName file = getChild("fileName")->getValue<std::string>();
+      // if (file.str() == loadedFileName)
+        // return;
+      if (loadedFileName != "" || file.str() == "")
+        return; //TODO: support dynamic re-loading, need to clear children first
+      loadedFileName = "";
+      std::cout << "importing file: " << file.str() << std::endl;
+      if (file.ext() == "obj")
+        sg::importOBJ(std::static_pointer_cast<sg::World>(shared_from_this()), file);
+      loadedFileName = file.str();
+      }
+       virtual void preCommit(RenderContext &ctx) override;
+
+       std::string loadedFileName;
+    };
 
     /*! A Simple Triangle Mesh that stores vertex, normal, texcoord,
         and vertex color in separate arrays */
@@ -39,6 +80,10 @@ namespace ospray {
         // add(createNode("index", "DataBuffer"));
         add(createNode("material", "Material"));
         add(createNode("visible", "bool", true));
+        add(createNode("position", "vec3f"));
+        add(createNode("rotation", "vec3f", vec3f(0), NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
+        getChild("rotation")->setMinMax(-vec3f(2*3.15f),vec3f(2*3.15f));
+        add(createNode("scale", "vec3f", vec3f(1.f)));
       };
       
       /*! \brief returns a std::string with the c++ name of this class */
@@ -47,9 +92,9 @@ namespace ospray {
       //! return bounding box of all primitives
       virtual box3f getBounds();
 
-      void preRender(RenderContext &ctx);
+      virtual void preRender(RenderContext &ctx) override;
 
-      void postCommit(RenderContext &ctx);
+      virtual void postCommit(RenderContext &ctx) override;
 
       /*! 'render' the nodes */
       virtual void render(RenderContext &ctx);

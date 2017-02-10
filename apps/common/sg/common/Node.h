@@ -113,11 +113,12 @@ namespace ospray {
       OSPRenderer ospRenderer;
       int level;
       //! create a new context
-      RenderContext() : xfm(one) {};
+      RenderContext() : xfm(one), level(0),ospRenderer(nullptr) {};
 
       //! create a new context with new transformation matrix
       RenderContext(const RenderContext &other, const affine3f &newXfm)
-        : world(other.world), integrator(other.integrator), xfm(newXfm),level(0)
+        : world(other.world), integrator(other.integrator), xfm(newXfm),level(0),
+        ospRenderer(nullptr)
       {}
 
       TimeStamp MTime;
@@ -153,7 +154,10 @@ namespace ospray {
       {
       public:
         NodeH() : nid(0),node(nullptr) {}
-        NodeH(std::shared_ptr<sg::Node> n) : node(n) { nid = Node::nodesMap[(size_t)n.get()]; }
+        NodeH(std::shared_ptr<sg::Node> n) : node(n) {
+         // nid = Node::nodesMap[(size_t)n.get()]; 
+          nid = 1;
+       }
         //note: sending a pointer to NodeH will use Node manager, workaround for not
         // being able to use shared_ptrs from constructors
         // NodeH(Node* n) { nid = Node::nodesMap[(size_t)n];
@@ -188,7 +192,7 @@ namespace ospray {
         //! is this handle pointing to a null value?
         bool isNULL() const
         {
-          return nid == 0;
+          return nid == 0 || !node;
         }
       };
 
@@ -256,16 +260,13 @@ namespace ospray {
       //! return when this node was last committed
       inline TimeStamp getLastCommitted() const { return lastCommitted; };
       inline void committed() {lastCommitted=TimeStamp::now();}
-      inline void modified() { 
+      virtual void modified() { 
         lastModified = TimeStamp::now(); 
-        std::cout << "modified node: " << getName() << std::endl;
+        std::cout << "modified: " << getName() << std::endl;
         if (!parent.isNULL()) 
         {
-          std::cout << "parent: " << parent->getName() << std::endl;
           parent->setChildrenModified(lastModified);
         }
-        else
-          std::cout << "parent was null\n";
       }
       void setChildrenModified(TimeStamp t) { 
         if (t >childrenMTime) 
@@ -281,7 +282,7 @@ namespace ospray {
       NodeH& getChild(std::string name) {
         std::lock_guard<std::mutex> lock{mutex};
         if (children.find(name) == children.end())
-          std::cout << "couldn't find child!\n";
+          std::cout << "couldn't find child! " << name << "\n";
         return children[name];
       }
 
