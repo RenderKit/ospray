@@ -25,12 +25,11 @@
 // ours
 // ispc exports
 #include "RaycastVolumeRenderer_ispc.h"
-#if EXP_DATA_PARALLEL
-# include "mpiCommon/MPICommon.h"
-# include "../../fb/DistributedFrameBuffer.h"
-# include "../../volume/DataDistributedBlockedVolume.h"
-# include "render/LoadBalancer.h"
-#endif
+
+#include "mpiCommon/MPICommon.h"
+#include "../../fb/DistributedFrameBuffer.h"
+#include "../../volume/DataDistributedBlockedVolume.h"
+#include "render/LoadBalancer.h"
 
 #define TILE_CACHE_SAFE_MUTEX 0
 
@@ -41,8 +40,6 @@ namespace ospray {
     UNUSED(type);
     return new RaycastVolumeMaterial;
   }
-
-#if EXP_DATA_PARALLEL
 
   struct CacheForBlockTiles
   {
@@ -298,7 +295,6 @@ namespace ospray {
     return fb->endFrame(0.f);
   }
 
-#endif
 
   void RaycastVolumeRenderer::commit()
   {
