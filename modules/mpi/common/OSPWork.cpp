@@ -92,9 +92,6 @@ namespace ospray {
       // CMD_COMMIT
       // =======================================================
       
-      CommitObject::CommitObject()
-      {}
-      
       CommitObject::CommitObject(ObjectHandle handle)
         : handle(handle)
       {}
@@ -113,7 +110,8 @@ namespace ospray {
             model->finalize();
           }
         } else {
-          throw std::runtime_error("Error: rank " + std::to_string(mpi::world.rank)
+          throw std::runtime_error("Error: rank "
+                                   + std::to_string(mpi::world.rank)
                                    + " did not have object to commit!");
         }
         // TODO: Work units should not be directly making MPI calls.
@@ -155,11 +153,6 @@ namespace ospray {
       // CMD_CREATE_FRAMEBUFFER
       // =======================================================
 
-      CreateFrameBuffer::CreateFrameBuffer()
-        : dimensions(vec2i(-1))
-      {
-      }
-      
       CreateFrameBuffer::CreateFrameBuffer(ObjectHandle handle,
                                            vec2i dimensions,
                                            OSPFrameBufferFormat format,
@@ -208,9 +201,6 @@ namespace ospray {
       // CMD_LOAD_MODULE
       // =======================================================
       
-      LoadModule::LoadModule()
-      {}
-      
       LoadModule::LoadModule(const std::string &name)
         : name(name)
       {}
@@ -223,7 +213,8 @@ namespace ospray {
         const std::string initSymName = "ospray_init_module_" + name;
         void *initSym = getSymbol(initSymName);
         if (!initSym) {
-          throw std::runtime_error("could not find module initializer " + initSymName);
+          throw std::runtime_error("could not find module initializer "
+                                   + initSymName);
         }
         void (*initMethod)() = (void(*)())initSym;
         initMethod();
@@ -523,15 +514,10 @@ namespace ospray {
         handle.assign(light);
       }
       
-
-
       // =======================================================
       // ospNewData
       // =======================================================
 
-      NewData::NewData()
-      {}
-      
       NewData::NewData(ObjectHandle handle,
                        size_t nItems,
                        OSPDataType format,
@@ -548,7 +534,8 @@ namespace ospray {
           if (flags & OSP_DATA_SHARED_BUFFER) {
             localData = init;
           } else {
-            static WarnOnce warning("#osp.mpi: warning - newdata currently creates a std::vector copy of input data...");
+            static WarnOnce warning("#osp.mpi: warning - newdata currently "
+                                    "creates a std::vector copy of input data");
             data.resize(ospray::sizeOf(format) * nItems);
             std::memcpy(data.data(), init, data.size());
           }
@@ -587,7 +574,8 @@ namespace ospray {
       
       void NewData::serialize(WriteStream &b) const
       {
-        static WarnOnce warning("#osp.mpi: Warning - newdata serialize currently uses a std::vector ... ");
+        static WarnOnce warning("#osp.mpi: Warning - newdata serialize "
+                                "currently uses a std::vector... ");
         /* note there are two issues with this: first is that when
            sharing data buffer we'd hvae only localdata set (not the
            this->data vector; second is that even _if_ we use the data
@@ -604,15 +592,11 @@ namespace ospray {
         format = (OSPDataType)fmt;
       }
 
-
-
-      
-
-      NewTexture2d::NewTexture2d()
-      {}
-      
-      NewTexture2d::NewTexture2d(ObjectHandle handle, vec2i dimensions,
-                                 OSPTextureFormat format, void *texture, uint32 flags)
+      NewTexture2d::NewTexture2d(ObjectHandle handle,
+                                 vec2i dimensions,
+                                 OSPTextureFormat format,
+                                 void *texture,
+                                 uint32 flags)
         : handle(handle),
           dimensions(dimensions),
           format(format),
@@ -625,8 +609,9 @@ namespace ospray {
       
       void NewTexture2d::run()
       {
-        Texture2D *texture = Texture2D::createTexture(dimensions, format, data.data(),
-                                                      flags & ~OSP_TEXTURE_SHARED_BUFFER);
+        Texture2D *texture =
+            Texture2D::createTexture(dimensions, format, data.data(),
+                                     flags & ~OSP_TEXTURE_SHARED_BUFFER);
         Assert(texture);
         handle.assign(texture);
       }
@@ -643,18 +628,21 @@ namespace ospray {
         format = (OSPTextureFormat)fmt;
       }
 
-      SetRegion::SetRegion() {}
       SetRegion::SetRegion(OSPVolume volume, vec3i start, vec3i size,
                            const void *src, OSPDataType type)
-        : handle((ObjectHandle&)volume), regionStart(start), regionSize(size), type(type)
+        : handle((ObjectHandle&)volume), regionStart(start),
+          regionSize(size), type(type)
       {
         size_t bytes = ospray::sizeOf(type) * size.x * size.y * size.z;
         // TODO: With the MPI batching this limitation should be lifted
         if (bytes > 2000000000LL) {
-          throw std::runtime_error("MPI ospSetRegion does not support region sizes > 2GB");
+          throw std::runtime_error("MPI ospSetRegion does not support "
+                                   "region sizes > 2GB");
         }
         data.resize(bytes);
-        std::memcpy(data.data(), src, bytes);  //TODO: should support sending data without copy
+
+        //TODO: should support sending data without copy
+        std::memcpy(data.data(), src, bytes);
       }
       void SetRegion::run() {
         Volume *volume = (Volume*)handle.lookup();
@@ -681,9 +669,6 @@ namespace ospray {
       // ospFrameBufferClear
       // =======================================================
 
-      ClearFrameBuffer::ClearFrameBuffer()
-      {}
-      
       ClearFrameBuffer::ClearFrameBuffer(OSPFrameBuffer fb, uint32 channels)
         : handle((ObjectHandle&)fb), channels(channels)
       {}
@@ -714,11 +699,9 @@ namespace ospray {
       // ospRenderFrame
       // =======================================================
       
-      RenderFrame::RenderFrame()
-        : varianceResult(0.f)
-      {}
-      
-      RenderFrame::RenderFrame(OSPFrameBuffer fb, OSPRenderer renderer, uint32 channels)
+      RenderFrame::RenderFrame(OSPFrameBuffer fb,
+                               OSPRenderer renderer,
+                               uint32 channels)
         : fbHandle((ObjectHandle&)fb),
           rendererHandle((ObjectHandle&)renderer),
           channels(channels),
@@ -755,7 +738,8 @@ namespace ospray {
         FrameBuffer *fb = (FrameBuffer*)fbHandle.lookup();
         Assert(renderer);
         Assert(fb);
-        varianceResult = TiledLoadBalancer::instance->renderFrame(renderer, fb, channels);
+        varianceResult =
+            TiledLoadBalancer::instance->renderFrame(renderer, fb, channels);
       }
       
       void RenderFrame::serialize(WriteStream &b) const
@@ -816,10 +800,9 @@ namespace ospray {
         }
       }
 
-      RemoveParam::RemoveParam()
-      {}
-      
-      RemoveParam::RemoveParam(ObjectHandle handle, const char *name) : handle(handle), name(name) {
+      RemoveParam::RemoveParam(ObjectHandle handle, const char *name)
+        : handle(handle), name(name)
+      {
         Assert(handle != nullHandle);
       }
       
@@ -851,9 +834,6 @@ namespace ospray {
       // ospSetPixelOp
       // =======================================================
       
-      SetPixelOp::SetPixelOp()
-      {}
-      
       SetPixelOp::SetPixelOp(OSPFrameBuffer fb, OSPPixelOp op)
         : fbHandle((ObjectHandle&)fb),
           poHandle((ObjectHandle&)op)
@@ -867,7 +847,8 @@ namespace ospray {
         Assert(po);
         fb->pixelOp = po->createInstance(fb, fb->pixelOp.ptr);
         if (!fb->pixelOp) {
-          std::cout << "#osp:mpi: WARNING: PixelOp did not create an instance!" << std::endl;
+          std::cout << "#osp:mpi: WARNING: PixelOp did not create an instance!"
+                    << std::endl;
         }
       }
 
@@ -884,9 +865,6 @@ namespace ospray {
       // =======================================================
       // ospRelease
       // =======================================================
-      
-      CommandRelease::CommandRelease()
-      {}
       
       CommandRelease::CommandRelease(ObjectHandle handle)
         : handle(handle)
@@ -912,9 +890,6 @@ namespace ospray {
       // =======================================================
       // ospFinalize
       // =======================================================
-      
-      CommandFinalize::CommandFinalize()
-      {}
       
       void CommandFinalize::run()
       {
