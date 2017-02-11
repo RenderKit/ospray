@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include "OSPMPIConfig.h"
 #include "volume/BlockBrickedVolume.h"
 
 namespace ospray {

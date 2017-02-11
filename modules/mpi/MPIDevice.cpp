@@ -40,6 +40,7 @@
 #  include <unistd.h> // for fork()
 #  include <dlfcn.h>
 #endif
+#include <ios>
 
 #ifdef OPEN_MPI
 # include <thread>
@@ -123,7 +124,8 @@ namespace ospray {
         MPI_Intercomm_create(app.comm, 0, world.comm, 1, 1, &worker.comm);
         if (logMPI) {
           std::cout << "master: Made 'worker' intercomm (through intercomm_create): "
-                    << (int*)worker.comm << std::endl;
+                    << std::hex << std::showbase << worker.comm
+                    << std::noshowbase << std::dec << std::endl;
         }
         
         // worker.makeIntracomm();
@@ -162,7 +164,8 @@ namespace ospray {
         worker.makeIntraComm();
         if (logMPI) {
           std::cout << "master: Made 'worker' intercomm (through split): "
-                    << (int*)worker.comm << std::endl;
+                    << std::hex << std::showbase << worker.comm
+                    << std::noshowbase << std::dec << std::endl;
 
           printf("#w: worker process %i/%i (global %i/%i)\n",
                  worker.rank,worker.size,world.rank,world.size);

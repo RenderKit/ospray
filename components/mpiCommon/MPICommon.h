@@ -26,7 +26,6 @@
 
 // ospcommon
 #include "ospcommon/common.h"
-#include "OSPMPIConfig.h"
 
 #ifdef _WIN32
 #  ifdef ospray_mpi_common_EXPORTS

@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include "OSPMPIConfig.h"
 #include "render/Renderer.h"
 
 namespace ospray {
