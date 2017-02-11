@@ -124,7 +124,7 @@ namespace ospray {
 
         /*! returns whether this objects needs flushing of the buffered
          *  command stream */
-        virtual bool flushing(){ return false; }
+        virtual bool flushing() { return false; }
         
         /*! what to do to execute this work item on a worker */
         virtual void run() {}
@@ -140,15 +140,12 @@ namespace ospray {
       /*! templated base class that allows to implemnt common
         functoinality of a work item (name, tag, flush bit) though
         inheritance */
-      template<int TAG, bool NEEDS_FLUSHING=false>
+      template<int TAG>
       struct BaseWork : public Work
       {
         /*! return a tag that the buffering code can use to encode
           what kind of work this is */
         virtual Work::tag_t getTag() const override { return tag; }
-
-        /*! returns whether this objects needs flushing of the buffered command stream */
-        virtual bool flushing() { return NEEDS_FLUSHING; }
         
         enum { tag = TAG };
       };
@@ -341,7 +338,7 @@ namespace ospray {
         std::vector<char> data;
       };
 
-      struct CommitObject : BaseWork<CMD_COMMIT,true>
+      struct CommitObject : BaseWork<CMD_COMMIT>
       {
         CommitObject() = default;
         CommitObject(ObjectHandle handle);
@@ -349,6 +346,8 @@ namespace ospray {
         virtual void run() override;
         // TODO: Which objects should the master commit?
         virtual void runOnMaster() override;
+
+        virtual bool flushing() override { return true; }
 
         /*! serializes itself on the given serial buffer - will write
           all data into this buffer in a way that it can afterwards
@@ -384,13 +383,14 @@ namespace ospray {
         uint32 channels;
       };
 
-      struct RenderFrame : BaseWork<CMD_RENDER_FRAME,true>
+      struct RenderFrame : BaseWork<CMD_RENDER_FRAME>
       {
         RenderFrame() = default;
         RenderFrame(OSPFrameBuffer fb, OSPRenderer renderer, uint32 channels);
         
         virtual void run() override;
         virtual void runOnMaster() override;
+        virtual bool flushing() override { return true; }
 
         /*! serializes itself on the given serial buffer - will write
           all data into this buffer in a way that it can afterwards
@@ -758,12 +758,14 @@ namespace ospray {
         ObjectHandle handle;
       };
 
-      struct LoadModule : public BaseWork<CMD_LOAD_MODULE,true>
+      struct LoadModule : public BaseWork<CMD_LOAD_MODULE>
       {
         LoadModule() = default;
         LoadModule(const std::string &name);
         
         virtual void run() override;
+
+        virtual bool flushing() override { return true; }
 
         /*! serializes itself on the given serial buffer - will write
           all data into this buffer in a way that it can afterwards
@@ -777,12 +779,13 @@ namespace ospray {
         std::string name;
       };
 
-      struct CommandFinalize : public BaseWork<CMD_FINALIZE,true>
+      struct CommandFinalize : public BaseWork<CMD_FINALIZE>
       {
         CommandFinalize() = default;
 
         virtual void run() override;
         virtual void runOnMaster() override;
+        virtual bool flushing() override { return true; }
 
         /*! serializes itself on the given serial buffer - will write
           all data into this buffer in a way that it can afterwards
