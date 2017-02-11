@@ -24,11 +24,11 @@ namespace ospray {
 
     /*! a geometry node - the generic geometry node */
     struct Volume : public sg::Renderable {
-      Volume() : volume(nullptr) { 
+      Volume() : volume(nullptr) {
       };
 
-      virtual void init() override 
-      {        
+      virtual void init() override
+      {
         Renderable::init();
         add(createNode("transferFunction", "TransferFunction"));
         add(createNode("gradientShadingEnabled", "bool", true));
@@ -42,6 +42,8 @@ namespace ospray {
         add(createNode("volumeClippingBoxLower", "vec3f", vec3f(0.f)));
         add(createNode("volumeClippingBoxUpper", "vec3f", vec3f(0.f)));
         add(createNode("specular", "vec3f", vec3f(0.3f)));
+        add(createNode("gridOrigin", "vec3f", vec3f(0.0f)));
+        add(createNode("gridSpacing", "vec3f", vec3f(0.002f)));
       }
 
       /*! \brief returns a std::string with the c++ name of this class */
@@ -50,14 +52,14 @@ namespace ospray {
       //! return bounding box of all primitives
       virtual box3f getBounds() override = 0;
 
-      //! serialize into given serialization state 
+      //! serialize into given serialization state
       virtual void serialize(sg::Serialization::State &state) override;
 
       virtual void preRender(RenderContext &ctx) override;
 
       static bool useDataDistributedVolume;
 
-      SG_NODE_DECLARE_MEMBER(std::shared_ptr<TransferFunction>,transferFunction,TransferFunction);    
+      SG_NODE_DECLARE_MEMBER(std::shared_ptr<TransferFunction>,transferFunction,TransferFunction);
       //! ospray volume object handle
       public: OSPVolume volume;
     };
@@ -73,13 +75,13 @@ namespace ospray {
       //! return bounding box of all primitives
       virtual box3f getBounds() override;
 
-      //! \brief Initialize this node's value from given XML node 
+      //! \brief Initialize this node's value from given XML node
       virtual void setFromXML(const xml::Node &node,
                               const unsigned char *binBasePtr) override;
 
       /*! \brief 'render' the object to ospray */
       virtual void render(RenderContext &ctx);
-      
+
       virtual void postCommit(RenderContext &ctx) override;
 
       SG_NODE_DECLARE_MEMBER(vec3i,dimensions,Dimensions)
@@ -99,7 +101,7 @@ namespace ospray {
       //! return bounding box of all primitives
       virtual box3f getBounds() override;
 
-      //! \brief Initialize this node's value from given XML node 
+      //! \brief Initialize this node's value from given XML node
       virtual void setFromXML(const xml::Node &node,
                               const unsigned char *binBasePtr) override;
 
@@ -110,12 +112,12 @@ namespace ospray {
       virtual void postCommit(RenderContext &ctx) override;
 
 
-      SG_NODE_DECLARE_MEMBER(vec3i,dimensions,Dimensions);    
-      SG_NODE_DECLARE_MEMBER(std::string,fileName,FileName);    
-      SG_NODE_DECLARE_MEMBER(std::string,voxelType,ScalarType);    
+      SG_NODE_DECLARE_MEMBER(vec3i,dimensions,Dimensions);
+      SG_NODE_DECLARE_MEMBER(std::string,fileName,FileName);
+      SG_NODE_DECLARE_MEMBER(std::string,voxelType,ScalarType);
 
     public:
-      //! \brief file name of the xml doc when the node was loaded/parsed from xml 
+      //! \brief file name of the xml doc when the node was loaded/parsed from xml
       /*! \detailed we need this to properly resolve relative file names */
       FileName fileNameOfCorrespondingXmlDoc;
 
@@ -132,7 +134,7 @@ namespace ospray {
       //! return bounding box of all primitives
       virtual box3f getBounds() override;
 
-      //! \brief Initialize this node's value from given XML node 
+      //! \brief Initialize this node's value from given XML node
       virtual void setFromXML(const xml::Node &node,
                               const unsigned char *binBasePtr) override;
 
@@ -140,17 +142,17 @@ namespace ospray {
       virtual void render(RenderContext &ctx) override;
 
       /*! resolution (X x Y) of each slice */
-      SG_NODE_DECLARE_MEMBER(vec2i,sliceResolution,SliceResolution);    
+      SG_NODE_DECLARE_MEMBER(vec2i,sliceResolution,SliceResolution);
       /*! base path name for the slices, in "printf format" (e.g., "/mydir/slice%04i.raw") */
-      SG_NODE_DECLARE_MEMBER(std::string,baseName,BaseName);    
-      SG_NODE_DECLARE_MEMBER(int32_t,firstSliceID,FirstSliceID);    
-      SG_NODE_DECLARE_MEMBER(int32_t,numSlices,numSlices);    
-      SG_NODE_DECLARE_MEMBER(std::string,voxelType,ScalarType);    
+      SG_NODE_DECLARE_MEMBER(std::string,baseName,BaseName);
+      SG_NODE_DECLARE_MEMBER(int32_t,firstSliceID,FirstSliceID);
+      SG_NODE_DECLARE_MEMBER(int32_t,numSlices,numSlices);
+      SG_NODE_DECLARE_MEMBER(std::string,voxelType,ScalarType);
 
       //! actual dimensions after the data is loaded in - to be computed from sliceResolutiona nd numSlices
-      SG_NODE_DECLARE_MEMBER(vec3i,dimensions,Dimensions);    
+      SG_NODE_DECLARE_MEMBER(vec3i,dimensions,Dimensions);
     };
-    
+
   } // ::ospray::sg
 } // ::ospray
 

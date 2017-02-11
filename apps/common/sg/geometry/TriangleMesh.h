@@ -26,7 +26,7 @@ namespace ospray {
   namespace sg {
 
     struct Importer : public sg::InstanceGroup {
-      Importer() : InstanceGroup() {}
+      Importer() : InstanceGroup() { instanced = true; }
 
       virtual void init() override
       {
@@ -53,6 +53,12 @@ namespace ospray {
         std::shared_ptr<sg::World> wsg(std::dynamic_pointer_cast<sg::World>(shared_from_this()));
         sg::importPLY(wsg, file);
       }
+      else if (file.ext() == "osg")
+      {
+        std::shared_ptr<sg::World> wsg(std::dynamic_pointer_cast<sg::World>(shared_from_this()));
+        sg::loadOSG(file, wsg);
+        instanced = false;
+      }
       else
       {
         std::cout << "unsupported file format\n";
@@ -63,42 +69,6 @@ namespace ospray {
       //   std::shared_ptr<sg::World> wsg(std::dynamic_pointer_cast<sg::World>(shared_from_this()));
       //   sg::loadOSG(file, wsg);
       // }
-      loadedFileName = file.str();
-      }
-
-       std::string loadedFileName;
-    };
-
-    //needs different handling than geometry importer due to lack 
-    // of instancing support in volumes
-      struct VolumeImporter : public sg::InstanceGroup {
-      VolumeImporter() : InstanceGroup() { instanced=false; }
-
-      virtual void init() override
-      {
-        InstanceGroup::init();
-        add(createNode("fileName", "string"));
-      }
-      virtual void setChildrenModified(TimeStamp t) override
-      {
-      Node::setChildrenModified(t);
-        ospcommon::FileName file(getChild("fileName")->getValue<std::string>());
-      if (file.str() == loadedFileName)
-        return;
-        std::cout << "attempting importing file: " << file.str() << std::endl;
-      if (loadedFileName != "" || file.str() == "")
-        return; //TODO: support dynamic re-loading, need to clear children first
-      loadedFileName = "";
-      if (file.ext() == "osg")
-      {
-        std::shared_ptr<sg::World> wsg(std::dynamic_pointer_cast<sg::World>(shared_from_this()));
-        sg::loadOSG(file, wsg);
-      }
-      else
-      {
-        std::cout << "unsupported file format\n";
-        return;
-      }
       loadedFileName = file.str();
       }
 
@@ -122,7 +92,7 @@ namespace ospray {
         add(createNode("material", "Material"));
 
       };
-      
+
       /*! \brief returns a std::string with the c++ name of this class */
       virtual    std::string toString() const { return "ospray::sg::Geometry"; }
 
@@ -136,7 +106,7 @@ namespace ospray {
       /*! 'render' the nodes */
       virtual void render(RenderContext &ctx);
 
-      //! \brief Initialize this node's value from given XML node 
+      //! \brief Initialize this node's value from given XML node
       /*!
         \detailed This allows a plug-and-play concept where a XML
         file can specify all kind of nodes wihout needing to know
@@ -144,8 +114,8 @@ namespace ospray {
         create a proper C++ instance of the given node type (the
         OSP_REGISTER_SG_NODE() macro will allow it to do so), and can
         tell the node to parse itself from the given XML content and
-        XML children 
-        
+        XML children
+
         \param node The XML node specifying this node's fields
 
         \param binBasePtr A pointer to an accompanying binary file (if
@@ -157,16 +127,16 @@ namespace ospray {
       OSPGeometry         ospGeometry;
       OSPGeometry         ospGeometryInstance;
       OSPModel ospModel;
-      
+
       // to allow memory-mapping triangle arrays (or in general,
       // sharing data with an application) we use data arrays, not std::vector's
 
       //! vertex (position) array
       std::shared_ptr<DataBuffer> vertex;
-      
+
       //! vertex normal array. empty means 'not present'
       std::shared_ptr<DataBuffer> normal;
-      
+
       //! vertex color array. empty means 'not present'
       std::shared_ptr<DataBuffer> color;
 
@@ -188,7 +158,7 @@ namespace ospray {
 
       //! constructor
       PTMTriangleMesh() : Geometry("trianglemesh"), ospGeometry(NULL) {};
-      
+
       // return bounding box of all primitives
       virtual box3f getBounds();
 
@@ -197,8 +167,8 @@ namespace ospray {
 
       OSPGeometry         ospGeometry;
 
-      /*! \brief "material list" for this trianglemesh 
-        
+      /*! \brief "material list" for this trianglemesh
+
         If non-empty, the 'Triangle::materialID' indexes into this
         list; if empty, all trianlges should use the
         Geometry::material no matter what Triangle::materialID is set
@@ -211,10 +181,10 @@ namespace ospray {
 
       //! vertex (position) array
       std::shared_ptr<DataBuffer> vertex;
-      
+
       //! vertex normal array. empty means 'not present'
       std::shared_ptr<DataBuffer> normal;
-      
+
       //! vertex color array. empty means 'not present'
       std::shared_ptr<DataBuffer> color;
 
@@ -223,7 +193,7 @@ namespace ospray {
 
       //! triangle indices
       std::shared_ptr<DataBuffer> index;
-      
+
       //! material IDs
       OSPData primMatIDs;
    };

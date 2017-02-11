@@ -22,7 +22,6 @@ namespace ospray {
   namespace sg {
 
     OSP_REGISTER_SG_NODE(Importer);
-    OSP_REGISTER_SG_NODE(VolumeImporter);
 
     //! return the bounding box of all primitives
     box3f TriangleMesh::getBounds()
@@ -231,8 +230,8 @@ namespace ospray {
         // ospcommon::affine3f::rotate(vec3f(0,1,0),rotation.y)*
         // ospcommon::affine3f::rotate(vec3f(0,0,1),rotation.z)*
         // ospcommon::affine3f::scale(scale);
-        
-        // ospGeometryInstance = ospNewInstance(ospModel, 
+
+        // ospGeometryInstance = ospNewInstance(ospModel,
         //   (osp::affine3f&)xfm);
         // ospCommit(ospGeometryInstance);
 
@@ -290,7 +289,7 @@ namespace ospray {
       // vec3f translation = getChild("position")->getValue<vec3f>();
       // ospcommon::affine3f xfm = ospcommon::one;
       // xfm = xfm*ospcommon::affine3f::translate(translation)*ospcommon::affine3f::rotate(vec3f(0,1,0),rotation.x)*ospcommon::affine3f::scale(scale);
-      // ospGeometryInstance = ospNewInstance(ospModel, 
+      // ospGeometryInstance = ospNewInstance(ospModel,
         // (osp::affine3f&)xfm);
       // ospCommit(ospGeometryInstance);
 

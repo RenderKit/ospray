@@ -52,6 +52,7 @@ namespace ospray {
         add(createNode("aoDistance", "float", 10000.f, NodeFlags::required | NodeFlags::valid_min_max));
         getChild("aoDistance")->setMinMax(float(1e-31),FLT_MAX);
         add(createNode("oneSidedLighting", "bool",true, NodeFlags::required));
+        add(createNode("aoTransparency", "bool",true, NodeFlags::required));
       }
 
     int Renderer::renderFrame()

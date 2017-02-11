@@ -34,7 +34,7 @@ namespace ospray {
     void Volume::serialize(sg::Serialization::State &state)
     {
       Node::serialize(state);
-      if (transferFunction) 
+      if (transferFunction)
         transferFunction->serialize(state);
     }
 
@@ -43,7 +43,7 @@ namespace ospray {
       if (volume)
         ospAddVolume(ctx.world->ospModel,volume);
     }
-    
+
 
 
 
@@ -61,12 +61,12 @@ namespace ospray {
     /*! \brief returns a std::string with the c++ name of this class */
     std::string StructuredVolume::toString() const
     { return "ospray::sg::StructuredVolume"; }
-    
+
     //! return bounding box of all primitives
     box3f StructuredVolume::getBounds()
     { return box3f(vec3f(0.f),vec3f(getDimensions())); }
 
-    //! \brief Initialize this node's value from given XML node 
+    //! \brief Initialize this node's value from given XML node
 
     void StructuredVolume::setFromXML(const xml::Node &node,
                                       const unsigned char *binBasePtr)
@@ -81,16 +81,16 @@ namespace ospray {
 
       if (voxelType == "uint8")
         voxelType = "uchar";
-      if (voxelType != "float" && voxelType != "uint8" && voxelType != "uchar") 
+      if (voxelType != "float" && voxelType != "uint8" && voxelType != "uchar")
         throw std::runtime_error("unknown StructuredVolume.voxelType (currently only supporting 'float' and 'uint8')");
 
-      if (!transferFunction) 
+      if (!transferFunction)
         setTransferFunction(std::make_shared<TransferFunction>());
 
-      std::cout << "#osp:sg: created StructuredVolume from XML file, dimensions = " 
+      std::cout << "#osp:sg: created StructuredVolume from XML file, dimensions = "
                 << getDimensions() << std::endl;
     }
-    
+
     /*! \brief 'render' the object to ospray */
     void StructuredVolume::render(RenderContext &ctx)
     {
@@ -98,8 +98,8 @@ namespace ospray {
 
       if (dimensions.x <= 0 || dimensions.y <= 0 || dimensions.z <= 0)
         throw std::runtime_error("StructuredVolume::render(): invalid volume dimensions");
-      
-      volume = ospNewVolume(useDataDistributedVolume 
+
+      volume = ospNewVolume(useDataDistributedVolume
                             ? "data_distributed_volume"
                             : "block_bricked_volume");
       if (!volume)
@@ -131,8 +131,8 @@ namespace ospray {
 
       if (dimensions.x <= 0 || dimensions.y <= 0 || dimensions.z <= 0)
         throw std::runtime_error("StructuredVolume::render(): invalid volume dimensions");
-      
-      volume = ospNewVolume(useDataDistributedVolume 
+
+      volume = ospNewVolume(useDataDistributedVolume
                             ? "data_distributed_volume"
                             : "block_bricked_volume");
       if (!volume)
@@ -174,12 +174,12 @@ namespace ospray {
     /*! \brief returns a std::string with the c++ name of this class */
     std::string StructuredVolumeFromFile::toString() const
     { return "ospray::sg::StructuredVolumeFromFile"; }
-    
+
     //! return bounding box of all primitives
     box3f StructuredVolumeFromFile::getBounds()
     { return box3f(vec3f(0.f),vec3f(getDimensions())); }
 
-    //! \brief Initialize this node's value from given XML node 
+    //! \brief Initialize this node's value from given XML node
     void StructuredVolumeFromFile::setFromXML(const xml::Node &node,
                                               const unsigned char *binBasePtr)
     {
@@ -190,8 +190,8 @@ namespace ospray {
       if (fileName == "") throw std::runtime_error("sg::StructuredVolumeFromFile: no 'fileName' specified");
 
       fileNameOfCorrespondingXmlDoc = node.doc->fileName;
-      
-      if (voxelType != "float" && voxelType != "uchar") 
+
+      if (voxelType != "float" && voxelType != "uchar")
         throw std::runtime_error("unknown StructuredVolume.voxelType (currently only supporting 'float')");
 
       if (!transferFunction) {
@@ -200,36 +200,36 @@ namespace ospray {
         if (xf)
           setTransferFunction(xf);
       }
-      if (!transferFunction) 
+      if (!transferFunction)
         setTransferFunction(std::make_shared<TransferFunction>());
-      
-      std::cout << "#osp:sg: created StructuredVolume from XML file, dimensions = " 
+
+      std::cout << "#osp:sg: created StructuredVolume from XML file, dimensions = "
                 << getDimensions() << std::endl;
     }
-    
+
     /*! \brief 'render' the object to ospray */
     void StructuredVolumeFromFile::render(RenderContext &ctx)
     {
       if (volume) return;
-      
+
       if (dimensions.x <= 0 || dimensions.y <= 0 || dimensions.z <= 0)
         throw std::runtime_error("StructuredVolume::render(): invalid volume dimensions");
 
       bool useBlockBricked = 1;
 
-      if (useDataDistributedVolume) 
+      if (useDataDistributedVolume)
         volume = ospNewVolume("data_distributed_volume");
       else
         volume = ospNewVolume(useBlockBricked ? "block_bricked_volume" : "shared_structured_volume");
       if (!volume)
         THROW_SG_ERROR("could not allocate volume");
-      
+
       ospSetString(volume,"voxelType",voxelType.c_str());
       ospSetVec3i(volume,"dimensions",(const osp::vec3i&)dimensions);
-      
+
       FileName realFileName = fileNameOfCorrespondingXmlDoc.path()+fileName;
       FILE *file = fopen(realFileName.c_str(),"rb");
-      if (!file) 
+      if (!file)
         throw std::runtime_error("StructuredVolumeFromFile::render(): could not open file '"
                                  +realFileName.str()+"' (expanded from xml file '"
                                  +fileNameOfCorrespondingXmlDoc.str()
@@ -280,8 +280,9 @@ namespace ospray {
 
     void StructuredVolumeFromFile::preCommit(RenderContext &ctx)
     {
-      if (volume) 
+      if (volume)
       {
+        ospCommit(volume);
         return;
       }
       if (dimensions.x <= 0 || dimensions.y <= 0 || dimensions.z <= 0)
@@ -289,22 +290,23 @@ namespace ospray {
 
       bool useBlockBricked = 1;
 
-      if (useDataDistributedVolume) 
+      if (useDataDistributedVolume)
         volume = ospNewVolume("data_distributed_volume");
       else
         volume = ospNewVolume(useBlockBricked ? "block_bricked_volume" : "shared_structured_volume");
       if (!volume)
         THROW_SG_ERROR("could not allocate volume");
+      setValue((OSPObject)volume);
 
       ospHandle = volume;
       setValue((OSPObject)volume);
-      
+
       ospSetString(volume,"voxelType",voxelType.c_str());
       ospSetVec3i(volume,"dimensions",(const osp::vec3i&)dimensions);
-      
+
       FileName realFileName = fileNameOfCorrespondingXmlDoc.path()+fileName;
       FILE *file = fopen(realFileName.c_str(),"rb");
-      if (!file) 
+      if (!file)
         throw std::runtime_error("StructuredVolumeFromFile::render(): could not open file '"
                                  +realFileName.str()+"' (expanded from xml file '"
                                  +fileNameOfCorrespondingXmlDoc.str()
@@ -369,12 +371,12 @@ namespace ospray {
     /*! \brief returns a std::string with the c++ name of this class */
     std::string StackedRawSlices::toString() const
     { return "ospray::sg::StackedRawSlices"; }
-    
+
     //! return bounding box of all primitives
     box3f StackedRawSlices::getBounds()
     { return box3f(vec3f(0.f),vec3f(getDimensions())); }
 
-    //! \brief Initialize this node's value from given XML node 
+    //! \brief Initialize this node's value from given XML node
     void StackedRawSlices::setFromXML(const xml::Node &node,
                                       const unsigned char *binBasePtr)
     {
@@ -383,14 +385,14 @@ namespace ospray {
       baseName        = node.getProp("baseName");
       firstSliceID    = std::stoll(node.getProp("firstSliceID","0"));
       numSlices       = std::stoll(node.getProp("numSlices"));
-      
-      if (voxelType != "uint8_t") 
+
+      if (voxelType != "uint8_t")
         throw std::runtime_error("unknown StackedRawSlices.voxelType (currently only supporting 'uint8_t')");
-          
-      if (!transferFunction) 
+
+      if (!transferFunction)
         setTransferFunction(std::make_shared<TransferFunction>());
     }
-    
+
     /*! \brief 'render' the object to ospray */
     void StackedRawSlices::render(RenderContext &ctx)
     {
@@ -402,7 +404,7 @@ namespace ospray {
 
       if (dimensions.x <= 0 || dimensions.y <= 0 || dimensions.z <= 0)
         throw std::runtime_error("StackedRawSlices::render(): invalid volume dimensions");
-      
+
       volume = ospNewVolume("block_bricked_volume");
       if (!volume)
         THROW_SG_ERROR("could not allocate volume");
@@ -416,7 +418,7 @@ namespace ospray {
         sprintf(sliceName, baseName.c_str(), firstSliceID + sliceID);
         PRINT(sliceName);
         FILE *file = fopen(sliceName,"rb");
-        if (!file) 
+        if (!file)
           throw std::runtime_error("StackedRawSlices::render(): could not open file '"
                                    +std::string(sliceName)+"'");
         size_t nRead = fread(slice,sizeof(float),nPerSlice,file);
