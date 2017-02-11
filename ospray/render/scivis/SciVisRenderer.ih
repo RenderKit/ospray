@@ -39,19 +39,16 @@ struct SciVisRenderer
   float aoDistance;
   vec3f aoColor;
   bool  aoTransparencyEnabled;
+
+  // ------------------------------------------------------------------
+  // pre-computed state variables so we don't have to check certain
+  // stuff per pixel
+  // ------------------------------------------------------------------
+
+  /*! checks if all the values (aoSamples, aoDistance, aoColor) etc
+      require use of AO, and if not, skip AO computatoins */
+  bool needToDoAO;
 };
-
-struct SciVisShadingInfo
-{
-  float d;
-  vec3f Kd;
-  vec3f Ks;
-  float Ns;
-  vec3f shadingNormal;
-
-  float local_opacity;
-};
-
 
 float lightAlpha(const uniform SciVisRenderer *uniform self,
                  Ray &ray, uniform Model *uniform model,
@@ -69,3 +66,4 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
                                            Volume *uniform volume,
                                            varying Ray &ray, float tBegin,
                                            float tEnd, float maxOpacity, bool isShadowRay, const varying float &rayOffset, const varying vec3i &sampleID, uniform float quality);
+
