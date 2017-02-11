@@ -157,8 +157,6 @@ namespace ospray {
         = std::make_shared<MPIBcastFabric>(mpi::app);
       std::shared_ptr<ReadStream> readStream
         = std::make_shared<BufferedFabric::ReadStream>(mpiFabric);
-      std::shared_ptr<WriteStream> writeStream
-        = std::make_shared<BufferedFabric::WriteStream>(mpiFabric);
 
       // create registry of work item types
       std::map<work::Work::tag_t,work::CreateWorkFct> workTypeRegistry;

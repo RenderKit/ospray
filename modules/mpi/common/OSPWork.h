@@ -26,8 +26,6 @@
 
 #include <ospray/ospray.h>
 #include "mpiCommon/MPICommon.h"
-// #include "mpiCommon/command.h"
-// #include "mpiCommon/SerialBuffer.h"
 #include "common/ObjectHandle.h"
 #include "DataStreaming.h"
 #include <map>
@@ -45,7 +43,8 @@ namespace ospray {
         this only to more quickly identify the offending command if
         something went wrong and all we have is the last command id.
       */
-      typedef enum {
+      enum CommandTag
+      {
         CMD_INVALID = -555,
         CMD_NEW_RENDERER=100,
         CMD_FRAMEBUFFER_CREATE,
@@ -94,7 +93,7 @@ namespace ospray {
         CMD_API_MODE,//TODO
 
         CMD_FINALIZE,
-      } CommandTag;
+      };
 
       std::string commandTagToString(CommandTag tag);
       
@@ -102,13 +101,14 @@ namespace ospray {
         serialize itself, de-serialize itself, and return a tag that
         allows the unbuffering code form figuring out what kind of
         work this is */
-      struct Work {
+      struct Work
+      {
         /*! type we use for representing tags */
-        typedef uint32_t tag_t;
+        using tag_t = uint32_t;
         
         /*! return a tag that the buffering code can use to encode
           what kind of work this is */
-        virtual tag_t getTag()                    const = 0;
+        virtual tag_t getTag() const = 0;
 
         // /*! for debugging only - return some string of what this is */
         // virtual const char *toString()            const = 0;
@@ -116,38 +116,36 @@ namespace ospray {
         /*! serializes itself on the given serial buffer - will write
           all data into this buffer in a way that it can afterwards
           un-serialize itself 'on the other side'*/
-        virtual void serialize(WriteStream &b)   const = 0;
+        virtual void serialize(WriteStream &b) const = 0;
 
         /*! de-serialize from a buffer that an object of this type has
           serialized itself in */
-        virtual void deserialize(ReadStream &b)       = 0;
+        virtual void deserialize(ReadStream &b) = 0;
 
-        /*! returns whether this objects needs flushing of the buffered command stream */
-        virtual bool flushing()     { return false; }
+        /*! returns whether this objects needs flushing of the buffered
+         *  command stream */
+        virtual bool flushing() { return false; }
         
         /*! what to do to execute this work item on a worker */
-        virtual void run()          {}
+        virtual void run() {}
 
         /*! what to do to execute this work item on the master */
-        virtual void runOnMaster()  {}
+        virtual void runOnMaster() {}
       };
 
-      typedef std::shared_ptr<Work> (*CreateWorkFct)();
+      using CreateWorkFct = std::shared_ptr<Work>(*)();
 
       void registerOSPWorkItems(std::map<Work::tag_t,CreateWorkFct> &workTypeRegistry);
 
       /*! templated base class that allows to implemnt common
         functoinality of a work item (name, tag, flush bit) though
         inheritance */
-      template<int TAG, bool NEEDS_FLUSHING=false>
-      struct BaseWork : public Work {
+      template<int TAG>
+      struct BaseWork : public Work
+      {
         /*! return a tag that the buffering code can use to encode
           what kind of work this is */
-        virtual Work::tag_t getTag()                 const override
-        { return tag; }
-
-        /*! returns whether this objects needs flushing of the buffered command stream */
-        virtual bool flushing()     { return NEEDS_FLUSHING; }
+        virtual Work::tag_t getTag() const override { return tag; }
         
         enum { tag = TAG };
       };
@@ -159,13 +157,14 @@ namespace ospray {
        more special treatment to handle sending the data or other
        params around as well. */
       template<typename T>
-      struct NewObjectT : BaseWork<T::TAG> {
-
-        NewObjectT() {}
-        NewObjectT(const char* type, ObjectHandle handle) : type(type), handle(handle) {}
+      struct NewObjectT : BaseWork<T::TAG>
+      {
+        NewObjectT() = default;
+        NewObjectT(const char* type, ObjectHandle handle)
+          : type(type), handle(handle) {}
         
-        virtual void run()         override; // { throw std::runtime_error("newobjectt not defined for "+std::string(__PRETTY_FUNCTION__)); }
-        virtual void runOnMaster() override; // {}
+        virtual void run()         override;
+        virtual void runOnMaster() override;
         
         /*! serializes itself on the given serial buffer - will write
           all data into this buffer in a way that it can afterwards
@@ -193,78 +192,18 @@ namespace ospray {
       struct ObjectType_PixelOp           { enum { TAG = CMD_NEW_PIXELOP }; };
       struct ObjectType_TransferFunction  { enum { TAG = CMD_NEW_TRANSFERFUNCTION }; };
       /*! @} */
-      typedef NewObjectT<ObjectType_Model>    NewModel;
-      typedef NewObjectT<ObjectType_PixelOp>  NewPixelOp;
-      typedef NewObjectT<ObjectType_Renderer> NewRenderer;
-      typedef NewObjectT<ObjectType_Camera>   NewCamera;
-      typedef NewObjectT<ObjectType_Volume>   NewVolume;
-      typedef NewObjectT<ObjectType_Geometry> NewGeometry;
-      typedef NewObjectT<ObjectType_TransferFunction> NewTransferFunction;
+      using NewModel            = NewObjectT<ObjectType_Model>;
+      using NewPixelOp          = NewObjectT<ObjectType_PixelOp>;
+      using NewRenderer         = NewObjectT<ObjectType_Renderer>;
+      using NewCamera           = NewObjectT<ObjectType_Camera>;
+      using NewVolume           = NewObjectT<ObjectType_Volume>;
+      using NewGeometry         = NewObjectT<ObjectType_Geometry>;
+      using NewTransferFunction = NewObjectT<ObjectType_TransferFunction>;
       
-      // // Specializations of the run method for actually creating the
-      // // new objects of each type.
-      // template<>
-      // void NewObject<Renderer>::run();
-      // // For the renderer stored error threshold we need to make
-      // // the renderer on the master as well.
-      // template<>
-      // void NewObject<Renderer>::runOnMaster();
-      // template<>
-      // void NewObject<Model>::run();
-      // template<>
-      // void NewObject<Geometry>::run();
-      // template<>
-      // void NewObject<Camera>::run();
-      // template<>
-      // void NewObject<Volume>::run();
-      // // We need to make volumes on master so we can set the string param
-      // template<>
-      // void NewObject<Volume>::runOnMaster();
-      // template<>
-      // void NewObject<TransferFunction>::run();
-      // template<>
-      // void NewObject<PixelOp>::run();
 
-      // template<typename T>
-      // struct NewRendererObjectTag;
-      // template<>
-      // struct NewRendererObjectTag<Material> {
-      //   const static size_t TAG = CMD_NEW_MATERIAL;
-      // };
-      // template<>
-      // struct NewRendererObjectTag<Light> {
-      //   const static size_t TAG = CMD_NEW_LIGHT;
-      // };
-      
-      // template<typename T>
-      // struct NewLight : BaseWork<CMD_NEW_LIGHT> {
-      //   NewLight() {}
-      //   NewLight(const char* type, OSPRenderer renderer, ObjectHandle handle)
-      //     : type(type), rendererHandle((ObjectHandle&)renderer), handle(handle)
-      //   {}
-        
-      //   virtual void run() override {}
-
-      //   /*! serializes itself on the given serial buffer - will write
-      //       all data into this buffer in a way that it can afterwards
-      //       un-serialize itself 'on the other side'*/
-      //   virtual void serialize(WriteStream &b) const override
-      //   { b << (int64)rendererHandle << (int64)handle << type; }
-        
-      //   /*! de-serialize from a buffer that an object of this type has
-      //       serialized itself in */
-      //   virtual void deserialize(ReadStream &b) override {
-      //     b >> rendererHandle.i64 >> handle.i64 >> type;
-      //   }
-
-      //   // const static size_t TAG = NewRendererObjectTag<T>::TAG;
-      //   std::string  type;
-      //   ObjectHandle rendererHandle;
-      //   ObjectHandle handle;
-      // };
-
-      struct NewMaterial : BaseWork<CMD_NEW_MATERIAL> {
-        NewMaterial() {}
+      struct NewMaterial : BaseWork<CMD_NEW_MATERIAL>
+      {
+        NewMaterial() = default;
         NewMaterial(const char* type, OSPRenderer renderer, ObjectHandle handle)
           : type(type), rendererHandle((ObjectHandle&)renderer), handle(handle)
         {}
@@ -288,8 +227,9 @@ namespace ospray {
         ObjectHandle handle;
       };
 
-      struct NewLight : BaseWork<CMD_NEW_LIGHT> {
-        NewLight() {}
+      struct NewLight : BaseWork<CMD_NEW_LIGHT>
+      {
+        NewLight() = default;
         NewLight(const char* type, OSPRenderer renderer, ObjectHandle handle)
           : type(type), rendererHandle((ObjectHandle&)renderer), handle(handle)
         {}
@@ -322,8 +262,9 @@ namespace ospray {
       // void NewRendererObject<Light>::run();
 
 
-      struct NewData : BaseWork<CMD_NEW_DATA> {
-        NewData();
+      struct NewData : BaseWork<CMD_NEW_DATA>
+      {
+        NewData() = default;
         NewData(ObjectHandle handle, size_t nItems,
                 OSPDataType format, void *initData, int flags);
         
@@ -349,8 +290,9 @@ namespace ospray {
       };
 
       
-      struct NewTexture2d : BaseWork<CMD_NEW_TEXTURE2D> {
-        NewTexture2d();
+      struct NewTexture2d : BaseWork<CMD_NEW_TEXTURE2D>
+      {
+        NewTexture2d() = default;
         NewTexture2d(ObjectHandle handle, vec2i dimensions,
                      OSPTextureFormat format, void *texture, uint32 flags);
         
@@ -373,9 +315,9 @@ namespace ospray {
       };
 
       
-      struct SetRegion : BaseWork<CMD_SET_REGION> {
-
-        SetRegion();
+      struct SetRegion : BaseWork<CMD_SET_REGION>
+      {
+        SetRegion() = default;
         SetRegion(OSPVolume volume, vec3i start, vec3i size, const void *src,
                   OSPDataType type);
         
@@ -396,14 +338,16 @@ namespace ospray {
         std::vector<char> data;
       };
 
-      struct CommitObject : BaseWork<CMD_COMMIT,true> {
-        
-        CommitObject();
+      struct CommitObject : BaseWork<CMD_COMMIT>
+      {
+        CommitObject() = default;
         CommitObject(ObjectHandle handle);
         
         virtual void run() override;
         // TODO: Which objects should the master commit?
         virtual void runOnMaster() override;
+
+        virtual bool flushing() override { return true; }
 
         /*! serializes itself on the given serial buffer - will write
           all data into this buffer in a way that it can afterwards
@@ -417,9 +361,9 @@ namespace ospray {
         ObjectHandle handle;
       };
 
-      struct ClearFrameBuffer : BaseWork<CMD_FRAMEBUFFER_CLEAR> {
-
-        ClearFrameBuffer();
+      struct ClearFrameBuffer : BaseWork<CMD_FRAMEBUFFER_CLEAR>
+      {
+        ClearFrameBuffer() = default;
         ClearFrameBuffer(OSPFrameBuffer fb, uint32 channels);
         
         virtual void run() override;
@@ -439,13 +383,14 @@ namespace ospray {
         uint32 channels;
       };
 
-      struct RenderFrame : BaseWork<CMD_RENDER_FRAME,true> {
-
-        RenderFrame();
+      struct RenderFrame : BaseWork<CMD_RENDER_FRAME>
+      {
+        RenderFrame() = default;
         RenderFrame(OSPFrameBuffer fb, OSPRenderer renderer, uint32 channels);
         
         virtual void run() override;
         virtual void runOnMaster() override;
+        virtual bool flushing() override { return true; }
 
         /*! serializes itself on the given serial buffer - will write
           all data into this buffer in a way that it can afterwards
@@ -460,12 +405,12 @@ namespace ospray {
         ObjectHandle rendererHandle;
         uint32 channels;
         // Variance result for adaptive accumulation
-        float varianceResult;
+        float varianceResult {0.f};
       };
 
-      struct AddVolume : BaseWork<CMD_ADD_VOLUME> {
-        
-        AddVolume() {}
+      struct AddVolume : BaseWork<CMD_ADD_VOLUME>
+      {
+        AddVolume() = default;
         AddVolume(OSPModel model, const OSPVolume &t)
           : modelHandle((const ObjectHandle&)model), objectHandle((const ObjectHandle&)t)
         {}
@@ -488,9 +433,9 @@ namespace ospray {
       };
 
       
-      struct AddGeometry : BaseWork<CMD_ADD_GEOMETRY> {
-        
-        AddGeometry(){}
+      struct AddGeometry : BaseWork<CMD_ADD_GEOMETRY>
+      {
+        AddGeometry() = default;
         AddGeometry(OSPModel model, const OSPGeometry &t)
           : modelHandle((const ObjectHandle&)model), objectHandle((const ObjectHandle&)t)
         {}
@@ -513,8 +458,9 @@ namespace ospray {
       };
 
       
-      struct RemoveGeometry : public BaseWork<CMD_REMOVE_GEOMETRY> {
-        RemoveGeometry() {}
+      struct RemoveGeometry : public BaseWork<CMD_REMOVE_GEOMETRY>
+      {
+        RemoveGeometry() = default;
         RemoveGeometry(OSPModel model, const OSPGeometry &t)
           : modelHandle((const ObjectHandle&)model),
             objectHandle((const ObjectHandle&)t)
@@ -537,8 +483,9 @@ namespace ospray {
         ObjectHandle objectHandle;
       };
 
-      struct RemoveVolume : public BaseWork<CMD_REMOVE_VOLUME> {
-        RemoveVolume(){}
+      struct RemoveVolume : public BaseWork<CMD_REMOVE_VOLUME>
+      {
+        RemoveVolume() = default;
         RemoveVolume(OSPModel model, const OSPVolume &t)
           : modelHandle((const ObjectHandle&)model),
             objectHandle((const ObjectHandle&)t)
@@ -561,13 +508,9 @@ namespace ospray {
         ObjectHandle objectHandle;
       };
 
-      // template<>
-      // void RemoveObject<OSPGeometry>::run();
-      // template<>
-      // void RemoveObject<OSPVolume>::run();
-
-      struct CreateFrameBuffer : public BaseWork<CMD_FRAMEBUFFER_CREATE> {
-        CreateFrameBuffer();
+      struct CreateFrameBuffer : public BaseWork<CMD_FRAMEBUFFER_CREATE>
+      {
+        CreateFrameBuffer() = default;
         CreateFrameBuffer(ObjectHandle handle, vec2i dimensions,
                           OSPFrameBufferFormat format, uint32 channels);
         
@@ -585,7 +528,7 @@ namespace ospray {
         virtual void deserialize(ReadStream &b) override;
 
         ObjectHandle handle;
-        vec2i dimensions;
+        vec2i dimensions {-1};
         OSPFrameBufferFormat format;
         uint32 channels;
       };
@@ -597,49 +540,58 @@ namespace ospray {
       struct ParamTag;
       
       template<>
-      struct ParamTag<std::string> {
+      struct ParamTag<std::string>
+      {
         const static size_t TAG = CMD_SET_STRING;
       };
       
       template<>
-      struct ParamTag<int> {
+      struct ParamTag<int>
+      {
         const static size_t TAG = CMD_SET_INT;
       };
       
       template<>
-      struct ParamTag<float> {
+      struct ParamTag<float>
+      {
         const static size_t TAG = CMD_SET_FLOAT;
       };
       
       template<>
-      struct ParamTag<vec2f> {
+      struct ParamTag<vec2f>
+      {
         const static size_t TAG = CMD_SET_VEC2F;
       };
       
       template<>
-      struct ParamTag<vec2i> {
+      struct ParamTag<vec2i>
+      {
         const static size_t TAG = CMD_SET_VEC2I;
       };
       
       template<>
-      struct ParamTag<vec3f> {
+      struct ParamTag<vec3f>
+      {
         const static size_t TAG = CMD_SET_VEC3F;
       };
       
       template<>
-      struct ParamTag<vec3i> {
+      struct ParamTag<vec3i>
+      {
         const static size_t TAG = CMD_SET_VEC3I;
       };
       
       template<>
-      struct ParamTag<vec4f> {
+      struct ParamTag<vec4f>
+      {
         const static size_t TAG = CMD_SET_VEC4F;
       };
 
       /*! this should go into implementation section ... */
       template<typename T>
-      struct SetParam : BaseWork<ParamTag<T>::TAG> {
-        SetParam(){}
+      struct SetParam : BaseWork<ParamTag<T>::TAG>
+      {
+        SetParam() = default;
         
         SetParam(ObjectHandle handle, const char *name, const T &val)
           : handle(handle), name(name), val(val)
@@ -678,9 +630,9 @@ namespace ospray {
       // both SetMaterial and SetObject take more different forms than the other
       // set operations since it doesn't take a name at all so
       // we go through a full specializations for them.
-      struct SetMaterial : public BaseWork<CMD_SET_MATERIAL> {
-
-        SetMaterial(){}
+      struct SetMaterial : public BaseWork<CMD_SET_MATERIAL>
+      {
+        SetMaterial() = default;
         SetMaterial(ObjectHandle handle, OSPMaterial val)
           : handle(handle), material((ObjectHandle&)val)
         {
@@ -706,9 +658,9 @@ namespace ospray {
       };
 
       template<>
-      struct SetParam<OSPObject> : BaseWork<CMD_SET_OBJECT> {
-
-        SetParam(){}
+      struct SetParam<OSPObject> : BaseWork<CMD_SET_OBJECT>
+      {
+        SetParam() = default;
         
         SetParam(ObjectHandle handle, const char *name, OSPObject &obj)
           : handle(handle),
@@ -747,9 +699,9 @@ namespace ospray {
         ObjectHandle val;
       };
 
-      struct RemoveParam : public BaseWork<CMD_REMOVE_PARAM> {
-
-        RemoveParam();
+      struct RemoveParam : public BaseWork<CMD_REMOVE_PARAM>
+      {
+        RemoveParam() = default;
         RemoveParam(ObjectHandle handle, const char *name);
         
         virtual void run() override;
@@ -768,8 +720,9 @@ namespace ospray {
         std::string name;
       };
 
-      struct SetPixelOp : public BaseWork<CMD_SET_PIXELOP> {
-        SetPixelOp();
+      struct SetPixelOp : public BaseWork<CMD_SET_PIXELOP>
+      {
+        SetPixelOp() = default;
         SetPixelOp(OSPFrameBuffer fb, OSPPixelOp op);
         
         virtual void run() override;
@@ -787,9 +740,9 @@ namespace ospray {
         ObjectHandle poHandle;
       };
 
-      struct CommandRelease : BaseWork<CMD_RELEASE> {
-
-        CommandRelease();
+      struct CommandRelease : BaseWork<CMD_RELEASE>
+      {
+        CommandRelease() = default;
         CommandRelease(ObjectHandle handle);
         void run() override;
 
@@ -805,12 +758,14 @@ namespace ospray {
         ObjectHandle handle;
       };
 
-      struct LoadModule : public BaseWork<CMD_LOAD_MODULE,true> {
-
-        LoadModule();
+      struct LoadModule : public BaseWork<CMD_LOAD_MODULE>
+      {
+        LoadModule() = default;
         LoadModule(const std::string &name);
         
         virtual void run() override;
+
+        virtual bool flushing() override { return true; }
 
         /*! serializes itself on the given serial buffer - will write
           all data into this buffer in a way that it can afterwards
@@ -824,12 +779,13 @@ namespace ospray {
         std::string name;
       };
 
-      struct CommandFinalize : public BaseWork<CMD_FINALIZE,true> {
-
-        CommandFinalize();
+      struct CommandFinalize : public BaseWork<CMD_FINALIZE>
+      {
+        CommandFinalize() = default;
 
         virtual void run() override;
         virtual void runOnMaster() override;
+        virtual bool flushing() override { return true; }
 
         /*! serializes itself on the given serial buffer - will write
           all data into this buffer in a way that it can afterwards

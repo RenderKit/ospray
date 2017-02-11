@@ -56,7 +56,7 @@ IF (OSPRAY_MODULE_MPI)
     ospray
     ospray_mpi_common
     ospray_common
-    ${MPI_C_LIBRARIES}
+    ${MPI_CXX_LIBRARIES}
   )
 
   ##############################################################
@@ -67,7 +67,6 @@ IF (OSPRAY_MODULE_MPI)
     MPIWorker.cpp
   LINK
     ospray_module_mpi
-#    ${MPI_CXX_LIBRARIES}
   )
 
 ENDIF (OSPRAY_MODULE_MPI)

@@ -22,19 +22,21 @@ namespace ospray {
   namespace mpi {
 
     /*! abstraction of an object that we can serailize/write (raw) data into */
-    struct WriteStream {
+    struct WriteStream
+    {
       virtual void write(void *mem, size_t size) = 0;
-      virtual void flush() {};
+      virtual void flush() {}
     };
       
     /*! abstraction of an object that we can read (raw) data from to
       then de-serialize into work objects */
-    struct ReadStream {
+    struct ReadStream
+    {
       virtual void read(void *mem, size_t size) = 0;
     };
 
 
-    /*! @{ gneric stream operators into/out of read/write streams, for raw data blocks */
+    /*! generic stream operators into/out of read/write streams, for raw data blocks */
     template<typename T>
     inline WriteStream &operator<<(WriteStream &buf, const T &rh)
     {
@@ -48,8 +50,6 @@ namespace ospray {
       buf.read((byte_t*)&rh, sizeof(T));
       return buf;
     }
-    /*! @} */
-
 
     /*! @{ stream operators into/out of read/write streams, for std::vectors of data 
 
@@ -60,8 +60,9 @@ namespace ospray {
       then _all_ items in a single block. Still, it is good to have
       this in here for correctness, so I'll leave it in here - the
       alternative would be to explciitly 'throw' an execptoin in there
-      to prevent the user from using this slow-path in the firs
-      tplace. Finally - last comment on this - we might actually want to do add some templates 
+      to prevent the user from using this slow-path in the first place.
+      Finally - last comment on this - we might actually want to do add
+      some templates
      */
     template<typename T>
     inline WriteStream &operator<<(WriteStream &buf, const std::vector<T> &rh)
