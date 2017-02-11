@@ -22,8 +22,6 @@ IF (OSPRAY_MODULE_MPI)
 
   OSPRAY_BUILD_COMPONENT(mpiCommon)
   
-  OPTION(OSPRAY_EXP_DATA_PARALLEL "Experimental data-parallel compositing mode" ON)
-  
   # if mpi mode is enabled, we have to configure the right mpi
   # compiler etc.
   OSPRAY_CONFIGURE_MPI()
