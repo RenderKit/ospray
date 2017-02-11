@@ -18,7 +18,3 @@
 
 #cmakedefine OSPRAY_PIN_ASYNC
 
-#cmakedefine OSPRAY_EXP_DATA_PARALLEL
-#ifdef OSPRAY_EXP_DATA_PARALLEL
-# define EXP_DATA_PARALLEL 1
-#endif

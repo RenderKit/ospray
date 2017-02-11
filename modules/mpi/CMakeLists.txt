@@ -22,7 +22,8 @@ IF (OSPRAY_MODULE_MPI)
 
   OSPRAY_BUILD_COMPONENT(mpiCommon)
   
-  OPTION(OSPRAY_EXP_DATA_PARALLEL "Experimental data-parallel compositing mode" ON)
+  OPTION(OSPRAY_PIN_ASYNC "Pin async mpi comm threads?" OFF)
+  MARK_AS_ADVANCED(OSPRAY_PIN_ASYNC)
   
   # if mpi mode is enabled, we have to configure the right mpi
   # compiler etc.
@@ -64,7 +65,7 @@ IF (OSPRAY_MODULE_MPI)
     ospray
     ospray_mpi_common
     ospray_common
-    ${MPI_C_LIBRARIES}
+    ${MPI_CXX_LIBRARIES}
   )
 
   ##############################################################
@@ -75,7 +76,6 @@ IF (OSPRAY_MODULE_MPI)
     MPIWorker.cpp
   LINK
     ospray_module_mpi
-#    ${MPI_CXX_LIBRARIES}
   )
 
 ENDIF (OSPRAY_MODULE_MPI)

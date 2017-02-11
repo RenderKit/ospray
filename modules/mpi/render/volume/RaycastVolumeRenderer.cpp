@@ -25,12 +25,11 @@
 // ours
 // ispc exports
 #include "RaycastVolumeRenderer_ispc.h"
-#if EXP_DATA_PARALLEL
-# include "mpiCommon/MPICommon.h"
-# include "../../fb/DistributedFrameBuffer.h"
-# include "../../volume/DataDistributedBlockedVolume.h"
-# include "render/LoadBalancer.h"
-#endif
+
+#include "mpiCommon/MPICommon.h"
+#include "../../fb/DistributedFrameBuffer.h"
+#include "../../volume/DataDistributedBlockedVolume.h"
+#include "render/LoadBalancer.h"
 
 #define TILE_CACHE_SAFE_MUTEX 0
 
@@ -41,8 +40,6 @@ namespace ospray {
     UNUSED(type);
     return new RaycastVolumeMaterial;
   }
-
-#if EXP_DATA_PARALLEL
 
   struct CacheForBlockTiles
   {
@@ -251,7 +248,7 @@ namespace ospray {
 
     // check if we're even in mpi parallel mode (can't do
     // data-parallel otherwise)
-    if (!ospray::core::isMpiParallel()) {
+    if (!ospray::mpi::isMpiParallel()) {
       throw std::runtime_error("#dvr: need data-parallel rendering, "
                                "but not running in mpi mode!?");
     }
@@ -291,14 +288,13 @@ namespace ospray {
     renderTask.dpv = ddVolumeVec[0];
 
     size_t NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
-    parallel_for(NTASKS, renderTask);
+    parallel_for(NTASKS, std::move(renderTask));
 
     dfb->waitUntilFinished();
     Renderer::endFrame(nullptr, channelFlags);
     return fb->endFrame(0.f);
   }
 
-#endif
 
   void RaycastVolumeRenderer::commit()
   {
