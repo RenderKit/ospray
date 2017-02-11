@@ -179,6 +179,7 @@ SET(OSPRAY_SOURCES
   render/simpleAO/SimpleAOMaterial.cpp
   render/simpleAO/SimpleAOMaterial.ih
   render/simpleAO/SimpleAOMaterial.ispc
+  render/scivis/lightAlpha.ispc
   render/scivis/SciVisRenderer.ispc
   render/scivis/SciVisMaterial.ispc
   render/scivis/SciVisMaterial.ih
