@@ -56,6 +56,7 @@ void DefaultRendererParser::finalize()
   {
     parsedRenderer.set("aoSamples", aoSamples);
     parsedRenderer.set("shadowsEnabled", shadows);
+    parsedRenderer.set("aoTransparencyEnabled", 1);
   }
 
   parsedRenderer.set("spp", spp);

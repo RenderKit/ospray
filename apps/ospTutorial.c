@@ -45,7 +45,7 @@ void writePPM(const char *fileName,
     for (int x = 0; x < size->x; x++) {
       out[3*x + 0] = in[4*x + 0];
       out[3*x + 1] = in[4*x + 1];
-      out[3*x + 2] = in[4*x +2 ];
+      out[3*x + 2] = in[4*x + 2];
     }
     fwrite(out, 3*size->x, sizeof(char), file);
   }

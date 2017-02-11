@@ -27,7 +27,7 @@ namespace ospray {
 
       //! \brief commit the material's parameters
       virtual void commit() {
-        if (getIE() != NULL) return;
+        if (getIE() != nullptr) return;
 
         const float etaInside = getParamf("etaInside", getParamf("eta", 1.5f));
         const float etaOutside = getParamf("etaOutside", 1.f);;

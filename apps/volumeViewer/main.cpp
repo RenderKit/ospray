@@ -91,8 +91,8 @@ int main(int argc, char *argv[])
   float directionalLightIntensity = 1.7f;
   float directionalLightAzimuth = 80;
   float directionalLightElevation = 65;
-  float samplingRate = .07;
-  float maxSamplingRate = .7;
+  float samplingRate = .125f;
+  float maxSamplingRate = 2.f;
   int spp = 1;
   bool noshadows = false;
   int aoSamples = 1;

@@ -88,42 +88,44 @@ export uniform float DFB_accumulate_##name(void  *uniform _self,             \
     const uniform float accHalfScale = rcpf(accumID/2+1);                    \
     float err = 0.f;                                                         \
     for (uniform int i = 0; i < maxi; i++) {                                 \
-      vec3f col3 = make_vec3f(tile->r[i], tile->g[i], tile->b[i]);           \
-      vec4f col = make_vec4f(col3, tile->a[i])                               \
-        + make_vec4f(accum->r[i], accum->g[i], accum->b[i], accum->a[i]);    \
+      vec4f col = make_vec4f(tile->r[i], tile->g[i], tile->b[i], tile->a[i]);\
+      vec4f acc = col                                                        \
+          + make_vec4f(accum->r[i], accum->g[i], accum->b[i], accum->a[i]);  \
                                                                              \
-      accum->r[i] = col.x;                                                   \
-      accum->g[i] = col.y;                                                   \
-      accum->b[i] = col.z;                                                   \
-      accum->a[i] = col.w;                                                   \
+      accum->r[i] = acc.x;                                                   \
+      accum->g[i] = acc.y;                                                   \
+      accum->b[i] = acc.z;                                                   \
+      accum->a[i] = acc.w;                                                   \
                                                                              \
-      col = col * rcpAccumID;                                                \
+      acc = acc * rcpAccumID;                                                \
                                                                              \
       /* variance buffer accumulates every other frame */                    \
       if (hasVarianceBuffer && (accumID & 1) == 1) {                         \
-        varying vec3f vari = make_vec3f(0.f);                                \
+        varying vec4f vari = make_vec4f(0.f);                                \
         if (accumID > 1)                                                     \
-          vari = make_vec3f(variance->r[i], variance->g[i], variance->b[i]); \
-        vari = vari + col3;                                                  \
+          vari = make_vec4f(variance->r[i], variance->g[i], variance->b[i],  \
+              variance->a[i]);                                               \
+        vari = vari + col;                                                   \
         variance->r[i] = vari.x;                                             \
         variance->g[i] = vari.y;                                             \
         variance->b[i] = vari.z;                                             \
+        variance->a[i] = vari.w;                                             \
                                                                              \
-        const vec3f acc3 = make_vec3f(col);                                  \
-        const float den2 = reduce_add(acc3);                                 \
+        /* invert alpha (bright alpha is more important */                   \
+        const float den2 = reduce_add(make_vec3f(acc)) + (1.f-acc.w);        \
         if (den2 > 0.0f) {                                                   \
-          const vec3f diff = absf(acc3 - accHalfScale * vari);               \
+          const vec4f diff = absf(acc - accHalfScale * vari);                \
           if ((i*programCount % TILE_SIZE) + programIndex < size.x)          \
             err += reduce_add(diff) * rsqrtf(den2);                          \
         }                                                                    \
       }                                                                      \
                                                                              \
-      final->r[i] = col.x;                                                   \
-      final->g[i] = col.y;                                                   \
-      final->b[i] = col.z;                                                   \
-      final->a[i] = col.w;                                                   \
+      final->r[i] = acc.x;                                                   \
+      final->g[i] = acc.y;                                                   \
+      final->b[i] = acc.z;                                                   \
+      final->a[i] = acc.w;                                                   \
                                                                              \
-      color[i] = cvt(col);                                                   \
+      color[i] = cvt(acc);                                                   \
     }                                                                        \
     /* error is also only updated every other frame to avoid alternating     \
      * error (get a monotone sequence) */                                    \

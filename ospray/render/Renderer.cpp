@@ -41,13 +41,12 @@ namespace ospray {
     if (maxDepthTexture) {
       if (maxDepthTexture->type != OSP_TEXTURE_R32F
           || !(maxDepthTexture->flags & OSP_TEXTURE_FILTER_NEAREST)) {
-        static WarnOnce warning("expected maxDepthTexture provided to the "
-                                "renderer to be type OSP_TEXTURE_R32F and have "
+        static WarnOnce warning("maxDepthTexture provided to the renderer "
+                                "needs to be of type OSP_TEXTURE_R32F and have "
                                 "the OSP_TEXTURE_FILTER_NEAREST flag");
       }
     }
 
-    vec3f bgColor;
     bgColor = getParam3f("bgColor", vec3f(1.f));
 
     if (getIE()) {
@@ -58,14 +57,15 @@ namespace ospray {
         epsilon *= diameter;
       }
 
-      ispc::Renderer_set(getIE(),
-                         model ? model->getIE() : nullptr,
-                         camera ? camera->getIE() : nullptr,
-                         epsilon,
-                         spp,
-                         backgroundEnabled,
-                         (ispc::vec3f&)bgColor,
-                         maxDepthTexture ? maxDepthTexture->getIE() : nullptr);
+      ispc::Renderer_set(getIE()
+          , model ? model->getIE() : nullptr
+          , camera ? camera->getIE() : nullptr
+          , epsilon
+          , spp
+          , backgroundEnabled
+          , (ispc::vec3f&)bgColor
+          , maxDepthTexture ? maxDepthTexture->getIE() : nullptr
+          );
     }
   }
 

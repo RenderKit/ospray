@@ -81,9 +81,9 @@ struct Renderer {
   Camera      *camera;
   float        epsilon; // parameter to prevent self-intersection issues, will be scaled with diameter of the scene
   int32        spp; // number of samples per pixel; negative values mean subsampling, i.e. render only every 2^-spp pixel in x and y for the first frame
-  uniform bool backgroundEnabled; // whether the background should be rendered (e.g. for compositing the background may be disabled)
-  uniform vec3f bgColor;// background color
-  uniform Texture2D *uniform maxDepthTexture; // optional maximum depth texture used for early ray termination
+  bool backgroundEnabled; // whether the background should be rendered (e.g. for compositing the background may be disabled)
+  vec3f bgColor;// background color
+  Texture2D *uniform maxDepthTexture; // optional maximum depth texture used for early ray termination
 };
 
 void Renderer_Constructor(uniform Renderer *uniform self, void *uniform cppE);

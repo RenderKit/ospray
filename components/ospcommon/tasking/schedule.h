@@ -14,32 +14,28 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "common/Material.h"
-#include "ThinGlass_ispc.h"
+#pragma once
 
-namespace ospray {
-  namespace pathtracer {
-    struct ThinGlass : public ospray::Material {
-      //! \brief common function to help printf-debugging
-      /*! Every derived class should overrride this! */
-      virtual std::string toString() const { return "ospray::pathtracer::ThinGlass"; }
+#include "TaskingTypeTraits.h"
+#include "schedule.inl"
 
-      //! \brief commit the material's parameters
-      virtual void commit() {
-        if (getIE() != nullptr) return;
+namespace ospcommon {
 
-        const vec3f& transmission
-          = getParam3f("transmission", vec3f(1.f));
-        const float eta
-          = getParamf("eta", 1.5f);
-        const float thickness
-          = getParamf("thickness",1.f);
+  // NOTE(jda) - This abstraction takes a lambda which should take captured
+  //             variables by *value* to ensure no captured references race
+  //             with the task itself.
 
-        ispcEquivalent = ispc::PathTracer_ThinGlass_create
-          (eta,(const ispc::vec3f&)transmission,thickness);
-      }
-    };
+  // NOTE(jda) - No priority is associated with this call, but could be added
+  //             later with a hint enum, using a default value for the priority
+  //             to not require specifying it.
+  template<typename TASK_T>
+  inline void schedule(TASK_T&& fcn)
+  {
+    static_assert(has_operator_method<TASK_T>::value,
+                  "ospcommon::schedule() requires the implementation of method "
+                  "'void TASK_T::operator()'.");
 
-    OSP_REGISTER_MATERIAL(ThinGlass,PathTracer_ThinGlass);
+    schedule_impl(std::forward<TASK_T>(fcn));
   }
-}
+
+} // ::ospcommon
