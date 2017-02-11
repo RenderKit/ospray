@@ -25,25 +25,13 @@
 namespace ospray {
   namespace sg {
 
-    struct Importer : public sg::World {
-      Importer() : World() {}
+    struct Importer : public sg::InstanceGroup {
+      Importer() : InstanceGroup() {}
 
       virtual void init() override
       {
-        Renderable::init();
+        InstanceGroup::init();
         add(createNode("fileName", "string"));
-      //         // World::preCommit(ctx);
-      // ospcommon::FileName file = getChild("fileName")->getValue<std::string>();
-      // // if (file.str() == loadedFileName)
-      //   // return;
-      // if (loadedFileName != "")
-      //   return; //TODO: support dynamic re-loading, need to clear children first
-      // loadedFileName = "";
-      // if (file.ext() == "obj")
-      //   sg::importOBJ(std::static_pointer_cast<sg::World>(shared_from_this()), file);
-      // loadedFileName = file.str();
-      // // traverse(ctx, "verify");
-      // traverse(ctx, "print");
       }
       virtual void setChildrenModified(TimeStamp t) override
       {
@@ -60,9 +48,59 @@ namespace ospray {
         std::cout << "importing file: " << file.str() << std::endl;
         sg::importOBJ(std::static_pointer_cast<sg::World>(shared_from_this()), file);
       }
+      else if (file.ext() == "ply")
+      {
+        std::shared_ptr<sg::World> wsg(std::dynamic_pointer_cast<sg::World>(shared_from_this()));
+        sg::importPLY(wsg, file);
+      }
+      else
+      {
+        std::cout << "unsupported file format\n";
+        return;
+      }
+      // else if (file.ext() == "osg")
+      // {
+      //   std::shared_ptr<sg::World> wsg(std::dynamic_pointer_cast<sg::World>(shared_from_this()));
+      //   sg::loadOSG(file, wsg);
+      // }
       loadedFileName = file.str();
       }
-       virtual void preCommit(RenderContext &ctx) override;
+
+       std::string loadedFileName;
+    };
+
+    //needs different handling than geometry importer due to lack 
+    // of instancing support in volumes
+      struct VolumeImporter : public sg::InstanceGroup {
+      VolumeImporter() : InstanceGroup() { instanced=false; }
+
+      virtual void init() override
+      {
+        InstanceGroup::init();
+        add(createNode("fileName", "string"));
+      }
+      virtual void setChildrenModified(TimeStamp t) override
+      {
+      Node::setChildrenModified(t);
+        ospcommon::FileName file(getChild("fileName")->getValue<std::string>());
+      if (file.str() == loadedFileName)
+        return;
+        std::cout << "attempting importing file: " << file.str() << std::endl;
+      if (loadedFileName != "" || file.str() == "")
+        return; //TODO: support dynamic re-loading, need to clear children first
+      loadedFileName = "";
+      if (file.ext() == "osg")
+      {
+        std::shared_ptr<sg::World> wsg(std::dynamic_pointer_cast<sg::World>(shared_from_this()));
+        sg::loadOSG(file, wsg);
+      }
+      else
+      {
+        std::cout << "unsupported file format\n";
+        return;
+      }
+      loadedFileName = file.str();
+      }
 
        std::string loadedFileName;
     };

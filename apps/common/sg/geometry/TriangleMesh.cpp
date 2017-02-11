@@ -21,12 +21,8 @@
 namespace ospray {
   namespace sg {
 
-    void Importer::preCommit(RenderContext &ctx)
-    {
-      World::preCommit(ctx);
-    }
-
     OSP_REGISTER_SG_NODE(Importer);
+    OSP_REGISTER_SG_NODE(VolumeImporter);
 
     //! return the bounding box of all primitives
     box3f TriangleMesh::getBounds()

@@ -25,6 +25,11 @@ namespace ospray {
     /*! a geometry node - the generic geometry node */
     struct Volume : public sg::Renderable {
       Volume() : volume(nullptr) { 
+      };
+
+      virtual void init() override 
+      {        
+        Renderable::init();
         add(createNode("transferFunction", "TransferFunction"));
         add(createNode("gradientShadingEnabled", "bool", true));
         add(createNode("preIntegration", "bool", true));
@@ -37,7 +42,7 @@ namespace ospray {
         add(createNode("volumeClippingBoxLower", "vec3f", vec3f(0.f)));
         add(createNode("volumeClippingBoxUpper", "vec3f", vec3f(0.f)));
         add(createNode("specular", "vec3f", vec3f(0.3f)));
-      };
+      }
 
       /*! \brief returns a std::string with the c++ name of this class */
       virtual    std::string toString() const override;

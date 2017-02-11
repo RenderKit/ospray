@@ -25,19 +25,14 @@ namespace ospray {
 
     /*! a world node */
     struct World : public sg::Renderable {
-      World() : Renderable(), ospModel(NULL) {
+      World() : Renderable(), ospModel(nullptr) {
         // add(createNode("bounds", "box3f"));
 //        add(createNode("model", "OSPObject", (OSPModel*)NULL));
       };
 
-      virtual init() override 
+      virtual void init() override 
       {
         add(createNode("bounds", "box3f"));
-        add(createNode("visible", "bool", true));
-        add(createNode("position", "vec3f"));
-        add(createNode("rotation", "vec3f", vec3f(0), NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
-        getChild("rotation")->setMinMax(-vec3f(2*3.15f),vec3f(2*3.15f));
-        add(createNode("scale", "vec3f", vec3f(1.f)));
       }
 
       /*! \brief returns a std::string with the c++ name of this class */
@@ -62,9 +57,39 @@ namespace ospray {
       virtual void postRender(RenderContext &ctx);
 
       OSPModel ospModel;
-      OSPGeometry ospInstance;
       std::vector<std::shared_ptr<Node> > nodes;
       std::shared_ptr<sg::World> oldWorld;
+
+      // template<typename T>
+      // inline void add(const Ref<T> &t) { add(t.ptr); }
+      // template<typename T>
+      // inline void add(T *t) { node.push_back(t); }
+    };
+
+
+    struct InstanceGroup : public sg::World {
+      InstanceGroup() : World(), ospInstance(nullptr), instanced(true) {
+        // add(createNode("bounds", "box3f"));
+//        add(createNode("model", "OSPObject", (OSPModel*)NULL));
+      };
+
+      virtual void init() override 
+      {
+        add(createNode("bounds", "box3f"));
+        add(createNode("visible", "bool", true));
+        add(createNode("position", "vec3f"));
+        add(createNode("rotation", "vec3f", vec3f(0), NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
+        getChild("rotation")->setMinMax(-vec3f(2*3.15f),vec3f(2*3.15f));
+        add(createNode("scale", "vec3f", vec3f(1.f)));
+      }
+
+      virtual void preCommit(RenderContext &ctx);
+      virtual void postCommit(RenderContext &ctx);
+      virtual void preRender(RenderContext &ctx);
+      virtual void postRender(RenderContext &ctx);
+
+      OSPGeometry ospInstance;
+      bool instanced;
 
       // template<typename T>
       // inline void add(const Ref<T> &t) { add(t.ptr); }

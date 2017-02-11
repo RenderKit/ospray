@@ -109,7 +109,7 @@ namespace ospray {
       };
 
 
-      std::shared_ptr<sg::TriangleMesh> readFile(const std::string &fileName)
+      void readFile(const std::string &fileName, std::shared_ptr<sg::TriangleMesh> mesh)
       {
         int nprops;
         PlyProperty **plist;
@@ -345,23 +345,23 @@ namespace ospray {
 
         free(ply->elems);
 
-        std::shared_ptr<sg::TriangleMesh> mesh = std::make_shared<sg::TriangleMesh>();
         mesh->index = idx;
         mesh->vertex = pos;
         if (!nor->v.empty())
           mesh->normal = nor;
-        return mesh;
+        // return mesh;
       }
 
     } // ::ospray::sg::ply
 
     void importPLY(std::shared_ptr<World> &world, const FileName &fileName)
     {
-      std::shared_ptr<sg::TriangleMesh> mesh = ply::readFile(fileName.str());
+      std::shared_ptr<sg::TriangleMesh> mesh = std::static_pointer_cast<sg::TriangleMesh>(sg::createNode(fileName.name(), "TriangleMesh").get());
+      ply::readFile(fileName.str(), mesh);
       world->nodes.push_back(std::dynamic_pointer_cast<Node>(mesh));
       std::cout << "adding ply file to world\n";
-      mesh->setName("ply");
-      mesh->setType("TriangleMesh");
+      // mesh->setName("ply");
+      // mesh->setType("TriangleMesh");
       world->add(std::dynamic_pointer_cast<sg::Node>(mesh));
     }
 

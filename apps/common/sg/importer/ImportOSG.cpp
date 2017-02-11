@@ -39,32 +39,32 @@ namespace ospray {
     /*! create a node of given type if registered (and tell it to
       parse itself from that xml node), or throw an exception if
       unkown node type */
-    sg::Node *createSGNodeFrom(const xml::Node &node, const unsigned char *binBasePtr)
-    {
-      std::map<std::string, creatorFct>::iterator it = osgNodeRegistry.find(node.name);
-      creatorFct creator = NULL;
-      if (it == osgNodeRegistry.end()) {
-        std::string creatorName = "ospray_create_sg_node__"+std::string(node.name);
-        creator = (creatorFct)getSymbol(creatorName);
-        if (!creator)
-          throw std::runtime_error("unknown ospray scene graph node '"+node.name+"'");
-        else
-          std::cout << "#osp:sg: creating at least one instance of node type '" << node.name << "'" << std::endl;
-        osgNodeRegistry[node.name] = creator;
-      } else creator = it->second;
-      assert(creator);
-      sg::Node *newNode = creator();
-      assert(newNode);
-      newNode->setType(node.name);
-      newNode->setName(node.getProp("name"));
-      try {
-        newNode->setFromXML(node,binBasePtr);
-        return newNode;
-      } catch (std::runtime_error e) {
-        delete newNode;
-        throw e;
-      }
-    }
+    // sg::Node *createSGNodeFrom(const xml::Node &node, const unsigned char *binBasePtr)
+    // {
+    //   std::map<std::string, creatorFct>::iterator it = osgNodeRegistry.find(node.name);
+    //   creatorFct creator = NULL;
+    //   if (it == osgNodeRegistry.end()) {
+    //     std::string creatorName = "ospray_create_sg_node__"+std::string(node.name);
+    //     creator = (creatorFct)getSymbol(creatorName);
+    //     if (!creator)
+    //       throw std::runtime_error("unknown ospray scene graph node '"+node.name+"'");
+    //     else
+    //       std::cout << "#osp:sg: creating at least one instance of node type '" << node.name << "'" << std::endl;
+    //     osgNodeRegistry[node.name] = creator;
+    //   } else creator = it->second;
+    //   assert(creator);
+    //   sg::Node *newNode = creator();
+    //   assert(newNode);
+    //   newNode->setType(node.name);
+    //   newNode->setName(node.getProp("name"));
+    //   try {
+    //     newNode->setFromXML(node,binBasePtr);
+    //     return newNode;
+    //   } catch (std::runtime_error e) {
+    //     delete newNode;
+    //     throw e;
+    //   }
+    // }
 
     // ==================================================================
     // XLM parser
@@ -151,7 +151,9 @@ namespace ospray {
           ospLoadModule("amr"); 
           ospLoadModule("sg_amr");  
         }
-        std::shared_ptr<sg::Node> newNode(createSGNodeFrom(*c,binBasePtr));
+        // std::shared_ptr<sg::Node> newNode(createSGNodeFrom(*c,binBasePtr));
+        std::shared_ptr<sg::Node> newNode = createNode(c->getProp("name"),c->name).get();
+        newNode->setFromXML(*c,binBasePtr);
         world->nodes.push_back(newNode);
         world->add(newNode);
         std::cout << "adding node to world: " << newNode->getName() << " " << newNode->getType() << "\n";
@@ -213,6 +215,37 @@ namespace ospray {
       
       cout << "#osp:sg: done parsing OSP file" << endl;
       return world;
+    }
+
+    void loadOSG(const std::string &fileName, std::shared_ptr<sg::World> world)
+    {
+      std::shared_ptr<xml::XMLDoc> doc;
+      // Ref<xml::XMLDoc> doc = NULL;
+      cout << "#osp:sg: starting to read OSPRay XML file '" << fileName << "'" << endl;
+      doc = xml::readXML(fileName);
+      cout << "#osp:sg: XML file read, starting to parse content..." << endl;
+
+      const std::string binFileName = fileName+"bin";
+      const unsigned char * const binBasePtr = mapFile(binFileName);
+
+      if (!doc) 
+        throw std::runtime_error("could not parse "+fileName);
+      
+      if (doc->child.size() != 1)
+        throw std::runtime_error("not an ospray xml file (empty XML document; no 'ospray' child node)'");
+      if ((doc->child[0]->name != "ospray" && doc->child[0]->name != "OSPRay") )
+        throw std::runtime_error("not an ospray xml file (document root node is '"+doc->child[0]->name+"', should be 'ospray'");
+
+      std::shared_ptr<xml::Node> root = doc->child[0];
+      // std::shared_ptr<sg::World> world(new World);//parseOSPRaySection(root->child[0]); 
+      if (root->child.size() == 1 && root->child[0]->name == "World") {
+        parseSGWorldNode(world.get(),*root->child[0],binBasePtr);
+      } else {
+        parseSGWorldNode(world.get(),*root,binBasePtr);
+      }
+      
+      cout << "#osp:sg: done parsing OSP file" << endl;
+      // return world;
     }
 
   } // ::ospray::sg

@@ -72,8 +72,6 @@ namespace ospray {
     void World::preRender(RenderContext &ctx)
     {
       preCommit(ctx);
-      if (getChild("visible")->getValue() == true)
-        ospAddGeometry(ospModel,ospInstance);
     }
 
     void World::postRender(RenderContext &ctx)
@@ -82,6 +80,40 @@ namespace ospray {
        ctx.world = oldWorld;
        if (oldWorld && oldWorld.get() != this)
        {
+        // ospAddGeometry(ospModel,ospInstance);
+       }
+    }
+
+    void InstanceGroup::preCommit(RenderContext &ctx)
+    {
+            if (instanced)
+      {
+      oldWorld = ctx.world;
+      ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
+      if (!ospModel)  //TODO: add support for changing initial geometry
+      {
+        ospModel = ospNewModel();
+        ospCommit(ospModel);
+        value = (OSPObject)ospModel;
+      }
+    }
+    }
+
+    void InstanceGroup::postCommit(RenderContext &ctx)
+    {
+            if (instanced)
+      {
+      ospCommit(ospModel);
+      ctx.world = oldWorld;
+    }
+    }
+
+    void InstanceGroup::preRender(RenderContext &ctx)
+    {
+      oldWorld = ctx.world;
+      if (instanced)
+      {
+      ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
         vec3f scale = getChild("scale")->getValue<vec3f>();
         vec3f rotation = getChild("rotation")->getValue<vec3f>();
         vec3f translation = getChild("position")->getValue<vec3f>();
@@ -90,10 +122,23 @@ namespace ospray {
         
         ospInstance = ospNewInstance(ospModel,(osp::affine3f&)xfm);
         ospCommit(ospInstance);
+
+      if (getChild("visible")->getValue() == true)
+        ospAddGeometry(oldWorld->ospModel,ospInstance);
+      }
+    }
+
+    void InstanceGroup::postRender(RenderContext &ctx)
+    {
+       // ospCommit(ospModel);
+       ctx.world = oldWorld;
+       if (oldWorld && oldWorld.get() != this)
+       {
         // ospAddGeometry(ospModel,ospInstance);
        }
     }
 
     OSP_REGISTER_SG_NODE(World);
+    OSP_REGISTER_SG_NODE(InstanceGroup);
   }
 }
