@@ -251,7 +251,7 @@ namespace ospray {
 
     // check if we're even in mpi parallel mode (can't do
     // data-parallel otherwise)
-    if (!ospray::core::isMpiParallel()) {
+    if (!ospray::mpi::isMpiParallel()) {
       throw std::runtime_error("#dvr: need data-parallel rendering, "
                                "but not running in mpi mode!?");
     }
@@ -291,7 +291,7 @@ namespace ospray {
     renderTask.dpv = ddVolumeVec[0];
 
     size_t NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
-    parallel_for(NTASKS, renderTask);
+    parallel_for(NTASKS, std::move(renderTask));
 
     dfb->waitUntilFinished();
     Renderer::endFrame(nullptr, channelFlags);

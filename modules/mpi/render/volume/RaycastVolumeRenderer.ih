@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "OSPMPIConfig.h"
 #include "common/Ray.ih"
 #include "lights/Light.ih"
 #include "math/box.ih"
