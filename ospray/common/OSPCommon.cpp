@@ -320,7 +320,7 @@ namespace ospray {
 
   void postErrorMsg(const std::string &msg, uint32_t postAtLogLevel)
   {
-    if (logLevel() >= postAtLogLevel)
+    if (logLevel() >= postAtLogLevel && ospray::api::Device::current.ptr)
       ospray::api::Device::current->error_fcn(msg.c_str());
   }
 

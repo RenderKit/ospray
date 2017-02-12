@@ -203,7 +203,7 @@ namespace ospray {
       tile->rcp_fbSize = bgTile.rcp_fbSize;
       tile->accumID = accumID;
       tile->generation = 1;
-      tile->children   = 0; //nextGenTile-1;
+      tile->children   = 0;
 
       fb->setTile(*tile);
     }
@@ -229,8 +229,10 @@ namespace ospray {
     if (ddVolumeVec.empty()) {
       static bool printed = false;
       if (!printed) {
-        cout << "no data parallel volumes, rendering in traditional"
+        std::stringstream msg;
+        msg << "no data parallel volumes, rendering in traditional"
              << " raycast_volume_render mode" << endl;
+        postErrorMsg(msg);
         printed = true;
       }
 
@@ -241,8 +243,10 @@ namespace ospray {
     // OK, we _need_ data-parallel rendering ....
     static bool printed = false;
     if (!printed) {
-      std::cout << "#dvr: at least one dp volume"
-                   " -> needs data-parallel rendering ..." << std::endl;
+      std::stringstream msg;
+      msg << "#dvr: at least one dp volume -> needs data-parallel rendering ..."
+          << std::endl;
+      postErrorMsg(msg);
       printed = true;
     }
 
