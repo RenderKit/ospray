@@ -26,6 +26,8 @@ namespace ospcommon {
   template <typename T>
   struct has_operator_method
   {
+    using TASK_T = typename std::decay<T>::type;
+
     template <class, class> class checker;
 
     template <typename C>
@@ -34,7 +36,7 @@ namespace ospcommon {
     template <typename C>
     static std::false_type test(...);
 
-    using type = decltype(test<T>(nullptr));
+    using type = decltype(test<TASK_T>(nullptr));
     static const bool value = std::is_same<std::true_type, type>::value;
   };
 
@@ -45,10 +47,12 @@ namespace ospcommon {
   template <typename T>
   struct has_operator_method_with_integral_param
   {
+    using TASK_T = typename std::decay<T>::type;
+
     template <typename P>
-    using t_param    = void(T::*)(P) const;
+    using t_param    = void(TASK_T::*)(P) const;
     using byte_t     = unsigned char;
-    using operator_t = decltype(&T::operator());
+    using operator_t = decltype(&TASK_T::operator());
 
     using param_is_byte     = std::is_same<t_param<byte_t>  , operator_t>;
     using param_is_short    = std::is_same<t_param<short>   , operator_t>;

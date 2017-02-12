@@ -288,7 +288,7 @@ namespace ospray {
     renderTask.dpv = ddVolumeVec[0];
 
     size_t NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
-    parallel_for(NTASKS, std::move(renderTask));
+    parallel_for(NTASKS, renderTask);
 
     dfb->waitUntilFinished();
     Renderer::endFrame(nullptr, channelFlags);
