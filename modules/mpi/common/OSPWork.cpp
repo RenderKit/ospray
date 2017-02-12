@@ -289,8 +289,6 @@ namespace ospray {
         }
       }
 
-
-      
       /*! create a work unit of given type */
       template<typename T>
       inline std::shared_ptr<Work> make_work_unit()
@@ -302,9 +300,9 @@ namespace ospray {
       CreateWorkFct createMakeWorkFct()
       { return make_work_unit<T>; }
       
-#define REGISTER_WORK_UNIT(W) workTypeRegistry[W::tag] = createMakeWorkFct<W>();
+#define REGISTER_WORK_UNIT(W) registry[W::tag] = createMakeWorkFct<W>();
       
-      void registerOSPWorkItems(std::map<Work::tag_t,CreateWorkFct> &workTypeRegistry)
+      void registerOSPWorkItems(WorkTypeRegistry &registry)
       {
         REGISTER_WORK_UNIT(NewRenderer);
         REGISTER_WORK_UNIT(NewModel);
@@ -426,6 +424,7 @@ namespace ospray {
         Assert(camera);
         handle.assign(camera);
       }
+
       template<>
       void NewCamera::runOnMaster()
       { /* do nothing */ }
@@ -440,6 +439,7 @@ namespace ospray {
         volume->refInc();
         handle.assign(volume);
       }      
+
       template<>
       void NewVolume::runOnMaster()
       {
@@ -451,11 +451,13 @@ namespace ospray {
       {
         TransferFunction *tfn = TransferFunction::createInstance(type.c_str());
         if (!tfn) {
-          throw std::runtime_error("unknown transfer functon type '" + type + "'");
+          throw std::runtime_error("unknown transfer functon type '"
+                                   + type + "'");
         }
         tfn->refInc();
         handle.assign(tfn);
       }
+
       template<>
       void NewTransferFunction::runOnMaster()
       { /* do nothing */ }
@@ -468,6 +470,7 @@ namespace ospray {
         }
         handle.assign(pixelOp);
       }
+
       template<>
       void NewPixelOp::runOnMaster()
       { /* do nothing */ }

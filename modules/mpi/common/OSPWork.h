@@ -133,9 +133,10 @@ namespace ospray {
         virtual void runOnMaster() {}
       };
 
-      using CreateWorkFct = std::shared_ptr<Work>(*)();
+      using CreateWorkFct    = std::shared_ptr<Work>(*)();
+      using WorkTypeRegistry = std::map<Work::tag_t, CreateWorkFct>;
 
-      void registerOSPWorkItems(std::map<Work::tag_t,CreateWorkFct> &workTypeRegistry);
+      void registerOSPWorkItems(WorkTypeRegistry &registry);
 
       /*! templated base class that allows to implemnt common
         functoinality of a work item (name, tag, flush bit) though
@@ -282,7 +283,7 @@ namespace ospray {
         ObjectHandle       handle;
         size_t             nItems;
         OSPDataType        format;
-        std::vector<char>  data;
+        std::vector<byte_t>  data;
         // If we're in collab/independent mode we can
         // be setting with just a local shared pointer
         void              *localData;
@@ -310,7 +311,7 @@ namespace ospray {
         ObjectHandle      handle;
         vec2i             dimensions;
         OSPTextureFormat  format;
-        std::vector<char> data;
+        std::vector<byte_t> data;
         uint32            flags;
       };
 
@@ -335,7 +336,7 @@ namespace ospray {
         ObjectHandle handle;
         vec3i regionStart, regionSize;
         OSPDataType type;
-        std::vector<char> data;
+        std::vector<byte_t> data;
       };
 
       struct CommitObject : BaseWork<CMD_COMMIT>

@@ -40,6 +40,10 @@ namespace ospcommon {
     static const bool value = std::is_same<std::true_type, type>::value;
   };
 
+#ifdef _WIN32
+  template <typename T>
+  using has_operator_method_with_integral_param = has_operator_method<T>;
+#else
   //NOTE(jda) - This checks at compile time if T implements the method
   //            'void T::operator(P taskIndex)', where P is an integral type
   //            (must be short, int, uint, or size_t) at compile-time. To be used
@@ -69,5 +73,6 @@ namespace ospcommon {
        param_is_long::value     ||
        param_is_size_t::value);
   };
+#endif
 
 } // ::ospcommon
