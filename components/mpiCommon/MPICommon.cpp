@@ -77,14 +77,42 @@ namespace ospray {
 
     /*! constructor. sets the 'comm', 'rank', and 'size' fields */
     Group::Group(const Group &other)
-      : comm(other.comm), rank(other.rank), size(other.size), containsMe(other.containsMe)
+      : comm(other.comm), rank(other.rank),
+        size(other.size), containsMe(other.containsMe)
     {
+    }
+
+    void Group::makeIntraComm()
+    {
+      lockMPI("Group::makeIntraComm");
+      MPI_Comm_rank(comm,&rank);
+      MPI_Comm_size(comm,&size);
+      unlockMPI();
+      containsMe = true;
+    }
+
+    void Group::makeIntraComm(MPI_Comm comm)
+    {
+      this->comm = comm; makeIntraComm();
+    }
+
+    void Group::makeInterComm(MPI_Comm comm)
+    {
+      this->comm = comm; makeInterComm();
+    }
+
+    void Group::makeInterComm()
+    {
+      lockMPI("Group::makeInterComm");
+      containsMe = false; rank = MPI_ROOT;
+      MPI_Comm_remote_size(comm,&size);
+      unlockMPI();
     }
 
     void Group::barrier() const
     {
       lockMPI("mpi::Group::barrier");
-      MPI_CALL(Barrier(comm)); 
+      MPI_CALL(Barrier(comm));
       unlockMPI();
     }
 

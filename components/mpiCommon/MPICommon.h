@@ -72,43 +72,30 @@ namespace ospray {
     
     /*! use this macro as a lock-guard inside any scope you want to
         perform MPI calls in */
-#define SERIALIZE_MPI std::lock_guard<std::mutex>(ospray::mpi::mpiSerializerMutex);
+#define SERIALIZE_MPI \
+  std::lock_guard<std::mutex>(ospray::mpi::mpiSerializerMutex);
     
     void checkMpiError(int rc);
 
     //! abstraction for an MPI group. 
     /*! it's the responsiblity of the respective mpi setup routines to
       fill in the proper values */
-    struct Group
+    struct OSPRAY_MPI_INTERFACE Group
     {
       /*! constructor. sets the 'comm', 'rank', and 'size' fields */
-      Group(MPI_Comm initComm=MPI_COMM_NULL);
+      Group(MPI_Comm initComm = MPI_COMM_NULL);
       Group(const Group &other);
 
       inline bool valid() const
       {
         return comm != MPI_COMM_NULL; 
       }
+
       // this is the RIGHT naming convention - old code has them all inside out.
-      void makeIntraComm() 
-      {
-        lockMPI("Group::makeIntraComm");
-        MPI_Comm_rank(comm,&rank);
-        MPI_Comm_size(comm,&size);
-        unlockMPI();
-        containsMe = true;
-      }
-      void makeIntraComm(MPI_Comm comm)
-      { this->comm = comm; makeIntraComm(); }
-      void makeInterComm(MPI_Comm comm)
-      { this->comm = comm; makeInterComm(); }
-      void makeInterComm()
-      {
-        lockMPI("Group::makeInterComm");
-        containsMe = false; rank = MPI_ROOT;
-        MPI_Comm_remote_size(comm,&size);
-        unlockMPI();
-      }
+      void makeIntraComm();
+      void makeIntraComm(MPI_Comm comm);
+      void makeInterComm(MPI_Comm comm);
+      void makeInterComm();
 
       /*! set to given intercomm, and properly set size, root, etc */
       void setTo(MPI_Comm comm);
@@ -117,7 +104,7 @@ namespace ospray {
       Group dup() const;
 
       /*! perform a MPI_barrier on this communicator */
-      void barrier() const ;
+      void barrier() const;
       
       /*! whether the current process/thread is a member of this
         gorup */
@@ -133,7 +120,7 @@ namespace ospray {
       int size {-1};
     };
 
-    // //! abstraction for any other peer node that we might want to communicate with
+    //! abstraction for any other peer node that we might want to communicate with
     struct Address
     {
       //! group that this peer is in
@@ -174,18 +161,7 @@ namespace ospray {
 
     // Initialize OSPRay's MPI groups
     OSPRAY_MPI_INTERFACE void init(int *ac, const char **av);
-
-    // namespace work {
-    //   struct Work;
-    // }
-
-    // OSPRAY_INTERFACE void send(const Address& address, void* msgPtr, int32 msgSize);
-    // OSPRAY_MPI_INTERFACE void send(const Address& addr, work::Work* work);
-    // //TODO: callback?
-    // OSPRAY_MPI_INTERFACE void recv(const Address& addr, std::vector<work::Work*>& work);
-    // OSPRAY_INTERFACE void send(const Address& addr, )
     OSPRAY_MPI_INTERFACE void flush();
-    // OSPRAY_MPI_INTERFACE void barrier(const Group& group);
 
     inline int getWorkerCount()
     {
