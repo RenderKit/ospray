@@ -97,7 +97,10 @@ namespace ospray {
       MPI_Status status;
       mpi::init(ac,av);
       if (logMPI) {
-        printf("#o: initMPI::OSPonRanks: %i/%i\n",world.rank,world.size);
+        std::stringstream msg;
+        msg << "#o: initMPI::OSPonRanks: " << world.rank << '/' << world.size
+            << std::endl;
+        postErrorMsg(msg);
       }
       lockMPI("createMPI_runOnExistingRanks");
       MPI_Barrier(MPI_COMM_WORLD);
@@ -117,15 +120,19 @@ namespace ospray {
         unlockMPI();
         app.makeIntraComm();
         if (logMPI) {
-          printf("#w: app process %i/%i (global %i/%i)\n",
-                 app.rank,app.size,world.rank,world.size);
+          std::stringstream msg;
+          msg << "#w: app process " << app.rank << '/' << app.size
+              << " (global " << world.rank << '/' << world.size << std::endl;
+          postErrorMsg(msg);
         }
 
         MPI_Intercomm_create(app.comm, 0, world.comm, 1, 1, &worker.comm);
         if (logMPI) {
-          std::cout << "master: Made 'worker' intercomm (through intercomm_create): "
-                    << std::hex << std::showbase << worker.comm
-                    << std::noshowbase << std::dec << std::endl;
+          std::stringstream msg;
+          msg << "master: Made 'worker' intercomm (through intercomm_create): "
+              << std::hex << std::showbase << worker.comm
+              << std::noshowbase << std::dec << std::endl;
+          postErrorMsg(msg);
         }
         
         // worker.makeIntracomm();
@@ -137,12 +144,18 @@ namespace ospray {
         // working correctly
         // ------------------------------------------------------------------
         {
-          if (logMPI)
-            printf("#m: ping-ponging a test message to every worker...\n");
+          if (logMPI) {
+            std::stringstream msg;
+            msg << "#m: ping-ponging a test message to every worker..."
+                << std::endl;
+          }
 
           for (int i=0;i<worker.size;i++) {
-            if (logMPI)
-              printf("#m: sending tag %i to worker %i\n",i,i);
+            if (logMPI) {
+              std::stringstream msg;
+              msg << "#m: sending tag "<< i << " to worker " << i << std::endl;
+              postErrorMsg(msg);
+            }
             MPI_Send(&i,1,MPI_INT,i,i,worker.comm);
             int reply;
             MPI_Recv(&reply,1,MPI_INT,i,i,worker.comm,&status);
@@ -163,12 +176,14 @@ namespace ospray {
         MPI_Comm_split(mpi::world.comm,0,mpi::world.rank,&worker.comm);
         worker.makeIntraComm();
         if (logMPI) {
-          std::cout << "master: Made 'worker' intercomm (through split): "
-                    << std::hex << std::showbase << worker.comm
-                    << std::noshowbase << std::dec << std::endl;
+          std::stringstream msg;
+          msg << "master: Made 'worker' intercomm (through split): "
+              << std::hex << std::showbase << worker.comm
+              << std::noshowbase << std::dec << std::endl;
 
-          printf("#w: worker process %i/%i (global %i/%i)\n",
-                 worker.rank,worker.size,world.rank,world.size);
+          msg << "#w: app process " << app.rank << '/' << app.size
+              << " (global " << world.rank << '/' << world.size << std::endl;
+          postErrorMsg(msg);
         }
 
         MPI_Intercomm_create(worker.comm, 0, world.comm, 0, 1, &app.comm);
@@ -181,8 +196,10 @@ namespace ospray {
         {
           // replying to test-message
           if (logMPI) {
-            printf("#w: start-up ping-pong: worker %i trying to receive tag %i...\n",
-                   worker.rank,worker.rank);
+            std::stringstream msg;
+            msg << "#w: start-up ping-pong: worker " << worker.rank <<
+                   " trying to receive tag " << worker.rank << "...\n";
+            postErrorMsg(msg);
           }
           int reply;
           MPI_Recv(&reply,1,MPI_INT,0,worker.rank,app.comm,&status);
@@ -208,8 +225,10 @@ namespace ospray {
           /* no return here - 'runWorker' will never return */
         } else {
           if (logMPI) {
-            cout << "#osp:mpi: distributed mode detected, "
-                 << "returning device on all ranks!" << endl;
+            std::stringstream msg;
+            msg << "#osp:mpi: distributed mode detected, "
+                << "returning device on all ranks!" << endl;
+            postErrorMsg(msg);
           }
         }
       }
@@ -923,8 +942,10 @@ namespace ospray {
     {
       if (logMPI) {
         static size_t numWorkSent = 0;
-        printf("#osp.mpi.master: processing/sending work item #%ul\n",
-               numWorkSent++);
+        std::stringstream msg;
+        msg << "#osp.mpi.master: processing/sending work item "
+            << numWorkSent++ << std::endl;
+        postErrorMsg(msg);
       }
       auto tag = typeIdOf(work);
       writeStream->write(&tag, sizeof(tag));
@@ -937,9 +958,10 @@ namespace ospray {
       work->runOnMaster();
 
       if (logMPI) {
-        printf("#osp.mpi.master: done work item, tag %ul: %s\n",
-               tag,
-               typeString(work).c_str());
+        std::stringstream msg;
+        msg << "#osp.mpi.master: done work item, tag " << tag << ": "
+            << typeString(work) << std::endl;
+        postErrorMsg(msg);
       }
     }
 

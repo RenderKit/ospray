@@ -161,8 +161,8 @@ namespace ospray {
       // -------------------------------------------------------
       // setting up read/write streams
       // -------------------------------------------------------
-      auto mpiFabric  = ospcommon::make_unique<MPIBcastFabric>(mpi::app);
-      auto readStream = ospcommon::make_unique<BufferedFabric::ReadStream>(*mpiFabric);
+      auto mpiFabric  = make_unique<MPIBcastFabric>(mpi::app);
+      auto readStream = make_unique<BufferedFabric::ReadStream>(*mpiFabric);
 
       // create registry of work item types
       std::map<work::Work::tag_t,work::CreateWorkFct> workTypeRegistry;
