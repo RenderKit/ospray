@@ -22,70 +22,15 @@
 #include "mpi/fb/DistributedFrameBuffer.h"
 #include "mpi/render/MPILoadBalancer.h"
 
-#include "common/Model.h"
 #include "common/Data.h"
 #include "common/Library.h"
 #include "common/Model.h"
 #include "geometry/TriangleMesh.h"
-#include "render/Renderer.h"
-#include "camera/Camera.h"
-#include "volume/Volume.h"
-#include "lights/Light.h"
 #include "texture/Texture2D.h"
-#include "transferFunction/TransferFunction.h"
 
 namespace ospray {
   namespace mpi {
     namespace work {
-
-      std::string commandTagToString(CommandTag tag)
-      {
-        switch (tag) {
-        case CMD_INVALID:              return "CMD_INVALID";
-        case CMD_NEW_RENDERER:         return "CMD_NEW_RENDERER";
-        case CMD_FRAMEBUFFER_CREATE:   return "CMD_FRAMEBUFFER_CREATE";
-        case CMD_RENDER_FRAME:         return "CMD_RENDER_FRAME";
-        case CMD_FRAMEBUFFER_CLEAR:    return "CMD_FRAMEBUFFER_CLEAR";
-        case CMD_FRAMEBUFFER_MAP:      return "CMD_FRAMEBUFFER_MAP";
-        case CMD_FRAMEBUFFER_UNMAP:    return "CMD_FRAMEBUFFER_UNMAP";
-        case CMD_NEW_DATA:             return "CMD_NEW_DATA";
-        case CMD_NEW_MODEL:            return "CMD_NEW_MODEL";
-        case CMD_NEW_GEOMETRY:         return "CMD_NEW_GEOMETRY";
-        case CMD_NEW_MATERIAL:         return "CMD_NEW_MATERIAL";
-        case CMD_NEW_LIGHT:            return "CMD_NEW_LIGHT";
-        case CMD_NEW_CAMERA:           return "CMD_NEW_CAMERA";
-        case CMD_NEW_VOLUME:           return "CMD_NEW_VOLUME";
-        case CMD_NEW_TRANSFERFUNCTION: return "CMD_NEW_TRANSFERFUNCTION";
-        case CMD_NEW_TEXTURE2D:        return "CMD_NEW_TEXTURE2D";
-        case CMD_ADD_GEOMETRY:         return "CMD_ADD_GEOMETRY";
-        case CMD_REMOVE_GEOMETRY:      return "CMD_REMOVE_GEOMETRY";
-        case CMD_ADD_VOLUME:           return "CMD_ADD_VOLUME";
-        case CMD_COMMIT:               return "CMD_COMMIT";
-        case CMD_LOAD_MODULE:          return "CMD_LOAD_MODULE";
-        case CMD_RELEASE:              return "CMD_RELEASE";
-        case CMD_REMOVE_VOLUME:        return "CMD_REMOVE_VOLUME";
-        case CMD_SET_MATERIAL:         return "CMD_SET_MATERIAL";
-        case CMD_SET_REGION:           return "CMD_SET_REGION";
-        case CMD_SET_REGION_DATA:      return "CMD_SET_REGION_DATA";
-        case CMD_SET_OBJECT:           return "CMD_SET_OBJECT";
-        case CMD_SET_STRING:           return "CMD_SET_STRING";
-        case CMD_SET_INT:              return "CMD_SET_INT";
-        case CMD_SET_FLOAT:            return "CMD_SET_FLOAT";
-        case CMD_SET_VEC2F:            return "CMD_SET_VEC2F";
-        case CMD_SET_VEC2I:            return "CMD_SET_VEC2I";
-        case CMD_SET_VEC3F:            return "CMD_SET_VEC3F";
-        case CMD_SET_VEC3I:            return "CMD_SET_VEC3I";
-        case CMD_SET_VEC4F:            return "CMD_SET_VEC4F";
-        case CMD_SET_PIXELOP:          return "CMD_SET_PIXELOP";
-        case CMD_REMOVE_PARAM:         return "CMD_REMOVE_PARAM";
-        case CMD_NEW_PIXELOP:          return "CMD_NEW_PIXELOP";
-        case CMD_API_MODE:             return "CMD_API_MODE";
-        case CMD_FINALIZE:             return "CMD_FINALIZE";
-        default:
-          PRINT(tag);
-          return "Unrecognized CommandTag #"+std::to_string((int)tag);
-        }
-      }
 
 
       // =======================================================
@@ -106,9 +51,7 @@ namespace ospray {
           // It looks like yes? or at least glutViewer segfaults if we don't do this
           // hack, to stay compatible with earlier version
           Model *model = dynamic_cast<Model*>(obj);
-          if (model) {
-            model->finalize();
-          }
+          if (model) model->finalize();
         } else {
           throw std::runtime_error("Error: rank "
                                    + std::to_string(mpi::world.rank)
@@ -124,7 +67,6 @@ namespace ospray {
         /// does get flushed etcpp)
         
         mpi::app.barrier();
-        // mpi::world.barrier();
       }
       
       void CommitObject::runOnMaster()
@@ -136,7 +78,6 @@ namespace ospray {
           }
         }
         mpi::worker.barrier();
-        // mpi::world.barrier();
       }
       
       void CommitObject::serialize(WriteStream &b) const
@@ -267,26 +208,6 @@ namespace ospray {
         geom->setMaterial(mat);
       }
 
-      template<typename T>
-      void SetParam<T>::run() 
-      {
-        ManagedObject *obj = handle.lookup();
-        Assert(obj);
-        obj->findParam(name.c_str(), true)->set(val);
-      }
-      
-      template<typename T>
-      void SetParam<T>::runOnMaster() 
-      {
-        if (!handle.defined())
-          return;
-        
-        ManagedObject *obj = handle.lookup();
-        if (dynamic_cast<Renderer*>(obj) || dynamic_cast<Volume*>(obj)) {
-          obj->findParam(name.c_str(), true)->set(val);
-        }
-      }
-
       /*! create a work unit of given type */
       template<typename T>
       inline std::unique_ptr<Work> make_work_unit()
@@ -298,7 +219,7 @@ namespace ospray {
       CreateWorkFct createMakeWorkFct()
       { return make_work_unit<T>; }
 
-#define REGISTER_WORK_UNIT(W) registry[W::tag] = createMakeWorkFct<W>()
+#define REGISTER_WORK_UNIT(W) registry[typeIdOf<W>()] = createMakeWorkFct<W>()
       
       void registerOSPWorkItems(WorkTypeRegistry &registry)
       {
@@ -350,17 +271,10 @@ namespace ospray {
       }
 #undef REGISTER_WORK_UNIT
 
+      // =======================================================
+      // ospNewRenderer
+      // =======================================================
 
-      template<>
-      void NewObjectT<ObjectType_Renderer>::run()
-      {
-        Renderer *renderer = Renderer::createRenderer(type.c_str());
-        if (!renderer) {
-          throw std::runtime_error("unknown renderer type '" + type + "'");
-        }
-        handle.assign(renderer);
-      }
-      
       template<>
       void NewRenderer::runOnMaster()
       {
@@ -368,91 +282,18 @@ namespace ospray {
       }
 
       // =======================================================
-      // ospNewModel
+      // ospNewVolume
       // =======================================================
-
-      template<>
-      void NewModel::run()
-      {
-        Model *model = new Model;
-        handle.assign(model);
-      }
-      
-      // =======================================================
-      // ospNewGeometry
-      // =======================================================
-
-      template<>
-      void NewGeometry::run()
-      {
-        Geometry *geometry = Geometry::createGeometry(type.c_str());
-        if (!geometry) {
-          throw std::runtime_error("unknown geometry type '" + type + "'");
-        }
-        // TODO: Why is this manual reference increment needed!?
-        // is it to keep the object alive until ospRelease is called
-        // since in the distributed mode no app has a reference to this object?
-
-        // iw: agree, this looks fishy; the 'handle' will eventually
-        // hold the ref the app is supposed to have (as long as the
-        // app has a valid handle it has a valid ref!), so adding a
-        // second one is fishy. IF this had to be done it'd have to be
-        // done for _every_ object (and then, arguably in
-        // handle::assign, not here ...!?
-        geometry->refInc();
-        handle.assign(geometry);
-      }
-
-      // =======================================================
-      // ospNewCamera
-      // =======================================================
-      
-      template<>
-      void NewCamera::run()
-      {
-        Camera *camera = Camera::createCamera(type.c_str());
-        Assert(camera);
-        handle.assign(camera);
-      }
-      
-      template<>
-      void NewVolume::run()
-      {
-        Volume *volume = Volume::createInstance(type.c_str());
-        if (!volume) {
-          throw std::runtime_error("unknown volume type '" + type + "'");
-        }
-        volume->refInc();
-        handle.assign(volume);
-      }      
 
       template<>
       void NewVolume::runOnMaster()
       {
         run();
       }
-      
-      template<>
-      void NewTransferFunction::run()
-      {
-        TransferFunction *tfn = TransferFunction::createInstance(type.c_str());
-        if (!tfn) {
-          throw std::runtime_error("unknown transfer functon type '"
-                                   + type + "'");
-        }
-        tfn->refInc();
-        handle.assign(tfn);
-      }
 
-      template<>
-      void NewPixelOp::run()
-      {
-        PixelOp *pixelOp = PixelOp::createPixelOp(type.c_str());
-        if (!pixelOp) {
-          throw std::runtime_error("unknown pixel op type '" + type + "'");
-        }
-        handle.assign(pixelOp);
-      }
+      // =======================================================
+      // ospNewMaterial
+      // =======================================================
 
       void NewMaterial::run()
       {
@@ -466,12 +307,7 @@ namespace ospray {
         }
         // No renderer present or the renderer doesn't intercept this
         // material type.
-        if (!material) {
-          material = Material::createMaterial(type.c_str());
-        }
-        if (!material) {
-          throw std::runtime_error("unknown material type '" + type + "'");
-        }
+        if (!material) material = Material::createMaterial(type.c_str());
         handle.assign(material);
       }
       
@@ -487,12 +323,7 @@ namespace ospray {
         }
         // No renderer present or the renderer doesn't intercept this
         // material type.
-        if (!light) {
-          light = Light::createLight(type.c_str());
-        }
-        if (!light) {
-          throw std::runtime_error("unknown light type '" + type + "'");
-        }
+        if (!light) light = Light::createLight(type.c_str());
         handle.assign(light);
       }
       
@@ -833,7 +664,7 @@ namespace ospray {
         PixelOp     *po = (PixelOp*)poHandle.lookup();
         Assert(fb);
         Assert(po);
-        fb->pixelOp = po->createInstance(fb, fb->pixelOp.ptr);
+        fb->pixelOp = po->createFromInstance(fb, fb->pixelOp.ptr);
         if (!fb->pixelOp) {
           std::cout << "#osp:mpi: WARNING: PixelOp did not create an instance!"
                     << std::endl;

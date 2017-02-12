@@ -178,5 +178,42 @@ namespace ospray {
       return getWorkerCount() > 0;
     }
 
+    // RTTI hash ID lookup helper functions ///////////////////////////////////
+
+    template <typename T>
+    inline size_t typeIdOf()
+    {
+      auto &info = typeid(T);
+      return info.hash_code();
+    }
+
+    template <typename T>
+    inline size_t typeIdOf(T *v)
+    {
+      auto &info = typeid(*v);
+      return info.hash_code();
+    }
+
+    template <typename T>
+    inline size_t typeIdOf(T &v)
+    {
+      auto &info = typeid(*v);
+      return info.hash_code();
+    }
+
+    template <typename T>
+    inline size_t typeIdOf(const std::unique_ptr<T> &v)
+    {
+      auto &info = typeid(*v);
+      return info.hash_code();
+    }
+
+    template <typename T>
+    inline size_t typeIdOf(const std::shared_ptr<T> &v)
+    {
+      auto &info = typeid(*v);
+      return info.hash_code();
+    }
+
   }// ::ospray::mpi
 } // ::ospray

@@ -368,7 +368,7 @@ namespace ospray {
     OSPPixelOp LocalDevice::newPixelOp(const char *type)
     {
       Assert(type != nullptr && "invalid render type identifier");
-      PixelOp *pixelOp = PixelOp::createPixelOp(type);
+      PixelOp *pixelOp = PixelOp::createInstance(type);
       if (!pixelOp) {
         if (debugMode) {
           throw std::runtime_error("unknown pixelOp type '" +
@@ -388,14 +388,14 @@ namespace ospray {
       PixelOp *po = (PixelOp*)_op;
       assert(fb);
       assert(po);
-      fb->pixelOp = po->createInstance(fb,fb->pixelOp.ptr);
+      fb->pixelOp = po->createFromInstance(fb,fb->pixelOp.ptr);
     }
 
     /*! create a new renderer object (out of list of registered renderers) */
     OSPRenderer LocalDevice::newRenderer(const char *type)
     {
       Assert(type != nullptr && "invalid render type identifier");
-      Renderer *renderer = Renderer::createRenderer(type);
+      Renderer *renderer = Renderer::createInstance(type);
       if (!renderer) {
         if (debugMode) {
           throw std::runtime_error("unknown renderer type '" +
@@ -412,7 +412,7 @@ namespace ospray {
     OSPGeometry LocalDevice::newGeometry(const char *type)
     {
       Assert(type != nullptr && "invalid render type identifier");
-      Geometry *geometry = Geometry::createGeometry(type);
+      Geometry *geometry = Geometry::createInstance(type);
       if (!geometry) return nullptr;
       geometry->refInc();
       return (OSPGeometry)geometry;
@@ -451,7 +451,7 @@ namespace ospray {
     OSPCamera LocalDevice::newCamera(const char *type)
     {
       Assert(type != nullptr && "invalid camera type identifier");
-      Camera *camera = Camera::createCamera(type);
+      Camera *camera = Camera::createInstance(type);
       if (!camera) {
         if (debugMode) {
           throw std::runtime_error("unknown camera type '"

@@ -80,15 +80,9 @@ namespace ospray {
     virtual ~PixelOp() = default;
 
     //! \brief create an instance of this pixel op
-    virtual Instance *createInstance(FrameBuffer *fb, PixelOp::Instance *prev);
+    virtual Instance *createFromInstance(FrameBuffer *fb, PixelOp::Instance *prev);
 
-    /*! \brief creates an abstract renderer class of given type
-
-      The respective renderer type must be a registered renderer type
-      in either ospray proper or any already loaded module. For
-      renderer types specified in special modules, make sure to call
-      ospLoadModule first. */
-    static PixelOp *createPixelOp(const char *identifier);
+    static PixelOp *createInstance(const char *identifier);
   };
 
   /*! \brief registers a internal ospray::<ClassName> renderer under

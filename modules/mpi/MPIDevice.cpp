@@ -923,14 +923,11 @@ namespace ospray {
     {
       if (logMPI) {
         static size_t numWorkSent = 0;
-        printf("#osp.mpi.master: processing/sending work item #%li: %s\n",
-               numWorkSent++,
-               work::commandTagToString((work::CommandTag)work->getTag()).c_str());
+        printf("#osp.mpi.master: processing/sending work item #%li\n",
+               numWorkSent++);
       }
-      work::Work::tag_t tag = work->getTag();
-      if (tag == 1)
-        throw std::runtime_error("inavlid tag!?");
-      writeStream->write(&tag,sizeof(tag));
+      auto tag = typeIdOf(work);
+      writeStream->write(&tag, sizeof(tag));
       work->serialize(*writeStream);
       
       if (work->flushing()) 
@@ -938,9 +935,11 @@ namespace ospray {
 
       // Run the master side variant of the work unit
       work->runOnMaster();
+
       if (logMPI) {
-        printf("#osp.mpi.master: done work item %s\n",
-               work::commandTagToString((work::CommandTag)work->getTag()).c_str());
+        printf("#osp.mpi.master: done work item, tag %i: %s\n",
+               tag,
+               work->toString().c_str());
       }
     }
 

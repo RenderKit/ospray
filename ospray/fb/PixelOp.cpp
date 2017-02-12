@@ -23,14 +23,14 @@
 
 namespace ospray {
 
-  PixelOp::Instance *PixelOp::createInstance(FrameBuffer *fb,
-                                             PixelOp::Instance *prev)
+  PixelOp::Instance *PixelOp::createFromInstance(FrameBuffer *fb,
+                                                 PixelOp::Instance *prev)
   {
     UNUSED(fb, prev);
     return nullptr;
   }
 
-  PixelOp *PixelOp::createPixelOp(const char *type)
+  PixelOp *PixelOp::createInstance(const char *type)
   {
     return createInstanceHelper<PixelOp, OSP_PIXEL_OP>(type);
   }

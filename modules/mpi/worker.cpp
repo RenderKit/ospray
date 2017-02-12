@@ -78,15 +78,24 @@ namespace ospray {
       readStream >> tag;
 
       static size_t numWorkReceived = 0;
+
       if(logMPI) {
-        printf("#osp.mpi.worker: got work #%li, tag %i: %s\n",
+        printf("#osp.mpi.worker: got work #%li, tag %i",
                numWorkReceived++,
-               tag,work::commandTagToString((work::CommandTag)tag).c_str());
+               tag);
       }
-      
+
       auto make_work = registry.find(tag);
-      assert(make_work != registry.end());
+      if (make_work == registry.end())
+        throw std::runtime_error("Invalid work type received!");
+
       auto work = make_work->second();
+
+      if(logMPI) {
+        printf(": %s\n", work->toString().c_str());
+      }
+
+
       work->deserialize(readStream);
       return work;
     }
@@ -163,15 +172,13 @@ namespace ospray {
       while (1) {
         auto work = readWork(workTypeRegistry, *readStream);
         if (logMPI) {
-          std::cout << "#osp.mpi.worker: processing work "
-                    << work::commandTagToString((work::CommandTag)work->getTag())
-                    << std::endl;
+          std::cout << "#osp.mpi.worker: processing work " << typeIdOf(work)
+                    << ": " << work->toString() << std::endl;
         }
         work->run();
         if (logMPI) {
-          std::cout << "#osp.mpi.worker: done w/ work "
-                    << work::commandTagToString((work::CommandTag)work->getTag())
-                    << std::endl;
+          std::cout << "#osp.mpi.worker: done w/ work " << typeIdOf(work)
+                    << ": " << work->toString() << std::endl;
         }
       }
     }
