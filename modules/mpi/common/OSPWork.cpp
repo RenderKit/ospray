@@ -208,68 +208,54 @@ namespace ospray {
         geom->setMaterial(mat);
       }
 
-      /*! create a work unit of given type */
-      template<typename T>
-      inline std::unique_ptr<Work> make_work_unit()
-      {
-        return ospcommon::make_unique<T>();
-      }
-
-      template<typename T>
-      CreateWorkFct createMakeWorkFct()
-      { return make_work_unit<T>; }
-
-#define REGISTER_WORK_UNIT(W) registry[typeIdOf<W>()] = createMakeWorkFct<W>()
-      
       void registerOSPWorkItems(WorkTypeRegistry &registry)
       {
-        REGISTER_WORK_UNIT(NewRenderer);
-        REGISTER_WORK_UNIT(NewModel);
-        REGISTER_WORK_UNIT(NewGeometry);
-        REGISTER_WORK_UNIT(NewCamera);
-        REGISTER_WORK_UNIT(NewVolume);
-        REGISTER_WORK_UNIT(NewTransferFunction);
-        REGISTER_WORK_UNIT(NewPixelOp);
+        registerWorkUnit<NewRenderer>(registry);
+        registerWorkUnit<NewModel>(registry);
+        registerWorkUnit<NewGeometry>(registry);
+        registerWorkUnit<NewCamera>(registry);
+        registerWorkUnit<NewVolume>(registry);
+        registerWorkUnit<NewTransferFunction>(registry);
+        registerWorkUnit<NewPixelOp>(registry);
 
-        REGISTER_WORK_UNIT(NewMaterial);
-        REGISTER_WORK_UNIT(NewLight);
+        registerWorkUnit<NewMaterial>(registry);
+        registerWorkUnit<NewLight>(registry);
 
-        REGISTER_WORK_UNIT(NewData);
-        REGISTER_WORK_UNIT(NewTexture2d);
+        registerWorkUnit<NewData>(registry);
+        registerWorkUnit<NewTexture2d>(registry);
 
-        REGISTER_WORK_UNIT(CommitObject);
-        REGISTER_WORK_UNIT(CommandRelease);
+        registerWorkUnit<CommitObject>(registry);
+        registerWorkUnit<CommandRelease>(registry);
 
-        REGISTER_WORK_UNIT(LoadModule);
+        registerWorkUnit<LoadModule>(registry);
 
-        REGISTER_WORK_UNIT(AddGeometry);
-        REGISTER_WORK_UNIT(AddVolume);
-        REGISTER_WORK_UNIT(RemoveGeometry);
-        REGISTER_WORK_UNIT(RemoveVolume);
+        registerWorkUnit<AddGeometry>(registry);
+        registerWorkUnit<AddVolume>(registry);
+        registerWorkUnit<RemoveGeometry>(registry);
+        registerWorkUnit<RemoveVolume>(registry);
 
-        REGISTER_WORK_UNIT(CreateFrameBuffer);
-        REGISTER_WORK_UNIT(ClearFrameBuffer);
-        REGISTER_WORK_UNIT(RenderFrame);
+        registerWorkUnit<CreateFrameBuffer>(registry);
+        registerWorkUnit<ClearFrameBuffer>(registry);
+        registerWorkUnit<RenderFrame>(registry);
 
-        REGISTER_WORK_UNIT(SetRegion);
-        REGISTER_WORK_UNIT(SetPixelOp);
+        registerWorkUnit<SetRegion>(registry);
+        registerWorkUnit<SetPixelOp>(registry);
 
-        REGISTER_WORK_UNIT(SetMaterial);
-        REGISTER_WORK_UNIT(SetParam<OSPObject>);
-        REGISTER_WORK_UNIT(SetParam<std::string>);
-        REGISTER_WORK_UNIT(SetParam<int>);
-        REGISTER_WORK_UNIT(SetParam<float>);
-        REGISTER_WORK_UNIT(SetParam<vec2f>);
-        REGISTER_WORK_UNIT(SetParam<vec2i>);
-        REGISTER_WORK_UNIT(SetParam<vec3f>);
-        REGISTER_WORK_UNIT(SetParam<vec3i>);
-        REGISTER_WORK_UNIT(SetParam<vec4f>);
+        registerWorkUnit<SetMaterial>(registry);
+        registerWorkUnit<SetParam<OSPObject>>(registry);
+        registerWorkUnit<SetParam<std::string>>(registry);
+        registerWorkUnit<SetParam<int>>(registry);
+        registerWorkUnit<SetParam<float>>(registry);
+        registerWorkUnit<SetParam<vec2f>>(registry);
+        registerWorkUnit<SetParam<vec2i>>(registry);
+        registerWorkUnit<SetParam<vec3f>>(registry);
+        registerWorkUnit<SetParam<vec3i>>(registry);
+        registerWorkUnit<SetParam<vec4f>>(registry);
 
-        REGISTER_WORK_UNIT(RemoveParam);
+        registerWorkUnit<RemoveParam>(registry);
 
-        REGISTER_WORK_UNIT(CommandFinalize);
+        registerWorkUnit<CommandFinalize>(registry);
       }
-#undef REGISTER_WORK_UNIT
 
       // =======================================================
       // ospNewRenderer

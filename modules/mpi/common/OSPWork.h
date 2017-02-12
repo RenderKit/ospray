@@ -74,6 +74,25 @@ namespace ospray {
       using CreateWorkFct    = std::unique_ptr<Work>(*)();
       using WorkTypeRegistry = std::map<Work::tag_t, CreateWorkFct>;
 
+      /*! create a work unit of given type */
+      template<typename T>
+      inline std::unique_ptr<Work> make_work_unit()
+      {
+        return make_unique<T>();
+      }
+
+      template<typename T>
+      inline CreateWorkFct createMakeWorkFct()
+      {
+        return make_work_unit<T>;
+      }
+
+      template <typename T>
+      inline void registerWorkUnit(WorkTypeRegistry &registry)
+      {
+        registry[typeIdOf<T>()] = createMakeWorkFct<T>();
+      }
+
       void registerOSPWorkItems(WorkTypeRegistry &registry);
 
       /*! All of the simple CMD_NEW_* can be implemented with the same
