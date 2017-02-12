@@ -96,20 +96,6 @@ namespace ospray {
         void run() override
         {
           auto *obj = T::createInstance(type.c_str());
-#if! _WIN32
-#  warning "CHECK IF obj->refInc() is needed here!"
-          // TODO: Why is this manual reference increment needed!?
-          // is it to keep the object alive until ospRelease is called
-          // since in the distributed mode no app has a reference to this obj?
-
-          // iw: agree, this looks fishy; the 'handle' will eventually
-          // hold the ref the app is supposed to have (as long as the
-          // app has a valid handle it has a valid ref!), so adding a
-          // second one is fishy. IF this had to be done it'd have to be
-          // done for _every_ object (and then, arguably in
-          // handle::assign, not here ...!?
-          obj->refInc();
-#endif
           handle.assign(obj);
         }
 
