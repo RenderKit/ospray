@@ -253,7 +253,6 @@ namespace ospray {
         }
       }
 
-
       // =======================================================
       // CMD_SET_MATERIAL
       // =======================================================
@@ -268,7 +267,6 @@ namespace ospray {
         geom->setMaterial(mat);
       }
 
-      
       template<typename T>
       void SetParam<T>::run() 
       {
@@ -300,7 +298,7 @@ namespace ospray {
       CreateWorkFct createMakeWorkFct()
       { return make_work_unit<T>; }
       
-#define REGISTER_WORK_UNIT(W) registry[W::tag] = createMakeWorkFct<W>();
+#define REGISTER_WORK_UNIT(W) registry[W::tag] = createMakeWorkFct<W>()
       
       void registerOSPWorkItems(WorkTypeRegistry &registry)
       {
@@ -380,10 +378,6 @@ namespace ospray {
         handle.assign(model);
       }
       
-      template<>
-      void NewModel::runOnMaster()
-      { /* do nothing */ }
-      
       // =======================================================
       // ospNewGeometry
       // =======================================================
@@ -408,10 +402,6 @@ namespace ospray {
         geometry->refInc();
         handle.assign(geometry);
       }
-      
-      template<>
-      void NewGeometry::runOnMaster()
-      { /* do nothing */ }
 
       // =======================================================
       // ospNewCamera
@@ -424,10 +414,6 @@ namespace ospray {
         Assert(camera);
         handle.assign(camera);
       }
-
-      template<>
-      void NewCamera::runOnMaster()
-      { /* do nothing */ }
       
       template<>
       void NewVolume::run()
@@ -459,21 +445,14 @@ namespace ospray {
       }
 
       template<>
-      void NewTransferFunction::runOnMaster()
-      { /* do nothing */ }
-
-      template<>
-      void NewPixelOp::run() {
+      void NewPixelOp::run()
+      {
         PixelOp *pixelOp = PixelOp::createPixelOp(type.c_str());
         if (!pixelOp) {
           throw std::runtime_error("unknown pixel op type '" + type + "'");
         }
         handle.assign(pixelOp);
       }
-
-      template<>
-      void NewPixelOp::runOnMaster()
-      { /* do nothing */ }
 
       void NewMaterial::run()
       {
@@ -647,7 +626,9 @@ namespace ospray {
         //TODO: should support sending data without copy
         std::memcpy(data.data(), src, bytes);
       }
-      void SetRegion::run() {
+
+      void SetRegion::run()
+      {
         Volume *volume = (Volume*)handle.lookup();
         Assert(volume);
         // TODO: Does it make sense to do the allreduce & report back fails?
@@ -658,10 +639,13 @@ namespace ospray {
         }
       }
 
-      void SetRegion::serialize(WriteStream &b) const {
+      void SetRegion::serialize(WriteStream &b) const
+      {
         b << (int64)handle << regionStart << regionSize << (int32)type << data;
       }
-      void SetRegion::deserialize(ReadStream &b) {
+
+      void SetRegion::deserialize(ReadStream &b)
+      {
         int32 ty;
         b >> handle.i64 >> regionStart >> regionSize >> ty >> data;
         type = (OSPDataType)ty;
@@ -828,6 +812,7 @@ namespace ospray {
       {
         b << (int64)handle << name;
       }
+
       void RemoveParam::deserialize(ReadStream &b)
       {
         b >> handle.i64 >> name;

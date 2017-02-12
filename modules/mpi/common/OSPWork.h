@@ -164,8 +164,8 @@ namespace ospray {
         NewObjectT(const char* type, ObjectHandle handle)
           : type(type), handle(handle) {}
         
-        virtual void run()         override;
-        virtual void runOnMaster() override;
+        virtual void run()         override {}
+        virtual void runOnMaster() override {}
         
         /*! serializes itself on the given serial buffer - will write
           all data into this buffer in a way that it can afterwards
