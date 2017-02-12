@@ -80,7 +80,7 @@ namespace ospray {
       static size_t numWorkReceived = 0;
 
       if(logMPI) {
-        printf("#osp.mpi.worker: got work #%li, tag %i",
+        printf("#osp.mpi.worker: got work #%ul, tag %ul",
                numWorkReceived++,
                tag);
       }
@@ -92,7 +92,7 @@ namespace ospray {
       auto work = make_work->second();
 
       if(logMPI) {
-        printf(": %s\n", work->toString().c_str());
+        printf(": %s\n", typeString(work).c_str());
       }
 
 
@@ -173,12 +173,12 @@ namespace ospray {
         auto work = readWork(workTypeRegistry, *readStream);
         if (logMPI) {
           std::cout << "#osp.mpi.worker: processing work " << typeIdOf(work)
-                    << ": " << work->toString() << std::endl;
+                    << ": " << typeString(work) << std::endl;
         }
         work->run();
         if (logMPI) {
           std::cout << "#osp.mpi.worker: done w/ work " << typeIdOf(work)
-                    << ": " << work->toString() << std::endl;
+                    << ": " << typeString(work) << std::endl;
         }
       }
     }

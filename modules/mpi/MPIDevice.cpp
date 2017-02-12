@@ -923,7 +923,7 @@ namespace ospray {
     {
       if (logMPI) {
         static size_t numWorkSent = 0;
-        printf("#osp.mpi.master: processing/sending work item #%li\n",
+        printf("#osp.mpi.master: processing/sending work item #%ul\n",
                numWorkSent++);
       }
       auto tag = typeIdOf(work);
@@ -937,9 +937,9 @@ namespace ospray {
       work->runOnMaster();
 
       if (logMPI) {
-        printf("#osp.mpi.master: done work item, tag %i: %s\n",
+        printf("#osp.mpi.master: done work item, tag %ul: %s\n",
                tag,
-               work->toString().c_str());
+               typeString(work).c_str());
       }
     }
 

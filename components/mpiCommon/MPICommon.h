@@ -183,36 +183,63 @@ namespace ospray {
     template <typename T>
     inline size_t typeIdOf()
     {
-      auto &info = typeid(T);
-      return info.hash_code();
+      return typeid(T).hash_code();
     }
 
     template <typename T>
     inline size_t typeIdOf(T *v)
     {
-      auto &info = typeid(*v);
-      return info.hash_code();
+      return typeid(*v).hash_code();
     }
 
     template <typename T>
-    inline size_t typeIdOf(T &v)
+    inline size_t typeIdOf(const T &v)
     {
-      auto &info = typeid(*v);
-      return info.hash_code();
+      return typeid(v).hash_code();
     }
 
     template <typename T>
     inline size_t typeIdOf(const std::unique_ptr<T> &v)
     {
-      auto &info = typeid(*v);
-      return info.hash_code();
+      return typeid(*v).hash_code();
     }
 
     template <typename T>
     inline size_t typeIdOf(const std::shared_ptr<T> &v)
     {
-      auto &info = typeid(*v);
-      return info.hash_code();
+      return typeid(*v).hash_code();
+    }
+
+    // RTTI string name lookup helper functions ///////////////////////////////
+
+    template <typename T>
+    inline std::string typeString()
+    {
+      return typeid(T).name();
+    }
+
+    template <typename T>
+    inline std::string typeString(T *v)
+    {
+      return typeid(*v).name();
+    }
+
+    template <typename T>
+    inline std::string typeString(const T &v)
+    {
+      return typeid(v).name();
+    }
+
+    template <typename T>
+    inline std::string typeString(const std::unique_ptr<T> &v)
+    {
+      return typeid(*v).name();
+    }
+
+    template <typename T>
+    inline std::string typeString(const std::shared_ptr<T> &v)
+    {
+      return typeid(*v).name();
     }
 
   }// ::ospray::mpi

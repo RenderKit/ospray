@@ -51,9 +51,6 @@ namespace ospray {
         /*! type we use for representing tags */
         using tag_t = size_t;
 
-        // /*! for debugging only - return some string of what this is */
-        virtual std::string toString() const = 0;
-
         /*! serializes itself on the given serial buffer - will write
           all data into this buffer in a way that it can afterwards
           un-serialize itself 'on the other side'*/
@@ -91,8 +88,6 @@ namespace ospray {
         NewObjectT(const char* type, ObjectHandle handle)
           : type(type), handle(handle) {}
 
-        inline std::string toString() const override { return "NewObjectT<T>"; }
-        
         void run() override
         {
           auto *obj = T::createInstance(type.c_str());
@@ -133,35 +128,12 @@ namespace ospray {
         handle.assign(model);
       }
 
-      template<> inline std::string NewModel::toString() const
-      { return "NewModel"; }
-
-      template<> inline std::string NewPixelOp::toString() const
-      { return "NewPixelOp"; }
-
-      template<> inline  std::string NewRenderer::toString() const
-      { return "NewRenderer"; }
-
-      template<> inline std::string NewCamera::toString() const
-      { return "NewCamera"; }
-
-      template<> inline std::string NewVolume::toString() const
-      { return "NewVolume"; }
-
-      template<> inline std::string NewGeometry::toString() const
-      { return "NewGeometry"; }
-
-      template<> inline std::string NewTransferFunction::toString() const
-      { return "NewTransferFunction"; }
-
       struct NewMaterial : public Work
       {
         NewMaterial() = default;
         NewMaterial(const char* type, OSPRenderer renderer, ObjectHandle handle)
           : type(type), rendererHandle((ObjectHandle&)renderer), handle(handle)
         {}
-
-        inline std::string toString() const override { return "NewMaterial"; }
 
         void run() override;
 
@@ -188,8 +160,6 @@ namespace ospray {
         NewLight(const char* type, OSPRenderer renderer, ObjectHandle handle)
           : type(type), rendererHandle((ObjectHandle&)renderer), handle(handle)
         {}
-
-        inline std::string toString() const override { return "NewLight"; }
 
         void run() override;
 
@@ -225,8 +195,6 @@ namespace ospray {
         NewData(ObjectHandle handle, size_t nItems,
                 OSPDataType format, void *initData, int flags);
 
-        inline std::string toString() const override { return "NewData"; }
-
         void run() override;
 
         /*! serializes itself on the given serial buffer - will write
@@ -255,8 +223,6 @@ namespace ospray {
         NewTexture2d(ObjectHandle handle, vec2i dimensions,
                      OSPTextureFormat format, void *texture, uint32 flags);
 
-        inline std::string toString() const override { return "NewTexture2d"; }
-
         void run() override;
 
         /*! serializes itself on the given serial buffer - will write
@@ -282,8 +248,6 @@ namespace ospray {
         SetRegion(OSPVolume volume, vec3i start, vec3i size, const void *src,
                   OSPDataType type);
 
-        inline std::string toString() const override { return "SetRegion"; }
-
         void run() override;
 
         /*! serializes itself on the given serial buffer - will write
@@ -306,8 +270,6 @@ namespace ospray {
       {
         CommitObject() = default;
         CommitObject(ObjectHandle handle);
-
-        inline std::string toString() const override { return "CommitObject"; }
 
         void run() override;
         // TODO: Which objects should the master commit?
@@ -332,9 +294,6 @@ namespace ospray {
         ClearFrameBuffer() = default;
         ClearFrameBuffer(OSPFrameBuffer fb, uint32 channels);
 
-        inline std::string toString() const override
-        { return "ClearFrameBuffer"; }
-
         void run() override;
         void runOnMaster() override;
 
@@ -356,8 +315,6 @@ namespace ospray {
         RenderFrame() = default;
         RenderFrame(OSPFrameBuffer fb, OSPRenderer renderer, uint32 channels);
         
-        inline std::string toString() const override { return "RenderFrame"; }
-
         void run() override;
         void runOnMaster() override;
         bool flushing() override { return true; }
@@ -386,8 +343,6 @@ namespace ospray {
             objectHandle((const ObjectHandle&)t)
         {}
 
-        inline std::string toString() const override { return "AddVolume"; }
-
         void run() override;
 
         /*! serializes itself on the given serial buffer - will write
@@ -413,8 +368,6 @@ namespace ospray {
           : modelHandle((const ObjectHandle&)model),
             objectHandle((const ObjectHandle&)t)
         {}
-
-        inline std::string toString() const override { return "AddGeometry"; }
 
         void run() override;
 
@@ -442,8 +395,6 @@ namespace ospray {
             objectHandle((const ObjectHandle&)t)
         {}
 
-        inline std::string toString() const override { return "RemoveGeometry"; }
-
         void run() override;
 
         /*! serializes itself on the given serial buffer - will write
@@ -469,9 +420,6 @@ namespace ospray {
             objectHandle((const ObjectHandle&)t)
         {}
 
-        inline std::string toString() const override
-        { return "RemoveVolume"; }
-
         void run() override;
 
         /*! serializes itself on the given serial buffer - will write
@@ -495,9 +443,6 @@ namespace ospray {
         CreateFrameBuffer(ObjectHandle handle, vec2i dimensions,
                           OSPFrameBufferFormat format, uint32 channels);
         
-        inline std::string toString() const override
-        { return "CreateFrameBuffer"; }
-
         void run() override;
         void runOnMaster() override;
 
@@ -527,8 +472,6 @@ namespace ospray {
         {
           Assert(handle != nullHandle);
         }
-
-        inline std::string toString() const override { return "SetParam"; }
 
         inline void run() override
         {
@@ -585,8 +528,6 @@ namespace ospray {
           Assert(material != nullHandle);
         }
 
-        inline std::string toString() const override { return "SetMaterial"; }
-
         void run() override;
         
         /*! serializes itself on the given serial buffer - will write
@@ -616,8 +557,6 @@ namespace ospray {
         {
           Assert(handle != nullHandle);
         }
-
-        inline std::string toString() const override { return "SetParam"; }
 
         void run() override
         {
@@ -653,8 +592,6 @@ namespace ospray {
         RemoveParam() = default;
         RemoveParam(ObjectHandle handle, const char *name);
 
-        inline std::string toString() const override { return "RemoveParam"; }
-
         void run() override;
         void runOnMaster() override;
 
@@ -676,8 +613,6 @@ namespace ospray {
         SetPixelOp() = default;
         SetPixelOp(OSPFrameBuffer fb, OSPPixelOp op);
 
-        inline std::string toString() const override { return "SetPixelOp"; }
-
         void run() override;
 
         /*! serializes itself on the given serial buffer - will write
@@ -698,9 +633,6 @@ namespace ospray {
         CommandRelease() = default;
         CommandRelease(ObjectHandle handle);
 
-        inline std::string toString() const override
-        { return "CommandRelease"; }
-
         void run() override;
 
         /*! serializes itself on the given serial buffer - will write
@@ -720,8 +652,6 @@ namespace ospray {
         LoadModule() = default;
         LoadModule(const std::string &name);
 
-        inline std::string toString() const override { return "LoadModule"; }
-
         void run() override;
         bool flushing() override { return true; }
 
@@ -740,9 +670,6 @@ namespace ospray {
       struct CommandFinalize : public Work
       {
         CommandFinalize() = default;
-
-        inline std::string toString() const override
-        { return "CommandFinalize"; }
 
         void run() override;
         void runOnMaster() override;
