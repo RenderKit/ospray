@@ -289,15 +289,15 @@ namespace ospray {
 
       /*! create a work unit of given type */
       template<typename T>
-      inline std::shared_ptr<Work> make_work_unit()
+      inline std::unique_ptr<Work> make_work_unit()
       {
-        return std::make_shared<T>();
+        return ospcommon::make_unique<T>();
       }
 
       template<typename T>
       CreateWorkFct createMakeWorkFct()
       { return make_work_unit<T>; }
-      
+
 #define REGISTER_WORK_UNIT(W) registry[W::tag] = createMakeWorkFct<W>()
       
       void registerOSPWorkItems(WorkTypeRegistry &registry)

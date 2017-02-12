@@ -224,9 +224,9 @@ namespace ospray {
       //      std::shared_ptr<mpi::BufferedMPIComm> bufferedComm;
 
       /*! @{ read and write stream for the work commands */
-      std::shared_ptr<Fabric>      mpiFabric;
-      std::shared_ptr<ReadStream>  readStream;
-      std::shared_ptr<WriteStream> writeStream;
+      std::unique_ptr<Fabric>      mpiFabric;
+      std::unique_ptr<ReadStream>  readStream;
+      std::unique_ptr<WriteStream> writeStream;
       /*! @} */
 
       bool initialized {false};

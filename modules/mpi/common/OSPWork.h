@@ -133,7 +133,7 @@ namespace ospray {
         virtual void runOnMaster() {}
       };
 
-      using CreateWorkFct    = std::shared_ptr<Work>(*)();
+      using CreateWorkFct    = std::unique_ptr<Work>(*)();
       using WorkTypeRegistry = std::map<Work::tag_t, CreateWorkFct>;
 
       void registerOSPWorkItems(WorkTypeRegistry &registry);

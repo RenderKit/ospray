@@ -466,9 +466,9 @@ namespace ospray {
 
       /* set up fabric and stuff - by now all the communicators should
          be properly set up */
-      mpiFabric   = std::make_shared<MPIBcastFabric>(mpi::worker);
-      readStream  = std::make_shared<BufferedFabric::ReadStream>(mpiFabric);
-      writeStream = std::make_shared<BufferedFabric::WriteStream>(mpiFabric);
+      mpiFabric   = make_unique<MPIBcastFabric>(mpi::worker);
+      readStream  = make_unique<BufferedFabric::ReadStream>(*mpiFabric);
+      writeStream = make_unique<BufferedFabric::WriteStream>(*mpiFabric);
       
       TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Master>();
     }

@@ -71,11 +71,11 @@ namespace ospray {
       throw std::runtime_error("embree internal error '"+std::string(str)+"'");
     }
 
-    std::shared_ptr<work::Work> readWork(std::map<work::Work::tag_t,work::CreateWorkFct> &registry,
-                                         std::shared_ptr<ReadStream> &readStream)
+    std::unique_ptr<work::Work> readWork(work::WorkTypeRegistry &registry,
+                                         ReadStream             &readStream)
     {
       work::Work::tag_t tag;
-      *readStream >> tag;
+      readStream >> tag;
 
       static size_t numWorkReceived = 0;
       if(logMPI) {
@@ -86,9 +86,8 @@ namespace ospray {
       
       auto make_work = registry.find(tag);
       assert(make_work != registry.end());
-      std::shared_ptr<work::Work> work = make_work->second();
-      assert(work);
-      work->deserialize(*readStream);
+      auto work = make_work->second();
+      work->deserialize(readStream);
       return work;
     }
 
@@ -153,10 +152,8 @@ namespace ospray {
       // -------------------------------------------------------
       // setting up read/write streams
       // -------------------------------------------------------
-      std::shared_ptr<Fabric> mpiFabric
-        = std::make_shared<MPIBcastFabric>(mpi::app);
-      std::shared_ptr<ReadStream> readStream
-        = std::make_shared<BufferedFabric::ReadStream>(mpiFabric);
+      auto mpiFabric  = ospcommon::make_unique<MPIBcastFabric>(mpi::app);
+      auto readStream = ospcommon::make_unique<BufferedFabric::ReadStream>(*mpiFabric);
 
       // create registry of work item types
       std::map<work::Work::tag_t,work::CreateWorkFct> workTypeRegistry;
@@ -164,7 +161,7 @@ namespace ospray {
 
       logMPI = checkIfWeNeedToDoMPIDebugOutputs();
       while (1) {
-        std::shared_ptr<work::Work> work = readWork(workTypeRegistry,readStream);
+        auto work = readWork(workTypeRegistry, *readStream);
         if (logMPI) {
           std::cout << "#osp.mpi.worker: processing work "
                     << work::commandTagToString((work::CommandTag)work->getTag())

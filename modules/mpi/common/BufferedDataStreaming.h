@@ -23,7 +23,10 @@ namespace ospray {
 
     /*! abstraction for a physical fabric that can transmit data -
       sockets, mpi, etc */
-    struct Fabric {
+    struct Fabric
+    {
+      virtual ~Fabric() = default;
+
       /*! send exact number of bytes - the fabric can do that through
         multiple smaller messages, but all bytes have to be
         delivered */
@@ -36,10 +39,12 @@ namespace ospray {
 
 
     /*! a specific fabric based on PMI */
-    struct MPIBcastFabric : public Fabric {
-
+    struct MPIBcastFabric : public Fabric
+    {
       /*! constructor - create a new broascast fabric that uses the given communicator */
       MPIBcastFabric(const mpi::Group &group);
+
+      virtual ~MPIBcastFabric() = default;
       
       /*! send exact number of bytes - the fabric can do that through
         multiple smaller messages, but all bytes have to be
@@ -58,22 +63,24 @@ namespace ospray {
     /*! contains implementations for buffered read and write streams,
         that fulfill smaller read/write requests from a large buffer
         that thos classes maintain */
-    struct BufferedFabric {
-
+    struct BufferedFabric
+    {
       /* read stream that serves smaller read requests (of a given
          siez) from a block of data that it queries from a fabric. if
          the internal buffer isn't big enough to fulfill the request,
          te next block will automatically get read from the fabric */ 
-      struct ReadStream : public ospray::mpi::ReadStream {
-        ReadStream(std::shared_ptr<Fabric> fabric)
+      struct ReadStream : public ospray::mpi::ReadStream
+      {
+        ReadStream(Fabric &fabric)
           : fabric(fabric), buffer(nullptr), numAvailable(0)
         {
-          if (!fabric) throw std::runtime_error("invalid fabric on BufferedFabric::ReadStream");
         }
+
+        virtual ~ReadStream() = default;
         
         virtual void read(void *mem, size_t size) override;
 
-        std::shared_ptr<Fabric> fabric;
+        std::reference_wrapper<Fabric> fabric;
         uint8_t *buffer;
         size_t   numAvailable;
       };
@@ -83,24 +90,23 @@ namespace ospray {
         buffer gets flushed either when the user explcitly calls
         flush(), or when the maximum size of the buffer gets
         reached */
-      struct WriteStream : public ospray::mpi::WriteStream {
-        WriteStream(std::shared_ptr<Fabric> fabric,
-                    size_t maxBufferSize = 1LL*1024*1024)
+      struct WriteStream : public ospray::mpi::WriteStream
+      {
+        WriteStream(Fabric &fabric, size_t maxBufferSize = 1LL*1024*1024)
           : fabric(fabric),
             maxBufferSize(maxBufferSize),
             numInBuffer(0),
             buffer(new uint8_t[maxBufferSize])
         {
-          if (!fabric) throw std::runtime_error("invalid fabric on BufferedFabric::WriteStream");
         }
-        ~WriteStream()
-        { delete buffer; }
+
+        virtual ~WriteStream() { delete buffer; }
         
         virtual void write(void *mem, size_t size) override;
         
         virtual void flush() override;
           
-        std::shared_ptr<Fabric> fabric;
+        std::reference_wrapper<Fabric> fabric;
         uint8_t *buffer;
         size_t maxBufferSize;
         size_t numInBuffer;
