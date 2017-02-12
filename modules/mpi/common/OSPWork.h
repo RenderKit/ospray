@@ -87,10 +87,13 @@ namespace ospray {
         return make_work_unit<T>;
       }
 
-      template <typename T>
+      template <typename WORK_T>
       inline void registerWorkUnit(WorkTypeRegistry &registry)
       {
-        registry[typeIdOf<T>()] = createMakeWorkFct<T>();
+        static_assert(std::is_base_of<Work, WORK_T>::value,
+                      "WORK_T must be a child class of ospray::work::Work!");
+
+        registry[typeIdOf<WORK_T>()] = createMakeWorkFct<WORK_T>();
       }
 
       void registerOSPWorkItems(WorkTypeRegistry &registry);
