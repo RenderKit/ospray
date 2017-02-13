@@ -198,7 +198,7 @@ namespace ospray {
 
 
 
-      virtual    std::string toString() const {}
+      virtual    std::string toString() const { return "Node"; }
       std::shared_ptr<sg::Param> getParam(const std::string &name) const;
       // void       addParam(sg::Param *p);
 
@@ -479,12 +479,11 @@ namespace ospray {
 
     template <typename T>
     void NodeParamCommit<T>::commit(std::shared_ptr<Node> n) {
-      // ospSet1f(parent->getValue<OSPObject>(), getName().c_str(), getValue<float>());
     }
 
     template <typename T>
     bool NodeParamCommit<T>::compare(const SGVar& min, const SGVar& max, const SGVar& value) {
-      // std::cout << "wakka\n";
+      return true;
     }
 
     template<typename T>
@@ -557,7 +556,7 @@ namespace ospray {
         add(createNode("bounds", "box3f"));
       }
       virtual box3f getBounds() { return bbox; }
-      virtual box3f extendBounds(box3f b) { bbox.extend(b); }
+      virtual box3f extendBounds(box3f b) { bbox.extend(b); return bbox; }
       virtual void preTraverse(RenderContext &ctx, const std::string& operation);
       virtual void postTraverse(RenderContext &ctx, const std::string& operation);
       virtual void preCommit(RenderContext &ctx) { bbox = empty; }

@@ -531,7 +531,7 @@ template <typename Variant, typename Comp>
 class comparer
 {
 public:
-    explicit comparer(Variant const& lhs) noexcept
+    explicit comparer(Variant const& lhs) 
         : lhs_(lhs) {}
     comparer& operator=(comparer const&) = delete;
     // visitor
@@ -583,20 +583,20 @@ private:
     data_type data;
 
 public:
-    VARIANT_INLINE variant() noexcept(std::is_nothrow_default_constructible<first_type>::value)
+    VARIANT_INLINE variant() 
         : type_index(sizeof...(Types)-1)
     {
         static_assert(std::is_default_constructible<first_type>::value, "First type in variant must be default constructible to allow default construction of variant");
         new (&data) first_type();
     }
 
-    VARIANT_INLINE variant(no_init) noexcept
+    VARIANT_INLINE variant(no_init) 
         : type_index(detail::invalid_value) {}
 
     // http://isocpp.org/blog/2012/11/universal-references-in-c11-scott-meyers
     template <typename T, typename Traits = detail::value_traits<T, Types...>,
               typename Enable = typename std::enable_if<Traits::is_valid && !std::is_same<variant<Types...>, typename Traits::value_type>::value>::type >
-    VARIANT_INLINE variant(T&& val) noexcept(std::is_nothrow_constructible<typename Traits::target_type, T&&>::value)
+    VARIANT_INLINE variant(T&& val)
         : type_index(Traits::index)
     {
         new (&data) typename Traits::target_type(std::forward<T>(val));
@@ -609,7 +609,6 @@ public:
     }
 
     VARIANT_INLINE variant(variant<Types...>&& old)
-        noexcept(detail::conjunction<std::is_nothrow_move_constructible<Types>...>::value)
         : type_index(old.type_index)
     {
         helper_type::move(old.type_index, &old.data, &data);
@@ -648,7 +647,7 @@ public:
     // conversions
     // move-assign
     template <typename T>
-    VARIANT_INLINE variant<Types...>& operator=(T&& rhs) noexcept
+    VARIANT_INLINE variant<Types...>& operator=(T&& rhs) 
     {
         variant<Types...> temp(std::forward<T>(rhs));
         move_assign(std::move(temp));
@@ -843,14 +842,14 @@ public:
         return type_index;
     }
 
-    VARIANT_INLINE int which() const noexcept
+    VARIANT_INLINE int which() const 
     {
         return static_cast<int>(sizeof...(Types)-type_index - 1);
     }
 
     template <typename T, typename std::enable_if<
                           (detail::direct_type<T, Types...>::index != detail::invalid_value)>::type* = nullptr>
-    VARIANT_INLINE static constexpr int which() noexcept
+    VARIANT_INLINE static constexpr int which() 
     {
         return static_cast<int>(sizeof...(Types)-detail::direct_type<T, Types...>::index - 1);
     }
@@ -903,7 +902,7 @@ public:
         return variant::visit(*this, ::mapbox::util::make_visitor(std::forward<Fs>(fs)...));
     }
 
-    ~variant() noexcept // no-throw destructor
+    ~variant() // no-throw destructor
     {
         helper_type::destroy(type_index, &data);
     }
@@ -1017,7 +1016,7 @@ ResultType const& get_unchecked(T const& var)
 namespace std {
 template <typename... Types>
 struct hash< ::mapbox::util::variant<Types...>> {
-    std::size_t operator()(const ::mapbox::util::variant<Types...>& v) const noexcept
+    std::size_t operator()(const ::mapbox::util::variant<Types...>& v) const 
     {
         return ::mapbox::util::apply_visitor(::mapbox::util::detail::hasher{}, v);
     }

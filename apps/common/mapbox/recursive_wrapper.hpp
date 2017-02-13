@@ -44,7 +44,7 @@ public:
     recursive_wrapper()
         : p_(new T){}
 
-    ~recursive_wrapper() noexcept { delete p_; }
+    ~recursive_wrapper()  { delete p_; }
 
     recursive_wrapper(recursive_wrapper const& operand)
         : p_(new T(operand.get())) {}
@@ -70,14 +70,14 @@ public:
         return *this;
     }
 
-    inline void swap(recursive_wrapper& operand) noexcept
+    inline void swap(recursive_wrapper& operand) 
     {
         T* temp = operand.p_;
         operand.p_ = p_;
         p_ = temp;
     }
 
-    recursive_wrapper& operator=(recursive_wrapper&& rhs) noexcept
+    recursive_wrapper& operator=(recursive_wrapper&& rhs) 
     {
         swap(rhs);
         return *this;
@@ -112,7 +112,7 @@ public:
 }; // class recursive_wrapper
 
 template <typename T>
-inline void swap(recursive_wrapper<T>& lhs, recursive_wrapper<T>& rhs) noexcept
+inline void swap(recursive_wrapper<T>& lhs, recursive_wrapper<T>& rhs) 
 {
     lhs.swap(rhs);
 }

@@ -35,7 +35,7 @@ public:
 
     optional(T const& v) { variant_ = v; }
 
-    explicit operator bool() const noexcept { return variant_.template is<T>(); }
+    explicit operator bool() const { return variant_.template is<T>(); }
 
     T const& get() const { return variant_.template get<T>(); }
     T& get() { return variant_.template get<T>(); }
