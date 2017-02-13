@@ -44,9 +44,9 @@ namespace ospray {
           recvThread(this),
           shouldExit(false)
       {
-        sendThread.handle = std::thread([this](){this->sendThread.run();});
-        procThread.handle = std::thread([this](){this->procThread.run();});
-        recvThread.handle = std::thread([this](){this->recvThread.run();});
+        sendThread.handle = std::thread([&](){sendThread.run();});
+        procThread.handle = std::thread([&](){procThread.run();});
+        recvThread.handle = std::thread([&](){recvThread.run();});
       }
 
       void BatchedIsendIrecvImpl::SendThread::run()
@@ -75,8 +75,21 @@ namespace ospray {
 
           // TODO: Is it ok to wait even if we're exiting? Maybe we'd just
           //       get send failed statuses back?
+          #if 1
+          int numCompletedTotal = 0;
+          while (true) {
+            int numCompleted = 0;
+            int completedIndices[SEND_WINDOW_SIZE];
+            SERIALIZED_MPI_CALL(Waitsome(numActions, request, &numCompleted,
+                                         completedIndices,MPI_STATUSES_IGNORE));
+            numCompletedTotal += numCompleted >= 0 ? numCompleted : 0;
+            if (numCompletedTotal >= numActions)
+              break;
+          }
+          #else
           SERIALIZED_MPI_CALL(Waitall(numActions, request,
                                       MPI_STATUSES_IGNORE));
+          #endif
           
           for (size_t i = 0; i < numActions; i++) {
             Action *action = actions[i];
@@ -171,8 +184,21 @@ namespace ospray {
           // TODO: Is it ok to wait even if we're exiting? Maybe we'd just get
           //       send failed statuses back?
           // now, have certain number of messages available...
+          #if 1
+          int numCompletedTotal = 0;
+          while (true) {
+            int numCompleted = 0;
+            int completedIndices[RECV_WINDOW_SIZE];
+            SERIALIZED_MPI_CALL(Waitsome(numRequests, request, &numCompleted,
+                                         completedIndices,MPI_STATUSES_IGNORE));
+            numCompletedTotal += numCompleted >= 0 ? numCompleted : 0;
+            if (numCompletedTotal >= numRequests)
+              break;
+          }
+          #else
           SERIALIZED_MPI_CALL(Waitall(numRequests, request,
                                       MPI_STATUSES_IGNORE));
+          #endif
 
           // OK, all actions are valid now
           g.recvQueue.putSome(&actions[0], numRequests);
