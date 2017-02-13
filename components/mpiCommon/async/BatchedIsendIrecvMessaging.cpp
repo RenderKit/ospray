@@ -44,9 +44,9 @@ namespace ospray {
           recvThread(this),
           shouldExit(false)
       {
-        sendThread.handle = std::thread([this](){this->sendThread.run();});
-        procThread.handle = std::thread([this](){this->procThread.run();});
-        recvThread.handle = std::thread([this](){this->recvThread.run();});
+        sendThread.handle = std::thread([&](){sendThread.run();});
+        procThread.handle = std::thread([&](){procThread.run();});
+        recvThread.handle = std::thread([&](){recvThread.run();});
       }
 
       //using ActiveAction = std::pair<Action*, MPI_Request>;
@@ -82,8 +82,12 @@ namespace ospray {
             } while (numSends == 0);
           }
 
-          // TODO: Is it ok to wait even if we're exiting? Maybe we'd just get
-          // send failed statuses back?
+          // Always check if we should exit, even in the case that our send
+          // window is full
+          if (g.shouldExit.load()) {
+            return;
+          }
+
           int numFinished = 0;
           SERIALIZED_MPI_CALL(Testsome(numSends, request, &numFinished,
                                        finishedSends, MPI_STATUSES_IGNORE));
@@ -174,6 +178,12 @@ namespace ospray {
               nanosleep(&sleep_time, nullptr);
 #endif
             }
+          }
+
+          // Always check if we should exit, even in the case that our recv
+          // window is full
+          if (g.shouldExit.load()) {
+            return;
           }
 
           int numFinished = 0;
