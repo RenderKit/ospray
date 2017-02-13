@@ -47,48 +47,75 @@ namespace ospray {
         recvThread.handle = std::thread([this](){this->recvThread.run();});
       }
 
+      //using ActiveAction = std::pair<Action*, MPI_Request>;
+
       void BatchedIsendIrecvImpl::SendThread::run()
       {
         Group  *g = this->group;
         Action *actions[SEND_WINDOW_SIZE];
         MPI_Request request[SEND_WINDOW_SIZE];
+        int finishedSends[SEND_WINDOW_SIZE];
+        // Number of outstanding sends in the actions list
+        int numSends = 0;
         while (1) {
-          size_t numActions = 0;
-          while (numActions == 0){
-            numActions = g->sendQueue.getSomeFor(actions,SEND_WINDOW_SIZE,
-                                                 std::chrono::milliseconds(1));
-            if (g->shouldExit.load()){
-              return;
-            }
-          }
-          for (uint32_t i = 0; i < numActions; i++) {
-            Action *action = actions[i];
-            lockMPI("async-isend");
-            MPI_CALL(Isend(action->data,action->size,MPI_BYTE,
-                           action->addr.rank,g->tag,g->comm,&request[i]));
-            unlockMPI();
+          // Each iteration try to get some new stuff to send if we have room, and repeatedly try
+          // if we have no data to send.
+          if (numSends < SEND_WINDOW_SIZE) {
+            do {
+              int numGot = g->sendQueue.getSomeFor(actions + numSends, SEND_WINDOW_SIZE - numSends,
+                  std::chrono::milliseconds(1));
+              if (g->shouldExit.load()){
+                return;
+              }
+
+              // New sends are placed at the end of the buffer
+              for (uint32_t i = numSends; i < numSends + numGot; i++) {
+                Action *action = actions[i];
+                lockMPI("async-isend");
+                MPI_CALL(Isend(action->data,action->size,MPI_BYTE,
+                      action->addr.rank,g->tag,g->comm, &request[i]));
+                unlockMPI();
+              }
+
+              numSends += numGot;
+            } while (numSends == 0);
           }
 
           // TODO: Is it ok to wait even if we're exiting? Maybe we'd just get send
           // failed statuses back?
-          lockMPI("async-send-waitall");
-          MPI_CALL(Waitall(numActions,request,MPI_STATUSES_IGNORE));
+          lockMPI("async-send-testsome");
+          int numFinished = 0;
+          MPI_CALL(Testsome(numSends, request, &numFinished, finishedSends, MPI_STATUSES_IGNORE));
           unlockMPI();
-          
-          for (uint32_t i = 0; i < numActions; i++) {
-            Action *action = actions[i];
-            free(action->data);
-            delete action;
-            
-            { std::lock_guard<std::mutex> lock(g->flushMutex);
-              g->numMessagesDoneSending++;
-              if (g->numMessagesDoneSending == g->numMessagesAskedToSend)
-                g->isFlushedCondition.notify_one();
+
+          if (numFinished > 0) {
+            for (int i = 0; i < numFinished; ++i) {
+              Action *a = actions[finishedSends[i]];
+              free(a->data);
+              delete a;
+
+              // Mark the entry as finished so we can partition the arrays
+              actions[finishedSends[i]] = nullptr;
+              request[finishedSends[i]] = MPI_REQUEST_NULL;
+
+              { std::lock_guard<std::mutex> lock(g->flushMutex);
+                g->numMessagesDoneSending++;
+                if (g->numMessagesDoneSending == g->numMessagesAskedToSend)
+                  g->isFlushedCondition.notify_one();
+              }
             }
+            // Move finished sends to the end of the respective buffers
+            std::stable_partition(actions, actions + SEND_WINDOW_SIZE,
+                [](const Action *a) { return a != nullptr; });
+
+            std::stable_partition(request, request + SEND_WINDOW_SIZE,
+                [](const MPI_Request &r) { return r != MPI_REQUEST_NULL; });
+
+            numSends -= numFinished;
           }
         }
       }
-      
+
       void BatchedIsendIrecvImpl::RecvThread::run()
       {
         // note this thread not only _probes_ for new receives, it
@@ -172,6 +199,7 @@ namespace ospray {
           // failed statuses back?
           // now, have certain number of messages available...
           lockMPI("async-waitall");
+          // TODO: We should be using testsome like the sending code
           MPI_CALL(Waitall(numRequests,request,MPI_STATUSES_IGNORE));
           unlockMPI();
 
