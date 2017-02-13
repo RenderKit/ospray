@@ -66,7 +66,7 @@ namespace ospray {
             do {
               int numGot = g.sendQueue.getSomeFor(actions + numSends,
                                                    SEND_WINDOW_SIZE - numSends,
-                                                   std::chrono::milliseconds(1));
+                                                   std::chrono::microseconds(150));
               if (g.shouldExit.load()){
                 return;
               }
@@ -224,7 +224,7 @@ namespace ospray {
           while (numActions == 0) {
             numActions = g->recvQueue.getSomeFor(actions,
                                                  PROC_WINDOW_SIZE,
-                                                 std::chrono::milliseconds(1));
+                                                 std::chrono::microseconds(150));
             if (g->shouldExit.load()){
               return;
             }
