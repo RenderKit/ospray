@@ -32,7 +32,6 @@
 #include "mpi/render/MPILoadBalancer.h"
 #include "fb/LocalFB.h"
 #include "mpi/fb/DistributedFrameBuffer.h"
-#include "common/OSPWork.h"
 #include "common/BufferedDataStreaming.h"
 
 // std
@@ -439,6 +438,8 @@ namespace ospray {
       Device::commit();
 
       initialized = true;
+
+      work::registerOSPWorkItems(workRegistry);
 
       int _ac = 2;
       const char *_av[] = {"ospray_mpi_worker", "--osp:mpi"};

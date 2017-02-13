@@ -77,17 +77,19 @@ namespace ospray {
       work::Work::tag_t tag;
       readStream >> tag;
 
-      static size_t numWorkReceived = 0;
-
       if(logMPI) {
-        printf("#osp.mpi.worker: got work #%ull, tag %ull",
-               numWorkReceived++,
-               tag);
+        static size_t numWorkReceived = 0;
+        std::stringstream msg;
+        msg << "#osp.mpi.worker: got work #" << numWorkReceived++
+            << ", tag " << tag << std::endl;
       }
 
       auto make_work = registry.find(tag);
-      if (make_work == registry.end())
-        throw std::runtime_error("Invalid work type received!");
+      if (make_work == registry.end()) {
+        std::stringstream msg;
+        msg << "Invalid work type received - tag #: " << tag;
+        throw std::runtime_error(msg.str());
+      }
 
       auto work = make_work->second();
 

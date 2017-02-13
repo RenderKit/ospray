@@ -230,24 +230,19 @@ namespace ospray {
 #endif
     }
 
-    // void send(const Address& addr, work::Work* work)
-    // {
-    //   BufferedMPIComm::get()->send(addr, work);
-    // }
+    size_t translatedHash(size_t v)
+    {
+      static std::map<size_t, size_t> id_translation;
 
-    // void recv(const Address& addr, std::vector<work::Work*>& work)
-    // {
-    //   BufferedMPIComm::get()->recv(addr, work);
-    // }
+      auto itr = id_translation.find(v);
+      if (itr == id_translation.end()) {
+        static size_t newIndex = 0;
+        id_translation[v] = newIndex;
+        return newIndex++;
+      } else {
+        return id_translation[v];
+      }
+    }
 
-    // void flush()
-    // {
-    //   BufferedMPIComm::get()->flush();
-    // }
-
-    // void barrier(const Group& group)
-    // {
-    //   BufferedMPIComm::get()->barrier(group);
-    // }
   } // ::ospray::mpi
 } // ::ospray

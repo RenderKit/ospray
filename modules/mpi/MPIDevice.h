@@ -18,13 +18,11 @@
 
 // mpicommon
 #include "mpiCommon/MPICommon.h"
-// #include "mpiCommon/command.h"
 // ospray
 #include "api/Device.h"
 #include "common/Managed.h"
 // ospray::mpi
 #include "common/BufferedDataStreaming.h"
-// #include "common/BufferedMPIComm.h"
 #include "common/OSPWork.h"
 
 /*! \file MPIDevice.h Implements the "mpi" device for mpi rendering */
@@ -229,9 +227,9 @@ namespace ospray {
       std::unique_ptr<WriteStream> writeStream;
       /*! @} */
 
-      bool initialized {false};
+      work::WorkTypeRegistry workRegistry;
 
-      void initWorkMap();
+      bool initialized {false};
     };
 
     // ==================================================================

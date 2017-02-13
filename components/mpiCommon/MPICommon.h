@@ -180,34 +180,36 @@ namespace ospray {
 
     // RTTI hash ID lookup helper functions ///////////////////////////////////
 
+    OSPRAY_MPI_INTERFACE size_t translatedHash(size_t v);
+
     template <typename T>
     inline size_t typeIdOf()
     {
-      return typeid(T).hash_code();
+      return translatedHash(typeid(T).hash_code());
     }
 
     template <typename T>
     inline size_t typeIdOf(T *v)
     {
-      return typeid(*v).hash_code();
+      return translatedHash(typeid(*v).hash_code());
     }
 
     template <typename T>
     inline size_t typeIdOf(const T &v)
     {
-      return typeid(v).hash_code();
+      return translatedHash(typeid(v).hash_code());
     }
 
     template <typename T>
     inline size_t typeIdOf(const std::unique_ptr<T> &v)
     {
-      return typeid(*v).hash_code();
+      return translatedHash(typeid(*v).hash_code());
     }
 
     template <typename T>
     inline size_t typeIdOf(const std::shared_ptr<T> &v)
     {
-      return typeid(*v).hash_code();
+      return translatedHash(typeid(*v).hash_code());
     }
 
     // RTTI string name lookup helper functions ///////////////////////////////
