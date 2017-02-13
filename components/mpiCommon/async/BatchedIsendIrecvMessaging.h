@@ -80,6 +80,7 @@ namespace ospray {
           void   *data;
           int32   size;
           Address addr;
+          MPI_Request request;
         };
 
         struct Group : public mpi::async::Group
