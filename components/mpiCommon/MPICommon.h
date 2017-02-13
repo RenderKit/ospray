@@ -66,6 +66,14 @@ namespace ospray {
     /*! helper functions that lock resp unlock the mpi serializer mutex */
     OSPRAY_MPI_INTERFACE void unlockMPI();
 
+    template<typename CLOSURE_T>
+    inline void serialized(const char *lockId, CLOSURE_T&& criticalSection)
+    {
+      lockMPI(lockId);
+      criticalSection();
+      unlockMPI();
+    }
+
     /*! the value of the 'whoHasTheLock' parameter of the last
         succeeding lockMPI() call */
     OSPRAY_MPI_INTERFACE const char *whoHasTheMPILock();

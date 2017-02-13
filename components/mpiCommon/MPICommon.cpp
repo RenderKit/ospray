@@ -67,8 +67,6 @@ namespace ospray {
       mpiSerializerMutex.unlock();
     }
     
-    
-    
     /*! constructor. sets the 'comm', 'rank', and 'size' fields */
     Group::Group(MPI_Comm initComm)
     {
