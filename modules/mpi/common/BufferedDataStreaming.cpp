@@ -14,6 +14,10 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <chrono>
+#include <thread>
+
+#include "MPICommon.h"
 #include "BufferedDataStreaming.h"
 
 namespace ospray {
@@ -36,12 +40,27 @@ namespace ospray {
       if (buffer) delete[] buffer;
 
       uint32_t sz32 = 0;
-      lockMPI("MPIBcastFabric::read");
-      MPI_CALL(Bcast(&sz32,1,MPI_INT,0,group.comm));
-      MPI_CALL(Barrier(group.comm));
+      // Get the size of the bcast being sent to us. Only this part must be non-blocking,
+      // after getting the size we know everyone will enter the blocking barrier and the
+      // blocking bcast where the buffer is sent out.
+      MPI_Request request;
+      SERIALIZED_MPI_CALL(Ibcast(&sz32, 1, MPI_INT, 0, group.comm, &request));
+
+      // Now do non-blocking test to see when this bcast is satisfied to avoid
+      // locking out the send/recv threads
+      int size_bcast_done = 0;
+      while (!size_bcast_done) {
+        SERIALIZED_MPI_CALL(Test(&request, &size_bcast_done, MPI_STATUS_IGNORE));
+        if (!size_bcast_done) {
+          std::this_thread::sleep_for(std::chrono::nanoseconds(250));
+        }
+      }
+
       buffer = new uint8_t[sz32];
-      MPI_CALL(Bcast(buffer,sz32,MPI_BYTE,0,group.comm));
-      unlockMPI();
+      serialized(CODE_LOCATION, [&]() {
+        MPI_CALL(Barrier(group.comm));
+        MPI_CALL(Bcast(buffer, sz32, MPI_BYTE, 0, group.comm));
+      });
       mem = buffer;
       return sz32;
     }
@@ -49,18 +68,33 @@ namespace ospray {
     /*! send exact number of bytes - the fabric can do that through
       multiple smaller messages, but all bytes have to be
       delivered */
-    void   MPIBcastFabric::send(void *mem, size_t size) 
+    void MPIBcastFabric::send(void *mem, size_t size) 
     {
       assert(size < (1LL<<30));
       uint32_t sz32 = size;
-      lockMPI("MPIBcastFabric::send");
-      MPI_CALL(Bcast(&sz32,1,MPI_INT,MPI_ROOT,group.comm));
-      MPI_CALL(Barrier(group.comm));
-      MPI_CALL(Bcast(mem,sz32,MPI_BYTE,MPI_ROOT,group.comm));
-      unlockMPI();
+
+      // Send the size of the bcast we're sending. Only this part must be non-blocking,
+      // after getting the size we know everyone will enter the blocking barrier and the
+      // blocking bcast where the buffer is sent out.
+      MPI_Request request;
+      SERIALIZED_MPI_CALL(Ibcast(&sz32, 1, MPI_INT, MPI_ROOT, group.comm, &request));
+
+      // Now do non-blocking test to see when this bcast is satisfied to avoid
+      // locking out the send/recv threads
+      int size_bcast_done = 0;
+      while (!size_bcast_done) {
+        SERIALIZED_MPI_CALL(Test(&request, &size_bcast_done, MPI_STATUS_IGNORE));
+        if (!size_bcast_done) {
+          std::this_thread::sleep_for(std::chrono::nanoseconds(250));
+        }
+      }
+
+      serialized(CODE_LOCATION, [&]() {
+        MPI_CALL(Barrier(group.comm));
+        MPI_CALL(Bcast(mem, sz32, MPI_BYTE, MPI_ROOT, group.comm));
+      });
     }
 
-    
     void BufferedFabric::ReadStream::read(void *mem, size_t size)
     {
       uint8_t *writePtr  = (uint8_t*)mem;
