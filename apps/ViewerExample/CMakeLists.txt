@@ -14,10 +14,12 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-option(OSPRAY_APPS_VIEWEREXAMPLE "Build 'Viewer' example app" ON)
+OPTION(OSPRAY_APPS_VIEWEREXAMPLE "Build 'Viewer' example app" OFF)
 
 if (OSPRAY_APPS_VIEWEREXAMPLE)
-
+  if (NOT OSPRAY_APPS_SG)
+    message(ERROR "OSPRAY_APPS_SG required to build OSPRAY_APPS_VIEWEREXAMPLE")
+  endif()
   find_package(OpenGL REQUIRED)
 
   ##############################################################

@@ -30,5 +30,4 @@ OSPRAY_CREATE_LIBRARY(ospray_importer
 LINK
   ospray_common
   ospray
-  ospray_sg
 )
