@@ -18,13 +18,11 @@
 
 // mpicommon
 #include "mpiCommon/MPICommon.h"
-// #include "mpiCommon/command.h"
 // ospray
 #include "api/Device.h"
 #include "common/Managed.h"
 // ospray::mpi
 #include "common/BufferedDataStreaming.h"
-// #include "common/BufferedMPIComm.h"
 #include "common/OSPWork.h"
 
 /*! \file MPIDevice.h Implements the "mpi" device for mpi rendering */
@@ -224,14 +222,14 @@ namespace ospray {
       //      std::shared_ptr<mpi::BufferedMPIComm> bufferedComm;
 
       /*! @{ read and write stream for the work commands */
-      std::shared_ptr<Fabric>      mpiFabric;
-      std::shared_ptr<ReadStream>  readStream;
-      std::shared_ptr<WriteStream> writeStream;
+      std::unique_ptr<Fabric>      mpiFabric;
+      std::unique_ptr<ReadStream>  readStream;
+      std::unique_ptr<WriteStream> writeStream;
       /*! @} */
 
-      bool initialized {false};
+      work::WorkTypeRegistry workRegistry;
 
-      void initWorkMap();
+      bool initialized {false};
     };
 
     // ==================================================================

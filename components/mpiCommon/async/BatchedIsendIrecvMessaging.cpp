@@ -23,15 +23,17 @@
 #include <chrono>
 #include <atomic>
 #include <thread>
+
 #include "BatchedIsendIrecvMessaging.h"
+#include "../MPICommon.h"
 
 namespace ospray {
   namespace mpi {
     namespace async {
 
-      enum { SEND_WINDOW_SIZE = 48 };
-      enum { RECV_WINDOW_SIZE = 48 };
-      enum { PROC_WINDOW_SIZE = 20 };
+      const int SEND_WINDOW_SIZE = 48;
+      const int RECV_WINDOW_SIZE = 48;
+      const int PROC_WINDOW_SIZE = 20;
 
       BatchedIsendIrecvImpl::Group::Group(MPI_Comm comm,
                                           Consumer *consumer,
@@ -51,19 +53,20 @@ namespace ospray {
 
       void BatchedIsendIrecvImpl::SendThread::run()
       {
-        Group  *g = this->group;
+        Group  &g = *group;
         Action *actions[SEND_WINDOW_SIZE];
         MPI_Request request[SEND_WINDOW_SIZE];
         int finishedSends[SEND_WINDOW_SIZE];
         // Number of outstanding sends in the actions list
         int numSends = 0;
         while (1) {
-          // Each iteration try to get some new stuff to send if we have room, and repeatedly try
-          // if we have no data to send.
+          // Each iteration try to get some new stuff to send if we have room,
+          // and repeatedly try if we have no data to send.
           if (numSends < SEND_WINDOW_SIZE) {
             do {
-              int numGot = g->sendQueue.getSomeFor(actions + numSends, SEND_WINDOW_SIZE - numSends,
-                  std::chrono::milliseconds(1));
+              int numGot = g->sendQueue.getSomeFor(actions + numSends,
+                                                   SEND_WINDOW_SIZE - numSends,
+                                                   std::chrono::milliseconds(1));
               if (g->shouldExit.load()){
                 return;
               }
@@ -71,22 +74,19 @@ namespace ospray {
               // New sends are placed at the end of the buffer
               for (uint32_t i = numSends; i < numSends + numGot; i++) {
                 Action *action = actions[i];
-                lockMPI("async-isend");
-                MPI_CALL(Isend(action->data,action->size,MPI_BYTE,
+                SERIALIZED_MPI_CALL(Isend(action->data,action->size,MPI_BYTE,
                       action->addr.rank,g->tag,g->comm, &request[i]));
-                unlockMPI();
               }
 
               numSends += numGot;
             } while (numSends == 0);
           }
 
-          // TODO: Is it ok to wait even if we're exiting? Maybe we'd just get send
-          // failed statuses back?
-          lockMPI("async-send-testsome");
+          // TODO: Is it ok to wait even if we're exiting? Maybe we'd just get
+          // send failed statuses back?
           int numFinished = 0;
-          MPI_CALL(Testsome(numSends, request, &numFinished, finishedSends, MPI_STATUSES_IGNORE));
-          unlockMPI();
+          SERIALIZED_MPI_CALL(Testsome(numSends, request, &numFinished,
+                                       finishedSends, MPI_STATUSES_IGNORE));
 
           if (numFinished > 0) {
             for (int i = 0; i < numFinished; ++i) {
@@ -104,6 +104,7 @@ namespace ospray {
                   g->isFlushedCondition.notify_one();
               }
             }
+
             // Move finished sends to the end of the respective buffers
             std::stable_partition(actions, actions + SEND_WINDOW_SIZE,
                 [](const Action *a) { return a != nullptr; });
@@ -118,9 +119,7 @@ namespace ospray {
 
       void BatchedIsendIrecvImpl::RecvThread::run()
       {
-        // note this thread not only _probes_ for new receives, it
-        // also immediately starts the receive operation using Irecv()
-        Group *g = (Group *)this->group;
+        Group &g = *group;
 
         MPI_Request request[RECV_WINDOW_SIZE];
         Action *actions[RECV_WINDOW_SIZE];
@@ -136,75 +135,72 @@ namespace ospray {
           numRequests = 0;
           // wait for first message
           {
-            // usleep(280);
             int msgAvail = 0;
             while (!msgAvail) {
-              lockMPI("async-iprobe");
-              MPI_CALL(Iprobe(MPI_ANY_SOURCE,g->tag,g->comm,&msgAvail,&status));
-              unlockMPI();
-              if (g->shouldExit.load()){
+              SERIALIZED_MPI_CALL(Iprobe(MPI_ANY_SOURCE, g.tag, g.comm,
+                                         &msgAvail, &status));
+
+              if (g.shouldExit.load())
                 return;
-              }
-              if (msgAvail){
+
+              if (msgAvail)
                 break;
-              }
+
 #ifdef _WIN32
               Sleep(sleep_time);
 #else
-              // TODO: Can we do a CMake feature test for this_thread::sleep_for and
-              // conditionally use nanosleep?
-              nanosleep(&sleep_time, NULL);
+              // TODO: Can we do a CMake feature test for this_thread::sleep_for
+              //       and conditionally use nanosleep?
+              nanosleep(&sleep_time, nullptr);
 #endif
             }
+
             Action *action = new Action;
-            action->addr = Address(g,status.MPI_SOURCE);
-            lockMPI("async-iprobe-getcount");
-            MPI_CALL(Get_count(&status,MPI_BYTE,&action->size));
-            unlockMPI();
+            action->addr = Address(&g, status.MPI_SOURCE);
+            SERIALIZED_MPI_CALL(Get_count(&status, MPI_BYTE, &action->size));
 
             action->data = malloc(action->size);
-            lockMPI("async-iprobe-irecv");
-            MPI_CALL(Irecv(action->data,action->size,MPI_BYTE,
-                           status.MPI_SOURCE,status.MPI_TAG,
-                           g->comm,&request[numRequests]));
-            unlockMPI();
+
+            SERIALIZED_MPI_CALL(Irecv(action->data, action->size, MPI_BYTE,
+                                      status.MPI_SOURCE, status.MPI_TAG,
+                                      g.comm, &request[numRequests]));
+
             actions[numRequests++] = action;
           }
+
           // ... and add all the other ones that are outstanding, up
           // to max window size
           while (numRequests < RECV_WINDOW_SIZE) {
             int msgAvail;
-            lockMPI("async-iprobe-recv");
-            MPI_CALL(Iprobe(MPI_ANY_SOURCE,g->tag,g->comm,&msgAvail,&status));
-            unlockMPI();
+            SERIALIZED_MPI_CALL(Iprobe(MPI_ANY_SOURCE, g.tag, g.comm,
+                                       &msgAvail, &status));
+
             if (!msgAvail)
               break;
             
             Action *action = new Action;
-            action->addr = Address(g,status.MPI_SOURCE);
-            lockMPI("async-batched-getcount");
-            MPI_CALL(Get_count(&status,MPI_BYTE,&action->size));
-            unlockMPI();
+            action->addr = Address(&g, status.MPI_SOURCE);
+
+            SERIALIZED_MPI_CALL(Get_count(&status,MPI_BYTE,&action->size));
 
             action->data = malloc(action->size);
-            lockMPI("async-batched-irecv");
-            MPI_CALL(Irecv(action->data,action->size,MPI_BYTE,
-                           status.MPI_SOURCE,status.MPI_TAG,
-                           g->comm,&request[numRequests]));
-            unlockMPI();
+
+            SERIALIZED_MPI_CALL(Irecv(action->data, action->size, MPI_BYTE,
+                                      status.MPI_SOURCE, status.MPI_TAG,
+                                      g.comm, &request[numRequests]));
+
             actions[numRequests++] = action;
           }
 
-          // TODO: Is it ok to wait even if we're exiting? Maybe we'd just get send
-          // failed statuses back?
+          // TODO: Is it ok to wait even if we're exiting? Maybe we'd just get
+          //       send failed statuses back?
           // now, have certain number of messages available...
-          lockMPI("async-waitall");
           // TODO: We should be using testsome like the sending code
-          MPI_CALL(Waitall(numRequests,request,MPI_STATUSES_IGNORE));
-          unlockMPI();
+          SERIALIZED_MPI_CALL(Waitall(numRequests, request,
+                                      MPI_STATUSES_IGNORE));
 
           // OK, all actions are valid now
-          g->recvQueue.putSome(&actions[0],numRequests);
+          g.recvQueue.putSome(&actions[0], numRequests);
         }
       }
 
@@ -214,16 +210,19 @@ namespace ospray {
         while (1) {
           Action *actions[PROC_WINDOW_SIZE];
           size_t numActions = 0;
-          while (numActions == 0){
-            numActions = g->recvQueue.getSomeFor(actions,PROC_WINDOW_SIZE,
-                std::chrono::milliseconds(1));
+
+          while (numActions == 0) {
+            numActions = g->recvQueue.getSomeFor(actions,
+                                                 PROC_WINDOW_SIZE,
+                                                 std::chrono::milliseconds(1));
             if (g->shouldExit.load()){
               return;
             }
           }
-          for (uint32_t i = 0; i < numActions; i++) {
+
+          for (size_t i = 0; i < numActions; i++) {
             Action *action = actions[i];
-            g->consumer->process(action->addr,action->data,action->size);
+            g->consumer->process(action->addr, action->data, action->size);
             delete action;
           }
         }
@@ -244,31 +243,37 @@ namespace ospray {
       void BatchedIsendIrecvImpl::init()
       {
         mpi::world.barrier();
+
         if (logMPI) {
           printf("#osp:mpi:BatchedIsendIrecvMessaging started up %i/%i\n",
-                 mpi::world.rank,mpi::world.size);
+                 mpi::world.rank, mpi::world.size);
           fflush(0);
         }
+
         mpi::world.barrier();
       }
 
       void BatchedIsendIrecvImpl::shutdown()
       {
         mpi::world.barrier();
+
         if (logMPI) {
           printf("#osp:mpi:BatchedIsendIrecvMessaging shutting down %i/%i\n",
-                 mpi::world.rank,mpi::world.size);
+                 mpi::world.rank, mpi::world.size);
           fflush(0);
         }
+
         mpi::world.barrier();
+
         for (uint32_t i = 0; i < myGroups.size(); i++)
           myGroups[i]->shutdown();
 
         if (logMPI) {
           printf("#osp:mpi:BatchedIsendIrecvMessaging finalizing %i/%i\n",
-                 mpi::world.rank,mpi::world.size);
+                 mpi::world.rank, mpi::world.size);
         }
-        MPI_CALL(Finalize());
+
+        SERIALIZED_MPI_CALL(Finalize());
       }
 
       async::Group *BatchedIsendIrecvImpl::createGroup(MPI_Comm comm,
@@ -291,11 +296,11 @@ namespace ospray {
         action->data   = msgPtr;
         action->size   = msgSize;
 
-        
         Group *g = (Group *)dest.group;
         { std::lock_guard<std::mutex> lock(g->flushMutex);
           g->numMessagesAskedToSend++;
         }
+
         g->sendQueue.put(action);
       }
 
@@ -303,18 +308,16 @@ namespace ospray {
           check if there's message incomgin during the flushign ... */
       void BatchedIsendIrecvImpl::flush()
       {
-        for (auto g : myGroups) {
-          assert(g);
+        for (auto g : myGroups)
           g->flush();
-        }
       }
 
       void BatchedIsendIrecvImpl::Group::flush()
       {
         std::unique_lock<std::mutex> lock(flushMutex);
         isFlushedCondition.wait(lock,[&]{
-            return (numMessagesDoneSending == numMessagesAskedToSend);
-          });
+          return (numMessagesDoneSending == numMessagesAskedToSend);
+        });
       }
       
     } // ::ospray::mpi::async

@@ -76,7 +76,7 @@ namespace ospray {
         if (numWeCanDeliver == 0) {
           // read some more ... we HAVE to fulfill this 'read()'
           // request, so have to read here
-          numAvailable = fabric->read((void*&)buffer);
+          numAvailable = fabric.get().read((void*&)buffer);
           continue;
         }
         
@@ -108,7 +108,7 @@ namespace ospray {
     void BufferedFabric::WriteStream::flush()
     {
       if (numInBuffer > 0)
-        fabric->send(buffer,numInBuffer);
+        fabric.get().send(buffer,numInBuffer);
       numInBuffer = 0;
     };
 

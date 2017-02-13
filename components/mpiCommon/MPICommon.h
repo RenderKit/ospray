@@ -43,7 +43,18 @@
 #endif
 /*! helper macro that checks the return value of all MPI_xxx(...)
     calls via MPI_CALL(xxx(...)).  */
-#define MPI_CALL(a) { int rc = MPI_##a; if (rc != MPI_SUCCESS) throw std::runtime_error("MPI call returned error"); }
+#define MPI_CALL(a) { \
+  int rc = MPI_##a; \
+  if (rc != MPI_SUCCESS) \
+    throw std::runtime_error("MPI call returned error"); \
+}
+
+#define SERIALIZED_MPI_CALL(a) { \
+  ospray::mpi::serialized(CODE_LOCATION, [&]() { \
+    MPI_CALL(a) \
+  }); \
+}
+
 
 namespace ospray {
   namespace mpi {
@@ -66,49 +77,44 @@ namespace ospray {
     /*! helper functions that lock resp unlock the mpi serializer mutex */
     OSPRAY_MPI_INTERFACE void unlockMPI();
 
+    template<typename CLOSURE_T>
+    inline void serialized(const char *lockId, CLOSURE_T&& criticalSection)
+    {
+      lockMPI(lockId);
+      criticalSection();
+      unlockMPI();
+    }
+
     /*! the value of the 'whoHasTheLock' parameter of the last
         succeeding lockMPI() call */
     OSPRAY_MPI_INTERFACE const char *whoHasTheMPILock();
     
     /*! use this macro as a lock-guard inside any scope you want to
         perform MPI calls in */
-#define SERIALIZE_MPI std::lock_guard<std::mutex>(ospray::mpi::mpiSerializerMutex);
+#define SERIALIZE_MPI \
+  std::lock_guard<std::mutex>(ospray::mpi::mpiSerializerMutex);
     
-    void checkMpiError(int rc);
+    OSPRAY_MPI_INTERFACE void checkMpiError(int rc);
 
     //! abstraction for an MPI group. 
     /*! it's the responsiblity of the respective mpi setup routines to
       fill in the proper values */
-    struct Group
+    struct OSPRAY_MPI_INTERFACE Group
     {
       /*! constructor. sets the 'comm', 'rank', and 'size' fields */
-      Group(MPI_Comm initComm=MPI_COMM_NULL);
+      Group(MPI_Comm initComm = MPI_COMM_NULL);
       Group(const Group &other);
 
       inline bool valid() const
       {
         return comm != MPI_COMM_NULL; 
       }
+
       // this is the RIGHT naming convention - old code has them all inside out.
-      void makeIntraComm() 
-      {
-        lockMPI("Group::makeIntraComm");
-        MPI_Comm_rank(comm,&rank);
-        MPI_Comm_size(comm,&size);
-        unlockMPI();
-        containsMe = true;
-      }
-      void makeIntraComm(MPI_Comm comm)
-      { this->comm = comm; makeIntraComm(); }
-      void makeInterComm(MPI_Comm comm)
-      { this->comm = comm; makeInterComm(); }
-      void makeInterComm()
-      {
-        lockMPI("Group::makeInterComm");
-        containsMe = false; rank = MPI_ROOT;
-        MPI_Comm_remote_size(comm,&size);
-        unlockMPI();
-      }
+      void makeIntraComm();
+      void makeIntraComm(MPI_Comm comm);
+      void makeInterComm(MPI_Comm comm);
+      void makeInterComm();
 
       /*! set to given intercomm, and properly set size, root, etc */
       void setTo(MPI_Comm comm);
@@ -117,7 +123,7 @@ namespace ospray {
       Group dup() const;
 
       /*! perform a MPI_barrier on this communicator */
-      void barrier() const ;
+      void barrier() const;
       
       /*! whether the current process/thread is a member of this
         gorup */
@@ -133,7 +139,7 @@ namespace ospray {
       int size {-1};
     };
 
-    // //! abstraction for any other peer node that we might want to communicate with
+    //! abstraction for any other peer node that we might want to communicate with
     struct Address
     {
       //! group that this peer is in
@@ -174,18 +180,7 @@ namespace ospray {
 
     // Initialize OSPRay's MPI groups
     OSPRAY_MPI_INTERFACE void init(int *ac, const char **av);
-
-    // namespace work {
-    //   struct Work;
-    // }
-
-    // OSPRAY_INTERFACE void send(const Address& address, void* msgPtr, int32 msgSize);
-    // OSPRAY_MPI_INTERFACE void send(const Address& addr, work::Work* work);
-    // //TODO: callback?
-    // OSPRAY_MPI_INTERFACE void recv(const Address& addr, std::vector<work::Work*>& work);
-    // OSPRAY_INTERFACE void send(const Address& addr, )
     OSPRAY_MPI_INTERFACE void flush();
-    // OSPRAY_MPI_INTERFACE void barrier(const Group& group);
 
     inline int getWorkerCount()
     {
@@ -200,6 +195,72 @@ namespace ospray {
     inline bool isMpiParallel()
     {
       return getWorkerCount() > 0;
+    }
+
+    // RTTI hash ID lookup helper functions ///////////////////////////////////
+
+    OSPRAY_MPI_INTERFACE size_t translatedHash(size_t v);
+
+    template <typename T>
+    inline size_t typeIdOf()
+    {
+      return translatedHash(typeid(T).hash_code());
+    }
+
+    template <typename T>
+    inline size_t typeIdOf(T *v)
+    {
+      return translatedHash(typeid(*v).hash_code());
+    }
+
+    template <typename T>
+    inline size_t typeIdOf(const T &v)
+    {
+      return translatedHash(typeid(v).hash_code());
+    }
+
+    template <typename T>
+    inline size_t typeIdOf(const std::unique_ptr<T> &v)
+    {
+      return translatedHash(typeid(*v).hash_code());
+    }
+
+    template <typename T>
+    inline size_t typeIdOf(const std::shared_ptr<T> &v)
+    {
+      return translatedHash(typeid(*v).hash_code());
+    }
+
+    // RTTI string name lookup helper functions ///////////////////////////////
+
+    template <typename T>
+    inline std::string typeString()
+    {
+      return typeid(T).name();
+    }
+
+    template <typename T>
+    inline std::string typeString(T *v)
+    {
+      return typeid(*v).name();
+    }
+
+    template <typename T>
+    inline std::string typeString(const T &v)
+    {
+      return typeid(v).name();
+    }
+
+    template <typename T>
+    inline std::string typeString(const std::unique_ptr<T> &v)
+    {
+      return typeid(*v).name();
+    }
+
+    template <typename T>
+    inline std::string typeString(const std::shared_ptr<T> &v)
+    {
+      return typeid(*v).name();
     }
 
   }// ::ospray::mpi

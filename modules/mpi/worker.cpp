@@ -71,24 +71,34 @@ namespace ospray {
       throw std::runtime_error("embree internal error '"+std::string(str)+"'");
     }
 
-    std::shared_ptr<work::Work> readWork(std::map<work::Work::tag_t,work::CreateWorkFct> &registry,
-                                         std::shared_ptr<ReadStream> &readStream)
+    std::unique_ptr<work::Work> readWork(work::WorkTypeRegistry &registry,
+                                         ReadStream             &readStream)
     {
       work::Work::tag_t tag;
-      *readStream >> tag;
+      readStream >> tag;
 
-      static size_t numWorkReceived = 0;
       if(logMPI) {
-        printf("#osp.mpi.worker: got work #%li, tag %i: %s\n",
-               numWorkReceived++,
-               tag,work::commandTagToString((work::CommandTag)tag).c_str());
+        static size_t numWorkReceived = 0;
+        std::stringstream msg;
+        msg << "#osp.mpi.worker: got work #" << numWorkReceived++
+            << ", tag " << tag << std::endl;
       }
-      
+
       auto make_work = registry.find(tag);
-      assert(make_work != registry.end());
-      std::shared_ptr<work::Work> work = make_work->second();
-      assert(work);
-      work->deserialize(*readStream);
+      if (make_work == registry.end()) {
+        std::stringstream msg;
+        msg << "Invalid work type received - tag #: " << tag;
+        throw std::runtime_error(msg.str());
+      }
+
+      auto work = make_work->second();
+
+      if(logMPI) {
+        printf(": %s\n", typeString(work).c_str());
+      }
+
+
+      work->deserialize(readStream);
       return work;
     }
 
@@ -153,10 +163,8 @@ namespace ospray {
       // -------------------------------------------------------
       // setting up read/write streams
       // -------------------------------------------------------
-      std::shared_ptr<Fabric> mpiFabric
-        = std::make_shared<MPIBcastFabric>(mpi::app);
-      std::shared_ptr<ReadStream> readStream
-        = std::make_shared<BufferedFabric::ReadStream>(mpiFabric);
+      auto mpiFabric  = make_unique<MPIBcastFabric>(mpi::app);
+      auto readStream = make_unique<BufferedFabric::ReadStream>(*mpiFabric);
 
       // create registry of work item types
       std::map<work::Work::tag_t,work::CreateWorkFct> workTypeRegistry;
@@ -164,17 +172,15 @@ namespace ospray {
 
       logMPI = checkIfWeNeedToDoMPIDebugOutputs();
       while (1) {
-        std::shared_ptr<work::Work> work = readWork(workTypeRegistry,readStream);
+        auto work = readWork(workTypeRegistry, *readStream);
         if (logMPI) {
-          std::cout << "#osp.mpi.worker: processing work "
-                    << work::commandTagToString((work::CommandTag)work->getTag())
-                    << std::endl;
+          std::cout << "#osp.mpi.worker: processing work " << typeIdOf(work)
+                    << ": " << typeString(work) << std::endl;
         }
         work->run();
         if (logMPI) {
-          std::cout << "#osp.mpi.worker: done w/ work "
-                    << work::commandTagToString((work::CommandTag)work->getTag())
-                    << std::endl;
+          std::cout << "#osp.mpi.worker: done w/ work " << typeIdOf(work)
+                    << ": " << typeString(work) << std::endl;
         }
       }
     }

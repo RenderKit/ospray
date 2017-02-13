@@ -67,8 +67,6 @@ namespace ospray {
       mpiSerializerMutex.unlock();
     }
     
-    
-    
     /*! constructor. sets the 'comm', 'rank', and 'size' fields */
     Group::Group(MPI_Comm initComm)
     {
@@ -77,14 +75,42 @@ namespace ospray {
 
     /*! constructor. sets the 'comm', 'rank', and 'size' fields */
     Group::Group(const Group &other)
-      : comm(other.comm), rank(other.rank), size(other.size), containsMe(other.containsMe)
+      : comm(other.comm), rank(other.rank),
+        size(other.size), containsMe(other.containsMe)
     {
+    }
+
+    void Group::makeIntraComm()
+    {
+      lockMPI("Group::makeIntraComm");
+      MPI_Comm_rank(comm,&rank);
+      MPI_Comm_size(comm,&size);
+      unlockMPI();
+      containsMe = true;
+    }
+
+    void Group::makeIntraComm(MPI_Comm comm)
+    {
+      this->comm = comm; makeIntraComm();
+    }
+
+    void Group::makeInterComm(MPI_Comm comm)
+    {
+      this->comm = comm; makeInterComm();
+    }
+
+    void Group::makeInterComm()
+    {
+      lockMPI("Group::makeInterComm");
+      containsMe = false; rank = MPI_ROOT;
+      MPI_Comm_remote_size(comm,&size);
+      unlockMPI();
     }
 
     void Group::barrier() const
     {
       lockMPI("mpi::Group::barrier");
-      MPI_CALL(Barrier(comm)); 
+      MPI_CALL(Barrier(comm));
       unlockMPI();
     }
 
@@ -202,24 +228,19 @@ namespace ospray {
 #endif
     }
 
-    // void send(const Address& addr, work::Work* work)
-    // {
-    //   BufferedMPIComm::get()->send(addr, work);
-    // }
+    size_t translatedHash(size_t v)
+    {
+      static std::map<size_t, size_t> id_translation;
 
-    // void recv(const Address& addr, std::vector<work::Work*>& work)
-    // {
-    //   BufferedMPIComm::get()->recv(addr, work);
-    // }
+      auto itr = id_translation.find(v);
+      if (itr == id_translation.end()) {
+        static size_t newIndex = 0;
+        id_translation[v] = newIndex;
+        return newIndex++;
+      } else {
+        return id_translation[v];
+      }
+    }
 
-    // void flush()
-    // {
-    //   BufferedMPIComm::get()->flush();
-    // }
-
-    // void barrier(const Group& group)
-    // {
-    //   BufferedMPIComm::get()->barrier(group);
-    // }
   } // ::ospray::mpi
 } // ::ospray

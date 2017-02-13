@@ -25,7 +25,7 @@
 
 namespace ospray {
 
-  Camera *Camera::createCamera(const char *type)
+  Camera *Camera::createInstance(const char *type)
   {
     return createInstanceHelper<Camera, OSP_CAMERA>(type);
   }
