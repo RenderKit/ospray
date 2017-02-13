@@ -111,7 +111,6 @@ namespace ospray {
           numRequests = 0;
           // wait for first message
           {
-            // usleep(280);
             int msgAvail = 0;
             while (!msgAvail) {
               SERIALIZED_MPI_CALL(Iprobe(MPI_ANY_SOURCE, g.tag, g.comm,
@@ -120,9 +119,9 @@ namespace ospray {
               if (g.shouldExit.load())
                 return;
 
-              if (msgAvail){
+              if (msgAvail)
                 break;
-              }
+
 #ifdef _WIN32
               Sleep(sleep_time);
 #else
@@ -176,7 +175,7 @@ namespace ospray {
                                       MPI_STATUSES_IGNORE));
 
           // OK, all actions are valid now
-          g.recvQueue.putSome(&actions[0],numRequests);
+          g.recvQueue.putSome(&actions[0], numRequests);
         }
       }
 
@@ -188,8 +187,9 @@ namespace ospray {
           size_t numActions = 0;
 
           while (numActions == 0) {
-            numActions = g->recvQueue.getSomeFor(actions,PROC_WINDOW_SIZE,
-                std::chrono::milliseconds(1));
+            numActions = g->recvQueue.getSomeFor(actions,
+                                                 PROC_WINDOW_SIZE,
+                                                 std::chrono::milliseconds(1));
             if (g->shouldExit.load()){
               return;
             }
@@ -197,7 +197,7 @@ namespace ospray {
 
           for (size_t i = 0; i < numActions; i++) {
             Action *action = actions[i];
-            g->consumer->process(action->addr,action->data,action->size);
+            g->consumer->process(action->addr, action->data, action->size);
             delete action;
           }
         }
@@ -218,11 +218,13 @@ namespace ospray {
       void BatchedIsendIrecvImpl::init()
       {
         mpi::world.barrier();
+
         if (logMPI) {
           printf("#osp:mpi:BatchedIsendIrecvMessaging started up %i/%i\n",
-                 mpi::world.rank,mpi::world.size);
+                 mpi::world.rank, mpi::world.size);
           fflush(0);
         }
+
         mpi::world.barrier();
       }
 
@@ -232,7 +234,7 @@ namespace ospray {
 
         if (logMPI) {
           printf("#osp:mpi:BatchedIsendIrecvMessaging shutting down %i/%i\n",
-                 mpi::world.rank,mpi::world.size);
+                 mpi::world.rank, mpi::world.size);
           fflush(0);
         }
 
@@ -243,7 +245,7 @@ namespace ospray {
 
         if (logMPI) {
           printf("#osp:mpi:BatchedIsendIrecvMessaging finalizing %i/%i\n",
-                 mpi::world.rank,mpi::world.size);
+                 mpi::world.rank, mpi::world.size);
         }
 
         SERIALIZED_MPI_CALL(Finalize());
@@ -269,11 +271,11 @@ namespace ospray {
         action->data   = msgPtr;
         action->size   = msgSize;
 
-        
         Group *g = (Group *)dest.group;
         { std::lock_guard<std::mutex> lock(g->flushMutex);
           g->numMessagesAskedToSend++;
         }
+
         g->sendQueue.put(action);
       }
 
@@ -289,8 +291,8 @@ namespace ospray {
       {
         std::unique_lock<std::mutex> lock(flushMutex);
         isFlushedCondition.wait(lock,[&]{
-            return (numMessagesDoneSending == numMessagesAskedToSend);
-          });
+          return (numMessagesDoneSending == numMessagesAskedToSend);
+        });
       }
       
     } // ::ospray::mpi::async
