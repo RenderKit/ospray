@@ -96,18 +96,18 @@ namespace ospray {
           : fabric(fabric),
             maxBufferSize(maxBufferSize),
             numInBuffer(0),
-            buffer(new uint8_t[maxBufferSize])
+            buffer(new byte_t[maxBufferSize])
         {
         }
 
-        virtual ~WriteStream() { delete buffer; }
+        virtual ~WriteStream() { delete [] buffer; }
         
         virtual void write(void *mem, size_t size) override;
         
         virtual void flush() override;
           
         std::reference_wrapper<Fabric> fabric;
-        uint8_t *buffer;
+        byte_t *buffer;
         size_t maxBufferSize;
         size_t numInBuffer;
       };

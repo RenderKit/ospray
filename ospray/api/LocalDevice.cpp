@@ -552,7 +552,7 @@ namespace ospray {
       } catch (const std::runtime_error &e) {
         std::string msg = "=================================================\n";
         msg += "# >>> ospray fatal error <<< \n";
-        msg += e.what() + '\n';
+        msg += std::string(e.what()) + '\n';
         msg += "=================================================\n";
         postErrorMsg(msg);
         exit(1);

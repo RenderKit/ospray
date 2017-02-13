@@ -80,7 +80,7 @@ namespace ospray {
       static size_t numWorkReceived = 0;
 
       if(logMPI) {
-        printf("#osp.mpi.worker: got work #%ul, tag %ul",
+        printf("#osp.mpi.worker: got work #%ull, tag %ull",
                numWorkReceived++,
                tag);
       }
