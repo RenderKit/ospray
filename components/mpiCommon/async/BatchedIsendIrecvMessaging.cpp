@@ -54,6 +54,7 @@ namespace ospray {
         Group  &g = *group;
         Action *actions[SEND_WINDOW_SIZE];
         MPI_Request request[SEND_WINDOW_SIZE];
+
         while (1) {
           size_t numActions = 0;
 
@@ -67,17 +68,15 @@ namespace ospray {
 
           for (size_t i = 0; i < numActions; i++) {
             Action *action = actions[i];
-            serialized("async-isend", [&]() {
-              MPI_CALL(Isend(action->data, action->size, MPI_BYTE,
-                             action->addr.rank, g.tag, g.comm, &request[i]));
-            });
+            SERIALIZED_MPI_CALL(Isend(action->data, action->size, MPI_BYTE,
+                                      action->addr.rank, g.tag, g.comm,
+                                      &request[i]));
           }
 
           // TODO: Is it ok to wait even if we're exiting? Maybe we'd just
           //       get send failed statuses back?
-          serialized("async-send-waitall", [&]() {
-            MPI_CALL(Waitall(numActions, request, MPI_STATUSES_IGNORE));
-          });
+          SERIALIZED_MPI_CALL(Waitall(numActions, request,
+                                      MPI_STATUSES_IGNORE));
           
           for (size_t i = 0; i < numActions; i++) {
             Action *action = actions[i];
@@ -115,10 +114,8 @@ namespace ospray {
             // usleep(280);
             int msgAvail = 0;
             while (!msgAvail) {
-              serialized("async-iprobe", [&]() {
-                MPI_CALL(Iprobe(MPI_ANY_SOURCE, g.tag, g.comm,
-                                &msgAvail, &status));
-              });
+              SERIALIZED_MPI_CALL(Iprobe(MPI_ANY_SOURCE, g.tag, g.comm,
+                                         &msgAvail, &status));
 
               if (g.shouldExit.load())
                 return;
@@ -137,17 +134,13 @@ namespace ospray {
 
             Action *action = new Action;
             action->addr = Address(&g, status.MPI_SOURCE);
-            serialized("async-iprobe-getcount", [&]() {
-              MPI_CALL(Get_count(&status, MPI_BYTE, &action->size));
-            });
+            SERIALIZED_MPI_CALL(Get_count(&status, MPI_BYTE, &action->size));
 
             action->data = malloc(action->size);
 
-            serialized("async-iprobe-irecv", [&]() {
-              MPI_CALL(Irecv(action->data, action->size, MPI_BYTE,
-                             status.MPI_SOURCE, status.MPI_TAG,
-                             g.comm, &request[numRequests]));
-            });
+            SERIALIZED_MPI_CALL(Irecv(action->data, action->size, MPI_BYTE,
+                                      status.MPI_SOURCE, status.MPI_TAG,
+                                      g.comm, &request[numRequests]));
 
             actions[numRequests++] = action;
           }
@@ -156,10 +149,8 @@ namespace ospray {
           // to max window size
           while (numRequests < RECV_WINDOW_SIZE) {
             int msgAvail;
-            serialized("async-iprobe-recv", [&]() {
-              MPI_CALL(Iprobe(MPI_ANY_SOURCE, g.tag, g.comm,
-                              &msgAvail, &status));
-            });
+            SERIALIZED_MPI_CALL(Iprobe(MPI_ANY_SOURCE, g.tag, g.comm,
+                                       &msgAvail, &status));
 
             if (!msgAvail)
               break;
@@ -167,27 +158,22 @@ namespace ospray {
             Action *action = new Action;
             action->addr = Address(&g, status.MPI_SOURCE);
 
-            serialized("async-batched-getcount", [&]() {
-              MPI_CALL(Get_count(&status,MPI_BYTE,&action->size));
-            });
+            SERIALIZED_MPI_CALL(Get_count(&status,MPI_BYTE,&action->size));
 
             action->data = malloc(action->size);
 
-            serialized("async-batched-irecv", [&]() {
-              MPI_CALL(Irecv(action->data, action->size, MPI_BYTE,
-                             status.MPI_SOURCE, status.MPI_TAG,
-                             g.comm, &request[numRequests]));
-            });
+            SERIALIZED_MPI_CALL(Irecv(action->data, action->size, MPI_BYTE,
+                                      status.MPI_SOURCE, status.MPI_TAG,
+                                      g.comm, &request[numRequests]));
 
             actions[numRequests++] = action;
           }
 
-          // TODO: Is it ok to wait even if we're exiting? Maybe we'd just get send
-          // failed statuses back?
+          // TODO: Is it ok to wait even if we're exiting? Maybe we'd just get
+          //       send failed statuses back?
           // now, have certain number of messages available...
-          serialized("async-waitall", [&]() {
-            MPI_CALL(Waitall(numRequests, request, MPI_STATUSES_IGNORE));
-          });
+          SERIALIZED_MPI_CALL(Waitall(numRequests, request,
+                                      MPI_STATUSES_IGNORE));
 
           // OK, all actions are valid now
           g.recvQueue.putSome(&actions[0],numRequests);
@@ -260,7 +246,7 @@ namespace ospray {
                  mpi::world.rank,mpi::world.size);
         }
 
-        MPI_CALL(Finalize());
+        SERIALIZED_MPI_CALL(Finalize());
       }
 
       async::Group *BatchedIsendIrecvImpl::createGroup(MPI_Comm comm,

@@ -88,7 +88,8 @@
 /* debug printing macros */
 #define STRING(x) #x
 #define TOSTRING(x) STRING(x)
-#define PING std::cout << __FILE__ << " (" << __LINE__ << "): " << __FUNCTION__ << std::endl
+#define CODE_LOCATION __FILE__ " (" STRING(__LINE__) ")"
+#define PING std::cout << CODE_LOCATION << ": " << __FUNCTION__ << std::endl
 #define PRINT(x) std::cout << STRING(x) << " = " << (x) << std::endl
 #define PRINT2(x,y) std::cout << STRING(x) << " = " << (x) << ", " << STRING(y) << " = " << (y) << std::endl
 #define PRINT3(x,y,z) std::cout << STRING(x) << " = " << (x) << ", " << STRING(y) << " = " << (y) << ", " << STRING(z) << " = " << (z) << std::endl

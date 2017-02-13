@@ -43,7 +43,18 @@
 #endif
 /*! helper macro that checks the return value of all MPI_xxx(...)
     calls via MPI_CALL(xxx(...)).  */
-#define MPI_CALL(a) { int rc = MPI_##a; if (rc != MPI_SUCCESS) throw std::runtime_error("MPI call returned error"); }
+#define MPI_CALL(a) { \
+  int rc = MPI_##a; \
+  if (rc != MPI_SUCCESS) \
+    throw std::runtime_error("MPI call returned error"); \
+}
+
+#define SERIALIZED_MPI_CALL(a) { \
+  ospray::mpi::serialized(CODE_LOCATION, [&]() { \
+    MPI_CALL(a) \
+  }); \
+}
+
 
 namespace ospray {
   namespace mpi {
