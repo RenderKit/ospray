@@ -20,9 +20,9 @@
 #include "ospcommon/FileName.h"
 
 // scene graph
-#include "sg/module/Module.h"
-#include "sg/importer/Importer.h"
-#include "sg/Renderer.h"
+// #include "sg/module/Module.h"
+// #include "sg/importer/Importer.h"
+// #include "sg/Renderer.h"
 
 #include <string>
 

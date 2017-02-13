@@ -245,6 +245,10 @@ namespace ospray {
       /*! \brief 'commit' updates */
       virtual void commit() {}
 
+      std::string getDocumentation() { return documentation; }
+
+      void setDocumentation(std::string s) { documentation = s; }
+
       /*! \brief return bounding box in world coordinates.
 
         This function can be used by the viewer(s) for calibrating
@@ -454,6 +458,7 @@ namespace ospray {
       std::mutex mutex;
       NodeFlags flags;
       bool valid;
+      std::string documentation;
     };
 
     /*! read a given scene graph node from its correspondoing xml node represenation */
@@ -467,7 +472,7 @@ namespace ospray {
     void registerNamedNode(const std::string &name, const std::shared_ptr<sg::Node> &node);
 
     typedef Node::NodeH NodeH;
-    Node::NodeH createNode(std::string name, std::string type="Node", SGVar var=NullType(), int flags=sg::NodeFlags::none);
+    Node::NodeH createNode(std::string name, std::string type="Node", SGVar var=NullType(), int flags=sg::NodeFlags::none, std::string documentation="");
     // , std::shared_ptr<sg::Param>=std::make_shared<sg::Param>("none")
 
     template <typename T>

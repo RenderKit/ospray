@@ -637,6 +637,8 @@ void ImGuiViewer::buildGUINode(sg::NodeH node, bool &renderer_changed, int inden
   }
   if (!node->isValid())
     ImGui::PopStyleColor(styles--);
+  if (ImGui::IsItemHovered())
+    ImGui::SetTooltip(node->getDocumentation().c_str());
 }
 
 }// namepace ospray

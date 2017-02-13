@@ -224,7 +224,7 @@ namespace ospray {
     std::map<std::string, creatorFct> nodeRegistry;
 
 
-    Node::NodeH createNode(std::string name, std::string type, SGVar var, int flags)
+    Node::NodeH createNode(std::string name, std::string type, SGVar var, int flags, std::string documentation)
     {
       std::map<std::string, creatorFct>::iterator it = nodeRegistry.find(type);
       creatorFct creator = NULL;
@@ -246,6 +246,7 @@ namespace ospray {
       newNode->setName(name);
       newNode->setType(type);
       newNode->setFlags(flags);
+      newNode->setDocumentation(documentation);
       if (valid(var))
           newNode->setValue(var);
       NodeH result = Node::NodeH(newNode);

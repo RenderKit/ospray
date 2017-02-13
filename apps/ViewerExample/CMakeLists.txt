@@ -51,6 +51,7 @@ ospray_create_application(ospViewerExample
     ospray_common
     ospray_commandline
     ospray_imgui3d
+    ospray_sg
   )
 
 endif()
