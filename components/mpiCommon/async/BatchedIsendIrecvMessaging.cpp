@@ -49,8 +49,6 @@ namespace ospray {
         recvThread.handle = std::thread([&](){recvThread.run();});
       }
 
-      //using ActiveAction = std::pair<Action*, MPI_Request>;
-
       void BatchedIsendIrecvImpl::SendThread::run()
       {
         Group  &g = *group;
