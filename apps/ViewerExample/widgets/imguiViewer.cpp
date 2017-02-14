@@ -302,7 +302,6 @@ void ImGuiViewer::buildGui()
   static bool demo_window = false;
 
   ImGui::Begin("Viewer Controls: press 'g' to show/hide", nullptr, flags);
-  ImGui::SetWindowFontScale(0.5f);
 
   if (ImGui::BeginMenuBar())
   {
