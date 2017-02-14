@@ -26,6 +26,7 @@
 // xml
 #include "../../../common/xml/XML.h"
 // ospcommon
+#include "ospray/common/OSPCommon.h"
 #include "ospcommon/vec.h"
 #include "mapbox/variant.hpp"
 #include <mutex>
@@ -584,7 +585,7 @@ namespace ospray {
       of this renderer.
     */
 #define OSP_REGISTER_SG_NODE(InternalClassName)                         \
-    extern "C" std::shared_ptr<ospray::sg::Node>                        \
+    extern "C" OSPRAY_DLLEXPORT std::shared_ptr<ospray::sg::Node>       \
     ospray_create_sg_node__##InternalClassName()                        \
     {                                                                   \
       std::cout << "creating Node of type: " << typeid(ospray::sg::InternalClassName).name() << std::endl; \
@@ -592,7 +593,7 @@ namespace ospray {
     }
 
 #define OSP_REGISTER_SG_NODE_NAME(InternalClassName,Name)               \
-    extern "C" std::shared_ptr<ospray::sg::Node> ospray_create_sg_node__##Name()        \
+    extern "C" OSPRAY_DLLEXPORT std::shared_ptr<ospray::sg::Node> ospray_create_sg_node__##Name()        \
     {                                                                   \
       std::cout << "creating Node of type: " << typeid(ospray::sg::InternalClassName).name() << std::endl; \
       return std::make_shared<ospray::sg::InternalClassName>();         \
