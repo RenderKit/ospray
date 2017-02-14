@@ -153,7 +153,7 @@ namespace ospray {
                      (const osp::vec3i&)region_sz);
       }
 
-      transferFunction->render(ctx);
+      transferFunction->postCommit(ctx);
 
       ospSetObject(volume,"transferFunction",transferFunction->getOSPHandle());
       ospCommit(volume);
@@ -349,6 +349,8 @@ namespace ospray {
         ospSetData(volume,"voxelData",data);
       }
       fclose(file);
+
+      transferFunction->preCommit(ctx);
     }
 
     void StructuredVolumeFromFile::postCommit(RenderContext &ctx)
