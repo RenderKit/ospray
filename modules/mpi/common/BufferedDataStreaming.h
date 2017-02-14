@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -55,7 +55,7 @@ namespace ospray {
         and give us size and pointer to this data */
       virtual size_t read(void *&mem) override;
       
-      uint8_t *buffer;
+      byte_t *buffer;
       mpi::Group group;
     };
 
@@ -63,7 +63,7 @@ namespace ospray {
     /*! contains implementations for buffered read and write streams,
         that fulfill smaller read/write requests from a large buffer
         that thos classes maintain */
-    struct BufferedFabric
+    namespace BufferedFabric
     {
       /* read stream that serves smaller read requests (of a given
          siez) from a block of data that it queries from a fabric. if
@@ -81,8 +81,8 @@ namespace ospray {
         virtual void read(void *mem, size_t size) override;
 
         std::reference_wrapper<Fabric> fabric;
-        uint8_t *buffer;
-        size_t   numAvailable;
+        byte_t *buffer;
+        size_t  numAvailable;
       };
 
       /*! maintains an internal buffer of a given size, and buffers
@@ -108,11 +108,10 @@ namespace ospray {
           
         std::reference_wrapper<Fabric> fabric;
         byte_t *buffer;
-        size_t maxBufferSize;
-        size_t numInBuffer;
+        size_t  maxBufferSize;
+        size_t  numInBuffer;
       };
       
-    };
-    
+    } // ::ospray::mpi::BufferedFabric
   } // ::ospray::mpi
 } // ::ospray
