@@ -164,7 +164,7 @@ void TransferFunction::drawUi(){
   }
   ImGui::End();
 }
-void TransferFunction::render(ospray::async_render_engine &renderEngine){
+void TransferFunction::render() {
   // TODO: How many samples for a palette? 128 or 256 is probably plent
   const int samples = 256;
   // Upload to GL if the transfer function has changed
@@ -178,7 +178,7 @@ void TransferFunction::render(ospray::async_render_engine &renderEngine){
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     if (prev_binding) {
       glBindTexture(GL_TEXTURE_2D, prev_binding);
@@ -225,7 +225,6 @@ void TransferFunction::render(ospray::async_render_engine &renderEngine){
     cpp::Data ospAlphaData(ospAlpha.size(), OSP_FLOAT, ospAlpha.data());
     transferFcn.set("colors", ospColorsData);
     transferFcn.set("opacities", ospAlphaData);
-    renderEngine.scheduleObjectCommit(transferFcn);
 
     if (prev_binding) {
       glBindTexture(GL_TEXTURE_2D, prev_binding);

@@ -17,6 +17,7 @@
 
 #include "imguiViewer.h"
 #include "common/sg/common/FrameBuffer.h"
+#include "transferFunction.h"
 
 #include <imgui.h>
 #include <sstream>
@@ -536,6 +537,16 @@ void ImGuiViewer::buildGUINode(sg::NodeH node, bool &renderer_changed, int inden
     {
       node->setValue(std::string(buf));
     }
+  }
+  else if (node->getType() == "TransferFunction") {
+    text += "TODO WILL";
+    ImGui::Text(text.c_str());
+    static TransferFunction *test = nullptr;
+    if (!test) {
+      test = new TransferFunction();
+    }
+    test->render();
+    test->drawUi();
   }
   else  // generic holder node
   {

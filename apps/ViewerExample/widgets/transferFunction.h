@@ -70,7 +70,7 @@ public:
   /* Render the transfer function to a 1D texture that can
    * be applied to volume data
    */
-  void render(ospray::async_render_engine &renderEngine);
+  void render();
   /* Load the transfer function from a file
   */
   //bool load_fcn(const vl::FileName &file_name);
