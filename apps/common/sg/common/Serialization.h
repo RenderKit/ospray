@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "sg/SceneGraphExports.h"
 #include "sg/common/Common.h"
 // ospcommon
 #include "ospcommon/AffineSpace.h"
@@ -27,7 +28,7 @@ namespace ospray {
     typedef ospcommon::AffineSpace3f affine3f;
 
     /*! class one can use to serialize all nodes in the scene graph */
-    struct Serialization {
+    struct OSPSG_INTERFACE Serialization {
       typedef enum { 
         /*! when serializing the scene graph, traverse through all
          instances and record each and every occurrence of any object
@@ -40,7 +41,7 @@ namespace ospray {
         DONT_FOLLOW_INSTANCES
       } Mode;
       
-      struct Instantiation {
+      struct OSPSG_INTERFACE Instantiation {
         std::shared_ptr<Instantiation> parentWorld;
         affine3f           xfm;
 
@@ -48,7 +49,7 @@ namespace ospray {
       };
       
       /*! describes one object that we encountered */
-      struct Object {
+      struct OSPSG_INTERFACE Object {
         /*! the node itself - this is intentionally NOT a shared_ptr
             since nodes call this with 'this', for which we have no
             shared_ptr info */
@@ -66,7 +67,7 @@ namespace ospray {
 
       /*! the node that maintains all the traversal state when
           traversing the scene graph */
-      struct State {
+      struct OSPSG_INTERFACE State {
         std::shared_ptr<Instantiation> instantiation;
         Serialization *serialization;
       };

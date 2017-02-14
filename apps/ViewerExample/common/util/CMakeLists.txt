@@ -28,5 +28,6 @@ ospray_create_library(ospray_imgui_util
   transactional_value.h
 LINK
   ospray
+  ospray_sg
 )
 

@@ -31,7 +31,7 @@ namespace ospray {
 
 #define INVALID_DATA_ERROR throw RuntimeError("invalid data format ")
 
-    struct DataBuffer : public Node {
+    struct OSPSG_INTERFACE DataBuffer : public Node {
       DataBuffer(OSPDataType type)
         : type(type), data(nullptr)
       {}

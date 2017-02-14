@@ -23,7 +23,7 @@ namespace ospray {
   namespace sg {
 
     //! a transformation node
-    struct Transform : public sg::Node {
+    struct OSPSG_INTERFACE Transform : public sg::Node {
       //! \brief constructor
       Transform(const AffineSpace3f &xfm, const std::shared_ptr<sg::Node> &node) 
         : Node(), xfm(xfm), node(node) 

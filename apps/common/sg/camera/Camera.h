@@ -23,7 +23,7 @@ namespace ospray {
   namespace sg {
 
     /*! a camera node - the generic camera node */
-    struct Camera : public sg::Node {
+    struct OSPSG_INTERFACE Camera : public sg::Node {
       Camera(const std::string &type) : type(type), ospCamera(NULL) {};
       /*! \brief returns a std::string with the c++ name of this class */
       virtual    std::string toString() const { return "ospray::sg::Camera"; }

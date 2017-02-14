@@ -26,7 +26,7 @@ namespace ospray {
   namespace sg {
 
 /*! a light node - the generic light node */
-struct Light : public sg::Node {
+struct OSPSG_INTERFACE Light : public sg::Node {
   //! \brief constructor
   Light() : type("none"), ospLight(nullptr) {};
   Light(const std::string &type) : type(type), ospLight(nullptr) {};
@@ -53,7 +53,7 @@ struct Light : public sg::Node {
 };
 
 /*! a light node - the generic light node */
-struct AmbientLight : public Light {
+struct OSPSG_INTERFACE AmbientLight : public Light {
   //! \brief constructor
   AmbientLight() : Light("AmbientLight") {}
 
@@ -67,7 +67,7 @@ struct AmbientLight : public Light {
 };
 
 /*! a light node - the generic light node */
-struct DirectionalLight : public Light {
+struct OSPSG_INTERFACE DirectionalLight : public Light {
   //! \brief constructor
   DirectionalLight() : Light("DirectionalLight") {}
 
@@ -85,7 +85,7 @@ struct DirectionalLight : public Light {
 };
 
 /*! a light node - the generic light node */
-struct PointLight : public Light {
+struct OSPSG_INTERFACE PointLight : public Light {
   //! \brief constructor
   PointLight() : Light("PointLight") {}
 
