@@ -480,10 +480,7 @@ namespace ospray {
       if (curGroup.empty()) return;
 
       std::map<Vertex, uint32_t> vertexMap;
-      // TriangleMesh *mesh = new TriangleMesh;
       //scenegraph
-
-std::cout << "adding triangleMesh\n";
       std::shared_ptr<TriangleMesh> mesh = std::static_pointer_cast<TriangleMesh>(createNode(fullPath.name(), "TriangleMesh").get());
       world->add(mesh);
       mesh->vertex = std::make_shared<DataVector3f>();
@@ -491,8 +488,6 @@ std::cout << "adding triangleMesh\n";
       mesh->texcoord = std::make_shared<DataVector2f>();
       mesh->index =  std::make_shared<DataVector3i>();
       mesh->material = curMaterial;
-      world->add(mesh);
-
 
       // merge three indices into one
       for (size_t j=0; j < curGroup.size(); j++) {
@@ -510,7 +505,6 @@ std::cout << "adding triangleMesh\n";
             continue;
 
           vec3i tri(v0,v1,v2);
-          // mesh->index.cast<DataVector3i>()->push_back(tri); //Vec3i(v0, v1, v2));
           std::dynamic_pointer_cast<DataVector3i>(mesh->index)->push_back(tri); //Vec3i(v0, v1, v2));
         }
       }

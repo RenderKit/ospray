@@ -155,8 +155,8 @@ namespace ospray {
         std::shared_ptr<sg::Node> newNode = createNode(c->getProp("name"),c->name).get();
         newNode->setFromXML(*c,binBasePtr);
         world->nodes.push_back(newNode);
-        world->add(newNode);
-        std::cout << "adding node to world: " << newNode->getName() << " " << newNode->getType() << "\n";
+        world->add(newNode)
+;        std::cout << "adding node to world: " << newNode->getName() << " " << newNode->getType() << "\n";
       }
     }
     

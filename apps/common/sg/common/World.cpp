@@ -22,8 +22,8 @@ namespace ospray {
     box3f World::getBounds()
     {
       box3f bounds = empty;
-      for (auto node : nodes)
-        bounds.extend(node->getBounds());
+      for (auto child : children)
+        bounds.extend(child.second->getBounds());
       return bounds;
     }
 

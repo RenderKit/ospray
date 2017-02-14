@@ -275,7 +275,7 @@ namespace ospray {
         }
       }
       virtual void setChildrenModified(TimeStamp t) { 
-        if (t >childrenMTime) 
+        if (t >childrenMTime)
         {
           childrenMTime = t; 
           if (!parent.isNULL()) 

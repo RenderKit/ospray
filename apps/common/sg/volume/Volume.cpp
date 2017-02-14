@@ -41,7 +41,9 @@ namespace ospray {
     void Volume::preRender(RenderContext &ctx)
     {
       if (volume)
+      {
         ospAddVolume(ctx.world->ospModel,volume);
+      }
     }
 
 
@@ -64,7 +66,7 @@ namespace ospray {
 
     //! return bounding box of all primitives
     box3f StructuredVolume::getBounds()
-    { return box3f(vec3f(0.f),vec3f(getDimensions())); }
+    { return box3f(vec3f(0.f),vec3f(getDimensions())*getChild("gridSpacing")->getValue<vec3f>()); }
 
     //! \brief Initialize this node's value from given XML node
 
@@ -177,7 +179,7 @@ namespace ospray {
 
     //! return bounding box of all primitives
     box3f StructuredVolumeFromFile::getBounds()
-    { return box3f(vec3f(0.f),vec3f(getDimensions())); }
+    { return box3f(vec3f(0.f),vec3f(getDimensions())*getChild("gridSpacing")->getValue<vec3f>()); }
 
     //! \brief Initialize this node's value from given XML node
     void StructuredVolumeFromFile::setFromXML(const xml::Node &node,
@@ -351,10 +353,8 @@ namespace ospray {
 
     void StructuredVolumeFromFile::postCommit(RenderContext &ctx)
     {
-      // std::cout << "post tf: " << getChild("transferFunction")->getValue<OSPObject>() << std::endl;
       ospSetObject(volume,"transferFunction",getChild("transferFunction")->getValue<OSPObject>());
-        // ospSetObject(volume,"transferFunction",getChild("transferFunction")->getValue<OSPObject>());
-        ospCommit(volume);
+      ospCommit(volume);
     }
 
     OSP_REGISTER_SG_NODE(StructuredVolumeFromFile);
