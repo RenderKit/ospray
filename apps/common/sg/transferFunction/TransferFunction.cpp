@@ -37,19 +37,25 @@ namespace ospray {
     // //! \brief Sets a new 'texture map' to be used for the color mapping
     void TransferFunction::setColorMap(const std::vector<vec3f> &colorArray)
     {
+      PING;
       if (ospColorData) { ospRelease(ospColorData); ospColorData = nullptr; }
       this->colorArray.clear();
       for (uint32_t i = 0; i < colorArray.size(); ++i)
         this->colorArray.push_back({i, colorArray[i]});
+
+      modified();
     }
 
     //! \brief Sets a new 'texture map' to be used for the alpha mapping
     void TransferFunction::setAlphaMap(const std::vector<vec2f> &alphaArray)
     {
+      PING;
       if (ospAlphaData) { ospRelease(ospAlphaData); ospAlphaData = nullptr; }
       this->alphaArray.clear();
       for (const auto &alpha : alphaArray)
         this->alphaArray.push_back({alpha.x, alpha.y});
+
+      modified();
     }
 
     float TransferFunction::getInterpolatedAlphaValue(float x)
@@ -72,12 +78,14 @@ namespace ospray {
     void TransferFunction::setValueRange(const vec2f &range)
     { 
       valueRange = range; 
-      // lastModified = TimeStamp::now();
+      PRINT(valueRange);
+      modified();
     }
 
     //! \brief commit the current field values to ospray
     void TransferFunction::commit() 
     {
+      PING;
       ospSetVec2f(ospTransferFunction,"valueRange",osp::vec2f{valueRange.x,valueRange.y});
       if (ospColorData == nullptr) {
         // for now, no resampling - just use the colors ...
@@ -87,7 +95,6 @@ namespace ospray {
         ospColorData = ospNewData(colorArray.size(),OSP_FLOAT3,colors); 
         ospCommit(ospColorData);
         ospSetData(ospTransferFunction,"colors",ospColorData);
-        // lastModified = TimeStamp::now();
       }
       if (ospAlphaData == nullptr) {
         float *alpha = (float*)alloca(sizeof(float)*numSamples);
@@ -100,16 +107,14 @@ namespace ospray {
         ospAlphaData = ospNewData(numSamples,OSP_FLOAT,alpha); 
         ospCommit(ospAlphaData);
         ospSetData(ospTransferFunction,"opacities",ospAlphaData);
-        // lastModified = TimeStamp::now();
       }
-      if (lastModified > lastCommitted) {
-        lastCommitted = rdtsc();
-        ospCommit(ospTransferFunction);
-      }
+      ospCommit(ospTransferFunction);
+      committed();
     }
 
     void TransferFunction::render(RenderContext &ctx)
     {
+      PING;
       if (!ospTransferFunction) {
         ospTransferFunction = ospNewTransferFunction("piecewise_linear");
         setValue((OSPObject)ospTransferFunction);
@@ -119,6 +124,8 @@ namespace ospray {
 
     void TransferFunction::preCommit(RenderContext &ctx)
     {
+      PING;
+
       if (!ospTransferFunction) {
         ospTransferFunction = ospNewTransferFunction("piecewise_linear");
         setValue((OSPObject)ospTransferFunction);
@@ -133,7 +140,6 @@ namespace ospray {
         ospColorData = ospNewData(colorArray.size(),OSP_FLOAT3,colors); 
         ospCommit(ospColorData);
         ospSetData(ospTransferFunction,"colors",ospColorData);
-        // lastModified = TimeStamp::now();
       }
       if (ospAlphaData == nullptr && alphaArray.size()) {
         std::cout << alphaArray.size() << std::endl;
@@ -147,8 +153,8 @@ namespace ospray {
         ospAlphaData = ospNewData(numSamples,OSP_FLOAT,alpha); 
         ospCommit(ospAlphaData);
         ospSetData(ospTransferFunction,"opacities",ospAlphaData);
-        // lastModified = TimeStamp::now();
       }
+      // TODO: Why do we commit here when we'd be going into commit which will commit again?
       ospCommit(ospTransferFunction);
     }
 
