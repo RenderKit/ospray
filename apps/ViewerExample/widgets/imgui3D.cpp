@@ -388,7 +388,6 @@ namespace ospray {
         currentWidget->timer.startRender();
         ImGui_ImplGlfwGL3_NewFrame();
         currentWidget->timer.doneRender();
-        ImGui::PushFont(font);
 
         if (ImGui3DWidget::showGui)
           currentWidget->buildGui();
