@@ -301,8 +301,10 @@ void ImGuiViewer::buildGui()
 
   static bool demo_window = false;
 
+  ImGui::SetNextWindowSizeConstraints(ImVec2(500,800), ImVec2(2048,2048));
   ImGui::Begin("Viewer Controls: press 'g' to show/hide", nullptr, flags);
   ImGui::SetWindowFontScale(0.5f*fontScale);
+  // ImGui::SetScrollY(1.f);
 
   if (ImGui::BeginMenuBar())
   {
@@ -532,7 +534,8 @@ void ImGuiViewer::buildGUINode(sg::NodeH node, bool &renderer_changed, int inden
     buf[value.size()] = '\0';
     ImGui::Text(text.c_str(),"");
     ImGui::SameLine();
-    if (ImGui::InputText("empty", buf, value.size()+256, ImGuiInputTextFlags_EnterReturnsTrue))
+    text = "##"+((std::ostringstream&)(std::ostringstream("") << node.get())).str(); //TODO: use unique uuid for every node
+    if (ImGui::InputText(text.c_str(), buf, value.size()+256, ImGuiInputTextFlags_EnterReturnsTrue))
     {
       node->setValue(std::string(buf));
     }
