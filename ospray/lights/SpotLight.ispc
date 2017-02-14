@@ -73,6 +73,7 @@ Light_SampleRes SpotLight_sample(const uniform Light* uniform super,
 Light_EvalRes SpotLight_eval(const uniform Light* uniform super,
                              const DifferentialGeometry& dg,
                              const vec3f& dir,
+                             const float minDist,
                              const float maxDist)
 {
   const SpotLight* uniform self = (SpotLight* uniform)super;
@@ -84,17 +85,14 @@ Light_EvalRes SpotLight_eval(const uniform Light* uniform super,
     const float cosAngle = -dot(dir, self->frame.vz);
     if (cosAngle > self->cosAngleMax) { // inside illuminated cone?
       const vec3f vp = dg.P - self->position;
-      const float dp = dot(vp, self->frame.vz);
-      if (dp > 0.f) { // in front of light?
-        const float t = dp*rcp(cosAngle);
-        if (t <= maxDist) {
-          const vec3f vd = vp + t * dir;
-          if (dot(vd, vd) < sqr(self->radius)) { // inside disk?
-            const float angularAttenuation = min((cosAngle - self->cosAngleMax) * self->cosAngleScale, 1.f);
-            const float pdf = self->diskPdf * cosAngle;
-            res.radiance = self->power * (angularAttenuation * pdf); // *sqr(t)/sqr(t) cancels
-            res.pdf = pdf * sqr(t);
-          }
+      const float t = dot(vp, self->frame.vz) * rcp(cosAngle);
+      if (t > minDist & t <= maxDist) {
+        const vec3f vd = vp + t * dir;
+        if (dot(vd, vd) < sqr(self->radius)) { // inside disk?
+          const float angularAttenuation = min((cosAngle - self->cosAngleMax) * self->cosAngleScale, 1.f);
+          const float pdf = self->diskPdf * cosAngle;
+          res.radiance = self->power * (angularAttenuation * pdf); // *sqr(t)/sqr(t) cancels
+          res.pdf = pdf * sqr(t);
         }
       }
     }
