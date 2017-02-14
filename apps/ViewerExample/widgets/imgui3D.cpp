@@ -374,8 +374,7 @@ namespace ospray {
       //io.Fonts->AddFontDefault();
       ImFontConfig config;
       config.MergeMode = false;
-      ImFont* font = io.Fonts->AddFontFromFileTTF("LibreBaskerville-Regular.ttf", 28, &config);
-      assert(font);
+      //ImFont* font = io.Fonts->AddFontFromFileTTF("LibreBaskerville-Regular.ttf", 28, &config);
 
       // Main loop
       while (!glfwWindowShouldClose(window))
@@ -385,45 +384,11 @@ namespace ospray {
         currentWidget->timer.startRender();
         ImGui_ImplGlfwGL3_NewFrame();
         currentWidget->timer.doneRender();
-        ImGui::PushFont(font);
-        //currentWidget->renderTime = 1.f/currentWidget->timer.getFPS();
 
         if (ImGui3DWidget::showGui)
           currentWidget->buildGui();
 
         ImGui::SetNextWindowPos(ImVec2(10,10));
-        // ImGui::PushStyleColor(ImGuiCol_ChildWindowBg, ImColor(1,0,0,1.f));
-        // ImGui::PushStyleColor(ImGuiCol_WindowBg, ImColor(1.f,0.f,0.f,0.1f));
-        // ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.f);
-        bool open;
-        if (!ImGui::Begin("Example: Fixed Overlay", &open, ImVec2(0,0), 0.f, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoSavedSettings))
-        {
-          ImGui::End();
-        }
-        else
-        {
-          ImFont* font = ImGui::GetFont();
-          ImGui::PushStyleColor(ImGuiCol_Text, ImColor(.3,.3,.3,1.f));
-          // font->FontSize = 122;
-          // ImGui::PushFont(font);
-          ImGui::SetWindowFontScale(1.0f);
-          font->Scale = 5.f;
-          ImGui::Text(("OSPRay v" + std::string(OSPRAY_VERSION)).c_str());
-          font->Scale = 1.f;
-          // ImGui::PopFont();
-          ImGui::SetWindowFontScale(0.5f);
-          // ImGui::Separator();
-          std::stringstream ss;
-          ss << 1.f/currentWidget->renderTime;
-          ImGui::PushStyleColor(ImGuiCol_Text, ImColor(.8,.8,.8,1.f));
-          ImGui::Text(("FPS: " + ss.str()).c_str());
-          ImGui::Text("press \'g\' for menu");
-          ImGui::End();
-          ImGui::PopStyleColor(2);
-        }
-        //ImGui::SetWindowFontScale(0.5f);
-        // ImGui::PopStyleColor(1);
-        // ImGui::PopStyleVar(1);
 
         currentWidget->timer.startRender();
         int new_w = 0, new_h = 0;
@@ -448,7 +413,7 @@ namespace ospray {
 
         currentWidget->timer.startRender();
         // Render GUI
- //       if (ImGui3DWidget::showGui)
+        if (ImGui3DWidget::showGui)
           ImGui::Render();
         currentWidget->timer.doneRender();
         currentWidget->guiTime = 1.f/currentWidget->timer.getFPS();
