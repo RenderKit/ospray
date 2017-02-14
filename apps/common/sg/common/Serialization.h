@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "sg/SceneGraphExports.h"
 #include "sg/common/Common.h"
 // ospcommon
 #include "ospcommon/AffineSpace.h"
@@ -40,7 +41,7 @@ namespace ospray {
         DONT_FOLLOW_INSTANCES
       } Mode;
       
-      struct Instantiation {
+      struct OSPSG_INTERFACE Instantiation {
         std::shared_ptr<Instantiation> parentWorld;
         affine3f           xfm;
 
