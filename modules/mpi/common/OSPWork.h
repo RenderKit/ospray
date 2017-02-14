@@ -14,468 +14,574 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+/*! \file OSPWork.h implements everything require to encode and
+  serialize work items that represent api calls 
+
+  this code currently lives only in the mpi device, but shuld in
+  theory also be applicable to other sorts of 'fabrics' for conveying
+  such encoded work items
+*/
+
 #pragma once
 
+#include <ospray/ospray.h>
 #include "mpiCommon/MPICommon.h"
-#include "mpiCommon/command.h"
-#include "mpiCommon/SerialBuffer.h"
+#include "common/ObjectHandle.h"
+#include "DataStreaming.h"
+
 #include "common/Model.h"
-#include "common/Data.h"
-#include "common/Library.h"
-#include "common/Model.h"
-#include "geometry/TriangleMesh.h"
 #include "render/Renderer.h"
 #include "camera/Camera.h"
 #include "volume/Volume.h"
 #include "lights/Light.h"
-#include "texture/Texture2D.h"
 #include "transferFunction/TransferFunction.h"
-#include "common/ObjectHandle.h"
+
+#include <map>
 
 namespace ospray {
   namespace mpi {
     namespace work {
 
-      void initWorkMap();
+      /*! abstract interface for a work item. a work item can
+        serialize itself, de-serialize itself, and return a tag that
+        allows the unbuffering code form figuring out what kind of
+        work this is */
+      struct Work
+      {
+        /*! type we use for representing tags */
+        using tag_t = size_t;
+
+        /*! serializes itself on the given serial buffer - will write
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        virtual void serialize(WriteStream &b) const = 0;
+
+        /*! de-serialize from a buffer that an object of this type has
+          serialized itself in */
+        virtual void deserialize(ReadStream &b) = 0;
+
+        /*! returns whether this objects needs flushing of the buffered
+         *  command stream */
+        virtual bool flushing() { return false; }
+        
+        /*! what to do to execute this work item on a worker */
+        virtual void run() {}
+
+        /*! what to do to execute this work item on the master */
+        virtual void runOnMaster() {}
+      };
+
+      using CreateWorkFct    = std::unique_ptr<Work>(*)();
+      using WorkTypeRegistry = std::map<Work::tag_t, CreateWorkFct>;
+
+      /*! create a work unit of given type */
+      template<typename T>
+      inline std::unique_ptr<Work> make_work_unit()
+      {
+        return make_unique<T>();
+      }
 
       template<typename T>
-      struct NewObjectTag;
-      template<>
-      struct NewObjectTag<Renderer> {
-        const static size_t TAG = CMD_NEW_RENDERER;
-      };
-      template<>
-      struct NewObjectTag<Model> {
-        const static size_t TAG = CMD_NEW_MODEL;
-      };
-      template<>
-      struct NewObjectTag<Geometry> {
-        const static size_t TAG = CMD_NEW_GEOMETRY;
-      };
-      template<>
-      struct NewObjectTag<Camera> {
-        const static size_t TAG = CMD_NEW_CAMERA;
-      };
-      template<>
-      struct NewObjectTag<Volume> {
-        const static size_t TAG = CMD_NEW_VOLUME;
-      };
-      template<>
-      struct NewObjectTag<TransferFunction> {
-        const static size_t TAG = CMD_NEW_TRANSFERFUNCTION;
-      };
-      template<>
-      struct NewObjectTag<PixelOp> {
-        const static size_t TAG = CMD_NEW_PIXELOP;
-      };
+      inline CreateWorkFct createMakeWorkFct()
+      {
+        return make_work_unit<T>;
+      }
 
-      // All of the simple CMD_NEW_* can be implemented with the same
-      // template. The more unique ones like NEW_DATA, NEW_TEXTURE2D
-      // or render specific objects like lights and materials require
-      // some more special treatment to handle sending the data or
-      // other params around as well.
+      template <typename WORK_T>
+      inline void registerWorkUnit(WorkTypeRegistry &registry)
+      {
+        static_assert(std::is_base_of<Work, WORK_T>::value,
+                      "WORK_T must be a child class of ospray::work::Work!");
+
+        registry[typeIdOf<WORK_T>()] = createMakeWorkFct<WORK_T>();
+      }
+
+      void registerOSPWorkItems(WorkTypeRegistry &registry);
+
+      /*! All of the simple CMD_NEW_* can be implemented with the same
+       template. The more unique ones like NEW_DATA, NEW_TEXTURE2D or
+       render specific objects like lights and materials require some
+       more special treatment to handle sending the data or other
+       params around as well. */
       template<typename T>
-      struct NewObject : Work {
-        const static size_t TAG = NewObjectTag<T>::TAG;
-        std::string type;
-        ObjectHandle handle;
+      struct NewObjectT : public Work
+      {
+        NewObjectT() = default;
+        NewObjectT(const char* type, ObjectHandle handle)
+          : type(type), handle(handle) {}
 
-        NewObject() {}
-        NewObject(const char* type, ObjectHandle handle) : type(type), handle(handle) {}
-        void run() override {}
+        void run() override
+        {
+          auto *obj = T::createInstance(type.c_str());
+          handle.assign(obj);
+        }
+
         void runOnMaster() override {}
-        size_t getTag() const override {
-          return TAG;
-        }
-        void serialize(SerialBuffer &b) const override {
-          b << (int64)handle << type;
-        }
-        void deserialize(SerialBuffer &b) override {
-          b >> handle.i64 >> type;
-        }
-      };
-      // Specializations of the run method for actually creating the
-      // new objects of each type.
-      template<>
-      void NewObject<Renderer>::run();
-      // For the renderer stored error threshold we need to make
-      // the renderer on the master as well.
-      template<>
-      void NewObject<Renderer>::runOnMaster();
-      template<>
-      void NewObject<Model>::run();
-      template<>
-      void NewObject<Geometry>::run();
-      template<>
-      void NewObject<Camera>::run();
-      template<>
-      void NewObject<Volume>::run();
-      // We need to make volumes on master so we can set the string param
-      template<>
-      void NewObject<Volume>::runOnMaster();
-      template<>
-      void NewObject<TransferFunction>::run();
-      template<>
-      void NewObject<PixelOp>::run();
-
-      template<typename T>
-      struct NewRendererObjectTag;
-      template<>
-      struct NewRendererObjectTag<Material> {
-        const static size_t TAG = CMD_NEW_MATERIAL;
-      };
-      template<>
-      struct NewRendererObjectTag<Light> {
-        const static size_t TAG = CMD_NEW_LIGHT;
-      };
-      template<typename T>
-      struct NewRendererObject : Work {
-        const static size_t TAG = NewRendererObjectTag<T>::TAG;
-        std::string type;
-        ObjectHandle rendererHandle;
+        
+        /*! serializes itself on the given serial buffer - will write
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        void serialize(WriteStream &b) const override
+        { b << (int64)handle << type; }
+        
+        /*! de-serialize from a buffer that an object of this type ha
+          serialized itself in */
+        void deserialize(ReadStream &b) override
+        { b >> handle.i64 >> type; }
+        
+        std::string  type;
         ObjectHandle handle;
+      };
 
-        NewRendererObject() {}
-        NewRendererObject(const char* type, OSPRenderer renderer, ObjectHandle handle)
+      using NewModel            = NewObjectT<Model>;
+      using NewPixelOp          = NewObjectT<PixelOp>;
+      using NewRenderer         = NewObjectT<Renderer>;
+      using NewCamera           = NewObjectT<Camera>;
+      using NewVolume           = NewObjectT<Volume>;
+      using NewGeometry         = NewObjectT<Geometry>;
+      using NewTransferFunction = NewObjectT<TransferFunction>;
+
+      // NewObjectT explicit instantiations ///////////////////////////////////
+
+      template<>
+      inline void NewModel::run()
+      {
+        auto *model = new Model;
+        handle.assign(model);
+      }
+
+      struct NewMaterial : public Work
+      {
+        NewMaterial() = default;
+        NewMaterial(const char* type, OSPRenderer renderer, ObjectHandle handle)
           : type(type), rendererHandle((ObjectHandle&)renderer), handle(handle)
         {}
-        void run() override {}
-        size_t getTag() const override {
-          return TAG;
-        }
-        void serialize(SerialBuffer &b) const override {
-          b << (int64)rendererHandle << (int64)handle << type;
-        }
-        void deserialize(SerialBuffer &b) override {
-          b >> rendererHandle.i64 >> handle.i64 >> type;
-        }
+
+        void run() override;
+
+        /*! serializes itself on the given serial buffer - will write
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        void serialize(WriteStream &b) const override
+        { b << (int64)rendererHandle << (int64)handle << type; }
+        
+        /*! de-serialize from a buffer that an object of this type has
+          serialized itself in */
+        void deserialize(ReadStream &b) override
+        { b >> rendererHandle.i64 >> handle.i64 >> type; }
+
+        // const static size_t TAG = NewRendererObjectTag<T>::TAG;
+        std::string  type;
+        ObjectHandle rendererHandle;
+        ObjectHandle handle;
       };
+
+      struct NewLight : public Work
+      {
+        NewLight() = default;
+        NewLight(const char* type, OSPRenderer renderer, ObjectHandle handle)
+          : type(type), rendererHandle((ObjectHandle&)renderer), handle(handle)
+        {}
+
+        void run() override;
+
+        /*! serializes itself on the given serial buffer - will write
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        void serialize(WriteStream &b) const override
+        { b << (int64)rendererHandle << (int64)handle << type; }
+        
+        /*! de-serialize from a buffer that an object of this type has
+          serialized itself in */
+        void deserialize(ReadStream &b) override
+        { b >> rendererHandle.i64 >> handle.i64 >> type; }
+
+        // const static size_t TAG = NewRendererObjectTag<T>::TAG;
+        std::string  type;
+        ObjectHandle rendererHandle;
+        ObjectHandle handle;
+      };
+
       // TODO: I don't do any of the sending back # of failures to
       // the "master", what would make sense to do in master/worker
       // and collaborative modes? Right now it will just throw and abort
-      template<>
-      void NewRendererObject<Material>::run();
-      template<>
-      void NewRendererObject<Light>::run();
+      // template<>
+      // void NewRendererObject<Material>::run();
+      // template<>
+      // void NewRendererObject<Light>::run();
 
-      struct NewData : Work {
-        const static size_t TAG = CMD_NEW_DATA;
-        ObjectHandle handle;
-        size_t nItems;
-        OSPDataType format;
-        std::vector<char> data;
+
+      struct NewData : public Work
+      {
+        NewData() = default;
+        NewData(ObjectHandle handle, size_t nItems,
+                OSPDataType format, void *initData, int flags);
+
+        void run() override;
+
+        /*! serializes itself on the given serial buffer - will write
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        void serialize(WriteStream &b) const override;
+
+        /*! de-serialize from a buffer that an object of this type has
+          serialized itself in */
+        void deserialize(ReadStream &b) override;
+
+        ObjectHandle        handle;
+        size_t              nItems;
+        OSPDataType         format;
+        std::vector<byte_t> data;
         // If we're in collab/independent mode we can
         // be setting with just a local shared pointer
-        void *localData;
-        int32 flags;
-
-        NewData();
-        NewData(ObjectHandle handle, size_t nItems,
-            OSPDataType format, void *initData, int flags);
-        void run() override;
-        size_t getTag() const override;
-        void serialize(SerialBuffer &b) const override;
-        void deserialize(SerialBuffer &b) override;
+        void              *localData;
+        int32              flags;
       };
 
-      struct NewTexture2d : Work {
-        const static size_t TAG = CMD_NEW_TEXTURE2D;
-        ObjectHandle handle;
-        vec2i dimensions;
-        OSPTextureFormat format;
-        std::vector<char> data;
-        uint32 flags;
-
-        NewTexture2d();
+      
+      struct NewTexture2d : public Work
+      {
+        NewTexture2d() = default;
         NewTexture2d(ObjectHandle handle, vec2i dimensions,
-            OSPTextureFormat format, void *texture, uint32 flags);
+                     OSPTextureFormat format, void *texture, uint32 flags);
+
         void run() override;
-        size_t getTag() const override;
-        void serialize(SerialBuffer &b) const override;
-        void deserialize(SerialBuffer &b) override;
+
+        /*! serializes itself on the given serial buffer - will write
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        void serialize(WriteStream &b) const override;
+
+        /*! de-serialize from a buffer that an object of this type has
+          serialized itself in */
+        void deserialize(ReadStream &b) override;
+
+        ObjectHandle        handle;
+        vec2i               dimensions;
+        OSPTextureFormat    format;
+        std::vector<byte_t> data;
+        uint32              flags;
       };
 
-      struct SetRegion : Work {
-        const static size_t TAG = CMD_SET_REGION;
-        ObjectHandle handle;
-        vec3i regionStart, regionSize;
-        OSPDataType type;
-        std::vector<char> data;
-
-        SetRegion();
+      
+      struct SetRegion : public Work
+      {
+        SetRegion() = default;
         SetRegion(OSPVolume volume, vec3i start, vec3i size, const void *src,
                   OSPDataType type);
+
         void run() override;
-        size_t getTag() const override;
-        void serialize(SerialBuffer &b) const override;
-        void deserialize(SerialBuffer &b) override;
+
+        /*! serializes itself on the given serial buffer - will write
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        void serialize(WriteStream &b) const override;
+
+        /*! de-serialize from a buffer that an object of this type has
+          serialized itself in */
+        void deserialize(ReadStream &b) override;
+
+        ObjectHandle        handle;
+        vec3i               regionStart;
+        vec3i               regionSize;
+        OSPDataType         type;
+        std::vector<byte_t> data;
       };
 
-      struct CommitObject : Work {
-        const static size_t TAG = CMD_COMMIT;
-        ObjectHandle handle;
-
-        CommitObject();
+      struct CommitObject : public Work
+      {
+        CommitObject() = default;
         CommitObject(ObjectHandle handle);
+
         void run() override;
         // TODO: Which objects should the master commit?
         void runOnMaster() override;
-        size_t getTag() const override;
-        bool flushing() const override;
-        void serialize(SerialBuffer &b) const override;
-        void deserialize(SerialBuffer &b) override;
+
+        bool flushing() override { return true; }
+
+        /*! serializes itself on the given serial buffer - will write
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        void serialize(WriteStream &b) const override;
+
+        /*! de-serialize from a buffer that an object of this type has
+          serialized itself in */
+        void deserialize(ReadStream &b) override;
+
+        ObjectHandle handle;
       };
 
-      struct ClearFrameBuffer : Work {
-        const static size_t TAG = CMD_FRAMEBUFFER_CLEAR;
-        ObjectHandle handle;
-        uint32 channels;
-
-        ClearFrameBuffer();
+      struct ClearFrameBuffer : public Work
+      {
+        ClearFrameBuffer() = default;
         ClearFrameBuffer(OSPFrameBuffer fb, uint32 channels);
+
         void run() override;
         void runOnMaster() override;
-        size_t getTag() const override;
-        void serialize(SerialBuffer &b) const override;
-        void deserialize(SerialBuffer &b) override;
+
+        /*! serializes itself on the given serial buffer - will write
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        void serialize(WriteStream &b) const override;
+
+        /*! de-serialize from a buffer that an object of this type has
+          serialized itself in */
+        void deserialize(ReadStream &b) override;
+
+        ObjectHandle handle;
+        uint32 channels;
       };
 
-      struct RenderFrame : Work {
-        const static size_t TAG = CMD_RENDER_FRAME;
+      struct RenderFrame : public Work
+      {
+        RenderFrame() = default;
+        RenderFrame(OSPFrameBuffer fb, OSPRenderer renderer, uint32 channels);
+        
+        void run() override;
+        void runOnMaster() override;
+        bool flushing() override { return true; }
+
+        /*! serializes itself on the given serial buffer - will write
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        void serialize(WriteStream &b) const override;
+
+        /*! de-serialize from a buffer that an object of this type has
+          serialized itself in */
+        void deserialize(ReadStream &b) override;
+
         ObjectHandle fbHandle;
         ObjectHandle rendererHandle;
         uint32 channels;
         // Variance result for adaptive accumulation
-        float varianceResult;
+        float varianceResult {0.f};
+      };
 
-        RenderFrame();
-        RenderFrame(OSPFrameBuffer fb, OSPRenderer renderer, uint32 channels);
+      struct AddVolume : public Work
+      {
+        AddVolume() = default;
+        AddVolume(OSPModel model, const OSPVolume &t)
+          : modelHandle((const ObjectHandle&)model),
+            objectHandle((const ObjectHandle&)t)
+        {}
+
+        void run() override;
+
+        /*! serializes itself on the given serial buffer - will write
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        void serialize(WriteStream &b) const override
+        { b << (int64)modelHandle << (int64)objectHandle; }
+
+        /*! de-serialize from a buffer that an object of this type has
+          serialized itself in */
+        void deserialize(ReadStream &b) override
+        { b >> modelHandle.i64 >> objectHandle.i64; }
+        
+        ObjectHandle modelHandle;
+        ObjectHandle objectHandle;
+      };
+
+      
+      struct AddGeometry : public Work
+      {
+        AddGeometry() = default;
+        AddGeometry(OSPModel model, const OSPGeometry &t)
+          : modelHandle((const ObjectHandle&)model),
+            objectHandle((const ObjectHandle&)t)
+        {}
+
+        void run() override;
+
+        /*! serializes itself on the given serial buffer - will write
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        void serialize(WriteStream &b) const override
+        { b << (int64)modelHandle << (int64)objectHandle; }
+
+        /*! de-serialize from a buffer that an object of this type has
+          serialized itself in */
+        void deserialize(ReadStream &b) override
+        { b >> modelHandle.i64 >> objectHandle.i64; }
+        
+        ObjectHandle modelHandle;
+        ObjectHandle objectHandle;
+      };
+
+      
+      struct RemoveGeometry : public Work
+      {
+        RemoveGeometry() = default;
+        RemoveGeometry(OSPModel model, const OSPGeometry &t)
+          : modelHandle((const ObjectHandle&)model),
+            objectHandle((const ObjectHandle&)t)
+        {}
+
+        void run() override;
+
+        /*! serializes itself on the given serial buffer - will write
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        void serialize(WriteStream &b) const override
+        { b << (int64)modelHandle << (int64)objectHandle; }
+
+        /*! de-serialize from a buffer that an object of this type has
+          serialized itself in */
+        void deserialize(ReadStream &b) override
+        { b >> modelHandle.i64 >> objectHandle.i64; }
+
+        ObjectHandle modelHandle;
+        ObjectHandle objectHandle;
+      };
+
+      struct RemoveVolume : public Work
+      {
+        RemoveVolume() = default;
+        RemoveVolume(OSPModel model, const OSPVolume &t)
+          : modelHandle((const ObjectHandle&)model),
+            objectHandle((const ObjectHandle&)t)
+        {}
+
+        void run() override;
+
+        /*! serializes itself on the given serial buffer - will write
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        void serialize(WriteStream &b) const override
+        { b << (int64)modelHandle << (int64)objectHandle; }
+
+        /*! de-serialize from a buffer that an object of this type has
+          serialized itself in */
+        void deserialize(ReadStream &b) override
+        { b >> modelHandle.i64 >> objectHandle.i64; }
+
+        ObjectHandle modelHandle;
+        ObjectHandle objectHandle;
+      };
+
+      struct CreateFrameBuffer : public Work
+      {
+        CreateFrameBuffer() = default;
+        CreateFrameBuffer(ObjectHandle handle, vec2i dimensions,
+                          OSPFrameBufferFormat format, uint32 channels);
+        
         void run() override;
         void runOnMaster() override;
-        size_t getTag() const override;
-        bool flushing() const override;
-        void serialize(SerialBuffer &b) const override;
-        void deserialize(SerialBuffer &b) override;
-      };
 
-      template<typename T>
-      struct AddObjectTag;
-      template<>
-      struct AddObjectTag<OSPGeometry> {
-        const static size_t TAG = CMD_ADD_GEOMETRY;
-      };
-      template<>
-      struct AddObjectTag<OSPVolume> {
-        const static size_t TAG = CMD_ADD_VOLUME;
-      };
+        /*! serializes itself on the given serial buffer - will write
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        void serialize(WriteStream &b) const override;
 
-      template<typename T>
-      struct AddObject : Work {
-        const static size_t TAG = AddObjectTag<T>::TAG;
-        ObjectHandle modelHandle;
-        ObjectHandle objectHandle;
+        /*! de-serialize from a buffer that an object of this type has
+          serialized itself in */
+        void deserialize(ReadStream &b) override;
 
-        AddObject(){}
-        AddObject(OSPModel model, const T &t)
-          : modelHandle((const ObjectHandle&)model), objectHandle((const ObjectHandle&)t)
-        {}
-        void run() override {}
-        size_t getTag() const override {
-          return TAG;
-        }
-        void serialize(SerialBuffer &b) const override {
-          b << (int64)modelHandle << (int64)objectHandle;
-        }
-        void deserialize(SerialBuffer &b) override {
-          b >> modelHandle.i64 >> objectHandle.i64;
-        }
-      };
-      template<>
-      void AddObject<OSPGeometry>::run();
-      template<>
-      void AddObject<OSPVolume>::run();
-
-      template<typename T>
-      struct RemoveObjectTag;
-      template<>
-      struct RemoveObjectTag<OSPGeometry> {
-        const static size_t TAG = CMD_REMOVE_GEOMETRY;
-      };
-      template<>
-      struct RemoveObjectTag<OSPVolume> {
-        const static size_t TAG = CMD_REMOVE_VOLUME;
-      };
-
-      template<typename T>
-      struct RemoveObject : Work {
-        const static size_t TAG = RemoveObjectTag<T>::TAG;
-        ObjectHandle modelHandle;
-        ObjectHandle objectHandle;
-
-        RemoveObject(){}
-        RemoveObject(OSPModel model, const T &t)
-          : modelHandle((const ObjectHandle&)model), objectHandle((const ObjectHandle&)t)
-        {}
-        void run() override {}
-        size_t getTag() const override {
-          return TAG;
-        }
-        void serialize(SerialBuffer &b) const override {
-          b << (int64)modelHandle << (int64)objectHandle;
-        }
-        void deserialize(SerialBuffer &b) override {
-          b >> modelHandle.i64 >> objectHandle.i64;
-        }
-      };
-      template<>
-      void RemoveObject<OSPGeometry>::run();
-      template<>
-      void RemoveObject<OSPVolume>::run();
-
-      struct CreateFrameBuffer : Work {
-        const static size_t TAG = CMD_FRAMEBUFFER_CREATE;
         ObjectHandle handle;
-        vec2i dimensions;
+        vec2i dimensions {-1};
         OSPFrameBufferFormat format;
         uint32 channels;
-
-        CreateFrameBuffer();
-        CreateFrameBuffer(ObjectHandle handle, vec2i dimensions,
-            OSPFrameBufferFormat format, uint32 channels);
-        void run() override;
-        void runOnMaster() override;
-        size_t getTag() const override;
-        void serialize(SerialBuffer &b) const override;
-        void deserialize(SerialBuffer &b) override;
       };
 
-      // Need specializations of the SetParam TAG for the actual
-      // type that is being set so we can decode properly on the
-      // other end.
+      /*! this should go into implementation section ... */
       template<typename T>
-      struct ParamTag;
-      template<>
-      struct ParamTag<std::string> {
-        const static size_t TAG = CMD_SET_STRING;
-      };
-      template<>
-      struct ParamTag<int> {
-        const static size_t TAG = CMD_SET_INT;
-      };
-      template<>
-      struct ParamTag<float> {
-        const static size_t TAG = CMD_SET_FLOAT;
-      };
-      template<>
-      struct ParamTag<vec2f> {
-        const static size_t TAG = CMD_SET_VEC2F;
-      };
-      template<>
-      struct ParamTag<vec2i> {
-        const static size_t TAG = CMD_SET_VEC2I;
-      };
-      template<>
-      struct ParamTag<vec3f> {
-        const static size_t TAG = CMD_SET_VEC3F;
-      };
-      template<>
-      struct ParamTag<vec3i> {
-        const static size_t TAG = CMD_SET_VEC3I;
-      };
-      template<>
-      struct ParamTag<vec4f> {
-        const static size_t TAG = CMD_SET_VEC4F;
-      };
-
-      template<typename T>
-      struct SetParam : Work {
-        const static size_t TAG = ParamTag<T>::TAG;
-        ObjectHandle handle;
-        std::string name;
-        T val;
-
-        SetParam(){}
+      struct SetParam :  public Work
+      {
+        SetParam() = default;
+        
         SetParam(ObjectHandle handle, const char *name, const T &val)
           : handle(handle), name(name), val(val)
         {
           Assert(handle != nullHandle);
         }
-        void run() override {
+
+        inline void run() override
+        {
           ManagedObject *obj = handle.lookup();
           Assert(obj);
           obj->findParam(name.c_str(), true)->set(val);
         }
-        void runOnMaster() override {
+
+        void runOnMaster() override
+        {
+          if (!handle.defined())
+            return;
+
           ManagedObject *obj = handle.lookup();
           if (dynamic_cast<Renderer*>(obj) || dynamic_cast<Volume*>(obj)) {
             obj->findParam(name.c_str(), true)->set(val);
           }
         }
-        size_t getTag() const override {
-          return TAG;
-        }
-        void serialize(SerialBuffer &b) const override {
-          b << (int64)handle << name << val;
-        }
-        void deserialize(SerialBuffer &b) override {
-          b >> handle.i64 >> name >> val;
-        }
+
+        /*! serializes itself on the given serial buffer - will write
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        void serialize(WriteStream &b) const override
+        { b << (int64)handle << name << val; }
+
+        /*! de-serialize from a buffer that an object of this type has
+          serialized itself in */
+        void deserialize(ReadStream &b) override
+        { b >> handle.i64 >> name >> val; }
+
+        ObjectHandle handle;
+        std::string name;
+        T val;
       };
+      
       // run for setString needs to know to pass the C string to
       // set the param so we need to provide a different run.
       template<>
       void SetParam<std::string>::run();
+      
       template<>
       void SetParam<std::string>::runOnMaster();
 
       // both SetMaterial and SetObject take more different forms than the other
       // set operations since it doesn't take a name at all so
       // we go through a full specializations for them.
-      template<>
-      struct SetParam<OSPMaterial> : Work {
-        const static size_t TAG = CMD_SET_MATERIAL;
-        ObjectHandle handle;
-        ObjectHandle material;
-
-        SetParam(){}
-        SetParam(ObjectHandle handle, OSPMaterial val)
+      struct SetMaterial : public Work
+      {
+        SetMaterial() = default;
+        SetMaterial(ObjectHandle handle, OSPMaterial val)
           : handle(handle), material((ObjectHandle&)val)
         {
           Assert(handle != nullHandle);
           Assert(material != nullHandle);
         }
-        void run() override {
-          Geometry *obj = (Geometry*)handle.lookup();
-          Material *mat = (Material*)material.lookup();
-          Assert(obj);
-          Assert(mat);
-          obj->setMaterial(mat);
-        }
-        size_t getTag() const override {
-          return TAG;
-        }
-        void serialize(SerialBuffer &b) const override {
-          b << (int64)handle << (int64)material;
-        }
-        void deserialize(SerialBuffer &b) override {
-          b >> handle.i64 >> material.i64;
-        }
+
+        void run() override;
+        
+        /*! serializes itself on the given serial buffer - will write
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        void serialize(WriteStream &b) const override
+        { b << (int64)handle << (int64)material; }
+
+        /*! de-serialize from a buffer that an object of this type has
+          serialized itself in */
+        void deserialize(ReadStream &b) override
+        { b >> handle.i64 >> material.i64; }
+
+        ObjectHandle handle;
+        ObjectHandle material;
       };
 
       template<>
-      struct SetParam<OSPObject> : Work {
-        const static size_t TAG = CMD_SET_OBJECT;
-        ObjectHandle handle;
-        std::string name;
-        ObjectHandle val;
-
-        SetParam(){}
+      struct SetParam<OSPObject> : public Work
+      {
+        SetParam() = default;
+        
         SetParam(ObjectHandle handle, const char *name, OSPObject &obj)
-          : handle(handle), name(name), val((ObjectHandle&)obj)
+          : handle(handle),
+            name(name),
+            val((ObjectHandle&)obj)
         {
           Assert(handle != nullHandle);
         }
-        void run() override {
+
+        void run() override
+        {
           ManagedObject *obj = handle.lookup();
           Assert(obj);
           ManagedObject *param = NULL;
@@ -485,80 +591,122 @@ namespace ospray {
           }
           obj->findParam(name.c_str(), true)->set(param);
         }
-        size_t getTag() const override {
-          return TAG;
-        }
-        void serialize(SerialBuffer &b) const override {
-          b << (int64)handle << name << (int64)val;
-        }
-        void deserialize(SerialBuffer &b) override {
-          b >> handle.i64 >> name >> val.i64;
-        }
+        
+        /*! serializes itself on the given serial buffer - will write
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        void serialize(WriteStream &b) const override
+        { b << (int64)handle << name << (int64)val; }
+        
+
+        /*! de-serialize from a buffer that an object of this type has
+          serialized itself in */
+        void deserialize(ReadStream &b) override
+        { b >> handle.i64 >> name >> val.i64; }
+
+        ObjectHandle handle;
+        std::string  name;
+        ObjectHandle val;
       };
 
-      struct RemoveParam : Work {
-        const static size_t TAG = CMD_REMOVE_PARAM;
-        ObjectHandle handle;
-        std::string name;
-
-        RemoveParam();
+      struct RemoveParam : public Work
+      {
+        RemoveParam() = default;
         RemoveParam(ObjectHandle handle, const char *name);
+
         void run() override;
         void runOnMaster() override;
-        size_t getTag() const override;
-        void serialize(SerialBuffer &b) const override;
-        void deserialize(SerialBuffer &b) override;
+
+        /*! serializes itself on the given serial buffer - will write
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        void serialize(WriteStream &b) const override;
+
+        /*! de-serialize from a buffer that an object of this type has
+          serialized itself in */
+        void deserialize(ReadStream &b) override;
+
+        ObjectHandle handle;
+        std::string name;
       };
 
-      struct SetPixelOp : Work {
-        const static size_t TAG = CMD_SET_PIXELOP;
+      struct SetPixelOp : public Work
+      {
+        SetPixelOp() = default;
+        SetPixelOp(OSPFrameBuffer fb, OSPPixelOp op);
+
+        void run() override;
+
+        /*! serializes itself on the given serial buffer - will write
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        void serialize(WriteStream &b) const override;
+
+        /*! de-serialize from a buffer that an object of this type has
+          serialized itself in */
+        void deserialize(ReadStream &b) override;
+
         ObjectHandle fbHandle;
         ObjectHandle poHandle;
-
-        SetPixelOp();
-        SetPixelOp(OSPFrameBuffer fb, OSPPixelOp op);
-        void run() override;
-        size_t getTag() const override;
-        void serialize(SerialBuffer &b) const override;
-        void deserialize(SerialBuffer &b) override;
       };
 
-      struct CommandRelease : Work {
-        const static size_t TAG = CMD_RELEASE;
-        ObjectHandle handle;
-
-        CommandRelease();
+      struct CommandRelease : public Work
+      {
+        CommandRelease() = default;
         CommandRelease(ObjectHandle handle);
+
         void run() override;
-        size_t getTag() const override;
-        void serialize(SerialBuffer &b) const override;
-        void deserialize(SerialBuffer &b) override;
+
+        /*! serializes itself on the given serial buffer - will write
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        void serialize(WriteStream &b) const override;
+
+        /*! de-serialize from a buffer that an object of this type has
+          serialized itself in */
+        void deserialize(ReadStream &b) override;
+
+        ObjectHandle handle;
       };
 
-      struct LoadModule : Work {
-        const static size_t TAG = CMD_LOAD_MODULE;
-        std::string name;
-
-        LoadModule();
+      struct LoadModule : public Work
+      {
+        LoadModule() = default;
         LoadModule(const std::string &name);
+
         void run() override;
-        size_t getTag() const override;
-        bool flushing() const override;
-        void serialize(SerialBuffer &b) const override;
-        void deserialize(SerialBuffer &b) override;
+        bool flushing() override { return true; }
+
+        /*! serializes itself on the given serial buffer - will write
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        void serialize(WriteStream &b) const override;
+
+        /*! de-serialize from a buffer that an object of this type has
+          serialized itself in */
+        void deserialize(ReadStream &b) override;
+
+        std::string name;
       };
 
-      struct CommandFinalize : Work {
-        const static size_t TAG = CMD_FINALIZE;
+      struct CommandFinalize : public Work
+      {
+        CommandFinalize() = default;
 
-        CommandFinalize();
         void run() override;
         void runOnMaster() override;
-        size_t getTag() const override;
-        bool flushing() const override;
-        void serialize(SerialBuffer &b) const override;
-        void deserialize(SerialBuffer &b) override;
+        bool flushing() override { return true; }
+
+        /*! serializes itself on the given serial buffer - will write
+          all data into this buffer in a way that it can afterwards
+          un-serialize itself 'on the other side'*/
+        void serialize(WriteStream &b) const override;
+
+        /*! de-serialize from a buffer that an object of this type has
+          serialized itself in */
+        void deserialize(ReadStream &b) override;
       };
-    }// namespace work
-  }// namespace mpi
-}// namespace ospray
+      
+    } // ::ospray::mpi::work
+  } // ::ospray::mpi
+} // ::ospray

@@ -25,18 +25,34 @@
 namespace ospray {
   namespace mpi {
     namespace async {
+      using namespace std;
       
       CommLayer *CommLayer::WORLD = nullptr;
 
+      CommLayer::CommLayer()
+      {
+      }
+      
+      CommLayer::~CommLayer()
+      {
+      }
+      
       CommLayer::Object::Object(CommLayer *comm, ObjectID myID)
         : myID(myID), comm(comm)
       {
+        assert(comm);
         master = mpi::async::CommLayer::Address(comm->masterRank(),myID);
         worker = new mpi::async::CommLayer::Address[comm->numWorkers()];
         for (int i = 0 ; i < comm->numWorkers(); i++)
           worker[i] = mpi::async::CommLayer::Address(comm->workerRank(i),myID);
       }
 
+      int32 CommLayer::numWorkers() const
+      {
+        assert(group);
+        return group->size - 1;
+      }
+      
       void CommLayer::process(const mpi::Address &source,
                               void *message,
                               int32 size)
@@ -61,6 +77,7 @@ namespace ospray {
 
       void CommLayer::sendTo(Address dest, Message *msg, size_t size)
       {
+        assert(group);
         msg->source.rank = group->rank;
         msg->dest = dest;
         msg->size = size;

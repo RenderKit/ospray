@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,11 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "DataStreaming.h"
 
-#cmakedefine OSPRAY_PIN_ASYNC
 
-#cmakedefine OSPRAY_EXP_DATA_PARALLEL
-#ifdef OSPRAY_EXP_DATA_PARALLEL
-# define EXP_DATA_PARALLEL 1
-#endif
+

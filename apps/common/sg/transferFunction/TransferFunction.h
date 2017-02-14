@@ -42,7 +42,6 @@ namespace ospray {
       //! \brief Initialize this node's value from given corresponding XML node 
       virtual void setFromXML(const xml::Node &node, 
                               const unsigned char *binBasePtr) override;
-
       virtual void commit() override;
       
       void setValueRange(const vec2f &range);

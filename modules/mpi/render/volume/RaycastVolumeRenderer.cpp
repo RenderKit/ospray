@@ -25,12 +25,11 @@
 // ours
 // ispc exports
 #include "RaycastVolumeRenderer_ispc.h"
-#if EXP_DATA_PARALLEL
-# include "mpiCommon/MPICommon.h"
-# include "../../fb/DistributedFrameBuffer.h"
-# include "../../volume/DataDistributedBlockedVolume.h"
-# include "render/LoadBalancer.h"
-#endif
+
+#include "mpiCommon/MPICommon.h"
+#include "../../fb/DistributedFrameBuffer.h"
+#include "../../volume/DataDistributedBlockedVolume.h"
+#include "render/LoadBalancer.h"
 
 #define TILE_CACHE_SAFE_MUTEX 0
 
@@ -41,8 +40,6 @@ namespace ospray {
     UNUSED(type);
     return new RaycastVolumeMaterial;
   }
-
-#if EXP_DATA_PARALLEL
 
   struct CacheForBlockTiles
   {
@@ -206,7 +203,7 @@ namespace ospray {
       tile->rcp_fbSize = bgTile.rcp_fbSize;
       tile->accumID = accumID;
       tile->generation = 1;
-      tile->children   = 0; //nextGenTile-1;
+      tile->children   = 0;
 
       fb->setTile(*tile);
     }
@@ -232,8 +229,10 @@ namespace ospray {
     if (ddVolumeVec.empty()) {
       static bool printed = false;
       if (!printed) {
-        cout << "no data parallel volumes, rendering in traditional"
+        std::stringstream msg;
+        msg << "no data parallel volumes, rendering in traditional"
              << " raycast_volume_render mode" << endl;
+        postErrorMsg(msg);
         printed = true;
       }
 
@@ -244,14 +243,16 @@ namespace ospray {
     // OK, we _need_ data-parallel rendering ....
     static bool printed = false;
     if (!printed) {
-      std::cout << "#dvr: at least one dp volume"
-                   " -> needs data-parallel rendering ..." << std::endl;
+      std::stringstream msg;
+      msg << "#dvr: at least one dp volume -> needs data-parallel rendering ..."
+          << std::endl;
+      postErrorMsg(msg);
       printed = true;
     }
 
     // check if we're even in mpi parallel mode (can't do
     // data-parallel otherwise)
-    if (!ospray::core::isMpiParallel()) {
+    if (!ospray::mpi::isMpiParallel()) {
       throw std::runtime_error("#dvr: need data-parallel rendering, "
                                "but not running in mpi mode!?");
     }
@@ -298,7 +299,6 @@ namespace ospray {
     return fb->endFrame(0.f);
   }
 
-#endif
 
   void RaycastVolumeRenderer::commit()
   {

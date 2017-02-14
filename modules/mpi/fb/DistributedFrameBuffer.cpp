@@ -21,10 +21,13 @@
 #include "ospcommon/tasking/parallel_for.h"
 #include "ospcommon/tasking/schedule.h"
 
+#include "mpiCommon/async/Messaging.h"
+
 #ifdef _WIN32
 #  include <windows.h> // for Sleep
 #endif
 
+//#define DBG(a) a
 #define DBG(a) /* ignore */
 
 using std::cout;
@@ -36,7 +39,8 @@ namespace ospray {
 
   using DFB = DistributedFrameBuffer;
 
-  struct MasterTileMessage : public mpi::async::CommLayer::Message {
+  struct MasterTileMessage : public mpi::async::CommLayer::Message
+  {
     vec2i coords;
     float error;
   };
@@ -44,7 +48,8 @@ namespace ospray {
   /*! message sent to the master when a tile is finished. Todo:
       compress the color data */
   template <typename FBType>
-  struct MasterTileMessage_FB : public MasterTileMessage {
+  struct MasterTileMessage_FB : public MasterTileMessage
+  {
     FBType color[TILE_SIZE][TILE_SIZE];
   };
 
@@ -54,7 +59,8 @@ namespace ospray {
 
   /*! message sent from one node's instance to another, to tell that
       instance to write that tile */
-  struct WriteTileMessage : public mpi::async::CommLayer::Message {
+  struct WriteTileMessage : public mpi::async::CommLayer::Message
+  {
     // TODO: add compression of pixels during transmission
     vec2i coords; // XXX redundant: it's also in tile.region.lower
     ospray::Tile tile;
@@ -96,6 +102,7 @@ namespace ospray {
     if (tiles <= 0)
       return;
 
+    throw std::runtime_error("DB::sync disabling this for now ...");
     int rc = MPI_Bcast(tileErrorBuffer, tiles, MPI_FLOAT, 0, MPI_COMM_WORLD);
     mpi::checkMpiError(rc);
   }
@@ -334,6 +341,8 @@ namespace ospray {
                    tile->begin.x,tile->begin.y,numTilesCompletedThisFrame,
                    numTiles.x*numTiles.y));
       }
+      DBG(printf("MASTER: num tilescmpletedbymytiles: %i/%i\n",
+                 numTilesCompletedByMyTile,numTiles.x*numTiles.y));
       if (numTilesCompletedByMyTile == numTiles.x*numTiles.y)
         closeCurrentFrame();
     } else {
@@ -441,6 +450,7 @@ namespace ospray {
       }
     }
 
+    mpi::async::flushMessages();
     frameDoneCond.notify_all();
   }
 
