@@ -25,7 +25,7 @@ namespace ospray {
     //! \brief Implements an abstraction of Time
     /*! Abstracts the concept of time to be used for time-stamping
       node's last 'lastupdated' and /lastmodified' time stamps */
-    struct TimeStamp {
+    struct OSPSG_INTERFACE TimeStamp {
       //! \brief constructor 
       TimeStamp(uint64_t t) : t(t) {};
       TimeStamp() { t=now(); };

@@ -27,7 +27,7 @@ namespace ospray {
     using ospcommon::FileName;
 
     /*! \brief C++ wrapper for a 2D Texture */
-    struct Texture2D : public Node {
+    struct OSPSG_INTERFACE Texture2D : public Node {
       /*! constructor */
       Texture2D();
       virtual ~Texture2D();

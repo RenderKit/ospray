@@ -23,7 +23,7 @@ namespace ospray {
   namespace sg {
 
     /*! \brief Base class for all Material Types */
-    struct Material : public Node {
+    struct OSPSG_INTERFACE Material : public Node {
       /*! constructor */
       Material();
       virtual void init() override;

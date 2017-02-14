@@ -16,13 +16,14 @@
 
 #pragma once
 
+#include "sg/SceneGraphExports.h"
 // sg components
 #include "sg/common/Node.h"
 
 namespace ospray {
   namespace sg {
 
-    struct FrameBuffer : public sg::Node {
+    struct OSPSG_INTERFACE FrameBuffer : public sg::Node {
 
       /*! constructor allocates an OSP frame buffer object */
       FrameBuffer(vec2i size=vec2i(300,300));

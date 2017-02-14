@@ -24,7 +24,7 @@ namespace ospray {
   namespace sg {
 
     /*! a world node */
-    struct World : public sg::Renderable {
+    struct OSPSG_INTERFACE World : public sg::Renderable {
       World() : Renderable(), ospModel(nullptr) {
         // add(createNode("bounds", "box3f"));
 //        add(createNode("model", "OSPObject", (OSPModel*)NULL));
@@ -67,7 +67,7 @@ namespace ospray {
     };
 
 
-    struct InstanceGroup : public sg::World {
+    struct OSPSG_INTERFACE InstanceGroup : public sg::World {
       InstanceGroup() : World(), ospInstance(nullptr), instanced(true) {
         // add(createNode("bounds", "box3f"));
 //        add(createNode("model", "OSPObject", (OSPModel*)NULL));

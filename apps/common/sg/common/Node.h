@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "sg/SceneGraphExports.h"
 #include "sg/common/TimeStamp.h"
 #include "sg/common/Serialization.h"
 #include "sg/common/RuntimeError.h"
@@ -48,7 +49,7 @@ namespace ospray {
     //     std::string vstring;
     //   };
     // };
-    struct NullType {
+    struct OSPSG_INTERFACE NullType {
     };
     bool operator==(const NullType& lhs, const NullType& rhs);
     typedef variant<NullType,
@@ -56,7 +57,7 @@ namespace ospray {
       OSPObject,
       ospcommon::vec3f, ospcommon::vec2f, ospcommon::vec2i, ospcommon::box3f, std::string,
       float, bool, int> SGVar;
-    bool isValid(SGVar var);
+    bool OSPSG_INTERFACE isValid(SGVar var);
 
 
     /*! forward decl of entity that nodes can write to when writing XML files */
@@ -80,7 +81,7 @@ namespace ospray {
 
       \note This is only the abstract base class, actual instantiations are
       the in the 'ParamT' template. */
-    struct Param {
+    struct OSPSG_INTERFACE Param {
       /*! constructor. the passed name alwasys remains constant */
       Param(const std::string &name) : name(name) {};
       /*! return name of this parameter. the value is in the derived class */
@@ -106,7 +107,7 @@ namespace ospray {
       rendering any object. note we INTENTIONALLY do not use
       shared_ptrs here because certain nodes want to set these values
       to 'this', which isn't valid for shared_ptrs */
-    struct RenderContext {
+    struct OSPSG_INTERFACE RenderContext {
       std::shared_ptr<sg::World>      world;      //!< world we're rendering into
       std::shared_ptr<sg::Integrator> integrator; //!< integrator used to create materials etc
       const affine3f  xfm;        //!< affine geometry transform matrix
@@ -140,7 +141,7 @@ namespace ospray {
     };
 
     /*! \brief base node of all scene graph nodes */
-    struct Node : public std::enable_shared_from_this<Node>
+    struct OSPSG_INTERFACE Node : public std::enable_shared_from_this<Node>
     {
       Node() : lastModified(1), childrenMTime(1), lastCommitted(0), name("NULL"),
       type("Node"), valid(false),
@@ -150,7 +151,7 @@ namespace ospray {
         NodeH is a handle to a sg::Node.  It has the benefit of supporting some operators without
           requiring dereferencing a pointer.
       */
-      class NodeH
+      class OSPSG_INTERFACE NodeH
       {
       public:
         NodeH() : nid(0),node(nullptr) {}
@@ -462,17 +463,19 @@ namespace ospray {
     };
 
     /*! read a given scene graph node from its correspondoing xml node represenation */
-    sg::Node *parseNode(xml::Node *node);
+    OSPSG_INTERFACE sg::Node* parseNode(xml::Node *node);
 
     // list of all named nodes - for now use this as a global
     // variable, but eventually we'll need tofind a better way for
     // storing this ... maybe in the world!?
     extern std::map<std::string,std::shared_ptr<sg::Node> > namedNodes;
-    std::shared_ptr<sg::Node> findNamedNode(const std::string &name);
-    void registerNamedNode(const std::string &name, const std::shared_ptr<sg::Node> &node);
+    std::shared_ptr<sg::Node> OSPSG_INTERFACE findNamedNode(const std::string &name);
+    OSPSG_INTERFACE void registerNamedNode(const std::string &name, const std::shared_ptr<sg::Node> &node);
 
     typedef Node::NodeH NodeH;
-    Node::NodeH createNode(std::string name, std::string type="Node", SGVar var=NullType(), int flags=sg::NodeFlags::none, std::string documentation="");
+    OSPSG_INTERFACE Node::NodeH createNode(std::string name, std::string type="Node",
+                                           SGVar var=NullType(), int flags=sg::NodeFlags::none,
+                                           std::string documentation="");
     // , std::shared_ptr<sg::Param>=std::make_shared<sg::Param>("none")
 
     template <typename T>
@@ -553,7 +556,7 @@ namespace ospray {
     };
 
     //! a Node with bounds and a render operation
-    struct Renderable : public Node
+    struct OSPSG_INTERFACE Renderable : public Node
     {
       Renderable() {}
       virtual void init() override

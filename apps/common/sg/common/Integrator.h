@@ -27,7 +27,7 @@ namespace ospray {
     struct World;
 
     /*! a renderer node - the generic renderer node */
-    struct Integrator : public sg::Node {
+    struct OSPSG_INTERFACE Integrator : public sg::Node {
 
       /*! constructor */
       Integrator(const std::string &type) : type(type), ospRenderer(NULL), spp(1) {};

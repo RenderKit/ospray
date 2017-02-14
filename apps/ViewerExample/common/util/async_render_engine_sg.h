@@ -36,7 +36,7 @@
 
 namespace ospray {
 namespace sg {
-  class async_render_engine_sg : public async_render_engine
+  class OSPRAY_IMGUI_UTIL_INTERFACE async_render_engine_sg : public async_render_engine
   {
   public:
 
