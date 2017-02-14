@@ -37,7 +37,6 @@ namespace ospray {
     // //! \brief Sets a new 'texture map' to be used for the color mapping
     void TransferFunction::setColorMap(const std::vector<vec3f> &colorArray)
     {
-      PING;
       if (ospColorData) { ospRelease(ospColorData); ospColorData = nullptr; }
       this->colorArray.clear();
       for (uint32_t i = 0; i < colorArray.size(); ++i)
@@ -49,7 +48,6 @@ namespace ospray {
     //! \brief Sets a new 'texture map' to be used for the alpha mapping
     void TransferFunction::setAlphaMap(const std::vector<vec2f> &alphaArray)
     {
-      PING;
       if (ospAlphaData) { ospRelease(ospAlphaData); ospAlphaData = nullptr; }
       this->alphaArray.clear();
       for (const auto &alpha : alphaArray)
@@ -85,7 +83,6 @@ namespace ospray {
     //! \brief commit the current field values to ospray
     void TransferFunction::commit() 
     {
-      PING;
       ospSetVec2f(ospTransferFunction,"valueRange",osp::vec2f{valueRange.x,valueRange.y});
       if (ospColorData == nullptr) {
         // for now, no resampling - just use the colors ...
@@ -114,7 +111,6 @@ namespace ospray {
 
     void TransferFunction::render(RenderContext &ctx)
     {
-      PING;
       if (!ospTransferFunction) {
         ospTransferFunction = ospNewTransferFunction("piecewise_linear");
         setValue((OSPObject)ospTransferFunction);
@@ -124,8 +120,6 @@ namespace ospray {
 
     void TransferFunction::preCommit(RenderContext &ctx)
     {
-      PING;
-
       if (!ospTransferFunction) {
         ospTransferFunction = ospNewTransferFunction("piecewise_linear");
         setValue((OSPObject)ospTransferFunction);
