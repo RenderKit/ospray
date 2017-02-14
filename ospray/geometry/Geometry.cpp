@@ -59,7 +59,7 @@ namespace ospray {
   {
   }
 
-  Geometry *Geometry::createGeometry(const char *type)
+  Geometry *Geometry::createInstance(const char *type)
   {
     return createInstanceHelper<Geometry, OSP_GEOMETRY>(type);
   }

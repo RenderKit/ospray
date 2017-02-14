@@ -20,6 +20,7 @@
 // std
 #include <mutex>
 #include <stdexcept>
+#include <algorithm> // std::min etc on windows
 
 #ifdef _WIN32
 // ----------- windows only -----------
@@ -76,7 +77,7 @@ typedef int ssize_t;
 
 namespace ospcommon {
 
-  using byte_t = unsigned char;
+  typedef unsigned char byte_t;
 
   /*! return system time in seconds */
   OSPCOMMON_INTERFACE double getSysTime();

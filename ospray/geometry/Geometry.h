@@ -63,7 +63,7 @@ namespace ospray {
       in either ospray proper or any already loaded module. For
       geometry types specified in special modules, make sure to call
       ospLoadModule first. */
-    static Geometry *createGeometry(const char *type);
+    static Geometry *createInstance(const char *type);
 
     box3f bounds {empty};
 

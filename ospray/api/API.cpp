@@ -57,10 +57,11 @@ inline ospray::api::Device *createMpiDevice()
     try {
       ospLoadModule("mpi");
       device = ospray::api::Device::createDevice("mpi");
-    } catch (const std::runtime_error &) {
+    } catch (const std::runtime_error &err) {
       std::string error_msg = "Cannot create a device of type 'mpi'! Make sure "
                               "you have enabled the OSPRAY_MODULE_MPI CMake "
                               "variable in your build of OSPRay.";
+      error_msg += ("\n(Reason device creation failed: "+std::string(err.what())+")");
       throw std::runtime_error(error_msg);
     }
   }
@@ -87,7 +88,6 @@ extern "C" void ospInit(int *_ac, const char **_av)
     mpiDevice->findParam("launchCommand", true)
              ->set(OSP_MPI_LAUNCH.second.c_str());
   }
-
   if (_ac && _av) {
     for (int i = 1; i < *_ac; i++) {
       std::string av(_av[i]);
@@ -102,7 +102,7 @@ extern "C" void ospInit(int *_ac, const char **_av)
       if (deviceSwitch == "--osp:device:") {
         removeArgs(*_ac,(char **&)_av,i,1);
         auto deviceName = av.substr(13);
-
+        
         try {
           auto *device = ospray::api::Device::createDevice(deviceName.c_str());
           ospray::api::Device::current = device;
