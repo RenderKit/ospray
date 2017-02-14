@@ -61,7 +61,8 @@ ImGuiViewer::ImGuiViewer(const std::deque<box3f> &worldBounds,
     camera(camera),
     worldBounds(worldBounds),
     lockFirstAnimationFrame(false),
-    scenegraph(scenegraph)
+    scenegraph(scenegraph),
+    renderEngine(scenegraph)
 {
   if (!worldBounds.empty())
     setWorldBounds(worldBounds[0]);
@@ -70,7 +71,6 @@ ImGuiViewer::ImGuiViewer(const std::deque<box3f> &worldBounds,
   renderer.set("camera", camera);
 
   // renderEngine.setRenderer(renderer);
-  renderEngine.setRenderer(scenegraph);
   renderEngine.setFbSize({1024, 768});
 
   renderEngine.scheduleObjectCommit(renderer);

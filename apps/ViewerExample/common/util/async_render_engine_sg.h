@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -35,29 +35,24 @@
 #include "async_render_engine.h"
 
 namespace ospray {
-namespace sg {
-  class OSPRAY_IMGUI_UTIL_INTERFACE async_render_engine_sg : public async_render_engine
-  {
-  public:
+  namespace sg {
 
-    async_render_engine_sg() : lastRTime(0) {};
-    async_render_engine_sg(sg::NodeH sgRenderer) : scenegraph(sgRenderer), lastRTime(0) {};
-    ~async_render_engine_sg() { stop(); }
-    virtual void start(int numThreads= -1) override;
-    virtual void stop() override;
+    class OSPRAY_IMGUI_UTIL_INTERFACE async_render_engine_sg
+        : public async_render_engine
+    {
+    public:
 
-    void setRenderer(sg::NodeH n) { scenegraph = n; }
+      async_render_engine_sg(sg::NodeH sgRenderer);
+      ~async_render_engine_sg() = default;
 
-  protected:
+    private:
 
-  	virtual void run();
-  	virtual void validate();
+      void run() override;
+      void validate() override;
 
-    bool paused={false};
-    int runningThreads={0};
+      sg::NodeH scenegraph;
+      sg::TimeStamp lastRTime {0};
+    };
 
-    sg::NodeH scenegraph;
-    sg::TimeStamp lastRTime;
-  };
-}
-}
+  } // ::ospray::sg
+} // ::ospray

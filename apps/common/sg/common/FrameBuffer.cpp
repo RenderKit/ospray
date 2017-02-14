@@ -54,7 +54,7 @@ namespace ospray {
       return (unsigned char *)ospMapFrameBuffer(ospFrameBuffer, OSP_FB_COLOR);
     }
 
-    void FrameBuffer::unmap(unsigned char *mem)
+    void FrameBuffer::unmap(void *mem)
     {
       ospUnmapFrameBuffer(mem,ospFrameBuffer);
     }

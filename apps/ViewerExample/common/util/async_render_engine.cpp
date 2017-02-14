@@ -52,7 +52,7 @@ namespace ospray {
       throw std::runtime_error("Can't start the engine in an invalid state!");
 
     state = ExecState::RUNNING;
-    backgroundThread = std::thread(&async_render_engine::run, this);
+    backgroundThread = std::thread([&](){ run(); });
   }
 
   void async_render_engine::stop()
