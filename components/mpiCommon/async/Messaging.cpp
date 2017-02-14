@@ -28,9 +28,11 @@ namespace ospray {
       Group::Group(MPI_Comm comm, Consumer *consumer, int32 tag)
         :  consumer(consumer), tag(tag)
       {
+        lockMPI("mpi::Group::Group()");
         MPI_CALL(Comm_dup(comm,&this->comm));
         MPI_CALL(Comm_rank(comm,&rank));
         MPI_CALL(Comm_size(comm,&size));
+        unlockMPI();
       }
 
       Group *WORLD = NULL;
@@ -39,17 +41,9 @@ namespace ospray {
       void initAsync()
       {
         if (AsyncMessagingImpl::global == NULL) {
-// #if 1
           AsyncMessagingImpl::global = new BatchedIsendIrecvImpl;
-// #elif 1
-//           AsyncMessagingImpl::global = new MultiIsendIrecvImpl;
-// #else
-//           AsyncMessagingImpl::global = new SimpleSendRecvImpl;
-// #endif
           AsyncMessagingImpl::global->init();
         }
-
-        // extern Group *WORLD;
       }
 
       Group *createGroup(MPI_Comm comm, Consumer *consumer, int32 tag)
@@ -58,6 +52,11 @@ namespace ospray {
         return AsyncMessagingImpl::global->createGroup(comm,consumer,tag);
       }
 
+      void flushMessages()
+      {
+        AsyncMessagingImpl::global->flush();
+      }
+      
       void shutdown()
       {
         AsyncMessagingImpl::global->shutdown();
@@ -69,7 +68,5 @@ namespace ospray {
       }
 
     } // ::ospray::mpi::async
-
-
   } // ::ospray::mpi
 } // ::ospray

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -22,181 +22,267 @@
 #include "mpi/fb/DistributedFrameBuffer.h"
 #include "mpi/render/MPILoadBalancer.h"
 
+#include "common/Data.h"
+#include "common/Library.h"
+#include "common/Model.h"
+#include "geometry/TriangleMesh.h"
+#include "texture/Texture2D.h"
+
 namespace ospray {
   namespace mpi {
     namespace work {
 
-#define REGISTER_WORK_UNIT(W) W::TAG, make_work_unit<W>
 
-      void initWorkMap()
+      // =======================================================
+      // CMD_COMMIT
+      // =======================================================
+      
+      CommitObject::CommitObject(ObjectHandle handle)
+        : handle(handle)
+      {}
+      
+      void CommitObject::run()
       {
-        Work::WORK_MAP = Work::WorkMap{
-          { REGISTER_WORK_UNIT(NewObject<Renderer>) },
-          { REGISTER_WORK_UNIT(NewObject<Model>) },
-          { REGISTER_WORK_UNIT(NewObject<Geometry>) },
-          { REGISTER_WORK_UNIT(NewObject<Camera>) },
-          { REGISTER_WORK_UNIT(NewObject<Volume>) },
-          { REGISTER_WORK_UNIT(NewObject<TransferFunction>) },
-          { REGISTER_WORK_UNIT(NewObject<PixelOp>) },
+        ManagedObject *obj = handle.lookup();
+        if (obj) {
+          obj->commit();
 
-          { REGISTER_WORK_UNIT(NewRendererObject<Material>) },
-          { REGISTER_WORK_UNIT(NewRendererObject<Light>) },
-
-          { REGISTER_WORK_UNIT(NewData) },
-          { REGISTER_WORK_UNIT(NewTexture2d) },
-
-          { REGISTER_WORK_UNIT(CommitObject) },
-          { REGISTER_WORK_UNIT(CommandRelease) },
-
-          { REGISTER_WORK_UNIT(LoadModule) },
-
-          { REGISTER_WORK_UNIT(AddObject<OSPGeometry>) },
-          { REGISTER_WORK_UNIT(AddObject<OSPVolume>) },
-          { REGISTER_WORK_UNIT(RemoveObject<OSPGeometry>) },
-          { REGISTER_WORK_UNIT(RemoveObject<OSPVolume>) },
-
-          { REGISTER_WORK_UNIT(CreateFrameBuffer) },
-          { REGISTER_WORK_UNIT(ClearFrameBuffer) },
-          { REGISTER_WORK_UNIT(RenderFrame) },
-
-          { REGISTER_WORK_UNIT(SetRegion) },
-          { REGISTER_WORK_UNIT(SetPixelOp) },
-
-          { REGISTER_WORK_UNIT(SetParam<OSPMaterial>) },
-          { REGISTER_WORK_UNIT(SetParam<OSPObject>) },
-          { REGISTER_WORK_UNIT(SetParam<std::string>) },
-          { REGISTER_WORK_UNIT(SetParam<int>) },
-          { REGISTER_WORK_UNIT(SetParam<float>) },
-          { REGISTER_WORK_UNIT(SetParam<vec2f>) },
-          { REGISTER_WORK_UNIT(SetParam<vec2i>) },
-          { REGISTER_WORK_UNIT(SetParam<vec3f>) },
-          { REGISTER_WORK_UNIT(SetParam<vec3i>) },
-          { REGISTER_WORK_UNIT(SetParam<vec4f>) },
-
-          { REGISTER_WORK_UNIT(RemoveParam) },
-
-          { REGISTER_WORK_UNIT(CommandFinalize) }
-        };
-      }
-
-#undef REGISTER_WORK_UNIT
-
-      // All the tags so they can be linked in properly
-      const size_t NewObjectTag<Renderer>::TAG;
-      const size_t NewObjectTag<Model>::TAG;
-      const size_t NewObjectTag<Geometry>::TAG;
-      const size_t NewObjectTag<Camera>::TAG;
-      const size_t NewObjectTag<Volume>::TAG;
-      const size_t NewObjectTag<TransferFunction>::TAG;
-      const size_t NewObjectTag<PixelOp>::TAG;
-      template<typename T>
-      const size_t NewObject<T>::TAG;
-      // should they init here or in the header? Header probably?
-      const size_t NewRendererObjectTag<Material>::TAG;
-      const size_t NewRendererObjectTag<Light>::TAG;
-      template<typename T>
-      const size_t NewRendererObject<T>::TAG;
-      const size_t NewData::TAG;
-      const size_t NewTexture2d::TAG;
-      const size_t SetRegion::TAG;
-      const size_t CommitObject::TAG;
-      const size_t ClearFrameBuffer::TAG;
-      const size_t RenderFrame::TAG;
-      const size_t AddObjectTag<OSPGeometry>::TAG;
-      const size_t AddObjectTag<OSPVolume>::TAG;
-      template<typename T>
-      const size_t AddObject<T>::TAG;
-      const size_t RemoveObjectTag<OSPGeometry>::TAG;
-      const size_t RemoveObjectTag<OSPVolume>::TAG;
-      template<typename T>
-      const size_t RemoveObject<T>::TAG;
-      const size_t CreateFrameBuffer::TAG;
-      const size_t ParamTag<std::string>::TAG;
-      const size_t ParamTag<int>::TAG;
-      const size_t ParamTag<float>::TAG;
-      const size_t ParamTag<vec2f>::TAG;
-      const size_t ParamTag<vec2i>::TAG;
-      const size_t ParamTag<vec3f>::TAG;
-      const size_t ParamTag<vec3i>::TAG;
-      const size_t ParamTag<vec4f>::TAG;
-      template<typename T>
-      const size_t SetParam<T>::TAG;
-      const size_t SetParam<OSPMaterial>::TAG;
-      const size_t SetParam<OSPObject>::TAG;
-      const size_t RemoveParam::TAG;
-      const size_t SetPixelOp::TAG;
-      const size_t CommandRelease::TAG;
-      const size_t LoadModule::TAG;
-      const size_t CommandFinalize::TAG;
-
-      template<>
-      void NewObject<Renderer>::run() {
-        Renderer *renderer = Renderer::createRenderer(type.c_str());
-        if (!renderer) {
-          throw std::runtime_error("unknown renderer type '" + type + "'");
+          // TODO: Do we need this hack anymore?
+          // It looks like yes? or at least glutViewer segfaults if we don't do this
+          // hack, to stay compatible with earlier version
+          Model *model = dynamic_cast<Model*>(obj);
+          if (model) model->finalize();
+        } else {
+          throw std::runtime_error("Error: rank "
+                                   + std::to_string(mpi::world.rank)
+                                   + " did not have object to commit!");
         }
-        handle.assign(renderer);
+        // TODO: Work units should not be directly making MPI calls.
+        // What should be responsible for this barrier?
+        // MPI_Barrier(MPI_COMM_WORLD);
+
+        /// iw: nah, perfectly OK to do MPI calls, as long as they
+        /// don't get into each other's ways, nad make sure there's no
+        /// cyclical dependencies (ie, that the server unit actually
+        /// does get flushed etcpp)
+        
+        mpi::app.barrier();
       }
-      template<>
-      void NewObject<Renderer>::runOnMaster() {
+      
+      void CommitObject::runOnMaster()
+      {
+        if (handle.defined()) {
+          ManagedObject *obj = handle.lookup();
+          if (dynamic_cast<Renderer*>(obj)) {
+            obj->commit();
+          }
+        }
+        mpi::worker.barrier();
+      }
+      
+      void CommitObject::serialize(WriteStream &b) const
+      {
+        b << (int64)handle;
+      }
+      
+      void CommitObject::deserialize(ReadStream &b)
+      {
+        b >> handle.i64;
+      }
+
+      // =======================================================
+      // CMD_CREATE_FRAMEBUFFER
+      // =======================================================
+
+      CreateFrameBuffer::CreateFrameBuffer(ObjectHandle handle,
+                                           vec2i dimensions,
+                                           OSPFrameBufferFormat format,
+                                           uint32 channels)
+        : handle(handle),
+          dimensions(dimensions),
+          format(format),
+          channels(channels)
+      {
+      }
+    
+      void CreateFrameBuffer::run()
+      {
+        const bool hasDepthBuffer = channels & OSP_FB_DEPTH;
+        const bool hasAccumBuffer = channels & OSP_FB_ACCUM;
+        const bool hasVarianceBuffer = channels & OSP_FB_VARIANCE;
+        assert(dimensions.x > 0);
+        assert(dimensions.y > 0);
+        FrameBuffer *fb
+          = new DistributedFrameBuffer(ospray::mpi::async::CommLayer::WORLD,
+                                       dimensions, handle, format, hasDepthBuffer,
+                                       hasAccumBuffer, hasVarianceBuffer);
+        // TODO: Only the master does this increment, though should the workers do it too?
+        fb->refInc();
+        handle.assign(fb);
+      }
+      
+      void CreateFrameBuffer::runOnMaster()
+      {
         run();
       }
-      template<>
-      void NewObject<Model>::run() {
-        Model *model = new Model;
-        handle.assign(model);
+      
+      void CreateFrameBuffer::serialize(WriteStream &b) const
+      {
+        b << (int64)handle << dimensions << (int32)format << channels;
       }
-      template<>
-      void NewObject<Geometry>::run() {
-        Geometry *geometry = Geometry::createGeometry(type.c_str());
-        if (!geometry) {
-          throw std::runtime_error("unknown geometry type '" + type + "'");
-        }
-        // TODO: Why is this manual reference increment needed!?
-        // is it to keep the object alive until ospRelease is called
-        // since in the distributed mode no app has a reference to this object?
-        geometry->refInc();
-        handle.assign(geometry);
-      }
-      template<>
-      void NewObject<Camera>::run() {
-        Camera *camera = Camera::createCamera(type.c_str());
-        Assert(camera);
-        handle.assign(camera);
-      }
-      template<>
-      void NewObject<Volume>::run() {
-        Volume *volume = Volume::createInstance(type.c_str());
-        if (!volume) {
-          throw std::runtime_error("unknown volume type '" + type + "'");
-        }
-        volume->refInc();
-        handle.assign(volume);
-      }
-      template<>
-      void NewObject<Volume>::runOnMaster() {
-        run();
-      }
-      template<>
-      void NewObject<TransferFunction>::run() {
-        TransferFunction *tfn = TransferFunction::createInstance(type.c_str());
-        if (!tfn) {
-          throw std::runtime_error("unknown transfer functon type '" + type + "'");
-        }
-        tfn->refInc();
-        handle.assign(tfn);
-      }
-      template<>
-      void NewObject<PixelOp>::run() {
-        PixelOp *pixelOp = PixelOp::createPixelOp(type.c_str());
-        if (!pixelOp) {
-          throw std::runtime_error("unknown pixel op type '" + type + "'");
-        }
-        handle.assign(pixelOp);
+      
+      void CreateFrameBuffer::deserialize(ReadStream &b)
+      {
+        int32 fmt;
+        b >> handle.i64 >> dimensions >> fmt >> channels;
+        format = (OSPFrameBufferFormat)fmt;
       }
 
+      // =======================================================
+      // CMD_LOAD_MODULE
+      // =======================================================
+      
+      LoadModule::LoadModule(const std::string &name)
+        : name(name)
+      {}
+      
+      void LoadModule::run()
+      {
+        const std::string libName = "ospray_module_" + name;
+        loadLibrary(libName);
+
+        const std::string initSymName = "ospray_init_module_" + name;
+        void *initSym = getSymbol(initSymName);
+        if (!initSym) {
+          throw std::runtime_error("could not find module initializer "
+                                   + initSymName);
+        }
+        void (*initMethod)() = (void(*)())initSym;
+        initMethod();
+      }
+      
+      void LoadModule::serialize(WriteStream &b) const
+      {
+        b << name;
+      }
+      
+      void LoadModule::deserialize(ReadStream &b)
+      {
+        b >> name;
+      }
+
+      // =======================================================
+      // CMD_SET_PARAM<...>
+      // =======================================================
       template<>
-      void NewRendererObject<Material>::run() {
+      void SetParam<std::string>::run()
+      {
+        ManagedObject *obj = handle.lookup();
+        Assert(obj);
+        obj->findParam(name.c_str(), true)->set(val.c_str());
+      }
+    
+      template<>
+      void SetParam<std::string>::runOnMaster()
+      {
+        if (!handle.defined())
+          return;
+        
+        ManagedObject *obj = handle.lookup();
+        if (dynamic_cast<Renderer*>(obj) || dynamic_cast<Volume*>(obj)) {
+          obj->findParam(name.c_str(), true)->set(val.c_str());
+        }
+      }
+
+      // =======================================================
+      // CMD_SET_MATERIAL
+      // =======================================================
+      void SetMaterial::run() 
+      {
+        Geometry *geom = (Geometry*)handle.lookup();
+        Material *mat = (Material*)material.lookup();
+        Assert(geom);
+        Assert(mat);
+        /* might we worthwhile doing a dyncast here to check if that
+           is actually a proper geometry .. */
+        geom->setMaterial(mat);
+      }
+
+      void registerOSPWorkItems(WorkTypeRegistry &registry)
+      {
+        registerWorkUnit<NewRenderer>(registry);
+        registerWorkUnit<NewModel>(registry);
+        registerWorkUnit<NewGeometry>(registry);
+        registerWorkUnit<NewCamera>(registry);
+        registerWorkUnit<NewVolume>(registry);
+        registerWorkUnit<NewTransferFunction>(registry);
+        registerWorkUnit<NewPixelOp>(registry);
+
+        registerWorkUnit<NewMaterial>(registry);
+        registerWorkUnit<NewLight>(registry);
+
+        registerWorkUnit<NewData>(registry);
+        registerWorkUnit<NewTexture2d>(registry);
+
+        registerWorkUnit<CommitObject>(registry);
+        registerWorkUnit<CommandRelease>(registry);
+
+        registerWorkUnit<LoadModule>(registry);
+
+        registerWorkUnit<AddGeometry>(registry);
+        registerWorkUnit<AddVolume>(registry);
+        registerWorkUnit<RemoveGeometry>(registry);
+        registerWorkUnit<RemoveVolume>(registry);
+
+        registerWorkUnit<CreateFrameBuffer>(registry);
+        registerWorkUnit<ClearFrameBuffer>(registry);
+        registerWorkUnit<RenderFrame>(registry);
+
+        registerWorkUnit<SetRegion>(registry);
+        registerWorkUnit<SetPixelOp>(registry);
+
+        registerWorkUnit<SetMaterial>(registry);
+        registerWorkUnit<SetParam<OSPObject>>(registry);
+        registerWorkUnit<SetParam<std::string>>(registry);
+        registerWorkUnit<SetParam<int>>(registry);
+        registerWorkUnit<SetParam<float>>(registry);
+        registerWorkUnit<SetParam<vec2f>>(registry);
+        registerWorkUnit<SetParam<vec2i>>(registry);
+        registerWorkUnit<SetParam<vec3f>>(registry);
+        registerWorkUnit<SetParam<vec3i>>(registry);
+        registerWorkUnit<SetParam<vec4f>>(registry);
+
+        registerWorkUnit<RemoveParam>(registry);
+
+        registerWorkUnit<CommandFinalize>(registry);
+      }
+
+      // =======================================================
+      // ospNewRenderer
+      // =======================================================
+
+      template<>
+      void NewRenderer::runOnMaster()
+      {
+        run();
+      }
+
+      // =======================================================
+      // ospNewVolume
+      // =======================================================
+
+      template<>
+      void NewVolume::runOnMaster()
+      {
+        run();
+      }
+
+      // =======================================================
+      // ospNewMaterial
+      // =======================================================
+
+      void NewMaterial::run()
+      {
         Renderer *renderer = (Renderer*)rendererHandle.lookup();
         Material *material = nullptr;
         if (renderer) {
@@ -207,16 +293,12 @@ namespace ospray {
         }
         // No renderer present or the renderer doesn't intercept this
         // material type.
-        if (!material) {
-          material = Material::createMaterial(type.c_str());
-        }
-        if (!material) {
-          throw std::runtime_error("unknown material type '" + type + "'");
-        }
+        if (!material) material = Material::createMaterial(type.c_str());
         handle.assign(material);
       }
-      template<>
-      void NewRendererObject<Light>::run() {
+      
+      void NewLight::run()
+      {
         Renderer *renderer = (Renderer*)rendererHandle.lookup();
         Light *light = nullptr;
         if (renderer) {
@@ -227,31 +309,40 @@ namespace ospray {
         }
         // No renderer present or the renderer doesn't intercept this
         // material type.
-        if (!light) {
-          light = Light::createLight(type.c_str());
-        }
-        if (!light) {
-          throw std::runtime_error("unknown light type '" + type + "'");
-        }
+        if (!light) light = Light::createLight(type.c_str());
         handle.assign(light);
       }
+      
+      // =======================================================
+      // ospNewData
+      // =======================================================
 
-      NewData::NewData(){}
-      NewData::NewData(ObjectHandle handle, size_t nItems,
-          OSPDataType format, void *init, int flags)
-        : handle(handle), nItems(nItems), format(format), localData(nullptr), flags(flags)
+      NewData::NewData(ObjectHandle handle,
+                       size_t nItems,
+                       OSPDataType format,
+                       void *init,
+                       int flags)
+        : handle(handle),
+          nItems(nItems),
+          format(format),
+          localData(nullptr),
+          flags(flags)
       {
         // TODO: Is this check ok for ParaView e.g. what Carson is changing in 2e81c005 ?
         if (init && nItems) {
           if (flags & OSP_DATA_SHARED_BUFFER) {
             localData = init;
           } else {
+            static WarnOnce warning("#osp.mpi: warning - newdata currently "
+                                    "creates a std::vector copy of input data");
             data.resize(ospray::sizeOf(format) * nItems);
             std::memcpy(data.data(), init, data.size());
           }
         }
       }
-      void NewData::run() {
+      
+      void NewData::run()
+      {
         Data *ospdata = nullptr;
         if (!data.empty()) {
           ospdata = new Data(nItems, format, data.data(), flags);
@@ -269,7 +360,7 @@ namespace ospray {
              what the core expects are pointers; to make the core
              happy we translate all data items back to pointers at
              this stage */
-          ObjectHandle *asHandle = (ObjectHandle*)ospdata->data;
+          ObjectHandle   *asHandle = (ObjectHandle*)ospdata->data;
           ManagedObject **asObjPtr = (ManagedObject**)ospdata->data;
           for (size_t i = 0; i < nItems; ++i) {
             if (asHandle[i] != NULL_HANDLE) {
@@ -279,59 +370,82 @@ namespace ospray {
           }
         }
       }
-      size_t NewData::getTag() const {
-        return TAG;
-      }
-      void NewData::serialize(SerialBuffer &b) const {
+      
+      void NewData::serialize(WriteStream &b) const
+      {
+        static WarnOnce warning("#osp.mpi: Warning - newdata serialize "
+                                "currently uses a std::vector... ");
+        /* note there are two issues with this: first is that when
+           sharing data buffer we'd hvae only localdata set (not the
+           this->data vector; second is that even _if_ we use the data
+           vector we're (temporarily) doubling memory consumptoin
+           because we copy all data into the std::vector first, just
+           so we can send it.... */
         b << (int64)handle << nItems << (int32)format << flags << data;
       }
-      void NewData::deserialize(SerialBuffer &b) {
+      
+      void NewData::deserialize(ReadStream &b)
+      {
         int32 fmt;
         b >> handle.i64 >> nItems >> fmt >> flags >> data;
         format = (OSPDataType)fmt;
       }
 
-      NewTexture2d::NewTexture2d() {}
-      NewTexture2d::NewTexture2d(ObjectHandle handle, vec2i dimensions,
-          OSPTextureFormat format, void *texture, uint32 flags)
-        : handle(handle), dimensions(dimensions), format(format), flags(flags)
+      NewTexture2d::NewTexture2d(ObjectHandle handle,
+                                 vec2i dimensions,
+                                 OSPTextureFormat format,
+                                 void *texture,
+                                 uint32 flags)
+        : handle(handle),
+          dimensions(dimensions),
+          format(format),
+          flags(flags)
       {
         size_t sz = ospray::sizeOf(format) * dimensions.x * dimensions.y;
         data.resize(sz);
         std::memcpy(data.data(), texture, sz);
       }
-      void NewTexture2d::run() {
-        Texture2D *texture = Texture2D::createTexture(dimensions, format, data.data(),
-                                                      flags & ~OSP_TEXTURE_SHARED_BUFFER);
+      
+      void NewTexture2d::run()
+      {
+        Texture2D *texture =
+            Texture2D::createTexture(dimensions, format, data.data(),
+                                     flags & ~OSP_TEXTURE_SHARED_BUFFER);
         Assert(texture);
         handle.assign(texture);
       }
-      size_t NewTexture2d::getTag() const {
-        return TAG;
-      }
-      void NewTexture2d::serialize(SerialBuffer &b) const {
+      
+      void NewTexture2d::serialize(WriteStream &b) const
+      {
         b << (int64)handle << dimensions << (int32)format << flags << data;
       }
-      void NewTexture2d::deserialize(SerialBuffer &b) {
+      
+      void NewTexture2d::deserialize(ReadStream &b)
+      {
         int32 fmt;
         b >> handle.i64 >> dimensions >> fmt >> flags >> data;
         format = (OSPTextureFormat)fmt;
       }
 
-      SetRegion::SetRegion() {}
       SetRegion::SetRegion(OSPVolume volume, vec3i start, vec3i size,
                            const void *src, OSPDataType type)
-        : handle((ObjectHandle&)volume), regionStart(start), regionSize(size), type(type)
+        : handle((ObjectHandle&)volume), regionStart(start),
+          regionSize(size), type(type)
       {
         size_t bytes = ospray::sizeOf(type) * size.x * size.y * size.z;
         // TODO: With the MPI batching this limitation should be lifted
         if (bytes > 2000000000LL) {
-          throw std::runtime_error("MPI ospSetRegion does not support region sizes > 2GB");
+          throw std::runtime_error("MPI ospSetRegion does not support "
+                                   "region sizes > 2GB");
         }
         data.resize(bytes);
-        std::memcpy(data.data(), src, bytes);  //TODO: should support sending data without copy
+
+        //TODO: should support sending data without copy
+        std::memcpy(data.data(), src, bytes);
       }
-      void SetRegion::run() {
+
+      void SetRegion::run()
+      {
         Volume *volume = (Volume*)handle.lookup();
         Assert(volume);
         // TODO: Does it make sense to do the allreduce & report back fails?
@@ -341,89 +455,65 @@ namespace ospray {
           throw std::runtime_error("Failed to set region for volume");
         }
       }
-      size_t SetRegion::getTag() const {
-        return TAG;
-      }
-      void SetRegion::serialize(SerialBuffer &b) const {
+
+      void SetRegion::serialize(WriteStream &b) const
+      {
         b << (int64)handle << regionStart << regionSize << (int32)type << data;
       }
-      void SetRegion::deserialize(SerialBuffer &b) {
+
+      void SetRegion::deserialize(ReadStream &b)
+      {
         int32 ty;
         b >> handle.i64 >> regionStart >> regionSize >> ty >> data;
         type = (OSPDataType)ty;
       }
 
-      CommitObject::CommitObject(){}
-      CommitObject::CommitObject(ObjectHandle handle) : handle(handle) {}
-      void CommitObject::run() {
-        ManagedObject *obj = handle.lookup();
-        if (obj) {
-          obj->commit();
 
-          // TODO: Do we need this hack anymore?
-          // It looks like yes? or at least glutViewer segfaults if we don't do this
-          // hack, to stay compatible with earlier version
-          Model *model = dynamic_cast<Model*>(obj);
-          if (model) {
-            model->finalize();
-          }
-        } else {
-          throw std::runtime_error("Error: rank " + std::to_string(mpi::world.rank)
-              + " did not have object to commit!");
-        }
-        // TODO: Work units should not be directly making MPI calls.
-        // What should be responsible for this barrier?
-        // MPI_Barrier(MPI_COMM_WORLD);
-        mpi::barrier(mpi::world);
-      }
-      void CommitObject::runOnMaster() {
-        ManagedObject *obj = handle.lookup();
-        if (dynamic_cast<Renderer*>(obj)) {
-          obj->commit();
-        }
-        mpi::barrier(mpi::world);
-      }
-      size_t CommitObject::getTag() const {
-        return TAG;
-      }
-      bool CommitObject::flushing() const {
-        return true;
-      }
-      void CommitObject::serialize(SerialBuffer &b) const {
-        b << (int64)handle;
-      }
-      void CommitObject::deserialize(SerialBuffer &b) {
-        b >> handle.i64;
-      }
+      // =======================================================
+      // ospFrameBufferClear
+      // =======================================================
 
-      ClearFrameBuffer::ClearFrameBuffer(){}
       ClearFrameBuffer::ClearFrameBuffer(OSPFrameBuffer fb, uint32 channels)
         : handle((ObjectHandle&)fb), channels(channels)
       {}
-      void ClearFrameBuffer::run() {
+      
+      void ClearFrameBuffer::run()
+      {
         FrameBuffer *fb = (FrameBuffer*)handle.lookup();
         Assert(fb);
         fb->clear(channels);
       }
-      void ClearFrameBuffer::runOnMaster() {
+      
+      void ClearFrameBuffer::runOnMaster()
+      {
         run();
       }
-      size_t ClearFrameBuffer::getTag() const {
-        return TAG;
-      }
-      void ClearFrameBuffer::serialize(SerialBuffer &b) const {
+
+      void ClearFrameBuffer::serialize(WriteStream &b) const
+      {
         b << (int64)handle << channels;
       }
-      void ClearFrameBuffer::deserialize(SerialBuffer &b) {
+      
+      void ClearFrameBuffer::deserialize(ReadStream &b)
+      {
         b >> handle.i64 >> channels;
       }
 
-      RenderFrame::RenderFrame() : varianceResult(0.f) {}
-      RenderFrame::RenderFrame(OSPFrameBuffer fb, OSPRenderer renderer, uint32 channels)
-        : fbHandle((ObjectHandle&)fb), rendererHandle((ObjectHandle&)renderer), channels(channels),
-        varianceResult(0.f)
+      // =======================================================
+      // ospRenderFrame
+      // =======================================================
+      
+      RenderFrame::RenderFrame(OSPFrameBuffer fb,
+                               OSPRenderer renderer,
+                               uint32 channels)
+        : fbHandle((ObjectHandle&)fb),
+          rendererHandle((ObjectHandle&)renderer),
+          channels(channels),
+          varianceResult(0.f)
       {}
-      void RenderFrame::run() {
+      
+      void RenderFrame::run()
+      {
         FrameBuffer *fb = (FrameBuffer*)fbHandle.lookup();
         Renderer *renderer = (Renderer*)rendererHandle.lookup();
         Assert(renderer);
@@ -445,36 +535,38 @@ namespace ospray {
         }
 #endif
       }
-      void RenderFrame::runOnMaster() {
+      
+      void RenderFrame::runOnMaster()
+      {
         Renderer *renderer = (Renderer*)rendererHandle.lookup();
         FrameBuffer *fb = (FrameBuffer*)fbHandle.lookup();
         Assert(renderer);
         Assert(fb);
-        varianceResult = TiledLoadBalancer::instance->renderFrame(renderer, fb, channels);
+        varianceResult =
+            TiledLoadBalancer::instance->renderFrame(renderer, fb, channels);
       }
-      size_t RenderFrame::getTag() const {
-        return TAG;
-      }
-      bool RenderFrame::flushing() const {
-        return true;
-      }
-      void RenderFrame::serialize(SerialBuffer &b) const {
+      
+      void RenderFrame::serialize(WriteStream &b) const
+      {
         b << (int64)fbHandle << (int64)rendererHandle << channels;
       }
-      void RenderFrame::deserialize(SerialBuffer &b) {
+      
+      void RenderFrame::deserialize(ReadStream &b)
+      {
         b >> fbHandle.i64 >> rendererHandle.i64 >> channels;
       }
 
-      template<>
-      void AddObject<OSPGeometry>::run() {
+      void AddGeometry::run()
+      {
         Model *model = (Model*)modelHandle.lookup();
         Geometry *geometry = (Geometry*)objectHandle.lookup();
         Assert(model);
         Assert(geometry);
         model->geometry.push_back(geometry);
       }
-      template<>
-      void AddObject<OSPVolume>::run() {
+
+      void AddVolume::run()
+      {
         Model *model = (Model*)modelHandle.lookup();
         Volume *volume = (Volume*)objectHandle.lookup();
         Assert(model);
@@ -482,176 +574,130 @@ namespace ospray {
         model->volume.push_back(volume);
       }
 
-      template<>
-      void RemoveObject<OSPGeometry>::run() {
+      void RemoveGeometry::run()
+      {
         Model *model = (Model*)modelHandle.lookup();
         Geometry *geometry = (Geometry*)objectHandle.lookup();
         Assert(model);
         Assert(geometry);
         auto it = std::find_if(model->geometry.begin(), model->geometry.end(),
-            [&](const Ref<Geometry> &g) {
-              return geometry == &*g;
-            });
+                               [&](const Ref<Geometry> &g) {
+                                 return geometry == &*g;
+                               });
         if (it != model->geometry.end()) {
           model->geometry.erase(it);
         }
       }
-      template<>
-      void RemoveObject<OSPVolume>::run() {
+
+      void RemoveVolume::run() {
         Model *model = (Model*)modelHandle.lookup();
         Volume *volume = (Volume*)objectHandle.lookup();
         Assert(model);
         Assert(volume);
         model->volume.push_back(volume);
         auto it = std::find_if(model->volume.begin(), model->volume.end(),
-            [&](const Ref<Volume> &v) {
-              return volume == &*v;
-            });
+                               [&](const Ref<Volume> &v) {
+                                 return volume == &*v;
+                               });
         if (it != model->volume.end()) {
           model->volume.erase(it);
         }
       }
 
-      CreateFrameBuffer::CreateFrameBuffer() {}
-      CreateFrameBuffer::CreateFrameBuffer(ObjectHandle handle, vec2i dimensions,
-          OSPFrameBufferFormat format, uint32 channels)
-        : handle(handle), dimensions(dimensions), format(format), channels(channels)
-      {}
-      void CreateFrameBuffer::run() {
-        const bool hasDepthBuffer = channels & OSP_FB_DEPTH;
-        const bool hasAccumBuffer = channels & OSP_FB_ACCUM;
-        const bool hasVarianceBuffer = channels & OSP_FB_VARIANCE;
-        FrameBuffer *fb = new DistributedFrameBuffer(ospray::mpi::async::CommLayer::WORLD,
-            dimensions, handle, format, hasDepthBuffer, hasAccumBuffer, hasVarianceBuffer);
-
-        // TODO: Only the master does this increment, though should the workers do it too?
-        fb->refInc();
-        handle.assign(fb);
-      }
-      void CreateFrameBuffer::runOnMaster() {
-        run();
-      }
-      size_t CreateFrameBuffer::getTag() const {
-        return TAG;
-      }
-      void CreateFrameBuffer::serialize(SerialBuffer &b) const {
-        b << (int64)handle << dimensions << (int32)format << channels;
-      }
-      void CreateFrameBuffer::deserialize(SerialBuffer &b) {
-        int32 fmt;
-        b >> handle.i64 >> dimensions >> fmt >> channels;
-        format = (OSPFrameBufferFormat)fmt;
-      }
-
-      template<>
-      void SetParam<std::string>::run() {
-        ManagedObject *obj = handle.lookup();
-        Assert(obj);
-        obj->findParam(name.c_str(), true)->set(val.c_str());
-      }
-      template<>
-      void SetParam<std::string>::runOnMaster() {
-        ManagedObject *obj = handle.lookup();
-        if (dynamic_cast<Renderer*>(obj) || dynamic_cast<Volume*>(obj)) {
-          obj->findParam(name.c_str(), true)->set(val.c_str());
-        }
-      }
-
-      RemoveParam::RemoveParam(){}
-      RemoveParam::RemoveParam(ObjectHandle handle, const char *name) : handle(handle), name(name) {
+      RemoveParam::RemoveParam(ObjectHandle handle, const char *name)
+        : handle(handle), name(name)
+      {
         Assert(handle != nullHandle);
       }
-      void RemoveParam::run() {
+      
+      void RemoveParam::run()
+      {
         ManagedObject *obj = handle.lookup();
         Assert(obj);
         obj->removeParam(name.c_str());
       }
-      void RemoveParam::runOnMaster() {
+      
+      void RemoveParam::runOnMaster()
+      {
         ManagedObject *obj = handle.lookup();
         if (dynamic_cast<Renderer*>(obj) || dynamic_cast<Volume*>(obj)) {
           obj->removeParam(name.c_str());
         }
       }
-      size_t RemoveParam::getTag() const {
-        return TAG;
-      }
-      void RemoveParam::serialize(SerialBuffer &b) const {
+
+      void RemoveParam::serialize(WriteStream &b) const
+      {
         b << (int64)handle << name;
       }
-      void RemoveParam::deserialize(SerialBuffer &b) {
+
+      void RemoveParam::deserialize(ReadStream &b)
+      {
         b >> handle.i64 >> name;
       }
 
-      SetPixelOp::SetPixelOp(){}
+      // =======================================================
+      // ospSetPixelOp
+      // =======================================================
+      
       SetPixelOp::SetPixelOp(OSPFrameBuffer fb, OSPPixelOp op)
-        : fbHandle((ObjectHandle&)fb), poHandle((ObjectHandle&)op)
+        : fbHandle((ObjectHandle&)fb),
+          poHandle((ObjectHandle&)op)
       {}
-      void SetPixelOp::run() {
+      
+      void SetPixelOp::run()
+      {
         FrameBuffer *fb = (FrameBuffer*)fbHandle.lookup();
-        PixelOp *po = (PixelOp*)poHandle.lookup();
+        PixelOp     *po = (PixelOp*)poHandle.lookup();
         Assert(fb);
         Assert(po);
-        fb->pixelOp = po->createInstance(fb, fb->pixelOp.ptr);
+        fb->pixelOp = po->createFromInstance(fb, fb->pixelOp.ptr);
         if (!fb->pixelOp) {
-          std::cout << "#osp:mpi: WARNING: PixelOp did not create an instance!" << std::endl;
+          std::cout << "#osp:mpi: WARNING: PixelOp did not create an instance!"
+                    << std::endl;
         }
       }
-      size_t SetPixelOp::getTag() const {
-        return TAG;
-      }
-      void SetPixelOp::serialize(SerialBuffer &b) const {
+
+      void SetPixelOp::serialize(WriteStream &b) const
+      {
         b << (int64)fbHandle << (int64)poHandle;
       }
-      void SetPixelOp::deserialize(SerialBuffer &b) {
+      
+      void SetPixelOp::deserialize(ReadStream &b)
+      {
         b >> fbHandle.i64 >> poHandle.i64;
       }
 
-      CommandRelease::CommandRelease() {}
-      CommandRelease::CommandRelease(ObjectHandle handle) : handle(handle){}
-      void CommandRelease::run() {
+      // =======================================================
+      // ospRelease
+      // =======================================================
+      
+      CommandRelease::CommandRelease(ObjectHandle handle)
+        : handle(handle)
+      {}
+      
+      void CommandRelease::run()
+      {
         ManagedObject *obj = handle.lookup();
         Assert(obj);
         handle.freeObject();
       }
-      size_t CommandRelease::getTag() const {
-        return TAG;
-      }
-      void CommandRelease::serialize(SerialBuffer &b) const {
+
+      void CommandRelease::serialize(WriteStream &b) const
+      {
         b << (int64)handle;
       }
-      void CommandRelease::deserialize(SerialBuffer &b) {
+      
+      void CommandRelease::deserialize(ReadStream &b)
+      {
         b >> handle.i64;
       }
 
-      LoadModule::LoadModule(){}
-      LoadModule::LoadModule(const std::string &name) : name(name){}
-      void LoadModule::run() {
-        const std::string libName = "ospray_module_" + name;
-        loadLibrary(libName);
-
-        const std::string initSymName = "ospray_init_module_" + name;
-        void *initSym = getSymbol(initSymName);
-        if (!initSym) {
-          throw std::runtime_error("could not find module initializer " + initSymName);
-        }
-        void (*initMethod)() = (void(*)())initSym;
-        initMethod();
-      }
-      size_t LoadModule::getTag() const {
-        return TAG;
-      }
-      bool LoadModule::flushing() const {
-        return true;
-      }
-      void LoadModule::serialize(SerialBuffer &b) const {
-        b << name;
-      }
-      void LoadModule::deserialize(SerialBuffer &b) {
-        b >> name;
-      }
-
-      CommandFinalize::CommandFinalize(){}
-      void CommandFinalize::run() {
+      // =======================================================
+      // ospFinalize
+      // =======================================================
+      
+      void CommandFinalize::run()
+      {
         async::shutdown();
         // TODO: Is it ok to call exit again here?
         // should we be calling exit? When the MPIDevice is
@@ -662,18 +708,19 @@ namespace ospray {
         // be exiting.
         std::exit(0);
       }
-      void CommandFinalize::runOnMaster() {
+      
+      void CommandFinalize::runOnMaster()
+      {
         async::shutdown();
       }
-      size_t CommandFinalize::getTag() const {
-        return TAG;
-      }
-      bool CommandFinalize::flushing() const {
-        return true;
-      }
-      void CommandFinalize::serialize(SerialBuffer &b) const {}
-      void CommandFinalize::deserialize(SerialBuffer &b) {}
-    }
-  }
-}
+      
+      void CommandFinalize::serialize(WriteStream &b) const
+      {}
+      
+      void CommandFinalize::deserialize(ReadStream &b)
+      {}
+
+    } // ::ospray::mpi::work
+  } // ::ospray::mpi
+} // ::ospray
 

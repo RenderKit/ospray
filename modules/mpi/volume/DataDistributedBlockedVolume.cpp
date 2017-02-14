@@ -30,8 +30,6 @@
 
 namespace ospray {
 
-#if EXP_DATA_PARALLEL
-
   //! Allocate storage and populate the volume, called through the OSPRay API.
   void DataDistributedBlockedVolume::commit()
   {
@@ -289,7 +287,5 @@ namespace ospray {
   // A volume type with internal data-distribution. needs a renderer
   // that is capable of data-parallel rendering!
   OSP_REGISTER_VOLUME(DataDistributedBlockedVolume, data_distributed_volume);
-
-#endif
 
 } // ::ospray

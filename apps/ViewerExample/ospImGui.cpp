@@ -33,7 +33,7 @@ ospcommon::vec3f translate;
 ospcommon::vec3f scale;
 bool lockFirstFrame = false;
 std::vector<std::string> files;
-bool showGui = true;
+bool showGui = false;
 
 void parseExtraParametersFromComandLine(int ac, const char **&av)
 {

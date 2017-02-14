@@ -18,13 +18,12 @@
 
 // mpicommon
 #include "mpiCommon/MPICommon.h"
-#include "mpiCommon/command.h"
-#include "mpiCommon/BufferedMPIComm.h"
 // ospray
 #include "api/Device.h"
 #include "common/Managed.h"
 // ospray::mpi
-#include "mpi/common/OSPWork.h"
+#include "common/BufferedDataStreaming.h"
+#include "common/OSPWork.h"
 
 /*! \file MPIDevice.h Implements the "mpi" device for mpi rendering */
 
@@ -79,7 +78,7 @@ namespace ospray {
         and reset accumID.
       */
       void frameBufferClear(OSPFrameBuffer _fb,
-                                    const uint32 fbChannelFlags) override;
+                            const uint32 fbChannelFlags) override;
 
       /*! create a new model */
       OSPModel newModel() override;
@@ -108,7 +107,7 @@ namespace ospray {
 
       /*! Copy data into the given volume. */
       int setRegion(OSPVolume object, const void *source,
-                            const vec3i &index, const vec3i &count) override;
+                    const vec3i &index, const vec3i &count) override;
 
       /*! assign (named) string parameter to an object */
       void setString(OSPObject object,
@@ -175,8 +174,8 @@ namespace ospray {
 
       /*! call a renderer to render a frame buffer */
       float renderFrame(OSPFrameBuffer _sc,
-                               OSPRenderer _renderer,
-                               const uint32 fbChannelFlags) override;
+                        OSPRenderer _renderer,
+                        const uint32 fbChannelFlags) override;
 
       /*! load module */
       int loadModule(const char *name) override;
@@ -200,8 +199,8 @@ namespace ospray {
       OSPTexture2D newTexture2D(const vec2i &size, const OSPTextureFormat,
                                 void *data, const uint32 flags) override;
 
-      /*! switch API mode for distriubted API extensions */
-      void apiMode(OSPDApiMode mode) override;
+      // /*! switch API mode for distriubted API extensions */
+      // void apiMode(OSPDApiMode mode) override;
 
       OSPDApiMode currentApiMode {OSPD_MODE_MASTERED};
 
@@ -220,7 +219,15 @@ namespace ospray {
 
       ObjectHandle allocateHandle() const;
 
-      std::shared_ptr<mpi::BufferedMPIComm> bufferedComm;
+      //      std::shared_ptr<mpi::BufferedMPIComm> bufferedComm;
+
+      /*! @{ read and write stream for the work commands */
+      std::unique_ptr<Fabric>      mpiFabric;
+      std::unique_ptr<ReadStream>  readStream;
+      std::unique_ptr<WriteStream> writeStream;
+      /*! @} */
+
+      work::WorkTypeRegistry workRegistry;
 
       bool initialized {false};
     };
@@ -229,8 +236,8 @@ namespace ospray {
     // Helper functions
     // ==================================================================
 
-    /*! return a string represenging the given API Mode */
-    const char *apiModeName(int mode);
+    // /*! return a string represenging the given API Mode */
+    // const char *apiModeName(int mode);
 
   } // ::ospray::mpi
 } // ::ospray

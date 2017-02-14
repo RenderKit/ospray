@@ -31,9 +31,16 @@
 #include "mpi/fb/DistributedFrameBuffer.h"
 #include "mpi/render/MPILoadBalancer.h"
 #include "transferFunction/TransferFunction.h"
-
+#include "common/OSPWork.h"
 // std
 #include <algorithm>
+
+#ifdef OPEN_MPI
+# include <thread>
+//# define _GNU_SOURCE
+# include <sched.h>
+#endif
+
 
 #ifdef _WIN32
 #  include <windows.h> // for Sleep and gethostname
@@ -53,10 +60,7 @@ void sleep(unsigned int seconds)
 #endif
 
 namespace ospray {
-
   namespace mpi {
-    using std::cout;
-    using std::endl;
 
     OSPRAY_MPI_INTERFACE void runWorker();
 
@@ -67,7 +71,45 @@ namespace ospray {
       throw std::runtime_error("embree internal error '"+std::string(str)+"'");
     }
 
+    std::unique_ptr<work::Work> readWork(work::WorkTypeRegistry &registry,
+                                         ReadStream             &readStream)
+    {
+      work::Work::tag_t tag;
+      readStream >> tag;
 
+      if(logMPI) {
+        static size_t numWorkReceived = 0;
+        std::stringstream msg;
+        msg << "#osp.mpi.worker: got work #" << numWorkReceived++
+            << ", tag " << tag << std::endl;
+      }
+
+      auto make_work = registry.find(tag);
+      if (make_work == registry.end()) {
+        std::stringstream msg;
+        msg << "Invalid work type received - tag #: " << tag;
+        throw std::runtime_error(msg.str());
+      }
+
+      auto work = make_work->second();
+
+      if(logMPI) {
+        printf(": %s\n", typeString(work).c_str());
+      }
+
+
+      work->deserialize(readStream);
+      return work;
+    }
+
+    bool checkIfWeNeedToDoMPIDebugOutputs()
+    {
+      char *envVar = getenv("OSPRAY_MPI_DEBUG");
+      if (!envVar) return false;
+      PING; PRINT(envVar);
+      return atoi(envVar) > 0;
+    }
+    
     /*! it's up to the proper init
       routine to decide which processes call this function and which
       ones don't. This function will not return.
@@ -79,7 +121,7 @@ namespace ospray {
       auto &device = ospray::api::Device::current;
 
       auto numThreads = device ? device->numThreads : -1;
-
+      
       // initialize embree. (we need to do this here rather than in
       // ospray::init() because in mpi-mode the latter is also called
       // in the host-stubs, where it shouldn't.
@@ -111,23 +153,39 @@ namespace ospray {
 
       char hostname[HOST_NAME_MAX];
       gethostname(hostname,HOST_NAME_MAX);
-      printf("#w: running MPI worker process %i/%i on pid %i@%s\n",
-             worker.rank,worker.size,getpid(),hostname);
+      if (logMPI) {
+        printf("#w: running MPI worker process %i/%i on pid %i@%s\n",
+               worker.rank,worker.size,getpid(),hostname);
+      }
 
       TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Slave>();
 
-      auto bufferedComm = mpi::BufferedMPIComm::get();
+      // -------------------------------------------------------
+      // setting up read/write streams
+      // -------------------------------------------------------
+      auto mpiFabric  = make_unique<MPIBcastFabric>(mpi::app);
+      auto readStream = make_unique<BufferedFabric::ReadStream>(*mpiFabric);
+
+      // create registry of work item types
+      std::map<work::Work::tag_t,work::CreateWorkFct> workTypeRegistry;
+      work::registerOSPWorkItems(workTypeRegistry);
+
+      logMPI = checkIfWeNeedToDoMPIDebugOutputs();
       while (1) {
-        std::vector<work::Work*> workCommands;
-        bufferedComm->recv(mpi::Address(&mpi::app, (int32)mpi::RECV_ALL),
-                           workCommands);
-        for (work::Work *&w : workCommands) {
-          w->run();
-          delete w;
-          w = nullptr;
+        auto work = readWork(workTypeRegistry, *readStream);
+        if (logMPI) {
+          std::cout << "#osp.mpi.worker: processing work " << typeIdOf(work)
+                    << ": " << typeString(work) << std::endl;
+        }
+        work->run();
+        if (logMPI) {
+          std::cout << "#osp.mpi.worker: done w/ work " << typeIdOf(work)
+                    << ": " << typeString(work) << std::endl;
         }
       }
     }
 
+
+    
   } // ::ospray::mpi
 } // ::ospray

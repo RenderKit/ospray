@@ -21,20 +21,10 @@ IF (OSPRAY_MODULE_MPI)
   SET(OSPRAY_DEFAULT_COMPONENT mpi)
 
   OSPRAY_BUILD_COMPONENT(mpiCommon)
-  
-  OPTION(OSPRAY_EXP_DATA_PARALLEL "Experimental data-parallel compositing mode" ON)
-  OPTION(OSPRAY_PIN_ASYNC "Pin async mpi comm threads?" OFF)
-  MARK_AS_ADVANCED(OSPRAY_PIN_ASYNC)
-  
+
   # if mpi mode is enabled, we have to configure the right mpi
   # compiler etc.
   OSPRAY_CONFIGURE_MPI()
-
-  CONFIGURE_FILE(OSPMPIConfig.h.in ${CMAKE_BINARY_DIR}/OSPMPIConfig.h)
-  INSTALL(FILES ${CMAKE_BINARY_DIR}/OSPMPIConfig.h
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray
-    COMPONENT devel
-  )
 
   INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/..)
   INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
@@ -45,6 +35,8 @@ IF (OSPRAY_MODULE_MPI)
     worker.cpp
 
     common/OSPWork.cpp
+    common/DataStreaming.h
+    common/BufferedDataStreaming.cpp
 
     fb/DistributedFrameBuffer.cpp
     fb/DistributedFrameBuffer.ispc

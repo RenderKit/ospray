@@ -34,7 +34,7 @@ namespace ospray {
       virtual void init() override;
 
       unsigned char *map();
-      void unmap(unsigned char *mem);
+      void unmap(void *mem);
 
       void clear();
 

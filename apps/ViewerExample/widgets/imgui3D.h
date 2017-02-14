@@ -39,7 +39,7 @@ namespace ospray {
     using ospcommon::AffineSpace3fa;
 
     struct ImGui3DWidget;
-    
+
     struct OSPRAY_IMGUI3D_INTERFACE Manipulator {
       // this is the fct that gets called when the mouse moved in the
       // associated window
@@ -103,7 +103,7 @@ namespace ospray {
       calls to display that framebuffer); if not specified, it's up to
       the derived class to implement whatever opengl calls are required
       to draw the window's content.
-    
+
     */
     struct OSPRAY_IMGUI3D_INTERFACE ImGui3DWidget
     {
@@ -227,6 +227,7 @@ namespace ospray {
        double renderTime;
        double guiTime;
        double totalTime;
+       float  fontScale;
 
        bool renderingPaused {false};
        /*! pointer to the frame buffer data. it is the repsonsiblity of

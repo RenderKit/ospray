@@ -46,6 +46,9 @@ namespace ospray {
       */
       struct OSPRAY_MPI_INTERFACE CommLayer : public async::Consumer
       {
+        CommLayer();
+        virtual ~CommLayer();
+        
         using ObjectID = int32;
 
         static CommLayer *WORLD;
@@ -118,7 +121,7 @@ namespace ospray {
         //! convenience function that returns our rank in the comm group 
         inline int32 rank() const { return group->rank; }
 
-        inline int32 numWorkers() const { return group->size - 1; }
+        int32 numWorkers() const;
         inline static int32 masterRank() { return 0; }
         inline static int32 workerRank(int clientID) { return 1 + clientID; }
         inline bool IamTheMaster() const { return group->rank == masterRank(); }
