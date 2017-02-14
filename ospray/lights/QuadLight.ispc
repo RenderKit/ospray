@@ -70,6 +70,7 @@ Light_SampleRes QuadLight_sample(const uniform Light* uniform super,
 Light_EvalRes QuadLight_eval(const uniform Light* uniform super,
                              const DifferentialGeometry& dg,
                              const vec3f& dir,
+                             const float minDist,
                              const float maxDist)
 {
   uniform QuadLight* uniform self = (uniform QuadLight* uniform)super;
@@ -93,7 +94,7 @@ Light_EvalRes QuadLight_eval(const uniform Light* uniform super,
 
   const float rcosd = rcp(cosd);
   const float dist = dot(self->nnormal, c) * rcosd;
-  if (dist > maxDist)
+  if (dist <= minDist | dist > maxDist)
     return res;
 
   res.radiance = self->radiance;

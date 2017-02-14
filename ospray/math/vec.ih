@@ -538,7 +538,7 @@ inline uniform float length(const uniform vec3f a) { return sqrtf(dot(a,a)); }
 inline varying float length(const varying vec3f a) { return sqrtf(dot(a,a)); }
 
 inline uniform float distance(const uniform vec3f a, const uniform vec3f b) { return length(a - b); }
-inline varying float distance(const varying vec3f a, const uniform vec3f b) { return length(a - b); }
+inline varying float distance(const varying vec3f a, const varying vec3f b) { return length(a - b); }
 
 
 inline uniform float dot(const uniform vec3fa a, const uniform vec3fa b) { return a.x*b.x+a.y*b.y+a.z*b.z; }
@@ -548,7 +548,7 @@ inline uniform float length(const uniform vec3fa a) { return sqrtf(dot(a,a)); }
 inline varying float length(const varying vec3fa a) { return sqrtf(dot(a,a)); }
 
 inline uniform float distance(const uniform vec3fa a, const uniform vec3fa b) { return length(a - b); }
-inline varying float distance(const varying vec3fa a, const uniform vec3fa b) { return length(a - b); }
+inline varying float distance(const varying vec3fa a, const varying vec3fa b) { return length(a - b); }
 
 // ------------------------------------------------------------------
 // cross product

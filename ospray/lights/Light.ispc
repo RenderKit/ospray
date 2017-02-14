@@ -19,6 +19,7 @@
 Light_EvalRes Light_eval(const uniform Light* uniform,
                          const DifferentialGeometry&,
                          const vec3f&,
+                         const float,
                          const float)
 {
   Light_EvalRes res;
