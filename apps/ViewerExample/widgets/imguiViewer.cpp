@@ -541,12 +541,15 @@ void ImGuiViewer::buildGUINode(sg::NodeH node, bool &renderer_changed, int inden
   else if (node->getType() == "TransferFunction") {
     text += "TODO WILL";
     ImGui::Text(text.c_str());
-    static TransferFunction *test = nullptr;
-    if (!test) {
-      test = new TransferFunction();
+    if (!node->getParam("transferFunctionWidget")) {
+      std::shared_ptr<sg::TransferFunction> tfn = std::dynamic_pointer_cast<sg::TransferFunction>(node.get());
+      tfn->setValueRange(vec2f(0, 255));
+      node->setParam("transferFunctionWidget", TransferFunction(tfn));
     }
-    test->render();
-    test->drawUi();
+    auto tfnWidget = dynamic_cast<sg::ParamT<TransferFunction>*>(node->getParam("transferFunctionWidget").get());
+    assert(tfnWidget);
+    tfnWidget->value.render();
+    tfnWidget->value.drawUi();
   }
   else  // generic holder node
   {

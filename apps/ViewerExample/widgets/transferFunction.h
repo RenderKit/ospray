@@ -14,6 +14,7 @@
 
 #include "Imgui3dExport.h"
 #include <ospray/ospray_cpp/TransferFunction.h>
+#include "common/sg/transferFunction/TransferFunction.h"
 #include "../common/util/async_render_engine.h"
 
 namespace ospray {
@@ -39,6 +40,8 @@ class OSPRAY_IMGUI3D_INTERFACE TransferFunction {
     void remove_point(const float &x);
   };
 
+  // The scenegraph transfer function being manipulated by this widget
+  std::shared_ptr<sg::TransferFunction> transferFcn;
   // Lines for RGBA transfer function controls
   std::array<Line, 4> rgba_lines;
   // The line currently being edited
@@ -51,19 +54,15 @@ class OSPRAY_IMGUI3D_INTERFACE TransferFunction {
   /* The 2d palette texture on the GPU for displaying the color map in the UI.
    */
   GLuint palette_tex;
-  cpp::TransferFunction transferFcn;
 
   // Magic number to identify these files (it's VLFN in ASCII)
   const static int32_t MAGIC = 0x564c464e;
 
 public:
-  // The histogram for the volume data
-  std::vector<size_t> histogram;
-
-  TransferFunction();
+  TransferFunction(std::shared_ptr<sg::TransferFunction> &tfn);
   ~TransferFunction();
-  TransferFunction(const TransferFunction&) = delete;
-  TransferFunction& operator=(const TransferFunction&) = delete;
+  TransferFunction(const TransferFunction &t);
+  TransferFunction& operator=(const TransferFunction &t);
   /* Draw the transfer function editor widget
   */
   void drawUi();
