@@ -14,8 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-option(OSPRAY_APPS_SG "Build SceneGraph" OFF)
-
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
 OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
