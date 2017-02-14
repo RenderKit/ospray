@@ -123,7 +123,7 @@ int main(int ac, const char **av)
       // std::shared_ptr<sg::World> osg = sg::loadOSG(file);
       // osg->setName("world");
       // root["renderer"]["world"] = sg::NodeH(osg);
-      root["renderer"]["world"] += sg::createNode(fn.name(), "VolumeImporter");
+      root["renderer"]["world"] += sg::createNode(fn.name(), "Importer");
       root["renderer"]["world"][fn.name()]["fileName"]->setValue(fn.str());
     }
     if (fn.ext() == "ply")
