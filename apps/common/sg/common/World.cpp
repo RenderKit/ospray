@@ -118,7 +118,10 @@ namespace ospray {
         vec3f rotation = getChild("rotation")->getValue<vec3f>();
         vec3f translation = getChild("position")->getValue<vec3f>();
         ospcommon::affine3f xfm = ospcommon::one;
-        xfm = xfm*ospcommon::affine3f::translate(translation)*ospcommon::affine3f::rotate(vec3f(0,1,0),rotation.x)*ospcommon::affine3f::scale(scale);
+        xfm = xfm*ospcommon::affine3f::translate(translation)*ospcommon::affine3f::rotate(vec3f(1,0,0),rotation.x)*
+        ospcommon::affine3f::rotate(vec3f(0,1,0),rotation.y)*
+        ospcommon::affine3f::rotate(vec3f(0,0,1),rotation.z)*
+        ospcommon::affine3f::scale(scale);
         
         ospInstance = ospNewInstance(ospModel,(osp::affine3f&)xfm);
         ospCommit(ospInstance);

@@ -304,7 +304,6 @@ void ImGuiViewer::buildGui()
   ImGui::SetNextWindowSizeConstraints(ImVec2(500,800), ImVec2(2048,2048));
   ImGui::Begin("Viewer Controls: press 'g' to show/hide", nullptr, flags);
   ImGui::SetWindowFontScale(0.5f*fontScale);
-  // ImGui::SetScrollY(1.f);
 
   if (ImGui::BeginMenuBar())
   {
