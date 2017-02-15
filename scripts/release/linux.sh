@@ -53,7 +53,7 @@ ROOT_DIR=$PWD
 DEP_DIR=$ROOT_DIR/deps
 
 DEP_LOCATION=http://sdvis.org/ospray/download/dependencies/linux
-DEP_EMBREE=embree-2.13.0.x86_64.linux
+DEP_EMBREE=embree-2.14.0.x86_64.linux
 DEP_ISPC=ispc-v1.9.1-linux
 DEP_TBB=tbb2017_20161128oss
 DEP_TARBALLS="$DEP_EMBREE.tar.gz $DEP_ISPC.tar.gz ${DEP_TBB}_lin.tgz"

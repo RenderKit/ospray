@@ -80,6 +80,7 @@ Light_SampleRes PointLight_sample(const uniform Light* uniform super,
 Light_EvalRes PointLight_eval(const uniform Light* uniform super,
                               const DifferentialGeometry& dg,
                               const vec3f& dir,
+                              const float minDist,
                               const float maxDist)
 {
   const PointLight* uniform self = (PointLight* uniform)super;
@@ -98,7 +99,7 @@ Light_EvalRes PointLight_eval(const uniform Light* uniform super,
       const float t_near = (b - sqrt(radical)) / (2.f*a);
       const float t_far = (b + sqrt(radical)) / (2.f*a);
 
-      if (t_far > 0.0f & t_near <= maxDist) {
+      if (t_far > minDist & t_near <= maxDist) {
         // TODO: handle interior case
 
         const float sinTheta2 = sqr(self->radius) * rcp(centerDist2);
