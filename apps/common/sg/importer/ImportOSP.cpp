@@ -202,7 +202,8 @@ namespace ospray {
       std::cout << "  voxelType  = " << voxelType << std::endl;
       std::cout << "  dimensions = " << dimensions << std::endl;
       std::cout << "  path       = " << doc->fileName.path() << std::endl;
-      volume->setTransferFunction(std::make_shared<TransferFunction>());
+      // TODO: This works on the old style of scenegraph!
+      //volume->setTransferFunction(std::make_shared<TransferFunction>());
       volume->fileNameOfCorrespondingXmlDoc = doc->fileName;
       volume->setFileName(fileName);
       volume->setDimensions(dimensions);

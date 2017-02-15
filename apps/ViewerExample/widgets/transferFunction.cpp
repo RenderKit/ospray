@@ -66,7 +66,10 @@ void TransferFunction::Line::remove_point(const float &x){
 // TODO WILL: The save/load code should use tfn_lib from apps
 const int32_t TransferFunction::MAGIC;
 
-TransferFunction::TransferFunction() : active_line(3), fcn_changed(true), palette_tex(0), transferFcn("piecewise_linear") {
+TransferFunction::TransferFunction(std::shared_ptr<sg::TransferFunction> &tfn)
+  : transferFcn(tfn), active_line(3), fcn_changed(true), palette_tex(0)
+{
+  // TODO: Use the transfer function passed to use to configure the initial widget lines
   rgba_lines[0].color = 0xff0000ff;
   rgba_lines[1].color = 0xff00ff00;
   rgba_lines[2].color = 0xffff0000;
@@ -76,6 +79,18 @@ TransferFunction::~TransferFunction(){
   if (palette_tex){
     glDeleteTextures(1, &palette_tex);
   }
+}
+TransferFunction::TransferFunction(const TransferFunction &t) : transferFcn(t.transferFcn),
+  rgba_lines(t.rgba_lines), active_line(t.active_line), fcn_changed(true), palette_tex(0)
+{}
+TransferFunction& TransferFunction::operator=(const TransferFunction &t) {
+  if (this == &t) {
+    return *this;
+  }
+  transferFcn = t.transferFcn;
+  rgba_lines = t.rgba_lines;
+  active_line = t.active_line;
+  fcn_changed = true;
 }
 void TransferFunction::drawUi(){
   if (ImGui::Begin("Transfer Function")){
@@ -130,15 +145,6 @@ void TransferFunction::drawUi(){
       }
     }
     draw_list->PushClipRect(canvas_pos, canvas_pos + canvas_size);
-    if (!histogram.empty()){
-      const size_t max_val = *std::max_element(histogram.begin(), histogram.end());
-      const float bar_width = 1.0f / static_cast<float>(histogram.size());
-      for (size_t i = 0; i < histogram.size(); ++i){
-        vec2f bottom{bar_width * i, 0.f};
-        vec2f top{bottom.x + bar_width, histogram[i] / static_cast<float>(max_val)};
-        draw_list->AddRectFilled(view_offset + view_scale * bottom, view_offset + view_scale * top, 0xffaaaaaa);
-      }
-    }
 
     // TODO: Should also draw little boxes showing the clickable region for each
     // line segment
@@ -164,7 +170,7 @@ void TransferFunction::drawUi(){
   }
   ImGui::End();
 }
-void TransferFunction::render(ospray::async_render_engine &renderEngine){
+void TransferFunction::render() {
   // TODO: How many samples for a palette? 128 or 256 is probably plent
   const int samples = 256;
   // Upload to GL if the transfer function has changed
@@ -178,7 +184,7 @@ void TransferFunction::render(ospray::async_render_engine &renderEngine){
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     if (prev_binding) {
       glBindTexture(GL_TEXTURE_2D, prev_binding);
@@ -191,7 +197,7 @@ void TransferFunction::render(ospray::async_render_engine &renderEngine){
     // Sample the palette then upload the data
     std::vector<uint8_t> palette(samples * 4, 0);
     std::vector<vec3f> ospColors(samples, vec3f(0));
-    std::vector<float> ospAlpha(samples, 0.f);
+    std::vector<vec2f> ospAlpha(samples, vec2f(0));
     // Step along the alpha line and sample it
     std::array<std::vector<vec2f>::const_iterator, 4> lit = {
       rgba_lines[0].line.begin(), rgba_lines[1].line.begin(),
@@ -208,24 +214,23 @@ void TransferFunction::render(ospray::async_render_engine &renderEngine){
         }
         assert(lit[j] != rgba_lines[j].line.end());
         const float t = (x - lit[j]->x) / ((lit[j] + 1)->x - lit[j]->x);
-        sampleColor[j] = std::pow(lerp(lit[j]->y, (lit[j] + 1)->y, t), 1.0 / 2.2);
+        // It's hard to click down at exactly 0, so offset a little bit
+        sampleColor[j] = clamp(lerp(lit[j]->y - 0.001, (lit[j] + 1)->y - 0.001, t));
       }
       for (size_t j = 0; j < 3; ++j) {
-        palette[i * 4 + j] = static_cast<uint8_t>(sampleColor[j] * 255.0);
+        palette[i * 4 + j] = static_cast<uint8_t>(std::pow(sampleColor[j], 1.0 / 2.2) * 255.0);
         ospColors[i][j] = sampleColor[j];
       }
-      ospAlpha[i] = sampleColor[3];
+      ospAlpha[i].x = x;
+      ospAlpha[i].y = sampleColor[3];
       palette[i * 4 + 3] = 255;
     }
     glBindTexture(GL_TEXTURE_2D, palette_tex);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, samples, 1, GL_RGBA, GL_UNSIGNED_BYTE,
         static_cast<const void*>(palette.data()));
 
-    cpp::Data ospColorsData(ospColors.size(), OSP_FLOAT3, ospColors.data());
-    cpp::Data ospAlphaData(ospAlpha.size(), OSP_FLOAT, ospAlpha.data());
-    transferFcn.set("colors", ospColorsData);
-    transferFcn.set("opacities", ospAlphaData);
-    renderEngine.scheduleObjectCommit(transferFcn);
+    transferFcn->setColorMap(ospColors);
+    transferFcn->setAlphaMap(ospAlpha);
 
     if (prev_binding) {
       glBindTexture(GL_TEXTURE_2D, prev_binding);

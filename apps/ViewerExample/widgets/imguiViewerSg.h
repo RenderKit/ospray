@@ -26,10 +26,12 @@
 #include <ospray/ospray_cpp/Model.h>
 #include <ospray/ospray_cpp/Renderer.h>
 
-#include "../common/util/async_render_engine.h"
+#include "../common/util/async_render_engine_sg.h"
 
 #include "imgui3D.h"
 #include "Imgui3dExport.h"
+
+#include "common/sg/SceneGraph.h"
 
 #include <deque>
 
@@ -38,16 +40,17 @@ namespace ospray {
   /*! mini scene graph viewer widget. \internal Note that all handling
     of camera is almost exactly similar to the code in volView;
     might make sense to move that into a common class! */
-  class OSPRAY_IMGUI3D_INTERFACE ImGuiViewer
+  class OSPRAY_IMGUI3D_INTERFACE ImGuiViewerSg
     : public ospray::imgui3D::ImGui3DWidget
   {
   public:
 
-    ImGuiViewer(const std::deque<ospcommon::box3f> &worldBounds,
+    ImGuiViewerSg(const std::deque<ospcommon::box3f> &worldBounds,
                 const std::deque<cpp::Model> &model,
                 cpp::Renderer renderer,
-                cpp::Camera camera);
-    ~ImGuiViewer();
+                cpp::Camera camera,
+                sg::NodeH scenegraph=sg::NodeH());
+    ~ImGuiViewerSg();
 
     void setRenderer(OSPRenderer renderer);
     void setScale(const ospcommon::vec3f& v )  {scale = v;}
@@ -71,6 +74,7 @@ namespace ospray {
     virtual void updateAnimation(double deltaSeconds);
 
     virtual void buildGui() override;
+    virtual void buildGUINode(sg::NodeH node, bool &renderer_changed, int indent);
 
     // Data //
 
@@ -80,6 +84,9 @@ namespace ospray {
     cpp::Renderer renderer;
 
     double lastFrameFPS;
+    double lastGUITime;
+    double lastDisplayTime;
+    double lastTotalTime;
 
     ospcommon::vec2i windowSize;
     imgui3D::ImGui3DWidget::ViewPort originalView;
@@ -92,10 +99,11 @@ namespace ospray {
     bool lockFirstAnimationFrame;  //use for static scene
     ospcommon::vec3f translate;
     ospcommon::vec3f scale;
+    sg::NodeH scenegraph;
 
     float aoDistance {1e20f};
 
-    async_render_engine renderEngine;
+    sg::async_render_engine_sg renderEngine;
     std::vector<uint32_t> pixelBuffer;
   };
 

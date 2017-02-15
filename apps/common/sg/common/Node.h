@@ -99,7 +99,9 @@ namespace ospray {
     template<typename T>
     struct ParamT : public sg::Param {
       ParamT(const std::string &name, const T &t) : Param(name), value(t) {};
-      virtual OSPDataType getOSPDataType() const override;
+      virtual OSPDataType getOSPDataType() const override {
+        return OSP_UNKNOWN;
+      }
       virtual void write(XMLWriter &) { NOTIMPLEMENTED; };
       T value;
     };
