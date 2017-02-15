@@ -543,7 +543,6 @@ void ImGuiViewer::buildGUINode(sg::NodeH node, bool &renderer_changed, int inden
     ImGui::Text(text.c_str());
     if (!node->getParam("transferFunctionWidget")) {
       std::shared_ptr<sg::TransferFunction> tfn = std::dynamic_pointer_cast<sg::TransferFunction>(node.get());
-      tfn->setValueRange(vec2f(0, 255));
       node->setParam("transferFunctionWidget", TransferFunction(tfn));
     }
     auto tfnWidget = dynamic_cast<sg::ParamT<TransferFunction>*>(node->getParam("transferFunctionWidget").get());

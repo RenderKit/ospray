@@ -69,6 +69,7 @@ const int32_t TransferFunction::MAGIC;
 TransferFunction::TransferFunction(std::shared_ptr<sg::TransferFunction> &tfn)
   : transferFcn(tfn), active_line(3), fcn_changed(true), palette_tex(0)
 {
+  // TODO: Use the transfer function passed to use to configure the initial widget lines
   rgba_lines[0].color = 0xff0000ff;
   rgba_lines[1].color = 0xff00ff00;
   rgba_lines[2].color = 0xffff0000;
