@@ -39,6 +39,20 @@ if (OSPRAY_APPS_VIEWEREXAMPLE)
   )
 
 ospray_create_application(ospViewerExample
+    ospImGuiSg.cpp
+    LINK
+    ${OPENGL_LIBRARIES}
+    glfw
+    gl3w
+    imgui
+    ospray
+    ospray_common
+    ospray_commandline
+    ospray_imgui3d_sg
+    ospray_sg
+  )
+
+ospray_create_application(ospViewerExampleNoSg
     ospImGui.cpp
     LINK
     ${OPENGL_LIBRARIES}
@@ -49,7 +63,6 @@ ospray_create_application(ospViewerExample
     ospray_common
     ospray_commandline
     ospray_imgui3d
-    ospray_sg
   )
 
 endif()
