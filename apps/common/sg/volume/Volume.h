@@ -33,7 +33,7 @@ namespace ospray {
         add(createNode("transferFunction", "TransferFunction"));
         add(createNode("gradientShadingEnabled", "bool", true));
         add(createNode("preIntegration", "bool", true));
-        add(createNode("singleSahde", "bool", true));
+        add(createNode("singleShade", "bool", true));
         add(createNode("adaptiveSampling", "bool", true));
         add(createNode("adaptiveScalar", "float", 15.f));
         add(createNode("adaptiveBacktrack", "float", 0.03f));
@@ -44,6 +44,8 @@ namespace ospray {
         add(createNode("specular", "vec3f", vec3f(0.3f)));
         add(createNode("gridOrigin", "vec3f", vec3f(0.0f)));
         add(createNode("gridSpacing", "vec3f", vec3f(0.002f)));
+        
+        transferFunction = std::dynamic_pointer_cast<TransferFunction>(children["transferFunction"].node);
       }
 
       /*! \brief returns a std::string with the c++ name of this class */
@@ -59,9 +61,12 @@ namespace ospray {
 
       static bool useDataDistributedVolume;
 
-      SG_NODE_DECLARE_MEMBER(std::shared_ptr<TransferFunction>,transferFunction,TransferFunction);
       //! ospray volume object handle
-      public: OSPVolume volume;
+      public:
+        OSPVolume volume;
+
+      protected:
+        std::shared_ptr<TransferFunction> transferFunction;
     };
 
     /*! a plain old structured volume */
@@ -120,7 +125,6 @@ namespace ospray {
       //! \brief file name of the xml doc when the node was loaded/parsed from xml
       /*! \detailed we need this to properly resolve relative file names */
       FileName fileNameOfCorrespondingXmlDoc;
-
     };
 
     /*! a structured volume whose input comes from a set of stacked RAW files */
