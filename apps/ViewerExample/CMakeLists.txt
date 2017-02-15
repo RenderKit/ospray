@@ -38,7 +38,7 @@ if (OSPRAY_APPS_VIEWEREXAMPLE)
     ${OPENGL_INCLUDE_DIR}
   )
 
-ospray_create_application(ospViewerExample
+  ospray_create_application(ospViewerExample
     ospImGuiSg.cpp
     LINK
     ${OPENGL_LIBRARIES}
@@ -52,7 +52,7 @@ ospray_create_application(ospViewerExample
     ospray_sg
   )
 
-ospray_create_application(ospViewerExampleNoSg
+  ospray_create_application(ospViewerExampleNoSg
     ospImGui.cpp
     LINK
     ${OPENGL_LIBRARIES}

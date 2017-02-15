@@ -31,7 +31,7 @@ namespace ospray {
       TimeStamp() { t=now(); };
       
       //! \brief returns global time(stamp) at time of calling
-      static inline TimeStamp now() { return ospcommon::rdtsc(); }
+      static inline TimeStamp now() { return ospcommon::read_tsc(); }
 
       //! \brief Allows ot typecast to a uint64_t (so times can be compared)
       inline operator uint64_t () const { return t; }
