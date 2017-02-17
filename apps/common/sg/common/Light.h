@@ -25,81 +25,60 @@
 namespace ospray {
   namespace sg {
 
-/*! a light node - the generic light node */
-struct OSPSG_INTERFACE Light : public sg::Node {
-  //! \brief constructor
-  Light() : type("none"), ospLight(nullptr) {};
-  Light(const std::string &type) : type(type), ospLight(nullptr) {};
-  
-  virtual void preCommit(RenderContext &ctx)
-  {
-  	if (!ospLight)
-  	  ospLight = ospNewLight(ctx.ospRenderer, type.c_str());
-  	ospCommit(ospLight);
-  	setValue((OSPObject)ospLight);
-  }
+    /*! a light node - the generic light node */
+    struct OSPSG_INTERFACE Light : public sg::Node
+    {
+      //! \brief constructor
+      Light() = default;
+      Light(const std::string &type) : type(type) {}
 
-  virtual void postCommit(RenderContext &ctx)
-  {
-    ospCommit(ospLight);
-  }
+      virtual void preCommit(RenderContext &ctx)
+      {
+        if (!ospLight)
+          ospLight = ospNewLight(ctx.ospRenderer, type.c_str());
+        ospCommit(ospLight);
+        setValue((OSPObject)ospLight);
+      }
 
-  //! \brief returns a std::string with the c++ name of this class 
-  virtual    std::string toString() const override { return "ospray::sg::Light"; }
+      virtual void postCommit(RenderContext &ctx)
+      {
+        ospCommit(ospLight);
+      }
 
-  /*! \brief light type, i.e., 'DirectionalLight', 'PointLight', ... */
-  const std::string type;
-  OSPLight ospLight;
-};
+      //! \brief returns a std::string with the c++ name of this class
+      virtual std::string toString() const override { return "ospray::sg::Light"; }
 
-/*! a light node - the generic light node */
-struct OSPSG_INTERFACE AmbientLight : public Light {
-  //! \brief constructor
-  AmbientLight() : Light("AmbientLight") {}
+      /*! \brief light type, i.e., 'DirectionalLight', 'PointLight', ... */
+      const std::string type {"none"};
+      OSPLight ospLight {nullptr};
+    };
 
-  virtual void init() override
-  { 
-  	add(createNode("color", "vec3f", vec3f(.7f,.8f,1.f),NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_color));
-    getChild("color")->setMinMax(vec3f(0), vec3f(1));
-  	add(createNode("intensity", "float", 0.2f,NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
-    getChild("intensity")->setMinMax(0.f,4.f);
-  }
-};
+    /*! a light node - the generic light node */
+    struct OSPSG_INTERFACE AmbientLight : public Light
+    {
+      //! \brief constructor
+      AmbientLight() : Light("AmbientLight") {}
 
-/*! a light node - the generic light node */
-struct OSPSG_INTERFACE DirectionalLight : public Light {
-  //! \brief constructor
-  DirectionalLight() : Light("DirectionalLight") {}
+      virtual void init() override;
+    };
 
-  virtual void init() override
-  { 
-  	add(createNode("direction", "vec3f", vec3f(-.3,.2,.4), NodeFlags::required | NodeFlags::gui_slider));
-    getChild("direction")->setMinMax(vec3f(-1), vec3f(1));
-  	add(createNode("color", "vec3f", vec3f(1.f),NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_color));
-    getChild("color")->setMinMax(vec3f(0), vec3f(1));
-  	add(createNode("intensity", "float", 3.f,NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
-    getChild("intensity")->setMinMax(0.f,4.f);
-  	add(createNode("angularDiameter", "float", 0.01f,NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
-    getChild("angularDiameter")->setMinMax(0.f,4.f);
-  }
-};
+    /*! a light node - the generic light node */
+    struct OSPSG_INTERFACE DirectionalLight : public Light
+    {
+      //! \brief constructor
+      DirectionalLight() : Light("DirectionalLight") {}
 
-/*! a light node - the generic light node */
-struct OSPSG_INTERFACE PointLight : public Light {
-  //! \brief constructor
-  PointLight() : Light("PointLight") {}
+      virtual void init() override;
+    };
 
-  virtual void init() override
-  { 
-    add(createNode("color", "vec3f", vec3f(1.f),NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_color));
-    getChild("color")->setMinMax(vec3f(0), vec3f(1));
-    add(createNode("position", "vec3f", vec3f(0.f),NodeFlags::required | NodeFlags::valid_min_max));
-    add(createNode("intensity", "float", 3.f,NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
-    getChild("intensity")->setMinMax(0.f,4.f);
-    add(createNode("radius", "float", 1.0f,NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
-    getChild("radius")->setMinMax(0.f,4.f);
-  }
-};
+    /*! a light node - the generic light node */
+    struct OSPSG_INTERFACE PointLight : public Light
+    {
+      //! \brief constructor
+      PointLight() : Light("PointLight") {}
 
-}
-}
+      virtual void init() override;
+    };
+
+  } // ::ospray::sg
+} // ::ospray

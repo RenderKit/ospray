@@ -37,12 +37,6 @@ namespace ospray {
 
     void FrameBuffer::postCommit(RenderContext &ctx)
     {
-      // std::cout << __PRETTY_FUNCTION__ << std::endl;
-      // std::cout << "Last modified: "  << getLastModified() 
-      //   << " last committed: " << getLastCommitted()
-      //   << " size last modified: " << getChild("size")->getLastModified() 
-      //   << " childMTime: " << ctx.getChildMTime()
-      //   << "\n";
       size = getChild("size")->getValue<vec2i>();
       destroyFB();
       createFB();
@@ -97,6 +91,7 @@ namespace ospray {
     {
       ospFreeFrameBuffer(ospFrameBuffer);
     }
+
     OSP_REGISTER_SG_NODE(FrameBuffer);
 
   } // ::ospray::sg

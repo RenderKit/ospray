@@ -25,81 +25,36 @@
 namespace ospray {
   namespace sg {
 
-    struct Importer : public sg::InstanceGroup {
-      Importer() : InstanceGroup() { instanced = true; }
+    struct Importer : public sg::InstanceGroup
+    {
+      Importer() = default;
 
       virtual void init() override
       {
         InstanceGroup::init();
         add(createNode("fileName", "string"));
       }
-      virtual void setChildrenModified(TimeStamp t) override
-      {
-      Node::setChildrenModified(t);
-        ospcommon::FileName file(getChild("fileName")->getValue<std::string>());
-      if (file.str() == loadedFileName)
-        return;
-        std::cout << "attempting importing file: " << file.str() << std::endl;
-      if (loadedFileName != "" || file.str() == "")
-        return; //TODO: support dynamic re-loading, need to clear children first
-      loadedFileName = "";
-      if (file.ext() == "obj")
-      {
-        std::cout << "importing file: " << file.str() << std::endl;
-        sg::importOBJ(std::static_pointer_cast<sg::World>(shared_from_this()), file);
-      }
-      else if (file.ext() == "ply")
-      {
-        std::shared_ptr<sg::World> wsg(std::dynamic_pointer_cast<sg::World>(shared_from_this()));
-        sg::importPLY(wsg, file);
-      }
-      else if (file.ext() == "osg")
-      {
-        std::shared_ptr<sg::World> wsg(std::dynamic_pointer_cast<sg::World>(shared_from_this()));
-        sg::loadOSG(file, wsg);
-        instanced = false;
-      }
-      else
-      {
-        std::cout << "unsupported file format\n";
-        return;
-      }
-      // else if (file.ext() == "osg")
-      // {
-      //   std::shared_ptr<sg::World> wsg(std::dynamic_pointer_cast<sg::World>(shared_from_this()));
-      //   sg::loadOSG(file, wsg);
-      // }
-      loadedFileName = file.str();
-      }
 
-       std::string loadedFileName;
+      virtual void setChildrenModified(TimeStamp t) override;
+
+      std::string loadedFileName;
     };
 
     /*! A Simple Triangle Mesh that stores vertex, normal, texcoord,
         and vertex color in separate arrays */
-    struct TriangleMesh : public sg::Geometry {
+    struct TriangleMesh : public sg::Geometry
+    {
 
       //! constructor
-      TriangleMesh() : Geometry("trianglemesh"), ospGeometry(NULL) {}
+      TriangleMesh() : Geometry("trianglemesh"), ospGeometry(nullptr) {}
 
-      virtual void init() override
-      {
-        // add(createNode("vertex", "DataBuffer"));
-        // add(createNode("normal", "DataBuffer"));
-        // add(createNode("color", "DataBuffer"));
-        // add(createNode("texcoord", "DataBuffer"));
-        // add(createNode("index", "DataBuffer"));
-        add(createNode("material", "Material"));
-
-      };
+      virtual void init() override;
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const { return "ospray::sg::Geometry"; }
+      virtual std::string toString() const { return "ospray::sg::Geometry"; }
 
       //! return bounding box of all primitives
       virtual box3f getBounds();
-
-      virtual void preRender(RenderContext &ctx) override;
 
       virtual void postCommit(RenderContext &ctx) override;
 
@@ -124,9 +79,9 @@ namespace ospray {
       */
       virtual void setFromXML(const xml::Node *const node, const unsigned char *binBasePtr);
 
-      OSPGeometry         ospGeometry;
-      OSPGeometry         ospGeometryInstance;
-      OSPModel ospModel;
+      OSPGeometry ospGeometry;
+      OSPGeometry ospGeometryInstance;
+      OSPModel    ospModel;
 
       // to allow memory-mapping triangle arrays (or in general,
       // sharing data with an application) we use data arrays, not std::vector's
@@ -149,15 +104,17 @@ namespace ospray {
 
 
     /*! A special triangle mesh that allows per-triangle materials */
-    struct PTMTriangleMesh : public sg::Geometry {
+    struct PTMTriangleMesh : public sg::Geometry
+    {
 
       /*! triangle with per-triangle material ID */
-      struct Triangle {
+      struct Triangle
+      {
         uint32_t vtxID[3], materialID;
       };
 
       //! constructor
-      PTMTriangleMesh() : Geometry("trianglemesh"), ospGeometry(NULL) {};
+      PTMTriangleMesh() : Geometry("trianglemesh"), ospGeometry(nullptr) {}
 
       // return bounding box of all primitives
       virtual box3f getBounds();
@@ -165,7 +122,7 @@ namespace ospray {
       /*! 'render' the nodes */
       virtual void render(RenderContext &ctx);
 
-      OSPGeometry         ospGeometry;
+      OSPGeometry ospGeometry;
 
       /*! \brief "material list" for this trianglemesh
 
@@ -173,7 +130,7 @@ namespace ospray {
         list; if empty, all trianlges should use the
         Geometry::material no matter what Triangle::materialID is set
        */
-      std::vector<std::shared_ptr<sg::Material> > materialList;
+      std::vector<std::shared_ptr<sg::Material>> materialList;
       std::vector<uint32_t> materialIDs;
 
       // to allow memory-mapping triangle arrays (or in general,

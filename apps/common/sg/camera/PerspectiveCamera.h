@@ -21,7 +21,8 @@
 namespace ospray {
   namespace sg {
 
-    struct OSPSG_INTERFACE PerspectiveCamera : public sg::Camera {     
+    struct OSPSG_INTERFACE PerspectiveCamera : public sg::Camera
+    {
       PerspectiveCamera();
       virtual void init() override;
 

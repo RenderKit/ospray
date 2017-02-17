@@ -22,14 +22,6 @@
 
 namespace ospray {
   namespace sg {
-    using std::cout;
-    using std::endl;
-
-
-    Renderer::Renderer()
-    {
-        ospRenderer = nullptr;
-    }
 
     void Renderer::init()
     {
@@ -78,7 +70,8 @@ namespace ospray {
       integrator->commit();
       camera->commit();
 
-      ospSet1f(camera->ospCamera,"aspect",frameBuffer->getSize().x/float(frameBuffer->getSize().y));
+      ospSet1f(camera->ospCamera,"aspect",
+               frameBuffer->getSize().x/float(frameBuffer->getSize().y));
       ospCommit(camera->ospCamera);
       ospRenderFrame(frameBuffer->getOSPHandle(),
                      integrator->getOSPHandle(),
@@ -95,30 +88,26 @@ namespace ospray {
       etc) */
     void Renderer::resetAccumulation()
     {
-      if (accumID == 0) {
-        // cout << "accumID already 0..." << endl;
-      } else {
-        accumID = 0;
-        // cout << "resetting accum" << endl;
-        if (frameBuffer)
-        frameBuffer->clear();
-      }
+      accumID = 0;
+      if (frameBuffer) frameBuffer->clear();
     }
 
     //! create a default camera
     std::shared_ptr<sg::Camera> Renderer::createDefaultCamera(vec3f up)
     {
-      // create a default camera
-      std::shared_ptr<sg::PerspectiveCamera> camera = std::make_shared<sg::PerspectiveCamera>();
-      if (world) {
+      auto camera = std::make_shared<sg::PerspectiveCamera>();
 
+      if (world) {
         // now, determine world bounds to automatically focus the camera
         box3f worldBounds = world->getBounds();
         if (worldBounds == box3f(empty)) {
-          cout << "#osp:qtv: world bounding box is empty, using default camera pose" << endl;
+          std:: cout << "#osp:qtv: world bounding box is empty, using default camera pose"
+                     << std::endl;
         } else {
-          cout << "#osp:qtv: found world bounds " << worldBounds << endl;
-          cout << "#osp:qtv: focussing default camera on world bounds" << endl;
+          std::cout << "#osp:qtv: found world bounds " << worldBounds
+                    << std::endl;
+          std::cout << "#osp:qtv: focussing default camera on world bounds"
+                    << std::endl;
 
           camera->setAt(center(worldBounds));
           if (up == vec3f(0,0,0))
@@ -134,26 +123,15 @@ namespace ospray {
     void Renderer::setCamera(const std::shared_ptr<sg::Camera> &camera)
     {
       this->camera = camera;
-      if (camera)
-        this->camera->commit();
-      // if (this->camera) {
-      //   this->camera->commit();
-      // }
-      if (integrator)
-        integrator->setCamera(camera);
-// camera && integrator && integrator->ospRenderer) {
-//         ospSetObject(integrator->ospRenderer,"camera",camera->ospCamera);
-//         ospCommit(integrator->ospRenderer);
-//       }
+      if (camera)     this->camera->commit();
+      if (integrator) integrator->setCamera(camera);
       resetAccumulation();
     }
 
     void Renderer::setIntegrator(const std::shared_ptr<sg::Integrator> &integrator)
     {
       this->integrator = integrator;
-      if (integrator) {
-        integrator->commit();
-      }
+      if (integrator) integrator->commit();
       resetAccumulation();
     }
 
@@ -165,11 +143,15 @@ namespace ospray {
       if (world) {
         allNodes.serialize(world,sg::Serialization::DONT_FOLLOW_INSTANCES);
         uniqueNodes.serialize(world,sg::Serialization::DO_FOLLOW_INSTANCES);
-      } else
-        std::cout << "#osp:sg:renderer: no world defined, yet\n#ospQTV: (did you forget to pass a scene file name on the command line?)" << std::endl;
+      } else {
+        std::cout << "#osp:sg:renderer: no world defined, yet" << std::endl;
+        std::cout << "#ospQTV: (did you forget to pass a scene file name on the command line?)"
+                  << std::endl;
+      }
 
       resetAccumulation();
-      std::cout << "#osp:sg:renderer: new world with " << world->nodes.size() << " nodes" << endl;
+      std::cout << "#osp:sg:renderer: new world with " << world->nodes.size()
+                << " nodes" << std::endl;
     }
 
     //! find the last camera in the scene graph
@@ -177,7 +159,8 @@ namespace ospray {
     {
       std::shared_ptr<sg::Camera> lastCamera;
       for (std::shared_ptr<Serialization::Object> obj : uniqueNodes.object) {
-        std::shared_ptr<sg::Camera> asCamera = std::dynamic_pointer_cast<sg::Camera>(obj->node);
+        std::shared_ptr<sg::Camera> asCamera =
+            std::dynamic_pointer_cast<sg::Camera>(obj->node);
         if (asCamera) lastCamera = asCamera;
       }
       return lastCamera;
@@ -188,7 +171,8 @@ namespace ospray {
     {
       std::shared_ptr<sg::Integrator> lastIntegrator;
       for (std::shared_ptr<Serialization::Object> obj : uniqueNodes.object) {
-        std::shared_ptr<sg::Integrator> asIntegrator = std::dynamic_pointer_cast<sg::Integrator>(obj->node);
+        std::shared_ptr<sg::Integrator> asIntegrator =
+            std::dynamic_pointer_cast<sg::Integrator>(obj->node);
         if (asIntegrator) lastIntegrator = asIntegrator;
       }
       return lastIntegrator;
@@ -196,7 +180,8 @@ namespace ospray {
 
     void Renderer::postRender(RenderContext &ctx)
     {
-      ospSetObject(ospRenderer,"model", getChild("world")->getValue<OSPObject>());
+      ospSetObject(ospRenderer, "model",
+                   getChild("world")->getValue<OSPObject>());
       ospCommit(ospRenderer);
       ospRenderFrame((OSPFrameBuffer)getChild("frameBuffer")->getValue<OSPObject>(),
                      ospRenderer,
@@ -211,18 +196,21 @@ namespace ospray {
 
     void Renderer::preCommit(RenderContext &ctx)
     {
-      if (getChild("frameBuffer")["size"]->getLastModified() > getChild("camera")["aspect"]->getLastCommitted())
+      if (getChild("frameBuffer")["size"]->getLastModified() >
+          getChild("camera")["aspect"]->getLastCommitted())
        getChild("camera")["aspect"]->setValue(
-         getChild("frameBuffer")["size"]->getValue<vec2i>().x/float(getChild("frameBuffer")["size"]->getValue().get<vec2i>().y));
-      std::string rendererType = getChild("rendererType")->getValue<std::string>();
+         getChild("frameBuffer")["size"]->getValue<vec2i>().x /
+         float(getChild("frameBuffer")["size"]->getValue().get<vec2i>().y)
+       );
+      auto rendererType = getChild("rendererType")->getValue<std::string>();
       if (!ospRenderer || rendererType != createdType)
       {
-          traverse(ctx, "modified");
-          ospRenderer = ospNewRenderer(rendererType.c_str());
-          assert(ospRenderer);
-          createdType = rendererType;
-          ospCommit(ospRenderer);
-          setValue((OSPObject)ospRenderer);
+        traverse(ctx, "modified");
+        ospRenderer = ospNewRenderer(rendererType.c_str());
+        assert(ospRenderer);
+        createdType = rendererType;
+        ospCommit(ospRenderer);
+        setValue((OSPObject)ospRenderer);
       }
       ctx.ospRenderer = ospRenderer;
     }
@@ -246,8 +234,8 @@ namespace ospray {
       ospSetObject(ospRenderer, "model",  getChild("world")->getValue<OSPObject>());
       ospSetObject(ospRenderer, "lights", lightsd);
       ospCommit(ospRenderer);
-      // if (getChildrenLastModified() > frameMTime)
-      //TODO: some child is kicking off modified every frame.  Should figure out which and ignore it
+      //TODO: some child is kicking off modified every frame...Should figure
+      //      out which and ignore it
       if (getChild("camera")->getChildrenLastModified() > frameMTime
         || getChild("lights")->getChildrenLastModified() > frameMTime
         || getChild("world")->getChildrenLastModified() > frameMTime
@@ -257,7 +245,11 @@ namespace ospray {
         || getChild("spp")->getLastModified() > frameMTime
         )
       {
-        ospFrameBufferClear((OSPFrameBuffer)getChild("frameBuffer")->getValue<OSPObject>(), OSP_FB_COLOR | OSP_FB_ACCUM);
+        ospFrameBufferClear(
+          (OSPFrameBuffer)getChild("frameBuffer")->getValue<OSPObject>(),
+          OSP_FB_COLOR | OSP_FB_ACCUM
+        );
+
         frameMTime = TimeStamp::now();
       }
 
@@ -266,5 +258,5 @@ namespace ospray {
 
     OSP_REGISTER_SG_NODE(Renderer);
 
-  }
-}
+  } // ::ospray::sg
+} // ::ospray

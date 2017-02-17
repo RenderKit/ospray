@@ -21,16 +21,15 @@
 namespace ospray {
   namespace sg {
 
-
     std::vector<std::shared_ptr<sg::Node> > Node::nodes;
     std::map<size_t,size_t> Node::nodesMap;
 
-        // ==================================================================
+    // ==================================================================
     // parameter type specializations
     // ==================================================================
-    template<> OSPDataType ParamT<std::shared_ptr<DataBuffer> >::getOSPDataType() const
+    template<> OSPDataType ParamT<std::shared_ptr<DataBuffer>>::getOSPDataType() const
     { return OSP_DATA; }
-    template<> OSPDataType ParamT<std::shared_ptr<Node> >::getOSPDataType() const
+    template<> OSPDataType ParamT<std::shared_ptr<Node>>::getOSPDataType() const
     { return OSP_OBJECT; }
 
     template<> OSPDataType ParamT<float>::getOSPDataType() const
@@ -53,10 +52,10 @@ namespace ospray {
 
     template<> OSPDataType ParamT<const char *>::getOSPDataType() const
     { return OSP_STRING; }
-    template<> OSPDataType ParamT<std::shared_ptr<Texture2D> >::getOSPDataType() const
+    template<> OSPDataType ParamT<std::shared_ptr<Texture2D>>::getOSPDataType() const
     { return OSP_TEXTURE; }
 
-    bool operator==(const NullType& lhs, const NullType& rhs) {return true;}
+    bool operator==(const NullType& lhs, const NullType& rhs) { return true; }
 
     // ==================================================================
     // sg node implementations
@@ -68,38 +67,39 @@ namespace ospray {
     //   param[p->getName()] = p;
     // }
 
-    std::shared_ptr<sg::Param> Node::getParam(const std::string &name) const {
+    std::shared_ptr<sg::Param> Node::getParam(const std::string &name) const
+    {
       auto it = params.find(name);
-      if (it != params.end()) {
+
+      if (it != params.end())
         return it->second;
-      }
+
       return nullptr;
     }
 
-    void Node::setFromXML(const xml::Node &node,
-                          const unsigned char *binBasePtr)
+    void Node::setFromXML(const xml::Node &node, const unsigned char *binBasePtr)
     {
-      throw std::runtime_error(toString()+":setFromXML() not implemented for XML node type "
-                               +node.name);
-    };
-
+      throw std::runtime_error(toString() +
+                               ":setFromXML() not implemented for XML node type "
+                               + node.name);
+    }
 
     void Node::traverse(RenderContext &ctx, const std::string& operation)
     {
-        //TODO: make child m time propagate
-        if (operation != "verify" && !isValid())
-          return;
-        TimeStamp childMTime = 1;
-        ctx.childMTime = childMTime;
-        preTraverse(ctx, operation);
-        ctx.level++;
-        for (auto child : children)
-        {
-          child.second->traverse(ctx,operation);
-        }
-        ctx.level--;
-        ctx.childMTime = getChildrenLastModified();
-        postTraverse(ctx, operation);
+      //TODO: make child m time propagate
+      if (operation != "verify" && !isValid())
+        return;
+      TimeStamp childMTime = 1;
+      ctx.childMTime = childMTime;
+      preTraverse(ctx, operation);
+      ctx.level++;
+      for (auto child : children)
+      {
+        child.second->traverse(ctx,operation);
+      }
+      ctx.level--;
+      ctx.childMTime = getChildrenLastModified();
+      postTraverse(ctx, operation);
     }
 
     void Node::preTraverse(RenderContext &ctx, const std::string& operation)
@@ -110,7 +110,9 @@ namespace ospray {
           std::cout << "  ";
         std::cout << name << " : " << type << "\n";
       }
-      else if (operation == "commit" && (getLastModified() >= getLastCommitted() || getChildrenLastModified() >= getLastCommitted()))
+      else if (operation == "commit" &&
+               (getLastModified() >= getLastCommitted() ||
+                getChildrenLastModified() >= getLastCommitted()))
       {
         preCommit(ctx);
       }
@@ -126,7 +128,9 @@ namespace ospray {
 
     void Node::postTraverse(RenderContext &ctx, const std::string& operation)
     {
-      if (operation == "commit" && (getLastModified() >= getLastCommitted() || getChildrenLastModified() >= getLastCommitted()))
+      if (operation == "commit" &&
+          (getLastModified() >= getLastCommitted() ||
+           getChildrenLastModified() >= getLastCommitted()))
       {
         postCommit(ctx);
         lastCommitted = TimeStamp::now();
@@ -141,38 +145,27 @@ namespace ospray {
       }
     }
 
-    void Node::postCommit(RenderContext &ctx)
-    {
-        // for (int i=0;i<ctx.level;i++)
-          // std::cout << "  ";
-        // std::cout << "commit: " << name << " : " << type << "\n";
-    }
-
-    void Renderable::preTraverse(RenderContext &ctx, const std::string& operation)
+    void Renderable::preTraverse(RenderContext &ctx,
+                                 const std::string& operation)
     {
       Node::preTraverse(ctx,operation);
       if (operation == "render")
-      {
         preRender(ctx);
-      }
     }
 
-    void Renderable::postTraverse(RenderContext &ctx, const std::string& operation)
+    void Renderable::postTraverse(RenderContext &ctx,
+                                  const std::string& operation)
     {
       Node::postTraverse(ctx,operation);
       if (operation == "render")
-      {
         postRender(ctx);
-      }
     }
-
 
     // ==================================================================
     // global struff
     // ==================================================================
 
     bool valid(SGVar var) { return var.which() > 0; }
-
 
     // list of all named nodes - for now use this as a global
     // variable, but eventually we'll need tofind a better way for
@@ -192,71 +185,38 @@ namespace ospray {
       namedNodes[name] = node;
     }
 
-    //     typedef std::shared_ptr<sg::Node> (*creatorFct)();
+    using CreatorFct = std::shared_ptr<sg::Node>(*)();
 
-    // std::map<std::string, creatorFct> sgNodeRegistry;
+    std::map<std::string, CreatorFct> nodeRegistry;
 
-    // /*! create a node of given type if registered (and tell it to
-    //   parse itself from that xml node), or throw an exception if
-    //   unkown node type */
-    // std::shared_ptr<sg::Node> createNodeFrom(const xml::Node &node, const unsigned char *binBasePtr)
-    // {
-    //   std::map<std::string, creatorFct>::iterator it = sgNodeRegistry.find(node.name);
-    //   creatorFct creator = NULL;
-    //   if (it == sgNodeRegistry.end()) {
-    //     const std::string creatorName = "ospray_create_sg_node__"+std::string(node.name);
-    //     creator = (creatorFct)getSymbol(creatorName);
-    //     if (!creator)
-    //       throw std::runtime_error("unknown ospray scene graph node '"+node.name+"'");
-    //     else
-    //       std::cout << "#osp:sg: creating at least one instance of node type '" << node.name << "'" << std::endl;
-    //     sgNodeRegistry[node.name] = creator;
-    //   }
-    //   else
-    //     creator = it->second;
-
-    //   assert(creator);
-    //   std::shared_ptr<sg::Node> newNode = creator();
-    //   if (!newNode)
-    //     throw std::runtime_error("could not create scene graph node");
-
-    //   newNode->setFromXML(node,binBasePtr);
-    //   if (node.hasProp("name"))
-    //     registerNamedNode(node.getProp("name"),newNode);
-    //   return newNode;
-    // }
-
-
-    typedef std::shared_ptr<sg::Node> (*creatorFct)();
-
-    std::map<std::string, creatorFct> nodeRegistry;
-
-
-    Node::NodeH createNode(std::string name, std::string type, SGVar var, int flags, std::string documentation)
+    Node::NodeH createNode(std::string name, std::string type, SGVar var,
+                           int flags, std::string documentation)
     {
-      std::map<std::string, creatorFct>::iterator it = nodeRegistry.find(type);
-      creatorFct creator = NULL;
+      std::map<std::string, CreatorFct>::iterator it = nodeRegistry.find(type);
+      CreatorFct creator = nullptr;
       if (it == nodeRegistry.end()) {
         std::string creatorName = "ospray_create_sg_node__"+std::string(type);
-        creator = (creatorFct)getSymbol(creatorName);
+        creator = (CreatorFct)getSymbol(creatorName);
         if (!creator)
           throw std::runtime_error("unknown ospray scene graph node '"+type+"'");
-        else
-          std::cout << "#osp:sg: creating at least one instance of node type '" << type << "'" << std::endl;
+        else {
+          std::cout << "#osp:sg: creating at least one instance of node type '"
+                    << type << "'" << std::endl;
+        }
         nodeRegistry[type] = creator;
-      } else creator = it->second;
-      assert(creator);
+      } else {
+        creator = it->second;
+      }
+
       std::shared_ptr<sg::Node> newNode = creator();
       Node::nodes.push_back(newNode);
       Node::nodesMap[(size_t)newNode.get()] = Node::nodes.size();
       newNode->init();
-      assert(newNode.get());
       newNode->setName(name);
       newNode->setType(type);
       newNode->setFlags(flags);
       newNode->setDocumentation(documentation);
-      if (valid(var))
-          newNode->setValue(var);
+      if (valid(var)) newNode->setValue(var);
       NodeH result = Node::NodeH(newNode);
       return result;
     }
@@ -271,8 +231,6 @@ namespace ospray {
     OSP_REGISTER_SG_NODE_NAME(NodeParam<std::string>, string);
     OSP_REGISTER_SG_NODE_NAME(NodeParam<box3f>, box3f);
     OSP_REGISTER_SG_NODE_NAME(NodeParam<OSPObject>, OSPObject);
-    // OSP_REGISTER_SG_NODE_NAME(NodeParam<OSPMaterial>, OSPMaterial);
-    // OSP_REGISTER_SG_NODE_NAME(NodeParam<OSPGeometry>, OSPGeometry);
 
-  }
-}
+  } // ::ospray::sg
+} // ::ospray

@@ -23,16 +23,13 @@ namespace ospray {
   namespace sg {
 
     /*! \brief Base class for all Material Types */
-    struct OSPSG_INTERFACE Material : public Node {
-      /*! constructor */
-      Material();
+    struct OSPSG_INTERFACE Material : public Node
+    {
+      Material() = default;
       virtual void init() override;
       
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const { return "ospray::viewer::sg::Material"; };
-      
-      //! 'render' the nodes
-      virtual void render(RenderContext &ctx);
+      virtual std::string toString() const { return "ospray::viewer::sg::Material"; }
 
       virtual void preCommit(RenderContext &ctx);
       virtual void postCommit(RenderContext &ctx);
@@ -44,8 +41,8 @@ namespace ospray {
       //! vector of textures used by the material
       std::vector<std::shared_ptr<Texture2D>> textures;
       
-      OSPMaterial ospMaterial;
-      OSPRenderer ospRenderer;
+      OSPMaterial ospMaterial {nullptr};
+      OSPRenderer ospRenderer {nullptr};
     };
 
   } // ::ospray::sg

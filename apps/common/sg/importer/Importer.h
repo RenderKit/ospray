@@ -20,15 +20,12 @@
 #include "../common/World.h"
 #include "ospcommon/FileName.h"
 
-/*! \file sg/module/Importer.h Defines the interface for writing
-    file importers for the ospray::sg */
-
 namespace ospray {
   namespace sg {
 
-    struct ImportState {
+    struct ImportState
+    {
       std::shared_ptr<sg::World> world;
-      // std::vector<std::string> searchPaths;
 
       ImportState(std::shared_ptr<sg::World> world)
         : world(world)
@@ -36,16 +33,17 @@ namespace ospray {
     };
 
     /*! prototype for any scene graph importer function */
-    typedef void (*ImporterFunction)(const FileName &fileName,
-                                     sg::ImportState &importerState);
+    using ImporterFunction = void (*)(const FileName &fileName,
+                                      sg::ImportState &importerState);
     
     /*! declare an importer function for a given file extension */
     void declareImporterForFileExtension(const std::string &fileExtension,
                                          ImporterFunction importer);
+
     /*! import a given file. throws a sg::RuntimeError if this could not be done */
     void importFile(std::shared_ptr<sg::World> &world, const FileName &fileName);
 
-  }
-}
+  } // ::ospray::sg
+} // ::ospray
 
 

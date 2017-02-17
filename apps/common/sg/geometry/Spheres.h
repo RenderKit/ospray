@@ -25,18 +25,20 @@ namespace ospray {
 
     /*! simple spheres, with all of the key info - position, radius,
         and a int32_t type specifier baked into each sphere  */
-    struct Spheres : public sg::Geometry {
-      struct Sphere { 
+    struct Spheres : public sg::Geometry
+    {
+      struct Sphere
+      {
         vec3f position;
         float radius;
         uint32_t typeID;
         
         // constructor
-        Sphere(vec3f position, float radius, uint32_t typeID=0);
+        Sphere(vec3f position, float radius, uint32_t typeID = 0);
         
         // return the bounding box
         inline box3f getBounds() const
-        { return box3f(position-vec3f(radius),position+vec3f(radius)); };
+        { return {position - vec3f(radius), position + vec3f(radius)}; }
       };
 
       //! constructor
@@ -64,7 +66,8 @@ namespace ospray {
         existant) that contains additional binary data that the xml
         node fields may point into
       */
-      void setFromXML(const xml::Node *const node, const unsigned char *binBasePtr);
+      void setFromXML(const xml::Node *const node,
+                      const unsigned char *binBasePtr);
 
       OSPGeometry         ospGeometry;
       std::vector<Sphere> sphere;

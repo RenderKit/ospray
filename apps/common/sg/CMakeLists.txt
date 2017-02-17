@@ -21,6 +21,7 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   SceneGraph.cpp
   Renderer.cpp
 
+  geometry/Geometry.h
   geometry/Spheres.cpp
   geometry/TriangleMesh.cpp
 

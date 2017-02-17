@@ -23,7 +23,9 @@ namespace ospray {
 
     /*! helper function to help build voxel ranges during parsing */
     template<typename T>
-    inline void extendVoxelRange(ospcommon::vec2f &voxelRange, const T *voxel, size_t num) {
+    inline void extendVoxelRange(ospcommon::vec2f &voxelRange,
+                                 const T *voxel, size_t num)
+    {
       for (size_t i = 0; i < num; ++i) {
         voxelRange.x = std::min(voxelRange.x, static_cast<float>(voxel[i]));
         voxelRange.y = std::max(voxelRange.y, static_cast<float>(voxel[i]));
@@ -97,7 +99,10 @@ namespace ospray {
 
     //! return bounding box of all primitives
     box3f StructuredVolume::getBounds()
-    { return box3f(vec3f(0.f),vec3f(getDimensions())*getChild("gridSpacing")->getValue<vec3f>()); }
+    {
+      return {vec3f(0.f),
+              vec3f(getDimensions())*getChild("gridSpacing")->getValue<vec3f>()};
+    }
 
     //! \brief Initialize this node's value from given XML node
 
@@ -114,39 +119,38 @@ namespace ospray {
 
       if (voxelType == "uint8")
         voxelType = "uchar";
-      if (voxelType != "float" && voxelType != "uint8" && voxelType != "uchar")
-        throw std::runtime_error("unknown StructuredVolume.voxelType (currently only supporting 'float' and 'uint8')");
-
-#if 0
-      if (!transferFunction) {
-        setTransferFunction(std::make_shared<TransferFunction>());
+      if (voxelType != "float" &&
+          voxelType != "uint8" &&
+          voxelType != "uchar") {
+        throw std::runtime_error("unknown StructuredVolume.voxelType (currently"
+                                 " only supporting 'float' and 'uint8')");
       }
-#endif
 
       std::cout << "#osp:sg: created StructuredVolume from XML file, dimensions = "
                 << getDimensions() << std::endl;
     }
 
-    /*! \brief 'render' the object to ospray */
     void StructuredVolume::render(RenderContext &ctx)
     {
       if (volume) return;
 
-      if (dimensions.x <= 0 || dimensions.y <= 0 || dimensions.z <= 0)
-        throw std::runtime_error("StructuredVolume::render(): invalid volume dimensions");
+      if (dimensions.x <= 0 || dimensions.y <= 0 || dimensions.z <= 0) {
+        throw std::runtime_error("StructuredVolume::render(): "
+                                 "invalid volume dimensions");
+      }
 
       volume = ospNewVolume(useDataDistributedVolume
                             ? "data_distributed_volume"
                             : "block_bricked_volume");
-      if (!volume)
-        THROW_SG_ERROR("could not allocate volume");
+
+      if (!volume) THROW_SG_ERROR("could not allocate volume");
 
       ospSetString(volume,"voxelType",voxelType.c_str());
       ospSetVec3i(volume,"dimensions",(const osp::vec3i&)dimensions);
       size_t nPerSlice = (size_t)dimensions.x*(size_t)dimensions.y;
       assert(mappedPointer != nullptr);
 
-      for (int z=0;z<dimensions.z;z++) {
+      for (int z = 0; z < dimensions.z; z++) {
         float *slice = (float*)(((unsigned char *)mappedPointer)+z*nPerSlice*sizeof(float));
         vec3i region_lo(0,0,z), region_sz(dimensions.x,dimensions.y,1);
         ospSetRegion(volume,slice,
@@ -167,13 +171,14 @@ namespace ospray {
       if (volume) return;
 
       if (dimensions.x <= 0 || dimensions.y <= 0 || dimensions.z <= 0)
-        throw std::runtime_error("StructuredVolume::render(): invalid volume dimensions");
+        throw std::runtime_error("StructuredVolume::render(): "
+                                 "invalid volume dimensions");
 
       volume = ospNewVolume(useDataDistributedVolume
                             ? "data_distributed_volume"
                             : "block_bricked_volume");
-      if (!volume)
-        THROW_SG_ERROR("could not allocate volume");
+
+      if (!volume) THROW_SG_ERROR("could not allocate volume");
 
       ospSetString(volume,"voxelType",voxelType.c_str());
       ospSetVec3i(volume,"dimensions",(const osp::vec3i&)dimensions);
@@ -194,9 +199,7 @@ namespace ospray {
       ospCommit(volume);
     }
 
-
     OSP_REGISTER_SG_NODE(StructuredVolume);
-
 
     // =======================================================
     // structured volume that is stored in a separate file (ie, a file
@@ -214,7 +217,10 @@ namespace ospray {
 
     //! return bounding box of all primitives
     box3f StructuredVolumeFromFile::getBounds()
-    { return box3f(vec3f(0.f),vec3f(getDimensions())*getChild("gridSpacing")->getValue<vec3f>()); }
+    {
+      return {vec3f(0.f),
+              vec3f(getDimensions())*getChild("gridSpacing")->getValue<vec3f>()};
+    }
 
     //! \brief Initialize this node's value from given XML node
     void StructuredVolumeFromFile::setFromXML(const xml::Node &node,
@@ -224,23 +230,18 @@ namespace ospray {
       if (voxelType == "uint8") voxelType = "uchar";
       dimensions = toVec3i(node.getProp("dimensions").c_str());
       fileName = node.getProp("fileName");
-      if (fileName == "") throw std::runtime_error("sg::StructuredVolumeFromFile: no 'fileName' specified");
+
+      if (fileName.empty()) {
+        throw std::runtime_error("sg::StructuredVolumeFromFile: "
+                                 "no 'fileName' specified");
+      }
 
       fileNameOfCorrespondingXmlDoc = node.doc->fileName;
 
-      if (voxelType != "float" && voxelType != "uchar")
-        throw std::runtime_error("unknown StructuredVolume.voxelType (currently only supporting 'float' and 'uchar')");
-
-#if 0
-      if (!transferFunction) {
-        const std::string xfName = node.getProp("transferFunction");
-        std::shared_ptr<TransferFunction> xf = std::dynamic_pointer_cast<TransferFunction>(findNamedNode(xfName));
-        if (xf)
-          setTransferFunction(xf);
+      if (voxelType != "float" && voxelType != "uchar") {
+        throw std::runtime_error("unknown StructuredVolume.voxelType "
+                                 "(currently only supporting 'float' and 'uchar')");
       }
-      if (!transferFunction)
-        setTransferFunction(std::make_shared<TransferFunction>());
-#endif
 
       std::cout << "#osp:sg: created StructuredVolume from XML file, dimensions = "
                 << getDimensions() << std::endl;
@@ -270,9 +271,10 @@ namespace ospray {
       if (useDataDistributedVolume)
         volume = ospNewVolume("data_distributed_volume");
       else
-        volume = ospNewVolume(useBlockBricked ? "block_bricked_volume" : "shared_structured_volume");
-      if (!volume)
-        THROW_SG_ERROR("could not allocate volume");
+        volume = ospNewVolume(useBlockBricked ? "block_bricked_volume" :
+                                                "shared_structured_volume");
+
+      if (!volume) THROW_SG_ERROR("could not allocate volume");
 
       ospHandle = volume;
       setValue((OSPObject)volume);

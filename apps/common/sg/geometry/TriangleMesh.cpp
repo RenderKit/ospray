@@ -23,7 +23,11 @@ namespace ospray {
 
     OSP_REGISTER_SG_NODE(Importer);
 
-    //! return the bounding box of all primitives
+    void TriangleMesh::init()
+    {
+      add(createNode("material", "Material"));
+    }
+
     box3f TriangleMesh::getBounds()
     {
       box3f bounds = empty;
@@ -94,45 +98,6 @@ namespace ospray {
       if (index && index->notEmpty())
         ospSetData(ospGeometry,"index",index->getOSP());
 
-#if 1
-      // OSPMaterial mat = NULL;
-      // // try to generate ospray material from the sg material stored with this object
-      // if (material) {
-      //   material->render(ctx);
-      //   mat = material->ospMaterial;
-      // }
-      // //PING; PRINT(mat);
-
-      // // if object couldt generate a valid material, create a default one
-      // if (!mat) {
-      //   std::cout << "#osp:sg: no material on object, creating default one" << std::endl;
-      //   mat = ospNewMaterial(ctx.integrator?ctx.integrator->getOSPHandle():NULL,"default");
-      //   assert(mat);
-      //   vec3f kd(.7f);
-      //   vec3f ks(.3f);
-      //   ospSet3fv(mat,"kd",&kd.x);
-      //   ospSet3fv(mat,"ks",&ks.x);
-      //   ospSet1f(mat,"Ns",99.f);
-      //   ospCommit(mat);
-      // }
-      // assert(mat);
-      // ospSetMaterial(ospGeometry,mat);
-      // ospSetMaterial(ospGeometry,(OSPMaterial)getChild("material")->getValue<OSPObject>());
-#else
-      // assign a default material (for now.... eventually we might
-      // want to do a 'real' material
-      OSPMaterial mat = ospNewMaterial(ctx.integrator?ctx.integrator->getOSPHandle():NULL,"default");
-      if (mat) {
-        vec3f kd(.7f);
-        vec3f ks(.3f);
-        ospSet3fv(mat,"kd",&kd.x);
-        ospSet3fv(mat,"ks",&ks.x);
-        ospSet1f(mat,"Ns",99.f);
-        ospCommit(mat);
-      }
-      ospSetMaterial(ospGeometry,mat);
-#endif
-
       ospCommit(ospGeometry);
       ospAddGeometry(ctx.world->ospModel,ospGeometry);
     }
@@ -140,7 +105,6 @@ namespace ospray {
     /*! 'render' the nodes */
     void PTMTriangleMesh::render(RenderContext &ctx)
     {
-      std::cout << __PRETTY_FUNCTION__ << std::endl;
       if (ospGeometry) return;
 
       assert(ctx.world);
@@ -167,85 +131,23 @@ namespace ospray {
       primMatIDs = ospNewData(materialIDs.size(), OSP_INT, &materialIDs[0], 0);
       ospSetData(ospGeometry,"prim.materialID",primMatIDs);
 
-      // OSPMaterial mat = NULL;
-      // // try to generate ospray material from the sg material stored with this object
-      // if (material) {
-      //   material->render(ctx);
-      //   mat = material->ospMaterial;
-      // }
-
-      // // if object couldt generate a valid material, create a default one
-      // if (!mat) {
-      //   std::cout << "#osp:sg: no material on object, creating default one" << std::endl;
-      //   mat = ospNewMaterial(ctx.integrator?ctx.integrator->getOSPHandle():NULL,"default");
-      //   assert(mat);
-      //   vec3f kd(.7f);
-      //   vec3f ks(.3f);
-      //   ospSet3fv(mat,"kd",&kd.x);
-      //   ospSet3fv(mat,"ks",&ks.x);
-      //   ospSet1f(mat,"Ns",99.f);
-      //   ospCommit(mat);
-      // }
-      // assert(mat);
-      // ospSetMaterial(ospGeometry,mat);
-
-#if 0
-      // THIS CODE DOESN"T WORK RIGHT NOW!!!!
-      std::vector<OSPMaterial> ospMaterials;
-      for (size_t i = 0; i < materialList.size(); i++) {
-        //If the material hasn't already been 'rendered' ensure that it is.
-        materialList[i]->render(ctx);
-        //Push the 'rendered' material onto the list
-        ospMaterials.push_back(materialList[i]->ospMaterial);
-        //std::cout << "#qtViewer 'rendered' material " << materialList[i]->name << std::endl;
-      }
-
-      OSPData materialData = ospNewData(materialList.size(), OSP_OBJECT, &ospMaterials[0], 0);
-      ospSetData(ospGeometry, "materialList", materialData);
-#endif
-
       ospCommit(ospGeometry);
       ospAddGeometry(ctx.world->ospModel,ospGeometry);
     }
 
-    void TriangleMesh::preRender(RenderContext &ctx)
-    {
-      // if (ospModel)
-      // {
-      //   if (getChild("visible")->getValue() == true)
-      //     ospAddGeometry(ctx.world->ospModel,ospGeometryInstance);
-      // }
-    }
-
     void TriangleMesh::postCommit(RenderContext &ctx)
     {
-       if (ospGeometry)
-       {
-        // vec3f scale = getChild("scale")->getValue<vec3f>();
-        // vec3f rotation = getChild("rotation")->getValue<vec3f>();
-        // vec3f translation = getChild("position")->getValue<vec3f>();
-        // ospcommon::affine3f xfm = ospcommon::one;
-        // xfm = xfm*ospcommon::affine3f::translate(translation)*
-        // ospcommon::affine3f::rotate(vec3f(1,0,0),rotation.x)*
-        // ospcommon::affine3f::rotate(vec3f(0,1,0),rotation.y)*
-        // ospcommon::affine3f::rotate(vec3f(0,0,1),rotation.z)*
-        // ospcommon::affine3f::scale(scale);
-
-        // ospGeometryInstance = ospNewInstance(ospModel,
-        //   (osp::affine3f&)xfm);
-        // ospCommit(ospGeometryInstance);
-
-        ospSetMaterial(ospGeometry, (OSPMaterial)getChild("material")->getValue<OSPObject>());
+      if (ospGeometry)
+      {
+        ospSetMaterial(ospGeometry,
+                       (OSPMaterial)getChild("material")->getValue<OSPObject>());
         ospCommit(ospGeometry);
-        // ospCommit(ospModel);
         return;
       }
 
-      assert(ctx.world);
-      assert(ctx.world->ospModel);
-
       ospGeometry = ospNewGeometry("trianglemesh");
-      ospModel = ospNewModel();
+      ospModel    = ospNewModel();
+
       // set vertex data
       if (vertex && vertex->notEmpty())
         ospSetData(ospGeometry,"vertex",vertex->getOSP());
@@ -257,44 +159,51 @@ namespace ospray {
       if (index && index->notEmpty())
         ospSetData(ospGeometry,"index",index->getOSP());
 
-      // OSPMaterial mat = NULL;
-      // // try to generate ospray material from the sg material stored with this object
-      // if (material) {
-      //   // material->render(ctx);
-      //   mat = material->ospMaterial;
-      // }
-      // PING; PRINT(mat);
-
-      // // if object couldt generate a valid material, create a default one
-      // if (!mat) {
-      //   std::cout << "#osp:sg: no material on object, creating default one" << std::endl;
-      //   std::cout << getName() << " " << ctx.ospRenderer << std::endl;
-      //   mat = ospNewMaterial(ctx.ospRenderer?ctx.ospRenderer:NULL,"default");
-      //   assert(mat);
-      //   vec3f kd(.7f);
-      //   vec3f ks(.3f);
-      //   ospSet3fv(mat,"kd",&kd.x);
-      //   ospSet3fv(mat,"ks",&ks.x);
-      //   ospSet1f(mat,"Ns",99.f);
-      //   ospCommit(mat);
-      // }
-      // assert(mat);
-      // ospSetMaterial(ospGeometry,mat);
-      ospSetMaterial(ospGeometry, (OSPMaterial)getChild("material")->getValue<OSPObject>());
+      ospSetMaterial(ospGeometry,
+                     (OSPMaterial)getChild("material")->getValue<OSPObject>());
       ospCommit(ospGeometry);
       ospAddGeometry(ctx.world->ospModel,ospGeometry);
-      // ospCommit(ospModel);
-      // vec3f scale = getChild("scale")->getValue<vec3f>();
-      // vec3f rotation = getChild("rotation")->getValue<vec3f>();
-      // vec3f translation = getChild("position")->getValue<vec3f>();
-      // ospcommon::affine3f xfm = ospcommon::one;
-      // xfm = xfm*ospcommon::affine3f::translate(translation)*ospcommon::affine3f::rotate(vec3f(0,1,0),rotation.x)*ospcommon::affine3f::scale(scale);
-      // ospGeometryInstance = ospNewInstance(ospModel,
-        // (osp::affine3f&)xfm);
-      // ospCommit(ospGeometryInstance);
+    }
 
-      //ospAddGeometry(ctx.world->ospModel,ospGeometry);
-}
+    void Importer::setChildrenModified(TimeStamp t)
+    {
+      Node::setChildrenModified(t);
+      ospcommon::FileName file(getChild("fileName")->getValue<std::string>());
+
+      if (file.str() == loadedFileName)
+        return;
+
+      std::cout << "attempting importing file: " << file.str() << std::endl;
+
+      if (loadedFileName != "" || file.str() == "")
+        return; //TODO: support dynamic re-loading, need to clear children first
+
+      loadedFileName = "";
+
+      if (file.ext() == "obj")
+      {
+        std::cout << "importing file: " << file.str() << std::endl;
+        sg::importOBJ(std::static_pointer_cast<sg::World>(shared_from_this()), file);
+      }
+      else if (file.ext() == "ply")
+      {
+        std::shared_ptr<sg::World> wsg(std::dynamic_pointer_cast<sg::World>(shared_from_this()));
+        sg::importPLY(wsg, file);
+      }
+      else if (file.ext() == "osg")
+      {
+        std::shared_ptr<sg::World> wsg(std::dynamic_pointer_cast<sg::World>(shared_from_this()));
+        sg::loadOSG(file, wsg);
+        instanced = false;
+      }
+      else
+      {
+        std::cout << "unsupported file format\n";
+        return;
+      }
+
+      loadedFileName = file.str();
+    }
 
     OSP_REGISTER_SG_NODE(TriangleMesh);
 

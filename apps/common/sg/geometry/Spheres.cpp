@@ -24,13 +24,7 @@
 namespace ospray {
   namespace sg {
 
-    using std::string;
-    using std::cout;
-    using std::endl;
-
-    Spheres::Sphere::Sphere(vec3f position, 
-                            float radius,
-                            uint32_t typeID)
+    Spheres::Sphere::Sphere(vec3f position, float radius, uint32_t typeID)
       : position(position), 
         radius(radius), 
         typeID(typeID) 
@@ -39,8 +33,8 @@ namespace ospray {
     box3f Spheres::getBounds() 
     {
       box3f bounds = empty;
-      for (size_t i=0;i<sphere.size();i++)
-        bounds.extend(sphere[i].getBounds());
+      for (auto &s : sphere)
+        bounds.extend(s.getBounds());
       return bounds;
     }
 
@@ -69,8 +63,8 @@ namespace ospray {
 
       Spheres::Sphere s(vec3f(0.f),rad,0);
       if (ofs == (size_t)-1) {
-        cout << "#osp:qtv: 'Spheres' ofs is '-1', "
-             << "generating set of random spheres..." << endl;
+        std::cout << "#osp:qtv: 'Spheres' ofs is '-1', "
+                  << "generating set of random spheres..." << std::endl;
         for (uint32_t i = 0; i < num; i++) {
           s.position.x = drand48();
           s.position.y = drand48();
@@ -87,13 +81,9 @@ namespace ospray {
       }
     }
 
-
     void Spheres::render(RenderContext &ctx)
     {
-      assert(!ospGeometry);
-
       ospGeometry = ospNewGeometry("spheres");
-      assert(ospGeometry);
 
       OSPData data = ospNewData(sphere.size()*5,OSP_FLOAT,
                                 &sphere[0],OSP_DATA_SHARED_BUFFER);
@@ -104,8 +94,7 @@ namespace ospray {
       ospSet1i(ospGeometry,"offset_radius",     3*sizeof(float));
       ospSet1i(ospGeometry,"offset_materialID", 4*sizeof(float));
 
-      OSPMaterial mat =
-          ospNewMaterial(ctx.integrator?ctx.integrator->getOSPHandle():nullptr,"default");
+      auto mat = ospNewMaterial(ctx.integrator->getOSPHandle(), "default");
       if (mat) {
         vec3f kd = vec3f(.7f);
         ospSet3fv(mat,"kd",&kd.x);
@@ -118,7 +107,8 @@ namespace ospray {
       ospCommit(data);
     }
 
-    struct RandomSpheres : public Spheres {
+    struct RandomSpheres : public Spheres
+    {
       //! \brief Initialize this node's value from given XML node 
       void setFromXML(const xml::Node *const node, 
                       const unsigned char *binBasePtr)
@@ -126,9 +116,9 @@ namespace ospray {
         vec3i dimensions = toVec3i(node->getProp("dimensions").c_str());
         int   num        = toInt(node->getProp("num").c_str());
         
-        float max_r = atof(node->getProp("radius").c_str());//std::max(dimensions.x,std::max(dimensions.y,dimensions.z)) / powf(num,.33f);
+        float max_r = atof(node->getProp("radius").c_str());
         float f = 0.3f; // overhang around the dimensions
-        for (int i=0;i<num;i++) {
+        for (int i = 0; i < num; i++) {
           vec3f pos; 
           pos.x = (-f+(1+2*f)*drand48())*dimensions.x;
           pos.y = (-f+(1+2*f)*drand48())*dimensions.y;

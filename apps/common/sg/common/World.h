@@ -24,11 +24,9 @@ namespace ospray {
   namespace sg {
 
     /*! a world node */
-    struct OSPSG_INTERFACE World : public sg::Renderable {
-      World() : Renderable(), ospModel(nullptr) {
-        // add(createNode("bounds", "box3f"));
-//        add(createNode("model", "OSPObject", (OSPModel*)NULL));
-      };
+    struct OSPSG_INTERFACE World : public sg::Renderable
+    {
+      World() = default;
 
       virtual void init() override 
       {
@@ -36,7 +34,8 @@ namespace ospray {
       }
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const override { return "ospray::viewer::sg::World"; }
+      virtual std::string toString() const override
+      { return "ospray::viewer::sg::World"; }
 
       //! serialize into given serialization state 
       virtual void serialize(sg::Serialization::State &serialization) override;
@@ -56,29 +55,23 @@ namespace ospray {
       virtual void preRender(RenderContext &ctx);
       virtual void postRender(RenderContext &ctx);
 
-      OSPModel ospModel;
-      std::vector<std::shared_ptr<Node> > nodes;
+      OSPModel ospModel {nullptr};
+      std::vector<std::shared_ptr<Node>> nodes;
       std::shared_ptr<sg::World> oldWorld;
-
-      // template<typename T>
-      // inline void add(const Ref<T> &t) { add(t.ptr); }
-      // template<typename T>
-      // inline void add(T *t) { node.push_back(t); }
     };
 
 
-    struct OSPSG_INTERFACE InstanceGroup : public sg::World {
-      InstanceGroup() : World(), ospInstance(nullptr), instanced(true) {
-        // add(createNode("bounds", "box3f"));
-//        add(createNode("model", "OSPObject", (OSPModel*)NULL));
-      };
+    struct OSPSG_INTERFACE InstanceGroup : public sg::World
+    {
+      InstanceGroup() = default;
 
       virtual void init() override 
       {
         add(createNode("bounds", "box3f"));
         add(createNode("visible", "bool", true));
         add(createNode("position", "vec3f"));
-        add(createNode("rotation", "vec3f", vec3f(0), NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
+        add(createNode("rotation", "vec3f", vec3f(0),
+                       NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
         getChild("rotation")->setMinMax(-vec3f(2*3.15f),vec3f(2*3.15f));
         add(createNode("scale", "vec3f", vec3f(1.f)));
       }
@@ -88,13 +81,8 @@ namespace ospray {
       virtual void preRender(RenderContext &ctx);
       virtual void postRender(RenderContext &ctx);
 
-      OSPGeometry ospInstance;
-      bool instanced;
-
-      // template<typename T>
-      // inline void add(const Ref<T> &t) { add(t.ptr); }
-      // template<typename T>
-      // inline void add(T *t) { node.push_back(t); }
+      OSPGeometry ospInstance {nullptr};
+      bool instanced {true};
     };
     
   } // ::ospray::sg
