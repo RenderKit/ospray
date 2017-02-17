@@ -212,9 +212,6 @@ void VolumeViewer::addGeometry(std::string filename)
   if (fn.ext() == "stl") {
     miniSG::importSTL(*msgModel,fn);
     loadedSGScene = true;
-  } else if (fn.ext() == "osg") {
-
-  }
   } else if (fn.ext() == "msg") {
     miniSG::importMSG(*msgModel,fn);
     loadedSGScene = true;

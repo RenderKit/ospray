@@ -39,39 +39,33 @@ namespace ospray {
       if (!group) group = new Group;
 
       if (fileName.ext() == "osp") {
-        importOSP(fn, group);
-#if 0 // NOTE(jda) - this can only be re-enabled once the importer stuff is off of Ref<>
-//#ifndef _WIN32
-      } else if (fileName.ext() == "osg") {
-          Ref<sg::World> world = new sg::World;
-          world = sg::loadOSG(fn);
-          Ref<sg::Volume> volumeNode;
-          for (auto node : world.ptr->node)
+#ifndef _WIN32
+
+          std::shared_ptr<sg::World> world;;
+          world = sg::loadOSP(fn);
+          std::shared_ptr<sg::Volume> volumeNode;
+          for (auto node : world->nodes)
           {
-            std::cout << "found node: " << node.ptr->toString() << std::endl;
-            if (node->toString().find("Chombo") != std::string::npos)
-              volumeNode = Ref<sg::Volume>((sg::Volume*)node.ptr);
+            if (node->toString().find("Volume") != std::string::npos)
+              volumeNode = std::dynamic_pointer_cast<sg::Volume>(node);
           }
           if (!volumeNode)
           {
             throw std::runtime_error("#ospray:importer: no volume found in osg file");
           }
           sg::RenderContext ctx;
-          Ref<sg::Integrator>  integrator;
-          integrator = new sg::Integrator("scivis");
-          ctx.integrator = integrator.ptr;
+          std::shared_ptr<sg::Integrator>  integrator;
+          integrator = std::make_shared<sg::Integrator>("scivis");
+          ctx.integrator = integrator;
           integrator->commit();
-          assert(ctx.world);
           if (!world) {
             std::cout << "#osp:qtv: no world defined. exiting." << std::endl;
             exit(1);
           }
 
           world->render(ctx);
-          assert(world->ospModel);
 
           OSPVolume volume = volumeNode->volume;
-          assert(volume);
 
           Volume* msgVolume = new Volume;
           msgVolume->bounds = volumeNode->getBounds();
