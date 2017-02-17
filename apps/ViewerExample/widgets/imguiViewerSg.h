@@ -19,13 +19,6 @@
 #include <atomic>
 #include <mutex>
 
-// mini scene graph for loading the model
-#include "common/miniSG/miniSG.h"
-
-#include <ospray/ospray_cpp/Camera.h>
-#include <ospray/ospray_cpp/Model.h>
-#include <ospray/ospray_cpp/Renderer.h>
-
 #include "../common/util/async_render_engine_sg.h"
 
 #include "imgui3D.h"
@@ -45,43 +38,25 @@ namespace ospray {
   {
   public:
 
-    ImGuiViewerSg(const std::deque<ospcommon::box3f> &worldBounds,
-                const std::deque<cpp::Model> &model,
-                cpp::Renderer renderer,
-                cpp::Camera camera,
-                sg::NodeH scenegraph=sg::NodeH());
+    ImGuiViewerSg(sg::NodeH scenegraph);
     ~ImGuiViewerSg();
-
-    void setRenderer(OSPRenderer renderer);
-    void setScale(const ospcommon::vec3f& v )  {scale = v;}
-    void setTranslation(const ospcommon::vec3f& v)  {translate = v;}
-    void setLockFirstAnimationFrame(bool st) {lockFirstAnimationFrame = st;}
 
   protected:
 
-    virtual void reshape(const ospcommon::vec2i &newSize) override;
-    virtual void keypress(char key) override;
+    void reshape(const ospcommon::vec2i &newSize) override;
+    void keypress(char key) override;
 
     void resetView();
     void printViewport();
     void saveScreenshot(const std::string &basename);
     void toggleRenderingPaused();
-    // We override this so we can update the AO ray length
-    void setWorldBounds(const ospcommon::box3f &worldBounds) override;
 
     void display() override;
 
-    virtual void updateAnimation(double deltaSeconds);
-
-    virtual void buildGui() override;
-    virtual void buildGUINode(sg::NodeH node, bool &renderer_changed, int indent);
+    void buildGui() override;
+    void buildGUINode(sg::NodeH node, int indent);
 
     // Data //
-
-    std::deque<cpp::Model>       sceneModels;
-    std::deque<ospcommon::box3f> worldBounds;
-    cpp::Camera   camera;
-    cpp::Renderer renderer;
 
     double lastFrameFPS;
     double lastGUITime;
@@ -91,17 +66,7 @@ namespace ospray {
     ospcommon::vec2i windowSize;
     imgui3D::ImGui3DWidget::ViewPort originalView;
 
-    double frameTimer;
-    double animationTimer;
-    double animationFrameDelta;
-    size_t animationFrameId;
-    bool animationPaused;
-    bool lockFirstAnimationFrame;  //use for static scene
-    ospcommon::vec3f translate;
-    ospcommon::vec3f scale;
     sg::NodeH scenegraph;
-
-    float aoDistance {1e20f};
 
     sg::async_render_engine_sg renderEngine;
     std::vector<uint32_t> pixelBuffer;

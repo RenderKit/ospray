@@ -51,51 +51,22 @@ static void writePPM(const string &fileName, const int sizeX, const int sizeY,
 
 namespace ospray {
 
-ImGuiViewerSg::ImGuiViewerSg(const std::deque<box3f> &worldBounds,
-                         const std::deque<cpp::Model> &model,
-                         cpp::Renderer renderer,
-                         cpp::Camera camera,
-                         sg::NodeH scenegraph)
+ImGuiViewerSg::ImGuiViewerSg(sg::NodeH scenegraph)
   : ImGui3DWidget(ImGui3DWidget::FRAMEBUFFER_NONE),
-    sceneModels(model),
-    renderer(renderer),
-    camera(camera),
-    worldBounds(worldBounds),
-    lockFirstAnimationFrame(false),
     scenegraph(scenegraph),
     renderEngine(scenegraph)
 {
-  if (!worldBounds.empty())
-    setWorldBounds(worldBounds[0]);
-
-  renderer.set("model",  sceneModels[0]);
-  renderer.set("camera", camera);
-
-  // renderEngine.setRenderer(renderer);
+  setWorldBounds(scenegraph["world"].get()->getBounds());
   renderEngine.setFbSize({1024, 768});
 
-  renderEngine.scheduleObjectCommit(renderer);
   renderEngine.start();
 
-  frameTimer = ospcommon::getSysTime();
-  animationTimer = 0.;
-  animationFrameDelta = .03;
-  animationFrameId = 0;
-  animationPaused = false;
   originalView = viewPort;
-  scale = vec3f(1,1,1);
-
 }
 
 ImGuiViewerSg::~ImGuiViewerSg()
 {
   renderEngine.stop();
-}
-
-void ImGuiViewerSg::setRenderer(OSPRenderer renderer)
-{
-  this->renderer = renderer;
-  // renderEngine.setRenderer(renderer);
 }
 
 void ImGuiViewerSg::reshape(const vec2i &newSize)
@@ -113,15 +84,6 @@ void ImGuiViewerSg::reshape(const vec2i &newSize)
 void ImGuiViewerSg::keypress(char key)
 {
   switch (key) {
-  case ' ':
-    animationPaused = !animationPaused;
-    break;
-  case '=':
-    animationFrameDelta = max(animationFrameDelta-0.01, 0.0001);
-    break;
-  case '-':
-    animationFrameDelta = min(animationFrameDelta+0.01, 1.0);
-    break;
   case 'R':
     toggleRenderingPaused();
     break;
@@ -200,18 +162,8 @@ void ImGuiViewerSg::toggleRenderingPaused()
   renderingPaused ? renderEngine.stop() : renderEngine.start();
 }
 
-void ImGuiViewerSg::setWorldBounds(const box3f &worldBounds) {
-  ImGui3DWidget::setWorldBounds(worldBounds);
-  aoDistance = (worldBounds.upper.x - worldBounds.lower.x)/4.f;
-  renderer.set("aoDistance", aoDistance);
-  renderEngine.scheduleObjectCommit(renderer);
-}
-
 void ImGuiViewerSg::display()
 {
-  updateAnimation(ospcommon::getSysTime()-frameTimer);
-  frameTimer = ospcommon::getSysTime();
-
   auto dir = viewPort.at - viewPort.from;
   dir = normalize(dir);
   scenegraph["camera"]["dir"]->setValue(dir);
@@ -248,70 +200,20 @@ void ImGuiViewerSg::display()
   ucharFB = nullptr;
 }
 
-void ImGuiViewerSg::updateAnimation(double deltaSeconds)
-{
-  if (sceneModels.size() < 2)
-    return;
-  if (animationPaused)
-    return;
-  animationTimer += deltaSeconds;
-  int framesSize = sceneModels.size();
-  const int frameStart = (lockFirstAnimationFrame ? 1 : 0);
-  if (lockFirstAnimationFrame)
-    framesSize--;
-
-  if (animationTimer > animationFrameDelta)
-  {
-    animationFrameId++;
-
-    //set animation time to remainder off of delta
-    animationTimer -= int(animationTimer/deltaSeconds) * deltaSeconds;
-
-    size_t dataFrameId = animationFrameId%framesSize+frameStart;
-    if (lockFirstAnimationFrame)
-    {
-      ospcommon::affine3f xfm = ospcommon::one;
-      xfm *= ospcommon::affine3f::translate(translate)
-             * ospcommon::affine3f::scale(scale);
-      OSPGeometry dynInst =
-              ospNewInstance((OSPModel)sceneModels[dataFrameId].object(),
-              (osp::affine3f&)xfm);
-      ospray::cpp::Model worldModel = ospNewModel();
-      ospcommon::affine3f staticXFM = ospcommon::one;
-      OSPGeometry staticInst =
-              ospNewInstance((OSPModel)sceneModels[0].object(),
-              (osp::affine3f&)staticXFM);
-      //Carson: TODO: creating new world model every frame unecessary
-      worldModel.addGeometry(staticInst);
-      worldModel.addGeometry(dynInst);
-      worldModel.commit();
-      renderer.set("model",  worldModel);
-    }
-    else
-    {
-      renderer.set("model",  sceneModels[dataFrameId]);
-    }
-
-    renderEngine.scheduleObjectCommit(renderer);
-  }
-}
-
 void ImGuiViewerSg::buildGui()
 {
   ImGuiWindowFlags flags = ImGuiWindowFlags_MenuBar;
 
   static bool demo_window = false;
 
-  ImGui::SetNextWindowSizeConstraints(ImVec2(500,800), ImVec2(2048,2048));
   ImGui::Begin("Viewer Controls: press 'g' to show/hide", nullptr, flags);
   ImGui::SetWindowFontScale(0.5f*fontScale);
-  // ImGui::SetScrollY(1.f);
 
   if (ImGui::BeginMenuBar())
   {
     if (ImGui::BeginMenu("App"))
     {
-#if 1
+#if 0
       ImGui::Checkbox("Show ImGui Demo Window", &demo_window);
 #endif
 
@@ -364,78 +266,16 @@ void ImGuiViewerSg::buildGui()
     ImGui::NewLine();
   }
 
-  bool renderer_changed = false;
-  //build SceneGraph GUI
   static float vec4fv[4] = { 0.10f, 0.20f, 0.30f, 0.44f };
   if (ImGui::CollapsingHeader("SceneGraph", "SceneGraph", true, true))
   {
-   buildGUINode(scenegraph, renderer_changed, 0);
+    buildGUINode(scenegraph, 0);
   }
-
-  //if (ImGui::CollapsingHeader("Renderer Parameters"))
-  if (0)
-  {
-    static int numThreads = -1;
-    if (ImGui::InputInt("# threads", &numThreads, 1)) {
-      renderEngine.stop();
-      renderEngine.start(numThreads);
-      renderer_changed = true;
-    }
-
-    static int ao = 1;
-    if (ImGui::SliderInt("aoSamples", &ao, 0, 32)) {
-      renderer.set("aoSamples", ao);
-      renderer_changed = true;
-    }
-
-    if (ImGui::InputFloat("aoDistance", &aoDistance)) {
-      renderer.set("aoDistance", aoDistance);
-      renderer_changed = true;
-    }
-
-    static bool ao_transparency = false;
-    if (ImGui::Checkbox("ao transparency", &ao_transparency)) {
-      renderer.set("aoTransparencyEnabled", int(ao_transparency));
-      renderer_changed = true;
-    }
-
-    static bool shadows = true;
-    if (ImGui::Checkbox("shadows", &shadows)) {
-      renderer.set("shadowsEnabled", int(shadows));
-      renderer_changed = true;
-    }
-
-    static bool singleSidedLighting = true;
-    if (ImGui::Checkbox("single_sided_lighting", &singleSidedLighting)) {
-      renderer.set("oneSidedLighting", int(singleSidedLighting));
-      renderer_changed = true;
-    }
-
-    static int exponent = -6;
-    if (ImGui::SliderInt("ray_epsilon (exponent)", &exponent, -10, 2)) {
-      renderer.set("epsilon", ospcommon::pow(10.f, (float)exponent));
-      renderer_changed = true;
-    }
-
-    static int spp = 1;
-    if (ImGui::SliderInt("spp", &spp, -4, 16)) {
-      renderer.set("spp", spp);
-      renderer_changed = true;
-    }
-
-    static ImVec4 bg_color = ImColor(255, 255, 255);
-    if (ImGui::ColorEdit3("bg_color", (float*)&bg_color)) {
-      renderer.set("bgColor", bg_color.x, bg_color.y, bg_color.z);
-      renderer_changed = true;
-    }
-  }
-  if (renderer_changed)
-    renderEngine.scheduleObjectCommit(renderer);
 
   ImGui::End();
 }
 
-void ImGuiViewerSg::buildGUINode(sg::NodeH node, bool &renderer_changed, int indent)
+void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
 {
   int styles=0;
   if (!node->isValid())
@@ -559,7 +399,6 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, bool &renderer_changed, int ind
     text += "##"+((std::ostringstream&)(std::ostringstream("") << node.get())).str(); //TODO: use unique uuid for every node
     if (ImGui::TreeNodeEx(text.c_str(), (indent > 0) ? 0 : ImGuiTreeNodeFlags_DefaultOpen))
     {
-      // if (node->getName() == "lights")
       {
         std::string popupName = "Add Node: ##"+((std::ostringstream&)(std::ostringstream("") << node.get())).str();
         float value = 1.f;
@@ -593,7 +432,8 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, bool &renderer_changed, int ind
           {
             char buf[256];
             buf[0]='\0';
-            if (ImGui::InputText("node name: ", buf, 256, ImGuiInputTextFlags_EnterReturnsTrue))
+            if (ImGui::InputText("node name: ", buf, 256,
+                                 ImGuiInputTextFlags_EnterReturnsTrue))
             {
               std::cout << "add node: \"" << buf << "\"\n";
               try
@@ -613,44 +453,18 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, bool &renderer_changed, int ind
           else
             addChild = false;
         }
-        // std::string popupName = "Add Node: ##"+((std::ostringstream&)(std::ostringstream("") << node.get())).str();
-        // if (ImGui::SmallButton("+"))
-        // {
-        //   std::cout << "click!\n";
-        //   ImGui::OpenPopup(popupName.c_str());
-        // }
-        // if (ImGui::BeginPopup(popupName.c_str()))
-        // {
-        //   char buf[256];
-        //   buf[0]='\0';
-        //   if (ImGui::InputText("node name: ", buf, 256, ImGuiInputTextFlags_EnterReturnsTrue))
-        //   {
-        //     std::cout << "add node: \"" << buf << "\"\n";
-        //     try
-        //     {
-        //       static int counter = 0;
-        //       std::stringstream ss;
-        //       ss << "userDefinedNode" << counter++;
-        //       node->add(sg::createNode(ss.str(), buf));
-        //     }
-        //     catch (...)
-        //     {
-        //       std::cerr << "invalid node type: " << buf << std::endl;
-        //     }
-        //   }
-        //   ImGui::EndPopup();
-        // }
       }
+
       if (!node->isValid())
         ImGui::PopStyleColor(styles--);
 
-      for(auto child : node->getChildren() )
-      {
-        buildGUINode(child, renderer_changed, ++indent);
-      }
+      for(auto child : node->getChildren())
+        buildGUINode(child, ++indent);
+
       ImGui::TreePop();
     }
   }
+
   if (!node->isValid())
     ImGui::PopStyleColor(styles--);
   if (ImGui::IsItemHovered())

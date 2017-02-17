@@ -53,7 +53,7 @@ namespace ospray {
 
     static ImGui3DWidget *currentWidget = nullptr;
 
-    bool ImGui3DWidget::showGui = true;
+    bool ImGui3DWidget::showGui = false;
 
     // Class definitions //////////////////////////////////////////////////////
 
