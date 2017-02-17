@@ -130,23 +130,13 @@ int main(int ac, const char **av)
 
   auto &world = renderer["world"];
 
-  for (auto file : files)
-  {
+  for (auto file : files) {
     FileName fn = file;
-    if (fn.ext() == "obj")
-    {
-      world += sg::createNode(fn.name(), "Importer");
-      world[fn.name()]["fileName"]->setValue(fn.str());
-    }
-    if (fn.ext() == "osg")
-    {
-      world += sg::createNode(fn.name(), "Importer");
-      world[fn.name()]["fileName"]->setValue(fn.str());
-    }
-    if (fn.ext() == "ply")
-    {
-      world += sg::createNode(fn.name(), "Importer");
-      world[fn.name()]["fileName"]->setValue(fn.str());
+    auto ext = fn.ext();
+    if (ext == "obj" || ext == "osg" || ext == "ply") {
+      auto importerNode = sg::createNode(fn.name(), "Importer");
+      importerNode["fileName"]->setValue(fn.str());
+      world += importerNode;
     }
   }
 
