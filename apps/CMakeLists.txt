@@ -78,7 +78,7 @@ IF(NOT (APPLE AND OSPRAY_COMPILER_ICC))
   ENDIF()
 ENDIF()
 
-ADD_SUBDIRECTORY(ViewerExample)
+ADD_SUBDIRECTORY(exampleViewer)
 
 # -------------------------------------------------------
 # redistribute QT on Windows
