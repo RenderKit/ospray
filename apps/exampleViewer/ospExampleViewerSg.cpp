@@ -161,7 +161,7 @@ int main(int ac, const char **av)
   renderer->traverse(ctx, "render");
 
   ospray::ImGuiViewerSg window(renderer);
-  window.create("ospImGui: OSPRay ImGui Viewer App");
+  window.create("OSPRay Example Viewer App");
 
   ospray::imgui3D::run();
 }
