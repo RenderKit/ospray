@@ -475,7 +475,7 @@ namespace ospray {
     std::shared_ptr<sg::Node> OSPSG_INTERFACE findNamedNode(const std::string &name);
     OSPSG_INTERFACE void registerNamedNode(const std::string &name, const std::shared_ptr<sg::Node> &node);
 
-    typedef Node::NodeH NodeH;
+    using NodeH = Node::NodeH;
     OSPSG_INTERFACE Node::NodeH createNode(std::string name, std::string type="Node",
                                            SGVar var=NullType(), int flags=sg::NodeFlags::none,
                                            std::string documentation="");

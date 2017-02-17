@@ -14,8 +14,6 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include <ospray/ospray_cpp/Device.h>
-#include "common/commandline/Utility.h"
 #include "common/sg/SceneGraph.h"
 #include "common/sg/Renderer.h"
 #include "common/sg/importer/Importer.h"
@@ -27,6 +25,7 @@
 
 #include <sstream>
 
+using namespace ospcommon;
 using namespace ospray;
 
 std::vector<std::string> files;
@@ -35,7 +34,7 @@ void parseFilesFromCommandLine(int ac, const char **&av)
 {
   for (int i = 1; i < ac; i++) {
     const std::string arg = av[i];
-    ospcommon::FileName fileName = std::string(av[i]);
+    FileName fileName = std::string(av[i]);
     auto ext = fileName.ext();
     if (ext == "obj" || ext == "osg" || ext == "ply")
       files.push_back(av[i]);
@@ -104,19 +103,56 @@ void parseCommandLine(int ac, const char **&av, sg::NodeH root)
         std::stringstream vals(value);
         float x,y,z;
         vals >> x >> y >> z;
-        node->getValue<ospcommon::vec3f>();
-        node->setValue(ospcommon::vec3f(x,y,z));
+        node->getValue<vec3f>();
+        node->setValue(vec3f(x,y,z));
       } catch(...) {}
       try
       {
         std::stringstream vals(value);
         int x,y,z;
         vals >> x >> y;
-        node->getValue<ospcommon::vec2i>();
-        node->setValue(ospcommon::vec2i(x,y));
+        node->getValue<vec2i>();
+        node->setValue(vec2i(x,y));
       } catch(...) {}
     }
   }
+}
+
+void addPlaneToScene(sg::NodeH &world)
+{
+  //add plane
+  auto bbox = world->getBounds();
+
+  osp::vec3f *vertices = new osp::vec3f[4];
+  float ps = bbox.upper.x*5.f;
+  float py = bbox.lower.z-0.01f;
+
+  py = bbox.lower.y-0.01f;
+  vertices[0] = osp::vec3f{-ps, py, -ps};
+  vertices[1] = osp::vec3f{-ps, py, ps};
+  vertices[2] = osp::vec3f{ps, py, -ps};
+  vertices[3] = osp::vec3f{ps, py, ps};
+  auto position = std::make_shared<sg::DataArray3f>((vec3f*)&vertices[0],
+                                                    size_t(4),
+                                                    false);
+  osp::vec3i *triangles = new osp::vec3i[2];
+  triangles[0] = osp::vec3i{0,1,2};
+  triangles[1] = osp::vec3i{1,2,3};
+  auto index = std::make_shared<sg::DataArray3i>((vec3i*)&triangles[0],
+                                                 size_t(2),
+                                                 false);
+  auto plane = sg::createNode("plane", "InstanceGroup");
+  auto mesh  = sg::createNode("mesh", "TriangleMesh");
+  std::shared_ptr<sg::TriangleMesh> sg_plane =
+    std::static_pointer_cast<sg::TriangleMesh>(mesh.get());
+  sg_plane->vertex = position;
+  sg_plane->index = index;
+  auto &planeMaterial = mesh["material"];
+  planeMaterial["Kd"]->setValue(vec3f(0.5f));
+  planeMaterial["Ks"]->setValue(vec3f(0.6f));
+  planeMaterial["Ns"]->setValue(2.f);
+  plane += mesh;
+  world += plane;
 }
 
 int main(int ac, const char **av)
@@ -134,85 +170,65 @@ int main(int ac, const char **av)
   parseFilesFromCommandLine(ac, av);
 
   sg::RenderContext ctx;
-  sg::NodeH root = sg::createNode("ospray");
-  std::cout << root->getName() << std::endl;
-  sg::NodeH rendererN = sg::createNode("renderer", "Renderer");
-  root->add(rendererN);
-  sg::NodeH sun =  sg::createNode("sun", "DirectionalLight");
-  root["renderer"]["lights"] += sun;
-  root["renderer"]["lights"]["sun"]["color"]->setValue(ospcommon::vec3f(1.f,232.f/255.f,166.f/255.f));
-  root["renderer"]["lights"]["sun"]["direction"]->setValue(ospcommon::vec3f(0.462f,-1.f,-.1f));
-  root["renderer"]["lights"]["sun"]["intensity"]->setValue(1.5f);
-  root["renderer"]["lights"] += sg::createNode("bounce", "DirectionalLight");
-  root["renderer"]["lights"]["bounce"]["color"]->setValue(ospcommon::vec3f(127.f/255.f,178.f/255.f,255.f/255.f));
-  root["renderer"]["lights"]["bounce"]["direction"]->setValue(ospcommon::vec3f(-.93,-.54f,-.605f));
-  root["renderer"]["lights"]["bounce"]["intensity"]->setValue(0.25f);
-  root["renderer"]["lights"] += sg::createNode("ambient", "AmbientLight");
-  root["renderer"]["lights"]["ambient"]["intensity"]->setValue(0.9f);
-  root["renderer"]["lights"]["ambient"]["color"]->setValue(ospcommon::vec3f(174.f/255.f,218.f/255.f,255.f/255.f));
-  root["renderer"]["shadowsEnabled"]->setValue(true);
-  root["renderer"]["aoSamples"]->setValue(1);
-  root["renderer"]["camera"]["fovy"]->setValue(60.f);
+  auto root = sg::createNode("ospray");
+
+  auto renderer = sg::createNode("renderer", "Renderer");
+  renderer["shadowsEnabled"]->setValue(true);
+  renderer["aoSamples"]->setValue(1);
+  renderer["camera"]["fovy"]->setValue(60.f);
+  root->add(renderer);
+
+  auto &lights = renderer["lights"];
+
+  auto sun =  sg::createNode("sun", "DirectionalLight");
+  sun["color"]->setValue(vec3f(1.f,232.f/255.f,166.f/255.f));
+  sun["direction"]->setValue(vec3f(0.462f,-1.f,-.1f));
+  sun["intensity"]->setValue(1.5f);
+  lights += sun;
+
+  auto bounce = sg::createNode("bounce", "DirectionalLight");
+  bounce["color"]->setValue(vec3f(127.f/255.f,178.f/255.f,255.f/255.f));
+  bounce["direction"]->setValue(vec3f(-.93,-.54f,-.605f));
+  bounce["intensity"]->setValue(0.25f);
+  lights += bounce;
+
+  auto ambient = sg::createNode("ambient", "AmbientLight");
+  ambient["intensity"]->setValue(0.9f);
+  ambient["color"]->setValue(vec3f(174.f/255.f,218.f/255.f,255.f/255.f));
+  lights += ambient;
 
   parseCommandLine(ac, av, root);
 
+  auto &world = renderer["world"];
+
   for (auto file : files)
   {
-    ospcommon::FileName fn = file;
+    FileName fn = file;
     if (fn.ext() == "obj")
     {
-      root["renderer"]["world"] += sg::createNode(fn.name(), "Importer");
-      root["renderer"]["world"][fn.name()]["fileName"]->setValue(fn.str());
+      world += sg::createNode(fn.name(), "Importer");
+      world[fn.name()]["fileName"]->setValue(fn.str());
     }
     if (fn.ext() == "osg")
     {
-      root["renderer"]["world"] += sg::createNode(fn.name(), "Importer");
-      root["renderer"]["world"][fn.name()]["fileName"]->setValue(fn.str());
+      world += sg::createNode(fn.name(), "Importer");
+      world[fn.name()]["fileName"]->setValue(fn.str());
     }
     if (fn.ext() == "ply")
     {
-      root["renderer"]["world"] += sg::createNode(fn.name(), "Importer");
-      root["renderer"]["world"][fn.name()]["fileName"]->setValue(fn.str());
+      world += sg::createNode(fn.name(), "Importer");
+      world[fn.name()]["fileName"]->setValue(fn.str());
     }
   }
 
-  //add plane
-#if 0//TODO: do this without std::deque<box3f> bbox
-  osp::vec3f *vertices = new osp::vec3f[4];
-  float ps = bbox[0].upper.x*5.f;
-  float py = bbox[0].lower.z-0.01f;
-  // vertices[0] = osp::vec3f{-ps, -ps, py};
-  // vertices[1] = osp::vec3f{-ps,  ps, py};
-  // vertices[2] = osp::vec3f{ ps, -ps, py};
-  // vertices[3] = osp::vec3f{ ps,  ps, py};
-
-  py = bbox[0].lower.y-0.01f;
-  vertices[0] = osp::vec3f{-ps, py, -ps};
-  vertices[1] = osp::vec3f{-ps, py, ps};
-  vertices[2] = osp::vec3f{ps, py, -ps};
-  vertices[3] = osp::vec3f{ps, py, ps};
-  auto position = std::shared_ptr<sg::DataBuffer>(new sg::DataArray3f((ospcommon::vec3f*)&vertices[0],size_t(4),false));
-  osp::vec3i *triangles = new osp::vec3i[2];
-  triangles[0] = osp::vec3i{0,1,2};
-  triangles[1] = osp::vec3i{1,2,3};
-  auto index = std::shared_ptr<sg::DataBuffer>(new sg::DataArray3i((ospcommon::vec3i*)&triangles[0],size_t(2),false));
-  root["renderer"]["world"] += sg::createNode("plane", "InstanceGroup");
-  root["renderer"]["world"]["plane"] += sg::createNode("mesh", "TriangleMesh");
-  std::shared_ptr<sg::TriangleMesh> plane =
-    std::static_pointer_cast<sg::TriangleMesh>(root["renderer"]["world"]["plane"]["mesh"].get());
-  plane->vertex = position;
-  plane->index = index;
-  root["renderer"]["world"]["plane"]["mesh"]["material"]["Kd"]->setValue(ospcommon::vec3f(0.8f));
-  root["renderer"]["world"]["plane"]["mesh"]["material"]["Ks"]->setValue(ospcommon::vec3f(0.6f));
-  root["renderer"]["world"]["plane"]["mesh"]["material"]["Ns"]->setValue(2.f);
-#endif
+  addPlaneToScene(world);
 
   root->traverse(ctx, "verify");
   root->traverse(ctx,"print");
-  rendererN->traverse(ctx, "commit");
-  rendererN->traverse(ctx, "render");
+  renderer->traverse(ctx, "commit");
+  renderer->traverse(ctx, "render");
 
-  ospray::ImGuiViewerSg window(root["renderer"]);
+  ospray::ImGuiViewerSg window(renderer);
   window.create("ospImGui: OSPRay ImGui Viewer App");
 
   ospray::imgui3D::run();
