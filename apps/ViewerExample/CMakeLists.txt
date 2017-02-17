@@ -38,8 +38,8 @@ if (OSPRAY_APPS_VIEWEREXAMPLE)
     ${OPENGL_INCLUDE_DIR}
   )
 
-  ospray_create_application(ospViewerExample
-    ospImGuiSg.cpp
+  ospray_create_application(ospExampleViewerSg
+    ospExampleViewerSg.cpp
     LINK
     ${OPENGL_LIBRARIES}
     glfw
@@ -52,8 +52,8 @@ if (OSPRAY_APPS_VIEWEREXAMPLE)
     ospray_sg
   )
 
-  ospray_create_application(ospViewerExampleNoSg
-    ospImGui.cpp
+  ospray_create_application(ospExampleViewer
+    ospExampleViewer.cpp
     LINK
     ${OPENGL_LIBRARIES}
     glfw
