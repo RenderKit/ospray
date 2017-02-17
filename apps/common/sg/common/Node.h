@@ -238,11 +238,8 @@ namespace ospray {
       virtual void modified()
       {
         lastModified = TimeStamp::now(); 
-        std::cout << "modified: " << getName() << std::endl;
         if (!parent.isNULL()) 
-        {
           parent->setChildrenModified(lastModified);
-        }
       }
 
       virtual void setChildrenModified(TimeStamp t)
