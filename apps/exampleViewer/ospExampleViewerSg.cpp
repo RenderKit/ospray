@@ -29,91 +29,22 @@ using namespace ospcommon;
 using namespace ospray;
 
 std::vector<std::string> files;
+bool addPlane = true;
+bool debug = false;
 
 void parseFilesFromCommandLine(int ac, const char **&av)
 {
   for (int i = 1; i < ac; i++) {
     const std::string arg = av[i];
-    FileName fileName = std::string(av[i]);
-    auto ext = fileName.ext();
-    if (ext == "obj" || ext == "osg" || ext == "ply")
-      files.push_back(av[i]);
-  }
-}
-
-void parseCommandLine(int ac, const char **&av, sg::NodeH root)
-{
-  for(int i=1;i < ac; i++)
-  {
-    std::string arg(av[i]);
-    size_t f;
-    std::string value("");
-    std::cout << "parsing cl arg: \"" << arg <<"\"" << std::endl;
-    while ( (f = arg.find(":")) != std::string::npos || (f = arg.find(",")) != std::string::npos)
-      arg[f]=' ';
-    f = arg.find("=");
-    if (f != std::string::npos)
-    {
-      value = arg.substr(f+1,arg.size());
-      std::cout << "found value: " << value << std::endl;
-    }
-    if (value != "")
-    {
-      std::stringstream ss;
-      ss << arg.substr(0,f);
-      std::string child;
-      sg::NodeH node = root;
-      while (ss >> child)
-      {
-        std::cout << "searching for node: " << child << std::endl;
-        node = node->getChildRecursive(child);
-        std::cout << "found node: " << node->getName() << std::endl;
-      }
-      try
-      {
-        node->getValue<std::string>();
-        node->setValue(value);
-      } catch(...) {};
-      try
-      {
-        std::stringstream vals(value);
-        float x;
-        vals >> x;
-        node->getValue<float>();
-        node->setValue(x);
-      } catch(...) {}
-      try
-      {
-        std::stringstream vals(value);
-        int x;
-        vals >> x;
-        node->getValue<int>();
-        node->setValue(x);
-      } catch(...) {}
-      try
-      {
-        std::stringstream vals(value);
-        bool x;
-        vals >> x;
-        node->getValue<bool>();
-        node->setValue(x);
-      } catch(...) {}
-      try
-      {
-        std::stringstream vals(value);
-        float x,y,z;
-        vals >> x >> y >> z;
-        node->getValue<vec3f>();
-        node->setValue(vec3f(x,y,z));
-      } catch(...) {}
-      try
-      {
-        std::stringstream vals(value);
-        int x,y,z;
-        vals >> x >> y;
-        node->getValue<vec2i>();
-        node->setValue(vec2i(x,y));
-      } catch(...) {}
+    if (arg == "-np" || arg == "--no-plane") {
+      addPlane = false;
+    } else if (arg == "-d" || arg == "--debug") {
+      debug = true;
+    } else {
+      FileName fileName = std::string(av[i]);
+      auto ext = fileName.ext();
+      if (ext == "obj" || ext == "osg" || ext == "ply")
+        files.push_back(av[i]);
     }
   }
 }
@@ -197,8 +128,6 @@ int main(int ac, const char **av)
   ambient["color"]->setValue(vec3f(174.f/255.f,218.f/255.f,255.f/255.f));
   lights += ambient;
 
-  parseCommandLine(ac, av, root);
-
   auto &world = renderer["world"];
 
   for (auto file : files)
@@ -221,10 +150,13 @@ int main(int ac, const char **av)
     }
   }
 
-  addPlaneToScene(world);
+  if (addPlane) addPlaneToScene(world);
 
-  root->traverse(ctx, "verify");
-  root->traverse(ctx,"print");
+  if (debug) {
+    root->traverse(ctx, "verify");
+    root->traverse(ctx, "print");
+  }
+
   renderer->traverse(ctx, "commit");
   renderer->traverse(ctx, "render");
 
