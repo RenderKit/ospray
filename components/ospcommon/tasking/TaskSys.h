@@ -16,50 +16,91 @@
 
 #pragma once
 
-#include "../platform.h"
-#include "../sysinfo.h"
-#include "../RefCount.h"
-// std
-#include <mutex>
+#include "../common.h"
+// stl
+#include <atomic>
 #include <condition_variable>
+#include <mutex>
 
 namespace ospcommon {
+  namespace tasking {
 
-  struct OSPCOMMON_INTERFACE __aligned(64) Task : public RefCount {
+    struct OSPCOMMON_INTERFACE __aligned(64) Task
+    {
+      Task(bool isDynamicallyAllocated = false);
+      virtual ~Task() = default;
 
-    Task(const char *name = "no name");
-    virtual ~Task();
+      // ------------------------------------------------------------------
+      // interface for scheduling a new task into the task system
+      // ------------------------------------------------------------------
 
-    // ------------------------------------------------------------------
-    // interface for scheduling a new task into the task system
-    // ------------------------------------------------------------------
+      enum ScheduleOrder
+      {
+        /*! schedule job to the END of the job queue, meaning it'll get
+            pulled only after all the ones already in the queue */
+        BACK_OF_QUEUE,
+        /*! schedule job to the FRONT of the queue, meaning it'll likely
+            get processed even before other jobs that are already in the
+            queue */
+        FRONT_OF_QUEUE
+      };
 
-    typedef enum {
-      /*! schedule job to the END of the job queue, meaning it'll get
-          pulled only after all the ones already in the queue */
-      BACK_OF_QUEUE,
-      /*! schedule job to the FRONT of the queue, meaning it'll likely
-          get processed even before other jobs that are already in the
-          queue */
-      FRONT_OF_QUEUE
-    } ScheduleOrder;
+      /*! the order in the queue that this job will get scheduled when
+       *  activated */
+      ScheduleOrder order;
 
-    /*! the order in the queue that this job will get scheduled when
-     *  activated */
-    ScheduleOrder order;
+      //! schedule the given task with the given number of sub-jobs.
+      void schedule(int numJobs, ScheduleOrder order=BACK_OF_QUEUE);
 
-    //! schedule the given task with the given number of sub-jobs.
-    void schedule(size_t numJobs, ScheduleOrder order=BACK_OF_QUEUE);
+      //! same as schedule(), but also wait for all jobs to complete
+      void scheduleAndWait(int numJobs, ScheduleOrder order=BACK_OF_QUEUE);
 
-    //! same as schedule(), but also wait for all jobs to complete
-    void scheduleAndWait(size_t numJobs, ScheduleOrder order=BACK_OF_QUEUE);
+      //! wait for the task to complete, optionally (by default) helping
+      //! to actually work on completing this task.
+      void wait();
 
-    //! wait for the task to complete, optionally (by default) helping
-    //! to actually work on completing this task.
-    void wait(bool workOnIt = true);
+    private:
 
-    //! get name of the task (useful for debugging)
-    const char *getName();
+      //! Allow tasking system backend to access all parts of the class, but
+      //! prevent users from using data which is an implementation detail of the
+      //! task
+      friend struct TaskSys;
+
+      // ------------------------------------------------------------------
+      // callback used to define what the task is doing
+      // ------------------------------------------------------------------
+
+      virtual void run(int jobID) = 0;
+
+      // ------------------------------------------------------------------
+      // internal data for the tasking systme to manage the task
+      // ------------------------------------------------------------------
+
+      //*! work on task until no more useful job available on this task
+      void workOnIt();
+
+      //! activate job, and insert into the task system. should never be
+      //! called by the user, only by the task(system) whenever the task
+      //! is a) scheduled and b) all dependencies are fulfilled
+      void activate();
+
+      // Data members //
+
+      __aligned(64) std::atomic_int numJobsCompleted;
+      __aligned(64) std::atomic_int numJobsStarted;
+      int numJobsInTask {0};
+
+      enum Status { INITIALIZING, SCHEDULED, ACTIVE, COMPLETED };
+      std::mutex __aligned(64) mutex;
+      Status volatile __aligned(64) status {INITIALIZING};
+      std::condition_variable __aligned(64) allDependenciesFulfilledCond;
+      std::condition_variable __aligned(64) allJobsCompletedCond;
+
+      __aligned(64) Task *volatile next;
+      bool dynamicallyAllocated {false};
+    };
+
+    // Public interface to the tasking system /////////////////////////////////
 
     /*! \brief initialize the task system with given number of worker
         tasks.
@@ -67,67 +108,36 @@ namespace ospcommon {
         numThreads==-1 means 'use all that are available; numThreads=0
         means 'no worker thread, assume that whoever calls wait() will
         do the work */
-    static void initTaskSystem(const size_t numThreads);
+    void OSPCOMMON_INTERFACE initTaskSystem(int numThreads = -1);
 
-  private:
+    template <typename TASK_T>
+    inline void parallel_for(int nTasks, TASK_T && fcn)
+    {
+      struct LocalTask : public Task
+      {
+        const TASK_T &t;
+        LocalTask(TASK_T&& fcn) : t(std::forward<TASK_T>(fcn)) {}
+        void run(int taskIndex) override { t(taskIndex); }
+      };
 
-    //! Allow tasking system backend to access all parts of the class, but
-    //! prevent users from using data which is an implementation detail of the
-    //! task
-    friend struct TaskSys;
+      LocalTask task(std::forward<TASK_T>(fcn));
+      task.scheduleAndWait(nTasks);
+    }
 
-    // ------------------------------------------------------------------
-    // callback used to define what the task is doing
-    // ------------------------------------------------------------------
+    template <typename TASK_T>
+    inline void schedule(int nTasks, TASK_T && fcn)
+    {
+      struct LocalTask : public Task
+      {
+        TASK_T t;
+        LocalTask(TASK_T&& fcn)
+          : Task(true), t(std::forward<TASK_T>(fcn)) {}
+        void run(int) override { t(); }
+      };
 
-    virtual void run(size_t jobID) = 0;
+      auto *task = LocalTask(std::forward<TASK_T>(fcn));
+      task->schedule(1, Task::FRONT_OF_QUEUE);
+    }
 
-    // ------------------------------------------------------------------
-    // internal data for the tasking systme to manage the task
-    // ------------------------------------------------------------------
-
-    //*! work on task until no more useful job available on this task
-    void workOnIt();
-
-    //! activate job, and insert into the task system. should never be
-    //! called by the user, only by the task(system) whenever the task
-    //! is a) scheduled and b) all dependencies are fulfilled
-    void activate();
-
-    __aligned(64) std::atomic_int numJobsCompleted;
-    __aligned(64) std::atomic_int numJobsStarted;
-    size_t    numJobsInTask;
-
-    typedef enum { INITIALIZING, SCHEDULED, ACTIVE, COMPLETED } Status;
-    std::mutex __aligned(64) mutex;
-    Status volatile __aligned(64) status;
-    std::atomic_int __aligned(64) numMissingDependencies;
-    std::condition_variable __aligned(64) allDependenciesFulfilledCond;
-    std::condition_variable __aligned(64) allJobsCompletedCond;
-
-    __aligned(64) Task *volatile next;
-    const char *name;
-  };
-
-// Inlined function definitions ///////////////////////////////////////////////
-
-  __forceinline Task::Task(const char *name)
-    : numJobsCompleted(),
-      numJobsStarted(),
-      numJobsInTask(0),
-      status(Task::INITIALIZING),
-      numMissingDependencies(),
-      name(name)
-  {
-  }
-
-  __forceinline Task::~Task()
-  {
-  }
-
-  __forceinline const char *Task::getName()
-  {
-    return name;
-  }
-
+  } // ::ospcommon::tasking
 } // ::ospcommon
