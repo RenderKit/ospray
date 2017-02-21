@@ -47,11 +47,7 @@ namespace ospcommon {
 #elif defined(OSPRAY_TASKING_OMP)
        if (numThreads > 0) omp_set_num_threads(numThreads);
 #elif defined(OSPRAY_TASKING_INTERNAL)
-       try {
-         Task::initTaskSystem(numThreads < 0 ? -1 : numThreads);
-       } catch (const std::runtime_error &e) {
-         std::cerr << "WARNING: " << e.what() << std::endl;
-       }
+       tasking::initTaskSystem(numThreads < 0 ? -1 : numThreads);
 #endif
     }
 
