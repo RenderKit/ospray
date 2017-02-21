@@ -25,16 +25,17 @@
 
 namespace ospcommon {
 
-  struct OSPCOMMON_INTERFACE __aligned(64) Task : public RefCount {
-
+  struct OSPCOMMON_INTERFACE __aligned(64) Task : public RefCount
+  {
     Task(const char *name = "no name");
-    virtual ~Task();
+    virtual ~Task() = default;
 
     // ------------------------------------------------------------------
     // interface for scheduling a new task into the task system
     // ------------------------------------------------------------------
 
-    typedef enum {
+    enum ScheduleOrder
+    {
       /*! schedule job to the END of the job queue, meaning it'll get
           pulled only after all the ones already in the queue */
       BACK_OF_QUEUE,
@@ -42,7 +43,7 @@ namespace ospcommon {
           get processed even before other jobs that are already in the
           queue */
       FRONT_OF_QUEUE
-    } ScheduleOrder;
+    };
 
     /*! the order in the queue that this job will get scheduled when
      *  activated */
@@ -96,12 +97,11 @@ namespace ospcommon {
 
     __aligned(64) std::atomic_int numJobsCompleted;
     __aligned(64) std::atomic_int numJobsStarted;
-    size_t    numJobsInTask;
+    size_t numJobsInTask {0};
 
-    typedef enum { INITIALIZING, SCHEDULED, ACTIVE, COMPLETED } Status;
+    enum Status { INITIALIZING, SCHEDULED, ACTIVE, COMPLETED };
     std::mutex __aligned(64) mutex;
-    Status volatile __aligned(64) status;
-    std::atomic_int __aligned(64) numMissingDependencies;
+    Status volatile __aligned(64) status {INITIALIZING};
     std::condition_variable __aligned(64) allDependenciesFulfilledCond;
     std::condition_variable __aligned(64) allJobsCompletedCond;
 
@@ -111,21 +111,14 @@ namespace ospcommon {
 
 // Inlined function definitions ///////////////////////////////////////////////
 
-  __forceinline Task::Task(const char *name)
+  inline Task::Task(const char *name)
     : numJobsCompleted(),
       numJobsStarted(),
-      numJobsInTask(0),
-      status(Task::INITIALIZING),
-      numMissingDependencies(),
       name(name)
   {
   }
 
-  __forceinline Task::~Task()
-  {
-  }
-
-  __forceinline const char *Task::getName()
+  inline const char *Task::getName()
   {
     return name;
   }

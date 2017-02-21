@@ -25,39 +25,46 @@
 
 namespace ospcommon {
   
-  struct TaskSys {
+  struct TaskSys
+  {
+    ~TaskSys();
+
+    void      init(size_t maxNumRenderTasks);
+    Ref<Task> getNextActiveTask();
+    void      shutdownWorkerThreads();
+
+    // Data members //
+
     bool initialized {false};
     bool running {false};
 
-    void init(size_t maxNumRenderTasks);
     static TaskSys global;
-    static void *threadStub(void *);
-    inline Ref<Task> getNextActiveTask();
 
-    //! Queue of tasks that have ALREADY been acitvated, and that are ready
-    //! to run
+    //! Queue of tasks that have ALREADY been acitvated, which are ready to run
     __aligned(64) Task *volatile activeListFirst {nullptr};
     __aligned(64) Task *volatile activeListLast {nullptr};
 
-    std::mutex     __aligned(64) mutex;
+    std::mutex __aligned(64) mutex;
     std::condition_variable __aligned(64) tasksAvailable;
 
-    void threadFunction();
-
-    std::vector<thread_t> threads;
-
-    ~TaskSys();
+    std::vector<std::thread> threads;
   };
   
   TaskSys __aligned(64) TaskSys::global;
 
+  inline TaskSys::~TaskSys()
+  {
+    shutdownWorkerThreads();
+  }
+
   inline void Task::workOnIt() 
   {
     size_t myCompleted = 0;
-    while (1) {
+    while (true) {
       const size_t thisJobID = numJobsStarted++;
+
       if (thisJobID >= numJobsInTask) 
-       break;
+        break;
       
       run(thisJobID);
       ++myCompleted;
@@ -75,13 +82,11 @@ namespace ospcommon {
   
   void Task::wait(bool workOnIt)
   {
-    if (status == Task::COMPLETED) {
+    if (status == Task::COMPLETED)
       return;
-    }
 
-    if (workOnIt) {
+    if (workOnIt)
       this->workOnIt();
-    }
 
     std::unique_lock<std::mutex> lock(mutex);
     allJobsCompletedCond.wait(lock, [&](){return status == Task::COMPLETED;});
@@ -95,28 +100,37 @@ namespace ospcommon {
 
   inline Ref<Task> TaskSys::getNextActiveTask()
   {
-    while (1) {
+    while (true) {
       std::unique_lock<std::mutex> lock(mutex);
       tasksAvailable.wait(lock, [&](){
         return !(activeListFirst == nullptr && running);
       });
 
-      if (!running) {
+      if (!running)
         return nullptr;
-      }
 
       Ref<Task> front = activeListFirst;
       if (front->numJobsStarted >= int(front->numJobsInTask)) {
-        if (activeListFirst == activeListLast) {
+
+        if (activeListFirst == activeListLast)
           activeListFirst = activeListLast = nullptr;
-        } else {
+        else
           activeListFirst = activeListFirst->next;
-        }
+
         continue;
       }
-      assert(front.ptr);
+
       return front;
     }
+  }
+
+  void TaskSys::shutdownWorkerThreads()
+  {
+    running = false;
+    tasksAvailable.notify_all();
+    for (auto &thread : threads)
+      thread.join();
+    threads.clear();
   }
     
   void Task::initTaskSystem(const size_t maxNumRenderTasks)
@@ -130,8 +144,7 @@ namespace ospcommon {
     this->order = order;
     numJobsInTask = numJobs;
     status = Task::SCHEDULED;
-    if (numMissingDependencies == 0)
-      activate();
+    activate();
   }
 
   inline void Task::activate()
@@ -159,50 +172,31 @@ namespace ospcommon {
     }
   }
 
-  void TaskSys::threadFunction()
-  {
-    while (1) {
-      Ref<Task> task = getNextActiveTask();
-      if (!running) {
-        return;
-      }
-      assert(task);
-      task->workOnIt();
-    }
-  }
-
-  TaskSys::~TaskSys()
-  {
-    running = false;
-    tasksAvailable.notify_all();
-    for (auto &thread : threads) {
-      join(thread);
-    }
-  }
-
-  void *TaskSys::threadStub(void *)
-  {
-    TaskSys::global.threadFunction();
-    return nullptr;
-  }
-
   void TaskSys::init(size_t numThreads)
   {
     if (initialized)
-      throw std::runtime_error("#osp: task system initialized twice!");
+      shutdownWorkerThreads();
 
     initialized = true;
-    running = true;
+    running     = true;
 
-    if (numThreads != 0) {
+    if (numThreads >= 0) {
       numThreads = std::min(numThreads,
                             (size_t)std::thread::hardware_concurrency());
     }
 
     /* generate all threads */
     for (size_t t = 1; t < numThreads; t++) {
-      threads.push_back(createThread((thread_func)TaskSys::threadStub,
-                                     (void*)-1,4*1024*1024,-1));
+      threads.emplace_back([&](){
+        while (true) {
+          Ref<Task> task = getNextActiveTask();
+
+          if (!running)
+            break;
+
+          task->workOnIt();
+        }
+      });
     }
   }
   
