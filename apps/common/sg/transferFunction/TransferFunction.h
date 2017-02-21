@@ -61,7 +61,9 @@ namespace ospray {
         it to ospray obejcts that need a reference to the ospray
         version of this xf */
       OSPTransferFunction getOSPHandle() const { return ospTransferFunction; }
+
     protected:
+
       OSPTransferFunction ospTransferFunction {nullptr};
       OSPData ospColorData {nullptr};
       OSPData ospAlphaData {nullptr};
@@ -73,9 +75,9 @@ namespace ospray {
       // determine the range of x'es, all values will be resampled
       // uniformly into this range. samples must be sorted by x
       // coordinate, and must span a non-empty range of x coordinates
-      std::vector<std::pair<float,vec3f> > colorArray;
+      std::vector<std::pair<float, vec3f>> colorArray;
       // array of (x,alpha(x)) opacity samples; otherwise same as colorArray
-      std::vector<std::pair<float,float> > alphaArray;
+      std::vector<std::pair<float, float>> alphaArray;
     };    
     
   } // ::ospray::sg

@@ -126,7 +126,6 @@ namespace ospray {
           float r = max_r*(0.5f + 0.5f*drand48());
           sphere.push_back(Sphere(pos,r));
         }
-        PRINT(sphere.size());
       }
     };
 

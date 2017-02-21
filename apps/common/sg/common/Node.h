@@ -58,7 +58,7 @@ namespace ospray {
     inline type get##capName() const { return name; }   \
     inline void set##capName(const type &name) {        \
       this->name = name;                                \
-      this->lastModified = TimeStamp();            \
+      this->lastModified = TimeStamp();                 \
     };                                                  \
   protected:                                            \
   type name                                             \
@@ -154,7 +154,7 @@ namespace ospray {
         //! add child node n to this node
         NodeH operator+= (NodeH n) { get()->add(n); n->setParent(*this); return n;}
 
-        std::shared_ptr<sg::Node> operator-> () { return get(); }
+        std::shared_ptr<sg::Node> operator->() { return get(); }
 
         std::shared_ptr<sg::Node> get() { return isNULL()? nullptr : node; }
 
@@ -461,7 +461,9 @@ namespace ospray {
     struct NodeParamCommit
     {
       static void commit(std::shared_ptr<Node> n);
-      static bool compare(const SGVar& min, const SGVar& max, const SGVar& value);
+      static bool compare(const SGVar& min,
+                          const SGVar& max,
+                          const SGVar& value);
     };
 
     template <typename T>
@@ -612,7 +614,10 @@ namespace ospray {
     ospray_create_sg_node__##Name()                                     \
     {                                                                   \
       return std::make_shared<ospray::sg::InternalClassName>();         \
-    }
+    }                                                                   \
+    /* Extra declaration to avoid "extra ;" pedantic warnings */        \
+    std::shared_ptr<ospray::sg::Node>                                   \
+    ospray_create_sg_node__##Name()
 
   } // ::ospray::sg
 } // ::ospray

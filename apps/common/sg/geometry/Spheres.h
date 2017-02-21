@@ -42,7 +42,7 @@ namespace ospray {
       };
 
       //! constructor
-      Spheres() : Geometry("spheres"), ospGeometry(NULL) {};
+      Spheres() : Geometry("spheres"), ospGeometry(nullptr) {}
       
       // return bounding box of all primitives
       virtual box3f getBounds();

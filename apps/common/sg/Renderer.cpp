@@ -25,28 +25,39 @@ namespace ospray {
 
     void Renderer::init()
     {
-        add(createNode("bounds", "box3f"));
-        add(createNode("rendererType", "string", std::string("scivis"), NodeFlags::required | NodeFlags::valid_whitelist | NodeFlags::gui_combo, "scivis: standard whitted style ray tracer.  pathtracer/pt: photo-realistic path tracer"));
-        getChild("rendererType")->setWhiteList(std::vector<SGVar>()={std::string("scivis"),std::string("pathtracer"),std::string("pt")});
-        add(createNode("world", "World"));
-        getChild("world")->setDocumentation("model containing scene objects");
-        add(createNode("camera", "PerspectiveCamera"));
-        add(createNode("frameBuffer", "FrameBuffer"));
-        add(createNode("lights"));
+      add(createNode("bounds", "box3f"));
+      add(createNode("rendererType", "string", std::string("scivis"),
+                     NodeFlags::required | NodeFlags::valid_whitelist | NodeFlags::gui_combo,
+                     "scivis: standard whitted style ray tracer. pathtracer/pt: photo-realistic path tracer"));
+      getChild("rendererType")->setWhiteList({std::string("scivis"),
+                                              std::string("pathtracer"),
+                                              std::string("pt")});
+      add(createNode("world", "World"));
+      getChild("world")->setDocumentation("model containing scene objects");
+      add(createNode("camera", "PerspectiveCamera"));
+      add(createNode("frameBuffer", "FrameBuffer"));
+      add(createNode("lights"));
 
       //TODO: move these to seperate SciVisRenderer
-        add(createNode("shadowsEnabled", "bool", true));
-        add(createNode("maxDepth", "int", 5, NodeFlags::required | NodeFlags::valid_min_max, "maximum number of ray bounces"));
-        getChild("maxDepth")->setMinMax(0,999);
-        add(createNode("aoSamples", "int", 1, NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider, "number of ambient occlusion samples.  0 means off"));
-        getChild("aoSamples")->setMinMax(0,128);
-        add(createNode("spp", "int", 1, NodeFlags::required | NodeFlags::gui_slider, "the number of samples rendered per pixel.  The higher the number, the smoother the resulting image."));
-        getChild("spp")->setMinMax(-8,128);
-        add(createNode("aoDistance", "float", 10000.f, NodeFlags::required | NodeFlags::valid_min_max, "maximum distance ao rays will trace to.  Useful if you do not want a large interior of a building to be completely black from occlusion."));
-        getChild("aoDistance")->setMinMax(float(1e-31),FLT_MAX);
-        add(createNode("oneSidedLighting", "bool",true, NodeFlags::required));
-        add(createNode("aoTransparency", "bool",true, NodeFlags::required));
-      }
+      add(createNode("shadowsEnabled", "bool", true));
+      add(createNode("maxDepth", "int", 5,
+                     NodeFlags::required | NodeFlags::valid_min_max,
+                     "maximum number of ray bounces"));
+      getChild("maxDepth")->setMinMax(0,999);
+      add(createNode("aoSamples", "int", 1,
+                     NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider,
+                     "number of ambient occlusion samples.  0 means off"));
+      getChild("aoSamples")->setMinMax(0,128);
+      add(createNode("spp", "int", 1, NodeFlags::required | NodeFlags::gui_slider,
+                     "the number of samples rendered per pixel.  The higher the number, the smoother the resulting image."));
+      getChild("spp")->setMinMax(-8,128);
+      add(createNode("aoDistance", "float", 10000.f,
+                     NodeFlags::required | NodeFlags::valid_min_max,
+                     "maximum distance ao rays will trace to.  Useful if you do not want a large interior of a building to be completely black from occlusion."));
+      getChild("aoDistance")->setMinMax(float(1e-31),FLT_MAX);
+      add(createNode("oneSidedLighting", "bool",true, NodeFlags::required));
+      add(createNode("aoTransparency", "bool",true, NodeFlags::required));
+    }
 
     int Renderer::renderFrame()
     {

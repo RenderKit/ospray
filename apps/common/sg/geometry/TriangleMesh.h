@@ -77,7 +77,8 @@ namespace ospray {
         existant) that contains additional binary data that the xml
         node fields may point into
       */
-      virtual void setFromXML(const xml::Node *const node, const unsigned char *binBasePtr);
+      virtual void setFromXML(const xml::Node *const node,
+                              const unsigned char *binBasePtr);
 
       OSPGeometry ospGeometry;
       OSPGeometry ospGeometryInstance;
