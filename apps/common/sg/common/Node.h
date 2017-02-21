@@ -312,20 +312,21 @@ namespace ospray {
       { std::lock_guard<std::mutex> lock{mutex}; return value.get<T>(); }
 
       //! set the value of the node.  Requires strict typecast
-      void setValue(SGVar val) { 
-        if (val != value) 
-        {
+      void setValue(SGVar val)
+      {
+        if (val != value)  {
           {
-          std::lock_guard<std::mutex> lock{mutex}; 
-          if (val != value) 
-            value = val;
+            std::lock_guard<std::mutex> lock{mutex};
+            if (val != value)
+              value = val;
           }
           modified();
         }
       }
 
       //! add node as child of this one
-      virtual void add(std::shared_ptr<Node> node) {
+      virtual void add(std::shared_ptr<Node> node)
+      {
         std::lock_guard<std::mutex> lock{mutex};
         children[node->name] = NodeH(node);
 
@@ -372,11 +373,13 @@ namespace ospray {
       void setFlags(int f) { flags = static_cast<NodeFlags>(f); }
       NodeFlags getFlags() { return flags; }
 
-      void setMinMax(const SGVar& minv, const SGVar& maxv) {
+      void setMinMax(const SGVar& minv, const SGVar& maxv)
+      {
         minmax.resize(2);
         minmax[0]=minv;
         minmax[1]=maxv;
       }
+
       SGVar getMin() { return minmax[0]; }
       SGVar getMax() { return minmax[1]; }
 
@@ -394,19 +397,16 @@ namespace ospray {
 
       virtual bool computeValid()
       {
-        if ((flags & NodeFlags::valid_min_max) && minmax.size() > 1)
-        {
+        if ((flags & NodeFlags::valid_min_max) && minmax.size() > 1) {
           if (!computeValidMinMax())
             return false;
         }
-        if (flags & NodeFlags::valid_blacklist)
-        {
+        if (flags & NodeFlags::valid_blacklist) {
           return std::find(blacklist.begin(),
                            blacklist.end(),
                            value) == blacklist.end();
         }
-        if (flags & NodeFlags::valid_whitelist)
-        {
+        if (flags & NodeFlags::valid_whitelist) {
           return std::find(whitelist.begin(),
                            whitelist.end(),
                            value) != whitelist.end();
@@ -534,10 +534,9 @@ namespace ospray {
       const vec3f v1 = min.get<vec3f>();
       const vec3f v2 = max.get<vec3f>();
       const vec3f v = value.get<vec3f>();
-      return !(v1.x > v.x || v2.x < v.x
-        || v1.y > v.y || v2.y < v.y
-        || v1.z > v.z || v2.z < v.z
-        );
+      return !(v1.x > v.x || v2.x < v.x ||
+               v1.y > v.y || v2.y < v.y ||
+               v1.z > v.z || v2.z < v.z);
     }
 
     template <>
@@ -563,7 +562,7 @@ namespace ospray {
 
       virtual bool computeValidMinMax() override
       {
-        if (minmax.size()<2 || !(flags & NodeFlags::valid_min_max))
+        if (minmax.size() < 2 || !(flags & NodeFlags::valid_min_max))
           return true;
         return NodeParamCommit<T>::compare(minmax[0], minmax[1], value);
       }
@@ -575,10 +574,7 @@ namespace ospray {
       Renderable() = default;
       virtual ~Renderable() = default;
 
-      virtual void init() override
-      {
-        add(createNode("bounds", "box3f"));
-      }
+      virtual void init() override { add(createNode("bounds", "box3f")); }
       virtual box3f getBounds() { return bbox; }
       virtual box3f extendBounds(box3f b) { bbox.extend(b); return bbox; }
       virtual void preTraverse(RenderContext &ctx, const std::string& operation);
