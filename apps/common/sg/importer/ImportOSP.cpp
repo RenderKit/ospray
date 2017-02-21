@@ -42,6 +42,13 @@ namespace ospray {
       unkown node type */
     std::shared_ptr<sg::Node> createNodeFrom(const xml::Node &node, const unsigned char *binBasePtr)
     {
+      if (node.name.find("Chombo") != std::string::npos)
+      {
+        if (!ospLoadModule("amr"))
+            std::runtime_error("could not load amr module\n");
+        if (!ospLoadModule("sg_amr"))
+            std::runtime_error("could not load amr module\n");
+      }
       std::map<std::string, creatorFct>::iterator it = sgNodeRegistry.find(node.name);
       creatorFct creator = NULL;
       if (it == sgNodeRegistry.end()) {
