@@ -20,9 +20,9 @@
 #include "ospcommon/FileName.h"
 
 // scene graph
-// #include "sg/module/Module.h"
-// #include "sg/importer/Importer.h"
-// #include "sg/Renderer.h"
+#include "sg/module/Module.h"
+#include "sg/importer/Importer.h"
+#include "sg/Renderer.h"
 
 #include <string>
 
@@ -40,18 +40,16 @@ namespace ospray {
 
       if (fileName.ext() == "osp") {
 #ifndef _WIN32
-
           std::shared_ptr<sg::World> world;;
           world = sg::loadOSP(fn);
           std::shared_ptr<sg::Volume> volumeNode;
-          for (auto node : world->nodes)
-          {
+          for (auto node : world->nodes) {
             if (node->toString().find("Volume") != std::string::npos)
               volumeNode = std::dynamic_pointer_cast<sg::Volume>(node);
           }
-          if (!volumeNode)
-          {
-            throw std::runtime_error("#ospray:importer: no volume found in osg file");
+          if (!volumeNode) {
+            throw std::runtime_error("#ospray:importer: no volume found "
+                                     "in osg file");
           }
           sg::RenderContext ctx;
           std::shared_ptr<sg::Integrator>  integrator;
@@ -82,5 +80,5 @@ namespace ospray {
       return group;
     }
 
-  }
-}
+  } // ::ospray::importer
+} // ::ospray
