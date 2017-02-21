@@ -53,10 +53,9 @@ namespace ospcommon {
 
     // Task definitions ///////////////////////////////////////////////////////
 
-    Task::Task(bool isDynamicallyAllocated)
+    Task::Task()
     : numJobsCompleted(),
-      numJobsStarted(),
-      dynamicallyAllocated(isDynamicallyAllocated)
+      numJobsStarted()
     {
     }
 
@@ -93,41 +92,6 @@ namespace ospcommon {
 
       std::unique_lock<std::mutex> lock(mutex);
       allJobsCompletedCond.wait(lock, [&](){return status == Task::COMPLETED;});
-    }
-
-    void Task::schedule(int numJobs, ScheduleOrder order)
-    {
-      this->order = order;
-      numJobsInTask = numJobs;
-      status = Task::SCHEDULED;
-      activate();
-    }
-
-    void Task::scheduleAndWait(int numJobs, ScheduleOrder order)
-    {
-      schedule(numJobs, order);
-      wait();
-    }
-
-    void Task::activate()
-    {
-      SCOPED_LOCK(TaskSys::global.mutex);
-      bool wasEmpty = TaskSys::global.activeListFirst == nullptr;
-      if (wasEmpty) {
-        TaskSys::global.activeListFirst = TaskSys::global.activeListLast = this;
-        this->next = nullptr;
-        TaskSys::global.tasksAvailable.notify_all();
-      } else {
-        if (order == Task::BACK_OF_QUEUE) {
-          this->next = nullptr;
-          TaskSys::global.activeListLast->next = this;
-          TaskSys::global.activeListLast = this;
-        } else {
-          this->next = TaskSys::global.activeListFirst;
-          TaskSys::global.activeListFirst = this;
-        }
-      }
-      status = Task::ACTIVE;
     }
 
     // TaskSys definitions ////////////////////////////////////////////////////
@@ -175,9 +139,6 @@ namespace ospcommon {
               break;
 
             task->workOnIt();
-
-            if (task->status == Task::COMPLETED && task->dynamicallyAllocated)
-              delete task;
           }
         });
       }
@@ -217,11 +178,40 @@ namespace ospcommon {
       threads.clear();
     }
 
-    // Interface definitions ////////////////////////////////////////////////////
+    // Interface definitions //////////////////////////////////////////////////
 
     void initTaskSystem(int maxNumRenderTasks)
     {
       TaskSys::global.init(maxNumRenderTasks);
+    }
+
+    void scheduleTask(std::shared_ptr<Task> task,
+                      int numJobs,
+                      ScheduleOrder order)
+    {
+      task->numJobsInTask = numJobs;
+      task->status = Task::SCHEDULED;
+
+      auto *t_ptr = task.get();
+
+      SCOPED_LOCK(TaskSys::global.mutex);
+      bool wasEmpty = TaskSys::global.activeListFirst == nullptr;
+      if (wasEmpty) {
+        TaskSys::global.activeListFirst = TaskSys::global.activeListLast = t_ptr;
+        task->next = nullptr;
+        TaskSys::global.tasksAvailable.notify_all();
+      } else {
+        if (order == BACK_OF_QUEUE) {
+          task->next = nullptr;
+          TaskSys::global.activeListLast->next = t_ptr;
+          TaskSys::global.activeListLast = t_ptr;
+        } else {
+          task->next = TaskSys::global.activeListFirst;
+          TaskSys::global.activeListFirst = t_ptr;
+        }
+      }
+
+      task->status = Task::ACTIVE;
     }
 
   } // ::ospcommon::tasking
