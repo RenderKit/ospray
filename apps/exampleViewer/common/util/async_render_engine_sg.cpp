@@ -22,8 +22,7 @@ namespace ospray {
   namespace sg {
 
     async_render_engine_sg::async_render_engine_sg(NodeH sgRenderer)
-      : scenegraph(sgRenderer),
-        lastRTime(0)
+      : scenegraph(sgRenderer)
     {
     }
 
@@ -31,14 +30,14 @@ namespace ospray {
     {
       while (state == ExecState::RUNNING) {
         sg::RenderContext ctx;
-        static sg::TimeStamp lastFTime = 0;
+        static sg::TimeStamp lastFTime;
         if (scenegraph["frameBuffer"]->getChildrenLastModified() > lastFTime )
         {
           nPixels = scenegraph["frameBuffer"]["size"]->getValue<vec2i>().x *
           scenegraph["frameBuffer"]["size"]->getValue<vec2i>().y;
           pixelBuffer[0].resize(nPixels);
           pixelBuffer[1].resize(nPixels);
-          lastFTime = sg::TimeStamp::now();
+          lastFTime = sg::TimeStamp();
         }
 
         fps.startRender();
@@ -48,7 +47,7 @@ namespace ospray {
         {
           scenegraph->traverse(ctx, "verify");
           scenegraph->traverse(ctx, "commit");
-          lastRTime = sg::TimeStamp::now();
+          lastRTime = sg::TimeStamp();
         }
 
         scenegraph->traverse(ctx, "render");

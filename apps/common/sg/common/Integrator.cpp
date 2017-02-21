@@ -59,7 +59,7 @@ namespace ospray {
         ospSetObject(ospRenderer,"camera",camera->ospCamera);
       }
 
-      lastCommitted = rdtsc();
+      lastCommitted = TimeStamp();
       ospCommit(ospRenderer);
       assert(ospRenderer); 
    }

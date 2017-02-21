@@ -21,12 +21,12 @@
 namespace ospray {
   namespace sg {
 
-    std::vector<std::shared_ptr<sg::Node> > Node::nodes;
-    std::map<size_t,size_t> Node::nodesMap;
+    std::vector<std::shared_ptr<sg::Node>> Node::nodes;
 
     // ==================================================================
     // parameter type specializations
     // ==================================================================
+
     template<> OSPDataType ParamT<std::shared_ptr<DataBuffer>>::getOSPDataType() const
     { return OSP_DATA; }
     template<> OSPDataType ParamT<std::shared_ptr<Node>>::getOSPDataType() const
@@ -60,12 +60,6 @@ namespace ospray {
     // ==================================================================
     // sg node implementations
     // ==================================================================
-    // void Node::addParam(sg::Param *p)
-    // {
-    //   assert(p);
-    //   assert(p->getName() != "");
-    //   param[p->getName()] = p;
-    // }
 
     std::shared_ptr<sg::Param> Node::getParam(const std::string &name) const
     {
@@ -89,8 +83,7 @@ namespace ospray {
       //TODO: make child m time propagate
       if (operation != "verify" && !isValid())
         return;
-      TimeStamp childMTime = 1;
-      ctx.childMTime = childMTime;
+      ctx.childMTime = TimeStamp();
       preTraverse(ctx, operation);
       ctx.level++;
       for (auto child : children)
@@ -133,7 +126,7 @@ namespace ospray {
            getChildrenLastModified() >= getLastCommitted()))
       {
         postCommit(ctx);
-        lastCommitted = TimeStamp::now();
+        lastCommitted = TimeStamp();
       }
       else if (operation == "verify")
       {
@@ -180,7 +173,8 @@ namespace ospray {
       return {};
     }
 
-    void registerNamedNode(const std::string &name, const std::shared_ptr<sg::Node> &node)
+    void registerNamedNode(const std::string &name,
+                           const std::shared_ptr<sg::Node> &node)
     {
       namedNodes[name] = node;
     }
@@ -210,7 +204,6 @@ namespace ospray {
 
       std::shared_ptr<sg::Node> newNode = creator();
       Node::nodes.push_back(newNode);
-      Node::nodesMap[(size_t)newNode.get()] = Node::nodes.size();
       newNode->init();
       newNode->setName(name);
       newNode->setType(type);

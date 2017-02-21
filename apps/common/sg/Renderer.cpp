@@ -250,7 +250,7 @@ namespace ospray {
           OSP_FB_COLOR | OSP_FB_ACCUM
         );
 
-        frameMTime = TimeStamp::now();
+        frameMTime = TimeStamp();
       }
 
       ospCommit(ospRenderer);

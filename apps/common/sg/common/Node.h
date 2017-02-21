@@ -58,7 +58,7 @@ namespace ospray {
     inline type get##capName() const { return name; }   \
     inline void set##capName(const type &name) {        \
       this->name = name;                                \
-      this->lastModified = TimeStamp::now();            \
+      this->lastModified = TimeStamp();            \
     };                                                  \
   protected:                                            \
   type name                                             \
@@ -96,7 +96,8 @@ namespace ospray {
       rendering any object. note we INTENTIONALLY do not use
       shared_ptrs here because certain nodes want to set these values
       to 'this', which isn't valid for shared_ptrs */
-    struct OSPSG_INTERFACE RenderContext {
+    struct OSPSG_INTERFACE RenderContext
+    {
       std::shared_ptr<sg::World>      world;      //!< world we're rendering into
       std::shared_ptr<sg::Integrator> integrator; //!< integrator used to create materials etc
       const affine3f  xfm {one};        //!< affine geometry transform matrix
@@ -132,9 +133,7 @@ namespace ospray {
     /*! \brief base node of all scene graph nodes */
     struct OSPSG_INTERFACE Node : public std::enable_shared_from_this<Node>
     {
-      Node() : lastModified(1), childrenMTime(1), lastCommitted(0), name("NULL"),
-      type("Node"), valid(false),
-      ospHandle(nullptr) {}
+      Node() : name("NULL"), type("Node"), valid(false), ospHandle(nullptr) {}
 
       /*!
           NodeH is a handle to a sg::Node.  It has the benefit of supporting
@@ -145,15 +144,6 @@ namespace ospray {
       public:
         NodeH() = default;
         NodeH(std::shared_ptr<sg::Node> n) : node(n) { nid = 1; }
-        //note: sending a pointer to NodeH will use Node manager, workaround for not
-        // being able to use shared_ptrs from constructors
-        // NodeH(Node* n) { nid = Node::nodesMap[(size_t)n];
-        //   std::cout << "creating node with nid: " << nid << std::endl;
-        //   if (!nid)
-        //     std::cout << "could not find node: " << (size_t)n << std::endl;
-        //   node = Node::nodes[nid-1]; }
-        //
-        // NodeH(sg::Node* n) { nid = Node::nodesMap[(size_t)n]; }
 
         size_t nid {0};
         std::shared_ptr<sg::Node> node;
@@ -233,11 +223,11 @@ namespace ospray {
 
       //! return when this node was last committed
       inline TimeStamp getLastCommitted() const { return lastCommitted; }
-      inline void committed() { lastCommitted=TimeStamp::now(); }
+      inline void committed() { lastCommitted = TimeStamp(); }
 
       virtual void modified()
       {
-        lastModified = TimeStamp::now(); 
+        lastModified = TimeStamp();
         if (!parent.isNULL()) 
           parent->setChildrenModified(lastModified);
       }
@@ -428,7 +418,7 @@ namespace ospray {
       virtual bool computeValidMinMax() { return true; }
 
       static std::vector<std::shared_ptr<sg::Node>> nodes;
-      static std::map<size_t, size_t> nodesMap;  // ptr, id
+
     protected:
       std::string name;
       std::string type;
@@ -438,9 +428,9 @@ namespace ospray {
       std::map<std::string, NodeH> children;
       OSPObject ospHandle;
       SGVar value;
-      TimeStamp lastModified  {1};
-      TimeStamp childrenMTime {1};
-      TimeStamp lastCommitted {0};
+      TimeStamp lastModified;
+      TimeStamp childrenMTime;
+      TimeStamp lastCommitted;
       std::map<std::string, std::shared_ptr<sg::Param>> params;
       NodeH parent;
       std::mutex mutex;
@@ -455,15 +445,17 @@ namespace ospray {
     // list of all named nodes - for now use this as a global
     // variable, but eventually we'll need tofind a better way for
     // storing this ... maybe in the world!?
-    extern std::map<std::string,std::shared_ptr<sg::Node> > namedNodes;
+    extern std::map<std::string,std::shared_ptr<sg::Node>> namedNodes;
     std::shared_ptr<sg::Node> OSPSG_INTERFACE findNamedNode(const std::string &name);
-    OSPSG_INTERFACE void registerNamedNode(const std::string &name, const std::shared_ptr<sg::Node> &node);
+    OSPSG_INTERFACE void registerNamedNode(const std::string &name,
+                                           const std::shared_ptr<sg::Node> &node);
 
     using NodeH = Node::NodeH;
-    OSPSG_INTERFACE Node::NodeH createNode(std::string name, std::string type="Node",
-                                           SGVar var=NullType(), int flags=sg::NodeFlags::none,
+    OSPSG_INTERFACE Node::NodeH createNode(std::string name,
+                                           std::string type = "Node",
+                                           SGVar var = NullType(),
+                                           int flags = sg::NodeFlags::none,
                                            std::string documentation="");
-    // , std::shared_ptr<sg::Param>=std::make_shared<sg::Param>("none")
 
     template <typename T>
     struct NodeParamCommit

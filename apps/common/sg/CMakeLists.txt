@@ -27,6 +27,7 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
 
   camera/PerspectiveCamera.cpp
 
+  common/TimeStamp.cpp
   common/Serialization.cpp
   common/Common.cpp
   common/Node.cpp

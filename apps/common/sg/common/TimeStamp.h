@@ -16,8 +16,10 @@
 
 #pragma once
 
+#include "sg/SceneGraphExports.h"
 #include "sg/common/Common.h"
-#include "ospcommon/intrinsics.h"
+
+#include <atomic>
 
 namespace ospray {
   namespace sg {
@@ -25,23 +27,22 @@ namespace ospray {
     //! \brief Implements an abstraction of Time
     /*! Abstracts the concept of time to be used for time-stamping
       node's last 'lastupdated' and /lastmodified' time stamps */
-    struct OSPSG_INTERFACE TimeStamp {
-      //! \brief constructor 
-      TimeStamp(uint64_t t) : t(t) {};
-      TimeStamp() { t=now(); };
-      
-      //! \brief returns global time(stamp) at time of calling
-      static inline TimeStamp now() { return ospcommon::read_tsc(); }
-
-      //! \brief Allows ot typecast to a uint64_t (so times can be compared)
-      inline operator uint64_t () const { return t; }
+    struct OSPSG_INTERFACE TimeStamp
+    {
+      TimeStamp() = default;
+      operator size_t() const;
       
     private:
+
+      static size_t getNextValue();
+
+      // Data members //
+
+      size_t value {getNextValue()};
+
       //! \brief the uint64_t that stores the time value
-      uint64_t t;
+      static std::atomic_size_t global;
     };
 
   } // ::ospray::sg
 } // ::ospray
-
-
