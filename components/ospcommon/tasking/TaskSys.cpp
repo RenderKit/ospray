@@ -27,11 +27,12 @@ namespace ospcommon {
   
   struct TaskSys
   {
+    TaskSys();
     ~TaskSys();
 
-    void      init(size_t maxNumRenderTasks);
-    Ref<Task> getNextActiveTask();
-    void      shutdownWorkerThreads();
+    void  init(int maxNumRenderTasks);
+    Task *getNextActiveTask();
+    void  shutdownWorkerThreads();
 
     // Data members //
 
@@ -42,7 +43,7 @@ namespace ospcommon {
 
     //! Queue of tasks that have ALREADY been acitvated, which are ready to run
     __aligned(64) Task *volatile activeListFirst {nullptr};
-    __aligned(64) Task *volatile activeListLast {nullptr};
+    __aligned(64) Task *volatile activeListLast  {nullptr};
 
     std::mutex __aligned(64) mutex;
     std::condition_variable __aligned(64) tasksAvailable;
@@ -52,6 +53,13 @@ namespace ospcommon {
   
   TaskSys __aligned(64) TaskSys::global;
 
+  TaskSys::TaskSys()
+  {
+#ifdef OSPRAY_TASKING_INTERNAL
+    init(-1);
+#endif
+  }
+
   inline TaskSys::~TaskSys()
   {
     shutdownWorkerThreads();
@@ -59,9 +67,10 @@ namespace ospcommon {
 
   inline void Task::workOnIt() 
   {
-    size_t myCompleted = 0;
+    int myCompleted = 0;
+
     while (true) {
-      const size_t thisJobID = numJobsStarted++;
+      const int thisJobID = numJobsStarted++;
 
       if (thisJobID >= numJobsInTask) 
         break;
@@ -71,7 +80,7 @@ namespace ospcommon {
     }
 
     if (myCompleted != 0) {
-      const size_t nowCompleted = (numJobsCompleted += myCompleted);
+      const int nowCompleted = (numJobsCompleted += myCompleted);
       if (nowCompleted == numJobsInTask) {
         SCOPED_LOCK(mutex);
         status = Task::COMPLETED;
@@ -92,13 +101,7 @@ namespace ospcommon {
     allJobsCompletedCond.wait(lock, [&](){return status == Task::COMPLETED;});
   }
 
-  void Task::scheduleAndWait(size_t numJobs, ScheduleOrder order)
-  {
-    schedule(numJobs,order);
-    wait();
-  }
-
-  inline Ref<Task> TaskSys::getNextActiveTask()
+  inline Task *TaskSys::getNextActiveTask()
   {
     while (true) {
       std::unique_lock<std::mutex> lock(mutex);
@@ -109,9 +112,8 @@ namespace ospcommon {
       if (!running)
         return nullptr;
 
-      Ref<Task> front = activeListFirst;
-      if (front->numJobsStarted >= int(front->numJobsInTask)) {
-
+      Task *front = activeListFirst;
+      if (front->numJobsStarted >= front->numJobsInTask) {
         if (activeListFirst == activeListLast)
           activeListFirst = activeListLast = nullptr;
         else
@@ -133,46 +135,42 @@ namespace ospcommon {
     threads.clear();
   }
     
-  void Task::initTaskSystem(const size_t maxNumRenderTasks)
+  void Task::schedule(int numJobs, ScheduleOrder order)
   {
-    TaskSys::global.init(maxNumRenderTasks);
-  }
-
-  void Task::schedule(size_t numJobs, ScheduleOrder order)
-  {
-    refInc();
     this->order = order;
     numJobsInTask = numJobs;
     status = Task::SCHEDULED;
     activate();
   }
 
-  inline void Task::activate()
+  void Task::scheduleAndWait(int numJobs, ScheduleOrder order)
   {
-    if (!TaskSys::global.initialized)
-      throw std::runtime_error("TASK SYSTEM NOT YET INITIALIZED");
-    {
-      SCOPED_LOCK(TaskSys::global.mutex);
-      bool wasEmpty = TaskSys::global.activeListFirst == nullptr;
-      if (wasEmpty) {
-        TaskSys::global.activeListFirst = TaskSys::global.activeListLast = this;
-        this->next = nullptr;
-        TaskSys::global.tasksAvailable.notify_all();
-      } else {
-        if (order == Task::BACK_OF_QUEUE) {
-          this->next = nullptr;
-          TaskSys::global.activeListLast->next = this;
-          TaskSys::global.activeListLast = this;
-        } else {
-          this->next = TaskSys::global.activeListFirst;
-          TaskSys::global.activeListFirst = this;
-        }
-      }
-      status = Task::ACTIVE;
-    }
+    schedule(numJobs,order);
+    wait();
   }
 
-  void TaskSys::init(size_t numThreads)
+  inline void Task::activate()
+  {
+    SCOPED_LOCK(TaskSys::global.mutex);
+    bool wasEmpty = TaskSys::global.activeListFirst == nullptr;
+    if (wasEmpty) {
+      TaskSys::global.activeListFirst = TaskSys::global.activeListLast = this;
+      this->next = nullptr;
+      TaskSys::global.tasksAvailable.notify_all();
+    } else {
+      if (order == Task::BACK_OF_QUEUE) {
+        this->next = nullptr;
+        TaskSys::global.activeListLast->next = this;
+        TaskSys::global.activeListLast = this;
+      } else {
+        this->next = TaskSys::global.activeListFirst;
+        TaskSys::global.activeListFirst = this;
+      }
+    }
+    status = Task::ACTIVE;
+  }
+
+  void TaskSys::init(int numThreads)
   {
     if (initialized)
       shutdownWorkerThreads();
@@ -182,22 +180,32 @@ namespace ospcommon {
 
     if (numThreads >= 0) {
       numThreads = std::min(numThreads,
-                            (size_t)std::thread::hardware_concurrency());
+                            (int)std::thread::hardware_concurrency());
+    } else {
+      numThreads = (int)std::thread::hardware_concurrency();
     }
 
     /* generate all threads */
-    for (size_t t = 1; t < numThreads; t++) {
+    for (int t = 1; t < numThreads; t++) {
       threads.emplace_back([&](){
         while (true) {
-          Ref<Task> task = getNextActiveTask();
+          Task *task = getNextActiveTask();
 
           if (!running)
             break;
 
           task->workOnIt();
+
+          if (task->status == Task::COMPLETED && task->dynamicallyAllocated)
+            delete task;
         }
       });
     }
   }
-  
+
+  void initTaskSystem(int maxNumRenderTasks)
+  {
+    TaskSys::global.init(maxNumRenderTasks);
+  }
+
 } // ::ospcommon

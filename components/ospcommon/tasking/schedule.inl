@@ -45,14 +45,15 @@ namespace ospcommon {
 #elif defined(OSPRAY_TASKING_CILK)
     cilk_spawn fcn();
 #elif defined(OSPRAY_TASKING_INTERNAL)
-    struct LocalTask : public Task {
+    struct LocalTask : public Task
+    {
       TASK_T t;
       LocalTask(TASK_T&& fcn)
-        : Task("LocalTask"), t(std::forward<TASK_T>(fcn)) {}
-      void run(size_t) override { t(); }
+        : Task(true), t(std::forward<TASK_T>(fcn)) {}
+      void run(int) override { t(); }
     };
 
-    Ref<LocalTask> task = new LocalTask(std::forward<TASK_T>(fcn));
+    auto *task = LocalTask(std::forward<TASK_T>(fcn));
     task->schedule(1, Task::FRONT_OF_QUEUE);
 #else// OpenMP or Debug --> synchronous!
     fcn();

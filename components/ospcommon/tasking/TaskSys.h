@@ -18,16 +18,16 @@
 
 #include "../platform.h"
 #include "../sysinfo.h"
-#include "../RefCount.h"
 // std
+#include <atomic>
 #include <mutex>
 #include <condition_variable>
 
 namespace ospcommon {
 
-  struct OSPCOMMON_INTERFACE __aligned(64) Task : public RefCount
+  struct OSPCOMMON_INTERFACE __aligned(64) Task
   {
-    Task(const char *name = "no name");
+    Task(bool isDynamicallyAllocated = false);
     virtual ~Task() = default;
 
     // ------------------------------------------------------------------
@@ -50,25 +50,14 @@ namespace ospcommon {
     ScheduleOrder order;
 
     //! schedule the given task with the given number of sub-jobs.
-    void schedule(size_t numJobs, ScheduleOrder order=BACK_OF_QUEUE);
+    void schedule(int numJobs, ScheduleOrder order=BACK_OF_QUEUE);
 
     //! same as schedule(), but also wait for all jobs to complete
-    void scheduleAndWait(size_t numJobs, ScheduleOrder order=BACK_OF_QUEUE);
+    void scheduleAndWait(int numJobs, ScheduleOrder order=BACK_OF_QUEUE);
 
     //! wait for the task to complete, optionally (by default) helping
     //! to actually work on completing this task.
     void wait(bool workOnIt = true);
-
-    //! get name of the task (useful for debugging)
-    const char *getName();
-
-    /*! \brief initialize the task system with given number of worker
-        tasks.
-
-        numThreads==-1 means 'use all that are available; numThreads=0
-        means 'no worker thread, assume that whoever calls wait() will
-        do the work */
-    static void initTaskSystem(const size_t numThreads);
 
   private:
 
@@ -81,7 +70,7 @@ namespace ospcommon {
     // callback used to define what the task is doing
     // ------------------------------------------------------------------
 
-    virtual void run(size_t jobID) = 0;
+    virtual void run(int jobID) = 0;
 
     // ------------------------------------------------------------------
     // internal data for the tasking systme to manage the task
@@ -95,9 +84,11 @@ namespace ospcommon {
     //! is a) scheduled and b) all dependencies are fulfilled
     void activate();
 
+    // Data members //
+
     __aligned(64) std::atomic_int numJobsCompleted;
     __aligned(64) std::atomic_int numJobsStarted;
-    size_t numJobsInTask {0};
+    int numJobsInTask {0};
 
     enum Status { INITIALIZING, SCHEDULED, ACTIVE, COMPLETED };
     std::mutex __aligned(64) mutex;
@@ -106,21 +97,24 @@ namespace ospcommon {
     std::condition_variable __aligned(64) allJobsCompletedCond;
 
     __aligned(64) Task *volatile next;
-    const char *name;
+    bool dynamicallyAllocated {false};
   };
 
-// Inlined function definitions ///////////////////////////////////////////////
+  /*! \brief initialize the task system with given number of worker
+      tasks.
 
-  inline Task::Task(const char *name)
-    : numJobsCompleted(),
-      numJobsStarted(),
-      name(name)
-  {
-  }
+      numThreads==-1 means 'use all that are available; numThreads=0
+      means 'no worker thread, assume that whoever calls wait() will
+      do the work */
+  void initTaskSystem(int numThreads);
 
-  inline const char *Task::getName()
+  // Inlined function definitions /////////////////////////////////////////////
+
+  inline Task::Task(bool isDynamicallyAllocated)
+  : numJobsCompleted(),
+    numJobsStarted(),
+    dynamicallyAllocated(isDynamicallyAllocated)
   {
-    return name;
   }
 
 } // ::ospcommon
