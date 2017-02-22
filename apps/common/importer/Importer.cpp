@@ -70,6 +70,8 @@ namespace ospray {
           Volume* msgVolume = new Volume;
           msgVolume->bounds = volumeNode->getBounds();
           msgVolume->handle = volumeNode->volume;
+          msgVolume->voxelRange = volumeNode->getVoxelRange();
+
           group->volume.push_back(msgVolume);
 #endif
       } else if (fileName.ext() == "bob") {

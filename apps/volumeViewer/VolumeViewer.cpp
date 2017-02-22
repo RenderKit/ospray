@@ -707,6 +707,7 @@ void VolumeViewer::importObjectsFromFile(const std::string &filename)
     
     ospray::importer::Volume *vol = imported->volume[i];
     assert(vol);
+    std::cout << "imported vol voxelRange: " << vol->voxelRange.y << std::endl;
     // For now we set the same transfer function on all volumes.
     ospSetObject(vol->handle, "transferFunction", transferFunction);
     ospCommit(vol->handle);
