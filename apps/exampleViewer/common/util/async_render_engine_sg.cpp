@@ -31,10 +31,13 @@ namespace ospray {
       while (state == ExecState::RUNNING) {
         sg::RenderContext ctx;
         static sg::TimeStamp lastFTime;
-        if (scenegraph["frameBuffer"]->getChildrenLastModified() > lastFTime )
+
+        auto &sgFB = scenegraph["frameBuffer"];
+
+        if (sgFB->getChildrenLastModified() > lastFTime )
         {
-          nPixels = scenegraph["frameBuffer"]["size"]->getValue<vec2i>().x *
-          scenegraph["frameBuffer"]["size"]->getValue<vec2i>().y;
+          auto &size = sgFB["size"];
+          nPixels = size->getValue<vec2i>().x * size->getValue<vec2i>().y;
           pixelBuffer[0].resize(nPixels);
           pixelBuffer[1].resize(nPixels);
           lastFTime = sg::TimeStamp();
@@ -42,8 +45,7 @@ namespace ospray {
 
         fps.startRender();
 
-        bool modified = (scenegraph->getChildrenLastModified() > lastRTime);
-        if (modified)
+        if (scenegraph->getChildrenLastModified() > lastRTime)
         {
           scenegraph->traverse(ctx, "verify");
           scenegraph->traverse(ctx, "commit");
@@ -53,15 +55,14 @@ namespace ospray {
         scenegraph->traverse(ctx, "render");
 
         fps.doneRender();
-        auto sgFB =
-            std::static_pointer_cast<sg::FrameBuffer>(scenegraph["frameBuffer"].get());
+        auto sgFBptr = std::static_pointer_cast<sg::FrameBuffer>(sgFB.get());
 
-        auto *srcPB = (uint32_t*) sgFB->map();
+        auto *srcPB = (uint32_t*)sgFBptr->map();
         auto *dstPB = (uint32_t*)pixelBuffer[currentPB].data();
 
         memcpy(dstPB, srcPB, nPixels*sizeof(uint32_t));
 
-        sgFB->unmap(srcPB);
+        sgFBptr->unmap(srcPB);
 
         if (fbMutex.try_lock())
         {

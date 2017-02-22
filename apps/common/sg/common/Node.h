@@ -41,13 +41,13 @@
 namespace ospray {
   namespace sg {
 
-    struct OSPSG_INTERFACE NullType {};
-
-    bool operator==(const NullType& lhs, const NullType& rhs);
-
 #if USE_OSPVARIANT
     using SGVar = OSPVariant;
 #else
+    struct OSPSG_INTERFACE NullType {};
+    inline bool operator==(const NullType& lhs, const NullType& rhs)
+    { return true; }
+
     using SGVar = mapbox::util::variant<NullType, OSPObject, vec3f, vec2f,
                                         vec2i, box3f, std::string,
                                         float, bool, int>;
@@ -461,7 +461,7 @@ namespace ospray {
     using NodeH = Node::NodeH;
     OSPSG_INTERFACE Node::NodeH createNode(std::string name,
                                            std::string type = "Node",
-                                           SGVar var = NullType(),
+                                           SGVar var = SGVar(),
                                            int flags = sg::NodeFlags::none,
                                            std::string documentation="");
 

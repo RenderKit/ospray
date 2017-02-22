@@ -55,8 +55,6 @@ namespace ospray {
     template<> OSPDataType ParamT<std::shared_ptr<Texture2D>>::getOSPDataType() const
     { return OSP_TEXTURE; }
 
-    bool operator==(const NullType& lhs, const NullType& rhs) { return true; }
-
     // ==================================================================
     // sg node implementations
     // ==================================================================
@@ -155,15 +153,19 @@ namespace ospray {
     }
 
     // ==================================================================
-    // global struff
+    // global stuff
     // ==================================================================
 
+#if USE_OSPVARIANT
+    bool valid(SGVar var) { return var.valid(); }
+#else
     bool valid(SGVar var) { return var.which() > 0; }
+#endif
 
     // list of all named nodes - for now use this as a global
     // variable, but eventually we'll need tofind a better way for
     // storing this
-    std::map<std::string,std::shared_ptr<sg::Node> > namedNodes;
+    std::map<std::string, std::shared_ptr<sg::Node>> namedNodes;
 
     std::shared_ptr<sg::Node> findNamedNode(const std::string &name)
     {
