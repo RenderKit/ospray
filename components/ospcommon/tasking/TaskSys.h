@@ -25,46 +25,29 @@
 namespace ospcommon {
   namespace tasking {
 
+    enum ScheduleOrder
+    {
+      /*! schedule job to the END of the job queue, meaning it'll get
+          pulled only after all the ones already in the queue */
+      BACK_OF_QUEUE,
+      /*! schedule job to the FRONT of the queue, meaning it'll likely
+          get processed even before other jobs that are already in the
+          queue */
+      FRONT_OF_QUEUE
+    };
+
     struct OSPCOMMON_INTERFACE __aligned(64) Task
     {
-      Task(bool isDynamicallyAllocated = false);
+      Task();
       virtual ~Task() = default;
 
       // ------------------------------------------------------------------
       // interface for scheduling a new task into the task system
       // ------------------------------------------------------------------
 
-      enum ScheduleOrder
-      {
-        /*! schedule job to the END of the job queue, meaning it'll get
-            pulled only after all the ones already in the queue */
-        BACK_OF_QUEUE,
-        /*! schedule job to the FRONT of the queue, meaning it'll likely
-            get processed even before other jobs that are already in the
-            queue */
-        FRONT_OF_QUEUE
-      };
-
-      /*! the order in the queue that this job will get scheduled when
-       *  activated */
-      ScheduleOrder order;
-
-      //! schedule the given task with the given number of sub-jobs.
-      void schedule(int numJobs, ScheduleOrder order=BACK_OF_QUEUE);
-
-      //! same as schedule(), but also wait for all jobs to complete
-      void scheduleAndWait(int numJobs, ScheduleOrder order=BACK_OF_QUEUE);
-
       //! wait for the task to complete, optionally (by default) helping
       //! to actually work on completing this task.
       void wait();
-
-    private:
-
-      //! Allow tasking system backend to access all parts of the class, but
-      //! prevent users from using data which is an implementation detail of the
-      //! task
-      friend struct TaskSys;
 
       // ------------------------------------------------------------------
       // callback used to define what the task is doing
@@ -76,13 +59,8 @@ namespace ospcommon {
       // internal data for the tasking systme to manage the task
       // ------------------------------------------------------------------
 
-      //*! work on task until no more useful job available on this task
+      //! work on task until no more useful job available on this task
       void workOnIt();
-
-      //! activate job, and insert into the task system. should never be
-      //! called by the user, only by the task(system) whenever the task
-      //! is a) scheduled and b) all dependencies are fulfilled
-      void activate();
 
       // Data members //
 
@@ -97,7 +75,6 @@ namespace ospcommon {
       std::condition_variable __aligned(64) allJobsCompletedCond;
 
       __aligned(64) Task *volatile next;
-      bool dynamicallyAllocated {false};
     };
 
     // Public interface to the tasking system /////////////////////////////////
@@ -110,6 +87,11 @@ namespace ospcommon {
         do the work */
     void OSPCOMMON_INTERFACE initTaskSystem(int numThreads = -1);
 
+    //! schedule the given task with the given number of sub-jobs.
+    void scheduleTask(std::shared_ptr<Task> task,
+                      int numJobs,
+                      ScheduleOrder order = BACK_OF_QUEUE);
+
     template <typename TASK_T>
     inline void parallel_for(int nTasks, TASK_T && fcn)
     {
@@ -120,8 +102,9 @@ namespace ospcommon {
         void run(int taskIndex) override { t(taskIndex); }
       };
 
-      LocalTask task(std::forward<TASK_T>(fcn));
-      task.scheduleAndWait(nTasks);
+      auto task = std::make_shared<LocalTask>(std::forward<TASK_T>(fcn));
+      scheduleTask(task, nTasks);
+      task->wait();
     }
 
     template <typename TASK_T>
@@ -130,13 +113,12 @@ namespace ospcommon {
       struct LocalTask : public Task
       {
         TASK_T t;
-        LocalTask(TASK_T&& fcn)
-          : Task(true), t(std::forward<TASK_T>(fcn)) {}
+        LocalTask(TASK_T&& fcn) : t(std::forward<TASK_T>(fcn)) {}
         void run(int) override { t(); }
       };
 
-      auto *task = LocalTask(std::forward<TASK_T>(fcn));
-      task->schedule(1, Task::FRONT_OF_QUEUE);
+      auto task = std::make_shared<LocalTask>(std::forward<TASK_T>(fcn));
+      scheduleTask(task, 1, FRONT_OF_QUEUE);
     }
 
   } // ::ospcommon::tasking
