@@ -26,24 +26,32 @@
 // xml
 #include "../../../common/xml/XML.h"
 // ospcommon
-#include "ospray/common/OSPCommon.h"
 #include "ospcommon/vec.h"
-#include "mapbox/variant.hpp"
+
+#define USE_OSPVARIANT 0
+
+#if USE_OSPVARIANT
+#  include "sg/common/OSPVariant.h"
+#else
+#  include "mapbox/variant.hpp"
+#endif
+
 #include <mutex>
-#include <typeinfo>
 
 namespace ospray {
   namespace sg {
-
-    using namespace ospcommon;
 
     struct OSPSG_INTERFACE NullType {};
 
     bool operator==(const NullType& lhs, const NullType& rhs);
 
+#if USE_OSPVARIANT
+    using SGVar = OSPVariant;
+#else
     using SGVar = mapbox::util::variant<NullType, OSPObject, vec3f, vec2f,
                                         vec2i, box3f, std::string,
                                         float, bool, int>;
+#endif
 
     bool OSPSG_INTERFACE isValid(SGVar var);
 
@@ -596,7 +604,7 @@ namespace ospray {
       of this renderer.
     */
 #define OSP_REGISTER_SG_NODE(InternalClassName)                         \
-    extern "C" OSPRAY_DLLEXPORT std::shared_ptr<ospray::sg::Node>       \
+    extern "C" OSPSG_INTERFACE std::shared_ptr<ospray::sg::Node>        \
     ospray_create_sg_node__##InternalClassName()                        \
     {                                                                   \
       return std::make_shared<ospray::sg::InternalClassName>();         \
@@ -606,7 +614,7 @@ namespace ospray {
     ospray_create_sg_node__##InternalClassName()
 
 #define OSP_REGISTER_SG_NODE_NAME(InternalClassName,Name)               \
-    extern "C" OSPRAY_DLLEXPORT std::shared_ptr<ospray::sg::Node>       \
+    extern "C" OSPSG_INTERFACE std::shared_ptr<ospray::sg::Node>        \
     ospray_create_sg_node__##Name()                                     \
     {                                                                   \
       return std::make_shared<ospray::sg::InternalClassName>();         \

@@ -18,6 +18,11 @@
 #include "sg/common/World.h"
 #include "sg/common/Integrator.h"
 
+#ifndef _WIN32
+# warning "Shouldn't include OSPCommon.h in ospray_sg!"
+#endif
+#include "ospray/common/OSPCommon.h"
+
 namespace ospray {
   namespace sg {
 
@@ -53,8 +58,7 @@ namespace ospray {
           extendVoxelRange(voxelRange, reinterpret_cast<const double*>(voxels), numVoxels);
           break;
         default:
-          throw std::runtime_error("sg::extendVoxelRange: unsupported voxel type "
-              + stringForType(voxelType));
+          throw std::runtime_error("sg::extendVoxelRange: unsupported voxel type!");
       }
     }
 

@@ -27,18 +27,19 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
 
   camera/PerspectiveCamera.cpp
 
-  common/TimeStamp.cpp
-  common/Serialization.cpp
   common/Common.cpp
-  common/Node.cpp
-  common/Light.cpp
-  common/Integrator.cpp
-  common/World.cpp
-  common/Texture2D.cpp
-  common/Material.cpp
-  common/Transform.cpp
   common/FrameBuffer.cpp
-  
+  common/Integrator.cpp
+  common/Light.cpp
+  common/Material.cpp
+  common/Node.cpp
+  common/OSPVariant.h
+  common/Serialization.cpp
+  common/TimeStamp.cpp
+  common/Texture2D.cpp
+  common/Transform.cpp
+  common/World.cpp
+
   transferFunction/TransferFunction.cpp
   volume/Volume.cpp
 
