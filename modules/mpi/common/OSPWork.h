@@ -133,6 +133,8 @@ namespace ospray {
         ObjectHandle handle;
       };
 
+      // NewObjectT explicit instantiations ///////////////////////////////////
+
       using NewModel            = NewObjectT<Model>;
       using NewPixelOp          = NewObjectT<PixelOp>;
       using NewRenderer         = NewObjectT<Renderer>;
@@ -141,14 +143,15 @@ namespace ospray {
       using NewGeometry         = NewObjectT<Geometry>;
       using NewTransferFunction = NewObjectT<TransferFunction>;
 
-      // NewObjectT explicit instantiations ///////////////////////////////////
+      // Specializations for objects
+      template<>
+      void NewRenderer::runOnMaster();
 
       template<>
-      inline void NewModel::run()
-      {
-        auto *model = new Model;
-        handle.assign(model);
-      }
+      void NewVolume::runOnMaster();
+
+      template<>
+      inline void NewModel::run();
 
       struct NewMaterial : public Work
       {
@@ -675,6 +678,8 @@ namespace ospray {
         LoadModule(const std::string &name);
 
         void run() override;
+        // We do need to load modules on master in the case of scripted modules
+        void runOnMaster() override;
         bool flushing() override { return true; }
 
         /*! serializes itself on the given serial buffer - will write
