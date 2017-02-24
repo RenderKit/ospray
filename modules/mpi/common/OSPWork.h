@@ -151,7 +151,7 @@ namespace ospray {
       void NewVolume::runOnMaster();
 
       template<>
-      inline void NewModel::run();
+      void NewModel::run();
 
       struct NewMaterial : public Work
       {

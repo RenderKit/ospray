@@ -284,7 +284,7 @@ namespace ospray {
       // ospNewModel
       // =======================================================
       template<>
-      inline void NewModel::run()
+      void NewModel::run()
       {
         auto *model = new Model;
         handle.assign(model);
