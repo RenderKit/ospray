@@ -236,8 +236,8 @@ namespace ospray {
          (that are not in scene graph format) to actual scene graph */
       if (doc->child[0]->name == "volume") {
         std::cout << "#osp.sg: Seems the file we are parsing is actually not a " << endl;
-        std::cout << "#osp.sg: ospray scene graph file, but rather a (older) " << endl;
-        std::cout << "#osp.sg: ospVolumeViewer input file. Herocically trying to " << endl;
+        std::cout << "#osp.sg: ospray scene graph file, but rather an (older) " << endl;
+        std::cout << "#osp.sg: ospVolumeViewer input file. Heroically trying to " << endl;
         std::cout << "#osp.sg: convert this to scene graph while loading. " << endl;
         return importOSPVolumeViewerFile(doc);
       }
