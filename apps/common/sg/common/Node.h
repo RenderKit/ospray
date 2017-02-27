@@ -28,30 +28,14 @@
 // ospcommon
 #include "ospcommon/vec.h"
 
-#define USE_OSPVARIANT 1
-
-#if USE_OSPVARIANT
-#  include "sg/common/OSPVariant.h"
-#else
-#  include "mapbox/variant.hpp"
-#endif
+#include "sg/common/OSPVariant.h"
 
 #include <mutex>
 
 namespace ospray {
   namespace sg {
 
-#if USE_OSPVARIANT
     using SGVar = OSPVariant;
-#else
-    struct OSPSG_INTERFACE NullType {};
-    inline bool operator==(const NullType& lhs, const NullType& rhs)
-    { return true; }
-
-    using SGVar = mapbox::util::variant<NullType, OSPObject, vec3f, vec2f,
-                                        vec2i, box3f, std::string,
-                                        float, bool, int>;
-#endif
 
     bool OSPSG_INTERFACE isValid(SGVar var);
 

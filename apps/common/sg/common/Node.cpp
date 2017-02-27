@@ -157,11 +157,7 @@ namespace ospray {
     // global stuff
     // ==================================================================
 
-#if USE_OSPVARIANT
     bool valid(SGVar var) { return var.valid(); }
-#else
-    bool valid(SGVar var) { return var.which() > 0; }
-#endif
 
     // list of all named nodes - for now use this as a global
     // variable, but eventually we'll need tofind a better way for
