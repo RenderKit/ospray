@@ -254,6 +254,17 @@ MACRO(OSPRAY_CREATE_APPLICATION APP_NAME)
   ENDIF()
 ENDMACRO()
 
+## Conveniance macro for creating OSPRay test applications ##
+# Usage - same as OSPRAY_CREATE_APPLICATION
+#
+# Will build the app if 'OSPRAY_ENABLE_TESTING=ON' in CMake
+
+MACRO(OSPRAY_CREATE_TEST)
+  IF (OSPRAY_ENABLE_TESTING)
+    OSPRAY_CREATE_APPLICATION(${ARGN})
+  ENDIF()
+ENDMACRO()
+
 ## Conveniance macro for installing OSPRay headers ##
 # Usage
 #

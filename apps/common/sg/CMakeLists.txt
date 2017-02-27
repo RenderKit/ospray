@@ -62,7 +62,7 @@ LINK
 
 ## Test apps ##
 
-OSPRAY_CREATE_APPLICATION(test_OSPVariant
+OSPRAY_CREATE_TEST(test_OSPVariant
   common/OSPVariant.h
   common/test_OSPVariant.cpp
 LINK
