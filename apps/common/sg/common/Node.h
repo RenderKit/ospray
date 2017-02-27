@@ -125,7 +125,8 @@ namespace ospray {
     /*! \brief base node of all scene graph nodes */
     struct OSPSG_INTERFACE Node : public std::enable_shared_from_this<Node>
     {
-      Node() = default;
+      // NOTE(jda) - can't do default member initializers due to MSVC...
+      Node() : name("NULL"), type("Node") {}
 
       /*!
           NodeH is a handle to a sg::Node.  It has the benefit of supporting
@@ -135,23 +136,23 @@ namespace ospray {
       {
       public:
         NodeH() = default;
-        NodeH(std::shared_ptr<sg::Node> n) : node(n) { nid = 1; }
+        NodeH(std::shared_ptr<sg::Node> n) : node(n) {}
 
-        size_t nid {0};
         std::shared_ptr<sg::Node> node;
 
         //! return child with name c
-        NodeH& operator[] (std::string c) { return get()->getChild(c);}
+        NodeH& operator[] (std::string c) { return get()->getChild(c); }
 
         //! add child node n to this node
-        NodeH operator+= (NodeH n) { get()->add(n); n->setParent(*this); return n;}
+        NodeH operator+= (NodeH n)
+        { get()->add(n); n->setParent(*this); return n;}
 
         std::shared_ptr<sg::Node> operator->() { return get(); }
 
-        std::shared_ptr<sg::Node> get() { return isNULL()? nullptr : node; }
+        std::shared_ptr<sg::Node> get() { return node; }
 
         //! is this handle pointing to a null value?
-        bool isNULL() const { return nid == 0 || !node; }
+        bool isNULL() const { return node.get() == nullptr; }
       };
 
       virtual std::string toString() const { return "Node"; }
@@ -413,8 +414,9 @@ namespace ospray {
       static std::vector<std::shared_ptr<sg::Node>> nodes;
 
     protected:
-      std::string name {"NULL"};
-      std::string type {"Node"};
+
+      std::string name;
+      std::string type;
       std::vector<SGVar> minmax;
       std::vector<SGVar> whitelist;
       std::vector<SGVar> blacklist;

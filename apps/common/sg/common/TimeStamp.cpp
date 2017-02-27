@@ -20,7 +20,7 @@ namespace ospray {
   namespace sg {
 
     //! \brief the uint64_t that stores the time value
-    std::atomic_size_t TimeStamp::global {0};
+    std::atomic<size_t> TimeStamp::global {0};
 
     ospray::sg::TimeStamp::operator size_t() const
     {

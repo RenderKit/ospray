@@ -41,7 +41,7 @@ namespace ospray {
       size_t value {getNextValue()};
 
       //! \brief the uint64_t that stores the time value
-      static std::atomic_size_t global;
+      static std::atomic<size_t> global;
     };
 
   } // ::ospray::sg
