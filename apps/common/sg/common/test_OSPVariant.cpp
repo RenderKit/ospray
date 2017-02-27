@@ -46,10 +46,18 @@ inline void test_interface(T testValue, T testValue2)
     verify_value<T>(v2, testValue);
   }
 
-  SECTION("Two objects with same value are equal")
+  SECTION("Two objects with same value are equal if constructed the same")
   {
     v = testValue;
     OSPVariant v2 = testValue;
+    REQUIRE(v == v2);
+  }
+
+  SECTION("Two objects with same value are equal if assigned from another")
+  {
+    v = testValue;
+    OSPVariant v2 = testValue2;
+    v = v2;
     REQUIRE(v == v2);
   }
 

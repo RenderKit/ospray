@@ -40,6 +40,8 @@ namespace ospray {
       template<typename T>
       void set(const T &value);
 
+      OSPVariant& operator=(const OSPVariant &rhs);
+
       template<typename T>
       OSPVariant& operator=(const T &rhs);
 
@@ -328,7 +330,7 @@ namespace ospray {
     inline void OSPVariant::set(const OSPVariant &value)
     {
       cleanup();
-      if (value.currentType == Type::STRING)
+      if (value.is<std::string>())
         set<std::string>(value.get<std::string>());
       else {
         currentType = value.currentType;
@@ -353,19 +355,19 @@ namespace ospray {
 
     inline OSPVariant::OSPVariant()
     {
-      std::memset(&data, 0, sizeof(data));
+      cleanup();
     }
 
     inline OSPVariant::OSPVariant(const OSPVariant &copy)
     {
-      std::memset(&data, 0, sizeof(data));
+      cleanup();
       set(copy);
     }
 
     template<typename T>
     inline OSPVariant::OSPVariant(const T &value)
     {
-      std::memset(&data, 0, sizeof(data));
+      cleanup();
       set(value);
     }
 
@@ -374,17 +376,25 @@ namespace ospray {
       cleanup();
     }
 
+    inline OSPVariant& OSPVariant::operator=(const OSPVariant &rhs)
+    {
+      set<OSPVariant>(rhs);
+      return *this;
+    }
+
     template<typename T>
     inline OSPVariant& OSPVariant::operator=(const T &rhs)
     {
       set<T>(rhs);
+      return *this;
     }
 
     inline void OSPVariant::cleanup()
     {
       if (is<std::string>() && data.as_string != nullptr)
         delete data.as_string;
-      std::memset(&data, 0, sizeof(data));
+
+      currentType = Type::INVALID;
     }
 
     // Overloaded operator definitions ////////////////////////////////////////
