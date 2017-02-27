@@ -20,11 +20,11 @@ namespace ospray {
   namespace sg {
 
     FrameBuffer::FrameBuffer(vec2i size)
-      : size(size),
-        ospFrameBuffer(NULL) 
+      : size(size)
     {
       createFB();
     }
+
     void FrameBuffer::init()
     {
       add(createNode("size", "vec2i", size));
@@ -84,7 +84,8 @@ namespace ospray {
       ospFrameBuffer = ospNewFrameBuffer((osp::vec2i&)size, OSP_FB_SRGBA,
                                          OSP_FB_COLOR | OSP_FB_ACCUM);
       setValue((OSPObject)ospFrameBuffer);
-      std::cout << "creating fb : " << getValue<OSPObject>() << " " << size << "\n";
+      std::cout << "creating fb : " << getValue<OSPObject>() << " " << size
+                << "\n";
     }
 
     void ospray::sg::FrameBuffer::destroyFB()

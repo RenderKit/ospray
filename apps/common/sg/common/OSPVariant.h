@@ -73,7 +73,7 @@ namespace ospray {
 
       // Data members //
 
-      Type currentType;
+      Type currentType {Type::INVALID};
 
       union
       {
@@ -353,7 +353,6 @@ namespace ospray {
 
     inline OSPVariant::OSPVariant()
     {
-      currentType = Type::INVALID;
       std::memset(&data, 0, sizeof(data));
     }
 

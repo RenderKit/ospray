@@ -141,7 +141,7 @@ namespace ospray {
     /*! \brief base node of all scene graph nodes */
     struct OSPSG_INTERFACE Node : public std::enable_shared_from_this<Node>
     {
-      Node() : name("NULL"), type("Node"), valid(false), ospHandle(nullptr) {}
+      Node() = default;
 
       /*!
           NodeH is a handle to a sg::Node.  It has the benefit of supporting
@@ -304,7 +304,8 @@ namespace ospray {
 
       //! return the parent node
       NodeH getParent() { return parent; }
-      //! returns handle to ospObject, however should actually call getValue on valid node instead
+      //! returns handle to ospObject, however should actually call getValue on
+      //  valid node instead
       OSPObject getOSPHandle() { return ospHandle; }
 
       //! sets the parent
@@ -428,13 +429,13 @@ namespace ospray {
       static std::vector<std::shared_ptr<sg::Node>> nodes;
 
     protected:
-      std::string name;
-      std::string type;
+      std::string name {"NULL"};
+      std::string type {"Node"};
       std::vector<SGVar> minmax;
       std::vector<SGVar> whitelist;
       std::vector<SGVar> blacklist;
       std::map<std::string, NodeH> children;
-      OSPObject ospHandle;
+      OSPObject ospHandle {nullptr};
       SGVar value;
       TimeStamp lastModified;
       TimeStamp childrenMTime;
@@ -443,7 +444,7 @@ namespace ospray {
       NodeH parent;
       std::mutex mutex;
       NodeFlags flags;
-      bool valid;
+      bool valid {false};
       std::string documentation;
     };
 
