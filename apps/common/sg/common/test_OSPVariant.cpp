@@ -21,6 +21,12 @@ inline void test_interface(T testValue, T testValue2)
   OSPVariant v;
   REQUIRE(!v.valid());
 
+  SECTION("Can make valid by construction")
+  {
+    OSPVariant v2(testValue);
+    verify_value<T>(v2, testValue);
+  }
+
   SECTION("Can make valid by calling set()")
   {
     v.set(testValue);
@@ -31,6 +37,13 @@ inline void test_interface(T testValue, T testValue2)
   {
     v = testValue;
     verify_value<T>(v, testValue);
+  }
+
+  SECTION("Can make valid by copy construction")
+  {
+    v.set(testValue);
+    OSPVariant v2(v);
+    verify_value<T>(v2, testValue);
   }
 
   SECTION("Two objects with same value are equal")
@@ -89,4 +102,17 @@ TEST_CASE("OSPVariant 'box3f' type behavior", "[types]")
 TEST_CASE("OSPVariant 'string' type behavior", "[types]")
 {
   test_interface<std::string>("Hello", "World");
+}
+
+TEST_CASE("OSPVariant 'OSPObject' type behavior", "[types]")
+{
+  // NOTE(jda) - we just need some phony pointer addresses to test OSPVariant,
+  //             no need to hand it "real" OSPRay objects...
+  void *val1 = nullptr;
+  void *val2 = nullptr;
+  val1 = &val1;
+  val2 = &val2;
+
+  test_interface<OSPObject>(static_cast<OSPObject>(val1),
+                            static_cast<OSPObject>(val2));
 }
