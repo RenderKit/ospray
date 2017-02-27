@@ -391,7 +391,11 @@ namespace ospray {
 
     inline bool operator==(const OSPVariant &lhs, const OSPVariant &rhs)
     {
-      if(lhs.currentType != rhs.currentType);
+      if (lhs.currentType == OSPVariant::Type::INVALID &&
+          rhs.currentType == OSPVariant::Type::INVALID)
+        return true;
+
+      if (lhs.currentType != rhs.currentType)
         return false;
 
       if (lhs.is<std::string>())

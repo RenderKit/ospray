@@ -81,13 +81,14 @@ namespace ospray {
       //TODO: make child m time propagate
       if (operation != "verify" && !isValid())
         return;
+
       ctx.childMTime = TimeStamp();
       preTraverse(ctx, operation);
       ctx.level++;
+
       for (auto child : children)
-      {
-        child.second->traverse(ctx,operation);
-      }
+        child.second->traverse(ctx, operation);
+
       ctx.level--;
       ctx.childMTime = getChildrenLastModified();
       postTraverse(ctx, operation);

@@ -28,7 +28,7 @@
 // ospcommon
 #include "ospcommon/vec.h"
 
-#define USE_OSPVARIANT 0
+#define USE_OSPVARIANT 1
 
 #if USE_OSPVARIANT
 #  include "sg/common/OSPVariant.h"

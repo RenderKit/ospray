@@ -59,3 +59,14 @@ LINK
   ospray_common
   ospray_xml
 )
+
+## Test apps ##
+
+OSPRAY_CREATE_APPLICATION(test_OSPVariant
+  common/OSPVariant.h
+  common/test_OSPVariant.cpp
+LINK
+  ospray_common
+)
+
+ADD_TEST(NAME OSPVariant COMMAND test_OSPVariant)
