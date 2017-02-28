@@ -38,9 +38,9 @@ namespace ospray {
       Group *group = existingGroupToAddTo;
       if (!group) group = new Group;
 
-      if (fileName.ext() == "osp") {
-          importOSP(fileName, group);
-#if 0 // NOTE(jda) - using ospray::sg is broken, needs fixed before enabling
+      if (fileName.ext() == "osp" || fileName.ext() == "osg") {
+          // importOSP(fileName, group);
+#if 1 // NOTE(jda) - using ospray::sg is broken, needs fixed before enabling
 //#ifndef _WIN32
           std::shared_ptr<sg::World> world;;
           world = sg::loadOSP(fn);
@@ -51,7 +51,7 @@ namespace ospray {
           }
           if (!volumeNode) {
             throw std::runtime_error("#ospray:importer: no volume found "
-                                     "in osg file");
+                                     "in osp file");
           }
           sg::RenderContext ctx;
           std::shared_ptr<sg::Integrator>  integrator;
