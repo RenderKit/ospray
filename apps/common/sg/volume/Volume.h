@@ -24,7 +24,7 @@ namespace ospray {
 
     /*! a geometry node - the generic geometry node */
     struct Volume : public sg::Node {
-      Volume() : volume(nullptr) { setVoxelRange(vec2f(std::numeric_limits<float>::infinity(),-std::numeric_limits<float>::infinity())); }
+      Volume() : volume(nullptr) {};
 
       /*! \brief returns a std::string with the c++ name of this class */
       virtual    std::string toString() const override;
@@ -38,7 +38,6 @@ namespace ospray {
       static bool useDataDistributedVolume;
 
       SG_NODE_DECLARE_MEMBER(std::shared_ptr<TransferFunction>,transferFunction,TransferFunction);    
-      SG_NODE_DECLARE_MEMBER(vec2f,voxelRange,VoxelRange);    
       //! ospray volume object handle
       public: OSPVolume volume;
     };
