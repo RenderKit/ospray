@@ -211,13 +211,8 @@ void ImGuiViewerSg::buildGui()
   ImGui::Begin("Viewer Controls: press 'g' to show/hide", nullptr, flags);
   ImGui::SetWindowFontScale(0.5f*fontScale);
 
-  if (ImGui::BeginMenuBar())
-  {
-    if (ImGui::BeginMenu("App"))
-    {
-#if 0
-      ImGui::Checkbox("Show ImGui Demo Window", &demo_window);
-#endif
+  if (ImGui::BeginMenuBar()) {
+    if (ImGui::BeginMenu("App")) {
 
       ImGui::Checkbox("Auto-Rotate", &animating);
       bool paused = renderingPaused;
@@ -232,8 +227,7 @@ void ImGuiViewerSg::buildGui()
       ImGui::EndMenu();
     }
 
-    if (ImGui::BeginMenu("View"))
-    {
+    if (ImGui::BeginMenu("View")) {
       bool orbitMode = (manipulator == inspectCenterManipulator);
       bool flyMode   = (manipulator == moveModeManipulator);
 
@@ -256,8 +250,8 @@ void ImGuiViewerSg::buildGui()
 
   if (demo_window) ImGui::ShowTestWindow(&demo_window);
 
-  if (ImGui::CollapsingHeader("FPS Statistics", "FPS Statistics", true, false))
-  {
+  if (ImGui::CollapsingHeader("FPS Statistics", "FPS Statistics",
+                              true, false)) {
     ImGui::NewLine();
     ImGui::Text("OSPRay render rate: %.1f FPS", lastFrameFPS);
     ImGui::Text("  Total GUI frame rate: %.1f FPS", ImGui::GetIO().Framerate);
@@ -270,9 +264,7 @@ void ImGuiViewerSg::buildGui()
 
   static float vec4fv[4] = { 0.10f, 0.20f, 0.30f, 0.44f };
   if (ImGui::CollapsingHeader("SceneGraph", "SceneGraph", true, true))
-  {
     buildGUINode(scenegraph, 0);
-  }
 
   ImGui::End();
 }
@@ -280,173 +272,158 @@ void ImGuiViewerSg::buildGui()
 void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
 {
   int styles=0;
-  if (!node->isValid())
-  {
+  if (!node->isValid()) {
     ImGui::PushStyleColor(ImGuiCol_Text, ImColor(200, 75, 48,255));
     styles++;
   }
   std::string text;
   text += std::string(node->getName()+" : ");
-  if (node->getType() == "vec3f")
-  {
-      ImGui::Text(text.c_str());
-      ImGui::SameLine();
-      vec3f val = node->getValue().get<vec3f>();
-      text = "##"+((std::ostringstream&)(std::ostringstream("") << node.get())).str(); //TODO: use unique uuid for every node
-      if ((node->getFlags() & sg::NodeFlags::gui_color))
-      {
-        if (ImGui::ColorEdit3(text.c_str(), (float*)&val.x))
-          node->setValue(val);
-      }
-      else if ((node->getFlags() & sg::NodeFlags::gui_slider))
-      {
-        if (ImGui::SliderFloat3(text.c_str(), &val.x, node->getMin().get<vec3f>().x, node->getMax().get<vec3f>().x))
-          node->setValue(val);
-      }
-      else if (ImGui::DragFloat3(text.c_str(), (float*)&val.x, .01f)) {
+  if (node->getType() == "vec3f") {
+    ImGui::Text(text.c_str());
+    ImGui::SameLine();
+    vec3f val = node->getValue().get<vec3f>();
+    text = "##"+((std::ostringstream&)(std::ostringstream("")
+           << node.get())).str(); //TODO: use unique uuid for every node
+    if ((node->getFlags() & sg::NodeFlags::gui_color)) {
+      if (ImGui::ColorEdit3(text.c_str(), (float*)&val.x))
         node->setValue(val);
-      }
-  }
-  else if (node->getType() == "vec2f")
-  {
+    }
+    else if ((node->getFlags() & sg::NodeFlags::gui_slider)) {
+      if (ImGui::SliderFloat3(text.c_str(), &val.x,
+                              node->getMin().get<vec3f>().x,
+                              node->getMax().get<vec3f>().x))
+        node->setValue(val);
+    }
+    else if (ImGui::DragFloat3(text.c_str(), (float*)&val.x, .01f)) {
+      node->setValue(val);
+    }
+  } else if (node->getType() == "vec2f") {
     ImGui::Text(text.c_str(),"");
     ImGui::SameLine();
     vec2f val = node->getValue().get<vec2f>();
-    text = "##"+((std::ostringstream&)(std::ostringstream("") << node.get())).str(); //TODO: use unique uuid for every node
+    text = "##"+((std::ostringstream&)(std::ostringstream("")
+           << node.get())).str(); //TODO: use unique uuid for every node
     if (ImGui::DragFloat2(text.c_str(), (float*)&val.x, .01f)) {
       node->setValue(val);
     }
-  }
-  else if (node->getType() == "vec2i")
-  {
+  } else if (node->getType() == "vec2i") {
     ImGui::Text(text.c_str());
     ImGui::SameLine();
     vec2i val = node->getValue().get<vec2i>();
-    text = "##"+((std::ostringstream&)(std::ostringstream("") << node.get())).str(); //TODO: use unique uuid for every node
+    text = "##"+((std::ostringstream&)(std::ostringstream("")
+           << node.get())).str(); //TODO: use unique uuid for every node
     if (ImGui::DragInt2(text.c_str(), (int*)&val.x)) {
       node->setValue(val);
     }
-  }
-  else if (node->getType() == "float")
-  {
+  } else if (node->getType() == "float") {
     ImGui::Text(text.c_str(),"");
     ImGui::SameLine();
     float val = node->getValue().get<float>();
-    text = "##"+((std::ostringstream&)(std::ostringstream("") << node.get())).str(); //TODO: use unique uuid for every node
-    if ((node->getFlags() & sg::NodeFlags::gui_slider))
-    {
-      if (ImGui::SliderFloat(text.c_str(), &val, node->getMin().get<float>(), node->getMax().get<float>()))
+    text = "##"+((std::ostringstream&)(std::ostringstream("")
+           << node.get())).str(); //TODO: use unique uuid for every node
+    if ((node->getFlags() & sg::NodeFlags::gui_slider)) {
+      if (ImGui::SliderFloat(text.c_str(), &val,
+                             node->getMin().get<float>(),
+                             node->getMax().get<float>()))
         node->setValue(val);
     }
     else if (ImGui::DragFloat(text.c_str(), &val, .01f)) {
       node->setValue(val);
     }
-  }
-  else if (node->getType() == "bool")
-  {
+  } else if (node->getType() == "bool") {
     ImGui::Text(text.c_str(),"");
     ImGui::SameLine();
     bool val = node->getValue().get<bool>();
-    text = "##"+((std::ostringstream&)(std::ostringstream("") << node.get())).str(); //TODO: use unique uuid for every node
+    text = "##"+((std::ostringstream&)(std::ostringstream("")
+           << node.get())).str(); //TODO: use unique uuid for every node
     if (ImGui::Checkbox(text.c_str(), &val)) {
       node->setValue(val);
     }
-  }
-  else if (node->getType() == "int")
-  {
+  } else if (node->getType() == "int") {
     ImGui::Text(text.c_str(),"");
     ImGui::SameLine();
     int val = node->getValue().get<int>();
-    text = "##"+((std::ostringstream&)(std::ostringstream("") << node.get())).str(); //TODO: use unique uuid for every node
-    if ((node->getFlags() & sg::NodeFlags::gui_slider))
-    {
-      if (ImGui::SliderInt(text.c_str(), &val, node->getMin().get<int>(), node->getMax().get<int>()))
-      {
+    text = "##"+((std::ostringstream&)(std::ostringstream("")
+           << node.get())).str(); //TODO: use unique uuid for every node
+    if ((node->getFlags() & sg::NodeFlags::gui_slider)) {
+      if (ImGui::SliderInt(text.c_str(), &val,
+                           node->getMin().get<int>(),
+                           node->getMax().get<int>()))
         node->setValue(val);
-      }
     }
     else if (ImGui::DragInt(text.c_str(), &val)) {
       node->setValue(val);
     }
-  }
-  else if (node->getType() == "string")
-  {
+  } else if (node->getType() == "string") {
     std::string value = node->getValue<std::string>().c_str();
     char* buf = (char*)malloc(value.size()+1+256);
     strcpy(buf,value.c_str());
     buf[value.size()] = '\0';
     ImGui::Text(text.c_str(),"");
     ImGui::SameLine();
-    text = "##"+((std::ostringstream&)(std::ostringstream("") << node.get())).str(); //TODO: use unique uuid for every node
-    if (ImGui::InputText(text.c_str(), buf, value.size()+256, ImGuiInputTextFlags_EnterReturnsTrue))
-    {
+    text = "##"+((std::ostringstream&)(std::ostringstream("")
+           << node.get())).str(); //TODO: use unique uuid for every node
+    if (ImGui::InputText(text.c_str(), buf,
+                         value.size()+256,
+                         ImGuiInputTextFlags_EnterReturnsTrue))
       node->setValue(std::string(buf));
-    }
-  }
-  else if (node->getType() == "TransferFunction") {
+  } else if (node->getType() == "TransferFunction") {
     text += "TODO WILL";
     ImGui::Text(text.c_str());
     if (!node->getParam("transferFunctionWidget")) {
-      std::shared_ptr<sg::TransferFunction> tfn = std::dynamic_pointer_cast<sg::TransferFunction>(node.get());
+      std::shared_ptr<sg::TransferFunction> tfn =
+          std::dynamic_pointer_cast<sg::TransferFunction>(node.get());
       node->setParam("transferFunctionWidget", TransferFunction(tfn));
     }
-    auto tfnWidget = dynamic_cast<sg::ParamT<TransferFunction>*>(node->getParam("transferFunctionWidget").get());
+    auto tfnWidget =
+        dynamic_cast<sg::ParamT<TransferFunction>*>(node->getParam("transferFunctionWidget").get());
     assert(tfnWidget);
     tfnWidget->value.render();
     tfnWidget->value.drawUi();
-  }
-  else  // generic holder node
-  {
+  } else { // generic holder node
     text+=node->getType();
-    text += "##"+((std::ostringstream&)(std::ostringstream("") << node.get())).str(); //TODO: use unique uuid for every node
-    if (ImGui::TreeNodeEx(text.c_str(), (indent > 0) ? 0 : ImGuiTreeNodeFlags_DefaultOpen))
-    {
+    text += "##"+((std::ostringstream&)(std::ostringstream("")
+            << node.get())).str(); //TODO: use unique uuid for every node
+    if (ImGui::TreeNodeEx(text.c_str(),
+                          (indent > 0) ? 0 : ImGuiTreeNodeFlags_DefaultOpen)) {
       {
-        std::string popupName = "Add Node: ##"+((std::ostringstream&)(std::ostringstream("") << node.get())).str();
+        std::string popupName = "Add Node: ##" +
+                                ((std::ostringstream&)(std::ostringstream("")
+                                << node.get())).str();
         float value = 1.f;
         static bool addChild = true;
-        if (ImGui::BeginPopupContextItem("item context menu"))
-        {
-            char buf[256];
-            buf[0]='\0';
-            if (ImGui::InputText("node name: ", buf, 256, ImGuiInputTextFlags_EnterReturnsTrue))
-            {
-              std::cout << "add node: \"" << buf << "\"\n";
-              try
-              {
-                static int counter = 0;
-                std::stringstream ss;
-                ss << "userDefinedNode" << counter++;
-                node->add(sg::createNode(ss.str(), buf));
-              }
-              catch (...)
-              {
-                std::cerr << "invalid node type: " << buf << std::endl;
-              }
+        if (ImGui::BeginPopupContextItem("item context menu")) {
+          char buf[256];
+          buf[0]='\0';
+          if (ImGui::InputText("node name: ", buf,
+                               256, ImGuiInputTextFlags_EnterReturnsTrue)) {
+            std::cout << "add node: \"" << buf << "\"\n";
+            try {
+              static int counter = 0;
+              std::stringstream ss;
+              ss << "userDefinedNode" << counter++;
+              node->add(sg::createNode(ss.str(), buf));
             }
+            catch (...)
+            {
+              std::cerr << "invalid node type: " << buf << std::endl;
+            }
+          }
 
-            ImGui::EndPopup();
-
-        }
-        if (addChild)
-        {
-          if (ImGui::BeginPopup(popupName.c_str()))
-          {
+          ImGui::EndPopup();
+        } if (addChild) {
+          if (ImGui::BeginPopup(popupName.c_str())) {
             char buf[256];
             buf[0]='\0';
             if (ImGui::InputText("node name: ", buf, 256,
-                                 ImGuiInputTextFlags_EnterReturnsTrue))
-            {
+                                 ImGuiInputTextFlags_EnterReturnsTrue)) {
               std::cout << "add node: \"" << buf << "\"\n";
-              try
-              {
+              try {
                 static int counter = 0;
                 std::stringstream ss;
                 ss << "userDefinedNode" << counter++;
                 node->add(sg::createNode(ss.str(), buf));
-              }
-              catch (...)
-              {
+              } catch (...) {
                 std::cerr << "invalid node type: " << buf << std::endl;
               }
             }
