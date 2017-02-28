@@ -49,7 +49,7 @@ namespace ospray {
       virtual std::string toString() const override { return "ospray::sg::Light"; }
 
       /*! \brief light type, i.e., 'DirectionalLight', 'PointLight', ... */
-      const std::string type {"none"};
+      const std::string type = "none";
       OSPLight ospLight {nullptr};
     };
 

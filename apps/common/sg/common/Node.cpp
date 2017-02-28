@@ -66,7 +66,7 @@ namespace ospray {
       if (it != params.end())
         return it->second;
 
-      return nullptr;
+      return {};
     }
 
     void Node::setFromXML(const xml::Node &node, const unsigned char *binBasePtr)

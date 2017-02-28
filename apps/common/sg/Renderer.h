@@ -69,7 +69,7 @@ namespace ospray {
       std::shared_ptr<sg::Integrator>  integrator;
       OSPRenderer ospRenderer {nullptr};
       TimeStamp frameMTime;
-      std::string createdType {"none"};
+      std::string createdType = "none";
 
       // state variables
       /*! all _unique_ nodes (i.e, even instanced nodes are listed

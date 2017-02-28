@@ -190,7 +190,6 @@ namespace ospray {
 
     OBJLoader::OBJLoader(std::shared_ptr<World> world, const FileName &fileName) 
       : world(world),
-        curMaterial(NULL),
         path(fileName.path()),
         fullPath(fileName)
     {
