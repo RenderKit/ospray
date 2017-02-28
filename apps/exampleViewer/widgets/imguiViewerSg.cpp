@@ -189,7 +189,6 @@ void ImGuiViewerSg::display()
     renderEngine.unmapFramebuffer();
   }
 
-  //Carson: ucharFB would appear to be a global variable used by imgui3D widget.
   ucharFB = pixelBuffer.data();
   frameBufferMode = ImGui3DWidget::FRAMEBUFFER_UCHAR;
   ImGui3DWidget::display();

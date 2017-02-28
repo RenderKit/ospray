@@ -226,6 +226,7 @@ void ImGuiViewer::display()
       auto *dstPixels = pixelBuffer.data();
       memcpy(dstPixels, srcPixels, nPixels * sizeof(uint32_t));
       lastFrameFPS = renderEngine.lastFrameFps();
+      renderTime = 1.f/lastFrameFPS;
     }
 
     renderEngine.unmapFramebuffer();

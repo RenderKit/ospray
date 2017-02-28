@@ -373,16 +373,19 @@ namespace ospray {
       ImGuiIO& io = ImGui::GetIO();
       ImFontConfig config;
       config.MergeMode = false;
-      ImFont* font = io.Fonts->AddFontFromFileTTF("LibreBaskerville-Regular.ttf", 28, &config);
-      if (font)
-      {
+
+      #if 0 // NOTE(jda) - this can cause crashes in Debug builds, needs fixed
+      ImFont* font =
+          io.Fonts->AddFontFromFileTTF("LibreBaskerville-Regular.ttf",
+                                       28, &config);
+      if (font) {
         std::cout << "loaded font\n";
         currentWidget->fontScale = 1.f;
       }
+      #endif
 
       // Main loop
-      while (!glfwWindowShouldClose(window))
-      {
+      while (!glfwWindowShouldClose(window)) {
         currentWidget->timerTotal.startRender();
         glfwPollEvents();
         currentWidget->timer.startRender();
@@ -393,16 +396,15 @@ namespace ospray {
           currentWidget->buildGui();
 
         ImGui::SetNextWindowPos(ImVec2(10,10));
-        // ImGui::PushStyleColor(ImGuiCol_ChildWindowBg, ImColor(1,0,0,1.f));
-        // ImGui::PushStyleColor(ImGuiCol_WindowBg, ImColor(1.f,0.f,0.f,0.1f));
-        // ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.f);
+        auto overlayFlags = ImGuiWindowFlags_NoTitleBar |
+                            ImGuiWindowFlags_NoResize   |
+                            ImGuiWindowFlags_NoMove     |
+                            ImGuiWindowFlags_NoSavedSettings;
         bool open;
-        if (!ImGui::Begin("Example: Fixed Overlay", &open, ImVec2(0,0), 0.f, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoSavedSettings))
-        {
+        if (!ImGui::Begin("Example: Fixed Overlay", &open,
+                          ImVec2(0,0), 0.f, overlayFlags)) {
           ImGui::End();
-        }
-        else
-        {
+        } else {
           ImFont* font = ImGui::GetFont();
           ImGui::PushStyleColor(ImGuiCol_Text, ImColor(.3,.3,.3,1.f));
           ImGui::SetWindowFontScale(currentWidget->fontScale*1.0f);
@@ -423,8 +425,7 @@ namespace ospray {
         int new_w = 0, new_h = 0;
         glfwGetFramebufferSize(window, &new_w, &new_h);
 
-        if (new_w != display_w || new_h != display_h)
-        {
+        if (new_w != display_w || new_h != display_h) {
           display_w = new_w;
           display_h = new_h;
           currentWidget->reshape(vec2i(display_w, display_h));
@@ -458,8 +459,7 @@ namespace ospray {
 
     void init(int32_t *ac, const char **av)
     {
-      for(int i = 1; i < *ac;i++)
-      {
+      for(int i = 1; i < *ac;i++) {
         std::string arg(av[i]);
         if (arg == "-win") {
           std::string arg2(av[i+1]);
@@ -513,8 +513,7 @@ namespace ospray {
           auto& fov = viewPortFromCmdLine->openingAngle;
 
           auto token = std::string("");
-          while (fin >> token)
-          {
+          while (fin >> token) {
             if (token == "-vp")
               fin >> fx >> fy >> fz;
             else if (token == "-vu")
@@ -523,8 +522,7 @@ namespace ospray {
               fin >> ax >> ay >> az;
             else if (token == "-fv")
               fin >> fov;
-            else
-            {
+            else {
               throw std::runtime_error("Unrecognized token:  \"" + token +
                                        '\"');
             }
