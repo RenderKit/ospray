@@ -164,13 +164,15 @@ void ImGuiViewerSg::toggleRenderingPaused()
 
 void ImGuiViewerSg::display()
 {
-  auto dir = viewPort.at - viewPort.from;
-  dir = normalize(dir);
-  scenegraph["camera"]["dir"]->setValue(dir);
-  scenegraph["camera"]["pos"]->setValue(viewPort.from);
-  scenegraph["camera"]["up"]->setValue(viewPort.up);
-  // scenegraph["camera"]["aspect"]->setValue(viewPort.aspect);
-  // scenegraph["camera"]["fovy"]->setValue(viewPort.openingAngle);
+  if (viewPort.modified) {
+    auto dir = viewPort.at - viewPort.from;
+    dir = normalize(dir);
+    auto &camera = scenegraph["camera"];
+    camera["dir"]->setValue(dir);
+    camera["pos"]->setValue(viewPort.from);
+    camera["up"]->setValue(viewPort.up);
+    viewPort.modified = false;
+  }
 
   if (renderEngine.hasNewFrame()) {
     auto &mappedFB = renderEngine.mapFramebuffer();

@@ -308,14 +308,13 @@ namespace ospray {
       //! set the value of the node.  Requires strict typecast
       void setValue(SGVar val)
       {
-        if (val != value)  {
-          {
-            std::lock_guard<std::mutex> lock{mutex};
-            if (val != value)
-              value = val;
-          }
-          modified();
+        {
+          std::lock_guard<std::mutex> lock{mutex};
+          if (val != value)
+            value = val;
         }
+
+        modified();
       }
 
       //! add node as child of this one
