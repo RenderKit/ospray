@@ -61,7 +61,8 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
     preIntegration(-1),
     aoSamples(-1),
     adaptiveSampling(-1),
-    gradientShadingEnabled(-1)
+    gradientShadingEnabled(-1),
+    renderInBackground(0)
 {
   // Default window size.
   resize(1024, 768);
@@ -300,8 +301,6 @@ void VolumeViewer::addGeometry(std::string filename)
       }
     }
   }
-  
-  
   // Force render.
   render();
 }
@@ -707,7 +706,6 @@ void VolumeViewer::importObjectsFromFile(const std::string &filename)
     
     ospray::importer::Volume *vol = imported->volume[i];
     assert(vol);
-    std::cout << "imported vol voxelRange: " << vol->voxelRange.y << std::endl;
     // For now we set the same transfer function on all volumes.
     ospSetObject(vol->handle, "transferFunction", transferFunction);
     ospCommit(vol->handle);

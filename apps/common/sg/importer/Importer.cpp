@@ -23,28 +23,28 @@
 namespace ospray {
   namespace sg {
 
-    std::map<const std::string, ImporterFunction> *importerForExtension = nullptr;
+    using FileExtToImporterMap = std::map<const std::string, ImporterFunction>;
+
+    FileExtToImporterMap importerForExtension;
     
     /*! declare an importer function for a given file extension */
     void declareImporterForFileExtension(const std::string &fileExtension,
                                          ImporterFunction importer)
     {
-      if (!importerForExtension)
-        importerForExtension = new std::map<const std::string, ImporterFunction>;
-      (*importerForExtension)[fileExtension] = importer;
+      importerForExtension[fileExtension] = importer;
     }
 
     /*! import a given file. throws a sg::RuntimeError if this could not be done */
     void importFile(std::shared_ptr<sg::World> &world, const FileName &fileName)
     {
-      if (!importerForExtension)
-        importerForExtension = new std::map<const std::string, ImporterFunction>;
-      ImporterFunction importer = (*importerForExtension)[fileName.ext()];
+      ImporterFunction importer = importerForExtension[fileName.ext()];
       if (importer) {
         ImportState state(world);
         importer(fileName,state);
-      } else
-        throw sg::RuntimeError("unknown file format (fileName was '"+fileName.str()+"')");
+      } else {
+        throw sg::RuntimeError("unknown file format (fileName was '"
+                               + fileName.str() + "')");
+      }
     }
     
   }

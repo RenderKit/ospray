@@ -123,7 +123,7 @@ namespace ospray {
 
     OSPIMPORTER_INTERFACE Group *import(const std::string &fileName,
                   Group *existingGroupToAddTo=nullptr);
-  }
+  } // ::ospray::importer
 
   //! Print an error message.
   inline void emitMessage(const std::string &kind, const std::string &message) 
@@ -151,4 +151,4 @@ namespace ospray {
   }
 #endif
 
-}
+} // ::ospray

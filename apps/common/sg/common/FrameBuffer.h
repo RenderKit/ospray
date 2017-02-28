@@ -16,22 +16,25 @@
 
 #pragma once
 
+#include "sg/SceneGraphExports.h"
 // sg components
 #include "sg/common/Node.h"
 
 namespace ospray {
   namespace sg {
 
-    struct FrameBuffer : public sg::Node {
-
+    struct OSPSG_INTERFACE FrameBuffer : public sg::Node
+    {
       /*! constructor allocates an OSP frame buffer object */
-      FrameBuffer(const vec2i &size);
+      FrameBuffer(vec2i size = vec2i(300,300));
 
       /*! destructor - relasess the OSP frame buffer object */
       virtual ~FrameBuffer();
 
+      virtual void init() override;
+
       unsigned char *map();
-      void unmap(unsigned char *mem);
+      void unmap(void *mem);
 
       void clear();
 
@@ -39,13 +42,13 @@ namespace ospray {
       
       vec2i getSize() const;
 
+      virtual void postCommit(RenderContext &ctx);
+
       /*! \brief returns a std::string with the c++ name of this class */
       virtual std::string toString() const;
 
       OSPFrameBuffer getOSPHandle() const;
       
-    // private:
-    
       // create the ospray framebuffer for this class
       void createFB();
 
@@ -53,7 +56,7 @@ namespace ospray {
       void destroyFB();
 
       OSPFrameBuffer ospFrameBuffer {nullptr};
-      const vec2i size;
+      vec2i size;
     };
 
   } // ::ospray::sg

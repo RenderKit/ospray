@@ -20,9 +20,15 @@
 
 namespace ospray {
   namespace sg {
+
     class FrameBuffer;
-    struct Renderer {
-      Renderer();
+
+    struct Renderer : public Renderable
+    {
+      Renderer() = default;
+      virtual void init() override;
+      virtual void preRender(RenderContext &ctx) override;
+      virtual void postRender(RenderContext &ctx) override;
 
       /*! re-start accumulation (for progressive rendering). make sure
           that this function gets called at lesat once every time that
@@ -41,17 +47,18 @@ namespace ospray {
       
       //! find the last camera in the scene graph
       std::shared_ptr<sg::Camera> getLastDefinedCamera() const;
+
       //! find the last integrator in the scene graph
       std::shared_ptr<sg::Integrator> getLastDefinedIntegrator() const;
       
       //! create a default camera
-      std::shared_ptr<sg::Camera> createDefaultCamera(vec3f up=vec3f(0,1,0));
-
-      // //! set a default camera
-      // void setDefaultCamera() { setCamera(createDefaultCamera()); }
+      std::shared_ptr<sg::Camera> createDefaultCamera(vec3f up = vec3f(0,1,0));
 
       /*! render a frame. return 0 if successful, any non-zero number if not */
       virtual int renderFrame();
+
+      void preCommit(RenderContext &ctx);
+      void postCommit(RenderContext &ctx);
 
       // =======================================================
       // state variables
@@ -60,7 +67,9 @@ namespace ospray {
       std::shared_ptr<sg::Camera>      camera;
       std::shared_ptr<sg::FrameBuffer> frameBuffer;
       std::shared_ptr<sg::Integrator>  integrator;
-      // std::shared_ptr<Frame>  frame;
+      OSPRenderer ospRenderer {nullptr};
+      TimeStamp frameMTime;
+      std::string createdType = "none";
 
       // state variables
       /*! all _unique_ nodes (i.e, even instanced nodes are listed
@@ -70,9 +79,11 @@ namespace ospray {
           time they are instanced */
       Serialization allNodes;
 
+      OSPRenderer getOSPHandle() const { return ospRenderer; }
       //! accumulation ID
       size_t accumID;
     };
-  }
-}
+
+  } // ::ospray::sg
+} // ::ospray
 

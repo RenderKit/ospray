@@ -18,24 +18,13 @@
 
 namespace ospray {
   namespace sg {
-
-    /*! constructor */
-    Texture2D::Texture2D()
-      : size(-1),
-        texelType(OSP_TEXTURE_FORMAT_INVALID),
-        ospTexture(NULL)
-    {
-    }
       
-    Texture2D::~Texture2D()
-    {
-    }
-    
     //! \brief load texture from given file. 
     /*! \detailed if file does not exist, or cannot be loaded for
       some reason, return NULL. Multiple loads from the same file
       will return the *same* texture object */
-    std::shared_ptr<Texture2D> Texture2D::load(const FileName &fileName, const bool prefereLinear)
+    std::shared_ptr<Texture2D> Texture2D::load(const FileName &fileName,
+                                               const bool prefereLinear)
     {
       /* WARNING: this cache means that every texture ever loaded will
          forever keep at least one refcount - ie, no texture will ever
@@ -49,11 +38,6 @@ namespace ospray {
 
       std::shared_ptr<Texture2D> tex;
       const std::string ext = fileName.ext();
-
-#ifdef OSPRAY_SG_LIBPNG
-      if (ext == "png") {
-      }
-#endif
 
       if (ext == "ppm") {
         try {

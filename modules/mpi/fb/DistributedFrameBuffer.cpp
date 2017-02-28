@@ -102,9 +102,7 @@ namespace ospray {
     if (tiles <= 0)
       return;
 
-    throw std::runtime_error("DB::sync disabling this for now ...");
-    int rc = MPI_Bcast(tileErrorBuffer, tiles, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    mpi::checkMpiError(rc);
+    SERIALIZED_MPI_CALL(Bcast(tileErrorBuffer, tiles, MPI_FLOAT, 0, MPI_COMM_WORLD));
   }
 
   // DistributedFrameBuffer definitions ///////////////////////////////////////

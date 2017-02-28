@@ -160,7 +160,10 @@ namespace ospray {
         void (*initMethod)() = (void(*)())initSym;
         initMethod();
       }
-      
+      void LoadModule::runOnMaster()
+      {
+        run();
+      }
       void LoadModule::serialize(WriteStream &b) const
       {
         b << name;
@@ -275,6 +278,16 @@ namespace ospray {
       void NewVolume::runOnMaster()
       {
         run();
+      }
+
+      // =======================================================
+      // ospNewModel
+      // =======================================================
+      template<>
+      void NewModel::run()
+      {
+        auto *model = new Model;
+        handle.assign(model);
       }
 
       // =======================================================

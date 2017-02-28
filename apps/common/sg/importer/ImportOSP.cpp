@@ -40,7 +40,8 @@ namespace ospray {
     /*! create a node of given type if registered (and tell it to
       parse itself from that xml node), or throw an exception if
       unkown node type */
-    std::shared_ptr<sg::Node> createNodeFrom(const xml::Node &node, const unsigned char *binBasePtr)
+    std::shared_ptr<sg::Node> createNodeFrom(const xml::Node &node,
+                                             const unsigned char *binBasePtr)
     {
       if (node.name.find("Chombo") != std::string::npos)
       {
@@ -49,15 +50,17 @@ namespace ospray {
         if (!ospLoadModule("sg_amr"))
             std::runtime_error("could not load amr module\n");
       }
-      std::map<std::string, creatorFct>::iterator it = sgNodeRegistry.find(node.name);
-      creatorFct creator = NULL;
+      auto it = sgNodeRegistry.find(node.name);
+      creatorFct creator = nullptr;
       if (it == sgNodeRegistry.end()) {
         const std::string creatorName = "ospray_create_sg_node__"+std::string(node.name);
         creator = (creatorFct)getSymbol(creatorName);
         if (!creator)
           throw std::runtime_error("unknown ospray scene graph node '"+node.name+"'");
-        else
-          std::cout << "#osp:sg: creating at least one instance of node type '" << node.name << "'" << std::endl;
+        else {
+          std::cout << "#osp:sg: creating at least one instance of node type '"
+                    << node.name << "'" << std::endl;
+        }
         sgNodeRegistry[node.name] = creator;
       }
       else
@@ -83,35 +86,32 @@ namespace ospray {
     bool parseParam(std::shared_ptr<sg::Node> target, const xml::Node &node)
     {
       const std::string name = node.getProp("name");
-      if (name == "") return false;
-      if (node.name == "data") {
+
+      if (name.empty()) {
+        return false;
+      } else if (node.name == "data") {
         assert(node.child.size() == 1);
         std::shared_ptr<sg::Node> value = parseNode(*node.child[0]);
         assert(value != NULL);
-        std::shared_ptr<sg::DataBuffer> dataNode = std::dynamic_pointer_cast<sg::DataBuffer>(value);
+        std::shared_ptr<sg::DataBuffer> dataNode =
+            std::dynamic_pointer_cast<sg::DataBuffer>(value);
         assert(dataNode);
         target->setParam(name,dataNode);
-        // target->addParam(new ParamT<std::shared_ptr<DataBuffer> >(name,dataNode));
         return true;
-      }
-      if (node.name == "object") {
+      } else if (node.name == "object") {
         assert(node.child.size() == 1);
         std::shared_ptr<sg::Node> value = parseNode(*node.child[0]);
         assert(value);
         target->setParam(name,value);
-        // target->addParam(new ParamT<std::shared_ptr<sg::Node> >(name,value));
         return true;
-      }
-      if (node.name == "int") {
-        // target->addParam(new ParamT<int32_t>(name,atoi(node.content.c_str())));
+      } else if (node.name == "int") {
         target->setParam(name,std::stoi(node.content));
         return true;
-      }
-      if (node.name == "float") {
-        // target->addParam(new ParamT<float>(name,atof(node.content.c_str())));
+      } else if (node.name == "float") {
         target->setParam(name,std::stof(node.content));
         return true;
       }
+
       return false;
     }
 
@@ -136,7 +136,8 @@ namespace ospray {
     std::shared_ptr<sg::Integrator> parseIntegratorNode(const xml::Node &node)
     {
       assert(node.name == "Integrator");
-      std::shared_ptr<Integrator> integrator = std::make_shared<Integrator>(node.getProp("type",""));
+      std::shared_ptr<Integrator> integrator =
+          std::make_shared<Integrator>(node.getProp("type",""));
       for (auto c : node.child) {
         if (parseParam(std::dynamic_pointer_cast<sg::Node>(integrator),*c))
           continue;
@@ -209,7 +210,8 @@ namespace ospray {
       std::cout << "  voxelType  = " << voxelType << std::endl;
       std::cout << "  dimensions = " << dimensions << std::endl;
       std::cout << "  path       = " << doc->fileName.path() << std::endl;
-      volume->setTransferFunction(std::make_shared<TransferFunction>());
+      // TODO: This works on the old style of scenegraph!
+      //volume->setTransferFunction(std::make_shared<TransferFunction>());
       volume->fileNameOfCorrespondingXmlDoc = doc->fileName;
       volume->setFileName(fileName);
       volume->setDimensions(dimensions);
@@ -236,8 +238,8 @@ namespace ospray {
          (that are not in scene graph format) to actual scene graph */
       if (doc->child[0]->name == "volume") {
         std::cout << "#osp.sg: Seems the file we are parsing is actually not a " << endl;
-        std::cout << "#osp.sg: ospray scene graph file, but rather a (older) " << endl;
-        std::cout << "#osp.sg: ospVolumeViewer input file. Herocically trying to " << endl;
+        std::cout << "#osp.sg: ospray scene graph file, but rather an (older) " << endl;
+        std::cout << "#osp.sg: ospVolumeViewer input file. Heroically trying to " << endl;
         std::cout << "#osp.sg: convert this to scene graph while loading. " << endl;
         return importOSPVolumeViewerFile(doc);
       }

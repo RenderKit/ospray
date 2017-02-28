@@ -24,11 +24,18 @@ namespace ospray {
   namespace sg {
 
     /*! a world node */
-    struct World : public sg::Node {
-      World() : ospModel(NULL) {};
+    struct OSPSG_INTERFACE World : public sg::Renderable
+    {
+      World() = default;
+
+      virtual void init() override 
+      {
+        add(createNode("bounds", "box3f"));
+      }
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const override { return "ospray::viewer::sg::World"; }
+      virtual std::string toString() const override
+      { return "ospray::viewer::sg::World"; }
 
       //! serialize into given serialization state 
       virtual void serialize(sg::Serialization::State &serialization) override;
@@ -43,17 +50,39 @@ namespace ospray {
         for which that does not apply can simpy return
         box3f(embree::empty) */
       virtual box3f getBounds() override;
+      virtual void preCommit(RenderContext &ctx);
+      virtual void postCommit(RenderContext &ctx);
+      virtual void preRender(RenderContext &ctx);
+      virtual void postRender(RenderContext &ctx);
 
-      template<typename T>
-      inline void add(const std::shared_ptr<T> &t) {
-        assert(t);
-        std::shared_ptr<sg::Node> asNode = std::dynamic_pointer_cast<Node>(t);
-        assert(asNode);
-        nodes.push_back(asNode);
+      OSPModel ospModel {nullptr};
+      std::vector<std::shared_ptr<Node>> nodes;
+      std::shared_ptr<sg::World> oldWorld;
+    };
+
+
+    struct OSPSG_INTERFACE InstanceGroup : public sg::World
+    {
+      InstanceGroup() = default;
+
+      virtual void init() override 
+      {
+        add(createNode("bounds", "box3f"));
+        add(createNode("visible", "bool", true));
+        add(createNode("position", "vec3f"));
+        add(createNode("rotation", "vec3f", vec3f(0),
+                       NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
+        getChild("rotation")->setMinMax(-vec3f(2*3.15f),vec3f(2*3.15f));
+        add(createNode("scale", "vec3f", vec3f(1.f)));
       }
 
-      std::vector<std::shared_ptr<sg::Node> > nodes;
-      OSPModel ospModel;
+      virtual void preCommit(RenderContext &ctx);
+      virtual void postCommit(RenderContext &ctx);
+      virtual void preRender(RenderContext &ctx);
+      virtual void postRender(RenderContext &ctx);
+
+      OSPGeometry ospInstance {nullptr};
+      bool instanced {true};
     };
     
   } // ::ospray::sg

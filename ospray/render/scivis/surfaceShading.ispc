@@ -107,28 +107,25 @@ void integrateOverLights(const uniform SciVisRenderer *uniform self,
       if (self->oneSidedLighting) {
         if (cosNL < 0.0f)
           continue;
-      }
-      else
+      } else
         cosNL = abs(cosNL);
       const float cosLR = max(0.f, dot(light.dir, R));
       vec3f specular = info.Ks * powf(cosLR, info.Ns);
       const vec3f brdf = info.Kd * cosNL + specular;
-      const vec3f light_contrib = info.local_opacity
-        * brdf * light.weight;
+      const vec3f light_contrib = info.local_opacity * brdf * light.weight;
 
-      if (self->shadowsEnabled) 
-        {
-          const float max_contrib = reduce_max(light_contrib);
-          if (max_contrib > .01f) {
-            Ray shadowRay;
-            setRay(shadowRay, P, light.dir);
-            const float light_alpha = lightAlpha(self, shadowRay,
-                                                 self->super.model,
-                                                 max_contrib,
-                                                 rayOffset, sampleID, quality);
-            color = color + light_alpha * light_contrib;
-          }
-        } else {
+      if (self->shadowsEnabled) {
+        const float max_contrib = reduce_max(light_contrib);
+        if (max_contrib > .01f) {
+          Ray shadowRay;
+          setRay(shadowRay, P, light.dir);
+          const float light_alpha = lightAlpha(self, shadowRay,
+              self->super.model,
+              max_contrib,
+              rayOffset, sampleID, quality);
+          color = color + light_alpha * light_contrib;
+        }
+      } else {
         color = color + light_contrib;
       }
     }

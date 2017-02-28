@@ -39,19 +39,19 @@ namespace ospray {
       if (!group) group = new Group;
 
       if (fileName.ext() == "osp") {
-#ifndef _WIN32
-
+          importOSP(fileName, group);
+#if 0 // NOTE(jda) - using ospray::sg is broken, needs fixed before enabling
+//#ifndef _WIN32
           std::shared_ptr<sg::World> world;;
           world = sg::loadOSP(fn);
           std::shared_ptr<sg::Volume> volumeNode;
-          for (auto node : world->nodes)
-          {
+          for (auto node : world->nodes) {
             if (node->toString().find("Volume") != std::string::npos)
               volumeNode = std::dynamic_pointer_cast<sg::Volume>(node);
           }
-          if (!volumeNode)
-          {
-            throw std::runtime_error("#ospray:importer: no volume found in osg file");
+          if (!volumeNode) {
+            throw std::runtime_error("#ospray:importer: no volume found "
+                                     "in osg file");
           }
           sg::RenderContext ctx;
           std::shared_ptr<sg::Integrator>  integrator;
@@ -70,8 +70,6 @@ namespace ospray {
           Volume* msgVolume = new Volume;
           msgVolume->bounds = volumeNode->getBounds();
           msgVolume->handle = volumeNode->volume;
-          msgVolume->voxelRange = volumeNode->getVoxelRange();
-
           group->volume.push_back(msgVolume);
 #endif
       } else if (fileName.ext() == "bob") {
@@ -84,5 +82,5 @@ namespace ospray {
       return group;
     }
 
-  }
-}
+  } // ::ospray::importer
+} // ::ospray
