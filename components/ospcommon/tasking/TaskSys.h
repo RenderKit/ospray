@@ -16,23 +16,14 @@
 
 #pragma once
 
-#include "../platform.h"
-#include "../sysinfo.h"
-#include "../RefCount.h"
-// std
-#include <mutex>
+#include "../common.h"
+// stl
+#include <atomic>
 #include <condition_variable>
+#include <mutex>
 
 namespace ospcommon {
-
-  struct OSPCOMMON_INTERFACE __aligned(64) Task : public RefCount
-  {
-    Task(const char *name = "no name");
-    virtual ~Task() = default;
-
-    // ------------------------------------------------------------------
-    // interface for scheduling a new task into the task system
-    // ------------------------------------------------------------------
+  namespace tasking {
 
     enum ScheduleOrder
     {
@@ -45,22 +36,48 @@ namespace ospcommon {
       FRONT_OF_QUEUE
     };
 
-    /*! the order in the queue that this job will get scheduled when
-     *  activated */
-    ScheduleOrder order;
+    struct OSPCOMMON_INTERFACE __aligned(64) Task
+    {
+      Task();
+      virtual ~Task() = default;
 
-    //! schedule the given task with the given number of sub-jobs.
-    void schedule(size_t numJobs, ScheduleOrder order=BACK_OF_QUEUE);
+      // ------------------------------------------------------------------
+      // interface for scheduling a new task into the task system
+      // ------------------------------------------------------------------
 
-    //! same as schedule(), but also wait for all jobs to complete
-    void scheduleAndWait(size_t numJobs, ScheduleOrder order=BACK_OF_QUEUE);
+      //! wait for the task to complete, optionally (by default) helping
+      //! to actually work on completing this task.
+      void wait();
 
-    //! wait for the task to complete, optionally (by default) helping
-    //! to actually work on completing this task.
-    void wait(bool workOnIt = true);
+      // ------------------------------------------------------------------
+      // callback used to define what the task is doing
+      // ------------------------------------------------------------------
 
-    //! get name of the task (useful for debugging)
-    const char *getName();
+      virtual void run(int jobID) = 0;
+
+      // ------------------------------------------------------------------
+      // internal data for the tasking systme to manage the task
+      // ------------------------------------------------------------------
+
+      //! work on task until no more useful job available on this task
+      void workOnIt();
+
+      // Data members //
+
+      __aligned(64) std::atomic_int numJobsCompleted;
+      __aligned(64) std::atomic_int numJobsStarted;
+      int numJobsInTask {0};
+
+      enum Status { INITIALIZING, SCHEDULED, ACTIVE, COMPLETED };
+      std::mutex __aligned(64) mutex;
+      Status volatile __aligned(64) status {INITIALIZING};
+      std::condition_variable __aligned(64) allDependenciesFulfilledCond;
+      std::condition_variable __aligned(64) allJobsCompletedCond;
+
+      __aligned(64) Task *volatile next;
+    };
+
+    // Public interface to the tasking system /////////////////////////////////
 
     /*! \brief initialize the task system with given number of worker
         tasks.
@@ -68,59 +85,41 @@ namespace ospcommon {
         numThreads==-1 means 'use all that are available; numThreads=0
         means 'no worker thread, assume that whoever calls wait() will
         do the work */
-    static void initTaskSystem(const size_t numThreads);
+    void OSPCOMMON_INTERFACE initTaskSystem(int numThreads = -1);
 
-  private:
+    //! schedule the given task with the given number of sub-jobs.
+    void scheduleTask(std::shared_ptr<Task> task,
+                      int numJobs,
+                      ScheduleOrder order = BACK_OF_QUEUE);
 
-    //! Allow tasking system backend to access all parts of the class, but
-    //! prevent users from using data which is an implementation detail of the
-    //! task
-    friend struct TaskSys;
+    template <typename TASK_T>
+    inline void parallel_for(int nTasks, TASK_T && fcn)
+    {
+      struct LocalTask : public Task
+      {
+        const TASK_T &t;
+        LocalTask(TASK_T&& fcn) : t(std::forward<TASK_T>(fcn)) {}
+        void run(int taskIndex) override { t(taskIndex); }
+      };
 
-    // ------------------------------------------------------------------
-    // callback used to define what the task is doing
-    // ------------------------------------------------------------------
+      auto task = std::make_shared<LocalTask>(std::forward<TASK_T>(fcn));
+      scheduleTask(task, nTasks);
+      task->wait();
+    }
 
-    virtual void run(size_t jobID) = 0;
+    template <typename TASK_T>
+    inline void schedule(int nTasks, TASK_T && fcn)
+    {
+      struct LocalTask : public Task
+      {
+        TASK_T t;
+        LocalTask(TASK_T&& fcn) : t(std::forward<TASK_T>(fcn)) {}
+        void run(int) override { t(); }
+      };
 
-    // ------------------------------------------------------------------
-    // internal data for the tasking systme to manage the task
-    // ------------------------------------------------------------------
+      auto task = std::make_shared<LocalTask>(std::forward<TASK_T>(fcn));
+      scheduleTask(task, 1, FRONT_OF_QUEUE);
+    }
 
-    //*! work on task until no more useful job available on this task
-    void workOnIt();
-
-    //! activate job, and insert into the task system. should never be
-    //! called by the user, only by the task(system) whenever the task
-    //! is a) scheduled and b) all dependencies are fulfilled
-    void activate();
-
-    __aligned(64) std::atomic_int numJobsCompleted;
-    __aligned(64) std::atomic_int numJobsStarted;
-    size_t numJobsInTask {0};
-
-    enum Status { INITIALIZING, SCHEDULED, ACTIVE, COMPLETED };
-    std::mutex __aligned(64) mutex;
-    Status volatile __aligned(64) status {INITIALIZING};
-    std::condition_variable __aligned(64) allDependenciesFulfilledCond;
-    std::condition_variable __aligned(64) allJobsCompletedCond;
-
-    __aligned(64) Task *volatile next;
-    const char *name;
-  };
-
-// Inlined function definitions ///////////////////////////////////////////////
-
-  inline Task::Task(const char *name)
-    : numJobsCompleted(),
-      numJobsStarted(),
-      name(name)
-  {
-  }
-
-  inline const char *Task::getName()
-  {
-    return name;
-  }
-
+  } // ::ospcommon::tasking
 } // ::ospcommon

@@ -114,13 +114,6 @@ namespace ospray {
       unlockMPI();
     }
 
-    void checkMpiError(int rc)
-    {
-      if (rc != MPI_SUCCESS)
-        throw std::runtime_error("MPI Error");
-    }
-
-    
     /*! set to given intercomm, and properly set size, root, etc */
     void Group::setTo(MPI_Comm comm)
     {

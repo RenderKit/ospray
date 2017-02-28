@@ -37,7 +37,7 @@ namespace ospray {
 
       alreadyLoaded.insert(moduleName);
 
-      const std::string libName = "ospray_sg_"+moduleName;
+      const std::string libName = "ospray_module_sg_"+moduleName;
       const std::string symName = "ospray_sg_"+moduleName+"_init";
       
       ospcommon::loadLibrary(libName);

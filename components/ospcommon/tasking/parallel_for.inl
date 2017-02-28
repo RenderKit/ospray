@@ -51,14 +51,7 @@ namespace ospcommon {
       fcn(taskIndex);
     }
 #elif defined(OSPRAY_TASKING_INTERNAL)
-    struct LocalTask : public Task {
-      const TASK_T &t;
-      LocalTask(const TASK_T& fcn) : Task("LocalTask"), t(fcn) {}
-      void run(size_t taskIndex) override { t(taskIndex); }
-    };
-
-    Ref<LocalTask> task = new LocalTask(fcn);
-    task->scheduleAndWait(nTasks);
+    tasking::parallel_for(nTasks, std::forward<TASK_T>(fcn));
 #elif defined(OSPRAY_TASKING_LIBDISPATCH)
     dispatch_apply_f(nTasks,
                      dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT,

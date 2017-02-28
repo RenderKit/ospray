@@ -94,8 +94,6 @@ namespace ospray {
 #define SERIALIZE_MPI \
   std::lock_guard<std::mutex>(ospray::mpi::mpiSerializerMutex);
     
-    OSPRAY_MPI_INTERFACE void checkMpiError(int rc);
-
     //! abstraction for an MPI group. 
     /*! it's the responsiblity of the respective mpi setup routines to
       fill in the proper values */

@@ -101,9 +101,9 @@ namespace ospray {
             << std::endl;
         postErrorMsg(msg);
       }
-      lockMPI("createMPI_runOnExistingRanks");
-      MPI_Barrier(MPI_COMM_WORLD);
-      unlockMPI();
+
+      SERIALIZED_MPI_CALL(Barrier(MPI_COMM_WORLD));
+
       if (world.size <= 1) {
         throw std::runtime_error("No MPI workers found.\n#osp:mpi: Fatal Error "
                                  "- OSPRay told to run in MPI mode, but there "
@@ -114,9 +114,7 @@ namespace ospray {
 
       if (world.rank == 0) {
         // we're the root
-        lockMPI("createMPI_runOnExistingRanks - comm split");
-        MPI_Comm_split(mpi::world.comm,1,mpi::world.rank,&app.comm);
-        unlockMPI();
+        SERIALIZED_MPI_CALL(Comm_split(mpi::world.comm,1,mpi::world.rank,&app.comm));
         app.makeIntraComm();
         if (logMPI) {
           std::stringstream msg;
@@ -125,7 +123,7 @@ namespace ospray {
           postErrorMsg(msg);
         }
 
-        MPI_Intercomm_create(app.comm, 0, world.comm, 1, 1, &worker.comm);
+        SERIALIZED_MPI_CALL(Intercomm_create(app.comm, 0, world.comm, 1, 1, &worker.comm));
         if (logMPI) {
           std::stringstream msg;
           msg << "master: Made 'worker' intercomm (through intercomm_create): "
@@ -142,7 +140,7 @@ namespace ospray {
         // do some simple hand-shake test, just to make sure MPI is
         // working correctly
         // ------------------------------------------------------------------
-        {
+        serialized(CODE_LOCATION, [&](){
           if (logMPI) {
             std::stringstream msg;
             msg << "#m: ping-ponging a test message to every worker..."
@@ -161,7 +159,7 @@ namespace ospray {
             Assert(reply == i);
           }
           MPI_Barrier(MPI_COMM_WORLD);
-        }
+        });
         
         // -------------------------------------------------------
         // at this point, all processes should be set up and synced. in
@@ -172,7 +170,7 @@ namespace ospray {
         // - all processes (incl app) have barrier'ed, and thus now in sync.
       } else {
         // we're the workers
-        MPI_Comm_split(mpi::world.comm,0,mpi::world.rank,&worker.comm);
+        SERIALIZED_MPI_CALL(Comm_split(mpi::world.comm,0,mpi::world.rank,&worker.comm));
         worker.makeIntraComm();
         if (logMPI) {
           std::stringstream msg;
@@ -185,14 +183,14 @@ namespace ospray {
           postErrorMsg(msg);
         }
 
-        MPI_Intercomm_create(worker.comm, 0, world.comm, 0, 1, &app.comm);
+        SERIALIZED_MPI_CALL(Intercomm_create(worker.comm, 0, world.comm, 0, 1, &app.comm));
         app.makeInterComm();
 
         // ------------------------------------------------------------------
         // do some simple hand-shake test, just to make sure MPI is
         // working correctly
         // ------------------------------------------------------------------
-        {
+        serialized(CODE_LOCATION, [&](){
           // replying to test-message
           if (logMPI) {
             std::stringstream msg;
@@ -205,7 +203,7 @@ namespace ospray {
           MPI_Send(&reply,1,MPI_INT,0,worker.rank,app.comm);
           
           MPI_Barrier(MPI_COMM_WORLD);
-        }
+        });
 
         
         // -------------------------------------------------------

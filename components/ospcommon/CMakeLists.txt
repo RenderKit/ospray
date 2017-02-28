@@ -17,7 +17,6 @@
 SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 SET(THREADS_PREFER_PTHREAD_FLAG TRUE)
 
-
 IF (TARGET ospray_common)
   # this target is already built!
 ELSE()
