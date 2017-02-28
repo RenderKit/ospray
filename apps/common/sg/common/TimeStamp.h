@@ -30,7 +30,6 @@ namespace ospray {
     struct OSPSG_INTERFACE TimeStamp
     {
       TimeStamp() = default;
-      TimeStamp(size_t t) { value=t; }
       operator size_t() const;
       
     private:
