@@ -63,7 +63,7 @@ float lightAlpha(const uniform SciVisRenderer *uniform self,
 
       alpha = alpha * (1.f - material_opacity);
       if (alpha * weight < ALPHA_THRESHOLD)
-        return alpha;
+        return 0.f;
     }
 
     // volumes
@@ -88,7 +88,7 @@ float lightAlpha(const uniform SciVisRenderer *uniform self,
       alpha = alpha * (1.f - material_opacity);
 
       if (alpha * weight < ALPHA_THRESHOLD)
-        return alpha;
+        return 0.f;
     } 
 
 
@@ -97,7 +97,7 @@ float lightAlpha(const uniform SciVisRenderer *uniform self,
     if (--remaining_depth <= 0)
       return alpha;
 
-    ray.t0 = org_t + rayOffset;
+    ray.t0 = org_t + self->super.epsilon;
     ray.t = org_t_max;
     ray.primID = -1;
     ray.geomID = -1;
