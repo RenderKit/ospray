@@ -826,8 +826,8 @@ void VolumeViewer::initObjects(const std::string &renderer_type)
   ospCommit(planeMaterial);
 
   osp::vec3f *vertices = new osp::vec3f[4];
-  float ps = 100000.f;
-  float py = boundingBox.upper.y+1.f;
+  float ps = 1000.f;
+  float py = boundingBox.upper.y+0.1f;
 #if 1
   vertices[0] = osp::vec3f{-ps, -ps, py};
   vertices[1] = osp::vec3f{-ps,  ps, py};
