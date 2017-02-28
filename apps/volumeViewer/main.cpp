@@ -99,6 +99,7 @@ int main(int argc, char *argv[])
   bool preIntegration = true;
   bool gradientShading = true;
   bool adaptiveSampling = true;
+  bool renderInBackground = false;
 
   std::vector<std::string> inFileName;
   // Parse the optional command line arguments.
@@ -159,6 +160,7 @@ int main(int argc, char *argv[])
       transferFunctionFilename = std::string(argv[++i]);
       std::cout << "got transferFunctionFilename = " << transferFunctionFilename << std::endl;
     } else if (arg == "--benchmark") {
+      renderInBackground = true;
       if (i + 3 >= argc) throw std::runtime_error("missing <warm-up frames> <frames> <filename> arguments");
       benchmarkWarmUpFrames = atoi(argv[++i]);
       benchmarkFrames = atoi(argv[++i]);
@@ -269,6 +271,7 @@ int main(int argc, char *argv[])
   volumeViewer->setAOSamples(aoSamples);
   volumeViewer->setPreIntegration(preIntegration);
   volumeViewer->setGradientShadingEnabled(gradientShading);
+  volumeViewer->setRenderInBackground(renderInBackground);
 
   // Display the first model.
   volumeViewer->setModel(0);

@@ -26,9 +26,11 @@ namespace ospcommon {
     typedef T scalar_t;
     typedef typename ospcommon::vec_t<T,N,ALIGN> vec_t;
     
-    inline box_t() {}
-    inline box_t( EmptyTy ) : lower(pos_inf), upper(neg_inf) {}
-    inline box_t(const box_t &o) : lower(o.lower), upper(o.upper) {}
+    inline box_t()                          = default;
+    inline box_t(const box_t &o)            = default;
+    inline box_t &operator=(const box_t &o) = default;
+
+    inline box_t(EmptyTy) : lower(pos_inf), upper(neg_inf) {}
     inline box_t(const vec_t &lower, const vec_t &upper) : lower(lower), upper(upper) {}
 
     inline vec_t size() const { return upper - lower; }
@@ -41,9 +43,6 @@ namespace ospcommon {
 
     inline bool contains(const vec_t &vec) const 
     { return !anyLessThan(vec,lower) && !anyLessThan(upper,vec); }
-
-    inline box_t &operator=(const box_t &o)
-    { lower = o.lower; upper = o.upper; return *this; }
 
     vec_t lower, upper;
   };

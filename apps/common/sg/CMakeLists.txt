@@ -21,21 +21,25 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   SceneGraph.cpp
   Renderer.cpp
 
+  geometry/Geometry.h
   geometry/Spheres.cpp
   geometry/TriangleMesh.cpp
 
   camera/PerspectiveCamera.cpp
 
-  common/Serialization.cpp
   common/Common.cpp
-  common/Node.cpp
-  common/Integrator.cpp
-  common/World.cpp
-  common/Texture2D.cpp
-  common/Material.cpp
-  common/Transform.cpp
   common/FrameBuffer.cpp
-  
+  common/Integrator.cpp
+  common/Light.cpp
+  common/Material.cpp
+  common/Node.cpp
+  common/OSPVariant.h
+  common/Serialization.cpp
+  common/TimeStamp.cpp
+  common/Texture2D.cpp
+  common/Transform.cpp
+  common/World.cpp
+
   transferFunction/TransferFunction.cpp
   volume/Volume.cpp
 
@@ -46,7 +50,7 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   # scene graph importers
   importer/Importer.cpp
   importer/ImportOSP.cpp
-#  importer/ImportOSG.cpp
+  importer/ImportOSG.cpp
   importer/ImportOBJ.cpp
   importer/ImportPLY.cpp
   importer/ImportRIVL.cpp
@@ -55,3 +59,14 @@ LINK
   ospray_common
   ospray_xml
 )
+
+## Test apps ##
+
+OSPRAY_CREATE_TEST(test_OSPVariant
+  common/OSPVariant.h
+  common/test_OSPVariant.cpp
+LINK
+  ospray_common
+)
+
+ADD_TEST(NAME OSPVariant COMMAND test_OSPVariant)

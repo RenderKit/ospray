@@ -43,7 +43,8 @@ namespace ospray {
       ospcommon::loadLibrary(libName);
       void *sym = ospcommon::getSymbol(symName);
       if (!sym)
-        throw sg::RuntimeError("could not load module '"+moduleName+"' (symbol '"+symName+"' not found)");
+        throw sg::RuntimeError("could not load module '" + moduleName
+                               + "' (symbol '" + symName + "' not found)");
 
       void (*initFct)() = (void (*)())sym;
       initFct();

@@ -193,7 +193,7 @@ namespace ospray {
         // now, create widgets for all of them
         for (int i=0;i<xferFuncs.size();i++) {
           // take name from node, or create one
-          std::string name = xferFuncs[i]->name;
+          std::string name = xferFuncs[i]->getName();
           if (name == "") {
             std::stringstream ss;
             ss << "(unnamed xfr fct #" << i << ")";

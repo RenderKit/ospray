@@ -179,6 +179,8 @@ public slots:
 
   void setAOWeight(double value);
 
+  void setRenderInBackground(bool st) { renderInBackground = st; osprayWindow->setRenderInBackground(st); }
+
   LightEditor* getLightEditor() { return lightEditor; }
 
 protected:
@@ -272,5 +274,5 @@ protected:
   int preIntegration;
   int adaptiveSampling;
   int gradientShadingEnabled;
-
+  bool renderInBackground;
 };

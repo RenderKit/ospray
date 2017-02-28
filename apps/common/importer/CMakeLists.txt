@@ -18,7 +18,6 @@ INCLUDE_DIRECTORIES(
   ${CMAKE_SOURCE_DIR}/ospray/include
   ${CMAKE_SOURCE_DIR}/ospray
   ${CMAKE_SOURCE_DIR}
-  ${CMAKE_SOURCE_DIR}/apps/qtViewer
   )
 
 OSPRAY_CREATE_LIBRARY(ospray_importer
@@ -28,7 +27,5 @@ OSPRAY_CREATE_LIBRARY(ospray_importer
   Importer.cpp
   TinyXML2.cpp
 LINK
-  ospray_common
-  ospray
   ospray_sg
 )

@@ -24,34 +24,34 @@
 
 namespace ospray {
   namespace sg {
-    using ospcommon::FileName;
 
     /*! \brief C++ wrapper for a 2D Texture */
-    struct Texture2D : public Node {
+    struct OSPSG_INTERFACE Texture2D : public Node
+    {
       /*! constructor */
-      Texture2D();
-      virtual ~Texture2D();
+      Texture2D() = default;
+      virtual ~Texture2D() = default;
       
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const override { return "ospray::viewer::sg::Texture2D"; };
+      virtual std::string toString() const override
+      { return "ospray::viewer::sg::Texture2D"; }
 
       //! \brief load texture from given file. 
       /*! \detailed if file does not exist, or cannot be loaded for
           some reason, return NULL. Multiple loads from the same file
           will return the *same* texture object */
-      static std::shared_ptr<Texture2D> load(const FileName &fileName, const bool prefereLinear = false);
+      static std::shared_ptr<Texture2D> load(const FileName &fileName,
+                                             const bool prefereLinear = false);
       virtual void render(RenderContext &ctx) override;
 
       //! texture size, in pixels
-      vec2i       size;
+      vec2i size {-1};
+
       //! format of each texel
-      OSPTextureFormat texelType;
+      OSPTextureFormat texelType {OSP_TEXTURE_FORMAT_INVALID};
       
-      OSPTexture2D ospTexture;
+      OSPTexture2D ospTexture {nullptr};
       std::shared_ptr<sg::DataArray1uc> texelData;
-    // private:
-    //   //! pixel data, in whatever format specified in 'texelType'
-    //   unsigned char       *texel;
     };
 
   } // ::ospray::sg
