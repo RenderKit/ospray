@@ -39,9 +39,6 @@ namespace ospray {
       if (!group) group = new Group;
 
       if (fileName.ext() == "osp" || fileName.ext() == "osg") {
-          // importOSP(fileName, group);
-#if 1 // NOTE(jda) - using ospray::sg is broken, needs fixed before enabling
-//#ifndef _WIN32
           std::shared_ptr<sg::World> world;;
           world = sg::loadOSP(fn);
           std::shared_ptr<sg::Volume> volumeNode;
@@ -54,27 +51,16 @@ namespace ospray {
                                      "in osp file");
           }
           sg::RenderContext ctx;
-          // std::shared_ptr<sg::Integrator>  integrator;
-          // integrator = std::make_shared<sg::Integrator>("scivis");
-          // ctx.integrator = integrator;
-          // integrator->commit();
-          // if (!world) {
-          //   std::cout << "#osp:qtv: no world defined. exiting." << std::endl;
-          //   exit(1);
-          // }
-
-          // world->render(ctx);
           world->traverse(ctx, "verify");
           world->traverse(ctx, "commit");
-          std::cout << "volumeNode::volume: " << volumeNode->volume << std::endl;
 
           OSPVolume volume = volumeNode->volume;
 
           Volume* msgVolume = new Volume;
           msgVolume->bounds = volumeNode->getBounds();
           msgVolume->handle = volumeNode->volume;
+          msgVolume->voxelRange = volumeNode->getChild("voxelRange")->getValue<vec2f>();
           group->volume.push_back(msgVolume);
-#endif
       } else if (fileName.ext() == "bob") {
         importRM(fn, group);
       } else {

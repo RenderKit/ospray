@@ -129,24 +129,26 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
       // Look up the opacity associated with the volume sample.
       vec3f sampleColor;
       float sampleOpacity;
-      sampleOpacity = volume->transferFunction->getIntegratedOpacityForValue(
-        volume->transferFunction,lastSample, sample);
+      sampleOpacity = volume->transferFunction->getIntegratedOpacityForValue(volume->transferFunction,
+                                                                             lastSample, sample);
       if (volume->adaptiveSampling && sampleOpacity > adaptiveBacktrack && ray.t0 > tSkipped)  // adaptive backtack
         {
           //adaptively refine sampling rate
           const float newSamplingRate = min(adaptiveScalar*sampleOpacity*quality,maxSamplingRate);
-          if (newSamplingRate > samplingRate + 0.1f)
+          if (newSamplingRate > samplingRate + 0.01f)
             {
               samplingRate = newSamplingRate;
               const float ot0 = ray.t0;
-              ray.t0 = max(max(ray.t0-ray.time,tSkipped), tBegin);
+              ray.t0 = max(max(ray.t0-max(ray.time,volume->samplingStep),tSkipped), tBegin);
+              //Carson: TODO: skipping past ray.time shouldnt be necessary and avoided 
+              //but currently greatly reduces artifacts from low to high opacity 
+              //regions.  issue with space skipping?
               tSkipped = ot0;
               volume->intersectAdaptive(volume, ray, samplingRate);
               lastSample = -1;
               continue;
             }
-            else
-              tSkipped = ray.t0;
+          tSkipped = ray.t0;
         }
 
       if (!isShadowRay)
@@ -300,7 +302,7 @@ SciVisRenderer_intersectVolumes(const uniform SciVisRenderer *uniform renderer,
   // If we intersected a volume, offset ray by a fraction of the nominal ray
   // step.
   if (volume)
-    ray.t0 += rayOffset * volume->samplingStep * rcpf(4.f);
+    ray.t0 += rayOffset * volume->samplingStep * rcpf(volume->samplingRate*0.5);
 
   // Return the first intersected volume.
   return volume;

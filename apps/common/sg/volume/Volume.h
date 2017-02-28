@@ -33,6 +33,7 @@ namespace ospray {
         add(createNode("gradientShadingEnabled", "bool", true));
         add(createNode("preIntegration", "bool", true));
         add(createNode("singleShade", "bool", true));
+        add(createNode("voxelRange", "vec2f", vec2f(std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity())));
         add(createNode("adaptiveSampling", "bool", true));
         add(createNode("adaptiveScalar", "float", 15.f));
         add(createNode("adaptiveBacktrack", "float", 0.03f));

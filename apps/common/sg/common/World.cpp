@@ -53,21 +53,15 @@ namespace ospray {
 
     void World::preCommit(RenderContext &ctx)
     {
-      std::cout << __PRETTY_FUNCTION__ << std::endl;
       oldWorld = ctx.world;
       ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
-      // if (!ospModel)
-      // {
-        ospModel = ospNewModel();
-        ospCommit(ospModel);
-        std::cout << "ospModel pre: " << ospModel << std::endl;
-        value = (OSPObject)ospModel;
-      // }
+      ospModel = ospNewModel();
+      ospCommit(ospModel);
+      value = (OSPObject)ospModel;
     }
 
     void World::postCommit(RenderContext &ctx)
     {
-      std::cout << "ospModel post: " << ospModel << std::endl;
       ospCommit(ospModel);
       ctx.world = oldWorld;
     }
@@ -81,15 +75,11 @@ namespace ospray {
     {
        ospCommit(ospModel);
        ctx.world = oldWorld;
-       if (oldWorld && oldWorld.get() != this)
-       {
-        // ospAddGeometry(ospModel,ospInstance);
-       }
     }
 
     void InstanceGroup::preCommit(RenderContext &ctx)
     {
-            if (instanced)
+      if (instanced)
       {
       oldWorld = ctx.world;
       ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
@@ -104,11 +94,11 @@ namespace ospray {
 
     void InstanceGroup::postCommit(RenderContext &ctx)
     {
-            if (instanced)
+      if (instanced)
       {
-      ospCommit(ospModel);
-      ctx.world = oldWorld;
-    }
+        ospCommit(ospModel);
+        ctx.world = oldWorld;
+      }
     }
 
     void InstanceGroup::preRender(RenderContext &ctx)
@@ -116,7 +106,7 @@ namespace ospray {
       oldWorld = ctx.world;
       if (instanced)
       {
-      ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
+        ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
         vec3f scale = getChild("scale")->getValue<vec3f>();
         vec3f rotation = getChild("rotation")->getValue<vec3f>();
         vec3f translation = getChild("position")->getValue<vec3f>();
@@ -136,12 +126,7 @@ namespace ospray {
 
     void InstanceGroup::postRender(RenderContext &ctx)
     {
-       // ospCommit(ospModel);
        ctx.world = oldWorld;
-       if (oldWorld && oldWorld.get() != this)
-       {
-        // ospAddGeometry(ospModel,ospInstance);
-       }
     }
 
     OSP_REGISTER_SG_NODE(World);

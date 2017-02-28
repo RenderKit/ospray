@@ -262,12 +262,10 @@ namespace ospray {
 
     void StructuredVolumeFromFile::preCommit(RenderContext &ctx)
     {
-      std::cout << __PRETTY_FUNCTION__ << std::endl;
       if (volume) {
         ospCommit(volume);
         return;
       }
-      std::cout << __PRETTY_FUNCTION__ << std::endl;
 
       if (dimensions.x <= 0 || dimensions.y <= 0 || dimensions.z <= 0)
         throw std::runtime_error("StructuredVolume::render(): invalid volume dimensions");
@@ -281,7 +279,6 @@ namespace ospray {
                                                 "shared_structured_volume");
 
       if (!volume) THROW_SG_ERROR("could not allocate volume");
-      std::cout << "volume: " << volume << std::endl;
 
       ospHandle = volume;
       setValue((OSPObject)volume);
@@ -326,6 +323,7 @@ namespace ospray {
       }
       fclose(file);
 
+      getChild("voxelRange")->setValue(voxelRange);
       transferFunction->setValueRange(voxelRange);
       transferFunction->preCommit(ctx);
       transferFunction->render(ctx);
