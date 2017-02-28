@@ -181,8 +181,7 @@ namespace ospray {
       
       ospSetString(volume,"voxelType",voxelType.c_str());
       ospSetVec3i(volume,"dimensions",(const osp::vec3i&)dimensions);
-
-      vec2f valueRange(std::numeric_limits<float>::infinity(),-std::numeric_limits<float>::infinity());
+      
       FileName realFileName = fileNameOfCorrespondingXmlDoc.path()+fileName;
       FILE *file = fopen(realFileName.c_str(),"rb");
       if (!file) 
@@ -199,11 +198,6 @@ namespace ospray {
             size_t nRead = fread(slice,sizeof(float),nPerSlice,file);
             if (nRead != nPerSlice)
               throw std::runtime_error("StructuredVolume::render(): read incomplete slice data ... partial file or wrong format!?");
-            for(size_t i=0;i<nPerSlice;i++)
-            {
-              valueRange.x = min(valueRange.x, slice[i]);
-              valueRange.y = max(valueRange.y, slice[i]);
-            }
             const vec3i region_lo(0,0,z),region_sz(dimensions.x,dimensions.y,1);
             ospSetRegion(volume,slice,(const osp::vec3i&)region_lo,(const osp::vec3i&)region_sz);
           }
@@ -214,11 +208,6 @@ namespace ospray {
             size_t nRead = fread(slice,sizeof(uint8_t),nPerSlice,file);
             if (nRead != nPerSlice)
               throw std::runtime_error("StructuredVolume::render(): read incomplete slice data ... partial file or wrong format!?");
-            for(size_t i=0;i<nRead;i++)
-            {
-              valueRange.x = min(valueRange.x, float(slice[i]));
-              valueRange.y = max(valueRange.y, float(slice[i]));
-            }
             const vec3i region_lo(0,0,z), region_sz(dimensions.x,dimensions.y,1);
             ospSetRegion(volume,slice,
                          (const osp::vec3i&)region_lo,
@@ -232,17 +221,10 @@ namespace ospray {
         size_t nRead = fread(voxels,sizeof(float),nVoxels,file);
         if (nRead != nVoxels)
           THROW_SG_ERROR("read incomplete data (truncated file or wrong format?!)");
-        for(size_t i=0;i<nVoxels;i++)
-        {
-          valueRange.x = min(valueRange.x, voxels[i]);
-          valueRange.y = max(valueRange.y, voxels[i]);
-        }
         OSPData data = ospNewData(nVoxels,OSP_FLOAT,voxels,OSP_DATA_SHARED_BUFFER);
         ospSetData(volume,"voxelData",data);
       }
       fclose(file);
-
-      setVoxelRange(valueRange);
 
       transferFunction->render(ctx);
 
