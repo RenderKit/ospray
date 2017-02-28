@@ -208,10 +208,6 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
         float tEnd = min(geometryRay.t,ray.t);
         foreach_unique (v in volume)
           {
-            //volumeColor = SciVisRenderer_computeVolumeSample(renderer, v, ray);
-            // Advance the ray for the next sample.
-            //volume->intersect(v, ray);
-
             //interval sampling
             volumeColor = SciVisRenderer_computeVolumeInterval(renderer, v, ray, tBegin, tEnd, .98f - color.w, 0, rayOffset, sampleID, 1.f);
           }

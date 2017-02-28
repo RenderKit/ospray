@@ -46,6 +46,7 @@ void printUsage(const char *exeName)
               << "    -vu <x> <y> <z>                            set viewport up vector to ('x', 'y', 'z')\n"
               << "    -vp <x> <y> <z>                            set camera position ('x', 'y', 'z')\n"
               << "    -vi <x> <y> <z>                            set look at position ('x', 'y', 'z')\n"
+              << "    -vf <field of view>                        set the field of view"
               << "    -r,--renderer <renderer>                   set renderer to use\n"
               << "    --writeframes <filename>                   emit frames to 'filename_xxxxx.ppm'\n"
               << "    -h,--help                                  print this message\n"
@@ -81,6 +82,7 @@ int main(int argc, char *argv[])
   int viewSizeHeight = 0;
   ospcommon::vec3f viewUp(0.f);
   ospcommon::vec3f viewAt(0.f), viewFrom(0.f);
+  float fovy = 35.f;
   bool showFrameRate = false;
   bool fullScreen = false;
   bool ownModelPerObject = false;
@@ -186,6 +188,9 @@ int main(int argc, char *argv[])
       directionalLightIntensity = atof(argv[++i]);
       directionalLightAzimuth = atof(argv[++i]);
       directionalLightElevation = atof(argv[++i]);
+    } else if (arg == "-vf") {
+      if (i + 1 >= argc) throw std::runtime_error("missing <vf> argument");
+      fovy = atof(argv[++i]);
     } else if (arg == "-vu") {
 
       if (i + 3 >= argc) throw std::runtime_error("missing <x> <y> <z> arguments");
@@ -304,6 +309,7 @@ int main(int argc, char *argv[])
     volumeViewer->getWindow()->getViewport()->at = viewAt;
     volumeViewer->getWindow()->getViewport()->from = viewFrom;
   }
+  volumeViewer->getWindow()->getViewport()->fovY = fovy;
 
   // Set the window size if specified.
   if (viewSizeWidth != 0 && viewSizeHeight != 0) volumeViewer->getWindow()->setFixedSize(viewSizeWidth, viewSizeHeight);
