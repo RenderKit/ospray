@@ -39,7 +39,9 @@ namespace ospray {
       if (!group) group = new Group;
 
       if (fileName.ext() == "osp") {
-#ifndef _WIN32
+          importOSP(fileName, group);
+#if 0 // NOTE(jda) - using ospray::sg is broken, needs fixed before enabling
+//#ifndef _WIN32
           std::shared_ptr<sg::World> world;;
           world = sg::loadOSP(fn);
           std::shared_ptr<sg::Volume> volumeNode;
