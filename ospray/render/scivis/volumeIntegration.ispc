@@ -302,7 +302,7 @@ SciVisRenderer_intersectVolumes(const uniform SciVisRenderer *uniform renderer,
   // If we intersected a volume, offset ray by a fraction of the nominal ray
   // step.
   if (volume)
-    ray.t0 += rayOffset * volume->samplingStep * rcpf(volume->samplingRate*0.5);
+    ray.t0 += rayOffset * volume->samplingStep * rcpf(volume->samplingRate);
 
   // Return the first intersected volume.
   return volume;
