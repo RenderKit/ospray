@@ -78,7 +78,11 @@ IF(NOT (APPLE AND OSPRAY_COMPILER_ICC))
   ENDIF()
 ENDIF()
 
-ADD_SUBDIRECTORY(exampleViewer)
+
+OPTION(OSPRAY_APPS_EXAMPLEVIEWER "Build 'Viewer' example app" ON)
+IF (OSPRAY_APPS_EXAMPLEVIEWER)
+  ADD_SUBDIRECTORY(exampleViewer)
+ENDIF()
 
 # -------------------------------------------------------
 # redistribute QT on Windows

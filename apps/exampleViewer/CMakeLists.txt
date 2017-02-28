@@ -14,55 +14,49 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-OPTION(OSPRAY_APPS_VIEWEREXAMPLE "Build 'Viewer' example app" OFF)
+find_package(OpenGL REQUIRED)
 
-if (OSPRAY_APPS_VIEWEREXAMPLE)
+##############################################################
+# Build support libs
+##############################################################
 
-  find_package(OpenGL REQUIRED)
+add_subdirectory(common)
+add_subdirectory(widgets)
 
-  ##############################################################
-  # Build support libs
-  ##############################################################
+##############################################################
+# Build app
+##############################################################
 
-  add_subdirectory(common)
-  add_subdirectory(widgets)
+include_directories(
+  ${CMAKE_SOURCE_DIR}
+  common/gl3w
+  common/imgui
+  ${OPENGL_INCLUDE_DIR}
+)
 
-  ##############################################################
-  # Build app
-  ##############################################################
+ospray_create_application(ospExampleViewerSg
+  ospExampleViewerSg.cpp
+  LINK
+  ${OPENGL_LIBRARIES}
+  glfw
+  gl3w
+  imgui
+  ospray
+  ospray_common
+  ospray_commandline
+  ospray_imgui3d_sg
+  ospray_sg
+)
 
-  include_directories(
-    ${CMAKE_SOURCE_DIR}
-    common/gl3w
-    common/imgui
-    ${OPENGL_INCLUDE_DIR}
-  )
-
-  ospray_create_application(ospExampleViewerSg
-    ospExampleViewerSg.cpp
-    LINK
-    ${OPENGL_LIBRARIES}
-    glfw
-    gl3w
-    imgui
-    ospray
-    ospray_common
-    ospray_commandline
-    ospray_imgui3d_sg
-    ospray_sg
-  )
-
-  ospray_create_application(ospExampleViewer
-    ospExampleViewer.cpp
-    LINK
-    ${OPENGL_LIBRARIES}
-    glfw
-    gl3w
-    imgui
-    ospray
-    ospray_common
-    ospray_commandline
-    ospray_imgui3d
-  )
-
-endif()
+ospray_create_application(ospExampleViewer
+  ospExampleViewer.cpp
+  LINK
+  ${OPENGL_LIBRARIES}
+  glfw
+  gl3w
+  imgui
+  ospray
+  ospray_common
+  ospray_commandline
+  ospray_imgui3d
+)
