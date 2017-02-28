@@ -54,7 +54,7 @@ float lightAlpha(const uniform SciVisRenderer *uniform self,
       } else {
         foreach_unique( mat in scivisMaterial ) {
           material_opacity = mat->d * get1f(mat->map_d, dg.st, 1.f);
-          if (mat->map_Kd) {
+          if (hasAlpha(mat->map_Kd)) {
             vec4f Kd_from_map = get4f(mat->map_Kd,dg.st);
             material_opacity *= Kd_from_map.w;
           }
