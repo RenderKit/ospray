@@ -53,18 +53,21 @@ namespace ospray {
 
     void World::preCommit(RenderContext &ctx)
     {
+      std::cout << __PRETTY_FUNCTION__ << std::endl;
       oldWorld = ctx.world;
       ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
       // if (!ospModel)
       // {
         ospModel = ospNewModel();
         ospCommit(ospModel);
+        std::cout << "ospModel pre: " << ospModel << std::endl;
         value = (OSPObject)ospModel;
       // }
     }
 
     void World::postCommit(RenderContext &ctx)
     {
+      std::cout << "ospModel post: " << ospModel << std::endl;
       ospCommit(ospModel);
       ctx.world = oldWorld;
     }

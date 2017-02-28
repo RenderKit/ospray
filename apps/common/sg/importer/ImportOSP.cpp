@@ -185,9 +185,9 @@ namespace ospray {
 
     std::shared_ptr<sg::World> importOSPVolumeViewerFile(std::shared_ptr<xml::XMLDoc> doc)
     {
-      std::shared_ptr<sg::World> world = std::make_shared<sg::World>();
+      NodeH world = createNode("world", "World");
       std::shared_ptr<sg::StructuredVolumeFromFile> volume
-        = std::make_shared<sg::StructuredVolumeFromFile>();
+        = std::dynamic_pointer_cast<sg::StructuredVolumeFromFile>(createNode("volume", "StructuredVolumeFromFile").get());
 
       vec3i dimensions(-1);
       std::string fileName = "";
@@ -218,7 +218,7 @@ namespace ospray {
       volume->setScalarType(voxelType);
       
       world->add(volume);
-      return world;
+      return std::dynamic_pointer_cast<sg::World>(world.get());
     }
 
     std::shared_ptr<sg::World> loadOSP(const std::string &fileName)

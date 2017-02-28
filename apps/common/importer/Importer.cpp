@@ -45,25 +45,28 @@ namespace ospray {
           std::shared_ptr<sg::World> world;;
           world = sg::loadOSP(fn);
           std::shared_ptr<sg::Volume> volumeNode;
-          for (auto node : world->nodes) {
-            if (node->toString().find("Volume") != std::string::npos)
-              volumeNode = std::dynamic_pointer_cast<sg::Volume>(node);
+          for (auto node : world->getChildren()) {
+            if (node->getType().find("Volume") != std::string::npos)
+              volumeNode = std::dynamic_pointer_cast<sg::Volume>(node.get());
           }
           if (!volumeNode) {
             throw std::runtime_error("#ospray:importer: no volume found "
                                      "in osp file");
           }
           sg::RenderContext ctx;
-          std::shared_ptr<sg::Integrator>  integrator;
-          integrator = std::make_shared<sg::Integrator>("scivis");
-          ctx.integrator = integrator;
-          integrator->commit();
-          if (!world) {
-            std::cout << "#osp:qtv: no world defined. exiting." << std::endl;
-            exit(1);
-          }
+          // std::shared_ptr<sg::Integrator>  integrator;
+          // integrator = std::make_shared<sg::Integrator>("scivis");
+          // ctx.integrator = integrator;
+          // integrator->commit();
+          // if (!world) {
+          //   std::cout << "#osp:qtv: no world defined. exiting." << std::endl;
+          //   exit(1);
+          // }
 
-          world->render(ctx);
+          // world->render(ctx);
+          world->traverse(ctx, "verify");
+          world->traverse(ctx, "commit");
+          std::cout << "volumeNode::volume: " << volumeNode->volume << std::endl;
 
           OSPVolume volume = volumeNode->volume;
 

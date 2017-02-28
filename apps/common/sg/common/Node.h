@@ -126,7 +126,7 @@ namespace ospray {
     struct OSPSG_INTERFACE Node : public std::enable_shared_from_this<Node>
     {
       // NOTE(jda) - can't do default member initializers due to MSVC...
-      Node() : name("NULL"), type("Node") {}
+      Node() : name("NULL"), type("Node"), lastModified(1), lastCommitted(-1) {}
 
       /*!
           NodeH is a handle to a sg::Node.  It has the benefit of supporting

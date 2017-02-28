@@ -96,6 +96,13 @@ namespace ospray {
 
     void Node::preTraverse(RenderContext &ctx, const std::string& operation)
     {
+      if (getName() == "world" && operation == "commit")
+      {
+        std::cout << "precommitting world, valid? " << isValid() 
+         << " modified? " << (getLastModified() >= getLastCommitted())
+         << " childrenModified? " << (getChildrenLastModified() >= getLastCommitted())
+         << std::endl;
+      }
       if (operation == "print")
       {
         for (int i=0;i<ctx.level;i++)
@@ -120,6 +127,14 @@ namespace ospray {
 
     void Node::postTraverse(RenderContext &ctx, const std::string& operation)
     {
+      if (getName() == "world" && operation == "commit")
+      {
+        std::cout << "postcommitting world, valid? " << isValid() 
+         << " modified? " << (getLastModified() >= getLastCommitted())
+         << " childrenModified? " << (getChildrenLastModified() >= getLastCommitted())
+         << std::endl;
+      }
+
       if (operation == "commit" &&
           (getLastModified() >= getLastCommitted() ||
            getChildrenLastModified() >= getLastCommitted()))

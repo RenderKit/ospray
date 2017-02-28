@@ -50,10 +50,10 @@ namespace ospray {
         for which that does not apply can simpy return
         box3f(embree::empty) */
       virtual box3f getBounds() override;
-      virtual void preCommit(RenderContext &ctx);
-      virtual void postCommit(RenderContext &ctx);
-      virtual void preRender(RenderContext &ctx);
-      virtual void postRender(RenderContext &ctx);
+      virtual void preCommit(RenderContext &ctx) override;
+      virtual void postCommit(RenderContext &ctx) override;
+      virtual void preRender(RenderContext &ctx) override;
+      virtual void postRender(RenderContext &ctx) override;
 
       OSPModel ospModel {nullptr};
       std::vector<std::shared_ptr<Node>> nodes;
@@ -76,10 +76,10 @@ namespace ospray {
         add(createNode("scale", "vec3f", vec3f(1.f)));
       }
 
-      virtual void preCommit(RenderContext &ctx);
-      virtual void postCommit(RenderContext &ctx);
-      virtual void preRender(RenderContext &ctx);
-      virtual void postRender(RenderContext &ctx);
+      virtual void preCommit(RenderContext &ctx) override;
+      virtual void postCommit(RenderContext &ctx) override;
+      virtual void preRender(RenderContext &ctx) override;
+      virtual void postRender(RenderContext &ctx) override;
 
       OSPGeometry ospInstance {nullptr};
       bool instanced {true};
