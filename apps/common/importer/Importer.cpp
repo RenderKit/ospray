@@ -53,9 +53,7 @@ namespace ospray {
           }
           sg::RenderContext ctx;
           world->traverse(ctx, "verify");
-          std::cout << "scenegraph:\n";
           world->traverse(ctx, "print");
-          std::cout << "end scenegraph\n";
           world->traverse(ctx, "commit");
 
           OSPVolume volume = volumeNode->volume;
