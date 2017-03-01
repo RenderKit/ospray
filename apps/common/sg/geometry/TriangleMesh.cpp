@@ -190,10 +190,10 @@ namespace ospray {
         std::shared_ptr<sg::World> wsg(std::dynamic_pointer_cast<sg::World>(shared_from_this()));
         sg::importPLY(wsg, file);
       }
-      else if (file.ext() == "osg")
+      else if (file.ext() == "osg" || file.ext() == "osp")
       {
         std::shared_ptr<sg::World> wsg(std::dynamic_pointer_cast<sg::World>(shared_from_this()));
-        sg::loadOSG(file, wsg);
+        sg::loadOSP(file, wsg);
         instanced = false;
       }
       else

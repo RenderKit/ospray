@@ -33,7 +33,9 @@ namespace ospray {
         add(createNode("gradientShadingEnabled", "bool", true));
         add(createNode("preIntegration", "bool", true));
         add(createNode("singleShade", "bool", true));
-        add(createNode("voxelRange", "vec2f", vec2f(std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity())));
+        add(createNode("voxelRange", "vec2f", 
+          vec2f(std::numeric_limits<float>::infinity(), 
+            -std::numeric_limits<float>::infinity())));
         add(createNode("adaptiveSampling", "bool", true));
         add(createNode("adaptiveScalar", "float", 15.f));
         add(createNode("adaptiveBacktrack", "float", 0.03f));
@@ -45,7 +47,8 @@ namespace ospray {
         add(createNode("gridOrigin", "vec3f", vec3f(0.0f)));
         add(createNode("gridSpacing", "vec3f", vec3f(0.002f)));
         
-        transferFunction = std::dynamic_pointer_cast<TransferFunction>(children["transferFunction"].node);
+        transferFunction = std::dynamic_pointer_cast<TransferFunction>(
+          children["transferFunction"].node);
       }
 
       /*! \brief returns a std::string with the c++ name of this class */

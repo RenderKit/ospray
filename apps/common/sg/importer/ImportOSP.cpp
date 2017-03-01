@@ -50,24 +50,28 @@ namespace ospray {
         if (!ospLoadModule("sg_amr"))
             std::runtime_error("could not load amr module\n");
       }
-      auto it = sgNodeRegistry.find(node.name);
-      creatorFct creator = nullptr;
-      if (it == sgNodeRegistry.end()) {
-        const std::string creatorName = "ospray_create_sg_node__"+std::string(node.name);
-        creator = (creatorFct)getSymbol(creatorName);
-        if (!creator)
-          throw std::runtime_error("unknown ospray scene graph node '"+node.name+"'");
-        else {
-          std::cout << "#osp:sg: creating at least one instance of node type '"
-                    << node.name << "'" << std::endl;
-        }
-        sgNodeRegistry[node.name] = creator;
-      }
-      else
-        creator = it->second;
+      // auto it = sgNodeRegistry.find(node.name);
+      // creatorFct creator = nullptr;
+      // if (it == sgNodeRegistry.end()) {
+      //   const std::string creatorName = "ospray_create_sg_node__"+std::string(node.name);
+      //   creator = (creatorFct)getSymbol(creatorName);
+      //   if (!creator)
+      //     throw std::runtime_error("unknown ospray scene graph node '"+node.name+"'");
+      //   else {
+      //     std::cout << "#osp:sg: creating at least one instance of node type '"
+      //               << node.name << "'" << std::endl;
+      //   }
+      //   sgNodeRegistry[node.name] = creator;
+      // }
+      // else
+      //   creator = it->second;
       
-      assert(creator);
-      std::shared_ptr<sg::Node> newNode = creator();
+      // assert(creator);
+      // std::shared_ptr<sg::Node> newNode = creator();
+      std::string name = "untitled";
+      if (node.hasProp("name"))
+        name = node.getProp("name");
+      std::shared_ptr<sg::Node> newNode = createNode(name, node.name).get();
       if (!newNode)
         throw std::runtime_error("could not create scene graph node");
       
@@ -183,11 +187,11 @@ namespace ospray {
       return std::shared_ptr<sg::Node>();
     }
 
-    std::shared_ptr<sg::World> importOSPVolumeViewerFile(std::shared_ptr<xml::XMLDoc> doc)
+    void importOSPVolumeViewerFile(std::shared_ptr<xml::XMLDoc> doc, std::shared_ptr<sg::World> world)
     {
-      NodeH world = createNode("world", "World");
       std::shared_ptr<sg::StructuredVolumeFromFile> volume
-        = std::dynamic_pointer_cast<sg::StructuredVolumeFromFile>(createNode("volume", "StructuredVolumeFromFile").get());
+        = std::dynamic_pointer_cast<sg::StructuredVolumeFromFile>(
+          createNode("volume", "StructuredVolumeFromFile").get());
 
       vec3i dimensions(-1);
       std::string fileName = "";
@@ -218,10 +222,9 @@ namespace ospray {
       volume->setScalarType(voxelType);
       
       world->add(volume);
-      return std::dynamic_pointer_cast<sg::World>(world.get());
     }
 
-    std::shared_ptr<sg::World> loadOSP(const std::string &fileName)
+    void loadOSP(const std::string &fileName, std::shared_ptr<sg::World> world)
     {
       std::shared_ptr<xml::XMLDoc> doc;
       // std::shared_ptr<xml::XMLDoc> doc = NULL;
@@ -241,7 +244,8 @@ namespace ospray {
         std::cout << "#osp.sg: ospray scene graph file, but rather an (older) " << endl;
         std::cout << "#osp.sg: ospVolumeViewer input file. Heroically trying to " << endl;
         std::cout << "#osp.sg: convert this to scene graph while loading. " << endl;
-        return importOSPVolumeViewerFile(doc);
+        importOSPVolumeViewerFile(doc, world);
+        return;
       }
 #endif
 
@@ -252,12 +256,18 @@ namespace ospray {
         throw std::runtime_error("could not parse "+fileName);
       
       if (doc->child.size() != 1)
-        throw std::runtime_error("not an ospray xml file (empty XML document; no 'ospray' child node)'");
+      {
+        throw std::runtime_error(
+          "not an ospray xml file (empty XML document; no 'ospray' child node)'");
+      }
       if ((doc->child[0]->name != "ospray" && doc->child[0]->name != "OSPRay") )
-        throw std::runtime_error("not an ospray xml file (document root node is '"+doc->child[0]->name+"', should be 'ospray'");
+      {
+        throw std::runtime_error("not an ospray xml file (document root node is '"
+          +doc->child[0]->name+"', should be 'ospray'");
+      }
 
       std::shared_ptr<xml::Node> root = doc->child[0];
-      std::shared_ptr<sg::World> world = std::make_shared<World>();//parseOSPRaySection(root->child[0]); 
+
       if (root->child.size() == 1 && root->child[0]->name == "World") {
         parseWorldNode(world,*root->child[0],binBasePtr);
       } else {
@@ -265,7 +275,14 @@ namespace ospray {
       }
       
       cout << "#osp:sg: done parsing OSP file" << endl;
-      return world;
+    }
+
+    std::shared_ptr<sg::World> loadOSP(const std::string &fileName)
+    {
+      NodeH world = createNode("world", "World");
+      loadOSP(fileName, std::static_pointer_cast<sg::World>(world.get()));
+
+      return std::static_pointer_cast<sg::World>(world.get());
     }
 
   } // ::ospray::sg

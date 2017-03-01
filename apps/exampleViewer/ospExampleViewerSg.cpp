@@ -43,7 +43,7 @@ void parseFilesFromCommandLine(int ac, const char **&av)
     } else {
       FileName fileName = std::string(av[i]);
       auto ext = fileName.ext();
-      if (ext == "obj" || ext == "osg" || ext == "ply")
+      if (ext == "obj" || ext == "osg" || ext == "ply" || ext == "osp")
         files.push_back(av[i]);
     }
   }
@@ -133,14 +133,10 @@ int main(int ac, const char **av)
   for (auto file : files) {
     FileName fn = file;
     auto ext = fn.ext();
-    if (ext == "obj" || ext == "osg" || ext == "ply") {
-      auto importerNode = sg::createNode(fn.name(), "Importer");
-      importerNode["fileName"]->setValue(fn.str());
-      world += importerNode;
-    }
+    auto importerNode = sg::createNode(fn.name(), "Importer");
+    importerNode["fileName"]->setValue(fn.str());
+    world += importerNode;
   }
-
-  if (addPlane) addPlaneToScene(world);
 
   if (debug) {
     root->traverse(ctx, "verify");
@@ -151,6 +147,7 @@ int main(int ac, const char **av)
   renderer->traverse(ctx, "render");
 
   ospray::ImGuiViewerSg window(renderer);
+  if (addPlane) addPlaneToScene(world);
   window.create("OSPRay Example Viewer App");
 
   ospray::imgui3D::run();

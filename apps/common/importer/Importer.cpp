@@ -40,6 +40,7 @@ namespace ospray {
 
       if (fileName.ext() == "osp" || fileName.ext() == "osg") {
           std::shared_ptr<sg::World> world;;
+          std::cout << "loading osp file: \n";
           world = sg::loadOSP(fn);
           std::shared_ptr<sg::Volume> volumeNode;
           for (auto node : world->getChildren()) {
@@ -52,6 +53,9 @@ namespace ospray {
           }
           sg::RenderContext ctx;
           world->traverse(ctx, "verify");
+          std::cout << "scenegraph:\n";
+          world->traverse(ctx, "print");
+          std::cout << "end scenegraph\n";
           world->traverse(ctx, "commit");
 
           OSPVolume volume = volumeNode->volume;
@@ -59,6 +63,7 @@ namespace ospray {
           Volume* msgVolume = new Volume;
           msgVolume->bounds = volumeNode->getBounds();
           msgVolume->handle = volumeNode->volume;
+          assert(msgVolume->handle);
           msgVolume->voxelRange = volumeNode->getChild("voxelRange")->getValue<vec2f>();
           group->volume.push_back(msgVolume);
       } else if (fileName.ext() == "bob") {
