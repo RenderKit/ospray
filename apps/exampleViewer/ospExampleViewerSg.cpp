@@ -55,7 +55,7 @@ void addPlaneToScene(sg::NodeH &world)
   auto bbox = world->getBounds();
 
   osp::vec3f *vertices = new osp::vec3f[4];
-  float ps = bbox.upper.x*5.f;
+  float ps = bbox.upper.x*3.f;
   float py = bbox.lower.z-0.01f;
 
   py = bbox.lower.y-0.01f;

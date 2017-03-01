@@ -125,7 +125,6 @@ namespace ospray {
       ospSetVec2f(ospTransferFunction,"valueRange",{valueRange.x,valueRange.y});
 
       if (ospColorData == nullptr && colorArray.size()) {
-        std::cout << colorArray.size() << std::endl;
         // for now, no resampling - just use the colors ...
         vec3f *colors = (vec3f*)alloca(sizeof(vec3f)*colorArray.size());
         for (uint32_t i = 0; i < colorArray.size(); i++)
@@ -136,7 +135,6 @@ namespace ospray {
       }
 
       if (ospAlphaData == nullptr && alphaArray.size()) {
-        std::cout << alphaArray.size() << std::endl;
         float *alpha = (float*)alloca(sizeof(float)*numSamples);
         float x0 = alphaArray.front().first;
         float dx = (alphaArray.back().first - x0) / (numSamples-1);
