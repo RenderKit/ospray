@@ -300,6 +300,7 @@ namespace ospcommon
     if (isa == AVX2) return "AVX2";
     if (isa == KNC) return "KNC";
     if (isa == AVX512KNL) return "AVX512KNL";
+    if (isa == AVX512SKX) return "AVX512SKX";
     return "UNKNOWN";
   }
 }

@@ -91,7 +91,7 @@ MACRO (OSPRAY_ISPC_COMPILE)
   ELSE()
     SET(ISPC_ARCHITECTURE "x86")
   ENDIF()
-  
+
   SET(ISPC_TARGET_DIR ${CMAKE_CURRENT_BINARY_DIR})
   INCLUDE_DIRECTORIES(${ISPC_TARGET_DIR})
 
@@ -158,6 +158,8 @@ MACRO (OSPRAY_ISPC_COMPILE)
       # in v1.9.0 ISPC changed the ISA suffix of avx512knl-i32x16 to just 'avx512knl'
       IF (${target} STREQUAL "avx512knl-i32x16" AND NOT ISPC_VERSION VERSION_LESS "1.9.0")
         SET(target "avx512knl")
+      ELSEIF (${target} STREQUAL "avx512skx-i32x16")
+        SET(target "avx512skx")
       ENDIF()
       SET(results ${results} "${outdir}/${fname}.dev_${target}${ISPC_TARGET_EXT}")
     ENDFOREACH()
@@ -166,7 +168,7 @@ MACRO (OSPRAY_ISPC_COMPILE)
       OUTPUT ${results} ${ISPC_TARGET_DIR}/${fname}_ispc.h
       COMMAND ${CMAKE_COMMAND} -E make_directory ${outdir}
       COMMAND ${ISPC_EXECUTABLE}
-      -I ${CMAKE_CURRENT_SOURCE_DIR} 
+      -I ${CMAKE_CURRENT_SOURCE_DIR}
       ${ISPC_INCLUDE_DIR_PARMS}
       --arch=${ISPC_ARCHITECTURE}
       --addressing=32
@@ -176,7 +178,7 @@ MACRO (OSPRAY_ISPC_COMPILE)
       --opt=fast-math
       ${ISPC_ADDITIONAL_ARGS}
       -h ${ISPC_TARGET_DIR}/${fname}_ispc.h
-      -MMM  ${outdir}/${fname}.dev.idep 
+      -MMM  ${outdir}/${fname}.dev.idep
       -o ${outdir}/${fname}.dev${ISPC_TARGET_EXT}
       ${input}
       DEPENDS ${input} ${deps}
