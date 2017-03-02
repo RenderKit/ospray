@@ -156,6 +156,7 @@ namespace ospray {
     private:
 
       FileName path;
+      FileName fullPath;
 
       /*! Geometry buffer. */
       std::vector<vec3f> v;
@@ -189,7 +190,8 @@ namespace ospray {
 
     OBJLoader::OBJLoader(std::shared_ptr<World> world, const FileName &fileName) 
       : world(world),
-        path(fileName.path())
+        path(fileName.path()),
+        fullPath(fileName)
     {
       /* open file */
       std::ifstream cin;
@@ -477,13 +479,14 @@ namespace ospray {
       if (curGroup.empty()) return;
 
       std::map<Vertex, uint32_t> vertexMap;
-      std::shared_ptr<TriangleMesh> mesh = std::make_shared<TriangleMesh>();
+      //scenegraph
+      std::shared_ptr<TriangleMesh> mesh = std::static_pointer_cast<TriangleMesh>(createNode(fullPath.name(), "TriangleMesh").get());
+      world->add(mesh);
       mesh->vertex = std::make_shared<DataVector3f>();
       mesh->normal = std::make_shared<DataVector3f>();
       mesh->texcoord = std::make_shared<DataVector2f>();
       mesh->index =  std::make_shared<DataVector3i>();
       mesh->material = curMaterial;
-      world->add(mesh);
 
       // merge three indices into one
       for (size_t j=0; j < curGroup.size(); j++) {
@@ -501,7 +504,6 @@ namespace ospray {
             continue;
 
           vec3i tri(v0,v1,v2);
-          // mesh->index.cast<DataVector3i>()->push_back(tri); //Vec3i(v0, v1, v2));
           std::dynamic_pointer_cast<DataVector3i>(mesh->index)->push_back(tri); //Vec3i(v0, v1, v2));
         }
       }
@@ -513,7 +515,6 @@ namespace ospray {
       std::cout << "ospray::sg::importOBJ: importing from " << fileName << endl;
       OBJLoader loader(world,fileName);
     }
-
   }
 } // ::ospray
 

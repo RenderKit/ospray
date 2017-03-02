@@ -19,6 +19,8 @@
 #include "QOSPRayWindow.h"
 #include "glUtil/util.h"
 
+#include "ospcommon/common.h"
+
 #ifdef __APPLE__
   #include <OpenGL/glu.h>
 #else
@@ -51,7 +53,9 @@ QOSPRayWindow::QOSPRayWindow(QMainWindow *parent,
     renderer(NULL), 
     camera(NULL),
     maxDepthTexture(NULL),
-    writeFramesFilename(writeFramesFilename)
+    writeFramesFilename(writeFramesFilename),
+    renderInBackground(false),
+    benchWarmupStarted(false)
 {
   // assign renderer
   if(!renderer)
@@ -60,7 +64,13 @@ QOSPRayWindow::QOSPRayWindow(QMainWindow *parent,
   this->renderer = renderer;
 
   // setup camera
-  camera = ospNewCamera("perspective");
+  auto cameraFromEnv = ospcommon::getEnvVar<std::string>("OSPRAY_USE_CAMERA_TYPE");
+
+  if (cameraFromEnv.first) {
+    camera = ospNewCamera(cameraFromEnv.second.c_str());
+  } else {
+    camera = ospNewCamera("perspective");
+  }
 
   if(!camera)
     throw std::runtime_error("QOSPRayWindow: could not create camera type 'perspective'");
@@ -124,10 +134,15 @@ void QOSPRayWindow::setWorldBounds(const ospcommon::box3f &worldBounds)
 
 void QOSPRayWindow::paintGL()
 {
-  if(!renderingEnabled || !frameBuffer || !renderer || !QApplication::activeWindow())
+  if(!renderingEnabled || !frameBuffer || !renderer || (!renderInBackground && !QApplication::activeWindow()))
     return;
 
   // if we're benchmarking and we've completed the required number of warm-up frames, start the timer
+  if (benchmarkFrames > 0 && !benchWarmupStarted)
+  {
+    benchWarmupStarted = true;
+    frameCount = 0;
+  }
   if(benchmarkFrames > 0 && frameCount == benchmarkWarmUpFrames) {
     std::cout << "starting benchmark timer" << std::endl;
     benchmarkTimer.start();
@@ -213,10 +228,10 @@ void QOSPRayWindow::paintGL()
   // quit if we're benchmarking and have exceeded the needed number of frames
   if(benchmarkFrames > 0 && frameCount >= benchmarkWarmUpFrames + benchmarkFrames) {
 
-    float elapsedSeconds = float(benchmarkTimer.elapsed()) / 1000.f;
+    double elapsedSeconds = float(benchmarkTimer.elapsed()) / 1000.0;
 
     std::cout << "benchmark: " << elapsedSeconds << " elapsed seconds ==> "
-      << float(benchmarkFrames) / elapsedSeconds << " fps" << std::endl;
+      << double(benchmarkFrames) / elapsedSeconds << " fps" << std::endl;
 
     uint32_t *mappedFrameBuffer = (unsigned int *) ospMapFrameBuffer(frameBuffer);
 

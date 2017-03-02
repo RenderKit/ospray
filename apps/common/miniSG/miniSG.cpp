@@ -17,6 +17,8 @@
 #include "miniSG.h"
 #include "stb_image.h"
 
+#include "ospray/common/OSPCommon.h"
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -309,8 +311,9 @@ namespace ospray {
           pixels = stbi_load(fileName.str().c_str(),&width,&height,&n,0);
         if (n < 3)  //TODO: it seems that grayscale bump maps with > 8 bit crash
         {
+           if (ospray::logLevel())
             std::cout << "WARNING: ignoring texture with < 3 channels.  Turn on USE_IMAGEMAGICK to fully utilize this scenes textures\n";
-            return tex;
+           return tex;
         }
         tex = new Texture2D;
         tex->width    = width;

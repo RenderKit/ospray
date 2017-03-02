@@ -21,7 +21,13 @@
 namespace ospray {
   namespace sg {
 
-    //! return the bounding box of all primitives
+    OSP_REGISTER_SG_NODE(Importer);
+
+    void TriangleMesh::init()
+    {
+      add(createNode("material", "Material"));
+    }
+
     box3f TriangleMesh::getBounds()
     {
       box3f bounds = empty;
@@ -39,7 +45,7 @@ namespace ospray {
       return bounds;
     }
 
-    //! \brief Initialize this node's value from given XML node 
+    //! \brief Initialize this node's value from given XML node
     /*!
       \detailed This allows a plug-and-play concept where a XML
       file can specify all kind of nodes wihout needing to know
@@ -47,33 +53,34 @@ namespace ospray {
       create a proper C++ instance of the given node type (the
       OSP_REGISTER_SG_NODE() macro will allow it to do so), and can
       tell the node to parse itself from the given XML content and
-      XML children 
-        
+      XML children
+
       \param node The XML node specifying this node's fields
 
       \param binBasePtr A pointer to an accompanying binary file (if
       existant) that contains additional binary data that the xml
       node fields may point into
     */
-    void TriangleMesh::setFromXML(const xml::Node *const node, const unsigned char *binBasePtr) 
+    void TriangleMesh::setFromXML(const xml::Node *const node, const unsigned char *binBasePtr)
     {
       xml::for_each_child_of(*node,[&](const xml::Node &child){
           if (child.name == "vertex") {
             size_t num = std::stoll(child.getProp("num"));
             size_t ofs = std::stoll(child.getProp("ofs"));
-            vertex = std::make_shared<DataArray3f>((vec3f*)((char*)binBasePtr+ofs),num,false);
-          } 
+            vertex = std::shared_ptr<DataBuffer>(new DataArray3f((vec3f*)((char*)binBasePtr+ofs),num,false));
+          }
           else if (child.name == "index") {
             size_t num = std::stoll(child.getProp("num"));
             size_t ofs = std::stoll(child.getProp("ofs"));
-            index = std::make_shared<DataArray3i>((vec3i*)((char*)binBasePtr+ofs),num,false);
-          } 
+            index = std::shared_ptr<DataBuffer>(new DataArray3i((vec3i*)((char*)binBasePtr+ofs),num,false));
+          }
         });
     }
 
     /*! 'render' the nodes */
     void TriangleMesh::render(RenderContext &ctx)
     {
+      std::cout << __PRETTY_FUNCTION__ << std::endl;
       if (ospGeometry) return;
 
       assert(ctx.world);
@@ -90,43 +97,6 @@ namespace ospray {
       // set index data
       if (index && index->notEmpty())
         ospSetData(ospGeometry,"index",index->getOSP());
-
-#if 1
-      OSPMaterial mat = NULL;
-      // try to generate ospray material from the sg material stored with this object
-      if (material) {
-        material->render(ctx);
-        mat = material->ospMaterial;
-      }
-      
-      // if object couldt generate a valid material, create a default one
-      if (!mat) {
-        std::cout << "#osp:sg: no material on object, creating default one" << std::endl;
-        mat = ospNewMaterial(ctx.integrator?ctx.integrator->getOSPHandle():NULL,"default");
-        assert(mat);
-        vec3f kd(.7f);
-        vec3f ks(.3f);
-        ospSet3fv(mat,"kd",&kd.x);
-        ospSet3fv(mat,"ks",&ks.x);
-        ospSet1f(mat,"Ns",99.f);
-        ospCommit(mat);
-      }
-      assert(mat);
-      ospSetMaterial(ospGeometry,mat);
-#else
-      // assign a default material (for now.... eventually we might
-      // want to do a 'real' material
-      OSPMaterial mat = ospNewMaterial(ctx.integrator?ctx.integrator->getOSPHandle():NULL,"default");
-      if (mat) {
-        vec3f kd(.7f);
-        vec3f ks(.3f);
-        ospSet3fv(mat,"kd",&kd.x);
-        ospSet3fv(mat,"ks",&ks.x);
-        ospSet1f(mat,"Ns",99.f);
-        ospCommit(mat);
-      }
-      ospSetMaterial(ospGeometry,mat);
-#endif
 
       ospCommit(ospGeometry);
       ospAddGeometry(ctx.world->ospModel,ospGeometry);
@@ -153,7 +123,7 @@ namespace ospray {
       // set index array
       if (index && index->notEmpty())
         ospSetData(ospGeometry,"index",index->getOSP());
-      
+
       Triangle *triangles = (Triangle*)index->getBase();
       for(size_t i = 0; i < index->getSize(); i++) {
         materialIDs.push_back(triangles[i].materialID >> 16);
@@ -161,46 +131,78 @@ namespace ospray {
       primMatIDs = ospNewData(materialIDs.size(), OSP_INT, &materialIDs[0], 0);
       ospSetData(ospGeometry,"prim.materialID",primMatIDs);
 
-      OSPMaterial mat = NULL;
-      // try to generate ospray material from the sg material stored with this object
-      if (material) {
-        material->render(ctx);
-        mat = material->ospMaterial;
-      }
-      
-      // if object couldt generate a valid material, create a default one
-      if (!mat) {
-        std::cout << "#osp:sg: no material on object, creating default one" << std::endl;
-        mat = ospNewMaterial(ctx.integrator?ctx.integrator->getOSPHandle():NULL,"default");
-        assert(mat);
-        vec3f kd(.7f);
-        vec3f ks(.3f);
-        ospSet3fv(mat,"kd",&kd.x);
-        ospSet3fv(mat,"ks",&ks.x);
-        ospSet1f(mat,"Ns",99.f);
-        ospCommit(mat);
-      }
-      assert(mat);
-      ospSetMaterial(ospGeometry,mat);
-
-#if 0
-      // THIS CODE DOESN"T WORK RIGHT NOW!!!!
-      std::vector<OSPMaterial> ospMaterials;
-      for (size_t i = 0; i < materialList.size(); i++) {
-        //If the material hasn't already been 'rendered' ensure that it is.
-        materialList[i]->render(ctx);
-        //Push the 'rendered' material onto the list
-        ospMaterials.push_back(materialList[i]->ospMaterial);
-        //std::cout << "#qtViewer 'rendered' material " << materialList[i]->name << std::endl;
-      }
-      
-      OSPData materialData = ospNewData(materialList.size(), OSP_OBJECT, &ospMaterials[0], 0);
-      ospSetData(ospGeometry, "materialList", materialData);
-#endif
-      
       ospCommit(ospGeometry);
       ospAddGeometry(ctx.world->ospModel,ospGeometry);
-      //std::cout << "#qtViewer 'rendered' mesh\n";
+    }
+
+    void TriangleMesh::postCommit(RenderContext &ctx)
+    {
+      if (ospGeometry)
+      {
+        ospSetMaterial(ospGeometry,
+                       (OSPMaterial)getChild("material")->getValue<OSPObject>());
+        ospCommit(ospGeometry);
+        return;
+      }
+
+      ospGeometry = ospNewGeometry("trianglemesh");
+      ospModel    = ospNewModel();
+
+      // set vertex data
+      if (vertex && vertex->notEmpty())
+        ospSetData(ospGeometry,"vertex",vertex->getOSP());
+      if (normal && normal->notEmpty())
+        ospSetData(ospGeometry,"vertex.normal",normal->getOSP());
+      if (texcoord && texcoord->notEmpty())
+        ospSetData(ospGeometry,"vertex.texcoord",texcoord->getOSP());
+      // set index data
+      if (index && index->notEmpty())
+        ospSetData(ospGeometry,"index",index->getOSP());
+
+      ospSetMaterial(ospGeometry,
+                     (OSPMaterial)getChild("material")->getValue<OSPObject>());
+      ospCommit(ospGeometry);
+      ospAddGeometry(ctx.world->ospModel,ospGeometry);
+    }
+
+    void Importer::setChildrenModified(TimeStamp t)
+    {
+      Node::setChildrenModified(t);
+      ospcommon::FileName file(getChild("fileName")->getValue<std::string>());
+
+      if (file.str() == loadedFileName)
+        return;
+
+      std::cout << "attempting importing file: " << file.str() << std::endl;
+
+      if (loadedFileName != "" || file.str() == "")
+        return; //TODO: support dynamic re-loading, need to clear children first
+
+      loadedFileName = "";
+
+      if (file.ext() == "obj")
+      {
+        std::cout << "importing file: " << file.str() << std::endl;
+        sg::importOBJ(std::static_pointer_cast<sg::World>(shared_from_this()), file);
+      }
+      else if (file.ext() == "ply")
+      {
+        std::shared_ptr<sg::World> wsg(std::dynamic_pointer_cast<sg::World>(shared_from_this()));
+        sg::importPLY(wsg, file);
+      }
+      else if (file.ext() == "osg" || file.ext() == "osp")
+      {
+        std::shared_ptr<sg::World> wsg(std::dynamic_pointer_cast<sg::World>(shared_from_this()));
+        sg::loadOSP(file, wsg);
+        instanced = false;
+      }
+      else
+      {
+        std::cout << "unsupported file format\n";
+        return;
+      }
+
+      loadedFileName = file.str();
     }
 
     OSP_REGISTER_SG_NODE(TriangleMesh);

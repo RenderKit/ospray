@@ -57,6 +57,7 @@ Light_SampleRes DirectionalLight_sample(const uniform Light* uniform super,
 Light_EvalRes DirectionalLight_eval(const uniform Light* uniform super,
                                     const DifferentialGeometry&,
                                     const vec3f& dir,
+                                    const float,
                                     const float maxDist)
 {
   uniform DirectionalLight* uniform self = (uniform DirectionalLight* uniform)super;

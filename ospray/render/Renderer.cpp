@@ -69,7 +69,7 @@ namespace ospray {
     }
   }
 
-  Renderer *Renderer::createRenderer(const char *type)
+  Renderer *Renderer::createInstance(const char *type)
   {
     return createInstanceHelper<Renderer, OSP_RENDERER>(type);
   }

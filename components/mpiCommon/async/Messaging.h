@@ -72,6 +72,8 @@ namespace ospray {
         virtual Group *createGroup(MPI_Comm comm,
                                    Consumer *consumer,
                                    int32 tag = MPI_ANY_TAG) = 0;
+        // flush all outstanding messages
+        virtual void flush() = 0;
         virtual void send(const Address &dest, void *msgPtr, int32 msgSize) = 0;
 
         static AsyncMessagingImpl *global;
@@ -82,6 +84,7 @@ namespace ospray {
                                               Consumer *consumer,
                                               int32 tag = MPI_ANY_TAG);
       OSPRAY_MPI_INTERFACE void shutdown();
+      OSPRAY_MPI_INTERFACE void flushMessages();
 
       /*! send a asynchronous message to the address specified. the
           'group' in said address HAS to be a group created via

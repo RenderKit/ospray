@@ -17,7 +17,6 @@
 SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 SET(THREADS_PREFER_PTHREAD_FLAG TRUE)
 
-
 IF (TARGET ospray_common)
   # this target is already built!
 ELSE()
@@ -38,8 +37,11 @@ ELSE()
     vec.cpp
     array3D/Array3D.cpp
 
+    tasking/parallel_for.inl
     tasking/parallel_for.h
     tasking/async.h
+    tasking/schedule.inl
+    tasking/schedule.h
     tasking/tasking_system_handle.cpp
     tasking/TaskingTypeTraits.h
     tasking/TaskSys.cpp

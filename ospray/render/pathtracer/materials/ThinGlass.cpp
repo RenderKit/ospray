@@ -26,7 +26,7 @@ namespace ospray {
 
       //! \brief commit the material's parameters
       virtual void commit() {
-        if (getIE() != NULL) return;
+        if (getIE() != nullptr) return;
 
         const vec3f& transmission
           = getParam3f("transmission", vec3f(1.f));

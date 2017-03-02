@@ -469,26 +469,6 @@ __define_binary_operator( operator/, / );
 
 #undef __define_binary_operator
 
-inline float reduce_mul(const vec3f v)
-{ return v.x * v.y * v.z; }
-inline uniform float reduce_mul(const uniform vec3f v)
-{ return v.x * v.y * v.z; }
-
-inline float reduce_max(const vec3f v)
-{ return max(max(v.x,v.y),v.z); }
-
-inline float reduce_add(const vec3f v)
-{ return v.x+v.y+v.z; }
-
-inline uniform float reduce_add(const uniform vec3f v)
-{ return v.x+v.y+v.z; }
-
-inline float reduce_avg(const vec3f v)
-{ return (v.x+v.y+v.z)*(1.0f/3.0f); }
-
-inline float luminance(const vec3f& c)
-{ return 0.212671f*c.x + 0.715160f*c.y + 0.072169f*c.z; }
-
 inline uniform bool eq(const uniform vec2f a, const uniform vec2f b)
 { return a.x==b.x && a.y==b.y; }
 inline bool eq(const vec2f a, const vec2f b)
@@ -538,7 +518,7 @@ inline uniform float length(const uniform vec3f a) { return sqrtf(dot(a,a)); }
 inline varying float length(const varying vec3f a) { return sqrtf(dot(a,a)); }
 
 inline uniform float distance(const uniform vec3f a, const uniform vec3f b) { return length(a - b); }
-inline varying float distance(const varying vec3f a, const uniform vec3f b) { return length(a - b); }
+inline varying float distance(const varying vec3f a, const varying vec3f b) { return length(a - b); }
 
 
 inline uniform float dot(const uniform vec3fa a, const uniform vec3fa b) { return a.x*b.x+a.y*b.y+a.z*b.z; }
@@ -548,7 +528,7 @@ inline uniform float length(const uniform vec3fa a) { return sqrtf(dot(a,a)); }
 inline varying float length(const varying vec3fa a) { return sqrtf(dot(a,a)); }
 
 inline uniform float distance(const uniform vec3fa a, const uniform vec3fa b) { return length(a - b); }
-inline varying float distance(const varying vec3fa a, const uniform vec3fa b) { return length(a - b); }
+inline varying float distance(const varying vec3fa a, const varying vec3fa b) { return length(a - b); }
 
 // ------------------------------------------------------------------
 // cross product
@@ -809,16 +789,17 @@ inline vec3i clamp(const vec3i &a, const uniform vec3i &b, const uniform vec3i &
 inline uniform vec3f nextafter(const uniform vec3i &a, const uniform vec3i &b)
 { return(make_vec3f(nextafter(a.x, b.x), nextafter(a.y, b.y), nextafter(a.z, b.z))); }
 
+
+inline varying int reduce_min(const varying vec3i &a)
+{ return min(min(a.x, a.y), a.z); }
+
+inline uniform int reduce_min(const uniform vec3i &a)
+{ return min(min(a.x, a.y), a.z); }
+
 inline varying float reduce_min(const varying vec3f &a)
 { return min(min(a.x, a.y), a.z); }
 
 inline uniform float reduce_min(const uniform vec3f &a)
-{ return min(min(a.x, a.y), a.z); }
-
-inline uniform float reduce_min(const uniform vec3i &a)
-{ return min(min(a.x, a.y), a.z); }
-
-inline varying float reduce_min(const varying vec3i &a)
 { return min(min(a.x, a.y), a.z); }
 
 inline varying float reduce_min(const varying vec4f &a)
@@ -827,10 +808,11 @@ inline varying float reduce_min(const varying vec4f &a)
 inline uniform float reduce_min(const uniform vec4f &a)
 { return min(min(a.x, a.y), min(a.z, a.w)); }
 
-inline uniform float reduce_max(const uniform vec3i &a)
+
+inline varying int reduce_max(const varying vec3i &a)
 { return max(max(a.x, a.y), a.z); }
 
-inline varying float reduce_max(const varying vec3i &a)
+inline uniform int reduce_max(const uniform vec3i &a)
 { return max(max(a.x, a.y), a.z); }
 
 inline varying float reduce_max(const varying vec3f &a)
@@ -845,14 +827,39 @@ inline varying float reduce_max(const varying vec4f &a)
 inline uniform float reduce_max(const uniform vec4f &a)
 { return max(max(a.x, a.y), max(a.z, a.w)); }
 
+
+inline varying float reduce_mul(const varying vec3f &a)
+{ return a.x * a.y * a.z; }
+
+inline uniform float reduce_mul(const uniform vec3f &a)
+{ return a.x * a.y * a.z; }
+
+
+inline varying float reduce_add(const varying vec3f &a)
+{ return a.x + a.y + a.z; }
+
 inline uniform float reduce_add(const uniform vec3f &a)
-{ return a.x+a.y+a.z; }
+{ return a.x + a.y + a.z; }
+
+inline varying float reduce_add(const varying vec4f &a)
+{ return (a.x + a.y) + (a.z + a.w); }
+
+inline uniform float reduce_add(const uniform vec4f &a)
+{ return (a.x + a.y) + (a.z + a.w); }
+
+
+inline varying float reduce_avg(const varying vec3f &a)
+{ return reduce_add(a)*(1.0f/3.0f); }
 
 inline uniform float reduce_avg(const uniform vec3f &a)
 { return reduce_add(a)*(1.0f/3.0f); }
 
-inline uniform float luminance(const uniform vec3f& c)
+inline varying float luminance(const varying vec3f &c)
 { return 0.212671f*c.x + 0.715160f*c.y + 0.072169f*c.z; }
+
+inline uniform float luminance(const uniform vec3f &c)
+{ return 0.212671f*c.x + 0.715160f*c.y + 0.072169f*c.z; }
+
 
 inline varying vec3f pow(const varying vec3f &a, const varying float b)
 { return make_vec3f(pow(a.x, b), pow(a.y, b), pow(a.z, b)); }

@@ -39,7 +39,7 @@ namespace ospcommon {
     std::string fullName = file+".dll";
     lib = LoadLibrary(fullName.c_str());
 #else
-#if defined(__MACOSX__)
+#if defined(__MACOSX__) || defined(__APPLE__)
     std::string fullName = "lib"+file+".dylib";
 #else
     std::string fullName = "lib"+file+".so";

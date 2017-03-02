@@ -75,12 +75,12 @@
 #ifdef  CHAISCRIPT_HAS_DECLSPEC
 #define CHAISCRIPT_MODULE_EXPORT extern "C" __declspec(dllexport)
 #else
-#define CHAISCRIPT_MODULE_EXPORT extern "C" 
+#define CHAISCRIPT_MODULE_EXPORT extern "C"
 #endif
 
 #ifdef CHAISCRIPT_MSVC_12
 #define CHAISCRIPT_NOEXCEPT throw()
-#define CHAISCRIPT_CONSTEXPR 
+#define CHAISCRIPT_CONSTEXPR
 #else
 #define CHAISCRIPT_NOEXCEPT noexcept
 #define CHAISCRIPT_CONSTEXPR constexpr

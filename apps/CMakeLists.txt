@@ -65,7 +65,7 @@ ENDIF()
 # qt-based viewer for geometry (and soon volumes)
 IF(NOT (APPLE AND OSPRAY_COMPILER_ICC) AND NOT WIN32)
   OPTION(OSPRAY_APPS_QTVIEWER "Build ospQtViewer (Qt-based model viewer)" ON)
-  IF (OSPRAY_APPS_QTVIEWER)
+  IF(OSPRAY_APPS_QTVIEWER)
     ADD_SUBDIRECTORY(qtViewer)
   ENDIF()
 ENDIF()
@@ -76,6 +76,12 @@ IF(NOT (APPLE AND OSPRAY_COMPILER_ICC))
   IF(OSPRAY_APPS_VOLUMEVIEWER)
     ADD_SUBDIRECTORY(volumeViewer)
   ENDIF()
+ENDIF()
+
+
+OPTION(OSPRAY_APPS_EXAMPLEVIEWER "Build 'Viewer' example app" OFF)
+IF (OSPRAY_APPS_EXAMPLEVIEWER)
+  ADD_SUBDIRECTORY(exampleViewer)
 ENDIF()
 
 # -------------------------------------------------------

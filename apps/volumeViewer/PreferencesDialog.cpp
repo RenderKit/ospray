@@ -69,7 +69,7 @@ PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer, ospcommon::box3
 
   adaptiveMaxSamplingRateSB = new QDoubleSpinBox();
   adaptiveMaxSamplingRateSB->setDecimals(3);
-  adaptiveMaxSamplingRateSB->setRange(0.01, 16.0);
+  adaptiveMaxSamplingRateSB->setRange(0.01, 64.0);
   adaptiveMaxSamplingRateSB->setSingleStep(0.01);
   connect(adaptiveMaxSamplingRateSB, SIGNAL(valueChanged(double)), volumeViewer, SLOT(setAdaptiveMaxSamplingRate(double)));
   formLayout->addRow("Adaptive max sampling rate", adaptiveMaxSamplingRateSB);
@@ -84,7 +84,7 @@ PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer, ospcommon::box3
   // sampling rate selection
   samplingRateSpinBox = new QDoubleSpinBox();
   samplingRateSpinBox->setDecimals(3);
-  samplingRateSpinBox->setRange(0.01, 16.0);
+  samplingRateSpinBox->setRange(0.01, 64.0);
   samplingRateSpinBox->setSingleStep(0.01);
   connect(samplingRateSpinBox, SIGNAL(valueChanged(double)), volumeViewer, SLOT(setSamplingRate(double)));
   formLayout->addRow("Sampling rate", samplingRateSpinBox);

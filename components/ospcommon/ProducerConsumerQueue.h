@@ -60,7 +60,9 @@ namespace ospray {
       if the queue is currently empty, wait until at least one element is there 
       or until the timeOut has elapsed, in which case the function may
       return 0. */
-    size_t getSomeFor(T *some, size_t maxSize, std::chrono::milliseconds timeOut);
+    template<typename TimeRep, typename TimePeriod>
+    size_t getSomeFor(T *some, size_t maxSize,
+                      const std::chrono::duration<TimeRep, TimePeriod> &timeOut);
 
   private:
     /*! the actual queue that holds the data */
@@ -151,7 +153,9 @@ namespace ospray {
   }
 
   template<typename T>
-  size_t ProducerConsumerQueue<T>::getSomeFor(T *some, size_t maxSize, std::chrono::milliseconds timeOut)
+  template<typename TimeRep, typename TimePeriod>
+  size_t ProducerConsumerQueue<T>::getSomeFor(T *some, size_t maxSize,
+            const std::chrono::duration<TimeRep, TimePeriod> &timeOut)
   {
     using namespace std::chrono;
     std::unique_lock<std::mutex> lock(mutex);

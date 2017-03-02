@@ -16,60 +16,35 @@
 
 #pragma once
 
-#include "../common.h"
+#include <functional>
+#include <future>
 
-#include "TaskingTypeTraits.h"
-
-#ifdef OSPRAY_TASKING_TBB
-#  include <tbb/task.h>
-#elif defined(OSPRAY_TASKING_CILK)
-#  include <cilk/cilk.h>
-#elif defined(OSPRAY_TASKING_INTERNAL)
-#  include "TaskSys.h"
-#endif
+#include "schedule.h"
 
 namespace ospcommon {
+
+  template<typename TASK_T>
+  using operator_return_t = typename std::result_of<TASK_T()>::type;
 
   // NOTE(jda) - This abstraction takes a lambda which should take captured
   //             variables by *value* to ensure no captured references race
   //             with the task itself.
-
-  // NOTE(jda) - No priority is associated with this call, but could be added
-  //             later with a hint enum, using a default value for the priority
-  //             to not require specifying it.
   template<typename TASK_T>
-  inline void async(TASK_T&& fcn)
+  inline auto async(TASK_T&& fcn) -> std::future<operator_return_t<TASK_T>>
   {
     static_assert(has_operator_method<TASK_T>::value,
-                  "ospray::async() requires the implementation of method "
-                  "'void TASK_T::operator()'.");
+                  "ospcommon::async() requires the implementation of method "
+                  "'RETURN_T TASK_T::operator()', where RETURN_T is the "
+                  "return value of the passed in task.");
 
-#ifdef OSPRAY_TASKING_TBB
-    struct LocalTBBTask : public tbb::task
-    {
-      TASK_T func;
-      tbb::task* execute() override { func(); return nullptr; }
-      LocalTBBTask(TASK_T&& f) : func(std::forward<TASK_T>(f)) {}
-    };
+    using package_t = std::packaged_task<operator_return_t<TASK_T>()>;
 
-    auto *tbb_node =
-        new(tbb::task::allocate_root())LocalTBBTask(std::forward<TASK_T>(fcn));
-    tbb::task::enqueue(*tbb_node);
-#elif defined(OSPRAY_TASKING_CILK)
-    cilk_spawn fcn();
-#elif defined(OSPRAY_TASKING_INTERNAL)
-    struct LocalTask : public Task {
-      TASK_T t;
-      LocalTask(TASK_T&& fcn)
-        : Task("LocalTask"), t(std::forward<TASK_T>(fcn)) {}
-      void run(size_t) override { t(); }
-    };
+    auto task   = new package_t(std::forward<TASK_T>(fcn));
+    auto future = task->get_future();
 
-    Ref<LocalTask> task = new LocalTask(std::forward<TASK_T>(fcn));
-    task->schedule(1, Task::FRONT_OF_QUEUE);
-#else// OpenMP or Debug --> synchronous!
-    fcn();
-#endif
+    schedule([=](){ (*task)(); delete task; });
+
+    return future;
   }
 
 } // ::ospcommon

@@ -38,46 +38,32 @@ namespace ospray {
       Group *group = existingGroupToAddTo;
       if (!group) group = new Group;
 
-      if (fileName.ext() == "osp") {
-        importOSP(fn, group);
-#if 0 // NOTE(jda) - this can only be re-enabled once the importer stuff is off of Ref<>
-//#ifndef _WIN32
-      } else if (fileName.ext() == "osg") {
-          Ref<sg::World> world = new sg::World;
-          world = sg::loadOSG(fn);
-          Ref<sg::Volume> volumeNode;
-          for (auto node : world.ptr->node)
-          {
-            std::cout << "found node: " << node.ptr->toString() << std::endl;
-            if (node->toString().find("Chombo") != std::string::npos)
-              volumeNode = Ref<sg::Volume>((sg::Volume*)node.ptr);
+      if (fileName.ext() == "osp" || fileName.ext() == "osg") {
+          std::shared_ptr<sg::World> world;;
+          std::cout << "loading osp file: \n";
+          world = sg::loadOSP(fn);
+          std::shared_ptr<sg::Volume> volumeNode;
+          for (auto node : world->getChildren()) {
+            if (node->getType().find("Volume") != std::string::npos)
+              volumeNode = std::dynamic_pointer_cast<sg::Volume>(node.get());
           }
-          if (!volumeNode)
-          {
-            throw std::runtime_error("#ospray:importer: no volume found in osg file");
+          if (!volumeNode) {
+            throw std::runtime_error("#ospray:importer: no volume found "
+                                     "in osp file");
           }
           sg::RenderContext ctx;
-          Ref<sg::Integrator>  integrator;
-          integrator = new sg::Integrator("scivis");
-          ctx.integrator = integrator.ptr;
-          integrator->commit();
-          assert(ctx.world);
-          if (!world) {
-            std::cout << "#osp:qtv: no world defined. exiting." << std::endl;
-            exit(1);
-          }
-
-          world->render(ctx);
-          assert(world->ospModel);
+          world->traverse(ctx, "verify");
+          world->traverse(ctx, "print");
+          world->traverse(ctx, "commit");
 
           OSPVolume volume = volumeNode->volume;
-          assert(volume);
 
           Volume* msgVolume = new Volume;
           msgVolume->bounds = volumeNode->getBounds();
           msgVolume->handle = volumeNode->volume;
+          assert(msgVolume->handle);
+          msgVolume->voxelRange = volumeNode->getChild("voxelRange")->getValue<vec2f>();
           group->volume.push_back(msgVolume);
-#endif
       } else if (fileName.ext() == "bob") {
         importRM(fn, group);
       } else {
@@ -88,5 +74,5 @@ namespace ospray {
       return group;
     }
 
-  }
-}
+  } // ::ospray::importer
+} // ::ospray

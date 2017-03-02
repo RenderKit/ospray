@@ -312,6 +312,10 @@ namespace ospray {
                     s = NEXT_TOK;
                     int32_t w = atol(s);
                     mat->setParam(childName.c_str(), vec4i(x,y,z,w));
+                  } else if (!childType.compare("texture")) {
+                    std::cout << "not yet handling 'texture' fields in rivl files" << std::endl;
+                  } else if (!childType.compare("material")) {
+                    std::cout << "not yet handling 'material' fields in rivl files" << std::endl;
                   } else {
                     //error!
                     throw std::runtime_error("unknown parameter type '" + childType + "' when parsing RIVL materials.");

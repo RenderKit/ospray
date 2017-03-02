@@ -26,6 +26,8 @@ namespace ospcommon {
   template <typename T>
   struct has_operator_method
   {
+    using TASK_T = typename std::decay<T>::type;
+
     template <class, class> class checker;
 
     template <typename C>
@@ -34,10 +36,14 @@ namespace ospcommon {
     template <typename C>
     static std::false_type test(...);
 
-    using type = decltype(test<T>(nullptr));
+    using type = decltype(test<TASK_T>(nullptr));
     static const bool value = std::is_same<std::true_type, type>::value;
   };
 
+#ifdef _WIN32
+  template <typename T>
+  using has_operator_method_with_integral_param = has_operator_method<T>;
+#else
   //NOTE(jda) - This checks at compile time if T implements the method
   //            'void T::operator(P taskIndex)', where P is an integral type
   //            (must be short, int, uint, or size_t) at compile-time. To be used
@@ -45,25 +51,28 @@ namespace ospcommon {
   template <typename T>
   struct has_operator_method_with_integral_param
   {
-    using T_SHORT_PARAM    = void(T::*)(short)        const;
-    using T_INT_PARAM      = void(T::*)(int)          const;
-    using T_UNSIGNED_PARAM = void(T::*)(unsigned int) const;
-    using T_SIZET_PARAM    = void(T::*)(size_t)       const;
+    using TASK_T = typename std::decay<T>::type;
 
-    using PARAM_IS_SHORT    = std::is_same<T_SHORT_PARAM,
-                                           decltype(&T::operator())>;
-    using PARAM_IS_INT      = std::is_same<T_INT_PARAM,
-                                           decltype(&T::operator())>;
-    using PARAM_IS_UNSIGNED = std::is_same<T_UNSIGNED_PARAM,
-                                           decltype(&T::operator())>;
-    using PARAM_IS_SIZET    = std::is_same<T_SIZET_PARAM,
-                                           decltype(&T::operator())>;
+    template <typename P>
+    using t_param    = void(TASK_T::*)(P) const;
+    using byte_t     = unsigned char;
+    using operator_t = decltype(&TASK_T::operator());
+
+    using param_is_byte     = std::is_same<t_param<byte_t>  , operator_t>;
+    using param_is_short    = std::is_same<t_param<short>   , operator_t>;
+    using param_is_int      = std::is_same<t_param<int>     , operator_t>;
+    using param_is_unsigned = std::is_same<t_param<unsigned>, operator_t>;
+    using param_is_long     = std::is_same<t_param<long>    , operator_t>;
+    using param_is_size_t   = std::is_same<t_param<size_t>  , operator_t>;
 
     static const bool value = has_operator_method<T>::value &&
-      (PARAM_IS_SHORT::value
-       || PARAM_IS_INT::value
-       || PARAM_IS_UNSIGNED::value
-       || PARAM_IS_SIZET::value);
+      (param_is_byte::value     ||
+       param_is_short::value    ||
+       param_is_int::value      ||
+       param_is_unsigned::value ||
+       param_is_long::value     ||
+       param_is_size_t::value);
   };
+#endif
 
 } // ::ospcommon

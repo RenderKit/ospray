@@ -27,7 +27,6 @@ namespace ospray {
         for each) */
     struct TransferFunction : public sg::Node 
     {
-      //! constructor
       TransferFunction();
 
       //! \brief initialize color and alpha arrays to 'some' useful values
@@ -39,10 +38,12 @@ namespace ospray {
       //! \brief creates ospray-side object(s) for this node
       virtual void render(RenderContext &ctx) override;
 
+      void preCommit(RenderContext &ctx);
+
       //! \brief Initialize this node's value from given corresponding XML node 
       virtual void setFromXML(const xml::Node &node, 
                               const unsigned char *binBasePtr) override;
-      virtual void commit();
+      virtual void commit() override;
       
       void setValueRange(const vec2f &range);
 
@@ -60,21 +61,23 @@ namespace ospray {
         it to ospray obejcts that need a reference to the ospray
         version of this xf */
       OSPTransferFunction getOSPHandle() const { return ospTransferFunction; }
+
     protected:
-      OSPTransferFunction ospTransferFunction;
-      OSPData ospColorData;
-      OSPData ospAlphaData;
-      vec2f valueRange;
+
+      OSPTransferFunction ospTransferFunction {nullptr};
+      OSPData ospColorData {nullptr};
+      OSPData ospAlphaData {nullptr};
+      vec2f valueRange {0.f, 1.f};
       // number of samples we'll use in the colordata and alphadata arrays
-      int numSamples;
+      int numSamples {256};
 
       // array of (x,color(x)) color samples; the first and last x
       // determine the range of x'es, all values will be resampled
       // uniformly into this range. samples must be sorted by x
       // coordinate, and must span a non-empty range of x coordinates
-      std::vector<std::pair<float,vec3f> > colorArray;
+      std::vector<std::pair<float, vec3f>> colorArray;
       // array of (x,alpha(x)) opacity samples; otherwise same as colorArray
-      std::vector<std::pair<float,float> > alphaArray;
+      std::vector<std::pair<float, float>> alphaArray;
     };    
     
   } // ::ospray::sg

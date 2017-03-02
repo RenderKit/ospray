@@ -37,13 +37,14 @@ namespace ospray {
 
       alreadyLoaded.insert(moduleName);
 
-      const std::string libName = "ospray_sg_"+moduleName;
+      const std::string libName = "ospray_module_sg_"+moduleName;
       const std::string symName = "ospray_sg_"+moduleName+"_init";
       
       ospcommon::loadLibrary(libName);
       void *sym = ospcommon::getSymbol(symName);
       if (!sym)
-        throw sg::RuntimeError("could not load module '"+moduleName+"' (symbol '"+symName+"' not found)");
+        throw sg::RuntimeError("could not load module '" + moduleName
+                               + "' (symbol '" + symName + "' not found)");
 
       void (*initFct)() = (void (*)())sym;
       initFct();

@@ -19,16 +19,28 @@
 namespace ospray {
   namespace sg {
 
-    FrameBuffer::FrameBuffer(const vec2i &size) 
-      : size(size), 
-        ospFrameBuffer(NULL) 
+    FrameBuffer::FrameBuffer(vec2i size)
+      : size(size)
     {
       createFB();
-    };
-    
+    }
+
+    void FrameBuffer::init()
+    {
+      add(createNode("size", "vec2i", size));
+    }
+
     FrameBuffer::~FrameBuffer()
     {
       destroyFB();
+    }
+
+    void FrameBuffer::postCommit(RenderContext &ctx)
+    {
+      size = getChild("size")->getValue<vec2i>();
+      destroyFB();
+      createFB();
+      ospCommit(ospFrameBuffer);
     }
 
     unsigned char *FrameBuffer::map()
@@ -36,7 +48,7 @@ namespace ospray {
       return (unsigned char *)ospMapFrameBuffer(ospFrameBuffer, OSP_FB_COLOR);
     }
 
-    void FrameBuffer::unmap(unsigned char *mem)
+    void FrameBuffer::unmap(void *mem)
     {
       ospUnmapFrameBuffer(mem,ospFrameBuffer);
     }
@@ -69,15 +81,17 @@ namespace ospray {
 
     void ospray::sg::FrameBuffer::createFB()
     {
-      ospFrameBuffer =
-          ospNewFrameBuffer((const osp::vec2i &)size, OSP_FB_SRGBA,
-                            OSP_FB_COLOR | OSP_FB_ACCUM);
+      ospFrameBuffer = ospNewFrameBuffer((osp::vec2i&)size, OSP_FB_SRGBA,
+                                         OSP_FB_COLOR | OSP_FB_ACCUM);
+      setValue((OSPObject)ospFrameBuffer);
     }
 
     void ospray::sg::FrameBuffer::destroyFB()
     {
       ospFreeFrameBuffer(ospFrameBuffer);
     }
+
+    OSP_REGISTER_SG_NODE(FrameBuffer);
 
   } // ::ospray::sg
 } // ::ospray

@@ -18,8 +18,6 @@
 #include "Geometry.h"
 #include "common/Util.h"
 #include "common/Library.h"
-// stl 
-#include <map>
 // ISPC exports
 #include "Geometry_ispc.h"
 
@@ -41,7 +39,7 @@ namespace ospray {
     if (!getIE()) 
       postErrorMsg("#osp: warning - geometry does not have an ispc equivalent!\n");
     else {
-      ispc::Geometry_setMaterial(this->getIE(),mat?mat->getIE():NULL);
+      ispc::Geometry_setMaterial(this->getIE(), mat ? mat->getIE() : nullptr);
     }
   }
 
@@ -59,7 +57,7 @@ namespace ospray {
   {
   }
 
-  Geometry *Geometry::createGeometry(const char *type)
+  Geometry *Geometry::createInstance(const char *type)
   {
     return createInstanceHelper<Geometry, OSP_GEOMETRY>(type);
   }
