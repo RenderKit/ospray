@@ -96,6 +96,7 @@ build-mpi:
   tags:
     - linux
     - mpi
+    - gcc
     - build
 
 build-osx-clang:
