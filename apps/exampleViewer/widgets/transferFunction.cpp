@@ -91,6 +91,7 @@ TransferFunction& TransferFunction::operator=(const TransferFunction &t) {
   rgba_lines = t.rgba_lines;
   active_line = t.active_line;
   fcn_changed = true;
+  return *this;
 }
 void TransferFunction::drawUi(){
   if (ImGui::Begin("Transfer Function")){
