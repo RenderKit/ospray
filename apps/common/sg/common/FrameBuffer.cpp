@@ -84,8 +84,6 @@ namespace ospray {
       ospFrameBuffer = ospNewFrameBuffer((osp::vec2i&)size, OSP_FB_SRGBA,
                                          OSP_FB_COLOR | OSP_FB_ACCUM);
       setValue((OSPObject)ospFrameBuffer);
-      std::cout << "creating fb : " << getValue<OSPObject>() << " " << size
-                << "\n";
     }
 
     void ospray::sg::FrameBuffer::destroyFB()
