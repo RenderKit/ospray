@@ -108,7 +108,7 @@ namespace ospcommon {
     }
 
     template <typename TASK_T>
-    inline void schedule(int nTasks, TASK_T && fcn)
+    inline void schedule(TASK_T && fcn)
     {
       struct LocalTask : public Task
       {

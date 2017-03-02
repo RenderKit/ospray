@@ -45,7 +45,7 @@ namespace ospcommon {
 #elif defined(OSPRAY_TASKING_CILK)
     cilk_spawn fcn();
 #elif defined(OSPRAY_TASKING_INTERNAL)
-    tasking::schedule(1, std::forward<TASK_T>(fcn));
+    tasking::schedule(std::forward<TASK_T>(fcn));
 #else// OpenMP or Debug --> synchronous!
     fcn();
 #endif
