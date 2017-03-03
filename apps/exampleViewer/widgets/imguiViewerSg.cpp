@@ -369,13 +369,13 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
   } else if (node->type() == "TransferFunction") {
     text += "TODO WILL";
     ImGui::Text(text.c_str());
-    if (!node->getParam("transferFunctionWidget")) {
+    if (!node->param("transferFunctionWidget")) {
       std::shared_ptr<sg::TransferFunction> tfn =
           std::dynamic_pointer_cast<sg::TransferFunction>(node.get());
       node->setParam("transferFunctionWidget", TransferFunction(tfn));
     }
     auto tfnWidget =
-        dynamic_cast<sg::ParamT<TransferFunction>*>(node->getParam("transferFunctionWidget").get());
+        dynamic_cast<sg::ParamT<TransferFunction>*>(node->param("transferFunctionWidget").get());
     assert(tfnWidget);
     tfnWidget->value.render();
     tfnWidget->value.drawUi();

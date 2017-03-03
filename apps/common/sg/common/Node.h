@@ -166,7 +166,7 @@ namespace ospray {
       };
 
       virtual std::string toString() const { return "Node"; }
-      std::shared_ptr<sg::Param> getParam(const std::string &name) const;
+      std::shared_ptr<sg::Param> param(const std::string &name) const;
 
       //! \brief Initialize this node's value from given XML node
       /*!
@@ -190,11 +190,11 @@ namespace ospray {
       //! just for convenience; add a typed 'setParam' function
       template<typename T>
       inline void setParam(const std::string &name, const T &t)
-      { params[name] = std::make_shared<ParamT<T>>(name,t); }
+      { properties.params[name] = std::make_shared<ParamT<T>>(name,t); }
 
       template<typename FCN_T>
       inline void for_each_param(FCN_T &&fcn)
-      { for (auto &p : params) fcn(p.second); }
+      { for (auto &p : properties.params) fcn(p.second); }
 
       virtual void init() {} //intialize children
 
@@ -455,9 +455,9 @@ namespace ospray {
         TimeStamp lastModified;
         TimeStamp childrenMTime;
         TimeStamp lastCommitted;
+        std::map<std::string, std::shared_ptr<sg::Param>> params;
       } properties;
 
-      std::map<std::string, std::shared_ptr<sg::Param>> params;
       NodeH parent;
       NodeFlags flags;
       bool valid {false};

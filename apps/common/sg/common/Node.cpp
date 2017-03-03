@@ -59,11 +59,11 @@ namespace ospray {
     // sg node implementations
     // ==================================================================
 
-    std::shared_ptr<sg::Param> Node::getParam(const std::string &name) const
+    std::shared_ptr<sg::Param> Node::param(const std::string &name) const
     {
-      auto it = params.find(name);
+      auto it = properties.params.find(name);
 
-      if (it != params.end())
+      if (it != properties.params.end())
         return it->second;
 
       return {};
