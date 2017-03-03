@@ -43,7 +43,7 @@ namespace ospray {
       assert(ctx.ospRenderer);
       if (ospMaterial != nullptr && ospRenderer == ctx.ospRenderer) return;
       auto mat = ospNewMaterial(ctx.ospRenderer,
-                                child("type")->getValue<std::string>().c_str());
+                                child("type")->valueAs<std::string>().c_str());
       if (!mat)
       {
         std::cerr << "Warning: Could not create material type '"

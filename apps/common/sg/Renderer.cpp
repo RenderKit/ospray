@@ -192,9 +192,9 @@ namespace ospray {
     void Renderer::postRender(RenderContext &ctx)
     {
       ospSetObject(ospRenderer, "model",
-                   child("world")->getValue<OSPObject>());
+                   child("world")->valueAs<OSPObject>());
       ospCommit(ospRenderer);
-      ospRenderFrame((OSPFrameBuffer)child("frameBuffer")->getValue<OSPObject>(),
+      ospRenderFrame((OSPFrameBuffer)child("frameBuffer")->valueAs<OSPObject>(),
                      ospRenderer,
                      OSP_FB_COLOR | OSP_FB_ACCUM);
       accumID++;
@@ -210,10 +210,10 @@ namespace ospray {
       if (child("frameBuffer")["size"]->getLastModified() >
           child("camera")["aspect"]->getLastCommitted())
        child("camera")["aspect"]->setValue(
-         child("frameBuffer")["size"]->getValue<vec2i>().x /
-         float(child("frameBuffer")["size"]->getValue().get<vec2i>().y)
+         child("frameBuffer")["size"]->valueAs<vec2i>().x /
+         float(child("frameBuffer")["size"]->valueAs<vec2i>().y)
        );
-      auto rendererType = child("rendererType")->getValue<std::string>();
+      auto rendererType = child("rendererType")->valueAs<std::string>();
       if (!ospRenderer || rendererType != createdType)
       {
         traverse(ctx, "modified");
@@ -228,20 +228,20 @@ namespace ospray {
 
     void Renderer::postCommit(RenderContext &ctx)
     {
-      ospSetObject(ospRenderer,"model", child("world")->getValue<OSPObject>());
-      ospSetObject(ospRenderer,"camera", child("camera")->getValue<OSPObject>());
+      ospSetObject(ospRenderer,"model", child("world")->valueAs<OSPObject>());
+      ospSetObject(ospRenderer,"camera", child("camera")->valueAs<OSPObject>());
       ospCommit(ospRenderer);
 
       // create and setup light for Ambient Occlusion
       std::vector<OSPLight> lights;
       for(auto &lightNode : child("lights")->children())
-        lights.push_back((OSPLight)lightNode->getValue<OSPObject>());
+        lights.push_back((OSPLight)lightNode->valueAs<OSPObject>());
 
       OSPData lightsd = ospNewData(lights.size(), OSP_LIGHT, &lights[0]);
       ospCommit(lightsd);
 
       // complete setup of renderer
-      ospSetObject(ospRenderer, "model",  child("world")->getValue<OSPObject>());
+      ospSetObject(ospRenderer, "model",  child("world")->valueAs<OSPObject>());
       ospSetObject(ospRenderer, "lights", lightsd);
       ospCommit(ospRenderer);
       //TODO: some child is kicking off modified every frame...Should figure
@@ -256,7 +256,7 @@ namespace ospray {
         )
       {
         ospFrameBufferClear(
-          (OSPFrameBuffer)child("frameBuffer")->getValue<OSPObject>(),
+          (OSPFrameBuffer)child("frameBuffer")->valueAs<OSPObject>(),
           OSP_FB_COLOR | OSP_FB_ACCUM
         );
 

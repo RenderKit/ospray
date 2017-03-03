@@ -140,7 +140,7 @@ namespace ospray {
       if (ospGeometry)
       {
         ospSetMaterial(ospGeometry,
-                       (OSPMaterial)child("material")->getValue<OSPObject>());
+                       (OSPMaterial)child("material")->valueAs<OSPObject>());
         ospCommit(ospGeometry);
         return;
       }
@@ -160,7 +160,7 @@ namespace ospray {
         ospSetData(ospGeometry,"index",index->getOSP());
 
       ospSetMaterial(ospGeometry,
-                     (OSPMaterial)child("material")->getValue<OSPObject>());
+                     (OSPMaterial)child("material")->valueAs<OSPObject>());
       ospCommit(ospGeometry);
       ospAddGeometry(ctx.world->ospModel,ospGeometry);
     }
@@ -168,7 +168,7 @@ namespace ospray {
     void Importer::setChildrenModified(TimeStamp t)
     {
       Node::setChildrenModified(t);
-      ospcommon::FileName file(child("fileName")->getValue<std::string>());
+      ospcommon::FileName file(child("fileName")->valueAs<std::string>());
 
       if (file.str() == loadedFileName)
         return;

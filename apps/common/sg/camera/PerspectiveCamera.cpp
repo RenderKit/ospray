@@ -55,11 +55,11 @@ namespace ospray {
     {
       if (!ospCamera) create(); 
       
-      ospSetVec3f(ospCamera,"pos",(const osp::vec3f&)child("pos")->getValue<vec3f>());
-      ospSetVec3f(ospCamera,"dir",(const osp::vec3f&)child("dir")->getValue<vec3f>());
-      ospSetVec3f(ospCamera,"up",(const osp::vec3f&)child("up")->getValue<vec3f>());
-      ospSetf(ospCamera,"aspect",child("aspect")->getValue<float>());
-      ospSetf(ospCamera,"fovy",child("fovy")->getValue<float>());
+      ospSetVec3f(ospCamera,"pos",(const osp::vec3f&)child("pos")->valueAs<vec3f>());
+      ospSetVec3f(ospCamera,"dir",(const osp::vec3f&)child("dir")->valueAs<vec3f>());
+      ospSetVec3f(ospCamera,"up",(const osp::vec3f&)child("up")->valueAs<vec3f>());
+      ospSetf(ospCamera,"aspect",child("aspect")->valueAs<float>());
+      ospSetf(ospCamera,"fovy",child("fovy")->valueAs<float>());
       ospCommit(ospCamera);  
     }
 

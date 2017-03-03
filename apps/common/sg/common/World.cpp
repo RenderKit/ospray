@@ -57,7 +57,7 @@ namespace ospray {
       ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
       ospModel = ospNewModel();
       ospCommit(ospModel);
-      value = (OSPObject)ospModel;
+      setValue((OSPObject)ospModel);
     }
 
     void World::postCommit(RenderContext &ctx)
@@ -79,23 +79,21 @@ namespace ospray {
 
     void InstanceGroup::preCommit(RenderContext &ctx)
     {
-      if (instanced)
-      {
-      oldWorld = ctx.world;
-      ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
-      if (!ospModel)  //TODO: add support for changing initial geometry
-      {
-        ospModel = ospNewModel();
-        ospCommit(ospModel);
-        value = (OSPObject)ospModel;
+      if (instanced) {
+        oldWorld = ctx.world;
+        ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
+        if (!ospModel)  //TODO: add support for changing initial geometry
+        {
+          ospModel = ospNewModel();
+          ospCommit(ospModel);
+          setValue((OSPObject)ospModel);
+        }
       }
-    }
     }
 
     void InstanceGroup::postCommit(RenderContext &ctx)
     {
-      if (instanced)
-      {
+      if (instanced) {
         ospCommit(ospModel);
         ctx.world = oldWorld;
       }
@@ -104,12 +102,11 @@ namespace ospray {
     void InstanceGroup::preRender(RenderContext &ctx)
     {
       oldWorld = ctx.world;
-      if (instanced)
-      {
+      if (instanced) {
         ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
-        vec3f scale = child("scale")->getValue<vec3f>();
-        vec3f rotation = child("rotation")->getValue<vec3f>();
-        vec3f translation = child("position")->getValue<vec3f>();
+        vec3f scale = child("scale")->valueAs<vec3f>();
+        vec3f rotation = child("rotation")->valueAs<vec3f>();
+        vec3f translation = child("position")->valueAs<vec3f>();
         ospcommon::affine3f xfm = ospcommon::one;
         xfm = xfm*ospcommon::affine3f::translate(translation)*ospcommon::affine3f::rotate(vec3f(1,0,0),rotation.x)*
         ospcommon::affine3f::rotate(vec3f(0,1,0),rotation.y)*
@@ -119,14 +116,14 @@ namespace ospray {
         ospInstance = ospNewInstance(ospModel,(osp::affine3f&)xfm);
         ospCommit(ospInstance);
 
-      if (child("visible")->getValue() == true)
-        ospAddGeometry(oldWorld->ospModel,ospInstance);
+        if (child("visible")->value() == true)
+          ospAddGeometry(oldWorld->ospModel,ospInstance);
       }
     }
 
     void InstanceGroup::postRender(RenderContext &ctx)
     {
-       ctx.world = oldWorld;
+      ctx.world = oldWorld;
     }
 
     OSP_REGISTER_SG_NODE(World);

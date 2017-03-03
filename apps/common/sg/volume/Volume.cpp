@@ -105,7 +105,7 @@ namespace ospray {
     box3f StructuredVolume::getBounds() const
     {
       return {vec3f(0.f),
-              vec3f(getDimensions())*child("gridSpacing")->getValue<vec3f>()};
+              vec3f(getDimensions())*child("gridSpacing")->valueAs<vec3f>()};
     }
 
     //! \brief Initialize this node's value from given XML node
@@ -223,7 +223,7 @@ namespace ospray {
     box3f StructuredVolumeFromFile::getBounds() const
     {
       return {vec3f(0.f),
-              vec3f(getDimensions())*child("gridSpacing")->getValue<vec3f>()};
+              vec3f(getDimensions())*child("gridSpacing")->valueAs<vec3f>()};
     }
 
     //! \brief Initialize this node's value from given XML node
@@ -333,7 +333,7 @@ namespace ospray {
 
     void StructuredVolumeFromFile::postCommit(RenderContext &ctx)
     {
-      ospSetObject(volume,"transferFunction",child("transferFunction")->getValue<OSPObject>());
+      ospSetObject(volume,"transferFunction",child("transferFunction")->valueAs<OSPObject>());
       ospCommit(volume);
     }
 

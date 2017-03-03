@@ -310,20 +310,24 @@ namespace ospray {
       { std::lock_guard<std::mutex> lock{mutex}; parent = p; }
 
       //! get the value of the node, whithout template conversion
-      const SGVar getValue()
-      { std::lock_guard<std::mutex> lock{mutex}; return value; }
+      const SGVar value()
+      { std::lock_guard<std::mutex> lock{mutex}; return properties.value; }
 
       //! returns the value of the node in the desired type
-      template<typename T> const T& getValue()
-      { std::lock_guard<std::mutex> lock{mutex}; return value.get<T>(); }
+      template<typename T>
+      const T& valueAs()
+      {
+        std::lock_guard<std::mutex> lock{mutex};
+        return properties.value.get<T>();
+      }
 
       //! set the value of the node.  Requires strict typecast
       void setValue(SGVar val)
       {
         {
           std::lock_guard<std::mutex> lock{mutex};
-          if (val != value)
-            value = val;
+          if (val != properties.value)
+            properties.value = val;
         }
 
         modified();
@@ -418,13 +422,13 @@ namespace ospray {
         if (flags & NodeFlags::valid_blacklist) {
           return std::find(properties.blacklist.begin(),
                            properties.blacklist.end(),
-                           value) == properties.blacklist.end();
+                           value()) == properties.blacklist.end();
         }
 
         if (flags & NodeFlags::valid_whitelist) {
           return std::find(properties.whitelist.begin(),
                            properties.whitelist.end(),
-                           value) != properties.whitelist.end();
+                           value()) != properties.whitelist.end();
         }
 
         return true;
@@ -444,9 +448,9 @@ namespace ospray {
         std::vector<SGVar> whitelist;
         std::vector<SGVar> blacklist;
         std::map<std::string, NodeH> children;
+        SGVar value;
       } properties;
 
-      SGVar value;
       TimeStamp lastModified;
       TimeStamp childrenMTime;
       TimeStamp lastCommitted;
@@ -523,15 +527,15 @@ namespace ospray {
     template <>
     inline void NodeParamCommit<float>::commit(std::shared_ptr<Node> n)
     {
-      ospSet1f(n->getParent()->getValue<OSPObject>(),
-               n->name().c_str(), n->getValue<float>());
+      ospSet1f(n->getParent()->valueAs<OSPObject>(),
+               n->name().c_str(), n->valueAs<float>());
     }
 
     template <>
     inline void NodeParamCommit<bool>::commit(std::shared_ptr<Node> n)
     {
-      ospSet1i(n->getParent()->getValue<OSPObject>(),
-               n->name().c_str(), n->getValue<bool>());
+      ospSet1i(n->getParent()->valueAs<OSPObject>(),
+               n->name().c_str(), n->valueAs<bool>());
     }
 
     template <>
@@ -545,8 +549,8 @@ namespace ospray {
     template <>
     inline void NodeParamCommit<int>::commit(std::shared_ptr<Node> n)
     {
-      ospSet1i(n->getParent()->getValue<OSPObject>(),
-               n->name().c_str(), n->getValue<int>());
+      ospSet1i(n->getParent()->valueAs<OSPObject>(),
+               n->name().c_str(), n->valueAs<int>());
     }
 
     template <>
@@ -565,8 +569,8 @@ namespace ospray {
     template <>
     inline void NodeParamCommit<vec3f>::commit(std::shared_ptr<Node> n)
     {
-      ospSet3fv(n->getParent()->getValue<OSPObject>(),
-                n->name().c_str(), &n->getValue<vec3f>().x);
+      ospSet3fv(n->getParent()->valueAs<OSPObject>(),
+                n->name().c_str(), &n->valueAs<vec3f>().x);
     }
 
     template <typename T>
@@ -578,7 +582,7 @@ namespace ospray {
         if (!parent.isNULL())
         {
           //TODO: generalize to other types of ManagedObject
-          if (parent->getValue().is<OSPObject>() == true)
+          if (parent->value().is<OSPObject>() == true)
             NodeParamCommit<T>::commit(shared_from_this());
         }
       }
@@ -587,7 +591,7 @@ namespace ospray {
       {
         if (properties.minmax.size() < 2 || !(flags & NodeFlags::valid_min_max))
           return true;
-        return NodeParamCommit<T>::compare(min(), max(), value);
+        return NodeParamCommit<T>::compare(min(), max(), value());
       }
     };
 

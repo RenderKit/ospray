@@ -280,7 +280,7 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
   if (node->type() == "vec3f") {
     ImGui::Text(text.c_str());
     ImGui::SameLine();
-    vec3f val = node->getValue().get<vec3f>();
+    vec3f val = node->valueAs<vec3f>();
     text = "##"+((std::ostringstream&)(std::ostringstream("")
            << node.get())).str(); //TODO: use unique uuid for every node
     if ((node->getFlags() & sg::NodeFlags::gui_color)) {
@@ -299,7 +299,7 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
   } else if (node->type() == "vec2f") {
     ImGui::Text(text.c_str(),"");
     ImGui::SameLine();
-    vec2f val = node->getValue().get<vec2f>();
+    vec2f val = node->valueAs<vec2f>();
     text = "##"+((std::ostringstream&)(std::ostringstream("")
            << node.get())).str(); //TODO: use unique uuid for every node
     if (ImGui::DragFloat2(text.c_str(), (float*)&val.x, .01f)) {
@@ -308,7 +308,7 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
   } else if (node->type() == "vec2i") {
     ImGui::Text(text.c_str());
     ImGui::SameLine();
-    vec2i val = node->getValue().get<vec2i>();
+    vec2i val = node->valueAs<vec2i>();
     text = "##"+((std::ostringstream&)(std::ostringstream("")
            << node.get())).str(); //TODO: use unique uuid for every node
     if (ImGui::DragInt2(text.c_str(), (int*)&val.x)) {
@@ -317,7 +317,7 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
   } else if (node->type() == "float") {
     ImGui::Text(text.c_str(),"");
     ImGui::SameLine();
-    float val = node->getValue().get<float>();
+    float val = node->valueAs<float>();
     text = "##"+((std::ostringstream&)(std::ostringstream("")
            << node.get())).str(); //TODO: use unique uuid for every node
     if ((node->getFlags() & sg::NodeFlags::gui_slider)) {
@@ -332,7 +332,7 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
   } else if (node->type() == "bool") {
     ImGui::Text(text.c_str(),"");
     ImGui::SameLine();
-    bool val = node->getValue().get<bool>();
+    bool val = node->valueAs<bool>();
     text = "##"+((std::ostringstream&)(std::ostringstream("")
            << node.get())).str(); //TODO: use unique uuid for every node
     if (ImGui::Checkbox(text.c_str(), &val)) {
@@ -341,7 +341,7 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
   } else if (node->type() == "int") {
     ImGui::Text(text.c_str(),"");
     ImGui::SameLine();
-    int val = node->getValue().get<int>();
+    int val = node->valueAs<int>();
     text = "##"+((std::ostringstream&)(std::ostringstream("")
            << node.get())).str(); //TODO: use unique uuid for every node
     if ((node->getFlags() & sg::NodeFlags::gui_slider)) {
@@ -354,7 +354,7 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
       node->setValue(val);
     }
   } else if (node->type() == "string") {
-    std::string value = node->getValue<std::string>().c_str();
+    std::string value = node->valueAs<std::string>().c_str();
     char* buf = (char*)malloc(value.size()+1+256);
     strcpy(buf,value.c_str());
     buf[value.size()] = '\0';

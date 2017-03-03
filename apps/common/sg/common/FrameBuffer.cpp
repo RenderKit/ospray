@@ -37,7 +37,7 @@ namespace ospray {
 
     void FrameBuffer::postCommit(RenderContext &ctx)
     {
-      size = child("size")->getValue<vec2i>();
+      size = child("size")->valueAs<vec2i>();
       destroyFB();
       createFB();
       ospCommit(ospFrameBuffer);
