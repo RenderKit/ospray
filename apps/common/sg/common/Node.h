@@ -141,7 +141,7 @@ namespace ospray {
         std::shared_ptr<sg::Node> node;
 
         //! return child with name c
-        NodeH& operator[] (std::string c) { return get()->getChild(c); }
+        NodeH& operator[] (const std::string &c) { return get()->getChild(c); }
 
         //! add child node n to this node
         NodeH operator+= (NodeH n)
@@ -200,7 +200,7 @@ namespace ospray {
 
       std::string getDocumentation() { return documentation; }
 
-      void setDocumentation(std::string s) { documentation = s; }
+      void setDocumentation(const std::string &s) { documentation = s; }
 
       /*! \brief return bounding box in world coordinates.
 
@@ -227,8 +227,7 @@ namespace ospray {
 
       virtual void setChildrenModified(TimeStamp t)
       {
-        if (t >childrenMTime)
-        {
+        if (t > childrenMTime) {
           childrenMTime = t; 
           if (!parent.isNULL()) 
             parent->setChildrenModified(childrenMTime);
@@ -236,7 +235,7 @@ namespace ospray {
       }
 
       //! return named child node
-      NodeH& getChild(std::string name) {
+      NodeH& getChild(const std::string &name) {
         std::lock_guard<std::mutex> lock{mutex};
         if (children.find(name) == children.end())
           std::cout << "couldn't find child! " << name << "\n";
@@ -244,7 +243,7 @@ namespace ospray {
       }
 
       //! return named child node
-      NodeH getChildRecursive(std::string name) {
+      NodeH getChildRecursive(const std::string &name) {
         mutex.lock();
         Node* n = this;
         auto f = n->children.find(name);
@@ -266,7 +265,7 @@ namespace ospray {
       }
 
       //! return all children of type
-      std::vector<NodeH> getChildrenByType(std::string t)
+      std::vector<NodeH> getChildrenByType(const std::string &t)
       {
         std::lock_guard<std::mutex> lock{mutex};
         std::vector<NodeH> result;
@@ -285,7 +284,7 @@ namespace ospray {
       }
 
       //! return child c
-      NodeH& operator[] (std::string c) { return getChild(c);}
+      NodeH& operator[] (const std::string &c) { return getChild(c);}
 
       //! return the parent node
       NodeH getParent() { return parent; }
@@ -351,10 +350,10 @@ namespace ospray {
       virtual void postCommit(RenderContext &ctx) {}
 
       //! name of the node, ie material007.  Should be unique among children
-      void setName(std::string v) { name = v; }
+      void setName(const std::string &v) { name = v; }
 
       //! set type of node, ie Material
-      void setType(std::string v) { type = v; }
+      void setType(const std::string &v) { type = v; }
 
       //! get name of the node, ie material007
       std::string getName() { return name; }
