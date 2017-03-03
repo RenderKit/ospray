@@ -42,7 +42,7 @@ namespace ospray {
       
       void setSPP(size_t spp);
 
-      OSPRenderer getOSPHandle() const { return ospRenderer; }
+      OSPRenderer handle() const { return ospRenderer; }
 
       SG_NODE_DECLARE_MEMBER(std::shared_ptr<sg::Camera>, camera, Camera);
       SG_NODE_DECLARE_MEMBER(std::shared_ptr<sg::World>, world, World);

@@ -87,7 +87,7 @@ namespace ospray {
       sgRenderer->renderFrame();
 
 
-      vec2i size = sgRenderer->frameBuffer->getSize();
+      vec2i size = sgRenderer->frameBuffer->size();
       unsigned char *fbMem = sgRenderer->frameBuffer->map();
       glDrawPixels(size.x, size.y, GL_RGBA, GL_UNSIGNED_BYTE, fbMem);
 
@@ -131,7 +131,7 @@ namespace ospray {
       assert(camera);
       const vec3f from = frame->sourcePoint;
       const vec3f at   = frame->targetPoint;
-      vec2i size = sgRenderer->frameBuffer->getSize();
+      vec2i size = sgRenderer->frameBuffer->size();
 
       camera->setFrom(from);
       camera->setAt(at);
@@ -456,7 +456,7 @@ namespace ospray {
     //! take a screen shot
     void ModelViewer::screenShotAction()
     {
-      vec2i size = sgRenderer->frameBuffer->getSize();
+      vec2i size = sgRenderer->frameBuffer->size();
       unsigned char *fbMem = sgRenderer->frameBuffer->map();
       glDrawPixels(size.x, size.y, GL_RGBA, GL_UNSIGNED_BYTE, fbMem);
       sgRenderer->frameBuffer->unmap(fbMem);

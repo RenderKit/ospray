@@ -34,11 +34,11 @@ namespace ospray {
       
     private:
 
-      static size_t getNextValue();
+      static size_t nextValue();
 
       // Data members //
 
-      size_t value {getNextValue()};
+      size_t value {nextValue()};
 
       //! \brief the uint64_t that stores the time value
       static std::atomic<size_t> global;

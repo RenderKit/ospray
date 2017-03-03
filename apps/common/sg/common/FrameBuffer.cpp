@@ -20,14 +20,14 @@ namespace ospray {
   namespace sg {
 
     FrameBuffer::FrameBuffer(vec2i size)
-      : size(size)
+      : fbsize(size)
     {
       createFB();
     }
 
     void FrameBuffer::init()
     {
-      add(createNode("size", "vec2i", size));
+      add(createNode("size", "vec2i", fbsize));
     }
 
     FrameBuffer::~FrameBuffer()
@@ -37,7 +37,7 @@ namespace ospray {
 
     void FrameBuffer::postCommit(RenderContext &ctx)
     {
-      size = child("size")->valueAs<vec2i>();
+      fbsize = child("size")->valueAs<vec2i>();
       destroyFB();
       createFB();
       ospCommit(ospFrameBuffer);
@@ -63,9 +63,9 @@ namespace ospray {
       ospFrameBufferClear(ospFrameBuffer,OSP_FB_ACCUM);
     }
 
-    vec2i FrameBuffer::getSize() const
+    vec2i FrameBuffer::size() const
     {
-      return size;
+      return fbsize;
     }
     
     /*! \brief returns a std::string with the c++ name of this class */
@@ -74,14 +74,14 @@ namespace ospray {
       return "ospray::sg::FrameBuffer";
     }
     
-    OSPFrameBuffer FrameBuffer::getOSPHandle() const
+    OSPFrameBuffer FrameBuffer::handle() const
     {
       return ospFrameBuffer;
     }
 
     void ospray::sg::FrameBuffer::createFB()
     {
-      ospFrameBuffer = ospNewFrameBuffer((osp::vec2i&)size, OSP_FB_SRGBA,
+      ospFrameBuffer = ospNewFrameBuffer((osp::vec2i&)fbsize, OSP_FB_SRGBA,
                                          OSP_FB_COLOR | OSP_FB_ACCUM);
       setValue((OSPObject)ospFrameBuffer);
     }

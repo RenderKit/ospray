@@ -27,7 +27,7 @@ namespace ospray {
       return value;
     }
 
-    size_t TimeStamp::getNextValue()
+    size_t TimeStamp::nextValue()
     {
       return global++;
     }

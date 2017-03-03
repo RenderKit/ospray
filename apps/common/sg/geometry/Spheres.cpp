@@ -34,7 +34,7 @@ namespace ospray {
     {
       box3f bounds = empty;
       for (auto &s : sphere)
-        bounds.extend(s.getBounds());
+        bounds.extend(s.bounds());
       return bounds;
     }
 
@@ -94,7 +94,7 @@ namespace ospray {
       ospSet1i(ospGeometry,"offset_radius",     3*sizeof(float));
       ospSet1i(ospGeometry,"offset_materialID", 4*sizeof(float));
 
-      auto mat = ospNewMaterial(ctx.integrator->getOSPHandle(), "default");
+      auto mat = ospNewMaterial(ctx.integrator->handle(), "default");
       if (mat) {
         vec3f kd = vec3f(.7f);
         ospSet3fv(mat,"kd",&kd.x);

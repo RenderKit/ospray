@@ -40,14 +40,14 @@ namespace ospray {
 
       void clearAccum();
       
-      vec2i getSize() const;
+      vec2i size() const;
 
       virtual void postCommit(RenderContext &ctx);
 
       /*! \brief returns a std::string with the c++ name of this class */
       virtual std::string toString() const;
 
-      OSPFrameBuffer getOSPHandle() const;
+      OSPFrameBuffer handle() const;
       
       // create the ospray framebuffer for this class
       void createFB();
@@ -56,7 +56,7 @@ namespace ospray {
       void destroyFB();
 
       OSPFrameBuffer ospFrameBuffer {nullptr};
-      vec2i size;
+      vec2i fbsize;
     };
 
   } // ::ospray::sg

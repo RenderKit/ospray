@@ -37,7 +37,7 @@ namespace ospray {
         Sphere(vec3f position, float radius, uint32_t typeID = 0);
         
         // return the bounding box
-        inline box3f getBounds() const
+        inline box3f bounds() const
         { return {position - vec3f(radius), position + vec3f(radius)}; }
       };
 
