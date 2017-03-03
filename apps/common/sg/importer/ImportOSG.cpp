@@ -151,12 +151,13 @@ namespace ospray {
           ospLoadModule("amr"); 
           ospLoadModule("sg_amr");  
         }
-        // std::shared_ptr<sg::Node> newNode(createSGNodeFrom(*c,binBasePtr));
-        std::shared_ptr<sg::Node> newNode = createNode(c->getProp("name"),c->name).get();
+        std::shared_ptr<sg::Node> newNode =
+            createNode(c->getProp("name"),c->name).get();
         newNode->setFromXML(*c,binBasePtr);
         world->nodes.push_back(newNode);
-        world->add(newNode)
-;        std::cout << "adding node to world: " << newNode->getName() << " " << newNode->getType() << "\n";
+        world->add(newNode);
+        std::cout << "adding node to world: " << newNode->name() << " "
+                  << newNode->getType() << "\n";
       }
     }
     

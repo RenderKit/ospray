@@ -276,7 +276,7 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
     styles++;
   }
   std::string text;
-  text += std::string(node->getName()+" : ");
+  text += std::string(node->name()+" : ");
   if (node->getType() == "vec3f") {
     ImGui::Text(text.c_str());
     ImGui::SameLine();

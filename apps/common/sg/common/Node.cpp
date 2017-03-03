@@ -96,24 +96,17 @@ namespace ospray {
 
     void Node::preTraverse(RenderContext &ctx, const std::string& operation)
     {
-      if (operation == "print")
-      {
+      if (operation == "print") {
         for (int i=0;i<ctx.level;i++)
           std::cout << "  ";
-        std::cout << name << " : " << type << "\n";
-      }
-      else if (operation == "commit" &&
+        std::cout << name() << " : " << type << "\n";
+      } else if (operation == "commit" &&
                (getLastModified() >= getLastCommitted() ||
-                getChildrenLastModified() >= getLastCommitted()))
-      {
+                getChildrenLastModified() >= getLastCommitted())) {
         preCommit(ctx);
-      }
-      else if (operation == "verify")
-      {
+      } else if (operation == "verify") {
         valid = computeValid();
-      }
-      else if (operation == "modified")
-      {
+      } else if (operation == "modified") {
         modified();
       }
     }

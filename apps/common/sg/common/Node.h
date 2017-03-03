@@ -62,16 +62,16 @@ namespace ospray {
     struct OSPSG_INTERFACE Param
     {
       /*! constructor. the passed name alwasys remains constant */
-      Param(const std::string &name) : name(name) {}
+      Param(const std::string &name) : _name(name) {}
       /*! return name of this parameter. the value is in the derived class */
-      inline const std::string getName() const { return name; }
+      inline const std::string name() const { return _name; }
       virtual void write(XMLWriter &) { NOTIMPLEMENTED; }
       /*! returns the ospray data type that this node corresponds to */
       virtual OSPDataType getOSPDataType() const = 0;
 
     protected:
       /*! name of this node */
-      const std::string name;
+      const std::string _name;
     };
 
     /*! \brief a concrete parameter to a scene graph node */
@@ -128,7 +128,11 @@ namespace ospray {
     struct OSPSG_INTERFACE Node : public std::enable_shared_from_this<Node>
     {
       // NOTE(jda) - can't do default member initializers due to MSVC...
-      Node() : name("NULL"), type("Node") { modified(); }
+      Node() : type("Node")
+      {
+        properties.name = "NULL";
+        modified();
+      }
 
       /*!
           NodeH is a handle to a sg::Node.  It has the benefit of supporting
@@ -331,7 +335,7 @@ namespace ospray {
       virtual void add(std::shared_ptr<Node> node)
       {
         std::lock_guard<std::mutex> lock{mutex};
-        children[node->name] = NodeH(node);
+        children[node->name()] = NodeH(node);
 
         //ARG!  Cannot call shared_from_this in constructors.  PIA!!!
         node->setParent(shared_from_this());
@@ -341,7 +345,7 @@ namespace ospray {
       virtual void add(NodeH node)
       {
         std::lock_guard<std::mutex> lock{mutex};
-        children[node->name] = node;
+        children[node->name()] = node;
         node->setParent(shared_from_this());
       }
 
@@ -364,13 +368,13 @@ namespace ospray {
       virtual void postCommit(RenderContext &ctx) {}
 
       //! name of the node, ie material007.  Should be unique among children
-      void setName(const std::string &v) { name = v; }
+      void setName(const std::string &v) { properties.name = v; }
 
       //! set type of node, ie Material
       void setType(const std::string &v) { type = v; }
 
       //! get name of the node, ie material007
-      std::string getName() { return name; }
+      std::string name() const { return properties.name; }
 
       //! type of node, ie Material
       std::string getType() { return type; }
@@ -429,7 +433,11 @@ namespace ospray {
 
     protected:
 
-      std::string name;
+      struct
+      {
+        std::string name;
+      } properties;
+
       std::string type;
       std::vector<SGVar> minmax;
       std::vector<SGVar> whitelist;
@@ -514,14 +522,14 @@ namespace ospray {
     inline void NodeParamCommit<float>::commit(std::shared_ptr<Node> n)
     {
       ospSet1f(n->getParent()->getValue<OSPObject>(),
-               n->getName().c_str(), n->getValue<float>());
+               n->name().c_str(), n->getValue<float>());
     }
 
     template <>
     inline void NodeParamCommit<bool>::commit(std::shared_ptr<Node> n)
     {
       ospSet1i(n->getParent()->getValue<OSPObject>(),
-               n->getName().c_str(), n->getValue<bool>());
+               n->name().c_str(), n->getValue<bool>());
     }
 
     template <>
@@ -536,7 +544,7 @@ namespace ospray {
     inline void NodeParamCommit<int>::commit(std::shared_ptr<Node> n)
     {
       ospSet1i(n->getParent()->getValue<OSPObject>(),
-               n->getName().c_str(), n->getValue<int>());
+               n->name().c_str(), n->getValue<int>());
     }
 
     template <>
@@ -556,7 +564,7 @@ namespace ospray {
     inline void NodeParamCommit<vec3f>::commit(std::shared_ptr<Node> n)
     {
       ospSet3fv(n->getParent()->getValue<OSPObject>(),
-                n->getName().c_str(), &n->getValue<vec3f>().x);
+                n->name().c_str(), &n->getValue<vec3f>().x);
     }
 
     template <typename T>

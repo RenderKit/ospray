@@ -193,7 +193,7 @@ namespace ospray {
         // now, create widgets for all of them
         for (int i=0;i<xferFuncs.size();i++) {
           // take name from node, or create one
-          std::string name = xferFuncs[i]->getName();
+          std::string name = xferFuncs[i]->name();
           if (name == "") {
             std::stringstream ss;
             ss << "(unnamed xfr fct #" << i << ")";
@@ -207,7 +207,7 @@ namespace ospray {
           // create a transfer function editor for this transfer function node
           QOSPTransferFunctionEditor *xfEd
             = new QOSPTransferFunctionEditor(xf);
-          const std::vector<std::pair<float,float> > &alpha = xf->getAlphaArray();
+          const std::vector<std::pair<float,float>> &alpha = xf->getAlphaArray();
           if (!alpha.empty()) {
             std::vector<ospcommon::vec2f> points;
             for (int i=0;i<alpha.size();i++)
