@@ -283,11 +283,11 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
     vec3f val = node->valueAs<vec3f>();
     text = "##"+((std::ostringstream&)(std::ostringstream("")
            << node.get())).str(); //TODO: use unique uuid for every node
-    if ((node->getFlags() & sg::NodeFlags::gui_color)) {
+    if ((node->flags() & sg::NodeFlags::gui_color)) {
       if (ImGui::ColorEdit3(text.c_str(), (float*)&val.x))
         node->setValue(val);
     }
-    else if ((node->getFlags() & sg::NodeFlags::gui_slider)) {
+    else if ((node->flags() & sg::NodeFlags::gui_slider)) {
       if (ImGui::SliderFloat3(text.c_str(), &val.x,
                               node->min().get<vec3f>().x,
                               node->max().get<vec3f>().x))
@@ -320,7 +320,7 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
     float val = node->valueAs<float>();
     text = "##"+((std::ostringstream&)(std::ostringstream("")
            << node.get())).str(); //TODO: use unique uuid for every node
-    if ((node->getFlags() & sg::NodeFlags::gui_slider)) {
+    if ((node->flags() & sg::NodeFlags::gui_slider)) {
       if (ImGui::SliderFloat(text.c_str(), &val,
                              node->min().get<float>(),
                              node->max().get<float>()))
@@ -344,7 +344,7 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
     int val = node->valueAs<int>();
     text = "##"+((std::ostringstream&)(std::ostringstream("")
            << node.get())).str(); //TODO: use unique uuid for every node
-    if ((node->getFlags() & sg::NodeFlags::gui_slider)) {
+    if ((node->flags() & sg::NodeFlags::gui_slider)) {
       if (ImGui::SliderInt(text.c_str(), &val,
                            node->min().get<int>(),
                            node->max().get<int>()))

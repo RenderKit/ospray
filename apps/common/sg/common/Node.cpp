@@ -120,7 +120,7 @@ namespace ospray {
         markAsCommitted();
       } else if (operation == "verify") {
         for (const auto &child : properties.children) {
-          if (child.second->getFlags() & NodeFlags::required)
+          if (child.second->flags() & NodeFlags::required)
             valid &= child.second->isValid();
         }
       }

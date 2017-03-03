@@ -384,9 +384,9 @@ namespace ospray {
       //! type of node, ie Material
       std::string type() const { return properties.type; }
 
-      void setFlags(NodeFlags f) { flags = f; }
-      void setFlags(int f) { flags = static_cast<NodeFlags>(f); }
-      NodeFlags getFlags() { return flags; }
+      void setFlags(NodeFlags f) { properties.flags = f; }
+      void setFlags(int f) { setFlags(static_cast<NodeFlags>(f)); }
+      NodeFlags flags() const { return properties.flags; }
 
       void setMinMax(const SGVar& minv, const SGVar& maxv)
       {
@@ -416,19 +416,19 @@ namespace ospray {
 # warning "Are validation node flags mutually exclusive?"
 #endif
 
-        if ((flags & NodeFlags::valid_min_max) &&
+        if ((flags() & NodeFlags::valid_min_max) &&
             properties.minmax.size() > 1) {
           if (!computeValidMinMax())
             return false;
         }
 
-        if (flags & NodeFlags::valid_blacklist) {
+        if (flags() & NodeFlags::valid_blacklist) {
           return std::find(properties.blacklist.begin(),
                            properties.blacklist.end(),
                            value()) == properties.blacklist.end();
         }
 
-        if (flags & NodeFlags::valid_whitelist) {
+        if (flags() & NodeFlags::valid_whitelist) {
           return std::find(properties.whitelist.begin(),
                            properties.whitelist.end(),
                            value()) != properties.whitelist.end();
@@ -457,9 +457,9 @@ namespace ospray {
         TimeStamp lastCommitted;
         std::map<std::string, std::shared_ptr<sg::Param>> params;
         NodeH parent;
+        NodeFlags flags;
       } properties;
 
-      NodeFlags flags;
       bool valid {false};
       std::string documentation;
 
@@ -593,8 +593,10 @@ namespace ospray {
 
       virtual bool computeValidMinMax() override
       {
-        if (properties.minmax.size() < 2 || !(flags & NodeFlags::valid_min_max))
+        if (properties.minmax.size() < 2 ||
+            !(flags() & NodeFlags::valid_min_max))
           return true;
+
         return NodeParamCommit<T>::compare(min(), max(), value());
       }
     };
