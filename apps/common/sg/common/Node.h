@@ -208,9 +208,10 @@ namespace ospray {
       /*! \brief 'commit' updates */
       virtual void commit() {}
 
-      std::string getDocumentation() { return documentation; }
+      std::string documentation() { return properties.documentation; }
 
-      void setDocumentation(const std::string &s) { documentation = s; }
+      void setDocumentation(const std::string &s)
+      { properties.documentation = s; }
 
       /*! \brief return bounding box in world coordinates.
 
@@ -459,9 +460,8 @@ namespace ospray {
         NodeH parent;
         NodeFlags flags;
         bool valid {false};
+        std::string documentation;
       } properties;
-
-      std::string documentation;
 
       mutable std::mutex mutex;
     };
