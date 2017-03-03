@@ -67,7 +67,7 @@ namespace ospray {
       inline const std::string name() const { return _name; }
       virtual void write(XMLWriter &) { NOTIMPLEMENTED; }
       /*! returns the ospray data type that this node corresponds to */
-      virtual OSPDataType getOSPDataType() const = 0;
+      virtual OSPDataType OSPType() const = 0;
 
     protected:
       /*! name of this node */
@@ -79,7 +79,7 @@ namespace ospray {
     struct ParamT : public sg::Param
     {
       ParamT(const std::string &name, const T &t) : Param(name), value(t) {}
-      virtual OSPDataType getOSPDataType() const override {return OSP_UNKNOWN;}
+      virtual OSPDataType OSPType() const override { return OSP_UNKNOWN; }
       virtual void write(XMLWriter &) { NOTIMPLEMENTED; }
       T value;
     };
