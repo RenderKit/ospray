@@ -44,7 +44,7 @@ namespace ospray {
           world = sg::loadOSP(fn);
           std::shared_ptr<sg::Volume> volumeNode;
           for (auto node : world->getChildren()) {
-            if (node->getType().find("Volume") != std::string::npos)
+            if (node->type().find("Volume") != std::string::npos)
               volumeNode = std::dynamic_pointer_cast<sg::Volume>(node.get());
           }
           if (!volumeNode) {

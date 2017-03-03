@@ -99,7 +99,7 @@ namespace ospray {
       if (operation == "print") {
         for (int i=0;i<ctx.level;i++)
           std::cout << "  ";
-        std::cout << name() << " : " << type << "\n";
+        std::cout << name() << " : " << type() << "\n";
       } else if (operation == "commit" &&
                (getLastModified() >= getLastCommitted() ||
                 getChildrenLastModified() >= getLastCommitted())) {

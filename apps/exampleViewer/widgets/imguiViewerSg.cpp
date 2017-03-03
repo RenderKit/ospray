@@ -277,7 +277,7 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
   }
   std::string text;
   text += std::string(node->name()+" : ");
-  if (node->getType() == "vec3f") {
+  if (node->type() == "vec3f") {
     ImGui::Text(text.c_str());
     ImGui::SameLine();
     vec3f val = node->getValue().get<vec3f>();
@@ -296,7 +296,7 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
     else if (ImGui::DragFloat3(text.c_str(), (float*)&val.x, .01f)) {
       node->setValue(val);
     }
-  } else if (node->getType() == "vec2f") {
+  } else if (node->type() == "vec2f") {
     ImGui::Text(text.c_str(),"");
     ImGui::SameLine();
     vec2f val = node->getValue().get<vec2f>();
@@ -305,7 +305,7 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
     if (ImGui::DragFloat2(text.c_str(), (float*)&val.x, .01f)) {
       node->setValue(val);
     }
-  } else if (node->getType() == "vec2i") {
+  } else if (node->type() == "vec2i") {
     ImGui::Text(text.c_str());
     ImGui::SameLine();
     vec2i val = node->getValue().get<vec2i>();
@@ -314,7 +314,7 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
     if (ImGui::DragInt2(text.c_str(), (int*)&val.x)) {
       node->setValue(val);
     }
-  } else if (node->getType() == "float") {
+  } else if (node->type() == "float") {
     ImGui::Text(text.c_str(),"");
     ImGui::SameLine();
     float val = node->getValue().get<float>();
@@ -329,7 +329,7 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
     else if (ImGui::DragFloat(text.c_str(), &val, .01f)) {
       node->setValue(val);
     }
-  } else if (node->getType() == "bool") {
+  } else if (node->type() == "bool") {
     ImGui::Text(text.c_str(),"");
     ImGui::SameLine();
     bool val = node->getValue().get<bool>();
@@ -338,7 +338,7 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
     if (ImGui::Checkbox(text.c_str(), &val)) {
       node->setValue(val);
     }
-  } else if (node->getType() == "int") {
+  } else if (node->type() == "int") {
     ImGui::Text(text.c_str(),"");
     ImGui::SameLine();
     int val = node->getValue().get<int>();
@@ -353,7 +353,7 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
     else if (ImGui::DragInt(text.c_str(), &val)) {
       node->setValue(val);
     }
-  } else if (node->getType() == "string") {
+  } else if (node->type() == "string") {
     std::string value = node->getValue<std::string>().c_str();
     char* buf = (char*)malloc(value.size()+1+256);
     strcpy(buf,value.c_str());
@@ -366,7 +366,7 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
                          value.size()+256,
                          ImGuiInputTextFlags_EnterReturnsTrue))
       node->setValue(std::string(buf));
-  } else if (node->getType() == "TransferFunction") {
+  } else if (node->type() == "TransferFunction") {
     text += "TODO WILL";
     ImGui::Text(text.c_str());
     if (!node->getParam("transferFunctionWidget")) {
@@ -380,7 +380,7 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
     tfnWidget->value.render();
     tfnWidget->value.drawUi();
   } else { // generic holder node
-    text+=node->getType();
+    text+=node->type();
     text += "##"+((std::ostringstream&)(std::ostringstream("")
             << node.get())).str(); //TODO: use unique uuid for every node
     if (ImGui::TreeNodeEx(text.c_str(),

@@ -128,9 +128,10 @@ namespace ospray {
     struct OSPSG_INTERFACE Node : public std::enable_shared_from_this<Node>
     {
       // NOTE(jda) - can't do default member initializers due to MSVC...
-      Node() : type("Node")
+      Node()
       {
         properties.name = "NULL";
+        properties.type = "Node";
         modified();
       }
 
@@ -371,13 +372,13 @@ namespace ospray {
       void setName(const std::string &v) { properties.name = v; }
 
       //! set type of node, ie Material
-      void setType(const std::string &v) { type = v; }
+      void setType(const std::string &v) { properties.type = v; }
 
       //! get name of the node, ie material007
       std::string name() const { return properties.name; }
 
       //! type of node, ie Material
-      std::string getType() { return type; }
+      std::string type() const { return properties.type; }
 
       void setFlags(NodeFlags f) { flags = f; }
       void setFlags(int f) { flags = static_cast<NodeFlags>(f); }
@@ -436,9 +437,9 @@ namespace ospray {
       struct
       {
         std::string name;
+        std::string type;
       } properties;
 
-      std::string type;
       std::vector<SGVar> minmax;
       std::vector<SGVar> whitelist;
       std::vector<SGVar> blacklist;

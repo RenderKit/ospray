@@ -157,7 +157,7 @@ namespace ospray {
         world->nodes.push_back(newNode);
         world->add(newNode);
         std::cout << "adding node to world: " << newNode->name() << " "
-                  << newNode->getType() << "\n";
+                  << newNode->type() << "\n";
       }
     }
     
