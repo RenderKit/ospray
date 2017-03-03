@@ -52,15 +52,16 @@ namespace ospray {
       /*! set a new alpha map array - x coordinate is point pos, y is point alpha value */
       void setAlphaMap(const std::vector<vec2f> &alphaArray);
 
-      const std::vector<std::pair<float,float> > &getAlphaArray() const
+      const std::vector<std::pair<float,float>> &alphas() const
       { return alphaArray; }
 
-      float getInterpolatedAlphaValue(float x);
+      float interpolatedAlpha(float x);
 
       /*! return the ospray handle for this xfer fct, so we can assign
         it to ospray obejcts that need a reference to the ospray
         version of this xf */
-      OSPTransferFunction getOSPHandle() const { return ospTransferFunction; }
+      OSP_DEPRECATED OSPTransferFunction handle() const
+      { return ospTransferFunction; }
 
     protected:
 

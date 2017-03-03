@@ -164,7 +164,7 @@ namespace ospray {
 
       transferFunction->render(ctx);
 
-      ospSetObject(volume,"transferFunction",transferFunction->getOSPHandle());
+      ospSetObject(volume,"transferFunction",transferFunction->handle());
       ospCommit(volume);
       ospAddVolume(ctx.world->ospModel,volume);
     }
@@ -199,7 +199,7 @@ namespace ospray {
 
       transferFunction->postCommit(ctx);
 
-      ospSetObject(volume,"transferFunction",transferFunction->getOSPHandle());
+      ospSetObject(volume,"transferFunction",transferFunction->handle());
       ospCommit(volume);
     }
 
@@ -327,7 +327,7 @@ namespace ospray {
       transferFunction->preCommit(ctx);
       transferFunction->render(ctx);
 
-      ospSetObject(volume,"transferFunction",transferFunction->getOSPHandle());
+      ospSetObject(volume,"transferFunction",transferFunction->handle());
       ospCommit(volume);
     }
 
@@ -416,7 +416,7 @@ namespace ospray {
 
       transferFunction->render(ctx);
 
-      ospSetObject(volume,"transferFunction",transferFunction->getOSPHandle());
+      ospSetObject(volume,"transferFunction",transferFunction->handle());
       ospCommit(volume);
       ospAddVolume(ctx.world->ospModel,volume);
     }

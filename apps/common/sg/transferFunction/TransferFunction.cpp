@@ -56,7 +56,7 @@ namespace ospray {
       markAsModified();
     }
 
-    float TransferFunction::getInterpolatedAlphaValue(float x)
+    float TransferFunction::interpolatedAlpha(float x)
     {
       if (x <= alphaArray.front().first)
         return alphaArray.front().second;
@@ -96,7 +96,7 @@ namespace ospray {
         float dx = (alphaArray.back().first - x0) / (numSamples-1);
 
         for (int i=0;i<numSamples;i++)
-          alpha[i] = getInterpolatedAlphaValue(i * dx);
+          alpha[i] = interpolatedAlpha(i * dx);
 
         ospAlphaData = ospNewData(numSamples,OSP_FLOAT,alpha);
         ospCommit(ospAlphaData);
@@ -140,7 +140,7 @@ namespace ospray {
         float dx = (alphaArray.back().first - x0) / (numSamples-1);
 
         for (int i=0;i<numSamples;i++)
-          alpha[i] = getInterpolatedAlphaValue(i * dx);
+          alpha[i] = interpolatedAlpha(i * dx);
 
         ospAlphaData = ospNewData(numSamples,OSP_FLOAT,alpha);
         ospCommit(ospAlphaData);
