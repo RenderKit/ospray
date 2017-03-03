@@ -86,7 +86,7 @@ namespace ospray {
       preTraverse(ctx, operation);
       ctx.level++;
 
-      for (auto child : children)
+      for (auto &child : properties.children)
         child.second->traverse(ctx, operation);
 
       ctx.level--;
@@ -115,15 +115,11 @@ namespace ospray {
     {
       if (operation == "commit" &&
           (getLastModified() >= getLastCommitted() ||
-           getChildrenLastModified() >= getLastCommitted()))
-      {
+           getChildrenLastModified() >= getLastCommitted())) {
         postCommit(ctx);
         lastCommitted = TimeStamp();
-      }
-      else if (operation == "verify")
-      {
-        for (auto child : children)
-        {
+      } else if (operation == "verify") {
+        for (const auto &child : properties.children) {
           if (child.second->getFlags() & NodeFlags::required)
             valid &= child.second->isValid();
         }

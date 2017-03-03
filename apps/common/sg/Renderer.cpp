@@ -29,11 +29,11 @@ namespace ospray {
       add(createNode("rendererType", "string", std::string("scivis"),
                      NodeFlags::required | NodeFlags::valid_whitelist | NodeFlags::gui_combo,
                      "scivis: standard whitted style ray tracer. pathtracer/pt: photo-realistic path tracer"));
-      getChild("rendererType")->setWhiteList({std::string("scivis"),
+      child("rendererType")->setWhiteList({std::string("scivis"),
                                               std::string("pathtracer"),
                                               std::string("pt")});
       add(createNode("world", "World"));
-      getChild("world")->setDocumentation("model containing scene objects");
+      child("world")->setDocumentation("model containing scene objects");
       add(createNode("camera", "PerspectiveCamera"));
       add(createNode("frameBuffer", "FrameBuffer"));
       add(createNode("lights"));
@@ -43,18 +43,18 @@ namespace ospray {
       add(createNode("maxDepth", "int", 5,
                      NodeFlags::required | NodeFlags::valid_min_max,
                      "maximum number of ray bounces"));
-      getChild("maxDepth")->setMinMax(0,999);
+      child("maxDepth")->setMinMax(0,999);
       add(createNode("aoSamples", "int", 1,
                      NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider,
                      "number of ambient occlusion samples.  0 means off"));
-      getChild("aoSamples")->setMinMax(0,128);
+      child("aoSamples")->setMinMax(0,128);
       add(createNode("spp", "int", 1, NodeFlags::required | NodeFlags::gui_slider,
                      "the number of samples rendered per pixel.  The higher the number, the smoother the resulting image."));
-      getChild("spp")->setMinMax(-8,128);
+      child("spp")->setMinMax(-8,128);
       add(createNode("aoDistance", "float", 10000.f,
                      NodeFlags::required | NodeFlags::valid_min_max,
                      "maximum distance ao rays will trace to.  Useful if you do not want a large interior of a building to be completely black from occlusion."));
-      getChild("aoDistance")->setMinMax(float(1e-31),FLT_MAX);
+      child("aoDistance")->setMinMax(float(1e-31),FLT_MAX);
       add(createNode("oneSidedLighting", "bool",true, NodeFlags::required));
       add(createNode("aoTransparency", "bool",true, NodeFlags::required));
     }
@@ -192,9 +192,9 @@ namespace ospray {
     void Renderer::postRender(RenderContext &ctx)
     {
       ospSetObject(ospRenderer, "model",
-                   getChild("world")->getValue<OSPObject>());
+                   child("world")->getValue<OSPObject>());
       ospCommit(ospRenderer);
-      ospRenderFrame((OSPFrameBuffer)getChild("frameBuffer")->getValue<OSPObject>(),
+      ospRenderFrame((OSPFrameBuffer)child("frameBuffer")->getValue<OSPObject>(),
                      ospRenderer,
                      OSP_FB_COLOR | OSP_FB_ACCUM);
       accumID++;
@@ -207,13 +207,13 @@ namespace ospray {
 
     void Renderer::preCommit(RenderContext &ctx)
     {
-      if (getChild("frameBuffer")["size"]->getLastModified() >
-          getChild("camera")["aspect"]->getLastCommitted())
-       getChild("camera")["aspect"]->setValue(
-         getChild("frameBuffer")["size"]->getValue<vec2i>().x /
-         float(getChild("frameBuffer")["size"]->getValue().get<vec2i>().y)
+      if (child("frameBuffer")["size"]->getLastModified() >
+          child("camera")["aspect"]->getLastCommitted())
+       child("camera")["aspect"]->setValue(
+         child("frameBuffer")["size"]->getValue<vec2i>().x /
+         float(child("frameBuffer")["size"]->getValue().get<vec2i>().y)
        );
-      auto rendererType = getChild("rendererType")->getValue<std::string>();
+      auto rendererType = child("rendererType")->getValue<std::string>();
       if (!ospRenderer || rendererType != createdType)
       {
         traverse(ctx, "modified");
@@ -228,36 +228,35 @@ namespace ospray {
 
     void Renderer::postCommit(RenderContext &ctx)
     {
-      ospSetObject(ospRenderer,"model", getChild("world")->getValue<OSPObject>());
-      ospSetObject(ospRenderer,"camera", getChild("camera")->getValue<OSPObject>());
+      ospSetObject(ospRenderer,"model", child("world")->getValue<OSPObject>());
+      ospSetObject(ospRenderer,"camera", child("camera")->getValue<OSPObject>());
       ospCommit(ospRenderer);
 
       // create and setup light for Ambient Occlusion
       std::vector<OSPLight> lights;
-      for( auto lightNode : getChild("lights")->getChildren())
-      {
+      for(auto &lightNode : child("lights")->children())
         lights.push_back((OSPLight)lightNode->getValue<OSPObject>());
-      }
+
       OSPData lightsd = ospNewData(lights.size(), OSP_LIGHT, &lights[0]);
       ospCommit(lightsd);
 
       // complete setup of renderer
-      ospSetObject(ospRenderer, "model",  getChild("world")->getValue<OSPObject>());
+      ospSetObject(ospRenderer, "model",  child("world")->getValue<OSPObject>());
       ospSetObject(ospRenderer, "lights", lightsd);
       ospCommit(ospRenderer);
       //TODO: some child is kicking off modified every frame...Should figure
       //      out which and ignore it
-      if (getChild("camera")->getChildrenLastModified() > frameMTime
-        || getChild("lights")->getChildrenLastModified() > frameMTime
-        || getChild("world")->getChildrenLastModified() > frameMTime
+      if (child("camera")->getChildrenLastModified() > frameMTime
+        || child("lights")->getChildrenLastModified() > frameMTime
+        || child("world")->getChildrenLastModified() > frameMTime
         || getLastModified() > frameMTime
-        || getChild("shadowsEnabled")->getLastModified() > frameMTime
-        || getChild("aoSamples")->getLastModified() > frameMTime
-        || getChild("spp")->getLastModified() > frameMTime
+        || child("shadowsEnabled")->getLastModified() > frameMTime
+        || child("aoSamples")->getLastModified() > frameMTime
+        || child("spp")->getLastModified() > frameMTime
         )
       {
         ospFrameBufferClear(
-          (OSPFrameBuffer)getChild("frameBuffer")->getValue<OSPObject>(),
+          (OSPFrameBuffer)child("frameBuffer")->getValue<OSPObject>(),
           OSP_FB_COLOR | OSP_FB_ACCUM
         );
 

@@ -436,7 +436,7 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
       if (!node->isValid())
         ImGui::PopStyleColor(styles--);
 
-      for(auto child : node->getChildren())
+      for(auto child : node->children())
         buildGUINode(child, ++indent);
 
       ImGui::TreePop();

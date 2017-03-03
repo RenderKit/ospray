@@ -22,7 +22,7 @@ namespace ospray {
     box3f World::getBounds() const
     {
       box3f bounds = empty;
-      for (auto child : children)
+      for (const auto &child : properties.children)
         bounds.extend(child.second->getBounds());
       return bounds;
     }
@@ -107,9 +107,9 @@ namespace ospray {
       if (instanced)
       {
         ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
-        vec3f scale = getChild("scale")->getValue<vec3f>();
-        vec3f rotation = getChild("rotation")->getValue<vec3f>();
-        vec3f translation = getChild("position")->getValue<vec3f>();
+        vec3f scale = child("scale")->getValue<vec3f>();
+        vec3f rotation = child("rotation")->getValue<vec3f>();
+        vec3f translation = child("position")->getValue<vec3f>();
         ospcommon::affine3f xfm = ospcommon::one;
         xfm = xfm*ospcommon::affine3f::translate(translation)*ospcommon::affine3f::rotate(vec3f(1,0,0),rotation.x)*
         ospcommon::affine3f::rotate(vec3f(0,1,0),rotation.y)*
@@ -119,7 +119,7 @@ namespace ospray {
         ospInstance = ospNewInstance(ospModel,(osp::affine3f&)xfm);
         ospCommit(ospInstance);
 
-      if (getChild("visible")->getValue() == true)
+      if (child("visible")->getValue() == true)
         ospAddGeometry(oldWorld->ospModel,ospInstance);
       }
     }

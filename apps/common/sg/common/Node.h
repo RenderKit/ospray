@@ -147,7 +147,7 @@ namespace ospray {
 
         //! return child with name c
         NodeH operator[] (const std::string &c) const
-        { return node->getChild(c); }
+        { return node->child(c); }
 
         //! add child node n to this node
         NodeH operator+= (NodeH n)
@@ -245,11 +245,11 @@ namespace ospray {
       }
 
       //! return named child node
-      NodeH getChild(const std::string &name) const
+      NodeH child(const std::string &name) const
       {
         std::lock_guard<std::mutex> lock{mutex};
-        auto itr = children.find(name);
-        if (itr == children.end()) {
+        auto itr = properties.children.find(name);
+        if (itr == properties.children.end()) {
           std::cout << "couldn't find child! " << name << "\n";
           return {};
         } else {
@@ -258,19 +258,19 @@ namespace ospray {
       }
 
       //! return named child node
-      NodeH getChildRecursive(const std::string &name)
+      NodeH childRecursive(const std::string &name)
       {
         mutex.lock();
         Node* n = this;
-        auto f = n->children.find(name);
-        if (f != n->children.end()) {
+        auto f = n->properties.children.find(name);
+        if (f != n->properties.children.end()) {
           mutex.unlock();
           return f->second;
         }
 
-        for (auto child : children) {
+        for (auto &child : properties.children) {
           mutex.unlock();
-          NodeH r = child.second->getChildRecursive(name);
+          NodeH r = child.second->childRecursive(name);
           if (!r.isNULL())
             return r;
           mutex.lock();
@@ -281,7 +281,7 @@ namespace ospray {
       }
 
       //! return all children of type
-      std::vector<NodeH> getChildrenByType(const std::string &t)
+      std::vector<NodeH> childrenByType(const std::string &t) const
       {
         std::lock_guard<std::mutex> lock{mutex};
         std::vector<NodeH> result;
@@ -290,17 +290,17 @@ namespace ospray {
       }
 
       //! return vector of child handles
-      std::vector<NodeH> getChildren()
+      std::vector<NodeH> children() const
       {
         std::lock_guard<std::mutex> lock{mutex};
         std::vector<NodeH> result;
-        for (auto child : children)
+        for (auto &child : properties.children)
           result.push_back(child.second);
         return result;
       }
 
       //! return child c
-      NodeH operator[] (const std::string &c) const { return getChild(c); }
+      NodeH operator[] (const std::string &c) const { return child(c); }
 
       //! return the parent node
       NodeH getParent() { return parent; }
@@ -336,7 +336,7 @@ namespace ospray {
       virtual void add(std::shared_ptr<Node> node)
       {
         std::lock_guard<std::mutex> lock{mutex};
-        children[node->name()] = NodeH(node);
+        properties.children[node->name()] = NodeH(node);
 
         //ARG!  Cannot call shared_from_this in constructors.  PIA!!!
         node->setParent(shared_from_this());
@@ -346,7 +346,7 @@ namespace ospray {
       virtual void add(NodeH node)
       {
         std::lock_guard<std::mutex> lock{mutex};
-        children[node->name()] = node;
+        properties.children[node->name()] = node;
         node->setParent(shared_from_this());
       }
 
@@ -446,9 +446,9 @@ namespace ospray {
         std::vector<SGVar> minmax;
         std::vector<SGVar> whitelist;
         std::vector<SGVar> blacklist;
+        std::map<std::string, NodeH> children;
       } properties;
 
-      std::map<std::string, NodeH> children;
       OSPObject ospHandle {nullptr};
       SGVar value;
       TimeStamp lastModified;

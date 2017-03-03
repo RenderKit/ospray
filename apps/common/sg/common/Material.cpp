@@ -29,13 +29,13 @@ namespace ospray {
       vec3f ks(208.f/255.f,140.f/255.f,82.f/255.f);
       add(createNode("Kd", "vec3f",kd,
                      NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_color));
-      getChild("Kd")->setMinMax(vec3f(0), vec3f(1));
+      child("Kd")->setMinMax(vec3f(0), vec3f(1));
       add(createNode("Ks", "vec3f",ks,
                      NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_color));
-      getChild("Ks")->setMinMax(vec3f(0), vec3f(1));
+      child("Ks")->setMinMax(vec3f(0), vec3f(1));
       add(createNode("Ns", "float",10.f,
                      NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
-      getChild("Ns")->setMinMax(0.f, 100.f);
+      child("Ns")->setMinMax(0.f, 100.f);
     }
 
     void Material::preCommit(RenderContext &ctx)
@@ -43,7 +43,7 @@ namespace ospray {
       assert(ctx.ospRenderer);
       if (ospMaterial != nullptr && ospRenderer == ctx.ospRenderer) return;
       auto mat = ospNewMaterial(ctx.ospRenderer,
-                                getChild("type")->getValue<std::string>().c_str());
+                                child("type")->getValue<std::string>().c_str());
       if (!mat)
       {
         std::cerr << "Warning: Could not create material type '"

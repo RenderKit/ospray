@@ -48,7 +48,7 @@ namespace ospray {
         add(createNode("gridSpacing", "vec3f", vec3f(0.002f)));
         
         transferFunction = std::dynamic_pointer_cast<TransferFunction>(
-          children["transferFunction"].node);
+          properties.children["transferFunction"].node);
       }
 
       /*! \brief returns a std::string with the c++ name of this class */

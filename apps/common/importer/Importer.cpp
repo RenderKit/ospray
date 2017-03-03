@@ -43,7 +43,7 @@ namespace ospray {
           std::cout << "loading osp file: \n";
           world = sg::loadOSP(fn);
           std::shared_ptr<sg::Volume> volumeNode;
-          for (auto node : world->getChildren()) {
+          for (auto node : world->children()) {
             if (node->type().find("Volume") != std::string::npos)
               volumeNode = std::dynamic_pointer_cast<sg::Volume>(node.get());
           }
@@ -62,7 +62,7 @@ namespace ospray {
           msgVolume->bounds = volumeNode->getBounds();
           msgVolume->handle = volumeNode->volume;
           assert(msgVolume->handle);
-          msgVolume->voxelRange = volumeNode->getChild("voxelRange")->getValue<vec2f>();
+          msgVolume->voxelRange = volumeNode->child("voxelRange")->getValue<vec2f>();
           group->volume.push_back(msgVolume);
       } else if (fileName.ext() == "bob") {
         importRM(fn, group);
