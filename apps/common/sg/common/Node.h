@@ -411,32 +411,7 @@ namespace ospray {
 
       virtual bool isValid() { return properties.valid; }
 
-      virtual bool computeValid()
-      {
-#ifndef _WIN32
-# warning "Are validation node flags mutually exclusive?"
-#endif
-
-        if ((flags() & NodeFlags::valid_min_max) &&
-            properties.minmax.size() > 1) {
-          if (!computeValidMinMax())
-            return false;
-        }
-
-        if (flags() & NodeFlags::valid_blacklist) {
-          return std::find(properties.blacklist.begin(),
-                           properties.blacklist.end(),
-                           value()) == properties.blacklist.end();
-        }
-
-        if (flags() & NodeFlags::valid_whitelist) {
-          return std::find(properties.whitelist.begin(),
-                           properties.whitelist.end(),
-                           value()) != properties.whitelist.end();
-        }
-
-        return true;
-      }
+      virtual bool computeValid();
 
       virtual bool computeValidMinMax() { return true; }
 

@@ -18,11 +18,6 @@
 #include "sg/common/World.h"
 #include "sg/common/Integrator.h"
 
-#ifndef _WIN32
-# warning "Shouldn't include OSPCommon.h in ospray_sg!"
-#endif
-#include "ospray/common/OSPCommon.h"
-
 namespace ospray {
   namespace sg {
 

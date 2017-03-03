@@ -68,9 +68,9 @@ namespace ospray {
       OSPTransferFunction ospTransferFunction {nullptr};
       OSPData ospColorData {nullptr};
       OSPData ospAlphaData {nullptr};
-      vec2f valueRange {0.f, 1.f};
+      vec2f   valueRange   {0.f, 1.f};
       // number of samples we'll use in the colordata and alphadata arrays
-      int numSamples {256};
+      int     numSamples   {256};
 
       // array of (x,color(x)) color samples; the first and last x
       // determine the range of x'es, all values will be resampled
