@@ -394,20 +394,24 @@ namespace ospray {
       SGVar min() const { return properties.minmax[0]; }
       SGVar max() const { return properties.minmax[1]; }
 
-      void setWhiteList(std::vector<SGVar> values)
+      void setWhiteList(const std::vector<SGVar> &values)
       {
-        whitelist = values;
+        properties.whitelist = values;
       }
 
-      void setBlackList(std::vector<SGVar> values)
+      void setBlackList(const std::vector<SGVar> &values)
       {
-        blacklist = values;
+        properties.blacklist = values;
       }
 
       virtual bool isValid() { return valid; }
 
       virtual bool computeValid()
       {
+#ifndef _WIN32
+# warning "Are validation node flags mutually exclusive?"
+#endif
+
         if ((flags & NodeFlags::valid_min_max) &&
             properties.minmax.size() > 1) {
           if (!computeValidMinMax())
@@ -415,15 +419,15 @@ namespace ospray {
         }
 
         if (flags & NodeFlags::valid_blacklist) {
-          return std::find(blacklist.begin(),
-                           blacklist.end(),
-                           value) == blacklist.end();
+          return std::find(properties.blacklist.begin(),
+                           properties.blacklist.end(),
+                           value) == properties.blacklist.end();
         }
 
         if (flags & NodeFlags::valid_whitelist) {
-          return std::find(whitelist.begin(),
-                           whitelist.end(),
-                           value) != whitelist.end();
+          return std::find(properties.whitelist.begin(),
+                           properties.whitelist.end(),
+                           value) != properties.whitelist.end();
         }
 
         return true;
@@ -440,10 +444,10 @@ namespace ospray {
         std::string name;
         std::string type;
         std::vector<SGVar> minmax;
+        std::vector<SGVar> whitelist;
+        std::vector<SGVar> blacklist;
       } properties;
 
-      std::vector<SGVar> whitelist;
-      std::vector<SGVar> blacklist;
       std::map<std::string, NodeH> children;
       OSPObject ospHandle {nullptr};
       SGVar value;
