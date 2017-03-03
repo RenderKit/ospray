@@ -52,10 +52,10 @@ namespace ospray {
       }
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const override;
+      virtual std::string toString() const override;
 
       //! return bounding box of all primitives
-      virtual box3f getBounds() override = 0;
+      virtual box3f getBounds() const override = 0;
 
       //! serialize into given serialization state
       virtual void serialize(sg::Serialization::State &state) override;
@@ -72,15 +72,16 @@ namespace ospray {
     };
 
     /*! a plain old structured volume */
-    struct StructuredVolume : public Volume {
+    struct StructuredVolume : public Volume
+    {
       //! constructor
       StructuredVolume();
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const override;
+      virtual std::string toString() const override;
 
       //! return bounding box of all primitives
-      virtual box3f getBounds() override;
+      virtual box3f getBounds() const override;
 
       //! \brief Initialize this node's value from given XML node
       virtual void setFromXML(const xml::Node &node,
@@ -106,7 +107,7 @@ namespace ospray {
       virtual std::string toString() const override;
 
       //! return bounding box of all primitives
-      virtual box3f getBounds() override;
+      virtual box3f getBounds() const override;
 
       //! \brief Initialize this node's value from given XML node
       virtual void setFromXML(const xml::Node &node,
@@ -138,7 +139,7 @@ namespace ospray {
       virtual std::string toString() const override;
 
       //! return bounding box of all primitives
-      virtual box3f getBounds() override;
+      virtual box3f getBounds() const override;
 
       //! \brief Initialize this node's value from given XML node
       virtual void setFromXML(const xml::Node &node,

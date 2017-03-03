@@ -140,21 +140,24 @@ namespace ospray {
         NodeH() = default;
         NodeH(std::shared_ptr<sg::Node> n) : node(n) {}
 
-        std::shared_ptr<sg::Node> node;
-
         //! return child with name c
-        NodeH& operator[] (const std::string &c) { return get()->getChild(c); }
+        NodeH operator[] (const std::string &c) const
+        { return node->getChild(c); }
 
         //! add child node n to this node
         NodeH operator+= (NodeH n)
         { get()->add(n); n->setParent(*this); return n;}
 
-        std::shared_ptr<sg::Node> operator->() { return get(); }
+        std::shared_ptr<sg::Node> operator->() const { return get(); }
 
-        std::shared_ptr<sg::Node> get() { return node; }
+        std::shared_ptr<sg::Node> get() const { return node; }
 
         //! is this handle pointing to a null value?
         bool isNULL() const { return node.get() == nullptr; }
+
+        // Data members //
+
+        std::shared_ptr<sg::Node> node;
       };
 
       virtual std::string toString() const { return "Node"; }
@@ -210,7 +213,7 @@ namespace ospray {
         camera motion, setting default camera position, etc. Nodes
         for which that does not apply can simpy return
         box3f(empty) */
-      virtual box3f getBounds() { return box3f(empty); }
+      virtual box3f getBounds() const { return box3f(empty); }
 
       //! return when this node was last modified
       inline TimeStamp getLastModified()  const { return lastModified; }
@@ -237,12 +240,16 @@ namespace ospray {
       }
 
       //! return named child node
-      NodeH& getChild(const std::string &name)
+      NodeH getChild(const std::string &name) const
       {
         std::lock_guard<std::mutex> lock{mutex};
-        if (children.find(name) == children.end())
+        auto itr = children.find(name);
+        if (itr == children.end()) {
           std::cout << "couldn't find child! " << name << "\n";
-        return children[name];
+          return {};
+        } else {
+          return itr->second;
+        }
       }
 
       //! return named child node
@@ -288,7 +295,7 @@ namespace ospray {
       }
 
       //! return child c
-      NodeH& operator[] (const std::string &c) { return getChild(c); }
+      NodeH operator[] (const std::string &c) const { return getChild(c); }
 
       //! return the parent node
       NodeH getParent() { return parent; }
@@ -435,10 +442,11 @@ namespace ospray {
       TimeStamp lastCommitted;
       std::map<std::string, std::shared_ptr<sg::Param>> params;
       NodeH parent;
-      std::mutex mutex;
       NodeFlags flags;
       bool valid {false};
       std::string documentation;
+
+      mutable std::mutex mutex;
     };
 
     /*! read a given scene graph node from its correspondoing xml node represenation */
@@ -580,7 +588,7 @@ namespace ospray {
       virtual ~Renderable() = default;
 
       virtual void init() override { add(createNode("bounds", "box3f")); }
-      virtual box3f getBounds() { return bbox; }
+      virtual box3f getBounds() const override { return bbox; }
       virtual box3f extendBounds(box3f b) { bbox.extend(b); return bbox; }
       virtual void preTraverse(RenderContext &ctx,
                                const std::string& operation);

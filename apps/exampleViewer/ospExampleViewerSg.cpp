@@ -78,7 +78,7 @@ void addPlaneToScene(sg::NodeH &world)
     std::static_pointer_cast<sg::TriangleMesh>(mesh.get());
   sg_plane->vertex = position;
   sg_plane->index = index;
-  auto &planeMaterial = mesh["material"];
+  auto planeMaterial = mesh["material"];
   planeMaterial["Kd"]->setValue(vec3f(0.5f));
   planeMaterial["Ks"]->setValue(vec3f(0.6f));
   planeMaterial["Ns"]->setValue(2.f);
@@ -109,7 +109,7 @@ int main(int ac, const char **av)
   renderer["camera"]["fovy"]->setValue(60.f);
   root->add(renderer);
 
-  auto &lights = renderer["lights"];
+  auto lights = renderer["lights"];
 
   auto sun =  sg::createNode("sun", "DirectionalLight");
   sun["color"]->setValue(vec3f(1.f,232.f/255.f,166.f/255.f));
@@ -128,7 +128,7 @@ int main(int ac, const char **av)
   ambient["color"]->setValue(vec3f(174.f/255.f,218.f/255.f,255.f/255.f));
   lights += ambient;
 
-  auto &world = renderer["world"];
+  auto world = renderer["world"];
 
   for (auto file : files) {
     FileName fn = file;

@@ -19,7 +19,7 @@
 namespace ospray {
   namespace sg {
 
-    box3f World::getBounds()
+    box3f World::getBounds() const
     {
       box3f bounds = empty;
       for (auto child : children)

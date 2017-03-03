@@ -167,7 +167,7 @@ void ImGuiViewerSg::display()
   if (viewPort.modified) {
     auto dir = viewPort.at - viewPort.from;
     dir = normalize(dir);
-    auto &camera = scenegraph["camera"];
+    auto camera = scenegraph["camera"];
     camera["dir"]->setValue(dir);
     camera["pos"]->setValue(viewPort.from);
     camera["up"]->setValue(viewPort.up);

@@ -32,11 +32,10 @@ namespace ospray {
         sg::RenderContext ctx;
         static sg::TimeStamp lastFTime;
 
-        auto &sgFB = scenegraph["frameBuffer"];
+        auto sgFB = scenegraph["frameBuffer"];
 
-        if (sgFB->getChildrenLastModified() > lastFTime )
-        {
-          auto &size = sgFB["size"];
+        if (sgFB->getChildrenLastModified() > lastFTime) {
+          auto size = sgFB["size"];
           nPixels = size->getValue<vec2i>().x * size->getValue<vec2i>().y;
           pixelBuffer[0].resize(nPixels);
           pixelBuffer[1].resize(nPixels);
