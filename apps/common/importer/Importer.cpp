@@ -59,7 +59,7 @@ namespace ospray {
           OSPVolume volume = volumeNode->volume;
 
           Volume* msgVolume = new Volume;
-          msgVolume->bounds = volumeNode->getBounds();
+          msgVolume->bounds = volumeNode->bounds();
           msgVolume->handle = volumeNode->volume;
           assert(msgVolume->handle);
           msgVolume->voxelRange = volumeNode->child("voxelRange")->valueAs<vec2f>();

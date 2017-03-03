@@ -367,7 +367,7 @@ namespace ospray {
       const xml::Node &root_element = *doc->child[0];
       std::shared_ptr<World> world = std::make_shared<World>();
       parseBGFscene(world,root_element);
-      PRINT(world->getBounds());
+      PRINT(world->bounds());
       return world;
     }
 

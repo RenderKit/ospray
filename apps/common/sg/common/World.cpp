@@ -19,11 +19,11 @@
 namespace ospray {
   namespace sg {
 
-    box3f World::getBounds() const
+    box3f World::bounds() const
     {
       box3f bounds = empty;
       for (const auto &child : properties.children)
-        bounds.extend(child.second->getBounds());
+        bounds.extend(child.second->bounds());
       return bounds;
     }
 
@@ -31,24 +31,13 @@ namespace ospray {
     void sg::World::serialize(sg::Serialization::State &state)
     {
       sg::Serialization::State savedState = state;
-      {
-        //state->serialization->object.push_back(Serialization::);
-        for (auto node: nodes)
-          node->serialize(state);
-      }
+      for (auto node: nodes)
+        node->serialize(state);
       state = savedState;
     }
 
     void World::render(RenderContext &ctx)
     {
-      // ctx.world = std::dynamic_pointer_cast<World>(shared_from_this());//this;
-
-      // if (ospModel)
-      //   throw std::runtime_error("World::ospModel alrady exists!?");
-      // ospModel = ospNewModel();
-      // for (auto node: nodes) 
-      //   node->render(ctx);
-      // ospCommit(ospModel);
     }
 
     void World::preCommit(RenderContext &ctx)

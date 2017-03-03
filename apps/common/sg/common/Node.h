@@ -219,7 +219,7 @@ namespace ospray {
         camera motion, setting default camera position, etc. Nodes
         for which that does not apply can simpy return
         box3f(empty) */
-      virtual box3f getBounds() const { return box3f(empty); }
+      virtual box3f bounds() const { return box3f(empty); }
 
       //! return when this node was last modified
       inline TimeStamp lastModified() const
@@ -608,7 +608,7 @@ namespace ospray {
       virtual ~Renderable() = default;
 
       virtual void init() override { add(createNode("bounds", "box3f")); }
-      virtual box3f getBounds() const override { return bbox; }
+      virtual box3f bounds() const override { return bbox; }
       virtual box3f extendBounds(box3f b) { bbox.extend(b); return bbox; }
       virtual void preTraverse(RenderContext &ctx,
                                const std::string& operation);

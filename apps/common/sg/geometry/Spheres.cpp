@@ -30,7 +30,7 @@ namespace ospray {
         typeID(typeID) 
     {}
 
-    box3f Spheres::getBounds() const
+    box3f Spheres::bounds() const
     {
       box3f bounds = empty;
       for (auto &s : sphere)

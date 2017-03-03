@@ -52,7 +52,7 @@ void parseFilesFromCommandLine(int ac, const char **&av)
 void addPlaneToScene(sg::NodeH &world)
 {
   //add plane
-  auto bbox = world->getBounds();
+  auto bbox = world->bounds();
 
   osp::vec3f *vertices = new osp::vec3f[4];
   float ps = bbox.upper.x*3.f;

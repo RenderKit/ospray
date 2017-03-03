@@ -41,7 +41,7 @@ namespace ospray {
         sgRenderer(renderer)
     {
       if (renderer->world) {
-        box3f worldBounds = renderer->world->getBounds();
+        box3f worldBounds = renderer->world->bounds();
         if (!worldBounds.empty()) {
           float moveSpeed = .25*length(worldBounds.size());
           QAffineSpaceManipulator::setMoveSpeed(moveSpeed);

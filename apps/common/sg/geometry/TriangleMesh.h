@@ -54,7 +54,7 @@ namespace ospray {
       virtual std::string toString() const { return "ospray::sg::Geometry"; }
 
       //! return bounding box of all primitives
-      virtual box3f getBounds() const override;
+      virtual box3f bounds() const override;
 
       virtual void postCommit(RenderContext &ctx) override;
 
@@ -118,7 +118,7 @@ namespace ospray {
       PTMTriangleMesh() : Geometry("trianglemesh"), ospGeometry(nullptr) {}
 
       // return bounding box of all primitives
-      virtual box3f getBounds() const override;
+      virtual box3f bounds() const override;
 
       /*! 'render' the nodes */
       virtual void render(RenderContext &ctx);

@@ -28,7 +28,7 @@ namespace ospray {
       add(createNode("material", "Material"));
     }
 
-    box3f TriangleMesh::getBounds() const
+    box3f TriangleMesh::bounds() const
     {
       box3f bounds = empty;
       for (uint32_t i = 0; i < vertex->getSize(); i++)
@@ -37,7 +37,7 @@ namespace ospray {
     }
 
     //! return the bounding box of all primitives
-    box3f PTMTriangleMesh::getBounds() const
+    box3f PTMTriangleMesh::bounds() const
     {
       box3f bounds = empty;
       for (uint32_t i = 0; i < vertex->getSize(); i++)

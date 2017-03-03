@@ -110,7 +110,7 @@ namespace ospray {
 
       if (world) {
         // now, determine world bounds to automatically focus the camera
-        box3f worldBounds = world->getBounds();
+        box3f worldBounds = world->bounds();
         if (worldBounds == box3f(empty)) {
           std:: cout << "#osp:qtv: world bounding box is empty, using default camera pose"
                      << std::endl;

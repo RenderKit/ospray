@@ -102,7 +102,7 @@ namespace ospray {
     { return "ospray::sg::StructuredVolume"; }
 
     //! return bounding box of all primitives
-    box3f StructuredVolume::getBounds() const
+    box3f StructuredVolume::bounds() const
     {
       return {vec3f(0.f),
               vec3f(getDimensions())*child("gridSpacing")->valueAs<vec3f>()};
@@ -220,7 +220,7 @@ namespace ospray {
     { return "ospray::sg::StructuredVolumeFromFile"; }
 
     //! return bounding box of all primitives
-    box3f StructuredVolumeFromFile::getBounds() const
+    box3f StructuredVolumeFromFile::bounds() const
     {
       return {vec3f(0.f),
               vec3f(getDimensions())*child("gridSpacing")->valueAs<vec3f>()};
@@ -353,7 +353,7 @@ namespace ospray {
     { return "ospray::sg::StackedRawSlices"; }
 
     //! return bounding box of all primitives
-    box3f StackedRawSlices::getBounds() const
+    box3f StackedRawSlices::bounds() const
     { return box3f(vec3f(0.f),vec3f(getDimensions())); }
 
     //! \brief Initialize this node's value from given XML node

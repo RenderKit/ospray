@@ -33,12 +33,12 @@ namespace ospray {
       }
     }
     
-    box3f Group::getBounds() const
+    box3f Group::bounds() const
     {
       box3f bounds = empty;
       for (auto child : children) {
         assert(child);
-        bounds.extend(child->getBounds());
+        bounds.extend(child->bounds());
       }
       return bounds;
     }

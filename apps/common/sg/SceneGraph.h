@@ -53,7 +53,7 @@ namespace ospray {
 
       /*! 'render' the nodes */
       virtual void render(RenderContext &ctx) override;
-      virtual box3f getBounds() const override;
+      virtual box3f bounds() const override;
       
       std::vector<std::shared_ptr<sg::Node> > children;
     };
@@ -64,11 +64,11 @@ namespace ospray {
 
       /*! \brief returns a std::string with the c++ name of this class */
       virtual std::string toString() const override { return "ospray::sg::GenericGeometry"; }
-      virtual box3f getBounds() const override { return bounds; }
+      virtual box3f bounds() const override { return _bounds; }
 
       /*! geometry type, i.e., 'spheres', 'cylinders', 'trianglemesh', ... */
       const std::string type; 
-      box3f bounds;
+      box3f _bounds;
     };
 
     /*! a instance of another model */

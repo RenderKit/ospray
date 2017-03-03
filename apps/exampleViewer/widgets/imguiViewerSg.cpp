@@ -56,7 +56,7 @@ ImGuiViewerSg::ImGuiViewerSg(sg::NodeH scenegraph)
     scenegraph(scenegraph),
     renderEngine(scenegraph)
 {
-  setWorldBounds(scenegraph["world"].get()->getBounds());
+  setWorldBounds(scenegraph["world"].get()->bounds());
   renderEngine.setFbSize({1024, 768});
 
   renderEngine.start();

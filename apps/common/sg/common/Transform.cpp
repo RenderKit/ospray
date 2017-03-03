@@ -37,10 +37,10 @@ namespace ospray {
       camera motion, setting default camera position, etc. Nodes
       for which that does not apply can simpy return
       box3f(empty) */
-    box3f Transform::getBounds() const
+    box3f Transform::bounds() const
     {
       assert(node);
-      const box3f nodeBounds = node->getBounds();
+      const box3f nodeBounds = node->bounds();
       const vec3f lo = nodeBounds.lower;
       const vec3f hi = nodeBounds.upper;
       box3f bounds = ospcommon::empty;

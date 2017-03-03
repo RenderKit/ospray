@@ -42,7 +42,7 @@ namespace ospray {
         camera motion, setting default camera position, etc. Nodes
         for which that does not apply can simpy return
         box3f(empty) */
-      virtual box3f getBounds() const override;
+      virtual box3f bounds() const override;
 
       //! \brief the actual (affine) transformation matrix
       AffineSpace3f xfm;

@@ -210,7 +210,7 @@ namespace ospray {
       // set the current world ...
       std::cout << "#osp:qtv: setting world ..." << std::endl;
       if (verbosity >= 1) {
-        std::cout << "#osp:qtv: world bounds is " << world->getBounds()
+        std::cout << "#osp:qtv: world bounds is " << world->bounds()
                   << std::endl;
       }
       renderer->setWorld(world);

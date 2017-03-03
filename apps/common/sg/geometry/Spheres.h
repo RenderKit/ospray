@@ -45,7 +45,7 @@ namespace ospray {
       Spheres() : Geometry("spheres"), ospGeometry(nullptr) {}
       
       // return bounding box of all primitives
-      virtual box3f getBounds() const override;
+      virtual box3f bounds() const override;
 
       /*! 'render' the nodes */
       virtual void render(RenderContext &ctx);
