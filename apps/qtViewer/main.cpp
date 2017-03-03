@@ -312,8 +312,8 @@ namespace ospray {
         // PRINT((int*)fbMem);
         // PRINT(*(int**)fbMem);
         QImage image = QImage(fbMem,
-                              renderer->frameBuffer->getSize().x,
-                              renderer->frameBuffer->getSize().y,
+                              renderer->frameBuffer->size().x,
+                              renderer->frameBuffer->size().y,
                               QImage::Format_ARGB32).rgbSwapped().mirrored();
         // QImage fb = QImage(fbMem,size.x,size.y,QImage::Format_RGB32).rgbSwapped().mirrored();
         image.save(outFileName.c_str());
