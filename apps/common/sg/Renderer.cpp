@@ -166,7 +166,7 @@ namespace ospray {
     }
 
     //! find the last camera in the scene graph
-    std::shared_ptr<sg::Camera> Renderer::getLastDefinedCamera() const
+    std::shared_ptr<sg::Camera> Renderer::lastDefinedCamera() const
     {
       std::shared_ptr<sg::Camera> lastCamera;
       for (std::shared_ptr<Serialization::Object> obj : uniqueNodes.object) {
@@ -178,7 +178,7 @@ namespace ospray {
     }
 
     //! find the last integrator in the scene graph
-    std::shared_ptr<sg::Integrator> Renderer::getLastDefinedIntegrator() const
+    std::shared_ptr<sg::Integrator> Renderer::lastDefinedIntegrator() const
     {
       std::shared_ptr<sg::Integrator> lastIntegrator;
       for (std::shared_ptr<Serialization::Object> obj : uniqueNodes.object) {
@@ -214,8 +214,7 @@ namespace ospray {
          float(child("frameBuffer")["size"]->valueAs<vec2i>().y)
        );
       auto rendererType = child("rendererType")->valueAs<std::string>();
-      if (!ospRenderer || rendererType != createdType)
-      {
+      if (!ospRenderer || rendererType != createdType) {
         traverse(ctx, "modified");
         ospRenderer = ospNewRenderer(rendererType.c_str());
         assert(ospRenderer);

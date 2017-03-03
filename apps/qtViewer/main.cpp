@@ -220,7 +220,7 @@ namespace ospray {
       // -------------------------------------------------------
       {
         // first, check if one is specified in the scene file.
-        auto integrator = renderer->getLastDefinedIntegrator();
+        auto integrator = renderer->lastDefinedIntegrator();
         if (!integrator) {
           std::string integratorName = integratorFromCommandLine;
           if (integratorName == "")
@@ -240,7 +240,7 @@ namespace ospray {
         if (cameraFromCommandLine) {
           renderer->setCamera(std::dynamic_pointer_cast<sg::Camera>(cameraFromCommandLine));
         } else {
-          renderer->setCamera(renderer->getLastDefinedCamera());
+          renderer->setCamera(renderer->lastDefinedCamera());
         }
         if (!renderer->camera) {
           renderer->setCamera(renderer->createDefaultCamera(upFromCommandLine));

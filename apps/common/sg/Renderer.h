@@ -46,10 +46,10 @@ namespace ospray {
       // -------------------------------------------------------
       
       //! find the last camera in the scene graph
-      std::shared_ptr<sg::Camera> getLastDefinedCamera() const;
+      std::shared_ptr<sg::Camera> lastDefinedCamera() const;
 
       //! find the last integrator in the scene graph
-      std::shared_ptr<sg::Integrator> getLastDefinedIntegrator() const;
+      std::shared_ptr<sg::Integrator> lastDefinedIntegrator() const;
       
       //! create a default camera
       std::shared_ptr<sg::Camera> createDefaultCamera(vec3f up = vec3f(0,1,0));
@@ -79,7 +79,6 @@ namespace ospray {
           time they are instanced */
       Serialization allNodes;
 
-      OSPRenderer getOSPHandle() const { return ospRenderer; }
       //! accumulation ID
       size_t accumID;
     };
