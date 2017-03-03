@@ -82,7 +82,7 @@ namespace ospray {
       if (operation != "verify" && !isValid())
         return;
 
-      ctx.childMTime = TimeStamp();
+      ctx._childMTime = TimeStamp();
       preTraverse(ctx, operation);
       ctx.level++;
 
@@ -90,7 +90,7 @@ namespace ospray {
         child.second->traverse(ctx, operation);
 
       ctx.level--;
-      ctx.childMTime = childrenLastModified();
+      ctx._childMTime = childrenLastModified();
       postTraverse(ctx, operation);
     }
 

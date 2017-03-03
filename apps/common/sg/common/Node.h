@@ -106,10 +106,10 @@ namespace ospray {
           ospRenderer(nullptr)
       {}
 
-      TimeStamp MTime;
-      TimeStamp getMTime() { return MTime; }
-      TimeStamp childMTime;
-      TimeStamp getChildMTime() { return childMTime; }
+      TimeStamp _MTime;
+      TimeStamp MTime() { return _MTime; }
+      TimeStamp _childMTime;
+      TimeStamp childMTime() { return _childMTime; }
     };
 
     enum NodeFlags
