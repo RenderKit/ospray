@@ -15,7 +15,7 @@
 ## ======================================================================== ##
 
 # ISPC versions to look for, in decending order (newest first)
-SET(ISPC_VERSION_WORKING "1.9.1" "1.9.0")
+SET(ISPC_VERSION_WORKING "1.9.1")
 LIST(GET ISPC_VERSION_WORKING -1 ISPC_VERSION_REQUIRED)
 
 IF (NOT ISPC_EXECUTABLE)
@@ -155,12 +155,7 @@ MACRO (OSPRAY_ISPC_COMPILE)
       LIST(APPEND ISPC_TARGETS sse2)
     ENDIF()
     FOREACH(target ${ISPC_TARGETS})
-      # in v1.9.0 ISPC changed the ISA suffix of avx512knl-i32x16 to just 'avx512knl'
-      IF (${target} STREQUAL "avx512knl-i32x16" AND NOT ISPC_VERSION VERSION_LESS "1.9.0")
-        SET(target "avx512knl")
-      ELSEIF (${target} STREQUAL "avx512skx-i32x16")
-        SET(target "avx512skx")
-      ENDIF()
+      STRING(REPLACE "-i32x16" "" target ${target}) # strip avx512(knl|skx)-i32x16
       SET(results ${results} "${outdir}/${fname}.dev_${target}${ISPC_TARGET_EXT}")
     ENDFOREACH()
 
