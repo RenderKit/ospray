@@ -44,7 +44,7 @@ namespace ospray {
         if (!ospRenderer)
           throw std::runtime_error("#osp:sg:SceneGraph: could not create renderer (of type '"+type+"')");
       }
-      if (lastCommitted >= lastModified) return;
+      if (lastCommitted() >= lastModified()) return;
 
       ospSet1i(ospRenderer,"spp",spp);
 
@@ -59,7 +59,7 @@ namespace ospray {
         ospSetObject(ospRenderer,"camera",camera->ospCamera);
       }
 
-      lastCommitted = TimeStamp();
+      markAsCommitted();
       ospCommit(ospRenderer);
       assert(ospRenderer); 
    }

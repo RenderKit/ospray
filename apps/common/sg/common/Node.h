@@ -50,7 +50,7 @@ namespace ospray {
     inline type get##capName() const { return name; }   \
     inline void set##capName(const type &name) {        \
       this->name = name;                                \
-      this->lastModified = TimeStamp();                 \
+      this->properties.lastModified = TimeStamp();      \
     };                                                  \
   protected:                                            \
   type name                                             \
@@ -132,7 +132,7 @@ namespace ospray {
       {
         properties.name = "NULL";
         properties.type = "Node";
-        modified();
+        markAsModified();
       }
 
       /*!
@@ -221,26 +221,29 @@ namespace ospray {
       virtual box3f getBounds() const { return box3f(empty); }
 
       //! return when this node was last modified
-      inline TimeStamp getLastModified()  const { return lastModified; }
-      inline TimeStamp getChildrenLastModified() { return childrenMTime;}
+      inline TimeStamp lastModified() const
+      { return properties.lastModified; }
+      inline TimeStamp childrenLastModified() const
+      { return properties.childrenMTime;}
 
       //! return when this node was last committed
-      inline TimeStamp getLastCommitted() const { return lastCommitted; }
-      inline void committed() { lastCommitted = TimeStamp(); }
+      inline TimeStamp lastCommitted() const
+      { return properties.lastCommitted; }
+      inline void markAsCommitted() { properties.lastCommitted = TimeStamp(); }
 
-      virtual void modified()
+      virtual void markAsModified()
       {
-        lastModified = TimeStamp();
+        properties.lastModified = TimeStamp();
         if (!parent.isNULL()) 
-          parent->setChildrenModified(lastModified);
+          parent->setChildrenModified(properties.lastModified);
       }
 
       virtual void setChildrenModified(TimeStamp t)
       {
-        if (t > childrenMTime) {
-          childrenMTime = t; 
+        if (t > properties.childrenMTime) {
+          properties.childrenMTime = t;
           if (!parent.isNULL()) 
-            parent->setChildrenModified(childrenMTime);
+            parent->setChildrenModified(properties.childrenMTime);
         } 
       }
 
@@ -330,7 +333,7 @@ namespace ospray {
             properties.value = val;
         }
 
-        modified();
+        markAsModified();
       }
 
       //! add node as child of this one
@@ -449,11 +452,11 @@ namespace ospray {
         std::vector<SGVar> blacklist;
         std::map<std::string, NodeH> children;
         SGVar value;
+        TimeStamp lastModified;
+        TimeStamp childrenMTime;
+        TimeStamp lastCommitted;
       } properties;
 
-      TimeStamp lastModified;
-      TimeStamp childrenMTime;
-      TimeStamp lastCommitted;
       std::map<std::string, std::shared_ptr<sg::Param>> params;
       NodeH parent;
       NodeFlags flags;

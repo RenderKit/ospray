@@ -34,7 +34,7 @@ namespace ospray {
 
         auto sgFB = scenegraph["frameBuffer"];
 
-        if (sgFB->getChildrenLastModified() > lastFTime) {
+        if (sgFB->childrenLastModified() > lastFTime) {
           auto size = sgFB["size"];
           nPixels = size->valueAs<vec2i>().x * size->valueAs<vec2i>().y;
           pixelBuffer[0].resize(nPixels);
@@ -44,7 +44,7 @@ namespace ospray {
 
         fps.startRender();
 
-        if (scenegraph->getChildrenLastModified() > lastRTime) {
+        if (scenegraph->childrenLastModified() > lastRTime) {
           scenegraph->traverse(ctx, "verify");
           scenegraph->traverse(ctx, "commit");
           lastRTime = sg::TimeStamp();

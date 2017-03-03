@@ -90,7 +90,7 @@ namespace ospray {
         child.second->traverse(ctx, operation);
 
       ctx.level--;
-      ctx.childMTime = getChildrenLastModified();
+      ctx.childMTime = childrenLastModified();
       postTraverse(ctx, operation);
     }
 
@@ -101,23 +101,23 @@ namespace ospray {
           std::cout << "  ";
         std::cout << name() << " : " << type() << "\n";
       } else if (operation == "commit" &&
-               (getLastModified() >= getLastCommitted() ||
-                getChildrenLastModified() >= getLastCommitted())) {
+               (lastModified() >= lastCommitted() ||
+                childrenLastModified() >= lastCommitted())) {
         preCommit(ctx);
       } else if (operation == "verify") {
         valid = computeValid();
       } else if (operation == "modified") {
-        modified();
+        markAsModified();
       }
     }
 
     void Node::postTraverse(RenderContext &ctx, const std::string& operation)
     {
       if (operation == "commit" &&
-          (getLastModified() >= getLastCommitted() ||
-           getChildrenLastModified() >= getLastCommitted())) {
+          (lastModified() >= lastCommitted() ||
+           childrenLastModified() >= lastCommitted())) {
         postCommit(ctx);
-        lastCommitted = TimeStamp();
+        markAsCommitted();
       } else if (operation == "verify") {
         for (const auto &child : properties.children) {
           if (child.second->getFlags() & NodeFlags::required)

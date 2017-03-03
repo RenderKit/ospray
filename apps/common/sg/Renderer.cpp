@@ -207,8 +207,8 @@ namespace ospray {
 
     void Renderer::preCommit(RenderContext &ctx)
     {
-      if (child("frameBuffer")["size"]->getLastModified() >
-          child("camera")["aspect"]->getLastCommitted())
+      if (child("frameBuffer")["size"]->lastModified() >
+          child("camera")["aspect"]->lastCommitted())
        child("camera")["aspect"]->setValue(
          child("frameBuffer")["size"]->valueAs<vec2i>().x /
          float(child("frameBuffer")["size"]->valueAs<vec2i>().y)
@@ -246,13 +246,13 @@ namespace ospray {
       ospCommit(ospRenderer);
       //TODO: some child is kicking off modified every frame...Should figure
       //      out which and ignore it
-      if (child("camera")->getChildrenLastModified() > frameMTime
-        || child("lights")->getChildrenLastModified() > frameMTime
-        || child("world")->getChildrenLastModified() > frameMTime
-        || getLastModified() > frameMTime
-        || child("shadowsEnabled")->getLastModified() > frameMTime
-        || child("aoSamples")->getLastModified() > frameMTime
-        || child("spp")->getLastModified() > frameMTime
+      if (child("camera")->childrenLastModified() > frameMTime
+        || child("lights")->childrenLastModified() > frameMTime
+        || child("world")->childrenLastModified() > frameMTime
+        || lastModified() > frameMTime
+        || child("shadowsEnabled")->lastModified() > frameMTime
+        || child("aoSamples")->lastModified() > frameMTime
+        || child("spp")->lastModified() > frameMTime
         )
       {
         ospFrameBufferClear(

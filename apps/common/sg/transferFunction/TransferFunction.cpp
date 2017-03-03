@@ -39,7 +39,7 @@ namespace ospray {
       for (uint32_t i = 0; i < colorArray.size(); ++i)
         this->colorArray.push_back({i, colorArray[i]});
 
-      modified();
+      markAsModified();
     }
 
     //! \brief Sets a new 'texture map' to be used for the alpha mapping
@@ -53,7 +53,7 @@ namespace ospray {
       for (const auto &alpha : alphaArray)
         this->alphaArray.push_back({alpha.x, alpha.y});
 
-      modified();
+      markAsModified();
     }
 
     float TransferFunction::getInterpolatedAlphaValue(float x)
@@ -74,7 +74,7 @@ namespace ospray {
     void TransferFunction::setValueRange(const vec2f &range)
     {
       valueRange = range;
-      modified();
+      markAsModified();
     }
 
     //! \brief commit the current field values to ospray
@@ -103,7 +103,7 @@ namespace ospray {
         ospSetData(ospTransferFunction,"opacities",ospAlphaData);
       }
       ospCommit(ospTransferFunction);
-      committed();
+      markAsCommitted();
     }
 
     void TransferFunction::render(RenderContext &ctx)
