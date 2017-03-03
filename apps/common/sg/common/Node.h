@@ -100,8 +100,10 @@ namespace ospray {
 
       //! create a new context with new transformation matrix
       RenderContext(const RenderContext &other, const affine3f &newXfm)
-        : world(other.world), integrator(other.integrator), xfm(newXfm),level(0),
-        ospRenderer(nullptr)
+        : world(other.world),
+          integrator(other.integrator),
+          xfm(newXfm),level(0),
+          ospRenderer(nullptr)
       {}
 
       TimeStamp MTime;
@@ -235,7 +237,8 @@ namespace ospray {
       }
 
       //! return named child node
-      NodeH& getChild(const std::string &name) {
+      NodeH& getChild(const std::string &name)
+      {
         std::lock_guard<std::mutex> lock{mutex};
         if (children.find(name) == children.end())
           std::cout << "couldn't find child! " << name << "\n";
@@ -243,23 +246,24 @@ namespace ospray {
       }
 
       //! return named child node
-      NodeH getChildRecursive(const std::string &name) {
+      NodeH getChildRecursive(const std::string &name)
+      {
         mutex.lock();
         Node* n = this;
         auto f = n->children.find(name);
-        if (f != n->children.end())
-        {
+        if (f != n->children.end()) {
           mutex.unlock();
           return f->second;
         }
-        for (auto child : children)
-        {
+
+        for (auto child : children) {
           mutex.unlock();
           NodeH r = child.second->getChildRecursive(name);
           if (!r.isNULL())
             return r;
           mutex.lock();
         }
+
         mutex.unlock();
         return NodeH();
       }
@@ -284,7 +288,7 @@ namespace ospray {
       }
 
       //! return child c
-      NodeH& operator[] (const std::string &c) { return getChild(c);}
+      NodeH& operator[] (const std::string &c) { return getChild(c); }
 
       //! return the parent node
       NodeH getParent() { return parent; }
@@ -327,7 +331,8 @@ namespace ospray {
       }
 
       //! add node as child of this one
-      virtual void add(NodeH node) {
+      virtual void add(NodeH node)
+      {
         std::lock_guard<std::mutex> lock{mutex};
         children[node->name] = node;
         node->setParent(shared_from_this());
@@ -338,10 +343,12 @@ namespace ospray {
       virtual void traverse(RenderContext &ctx, const std::string& operation);
 
       //! called before traversing children
-      virtual void preTraverse(RenderContext &ctx, const std::string& operation);
+      virtual void preTraverse(RenderContext &ctx,
+                               const std::string& operation);
 
       //! called after traversing children
-      virtual void postTraverse(RenderContext &ctx, const std::string& operation);
+      virtual void postTraverse(RenderContext &ctx,
+                                const std::string& operation);
 
       //! called before committing children during traversal
       virtual void preCommit(RenderContext &ctx) {}
@@ -393,11 +400,13 @@ namespace ospray {
           if (!computeValidMinMax())
             return false;
         }
+
         if (flags & NodeFlags::valid_blacklist) {
           return std::find(blacklist.begin(),
                            blacklist.end(),
                            value) == blacklist.end();
         }
+
         if (flags & NodeFlags::valid_whitelist) {
           return std::find(whitelist.begin(),
                            whitelist.end(),
@@ -439,9 +448,12 @@ namespace ospray {
     // variable, but eventually we'll need tofind a better way for
     // storing this ... maybe in the world!?
     extern std::map<std::string,std::shared_ptr<sg::Node>> namedNodes;
-    std::shared_ptr<sg::Node> OSPSG_INTERFACE findNamedNode(const std::string &name);
-    OSPSG_INTERFACE void registerNamedNode(const std::string &name,
-                                           const std::shared_ptr<sg::Node> &node);
+    std::shared_ptr<sg::Node> OSPSG_INTERFACE
+    findNamedNode(const std::string &name);
+
+    OSPSG_INTERFACE
+    void registerNamedNode(const std::string &name,
+                           const std::shared_ptr<sg::Node> &node);
 
     using NodeH = Node::NodeH;
     OSPSG_INTERFACE Node::NodeH createNode(std::string name,
@@ -570,8 +582,10 @@ namespace ospray {
       virtual void init() override { add(createNode("bounds", "box3f")); }
       virtual box3f getBounds() { return bbox; }
       virtual box3f extendBounds(box3f b) { bbox.extend(b); return bbox; }
-      virtual void preTraverse(RenderContext &ctx, const std::string& operation);
-      virtual void postTraverse(RenderContext &ctx, const std::string& operation);
+      virtual void preTraverse(RenderContext &ctx,
+                               const std::string& operation);
+      virtual void postTraverse(RenderContext &ctx,
+                                const std::string& operation);
       virtual void preCommit(RenderContext &ctx) { bbox = empty; }
       virtual void preRender(RenderContext &ctx) {}
       virtual void postRender(RenderContext &ctx) {}
