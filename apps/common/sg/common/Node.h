@@ -408,7 +408,7 @@ namespace ospray {
         properties.blacklist = values;
       }
 
-      virtual bool isValid() { return valid; }
+      virtual bool isValid() { return properties.valid; }
 
       virtual bool computeValid()
       {
@@ -458,9 +458,9 @@ namespace ospray {
         std::map<std::string, std::shared_ptr<sg::Param>> params;
         NodeH parent;
         NodeFlags flags;
+        bool valid {false};
       } properties;
 
-      bool valid {false};
       std::string documentation;
 
       mutable std::mutex mutex;

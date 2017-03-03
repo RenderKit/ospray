@@ -105,7 +105,7 @@ namespace ospray {
                 childrenLastModified() >= lastCommitted())) {
         preCommit(ctx);
       } else if (operation == "verify") {
-        valid = computeValid();
+        properties.valid = computeValid();
       } else if (operation == "modified") {
         markAsModified();
       }
@@ -121,7 +121,7 @@ namespace ospray {
       } else if (operation == "verify") {
         for (const auto &child : properties.children) {
           if (child.second->flags() & NodeFlags::required)
-            valid &= child.second->isValid();
+            properties.valid &= child.second->isValid();
         }
       }
     }
