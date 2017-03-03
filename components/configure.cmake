@@ -56,8 +56,8 @@ MACRO(OSPRAY_BUILD_COMPONENT comp)
 
   ENDIF()
   
-  IF(EXISTS ${CURRENT_COMPONENT_DIR}/include.cmake)
-    INCLUDE(${CURRENT_COMPONENT_DIR}/include.cmake)
-  ENDIF()
+    IF(EXISTS ${CURRENT_COMPONENT_DIR}/include.cmake)
+      INCLUDE(${CURRENT_COMPONENT_DIR}/include.cmake)
+    ENDIF()
 
 ENDMACRO()
