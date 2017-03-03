@@ -39,6 +39,15 @@ namespace ospray {
 
     bool OSPSG_INTERFACE isValid(SGVar var);
 
+    /*! return the size (in byte) for a given ospray data type */
+    size_t sizeOf(const OSPDataType type);
+
+    /*! return the ospray data type for a given string-ified type */
+    OSPDataType getOSPDataTypeFor(const char *typeName);
+
+    /*! return the ospray data type for a given string-ified type */
+    OSPDataType getOSPDataTypeFor(const std::string &typeName);
+
     /*! forward decl of entity that nodes can write to when writing XML files */
     struct XMLWriter;
 

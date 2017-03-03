@@ -424,8 +424,10 @@ namespace ospray {
         return lhs.get<float>() == rhs.get<float>();
       else if (lhs.is<bool>())
         return lhs.get<bool>() == rhs.get<bool>();
-      else
+      else if (lhs.is<int>())
         return lhs.get<int>() == rhs.get<int>();
+      else
+        throw std::runtime_error("unknown variant type in operator==(Variant,Variant)");
     }
 
     inline bool operator!=(const OSPVariant &lhs, const OSPVariant &rhs)

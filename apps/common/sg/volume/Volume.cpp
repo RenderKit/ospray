@@ -289,7 +289,7 @@ namespace ospray {
                                  +"' and file name '"+fileName+"')");
 
       vec2f voxelRange(std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity());
-      const OSPDataType ospVoxelType = typeForString(voxelType.c_str());
+      const OSPDataType ospVoxelType = getOSPDataTypeFor(voxelType);
       const size_t voxelSize = sizeOf(ospVoxelType);
       if (useBlockBricked || useDataDistributedVolume) {
         const size_t nPerSlice = (size_t)dimensions.x * (size_t)dimensions.y;
