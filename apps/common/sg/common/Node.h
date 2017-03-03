@@ -234,16 +234,16 @@ namespace ospray {
       virtual void markAsModified()
       {
         properties.lastModified = TimeStamp();
-        if (!parent.isNULL()) 
-          parent->setChildrenModified(properties.lastModified);
+        if (!parent().isNULL())
+          parent()->setChildrenModified(properties.lastModified);
       }
 
       virtual void setChildrenModified(TimeStamp t)
       {
         if (t > properties.childrenMTime) {
           properties.childrenMTime = t;
-          if (!parent.isNULL()) 
-            parent->setChildrenModified(properties.childrenMTime);
+          if (!parent().isNULL())
+            parent()->setChildrenModified(properties.childrenMTime);
         } 
       }
 
@@ -306,14 +306,14 @@ namespace ospray {
       NodeH operator[] (const std::string &c) const { return child(c); }
 
       //! return the parent node
-      NodeH getParent() { return parent; }
+      NodeH parent() { return properties.parent; }
 
       //! sets the parent
       void setParent(const NodeH& p)
-      { std::lock_guard<std::mutex> lock{mutex}; parent = p; }
+      { std::lock_guard<std::mutex> lock{mutex}; properties.parent = p; }
 
       //! get the value of the node, whithout template conversion
-      const SGVar value()
+      SGVar value()
       { std::lock_guard<std::mutex> lock{mutex}; return properties.value; }
 
       //! returns the value of the node in the desired type
@@ -456,9 +456,9 @@ namespace ospray {
         TimeStamp childrenMTime;
         TimeStamp lastCommitted;
         std::map<std::string, std::shared_ptr<sg::Param>> params;
+        NodeH parent;
       } properties;
 
-      NodeH parent;
       NodeFlags flags;
       bool valid {false};
       std::string documentation;
@@ -530,14 +530,14 @@ namespace ospray {
     template <>
     inline void NodeParamCommit<float>::commit(std::shared_ptr<Node> n)
     {
-      ospSet1f(n->getParent()->valueAs<OSPObject>(),
+      ospSet1f(n->parent()->valueAs<OSPObject>(),
                n->name().c_str(), n->valueAs<float>());
     }
 
     template <>
     inline void NodeParamCommit<bool>::commit(std::shared_ptr<Node> n)
     {
-      ospSet1i(n->getParent()->valueAs<OSPObject>(),
+      ospSet1i(n->parent()->valueAs<OSPObject>(),
                n->name().c_str(), n->valueAs<bool>());
     }
 
@@ -552,7 +552,7 @@ namespace ospray {
     template <>
     inline void NodeParamCommit<int>::commit(std::shared_ptr<Node> n)
     {
-      ospSet1i(n->getParent()->valueAs<OSPObject>(),
+      ospSet1i(n->parent()->valueAs<OSPObject>(),
                n->name().c_str(), n->valueAs<int>());
     }
 
@@ -572,7 +572,7 @@ namespace ospray {
     template <>
     inline void NodeParamCommit<vec3f>::commit(std::shared_ptr<Node> n)
     {
-      ospSet3fv(n->getParent()->valueAs<OSPObject>(),
+      ospSet3fv(n->parent()->valueAs<OSPObject>(),
                 n->name().c_str(), &n->valueAs<vec3f>().x);
     }
 
@@ -582,10 +582,11 @@ namespace ospray {
       NodeParam() : Node() { setValue(T()); }
       virtual void postCommit(RenderContext &ctx) override
       {
-        if (!parent.isNULL())
-        {
+        if (!parent().isNULL()) {
           //TODO: generalize to other types of ManagedObject
-          if (parent->value().is<OSPObject>() == true)
+
+          //NOTE(jda) - OMG the syntax for the 'if' is strange...
+          if (parent()->value().template is<OSPObject>())
             NodeParamCommit<T>::commit(shared_from_this());
         }
       }
