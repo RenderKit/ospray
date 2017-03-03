@@ -386,13 +386,13 @@ namespace ospray {
 
       void setMinMax(const SGVar& minv, const SGVar& maxv)
       {
-        minmax.resize(2);
-        minmax[0]=minv;
-        minmax[1]=maxv;
+        properties.minmax.resize(2);
+        properties.minmax[0] = minv;
+        properties.minmax[1] = maxv;
       }
 
-      SGVar getMin() { return minmax[0]; }
-      SGVar getMax() { return minmax[1]; }
+      SGVar min() const { return properties.minmax[0]; }
+      SGVar max() const { return properties.minmax[1]; }
 
       void setWhiteList(std::vector<SGVar> values)
       {
@@ -408,7 +408,8 @@ namespace ospray {
 
       virtual bool computeValid()
       {
-        if ((flags & NodeFlags::valid_min_max) && minmax.size() > 1) {
+        if ((flags & NodeFlags::valid_min_max) &&
+            properties.minmax.size() > 1) {
           if (!computeValidMinMax())
             return false;
         }
@@ -438,9 +439,9 @@ namespace ospray {
       {
         std::string name;
         std::string type;
+        std::vector<SGVar> minmax;
       } properties;
 
-      std::vector<SGVar> minmax;
       std::vector<SGVar> whitelist;
       std::vector<SGVar> blacklist;
       std::map<std::string, NodeH> children;
@@ -584,9 +585,9 @@ namespace ospray {
 
       virtual bool computeValidMinMax() override
       {
-        if (minmax.size() < 2 || !(flags & NodeFlags::valid_min_max))
+        if (properties.minmax.size() < 2 || !(flags & NodeFlags::valid_min_max))
           return true;
-        return NodeParamCommit<T>::compare(minmax[0], minmax[1], value);
+        return NodeParamCommit<T>::compare(min(), max(), value);
       }
     };
 

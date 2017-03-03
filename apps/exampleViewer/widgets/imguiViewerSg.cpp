@@ -289,8 +289,8 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
     }
     else if ((node->getFlags() & sg::NodeFlags::gui_slider)) {
       if (ImGui::SliderFloat3(text.c_str(), &val.x,
-                              node->getMin().get<vec3f>().x,
-                              node->getMax().get<vec3f>().x))
+                              node->min().get<vec3f>().x,
+                              node->max().get<vec3f>().x))
         node->setValue(val);
     }
     else if (ImGui::DragFloat3(text.c_str(), (float*)&val.x, .01f)) {
@@ -322,8 +322,8 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
            << node.get())).str(); //TODO: use unique uuid for every node
     if ((node->getFlags() & sg::NodeFlags::gui_slider)) {
       if (ImGui::SliderFloat(text.c_str(), &val,
-                             node->getMin().get<float>(),
-                             node->getMax().get<float>()))
+                             node->min().get<float>(),
+                             node->max().get<float>()))
         node->setValue(val);
     }
     else if (ImGui::DragFloat(text.c_str(), &val, .01f)) {
@@ -346,8 +346,8 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
            << node.get())).str(); //TODO: use unique uuid for every node
     if ((node->getFlags() & sg::NodeFlags::gui_slider)) {
       if (ImGui::SliderInt(text.c_str(), &val,
-                           node->getMin().get<int>(),
-                           node->getMax().get<int>()))
+                           node->min().get<int>(),
+                           node->max().get<int>()))
         node->setValue(val);
     }
     else if (ImGui::DragInt(text.c_str(), &val)) {
