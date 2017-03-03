@@ -304,9 +304,6 @@ namespace ospray {
 
       //! return the parent node
       NodeH getParent() { return parent; }
-      //! returns handle to ospObject, however should actually call getValue on
-      //  valid node instead
-      OSPObject getOSPHandle() { return ospHandle; }
 
       //! sets the parent
       void setParent(const NodeH& p)
@@ -449,7 +446,6 @@ namespace ospray {
         std::map<std::string, NodeH> children;
       } properties;
 
-      OSPObject ospHandle {nullptr};
       SGVar value;
       TimeStamp lastModified;
       TimeStamp childrenMTime;

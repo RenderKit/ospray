@@ -280,7 +280,6 @@ namespace ospray {
 
       if (!volume) THROW_SG_ERROR("could not allocate volume");
 
-      ospHandle = volume;
       setValue((OSPObject)volume);
 
       ospSetString(volume,"voxelType",voxelType.c_str());
