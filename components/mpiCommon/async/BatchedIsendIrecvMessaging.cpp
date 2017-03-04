@@ -108,10 +108,10 @@ namespace ospray {
             }
 
             // Move finished sends to the end of the respective buffers
-            std::stable_partition(actions, actions + SEND_WINDOW_SIZE,
+            std::stable_partition(actions, actions + numSends,
                 [](const Action *a) { return a != nullptr; });
 
-            std::stable_partition(request, request + SEND_WINDOW_SIZE,
+            std::stable_partition(request, request + numSends,
                 [](const MPI_Request &r) { return r != MPI_REQUEST_NULL; });
 
             numSends -= numFinished;
@@ -198,15 +198,14 @@ namespace ospray {
             }
 
             // Move finished recvs to the end of the respective buffers
-            auto completed = std::stable_partition(actions, actions + RECV_WINDOW_SIZE,
+            auto completed = std::stable_partition(actions, actions + numRequests,
                 [](const Action *a) { return a != nullptr && a->request != MPI_REQUEST_NULL; });
 
-            std::stable_partition(request, request + RECV_WINDOW_SIZE,
+            std::stable_partition(request, request + numRequests,
                 [](const MPI_Request &r) { return r != MPI_REQUEST_NULL; });
 
             // OK, some actions are valid now
             g.recvQueue.putSome(completed, numFinished);
-
             numRequests -= numFinished;
           }
         }
