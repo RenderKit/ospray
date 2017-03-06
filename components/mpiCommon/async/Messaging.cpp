@@ -23,24 +23,24 @@ namespace ospray {
 
     namespace async {
       
-      AsyncMessagingImpl *AsyncMessagingImpl::global = NULL;
+      AsyncMessagingImpl *AsyncMessagingImpl::global = nullptr;
 
       Group::Group(MPI_Comm comm, Consumer *consumer, int32 tag)
         :  consumer(consumer), tag(tag)
       {
-        lockMPI("mpi::Group::Group()");
-        MPI_CALL(Comm_dup(comm,&this->comm));
-        MPI_CALL(Comm_rank(comm,&rank));
-        MPI_CALL(Comm_size(comm,&size));
-        unlockMPI();
+        mpi::serialized(CODE_LOCATION, [&]() {
+          MPI_CALL(Comm_dup(comm,&this->comm));
+          MPI_CALL(Comm_rank(comm,&rank));
+          MPI_CALL(Comm_size(comm,&size));
+        });
       }
 
-      Group *WORLD = NULL;
+      Group *WORLD = nullptr;
 
       // init async layer
       void initAsync()
       {
-        if (AsyncMessagingImpl::global == NULL) {
+        if (AsyncMessagingImpl::global == nullptr) {
           AsyncMessagingImpl::global = new BatchedIsendIrecvImpl;
           AsyncMessagingImpl::global->init();
         }

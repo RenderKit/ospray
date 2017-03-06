@@ -82,10 +82,10 @@ namespace ospray {
 
     void Group::makeIntraComm()
     {
-      lockMPI("Group::makeIntraComm");
-      MPI_Comm_rank(comm,&rank);
-      MPI_Comm_size(comm,&size);
-      unlockMPI();
+      mpi::serialized(CODE_LOCATION, [&]() {
+        MPI_CALL(Comm_rank(comm,&rank));
+        MPI_CALL(Comm_size(comm,&size));
+      });
       containsMe = true;
     }
 
@@ -101,17 +101,16 @@ namespace ospray {
 
     void Group::makeInterComm()
     {
-      lockMPI("Group::makeInterComm");
-      containsMe = false; rank = MPI_ROOT;
-      MPI_Comm_remote_size(comm,&size);
-      unlockMPI();
+      mpi::serialized(CODE_LOCATION, [&]() {
+        containsMe = false;
+        rank = MPI_ROOT;
+        MPI_CALL(Comm_remote_size(comm, &size));
+      });
     }
 
     void Group::barrier() const
     {
-      lockMPI("mpi::Group::barrier");
-      MPI_CALL(Barrier(comm));
-      unlockMPI();
+      SERIALIZED_MPI_CALL(Barrier(comm));
     }
 
     /*! set to given intercomm, and properly set size, root, etc */
@@ -122,9 +121,7 @@ namespace ospray {
         rank = size = -1;
       } else {
         int isInter;
-        lockMPI("mpi::Group::setTo");
-        MPI_CALL(Comm_test_inter(comm,&isInter));
-        unlockMPI();
+        SERIALIZED_MPI_CALL(Comm_test_inter(comm,&isInter));
         if (isInter)
           makeInterComm(comm);
         else
@@ -136,26 +133,20 @@ namespace ospray {
     Group Group::dup() const
     {
       MPI_Comm duped;
-      lockMPI("mpi::Group::dup");
-      MPI_CALL(Comm_dup(comm,&duped));
-      unlockMPI();
+      SERIALIZED_MPI_CALL(Comm_dup(comm,&duped));
       return Group(duped);
     }
         
     void init(int *ac, const char **av)
     {
       int initialized = false;
-      lockMPI("mpi::init");
-      MPI_CALL(Initialized(&initialized));
-      unlockMPI();
+      SERIALIZED_MPI_CALL(Initialized(&initialized));
       
       if (!initialized) {
         // MPI_Init(ac,(char ***)&av);
         int required = MPI_THREAD_SERIALIZED;
         int provided = 0;
-        lockMPI("MPI_init_thread");
-        MPI_CALL(Init_thread(ac,(char ***)&av,required,&provided));
-        unlockMPI();
+        SERIALIZED_MPI_CALL(Init_thread(ac,(char ***)&av,required,&provided));
         if (provided != required) {
           throw std::runtime_error("MPI implementation does not offer "
                                    "multi-threading capabilities");
@@ -172,11 +163,12 @@ namespace ospray {
           throw std::runtime_error("ospray requires mpi to be initialized with "
             "MPI_THREAD_SERIAL if initialized before calling ospray");
       }
-      lockMPI("mpi::init()");
-      world.comm = MPI_COMM_WORLD;
-      MPI_CALL(Comm_rank(MPI_COMM_WORLD,&world.rank));
-      MPI_CALL(Comm_size(MPI_COMM_WORLD,&world.size));
-      unlockMPI();
+
+      mpi::serialized(CODE_LOCATION, [&]() {
+        world.comm = MPI_COMM_WORLD;
+        MPI_CALL(Comm_rank(MPI_COMM_WORLD,&world.rank));
+        MPI_CALL(Comm_size(MPI_COMM_WORLD,&world.size));
+      });
 
       {
         /*! iw, jan 2017: this entire code block should eventually get
