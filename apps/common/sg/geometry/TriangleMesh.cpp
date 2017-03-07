@@ -64,20 +64,24 @@ namespace ospray {
       existant) that contains additional binary data that the xml
       node fields may point into
     */
-    void TriangleMesh::setFromXML(const xml::Node *const node, const unsigned char *binBasePtr)
+    void TriangleMesh::setFromXML(const xml::Node &node,
+                                  const unsigned char *binBasePtr)
     {
-      xml::for_each_child_of(*node,[&](const xml::Node &child){
-          if (child.name == "vertex") {
-            size_t num = std::stoll(child.getProp("num"));
-            size_t ofs = std::stoll(child.getProp("ofs"));
-            vertex = std::shared_ptr<DataBuffer>(new DataArray3f((vec3f*)((char*)binBasePtr+ofs),num,false));
-          }
-          else if (child.name == "index") {
-            size_t num = std::stoll(child.getProp("num"));
-            size_t ofs = std::stoll(child.getProp("ofs"));
-            index = std::shared_ptr<DataBuffer>(new DataArray3i((vec3i*)((char*)binBasePtr+ofs),num,false));
-          }
-        });
+      std::string fileName = node.getProp("fileName");
+      if (fileName.empty()) {
+        xml::for_each_child_of(node, [&](const xml::Node &child){
+            if (child.name == "vertex") {
+              size_t num = std::stoll(child.getProp("num"));
+              size_t ofs = std::stoll(child.getProp("ofs"));
+              vertex = std::shared_ptr<DataBuffer>(new DataArray3f((vec3f*)((char*)binBasePtr+ofs),num,false));
+            }
+            else if (child.name == "index") {
+              size_t num = std::stoll(child.getProp("num"));
+              size_t ofs = std::stoll(child.getProp("ofs"));
+              index = std::shared_ptr<DataBuffer>(new DataArray3i((vec3i*)((char*)binBasePtr+ofs),num,false));
+            }
+          });
+      }
     }
 
     /*! 'render' the nodes */
