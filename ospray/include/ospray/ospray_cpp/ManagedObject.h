@@ -21,6 +21,7 @@
 
 #include <ospray/ospray.h>
 #include "ospcommon/vec.h"
+#include "ospcommon/AffineSpace.h"
 
 namespace ospray {
   namespace cpp    {

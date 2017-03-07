@@ -105,7 +105,7 @@ int main(int ac, const char **av)
     ospray::cpp::Model jointModel;
     for (int i=0;i<model.size();i++) {
       ospcommon::affine3f xfm = ospcommon::one;
-      ospray::cpp::Geometry asInstance = ospray::cpp::Geometry(ospNewInstance(model[i].handle(),(osp::affine3f&)xfm));
+      ospray::cpp::Geometry asInstance = model[i].createInstance(xfm);
       jointModel.addGeometry(asInstance);
     }
     jointModel.commit();

@@ -42,6 +42,8 @@ namespace ospray {
 
       void removeVolume(Volume &v) const;
       void removeVolume(OSPVolume v) const;
+
+      Geometry createInstance(const ospcommon::affine3f &transform) const;
     };
 
     // Inlined function definitions ///////////////////////////////////////////////
@@ -104,6 +106,12 @@ namespace ospray {
     inline void Model::removeVolume(OSPVolume v) const
     {
       ospRemoveVolume(handle(), v);
+    }
+
+    inline Geometry
+    Model::createInstance(const ospcommon::affine3f &transform) const
+    {
+      return ospNewInstance(handle(), (const osp::affine3f&)transform);
     }
 
   }// namespace cpp
