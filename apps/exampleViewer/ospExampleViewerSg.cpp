@@ -127,7 +127,6 @@ int main(int ac, const char **av)
 
   for (auto file : files) {
     FileName fn = file;
-    auto ext = fn.ext();
     auto importerNode = sg::createNode(fn.name(), "Importer");
     importerNode["fileName"]->setValue(fn.str());
     world += importerNode;
@@ -139,7 +138,6 @@ int main(int ac, const char **av)
   }
 
   renderer->traverse(ctx, "commit");
-  renderer->traverse(ctx, "render");
 
   ospray::ImGuiViewerSg window(renderer);
   if (addPlane) addPlaneToScene(world);

@@ -28,8 +28,9 @@ namespace ospray {
 
     void async_render_engine_sg::run()
     {
+      sg::RenderContext ctx;
+
       while (state == ExecState::RUNNING) {
-        sg::RenderContext ctx;
         static sg::TimeStamp lastFTime;
 
         auto sgFB = scenegraph["frameBuffer"];
@@ -62,8 +63,7 @@ namespace ospray {
 
         sgFBptr->unmap(srcPB);
 
-        if (fbMutex.try_lock())
-        {
+        if (fbMutex.try_lock()) {
           std::swap(currentPB, mappedPB);
           newPixels = true;
           fbMutex.unlock();
