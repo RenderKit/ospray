@@ -67,7 +67,7 @@ IF (OSPRAY_MODULE_MPI)
   OSPRAY_CREATE_APPLICATION(ospray_mpi_worker
     MPIWorker.cpp
   LINK
-    ospray_module_mpi
+    ospray
   )
 
 ENDIF (OSPRAY_MODULE_MPI)
