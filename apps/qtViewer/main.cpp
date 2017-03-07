@@ -79,8 +79,15 @@ namespace ospray {
       // init qt
       QApplication *app = new QApplication(argc, (char **)argv);
       
-      auto world = std::make_shared<sg::World>();
-      auto renderer = std::make_shared<sg::Renderer>();
+      auto renderer_h = sg::createNode("renderer", "Renderer");
+      auto world_h    = renderer_h["world"];
+
+      std::shared_ptr<sg::Renderer> renderer =
+        std::dynamic_pointer_cast<sg::Renderer>(renderer_h.get());
+
+      std::shared_ptr<sg::World> world =
+        std::dynamic_pointer_cast<sg::World>(world_h.get());
+
       bool fullscreen = false;
 
       for (int argID=1;argID<argc;argID++) {
@@ -213,7 +220,11 @@ namespace ospray {
         std::cout << "#osp:qtv: world bounds is " << world->bounds()
                   << std::endl;
       }
-      renderer->setWorld(world);
+
+      sg::RenderContext ctx;
+
+      renderer->traverse(ctx, "commit");
+      renderer->traverse(ctx, "render");
 
       // -------------------------------------------------------
       // initialize renderer's integrator
