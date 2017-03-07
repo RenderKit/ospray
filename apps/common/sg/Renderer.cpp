@@ -28,15 +28,21 @@ namespace ospray {
       add(createNode("bounds", "box3f"));
       add(createNode("rendererType", "string", std::string("scivis"),
                      NodeFlags::required | NodeFlags::valid_whitelist | NodeFlags::gui_combo,
-                     "scivis: standard whitted style ray tracer. pathtracer/pt: photo-realistic path tracer"));
+                     "scivis: standard whitted style ray tracer. "
+                     "pathtracer/pt: photo-realistic path tracer"));
       child("rendererType")->setWhiteList({std::string("scivis"),
-                                              std::string("pathtracer"),
-                                              std::string("pt")});
+                                           std::string("sv"),
+                                           std::string("dvr"),
+                                           std::string("pathtracer"),
+                                           std::string("pt")});
       add(createNode("world", "World"));
       child("world")->setDocumentation("model containing scene objects");
       add(createNode("camera", "PerspectiveCamera"));
       add(createNode("frameBuffer", "FrameBuffer"));
       add(createNode("lights"));
+
+      add(createNode("bgColor", "vec3f", vec3f(0.9f, 0.9f, 0.9f),
+                     NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_color));
 
       //TODO: move these to seperate SciVisRenderer
       add(createNode("shadowsEnabled", "bool", true));
@@ -49,11 +55,14 @@ namespace ospray {
                      "number of ambient occlusion samples.  0 means off"));
       child("aoSamples")->setMinMax(0,128);
       add(createNode("spp", "int", 1, NodeFlags::required | NodeFlags::gui_slider,
-                     "the number of samples rendered per pixel.  The higher the number, the smoother the resulting image."));
+                     "the number of samples rendered per pixel. The higher "
+                     "the number, the smoother the resulting image."));
       child("spp")->setMinMax(-8,128);
       add(createNode("aoDistance", "float", 10000.f,
                      NodeFlags::required | NodeFlags::valid_min_max,
-                     "maximum distance ao rays will trace to.  Useful if you do not want a large interior of a building to be completely black from occlusion."));
+                     "maximum distance ao rays will trace to."
+                     " Useful if you do not want a large interior of a"
+                     " building to be completely black from occlusion."));
       child("aoDistance")->setMinMax(float(1e-31),FLT_MAX);
       add(createNode("oneSidedLighting", "bool",true, NodeFlags::required));
       add(createNode("aoTransparency", "bool",true, NodeFlags::required));
@@ -208,11 +217,13 @@ namespace ospray {
     void Renderer::preCommit(RenderContext &ctx)
     {
       if (child("frameBuffer")["size"]->lastModified() >
-          child("camera")["aspect"]->lastCommitted())
-       child("camera")["aspect"]->setValue(
-         child("frameBuffer")["size"]->valueAs<vec2i>().x /
-         float(child("frameBuffer")["size"]->valueAs<vec2i>().y)
-       );
+          child("camera")["aspect"]->lastCommitted()) {
+
+        child("camera")["aspect"]->setValue(
+          child("frameBuffer")["size"]->valueAs<vec2i>().x /
+          float(child("frameBuffer")["size"]->valueAs<vec2i>().y)
+        );
+      }
       auto rendererType = child("rendererType")->valueAs<std::string>();
       if (!ospRenderer || rendererType != createdType) {
         traverse(ctx, "modified");

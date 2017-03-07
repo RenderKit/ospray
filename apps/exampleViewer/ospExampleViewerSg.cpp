@@ -32,7 +32,7 @@ std::vector<std::string> files;
 bool addPlane = true;
 bool debug = false;
 
-void parseFilesFromCommandLine(int ac, const char **&av)
+void parseCommandLine(int ac, const char **&av)
 {
   for (int i = 1; i < ac; i++) {
     const std::string arg = av[i];
@@ -40,6 +40,8 @@ void parseFilesFromCommandLine(int ac, const char **&av)
       addPlane = false;
     } else if (arg == "-d" || arg == "--debug") {
       debug = true;
+    } else if (arg == "-m" || arg == "--module") {
+      ospLoadModule(av[++i]);
     } else {
       files.push_back(av[i]);
     }
@@ -95,7 +97,7 @@ int main(int ac, const char **av)
 
   ospray::imgui3D::init(&ac,av);
 
-  parseFilesFromCommandLine(ac, av);
+  parseCommandLine(ac, av);
 
   auto renderer = sg::createNode("renderer", "Renderer");
   renderer["shadowsEnabled"]->setValue(true);
