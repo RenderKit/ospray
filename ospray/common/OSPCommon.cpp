@@ -74,6 +74,8 @@ namespace ospray {
         std::string parm = av[i];
         if (parm == "--osp:debug") {
           device->findParam("debug", true)->set(true);
+          // per default enable logging to cout; may be overridden later
+          device->error_fcn = [](const char *msg){ std::cout << msg; };
           removeArgs(ac,av,i,1);
         } else if (parm == "--osp:verbose") {
           device->findParam("logLevel", true)->set(1);
