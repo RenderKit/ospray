@@ -235,7 +235,7 @@ void VolumeViewer::addGeometry(std::string filename)
     miniSG::importMSG(*msgModel,fn);
     loadedSGScene = true;
   } else if (fn.ext() == "tri") {
-    miniSG::importTRI(*msgModel,fn);
+    miniSG::importTRI_xyz(*msgModel,fn);
     loadedSGScene = true;
   } else if (fn.ext() == "xml") {
     miniSG::importRIVL(*msgModel,fn);

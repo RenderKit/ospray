@@ -100,6 +100,21 @@ int main(int ac, const char **av)
 
   std::tie(bbox, model, renderer, camera) = ospObjs;
 
+#if 1
+  if (model.size() > 1) {
+    ospray::cpp::Model jointModel;
+    for (int i=0;i<model.size();i++) {
+      ospcommon::affine3f xfm = ospcommon::one;
+      ospray::cpp::Geometry asInstance = ospray::cpp::Geometry(ospNewInstance(model[i].handle(),(osp::affine3f&)xfm));
+      jointModel.addGeometry(asInstance);
+    }
+    jointModel.commit();
+    model.clear();
+    model.push_back(jointModel);
+  }
+#endif
+
+
   parseExtraParametersFromComandLine(ac, av);
 
 #ifdef OSPRAY_APPS_ENABLE_SCRIPTING

@@ -22,30 +22,62 @@ namespace ospray {
     using std::cout;
     using std::endl;
 
-    void importTRI(Model &model,
+    /*! NASA 'tri' format, with three vec3f vertices per triangle (no
+        indices in file) */
+    void importTRI_xyz(Model &model,
                    const ospcommon::FileName &fileName)
     {
       FILE *file = fopen(fileName.c_str(),"rb");
       if (!file) error("could not open input file");
 
-      int32_t numVertices;
-      auto rc = fread(&numVertices,1,sizeof(numVertices),file);
+      Mesh *mesh = new Mesh;
+
+      vec3f tri[3];
+      while (fread(&tri,sizeof(vec3f),3,file) == 3) {
+        mesh->position.push_back(tri[0]);
+        mesh->position.push_back(tri[1]);
+        mesh->position.push_back(tri[2]);
+      }
+      for (int i=0;i<mesh->position.size()/3;i++) {
+        mesh->triangle.push_back(Triangle(vec3i(3*i)+vec3i(0,1,2)));
+      }
+      mesh->material = new Material;
+      mesh->material->name = "OBJ";
+      mesh->material->setParam("Kd", vec3f(.7f));
+      
+      model.instance.push_back(Instance(model.mesh.size()));
+      model.mesh.push_back(mesh);
+      std::cout << "#msg: loaded .tri file of " << mesh->triangle.size() << " triangles" << std::endl;
+    }
+
+    /*! NASA 'tri' format, with three vec3fa vertices per triangle (no
+        indices in file); fourth component per vertex is typically a
+        scalar used for coloring - we ignore that for now */
+    void importTRI_xyzs(Model &model,
+                   const ospcommon::FileName &fileName)
+    {
+      FILE *file = fopen(fileName.c_str(),"rb");
+      if (!file) error("could not open input file");
 
       Mesh *mesh = new Mesh;
-      model.mesh.push_back(mesh);
 
-      mesh->position.resize(numVertices);
-      mesh->normal.resize(numVertices);
-      mesh->triangle.resize(numVertices/3);
-      rc = fread(&mesh->position[0],numVertices,4*sizeof(float),file);
-      rc = fread(&mesh->normal[0],numVertices,4*sizeof(float),file);
-      (void)rc;
-      for (int i=0;i<numVertices/3;i++) {
-        mesh->triangle[i].v0 = 3*i+0;
-        mesh->triangle[i].v1 = 3*i+1;
-        mesh->triangle[i].v2 = 3*i+2;
+      vec3fa tri[3];
+      while (fread(&tri,sizeof(vec3f),3,file) == 3) {
+        mesh->position.push_back(tri[0]);
+        mesh->position.push_back(tri[1]);
+        mesh->position.push_back(tri[2]);
       }
-      model.instance.push_back(Instance(0));
+      for (int i=0;i<mesh->position.size()/3;i++) {
+        mesh->triangle.push_back(Triangle(vec3i(3*i)+vec3i(0,1,2)));
+      }
+
+      mesh->material = new Material;
+      mesh->material->name = "OBJ";
+      mesh->material->setParam("Kd", vec3f(.7f));
+
+      model.instance.push_back(Instance(model.mesh.size()));
+      model.mesh.push_back(mesh);
+      std::cout << "#msg: loaded .tri file of " << mesh->triangle.size() << " triangles" << std::endl;
     }
 
   } // ::ospray::minisg

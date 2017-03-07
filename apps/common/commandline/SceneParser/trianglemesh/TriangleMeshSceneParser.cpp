@@ -19,11 +19,12 @@
 #include <ospray/ospray_cpp/Data.h>
 #include <common/miniSG/miniSG.h>
 
+#include <string>
+#include <iostream>
+
 using namespace ospray;
 using namespace ospcommon;
 
-#include <string>
-#include <iostream>
 using std::cerr;
 using std::endl;
 
@@ -43,15 +44,15 @@ static void warnMaterial(const std::string &type)
 // SceneParser definitions ////////////////////////////////////////////////////
 
 TriangleMeshSceneParser::TriangleMeshSceneParser(cpp::Renderer renderer,
-                                                 std::string geometryType) :
-  renderer(renderer),
-  geometryType(geometryType),
-  alpha(false),
-  shouldCreateDefaultMaterial(true),
-  maxObjectsToConsider((uint32_t)-1),
-  forceInstancing(false),
-  forceNoInstancing(false),
-  msgModel(new miniSG::Model)
+                                                 std::string geometryType)
+  : renderer(renderer),
+    geometryType(geometryType),
+    alpha(false),
+    shouldCreateDefaultMaterial(true),
+    maxObjectsToConsider((uint32_t)-1),
+    forceInstancing(false),
+    forceNoInstancing(false),
+    msgModel(new miniSG::Model)
 {
 }
 
@@ -83,7 +84,10 @@ bool TriangleMeshSceneParser::parse(int ac, const char **&av)
         miniSG::importMSG(*msgModel,fn);
         loadedScene = true;
       } else if (fn.ext() == "tri") {
-        miniSG::importTRI(*msgModel,fn);
+        miniSG::importTRI_xyz(*msgModel,fn);
+        loadedScene = true;
+      } else if (fn.ext() == "xyzs") {
+        miniSG::importTRI_xyzs(*msgModel,fn);
         loadedScene = true;
       } else if (fn.ext() == "xml") {
         miniSG::importRIVL(*msgModel,fn);
