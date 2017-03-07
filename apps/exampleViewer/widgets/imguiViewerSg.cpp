@@ -366,19 +366,6 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
                          value.size()+256,
                          ImGuiInputTextFlags_EnterReturnsTrue))
       node->setValue(std::string(buf));
-  } else if (node->type() == "TransferFunction") {
-    text += "TODO WILL";
-    ImGui::Text(text.c_str());
-    if (!node->param("transferFunctionWidget")) {
-      std::shared_ptr<sg::TransferFunction> tfn =
-          std::dynamic_pointer_cast<sg::TransferFunction>(node.get());
-      node->setParam("transferFunctionWidget", TransferFunction(tfn));
-    }
-    auto tfnWidget =
-        dynamic_cast<sg::ParamT<TransferFunction>*>(node->param("transferFunctionWidget").get());
-    assert(tfnWidget);
-    tfnWidget->value.render();
-    tfnWidget->value.drawUi();
   } else { // generic holder node
     text+=node->type();
     text += "##"+((std::ostringstream&)(std::ostringstream("")
@@ -431,6 +418,23 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
           else
             addChild = false;
         }
+
+          if (node->type() == "TransferFunction") {
+    text += "TODO WILL";
+    ImGui::Text(text.c_str());
+    if (!node->param("transferFunctionWidget")) {
+      std::shared_ptr<sg::TransferFunction> tfn =
+          std::dynamic_pointer_cast<sg::TransferFunction>(node.get());
+      node->setParam("transferFunctionWidget", TransferFunction(tfn));
+    }
+    auto tfnWidget =
+        dynamic_cast<sg::ParamT<TransferFunction>*>(node->param("transferFunctionWidget").get());
+    assert(tfnWidget);
+    tfnWidget->value.render();
+    tfnWidget->value.drawUi();
+  }
+
+
       }
 
       if (!node->isValid())

@@ -29,6 +29,12 @@ namespace ospray {
     {
       TransferFunction();
 
+      virtual void init() override
+      {
+        add(createNode("valueRange", "vec2f", vec2f(0.f,1.f)));
+        add(createNode("numSamples", "int", 256));
+      }
+
       //! \brief initialize color and alpha arrays to 'some' useful values
       void setDefaultValues();
 
@@ -43,9 +49,9 @@ namespace ospray {
       //! \brief Initialize this node's value from given corresponding XML node 
       virtual void setFromXML(const xml::Node &node, 
                               const unsigned char *binBasePtr) override;
-      virtual void commit() override;
+      // virtual void commit() override;
       
-      void setValueRange(const vec2f &range);
+      // void setValueRange(const vec2f &range);
 
       // /*! set a new color map array (using array of uniformly samples colors) */
       void setColorMap(const std::vector<vec3f> &colorArray);

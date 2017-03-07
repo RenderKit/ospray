@@ -72,8 +72,6 @@ vec4f SciVisRenderer_computeVolumeSample(SciVisRenderer *uniform renderer,
       shadedColor = shadedColor + sampleColor * cosNL * light.weight * one_over_pi /*BRDF normalization to match surface shading*/;
     }
 
-    //sampleColor = shadedColor;
-
     dg.color = make_vec4f(sampleColor, 1);
     dg.Ng = dg.Ns;
     SciVisShadingInfo info;
@@ -111,6 +109,7 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
   float tSkipped = -1;  //for adaptive, skip adapting sampling rate up to this value
   vec4f intervalColor = make_vec4f(0.f);
   volume->intersect(volume, ray);
+  tBegin = ray.t0+renderer->volumeEpsilon;
   // const uniform float oneOverQuality = (1.f/quality);
   float samplingRate = volume->samplingRate*quality;
   float lastSample = -1.f;

@@ -71,40 +71,42 @@ namespace ospray {
       return alphaArray.back().second;
     }
 
-    void TransferFunction::setValueRange(const vec2f &range)
-    {
-      valueRange = range;
-      markAsModified();
-    }
+    // void TransferFunction::setValueRange(const vec2f &range)
+    // {
+    //   valueRange = range;
+    //   markAsModified();
+    // }
 
     //! \brief commit the current field values to ospray
-    void TransferFunction::commit()
-    {
-      ospSetVec2f(ospTransferFunction,"valueRange",{valueRange.x,valueRange.y});
-      if (ospColorData == nullptr) {
-        // for now, no resampling - just use the colors ...
-        vec3f *colors = (vec3f*)alloca(sizeof(vec3f)*colorArray.size());
-        for (uint32_t i = 0; i < colorArray.size(); i++)
-          colors[i] = colorArray[i].second;
-        ospColorData = ospNewData(colorArray.size(),OSP_FLOAT3,colors);
-        ospCommit(ospColorData);
-        ospSetData(ospTransferFunction,"colors",ospColorData);
-      }
-      if (ospAlphaData == nullptr) {
-        float *alpha = (float*)alloca(sizeof(float)*numSamples);
-        float x0 = alphaArray.front().first;
-        float dx = (alphaArray.back().first - x0) / (numSamples-1);
+    // void TransferFunction::commit()
+    // {
+      // ospSetVec2f(ospTransferFunction,"valueRange",
+      //   child["valueRange"]->valueAs<vec2f>());
+      // int numSamples = child("numSamples")->valueAs<int>();
+    //   if (ospColorData == nullptr) {
+    //     // for now, no resampling - just use the colors ...
+    //     vec3f *colors = (vec3f*)alloca(sizeof(vec3f)*colorArray.size());
+    //     for (uint32_t i = 0; i < colorArray.size(); i++)
+    //       colors[i] = colorArray[i].second;
+    //     ospColorData = ospNewData(colorArray.size(),OSP_FLOAT3,colors);
+    //     ospCommit(ospColorData);
+    //     ospSetData(ospTransferFunction,"colors",ospColorData);
+    //   }
+    //   if (ospAlphaData == nullptr) {
+    //     float *alpha = (float*)alloca(sizeof(float)*numSamples);
+    //     float x0 = alphaArray.front().first;
+    //     float dx = (alphaArray.back().first - x0) / (numSamples-1);
 
-        for (int i=0;i<numSamples;i++)
-          alpha[i] = interpolatedAlpha(i * dx);
+    //     for (int i=0;i<numSamples;i++)
+    //       alpha[i] = interpolatedAlpha(i * dx);
 
-        ospAlphaData = ospNewData(numSamples,OSP_FLOAT,alpha);
-        ospCommit(ospAlphaData);
-        ospSetData(ospTransferFunction,"opacities",ospAlphaData);
-      }
-      ospCommit(ospTransferFunction);
-      markAsCommitted();
-    }
+    //     ospAlphaData = ospNewData(numSamples,OSP_FLOAT,alpha);
+    //     ospCommit(ospAlphaData);
+    //     ospSetData(ospTransferFunction,"opacities",ospAlphaData);
+    //   }
+    //   ospCommit(ospTransferFunction);
+    //   markAsCommitted();
+    // }
 
     void TransferFunction::render(RenderContext &ctx)
     {
@@ -122,6 +124,7 @@ namespace ospray {
         setValue((OSPObject)ospTransferFunction);
       }
 
+      vec2f valueRange = child("valueRange")->valueAs<vec2f>();
       ospSetVec2f(ospTransferFunction,"valueRange",{valueRange.x,valueRange.y});
 
       if (ospColorData == nullptr && colorArray.size()) {

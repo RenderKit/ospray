@@ -318,7 +318,8 @@ namespace ospray {
       fclose(file);
 
       child("voxelRange")->setValue(voxelRange);
-      transferFunction->setValueRange(voxelRange);
+      // transferFunction->setValueRange(voxelRange);
+      transferFunction->child("valueRange")->setValue(voxelRange);
       transferFunction->preCommit(ctx);
       transferFunction->render(ctx);
 
