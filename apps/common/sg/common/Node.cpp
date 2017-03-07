@@ -184,6 +184,12 @@ namespace ospray {
       postTraverse(ctx, operation);
     }
 
+    void Node::traverse(const std::string &operation)
+    {
+      RenderContext ctx;
+      traverse(ctx, operation);
+    }
+
     void Node::preTraverse(RenderContext &ctx, const std::string& operation)
     {
       if (operation == "print") {

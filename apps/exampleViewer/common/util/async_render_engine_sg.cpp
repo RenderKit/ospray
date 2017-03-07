@@ -28,8 +28,6 @@ namespace ospray {
 
     void async_render_engine_sg::run()
     {
-      sg::RenderContext ctx;
-
       while (state == ExecState::RUNNING) {
         static sg::TimeStamp lastFTime;
 
@@ -46,12 +44,12 @@ namespace ospray {
         fps.startRender();
 
         if (scenegraph->childrenLastModified() > lastRTime) {
-          scenegraph->traverse(ctx, "verify");
-          scenegraph->traverse(ctx, "commit");
+          scenegraph->traverse("verify");
+          scenegraph->traverse("commit");
           lastRTime = sg::TimeStamp();
         }
 
-        scenegraph->traverse(ctx, "render");
+        scenegraph->traverse("render");
 
         fps.doneRender();
         auto sgFBptr = std::static_pointer_cast<sg::FrameBuffer>(sgFB.get());

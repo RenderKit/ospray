@@ -97,8 +97,6 @@ int main(int ac, const char **av)
 
   parseFilesFromCommandLine(ac, av);
 
-  sg::RenderContext ctx;
-
   auto renderer = sg::createNode("renderer", "Renderer");
   renderer["shadowsEnabled"]->setValue(true);
   renderer["aoSamples"]->setValue(1);
@@ -133,11 +131,11 @@ int main(int ac, const char **av)
   }
 
   if (debug) {
-    renderer->traverse(ctx, "verify");
-    renderer->traverse(ctx, "print");
+    renderer->traverse("verify");
+    renderer->traverse("print");
   }
 
-  renderer->traverse(ctx, "commit");
+  renderer->traverse("commit");
 
   ospray::ImGuiViewerSg window(renderer);
   if (addPlane) addPlaneToScene(world);

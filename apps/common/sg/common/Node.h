@@ -368,6 +368,10 @@ namespace ospray {
       //  print,commit,render or custom operations
       virtual void traverse(RenderContext &ctx, const std::string& operation);
 
+      //! Helper overload to use a default constructed RenderContext for root
+      //  level traversal
+      void traverse(const std::string& operation);
+
       //! called before traversing children
       virtual void preTraverse(RenderContext &ctx,
                                const std::string& operation);
