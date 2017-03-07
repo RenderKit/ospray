@@ -20,38 +20,20 @@
 #include "sg/geometry/Geometry.h"
 #include "sg/common/Data.h"
 #include "sg/common/World.h"
-#include "common/sg/SceneGraph.h"
 
 namespace ospray {
   namespace sg {
-
-    struct Importer : public sg::InstanceGroup
-    {
-      Importer() = default;
-
-      virtual void init() override
-      {
-        InstanceGroup::init();
-        add(createNode("fileName", "string"));
-      }
-
-      virtual void setChildrenModified(TimeStamp t) override;
-
-      std::string loadedFileName;
-    };
 
     /*! A Simple Triangle Mesh that stores vertex, normal, texcoord,
         and vertex color in separate arrays */
     struct TriangleMesh : public sg::Geometry
     {
-
-      //! constructor
-      TriangleMesh() : Geometry("trianglemesh"), ospGeometry(nullptr) {}
+      TriangleMesh() : Geometry("trianglemesh") {}
 
       virtual void init() override;
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual std::string toString() const { return "ospray::sg::Geometry"; }
+      virtual std::string toString() const;
 
       //! return bounding box of all primitives
       virtual box3f bounds() const override;
@@ -80,9 +62,9 @@ namespace ospray {
       virtual void setFromXML(const xml::Node *const node,
                               const unsigned char *binBasePtr);
 
-      OSPGeometry ospGeometry;
-      OSPGeometry ospGeometryInstance;
-      OSPModel    ospModel;
+      OSPGeometry ospGeometry {nullptr};
+      OSPGeometry ospGeometryInstance {nullptr};
+      OSPModel    ospModel {nullptr};
 
       // to allow memory-mapping triangle arrays (or in general,
       // sharing data with an application) we use data arrays, not std::vector's

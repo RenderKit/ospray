@@ -32,6 +32,21 @@ namespace ospray {
       {}
     };
 
+    struct Importer : public sg::InstanceGroup
+    {
+      Importer() = default;
+
+      virtual void init() override
+      {
+        InstanceGroup::init();
+        add(createNode("fileName", "string"));
+      }
+
+      virtual void setChildrenModified(TimeStamp t) override;
+
+      std::string loadedFileName;
+    };
+
     /*! prototype for any scene graph importer function */
     using ImporterFunction = void (*)(const FileName &fileName,
                                       sg::ImportState &importerState);

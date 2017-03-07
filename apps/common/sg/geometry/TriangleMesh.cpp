@@ -21,11 +21,14 @@
 namespace ospray {
   namespace sg {
 
-    OSP_REGISTER_SG_NODE(Importer);
-
     void TriangleMesh::init()
     {
       add(createNode("material", "Material"));
+    }
+
+    std::string TriangleMesh::toString() const
+    {
+      return "ospray::sg::Geometry";
     }
 
     box3f TriangleMesh::bounds() const
@@ -163,46 +166,6 @@ namespace ospray {
                      (OSPMaterial)child("material")->valueAs<OSPObject>());
       ospCommit(ospGeometry);
       ospAddGeometry(ctx.world->ospModel,ospGeometry);
-    }
-
-    void Importer::setChildrenModified(TimeStamp t)
-    {
-      Node::setChildrenModified(t);
-      ospcommon::FileName file(child("fileName")->valueAs<std::string>());
-
-      if (file.str() == loadedFileName)
-        return;
-
-      std::cout << "attempting importing file: " << file.str() << std::endl;
-
-      if (loadedFileName != "" || file.str() == "")
-        return; //TODO: support dynamic re-loading, need to clear children first
-
-      loadedFileName = "";
-
-      if (file.ext() == "obj")
-      {
-        std::cout << "importing file: " << file.str() << std::endl;
-        sg::importOBJ(std::static_pointer_cast<sg::World>(shared_from_this()), file);
-      }
-      else if (file.ext() == "ply")
-      {
-        std::shared_ptr<sg::World> wsg(std::dynamic_pointer_cast<sg::World>(shared_from_this()));
-        sg::importPLY(wsg, file);
-      }
-      else if (file.ext() == "osg" || file.ext() == "osp")
-      {
-        std::shared_ptr<sg::World> wsg(std::dynamic_pointer_cast<sg::World>(shared_from_this()));
-        sg::loadOSP(file, wsg);
-        instanced = false;
-      }
-      else
-      {
-        std::cout << "unsupported file format\n";
-        return;
-      }
-
-      loadedFileName = file.str();
     }
 
     OSP_REGISTER_SG_NODE(TriangleMesh);
