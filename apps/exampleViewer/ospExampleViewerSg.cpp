@@ -41,10 +41,7 @@ void parseFilesFromCommandLine(int ac, const char **&av)
     } else if (arg == "-d" || arg == "--debug") {
       debug = true;
     } else {
-      FileName fileName = std::string(av[i]);
-      auto ext = fileName.ext();
-      if (ext == "obj" || ext == "osg" || ext == "ply" || ext == "osp")
-        files.push_back(av[i]);
+      files.push_back(av[i]);
     }
   }
 }
