@@ -102,7 +102,25 @@ namespace glutViewer {
     ospray::cpp::Renderer renderer;
     ospray::cpp::Camera   camera;
 
+<<<<<<< HEAD
     std::tie(bbox, model, renderer, camera) = ospObjs;
+=======
+  std::tie(bbox, model, renderer, camera) = ospObjs;
+
+#if 1
+  if (model.size() > 1) {
+    ospray::cpp::Model jointModel;
+    for (int i=0;i<model.size();i++) {
+      ospcommon::affine3f xfm = ospcommon::one;
+      ospray::cpp::Geometry asInstance = model[i].createInstance(xfm);
+      jointModel.addGeometry(asInstance);
+    }
+    jointModel.commit();
+    model.clear();
+    model.push_back(jointModel);
+  }
+#endif
+>>>>>>> 435392f0dd87d6d849c46435a84e61b6432f07c1
 
     parseExtraParametersFromComandLine(ac, av);
 
