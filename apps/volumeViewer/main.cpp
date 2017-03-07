@@ -160,10 +160,12 @@ int main(int argc, char *argv[])
     } else if (arg == "--transferfunction") {
       if (i + 1 >= argc) throw std::runtime_error("missing <filename> argument");
       transferFunctionFilename = std::string(argv[++i]);
-      std::cout << "got transferFunctionFilename = " << transferFunctionFilename << std::endl;
+      std::cout << "got transferFunctionFilename = "
+                << transferFunctionFilename << std::endl;
     } else if (arg == "--benchmark") {
       renderInBackground = true;
-      if (i + 3 >= argc) throw std::runtime_error("missing <warm-up frames> <frames> <filename> arguments");
+      if (i + 3 >= argc)
+        throw std::runtime_error("missing <warm-up frames> <frames> <filename> arguments");
       benchmarkWarmUpFrames = atoi(argv[++i]);
       benchmarkFrames = atoi(argv[++i]);
       benchmarkFilename = argv[++i];
@@ -180,7 +182,8 @@ int main(int argc, char *argv[])
         arg2.replace(pos, 1, " ");
         std::stringstream ss(arg2);
         ss >> viewSizeWidth >> viewSizeHeight;
-        std::cout << "got viewSizeWidth = " << viewSizeWidth << ", viewSizeHeight = " << viewSizeHeight << std::endl;
+        std::cout << "got viewSizeWidth = " << viewSizeWidth
+                  << ", viewSizeHeight = " << viewSizeHeight << std::endl;
       } else throw std::runtime_error("improperly formatted <width>x<height> argument");
     } else if (arg == "--ambientLight") {
       if (i + 1 >= argc) throw std::runtime_error("missing light argument");
@@ -195,13 +198,15 @@ int main(int argc, char *argv[])
       fovy = atof(argv[++i]);
     } else if (arg == "-vu") {
 
-      if (i + 3 >= argc) throw std::runtime_error("missing <x> <y> <z> arguments");
+      if (i + 3 >= argc)
+        throw std::runtime_error("missing <x> <y> <z> arguments");
 
       viewUp.x = atof(argv[++i]);
       viewUp.y = atof(argv[++i]);
       viewUp.z = atof(argv[++i]);
 
-      std::cout << "got viewup (-vu) = " << viewUp.x << " " << viewUp.y << " " << viewUp.z << std::endl;
+      std::cout << "got viewup (-vu) = " << viewUp.x << " "
+                << viewUp.y << " " << viewUp.z << std::endl;
 
     } else if (arg == "-vp") {
 
@@ -211,7 +216,8 @@ int main(int argc, char *argv[])
       viewFrom.y = atof(argv[++i]);
       viewFrom.z = atof(argv[++i]);
 
-      std::cout << "got view-from (-vp) = " << viewFrom.x << " " << viewFrom.y << " " << viewFrom.z << std::endl;
+      std::cout << "got view-from (-vp) = " << viewFrom.x << " "
+                << viewFrom.y << " " << viewFrom.z << std::endl;
 
     } else if (arg == "-vi") {
 
@@ -221,11 +227,13 @@ int main(int argc, char *argv[])
       viewAt.y = atof(argv[++i]);
       viewAt.z = atof(argv[++i]);
 
-      std::cout << "got view-at (-vi) = " << viewAt.x << " " << viewAt.y << " " << viewAt.z << std::endl;
+      std::cout << "got view-at (-vi) = " << viewAt.x << " "
+                << viewAt.y << " " << viewAt.z << std::endl;
 
     } else if (arg == "--writeframes") {
 
-      if (i + 1 >= argc || argv[i + 1][0] == '-') throw std::runtime_error("the '--writeframes' option requires a filename argument");
+      if (i + 1 >= argc || argv[i + 1][0] == '-')
+        throw std::runtime_error("the '--writeframes' option requires a filename argument");
       writeFramesFilename = argv[++i];
       std::cout << "got writeFramesFilename = " << writeFramesFilename << std::endl;
 
@@ -239,7 +247,8 @@ int main(int argc, char *argv[])
       if(error != 0) {
         std::ostringstream ss;
         ss << error;
-        throw std::runtime_error("could not load module " + moduleName + ", error " + ss.str());
+        throw std::runtime_error("could not load module " + moduleName
+                                 + ", error " + ss.str());
       }
     } else if (arg == "-h" || arg == "--help") {
       printUsage(argv[0]);
@@ -262,10 +271,12 @@ int main(int argc, char *argv[])
                                                 fullScreen,
                                                 writeFramesFilename);
 
-  volumeViewer->getLightEditor()->setAmbientLightIntensity(ambientLightIntensity);
-  volumeViewer->getLightEditor()->setDirectionalLightIntensity(directionalLightIntensity);
-  volumeViewer->getLightEditor()->setDirectionalLightAzimuth(directionalLightAzimuth);
-  volumeViewer->getLightEditor()->setDirectionalLightElevation(directionalLightElevation);
+  auto *lightEditor = volumeViewer->getLightEditor();
+
+  lightEditor->setAmbientLightIntensity(ambientLightIntensity);
+  lightEditor->setDirectionalLightIntensity(directionalLightIntensity);
+  lightEditor->setDirectionalLightAzimuth(directionalLightAzimuth);
+  lightEditor->setDirectionalLightElevation(directionalLightElevation);
 
   volumeViewer->setSamplingRate(samplingRate);
   volumeViewer->setAdaptiveMaxSamplingRate(maxSamplingRate);
@@ -315,7 +326,8 @@ int main(int argc, char *argv[])
   volumeViewer->getWindow()->getViewport()->fovY = fovy;
 
   // Set the window size if specified.
-  if (viewSizeWidth != 0 && viewSizeHeight != 0) volumeViewer->getWindow()->setFixedSize(viewSizeWidth, viewSizeHeight);
+  if (viewSizeWidth != 0 && viewSizeHeight != 0)
+    volumeViewer->getWindow()->setFixedSize(viewSizeWidth, viewSizeHeight);
 
 
   // Set the view up vector if specified.

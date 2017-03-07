@@ -41,16 +41,16 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
     modelIndex(0),
     ownModelPerObject(ownModelPerObject),
     boundingBox(ospcommon::vec3f(0.f), ospcommon::vec3f(1.f)),
-    renderer(NULL),
+    renderer(nullptr),
     rendererInitialized(false),
-    transferFunction(NULL),
-    ambientLight(NULL),
-    directionalLight(NULL),
-    osprayWindow(NULL),
-    annotationRenderer(NULL),
-    transferFunctionEditor(NULL),
-    isosurfaceEditor(NULL),
-    autoRotateAction(NULL),
+    transferFunction(nullptr),
+    ambientLight(nullptr),
+    directionalLight(nullptr),
+    osprayWindow(nullptr),
+    annotationRenderer(nullptr),
+    transferFunctionEditor(nullptr),
+    isosurfaceEditor(nullptr),
+    autoRotateAction(nullptr),
     autoRotationRate(0.025f),
     usePlane(-1),
     samplingRate(-1),
@@ -70,7 +70,8 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
   // Create and configure the OSPRay state.
   initObjects(renderer_type);
 
-  // Create an OSPRay window and set it as the central widget, but don't let it start rendering until we're done with setup.
+  // Create an OSPRay window and set it as the central widget, but don't let
+  // it start rendering until we're done with setup.
   osprayWindow = new QOSPRayWindow(this, this->renderer,
                                    showFrameRate, writeFramesFilename);
   setCentralWidget(osprayWindow);
@@ -123,7 +124,8 @@ void VolumeViewer::setModel(size_t index)
 
   PRINT(modelStates[index].volumes.size());
   if (!modelStates[index].volumes.empty()) {
-    // Update transfer function and isosurface editor data value range with the voxel range of the current model's first volume.
+    //! Update transfer function and isosurface editor data value range with the
+    //  voxel range of the current model's first volume.
     OSPVolume volume = modelStates[index].volumes[0]->handle;
     ospcommon::vec2f voxelRange = modelStates[index].volumes[0]->voxelRange;
     
@@ -136,10 +138,29 @@ void VolumeViewer::setModel(size_t index)
     probeWidget->setVolume(modelStates[index].volumes[0]->handle);
     
     // Update current filename information label.
-    if (ownModelPerObject)
-      currentFilenameInfoLabel.setText("<b>Timestep " + QString::number(index) + QString("</b>: Data value range: [") + QString::number(voxelRange.x) + ", " + QString::number(voxelRange.y) + "]");
-    else
-      currentFilenameInfoLabel.setText("<b>Timestep " + QString::number(index) + QString("</b>: ") + QString(objectFileFilenames[index].c_str()).split('/').back() + ". Data value range: [" + QString::number(voxelRange.x) + ", " + QString::number(voxelRange.y) + "]");
+    if (ownModelPerObject) {
+      currentFilenameInfoLabel.setText(
+        "<b>Timestep "
+        + QString::number(index)
+        + QString("</b>: Data value range: [")
+        + QString::number(voxelRange.x)
+        + ", "
+        + QString::number(voxelRange.y)
+        + "]"
+      );
+    } else {
+      currentFilenameInfoLabel.setText(
+        "<b>Timestep "
+        + QString::number(index)
+        + QString("</b>: ")
+        + QString(objectFileFilenames[index].c_str()).split('/').back()
+        + ". Data value range: ["
+        + QString::number(voxelRange.x)
+        + ", "
+        + QString::number(voxelRange.y)
+        + "]"
+      );
+    }
   }
   // Enable rendering on the OSPRay window.
   osprayWindow->setRenderingEnabled(true);
@@ -152,10 +173,10 @@ std::string VolumeViewer::toString() const
 
 void VolumeViewer::autoRotate(bool set)
 {
-  if(osprayWindow == NULL)
+  if(osprayWindow == nullptr)
     return;
 
-  if(autoRotateAction != NULL)
+  if(autoRotateAction != nullptr)
     autoRotateAction->setChecked(set);
 
   if(set) {
@@ -193,20 +214,17 @@ void VolumeViewer::addSlice(std::string filename)
 
 void VolumeViewer::addGeometry(std::string filename)
 {
-  // For now we assume PLY geometry files. Later we can support other geometry formats.
-
   // Get filename if not specified.
-  if(filename.empty())
-    filename = QFileDialog::getOpenFileName(this, tr("Load geometry"), ".", "Geometry files (*)").toStdString();
+  if(filename.empty()) {
+    filename = QFileDialog::getOpenFileName(this,
+                                            tr("Load geometry"),
+                                            ".",
+                                            "Geometry files (*)").toStdString();
+  }
 
   if(filename.empty())
     return;
 
-  // Attempt to load the geometry through the TriangleMeshFile loader.
-  // OSPGeometry triangleMesh = ospNewGeometry("trianglemesh");
-
-  // If successful, commit the triangle mesh and add it to all models.
-  // if(TriangleMeshFile::importTriangleMesh(filename, triangleMesh) != NULL) {
   ospcommon::FileName fn = filename;
   ospray::miniSG::Model* msgModel = new miniSG::Model;
   bool loadedSGScene = false;
@@ -241,7 +259,9 @@ void VolumeViewer::addGeometry(std::string filename)
 
     OSPGeometry triangleMesh = newStuff->geometry[0]->handle;
   // For now: if this is a DDS geometry, assume it is a horizon and its color should be mapped through the first volume's transfer function.
-    if(QString(filename.c_str()).endsWith(".dds") && modelStates.size() > 0 && modelStates[0].volumes.size() > 0) {
+    if(QString(filename.c_str()).endsWith(".dds")
+       && modelStates.size() > 0
+       && modelStates[0].volumes.size() > 0) {
 
       OSPMaterial material = ospNewMaterial(renderer, "default");
       ospSet3f(material, "Kd", 1,1,1);
@@ -251,14 +271,13 @@ void VolumeViewer::addGeometry(std::string filename)
       ospSetMaterial(triangleMesh, material);
       ospCommit(triangleMesh);
 
-  // Create an instance of the geometry and add the instance to the main model(s)--this prevents the geometry
-  // from being rebuilt every time the main model is committed (e.g. when slices / isosurfaces are manipulated)
       OSPModel modelInstance = ospNewModel();
       ospAddGeometry(modelInstance, triangleMesh);
       ospCommit(modelInstance);
 
       ospcommon::affine3f xfm = ospcommon::one;
-      OSPGeometry triangleMeshInstance = ospNewInstance(modelInstance, (osp::affine3f&)xfm);
+      OSPGeometry triangleMeshInstance = ospNewInstance(modelInstance,
+                                                        (osp::affine3f&)xfm);
       ospCommit(triangleMeshInstance);
 
       for(size_t i=0; i<modelStates.size(); i++) {
@@ -267,8 +286,8 @@ void VolumeViewer::addGeometry(std::string filename)
       }
     }
   }
-  if (loadedSGScene)
-  {
+
+  if (loadedSGScene) {
     std::vector<OSPModel> instanceModels;
 
     for (size_t i = 0; i < msgModel->mesh.size(); i++) {
@@ -355,7 +374,7 @@ void VolumeViewer::commitVolumes()
 
 void VolumeViewer::render()
 {
-  if (osprayWindow != NULL) {
+  if (osprayWindow != nullptr) {
     osprayWindow->resetAccumulationBuffer();
     osprayWindow->updateGL();
   }
@@ -367,11 +386,12 @@ void VolumeViewer::setRenderAnnotationsEnabled(bool value)
     if (!annotationRenderer)
       annotationRenderer = new OpenGLAnnotationRenderer(this);
 
-    connect(osprayWindow, SIGNAL(renderGLComponents()), annotationRenderer, SLOT(render()), Qt::UniqueConnection);
+    connect(osprayWindow, SIGNAL(renderGLComponents()), annotationRenderer,
+            SLOT(render()), Qt::UniqueConnection);
   }
   else {
     delete annotationRenderer;
-    annotationRenderer = NULL;
+    annotationRenderer = nullptr;
   }
 
   render();
@@ -730,7 +750,7 @@ void VolumeViewer::importObjectsFromFile(const std::string &filename)
       modelStates.push_back(ModelState(ospNewModel()));
     
     OSPDataType type;
-    ospGetType(objects[i], NULL, &type);
+    ospGetType(objects[i], nullptr, &type);
     
     if (type == OSP_GEOMETRY) {
       
@@ -767,11 +787,10 @@ void VolumeViewer::initObjects(const std::string &renderer_type)
 {
   // Create an OSPRay renderer.
   renderer = ospNewRenderer(renderer_type.c_str());
-  exitOnCondition(renderer == NULL, "could not create OSPRay renderer object");
+  exitOnCondition(renderer == nullptr, "could not create OSPRay renderer object");
 
   // Set renderer defaults (if not using 'aoX' renderers)
-  if (renderer_type[0] != 'a' && renderer_type[1] != 'o')
-  {
+  if (renderer_type[0] != 'a' && renderer_type[1] != 'o') {
     ospSet1i(renderer, "aoSamples", 1);
     ospSet1i(renderer, "shadowsEnabled", 1);
     ospSet1i(renderer, "aoTransparencyEnabled", 1);
@@ -779,12 +798,13 @@ void VolumeViewer::initObjects(const std::string &renderer_type)
 
   // Create OSPRay ambient and directional lights. GUI elements will modify their parameters.
   ambientLight = ospNewLight(renderer, "AmbientLight");
-  exitOnCondition(ambientLight == NULL, "could not create ambient light");
+  exitOnCondition(ambientLight == nullptr, "could not create ambient light");
   ospSet3f(ambientLight, "color", 0.3f, 0.5f, 1.f);
   ospCommit(ambientLight);
 
   directionalLight = ospNewLight(renderer, "DirectionalLight");
-  exitOnCondition(directionalLight == NULL, "could not create directional light");
+  exitOnCondition(directionalLight == nullptr,
+                  "could not create directional light");
   ospSet3f(directionalLight, "color", 1.f, 0.9f, 0.4f);
   ospCommit(directionalLight);
 
@@ -803,18 +823,20 @@ void VolumeViewer::initObjects(const std::string &renderer_type)
   } else {
     transferFunction = ospNewTransferFunction("piecewise_linear");
   }
-  exitOnCondition(transferFunction == NULL, "could not create OSPRay transfer function object");
+  exitOnCondition(transferFunction == nullptr,
+                  "could not create OSPRay transfer function object");
   ospCommit(transferFunction);
 
   // Load OSPRay objects from files.
   for (size_t i=0 ; i < objectFileFilenames.size() ; i++)
     importObjectsFromFile(objectFileFilenames[i]);
 
-
   boundingBox = ospcommon::empty;
   if (!modelStates.empty()) {
     for (size_t i=0; i<modelStates[0].volumes.size(); i++) 
       boundingBox.extend(modelStates[0].volumes[i]->boundingBox);
+  } else {
+    modelStates.push_back(ospNewModel());
   }
   PRINT(boundingBox);
 
@@ -910,7 +932,8 @@ void VolumeViewer::initUserInterfaceWidgets()
   connect(screenshotAction, SIGNAL(triggered()), this, SLOT(screenshot()));
   toolbar->addAction(screenshotAction);
 
-  // Create the transfer function editor dock widget, this widget modifies the transfer function directly.
+  // Create the transfer function editor dock widget, this widget modifies
+  // the transfer function directly.
   QDockWidget *transferFunctionEditorDockWidget = new QDockWidget("Transfer Function", this);
   transferFunctionEditor = new TransferFunctionEditor(transferFunction);
   transferFunctionEditorDockWidget->setWidget(transferFunctionEditor);
@@ -918,21 +941,24 @@ void VolumeViewer::initUserInterfaceWidgets()
   connect(transferFunctionEditor, SIGNAL(committed()), this, SLOT(render()));
   addDockWidget(Qt::LeftDockWidgetArea, transferFunctionEditorDockWidget);
 
-  // Set the transfer function editor widget to its minimum allowed height, to leave room for other dock widgets.
+  // Set the transfer function editor widget to its minimum allowed height,
+  // to leave room for other dock widgets.
   transferFunctionEditor->setMaximumHeight(transferFunctionEditor->minimumSize().height());
 
   // Create slice editor dock widget.
   QDockWidget *sliceEditorDockWidget = new QDockWidget("Slices", this);
   sliceEditor = new SliceEditor(boundingBox);
   sliceEditorDockWidget->setWidget(sliceEditor);
-  connect(sliceEditor, SIGNAL(slicesChanged(std::vector<SliceParameters>)), this, SLOT(setSlices(std::vector<SliceParameters>)));
+  connect(sliceEditor, SIGNAL(slicesChanged(std::vector<SliceParameters>)),
+          this, SLOT(setSlices(std::vector<SliceParameters>)));
   addDockWidget(Qt::LeftDockWidgetArea, sliceEditorDockWidget);
 
   // Create isosurface editor dock widget.
   QDockWidget *isosurfaceEditorDockWidget = new QDockWidget("Isosurfaces", this);
   isosurfaceEditor = new IsosurfaceEditor();
   isosurfaceEditorDockWidget->setWidget(isosurfaceEditor);
-  connect(isosurfaceEditor, SIGNAL(isovaluesChanged(std::vector<float>)), this, SLOT(setIsovalues(std::vector<float>)));
+  connect(isosurfaceEditor, SIGNAL(isovaluesChanged(std::vector<float>)),
+          this, SLOT(setIsovalues(std::vector<float>)));
   addDockWidget(Qt::LeftDockWidgetArea, isosurfaceEditorDockWidget);
 
   // Create the light editor dock widget, this widget modifies the light directly.
