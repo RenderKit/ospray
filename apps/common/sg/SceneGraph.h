@@ -106,9 +106,9 @@ namespace ospray {
                                    const FileName &fileName);
 
     OSPSG_INTERFACE std::shared_ptr<sg::World> loadOSP(const std::string &fileName);
-    OSPSG_INTERFACE void loadOSP(const std::string &fileName, std::shared_ptr<sg::World> world);
+    OSPSG_INTERFACE void loadOSP(std::shared_ptr<sg::World> world, const std::string &fileName);
     OSPSG_INTERFACE std::shared_ptr<sg::World> readXML(const std::string &fileName);
-    OSPSG_INTERFACE std::shared_ptr<sg::World> importRIVL(const std::string &fileName);
+    OSPSG_INTERFACE void importRIVL(std::shared_ptr<World> world, const std::string &fileName);
     OSPSG_INTERFACE std::shared_ptr<sg::World> loadOSG(const std::string &fileName);
 
     OSPSG_INTERFACE void loadOSG(const std::string &fileName,

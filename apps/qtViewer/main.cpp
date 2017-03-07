@@ -195,8 +195,6 @@ namespace ospray {
           FileName fn = arg;
           if (fn.ext() == "osp" || fn.ext() == "osg" || fn.ext() == "pkd") {
             world = sg::loadOSP(fn.str());
-            // } else if (fn.ext() == "atom") {
-            //   world = sg::AlphaSpheres::importOspAtomFile(fn.str());
           } else if ((fn.ext() == "ply") || 
                      ((fn.ext() == "gz") && (fn.dropExt().ext() == "ply"))) {
             sg::importPLY(world,fn);
@@ -204,7 +202,7 @@ namespace ospray {
             sg::importOBJ(world,fn);
           } else if (fn.ext() == "xml") {
             std::cout << "#osp:qtv: reading RIVL file " << arg << std::endl;
-            world = sg::importRIVL(arg);
+            sg::importRIVL(world,arg);
           } else 
             sg::importFile(world,fn);
         }

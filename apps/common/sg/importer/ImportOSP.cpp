@@ -224,7 +224,7 @@ namespace ospray {
       world->add(volume);
     }
 
-    void loadOSP(const std::string &fileName, std::shared_ptr<sg::World> world)
+    void loadOSP(std::shared_ptr<sg::World> world, const std::string &fileName)
     {
       std::shared_ptr<xml::XMLDoc> doc;
       // std::shared_ptr<xml::XMLDoc> doc = NULL;
@@ -280,7 +280,7 @@ namespace ospray {
     std::shared_ptr<sg::World> loadOSP(const std::string &fileName)
     {
       NodeH world = createNode("world", "World");
-      loadOSP(fileName, std::static_pointer_cast<sg::World>(world.get()));
+      loadOSP(std::static_pointer_cast<sg::World>(world.get()), fileName);
 
       return std::static_pointer_cast<sg::World>(world.get());
     }

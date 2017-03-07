@@ -16,8 +16,6 @@
 
 #undef NDEBUG
 
-#define WARN_ON_INCLUDING_OSPCOMMON 1
-
 #include "SceneGraph.h"
 #include "sg/common/Texture2D.h"
 #include "sg/geometry/TriangleMesh.h"
@@ -349,7 +347,8 @@ namespace ospray {
       world->add(lastNode);
     }
 
-    std::shared_ptr<sg::World> importRIVL(const std::string &fileName)
+    void importRIVL(std::shared_ptr<sg::World> world,
+                    const std::string &fileName)
     {
       string xmlFileName = fileName;
       string binFileName = fileName+".bin";
@@ -365,10 +364,8 @@ namespace ospray {
       if (doc->child.size() != 1 || doc->child[0]->name != "BGFscene")
         throw std::runtime_error("could not parse RIVL file: Not in RIVL format!?");
       const xml::Node &root_element = *doc->child[0];
-      std::shared_ptr<World> world = std::make_shared<World>();
       parseBGFscene(world,root_element);
       PRINT(world->bounds());
-      return world;
     }
 
   } // ::ospray::sg

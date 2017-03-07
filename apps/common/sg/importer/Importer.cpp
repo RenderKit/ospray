@@ -71,8 +71,11 @@ namespace ospray {
         sg::importPLY(wsg, file);
       } else if (file.ext() == "osg" || file.ext() == "osp") {
         std::shared_ptr<sg::World> wsg(std::dynamic_pointer_cast<sg::World>(shared_from_this()));
-        sg::loadOSP(file, wsg);
+        sg::loadOSP(wsg, file);
         instanced = false;
+      } else if (file.ext() == "xml") {
+        std::shared_ptr<sg::World> wsg(std::dynamic_pointer_cast<sg::World>(shared_from_this()));
+        sg::importRIVL(wsg, file);
       } else {
         std::cout << "unsupported file format\n";
         return;
