@@ -560,6 +560,14 @@ namespace ospray {
                 n->name().c_str(), &n->valueAs<vec3f>().x);
     }
 
+
+    template <>
+    inline void NodeParamCommit<vec2f>::commit(std::shared_ptr<Node> n)
+    {
+      ospSet3fv(n->parent()->valueAs<OSPObject>(),
+                n->name().c_str(), &n->valueAs<vec2f>().x);
+    }
+
     template <typename T>
     struct NodeParam : public Node
     {

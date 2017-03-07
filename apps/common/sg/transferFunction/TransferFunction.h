@@ -42,9 +42,10 @@ namespace ospray {
       virtual std::string toString() const override;
 
       //! \brief creates ospray-side object(s) for this node
-      virtual void render(RenderContext &ctx) override;
+      // virtual void render(RenderContext &ctx) override;
 
-      void preCommit(RenderContext &ctx);
+      virtual void preCommit(RenderContext &ctx) override;
+      virtual void postCommit(RenderContext &ctx) override;
 
       //! \brief Initialize this node's value from given corresponding XML node 
       virtual void setFromXML(const xml::Node &node, 
@@ -74,7 +75,7 @@ namespace ospray {
       OSPTransferFunction ospTransferFunction {nullptr};
       OSPData ospColorData {nullptr};
       OSPData ospAlphaData {nullptr};
-      vec2f   valueRange   {0.f, 1.f};
+      // vec2f   valueRange   {0.f, 1.f};
       // number of samples we'll use in the colordata and alphadata arrays
       int     numSamples   {256};
 

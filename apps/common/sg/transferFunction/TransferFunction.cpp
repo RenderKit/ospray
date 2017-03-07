@@ -23,6 +23,7 @@ namespace ospray {
 
     //! constructor
     TransferFunction::TransferFunction()
+     : Node()
     {
       setDefaultValues();
     }
@@ -108,14 +109,14 @@ namespace ospray {
     //   markAsCommitted();
     // }
 
-    void TransferFunction::render(RenderContext &ctx)
-    {
-      if (!ospTransferFunction) {
-        ospTransferFunction = ospNewTransferFunction("piecewise_linear");
-        setValue((OSPObject)ospTransferFunction);
-      }
-      commit();
-    }
+    // void TransferFunction::render(RenderContext &ctx)
+    // {
+    //   if (!ospTransferFunction) {
+    //     ospTransferFunction = ospNewTransferFunction("piecewise_linear");
+    //     setValue((OSPObject)ospTransferFunction);
+    //   }
+    //   commit();
+    // }
 
     void TransferFunction::preCommit(RenderContext &ctx)
     {
@@ -149,11 +150,13 @@ namespace ospray {
         ospCommit(ospAlphaData);
         ospSetData(ospTransferFunction,"opacities",ospAlphaData);
       }
+    }
 
-      // TODO: Why do we commit here when we'd be going into commit which will
-      //       commit again?
+    void TransferFunction::postCommit(RenderContext &ctx)
+    {
       ospCommit(ospTransferFunction);
     }
+
 
     void TransferFunction::setFromXML(const xml::Node& node,
                                       const unsigned char *binBasePtr)

@@ -47,8 +47,8 @@ namespace ospray {
         add(createNode("gridOrigin", "vec3f", vec3f(0.0f)));
         add(createNode("gridSpacing", "vec3f", vec3f(0.002f)));
         
-        transferFunction = std::dynamic_pointer_cast<TransferFunction>(
-          properties.children["transferFunction"].node);
+        // transferFunction = std::dynamic_pointer_cast<TransferFunction>(
+          // properties.children["transferFunction"].node);
       }
 
       /*! \brief returns a std::string with the c++ name of this class */
@@ -68,7 +68,7 @@ namespace ospray {
 
     protected:
 
-        std::shared_ptr<TransferFunction> transferFunction;
+        // std::shared_ptr<TransferFunction> transferFunction;
     };
 
     /*! a plain old structured volume */
