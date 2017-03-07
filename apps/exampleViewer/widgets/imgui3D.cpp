@@ -412,13 +412,16 @@ namespace ospray {
           ImGui::Text(("OSPRay v" + std::string(OSPRAY_VERSION)).c_str());
           font->Scale = 1.f;
           ImGui::SetWindowFontScale(currentWidget->fontScale*0.7f);
+          ImGui::PopStyleColor(1);
+
           std::stringstream ss;
           ss << 1.f/currentWidget->renderTime;
           ImGui::PushStyleColor(ImGuiCol_Text, ImColor(.8,.8,.8,1.f));
           ImGui::Text(("FPS: " + ss.str()).c_str());
           ImGui::Text("press \'g\' for menu");
+          ImGui::PopStyleColor(1);
+
           ImGui::End();
-          ImGui::PopStyleColor(2);
         }
 
         currentWidget->timer.startRender();
