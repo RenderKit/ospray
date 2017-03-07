@@ -30,6 +30,7 @@
 
 using namespace ospray;
 using namespace ospcommon;
+using namespace commandline;
 
 VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
                            std::string renderer_type,

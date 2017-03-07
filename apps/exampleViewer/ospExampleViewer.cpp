@@ -19,54 +19,61 @@
 
 #include "widgets/imguiViewer.h"
 
-ospcommon::vec3f translate;
-ospcommon::vec3f scale;
-bool lockFirstFrame = false;
-bool showGui = true;
+namespace exampleViewer {
 
-void parseExtraParametersFromComandLine(int ac, const char **&av)
-{
-  for (int i = 1; i < ac; i++) {
-    const std::string arg = av[i];
-    if (arg == "--translate") {
-      translate.x = atof(av[++i]);
-      translate.y = atof(av[++i]);
-      translate.z = atof(av[++i]);
-    } else if (arg == "--scale") {
-      scale.x = atof(av[++i]);
-      scale.y = atof(av[++i]);
-      scale.z = atof(av[++i]);
-    } else if (arg == "--lockFirstFrame") {
-      lockFirstFrame = true;
-    } else if (arg == "--nogui") {
-      showGui = false;
+  using namespace commandline;
+
+  ospcommon::vec3f translate;
+  ospcommon::vec3f scale;
+  bool lockFirstFrame = false;
+  bool showGui = true;
+
+  void parseExtraParametersFromComandLine(int ac, const char **&av)
+  {
+    for (int i = 1; i < ac; i++) {
+      const std::string arg = av[i];
+      if (arg == "--translate") {
+        translate.x = atof(av[++i]);
+        translate.y = atof(av[++i]);
+        translate.z = atof(av[++i]);
+      } else if (arg == "--scale") {
+        scale.x = atof(av[++i]);
+        scale.y = atof(av[++i]);
+        scale.z = atof(av[++i]);
+      } else if (arg == "--lockFirstFrame") {
+        lockFirstFrame = true;
+      } else if (arg == "--nogui") {
+        showGui = false;
+      }
     }
   }
-}
 
-int main(int ac, const char **av)
-{
-  ospInit(&ac,av);
+  extern "C" int main(int ac, const char **av)
+  {
+    ospInit(&ac,av);
 
-  ospray::imgui3D::init(&ac,av);
+    ospray::imgui3D::init(&ac,av);
 
-  auto ospObjs = parseWithDefaultParsers(ac, av);
+    auto ospObjs = parseWithDefaultParsers(ac, av);
 
-  std::deque<ospcommon::box3f>   bbox;
-  std::deque<ospray::cpp::Model> model;
-  ospray::cpp::Renderer renderer;
-  ospray::cpp::Camera   camera;
+    std::deque<ospcommon::box3f>   bbox;
+    std::deque<ospray::cpp::Model> model;
+    ospray::cpp::Renderer renderer;
+    ospray::cpp::Camera   camera;
 
-  std::tie(bbox, model, renderer, camera) = ospObjs;
+    std::tie(bbox, model, renderer, camera) = ospObjs;
 
-  parseExtraParametersFromComandLine(ac, av);
-  ospray::imgui3D::ImGui3DWidget::showGui = showGui;
+    parseExtraParametersFromComandLine(ac, av);
+    ospray::imgui3D::ImGui3DWidget::showGui = showGui;
 
-  ospray::ImGuiViewer window(bbox, model, renderer, camera);
-  window.setScale(scale);
-  window.setLockFirstAnimationFrame(lockFirstFrame);
-  window.setTranslation(translate);
-  window.create("ospImGui: OSPRay ImGui Viewer App");
+    ospray::ImGuiViewer window(bbox, model, renderer, camera);
+    window.setScale(scale);
+    window.setLockFirstAnimationFrame(lockFirstFrame);
+    window.setTranslation(translate);
+    window.create("ospImGui: OSPRay ImGui Viewer App");
 
-  ospray::imgui3D::run();
+    ospray::imgui3D::run();
+    return 0;
+  }
+
 }

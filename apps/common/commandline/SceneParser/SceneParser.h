@@ -22,10 +22,14 @@
 #include <ospcommon/box.h>
 #include <deque>
 
-class OSPRAY_COMMANDLINE_INTERFACE SceneParser : public CommandLineParser
-{
-public:
-  virtual ~SceneParser() = default;
-  virtual std::deque<ospray::cpp::Model> model() const = 0;
-  virtual std::deque<ospcommon::box3f>   bbox()  const = 0;
-};
+namespace commandline {
+
+  class OSPRAY_COMMANDLINE_INTERFACE SceneParser : public CommandLineParser
+  {
+  public:
+    virtual ~SceneParser() = default;
+    virtual std::deque<ospray::cpp::Model> model() const = 0;
+    virtual std::deque<ospcommon::box3f>   bbox()  const = 0;
+  };
+
+} // ::commandline

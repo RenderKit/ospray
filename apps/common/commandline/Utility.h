@@ -28,20 +28,22 @@
 #include <tuple>
 #include <type_traits>
 
-inline void parseForLoadingModules(int ac, const char**& av)
-{
-  for (int i = 1; i < ac; i++) {
-    const std::string arg = av[i];
-    if (arg == "--module" || arg == "-m") {
-      ospLoadModule(av[++i]);
+namespace commandline {
+
+  inline void parseForLoadingModules(int ac, const char**& av)
+  {
+    for (int i = 1; i < ac; i++) {
+      const std::string arg = av[i];
+      if (arg == "--module" || arg == "-m") {
+        ospLoadModule(av[++i]);
+      }
     }
   }
-}
-
-using ParsedOSPObjects = std::tuple<std::deque<ospcommon::box3f>,
-                                    std::deque<ospray::cpp::Model>,
-                                    ospray::cpp::Renderer,
-                                    ospray::cpp::Camera>;
+  
+  using ParsedOSPObjects = std::tuple<std::deque<ospcommon::box3f>,
+                                      std::deque<ospray::cpp::Model>,
+                                      ospray::cpp::Renderer,
+                                      ospray::cpp::Camera>;
 
 template <typename RendererParser_T,
           typename CameraParser_T,
@@ -82,5 +84,7 @@ inline ParsedOSPObjects parseCommandLine(int ac, const char **&av)
 inline ParsedOSPObjects parseWithDefaultParsers(int ac, const char**& av)
 {
   return parseCommandLine<DefaultRendererParser, DefaultCameraParser,
-                          MultiSceneParser, DefaultLightsParser>(ac, av);
+    MultiSceneParser, DefaultLightsParser>(ac, av);
 }
+
+} // ::commandline

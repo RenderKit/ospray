@@ -22,108 +22,110 @@
 
 #include <ospray/ospray_cpp/Data.h>
 
-using namespace ospray;
-using namespace ospcommon;
+namespace commandline {
+  
+  using namespace ospray;
+  using namespace ospcommon;
 
-// TODO: Need to convert ospray.h calls to ospray::cpp objects!
+  // TODO: Need to convert ospray.h calls to ospray::cpp objects!
 
-// Helper functions ///////////////////////////////////////////////////////////
+  // Helper functions ///////////////////////////////////////////////////////////
 
-particle::Model *createTestCube(int numPerSide)
-{
-  particle::Model *m = new particle::Model;
-  int type = m->getAtomType("testParticle");
-  for (int z=0;z<numPerSide;z++)
-    for (int y=0;y<numPerSide;y++)
-      for (int x=0;x<numPerSide;x++) {
-        particle::Model::Atom a;
-        a.position.x = x/float(numPerSide);
-        a.position.y = y/float(numPerSide);
-        a.position.z = z/float(numPerSide);
-        a.type = type;
-        a.radius = 1.f/numPerSide;
-        m->atom.push_back(a);
-      }
-  return m;
-}
-
-OSPData makeMaterials(OSPRenderer renderer, particle::Model *model)
-{
-  int numMaterials = model->atomType.size();
-  std::vector<OSPMaterial> matArray(numMaterials);
-  for (int i = 0; i < numMaterials; i++) {
-    OSPMaterial mat = ospNewMaterial(renderer,"OBJMaterial");
-    assert(mat);
-    ospSet3fv(mat,"kd",&model->atomType[i]->color.x);
-    ospCommit(mat);
-    matArray[i] = mat;
+  particle::Model *createTestCube(int numPerSide)
+  {
+    particle::Model *m = new particle::Model;
+    int type = m->getAtomType("testParticle");
+    for (int z=0;z<numPerSide;z++)
+      for (int y=0;y<numPerSide;y++)
+        for (int x=0;x<numPerSide;x++) {
+          particle::Model::Atom a;
+          a.position.x = x/float(numPerSide);
+          a.position.y = y/float(numPerSide);
+          a.position.z = z/float(numPerSide);
+          a.type = type;
+          a.radius = 1.f/numPerSide;
+          m->atom.push_back(a);
+        }
+    return m;
   }
-  OSPData data = ospNewData(numMaterials,OSP_OBJECT,matArray.data());
-  ospCommit(data);
-  return data;
-}
 
-// Helper types ///////////////////////////////////////////////////////////////
+  OSPData makeMaterials(OSPRenderer renderer, particle::Model *model)
+  {
+    int numMaterials = model->atomType.size();
+    std::vector<OSPMaterial> matArray(numMaterials);
+    for (int i = 0; i < numMaterials; i++) {
+      OSPMaterial mat = ospNewMaterial(renderer,"OBJMaterial");
+      assert(mat);
+      ospSet3fv(mat,"kd",&model->atomType[i]->color.x);
+      ospCommit(mat);
+      matArray[i] = mat;
+    }
+    OSPData data = ospNewData(numMaterials,OSP_OBJECT,matArray.data());
+    ospCommit(data);
+    return data;
+  }
 
-struct DeferredLoadJob {
-  DeferredLoadJob(particle::Model *model,
-                  const FileName &xyzFileName,
-                  const FileName &defFileName)
-    : model(model), xyzFileName(xyzFileName), defFileName(defFileName)
-  {}
+  // Helper types ///////////////////////////////////////////////////////////////
 
-  //! the mode we still have to load
-  particle::Model *model;
-  //! file name of xyz file to be loaded into this model
-  FileName xyzFileName;
-  //! name of atom type defintion file active when this xyz file was added
-  FileName defFileName;
-};
+  struct DeferredLoadJob {
+    DeferredLoadJob(particle::Model *model,
+                    const FileName &xyzFileName,
+                    const FileName &defFileName)
+      : model(model), xyzFileName(xyzFileName), defFileName(defFileName)
+    {}
 
-// Class definitions //////////////////////////////////////////////////////////
+    //! the mode we still have to load
+    particle::Model *model;
+    //! file name of xyz file to be loaded into this model
+    FileName xyzFileName;
+    //! name of atom type defintion file active when this xyz file was added
+    FileName defFileName;
+  };
 
-ParticleSceneParser::ParticleSceneParser(cpp::Renderer renderer) :
-  renderer(renderer)
-{
-}
+  // Class definitions //////////////////////////////////////////////////////////
 
-bool ParticleSceneParser::parse(int ac, const char **&av)
-{
-  bool loadedScene = false;
-  std::vector<particle::Model *> particleModel;
-  std::vector<DeferredLoadJob *> deferredLoadingListXYZ;
-  FileName defFileName = "";
-  int timeStep = 0;
+  ParticleSceneParser::ParticleSceneParser(cpp::Renderer renderer) :
+    renderer(renderer)
+  {
+  }
 
-  for (int i = 1; i < ac; i++) {
-    const std::string arg = av[i];
-    if (arg == "--radius") {
-      ospray::particle::Model::defaultRadius = atof(av[++i]);
-    } else if (arg == "--atom-defs") {
-      defFileName = av[++i];
-    } else if (arg == "--particle-timestep") {
-      timeStep = atoi(av[++i]);
-    } else {
-      FileName fn = arg;
-      if (fn.str() == "___CUBE_TEST___") {
-        int numPerSide = atoi(av[++i]);
-        particle::Model *m = createTestCube(numPerSide);
-        particleModel.push_back(m);
-        loadedScene = true;
-      } else if (fn.ext() == "xyz") {
-        particle::Model *m = new particle::Model;
-        deferredLoadingListXYZ.push_back(new DeferredLoadJob(m,fn,defFileName));
-        particleModel.push_back(m);
-        loadedScene = true;
-      } else if (fn.ext() == "xyz2") {
-        particle::Model *m = new particle::Model;
-        m->loadXYZ2(fn);
-        particleModel.push_back(m);
-        loadedScene = true;
+  bool ParticleSceneParser::parse(int ac, const char **&av)
+  {
+    bool loadedScene = false;
+    std::vector<particle::Model *> particleModel;
+    std::vector<DeferredLoadJob *> deferredLoadingListXYZ;
+    FileName defFileName = "";
+    int timeStep = 0;
+
+    for (int i = 1; i < ac; i++) {
+      const std::string arg = av[i];
+      if (arg == "--radius") {
+        ospray::particle::Model::defaultRadius = atof(av[++i]);
+      } else if (arg == "--atom-defs") {
+        defFileName = av[++i];
+      } else if (arg == "--particle-timestep") {
+        timeStep = atoi(av[++i]);
+      } else {
+        FileName fn = arg;
+        if (fn.str() == "___CUBE_TEST___") {
+          int numPerSide = atoi(av[++i]);
+          particle::Model *m = createTestCube(numPerSide);
+          particleModel.push_back(m);
+          loadedScene = true;
+        } else if (fn.ext() == "xyz") {
+          particle::Model *m = new particle::Model;
+          deferredLoadingListXYZ.push_back(new DeferredLoadJob(m,fn,defFileName));
+          particleModel.push_back(m);
+          loadedScene = true;
+        } else if (fn.ext() == "xyz2") {
+          particle::Model *m = new particle::Model;
+          m->loadXYZ2(fn);
+          particleModel.push_back(m);
+          loadedScene = true;
 #if 1 // NOTE(jda) - The '.xml' file extension conflicts with RIVL files in
       //             TriangleMeshSceneParser...disabling here for now until the
       //             the problem requires a solution.
-      }
+        }
 #else
       } else if (fn.ext() == "xml") {
         particle::Model *m = particle::parse__Uintah_timestep_xml(fn);
@@ -184,3 +186,5 @@ std::deque<box3f> ParticleSceneParser::bbox() const
   boxes.push_back(sceneBbox);
   return boxes;
 }
+
+} // ::commandline

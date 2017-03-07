@@ -23,112 +23,104 @@
 # include "common/widgets/OSPGlutViewer.h"
 #endif
 
-ospcommon::vec3f translate;
-ospcommon::vec3f scale;
-bool lockFirstFrame = false;
+namespace glutViewer {
 
-std::string scriptFileFromCommandLine(int ac, const char **&av)
-{
-  std::string scriptFileName;
+  using namespace commandline;
 
-  for (int i = 1; i < ac; i++) {
-    const std::string arg = av[i];
-    if (arg == "--script" || arg == "-s") {
-      scriptFileName = av[++i];
+  ospcommon::vec3f translate;
+  ospcommon::vec3f scale;
+  bool lockFirstFrame = false;
+
+  std::string scriptFileFromCommandLine(int ac, const char **&av)
+  {
+    std::string scriptFileName;
+
+    for (int i = 1; i < ac; i++) {
+      const std::string arg = av[i];
+      if (arg == "--script" || arg == "-s") {
+        scriptFileName = av[++i];
+      }
+    }
+
+    return scriptFileName;
+  }
+
+  void parseExtraParametersFromComandLine(int ac, const char **&av)
+  {
+    for (int i = 1; i < ac; i++) {
+      const std::string arg = av[i];
+      if (arg == "--translate") {
+        translate.x = atof(av[++i]);
+        translate.y = atof(av[++i]);
+        translate.z = atof(av[++i]);
+      } else if (arg == "--scale") {
+        scale.x = atof(av[++i]);
+        scale.y = atof(av[++i]);
+        scale.z = atof(av[++i]);
+      } else if (arg == "--lockFirstFrame") {
+        lockFirstFrame = true;
+      }
     }
   }
 
-  return scriptFileName;
-}
-
-void parseExtraParametersFromComandLine(int ac, const char **&av)
-{
-  for (int i = 1; i < ac; i++) {
-    const std::string arg = av[i];
-    if (arg == "--translate") {
-      translate.x = atof(av[++i]);
-      translate.y = atof(av[++i]);
-      translate.z = atof(av[++i]);
-    } else if (arg == "--scale") {
-      scale.x = atof(av[++i]);
-      scale.y = atof(av[++i]);
-      scale.z = atof(av[++i]);
-    } else if (arg == "--lockFirstFrame") {
-      lockFirstFrame = true;
-    }
-  }
-}
-
-int main(int ac, const char **av)
-{
+  extern "C" int main(int ac, const char **av)
+  {
 #if 1
-  ospInit(&ac,av);
+    ospInit(&ac,av);
 #elif 1
-  ospray::cpp::Device device("default");
-  //ospray::cpp::Device device("mpi");
+    ospray::cpp::Device device("default");
+    //ospray::cpp::Device device("mpi");
 
-  //device.set("numThreads", 1);
-  //device.set("logLevel", 2);
-  //device.set("debug", 1);
-  device.commit();
+    //device.set("numThreads", 1);
+    //device.set("logLevel", 2);
+    //device.set("debug", 1);
+    device.commit();
 
-  device.setCurrent();
+    device.setCurrent();
 #else
-  auto device = ospCreateDevice();
-  //auto device = ospCreateDevice("mpi");
+    auto device = ospCreateDevice();
+    //auto device = ospCreateDevice("mpi");
 
-  // set device parameters...
-  //ospDeviceSet1i(device, "numThreads", 1);
-  //ospDeviceSet1i(device, "logLevel", 2);
-  //ospDeviceSet1i(device, "debug", 1);
-  ospDeviceCommit(device);
+    // set device parameters...
+    //ospDeviceSet1i(device, "numThreads", 1);
+    //ospDeviceSet1i(device, "logLevel", 2);
+    //ospDeviceSet1i(device, "debug", 1);
+    ospDeviceCommit(device);
 
-  ospSetCurrentDevice(device);
+    ospSetCurrentDevice(device);
 #endif
 
-  ospray::glut3D::initGLUT(&ac,av);
+    ospray::glut3D::initGLUT(&ac,av);
 
-  auto device = ospGetCurrentDevice();
-  ospDeviceSetErrorMsgFunc(device, [](const char *msg) { std::cout << msg; });
+    auto device = ospGetCurrentDevice();
+    ospDeviceSetErrorMsgFunc(device, [](const char *msg) { std::cout << msg; });
 
-  auto ospObjs = parseWithDefaultParsers(ac, av);
+    auto ospObjs = parseWithDefaultParsers(ac, av);
 
-  std::deque<ospcommon::box3f>   bbox;
-  std::deque<ospray::cpp::Model> model;
-  ospray::cpp::Renderer renderer;
-  ospray::cpp::Camera   camera;
+    std::deque<ospcommon::box3f>   bbox;
+    std::deque<ospray::cpp::Model> model;
+    ospray::cpp::Renderer renderer;
+    ospray::cpp::Camera   camera;
 
-  std::tie(bbox, model, renderer, camera) = ospObjs;
+    std::tie(bbox, model, renderer, camera) = ospObjs;
 
-#if 1
-  if (model.size() > 1) {
-    ospray::cpp::Model jointModel;
-    for (int i=0;i<model.size();i++) {
-      ospcommon::affine3f xfm = ospcommon::one;
-      ospray::cpp::Geometry asInstance = ospray::cpp::Geometry(ospNewInstance(model[i].handle(),(osp::affine3f&)xfm));
-      jointModel.addGeometry(asInstance);
-    }
-    jointModel.commit();
-    model.clear();
-    model.push_back(jointModel);
-  }
-#endif
-
-
-  parseExtraParametersFromComandLine(ac, av);
+    parseExtraParametersFromComandLine(ac, av);
 
 #ifdef OSPRAY_APPS_ENABLE_SCRIPTING
-  auto scriptFileName = scriptFileFromCommandLine(ac, av);
+    auto scriptFileName = scriptFileFromCommandLine(ac, av);
 
-  ospray::ScriptedOSPGlutViewer window(bbox, model, renderer,
-                                       camera, scriptFileName);
+    ospray::ScriptedOSPGlutViewer window(bbox, model, renderer,
+                                         camera, scriptFileName);
 #else
-  ospray::OSPGlutViewer window(bbox, model, renderer, camera);
+    ospray::OSPGlutViewer window(bbox, model, renderer, camera);
 #endif
-  window.setScale(scale);
-  window.setLockFirstAnimationFrame(lockFirstFrame);
-  window.setTranslation(translate);
-  window.create("ospGlutViewer: OSPRay Mini-Scene Graph test viewer");
+    window.setScale(scale);
+    window.setLockFirstAnimationFrame(lockFirstFrame);
+    window.setTranslation(translate);
+    window.create("ospGlutViewer: OSPRay Mini-Scene Graph test viewer");
 
-  ospray::glut3D::runGLUT();
-}
+    ospray::glut3D::runGLUT();
+    return 0;
+  }
+
+} // ::glutViewer
