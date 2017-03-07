@@ -29,6 +29,7 @@ using namespace ospcommon;
 using namespace ospray;
 
 std::vector<std::string> files;
+std::string initialRendererType;
 bool addPlane = true;
 bool debug = false;
 
@@ -40,6 +41,8 @@ void parseCommandLine(int ac, const char **&av)
       addPlane = false;
     } else if (arg == "-d" || arg == "--debug") {
       debug = true;
+    } else if (arg == "-r" || arg == "--renderer") {
+      initialRendererType = av[++i];
     } else if (arg == "-m" || arg == "--module") {
       ospLoadModule(av[++i]);
     } else {
@@ -103,6 +106,9 @@ int main(int ac, const char **av)
   renderer["shadowsEnabled"]->setValue(true);
   renderer["aoSamples"]->setValue(1);
   renderer["camera"]["fovy"]->setValue(60.f);
+
+  if (!initialRendererType.empty())
+    renderer["rendererType"]->setValue(initialRendererType);
 
   auto lights = renderer["lights"];
 
