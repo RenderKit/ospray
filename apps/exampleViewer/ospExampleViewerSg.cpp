@@ -98,13 +98,11 @@ int main(int ac, const char **av)
   parseFilesFromCommandLine(ac, av);
 
   sg::RenderContext ctx;
-  auto root = sg::createNode("ospray");
 
   auto renderer = sg::createNode("renderer", "Renderer");
   renderer["shadowsEnabled"]->setValue(true);
   renderer["aoSamples"]->setValue(1);
   renderer["camera"]["fovy"]->setValue(60.f);
-  root->add(renderer);
 
   auto lights = renderer["lights"];
 
@@ -136,8 +134,8 @@ int main(int ac, const char **av)
   }
 
   if (debug) {
-    root->traverse(ctx, "verify");
-    root->traverse(ctx, "print");
+    renderer->traverse(ctx, "verify");
+    renderer->traverse(ctx, "print");
   }
 
   renderer->traverse(ctx, "commit");
