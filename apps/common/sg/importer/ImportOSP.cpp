@@ -30,54 +30,32 @@ namespace ospray {
     using std::cout;
     using std::endl;
 
-    // ==================================================================
-    // sg node registry code
-    // ==================================================================
-    typedef std::shared_ptr<sg::Node> (*creatorFct)();
-    
-    std::map<std::string, creatorFct> sgNodeRegistry;
-
     /*! create a node of given type if registered (and tell it to
       parse itself from that xml node), or throw an exception if
       unkown node type */
     std::shared_ptr<sg::Node> createNodeFrom(const xml::Node &node,
                                              const unsigned char *binBasePtr)
     {
-      if (node.name.find("Chombo") != std::string::npos)
-      {
+      if (node.name.find("Chombo") != std::string::npos) {
         if (!ospLoadModule("amr"))
             std::runtime_error("could not load amr module\n");
         if (!ospLoadModule("sg_amr"))
             std::runtime_error("could not load amr module\n");
       }
-      // auto it = sgNodeRegistry.find(node.name);
-      // creatorFct creator = nullptr;
-      // if (it == sgNodeRegistry.end()) {
-      //   const std::string creatorName = "ospray_create_sg_node__"+std::string(node.name);
-      //   creator = (creatorFct)getSymbol(creatorName);
-      //   if (!creator)
-      //     throw std::runtime_error("unknown ospray scene graph node '"+node.name+"'");
-      //   else {
-      //     std::cout << "#osp:sg: creating at least one instance of node type '"
-      //               << node.name << "'" << std::endl;
-      //   }
-      //   sgNodeRegistry[node.name] = creator;
-      // }
-      // else
-      //   creator = it->second;
-      
-      // assert(creator);
-      // std::shared_ptr<sg::Node> newNode = creator();
+
       std::string name = "untitled";
       if (node.hasProp("name"))
         name = node.getProp("name");
+
       std::shared_ptr<sg::Node> newNode = createNode(name, node.name).get();
-      if (!newNode)
+      if (!newNode.get())
         throw std::runtime_error("could not create scene graph node");
       
       newNode->setFromXML(node,binBasePtr);
+
       if (node.hasProp("name"))
         registerNamedNode(node.getProp("name"),newNode);
+
       return newNode;
     }
 
