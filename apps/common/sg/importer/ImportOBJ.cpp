@@ -163,6 +163,7 @@ namespace ospray {
       std::vector<vec3f> vn;
       std::vector<vec2f> vt;
       std::vector<std::vector<Vertex> > curGroup;
+      std::string curGroupName={""};
 
       /*! Material handling. */
       std::shared_ptr<Material> curMaterial;
@@ -224,6 +225,9 @@ namespace ospray {
 
           const char* token = trimEnd(line + strspn(line, " \t"));
           if (token[0] == 0) continue;
+
+          if (token[0] == 'g')
+            curGroupName = std::string(parseSep(token += 1));
 
           /*! parse position */
           if (token[0] == 'v' && isSep(token[1]))
@@ -479,8 +483,9 @@ namespace ospray {
       if (curGroup.empty()) return;
 
       std::map<Vertex, uint32_t> vertexMap;
+      std::string name = fullPath.name()+"_"+curGroupName;
       //scenegraph
-      std::shared_ptr<TriangleMesh> mesh = std::static_pointer_cast<TriangleMesh>(createNode(fullPath.name(), "TriangleMesh").get());
+      std::shared_ptr<TriangleMesh> mesh = std::static_pointer_cast<TriangleMesh>(createNode(name, "TriangleMesh").get());
       world->add(mesh);
       mesh->vertex = std::make_shared<DataVector3f>();
       mesh->normal = std::make_shared<DataVector3f>();
