@@ -32,6 +32,14 @@ namespace ospray {
                      "pathtracer/pt: photo-realistic path tracer"));
       child("rendererType")->setWhiteList({std::string("scivis"),
                                            std::string("sv"),
+                                           std::string("raytracer"),
+                                           std::string("rt"),
+                                           std::string("ao"),
+                                           std::string("ao1"),
+                                           std::string("ao2"),
+                                           std::string("ao4"),
+                                           std::string("ao8"),
+                                           std::string("ao16"),
                                            std::string("dvr"),
                                            std::string("pathtracer"),
                                            std::string("pt")});
