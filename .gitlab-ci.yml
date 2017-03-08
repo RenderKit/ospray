@@ -126,6 +126,15 @@ build-windows-msvc14:
     - build
     - win7
 
+build-windows-msvc15:
+  type: build
+  script:
+    - call scripts\build_gitlab\win.bat "Visual Studio 15 2017 Win64" "v141"
+  tags:
+    - msvc15
+    - build
+    - win7
+
 build-windows-icc:
   type: build
   script:
