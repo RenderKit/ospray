@@ -163,7 +163,7 @@ namespace ospray {
       std::vector<vec3f> vn;
       std::vector<vec2f> vt;
       std::vector<std::vector<Vertex> > curGroup;
-      std::string curGroupName={""};
+      std::string curGroupName;
 
       /*! Material handling. */
       std::shared_ptr<Material> curMaterial;
