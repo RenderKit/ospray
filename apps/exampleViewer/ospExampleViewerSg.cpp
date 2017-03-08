@@ -45,12 +45,14 @@ void parseCommandLine(int ac, const char **&av)
       initialRendererType = av[++i];
     } else if (arg == "-m" || arg == "--module") {
       ospLoadModule(av[++i]);
-    } else {
+    } else if (arg[0] != '-') {
       files.push_back(av[i]);
     }
   }
 }
 
+//parse command line arguments containing the format:
+//  -nodeName:...:nodeName=value,value,value
 void parseCommandLineSG(int ac, const char **&av, sg::NodeH root)
 {
   for(int i=1;i < ac; i++)
@@ -58,6 +60,8 @@ void parseCommandLineSG(int ac, const char **&av, sg::NodeH root)
     std::string arg(av[i]);
     size_t f;
     std::string value("");
+    if (arg.size() < 2 || arg[0] != '-')
+      continue;
     while ( (f = arg.find(":")) != std::string::npos || (f = arg.find(",")) != std::string::npos)
       arg[f]=' ';
     f = arg.find("=");
@@ -68,7 +72,7 @@ void parseCommandLineSG(int ac, const char **&av, sg::NodeH root)
     if (value != "")
     {
       std::stringstream ss;
-      ss << arg.substr(0,f);
+      ss << arg.substr(1,f-1);
       std::string child;
       sg::NodeH node = root;
       while (ss >> child)
