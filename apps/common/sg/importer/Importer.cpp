@@ -76,6 +76,20 @@ namespace ospray {
       } else if (file.ext() == "xml") {
         std::shared_ptr<sg::World> wsg(std::dynamic_pointer_cast<sg::World>(shared_from_this()));
         sg::importRIVL(wsg, file);
+      } else if (file.ext() == "x3d") {
+        // miniSG::Model msgModel;
+        // miniSG::importX3D(msgModel, file);
+        // for (auto mesh : msgModel->mesh)
+        // {
+        //   sg::TriangleMesh sgMesh = std::dynamic_shared_cast<sg::TriangleMesh>
+        //     (createNode(mesh->name, "TriangleMesh").get());
+        //   sgMesh->position = mesh->position;
+        //   sgMesh->normal = mesh->normal;
+        //   sgMesh->color = mesh->color;
+        //   sgMesh->texcoord = mesh->texcoord;
+        //   sgMesh->triangle = mesh->triangle;
+        //   // add mesh->material
+        // }
       } else {
         std::cout << "unsupported file format\n";
         return;

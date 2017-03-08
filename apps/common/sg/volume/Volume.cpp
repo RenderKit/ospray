@@ -79,6 +79,8 @@ namespace ospray {
       if (volume)
       {
         ospAddVolume(ctx.world->ospModel,volume);
+        if (child("isosurfaceEnabled")->valueAs<bool>() == true && isosurfacesGeometry)
+          ospAddGeometry(ctx.world->ospModel, isosurfacesGeometry);
       }
     }
 
@@ -259,6 +261,13 @@ namespace ospray {
     {
       if (volume) {
         ospCommit(volume);
+        if (child("isosurfaceEnabled")->valueAs<bool>() == true && isosurfacesGeometry)
+        {
+          OSPData isovaluesData = ospNewData(1, OSP_FLOAT, 
+            &child("isosurface")->valueAs<float>());
+          ospSetData(isosurfacesGeometry, "isovalues", isovaluesData);
+          ospCommit(isosurfacesGeometry);
+        }
         return;
       }
 
@@ -274,6 +283,9 @@ namespace ospray {
                                                 "shared_structured_volume");
 
       if (!volume) THROW_SG_ERROR("could not allocate volume");
+
+      isosurfacesGeometry = ospNewGeometry("isosurfaces");
+      ospSetObject(isosurfacesGeometry, "volume", volume);
 
       setValue((OSPObject)volume);
 
@@ -318,6 +330,7 @@ namespace ospray {
       fclose(file);
 
       child("voxelRange")->setValue(voxelRange);
+      child("isosurface")->setMinMax(voxelRange.x, voxelRange.y);
       // transferFunction->setValueRange(voxelRange);
       child("transferFunction")["valueRange"]->setValue(voxelRange);
       child("transferFunction")->preCommit(ctx);

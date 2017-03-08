@@ -46,6 +46,10 @@ namespace ospray {
         add(createNode("specular", "vec3f", vec3f(0.3f)));
         add(createNode("gridOrigin", "vec3f", vec3f(0.0f)));
         add(createNode("gridSpacing", "vec3f", vec3f(0.002f)));
+        add(createNode("isosurfaceEnabled", "bool", false));
+        add(createNode("isosurface", "float", 0.5f, 
+          NodeFlags::valid_min_max | NodeFlags::gui_slider));
+        child("isosurface")->setMinMax(0.f,255.f);
         
         // transferFunction = std::dynamic_pointer_cast<TransferFunction>(
           // properties.children["transferFunction"].node);
@@ -65,6 +69,7 @@ namespace ospray {
       static bool useDataDistributedVolume;
 
       OSPVolume volume {nullptr};
+      OSPGeometry isosurfacesGeometry{nullptr};
 
     protected:
 
