@@ -51,6 +51,81 @@ void parseCommandLine(int ac, const char **&av)
   }
 }
 
+void parseCommandLineSG(int ac, const char **&av, sg::NodeH root)
+{
+  for(int i=1;i < ac; i++)
+  {
+    std::string arg(av[i]);
+    size_t f;
+    std::string value("");
+    while ( (f = arg.find(":")) != std::string::npos || (f = arg.find(",")) != std::string::npos)
+      arg[f]=' ';
+    f = arg.find("=");
+    if (f != std::string::npos)
+    {
+      value = arg.substr(f+1,arg.size());
+    }
+    if (value != "")
+    {
+      std::stringstream ss;
+      ss << arg.substr(0,f);
+      std::string child;
+      sg::NodeH node = root;
+      while (ss >> child)
+      {
+        node = node->childRecursive(child);
+      }
+      //Carson: TODO: reimplement with a way of determining type of node value
+      //  currently relies on exception on value cast
+      try
+      {
+        node->valueAs<std::string>();
+        node->setValue(value);
+      } catch(...) {};
+      try
+      {
+        std::stringstream vals(value);
+        float x;
+        vals >> x;
+        node->valueAs<float>();
+        node->setValue(x);
+      } catch(...) {}
+      try
+      {
+        std::stringstream vals(value);
+        int x;
+        vals >> x;
+        node->valueAs<int>();
+        node->setValue(x);
+      } catch(...) {}
+      try
+      {
+        std::stringstream vals(value);
+        bool x;
+        vals >> x;
+        node->valueAs<bool>();
+        node->setValue(x);
+      } catch(...) {}
+      try
+      {
+        std::stringstream vals(value);
+        float x,y,z;
+        vals >> x >> y >> z;
+        node->valueAs<ospcommon::vec3f>();
+        node->setValue(ospcommon::vec3f(x,y,z));
+      } catch(...) {}
+      try
+      {
+        std::stringstream vals(value);
+        int x,y,z;
+        vals >> x >> y;
+        node->valueAs<ospcommon::vec2i>();
+        node->setValue(ospcommon::vec2i(x,y));
+      } catch(...) {}
+    }
+  }
+}
+
 void addPlaneToScene(sg::NodeH &world)
 {
   //add plane
@@ -137,6 +212,8 @@ int main(int ac, const char **av)
     importerNode["fileName"]->setValue(fn.str());
     world += importerNode;
   }
+
+  parseCommandLineSG(ac, av, renderer);
 
   if (debug) {
     renderer->traverse("verify");
