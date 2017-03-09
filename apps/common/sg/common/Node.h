@@ -106,21 +106,21 @@ namespace ospray {
           NodeH is a handle to a sg::Node.  It has the benefit of supporting
           some operators without requiring dereferencing a pointer.
       */
-      class OSPSG_INTERFACE NodeHandle
+      class OSPSG_INTERFACE Handle
       {
       public:
-        NodeHandle() = default;
-        NodeHandle(std::shared_ptr<sg::Node> n) : node(n) {}
+        Handle() = default;
+        Handle(std::shared_ptr<sg::Node> n) : node(n) {}
 
         //! return child with name c
-        NodeHandle operator[] (const std::string &c) const
+        Handle operator[] (const std::string &c) const
         { return node->child(c); }
 
-        NodeHandle operator[] (const char *c) const
+        Handle operator[] (const char *c) const
         { return node->child(c); }
 
         //! add child node n to this node
-        NodeHandle operator+= (NodeHandle n)
+        Handle operator+= (Handle n)
         { get()->add(n); n->setParent(*this); return n;}
 
         std::shared_ptr<sg::Node> operator->() const { return get(); }
@@ -205,25 +205,25 @@ namespace ospray {
       bool hasChild(const std::string &name) const;
 
       //! return named child node
-      NodeHandle child(const std::string &name) const;
+      Handle child(const std::string &name) const;
 
       //! return named child node
-      NodeHandle childRecursive(const std::string &name);
+      Handle childRecursive(const std::string &name);
 
       //! return all children of type
-      std::vector<NodeHandle> childrenByType(const std::string &t) const;
+      std::vector<Handle> childrenByType(const std::string &t) const;
 
       //! return vector of child handles
-      std::vector<NodeHandle> children() const;
+      std::vector<Handle> children() const;
 
       //! return child c
-      NodeHandle operator[] (const std::string &c) const;
+      Handle operator[] (const std::string &c) const;
 
       //! return the parent node
-      NodeHandle parent();
+      Handle parent();
 
       //! sets the parent
-      void setParent(const NodeHandle& p);
+      void setParent(const Handle& p);
 
       //! get the value of the node, whithout template conversion
       SGVar value();
@@ -239,7 +239,7 @@ namespace ospray {
       virtual void add(std::shared_ptr<Node> node);
 
       //! add node as child of this one
-      virtual void add(NodeHandle node);
+      virtual void add(Handle node);
 
       //! traverse this node and childrend with given operation, such as
       //  print,commit,render or custom operations
@@ -303,13 +303,13 @@ namespace ospray {
         std::vector<SGVar> minmax;
         std::vector<SGVar> whitelist;
         std::vector<SGVar> blacklist;
-        std::map<std::string, NodeHandle> children;
+        std::map<std::string, Handle> children;
         SGVar value;
         TimeStamp lastModified;
         TimeStamp childrenMTime;
         TimeStamp lastCommitted;
         std::map<std::string, std::shared_ptr<sg::Param>> params;
-        NodeHandle parent;
+        Handle parent;
         NodeFlags flags;
         bool valid {false};
         std::string documentation;
@@ -355,13 +355,13 @@ namespace ospray {
     void registerNamedNode(const std::string &name,
                            const std::shared_ptr<sg::Node> &node);
 
-    using NodeHandle = Node::NodeHandle;
+    using NodeHandle = Node::Handle;
 
     OSPSG_INTERFACE NodeHandle createNode(std::string name,
-                                     std::string type = "Node",
-                                     SGVar var = SGVar(),
-                                     int flags = sg::NodeFlags::none,
-                                     std::string documentation="");
+                                          std::string type = "Node",
+                                          SGVar var = SGVar(),
+                                          int flags = sg::NodeFlags::none,
+                                          std::string documentation="");
 
     template <typename T>
     struct NodeParamCommit
