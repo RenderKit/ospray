@@ -54,12 +54,12 @@ namespace ospray {
       existant) that contains additional binary data that the xml
       node fields may point into
     */
-    void Spheres::setFromXML(const xml::Node *const node,
+    void Spheres::setFromXML(const xml::Node &node,
                              const unsigned char *binBasePtr)
     {
-      size_t num = std::stoll(node->getProp("num"));
-      size_t ofs = std::stoll(node->getProp("ofs","-1"));
-      float  rad = atof(node->getProp("radius").c_str());
+      size_t num = std::stoll(node.getProp("num"));
+      size_t ofs = std::stoll(node.getProp("ofs","-1"));
+      float  rad = atof(node.getProp("radius").c_str());
 
       Spheres::Sphere s(vec3f(0.f),rad,0);
       if (ofs == (size_t)-1) {

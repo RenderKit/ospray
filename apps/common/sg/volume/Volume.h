@@ -93,7 +93,7 @@ namespace ospray {
                               const unsigned char *binBasePtr) override;
 
       /*! \brief 'render' the object to ospray */
-      virtual void render(RenderContext &ctx);
+      virtual void render(RenderContext &ctx) override;
 
       virtual void postCommit(RenderContext &ctx) override;
 

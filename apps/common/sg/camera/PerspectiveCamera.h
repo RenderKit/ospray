@@ -26,8 +26,8 @@ namespace ospray {
       PerspectiveCamera();
       virtual void init() override;
 
-      virtual void commit();
-      virtual void postCommit(RenderContext &ctx);
+      virtual void commit() override;
+      virtual void postCommit(RenderContext &ctx) override;
       
       SG_NODE_DECLARE_MEMBER(vec3f,from,From);
       SG_NODE_DECLARE_MEMBER(vec3f,at,At);

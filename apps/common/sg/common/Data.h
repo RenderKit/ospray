@@ -31,13 +31,16 @@ namespace ospray {
 
 #define INVALID_DATA_ERROR throw RuntimeError("invalid data format ")
 
-    struct OSPSG_INTERFACE DataBuffer : public Node {
+    struct OSPSG_INTERFACE DataBuffer : public Node
+    {
       DataBuffer(OSPDataType type)
         : type(type), data(nullptr)
       {}
-      virtual ~DataBuffer() {}
 
-      virtual std::string toString() const { return "DataBuffer<abstract>"; }
+      virtual ~DataBuffer() = default;
+
+      virtual std::string toString() const override
+      { return "DataBuffer<abstract>"; }
 
       virtual float  get1f(index_t idx)  const { INVALID_DATA_ERROR; }
       virtual vec2f  get2f(index_t idx)  const { INVALID_DATA_ERROR; }
@@ -79,8 +82,8 @@ namespace ospray {
         : DataBuffer((OSPDataType)TID),  size(size), mine(mine), base(base)
       {
       }
-      virtual void        *getBase()  const { return (void*)base; }
-      virtual size_t       getSize()  const { return size; }
+      virtual void        *getBase()  const override { return (void*)base; }
+      virtual size_t       getSize()  const override { return size; }
       virtual ~DataArrayT() { if (mine && base) delete base; }
 
       typedef T ElementType;
@@ -90,84 +93,119 @@ namespace ospray {
       T     *base;
     };
 
-    struct DataArray1uc : public DataArrayT<unsigned char,OSP_UCHAR> {
+    struct DataArray1uc : public DataArrayT<unsigned char,OSP_UCHAR>
+    {
       DataArray1uc(unsigned char *base, size_t size, bool mine=true)
         : DataArrayT<unsigned char,OSP_UCHAR>(base,size,mine)
       {}
     };
-    struct DataArray2f : public DataArrayT<vec2f,OSP_FLOAT2> {
+
+    struct DataArray2f : public DataArrayT<vec2f,OSP_FLOAT2>
+    {
       DataArray2f(vec2f *base, size_t size, bool mine=true)
         : DataArrayT<vec2f,OSP_FLOAT2>(base,size,mine)
       {}
-      virtual vec2f  get2f(index_t idx)  const { assert(base); return this->base[idx]; }
+      virtual vec2f get2f(index_t idx) const  override
+      { assert(base); return this->base[idx]; }
     };
-    struct DataArray3f : public DataArrayT<vec3f,OSP_FLOAT3> {
+
+    struct DataArray3f : public DataArrayT<vec3f,OSP_FLOAT3>
+    {
       DataArray3f(vec3f *base, size_t size, bool mine=true)
         : DataArrayT<vec3f,OSP_FLOAT3>(base,size,mine)
       {}
-      virtual vec3f  get3f(index_t idx)  const { assert(base); return this->base[idx]; }
+      virtual vec3f get3f(index_t idx) const override
+      { assert(base); return this->base[idx]; }
     };
-    struct DataArray3fa : public DataArrayT<vec3fa,OSP_FLOAT3A> {
+
+    struct DataArray3fa : public DataArrayT<vec3fa,OSP_FLOAT3A>
+    {
       DataArray3fa(vec3fa *base, size_t size, bool mine=true)
         : DataArrayT<vec3fa,OSP_FLOAT3A>(base,size,mine)
       {}
-      virtual vec3fa  get3fa(index_t idx)  const { assert(base); return this->base[idx]; }
+      virtual vec3fa get3fa(index_t idx) const override
+      { assert(base); return this->base[idx]; }
     };
-    struct DataArray4f : public DataArrayT<vec4f,OSP_FLOAT4> {
+
+    struct DataArray4f : public DataArrayT<vec4f,OSP_FLOAT4>
+    {
       DataArray4f(vec4f *base, size_t size, bool mine=true)
         : DataArrayT<vec4f,OSP_FLOAT4>(base,size,mine)
       {}
-      virtual vec4f  get4f(index_t idx)  const { assert(base); return this->base[idx]; }
+      virtual vec4f get4f(index_t idx) const override
+      { assert(base); return this->base[idx]; }
     };
 
-    struct DataArray1i : public DataArrayT<int32_t,OSP_INT> {
+    struct DataArray1i : public DataArrayT<int32_t,OSP_INT>
+    {
       DataArray1i(int32_t *base, size_t size, bool mine=true)
         : DataArrayT<int32_t,OSP_INT>(base,size,mine)
         {}
-      virtual int32_t get1i(index_t idx) const { assert(base); return this->base[idx]; }
+      virtual int32_t get1i(index_t idx) const override
+      { assert(base); return this->base[idx]; }
     };
 
-    struct DataArray3i : public DataArrayT<vec3i,OSP_INT3> {
+    struct DataArray3i : public DataArrayT<vec3i,OSP_INT3>
+    {
       DataArray3i(vec3i *base, size_t size, bool mine=true)
         : DataArrayT<vec3i,OSP_INT3>(base,size,mine)
       {}
-      virtual vec3i  get3i(index_t idx)  const { assert(base); return this->base[idx]; }
+      virtual vec3i get3i(index_t idx) const override
+      { assert(base); return this->base[idx]; }
     };
-    struct DataArray4i : public DataArrayT<vec4i,OSP_INT4> {
+
+    struct DataArray4i : public DataArrayT<vec4i,OSP_INT4>
+    {
       DataArray4i(vec4i *base, size_t size, bool mine=true)
         : DataArrayT<vec4i,OSP_INT4>(base,size,mine)
       {}
-      virtual vec4i  get4i(index_t idx)  const { assert(base); return this->base[idx]; }
+      virtual vec4i get4i(index_t idx) const override
+      { assert(base); return this->base[idx]; }
     };
 
     // -------------------------------------------------------
     // data *VECTORS*
     // -------------------------------------------------------
     template<typename T, int TID>
-    struct DataVectorT : public DataBuffer {
+    struct DataVectorT : public DataBuffer
+    {
       DataVectorT()
         : DataBuffer((OSPDataType)TID)
       {}
-      virtual void       *getBase()  const { return (void*)&v[0]; }
-      virtual size_t      getSize()  const { return v.size(); }
+      virtual void   *getBase() const override { return (void*)&v[0]; }
+      virtual size_t  getSize() const override { return v.size(); }
       inline void push_back(const T &t) { v.push_back(t); }
       std::vector<T> v;
     };
 
-    struct DataVector2f : public DataVectorT<vec2f,OSP_FLOAT2> {
-      virtual vec2f  get2f(index_t idx)  const { assert(idx<v.size()); return this->v[idx]; }
+    struct DataVector2f : public DataVectorT<vec2f,OSP_FLOAT2>
+    {
+      virtual vec2f get2f(index_t idx) const override
+      { assert(idx<v.size()); return this->v[idx]; }
     };
-    struct DataVector3f : public DataVectorT<vec3f,OSP_FLOAT3> {
-      virtual vec3f  get3f(index_t idx)  const { assert(idx<v.size()); return this->v[idx]; }
+
+    struct DataVector3f : public DataVectorT<vec3f,OSP_FLOAT3>
+    {
+      virtual vec3f get3f(index_t idx) const override
+      { assert(idx<v.size()); return this->v[idx]; }
     };
-    struct DataVector3fa : public DataVectorT<vec3fa,OSP_FLOAT3A> {
-      virtual vec3fa  get3fa(index_t idx)  const { assert(idx<v.size()); return this->v[idx]; }
+
+    struct DataVector3fa : public DataVectorT<vec3fa,OSP_FLOAT3A>
+    {
+      virtual vec3fa get3fa(index_t idx) const override
+      { assert(idx<v.size()); return this->v[idx]; }
     };
-    struct DataVector4f : public DataVectorT<vec4f,OSP_FLOAT4> {
-      virtual vec4f  get4f(index_t idx)  const { assert(idx<v.size()); return this->v[idx]; }
+
+    struct DataVector4f : public DataVectorT<vec4f,OSP_FLOAT4>
+    {
+      virtual vec4f get4f(index_t idx) const override
+      { assert(idx<v.size()); return this->v[idx]; }
     };
-    struct DataVector3i : public DataVectorT<vec3i,OSP_INT3> {
-      virtual vec3i  get3i(index_t idx)  const { assert(idx<v.size()); return this->v[idx]; }
+
+    struct DataVector3i : public DataVectorT<vec3i,OSP_INT3>
+    {
+      virtual vec3i get3i(index_t idx) const override
+      { assert(idx<v.size()); return this->v[idx]; }
     };
 
     template<typename T>

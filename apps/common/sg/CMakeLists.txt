@@ -25,9 +25,11 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   geometry/Spheres.cpp
   geometry/TriangleMesh.cpp
 
+  camera/Camera.h
   camera/PerspectiveCamera.cpp
 
   common/Common.cpp
+  common/Data.h
   common/FrameBuffer.cpp
   common/Integrator.cpp
   common/Light.cpp

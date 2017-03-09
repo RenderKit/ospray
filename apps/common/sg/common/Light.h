@@ -32,8 +32,8 @@ namespace ospray {
       Light() = default;
       Light(const std::string &type) : type(type) {}
 
-      virtual void preCommit(RenderContext &ctx);
-      virtual void postCommit(RenderContext &ctx);
+      virtual void preCommit(RenderContext &ctx) override;
+      virtual void postCommit(RenderContext &ctx) override;
 
       //! \brief returns a std::string with the c++ name of this class
       virtual std::string toString() const override;

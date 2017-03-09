@@ -48,7 +48,7 @@ namespace ospray {
       virtual box3f bounds() const override;
 
       /*! 'render' the nodes */
-      virtual void render(RenderContext &ctx);
+      virtual void render(RenderContext &ctx) override;
 
       //! \brief Initialize this node's value from given XML node 
       /*!
@@ -66,8 +66,8 @@ namespace ospray {
         existant) that contains additional binary data that the xml
         node fields may point into
       */
-      void setFromXML(const xml::Node *const node,
-                      const unsigned char *binBasePtr);
+      void setFromXML(const xml::Node &node,
+                      const unsigned char *binBasePtr) override;
 
       OSPGeometry         ospGeometry;
       std::vector<Sphere> sphere;

@@ -19,7 +19,9 @@
 
 namespace ospray {
   namespace pathtracer {
-    struct Luminous : public ospray::Material {
+
+    struct Luminous : public ospray::Material
+    {
       Luminous()
       {
         ispcEquivalent = ispc::PathTracer_Luminous_create();
@@ -27,13 +29,14 @@ namespace ospray {
 
       //! \brief common function to help printf-debugging
       /*! Every derived class should overrride this! */
-      virtual std::string toString() const
+      virtual std::string toString() const override
       {
         return "ospray::pathtracer::Luminous";
       }
 
       //! \brief commit the material's parameters
-      virtual void commit() {
+      virtual void commit() override
+      {
         const vec3f radiance = getParam3f("color", vec3f(1.f)) *
                                getParam1f("intensity", 1.f);
         const float transparency = getParam1f("transparency", 0.f);

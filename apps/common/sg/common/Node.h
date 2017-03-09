@@ -79,7 +79,7 @@ namespace ospray {
     {
       ParamT(const std::string &name, const T &t) : Param(name), value(t) {}
       virtual OSPDataType OSPType() const override { return OSP_UNKNOWN; }
-      virtual void write(XMLWriter &) { NOTIMPLEMENTED; }
+      virtual void write(XMLWriter &) override { NOTIMPLEMENTED; }
       T value;
     };
 
@@ -488,11 +488,11 @@ namespace ospray {
       virtual box3f bounds() const override { return bbox; }
       virtual box3f extendBounds(box3f b) { bbox.extend(b); return bbox; }
       virtual void preTraverse(RenderContext &ctx,
-                               const std::string& operation);
+                               const std::string& operation) override;
       virtual void postTraverse(RenderContext &ctx,
-                                const std::string& operation);
-      virtual void preCommit(RenderContext &ctx) { bbox = empty; }
-      virtual void preRender(RenderContext &ctx) {}
+                                const std::string& operation) override;
+      virtual void preCommit(RenderContext &ctx) override { bbox = empty; }
+      virtual void preRender(RenderContext &ctx)  {}
       virtual void postRender(RenderContext &ctx) {}
     protected:
       box3f bbox;

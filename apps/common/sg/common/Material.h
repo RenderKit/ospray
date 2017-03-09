@@ -29,14 +29,15 @@ namespace ospray {
       virtual void init() override;
       
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual std::string toString() const { return "ospray::viewer::sg::Material"; }
+      virtual std::string toString() const override;
 
-      virtual void preCommit(RenderContext &ctx);
-      virtual void postCommit(RenderContext &ctx);
+      virtual void preCommit(RenderContext &ctx) override;
+      virtual void postCommit(RenderContext &ctx) override;
 
       //! a logical name, of no other useful meaning whatsoever
       std::string name; 
-      //! indicates the type of material/shader the renderer should use for these parameters
+      //! indicates the type of material/shader the renderer should use for
+      //  these parameters
       std::string type;
       //! vector of textures used by the material
       std::vector<std::shared_ptr<Texture2D>> textures;

@@ -109,13 +109,15 @@ namespace ospray {
           size_t numMessagesAskedToSend { 0 };
         };
 
-        virtual void flush();
-        virtual void init();
-        virtual void shutdown();
+        virtual void flush() override;
+        virtual void init() override;
+        virtual void shutdown() override;
         virtual async::Group *createGroup(MPI_Comm comm,
                                           Consumer *consumer,
-                                          int32 tag = MPI_ANY_TAG);
-        virtual void send(const Address &dest, void *msgPtr, int32 msgSize);
+                                          int32 tag = MPI_ANY_TAG) override;
+        virtual void send(const Address &dest,
+                          void *msgPtr,
+                          int32 msgSize) override;
 
         std::vector<Group *> myGroups;
       };

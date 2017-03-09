@@ -21,13 +21,16 @@
 namespace ospray {
   namespace pathtracer {
 
-    struct OBJMaterial : public ospray::Material {
+    struct OBJMaterial : public ospray::Material
+    {
       //! \brief common function to help printf-debugging 
       /*! Every derived class should overrride this! */
-      virtual std::string toString() const { return "ospray::pathtracer::OBJMaterial"; }
+      virtual std::string toString() const  override
+      { return "ospray::pathtracer::OBJMaterial"; }
 
       //! \brief commit the material's parameters
-      virtual void commit() {
+      virtual void commit()  override
+      {
         if (getIE() == nullptr)
           ispcEquivalent = ispc::PathTracer_OBJ_create();
 

@@ -23,10 +23,12 @@ namespace ospray {
     struct Glass : public ospray::Material {
       //! \brief common function to help printf-debugging
       /*! Every derived class should override this! */
-      virtual std::string toString() const { return "ospray::pathtracer::Glass"; }
+      virtual std::string toString() const  override
+      { return "ospray::pathtracer::Glass"; }
 
       //! \brief commit the material's parameters
-      virtual void commit() {
+      virtual void commit() override
+      {
         if (getIE() != nullptr) return;
 
         const float etaInside = getParamf("etaInside", getParamf("eta", 1.5f));

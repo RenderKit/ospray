@@ -42,10 +42,10 @@ namespace ospray {
       
       vec2i size() const;
 
-      virtual void postCommit(RenderContext &ctx);
+      virtual void postCommit(RenderContext &ctx) override;
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual std::string toString() const;
+      virtual std::string toString() const override;
 
       OSPFrameBuffer handle() const;
       

@@ -57,8 +57,8 @@ namespace ospray {
       /*! render a frame. return 0 if successful, any non-zero number if not */
       virtual int renderFrame();
 
-      void preCommit(RenderContext &ctx);
-      void postCommit(RenderContext &ctx);
+      void preCommit(RenderContext &ctx) override;
+      void postCommit(RenderContext &ctx) override;
 
       // =======================================================
       // state variables

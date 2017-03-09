@@ -33,7 +33,7 @@ namespace ospray {
       virtual void init() override;
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual std::string toString() const;
+      virtual std::string toString() const override;
 
       //! return bounding box of all primitives
       virtual box3f bounds() const override;
@@ -41,7 +41,7 @@ namespace ospray {
       virtual void postCommit(RenderContext &ctx) override;
 
       /*! 'render' the nodes */
-      virtual void render(RenderContext &ctx);
+      virtual void render(RenderContext &ctx) override;
 
       //! \brief Initialize this node's value from given XML node
       /*!
@@ -103,7 +103,7 @@ namespace ospray {
       virtual box3f bounds() const override;
 
       /*! 'render' the nodes */
-      virtual void render(RenderContext &ctx);
+      virtual void render(RenderContext &ctx) override;
 
       OSPGeometry ospGeometry;
 

@@ -72,42 +72,53 @@ namespace ospray {
     /*! Abstraction for a 'material' that a renderer can query from
       any geometry (it's up to the renderer to know what to do with
       the respective mateiral type) */
-    struct RIVLMaterial : public miniSG::Node {
-      virtual string toString() const { return "ospray::miniSG::RIVLMaterial"; } 
+    struct RIVLMaterial : public miniSG::Node
+    {
+      virtual string toString() const override
+      { return "ospray::miniSG::RIVLMaterial"; }
       Ref<miniSG::Material> general;
     };
 
-    struct RIVLCamera : public miniSG::Node {
-      virtual string toString() const { return "ospray::miniSG::RIVLCamera"; } 
+    struct RIVLCamera : public miniSG::Node
+    {
+      virtual string toString() const override
+      { return "ospray::miniSG::RIVLCamera"; }
       vec3f from, at, up;
     };
 
     /*! Scene graph grouping node */
-    struct Group : public miniSG::Node {
-      virtual string toString() const;
+    struct Group : public miniSG::Node
+    {
+      virtual string toString() const override;
       std::vector<Ref<miniSG::Node> > child;
     };
 
     /*! scene graph node that contains an ospray geometry type (i.e.,
       anything that defines some sort of geometric surface */
-    struct Geometry : public miniSG::Node {
-      std::vector<Ref<RIVLMaterial> > material;
-      virtual string toString() const { return "ospray::miniSG::Geometry"; } 
+    struct Geometry : public miniSG::Node
+    {
+      std::vector<Ref<RIVLMaterial>> material;
+      virtual string toString() const  override
+      { return "ospray::miniSG::Geometry"; }
     };
 
     /*! scene graph node that contains an ospray geometry type (i.e.,
       anything that defines some sort of geometric surface */
-    struct RIVLTexture : public miniSG::Node {
-      virtual string toString() const { return "ospray::miniSG::Texture"; } 
+    struct RIVLTexture : public miniSG::Node
+    {
+      virtual string toString() const override
+      { return "ospray::miniSG::Texture"; }
       Ref<miniSG::Texture2D> texData;
     };
 
     /*! scene graph node that contains an ospray geometry type (i.e.,
       anything that defines some sort of geometric surface */
-    struct Transform : public miniSG::Node {
+    struct Transform : public miniSG::Node
+    {
       Ref<miniSG::Node> child;
       affine3f xfm;
-      virtual string toString() const { return "ospray::miniSG::Transform"; } 
+      virtual string toString() const override
+      { return "ospray::miniSG::Transform"; }
     };
 
     /*! a triangle mesh with 3 floats and 3 ints for vertex and index
@@ -116,8 +127,9 @@ namespace ospray {
     //          typename vtx_t=ospray::vec3f,
     //          typename nor_t=ospray::vec3f,
     //          typename txt_t=ospray::vec2f>
-    struct TriangleMesh : public miniSG::Geometry {
-      virtual string toString() const;
+    struct TriangleMesh : public miniSG::Geometry
+    {
+      virtual string toString() const override;
       TriangleMesh();
 
       // /*! \brief data handle to vertex data array. 
@@ -177,7 +189,6 @@ namespace ospray {
       return ss.str();
     } 
     
-
     std::string Group::toString() const 
     { 
       std::stringstream ss;

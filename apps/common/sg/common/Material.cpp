@@ -38,6 +38,11 @@ namespace ospray {
       child("Ns")->setMinMax(0.f, 100.f);
     }
 
+    std::string Material::toString() const
+    {
+      return "ospray::viewer::sg::Material";
+    }
+
     void Material::preCommit(RenderContext &ctx)
     {
       assert(ctx.ospRenderer);

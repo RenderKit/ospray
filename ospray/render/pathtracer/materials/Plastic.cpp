@@ -19,13 +19,17 @@
 
 namespace ospray {
   namespace pathtracer {
-    struct Plastic : public ospray::Material {
+
+    struct Plastic : public ospray::Material
+    {
       //! \brief common function to help printf-debugging
       /*! Every derived class should overrride this! */
-      virtual std::string toString() const { return "ospray::pathtracer::Plastic"; }
+      virtual std::string toString() const  override
+      { return "ospray::pathtracer::Plastic"; }
 
       //! \brief commit the material's parameters
-      virtual void commit() {
+      virtual void commit() override
+      {
         if (getIE() != nullptr) return;
 
         const vec3f pigmentColor = getParam3f("pigmentColor",vec3f(1.f));
