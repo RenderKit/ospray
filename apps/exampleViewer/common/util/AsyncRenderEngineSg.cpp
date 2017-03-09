@@ -21,12 +21,12 @@
 namespace ospray {
   namespace sg {
 
-    async_render_engine_sg::async_render_engine_sg(NodeHandle sgRenderer)
+    AsyncRenderEngineSg::AsyncRenderEngineSg(NodeHandle sgRenderer)
       : scenegraph(sgRenderer)
     {
     }
 
-    void async_render_engine_sg::run()
+    void AsyncRenderEngineSg::run()
     {
       while (state == ExecState::RUNNING) {
         static sg::TimeStamp lastFTime;
@@ -69,7 +69,7 @@ namespace ospray {
       }
     }
 
-    void async_render_engine_sg::validate()
+    void AsyncRenderEngineSg::validate()
     {
       if (state == ExecState::INVALID)
         state = ExecState::STOPPED;

@@ -95,7 +95,7 @@ namespace ospray {
 
     float aoDistance {1e20f};
 
-    async_render_engine renderEngine;
+    AsyncRenderEngine renderEngine;
     std::vector<uint32_t> pixelBuffer;
   };
 

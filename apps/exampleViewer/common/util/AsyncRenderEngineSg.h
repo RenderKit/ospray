@@ -37,13 +37,13 @@
 namespace ospray {
   namespace sg {
 
-    class OSPRAY_IMGUI_UTIL_INTERFACE async_render_engine_sg
-        : public async_render_engine
+    class OSPRAY_IMGUI_UTIL_INTERFACE AsyncRenderEngineSg
+        : public AsyncRenderEngine
     {
     public:
 
-      async_render_engine_sg(sg::NodeHandle sgRenderer);
-      ~async_render_engine_sg() = default;
+      AsyncRenderEngineSg(sg::NodeHandle sgRenderer);
+      ~AsyncRenderEngineSg() = default;
 
     private:
 

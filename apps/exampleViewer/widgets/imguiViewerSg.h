@@ -68,7 +68,7 @@ namespace ospray {
 
     sg::NodeHandle scenegraph;
 
-    sg::async_render_engine_sg renderEngine;
+    sg::AsyncRenderEngineSg renderEngine;
     std::vector<uint32_t> pixelBuffer;
   };
 

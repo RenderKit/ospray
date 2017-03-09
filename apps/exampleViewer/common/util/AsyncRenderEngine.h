@@ -36,12 +36,12 @@ namespace ospray {
 
   enum class ExecState {STOPPED, RUNNING, INVALID};
 
-  class OSPRAY_IMGUI_UTIL_INTERFACE async_render_engine
+  class OSPRAY_IMGUI_UTIL_INTERFACE AsyncRenderEngine
   {
   public:
 
-    async_render_engine() = default;
-    ~async_render_engine();
+    AsyncRenderEngine() = default;
+    ~AsyncRenderEngine();
 
     // Properties //
 
