@@ -133,16 +133,11 @@ namespace ospray {
       gui_combo = 1<<7
     };
 
+
     /*! \brief base node of all scene graph nodes */
     struct OSPSG_INTERFACE Node : public std::enable_shared_from_this<Node>
     {
-      // NOTE(jda) - can't do default member initializers due to MSVC...
-      Node()
-      {
-        properties.name = "NULL";
-        properties.type = "Node";
-        markAsModified();
-      }
+      Node();
 
       /*!
           NodeH is a handle to a sg::Node.  It has the benefit of supporting
@@ -174,7 +169,7 @@ namespace ospray {
         std::shared_ptr<sg::Node> node;
       };
 
-      virtual std::string toString() const { return "Node"; }
+      virtual std::string toString() const;
       std::shared_ptr<sg::Param> param(const std::string &name) const;
 
       //! \brief Initialize this node's value from given XML node
@@ -198,29 +193,26 @@ namespace ospray {
 
       //! just for convenience; add a typed 'setParam' function
       template<typename T>
-      inline void setParam(const std::string &name, const T &t)
-      { properties.params[name] = std::make_shared<ParamT<T>>(name,t); }
+      void setParam(const std::string &name, const T &t);
 
       template<typename FCN_T>
-      inline void for_each_param(FCN_T &&fcn)
-      { for (auto &p : properties.params) fcn(p.second); }
+      void for_each_param(FCN_T &&fcn);
 
-      virtual void init() {} //intialize children
+      virtual void init(); //intialize children
 
       /*! serialize the scene graph - add object to the serialization,
         but don't do anything else to the node(s) */
       virtual void serialize(sg::Serialization::State &state);
 
       /*! \brief 'render' the object for the first time */
-      virtual void render(RenderContext &ctx) {}
+      virtual void render(RenderContext &ctx);
 
       /*! \brief 'commit' updates */
-      virtual void commit() {}
+      virtual void commit();
 
-      std::string documentation() { return properties.documentation; }
+      std::string documentation();
 
-      void setDocumentation(const std::string &s)
-      { properties.documentation = s; }
+      void setDocumentation(const std::string &s);
 
       /*! \brief return bounding box in world coordinates.
 
@@ -228,141 +220,56 @@ namespace ospray {
         camera motion, setting default camera position, etc. Nodes
         for which that does not apply can simpy return
         box3f(empty) */
-      virtual box3f bounds() const { return box3f(empty); }
+      virtual box3f bounds() const;
 
       //! return when this node was last modified
-      inline TimeStamp lastModified() const
-      { return properties.lastModified; }
-      inline TimeStamp childrenLastModified() const
-      { return properties.childrenMTime;}
+      TimeStamp lastModified() const;
+      TimeStamp childrenLastModified() const;
 
       //! return when this node was last committed
-      inline TimeStamp lastCommitted() const
-      { return properties.lastCommitted; }
-      inline void markAsCommitted() { properties.lastCommitted = TimeStamp(); }
+      TimeStamp lastCommitted() const;
+      void markAsCommitted();
 
-      virtual void markAsModified()
-      {
-        properties.lastModified = TimeStamp();
-        if (!parent().isNULL())
-          parent()->setChildrenModified(properties.lastModified);
-      }
+      virtual void markAsModified();
 
-      virtual void setChildrenModified(TimeStamp t)
-      {
-        if (t > properties.childrenMTime) {
-          properties.childrenMTime = t;
-          if (!parent().isNULL())
-            parent()->setChildrenModified(properties.childrenMTime);
-        } 
-      }
+      virtual void setChildrenModified(TimeStamp t);
 
       //! return named child node
-      NodeH child(const std::string &name) const
-      {
-        std::lock_guard<std::mutex> lock{mutex};
-        auto itr = properties.children.find(name);
-        if (itr == properties.children.end()) {
-          std::cout << "couldn't find child! " << name << "\n";
-          return {};
-        } else {
-          return itr->second;
-        }
-      }
+      NodeH child(const std::string &name) const;
 
       //! return named child node
-      NodeH childRecursive(const std::string &name)
-      {
-        mutex.lock();
-        Node* n = this;
-        auto f = n->properties.children.find(name);
-        if (f != n->properties.children.end()) {
-          mutex.unlock();
-          return f->second;
-        }
-
-        for (auto &child : properties.children) {
-          mutex.unlock();
-          NodeH r = child.second->childRecursive(name);
-          if (!r.isNULL())
-            return r;
-          mutex.lock();
-        }
-
-        mutex.unlock();
-        return NodeH();
-      }
+      NodeH childRecursive(const std::string &name);
 
       //! return all children of type
-      std::vector<NodeH> childrenByType(const std::string &t) const
-      {
-        std::lock_guard<std::mutex> lock{mutex};
-        std::vector<NodeH> result;
-        NOT_IMPLEMENTED;
-        return result;
-      }
+      std::vector<NodeH> childrenByType(const std::string &t) const;
 
       //! return vector of child handles
-      std::vector<NodeH> children() const
-      {
-        std::lock_guard<std::mutex> lock{mutex};
-        std::vector<NodeH> result;
-        for (auto &child : properties.children)
-          result.push_back(child.second);
-        return result;
-      }
+      std::vector<NodeH> children() const;
 
       //! return child c
-      NodeH operator[] (const std::string &c) const { return child(c); }
+      NodeH operator[] (const std::string &c) const;
 
       //! return the parent node
-      NodeH parent() { return properties.parent; }
+      NodeH parent();
 
       //! sets the parent
-      void setParent(const NodeH& p)
-      { std::lock_guard<std::mutex> lock{mutex}; properties.parent = p; }
+      void setParent(const NodeH& p);
 
       //! get the value of the node, whithout template conversion
-      SGVar value()
-      { std::lock_guard<std::mutex> lock{mutex}; return properties.value; }
+      SGVar value();
 
       //! returns the value of the node in the desired type
       template<typename T>
-      const T& valueAs()
-      {
-        std::lock_guard<std::mutex> lock{mutex};
-        return properties.value.get<T>();
-      }
+      const T& valueAs();
 
       //! set the value of the node.  Requires strict typecast
-      void setValue(SGVar val)
-      {
-        {
-          std::lock_guard<std::mutex> lock{mutex};
-          if (val != properties.value)
-            properties.value = val;
-        }
-
-        markAsModified();
-      }
+      void setValue(SGVar val);
 
       //! add node as child of this one
-      virtual void add(std::shared_ptr<Node> node)
-      {
-        std::lock_guard<std::mutex> lock{mutex};
-        properties.children[node->name()] = NodeH(node);
-
-        //ARG!  Cannot call shared_from_this in constructors.  PIA!!!
-        node->setParent(shared_from_this());
-      }
+      virtual void add(std::shared_ptr<Node> node);
 
       //! add node as child of this one
-      virtual void add(NodeH node)
-      {
-        std::lock_guard<std::mutex> lock{mutex};
-        properties.children[node->name()] = node;
-        node->setParent(shared_from_this());
-      }
+      virtual void add(NodeH node);
 
       //! traverse this node and childrend with given operation, such as
       //  print,commit,render or custom operations
@@ -381,56 +288,43 @@ namespace ospray {
                                 const std::string& operation);
 
       //! called before committing children during traversal
-      virtual void preCommit(RenderContext &ctx) {}
+      virtual void preCommit(RenderContext &ctx);
 
       //! called after committing children during traversal
-      virtual void postCommit(RenderContext &ctx) {}
+      virtual void postCommit(RenderContext &ctx);
 
       //! name of the node, ie material007.  Should be unique among children
-      void setName(const std::string &v) { properties.name = v; }
+      void setName(const std::string &v);
 
       //! set type of node, ie Material
-      void setType(const std::string &v) { properties.type = v; }
+      void setType(const std::string &v);
 
       //! get name of the node, ie material007
-      std::string name() const { return properties.name; }
+      std::string name() const;
 
       //! type of node, ie Material
-      std::string type() const { return properties.type; }
+      std::string type() const;
 
-      void setFlags(NodeFlags f) { properties.flags = f; }
-      void setFlags(int f) { setFlags(static_cast<NodeFlags>(f)); }
-      NodeFlags flags() const { return properties.flags; }
+      void setFlags(NodeFlags f);
+      void setFlags(int f);
+      NodeFlags flags() const;
 
-      void setMinMax(const SGVar& minv, const SGVar& maxv)
-      {
-        properties.minmax.resize(2);
-        properties.minmax[0] = minv;
-        properties.minmax[1] = maxv;
-      }
+      void setMinMax(const SGVar& minv, const SGVar& maxv);
 
-      SGVar min() const { return properties.minmax[0]; }
-      SGVar max() const { return properties.minmax[1]; }
+      SGVar min() const;
+      SGVar max() const;
 
-      void setWhiteList(const std::vector<SGVar> &values)
-      {
-        properties.whitelist = values;
-      }
+      void setWhiteList(const std::vector<SGVar> &values);
+      void setBlackList(const std::vector<SGVar> &values);
 
-      void setBlackList(const std::vector<SGVar> &values)
-      {
-        properties.blacklist = values;
-      }
-
-      virtual bool isValid() { return properties.valid; }
-
-      virtual bool computeValid();
-
-      virtual bool computeValidMinMax() { return true; }
+      virtual bool isValid();
 
       static std::vector<std::shared_ptr<sg::Node>> nodes;
 
     protected:
+
+      virtual bool computeValid();
+      virtual bool computeValidMinMax();
 
       struct
       {
@@ -454,6 +348,29 @@ namespace ospray {
       mutable std::mutex mutex;
     };
 
+    // Inlined Node definitions ///////////////////////////////////////////////
+
+    //! just for convenience; add a typed 'setParam' function
+    template<typename T>
+    inline void Node::setParam(const std::string &name, const T &t)
+    {
+      properties.params[name] = std::make_shared<ParamT<T>>(name,t);
+    }
+
+    template<typename FCN_T>
+    inline void Node::for_each_param(FCN_T &&fcn)
+    {
+      for (auto &p : properties.params)
+        fcn(p.second);
+    }
+
+    template<typename T>
+    inline const T& Node::valueAs()
+    {
+      std::lock_guard<std::mutex> lock{mutex};
+      return properties.value.get<T>();
+    }
+
     /*! read a given scene graph node from its correspondoing xml node represenation */
     OSPSG_INTERFACE sg::Node* parseNode(xml::Node *node);
 
@@ -469,11 +386,12 @@ namespace ospray {
                            const std::shared_ptr<sg::Node> &node);
 
     using NodeH = Node::NodeH;
-    OSPSG_INTERFACE Node::NodeH createNode(std::string name,
-                                           std::string type = "Node",
-                                           SGVar var = SGVar(),
-                                           int flags = sg::NodeFlags::none,
-                                           std::string documentation="");
+
+    OSPSG_INTERFACE NodeH createNode(std::string name,
+                                     std::string type = "Node",
+                                     SGVar var = SGVar(),
+                                     int flags = sg::NodeFlags::none,
+                                     std::string documentation="");
 
     template <typename T>
     struct NodeParamCommit

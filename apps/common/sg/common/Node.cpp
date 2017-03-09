@@ -149,6 +149,19 @@ namespace ospray {
     // sg node implementations
     // ==================================================================
 
+    // NOTE(jda) - can't do default member initializers due to MSVC...
+    Node::Node()
+    {
+      properties.name = "NULL";
+      properties.type = "Node";
+      markAsModified();
+    }
+
+    std::string Node::toString() const
+    {
+      return "ospray::sg::Node";
+    }
+
     std::shared_ptr<sg::Param> Node::param(const std::string &name) const
     {
       auto it = properties.params.find(name);
@@ -164,6 +177,169 @@ namespace ospray {
       throw std::runtime_error(toString() +
                                ":setFromXML() not implemented for XML node type "
                                + node.name);
+    }
+
+    void Node::init()
+    {
+    }
+
+    void Node::render(RenderContext &ctx)
+    {
+    }
+
+    void Node::commit()
+    {
+    }
+
+    std::string Node::documentation()
+    {
+      return properties.documentation;
+    }
+
+    void Node::setDocumentation(const std::string &s)
+    {
+      properties.documentation = s;
+    }
+
+    box3f Node::bounds() const
+    {
+      return empty;
+    }
+
+    TimeStamp Node::lastModified() const
+    {
+      return properties.lastModified;
+    }
+
+    TimeStamp Node::childrenLastModified() const
+    {
+      return properties.childrenMTime;
+    }
+
+    TimeStamp Node::lastCommitted() const
+    {
+      return properties.lastCommitted;
+    }
+
+    void Node::markAsCommitted()
+    {
+      properties.lastCommitted = TimeStamp();
+    }
+
+    void Node::markAsModified()
+    {
+      properties.lastModified = TimeStamp();
+      if (!parent().isNULL())
+        parent()->setChildrenModified(properties.lastModified);
+    }
+
+    void Node::setChildrenModified(TimeStamp t)
+    {
+      if (t > properties.childrenMTime) {
+        properties.childrenMTime = t;
+        if (!parent().isNULL())
+          parent()->setChildrenModified(properties.childrenMTime);
+      }
+    }
+
+    Node::NodeH Node::child(const std::string &name) const
+    {
+      std::lock_guard<std::mutex> lock{mutex};
+      auto itr = properties.children.find(name);
+      if (itr == properties.children.end()) {
+        std::cout << "couldn't find child! " << name << "\n";
+        return {};
+      } else {
+        return itr->second;
+      }
+    }
+
+    Node::NodeH Node::childRecursive(const std::string &name)
+    {
+      mutex.lock();
+      Node* n = this;
+      auto f = n->properties.children.find(name);
+      if (f != n->properties.children.end()) {
+        mutex.unlock();
+        return f->second;
+      }
+
+      for (auto &child : properties.children) {
+        mutex.unlock();
+        NodeH r = child.second->childRecursive(name);
+        if (!r.isNULL())
+          return r;
+        mutex.lock();
+      }
+
+      mutex.unlock();
+      return NodeH();
+    }
+
+    std::vector<Node::NodeH> Node::childrenByType(const std::string &t) const
+    {
+      std::lock_guard<std::mutex> lock{mutex};
+      std::vector<NodeH> result;
+      NOT_IMPLEMENTED;
+      return result;
+    }
+
+    std::vector<Node::NodeH> Node::children() const
+    {
+      std::lock_guard<std::mutex> lock{mutex};
+      std::vector<NodeH> result;
+      for (auto &child : properties.children)
+        result.push_back(child.second);
+      return result;
+    }
+
+    Node::NodeH Node::operator[](const std::string &c) const
+    {
+      return child(c);
+    }
+
+    Node::NodeH Node::parent()
+    {
+      return properties.parent;
+    }
+
+    void Node::setParent(const Node::NodeH &p)
+    {
+      std::lock_guard<std::mutex> lock{mutex};
+      properties.parent = p;
+    }
+
+    SGVar Node::value()
+    {
+      std::lock_guard<std::mutex> lock{mutex};
+      return properties.value;
+    }
+
+    void Node::setValue(SGVar val)
+    {
+      {
+        std::lock_guard<std::mutex> lock{mutex};
+        if (val != properties.value)
+          properties.value = val;
+      }
+
+      markAsModified();
+    }
+
+    void Node::add(std::shared_ptr<Node> node)
+    {
+      std::lock_guard<std::mutex> lock{mutex};
+      properties.children[node->name()] = NodeH(node);
+
+      //ARG!  Cannot call shared_from_this in constructors.  PIA!!!
+      node->setParent(shared_from_this());
+    }
+
+    void Node::add(Node::NodeH node)
+    {
+      std::lock_guard<std::mutex> lock{mutex};
+      properties.children[node->name()] = node;
+      node->setParent(shared_from_this());
     }
 
     void Node::traverse(RenderContext &ctx, const std::string& operation)
@@ -222,6 +398,81 @@ namespace ospray {
       }
     }
 
+    void Node::preCommit(RenderContext &ctx)
+    {
+    }
+
+    void Node::postCommit(RenderContext &ctx)
+    {
+    }
+
+    void Node::setName(const std::string &v)
+    {
+      properties.name = v;
+    }
+
+    void Node::setType(const std::string &v)
+    {
+      properties.type = v;
+    }
+
+    std::string Node::name() const
+    {
+      return properties.name;
+    }
+
+    std::string Node::type() const
+    {
+      return properties.type;
+    }
+
+    void Node::setFlags(NodeFlags f)
+    {
+      properties.flags = f;
+    }
+
+    void Node::setFlags(int f)
+    {
+      setFlags(static_cast<NodeFlags>(f));
+    }
+
+    NodeFlags Node::flags() const
+    {
+      return properties.flags;
+    }
+
+    void Node::setMinMax(const SGVar &minv, const SGVar &maxv)
+    {
+      properties.minmax.resize(2);
+      properties.minmax[0] = minv;
+      properties.minmax[1] = maxv;
+    }
+
+    SGVar Node::min() const
+    {
+      return properties.minmax[0];
+    }
+
+    SGVar Node::max() const
+    {
+      return properties.minmax[1];
+    }
+
+    void Node::setWhiteList(const std::vector<SGVar> &values)
+    {
+      properties.whitelist = values;
+    }
+
+    void Node::setBlackList(const std::vector<SGVar> &values)
+    {
+      properties.blacklist = values;
+    }
+
+    bool Node::isValid()
+    {
+      return properties.valid;
+    }
+
     bool Node::computeValid()
     {
 #ifndef _WIN32
@@ -249,6 +500,10 @@ namespace ospray {
       return true;
     }
 
+    bool Node::computeValidMinMax()
+    {
+      return true;
+    }
 
     // ==================================================================
     // Renderable
@@ -299,8 +554,8 @@ namespace ospray {
 
     std::map<std::string, CreatorFct> nodeRegistry;
 
-    Node::NodeH createNode(std::string name, std::string type, SGVar var,
-                           int flags, std::string documentation)
+    NodeH createNode(std::string name, std::string type, SGVar var,
+                     int flags, std::string documentation)
     {
       std::map<std::string, CreatorFct>::iterator it = nodeRegistry.find(type);
       CreatorFct creator = nullptr;
@@ -325,9 +580,10 @@ namespace ospray {
       newNode->setType(type);
       newNode->setFlags(flags);
       newNode->setDocumentation(documentation);
+
       if (valid(var)) newNode->setValue(var);
-      NodeH result = Node::NodeH(newNode);
-      return result;
+
+      return newNode;
     }
 
     OSP_REGISTER_SG_NODE(Node);
