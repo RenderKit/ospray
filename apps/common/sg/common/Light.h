@@ -32,21 +32,11 @@ namespace ospray {
       Light() = default;
       Light(const std::string &type) : type(type) {}
 
-      virtual void preCommit(RenderContext &ctx)
-      {
-        if (!ospLight)
-          ospLight = ospNewLight(ctx.ospRenderer, type.c_str());
-        ospCommit(ospLight);
-        setValue((OSPObject)ospLight);
-      }
-
-      virtual void postCommit(RenderContext &ctx)
-      {
-        ospCommit(ospLight);
-      }
+      virtual void preCommit(RenderContext &ctx);
+      virtual void postCommit(RenderContext &ctx);
 
       //! \brief returns a std::string with the c++ name of this class
-      virtual std::string toString() const override { return "ospray::sg::Light"; }
+      virtual std::string toString() const override;
 
       /*! \brief light type, i.e., 'DirectionalLight', 'PointLight', ... */
       const std::string type = "none";

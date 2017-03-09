@@ -133,37 +133,6 @@ namespace ospray {
 
     void StructuredVolume::render(RenderContext &ctx)
     {
-      // if (volume) return;
-
-      // if (dimensions.x <= 0 || dimensions.y <= 0 || dimensions.z <= 0) {
-      //   throw std::runtime_error("StructuredVolume::render(): "
-      //                            "invalid volume dimensions");
-      // }
-
-      // volume = ospNewVolume(useDataDistributedVolume
-      //                       ? "data_distributed_volume"
-      //                       : "block_bricked_volume");
-
-      // if (!volume) THROW_SG_ERROR("could not allocate volume");
-
-      // ospSetString(volume,"voxelType",voxelType.c_str());
-      // ospSetVec3i(volume,"dimensions",(const osp::vec3i&)dimensions);
-      // size_t nPerSlice = (size_t)dimensions.x*(size_t)dimensions.y;
-      // assert(mappedPointer != nullptr);
-
-      // for (int z = 0; z < dimensions.z; z++) {
-      //   float *slice = (float*)(((unsigned char *)mappedPointer)+z*nPerSlice*sizeof(float));
-      //   vec3i region_lo(0,0,z), region_sz(dimensions.x,dimensions.y,1);
-      //   ospSetRegion(volume,slice,
-      //                (const osp::vec3i&)region_lo,
-      //                (const osp::vec3i&)region_sz);
-      // }
-
-      // // transferFunction->render(ctx);
-
-      // // ospSetObject(volume,"transferFunction",transferFunction->handle());
-      // ospCommit(volume);
-      // ospAddVolume(ctx.world->ospModel,volume);
     }
 
     // TODO: why is this a copy-paste of render??
@@ -194,9 +163,6 @@ namespace ospray {
                      (const osp::vec3i&)region_sz);
       }
 
-      // transferFunction->postCommit(ctx);
-
-      // ospSetObject(volume,"transferFunction",transferFunction->handle());
       ospCommit(volume);
     }
 
@@ -214,7 +180,9 @@ namespace ospray {
 
     /*! \brief returns a std::string with the c++ name of this class */
     std::string StructuredVolumeFromFile::toString() const
-    { return "ospray::sg::StructuredVolumeFromFile"; }
+    {
+      return "ospray::sg::StructuredVolumeFromFile";
+    }
 
     //! return bounding box of all primitives
     box3f StructuredVolumeFromFile::bounds() const
@@ -334,10 +302,8 @@ namespace ospray {
       float iso = child("isosurface")->valueAs<float>();
       if (iso < voxelRange.x || iso > voxelRange.y)
         child("isosurface")->setValue((voxelRange.y-voxelRange.x)/2.f);
-      // transferFunction->setValueRange(voxelRange);
       child("transferFunction")["valueRange"]->setValue(voxelRange);
       child("transferFunction")->preCommit(ctx);
-      // transferFunction->render(ctx);
 
       ospSetObject(volume,"transferFunction",child("transferFunction")->valueAs<OSPObject>());
       ospCommit(volume);
@@ -362,11 +328,15 @@ namespace ospray {
 
     /*! \brief returns a std::string with the c++ name of this class */
     std::string StackedRawSlices::toString() const
-    { return "ospray::sg::StackedRawSlices"; }
+    {
+      return "ospray::sg::StackedRawSlices";
+    }
 
     //! return bounding box of all primitives
     box3f StackedRawSlices::bounds() const
-    { return box3f(vec3f(0.f),vec3f(getDimensions())); }
+    {
+      return box3f(vec3f(0.f),vec3f(getDimensions()));
+    }
 
     //! \brief Initialize this node's value from given XML node
     void StackedRawSlices::setFromXML(const xml::Node &node,
@@ -390,47 +360,6 @@ namespace ospray {
     /*! \brief 'render' the object to ospray */
     void StackedRawSlices::render(RenderContext &ctx)
     {
-      // if (volume) return;
-
-      // dimensions.x = sliceResolution.x;
-      // dimensions.y = sliceResolution.y;
-      // dimensions.z = numSlices;
-
-      // if (dimensions.x <= 0 || dimensions.y <= 0 || dimensions.z <= 0)
-      //   throw std::runtime_error("StackedRawSlices::render(): invalid volume dimensions");
-
-      // volume = ospNewVolume("block_bricked_volume");
-      // if (!volume)
-      //   THROW_SG_ERROR("could not allocate volume");
-
-      // ospSetString(volume,"voxelType",voxelType.c_str());
-      // ospSetVec3i(volume,"dimensions",(const osp::vec3i&)dimensions);
-      // size_t nPerSlice = dimensions.x*dimensions.y;
-      // uint8_t *slice = new uint8_t[nPerSlice];
-      // for (int sliceID=0;sliceID<numSlices;sliceID++) {
-      //   char *sliceName = (char*)alloca(strlen(baseName.c_str()) + 20);
-      //   sprintf(sliceName, baseName.c_str(), firstSliceID + sliceID);
-      //   PRINT(sliceName);
-      //   FILE *file = fopen(sliceName,"rb");
-      //   if (!file)
-      //     throw std::runtime_error("StackedRawSlices::render(): could not open file '"
-      //                              +std::string(sliceName)+"'");
-      //   size_t nRead = fread(slice,sizeof(float),nPerSlice,file);
-      //   if (nRead != nPerSlice)
-      //     throw std::runtime_error("StackedRawSlices::render(): read incomplete slice data ... partial file or wrong format!?");
-      //   const vec3i region_lo(0,0,sliceID), region_sz(dimensions.x,dimensions.y,1);
-      //   ospSetRegion(volume,slice,
-      //                (const osp::vec3i&)region_lo,
-      //                (const osp::vec3i&)region_sz);
-      //   fclose(file);
-      // }
-      // delete[] slice;
-
-      // // transferFunction->render(ctx);
-
-      // // ospSetObject(volume,"transferFunction",transferFunction->handle());
-      // ospCommit(volume);
-      // ospAddVolume(ctx.world->ospModel,volume);
     }
 
     OSP_REGISTER_SG_NODE(StackedRawSlices);

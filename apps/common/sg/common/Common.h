@@ -48,8 +48,19 @@ namespace ospray {
         'integrator' */
     struct Integrator;
 
+    struct RenderContext;
+
     //! map the given file to memory and return that pointer
-    const unsigned char * mapFile(const std::string &fileName);
+    const unsigned char* mapFile(const std::string &fileName);
+
+    /*! return the size (in byte) for a given ospray data type */
+    size_t sizeOf(const OSPDataType type);
+
+    /*! return the ospray data type for a given string-ified type */
+    OSPDataType getOSPDataTypeFor(const char *typeName);
+
+    /*! return the ospray data type for a given string-ified type */
+    OSPDataType getOSPDataTypeFor(const std::string &typeName);
 
   } // ::ospray::sg
 } // ::ospray

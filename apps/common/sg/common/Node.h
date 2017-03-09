@@ -19,6 +19,7 @@
 #include "sg/SceneGraphExports.h"
 #include "sg/common/TimeStamp.h"
 #include "sg/common/Serialization.h"
+#include "sg/common/RenderContext.h"
 #include "sg/common/RuntimeError.h"
 // stl
 #include <map>
@@ -36,17 +37,6 @@ namespace ospray {
   namespace sg {
 
     using SGVar = OSPVariant;
-
-    bool OSPSG_INTERFACE isValid(SGVar var);
-
-    /*! return the size (in byte) for a given ospray data type */
-    size_t sizeOf(const OSPDataType type);
-
-    /*! return the ospray data type for a given string-ified type */
-    OSPDataType getOSPDataTypeFor(const char *typeName);
-
-    /*! return the ospray data type for a given string-ified type */
-    OSPDataType getOSPDataTypeFor(const std::string &typeName);
 
     /*! forward decl of entity that nodes can write to when writing XML files */
     struct XMLWriter;
@@ -93,34 +83,6 @@ namespace ospray {
       T value;
     };
 
-    /*! class that encapsulate all the context/state required for
-      rendering any object. note we INTENTIONALLY do not use
-      shared_ptrs here because certain nodes want to set these values
-      to 'this', which isn't valid for shared_ptrs */
-    struct OSPSG_INTERFACE RenderContext
-    {
-      std::shared_ptr<sg::World>      world;      //!< world we're rendering into
-      std::shared_ptr<sg::Integrator> integrator; //!< integrator used to create materials etc
-      const affine3f  xfm {one};        //!< affine geometry transform matrix
-      OSPRenderer ospRenderer {nullptr};
-      int level {0};
-
-      RenderContext() = default;
-
-      //! create a new context with new transformation matrix
-      RenderContext(const RenderContext &other, const affine3f &newXfm)
-        : world(other.world),
-          integrator(other.integrator),
-          xfm(newXfm),level(0),
-          ospRenderer(nullptr)
-      {}
-
-      TimeStamp _MTime;
-      TimeStamp MTime() { return _MTime; }
-      TimeStamp _childMTime;
-      TimeStamp childMTime() { return _childMTime; }
-    };
-
     enum NodeFlags
     {
       none = 0 << 0,
@@ -133,6 +95,7 @@ namespace ospray {
       gui_combo = 1<<7
     };
 
+    // Base Node class definition /////////////////////////////////////////////
 
     /*! \brief base node of all scene graph nodes */
     struct OSPSG_INTERFACE Node : public std::enable_shared_from_this<Node>
@@ -345,6 +308,8 @@ namespace ospray {
         std::string documentation;
       } properties;
 
+      // NOTE(jda) - The mutex is 'mutable' because const methods still need
+      //             to be able to lock the mutex
       mutable std::mutex mutex;
     };
 
@@ -371,13 +336,11 @@ namespace ospray {
       return properties.value.get<T>();
     }
 
-    /*! read a given scene graph node from its correspondoing xml node represenation */
-    OSPSG_INTERFACE sg::Node* parseNode(xml::Node *node);
-
     // list of all named nodes - for now use this as a global
     // variable, but eventually we'll need tofind a better way for
     // storing this ... maybe in the world!?
     extern std::map<std::string,std::shared_ptr<sg::Node>> namedNodes;
+
     std::shared_ptr<sg::Node> OSPSG_INTERFACE
     findNamedNode(const std::string &name);
 
@@ -403,22 +366,22 @@ namespace ospray {
     };
 
     template <typename T>
-    void NodeParamCommit<T>::commit(std::shared_ptr<Node> n)
+    inline void NodeParamCommit<T>::commit(std::shared_ptr<Node> n)
     {
     }
 
     template <typename T>
-    bool NodeParamCommit<T>::compare(const SGVar& min,
-                                     const SGVar& max,
-                                     const SGVar& value)
+    inline bool NodeParamCommit<T>::compare(const SGVar& min,
+                                            const SGVar& max,
+                                            const SGVar& value)
     {
       return true;
     }
 
     template<typename T>
-    bool NodeParamCommitComparison(const SGVar& min,
-                                   const SGVar& max,
-                                   const SGVar& value)
+    inline bool NodeParamCommitComparison(const SGVar& min,
+                                          const SGVar& max,
+                                          const SGVar& value)
     {
       if (value.get<T>() < min.get<T>() || value.get<T>() > max.get<T>())
         return false;

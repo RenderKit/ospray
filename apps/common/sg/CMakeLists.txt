@@ -34,6 +34,7 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   common/Material.cpp
   common/Node.cpp
   common/OSPVariant.h
+  common/RenderContext.h
   common/Serialization.cpp
   common/TimeStamp.cpp
   common/Texture2D.cpp
