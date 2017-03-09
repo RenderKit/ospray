@@ -17,6 +17,8 @@
 // ospray::sg
 #include "Importer.h"
 #include "common/sg/SceneGraph.h"
+#include "common/sg/geometry/TriangleMesh.h"
+#include "common/miniSG/miniSG.h"
 
 /*! \file sg/module/Importer.cpp Defines the interface for writing
     file importers for the ospray::sg */
@@ -76,20 +78,32 @@ namespace ospray {
       } else if (file.ext() == "xml") {
         std::shared_ptr<sg::World> wsg(std::dynamic_pointer_cast<sg::World>(shared_from_this()));
         sg::importRIVL(wsg, file);
-      } else if (file.ext() == "x3d") {
-        // miniSG::Model msgModel;
-        // miniSG::importX3D(msgModel, file);
-        // for (auto mesh : msgModel->mesh)
-        // {
-        //   sg::TriangleMesh sgMesh = std::dynamic_shared_cast<sg::TriangleMesh>
-        //     (createNode(mesh->name, "TriangleMesh").get());
-        //   sgMesh->position = mesh->position;
-        //   sgMesh->normal = mesh->normal;
-        //   sgMesh->color = mesh->color;
-        //   sgMesh->texcoord = mesh->texcoord;
-        //   sgMesh->triangle = mesh->triangle;
-        //   // add mesh->material
-        // }
+      } else if (file.ext() == "x3d" || file.ext() == "hbp" || file.ext() == "msg" || 
+      file.ext() == "rivl" || file.ext() == "stl" || file.ext() == "tri") {
+        miniSG::Model msgModel;
+        miniSG::importX3D(msgModel, file);
+        for (auto mesh : msgModel.mesh)
+        {
+          auto sgMesh = std::dynamic_pointer_cast<sg::TriangleMesh>
+            (createNode(mesh->name, "TriangleMesh").get());
+          sgMesh->vertex = std::make_shared<DataVector3f>();
+          for(int i =0; i < mesh->position.size(); i++)
+            std::dynamic_pointer_cast<DataVector3f>(sgMesh->vertex)->push_back(
+              mesh->position[i]);
+          sgMesh->normal = std::make_shared<DataVector3f>();
+          for(int i =0; i < mesh->normal.size(); i++)
+            std::dynamic_pointer_cast<DataVector3f>(sgMesh->normal)->push_back(
+              mesh->normal[i]);
+          sgMesh->texcoord = std::make_shared<DataVector2f>();
+          for(int i =0; i < mesh->texcoord.size(); i++)
+            std::dynamic_pointer_cast<DataVector2f>(sgMesh->texcoord)->push_back(
+              mesh->texcoord[i]);
+          sgMesh->index =  std::make_shared<DataVector3i>();
+          for(int i =0; i < mesh->triangle.size(); i++)
+            std::dynamic_pointer_cast<DataVector3i>(sgMesh->index)->push_back(
+              vec3i(mesh->triangle[i].v0, mesh->triangle[i].v1, mesh->triangle[i].v2));
+          add(sgMesh);
+        }
       } else {
         std::cout << "unsupported file format\n";
         return;
