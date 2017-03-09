@@ -53,6 +53,8 @@ namespace ospray {
 
       bool valid() const;
 
+      std::string toString();
+
     private:
 
       // Friends //
@@ -349,6 +351,33 @@ namespace ospray {
     inline bool OSPVariant::valid() const
     {
       return currentType != Type::INVALID;
+    }
+
+    inline std::string OSPVariant::toString()
+    {
+      std::stringstream asString;
+      asString << "OSPVariant<";
+
+      if (is<OSPObject>())
+        asString << "OSPobject> : " << get<OSPObject>();
+      else if (is<vec3f>())
+        asString << "vec3f> : " << get<vec3f>();
+      else if (is<vec2f>())
+        asString << "vec2f> : " << get<vec2f>();
+      else if (is<box3f>())
+        asString << "box3f> : " << get<box3f>();
+      else if (is<std::string>())
+        asString << "std::string> : " << get<std::string>();
+      else if (is<float>())
+        asString << "float> : " << get<float>();
+      else if (is<bool>())
+        asString << "bool> : " << get<bool>();
+      else if (is<int>())
+        asString << "int> : " << get<int>();
+      else
+        asString << "INVALID>";
+
+      return asString.str();
     }
 
     // Other inlined definitions //////////////////////////////////////////////
