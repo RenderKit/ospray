@@ -50,16 +50,6 @@ IF(OSPRAY_APPS_ENABLE_SCRIPTING)
   ADD_SUBDIRECTORY(common/script)
 ENDIF()
 
-# mini-scene graph viewer implemented with GLUT
-OPTION(OSPRAY_APPS_GLUTVIEWER "Build ospGlutViewer application." ON)
-
-IF(OSPRAY_APPS_GLUTVIEWER)
-  INCLUDE(glut)
-  # common utility classes for GLUT-based 3D viewer widget
-  ADD_SUBDIRECTORY(common/widgets)
-  ADD_SUBDIRECTORY(glutViewer)
-ENDIF()
-
 # NOTE(jda) - Disable Qt based viewers when on OS X using ICC due to
 #             unresolved issues
 # qt-based viewer for geometry (and soon volumes)
