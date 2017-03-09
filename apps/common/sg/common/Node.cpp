@@ -153,13 +153,19 @@ namespace ospray {
       }
     }
 
+    bool Node::hasChild(const std::string &name) const
+    {
+      std::lock_guard<std::mutex> lock{mutex};
+      auto itr = properties.children.find(name);
+      return itr != properties.children.end();
+    }
+
     Node::NodeH Node::child(const std::string &name) const
     {
       std::lock_guard<std::mutex> lock{mutex};
       auto itr = properties.children.find(name);
       if (itr == properties.children.end()) {
-        std::cout << "couldn't find child! " << name << "\n";
-        return {};
+        throw std::runtime_error("Could not find sg child node with name"+name);
       } else {
         return itr->second;
       }

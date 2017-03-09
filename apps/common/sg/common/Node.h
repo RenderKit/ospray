@@ -197,6 +197,8 @@ namespace ospray {
 
       virtual void setChildrenModified(TimeStamp t);
 
+      bool hasChild(const std::string &name) const;
+
       //! return named child node
       NodeH child(const std::string &name) const;
 
