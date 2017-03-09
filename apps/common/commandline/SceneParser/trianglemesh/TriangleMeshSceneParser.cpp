@@ -108,18 +108,17 @@ namespace commandline {
           loadedScene = true;
         }
       }
-      if (loadedScene)
-        {
-          msgModels.push_back(msgModel);
-          sceneModels.push_back(cpp::Model());
-          msgModel = new miniSG::Model;
-          total_loadedScene = true;
-        }
+
+      if (loadedScene) {
+        msgModels.push_back(msgModel);
+        sceneModels.push_back(cpp::Model());
+        msgModel = new miniSG::Model;
+        total_loadedScene = true;
+      }
     }
 
-    if (total_loadedScene) {
+    if (total_loadedScene)
       finalize();
-    }
 
     return total_loadedScene;
   }

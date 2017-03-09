@@ -26,6 +26,29 @@
 namespace ospray {
   namespace sg {
 
+    // Helper functions ///////////////////////////////////////////////////////
+
+    static inline void importMiniSg(miniSG::Model &msgModel,
+                                    const ospcommon::FileName &fn)
+    {
+      if (fn.ext() == "stl")
+        miniSG::importSTL(msgModel,fn);
+      else if (fn.ext() == "msg")
+        miniSG::importMSG(msgModel,fn);
+      else if (fn.ext() == "tri")
+        miniSG::importTRI_xyz(msgModel,fn);
+      else if (fn.ext() == "xyzs")
+        miniSG::importTRI_xyzs(msgModel,fn);
+      else if (fn.ext() == "xml")
+        miniSG::importRIVL(msgModel,fn);
+      else if (fn.ext() == "hbp")
+        miniSG::importHBP(msgModel,fn);
+      else if (fn.ext() == "x3d")
+        miniSG::importX3D(msgModel,fn);
+    }
+
+    // Importer definitions ///////////////////////////////////////////////////
+
     using FileExtToImporterMap = std::map<const std::string, ImporterFunction>;
 
     FileExtToImporterMap importerForExtension;
@@ -75,15 +98,14 @@ namespace ospray {
         std::shared_ptr<sg::World> wsg(std::dynamic_pointer_cast<sg::World>(shared_from_this()));
         sg::loadOSP(wsg, file);
         instanced = false;
-      } else if (file.ext() == "xml") {
-        std::shared_ptr<sg::World> wsg(std::dynamic_pointer_cast<sg::World>(shared_from_this()));
-        sg::importRIVL(wsg, file);
-      } else if (file.ext() == "x3d" || file.ext() == "hbp" || file.ext() == "msg" || 
-      file.ext() == "rivl" || file.ext() == "stl" || file.ext() == "tri") {
+      } else if (file.ext() == "x3d" || file.ext() == "hbp" ||
+                 file.ext() == "msg" || file.ext() == "stl" ||
+                 file.ext() == "tri" || file.ext() == "xml") {
+
         miniSG::Model msgModel;
-        miniSG::importX3D(msgModel, file);
-        for (auto mesh : msgModel.mesh)
-        {
+        importMiniSg(msgModel, file);
+
+        for (auto mesh : msgModel.mesh) {
           auto sgMesh = std::dynamic_pointer_cast<sg::TriangleMesh>
             (createNode(mesh->name, "TriangleMesh").get());
           sgMesh->vertex = std::make_shared<DataVector3f>();
