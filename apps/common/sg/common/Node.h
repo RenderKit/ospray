@@ -116,6 +116,9 @@ namespace ospray {
         NodeH operator[] (const std::string &c) const
         { return node->child(c); }
 
+        NodeH operator[] (const char *c) const
+        { return node->child(c); }
+
         //! add child node n to this node
         NodeH operator+= (NodeH n)
         { get()->add(n); n->setParent(*this); return n;}
@@ -126,6 +129,8 @@ namespace ospray {
 
         //! is this handle pointing to a null value?
         bool isNULL() const { return node.get() == nullptr; }
+
+        operator bool() const { return !isNULL(); }
 
         // Data members //
 
