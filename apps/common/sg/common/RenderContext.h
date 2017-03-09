@@ -54,8 +54,9 @@ namespace ospray {
                                         const affine3f &newXfm)
       : world(other.world),
         integrator(other.integrator),
-        xfm(newXfm),level(0),
-        ospRenderer(nullptr)
+        xfm(newXfm),
+        ospRenderer(nullptr),
+        level(0)
     {}
 
     inline TimeStamp RenderContext::MTime()

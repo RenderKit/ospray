@@ -127,7 +127,6 @@ void VolumeViewer::setModel(size_t index)
   if (!modelStates[index].volumes.empty()) {
     //! Update transfer function and isosurface editor data value range with the
     //  voxel range of the current model's first volume.
-    OSPVolume volume = modelStates[index].volumes[0]->handle;
     ospcommon::vec2f voxelRange = modelStates[index].volumes[0]->voxelRange;
     
     if(voxelRange != ospcommon::vec2f(0.f)) {

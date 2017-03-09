@@ -121,7 +121,7 @@ void parseCommandLineSG(int ac, const char **&av, sg::NodeH root)
       try
       {
         std::stringstream vals(value);
-        int x,y,z;
+        int x,y;
         vals >> x >> y;
         node->valueAs<ospcommon::vec2i>();
         node->setValue(ospcommon::vec2i(x,y));

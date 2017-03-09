@@ -690,8 +690,6 @@ namespace ospray {
       
       void CommandRelease::run()
       {
-        ManagedObject *obj = handle.lookup();
-        Assert(obj);
         handle.freeObject();
       }
 

@@ -94,9 +94,9 @@ namespace ospray {
       {
         WriteStream(Fabric &fabric, size_t maxBufferSize = 1LL*1024*1024)
           : fabric(fabric),
+            buffer(new byte_t[maxBufferSize]),
             maxBufferSize(maxBufferSize),
-            numInBuffer(0),
-            buffer(new byte_t[maxBufferSize])
+            numInBuffer(0)
         {
         }
 
