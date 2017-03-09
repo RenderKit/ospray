@@ -21,7 +21,7 @@
 namespace ospray {
   namespace sg {
 
-    async_render_engine_sg::async_render_engine_sg(NodeH sgRenderer)
+    async_render_engine_sg::async_render_engine_sg(NodeHandle sgRenderer)
       : scenegraph(sgRenderer)
     {
     }

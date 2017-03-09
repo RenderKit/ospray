@@ -56,7 +56,7 @@ void parseCommandLine(int ac, const char **&av)
 
 //parse command line arguments containing the format:
 //  -nodeName:...:nodeName=value,value,value
-void parseCommandLineSG(int ac, const char **&av, sg::NodeH root)
+void parseCommandLineSG(int ac, const char **&av, sg::NodeHandle root)
 {
   for(int i=1;i < ac; i++)
   {
@@ -77,7 +77,7 @@ void parseCommandLineSG(int ac, const char **&av, sg::NodeH root)
       std::stringstream ss;
       ss << arg.substr(1,f-1);
       std::string child;
-      sg::NodeH node = root;
+      sg::NodeHandle node = root;
       while (ss >> child)
       {
         node = node->childRecursive(child);
@@ -133,7 +133,7 @@ void parseCommandLineSG(int ac, const char **&av, sg::NodeH root)
   }
 }
 
-void addPlaneToScene(sg::NodeH &world)
+void addPlaneToScene(sg::NodeHandle &world)
 {
   //add plane
   auto bbox = world->bounds();

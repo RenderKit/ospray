@@ -160,7 +160,7 @@ namespace ospray {
       return itr != properties.children.end();
     }
 
-    Node::NodeH Node::child(const std::string &name) const
+    Node::NodeHandle Node::child(const std::string &name) const
     {
       std::lock_guard<std::mutex> lock{mutex};
       auto itr = properties.children.find(name);
@@ -171,7 +171,7 @@ namespace ospray {
       }
     }
 
-    Node::NodeH Node::childRecursive(const std::string &name)
+    Node::NodeHandle Node::childRecursive(const std::string &name)
     {
       mutex.lock();
       Node* n = this;
@@ -183,44 +183,44 @@ namespace ospray {
 
       for (auto &child : properties.children) {
         mutex.unlock();
-        NodeH r = child.second->childRecursive(name);
+        NodeHandle r = child.second->childRecursive(name);
         if (!r.isNULL())
           return r;
         mutex.lock();
       }
 
       mutex.unlock();
-      return NodeH();
+      return NodeHandle();
     }
 
-    std::vector<Node::NodeH> Node::childrenByType(const std::string &t) const
+    std::vector<Node::NodeHandle> Node::childrenByType(const std::string &t) const
     {
       std::lock_guard<std::mutex> lock{mutex};
-      std::vector<NodeH> result;
+      std::vector<NodeHandle> result;
       NOT_IMPLEMENTED;
       return result;
     }
 
-    std::vector<Node::NodeH> Node::children() const
+    std::vector<Node::NodeHandle> Node::children() const
     {
       std::lock_guard<std::mutex> lock{mutex};
-      std::vector<NodeH> result;
+      std::vector<NodeHandle> result;
       for (auto &child : properties.children)
         result.push_back(child.second);
       return result;
     }
 
-    Node::NodeH Node::operator[](const std::string &c) const
+    Node::NodeHandle Node::operator[](const std::string &c) const
     {
       return child(c);
     }
 
-    Node::NodeH Node::parent()
+    Node::NodeHandle Node::parent()
     {
       return properties.parent;
     }
 
-    void Node::setParent(const Node::NodeH &p)
+    void Node::setParent(const Node::NodeHandle &p)
     {
       std::lock_guard<std::mutex> lock{mutex};
       properties.parent = p;
@@ -246,13 +246,13 @@ namespace ospray {
     void Node::add(std::shared_ptr<Node> node)
     {
       std::lock_guard<std::mutex> lock{mutex};
-      properties.children[node->name()] = NodeH(node);
+      properties.children[node->name()] = NodeHandle(node);
 
       //ARG!  Cannot call shared_from_this in constructors.  PIA!!!
       node->setParent(shared_from_this());
     }
 
-    void Node::add(Node::NodeH node)
+    void Node::add(Node::NodeHandle node)
     {
       std::lock_guard<std::mutex> lock{mutex};
       properties.children[node->name()] = node;
@@ -469,7 +469,7 @@ namespace ospray {
 
     std::map<std::string, CreatorFct> nodeRegistry;
 
-    NodeH createNode(std::string name, std::string type, SGVar var,
+    NodeHandle createNode(std::string name, std::string type, SGVar var,
                      int flags, std::string documentation)
     {
       std::map<std::string, CreatorFct>::iterator it = nodeRegistry.find(type);

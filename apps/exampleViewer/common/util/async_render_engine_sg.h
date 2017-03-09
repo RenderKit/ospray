@@ -42,7 +42,7 @@ namespace ospray {
     {
     public:
 
-      async_render_engine_sg(sg::NodeH sgRenderer);
+      async_render_engine_sg(sg::NodeHandle sgRenderer);
       ~async_render_engine_sg() = default;
 
     private:
@@ -50,7 +50,7 @@ namespace ospray {
       void run() override;
       void validate() override;
 
-      sg::NodeH scenegraph;
+      sg::NodeHandle scenegraph;
       sg::TimeStamp lastRTime;
     };
 
