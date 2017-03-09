@@ -185,6 +185,7 @@ int main(int ac, const char **av)
   parseCommandLine(ac, av);
 
   auto renderer = sg::createNode("renderer", "Renderer");
+
   renderer["shadowsEnabled"]->setValue(true);
   renderer["aoSamples"]->setValue(1);
   renderer["camera"]["fovy"]->setValue(60.f);
@@ -228,6 +229,17 @@ int main(int ac, const char **av)
   }
 
   renderer->traverse("commit");
+
+#ifdef DW
+  auto dwRenderer = sg::createNode("displayWallRenderer", "Renderer");
+  dwRenderer["lights"] = renderer["lights"];
+  dwRenderer["shadowsEnabled"] = renderer["shadowsEnabled"];
+  dwRenderer["aoSamples"] = renderer["aoSamples"]->setValue(1);
+  dwRenderer["camera"] = renderer["camera"];
+  dwRenderer["world"] = renderer["world"];
+  dwRenderer->traverse("commit");
+#endif
+
 
   ospray::ImGuiViewerSg window(renderer);
   if (addPlane) addPlaneToScene(world);
