@@ -304,9 +304,7 @@ namespace ospray {
       glfwSetWindowTitle(window, title.c_str());
     }
 
-    void ImGui3DWidget::create(const char *title,
-                               const vec2i &size,
-                               bool fullScreen)
+    void ImGui3DWidget::create(const char *title, bool fullScreen)
     {
       // Setup window
       auto error_callback = [](int error, const char* description) {
@@ -321,7 +319,17 @@ namespace ospray {
       glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
       glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
-      window = glfwCreateWindow(size.x, size.y, title, nullptr, nullptr);
+      const auto &size = defaultInitSize;
+
+      if (fullScreen) {
+        auto *monitor = glfwGetPrimaryMonitor();
+        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+
+        window = glfwCreateWindow(mode->width, mode->height,
+                                  title, monitor, nullptr);
+      }
+      else
+        window = glfwCreateWindow(size.x, size.y, title, nullptr, nullptr);
 
       glfwMakeContextCurrent(window);
       gl3wInit();

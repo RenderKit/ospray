@@ -32,6 +32,7 @@ std::vector<std::string> files;
 std::string initialRendererType;
 bool addPlane = true;
 bool debug = false;
+bool fullscreen = false;
 
 void parseCommandLine(int ac, const char **&av)
 {
@@ -45,6 +46,8 @@ void parseCommandLine(int ac, const char **&av)
       initialRendererType = av[++i];
     } else if (arg == "-m" || arg == "--module") {
       ospLoadModule(av[++i]);
+    } else if (arg == "--fullscreen") {
+      fullscreen = true;
     } else if (arg[0] != '-') {
       files.push_back(av[i]);
     }
@@ -228,7 +231,7 @@ int main(int ac, const char **av)
 
   ospray::ImGuiViewerSg window(renderer);
   if (addPlane) addPlaneToScene(world);
-  window.create("OSPRay Example Viewer App");
+  window.create("OSPRay Example Viewer App", fullscreen);
 
   ospray::imgui3D::run();
 }

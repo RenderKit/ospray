@@ -181,9 +181,7 @@ namespace ospray {
        /*! create this window. Note that this just *creates* the window,
          but glut will not do anything else with this window before
          'run' got called */
-       void create(const char *title,
-                   const vec2i &size = defaultInitSize,
-                   bool fullScreen = false);
+       void create(const char *title, bool fullScreen = false);
 
        // ------------------------------------------------------------------
        // camera helper code

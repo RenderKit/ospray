@@ -27,6 +27,7 @@ namespace exampleViewer {
   ospcommon::vec3f scale;
   bool lockFirstFrame = false;
   bool showGui = true;
+  bool fullscreen = false;
 
   void parseExtraParametersFromComandLine(int ac, const char **&av)
   {
@@ -44,6 +45,8 @@ namespace exampleViewer {
         lockFirstFrame = true;
       } else if (arg == "--nogui") {
         showGui = false;
+      } else if (arg == "--fullscreen") {
+        fullscreen = true;
       }
     }
   }
@@ -70,7 +73,7 @@ namespace exampleViewer {
     window.setScale(scale);
     window.setLockFirstAnimationFrame(lockFirstFrame);
     window.setTranslation(translate);
-    window.create("ospImGui: OSPRay ImGui Viewer App");
+    window.create("ospImGui: OSPRay ImGui Viewer App", fullscreen);
 
     ospray::imgui3D::run();
     return 0;
