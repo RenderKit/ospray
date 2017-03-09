@@ -32,7 +32,7 @@
 #include "transactional_value.h"
 
 #include "sg/common/Node.h"
-#include "async_render_engine.h"
+#include "AsyncRenderEngine.h"
 
 namespace ospray {
   namespace sg {

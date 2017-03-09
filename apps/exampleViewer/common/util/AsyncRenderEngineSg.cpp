@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "async_render_engine_sg.h"
+#include "AsyncRenderEngineSg.h"
 
 #include "sg/common/FrameBuffer.h"
 

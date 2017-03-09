@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "async_render_engine.h"
+#include "AsyncRenderEngine.h"
 
 namespace ospray {
 

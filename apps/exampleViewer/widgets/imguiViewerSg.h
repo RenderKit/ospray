@@ -19,7 +19,7 @@
 #include <atomic>
 #include <mutex>
 
-#include "../common/util/async_render_engine_sg.h"
+#include "../common/util/AsyncRenderEngineSg.h"
 
 #include "imgui3D.h"
 #include "Imgui3dExport.h"
