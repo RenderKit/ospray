@@ -47,7 +47,7 @@ namespace ospray {
         add(createNode("gridOrigin", "vec3f", vec3f(0.0f)));
         add(createNode("gridSpacing", "vec3f", vec3f(0.002f)));
         add(createNode("isosurfaceEnabled", "bool", false));
-        add(createNode("isosurface", "float", 0.5f, 
+        add(createNode("isosurface", "float", -std::numeric_limits<float>::infinity(), 
           NodeFlags::valid_min_max | NodeFlags::gui_slider));
         child("isosurface")->setMinMax(0.f,255.f);
         

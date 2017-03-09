@@ -331,6 +331,9 @@ namespace ospray {
 
       child("voxelRange")->setValue(voxelRange);
       child("isosurface")->setMinMax(voxelRange.x, voxelRange.y);
+      float iso = child("isosurface")->valueAs<float>();
+      if (iso < voxelRange.x || iso > voxelRange.y)
+        child("isosurface")->setValue((voxelRange.y-voxelRange.x)/2.f);
       // transferFunction->setValueRange(voxelRange);
       child("transferFunction")["valueRange"]->setValue(voxelRange);
       child("transferFunction")->preCommit(ctx);
