@@ -26,6 +26,30 @@
 namespace ospray {
   namespace sg {
 
+    // for now, let's hardcode the importers - should be moved to a
+    // registry at some point ...
+    void importFileType_points(std::shared_ptr<World> &world,
+                               const FileName &url);
+
+
+
+    /*! helper function that takes a url-style file format/file name
+      specifier and extracts the file type (if recognized). if not a
+      url-type file specifier this returns "" */
+    std::string detectFileTypeFromURL(const FileName &fileName) 
+    {
+      const size_t urlSepPos = fileName.str().find("://");
+      if (urlSepPos == std::string::npos)
+        // not a url-specifier
+        return "";
+      
+      /* this is a url-specifier - first colon is end of file type
+         (this allows parameters such as
+         'points:radius=.3://filName' */
+      const size_t colonPos = fileName.str().find(":");
+      return fileName.str().substr(0,colonPos);
+    }
+
     // Helper functions ///////////////////////////////////////////////////////
 
     static inline void importMiniSg(miniSG::Model &msgModel,
@@ -76,34 +100,47 @@ namespace ospray {
     void Importer::setChildrenModified(TimeStamp t)
     {
       Node::setChildrenModified(t);
-      ospcommon::FileName file(child("fileName")->valueAs<std::string>());
+      ospcommon::FileName fileName(child("fileName")->valueAs<std::string>());
 
-      if (file.str() == loadedFileName)
+      if (fileName.str() == loadedFileName)
         return;
 
-      std::cout << "attempting importing file: " << file.str() << std::endl;
+      std::cout << "attempting importing file: " << fileName.str() << std::endl;
 
-      if (loadedFileName != "" || file.str() == "")
+      if (loadedFileName != "" || fileName.str() == "")
         return; //TODO: support dynamic re-loading, need to clear children first
 
       loadedFileName = "";
 
-      if (file.ext() == "obj") {
-        std::cout << "importing file: " << file.str() << std::endl;
-        sg::importOBJ(std::static_pointer_cast<sg::World>(shared_from_this()), file);
-      } else if (file.ext() == "ply") {
-        std::shared_ptr<sg::World> wsg(std::dynamic_pointer_cast<sg::World>(shared_from_this()));
-        sg::importPLY(wsg, file);
-      } else if (file.ext() == "osg" || file.ext() == "osp") {
-        std::shared_ptr<sg::World> wsg(std::dynamic_pointer_cast<sg::World>(shared_from_this()));
-        sg::loadOSP(wsg, file);
+      std::shared_ptr<sg::World> wsg(std::dynamic_pointer_cast<sg::World>(shared_from_this()));
+
+#if 1
+      const std::string fileType = detectFileTypeFromURL(fileName);
+      if (fileType != "") {
+
+        /* iw - todo: move this code to a registry that automatically
+           looks up right function based on loaded symbols... */
+        if (fileType == "points" || fileType == "spheres") {
+          importFileType_points(wsg,fileName);
+          loadedFileName = fileName.str();
+        } else
+          std::cout << "Found a URL-style file type specified, but didn't recognize file type '" << fileType<< "' ... reverting to loading by file extension" << std::endl;
+      } 
+#endif
+      if (fileName.ext() == "obj") {
+        std::cout << "importing file: " << fileName.str() << std::endl;
+        sg::importOBJ(std::static_pointer_cast<sg::World>(shared_from_this()), fileName);
+      } else if (fileName.ext() == "ply") {
+        sg::importPLY(wsg, fileName);
+      } else if (fileName.ext() == "osg" || fileName.ext() == "osp") {
+        sg::loadOSP(wsg, fileName);
         instanced = false;
-      } else if (file.ext() == "x3d" || file.ext() == "hbp" ||
-                 file.ext() == "msg" || file.ext() == "stl" ||
-                 file.ext() == "tri" || file.ext() == "xml") {
+      } else if (fileName.ext() == "x3d" || fileName.ext() == "hbp" ||
+                 fileName.ext() == "msg" || fileName.ext() == "stl" ||
+                 fileName.ext() == "tri" || fileName.ext() == "xml") {
 
         miniSG::Model msgModel;
-        importMiniSg(msgModel, file);
+        importMiniSg(msgModel, fileName);
 
         for (auto mesh : msgModel.mesh) {
           auto sgMesh = std::dynamic_pointer_cast<sg::TriangleMesh>
@@ -111,27 +148,27 @@ namespace ospray {
           sgMesh->vertex = std::make_shared<DataVector3f>();
           for(int i =0; i < mesh->position.size(); i++)
             std::dynamic_pointer_cast<DataVector3f>(sgMesh->vertex)->push_back(
-              mesh->position[i]);
+                                                                               mesh->position[i]);
           sgMesh->normal = std::make_shared<DataVector3f>();
           for(int i =0; i < mesh->normal.size(); i++)
             std::dynamic_pointer_cast<DataVector3f>(sgMesh->normal)->push_back(
-              mesh->normal[i]);
+                                                                               mesh->normal[i]);
           sgMesh->texcoord = std::make_shared<DataVector2f>();
           for(int i =0; i < mesh->texcoord.size(); i++)
             std::dynamic_pointer_cast<DataVector2f>(sgMesh->texcoord)->push_back(
-              mesh->texcoord[i]);
+                                                                                 mesh->texcoord[i]);
           sgMesh->index =  std::make_shared<DataVector3i>();
           for(int i =0; i < mesh->triangle.size(); i++)
             std::dynamic_pointer_cast<DataVector3i>(sgMesh->index)->push_back(
-              vec3i(mesh->triangle[i].v0, mesh->triangle[i].v1, mesh->triangle[i].v2));
+                                                                              vec3i(mesh->triangle[i].v0, mesh->triangle[i].v1, mesh->triangle[i].v2));
           add(sgMesh);
         }
       } else {
         std::cout << "unsupported file format\n";
         return;
       }
-
-      loadedFileName = file.str();
+    
+      loadedFileName = fileName.str();
     }
 
     OSP_REGISTER_SG_NODE(Importer);
