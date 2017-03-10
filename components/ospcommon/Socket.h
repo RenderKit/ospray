@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "MPI.h"
+#include "platform.h"
 
 namespace ospcommon
 {
