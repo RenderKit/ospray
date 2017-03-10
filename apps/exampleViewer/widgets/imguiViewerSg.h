@@ -38,7 +38,7 @@ namespace ospray {
   {
   public:
 
-    ImGuiViewerSg(sg::NodeH scenegraph);
+    ImGuiViewerSg(sg::NodeH scenegraph, sg::NodeH scenegraphDW);
     ~ImGuiViewerSg();
 
   protected:
@@ -67,6 +67,9 @@ namespace ospray {
     imgui3D::ImGui3DWidget::ViewPort originalView;
 
     sg::NodeH scenegraph;
+#if DW
+    sg::NodeH scenegraphDW;
+#endif
 
     sg::async_render_engine_sg renderEngine;
     std::vector<uint32_t> pixelBuffer;

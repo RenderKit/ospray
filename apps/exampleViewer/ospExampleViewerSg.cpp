@@ -18,12 +18,64 @@
 #include "common/sg/Renderer.h"
 #include "common/sg/importer/Importer.h"
 #include "ospcommon/FileName.h"
+#include "ospcommon/Socket.h"
+#include "ospcommon/vec.h"
 
 #include "sg/geometry/TriangleMesh.h"
 
 #include "widgets/imguiViewerSg.h"
-
 #include <sstream>
+
+namespace dw {
+    
+  struct ServiceInfo {
+    /* constructor that initializes everything to default values */
+    ServiceInfo()
+      : totalPixelsInWall(-1,-1),
+        mpiPortName("<value not set>")
+    {}
+      
+    /*! total pixels in the entire display wall, across all
+      indvididual displays, and including bezels (future versios
+      will allow to render to smaller resolutions, too - and have
+      the clients upscale this - but for now the client(s) have to
+      render at exactly this resolution */
+    ospcommon::vec2i totalPixelsInWall;
+
+    /*! the MPI port name that the service is listening on client
+      connections for (ie, the one to use with
+      client::establishConnection) */
+    std::string mpiPortName; 
+
+    /*! whether this runs in stereo mode */
+    int stereo;
+
+    /*! read a service info from a given hostName:port. The service
+      has to already be running on that port 
+
+      Note this may throw a std::runtime_error if the connection
+      cannot be established 
+    */
+    void getFrom(const std::string &hostName,
+                 const int portNo);
+  };
+  /*! read a service info from a given hostName:port. The service
+    has to already be running on that port */
+  void ServiceInfo::getFrom(const std::string &hostName,
+                            const int portNo)
+  {
+    ospcommon::socket_t sock = ospcommon::connect(hostName.c_str(),portNo);
+    if (!sock)
+      throw std::runtime_error("could not create display wall connection!");
+
+    mpiPortName = read_string(sock);
+    totalPixelsInWall.x = read_int(sock);
+    totalPixelsInWall.y = read_int(sock);
+    stereo = read_int(sock);
+    close(sock);
+  }
+}
+
 
 using namespace ospcommon;
 using namespace ospray;
@@ -59,78 +111,78 @@ void parseCommandLine(int ac, const char **&av)
 void parseCommandLineSG(int ac, const char **&av, sg::NodeH root)
 {
   for(int i=1;i < ac; i++)
-  {
-    std::string arg(av[i]);
-    size_t f;
-    std::string value("");
-    if (arg.size() < 2 || arg[0] != '-')
-      continue;
-    while ( (f = arg.find(":")) != std::string::npos || (f = arg.find(",")) != std::string::npos)
-      arg[f]=' ';
-    f = arg.find("=");
-    if (f != std::string::npos)
     {
-      value = arg.substr(f+1,arg.size());
+      std::string arg(av[i]);
+      size_t f;
+      std::string value("");
+      if (arg.size() < 2 || arg[0] != '-')
+        continue;
+      while ( (f = arg.find(":")) != std::string::npos || (f = arg.find(",")) != std::string::npos)
+        arg[f]=' ';
+      f = arg.find("=");
+      if (f != std::string::npos)
+        {
+          value = arg.substr(f+1,arg.size());
+        }
+      if (value != "")
+        {
+          std::stringstream ss;
+          ss << arg.substr(1,f-1);
+          std::string child;
+          sg::NodeH node = root;
+          while (ss >> child)
+            {
+              node = node->childRecursive(child);
+            }
+          //Carson: TODO: reimplement with a way of determining type of node value
+          //  currently relies on exception on value cast
+          try
+            {
+              node->valueAs<std::string>();
+              node->setValue(value);
+            } catch(...) {};
+          try
+            {
+              std::stringstream vals(value);
+              float x;
+              vals >> x;
+              node->valueAs<float>();
+              node->setValue(x);
+            } catch(...) {}
+          try
+            {
+              std::stringstream vals(value);
+              int x;
+              vals >> x;
+              node->valueAs<int>();
+              node->setValue(x);
+            } catch(...) {}
+          try
+            {
+              std::stringstream vals(value);
+              bool x;
+              vals >> x;
+              node->valueAs<bool>();
+              node->setValue(x);
+            } catch(...) {}
+          try
+            {
+              std::stringstream vals(value);
+              float x,y,z;
+              vals >> x >> y >> z;
+              node->valueAs<ospcommon::vec3f>();
+              node->setValue(ospcommon::vec3f(x,y,z));
+            } catch(...) {}
+          try
+            {
+              std::stringstream vals(value);
+              int x,y;
+              vals >> x >> y;
+              node->valueAs<ospcommon::vec2i>();
+              node->setValue(ospcommon::vec2i(x,y));
+            } catch(...) {}
+        }
     }
-    if (value != "")
-    {
-      std::stringstream ss;
-      ss << arg.substr(1,f-1);
-      std::string child;
-      sg::NodeH node = root;
-      while (ss >> child)
-      {
-        node = node->childRecursive(child);
-      }
-      //Carson: TODO: reimplement with a way of determining type of node value
-      //  currently relies on exception on value cast
-      try
-      {
-        node->valueAs<std::string>();
-        node->setValue(value);
-      } catch(...) {};
-      try
-      {
-        std::stringstream vals(value);
-        float x;
-        vals >> x;
-        node->valueAs<float>();
-        node->setValue(x);
-      } catch(...) {}
-      try
-      {
-        std::stringstream vals(value);
-        int x;
-        vals >> x;
-        node->valueAs<int>();
-        node->setValue(x);
-      } catch(...) {}
-      try
-      {
-        std::stringstream vals(value);
-        bool x;
-        vals >> x;
-        node->valueAs<bool>();
-        node->setValue(x);
-      } catch(...) {}
-      try
-      {
-        std::stringstream vals(value);
-        float x,y,z;
-        vals >> x >> y >> z;
-        node->valueAs<ospcommon::vec3f>();
-        node->setValue(ospcommon::vec3f(x,y,z));
-      } catch(...) {}
-      try
-      {
-        std::stringstream vals(value);
-        int x,y;
-        vals >> x >> y;
-        node->valueAs<ospcommon::vec2i>();
-        node->setValue(ospcommon::vec2i(x,y));
-      } catch(...) {}
-    }
-  }
 }
 
 void addPlaneToScene(sg::NodeH &world)
@@ -185,13 +237,37 @@ int main(int ac, const char **av)
   parseCommandLine(ac, av);
 
   auto renderer = sg::createNode("renderer", "Renderer");
+  sg::NodeH rendererDW;// = sg::createNode("renderer", "Renderer");
+
+#if 1
+  const char *dwNodeName = getenv("DISPLAY_WALL");
+  if (!dwNodeName) {
+    throw std::runtime_error("no DISPLAY_WALL env var set");
+  }
+  PING; PRINT(dwNodeName);
+  dw::ServiceInfo dwService;
+  dwService.getFrom(dwNodeName,2903);
+  PRINT(dwService.mpiPortName);
+  rendererDW = sg::createNode("renderer", "Renderer");
+#endif
+
 
   renderer["shadowsEnabled"]->setValue(true);
   renderer["aoSamples"]->setValue(1);
   renderer["camera"]["fovy"]->setValue(60.f);
 
-  if (!initialRendererType.empty())
+  if (rendererDW.notNULL()) {
+    rendererDW["shadowsEnabled"]->setValue(true);
+    rendererDW["aoSamples"]->setValue(1);
+    rendererDW["camera"]["fovy"]->setValue(60.f);
+  }
+
+  if (!initialRendererType.empty()) {
     renderer["rendererType"]->setValue(initialRendererType);
+    if (rendererDW.notNULL()) {
+      rendererDW["rendererType"]->setValue(initialRendererType);
+    }
+  }
 
   auto lights = renderer["lights"];
 
@@ -230,20 +306,37 @@ int main(int ac, const char **av)
 
   renderer->traverse("commit");
 
-#ifdef DW
-  auto dwRenderer = sg::createNode("displayWallRenderer", "Renderer");
-  dwRenderer["lights"] = renderer["lights"];
-  dwRenderer["shadowsEnabled"] = renderer["shadowsEnabled"];
-  dwRenderer["aoSamples"] = renderer["aoSamples"]->setValue(1);
-  dwRenderer["camera"] = renderer["camera"];
-  dwRenderer["world"] = renderer["world"];
-  dwRenderer->traverse("commit");
-#endif
 
 
-  ospray::ImGuiViewerSg window(renderer);
+  // PING;
+  // rendererDW["lights"].node = renderer["lights"].node;
+  // rendererDW["shadowsEnabled"].node = renderer["shadowsEnabled"].node;
+  // rendererDW["aoSamples"].node = renderer["aoSamples"].node;
+  // rendererDW["camera"].node = renderer["camera"].node;
+  // rendererDW["world"].node = renderer["world"].node;
+  // PRINT(renderer["camera"].node);
+
+  if (rendererDW.notNULL()) {
+    rendererDW->properties.children["world"] = renderer["world"];
+    // rendererDW->properties.children["camera"] = renderer["camera"];
+    // rendererDW->properties.children["aoSamples"] = renderer["aoSamples"];
+    // rendererDW->properties.children["shadowsEnabled"] = renderer["shadowsEnabled"];
+    rendererDW->properties.children["lights"] = renderer["lights"];
+    
+    
+    rendererDW["frameBuffer"]["size"]->setValue(dwService.totalPixelsInWall);
+    rendererDW["frameBuffer"]["displayWall"]->setValue(dwService.mpiPortName);
+    
+    
+    rendererDW->traverse("verify");
+    // rendererDW->traverse("print");
+    rendererDW->traverse("commit");
+  }
+  
+  ospray::ImGuiViewerSg window(renderer,rendererDW);
   if (addPlane) addPlaneToScene(world);
   window.create("OSPRay Example Viewer App", fullscreen);
-
+  
   ospray::imgui3D::run();
 }
+  

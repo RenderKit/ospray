@@ -21,8 +21,10 @@
 namespace ospray {
   namespace sg {
 
-    async_render_engine_sg::async_render_engine_sg(NodeH sgRenderer)
-      : scenegraph(sgRenderer)
+    async_render_engine_sg::async_render_engine_sg(NodeH sgRenderer, 
+                                                   NodeH sgRendererDW)
+      : scenegraph(sgRenderer),
+        scenegraphDW(sgRendererDW)
     {
     }
 
@@ -46,10 +48,21 @@ namespace ospray {
         if (scenegraph->childrenLastModified() > lastRTime) {
           scenegraph->traverse("verify");
           scenegraph->traverse("commit");
+
+          if (scenegraphDW.node) {
+            scenegraphDW->traverse("verify");
+            scenegraphDW->traverse("commit");
+          }
+
           lastRTime = sg::TimeStamp();
         }
 
+        std::cout << "=======================================================" << std::endl;
         scenegraph->traverse("render");
+        if (scenegraphDW.node) {
+          scenegraphDW->traverse("render");
+          // std::cout << "called render on dw scene graph, and set the display wall renderer and frame buffer ..." << std::endl;
+        }
 
         fps.doneRender();
         auto sgFBptr = std::static_pointer_cast<sg::FrameBuffer>(sgFB.get());
@@ -58,7 +71,7 @@ namespace ospray {
         auto *dstPB = (uint32_t*)pixelBuffer[currentPB].data();
 
         memcpy(dstPB, srcPB, nPixels*sizeof(uint32_t));
-
+        
         sgFBptr->unmap(srcPB);
 
         if (fbMutex.try_lock()) {

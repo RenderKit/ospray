@@ -46,6 +46,7 @@ namespace ospray {
     // Properties //
 
     void setRenderer(cpp::Renderer renderer);
+
     void setFbSize(const ospcommon::vec2i &size);
 
     // Method to say that an objects needs to be comitted before next frame //
@@ -86,6 +87,8 @@ namespace ospray {
     cpp::FrameBuffer frameBuffer;
 
     transactional_value<cpp::Renderer>    renderer;
+    transactional_value<cpp::Renderer>    rendererDW;
+    transactional_value<cpp::FrameBuffer> frameBufferDW;
     transactional_value<ospcommon::vec2i> fbSize;
 
     int nPixels {0};

@@ -27,7 +27,10 @@ namespace ospray {
 
     void FrameBuffer::init()
     {
+      PING;
       add(createNode("size", "vec2i", fbsize));
+      add(createNode("displayWall", "string", std::string("")));
+      createFB();
     }
 
     FrameBuffer::~FrameBuffer()
@@ -38,8 +41,25 @@ namespace ospray {
     void FrameBuffer::postCommit(RenderContext &ctx)
     {
       fbsize = child("size")->valueAs<vec2i>();
+
+      std::string displayWall = child("displayWall")->valueAs<std::string>();
+      this->displayWallStream = displayWall;
+
       destroyFB();
       createFB();
+      
+      if (displayWall != "") {
+        ospLoadModule("displayWald");
+        OSPPixelOp pixelOp = ospNewPixelOp("display_wald");
+        ospSetString(pixelOp,"streamName",displayWall.c_str());
+        ospCommit(pixelOp);
+        ospSetPixelOp(ospFrameBuffer,pixelOp);
+        std::cout << "-------------------------------------------------------" << std::endl;
+        std::cout << "this is the display wall frma ebuferr .. size is " << fbsize << std::endl;
+        std::cout << "added display wall pixel op ..." << std::endl;
+      }
+      std::cout << "created display wall pixelop, and assigned to frame buffer!" << std::endl;
+
       ospCommit(ospFrameBuffer);
     }
 
@@ -81,7 +101,10 @@ namespace ospray {
 
     void ospray::sg::FrameBuffer::createFB()
     {
-      ospFrameBuffer = ospNewFrameBuffer((osp::vec2i&)fbsize, OSP_FB_SRGBA,
+      ospFrameBuffer = ospNewFrameBuffer((osp::vec2i&)fbsize, 
+                                         (displayWallStream=="")
+                                         ? OSP_FB_SRGBA
+                                         : OSP_FB_NONE,
                                          OSP_FB_COLOR | OSP_FB_ACCUM);
       setValue((OSPObject)ospFrameBuffer);
     }

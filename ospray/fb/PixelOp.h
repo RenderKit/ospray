@@ -80,7 +80,7 @@ namespace ospray {
     virtual ~PixelOp() = default;
 
     //! \brief create an instance of this pixel op
-    virtual Instance *createFromInstance(FrameBuffer *fb, PixelOp::Instance *prev);
+    virtual Instance *createInstance(FrameBuffer *fb, PixelOp::Instance *prev) = 0;
 
     static PixelOp *createInstance(const char *identifier);
   };

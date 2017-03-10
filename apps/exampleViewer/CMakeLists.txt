@@ -16,6 +16,8 @@
 
 find_package(OpenGL REQUIRED)
 
+ADD_DEFINITIONS(-DDW=1)
+
 ##############################################################
 # Build support libs
 ##############################################################
@@ -46,6 +48,8 @@ ospray_create_application(ospExampleViewerSg
   ospray_commandline
   ospray_imgui3d_sg
   ospray_sg
+  ospray_module_displayWald
+  ospray_module_mpi
 )
 
 ospray_create_application(ospExampleViewer

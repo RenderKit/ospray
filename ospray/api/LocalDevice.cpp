@@ -388,7 +388,7 @@ namespace ospray {
       PixelOp *po = (PixelOp*)_op;
       assert(fb);
       assert(po);
-      fb->pixelOp = po->createFromInstance(fb,fb->pixelOp.ptr);
+      fb->pixelOp = po->createInstance(fb,fb->pixelOp.ptr);
     }
 
     /*! create a new renderer object (out of list of registered renderers) */

@@ -51,10 +51,17 @@ static void writePPM(const string &fileName, const int sizeX, const int sizeY,
 
 namespace ospray {
 
-ImGuiViewerSg::ImGuiViewerSg(sg::NodeH scenegraph)
+ImGuiViewerSg::ImGuiViewerSg(sg::NodeH scenegraph
+#if DW
+                             ,sg::NodeH scenegraphDW
+#endif
+                             )
   : ImGui3DWidget(ImGui3DWidget::FRAMEBUFFER_NONE),
     scenegraph(scenegraph),
-    renderEngine(scenegraph)
+    renderEngine(scenegraph, scenegraphDW)
+#if DW
+  ,scenegraphDW(scenegraphDW)
+#endif
 {
   setWorldBounds(scenegraph["world"].get()->bounds());
   renderEngine.setFbSize({1024, 768});
@@ -78,6 +85,7 @@ void ImGuiViewerSg::reshape(const vec2i &newSize)
 
   renderEngine.setFbSize(newSize);
   scenegraph["frameBuffer"]["size"]->setValue(newSize);
+
   pixelBuffer.resize(newSize.x * newSize.y);
 }
 
@@ -171,6 +179,16 @@ void ImGuiViewerSg::display()
     camera["dir"]->setValue(dir);
     camera["pos"]->setValue(viewPort.from);
     camera["up"]->setValue(viewPort.up);
+
+#if 1
+    if (scenegraphDW.node) {
+      auto camera = scenegraphDW["camera"];
+      camera["dir"]->setValue(dir);
+      camera["pos"]->setValue(viewPort.from);
+      camera["up"]->setValue(viewPort.up);
+    }
+#endif
+
     viewPort.modified = false;
   }
 
@@ -419,22 +437,20 @@ void ImGuiViewerSg::buildGUINode(sg::NodeH node, int indent)
             addChild = false;
         }
 
-          if (node->type() == "TransferFunction") {
-    text += "TODO WILL";
-    ImGui::Text(text.c_str());
-    if (!node->param("transferFunctionWidget")) {
-      std::shared_ptr<sg::TransferFunction> tfn =
-          std::dynamic_pointer_cast<sg::TransferFunction>(node.get());
-      node->setParam("transferFunctionWidget", TransferFunction(tfn));
-    }
-    auto tfnWidget =
-        dynamic_cast<sg::ParamT<TransferFunction>*>(node->param("transferFunctionWidget").get());
-    assert(tfnWidget);
-    tfnWidget->value.render();
-    tfnWidget->value.drawUi();
-  }
-
-
+        if (node->type() == "TransferFunction") {
+          text += "TODO WILL";
+          ImGui::Text(text.c_str());
+          if (!node->param("transferFunctionWidget")) {
+            std::shared_ptr<sg::TransferFunction> tfn =
+              std::dynamic_pointer_cast<sg::TransferFunction>(node.get());
+            node->setParam("transferFunctionWidget", TransferFunction(tfn));
+          }
+          auto tfnWidget =
+            dynamic_cast<sg::ParamT<TransferFunction>*>(node->param("transferFunctionWidget").get());
+          assert(tfnWidget);
+          tfnWidget->value.render();
+          tfnWidget->value.drawUi();
+        }
       }
 
       if (!node->isValid())
