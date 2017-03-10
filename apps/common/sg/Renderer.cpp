@@ -248,11 +248,9 @@ namespace ospray {
     {
       ospSetObject(ospRenderer,"model", child("world")->valueAs<OSPObject>());
       ospSetObject(ospRenderer,"camera", child("camera")->valueAs<OSPObject>());
-      ospCommit(ospRenderer);
 
       if (lightsData == nullptr || lightsBuildTime < child("lights")->childrenLastModified())
       {
-        std::cout << "new lights\n";
         // create and setup light for Ambient Occlusion
         std::vector<OSPLight> lights;
         for(auto &lightNode : child("lights")->children())
@@ -268,7 +266,7 @@ namespace ospray {
       // complete setup of renderer
       ospSetObject(ospRenderer, "model",  child("world")->valueAs<OSPObject>());
       ospSetObject(ospRenderer, "lights", lightsData);
-      ospCommit(ospRenderer);
+
       //TODO: some child is kicking off modified every frame...Should figure
       //      out which and ignore it
       if (child("camera")->childrenLastModified() > frameMTime
