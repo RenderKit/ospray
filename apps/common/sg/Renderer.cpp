@@ -228,8 +228,8 @@ namespace ospray {
           child("camera")["aspect"]->lastCommitted()) {
 
         child("camera")["aspect"]->setValue(
-          child("frameBuffer")["size"]->valueAs<vec2i>().x /
-          float(child("frameBuffer")["size"]->valueAs<vec2i>().y)
+        child("frameBuffer")["size"]->valueAs<vec2i>().x /
+        float(child("frameBuffer")["size"]->valueAs<vec2i>().y)
         );
       }
       auto rendererType = child("rendererType")->valueAs<std::string>();
@@ -250,17 +250,24 @@ namespace ospray {
       ospSetObject(ospRenderer,"camera", child("camera")->valueAs<OSPObject>());
       ospCommit(ospRenderer);
 
-      // create and setup light for Ambient Occlusion
-      std::vector<OSPLight> lights;
-      for(auto &lightNode : child("lights")->children())
-        lights.push_back((OSPLight)lightNode->valueAs<OSPObject>());
+      if (lightsData == nullptr || lightsBuildTime < child("lights")->childrenLastModified())
+      {
+        std::cout << "new lights\n";
+        // create and setup light for Ambient Occlusion
+        std::vector<OSPLight> lights;
+        for(auto &lightNode : child("lights")->children())
+          lights.push_back((OSPLight)lightNode->valueAs<OSPObject>());
 
-      OSPData lightsd = ospNewData(lights.size(), OSP_LIGHT, &lights[0]);
-      ospCommit(lightsd);
+        if (lightsData)
+          ospRelease(lightsData);
+        lightsData = ospNewData(lights.size(), OSP_LIGHT, &lights[0]);
+        ospCommit(lightsData);
+        lightsBuildTime = TimeStamp();
+      }
 
       // complete setup of renderer
       ospSetObject(ospRenderer, "model",  child("world")->valueAs<OSPObject>());
-      ospSetObject(ospRenderer, "lights", lightsd);
+      ospSetObject(ospRenderer, "lights", lightsData);
       ospCommit(ospRenderer);
       //TODO: some child is kicking off modified every frame...Should figure
       //      out which and ignore it

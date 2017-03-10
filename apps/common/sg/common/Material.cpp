@@ -67,6 +67,8 @@ namespace ospray {
       }
 
       setValue((OSPObject)mat);
+      if (ospMaterial)
+        ospRelease(ospMaterial);
       ospMaterial = mat;
       ospRenderer = ctx.ospRenderer;
     }

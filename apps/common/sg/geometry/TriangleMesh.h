@@ -105,8 +105,6 @@ namespace ospray {
       /*! 'render' the nodes */
       virtual void render(RenderContext &ctx) override;
 
-      OSPGeometry ospGeometry;
-
       /*! \brief "material list" for this trianglemesh
 
         If non-empty, the 'Triangle::materialID' indexes into this
@@ -114,7 +112,8 @@ namespace ospray {
         Geometry::material no matter what Triangle::materialID is set
        */
       std::vector<std::shared_ptr<sg::Material>> materialList;
-      std::vector<uint32_t> materialIDs;
+      std::vector<uint32_t> materialIDs;      
+      OSPGeometry ospGeometry {nullptr};
 
       // to allow memory-mapping triangle arrays (or in general,
       // sharing data with an application) we use data arrays, not std::vector's

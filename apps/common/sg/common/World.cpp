@@ -44,6 +44,8 @@ namespace ospray {
     {
       oldWorld = ctx.world;
       ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
+      if (ospModel)
+        ospRelease(ospModel);
       ospModel = ospNewModel();
       ospCommit(ospModel);
       setValue((OSPObject)ospModel);
@@ -102,6 +104,8 @@ namespace ospray {
         ospcommon::affine3f::rotate(vec3f(0,0,1),rotation.z)*
         ospcommon::affine3f::scale(scale);
         
+        if (ospInstance)
+          ospRelease(ospInstance);
         ospInstance = ospNewInstance(ospModel,(osp::affine3f&)xfm);
         ospCommit(ospInstance);
 
