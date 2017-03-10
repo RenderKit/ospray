@@ -108,7 +108,7 @@ void parseCommandLine(int ac, const char **&av)
 
 //parse command line arguments containing the format:
 //  -nodeName:...:nodeName=value,value,value
-void parseCommandLineSG(int ac, const char **&av, sg::NodeH root)
+void parseCommandLineSG(int ac, const char **&av, sg::NodeHandle root)
 {
   for(int i=1;i < ac; i++)
     {
@@ -129,7 +129,7 @@ void parseCommandLineSG(int ac, const char **&av, sg::NodeH root)
           std::stringstream ss;
           ss << arg.substr(1,f-1);
           std::string child;
-          sg::NodeH node = root;
+          sg::NodeHandle node = root;
           while (ss >> child)
             {
               node = node->childRecursive(child);
@@ -185,7 +185,7 @@ void parseCommandLineSG(int ac, const char **&av, sg::NodeH root)
     }
 }
 
-void addPlaneToScene(sg::NodeH &world)
+void addPlaneToScene(sg::NodeHandle &world)
 {
   //add plane
   auto bbox = world->bounds();
@@ -237,20 +237,25 @@ int main(int ac, const char **av)
   parseCommandLine(ac, av);
 
   auto renderer = sg::createNode("renderer", "Renderer");
-  sg::NodeH rendererDW;// = sg::createNode("renderer", "Renderer");
-
-#if 1
-  const char *dwNodeName = getenv("DISPLAY_WALL");
-  if (!dwNodeName) {
-    throw std::runtime_error("no DISPLAY_WALL env var set");
-  }
-  PING; PRINT(dwNodeName);
+  /*! the renderer we use for rendering on the display wall; null if
+      no dw available */
+  sg::NodeHandle rendererDW;
+  /*! display wall service info - ignore if 'rendererDW' is null */
   dw::ServiceInfo dwService;
-  dwService.getFrom(dwNodeName,2903);
-  PRINT(dwService.mpiPortName);
-  rendererDW = sg::createNode("renderer", "Renderer");
-#endif
 
+  const char *dwNodeName = getenv("DISPLAY_WALL");
+  if (dwNodeName) {
+    std::cout << "#######################################################" << std::endl;
+    std::cout << "found a DISPLAY_WALL environment variable ...." << std::endl;
+    std::cout << "trying to connect to display wall service on "
+              << dwNodeName << ":2903" << std::endl;
+    
+    dwService.getFrom(dwNodeName,2903);
+    std::cout << "found display wall service on MPI port "
+              << dwService.mpiPortName << std::endl;
+    std::cout << "#######################################################" << std::endl;
+    rendererDW = sg::createNode("renderer", "Renderer");
+  }
 
   renderer["shadowsEnabled"]->setValue(true);
   renderer["aoSamples"]->setValue(1);

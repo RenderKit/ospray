@@ -87,7 +87,6 @@ namespace ospray {
     /*! 'render' the nodes */
     void TriangleMesh::render(RenderContext &ctx)
     {
-      std::cout << __PRETTY_FUNCTION__ << std::endl;
       if (ospGeometry) return;
 
       assert(ctx.world);
@@ -152,6 +151,10 @@ namespace ospray {
         return;
       }
 
+      if (ospGeometry)
+        ospRelease(ospGeometry);
+      if (ospModel)
+        ospRelease(ospModel);
       ospGeometry = ospNewGeometry("trianglemesh");
       ospModel    = ospNewModel();
 

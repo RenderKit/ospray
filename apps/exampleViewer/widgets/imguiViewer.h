@@ -26,7 +26,7 @@
 #include <ospray/ospray_cpp/Model.h>
 #include <ospray/ospray_cpp/Renderer.h>
 
-#include "../common/util/async_render_engine.h"
+#include "../common/util/AsyncRenderEngine.h"
 
 #include "imgui3D.h"
 #include "Imgui3dExport.h"
@@ -95,7 +95,7 @@ namespace ospray {
 
     float aoDistance {1e20f};
 
-    async_render_engine renderEngine;
+    AsyncRenderEngine renderEngine;
     std::vector<uint32_t> pixelBuffer;
   };
 

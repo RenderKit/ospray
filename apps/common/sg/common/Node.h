@@ -33,7 +33,7 @@
 
 #include <mutex>
 
-#define MULTIPLE_PARENTS 1
+//#define MULTIPLE_PARENTS 1
 
 namespace ospray {
   namespace sg {
@@ -104,27 +104,25 @@ namespace ospray {
     {
       Node();
 
-      /*!
-          NodeH is a handle to a sg::Node.  It has the benefit of supporting
-          some operators without requiring dereferencing a pointer.
-      */
-      class OSPSG_INTERFACE NodeH
+      /*! Node::Handle is a handle to a sg::Node.  It has the benefit
+          of supporting some operators without requiring dereferencing
+          a pointer. */
+      class OSPSG_INTERFACE Handle
       {
       public:
-        NodeH() = default;
-        NodeH(std::shared_ptr<sg::Node> n) : node(n) {}
+        Handle() = default;
+        Handle(const std::shared_ptr<sg::Node> &n) : node(n) {}
 
         //! return child with name c
-        NodeH operator[] (const std::string &c) const
+        Handle operator[] (const std::string &c) const
+        { return node->child(c); }
+
+        Handle operator[] (const char *c) const
         { return node->child(c); }
 
         //! add child node n to this node
-        NodeH operator+= (NodeH n)
-        { 
-          get()->add(n); 
-          n->setParent(*this); 
-          return n;
-        }
+        Handle operator+= (Handle n)
+        { get()->add(n); n->setParent(*this); return n;}
 
         std::shared_ptr<sg::Node> operator->() const { return get(); }
 
@@ -132,7 +130,10 @@ namespace ospray {
 
         //! is this handle pointing to a null value?
         bool notNULL() const { return !isNULL(); }
+        //! is this handle pointing to a null value?
         bool isNULL() const { return node.get() == nullptr; }
+
+        operator bool() const { return !isNULL(); }
 
         // Data members //
 
@@ -204,29 +205,32 @@ namespace ospray {
 
       virtual void setChildrenModified(TimeStamp t);
 
-      //! return named child node
-      NodeH child(const std::string &name) const;
+      bool hasChild(const std::string &name) const;
 
       //! return named child node
-      NodeH childRecursive(const std::string &name);
+      Handle child(const std::string &name) const;
+
+      //! return named child node
+      Handle childRecursive(const std::string &name);
 
       //! return all children of type
-      std::vector<NodeH> childrenByType(const std::string &t) const;
+      std::vector<Handle> childrenByType(const std::string &t) const;
 
       //! return vector of child handles
-      std::vector<NodeH> children() const;
+      std::vector<Handle> children() const;
 
       //! return child c
-      NodeH operator[] (const std::string &c) const;
+      Handle operator[] (const std::string &c) const;
 
       //! return the parent node
 #if MULTIPLE_PARENTS
-      std::vector<NodeH> parent();
+      std::vector<Handle> parent() const;
 #else
-      NodeH parent();
+      Handle parent() const;
 #endif
+
       //! sets the parent
-      void setParent(const NodeH& p);
+      void setParent(const Handle& p);
 
       //! get the value of the node, whithout template conversion
       SGVar value();
@@ -242,7 +246,7 @@ namespace ospray {
       virtual void add(std::shared_ptr<Node> node);
 
       //! add node as child of this one
-      virtual void add(NodeH node);
+      virtual void add(Handle node);
 
       //! traverse this node and childrend with given operation, such as
       //  print,commit,render or custom operations
@@ -306,16 +310,16 @@ namespace ospray {
         std::vector<SGVar> minmax;
         std::vector<SGVar> whitelist;
         std::vector<SGVar> blacklist;
-        std::map<std::string, NodeH> children;
+        std::map<std::string, Handle> children;
         SGVar value;
         TimeStamp lastModified;
         TimeStamp childrenMTime;
         TimeStamp lastCommitted;
         std::map<std::string, std::shared_ptr<sg::Param>> params;
 #if MULTIPLE_PARENTS
-        std::vector<NodeH> parent;
+        std::vector<Handle> parent;
 #else
-        NodeH parent;
+        Handle parent;
 #endif
         NodeFlags flags;
         bool valid {false};
@@ -362,13 +366,13 @@ namespace ospray {
     void registerNamedNode(const std::string &name,
                            const std::shared_ptr<sg::Node> &node);
 
-    using NodeH = Node::NodeH;
+    using NodeHandle = Node::Handle;
 
-    OSPSG_INTERFACE NodeH createNode(std::string name,
-                                     std::string type = "Node",
-                                     SGVar var = SGVar(),
-                                     int flags = sg::NodeFlags::none,
-                                     std::string documentation="");
+    OSPSG_INTERFACE NodeHandle createNode(std::string name,
+                                          std::string type = "Node",
+                                          SGVar var = SGVar(),
+                                          int flags = sg::NodeFlags::none,
+                                          std::string documentation="");
 
     template <typename T>
     struct NodeParamCommit

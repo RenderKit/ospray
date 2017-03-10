@@ -68,6 +68,8 @@ namespace ospray {
       std::shared_ptr<sg::FrameBuffer> frameBuffer;
       std::shared_ptr<sg::Integrator>  integrator;
       OSPRenderer ospRenderer {nullptr};
+      OSPData lightsData={nullptr};
+      TimeStamp lightsBuildTime;
       TimeStamp frameMTime;
       std::string createdType = "none";
 

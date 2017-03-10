@@ -14,32 +14,32 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "async_render_engine.h"
+#include "AsyncRenderEngine.h"
 
 namespace ospray {
 
-  async_render_engine::~async_render_engine()
+  AsyncRenderEngine::~AsyncRenderEngine()
   {
     stop();
   }
 
-  void async_render_engine::setRenderer(cpp::Renderer renderer)
+  void AsyncRenderEngine::setRenderer(cpp::Renderer renderer)
   {
     this->renderer = renderer;
   }
 
-  void async_render_engine::setFbSize(const ospcommon::vec2i &size)
+  void AsyncRenderEngine::setFbSize(const ospcommon::vec2i &size)
   {
     fbSize = size;
   }
 
-  void async_render_engine::scheduleObjectCommit(const cpp::ManagedObject &obj)
+  void AsyncRenderEngine::scheduleObjectCommit(const cpp::ManagedObject &obj)
   {
     std::lock_guard<std::mutex> lock{objMutex};
     objsToCommit.push_back(obj.object()); 
   }
 
-  void async_render_engine::start(int numThreads)
+  void AsyncRenderEngine::start(int numThreads)
   {
     if (state == ExecState::RUNNING)
       return;
@@ -55,7 +55,7 @@ namespace ospray {
     backgroundThread = std::thread([&](){ run(); });
   }
 
-  void async_render_engine::stop()
+  void AsyncRenderEngine::stop()
   {
     if (state != ExecState::RUNNING)
       return;
@@ -65,34 +65,34 @@ namespace ospray {
       backgroundThread.join();
   }
 
-  ExecState async_render_engine::runningState() const
+  ExecState AsyncRenderEngine::runningState() const
   {
     return state;
   }
 
-  bool async_render_engine::hasNewFrame() const
+  bool AsyncRenderEngine::hasNewFrame() const
   {
     return newPixels;
   }
 
-  double async_render_engine::lastFrameFps() const
+  double AsyncRenderEngine::lastFrameFps() const
   {
     return fps.getFPS();
   }
 
-  const std::vector<uint32_t> &async_render_engine::mapFramebuffer()
+  const std::vector<uint32_t> &AsyncRenderEngine::mapFramebuffer()
   {
     fbMutex.lock();
     newPixels = false;
     return pixelBuffer[mappedPB];
   }
 
-  void async_render_engine::unmapFramebuffer()
+  void AsyncRenderEngine::unmapFramebuffer()
   {
     fbMutex.unlock();
   }
 
-  void async_render_engine::validate()
+  void AsyncRenderEngine::validate()
   {
     if (state == ExecState::INVALID)
     {
@@ -101,7 +101,7 @@ namespace ospray {
     }
   }
 
-  bool async_render_engine::checkForObjCommits()
+  bool AsyncRenderEngine::checkForObjCommits()
   {
     bool commitOccurred = false;
 
@@ -118,7 +118,7 @@ namespace ospray {
     return commitOccurred;
   }
 
-  bool async_render_engine::checkForFbResize()
+  bool AsyncRenderEngine::checkForFbResize()
   {
     bool changed = fbSize.update();
 
@@ -135,7 +135,7 @@ namespace ospray {
     return changed;
   }
 
-  void async_render_engine::run()
+  void AsyncRenderEngine::run()
   {
     auto device = ospGetCurrentDevice();
     if (numOsprayThreads > 0)

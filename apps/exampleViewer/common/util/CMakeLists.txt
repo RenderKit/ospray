@@ -16,7 +16,7 @@
 
 ospray_create_library(ospray_imgui_util
   ImguiUtilExport.h
-  async_render_engine.cpp
+  AsyncRenderEngine.cpp
   FPSCounter.cpp
   transactional_value.h
 LINK
@@ -25,8 +25,8 @@ LINK
 
 ospray_create_library(ospray_imgui_util_sg
   ImguiUtilExport.h
-  async_render_engine.cpp
-  async_render_engine_sg.cpp
+  AsyncRenderEngine.cpp
+  AsyncRenderEngineSg.cpp
   FPSCounter.cpp
   transactional_value.h
 LINK

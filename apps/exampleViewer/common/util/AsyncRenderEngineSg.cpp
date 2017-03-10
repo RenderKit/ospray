@@ -14,21 +14,21 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "async_render_engine_sg.h"
+#include "AsyncRenderEngineSg.h"
 
 #include "sg/common/FrameBuffer.h"
 
 namespace ospray {
   namespace sg {
 
-    async_render_engine_sg::async_render_engine_sg(NodeH sgRenderer, 
-                                                   NodeH sgRendererDW)
+    AsyncRenderEngineSg::AsyncRenderEngineSg(const NodeHandle &sgRenderer, 
+                                             const NodeHandle &sgRendererDW)
       : scenegraph(sgRenderer),
         scenegraphDW(sgRendererDW)
     {
     }
 
-    void async_render_engine_sg::run()
+    void AsyncRenderEngineSg::run()
     {
       while (state == ExecState::RUNNING) {
         static sg::TimeStamp lastFTime;
@@ -49,7 +49,7 @@ namespace ospray {
           scenegraph->traverse("verify");
           scenegraph->traverse("commit");
 
-          if (scenegraphDW.node) {
+          if (scenegraphDW) {
             scenegraphDW->traverse("verify");
             scenegraphDW->traverse("commit");
           }
@@ -57,13 +57,10 @@ namespace ospray {
           lastRTime = sg::TimeStamp();
         }
 
-        std::cout << "=======================================================" << std::endl;
         scenegraph->traverse("render");
-        if (scenegraphDW.node) {
+        if (scenegraphDW) 
           scenegraphDW->traverse("render");
-          // std::cout << "called render on dw scene graph, and set the display wall renderer and frame buffer ..." << std::endl;
-        }
-
+        
         fps.doneRender();
         auto sgFBptr = std::static_pointer_cast<sg::FrameBuffer>(sgFB.get());
 
@@ -82,7 +79,7 @@ namespace ospray {
       }
     }
 
-    void async_render_engine_sg::validate()
+    void AsyncRenderEngineSg::validate()
     {
       if (state == ExecState::INVALID)
         state = ExecState::STOPPED;

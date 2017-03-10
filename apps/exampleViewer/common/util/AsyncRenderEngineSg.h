@@ -32,28 +32,28 @@
 #include "transactional_value.h"
 
 #include "sg/common/Node.h"
-#include "async_render_engine.h"
+#include "AsyncRenderEngine.h"
 
 namespace ospray {
   namespace sg {
 
-    class OSPRAY_IMGUI_UTIL_INTERFACE async_render_engine_sg
-        : public async_render_engine
+    class OSPRAY_IMGUI_UTIL_INTERFACE AsyncRenderEngineSg
+        : public AsyncRenderEngine
     {
     public:
 
-      async_render_engine_sg(sg::NodeH sgRenderer,
-                             sg::NodeH sgRendererDW);
-      ~async_render_engine_sg() = default;
+      AsyncRenderEngineSg(const sg::NodeHandle &sgRenderer,
+                          const sg::NodeHandle &sgRendererDW);
+      ~AsyncRenderEngineSg() = default;
 
     private:
 
-      void run() override;
-      void validate() override;
+      virtual void run()      override;
+      virtual void validate() override;
 
-      sg::NodeH scenegraph;
-      sg::NodeH scenegraphDW;
-      sg::TimeStamp lastRTime;
+      const sg::NodeHandle scenegraph;
+      const sg::NodeHandle scenegraphDW;
+      sg::TimeStamp  lastRTime;
     };
 
   } // ::ospray::sg

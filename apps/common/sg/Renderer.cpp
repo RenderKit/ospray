@@ -238,8 +238,8 @@ namespace ospray {
           child("camera")["aspect"]->lastCommitted()) {
 
         child("camera")["aspect"]->setValue(
-          child("frameBuffer")["size"]->valueAs<vec2i>().x /
-          float(child("frameBuffer")["size"]->valueAs<vec2i>().y)
+        child("frameBuffer")["size"]->valueAs<vec2i>().x /
+        float(child("frameBuffer")["size"]->valueAs<vec2i>().y)
         );
       }
       auto rendererType = child("rendererType")->valueAs<std::string>();
@@ -258,35 +258,51 @@ namespace ospray {
     {
       ospSetObject(ospRenderer,"model", child("world")->valueAs<OSPObject>());
       ospSetObject(ospRenderer,"camera", child("camera")->valueAs<OSPObject>());
-      ospCommit(ospRenderer);
+// <<<<<<< HEAD
+//       ospCommit(ospRenderer);
 
-      PRINT(child("camera")["pos"]->valueAs<vec3f>());
+//       PRINT(child("camera")["pos"]->valueAs<vec3f>());
 
-      // create and setup light for Ambient Occlusion
-      std::vector<OSPLight> lights;
-      // currently getting a core dump if this is on ...
-      for(auto &lightNode : child("lights")->children()) {
-        OSPLight l = (OSPLight)lightNode->valueAs<OSPObject>();
-        lights.push_back(l);
+//       // create and setup light for Ambient Occlusion
+//       std::vector<OSPLight> lights;
+//       // currently getting a core dump if this is on ...
+//       for(auto &lightNode : child("lights")->children()) {
+//         OSPLight l = (OSPLight)lightNode->valueAs<OSPObject>();
+//         lights.push_back(l);
+//       }
+
+//       OSPData lightsd = ospNewData(lights.size(), OSP_OBJECT// OSP_LIGHT 
+//                                    // iw: using OSP_LIGHT gives a core dump i nmpi mode...
+//                                    , &lights[0]);
+//       ospCommit(lightsd);
+
+//       // complete setup of renderer
+//       // ospSetObject(ospRenderer, "model",  child("world")->valueAs<OSPObject>());
+//       ospSetObject(ospRenderer, "lights", lightsd);
+//       ospCommit(ospRenderer);
+// =======
+
+      if (lightsData == nullptr || lightsBuildTime < child("lights")->childrenLastModified())
+      {
+        // create and setup light for Ambient Occlusion
+        std::vector<OSPLight> lights;
+        for(auto &lightNode : child("lights")->children())
+          lights.push_back((OSPLight)lightNode->valueAs<OSPObject>());
+
+        if (lightsData)
+          ospRelease(lightsData);
+        lightsData = ospNewData(lights.size(), OSP_LIGHT, &lights[0]);
+        ospCommit(lightsData);
+        lightsBuildTime = TimeStamp();
       }
 
-      OSPData lightsd = ospNewData(lights.size(), OSP_OBJECT// OSP_LIGHT 
-                                   // iw: using OSP_LIGHT gives a core dump i nmpi mode...
-                                   , &lights[0]);
-      ospCommit(lightsd);
-
       // complete setup of renderer
-      // ospSetObject(ospRenderer, "model",  child("world")->valueAs<OSPObject>());
-      ospSetObject(ospRenderer, "lights", lightsd);
-      ospCommit(ospRenderer);
+      ospSetObject(ospRenderer, "model",  child("world")->valueAs<OSPObject>());
+      ospSetObject(ospRenderer, "lights", lightsData);
+
+// >>>>>>> devel
       //TODO: some child is kicking off modified every frame...Should figure
       //      out which and ignore it
-
-      PING;
-      PRINT(this);
-      PRINT(child("camera")->childrenLastModified());
-      PRINT(lastModified());
-      PRINT(frameMTime);
 
       if (child("camera")->childrenLastModified() > frameMTime
         || child("lights")->childrenLastModified() > frameMTime
@@ -297,7 +313,6 @@ namespace ospray {
         || child("spp")->lastModified() > frameMTime
         )
       {
-        std::cout << "RESETTING ACCUM" << std::endl;
         ospFrameBufferClear(
           (OSPFrameBuffer)child("frameBuffer")->valueAs<OSPObject>(),
           OSP_FB_COLOR | OSP_FB_ACCUM
