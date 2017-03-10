@@ -116,8 +116,8 @@ namespace ospray {
 
 #if 1
       const std::string fileType = detectFileTypeFromURL(fileName);
+      PRINT(fileType);
       if (fileType != "") {
-
         /* iw - todo: move this code to a registry that automatically
            looks up right function based on loaded symbols... */
         if (fileType == "points" || fileType == "spheres") {

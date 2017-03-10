@@ -50,6 +50,8 @@ namespace ospray {
       /*! 'render' the nodes */
       virtual void render(RenderContext &ctx) override;
 
+      virtual void init() override;
+
       //! \brief Initialize this node's value from given XML node 
       /*!
         \detailed This allows a plug-and-play concept where a XML

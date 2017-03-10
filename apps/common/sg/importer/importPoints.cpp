@@ -30,25 +30,34 @@ namespace ospray {
     void importFileType_points(std::shared_ptr<World> &world,
                                const FileName &url)
     {
+      std::cout << "--------------------------------------------" << std::endl;
+      std::cout << "#osp.sg: importer for 'points': " << url.str() << std::endl;
+
       const char *fileName = strstr(url.str().c_str(),"://")+3;
+      PRINT(fileName);
       FILE *file = fopen(fileName,"rb");
       if (!file)
         throw std::runtime_error("could not open file "+std::string(fileName));
 
       // read the data vector
+      PING;
       std::shared_ptr<DataVectorT<Spheres::Sphere,OSP_RAW>> data
         = std::make_shared<DataVectorT<Spheres::Sphere,OSP_RAW>>();
       
+      PING;
       float f[5];
       while (fread(f,sizeof(float),5,file) == 5) {
         data->v.push_back(Spheres::Sphere(vec3f(f[0],f[1],f[2]),.1,0));
       }
       fclose(file);
 
+      PING;
       
       // create the node
       NodeHandle spheres = createNode("spheres","Spheres");
-      spheres["data"]->setValue(NodeHandle(data));
+      PING;
+      spheres["data"]->setValue(data);
+      PING;
 
       NodeHandle(world) += spheres;
     }

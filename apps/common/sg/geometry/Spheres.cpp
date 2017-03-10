@@ -36,7 +36,13 @@ namespace ospray {
       : Geometry("spheres"), 
         ospGeometry(nullptr) 
     {
+    }
+
+    void Spheres::init()
+    {
+      PING;
       add(createNode("data"));
+      PING;
     }
 
     box3f Spheres::bounds() const
@@ -96,6 +102,7 @@ namespace ospray {
 
     void Spheres::render(RenderContext &ctx)
     {
+      PING;
       ospGeometry = ospNewGeometry("spheres");
 
       std::shared_ptr<DataVectorT<Sphere,OSP_RAW>> spheres 
@@ -121,6 +128,7 @@ namespace ospray {
       
       ospAddGeometry(ctx.world->ospModel,ospGeometry);
       ospCommit(data);
+      PING;
     }
 
     OSP_REGISTER_SG_NODE(Spheres);
