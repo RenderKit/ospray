@@ -21,8 +21,10 @@
 namespace ospray {
   namespace sg {
 
-    AsyncRenderEngineSg::AsyncRenderEngineSg(NodeHandle sgRenderer)
-      : scenegraph(sgRenderer)
+    AsyncRenderEngineSg::AsyncRenderEngineSg(const NodeHandle &sgRenderer, 
+                                             const NodeHandle &sgRendererDW)
+      : scenegraph(sgRenderer),
+        scenegraphDW(sgRendererDW)
     {
     }
 
@@ -46,11 +48,19 @@ namespace ospray {
         if (scenegraph->childrenLastModified() > lastRTime) {
           scenegraph->traverse("verify");
           scenegraph->traverse("commit");
+
+          if (scenegraphDW) {
+            scenegraphDW->traverse("verify");
+            scenegraphDW->traverse("commit");
+          }
+
           lastRTime = sg::TimeStamp();
         }
 
         scenegraph->traverse("render");
-
+        if (scenegraphDW) 
+          scenegraphDW->traverse("render");
+        
         fps.doneRender();
         auto sgFBptr = std::static_pointer_cast<sg::FrameBuffer>(sgFB.get());
 
@@ -58,7 +68,7 @@ namespace ospray {
         auto *dstPB = (uint32_t*)pixelBuffer[currentPB].data();
 
         memcpy(dstPB, srcPB, nPixels*sizeof(uint32_t));
-
+        
         sgFBptr->unmap(srcPB);
 
         if (fbMutex.try_lock()) {

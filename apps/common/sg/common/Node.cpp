@@ -140,16 +140,28 @@ namespace ospray {
     void Node::markAsModified()
     {
       properties.lastModified = TimeStamp();
+#if MULTIPLE_PARENTS
+      for (auto p : parent())
+        if (!p.isNULL())
+          p->setChildrenModified(properties.lastModified);
+#else
       if (!parent().isNULL())
         parent()->setChildrenModified(properties.lastModified);
+#endif
     }
 
     void Node::setChildrenModified(TimeStamp t)
     {
       if (t > properties.childrenMTime) {
         properties.childrenMTime = t;
+#if MULTIPLE_PARENTS
+        for (auto p : parent())
+          if (!p.isNULL())
+            p->setChildrenModified(properties.childrenMTime);
+#else
         if (!parent().isNULL())
           parent()->setChildrenModified(properties.childrenMTime);
+#endif
       }
     }
 
@@ -165,7 +177,8 @@ namespace ospray {
       std::lock_guard<std::mutex> lock{mutex};
       auto itr = properties.children.find(name);
       if (itr == properties.children.end()) {
-        throw std::runtime_error("Could not find sg child node with name"+name);
+        throw std::runtime_error("in node "+toString()+
+                                 " : could not find sg child node with name '"+name+"'");
       } else {
         return itr->second;
       }
@@ -215,15 +228,26 @@ namespace ospray {
       return child(c);
     }
 
-    Node::Handle Node::parent()
+#if MULTIPLE_PARENTS
+    std::vector<Node::Handle> Node::parent() const
     {
       return properties.parent;
     }
+#else
+    Node::Handle Node::parent() const 
+    {
+      return properties.parent;
+    }
+#endif
 
     void Node::setParent(const Node::Handle &p)
     {
       std::lock_guard<std::mutex> lock{mutex};
+#ifdef MULTIPLE_PARENTS
+      properties.parent.push_back(p);
+#else
       properties.parent = p;
+#endif
     }
 
     SGVar Node::value()

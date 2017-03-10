@@ -663,7 +663,8 @@ namespace ospray {
         PixelOp     *po = (PixelOp*)poHandle.lookup();
         Assert(fb);
         Assert(po);
-        fb->pixelOp = po->createFromInstance(fb, fb->pixelOp.ptr);
+        fb->pixelOp = po->createInstance(fb, fb->pixelOp.ptr);
+
         if (!fb->pixelOp) {
           std::cout << "#osp:mpi: WARNING: PixelOp did not create an instance!"
                     << std::endl;

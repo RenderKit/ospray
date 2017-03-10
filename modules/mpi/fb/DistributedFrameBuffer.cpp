@@ -329,6 +329,7 @@ namespace ospray {
   {
     DBG(printf("rank %i: tilecompleted %i,%i\n",mpi::world.rank,
                tile->begin.x,tile->begin.y));
+
     if (IamTheMaster()) {
       int numTilesCompletedByMyTile = 0;
       /*! we will not do anything with the tile other than mark it's done */

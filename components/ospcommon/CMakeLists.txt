@@ -36,6 +36,7 @@ ELSE()
     thread.cpp
     vec.cpp
     array3D/Array3D.cpp
+    Socket.cpp
 
     tasking/parallel_for.inl
     tasking/parallel_for.h

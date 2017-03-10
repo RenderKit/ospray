@@ -148,8 +148,9 @@ namespace ospray {
       resetAccum |= checkForFbResize();
       resetAccum |= checkForObjCommits();
 
-      if (resetAccum)
+      if (resetAccum) {
         frameBuffer.clear(OSP_FB_ACCUM);
+      }
 
       fps.startRender();
       renderer.ref().renderFrame(frameBuffer, OSP_FB_COLOR | OSP_FB_ACCUM);

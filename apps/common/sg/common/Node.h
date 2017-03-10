@@ -33,6 +33,8 @@
 
 #include <mutex>
 
+//#define MULTIPLE_PARENTS 1
+
 namespace ospray {
   namespace sg {
 
@@ -102,15 +104,14 @@ namespace ospray {
     {
       Node();
 
-      /*!
-          NodeH is a handle to a sg::Node.  It has the benefit of supporting
-          some operators without requiring dereferencing a pointer.
-      */
+      /*! Node::Handle is a handle to a sg::Node.  It has the benefit
+          of supporting some operators without requiring dereferencing
+          a pointer. */
       class OSPSG_INTERFACE Handle
       {
       public:
         Handle() = default;
-        Handle(std::shared_ptr<sg::Node> n) : node(n) {}
+        Handle(const std::shared_ptr<sg::Node> &n) : node(n) {}
 
         //! return child with name c
         Handle operator[] (const std::string &c) const
@@ -127,6 +128,8 @@ namespace ospray {
 
         std::shared_ptr<sg::Node> get() const { return node; }
 
+        //! is this handle pointing to a null value?
+        bool notNULL() const { return !isNULL(); }
         //! is this handle pointing to a null value?
         bool isNULL() const { return node.get() == nullptr; }
 
@@ -220,7 +223,11 @@ namespace ospray {
       Handle operator[] (const std::string &c) const;
 
       //! return the parent node
-      Handle parent();
+#if MULTIPLE_PARENTS
+      std::vector<Handle> parent() const;
+#else
+      Handle parent() const;
+#endif
 
       //! sets the parent
       void setParent(const Handle& p);
@@ -291,7 +298,7 @@ namespace ospray {
 
       static std::vector<std::shared_ptr<sg::Node>> nodes;
 
-    protected:
+      //    protected:
 
       virtual bool computeValid();
       virtual bool computeValidMinMax();
@@ -309,7 +316,11 @@ namespace ospray {
         TimeStamp childrenMTime;
         TimeStamp lastCommitted;
         std::map<std::string, std::shared_ptr<sg::Param>> params;
+#if MULTIPLE_PARENTS
+        std::vector<Handle> parent;
+#else
         Handle parent;
+#endif
         NodeFlags flags;
         bool valid {false};
         std::string documentation;
@@ -406,15 +417,27 @@ namespace ospray {
     template <>
     inline void NodeParamCommit<float>::commit(std::shared_ptr<Node> n)
     {
+#if MULTIPLE_PARENTS
+      for (auto p : n->parent())
+        ospSet1f(p->valueAs<OSPObject>(),
+                 n->name().c_str(), n->valueAs<float>());
+#else
       ospSet1f(n->parent()->valueAs<OSPObject>(),
                n->name().c_str(), n->valueAs<float>());
+#endif
     }
 
     template <>
     inline void NodeParamCommit<bool>::commit(std::shared_ptr<Node> n)
     {
+#if MULTIPLE_PARENTS
+      for (auto p : n->parent())
+        ospSet1i(p->valueAs<OSPObject>(),
+                 n->name().c_str(), n->valueAs<bool>());
+#else
       ospSet1i(n->parent()->valueAs<OSPObject>(),
                n->name().c_str(), n->valueAs<bool>());
+#endif
     }
 
     template <>
@@ -428,8 +451,14 @@ namespace ospray {
     template <>
     inline void NodeParamCommit<int>::commit(std::shared_ptr<Node> n)
     {
+#if MULTIPLE_PARENTS
+      for (auto p : n->parent())
+        ospSet1i(p->valueAs<OSPObject>(),
+                 n->name().c_str(), n->valueAs<int>());
+#else
       ospSet1i(n->parent()->valueAs<OSPObject>(),
                n->name().c_str(), n->valueAs<int>());
+#endif
     }
 
     template <>
@@ -448,16 +477,28 @@ namespace ospray {
     template <>
     inline void NodeParamCommit<vec3f>::commit(std::shared_ptr<Node> n)
     {
+#if MULTIPLE_PARENTS
+      for (auto p : n->parent())
+        ospSet3fv(p->valueAs<OSPObject>(),
+                  n->name().c_str(), &n->valueAs<vec3f>().x);
+#else
       ospSet3fv(n->parent()->valueAs<OSPObject>(),
                 n->name().c_str(), &n->valueAs<vec3f>().x);
+#endif
     }
 
 
     template <>
     inline void NodeParamCommit<vec2f>::commit(std::shared_ptr<Node> n)
     {
+#if MULTIPLE_PARENTS
+      for (auto p : n->parent())
+      ospSet3fv(p->valueAs<OSPObject>(),
+                n->name().c_str(), &n->valueAs<vec2f>().x);
+#else
       ospSet3fv(n->parent()->valueAs<OSPObject>(),
                 n->name().c_str(), &n->valueAs<vec2f>().x);
+#endif
     }
 
     template <typename T>
@@ -466,6 +507,17 @@ namespace ospray {
       NodeParam() : Node() { setValue(T()); }
       virtual void postCommit(RenderContext &ctx) override
       {
+#if MULTIPLE_PARENTS
+        for (auto p : parent()) {
+          if (!p.isNULL()) {
+            //TODO: generalize to other types of ManagedObject
+            
+            //NOTE(jda) - OMG the syntax for the 'if' is strange...
+            if (p->value().template is<OSPObject>())
+              NodeParamCommit<T>::commit(shared_from_this());
+          }
+        }
+#else
         if (!parent().isNULL()) {
           //TODO: generalize to other types of ManagedObject
 
@@ -473,6 +525,7 @@ namespace ospray {
           if (parent()->value().template is<OSPObject>())
             NodeParamCommit<T>::commit(shared_from_this());
         }
+#endif
       }
 
       virtual bool computeValidMinMax() override

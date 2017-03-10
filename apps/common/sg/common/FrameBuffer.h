@@ -57,6 +57,7 @@ namespace ospray {
 
       OSPFrameBuffer ospFrameBuffer {nullptr};
       vec2i fbsize;
+      std::string displayWallStream { "" };
     };
 
   } // ::ospray::sg

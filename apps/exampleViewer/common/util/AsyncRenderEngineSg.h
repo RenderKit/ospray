@@ -42,16 +42,18 @@ namespace ospray {
     {
     public:
 
-      AsyncRenderEngineSg(sg::NodeHandle sgRenderer);
+      AsyncRenderEngineSg(const sg::NodeHandle &sgRenderer,
+                          const sg::NodeHandle &sgRendererDW);
       ~AsyncRenderEngineSg() = default;
 
     private:
 
-      void run() override;
-      void validate() override;
+      virtual void run()      override;
+      virtual void validate() override;
 
-      sg::NodeHandle scenegraph;
-      sg::TimeStamp lastRTime;
+      const sg::NodeHandle scenegraph;
+      const sg::NodeHandle scenegraphDW;
+      sg::TimeStamp  lastRTime;
     };
 
   } // ::ospray::sg

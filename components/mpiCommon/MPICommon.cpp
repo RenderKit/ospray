@@ -144,7 +144,12 @@ namespace ospray {
       
       if (!initialized) {
         // MPI_Init(ac,(char ***)&av);
+#if 1
+        std::cout << "FORCING THREADED MPI" << std::endl;
+        int required = MPI_THREAD_MULTIPLE;
+#else
         int required = MPI_THREAD_SERIALIZED;
+#endif
         int provided = 0;
         SERIALIZED_MPI_CALL(Init_thread(ac,(char ***)&av,required,&provided));
         if (provided != required) {
