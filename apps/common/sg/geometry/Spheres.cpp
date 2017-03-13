@@ -42,15 +42,16 @@ namespace ospray {
 
     void Spheres::init()
     {
-      add(createNode("data"));
+      add(createNode("sphereData"));
+      add(createNode("colorData"));
       add(createNode("material", "Material"));
     }
 
     box3f Spheres::bounds() const
     {
-      Node::Handle data = child("data");
+      Node::Handle sphereData = child("sphereData");
       std::shared_ptr<DataVectorT<Sphere,OSP_RAW>> spheres 
-        = std::dynamic_pointer_cast<DataVectorT<Sphere,OSP_RAW>>(data.node);
+        = std::dynamic_pointer_cast<DataVectorT<Sphere,OSP_RAW>>(sphereData.node);
       
       box3f bounds = empty;
       for (auto &s : spheres->v)
@@ -84,25 +85,42 @@ namespace ospray {
     {
       ospGeometry = ospNewGeometry("spheres");
 
-      Node::Handle dataNode = child("data");
-      std::shared_ptr<DataVectorT<Sphere,OSP_RAW>> spheres 
-        = std::dynamic_pointer_cast<DataVectorT<Sphere,OSP_RAW>>(dataNode.node);
+      {
+        Node::Handle sphereDataNode = child("sphereData");
+        std::shared_ptr<DataVectorT<Sphere,OSP_RAW>> sphereData 
+          = std::dynamic_pointer_cast<DataVectorT<Sphere,OSP_RAW>>(sphereDataNode.node);
+        OSPData ospSphereData = ospNewData(sphereData->v.size()*5,OSP_FLOAT,
+                                           sphereData->v.data(),OSP_DATA_SHARED_BUFFER);
+        ospCommit(ospSphereData);
+
+        ospSetData(ospGeometry,"spheres",ospSphereData);
+        
+        ospSet1i(ospGeometry,"bytes_per_sphere",sizeof(Spheres::Sphere));
+        ospSet1i(ospGeometry,"center_offset",     0*sizeof(float));
+        ospSet1i(ospGeometry,"offset_radius",     3*sizeof(float));
+        ospSet1i(ospGeometry,"offset_materialID", 4*sizeof(float));
+      }
+      {
+        Node::Handle colorDataNode = child("colorData");
+        std::shared_ptr<DataVectorT<vec4f,OSP_RAW>> colorData 
+          = std::dynamic_pointer_cast<DataVectorT<vec4f,OSP_RAW>>(colorDataNode.node);
+        PING; PRINT(colorData);
+        if (colorData) {
+          OSPData ospColorData = ospNewData(colorData->v.size()*5,OSP_FLOAT,
+                                            colorData->v.data(),OSP_DATA_SHARED_BUFFER);
+          ospCommit(ospColorData);
+          
+          ospSetData(ospGeometry,"color",ospColorData);
+          ospSet1i(ospGeometry,"color_offset",     0*sizeof(float));
+          ospSet1i(ospGeometry,"color_stride",     4*sizeof(float));
+        }
+      }
       
-      OSPData data = ospNewData(spheres->v.size()*5,OSP_FLOAT,
-                                spheres->v.data(),OSP_DATA_SHARED_BUFFER);
-      ospSetData(ospGeometry,"spheres",data);
-
-      ospSet1i(ospGeometry,"bytes_per_sphere",sizeof(Spheres::Sphere));
-      ospSet1i(ospGeometry,"center_offset",     0*sizeof(float));
-      ospSet1i(ospGeometry,"offset_radius",     3*sizeof(float));
-      ospSet1i(ospGeometry,"offset_materialID", 4*sizeof(float));
-
       ospSetMaterial(ospGeometry,
                      (OSPMaterial)child("material")->valueAs<OSPObject>());
       ospCommit(ospGeometry);
       
       ospAddGeometry(ctx.world->ospModel,ospGeometry);
-      ospCommit(data);
     }
 
     OSP_REGISTER_SG_NODE(Spheres);

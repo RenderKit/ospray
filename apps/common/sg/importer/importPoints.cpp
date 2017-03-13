@@ -24,6 +24,41 @@
 namespace ospray {
   namespace sg {
 
+    struct ColorMap
+    {
+      ColorMap(float lo, float hi) 
+        : lo(lo), hi(hi) 
+      { 
+        assert(lo <= hi); 
+        // TODO: need a better color map here ...
+        color.push_back(vec3f(0.f,0.f,0.f));
+        color.push_back(vec3f(0.f,0.f,1.f));
+        color.push_back(vec3f(0.f,1.f,0.f));
+        color.push_back(vec3f(1.f,0.f,0.f));
+        color.push_back(vec3f(1.f,1.f,0.f));
+        color.push_back(vec3f(0.f,1.f,1.f));
+        color.push_back(vec3f(1.f,0.f,1.f));
+        color.push_back(vec3f(1.f,1.f,1.f));
+      };
+
+      vec4f colorFor(float f)
+      {
+        if (f <= lo) return vec4f(color.front(),1.f);
+        if (f >= hi) return vec4f(color.back(),1.f);
+
+        float r = ((f-lo) * color.size()) / (hi-lo);
+        int idx = int(r);
+        if (idx < 0) idx = 0;
+        if (idx >= color.size()) idx = color.size()-1;
+        
+        vec3f c = color[idx] + (r-idx)*(color[idx+1]-color[idx]);
+        return vec4f(c,1.f);
+      }
+
+      float lo, hi;
+      std::vector<vec3f> color;
+    };
+
     bool readOne(FILE *file, float *f, int N, bool ascii)
     {
       if (!ascii)
@@ -59,7 +94,7 @@ namespace ospray {
 
       // read the data vector
       PING;
-      std::shared_ptr<DataVectorT<Spheres::Sphere,OSP_RAW>> data
+      std::shared_ptr<DataVectorT<Spheres::Sphere,OSP_RAW>> sphereData
         = std::make_shared<DataVectorT<Spheres::Sphere,OSP_RAW>>();
 
       float radius = .1f;
@@ -92,6 +127,11 @@ namespace ospray {
 
       float f[numFloatsPerSphere];
       box3f bounds;
+
+      std::vector<float> mappedScalarVector;
+      float mappedScalarMin = +std::numeric_limits<float>::infinity();
+      float mappedScalarMax = -std::numeric_limits<float>::infinity();
+
       while (readOne(file,f,numFloatsPerSphere,ascii)) {
         // read one more sphere ....
         Spheres::Sphere s;
@@ -102,25 +142,42 @@ namespace ospray {
           = (rPos == std::string::npos)
           ? radius
           : f[rPos];
-        data->v.push_back(s);
+        sphereData->v.push_back(s);
         bounds.extend(s.position-s.radius);
         bounds.extend(s.position+s.radius);
+
+        if (sPos != std::string::npos) {
+          mappedScalarVector.push_back(f[sPos]);
+          mappedScalarMin = std::min(mappedScalarMin,f[sPos]);
+          mappedScalarMax = std::max(mappedScalarMax,f[sPos]);
+        }
       }
       fclose(file);
 
       // create the node
-      NodeHandle spheres = createNode("spheres","Spheres");
+      NodeHandle sphereObject = createNode("spheres","Spheres");
 
       // iw - note that 'add' sounds wrong here, but that's the way
       // the current scene graph works - 'adding' that node (which
       // happens to have the right name) will essentially replace the
       // old value of that node, and thereby assign the 'data' field
-      data->setName("data");
-      spheres->add(data); //["data"]->setValue(data);
+      sphereData->setName("sphereData");
+      sphereObject->add(sphereData); //["data"]->setValue(data);
+      
+      if (!mappedScalarVector.empty()) {
+        std::cout << "#osp.sg: creating color map for points data ..." << std::endl;
+        ColorMap cm(mappedScalarMin,mappedScalarMax);
+        std::shared_ptr<DataVectorT<vec4f,OSP_RAW>> colorData
+          = std::make_shared<DataVectorT<vec4f,OSP_RAW>>();
+        for (int i=0;i<mappedScalarVector.size();i++)
+          colorData->v.push_back(cm.colorFor(mappedScalarVector[i]));
+        colorData->setName("colorData");
+        sphereObject->add(colorData);
+      }
 
-      std::cout << "#osp.sg: imported " << prettyNumber(data->v.size()) 
+      std::cout << "#osp.sg: imported " << prettyNumber(sphereData->v.size()) 
                 << " points, bounds = " << bounds << std::endl;;
-      NodeHandle(world) += spheres;
+      NodeHandle(world) += sphereObject;
     }
 
   }// ::ospray::sg
