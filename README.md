@@ -1,7 +1,7 @@
 OSPRay
 ======
 
-This is release v1.2.0 of OSPRay. For changes and new features see the
+This is release v1.2.1 of OSPRay. For changes and new features see the
 [changelog](CHANGELOG.md). Also visit http://www.ospray.org for more
 information.
 
@@ -56,9 +56,8 @@ branch should always point to the latest tested bugfix release.
 Prerequisites
 -------------
 
-OSPRay currently supports both Linux and Mac OS X (and experimentally
-Windows). In addition, before you can build OSPRay you need the
-following prerequisites:
+OSPRay currently supports Linux, Mac OS X, and Windows. In addition,
+before you can build OSPRay you need the following prerequisites:
 
 -   You can clone the latest OSPRay sources via:
 
@@ -157,9 +156,9 @@ Documentation
 =============
 
 The following [API
-documentation](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
+documentation](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation")
 of OSPRay can also be found as a [pdf
-document](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
+document](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation")
 (2.6MB).
 
 For a deeper explanation of the concepts, design, features and
@@ -183,12 +182,15 @@ To access the OSPRay API you first need to include the OSPRay header
 
 where the API is compatible with C99 and C++.
 
-In order to use the API, OSPRay must initialized with a "device". A
+Initialization
+--------------
+
+In order to use the API, OSPRay must be initialized with a "device". A
 device is the object which implements the API. Creating and initializing
 a device can be done in either of two ways: command line arguments or
 manually instantiating a device.
 
-### Initialization via command line arguments
+### Command Line Arguments
 
 The first is to do so by giving OSPRay the command line from `main()` by
 calling
@@ -252,7 +254,7 @@ convention with "`--osp:`") are understood:
 
 : Command line parameters accepted by OSPRay's `ospInit`.
 
-### Initialization via manual device instantiation
+### Manual Device Instantiation
 
 The second method of initialization is to explicitly create the device
 yourself, and possibly set parameters. This method looks almost
@@ -318,23 +320,23 @@ to OSPRay API calls, where users can set/change parameters and recommit
 the device. If changes are made to the device that is already set as the
 current device, it does not need to be set as current again.
 
-### Useful environment variables
+### Environment Variables
 
 Finally, OSPRay's generic device parameters can be overridden via
 environment variables for easy changes to OSPRay's behavior without
 needing to change the application (variables are prefixed by convention
 with "`OSPRAY_`"):
 
-| Variable            | Description                                                   |
-|:--------------------|:--------------------------------------------------------------|
-| OSPRAY\_THREADS     | equivalent to `--osp:numthreads`                              |
-| OSPRAY\_LOG\_LEVEL  | equivalent to `--osp:loglevel`                                |
-| OSPRAY\_LOG\_OUTPUT | equivalent to `--osp:logoutput`                               |
-| OSPRAY\_DEBUG       | equivalent to both OSPRAY\_LOG\_LEVEL=2 and OSPRAY\_THREADS=1 |
+| Variable            | Description                      |
+|:--------------------|:---------------------------------|
+| OSPRAY\_THREADS     | equivalent to `--osp:numthreads` |
+| OSPRAY\_LOG\_LEVEL  | equivalent to `--osp:loglevel`   |
+| OSPRAY\_LOG\_OUTPUT | equivalent to `--osp:logoutput`  |
+| OSPRAY\_DEBUG       | equivalent to `--osp:debug`      |
 
 : Environment variables interpreted by OSPRay.
 
-### Handling error and status messages from OSPRay
+### Handling Error and Status Messages from OSPRay
 
 Applications may be interested in messages which OSPRay emits, whether
 for debugging or logging events. Applications can call
@@ -349,7 +351,7 @@ desired by an application will require that a callback be provided. Note
 that callbacks for C++ std::cout and std::cerr can be alternatively set
 through ospInit() or OSPRAY\_LOG\_OUTPUT environment variable.
 
-### Loading OSPRay extensions at runtime
+### Loading OSPRay Extensions at Runtime
 
 OSPRay's functionality can be extended via plugins, which are
 implemented in shared libraries. To load plugin `name` from
@@ -579,27 +581,28 @@ summarized in the table below. If `voxelRange` is not provided for a
 volume OSPRay will compute it based on the voxel data, which may result
 in slower data updates.
 
-| Type   | Name                    | Description                                                              |
-|:-------|:------------------------|:-------------------------------------------------------------------------|
-| vec3i  | dimensions              | number of voxels in each dimension $(x, y, z)$                           |
-| string | voxelType               | data type of each voxel, currently supported are:                        |
-|       |                        | "uchar" (8 bit unsigned integer)                                         |
-|       |                        | "ushort" (16 bit unsigned integer)                                       |
-|       |                        | "float" (32 bit single precision floating point)                         |
-|       |                        | "double" (64 bit double precision floating point)                        |
-| vec2f  | voxelRange              | minimum and maximum of the scalar values                                 |
-| vec3f  | gridOrigin              | origin of the grid in world-space, default $(0, 0, 0)$                   |
-| vec3f  | gridSpacing             | size of the grid cells in world-space, default $(1, 1, 1)$               |
-| bool   | gradientShadingEnabled  | volume is rendered with surface shading according to normalized gradient |
-| bool   | preIntegration          | enable using pre-integration for transferFunction lookups                |
-| bool   | singleShade             | shade only at the point of maximum intensity                             |
-| bool   | adaptiveSampling        | adapt ray step size based on opacity                                     |
-| float  | adaptiveScalar          | modifier for adaptive step size                                          |
-| float  | adaptiveMaxSamplingRate | maximum sampling rate for adaptive sampling                              |
-| float  | samplingRate            | sampling rate of the volume. This is the minumum step size for adaptive. |
-| vec3f  | specular                | specular component for shading                                           |
-| vec3f  | volumeClippingBoxLower  | clip the volume values in object coordinates                             |
-| vec3f  | volumeClippingBoxUpper  | clip the volume values in object coordinates                             |
+| Type   | Name                    |      Default| Description                                                                       |
+|:-------|:------------------------|------------:|:----------------------------------------------------------------------------------|
+| vec3i  | dimensions              |             | number of voxels in each dimension $(x, y, z)$                                    |
+| string | voxelType               |             | data type of each voxel, currently supported are:                                 |
+|        |                         |             | "uchar" (8 bit unsigned integer)                                                  |
+|        |                         |             | "short" (16 bit signed integer)                                                   |
+|        |                         |             | "ushort" (16 bit unsigned integer)                                                |
+|        |                         |             | "float" (32 bit single precision floating point)                                  |
+|        |                         |             | "double" (64 bit double precision floating point)                                 |
+| vec2f  | voxelRange              |             | minimum and maximum of the scalar values                                          |
+| vec3f  | gridOrigin              |  $(0, 0, 0)$| origin of the grid in world-space                                                 |
+| vec3f  | gridSpacing             |  $(1, 1, 1)$| size of the grid cells in world-space                                             |
+| bool   | gradientShadingEnabled  |        false| volume is rendered with surface shading wrt. to normalized gradient               |
+| bool   | preIntegration          |        false| use pre-integration for [transfer function](#transfer-function) lookups           |
+| bool   | singleShade             |         true| shade only at the point of maximum intensity                                      |
+| bool   | adaptiveSampling        |         true| adapt ray step size based on opacity                                              |
+| float  | adaptiveScalar          |           15| modifier for adaptive step size                                                   |
+| float  | adaptiveMaxSamplingRate |            2| maximum sampling rate for adaptive sampling                                       |
+| float  | samplingRate            |        0.125| sampling rate of the volume (this is the minimum step size for adaptive sampling) |
+| vec3f  | specular                |     gray 0.3| specular color for shading                                                        |
+| vec3f  | volumeClippingBoxLower  |     disabled| lower coordinate (in object-space) to clip the volume values                      |
+| vec3f  | volumeClippingBoxUpper  |     disabled| upper coordinate (in object-space) to clip the volume values                      |
 
 : Parameters to configure a structured volume.
 
@@ -991,7 +994,7 @@ were rendered with OpenGL. The screen-sized [texture](#texture)
 distance of primary rays, thus objects of other renderers can hide
 objects rendered by OSPRay.
 
-### Path tracer
+### Path Tracer
 
 The path tracer supports soft shadows, indirect illumination and
 realistic materials. In addition to the [general parameters](#renderer)
@@ -1078,11 +1081,11 @@ The call returns `NULL` if that type of camera is not known by the
 renderer, or else an `OSPLight` handle to the created light source. All
 light sources[^2] accept the following parameters:
 
-| Type     | Name      | Default | Description                            |
-|:---------|:----------|:--------|:---------------------------------------|
-| vec3f(a) | color     | white   | color of the light                     |
-| float    | intensity | 1       | intensity of the light (a factor)      |
-| bool     | isVisible | true    | whether the light can be directly seen |
+| Type     | Name      |  Default| Description                            |
+|:---------|:----------|--------:|:---------------------------------------|
+| vec3f(a) | color     |    white| color of the light                     |
+| float    | intensity |        1| intensity of the light (a factor)      |
+| bool     | isVisible |     true| whether the light can be directly seen |
 
 : Parameters accepted by the all lights.
 
