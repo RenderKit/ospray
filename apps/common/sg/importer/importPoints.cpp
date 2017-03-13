@@ -24,6 +24,19 @@
 namespace ospray {
   namespace sg {
 
+    bool readOne(FILE *file, float *f, int N, bool ascii)
+    {
+      if (!ascii)
+        return fread(f,sizeof(float),N,file) == N;
+      
+      // ascii:
+      for (int i=0;i<N;i++) {
+        int rc = fscanf(file,"%f",f+i);
+        if (rc == 0) return (i == 0);
+        fscanf(file,"\n");
+      }
+    }
+
     // for now, let's hardcode the importers - should be moved to a
     // registry at some point ...
     void importFileType_points(std::shared_ptr<World> &world,
@@ -58,6 +71,8 @@ namespace ospray {
       if (fu.hasArg("format"))
         format = fu["format"];
 
+      bool ascii = fu.hasArg("ascii");
+
       /* for now, hard-coded sphere componetns to be in float format,
          so the number of chars in the format string is the num components */
       int numFloatsPerSphere = format.size();
@@ -75,7 +90,7 @@ namespace ospray {
         throw std::runtime_error("invalid points format: no z component");
 
       float f[numFloatsPerSphere];
-      while (fread(f,sizeof(float),numFloatsPerSphere,file) == numFloatsPerSphere) {
+      while (readOne(file,f,numFloatsPerSphere,ascii)) {
         // read one more sphere ....
         Spheres::Sphere s;
         s.position.x = f[xPos];
