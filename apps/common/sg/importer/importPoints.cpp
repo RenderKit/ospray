@@ -91,6 +91,7 @@ namespace ospray {
         throw std::runtime_error("invalid points format: no z component");
 
       float f[numFloatsPerSphere];
+      box3f bounds;
       while (readOne(file,f,numFloatsPerSphere,ascii)) {
         // read one more sphere ....
         Spheres::Sphere s;
@@ -102,6 +103,8 @@ namespace ospray {
           ? radius
           : f[rPos];
         data->v.push_back(s);
+        bounds.extend(s.position-s.radius);
+        bounds.extend(s.position+s.radius);
       }
       fclose(file);
 
@@ -115,6 +118,8 @@ namespace ospray {
       data->setName("data");
       spheres->add(data); //["data"]->setValue(data);
 
+      std::cout << "#osp.sg: imported " << prettyNumber(data->v.size()) 
+                << " points, bounds = " << bounds << std::endl;;
       NodeHandle(world) += spheres;
     }
 
