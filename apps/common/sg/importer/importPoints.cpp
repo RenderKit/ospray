@@ -30,15 +30,21 @@ namespace ospray {
         : lo(lo), hi(hi) 
       { 
         assert(lo <= hi); 
+
         // TODO: need a better color map here ...
-        color.push_back(vec3f(0.f,0.f,0.f));
-        color.push_back(vec3f(0.f,0.f,1.f));
-        color.push_back(vec3f(0.f,1.f,0.f));
-        color.push_back(vec3f(1.f,0.f,0.f));
-        color.push_back(vec3f(1.f,1.f,0.f));
-        color.push_back(vec3f(0.f,1.f,1.f));
-        color.push_back(vec3f(1.f,0.f,1.f));
-        color.push_back(vec3f(1.f,1.f,1.f));
+        // color.push_back(vec3f(0.f,0.f,0.f));
+        // color.push_back(vec3f(0.f,0.f,1.f));
+        // color.push_back(vec3f(0.f,1.f,0.f));
+        // color.push_back(vec3f(1.f,0.f,0.f));
+        // color.push_back(vec3f(1.f,1.f,0.f));
+        // color.push_back(vec3f(0.f,1.f,1.f));
+        // color.push_back(vec3f(1.f,0.f,1.f));
+        // color.push_back(vec3f(1.f,1.f,1.f));
+
+        // from old qtivewre: "cool to warm"
+        color.push_back(ospcommon::vec3f(0.231373  , 0.298039    , 0.752941    ));       
+        color.push_back(ospcommon::vec3f(0.865003  , 0.865003    , 0.865003    ));       
+        color.push_back(ospcommon::vec3f(0.705882  , 0.0156863   , 0.14902     ));
       };
 
       vec4f colorFor(float f)
@@ -46,10 +52,10 @@ namespace ospray {
         if (f <= lo) return vec4f(color.front(),1.f);
         if (f >= hi) return vec4f(color.back(),1.f);
 
-        float r = ((f-lo) * color.size()) / (hi-lo);
+        float r = ((f-lo) * (color.size()-1)) / (hi-lo);
         int idx = int(r);
         if (idx < 0) idx = 0;
-        if (idx >= color.size()) idx = color.size()-1;
+        if (idx >= color.size()) idx = color.size()-2;
         
         vec3f c = color[idx] + (r-idx)*(color[idx+1]-color[idx]);
         return vec4f(c,1.f);
