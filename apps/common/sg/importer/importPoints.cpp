@@ -35,6 +35,7 @@ namespace ospray {
         if (rc == 0) return (i == 0);
         fscanf(file,"\n");
       }
+      return true;
     }
 
     // for now, let's hardcode the importers - should be moved to a
