@@ -23,10 +23,8 @@
 
 namespace ospcommon
 {
-  using namespace ospcommon;
-
   /*! type for a socket */
-  typedef struct opaque_socket_t* socket_t;
+  using socket_t = struct opaque_socket_t*;
 
   /*! exception thrown when other side disconnects */
   struct Disconnect : public std::exception
@@ -86,4 +84,4 @@ namespace ospcommon
   /*! writes a string to the socket */
   void write(socket_t socket, const std::string& str);
 
-}// ::ospray
+}// ::ospcommon
