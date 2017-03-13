@@ -25,7 +25,9 @@
 namespace ospray {
   namespace sg {
 
-    Spheres::Sphere::Sphere(vec3f position, float radius, uint32_t typeID)
+    Spheres::Sphere::Sphere(const vec3f &position, 
+                            float radius, 
+                            uint32_t typeID)
       : position(position), 
         radius(radius), 
         typeID(typeID) 

@@ -29,16 +29,18 @@ namespace ospray {
     {
       struct Sphere
       {
-        vec3f position;
-        float radius;
-        uint32_t typeID;
-        
         // constructor
-        Sphere(vec3f position, float radius, uint32_t typeID = 0);
+        Sphere(const vec3f &position=vec3f(0.f), 
+               float radius=1.f, 
+               uint32_t typeID = 0);
         
         // return the bounding box
         inline box3f bounds() const
         { return {position - vec3f(radius), position + vec3f(radius)}; }
+
+        vec3f position;
+        float radius;
+        uint32_t typeID;
       };
 
       //! constructor

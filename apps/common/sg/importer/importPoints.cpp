@@ -48,31 +48,56 @@ namespace ospray {
       std::shared_ptr<DataVectorT<Spheres::Sphere,OSP_RAW>> data
         = std::make_shared<DataVectorT<Spheres::Sphere,OSP_RAW>>();
 
-      if (!fu.hasArg("format"))
-        throw std::runtime_error("'points' importer error: 'format=...' not specified...");
+      float radius = .1f;
+      if (fu.hasArg("radius"))
+        radius = std::stof(fu["radius"]);
+      if (radius == 0.f)
+        throw std::runtime_error("#sg.importPoints: could not parse radius ...");
+      
+      std::string format = "xyz";
+      if (fu.hasArg("format"))
+        format = fu["format"];
 
-      if (fu["format"] == "xyzr") {
-        float f[4];
-        while (fread(f,sizeof(float),4,file) == 4) {
-          data->v.push_back(Spheres::Sphere(vec3f(f[0],f[1],f[2]),f[3],0));
-        }
+      /* for now, hard-coded sphere componetns to be in float format,
+         so the number of chars in the format string is the num components */
+      int numFloatsPerSphere = format.size();
+      size_t xPos = format.find("x");
+      size_t yPos = format.find("y");
+      size_t zPos = format.find("z");
+      size_t rPos = format.find("r");
+      size_t sPos = format.find("s");
+
+      if (xPos == std::string::npos)
+        throw std::runtime_error("invalid points format: no x component");
+      if (yPos == std::string::npos)
+        throw std::runtime_error("invalid points format: no y component");
+      if (zPos == std::string::npos)
+        throw std::runtime_error("invalid points format: no z component");
+
+      float f[numFloatsPerSphere];
+      while (fread(f,sizeof(float),numFloatsPerSphere,file) == numFloatsPerSphere) {
+        // read one more sphere ....
+        Spheres::Sphere s;
+        s.position.x = f[xPos];
+        s.position.y = f[yPos];
+        s.position.z = f[zPos];
+        s.radius
+          = (rPos == std::string::npos)
+          ? radius
+          : f[rPos];
+        data->v.push_back(s);
       }
-      else throw std::runtime_error("#osp.sg.importPoints: unknown format '"+fu["format"]+"'");
       fclose(file);
 
-      PING;
-      
       // create the node
       NodeHandle spheres = createNode("spheres","Spheres");
 
-      PING;
       // iw - note that 'add' sounds wrong here, but that's the way
       // the current scene graph works - 'adding' that node (which
       // happens to have the right name) will essentially replace the
       // old value of that node, and thereby assign the 'data' field
       data->setName("data");
       spheres->add(data); //["data"]->setValue(data);
-      PING;
 
       NodeHandle(world) += spheres;
     }
