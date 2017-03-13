@@ -119,25 +119,33 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     const vec3f wo = neg(ray.dir);
 
-    float maxLightDist = ray.t; // per default, virtual lights are occluded by hit geometry
-
+    float  maxLightDist;
     // environment shading when nothing hit
     if (noHit(ray)) {
-      maxLightDist = inf; // also include envLights (i.e. the ones in infinity)
+      maxLightDist = inf; // include envLights (i.e. the ones in infinity)
       if (straightPath) {
         sample.alpha = 1.0f - luminance(Lw);
+        if ((bool)self->backplate) {
+          L = L + Lw * get3f(self->backplate, clamp2edge(self->backplate, pixel));
+          maxLightDist = 1e38; // backplate hides envLights (i.e. the ones at infinity)
+        }
       }
-      if ((bool)self->backplate & straightPath) {
-        L = L + Lw * get3f(self->backplate, clamp2edge(self->backplate, pixel));
-        maxLightDist = 1e38; // backplate hides envLights (i.e. the ones at infinity)
-      }
-    }
+    } else
+      // virtual lights are occluded by hit geometry
+      // because lastDg.P can be different from ray.org (when previously sampled a Dirac transmission)
+      // we cannot just use ray.t as maxDist
+      maxLightDist = distance(lastDg.P, ray.org + ray.t * ray.dir);
+
 
     // add light from *virtual* lights by intersecting them
     for (uniform int i = self->numGeoLights; i < self->numLights; i++) {
+      const float minLightDist = distance(lastDg.P, ray.org); // minDist is not always zero, see above
       const uniform Light *uniform l = self->lights[i];
       if (!straightPath || l->isVisible) {
-        Light_EvalRes le = l->eval(l, lastDg, ray.dir, maxLightDist);
+        // to correctly handle MIS through transparencies the light pdf needs to be calculated wrt. lastDg
+        // however, we only have a valid intersection with the light in [minLightDist, maxLightDist],
+        // otherwise light could be added twice
+        Light_EvalRes le = l->eval(l, lastDg, ray.dir, minLightDist, maxLightDist);
         if (reduce_max(le.radiance) > 0.0f)
           L = L + Lw * le.radiance * misHeuristic(lastBSDFPdf, le.pdf);
       }

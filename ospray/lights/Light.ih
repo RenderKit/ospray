@@ -46,6 +46,7 @@ struct Light_EvalRes
 typedef Light_EvalRes (*Light_EvalFunc)(const uniform Light* uniform,
                                         const DifferentialGeometry&, //! point to evaluate illumination for >*/
                                         const vec3f& dir,            //! direction towards the light source, normalized >*/
+                                        const float minDist,         //! minimum distance to look for light contribution >*/
                                         const float maxDist);        //! maximum distance to look for light contribution >*/
 
 
@@ -56,7 +57,7 @@ struct Light
   bool isVisible; // either directly in camera, or via a straight path (i.e. through ThinGlass)
 };
 
-Light_EvalRes Light_eval(const uniform Light* uniform, const DifferentialGeometry&, const vec3f&, const float);
+Light_EvalRes Light_eval(const uniform Light* uniform, const DifferentialGeometry&, const vec3f&, const float, const float);
 
 inline void Light_Constructor(uniform Light* uniform self)
 {

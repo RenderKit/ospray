@@ -27,7 +27,7 @@
 namespace ospcommon {
 
   template<typename TASK_T>
-  inline void async_impl(TASK_T&& fcn)
+  inline void schedule_impl(TASK_T&& fcn)
   {
 #ifdef OSPRAY_TASKING_TBB
     struct LocalTBBTask : public tbb::task

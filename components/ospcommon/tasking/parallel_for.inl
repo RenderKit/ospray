@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <utility>
+
 #ifdef OSPRAY_TASKING_TBB
 #  include <tbb/parallel_for.h>
 #elif defined(OSPRAY_TASKING_CILK)

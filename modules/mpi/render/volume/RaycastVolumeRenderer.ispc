@@ -186,7 +186,6 @@ RaycastVolumeRenderer_intersectVolumes(uniform RaycastVolumeRenderer *uniform se
   Ray volumeRay = ray;
   volumeRay.t0 = infinity;
 
-#if EXP_DATA_PARALLEL
   if (passInfo.block != NULL) {
     // Intersect volume bounding box.
     float t0, t1;
@@ -219,12 +218,10 @@ RaycastVolumeRenderer_intersectVolumes(uniform RaycastVolumeRenderer *uniform se
     // Return the first intersected volume.
     return volume;
   }
-#endif
 
   // Test each volume and find the first intersection.
   for (uniform int32 i=0; i<self->super.model->volumeCount; i++) {
     Volume *uniform volume_i = self->super.model->volumes[i];
-#if EXP_DATA_PARALLEL
     // hack for now .... if this does not have a 'getvoxel' function
     // it must be a data parallel volume...
     if (volume_i->computeSample == NULL) {
@@ -232,16 +229,13 @@ RaycastVolumeRenderer_intersectVolumes(uniform RaycastVolumeRenderer *uniform se
       // do NOT render data-parallel volumes in regular sampling mode...
       continue;
     }
-#endif
 
     // Intersect volume bounding box.
     float t0, t1;
     intersectBox(ray, volume_i->boundingBox, t0, t1);
 
-#if EXP_DATA_PARALLEL
     t0 = max(t0,passInfo.region.lower);
     t1 = min(t1,passInfo.region.upper);
-#endif
 
     // Clip against volume clipping box (if specified).
     if(ne(volume_i->volumeClippingBox.lower,
@@ -469,7 +463,6 @@ export void RaycastVolumeRenderer_setLights(void *uniform _self,
   self->numLights = numLights;
 }
 
-#if EXP_DATA_PARALLEL
 extern "C" Tile *
 uniform CacheForBlockTiles_getTileForBlock(void *uniform _tileCache,
                                            uniform uint32 blockID);
@@ -673,4 +666,3 @@ export void DDDVRRenderer_renderTile(void*uniform _self,
   }
 }
 
-#endif

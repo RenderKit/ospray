@@ -40,7 +40,7 @@ namespace ospray {
 
     /*! initialize everything GLUT-related */
     OSPRAY_GLUT3D_INTERFACE void initGLUT(int32_t *ac, const char **av);
-    /*! switch over to GLUT for control flow. This functoin will not return */
+    /*! switch over to GLUT for control flow. This function will not return */
     OSPRAY_GLUT3D_INTERFACE void runGLUT();
 
     using ospcommon::AffineSpace3fa;

@@ -50,6 +50,7 @@ Light_SampleRes AmbientLight_sample(const uniform Light* uniform super,
 Light_EvalRes AmbientLight_eval(const uniform Light* uniform super,
                                 const DifferentialGeometry& dg,
                                 const vec3f& dir,
+                                const float,
                                 const float maxDist)
 {
   uniform AmbientLight* uniform self = (uniform AmbientLight* uniform)super;

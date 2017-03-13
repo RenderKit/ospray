@@ -78,6 +78,7 @@ Light_SampleRes HDRILight_sample(const uniform Light* uniform super,
 Light_EvalRes HDRILight_eval(const uniform Light* uniform super,
                              const DifferentialGeometry&,
                              const vec3f& dir,
+                             const float,
                              const float maxDist)
 {
   uniform HDRILight* uniform self = (uniform HDRILight* uniform)super;

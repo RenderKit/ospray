@@ -16,26 +16,35 @@
 
 #pragma once
 
-#include "TaskingTypeTraits.h"
-#include "async.inl"
+#include <functional>
+#include <future>
+
+#include "schedule.h"
 
 namespace ospcommon {
+
+  template<typename TASK_T>
+  using operator_return_t = typename std::result_of<TASK_T()>::type;
 
   // NOTE(jda) - This abstraction takes a lambda which should take captured
   //             variables by *value* to ensure no captured references race
   //             with the task itself.
-
-  // NOTE(jda) - No priority is associated with this call, but could be added
-  //             later with a hint enum, using a default value for the priority
-  //             to not require specifying it.
   template<typename TASK_T>
-  inline void async(TASK_T&& fcn)
+  inline auto async(TASK_T&& fcn) -> std::future<operator_return_t<TASK_T>>
   {
     static_assert(has_operator_method<TASK_T>::value,
-                  "ospray::async() requires the implementation of method "
-                  "'void TASK_T::operator()'.");
+                  "ospcommon::schedule() requires the implementation of method "
+                  "'RETURN_T TASK_T::operator()', where RETURN_T is the "
+                  "return value of the passed in task.");
 
-    async_impl(std::forward<TASK_T>(fcn));
+    using package_t = std::packaged_task<operator_return_t<TASK_T>()>;
+
+    auto task   = new package_t(std::forward<TASK_T>(fcn));
+    auto future = task->get_future();
+
+    schedule([=](){ (*task)(); delete task; });
+
+    return future;
   }
 
 } // ::ospcommon

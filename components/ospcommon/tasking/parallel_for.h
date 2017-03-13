@@ -29,7 +29,7 @@ namespace ospcommon {
     static_assert(has_operator_method_with_integral_param<TASK_T>::value,
                   "ospcommon::parallel_for() requires the implementation of "
                   "method 'void TASK_T::operator(P taskIndex), where P is of "
-                  "type short, int, uint, or size_t.");
+                  "type unsigned char, short, int, uint, long, or size_t.");
 
     parallel_for_impl(nTasks, std::forward<TASK_T>(fcn));
   }
@@ -42,7 +42,7 @@ namespace ospcommon {
     static_assert(has_operator_method_with_integral_param<TASK_T>::value,
                   "ospcommon::serial_for() requires the implementation of "
                   "method 'void TASK_T::operator(P taskIndex), where P is of "
-                  "type short, int, uint, or size_t.");
+                  "type unsigned char, short, int, uint, long, or size_t.");
 
     for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
       fcn(taskIndex);
