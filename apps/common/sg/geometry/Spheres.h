@@ -74,6 +74,7 @@ namespace ospray {
       /*! the data array that contains the actual sphere data */
       Node::Handle        data;
       OSPGeometry         ospGeometry;
+      // std::vector<Sphere> sphereVector;
     };
 
   } // ::ospray::sg
