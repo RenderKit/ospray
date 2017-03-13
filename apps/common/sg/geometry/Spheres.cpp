@@ -40,13 +40,13 @@ namespace ospray {
 
     void Spheres::init()
     {
-      PING;
       add(createNode("data"));
-      PING;
+      add(createNode("material", "Material"));
     }
 
     box3f Spheres::bounds() const
     {
+      Node::Handle data = child("data");
       std::shared_ptr<DataVectorT<Sphere,OSP_RAW>> spheres 
         = std::dynamic_pointer_cast<DataVectorT<Sphere,OSP_RAW>>(data.node);
       
@@ -76,37 +76,15 @@ namespace ospray {
                              const unsigned char *binBasePtr)
     {
       throw std::runtime_error("setFromXML no longer makes sense with the new scene graph design");
-      // size_t num = std::stoll(node.getProp("num"));
-      // size_t ofs = std::stoll(node.getProp("ofs","-1"));
-      // float  rad = atof(node.getProp("radius").c_str());
-
-      // Spheres::Sphere s(vec3f(0.f),rad,0);
-      // if (ofs == (size_t)-1) {
-      //   std::cout << "#osp:qtv: 'Spheres' ofs is '-1', "
-      //             << "generating set of random spheres..." << std::endl;
-      //   for (uint32_t i = 0; i < num; i++) {
-      //     s.position.x = drand48();
-      //     s.position.y = drand48();
-      //     s.position.z = drand48();
-      //     s.radius = rad;
-      //     sphere.push_back(s);
-      //   }
-      // } else {
-      //   const vec3f *in = (const vec3f*)(binBasePtr+ofs);
-      //   for (uint32_t i = 0; i < num; i++) {
-      //     memcpy(&s,&in[i],sizeof(*in));
-      //     sphere.push_back(s);
-      //   }
-      // }
     }
 
-    void Spheres::render(RenderContext &ctx)
+    void Spheres::postCommit(RenderContext &ctx)
     {
-      PING;
       ospGeometry = ospNewGeometry("spheres");
 
+      Node::Handle dataNode = child("data");
       std::shared_ptr<DataVectorT<Sphere,OSP_RAW>> spheres 
-        = std::dynamic_pointer_cast<DataVectorT<Sphere,OSP_RAW>>(data.node);
+        = std::dynamic_pointer_cast<DataVectorT<Sphere,OSP_RAW>>(dataNode.node);
       
       OSPData data = ospNewData(spheres->v.size()*5,OSP_FLOAT,
                                 spheres->v.data(),OSP_DATA_SHARED_BUFFER);
@@ -117,18 +95,12 @@ namespace ospray {
       ospSet1i(ospGeometry,"offset_radius",     3*sizeof(float));
       ospSet1i(ospGeometry,"offset_materialID", 4*sizeof(float));
 
-      auto mat = ospNewMaterial(ctx.integrator->handle(), "default");
-      if (mat) {
-        vec3f kd = vec3f(.7f);
-        ospSet3fv(mat,"kd",&kd.x);
-        ospCommit(mat);
-      }
-      ospSetMaterial(ospGeometry,mat);
+      ospSetMaterial(ospGeometry,
+                     (OSPMaterial)child("material")->valueAs<OSPObject>());
       ospCommit(ospGeometry);
       
       ospAddGeometry(ctx.world->ospModel,ospGeometry);
       ospCommit(data);
-      PING;
     }
 
     OSP_REGISTER_SG_NODE(Spheres);

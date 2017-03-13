@@ -48,7 +48,8 @@ namespace ospray {
       virtual box3f bounds() const override;
 
       /*! 'render' the nodes */
-      virtual void render(RenderContext &ctx) override;
+      virtual void postCommit(RenderContext &ctx) override;
+      // virtual void render(RenderContext &ctx) override;
 
       virtual void init() override;
 
@@ -72,7 +73,7 @@ namespace ospray {
                       const unsigned char *binBasePtr) override;
 
       /*! the data array that contains the actual sphere data */
-      Node::Handle        data;
+      // Node::Handle        data;
       OSPGeometry         ospGeometry;
       // std::vector<Sphere> sphereVector;
     };

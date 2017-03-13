@@ -76,42 +76,6 @@ namespace ospray {
       add(createNode("aoTransparency", "bool",true, NodeFlags::required));
     }
 
-    int Renderer::renderFrame()
-    {
-      // PING;
-      // std::cout << "=======================================================" << std::endl;
-
-      // if (!integrator) return 1;
-      // if (!frameBuffer) return 2;
-      // if (!camera) return 3;
-      // if (!world) return 4;
-
-      // assert(integrator->ospRenderer);
-
-      // if (!world->ospModel) {
-      //   RenderContext rootContext;
-      //   // geometries need the integrator to create materials
-      //   rootContext.integrator = integrator;
-      //   world->render(rootContext);
-      //   assert(world->ospModel);
-      // }
-
-      // integrator->setWorld(world);
-      // integrator->setCamera(camera);
-      // integrator->commit();
-      // camera->commit();
-
-      // ospSet1f(camera->ospCamera,"aspect",
-      //          frameBuffer->size().x/float(frameBuffer->size().y));
-      // ospCommit(camera->ospCamera);
-      // ospRenderFrame(frameBuffer->handle(),
-      //                integrator->handle(),
-      //                OSP_FB_COLOR|OSP_FB_ACCUM);
-      // accumID++;
-
-      // return 0;
-    }
-
     /*! re-start accumulation (for progressive rendering). make sure
       that this function gets called at lesat once every time that
       anything changes that might change the appearance of the
@@ -258,29 +222,6 @@ namespace ospray {
     {
       ospSetObject(ospRenderer,"model", child("world")->valueAs<OSPObject>());
       ospSetObject(ospRenderer,"camera", child("camera")->valueAs<OSPObject>());
-// <<<<<<< HEAD
-//       ospCommit(ospRenderer);
-
-//       PRINT(child("camera")["pos"]->valueAs<vec3f>());
-
-//       // create and setup light for Ambient Occlusion
-//       std::vector<OSPLight> lights;
-//       // currently getting a core dump if this is on ...
-//       for(auto &lightNode : child("lights")->children()) {
-//         OSPLight l = (OSPLight)lightNode->valueAs<OSPObject>();
-//         lights.push_back(l);
-//       }
-
-//       OSPData lightsd = ospNewData(lights.size(), OSP_OBJECT// OSP_LIGHT 
-//                                    // iw: using OSP_LIGHT gives a core dump i nmpi mode...
-//                                    , &lights[0]);
-//       ospCommit(lightsd);
-
-//       // complete setup of renderer
-//       // ospSetObject(ospRenderer, "model",  child("world")->valueAs<OSPObject>());
-//       ospSetObject(ospRenderer, "lights", lightsd);
-//       ospCommit(ospRenderer);
-// =======
 
       if (lightsData == nullptr || lightsBuildTime < child("lights")->childrenLastModified())
       {
@@ -300,7 +241,6 @@ namespace ospray {
       ospSetObject(ospRenderer, "model",  child("world")->valueAs<OSPObject>());
       ospSetObject(ospRenderer, "lights", lightsData);
 
-// >>>>>>> devel
       //TODO: some child is kicking off modified every frame...Should figure
       //      out which and ignore it
 

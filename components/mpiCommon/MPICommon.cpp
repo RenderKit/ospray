@@ -148,9 +148,6 @@ namespace ospray {
         /* MPI not initialized by the app - it's up to us */
         int required = MPI_THREAD_MULTIPLE;
         SERIALIZED_MPI_CALL(Init_thread(ac,(char ***)&av,MPI_THREAD_MULTIPLE,&provided));
-        if (provided == MPI_THREAD_MULTIPLE) {
-          SERIALIZED_MPI_CALL(Init_thread(ac,(char ***)&av,MPI_THREAD_SERIALIZED,&provided));
-        }
       } else {
         /* MPI was already initialized by the app that called us! */
         MPI_Query_thread(&provided);

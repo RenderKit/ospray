@@ -54,9 +54,6 @@ namespace ospray {
       //! create a default camera
       std::shared_ptr<sg::Camera> createDefaultCamera(vec3f up = vec3f(0,1,0));
 
-      /*! render a frame. return 0 if successful, any non-zero number if not */
-      virtual int renderFrame();
-
       void preCommit(RenderContext &ctx) override;
       void postCommit(RenderContext &ctx) override;
 

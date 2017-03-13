@@ -21,10 +21,81 @@
 #include "common/miniSG/miniSG.h"
 
 /*! \file sg/module/Importer.cpp Defines the interface for writing
-    file importers for the ospray::sg */
+  file importers for the ospray::sg */
 
 namespace ospray {
   namespace sg {
+
+
+    struct AutoFree
+    {
+      AutoFree(void *s) : s(s) {};
+      ~AutoFree() { free(s); }
+      void *s;
+    };
+
+
+    /*! do the actual parsing, and return a formatURL */
+    FormatURL::FormatURL(const std::string &input)
+    {
+      char *buffer = strdup(input.c_str());
+      AutoFree _buffer(buffer);
+        
+      char *urlSep = strstr(buffer,"://");
+      if (!urlSep) 
+        throw std::runtime_error("not actually a file format url");
+
+      *urlSep = 0;
+      this->formatType = buffer;
+
+      char *fileName = urlSep+3;
+      char *arg = strtok(fileName,":");
+      this->fileName = fileName;
+
+      arg = strtok(NULL,":");
+      std::vector<std::string> args;
+      while (arg) {
+        args.push_back(arg);
+        arg = strtok(NULL,":");
+      }
+
+      // now, parse all name:value pairs
+      for (auto arg_i : args) {
+        char *s = strdup(arg_i.c_str());
+        AutoFree _s(s);
+        char *name = strtok(s,"=");
+        char *val  = strtok(NULL,"=");
+        std::pair<std::string,std::string> newArg(name,val?val:"");
+        this->args.push_back(newArg);
+      }
+    }
+
+    /*! returns whether the given argument was specified in the format url */
+    bool FormatURL::hasArg(const std::string &name) const
+    { 
+      for (auto &a : args)
+        if (a.first == name) return true;
+      return false; 
+    }
+
+    /*! return value of parameter with given name; returns "" if
+      parameter wasn't supplied */
+    std::string FormatURL::operator[](const std::string &name) const
+    { 
+      for (auto &a : args)
+        if (a.first == name) return a.second;
+      return std::string("<invalid parameter name>"); 
+    }
+
+    /*! return value of parameter with given name; returns "" if
+      parameter wasn't supplied */
+    std::string FormatURL::operator[](const char *name) const
+    { 
+      return (*this)[std::string(name)]; 
+    }
+
+
+
 
     // for now, let's hardcode the importers - should be moved to a
     // registry at some point ...
@@ -32,23 +103,6 @@ namespace ospray {
                                const FileName &url);
 
 
-
-    /*! helper function that takes a url-style file format/file name
-      specifier and extracts the file type (if recognized). if not a
-      url-type file specifier this returns "" */
-    std::string detectFileTypeFromURL(const FileName &fileName) 
-    {
-      const size_t urlSepPos = fileName.str().find("://");
-      if (urlSepPos == std::string::npos)
-        // not a url-specifier
-        return "";
-      
-      /* this is a url-specifier - first colon is end of file type
-         (this allows parameters such as
-         'points:radius=.3://filName' */
-      const size_t colonPos = fileName.str().find(":");
-      return fileName.str().substr(0,colonPos);
-    }
 
     // Helper functions ///////////////////////////////////////////////////////
 
@@ -115,16 +169,25 @@ namespace ospray {
       std::shared_ptr<sg::World> wsg(std::dynamic_pointer_cast<sg::World>(shared_from_this()));
 
 #if 1
-      const std::string fileType = detectFileTypeFromURL(fileName);
-      PRINT(fileType);
-      if (fileType != "") {
-        /* iw - todo: move this code to a registry that automatically
+      std::shared_ptr<FormatURL> fu;
+      try {
+        fu = std::make_shared<FormatURL>(fileName.c_str());
+      } catch (std::runtime_error e) {
+        /* this failed so this was not a file type url ... */
+        fu = nullptr;
+      }
+
+      if (fu) {
+        // so this _was_ a file type url
+
+        /* todo: move this code to a registry that automatically
            looks up right function based on loaded symbols... */
-        if (fileType == "points" || fileType == "spheres") {
+        if (fu->formatType == "points" || fu->formatType == "spheres") {
           importFileType_points(wsg,fileName);
-          loadedFileName = fileName.str();
+          loadedFileName = fileName;
+          return;
         } else
-          std::cout << "Found a URL-style file type specified, but didn't recognize file type '" << fileType<< "' ... reverting to loading by file extension" << std::endl;
+          std::cout << "Found a URL-style file type specified, but didn't recognize file type '" << fu->formatType<< "' ... reverting to loading by file extension" << std::endl;
       } 
 #endif
       if (fileName.ext() == "obj") {
