@@ -52,8 +52,9 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
 
   # scene graph importers
   importer/Importer.cpp
+  importer/importPoints.cpp
+# all these should be lower-case: they're functions, not classes
   importer/ImportOSP.cpp
-  importer/ImportOSG.cpp
   importer/ImportOBJ.cpp
   importer/ImportPLY.cpp
   importer/ImportRIVL.cpp

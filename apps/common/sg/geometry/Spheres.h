@@ -42,13 +42,15 @@ namespace ospray {
       };
 
       //! constructor
-      Spheres() : Geometry("spheres"), ospGeometry(nullptr) {}
+      Spheres();
       
       // return bounding box of all primitives
       virtual box3f bounds() const override;
 
       /*! 'render' the nodes */
       virtual void render(RenderContext &ctx) override;
+
+      virtual void init() override;
 
       //! \brief Initialize this node's value from given XML node 
       /*!
@@ -69,8 +71,9 @@ namespace ospray {
       void setFromXML(const xml::Node &node,
                       const unsigned char *binBasePtr) override;
 
+      /*! the data array that contains the actual sphere data */
+      Node::Handle        data;
       OSPGeometry         ospGeometry;
-      std::vector<Sphere> sphere;
     };
 
   } // ::ospray::sg

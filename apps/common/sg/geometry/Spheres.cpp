@@ -18,6 +18,7 @@
 
 #include "sg/geometry/Spheres.h"
 #include "sg/common/Integrator.h"
+#include "sg/common/Data.h"
 // xml parser
 #include "common/xml/XML.h"
 
@@ -28,12 +29,29 @@ namespace ospray {
       : position(position), 
         radius(radius), 
         typeID(typeID) 
-    {}
+    {
+    }
+
+    Spheres::Spheres()
+      : Geometry("spheres"), 
+        ospGeometry(nullptr) 
+    {
+    }
+
+    void Spheres::init()
+    {
+      PING;
+      add(createNode("data"));
+      PING;
+    }
 
     box3f Spheres::bounds() const
     {
+      std::shared_ptr<DataVectorT<Sphere,OSP_RAW>> spheres 
+        = std::dynamic_pointer_cast<DataVectorT<Sphere,OSP_RAW>>(data.node);
+      
       box3f bounds = empty;
-      for (auto &s : sphere)
+      for (auto &s : spheres->v)
         bounds.extend(s.bounds());
       return bounds;
     }
@@ -57,36 +75,41 @@ namespace ospray {
     void Spheres::setFromXML(const xml::Node &node,
                              const unsigned char *binBasePtr)
     {
-      size_t num = std::stoll(node.getProp("num"));
-      size_t ofs = std::stoll(node.getProp("ofs","-1"));
-      float  rad = atof(node.getProp("radius").c_str());
+      throw std::runtime_error("setFromXML no longer makes sense with the new scene graph design");
+      // size_t num = std::stoll(node.getProp("num"));
+      // size_t ofs = std::stoll(node.getProp("ofs","-1"));
+      // float  rad = atof(node.getProp("radius").c_str());
 
-      Spheres::Sphere s(vec3f(0.f),rad,0);
-      if (ofs == (size_t)-1) {
-        std::cout << "#osp:qtv: 'Spheres' ofs is '-1', "
-                  << "generating set of random spheres..." << std::endl;
-        for (uint32_t i = 0; i < num; i++) {
-          s.position.x = drand48();
-          s.position.y = drand48();
-          s.position.z = drand48();
-          s.radius = rad;
-          sphere.push_back(s);
-        }
-      } else {
-        const vec3f *in = (const vec3f*)(binBasePtr+ofs);
-        for (uint32_t i = 0; i < num; i++) {
-          memcpy(&s,&in[i],sizeof(*in));
-          sphere.push_back(s);
-        }
-      }
+      // Spheres::Sphere s(vec3f(0.f),rad,0);
+      // if (ofs == (size_t)-1) {
+      //   std::cout << "#osp:qtv: 'Spheres' ofs is '-1', "
+      //             << "generating set of random spheres..." << std::endl;
+      //   for (uint32_t i = 0; i < num; i++) {
+      //     s.position.x = drand48();
+      //     s.position.y = drand48();
+      //     s.position.z = drand48();
+      //     s.radius = rad;
+      //     sphere.push_back(s);
+      //   }
+      // } else {
+      //   const vec3f *in = (const vec3f*)(binBasePtr+ofs);
+      //   for (uint32_t i = 0; i < num; i++) {
+      //     memcpy(&s,&in[i],sizeof(*in));
+      //     sphere.push_back(s);
+      //   }
+      // }
     }
 
     void Spheres::render(RenderContext &ctx)
     {
+      PING;
       ospGeometry = ospNewGeometry("spheres");
 
-      OSPData data = ospNewData(sphere.size()*5,OSP_FLOAT,
-                                &sphere[0],OSP_DATA_SHARED_BUFFER);
+      std::shared_ptr<DataVectorT<Sphere,OSP_RAW>> spheres 
+        = std::dynamic_pointer_cast<DataVectorT<Sphere,OSP_RAW>>(data.node);
+      
+      OSPData data = ospNewData(spheres->v.size()*5,OSP_FLOAT,
+                                spheres->v.data(),OSP_DATA_SHARED_BUFFER);
       ospSetData(ospGeometry,"spheres",data);
 
       ospSet1i(ospGeometry,"bytes_per_sphere",sizeof(Spheres::Sphere));
@@ -105,31 +128,9 @@ namespace ospray {
       
       ospAddGeometry(ctx.world->ospModel,ospGeometry);
       ospCommit(data);
+      PING;
     }
 
-    struct RandomSpheres : public Spheres
-    {
-      //! \brief Initialize this node's value from given XML node 
-      void setFromXML(const xml::Node *const node, 
-                      const unsigned char *binBasePtr)
-      {
-        vec3i dimensions = toVec3i(node->getProp("dimensions").c_str());
-        int   num        = toInt(node->getProp("num").c_str());
-        
-        float max_r = atof(node->getProp("radius").c_str());
-        float f = 0.3f; // overhang around the dimensions
-        for (int i = 0; i < num; i++) {
-          vec3f pos; 
-          pos.x = (-f+(1+2*f)*drand48())*dimensions.x;
-          pos.y = (-f+(1+2*f)*drand48())*dimensions.y;
-          pos.z = (-f+(1+2*f)*drand48())*dimensions.z;
-          float r = max_r*(0.5f + 0.5f*drand48());
-          sphere.push_back(Sphere(pos,r));
-        }
-      }
-    };
-
-    OSP_REGISTER_SG_NODE(RandomSpheres);
     OSP_REGISTER_SG_NODE(Spheres);
   }
 }

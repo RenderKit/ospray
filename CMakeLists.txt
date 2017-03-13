@@ -95,7 +95,6 @@ ENDIF()
 ADD_SUBDIRECTORY(modules)
 
 
-
 # create a configure file that both ospray and ispc can read the cmake config
 # from needs to be at the end, after all cache variables have been set
 CONFIGURE_FILE(ospray/common/OSPConfig.h.in OSPConfig.h)

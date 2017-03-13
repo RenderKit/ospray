@@ -25,11 +25,11 @@ namespace ospray {
 
     struct ImportState
     {
-      std::shared_ptr<sg::World> world;
-
       ImportState(std::shared_ptr<sg::World> world)
         : world(world)
       {}
+
+      std::shared_ptr<sg::World> world;
     };
 
     struct Importer : public sg::InstanceGroup
