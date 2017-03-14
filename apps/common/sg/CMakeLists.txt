@@ -35,6 +35,7 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   common/Light.cpp
   common/Material.cpp
   common/Node.cpp
+  common/OSPAny.h
   common/OSPVariant.h
   common/RenderContext.h
   common/Serialization.cpp
@@ -75,3 +76,10 @@ LINK
 )
 
 ADD_TEST(NAME OSPVariant COMMAND test_OSPVariant)
+
+OSPRAY_CREATE_TEST(test_boost.any
+  common/OSPAny.h
+  common/test_boost.any.cpp
+)
+
+ADD_TEST(NAME boost.any COMMAND test_boost.any)
