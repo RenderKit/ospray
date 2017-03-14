@@ -262,10 +262,15 @@ namespace ospray {
 
       virtual bool isValid();
 
-      //    protected:
-
       virtual bool computeValid();
       virtual bool computeValidMinMax();
+
+      // NOTE(jda) - This needs to be enabled, BAD to have Node users poking
+      //             around in data members! Ideally this should be 'private',
+      //             but that's a more minor concern...
+#if 0
+    protected:
+#endif
 
       struct
       {
