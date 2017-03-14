@@ -92,7 +92,7 @@ namespace ospray {
         Handle operator+= (Handle n)
         { get()->add(n); n->setParent(*this); return n;}
 
-        std::shared_ptr<sg::Node> operator->() const { return get(); }
+        sg::Node* operator->() const { return node.get(); }
 
         std::shared_ptr<sg::Node> get() const { return node; }
 
