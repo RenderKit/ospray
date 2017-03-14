@@ -200,11 +200,11 @@ namespace ospray {
     {
       if (child("frameBuffer")["size"]->lastModified() >
           child("camera")["aspect"]->lastCommitted()) {
-
+        
         child("camera")["aspect"]->setValue(
-        child("frameBuffer")["size"]->valueAs<vec2i>().x /
-        float(child("frameBuffer")["size"]->valueAs<vec2i>().y)
-        );
+                                            child("frameBuffer")["size"]->valueAs<vec2i>().x /
+                                            float(child("frameBuffer")["size"]->valueAs<vec2i>().y)
+                                            );
       }
       auto rendererType = child("rendererType")->valueAs<std::string>();
       if (!ospRenderer || rendererType != createdType) {
