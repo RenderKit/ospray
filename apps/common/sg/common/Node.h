@@ -76,9 +76,8 @@ namespace ospray {
       /*! Node::Handle is a handle to a sg::Node.  It has the benefit
           of supporting some operators without requiring dereferencing
           a pointer. */
-      class OSPSG_INTERFACE Handle
+      struct OSPSG_INTERFACE Handle
       {
-      public:
         Handle() = default;
         Handle(const std::shared_ptr<sg::Node> &n) : node(n) {}
 
@@ -103,6 +102,8 @@ namespace ospray {
         bool isNULL() const { return node.get() == nullptr; }
 
         operator bool() const { return !isNULL(); }
+
+      private:
 
         // Data members //
 

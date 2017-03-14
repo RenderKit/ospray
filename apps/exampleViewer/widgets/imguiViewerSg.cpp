@@ -176,7 +176,7 @@ namespace ospray {
       camera["up"]->setValue(viewPort.up);
 
 #if 1
-      if (scenegraphDW.node) {
+      if (scenegraphDW.notNULL()) {
         auto camera = scenegraphDW["camera"];
         camera["dir"]->setValue(dir);
         camera["pos"]->setValue(viewPort.from);
