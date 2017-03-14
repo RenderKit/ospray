@@ -426,8 +426,8 @@ namespace ospray {
 
     std::map<std::string, CreatorFct> nodeRegistry;
 
-    NodeHandle createNode(std::string name, std::string type, SGVar var,
-                     int flags, std::string documentation)
+    Node::Handle createNode(std::string name, std::string type, SGVar var,
+                            int flags, std::string documentation)
     {
       std::map<std::string, CreatorFct>::iterator it = nodeRegistry.find(type);
       CreatorFct creator = nullptr;

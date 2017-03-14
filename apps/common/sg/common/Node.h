@@ -333,13 +333,11 @@ namespace ospray {
     void registerNamedNode(const std::string &name,
                            const std::shared_ptr<sg::Node> &node);
 
-    using NodeHandle = Node::Handle;
-
-    OSPSG_INTERFACE NodeHandle createNode(std::string name,
-                                          std::string type = "Node",
-                                          SGVar var = SGVar(),
-                                          int flags = sg::NodeFlags::none,
-                                          std::string documentation="");
+    OSPSG_INTERFACE Node::Handle createNode(std::string name,
+                                            std::string type = "Node",
+                                            SGVar var = SGVar(),
+                                            int flags = sg::NodeFlags::none,
+                                            std::string documentation="");
 
     template <typename T>
     struct NodeParamCommit

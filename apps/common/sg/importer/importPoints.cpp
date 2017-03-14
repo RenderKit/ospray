@@ -161,7 +161,7 @@ namespace ospray {
       fclose(file);
 
       // create the node
-      NodeHandle sphereObject = createNode("spheres","Spheres");
+      Node::Handle sphereObject = createNode("spheres","Spheres");
 
       // iw - note that 'add' sounds wrong here, but that's the way
       // the current scene graph works - 'adding' that node (which
@@ -183,7 +183,7 @@ namespace ospray {
 
       std::cout << "#osp.sg: imported " << prettyNumber(sphereData->v.size()) 
                 << " points, bounds = " << bounds << std::endl;;
-      NodeHandle(world) += sphereObject;
+      Node::Handle(world) += sphereObject;
     }
 
   }// ::ospray::sg

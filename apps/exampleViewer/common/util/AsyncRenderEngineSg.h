@@ -42,8 +42,8 @@ namespace ospray {
     {
     public:
 
-      AsyncRenderEngineSg(const sg::NodeHandle &sgRenderer,
-                          const sg::NodeHandle &sgRendererDW);
+      AsyncRenderEngineSg(const sg::Node::Handle &sgRenderer,
+                          const sg::Node::Handle &sgRendererDW);
       ~AsyncRenderEngineSg() = default;
 
     private:
@@ -51,8 +51,8 @@ namespace ospray {
       virtual void run()      override;
       virtual void validate() override;
 
-      const sg::NodeHandle scenegraph;
-      const sg::NodeHandle scenegraphDW;
+      const sg::Node::Handle scenegraph;
+      const sg::Node::Handle scenegraphDW;
       sg::TimeStamp  lastRTime;
     };
 

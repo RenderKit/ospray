@@ -257,7 +257,7 @@ namespace ospray {
 
     std::shared_ptr<sg::World> loadOSP(const std::string &fileName)
     {
-      NodeHandle world = createNode("world", "World");
+      Node::Handle world = createNode("world", "World");
       loadOSP(std::static_pointer_cast<sg::World>(world.get()), fileName);
 
       return std::static_pointer_cast<sg::World>(world.get());

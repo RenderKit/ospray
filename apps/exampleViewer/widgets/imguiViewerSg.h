@@ -38,8 +38,8 @@ namespace ospray {
   {
   public:
 
-    ImGuiViewerSg(const sg::NodeHandle &scenegraph,
-                  const sg::NodeHandle &scenegraphDW);
+    ImGuiViewerSg(const sg::Node::Handle &scenegraph,
+                  const sg::Node::Handle &scenegraphDW);
     ~ImGuiViewerSg();
 
   protected:
@@ -55,7 +55,7 @@ namespace ospray {
     void display() override;
 
     void buildGui() override;
-    void buildGUINode(sg::NodeHandle node, int indent);
+    void buildGUINode(sg::Node::Handle node, int indent);
 
     // Data //
 
@@ -67,8 +67,8 @@ namespace ospray {
     ospcommon::vec2i windowSize;
     imgui3D::ImGui3DWidget::ViewPort originalView;
 
-    sg::NodeHandle scenegraph;
-    sg::NodeHandle scenegraphDW;
+    sg::Node::Handle scenegraph;
+    sg::Node::Handle scenegraphDW;
 
     sg::AsyncRenderEngineSg renderEngine;
     std::vector<uint32_t> pixelBuffer;

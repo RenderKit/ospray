@@ -108,7 +108,7 @@ void parseCommandLine(int ac, const char **&av)
 
 //parse command line arguments containing the format:
 //  -nodeName:...:nodeName=value,value,value
-void parseCommandLineSG(int ac, const char **&av, sg::NodeHandle root)
+void parseCommandLineSG(int ac, const char **&av, sg::Node::Handle root)
 {
   for(int i=1;i < ac; i++)
     {
@@ -129,7 +129,7 @@ void parseCommandLineSG(int ac, const char **&av, sg::NodeHandle root)
           std::stringstream ss;
           ss << arg.substr(1,f-1);
           std::string child;
-          sg::NodeHandle node = root;
+          sg::Node::Handle node = root;
           while (ss >> child)
             {
               node = node->childRecursive(child);
@@ -185,7 +185,7 @@ void parseCommandLineSG(int ac, const char **&av, sg::NodeHandle root)
     }
 }
 
-void addPlaneToScene(sg::NodeHandle &world)
+void addPlaneToScene(sg::Node::Handle &world)
 {
   //add plane
   auto bbox = world->bounds();
@@ -239,7 +239,7 @@ int main(int ac, const char **av)
   auto renderer = sg::createNode("renderer", "Renderer");
   /*! the renderer we use for rendering on the display wall; null if
       no dw available */
-  sg::NodeHandle rendererDW;
+  sg::Node::Handle rendererDW;
   /*! display wall service info - ignore if 'rendererDW' is null */
   dw::ServiceInfo dwService;
 

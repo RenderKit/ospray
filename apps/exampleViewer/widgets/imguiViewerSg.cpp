@@ -51,8 +51,8 @@ static void writePPM(const string &fileName, const int sizeX, const int sizeY,
 
 namespace ospray {
 
-  ImGuiViewerSg::ImGuiViewerSg(const sg::NodeHandle &scenegraph,
-                               const sg::NodeHandle &scenegraphDW
+  ImGuiViewerSg::ImGuiViewerSg(const sg::Node::Handle &scenegraph,
+                               const sg::Node::Handle &scenegraphDW
                                )
     : ImGui3DWidget(ImGui3DWidget::FRAMEBUFFER_NONE),
       scenegraph(scenegraph),
@@ -281,7 +281,7 @@ namespace ospray {
     ImGui::End();
   }
 
-  void ImGuiViewerSg::buildGUINode(sg::NodeHandle node, int indent)
+  void ImGuiViewerSg::buildGUINode(sg::Node::Handle node, int indent)
   {
     int styles=0;
     if (!node->isValid()) {
