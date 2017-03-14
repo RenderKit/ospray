@@ -33,13 +33,13 @@ namespace ospray {
      * be applied to volume data
      */
     void render();
-    // A line is made up of points sorted by x, its coordinates are
-    // on the range [0, 1]
 
   private:
 
     struct Line
     {
+      // A line is made up of points sorted by x, its coordinates are
+      // on the range [0, 1]
       std::vector<ospcommon::vec2f> line;
       int color;
 
@@ -52,28 +52,38 @@ namespace ospray {
        * also track if you're actively dragging a point so we don't recreate
        * points if you move the mouse too fast
        */
-      void move_point(const float &start_x, const ospcommon::vec2f &end);
+      void movePoint(const float &startX, const ospcommon::vec2f &end);
       // Remove a point from the line, merging the two segments on either side
-      void remove_point(const float &x);
+      void removePoint(const float &x);
+    };
+    // The transfer function color presets available
+    enum ColorMap {
+      JET,
+      ICE_FIRE,
+      COOL_WARM,
+      BLUE_RED,
+      GRAYSCALE,
+      CUSTOM
     };
 
     // The scenegraph transfer function being manipulated by this widget
     std::shared_ptr<sg::TransferFunction> transferFcn;
     // Lines for RGBA transfer function controls
-    std::array<Line, 4> rgba_lines;
+    std::array<Line, 4> rgbaLines;
     // The line currently being edited
-    int active_line;
+    int activeLine;
+    // The selected transfer function being shown
+    int tfcnSelection;
 
     // Track if the function changed and must be re-uploaded.
     // We start by marking it changed to upload the initial palette
-    bool fcn_changed;
+    bool fcnChanged;
+    // The 2d palette texture on the GPU for displaying the color map in the UI.
+    GLuint paletteTex;
 
-    /* The 2d palette texture on the GPU for displaying the color map in the UI.
-     */
-    GLuint palette_tex;
-
-    // Magic number to identify these files (it's VLFN in ASCII)
-    const static int32_t MAGIC = 0x564c464e;
+    // Select the provided color map specified by tfcnSelection
+    void setColorMap();
   };
 
 }// ::ospray
+
