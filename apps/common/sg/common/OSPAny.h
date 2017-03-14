@@ -16,6 +16,10 @@
 
 #pragma once
 
+#include <iostream>
+#include <sstream>
+#include <type_traits>
+
 #include "ospcommon/common.h"
 
 namespace ospray {
@@ -87,6 +91,9 @@ namespace ospray {
                      std::forward<T>(value)
                    ))
     {
+      static_assert(std::is_copy_constructible<T>::value
+                    && std::is_copy_assignable<T>::value,
+                    "OSPAny can only be constructed with copyable values!");
     }
 
     inline OSPAny::OSPAny(const OSPAny &copy) :
@@ -104,11 +111,16 @@ namespace ospray {
     template<typename T>
     inline OSPAny &OSPAny::operator=(T rhs)
     {
+      static_assert(std::is_copy_constructible<T>::value
+                    && std::is_copy_assignable<T>::value,
+                    "OSPAny can only be assigned values which are copyable!");
+
       currentValue = std::unique_ptr<handle_base>(
         new handle<typename std::remove_reference<T>::type>(
           std::forward<T>(rhs)
         )
       );
+
       return *this;
     }
 
@@ -120,8 +132,14 @@ namespace ospray {
 
       if (is<T>())
         return *(static_cast<T*>(currentValue->data()));
-      else
-        throw std::runtime_error("Incorrect type queried for OSPAny!");
+      else {
+        std::stringstream msg;
+        msg << "Incorrect type queried for OSPAny!" << '\n';
+        msg << "  queried type == " << typeid(T).name() << '\n';
+        msg << "  current type == " << currentValue->valueTypeID().name()
+            << '\n';
+        throw std::runtime_error(msg.str());
+      }
     }
 
     template<typename T>
@@ -138,7 +156,10 @@ namespace ospray {
 
     inline std::string OSPAny::toString() const
     {
-      return "OSPAny<>";
+      std::stringstream retval;
+      retval << "OSPAny : (currently holds value of type) --> "
+             << currentValue->valueTypeID().name();
+      return retval.str();
     }
 
     template<typename T>
@@ -171,7 +192,7 @@ namespace ospray {
       return &value;
     }
 
-    // Comparison function ////////////////////////////////////////////////////
+    // Comparison functions ///////////////////////////////////////////////////
 
     inline bool operator==(const OSPAny &lhs, const OSPAny &rhs)
     {
