@@ -23,9 +23,14 @@ namespace ospray {
 
     //! constructor
     TransferFunction::TransferFunction()
-     : Node()
     {
       setDefaultValues();
+    }
+
+    void TransferFunction::init()
+    {
+      add(createNode("valueRange", "vec2f", vec2f(0.f,1.f)));
+      add(createNode("numSamples", "int", 256));
     }
 
     // //! \brief Sets a new 'texture map' to be used for the color mapping
@@ -57,6 +62,11 @@ namespace ospray {
       markAsModified();
     }
 
+    const std::vector<std::pair<float, float>> &TransferFunction::alphas() const
+    {
+      return alphaArray;
+    }
+
     float TransferFunction::interpolatedAlpha(float x)
     {
       if (x <= alphaArray.front().first)
@@ -72,51 +82,10 @@ namespace ospray {
       return alphaArray.back().second;
     }
 
-    // void TransferFunction::setValueRange(const vec2f &range)
-    // {
-    //   valueRange = range;
-    //   markAsModified();
-    // }
-
-    //! \brief commit the current field values to ospray
-    // void TransferFunction::commit()
-    // {
-      // ospSetVec2f(ospTransferFunction,"valueRange",
-      //   child["valueRange"]->valueAs<vec2f>());
-      // int numSamples = child("numSamples")->valueAs<int>();
-    //   if (ospColorData == nullptr) {
-    //     // for now, no resampling - just use the colors ...
-    //     vec3f *colors = (vec3f*)alloca(sizeof(vec3f)*colorArray.size());
-    //     for (uint32_t i = 0; i < colorArray.size(); i++)
-    //       colors[i] = colorArray[i].second;
-    //     ospColorData = ospNewData(colorArray.size(),OSP_FLOAT3,colors);
-    //     ospCommit(ospColorData);
-    //     ospSetData(ospTransferFunction,"colors",ospColorData);
-    //   }
-    //   if (ospAlphaData == nullptr) {
-    //     float *alpha = (float*)alloca(sizeof(float)*numSamples);
-    //     float x0 = alphaArray.front().first;
-    //     float dx = (alphaArray.back().first - x0) / (numSamples-1);
-
-    //     for (int i=0;i<numSamples;i++)
-    //       alpha[i] = interpolatedAlpha(i * dx);
-
-    //     ospAlphaData = ospNewData(numSamples,OSP_FLOAT,alpha);
-    //     ospCommit(ospAlphaData);
-    //     ospSetData(ospTransferFunction,"opacities",ospAlphaData);
-    //   }
-    //   ospCommit(ospTransferFunction);
-    //   markAsCommitted();
-    // }
-
-    // void TransferFunction::render(RenderContext &ctx)
-    // {
-    //   if (!ospTransferFunction) {
-    //     ospTransferFunction = ospNewTransferFunction("piecewise_linear");
-    //     setValue((OSPObject)ospTransferFunction);
-    //   }
-    //   commit();
-    // }
+    OSPTransferFunction TransferFunction::handle() const
+    {
+      return ospTransferFunction;
+    }
 
     void TransferFunction::preCommit(RenderContext &ctx)
     {

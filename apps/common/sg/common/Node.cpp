@@ -22,40 +22,6 @@
 namespace ospray {
   namespace sg {
 
-    std::vector<std::shared_ptr<sg::Node>> Node::nodes;
-
-    // ==================================================================
-    // parameter type specializations
-    // ==================================================================
-
-    template<> OSPDataType ParamT<std::shared_ptr<DataBuffer>>::OSPType() const
-    { return OSP_DATA; }
-    template<> OSPDataType ParamT<std::shared_ptr<Node>>::OSPType() const
-    { return OSP_OBJECT; }
-
-    template<> OSPDataType ParamT<float>::OSPType() const
-    { return OSP_FLOAT; }
-    template<> OSPDataType ParamT<vec2f>::OSPType() const
-    { return OSP_FLOAT2; }
-    template<> OSPDataType ParamT<vec3f>::OSPType() const
-    { return OSP_FLOAT3; }
-    template<> OSPDataType ParamT<vec4f>::OSPType() const
-    { return OSP_FLOAT4; }
-
-    template<> OSPDataType ParamT<int32_t>::OSPType() const
-    { return OSP_INT; }
-    template<> OSPDataType ParamT<vec2i>::OSPType() const
-    { return OSP_INT2; }
-    template<> OSPDataType ParamT<vec3i>::OSPType() const
-    { return OSP_INT3; }
-    template<> OSPDataType ParamT<vec4i>::OSPType() const
-    { return OSP_INT4; }
-
-    template<> OSPDataType ParamT<const char *>::OSPType() const
-    { return OSP_STRING; }
-    template<> OSPDataType ParamT<std::shared_ptr<Texture2D>>::OSPType() const
-    { return OSP_TEXTURE; }
-
     // ==================================================================
     // sg node implementations
     // ==================================================================
@@ -71,16 +37,6 @@ namespace ospray {
     std::string Node::toString() const
     {
       return "ospray::sg::Node";
-    }
-
-    std::shared_ptr<sg::Param> Node::param(const std::string &name) const
-    {
-      auto it = properties.params.find(name);
-
-      if (it != properties.params.end())
-        return it->second;
-
-      return {};
     }
 
     void Node::setFromXML(const xml::Node &node, const unsigned char *binBasePtr)
@@ -447,31 +403,12 @@ namespace ospray {
     // global stuff
     // ==================================================================
 
-    // list of all named nodes - for now use this as a global
-    // variable, but eventually we'll need tofind a better way for
-    // storing this
-    std::map<std::string, std::shared_ptr<sg::Node>> namedNodes;
-
-    std::shared_ptr<sg::Node> findNamedNode(const std::string &name)
-    {
-      auto it = namedNodes.find(name);
-      if (it != namedNodes.end())
-        return it->second;
-      return {};
-    }
-
-    void registerNamedNode(const std::string &name,
-                           const std::shared_ptr<sg::Node> &node)
-    {
-      namedNodes[name] = node;
-    }
-
     using CreatorFct = std::shared_ptr<sg::Node>(*)();
 
     std::map<std::string, CreatorFct> nodeRegistry;
 
-    NodeHandle createNode(std::string name, std::string type, SGVar var,
-                     int flags, std::string documentation)
+    Node::Handle createNode(std::string name, std::string type, SGVar var,
+                            int flags, std::string documentation)
     {
       std::map<std::string, CreatorFct>::iterator it = nodeRegistry.find(type);
       CreatorFct creator = nullptr;
@@ -490,7 +427,6 @@ namespace ospray {
       }
 
       std::shared_ptr<sg::Node> newNode = creator();
-      Node::nodes.push_back(newNode);
       newNode->init();
       newNode->setName(name);
       newNode->setType(type);

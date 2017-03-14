@@ -11,14 +11,22 @@
 
 using namespace ospcommon;
 
-static float lerp(const float a, const float b, const float t) {
+static float lerp(const float a, const float b, const float t)
+{
   return (1.0 - t) * a + t * b;
 }
 
 namespace ospray {
 
-TransferFunction::Line::Line() : line({vec2f(0, 0), vec2f(1, 1)}), color(0xffffffff) {}
-void TransferFunction::Line::movePoint(const float &startX, const vec2f &end){
+TransferFunction::Line::Line() :
+  line({vec2f(0, 0),
+  vec2f(1, 1)}),
+   color(0xffffffff)
+{
+}
+
+void TransferFunction::Line::movePoint(const float &startX, const vec2f &end)
+{
   // Find the closest point to where the user clicked
   auto fnd = std::min_element(line.begin(), line.end(),
       [&startX](const vec2f &a, const vec2f &b){
@@ -48,7 +56,8 @@ void TransferFunction::Line::movePoint(const float &startX, const vec2f &end){
     }
   }
 }
-void TransferFunction::Line::removePoint(const float &x){
+void TransferFunction::Line::removePoint(const float &x)
+{
   if (line.size() == 2){
     return;
   }
@@ -63,8 +72,12 @@ void TransferFunction::Line::removePoint(const float &x){
   }
 }
 
-TransferFunction::TransferFunction(std::shared_ptr<sg::TransferFunction> &tfn)
-  : transferFcn(tfn), activeLine(3), tfcnSelection(JET), fcnChanged(true), paletteTex(0)
+TransferFunction::TransferFunction(std::shared_ptr<sg::TransferFunction> &tfn) :
+  transferFcn(tfn),
+  activeLine(3),
+  tfcnSelection(JET),
+  fcnChanged(true),
+  paletteTex(0)
 {
   // TODO: Use the transfer function passed to use to configure the initial widget lines
   rgbaLines[0].color = 0xff0000ff;
@@ -73,17 +86,24 @@ TransferFunction::TransferFunction(std::shared_ptr<sg::TransferFunction> &tfn)
   rgbaLines[3].color = 0xffffffff;
   setColorMap();
 }
-TransferFunction::~TransferFunction(){
+TransferFunction::~TransferFunction()
+{
   if (paletteTex){
     glDeleteTextures(1, &paletteTex);
   }
 }
-TransferFunction::TransferFunction(const TransferFunction &t) : transferFcn(t.transferFcn),
-  rgbaLines(t.rgbaLines), activeLine(t.activeLine), tfcnSelection(t.tfcnSelection), fcnChanged(true), paletteTex(0)
+TransferFunction::TransferFunction(const TransferFunction &t) :
+  transferFcn(t.transferFcn),
+  rgbaLines(t.rgbaLines),
+  activeLine(t.activeLine),
+  tfcnSelection(t.tfcnSelection),
+  fcnChanged(true),
+  paletteTex(0)
 {
   setColorMap();
 }
-TransferFunction& TransferFunction::operator=(const TransferFunction &t) {
+TransferFunction& TransferFunction::operator=(const TransferFunction &t)
+{
   if (this == &t) {
     return *this;
   }
@@ -93,7 +113,9 @@ TransferFunction& TransferFunction::operator=(const TransferFunction &t) {
   fcnChanged = true;
   return *this;
 }
-void TransferFunction::drawUi(){
+
+void TransferFunction::drawUi()
+{
   if (ImGui::Begin("Transfer Function")){
     ImGui::Text("Left click and drag to add/move points\nRight click to remove\n");
     /*
@@ -185,7 +207,9 @@ void TransferFunction::drawUi(){
   }
   ImGui::End();
 }
-void TransferFunction::render() {
+
+void TransferFunction::render()
+{
   // TODO: How many samples for a palette? 128 or 256 is probably plent
   const int samples = 256;
   // Upload to GL if the transfer function has changed
@@ -253,7 +277,8 @@ void TransferFunction::render() {
     fcnChanged = false;
   }
 }
-void TransferFunction::setColorMap() {
+void TransferFunction::setColorMap()
+{
   std::vector<vec3f> colors;
   if (tfcnSelection == JET) {
     // From the old volume viewer, these are based on ParaView
@@ -305,5 +330,5 @@ void TransferFunction::setColorMap() {
   }
 }
 
-}
+}// ::ospray
 

@@ -29,14 +29,14 @@
 // ospcommon
 #include "ospcommon/vec.h"
 
-#include "sg/common/OSPVariant.h"
+#include "sg/common/OSPAny.h"
 
 #include <mutex>
 
 namespace ospray {
   namespace sg {
 
-    using SGVar = OSPVariant;
+    using SGVar = OSPAny;
 
     /*! forward decl of entity that nodes can write to when writing XML files */
     struct XMLWriter;
@@ -53,35 +53,6 @@ namespace ospray {
     };                                                  \
   protected:                                            \
   type name                                             \
-
-    /*! \brief a parameter to a node (is not in itself a node).
-
-      \note This is only the abstract base class, actual instantiations are
-      the in the 'ParamT' template. */
-    struct OSPSG_INTERFACE Param
-    {
-      /*! constructor. the passed name alwasys remains constant */
-      Param(const std::string &name) : _name(name) {}
-      /*! return name of this parameter. the value is in the derived class */
-      inline const std::string name() const { return _name; }
-      virtual void write(XMLWriter &) { NOTIMPLEMENTED; }
-      /*! returns the ospray data type that this node corresponds to */
-      virtual OSPDataType OSPType() const = 0;
-
-    protected:
-      /*! name of this node */
-      const std::string _name;
-    };
-
-    /*! \brief a concrete parameter to a scene graph node */
-    template<typename T>
-    struct ParamT : public sg::Param
-    {
-      ParamT(const std::string &name, const T &t) : Param(name), value(t) {}
-      virtual OSPDataType OSPType() const override { return OSP_UNKNOWN; }
-      virtual void write(XMLWriter &) override { NOTIMPLEMENTED; }
-      T value;
-    };
 
     enum NodeFlags
     {
@@ -105,9 +76,8 @@ namespace ospray {
       /*! Node::Handle is a handle to a sg::Node.  It has the benefit
           of supporting some operators without requiring dereferencing
           a pointer. */
-      class OSPSG_INTERFACE Handle
+      struct OSPSG_INTERFACE Handle
       {
-      public:
         Handle() = default;
         Handle(const std::shared_ptr<sg::Node> &n) : node(n) {}
 
@@ -122,7 +92,7 @@ namespace ospray {
         Handle operator+= (Handle n)
         { get()->add(n); n->setParent(*this); return n;}
 
-        std::shared_ptr<sg::Node> operator->() const { return get(); }
+        sg::Node* operator->() const { return node.get(); }
 
         std::shared_ptr<sg::Node> get() const { return node; }
 
@@ -133,13 +103,14 @@ namespace ospray {
 
         operator bool() const { return !isNULL(); }
 
+      private:
+
         // Data members //
 
         std::shared_ptr<sg::Node> node;
       };
 
       virtual std::string toString() const;
-      std::shared_ptr<sg::Param> param(const std::string &name) const;
 
       //! \brief Initialize this node's value from given XML node
       /*!
@@ -159,13 +130,6 @@ namespace ospray {
       */
       virtual void setFromXML(const xml::Node &node,
                               const unsigned char *binBasePtr);
-
-      //! just for convenience; add a typed 'setParam' function
-      template<typename T>
-      void setParam(const std::string &name, const T &t);
-
-      template<typename FCN_T>
-      void for_each_param(FCN_T &&fcn);
 
       virtual void init(); //intialize children
 
@@ -231,7 +195,11 @@ namespace ospray {
 
       //! returns the value of the node in the desired type
       template<typename T>
-      const T& valueAs();
+      T& valueAs();
+
+      //! returns the value of the node in the desired type
+      template<typename T>
+      const T& valueAs() const;
 
       //! set the value of the node.  Requires strict typecast
       void setValue(SGVar val);
@@ -241,6 +209,10 @@ namespace ospray {
 
       //! add node as child of this one
       virtual void add(Handle node);
+
+      //! just for convenience; add a typed 'setParam' function
+      template<typename T>
+      void createChildWithValue(const std::string &name, const T &t);
 
       //! traverse this node and childrend with given operation, such as
       //  print,commit,render or custom operations
@@ -290,12 +262,15 @@ namespace ospray {
 
       virtual bool isValid();
 
-      static std::vector<std::shared_ptr<sg::Node>> nodes;
-
-      //    protected:
-
       virtual bool computeValid();
       virtual bool computeValidMinMax();
+
+      // NOTE(jda) - This needs to be enabled, BAD to have Node users poking
+      //             around in data members! Ideally this should be 'private',
+      //             but that's a more minor concern...
+#if 0
+    protected:
+#endif
 
       struct
       {
@@ -309,7 +284,6 @@ namespace ospray {
         TimeStamp lastModified;
         TimeStamp childrenMTime;
         TimeStamp lastCommitted;
-        std::map<std::string, std::shared_ptr<sg::Param>> params;
         Handle parent;
         NodeFlags flags;
         bool valid {false};
@@ -325,71 +299,45 @@ namespace ospray {
 
     //! just for convenience; add a typed 'setParam' function
     template<typename T>
-    inline void Node::setParam(const std::string &name, const T &t)
+    inline void Node::createChildWithValue(const std::string &name, const T &t)
     {
-      properties.params[name] = std::make_shared<ParamT<T>>(name,t);
-    }
-
-    template<typename FCN_T>
-    inline void Node::for_each_param(FCN_T &&fcn)
-    {
-      for (auto &p : properties.params)
-        fcn(p.second);
+      auto iter = properties.children.find("name");
+      if (iter != std::end(properties.children))
+        iter->second->setValue(t);
+      else {
+        auto node = std::make_shared<Node>();
+        node->setValue(t);
+        node->setName(name);
+        add(node);
+      }
     }
 
     template<typename T>
-    inline const T& Node::valueAs()
+    inline T& Node::valueAs()
     {
       std::lock_guard<std::mutex> lock{mutex};
       return properties.value.get<T>();
     }
 
-    // list of all named nodes - for now use this as a global
-    // variable, but eventually we'll need tofind a better way for
-    // storing this ... maybe in the world!?
-    extern std::map<std::string,std::shared_ptr<sg::Node>> namedNodes;
-
-    std::shared_ptr<sg::Node> OSPSG_INTERFACE
-    findNamedNode(const std::string &name);
-
-    OSPSG_INTERFACE
-    void registerNamedNode(const std::string &name,
-                           const std::shared_ptr<sg::Node> &node);
-
-    using NodeHandle = Node::Handle;
-
-    OSPSG_INTERFACE NodeHandle createNode(std::string name,
-                                          std::string type = "Node",
-                                          SGVar var = SGVar(),
-                                          int flags = sg::NodeFlags::none,
-                                          std::string documentation="");
-
-    template <typename T>
-    struct NodeParamCommit
-    {
-      static void commit(std::shared_ptr<Node> n);
-      static bool compare(const SGVar& min,
-                          const SGVar& max,
-                          const SGVar& value);
-    };
-
-    template <typename T>
-    inline void NodeParamCommit<T>::commit(std::shared_ptr<Node> n)
-    {
-    }
-
-    template <typename T>
-    inline bool NodeParamCommit<T>::compare(const SGVar& min,
-                                            const SGVar& max,
-                                            const SGVar& value)
-    {
-      return true;
-    }
-
     template<typename T>
-    inline bool NodeParamCommitComparison(const SGVar& min,
-                                          const SGVar& max,
-                                          const SGVar& value)
+    inline const T& Node::valueAs() const
+    {
+      std::lock_guard<std::mutex> lock{mutex};
+      return properties.value.get<T>();
+    }
+
+    OSPSG_INTERFACE Node::Handle createNode(std::string name,
+                                            std::string type = "Node",
+                                            SGVar var = SGVar(),
+                                            int flags = sg::NodeFlags::none,
+                                            std::string documentation="");
+
+    // Helper functions ///////////////////////////////////////////////////////
+
+    // Compare //
+
+    template <typename T>
+    inline bool compare(const SGVar& min, const SGVar& max, const SGVar& value)
     {
       if (value.get<T>() < min.get<T>() || value.get<T>() > max.get<T>())
         return false;
@@ -397,69 +345,94 @@ namespace ospray {
     }
 
     template <>
-    inline bool NodeParamCommit<float>::compare(const SGVar& min,
-                                                const SGVar& max,
-                                                const SGVar& value)
+    inline bool compare<vec2f>(const SGVar& min,
+                               const SGVar& max,
+                               const SGVar& value)
     {
-      return NodeParamCommitComparison<float>(min,max,value);
+      const vec2f &v1 = min.get<vec2f>();
+      const vec2f &v2 = max.get<vec2f>();
+      const vec2f &v  = value.get<vec2f>();
+      return !(v1.x > v.x || v2.x < v.x ||
+               v1.y > v.y || v2.y < v.y);
     }
 
     template <>
-    inline void NodeParamCommit<float>::commit(std::shared_ptr<Node> n)
+    inline bool compare<vec2i>(const SGVar& min,
+                               const SGVar& max,
+                               const SGVar& value)
     {
-      ospSet1f(n->parent()->valueAs<OSPObject>(),
-               n->name().c_str(), n->valueAs<float>());
+      const vec2i &v1 = min.get<vec2i>();
+      const vec2i &v2 = max.get<vec2i>();
+      const vec2i &v  = value.get<vec2i>();
+      return !(v1.x > v.x || v2.x < v.x ||
+               v1.y > v.y || v2.y < v.y);
     }
 
     template <>
-    inline void NodeParamCommit<bool>::commit(std::shared_ptr<Node> n)
+    inline bool compare<vec3f>(const SGVar& min,
+                               const SGVar& max,
+                               const SGVar& value)
     {
-      ospSet1i(n->parent()->valueAs<OSPObject>(),
-               n->name().c_str(), n->valueAs<bool>());
-    }
-
-    template <>
-    inline bool NodeParamCommit<int>::compare(const SGVar& min,
-                                              const SGVar& max,
-                                              const SGVar& value)
-    {
-      return NodeParamCommitComparison<int>(min,max,value);
-    }
-
-    template <>
-    inline void NodeParamCommit<int>::commit(std::shared_ptr<Node> n)
-    {
-      ospSet1i(n->parent()->valueAs<OSPObject>(),
-               n->name().c_str(), n->valueAs<int>());
-    }
-
-    template <>
-    inline bool NodeParamCommit<vec3f>::compare(const SGVar& min,
-                                                const SGVar& max,
-                                                const SGVar& value)
-    {
-      const vec3f v1 = min.get<vec3f>();
-      const vec3f v2 = max.get<vec3f>();
-      const vec3f v = value.get<vec3f>();
+      const vec3f &v1 = min.get<vec3f>();
+      const vec3f &v2 = max.get<vec3f>();
+      const vec3f &v  = value.get<vec3f>();
       return !(v1.x > v.x || v2.x < v.x ||
                v1.y > v.y || v2.y < v.y ||
                v1.z > v.z || v2.z < v.z);
     }
 
     template <>
-    inline void NodeParamCommit<vec3f>::commit(std::shared_ptr<Node> n)
+    inline bool compare<box3f>(const SGVar& min,
+                               const SGVar& max,
+                               const SGVar& value)
     {
-      ospSet3fv(n->parent()->valueAs<OSPObject>(),
-                n->name().c_str(), &n->valueAs<vec3f>().x);
+      return true;// NOTE(jda) - this is wrong, was incorrect before refactoring
+    }
+
+    // Commit //
+
+    template <typename T>
+    inline void commitNodeValue(Node &)
+    {
+    }
+
+    template <>
+    inline void commitNodeValue<float>(Node &n)
+    {
+      ospSet1f(n.parent()->valueAs<OSPObject>(),
+               n.name().c_str(), n.valueAs<float>());
+    }
+
+    template <>
+    inline void commitNodeValue<bool>(Node &n)
+    {
+      ospSet1i(n.parent()->valueAs<OSPObject>(),
+               n.name().c_str(), n.valueAs<bool>());
+    }
+
+    template <>
+    inline void commitNodeValue<int>(Node &n)
+    {
+      ospSet1i(n.parent()->valueAs<OSPObject>(),
+               n.name().c_str(), n.valueAs<int>());
+    }
+
+    template <>
+    inline void commitNodeValue<vec3f>(Node &n)
+    {
+      ospSet3fv(n.parent()->valueAs<OSPObject>(),
+                n.name().c_str(), &n.valueAs<vec3f>().x);
     }
 
 
     template <>
-    inline void NodeParamCommit<vec2f>::commit(std::shared_ptr<Node> n)
+    inline void commitNodeValue<vec2f>(Node &n)
     {
-      ospSet3fv(n->parent()->valueAs<OSPObject>(),
-                n->name().c_str(), &n->valueAs<vec2f>().x);
+      ospSet3fv(n.parent()->valueAs<OSPObject>(),
+                n.name().c_str(), &n.valueAs<vec2f>().x);
     }
+
+    // Helper parameter node wrapper //////////////////////////////////////////
 
     template <typename T>
     struct NodeParam : public Node
@@ -472,7 +445,7 @@ namespace ospray {
 
           //NOTE(jda) - OMG the syntax for the 'if' is strange...
           if (parent()->value().template is<OSPObject>())
-            NodeParamCommit<T>::commit(shared_from_this());
+            commitNodeValue<T>(*this);
         }
       }
 
@@ -482,9 +455,11 @@ namespace ospray {
             !(flags() & NodeFlags::valid_min_max))
           return true;
 
-        return NodeParamCommit<T>::compare(min(), max(), value());
+        return compare<T>(min(), max(), value());
       }
     };
+
+    // Base Node for all renderables //////////////////////////////////////////
 
     //! a Node with bounds and a render operation
     struct OSPSG_INTERFACE Renderable : public Node

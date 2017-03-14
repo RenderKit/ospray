@@ -296,7 +296,7 @@ namespace ospray {
         return false;
       
       parseSep(token+=strlen(keyWord));
-      mat->setParam(keyWord, parse<T>(token));
+      mat->createChildWithValue(keyWord, parse<T>(token));
 
       return true;
     }
@@ -313,7 +313,7 @@ namespace ospray {
         return false;
 
       parseSep(token+=strlen(keyWord));
-      mat->setParam(keyWord,
+      mat->createChildWithValue(keyWord,
                     loadTexture(path,parse<std::string>(token),preferLinear));
       return true;
     }
@@ -406,7 +406,7 @@ namespace ospray {
           token += strcspn(token, " \t");
           *(char*)token = 0;
           parseSepOpt(token += 1);
-          cur->setParam(ident, getFloat(token));
+          cur->createChildWithValue(ident, getFloat(token));
         }
       // if (cur) g_device->rtCommit(cur);
       cin.close();

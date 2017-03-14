@@ -51,8 +51,8 @@ static void writePPM(const string &fileName, const int sizeX, const int sizeY,
 
 namespace ospray {
 
-  ImGuiViewerSg::ImGuiViewerSg(const sg::NodeHandle &scenegraph,
-                               const sg::NodeHandle &scenegraphDW
+  ImGuiViewerSg::ImGuiViewerSg(const sg::Node::Handle &scenegraph,
+                               const sg::Node::Handle &scenegraphDW
                                )
     : ImGui3DWidget(ImGui3DWidget::FRAMEBUFFER_NONE),
       scenegraph(scenegraph),
@@ -176,7 +176,7 @@ namespace ospray {
       camera["up"]->setValue(viewPort.up);
 
 #if 1
-      if (scenegraphDW.node) {
+      if (scenegraphDW.notNULL()) {
         auto camera = scenegraphDW["camera"];
         camera["dir"]->setValue(dir);
         camera["pos"]->setValue(viewPort.from);
@@ -281,7 +281,7 @@ namespace ospray {
     ImGui::End();
   }
 
-  void ImGuiViewerSg::buildGUINode(sg::NodeHandle node, int indent)
+  void ImGuiViewerSg::buildGUINode(sg::Node::Handle node, int indent)
   {
     int styles=0;
     if (!node->isValid()) {
@@ -433,18 +433,19 @@ namespace ospray {
           }
 
           if (node->type() == "TransferFunction") {
-            text += "TODO WILL";
-            ImGui::Text(text.c_str());
-            if (!node->param("transferFunctionWidget")) {
+            if (!node->hasChild("transferFunctionWidget")) {
               std::shared_ptr<sg::TransferFunction> tfn =
                 std::dynamic_pointer_cast<sg::TransferFunction>(node.get());
-              node->setParam("transferFunctionWidget", TransferFunction(tfn));
+
+              node->createChildWithValue("transferFunctionWidget",
+                                         TransferFunction(tfn));
             }
-            auto tfnWidget =
-              dynamic_cast<sg::ParamT<TransferFunction>*>(node->param("transferFunctionWidget").get());
-            assert(tfnWidget);
-            tfnWidget->value.render();
-            tfnWidget->value.drawUi();
+
+            auto &tfnWidget =
+              node["transferFunctionWidget"].get()->valueAs<TransferFunction>();
+
+            tfnWidget.render();
+            tfnWidget.drawUi();
           }
         }
 

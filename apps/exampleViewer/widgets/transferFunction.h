@@ -20,10 +20,26 @@ namespace ospray {
 
   class OSPRAY_IMGUI3D_INTERFACE TransferFunction
   {
-    // A line is made up of points sorted by x, its coordinates are
-    // on the range [0, 1]
+  public:
+
+    TransferFunction(std::shared_ptr<sg::TransferFunction> &tfn);
+    ~TransferFunction();
+    TransferFunction(const TransferFunction &t);
+    TransferFunction& operator=(const TransferFunction &t);
+    /* Draw the transfer function editor widget
+    */
+    void drawUi();
+    /* Render the transfer function to a 1D texture that can
+     * be applied to volume data
+     */
+    void render();
+
+  private:
+
     struct Line
     {
+      // A line is made up of points sorted by x, its coordinates are
+      // on the range [0, 1]
       std::vector<ospcommon::vec2f> line;
       int color;
 
@@ -62,30 +78,12 @@ namespace ospray {
     // Track if the function changed and must be re-uploaded.
     // We start by marking it changed to upload the initial palette
     bool fcnChanged;
-
-    /* The 2d palette texture on the GPU for displaying the color map in the UI.
-     */
+    // The 2d palette texture on the GPU for displaying the color map in the UI.
     GLuint paletteTex;
 
-  public:
-    TransferFunction(std::shared_ptr<sg::TransferFunction> &tfn);
-    ~TransferFunction();
-    TransferFunction(const TransferFunction &t);
-    TransferFunction& operator=(const TransferFunction &t);
-    /* Draw the transfer function editor widget
-    */
-    void drawUi();
-    /* Render the transfer function to a 1D texture that can
-     * be applied to volume data
-     */
-    void render();
-
-  private:
     // Select the provided color map specified by tfcnSelection
     void setColorMap();
-    // TODO: Save/load the transfer function through the file dialog
-    //void save_fcn() const;
-    //void load_fcn();
   };
 
 }// ::ospray
+
