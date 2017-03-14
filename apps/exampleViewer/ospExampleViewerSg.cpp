@@ -311,26 +311,14 @@ int main(int ac, const char **av)
 
   renderer->traverse("commit");
 
-
-
-  // PING;
-  // rendererDW["lights"].node = renderer["lights"].node;
-  // rendererDW["shadowsEnabled"].node = renderer["shadowsEnabled"].node;
-  // rendererDW["aoSamples"].node = renderer["aoSamples"].node;
-  // rendererDW["camera"].node = renderer["camera"].node;
-  // rendererDW["world"].node = renderer["world"].node;
-  // PRINT(renderer["camera"].node);
-
   if (rendererDW.notNULL()) {
     rendererDW->properties.children["world"] = renderer["world"];
-    // rendererDW->properties.children["camera"] = renderer["camera"];
-    // rendererDW->properties.children["aoSamples"] = renderer["aoSamples"];
-    // rendererDW->properties.children["shadowsEnabled"] = renderer["shadowsEnabled"];
     rendererDW->properties.children["lights"] = renderer["lights"];
-    
     
     rendererDW["frameBuffer"]["size"]->setValue(dwService.totalPixelsInWall);
     rendererDW["frameBuffer"]["displayWall"]->setValue(dwService.mpiPortName);
+    // rendererDW["frameBuffer"]["size"]->setValue(dwService.totalPixelsInWall);
+    // rendererDW["frameBuffer"]["displayWall"]->setValue(dwService.mpiPortName);
     
     
     rendererDW->traverse("verify");

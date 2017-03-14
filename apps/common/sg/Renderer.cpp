@@ -232,7 +232,11 @@ namespace ospray {
 
         if (lightsData)
           ospRelease(lightsData);
-        lightsData = ospNewData(lights.size(), OSP_LIGHT, &lights[0]);
+        /* iw - do NOT use OSP_LIGHT here - the current mpi device
+           does not properly translate an ospdata of lights from
+           pointer to handles - it does for OSP_OBJECT */
+        lightsData = ospNewData(lights.size(), OSP_OBJECT, &lights[0]);
+        // lightsData = ospNewData(lights.size(), OSP_LIGHT, &lights[0]);
         ospCommit(lightsData);
         lightsBuildTime = TimeStamp();
       }
