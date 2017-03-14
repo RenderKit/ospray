@@ -392,33 +392,33 @@ namespace ospray {
     // Commit //
 
     template <typename T>
-    inline void commit(Node &)
+    inline void commitNodeValue(Node &)
     {
     }
 
     template <>
-    inline void commit<float>(Node &n)
+    inline void commitNodeValue<float>(Node &n)
     {
       ospSet1f(n.parent()->valueAs<OSPObject>(),
                n.name().c_str(), n.valueAs<float>());
     }
 
     template <>
-    inline void commit<bool>(Node &n)
+    inline void commitNodeValue<bool>(Node &n)
     {
       ospSet1i(n.parent()->valueAs<OSPObject>(),
                n.name().c_str(), n.valueAs<bool>());
     }
 
     template <>
-    inline void commit<int>(Node &n)
+    inline void commitNodeValue<int>(Node &n)
     {
       ospSet1i(n.parent()->valueAs<OSPObject>(),
                n.name().c_str(), n.valueAs<int>());
     }
 
     template <>
-    inline void commit<vec3f>(Node &n)
+    inline void commitNodeValue<vec3f>(Node &n)
     {
       ospSet3fv(n.parent()->valueAs<OSPObject>(),
                 n.name().c_str(), &n.valueAs<vec3f>().x);
@@ -426,7 +426,7 @@ namespace ospray {
 
 
     template <>
-    inline void commit<vec2f>(Node &n)
+    inline void commitNodeValue<vec2f>(Node &n)
     {
       ospSet3fv(n.parent()->valueAs<OSPObject>(),
                 n.name().c_str(), &n.valueAs<vec2f>().x);
@@ -445,7 +445,7 @@ namespace ospray {
 
           //NOTE(jda) - OMG the syntax for the 'if' is strange...
           if (parent()->value().template is<OSPObject>())
-            ::ospray::sg::commit<T>(*this);
+            commitNodeValue<T>(*this);
         }
       }
 
