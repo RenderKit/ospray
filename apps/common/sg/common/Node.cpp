@@ -41,11 +41,6 @@ namespace ospray {
       return "ospray::sg::Node";
     }
 
-    Node::Handle Node::param(const std::string &name) const
-    {
-      return child(name);
-    }
-
     void Node::setFromXML(const xml::Node &node, const unsigned char *binBasePtr)
     {
       throw std::runtime_error(toString() +

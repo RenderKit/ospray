@@ -78,19 +78,19 @@ namespace ospray {
         std::shared_ptr<sg::DataBuffer> dataNode =
             std::dynamic_pointer_cast<sg::DataBuffer>(value);
         assert(dataNode);
-        target->setParam(name,dataNode);
+        target->createChildWithValue(name,dataNode);
         return true;
       } else if (node.name == "object") {
         assert(node.child.size() == 1);
         std::shared_ptr<sg::Node> value = parseNode(*node.child[0]);
         assert(value);
-        target->setParam(name,value);
+        target->createChildWithValue(name,value);
         return true;
       } else if (node.name == "int") {
-        target->setParam(name,std::stoi(node.content));
+        target->createChildWithValue(name,std::stoi(node.content));
         return true;
       } else if (node.name == "float") {
-        target->setParam(name,std::stof(node.content));
+        target->createChildWithValue(name,std::stof(node.content));
         return true;
       }
 

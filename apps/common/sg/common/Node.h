@@ -110,7 +110,6 @@ namespace ospray {
       };
 
       virtual std::string toString() const;
-      Handle param(const std::string &name) const;
 
       //! \brief Initialize this node's value from given XML node
       /*!
@@ -130,10 +129,6 @@ namespace ospray {
       */
       virtual void setFromXML(const xml::Node &node,
                               const unsigned char *binBasePtr);
-
-      //! just for convenience; add a typed 'setParam' function
-      template<typename T>
-      void setParam(const std::string &name, const T &t);
 
       virtual void init(); //intialize children
 
@@ -213,6 +208,10 @@ namespace ospray {
 
       //! add node as child of this one
       virtual void add(Handle node);
+
+      //! just for convenience; add a typed 'setParam' function
+      template<typename T>
+      void createChildWithValue(const std::string &name, const T &t);
 
       //! traverse this node and childrend with given operation, such as
       //  print,commit,render or custom operations
@@ -296,7 +295,7 @@ namespace ospray {
 
     //! just for convenience; add a typed 'setParam' function
     template<typename T>
-    inline void Node::setParam(const std::string &name, const T &t)
+    inline void Node::createChildWithValue(const std::string &name, const T &t)
     {
       auto iter = properties.children.find("name");
       if (iter != std::end(properties.children))
