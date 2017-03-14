@@ -332,32 +332,12 @@ namespace ospray {
                                             int flags = sg::NodeFlags::none,
                                             std::string documentation="");
 
-    template <typename T>
-    struct NodeParamCommit
-    {
-      static void commit(std::shared_ptr<Node> n);
-      static bool compare(const SGVar& min,
-                          const SGVar& max,
-                          const SGVar& value);
-    };
+    // Helper functions ///////////////////////////////////////////////////////
+
+    // Compare //
 
     template <typename T>
-    inline void NodeParamCommit<T>::commit(std::shared_ptr<Node> n)
-    {
-    }
-
-    template <typename T>
-    inline bool NodeParamCommit<T>::compare(const SGVar& min,
-                                            const SGVar& max,
-                                            const SGVar& value)
-    {
-      return true;
-    }
-
-    template<typename T>
-    inline bool NodeParamCommitComparison(const SGVar& min,
-                                          const SGVar& max,
-                                          const SGVar& value)
+    inline bool compare(const SGVar& min, const SGVar& max, const SGVar& value)
     {
       if (value.get<T>() < min.get<T>() || value.get<T>() > max.get<T>())
         return false;
@@ -365,69 +345,94 @@ namespace ospray {
     }
 
     template <>
-    inline bool NodeParamCommit<float>::compare(const SGVar& min,
-                                                const SGVar& max,
-                                                const SGVar& value)
+    inline bool compare<vec2f>(const SGVar& min,
+                               const SGVar& max,
+                               const SGVar& value)
     {
-      return NodeParamCommitComparison<float>(min,max,value);
+      const vec2f &v1 = min.get<vec2f>();
+      const vec2f &v2 = max.get<vec2f>();
+      const vec2f &v  = value.get<vec2f>();
+      return !(v1.x > v.x || v2.x < v.x ||
+               v1.y > v.y || v2.y < v.y);
     }
 
     template <>
-    inline void NodeParamCommit<float>::commit(std::shared_ptr<Node> n)
+    inline bool compare<vec2i>(const SGVar& min,
+                               const SGVar& max,
+                               const SGVar& value)
     {
-      ospSet1f(n->parent()->valueAs<OSPObject>(),
-               n->name().c_str(), n->valueAs<float>());
+      const vec2i &v1 = min.get<vec2i>();
+      const vec2i &v2 = max.get<vec2i>();
+      const vec2i &v  = value.get<vec2i>();
+      return !(v1.x > v.x || v2.x < v.x ||
+               v1.y > v.y || v2.y < v.y);
     }
 
     template <>
-    inline void NodeParamCommit<bool>::commit(std::shared_ptr<Node> n)
+    inline bool compare<vec3f>(const SGVar& min,
+                               const SGVar& max,
+                               const SGVar& value)
     {
-      ospSet1i(n->parent()->valueAs<OSPObject>(),
-               n->name().c_str(), n->valueAs<bool>());
-    }
-
-    template <>
-    inline bool NodeParamCommit<int>::compare(const SGVar& min,
-                                              const SGVar& max,
-                                              const SGVar& value)
-    {
-      return NodeParamCommitComparison<int>(min,max,value);
-    }
-
-    template <>
-    inline void NodeParamCommit<int>::commit(std::shared_ptr<Node> n)
-    {
-      ospSet1i(n->parent()->valueAs<OSPObject>(),
-               n->name().c_str(), n->valueAs<int>());
-    }
-
-    template <>
-    inline bool NodeParamCommit<vec3f>::compare(const SGVar& min,
-                                                const SGVar& max,
-                                                const SGVar& value)
-    {
-      const vec3f v1 = min.get<vec3f>();
-      const vec3f v2 = max.get<vec3f>();
-      const vec3f v = value.get<vec3f>();
+      const vec3f &v1 = min.get<vec3f>();
+      const vec3f &v2 = max.get<vec3f>();
+      const vec3f &v  = value.get<vec3f>();
       return !(v1.x > v.x || v2.x < v.x ||
                v1.y > v.y || v2.y < v.y ||
                v1.z > v.z || v2.z < v.z);
     }
 
     template <>
-    inline void NodeParamCommit<vec3f>::commit(std::shared_ptr<Node> n)
+    inline bool compare<box3f>(const SGVar& min,
+                               const SGVar& max,
+                               const SGVar& value)
     {
-      ospSet3fv(n->parent()->valueAs<OSPObject>(),
-                n->name().c_str(), &n->valueAs<vec3f>().x);
+      return true;// NOTE(jda) - this is wrong, was incorrect before refactoring
+    }
+
+    // Commit //
+
+    template <typename T>
+    inline void commit(Node &)
+    {
+    }
+
+    template <>
+    inline void commit<float>(Node &n)
+    {
+      ospSet1f(n.parent()->valueAs<OSPObject>(),
+               n.name().c_str(), n.valueAs<float>());
+    }
+
+    template <>
+    inline void commit<bool>(Node &n)
+    {
+      ospSet1i(n.parent()->valueAs<OSPObject>(),
+               n.name().c_str(), n.valueAs<bool>());
+    }
+
+    template <>
+    inline void commit<int>(Node &n)
+    {
+      ospSet1i(n.parent()->valueAs<OSPObject>(),
+               n.name().c_str(), n.valueAs<int>());
+    }
+
+    template <>
+    inline void commit<vec3f>(Node &n)
+    {
+      ospSet3fv(n.parent()->valueAs<OSPObject>(),
+                n.name().c_str(), &n.valueAs<vec3f>().x);
     }
 
 
     template <>
-    inline void NodeParamCommit<vec2f>::commit(std::shared_ptr<Node> n)
+    inline void commit<vec2f>(Node &n)
     {
-      ospSet3fv(n->parent()->valueAs<OSPObject>(),
-                n->name().c_str(), &n->valueAs<vec2f>().x);
+      ospSet3fv(n.parent()->valueAs<OSPObject>(),
+                n.name().c_str(), &n.valueAs<vec2f>().x);
     }
+
+    // Helper parameter node wrapper //////////////////////////////////////////
 
     template <typename T>
     struct NodeParam : public Node
@@ -440,7 +445,7 @@ namespace ospray {
 
           //NOTE(jda) - OMG the syntax for the 'if' is strange...
           if (parent()->value().template is<OSPObject>())
-            NodeParamCommit<T>::commit(shared_from_this());
+            ::ospray::sg::commit<T>(*this);
         }
       }
 
@@ -450,9 +455,11 @@ namespace ospray {
             !(flags() & NodeFlags::valid_min_max))
           return true;
 
-        return NodeParamCommit<T>::compare(min(), max(), value());
+        return compare<T>(min(), max(), value());
       }
     };
+
+    // Base Node for all renderables //////////////////////////////////////////
 
     //! a Node with bounds and a render operation
     struct OSPSG_INTERFACE Renderable : public Node
