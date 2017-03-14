@@ -29,14 +29,24 @@
 // ospcommon
 #include "ospcommon/vec.h"
 
-#include "sg/common/OSPVariant.h"
+#define USE_OSPANY 1
+
+#if USE_OSPANY
+#  include "sg/common/OSPAny.h"
+#else
+#  include "sg/common/OSPVariant.h"
+#endif
 
 #include <mutex>
 
 namespace ospray {
   namespace sg {
 
+#if USE_OSPANY
+    using SGVar = OSPAny;
+#else
     using SGVar = OSPVariant;
+#endif
 
     /*! forward decl of entity that nodes can write to when writing XML files */
     struct XMLWriter;
