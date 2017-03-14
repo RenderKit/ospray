@@ -77,9 +77,9 @@ LINK
 
 ADD_TEST(NAME OSPVariant COMMAND test_OSPVariant)
 
-OSPRAY_CREATE_TEST(test_boost.any
+OSPRAY_CREATE_TEST(test_OSPAny
   common/OSPAny.h
-  common/test_boost.any.cpp
+  common/test_OSPAny.cpp
 )
 
-ADD_TEST(NAME boost.any COMMAND test_boost.any)
+ADD_TEST(NAME OSPAny COMMAND test_OSPAny)

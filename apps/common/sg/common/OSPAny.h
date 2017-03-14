@@ -34,7 +34,7 @@ namespace ospray {
       OSPAny& operator=(const OSPAny &rhs);
 
       template<typename T>
-      OSPAny& operator=(const T &rhs);
+      OSPAny& operator=(T &&rhs);
 
       template<typename T>
       const T& get() const;
@@ -58,15 +58,17 @@ namespace ospray {
       {
         virtual ~handle_base() = default;
         virtual handle_base* clone() const = 0;
-        virtual size_t valueTypeID() const = 0;
+        virtual const std::type_info& valueTypeID() const = 0;
+        virtual bool isSame(handle_base *other) const = 0;
       };
 
       template <typename T>
       struct handle : public handle_base
       {
-        handle(T &&value);
+        handle(T value);
         handle_base* clone() const override;
-        size_t valueTypeID() const override;
+        const std::type_info& valueTypeID() const override;
+        bool isSame(handle_base *other) const override;
         T value;
       };
 
@@ -97,7 +99,6 @@ namespace ospray {
       return *this;
     }
 
-
     template<typename T>
     inline OSPAny &OSPAny::operator=(T &&rhs)
     {
@@ -109,6 +110,9 @@ namespace ospray {
     template<typename T>
     const T &OSPAny::get() const
     {
+      if (!valid())
+        throw std::runtime_error("Can't query value from an empty OSPAny!");
+
       if (is<T>())
         return *(static_cast<T*>(currentValue.get()));
       else
@@ -118,7 +122,8 @@ namespace ospray {
     template<typename T>
     bool OSPAny::is() const
     {
-      return valid() && (typeid(T).hash_code() == currentValue->valueTypeID());
+      return valid() &&
+             (typeid(T).hash_code() == currentValue->valueTypeID().hash_code());
     }
 
     inline bool OSPAny::valid() const
@@ -132,20 +137,34 @@ namespace ospray {
     }
 
     template<typename T>
-    inline OSPAny::handle::handle(T &&v) : value(std::move(v))
+    inline OSPAny::handle<T>::handle(T v) : value(std::move(v))
     {
     }
 
     template<typename T>
     inline OSPAny::handle_base *OSPAny::handle<T>::clone() const
     {
-      return new handle<T>(currentValue);
+      return new handle<T>(value);
     }
 
     template<typename T>
-    inline size_t OSPAny::handle::valueTypeID() const
+    inline const std::type_info &OSPAny::handle<T>::valueTypeID() const
     {
-      return typeid(T).hash_code();
+      return typeid(T);
+    }
+
+    template<typename T>
+    inline bool OSPAny::handle<T>::isSame(OSPAny::handle_base *other) const
+    {
+      handle<T>* otherHandle = dynamic_cast<handle<T>*>(other);
+      return (otherHandle != nullptr) && (otherHandle->value == this->value);
+    }
+
+    // Comparison function ////////////////////////////////////////////////////
+
+    inline bool operator==(const OSPAny &lhs, const OSPAny &rhs)
+    {
+      return lhs.currentValue->isSame(rhs.currentValue.get());
     }
 
   } // ::ospray::sg

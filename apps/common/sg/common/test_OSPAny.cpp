@@ -2,6 +2,7 @@
 #include "ospcommon/testing/catch.hpp"
 
 #include "OSPVariant.h"
+#include "OSPAny.h"
 
 using ospray::sg::OSPVariant;
 
