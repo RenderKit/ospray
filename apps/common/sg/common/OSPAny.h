@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <memory>
+#include "ospcommon/common.h"
 
 namespace ospray {
   namespace sg {
@@ -27,14 +27,14 @@ namespace ospray {
       OSPAny(const OSPAny &copy);
 
       template<typename T>
-      OSPAny(T &&value);
+      OSPAny(T value);
 
       ~OSPAny() = default;
 
       OSPAny& operator=(const OSPAny &rhs);
 
       template<typename T>
-      OSPAny& operator=(T &&rhs);
+      OSPAny& operator=(T rhs);
 
       template<typename T>
       const T& get() const;
@@ -60,6 +60,7 @@ namespace ospray {
         virtual handle_base* clone() const = 0;
         virtual const std::type_info& valueTypeID() const = 0;
         virtual bool isSame(handle_base *other) const = 0;
+        virtual void *data() = 0;
       };
 
       template <typename T>
@@ -69,6 +70,7 @@ namespace ospray {
         handle_base* clone() const override;
         const std::type_info& valueTypeID() const override;
         bool isSame(handle_base *other) const override;
+        void *data() override;
         T value;
       };
 
@@ -80,7 +82,7 @@ namespace ospray {
     // Inlined OSPAny definitions /////////////////////////////////////////////
 
     template<typename T>
-    inline OSPAny::OSPAny(T &&value) :
+    inline OSPAny::OSPAny(T value) :
       currentValue(new handle<typename std::remove_reference<T>::type>(
                      std::forward<T>(value)
                    ))
@@ -95,15 +97,18 @@ namespace ospray {
     inline OSPAny &OSPAny::operator=(const OSPAny &rhs)
     {
       OSPAny temp(rhs);
-      std::swap(temp, *this);
+      currentValue = std::move(temp.currentValue);
       return *this;
     }
 
     template<typename T>
-    inline OSPAny &OSPAny::operator=(T &&rhs)
+    inline OSPAny &OSPAny::operator=(T rhs)
     {
-      OSPAny temp(std::forward<T>(rhs));
-      std::swap(temp, *this);
+      currentValue = std::unique_ptr<handle_base>(
+        new handle<typename std::remove_reference<T>::type>(
+          std::forward<T>(rhs)
+        )
+      );
       return *this;
     }
 
@@ -114,7 +119,7 @@ namespace ospray {
         throw std::runtime_error("Can't query value from an empty OSPAny!");
 
       if (is<T>())
-        return *(static_cast<T*>(currentValue.get()));
+        return *(static_cast<T*>(currentValue->data()));
       else
         throw std::runtime_error("Incorrect type queried for OSPAny!");
     }
@@ -160,11 +165,22 @@ namespace ospray {
       return (otherHandle != nullptr) && (otherHandle->value == this->value);
     }
 
+    template<typename T>
+    void *OSPAny::handle<T>::data()
+    {
+      return &value;
+    }
+
     // Comparison function ////////////////////////////////////////////////////
 
     inline bool operator==(const OSPAny &lhs, const OSPAny &rhs)
     {
       return lhs.currentValue->isSame(rhs.currentValue.get());
+    }
+
+    inline bool operator!=(const OSPAny &lhs, const OSPAny &rhs)
+    {
+      return !(lhs == rhs);
     }
 
   } // ::ospray::sg
