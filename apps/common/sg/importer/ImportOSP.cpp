@@ -53,9 +53,6 @@ namespace ospray {
       
       newNode->setFromXML(node,binBasePtr);
 
-      if (node.hasProp("name"))
-        registerNamedNode(node.getProp("name"),newNode);
-
       return newNode;
     }
 

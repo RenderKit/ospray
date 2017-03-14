@@ -403,25 +403,6 @@ namespace ospray {
     // global stuff
     // ==================================================================
 
-    // list of all named nodes - for now use this as a global
-    // variable, but eventually we'll need tofind a better way for
-    // storing this
-    std::map<std::string, std::shared_ptr<sg::Node>> namedNodes;
-
-    std::shared_ptr<sg::Node> findNamedNode(const std::string &name)
-    {
-      auto it = namedNodes.find(name);
-      if (it != namedNodes.end())
-        return it->second;
-      return {};
-    }
-
-    void registerNamedNode(const std::string &name,
-                           const std::shared_ptr<sg::Node> &node)
-    {
-      namedNodes[name] = node;
-    }
-
     using CreatorFct = std::shared_ptr<sg::Node>(*)();
 
     std::map<std::string, CreatorFct> nodeRegistry;

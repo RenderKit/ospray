@@ -321,18 +321,6 @@ namespace ospray {
       return properties.value.get<T>();
     }
 
-    // list of all named nodes - for now use this as a global
-    // variable, but eventually we'll need tofind a better way for
-    // storing this ... maybe in the world!?
-    extern std::map<std::string,std::shared_ptr<sg::Node>> namedNodes;
-
-    std::shared_ptr<sg::Node> OSPSG_INTERFACE
-    findNamedNode(const std::string &name);
-
-    OSPSG_INTERFACE
-    void registerNamedNode(const std::string &name,
-                           const std::shared_ptr<sg::Node> &node);
-
     OSPSG_INTERFACE Node::Handle createNode(std::string name,
                                             std::string type = "Node",
                                             SGVar var = SGVar(),
