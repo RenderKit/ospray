@@ -53,7 +53,7 @@ namespace ospray {
 
       bool valid() const;
 
-      std::string toString();
+      std::string toString() const;
 
     private:
 
@@ -353,7 +353,7 @@ namespace ospray {
       return currentType != Type::INVALID;
     }
 
-    inline std::string OSPVariant::toString()
+    inline std::string OSPVariant::toString() const
     {
       std::stringstream asString;
       asString << "OSPVariant<";
