@@ -25,38 +25,6 @@ namespace ospray {
     std::vector<std::shared_ptr<sg::Node>> Node::nodes;
 
     // ==================================================================
-    // parameter type specializations
-    // ==================================================================
-
-    template<> OSPDataType ParamT<std::shared_ptr<DataBuffer>>::OSPType() const
-    { return OSP_DATA; }
-    template<> OSPDataType ParamT<std::shared_ptr<Node>>::OSPType() const
-    { return OSP_OBJECT; }
-
-    template<> OSPDataType ParamT<float>::OSPType() const
-    { return OSP_FLOAT; }
-    template<> OSPDataType ParamT<vec2f>::OSPType() const
-    { return OSP_FLOAT2; }
-    template<> OSPDataType ParamT<vec3f>::OSPType() const
-    { return OSP_FLOAT3; }
-    template<> OSPDataType ParamT<vec4f>::OSPType() const
-    { return OSP_FLOAT4; }
-
-    template<> OSPDataType ParamT<int32_t>::OSPType() const
-    { return OSP_INT; }
-    template<> OSPDataType ParamT<vec2i>::OSPType() const
-    { return OSP_INT2; }
-    template<> OSPDataType ParamT<vec3i>::OSPType() const
-    { return OSP_INT3; }
-    template<> OSPDataType ParamT<vec4i>::OSPType() const
-    { return OSP_INT4; }
-
-    template<> OSPDataType ParamT<const char *>::OSPType() const
-    { return OSP_STRING; }
-    template<> OSPDataType ParamT<std::shared_ptr<Texture2D>>::OSPType() const
-    { return OSP_TEXTURE; }
-
-    // ==================================================================
     // sg node implementations
     // ==================================================================
 

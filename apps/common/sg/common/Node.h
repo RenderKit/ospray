@@ -54,35 +54,6 @@ namespace ospray {
   protected:                                            \
   type name                                             \
 
-    /*! \brief a parameter to a node (is not in itself a node).
-
-      \note This is only the abstract base class, actual instantiations are
-      the in the 'ParamT' template. */
-    struct OSPSG_INTERFACE Param
-    {
-      /*! constructor. the passed name alwasys remains constant */
-      Param(const std::string &name) : _name(name) {}
-      /*! return name of this parameter. the value is in the derived class */
-      inline const std::string name() const { return _name; }
-      virtual void write(XMLWriter &) { NOTIMPLEMENTED; }
-      /*! returns the ospray data type that this node corresponds to */
-      virtual OSPDataType OSPType() const = 0;
-
-    protected:
-      /*! name of this node */
-      const std::string _name;
-    };
-
-    /*! \brief a concrete parameter to a scene graph node */
-    template<typename T>
-    struct ParamT : public sg::Param
-    {
-      ParamT(const std::string &name, const T &t) : Param(name), value(t) {}
-      virtual OSPDataType OSPType() const override { return OSP_UNKNOWN; }
-      virtual void write(XMLWriter &) override { NOTIMPLEMENTED; }
-      T value;
-    };
-
     enum NodeFlags
     {
       none = 0 << 0,
@@ -310,7 +281,6 @@ namespace ospray {
         TimeStamp lastModified;
         TimeStamp childrenMTime;
         TimeStamp lastCommitted;
-        std::map<std::string, std::shared_ptr<sg::Param>> params;
         Handle parent;
         NodeFlags flags;
         bool valid {false};
