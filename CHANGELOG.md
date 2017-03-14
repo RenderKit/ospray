@@ -1,6 +1,11 @@
 Version History
 ---------------
 
+### Changes in v1.2.1:
+
+-   Various bugfixes related to MPI distributed rendering, ISPC issues
+    on Windows, and other build related issues.
+
 ### Changes in v1.2.0:
 
 -   Added support for volumes with voxelType `short` (16-bit signed
