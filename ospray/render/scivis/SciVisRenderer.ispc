@@ -251,11 +251,11 @@ void SciVisRenderer_renderSample(uniform Renderer *uniform _self,
     = (SciVisRenderer *uniform) _self;
 
   // Ray offset for this sample, as a fraction of the nominal step size.
-  float rayOffset = precomputedHalton2(sample.sampleID.z);
+  float rayOffset = 0; // precomputedHalton2(sample.sampleID.z);
   int ix = sample.sampleID.x % 4;
   int iy = sample.sampleID.y % 4;
   int patternID = ix + 4 * iy;
-  rayOffset += precomputedHalton3(patternID);
+  rayOffset += 0; //precomputedHalton3(patternID);
 
   if(rayOffset > 1.f) rayOffset -= 1.f;
 
