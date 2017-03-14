@@ -29,11 +29,7 @@ namespace ospray {
     {
       TransferFunction();
 
-      virtual void init() override
-      {
-        add(createNode("valueRange", "vec2f", vec2f(0.f,1.f)));
-        add(createNode("numSamples", "int", 256));
-      }
+      virtual void init() override;
 
       //! \brief initialize color and alpha arrays to 'some' useful values
       void setDefaultValues();
@@ -59,16 +55,14 @@ namespace ospray {
       /*! set a new alpha map array - x coordinate is point pos, y is point alpha value */
       void setAlphaMap(const std::vector<vec2f> &alphaArray);
 
-      const std::vector<std::pair<float,float>> &alphas() const
-      { return alphaArray; }
+      const std::vector<std::pair<float,float>> &alphas() const;
 
       float interpolatedAlpha(float x);
 
       /*! return the ospray handle for this xfer fct, so we can assign
         it to ospray obejcts that need a reference to the ospray
         version of this xf */
-      OSP_DEPRECATED OSPTransferFunction handle() const
-      { return ospTransferFunction; }
+      OSP_DEPRECATED OSPTransferFunction handle() const;
 
     protected:
 

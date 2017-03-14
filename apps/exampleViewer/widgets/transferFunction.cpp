@@ -11,14 +11,22 @@
 
 using namespace ospcommon;
 
-static float lerp(const float a, const float b, const float t) {
+static float lerp(const float a, const float b, const float t)
+{
   return (1.0 - t) * a + t * b;
 }
 
 namespace ospray {
 
-TransferFunction::Line::Line() : line({vec2f(0, 0), vec2f(1, 1)}), color(0xffffffff) {}
-void TransferFunction::Line::move_point(const float &start_x, const vec2f &end){
+TransferFunction::Line::Line() :
+  line({vec2f(0, 0),
+  vec2f(1, 1)}),
+   color(0xffffffff)
+{
+}
+
+void TransferFunction::Line::move_point(const float &start_x, const vec2f &end)
+{
   // Find the closest point to where the user clicked
   auto fnd = std::min_element(line.begin(), line.end(),
       [&start_x](const vec2f &a, const vec2f &b){
@@ -48,7 +56,9 @@ void TransferFunction::Line::move_point(const float &start_x, const vec2f &end){
     }
   }
 }
-void TransferFunction::Line::remove_point(const float &x){
+
+void TransferFunction::Line::remove_point(const float &x)
+{
   if (line.size() == 2){
     return;
   }
@@ -75,15 +85,25 @@ TransferFunction::TransferFunction(std::shared_ptr<sg::TransferFunction> &tfn)
   rgba_lines[2].color = 0xffff0000;
   rgba_lines[3].color = 0xffffffff;
 }
-TransferFunction::~TransferFunction(){
+
+TransferFunction::~TransferFunction()
+{
   if (palette_tex){
     glDeleteTextures(1, &palette_tex);
   }
 }
-TransferFunction::TransferFunction(const TransferFunction &t) : transferFcn(t.transferFcn),
-  rgba_lines(t.rgba_lines), active_line(t.active_line), fcn_changed(true), palette_tex(0)
-{}
-TransferFunction& TransferFunction::operator=(const TransferFunction &t) {
+
+TransferFunction::TransferFunction(const TransferFunction &t) :
+  transferFcn(t.transferFcn),
+  rgba_lines(t.rgba_lines),
+  active_line(t.active_line),
+  fcn_changed(true),
+  palette_tex(0)
+{
+}
+
+TransferFunction& TransferFunction::operator=(const TransferFunction &t)
+{
   if (this == &t) {
     return *this;
   }
@@ -93,7 +113,9 @@ TransferFunction& TransferFunction::operator=(const TransferFunction &t) {
   fcn_changed = true;
   return *this;
 }
-void TransferFunction::drawUi(){
+
+void TransferFunction::drawUi()
+{
   if (ImGui::Begin("Transfer Function")){
     ImGui::Text("Left click and drag to add/move points\nRight click to remove\n");
     /*
@@ -171,7 +193,9 @@ void TransferFunction::drawUi(){
   }
   ImGui::End();
 }
-void TransferFunction::render() {
+
+void TransferFunction::render()
+{
   // TODO: How many samples for a palette? 128 or 256 is probably plent
   const int samples = 256;
   // Upload to GL if the transfer function has changed
@@ -239,72 +263,5 @@ void TransferFunction::render() {
     fcn_changed = false;
   }
 }
-/*
-bool TransferFunction::load_fcn(const vl::FileName &file_name){
-  std::ifstream fin{file_name.c_str(), std::ios::binary};
-  int32_t magic = 0;
-  if (!fin){
-    std::string msg = "Could not open file '" + file_name.file_name + "'";
-    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "File Not Found", msg.c_str(), NULL);
-    return false;
-  }
-  fin.read(reinterpret_cast<char*>(&magic), sizeof(int32_t));
-  if (magic != MAGIC){
-    std::string msg = "File '" + file_name.file_name + "' is not a valid TransferFunction";
-    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Invalid File", msg.c_str(), NULL);
-    return false;
-  }
-  for (auto &line : rgba_lines){
-    line.line.clear();
-    uint64_t n = 0;
-    fin.read(reinterpret_cast<char*>(&n), sizeof(uint64_t));
-    line.line.resize(n, vec2f(-1));
-    fin.read(reinterpret_cast<char*>(line.line.data()), sizeof(vec2f) * n);
-  }
-  fcn_changed = true;
-  return true;
-}
-*/
-void TransferFunction::save_fcn() const {
-  /*
-     vl::FileDialog dialog{"vlfn"};
-  // The file format is an int32 magic number followed by the red, green, blue and alpha lines
-  // Each color line begins with a uint64_t specifying the number of points making
-  // the line followed by the vec2 points on the line
-  vl::FileResult fresult = dialog.save_file();
-  if (fresult.status != vl::FileDialogStatus::FILE_OKAY){
-  if (fresult.status == vl::FileDialogStatus::FILE_ERROR){
-  std::cout << "Dialog error: " << fresult.result << "\n";
-  }
-  return;
-  }
-  if (fresult.result.size() < 6 || fresult.result.extension() != "vlfn"){
-  fresult.result.file_name += ".vlfn";
-  }
-  std::ofstream fout{fresult.result.c_str(), std::ios::binary};
-  fout.write(reinterpret_cast<const char*>(&MAGIC), sizeof(int32_t));
-  for (const auto &line : rgba_lines){
-  const uint64_t n = line.line.size();
-  fout.write(reinterpret_cast<const char*>(&n), sizeof(uint64_t));
-  fout.write(reinterpret_cast<const char*>(line.line.data()), sizeof(vec2) * n);
-  }
-  */
-}
-void TransferFunction::load_fcn(){
-  /*
-   * TODO: Add native file dialog as well.
-   vl::FileDialog dialog{"vlfn"};
-   vl::FileResult fresult = dialog.open_file();
-   if (fresult.status != vl::FileDialogStatus::FILE_OKAY){
-   if (fresult.status == vl::FileDialogStatus::FILE_ERROR){
-   std::cout << "Dialog error: " << fresult.result << "\n";
-   }
-   return;
-   }
-   load_fcn(fresult.result);
-   */
-}
 
-}
-
-
+}// ::ospray

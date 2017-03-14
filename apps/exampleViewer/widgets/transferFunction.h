@@ -20,8 +20,24 @@ namespace ospray {
 
   class OSPRAY_IMGUI3D_INTERFACE TransferFunction
   {
+  public:
+
+    TransferFunction(std::shared_ptr<sg::TransferFunction> &tfn);
+    ~TransferFunction();
+    TransferFunction(const TransferFunction &t);
+    TransferFunction& operator=(const TransferFunction &t);
+    /* Draw the transfer function editor widget
+    */
+    void drawUi();
+    /* Render the transfer function to a 1D texture that can
+     * be applied to volume data
+     */
+    void render();
     // A line is made up of points sorted by x, its coordinates are
     // on the range [0, 1]
+
+  private:
+
     struct Line
     {
       std::vector<ospcommon::vec2f> line;
@@ -58,27 +74,6 @@ namespace ospray {
 
     // Magic number to identify these files (it's VLFN in ASCII)
     const static int32_t MAGIC = 0x564c464e;
-
-  public:
-    TransferFunction(std::shared_ptr<sg::TransferFunction> &tfn);
-    ~TransferFunction();
-    TransferFunction(const TransferFunction &t);
-    TransferFunction& operator=(const TransferFunction &t);
-    /* Draw the transfer function editor widget
-    */
-    void drawUi();
-    /* Render the transfer function to a 1D texture that can
-     * be applied to volume data
-     */
-    void render();
-    /* Load the transfer function from a file
-    */
-    //bool load_fcn(const vl::FileName &file_name);
-
-  private:
-    // Save/load the transfer function through the file dialog
-    void save_fcn() const;
-    void load_fcn();
   };
 
 }// ::ospray

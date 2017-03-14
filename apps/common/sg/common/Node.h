@@ -139,7 +139,7 @@ namespace ospray {
       };
 
       virtual std::string toString() const;
-      std::shared_ptr<sg::Param> param(const std::string &name) const;
+      Handle param(const std::string &name) const;
 
       //! \brief Initialize this node's value from given XML node
       /*!
@@ -163,9 +163,6 @@ namespace ospray {
       //! just for convenience; add a typed 'setParam' function
       template<typename T>
       void setParam(const std::string &name, const T &t);
-
-      template<typename FCN_T>
-      void for_each_param(FCN_T &&fcn);
 
       virtual void init(); //intialize children
 
@@ -231,7 +228,11 @@ namespace ospray {
 
       //! returns the value of the node in the desired type
       template<typename T>
-      const T& valueAs();
+      T& valueAs();
+
+      //! returns the value of the node in the desired type
+      template<typename T>
+      const T& valueAs() const;
 
       //! set the value of the node.  Requires strict typecast
       void setValue(SGVar val);
@@ -327,18 +328,26 @@ namespace ospray {
     template<typename T>
     inline void Node::setParam(const std::string &name, const T &t)
     {
-      properties.params[name] = std::make_shared<ParamT<T>>(name,t);
-    }
-
-    template<typename FCN_T>
-    inline void Node::for_each_param(FCN_T &&fcn)
-    {
-      for (auto &p : properties.params)
-        fcn(p.second);
+      auto iter = properties.children.find("name");
+      if (iter != std::end(properties.children))
+        iter->second->setValue(t);
+      else {
+        auto node = std::make_shared<Node>();
+        node->setValue(t);
+        node->setName(name);
+        add(node);
+      }
     }
 
     template<typename T>
-    inline const T& Node::valueAs()
+    inline T& Node::valueAs()
+    {
+      std::lock_guard<std::mutex> lock{mutex};
+      return properties.value.get<T>();
+    }
+
+    template<typename T>
+    inline const T& Node::valueAs() const
     {
       std::lock_guard<std::mutex> lock{mutex};
       return properties.value.get<T>();

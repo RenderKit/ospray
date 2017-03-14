@@ -41,6 +41,9 @@ namespace ospray {
       OSPAny& operator=(T rhs);
 
       template<typename T>
+      T& get();
+
+      template<typename T>
       const T& get() const;
 
       template<typename T>
@@ -122,6 +125,24 @@ namespace ospray {
       );
 
       return *this;
+    }
+
+    template<typename T>
+    T &OSPAny::get()
+    {
+      if (!valid())
+        throw std::runtime_error("Can't query value from an empty OSPAny!");
+
+      if (is<T>())
+        return *(static_cast<T*>(currentValue->data()));
+      else {
+        std::stringstream msg;
+        msg << "Incorrect type queried for OSPAny!" << '\n';
+        msg << "  queried type == " << typeid(T).name() << '\n';
+        msg << "  current type == " << currentValue->valueTypeID().name()
+            << '\n';
+        throw std::runtime_error(msg.str());
+      }
     }
 
     template<typename T>

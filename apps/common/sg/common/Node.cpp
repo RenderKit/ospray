@@ -73,14 +73,9 @@ namespace ospray {
       return "ospray::sg::Node";
     }
 
-    std::shared_ptr<sg::Param> Node::param(const std::string &name) const
+    Node::Handle Node::param(const std::string &name) const
     {
-      auto it = properties.params.find(name);
-
-      if (it != properties.params.end())
-        return it->second;
-
-      return {};
+      return child(name);
     }
 
     void Node::setFromXML(const xml::Node &node, const unsigned char *binBasePtr)
