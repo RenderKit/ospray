@@ -46,10 +46,14 @@ namespace ospray {
     ImGuiViewer(const std::deque<ospcommon::box3f> &worldBounds,
                 const std::deque<cpp::Model> &model,
                 cpp::Renderer renderer,
+                cpp::Renderer rendererDW,
+                cpp::FrameBuffer frameBufferDW,
                 cpp::Camera camera);
     ~ImGuiViewer();
 
-    void setRenderer(OSPRenderer renderer);
+    void setRenderer(OSPRenderer renderer,
+                     OSPRenderer rendererDW,
+                     OSPFrameBuffer frameBufferDW);
     void setScale(const ospcommon::vec3f& v )  {scale = v;}
     void setTranslation(const ospcommon::vec3f& v)  {translate = v;}
     void setLockFirstAnimationFrame(bool st) {lockFirstAnimationFrame = st;}
@@ -78,6 +82,8 @@ namespace ospray {
     std::deque<ospcommon::box3f> worldBounds;
     cpp::Camera   camera;
     cpp::Renderer renderer;
+    cpp::Renderer rendererDW;
+    cpp::FrameBuffer frameBufferDW;
 
     double lastFrameFPS;
 

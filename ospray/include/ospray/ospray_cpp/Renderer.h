@@ -22,74 +22,74 @@
 #include <ospray/ospray_cpp/Material.h>
 
 namespace ospray {
-namespace cpp    {
+  namespace cpp    {
 
-class Renderer : public ManagedObject_T<OSPRenderer>
-{
-public:
+    class Renderer : public ManagedObject_T<OSPRenderer>
+    {
+    public:
 
-  Renderer(const std::string &type);
-  Renderer(const Renderer &copy);
-  Renderer(OSPRenderer existing = nullptr);
+      Renderer(const std::string &type);
+      Renderer(const Renderer &copy);
+      Renderer(OSPRenderer existing = nullptr);
 
-  Material newMaterial(const std::string &type) const;
-  Light    newLight(const std::string &type) const;
+      Material newMaterial(const std::string &type) const;
+      Light    newLight(const std::string &type) const;
 
-  float renderFrame(const FrameBuffer &fb, uint32_t channels) const;
+      float renderFrame(const FrameBuffer &fb, uint32_t channels) const;
 
-  OSPPickResult pick(const ospcommon::vec2f &screenPos) const;
-};
+      OSPPickResult pick(const ospcommon::vec2f &screenPos) const;
+    };
 
-// Inlined function definitions ///////////////////////////////////////////////
+    // Inlined function definitions ///////////////////////////////////////////////
 
-inline Renderer::Renderer(const std::string &type)
-{
-  OSPRenderer c = ospNewRenderer(type.c_str());
-  if (c) {
-    ospObject = c;
-  } else {
-    throw std::runtime_error("Failed to create OSPRenderer!");
-  }
-}
+    inline Renderer::Renderer(const std::string &type)
+    {
+      OSPRenderer c = ospNewRenderer(type.c_str());
+      if (c) {
+        ospObject = c;
+      } else {
+        throw std::runtime_error("Failed to create OSPRenderer!");
+      }
+    }
 
-inline Renderer::Renderer(const Renderer &copy) :
-  ManagedObject_T<OSPRenderer>(copy.handle())
-{
-}
+    inline Renderer::Renderer(const Renderer &copy) :
+      ManagedObject_T<OSPRenderer>(copy.handle())
+    {
+    }
 
-inline Renderer::Renderer(OSPRenderer existing) :
-  ManagedObject_T<OSPRenderer>(existing)
-{
-}
+    inline Renderer::Renderer(OSPRenderer existing) :
+      ManagedObject_T<OSPRenderer>(existing)
+    {
+    }
 
-inline Material Renderer::newMaterial(const std::string &type) const
-{
-  auto mat = Material(ospNewMaterial(handle(), type.c_str()));
+    inline Material Renderer::newMaterial(const std::string &type) const
+    {
+      auto mat = Material(ospNewMaterial(handle(), type.c_str()));
 
-  if (!mat.handle()) {
-    throw std::runtime_error("Failed to create OSPMaterial!");
-  }
+      if (!mat.handle()) {
+        throw std::runtime_error("Failed to create OSPMaterial!");
+      }
 
-  return mat;
-}
+      return mat;
+    }
 
-inline Light Renderer::newLight(const std::string &type) const
-{
-  return Light(ospNewLight(handle(), type.c_str()));
-}
+    inline Light Renderer::newLight(const std::string &type) const
+    {
+      return Light(ospNewLight(handle(), type.c_str()));
+    }
 
-inline float Renderer::renderFrame(const FrameBuffer &fb, uint32_t channels) const
-{
-  return ospRenderFrame(fb.handle(), handle(), channels);
-}
+    inline float Renderer::renderFrame(const FrameBuffer &fb, uint32_t channels) const
+    {
+      return ospRenderFrame(fb.handle(), handle(), channels);
+    }
 
-inline OSPPickResult Renderer::pick(const ospcommon::vec2f &screenPos) const
-{
-  OSPPickResult result;
-  ospPick(&result, handle(), (const osp::vec2f&)screenPos);
-  return result;
-}
+    inline OSPPickResult Renderer::pick(const ospcommon::vec2f &screenPos) const
+    {
+      OSPPickResult result;
+      ospPick(&result, handle(), (const osp::vec2f&)screenPos);
+      return result;
+    }
 
 
-}// namespace cpp
+  }// namespace cpp
 }// namespace ospray

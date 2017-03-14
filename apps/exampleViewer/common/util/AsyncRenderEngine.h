@@ -45,7 +45,9 @@ namespace ospray {
 
     // Properties //
 
-    void setRenderer(cpp::Renderer renderer);
+    void setRenderer(cpp::Renderer renderer,
+                     cpp::Renderer rendererDW,
+                     cpp::FrameBuffer frameBufferDW);
 
     void setFbSize(const ospcommon::vec2i &size);
 
@@ -85,10 +87,10 @@ namespace ospray {
     std::atomic<ExecState> state {ExecState::INVALID};
 
     cpp::FrameBuffer frameBuffer;
+    cpp::FrameBuffer frameBufferDW;
 
     transactional_value<cpp::Renderer>    renderer;
     transactional_value<cpp::Renderer>    rendererDW;
-    transactional_value<cpp::FrameBuffer> frameBufferDW;
     transactional_value<ospcommon::vec2i> fbSize;
 
     int nPixels {0};

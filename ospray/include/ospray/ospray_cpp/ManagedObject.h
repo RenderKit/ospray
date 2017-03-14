@@ -133,6 +133,10 @@ namespace ospray {
       //! Get the underlying specific OSP* handle
       OSP_TYPE handle() const;
 
+      //! return whether the given object is valid, or NULL
+      inline operator bool () const { return handle() != nullptr; }
+
+
     protected:
 
       OSP_TYPE ospObject;

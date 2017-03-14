@@ -16,51 +16,60 @@
 
 #include "RendererParser.h"
 
-bool DefaultRendererParser::parse(int ac, const char **&av)
-{
-  for (int i = 1; i < ac; i++) {
-    const std::string arg = av[i];
-    if (arg == "--renderer" || arg == "-r") {
-      assert(i+1 < ac);
-      rendererType = av[++i];
-    } else if (arg == "--spp" || arg == "-spp") {
-      spp = atoi(av[++i]);
-    } else if (arg == "--noshadows" || arg == "-ns") {
-      shadows = 0;
-    } else if (arg == "--ao-samples" || arg == "-ao") {
-      aoSamples = atoi(av[++i]);
-    } else if (arg == "--max-depth") {
-      maxDepth = atoi(av[++i]);
-    }
-  }
+namespace commandline {
 
-  finalize();
-
-  return true;
-}
-
-ospray::cpp::Renderer DefaultRendererParser::renderer()
-{
-  return parsedRenderer;
-}
-
-void DefaultRendererParser::finalize()
-{
-  if (rendererType.empty())
-    rendererType = "scivis";
-
-  parsedRenderer = ospray::cpp::Renderer(rendererType.c_str());
-
-  // Set renderer defaults (if not using 'aoX' renderers)
-  if (rendererType[0] != 'a' && rendererType[1] != 'o')
+  bool DefaultRendererParser::parse(int ac, const char **&av)
   {
-    parsedRenderer.set("aoSamples", aoSamples);
-    parsedRenderer.set("shadowsEnabled", shadows);
-    parsedRenderer.set("aoTransparencyEnabled", 1);
+    for (int i = 1; i < ac; i++) {
+      const std::string arg = av[i];
+      if (arg == "--renderer" || arg == "-r") {
+        assert(i+1 < ac);
+        rendererType = av[++i];
+      } else if (arg == "--spp" || arg == "-spp") {
+        spp = atoi(av[++i]);
+      } else if (arg == "--noshadows" || arg == "-ns") {
+        shadows = 0;
+      } else if (arg == "--ao-samples" || arg == "-ao") {
+        aoSamples = atoi(av[++i]);
+      } else if (arg == "--max-depth") {
+        maxDepth = atoi(av[++i]);
+      }
+    }
+
+    // iw - moved finalize into create() so we can create multiple
+    // renderers from one parsed set of settings
+    // finalize();
+
+    return true;
   }
 
-  parsedRenderer.set("spp", spp);
-  parsedRenderer.set("maxDepth", maxDepth);
+  ospray::cpp::Renderer DefaultRendererParser::create()
+  {
+    // iw - moved finalize into create() so we can create multiple
+    // renderers from one parsed set of settings
+    finalize();
+    return parsedRenderer;
+  }
 
-  parsedRenderer.commit();
+  void DefaultRendererParser::finalize()
+  {
+    if (rendererType.empty())
+      rendererType = "scivis";
+
+    parsedRenderer = ospray::cpp::Renderer(rendererType.c_str());
+
+    // Set renderer defaults (if not using 'aoX' renderers)
+    if (rendererType[0] != 'a' && rendererType[1] != 'o')
+      {
+        parsedRenderer.set("aoSamples", aoSamples);
+        parsedRenderer.set("shadowsEnabled", shadows);
+        parsedRenderer.set("aoTransparencyEnabled", 1);
+      }
+
+    parsedRenderer.set("spp", spp);
+    parsedRenderer.set("maxDepth", maxDepth);
+
+    parsedRenderer.commit();
+  }
+
 }

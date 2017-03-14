@@ -23,9 +23,13 @@ namespace ospray {
     stop();
   }
 
-  void AsyncRenderEngine::setRenderer(cpp::Renderer renderer)
+  void AsyncRenderEngine::setRenderer(cpp::Renderer renderer,
+                                      cpp::Renderer rendererDW,
+                                      cpp::FrameBuffer frameBufferDW)
   {
-    this->renderer = renderer;
+    this->renderer      = renderer;
+    this->rendererDW    = rendererDW;
+    this->frameBufferDW = frameBufferDW;
   }
 
   void AsyncRenderEngine::setFbSize(const ospcommon::vec2i &size)
@@ -97,6 +101,7 @@ namespace ospray {
     if (state == ExecState::INVALID)
     {
       renderer.update();
+      rendererDW.update();
       state = renderer.ref().handle() ? ExecState::STOPPED : ExecState::INVALID;
     }
   }
@@ -150,10 +155,14 @@ namespace ospray {
 
       if (resetAccum) {
         frameBuffer.clear(OSP_FB_ACCUM);
+        if (frameBufferDW)
+          frameBufferDW.clear(OSP_FB_ACCUM);
       }
 
       fps.startRender();
       renderer.ref().renderFrame(frameBuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
+      if (rendererDW.ref())
+        rendererDW.ref().renderFrame(frameBufferDW, OSP_FB_COLOR | OSP_FB_ACCUM);
       fps.doneRender();
 
       auto *srcPB = (uint32_t*)frameBuffer.map(OSP_FB_COLOR);
