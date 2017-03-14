@@ -97,7 +97,7 @@ namespace ospray {
     }
 
     inline OSPAny::OSPAny(const OSPAny &copy) :
-      currentValue(copy.currentValue->clone())
+      currentValue(copy.valid() ? copy.currentValue->clone() : nullptr)
     {
     }
 
