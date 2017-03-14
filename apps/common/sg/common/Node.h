@@ -262,8 +262,6 @@ namespace ospray {
 
       virtual bool isValid();
 
-      static std::vector<std::shared_ptr<sg::Node>> nodes;
-
       //    protected:
 
       virtual bool computeValid();

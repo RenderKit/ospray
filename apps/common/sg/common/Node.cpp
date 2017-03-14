@@ -22,8 +22,6 @@
 namespace ospray {
   namespace sg {
 
-    std::vector<std::shared_ptr<sg::Node>> Node::nodes;
-
     // ==================================================================
     // sg node implementations
     // ==================================================================
@@ -448,7 +446,6 @@ namespace ospray {
       }
 
       std::shared_ptr<sg::Node> newNode = creator();
-      Node::nodes.push_back(newNode);
       newNode->init();
       newNode->setName(name);
       newNode->setType(type);
