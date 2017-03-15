@@ -133,6 +133,7 @@ namespace ospray {
     default:
       throw std::runtime_error("unsupported trianglemesh.vertex data type");
     }
+    
     if (normalData) switch (normalData->type) {
     case OSP_FLOAT3:  numCompsInNor = 3; break;
     case OSP_FLOAT:

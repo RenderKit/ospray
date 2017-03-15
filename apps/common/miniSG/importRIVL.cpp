@@ -259,6 +259,7 @@ namespace ospray {
             std::string name = node.getProp("name","");
             std::string type = node.getProp("type");
 
+            mat->setParam("type",strdup(type.c_str()));
             xml::for_each_child_of(node,[&](const xml::Node &child){
                 std::string childNodeType = child.name;
 

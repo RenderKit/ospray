@@ -43,7 +43,10 @@ const varying BSDF* uniform MetallicPaint_getBSDF(const uniform PathTraceMateria
   varying LinearSpace3f* uniform shadingFrame = LinearSpace3f_create(ctx, frame(dg.Ns));
   varying BSDF* uniform bsdf = MultiBSDF_create(ctx);
 
-  MultiBSDF_add(bsdf, Lambert_create(ctx, shadingFrame, self->shadeColor), luminance(self->shadeColor));
+  const vec3f _shadeColor = self->shadeColor;
+  MultiBSDF_add(bsdf, 
+                Lambert_create(ctx, shadingFrame, _shadeColor), 
+                luminance(self->shadeColor));
 
   if (self->glitterSpread != 0.0f & ne(self->glitterColor, make_vec3f(0.0f)))
   {

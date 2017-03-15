@@ -139,7 +139,7 @@ inline void shade_ao(uniform SimpleAO *uniform self,
       hits++;
   }
   float diffuse = absf(dot(N,ray.dir));
-  color = superColor * make_vec3f(diffuse * (1.0f - (float)hits/sampleCnt));
+  color = superColor * make_vec3f(diffuse * (1.0f - hits/(float)sampleCnt));
   alpha = 1.f;
   return;
 }

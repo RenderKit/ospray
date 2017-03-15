@@ -122,11 +122,20 @@ namespace ospray {
     case ' ':
       animationPaused = !animationPaused;
       break;
-    case '=':
+    case '<':
       animationFrameDelta = max(animationFrameDelta-0.01, 0.0001);
       break;
-    case '-':
+    case '>':
       animationFrameDelta = min(animationFrameDelta+0.01, 1.0);
+      break;
+    case '=':
+    case '+':
+      motionSpeed *= 1.5f;
+      std::cout << "new motion speed: " << motionSpeed << std::endl;
+      break;
+    case '-':
+      motionSpeed /= 1.5f;
+      std::cout << "new motion speed: " << motionSpeed << std::endl;
       break;
     case 'R':
       toggleRenderingPaused();
