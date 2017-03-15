@@ -121,7 +121,7 @@ namespace ospray {
       auto &device = ospray::api::Device::current;
 
       auto numThreads = device ? device->numThreads : -1;
-      
+
       // initialize embree. (we need to do this here rather than in
       // ospray::init() because in mpi-mode the latter is also called
       // in the host-stubs, where it shouldn't.

@@ -69,8 +69,22 @@ inline ospray::api::Device *createMpiDevice()
   return device;
 }
 
+// iw - on some systems we seem to have 'somebody'
+// pre-affinitzie us to only certain cores ... let's fix this
+// :-)
+void ospray_deAffinitize()
+{
+  cpu_set_t validCores;
+  CPU_ZERO(&validCores);
+  for (int i=0;i<CPU_SETSIZE;i++)
+    CPU_SET(i,&validCores);
+  sched_setaffinity(getpid(),sizeof(validCores),&validCores);
+}
+
 extern "C" void ospInit(int *_ac, const char **_av)
 {
+  ospray_deAffinitize();
+
   if (ospray::api::Device::current) {
     throw std::runtime_error("OSPRay error: device already exists "
                              "(did you call ospInit twice?)");
