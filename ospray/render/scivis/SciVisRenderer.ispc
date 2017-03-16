@@ -193,7 +193,8 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
       // Check to see if we've exited the current volume.
       if (ray.t0 >= ray.t) {
 
-        ray.t0 = ray.t + renderer->volumeEpsilon;
+        // ray.t0 = ray.t + renderer->volumeEpsilon;
+	ray.t0 += renderer->volumeEpsilon;
         ray.t = tMax;
         volume = SciVisRenderer_intersectVolumes(renderer, ray, rayOffset);
 
