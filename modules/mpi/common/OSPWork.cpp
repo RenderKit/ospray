@@ -358,15 +358,41 @@ namespace ospray {
       {
         Data *ospdata = nullptr;
         if (!data.empty()) {
+          // iw - shouldn't we _always_ set the shared_data flag here?
+          // after deserialization all the data is in a std::vector
+          // (data) that we own, and never free, anywya -- shouldn't
+          // we just share this?
           ospdata = new Data(nItems, format, data.data(), flags);
         } else if (localData) {
+          // iw - how can that ever trigger? localdata should get set
+          // only on the master, but 'run' happens only on the
+          // workers.... right?
           ospdata = new Data(nItems, format, localData, flags);
         } else {
+          // iw - can this ever happen? (empty data?) if so, shouldn't
+          // we make sure that flags get the shared flag removed (in
+          // case it was set)
           ospdata = new Data(nItems, format, nullptr, flags);
         }
         Assert(ospdata);
+        // iw - not sure if string would be handled correctly (I doubt
+        // it), so let's assert that nobody accidentally uses it.
+        assert(format != OSP_STRING);
         handle.assign(ospdata);
-        if (format == OSP_OBJECT) {
+        if (format == OSP_OBJECT ||
+            format == OSP_CAMERA  ||
+            format == OSP_DATA ||
+            format == OSP_FRAMEBUFFER ||
+            format == OSP_GEOMETRY ||
+            format == OSP_LIGHT ||
+            format == OSP_MATERIAL ||
+            format == OSP_MODEL ||
+            format == OSP_RENDERER ||
+            format == OSP_TEXTURE ||
+            format == OSP_TRANSFER_FUNCTION ||
+            format == OSP_VOLUME ||
+            format == OSP_PIXEL_OP
+            ) {
           /* translating handles to managedobject pointers: if a
              data array has 'object' or 'data' entry types, then
              what the host sends are _handles_, not pointers, but
@@ -389,9 +415,9 @@ namespace ospray {
         static WarnOnce warning("#osp.mpi: Warning - newdata serialize "
                                 "currently uses a std::vector... ");
         /* note there are two issues with this: first is that when
-           sharing data buffer we'd hvae only localdata set (not the
+           sharing data buffer we'd have only localdata set (not the
            this->data vector; second is that even _if_ we use the data
-           vector we're (temporarily) doubling memory consumptoin
+           vector we're (temporarily) doubling memory consumption
            because we copy all data into the std::vector first, just
            so we can send it.... */
         b << (int64)handle << nItems << (int32)format << flags << data;
