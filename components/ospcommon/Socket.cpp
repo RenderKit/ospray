@@ -29,7 +29,9 @@
 typedef int socklen_t;
 #define SHUT_RDWR 0x2
 #else 
-#include <unistd.h>
+#ifdef __linux__
+#  include <unistd.h>
+#endif
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
