@@ -53,5 +53,6 @@ namespace ospray {
     };
 
     OSP_REGISTER_MATERIAL(Glass,PathTracer_Glass);
+    OSP_REGISTER_MATERIAL(Glass,PathTracer_Dielectric);
   }
 }
