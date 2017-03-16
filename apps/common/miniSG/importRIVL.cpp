@@ -217,11 +217,11 @@ namespace ospray {
             txt.ptr->texData = new miniSG::Texture2D;
             nodeList.push_back(txt.ptr);
 
-            int height   = std::stol(node.getProp("height"));
-            int width    = std::stol(node.getProp("width"));
-            int ofs      = std::stol(node.getProp("ofs"));
-            int channels = std::stol(node.getProp("channels"));
-            int depth    = std::stol(node.getProp("depth"));
+            size_t height   = std::stoll(node.getProp("height"));
+            size_t width    = std::stoll(node.getProp("width"));
+            size_t ofs      = std::stoll(node.getProp("ofs"));
+            size_t channels = std::stoll(node.getProp("channels"));
+            size_t depth    = std::stoll(node.getProp("depth"));
             std::string format = node.getProp("format");
 
             txt.ptr->texData->channels = channels;
@@ -334,8 +334,7 @@ namespace ospray {
                   }
                   free(value);
                 } else if (!childNodeType.compare("textures")) {
-                  int num = std::stoll(child.getProp("num","-1"));
-
+                  size_t num = std::stoll(child.getProp("num","-1"));
                   if (child.content == "") {
                   } else {
                     char *tokenBuffer = strdup(child.content.c_str());
