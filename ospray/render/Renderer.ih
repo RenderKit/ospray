@@ -53,9 +53,6 @@ struct ScreenSample {
 typedef void (*Renderer_RenderSampleFct)(uniform Renderer *uniform self,
                                          void *uniform perFrameData,
                                          varying ScreenSample &retValue);
-typedef void (*Renderer_ToneMapFct)(uniform Renderer *uniform self,
-                                 varying vec3f &color,
-                                 const varying vec2i &pixelID);
 typedef unmasked void (*Renderer_RenderTileFct)(uniform Renderer *uniform self,
                                        void *uniform perFrameData,
                                        uniform Tile &tile,
@@ -67,7 +64,6 @@ typedef unmasked void (*Renderer_EndFrameFct)(uniform Renderer *uniform self,
 
 struct Renderer {
   Renderer_RenderSampleFct renderSample;
-  Renderer_ToneMapFct      toneMap;
   Renderer_RenderTileFct   renderTile;
   Renderer_BeginFrameFct   beginFrame;
   Renderer_EndFrameFct     endFrame;
@@ -77,7 +73,7 @@ struct Renderer {
   FrameBuffer *fb; /*!< currently rendered frame buffer. may be NULL
                      or invalid before start of, or after end of, a
                      frame */
-  Model       *model;
+  Model       *uniform model;
   Camera      *camera;
   float        epsilon; // parameter to prevent self-intersection issues, will be scaled with diameter of the scene
   int32        spp; // number of samples per pixel; negative values mean subsampling, i.e. render only every 2^-spp pixel in x and y for the first frame

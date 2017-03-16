@@ -193,7 +193,6 @@ void Renderer_Constructor(uniform Renderer *uniform self,
   self->renderTile   = Renderer_default_renderTile;
   self->beginFrame   = Renderer_default_beginFrame;
   self->endFrame     = Renderer_default_endFrame;
-  self->toneMap      = NULL;
 }
 
 void Renderer_Constructor(uniform Renderer *uniform self,
@@ -208,18 +207,20 @@ void Renderer_Constructor(uniform Renderer *uniform self,
   self->spp    = spp;
 }
 
+
+// Exports (called from C++)
+//////////////////////////////////////////////////////////////////////////////
+
 export void Renderer_renderTile(void *uniform _self,
                                 void *uniform perFrameData,
                                 uniform Tile &tile,
                                 uniform int jobID)
 {
-  //print("Renderer_renderTile\n");
   uniform Renderer *uniform self = (uniform Renderer *uniform)_self;
   self->renderTile(self, perFrameData, tile, jobID);
 }
 
-export void *uniform Renderer_beginFrame(void *uniform _self,
-                                void *uniform _fb)
+export void *uniform Renderer_beginFrame(void *uniform _self, void *uniform _fb)
 {
   uniform Renderer *uniform self = (uniform Renderer *uniform)_self;
   uniform FrameBuffer *uniform fb = (uniform FrameBuffer *uniform)_fb;
@@ -227,8 +228,7 @@ export void *uniform Renderer_beginFrame(void *uniform _self,
 }
 
 
-export void Renderer_endFrame(void *uniform _self,
-                              void *uniform perFrameData)
+export void Renderer_endFrame(void *uniform _self, void *uniform perFrameData)
 {
   uniform Renderer *uniform self = (uniform Renderer *uniform)_self;
   self->endFrame(self, perFrameData);
