@@ -29,7 +29,6 @@ namespace exampleViewer {
   ospcommon::vec3f translate;
   ospcommon::vec3f scale;
   bool lockFirstFrame = false;
-  bool showGui = true;
   bool fullscreen = false;
   std::string displayWall = "";
 
@@ -100,8 +99,6 @@ namespace exampleViewer {
         scale.z = atof(av[++i]);
       } else if (arg == "--lockFirstFrame") {
         lockFirstFrame = true;
-      } else if (arg == "--nogui") {
-        showGui = false;
       } else if (arg == "--fullscreen") {
         fullscreen = true;
       }
@@ -154,7 +151,6 @@ namespace exampleViewer {
       // no diplay wall - nix the display wall renderer
       rendererDW = ospray::cpp::Renderer();
     }
-    ospray::imgui3D::ImGui3DWidget::showGui = showGui;
 
     ospray::ImGuiViewer window(bbox, model, renderer, rendererDW, frameBufferDW, camera);
     window.setScale(scale);
