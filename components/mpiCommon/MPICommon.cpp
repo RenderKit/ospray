@@ -197,6 +197,8 @@ namespace ospray {
                                   290374);
         assert(worldGroup);
         mpi::async::CommLayer::WORLD->group = worldGroup;
+        PING;
+        PRINT(mpi::async::CommLayer::WORLD->group->size);
         if (logMPI)
           std::cout << "#osp.mpi: async messaging layer started ... " << std::endl;
       }
