@@ -179,20 +179,25 @@ unmasked void Renderer_default_renderTile(uniform Renderer *uniform self,
   }
 }
 
+export void Renderer_set(void *uniform _self
+    , void *uniform _model
+    , void *uniform _camera
+    , const uniform float epsilon
+    , const uniform int32 spp
+    , const uniform vec4f &bgColor
+    , void *uniform _maxDepthTexture
+    );
+
 void Renderer_Constructor(uniform Renderer *uniform self,
                           void *uniform cppE)
 {
   self->cppEquivalent = cppE;
-  self->model  = NULL;
-  self->camera = NULL;
-  self->fb     = NULL;
-  self->spp    = 1;
-  self->backgroundEnabled = true;
-  self->maxDepthTexture = NULL;
   self->renderSample = Renderer_default_renderSample;
   self->renderTile   = Renderer_default_renderTile;
   self->beginFrame   = Renderer_default_beginFrame;
   self->endFrame     = Renderer_default_endFrame;
+  self->fb = NULL;
+  Renderer_set(self, NULL, NULL, 1e-6f, 1, make_vec4f(0.f), NULL);
 }
 
 void Renderer_Constructor(uniform Renderer *uniform self,
@@ -239,8 +244,7 @@ export void Renderer_set(void *uniform _self
     , void *uniform _camera
     , const uniform float epsilon
     , const uniform int32 spp
-    , const uniform bool backgroundEnabled
-    , const uniform vec3f &bgColor
+    , const uniform vec4f &bgColor
     , void *uniform _maxDepthTexture
     )
 {
@@ -249,7 +253,6 @@ export void Renderer_set(void *uniform _self
   self->camera = (uniform Camera *uniform)_camera;
   self->epsilon = epsilon;
   self->spp = spp;
-  self->backgroundEnabled = backgroundEnabled;
   self->bgColor = bgColor;
   self->maxDepthTexture = (uniform Texture2D *uniform)_maxDepthTexture;
 

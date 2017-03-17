@@ -91,11 +91,8 @@ namespace ospray {
     /*! adaptive accumulation: variance-based error to reach */
     float errorThreshold {0.f};
 
-    /*! \brief whether the background should be rendered (e.g. for compositing the background may be disabled) */
-    bool backgroundEnabled {true};
-
     /*! \brief the background color */
-    vec3f bgColor {1.f};
+    vec4f bgColor {0.f};
 
     /*! \brief maximum depth texture provided as an optional parameter to the renderer, used for early ray termination
 

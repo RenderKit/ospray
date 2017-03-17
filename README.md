@@ -1,9 +1,9 @@
 OSPRay
 ======
 
-This is release v1.2.1 of OSPRay. For changes and new features see the
-[changelog](CHANGELOG.md). Also visit http://www.ospray.org for more
-information.
+This is release v1.3.0 (devel) of OSPRay. For changes and new features
+see the [changelog](CHANGELOG.md). Also visit http://www.ospray.org for
+more information.
 
 OSPRay Overview
 ===============
@@ -65,18 +65,18 @@ before you can build OSPRay you need the following prerequisites:
 
 -   To build OSPRay you need [CMake](http://www.cmake.org), any form of
     C++11 compiler (we recommend using GCC, but also support Clang and
-    the [Intel® C++ compiler
-    (ICC)](https://software.intel.com/en-us/c-compilers)), and standard
-    Linux development tools. To build the demo viewers, you should also
-    have some version of OpenGL and the GL Utility Toolkit (GLUT or
-    freeglut), as well as Qt 4.6 or higher.
--   Additionally you require a copy of the [Intel® SPMD Program Compiler
-    (ISPC)](http://ispc.github.io). Please obtain a copy of the latest
-    binary release of ISPC (currently 1.9.1) from the [ISPC downloads
-    page](https://ispc.github.io/downloads.html). The build system looks
-    for ISPC in the `PATH` and in the directory right "next to" the
-    checked-out OSPRay sources.[^1] Alternatively set the CMake variable
-    `ISPC_EXECUTABLE` to the location of the ISPC compiler.
+    the [Intel® C++
+    compiler (ICC)](https://software.intel.com/en-us/c-compilers)), and
+    standard Linux development tools. To build the demo viewers, you
+    should also have some version of OpenGL and the GL Utility Toolkit
+    (GLUT or freeglut), as well as Qt 4.6 or higher.
+-   Additionally you require a copy of the [Intel® SPMD Program
+    Compiler (ISPC)](http://ispc.github.io). Please obtain a copy of the
+    latest binary release of ISPC (currently 1.9.1) from the [ISPC
+    downloads page](https://ispc.github.io/downloads.html). The build
+    system looks for ISPC in the `PATH` and in the directory right "next
+    to" the checked-out OSPRay sources.[^1] Alternatively set the CMake
+    variable `ISPC_EXECUTABLE` to the location of the ISPC compiler.
 -   Per default OSPRay uses the [Intel® Threading Building
     Blocks](https://www.threadingbuildingblocks.org/) (TBB) as tasking
     system, which we recommend for performance and flexibility reasons.
@@ -125,9 +125,10 @@ CMake is easy:
 
 -   The compiler CMake will use will default to whatever the `CC` and
     `CXX` environment variables point to. Should you want to specify a
-    different compiler, run cmake manually while specifying the desired
-    compiler. The default compiler on most linux machines is `gcc`, but
-    it can be pointed to `clang` instead by executing the following:
+    different compiler, run cmake manually while specifying the
+    desired compiler. The default compiler on most linux machines is
+    `gcc`, but it can be pointed to `clang` instead by executing the
+    following:
 
         user@mymachine[~/Projects/ospray/release]: cmake
             -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang ..
@@ -147,8 +148,8 @@ CMake is easy:
 
         user@mymachine[~/Projects/ospray/release]: make
 
--   You should now have `libospray.so` as well as a set of sample
-    viewers. You can test your version of OSPRay using any of the
+-   You should now have `libospray.so` as well as a set of
+    sample viewers. You can test your version of OSPRay using any of the
     examples on the [OSPRay Demos and
     Examples](http://www.ospray.org/demos.html) page.
 
@@ -156,9 +157,9 @@ Documentation
 =============
 
 The following [API
-documentation](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation")
+documentation](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
 of OSPRay can also be found as a [pdf
-document](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation")
+document](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
 (2.6MB).
 
 For a deeper explanation of the concepts, design, features and
@@ -653,13 +654,13 @@ A traditional triangle mesh (indexed face set) geometry is created by
 calling `ospNewGeometry` with type string "`triangles`". Once created, a
 triangle mesh recognizes the following parameters:
 
-| Type                 | Name            | Description                                              |
-|:---------------------|:----------------|:---------------------------------------------------------|
-| vec3f(a)\[\]         | vertex          | [data](#data) array of vertex positions                  |
-| vec3f(a)\[\]         | vertex.normal   | [data](#data) array of vertex normals                    |
-| vec4f\[\]/vec3fa\[\] | vertex.color    | [data](#data) array of vertex colors (RGBA/RGB)          |
-| vec2f\[\]            | vertex.texcoord | [data](#data) array of vertex texture coordinates        |
-| vec3i(a)\[\]         | index           | [data](#data) array of triangle indices (into vertex.\*) |
+| Type                   | Name            | Description                                              |
+|:-----------------------|:----------------|:---------------------------------------------------------|
+| vec3f(a)\[\]           | vertex          | [data](#data) array of vertex positions                  |
+| vec3f(a)\[\]           | vertex.normal   | [data](#data) array of vertex normals                    |
+| vec4f\[\] / vec3fa\[\] | vertex.color    | [data](#data) array of vertex colors (RGBA/RGB)          |
+| vec2f\[\]              | vertex.texcoord | [data](#data) array of vertex texture coordinates        |
+| vec3i(a)\[\]           | index           | [data](#data) array of triangle indices (into vertex.\*) |
 
 : Parameters defining a triangle mesh geometry.
 
@@ -957,21 +958,15 @@ special parameters:
 <td align="left">bool</td>
 <td align="left">oneSidedLighting</td>
 <td align="right">true</td>
-<td align="left">if true back-facing surfaces (wrt. light) receive no illumination</td>
+<td align="left">if true back-facing surfaces (wrt. light source) receive no illumination</td>
 </tr>
 <tr class="even">
-<td align="left">vec3f</td>
+<td align="left">float / vec3f / vec4f</td>
 <td align="left">bgColor</td>
-<td align="right">white</td>
-<td align="left">background color (RGB)</td>
+<td align="right">black, transparent</td>
+<td align="left">background color and alpha (RGBA)</td>
 </tr>
 <tr class="odd">
-<td align="left">bool</td>
-<td align="left">backgroundEnabled</td>
-<td align="right">true</td>
-<td align="left">whether to color the background with <code>bgColor</code></td>
-</tr>
-<tr class="even">
 <td align="left">OSPTexture2D</td>
 <td align="left">maxDepthTexture</td>
 <td align="right">NULL</td>
@@ -985,6 +980,13 @@ special parameters:
 Note that the intensity (and color) of AO is controlled via an [ambient
 light](#ambient-light). If `aoSamples` is zero (the default) then
 ambient lights cause ambient illumination (without occlusion).
+
+Per default the background of the rendered image will be transparent
+black, i.e. the alpha channel holds the opacity of the rendered objects.
+This facilitates transparency-aware blending of the image with an
+arbitraty background image by the application. The parameter `bgColor`
+can be used to already blend with a constant background color (and
+alpha) during rendering.
 
 The SciVis renderer supports depth composition with images of other
 renderers, for example to incorporate help geometries of a 3D UI that
@@ -1727,6 +1729,39 @@ frames in the second image `accumulatedFrames.png`.
 ![After accumulating ten
 frames.](https://ospray.github.io/images/tutorial_accumulatedframe.png)
 
+Example Viewer
+--------------
+
+The OSPRay Example Viewer uses a built-in ImGUI library with minimal
+dependencies. The viewer uses the OSPRay scenegraph interface, which the
+GUI displays and manipulates. Run as `ospExampleViewerSg teapot.obj`,
+for example.
+
+<img src="https://ospray.github.io/images/exampleViewer.jpg" alt="Screenshot of ospExampleViewerSg." style="width:80.0%" />
+
+This also functions as an OSPRay state debugger -- invalid values will
+display in red up the hierarchy and shouldn't break the viewer until
+corrected. You can also add new nodes where appropriate. For instance,
+when "lights" is expanded, right click on "lights" and type in a light
+type, such as "point": a [point light](#point-light-sphere-light) is
+automatically added. Similarly, right click on "world" and create an
+"Importer". Change the filename to an appropriate file, and the Importer
+will propagate with the resulting state.
+
+All commandline options with the exception of a few[^7] function
+directly on the scenegraph itself. For instance, to change the renderer
+to the [path tracer](#path-tracer) from the commandline run
+
+    ospExampleViewer ospray:renderer:rendererType=pt
+
+where "`:`" denotes walking the scenegraph nodes. This can be shortened
+to
+
+    ospExampleViewer rendererType=pt
+
+as any node specified before the "`=`" sign will walk down the tree
+until it finds the first instance of that name.
+
 Qt Viewer
 ---------
 
@@ -1753,8 +1788,7 @@ at the [OSPRay Demos and Examples](http://www.ospray.org/demos.html)
 page.
 
 [^1]: For example, if OSPRay is in `~/Projects/ospray`, ISPC will also
-    be searched in `~/Projects/ispc-v1.9.1-linux` and
-    `~/Projects/ispc-v1.9.0-linux`
+    be searched in `~/Projects/ispc-v1.9.1-linux`
 
 [^2]: The [HDRI Light](#hdri-light) is an exception, it knows about
     `intensity`, but not about `color`.
@@ -1767,3 +1801,5 @@ page.
     framebuffer are always updated.
 
 [^6]: A C99 version is available at `apps/ospTutorial.c`.
+
+[^7]: such as `--nogui`
