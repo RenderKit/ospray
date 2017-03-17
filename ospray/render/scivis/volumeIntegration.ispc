@@ -100,7 +100,10 @@ vec4f SciVisRenderer_computeVolumeSample(SciVisRenderer *uniform renderer,
 vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform renderer,
                                            Volume *uniform volume,
                                            varying Ray &ray, float tBegin,
-                                           float tEnd, float maxOpacity, bool isShadowRay, const varying float &rayOffset, const varying vec3i &sampleID, uniform float quality)
+                                           float tEnd, float maxOpacity, bool isShadowRay, 
+					   const varying float &rayOffset, 
+					   const varying vec3i &sampleID, 
+					   uniform float quality)
 {
   vec3f singleCoordinates;
   float singleMax = -1.f;
