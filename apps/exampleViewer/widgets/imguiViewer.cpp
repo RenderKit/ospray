@@ -77,10 +77,12 @@ namespace ospray {
 
     renderer.set("model",  sceneModels[0]);
     renderer.set("camera", camera);
+    renderer.set("bgColor", 1.f, 1.f, 1.f, 1.f);
 
     if (rendererDW) {
       rendererDW.set("model",  sceneModels[0]);
       rendererDW.set("camera", camera);
+      rendererDW.set("bgColor", 1.f, 1.f, 1.f, 1.f);
     }
     renderEngine.setRenderer(renderer, rendererDW, frameBufferDW);
     renderEngine.setFbSize({1024, 768});
