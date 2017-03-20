@@ -175,20 +175,11 @@ namespace ospray {
 
     void Renderer::postRender(RenderContext &ctx)
     {
-      PING;
       ospSetObject(ospRenderer, "model",
                    child("world")->valueAs<OSPObject>());
-      PING;
       ospCommit(ospRenderer);
 
-      PING;
-      // PING;
-      // PRINT(this);
-      // std::cout << "Rendering ...." << std::endl;
       OSPFrameBuffer fb = (OSPFrameBuffer)child("frameBuffer")->valueAs<OSPObject>();
-      // PRINT(fb);
-      // PRINT(ospRenderer);
-      PING;
       ospRenderFrame(fb,
                      ospRenderer,
                      OSP_FB_COLOR | OSP_FB_ACCUM);

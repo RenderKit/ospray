@@ -27,7 +27,6 @@ namespace ospray {
 
     void FrameBuffer::init()
     {
-      PING;
       add(createNode("size", "vec2i", fbsize));
       add(createNode("displayWall", "string", std::string("")));
       createFB();

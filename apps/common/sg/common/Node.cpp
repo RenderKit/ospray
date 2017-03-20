@@ -412,15 +412,14 @@ namespace ospray {
     {
       std::map<std::string, CreatorFct>::iterator it = nodeRegistry.find(type);
       CreatorFct creator = nullptr;
+
       if (it == nodeRegistry.end()) {
         std::string creatorName = "ospray_create_sg_node__"+std::string(type);
         creator = (CreatorFct)getSymbol(creatorName);
+
         if (!creator)
           throw std::runtime_error("unknown ospray scene graph node '"+type+"'");
-        else {
-          std::cout << "#osp:sg: creating at least one instance of node type '"
-                    << type << "'" << std::endl;
-        }
+
         nodeRegistry[type] = creator;
       } else {
         creator = it->second;
