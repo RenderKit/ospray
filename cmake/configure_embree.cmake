@@ -77,9 +77,13 @@ ELSE()
   ENDIF()
 ENDIF()
 
-IF(NOT EMBREE_ISA_SUPPORTS_SSE4)
+IF (NOT (EMBREE_ISA_SUPPORTS_SSE4
+ OR EMBREE_ISA_SUPPORTS_AVX
+ OR EMBREE_ISA_SUPPORTS_AVX2
+ OR EMBREE_ISA_SUPPORTS_AVX512KNL
+ OR EMBREE_ISA_SUPPORTS_AVX512SKX))
     MESSAGE(FATAL_ERROR
-            "Your Embree build needs to support at least SSE4.1!")
+            "Your Embree build needs to support at least one ISA >= SSE4.1!")
 ENDIF()
 
 # Configure OSPRay ISA last after we've detected what we got w/ Embree
