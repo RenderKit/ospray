@@ -89,7 +89,9 @@ extern "C" void ospInit(int *_ac, const char **_av)
   ospray_deAffinitize();
 #endif
 
-  if (ospray::api::Device::current) {
+  auto &currentDevice = ospray::api::Device::current;
+
+  if (currentDevice) {
     throw std::runtime_error("OSPRay error: device already exists "
                              "(did you call ospInit twice?)");
   }
@@ -100,20 +102,15 @@ extern "C" void ospInit(int *_ac, const char **_av)
     postErrorMsg("#osp: launching ospray mpi ring - "
                  "make sure that mpd is running");
 
-    auto *mpiDevice = createMpiDevice();
-    ospray::api::Device::current = mpiDevice;
-    mpiDevice->findParam("mpiMode", true)->set("mpi-launch");
-    mpiDevice->findParam("launchCommand", true)
-             ->set(OSP_MPI_LAUNCH.second.c_str());
+    currentDevice = createMpiDevice();
+    currentDevice->findParam("mpiMode", true)->set("mpi-launch");
+    currentDevice->findParam("launchCommand", true)
+                 ->set(OSP_MPI_LAUNCH.second.c_str());
   }
-
-  ospray::api::Device *mpiDevice = nullptr;
 
   if (_ac && _av) {
     for (int i = 1; i < *_ac; i++) {
       std::string av(_av[i]);
-
-      PING; PRINT(av);
 
       if (av == "--osp:coi") {
         throw std::runtime_error("OSPRay's COI device is no longer supported!");
@@ -127,8 +124,7 @@ extern "C" void ospInit(int *_ac, const char **_av)
         auto deviceName = av.substr(13);
         
         try {
-          auto *device = ospray::api::Device::createDevice(deviceName.c_str());
-          ospray::api::Device::current = device;
+          currentDevice = ospray::api::Device::createDevice(deviceName.c_str());
         } catch (const std::runtime_error &) {
           throw std::runtime_error("Failed to create device of type '"
                                    + deviceName + "'! Perhaps you spelled the "
@@ -141,10 +137,8 @@ extern "C" void ospInit(int *_ac, const char **_av)
 
       if (av == "--osp:mpi") {
         removeArgs(*_ac,(char **&)_av,i,1);
-        if (!mpiDevice) {
-          mpiDevice = createMpiDevice();
-          ospray::api::Device::current = mpiDevice;
-        }
+        if (!currentDevice)
+          currentDevice = createMpiDevice();
         --i;
         continue;
       }
@@ -155,10 +149,9 @@ extern "C" void ospInit(int *_ac, const char **_av)
         const char *launchCommand = strdup(_av[i+1]);
         removeArgs(*_ac,(char **&)_av,i,2);
 
-        mpiDevice = createMpiDevice();
-        ospray::api::Device::current = mpiDevice;
-        mpiDevice->findParam("mpiMode", true)->set("mpi-launch");
-        mpiDevice->findParam("launchCommand", true)->set(launchCommand);
+        currentDevice = createMpiDevice();
+        currentDevice->findParam("mpiMode", true)->set("mpi-launch");
+        currentDevice->findParam("launchCommand", true)->set(launchCommand);
         --i;
         continue;
       }
@@ -171,11 +164,10 @@ extern "C" void ospInit(int *_ac, const char **_av)
         }
         removeArgs(*_ac,(char **&)_av,i,1);
 
-        mpiDevice = createMpiDevice();
-        ospray::api::Device::current = mpiDevice;
-        mpiDevice->findParam("mpiMode", true)->set("mpi-listen");
-        mpiDevice->findParam("fileNameToStorePortIn", true)
-          ->set(fileNameToStorePortIn?fileNameToStorePortIn:"");
+        currentDevice = createMpiDevice();
+        currentDevice->findParam("mpiMode", true)->set("mpi-listen");
+        currentDevice->findParam("fileNameToStorePortIn", true)
+                     ->set(fileNameToStorePortIn?fileNameToStorePortIn:"");
         --i;
         continue;
       }
@@ -185,14 +177,11 @@ extern "C" void ospInit(int *_ac, const char **_av)
         std::string portName = _av[i+1];
         removeArgs(*_ac,(char **&)_av,i,2);
 
-        if (!mpiDevice) {
-          mpiDevice = createMpiDevice();
-          ospray::api::Device::current = mpiDevice;
-        }
-        PING;
-        mpiDevice->findParam("mpiMode", true)->set("mpi-connect");
-        PRINT(portName);
-        mpiDevice->findParam("portName", true)->set(portName.c_str());
+        if (!currentDevice)
+          currentDevice = createMpiDevice();
+
+        currentDevice->findParam("mpiMode", true)->set("mpi-connect");
+        currentDevice->findParam("portName", true)->set(portName.c_str());
         --i;
         continue;
       }
@@ -200,15 +189,10 @@ extern "C" void ospInit(int *_ac, const char **_av)
   }
 
   // no device created on cmd line, yet, so default to localdevice
-  if (!ospray::api::Device::current) {
-    PING;
-    ospray::api::Device::current = new ospray::api::LocalDevice;
-  }
+  if (!ospray::api::Device::current)
+    currentDevice = new ospray::api::LocalDevice;
   
-  PING;
   ospray::initFromCommandLine(_ac,&_av);
-  PING;
-  
   ospray::api::Device::current->commit();
 }
 
