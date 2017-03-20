@@ -158,8 +158,6 @@ namespace ospray {
       switch(provided) {
       case MPI_THREAD_MULTIPLE:
         mpiIsThreaded = true;
-        if (rank == 0)
-          std::cout << "#osp.mpi: found _threaded_ MPI. Perfect!" << std::endl;
         break;
       case MPI_THREAD_SERIALIZED:
         mpiIsThreaded = false;
@@ -197,8 +195,6 @@ namespace ospray {
                                   290374);
         assert(worldGroup);
         mpi::async::CommLayer::WORLD->group = worldGroup;
-        PING;
-        PRINT(mpi::async::CommLayer::WORLD->group->size);
         if (logMPI)
           std::cout << "#osp.mpi: async messaging layer started ... " << std::endl;
       }

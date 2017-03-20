@@ -77,7 +77,6 @@ namespace ospray {
       work::Work::tag_t tag;
       readStream >> tag;
 
-      PING; PRINT(tag);
       if(logMPI) {
         static size_t numWorkReceived = 0;
         std::stringstream msg;
@@ -107,7 +106,6 @@ namespace ospray {
     {
       char *envVar = getenv("OSPRAY_MPI_DEBUG");
       if (!envVar) return false;
-      PING; PRINT(envVar);
       return atoi(envVar) > 0;
     }
     
@@ -119,7 +117,6 @@ namespace ospray {
     */
     void runWorker()
     {
-      PING;
       auto &device = ospray::api::Device::current;
 
       auto numThreads = device ? device->numThreads : -1;
@@ -132,7 +129,6 @@ namespace ospray {
         embreeConfig << " threads=1,verbose=2";
       else if(numThreads > 0)
         embreeConfig << " threads=" << numThreads;
-      PING;
 
       // NOTE(jda) - This guard guarentees that the embree device gets cleaned
       //             up no matter how the scope of runWorker() is left
@@ -141,7 +137,6 @@ namespace ospray {
         ~EmbreeDeviceScopeGuard() { rtcDeleteDevice(embreeDevice); }
       };
 
-      PING;
       RTCDevice embreeDevice = rtcNewDevice(embreeConfig.str().c_str());
       device->embreeDevice = embreeDevice;
       EmbreeDeviceScopeGuard guard;
@@ -162,7 +157,6 @@ namespace ospray {
                worker.rank,worker.size,getpid(),hostname);
       }
 
-      PING;
       TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Slave>();
 
       // -------------------------------------------------------
@@ -173,13 +167,10 @@ namespace ospray {
 
       // create registry of work item types
       std::map<work::Work::tag_t,work::CreateWorkFct> workTypeRegistry;
-      PING;
       work::registerOSPWorkItems(workTypeRegistry);
-      PING;
 
       logMPI = checkIfWeNeedToDoMPIDebugOutputs();
       while (1) {
-        PING;
         auto work = readWork(workTypeRegistry, *readStream);
         if (logMPI) {
           std::cout << "#osp.mpi.worker: processing work " << typeIdOf(work)
@@ -193,7 +184,5 @@ namespace ospray {
       }
     }
 
-
-    
   } // ::ospray::mpi
 } // ::ospray

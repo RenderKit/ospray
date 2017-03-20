@@ -110,7 +110,6 @@ namespace ospray {
         const bool hasDepthBuffer = channels & OSP_FB_DEPTH;
         const bool hasAccumBuffer = channels & OSP_FB_ACCUM;
         const bool hasVarianceBuffer = channels & OSP_FB_VARIANCE;
-        PING; PRINT(hasDepthBuffer);
 
         assert(dimensions.x > 0);
         assert(dimensions.y > 0);
@@ -555,11 +554,8 @@ namespace ospray {
       
       void RenderFrame::run()
       {
-        PING;
         FrameBuffer *fb = (FrameBuffer*)fbHandle.lookup();
-        PING;
         Renderer *renderer = (Renderer*)rendererHandle.lookup();
-        PING;
         Assert(renderer);
         Assert(fb);
         // TODO: This function execution must run differently
@@ -578,7 +574,6 @@ namespace ospray {
           TiledLoadBalancer::instance->renderFrame(nullptr, fb, channels);
         }
 #endif
-        PING;
       }
       
       void RenderFrame::runOnMaster()

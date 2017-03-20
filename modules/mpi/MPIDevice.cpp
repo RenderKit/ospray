@@ -234,7 +234,6 @@ namespace ospray {
 
     void createMPI_RanksBecomeWorkers(int *ac, const char **av)
     {
-      PING;
       createMPI_runOnExistingRanks(ac,av,true);
     }
 
@@ -276,11 +275,8 @@ namespace ospray {
       socket_t mpiPortSocket = ospcommon::bind(3141);
       socket_t clientSocket = ospcommon::listen(mpiPortSocket);
       size_t len = strlen(appPortName);
-      PRINT(len);
       ospcommon::write(clientSocket,&len,sizeof(len));
-      PRINT(appPortName);
       ospcommon::write(clientSocket,appPortName,len);
-      PRINT(appPortName);
       flush(clientSocket);
       
       rc = MPI_Comm_accept(appPortName,MPI_INFO_NULL,0,app.comm,&worker.comm);
@@ -293,12 +289,8 @@ namespace ospray {
       mpi::Group mergedComm;
       MPI_CALL(Intercomm_merge(worker.comm,0,&mergedComm.comm));
       mergedComm.makeIntraComm();
-      PRINT(mergedComm.rank);
-      PRINT(mergedComm.size);
-      PING; 
       mpi::world.comm = mergedComm.comm;
       mpi::world.makeIntraComm();
-      PRINT(mpi::world.rank);
 
       // create a new world that has everybody:
       
@@ -306,8 +298,6 @@ namespace ospray {
         mpi::async::createGroup(mergedComm.comm,
                                 mpi::async::CommLayer::WORLD,
                                 290374);
-      PING;
-      PRINT(mpi::async::CommLayer::WORLD->group->size);
 
       if (app.rank == 0) {
         cout << "======================================================="
@@ -316,9 +306,7 @@ namespace ospray {
         cout << "======================================================="
              << endl;
       }
-      PING;
       MPI_Barrier(mergedComm.comm);
-      PING;
     }
 
 
@@ -328,10 +316,7 @@ namespace ospray {
     void createMPI_connectToListener(int *ac, const char **av, const std::string &host)
     {
       MPI_Status status;
-        PING;
       mpi::init(ac,av);
-      PING;
-      PRINT(host);
       
       if (logMPI && world.rank < 1) {
         cout << "======================================================="
@@ -351,30 +336,20 @@ namespace ospray {
         ospcommon::socket_t masterSocket = ospcommon::connect(host.c_str(),3141);
         
         size_t len;
-        PING; 
-        PRINT(masterSocket);
         ospcommon::read(masterSocket,&len,sizeof(len));
-        PRINT(len);
         ospcommon::read(masterSocket,appPortName,len);
-        PRINT(appPortName);
         ospcommon::close(masterSocket);
       }
 
-      PING;
       rc = MPI_Comm_connect(appPortName,MPI_INFO_NULL,0,worker.comm,&app.comm);
-        PING;
 
       Assert(rc == MPI_SUCCESS);
-          PING;
       app.makeInterComm();
 
 
       mpi::Group mergedComm;
       MPI_CALL(Intercomm_merge(app.comm,1,&mergedComm.comm));
       mergedComm.makeIntraComm();
-      PRINT(mergedComm.rank);
-      PRINT(mergedComm.size);
-      PING; 
       mpi::world.comm = mergedComm.comm;
       mpi::world.makeIntraComm();
 
@@ -385,8 +360,6 @@ namespace ospray {
         mpi::async::createGroup(mergedComm.comm,
                                 mpi::async::CommLayer::WORLD,
                                 290374);
-      PING;
-      PRINT(mpi::async::CommLayer::WORLD->group->size);
       MPI_Barrier(mergedComm.comm);
 
 
@@ -461,8 +434,6 @@ namespace ospray {
 #endif
       }
 
-      PING;
-      PRINT(appPortName);
       rc = MPI_Comm_accept(appPortName,MPI_INFO_NULL,0,app.comm,&worker.comm);
       Assert(rc == MPI_SUCCESS);
       worker.makeInterComm();
@@ -528,7 +499,6 @@ namespace ospray {
       const char *_av[] = {"ospray_mpi_worker", "--osp:mpi"};
 
       std::string mode = getParamString("mpiMode", "mpi");
-      PING; PRINT(mode);
 
       if (mode == "mpi") {
         createMPI_RanksBecomeWorkers(&_ac,_av);
@@ -555,9 +525,7 @@ namespace ospray {
                                    "where the master is listening at!");
         }
 
-        PING;
         createMPI_connectToListener(&_ac,_av,portName);
-        PING;
       }
       else {
         throw std::runtime_error("Invalid MPI mode!");
@@ -573,24 +541,13 @@ namespace ospray {
         }
       }
 
-
-      PING;
-
       /* set up fabric and stuff - by now all the communicators should
          be properly set up */
       mpiFabric   = make_unique<MPIBcastFabric>(mpi::worker);
-
-      PING;
       readStream  = make_unique<BufferedFabric::ReadStream>(*mpiFabric);
-
-      PING;
       writeStream = make_unique<BufferedFabric::WriteStream>(*mpiFabric);
 
-      PING;
-      
       TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Master>();
-
-      PING;
     }
 
     OSPFrameBuffer 
@@ -600,8 +557,6 @@ namespace ospray {
     {
       ObjectHandle handle = allocateHandle();
       work::CreateFrameBuffer work(handle, size, mode, channels);
-      PING;
-      PRINT(channels);
       processWork(&work);
       return (OSPFrameBuffer)(int64)handle;
     }
@@ -1043,7 +998,6 @@ namespace ospray {
 
     void MPIDevice::processWork(work::Work* work)
     {
-      PING;
       if (logMPI) {
         static size_t numWorkSent = 0;
         std::stringstream msg;
@@ -1052,7 +1006,6 @@ namespace ospray {
         postErrorMsg(msg);
       }
       auto tag = typeIdOf(work);
-      PRINT(tag);
       writeStream->write(&tag, sizeof(tag));
       work->serialize(*writeStream);
       

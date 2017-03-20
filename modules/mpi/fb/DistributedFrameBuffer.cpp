@@ -128,8 +128,6 @@ namespace ospray {
     ispc::DFB_set(getIE(), numPixels.x, numPixels.y, colorBufferFormat);
     comm->registerObject(this,myID);
 
-    PING; PRINT(numPixels);
-    
     createTiles();
     const size_t bytes = sizeof(int32)*getTotalTiles();
     tileAccumID = (int32*)alignedMalloc(bytes);
@@ -141,8 +139,6 @@ namespace ospray {
             << "format; creating distributed frame buffer WITHOUT having a "
             << "mappable copy on the master" << endl);
       } else {
-        PING;
-        PRINT(hasDepthBuffer);
         localFBonMaster = new LocalFrameBuffer(numPixels,
                                                colorBufferFormat,
                                                hasDepthBuffer,
@@ -241,8 +237,6 @@ namespace ospray {
 
   void DFB::createTiles()
   {
-    PING;
-    PRINT(comm->group->size);
     size_t tileID = 0;
     vec2i numPixels = getNumPixels();
     for (int y = 0; y < numPixels.y; y += TILE_SIZE) {
