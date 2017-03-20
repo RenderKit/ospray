@@ -28,7 +28,7 @@ namespace ospray {
 
       FrameBuffer() = default;//NOTE(jda) - this does *not* create the underlying
       //            OSP object
-      FrameBuffer(const osp::vec2i &size,
+      FrameBuffer(const ospcommon::vec2i &size,
                   OSPFrameBufferFormat format = OSP_FB_SRGBA,
                   int channels = OSP_FB_COLOR);
       FrameBuffer(const FrameBuffer &copy);
@@ -56,11 +56,11 @@ namespace ospray {
 
     // Inlined function definitions ///////////////////////////////////////////////
 
-    inline FrameBuffer::FrameBuffer(const osp::vec2i &size,
+    inline FrameBuffer::FrameBuffer(const ospcommon::vec2i &size,
                                     OSPFrameBufferFormat format,
                                     int channels)
     {
-      ospObject = ospNewFrameBuffer(size, format, channels);
+      ospObject = ospNewFrameBuffer((const osp::vec2i&)size, format, channels);
     }
 
     inline FrameBuffer::FrameBuffer(const FrameBuffer &copy) :
