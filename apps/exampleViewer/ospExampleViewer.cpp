@@ -111,7 +111,7 @@ namespace exampleViewer {
 
     ospray::imgui3D::init(&ac,av);
 
-    auto ospObjs = parseWithDefaultParsers(ac, av);
+    auto ospObjs = parseWithDefaultParsersDW(ac, av);
 
     std::deque<ospcommon::box3f>   bbox;
     std::deque<ospray::cpp::Model> model;

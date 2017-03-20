@@ -51,6 +51,15 @@ namespace ospray {
   ImGuiViewer::ImGuiViewer(const std::deque<box3f> &worldBounds,
                            const std::deque<cpp::Model> &model,
                            cpp::Renderer renderer,
+                           cpp::Camera camera)
+    : ImGuiViewer(worldBounds, model, renderer,
+                  cpp::Renderer(), cpp::FrameBuffer(), camera)
+  {
+  }
+
+  ImGuiViewer::ImGuiViewer(const std::deque<box3f> &worldBounds,
+                           const std::deque<cpp::Model> &model,
+                           cpp::Renderer renderer,
                            cpp::Renderer rendererDW,
                            cpp::FrameBuffer frameBufferDW,
                            cpp::Camera camera)
