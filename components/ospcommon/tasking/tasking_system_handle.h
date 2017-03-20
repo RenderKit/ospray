@@ -21,5 +21,6 @@
 namespace ospcommon {
 
   void OSPCOMMON_INTERFACE initTaskingSystem(int numThreads = -1);
+  void OSPCOMMON_INTERFACE deAffinitizeCores();
 
 }// namespace ospcommon

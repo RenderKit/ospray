@@ -69,26 +69,8 @@ inline ospray::api::Device *createMpiDevice()
   return device;
 }
 
-#ifdef __linux__
-// iw - on some systems we seem to have 'somebody'
-// pre-affinitzie us to only certain cores ... let's fix this
-// :-)
-void ospray_deAffinitize()
-{
-  cpu_set_t validCores;
-  CPU_ZERO(&validCores);
-  for (int i=0;i<CPU_SETSIZE;i++)
-    CPU_SET(i,&validCores);
-  sched_setaffinity(getpid(),sizeof(validCores),&validCores);
-}
-#endif
-
 extern "C" void ospInit(int *_ac, const char **_av)
 {
-#ifdef __linux__
-  ospray_deAffinitize();
-#endif
-
   auto &currentDevice = ospray::api::Device::current;
 
   if (currentDevice) {
@@ -193,7 +175,8 @@ extern "C" void ospInit(int *_ac, const char **_av)
     currentDevice = new ospray::api::LocalDevice;
   
   ospray::initFromCommandLine(_ac,&_av);
-  ospray::api::Device::current->commit();
+
+  currentDevice->commit();
 }
 
 extern "C" OSPDevice ospCreateDevice(const char *deviceType)
@@ -217,10 +200,9 @@ extern "C" OSPDevice ospGetCurrentDevice()
   return (OSPDevice)ospray::api::Device::current.ptr;
 }
 
-
 /*! destroy a given frame buffer.
 
-  due to internal reference counting the framebuffer may or may not be deleted immediately
+  due to internal reference counting, it may or may not be deleted immediately
 */
 extern "C" void ospFreeFrameBuffer(OSPFrameBuffer fb)
 {
