@@ -23,15 +23,11 @@ namespace ospray {
 
     struct Geometry : public sg::Renderable
     {
-      Geometry(const std::string &type) : type(type) {}
-      virtual void init() override
-      {
-        add(createNode("material", "Material"));
-        add(createNode("type", "string"));
-      }
+      Geometry(const std::string &type);
+      virtual void init() override;
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual std::string toString() const override { return "ospray::sg::Geometry"; }
+      virtual std::string toString() const override;
 
       /*! geometry type, i.e., 'spheres', 'cylinders', 'trianglemesh', ... */
       const std::string type; 
@@ -39,6 +35,21 @@ namespace ospray {
       /*! material for this geometry */
       std::shared_ptr<Material> material;
     };
+
+    // Inlined member definitions /////////////////////////////////////////////
+
+    inline Geometry::Geometry(const std::string &type) : type(type) {}
+
+    inline void Geometry::init()
+    {
+      add(createNode("material", "Material"));
+      add(createNode("type", "string"));
+    }
+
+    inline std::string Geometry::toString() const
+    {
+      return "ospray::sg::Geometry";
+    }
     
   } // ::ospray::sg
 } // ::ospray
