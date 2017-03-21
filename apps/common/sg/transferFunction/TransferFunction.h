@@ -35,24 +35,19 @@ namespace ospray {
       void setDefaultValues();
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual std::string toString() const override;
+      std::string toString() const override;
 
-      //! \brief creates ospray-side object(s) for this node
-      // virtual void render(RenderContext &ctx) override;
-
-      virtual void preCommit(RenderContext &ctx) override;
-      virtual void postCommit(RenderContext &ctx) override;
+      void preCommit(RenderContext &ctx) override;
+      void postCommit(RenderContext &ctx) override;
 
       //! \brief Initialize this node's value from given corresponding XML node 
-      virtual void setFromXML(const xml::Node &node, 
-                              const unsigned char *binBasePtr) override;
-      // virtual void commit() override;
-      
-      // void setValueRange(const vec2f &range);
+      void setFromXML(const xml::Node &node,
+                      const unsigned char *binBasePtr) override;
 
-      // /*! set a new color map array (using array of uniformly samples colors) */
+      /*! set a new color map array (using array of uniformly samples colors) */
       void setColorMap(const std::vector<vec3f> &colorArray);
-      /*! set a new alpha map array - x coordinate is point pos, y is point alpha value */
+      /*! set a new alpha map array - x coordinate is point pos,
+          y is point alpha value */
       void setAlphaMap(const std::vector<vec2f> &alphaArray);
 
       const std::vector<std::pair<float,float>> &alphas() const;
@@ -69,9 +64,8 @@ namespace ospray {
       OSPTransferFunction ospTransferFunction {nullptr};
       OSPData ospColorData {nullptr};
       OSPData ospAlphaData {nullptr};
-      // vec2f   valueRange   {0.f, 1.f};
       // number of samples we'll use in the colordata and alphadata arrays
-      int     numSamples   {256};
+      int numSamples {256};
 
       // array of (x,color(x)) color samples; the first and last x
       // determine the range of x'es, all values will be resampled
