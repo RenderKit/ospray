@@ -174,7 +174,7 @@ namespace ospray {
       Node& child(const std::string &name) const;
 
       //! return named child node
-      Handle childRecursive(const std::string &name);
+      Node& childRecursive(const std::string &name);
 
       //! return all children of type
       std::vector<Handle> childrenByType(const std::string &t) const;

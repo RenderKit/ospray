@@ -121,33 +121,34 @@ namespace ospray {
       std::lock_guard<std::mutex> lock{mutex};
       auto itr = properties.children.find(name);
       if (itr == properties.children.end()) {
-        throw std::runtime_error("in node "+toString()+
-                                 " : could not find sg child node with name '"+name+"'");
+        throw std::runtime_error("in node " + toString() +
+                                 " : could not find sg child node with name '"
+                                 + name + "'");
       } else {
         return *itr->second;
       }
     }
 
-    Node::Handle Node::childRecursive(const std::string &name)
+    Node& Node::childRecursive(const std::string &name)
     {
       mutex.lock();
       Node* n = this;
       auto f = n->properties.children.find(name);
       if (f != n->properties.children.end()) {
         mutex.unlock();
-        return f->second;
+        return *f->second;
       }
 
       for (auto &child : properties.children) {
         mutex.unlock();
         Handle r = child.second->childRecursive(name);
         if (!r.isNULL())
-          return r;
+          return *r.get();
         mutex.lock();
       }
 
       mutex.unlock();
-      return Handle();
+      throw std::runtime_error("error finding node in Node::childRecursive");
     }
 
     std::vector<Node::Handle> Node::childrenByType(const std::string &t) const
