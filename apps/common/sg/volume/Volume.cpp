@@ -302,7 +302,7 @@ namespace ospray {
       float iso = child("isosurface").valueAs<float>();
       if (iso < voxelRange.x || iso > voxelRange.y)
         child("isosurface").setValue((voxelRange.y-voxelRange.x)/2.f);
-      child("transferFunction")["valueRange"]->setValue(voxelRange);
+      child("transferFunction")["valueRange"].setValue(voxelRange);
       child("transferFunction").preCommit(ctx);
 
       ospSetObject(volume,"transferFunction",child("transferFunction").valueAs<OSPObject>());

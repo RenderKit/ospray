@@ -108,7 +108,8 @@ namespace ospray {
           if (up == vec3f(0,0,0))
             up = vec3f(0,1,0);
           camera->setUp(up);
-          camera->setFrom(center(worldBounds) + .3f*vec3f(-1,+3,+1.5)*worldBounds.size());
+          camera->setFrom(center(worldBounds) +
+                          .3f * vec3f(-1,+3,+1.5) * worldBounds.size());
         }
       }
       camera->commit();
@@ -193,12 +194,12 @@ namespace ospray {
 
     void Renderer::preCommit(RenderContext &ctx)
     {
-      if (child("frameBuffer")["size"]->lastModified() >
-          child("camera")["aspect"]->lastCommitted()) {
+      if (child("frameBuffer")["size"].lastModified() >
+          child("camera")["aspect"].lastCommitted()) {
         
-        child("camera")["aspect"]->setValue(
-          child("frameBuffer")["size"]->valueAs<vec2i>().x /
-          float(child("frameBuffer")["size"]->valueAs<vec2i>().y)
+        child("camera")["aspect"].setValue(
+          child("frameBuffer")["size"].valueAs<vec2i>().x /
+          float(child("frameBuffer")["size"].valueAs<vec2i>().y)
         );
       }
       auto rendererType = child("rendererType").valueAs<std::string>();

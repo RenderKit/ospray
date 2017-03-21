@@ -183,13 +183,15 @@ namespace ospray {
       std::vector<std::shared_ptr<Node>> children() const;
 
       //! return child c
-      Handle operator[] (const std::string &c) const;
+      Node& operator[] (const std::string &c) const;
 
       //! return the parent node
-      Handle parent() const;
+      Node& parent() const;
 
       //! sets the parent
       void setParent(const Handle& p);
+
+      bool hasParent() const;
 
       //! get the value of the node, whithout template conversion
       SGVar value();
@@ -285,7 +287,7 @@ namespace ospray {
         TimeStamp lastModified;
         TimeStamp childrenMTime;
         TimeStamp lastCommitted;
-        Handle parent;
+        std::shared_ptr<Node> parent;
         NodeFlags flags;
         bool valid {false};
         std::string documentation;
@@ -400,28 +402,28 @@ namespace ospray {
     template <>
     inline void commitNodeValue<float>(Node &n)
     {
-      ospSet1f(n.parent()->valueAs<OSPObject>(),
+      ospSet1f(n.parent().valueAs<OSPObject>(),
                n.name().c_str(), n.valueAs<float>());
     }
 
     template <>
     inline void commitNodeValue<bool>(Node &n)
     {
-      ospSet1i(n.parent()->valueAs<OSPObject>(),
+      ospSet1i(n.parent().valueAs<OSPObject>(),
                n.name().c_str(), n.valueAs<bool>());
     }
 
     template <>
     inline void commitNodeValue<int>(Node &n)
     {
-      ospSet1i(n.parent()->valueAs<OSPObject>(),
+      ospSet1i(n.parent().valueAs<OSPObject>(),
                n.name().c_str(), n.valueAs<int>());
     }
 
     template <>
     inline void commitNodeValue<vec3f>(Node &n)
     {
-      ospSet3fv(n.parent()->valueAs<OSPObject>(),
+      ospSet3fv(n.parent().valueAs<OSPObject>(),
                 n.name().c_str(), &n.valueAs<vec3f>().x);
     }
 
@@ -429,7 +431,7 @@ namespace ospray {
     template <>
     inline void commitNodeValue<vec2f>(Node &n)
     {
-      ospSet3fv(n.parent()->valueAs<OSPObject>(),
+      ospSet3fv(n.parent().valueAs<OSPObject>(),
                 n.name().c_str(), &n.valueAs<vec2f>().x);
     }
 
@@ -441,11 +443,11 @@ namespace ospray {
       NodeParam() : Node() { setValue(T()); }
       virtual void postCommit(RenderContext &ctx) override
       {
-        if (!parent().isNULL()) {
+        if (hasParent()) {
           //TODO: generalize to other types of ManagedObject
 
           //NOTE(jda) - OMG the syntax for the 'if' is strange...
-          if (parent()->value().template is<OSPObject>())
+          if (parent().value().template is<OSPObject>())
             commitNodeValue<T>(*this);
         }
       }

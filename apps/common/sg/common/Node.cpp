@@ -96,16 +96,16 @@ namespace ospray {
     void Node::markAsModified()
     {
       properties.lastModified = TimeStamp();
-      if (!parent().isNULL())
-        parent()->setChildrenModified(properties.lastModified);
+      if (hasParent())
+        parent().setChildrenModified(properties.lastModified);
     }
 
     void Node::setChildrenModified(TimeStamp t)
     {
       if (t > properties.childrenMTime) {
         properties.childrenMTime = t;
-        if (!parent().isNULL())
-          parent()->setChildrenModified(properties.childrenMTime);
+        if (hasParent())
+          parent().setChildrenModified(properties.childrenMTime);
       }
     }
 
@@ -168,20 +168,25 @@ namespace ospray {
       return result;
     }
 
-    Node::Handle Node::operator[](const std::string &c) const
+    Node& Node::operator[](const std::string &c) const
     {
       return child(c);
     }
 
-    Node::Handle Node::parent() const 
+    Node& Node::parent() const
     {
-      return properties.parent;
+      return *properties.parent;
     }
 
     void Node::setParent(const Node::Handle &p)
     {
       std::lock_guard<std::mutex> lock{mutex};
-      properties.parent = p;
+      properties.parent = p.get();
+    }
+
+    bool Node::hasParent() const
+    {
+      return properties.parent.get() != nullptr;
     }
 
     SGVar Node::value()
