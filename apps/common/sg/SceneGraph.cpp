@@ -25,6 +25,11 @@ namespace ospray {
   namespace sg {
 
     /*! 'render' the nodes */
+    std::string Group::toString() const
+    {
+      return "ospray::sg::Group";
+    }
+
     void Group::render(RenderContext &ctx)
     {
       for (auto child : children) {
@@ -46,7 +51,36 @@ namespace ospray {
     void Node::serialize(sg::Serialization::State &state)
     { 
     }
-    
+
+    std::string Info::toString() const
+    {
+      return "ospray::sg::Info";
+    }
+
+    GenericGeometry::GenericGeometry(const std::string &type)
+      : Geometry(type)
+    {
+    }
+
+    std::string GenericGeometry::toString() const
+    {
+      return "ospray::sg::GenericGeometry";
+    }
+
+    box3f GenericGeometry::bounds() const
+    {
+      return _bounds;
+    }
+
+    Instance::Instance() : Geometry("Instance")
+    {
+    }
+
+    std::string Instance::toString() const
+    {
+      return "ospray::sg::Instance";
+    }
+
     OSP_REGISTER_SG_NODE(Group);
 
   } // ::ospray::sg
