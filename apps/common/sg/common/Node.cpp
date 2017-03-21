@@ -178,10 +178,10 @@ namespace ospray {
       return *properties.parent;
     }
 
-    void Node::setParent(const Node::Handle &p)
+    void Node::setParent(const std::shared_ptr<Node> &p)
     {
       std::lock_guard<std::mutex> lock{mutex};
-      properties.parent = p.get();
+      properties.parent = p;
     }
 
     bool Node::hasParent() const

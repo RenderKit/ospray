@@ -91,7 +91,7 @@ namespace ospray {
 
         //! add child node n to this node
         Handle operator+= (Handle n)
-        { get()->add(n); n->setParent(*this); return n;}
+        { get()->add(n); n->setParent(node); return n;}
 
         sg::Node* operator->() const { return node.get(); }
 
@@ -189,7 +189,7 @@ namespace ospray {
       Node& parent() const;
 
       //! sets the parent
-      void setParent(const Handle& p);
+      void setParent(const std::shared_ptr<Node>& p);
 
       bool hasParent() const;
 
