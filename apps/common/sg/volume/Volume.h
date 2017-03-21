@@ -26,36 +26,8 @@ namespace ospray {
     {
       Volume() = default;
 
-      virtual void init() override
-      {
-        Renderable::init();
-        add(createNode("transferFunction", "TransferFunction"));
-        add(createNode("gradientShadingEnabled", "bool", true));
-        add(createNode("preIntegration", "bool", true));
-        add(createNode("singleShade", "bool", true));
-        add(createNode("voxelRange", "vec2f", 
-          vec2f(std::numeric_limits<float>::infinity(), 
-            -std::numeric_limits<float>::infinity())));
-        add(createNode("adaptiveSampling", "bool", true));
-        add(createNode("adaptiveScalar", "float", 15.f));
-        add(createNode("adaptiveBacktrack", "float", 0.03f));
-        add(createNode("samplingRate", "float", 0.125f));
-        add(createNode("adaptiveMaxSamplingRate", "float", 2.f));
-        add(createNode("volumeClippingBoxLower", "vec3f", vec3f(0.f)));
-        add(createNode("volumeClippingBoxUpper", "vec3f", vec3f(0.f)));
-        add(createNode("specular", "vec3f", vec3f(0.3f)));
-        add(createNode("gridOrigin", "vec3f", vec3f(0.0f)));
-        add(createNode("gridSpacing", "vec3f", vec3f(0.002f)));
-        add(createNode("isosurfaceEnabled", "bool", false));
-        add(createNode("isosurface", "float", -std::numeric_limits<float>::infinity(), 
-          NodeFlags::valid_min_max | NodeFlags::gui_slider));
-        child("isosurface").setMinMax(0.f,255.f);
-        
-        // transferFunction = std::dynamic_pointer_cast<TransferFunction>(
-          // properties.children["transferFunction"].node);
-      }
+      virtual void init() override;
 
-      /*! \brief returns a std::string with the c++ name of this class */
       virtual std::string toString() const override;
 
       //! return bounding box of all primitives
@@ -70,32 +42,23 @@ namespace ospray {
 
       OSPVolume volume {nullptr};
       OSPGeometry isosurfacesGeometry{nullptr};
-
-    protected:
-
-        // std::shared_ptr<TransferFunction> transferFunction;
     };
 
     /*! a plain old structured volume */
     struct StructuredVolume : public Volume
     {
-      //! constructor
       StructuredVolume();
 
-      /*! \brief returns a std::string with the c++ name of this class */
-      virtual std::string toString() const override;
+      std::string toString() const override;
 
       //! return bounding box of all primitives
-      virtual box3f bounds() const override;
+      box3f bounds() const override;
 
       //! \brief Initialize this node's value from given XML node
-      virtual void setFromXML(const xml::Node &node,
-                              const unsigned char *binBasePtr) override;
+      void setFromXML(const xml::Node &node,
+                      const unsigned char *binBasePtr) override;
 
-      /*! \brief 'render' the object to ospray */
-      virtual void render(RenderContext &ctx) override;
-
-      virtual void postCommit(RenderContext &ctx) override;
+      void postCommit(RenderContext &ctx) override;
 
       SG_NODE_DECLARE_MEMBER(vec3i, dimensions, Dimensions);
       SG_NODE_DECLARE_MEMBER(std::string, voxelType, ScalarType);
@@ -108,21 +71,17 @@ namespace ospray {
     {
       StructuredVolumeFromFile();
 
-      /*! \brief returns a std::string with the c++ name of this class */
-      virtual std::string toString() const override;
+      std::string toString() const override;
 
       //! return bounding box of all primitives
-      virtual box3f bounds() const override;
+      box3f bounds() const override;
 
       //! \brief Initialize this node's value from given XML node
-      virtual void setFromXML(const xml::Node &node,
-                              const unsigned char *binBasePtr) override;
+      void setFromXML(const xml::Node &node,
+                      const unsigned char *binBasePtr) override;
 
-      /*! \brief 'render' the object to ospray */
-      virtual void render(RenderContext &ctx) override;
-
-      virtual void preCommit(RenderContext &ctx) override;
-      virtual void postCommit(RenderContext &ctx) override;
+      void preCommit(RenderContext &ctx) override;
+      void postCommit(RenderContext &ctx) override;
 
 
       SG_NODE_DECLARE_MEMBER(vec3i, dimensions, Dimensions);
@@ -130,7 +89,7 @@ namespace ospray {
       SG_NODE_DECLARE_MEMBER(std::string, voxelType, ScalarType);
 
     public:
-      //! \brief file name of the xml doc when the node was loaded/parsed from xml
+      //! \brief file name of the xml doc when the node was loaded from xml
       /*! \detailed we need this to properly resolve relative file names */
       FileName fileNameOfCorrespondingXmlDoc;
     };
@@ -140,18 +99,14 @@ namespace ospray {
     {
       StackedRawSlices();
 
-      /*! \brief returns a std::string with the c++ name of this class */
-      virtual std::string toString() const override;
+      std::string toString() const override;
 
       //! return bounding box of all primitives
-      virtual box3f bounds() const override;
+      box3f bounds() const override;
 
       //! \brief Initialize this node's value from given XML node
-      virtual void setFromXML(const xml::Node &node,
+      void setFromXML(const xml::Node &node,
                               const unsigned char *binBasePtr) override;
-
-      /*! \brief 'render' the object to ospray */
-      virtual void render(RenderContext &ctx) override;
 
       /*! resolution (X x Y) of each slice */
       SG_NODE_DECLARE_MEMBER(vec2i, sliceResolution, SliceResolution);

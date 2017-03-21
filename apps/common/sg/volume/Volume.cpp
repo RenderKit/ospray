@@ -32,25 +32,36 @@ namespace ospray {
       }
     }
 
-    //! Convenient wrapper that will do the template dispatch for you based on the voxelType passed
-    inline void extendVoxelRange(ospcommon::vec2f &voxelRange, const OSPDataType voxelType,
-        const unsigned char *voxels, const size_t numVoxels)
+    //! Convenient wrapper that will do the template dispatch for you based on
+    //  the voxelType passed
+    inline void extendVoxelRange(ospcommon::vec2f &voxelRange,
+                                 const OSPDataType voxelType,
+                                 const unsigned char *voxels,
+                                 const size_t numVoxels)
     {
       switch (voxelType) {
         case OSP_UCHAR:
           extendVoxelRange(voxelRange, voxels, numVoxels);
           break;
         case OSP_SHORT:
-          extendVoxelRange(voxelRange, reinterpret_cast<const short*>(voxels), numVoxels);
+          extendVoxelRange(voxelRange,
+                           reinterpret_cast<const short*>(voxels),
+                           numVoxels);
           break;
         case OSP_USHORT:
-          extendVoxelRange(voxelRange, reinterpret_cast<const unsigned short*>(voxels), numVoxels);
+          extendVoxelRange(voxelRange,
+                           reinterpret_cast<const unsigned short*>(voxels),
+                           numVoxels);
           break;
         case OSP_FLOAT:
-          extendVoxelRange(voxelRange, reinterpret_cast<const float*>(voxels), numVoxels);
+          extendVoxelRange(voxelRange,
+                           reinterpret_cast<const float*>(voxels),
+                           numVoxels);
           break;
         case OSP_DOUBLE:
-          extendVoxelRange(voxelRange, reinterpret_cast<const double*>(voxels), numVoxels);
+          extendVoxelRange(voxelRange,
+                           reinterpret_cast<const double*>(voxels),
+                           numVoxels);
           break;
         default:
           throw std::runtime_error("sg::extendVoxelRange: unsupported voxel type!");
@@ -64,22 +75,49 @@ namespace ospray {
     bool Volume::useDataDistributedVolume = false;
 
     /*! \brief returns a std::string with the c++ name of this class */
+    void Volume::init()
+    {
+      Renderable::init();
+      add(createNode("transferFunction", "TransferFunction"));
+      add(createNode("gradientShadingEnabled", "bool", true));
+      add(createNode("preIntegration", "bool", true));
+      add(createNode("singleShade", "bool", true));
+      add(createNode("voxelRange", "vec2f",
+                     vec2f(std::numeric_limits<float>::infinity(),
+                           -std::numeric_limits<float>::infinity())));
+      add(createNode("adaptiveSampling", "bool", true));
+      add(createNode("adaptiveScalar", "float", 15.f));
+      add(createNode("adaptiveBacktrack", "float", 0.03f));
+      add(createNode("samplingRate", "float", 0.125f));
+      add(createNode("adaptiveMaxSamplingRate", "float", 2.f));
+      add(createNode("volumeClippingBoxLower", "vec3f", vec3f(0.f)));
+      add(createNode("volumeClippingBoxUpper", "vec3f", vec3f(0.f)));
+      add(createNode("specular", "vec3f", vec3f(0.3f)));
+      add(createNode("gridOrigin", "vec3f", vec3f(0.0f)));
+      add(createNode("gridSpacing", "vec3f", vec3f(0.002f)));
+      add(createNode("isosurfaceEnabled", "bool", false));
+      add(createNode("isosurface", "float",
+                     -std::numeric_limits<float>::infinity(),
+                     NodeFlags::valid_min_max | NodeFlags::gui_slider));
+      child("isosurface").setMinMax(0.f,255.f);
+    }
+
     std::string Volume::toString() const
-    { return "ospray::sg::Volume"; }
+    {
+      return "ospray::sg::Volume";
+    }
 
     void Volume::serialize(sg::Serialization::State &state)
     {
       Node::serialize(state);
-      // if (transferFunction)
-      //   transferFunction->serialize(state);
     }
 
     void Volume::preRender(RenderContext &ctx)
     {
-      if (volume)
-      {
+      if (volume) {
         ospAddVolume(ctx.world->ospModel,volume);
-        if (child("isosurfaceEnabled").valueAs<bool>() == true && isosurfacesGeometry)
+        if (child("isosurfaceEnabled").valueAs<bool>() == true
+            && isosurfacesGeometry)
           ospAddGeometry(ctx.world->ospModel, isosurfacesGeometry);
       }
     }
@@ -90,9 +128,9 @@ namespace ospray {
 
     //! constructor
     StructuredVolume::StructuredVolume()
-      : dimensions(-1), voxelType("<undefined>"),
-        mappedPointer(nullptr)
-    {}
+      : dimensions(-1), voxelType("<undefined>"), mappedPointer(nullptr)
+    {
+    }
 
     /*! \brief returns a std::string with the c++ name of this class */
     std::string StructuredVolume::toString() const
@@ -102,7 +140,7 @@ namespace ospray {
     box3f StructuredVolume::bounds() const
     {
       return {vec3f(0.f),
-              vec3f(getDimensions())*child("gridSpacing").valueAs<vec3f>()};
+            vec3f(getDimensions())*child("gridSpacing").valueAs<vec3f>()};
     }
 
     //! \brief Initialize this node's value from given XML node
@@ -127,12 +165,8 @@ namespace ospray {
                                  " only supporting 'float' and 'uint8')");
       }
 
-      std::cout << "#osp:sg: created StructuredVolume from XML file, dimensions = "
-                << getDimensions() << std::endl;
-    }
-
-    void StructuredVolume::render(RenderContext &ctx)
-    {
+      std::cout << "#osp:sg: created StructuredVolume from XML file, "
+                << "dimensions = " << getDimensions() << std::endl;
     }
 
     // TODO: why is this a copy-paste of render??
@@ -156,7 +190,8 @@ namespace ospray {
       assert(mappedPointer != nullptr);
 
       for (int z=0;z<dimensions.z;z++) {
-        float *slice = (float*)(((unsigned char *)mappedPointer)+z*nPerSlice*sizeof(float));
+        float *slice =
+          (float*)(((unsigned char *)mappedPointer)+z*nPerSlice*sizeof(float));
         vec3i region_lo(0,0,z), region_sz(dimensions.x,dimensions.y,1);
         ospSetRegion(volume,slice,
                      (const osp::vec3i&)region_lo,
@@ -209,28 +244,19 @@ namespace ospray {
 
       if (voxelType != "float" && voxelType != "uchar") {
         throw std::runtime_error("unknown StructuredVolume.voxelType "
-                                 "(currently only supporting 'float' and 'uchar')");
+                                 "(currently support 'float' and 'uchar')");
       }
 
-      std::cout << "#osp:sg: created StructuredVolume from XML file, dimensions = "
-                << getDimensions() << std::endl;
-    }
-
-    /*! \brief 'render' the object to ospray */
-    void StructuredVolumeFromFile::render(RenderContext &ctx)
-    {
-      // transferFunction->render(ctx);
-      if (!volume) {
-        throw std::runtime_error("Render was called without pre-commit??");
-      }
+      std::cout << "#osp:sg: created StructuredVolume from XML file, "
+                << "dimensions = " << getDimensions() << std::endl;
     }
 
     void StructuredVolumeFromFile::preCommit(RenderContext &ctx)
     {
       if (volume) {
         ospCommit(volume);
-        if (child("isosurfaceEnabled").valueAs<bool>() == true && isosurfacesGeometry)
-        {
+        if (child("isosurfaceEnabled").valueAs<bool>() == true
+            && isosurfacesGeometry) {
           OSPData isovaluesData = ospNewData(1, OSP_FLOAT, 
             &child("isosurface").valueAs<float>());
           ospSetData(isosurfacesGeometry, "isovalues", isovaluesData);
@@ -239,8 +265,10 @@ namespace ospray {
         return;
       }
 
-      if (dimensions.x <= 0 || dimensions.y <= 0 || dimensions.z <= 0)
-        throw std::runtime_error("StructuredVolume::render(): invalid volume dimensions");
+      if (dimensions.x <= 0 || dimensions.y <= 0 || dimensions.z <= 0) {
+        throw std::runtime_error("StructuredVolume::render(): "
+                                 "invalid volume dimensions");
+      }
 
       bool useBlockBricked = 1;
 
@@ -305,7 +333,9 @@ namespace ospray {
       child("transferFunction")["valueRange"].setValue(voxelRange);
       child("transferFunction").preCommit(ctx);
 
-      ospSetObject(volume,"transferFunction",child("transferFunction").valueAs<OSPObject>());
+      ospSetObject(volume,
+                   "transferFunction",
+                   child("transferFunction").valueAs<OSPObject>());
       ospCommit(volume);
     }
 
@@ -322,7 +352,6 @@ namespace ospray {
     // stacked slices volume class
     // =======================================================
 
-    //! constructor
     StackedRawSlices::StackedRawSlices()
       : baseName(""), voxelType("uint8_t"), dimensions(-1)
     {}
@@ -349,18 +378,10 @@ namespace ospray {
       firstSliceID    = std::stoll(node.getProp("firstSliceID","0"));
       numSlices       = std::stoll(node.getProp("numSlices"));
 
-      if (voxelType != "uint8_t")
-        throw std::runtime_error("unknown StackedRawSlices.voxelType (currently only supporting 'uint8_t')");
-
-#if 0
-      if (!transferFunction)
-        setTransferFunction(std::make_shared<TransferFunction>());
-#endif
-    }
-
-    /*! \brief 'render' the object to ospray */
-    void StackedRawSlices::render(RenderContext &ctx)
-    {
+      if (voxelType != "uint8_t") {
+        throw std::runtime_error("unknown StackedRawSlices.voxelType "
+                                 "(currently only supporting 'uint8_t')");
+      }
     }
 
     OSP_REGISTER_SG_NODE(StackedRawSlices);
