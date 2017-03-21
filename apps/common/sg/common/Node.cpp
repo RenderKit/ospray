@@ -50,7 +50,7 @@ namespace ospray {
     {
     }
 
-    std::string Node::documentation()
+    std::string Node::documentation() const
     {
       return properties.documentation;
     }
@@ -350,7 +350,7 @@ namespace ospray {
       properties.blacklist = values;
     }
 
-    bool Node::isValid()
+    bool Node::isValid() const
     {
       return properties.valid;
     }

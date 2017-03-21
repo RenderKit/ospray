@@ -100,7 +100,7 @@ namespace ospray {
         but don't do anything else to the node(s) */
       virtual void serialize(sg::Serialization::State &state);
 
-      std::string documentation();
+      std::string documentation() const;
 
       void setDocumentation(const std::string &s);
 
@@ -164,7 +164,7 @@ namespace ospray {
       void setValue(SGVar val);
 
       //! add node as child of this one
-      virtual void add(std::shared_ptr<Node> node);
+      void add(std::shared_ptr<Node> node);
 
       //! add child node n to this node
       Node& operator+=(std::shared_ptr<Node> n);
@@ -225,7 +225,7 @@ namespace ospray {
       void setWhiteList(const std::vector<SGVar> &values);
       void setBlackList(const std::vector<SGVar> &values);
 
-      virtual bool isValid();
+      bool isValid() const;
 
       virtual bool computeValid();
       virtual bool computeValidMinMax();
