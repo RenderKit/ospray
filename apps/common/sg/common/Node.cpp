@@ -159,10 +159,10 @@ namespace ospray {
       return result;
     }
 
-    std::vector<Node::Handle> Node::children() const
+    std::vector<std::shared_ptr<Node> > Node::children() const
     {
       std::lock_guard<std::mutex> lock{mutex};
-      std::vector<Handle> result;
+      std::vector<std::shared_ptr<Node>> result;
       for (auto &child : properties.children)
         result.push_back(child.second);
       return result;

@@ -180,7 +180,7 @@ namespace ospray {
       std::vector<Handle> childrenByType(const std::string &t) const;
 
       //! return vector of child handles
-      std::vector<Handle> children() const;
+      std::vector<std::shared_ptr<Node>> children() const;
 
       //! return child c
       Handle operator[] (const std::string &c) const;
