@@ -79,7 +79,7 @@ namespace ospray {
       if (volume)
       {
         ospAddVolume(ctx.world->ospModel,volume);
-        if (child("isosurfaceEnabled")->valueAs<bool>() == true && isosurfacesGeometry)
+        if (child("isosurfaceEnabled").valueAs<bool>() == true && isosurfacesGeometry)
           ospAddGeometry(ctx.world->ospModel, isosurfacesGeometry);
       }
     }
@@ -102,7 +102,7 @@ namespace ospray {
     box3f StructuredVolume::bounds() const
     {
       return {vec3f(0.f),
-              vec3f(getDimensions())*child("gridSpacing")->valueAs<vec3f>()};
+              vec3f(getDimensions())*child("gridSpacing").valueAs<vec3f>()};
     }
 
     //! \brief Initialize this node's value from given XML node
@@ -188,7 +188,7 @@ namespace ospray {
     box3f StructuredVolumeFromFile::bounds() const
     {
       return {vec3f(0.f),
-              vec3f(getDimensions())*child("gridSpacing")->valueAs<vec3f>()};
+              vec3f(getDimensions())*child("gridSpacing").valueAs<vec3f>()};
     }
 
     //! \brief Initialize this node's value from given XML node
@@ -229,10 +229,10 @@ namespace ospray {
     {
       if (volume) {
         ospCommit(volume);
-        if (child("isosurfaceEnabled")->valueAs<bool>() == true && isosurfacesGeometry)
+        if (child("isosurfaceEnabled").valueAs<bool>() == true && isosurfacesGeometry)
         {
           OSPData isovaluesData = ospNewData(1, OSP_FLOAT, 
-            &child("isosurface")->valueAs<float>());
+            &child("isosurface").valueAs<float>());
           ospSetData(isosurfacesGeometry, "isovalues", isovaluesData);
           ospCommit(isosurfacesGeometry);
         }
@@ -297,21 +297,22 @@ namespace ospray {
       }
       fclose(file);
 
-      child("voxelRange")->setValue(voxelRange);
-      child("isosurface")->setMinMax(voxelRange.x, voxelRange.y);
-      float iso = child("isosurface")->valueAs<float>();
+      child("voxelRange").setValue(voxelRange);
+      child("isosurface").setMinMax(voxelRange.x, voxelRange.y);
+      float iso = child("isosurface").valueAs<float>();
       if (iso < voxelRange.x || iso > voxelRange.y)
-        child("isosurface")->setValue((voxelRange.y-voxelRange.x)/2.f);
+        child("isosurface").setValue((voxelRange.y-voxelRange.x)/2.f);
       child("transferFunction")["valueRange"]->setValue(voxelRange);
-      child("transferFunction")->preCommit(ctx);
+      child("transferFunction").preCommit(ctx);
 
-      ospSetObject(volume,"transferFunction",child("transferFunction")->valueAs<OSPObject>());
+      ospSetObject(volume,"transferFunction",child("transferFunction").valueAs<OSPObject>());
       ospCommit(volume);
     }
 
     void StructuredVolumeFromFile::postCommit(RenderContext &ctx)
     {
-      ospSetObject(volume,"transferFunction",child("transferFunction")->valueAs<OSPObject>());
+      ospSetObject(volume,"transferFunction",
+                   child("transferFunction").valueAs<OSPObject>());
       ospCommit(volume);
     }
 

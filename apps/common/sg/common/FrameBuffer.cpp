@@ -39,9 +39,9 @@ namespace ospray {
 
     void FrameBuffer::postCommit(RenderContext &ctx)
     {
-      fbsize = child("size")->valueAs<vec2i>();
+      fbsize = child("size").valueAs<vec2i>();
 
-      std::string displayWall = child("displayWall")->valueAs<std::string>();
+      std::string displayWall = child("displayWall").valueAs<std::string>();
       this->displayWallStream = displayWall;
 
       destroyFB();

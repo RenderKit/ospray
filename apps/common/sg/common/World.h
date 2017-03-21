@@ -72,7 +72,7 @@ namespace ospray {
         add(createNode("position", "vec3f"));
         add(createNode("rotation", "vec3f", vec3f(0),
                        NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
-        child("rotation")->setMinMax(-vec3f(2*3.15f),vec3f(2*3.15f));
+        child("rotation").setMinMax(-vec3f(2*3.15f),vec3f(2*3.15f));
         add(createNode("scale", "vec3f", vec3f(1.f)));
       }
 

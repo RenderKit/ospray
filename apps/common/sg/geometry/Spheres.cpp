@@ -120,7 +120,7 @@ namespace ospray {
       }
       
       ospSetMaterial(ospGeometry,
-                     (OSPMaterial)child("material")->valueAs<OSPObject>());
+                     (OSPMaterial)child("material").valueAs<OSPObject>());
       ospCommit(ospGeometry);
       
       ospAddGeometry(ctx.world->ospModel,ospGeometry);

@@ -79,6 +79,7 @@ namespace ospray {
       struct OSPSG_INTERFACE Handle
       {
         Handle() = default;
+        Handle(Node &n) : node(n.shared_from_this()) {}
         Handle(const std::shared_ptr<sg::Node> &n) : node(n) {}
 
         //! return child with name c
@@ -170,7 +171,7 @@ namespace ospray {
       bool hasChild(const std::string &name) const;
 
       /*! return named child node. */
-      Handle child(const std::string &name) const;
+      Node& child(const std::string &name) const;
 
       //! return named child node
       Handle childRecursive(const std::string &name);

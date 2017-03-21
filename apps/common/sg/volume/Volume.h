@@ -49,7 +49,7 @@ namespace ospray {
         add(createNode("isosurfaceEnabled", "bool", false));
         add(createNode("isosurface", "float", -std::numeric_limits<float>::infinity(), 
           NodeFlags::valid_min_max | NodeFlags::gui_slider));
-        child("isosurface")->setMinMax(0.f,255.f);
+        child("isosurface").setMinMax(0.f,255.f);
         
         // transferFunction = std::dynamic_pointer_cast<TransferFunction>(
           // properties.children["transferFunction"].node);

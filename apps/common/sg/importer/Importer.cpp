@@ -154,7 +154,7 @@ namespace ospray {
     void Importer::setChildrenModified(TimeStamp t)
     {
       Node::setChildrenModified(t);
-      ospcommon::FileName fileName(child("fileName")->valueAs<std::string>());
+      ospcommon::FileName fileName(child("fileName").valueAs<std::string>());
 
       if (fileName.str() == loadedFileName)
         return;

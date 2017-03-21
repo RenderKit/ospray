@@ -95,9 +95,9 @@ namespace ospray {
       oldWorld = ctx.world;
       if (instanced) {
         ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
-        vec3f scale = child("scale")->valueAs<vec3f>();
-        vec3f rotation = child("rotation")->valueAs<vec3f>();
-        vec3f translation = child("position")->valueAs<vec3f>();
+        vec3f scale = child("scale").valueAs<vec3f>();
+        vec3f rotation = child("rotation").valueAs<vec3f>();
+        vec3f translation = child("position").valueAs<vec3f>();
         ospcommon::affine3f xfm = ospcommon::one;
         xfm = xfm*ospcommon::affine3f::translate(translation)*ospcommon::affine3f::rotate(vec3f(1,0,0),rotation.x)*
         ospcommon::affine3f::rotate(vec3f(0,1,0),rotation.y)*
@@ -109,7 +109,7 @@ namespace ospray {
         ospInstance = ospNewInstance(ospModel,(osp::affine3f&)xfm);
         ospCommit(ospInstance);
 
-        if (child("visible")->value() == true)
+        if (child("visible").value() == true)
           ospAddGeometry(oldWorld->ospModel,ospInstance);
       }
     }

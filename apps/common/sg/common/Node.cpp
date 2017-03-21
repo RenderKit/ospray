@@ -116,7 +116,7 @@ namespace ospray {
       return itr != properties.children.end();
     }
 
-    Node::Handle Node::child(const std::string &name) const
+    Node& Node::child(const std::string &name) const
     {
       std::lock_guard<std::mutex> lock{mutex};
       auto itr = properties.children.find(name);
@@ -124,7 +124,7 @@ namespace ospray {
         throw std::runtime_error("in node "+toString()+
                                  " : could not find sg child node with name '"+name+"'");
       } else {
-        return itr->second;
+        return *itr->second;
       }
     }
 

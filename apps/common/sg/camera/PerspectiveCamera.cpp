@@ -30,12 +30,12 @@ namespace ospray {
     {
       add(createNode("pos", "vec3f", from));
       add(createNode("dir", "vec3f", at,NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
-      child("dir")->setMinMax(vec3f(-1), vec3f(1));
+      child("dir").setMinMax(vec3f(-1), vec3f(1));
       add(createNode("up", "vec3f", up,NodeFlags::required));
       add(createNode("aspect", "float", aspect,NodeFlags::required | NodeFlags::valid_min_max));
-      child("aspect")->setMinMax(float(1e-31), float(1e31));
+      child("aspect").setMinMax(float(1e-31), float(1e31));
       add(createNode("fovy", "float", fovy,NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
-      child("fovy")->setMinMax(.1f, 360.f);
+      child("fovy").setMinMax(.1f, 360.f);
     }
 
     void PerspectiveCamera::commit() 
@@ -55,11 +55,11 @@ namespace ospray {
     {
       if (!ospCamera) create(); 
       
-      ospSetVec3f(ospCamera,"pos",(const osp::vec3f&)child("pos")->valueAs<vec3f>());
-      ospSetVec3f(ospCamera,"dir",(const osp::vec3f&)child("dir")->valueAs<vec3f>());
-      ospSetVec3f(ospCamera,"up",(const osp::vec3f&)child("up")->valueAs<vec3f>());
-      ospSetf(ospCamera,"aspect",child("aspect")->valueAs<float>());
-      ospSetf(ospCamera,"fovy",child("fovy")->valueAs<float>());
+      ospSetVec3f(ospCamera,"pos",(const osp::vec3f&)child("pos").valueAs<vec3f>());
+      ospSetVec3f(ospCamera,"dir",(const osp::vec3f&)child("dir").valueAs<vec3f>());
+      ospSetVec3f(ospCamera,"up",(const osp::vec3f&)child("up").valueAs<vec3f>());
+      ospSetf(ospCamera,"aspect",child("aspect").valueAs<float>());
+      ospSetf(ospCamera,"fovy",child("fovy").valueAs<float>());
       ospCommit(ospCamera);  
     }
 

@@ -94,7 +94,7 @@ namespace ospray {
         setValue((OSPObject)ospTransferFunction);
       }
 
-      vec2f valueRange = child("valueRange")->valueAs<vec2f>();
+      vec2f valueRange = child("valueRange").valueAs<vec2f>();
       ospSetVec2f(ospTransferFunction,"valueRange",{valueRange.x,valueRange.y});
 
       if (ospColorData == nullptr && colorArray.size()) {

@@ -62,7 +62,7 @@ namespace ospray {
           msgVolume->bounds = volumeNode->bounds();
           msgVolume->handle = volumeNode->volume;
           assert(msgVolume->handle);
-          msgVolume->voxelRange = volumeNode->child("voxelRange")->valueAs<vec2f>();
+          msgVolume->voxelRange = volumeNode->child("voxelRange").valueAs<vec2f>();
           group->volume.push_back(msgVolume);
       } else if (fileName.ext() == "bob") {
         importRM(fn, group);
