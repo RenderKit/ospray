@@ -71,7 +71,7 @@ namespace ospray {
       } else if (node.name == "data") {
         assert(node.child.size() == 1);
         std::shared_ptr<sg::Node> value = parseNode(*node.child[0]);
-        assert(value != NULL);
+        assert(value != nullptr);
         std::shared_ptr<sg::DataBuffer> dataNode =
             std::dynamic_pointer_cast<sg::DataBuffer>(value);
         assert(dataNode);
@@ -112,20 +112,6 @@ namespace ospray {
       return info;
     }
     
-    std::shared_ptr<sg::Integrator> parseIntegratorNode(const xml::Node &node)
-    {
-      assert(node.name == "Integrator");
-      std::shared_ptr<Integrator> integrator =
-          std::make_shared<Integrator>(node.getProp("type",""));
-      for (auto c : node.child) {
-        if (parseParam(std::dynamic_pointer_cast<sg::Node>(integrator),*c))
-          continue;
-        throw std::runtime_error("unknown node type '"+c->name
-                                 +"' in ospray::sg::Integrator node");
-      }
-      return integrator;
-    }
-    
     void parseWorldNode(std::shared_ptr<sg::World> world,
                         const xml::Node &node,
                         const unsigned char *binBasePtr)
@@ -156,9 +142,8 @@ namespace ospray {
         return parseDataNode(node);
       if (node.name == "Info")
         return parseInfoNode(node);
-      if (node.name == "Integrator")
-        return parseIntegratorNode(node);
-      std::cout << "warning: unknown sg::Node type '" << node.name << "'" << std::endl;
+      std::cout << "warning: unknown sg::Node type '" << node.name << "'"
+                << std::endl;
       return std::shared_ptr<sg::Node>();
     }
 
@@ -179,10 +164,12 @@ namespace ospray {
           else if (child.name == "filename")
             fileName = child.content;
           else if (child.name == "samplingRate") {
-            std::cout << "#osp.sg: cowardly refusing to parse 'samplingRate'" << std::endl;
+            std::cout << "#osp.sg: cowardly refusing to parse 'samplingRate'"
+                      << std::endl;
             std::cout << "#osp.sg: (note this should be OK)" << std::endl;
           } else
-            throw std::runtime_error("unknown old-style osp file component volume::" + child.name);
+            throw std::runtime_error("unknown old-style osp file component volume::"
+                                     + child.name);
         });
       std::cout << "#osp.sg: parsed old-style osp file as: " << std::endl;
       std::cout << "  fileName   = " << fileName << std::endl;
@@ -211,7 +198,6 @@ namespace ospray {
       if (doc->child.empty())
         throw std::runtime_error("ospray xml input file does not contain any nodes!?");
 
-#if 1
       /* TEMPORARY FIX while we transition old volumeViewer .osp files
          (that are not in scene graph format) to actual scene graph */
       if (doc->child[0]->name == "volume") {
@@ -222,7 +208,6 @@ namespace ospray {
         importOSPVolumeViewerFile(doc, world);
         return;
       }
-#endif
 
       const std::string binFileName = fileName+"bin";
       const unsigned char * const binBasePtr = mapFile(binFileName);

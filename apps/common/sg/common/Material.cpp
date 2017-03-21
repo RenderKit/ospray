@@ -16,7 +16,6 @@
 
 #include "sg/common/Material.h"
 #include "sg/common/World.h"
-#include "sg/common/Integrator.h"
 #include "ospray/ospray.h"
 
 namespace ospray {
@@ -55,7 +54,7 @@ namespace ospray {
                   << type << "'. Replacing with default material." << std::endl;
         static OSPMaterial defaultMaterial = nullptr;
         if (!defaultMaterial) {
-          defaultMaterial = ospNewMaterial(ctx.integrator->handle(), "OBJ");
+          defaultMaterial = ospNewMaterial(ctx.ospRenderer, "OBJ");
           vec3f kd(.7f);
           vec3f ks(.3f);
           ospSet3fv(defaultMaterial, "Kd", &kd.x);

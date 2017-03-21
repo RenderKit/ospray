@@ -17,8 +17,8 @@
 #undef NDEBUG
 
 #include "sg/geometry/Spheres.h"
-#include "sg/common/Integrator.h"
 #include "sg/common/Data.h"
+#include "sg/common/World.h"
 // xml parser
 #include "common/xml/XML.h"
 
@@ -127,7 +127,7 @@ namespace ospray {
                      (OSPMaterial)child("material").valueAs<OSPObject>());
       ospCommit(ospGeometry);
       
-      ospAddGeometry(ctx.world->ospModel,ospGeometry);
+      ospAddGeometry(ctx.world->ospModel, ospGeometry);
     }
 
     OSP_REGISTER_SG_NODE(Spheres);

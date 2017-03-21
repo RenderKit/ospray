@@ -16,7 +16,6 @@
 
 #include "sg/geometry/TriangleMesh.h"
 #include "sg/common/World.h"
-#include "sg/common/Integrator.h"
 
 namespace ospray {
   namespace sg {

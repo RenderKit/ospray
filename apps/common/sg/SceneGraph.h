@@ -18,7 +18,6 @@
 
 // sg components
 #include "sg/common/Node.h"
-#include "sg/common/Integrator.h"
 #include "sg/common/Data.h"
 #include "sg/common/Transform.h"
 

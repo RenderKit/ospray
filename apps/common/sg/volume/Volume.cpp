@@ -16,7 +16,6 @@
 
 #include "Volume.h"
 #include "sg/common/World.h"
-#include "sg/common/Integrator.h"
 
 namespace ospray {
   namespace sg {
