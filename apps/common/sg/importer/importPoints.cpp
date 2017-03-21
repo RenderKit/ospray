@@ -161,14 +161,14 @@ namespace ospray {
       fclose(file);
 
       // create the node
-      Node::Handle sphereObject = createNode("spheres","Spheres");
+      auto &sphereObject = world->createChildNode("spheres","Spheres");
 
       // iw - note that 'add' sounds wrong here, but that's the way
       // the current scene graph works - 'adding' that node (which
       // happens to have the right name) will essentially replace the
       // old value of that node, and thereby assign the 'data' field
       sphereData->setName("sphereData");
-      sphereObject->add(sphereData); //["data"]->setValue(data);
+      sphereObject.add(sphereData); //["data"]->setValue(data);
       
       if (!mappedScalarVector.empty()) {
         std::cout << "#osp.sg: creating color map for points data ..." << std::endl;
@@ -178,12 +178,11 @@ namespace ospray {
         for (int i=0;i<mappedScalarVector.size();i++)
           colorData->v.push_back(cm.colorFor(mappedScalarVector[i]));
         colorData->setName("colorData");
-        sphereObject->add(colorData);
+        sphereObject.add(colorData);
       }
 
       std::cout << "#osp.sg: imported " << prettyNumber(sphereData->v.size()) 
                 << " points, bounds = " << bounds << std::endl;;
-      Node::Handle(world) += sphereObject;
     }
 
   }// ::ospray::sg

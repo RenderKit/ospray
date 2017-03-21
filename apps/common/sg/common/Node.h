@@ -73,44 +73,6 @@ namespace ospray {
     {
       Node();
 
-      /*! Node::Handle is a handle to a sg::Node.  It has the benefit
-          of supporting some operators without requiring dereferencing
-          a pointer. */
-      struct OSPSG_INTERFACE Handle
-      {
-        Handle() = default;
-        Handle(Node &n) : node(n.shared_from_this()) {}
-        Handle(const std::shared_ptr<sg::Node> &n) : node(n) {}
-
-        //! return child with name c
-        Handle operator[] (const std::string &c) const
-        { return node->child(c); }
-
-        Handle operator[] (const char *c) const
-        { return node->child(c); }
-
-        //! add child node n to this node
-        Handle operator+= (Handle n)
-        { get()->add(n.get()); n->setParent(node); return n;}
-
-        sg::Node* operator->() const { return node.get(); }
-
-        std::shared_ptr<sg::Node> get() const { return node; }
-
-        //! is this handle pointing to a null value?
-        bool notNULL() const { return !isNULL(); }
-        //! is this handle pointing to a null value?
-        bool isNULL() const { return node.get() == nullptr; }
-
-        operator bool() const { return !isNULL(); }
-
-      private:
-
-        // Data members //
-
-        std::shared_ptr<sg::Node> node;
-      };
-
       virtual std::string toString() const;
 
       //! \brief Initialize this node's value from given XML node

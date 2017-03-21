@@ -316,9 +316,11 @@ int main(int ac, const char **av)
   }
 
   renderer.traverse("commit");
-  
-  ospray::ImGuiViewerSg window(renderer, rendererDW);
+
+  ospray::ImGuiViewerSg window(renderer_ptr, rendererDW);
+
   if (addPlane) addPlaneToScene(world);
+
   window.create("OSPRay Example Viewer App", fullscreen);
   
   ospray::imgui3D::run();

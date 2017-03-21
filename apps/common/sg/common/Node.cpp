@@ -141,9 +141,11 @@ namespace ospray {
 
       for (auto &child : properties.children) {
         mutex.unlock();
-        Handle r = child.second->childRecursive(name);
-        if (!r.isNULL())
-          return *r.get();
+        try {
+          return child.second->childRecursive(name);
+        }
+        catch (const std::runtime_error &) {}
+
         mutex.lock();
       }
 

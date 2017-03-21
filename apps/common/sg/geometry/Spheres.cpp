@@ -52,9 +52,9 @@ namespace ospray {
 
     box3f Spheres::bounds() const
     {
-      Node::Handle sphereData = child("sphereData");
+      auto sphereData = child("sphereData").shared_from_this();
       std::shared_ptr<DataVectorT<Sphere,OSP_RAW>> spheres 
-        = std::dynamic_pointer_cast<DataVectorT<Sphere,OSP_RAW>>(sphereData.get());
+        = std::dynamic_pointer_cast<DataVectorT<Sphere,OSP_RAW>>(sphereData);
       
       box3f bounds = empty;
       for (auto &s : spheres->v)
@@ -89,9 +89,9 @@ namespace ospray {
       ospGeometry = ospNewGeometry("spheres");
 
       {
-        Node::Handle sphereDataNode = child("sphereData");
+        auto sphereDataNode = child("sphereData").shared_from_this();
         std::shared_ptr<DataVectorT<Sphere,OSP_RAW>> sphereData 
-          = std::dynamic_pointer_cast<DataVectorT<Sphere,OSP_RAW>>(sphereDataNode.get());
+          = std::dynamic_pointer_cast<DataVectorT<Sphere,OSP_RAW>>(sphereDataNode);
         OSPData ospSphereData = ospNewData(sphereData->v.size()*5,OSP_FLOAT,
                                            sphereData->v.data(),OSP_DATA_SHARED_BUFFER);
         ospCommit(ospSphereData);
@@ -104,9 +104,9 @@ namespace ospray {
         ospSet1i(ospGeometry,"offset_materialID", 4*sizeof(float));
       }
       {
-        Node::Handle colorDataNode = child("colorData");
+        auto colorDataNode = child("colorData").shared_from_this();
         std::shared_ptr<DataVectorT<vec4f,OSP_RAW>> colorData 
-          = std::dynamic_pointer_cast<DataVectorT<vec4f,OSP_RAW>>(colorDataNode.get());
+          = std::dynamic_pointer_cast<DataVectorT<vec4f,OSP_RAW>>(colorDataNode);
         PING; PRINT(colorData);
         if (colorData) {
           OSPData ospColorData = ospNewData(colorData->v.size()*5,OSP_FLOAT,
