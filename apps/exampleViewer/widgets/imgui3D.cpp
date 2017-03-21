@@ -319,7 +319,21 @@ namespace ospray {
       glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
       glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
-      const auto &size = defaultInitSize;
+      auto size = defaultInitSize;
+
+      auto defaultSizeFromEnv =
+        getEnvVar<std::string>("OSPRAY_APPS_DEFAULT_WINDOW_SIZE");
+
+      if (defaultSizeFromEnv.first) {
+        int rc = sscanf(defaultSizeFromEnv.second.c_str(),
+                        "%dx%d", &size.x, &size.y);
+        if (rc != 2) {
+          throw std::runtime_error("could not parse"
+                                   " OSPRAY_APPS_DEFAULT_WINDOW_SIZE "
+                                   "env-var. Must be of format <X>x<Y>x<>Z "
+                                   "(e.g., '1024x768'");
+        }
+      }
 
       if (fullScreen) {
         auto *monitor = glfwGetPrimaryMonitor();
