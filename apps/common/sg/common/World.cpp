@@ -27,6 +27,16 @@ namespace ospray {
       return bounds;
     }
 
+    void World::init()
+    {
+      add(createNode("bounds", "box3f"));
+    }
+
+    std::string World::toString() const
+    {
+      return "ospray::viewer::sg::World";
+    }
+
     //! serialize into given serialization state
     void sg::World::serialize(sg::Serialization::State &state)
     {
@@ -34,10 +44,6 @@ namespace ospray {
       for (auto node: nodes)
         node->serialize(state);
       state = savedState;
-    }
-
-    void World::render(RenderContext &ctx)
-    {
     }
 
     void World::preCommit(RenderContext &ctx)
@@ -66,6 +72,19 @@ namespace ospray {
     {
        ospCommit(ospModel);
        ctx.world = oldWorld;
+    }
+
+    void InstanceGroup::init()
+    {
+      add(createNode("bounds", "box3f"));
+      add(createNode("visible", "bool", true));
+      add(createNode("position", "vec3f"));
+      add(createNode("rotation", "vec3f", vec3f(0),
+                     NodeFlags::required      |
+                     NodeFlags::valid_min_max |
+                     NodeFlags::gui_slider));
+      child("rotation").setMinMax(-vec3f(2*3.15f),vec3f(2*3.15f));
+      add(createNode("scale", "vec3f", vec3f(1.f)));
     }
 
     void InstanceGroup::preCommit(RenderContext &ctx)

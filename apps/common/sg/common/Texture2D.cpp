@@ -19,7 +19,12 @@
 namespace ospray {
   namespace sg {
       
-    //! \brief load texture from given file. 
+    std::string Texture2D::toString() const
+    {
+      return "ospray::viewer::sg::Texture2D";
+    }
+
+    //! \brief load texture from given file.
     /*! \detailed if file does not exist, or cannot be loaded for
       some reason, return NULL. Multiple loads from the same file
       will return the *same* texture object */
@@ -115,21 +120,6 @@ namespace ospray {
       } 
       textureCache[fileName.str()] = tex;
       return tex;
-    }
-    
-    void Texture2D::render(RenderContext &ctx)
-    {
-      if (ospTexture)
-        return;
-      
-      ospTexture = ospNewTexture2D((osp::vec2i&)size,
-                                   texelType,
-                                   texelData->getBase(),
-                                   0);
-      if(!ospTexture)
-        std::cerr << "Warning: Could not create Texture2D\n";
-      else
-        ospCommit(ospTexture);
     }
 
   } // ::ospray::sg

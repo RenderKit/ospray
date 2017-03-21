@@ -50,14 +50,6 @@ namespace ospray {
     {
     }
 
-    void Node::render(RenderContext &ctx)
-    {
-    }
-
-    void Node::commit()
-    {
-    }
-
     std::string Node::documentation()
     {
       return properties.documentation;

@@ -29,14 +29,6 @@ namespace ospray {
     {
       return "ospray::sg::Group";
     }
-
-    void Group::render(RenderContext &ctx)
-    {
-      for (auto child : children) {
-        assert(child);
-        child->render(ctx); 
-      }
-    }
     
     box3f Group::bounds() const
     {

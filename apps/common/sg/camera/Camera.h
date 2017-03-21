@@ -57,7 +57,6 @@ namespace ospray {
     {
       if (ospCamera) destroy();
       ospCamera = ospNewCamera(type.c_str());
-      commit();
       setValue((OSPObject)ospCamera);
     }
 

@@ -100,12 +100,6 @@ namespace ospray {
         but don't do anything else to the node(s) */
       virtual void serialize(sg::Serialization::State &state);
 
-      /*! \brief 'render' the object for the first time */
-      virtual void render(RenderContext &ctx);
-
-      /*! \brief 'commit' updates */
-      virtual void commit();
-
       std::string documentation();
 
       void setDocumentation(const std::string &s);
