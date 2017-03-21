@@ -304,27 +304,20 @@ int main(int ac, const char **av)
 
   parseCommandLineSG(ac, av, renderer);
 
+  if (rendererDW.notNULL()) {
+    rendererDW->properties.children["world"]  = renderer["world"];
+    rendererDW->properties.children["lights"] = renderer["lights"];
+    
+    rendererDW["frameBuffer"]["size"]->setValue(dwService.totalPixelsInWall);
+    rendererDW["frameBuffer"]["displayWall"]->setValue(dwService.mpiPortName);
+  }
+
   if (debug) {
     renderer->traverse("verify");
     renderer->traverse("print");
   }
 
   renderer->traverse("commit");
-
-  if (rendererDW.notNULL()) {
-    rendererDW->properties.children["world"] = renderer["world"];
-    rendererDW->properties.children["lights"] = renderer["lights"];
-    
-    rendererDW["frameBuffer"]["size"]->setValue(dwService.totalPixelsInWall);
-    rendererDW["frameBuffer"]["displayWall"]->setValue(dwService.mpiPortName);
-    // rendererDW["frameBuffer"]["size"]->setValue(dwService.totalPixelsInWall);
-    // rendererDW["frameBuffer"]["displayWall"]->setValue(dwService.mpiPortName);
-    
-    
-    rendererDW->traverse("verify");
-    // rendererDW->traverse("print");
-    rendererDW->traverse("commit");
-  }
   
   ospray::ImGuiViewerSg window(renderer,rendererDW);
   if (addPlane) addPlaneToScene(world);
