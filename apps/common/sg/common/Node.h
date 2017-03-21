@@ -132,10 +132,6 @@ namespace ospray {
       //! return named child node
       Node& childRecursive(const std::string &name);
 
-      //! return all children of type
-      std::vector<std::shared_ptr<Node>>
-      childrenByType(const std::string &t) const;
-
       //! return vector of child handles
       std::vector<std::shared_ptr<Node>> children() const;
 
