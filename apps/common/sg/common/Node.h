@@ -91,7 +91,7 @@ namespace ospray {
 
         //! add child node n to this node
         Handle operator+= (Handle n)
-        { get()->add(n); n->setParent(node); return n;}
+        { get()->add(n.get()); n->setParent(node); return n;}
 
         sg::Node* operator->() const { return node.get(); }
 
@@ -190,6 +190,9 @@ namespace ospray {
       Node& parent() const;
 
       //! sets the parent
+      void setParent(Node &p);
+
+      //! sets the parent
       void setParent(const std::shared_ptr<Node>& p);
 
       bool hasParent() const;
@@ -211,12 +214,18 @@ namespace ospray {
       //! add node as child of this one
       virtual void add(std::shared_ptr<Node> node);
 
-      //! add node as child of this one
-      virtual void add(Handle node);
+      //! add child node n to this node
+      Node& operator+=(std::shared_ptr<Node> n);
 
       //! just for convenience; add a typed 'setParam' function
       template<typename T>
       void createChildWithValue(const std::string &name, const T &t);
+
+      Node& createChildNode(std::string name,
+                            std::string type = "Node",
+                            SGVar var = SGVar(),
+                            int flags = sg::NodeFlags::none,
+                            std::string documentation="");
 
       //! traverse this node and childrend with given operation, such as
       //  print,commit,render or custom operations
@@ -330,11 +339,11 @@ namespace ospray {
       return properties.value.get<T>();
     }
 
-    OSPSG_INTERFACE Node::Handle createNode(std::string name,
-                                            std::string type = "Node",
-                                            SGVar var = SGVar(),
-                                            int flags = sg::NodeFlags::none,
-                                            std::string documentation="");
+    OSPSG_INTERFACE std::shared_ptr<Node> createNode(std::string name,
+                                                     std::string type = "Node",
+                                                     SGVar var = SGVar(),
+                                                     int flags = sg::NodeFlags::none,
+                                                     std::string documentation="");
 
     // Helper functions ///////////////////////////////////////////////////////
 

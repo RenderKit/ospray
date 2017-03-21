@@ -179,6 +179,12 @@ namespace ospray {
       return *properties.parent;
     }
 
+    void Node::setParent(Node &p)
+    {
+      std::lock_guard<std::mutex> lock{mutex};
+      properties.parent = p.shared_from_this();
+    }
+
     void Node::setParent(const std::shared_ptr<Node> &p)
     {
       std::lock_guard<std::mutex> lock{mutex};
@@ -216,11 +222,21 @@ namespace ospray {
       node->setParent(shared_from_this());
     }
 
-    void Node::add(Node::Handle node)
+    Node& Node::operator+=(std::shared_ptr<Node> n)
     {
-      std::lock_guard<std::mutex> lock{mutex};
-      properties.children[node->name()] = node.get();
-      node->setParent(shared_from_this());
+      add(n);
+      return *this;
+    }
+
+    Node& Node::createChildNode(std::string name,
+                                std::string type,
+                                SGVar var,
+                                int flags,
+                                std::string documentation)
+    {
+      auto child = createNode(name, type, var, flags, documentation);
+      add(child);
+      return *child;
     }
 
     void Node::traverse(RenderContext &ctx, const std::string& operation)
@@ -414,8 +430,11 @@ namespace ospray {
 
     std::map<std::string, CreatorFct> nodeRegistry;
 
-    Node::Handle createNode(std::string name, std::string type, SGVar var,
-                            int flags, std::string documentation)
+    std::shared_ptr<Node> createNode(std::string name,
+                                     std::string type,
+                                     SGVar var,
+                                     int flags,
+                                     std::string documentation)
     {
       std::map<std::string, CreatorFct>::iterator it = nodeRegistry.find(type);
       CreatorFct creator = nullptr;

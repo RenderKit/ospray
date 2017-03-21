@@ -47,7 +47,7 @@ namespace ospray {
       if (node.hasProp("name"))
         name = node.getProp("name");
 
-      std::shared_ptr<sg::Node> newNode = createNode(name, node.name).get();
+      std::shared_ptr<sg::Node> newNode = createNode(name, node.name);
       if (!newNode.get())
         throw std::runtime_error("could not create scene graph node");
       
@@ -166,7 +166,7 @@ namespace ospray {
     {
       std::shared_ptr<sg::StructuredVolumeFromFile> volume
         = std::dynamic_pointer_cast<sg::StructuredVolumeFromFile>(
-          createNode("volume", "StructuredVolumeFromFile").get());
+          createNode("volume", "StructuredVolumeFromFile"));
 
       vec3i dimensions(-1);
       std::string fileName = "";
