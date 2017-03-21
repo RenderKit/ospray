@@ -279,7 +279,7 @@ namespace ospray {
         std::vector<SGVar> minmax;
         std::vector<SGVar> whitelist;
         std::vector<SGVar> blacklist;
-        std::map<std::string, Handle> children;
+        std::map<std::string, std::shared_ptr<Node>> children;
         SGVar value;
         TimeStamp lastModified;
         TimeStamp childrenMTime;

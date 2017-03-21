@@ -305,9 +305,9 @@ int main(int ac, const char **av)
   parseCommandLineSG(ac, av, renderer);
 
   if (rendererDW.notNULL()) {
-    rendererDW->properties.children["world"]  = renderer["world"];
-    rendererDW->properties.children["lights"] = renderer["lights"];
-    
+    rendererDW->properties.children["world"]  = renderer["world"].get();
+    rendererDW->properties.children["lights"] = renderer["lights"].get();
+
     rendererDW["frameBuffer"]["size"]->setValue(dwService.totalPixelsInWall);
     rendererDW["frameBuffer"]["displayWall"]->setValue(dwService.mpiPortName);
   }
