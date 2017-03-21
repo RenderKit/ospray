@@ -21,11 +21,15 @@ namespace ospray {
 
     PerspectiveCamera::PerspectiveCamera() 
       : Camera("perspective"),
-        from(0,-1,0), at(0,0,0), up(0,0,1), aspect(1),
+        from(0,-1,0),
+        at(0,0,0),
+        up(0,0,1),
+        aspect(1),
         fovy(60)
     {
       create(); 
     }
+
     void PerspectiveCamera::init()
     {
       add(createNode("pos", "vec3f", from));
@@ -36,19 +40,6 @@ namespace ospray {
       child("aspect").setMinMax(float(1e-31), float(1e31));
       add(createNode("fovy", "float", fovy,NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
       child("fovy").setMinMax(.1f, 360.f);
-    }
-
-    void PerspectiveCamera::commit() 
-    {
-      if (!ospCamera) create(); 
-      
-      ospSetVec3f(ospCamera,"pos",(const osp::vec3f&)from);
-      vec3f dir = (at - from);
-      ospSetVec3f(ospCamera,"dir",(const osp::vec3f&)dir);
-      ospSetVec3f(ospCamera,"up",(const osp::vec3f&)up);
-      ospSetf(ospCamera,"aspect",aspect);
-      ospSetf(ospCamera,"fovy",fovy);
-      ospCommit(ospCamera);      
     }
 
     void PerspectiveCamera::postCommit(RenderContext &ctx)
