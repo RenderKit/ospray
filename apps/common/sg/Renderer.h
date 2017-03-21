@@ -26,60 +26,23 @@ namespace ospray {
     struct Renderer : public Renderable
     {
       Renderer() = default;
-      virtual void init() override;
-      virtual void preRender(RenderContext &ctx) override;
-      virtual void postRender(RenderContext &ctx) override;
 
-      /*! re-start accumulation (for progressive rendering). make sure
-          that this function gets called at lesat once every time that
-          anything changes that might change the appearance of the
-          converged image (e.g., camera position, scene, frame size,
-          etc) */
-      void resetAccumulation();
+      void init() override;
 
-      void setWorld(const std::shared_ptr<sg::World> &world);
-      void setCamera(const std::shared_ptr<sg::Camera> &camera);
-      void setIntegrator(const std::shared_ptr<sg::Integrator> &integrator);
-
-      // -------------------------------------------------------
-      // query functions
-      // -------------------------------------------------------
-      
-      //! find the last camera in the scene graph
-      std::shared_ptr<sg::Camera> lastDefinedCamera() const;
-
-      //! find the last integrator in the scene graph
-      std::shared_ptr<sg::Integrator> lastDefinedIntegrator() const;
-      
-      //! create a default camera
-      std::shared_ptr<sg::Camera> createDefaultCamera(vec3f up = vec3f(0,1,0));
-
+      void preRender(RenderContext &ctx) override;
+      void postRender(RenderContext &ctx) override;
       void preCommit(RenderContext &ctx) override;
       void postCommit(RenderContext &ctx) override;
 
-      // =======================================================
-      // state variables
-      // =======================================================
-      std::shared_ptr<sg::World>       world;
-      std::shared_ptr<sg::Camera>      camera;
-      std::shared_ptr<sg::FrameBuffer> frameBuffer;
-      std::shared_ptr<sg::Integrator>  integrator;
+    private:
+
+      // Data members //
+
       OSPRenderer ospRenderer {nullptr};
-      OSPData lightsData={nullptr};
+      OSPData lightsData {nullptr};
       TimeStamp lightsBuildTime;
       TimeStamp frameMTime;
       std::string createdType = "none";
-
-      // state variables
-      /*! all _unique_ nodes (i.e, even instanced nodes are listed
-          only once */
-      Serialization uniqueNodes;
-      /*! _all_ nodes (i.e, instanced nodes are listed once for each
-          time they are instanced */
-      Serialization allNodes;
-
-      //! accumulation ID
-      size_t accumID;
     };
 
   } // ::ospray::sg
