@@ -167,18 +167,18 @@ namespace ospray {
     void Node::setParent(Node &p)
     {
       std::lock_guard<std::mutex> lock{mutex};
-      properties.parent = p.shared_from_this();
+      properties.parent = &p;
     }
 
     void Node::setParent(const std::shared_ptr<Node> &p)
     {
       std::lock_guard<std::mutex> lock{mutex};
-      properties.parent = p;
+      properties.parent = p.get();
     }
 
     bool Node::hasParent() const
     {
-      return properties.parent.get() != nullptr;
+      return properties.parent != nullptr;
     }
 
     SGVar Node::value()

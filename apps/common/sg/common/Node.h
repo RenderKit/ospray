@@ -249,7 +249,7 @@ namespace ospray {
         TimeStamp lastModified;
         TimeStamp childrenMTime;
         TimeStamp lastCommitted;
-        std::shared_ptr<Node> parent;
+        Node* parent {nullptr};
         NodeFlags flags;
         bool valid {false};
         std::string documentation;
