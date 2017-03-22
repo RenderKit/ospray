@@ -30,8 +30,6 @@ namespace ospray {
     {
       TriangleMesh();
 
-      void init() override;
-
       /*! \brief returns a std::string with the c++ name of this class */
       std::string toString() const override;
 

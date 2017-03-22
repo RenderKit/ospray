@@ -20,13 +20,10 @@
 namespace ospray {
   namespace sg {
 
-    TriangleMesh::TriangleMesh() : Geometry("trianglemesh")
+    TriangleMesh::TriangleMesh()
+      : Geometry("trianglemesh")
     {
-    }
-
-    void TriangleMesh::init()
-    {
-      add(createNode("material", "Material"));
+      createChildNode("material", "Material");
     }
 
     std::string TriangleMesh::toString() const

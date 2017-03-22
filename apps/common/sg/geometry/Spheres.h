@@ -49,8 +49,6 @@ namespace ospray {
       /*! 'render' the nodes */
       void postCommit(RenderContext &ctx) override;
 
-      void init() override;
-
       //! \brief Initialize this node's value from given XML node 
       /*!
         \detailed This allows a plug-and-play concept where a XML

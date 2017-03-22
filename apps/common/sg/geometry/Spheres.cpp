@@ -42,16 +42,12 @@ namespace ospray {
     Spheres::Spheres()
       : Geometry("spheres")
     {
-    }
-
-    void Spheres::init()
-    {
-      add(createNode("sphereData"));
-      add(createNode("colorData"));
-      add(createNode("material", "Material"));
-      (*this)["material"]["Kd"].setValue(vec3f(1,1,1));
-      (*this)["material"]["Ks"].setValue(vec3f(0,0,0));
-      (*this)["material"]["Ns"].setValue(0.f);
+      createChildNode("sphereData");
+      createChildNode("colorData");
+      auto &materialNode = createChildNode("material", "Material");
+      materialNode["Kd"].setValue(vec3f(1,1,1));
+      materialNode["Ks"].setValue(vec3f(0,0,0));
+      materialNode["Ns"].setValue(0.f);
     }
 
     box3f Spheres::bounds() const
