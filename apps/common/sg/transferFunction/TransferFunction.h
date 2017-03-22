@@ -29,8 +29,6 @@ namespace ospray {
     {
       TransferFunction();
 
-      virtual void init() override;
-
       //! \brief initialize color and alpha arrays to 'some' useful values
       void setDefaultValues();
 
