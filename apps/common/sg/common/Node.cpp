@@ -203,8 +203,7 @@ namespace ospray {
       std::lock_guard<std::mutex> lock{mutex};
       properties.children[node->name()] = node;
 
-      //ARG!  Cannot call shared_from_this in constructors.  PIA!!!
-      node->setParent(shared_from_this());
+      node->setParent(*this);
     }
 
     Node& Node::operator+=(std::shared_ptr<Node> n)

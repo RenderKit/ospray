@@ -25,14 +25,7 @@ namespace ospray {
     {
       PerspectiveCamera();
 
-      void init() override;
       void postCommit(RenderContext &ctx) override;
-      
-      SG_NODE_DECLARE_MEMBER(vec3f,from,From);
-      SG_NODE_DECLARE_MEMBER(vec3f,at,At);
-      SG_NODE_DECLARE_MEMBER(vec3f,up,Up);
-      SG_NODE_DECLARE_MEMBER(float,aspect,Aspect);    
-      SG_NODE_DECLARE_MEMBER(float,fovy,Fovy);    
     };
 
   } // ::ospray::sg
