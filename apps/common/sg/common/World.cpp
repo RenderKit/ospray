@@ -74,17 +74,17 @@ namespace ospray {
        ctx.world = oldWorld;
     }
 
-    void InstanceGroup::init()
+    InstanceGroup::InstanceGroup()
     {
-      add(createNode("bounds", "box3f"));
-      add(createNode("visible", "bool", true));
-      add(createNode("position", "vec3f"));
-      add(createNode("rotation", "vec3f", vec3f(0),
+      createChildNode("bounds", "box3f");
+      createChildNode("visible", "bool", true);
+      createChildNode("position", "vec3f");
+      createChildNode("rotation", "vec3f", vec3f(0),
                      NodeFlags::required      |
                      NodeFlags::valid_min_max |
-                     NodeFlags::gui_slider));
-      child("rotation").setMinMax(-vec3f(2*3.15f),vec3f(2*3.15f));
-      add(createNode("scale", "vec3f", vec3f(1.f)));
+                     NodeFlags::gui_slider).setMinMax(-vec3f(2*3.15f),
+                                                      vec3f(2*3.15f));
+      createChildNode("scale", "vec3f", vec3f(1.f));
     }
 
     void InstanceGroup::preCommit(RenderContext &ctx)

@@ -55,9 +55,7 @@ namespace ospray {
 
     struct OSPSG_INTERFACE InstanceGroup : public sg::World
     {
-      InstanceGroup() = default;
-
-      void init() override;
+      InstanceGroup();
 
       void preCommit(RenderContext &ctx) override;
       void postCommit(RenderContext &ctx) override;
