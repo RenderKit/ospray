@@ -23,28 +23,23 @@ namespace ospray {
       : Camera("perspective")
     {
       createChildNode("pos", "vec3f", vec3f(0, -1, 0));
-      auto &dirNode =
-          createChildNode("dir", "vec3f", vec3f(0, 0, 0),
-                           NodeFlags::required | NodeFlags::valid_min_max |
-                           NodeFlags::required | NodeFlags::valid_min_max |
-                           NodeFlags::gui_slider);
-      dirNode.setMinMax(vec3f(-1), vec3f(1));
+      createChildNode("dir", "vec3f", vec3f(0, 0, 0),
+                       NodeFlags::required | NodeFlags::valid_min_max |
+                       NodeFlags::required | NodeFlags::valid_min_max |
+                       NodeFlags::gui_slider).setMinMax(vec3f(-1), vec3f(1));
       createChildNode("up", "vec3f", vec3f(0, 0, 1),NodeFlags::required);
-      auto &aspectNode =
-          createChildNode("aspect", "float", 1.f,
-                          NodeFlags::required | NodeFlags::valid_min_max);
-      aspectNode.setMinMax(float(1e-31), float(1e31));
-      auto &fovyNode =
-          createChildNode("fovy", "float", 60.f,
-                          NodeFlags::required | NodeFlags::valid_min_max |
-                          NodeFlags::required | NodeFlags::valid_min_max |
-                          NodeFlags::gui_slider);
-      fovyNode.setMinMax(.1f, 360.f);
+      createChildNode("aspect", "float", 1.f,
+                      NodeFlags::required |
+                      NodeFlags::valid_min_max).setMinMax(1e-31f, 1e31f);
+      createChildNode("fovy", "float", 60.f,
+                      NodeFlags::required | NodeFlags::valid_min_max |
+                      NodeFlags::required | NodeFlags::valid_min_max |
+                      NodeFlags::gui_slider).setMinMax(.1f, 360.f);
     }
 
     void PerspectiveCamera::postCommit(RenderContext &ctx)
     {
-      if (!ospCamera) create(); 
+      if (!ospCamera) create();
       
       ospSetVec3f(ospCamera,"pos",(const osp::vec3f&)child("pos").valueAs<vec3f>());
       ospSetVec3f(ospCamera,"dir",(const osp::vec3f&)child("dir").valueAs<vec3f>());

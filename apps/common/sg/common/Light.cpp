@@ -40,69 +40,59 @@ namespace ospray {
     AmbientLight::AmbientLight()
       : Light("AmbientLight")
     {
-      auto &colorNode =
-          createChildNode("color", "vec3f", vec3f(.7f,.8f,1.f),
-                          NodeFlags::required | NodeFlags::valid_min_max |
-                          NodeFlags::gui_color);
-
-      colorNode.setMinMax(vec3f(0), vec3f(1));
-      auto &intensityNode =
-          createChildNode("intensity", "float", 0.2f,
-                          NodeFlags::required | NodeFlags::valid_min_max |
-                          NodeFlags::gui_slider);
-      intensityNode.setMinMax(0.f,4.f);
+      createChildNode("color", "vec3f", vec3f(.7f,.8f,1.f),
+                      NodeFlags::required |
+                      NodeFlags::valid_min_max |
+                      NodeFlags::gui_color).setMinMax(vec3f(0), vec3f(1));
+      createChildNode("intensity", "float", 0.2f,
+                      NodeFlags::required |
+                      NodeFlags::valid_min_max |
+                      NodeFlags::gui_slider).setMinMax(0.f,4.f);
     }
 
     DirectionalLight::DirectionalLight()
       : Light("DirectionalLight")
     {
-      auto &directionNode =
-          createChildNode("direction", "vec3f", vec3f(-.3,.2,.4),
-                          NodeFlags::required | NodeFlags::gui_slider);
-      directionNode.setMinMax(vec3f(-1), vec3f(1));
+      createChildNode("direction", "vec3f", vec3f(-.3,.2,.4),
+                      NodeFlags::required |
+                      NodeFlags::gui_slider).setMinMax(vec3f(-1), vec3f(1));
 
-      auto &colorNode =
-          createChildNode("color", "vec3f", vec3f(1.f),
-                          NodeFlags::required | NodeFlags::valid_min_max |
-                          NodeFlags::gui_color);
-      colorNode.setMinMax(vec3f(0), vec3f(1));
+      createChildNode("color", "vec3f", vec3f(1.f),
+                      NodeFlags::required |
+                      NodeFlags::valid_min_max |
+                      NodeFlags::gui_color).setMinMax(vec3f(0), vec3f(1));
 
-      auto &intensityNode =
-          createChildNode("intensity", "float", 3.f,
-                          NodeFlags::required | NodeFlags::valid_min_max |
-                          NodeFlags::gui_slider);
-      intensityNode.setMinMax(0.f,4.f);
+      createChildNode("intensity", "float", 3.f,
+                      NodeFlags::required |
+                      NodeFlags::valid_min_max |
+                      NodeFlags::gui_slider).setMinMax(0.f,4.f);
 
-      auto &angularDiameterNode =
-          createChildNode("angularDiameter", "float", 0.01f,
-                          NodeFlags::required | NodeFlags::valid_min_max |
-                          NodeFlags::gui_slider);
-      angularDiameterNode.setMinMax(0.f,4.f);
+      createChildNode("angularDiameter", "float", 0.01f,
+                      NodeFlags::required |
+                      NodeFlags::valid_min_max |
+                      NodeFlags::gui_slider).setMinMax(0.f,4.f);
     }
 
     PointLight::PointLight()
       : Light("PointLight")
     {
-      auto &colorNode =
-          createChildNode("color", "vec3f", vec3f(1.f),
-                          NodeFlags::required | NodeFlags::valid_min_max |
-                          NodeFlags::gui_color);
-      colorNode.setMinMax(vec3f(0), vec3f(1));
+      createChildNode("color", "vec3f", vec3f(1.f),
+                      NodeFlags::required |
+                      NodeFlags::valid_min_max |
+                      NodeFlags::gui_color).setMinMax(vec3f(0), vec3f(1));
 
       createChildNode("position", "vec3f", vec3f(0.f),
                       NodeFlags::required | NodeFlags::valid_min_max);
 
-      auto &intensityNode =
-          createChildNode("intensity", "float", 3.f,
-                          NodeFlags::required | NodeFlags::valid_min_max |
-                          NodeFlags::gui_slider);
-      intensityNode.setMinMax(0.f,4.f);
+      createChildNode("intensity", "float", 3.f,
+                      NodeFlags::required |
+                      NodeFlags::valid_min_max |
+                      NodeFlags::gui_slider).setMinMax(0.f,4.f);
 
-      auto &radiusNode =
-          createChildNode("radius", "float", 1.0f,
-                          NodeFlags::required | NodeFlags::valid_min_max |
-                          NodeFlags::gui_slider);
-      radiusNode.setMinMax(0.f,4.f);
+      createChildNode("radius", "float", 1.0f,
+                      NodeFlags::required |
+                      NodeFlags::valid_min_max |
+                      NodeFlags::gui_slider).setMinMax(0.f,4.f);
     }
 
     OSP_REGISTER_SG_NODE(Light);
