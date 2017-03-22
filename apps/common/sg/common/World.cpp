@@ -19,17 +19,17 @@
 namespace ospray {
   namespace sg {
 
+    World::World()
+    {
+      createChildNode("bounds", "box3f");
+    }
+
     box3f World::bounds() const
     {
       box3f bounds = empty;
       for (const auto &child : properties.children)
         bounds.extend(child.second->bounds());
       return bounds;
-    }
-
-    void World::init()
-    {
-      add(createNode("bounds", "box3f"));
     }
 
     std::string World::toString() const

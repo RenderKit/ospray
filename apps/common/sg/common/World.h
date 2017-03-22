@@ -26,10 +26,8 @@ namespace ospray {
     /*! a world node */
     struct OSPSG_INTERFACE World : public sg::Renderable
     {
-      World() = default;
+      World();
       virtual ~World() = default;
-
-      virtual void init() override;
 
       /*! \brief returns a std::string with the c++ name of this class */
       virtual std::string toString() const override;
