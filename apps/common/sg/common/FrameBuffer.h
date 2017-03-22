@@ -56,7 +56,6 @@ namespace ospray {
       void destroyFB();
 
       OSPFrameBuffer ospFrameBuffer {nullptr};
-      vec2i fbsize;
       std::string displayWallStream { "" };
     };
 

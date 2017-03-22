@@ -20,16 +20,14 @@ namespace ospray {
   namespace sg {
 
     FrameBuffer::FrameBuffer(vec2i size)
-      : fbsize(size)
     {
+      createChildNode("size", "vec2i", size);
+      createChildNode("displayWall", "string", std::string(""));
       createFB();
     }
 
     void FrameBuffer::init()
     {
-      add(createNode("size", "vec2i", fbsize));
-      add(createNode("displayWall", "string", std::string("")));
-      createFB();
     }
 
     FrameBuffer::~FrameBuffer()
@@ -39,8 +37,6 @@ namespace ospray {
 
     void FrameBuffer::postCommit(RenderContext &ctx)
     {
-      fbsize = child("size").valueAs<vec2i>();
-
       std::string displayWall = child("displayWall").valueAs<std::string>();
       this->displayWallStream = displayWall;
 
@@ -53,11 +49,15 @@ namespace ospray {
         ospSetString(pixelOp,"streamName",displayWall.c_str());
         ospCommit(pixelOp);
         ospSetPixelOp(ospFrameBuffer,pixelOp);
-        std::cout << "-------------------------------------------------------" << std::endl;
-        std::cout << "this is the display wall frma ebuferr .. size is " << fbsize << std::endl;
+        std::cout << "-------------------------------------------------------"
+                  << std::endl;
+        std::cout << "this is the display wall frma ebuferr .. size is "
+                  << size() << std::endl;
         std::cout << "added display wall pixel op ..." << std::endl;
       }
-      std::cout << "created display wall pixelop, and assigned to frame buffer!" << std::endl;
+
+      std::cout << "created display wall pixelop, and assigned to frame buffer!"
+                << std::endl;
 
       ospCommit(ospFrameBuffer);
     }
@@ -84,7 +84,7 @@ namespace ospray {
 
     vec2i FrameBuffer::size() const
     {
-      return fbsize;
+      return child("size").valueAs<vec2i>();
     }
     
     /*! \brief returns a std::string with the c++ name of this class */
@@ -100,7 +100,8 @@ namespace ospray {
 
     void ospray::sg::FrameBuffer::createFB()
     {
-      ospFrameBuffer = ospNewFrameBuffer((osp::vec2i&)fbsize, 
+      auto fbsize = size();
+      ospFrameBuffer = ospNewFrameBuffer((osp::vec2i&)fbsize,
                                          (displayWallStream=="")
                                          ? OSP_FB_SRGBA
                                          : OSP_FB_NONE,
