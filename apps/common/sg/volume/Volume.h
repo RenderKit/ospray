@@ -24,9 +24,7 @@ namespace ospray {
 
     struct Volume : public sg::Renderable
     {
-      Volume() = default;
-
-      virtual void init() override;
+      Volume();
 
       virtual std::string toString() const override;
 

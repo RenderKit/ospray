@@ -74,31 +74,30 @@ namespace ospray {
     bool Volume::useDataDistributedVolume = false;
 
     /*! \brief returns a std::string with the c++ name of this class */
-    void Volume::init()
+    Volume::Volume()
     {
-      Renderable::init();
-      add(createNode("transferFunction", "TransferFunction"));
-      add(createNode("gradientShadingEnabled", "bool", true));
-      add(createNode("preIntegration", "bool", true));
-      add(createNode("singleShade", "bool", true));
-      add(createNode("voxelRange", "vec2f",
-                     vec2f(std::numeric_limits<float>::infinity(),
-                           -std::numeric_limits<float>::infinity())));
-      add(createNode("adaptiveSampling", "bool", true));
-      add(createNode("adaptiveScalar", "float", 15.f));
-      add(createNode("adaptiveBacktrack", "float", 0.03f));
-      add(createNode("samplingRate", "float", 0.125f));
-      add(createNode("adaptiveMaxSamplingRate", "float", 2.f));
-      add(createNode("volumeClippingBoxLower", "vec3f", vec3f(0.f)));
-      add(createNode("volumeClippingBoxUpper", "vec3f", vec3f(0.f)));
-      add(createNode("specular", "vec3f", vec3f(0.3f)));
-      add(createNode("gridOrigin", "vec3f", vec3f(0.0f)));
-      add(createNode("gridSpacing", "vec3f", vec3f(0.002f)));
-      add(createNode("isosurfaceEnabled", "bool", false));
-      add(createNode("isosurface", "float",
-                     -std::numeric_limits<float>::infinity(),
-                     NodeFlags::valid_min_max | NodeFlags::gui_slider));
-      child("isosurface").setMinMax(0.f,255.f);
+      createChildNode("transferFunction", "TransferFunction");
+      createChildNode("gradientShadingEnabled", "bool", true);
+      createChildNode("preIntegration", "bool", true);
+      createChildNode("singleShade", "bool", true);
+      createChildNode("voxelRange", "vec2f",
+                      vec2f(std::numeric_limits<float>::infinity(),
+                            -std::numeric_limits<float>::infinity()));
+      createChildNode("adaptiveSampling", "bool", true);
+      createChildNode("adaptiveScalar", "float", 15.f);
+      createChildNode("adaptiveBacktrack", "float", 0.03f);
+      createChildNode("samplingRate", "float", 0.125f);
+      createChildNode("adaptiveMaxSamplingRate", "float", 2.f);
+      createChildNode("volumeClippingBoxLower", "vec3f", vec3f(0.f));
+      createChildNode("volumeClippingBoxUpper", "vec3f", vec3f(0.f));
+      createChildNode("specular", "vec3f", vec3f(0.3f));
+      createChildNode("gridOrigin", "vec3f", vec3f(0.0f));
+      createChildNode("gridSpacing", "vec3f", vec3f(0.002f));
+      createChildNode("isosurfaceEnabled", "bool", false);
+      createChildNode("isosurface", "float",
+                      -std::numeric_limits<float>::infinity(),
+                      NodeFlags::valid_min_max |
+                      NodeFlags::gui_slider).setMinMax(0.f,255.f);
     }
 
     std::string Volume::toString() const

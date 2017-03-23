@@ -429,10 +429,9 @@ namespace ospray {
     //! a Node with bounds and a render operation
     struct OSPSG_INTERFACE Renderable : public Node
     {
-      Renderable() = default;
+      Renderable() { createChildNode("bounds", "box3f"); }
       virtual ~Renderable() = default;
 
-      virtual void init() override { add(createNode("bounds", "box3f")); }
       virtual box3f bounds() const override { return bbox; }
       virtual box3f extendBounds(box3f b) { bbox.extend(b); return bbox; }
       virtual void preTraverse(RenderContext &ctx,
