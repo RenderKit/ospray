@@ -16,8 +16,8 @@
 
 include_directories(
   ${CMAKE_CURRENT_LIST_DIR}/../common/gl3w
-  ${CMAKE_CURRENT_LIST_DIR}/../common/glfw/include
   ${CMAKE_CURRENT_LIST_DIR}/../common/imgui
+  ${GLFW_INCLUDE_DIRS}
   ${OPENGL_INCLUDE_DIR}
 )
 
