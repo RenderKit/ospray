@@ -123,6 +123,7 @@ int main(int argc, const char **argv) {
 
   // complete setup of renderer
   ospSet1i(renderer, "aoSamples", 1);
+  ospSet1f(renderer, "bgColor", 1.0f); // white, transparent
   ospSetObject(renderer, "model",  world);
   ospSetObject(renderer, "camera", camera);
   ospSetObject(renderer, "lights", lights);

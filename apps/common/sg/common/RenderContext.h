@@ -39,7 +39,7 @@ namespace ospray {
       // Data members //
 
       std::shared_ptr<sg::World>      world;      //!< world we're rendering into
-      std::shared_ptr<sg::Integrator> integrator; //!< integrator used to create materials etc
+      //std::shared_ptr<sg::Integrator> integrator; //!< integrator used to create materials etc
       const affine3f xfm {one}; //!< affine geometry transform matrix
       OSPRenderer ospRenderer {nullptr};
       int level {0};
@@ -53,7 +53,7 @@ namespace ospray {
     inline RenderContext::RenderContext(const RenderContext &other,
                                         const affine3f &newXfm)
       : world(other.world),
-        integrator(other.integrator),
+        //integrator(other.integrator),
         xfm(newXfm),
         ospRenderer(nullptr),
         level(0)

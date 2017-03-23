@@ -19,12 +19,22 @@
 namespace ospray {
   namespace sg {
 
+    World::World()
+    {
+      createChildNode("bounds", "box3f");
+    }
+
     box3f World::bounds() const
     {
       box3f bounds = empty;
       for (const auto &child : properties.children)
         bounds.extend(child.second->bounds());
       return bounds;
+    }
+
+    std::string World::toString() const
+    {
+      return "ospray::viewer::sg::World";
     }
 
     //! serialize into given serialization state
@@ -34,10 +44,6 @@ namespace ospray {
       for (auto node: nodes)
         node->serialize(state);
       state = savedState;
-    }
-
-    void World::render(RenderContext &ctx)
-    {
     }
 
     void World::preCommit(RenderContext &ctx)
@@ -68,6 +74,19 @@ namespace ospray {
        ctx.world = oldWorld;
     }
 
+    InstanceGroup::InstanceGroup()
+    {
+      createChildNode("bounds", "box3f");
+      createChildNode("visible", "bool", true);
+      createChildNode("position", "vec3f");
+      createChildNode("rotation", "vec3f", vec3f(0),
+                     NodeFlags::required      |
+                     NodeFlags::valid_min_max |
+                     NodeFlags::gui_slider).setMinMax(-vec3f(2*3.15f),
+                                                      vec3f(2*3.15f));
+      createChildNode("scale", "vec3f", vec3f(1.f));
+    }
+
     void InstanceGroup::preCommit(RenderContext &ctx)
     {
       if (instanced) {
@@ -95,9 +114,9 @@ namespace ospray {
       oldWorld = ctx.world;
       if (instanced) {
         ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
-        vec3f scale = child("scale")->valueAs<vec3f>();
-        vec3f rotation = child("rotation")->valueAs<vec3f>();
-        vec3f translation = child("position")->valueAs<vec3f>();
+        vec3f scale = child("scale").valueAs<vec3f>();
+        vec3f rotation = child("rotation").valueAs<vec3f>();
+        vec3f translation = child("position").valueAs<vec3f>();
         ospcommon::affine3f xfm = ospcommon::one;
         xfm = xfm*ospcommon::affine3f::translate(translation)*ospcommon::affine3f::rotate(vec3f(1,0,0),rotation.x)*
         ospcommon::affine3f::rotate(vec3f(0,1,0),rotation.y)*
@@ -109,7 +128,7 @@ namespace ospray {
         ospInstance = ospNewInstance(ospModel,(osp::affine3f&)xfm);
         ospCommit(ospInstance);
 
-        if (child("visible")->value() == true)
+        if (child("visible").value() == true)
           ospAddGeometry(oldWorld->ospModel,ospInstance);
       }
     }

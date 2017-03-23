@@ -16,26 +16,28 @@
 
 #include "sg/common/Material.h"
 #include "sg/common/World.h"
-#include "sg/common/Integrator.h"
 #include "ospray/ospray.h"
 
 namespace ospray {
   namespace sg {
 
-    void Material::init()
+    Material::Material()
     {
-      add(createNode("type", "string", std::string("OBJMaterial")));
+      createChildNode("type", "string", std::string("OBJMaterial"));
       vec3f kd(10.f/255.f,68.f/255.f,117.f/255.f);
       vec3f ks(208.f/255.f,140.f/255.f,82.f/255.f);
-      add(createNode("Kd", "vec3f",kd,
-                     NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_color));
-      child("Kd")->setMinMax(vec3f(0), vec3f(1));
-      add(createNode("Ks", "vec3f",ks,
-                     NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_color));
-      child("Ks")->setMinMax(vec3f(0), vec3f(1));
-      add(createNode("Ns", "float",10.f,
-                     NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
-      child("Ns")->setMinMax(0.f, 100.f);
+      createChildNode("Kd", "vec3f",kd,
+                      NodeFlags::required |
+                      NodeFlags::valid_min_max |
+                      NodeFlags::gui_color).setMinMax(vec3f(0), vec3f(1));
+      createChildNode("Ks", "vec3f",ks,
+                      NodeFlags::required |
+                      NodeFlags::valid_min_max |
+                      NodeFlags::gui_color).setMinMax(vec3f(0), vec3f(1));
+      createChildNode("Ns", "float",10.f,
+                      NodeFlags::required |
+                      NodeFlags::valid_min_max |
+                      NodeFlags::gui_slider).setMinMax(0.f, 100.f);
     }
 
     std::string Material::toString() const
@@ -48,14 +50,14 @@ namespace ospray {
       assert(ctx.ospRenderer);
       if (ospMaterial != nullptr && ospRenderer == ctx.ospRenderer) return;
       auto mat = ospNewMaterial(ctx.ospRenderer,
-                                child("type")->valueAs<std::string>().c_str());
+                                child("type").valueAs<std::string>().c_str());
       if (!mat)
       {
         std::cerr << "Warning: Could not create material type '"
                   << type << "'. Replacing with default material." << std::endl;
         static OSPMaterial defaultMaterial = nullptr;
         if (!defaultMaterial) {
-          defaultMaterial = ospNewMaterial(ctx.integrator->handle(), "OBJ");
+          defaultMaterial = ospNewMaterial(ctx.ospRenderer, "OBJ");
           vec3f kd(.7f);
           vec3f ks(.3f);
           ospSet3fv(defaultMaterial, "Kd", &kd.x);

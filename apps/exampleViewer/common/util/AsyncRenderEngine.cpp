@@ -129,7 +129,7 @@ namespace ospray {
 
     if (changed) {
       auto &size  = fbSize.ref();
-      frameBuffer = cpp::FrameBuffer(osp::vec2i{size.x, size.y}, OSP_FB_SRGBA,
+      frameBuffer = cpp::FrameBuffer(size, OSP_FB_SRGBA,
                                      OSP_FB_COLOR | OSP_FB_DEPTH | OSP_FB_ACCUM);
 
       nPixels = size.x * size.y;

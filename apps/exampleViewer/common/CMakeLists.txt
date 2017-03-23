@@ -19,18 +19,30 @@ if (NOT WIN32)
 endif()
 
 ##############################################################
-# Build GLFW
+# Find or build GLFW
 ##############################################################
 
-set(GLFW_BUILD_DOCS     OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_TESTS    OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+find_package(GLFW)
 
-# GLFW seems to need to build as shared libs for windows
-if (WIN32)
-  set(BUILD_SHARED_LIBS ON)
+if (NOT GLFW_FOUND)
+  message(STATUS "Building GLFW from included source")
+
+  set(GLFW_BUILD_DOCS     OFF CACHE BOOL "" FORCE)
+  set(GLFW_BUILD_TESTS    OFF CACHE BOOL "" FORCE)
+  set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+
+  # GLFW seems to need to build as shared libs for windows
+  if (WIN32)
+    set(BUILD_SHARED_LIBS ON)
+  endif()
+
+  add_subdirectory(glfw)
+
+  set(GLFW_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/glfw/include PARENT_SCOPE)
+  set(GLFW_LIBRARIES glfw PARENT_SCOPE)
+else()
+  message(STATUS "Using GLFW found in the environment")
 endif()
-add_subdirectory(glfw)
 
 ##############################################################
 # Build gl3w

@@ -158,8 +158,6 @@ namespace ospray {
       switch(provided) {
       case MPI_THREAD_MULTIPLE:
         mpiIsThreaded = true;
-        if (rank == 0)
-          std::cout << "#osp.mpi: found _threaded_ MPI. Perfect!" << std::endl;
         break;
       case MPI_THREAD_SERIALIZED:
         mpiIsThreaded = false;

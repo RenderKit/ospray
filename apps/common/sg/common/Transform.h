@@ -25,16 +25,10 @@ namespace ospray {
     //! a transformation node
     struct OSPSG_INTERFACE Transform : public sg::Node
     {
-      //! \brief constructor
-      Transform(const AffineSpace3f &xfm, const std::shared_ptr<sg::Node> &node) 
-        : Node(), xfm(xfm), node(node) 
-      {}
+      Transform(const AffineSpace3f &xfm,
+                const std::shared_ptr<sg::Node> &node);
 
-      /*! \brief returns a std::string with the c++ name of this class */
-      virtual std::string toString() const override;
-
-      /*! \brief 'render' the object for the first time */
-      virtual void render(RenderContext &ctx) override;
+      std::string toString() const override;
 
       /*! \brief return bounding box in world coordinates.
 
@@ -42,7 +36,7 @@ namespace ospray {
         camera motion, setting default camera position, etc. Nodes
         for which that does not apply can simpy return
         box3f(empty) */
-      virtual box3f bounds() const override;
+      box3f bounds() const override;
 
       //! \brief the actual (affine) transformation matrix
       AffineSpace3f xfm;

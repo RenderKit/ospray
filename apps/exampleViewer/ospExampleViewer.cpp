@@ -82,7 +82,6 @@ namespace exampleViewer {
     }
   }
 
-
   void parseExtraParametersFromComandLine(int ac, const char **&av)
   {
     for (int i = 1; i < ac; i++) {
@@ -111,7 +110,7 @@ namespace exampleViewer {
 
     ospray::imgui3D::init(&ac,av);
 
-    auto ospObjs = parseWithDefaultParsers(ac, av);
+    auto ospObjs = parseWithDefaultParsersDW(ac, av);
 
     std::deque<ospcommon::box3f>   bbox;
     std::deque<ospray::cpp::Model> model;
@@ -125,8 +124,7 @@ namespace exampleViewer {
     parseExtraParametersFromComandLine(ac, av);
     
     if (displayWall != "") {
-      /*! iw - could move all that into some commandline::DisplayWallParser */
-      std::cout << "#######################################################" << std::endl;
+      std::cout << "#############################################" << std::endl;
       std::cout << "found --display-wall cmdline argument ...." << std::endl;
       std::cout << "trying to connect to display wall service on "
                 << displayWall << ":2903" << std::endl;
@@ -135,8 +133,8 @@ namespace exampleViewer {
       dwService.getFrom(displayWall,2903);
       std::cout << "found display wall service on MPI port "
                 << dwService.mpiPortName << std::endl;
-      std::cout << "#######################################################" << std::endl;
-      frameBufferDW = ospray::cpp::FrameBuffer((osp::vec2i&)dwService.totalPixelsInWall,
+      std::cout << "#############################################" << std::endl;
+      frameBufferDW = ospray::cpp::FrameBuffer(dwService.totalPixelsInWall,
                                                (OSPFrameBufferFormat)OSP_FB_NONE,
                                                OSP_FB_COLOR|OSP_FB_ACCUM);
       
@@ -152,7 +150,8 @@ namespace exampleViewer {
       rendererDW = ospray::cpp::Renderer();
     }
 
-    ospray::ImGuiViewer window(bbox, model, renderer, rendererDW, frameBufferDW, camera);
+    ospray::ImGuiViewer window(bbox, model, renderer, rendererDW,
+                               frameBufferDW, camera);
     window.setScale(scale);
     window.setLockFirstAnimationFrame(lockFirstFrame);
     window.setTranslation(translate);

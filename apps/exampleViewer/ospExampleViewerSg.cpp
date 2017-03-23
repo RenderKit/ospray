@@ -108,87 +108,82 @@ void parseCommandLine(int ac, const char **&av)
 
 //parse command line arguments containing the format:
 //  -nodeName:...:nodeName=value,value,value
-void parseCommandLineSG(int ac, const char **&av, sg::Node::Handle root)
+void parseCommandLineSG(int ac, const char **&av, sg::Node &root)
 {
-  for(int i=1;i < ac; i++)
-    {
-      std::string arg(av[i]);
-      size_t f;
-      std::string value("");
-      if (arg.size() < 2 || arg[0] != '-')
-        continue;
-      while ( (f = arg.find(":")) != std::string::npos || (f = arg.find(",")) != std::string::npos)
-        arg[f]=' ';
-      f = arg.find("=");
-      if (f != std::string::npos)
-        {
-          value = arg.substr(f+1,arg.size());
-        }
-      if (value != "")
-        {
-          std::stringstream ss;
-          ss << arg.substr(1,f-1);
-          std::string child;
-          sg::Node::Handle node = root;
-          while (ss >> child)
-            {
-              node = node->childRecursive(child);
-            }
-          //Carson: TODO: reimplement with a way of determining type of node value
-          //  currently relies on exception on value cast
-          try
-            {
-              node->valueAs<std::string>();
-              node->setValue(value);
-            } catch(...) {};
-          try
-            {
-              std::stringstream vals(value);
-              float x;
-              vals >> x;
-              node->valueAs<float>();
-              node->setValue(x);
-            } catch(...) {}
-          try
-            {
-              std::stringstream vals(value);
-              int x;
-              vals >> x;
-              node->valueAs<int>();
-              node->setValue(x);
-            } catch(...) {}
-          try
-            {
-              std::stringstream vals(value);
-              bool x;
-              vals >> x;
-              node->valueAs<bool>();
-              node->setValue(x);
-            } catch(...) {}
-          try
-            {
-              std::stringstream vals(value);
-              float x,y,z;
-              vals >> x >> y >> z;
-              node->valueAs<ospcommon::vec3f>();
-              node->setValue(ospcommon::vec3f(x,y,z));
-            } catch(...) {}
-          try
-            {
-              std::stringstream vals(value);
-              int x,y;
-              vals >> x >> y;
-              node->valueAs<ospcommon::vec2i>();
-              node->setValue(ospcommon::vec2i(x,y));
-            } catch(...) {}
-        }
+  for(int i=1;i < ac; i++) {
+    std::string arg(av[i]);
+    size_t f;
+    std::string value("");
+    if (arg.size() < 2 || arg[0] != '-')
+      continue;
+
+    while ((f = arg.find(":")) != std::string::npos ||
+           (f = arg.find(",")) != std::string::npos) {
+      arg[f] = ' ';
     }
+
+    f = arg.find("=");
+    if (f != std::string::npos)
+      value = arg.substr(f+1,arg.size());
+
+    if (value != "") {
+      std::stringstream ss;
+      ss << arg.substr(1,f-1);
+      std::string child;
+      std::reference_wrapper<sg::Node> node_ref = root;
+      while (ss >> child) {
+        node_ref = node_ref.get().childRecursive(child);
+      }
+      auto &node = node_ref.get();
+      //Carson: TODO: reimplement with a way of determining type of node value
+      //  currently relies on exception on value cast
+      try {
+        node.valueAs<std::string>();
+        node.setValue(value);
+      } catch(...) {};
+      try {
+        std::stringstream vals(value);
+        float x;
+        vals >> x;
+        node.valueAs<float>();
+        node.setValue(x);
+      } catch(...) {}
+      try {
+        std::stringstream vals(value);
+        int x;
+        vals >> x;
+        node.valueAs<int>();
+        node.setValue(x);
+      } catch(...) {}
+      try {
+        std::stringstream vals(value);
+        bool x;
+        vals >> x;
+        node.valueAs<bool>();
+        node.setValue(x);
+      } catch(...) {}
+      try {
+        std::stringstream vals(value);
+        float x,y,z;
+        vals >> x >> y >> z;
+        node.valueAs<ospcommon::vec3f>();
+        node.setValue(ospcommon::vec3f(x,y,z));
+      } catch(...) {}
+      try {
+        std::stringstream vals(value);
+        int x,y;
+        vals >> x >> y;
+        node.valueAs<ospcommon::vec2i>();
+        node.setValue(ospcommon::vec2i(x,y));
+      } catch(...) {}
+    }
+  }
 }
 
-void addPlaneToScene(sg::Node::Handle &world)
+void addPlaneToScene(sg::Node& world)
 {
   //add plane
-  auto bbox = world->bounds();
+  auto bbox = world.bounds();
 
   osp::vec3f *vertices = new osp::vec3f[4];
   float ps = bbox.upper.x*3.f;
@@ -208,18 +203,17 @@ void addPlaneToScene(sg::Node::Handle &world)
   auto index = std::make_shared<sg::DataArray3i>((vec3i*)&triangles[0],
                                                  size_t(2),
                                                  false);
-  auto plane = sg::createNode("plane", "InstanceGroup");
-  auto mesh  = sg::createNode("mesh", "TriangleMesh");
+  auto &plane = world.createChildNode("plane", "InstanceGroup");
+  auto &mesh  = plane.createChildNode("mesh", "TriangleMesh");
+
   std::shared_ptr<sg::TriangleMesh> sg_plane =
-    std::static_pointer_cast<sg::TriangleMesh>(mesh.get());
+    std::static_pointer_cast<sg::TriangleMesh>(mesh.shared_from_this());
   sg_plane->vertex = position;
   sg_plane->index = index;
-  auto planeMaterial = mesh["material"];
-  planeMaterial["Kd"]->setValue(vec3f(0.5f));
-  planeMaterial["Ks"]->setValue(vec3f(0.6f));
-  planeMaterial["Ns"]->setValue(2.f);
-  plane += mesh;
-  world += plane;
+  auto &planeMaterial = mesh["material"];
+  planeMaterial["Kd"].setValue(vec3f(0.5f));
+  planeMaterial["Ks"].setValue(vec3f(0.6f));
+  planeMaterial["Ns"].setValue(2.f);
 }
 
 int main(int ac, const char **av)
@@ -236,16 +230,18 @@ int main(int ac, const char **av)
 
   parseCommandLine(ac, av);
 
-  auto renderer = sg::createNode("renderer", "Renderer");
+  auto renderer_ptr = sg::createNode("renderer", "Renderer");
+  auto &renderer = *renderer_ptr;
   /*! the renderer we use for rendering on the display wall; null if
       no dw available */
-  sg::Node::Handle rendererDW;
+  std::shared_ptr<sg::Node> rendererDW;
   /*! display wall service info - ignore if 'rendererDW' is null */
   dw::ServiceInfo dwService;
 
   const char *dwNodeName = getenv("DISPLAY_WALL");
   if (dwNodeName) {
-    std::cout << "#######################################################" << std::endl;
+    std::cout << "#######################################################"
+              << std::endl;
     std::cout << "found a DISPLAY_WALL environment variable ...." << std::endl;
     std::cout << "trying to connect to display wall service on "
               << dwNodeName << ":2903" << std::endl;
@@ -253,81 +249,78 @@ int main(int ac, const char **av)
     dwService.getFrom(dwNodeName,2903);
     std::cout << "found display wall service on MPI port "
               << dwService.mpiPortName << std::endl;
-    std::cout << "#######################################################" << std::endl;
+    std::cout << "#######################################################"
+              << std::endl;
     rendererDW = sg::createNode("renderer", "Renderer");
   }
 
-  renderer["shadowsEnabled"]->setValue(true);
-  renderer["aoSamples"]->setValue(1);
-  renderer["camera"]["fovy"]->setValue(60.f);
+  renderer["shadowsEnabled"].setValue(true);
+  renderer["aoSamples"].setValue(1);
+  renderer["camera"]["fovy"].setValue(60.f);
 
-  if (rendererDW.notNULL()) {
-    rendererDW["shadowsEnabled"]->setValue(true);
-    rendererDW["aoSamples"]->setValue(1);
-    rendererDW["camera"]["fovy"]->setValue(60.f);
+  if (rendererDW.get()) {
+    rendererDW->child("shadowsEnabled").setValue(true);
+    rendererDW->child("aoSamples").setValue(1);
+    rendererDW->child("camera")["fovy"].setValue(60.f);
   }
 
   if (!initialRendererType.empty()) {
-    renderer["rendererType"]->setValue(initialRendererType);
-    if (rendererDW.notNULL()) {
-      rendererDW["rendererType"]->setValue(initialRendererType);
+    renderer["rendererType"].setValue(initialRendererType);
+    if (rendererDW.get()) {
+      rendererDW->child("rendererType").setValue(initialRendererType);
     }
   }
 
-  auto lights = renderer["lights"];
+  auto &lights = renderer["lights"];
 
-  auto sun =  sg::createNode("sun", "DirectionalLight");
-  sun["color"]->setValue(vec3f(1.f,232.f/255.f,166.f/255.f));
-  sun["direction"]->setValue(vec3f(0.462f,-1.f,-.1f));
-  sun["intensity"]->setValue(1.5f);
-  lights += sun;
+  auto &sun = lights.createChildNode("sun", "DirectionalLight");
+  sun["color"].setValue(vec3f(1.f,232.f/255.f,166.f/255.f));
+  sun["direction"].setValue(vec3f(0.462f,-1.f,-.1f));
+  sun["intensity"].setValue(1.5f);
 
-  auto bounce = sg::createNode("bounce", "DirectionalLight");
-  bounce["color"]->setValue(vec3f(127.f/255.f,178.f/255.f,255.f/255.f));
-  bounce["direction"]->setValue(vec3f(-.93,-.54f,-.605f));
-  bounce["intensity"]->setValue(0.25f);
-  lights += bounce;
+  auto &bounce = lights.createChildNode("bounce", "DirectionalLight");
+  bounce["color"].setValue(vec3f(127.f/255.f,178.f/255.f,255.f/255.f));
+  bounce["direction"].setValue(vec3f(-.93,-.54f,-.605f));
+  bounce["intensity"].setValue(0.25f);
 
-  auto ambient = sg::createNode("ambient", "AmbientLight");
-  ambient["intensity"]->setValue(0.9f);
-  ambient["color"]->setValue(vec3f(174.f/255.f,218.f/255.f,255.f/255.f));
-  lights += ambient;
+  auto &ambient = lights.createChildNode("ambient", "AmbientLight");
+  ambient["intensity"].setValue(0.9f);
+  ambient["color"].setValue(vec3f(174.f/255.f,218.f/255.f,255.f/255.f));
 
-  auto world = renderer["world"];
+  auto &world = renderer["world"];
 
   for (auto file : files) {
     FileName fn = file;
-    auto importerNode = sg::createNode(fn.name(), "Importer");
-    importerNode["fileName"]->setValue(fn.str());
-    world += importerNode;
+    auto importerNode_ptr = sg::createNode(fn.name(), "Importer");
+    auto &importerNode = *importerNode_ptr;
+    importerNode["fileName"].setValue(fn.str());
+    world += importerNode_ptr;
   }
 
   parseCommandLineSG(ac, av, renderer);
 
+  if (rendererDW.get()) {
+    rendererDW->properties.children["world"]  =
+        renderer["world"].shared_from_this();
+    rendererDW->properties.children["lights"] =
+        renderer["lights"].shared_from_this();
+
+    auto &frameBuffer = rendererDW->child("frameBuffer");
+    frameBuffer["size"].setValue(dwService.totalPixelsInWall);
+    frameBuffer["displayWall"].setValue(dwService.mpiPortName);
+  }
+
   if (debug) {
-    renderer->traverse("verify");
-    renderer->traverse("print");
+    renderer.traverse("verify");
+    renderer.traverse("print");
   }
 
-  renderer->traverse("commit");
+  renderer.traverse("commit");
 
-  if (rendererDW.notNULL()) {
-    rendererDW->properties.children["world"] = renderer["world"];
-    rendererDW->properties.children["lights"] = renderer["lights"];
-    
-    rendererDW["frameBuffer"]["size"]->setValue(dwService.totalPixelsInWall);
-    rendererDW["frameBuffer"]["displayWall"]->setValue(dwService.mpiPortName);
-    // rendererDW["frameBuffer"]["size"]->setValue(dwService.totalPixelsInWall);
-    // rendererDW["frameBuffer"]["displayWall"]->setValue(dwService.mpiPortName);
-    
-    
-    rendererDW->traverse("verify");
-    // rendererDW->traverse("print");
-    rendererDW->traverse("commit");
-  }
-  
-  ospray::ImGuiViewerSg window(renderer,rendererDW);
+  ospray::ImGuiViewerSg window(renderer_ptr, rendererDW);
+
   if (addPlane) addPlaneToScene(world);
+
   window.create("OSPRay Example Viewer App", fullscreen);
   
   ospray::imgui3D::run();

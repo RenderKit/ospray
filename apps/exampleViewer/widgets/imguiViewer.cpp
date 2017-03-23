@@ -51,6 +51,15 @@ namespace ospray {
   ImGuiViewer::ImGuiViewer(const std::deque<box3f> &worldBounds,
                            const std::deque<cpp::Model> &model,
                            cpp::Renderer renderer,
+                           cpp::Camera camera)
+    : ImGuiViewer(worldBounds, model, renderer,
+                  cpp::Renderer(), cpp::FrameBuffer(), camera)
+  {
+  }
+
+  ImGuiViewer::ImGuiViewer(const std::deque<box3f> &worldBounds,
+                           const std::deque<cpp::Model> &model,
+                           cpp::Renderer renderer,
                            cpp::Renderer rendererDW,
                            cpp::FrameBuffer frameBufferDW,
                            cpp::Camera camera)
@@ -68,10 +77,12 @@ namespace ospray {
 
     renderer.set("model",  sceneModels[0]);
     renderer.set("camera", camera);
+    renderer.set("bgColor", 1.f, 1.f, 1.f, 1.f);
 
     if (rendererDW) {
       rendererDW.set("model",  sceneModels[0]);
       rendererDW.set("camera", camera);
+      rendererDW.set("bgColor", 1.f, 1.f, 1.f, 1.f);
     }
     renderEngine.setRenderer(renderer, rendererDW, frameBufferDW);
     renderEngine.setFbSize({1024, 768});
@@ -329,140 +340,140 @@ namespace ospray {
     ImGui::Begin("Viewer Controls: press 'g' to show/hide", nullptr, flags);
     ImGui::SetWindowFontScale(0.5f*fontScale);
 
-    if (ImGui::BeginMenuBar())
-      {
-        if (ImGui::BeginMenu("App"))
-          {
+    if (ImGui::BeginMenuBar()) {
+      if (ImGui::BeginMenu("App")) {
 #if 0
-            ImGui::Checkbox("Show ImGui Demo Window", &demo_window);
+          ImGui::Checkbox("Show ImGui Demo Window", &demo_window);
 #endif
 
-            ImGui::Checkbox("Auto-Rotate", &animating);
-            bool paused = renderingPaused;
-            if (ImGui::Checkbox("Pause Rendering", &paused)) {
-              toggleRenderingPaused();
-            }
-            if (ImGui::MenuItem("Take Screenshot")) saveScreenshot("ospimguiviewer");
-            if (ImGui::MenuItem("Quit")) {
-              renderEngine.stop();
-              std::exit(0);
-            }
-            ImGui::EndMenu();
-          }
+        ImGui::Checkbox("Auto-Rotate", &animating);
 
-        if (ImGui::BeginMenu("View"))
-          {
-            bool orbitMode = (manipulator == inspectCenterManipulator);
-            bool flyMode   = (manipulator == moveModeManipulator);
+        bool paused = renderingPaused;
+        if (ImGui::Checkbox("Pause Rendering", &paused))
+          toggleRenderingPaused();
 
-            if (ImGui::Checkbox("Orbit Camera Mode", &orbitMode)) {
-              manipulator = inspectCenterManipulator;
-            }
-            if (ImGui::Checkbox("Fly Camera Mode", &flyMode)) {
-              manipulator = moveModeManipulator;
-            }
+        if (ImGui::MenuItem("Take Screenshot"))
+          saveScreenshot("ospimguiviewer");
 
-            if (ImGui::MenuItem("Reset View")) resetView();
-            if (ImGui::MenuItem("Reset Accumulation")) viewPort.modified = true;
-            if (ImGui::MenuItem("Print View")) printViewport();
+        if (ImGui::MenuItem("Quit")) {
+          renderEngine.stop();
+          std::exit(0);
+        }
 
-            ImGui::EndMenu();
-          }
-
-        ImGui::EndMenuBar();
+        ImGui::EndMenu();
       }
+
+      if (ImGui::BeginMenu("View")) {
+        bool orbitMode = (manipulator == inspectCenterManipulator);
+        bool flyMode   = (manipulator == moveModeManipulator);
+
+        if (ImGui::Checkbox("Orbit Camera Mode", &orbitMode)) {
+          manipulator = inspectCenterManipulator;
+        }
+        if (ImGui::Checkbox("Fly Camera Mode", &flyMode)) {
+          manipulator = moveModeManipulator;
+        }
+
+        if (ImGui::MenuItem("Reset View")) resetView();
+        if (ImGui::MenuItem("Reset Accumulation")) viewPort.modified = true;
+        if (ImGui::MenuItem("Print View")) printViewport();
+
+        ImGui::EndMenu();
+      }
+
+      ImGui::EndMenuBar();
+    }
 
     if (demo_window) ImGui::ShowTestWindow(&demo_window);
 
-    if (ImGui::CollapsingHeader("FPS Statistics", "FPS Statistics", true, true))
-      {
-        ImGui::NewLine();
-        ImGui::Text("OSPRay render rate: %.1f FPS", lastFrameFPS);
-        ImGui::Text("  GUI display rate: %.1f FPS", ImGui::GetIO().Framerate);
-        ImGui::NewLine();
+    if (ImGui::CollapsingHeader("FPS Statistics", "FPS Statistics",
+                                true, true)) {
+      ImGui::NewLine();
+      ImGui::Text("OSPRay render rate: %.1f FPS", lastFrameFPS);
+      ImGui::Text("  GUI display rate: %.1f FPS", ImGui::GetIO().Framerate);
+      ImGui::NewLine();
+    }
+
+    if (ImGui::CollapsingHeader("Renderer Parameters")) {
+      bool renderer_changed = false;
+
+      static int numThreads = -1;
+      if (ImGui::InputInt("# threads", &numThreads, 1)) {
+        renderEngine.stop();
+        renderEngine.start(numThreads);
+        renderer_changed = true;
       }
 
-    if (ImGui::CollapsingHeader("Renderer Parameters"))
-      {
-        bool renderer_changed = false;
+      static int ao = 1;
+      if (ImGui::SliderInt("aoSamples", &ao, 0, 32)) {
+        renderer.set("aoSamples", ao);
+        if (rendererDW)
+          rendererDW.set("aoSamples", ao);
 
-        static int numThreads = -1;
-        if (ImGui::InputInt("# threads", &numThreads, 1)) {
-          renderEngine.stop();
-          renderEngine.start(numThreads);
-          renderer_changed = true;
-        }
-
-        static int ao = 1;
-        if (ImGui::SliderInt("aoSamples", &ao, 0, 32)) {
-          renderer.set("aoSamples", ao);
-          if (rendererDW) 
-            rendererDW.set("aoSamples", ao);
-        
-          renderer_changed = true;
-        }
-
-        if (ImGui::InputFloat("aoDistance", &aoDistance)) {
-          renderer.set("aoDistance", aoDistance);
-          if (rendererDW)
-            rendererDW.set("aoDistance", aoDistance);
-          renderer_changed = true;
-        }
-
-        static bool ao_transparency = false;
-        if (ImGui::Checkbox("ao transparency", &ao_transparency)) {
-          renderer.set("aoTransparencyEnabled", int(ao_transparency));
-          if (rendererDW) 
-            rendererDW.set("aoTransparencyEnabled", int(ao_transparency));
-          renderer_changed = true;
-        }
-
-        static bool shadows = true;
-        if (ImGui::Checkbox("shadows", &shadows)) {
-          renderer.set("shadowsEnabled", int(shadows));
-          if (rendererDW) 
-            rendererDW.set("shadowsEnabled", int(shadows));
-          renderer_changed = true;
-        }
-
-        static bool singleSidedLighting = true;
-        if (ImGui::Checkbox("single_sided_lighting", &singleSidedLighting)) {
-          renderer.set("oneSidedLighting", int(singleSidedLighting));
-          if (rendererDW) 
-            rendererDW.set("oneSidedLighting", int(singleSidedLighting));
-          renderer_changed = true;
-        }
-
-        static int exponent = -6;
-        if (ImGui::SliderInt("ray_epsilon (exponent)", &exponent, -10, 2)) {
-          renderer.set("epsilon", ospcommon::pow(10.f, (float)exponent));
-          if (rendererDW) 
-            rendererDW.set("epsilon", ospcommon::pow(10.f, (float)exponent));
-          renderer_changed = true;
-        }
-
-        static int spp = 1;
-        if (ImGui::SliderInt("spp", &spp, -4, 16)) {
-          renderer.set("spp", spp);
-          if (rendererDW) 
-            rendererDW.set("spp", spp);
-          renderer_changed = true;
-        }
-
-        static ImVec4 bg_color = ImColor(255, 255, 255);
-        if (ImGui::ColorEdit3("bg_color", (float*)&bg_color)) {
-          renderer.set("bgColor", bg_color.x, bg_color.y, bg_color.z);
-          if (rendererDW) 
-            rendererDW.set("bgColor", bg_color.x, bg_color.y, bg_color.z);
-          renderer_changed = true;
-        }
-
-        if (renderer_changed) {
-          renderEngine.scheduleObjectCommit(renderer);
-          if (rendererDW)
-          renderEngine.scheduleObjectCommit(rendererDW);
-        }
+        renderer_changed = true;
       }
+
+      if (ImGui::InputFloat("aoDistance", &aoDistance)) {
+        renderer.set("aoDistance", aoDistance);
+        if (rendererDW)
+          rendererDW.set("aoDistance", aoDistance);
+        renderer_changed = true;
+      }
+
+      static bool ao_transparency = false;
+      if (ImGui::Checkbox("ao transparency", &ao_transparency)) {
+        renderer.set("aoTransparencyEnabled", int(ao_transparency));
+        if (rendererDW)
+          rendererDW.set("aoTransparencyEnabled", int(ao_transparency));
+        renderer_changed = true;
+      }
+
+      static bool shadows = true;
+      if (ImGui::Checkbox("shadows", &shadows)) {
+        renderer.set("shadowsEnabled", int(shadows));
+        if (rendererDW)
+          rendererDW.set("shadowsEnabled", int(shadows));
+        renderer_changed = true;
+      }
+
+      static bool singleSidedLighting = true;
+      if (ImGui::Checkbox("single_sided_lighting", &singleSidedLighting)) {
+        renderer.set("oneSidedLighting", int(singleSidedLighting));
+        if (rendererDW)
+          rendererDW.set("oneSidedLighting", int(singleSidedLighting));
+        renderer_changed = true;
+      }
+
+      static int exponent = -6;
+      if (ImGui::SliderInt("ray_epsilon (exponent)", &exponent, -10, 2)) {
+        renderer.set("epsilon", ospcommon::pow(10.f, (float)exponent));
+        if (rendererDW)
+          rendererDW.set("epsilon", ospcommon::pow(10.f, (float)exponent));
+        renderer_changed = true;
+      }
+
+      static int spp = 1;
+      if (ImGui::SliderInt("spp", &spp, -4, 16)) {
+        renderer.set("spp", spp);
+        if (rendererDW)
+          rendererDW.set("spp", spp);
+        renderer_changed = true;
+      }
+
+      static ImVec4 bg_color = ImColor(255, 255, 255);
+      if (ImGui::ColorEdit3("bg_color", (float*)&bg_color)) {
+        renderer.set("bgColor", bg_color.x, bg_color.y, bg_color.z);
+        if (rendererDW)
+          rendererDW.set("bgColor", bg_color.x, bg_color.y, bg_color.z);
+        renderer_changed = true;
+      }
+
+      if (renderer_changed) {
+        renderEngine.scheduleObjectCommit(renderer);
+        if (rendererDW)
+        renderEngine.scheduleObjectCommit(rendererDW);
+      }
+    }
 
     ImGui::End();
   }

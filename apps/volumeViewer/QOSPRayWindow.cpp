@@ -181,8 +181,7 @@ void QOSPRayWindow::paintGL()
     ospSetObject(renderer, "maxDepthTexture", maxDepthTexture);
 
     // disable OSPRay background rendering since we're compositing
-    ospSet1i(renderer, "backgroundEnabled", 0);
-
+    ospSet4f(renderer, "bgColor", 0.f, 0.f, 0.f, 0.f);
     ospCommit(renderer);
 
     // disable OpenGL depth testing and enable blending for compositing
@@ -194,7 +193,7 @@ void QOSPRayWindow::paintGL()
 
     // unset any maximum depth texture and enable OSPRay background rendering
     ospSetObject(renderer, "maxDepthTexture", NULL);
-    ospSet1i(renderer, "backgroundEnabled", 1);
+    ospSet4f(renderer, "bgColor", 1.f, 1.f, 1.f, 1.f);
     ospCommit(renderer);
 
     // disable OpenGL blending

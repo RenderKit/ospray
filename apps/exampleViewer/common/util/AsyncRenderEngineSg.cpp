@@ -21,8 +21,8 @@
 namespace ospray {
   namespace sg {
 
-    AsyncRenderEngineSg::AsyncRenderEngineSg(const Node::Handle &sgRenderer,
-                                             const Node::Handle &sgRendererDW)
+    AsyncRenderEngineSg::AsyncRenderEngineSg(const std::shared_ptr<Node> &sgRenderer,
+                                             const std::shared_ptr<Node> &sgRendererDW)
       : scenegraph(sgRenderer),
         scenegraphDW(sgRendererDW)
     {
@@ -33,11 +33,11 @@ namespace ospray {
       while (state == ExecState::RUNNING) {
         static sg::TimeStamp lastFTime;
 
-        auto sgFB = scenegraph["frameBuffer"];
+        auto &sgFB = scenegraph->child("frameBuffer");
 
-        if (sgFB->childrenLastModified() > lastFTime) {
-          auto size = sgFB["size"];
-          nPixels = size->valueAs<vec2i>().x * size->valueAs<vec2i>().y;
+        if (sgFB.childrenLastModified() > lastFTime) {
+          auto &size = sgFB["size"];
+          nPixels = size.valueAs<vec2i>().x * size.valueAs<vec2i>().y;
           pixelBuffer[0].resize(nPixels);
           pixelBuffer[1].resize(nPixels);
           lastFTime = sg::TimeStamp();
@@ -62,7 +62,8 @@ namespace ospray {
           scenegraphDW->traverse("render");
         
         fps.doneRender();
-        auto sgFBptr = std::static_pointer_cast<sg::FrameBuffer>(sgFB.get());
+        auto sgFBptr =
+            std::static_pointer_cast<sg::FrameBuffer>(sgFB.shared_from_this());
 
         auto *srcPB = (uint32_t*)sgFBptr->map();
         auto *dstPB = (uint32_t*)pixelBuffer[currentPB].data();

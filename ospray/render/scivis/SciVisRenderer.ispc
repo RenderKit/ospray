@@ -268,9 +268,7 @@ void SciVisRenderer_renderSample(uniform Renderer *uniform _self,
                            sample.sampleID, color, depth);
 
   // blend with background
-  if (renderer->super.backgroundEnabled) {
-    color = color + (1.0f - color.w) * make_vec4f(renderer->super.bgColor, 0.f);
-  }
+  color = color + (1.0f - color.w) * renderer->super.bgColor;
 
   // Store the result in the sample.
   sample.rgb = make_vec3f(color);

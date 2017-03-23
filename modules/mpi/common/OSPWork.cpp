@@ -110,6 +110,7 @@ namespace ospray {
         const bool hasDepthBuffer = channels & OSP_FB_DEPTH;
         const bool hasAccumBuffer = channels & OSP_FB_ACCUM;
         const bool hasVarianceBuffer = channels & OSP_FB_VARIANCE;
+
         assert(dimensions.x > 0);
         assert(dimensions.y > 0);
         FrameBuffer *fb

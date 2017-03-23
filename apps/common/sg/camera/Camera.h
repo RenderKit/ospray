@@ -26,14 +26,14 @@ namespace ospray {
     struct OSPSG_INTERFACE Camera : public sg::Node
     {
       Camera(const std::string &type);
-      /*! \brief returns a std::string with the c++ name of this class */
+
       virtual std::string toString() const override;
-      virtual void commit()  override;
 
       virtual void create();
       virtual void destroy();
-
       virtual void postCommit(RenderContext &ctx) override;
+
+    protected:
 
       // Data members //
 
@@ -53,15 +53,10 @@ namespace ospray {
       return "ospray::sg::Camera";
     }
 
-    inline void Camera::commit()
-    {
-    }
-
     inline void Camera::create()
     {
       if (ospCamera) destroy();
       ospCamera = ospNewCamera(type.c_str());
-      commit();
       setValue((OSPObject)ospCamera);
     }
 

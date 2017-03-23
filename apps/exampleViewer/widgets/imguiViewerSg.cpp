@@ -51,14 +51,14 @@ static void writePPM(const string &fileName, const int sizeX, const int sizeY,
 
 namespace ospray {
 
-  ImGuiViewerSg::ImGuiViewerSg(const sg::Node::Handle &scenegraph,
-                               const sg::Node::Handle &scenegraphDW
+  ImGuiViewerSg::ImGuiViewerSg(const std::shared_ptr<sg::Node> &scenegraph,
+                               const std::shared_ptr<sg::Node> &scenegraphDW
                                )
     : ImGui3DWidget(ImGui3DWidget::FRAMEBUFFER_NONE),
       scenegraph(scenegraph),
       renderEngine(scenegraph, scenegraphDW),scenegraphDW(scenegraphDW)
   {
-    setWorldBounds(scenegraph["world"].get()->bounds());
+    setWorldBounds(scenegraph->child("world").bounds());
     renderEngine.setFbSize({1024, 768});
 
     renderEngine.start();
@@ -79,7 +79,7 @@ namespace ospray {
     viewPort.modified = true;
 
     renderEngine.setFbSize(newSize);
-    scenegraph["frameBuffer"]["size"]->setValue(newSize);
+    scenegraph->child("frameBuffer")["size"].setValue(newSize);
 
     pixelBuffer.resize(newSize.x * newSize.y);
   }
@@ -170,17 +170,17 @@ namespace ospray {
     if (viewPort.modified) {
       auto dir = viewPort.at - viewPort.from;
       dir = normalize(dir);
-      auto camera = scenegraph["camera"];
-      camera["dir"]->setValue(dir);
-      camera["pos"]->setValue(viewPort.from);
-      camera["up"]->setValue(viewPort.up);
+      auto &camera = scenegraph->child("camera");
+      camera["dir"].setValue(dir);
+      camera["pos"].setValue(viewPort.from);
+      camera["up"].setValue(viewPort.up);
 
 #if 1
-      if (scenegraphDW.notNULL()) {
-        auto camera = scenegraphDW["camera"];
-        camera["dir"]->setValue(dir);
-        camera["pos"]->setValue(viewPort.from);
-        camera["up"]->setValue(viewPort.up);
+      if (scenegraphDW.get()) {
+        auto &camera = scenegraphDW->child("camera");
+        camera["dir"].setValue(dir);
+        camera["pos"].setValue(viewPort.from);
+        camera["up"].setValue(viewPort.up);
       }
 #endif
 
@@ -281,7 +281,7 @@ namespace ospray {
     ImGui::End();
   }
 
-  void ImGuiViewerSg::buildGUINode(sg::Node::Handle node, int indent)
+  void ImGuiViewerSg::buildGUINode(std::shared_ptr<sg::Node> node, int indent)
   {
     int styles=0;
     if (!node->isValid()) {
@@ -435,14 +435,14 @@ namespace ospray {
           if (node->type() == "TransferFunction") {
             if (!node->hasChild("transferFunctionWidget")) {
               std::shared_ptr<sg::TransferFunction> tfn =
-                std::dynamic_pointer_cast<sg::TransferFunction>(node.get());
+                std::dynamic_pointer_cast<sg::TransferFunction>(node);
 
               node->createChildWithValue("transferFunctionWidget",
                                          TransferFunction(tfn));
             }
 
             auto &tfnWidget =
-              node["transferFunctionWidget"].get()->valueAs<TransferFunction>();
+              node->child("transferFunctionWidget").valueAs<TransferFunction>();
 
             tfnWidget.render();
             tfnWidget.drawUi();

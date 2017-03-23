@@ -17,8 +17,8 @@
 #undef NDEBUG
 
 #include "sg/geometry/Spheres.h"
-#include "sg/common/Integrator.h"
 #include "sg/common/Data.h"
+#include "sg/common/World.h"
 // xml parser
 #include "common/xml/XML.h"
 
@@ -34,27 +34,27 @@ namespace ospray {
     {
     }
 
-    Spheres::Spheres()
-      : Geometry("spheres"), 
-        ospGeometry(nullptr) 
+    box3f Spheres::Sphere::bounds() const
     {
+      return {position - vec3f(radius), position + vec3f(radius)};
     }
 
-    void Spheres::init()
+    Spheres::Spheres()
+      : Geometry("spheres")
     {
-      add(createNode("sphereData"));
-      add(createNode("colorData"));
-      add(createNode("material", "Material"));
-      (*this)["material"]["Kd"]->setValue(vec3f(1,1,1));
-      (*this)["material"]["Ks"]->setValue(vec3f(0,0,0));
-      (*this)["material"]["Ns"]->setValue(0.f);
+      createChildNode("sphereData");
+      createChildNode("colorData");
+      auto &materialNode = createChildNode("material", "Material");
+      materialNode["Kd"].setValue(vec3f(1,1,1));
+      materialNode["Ks"].setValue(vec3f(0,0,0));
+      materialNode["Ns"].setValue(0.f);
     }
 
     box3f Spheres::bounds() const
     {
-      Node::Handle sphereData = child("sphereData");
+      auto sphereData = child("sphereData").shared_from_this();
       std::shared_ptr<DataVectorT<Sphere,OSP_RAW>> spheres 
-        = std::dynamic_pointer_cast<DataVectorT<Sphere,OSP_RAW>>(sphereData.get());
+        = std::dynamic_pointer_cast<DataVectorT<Sphere,OSP_RAW>>(sphereData);
       
       box3f bounds = empty;
       for (auto &s : spheres->v)
@@ -81,51 +81,51 @@ namespace ospray {
     void Spheres::setFromXML(const xml::Node &node,
                              const unsigned char *binBasePtr)
     {
-      throw std::runtime_error("setFromXML no longer makes sense with the new scene graph design");
+      throw std::runtime_error("setFromXML no longer makes sense with the"
+                               " new scene graph design");
     }
 
     void Spheres::postCommit(RenderContext &ctx)
     {
       ospGeometry = ospNewGeometry("spheres");
 
-      {
-        Node::Handle sphereDataNode = child("sphereData");
-        std::shared_ptr<DataVectorT<Sphere,OSP_RAW>> sphereData 
-          = std::dynamic_pointer_cast<DataVectorT<Sphere,OSP_RAW>>(sphereDataNode.get());
-        OSPData ospSphereData = ospNewData(sphereData->v.size()*5,OSP_FLOAT,
-                                           sphereData->v.data(),OSP_DATA_SHARED_BUFFER);
-        ospCommit(ospSphereData);
+      auto sphereDataNode = child("sphereData").shared_from_this();
+      std::shared_ptr<DataVectorT<Sphere,OSP_RAW>> sphereData
+        = std::dynamic_pointer_cast<DataVectorT<Sphere,OSP_RAW>>(sphereDataNode);
+      OSPData ospSphereData = ospNewData(sphereData->v.size()*5,OSP_FLOAT,
+                                         sphereData->v.data(),
+                                         OSP_DATA_SHARED_BUFFER);
+      ospCommit(ospSphereData);
 
-        ospSetData(ospGeometry,"spheres",ospSphereData);
-        
-        ospSet1i(ospGeometry,"bytes_per_sphere",sizeof(Spheres::Sphere));
-        ospSet1i(ospGeometry,"center_offset",     0*sizeof(float));
-        ospSet1i(ospGeometry,"offset_radius",     3*sizeof(float));
-        ospSet1i(ospGeometry,"offset_materialID", 4*sizeof(float));
-      }
-      {
-        Node::Handle colorDataNode = child("colorData");
-        std::shared_ptr<DataVectorT<vec4f,OSP_RAW>> colorData 
-          = std::dynamic_pointer_cast<DataVectorT<vec4f,OSP_RAW>>(colorDataNode.get());
-        PING; PRINT(colorData);
-        if (colorData) {
-          OSPData ospColorData = ospNewData(colorData->v.size()*5,OSP_FLOAT,
-                                            colorData->v.data(),OSP_DATA_SHARED_BUFFER);
-          ospCommit(ospColorData);
-          
-          ospSetData(ospGeometry,"color",ospColorData);
-          ospSet1i(ospGeometry,"color_offset",     0*sizeof(float));
-          ospSet1i(ospGeometry,"color_stride",     4*sizeof(float));
-        }
+      ospSetData(ospGeometry,"spheres",ospSphereData);
+
+      ospSet1i(ospGeometry,"bytes_per_sphere",sizeof(Spheres::Sphere));
+      ospSet1i(ospGeometry,"center_offset",     0*sizeof(float));
+      ospSet1i(ospGeometry,"offset_radius",     3*sizeof(float));
+      ospSet1i(ospGeometry,"offset_materialID", 4*sizeof(float));
+
+      auto colorDataNode = child("colorData").shared_from_this();
+      std::shared_ptr<DataVectorT<vec4f,OSP_RAW>> colorData
+        = std::dynamic_pointer_cast<DataVectorT<vec4f,OSP_RAW>>(colorDataNode);
+
+      if (colorData) {
+        OSPData ospColorData = ospNewData(colorData->v.size()*5,OSP_FLOAT,
+                                          colorData->v.data(),
+                                          OSP_DATA_SHARED_BUFFER);
+        ospCommit(ospColorData);
+
+        ospSetData(ospGeometry,"color",ospColorData);
+        ospSet1i(ospGeometry,"color_offset",     0*sizeof(float));
+        ospSet1i(ospGeometry,"color_stride",     4*sizeof(float));
       }
       
       ospSetMaterial(ospGeometry,
-                     (OSPMaterial)child("material")->valueAs<OSPObject>());
+                     (OSPMaterial)child("material").valueAs<OSPObject>());
       ospCommit(ospGeometry);
       
-      ospAddGeometry(ctx.world->ospModel,ospGeometry);
+      ospAddGeometry(ctx.world->ospModel, ospGeometry);
     }
 
     OSP_REGISTER_SG_NODE(Spheres);
-  }
-}
+  }// ::ospray::sg
+}// ::ospray

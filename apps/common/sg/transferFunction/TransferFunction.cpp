@@ -25,12 +25,8 @@ namespace ospray {
     TransferFunction::TransferFunction()
     {
       setDefaultValues();
-    }
-
-    void TransferFunction::init()
-    {
-      add(createNode("valueRange", "vec2f", vec2f(0.f,1.f)));
-      add(createNode("numSamples", "int", 256));
+      createChildNode("valueRange", "vec2f", vec2f(0.f,1.f));
+      createChildNode("numSamples", "int", 256);
     }
 
     // //! \brief Sets a new 'texture map' to be used for the color mapping
@@ -94,7 +90,7 @@ namespace ospray {
         setValue((OSPObject)ospTransferFunction);
       }
 
-      vec2f valueRange = child("valueRange")->valueAs<vec2f>();
+      vec2f valueRange = child("valueRange").valueAs<vec2f>();
       ospSetVec2f(ospTransferFunction,"valueRange",{valueRange.x,valueRange.y});
 
       if (ospColorData == nullptr && colorArray.size()) {

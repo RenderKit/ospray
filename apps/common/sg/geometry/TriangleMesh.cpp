@@ -16,14 +16,14 @@
 
 #include "sg/geometry/TriangleMesh.h"
 #include "sg/common/World.h"
-#include "sg/common/Integrator.h"
 
 namespace ospray {
   namespace sg {
 
-    void TriangleMesh::init()
+    TriangleMesh::TriangleMesh()
+      : Geometry("trianglemesh")
     {
-      add(createNode("material", "Material"));
+      createChildNode("material", "Material");
     }
 
     std::string TriangleMesh::toString() const
@@ -32,15 +32,6 @@ namespace ospray {
     }
 
     box3f TriangleMesh::bounds() const
-    {
-      box3f bounds = empty;
-      for (uint32_t i = 0; i < vertex->getSize(); i++)
-        bounds.extend(vertex->get3f(i));
-      return bounds;
-    }
-
-    //! return the bounding box of all primitives
-    box3f PTMTriangleMesh::bounds() const
     {
       box3f bounds = empty;
       for (uint32_t i = 0; i < vertex->getSize(); i++)
@@ -84,61 +75,16 @@ namespace ospray {
       }
     }
 
-    /*! 'render' the nodes */
-    void TriangleMesh::render(RenderContext &ctx)
+    PTMTriangleMesh::PTMTriangleMesh() : Geometry("trianglemesh")
     {
-      if (ospGeometry) return;
-
-      assert(ctx.world);
-      assert(ctx.world->ospModel);
-
-      ospGeometry = ospNewGeometry("trianglemesh");
-      // set vertex data
-      if (vertex && vertex->notEmpty())
-        ospSetData(ospGeometry,"vertex",vertex->getOSP());
-      if (normal && normal->notEmpty())
-        ospSetData(ospGeometry,"vertex.normal",normal->getOSP());
-      if (texcoord && texcoord->notEmpty())
-        ospSetData(ospGeometry,"vertex.texcoord",texcoord->getOSP());
-      // set index data
-      if (index && index->notEmpty())
-        ospSetData(ospGeometry,"index",index->getOSP());
-
-      ospCommit(ospGeometry);
-      ospAddGeometry(ctx.world->ospModel,ospGeometry);
     }
 
-    /*! 'render' the nodes */
-    void PTMTriangleMesh::render(RenderContext &ctx)
+    box3f PTMTriangleMesh::bounds() const
     {
-      if (ospGeometry) return;
-
-      assert(ctx.world);
-      assert(ctx.world->ospModel);
-
-      ospGeometry = ospNewGeometry("trianglemesh");
-      // set vertex arrays
-      if (vertex && vertex->notEmpty()) {
-        OSPData data = vertex->getOSP();
-        ospSetData(ospGeometry,"vertex",data);
-      }
-      if (normal && normal->notEmpty())
-        ospSetData(ospGeometry,"vertex.normal",normal->getOSP());
-      if (texcoord && texcoord->notEmpty())
-        ospSetData(ospGeometry,"vertex.texcoord",texcoord->getOSP());
-      // set index array
-      if (index && index->notEmpty())
-        ospSetData(ospGeometry,"index",index->getOSP());
-
-      Triangle *triangles = (Triangle*)index->getBase();
-      for(size_t i = 0; i < index->getSize(); i++) {
-        materialIDs.push_back(triangles[i].materialID >> 16);
-      }
-      primMatIDs = ospNewData(materialIDs.size(), OSP_INT, &materialIDs[0], 0);
-      ospSetData(ospGeometry,"prim.materialID",primMatIDs);
-
-      ospCommit(ospGeometry);
-      ospAddGeometry(ctx.world->ospModel,ospGeometry);
+      box3f bounds = empty;
+      for (uint32_t i = 0; i < vertex->getSize(); i++)
+        bounds.extend(vertex->get3f(i));
+      return bounds;
     }
 
     void TriangleMesh::postCommit(RenderContext &ctx)
@@ -146,7 +92,7 @@ namespace ospray {
       if (ospGeometry)
       {
         ospSetMaterial(ospGeometry,
-                       (OSPMaterial)child("material")->valueAs<OSPObject>());
+                       (OSPMaterial)child("material").valueAs<OSPObject>());
         ospCommit(ospGeometry);
         return;
       }
@@ -170,7 +116,7 @@ namespace ospray {
         ospSetData(ospGeometry,"index",index->getOSP());
 
       ospSetMaterial(ospGeometry,
-                     (OSPMaterial)child("material")->valueAs<OSPObject>());
+                     (OSPMaterial)child("material").valueAs<OSPObject>());
       ospCommit(ospGeometry);
       ospAddGeometry(ctx.world->ospModel,ospGeometry);
     }

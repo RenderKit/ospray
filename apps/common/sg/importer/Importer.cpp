@@ -151,10 +151,15 @@ namespace ospray {
       }
     }
 
+    Importer::Importer()
+    {
+      createChildNode("fileName", "string");
+    }
+
     void Importer::setChildrenModified(TimeStamp t)
     {
       Node::setChildrenModified(t);
-      ospcommon::FileName fileName(child("fileName")->valueAs<std::string>());
+      ospcommon::FileName fileName(child("fileName").valueAs<std::string>());
 
       if (fileName.str() == loadedFileName)
         return;
@@ -207,7 +212,7 @@ namespace ospray {
 
         for (auto mesh : msgModel.mesh) {
           auto sgMesh = std::dynamic_pointer_cast<sg::TriangleMesh>
-            (createNode(mesh->name, "TriangleMesh").get());
+            (createNode(mesh->name, "TriangleMesh"));
           sgMesh->vertex = std::make_shared<DataVector3f>();
           for(int i =0; i < mesh->position.size(); i++)
             std::dynamic_pointer_cast<DataVector3f>(sgMesh->vertex)->push_back(

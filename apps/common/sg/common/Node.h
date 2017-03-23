@@ -73,43 +73,6 @@ namespace ospray {
     {
       Node();
 
-      /*! Node::Handle is a handle to a sg::Node.  It has the benefit
-          of supporting some operators without requiring dereferencing
-          a pointer. */
-      struct OSPSG_INTERFACE Handle
-      {
-        Handle() = default;
-        Handle(const std::shared_ptr<sg::Node> &n) : node(n) {}
-
-        //! return child with name c
-        Handle operator[] (const std::string &c) const
-        { return node->child(c); }
-
-        Handle operator[] (const char *c) const
-        { return node->child(c); }
-
-        //! add child node n to this node
-        Handle operator+= (Handle n)
-        { get()->add(n); n->setParent(*this); return n;}
-
-        sg::Node* operator->() const { return node.get(); }
-
-        std::shared_ptr<sg::Node> get() const { return node; }
-
-        //! is this handle pointing to a null value?
-        bool notNULL() const { return !isNULL(); }
-        //! is this handle pointing to a null value?
-        bool isNULL() const { return node.get() == nullptr; }
-
-        operator bool() const { return !isNULL(); }
-
-      private:
-
-        // Data members //
-
-        std::shared_ptr<sg::Node> node;
-      };
-
       virtual std::string toString() const;
 
       //! \brief Initialize this node's value from given XML node
@@ -131,19 +94,11 @@ namespace ospray {
       virtual void setFromXML(const xml::Node &node,
                               const unsigned char *binBasePtr);
 
-      virtual void init(); //intialize children
-
       /*! serialize the scene graph - add object to the serialization,
         but don't do anything else to the node(s) */
       virtual void serialize(sg::Serialization::State &state);
 
-      /*! \brief 'render' the object for the first time */
-      virtual void render(RenderContext &ctx);
-
-      /*! \brief 'commit' updates */
-      virtual void commit();
-
-      std::string documentation();
+      std::string documentation() const;
 
       void setDocumentation(const std::string &s);
 
@@ -170,25 +125,27 @@ namespace ospray {
       bool hasChild(const std::string &name) const;
 
       /*! return named child node. */
-      Handle child(const std::string &name) const;
+      Node& child(const std::string &name) const;
 
       //! return named child node
-      Handle childRecursive(const std::string &name);
-
-      //! return all children of type
-      std::vector<Handle> childrenByType(const std::string &t) const;
+      Node& childRecursive(const std::string &name);
 
       //! return vector of child handles
-      std::vector<Handle> children() const;
+      std::vector<std::shared_ptr<Node>> children() const;
 
       //! return child c
-      Handle operator[] (const std::string &c) const;
+      Node& operator[] (const std::string &c) const;
 
       //! return the parent node
-      Handle parent() const;
+      Node& parent() const;
 
       //! sets the parent
-      void setParent(const Handle& p);
+      void setParent(Node &p);
+
+      //! sets the parent
+      void setParent(const std::shared_ptr<Node>& p);
+
+      bool hasParent() const;
 
       //! get the value of the node, whithout template conversion
       SGVar value();
@@ -205,14 +162,20 @@ namespace ospray {
       void setValue(SGVar val);
 
       //! add node as child of this one
-      virtual void add(std::shared_ptr<Node> node);
+      void add(std::shared_ptr<Node> node);
 
-      //! add node as child of this one
-      virtual void add(Handle node);
+      //! add child node n to this node
+      Node& operator+=(std::shared_ptr<Node> n);
 
       //! just for convenience; add a typed 'setParam' function
       template<typename T>
       void createChildWithValue(const std::string &name, const T &t);
+
+      Node& createChildNode(std::string name,
+                            std::string type = "Node",
+                            SGVar var = SGVar(),
+                            int flags = sg::NodeFlags::none,
+                            std::string documentation="");
 
       //! traverse this node and childrend with given operation, such as
       //  print,commit,render or custom operations
@@ -260,7 +223,7 @@ namespace ospray {
       void setWhiteList(const std::vector<SGVar> &values);
       void setBlackList(const std::vector<SGVar> &values);
 
-      virtual bool isValid();
+      bool isValid() const;
 
       virtual bool computeValid();
       virtual bool computeValidMinMax();
@@ -279,12 +242,12 @@ namespace ospray {
         std::vector<SGVar> minmax;
         std::vector<SGVar> whitelist;
         std::vector<SGVar> blacklist;
-        std::map<std::string, Handle> children;
+        std::map<std::string, std::shared_ptr<Node>> children;
         SGVar value;
         TimeStamp lastModified;
         TimeStamp childrenMTime;
         TimeStamp lastCommitted;
-        Handle parent;
+        Node* parent {nullptr};
         NodeFlags flags;
         bool valid {false};
         std::string documentation;
@@ -326,11 +289,11 @@ namespace ospray {
       return properties.value.get<T>();
     }
 
-    OSPSG_INTERFACE Node::Handle createNode(std::string name,
-                                            std::string type = "Node",
-                                            SGVar var = SGVar(),
-                                            int flags = sg::NodeFlags::none,
-                                            std::string documentation="");
+    OSPSG_INTERFACE std::shared_ptr<Node> createNode(std::string name,
+                                                     std::string type = "Node",
+                                                     SGVar var = SGVar(),
+                                                     int flags = sg::NodeFlags::none,
+                                                     std::string documentation="");
 
     // Helper functions ///////////////////////////////////////////////////////
 
@@ -399,28 +362,28 @@ namespace ospray {
     template <>
     inline void commitNodeValue<float>(Node &n)
     {
-      ospSet1f(n.parent()->valueAs<OSPObject>(),
+      ospSet1f(n.parent().valueAs<OSPObject>(),
                n.name().c_str(), n.valueAs<float>());
     }
 
     template <>
     inline void commitNodeValue<bool>(Node &n)
     {
-      ospSet1i(n.parent()->valueAs<OSPObject>(),
+      ospSet1i(n.parent().valueAs<OSPObject>(),
                n.name().c_str(), n.valueAs<bool>());
     }
 
     template <>
     inline void commitNodeValue<int>(Node &n)
     {
-      ospSet1i(n.parent()->valueAs<OSPObject>(),
+      ospSet1i(n.parent().valueAs<OSPObject>(),
                n.name().c_str(), n.valueAs<int>());
     }
 
     template <>
     inline void commitNodeValue<vec3f>(Node &n)
     {
-      ospSet3fv(n.parent()->valueAs<OSPObject>(),
+      ospSet3fv(n.parent().valueAs<OSPObject>(),
                 n.name().c_str(), &n.valueAs<vec3f>().x);
     }
 
@@ -428,7 +391,7 @@ namespace ospray {
     template <>
     inline void commitNodeValue<vec2f>(Node &n)
     {
-      ospSet3fv(n.parent()->valueAs<OSPObject>(),
+      ospSet3fv(n.parent().valueAs<OSPObject>(),
                 n.name().c_str(), &n.valueAs<vec2f>().x);
     }
 
@@ -440,11 +403,11 @@ namespace ospray {
       NodeParam() : Node() { setValue(T()); }
       virtual void postCommit(RenderContext &ctx) override
       {
-        if (!parent().isNULL()) {
+        if (hasParent()) {
           //TODO: generalize to other types of ManagedObject
 
           //NOTE(jda) - OMG the syntax for the 'if' is strange...
-          if (parent()->value().template is<OSPObject>())
+          if (parent().value().template is<OSPObject>())
             commitNodeValue<T>(*this);
         }
       }
@@ -464,10 +427,9 @@ namespace ospray {
     //! a Node with bounds and a render operation
     struct OSPSG_INTERFACE Renderable : public Node
     {
-      Renderable() = default;
+      Renderable() { createChildNode("bounds", "box3f"); }
       virtual ~Renderable() = default;
 
-      virtual void init() override { add(createNode("bounds", "box3f")); }
       virtual box3f bounds() const override { return bbox; }
       virtual box3f extendBounds(box3f b) { bbox.extend(b); return bbox; }
       virtual void preTraverse(RenderContext &ctx,

@@ -63,13 +63,7 @@ namespace ospray {
 
     struct Importer : public sg::InstanceGroup
     {
-      Importer() = default;
-
-      virtual void init() override
-      {
-        InstanceGroup::init();
-        add(createNode("fileName", "string"));
-      }
+      Importer();
 
       virtual void setChildrenModified(TimeStamp t) override;
 

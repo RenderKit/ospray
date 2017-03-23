@@ -31,7 +31,6 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   common/Common.cpp
   common/Data.h
   common/FrameBuffer.cpp
-  common/Integrator.cpp
   common/Light.cpp
   common/Material.cpp
   common/Node.cpp

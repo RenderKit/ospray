@@ -196,9 +196,9 @@ namespace bench {
 
     std::deque<Model> model;
     Renderer renderer;
-    Renderer rendererDW;
     Camera camera;
-    std::tie(std::ignore, model, renderer, rendererDW, camera) = ospObjs;
+    std::tie(std::ignore, model, renderer, camera) = ospObjs;
+
     cmdlineFixture = std::make_shared<OSPRayFixture>(renderer, camera, model[0]);
     if (width > 0 || height > 0) {
       cmdlineFixture->setFrameBuffer(width, height);

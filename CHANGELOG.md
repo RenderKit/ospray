@@ -1,6 +1,15 @@
 Version History
 ---------------
 
+### Changes in v1.3.0:
+
+-   Support of Intel® AVX-512 for next generation Intel® Xeon® processor
+    (codename Skylake), thus new minimum ISPC version is 1.9.1
+-   Changed behavior of the background color in the SciVis renderer:
+    `bgColor` now includes alpha and is always blended (no
+    `backgroundEnabled` anymore). To disable the background don't set
+    bgColor, or set it to transparent black (0, 0, 0, 0).
+
 ### Changes in v1.2.1:
 
 -   Various bugfixes related to MPI distributed rendering, ISPC issues

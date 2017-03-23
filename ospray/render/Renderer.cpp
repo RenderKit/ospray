@@ -34,7 +34,6 @@ namespace ospray {
     epsilon = getParam1f("epsilon", 1e-6f);
     spp = getParam1i("spp", 1);
     errorThreshold = getParam1f("varianceThreshold", 0.f);
-    backgroundEnabled = getParam1i("backgroundEnabled", 1);
     maxDepthTexture = (Texture2D*)getParamObject("maxDepthTexture", nullptr);
     model = (Model*)getParamObject("model", getParamObject("world"));
 
@@ -47,7 +46,8 @@ namespace ospray {
       }
     }
 
-    bgColor = getParam3f("bgColor", vec3f(1.f));
+    vec3f bgColor3 = getParam3f("bgColor", vec3f(getParam1f("bgColor", 0.f)));
+    bgColor = getParam4f("bgColor", vec4f(bgColor3, 0.f));
 
     if (getIE()) {
       ManagedObject* camera = getParamObject("camera");
@@ -62,8 +62,7 @@ namespace ospray {
           , camera ? camera->getIE() : nullptr
           , epsilon
           , spp
-          , backgroundEnabled
-          , (ispc::vec3f&)bgColor
+          , (ispc::vec4f&)bgColor
           , maxDepthTexture ? maxDepthTexture->getIE() : nullptr
           );
     }

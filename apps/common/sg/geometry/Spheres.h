@@ -34,26 +34,20 @@ namespace ospray {
                float radius=1.f, 
                uint32_t typeID = 0);
         
-        // return the bounding box
-        inline box3f bounds() const
-        { return {position - vec3f(radius), position + vec3f(radius)}; }
+        box3f bounds() const;
 
         vec3f position;
         float radius;
         uint32_t typeID;
       };
 
-      //! constructor
       Spheres();
       
       // return bounding box of all primitives
-      virtual box3f bounds() const override;
+      box3f bounds() const override;
 
       /*! 'render' the nodes */
-      virtual void postCommit(RenderContext &ctx) override;
-      // virtual void render(RenderContext &ctx) override;
-
-      virtual void init() override;
+      void postCommit(RenderContext &ctx) override;
 
       //! \brief Initialize this node's value from given XML node 
       /*!
@@ -74,10 +68,7 @@ namespace ospray {
       void setFromXML(const xml::Node &node,
                       const unsigned char *binBasePtr) override;
 
-      /*! the data array that contains the actual sphere data */
-      // Node::Handle        data;
-      OSPGeometry         ospGeometry;
-      // std::vector<Sphere> sphereVector;
+      OSPGeometry ospGeometry {nullptr};
     };
 
   } // ::ospray::sg

@@ -46,19 +46,7 @@ namespace ospray {
                                + node.name);
     }
 
-    void Node::init()
-    {
-    }
-
-    void Node::render(RenderContext &ctx)
-    {
-    }
-
-    void Node::commit()
-    {
-    }
-
-    std::string Node::documentation()
+    std::string Node::documentation() const
     {
       return properties.documentation;
     }
@@ -96,16 +84,16 @@ namespace ospray {
     void Node::markAsModified()
     {
       properties.lastModified = TimeStamp();
-      if (!parent().isNULL())
-        parent()->setChildrenModified(properties.lastModified);
+      if (hasParent())
+        parent().setChildrenModified(properties.lastModified);
     }
 
     void Node::setChildrenModified(TimeStamp t)
     {
       if (t > properties.childrenMTime) {
         properties.childrenMTime = t;
-        if (!parent().isNULL())
-          parent()->setChildrenModified(properties.childrenMTime);
+        if (hasParent())
+          parent().setChildrenModified(properties.childrenMTime);
       }
     }
 
@@ -116,71 +104,77 @@ namespace ospray {
       return itr != properties.children.end();
     }
 
-    Node::Handle Node::child(const std::string &name) const
+    Node& Node::child(const std::string &name) const
     {
       std::lock_guard<std::mutex> lock{mutex};
       auto itr = properties.children.find(name);
       if (itr == properties.children.end()) {
-        throw std::runtime_error("in node "+toString()+
-                                 " : could not find sg child node with name '"+name+"'");
+        throw std::runtime_error("in node " + toString() +
+                                 " : could not find sg child node with name '"
+                                 + name + "'");
       } else {
-        return itr->second;
+        return *itr->second;
       }
     }
 
-    Node::Handle Node::childRecursive(const std::string &name)
+    Node& Node::childRecursive(const std::string &name)
     {
       mutex.lock();
       Node* n = this;
       auto f = n->properties.children.find(name);
       if (f != n->properties.children.end()) {
         mutex.unlock();
-        return f->second;
+        return *f->second;
       }
 
       for (auto &child : properties.children) {
         mutex.unlock();
-        Handle r = child.second->childRecursive(name);
-        if (!r.isNULL())
-          return r;
+        try {
+          return child.second->childRecursive(name);
+        }
+        catch (const std::runtime_error &) {}
+
         mutex.lock();
       }
 
       mutex.unlock();
-      return Handle();
+      throw std::runtime_error("error finding node in Node::childRecursive");
     }
 
-    std::vector<Node::Handle> Node::childrenByType(const std::string &t) const
+    std::vector<std::shared_ptr<Node>> Node::children() const
     {
       std::lock_guard<std::mutex> lock{mutex};
-      std::vector<Handle> result;
-      NOT_IMPLEMENTED;
-      return result;
-    }
-
-    std::vector<Node::Handle> Node::children() const
-    {
-      std::lock_guard<std::mutex> lock{mutex};
-      std::vector<Handle> result;
+      std::vector<std::shared_ptr<Node>> result;
       for (auto &child : properties.children)
         result.push_back(child.second);
       return result;
     }
 
-    Node::Handle Node::operator[](const std::string &c) const
+    Node& Node::operator[](const std::string &c) const
     {
       return child(c);
     }
 
-    Node::Handle Node::parent() const 
+    Node& Node::parent() const
     {
-      return properties.parent;
+      return *properties.parent;
     }
 
-    void Node::setParent(const Node::Handle &p)
+    void Node::setParent(Node &p)
     {
       std::lock_guard<std::mutex> lock{mutex};
-      properties.parent = p;
+      properties.parent = &p;
+    }
+
+    void Node::setParent(const std::shared_ptr<Node> &p)
+    {
+      std::lock_guard<std::mutex> lock{mutex};
+      properties.parent = p.get();
+    }
+
+    bool Node::hasParent() const
+    {
+      return properties.parent != nullptr;
     }
 
     SGVar Node::value()
@@ -203,17 +197,26 @@ namespace ospray {
     void Node::add(std::shared_ptr<Node> node)
     {
       std::lock_guard<std::mutex> lock{mutex};
-      properties.children[node->name()] = Handle(node);
+      properties.children[node->name()] = node;
 
-      //ARG!  Cannot call shared_from_this in constructors.  PIA!!!
-      node->setParent(shared_from_this());
+      node->setParent(*this);
     }
 
-    void Node::add(Node::Handle node)
+    Node& Node::operator+=(std::shared_ptr<Node> n)
     {
-      std::lock_guard<std::mutex> lock{mutex};
-      properties.children[node->name()] = node;
-      node->setParent(shared_from_this());
+      add(n);
+      return *this;
+    }
+
+    Node& Node::createChildNode(std::string name,
+                                std::string type,
+                                SGVar var,
+                                int flags,
+                                std::string documentation)
+    {
+      auto child = createNode(name, type, var, flags, documentation);
+      add(child);
+      return *child;
     }
 
     void Node::traverse(RenderContext &ctx, const std::string& operation)
@@ -342,7 +345,7 @@ namespace ospray {
       properties.blacklist = values;
     }
 
-    bool Node::isValid()
+    bool Node::isValid() const
     {
       return properties.valid;
     }
@@ -407,27 +410,28 @@ namespace ospray {
 
     std::map<std::string, CreatorFct> nodeRegistry;
 
-    Node::Handle createNode(std::string name, std::string type, SGVar var,
-                            int flags, std::string documentation)
+    std::shared_ptr<Node> createNode(std::string name,
+                                     std::string type,
+                                     SGVar var,
+                                     int flags,
+                                     std::string documentation)
     {
       std::map<std::string, CreatorFct>::iterator it = nodeRegistry.find(type);
       CreatorFct creator = nullptr;
+
       if (it == nodeRegistry.end()) {
         std::string creatorName = "ospray_create_sg_node__"+std::string(type);
         creator = (CreatorFct)getSymbol(creatorName);
+
         if (!creator)
           throw std::runtime_error("unknown ospray scene graph node '"+type+"'");
-        else {
-          std::cout << "#osp:sg: creating at least one instance of node type '"
-                    << type << "'" << std::endl;
-        }
+
         nodeRegistry[type] = creator;
       } else {
         creator = it->second;
       }
 
       std::shared_ptr<sg::Node> newNode = creator();
-      newNode->init();
       newNode->setName(name);
       newNode->setType(type);
       newNode->setFlags(flags);
