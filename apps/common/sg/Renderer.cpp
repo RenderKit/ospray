@@ -21,57 +21,64 @@
 namespace ospray {
   namespace sg {
 
-    void Renderer::init()
+    Renderer::Renderer()
     {
-      add(createNode("bounds", "box3f"));
-      add(createNode("rendererType", "string", std::string("scivis"),
-                     NodeFlags::required | NodeFlags::valid_whitelist | NodeFlags::gui_combo,
-                     "scivis: standard whitted style ray tracer. "
-                     "pathtracer/pt: photo-realistic path tracer"));
+      createChildNode("bounds", "box3f");
+      createChildNode("rendererType", "string", std::string("scivis"),
+                      NodeFlags::required |
+                      NodeFlags::valid_whitelist |
+                      NodeFlags::gui_combo,
+                      "scivis: standard whitted style ray tracer. "
+                      "pathtracer/pt: photo-realistic path tracer");
       child("rendererType").setWhiteList({std::string("scivis"),
-                                           std::string("sv"),
-                                           std::string("raytracer"),
-                                           std::string("rt"),
-                                           std::string("ao"),
-                                           std::string("ao1"),
-                                           std::string("ao2"),
-                                           std::string("ao4"),
-                                           std::string("ao8"),
-                                           std::string("ao16"),
-                                           std::string("dvr"),
-                                           std::string("pathtracer"),
-                                           std::string("pt")});
-      add(createNode("world", "World"));
-      child("world").setDocumentation("model containing scene objects");
-      add(createNode("camera", "PerspectiveCamera"));
-      add(createNode("frameBuffer", "FrameBuffer"));
-      add(createNode("lights"));
+                                          std::string("sv"),
+                                          std::string("raytracer"),
+                                          std::string("rt"),
+                                          std::string("ao"),
+                                          std::string("ao1"),
+                                          std::string("ao2"),
+                                          std::string("ao4"),
+                                          std::string("ao8"),
+                                          std::string("ao16"),
+                                          std::string("dvr"),
+                                          std::string("pathtracer"),
+                                          std::string("pt")});
+      createChildNode("world",
+                      "World").setDocumentation("model containing scene objects");
+      createChildNode("camera", "PerspectiveCamera");
+      createChildNode("frameBuffer", "FrameBuffer");
+      createChildNode("lights");
 
-      add(createNode("bgColor", "vec3f", vec3f(0.9f, 0.9f, 0.9f),
-                     NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_color));
+      createChildNode("bgColor", "vec3f", vec3f(0.9f, 0.9f, 0.9f),
+                      NodeFlags::required |
+                      NodeFlags::valid_min_max |
+                      NodeFlags::gui_color);
 
       //TODO: move these to seperate SciVisRenderer
-      add(createNode("shadowsEnabled", "bool", true));
-      add(createNode("maxDepth", "int", 5,
-                     NodeFlags::required | NodeFlags::valid_min_max,
-                     "maximum number of ray bounces"));
-      child("maxDepth").setMinMax(0,999);
-      add(createNode("aoSamples", "int", 1,
-                     NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider,
-                     "number of ambient occlusion samples.  0 means off"));
-      child("aoSamples").setMinMax(0,128);
-      add(createNode("spp", "int", 1, NodeFlags::required | NodeFlags::gui_slider,
-                     "the number of samples rendered per pixel. The higher "
-                     "the number, the smoother the resulting image."));
+      createChildNode("shadowsEnabled", "bool", true);
+      createChildNode("maxDepth", "int", 5,
+                      NodeFlags::required | NodeFlags::valid_min_max,
+                      "maximum number of ray bounces").setMinMax(0,999);
+      createChildNode("aoSamples", "int", 1,
+                     NodeFlags::required |
+                      NodeFlags::valid_min_max |
+                      NodeFlags::gui_slider,
+                     "AO samples per frame.").setMinMax(0,128);
+      createChildNode("spp", "int", 1,
+                      NodeFlags::required | NodeFlags::gui_slider,
+                      "the number of samples rendered per pixel. The higher "
+                      "the number, the smoother the resulting image.");
       child("spp").setMinMax(-8,128);
-      add(createNode("aoDistance", "float", 10000.f,
-                     NodeFlags::required | NodeFlags::valid_min_max,
-                     "maximum distance ao rays will trace to."
-                     " Useful if you do not want a large interior of a"
-                     " building to be completely black from occlusion."));
-      child("aoDistance").setMinMax(float(1e-31),FLT_MAX);
-      add(createNode("oneSidedLighting", "bool",true, NodeFlags::required));
-      add(createNode("aoTransparency", "bool",true, NodeFlags::required));
+
+      createChildNode("aoDistance", "float", 10000.f,
+                      NodeFlags::required | NodeFlags::valid_min_max,
+                      "maximum distance ao rays will trace to."
+                      " Useful if you do not want a large interior of a"
+                      " building to be completely black from occlusion.");
+      child("aoDistance").setMinMax(1e-20f, 1e20f);
+
+      createChildNode("oneSidedLighting", "bool", true, NodeFlags::required);
+      createChildNode("aoTransparency", "bool", true, NodeFlags::required);
     }
 
     void Renderer::postRender(RenderContext &ctx)

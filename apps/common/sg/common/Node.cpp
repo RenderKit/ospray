@@ -46,10 +46,6 @@ namespace ospray {
                                + node.name);
     }
 
-    void Node::init()
-    {
-    }
-
     std::string Node::documentation() const
     {
       return properties.documentation;
@@ -436,7 +432,6 @@ namespace ospray {
       }
 
       std::shared_ptr<sg::Node> newNode = creator();
-      newNode->init();
       newNode->setName(name);
       newNode->setType(type);
       newNode->setFlags(flags);

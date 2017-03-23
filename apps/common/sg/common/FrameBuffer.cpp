@@ -26,10 +26,6 @@ namespace ospray {
       createFB();
     }
 
-    void FrameBuffer::init()
-    {
-    }
-
     FrameBuffer::~FrameBuffer()
     {
       destroyFB();

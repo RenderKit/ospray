@@ -94,8 +94,6 @@ namespace ospray {
       virtual void setFromXML(const xml::Node &node,
                               const unsigned char *binBasePtr);
 
-      virtual void init(); //intialize children
-
       /*! serialize the scene graph - add object to the serialization,
         but don't do anything else to the node(s) */
       virtual void serialize(sg::Serialization::State &state);

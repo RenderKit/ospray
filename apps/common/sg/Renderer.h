@@ -25,9 +25,7 @@ namespace ospray {
 
     struct Renderer : public Renderable
     {
-      Renderer() = default;
-
-      void init() override;
+      Renderer();
 
       void preRender(RenderContext &ctx) override;
       void postRender(RenderContext &ctx) override;

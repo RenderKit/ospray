@@ -31,8 +31,6 @@ namespace ospray {
       /*! destructor - relasess the OSP frame buffer object */
       virtual ~FrameBuffer();
 
-      virtual void init() override;
-
       unsigned char *map();
       void unmap(void *mem);
 
