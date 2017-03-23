@@ -134,6 +134,8 @@ public slots:
   void setGradientShadingEnabled(bool value);
   bool getGradientShadingEnabled() { return gradientShadingEnabled; }
 
+  void setBgColor(ospcommon::vec3f color) { bgColor = color; }
+
   //! Set gradient shading flag on all volumes.
   void setPreIntegration(bool value);
   bool getPreIntegration() { return preIntegration; }
@@ -194,6 +196,8 @@ protected:
 
   //! Active OSPRay model index (time step).
   size_t modelIndex;
+
+  ospcommon::vec3f bgColor;
 
   //! Bounding box of the (first) volume.
   ospcommon::box3f boundingBox;

@@ -63,7 +63,8 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
     aoSamples(-1),
     adaptiveSampling(-1),
     gradientShadingEnabled(-1),
-    renderInBackground(0)
+    renderInBackground(0),
+    bgColor(ospcommon::vec3f(1,1,1))
 {
   // Default window size.
   resize(1024, 768);
@@ -795,6 +796,8 @@ void VolumeViewer::initObjects(const std::string &renderer_type)
     ospSet1i(renderer, "shadowsEnabled", 1);
     ospSet1i(renderer, "aoTransparencyEnabled", 1);
   }
+
+  ospSet3fv(renderer, "bgColor", &bgColor.x);
 
   // Create OSPRay ambient and directional lights. GUI elements will modify their parameters.
   ambientLight = ospNewLight(renderer, "AmbientLight");

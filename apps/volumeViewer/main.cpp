@@ -102,6 +102,9 @@ int main(int argc, char *argv[])
   bool gradientShading = true;
   bool adaptiveSampling = true;
   bool renderInBackground = false;
+  ospcommon::box3f volumeClippingBox;
+  bool setVolumeClippingBox = false;
+  ospcommon::vec3f bgColor(1,1,1);
 
   std::vector<std::string> inFileName;
   // Parse the optional command line arguments.
@@ -120,6 +123,24 @@ int main(int argc, char *argv[])
     } else if (arg == "--samplingRate") {
       if (i + 1 >= argc) throw std::runtime_error("missing argument");
       samplingRate = atof(argv[++i]);
+
+    } else if (arg == "--clippingBox") {
+      if (i + 6 >= argc) throw std::runtime_error("missing argument");
+      float lx = atof(argv[++i]);
+      float ly = atof(argv[++i]);
+      float lz = atof(argv[++i]);
+      float ux = atof(argv[++i]);
+      float uy = atof(argv[++i]);
+      float uz = atof(argv[++i]);
+      volumeClippingBox.lower = ospcommon::vec3f(lx,ly,lz);
+      volumeClippingBox.upper = ospcommon::vec3f(ux,uy,uz);
+      setVolumeClippingBox = true;
+    } else if (arg == "--bgColor") {
+      if (i + 3 >= argc) throw std::runtime_error("missing argument");
+      float x = atof(argv[++i]);
+      float y = atof(argv[++i]);
+      float z = atof(argv[++i]);
+      bgColor = ospcommon::vec3f(x,y,z);
     } else if (arg == "--ao-samples" || arg == "-ao") {
       if (i + 1 >= argc) throw std::runtime_error("missing argument");
       aoSamples = atoi(argv[++i]);
@@ -288,6 +309,9 @@ int main(int argc, char *argv[])
   volumeViewer->setPreIntegration(preIntegration);
   volumeViewer->setGradientShadingEnabled(gradientShading);
   volumeViewer->setRenderInBackground(renderInBackground);
+  volumeViewer->setBgColor(bgColor);
+  if (setVolumeClippingBox)
+    volumeViewer->setVolumeClippingBox(volumeClippingBox);
 
   // Display the first model.
   volumeViewer->setModel(0);
