@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -22,16 +22,14 @@
 /// Platforms supporting Socket interface
 ////////////////////////////////////////////////////////////////////////////////
 
-#if defined(__WIN32__)
+#ifdef _WIN32
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 //#include <winsock2.h>
 //#include <io.h>
 typedef int socklen_t;
 #define SHUT_RDWR 0x2
 #else 
-#ifdef __linux__
-#  include <unistd.h>
-#endif
+#include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -40,7 +38,7 @@ typedef int socklen_t;
 #include <netdb.h> 
 #define SOCKET int
 #define INVALID_SOCKET -1
-#define closesocket close
+#define closesocket ::close
 #endif
 
 /*! ignore if not supported */
@@ -53,7 +51,7 @@ typedef int socklen_t;
 namespace ospcommon
 {
     __forceinline void initialize() {
-#ifdef __WIN32__
+#ifdef _WIN32
       static bool initialized = false;
       static MutexSys initMutex;
       Lock<MutexSys> lock(initMutex);
@@ -87,6 +85,17 @@ namespace ospcommon
       size_t oend;
     };
 
+    struct AutoCloseSocket
+    {
+      SOCKET sock;
+      AutoCloseSocket (SOCKET sock) : sock(sock) {}
+      ~AutoCloseSocket () {
+        if (sock != INVALID_SOCKET) {
+          closesocket(sock);
+        }
+      }
+    };
+
     socket_t connect(const char* host, unsigned short port) 
     {
       initialize();
@@ -94,6 +103,7 @@ namespace ospcommon
       /*! create a new socket */
       SOCKET sockfd = ::socket(AF_INET, SOCK_STREAM, 0);
       if (sockfd == INVALID_SOCKET) THROW_RUNTIME_ERROR("cannot create socket");
+      AutoCloseSocket auto_close(sockfd);
       
       /*! perform DNS lookup */
       struct hostent* server = ::gethostbyname(host);
@@ -119,6 +129,7 @@ namespace ospcommon
       { int flag = 1; setsockopt(sockfd, SOL_SOCKET, SO_NOSIGPIPE, (const char*) &flag, sizeof(int)); }
 #endif
       
+      auto_close.sock = INVALID_SOCKET;
       return (socket_t) new buffered_socket_t(sockfd);
     }
     
@@ -129,6 +140,7 @@ namespace ospcommon
       /*! create a new socket */
       SOCKET sockfd = ::socket(AF_INET, SOCK_STREAM, 0);
       if (sockfd == INVALID_SOCKET) THROW_RUNTIME_ERROR("cannot create socket");
+      AutoCloseSocket auto_close(sockfd);
 
       /* When the server completes, the server socket enters a time-wait state during which the local
       address and port used by the socket are believed to be in use by the OS. The wait state may
@@ -151,6 +163,7 @@ namespace ospcommon
       if (::listen(sockfd,5) < 0)
         THROW_RUNTIME_ERROR("listening on socket failed");
 
+      auto_close.sock = INVALID_SOCKET;
       return (socket_t) new buffered_socket_t(sockfd);
     }
     
@@ -255,6 +268,7 @@ namespace ospcommon
     void close(socket_t hsock_i) {
       buffered_socket_t* hsock = (buffered_socket_t*) hsock_i;
       ::shutdown(hsock->fd,SHUT_RDWR);
+      closesocket(hsock->fd);
       delete hsock;
     }
 
