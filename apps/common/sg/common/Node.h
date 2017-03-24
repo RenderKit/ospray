@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include "sg/SceneGraphExports.h"
 #include "sg/common/TimeStamp.h"
 #include "sg/common/Serialization.h"
 #include "sg/common/RenderContext.h"

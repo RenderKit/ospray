@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include "sg/SceneGraphExports.h"
 #include "sg/common/Common.h"
 // ospcommon
 #include "ospcommon/AffineSpace.h"

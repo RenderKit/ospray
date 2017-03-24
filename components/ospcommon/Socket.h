@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "platform.h"
+#include "common.h"
 
 namespace ospcommon
 {
@@ -34,54 +34,54 @@ namespace ospcommon
   };
 
   /*! creates a socket bound to a port */
-  socket_t bind(unsigned short port);
+  OSPCOMMON_INTERFACE socket_t bind(unsigned short port);
 
   /*! listens for an incoming connection and accepts that connection */
-  socket_t listen(socket_t sockfd);
+  OSPCOMMON_INTERFACE socket_t listen(socket_t sockfd);
 
   /*! initiates a connection */
-  socket_t connect(const char* host, unsigned short port);
+  OSPCOMMON_INTERFACE socket_t connect(const char* host, unsigned short port);
 
   /*! read data from the socket */
-  void read(socket_t socket, void* data, size_t bytes);
+  OSPCOMMON_INTERFACE void read(socket_t socket, void* data, size_t bytes);
 
   /*! write data to the socket */
-  void write(socket_t socket, const void* data, size_t bytes);
+  OSPCOMMON_INTERFACE void write(socket_t socket, const void* data, size_t bytes);
 
   /*! flushes the write buffer */
-  void flush(socket_t socket);
+  OSPCOMMON_INTERFACE void flush(socket_t socket);
 
   /*! close a socket */
-  void close(socket_t socket);
+  OSPCOMMON_INTERFACE void close(socket_t socket);
 
   /*! reads a bool from the socket */
-  bool read_bool(socket_t socket);
+  OSPCOMMON_INTERFACE bool read_bool(socket_t socket);
 
   /*! reads a character from the socket */
-  char read_char(socket_t socket);
+  OSPCOMMON_INTERFACE char read_char(socket_t socket);
 
   /*! reads an integer from the socket */
-  int read_int(socket_t socket);
+  OSPCOMMON_INTERFACE int read_int(socket_t socket);
 
   /*! reads a float from the socket */
-  float read_float(socket_t socket);
+  OSPCOMMON_INTERFACE float read_float(socket_t socket);
 
   /*! reads a string from the socket */
-  std::string read_string(socket_t socket);
+  OSPCOMMON_INTERFACE std::string read_string(socket_t socket);
 
   /*! writes a bool to the socket */
-  void write(socket_t socket, bool value);
+  OSPCOMMON_INTERFACE void write(socket_t socket, bool value);
 
   /*! writes a character to the socket */
-  void write(socket_t socket, char value);
+  OSPCOMMON_INTERFACE void write(socket_t socket, char value);
 
   /*! writes an integer to the socket */
-  void write(socket_t socket, int value);
+  OSPCOMMON_INTERFACE void write(socket_t socket, int value);
 
   /*! writes a float to the socket */
-  void write(socket_t socket, float value);
+  OSPCOMMON_INTERFACE void write(socket_t socket, float value);
 
   /*! writes a string to the socket */
-  void write(socket_t socket, const std::string& str);
+  OSPCOMMON_INTERFACE void write(socket_t socket, const std::string& str);
 
 }// ::ospcommon

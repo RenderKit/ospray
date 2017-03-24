@@ -23,6 +23,6 @@ set(LIB_NAME gl3w)
 
 include_directories(${CMAKE_CURRENT_LIST_DIR})
 
-add_library(${LIB_NAME} gl3w.c)
+add_library(${LIB_NAME} STATIC gl3w.c)
 
 target_link_libraries(${LIB_NAME} ${OPENGL_LIBRARIES})

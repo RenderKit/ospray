@@ -25,7 +25,7 @@ namespace ospray {
         uniformly spaced color and alpha values between which the
         value will be linearly interpolated (similar to a 1D texture
         for each) */
-    struct TransferFunction : public sg::Node 
+    struct OSPSG_INTERFACE TransferFunction : public sg::Node
     {
       TransferFunction();
 

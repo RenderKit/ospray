@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include "sg/SceneGraphExports.h"
 // sg components
 #include "sg/common/Node.h"
 
@@ -54,7 +53,7 @@ namespace ospray {
       void destroyFB();
 
       OSPFrameBuffer ospFrameBuffer {nullptr};
-      std::string displayWallStream { "" };
+      std::string displayWallStream;
     };
 
   } // ::ospray::sg
