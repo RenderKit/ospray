@@ -18,7 +18,6 @@
 
 #include <iostream>
 #include <sstream>
-#include <type_traits>
 
 #include "ospcommon/common.h"
 #include "OSPTypeTraits.h"

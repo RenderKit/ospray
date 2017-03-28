@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <type_traits>
+
 namespace ospray {
   namespace sg {
     namespace traits {
