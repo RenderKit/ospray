@@ -40,10 +40,6 @@ namespace ospray {
       return bounds;
     }
 
-    void Node::serialize(sg::Serialization::State &state)
-    { 
-    }
-
     std::string Info::toString() const
     {
       return "ospray::sg::Info";
