@@ -14,28 +14,30 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "async_render_engine_sg.h"
+#include "AsyncRenderEngineSg.h"
 
 #include "sg/common/FrameBuffer.h"
 
 namespace ospray {
   namespace sg {
 
-    async_render_engine_sg::async_render_engine_sg(NodeH sgRenderer)
-      : scenegraph(sgRenderer)
+    AsyncRenderEngineSg::AsyncRenderEngineSg(const std::shared_ptr<Node> &sgRenderer,
+                                             const std::shared_ptr<Node> &sgRendererDW)
+      : scenegraph(sgRenderer),
+        scenegraphDW(sgRendererDW)
     {
     }
 
-    void async_render_engine_sg::run()
+    void AsyncRenderEngineSg::run()
     {
       while (state == ExecState::RUNNING) {
         static sg::TimeStamp lastFTime;
 
-        auto sgFB = scenegraph["frameBuffer"];
+        auto &sgFB = scenegraph->child("frameBuffer");
 
-        if (sgFB->childrenLastModified() > lastFTime) {
-          auto size = sgFB["size"];
-          nPixels = size->valueAs<vec2i>().x * size->valueAs<vec2i>().y;
+        if (sgFB.childrenLastModified() > lastFTime) {
+          auto &size = sgFB["size"];
+          nPixels = size.valueAs<vec2i>().x * size.valueAs<vec2i>().y;
           pixelBuffer[0].resize(nPixels);
           pixelBuffer[1].resize(nPixels);
           lastFTime = sg::TimeStamp();
@@ -46,19 +48,28 @@ namespace ospray {
         if (scenegraph->childrenLastModified() > lastRTime) {
           scenegraph->traverse("verify");
           scenegraph->traverse("commit");
+
+          if (scenegraphDW) {
+            scenegraphDW->traverse("verify");
+            scenegraphDW->traverse("commit");
+          }
+
           lastRTime = sg::TimeStamp();
         }
 
         scenegraph->traverse("render");
-
+        if (scenegraphDW) 
+          scenegraphDW->traverse("render");
+        
         fps.doneRender();
-        auto sgFBptr = std::static_pointer_cast<sg::FrameBuffer>(sgFB.get());
+        auto sgFBptr =
+            std::static_pointer_cast<sg::FrameBuffer>(sgFB.shared_from_this());
 
         auto *srcPB = (uint32_t*)sgFBptr->map();
         auto *dstPB = (uint32_t*)pixelBuffer[currentPB].data();
 
         memcpy(dstPB, srcPB, nPixels*sizeof(uint32_t));
-
+        
         sgFBptr->unmap(srcPB);
 
         if (fbMutex.try_lock()) {
@@ -69,7 +80,7 @@ namespace ospray {
       }
     }
 
-    void async_render_engine_sg::validate()
+    void AsyncRenderEngineSg::validate()
     {
       if (state == ExecState::INVALID)
         state = ExecState::STOPPED;

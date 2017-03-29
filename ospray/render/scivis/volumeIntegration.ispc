@@ -111,8 +111,11 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
   ray.t0 = tBegin;
   float tSkipped = -1;  //for adaptive, skip adapting sampling rate up to this value
   vec4f intervalColor = make_vec4f(0.f);
-  // volume->intersect(volume, ray);
-  tBegin = ray.t0+renderer->volumeEpsilon;
+  if (volume->adaptiveSampling)
+    volume->intersectAdaptive(volume, ray, volume->adaptiveMaxSamplingRate);
+  else 
+    volume->intersect(volume,ray);
+  tBegin = ray.t0+renderer->super.epsilon;
   // const uniform float oneOverQuality = (1.f/quality);
   float samplingRate = volume->samplingRate*quality;
   float lastSample = -1.f;

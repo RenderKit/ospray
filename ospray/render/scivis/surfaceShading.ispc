@@ -73,13 +73,7 @@ void shadeAO(const uniform SciVisRenderer *uniform self,
   // Calculate AO contribution as ambient term
   float ao = 1.0f;
   if (self->needToDoAO)
-    // self->aoSamples > 0
-    //   &&
-    //   reduce_max(self->aoColor) > 0.f
-    //   &&
-    //   self->aoDistance > 0.f
-    //   )
-      ao = calculateAO(self, sampleID, dg, info.shadingNormal);
+    ao = calculateAO(self, sampleID, dg, info.shadingNormal);
   
   color = color + (info.local_opacity * ao) * info.Kd * self->aoColor;
 }

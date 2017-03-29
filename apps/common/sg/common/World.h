@@ -26,22 +26,14 @@ namespace ospray {
     /*! a world node */
     struct OSPSG_INTERFACE World : public sg::Renderable
     {
-      World() = default;
-
-      virtual void init() override 
-      {
-        add(createNode("bounds", "box3f"));
-      }
+      World();
+      virtual ~World() = default;
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual std::string toString() const override
-      { return "ospray::viewer::sg::World"; }
+      virtual std::string toString() const override;
 
       //! serialize into given serialization state 
       virtual void serialize(sg::Serialization::State &serialization) override;
-
-      /*! 'render' the object for the first time */
-      virtual void render(RenderContext &ctx) override;
 
       /*! \brief return bounding box in world coordinates.
 
@@ -63,23 +55,12 @@ namespace ospray {
 
     struct OSPSG_INTERFACE InstanceGroup : public sg::World
     {
-      InstanceGroup() = default;
+      InstanceGroup();
 
-      virtual void init() override 
-      {
-        add(createNode("bounds", "box3f"));
-        add(createNode("visible", "bool", true));
-        add(createNode("position", "vec3f"));
-        add(createNode("rotation", "vec3f", vec3f(0),
-                       NodeFlags::required | NodeFlags::valid_min_max | NodeFlags::gui_slider));
-        child("rotation")->setMinMax(-vec3f(2*3.15f),vec3f(2*3.15f));
-        add(createNode("scale", "vec3f", vec3f(1.f)));
-      }
-
-      virtual void preCommit(RenderContext &ctx) override;
-      virtual void postCommit(RenderContext &ctx) override;
-      virtual void preRender(RenderContext &ctx) override;
-      virtual void postRender(RenderContext &ctx) override;
+      void preCommit(RenderContext &ctx) override;
+      void postCommit(RenderContext &ctx) override;
+      void preRender(RenderContext &ctx) override;
+      void postRender(RenderContext &ctx) override;
 
       OSPGeometry ospInstance {nullptr};
       bool instanced {true};

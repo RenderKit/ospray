@@ -71,15 +71,6 @@ build-ubuntu1404-gcc:
     - gcc
     - build
 
-build-sles-gcc:
-  type: build
-  script:
-    - scripts/build_gitlab/linux.sh
-  tags:
-    - sles
-    - gcc
-    - build
-
 build-debug:
   type: build
   script:
@@ -145,28 +136,6 @@ build-windows-icc:
     - win7
 
 ### RELEASE JOBS ###
-
-# NOTE(jda) - Current CentOS 6 release machine needs gcc environment
-#             debugged
-#release-linux-gcc:
-#  type: deploy
-#  script:
-#    - module load gcc
-#    - export CC=gcc
-#    - export CXX=g++
-#    - export OSPRAY_RELEASE_NO_VERIFY=1
-#    - scripts/release/linux.sh
-#  tags:
-#    - gcc
-#    - release
-#    - centos6
-#  only:
-#    - devel
-#    - master
-#    - release-1.0
-#  artifacts:
-#    paths:
-#      - build_release/*.gz
 
 release-linux-icc:
   type: deploy

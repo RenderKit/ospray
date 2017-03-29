@@ -30,11 +30,9 @@ namespace ospray {
     {
       /*! constructor */
       Texture2D() = default;
-      virtual ~Texture2D() = default;
       
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual std::string toString() const override
-      { return "ospray::viewer::sg::Texture2D"; }
+      std::string toString() const override;
 
       //! \brief load texture from given file. 
       /*! \detailed if file does not exist, or cannot be loaded for
@@ -42,7 +40,6 @@ namespace ospray {
           will return the *same* texture object */
       static std::shared_ptr<Texture2D> load(const FileName &fileName,
                                              const bool prefereLinear = false);
-      virtual void render(RenderContext &ctx) override;
 
       //! texture size, in pixels
       vec2i size {-1};

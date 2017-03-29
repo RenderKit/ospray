@@ -25,8 +25,7 @@ namespace ospray {
     /*! \brief Base class for all Material Types */
     struct OSPSG_INTERFACE Material : public Node
     {
-      Material() = default;
-      virtual void init() override;
+      Material();
       
       /*! \brief returns a std::string with the c++ name of this class */
       virtual std::string toString() const override;

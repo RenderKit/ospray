@@ -43,11 +43,13 @@ namespace ospray {
       virtual void set(const std::string &name, float v) const = 0;
       virtual void set(const std::string &name, float v1, float v2) const = 0;
       virtual void set(const std::string &name, float v1, float v2, float v3) const = 0;
+      virtual void set(const std::string &name, float v1, float v2, float v3, float v4) const = 0;
 
       // double
       virtual void set(const std::string &name, double v) const = 0;
       virtual void set(const std::string &name, double v1, double v2) const = 0;
       virtual void set(const std::string &name, double v1, double v2, double v3) const = 0;
+      virtual void set(const std::string &name, double v1, double v2, double v3, double v4) const = 0;
 
       // ospcommon::vec2
       virtual void set(const std::string &name, const ospcommon::vec2i &v) const = 0;
@@ -103,10 +105,12 @@ namespace ospray {
       void set(const std::string &name, float v) const override;
       void set(const std::string &name, float v1, float v2) const override;
       void set(const std::string &name, float v1, float v2, float v3) const override;
+      void set(const std::string &name, float v1, float v2, float v3, float v4) const override;
 
       void set(const std::string &name, double v) const override;
       void set(const std::string &name, double v1, double v2) const override;
       void set(const std::string &name, double v1, double v2, double v3) const override;
+      void set(const std::string &name, double v1, double v2, double v3, double v4) const override;
 
       void set(const std::string &name, const ospcommon::vec2i &v) const override;
       void set(const std::string &name, const ospcommon::vec2f &v) const override;
@@ -132,6 +136,10 @@ namespace ospray {
 
       //! Get the underlying specific OSP* handle
       OSP_TYPE handle() const;
+
+      //! return whether the given object is valid, or NULL
+      inline operator bool () const { return handle() != nullptr; }
+
 
     protected:
 
@@ -206,6 +214,14 @@ namespace ospray {
     }
 
     template <typename OSP_TYPE>
+    inline void ManagedObject_T<OSP_TYPE>::set(const std::string &name,
+                                               float v1, float v2,
+                                               float v3, float v4) const
+    {
+      ospSet4f(ospObject, name.c_str(), v1, v2, v3, v4);
+    }
+
+    template <typename OSP_TYPE>
     inline void ManagedObject_T<OSP_TYPE>::set(const std::string &name, double v) const
     {
       ospSet1f(ospObject, name.c_str(), v);
@@ -223,6 +239,14 @@ namespace ospray {
                                                double v1, double v2, double v3) const
     {
       ospSet3f(ospObject, name.c_str(), v1, v2, v3);
+    }
+
+    template <typename OSP_TYPE>
+    inline void ManagedObject_T<OSP_TYPE>::set(const std::string &name,
+                                               double v1, double v2,
+                                               double v3, double v4) const
+    {
+      ospSet4f(ospObject, name.c_str(), v1, v2, v3, v4);
     }
 
     template <typename OSP_TYPE>

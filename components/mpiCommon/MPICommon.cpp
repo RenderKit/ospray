@@ -25,6 +25,7 @@ namespace ospray {
       but for now tihs is cleaner here thatn in the MPI device
      */
     OSPRAY_MPI_INTERFACE bool logMPI = 0;
+    OSPRAY_MPI_INTERFACE bool mpiIsThreaded = 0;
 
     OSPRAY_MPI_INTERFACE Group world;
     OSPRAY_MPI_INTERFACE Group app;
@@ -142,34 +143,41 @@ namespace ospray {
       int initialized = false;
       SERIALIZED_MPI_CALL(Initialized(&initialized));
       
+      int provided = 0;
       if (!initialized) {
-        // MPI_Init(ac,(char ***)&av);
-        int required = MPI_THREAD_SERIALIZED;
-        int provided = 0;
-        SERIALIZED_MPI_CALL(Init_thread(ac,(char ***)&av,required,&provided));
-        if (provided != required) {
-          throw std::runtime_error("MPI implementation does not offer "
-                                   "multi-threading capabilities");
-        }
-        if (logMPI) std::cout << "#osp.mpi: MPI_Init successful!" << std::endl;
-      }
-      else
-      {
-        printf("running ospray in pre-initialized mpi mode\n");
-        int provided;
+        /* MPI not initialized by the app - it's up to us */
+        int required = MPI_THREAD_MULTIPLE;
+        SERIALIZED_MPI_CALL(Init_thread(ac,(char ***)&av,MPI_THREAD_MULTIPLE,&provided));
+      } else {
+        /* MPI was already initialized by the app that called us! */
         MPI_Query_thread(&provided);
-        int requested = MPI_THREAD_SERIALIZED;
-        if (provided != requested)
-          throw std::runtime_error("ospray requires mpi to be initialized with "
-            "MPI_THREAD_SERIAL if initialized before calling ospray");
       }
 
+      int rank;
+      SERIALIZED_MPI_CALL(Comm_rank(MPI_COMM_WORLD,&rank));
+      switch(provided) {
+      case MPI_THREAD_MULTIPLE:
+        mpiIsThreaded = true;
+        break;
+      case MPI_THREAD_SERIALIZED:
+        mpiIsThreaded = false;
+        if (rank == 0) {
+          std::cout << "#osp.mpi: didn't find 'thread_multiple' MPI, but!" << std::endl;
+          std::cout << "#osp.mpi: can still do thread_serialized." << std::endl;
+          std::cout << "#osp.mpi: most things should work, but some modules." << std::endl;
+          std::cout << "#osp.mpi: might not." << std::endl;
+        }
+        break;
+      default:
+        throw std::runtime_error("fatal MPI error: MPI runtime doesn't offer even MPI_THREAD_SERIALIZED ...");
+      }
+      
       mpi::serialized(CODE_LOCATION, [&]() {
-        world.comm = MPI_COMM_WORLD;
-        MPI_CALL(Comm_rank(MPI_COMM_WORLD,&world.rank));
-        MPI_CALL(Comm_size(MPI_COMM_WORLD,&world.size));
-      });
-
+          world.comm = MPI_COMM_WORLD;
+          MPI_CALL(Comm_rank(MPI_COMM_WORLD,&world.rank));
+          MPI_CALL(Comm_size(MPI_COMM_WORLD,&world.size));
+        });
+      
       {
         /*! iw, jan 2017: this entire code block should eventually get
             removed once we switch to the new asyn messaging library;

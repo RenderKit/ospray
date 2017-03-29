@@ -106,7 +106,6 @@ namespace ospray {
     {
       char *envVar = getenv("OSPRAY_MPI_DEBUG");
       if (!envVar) return false;
-      PING; PRINT(envVar);
       return atoi(envVar) > 0;
     }
     
@@ -121,7 +120,7 @@ namespace ospray {
       auto &device = ospray::api::Device::current;
 
       auto numThreads = device ? device->numThreads : -1;
-      
+
       // initialize embree. (we need to do this here rather than in
       // ospray::init() because in mpi-mode the latter is also called
       // in the host-stubs, where it shouldn't.
@@ -185,7 +184,5 @@ namespace ospray {
       }
     }
 
-
-    
   } // ::ospray::mpi
 } // ::ospray

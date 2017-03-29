@@ -43,31 +43,19 @@ namespace ospray {
       OSPLight ospLight {nullptr};
     };
 
-    /*! a light node - the generic light node */
     struct OSPSG_INTERFACE AmbientLight : public Light
     {
-      //! \brief constructor
-      AmbientLight() : Light("AmbientLight") {}
-
-      virtual void init() override;
+      AmbientLight();
     };
 
-    /*! a light node - the generic light node */
     struct OSPSG_INTERFACE DirectionalLight : public Light
     {
-      //! \brief constructor
-      DirectionalLight() : Light("DirectionalLight") {}
-
-      virtual void init() override;
+      DirectionalLight();
     };
 
-    /*! a light node - the generic light node */
     struct OSPSG_INTERFACE PointLight : public Light
     {
-      //! \brief constructor
-      PointLight() : Light("PointLight") {}
-
-      virtual void init() override;
+      PointLight();
     };
 
   } // ::ospray::sg

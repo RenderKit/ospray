@@ -406,7 +406,7 @@ GLFWAPI void glfwDestroyWindow(GLFWwindow* handle)
         while (*prev != window)
             prev = &((*prev)->next);
 
-        *prev = window->next;
+        *prev = window->next; 
     }
 
     free(window);

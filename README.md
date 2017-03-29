@@ -1,9 +1,9 @@
 OSPRay
 ======
 
-This is release v1.2.0 of OSPRay. For changes and new features see the
-[changelog](CHANGELOG.md). Also visit http://www.ospray.org for more
-information.
+This is release v1.3.0 (devel) of OSPRay. For changes and new features
+see the [changelog](CHANGELOG.md). Also visit http://www.ospray.org for
+more information.
 
 OSPRay Overview
 ===============
@@ -56,9 +56,8 @@ branch should always point to the latest tested bugfix release.
 Prerequisites
 -------------
 
-OSPRay currently supports both Linux and Mac OS X (and experimentally
-Windows). In addition, before you can build OSPRay you need the
-following prerequisites:
+OSPRay currently supports Linux, Mac OS X, and Windows. In addition,
+before you can build OSPRay you need the following prerequisites:
 
 -   You can clone the latest OSPRay sources via:
 
@@ -66,18 +65,18 @@ following prerequisites:
 
 -   To build OSPRay you need [CMake](http://www.cmake.org), any form of
     C++11 compiler (we recommend using GCC, but also support Clang and
-    the [Intel® C++ compiler
-    (ICC)](https://software.intel.com/en-us/c-compilers)), and standard
-    Linux development tools. To build the demo viewers, you should also
-    have some version of OpenGL and the GL Utility Toolkit (GLUT or
-    freeglut), as well as Qt 4.6 or higher.
--   Additionally you require a copy of the [Intel® SPMD Program Compiler
-    (ISPC)](http://ispc.github.io). Please obtain a copy of the latest
-    binary release of ISPC (currently 1.9.1) from the [ISPC downloads
-    page](https://ispc.github.io/downloads.html). The build system looks
-    for ISPC in the `PATH` and in the directory right "next to" the
-    checked-out OSPRay sources.[^1] Alternatively set the CMake variable
-    `ISPC_EXECUTABLE` to the location of the ISPC compiler.
+    the [Intel® C++
+    compiler (ICC)](https://software.intel.com/en-us/c-compilers)), and
+    standard Linux development tools. To build the demo viewers, you
+    should also have some version of OpenGL and the GL Utility Toolkit
+    (GLUT or freeglut), as well as Qt 4.6 or higher.
+-   Additionally you require a copy of the [Intel® SPMD Program
+    Compiler (ISPC)](http://ispc.github.io). Please obtain a copy of the
+    latest binary release of ISPC (currently 1.9.1) from the [ISPC
+    downloads page](https://ispc.github.io/downloads.html). The build
+    system looks for ISPC in the `PATH` and in the directory right "next
+    to" the checked-out OSPRay sources.[^1] Alternatively set the CMake
+    variable `ISPC_EXECUTABLE` to the location of the ISPC compiler.
 -   Per default OSPRay uses the [Intel® Threading Building
     Blocks](https://www.threadingbuildingblocks.org/) (TBB) as tasking
     system, which we recommend for performance and flexibility reasons.
@@ -126,9 +125,10 @@ CMake is easy:
 
 -   The compiler CMake will use will default to whatever the `CC` and
     `CXX` environment variables point to. Should you want to specify a
-    different compiler, run cmake manually while specifying the desired
-    compiler. The default compiler on most linux machines is `gcc`, but
-    it can be pointed to `clang` instead by executing the following:
+    different compiler, run cmake manually while specifying the
+    desired compiler. The default compiler on most linux machines is
+    `gcc`, but it can be pointed to `clang` instead by executing the
+    following:
 
         user@mymachine[~/Projects/ospray/release]: cmake
             -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang ..
@@ -148,8 +148,8 @@ CMake is easy:
 
         user@mymachine[~/Projects/ospray/release]: make
 
--   You should now have `libospray.so` as well as a set of sample
-    viewers. You can test your version of OSPRay using any of the
+-   You should now have `libospray.so` as well as a set of
+    sample viewers. You can test your version of OSPRay using any of the
     examples on the [OSPRay Demos and
     Examples](http://www.ospray.org/demos.html) page.
 
@@ -183,12 +183,15 @@ To access the OSPRay API you first need to include the OSPRay header
 
 where the API is compatible with C99 and C++.
 
-In order to use the API, OSPRay must initialized with a "device". A
+Initialization
+--------------
+
+In order to use the API, OSPRay must be initialized with a "device". A
 device is the object which implements the API. Creating and initializing
 a device can be done in either of two ways: command line arguments or
 manually instantiating a device.
 
-### Initialization via command line arguments
+### Command Line Arguments
 
 The first is to do so by giving OSPRay the command line from `main()` by
 calling
@@ -252,7 +255,7 @@ convention with "`--osp:`") are understood:
 
 : Command line parameters accepted by OSPRay's `ospInit`.
 
-### Initialization via manual device instantiation
+### Manual Device Instantiation
 
 The second method of initialization is to explicitly create the device
 yourself, and possibly set parameters. This method looks almost
@@ -318,23 +321,23 @@ to OSPRay API calls, where users can set/change parameters and recommit
 the device. If changes are made to the device that is already set as the
 current device, it does not need to be set as current again.
 
-### Useful environment variables
+### Environment Variables
 
 Finally, OSPRay's generic device parameters can be overridden via
 environment variables for easy changes to OSPRay's behavior without
 needing to change the application (variables are prefixed by convention
 with "`OSPRAY_`"):
 
-| Variable            | Description                                                   |
-|:--------------------|:--------------------------------------------------------------|
-| OSPRAY\_THREADS     | equivalent to `--osp:numthreads`                              |
-| OSPRAY\_LOG\_LEVEL  | equivalent to `--osp:loglevel`                                |
-| OSPRAY\_LOG\_OUTPUT | equivalent to `--osp:logoutput`                               |
-| OSPRAY\_DEBUG       | equivalent to both OSPRAY\_LOG\_LEVEL=2 and OSPRAY\_THREADS=1 |
+| Variable            | Description                      |
+|:--------------------|:---------------------------------|
+| OSPRAY\_THREADS     | equivalent to `--osp:numthreads` |
+| OSPRAY\_LOG\_LEVEL  | equivalent to `--osp:loglevel`   |
+| OSPRAY\_LOG\_OUTPUT | equivalent to `--osp:logoutput`  |
+| OSPRAY\_DEBUG       | equivalent to `--osp:debug`      |
 
 : Environment variables interpreted by OSPRay.
 
-### Handling error and status messages from OSPRay
+### Handling Error and Status Messages from OSPRay
 
 Applications may be interested in messages which OSPRay emits, whether
 for debugging or logging events. Applications can call
@@ -349,7 +352,7 @@ desired by an application will require that a callback be provided. Note
 that callbacks for C++ std::cout and std::cerr can be alternatively set
 through ospInit() or OSPRAY\_LOG\_OUTPUT environment variable.
 
-### Loading OSPRay extensions at runtime
+### Loading OSPRay Extensions at Runtime
 
 OSPRay's functionality can be extended via plugins, which are
 implemented in shared libraries. To load plugin `name` from
@@ -579,27 +582,28 @@ summarized in the table below. If `voxelRange` is not provided for a
 volume OSPRay will compute it based on the voxel data, which may result
 in slower data updates.
 
-| Type   | Name                    | Description                                                              |
-|:-------|:------------------------|:-------------------------------------------------------------------------|
-| vec3i  | dimensions              | number of voxels in each dimension $(x, y, z)$                           |
-| string | voxelType               | data type of each voxel, currently supported are:                        |
-|       |                        | "uchar" (8 bit unsigned integer)                                         |
-|       |                        | "ushort" (16 bit unsigned integer)                                       |
-|       |                        | "float" (32 bit single precision floating point)                         |
-|       |                        | "double" (64 bit double precision floating point)                        |
-| vec2f  | voxelRange              | minimum and maximum of the scalar values                                 |
-| vec3f  | gridOrigin              | origin of the grid in world-space, default $(0, 0, 0)$                   |
-| vec3f  | gridSpacing             | size of the grid cells in world-space, default $(1, 1, 1)$               |
-| bool   | gradientShadingEnabled  | volume is rendered with surface shading according to normalized gradient |
-| bool   | preIntegration          | enable using pre-integration for transferFunction lookups                |
-| bool   | singleShade             | shade only at the point of maximum intensity                             |
-| bool   | adaptiveSampling        | adapt ray step size based on opacity                                     |
-| float  | adaptiveScalar          | modifier for adaptive step size                                          |
-| float  | adaptiveMaxSamplingRate | maximum sampling rate for adaptive sampling                              |
-| float  | samplingRate            | sampling rate of the volume. This is the minumum step size for adaptive. |
-| vec3f  | specular                | specular component for shading                                           |
-| vec3f  | volumeClippingBoxLower  | clip the volume values in object coordinates                             |
-| vec3f  | volumeClippingBoxUpper  | clip the volume values in object coordinates                             |
+| Type   | Name                    |      Default| Description                                                                       |
+|:-------|:------------------------|------------:|:----------------------------------------------------------------------------------|
+| vec3i  | dimensions              |             | number of voxels in each dimension $(x, y, z)$                                    |
+| string | voxelType               |             | data type of each voxel, currently supported are:                                 |
+|        |                         |             | "uchar" (8 bit unsigned integer)                                                  |
+|        |                         |             | "short" (16 bit signed integer)                                                   |
+|        |                         |             | "ushort" (16 bit unsigned integer)                                                |
+|        |                         |             | "float" (32 bit single precision floating point)                                  |
+|        |                         |             | "double" (64 bit double precision floating point)                                 |
+| vec2f  | voxelRange              |             | minimum and maximum of the scalar values                                          |
+| vec3f  | gridOrigin              |  $(0, 0, 0)$| origin of the grid in world-space                                                 |
+| vec3f  | gridSpacing             |  $(1, 1, 1)$| size of the grid cells in world-space                                             |
+| bool   | gradientShadingEnabled  |        false| volume is rendered with surface shading wrt. to normalized gradient               |
+| bool   | preIntegration          |        false| use pre-integration for [transfer function](#transfer-function) lookups           |
+| bool   | singleShade             |         true| shade only at the point of maximum intensity                                      |
+| bool   | adaptiveSampling        |         true| adapt ray step size based on opacity                                              |
+| float  | adaptiveScalar          |           15| modifier for adaptive step size                                                   |
+| float  | adaptiveMaxSamplingRate |            2| maximum sampling rate for adaptive sampling                                       |
+| float  | samplingRate            |        0.125| sampling rate of the volume (this is the minimum step size for adaptive sampling) |
+| vec3f  | specular                |     gray 0.3| specular color for shading                                                        |
+| vec3f  | volumeClippingBoxLower  |     disabled| lower coordinate (in object-space) to clip the volume values                      |
+| vec3f  | volumeClippingBoxUpper  |     disabled| upper coordinate (in object-space) to clip the volume values                      |
 
 : Parameters to configure a structured volume.
 
@@ -650,13 +654,13 @@ A traditional triangle mesh (indexed face set) geometry is created by
 calling `ospNewGeometry` with type string "`triangles`". Once created, a
 triangle mesh recognizes the following parameters:
 
-| Type                 | Name            | Description                                              |
-|:---------------------|:----------------|:---------------------------------------------------------|
-| vec3f(a)\[\]         | vertex          | [data](#data) array of vertex positions                  |
-| vec3f(a)\[\]         | vertex.normal   | [data](#data) array of vertex normals                    |
-| vec4f\[\]/vec3fa\[\] | vertex.color    | [data](#data) array of vertex colors (RGBA/RGB)          |
-| vec2f\[\]            | vertex.texcoord | [data](#data) array of vertex texture coordinates        |
-| vec3i(a)\[\]         | index           | [data](#data) array of triangle indices (into vertex.\*) |
+| Type                   | Name            | Description                                              |
+|:-----------------------|:----------------|:---------------------------------------------------------|
+| vec3f(a)\[\]           | vertex          | [data](#data) array of vertex positions                  |
+| vec3f(a)\[\]           | vertex.normal   | [data](#data) array of vertex normals                    |
+| vec4f\[\] / vec3fa\[\] | vertex.color    | [data](#data) array of vertex colors (RGBA/RGB)          |
+| vec2f\[\]              | vertex.texcoord | [data](#data) array of vertex texture coordinates        |
+| vec3i(a)\[\]           | index           | [data](#data) array of triangle indices (into vertex.\*) |
 
 : Parameters defining a triangle mesh geometry.
 
@@ -954,21 +958,15 @@ special parameters:
 <td align="left">bool</td>
 <td align="left">oneSidedLighting</td>
 <td align="right">true</td>
-<td align="left">if true back-facing surfaces (wrt. light) receive no illumination</td>
+<td align="left">if true back-facing surfaces (wrt. light source) receive no illumination</td>
 </tr>
 <tr class="even">
-<td align="left">vec3f</td>
+<td align="left">float / vec3f / vec4f</td>
 <td align="left">bgColor</td>
-<td align="right">white</td>
-<td align="left">background color (RGB)</td>
+<td align="right">black, transparent</td>
+<td align="left">background color and alpha (RGBA)</td>
 </tr>
 <tr class="odd">
-<td align="left">bool</td>
-<td align="left">backgroundEnabled</td>
-<td align="right">true</td>
-<td align="left">whether to color the background with <code>bgColor</code></td>
-</tr>
-<tr class="even">
 <td align="left">OSPTexture2D</td>
 <td align="left">maxDepthTexture</td>
 <td align="right">NULL</td>
@@ -983,6 +981,13 @@ Note that the intensity (and color) of AO is controlled via an [ambient
 light](#ambient-light). If `aoSamples` is zero (the default) then
 ambient lights cause ambient illumination (without occlusion).
 
+Per default the background of the rendered image will be transparent
+black, i.e. the alpha channel holds the opacity of the rendered objects.
+This facilitates transparency-aware blending of the image with an
+arbitraty background image by the application. The parameter `bgColor`
+can be used to already blend with a constant background color (and
+alpha) during rendering.
+
 The SciVis renderer supports depth composition with images of other
 renderers, for example to incorporate help geometries of a 3D UI that
 were rendered with OpenGL. The screen-sized [texture](#texture)
@@ -991,7 +996,7 @@ were rendered with OpenGL. The screen-sized [texture](#texture)
 distance of primary rays, thus objects of other renderers can hide
 objects rendered by OSPRay.
 
-### Path tracer
+### Path Tracer
 
 The path tracer supports soft shadows, indirect illumination and
 realistic materials. In addition to the [general parameters](#renderer)
@@ -1078,11 +1083,11 @@ The call returns `NULL` if that type of camera is not known by the
 renderer, or else an `OSPLight` handle to the created light source. All
 light sources[^2] accept the following parameters:
 
-| Type     | Name      | Default | Description                            |
-|:---------|:----------|:--------|:---------------------------------------|
-| vec3f(a) | color     | white   | color of the light                     |
-| float    | intensity | 1       | intensity of the light (a factor)      |
-| bool     | isVisible | true    | whether the light can be directly seen |
+| Type     | Name      |  Default| Description                            |
+|:---------|:----------|--------:|:---------------------------------------|
+| vec3f(a) | color     |    white| color of the light                     |
+| float    | intensity |        1| intensity of the light (a factor)      |
+| bool     | isVisible |     true| whether the light can be directly seen |
 
 : Parameters accepted by the all lights.
 
@@ -1724,6 +1729,39 @@ frames in the second image `accumulatedFrames.png`.
 ![After accumulating ten
 frames.](https://ospray.github.io/images/tutorial_accumulatedframe.png)
 
+Example Viewer
+--------------
+
+The OSPRay Example Viewer uses a built-in ImGUI library with minimal
+dependencies. The viewer uses the OSPRay scenegraph interface, which the
+GUI displays and manipulates. Run as `ospExampleViewerSg teapot.obj`,
+for example.
+
+<img src="https://ospray.github.io/images/exampleViewer.jpg" alt="Screenshot of ospExampleViewerSg." style="width:80.0%" />
+
+This also functions as an OSPRay state debugger -- invalid values will
+display in red up the hierarchy and shouldn't break the viewer until
+corrected. You can also add new nodes where appropriate. For instance,
+when "lights" is expanded, right click on "lights" and type in a light
+type, such as "point": a [point light](#point-light-sphere-light) is
+automatically added. Similarly, right click on "world" and create an
+"Importer". Change the filename to an appropriate file, and the Importer
+will propagate with the resulting state.
+
+All commandline options with the exception of a few[^7] function
+directly on the scenegraph itself. For instance, to change the renderer
+to the [path tracer](#path-tracer) from the commandline run
+
+    ospExampleViewer ospray:renderer:rendererType=pt
+
+where "`:`" denotes walking the scenegraph nodes. This can be shortened
+to
+
+    ospExampleViewer rendererType=pt
+
+as any node specified before the "`=`" sign will walk down the tree
+until it finds the first instance of that name.
+
 Qt Viewer
 ---------
 
@@ -1750,8 +1788,7 @@ at the [OSPRay Demos and Examples](http://www.ospray.org/demos.html)
 page.
 
 [^1]: For example, if OSPRay is in `~/Projects/ospray`, ISPC will also
-    be searched in `~/Projects/ispc-v1.9.1-linux` and
-    `~/Projects/ispc-v1.9.0-linux`
+    be searched in `~/Projects/ispc-v1.9.1-linux`
 
 [^2]: The [HDRI Light](#hdri-light) is an exception, it knows about
     `intensity`, but not about `color`.
@@ -1764,3 +1801,5 @@ page.
     framebuffer are always updated.
 
 [^6]: A C99 version is available at `apps/ospTutorial.c`.
+
+[^7]: such as `--nogui`

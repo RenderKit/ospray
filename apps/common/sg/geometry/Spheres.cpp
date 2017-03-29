@@ -17,23 +17,47 @@
 #undef NDEBUG
 
 #include "sg/geometry/Spheres.h"
-#include "sg/common/Integrator.h"
+#include "sg/common/Data.h"
+#include "sg/common/World.h"
 // xml parser
 #include "common/xml/XML.h"
 
 namespace ospray {
   namespace sg {
 
-    Spheres::Sphere::Sphere(vec3f position, float radius, uint32_t typeID)
+    Spheres::Sphere::Sphere(const vec3f &position, 
+                            float radius, 
+                            uint32_t typeID)
       : position(position), 
         radius(radius), 
         typeID(typeID) 
-    {}
+    {
+    }
+
+    box3f Spheres::Sphere::bounds() const
+    {
+      return {position - vec3f(radius), position + vec3f(radius)};
+    }
+
+    Spheres::Spheres()
+      : Geometry("spheres")
+    {
+      createChildNode("sphereData");
+      createChildNode("colorData");
+      auto &materialNode = createChildNode("material", "Material");
+      materialNode["Kd"].setValue(vec3f(1,1,1));
+      materialNode["Ks"].setValue(vec3f(0,0,0));
+      materialNode["Ns"].setValue(0.f);
+    }
 
     box3f Spheres::bounds() const
     {
+      auto sphereData = child("sphereData").shared_from_this();
+      std::shared_ptr<DataVectorT<Sphere,OSP_RAW>> spheres 
+        = std::dynamic_pointer_cast<DataVectorT<Sphere,OSP_RAW>>(sphereData);
+      
       box3f bounds = empty;
-      for (auto &s : sphere)
+      for (auto &s : spheres->v)
         bounds.extend(s.bounds());
       return bounds;
     }
@@ -57,79 +81,51 @@ namespace ospray {
     void Spheres::setFromXML(const xml::Node &node,
                              const unsigned char *binBasePtr)
     {
-      size_t num = std::stoll(node.getProp("num"));
-      size_t ofs = std::stoll(node.getProp("ofs","-1"));
-      float  rad = atof(node.getProp("radius").c_str());
-
-      Spheres::Sphere s(vec3f(0.f),rad,0);
-      if (ofs == (size_t)-1) {
-        std::cout << "#osp:qtv: 'Spheres' ofs is '-1', "
-                  << "generating set of random spheres..." << std::endl;
-        for (uint32_t i = 0; i < num; i++) {
-          s.position.x = drand48();
-          s.position.y = drand48();
-          s.position.z = drand48();
-          s.radius = rad;
-          sphere.push_back(s);
-        }
-      } else {
-        const vec3f *in = (const vec3f*)(binBasePtr+ofs);
-        for (uint32_t i = 0; i < num; i++) {
-          memcpy(&s,&in[i],sizeof(*in));
-          sphere.push_back(s);
-        }
-      }
+      throw std::runtime_error("setFromXML no longer makes sense with the"
+                               " new scene graph design");
     }
 
-    void Spheres::render(RenderContext &ctx)
+    void Spheres::postCommit(RenderContext &ctx)
     {
       ospGeometry = ospNewGeometry("spheres");
 
-      OSPData data = ospNewData(sphere.size()*5,OSP_FLOAT,
-                                &sphere[0],OSP_DATA_SHARED_BUFFER);
-      ospSetData(ospGeometry,"spheres",data);
+      auto sphereDataNode = child("sphereData").shared_from_this();
+      std::shared_ptr<DataVectorT<Sphere,OSP_RAW>> sphereData
+        = std::dynamic_pointer_cast<DataVectorT<Sphere,OSP_RAW>>(sphereDataNode);
+      OSPData ospSphereData = ospNewData(sphereData->v.size()*5,OSP_FLOAT,
+                                         sphereData->v.data(),
+                                         OSP_DATA_SHARED_BUFFER);
+      ospCommit(ospSphereData);
+
+      ospSetData(ospGeometry,"spheres",ospSphereData);
 
       ospSet1i(ospGeometry,"bytes_per_sphere",sizeof(Spheres::Sphere));
       ospSet1i(ospGeometry,"center_offset",     0*sizeof(float));
       ospSet1i(ospGeometry,"offset_radius",     3*sizeof(float));
       ospSet1i(ospGeometry,"offset_materialID", 4*sizeof(float));
 
-      auto mat = ospNewMaterial(ctx.integrator->handle(), "default");
-      if (mat) {
-        vec3f kd = vec3f(.7f);
-        ospSet3fv(mat,"kd",&kd.x);
-        ospCommit(mat);
+      auto colorDataNode = child("colorData").shared_from_this();
+      std::shared_ptr<DataVectorT<vec4f,OSP_RAW>> colorData
+        = std::dynamic_pointer_cast<DataVectorT<vec4f,OSP_RAW>>(colorDataNode);
+
+      if (colorData) {
+        OSPData ospColorData = ospNewData(colorData->v.size()*5,OSP_FLOAT,
+                                          colorData->v.data(),
+                                          OSP_DATA_SHARED_BUFFER);
+        ospCommit(ospColorData);
+
+        ospSetData(ospGeometry,"color",ospColorData);
+        ospSet1i(ospGeometry,"color_offset",     0*sizeof(float));
+        ospSet1i(ospGeometry,"color_stride",     4*sizeof(float));
       }
-      ospSetMaterial(ospGeometry,mat);
+      
+      ospSetMaterial(ospGeometry,
+                     (OSPMaterial)child("material").valueAs<OSPObject>());
       ospCommit(ospGeometry);
       
-      ospAddGeometry(ctx.world->ospModel,ospGeometry);
-      ospCommit(data);
+      ospAddGeometry(ctx.world->ospModel, ospGeometry);
     }
 
-    struct RandomSpheres : public Spheres
-    {
-      //! \brief Initialize this node's value from given XML node 
-      void setFromXML(const xml::Node *const node, 
-                      const unsigned char *binBasePtr)
-      {
-        vec3i dimensions = toVec3i(node->getProp("dimensions").c_str());
-        int   num        = toInt(node->getProp("num").c_str());
-        
-        float max_r = atof(node->getProp("radius").c_str());
-        float f = 0.3f; // overhang around the dimensions
-        for (int i = 0; i < num; i++) {
-          vec3f pos; 
-          pos.x = (-f+(1+2*f)*drand48())*dimensions.x;
-          pos.y = (-f+(1+2*f)*drand48())*dimensions.y;
-          pos.z = (-f+(1+2*f)*drand48())*dimensions.z;
-          float r = max_r*(0.5f + 0.5f*drand48());
-          sphere.push_back(Sphere(pos,r));
-        }
-      }
-    };
-
-    OSP_REGISTER_SG_NODE(RandomSpheres);
     OSP_REGISTER_SG_NODE(Spheres);
-  }
-}
+  }// ::ospray::sg
+}// ::ospray

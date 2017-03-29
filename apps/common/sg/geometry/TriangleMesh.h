@@ -28,20 +28,15 @@ namespace ospray {
         and vertex color in separate arrays */
     struct TriangleMesh : public sg::Geometry
     {
-      TriangleMesh() : Geometry("trianglemesh") {}
-
-      virtual void init() override;
+      TriangleMesh();
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual std::string toString() const override;
+      std::string toString() const override;
 
       //! return bounding box of all primitives
-      virtual box3f bounds() const override;
+      box3f bounds() const override;
 
-      virtual void postCommit(RenderContext &ctx) override;
-
-      /*! 'render' the nodes */
-      virtual void render(RenderContext &ctx) override;
+      void postCommit(RenderContext &ctx) override;
 
       //! \brief Initialize this node's value from given XML node
       /*!
@@ -59,8 +54,10 @@ namespace ospray {
         existant) that contains additional binary data that the xml
         node fields may point into
       */
-      virtual void setFromXML(const xml::Node &node,
-                              const unsigned char *binBasePtr) override;
+      void setFromXML(const xml::Node &node,
+                      const unsigned char *binBasePtr) override;
+
+      // Data members //
 
       OSPGeometry ospGeometry {nullptr};
       OSPGeometry ospGeometryInstance {nullptr};
@@ -89,7 +86,6 @@ namespace ospray {
     /*! A special triangle mesh that allows per-triangle materials */
     struct PTMTriangleMesh : public sg::Geometry
     {
-
       /*! triangle with per-triangle material ID */
       struct Triangle
       {
@@ -97,15 +93,11 @@ namespace ospray {
       };
 
       //! constructor
-      PTMTriangleMesh() : Geometry("trianglemesh"), ospGeometry(nullptr) {}
+      PTMTriangleMesh();
 
-      // return bounding box of all primitives
-      virtual box3f bounds() const override;
+      box3f bounds() const override;
 
-      /*! 'render' the nodes */
-      virtual void render(RenderContext &ctx) override;
-
-      OSPGeometry ospGeometry;
+      // Data members //
 
       /*! \brief "material list" for this trianglemesh
 
@@ -114,7 +106,8 @@ namespace ospray {
         Geometry::material no matter what Triangle::materialID is set
        */
       std::vector<std::shared_ptr<sg::Material>> materialList;
-      std::vector<uint32_t> materialIDs;
+      std::vector<uint32_t> materialIDs;      
+      OSPGeometry ospGeometry {nullptr};
 
       // to allow memory-mapping triangle arrays (or in general,
       // sharing data with an application) we use data arrays, not std::vector's

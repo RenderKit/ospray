@@ -21,14 +21,14 @@ namespace ospray {
   namespace sg {
 
     /*! \brief returns a std::string with the c++ name of this class */
+    Transform::Transform(const AffineSpace3f &xfm,
+                         const std::shared_ptr<Node> &node)
+      : Node(), xfm(xfm), node(node)
+    {}
+
     std::string Transform::toString() const
-    { return "ospray::sg::Transform"; }
-    
-    /*! \brief 'render' the object for the first time */
-    void Transform::render(RenderContext &ctx)
     {
-      RenderContext newCtx(ctx,xfm);
-      if (node) node->render(newCtx);
+      return "ospray::sg::Transform";
     }
     
     /*! \brief return bounding box in world coordinates.

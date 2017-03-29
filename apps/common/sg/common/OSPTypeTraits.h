@@ -16,43 +16,33 @@
 
 #pragma once
 
-// std
-#include <atomic>
-#include <thread>
-#include <vector>
-
-// ospcommon
-#include <ospcommon/box.h>
-
-// ospray::cpp
-#include "ospray/ospray_cpp/Renderer.h"
-
-// ospImGui util
-#include "FPSCounter.h"
-#include "transactional_value.h"
-
-#include "sg/common/Node.h"
-#include "async_render_engine.h"
+#include <type_traits>
 
 namespace ospray {
   namespace sg {
+    namespace traits {
 
-    class OSPRAY_IMGUI_UTIL_INTERFACE async_render_engine_sg
-        : public async_render_engine
-    {
-    public:
+      template <typename T, typename Arg>
+      std::true_type operator==(const T&, const Arg&);
 
-      async_render_engine_sg(sg::NodeH sgRenderer);
-      ~async_render_engine_sg() = default;
+      template <typename T, typename Arg = T>
+      struct HasOperatorEqualsT
+      {
+        enum
+        {
+          value = !std::is_same<decltype(*(T*)(0) == *(Arg*)(0)),
+                                std::true_type>::value
+        };
+      };
 
-    private:
+      template <typename T, typename TYPE>
+      using HasOperatorEquals =
+        typename std::enable_if<HasOperatorEqualsT<T>::value, TYPE>::type;
 
-      void run() override;
-      void validate() override;
+      template <typename T, typename TYPE>
+      using NoOperatorEquals =
+        typename std::enable_if<!HasOperatorEqualsT<T>::value, TYPE>::type;
 
-      sg::NodeH scenegraph;
-      sg::TimeStamp lastRTime;
-    };
-
+    } // ::ospray::sg::traits
   } // ::ospray::sg
 } // ::ospray

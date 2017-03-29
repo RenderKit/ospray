@@ -36,16 +36,19 @@ namespace ospray {
 
   enum class ExecState {STOPPED, RUNNING, INVALID};
 
-  class OSPRAY_IMGUI_UTIL_INTERFACE async_render_engine
+  class OSPRAY_IMGUI_UTIL_INTERFACE AsyncRenderEngine
   {
   public:
 
-    async_render_engine() = default;
-    ~async_render_engine();
+    AsyncRenderEngine() = default;
+    ~AsyncRenderEngine();
 
     // Properties //
 
-    void setRenderer(cpp::Renderer renderer);
+    void setRenderer(cpp::Renderer renderer,
+                     cpp::Renderer rendererDW,
+                     cpp::FrameBuffer frameBufferDW);
+
     void setFbSize(const ospcommon::vec2i &size);
 
     // Method to say that an objects needs to be comitted before next frame //
@@ -84,8 +87,10 @@ namespace ospray {
     std::atomic<ExecState> state {ExecState::INVALID};
 
     cpp::FrameBuffer frameBuffer;
+    cpp::FrameBuffer frameBufferDW;
 
     transactional_value<cpp::Renderer>    renderer;
+    transactional_value<cpp::Renderer>    rendererDW;
     transactional_value<ospcommon::vec2i> fbSize;
 
     int nPixels {0};

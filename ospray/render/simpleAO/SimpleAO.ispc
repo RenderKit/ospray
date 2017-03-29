@@ -90,10 +90,9 @@ inline void shade_ao(uniform SimpleAO *uniform self,
                      const uniform float rot_x,
                      const uniform float rot_y)
 {
-  if (ray.geomID < 0) {
-    color = self->super.backgroundEnabled ? self->super.bgColor :
-                                            make_vec3f(0.f);
-    alpha = self->super.backgroundEnabled ? 1.f : 0.f;
+  if (noHit(ray)) {
+    color = make_vec3f(self->super.bgColor);
+    alpha = self->super.bgColor.w;
     return;
   }
 
@@ -139,7 +138,7 @@ inline void shade_ao(uniform SimpleAO *uniform self,
       hits++;
   }
   float diffuse = absf(dot(N,ray.dir));
-  color = superColor * make_vec3f(diffuse * (1.0f - (float)hits/sampleCnt));
+  color = superColor * make_vec3f(diffuse * (1.0f - hits/(float)sampleCnt));
   alpha = 1.f;
   return;
 }

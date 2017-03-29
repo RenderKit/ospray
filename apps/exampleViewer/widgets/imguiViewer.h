@@ -26,7 +26,7 @@
 #include <ospray/ospray_cpp/Model.h>
 #include <ospray/ospray_cpp/Renderer.h>
 
-#include "../common/util/async_render_engine.h"
+#include "../common/util/AsyncRenderEngine.h"
 
 #include "imgui3D.h"
 #include "Imgui3dExport.h"
@@ -47,9 +47,18 @@ namespace ospray {
                 const std::deque<cpp::Model> &model,
                 cpp::Renderer renderer,
                 cpp::Camera camera);
+
+    ImGuiViewer(const std::deque<ospcommon::box3f> &worldBounds,
+                const std::deque<cpp::Model> &model,
+                cpp::Renderer renderer,
+                cpp::Renderer rendererDW,
+                cpp::FrameBuffer frameBufferDW,
+                cpp::Camera camera);
     ~ImGuiViewer();
 
-    void setRenderer(OSPRenderer renderer);
+    void setRenderer(OSPRenderer renderer,
+                     OSPRenderer rendererDW,
+                     OSPFrameBuffer frameBufferDW);
     void setScale(const ospcommon::vec3f& v )  {scale = v;}
     void setTranslation(const ospcommon::vec3f& v)  {translate = v;}
     void setLockFirstAnimationFrame(bool st) {lockFirstAnimationFrame = st;}
@@ -78,6 +87,8 @@ namespace ospray {
     std::deque<ospcommon::box3f> worldBounds;
     cpp::Camera   camera;
     cpp::Renderer renderer;
+    cpp::Renderer rendererDW;
+    cpp::FrameBuffer frameBufferDW;
 
     double lastFrameFPS;
 
@@ -95,7 +106,7 @@ namespace ospray {
 
     float aoDistance {1e20f};
 
-    async_render_engine renderEngine;
+    AsyncRenderEngine renderEngine;
     std::vector<uint32_t> pixelBuffer;
   };
 

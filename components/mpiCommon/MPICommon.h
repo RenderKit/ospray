@@ -65,6 +65,7 @@ namespace ospray {
       but for now tihs is cleaner here thatn in the MPI device
     */
     OSPRAY_MPI_INTERFACE extern bool logMPI;
+    OSPRAY_MPI_INTERFACE extern bool mpiIsThreaded;
 
     /*! helper functions that lock resp unlock the mpi serializer
       mutex the 'whohasthelock' variable is only for debugging - it

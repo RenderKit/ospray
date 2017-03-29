@@ -33,6 +33,7 @@
 #include "fb/LocalFB.h"
 #include "mpi/fb/DistributedFrameBuffer.h"
 #include "common/BufferedDataStreaming.h"
+#include "ospcommon/Socket.h"
 
 // std
 #ifndef _WIN32
@@ -247,8 +248,7 @@ namespace ospray {
       filename passed to this function; or will print it to stdout if this is
       nullptr
     */
-    void createMPI_ListenForWorkers(int *ac, const char **av,
-                                    const char *fileNameToStorePortIn)
+    void createMPI_ListenForWorkers(int *ac, const char **av)
     {
       mpi::init(ac,av);
 
@@ -266,35 +266,38 @@ namespace ospray {
       app.makeIntraComm();
 
       char appPortName[MPI_MAX_PORT_NAME];
-      if (world.rank == 0) {
-        rc = MPI_Open_port(MPI_INFO_NULL, appPortName);
-        Assert(rc == MPI_SUCCESS);
+      if (world.rank != 0) 
+        throw std::runtime_error("--osp:mpi-listen only makes sense with a single rank  ...");
 
-        // fix port name: replace all '$'s by '%'s to allow using it on the
-        //                cmdline...
-        char *fixedPortName = strdup(appPortName);
-        for (char *s = fixedPortName; *s; ++s)
-          if (*s == '$') *s = '%';
-
-        if (logMPI) {
-          cout << "#a: ospray app started, waiting for service connect" << endl;
-          cout << "#a: at port " << fixedPortName << endl;
-        }
-
-        if (fileNameToStorePortIn) {
-          FILE *file = fopen(fileNameToStorePortIn,"w");
-          Assert2(file,"could not open file to store listen port in");
-          fprintf(file,"%s",fixedPortName);
-          fclose(file);
-          if (logMPI) {
-            cout << "#a: (ospray port name store in file '"
-                 << fileNameToStorePortIn << "')" << endl;
-          }
-        }
-      }
+      rc = MPI_Open_port(MPI_INFO_NULL, appPortName);
+      Assert(rc == MPI_SUCCESS);
+      
+      socket_t mpiPortSocket = ospcommon::bind(3141);
+      socket_t clientSocket = ospcommon::listen(mpiPortSocket);
+      size_t len = strlen(appPortName);
+      ospcommon::write(clientSocket,&len,sizeof(len));
+      ospcommon::write(clientSocket,appPortName,len);
+      flush(clientSocket);
+      
       rc = MPI_Comm_accept(appPortName,MPI_INFO_NULL,0,app.comm,&worker.comm);
+      ospcommon::close(clientSocket);
+      ospcommon::close(mpiPortSocket);
       Assert(rc == MPI_SUCCESS);
       worker.makeInterComm();
+
+
+      mpi::Group mergedComm;
+      MPI_CALL(Intercomm_merge(worker.comm,0,&mergedComm.comm));
+      mergedComm.makeIntraComm();
+      mpi::world.comm = mergedComm.comm;
+      mpi::world.makeIntraComm();
+
+      // create a new world that has everybody:
+      
+      mpi::async::CommLayer::WORLD->group = 
+        mpi::async::createGroup(mergedComm.comm,
+                                mpi::async::CommLayer::WORLD,
+                                290374);
 
       if (app.rank == 0) {
         cout << "======================================================="
@@ -303,18 +306,71 @@ namespace ospray {
         cout << "======================================================="
              << endl;
       }
-      MPI_Barrier(app.comm);
+      MPI_Barrier(mergedComm.comm);
+    }
 
-      if (app.rank == 1) {
-        cout << "WARNING: you're trying to run an mpi-parallel app with ospray;"
-             << endl
-             << " only the root rank is allowed to issue ospray calls" << endl;
+
+
+
+
+    void createMPI_connectToListener(int *ac, const char **av, const std::string &host)
+    {
+      MPI_Status status;
+      mpi::init(ac,av);
+      
+      if (logMPI && world.rank < 1) {
+        cout << "======================================================="
+             << endl;
+        cout << "initializing OSPRay MPI in 'connect to master' mode"
+             << endl;
         cout << "======================================================="
              << endl;
       }
+      int rc;
 
-      MPI_Barrier(app.comm);
+      worker.comm = world.comm;
+      worker.makeIntraComm();
+
+      char appPortName[MPI_MAX_PORT_NAME];
+      if (worker.rank == 0) {
+        ospcommon::socket_t masterSocket = ospcommon::connect(host.c_str(),3141);
+        
+        size_t len;
+        ospcommon::read(masterSocket,&len,sizeof(len));
+        ospcommon::read(masterSocket,appPortName,len);
+        ospcommon::close(masterSocket);
+      }
+
+      rc = MPI_Comm_connect(appPortName,MPI_INFO_NULL,0,worker.comm,&app.comm);
+
+      Assert(rc == MPI_SUCCESS);
+      app.makeInterComm();
+
+
+      mpi::Group mergedComm;
+      MPI_CALL(Intercomm_merge(app.comm,1,&mergedComm.comm));
+      mergedComm.makeIntraComm();
+      mpi::world.comm = mergedComm.comm;
+      mpi::world.makeIntraComm();
+
+
+      // create a new world that has everybody:
+      
+      mpi::async::CommLayer::WORLD->group = 
+        mpi::async::createGroup(mergedComm.comm,
+                                mpi::async::CommLayer::WORLD,
+                                290374);
+      MPI_Barrier(mergedComm.comm);
+
+
+      // MPI_Barrier(worker.comm);
+
+      std::cout << "starting worker..." << std::endl;
+        mpi::runWorker();
     }
+
+
+
 
     /*! in this mode ("separate worker group" mode)
       - the user may or may not have launched MPI explicitly for his app
@@ -458,15 +514,18 @@ namespace ospray {
         createMPI_LaunchWorkerGroup(&_ac,_av,launchCommand.c_str());
       }
       else if (mode == "mpi-listen") {
-        std::string fileNameToStorePortIn =
-            getParamString("fileNameToStorePortIn", "");
+        createMPI_ListenForWorkers(&_ac,_av);
+      }
+      else if (mode == "mpi-connect") {
+        std::string portName =
+            getParamString("portName", "");
 
-        if (fileNameToStorePortIn.empty()) {
-          throw std::runtime_error("You must provide the fileNameToStorePortIn "
-                                   "parameter in mpi-listen mode!");
+        if (portName.empty()) {
+          throw std::runtime_error("You must provide the port name string "
+                                   "where the master is listening at!");
         }
 
-        createMPI_ListenForWorkers(&_ac,_av,fileNameToStorePortIn.c_str());
+        createMPI_connectToListener(&_ac,_av,portName);
       }
       else {
         throw std::runtime_error("Invalid MPI mode!");
@@ -487,7 +546,7 @@ namespace ospray {
       mpiFabric   = make_unique<MPIBcastFabric>(mpi::worker);
       readStream  = make_unique<BufferedFabric::ReadStream>(*mpiFabric);
       writeStream = make_unique<BufferedFabric::WriteStream>(*mpiFabric);
-      
+
       TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Master>();
     }
 

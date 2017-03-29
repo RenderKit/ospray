@@ -16,47 +16,45 @@
 
 #pragma once
 
+// std
+#include <atomic>
+#include <thread>
+#include <vector>
+
+// ospcommon
+#include <ospcommon/box.h>
+
+// ospray::cpp
+#include "ospray/ospray_cpp/Renderer.h"
+
+// ospImGui util
+#include "FPSCounter.h"
+#include "transactional_value.h"
+
 #include "sg/common/Node.h"
-#include "sg/common/Serialization.h"
-#include "sg/common/World.h"
+#include "AsyncRenderEngine.h"
 
 namespace ospray {
   namespace sg {
 
-    struct Camera;
-    struct World;
-
-    /*! a renderer node - the generic renderer node */
-    struct OSPSG_INTERFACE Integrator : public sg::Node
+    class OSPRAY_IMGUI_UTIL_INTERFACE AsyncRenderEngineSg
+        : public AsyncRenderEngine
     {
-      /*! constructor */
-      Integrator(const std::string &type)
-        : type(type), ospRenderer(nullptr), spp(1) {}
-      
-      /*! \brief returns a std::string with the c++ name of this class */
-      virtual std::string toString() const override;
-      
-      /*! update the current node's fields to ospray - the node must
-        already have been 'render'ed once before this can be called */
-      virtual void commit() override;
-      
-      void setSPP(size_t spp);
-
-      OSPRenderer handle() const { return ospRenderer; }
-
-      SG_NODE_DECLARE_MEMBER(std::shared_ptr<sg::Camera>, camera, Camera);
-      SG_NODE_DECLARE_MEMBER(std::shared_ptr<sg::World>, world, World);
-
-      /*! renderer type, i.e., 'ao', 'obj', 'pathtracer', ... */
-      const std::string type; 
-
     public:
 
-      OSPRenderer ospRenderer;
-      size_t spp;
+      AsyncRenderEngineSg(const std::shared_ptr<Node> &sgRenderer,
+                          const std::shared_ptr<Node> &sgRendererDW);
+      ~AsyncRenderEngineSg() = default;
+
+    private:
+
+      virtual void run()      override;
+      virtual void validate() override;
+
+      const std::shared_ptr<Node> scenegraph;
+      const std::shared_ptr<Node> scenegraphDW;
+      sg::TimeStamp  lastRTime;
     };
-    
+
   } // ::ospray::sg
 } // ::ospray
-
-

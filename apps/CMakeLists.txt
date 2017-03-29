@@ -21,6 +21,7 @@ INCLUDE_DIRECTORIES(
   ${CMAKE_SOURCE_DIR}
   ${CMAKE_CURRENT_LIST_DIR}
   common
+  common/boost.any
 )
 
 # common utilities
@@ -59,7 +60,7 @@ IF(NOT (APPLE AND OSPRAY_COMPILER_ICC))
 ENDIF()
 
 
-OPTION(OSPRAY_APPS_EXAMPLEVIEWER "Build 'Viewer' example app" OFF)
+OPTION(OSPRAY_APPS_EXAMPLEVIEWER "Build 'Viewer' example app" ON)
 IF (OSPRAY_APPS_EXAMPLEVIEWER)
   ADD_SUBDIRECTORY(exampleViewer)
 ENDIF()

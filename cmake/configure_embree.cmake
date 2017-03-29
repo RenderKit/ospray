@@ -37,20 +37,8 @@ OSPRAY_CHECK_EMBREE_FEATURE(GEOMETRY_USER "user geometries")
 OSPRAY_CHECK_EMBREE_FEATURE(RAY_PACKETS "ray packets")
 OSPRAY_CHECK_EMBREE_FEATURE(BACKFACE_CULLING "backface culling" OFF)
 
-# also remove Embree's TBB libs if OSPRay uses TBB to avoid problems with
-# cyclic rpath
-IF(NOT DEFINED EMBREE_LIBRARIES OR OSPRAY_TASKING_TBB)
-  SET(EMBREE_LIBRARIES ${EMBREE_LIBRARY})
-ELSE()
-  # check if we need to add TBB to EMBREE_LIBRARIES
-  IF((EMBREE_TASKING_TBB OR (${EMBREE_TASKING_SYSTEM} STREQUAL "TBB"))
-      AND NOT EMBREE_USE_PACKAGED_TBB)
-    OSPRAY_WARN_ONCE(EMBREE_FORCE_TBB
-      "You *MUST* have TBB installed based on the Embree we found!")
-    FIND_PACKAGE(TBB REQUIRED)
-    SET(EMBREE_LIBRARIES ${EMBREE_LIBRARIES} ${TBB_LIBRARIES})
-  ENDIF()
-ENDIF()
+# remove Embree's TBB libs (not needed, cyclic rpath)
+SET(EMBREE_LIBRARIES ${EMBREE_LIBRARY})
 
 IF (EMBREE_MAX_ISA STREQUAL "NONE")
   SET(EMBREE_ISA_SUPPORTS_SSE4      ${EMBREE_ISA_SSE42})
@@ -89,9 +77,13 @@ ELSE()
   ENDIF()
 ENDIF()
 
-IF(NOT EMBREE_ISA_SUPPORTS_SSE4)
+IF (NOT (EMBREE_ISA_SUPPORTS_SSE4
+ OR EMBREE_ISA_SUPPORTS_AVX
+ OR EMBREE_ISA_SUPPORTS_AVX2
+ OR EMBREE_ISA_SUPPORTS_AVX512KNL
+ OR EMBREE_ISA_SUPPORTS_AVX512SKX))
     MESSAGE(FATAL_ERROR
-            "Your Embree build needs to support at least SSE4.1!")
+            "Your Embree build needs to support at least one ISA >= SSE4.1!")
 ENDIF()
 
 # Configure OSPRay ISA last after we've detected what we got w/ Embree

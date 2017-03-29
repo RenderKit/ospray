@@ -23,24 +23,47 @@
 namespace ospray {
   namespace sg {
 
+    /*! helper class that parses a "points:///tmp/myfile.xyz:format=xyz:whatEver:radius=.3"
+      file format url specifier into, in this example,
+
+      formatType="points"
+      fileName="/tmp/myFile.xyz"
+      args={ {"format","xyz"}, {"whatEver",""}, {"radius",".3"} }
+    */
+    struct FormatURL 
+    {
+      /*! do the actual parsing, and return a formatURL */
+      FormatURL(const std::string &input);
+
+      /*! returns whether the given argument was specified in the format url */
+      bool hasArg(const std::string &name) const;
+
+      /*! return value of parameter with given name; returns "" if
+          parameter wasn't supplied */
+      std::string operator[](const std::string &name) const;
+
+      /*! return value of parameter with given name; returns "" if
+          parameter wasn't supplied */
+      std::string operator[](const char *name) const;
+
+      std::string formatType;
+      std::string fileName;
+      std::vector<std::pair<std::string,std::string>> args;
+    };
+
+
     struct ImportState
     {
-      std::shared_ptr<sg::World> world;
-
       ImportState(std::shared_ptr<sg::World> world)
         : world(world)
       {}
+
+      std::shared_ptr<sg::World> world;
     };
 
     struct Importer : public sg::InstanceGroup
     {
-      Importer() = default;
-
-      virtual void init() override
-      {
-        InstanceGroup::init();
-        add(createNode("fileName", "string"));
-      }
+      Importer();
 
       virtual void setChildrenModified(TimeStamp t) override;
 

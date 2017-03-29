@@ -31,11 +31,11 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   common/Common.cpp
   common/Data.h
   common/FrameBuffer.cpp
-  common/Integrator.cpp
   common/Light.cpp
   common/Material.cpp
   common/Node.cpp
-  common/OSPVariant.h
+  common/OSPAny.h
+  common/OSPTypeTraits.h
   common/RenderContext.h
   common/Serialization.cpp
   common/TimeStamp.cpp
@@ -52,8 +52,9 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
 
   # scene graph importers
   importer/Importer.cpp
+  importer/importPoints.cpp
+# all these should be lower-case: they're functions, not classes
   importer/ImportOSP.cpp
-  importer/ImportOSG.cpp
   importer/ImportOBJ.cpp
   importer/ImportPLY.cpp
   importer/ImportRIVL.cpp
@@ -66,11 +67,9 @@ LINK
 
 ## Test apps ##
 
-OSPRAY_CREATE_TEST(test_OSPVariant
-  common/OSPVariant.h
-  common/test_OSPVariant.cpp
-LINK
-  ospray_common
+OSPRAY_CREATE_TEST(test_OSPAny
+  common/OSPAny.h
+  common/test_OSPAny.cpp
 )
 
-ADD_TEST(NAME OSPVariant COMMAND test_OSPVariant)
+ADD_TEST(NAME OSPAny COMMAND test_OSPAny)

@@ -19,7 +19,7 @@
 #include <atomic>
 #include <mutex>
 
-#include "../common/util/async_render_engine_sg.h"
+#include "../common/util/AsyncRenderEngineSg.h"
 
 #include "imgui3D.h"
 #include "Imgui3dExport.h"
@@ -38,7 +38,8 @@ namespace ospray {
   {
   public:
 
-    ImGuiViewerSg(sg::NodeH scenegraph);
+    ImGuiViewerSg(const std::shared_ptr<sg::Node> &scenegraph,
+                  const std::shared_ptr<sg::Node> &scenegraphDW);
     ~ImGuiViewerSg();
 
   protected:
@@ -54,7 +55,7 @@ namespace ospray {
     void display() override;
 
     void buildGui() override;
-    void buildGUINode(sg::NodeH node, int indent);
+    void buildGUINode(std::shared_ptr<sg::Node> node, int indent);
 
     // Data //
 
@@ -66,9 +67,10 @@ namespace ospray {
     ospcommon::vec2i windowSize;
     imgui3D::ImGui3DWidget::ViewPort originalView;
 
-    sg::NodeH scenegraph;
+    std::shared_ptr<sg::Node> scenegraph;
+    std::shared_ptr<sg::Node> scenegraphDW;
 
-    sg::async_render_engine_sg renderEngine;
+    sg::AsyncRenderEngineSg renderEngine;
     std::vector<uint32_t> pixelBuffer;
   };
 

@@ -22,31 +22,33 @@
 
 #include <string>
 
-class OSPRAY_COMMANDLINE_INTERFACE RendererParser : public CommandLineParser
-{
-public:
-  virtual ~RendererParser() = default;
-  virtual ospray::cpp::Renderer renderer() = 0;
-};
+namespace commandline {
+  class OSPRAY_COMMANDLINE_INTERFACE RendererParser : public CommandLineParser
+  {
+  public:
+    virtual ~RendererParser() = default;
+    virtual ospray::cpp::Renderer create() = 0;
+  };
 
-class OSPRAY_COMMANDLINE_INTERFACE DefaultRendererParser : public RendererParser
-{
-public:
-  DefaultRendererParser() = default;
-  bool parse(int ac, const char **&av) override;
-  ospray::cpp::Renderer renderer() override;
+  class OSPRAY_COMMANDLINE_INTERFACE DefaultRendererParser : public RendererParser
+  {
+  public:
+    DefaultRendererParser() = default;
+    bool parse(int ac, const char **&av) override;
+    ospray::cpp::Renderer create() override;
 
-protected:
+  protected:
 
-  std::string           rendererType;
-  ospray::cpp::Renderer parsedRenderer;
+    std::string           rendererType;
+    ospray::cpp::Renderer parsedRenderer;
 
-  int spp{1};
-  int maxDepth{5};
-  int shadows{1};
-  int aoSamples{1};
+    int spp{1};
+    int maxDepth{5};
+    int shadows{1};
+    int aoSamples{1};
 
-private:
+  private:
 
-  void finalize();
-};
+    void finalize();
+  };
+}

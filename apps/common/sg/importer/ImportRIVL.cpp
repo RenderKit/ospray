@@ -129,19 +129,19 @@ namespace ospray {
       char *s = strtok((char*)value, " \t\n\r");
       //TODO: UGLY! Find a better way.
       if (!paramType.compare("float")) {
-        mat->setParam(paramName,(float)atof(s));
+        mat->createChildWithValue(paramName,(float)atof(s));
       } else if (!paramType.compare("float2")) {
         float x = atof(s);
         s = NEXT_TOK;
         float y = atof(s);
-        mat->setParam(paramName,vec2f(x,y));
+        mat->createChildWithValue(paramName,vec2f(x,y));
       } else if (!paramType.compare("float3")) {
         float x = atof(s);
         s = NEXT_TOK;
         float y = atof(s);
         s = NEXT_TOK;
         float z = atof(s);
-        mat->setParam(paramName,vec3f(x,y,z));
+        mat->createChildWithValue(paramName,vec3f(x,y,z));
       } else if (!paramType.compare("float4")) {
         float x = atof(s);
         s = NEXT_TOK;
@@ -150,21 +150,21 @@ namespace ospray {
         float z = atof(s);
         s = NEXT_TOK;
         float w = atof(s);
-        mat->setParam(paramName, vec4f(x,y,z,w));
+        mat->createChildWithValue(paramName, vec4f(x,y,z,w));
       } else if (!paramType.compare("int")) {
-        mat->setParam(paramName, (int32_t)atol(s));
+        mat->createChildWithValue(paramName, (int32_t)atol(s));
       } else if (!paramType.compare("int2")) {
         int32_t x = atol(s);
         s = NEXT_TOK;
         int32_t y = atol(s);
-        mat->setParam(paramName, vec2i(x,y));
+        mat->createChildWithValue(paramName, vec2i(x,y));
       } else if (!paramType.compare("int3")) {
         int32_t x = atol(s);
         s = NEXT_TOK;
         int32_t y = atol(s);
         s = NEXT_TOK;
         int32_t z = atol(s);
-        mat->setParam(paramName, vec3i(x,y,z));
+        mat->createChildWithValue(paramName, vec3i(x,y,z));
       } else if (!paramType.compare("int4")) {
         int32_t x = atol(s);
         s = NEXT_TOK;
@@ -173,7 +173,7 @@ namespace ospray {
         int32_t z = atol(s);
         s = NEXT_TOK;
         int32_t w = atol(s);
-        mat->setParam(paramName, vec4i(x,y,z,w));
+        mat->createChildWithValue(paramName, vec4i(x,y,z,w));
       } else {
         //error!
         throw std::runtime_error("unknown parameter type '" + paramType + "' when parsing RIVL materials.");
