@@ -16,6 +16,7 @@ build-centos6-gcc:
 build-centos6-icc:
   type: build
   script:
+    - module load gcc/4.9.3
     - module load intel
     - export CC=icc
     - export CXX=icpc
