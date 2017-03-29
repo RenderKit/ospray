@@ -176,6 +176,9 @@ namespace ospray {
                             int flags = sg::NodeFlags::none,
                             std::string documentation="");
 
+      void setChildNode(const std::string &name,
+                        const std::shared_ptr<Node> &node);
+
       //! traverse this node and childrend with given operation, such as
       //  print,commit,render or custom operations
       virtual void traverse(RenderContext &ctx, const std::string& operation);
@@ -227,12 +230,7 @@ namespace ospray {
       virtual bool computeValid();
       virtual bool computeValidMinMax();
 
-      // NOTE(jda) - This needs to be enabled, BAD to have Node users poking
-      //             around in data members! Ideally this should be 'private',
-      //             but that's a more minor concern...
-#if 0
     protected:
-#endif
 
       struct
       {

@@ -219,6 +219,15 @@ namespace ospray {
       return *child;
     }
 
+    void Node::setChildNode(const std::string &name,
+                            const std::shared_ptr<Node> &node)
+    {
+      properties.children[name] = node;
+#ifndef _WIN32
+# warning "TODO: child node parent needs to be set, which requires multi-parent support"
+#endif
+    }
+
     void Node::traverse(RenderContext &ctx, const std::string& operation)
     {
       //TODO: make child m time propagate
