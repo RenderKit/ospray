@@ -210,7 +210,7 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
         foreach_unique (v in volume)
           {
             //interval sampling
-            volumeColor = SciVisRenderer_computeVolumeInterval(renderer, v, ray, tBegin, tEnd, .98f - color.w, 0, rayOffset, sampleID, 1.f);
+            volumeColor = SciVisRenderer_computeVolumeInterval(renderer, v, ray, tBegin, tEnd, 0.999f, 0, rayOffset, sampleID, 1.f);
           }
 
         // Volume contribution.
@@ -252,11 +252,11 @@ void SciVisRenderer_renderSample(uniform Renderer *uniform _self,
     = (SciVisRenderer *uniform) _self;
 
   // Ray offset for this sample, as a fraction of the nominal step size.
-  float rayOffset = 0; // precomputedHalton2(sample.sampleID.z);
+  float rayOffset = precomputedHalton2(sample.sampleID.z);
   int ix = sample.sampleID.x % 4;
   int iy = sample.sampleID.y % 4;
   int patternID = ix + 4 * iy;
-  rayOffset += 0; //precomputedHalton3(patternID);
+  rayOffset += precomputedHalton3(patternID);
 
   if(rayOffset > 1.f) rayOffset -= 1.f;
 
