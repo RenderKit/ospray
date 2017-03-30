@@ -3,22 +3,19 @@
 # change this block to fit your environment
 DIRROOT=~
 OSPROOT=~/OSPRay
-export QT_ROOT=${DIRROOT}/visitOSPRay/qt-everywhere-opensource-src-4.8.3
-export TBB_ROOT=${OSPROOT}/tbb2017_20160916oss
-export ISPC_ROOT=${OSPROOT}/ispc-v1.9.1-linux
-export EMBREE_ROOT=${OSPROOT}/embree-2.14.0.x86_64.linux
-export INTELICC_PATH=/opt/intel/bin/icc
-source /opt/intel/parallel_studio_xe_2017.0.035/bin/psxevars.sh intel64
 
 # Qt component
+export QT_ROOT=${DIRROOT}/visitOSPRay/qt-everywhere-opensource-src-4.8.3
 export PATH=${QT_ROOT}/bin:${PATH}
 export LD_LIBRARY_PATH=${QT_ROOT}/lib:${LD_LIBRARY_PATH}
 
 # TBB component
+export TBB_ROOT=${OSPROOT}/tbb2017_20160916oss
 source ${TBB_ROOT}/bin/tbbvars.sh intel64
 export LD_LIBRARY_PATH=${TBB_ROOT}/lib/intel64/gcc4.7:${LD_LIBRARY_PATH}
 
 # ispc component
+export ISPC_ROOT=${OSPROOT}/ispc-v1.9.1-linux
 export PATH=${ISPC_ROOT}:${PATH}
 
 PROJSUFFIX=""
@@ -56,6 +53,8 @@ until [ -z "$1" ]; do
 
 	# --- Setup intel icc
 	-ic | --intel-icc)
+	    source /opt/intel/parallel_studio_xe_2017.0.035/bin/psxevars.sh intel64
+	    export INTELICC_PATH=/opt/intel/bin/icc
 	    CMAKEARGS=${CMAKEARGS}" -DCMAKE_CXX_COMPILER=${INTELICC_PATH}"
 	    CMAKEARGS=${CMAKEARGS}" -DCMAKE_C_COMPILER=${INTELICC_PATH}"
 	    shift 1;;
@@ -69,6 +68,7 @@ until [ -z "$1" ]; do
 
 	# --- Setup external embree
 	-e  | --embree)
+	    export EMBREE_ROOT=${OSPROOT}/embree-2.14.0.x86_64.linux
 	    export embree_DIR=${EMBREE_ROOT}
 	    PROJSUFFIX=${PROJSUFFIX}_embree
 	    CMAKEARGS=${CMAKEARGS}" -DOSPRAY_USE_EXTERNAL_EMBREE=ON"
