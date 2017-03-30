@@ -31,6 +31,11 @@ namespace ospray {
     {
       properties.name = "NULL";
       properties.type = "Node";
+      // MSVC 2013 is buggy and ignores {}-initialization of anonymous structs
+#if _MSC_VER <= 1800
+      properties.parent = nullptr;
+      properties.valid = false;
+#endif
       markAsModified();
     }
 
