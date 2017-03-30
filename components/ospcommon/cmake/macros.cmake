@@ -369,6 +369,12 @@ MACRO(OSPRAY_CONFIGURE_COMPILER)
     MESSAGE(FATAL_ERROR
             "Unsupported compiler specified: '${CMAKE_CXX_COMPILER_ID}'")
   ENDIF()
+
+  IF (WIN32)
+    # increase stack to 8MB (the default size of 1MB is too small for our apps)
+    # note: linker options are independent of compiler (icc or MSVC)
+    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:8388608")
+  ENDIF()
 ENDMACRO()
 
 ## Tasking system configuration macro ##
