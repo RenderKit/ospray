@@ -174,7 +174,7 @@ namespace ospray {
   */
   struct OSPRAY_SDK_INTERFACE WarnOnce
   {
-    WarnOnce(const std::string &warning);
+    WarnOnce(const std::string &warning, uint32_t postAtLogLevel = 0);
   private:
     const std::string s;
   };

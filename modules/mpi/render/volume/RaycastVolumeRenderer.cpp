@@ -227,28 +227,16 @@ namespace ospray {
     }
 
     if (ddVolumeVec.empty()) {
-      static bool printed = false;
-      if (!printed) {
-        std::stringstream msg;
-        msg << "no data parallel volumes, rendering in traditional"
-             << " raycast_volume_render mode" << endl;
-        postErrorMsg(msg);
-        printed = true;
-      }
-
+      static WarnOnce warning("no data parallel volumes, rendering in traditional"
+                              " raycast_volume_render mode\n");
       return Renderer::renderFrame(fb,channelFlags);
     }
 
     // =======================================================
     // OK, we _need_ data-parallel rendering ....
-    static bool printed = false;
-    if (!printed) {
-      std::stringstream msg;
-      msg << "#dvr: at least one dp volume -> needs data-parallel rendering ..."
-          << std::endl;
-      postErrorMsg(msg);
-      printed = true;
-    }
+    static WarnOnce dataParMsg("#dvr: at least one dp volume ->"
+                               " needs data-parallel rendering ...",
+                               OSPRAY_MPI_VERBOSE_LEVEL);
 
     // check if we're even in mpi parallel mode (can't do
     // data-parallel otherwise)

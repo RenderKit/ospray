@@ -28,9 +28,6 @@
 namespace ospray {
   namespace mpi {
 
-    using std::cout;
-    using std::endl;
-
     namespace staticLoadBalancer {
 
       float Master::renderFrame(Renderer *renderer,

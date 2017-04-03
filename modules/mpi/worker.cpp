@@ -66,9 +66,11 @@ namespace ospray {
 
     void embreeErrorFunc(const RTCError code, const char* str)
     {
-      std::cerr << "#osp: embree internal error " << code << " : "
-                << str << std::endl;
-      throw std::runtime_error("embree internal error '"+std::string(str)+"'");
+      std::stringstream msg;
+      msg << "#osp: embree internal error " << code << " : "
+        << str << std::endl;
+      postErrorMsg(msg);
+      throw std::runtime_error(msg.str());
     }
 
     std::unique_ptr<work::Work> readWork(work::WorkTypeRegistry &registry,
@@ -77,24 +79,28 @@ namespace ospray {
       work::Work::tag_t tag;
       readStream >> tag;
 
-      if(logMPI) {
+      if (logMPI) {
         static size_t numWorkReceived = 0;
         std::stringstream msg;
         msg << "#osp.mpi.worker: got work #" << numWorkReceived++
             << ", tag " << tag << std::endl;
+        postErrorMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
       }
 
       auto make_work = registry.find(tag);
       if (make_work == registry.end()) {
         std::stringstream msg;
-        msg << "Invalid work type received - tag #: " << tag;
+        msg << "Invalid work type received - tag #: " << tag << "\n";
+        postErrorMsg(msg);
         throw std::runtime_error(msg.str());
       }
 
       auto work = make_work->second();
 
-      if(logMPI) {
-        printf(": %s\n", typeString(work).c_str());
+      if (logMPI) {
+        std::stringstream msg;
+        msg << ": " << typeString(work).c_str() << "\n";
+        postErrorMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
       }
 
 
@@ -104,9 +110,9 @@ namespace ospray {
 
     bool checkIfWeNeedToDoMPIDebugOutputs()
     {
+      // Use the env-var for backwards compat.
       char *envVar = getenv("OSPRAY_MPI_DEBUG");
-      if (!envVar) return false;
-      return atoi(envVar) > 0;
+      return logLevel() >= OSPRAY_MPI_VERBOSE_LEVEL || (envVar && atoi(envVar) > 0);
     }
     
     /*! it's up to the proper init
@@ -146,15 +152,22 @@ namespace ospray {
 
       if (rtcDeviceGetError(embreeDevice) != RTC_NO_ERROR) {
         // why did the error function not get called !?
-        std::cerr << "#osp:init: embree internal error number "
+        std::stringstream msg;
+        msg << "#osp:init: embree internal error number "
                   << (int)rtcDeviceGetError(embreeDevice) << std::endl;
+        postErrorMsg(msg);
       }
 
-      char hostname[HOST_NAME_MAX];
-      gethostname(hostname,HOST_NAME_MAX);
+      logMPI = checkIfWeNeedToDoMPIDebugOutputs();
+
       if (logMPI) {
-        printf("#w: running MPI worker process %i/%i on pid %i@%s\n",
-               worker.rank,worker.size,getpid(),hostname);
+        char hostname[HOST_NAME_MAX];
+        gethostname(hostname,HOST_NAME_MAX);
+        std::stringstream msg;
+        msg << "#w: running MPI worker process " << worker.rank
+          << "/" << worker.size << " on pid " << getpid() << "@"
+          << hostname << "\n";
+        postErrorMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
       }
 
       TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Slave>();
@@ -169,17 +182,22 @@ namespace ospray {
       std::map<work::Work::tag_t,work::CreateWorkFct> workTypeRegistry;
       work::registerOSPWorkItems(workTypeRegistry);
 
-      logMPI = checkIfWeNeedToDoMPIDebugOutputs();
       while (1) {
         auto work = readWork(workTypeRegistry, *readStream);
         if (logMPI) {
-          std::cout << "#osp.mpi.worker: processing work " << typeIdOf(work)
-                    << ": " << typeString(work) << std::endl;
+          std::stringstream msg;
+          msg << "#osp.mpi.worker: processing work " << typeIdOf(work)
+            << ": " << typeString(work) << std::endl;
+          postErrorMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
         }
+
         work->run();
+
         if (logMPI) {
-          std::cout << "#osp.mpi.worker: done w/ work " << typeIdOf(work)
-                    << ": " << typeString(work) << std::endl;
+          std::stringstream msg;
+          msg << "#osp.mpi.worker: done w/ work " << typeIdOf(work)
+            << ": " << typeString(work) << std::endl;
+          postErrorMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
         }
       }
     }

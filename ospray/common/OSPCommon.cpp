@@ -33,11 +33,11 @@ namespace ospray {
     return ospcommon::alignedFree(ptr);
   }
 
-  WarnOnce::WarnOnce(const std::string &s) 
+  WarnOnce::WarnOnce(const std::string &s, uint32_t postAtLogLevel) 
     : s(s) 
   {
     std::string msg = "Warning: " + s + " (only reporting first occurrence)\n";
-    postErrorMsg(msg);
+    postErrorMsg(msg, postAtLogLevel);
   }
   
   /*! for debugging. compute a checksum for given area range... */

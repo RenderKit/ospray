@@ -693,8 +693,7 @@ namespace ospray {
         fb->pixelOp = po->createInstance(fb, fb->pixelOp.ptr);
 
         if (!fb->pixelOp) {
-          std::cout << "#osp:mpi: WARNING: PixelOp did not create an instance!"
-                    << std::endl;
+          postErrorMsg("#osp:mpi: WARNING: PixelOp did not create an instance!\n");
         }
       }
 

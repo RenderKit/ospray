@@ -25,9 +25,6 @@
 #include <queue>
 
 namespace ospray {
-  using std::cout;
-  using std::endl;
-
   struct TileDesc;
   struct TileData;
 

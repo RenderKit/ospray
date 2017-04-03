@@ -238,7 +238,8 @@ namespace ospray {
 
       void BatchedIsendIrecvImpl::Group::shutdown()
       {
-        postErrorMsg("#osp:mpi:BatchIsendIrecvMessaging:Group shutting down\n");
+        postErrorMsg("#osp:mpi:BatchIsendIrecvMessaging:Group shutting down\n",
+                     OSPRAY_MPI_VERBOSE_LEVEL);
         shouldExit.store(true);
         sendThread.handle.join();
         recvThread.handle.join();
@@ -250,9 +251,9 @@ namespace ospray {
         mpi::world.barrier();
 
         std::stringstream ss;
-        ss << "#osp:mpi:BatchedIsendIrecvMessaging started up" << mpi::world.rank
+        ss << "#osp:mpi:BatchedIsendIrecvMessaging started up " << mpi::world.rank
           << "/" << mpi::world.size << "\n";
-        postErrorMsg(ss);
+        postErrorMsg(ss, OSPRAY_MPI_VERBOSE_LEVEL);
 
         mpi::world.barrier();
       }
@@ -262,9 +263,9 @@ namespace ospray {
         mpi::world.barrier();
 
         std::stringstream ss;
-        ss << "#osp:mpi:BatchedIsendIrecvMessaging shutting down" << mpi::world.rank
+        ss << "#osp:mpi:BatchedIsendIrecvMessaging shutting down " << mpi::world.rank
           << "/" << mpi::world.size << "\n";
-        postErrorMsg(ss);
+        postErrorMsg(ss, OSPRAY_MPI_VERBOSE_LEVEL);
 
         mpi::world.barrier();
 
@@ -272,9 +273,9 @@ namespace ospray {
           myGroups[i]->shutdown();
 
         ss.clear();
-        ss << "#osp:mpi:BatchedIsendIrecvMessaging finalizing" << mpi::world.rank
+        ss << "#osp:mpi:BatchedIsendIrecvMessaging finalizing " << mpi::world.rank
           << "/" << mpi::world.size << "\n";
-        postErrorMsg(ss);
+        postErrorMsg(ss, OSPRAY_MPI_VERBOSE_LEVEL);
 
         SERIALIZED_MPI_CALL(Finalize());
       }
