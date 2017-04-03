@@ -63,7 +63,6 @@ namespace ospray {
     /*! helper functions that lock resp unlock the mpi serializer mutex */
     void unlockMPI()
     {
-      // std::cout << "mpi unlocked by " << g_whoHasTheMPILock << std::endl;
       g_whoHasTheMPILock = "<nobody>";
       mpiSerializerMutex.unlock();
     }
@@ -162,10 +161,10 @@ namespace ospray {
       case MPI_THREAD_SERIALIZED:
         mpiIsThreaded = false;
         if (rank == 0) {
-          std::cout << "#osp.mpi: didn't find 'thread_multiple' MPI, but!" << std::endl;
-          std::cout << "#osp.mpi: can still do thread_serialized." << std::endl;
-          std::cout << "#osp.mpi: most things should work, but some modules." << std::endl;
-          std::cout << "#osp.mpi: might not." << std::endl;
+          postErrorMsg("#osp.mpi: didn't find 'thread_multiple' MPI, but!\n"
+              "#osp.mpi: can still do thread_serialized.\n"
+              "#osp.mpi: most things should work, but some modules.\n"
+              "#osp.mpi: might not.\n", OSPRAY_MPI_VERBOSE_LEVEL);
         }
         break;
       default:
@@ -186,8 +185,7 @@ namespace ospray {
             general as soon as one initializes mpicommon ... (_and_
             the messaging code isn't exactly up to snuff wrt to
             cleanliness etc as it should be*/
-        if (logMPI)
-          std::cout << "#osp.mpi: starting up the async messaging layer ...!" << std::endl;
+        postErrorMsg("#osp.mpi: starting up the async messaging layer ...!", OSPRAY_MPI_VERBOSE_LEVEL);
         mpi::async::CommLayer::WORLD = new mpi::async::CommLayer;
         mpi::async::Group *worldGroup =
           mpi::async::createGroup(MPI_COMM_WORLD,
@@ -195,8 +193,7 @@ namespace ospray {
                                   290374);
         assert(worldGroup);
         mpi::async::CommLayer::WORLD->group = worldGroup;
-        if (logMPI)
-          std::cout << "#osp.mpi: async messaging layer started ... " << std::endl;
+        postErrorMsg("#osp.mpi: async messaging layer started ... ", OSPRAY_MPI_VERBOSE_LEVEL);
       }
 
       // by default, all MPI comm gets locked down, unless we
@@ -214,8 +211,10 @@ namespace ospray {
          this to find some other bugs, but eventually we have to do
          this - and once we do, we have to do the lock/unlock for
          every api call. */
-      if (logMPI)
-        std::cout << "#osp.mpi: FOR NOW, WE DO _NOT_ LOCK MPI CALLS UPON STARTUP - EVENTUALLY WE HAVE TO DO THIS!!!" << std::endl;
+      // Will: I think we're doing this now but in the device right?
+      postErrorMsg("#osp.mpi: FOR NOW, WE DO _NOT_ LOCK MPI"
+          " CALLS UPON STARTUP - EVENTUALLY WE HAVE TO DO THIS!!!",
+          OSPRAY_MPI_VERBOSE_LEVEL);
 #else
       lockMPI();
 #endif

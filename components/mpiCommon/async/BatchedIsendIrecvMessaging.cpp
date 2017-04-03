@@ -24,6 +24,7 @@
 #include <atomic>
 #include <thread>
 
+#include "ospray/common/OSPCommon.h"
 #include "BatchedIsendIrecvMessaging.h"
 #include "../MPICommon.h"
 
@@ -237,10 +238,7 @@ namespace ospray {
 
       void BatchedIsendIrecvImpl::Group::shutdown()
       {
-        if (logMPI) {
-          std::cout << "#osp:mpi:BatchIsendIrecvMessaging:Group shutting down"
-                    << std::endl;
-        }
+        postErrorMsg("#osp:mpi:BatchIsendIrecvMessaging:Group shutting down\n");
         shouldExit.store(true);
         sendThread.handle.join();
         recvThread.handle.join();
@@ -251,11 +249,10 @@ namespace ospray {
       {
         mpi::world.barrier();
 
-        if (logMPI) {
-          printf("#osp:mpi:BatchedIsendIrecvMessaging started up %i/%i\n",
-                 mpi::world.rank, mpi::world.size);
-          fflush(0);
-        }
+        std::stringstream ss;
+        ss << "#osp:mpi:BatchedIsendIrecvMessaging started up" << mpi::world.rank
+          << "/" << mpi::world.size << "\n";
+        postErrorMsg(ss);
 
         mpi::world.barrier();
       }
@@ -264,21 +261,20 @@ namespace ospray {
       {
         mpi::world.barrier();
 
-        if (logMPI) {
-          printf("#osp:mpi:BatchedIsendIrecvMessaging shutting down %i/%i\n",
-                 mpi::world.rank, mpi::world.size);
-          fflush(0);
-        }
+        std::stringstream ss;
+        ss << "#osp:mpi:BatchedIsendIrecvMessaging shutting down" << mpi::world.rank
+          << "/" << mpi::world.size << "\n";
+        postErrorMsg(ss);
 
         mpi::world.barrier();
 
         for (uint32_t i = 0; i < myGroups.size(); i++)
           myGroups[i]->shutdown();
 
-        if (logMPI) {
-          printf("#osp:mpi:BatchedIsendIrecvMessaging finalizing %i/%i\n",
-                 mpi::world.rank, mpi::world.size);
-        }
+        ss.clear();
+        ss << "#osp:mpi:BatchedIsendIrecvMessaging finalizing" << mpi::world.rank
+          << "/" << mpi::world.size << "\n";
+        postErrorMsg(ss);
 
         SERIALIZED_MPI_CALL(Finalize());
       }
