@@ -22,6 +22,8 @@
 #include "common/script/OSPRayScriptHandler.h"
 #include "OSPRayFixture.h"
 
+namespace bench {
+
 class BenchScriptHandler : public ospray::OSPRayScriptHandler {
   public:
     BenchScriptHandler(std::shared_ptr<OSPRayFixture> &fixture);
@@ -32,6 +34,8 @@ class BenchScriptHandler : public ospray::OSPRayScriptHandler {
 
     using BenchStats = pico_bench::Statistics<OSPRayFixture::Millis>;
 };
+
+}
 
 #endif
 

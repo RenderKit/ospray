@@ -18,9 +18,9 @@
 
 #include <iostream>
 #include <sstream>
-#include <type_traits>
 
 #include "ospcommon/common.h"
+#include "OSPTypeTraits.h"
 
 namespace ospray {
   namespace sg {
@@ -79,6 +79,18 @@ namespace ospray {
         bool isSame(handle_base *other) const override;
         void *data() override;
         T value;
+
+        // NOTE(jda) - Use custom type trait to select a real implementation of
+        //             isSame(), or one that always returns 'false' if the
+        //             template type 'T' does not implement operator==() with
+        //             itself.
+        template <typename TYPE>
+        inline traits::HasOperatorEquals<TYPE, bool>//<-- substitues to 'bool'
+        isSameImpl(handle_base *other) const;
+
+        template <typename TYPE>
+        inline traits::NoOperatorEquals<TYPE, bool>//<-- substitutes to 'bool'
+        isSameImpl(handle_base *other) const;
       };
 
       // Data members //
@@ -203,8 +215,24 @@ namespace ospray {
     template<typename T>
     inline bool OSPAny::handle<T>::isSame(OSPAny::handle_base *other) const
     {
+      return isSameImpl<T>(other);
+    }
+
+    template <typename T>
+    template <typename TYPE>
+    inline traits::HasOperatorEquals<TYPE, bool>
+    OSPAny::handle<T>::isSameImpl(OSPAny::handle_base *other) const
+    {
       handle<T>* otherHandle = dynamic_cast<handle<T>*>(other);
       return (otherHandle != nullptr) && (otherHandle->value == this->value);
+    }
+
+    template <typename T>
+    template <typename TYPE>
+    inline traits::NoOperatorEquals<TYPE, bool>
+    OSPAny::handle<T>::isSameImpl(OSPAny::handle_base *other) const
+    {
+      return false;
     }
 
     template<typename T>

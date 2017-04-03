@@ -34,8 +34,6 @@ namespace ospray {
      */
     void render();
 
-  private:
-
     struct Line
     {
       // A line is made up of points sorted by x, its coordinates are
@@ -56,6 +54,9 @@ namespace ospray {
       // Remove a point from the line, merging the two segments on either side
       void removePoint(const float &x);
     };
+
+  private:
+
     // The transfer function color presets available
     enum ColorMap {
       JET,

@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include "sg/SceneGraphExports.h"
 #include "sg/common/TimeStamp.h"
 #include "sg/common/Serialization.h"
 #include "sg/common/RenderContext.h"
@@ -98,9 +97,28 @@ namespace ospray {
         but don't do anything else to the node(s) */
       virtual void serialize(sg::Serialization::State &state);
 
+      // Properties ///////////////////////////////////////////////////////////
+
+      std::string name()          const;
+      std::string type()          const;
+      SGVar       min()           const;
+      SGVar       max()           const;
+      NodeFlags   flags()         const;
       std::string documentation() const;
 
+      void setName(const std::string &v);
+      void setType(const std::string &v);
+      void setMinMax(const SGVar& minv, const SGVar& maxv);
+      void setFlags(NodeFlags f);
+      void setFlags(int f);
       void setDocumentation(const std::string &s);
+      void setWhiteList(const std::vector<SGVar> &values);
+      void setBlackList(const std::vector<SGVar> &values);
+
+      bool isValid() const;
+
+      virtual bool computeValid();
+      virtual bool computeValidMinMax();
 
       /*! \brief return bounding box in world coordinates.
 
@@ -110,42 +128,7 @@ namespace ospray {
         box3f(empty) */
       virtual box3f bounds() const;
 
-      //! return when this node was last modified
-      TimeStamp lastModified() const;
-      TimeStamp childrenLastModified() const;
-
-      //! return when this node was last committed
-      TimeStamp lastCommitted() const;
-      void markAsCommitted();
-
-      virtual void markAsModified();
-
-      virtual void setChildrenModified(TimeStamp t);
-
-      bool hasChild(const std::string &name) const;
-
-      /*! return named child node. */
-      Node& child(const std::string &name) const;
-
-      //! return named child node
-      Node& childRecursive(const std::string &name);
-
-      //! return vector of child handles
-      std::vector<std::shared_ptr<Node>> children() const;
-
-      //! return child c
-      Node& operator[] (const std::string &c) const;
-
-      //! return the parent node
-      Node& parent() const;
-
-      //! sets the parent
-      void setParent(Node &p);
-
-      //! sets the parent
-      void setParent(const std::shared_ptr<Node>& p);
-
-      bool hasParent() const;
+      // Node stored value (data) interface ///////////////////////////////////
 
       //! get the value of the node, whithout template conversion
       SGVar value();
@@ -161,11 +144,33 @@ namespace ospray {
       //! set the value of the node.  Requires strict typecast
       void setValue(SGVar val);
 
+      // Update detection interface ///////////////////////////////////////////
+
+      TimeStamp lastModified() const;
+      TimeStamp lastCommitted() const;
+      TimeStamp childrenLastModified() const;
+
+      void markAsCommitted();
+      virtual void markAsModified();
+      virtual void setChildrenModified(TimeStamp t);
+
+      // Parent-child structual interface /////////////////////////////////////
+
+      // Children //
+
+      bool hasChild(const std::string &name) const;
+
+      /*! return named child node. */
+      Node& child(const std::string &name) const;
+      Node& operator[] (const std::string &c) const;
+
+      Node& childRecursive(const std::string &name);
+
+      std::vector<std::shared_ptr<Node>> children() const;
+
       //! add node as child of this one
       void add(std::shared_ptr<Node> node);
-
-      //! add child node n to this node
-      Node& operator+=(std::shared_ptr<Node> n);
+      Node& operator+=(std::shared_ptr<Node> node);
 
       //! just for convenience; add a typed 'setParam' function
       template<typename T>
@@ -176,6 +181,19 @@ namespace ospray {
                             SGVar var = SGVar(),
                             int flags = sg::NodeFlags::none,
                             std::string documentation="");
+
+      void setChildNode(const std::string &name,
+                        const std::shared_ptr<Node> &node);
+
+      // Parent //
+
+      bool hasParent() const;
+
+      Node& parent() const;
+      void setParent(Node &p);
+      void setParent(const std::shared_ptr<Node>& p);
+
+      // Traversal interface //////////////////////////////////////////////////
 
       //! traverse this node and childrend with given operation, such as
       //  print,commit,render or custom operations
@@ -199,41 +217,7 @@ namespace ospray {
       //! called after committing children during traversal
       virtual void postCommit(RenderContext &ctx);
 
-      //! name of the node, ie material007.  Should be unique among children
-      void setName(const std::string &v);
-
-      //! set type of node, ie Material
-      void setType(const std::string &v);
-
-      //! get name of the node, ie material007
-      std::string name() const;
-
-      //! type of node, ie Material
-      std::string type() const;
-
-      void setFlags(NodeFlags f);
-      void setFlags(int f);
-      NodeFlags flags() const;
-
-      void setMinMax(const SGVar& minv, const SGVar& maxv);
-
-      SGVar min() const;
-      SGVar max() const;
-
-      void setWhiteList(const std::vector<SGVar> &values);
-      void setBlackList(const std::vector<SGVar> &values);
-
-      bool isValid() const;
-
-      virtual bool computeValid();
-      virtual bool computeValidMinMax();
-
-      // NOTE(jda) - This needs to be enabled, BAD to have Node users poking
-      //             around in data members! Ideally this should be 'private',
-      //             but that's a more minor concern...
-#if 0
     protected:
-#endif
 
       struct
       {

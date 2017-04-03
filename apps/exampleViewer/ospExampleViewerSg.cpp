@@ -300,10 +300,8 @@ int main(int ac, const char **av)
   parseCommandLineSG(ac, av, renderer);
 
   if (rendererDW.get()) {
-    rendererDW->properties.children["world"]  =
-        renderer["world"].shared_from_this();
-    rendererDW->properties.children["lights"] =
-        renderer["lights"].shared_from_this();
+    rendererDW->setChildNode("world",  renderer["world"].shared_from_this());
+    rendererDW->setChildNode("lights", renderer["lights"].shared_from_this());
 
     auto &frameBuffer = rendererDW->child("frameBuffer");
     frameBuffer["size"].setValue(dwService.totalPixelsInWall);

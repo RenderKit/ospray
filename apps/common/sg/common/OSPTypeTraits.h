@@ -14,62 +14,35 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#undef NDEBUG
+#pragma once
 
-// scene graph
-#include "SceneGraph.h"
-#include "sg/common/Texture2D.h"
-#include "sg/geometry/Spheres.h"
+#include <type_traits>
 
 namespace ospray {
   namespace sg {
+    namespace traits {
 
-    /*! 'render' the nodes */
-    std::string Group::toString() const
-    {
-      return "ospray::sg::Group";
-    }
-    
-    box3f Group::bounds() const
-    {
-      box3f bounds = empty;
-      for (auto child : children) {
-        assert(child);
-        bounds.extend(child->bounds());
-      }
-      return bounds;
-    }
+      template <typename T, typename Arg>
+      std::true_type operator==(const T&, const Arg&);
 
-    std::string Info::toString() const
-    {
-      return "ospray::sg::Info";
-    }
+      template <typename T, typename Arg = T>
+      struct HasOperatorEqualsT
+      {
+        enum
+        {
+          value = !std::is_same<decltype(*(T*)(0) == *(Arg*)(0)),
+                                std::true_type>::value
+        };
+      };
 
-    GenericGeometry::GenericGeometry(const std::string &type)
-      : Geometry(type)
-    {
-    }
+      template <typename T, typename TYPE>
+      using HasOperatorEquals =
+        typename std::enable_if<HasOperatorEqualsT<T>::value, TYPE>::type;
 
-    std::string GenericGeometry::toString() const
-    {
-      return "ospray::sg::GenericGeometry";
-    }
+      template <typename T, typename TYPE>
+      using NoOperatorEquals =
+        typename std::enable_if<!HasOperatorEqualsT<T>::value, TYPE>::type;
 
-    box3f GenericGeometry::bounds() const
-    {
-      return _bounds;
-    }
-
-    Instance::Instance() : Geometry("Instance")
-    {
-    }
-
-    std::string Instance::toString() const
-    {
-      return "ospray::sg::Instance";
-    }
-
-    OSP_REGISTER_SG_NODE(Group);
-
+    } // ::ospray::sg::traits
   } // ::ospray::sg
 } // ::ospray

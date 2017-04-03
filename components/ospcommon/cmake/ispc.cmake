@@ -24,10 +24,10 @@ IF (NOT ISPC_EXECUTABLE)
     SET(ISPC_DIR_SUFFIX "osx")
   ELSEIF(WIN32)
     SET(ISPC_DIR_SUFFIX "windows")
-    IF (MSVC_VERSION GREATER_EQUAL 1900)
-      LIST(APPEND ISPC_DIR_SUFFIX "windows-vs2015")
-    ELSE()
+    IF (MSVC_VERSION LESS 1900)
       LIST(APPEND ISPC_DIR_SUFFIX "windows-vs2013")
+    ELSE()
+      LIST(APPEND ISPC_DIR_SUFFIX "windows-vs2015")
     ENDIF()
   ELSE()
     SET(ISPC_DIR_SUFFIX "linux")
@@ -147,17 +147,12 @@ MACRO (OSPRAY_ISPC_COMPILE)
 
     # if we have multiple targets add additional object files
     LIST(LENGTH ISPC_TARGETS NUM_TARGETS)
-    IF (NUM_TARGETS EQUAL 1)
-      # workaround link issues to Embree ISPC exports:
-      # we add a 2nd target to force ISPC to add the ISA suffix during name
-      # mangling
-      SET(ISPC_TARGET_ARGS "${ISPC_TARGETS},sse2")
-      LIST(APPEND ISPC_TARGETS sse2)
+    IF (NUM_TARGETS GREATER 1)
+      FOREACH(target ${ISPC_TARGETS})
+        STRING(REPLACE "-i32x16" "" target ${target}) # strip avx512(knl|skx)-i32x16
+        SET(results ${results} "${outdir}/${fname}.dev_${target}${ISPC_TARGET_EXT}")
+      ENDFOREACH()
     ENDIF()
-    FOREACH(target ${ISPC_TARGETS})
-      STRING(REPLACE "-i32x16" "" target ${target}) # strip avx512(knl|skx)-i32x16
-      SET(results ${results} "${outdir}/${fname}.dev_${target}${ISPC_TARGET_EXT}")
-    ENDFOREACH()
 
     ADD_CUSTOM_COMMAND(
       OUTPUT ${results} ${ISPC_TARGET_DIR}/${fname}_ispc.h

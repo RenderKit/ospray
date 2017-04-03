@@ -131,7 +131,7 @@ namespace ospray {
       if (zPos == std::string::npos)
         throw std::runtime_error("invalid points format: no z component");
 
-      float f[numFloatsPerSphere];
+      float * const f = (float *)alloca(sizeof(float)*numFloatsPerSphere);
       box3f bounds;
 
       std::vector<float> mappedScalarVector;

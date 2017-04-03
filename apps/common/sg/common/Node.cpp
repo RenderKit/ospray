@@ -31,6 +31,11 @@ namespace ospray {
     {
       properties.name = "NULL";
       properties.type = "Node";
+      // MSVC 2013 is buggy and ignores {}-initialization of anonymous structs
+#if _MSC_VER <= 1800
+      properties.parent = nullptr;
+      properties.valid = false;
+#endif
       markAsModified();
     }
 
@@ -46,9 +51,67 @@ namespace ospray {
                                + node.name);
     }
 
+    void Node::serialize(sg::Serialization::State &state)
+    {
+    }
+
+    // Properties /////////////////////////////////////////////////////////////
+
+    std::string Node::name() const
+    {
+      return properties.name;
+    }
+
+    std::string Node::type() const
+    {
+      return properties.type;
+    }
+
+    SGVar Node::min() const
+    {
+      return properties.minmax[0];
+    }
+
+    SGVar Node::max() const
+    {
+      return properties.minmax[1];
+    }
+
+    NodeFlags Node::flags() const
+    {
+      return properties.flags;
+    }
+
     std::string Node::documentation() const
     {
       return properties.documentation;
+    }
+
+    void Node::setName(const std::string &v)
+    {
+      properties.name = v;
+    }
+
+    void Node::setType(const std::string &v)
+    {
+      properties.type = v;
+    }
+
+    void Node::setMinMax(const SGVar &minv, const SGVar &maxv)
+    {
+      properties.minmax.resize(2);
+      properties.minmax[0] = minv;
+      properties.minmax[1] = maxv;
+    }
+
+    void Node::setFlags(NodeFlags f)
+    {
+      properties.flags = f;
+    }
+
+    void Node::setFlags(int f)
+    {
+      setFlags(static_cast<NodeFlags>(f));
     }
 
     void Node::setDocumentation(const std::string &s)
@@ -56,24 +119,92 @@ namespace ospray {
       properties.documentation = s;
     }
 
+    void Node::setWhiteList(const std::vector<SGVar> &values)
+    {
+      properties.whitelist = values;
+    }
+
+    void Node::setBlackList(const std::vector<SGVar> &values)
+    {
+      properties.blacklist = values;
+    }
+
+    bool Node::isValid() const
+    {
+      return properties.valid;
+    }
+
+    bool Node::computeValid()
+    {
+#ifndef _WIN32
+# warning "Are validation node flags mutually exclusive?"
+#endif
+
+      if ((flags() & NodeFlags::valid_min_max) &&
+          properties.minmax.size() > 1) {
+        if (!computeValidMinMax())
+          return false;
+      }
+
+      if (flags() & NodeFlags::valid_blacklist) {
+        return std::find(properties.blacklist.begin(),
+                         properties.blacklist.end(),
+                         value()) == properties.blacklist.end();
+      }
+
+      if (flags() & NodeFlags::valid_whitelist) {
+        return std::find(properties.whitelist.begin(),
+                         properties.whitelist.end(),
+                         value()) != properties.whitelist.end();
+      }
+
+      return true;
+    }
+
+    bool Node::computeValidMinMax()
+    {
+      return true;
+    }
+
     box3f Node::bounds() const
     {
       return empty;
     }
+
+    // Node stored value (data) interface /////////////////////////////////////
+
+    SGVar Node::value()
+    {
+      std::lock_guard<std::mutex> lock{mutex};
+      return properties.value;
+    }
+
+    void Node::setValue(SGVar val)
+    {
+      {
+        std::lock_guard<std::mutex> lock{mutex};
+        if (val != properties.value)
+          properties.value = val;
+      }
+
+      markAsModified();
+    }
+
+    // Update detection interface /////////////////////////////////////////////
 
     TimeStamp Node::lastModified() const
     {
       return properties.lastModified;
     }
 
-    TimeStamp Node::childrenLastModified() const
-    {
-      return properties.childrenMTime;
-    }
-
     TimeStamp Node::lastCommitted() const
     {
       return properties.lastCommitted;
+    }
+
+    TimeStamp Node::childrenLastModified() const
+    {
+      return properties.childrenMTime;
     }
 
     void Node::markAsCommitted()
@@ -97,6 +228,8 @@ namespace ospray {
       }
     }
 
+    // Parent-child structual interface ///////////////////////////////////////
+
     bool Node::hasChild(const std::string &name) const
     {
       std::lock_guard<std::mutex> lock{mutex};
@@ -115,6 +248,11 @@ namespace ospray {
       } else {
         return *itr->second;
       }
+    }
+
+    Node& Node::operator[](const std::string &c) const
+    {
+      return child(c);
     }
 
     Node& Node::childRecursive(const std::string &name)
@@ -150,50 +288,6 @@ namespace ospray {
       return result;
     }
 
-    Node& Node::operator[](const std::string &c) const
-    {
-      return child(c);
-    }
-
-    Node& Node::parent() const
-    {
-      return *properties.parent;
-    }
-
-    void Node::setParent(Node &p)
-    {
-      std::lock_guard<std::mutex> lock{mutex};
-      properties.parent = &p;
-    }
-
-    void Node::setParent(const std::shared_ptr<Node> &p)
-    {
-      std::lock_guard<std::mutex> lock{mutex};
-      properties.parent = p.get();
-    }
-
-    bool Node::hasParent() const
-    {
-      return properties.parent != nullptr;
-    }
-
-    SGVar Node::value()
-    {
-      std::lock_guard<std::mutex> lock{mutex};
-      return properties.value;
-    }
-
-    void Node::setValue(SGVar val)
-    {
-      {
-        std::lock_guard<std::mutex> lock{mutex};
-        if (val != properties.value)
-          properties.value = val;
-      }
-
-      markAsModified();
-    }
-
     void Node::add(std::shared_ptr<Node> node)
     {
       std::lock_guard<std::mutex> lock{mutex};
@@ -218,6 +312,39 @@ namespace ospray {
       add(child);
       return *child;
     }
+
+    void Node::setChildNode(const std::string &name,
+                            const std::shared_ptr<Node> &node)
+    {
+      properties.children[name] = node;
+#ifndef _WIN32
+# warning "TODO: child node parent needs to be set, which requires multi-parent support"
+#endif
+    }
+
+    bool Node::hasParent() const
+    {
+      return properties.parent != nullptr;
+    }
+
+    Node& Node::parent() const
+    {
+      return *properties.parent;
+    }
+
+    void Node::setParent(Node &p)
+    {
+      std::lock_guard<std::mutex> lock{mutex};
+      properties.parent = &p;
+    }
+
+    void Node::setParent(const std::shared_ptr<Node> &p)
+    {
+      std::lock_guard<std::mutex> lock{mutex};
+      properties.parent = p.get();
+    }
+
+    // Traversal interface ////////////////////////////////////////////////////
 
     void Node::traverse(RenderContext &ctx, const std::string& operation)
     {
@@ -281,105 +408,6 @@ namespace ospray {
 
     void Node::postCommit(RenderContext &ctx)
     {
-    }
-
-    void Node::setName(const std::string &v)
-    {
-      properties.name = v;
-    }
-
-    void Node::setType(const std::string &v)
-    {
-      properties.type = v;
-    }
-
-    std::string Node::name() const
-    {
-      return properties.name;
-    }
-
-    std::string Node::type() const
-    {
-      return properties.type;
-    }
-
-    void Node::setFlags(NodeFlags f)
-    {
-      properties.flags = f;
-    }
-
-    void Node::setFlags(int f)
-    {
-      setFlags(static_cast<NodeFlags>(f));
-    }
-
-    NodeFlags Node::flags() const
-    {
-      return properties.flags;
-    }
-
-    void Node::setMinMax(const SGVar &minv, const SGVar &maxv)
-    {
-      properties.minmax.resize(2);
-      properties.minmax[0] = minv;
-      properties.minmax[1] = maxv;
-    }
-
-    SGVar Node::min() const
-    {
-      return properties.minmax[0];
-    }
-
-    SGVar Node::max() const
-    {
-      return properties.minmax[1];
-    }
-
-    void Node::setWhiteList(const std::vector<SGVar> &values)
-    {
-      properties.whitelist = values;
-    }
-
-    void Node::setBlackList(const std::vector<SGVar> &values)
-    {
-      properties.blacklist = values;
-    }
-
-    bool Node::isValid() const
-    {
-      return properties.valid;
-    }
-
-    bool Node::computeValid()
-    {
-#ifndef _WIN32
-# warning "Are validation node flags mutually exclusive?"
-#endif
-
-      if ((flags() & NodeFlags::valid_min_max) &&
-          properties.minmax.size() > 1) {
-        if (!computeValidMinMax())
-          return false;
-      }
-
-      if (flags() & NodeFlags::valid_blacklist) {
-        return std::find(properties.blacklist.begin(),
-                         properties.blacklist.end(),
-                         value()) == properties.blacklist.end();
-      }
-
-      if (flags() & NodeFlags::valid_whitelist) {
-        return std::find(properties.whitelist.begin(),
-                         properties.whitelist.end(),
-                         value()) != properties.whitelist.end();
-      }
-
-      return true;
-    }
-
-    bool Node::computeValidMinMax()
-    {
-      return true;
     }
 
     // ==================================================================
