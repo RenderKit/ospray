@@ -92,7 +92,7 @@ namespace ospray {
 #endif
     }
 
-    Mutex mutex;
+    std::mutex mutex;
     size_t numBlocks;
     Tile *volatile *blockTile;
   };

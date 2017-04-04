@@ -16,13 +16,12 @@
 
 #pragma once
 
-// ours
 // ospray components
 #include "components/mpiCommon/async/CommLayer.h"
 // ospray
 #include "ospray/fb/LocalFB.h"
 // std
-#include <queue>
+#include <condition_variable>
 
 namespace ospray {
   struct TileDesc;
@@ -183,7 +182,7 @@ namespace ospray {
 
     /*! mutex used to protect all threading-sensitive data in this
         object */
-    Mutex mutex;
+    std::mutex mutex;
 
     //! set to true when the frame becomes 'active', and write tile
     //! messages can be consumed.
@@ -194,7 +193,7 @@ namespace ospray {
     bool frameIsDone;
 
     //! condition that gets triggered when the frame is done
-    Condition frameDoneCond;
+    std::condition_variable frameDoneCond;
 
     /*! a vector of async messages for the *current* frame that got
         received before that frame actually started, and that we have

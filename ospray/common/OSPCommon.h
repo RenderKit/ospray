@@ -40,39 +40,17 @@ typedef int ssize_t;
 # include "unistd.h"
 #endif
 
-#if 1
+// ospcommon
 #include "ospcommon/AffineSpace.h"
 #include "ospcommon/RefCount.h"
 #include "ospcommon/malloc.h"
-#else
-// embree
-#include "common/math/vec2.h"
-#include "common/math/vec3.h"
-#include "common/math/vec4.h"
-#include "common/math/bbox.h"
-#include "common/math/affinespace.h" // includes "common/math/linearspace[23].h"
-#include "common/sys/ref.h"
-#include "common/sys/alloc.h"
-#endif
 
-// C++11
-#include <vector>
+#if 0
+// stl
 #include <atomic>
 #include <mutex>
 #include <condition_variable>
 #include <type_traits>
-
-#if 1
-// iw: remove this eventually, and replace all occurrences with actual
-// std::atomic_xyz's etc; for now this'll make it easier to try out the new c++11 types
-namespace ospray {
-  typedef std::atomic_int AtomicInt;
-  typedef std::mutex Mutex;
-  typedef std::lock_guard<std::mutex> LockGuard;
-  typedef std::condition_variable Condition;
-
-  using namespace ospcommon;
-}
 #endif
 
 // ospray
@@ -96,35 +74,25 @@ namespace ospray {
 #endif
 #define OSPRAY_SDK_INTERFACE OSPRAY_INTERFACE
 
-#define ALIGNED_STRUCT                                           \
-  void* operator new(size_t size) { return alignedMalloc(size); }       \
-  void operator delete(void* ptr) { alignedFree(ptr); }      \
-  void* operator new[](size_t size) { return alignedMalloc(size); }  \
-  void operator delete[](void* ptr) { alignedFree(ptr); }    \
-
-#define ALIGNED_STRUCT_(align)                                           \
-  void* operator new(size_t size) { return alignedMalloc(size,align); } \
-  void operator delete(void* ptr) { alignedFree(ptr); }                 \
-  void* operator new[](size_t size) { return alignedMalloc(size,align); } \
-  void operator delete[](void* ptr) { alignedFree(ptr); }               \
-
 //! main namespace for all things ospray (for internal code)
 namespace ospray {
 
+  using namespace ospcommon;
+
   /*! basic types */
-  typedef ::int64_t int64;
-  typedef ::uint64_t uint64;
+  using int64  = std::int64_t;
+  using uint64 = std::uint64_t;
 
-  typedef ::int32_t int32;
-  typedef ::uint32_t uint32;
+  using int32  = std::int32_t;
+  using uint32 = std::uint32_t;
 
-  typedef ::int16_t int16;
-  typedef ::uint16_t uint16;
+  using int16  = std::int16_t;
+  using uint16 = std::uint16_t;
 
-  typedef ::int8_t int8;
-  typedef ::uint8_t uint8;
+  using int8  = std::int8_t;
+  using uint8 = std::uint8_t;
 
-  typedef ::int64_t index_t;
+  using index_t = std::int64_t;
 
   void initFromCommandLine(int *ac = nullptr, const char ***av = nullptr);
 
