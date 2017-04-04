@@ -58,7 +58,7 @@ typedef int ssize_t;
 #include "ospray/OSPTexture.h"
 
 // std
-#include <stdint.h> // for int64_t etc
+#include <cstdint> // for int64_t etc
 #include <sstream>
 
 #ifdef _WIN32
