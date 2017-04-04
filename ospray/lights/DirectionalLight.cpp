@@ -29,7 +29,6 @@ namespace ospray {
     return "ospray::DirectionalLight";
   }
 
-  //! Commit parameters understood by the DirectionalLight
   void DirectionalLight::commit()
   {
     Light::commit();
@@ -53,4 +52,4 @@ namespace ospray {
   OSP_REGISTER_LIGHT(DirectionalLight, distant);
   OSP_REGISTER_LIGHT(DirectionalLight, directional);
 
-}// ::ospray
+} // ::ospray

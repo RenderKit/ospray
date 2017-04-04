@@ -17,13 +17,15 @@
 // ospray 
 #include "Geometry.h"
 #include "common/Util.h"
-#include "common/Library.h"
 // ISPC exports
 #include "Geometry_ispc.h"
 
 namespace ospray {
 
-  Geometry::Geometry() { managedObjectType = OSP_GEOMETRY; }
+  Geometry::Geometry()
+  {
+    managedObjectType = OSP_GEOMETRY;
+  }
 
   void Geometry::setMaterial(Material *mat)
   {

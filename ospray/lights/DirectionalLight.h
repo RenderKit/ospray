@@ -36,4 +36,4 @@ namespace ospray {
     float angularDiameter {0.f};    //!< Apparent size of the distant light, in degree (e.g. 0.53 for the sun)
   };
 
-}// ::ospray
+} // ::ospray

@@ -18,10 +18,6 @@
 #include "TriangleMesh.h"
 #include "common/Model.h"
 #include "../include/ospray/ospray.h"
-// embree 
-#include "embree2/rtcore.h"
-#include "embree2/rtcore_scene.h"
-#include "embree2/rtcore_geometry.h"
 // ispc exports
 #include "TriangleMesh_ispc.h"
 #include <cmath>

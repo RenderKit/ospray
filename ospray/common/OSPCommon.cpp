@@ -16,8 +16,6 @@
 
 #include "OSPCommon.h"
 #include "api/Device.h"
-// embree
-#include "embree2/rtcore.h"
 
 namespace ospray {
 
@@ -107,25 +105,6 @@ namespace ospray {
     }
   }
 
-  void error_handler(const RTCError code, const char *str)
-  {
-    printf("Embree: ");
-    switch (code) {
-      case RTC_UNKNOWN_ERROR    : printf("RTC_UNKNOWN_ERROR"); break;
-      case RTC_INVALID_ARGUMENT : printf("RTC_INVALID_ARGUMENT"); break;
-      case RTC_INVALID_OPERATION: printf("RTC_INVALID_OPERATION"); break;
-      case RTC_OUT_OF_MEMORY    : printf("RTC_OUT_OF_MEMORY"); break;
-      case RTC_UNSUPPORTED_CPU  : printf("RTC_UNSUPPORTED_CPU"); break;
-      default                   : printf("invalid error code"); break;
-    }
-    if (str) { 
-      printf(" ("); 
-      while (*str) putchar(*str++); 
-      printf(")\n"); 
-    }
-    abort();
-  }
-
   size_t sizeOf(const OSPDataType type) {
     switch (type) {
     case OSP_VOID_PTR:
@@ -182,8 +161,9 @@ namespace ospray {
     throw std::runtime_error(error.str());
   }
 
-  OSPDataType typeForString(const char *string) {
-    if (string == NULL)                return(OSP_UNKNOWN);
+  OSPDataType typeForString(const char *string)
+  {
+    if (string == nullptr)             return(OSP_UNKNOWN);
     if (strcmp(string, "char"  ) == 0) return(OSP_CHAR);
     if (strcmp(string, "double") == 0) return(OSP_DOUBLE);
     if (strcmp(string, "float" ) == 0) return(OSP_FLOAT);
@@ -264,7 +244,8 @@ namespace ospray {
     throw std::runtime_error(error.str());
   }
 
-  size_t sizeOf(const OSPTextureFormat type) {
+  size_t sizeOf(const OSPTextureFormat type)
+  {
     switch (type) {
       case OSP_TEXTURE_RGBA8:
       case OSP_TEXTURE_SRGBA:          return sizeof(uint32);

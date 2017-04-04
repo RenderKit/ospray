@@ -20,7 +20,7 @@
 
 namespace ospray {
 
-  std::map<int64,Ref<ospray::ManagedObject> > objectByHandle;
+  std::map<int64,Ref<ospray::ManagedObject>> objectByHandle;
   std::stack<int64> freedHandles;
 
   //! next unassigned ID on this node
@@ -38,7 +38,6 @@ namespace ospray {
   {
     ObjectHandle h;
     if (freedHandles.empty()) {
-      //      h.i32.owner = app.rank;
       h.i32.ID = nextFreeLocalID++;
     } else {
       h = freedHandles.top();

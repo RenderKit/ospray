@@ -16,10 +16,6 @@
 
 #pragma once
 
-/*! \file OSPCommon.h Defines common types and classes that _every_
-  ospray file should know about */
-
-// include cmake config first
 #include "OSPConfig.h"
 
 #ifdef _WIN32
@@ -44,14 +40,6 @@ typedef int ssize_t;
 #include "ospcommon/AffineSpace.h"
 #include "ospcommon/RefCount.h"
 #include "ospcommon/malloc.h"
-
-#if 0
-// stl
-#include <atomic>
-#include <mutex>
-#include <condition_variable>
-#include <type_traits>
-#endif
 
 // ospray
 #include "ospray/OSPDataType.h"
@@ -142,7 +130,7 @@ namespace ospray {
   */
   struct OSPRAY_SDK_INTERFACE WarnOnce
   {
-    WarnOnce(const std::string &warning, uint32_t postAtLogLevel = 0);
+    WarnOnce(const std::string &message, uint32_t postAtLogLevel = 0);
   private:
     const std::string s;
   };
@@ -158,9 +146,3 @@ namespace ospray {
                                      uint32_t postAtLogLevel = 0);
 
 } // ::ospray
-
-#ifdef _WIN32
-#define __PRETTY_FUNCTION__ __FUNCSIG__
-#endif
-#define NOTIMPLEMENTED    throw std::runtime_error(std::string(__PRETTY_FUNCTION__)+": not implemented...");
-
