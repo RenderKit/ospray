@@ -28,6 +28,7 @@ LINK
 
   ${MPI_C_LIBRARIES}
   ospray_common
+  ospray
 
 COMPONENT mpi
 )
