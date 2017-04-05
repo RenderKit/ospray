@@ -212,7 +212,7 @@ namespace ospray {
                         const vec3f *worldCoordinates,
                         const size_t &count) override;
 
-      void processWork(work::Work* work);
+      void processWork(work::Work &work);
 
     private:
 
@@ -220,8 +220,6 @@ namespace ospray {
       int getString(OSPObject object, const char *name, char **value);
 
       ObjectHandle allocateHandle() const;
-
-      //      std::shared_ptr<mpi::BufferedMPIComm> bufferedComm;
 
       /*! @{ read and write stream for the work commands */
       std::unique_ptr<Fabric>      mpiFabric;
