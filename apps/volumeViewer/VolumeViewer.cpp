@@ -129,15 +129,15 @@ void VolumeViewer::setModel(size_t index)
     //! Update transfer function and isosurface editor data value range with the
     //  voxel range of the current model's first volume.
     ospcommon::vec2f voxelRange = modelStates[index].volumes[0]->voxelRange;
-    
+
     if(voxelRange != ospcommon::vec2f(0.f)) {
       transferFunctionEditor->setDataValueRange(voxelRange);
       isosurfaceEditor->setDataValueRange(voxelRange);
     }
-    
+
     // Update active volume on probe widget.
     probeWidget->setVolume(modelStates[index].volumes[0]->handle);
-    
+
     // Update current filename information label.
     if (ownModelPerObject) {
       currentFilenameInfoLabel.setText(
@@ -293,7 +293,7 @@ void VolumeViewer::addGeometry(std::string filename)
 
     for (size_t i = 0; i < msgModel->mesh.size(); i++) {
       Ref<miniSG::Mesh> msgMesh = msgModel->mesh[i];
-      TriangleMeshSceneParser parser(ospray::cpp::Renderer(), "triangles");
+      TriangleMeshSceneParser parser(ospray::cpp::Renderer(renderer), "triangles");
       auto ospMesh = parser.createOSPRayGeometry(msgModel, msgMesh.ptr);
 
       OSPMaterial mat = ospNewMaterial(renderer, "OBJMaterial");
@@ -453,7 +453,7 @@ void VolumeViewer::setShadows(bool value)
 {
   if (shadows != value)
   {
-    ospSet1i(renderer, "shadowsEnabled", value);  
+    ospSet1i(renderer, "shadowsEnabled", value);
     if(rendererInitialized)
       ospCommit(renderer);
 
@@ -471,7 +471,7 @@ void VolumeViewer::setPlane(bool st)
     usePlane = st;
     if (planeMesh)
     {
-      for(size_t i=0; i<modelStates.size(); i++) 
+      for(size_t i=0; i<modelStates.size(); i++)
       {
         ospCommit(modelStates[i].model);
         if (usePlane)
@@ -489,7 +489,7 @@ void VolumeViewer::setPlane(bool st)
 
 void VolumeViewer::setAOWeight(double value)
 {
-  ospSet1f(renderer, "aoWeight", value);  
+  ospSet1f(renderer, "aoWeight", value);
   if(rendererInitialized)
     ospCommit(renderer);
   render();
@@ -499,7 +499,7 @@ void VolumeViewer::setAOSamples(int value)
 {
   if (aoSamples != value)
   {
-    ospSet1i(renderer, "aoSamples", value);  
+    ospSet1i(renderer, "aoSamples", value);
     if(rendererInitialized)
       ospCommit(renderer);
     render();
@@ -513,7 +513,7 @@ void VolumeViewer::setSPP(int value)
 {
   if (spp != value)
   {
-    ospSet1i(renderer, "spp", value);  
+    ospSet1i(renderer, "spp", value);
     if(rendererInitialized)
       ospCommit(renderer);
     render();
@@ -696,7 +696,7 @@ void VolumeViewer::importObjectsFromFile(const std::string &filename)
   if (!ownModelPerObject)
     // Create an OSPRay model and its associated model state.
     modelStates.push_back(ModelState(ospNewModel()));
-  
+
   // Load OSPRay objects from a file.
   //  OSPObject *objects = ObjectFile::importObjects(filename.c_str());
   ospray::importer::Group *imported = ospray::importer::import(filename);
@@ -710,10 +710,10 @@ void VolumeViewer::importObjectsFromFile(const std::string &filename)
   for (size_t i=0 ; i < imported->geometry.size() ; i++) {
     if (ownModelPerObject)
       modelStates.push_back(ModelState(ospNewModel()));
-    
+
     // Commit the geometry.
     ospCommit(imported->geometry[i]->handle);
-    
+
     // Add the loaded geometry to the model.
     ospAddGeometry(modelStates.back().model, imported->geometry[i]->handle);
 
@@ -724,16 +724,16 @@ void VolumeViewer::importObjectsFromFile(const std::string &filename)
   for (size_t i=0 ; i < imported->volume.size() ; i++) {
     if (ownModelPerObject)
       modelStates.push_back(ModelState(ospNewModel()));
-    
+
     ospray::importer::Volume *vol = imported->volume[i];
     assert(vol);
     // For now we set the same transfer function on all volumes.
     ospSetObject(vol->handle, "transferFunction", transferFunction);
     ospCommit(vol->handle);
-    
+
     // Add the loaded volume(s) to the model.
     ospAddVolume(modelStates.back().model, vol->handle);
-    
+
     assert(!vol->bounds.empty());
     // Add to volumes vector for the current model.
     modelStates.back().volumes.push_back(new ModelState::Volume(vol->handle,
@@ -749,12 +749,12 @@ void VolumeViewer::importObjectsFromFile(const std::string &filename)
   for (size_t i=0 ; objects[i] ; i++) {
     if (ownModelPerObject)
       modelStates.push_back(ModelState(ospNewModel()));
-    
+
     OSPDataType type;
     ospGetType(objects[i], nullptr, &type);
-    
+
     if (type == OSP_GEOMETRY) {
-      
+
       // Commit the geometry.
       ospCommit(objects[i]);
 
@@ -836,7 +836,7 @@ void VolumeViewer::initObjects(const std::string &renderer_type)
 
   boundingBox = ospcommon::empty;
   if (!modelStates.empty()) {
-    for (size_t i=0; i<modelStates[0].volumes.size(); i++) 
+    for (size_t i=0; i<modelStates[0].volumes.size(); i++)
       boundingBox.extend(modelStates[0].volumes[i]->boundingBox);
   } else {
     modelStates.push_back(ospNewModel());
@@ -876,7 +876,7 @@ void VolumeViewer::initObjects(const std::string &renderer_type)
 
   OSPData index = ospNewData(2, OSP_INT3, &triangles[0]);
   ospCommit(index);
-  ospSetData(planeMesh, "index", index); 
+  ospSetData(planeMesh, "index", index);
   delete[] triangles;
 
   ospSetMaterial(planeMesh, planeMaterial);

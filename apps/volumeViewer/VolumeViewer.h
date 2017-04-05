@@ -134,7 +134,12 @@ public slots:
   void setGradientShadingEnabled(bool value);
   bool getGradientShadingEnabled() { return gradientShadingEnabled; }
 
-  void setBgColor(ospcommon::vec3f color) { bgColor = color; }
+  void setBgColor(ospcommon::vec3f color) { bgColor = color;
+    std::cout << "setting bgColor to: " << bgColor.x << " "
+      << bgColor.y << " " << bgColor.z << std::endl;
+    ospSet3fv(renderer, "bgColor", &bgColor.x);
+    ospCommit(renderer);
+  }
 
   //! Set gradient shading flag on all volumes.
   void setPreIntegration(bool value);
