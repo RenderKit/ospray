@@ -35,6 +35,7 @@ ELSE()
     library.cpp
     thread.cpp
     vec.cpp
+    PseudoURL.cpp
     array3D/Array3D.cpp
     Socket.cpp
 
