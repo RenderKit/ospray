@@ -200,6 +200,11 @@ namespace ospray {
       return getWorkerCount() > 0;
     }
 
+    inline bool IamTheMaster()
+    {
+      return mpi::world.rank == 0;
+    }
+
     // RTTI hash ID lookup helper functions ///////////////////////////////////
 
     OSPRAY_MPI_INTERFACE size_t translatedHash(size_t v);

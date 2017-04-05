@@ -32,7 +32,8 @@ namespace ospray {
   struct MasterTileMessage_FB;
   struct WriteTileMessage;
 
-  class DistributedTileError : public TileError {
+  class DistributedTileError : public TileError
+  {
     public:
       DistributedTileError(const vec2i &numTiles);
       ~DistributedTileError() = default;
@@ -128,7 +129,6 @@ namespace ospray {
 
     //! number of tiles that "I" own
     size_t numMyTiles() const { return myTiles.size(); }
-    bool IamTheMaster() const { return comm->IamTheMaster(); }
     static int32 workerRank(int id) { return mpi::async::CommLayer::workerRank(id); }
 
     /*! return tile descriptor for given pixel coordinates. this tile

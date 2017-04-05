@@ -29,7 +29,9 @@
 
 namespace ospray {
   namespace mpi {
-    struct MPIDevice : public api::Device {
+
+    struct MPIDevice : public api::Device
+    {
       MPIDevice();
       ~MPIDevice();
 
