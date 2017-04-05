@@ -30,7 +30,7 @@ void TransferFunction::Line::movePoint(const float &startX, const vec2f &end)
   // Find the closest point to where the user clicked
   auto fnd = std::min_element(line.begin(), line.end(),
       [&startX](const vec2f &a, const vec2f &b){
-      return std::abs(startX - a.x) < std::abs(startX - b.x);
+        return std::abs(startX - a.x) < std::abs(startX - b.x);
       });
   // If there's no nearby point we need to insert a new one
   // TODO: How much fudge to allow for here?
@@ -163,8 +163,8 @@ void TransferFunction::drawUi()
     ImDrawList *draw_list = ImGui::GetWindowDrawList();
     draw_list->AddRect(canvasPos, canvasPos + canvasSize, ImColor(255, 255, 255));
 
-    const vec2f view_scale(canvasSize.x, -canvasSize.y);
-    const vec2f viewOffset(canvasPos.x, canvasPos.y + canvasSize.y);
+    const vec2f view_scale(canvasSize.x, -canvasSize.y + 10);
+    const vec2f viewOffset(canvasPos.x, canvasPos.y + canvasSize.y - 10);
 
     ImGui::InvisibleButton("canvas", canvasSize);
     if (ImGui::IsItemHovered()){
@@ -257,7 +257,7 @@ void TransferFunction::render()
         sampleColor[j] = clamp(lerp(lit[j]->y - 0.001, (lit[j] + 1)->y - 0.001, t));
       }
       for (size_t j = 0; j < 3; ++j) {
-        palette[i * 4 + j] = sampleColor[j] * 255.0;
+        palette[i * 4 + j] = clamp(sampleColor[j] * 255.0, 0.0, 255.0);
         ospColors[i][j] = sampleColor[j];
       }
       ospAlpha[i].x = x;
