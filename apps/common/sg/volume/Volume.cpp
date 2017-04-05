@@ -118,7 +118,7 @@ namespace ospray {
       createChildNode("volumeClippingBoxUpper", "vec3f", vec3f(0.f));
       createChildNode("specular", "vec3f", vec3f(0.3f));
       createChildNode("gridOrigin", "vec3f", vec3f(0.0f));
-      createChildNode("gridSpacing", "vec3f", vec3f(0.002f));
+      createChildNode("gridSpacing", "vec3f", vec3f(1.f));
       createChildNode("isosurfaceEnabled", "bool", false);
       createChildNode("isosurface", "float",
                       -std::numeric_limits<float>::infinity(),
@@ -217,7 +217,7 @@ namespace ospray {
     //! return bounding box of all primitives
     box3f StructuredVolumeFromFile::bounds() const
     {
-      return {vec3f(0.f),
+      return  {vec3f(0.f),
               vec3f(getDimensions())*child("gridSpacing").valueAs<vec3f>()};
     }
 
@@ -328,12 +328,6 @@ namespace ospray {
       if (iso < voxelRange.x || iso > voxelRange.y)
         child("isosurface").setValue((voxelRange.y-voxelRange.x)/2.f);
       child("transferFunction")["valueRange"].setValue(voxelRange);
-      child("transferFunction").preCommit(ctx);
-
-      ospSetObject(volume,
-                   "transferFunction",
-                   child("transferFunction").valueAs<OSPObject>());
-      ospCommit(volume);
     }
 
     void StructuredVolumeFromFile::postCommit(RenderContext &ctx)

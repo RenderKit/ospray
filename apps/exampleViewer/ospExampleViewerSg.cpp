@@ -187,9 +187,9 @@ void addPlaneToScene(sg::Node& world)
 
   osp::vec3f *vertices = new osp::vec3f[4];
   float ps = bbox.upper.x*3.f;
-  float py = bbox.lower.z-0.01f;
+  float py = bbox.lower.z-.1f;
 
-  py = bbox.lower.y-0.01f;
+  py = bbox.lower.y+0.01f;
   vertices[0] = osp::vec3f{-ps, py, -ps};
   vertices[1] = osp::vec3f{-ps, py, ps};
   vertices[2] = osp::vec3f{ps, py, -ps};
