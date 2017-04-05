@@ -22,6 +22,8 @@
     argument pairs (e.g., 'format=xyzrgb') */
 
 #include "common.h"
+#include <string>
+#include <vector>
 
 namespace ospcommon {
 
