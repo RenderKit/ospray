@@ -40,7 +40,6 @@
 #  include <unistd.h> // for fork()
 #  include <dlfcn.h>
 #endif
-#include <ios>
 
 #ifdef OPEN_MPI
 # include <thread>
@@ -340,15 +339,16 @@ namespace ospray {
       MPI_CALL(Barrier(mergedComm.comm));
     }
 
-    void createMPI_connectToListener(int *ac, const char **av, const std::string &host)
+    void createMPI_connectToListener(int *ac, const char **av,
+                                     const std::string &host)
     {
       mpi::init(ac,av);
       
       if (world.rank < 1) {
         postErrorMsg("=======================================================\n"
-            "initializing OSPRay MPI in 'connect to master' mode\n"
-            "=======================================================\n",
-            OSPRAY_MPI_VERBOSE_LEVEL);
+                     "initializing OSPRay MPI in 'connect to master' mode\n"
+                     "=======================================================\n",
+                     OSPRAY_MPI_VERBOSE_LEVEL);
       }
 
       worker.comm = world.comm;
@@ -478,7 +478,6 @@ namespace ospray {
     // MPIDevice definitions //////////////////////////////////////////////////
     
     MPIDevice::MPIDevice()
-    //      : bufferedComm(std::make_shared<BufferedMPIComm>())
     {
       /* do _NOT_ try to set up the fabric, streams, etc, here - MPI
          comms are _NOT_ yet properly set up */
@@ -494,7 +493,7 @@ namespace ospray {
       if (IamTheMaster()) {
         postErrorMsg("shutting down mpi device", OSPRAY_MPI_VERBOSE_LEVEL);
         work::CommandFinalize work;
-        processWork(&work);
+        processWork(work);
       }
     }
 
@@ -571,7 +570,7 @@ namespace ospray {
     {
       ObjectHandle handle = allocateHandle();
       work::CreateFrameBuffer work(handle, size, mode, channels);
-      processWork(&work);
+      processWork(work);
       return (OSPFrameBuffer)(int64)handle;
     }
 
@@ -607,7 +606,7 @@ namespace ospray {
     {
       ObjectHandle handle = allocateHandle();
       work::NewModel work("", handle);
-      processWork(&work);
+      processWork(work);
       return (OSPModel)(int64)handle;
     }
 
@@ -617,7 +616,7 @@ namespace ospray {
       Assert(_object);
       const ObjectHandle handle = (const ObjectHandle&)_object;
       work::CommitObject work(handle);
-      processWork(&work);
+      processWork(work);
     }
 
     /*! add a new geometry to a model */
@@ -626,7 +625,7 @@ namespace ospray {
       Assert(_model);
       Assert(_geometry);
       work::AddGeometry work(_model, _geometry);
-      processWork(&work);
+      processWork(work);
     }
 
     /*! add a new volume to a model */
@@ -635,7 +634,7 @@ namespace ospray {
       Assert(_model);
       Assert(_volume);
       work::AddVolume work(_model, _volume);
-      processWork(&work);
+      processWork(work);
     }
 
     /*! create a new data buffer */
@@ -648,7 +647,7 @@ namespace ospray {
         flags = flags & ~OSP_DATA_SHARED_BUFFER;
       }
       work::NewData work(handle, nitems, format, init, flags);
-      processWork(&work);
+      processWork(work);
       return (OSPData)(int64)handle;
     }
 
@@ -665,7 +664,7 @@ namespace ospray {
       Assert(object != nullptr  && "invalid object handle");
       Assert(name != nullptr && "invalid identifier for object parameter");
       work::RemoveParam work((ObjectHandle&)object, name);
-      processWork(&work);
+      processWork(work);
     }
 
     /*! Copy data into the given object. */
@@ -678,13 +677,13 @@ namespace ospray {
       char *typeString = nullptr;
       getString(_volume, "voxelType", &typeString);
       OSPDataType type = typeForString(typeString);
-      delete[] typeString;
+      delete [] typeString;
 
       Assert(type != OSP_UNKNOWN && "unknown volume voxel type");
       // TODO: should we be counting and reporting failures of setRegion
       // like before?
       work::SetRegion work(_volume, index, count, source, type);
-      processWork(&work);
+      processWork(work);
       return true;
     }
 
@@ -696,14 +695,14 @@ namespace ospray {
       Assert(_object);
       Assert(bufName);
       work::SetParam<std::string> work((ObjectHandle&)_object, bufName, s);
-      processWork(&work);
+      processWork(work);
     }
 
     /*! load module */
     int MPIDevice::loadModule(const char *name)
     {
       work::LoadModule work(name);
-      processWork(&work);
+      processWork(work);
       // FIXME: actually we should return an error code here...
       // TODO: If some fail? Can we assume if the master succeeds in loading
       // that all have succeeded in loading? I don't think so.
@@ -718,7 +717,7 @@ namespace ospray {
       Assert(_object);
       Assert(bufName);
       work::SetParam<float> work((ObjectHandle&)_object, bufName, f);
-      processWork(&work);
+      processWork(work);
     }
 
     /*! assign (named) int parameter to an object */
@@ -727,7 +726,7 @@ namespace ospray {
       Assert(_object);
       Assert(bufName);
       work::SetParam<int> work((ObjectHandle&)_object, bufName, i);
-      processWork(&work);
+      processWork(work);
     }
 
     /*! assign (named) vec2f parameter to an object */
@@ -738,7 +737,7 @@ namespace ospray {
       Assert(_object);
       Assert(bufName);
       work::SetParam<vec2f> work((ObjectHandle&)_object, bufName, v);
-      processWork(&work);
+      processWork(work);
     }
 
     /*! assign (named) vec3f parameter to an object */
@@ -749,7 +748,7 @@ namespace ospray {
       Assert(_object);
       Assert(bufName);
       work::SetParam<vec3f> work((ObjectHandle&)_object, bufName, v);
-      processWork(&work);
+      processWork(work);
     }
 
     /*! assign (named) vec4f parameter to an object */
@@ -760,7 +759,7 @@ namespace ospray {
       Assert(_object);
       Assert(bufName);
       work::SetParam<vec4f> work((ObjectHandle&)_object, bufName, v);
-      processWork(&work);
+      processWork(work);
     }
 
     /*! assign (named) vec2i parameter to an object */
@@ -771,7 +770,7 @@ namespace ospray {
       Assert(_object);
       Assert(bufName);
       work::SetParam<vec2i> work((ObjectHandle&)_object, bufName, v);
-      processWork(&work);
+      processWork(work);
     }
 
     /*! assign (named) vec3i parameter to an object */
@@ -782,7 +781,7 @@ namespace ospray {
       Assert(_object);
       Assert(bufName);
       work::SetParam<vec3i> work((ObjectHandle&)_object, bufName, v);
-      processWork(&work);
+      processWork(work);
     }
 
     /*! assign (named) data item as a parameter to an object */
@@ -793,7 +792,7 @@ namespace ospray {
       Assert(_target != nullptr);
       Assert(bufName != nullptr);
       work::SetParam<OSPObject> work((ObjectHandle&)_target, bufName, _value);
-      processWork(&work);
+      processWork(work);
     }
 
     /*! create a new pixelOp object (out of list of registered pixelOps) */
@@ -803,7 +802,7 @@ namespace ospray {
 
       ObjectHandle handle = allocateHandle();
       work::NewPixelOp work(type, handle);
-      processWork(&work);
+      processWork(work);
       return (OSPPixelOp)(int64)handle;
     }
 
@@ -813,7 +812,7 @@ namespace ospray {
       Assert(_fb != nullptr);
       Assert(_op != nullptr);
       work::SetPixelOp work(_fb, _op);
-      processWork(&work);
+      processWork(work);
     }
 
     /*! create a new renderer object (out of list of registered renderers) */
@@ -823,7 +822,7 @@ namespace ospray {
 
       ObjectHandle handle = allocateHandle();
       work::NewRenderer work(type, handle);
-      processWork(&work);
+      processWork(work);
       return (OSPRenderer)(int64)handle;
     }
 
@@ -833,7 +832,7 @@ namespace ospray {
       Assert(type != nullptr);
       ObjectHandle handle = allocateHandle();
       work::NewCamera work(type, handle);
-      processWork(&work);
+      processWork(work);
       return (OSPCamera)(int64)handle;
     }
 
@@ -844,7 +843,7 @@ namespace ospray {
 
       ObjectHandle handle = allocateHandle();
       work::NewVolume work(type, handle);
-      processWork(&work);
+      processWork(work);
       return (OSPVolume)(int64)handle;
     }
 
@@ -855,7 +854,7 @@ namespace ospray {
 
       ObjectHandle handle = allocateHandle();
       work::NewGeometry work(type, handle);
-      processWork(&work);
+      processWork(work);
       return (OSPGeometry)(int64)handle;
     }
 
@@ -870,13 +869,13 @@ namespace ospray {
 
       ObjectHandle handle = allocateHandle();
       work::NewMaterial work(type, _renderer, handle);
-      processWork(&work);
+      processWork(work);
       // TODO: Should we be tracking number of failures? Shouldn't they
       // all fail or not fail?
       return (OSPMaterial)(int64)handle;
     }
 
-      /*! create a new transfer function object (out of list of
+    /*! create a new transfer function object (out of list of
         registered transfer function types) */
     OSPTransferFunction MPIDevice::newTransferFunction(const char *type)
     {
@@ -884,10 +883,9 @@ namespace ospray {
 
       ObjectHandle handle = allocateHandle();
       work::NewTransferFunction work(type, handle);
-      processWork(&work);
+      processWork(work);
       return (OSPTransferFunction)(int64)handle;
     }
-
 
     /*! have given renderer create a new Light */
     OSPLight MPIDevice::newLight(OSPRenderer _renderer, const char *type)
@@ -897,7 +895,7 @@ namespace ospray {
 
       ObjectHandle handle = allocateHandle();
       work::NewLight work(type, _renderer, handle);
-      processWork(&work);
+      processWork(work);
       // TODO: Should we be tracking number of failures? Shouldn't they
       // all fail or not fail?
       return (OSPLight)(int64)handle;
@@ -919,33 +917,32 @@ namespace ospray {
                                      const uint32 fbChannelFlags)
     {
       work::ClearFrameBuffer work(_fb, fbChannelFlags);
-      processWork(&work);
+      processWork(work);
     }
 
     /*! remove an existing geometry from a model */
     void MPIDevice::removeGeometry(OSPModel _model, OSPGeometry _geometry)
     {
       work::RemoveGeometry work(_model, _geometry);
-      processWork(&work);
+      processWork(work);
     }
 
     /*! remove an existing volume from a model */
     void MPIDevice::removeVolume(OSPModel _model, OSPVolume _volume)
     {
       work::RemoveVolume work(_model, _volume);
-      processWork(&work);
+      processWork(work);
     }
-
 
     /*! call a renderer to render a frame buffer */
     float MPIDevice::renderFrame(OSPFrameBuffer _fb,
-                                OSPRenderer _renderer,
-                                const uint32 fbChannelFlags)
+                                 OSPRenderer _renderer,
+                                 const uint32 fbChannelFlags)
     {
       // Note: render frame is flushing so the work error result will be set,
       // since the master participates in rendering
       work::RenderFrame work(_fb, _renderer, fbChannelFlags);
-      processWork(&work);
+      processWork(work);
       return work.varianceResult;
     }
 
@@ -963,14 +960,14 @@ namespace ospray {
     {
       if (!_obj) return;
       work::CommandRelease work((const ObjectHandle&)_obj);
-      processWork(&work);
+      processWork(work);
     }
 
     //! assign given material to given geometry
     void MPIDevice::setMaterial(OSPGeometry _geometry, OSPMaterial _material)
     {
       work::SetMaterial work((ObjectHandle&)_geometry, _material);
-      processWork(&work);
+      processWork(work);
     }
 
     /*! create a new Texture2D object */
@@ -979,7 +976,7 @@ namespace ospray {
     {
       ObjectHandle handle = allocateHandle();
       work::NewTexture2d work(handle, sz, type, data, flags);
-      processWork(&work);
+      processWork(work);
       return (OSPTexture2D)(int64)handle;
     }
 
@@ -988,10 +985,8 @@ namespace ospray {
                                  const vec3f *worldCoordinates,
                                  const size_t &count)
     {
-      Assert2(volume, "invalid volume handle");
-      Assert2(worldCoordinates, "invalid worldCoordinates");
-
-      Assert2(0, "not implemented");
+      UNUSED(results, volume, worldCoordinates, count);
+      NOT_IMPLEMENTED;
     }
 
     int MPIDevice::getString(OSPObject _object, const char *name, char **value)
@@ -1010,7 +1005,7 @@ namespace ospray {
       return false;
     }
 
-    void MPIDevice::processWork(work::Work* work)
+    void MPIDevice::processWork(work::Work &work)
     {
       if (logMPI) {
         static size_t numWorkSent = 0;
@@ -1021,13 +1016,13 @@ namespace ospray {
       }
       auto tag = typeIdOf(work);
       writeStream->write(&tag, sizeof(tag));
-      work->serialize(*writeStream);
+      work.serialize(*writeStream);
       
-      if (work->flushing()) 
+      if (work.flushing())
         writeStream->flush();
 
       // Run the master side variant of the work unit
-      work->runOnMaster();
+      work.runOnMaster();
 
       if (logMPI) {
         std::stringstream msg;
