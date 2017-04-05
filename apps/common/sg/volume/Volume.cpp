@@ -88,6 +88,11 @@ namespace ospray {
       }
     }
 
+    bool unsupportedVoxelType(const std::string &type) {
+      return type != "uchar" && type != "ushort" && type != "short"
+        && type != "float" && type != "double";
+    }
+
     // =======================================================
     // base volume class
     // =======================================================
@@ -179,11 +184,8 @@ namespace ospray {
 
       if (voxelType == "uint8")
         voxelType = "uchar";
-      if (voxelType != "float" &&
-          voxelType != "uint8" &&
-          voxelType != "uchar") {
-        throw std::runtime_error("unknown StructuredVolume.voxelType (currently"
-                                 " only supporting 'float' and 'uint8')");
+      if (unsupportedVoxelType(voxelType)) {
+        THROW_SG_ERROR("unknown StructuredVolume.voxelType '" + voxelType + "'");
       }
 
       std::cout << "#osp:sg: created StructuredVolume from XML file, "
@@ -232,13 +234,11 @@ namespace ospray {
         throw std::runtime_error("sg::StructuredVolumeFromFile: "
                                  "no 'fileName' specified");
       }
+      if (unsupportedVoxelType(voxelType)) {
+        THROW_SG_ERROR("unknown StructuredVolume.voxelType '" + voxelType + "'");
+      }
 
       fileNameOfCorrespondingXmlDoc = node.doc->fileName;
-
-      if (voxelType != "float" && voxelType != "uchar") {
-        throw std::runtime_error("unknown StructuredVolume.voxelType "
-                                 "(currently support 'float' and 'uchar')");
-      }
 
       std::cout << "#osp:sg: created StructuredVolume from XML file, "
                 << "dimensions = " << getDimensions() << std::endl;
