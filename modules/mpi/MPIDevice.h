@@ -232,13 +232,6 @@ namespace ospray {
       bool initialized {false};
     };
 
-    // ==================================================================
-    // Helper functions
-    // ==================================================================
-
-    // /*! return a string represenging the given API Mode */
-    // const char *apiModeName(int mode);
-
   } // ::ospray::mpi
 } // ::ospray
 
