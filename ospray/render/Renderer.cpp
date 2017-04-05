@@ -92,10 +92,7 @@ namespace ospray {
 
   float Renderer::renderFrame(FrameBuffer *fb, const uint32 channelFlags)
   {
-     // double T0 = getSysTime();
     return TiledLoadBalancer::instance->renderFrame(this,fb,channelFlags);
-     // double T1 = getSysTime();
-     // printf("time per frame %lf ms\n",(T1-T0)*1e3f);
   }
 
   OSPPickResult Renderer::pick(const vec2f &screenPos)

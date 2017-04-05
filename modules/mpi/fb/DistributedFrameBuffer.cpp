@@ -21,6 +21,7 @@
 #include "ospcommon/tasking/parallel_for.h"
 #include "ospcommon/tasking/schedule.h"
 
+#include "mpiCommon/MPICommon.h"
 #include "mpiCommon/async/Messaging.h"
 
 #ifdef _WIN32
@@ -180,7 +181,7 @@ namespace ospray {
         // increment accumID only for active tiles
         for (int t = 0; t < getTotalTiles(); t++)
           if (tileError(vec2i(t, 0)) <= errorThreshold) {
-            if (IamTheMaster() || allTiles[t]->mine())
+            if (mpi::IamTheMaster() || allTiles[t]->mine())
               numTilesCompletedThisFrame++;
           } else
             tileAccumID[t]++;
@@ -202,7 +203,7 @@ namespace ospray {
       this->incoming(msg);
 
     if (numTilesCompletedThisFrame
-        == (IamTheMaster() ? getTotalTiles() : myTiles.size()))
+        == (mpi::IamTheMaster() ? getTotalTiles() : myTiles.size()))
       closeCurrentFrame();
   }
 
@@ -330,7 +331,7 @@ namespace ospray {
     DBG(printf("rank %i: tilecompleted %i,%i\n",mpi::world.rank,
                tile->begin.x,tile->begin.y));
 
-    if (IamTheMaster()) {
+    if (mpi::IamTheMaster()) {
       int numTilesCompletedByMyTile = 0;
       /*! we will not do anything with the tile other than mark it's done */
       {
@@ -441,7 +442,7 @@ namespace ospray {
     frameIsActive = false;
     frameIsDone   = true;
 
-    if (IamTheMaster()) {
+    if (mpi::IamTheMaster()) {
       /* do nothing */
     } else {
       if (pixelOp) { 

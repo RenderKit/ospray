@@ -434,7 +434,7 @@ namespace ospray {
     // global stuff
     // ==================================================================
 
-    using CreatorFct = std::shared_ptr<sg::Node>(*)();
+    using CreatorFct = sg::Node*(*)();
 
     std::map<std::string, CreatorFct> nodeRegistry;
 
@@ -459,7 +459,7 @@ namespace ospray {
         creator = it->second;
       }
 
-      std::shared_ptr<sg::Node> newNode = creator();
+      std::shared_ptr<sg::Node> newNode(creator());
       newNode->setName(name);
       newNode->setType(type);
       newNode->setFlags(flags);

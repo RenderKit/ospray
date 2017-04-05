@@ -17,10 +17,6 @@
 // ospray
 #include "api/Device.h"
 #include "Model.h"
-// embree
-#include "embree2/rtcore.h"
-#include "embree2/rtcore_scene.h"
-#include "embree2/rtcore_geometry.h"
 // ispc exports
 #include "Model_ispc.h"
 

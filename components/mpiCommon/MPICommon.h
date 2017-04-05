@@ -26,6 +26,7 @@
 
 // ospcommon
 #include "ospcommon/common.h"
+#include "ospray/common/OSPCommon.h"
 
 #ifdef _WIN32
 #  ifdef ospray_mpi_common_EXPORTS
@@ -55,6 +56,9 @@
   }); \
 }
 
+// Log level at which extremely verbose MPI logging output will
+// be written
+#define OSPRAY_MPI_VERBOSE_LEVEL 3
 
 namespace ospray {
   namespace mpi {
@@ -194,6 +198,11 @@ namespace ospray {
     inline bool isMpiParallel()
     {
       return getWorkerCount() > 0;
+    }
+
+    inline bool IamTheMaster()
+    {
+      return mpi::world.rank == 0;
     }
 
     // RTTI hash ID lookup helper functions ///////////////////////////////////

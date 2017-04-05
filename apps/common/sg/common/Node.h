@@ -437,24 +437,22 @@ namespace ospray {
       of this renderer.
     */
 #define OSP_REGISTER_SG_NODE(InternalClassName)                         \
-    extern "C" OSPSG_INTERFACE std::shared_ptr<ospray::sg::Node>        \
+    extern "C" OSPSG_INTERFACE ospray::sg::Node*                        \
     ospray_create_sg_node__##InternalClassName()                        \
     {                                                                   \
-      return std::make_shared<ospray::sg::InternalClassName>();         \
+      return new ospray::sg::InternalClassName;                         \
     }                                                                   \
     /* Extra declaration to avoid "extra ;" pedantic warnings */        \
-    std::shared_ptr<ospray::sg::Node>                                   \
-    ospray_create_sg_node__##InternalClassName()
+    ospray::sg::Node* ospray_create_sg_node__##InternalClassName()
 
 #define OSP_REGISTER_SG_NODE_NAME(InternalClassName,Name)               \
-    extern "C" OSPSG_INTERFACE std::shared_ptr<ospray::sg::Node>        \
+    extern "C" OSPSG_INTERFACE ospray::sg::Node*                        \
     ospray_create_sg_node__##Name()                                     \
     {                                                                   \
-      return std::make_shared<ospray::sg::InternalClassName>();         \
+      return new ospray::sg::InternalClassName;                         \
     }                                                                   \
     /* Extra declaration to avoid "extra ;" pedantic warnings */        \
-    std::shared_ptr<ospray::sg::Node>                                   \
-    ospray_create_sg_node__##Name()
+    ospray::sg::Node* ospray_create_sg_node__##Name()
 
   } // ::ospray::sg
 } // ::ospray

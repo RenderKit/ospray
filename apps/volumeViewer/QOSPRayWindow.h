@@ -112,11 +112,11 @@ protected:
   /*! Display the frame rate in the main window title bar. */
   bool showFrameRate;
 
-  virtual void paintGL();
-  virtual void resizeGL(int width, int height);
-  virtual void mousePressEvent(QMouseEvent * event);
-  virtual void mouseReleaseEvent(QMouseEvent * event);
-  virtual void mouseMoveEvent(QMouseEvent * event);
+  virtual void paintGL() override;
+  virtual void resizeGL(int width, int height) override;
+  virtual void mousePressEvent(QMouseEvent * event) override;
+  virtual void mouseReleaseEvent(QMouseEvent * event) override;
+  virtual void mouseMoveEvent(QMouseEvent * event) override;
 
   /*! rotate about center point */
   virtual void rotateCenter(float du, float dv);

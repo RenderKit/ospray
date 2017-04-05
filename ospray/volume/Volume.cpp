@@ -15,12 +15,11 @@
 // ======================================================================== //
 
 // ospray
-#include "common/Library.h"
 #include "common/Util.h"
 #include "volume/Volume.h"
-#include "Volume_ispc.h"
 #include "transferFunction/TransferFunction.h"
 #include "common/Data.h"
+#include "Volume_ispc.h"
 
 namespace ospray {
 

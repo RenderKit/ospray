@@ -30,8 +30,6 @@ namespace ospray {
     necessariy 'end-begin'. 'color' and 'depth' arrays are always
     alloc'ed in TILE_SIZE pixels */
   struct TileDesc {
-    ALIGNED_STRUCT
-
     /*! constructor */
     TileDesc(DistributedFrameBuffer *dfb,
              const vec2i &begin,
@@ -144,7 +142,7 @@ namespace ospray {
         buffer in the parent tile we temporarily composite into this
         buffer until all the composites have been done. */
     ospray::Tile compositedTileData;
-    Mutex mutex;
+    std::mutex mutex;
   };
 
   /*! specialized tile implementation that first buffers all
@@ -181,7 +179,7 @@ namespace ospray {
     int currentGeneration;
     int expectedInNextGeneration;
     int missingInCurrentGeneration;
-    Mutex mutex;
+    std::mutex mutex;
   };
 
 } // namespace ospray

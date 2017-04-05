@@ -41,7 +41,7 @@ namespace ospray {
     xfm.l.vz = getParam3f("xfm.l.vz",vec3f(0.f,0.f,1.f));
     xfm.p   = getParam3f("xfm.p",vec3f(0.f,0.f,0.f));
 
-    instancedScene = (Model *)getParamObject("model",NULL);
+    instancedScene = (Model *)getParamObject("model", nullptr);
     assert(instancedScene);
 
     if (!instancedScene->embreeSceneHandle) {

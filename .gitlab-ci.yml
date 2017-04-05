@@ -142,7 +142,7 @@ release-linux-icc:
   type: deploy
   script:
     - module load cmake
-    - module load gcc
+    - module load gcc/4.9.3
     - module load intel
     - module load qt
     - export CC=icc

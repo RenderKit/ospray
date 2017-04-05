@@ -89,8 +89,8 @@ namespace ospray {
 
   void DataDistributedBlockedVolume::buildAccelerator()
   {
-    std::cout << "intentionally SKIP building an accelerator for data parallel "
-              << "volume (this'll be done on the brick level)" << std::endl;
+    postErrorMsg("intentionally SKIP building an accelerator for data parallel "
+        "volume (this'll be done on the brick level)\n", OSPRAY_MPI_VERBOSE_LEVEL);
   }
 
   std::string DataDistributedBlockedVolume::toString() const
@@ -177,9 +177,14 @@ namespace ospray {
 
     ddBlocks    = getParam3i("num_dp_blocks",vec3i(4,4,4));
     blockSize   = divRoundUp(dimensions,ddBlocks);
-    std::cout << "#osp:dp: using data parallel volume of " << ddBlocks
-              << " blocks, blockSize is " << blockSize << std::endl;
-    
+
+    std::stringstream msg;
+    if (mpi::logMPI) {
+      msg << "#osp:dp: using data parallel volume of " << ddBlocks
+        << " blocks, blockSize is " << blockSize << "\n";
+      postErrorMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
+    }
+
     // Set the grid origin, default to (0,0,0).
     this->gridOrigin = getParam3f("gridOrigin", vec3f(0.f));
 
@@ -196,10 +201,14 @@ namespace ospray {
     numDDBlocks = ospcommon::reduce_mul(ddBlocks);
     ddBlock     = new DDBlock[numDDBlocks];
 
-    printf("=======================================================\n");
-    printf("created %ix%ix%i data distributed volume blocks\n",
-           ddBlocks.x,ddBlocks.y,ddBlocks.z);
-    printf("=======================================================\n");
+    if (mpi::logMPI) {
+      msg.clear();
+      msg << "=======================================================\n"
+        << "created " << ddBlocks.x << "x" << ddBlocks.y << "x" << ddBlocks.z
+        << " data distributed volume blocks\n"
+        << "=======================================================\n";
+      postErrorMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
+    }
 
     if (!ospray::mpi::isMpiParallel()) {
       throw std::runtime_error("data parallel volume, but not in mpi parallel "
@@ -259,9 +268,15 @@ namespace ospray {
               volume->findParam("scaleFactor",1)->set(scaleFactor);
             }
             
-            printf("worker rank %li owns block %i,%i,%i (ID %i), dims %i %i %i\n",
-                   (size_t)mpi::getWorkerRank(),ix,iy,iz,
-                   blockID,blockDims.x,blockDims.y,blockDims.z);
+            if (mpi::logMPI) {
+              msg.clear();
+              msg << "worker rank " << mpi::getWorkerRank()
+                << " owns block " << ix << "," << iy << "," << iz
+                << " (ID " << blockID << "), dims " << blockDims.x
+                << " " << blockDims.y << " " << blockDims.z << "\n";
+              postErrorMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
+            }
+
             block->cppVolume = volume;
             block->ispcVolume = NULL; //volume->getIE();
           } else {

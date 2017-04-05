@@ -29,7 +29,8 @@ namespace ospray {
     return "ospray::AmbientLight";
   }
 
-  void AmbientLight::commit() {
+  void AmbientLight::commit()
+  {
     Light::commit();
 
     color     = getParam3f("color", vec3f(1.f));
@@ -47,4 +48,4 @@ namespace ospray {
   OSP_REGISTER_LIGHT(AmbientLight, AmbientLight);
   OSP_REGISTER_LIGHT(AmbientLight, ambient);
 
-}// ::ospray
+} // ::ospray

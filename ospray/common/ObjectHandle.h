@@ -38,7 +38,8 @@ namespace ospray {
     as if they were pointers (and thus, 'null' objects are
     consistent between local and mpi rendering)
   */
-  union OSPRAY_SDK_INTERFACE ObjectHandle {
+  union OSPRAY_SDK_INTERFACE ObjectHandle
+  {
     static ObjectHandle alloc();
     void free();
 

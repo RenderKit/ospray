@@ -16,19 +16,9 @@
 
 // ospray
 #include "PixelOp.h"
-#include "common/Library.h"
 #include "common/Util.h"
-// stl
-#include <map>
 
 namespace ospray {
-
-  // PixelOp::Instance *PixelOp::createInstance(FrameBuffer *fb,
-  //                                            PixelOp::Instance *prev)
-  // {
-  //   UNUSED(fb, prev);
-  //   return nullptr;
-  // }
 
   PixelOp *PixelOp::createInstance(const char *type)
   {

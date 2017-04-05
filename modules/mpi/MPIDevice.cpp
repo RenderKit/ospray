@@ -49,16 +49,132 @@
 #endif
 
 namespace ospray {
-  using std::cout;
-  using std::endl;
-
   namespace mpi {
-    
+
+    // Forward declarations ///////////////////////////////////////////////////
+
+    bool checkIfWeNeedToDoMPIDebugOutputs();
+
     //! this runs an ospray worker process.
     /*! it's up to the proper init routine to decide which processes
       call this function and which ones don't. This function will not
       return. */
     OSPRAY_MPI_INTERFACE void runWorker();
+
+    // Misc helper functions //////////////////////////////////////////////////
+
+    static inline void throwIfNotMpiParallel()
+    {
+      if (world.size <= 1) {
+        throw std::runtime_error("No MPI workers found.\n#osp:mpi: Fatal Error "
+                                 "- OSPRay told to run in MPI mode, but there "
+                                 "seems to be no MPI peers!?\n#osp:mpi: (Did "
+                                 "you forget an 'mpirun' in front of your "
+                                 "application?)");
+      }
+    }
+
+    static inline void setupMaster()
+    {
+      SERIALIZED_MPI_CALL(
+        Comm_split(mpi::world.comm,1,mpi::world.rank,&app.comm)
+      );
+
+      app.makeIntraComm();
+
+      if (logMPI) {
+        std::stringstream msg;
+        msg << "#w: app process " << app.rank << '/' << app.size
+            << " (global " << world.rank << '/' << world.size << std::endl;
+        postErrorMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
+      }
+
+      SERIALIZED_MPI_CALL(
+        Intercomm_create(app.comm, 0, world.comm, 1, 1, &worker.comm)
+      );
+
+      if (logMPI) {
+        std::stringstream msg;
+        msg << "master: Made 'worker' intercomm (through intercomm_create): "
+            << std::hex << std::showbase << worker.comm
+            << std::noshowbase << std::dec << std::endl;
+        postErrorMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
+      }
+
+      worker.makeInterComm();
+    }
+
+    static inline void setupWorker()
+    {
+      SERIALIZED_MPI_CALL(
+        Comm_split(mpi::world.comm,0,mpi::world.rank,&worker.comm)
+      );
+
+      worker.makeIntraComm();
+
+      if (logMPI) {
+        std::stringstream msg;
+        msg << "master: Made 'worker' intercomm (through split): "
+            << std::hex << std::showbase << worker.comm
+            << std::noshowbase << std::dec << std::endl;
+
+        msg << "#w: app process " << app.rank << '/' << app.size
+            << " (global " << world.rank << '/' << world.size << std::endl;
+        postErrorMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
+      }
+
+      SERIALIZED_MPI_CALL(
+        Intercomm_create(worker.comm, 0, world.comm, 0, 1, &app.comm)
+      );
+
+      app.makeInterComm();
+    }
+
+    static inline void doHandshakeTestMaster()
+    {
+      MPI_Status status;
+      serialized(CODE_LOCATION, [&](){
+        if (logMPI) {
+          std::stringstream msg;
+          msg << "#m: ping-ponging a test message to every worker..."
+              << std::endl;
+        }
+
+        for (int i=0;i<worker.size;i++) {
+          if (logMPI) {
+            std::stringstream msg;
+            msg << "#m: sending tag "<< i << " to worker " << i << std::endl;
+            postErrorMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
+          }
+          MPI_CALL(Send(&i,1,MPI_INT,i,i,worker.comm));
+          int reply;
+          MPI_CALL(Recv(&reply,1,MPI_INT,i,i,worker.comm,&status));
+          Assert(reply == i);
+        }
+        MPI_CALL(Barrier(MPI_COMM_WORLD));
+      });
+    }
+
+    static inline void doHandshakeTestWorker()
+    {
+      MPI_Status status;
+      serialized(CODE_LOCATION, [&](){
+        // replying to test-message
+        if (logMPI) {
+          std::stringstream msg;
+          msg << "#w: start-up ping-pong: worker " << worker.rank <<
+                 " trying to receive tag " << worker.rank << "...\n";
+          postErrorMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
+        }
+        int reply;
+        MPI_CALL(Recv(&reply,1,MPI_INT,0,worker.rank,app.comm,&status));
+        MPI_CALL(Send(&reply,1,MPI_INT,0,worker.rank,app.comm));
+
+        MPI_CALL(Barrier(MPI_COMM_WORLD));
+      });
+    }
+
+    // MPI initialization helper functions ////////////////////////////////////
 
     /*! in this mode ("ospray on ranks" mode, or "ranks" mode), the
         user has launched the app across all ranks using mpirun "<all
@@ -94,74 +210,25 @@ namespace ospray {
     void createMPI_runOnExistingRanks(int *ac, const char **av,
                                       bool ranksBecomeWorkers)
     {
-      MPI_Status status;
       mpi::init(ac,av);
+
+      logMPI = checkIfWeNeedToDoMPIDebugOutputs();
+
       if (logMPI) {
         std::stringstream msg;
         msg << "#o: initMPI::OSPonRanks: " << world.rank << '/' << world.size
             << std::endl;
-        postErrorMsg(msg);
+        postErrorMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
       }
 
       SERIALIZED_MPI_CALL(Barrier(MPI_COMM_WORLD));
 
-      if (world.size <= 1) {
-        throw std::runtime_error("No MPI workers found.\n#osp:mpi: Fatal Error "
-                                 "- OSPRay told to run in MPI mode, but there "
-                                 "seems to be no MPI peers!?\n#osp:mpi: (Did "
-                                 "you forget an 'mpirun' in front of your "
-                                 "application?)");
-      }
+      throwIfNotMpiParallel();
 
-      if (world.rank == 0) {
-        // we're the root
-        SERIALIZED_MPI_CALL(Comm_split(mpi::world.comm,1,mpi::world.rank,&app.comm));
-        app.makeIntraComm();
-        if (logMPI) {
-          std::stringstream msg;
-          msg << "#w: app process " << app.rank << '/' << app.size
-              << " (global " << world.rank << '/' << world.size << std::endl;
-          postErrorMsg(msg);
-        }
+      if (IamTheMaster()) {
+        setupMaster();
+        doHandshakeTestMaster();
 
-        SERIALIZED_MPI_CALL(Intercomm_create(app.comm, 0, world.comm, 1, 1, &worker.comm));
-        if (logMPI) {
-          std::stringstream msg;
-          msg << "master: Made 'worker' intercomm (through intercomm_create): "
-              << std::hex << std::showbase << worker.comm
-              << std::noshowbase << std::dec << std::endl;
-          postErrorMsg(msg);
-        }
-        
-        // worker.makeIntracomm();
-        worker.makeInterComm();
-
-
-        // ------------------------------------------------------------------
-        // do some simple hand-shake test, just to make sure MPI is
-        // working correctly
-        // ------------------------------------------------------------------
-        serialized(CODE_LOCATION, [&](){
-          if (logMPI) {
-            std::stringstream msg;
-            msg << "#m: ping-ponging a test message to every worker..."
-                << std::endl;
-          }
-
-          for (int i=0;i<worker.size;i++) {
-            if (logMPI) {
-              std::stringstream msg;
-              msg << "#m: sending tag "<< i << " to worker " << i << std::endl;
-              postErrorMsg(msg);
-            }
-            MPI_Send(&i,1,MPI_INT,i,i,worker.comm);
-            int reply;
-            MPI_Recv(&reply,1,MPI_INT,i,i,worker.comm,&status);
-            Assert(reply == i);
-          }
-          MPI_Barrier(MPI_COMM_WORLD);
-        });
-        
         // -------------------------------------------------------
         // at this point, all processes should be set up and synced. in
         // particular:
@@ -170,43 +237,9 @@ namespace ospray {
         //   another ("worker")
         // - all processes (incl app) have barrier'ed, and thus now in sync.
       } else {
-        // we're the workers
-        SERIALIZED_MPI_CALL(Comm_split(mpi::world.comm,0,mpi::world.rank,&worker.comm));
-        worker.makeIntraComm();
-        if (logMPI) {
-          std::stringstream msg;
-          msg << "master: Made 'worker' intercomm (through split): "
-              << std::hex << std::showbase << worker.comm
-              << std::noshowbase << std::dec << std::endl;
+        setupWorker();
+        doHandshakeTestWorker();
 
-          msg << "#w: app process " << app.rank << '/' << app.size
-              << " (global " << world.rank << '/' << world.size << std::endl;
-          postErrorMsg(msg);
-        }
-
-        SERIALIZED_MPI_CALL(Intercomm_create(worker.comm, 0, world.comm, 0, 1, &app.comm));
-        app.makeInterComm();
-
-        // ------------------------------------------------------------------
-        // do some simple hand-shake test, just to make sure MPI is
-        // working correctly
-        // ------------------------------------------------------------------
-        serialized(CODE_LOCATION, [&](){
-          // replying to test-message
-          if (logMPI) {
-            std::stringstream msg;
-            msg << "#w: start-up ping-pong: worker " << worker.rank <<
-                   " trying to receive tag " << worker.rank << "...\n";
-            postErrorMsg(msg);
-          }
-          int reply;
-          MPI_Recv(&reply,1,MPI_INT,0,worker.rank,app.comm,&status);
-          MPI_Send(&reply,1,MPI_INT,0,worker.rank,app.comm);
-          
-          MPI_Barrier(MPI_COMM_WORLD);
-        });
-
-        
         // -------------------------------------------------------
         // at this point, all processes should be set up and synced. in
         // particular:
@@ -225,8 +258,8 @@ namespace ospray {
           if (logMPI) {
             std::stringstream msg;
             msg << "#osp:mpi: distributed mode detected, "
-                << "returning device on all ranks!" << endl;
-            postErrorMsg(msg);
+                << "returning device on all ranks!" << std::endl;
+            postErrorMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
           }
         }
       }
@@ -252,25 +285,24 @@ namespace ospray {
     {
       mpi::init(ac,av);
 
-      if (logMPI && world.rank < 1) {
-        cout << "======================================================="
-             << endl;
-        cout << "initializing OSPRay MPI in 'listening for workers' mode"
-             << endl;
-        cout << "======================================================="
-             << endl;
+      if (world.rank < 1) {
+        postErrorMsg("=======================================================\n"
+                     "initializing OSPRay MPI in 'listening for workers' mode\n"
+                     "=======================================================\n",
+                     OSPRAY_MPI_VERBOSE_LEVEL);
       }
-      int rc;
 
       app.comm = world.comm;
       app.makeIntraComm();
 
       char appPortName[MPI_MAX_PORT_NAME];
-      if (world.rank != 0) 
-        throw std::runtime_error("--osp:mpi-listen only makes sense with a single rank  ...");
 
-      rc = MPI_Open_port(MPI_INFO_NULL, appPortName);
-      Assert(rc == MPI_SUCCESS);
+      if (!IamTheMaster()) {
+        throw std::runtime_error("--osp:mpi-listen only makes sense with "
+                                 "a single rank...");
+      }
+
+      MPI_CALL(Open_port(MPI_INFO_NULL, appPortName));
       
       socket_t mpiPortSocket = ospcommon::bind(3141);
       socket_t clientSocket = ospcommon::listen(mpiPortSocket);
@@ -279,12 +311,11 @@ namespace ospray {
       ospcommon::write(clientSocket,appPortName,len);
       flush(clientSocket);
       
-      rc = MPI_Comm_accept(appPortName,MPI_INFO_NULL,0,app.comm,&worker.comm);
+      MPI_CALL(Comm_accept(appPortName,MPI_INFO_NULL,0,app.comm,&worker.comm));
       ospcommon::close(clientSocket);
       ospcommon::close(mpiPortSocket);
-      Assert(rc == MPI_SUCCESS);
-      worker.makeInterComm();
 
+      worker.makeInterComm();
 
       mpi::Group mergedComm;
       MPI_CALL(Intercomm_merge(worker.comm,0,&mergedComm.comm));
@@ -300,33 +331,25 @@ namespace ospray {
                                 290374);
 
       if (app.rank == 0) {
-        cout << "======================================================="
-             << endl;
-        cout << "OSPRAY Worker ring connected" << endl;
-        cout << "======================================================="
-             << endl;
+        postErrorMsg("=======================================================\n"
+                     "OSPRAY Worker ring connected\n"
+                     "=======================================================\n",
+                     OSPRAY_MPI_VERBOSE_LEVEL);
       }
-      MPI_Barrier(mergedComm.comm);
+
+      MPI_CALL(Barrier(mergedComm.comm));
     }
-
-
-
-
 
     void createMPI_connectToListener(int *ac, const char **av, const std::string &host)
     {
-      MPI_Status status;
       mpi::init(ac,av);
       
-      if (logMPI && world.rank < 1) {
-        cout << "======================================================="
-             << endl;
-        cout << "initializing OSPRay MPI in 'connect to master' mode"
-             << endl;
-        cout << "======================================================="
-             << endl;
+      if (world.rank < 1) {
+        postErrorMsg("=======================================================\n"
+            "initializing OSPRay MPI in 'connect to master' mode\n"
+            "=======================================================\n",
+            OSPRAY_MPI_VERBOSE_LEVEL);
       }
-      int rc;
 
       worker.comm = world.comm;
       worker.makeIntraComm();
@@ -341,9 +364,7 @@ namespace ospray {
         ospcommon::close(masterSocket);
       }
 
-      rc = MPI_Comm_connect(appPortName,MPI_INFO_NULL,0,worker.comm,&app.comm);
-
-      Assert(rc == MPI_SUCCESS);
+      MPI_CALL(Comm_connect(appPortName,MPI_INFO_NULL,0,worker.comm,&app.comm));
       app.makeInterComm();
 
 
@@ -353,24 +374,17 @@ namespace ospray {
       mpi::world.comm = mergedComm.comm;
       mpi::world.makeIntraComm();
 
-
       // create a new world that has everybody:
       
       mpi::async::CommLayer::WORLD->group = 
         mpi::async::createGroup(mergedComm.comm,
                                 mpi::async::CommLayer::WORLD,
                                 290374);
-      MPI_Barrier(mergedComm.comm);
+      MPI_CALL(Barrier(mergedComm.comm));
 
-
-      // MPI_Barrier(worker.comm);
-
-      std::cout << "starting worker..." << std::endl;
-        mpi::runWorker();
+      postErrorMsg("starting worker...", OSPRAY_MPI_VERBOSE_LEVEL);
+      mpi::runWorker();
     }
-
-
-
 
     /*! in this mode ("separate worker group" mode)
       - the user may or may not have launched MPI explicitly for his app
@@ -384,36 +398,37 @@ namespace ospray {
     void createMPI_LaunchWorkerGroup(int *ac, const char **av,
                                      const char *launchCommand)
     {
-      int rc;
-
       mpi::init(ac,av);
 
       Assert(launchCommand);
 
-      MPI_Comm_dup(world.comm,&app.comm);
+      MPI_CALL(Comm_dup(world.comm,&app.comm));
       app.makeIntraComm();
-      // app.makeIntercomm();
 
       char appPortName[MPI_MAX_PORT_NAME];
       if (app.rank == 0 || app.size == -1) {
         if (logMPI) {
-          cout << "======================================================="
-               << endl;
-          cout << "initializing OSPRay MPI in 'launching new workers' mode"
-               << endl;
-          cout << "using launch script '" << launchCommand << "'" << endl;
+          std::stringstream msg;
+          msg << "=======================================================\n"
+              << "initializing OSPRay MPI in 'launching new workers' mode"
+              << "=======================================================\n"
+              << "using launch script '" << launchCommand << "'\n";
+          postErrorMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
         }
-        rc = MPI_Open_port(MPI_INFO_NULL, appPortName);
-        Assert(rc == MPI_SUCCESS);
+
+        MPI_CALL(Open_port(MPI_INFO_NULL, appPortName));
 
         // fix port name: replace all '$'s by '%'s to allow using it on the
         //                cmdline...
         char *fixedPortName = strdup(appPortName);
+
         if (logMPI) {
-          cout << "with port " << fixedPortName <<  endl;
-          cout << "======================================================="
-               << endl;
+          std::stringstream msg;
+          msg << "with port " << fixedPortName
+            << "\n=======================================================\n";
+          postErrorMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
         }
+
         for (char *s = fixedPortName; *s; ++s)
           if (*s == '$') *s = '%';
 
@@ -425,44 +440,43 @@ namespace ospray {
         if (fork()) {
           auto result = system(systemCommand);
           (void)result;
-          if (logMPI) {
-            cout << "OSPRay worker process has died - killing application"
-                 << endl;
-          }
+
+          postErrorMsg("OSPRay worker process has died - killing application");
           exit(0);
         }
 #endif
       }
 
-      rc = MPI_Comm_accept(appPortName,MPI_INFO_NULL,0,app.comm,&worker.comm);
-      Assert(rc == MPI_SUCCESS);
+      MPI_CALL(Comm_accept(appPortName,MPI_INFO_NULL,0,app.comm,&worker.comm));
       worker.makeInterComm();
-      // worker.makeIntracomm();
+
       if (app.rank == 0 || app.size == -1) {
-        cout << "OSPRay MPI Worker ring successfully connected." << endl;
-        cout << "found " << worker.size << " workers." << endl;
-        cout << "======================================================="
-             << endl;
+        std::stringstream msg;
+        msg << "OSPRay MPI Worker ring successfully connected.\n"
+            << "found " << worker.size << " workers."
+            << "\n=======================================================\n";
+        postErrorMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
       }
+
       if (app.size > 1) {
         if (app.rank == 1) {
-          cout << "ospray:WARNING: you're trying to run an mpi-parallel app "
+          std::stringstream msg;
+          msg << "ospray:WARNING: you're trying to run an mpi-parallel app "
                << "with ospray\n"
                << "(only the root node is allowed to issue ospray api "
-               << "calls right now)\n";
-          cout << "======================================================="
-               << endl;
+               << "calls right now)\n"
+               << "=======================================================\n";
+          postErrorMsg(msg);
         }
 
-        MPI_Barrier(app.comm);
+        MPI_CALL(Barrier(app.comm));
       }
 
-      MPI_Barrier(app.comm);
+      MPI_CALL(Barrier(app.comm));
     }
+
+    // MPIDevice definitions //////////////////////////////////////////////////
     
-
-    bool checkIfWeNeedToDoMPIDebugOutputs();
-
     MPIDevice::MPIDevice()
     //      : bufferedComm(std::make_shared<BufferedMPIComm>())
     {
@@ -477,8 +491,8 @@ namespace ospray {
     {
       // NOTE(jda) - Seems that there are no MPI Devices on worker ranks...this
       //             will likely change for data-distributed API settings?
-      if (mpi::world.rank == 0) {
-        if(logMPI) std::cout << "shutting down mpi device" << std::endl;
+      if (IamTheMaster()) {
+        postErrorMsg("shutting down mpi device", OSPRAY_MPI_VERBOSE_LEVEL);
         work::CommandFinalize work;
         processWork(&work);
       }
@@ -1003,7 +1017,7 @@ namespace ospray {
         std::stringstream msg;
         msg << "#osp.mpi.master: processing/sending work item "
             << numWorkSent++ << std::endl;
-        postErrorMsg(msg);
+        postErrorMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
       }
       auto tag = typeIdOf(work);
       writeStream->write(&tag, sizeof(tag));
@@ -1019,7 +1033,7 @@ namespace ospray {
         std::stringstream msg;
         msg << "#osp.mpi.master: done work item, tag " << tag << ": "
             << typeString(work) << std::endl;
-        postErrorMsg(msg);
+        postErrorMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
       }
     }
 

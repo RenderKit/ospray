@@ -29,7 +29,9 @@
 
 namespace ospray {
   namespace mpi {
-    struct MPIDevice : public api::Device {
+
+    struct MPIDevice : public api::Device
+    {
       MPIDevice();
       ~MPIDevice();
 
@@ -231,13 +233,6 @@ namespace ospray {
 
       bool initialized {false};
     };
-
-    // ==================================================================
-    // Helper functions
-    // ==================================================================
-
-    // /*! return a string represenging the given API Mode */
-    // const char *apiModeName(int mode);
 
   } // ::ospray::mpi
 } // ::ospray

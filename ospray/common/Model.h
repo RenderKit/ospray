@@ -20,13 +20,11 @@
 #include "geometry/Geometry.h"
 #include "volume/Volume.h"
 
-// stl stuff
+// stl
 #include <vector>
 
-// embree stuff
+// embree
 #include "embree2/rtcore.h"
-#include "embree2/rtcore_scene.h"
-#include "embree2/rtcore_geometry.h"
 
 namespace ospray {
 

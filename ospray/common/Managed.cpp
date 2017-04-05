@@ -15,7 +15,6 @@
 // ======================================================================== //
 
 #include "Managed.h"
-#include "Data.h"
 #include "OSPCommon_ispc.h"
 
 namespace ospray {

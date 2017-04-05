@@ -20,6 +20,27 @@
 namespace ospray {
   namespace sg {
 
+    static vec3i checkForAndEnableDistributedVolumes()
+    {
+      auto dpFromEnv = getEnvVar<std::string>("OSPRAY_DATA_PARALLEL");
+
+      if (dpFromEnv.first) {
+        // Create the OSPRay object.
+        vec3i blockDims;
+        int rc = sscanf(dpFromEnv.second.c_str(), "%dx%dx%d",
+                        &blockDims.x, &blockDims.y, &blockDims.z);
+        if (rc != 3) {
+          throw std::runtime_error("could not parse OSPRAY_DATA_PARALLEL "
+                                   "env-var. Must be of format <X>x<Y>x<>Z "
+                                   "(e.g., '4x4x4'");
+        }
+        Volume::useDataDistributedVolume = true;
+        return blockDims;
+      } else {
+        return {0, 0, 0,};
+      }
+    }
+
     /*! helper function to help build voxel ranges during parsing */
     template<typename T>
     inline void extendVoxelRange(ospcommon::vec2f &voxelRange,
@@ -65,6 +86,11 @@ namespace ospray {
         default:
           throw std::runtime_error("sg::extendVoxelRange: unsupported voxel type!");
       }
+    }
+
+    bool unsupportedVoxelType(const std::string &type) {
+      return type != "uchar" && type != "ushort" && type != "short"
+        && type != "float" && type != "double";
     }
 
     // =======================================================
@@ -132,13 +158,15 @@ namespace ospray {
 
     /*! \brief returns a std::string with the c++ name of this class */
     std::string StructuredVolume::toString() const
-    { return "ospray::sg::StructuredVolume"; }
+    {
+      return "ospray::sg::StructuredVolume";
+    }
 
     //! return bounding box of all primitives
     box3f StructuredVolume::bounds() const
     {
       return {vec3f(0.f),
-            vec3f(getDimensions())*child("gridSpacing").valueAs<vec3f>()};
+              vec3f(getDimensions())*child("gridSpacing").valueAs<vec3f>()};
     }
 
     //! \brief Initialize this node's value from given XML node
@@ -156,47 +184,16 @@ namespace ospray {
 
       if (voxelType == "uint8")
         voxelType = "uchar";
-      if (voxelType != "float" &&
-          voxelType != "uint8" &&
-          voxelType != "uchar") {
-        throw std::runtime_error("unknown StructuredVolume.voxelType (currently"
-                                 " only supporting 'float' and 'uint8')");
+      if (unsupportedVoxelType(voxelType)) {
+        THROW_SG_ERROR("unknown StructuredVolume.voxelType '" + voxelType + "'");
       }
 
       std::cout << "#osp:sg: created StructuredVolume from XML file, "
                 << "dimensions = " << getDimensions() << std::endl;
     }
 
-    // TODO: why is this a copy-paste of render??
     void StructuredVolume::postCommit(RenderContext &ctx)
     {
-      if (volume) return;
-
-      if (dimensions.x <= 0 || dimensions.y <= 0 || dimensions.z <= 0)
-        throw std::runtime_error("StructuredVolume::render(): "
-                                 "invalid volume dimensions");
-
-      volume = ospNewVolume(useDataDistributedVolume
-                            ? "data_distributed_volume"
-                            : "block_bricked_volume");
-
-      if (!volume) THROW_SG_ERROR("could not allocate volume");
-
-      ospSetString(volume,"voxelType",voxelType.c_str());
-      ospSetVec3i(volume,"dimensions",(const osp::vec3i&)dimensions);
-      size_t nPerSlice = (size_t)dimensions.x*(size_t)dimensions.y;
-      assert(mappedPointer != nullptr);
-
-      for (int z=0;z<dimensions.z;z++) {
-        float *slice =
-          (float*)(((unsigned char *)mappedPointer)+z*nPerSlice*sizeof(float));
-        vec3i region_lo(0,0,z), region_sz(dimensions.x,dimensions.y,1);
-        ospSetRegion(volume,slice,
-                     (const osp::vec3i&)region_lo,
-                     (const osp::vec3i&)region_sz);
-      }
-
-      ospCommit(volume);
     }
 
     OSP_REGISTER_SG_NODE(StructuredVolume);
@@ -237,13 +234,11 @@ namespace ospray {
         throw std::runtime_error("sg::StructuredVolumeFromFile: "
                                  "no 'fileName' specified");
       }
+      if (unsupportedVoxelType(voxelType)) {
+        THROW_SG_ERROR("unknown StructuredVolume.voxelType '" + voxelType + "'");
+      }
 
       fileNameOfCorrespondingXmlDoc = node.doc->fileName;
-
-      if (voxelType != "float" && voxelType != "uchar") {
-        throw std::runtime_error("unknown StructuredVolume.voxelType "
-                                 "(currently support 'float' and 'uchar')");
-      }
 
       std::cout << "#osp:sg: created StructuredVolume from XML file, "
                 << "dimensions = " << getDimensions() << std::endl;
@@ -268,10 +263,14 @@ namespace ospray {
                                  "invalid volume dimensions");
       }
 
+      vec3i dataDistributedBlocks = checkForAndEnableDistributedVolumes();
+
       bool useBlockBricked = 1;
 
-      if (useDataDistributedVolume)
+      if (useDataDistributedVolume) {
         volume = ospNewVolume("data_distributed_volume");
+        ospSetVec3i(volume,"num_dp_blocks",(osp::vec3i&)dataDistributedBlocks);
+      }
       else
         volume = ospNewVolume(useBlockBricked ? "block_bricked_volume" :
                                                 "shared_structured_volume");
