@@ -14,6 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <thread>
+#include <atomic>
+#include <mutex>
 #include "Volume.h"
 #include "sg/common/World.h"
 
@@ -376,6 +379,222 @@ namespace ospray {
     }
 
     OSP_REGISTER_SG_NODE(StackedRawSlices);
+
+    // =======================================================
+    // Richtmyer-Meshkov volume class and utils
+    // =======================================================
+
+    RichtmyerMeshkov::RichtmyerMeshkov()
+      : dimensions(2048, 2048, 1920)
+    {}
+
+    std::string RichtmyerMeshkov::toString() const
+    {
+      return "ospray::sg::RichtmyerMeshkov";
+    }
+
+    //! return bounding box of all primitives
+    box3f RichtmyerMeshkov::bounds() const
+    {
+      return box3f(vec3f(0.f), vec3f(getDimensions()));
+    }
+
+    //! \brief Initialize this node's value from given XML node
+    void RichtmyerMeshkov::setFromXML(const xml::Node &node,
+        const unsigned char *binBasePtr)
+    {
+      dirName = node.getProp("dirName");
+      const std::string t = node.getProp("timeStep");
+      if (t.empty()) {
+        THROW_SG_ERROR("sg::RichtmyerMeshkov: no 'timeStep' specified");
+      }
+      timeStep = std::stoi(t);
+
+      if (dirName.empty()) {
+        THROW_SG_ERROR("sg::RichtmyerMeshkov: no 'dirName' specified");
+      }
+
+      fileNameOfCorrespondingXmlDoc = node.doc->fileName;
+    }
+
+    void RichtmyerMeshkov::preCommit(RenderContext &ctx)
+    {
+      if (volume) {
+        ospCommit(volume);
+        if (child("isosurfaceEnabled").valueAs<bool>() == true
+            && isosurfacesGeometry) {
+          OSPData isovaluesData = ospNewData(1, OSP_FLOAT, 
+            &child("isosurface").valueAs<float>());
+          ospSetData(isosurfacesGeometry, "isovalues", isovaluesData);
+          ospCommit(isosurfacesGeometry);
+        }
+        return;
+      }
+
+      const vec3i dataDistributedBlocks = checkForAndEnableDistributedVolumes();
+
+      if (useDataDistributedVolume) {
+        volume = ospNewVolume("data_distributed_volume");
+        ospSetVec3i(volume, "num_dp_blocks", (osp::vec3i&)dataDistributedBlocks);
+      }
+      else {
+        volume = ospNewVolume("block_bricked_volume");
+      }
+
+      if (!volume) {
+        THROW_SG_ERROR("could not allocate volume");
+      }
+
+      isosurfacesGeometry = ospNewGeometry("isosurfaces");
+      ospSetObject(isosurfacesGeometry, "volume", volume);
+
+      setValue((OSPObject)volume);
+
+      ospSetString(volume, "voxelType", "uchar");
+      ospSetVec3i(volume, "dimensions", (const osp::vec3i&)dimensions);
+
+      const FileName realFileName = fileNameOfCorrespondingXmlDoc.path() + dirName;
+
+      // Launch loader threads to load the volume
+      LoaderState loaderState(fileNameOfCorrespondingXmlDoc.path() + dirName, timeStep);
+      std::vector<std::thread> threads;
+      createChildNode("blocksLoaded", "string", "0/" + std::to_string(LoaderState::NUM_BLOCKS));
+
+      for (size_t i = 0; i < std::thread::hardware_concurrency(); ++i) {
+        threads.push_back(std::thread([&](){ loaderThread(loaderState); }));
+      }
+      for (auto &t : threads) {
+        t.join();
+      }
+
+      child("voxelRange").setValue(loaderState.voxelRange);
+      child("isosurface").setMinMax(loaderState.voxelRange.x,
+                                    loaderState.voxelRange.y);
+      float iso = child("isosurface").valueAs<float>();
+      if (iso < loaderState.voxelRange.x || iso > loaderState.voxelRange.y) {
+        child("isosurface").setValue((loaderState.voxelRange.y - loaderState.voxelRange.x) / 2.f);
+      }
+      child("transferFunction")["valueRange"].setValue(loaderState.voxelRange);
+      child("transferFunction").preCommit(ctx);
+      ospSetObject(volume,"transferFunction",
+                   child("transferFunction").valueAs<OSPObject>());
+      ospCommit(volume);
+    }
+
+    void RichtmyerMeshkov::postCommit(RenderContext &ctx)
+    {
+      // In StructuredVolumeFromFile it does this at the end
+      // of pre-commit as well, but shouldn't that not be needed? Since
+      // it will be done in postCommit which is called immediately after?
+      ospSetObject(volume,"transferFunction",
+                   child("transferFunction").valueAs<OSPObject>());
+      ospCommit(volume);
+    }
+
+    void RichtmyerMeshkov::loaderThread(LoaderState &state)
+    {
+      Node &progressLog = child("blocksLoaded");
+      std::vector<uint8_t> block(LoaderState::BLOCK_SIZE, 0);
+      while (true) {
+        const size_t blockID = state.loadNextBlock(block);
+        if (blockID >= LoaderState::NUM_BLOCKS) {
+          break;
+        }
+
+        const int I = blockID % 8;
+        const int J = (blockID / 8) % 8;
+        const int K = (blockID / 64);
+
+        vec2f blockRange(block[0]);
+        extendVoxelRange(blockRange, &block[0], LoaderState::BLOCK_SIZE);
+        const vec3i region_lo(I * 256, J * 256, K * 128);
+        const vec3i region_sz(256, 256, 128);
+        {
+          std::lock_guard<std::mutex> lock(state.mutex);
+          ospSetRegion(volume, block.data(), (const osp::vec3i&)region_lo,
+                       (const osp::vec3i&)region_sz);
+
+          state.voxelRange.x = std::min(state.voxelRange.x, blockRange.x);
+          state.voxelRange.y = std::max(state.voxelRange.y, blockRange.y);
+          progressLog.setValue(std::to_string(blockID + 1) + "/"
+                               + std::to_string(LoaderState::NUM_BLOCKS));
+        }
+      }
+    }
+
+    const size_t RichtmyerMeshkov::LoaderState::BLOCK_SIZE = 256 * 256 * 128;
+    const size_t RichtmyerMeshkov::LoaderState::NUM_BLOCKS = 8 * 8 * 15;
+
+    RichtmyerMeshkov::LoaderState::LoaderState(const FileName &fullDirName, const int timeStep)
+      : nextBlockID(0), useGZip(getenv("OSPRAY_RM_NO_GZIP") == NULL),
+      fullDirName(fullDirName),
+      voxelRange(std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity()),
+      timeStep(timeStep)
+    {}
+
+    size_t RichtmyerMeshkov::LoaderState::loadNextBlock(std::vector<uint8_t> &b)
+    {
+      const size_t blockID = nextBlockID.fetch_add(1);
+      if (blockID >= NUM_BLOCKS) {
+        return blockID;
+      }
+
+      // The RM Bob filenames are at most 15 characters long,
+      // in the case of gzipped ones
+      char bobName[16] = {0};
+      FILE *file = NULL;
+      if (useGZip) {
+#ifndef _WIN32
+        std::sprintf(bobName, "d_%04d_%04li.gz", timeStep, blockID);
+        const FileName fileName = fullDirName + FileName(bobName);
+        const std::string cmd = "gunzip -c " + std::string(fileName);
+        file = popen(cmd.c_str(), "r");
+        if (!file) {
+          THROW_SG_ERROR("sg::RichtmyerMeshkov: could not open popen '"
+                         + cmd + "'");
+        }
+#else
+        THROW_SG_ERROR("sg::RichtmyerMeshkov: gzipped RM bob's"
+                       " aren't supported on Windows!");
+#endif
+      } else {
+        std::sprintf(bobName, "d_%04d_%04li", timeStep, blockID);
+        const FileName fileName = fullDirName + FileName(bobName);
+        file = fopen(fileName.c_str(), "rb");
+        if (!file) {
+          THROW_SG_ERROR("sg::RichtmyerMeshkov: could not open file '"
+                         + std::string(fileName) + "'");
+        }
+      }
+
+      if (b.size() < LoaderState::BLOCK_SIZE) {
+        b.resize(LoaderState::BLOCK_SIZE);
+      }
+
+      if (std::fread(b.data(), LoaderState::BLOCK_SIZE, 1, file) != 1) {
+        if (useGZip) {
+#ifndef _WIN32
+          pclose(file);
+#endif
+        } else {
+          fclose(file);
+        }
+        THROW_SG_ERROR("sg::RichtmyerMeshkov: failed to read data from bob "
+                       + std::string(bobName));
+      }
+
+      if (useGZip) {
+#ifndef _WIN32
+        pclose(file);
+#endif
+      } else {
+        fclose(file);
+      }
+
+      return blockID;
+    }
+
+    OSP_REGISTER_SG_NODE(RichtmyerMeshkov);
 
   } // ::ospray::sg
 } // ::ospray
