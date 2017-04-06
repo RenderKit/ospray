@@ -561,7 +561,11 @@ namespace ospray {
                        " aren't supported on Windows!");
 #endif
       } else {
+#ifdef _WIN32
+        if (_snprintf_s(bobName, 16, 16, "d_%04d_%04li", timeStep, blockID) > 15) {
+#else
         if (std::snprintf(bobName, 16, "d_%04d_%04li", timeStep, blockID) > 15) {
+#endif
           THROW_SG_ERROR("sg::RichtmyerMeshkov: Invalid timestep or blockID!");
         }
         const FileName fileName = fullDirName + FileName(bobName);
