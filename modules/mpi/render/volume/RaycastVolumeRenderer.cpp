@@ -46,15 +46,18 @@ namespace ospray {
     CacheForBlockTiles(size_t numBlocks)
       : numBlocks(numBlocks), blockTile(new Tile *[numBlocks])
     {
-      for (size_t i = 0; i < numBlocks; i++) blockTile[i] = nullptr;
+      for (size_t i = 0; i < numBlocks; i++)
+        blockTile[i] = nullptr;
     }
 
     ~CacheForBlockTiles()
     {
-      for (size_t i = 0; i < numBlocks; i++)
-        if (blockTile[i]) delete blockTile[i];
+      for (size_t i = 0; i < numBlocks; i++) {
+        if (blockTile[i])
+          delete blockTile[i];
+      }
 
-      delete[] blockTile;
+      delete [] blockTile;
     }
 
     Tile *allocTile()
@@ -119,23 +122,23 @@ namespace ospray {
 
   void DPRenderTask::operator()(int taskIndex) const
   {
-    const size_t tileID = taskIndex;
-    const size_t tile_y = taskIndex / numTiles_x;
-    const size_t tile_x = taskIndex - tile_y*numTiles_x;
+    const int &tileID = taskIndex;
+    const int tile_y  = tileID / numTiles_x;
+    const int tile_x  = tileID - tile_y*numTiles_x;
     const vec2i tileId(tile_x, tile_y);
-    const int32 accumID = fb->accumID(tileId);
+    const int accumID = fb->accumID(tileId);
     Tile bgTile(tileId, fb->size, accumID);
     Tile fgTile(bgTile);
 
-    size_t numBlocks = dpv->numDDBlocks;
+    int numBlocks = dpv->numDDBlocks;
     CacheForBlockTiles blockTileCache(numBlocks);
     bool *blockWasVisible = STACK_BUFFER(bool, numBlocks);
 
-    for (size_t i = 0; i < numBlocks; i++)
+    for (int i = 0; i < numBlocks; i++)
       blockWasVisible[i] = false;
 
     bool renderForeAndBackground =
-        (taskIndex % mpi::getWorkerCount()) == mpi::getWorkerRank();
+        (tileID % mpi::getWorkerCount()) == mpi::getWorkerRank();
 
     const int numJobs = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
 
@@ -153,7 +156,6 @@ namespace ospray {
                                      tid);
     });
 
-
     if (renderForeAndBackground) {
       // this is a tile owned by me - i'm responsible for writing
       // generaition #0, and telling the fb how many more tiles will
@@ -170,8 +172,6 @@ namespace ospray {
           + totalBlocksInTile /* plus how many blocks map to this
                                      tile, IN TOTAL (ie, INCLUDING blocks
                                      on other nodes)*/;
-      // printf("rank %i total tiles in tile %i is %i\n",
-      //        core::getWorkerRank(),taskIndex,nextGenTiles);
 
       // set background tile
       bgTile.generation = 0;
@@ -193,7 +193,7 @@ namespace ospray {
     // _across_all_clients_, but we only have to send ours (assuming
     // that all clients together send exactly as many as the owner
     // told the DFB to expect)
-    for (size_t blockID = 0; blockID < numBlocks; blockID++) {
+    for (int blockID = 0; blockID < numBlocks; blockID++) {
       Tile *tile = blockTileCache.blockTile[blockID];
       if (tile == nullptr)
         continue;
@@ -227,8 +227,8 @@ namespace ospray {
     }
 
     if (ddVolumeVec.empty()) {
-      static WarnOnce warning("no data parallel volumes, rendering in traditional"
-                              " raycast_volume_render mode");
+      static WarnOnce warning("no data parallel volumes, rendering in "
+                              "traditional raycast_volume_render mode");
       return Renderer::renderFrame(fb,channelFlags);
     }
 

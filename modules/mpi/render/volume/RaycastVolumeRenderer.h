@@ -23,12 +23,10 @@ namespace ospray {
   //! \brief A concrete implemetation of the Renderer class for rendering
   //!  volumes optionally containing embedded surfaces.
   //!
-  class RaycastVolumeRenderer : public Renderer {
-
-  public:
-
-    RaycastVolumeRenderer()  = default;
-    ~RaycastVolumeRenderer() = default;
+  struct RaycastVolumeRenderer : public Renderer
+  {
+    RaycastVolumeRenderer() = default;
+    virtual ~RaycastVolumeRenderer() = default;
 
     //! Create a material of the given type.
     Material* createMaterial(const char *type) override;
@@ -45,15 +43,8 @@ namespace ospray {
 
   private:
 
-    //! Print an error message.
-    void emitMessage(const std::string &kind, const std::string &message) const;
-
-    //! Error checking.
-    void exitOnCondition(bool condition, const std::string &message) const;
-
     //! ISPC equivalents for lights.
     std::vector<void *> lights;
-
   };
 
   // Inlined function definitions /////////////////////////////////////////////
@@ -61,24 +52,6 @@ namespace ospray {
   inline std::string RaycastVolumeRenderer::toString() const
   {
     return("ospray::RaycastVolumeRenderer");
-  }
-
-  inline void RaycastVolumeRenderer::emitMessage(const std::string &kind,
-                                                 const std::string &msg) const
-  {
-    std::cerr << "  " + toString() + "  " << kind + ": " + msg + "."
-              << std::endl;
-  }
-
-  inline void
-  RaycastVolumeRenderer::exitOnCondition(bool condition,
-                                         const std::string &message) const
-  {
-    if (!condition)
-      return;
-
-    emitMessage("ERROR", message);
-    exit(1);
   }
 
 } // ::ospray
