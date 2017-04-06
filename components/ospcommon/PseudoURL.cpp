@@ -27,8 +27,7 @@ namespace ospcommon {
   {
     size_t prev = 0;
     size_t fnd = str.find(delim);
-    for (; fnd != std::string::npos;  prev = fnd + 1, fnd = str.find(delim, prev))
-    {
+    for (; fnd != std::string::npos;  prev = fnd + 1, fnd = str.find(delim, prev)) {
       // Discard repeated tokens in the string, e.g. tokeninzing a::c::b on ':' should
       // just return a, c, b
       if (fnd - prev > 1) {
