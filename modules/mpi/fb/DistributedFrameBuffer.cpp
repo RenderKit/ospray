@@ -137,8 +137,8 @@ namespace ospray {
     if (comm->group->rank == 0) {
       if (colorBufferFormat == OSP_FB_NONE) {
         DBG(cout << "#osp:mpi:dfb: we're the master, but framebuffer has 'NONE' "
-            << "format; creating distributed frame buffer WITHOUT having a "
-            << "mappable copy on the master" << endl);
+                 << "format; creating distributed frame buffer WITHOUT having a "
+                 << "mappable copy on the master" << endl);
       } else {
         localFBonMaster = new LocalFrameBuffer(numPixels,
                                                colorBufferFormat,
@@ -158,6 +158,7 @@ namespace ospray {
   void DFB::startNewFrame(const float errorThreshold)
   {
     std::vector<mpi::async::CommLayer::Message *> delayedMessage;
+
     {
       SCOPED_LOCK(mutex);
       DBG(printf("rank %i starting new frame\n",mpi::world.rank));
@@ -179,15 +180,17 @@ namespace ospray {
 
       if (hasAccumBuffer) {
         // increment accumID only for active tiles
-        for (int t = 0; t < getTotalTiles(); t++)
+        for (int t = 0; t < getTotalTiles(); t++) {
           if (tileError(vec2i(t, 0)) <= errorThreshold) {
             if (mpi::IamTheMaster() || allTiles[t]->mine())
               numTilesCompletedThisFrame++;
-          } else
+          } else {
             tileAccumID[t]++;
+          }
+        }
       }
 
-      frameIsDone   = false;
+      frameIsDone = false;
 
       // set frame to active - this HAS TO BE the last thing we do
       // before unlockign the mutex, because the 'incoming()' message

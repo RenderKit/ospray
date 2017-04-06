@@ -90,9 +90,9 @@ namespace ospray {
 
 #define MAX_TILE_SIZE 128
 
-#if TILE_SIZE>MAX_TILE_SIZE
-          Tile *tilePtr = new Tile(tileId, fb->size, accumID);
-          Tile &tile = *tilePtr;
+#if TILE_SIZE > MAX_TILE_SIZE
+          auto *tilePtr = make_unique<Tile>(tileId, fb->size, accumID);
+          auto &tile    = *tilePtr;
 #else
           Tile __aligned(64) tile(tileId, fb->size, accumID);
 #endif
@@ -103,9 +103,6 @@ namespace ospray {
           });
 
           fb->setTile(tile);
-#if TILE_SIZE>MAX_TILE_SIZE
-          delete tilePtr;
-#endif
         });
 
         dfb->waitUntilFinished();

@@ -32,10 +32,56 @@ namespace ospray {
   namespace mpi {
     namespace work {
 
+      void registerOSPWorkItems(WorkTypeRegistry &registry)
+      {
+        registerWorkUnit<NewRenderer>(registry);
+        registerWorkUnit<NewModel>(registry);
+        registerWorkUnit<NewGeometry>(registry);
+        registerWorkUnit<NewCamera>(registry);
+        registerWorkUnit<NewVolume>(registry);
+        registerWorkUnit<NewTransferFunction>(registry);
+        registerWorkUnit<NewPixelOp>(registry);
 
-      // =======================================================
-      // CMD_COMMIT
-      // =======================================================
+        registerWorkUnit<NewMaterial>(registry);
+        registerWorkUnit<NewLight>(registry);
+
+        registerWorkUnit<NewData>(registry);
+        registerWorkUnit<NewTexture2d>(registry);
+
+        registerWorkUnit<CommitObject>(registry);
+        registerWorkUnit<CommandRelease>(registry);
+
+        registerWorkUnit<LoadModule>(registry);
+
+        registerWorkUnit<AddGeometry>(registry);
+        registerWorkUnit<AddVolume>(registry);
+        registerWorkUnit<RemoveGeometry>(registry);
+        registerWorkUnit<RemoveVolume>(registry);
+
+        registerWorkUnit<CreateFrameBuffer>(registry);
+        registerWorkUnit<ClearFrameBuffer>(registry);
+        registerWorkUnit<RenderFrame>(registry);
+
+        registerWorkUnit<SetRegion>(registry);
+        registerWorkUnit<SetPixelOp>(registry);
+
+        registerWorkUnit<SetMaterial>(registry);
+        registerWorkUnit<SetParam<OSPObject>>(registry);
+        registerWorkUnit<SetParam<std::string>>(registry);
+        registerWorkUnit<SetParam<int>>(registry);
+        registerWorkUnit<SetParam<float>>(registry);
+        registerWorkUnit<SetParam<vec2f>>(registry);
+        registerWorkUnit<SetParam<vec2i>>(registry);
+        registerWorkUnit<SetParam<vec3f>>(registry);
+        registerWorkUnit<SetParam<vec3i>>(registry);
+        registerWorkUnit<SetParam<vec4f>>(registry);
+
+        registerWorkUnit<RemoveParam>(registry);
+
+        registerWorkUnit<CommandFinalize>(registry);
+      }
+
+      // ospCommit ////////////////////////////////////////////////////////////
       
       CommitObject::CommitObject(ObjectHandle handle)
         : handle(handle)
@@ -90,9 +136,7 @@ namespace ospray {
         b >> handle.i64;
       }
 
-      // =======================================================
-      // CMD_CREATE_FRAMEBUFFER
-      // =======================================================
+      // ospNewFrameBuffer ////////////////////////////////////////////////////
 
       CreateFrameBuffer::CreateFrameBuffer(ObjectHandle handle,
                                            vec2i dimensions,
@@ -139,9 +183,7 @@ namespace ospray {
         format = (OSPFrameBufferFormat)fmt;
       }
 
-      // =======================================================
-      // CMD_LOAD_MODULE
-      // =======================================================
+      // ospLoadModule ////////////////////////////////////////////////////////
       
       LoadModule::LoadModule(const std::string &name)
         : name(name)
@@ -175,9 +217,8 @@ namespace ospray {
         b >> name;
       }
 
-      // =======================================================
-      // CMD_SET_PARAM<...>
-      // =======================================================
+      // ospSetParam //////////////////////////////////////////////////////////
+
       template<>
       void SetParam<std::string>::run()
       {
@@ -198,9 +239,8 @@ namespace ospray {
         }
       }
 
-      // =======================================================
-      // CMD_SET_MATERIAL
-      // =======================================================
+      // ospSetMaterial ///////////////////////////////////////////////////////
+
       void SetMaterial::run() 
       {
         Geometry *geom = (Geometry*)handle.lookup();
@@ -212,58 +252,7 @@ namespace ospray {
         geom->setMaterial(mat);
       }
 
-      void registerOSPWorkItems(WorkTypeRegistry &registry)
-      {
-        registerWorkUnit<NewRenderer>(registry);
-        registerWorkUnit<NewModel>(registry);
-        registerWorkUnit<NewGeometry>(registry);
-        registerWorkUnit<NewCamera>(registry);
-        registerWorkUnit<NewVolume>(registry);
-        registerWorkUnit<NewTransferFunction>(registry);
-        registerWorkUnit<NewPixelOp>(registry);
-
-        registerWorkUnit<NewMaterial>(registry);
-        registerWorkUnit<NewLight>(registry);
-
-        registerWorkUnit<NewData>(registry);
-        registerWorkUnit<NewTexture2d>(registry);
-
-        registerWorkUnit<CommitObject>(registry);
-        registerWorkUnit<CommandRelease>(registry);
-
-        registerWorkUnit<LoadModule>(registry);
-
-        registerWorkUnit<AddGeometry>(registry);
-        registerWorkUnit<AddVolume>(registry);
-        registerWorkUnit<RemoveGeometry>(registry);
-        registerWorkUnit<RemoveVolume>(registry);
-
-        registerWorkUnit<CreateFrameBuffer>(registry);
-        registerWorkUnit<ClearFrameBuffer>(registry);
-        registerWorkUnit<RenderFrame>(registry);
-
-        registerWorkUnit<SetRegion>(registry);
-        registerWorkUnit<SetPixelOp>(registry);
-
-        registerWorkUnit<SetMaterial>(registry);
-        registerWorkUnit<SetParam<OSPObject>>(registry);
-        registerWorkUnit<SetParam<std::string>>(registry);
-        registerWorkUnit<SetParam<int>>(registry);
-        registerWorkUnit<SetParam<float>>(registry);
-        registerWorkUnit<SetParam<vec2f>>(registry);
-        registerWorkUnit<SetParam<vec2i>>(registry);
-        registerWorkUnit<SetParam<vec3f>>(registry);
-        registerWorkUnit<SetParam<vec3i>>(registry);
-        registerWorkUnit<SetParam<vec4f>>(registry);
-
-        registerWorkUnit<RemoveParam>(registry);
-
-        registerWorkUnit<CommandFinalize>(registry);
-      }
-
-      // =======================================================
-      // ospNewRenderer
-      // =======================================================
+      // ospNewRenderer ///////////////////////////////////////////////////////
 
       template<>
       void NewRenderer::runOnMaster()
@@ -271,9 +260,7 @@ namespace ospray {
         run();
       }
 
-      // =======================================================
-      // ospNewVolume
-      // =======================================================
+      // ospNewVolume /////////////////////////////////////////////////////////
 
       template<>
       void NewVolume::runOnMaster()
@@ -281,9 +268,8 @@ namespace ospray {
         run();
       }
 
-      // =======================================================
-      // ospNewModel
-      // =======================================================
+      // ospNewModel //////////////////////////////////////////////////////////
+
       template<>
       void NewModel::run()
       {
@@ -291,9 +277,7 @@ namespace ospray {
         handle.assign(model);
       }
 
-      // =======================================================
-      // ospNewMaterial
-      // =======================================================
+      // ospNewMaterial ///////////////////////////////////////////////////////
 
       void NewMaterial::run()
       {
@@ -310,7 +294,9 @@ namespace ospray {
         if (!material) material = Material::createMaterial(type.c_str());
         handle.assign(material);
       }
-      
+
+      // ospNewLight //////////////////////////////////////////////////////////
+
       void NewLight::run()
       {
         Renderer *renderer = (Renderer*)rendererHandle.lookup();
@@ -327,9 +313,7 @@ namespace ospray {
         handle.assign(light);
       }
       
-      // =======================================================
-      // ospNewData
-      // =======================================================
+      // ospNewData ///////////////////////////////////////////////////////////
 
       NewData::NewData(ObjectHandle handle,
                        size_t nItems,
@@ -431,6 +415,8 @@ namespace ospray {
         format = (OSPDataType)fmt;
       }
 
+      // ospNewTexture2d //////////////////////////////////////////////////////
+
       NewTexture2d::NewTexture2d(ObjectHandle handle,
                                  vec2i dimensions,
                                  OSPTextureFormat format,
@@ -466,6 +452,8 @@ namespace ospray {
         b >> handle.i64 >> dimensions >> fmt >> flags >> data;
         format = (OSPTextureFormat)fmt;
       }
+
+      // ospSetRegion /////////////////////////////////////////////////////////
 
       SetRegion::SetRegion(OSPVolume volume, vec3i start, vec3i size,
                            const void *src, OSPDataType type)
@@ -508,10 +496,7 @@ namespace ospray {
         type = (OSPDataType)ty;
       }
 
-
-      // =======================================================
-      // ospFrameBufferClear
-      // =======================================================
+      // ospFrameBufferClear //////////////////////////////////////////////////
 
       ClearFrameBuffer::ClearFrameBuffer(OSPFrameBuffer fb, uint32 channels)
         : handle((ObjectHandle&)fb), channels(channels)
@@ -539,9 +524,7 @@ namespace ospray {
         b >> handle.i64 >> channels;
       }
 
-      // =======================================================
-      // ospRenderFrame
-      // =======================================================
+      // ospRenderFrame ///////////////////////////////////////////////////////
       
       RenderFrame::RenderFrame(OSPFrameBuffer fb,
                                OSPRenderer renderer,
@@ -565,15 +548,7 @@ namespace ospray {
         // takes over scheduling of tile work like the distributed volume renderer
         // We need some way to pick the right function to call, either to the
         // renderer or directly to the load balancer to render the frame
-#if 1
         varianceResult = renderer->renderFrame(fb, channels);
-#else
-        if (mpi::world.rank > 0) {
-          renderer->renderFrame(fb, channels);
-        } else {
-          TiledLoadBalancer::instance->renderFrame(nullptr, fb, channels);
-        }
-#endif
       }
       
       void RenderFrame::runOnMaster()
@@ -596,6 +571,8 @@ namespace ospray {
         b >> fbHandle.i64 >> rendererHandle.i64 >> channels;
       }
 
+      // ospAddGeometry ///////////////////////////////////////////////////////
+
       void AddGeometry::run()
       {
         Model *model = (Model*)modelHandle.lookup();
@@ -605,6 +582,8 @@ namespace ospray {
         model->geometry.push_back(geometry);
       }
 
+      // ospAddVolume /////////////////////////////////////////////////////////
+
       void AddVolume::run()
       {
         Model *model = (Model*)modelHandle.lookup();
@@ -613,6 +592,8 @@ namespace ospray {
         Assert(volume);
         model->volume.push_back(volume);
       }
+
+      // ospRemoveGeometry ////////////////////////////////////////////////////
 
       void RemoveGeometry::run()
       {
@@ -629,7 +610,10 @@ namespace ospray {
         }
       }
 
-      void RemoveVolume::run() {
+      // ospRemoveVolume //////////////////////////////////////////////////////
+
+      void RemoveVolume::run()
+      {
         Model *model = (Model*)modelHandle.lookup();
         Volume *volume = (Volume*)objectHandle.lookup();
         Assert(model);
@@ -643,6 +627,8 @@ namespace ospray {
           model->volume.erase(it);
         }
       }
+
+      // ospRemoveParam ///////////////////////////////////////////////////////
 
       RemoveParam::RemoveParam(ObjectHandle handle, const char *name)
         : handle(handle), name(name)
@@ -675,9 +661,7 @@ namespace ospray {
         b >> handle.i64 >> name;
       }
 
-      // =======================================================
-      // ospSetPixelOp
-      // =======================================================
+      // ospSetPixelOp ////////////////////////////////////////////////////////
       
       SetPixelOp::SetPixelOp(OSPFrameBuffer fb, OSPPixelOp op)
         : fbHandle((ObjectHandle&)fb),
@@ -707,9 +691,7 @@ namespace ospray {
         b >> fbHandle.i64 >> poHandle.i64;
       }
 
-      // =======================================================
-      // ospRelease
-      // =======================================================
+      // ospRelease ///////////////////////////////////////////////////////////
       
       CommandRelease::CommandRelease(ObjectHandle handle)
         : handle(handle)
@@ -730,9 +712,7 @@ namespace ospray {
         b >> handle.i64;
       }
 
-      // =======================================================
-      // ospFinalize
-      // =======================================================
+      // ospFinalize //////////////////////////////////////////////////////////
       
       void CommandFinalize::run()
       {
