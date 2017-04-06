@@ -54,7 +54,6 @@ namespace ospray {
     numDDBlocks(0),
     ddBlock(NULL)
   {
-    PING;
   }
 
   void DataDistributedBlockedVolume::updateEditableParameters()
