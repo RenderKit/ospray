@@ -545,7 +545,9 @@ namespace ospray {
       FILE *file = NULL;
       if (useGZip) {
 #ifndef _WIN32
-        std::sprintf(bobName, "d_%04d_%04li.gz", timeStep, blockID);
+        if (std::snprintf(bobName, 16, "d_%04d_%04li.gz", timeStep, blockID) > 15) {
+          THROW_SG_ERROR("sg::RichtmyerMeshkov: Invalid timestep or blockID!");
+        }
         const FileName fileName = fullDirName + FileName(bobName);
         const std::string cmd = "gunzip -c " + std::string(fileName);
         file = popen(cmd.c_str(), "r");
@@ -558,7 +560,9 @@ namespace ospray {
                        " aren't supported on Windows!");
 #endif
       } else {
-        std::sprintf(bobName, "d_%04d_%04li", timeStep, blockID);
+        if (std::snprintf(bobName, 16, "d_%04d_%04li", timeStep, blockID) > 15) {
+          THROW_SG_ERROR("sg::RichtmyerMeshkov: Invalid timestep or blockID!");
+        }
         const FileName fileName = fullDirName + FileName(bobName);
         file = fopen(fileName.c_str(), "rb");
         if (!file) {
