@@ -27,11 +27,14 @@
 
 namespace ospcommon {
 
-  /* a pseudo-url is of the form '<type>://<fileanme>[:name=value]*'
-  into its components of 'type' (e.g, 'points', 'slines', etc),
-  filename, and 'name=value' argument pairs (e.g.,
-  'format=xyzrgb'). This class takes a string and splits it into these
-  components */
+  //! \brief Tokenize the string passed on the desired delimeter
+  void tokenize(const std::string &str, const char delim, std::vector<std::string> &tokens);
+
+  /* a pseudo-url is of the form '<type>://<filename>[:name=value]*'
+     into its components of 'type' (e.g, 'points', 'lines', etc),
+     filename, and 'name=value' argument pairs (e.g.,
+     'format=xyzrgb'). This class takes a string and splits it into these
+     components */
   struct PseudoURL {
 
     /*! constructor - parse the given string into its components */
@@ -53,8 +56,7 @@ namespace ospcommon {
 
   private:
     /*! the type of the psueod-url, eg, for 'points://file.raw' this
-        would be 'points'. If no "://" is specified, this gets set to
-        "" */
+        would be 'points'. If no "://" is specified, this gets set to "" */
     std::string type;
     /*! the filename - the thing after the <type>://, and before the
         ":" that starts parameters */

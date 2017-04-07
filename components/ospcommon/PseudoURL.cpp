@@ -15,25 +15,41 @@
 // ======================================================================== //
 
 /*! \file PseudoURL: splits a 'pseudo-url' of the form
-  '<type>://<fileanme>[:name=value]*' into its components of 'type'
-    (e.g, 'points', 'slines', etc), filename, and 'name=value'
+  '<type>://<filename>[:name=value]*' into its components of 'type'
+    (e.g, 'points', 'lines', etc), filename, and 'name=value'
     argument pairs (e.g., 'format=xyzrgb') */
 
 #include "PseudoURL.h"
 
 namespace ospcommon {
 
+  void tokenize(const std::string &str, const char delim, std::vector<std::string> &tokens)
+  {
+    size_t prev = 0;
+    size_t fnd = str.find(delim);
+    for (; fnd != std::string::npos;  prev = fnd + 1, fnd = str.find(delim, prev)) {
+      // Discard repeated tokens in the string, e.g. tokeninzing a::c::b on ':' should
+      // just return a, c, b
+      if (fnd - prev > 1) {
+        tokens.push_back(str.substr(prev, fnd - prev));
+      }
+    }
+    // Grab the last token in the string, if the string didn't terminate with a delimeter
+    if (str.size() - prev > 1) {
+      tokens.push_back(str.substr(prev));
+    }
+  }
+
   /*! constructor - parse the given string into its components */
   PseudoURL::PseudoURL(const std::string &inputString)
   {
     std::string tmp = inputString;
-    char *separator = (char*)strstr(tmp.c_str(),"://");
-    if (separator) {
+    const size_t separator = tmp.find("://");
+    if (separator != std::string::npos) {
       // separator specified: cut off 'type' before that separator,
       // and reset 'tmp' to everything behind it
-      *separator = 0;
-      type = separator;
-      tmp  = separator+strlen("://");
+      type = tmp.substr(0, separator);
+      tmp  = tmp.substr(separator + 3);
     } else {
       // no separator -> empty type specifier string, tmp returns
       // un-modified
@@ -43,12 +59,7 @@ namespace ospcommon {
     /* now, split remainder into its colon-separated components (the
        first of those is the filename, all other ones are params */
     std::vector<std::string> colonSeparatedComponents;
-    char *tok_save = NULL;
-    const char *tok = strtok_r((char*)tmp.c_str(),":",&tok_save);
-    while (tok) {
-      colonSeparatedComponents.push_back(tok);
-      tok = strtok_r(NULL,":",&tok_save);
-    }
+    tokenize(tmp, ':', colonSeparatedComponents);
 
     if (colonSeparatedComponents.empty())
       // degenerate case of "type://<nothing>" - return empty filename and empty params
@@ -57,12 +68,13 @@ namespace ospcommon {
     fileName = colonSeparatedComponents[0];
     for (int arg_it = 1;arg_it<colonSeparatedComponents.size();arg_it++) {
       std::string arg = colonSeparatedComponents[arg_it];
-      char *equalSign = strstr((char*)arg.c_str(),"=");
-      if (equalSign) {
-        *equalSign = 0;
-        params.push_back(std::pair<std::string,std::string>(arg,equalSign+1));
-      } else
+      const size_t equalSign = arg.find('=');
+      if (equalSign != std::string::npos) {
+        params.push_back(std::pair<std::string,std::string>(arg.substr(0, equalSign),
+                                                            arg.substr(equalSign+1)));
+      } else {
         params.push_back(std::pair<std::string,std::string>(arg,""));
+      }
     }
   }
 
@@ -71,14 +83,14 @@ namespace ospcommon {
   {
     return type;
   }
-    
+
   /*! return the parsed file name specifier. cannot be empty
     string */
   std::string PseudoURL::getFileName() const
   {
     return fileName;
   }
-  
+
   /*! return value for given parameters name, or throw an exception
     if not specified */
   std::string PseudoURL::getValue(const std::string &name) const
@@ -97,14 +109,14 @@ namespace ospcommon {
       throw std::runtime_error("PseudoURL::getValue queried value of not-specified parameter");
     return params[found].second;
   }
-  
+
   /*! check if the given parameter was specified */
- bool PseudoURL::hasParam(const std::string &name)
- {
+  bool PseudoURL::hasParam(const std::string &name)
+  {
     for (auto param : params)
       if (param.first == name) return true;
     return false;
- }
-  
+  }
+
 } // ::ospcommon
 
