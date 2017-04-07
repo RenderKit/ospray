@@ -365,9 +365,7 @@ extern "C" OSPRenderer ospNewRenderer(const char *_type)
   }
   OSPRenderer renderer = ospray::api::Device::current->newRenderer(type.c_str());
   if (renderer == nullptr) {
-    std::stringstream msg;
-    msg << "#ospray: could not create renderer '" << type << "'" << std::endl;
-    postErrorMsg(msg, 1);
+    postErrorMsg(1) << "#ospray: could not create renderer '" << type << "'";
   }
   return renderer;
 }
@@ -382,9 +380,7 @@ extern "C" OSPGeometry ospNewGeometry(const char *type)
   LOG("ospNewGeometry(" << type << ")");
   OSPGeometry geometry = ospray::api::Device::current->newGeometry(type);
   if (geometry == nullptr) {
-    std::stringstream msg;
-    msg << "#ospray: could not create geometry '" << type << "'" << std::endl;
-    postErrorMsg(msg, 1);
+    postErrorMsg(1) << "#ospray: could not create geometry '" << type << "'";
   }
   LOG("DONE ospNewGeometry(" << type << ") >> " << (int *)geometry);
   return geometry;
@@ -401,9 +397,7 @@ extern "C" OSPMaterial ospNewMaterial(OSPRenderer renderer, const char *type)
   LOG("ospNewMaterial(" << renderer << ", " << type << ")");
   OSPMaterial material = ospray::api::Device::current->newMaterial(renderer, type);
   if (material == nullptr) {
-    std::stringstream msg;
-    msg << "#ospray: could not create material '" << type << "'" << std::endl;
-    postErrorMsg(msg, 1);
+    postErrorMsg(1) << "#ospray: could not create material '" << type << "'";
   }
   return material;
 }
@@ -415,9 +409,7 @@ extern "C" OSPLight ospNewLight(OSPRenderer renderer, const char *type)
   LOG("ospNewLight(" << renderer << ", " << type << ")");
   OSPLight light = ospray::api::Device::current->newLight(renderer, type);
   if (light == nullptr) {
-    std::stringstream msg;
-    msg << "#ospray: could not create light '" << type << "'" << std::endl;
-    postErrorMsg(msg, 1);
+    postErrorMsg(1) << "#ospray: could not create light '" << type << "'";
   }
   return light;
 }
@@ -432,9 +424,7 @@ extern "C" OSPCamera ospNewCamera(const char *type)
   LOG("ospNewCamera(" << type << ")");
   OSPCamera camera = ospray::api::Device::current->newCamera(type);
   if (camera == nullptr) {
-    std::stringstream msg;
-    msg << "#ospray: could not create camera '" << type << "'" << std::endl;
-    postErrorMsg(msg, 1);
+    postErrorMsg(1) << "#ospray: could not create camera '" << type << "'";
   }
   return camera;
 }
@@ -459,9 +449,7 @@ extern "C" OSPVolume ospNewVolume(const char *type)
   LOG("ospNewVolume(" << type << ")");
   OSPVolume volume = ospray::api::Device::current->newVolume(type);
   if (volume == nullptr) {
-    std::stringstream msg;
-    msg << "#ospray: could not create volume '" << type << "'" << std::endl;
-    postErrorMsg(msg, 1);
+    postErrorMsg(1) << "#ospray: could not create volume '" << type << "'";
   }
   return volume;
 }
@@ -475,9 +463,7 @@ extern "C" OSPTransferFunction ospNewTransferFunction(const char *type)
   LOG("ospNewTransferFunction(" << type << ")");
   OSPTransferFunction transferFunction = ospray::api::Device::current->newTransferFunction(type);
   if (transferFunction == nullptr) {
-    std::stringstream msg;
-    msg << "#ospray: could not create transferFunction '" << type << "'" << std::endl;
-    postErrorMsg(msg, 1);
+    postErrorMsg(1) << "#ospray: could not create transferFunction '" << type << "'";
   }
   return transferFunction;
 }

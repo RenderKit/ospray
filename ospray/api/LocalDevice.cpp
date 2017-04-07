@@ -39,9 +39,7 @@ namespace ospray {
 
     void embreeErrorFunc(const RTCError code, const char* str)
     {
-      std::stringstream msg;
-      msg << "#osp: embree internal error " << code << " : " << str << '\n';
-      postErrorMsg(msg.str());
+      postErrorMsg() << "#osp: embree internal error " << code << " : " << str;
       throw std::runtime_error("embree internal error '" +std::string(str)+"'");
     }
 
@@ -66,9 +64,7 @@ namespace ospray {
       RTCError erc = rtcDeviceGetError(embreeDevice);
       if (erc != RTC_NO_ERROR) {
         // why did the error function not get called !?
-        std::stringstream msg;
-        msg << "#osp:init: embree internal error number " << erc << '\n';
-        postErrorMsg(msg.str());
+        postErrorMsg() << "#osp:init: embree internal error number " << erc;
         assert(erc == RTC_NO_ERROR);
       }
 
@@ -550,11 +546,10 @@ namespace ospray {
       try {
         return renderer->renderFrame(fb, fbChannelFlags);
       } catch (const std::runtime_error &e) {
-        std::string msg = "=================================================\n";
-        msg += "# >>> ospray fatal error <<< \n";
-        msg += std::string(e.what()) + '\n';
-        msg += "=================================================\n";
-        postErrorMsg(msg);
+        postErrorMsg() << "=================================================\n"
+                       << "# >>> ospray fatal error <<< \n"
+                       << std::string(e.what()) + '\n'
+                       << "=================================================\n";
         exit(1);
       }
     }

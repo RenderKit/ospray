@@ -48,11 +48,12 @@ namespace ospray {
     static int numPrints = 0;
     numPrints++;
     if (numPrints == 5) {
-      postErrorMsg("(all future printouts for triangle mesh creation "
-                   "will be omitted)\n", 2);
+      postErrorMsg(2) << "(all future printouts for triangle mesh creation "
+                      << "will be omitted)";
     }
     
-    if (numPrints < 5) postErrorMsg("ospray: finalizing trianglemesh ...\n", 2);
+    if (numPrints < 5)
+      postErrorMsg(2) << "ospray: finalizing trianglemesh ...";
 
     Assert(model && "invalid model pointer");
 
@@ -154,11 +155,9 @@ namespace ospray {
       bounds.extend(*(vec3f*)(vertex + i));
 
     if (numPrints < 5) {
-      std::stringstream msg;
-      msg << "  created triangle mesh (" << numTris << " tris "
-          << ", " << numVerts << " vertices)" << std::endl;
-      msg << "  mesh bounds " << bounds << std::endl;
-      postErrorMsg(msg, 2);
+      postErrorMsg(2) << "  created triangle mesh (" << numTris << " tris "
+                      << ", " << numVerts << " vertices)\n"
+                      << "  mesh bounds " << bounds;
     }
 
     ispc::TriangleMesh_set(getIE(),model->getIE(),eMesh,

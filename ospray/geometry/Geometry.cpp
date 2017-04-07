@@ -30,14 +30,14 @@ namespace ospray {
   void Geometry::setMaterial(Material *mat)
   {
     if (!mat) {
-      std::stringstream msg;
-      msg << "#osp: warning - tried to set NULL material; ignoring"
-          << "#osp: warning. (note this means that object may not get any "
-          << "material at all!)" << std::endl;
-      postErrorMsg(msg.str());
+      postErrorMsg() << "#osp: warning - tried to set NULL material; ignoring"
+                     << "#osp: warning. (note this means that object may not "
+                     << " get any material at all!)";
       return;
     }
+
     material = mat;
+
     if (!getIE()) 
       postErrorMsg("#osp: warning - geometry does not have an ispc equivalent!\n");
     else {

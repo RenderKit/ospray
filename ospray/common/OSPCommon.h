@@ -117,6 +117,7 @@ namespace ospray {
   /*! size of OSPTextureFormat */
   OSPRAY_INTERFACE size_t sizeOf(const OSPTextureFormat);
 
+  OSPRAY_INTERFACE int loadLocalModule(const std::string &name);
 
   /*! little helper class that prints out a warning string upon the
     first time it is encountered.
@@ -137,12 +138,35 @@ namespace ospray {
 
   OSPRAY_INTERFACE uint32_t logLevel();
 
-  OSPRAY_INTERFACE int loadLocalModule(const std::string &name);
-
   OSPRAY_INTERFACE void postErrorMsg(const std::stringstream &msg,
                                      uint32_t postAtLogLevel = 0);
 
   OSPRAY_INTERFACE void postErrorMsg(const std::string &msg,
                                      uint32_t postAtLogLevel = 0);
+
+  struct OSPRAY_SDK_INTERFACE ErrorMsgStream
+  {
+    ErrorMsgStream(uint32_t postAtLogLevel = 0);
+    ~ErrorMsgStream();
+
+    ErrorMsgStream(ErrorMsgStream &&) = default;
+
+  private:
+
+    template <typename T>
+    friend ErrorMsgStream operator<<(ErrorMsgStream &&stream, T &&rhs);
+
+    std::stringstream msg;
+    uint32_t logLevel {0};
+  };
+
+  template <typename T>
+  inline ErrorMsgStream operator<<(ErrorMsgStream &&stream, T &&rhs)
+  {
+    stream.msg << std::forward<T>(rhs);
+    return std::forward<ErrorMsgStream>(stream);
+  }
+
+  OSPRAY_INTERFACE ErrorMsgStream postErrorMsg(uint32_t postAtLogLevel = 0);
 
 } // ::ospray

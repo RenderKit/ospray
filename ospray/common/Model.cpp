@@ -40,11 +40,10 @@ namespace ospray {
 
   void Model::finalize()
   {
-    std::stringstream msg;
-    msg << "=======================================================\n";
-    msg << "Finalizing model, has " << geometry.size()
-        << " geometries and " << volume.size() << " volumes" << std::endl;
-    postErrorMsg(msg, 2);
+    postErrorMsg(2)
+        << "=======================================================\n"
+        << "Finalizing model, has " << geometry.size()
+        << " geometries and " << volume.size() << " volumes";
 
     RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
 
@@ -54,11 +53,9 @@ namespace ospray {
     bounds = empty;
 
     for (size_t i = 0; i < geometry.size(); i++) {
-
-       std::stringstream msg;
-       msg << "=======================================================\n"
-           << "Finalizing geometry " << i << std::endl;
-       postErrorMsg(msg, 2);
+       postErrorMsg(2)
+           << "=======================================================\n"
+           << "Finalizing geometry " << i;
 
       geometry[i]->finalize(this);
 

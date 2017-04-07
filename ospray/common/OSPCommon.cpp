@@ -34,8 +34,9 @@ namespace ospray {
   WarnOnce::WarnOnce(const std::string &s, uint32_t postAtLogLevel) 
     : s(s) 
   {
-    std::string msg = "Warning: " + s + " (only reporting first occurrence)\n";
-    postErrorMsg(msg, postAtLogLevel);
+    postErrorMsg(postAtLogLevel) << "Warning: "
+                                 << s
+                                 << " (only reporting first occurrence)";
   }
   
   /*! for debugging. compute a checksum for given area range... */
@@ -305,6 +306,22 @@ namespace ospray {
   {
     if (logLevel() >= postAtLogLevel && ospray::api::Device::current.ptr)
       ospray::api::Device::current->error_fcn(msg.c_str());
+  }
+
+  ErrorMsgStream::ErrorMsgStream(uint32_t postAtLogLevel)
+    : logLevel(postAtLogLevel)
+  {
+  }
+
+  ErrorMsgStream::~ErrorMsgStream()
+  {
+    msg << std::endl;
+    postErrorMsg(msg, logLevel);
+  }
+
+  ErrorMsgStream postErrorMsg(uint32_t postAtLogLevel)
+  {
+    return ErrorMsgStream(postAtLogLevel);
   }
 
 } // ::ospray

@@ -181,8 +181,8 @@ namespace ospray {
   void ManagedObject::emitMessage(const std::string &kind,
                                   const std::string &message) const
   {
-    std::string msg = "  " + toString() + "  " + kind + ": " + message + ".\n";
-    postErrorMsg(msg);
+    postErrorMsg() << "  " << toString()
+                   << "  " << kind << ": " << message + '.';
   }
 
   void ManagedObject::exitOnCondition(bool condition,
