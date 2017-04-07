@@ -41,7 +41,7 @@ namespace ospray {
         : myID(myID), comm(comm)
       {
         assert(comm);
-        master = mpi::async::CommLayer::Address(comm->masterRank(),myID);
+        master = mpi::async::CommLayer::Address(masterRank(), myID);
         worker = new mpi::async::CommLayer::Address[comm->numWorkers()];
         for (int i = 0 ; i < comm->numWorkers(); i++)
           worker[i] = mpi::async::CommLayer::Address(comm->workerRank(i),myID);

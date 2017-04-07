@@ -122,9 +122,7 @@ namespace ospray {
         inline int32 rank() const { return group->rank; }
 
         int32 numWorkers() const;
-        inline static int32 masterRank() { return 0; }
         inline static int32 workerRank(int clientID) { return 1 + clientID; }
-        inline bool IamTheMaster() const { return group->rank == masterRank(); }
 
         //! mutex to protect the registry
         std::mutex mutex;

@@ -138,7 +138,7 @@ namespace ospray {
       blockWasVisible[i] = false;
 
     bool renderForeAndBackground =
-        (tileID % mpi::getWorkerCount()) == mpi::getWorkerRank();
+        (tileID % mpi::numWorkers()) == mpi::workerRank();
 
     const int numJobs = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
 
@@ -151,7 +151,7 @@ namespace ospray {
                                      dpv->ddBlock,
                                      blockWasVisible,
                                      tileID,
-                                     mpi::getWorkerRank(),
+                                     mpi::workerRank(),
                                      renderForeAndBackground,
                                      tid);
     });

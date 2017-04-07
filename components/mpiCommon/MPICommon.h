@@ -187,24 +187,29 @@ namespace ospray {
     OSPRAY_MPI_INTERFACE void init(int *ac, const char **av);
     OSPRAY_MPI_INTERFACE void flush();
 
-    inline int getWorkerCount()
+    inline int numWorkers()
     {
       return mpi::worker.size;
     }
 
-    inline int getWorkerRank()
+    inline int workerRank()
     {
       return mpi::worker.rank;
     }
 
     inline bool isMpiParallel()
     {
-      return getWorkerCount() > 0;
+      return numWorkers() > 0;
+    }
+
+    inline int32 masterRank()
+    {
+      return 0;
     }
 
     inline bool IamTheMaster()
     {
-      return mpi::world.rank == 0;
+      return mpi::world.rank == masterRank();
     }
 
     // RTTI hash ID lookup helper functions ///////////////////////////////////
