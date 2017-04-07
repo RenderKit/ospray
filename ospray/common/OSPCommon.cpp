@@ -323,7 +323,7 @@ namespace ospray {
 
   ErrorMsgStream::ErrorMsgStream(ErrorMsgStream &&other)
   {
-    msg      = std::move(other.msg);
+    msg.str(other.msg.str());
     logLevel = other.logLevel;
   }
 
