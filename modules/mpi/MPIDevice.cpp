@@ -327,7 +327,7 @@ namespace ospray {
       mpi::async::CommLayer::WORLD->group = 
         mpi::async::createGroup(mergedComm.comm,
                                 mpi::async::CommLayer::WORLD,
-                                290374);
+                                OSPRAY_WORLD_GROUP_TAG);
 
       if (app.rank == 0) {
         postErrorMsg("=======================================================\n"
@@ -379,7 +379,7 @@ namespace ospray {
       mpi::async::CommLayer::WORLD->group = 
         mpi::async::createGroup(mergedComm.comm,
                                 mpi::async::CommLayer::WORLD,
-                                290374);
+                                OSPRAY_WORLD_GROUP_TAG);
       MPI_CALL(Barrier(mergedComm.comm));
 
       postErrorMsg("starting worker...", OSPRAY_MPI_VERBOSE_LEVEL);

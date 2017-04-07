@@ -60,6 +60,8 @@
 // be written
 #define OSPRAY_MPI_VERBOSE_LEVEL 3
 
+#define OSPRAY_WORLD_GROUP_TAG 290374
+
 namespace ospray {
   namespace mpi {
     using namespace ospcommon;

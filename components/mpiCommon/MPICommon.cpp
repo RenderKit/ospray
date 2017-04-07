@@ -190,7 +190,7 @@ namespace ospray {
         mpi::async::Group *worldGroup =
           mpi::async::createGroup(MPI_COMM_WORLD,
                                   mpi::async::CommLayer::WORLD,
-                                  290374);
+                                  OSPRAY_WORLD_GROUP_TAG);
         assert(worldGroup);
         mpi::async::CommLayer::WORLD->group = worldGroup;
         postErrorMsg("#osp.mpi: async messaging layer started ... ", OSPRAY_MPI_VERBOSE_LEVEL);
