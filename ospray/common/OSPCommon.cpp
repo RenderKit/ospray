@@ -321,6 +321,12 @@ namespace ospray {
     }
   }
 
+  ErrorMsgStream::ErrorMsgStream(ErrorMsgStream &&other)
+  {
+    msg      = std::move(other.msg);
+    logLevel = other.logLevel;
+  }
+
   ErrorMsgStream postErrorMsg(uint32_t postAtLogLevel)
   {
     return ErrorMsgStream(postAtLogLevel);

@@ -149,7 +149,7 @@ namespace ospray {
     ErrorMsgStream(uint32_t postAtLogLevel = 0);
     ~ErrorMsgStream();
 
-    ErrorMsgStream(ErrorMsgStream &&) = default;
+    ErrorMsgStream(ErrorMsgStream &&other);
 
   private:
 
