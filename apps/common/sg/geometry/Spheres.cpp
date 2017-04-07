@@ -42,9 +42,9 @@ namespace ospray {
     Spheres::Spheres()
       : Geometry("spheres")
     {
-      createChildNode("sphereData");
-      createChildNode("colorData");
-      auto &materialNode = createChildNode("material", "Material");
+      createChild("sphereData");
+      createChild("colorData");
+      auto &materialNode = createChild("material", "Material");
       materialNode["Kd"].setValue(vec3f(1,1,1));
       materialNode["Ks"].setValue(vec3f(0,0,0));
       materialNode["Ns"].setValue(0.f);

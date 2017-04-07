@@ -302,7 +302,7 @@ namespace ospray {
       return *this;
     }
 
-    Node& Node::createChildNode(std::string name,
+    Node& Node::createChild(std::string name,
                                 std::string type,
                                 SGVar var,
                                 int flags,
@@ -313,7 +313,7 @@ namespace ospray {
       return *child;
     }
 
-    void Node::setChildNode(const std::string &name,
+    void Node::setChild(const std::string &name,
                             const std::shared_ptr<Node> &node)
     {
       properties.children[name] = node;
@@ -349,7 +349,7 @@ namespace ospray {
     void Node::traverse(RenderContext &ctx, const std::string& operation)
     {
       //TODO: make child m time propagate
-      if (operation != "verify" && !isValid())
+      if (operation != "verify" && operation != "print" && !isValid())
         return;
 
       ctx._childMTime = TimeStamp();

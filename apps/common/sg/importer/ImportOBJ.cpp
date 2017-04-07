@@ -59,14 +59,14 @@ namespace ospray {
       Vertex(int v) : v(v), vt(v), vn(v) {};
       Vertex(int v, int vt, int vn) : v(v), vt(vt), vn(vn) {};
     };
-    
+
     static inline bool operator < ( const Vertex& a, const Vertex& b ) {
       if (a.v  != b.v)  return a.v  < b.v;
       if (a.vn != b.vn) return a.vn < b.vn;
       if (a.vt != b.vt) return a.vt < b.vt;
       return false;
     }
-    
+
     /*! Fill space at the end of the token with 0s. */
     static inline const char* trimEnd(const char* token) {
       size_t len = strlen(token);
@@ -76,24 +76,24 @@ namespace ospray {
         *pe-- = 0;
       return token;
     }
-    
+
     /*! Determine if character is a separator. */
     static inline bool isSep(const char c) {
       return (c == ' ') || (c == '\t');
     }
-    
+
     /*! Parse separator. */
     static inline const char* parseSep(const char*& token) {
       size_t sep = strspn(token, " \t");
       if (!sep) throw std::runtime_error("separator expected");
       return token+=sep;
     }
-    
+
     /*! Parse optional separator. */
     static inline const char* parseSepOpt(const char*& token) {
       return token+=strspn(token, " \t");
     }
-    
+
     /*! Read float from a string. */
     static inline float getFloat(const char*& token) {
       token += strspn(token, " \t");
@@ -101,14 +101,14 @@ namespace ospray {
       token += strcspn(token, " \t\r");
       return n;
     }
-    
+
     /*! Read vec2f from a string. */
     static inline vec2f getVec2f(const char*& token) {
       float x = getFloat(token);
       float y = getFloat(token);
       return vec2f(x,y);
     }
-    
+
     /*! Read vec3f from a string. */
     static inline vec3f getVec3f(const char*& token) {
       float x = getFloat(token);
@@ -117,25 +117,25 @@ namespace ospray {
       return vec3f(x,y,z);
     }
 
-    
+
     class OBJLoader
     {
     public:
-      
+
       std::shared_ptr<World> world;
       std::map<std::string,std::shared_ptr<Material> > material;
-      
+
       /*! Constructor. */
       OBJLoader(std::shared_ptr<World> world, const FileName& fileName);
-      
+
       /*! Destruction */
       ~OBJLoader();
- 
+
       /*! Public methods. */
       void loadMTL(const FileName& fileName);
-      
+
       template<typename T>
-      inline T parse(const char *&token);
+      inline T parse(const char *&token, std::string& type);
 
       /*! try to parse given token stream as a float-type with given
         keyword; and if successful, assign to material. returns true
@@ -144,7 +144,7 @@ namespace ospray {
       bool tryToMatch(const char *&token,
                       const char *keyWord,
                       const std::shared_ptr<Material> &mat);
-      
+
       /*! try to parse given token stream as a float-type with given
         keyword; and if successful, load the texture and assign to
         material. returns true if matched, false if not */
@@ -181,15 +181,15 @@ namespace ospray {
                          const Vertex& i);
     };
 
-    
-    template<> inline vec3f OBJLoader::parse(const char *&token)
-    { return getVec3f(token); }
-    template<> inline float OBJLoader::parse(const char *&token)
-    { return getFloat(token); }
-    template<> inline std::string OBJLoader::parse(const char *&token)
-    { return std::string(token); }
 
-    OBJLoader::OBJLoader(std::shared_ptr<World> world, const FileName &fileName) 
+    template<> inline vec3f OBJLoader::parse(const char *&token, std::string& type)
+    { type="vec3f"; return getVec3f(token); }
+    template<> inline float OBJLoader::parse(const char *&token, std::string& type)
+    { type="float"; return getFloat(token); }
+    template<> inline std::string OBJLoader::parse(const char *&token, std::string& type)
+    { type="string"; return std::string(token); }
+
+    OBJLoader::OBJLoader(std::shared_ptr<World> world, const FileName &fileName)
       : world(world),
         path(fileName.path()),
         fullPath(fileName)
@@ -206,6 +206,7 @@ namespace ospray {
       // Handle<Device::RTMaterial> defaultMaterial = g_device->rtNewMaterial("matte");
       // g_device->rtSetFloat3(defaultMaterial, "reflectance", 0.5f, 0.5f, 0.5f);
       // g_device->rtCommit(defaultMaterial);
+      defaultMaterial = std::static_pointer_cast<Material>(createNode("material","Material"));
       curMaterial = defaultMaterial;
 
       char line[1000000];
@@ -263,7 +264,10 @@ namespace ospray {
               if (material.find(name) == material.end())
                 curMaterial = defaultMaterial;
               else
+              {
+                std::cout << "using curMaterial: " << name << std::endl;
                 curMaterial = material[name];
+              }
               continue;
             }
 
@@ -272,13 +276,13 @@ namespace ospray {
             loadMTL(path + std::string(parseSep(token += 6)));
             continue;
           }
-      
+
           // ignore unknown stuff
         }
       flushFaceGroup();
       cin.close();
     }
-    
+
     OBJLoader::~OBJLoader()
     {
     }
@@ -294,13 +298,15 @@ namespace ospray {
     {
       if (strncasecmp(token, keyWord, strlen(keyWord)))
         return false;
-      
+
       parseSep(token+=strlen(keyWord));
-      mat->createChildWithValue(keyWord, parse<T>(token));
+      std::string type;
+      auto val = parse<T>(token,type);
+      mat->createChild(keyWord, type, val);
 
       return true;
     }
-    
+
     /*! try to parse given token stream as a float-type with given
       keyword; and if successful, load the texture and assign to
       material. returns true if matched, false if not */
@@ -313,8 +319,10 @@ namespace ospray {
         return false;
 
       parseSep(token+=strlen(keyWord));
-      mat->createChildWithValue(keyWord,
-                    loadTexture(path,parse<std::string>(token),preferLinear));
+      std::string type;
+      auto node =  loadTexture(path,parse<std::string>(token,type),preferLinear);
+      // mat->createChildWithValue(keyWord, type, val);
+      mat->add(node);
       return true;
     }
 
@@ -332,7 +340,7 @@ namespace ospray {
       memset(line, 0, sizeof(line));
 
       //      Handle<Device::RTMaterial> cur = null;
-      std::shared_ptr<Material> cur;
+      std::shared_ptr<Material> cur = std::static_pointer_cast<Material>(createNode("material","Material"));
       while (cin.peek() != -1)
         {
           /* load next multiline */
@@ -353,7 +361,8 @@ namespace ospray {
             parseSep(token+=6);
             // if (cur) g_device->rtCommit(cur);
             std::string name(token);
-            material[name] = cur = std::make_shared<Material>(); //g_device->rtNewMaterial("obj");
+            material[name] = cur = std::static_pointer_cast<Material>(createNode(name,"Material"));
+             //g_device->rtNewMaterial("obj");
             //            model.material.push_back(cur);
             cur->name = name;
             cur->type = "OBJ";
@@ -366,13 +375,13 @@ namespace ospray {
             continue;
           }//throw std::runtime_error("invalid material file: newmtl expected first");
 
-          if (!strncmp(token, "illum_4",7)) { 
+          if (!strncmp(token, "illum_4",7)) {
             /*! iw: hack for VMD-exported OBJ files, working around a
               bug in VMD's OBJ exporter (VMD writes "illum_4" (with
               an underscore) rather than "illum 4" (with a
               whitespace) */
-            parseSep(token += 7);  
-            continue; 
+            parseSep(token += 7);
+            continue;
           }
 
           if (tryToMatch<float>(token,"illum",cur)) continue;
@@ -401,12 +410,12 @@ namespace ospray {
             continue;
           }
 
-          // add anything else as float param
+          //add anything else as float param
           const char * ident = token;
           token += strcspn(token, " \t");
           *(char*)token = 0;
           parseSepOpt(token += 1);
-          cur->createChildWithValue(ident, getFloat(token));
+          cur->createChildWithValue(ident, "float", getFloat(token));
         }
       // if (cur) g_device->rtCommit(cur);
       cin.close();
@@ -450,7 +459,7 @@ namespace ospray {
       return(v);
     }
 
-    uint32_t OBJLoader::getVertex(std::map<Vertex,uint32_t>& vertexMap, 
+    uint32_t OBJLoader::getVertex(std::map<Vertex,uint32_t>& vertexMap,
                                   const std::shared_ptr<TriangleMesh> &mesh,
                                   const Vertex& i)
     {
@@ -483,7 +492,10 @@ namespace ospray {
       if (curGroup.empty()) return;
 
       std::map<Vertex, uint32_t> vertexMap;
-      std::string name = fullPath.name()+"_"+curGroupName;
+      static int counter=0;
+      std::stringstream ss;
+      ss << fullPath.name() << "_" << counter++ << "_" << curGroupName;
+      std::string name = ss.str();
       //scenegraph
       std::shared_ptr<TriangleMesh> mesh =
           std::static_pointer_cast<TriangleMesh>(createNode(name, "TriangleMesh"));
@@ -492,14 +504,15 @@ namespace ospray {
       mesh->normal = std::make_shared<DataVector3f>();
       mesh->texcoord = std::make_shared<DataVector2f>();
       mesh->index =  std::make_shared<DataVector3i>();
-      mesh->material = curMaterial;
+      //std::cout << "setting mesh curMaterial: " << curMaterial->name << std::endl;
+      mesh->setChild("material",curMaterial);
 
       // merge three indices into one
       for (size_t j=0; j < curGroup.size(); j++) {
         /* iterate over all faces */
         const std::vector<Vertex>& face = curGroup[j];
         Vertex i0 = face[0], i1 = Vertex(-1), i2 = face[1];
-          
+
         /* triangulate the face with a triangle fan */
         for (size_t k=2; k < face.size(); k++) {
           i1 = i2; i2 = face[k];

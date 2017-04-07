@@ -437,7 +437,7 @@ namespace ospray {
               std::shared_ptr<sg::TransferFunction> tfn =
                 std::dynamic_pointer_cast<sg::TransferFunction>(node);
 
-              node->createChildWithValue("transferFunctionWidget",
+              node->createChildWithValue("transferFunctionWidget","Node",
                                          TransferFunction(tfn));
             }
 

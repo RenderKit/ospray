@@ -23,8 +23,8 @@ namespace ospray {
 
     Renderer::Renderer()
     {
-      createChildNode("bounds", "box3f");
-      createChildNode("rendererType", "string", std::string("scivis"),
+      createChild("bounds", "box3f");
+      createChild("rendererType", "string", std::string("scivis"),
                       NodeFlags::required |
                       NodeFlags::valid_whitelist |
                       NodeFlags::gui_combo,
@@ -43,42 +43,42 @@ namespace ospray {
                                           std::string("dvr"),
                                           std::string("pathtracer"),
                                           std::string("pt")});
-      createChildNode("world",
+      createChild("world",
                       "World").setDocumentation("model containing scene objects");
-      createChildNode("camera", "PerspectiveCamera");
-      createChildNode("frameBuffer", "FrameBuffer");
-      createChildNode("lights");
+      createChild("camera", "PerspectiveCamera");
+      createChild("frameBuffer", "FrameBuffer");
+      createChild("lights");
 
-      createChildNode("bgColor", "vec3f", vec3f(0.9f, 0.9f, 0.9f),
+      createChild("bgColor", "vec3f", vec3f(0.9f, 0.9f, 0.9f),
                       NodeFlags::required |
                       NodeFlags::valid_min_max |
                       NodeFlags::gui_color);
 
       //TODO: move these to seperate SciVisRenderer
-      createChildNode("shadowsEnabled", "bool", true);
-      createChildNode("maxDepth", "int", 5,
+      createChild("shadowsEnabled", "bool", true);
+      createChild("maxDepth", "int", 5,
                       NodeFlags::required | NodeFlags::valid_min_max,
                       "maximum number of ray bounces").setMinMax(0,999);
-      createChildNode("aoSamples", "int", 1,
+      createChild("aoSamples", "int", 1,
                      NodeFlags::required |
                       NodeFlags::valid_min_max |
                       NodeFlags::gui_slider,
                      "AO samples per frame.").setMinMax(0,128);
-      createChildNode("spp", "int", 1,
+      createChild("spp", "int", 1,
                       NodeFlags::required | NodeFlags::gui_slider,
                       "the number of samples rendered per pixel. The higher "
                       "the number, the smoother the resulting image.");
       child("spp").setMinMax(-8,128);
 
-      createChildNode("aoDistance", "float", 10000.f,
+      createChild("aoDistance", "float", 10000.f,
                       NodeFlags::required | NodeFlags::valid_min_max,
                       "maximum distance ao rays will trace to."
                       " Useful if you do not want a large interior of a"
                       " building to be completely black from occlusion.");
       child("aoDistance").setMinMax(1e-20f, 1e20f);
 
-      createChildNode("oneSidedLighting", "bool", true, NodeFlags::required);
-      createChildNode("aoTransparency", "bool", true, NodeFlags::required);
+      createChild("oneSidedLighting", "bool", true, NodeFlags::required);
+      createChild("aoTransparency", "bool", true, NodeFlags::required);
     }
 
     void Renderer::postRender(RenderContext &ctx)

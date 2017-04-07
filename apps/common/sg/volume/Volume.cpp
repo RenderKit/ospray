@@ -105,25 +105,25 @@ namespace ospray {
     /*! \brief returns a std::string with the c++ name of this class */
     Volume::Volume()
     {
-      createChildNode("transferFunction", "TransferFunction");
-      createChildNode("gradientShadingEnabled", "bool", true);
-      createChildNode("preIntegration", "bool", true);
-      createChildNode("singleShade", "bool", true);
-      createChildNode("voxelRange", "vec2f",
+      createChild("transferFunction", "TransferFunction");
+      createChild("gradientShadingEnabled", "bool", true);
+      createChild("preIntegration", "bool", true);
+      createChild("singleShade", "bool", true);
+      createChild("voxelRange", "vec2f",
                       vec2f(std::numeric_limits<float>::infinity(),
                             -std::numeric_limits<float>::infinity()));
-      createChildNode("adaptiveSampling", "bool", true);
-      createChildNode("adaptiveScalar", "float", 15.f);
-      createChildNode("adaptiveBacktrack", "float", 0.03f);
-      createChildNode("samplingRate", "float", 0.125f);
-      createChildNode("adaptiveMaxSamplingRate", "float", 2.f);
-      createChildNode("volumeClippingBoxLower", "vec3f", vec3f(0.f));
-      createChildNode("volumeClippingBoxUpper", "vec3f", vec3f(0.f));
-      createChildNode("specular", "vec3f", vec3f(0.3f));
-      createChildNode("gridOrigin", "vec3f", vec3f(0.0f));
-      createChildNode("gridSpacing", "vec3f", vec3f(1.f));
-      createChildNode("isosurfaceEnabled", "bool", false);
-      createChildNode("isosurface", "float",
+      createChild("adaptiveSampling", "bool", true);
+      createChild("adaptiveScalar", "float", 15.f);
+      createChild("adaptiveBacktrack", "float", 0.03f);
+      createChild("samplingRate", "float", 0.125f);
+      createChild("adaptiveMaxSamplingRate", "float", 2.f);
+      createChild("volumeClippingBoxLower", "vec3f", vec3f(0.f));
+      createChild("volumeClippingBoxUpper", "vec3f", vec3f(0.f));
+      createChild("specular", "vec3f", vec3f(0.3f));
+      createChild("gridOrigin", "vec3f", vec3f(0.0f));
+      createChild("gridSpacing", "vec3f", vec3f(1.f));
+      createChild("isosurfaceEnabled", "bool", false);
+      createChild("isosurface", "float",
                       -std::numeric_limits<float>::infinity(),
                       NodeFlags::valid_min_max |
                       NodeFlags::gui_slider).setMinMax(0.f,255.f);
@@ -458,7 +458,7 @@ namespace ospray {
       // Launch loader threads to load the volume
       LoaderState loaderState(fileNameOfCorrespondingXmlDoc.path() + dirName, timeStep);
       std::vector<std::thread> threads;
-      createChildNode("blocksLoaded", "string", "0/" + std::to_string(LoaderState::NUM_BLOCKS));
+      createChild("blocksLoaded", "string", "0/" + std::to_string(LoaderState::NUM_BLOCKS));
 
       for (size_t i = 0; i < std::thread::hardware_concurrency(); ++i) {
         threads.push_back(std::thread([&](){ loaderThread(loaderState); }));

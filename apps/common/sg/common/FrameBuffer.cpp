@@ -21,8 +21,8 @@ namespace ospray {
 
     FrameBuffer::FrameBuffer(vec2i size)
     {
-      createChildNode("size", "vec2i", size);
-      createChildNode("displayWall", "string", std::string(""));
+      createChild("size", "vec2i", size);
+      createChild("displayWall", "string", std::string(""));
       createFB();
     }
 

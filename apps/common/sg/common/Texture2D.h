@@ -30,11 +30,11 @@ namespace ospray {
     {
       /*! constructor */
       Texture2D() = default;
-      
+
       /*! \brief returns a std::string with the c++ name of this class */
       std::string toString() const override;
 
-      //! \brief load texture from given file. 
+      //! \brief load texture from given file.
       /*! \detailed if file does not exist, or cannot be loaded for
           some reason, return NULL. Multiple loads from the same file
           will return the *same* texture object */
@@ -43,12 +43,16 @@ namespace ospray {
 
       //! texture size, in pixels
       vec2i size {-1};
+      int channels{0};
+      int depth{0};
+      bool prefereLinear{false};
 
       //! format of each texel
       OSPTextureFormat texelType {OSP_TEXTURE_FORMAT_INVALID};
-      
+
       OSPTexture2D ospTexture {nullptr};
       std::shared_ptr<sg::DataArray1uc> texelData;
+      void* data{nullptr};
     };
 
   } // ::ospray::sg

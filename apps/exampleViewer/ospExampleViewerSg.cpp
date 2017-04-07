@@ -27,14 +27,14 @@
 #include <sstream>
 
 namespace dw {
-    
+
   struct ServiceInfo {
     /* constructor that initializes everything to default values */
     ServiceInfo()
       : totalPixelsInWall(-1,-1),
         mpiPortName("<value not set>")
     {}
-      
+
     /*! total pixels in the entire display wall, across all
       indvididual displays, and including bezels (future versios
       will allow to render to smaller resolutions, too - and have
@@ -45,16 +45,16 @@ namespace dw {
     /*! the MPI port name that the service is listening on client
       connections for (ie, the one to use with
       client::establishConnection) */
-    std::string mpiPortName; 
+    std::string mpiPortName;
 
     /*! whether this runs in stereo mode */
     int stereo;
 
     /*! read a service info from a given hostName:port. The service
-      has to already be running on that port 
+      has to already be running on that port
 
       Note this may throw a std::runtime_error if the connection
-      cannot be established 
+      cannot be established
     */
     void getFrom(const std::string &hostName,
                  const int portNo);
@@ -203,8 +203,8 @@ void addPlaneToScene(sg::Node& world)
   auto index = std::make_shared<sg::DataArray3i>((vec3i*)&triangles[0],
                                                  size_t(2),
                                                  false);
-  auto &plane = world.createChildNode("plane", "InstanceGroup");
-  auto &mesh  = plane.createChildNode("mesh", "TriangleMesh");
+  auto &plane = world.createChild("plane", "InstanceGroup");
+  auto &mesh  = plane.createChild("mesh", "TriangleMesh");
 
   std::shared_ptr<sg::TriangleMesh> sg_plane =
     std::static_pointer_cast<sg::TriangleMesh>(mesh.shared_from_this());
@@ -245,7 +245,7 @@ int main(int ac, const char **av)
     std::cout << "found a DISPLAY_WALL environment variable ...." << std::endl;
     std::cout << "trying to connect to display wall service on "
               << dwNodeName << ":2903" << std::endl;
-    
+
     dwService.getFrom(dwNodeName,2903);
     std::cout << "found display wall service on MPI port "
               << dwService.mpiPortName << std::endl;
@@ -273,17 +273,17 @@ int main(int ac, const char **av)
 
   auto &lights = renderer["lights"];
 
-  auto &sun = lights.createChildNode("sun", "DirectionalLight");
+  auto &sun = lights.createChild("sun", "DirectionalLight");
   sun["color"].setValue(vec3f(1.f,232.f/255.f,166.f/255.f));
   sun["direction"].setValue(vec3f(0.462f,-1.f,-.1f));
   sun["intensity"].setValue(1.5f);
 
-  auto &bounce = lights.createChildNode("bounce", "DirectionalLight");
+  auto &bounce = lights.createChild("bounce", "DirectionalLight");
   bounce["color"].setValue(vec3f(127.f/255.f,178.f/255.f,255.f/255.f));
   bounce["direction"].setValue(vec3f(-.93,-.54f,-.605f));
   bounce["intensity"].setValue(0.25f);
 
-  auto &ambient = lights.createChildNode("ambient", "AmbientLight");
+  auto &ambient = lights.createChild("ambient", "AmbientLight");
   ambient["intensity"].setValue(0.9f);
   ambient["color"].setValue(vec3f(174.f/255.f,218.f/255.f,255.f/255.f));
 
@@ -300,16 +300,16 @@ int main(int ac, const char **av)
   parseCommandLineSG(ac, av, renderer);
 
   if (rendererDW.get()) {
-    rendererDW->setChildNode("world",  renderer["world"].shared_from_this());
-    rendererDW->setChildNode("lights", renderer["lights"].shared_from_this());
+    rendererDW->setChild("world",  renderer["world"].shared_from_this());
+    rendererDW->setChild("lights", renderer["lights"].shared_from_this());
 
     auto &frameBuffer = rendererDW->child("frameBuffer");
     frameBuffer["size"].setValue(dwService.totalPixelsInWall);
     frameBuffer["displayWall"].setValue(dwService.mpiPortName);
   }
 
-  if (debug) {
-    renderer.traverse("verify");
+  if (debug)
+  {
     renderer.traverse("print");
   }
 
@@ -320,7 +320,7 @@ int main(int ac, const char **av)
   if (addPlane) addPlaneToScene(world);
 
   window.create("OSPRay Example Viewer App", fullscreen);
-  
+
   ospray::imgui3D::run();
 }
-  
+

@@ -22,16 +22,16 @@ namespace ospray {
     PerspectiveCamera::PerspectiveCamera() 
       : Camera("perspective")
     {
-      createChildNode("pos", "vec3f", vec3f(0, -1, 0));
-      createChildNode("dir", "vec3f", vec3f(0, 0, 0),
+      createChild("pos", "vec3f", vec3f(0, -1, 0));
+      createChild("dir", "vec3f", vec3f(0, 0, 0),
                        NodeFlags::required | NodeFlags::valid_min_max |
                        NodeFlags::required | NodeFlags::valid_min_max |
                        NodeFlags::gui_slider).setMinMax(vec3f(-1), vec3f(1));
-      createChildNode("up", "vec3f", vec3f(0, 0, 1),NodeFlags::required);
-      createChildNode("aspect", "float", 1.f,
+      createChild("up", "vec3f", vec3f(0, 0, 1),NodeFlags::required);
+      createChild("aspect", "float", 1.f,
                       NodeFlags::required |
                       NodeFlags::valid_min_max).setMinMax(1e-31f, 1e31f);
-      createChildNode("fovy", "float", 60.f,
+      createChild("fovy", "float", 60.f,
                       NodeFlags::required | NodeFlags::valid_min_max |
                       NodeFlags::required | NodeFlags::valid_min_max |
                       NodeFlags::gui_slider).setMinMax(.1f, 360.f);

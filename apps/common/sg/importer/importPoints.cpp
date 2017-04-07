@@ -161,7 +161,7 @@ namespace ospray {
       fclose(file);
 
       // create the node
-      auto &sphereObject = world->createChildNode("spheres","Spheres");
+      auto &sphereObject = world->createChild("spheres","Spheres");
 
       // iw - note that 'add' sounds wrong here, but that's the way
       // the current scene graph works - 'adding' that node (which

@@ -23,21 +23,22 @@ namespace ospray {
 
     Material::Material()
     {
-      createChildNode("type", "string", std::string("OBJMaterial"));
+      createChild("type", "string", std::string("OBJMaterial"));
       vec3f kd(10.f/255.f,68.f/255.f,117.f/255.f);
       vec3f ks(208.f/255.f,140.f/255.f,82.f/255.f);
-      createChildNode("Kd", "vec3f",kd,
+      createChild("Kd", "vec3f",kd,
                       NodeFlags::required |
                       NodeFlags::valid_min_max |
                       NodeFlags::gui_color).setMinMax(vec3f(0), vec3f(1));
-      createChildNode("Ks", "vec3f",ks,
+      createChild("Ks", "vec3f",ks,
                       NodeFlags::required |
                       NodeFlags::valid_min_max |
                       NodeFlags::gui_color).setMinMax(vec3f(0), vec3f(1));
-      createChildNode("Ns", "float",10.f,
+      createChild("Ns", "float",10.f,
                       NodeFlags::required |
                       NodeFlags::valid_min_max |
                       NodeFlags::gui_slider).setMinMax(0.f, 100.f);
+       setValue((OSPObject)nullptr);
     }
 
     std::string Material::toString() const

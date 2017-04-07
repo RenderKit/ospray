@@ -21,7 +21,7 @@ namespace ospray {
 
     World::World()
     {
-      createChildNode("bounds", "box3f");
+      createChild("bounds", "box3f");
     }
 
     box3f World::bounds() const
@@ -76,15 +76,15 @@ namespace ospray {
 
     InstanceGroup::InstanceGroup()
     {
-      createChildNode("bounds", "box3f");
-      createChildNode("visible", "bool", true);
-      createChildNode("position", "vec3f");
-      createChildNode("rotation", "vec3f", vec3f(0),
+      createChild("bounds", "box3f");
+      createChild("visible", "bool", true);
+      createChild("position", "vec3f");
+      createChild("rotation", "vec3f", vec3f(0),
                      NodeFlags::required      |
                      NodeFlags::valid_min_max |
                      NodeFlags::gui_slider).setMinMax(-vec3f(2*3.15f),
                                                       vec3f(2*3.15f));
-      createChildNode("scale", "vec3f", vec3f(1.f));
+      createChild("scale", "vec3f", vec3f(1.f));
     }
 
     void InstanceGroup::preCommit(RenderContext &ctx)

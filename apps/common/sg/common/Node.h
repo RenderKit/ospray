@@ -174,15 +174,15 @@ namespace ospray {
 
       //! just for convenience; add a typed 'setParam' function
       template<typename T>
-      void createChildWithValue(const std::string &name, const T &t);
+      void createChildWithValue(const std::string &name, const std::string& type, const T &t);
 
-      Node& createChildNode(std::string name,
+      Node& createChild(std::string name,
                             std::string type = "Node",
                             SGVar var = SGVar(),
                             int flags = sg::NodeFlags::none,
                             std::string documentation="");
 
-      void setChildNode(const std::string &name,
+      void setChild(const std::string &name,
                         const std::shared_ptr<Node> &node);
 
       // Parent //
@@ -246,13 +246,14 @@ namespace ospray {
 
     //! just for convenience; add a typed 'setParam' function
     template<typename T>
-    inline void Node::createChildWithValue(const std::string &name, const T &t)
+    inline void Node::createChildWithValue(const std::string &name, const std::string& type, const T &t)
     {
       auto iter = properties.children.find("name");
       if (iter != std::end(properties.children))
         iter->second->setValue(t);
       else {
         auto node = std::make_shared<Node>();
+        node->setType(type);
         node->setValue(t);
         node->setName(name);
         add(node);
@@ -411,7 +412,7 @@ namespace ospray {
     //! a Node with bounds and a render operation
     struct OSPSG_INTERFACE Renderable : public Node
     {
-      Renderable() { createChildNode("bounds", "box3f"); }
+      Renderable() { createChild("bounds", "box3f"); }
       virtual ~Renderable() = default;
 
       virtual box3f bounds() const override { return bbox; }

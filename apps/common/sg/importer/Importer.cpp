@@ -153,7 +153,7 @@ namespace ospray {
 
     Importer::Importer()
     {
-      createChildNode("fileName", "string");
+      createChild("fileName", "string");
     }
 
     void Importer::setChildrenModified(TimeStamp t)
