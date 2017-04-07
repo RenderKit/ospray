@@ -406,6 +406,31 @@ namespace ospray {
     }
   }
 
+  size_t DistributedFrameBuffer::numMyTiles() const
+  {
+    return myTiles.size();
+  }
+
+  int32 DistributedFrameBuffer::workerRank(int id)
+  {
+    return mpi::async::CommLayer::workerRank(id);
+  }
+
+  TileDesc *DistributedFrameBuffer::getTileDescFor(const vec2i &coords) const
+  {
+    return allTiles[getTileIDof(coords)];
+  }
+
+  size_t DistributedFrameBuffer::getTileIDof(const vec2i &c) const
+  {
+    return (c.x/TILE_SIZE)+(c.y/TILE_SIZE)*numTiles.x;
+  }
+
+  std::string DistributedFrameBuffer::toString() const
+  {
+    return "ospray::DistributedFrameBuffer";
+  }
+
   void DFB::incoming(mpi::async::CommLayer::Message *_msg)
   {
     if (!frameIsActive) {

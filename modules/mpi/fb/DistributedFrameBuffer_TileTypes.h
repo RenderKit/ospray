@@ -29,14 +29,14 @@ namespace ospray {
     that 'size' is the tile size used by the frame buffer, _NOT_
     necessariy 'end-begin'. 'color' and 'depth' arrays are always
     alloc'ed in TILE_SIZE pixels */
-  struct TileDesc {
-    /*! constructor */
+  struct TileDesc
+  {
     TileDesc(DistributedFrameBuffer *dfb,
              const vec2i &begin,
              size_t tileID,
              size_t ownerID);
 
-    virtual ~TileDesc() {}
+    virtual ~TileDesc() = default;
 
     /*! returns whether this tile is one of this particular
         node's tiles */
@@ -53,7 +53,8 @@ namespace ospray {
       do not have a RGBA-I8 color field, because typically that'll
       be done by the postop and send-to-master op, and not stored in
       the DFB tile itself */
-  struct TileData : public TileDesc {
+  struct TileData : public TileDesc
+  {
     TileData(DistributedFrameBuffer *dfb,
              const vec2i &begin,
              size_t tileID,
@@ -90,8 +91,8 @@ namespace ospray {
   // -------------------------------------------------------
   /*! specialized tile for plain sort-first rendering, where each
       tile is written only exactly once. */
-  struct WriteOnlyOnceTile : public TileData {
-
+  struct WriteOnlyOnceTile : public TileData
+  {
     /*! constructor */
     WriteOnlyOnceTile(DistributedFrameBuffer *dfb,
                       const vec2i &begin,
@@ -117,15 +118,10 @@ namespace ospray {
   // -------------------------------------------------------
   /*! specialized tile for doing Z-compositing. this does not have
       additional data, but a different write op. */
-  struct ZCompositeTile : public TileData {
-
-    /*! constructor */
-    ZCompositeTile(DistributedFrameBuffer *dfb,
-                   const vec2i &begin,
-                   size_t tileID,
-                   size_t ownerID)
-      : TileData(dfb,begin,tileID,ownerID)
-    {}
+  struct ZCompositeTile : public TileData
+  {
+    ZCompositeTile(DistributedFrameBuffer *dfb, const vec2i &begin,
+                   size_t tileID, size_t ownerID);
 
     /*! called exactly once at the beginning of each frame */
     void newFrame() override;
@@ -149,15 +145,12 @@ namespace ospray {
       ospray::Tile's until all input tiles are available, then sorts
       them by closest z component per tile, and only tthen does
       front-to-back compositing of those tiles */
-  struct AlphaBlendTile_simple : public TileData {
-
-    /*! constructor */
+  struct AlphaBlendTile_simple : public TileData
+  {
     AlphaBlendTile_simple(DistributedFrameBuffer *dfb,
-                   const vec2i &begin,
-                   size_t tileID,
-                   size_t ownerID)
-      : TileData(dfb,begin,tileID,ownerID)
-    {}
+                          const vec2i &begin,
+                          size_t tileID,
+                          size_t ownerID);
 
     /*! called exactly once at the beginning of each frame */
     void newFrame() override;
@@ -166,7 +159,8 @@ namespace ospray {
         written into / composited into this dfb tile */
     void process(const ospray::Tile &tile) override;
 
-    struct BufferedTile {
+    struct BufferedTile
+    {
       ospray::Tile tile;
 
       /*! determines order of this tile relative to other tiles.
@@ -175,6 +169,7 @@ namespace ospray {
         increasing 'BufferedTile::sortOrder' value */
       float sortOrder;
     };
+
     std::vector<BufferedTile *> bufferedTile;
     int currentGeneration;
     int expectedInNextGeneration;

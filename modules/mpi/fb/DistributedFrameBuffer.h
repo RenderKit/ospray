@@ -85,13 +85,13 @@ namespace ospray {
 
     void waitUntilFinished();
 
-    // ==================================================================
-    // remaining framebuffer interface
-    // ==================================================================
-
     int32 accumID(const vec2i &) override;
     float tileError(const vec2i &tile) override;
     float endFrame(const float errorThreshold) override;
+
+    enum FrameMode { WRITE_ONCE, ALPHA_BLEND, Z_COMPOSITE };
+
+    void setFrameMode(FrameMode newFrameMode) ;
 
     // ==================================================================
     // interface for the comm layer, to enable communication between
@@ -112,6 +112,13 @@ namespace ospray {
     //! process a client-to-client write tile message */
     void processMessage(WriteTileMessage *msg);
 
+  private:
+
+    friend struct TileData;
+    friend struct AlphaBlendTile_simple;
+    friend struct WriteOnlyOnceTile;
+    friend struct ZCompositeTile;
+
     // ==================================================================
     // internal helper functions
     // ==================================================================
@@ -128,27 +135,20 @@ namespace ospray {
     void tileIsCompleted(TileData *tile);
 
     //! number of tiles that "I" own
-    size_t numMyTiles() const { return myTiles.size(); }
-    static int32 workerRank(int id) { return mpi::async::CommLayer::workerRank(id); }
-
-    /*! return tile descriptor for given pixel coordinates. this tile
-      ! may or may not belong to current instance */
-    TileDesc *getTileDescFor(const vec2i &coords) const
-    { return allTiles[getTileIDof(coords)]; }
-
-    /*! return the tile ID for given pair of coordinates. this tile
-        may or may not belong to current instance */
-    size_t getTileIDof(const vec2i &c) const
-    { return (c.x/TILE_SIZE)+(c.y/TILE_SIZE)*numTiles.x; }
+    size_t numMyTiles() const;
+    static int32 workerRank(int id);
 
     //! \brief common function to help printf-debugging
     /*! \detailed Every derived class should overrride this! */
-    std::string toString() const override
-    { return "ospray::DistributedFrameBuffer"; }
+    std::string toString() const override;
 
-    typedef enum {
-      WRITE_ONCE, ALPHA_BLEND, Z_COMPOSITE
-    } FrameMode;
+    /*! return tile descriptor for given pixel coordinates. this tile
+      ! may or may not belong to current instance */
+    TileDesc *getTileDescFor(const vec2i &coords) const;
+
+    /*! return the tile ID for given pair of coordinates. this tile
+        may or may not belong to current instance */
+    size_t getTileIDof(const vec2i &c) const;
 
     int32 *tileAccumID; //< holds accumID per tile, for adaptive accumulation
     //!< holds error per tile and adaptive regions, for variance estimation / stopping
@@ -161,7 +161,6 @@ namespace ospray {
     Ref<LocalFrameBuffer> localFBonMaster;
 
     FrameMode frameMode;
-    void setFrameMode(FrameMode newFrameMode) ;
     void createTiles();
     TileData *createTile(const vec2i &xy, size_t tileID, size_t ownerID);
     void freeTiles();

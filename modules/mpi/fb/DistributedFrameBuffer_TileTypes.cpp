@@ -32,7 +32,13 @@ namespace ospray {
     : TileDesc(dfb,begin,tileID,ownerID)
   {}
 
-  /*! called exactly once at the beginning of each frame */
+  AlphaBlendTile_simple::AlphaBlendTile_simple(DistributedFrameBuffer *dfb,
+                                               const vec2i &begin,
+                                               size_t tileID,
+                                               size_t ownerID)
+    : TileData(dfb,begin,tileID,ownerID)
+  {}
+
   void AlphaBlendTile_simple::newFrame()
   {
     currentGeneration = 0;
@@ -174,6 +180,13 @@ namespace ospray {
     accumulate(tile);
     dfb->tileIsCompleted(this);
   }
+
+  ZCompositeTile::ZCompositeTile(DistributedFrameBuffer *dfb,
+                                 const vec2i &begin,
+                                 size_t tileID,
+                                 size_t ownerID)
+    : TileData(dfb,begin,tileID,ownerID)
+  {}
 
   void ZCompositeTile::newFrame()
   {
