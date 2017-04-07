@@ -265,7 +265,6 @@ namespace ospray {
                 curMaterial = defaultMaterial;
               else
               {
-                std::cout << "using curMaterial: " << name << std::endl;
                 curMaterial = material[name];
               }
               continue;
@@ -322,7 +321,7 @@ namespace ospray {
       std::string type;
       auto node =  loadTexture(path,parse<std::string>(token,type),preferLinear);
       // mat->createChildWithValue(keyWord, type, val);
-      mat->add(node);
+      mat->setChild(keyWord, node);
       return true;
     }
 

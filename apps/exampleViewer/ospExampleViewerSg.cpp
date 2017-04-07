@@ -313,6 +313,7 @@ int main(int ac, const char **av)
     renderer.traverse("print");
   }
 
+  renderer.traverse("verify");
   renderer.traverse("commit");
 
   ospray::ImGuiViewerSg window(renderer_ptr, rendererDW);

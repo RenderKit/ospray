@@ -38,7 +38,7 @@ namespace ospray {
                       NodeFlags::required |
                       NodeFlags::valid_min_max |
                       NodeFlags::gui_slider).setMinMax(0.f, 100.f);
-       setValue((OSPObject)nullptr);
+      setValue((OSPObject)nullptr);
     }
 
     std::string Material::toString() const
@@ -70,14 +70,27 @@ namespace ospray {
       }
 
       setValue((OSPObject)mat);
-      if (ospMaterial)
-        ospRelease(ospMaterial);
       ospMaterial = mat;
       ospRenderer = ctx.ospRenderer;
     }
 
     void Material::postCommit(RenderContext &ctx)
     {
+      if (hasChild("map_Kd"))
+        ospSetObject(valueAs<OSPObject>(), "map_Kd", 
+          child("map_Kd").valueAs<OSPObject>());
+      if (hasChild("map_Ks"))
+        ospSetObject(valueAs<OSPObject>(), "map_Ks", 
+          child("map_Ks").valueAs<OSPObject>());
+      if (hasChild("map_Ns"))
+        ospSetObject(valueAs<OSPObject>(), "map_Ns", 
+          child("map_Ns").valueAs<OSPObject>());
+      if (hasChild("map_d"))
+        ospSetObject(valueAs<OSPObject>(), "map_d", 
+          child("map_d").valueAs<OSPObject>());
+      if (hasChild("map_Bump"))
+        ospSetObject(valueAs<OSPObject>(), "map_Bump", 
+          child("map_Bump").valueAs<OSPObject>());
       ospCommit(ospMaterial);
     }
 

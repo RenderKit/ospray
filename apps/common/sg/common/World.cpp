@@ -106,14 +106,6 @@ namespace ospray {
       if (instanced) {
         ospCommit(ospModel);
         ctx.world = oldWorld;
-      }
-    }
-
-    void InstanceGroup::preRender(RenderContext &ctx)
-    {
-      oldWorld = ctx.world;
-      if (instanced) {
-        ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
         vec3f scale = child("scale").valueAs<vec3f>();
         vec3f rotation = child("rotation").valueAs<vec3f>();
         vec3f translation = child("position").valueAs<vec3f>();
@@ -127,7 +119,14 @@ namespace ospray {
           ospRelease(ospInstance);
         ospInstance = ospNewInstance(ospModel,(osp::affine3f&)xfm);
         ospCommit(ospInstance);
+      }
+    }
 
+    void InstanceGroup::preRender(RenderContext &ctx)
+    {
+      oldWorld = ctx.world;
+      if (instanced) {
+        ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
         if (child("visible").value() == true)
           ospAddGeometry(oldWorld->ospModel,ospInstance);
       }

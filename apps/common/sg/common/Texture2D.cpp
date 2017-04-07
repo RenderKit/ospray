@@ -60,7 +60,7 @@ namespace ospray {
         return textureCache[fileName.str()];
 
       std::shared_ptr<Texture2D> tex = std::static_pointer_cast<Texture2D>(
-        createNode(fileName.path(),"Texture2D"));
+        createNode(fileName.name(),"Texture2D"));
       const std::string ext = fileName.ext();
 
       if (ext == "ppm") {
@@ -302,12 +302,6 @@ namespace ospray {
           pixels = (unsigned char*)stbi_loadf(fileName.str().c_str(), &width, &height, &n, 0);
         else
           pixels = stbi_load(fileName.str().c_str(),&width,&height,&n,0);
-        if (n < 3)  //TODO: it seems that grayscale bump maps with > 8 bit crash
-        {
-           if (ospray::logLevel())
-            std::cout << "WARNING: ignoring texture with < 3 channels.  Turn on USE_IMAGEMAGICK to fully utilize this scenes textures\n";
-           return tex;
-        }
         tex->size.x    = width;
         tex->size.y   = height;
         tex->channels = n;
@@ -424,6 +418,46 @@ namespace ospray {
       // textureCache[fileName.str()] = tex;
       // return tex;
     }
+
+    Texture2D::Texture2D()
+      : data(nullptr), texelData(nullptr), ospTexture2D(nullptr)
+    {
+      setValue((OSPObject)nullptr);
+    }
+
+    void Texture2D::preCommit(RenderContext &ctx)
+    {
+      OSPTextureFormat type = OSP_TEXTURE_R8;
+
+      if (depth == 1) {
+        if( channels == 1 ) type = OSP_TEXTURE_R8;
+        if( channels == 3 )
+          type = prefereLinear ? OSP_TEXTURE_RGB8 : OSP_TEXTURE_SRGB;
+        if( channels == 4 )
+          type = prefereLinear ? OSP_TEXTURE_RGBA8 : OSP_TEXTURE_SRGBA;
+      } else if (depth == 4) {
+        if( channels == 1 ) type = OSP_TEXTURE_R32F;
+        if( channels == 3 ) type = OSP_TEXTURE_RGB32F;
+        if( channels == 4 ) type = OSP_TEXTURE_RGBA32F;
+      }
+
+      void* dat = data;
+      if (!dat && texelData)
+        dat = texelData->getOSP();
+      if (!dat)
+      {
+        ospTexture2D = nullptr;
+        return;
+      }
+
+      ospTexture2D = ospNewTexture2D( (osp::vec2i&)size,
+                                       type,
+                                       data,
+                                       0);
+      setValue((OSPObject)ospTexture2D);
+      ospCommit(ospTexture2D);
+    }
+
     OSP_REGISTER_SG_NODE(Texture2D);
 
 
