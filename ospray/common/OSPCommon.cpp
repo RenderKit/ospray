@@ -315,8 +315,10 @@ namespace ospray {
 
   ErrorMsgStream::~ErrorMsgStream()
   {
-    msg << std::endl;
-    postErrorMsg(msg, logLevel);
+    if (!msg.str().empty()) {
+      msg << std::endl;
+      postErrorMsg(msg, logLevel);
+    }
   }
 
   ErrorMsgStream postErrorMsg(uint32_t postAtLogLevel)
