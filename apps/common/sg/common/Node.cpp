@@ -232,15 +232,19 @@ namespace ospray {
 
     bool Node::hasChild(const std::string &name) const
     {
+      std::string lower=name;
+      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
       std::lock_guard<std::mutex> lock{mutex};
-      auto itr = properties.children.find(name);
+      auto itr = properties.children.find(lower);
       return itr != properties.children.end();
     }
 
     Node& Node::child(const std::string &name) const
     {
+      std::string lower=name;
+      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
       std::lock_guard<std::mutex> lock{mutex};
-      auto itr = properties.children.find(name);
+      auto itr = properties.children.find(lower);
       if (itr == properties.children.end()) {
         throw std::runtime_error("in node " + toString() +
                                  " : could not find sg child node with name '"
@@ -291,7 +295,10 @@ namespace ospray {
     void Node::add(std::shared_ptr<Node> node)
     {
       std::lock_guard<std::mutex> lock{mutex};
-      properties.children[node->name()] = node;
+      const std::string& name = node->name();
+      std::string lower=name;
+      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+      properties.children[lower] = node;
 
       node->setParent(*this);
     }
@@ -316,7 +323,9 @@ namespace ospray {
     void Node::setChild(const std::string &name,
                             const std::shared_ptr<Node> &node)
     {
-      properties.children[name] = node;
+      std::string lower=name;
+      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+      properties.children[lower] = node;
 #ifndef _WIN32
 # warning "TODO: child node parent needs to be set, which requires multi-parent support"
 #endif

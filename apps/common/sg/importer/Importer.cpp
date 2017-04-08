@@ -203,6 +203,8 @@ namespace ospray {
       } else if (fileName.ext() == "osg" || fileName.ext() == "osp") {
         sg::loadOSP(wsg, fileName);
         instanced = false;
+      } else if (fileName.ext() == "xml") {
+        sg::importRIVL(wsg, fileName);
       } else if (fileName.ext() == "x3d" || fileName.ext() == "hbp" ||
                  fileName.ext() == "msg" || fileName.ext() == "stl" ||
                  fileName.ext() == "tri" || fileName.ext() == "xml") {

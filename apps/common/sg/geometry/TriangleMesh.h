@@ -84,7 +84,8 @@ namespace ospray {
 
 
     /*! A special triangle mesh that allows per-triangle materials */
-    struct PTMTriangleMesh : public sg::Geometry
+    //TODO: add commit code to commit material list!
+    struct PTMTriangleMesh : public sg::TriangleMesh
     {
       /*! triangle with per-triangle material ID */
       struct Triangle
@@ -107,25 +108,25 @@ namespace ospray {
        */
       std::vector<std::shared_ptr<sg::Material>> materialList;
       std::vector<uint32_t> materialIDs;      
-      OSPGeometry ospGeometry {nullptr};
+      // OSPGeometry ospGeometry {nullptr};
 
       // to allow memory-mapping triangle arrays (or in general,
       // sharing data with an application) we use data arrays, not std::vector's
 
-      //! vertex (position) array
-      std::shared_ptr<DataBuffer> vertex;
+      // //! vertex (position) array
+      // std::shared_ptr<DataBuffer> vertex;
 
-      //! vertex normal array. empty means 'not present'
-      std::shared_ptr<DataBuffer> normal;
+      // //! vertex normal array. empty means 'not present'
+      // std::shared_ptr<DataBuffer> normal;
 
-      //! vertex color array. empty means 'not present'
-      std::shared_ptr<DataBuffer> color;
+      // //! vertex color array. empty means 'not present'
+      // std::shared_ptr<DataBuffer> color;
 
-      //! vertex texture coordinate array. empty means 'not present'
-      std::shared_ptr<DataBuffer> texcoord;
+      // //! vertex texture coordinate array. empty means 'not present'
+      // std::shared_ptr<DataBuffer> texcoord;
 
-      //! triangle indices
-      std::shared_ptr<DataBuffer> index;
+      // //! triangle indices
+      // std::shared_ptr<DataBuffer> index;
 
       //! material IDs
       OSPData primMatIDs;

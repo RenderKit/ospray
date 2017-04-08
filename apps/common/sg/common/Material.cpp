@@ -26,6 +26,10 @@ namespace ospray {
       createChild("type", "string", std::string("OBJMaterial"));
       vec3f kd(10.f/255.f,68.f/255.f,117.f/255.f);
       vec3f ks(208.f/255.f,140.f/255.f,82.f/255.f);
+      createChild("Ka", "vec3f",vec3f(1),
+                      NodeFlags::required |
+                      NodeFlags::valid_min_max |
+                      NodeFlags::gui_color).setMinMax(vec3f(0), vec3f(1));
       createChild("Kd", "vec3f",kd,
                       NodeFlags::required |
                       NodeFlags::valid_min_max |

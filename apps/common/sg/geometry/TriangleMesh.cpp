@@ -75,7 +75,7 @@ namespace ospray {
       }
     }
 
-    PTMTriangleMesh::PTMTriangleMesh() : Geometry("trianglemesh")
+    PTMTriangleMesh::PTMTriangleMesh() : TriangleMesh()
     {
     }
 

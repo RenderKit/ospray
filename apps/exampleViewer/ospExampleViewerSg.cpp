@@ -85,6 +85,7 @@ std::string initialRendererType;
 bool addPlane = true;
 bool debug = false;
 bool fullscreen = false;
+bool print = false;
 
 void parseCommandLine(int ac, const char **&av)
 {
@@ -98,6 +99,8 @@ void parseCommandLine(int ac, const char **&av)
       initialRendererType = av[++i];
     } else if (arg == "-m" || arg == "--module") {
       ospLoadModule(av[++i]);
+    } else if (arg == "--print") {
+      print=true;
     } else if (arg == "--fullscreen") {
       fullscreen = true;
     } else if (arg[0] != '-') {
@@ -308,7 +311,7 @@ int main(int ac, const char **av)
     frameBuffer["displayWall"].setValue(dwService.mpiPortName);
   }
 
-  if (debug)
+  if (print || debug)
   {
     renderer.traverse("print");
   }

@@ -248,9 +248,8 @@ namespace ospray {
     template<typename T>
     inline void Node::createChildWithValue(const std::string &name, const std::string& type, const T &t)
     {
-      auto iter = properties.children.find("name");
-      if (iter != std::end(properties.children))
-        iter->second->setValue(t);
+      if (hasChild(name))
+        child(name).setValue(t);
       else {
         auto node = std::make_shared<Node>();
         node->setType(type);
