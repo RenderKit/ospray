@@ -47,7 +47,7 @@ namespace ospray {
       vec2i size {-1};
       int channels{0};
       int depth{0};
-      bool prefereLinear{false};
+      bool preferLinear{false};
 
       //! format of each texel
       OSPTextureFormat texelType {OSP_TEXTURE_FORMAT_INVALID};

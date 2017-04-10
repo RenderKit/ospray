@@ -43,10 +43,10 @@ namespace ospray {
 
     std::shared_ptr<Texture2D> loadTexture(const std::string &path,
                                            const std::string &fileName,
-                                           const bool prefereLinear = false)
+                                           const bool preferLinear = false)
     {
       FileName texFileName = path+"/"+fileName;
-      std::shared_ptr<Texture2D> tex = Texture2D::load(texFileName, prefereLinear);
+      std::shared_ptr<Texture2D> tex = Texture2D::load(texFileName, preferLinear);
       if (!tex)
         std::cout << "could not load texture " << texFileName << " !" << endl;
       return tex;

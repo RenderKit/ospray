@@ -43,7 +43,7 @@ namespace ospray {
       some reason, return NULL. Multiple loads from the same file
       will return the *same* texture object */
     std::shared_ptr<Texture2D> Texture2D::load(const FileName &fileNameAbs,
-                                               const bool prefereLinear)
+                                               const bool preferLinear)
     {
       FileName fileName = fileNameAbs;
       std::string fileNameBase = fileNameAbs;
@@ -74,7 +74,7 @@ namespace ospray {
                 tex->channels = image.matte() ? 4 : 3;
                 const bool hdr = image.depth() > 8;
                 tex->depth    = hdr ? 4 : 1;
-                tex->prefereLinear = prefereLinear;
+                tex->preferLinear = preferLinear;
                 float rcpMaxRGB = 1.0f/float(MaxRGB);
                 const Magick::PixelPacket* pixels = image.getConstPixels(0,0,tex->size.x,tex->size.y);
                 if (!pixels) {
@@ -172,7 +172,7 @@ namespace ospray {
           tex->size.y   = height;
           tex->channels = 3;
           tex->depth    = 1;
-          tex->prefereLinear = prefereLinear;
+          tex->preferLinear = preferLinear;
           tex->data     = new unsigned char[width*height*3];
           rc = fread(tex->data,width*height*3,1,file);
           // flip in y, because OSPRay's textures have the origin at the lower left corner
@@ -238,7 +238,7 @@ namespace ospray {
           tex->size.y   = height;
           tex->channels = numChannels;
           tex->depth    = sizeof(float);
-          tex->prefereLinear = prefereLinear;
+          tex->preferLinear = preferLinear;
           tex->data     = new float[width * height * numChannels];
           if (fread(tex->data, sizeof(float), width * height * numChannels, file)
               != width * height * numChannels)
@@ -265,7 +265,7 @@ namespace ospray {
         tex->channels = image.matte() ? 4 : 3;
         const bool hdr = image.depth() > 8;
         tex->depth    = hdr ? 4 : 1;
-        tex->prefereLinear = prefereLinear;
+        tex->preferLinear = preferLinear;
         float rcpMaxRGB = 1.0f/float(MaxRGB);
         const Magick::PixelPacket* pixels = image.getConstPixels(0,0,tex->size.x,tex->size.y);
         if (!pixels) {
@@ -306,7 +306,7 @@ namespace ospray {
         tex->size.y   = height;
         tex->channels = n;
         tex->depth    = hdr ? 4 : 1;
-        tex->prefereLinear = prefereLinear;
+        tex->preferLinear = preferLinear;
         unsigned char MaxRGB = 1;
         float rcpMaxRGB = 1.0f/float(MaxRGB);
         if (!pixels) {
@@ -398,7 +398,7 @@ namespace ospray {
 
       //     // tex = std::make_shared<Texture2D>();
       //     tex->size      = vec2i(width,height);
-      //     tex->texelType = prefereLinear ? OSP_TEXTURE_RGB8 : OSP_TEXTURE_SRGB;
+      //     tex->texelType = preferLinear ? OSP_TEXTURE_RGB8 : OSP_TEXTURE_SRGB;
       //     unsigned char *texel     = new unsigned char[width*height*3];
       //     if (!fread(texel,width*height*3,1,file)) {
       //       delete[] texel;
@@ -432,9 +432,9 @@ namespace ospray {
       if (depth == 1) {
         if( channels == 1 ) type = OSP_TEXTURE_R8;
         if( channels == 3 )
-          type = prefereLinear ? OSP_TEXTURE_RGB8 : OSP_TEXTURE_SRGB;
+          type = preferLinear ? OSP_TEXTURE_RGB8 : OSP_TEXTURE_SRGB;
         if( channels == 4 )
-          type = prefereLinear ? OSP_TEXTURE_RGBA8 : OSP_TEXTURE_SRGBA;
+          type = preferLinear ? OSP_TEXTURE_RGBA8 : OSP_TEXTURE_SRGBA;
       } else if (depth == 4) {
         if( channels == 1 ) type = OSP_TEXTURE_R32F;
         if( channels == 3 ) type = OSP_TEXTURE_RGB32F;
@@ -443,7 +443,7 @@ namespace ospray {
 
       void* dat = data;
       if (!dat && texelData)
-        dat = texelData->getOSP();
+        dat = texelData->getBase();
       if (!dat)
       {
         ospTexture2D = nullptr;
@@ -452,7 +452,7 @@ namespace ospray {
 
       ospTexture2D = ospNewTexture2D( (osp::vec2i&)size,
                                        type,
-                                       data,
+                                       dat,
                                        0);
       setValue((OSPObject)ospTexture2D);
       ospCommit(ospTexture2D);

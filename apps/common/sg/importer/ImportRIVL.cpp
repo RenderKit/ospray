@@ -34,7 +34,11 @@ namespace ospray {
 
     void parseTextureNode(const xml::Node &node)
     {
+      const std::string name = node.getProp("name");
+      const std::string type = node.getProp("type");
       std::shared_ptr<sg::Texture2D> txt = std::make_shared<sg::Texture2D>();
+      txt->setName(name);
+      txt->setType(type);
       txt->ospTexture = NULL;
       nodeList.push_back(txt);
 
@@ -68,6 +72,8 @@ namespace ospray {
         txt->texelType = OSP_TEXTURE_RGB32F;
 
       txt->size = vec2i(width, height);
+      txt->channels = channels;
+      txt->depth = depth;
 
       if (channels == 4) { // RIVL bin stores alpha channel inverted, fix here
         size_t sz = width * height;
@@ -131,6 +137,11 @@ namespace ospray {
       if (paramName.find("map_") != std::string::npos)
       {
         //TODO: lookup id into textures
+        int texID = atoi(s);
+          std::shared_ptr<Texture2D> tex = std::dynamic_pointer_cast<Texture2D>(nodeList[texID]);
+          s = strtok(NULL, " \t\n\r");
+          if (mat->textures.size() == 1)
+            mat->setChild(paramName, tex);
       }
       else if (!paramType.compare("float")) {
         mat->createChildWithValue(paramName,"float",(float)atof(s));
@@ -201,10 +212,6 @@ namespace ospray {
           else if (!child.name.compare("param"))
             parseMaterialParam(mat,child);
         });
-      std::cout << __PRETTY_FUNCTION__ << std::endl;
-      std::cout << "material print:\n\"";
-      mat->traverse("print");
-      std::cout << "\"\n end material print\n";
     }
 
     void parseTransformNode(const xml::Node &node)
