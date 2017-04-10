@@ -31,8 +31,8 @@
 #define MPI_CALL(a) { int rc = MPI_##a; if (rc != MPI_SUCCESS) throw std::runtime_error("MPI call returned error"); }
 
 
-#define MAML_THROW(a) throw std::runtime_error("in "+std::string(__PRETTY_FUNCTION__)+" : "+std::string(a))
-#define MAML_NOT_IMPLEMENTED HOTT_THROW("method not implemented")
+#define MAML_THROW(a) \
+  throw std::runtime_error("in "+std::string(__PRETTY_FUNCTION__)+" : "+std::string(a))
   
 
 namespace maml {
@@ -43,8 +43,8 @@ namespace maml {
     pointer to data; the message itself "owns" this pointer, and
     will delete it once the message itself dies. the message itself
     is reference counted using the std::shared_ptr functionality. */
-  struct Message {
-    
+  struct Message
+  {
     /*! create a new message with given amount of bytes in storage */
     Message(size_t size);
     
@@ -60,15 +60,18 @@ namespace maml {
     
     /*! destruct message and free allocated memory */
     virtual ~Message();
-    
+
+    bool isValid() const;
+
     /*! @{ sender/receiver of this message */
-    MPI_Comm    comm;
-    int         rank;
-    int         tag;
+    MPI_Comm  comm {MPI_COMM_NULL};
+    int       rank {-1};
+    int       tag  { 0};
     /*! @} */
+
     /*! @{ actual payload of this message */
-    unsigned char *data;
-    size_t      size;
+    ospcommon::byte_t   *data {nullptr};
+    size_t               size {0};
     /*! @} */
     
   private:
@@ -80,12 +83,13 @@ namespace maml {
   
   /*! a message whose payload is owned by the user, and which we do
     NOT delete upon termination */
-  struct UserMemMessage : public Message {
+  struct UserMemMessage : public Message
+  {
     UserMemMessage(const void *nonCopyMem, size_t size)
       : Message(nonCopyMem,size)
-    {};
+    {}
     virtual ~UserMemMessage()
-    { /* set data to NULL, that keeps the parent from deleting it */ data = NULL; }
+    { /* set data to null to keep the parent from deleting it */ data = nullptr; }
   };
 
   /*! initialize the maml layer. must be called before doing any call
@@ -99,7 +103,8 @@ namespace maml {
       every time such a message comes in. maml receives the message,
       then passed it to the handler, from which point it is owned by -
       and the respsonsibility of - the handler */
-  struct MessageHandler {
+  struct MessageHandler
+  {
     virtual void incoming(const std::shared_ptr<Message> &message) = 0;
   };
   

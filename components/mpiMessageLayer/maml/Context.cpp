@@ -20,7 +20,7 @@
 namespace maml {
 
   /*! the singleton object that handles all the communication */
-  Context *Context::singleton = NULL;
+  Context *Context::singleton = nullptr;
 
   Context::Context()
     : canDoMPICalls(false), flushed(true)
@@ -28,15 +28,24 @@ namespace maml {
     mpiThreadHandle   = std::thread([this](){ mpiThread(); });
     inboxThreadHandle = std::thread([this](){ inboxThread(); });
   }
+
+  bool Context::initialized()
+  {
+    return Context::singleton != nullptr;
+  }
   
   /*! register a new incoing-message handler. if any message comes in
     on the given communicator we'll call this handler */
   void Context::registerHandlerFor(MPI_Comm comm, MessageHandler *handler)
   {
     std::lock_guard<std::mutex> lock(handlersMutex);
-    if (handlers.find(comm) != handlers.end())
-      std::cout << __PRETTY_FUNCTION__
-                << ": Warning: handler for this MPI_Comm already installed" << std::endl;
+
+    if (handlers.find(comm) != handlers.end()) {
+      std::cout << CODE_LOCATION
+                << ": Warning: handler for this MPI_Comm already installed"
+                << std::endl;
+    }
+
     handlers[comm] = handler;
 
     /*! todo: to avoid race conditions we MAY want to check if there's
@@ -240,13 +249,7 @@ namespace maml {
   void Context::flush()
   {
     std::unique_lock<std::mutex> lock(flushMutex);
-
-    // if (!flushed)
-    //   { std::lock_guard<std::mutex> outboxLock(outboxMutex);
-        // std::cout << "#maml: flushing (" << outbox.size() << " messages in outbox)!" << std::endl;
-      // }
     flushCondition.wait(lock, [this]{return flushed;});
-    // std::cout << "#maml: flushed..." << std::endl;
   }
   
   /*! start the service; from this point on maml is free to use MPI

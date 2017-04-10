@@ -26,10 +26,13 @@
 namespace maml {
 
   /*! the singleton object that handles all the communication */
-  struct Context {
+  struct Context
+  {
     Context();
     
     static Context *singleton;
+
+    static bool initialized();
 
     /*! register a new incoing-message handler. if any message comes in
       on the given communicator we'll call this handler */
