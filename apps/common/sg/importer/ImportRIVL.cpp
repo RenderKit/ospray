@@ -34,8 +34,10 @@ namespace ospray {
 
     void parseTextureNode(const xml::Node &node)
     {
-      const std::string name = node.getProp("name");
-      const std::string type = node.getProp("type");
+      std::stringstream ss;
+      ss << "rivlTexture_" << nodeList.size();
+      const std::string name = ss.str();
+      const std::string type = "Texture2D";
       std::shared_ptr<sg::Texture2D> txt = std::make_shared<sg::Texture2D>();
       txt->setName(name);
       txt->setType(type);
@@ -202,7 +204,6 @@ namespace ospray {
       mat->ospMaterial = NULL;
       nodeList.push_back(mat);
       
-      std::cout << "found material name: " << node.getProp("name") << std::endl;
       mat->setName(node.getProp("name"));
       mat->setType(node.getProp("type"));
       
@@ -337,7 +338,6 @@ namespace ospray {
       
       std::shared_ptr<sg::Node> lastNode;
       xml::for_each_child_of(root,[&](const xml::Node &node){
-          PRINT(node.name);
           if (node.name == "text") {
             // -------------------------------------------------------
           } else if (node.name == "Texture2D") {
