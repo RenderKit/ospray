@@ -17,21 +17,18 @@
 #include "Context.h"
 #include <iostream>
 
+using ospcommon::make_unique;
+
 namespace maml {
 
   /*! the singleton object that handles all the communication */
-  Context *Context::singleton = nullptr;
+  std::unique_ptr<Context> Context::singleton = make_unique<Context>();
 
   Context::Context()
     : canDoMPICalls(false), flushed(true)
   {
-    mpiThreadHandle   = std::thread([this](){ mpiThread(); });
+    mpiThreadHandle   = std::thread([this](){ mpiThread();   });
     inboxThreadHandle = std::thread([this](){ inboxThread(); });
-  }
-
-  bool Context::initialized()
-  {
-    return Context::singleton != nullptr;
   }
   
   /*! register a new incoing-message handler. if any message comes in
@@ -101,18 +98,18 @@ namespace maml {
     /*! list of messages we are currently in the process of receiving
       from the MPI layer - ie, we know those messages exist, but
       they have NOT yet been fully received */
-    std::vector<std::shared_ptr<Message> > currentlyReceiving;
+    std::vector<std::shared_ptr<Message>> currentlyReceiving;
     
     /*! list of messages we are currently in the process of sending
       via the MPI layer - ie, we have already triggered an MPI_Isend,
       but have not verified that the message has been received yet */
-    std::vector<std::shared_ptr<Message> > currentlySending;
+    std::vector<std::shared_ptr<Message>> currentlySending;
     
     while (1) {
       bool anyDoneSend = false;
       bool anyDoneRecv = false;
       /*! the messages we have finihsed receiving this round */
-      std::vector<std::shared_ptr<Message> > inbox;
+      std::vector<std::shared_ptr<Message>> inbox;
       
       { /* do all MPI commands under the mpi lock */
         std::unique_lock<std::mutex> lock(canDoMPIMutex);

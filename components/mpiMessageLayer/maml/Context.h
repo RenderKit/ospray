@@ -30,7 +30,7 @@ namespace maml {
   {
     Context();
     
-    static Context *singleton;
+    static std::unique_ptr<Context> singleton;
 
     static bool initialized();
 

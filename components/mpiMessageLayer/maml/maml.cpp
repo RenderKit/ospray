@@ -21,14 +21,6 @@ namespace maml {
 
   std::mutex messageMutex;
 
-  // Helper functions /////////////////////////////////////////////////////////
-
-  void throwIfContextNotInitialized()
-  {
-    if (!Context::initialized())
-      MAML_THROW("MAML layer not initialized?!");
-  }
-
   // maml::Message definitions ////////////////////////////////////////////////
 
   /*! create a new message with given amount of bytes in storage */
@@ -85,18 +77,12 @@ namespace maml {
 
     if (!initialized)
       MAML_THROW("MPI not initialized");
-
-    if (Context::singleton)
-      MAML_THROW("MAML layer _already_ initialized");
-    
-    Context::singleton = new Context;
   }
 
   /*! register a new incoing-message handler. if any message comes in
     on the given communicator we'll call this handler */
   void registerHandlerFor(MPI_Comm comm, MessageHandler *handler)
   {
-    throwIfContextNotInitialized();
     Context::singleton->registerHandlerFor(comm,handler);
   }
 
@@ -106,7 +92,6 @@ namespace maml {
       has been called */
   void start()
   {
-    throwIfContextNotInitialized();
     Context::singleton->start();
   }
 
@@ -117,7 +102,6 @@ namespace maml {
       if they are already in flight */
   void stop()
   {
-    throwIfContextNotInitialized();
     Context::singleton->stop();
   }
 
@@ -128,8 +112,6 @@ namespace maml {
   {
     if (msg.get() && !msg->isValid())
       MAML_THROW("Invalid message");
-
-    throwIfContextNotInitialized();
 
     Context::singleton->send(std::shared_ptr<Message>(msg));
   }
@@ -151,8 +133,6 @@ namespace maml {
   /*! make sure all outgoing messages get sent... */
   void flush()
   {
-    throwIfContextNotInitialized();
-
     Context::singleton->flush();
   }
   

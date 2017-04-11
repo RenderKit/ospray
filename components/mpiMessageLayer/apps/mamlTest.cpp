@@ -18,14 +18,11 @@
 #include <atomic>
 #include <sys/times.h>
 
-namespace maml {  
-} // ::maml
-
 struct MyHandler : public maml::MessageHandler
 {
-  MyHandler() : numReceived() {};
+  MyHandler() = default;
   
-  virtual void incoming(const std::shared_ptr<maml::Message> &message)
+  void incoming(const std::shared_ptr<maml::Message> &message) override
   {
     ++numReceived;
   }

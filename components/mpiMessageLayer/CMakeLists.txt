@@ -34,6 +34,9 @@ COMPONENT mpi
 # ------------------------------------------------------------------
 # tests and examples
 # ------------------------------------------------------------------
+
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_LIST_DIR})
+
 OSPRAY_CREATE_APPLICATION(mamlTest
   apps/mamlTest.cpp
 LINK
