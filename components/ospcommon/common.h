@@ -69,7 +69,7 @@ typedef int ssize_t;
 #ifdef _WIN32
 #define __PRETTY_FUNCTION__ __FUNCSIG__
 #endif
-#define NOTIMPLEMENTED    throw std::runtime_error(std::string(__PRETTY_FUNCTION__)+": not implemented...");
+#define NOTIMPLEMENTED throw std::runtime_error(std::string(__PRETTY_FUNCTION__)+": not implemented...");
 
 #define SCOPED_LOCK(x) \
   std::lock_guard<std::mutex> _lock(x); \

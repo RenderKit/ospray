@@ -14,11 +14,9 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-OSPRAY_BUILD_COMPONENT(mpiCommon)
-
-OSPRAY_CONFIGURE_MPI()
-
 SET(MAML_LIBRARY ospray_mpi_maml)
+
+OSPRAY_BUILD_COMPONENT(mpiCommon)
 
 # ------------------------------------------------------------------
 # The MAML library itself

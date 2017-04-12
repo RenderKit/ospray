@@ -21,10 +21,7 @@ IF (OSPRAY_MODULE_MPI)
   SET(OSPRAY_DEFAULT_COMPONENT mpi)
 
   OSPRAY_BUILD_COMPONENT(mpiCommon)
-
-  # if mpi mode is enabled, we have to configure the right mpi
-  # compiler etc.
-  OSPRAY_CONFIGURE_MPI()
+  OSPRAY_BUILD_COMPONENT(mpiMessageLayer)
 
   INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/..)
   INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})

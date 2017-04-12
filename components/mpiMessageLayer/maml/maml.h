@@ -16,25 +16,10 @@
 
 #pragma once
 
-#define OMPI_SKIP_MPICXX 1
-#include <mpi.h>
-#include <memory>
-#include <assert.h>
-
-#include "ospcommon/common.h"
-
-    // IMPI on Windows defines MPI_CALL already, erroneously
-#ifdef MPI_CALL
-# undef MPI_CALL
-#endif
-  /*! helper macro that checks the return value of all MPI_xxx(...)
-    calls via MPI_CALL(xxx(...)).  */
-#define MPI_CALL(a) { int rc = MPI_##a; if (rc != MPI_SUCCESS) throw std::runtime_error("MPI call returned error"); }
-
+#include "mpiCommon/MPICommon.h"
 
 #define MAML_THROW(a) \
   throw std::runtime_error("in "+std::string(__PRETTY_FUNCTION__)+" : "+std::string(a))
-  
 
 namespace maml {
 
@@ -89,8 +74,10 @@ namespace maml {
     UserMemMessage(const void *nonCopyMem, size_t size)
       : Message(nonCopyMem,size)
     {}
+
+    /* set data to null to keep the parent from deleting it */
     virtual ~UserMemMessage()
-    { /* set data to null to keep the parent from deleting it */ data = nullptr; }
+    { data = nullptr; }
   };
 
   /*! initialize the maml layer. must be called before doing any call
@@ -158,8 +145,6 @@ namespace maml {
       sending out some new message(s) that simply haven't even STARTED
       arriving on this node, yet!!!
   */
-  // void sendTo(MPI_Comm comm, int rank, Message *msg);
-
   void sendTo(MPI_Comm comm, int rank, std::shared_ptr<Message> msg);
 
 } // ::maml
