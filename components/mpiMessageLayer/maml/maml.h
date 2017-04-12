@@ -19,7 +19,8 @@
 #include "mpiCommon/MPICommon.h"
 
 #define MAML_THROW(a) \
-  throw std::runtime_error("in "+std::string(__PRETTY_FUNCTION__)+" : "+std::string(a))
+  throw std::runtime_error("in " + std::string(__PRETTY_FUNCTION__) + \
+                           " : " + std::string(a))
 
 namespace maml {
 
@@ -31,6 +32,8 @@ namespace maml {
     is reference counted using the std::shared_ptr functionality. */
   struct Message
   {
+    Message() = default;
+
     /*! create a new message with given amount of bytes in storage */
     Message(size_t size);
     
@@ -41,8 +44,7 @@ namespace maml {
     /*! create a new message (addressed to given comm:rank) with given
         amount of storage, and copy memory from the given address to
         it */
-    Message(MPI_Comm comm, int rank,
-            const void *copyMem, size_t size);
+    Message(MPI_Comm comm, int rank, const void *copyMem, size_t size);
     
     /*! destruct message and free allocated memory */
     virtual ~Message();
@@ -56,8 +58,8 @@ namespace maml {
     /*! @} */
 
     /*! @{ actual payload of this message */
-    ospcommon::byte_t   *data {nullptr};
-    size_t               size {0};
+    ospcommon::byte_t *data {nullptr};
+    size_t             size {0};
     /*! @} */
     
   private:
@@ -71,20 +73,14 @@ namespace maml {
     NOT delete upon termination */
   struct UserMemMessage : public Message
   {
-    UserMemMessage(const void *nonCopyMem, size_t size)
-      : Message(nonCopyMem,size)
-    {}
+    UserMemMessage(void *nonCopyMem, size_t size)
+      : Message()
+    { data = (ospcommon::byte_t*)nonCopyMem; this->size = size; }
 
     /* set data to null to keep the parent from deleting it */
     virtual ~UserMemMessage()
     { data = nullptr; }
   };
-
-  /*! initialize the maml layer. must be called before doing any call
-      below, but should only be called once. note this assuems that
-      MPI is already initialized; it will use the existing MPI
-      layer */
-  void init(int &ac, char **&av);
 
   /*! abstraction for an object that can receive messages. handlers
       get associated with MPI_Comm's, and get called automatically

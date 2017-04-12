@@ -38,7 +38,7 @@ namespace maml {
     std::lock_guard<std::mutex> lock(handlersMutex);
 
     if (handlers.find(comm) != handlers.end()) {
-      std::cout << CODE_LOCATION
+      std::cerr << CODE_LOCATION
                 << ": Warning: handler for this MPI_Comm already installed"
                 << std::endl;
     }

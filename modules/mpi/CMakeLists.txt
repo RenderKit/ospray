@@ -56,6 +56,7 @@ IF (OSPRAY_MODULE_MPI)
     ospray
     ospray_mpi_common
     ospray_common
+    ospray_mpi_maml
     ${MPI_CXX_LIBRARIES}
   )
 

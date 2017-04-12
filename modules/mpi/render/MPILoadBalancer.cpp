@@ -76,7 +76,7 @@ namespace ospray {
         if ((ALLTASKS % worker.size) > worker.rank)
           NTASKS++;
 
-        // serial_for(NTASKS, [&](int taskIndex){
+        //serial_for(NTASKS, [&](int taskIndex){
         parallel_for(NTASKS, [&](int taskIndex){
           const size_t tileID = taskIndex * worker.size + worker.rank;
           const size_t numTiles_x = fb->getNumTiles().x;
@@ -91,13 +91,13 @@ namespace ospray {
 #define MAX_TILE_SIZE 128
 
 #if TILE_SIZE > MAX_TILE_SIZE
-          auto *tilePtr = make_unique<Tile>(tileId, fb->size, accumID);
-          auto &tile    = *tilePtr;
+          auto tilePtr = make_unique<Tile>(tileId, fb->size, accumID);
+          auto &tile   = *tilePtr;
 #else
           Tile __aligned(64) tile(tileId, fb->size, accumID);
 #endif
 
-          // serial_for(numJobs(renderer->spp, accumID), [&](int tid){
+          //serial_for(numJobs(renderer->spp, accumID), [&](int tid){
           parallel_for(numJobs(renderer->spp, accumID), [&](int tid){
             renderer->renderTile(perFrameData, tile, tid);
           });

@@ -65,20 +65,6 @@ namespace maml {
 
   // maml API definitions /////////////////////////////////////////////////////
   
-  /*! initialize the maml layer. must be called before doing any call
-      below, but should only be called once. note this assuems that
-      MPI is already initialized; it will use the existing MPI
-      layer */
-  void init(int &/*ac*/, char **&/*av*/)
-  {
-    int initialized;
-
-    MPI_CALL(Initialized(&initialized));
-
-    if (!initialized)
-      MAML_THROW("MPI not initialized");
-  }
-
   /*! register a new incoing-message handler. if any message comes in
     on the given communicator we'll call this handler */
   void registerHandlerFor(MPI_Comm comm, MessageHandler *handler)
@@ -126,7 +112,6 @@ namespace maml {
 
     msg->rank = rank;
     msg->comm = comm;
-    msg->tag  = 0;
     send(msg);
   }
 
