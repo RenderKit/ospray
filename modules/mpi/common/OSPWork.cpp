@@ -161,7 +161,6 @@ namespace ospray {
           = new DistributedFrameBuffer(ospray::mpi::async::CommLayer::WORLD,
                                        dimensions, handle, format, hasDepthBuffer,
                                        hasAccumBuffer, hasVarianceBuffer);
-        // TODO: Only the master does this increment, though should the workers do it too?
         fb->refInc();
         handle.assign(fb);
       }

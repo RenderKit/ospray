@@ -1021,15 +1021,10 @@ namespace ospray {
 
     ObjectHandle MPIDevice::allocateHandle() const
     {
-      ObjectHandle handle = nullHandle;
-      switch (currentApiMode) {
-        case OSPD_MODE_MASTERED:
-          handle = ObjectHandle::alloc();
-          break;
-        default:
-          throw std::runtime_error("MPIDevice::processWork: Unimplemented mode!");
-      }
-      return handle;
+      if (currentApiMode != OSPD_MODE_MASTERED)
+        throw std::runtime_error("Can only alloc handles in MASTERED mode!");
+
+      return ObjectHandle();
     }
 
     OSP_REGISTER_DEVICE(MPIDevice, mpi_device);

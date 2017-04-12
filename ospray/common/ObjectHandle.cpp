@@ -34,16 +34,28 @@ namespace ospray {
     freedHandles.push((int64)*this);
   }
 
-  ObjectHandle ObjectHandle::alloc()
+  ObjectHandle::ObjectHandle()
   {
-    ObjectHandle h;
     if (freedHandles.empty()) {
-      h.i32.ID = nextFreeLocalID++;
+      i32.ID = nextFreeLocalID++;
     } else {
-      h = freedHandles.top();
+      i64 = freedHandles.top();
       freedHandles.pop();
     }
-    return h;
+  }
+
+  ObjectHandle::ObjectHandle(int64 i) : i64(i)
+  {
+  }
+
+  ObjectHandle::ObjectHandle(const ObjectHandle &other) : i64(other.i64)
+  {
+  }
+
+  ObjectHandle &ObjectHandle::operator=(const ObjectHandle &other)
+  {
+    i64 = other.i64;
+    return *this;
   }
 
   /*! define the given handle to refer to given object */
@@ -66,7 +78,22 @@ namespace ospray {
     objectByHandle.erase(it);
   }
 
-  bool ObjectHandle::defined() const 
+  int32 ObjectHandle::ownerRank() const
+  {
+    return i32.owner;
+  }
+
+  int32 ObjectHandle::objID() const
+  {
+    return i32.ID;
+  }
+
+  ospray::ObjectHandle::operator int64() const
+  {
+    return i64;
+  }
+
+  bool ObjectHandle::defined() const
   {
     auto it = objectByHandle.find(i64);
     return it != objectByHandle.end();
