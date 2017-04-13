@@ -16,6 +16,8 @@
 
 SET(MAML_LIBRARY ospray_mpi_maml)
 
+OSPRAY_CONFIGURE_MPI()
+
 OSPRAY_BUILD_COMPONENT(mpiCommon)
 
 # ------------------------------------------------------------------
