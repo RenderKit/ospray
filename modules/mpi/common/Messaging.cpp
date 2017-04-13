@@ -32,7 +32,7 @@ namespace ospray {
         objectListeners[handleObjID] = listener;
       }
 
-      void incoming(const std::shared_ptr<maml::Message> &message)
+      void incoming(const std::shared_ptr<maml::Message> &message) override
       {
         auto obj = objectListeners.find(message->tag);
         if (obj != objectListeners.end()) {
