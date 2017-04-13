@@ -75,14 +75,14 @@ namespace maml {
           triggered. it's another thread's job to execute those
           messages
     */
-    void mpiThread();
+    void mpiSendAndRecieveThread();
 
     /*! the thread that executes messages that the receiveer thread
         put into the inbox */
-    void inboxThread();
+    void processInboxThread();
 
     /*! make sure all outgoing messages get sent... */
-    void flush();
+    void flushOutgoingMessages();
 
     bool                    canDoMPICalls;
     std::mutex              canDoMPIMutex;
@@ -95,13 +95,13 @@ namespace maml {
     std::map<MPI_Comm,MessageHandler *> handlers;
 
     /*! new messsages that still need to get sent */
-    std::mutex                             outboxMutex;
-    std::vector<std::shared_ptr<Message> > outbox;
+    std::mutex                            outboxMutex;
+    std::vector<std::shared_ptr<Message>> outbox;
 
     /*! new messsages that have been received but not yet executed */
-    std::mutex                             inboxMutex;
-    std::condition_variable                inboxCondition;
-    std::vector<std::shared_ptr<Message> > inbox;
+    std::mutex                            inboxMutex;
+    std::condition_variable               inboxCondition;
+    std::vector<std::shared_ptr<Message>> inbox;
 
     /*! used to execute a flush: this condition gets triggered when
       all messages in the outbox have been (fully) sent */

@@ -27,8 +27,8 @@ namespace maml {
   Context::Context()
     : canDoMPICalls(false), flushed(true)
   {
-    mpiThreadHandle   = std::thread([this](){ mpiThread();   });
-    inboxThreadHandle = std::thread([this](){ inboxThread(); });
+    mpiThreadHandle   = std::thread([this](){ mpiSendAndRecieveThread(); });
+    inboxThreadHandle = std::thread([this](){ processInboxThread();      });
   }
   
   /*! register a new incoing-message handler. if any message comes in
@@ -65,7 +65,7 @@ namespace maml {
   }
     
 
-  void Context::inboxThread()
+  void Context::processInboxThread()
   {
     while (1) {
       std::vector<std::shared_ptr<Message>> execList;
@@ -92,7 +92,7 @@ namespace maml {
     }
   }
   
-  void Context::mpiThread()
+  void Context::mpiSendAndRecieveThread()
   {
     /*! list of messages we are currently in the process of receiving
       from the MPI layer - ie, we know those messages exist, but
@@ -247,7 +247,7 @@ namespace maml {
   }
 
   /*! make sure all outgoing messages get sent... */
-  void Context::flush()
+  void Context::flushOutgoingMessages()
   {
     std::unique_lock<std::mutex> lock(flushMutex);
     flushCondition.wait(lock, [this]{return flushed;});

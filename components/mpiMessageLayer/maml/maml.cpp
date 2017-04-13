@@ -118,7 +118,7 @@ namespace maml {
   /*! make sure all outgoing messages get sent... */
   void flush()
   {
-    Context::singleton->flush();
+    Context::singleton->flushOutgoingMessages();
   }
   
   /*! close down and clean exit. NOT YET IMPLEMENTED. */
