@@ -68,7 +68,7 @@ namespace maml {
   void Context::inboxThread()
   {
     while (1) {
-      std::vector<std::shared_ptr<Message> > execList;
+      std::vector<std::shared_ptr<Message>> execList;
 
       // fetch the list of messages that need to be executed
       {
@@ -76,19 +76,18 @@ namespace maml {
         if (inbox.empty())
           inboxCondition.wait(lock, [this]{return !inbox.empty();});
         execList = inbox;
-        // std::cout << "found " << inbox.size() << " messages in inbox!" << std::endl;
         inbox.clear();
       }
 
       for (int i=0;i<execList.size();i++) {
-        MessageHandler *handler = NULL;
+        MessageHandler *handler = nullptr;
         { std::lock_guard<std::mutex> lock(handlersMutex);
           handler = handlers[execList[i]->comm];
           assert(handler);
         }
 
         handler->incoming(execList[i]);
-        execList[i] = NULL;
+        execList[i] = nullptr;
       }
     }
   }
@@ -123,15 +122,16 @@ namespace maml {
               std::shared_ptr<Message> msg = outbox[i];
               assert(msg);
               assert(msg->data);
-              MPI_CALL(Isend(msg->data,msg->size,MPI_BYTE,msg->rank,msg->tag,msg->comm,&msg->request));
+              MPI_CALL(Isend(msg->data, msg->size, MPI_BYTE, msg->rank,
+                             msg->tag, msg->comm, &msg->request));
               currentlySending.push_back(msg);
-              // std::cout << "got new out message - starting to send and pushing to send queue ..." << std::endl;
             }
             outbox.clear();
           }
         }
         
-        /* check if there's any new incoming message(s) ... and trigger receiving for any new ones */
+        /* check if there's any new incoming message(s) ...
+           and trigger receiving for any new ones */
         {
           std::lock_guard<std::mutex> lock(handlersMutex);
           /* check each message handler (we're not receiveing anything
@@ -143,17 +143,19 @@ namespace maml {
             /* probe if there's something incoming on this handler's comm */
             int             hasIncoming = 0;
             MPI_Status status;
-            MPI_CALL(Iprobe(MPI_ANY_SOURCE,MPI_ANY_TAG,comm,&hasIncoming,&status));
+            MPI_CALL(Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG,
+                            comm, &hasIncoming, &status));
             if (hasIncoming) {
               
               int size;
               MPI_CALL(Get_count(&status,MPI_BYTE,&size));
               
-              std::shared_ptr<Message> msg = std::shared_ptr<Message>(new Message(size));
+              auto msg = std::make_shared<Message>(size);
               msg->rank = status.MPI_SOURCE;
               msg->tag  = status.MPI_TAG;
               msg->comm = comm;
-              MPI_CALL(Irecv(msg->data,size,MPI_BYTE,msg->rank,msg->tag,msg->comm,&msg->request));
+              MPI_CALL(Irecv(msg->data, size, MPI_BYTE, msg->rank,
+                             msg->tag, msg->comm, &msg->request));
               currentlyReceiving.push_back(msg);
             }
           }
@@ -177,23 +179,25 @@ namespace maml {
           // wait for at least one of those to complete
           int done[numRequests];
           int numDone = 0;
-          // printf("waitsome(%i) send=%i recv=%i %i\n",rank,numSendRequests,numRecvRequests,numRequests);
           if (numRecvRequests == 0) {
-            MPI_CALL(Testsome(numRequests,activeRequest,&numDone,done,MPI_STATUSES_IGNORE));
+            MPI_CALL(Testsome(numRequests, activeRequest, &numDone,
+                              done, MPI_STATUSES_IGNORE));
           } else {
-            MPI_CALL(Waitsome(numRequests,activeRequest,&numDone,done,MPI_STATUSES_IGNORE));
+            MPI_CALL(Waitsome(numRequests, activeRequest, &numDone,
+                              done, MPI_STATUSES_IGNORE));
           }
           for (int i=0;i<numDone;i++) {
             int requestID = done[i];
             if (requestID >= numSendRequests) {
               // this was a recv request
-              std::shared_ptr<Message> msg = currentlyReceiving[requestID-numSendRequests];
-              currentlyReceiving[requestID-numSendRequests] = NULL;
+              std::shared_ptr<Message> msg =
+                currentlyReceiving[requestID-numSendRequests];
+              currentlyReceiving[requestID-numSendRequests] = nullptr;
               inbox.push_back(msg);
               anyDoneRecv = true;
             } else {
               // this was a send request that just finished
-              currentlySending[requestID] = NULL;
+              currentlySending[requestID] = nullptr;
               anyDoneSend = true;
             }
           }

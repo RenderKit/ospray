@@ -313,7 +313,7 @@ namespace ospray {
             //Carson: TODO: creating new world model every frame unecessary
             worldModel.addGeometry(staticInst);
             worldModel.addGeometry(dynInst);
-            worldModel.commit();
+            renderEngine.scheduleObjectCommit(worldModel);
             renderer.set("model",  worldModel);
             if (rendererDW)
               rendererDW.set("model",  worldModel);
