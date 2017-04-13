@@ -211,9 +211,9 @@ namespace ospray {
                         const vec3f *worldCoordinates,
                         const size_t &count) override;
 
-      void processWork(work::Work &work);
-
     private:
+
+      void processWork(work::Work &work);
 
       /*! This only exists to support getting the voxel type for setRegion */
       int getString(OSPObject object, const char *name, char **value);

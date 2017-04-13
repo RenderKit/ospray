@@ -158,10 +158,8 @@ namespace ospray {
         assert(dimensions.x > 0);
         assert(dimensions.y > 0);
 
-        auto comm = mpi::world.comm;
-
         FrameBuffer *fb
-          = new DistributedFrameBuffer(comm, dimensions, handle,
+          = new DistributedFrameBuffer(dimensions, handle,
                                        format, hasDepthBuffer,
                                        hasAccumBuffer, hasVarianceBuffer);
         fb->refInc();
@@ -209,6 +207,7 @@ namespace ospray {
       {
         run();
       }
+
       void LoadModule::serialize(WriteStream &b) const
       {
         b << name;

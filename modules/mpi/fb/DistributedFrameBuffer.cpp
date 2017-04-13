@@ -24,6 +24,8 @@
 #include "mpiCommon/MPICommon.h"
 #include "mpiCommon/async/Messaging.h"
 
+#include "../common/Messaging.h"
+
 #ifdef _WIN32
 #  include <windows.h> // for Sleep
 #endif
@@ -117,8 +119,7 @@ namespace ospray {
 
   // DistributedFrameBuffer definitions ///////////////////////////////////////
 
-  DFB::DistributedFrameBuffer(MPI_Comm _comm,
-                              const vec2i &numPixels,
+  DFB::DistributedFrameBuffer(const vec2i &numPixels,
                               ObjectHandle myID,
                               ColorBufferFormat colorBufferFormat,
                               bool hasDepthBuffer,
@@ -126,7 +127,7 @@ namespace ospray {
                               bool hasVarianceBuffer)
     : FrameBuffer(numPixels,colorBufferFormat,hasDepthBuffer,
                   hasAccumBuffer,hasVarianceBuffer),
-      comm(_comm),
+      myID(myID),
       tileErrorRegion(hasVarianceBuffer ? getNumTiles() : vec2i(0)),
       localFBonMaster(nullptr),
       frameMode(WRITE_ONCE),
@@ -135,7 +136,8 @@ namespace ospray {
   {
     this->ispcEquivalent = ispc::DFB_create(this);
     ispc::DFB_set(getIE(), numPixels.x, numPixels.y, colorBufferFormat);
-    maml::registerHandlerFor(comm, this);
+
+    mpi::registerMessageListener(myID.objID(), this);
 
     createTiles();
     const size_t bytes = sizeof(int32)*getTotalTiles();
@@ -374,7 +376,7 @@ namespace ospray {
 
         auto msg = std::make_shared<maml::Message>(&mtm, sizeof(mtm));
 
-        maml::sendTo(comm, mpi::masterRank(), msg);
+        mpi::sendTo(mpi::masterRank(), myID.objID(), msg);
       } break;
       case OSP_FB_RGBA8:
       case OSP_FB_SRGBA: {
@@ -388,7 +390,7 @@ namespace ospray {
 
         auto msg = std::make_shared<maml::Message>(&mtm, sizeof(mtm));
 
-        maml::sendTo(comm, mpi::masterRank(), msg);
+        mpi::sendTo(mpi::masterRank(), myID.objID(), msg);
       } break;
       case OSP_FB_RGBA32F: {
         /*! if the master has RGBA32F format, we're sending him a tile of the
@@ -401,7 +403,7 @@ namespace ospray {
 
         auto msg = std::make_shared<maml::Message>(&mtm, sizeof(mtm));
 
-        maml::sendTo(comm, mpi::masterRank(), msg);
+        mpi::sendTo(mpi::masterRank(), myID.objID(), msg);
       } break;
       default:
         throw std::runtime_error("#osp:mpi:dfb: color buffer format not "
@@ -513,7 +515,7 @@ namespace ospray {
                                                  sizeof(msgPayload));
       int dstRank = mpi::globalRankFromWorkerRank(tileDesc->ownerID);
 
-      maml::sendTo(comm, dstRank, msg);
+      mpi::sendTo(dstRank, myID.objID(), msg);
     } else {
       if (!frameIsActive)
         throw std::runtime_error("#dfb: cannot setTile if frame is inactive!");

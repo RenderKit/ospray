@@ -34,6 +34,7 @@ IF (OSPRAY_MODULE_MPI)
     worker.cpp
 
     common/OSPWork.cpp
+    common/Messaging.cpp
     common/DataStreaming.h
     common/BufferedDataStreaming.cpp
 

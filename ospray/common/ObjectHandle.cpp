@@ -37,7 +37,8 @@ namespace ospray {
   ObjectHandle::ObjectHandle()
   {
     if (freedHandles.empty()) {
-      i32.ID = nextFreeLocalID++;
+      i32.ID    = nextFreeLocalID++;
+      i32.owner = 0;
     } else {
       i64 = freedHandles.top();
       freedHandles.pop();

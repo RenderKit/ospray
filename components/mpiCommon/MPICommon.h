@@ -185,7 +185,6 @@ namespace ospray {
 
     // Initialize OSPRay's MPI groups
     OSPRAY_MPI_INTERFACE void init(int *ac, const char **av);
-    OSPRAY_MPI_INTERFACE void flush();
 
     inline int globalRank()
     {

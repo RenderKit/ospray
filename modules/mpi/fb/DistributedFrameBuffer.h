@@ -43,8 +43,7 @@ namespace ospray {
   struct DistributedFrameBuffer : public maml::MessageHandler,
                                   public FrameBuffer
   {
-    DistributedFrameBuffer(MPI_Comm comm,
-                           const vec2i &numPixels,
+    DistributedFrameBuffer(const vec2i &numPixels,
                            ObjectHandle myHandle,
                            ColorBufferFormat,
                            bool hasDepthBuffer,
@@ -155,7 +154,7 @@ namespace ospray {
 
     // Data members ///////////////////////////////////////////////////////////
 
-    MPI_Comm comm {MPI_COMM_NULL};
+    ObjectHandle myID;
 
     int32 *tileAccumID; //< holds accumID per tile, for adaptive accumulation
     //!< holds error per tile and adaptive regions, for variance estimation / stopping
