@@ -46,8 +46,13 @@ namespace ospray {
         fps.startRender();
 
         if (scenegraph->childrenLastModified() > lastRTime) {
+          static int once = 0;
+          if (once++ < 200)
+          {
+          std::cout << "commit\n";
           scenegraph->traverse("verify");
           scenegraph->traverse("commit");
+        }
 
           if (scenegraphDW) {
             scenegraphDW->traverse("verify");

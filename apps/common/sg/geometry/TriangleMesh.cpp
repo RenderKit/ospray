@@ -99,10 +99,10 @@ namespace ospray {
 
       if (ospGeometry)
         ospRelease(ospGeometry);
-      if (ospModel)
-        ospRelease(ospModel);
+      // if (ospModel)
+        // ospRelease(ospModel);
       ospGeometry = ospNewGeometry("trianglemesh");
-      ospModel    = ospNewModel();
+      // ospModel    = ospNewModel();
 
       // set vertex data
       if (vertex && vertex->notEmpty())
@@ -118,6 +118,11 @@ namespace ospray {
       ospSetMaterial(ospGeometry,
                      (OSPMaterial)child("material").valueAs<OSPObject>());
       ospCommit(ospGeometry);
+      // ospAddGeometry(ctx.world->ospModel,ospGeometry);
+    }
+
+    void TriangleMesh::postRender(RenderContext& ctx)
+    {
       ospAddGeometry(ctx.world->ospModel,ospGeometry);
     }
 

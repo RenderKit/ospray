@@ -58,7 +58,13 @@ namespace ospray {
       scenegraph(scenegraph),
       renderEngine(scenegraph, scenegraphDW),scenegraphDW(scenegraphDW)
   {
-    setWorldBounds(scenegraph->child("world").bounds());
+    auto bbox = scenegraph->child("world").bounds();
+    if (bbox.empty())
+    {
+      bbox.lower = vec3f(-5,0,-5);
+      bbox.upper = vec3f(5,10,5);
+    }
+    setWorldBounds(bbox);
     renderEngine.setFbSize({1024, 768});
 
     renderEngine.start();

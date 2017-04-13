@@ -140,10 +140,9 @@ namespace ospray {
       {
         //TODO: lookup id into textures
         int texID = atoi(s);
-          std::shared_ptr<Texture2D> tex = std::dynamic_pointer_cast<Texture2D>(nodeList[texID]);
+          std::shared_ptr<Texture2D> tex = std::dynamic_pointer_cast<Texture2D>(mat->textures[texID]);
           s = strtok(NULL, " \t\n\r");
-          if (mat->textures.size() == 1)
-            mat->setChild(paramName, tex);
+          mat->setChild(paramName, tex);
       }
       else if (!paramType.compare("float")) {
         mat->createChildWithValue(paramName,"float",(float)atof(s));
@@ -219,6 +218,7 @@ namespace ospray {
     {
       std::shared_ptr<sg::Node> child;
       affine3f xfm;
+      int id=0;
         
       // find child ID
       xml::for_each_prop(node,[&](const std::string &name, const std::string &value){
@@ -226,6 +226,8 @@ namespace ospray {
             size_t childID = atoi(value.c_str());//(char*)value);
             child = nodeList[childID];
             assert(child);
+          } else if (name == "id") {
+            id = atoi(value.c_str());
           }
         });
 
@@ -249,7 +251,12 @@ namespace ospray {
         throw std::runtime_error("invalid number of elements in RIVL transform node");
       }
 
-      std::shared_ptr<sg::Transform> xfNode = std::make_shared<sg::Transform>(xfm,child);
+      // std::shared_ptr<sg::Transform> xfNode = std::make_shared<sg::Transform>(xfm,child);
+      std::stringstream ss;
+      ss << "instance_" << id;
+      auto xfNode = createNode(ss.str(), "InstanceGroup");
+      xfNode->setChild(child->name(), child);
+      std::static_pointer_cast<sg::InstanceGroup>(xfNode)->baseTransform = xfm;
       nodeList.push_back(std::dynamic_pointer_cast<sg::Node>(xfNode));
     }
 
@@ -259,7 +266,10 @@ namespace ospray {
     {
       std::shared_ptr<sg::PTMTriangleMesh> mesh = std::make_shared<sg::PTMTriangleMesh>();
       std::stringstream ss;
-      ss << node.getProp("name") << "_" << node.getProp("id");
+      ss << node.getProp("name");
+      if (ss.str() == "")
+        ss << "mesh";
+      ss << "_" << node.getProp("id");
       mesh->setName(ss.str());
       mesh->setType("PTMTriangleMesh");
       nodeList.push_back(mesh);
@@ -313,6 +323,10 @@ namespace ospray {
     void parseGroupNode(const xml::Node &node)
     {
       std::shared_ptr<sg::Group> group = std::make_shared<sg::Group>();
+      std::stringstream ss;
+      ss << "group_" << nodeList.size();
+      group->setName(ss.str());
+      group->setType("Node");
       nodeList.push_back(group);
       if (node.content == "")
         // empty group...
@@ -323,6 +337,9 @@ namespace ospray {
           size_t childID = atoi(s);
           std::shared_ptr<sg::Node> child = nodeList[childID];
           group->children.push_back(child);
+          std::stringstream ss;
+          ss << "child_" << childID;
+          group->setChild(ss.str(), child);
         }
         free(value);
       }
@@ -330,7 +347,6 @@ namespace ospray {
     
     void parseBGFscene(std::shared_ptr<sg::World> world, const xml::Node &root)
     {
-      std::cout << __PRETTY_FUNCTION__ << std::endl;
       if (root.name != "BGFscene")
         throw std::runtime_error("XML file is not a RIVL model !?");
       if (root.child.empty())
@@ -345,19 +361,24 @@ namespace ospray {
             parseTextureNode(node);
             // -------------------------------------------------------
           } else if (node.name == "Material") {
-            std::cout << "parsing material\n";
             // -------------------------------------------------------
             parseMaterialNode(node);
             // -------------------------------------------------------
           } else if (node.name == "Transform") {
+            static int counter =0;
             // -------------------------------------------------------
             parseTransformNode(node);
+            // if (counter++ < 2)
+            {
+              lastNode = nodeList.back();
+            // world->add(lastNode);
+            }
             // -------------------------------------------------------
           } else if (node.name == "Mesh") {
             // -------------------------------------------------------
             parseMeshNode(node);
             lastNode = nodeList.back();
-            world->add(lastNode);
+            // world->add(lastNode);
             // -------------------------------------------------------
           } else if (node.name == "Group") {
             // -------------------------------------------------------

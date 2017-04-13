@@ -36,6 +36,7 @@ namespace ospray {
       properties.parent = nullptr;
       properties.valid = false;
 #endif
+      properties.flags = sg::NodeFlags::none;
       markAsModified();
     }
 
@@ -323,6 +324,7 @@ namespace ospray {
     void Node::setChild(const std::string &name,
                             const std::shared_ptr<Node> &node)
     {
+      std::lock_guard<std::mutex> lock{mutex};
       std::string lower=name;
       std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
       properties.children[lower] = node;
@@ -391,6 +393,8 @@ namespace ospray {
         preCommit(ctx);
       } else if (operation == "verify") {
         properties.valid = computeValid();
+        if (!properties.valid)
+          std::cout << name() << " marked invalid\n";
       } else if (operation == "modified") {
         markAsModified();
       }

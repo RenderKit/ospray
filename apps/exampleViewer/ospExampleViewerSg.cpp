@@ -187,6 +187,11 @@ void addPlaneToScene(sg::Node& world)
 {
   //add plane
   auto bbox = world.bounds();
+  if (bbox.empty())
+  {
+    bbox.lower = vec3f(-5,0,-5);
+    bbox.upper = vec3f(5,10,5);
+  }
 
   osp::vec3f *vertices = new osp::vec3f[4];
   float ps = bbox.upper.x*3.f;
@@ -237,7 +242,7 @@ int main(int ac, const char **av)
   auto &renderer = *renderer_ptr;
   /*! the renderer we use for rendering on the display wall; null if
       no dw available */
-  std::shared_ptr<sg::Node> rendererDW;
+  std::shared_ptr<sg::Node> rendererDW=nullptr;
   /*! display wall service info - ignore if 'rendererDW' is null */
   dw::ServiceInfo dwService;
 
@@ -316,8 +321,14 @@ int main(int ac, const char **av)
     renderer.traverse("print");
   }
 
+  renderer.traverse("print");
+  std::cout << "verify\n";
   renderer.traverse("verify");
+  std::cout << "commit\n";
   renderer.traverse("commit");
+  std::cout << "render\n";
+  renderer.traverse("render");
+  std::cout << "done render\n";
 
   ospray::ImGuiViewerSg window(renderer_ptr, rendererDW);
 

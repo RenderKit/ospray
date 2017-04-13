@@ -83,9 +83,9 @@ namespace ospray {
 
     void Renderer::postRender(RenderContext &ctx)
     {
-      ospSetObject(ospRenderer, "model",
-                   child("world").valueAs<OSPObject>());
-      ospCommit(ospRenderer);
+      // ospSetObject(ospRenderer, "model",
+      //              child("world").valueAs<OSPObject>());
+      // ospCommit(ospRenderer);
 
       auto fb = (OSPFrameBuffer)child("frameBuffer").valueAs<OSPObject>();
       ospRenderFrame(fb,
@@ -122,27 +122,7 @@ namespace ospray {
 
     void Renderer::postCommit(RenderContext &ctx)
     {
-      ospSetObject(ospRenderer,"model", child("world").valueAs<OSPObject>());
-      ospSetObject(ospRenderer,"camera", child("camera").valueAs<OSPObject>());
 
-      if (lightsData == nullptr ||
-          lightsBuildTime < child("lights").childrenLastModified())
-      {
-        // create and setup light for Ambient Occlusion
-        std::vector<OSPLight> lights;
-        for(auto &lightNode : child("lights").children())
-          lights.push_back((OSPLight)lightNode->valueAs<OSPObject>());
-
-        if (lightsData)
-          ospRelease(lightsData);
-        lightsData = ospNewData(lights.size(), OSP_LIGHT, &lights[0]);
-        ospCommit(lightsData);
-        lightsBuildTime = TimeStamp();
-      }
-
-      // complete setup of renderer
-      ospSetObject(ospRenderer, "model",  child("world").valueAs<OSPObject>());
-      ospSetObject(ospRenderer, "lights", lightsData);
 
       //TODO: some child is kicking off modified every frame...Should figure
       //      out which and ignore it
@@ -160,10 +140,31 @@ namespace ospray {
           OSP_FB_COLOR | OSP_FB_ACCUM
         );
 
+              if (lightsData == nullptr ||
+          lightsBuildTime < child("lights").childrenLastModified())
+      {
+        // create and setup light for Ambient Occlusion
+        std::vector<OSPLight> lights;
+        for(auto &lightNode : child("lights").children())
+          lights.push_back((OSPLight)lightNode->valueAs<OSPObject>());
+
+        if (lightsData)
+          ospRelease(lightsData);
+        lightsData = ospNewData(lights.size(), OSP_LIGHT, &lights[0]);
+        ospCommit(lightsData);
+        lightsBuildTime = TimeStamp();
+      }
+
+      // complete setup of renderer
+      ospSetObject(ospRenderer,"camera", child("camera").valueAs<OSPObject>());
+      ospSetObject(ospRenderer, "model",  child("world").valueAs<OSPObject>());
+      ospSetObject(ospRenderer, "lights", lightsData);
+
+      ospCommit(ospRenderer);
+
         frameMTime = TimeStamp();
       }
 
-      ospCommit(ospRenderer);
     }
 
     OSP_REGISTER_SG_NODE(Renderer);

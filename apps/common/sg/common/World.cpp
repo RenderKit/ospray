@@ -65,7 +65,9 @@ namespace ospray {
 
     void World::preRender(RenderContext &ctx)
     {
-      preCommit(ctx);
+      // preCommit(ctx);
+      oldWorld = ctx.world;
+      ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
     }
 
     void World::postRender(RenderContext &ctx)
@@ -75,6 +77,7 @@ namespace ospray {
     }
 
     InstanceGroup::InstanceGroup()
+      : baseTransform(ospcommon::one), worldTransform(ospcommon::one)
     {
       createChild("bounds", "box3f");
       createChild("visible", "bool", true);
@@ -87,54 +90,108 @@ namespace ospray {
       createChild("scale", "vec3f", vec3f(1.f));
     }
 
+        /*! \brief return bounding box in world coordinates.
+      
+      This function can be used by the viewer(s) for calibrating
+      camera motion, setting default camera position, etc. Nodes
+      for which that does not apply can simpy return
+      box3f(empty) */
+    box3f InstanceGroup::bounds() const
+    {
+      box3f cbounds = empty;
+      for (const auto &child : properties.children)
+        cbounds.extend(child.second->bounds());
+      if (cbounds.empty())
+        return cbounds;
+      const vec3f lo = cbounds.lower;
+      const vec3f hi = cbounds.upper;
+      box3f bounds = ospcommon::empty;
+      bounds.extend(xfmPoint(worldTransform,vec3f(lo.x,lo.y,lo.z)));
+      bounds.extend(xfmPoint(worldTransform,vec3f(hi.x,lo.y,lo.z)));
+      bounds.extend(xfmPoint(worldTransform,vec3f(lo.x,hi.y,lo.z)));
+      bounds.extend(xfmPoint(worldTransform,vec3f(hi.x,hi.y,lo.z)));
+      bounds.extend(xfmPoint(worldTransform,vec3f(lo.x,lo.y,hi.z)));
+      bounds.extend(xfmPoint(worldTransform,vec3f(hi.x,lo.y,hi.z)));
+      bounds.extend(xfmPoint(worldTransform,vec3f(lo.x,hi.y,hi.z)));
+      bounds.extend(xfmPoint(worldTransform,vec3f(hi.x,hi.y,hi.z)));
+      return bounds;
+    }
+
+    void InstanceGroup::traverse(RenderContext &ctx, const std::string& operation)
+    {
+      if (instanced && operation == "render")
+      {
+        preRender(ctx);
+        postRender(ctx);
+      }
+      else 
+        Node::traverse(ctx,operation);
+    }
+
     void InstanceGroup::preCommit(RenderContext &ctx)
     {
       if (instanced) {
         oldWorld = ctx.world;
         ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
-        if (!ospModel)  //TODO: add support for changing initial geometry
-        {
-          ospModel = ospNewModel();
-          ospCommit(ospModel);
-          setValue((OSPObject)ospModel);
-        }
+        vec3f scale = child("scale").valueAs<vec3f>();
+        vec3f rotation = child("rotation").valueAs<vec3f>();
+        vec3f translation = child("position").valueAs<vec3f>();
+        worldTransform = baseTransform*ospcommon::affine3f::translate(translation)*
+        ospcommon::affine3f::rotate(vec3f(1,0,0),rotation.x)*
+        ospcommon::affine3f::rotate(vec3f(0,1,0),rotation.y)*
+        ospcommon::affine3f::rotate(vec3f(0,0,1),rotation.z)*
+        ospcommon::affine3f::scale(scale);
+
+        if (ospModel)
+          ospRelease(ospModel);
+        ospModel = ospNewModel();
+        ospCommit(ospModel);
+        setValue((OSPObject)ospModel);
       }
     }
 
     void InstanceGroup::postCommit(RenderContext &ctx)
     {
-      if (instanced) {
+      if (instanced)
+      {
+        //instancegroup caches render calls in commit.  
+        for (auto child : properties.children)
+          child.second->traverse(ctx, "render");
+
         ospCommit(ospModel);
         ctx.world = oldWorld;
-        vec3f scale = child("scale").valueAs<vec3f>();
-        vec3f rotation = child("rotation").valueAs<vec3f>();
-        vec3f translation = child("position").valueAs<vec3f>();
-        ospcommon::affine3f xfm = ospcommon::one;
-        xfm = xfm*ospcommon::affine3f::translate(translation)*ospcommon::affine3f::rotate(vec3f(1,0,0),rotation.x)*
-        ospcommon::affine3f::rotate(vec3f(0,1,0),rotation.y)*
-        ospcommon::affine3f::rotate(vec3f(0,0,1),rotation.z)*
-        ospcommon::affine3f::scale(scale);
-        
         if (ospInstance)
           ospRelease(ospInstance);
-        ospInstance = ospNewInstance(ospModel,(osp::affine3f&)xfm);
-        ospCommit(ospInstance);
+        ospInstance = ospNewInstance(ospModel,(osp::affine3f&)worldTransform);
+        ospCommit(ospInstance);        
       }
     }
 
     void InstanceGroup::preRender(RenderContext &ctx)
     {
+              if (instanced) {
       oldWorld = ctx.world;
-      if (instanced) {
         ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
-        if (child("visible").value() == true)
-          ospAddGeometry(oldWorld->ospModel,ospInstance);
+        {
+          // ospModel = ospNewModel();
+          // ospCommit(ospModel);
+          // setValue((OSPObject)ospModel);
+        }
       }
     }
 
     void InstanceGroup::postRender(RenderContext &ctx)
     {
-      ctx.world = oldWorld;
+      if (instanced)
+      {
+        ctx.world = oldWorld;
+        // ospCommit(ospModel);
+        if (child("visible").value() == true)
+        {
+          // if (!bounds().empty())
+            ospAddGeometry(oldWorld->ospModel,ospInstance);
+        }
+      }
     }
 
     OSP_REGISTER_SG_NODE(World);

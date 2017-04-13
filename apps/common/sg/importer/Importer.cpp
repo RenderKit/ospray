@@ -197,13 +197,15 @@ namespace ospray {
 #endif
       if (fileName.ext() == "obj") {
         std::cout << "importing file: " << fileName.str() << std::endl;
+        // instanced = false;
         sg::importOBJ(std::static_pointer_cast<sg::World>(shared_from_this()), fileName);
       } else if (fileName.ext() == "ply") {
         sg::importPLY(wsg, fileName);
       } else if (fileName.ext() == "osg" || fileName.ext() == "osp") {
-        sg::loadOSP(wsg, fileName);
         instanced = false;
+        sg::loadOSP(wsg, fileName);
       } else if (fileName.ext() == "xml") {
+        instanced = false;
         sg::importRIVL(wsg, fileName);
       } else if (fileName.ext() == "x3d" || fileName.ext() == "hbp" ||
                  fileName.ext() == "msg" || fileName.ext() == "stl" ||
