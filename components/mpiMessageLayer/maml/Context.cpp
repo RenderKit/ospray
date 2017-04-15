@@ -80,11 +80,18 @@ namespace maml {
   void Context::mpiSendAndRecieveThread()
   {
     while(threadsRunning) {
+      std::unique_lock<std::mutex> lock(canDoMPIMutex);
+      canDoMPICondition.wait(lock, [&]{ return canDoMPICalls; });
+
+      mpiThreadActive = true;
+
       sendSomeMessages();
       recvSomeMessages();
 
       waitOnSomeSends();
       waitOnSomeRecvs();
+
+      mpiThreadActive = false;
     }
   }
 
@@ -179,10 +186,15 @@ namespace maml {
     }
   }
 
-  /*! make sure all outgoing messages get sent... */
-  void Context::flushOutgoingMessages()
+  void Context::flushRemainingMessages()
   {
-    //TODO
+    sendSomeMessages();
+
+    while (!pendingRecvs.empty())
+      waitOnSomeRecvs();
+
+    while (!pendingSends.empty())
+      waitOnSomeSends();
   }
 
   /*! start the service; from this point on maml is free to use MPI
@@ -191,7 +203,8 @@ namespace maml {
     has been called */
   void Context::start()
   {
-    //TODO
+    canDoMPICalls = true;
+    canDoMPICondition.notify_one();
   }
 
   /*! stops the maml layer; maml will no longer perform any MPI calls;
@@ -201,7 +214,11 @@ namespace maml {
     if they are already in flight */
   void Context::stop()
   {
-    //TODO
+    canDoMPICalls = false;
+    std::unique_lock<std::mutex> lock(canDoMPIMutex);
+    canDoMPICondition.wait(lock, [&]{ return !mpiThreadActive; });
+
+    flushRemainingMessages();
   }
 #else
   Context::Context()

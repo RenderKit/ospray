@@ -493,7 +493,6 @@ namespace ospray {
       }
     }
 
-    maml::flush();
     frameDoneCond.notify_all();
   }
 

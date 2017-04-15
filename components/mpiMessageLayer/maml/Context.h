@@ -83,9 +83,6 @@ namespace maml {
         put into the inbox */
     void processInboxThread();
 
-    /*! make sure all outgoing messages get sent... */
-    void flushOutgoingMessages();
-
 #if 1
   private:
 
@@ -96,6 +93,8 @@ namespace maml {
 
     void waitOnSomeSends();
     void waitOnSomeRecvs();
+
+    void flushRemainingMessages();
 
     // Data members //
 
@@ -118,7 +117,15 @@ namespace maml {
 
     std::thread mpiSendRecvThread;
     std::thread inboxProcThread;
+
+    bool                    canDoMPICalls {false};
+    bool                    mpiThreadActive {false};
+    std::mutex              canDoMPIMutex;
+    std::condition_variable canDoMPICondition;
 #else
+    /*! make sure all outgoing messages get sent... */
+    void flushOutgoingMessages();
+
     bool                    canDoMPICalls;
     std::mutex              canDoMPIMutex;
     std::condition_variable canDoMPICondition;

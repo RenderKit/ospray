@@ -114,12 +114,6 @@ namespace maml {
     msg->comm = comm;
     send(msg);
   }
-
-  /*! make sure all outgoing messages get sent... */
-  void flush()
-  {
-    Context::singleton->flushOutgoingMessages();
-  }
   
   /*! close down and clean exit. NOT YET IMPLEMENTED. */
   void finalize()

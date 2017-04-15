@@ -122,9 +122,6 @@ namespace maml {
       opportunity. */
   // void send(Message *msg);
   void send(std::shared_ptr<Message> msg);
-
-  /*! make sure all outgoing messages get sent... */
-  void flush();
   
   /*! schedule the given message to be send to the given
       comm:rank. comm and rank have to be a valid address. Once this
