@@ -24,8 +24,6 @@
 
 namespace maml {
 
-  struct Context;
-  
   /*! object that handles a message. a message primarily consists of a
     pointer to data; the message itself "owns" this pointer, and
     will delete it once the message itself dies. the message itself
@@ -61,12 +59,6 @@ namespace maml {
     ospcommon::byte_t *data {nullptr};
     size_t             size {0};
     /*! @} */
-    
-  private:
-    /*! the request for sending/receiving this message */
-    MPI_Request request;
-    
-    friend class Context;
   };
   
   /*! a message whose payload is owned by the user, and which we do

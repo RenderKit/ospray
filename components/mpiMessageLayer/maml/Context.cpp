@@ -100,9 +100,10 @@ namespace maml {
       auto outgoingMessages = outbox.consume();
 
       for (auto &msg : outgoingMessages) {
+        MPI_Request request;
         MPI_CALL(Isend(msg->data, msg->size, MPI_BYTE, msg->rank,
-                       msg->tag, msg->comm, &msg->request));
-        pendingSends.push_back(msg->request);
+                       msg->tag, msg->comm, &request));
+        pendingSends.push_back(request);
         sendCache.push_back(std::move(msg));
       }
     }
@@ -127,9 +128,11 @@ namespace maml {
         msg->rank = status.MPI_SOURCE;
         msg->tag  = status.MPI_TAG;
         msg->comm = comm;
+
+        MPI_Request request;
         MPI_CALL(Irecv(msg->data, size, MPI_BYTE, msg->rank,
-                       msg->tag, msg->comm, &msg->request));
-        pendingRecvs.push_back(msg->request);
+                       msg->tag, msg->comm, &request));
+        pendingRecvs.push_back(request);
         recvCache.push_back(std::move(msg));
       }
     }
