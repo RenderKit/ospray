@@ -33,7 +33,7 @@ namespace maml {
   {
     Context();
     ~Context();
-    
+
     static std::unique_ptr<Context> singleton;
 
     /*! register a new incoing-message handler. if any message comes in
@@ -58,10 +58,14 @@ namespace maml {
         stopped */
     void send(std::shared_ptr<Message> msg);
 
-    /*! the thread (function) that executes all MPI commands to
-        send/receive messages via MPI. 
+  private:
 
-        Some notes: 
+    // Helper functions //
+
+    /*! the thread (function) that executes all MPI commands to
+        send/receive messages via MPI.
+
+        Some notes:
 
         - this thread does MPI calls (only!) between calls of start()
         and end(). unless you cal start(), nothing will ever get sent
@@ -82,10 +86,6 @@ namespace maml {
     /*! the thread that executes messages that the receiveer thread
         put into the inbox */
     void processInboxThread();
-
-  private:
-
-    // Helper functions //
 
     void sendMessagesFromOutbox();
     void pollForAndRecieveMessages();
