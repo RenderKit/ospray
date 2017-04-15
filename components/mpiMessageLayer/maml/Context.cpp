@@ -82,19 +82,19 @@ namespace maml {
       std::unique_lock<std::mutex> lock(canDoMPIMutex);
       canDoMPICondition.wait(lock, [&]{ return canDoMPICalls; });
 
-      mpiThreadActive = true;
+      sendAndRecieveThreadActive = true;
 
-      sendSomeMessages();
-      recvSomeMessages();
+      sendMessagesFromOutbox();
+      pollForAndRecieveMessages();
 
-      waitOnSomeSends();
-      waitOnSomeRecvs();
+      waitOnSomeSendRequests();
+      waitOnSomeRecvRequests();
 
-      mpiThreadActive = false;
+      sendAndRecieveThreadActive = false;
     }
   }
 
-  void Context::sendSomeMessages()
+  void Context::sendMessagesFromOutbox()
   {
     if (!outbox.empty()) {
       auto outgoingMessages = outbox.consume();
@@ -109,7 +109,7 @@ namespace maml {
     }
   }
 
-  void Context::recvSomeMessages()
+  void Context::pollForAndRecieveMessages()
   {
     for (auto &it : handlers) {
       MPI_Comm comm = it.first;
@@ -138,7 +138,7 @@ namespace maml {
     }
   }
 
-  void Context::waitOnSomeSends()
+  void Context::waitOnSomeSendRequests()
   {
     if (!pendingSends.empty()) {
       int numDone = 0;
@@ -163,7 +163,7 @@ namespace maml {
     }
   }
 
-  void Context::waitOnSomeRecvs()
+  void Context::waitOnSomeRecvRequests()
   {
     if (!pendingRecvs.empty()) {
       int numDone = 0;
@@ -190,13 +190,13 @@ namespace maml {
 
   void Context::flushRemainingMessages()
   {
-    sendSomeMessages();
+    sendMessagesFromOutbox();
 
     while (!pendingRecvs.empty())
-      waitOnSomeRecvs();
+      waitOnSomeRecvRequests();
 
     while (!pendingSends.empty())
-      waitOnSomeSends();
+      waitOnSomeSendRequests();
   }
 
   /*! start the service; from this point on maml is free to use MPI
@@ -218,7 +218,7 @@ namespace maml {
   {
     canDoMPICalls = false;
     std::unique_lock<std::mutex> lock(canDoMPIMutex);
-    canDoMPICondition.wait(lock, [&]{ return !mpiThreadActive; });
+    canDoMPICondition.wait(lock, [&]{ return !sendAndRecieveThreadActive; });
 
     flushRemainingMessages();
   }

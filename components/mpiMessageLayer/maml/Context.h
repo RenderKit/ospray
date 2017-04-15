@@ -87,11 +87,11 @@ namespace maml {
 
     // Helper functions //
 
-    void sendSomeMessages();
-    void recvSomeMessages();
+    void sendMessagesFromOutbox();
+    void pollForAndRecieveMessages();
 
-    void waitOnSomeSends();
-    void waitOnSomeRecvs();
+    void waitOnSomeSendRequests();
+    void waitOnSomeRecvRequests();
 
     void flushRemainingMessages();
 
@@ -118,7 +118,7 @@ namespace maml {
     std::thread inboxProcThread;
 
     bool                    canDoMPICalls {false};
-    bool                    mpiThreadActive {false};
+    bool                    sendAndRecieveThreadActive {false};
     std::mutex              canDoMPIMutex;
     std::condition_variable canDoMPICondition;
   };
