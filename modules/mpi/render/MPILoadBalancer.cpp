@@ -76,7 +76,6 @@ namespace ospray {
         if ((ALLTASKS % worker.size) > worker.rank)
           NTASKS++;
 
-        //serial_for(NTASKS, [&](int taskIndex){
         parallel_for(NTASKS, [&](int taskIndex){
           const size_t tileID = taskIndex * worker.size + worker.rank;
           const size_t numTiles_x = fb->getNumTiles().x;
@@ -97,7 +96,6 @@ namespace ospray {
           Tile __aligned(64) tile(tileId, fb->size, accumID);
 #endif
 
-          //serial_for(numJobs(renderer->spp, accumID), [&](int tid){
           parallel_for(numJobs(renderer->spp, accumID), [&](int tid){
             renderer->renderTile(perFrameData, tile, tid);
           });
@@ -108,7 +106,8 @@ namespace ospray {
         dfb->waitUntilFinished();
         renderer->endFrame(perFrameData,channelFlags);
 
-        return inf; // irrelevant on slave
+        return dfb->endFrame(0.f); // irrelevant return value on slave, still
+                                   // call to stop maml layer
       }
 
       std::string Slave::toString() const
