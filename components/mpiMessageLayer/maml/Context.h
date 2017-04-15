@@ -17,6 +17,9 @@
 #pragma once
 
 #include "maml.h"
+//ospcommon
+#include "ospcommon/containers/TransactionalBuffer.h"
+//stl
 #include <vector>
 #include <map>
 #include <thread>
@@ -29,10 +32,9 @@ namespace maml {
   struct Context
   {
     Context();
+    ~Context();
     
     static std::unique_ptr<Context> singleton;
-
-    static bool initialized();
 
     /*! register a new incoing-message handler. if any message comes in
       on the given communicator we'll call this handler */
@@ -84,6 +86,39 @@ namespace maml {
     /*! make sure all outgoing messages get sent... */
     void flushOutgoingMessages();
 
+#if 1
+  private:
+
+    // Helper functions //
+
+    void sendSomeMessages();
+    void recvSomeMessages();
+
+    void waitOnSomeSends();
+    void waitOnSomeRecvs();
+
+    // Data members //
+
+    bool threadsRunning {true};
+
+    ospcommon::TransactionalBuffer<std::shared_ptr<Message>> inbox;
+    ospcommon::TransactionalBuffer<std::shared_ptr<Message>> outbox;
+
+    // NOTE(jda) - sendCache/pendingSends MUST correspond with each other by
+    //             their index in their respective vectors...
+    std::vector<std::shared_ptr<Message>> sendCache;
+    std::vector<MPI_Request>              pendingSends;
+
+    // NOTE(jda) - recvCache/pendingRecvs MUST correspond with each other by
+    //             their index in their respective vectors...
+    std::vector<std::shared_ptr<Message>> recvCache;
+    std::vector<MPI_Request>              pendingRecvs;
+
+    std::map<MPI_Comm, MessageHandler *> handlers;
+
+    std::thread mpiSendRecvThread;
+    std::thread inboxProcThread;
+#else
     bool                    canDoMPICalls;
     std::mutex              canDoMPIMutex;
     std::condition_variable canDoMPICondition;
@@ -91,8 +126,8 @@ namespace maml {
     std::thread mpiThreadHandle;
     std::thread inboxThreadHandle;
 
-    std::mutex                          handlersMutex;
-    std::map<MPI_Comm,MessageHandler *> handlers;
+    std::mutex                           handlersMutex;
+    std::map<MPI_Comm, MessageHandler *> handlers;
 
     /*! new messsages that still need to get sent */
     std::mutex                            outboxMutex;
@@ -108,6 +143,7 @@ namespace maml {
     bool                    flushed;
     std::mutex              flushMutex;
     std::condition_variable flushCondition;
+#endif
   };
   
 } // ::maml
