@@ -83,7 +83,6 @@ namespace maml {
         put into the inbox */
     void processInboxThread();
 
-#if 1
   private:
 
     // Helper functions //
@@ -122,35 +121,6 @@ namespace maml {
     bool                    mpiThreadActive {false};
     std::mutex              canDoMPIMutex;
     std::condition_variable canDoMPICondition;
-#else
-    /*! make sure all outgoing messages get sent... */
-    void flushOutgoingMessages();
-
-    bool                    canDoMPICalls;
-    std::mutex              canDoMPIMutex;
-    std::condition_variable canDoMPICondition;
-    
-    std::thread mpiThreadHandle;
-    std::thread inboxThreadHandle;
-
-    std::mutex                           handlersMutex;
-    std::map<MPI_Comm, MessageHandler *> handlers;
-
-    /*! new messsages that still need to get sent */
-    std::mutex                            outboxMutex;
-    std::vector<std::shared_ptr<Message>> outbox;
-
-    /*! new messsages that have been received but not yet executed */
-    std::mutex                            inboxMutex;
-    std::condition_variable               inboxCondition;
-    std::vector<std::shared_ptr<Message>> inbox;
-
-    /*! used to execute a flush: this condition gets triggered when
-      all messages in the outbox have been (fully) sent */
-    bool                    flushed;
-    std::mutex              flushMutex;
-    std::condition_variable flushCondition;
-#endif
   };
   
 } // ::maml
