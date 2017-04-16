@@ -25,12 +25,14 @@
 
 namespace ospray {
   namespace mpi {
+    namespace messaging {
 
-    void registerMessageListener(int handleObjID,
-                                 maml::MessageHandler *listener);
+      void registerMessageListener(int handleObjID,
+                                   maml::MessageHandler *listener);
 
-    void sendTo(int globalRank, ObjectHandle object,
-                std::shared_ptr<maml::Message> msg);
+      void sendTo(int globalRank, ObjectHandle object,
+                  std::shared_ptr<maml::Message> msg);
 
-  }// ::ospray::mpi
-}// ::ospray
+    } // ::ospray::mpi::messaging
+  } // ::ospray::mpi
+} // ::ospray

@@ -20,11 +20,28 @@
 
 namespace ospray {
   namespace mpi {
+    namespace messaging {
 
-    struct ObjectMessageHandler : maml::MessageHandler
-    {
-      void registerMessageListener(int handleObjID,
-                                   maml::MessageHandler *listener)
+      // Internal maml message handler for all of OSPRay //////////////////////
+
+      struct ObjectMessageHandler : maml::MessageHandler
+      {
+        void registerMessageListener(int handleObjID,
+                                     maml::MessageHandler *listener);
+
+        void incoming(const std::shared_ptr<maml::Message> &message) override;
+
+        // Data members //
+
+        std::unordered_map<int, maml::MessageHandler*> objectListeners;
+      };
+
+      // Inlined ObjectMessageHandler definitions /////////////////////////////
+
+      inline void ObjectMessageHandler::registerMessageListener(
+        int handleObjID,
+        maml::MessageHandler *listener
+      )
       {
         if (objectListeners.find(handleObjID) != objectListeners.end())
           postErrorMsg() << "WARNING: overwriting an existing object listener!";
@@ -32,7 +49,9 @@ namespace ospray {
         objectListeners[handleObjID] = listener;
       }
 
-      void incoming(const std::shared_ptr<maml::Message> &message) override
+      inline void ObjectMessageHandler::incoming(
+        const std::shared_ptr<maml::Message> &message
+      )
       {
         auto obj = objectListeners.find(message->tag);
         if (obj != objectListeners.end()) {
@@ -42,35 +61,35 @@ namespace ospray {
         }
       }
 
-      // Data members //
+      // Singleton instance (hidden) and helper creation function /////////////
 
-      std::unordered_map<int, maml::MessageHandler*> objectListeners;
-    };
+      std::unique_ptr<ObjectMessageHandler> createHandler()
+      {
+        auto instance = ospcommon::make_unique<ObjectMessageHandler>();
+        maml::registerHandlerFor(world.comm, instance.get());
+        return instance;
+      }
 
-    std::unique_ptr<ObjectMessageHandler> createHandler()
-    {
-      auto instance = ospcommon::make_unique<ObjectMessageHandler>();
-      maml::registerHandlerFor(world.comm, instance.get());
-      return instance;
-    }
+      static std::unique_ptr<ObjectMessageHandler> handler;
 
-    static std::unique_ptr<ObjectMessageHandler> handler;
+      // ospray::mpi::messaging definitions ///////////////////////////////////
 
-    void registerMessageListener(int handleObjID,
-                                 maml::MessageHandler *listener)
-    {
-      if (!handler.get())
-        handler = createHandler();
+      void registerMessageListener(int handleObjID,
+                                   maml::MessageHandler *listener)
+      {
+        if (!handler.get())
+          handler = createHandler();
 
-      handler->registerMessageListener(handleObjID, listener);
-    }
+        handler->registerMessageListener(handleObjID, listener);
+      }
 
-    void sendTo(int globalRank, ObjectHandle object,
-                std::shared_ptr<maml::Message> msg)
-    {
-      msg->tag = object.objID();
-      maml::sendTo(world.comm, globalRank, msg);
-    }
+      void sendTo(int globalRank, ObjectHandle object,
+                  std::shared_ptr<maml::Message> msg)
+      {
+        msg->tag = object.objID();
+        maml::sendTo(world.comm, globalRank, msg);
+      }
 
-  }// ::ospray::mpi
-}// ::ospray
+    } // ::ospray::mpi::messaging
+  } // ::ospray::mpi
+} // ::ospray
