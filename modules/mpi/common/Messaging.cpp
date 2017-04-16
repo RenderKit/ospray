@@ -65,9 +65,10 @@ namespace ospray {
       handler->registerMessageListener(handleObjID, listener);
     }
 
-    void sendTo(int globalRank, int objID, std::shared_ptr<maml::Message> msg)
+    void sendTo(int globalRank, ObjectHandle object,
+                std::shared_ptr<maml::Message> msg)
     {
-      msg->tag = objID;
+      msg->tag = object.objID();
       maml::sendTo(world.comm, globalRank, msg);
     }
 

@@ -375,7 +375,7 @@ namespace ospray {
 
         auto msg = std::make_shared<maml::Message>(&mtm, sizeof(mtm));
 
-        mpi::sendTo(mpi::masterRank(), myID.objID(), msg);
+        mpi::sendTo(mpi::masterRank(), myID, msg);
       } break;
       case OSP_FB_RGBA8:
       case OSP_FB_SRGBA: {
@@ -389,7 +389,7 @@ namespace ospray {
 
         auto msg = std::make_shared<maml::Message>(&mtm, sizeof(mtm));
 
-        mpi::sendTo(mpi::masterRank(), myID.objID(), msg);
+        mpi::sendTo(mpi::masterRank(), myID, msg);
       } break;
       case OSP_FB_RGBA32F: {
         /*! if the master has RGBA32F format, we're sending him a tile of the
@@ -402,7 +402,7 @@ namespace ospray {
 
         auto msg = std::make_shared<maml::Message>(&mtm, sizeof(mtm));
 
-        mpi::sendTo(mpi::masterRank(), myID.objID(), msg);
+        mpi::sendTo(mpi::masterRank(), myID, msg);
       } break;
       default:
         throw std::runtime_error("#osp:mpi:dfb: color buffer format not "
@@ -513,7 +513,7 @@ namespace ospray {
                                                  sizeof(msgPayload));
       int dstRank = mpi::globalRankFromWorkerRank(tileDesc->ownerID);
 
-      mpi::sendTo(dstRank, myID.objID(), msg);
+      mpi::sendTo(dstRank, myID, msg);
     } else {
       if (!frameIsActive)
         throw std::runtime_error("#dfb: cannot setTile if frame is inactive!");

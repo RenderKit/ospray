@@ -20,6 +20,8 @@
 #include "mpiCommon/MPICommon.h"
 // maml
 #include "maml/maml.h"
+// ospray
+#include "ospray/common/ObjectHandle.h"
 
 namespace ospray {
   namespace mpi {
@@ -27,7 +29,8 @@ namespace ospray {
     void registerMessageListener(int handleObjID,
                                  maml::MessageHandler *listener);
 
-    void sendTo(int globalRank, int objID, std::shared_ptr<maml::Message> msg);
+    void sendTo(int globalRank, ObjectHandle object,
+                std::shared_ptr<maml::Message> msg);
 
   }// ::ospray::mpi
 }// ::ospray
