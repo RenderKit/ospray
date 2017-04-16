@@ -33,6 +33,7 @@ namespace maml {
   Context::~Context()
   {
     threadsRunning = false;
+    start();// wake up mpiSendRecvThread so it can be shutdown
     mpiSendRecvThread.join();
     inboxProcThread.join();
   }
@@ -78,9 +79,12 @@ namespace maml {
 
   void Context::mpiSendAndRecieveThread()
   {
-    while(threadsRunning) {
+    while(true) {
       std::unique_lock<std::mutex> lock(canDoMPIMutex);
       canDoMPICondition.wait(lock, [&]{ return canDoMPICalls; });
+
+      if (!threadsRunning)
+        return;
 
       sendAndRecieveThreadActive = true;
 

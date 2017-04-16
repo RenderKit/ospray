@@ -22,7 +22,6 @@
 #include "ospcommon/tasking/schedule.h"
 
 #include "mpiCommon/MPICommon.h"
-#include "mpiCommon/async/Messaging.h"
 
 #include "../common/Messaging.h"
 

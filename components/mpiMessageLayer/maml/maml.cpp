@@ -115,11 +115,4 @@ namespace maml {
     send(msg);
   }
   
-  /*! close down and clean exit. NOT YET IMPLEMENTED. */
-  void finalize()
-  {
-    std::cout << "#maml: warning: maml::finalize() not yet implemented"
-              << std::endl;
-  }
-  
 } // ::maml

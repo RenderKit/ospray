@@ -100,9 +100,6 @@ namespace maml {
       receives any more messages (until the next 'start()' call) even
       if they are already in flight */
   void stop();
-
-  /*! close down and clean exit. NOT YET IMPLEMENTED. */
-  void finalize();
   
   /*! schedule the given message to be send to the comm:rank indicated
       in this message. comm and rank have to be a valid address. Once

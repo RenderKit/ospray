@@ -717,9 +717,7 @@ namespace ospray {
       
       void CommandFinalize::run()
       {
-#ifndef _WIN32
-# warning "TODO: finalze maml here (clean shutdown)"
-#endif
+        runOnMaster();
 
         // TODO: Is it ok to call exit again here?
         // should we be calling exit? When the MPIDevice is
@@ -733,9 +731,8 @@ namespace ospray {
       
       void CommandFinalize::runOnMaster()
       {
-#ifndef _WIN32
-# warning "TODO: finalze maml here (clean shutdown)"
-#endif
+        world.barrier();
+        SERIALIZED_MPI_CALL(Finalize());
       }
       
       void CommandFinalize::serialize(WriteStream &b) const
