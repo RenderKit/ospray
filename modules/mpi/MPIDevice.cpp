@@ -320,7 +320,7 @@ namespace ospray {
                      OSPRAY_MPI_VERBOSE_LEVEL);
       }
 
-      MPI_CALL(Barrier(mergedComm.comm));
+      mpi::world.barrier();
     }
 
     void createMPI_connectToListener(int *ac, const char **av,
@@ -357,6 +357,8 @@ namespace ospray {
       mergedComm.makeIntraComm();
       mpi::world.comm = mergedComm.comm;
       mpi::world.makeIntraComm();
+
+      mpi::world.barrier();
 
       postErrorMsg("starting worker...", OSPRAY_MPI_VERBOSE_LEVEL);
       mpi::runWorker();
