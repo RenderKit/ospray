@@ -153,8 +153,8 @@ namespace maml {
 
       for (int i = 0; i < numDone; ++i) {
         int pendingSendCompletedIndex = done[i];
-        pendingSends[pendingSendCompletedIndex] = nullptr;
-        sendCache[pendingSendCompletedIndex]    = nullptr;
+        pendingSends[pendingSendCompletedIndex] = 0;// maps to 'int' on Win...
+        sendCache[pendingSendCompletedIndex].reset();
       }
 
       sendCache.erase(std::remove(sendCache.begin(),
@@ -178,7 +178,7 @@ namespace maml {
 
       for (int i = 0; i < numDone; ++i) {
         int pendingRecvCompletedIndex = done[i];
-        pendingRecvs[pendingRecvCompletedIndex] = nullptr;
+        pendingRecvs[pendingRecvCompletedIndex] = 0;// maps to 'int' on Win...
         inbox.push_back(std::move(recvCache[pendingRecvCompletedIndex]));
       }
 
