@@ -15,7 +15,8 @@
 // ======================================================================== //
 
 #include "MPICommon.h"
-#include "async/CommLayer.h"
+
+#include <map>
 
 namespace ospray {
   namespace mpi {
@@ -145,8 +146,8 @@ namespace ospray {
       int provided = 0;
       if (!initialized) {
         /* MPI not initialized by the app - it's up to us */
-        int required = MPI_THREAD_MULTIPLE;
-        SERIALIZED_MPI_CALL(Init_thread(ac,(char ***)&av,MPI_THREAD_MULTIPLE,&provided));
+        SERIALIZED_MPI_CALL(Init_thread(ac, (char ***)&av,
+                                        MPI_THREAD_MULTIPLE, &provided));
       } else {
         /* MPI was already initialized by the app that called us! */
         MPI_Query_thread(&provided);
@@ -168,7 +169,8 @@ namespace ospray {
         }
         break;
       default:
-        throw std::runtime_error("fatal MPI error: MPI runtime doesn't offer even MPI_THREAD_SERIALIZED ...");
+        throw std::runtime_error("fatal MPI error: MPI runtime doesn't offer "
+                                 "even MPI_THREAD_SERIALIZED ...");
       }
       
       mpi::serialized(CODE_LOCATION, [&]() {
@@ -176,25 +178,6 @@ namespace ospray {
           MPI_CALL(Comm_rank(MPI_COMM_WORLD,&world.rank));
           MPI_CALL(Comm_size(MPI_COMM_WORLD,&world.size));
         });
-      
-      {
-        /*! iw, jan 2017: this entire code block should eventually get
-            removed once we switch to the new asyn messaging library;
-            in particular the asyn messaging should be turned on by
-            whoever needs it (eg, DFB, display wall, etc); not in
-            general as soon as one initializes mpicommon ... (_and_
-            the messaging code isn't exactly up to snuff wrt to
-            cleanliness etc as it should be*/
-        postErrorMsg("#osp.mpi: starting up the async messaging layer ...!", OSPRAY_MPI_VERBOSE_LEVEL);
-        mpi::async::CommLayer::WORLD = new mpi::async::CommLayer;
-        mpi::async::Group *worldGroup =
-          mpi::async::createGroup(MPI_COMM_WORLD,
-                                  mpi::async::CommLayer::WORLD,
-                                  OSPRAY_WORLD_GROUP_TAG);
-        assert(worldGroup);
-        mpi::async::CommLayer::WORLD->group = worldGroup;
-        postErrorMsg("#osp.mpi: async messaging layer started ... ", OSPRAY_MPI_VERBOSE_LEVEL);
-      }
 
       // by default, all MPI comm gets locked down, unless we
       // explicitly enable it
@@ -213,8 +196,8 @@ namespace ospray {
          every api call. */
       // Will: I think we're doing this now but in the device right?
       postErrorMsg("#osp.mpi: FOR NOW, WE DO _NOT_ LOCK MPI"
-          " CALLS UPON STARTUP - EVENTUALLY WE HAVE TO DO THIS!!!",
-          OSPRAY_MPI_VERBOSE_LEVEL);
+                   " CALLS UPON STARTUP - EVENTUALLY WE HAVE TO DO THIS!!!",
+                   OSPRAY_MPI_VERBOSE_LEVEL);
 #else
       lockMPI();
 #endif

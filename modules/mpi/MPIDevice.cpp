@@ -17,7 +17,6 @@
 #undef NDEBUG // do all assertions in this file
 
 #include "mpiCommon/MPICommon.h"
-#include "mpiCommon/async/CommLayer.h"
 #include "mpi/MPIDevice.h"
 #include "common/Model.h"
 #include "common/Data.h"
@@ -314,13 +313,6 @@ namespace ospray {
       mpi::world.comm = mergedComm.comm;
       mpi::world.makeIntraComm();
 
-      // create a new world that has everybody:
-      
-      mpi::async::CommLayer::WORLD->group = 
-        mpi::async::createGroup(mergedComm.comm,
-                                mpi::async::CommLayer::WORLD,
-                                OSPRAY_WORLD_GROUP_TAG);
-
       if (app.rank == 0) {
         postErrorMsg("=======================================================\n"
                      "OSPRAY Worker ring connected\n"
@@ -328,7 +320,7 @@ namespace ospray {
                      OSPRAY_MPI_VERBOSE_LEVEL);
       }
 
-      MPI_CALL(Barrier(mergedComm.comm));
+      mpi::world.barrier();
     }
 
     void createMPI_connectToListener(int *ac, const char **av,
@@ -366,13 +358,7 @@ namespace ospray {
       mpi::world.comm = mergedComm.comm;
       mpi::world.makeIntraComm();
 
-      // create a new world that has everybody:
-      
-      mpi::async::CommLayer::WORLD->group = 
-        mpi::async::createGroup(mergedComm.comm,
-                                mpi::async::CommLayer::WORLD,
-                                OSPRAY_WORLD_GROUP_TAG);
-      MPI_CALL(Barrier(mergedComm.comm));
+      mpi::world.barrier();
 
       postErrorMsg("starting worker...", OSPRAY_MPI_VERBOSE_LEVEL);
       mpi::runWorker();
@@ -579,8 +565,7 @@ namespace ospray {
     }
 
     /*! unmap previously mapped frame buffer */
-    void MPIDevice::frameBufferUnmap(const void *mapped,
-                                     OSPFrameBuffer _fb)
+    void MPIDevice::frameBufferUnmap(const void *mapped, OSPFrameBuffer _fb)
     {
       ObjectHandle handle = (const ObjectHandle &)_fb;
       FrameBuffer *fb = (FrameBuffer *)handle.lookup();

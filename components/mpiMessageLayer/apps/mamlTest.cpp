@@ -33,8 +33,7 @@ struct MyHandler : public maml::MessageHandler
 extern "C" int main(int ac, char **av)
 {
   MPI_CALL(Init(&ac, &av));
-  maml::init(ac,av);
-  srand48(times(NULL));
+  srand48(times(nullptr));
 
   int numRuns = 1000000;
   int rank = -1;

@@ -19,18 +19,19 @@
 #include "mpiCommon/MPICommon.h"
 
 #define MAML_THROW(a) \
-  throw std::runtime_error("in "+std::string(__PRETTY_FUNCTION__)+" : "+std::string(a))
+  throw std::runtime_error("in " + std::string(__PRETTY_FUNCTION__) + \
+                           " : " + std::string(a))
 
 namespace maml {
 
-  struct Context;
-  
   /*! object that handles a message. a message primarily consists of a
     pointer to data; the message itself "owns" this pointer, and
     will delete it once the message itself dies. the message itself
     is reference counted using the std::shared_ptr functionality. */
   struct Message
   {
+    Message() = default;
+
     /*! create a new message with given amount of bytes in storage */
     Message(size_t size);
     
@@ -41,8 +42,7 @@ namespace maml {
     /*! create a new message (addressed to given comm:rank) with given
         amount of storage, and copy memory from the given address to
         it */
-    Message(MPI_Comm comm, int rank,
-            const void *copyMem, size_t size);
+    Message(MPI_Comm comm, int rank, const void *copyMem, size_t size);
     
     /*! destruct message and free allocated memory */
     virtual ~Message();
@@ -56,35 +56,23 @@ namespace maml {
     /*! @} */
 
     /*! @{ actual payload of this message */
-    ospcommon::byte_t   *data {nullptr};
-    size_t               size {0};
+    ospcommon::byte_t *data {nullptr};
+    size_t             size {0};
     /*! @} */
-    
-  private:
-    /*! the request for sending/receiving this message */
-    MPI_Request request;
-    
-    friend class Context;
   };
   
   /*! a message whose payload is owned by the user, and which we do
     NOT delete upon termination */
   struct UserMemMessage : public Message
   {
-    UserMemMessage(const void *nonCopyMem, size_t size)
-      : Message(nonCopyMem,size)
-    {}
+    UserMemMessage(void *nonCopyMem, size_t size)
+      : Message()
+    { data = (ospcommon::byte_t*)nonCopyMem; this->size = size; }
 
     /* set data to null to keep the parent from deleting it */
     virtual ~UserMemMessage()
     { data = nullptr; }
   };
-
-  /*! initialize the maml layer. must be called before doing any call
-      below, but should only be called once. note this assuems that
-      MPI is already initialized; it will use the existing MPI
-      layer */
-  void init(int &ac, char **&av);
 
   /*! abstraction for an object that can receive messages. handlers
       get associated with MPI_Comm's, and get called automatically
@@ -112,9 +100,6 @@ namespace maml {
       receives any more messages (until the next 'start()' call) even
       if they are already in flight */
   void stop();
-
-  /*! close down and clean exit. NOT YET IMPLEMENTED. */
-  void finalize();
   
   /*! schedule the given message to be send to the comm:rank indicated
       in this message. comm and rank have to be a valid address. Once
@@ -126,9 +111,6 @@ namespace maml {
       opportunity. */
   // void send(Message *msg);
   void send(std::shared_ptr<Message> msg);
-
-  /*! make sure all outgoing messages get sent... */
-  void flush();
   
   /*! schedule the given message to be send to the given
       comm:rank. comm and rank have to be a valid address. Once this

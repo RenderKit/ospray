@@ -68,7 +68,8 @@ namespace ospray {
       /*! create a new pixelOp object (out of list of registered pixelOps) */
       OSPPixelOp newPixelOp(const char *type) override;
 
-      /*! clear the specified channel(s) of the frame buffer specified in 'whichChannels'
+      /*! clear the specified channel(s) of the frame buffer specified in
+          'whichChannels'
 
         if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to
         '0,0,0,0'.
@@ -84,9 +85,6 @@ namespace ospray {
 
       /*! create a new model */
       OSPModel newModel() override;
-
-      // /*! finalize a newly specified model */
-      // void finalizeModel(OSPModel _model) override;
 
       /*! commit the given object's outstanding changes */
       void commit(OSPObject object) override;
@@ -154,7 +152,8 @@ namespace ospray {
                     const char *bufName,
                     const vec3i &v) override;
 
-      /*! add untyped void pointer to object - this will *ONLY* work in local rendering!  */
+      /*! add untyped void pointer to object - this will *ONLY* work in local
+          rendering!  */
       void setVoidPtr(OSPObject object, const char *bufName, void *v) override;
 
       void removeParam(OSPObject object, const char *name) override;
@@ -212,9 +211,9 @@ namespace ospray {
                         const vec3f *worldCoordinates,
                         const size_t &count) override;
 
-      void processWork(work::Work &work);
-
     private:
+
+      void processWork(work::Work &work);
 
       /*! This only exists to support getting the voxel type for setRegion */
       int getString(OSPObject object, const char *name, char **value);

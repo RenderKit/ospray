@@ -33,6 +33,7 @@ IF (OSPRAY_MODULE_MPI)
     worker.cpp
 
     common/OSPWork.cpp
+    common/Messaging.cpp
     common/DataStreaming.h
     common/BufferedDataStreaming.cpp
 
@@ -55,6 +56,7 @@ IF (OSPRAY_MODULE_MPI)
     ospray
     ospray_mpi_common
     ospray_common
+    ospray_mpi_maml
     ${MPI_CXX_LIBRARIES}
   )
 

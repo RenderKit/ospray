@@ -185,7 +185,16 @@ namespace ospray {
 
     // Initialize OSPRay's MPI groups
     OSPRAY_MPI_INTERFACE void init(int *ac, const char **av);
-    OSPRAY_MPI_INTERFACE void flush();
+
+    inline int globalRank()
+    {
+      return mpi::world.rank;
+    }
+
+    inline int numGlobalRanks()
+    {
+      return mpi::world.size;
+    }
 
     inline int numWorkers()
     {
@@ -210,6 +219,21 @@ namespace ospray {
     inline bool IamTheMaster()
     {
       return mpi::world.rank == masterRank();
+    }
+
+    inline bool IamAWorker()
+    {
+      return mpi::world.rank > 0;
+    }
+
+    inline int workerRankFromGlobalRank(int globalRank)
+    {
+      return globalRank - 1;
+    }
+
+    inline int globalRankFromWorkerRank(int workerRank)
+    {
+      return 1 + workerRank;
     }
 
     // RTTI hash ID lookup helper functions ///////////////////////////////////

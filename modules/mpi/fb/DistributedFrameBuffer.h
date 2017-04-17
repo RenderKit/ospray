@@ -17,7 +17,7 @@
 #pragma once
 
 // ospray components
-#include "components/mpiCommon/async/CommLayer.h"
+#include "maml/maml.h"
 // ospray
 #include "ospray/fb/LocalFB.h"
 // std
@@ -40,13 +40,11 @@ namespace ospray {
       void sync(); // broadcast tileErrorBuffer to all workers
   };
 
-  struct DistributedFrameBuffer
-    : public mpi::async::CommLayer::Object,
-      public virtual FrameBuffer
+  struct DistributedFrameBuffer : public maml::MessageHandler,
+                                  public FrameBuffer
   {
-    DistributedFrameBuffer(mpi::async::CommLayer *comm,
-                           const vec2i &numPixels,
-                           size_t myHandle,
+    DistributedFrameBuffer(const vec2i &numPixels,
+                           ObjectHandle myHandle,
                            ColorBufferFormat,
                            bool hasDepthBuffer,
                            bool hasAccumBuffer,
@@ -87,6 +85,7 @@ namespace ospray {
 
     int32 accumID(const vec2i &) override;
     float tileError(const vec2i &tile) override;
+    void  beginFrame() override;
     float endFrame(const float errorThreshold) override;
 
     enum FrameMode { WRITE_ONCE, ALPHA_BLEND, Z_COMPOSITE };
@@ -94,13 +93,13 @@ namespace ospray {
     void setFrameMode(FrameMode newFrameMode) ;
 
     // ==================================================================
-    // interface for the comm layer, to enable communication between
+    // interface for maml messaging, enables communication between
     // different instances of same object
     // ==================================================================
 
     //! handle incoming message from commlayer. it's the
     //! recipient's job to properly delete the message.
-    void incoming(mpi::async::CommLayer::Message *msg) override;
+    void incoming(const std::shared_ptr<maml::Message> &message) override;
 
     //! process an empty client-to-master write tile message */
     void processMessage(MasterTileMessage *msg);
@@ -136,7 +135,6 @@ namespace ospray {
 
     //! number of tiles that "I" own
     size_t numMyTiles() const;
-    static int32 workerRank(int id);
 
     //! \brief common function to help printf-debugging
     /*! \detailed Every derived class should overrride this! */
@@ -150,10 +148,17 @@ namespace ospray {
         may or may not belong to current instance */
     size_t getTileIDof(const vec2i &c) const;
 
+    void createTiles();
+    TileData *createTile(const vec2i &xy, size_t tileID, size_t ownerID);
+    void freeTiles();
+
+    // Data members ///////////////////////////////////////////////////////////
+
+    ObjectHandle myID;
+
     int32 *tileAccumID; //< holds accumID per tile, for adaptive accumulation
     //!< holds error per tile and adaptive regions, for variance estimation / stopping
     DistributedTileError tileErrorRegion;
-
 
     /*! local frame buffer on the master used for storing the final
         tiles. will be null on all workers, and _may_ be null on the
@@ -161,9 +166,6 @@ namespace ospray {
     Ref<LocalFrameBuffer> localFBonMaster;
 
     FrameMode frameMode;
-    void createTiles();
-    TileData *createTile(const vec2i &xy, size_t tileID, size_t ownerID);
-    void freeTiles();
 
     /*! #tiles we've (already) sent to / received by the master this frame
         (used to track when current node is done with this frame - we are done
@@ -200,7 +202,7 @@ namespace ospray {
         condition can actually happen if another node is just fast
         enough, and sends us the first rendered tile before our node's
         loadbalancer even started working on that frame. */
-    std::vector<mpi::async::CommLayer::Message *> delayedMessage;
+    std::vector<std::shared_ptr<maml::Message>> delayedMessage;
   };
 
   // Inlined definitions //////////////////////////////////////////////////////

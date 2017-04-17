@@ -17,6 +17,9 @@
 #pragma once
 
 #include "maml.h"
+//ospcommon
+#include "ospcommon/containers/TransactionalBuffer.h"
+//stl
 #include <vector>
 #include <map>
 #include <thread>
@@ -29,10 +32,9 @@ namespace maml {
   struct Context
   {
     Context();
-    
-    static std::unique_ptr<Context> singleton;
+    ~Context();
 
-    static bool initialized();
+    static std::unique_ptr<Context> singleton;
 
     /*! register a new incoing-message handler. if any message comes in
       on the given communicator we'll call this handler */
@@ -56,10 +58,14 @@ namespace maml {
         stopped */
     void send(std::shared_ptr<Message> msg);
 
-    /*! the thread (function) that executes all MPI commands to
-        send/receive messages via MPI. 
+  private:
 
-        Some notes: 
+    // Helper functions //
+
+    /*! the thread (function) that executes all MPI commands to
+        send/receive messages via MPI.
+
+        Some notes:
 
         - this thread does MPI calls (only!) between calls of start()
         and end(). unless you cal start(), nothing will ever get sent
@@ -75,39 +81,46 @@ namespace maml {
           triggered. it's another thread's job to execute those
           messages
     */
-    void mpiThread();
+    void mpiSendAndRecieveThread();
 
     /*! the thread that executes messages that the receiveer thread
         put into the inbox */
-    void inboxThread();
+    void processInboxThread();
 
-    /*! make sure all outgoing messages get sent... */
-    void flush();
+    void sendMessagesFromOutbox();
+    void pollForAndRecieveMessages();
 
-    bool                    canDoMPICalls;
+    void waitOnSomeSendRequests();
+    void waitOnSomeRecvRequests();
+
+    void flushRemainingMessages();
+
+    // Data members //
+
+    bool threadsRunning {true};
+
+    ospcommon::TransactionalBuffer<std::shared_ptr<Message>> inbox;
+    ospcommon::TransactionalBuffer<std::shared_ptr<Message>> outbox;
+
+    // NOTE(jda) - sendCache/pendingSends MUST correspond with each other by
+    //             their index in their respective vectors...
+    std::vector<std::shared_ptr<Message>> sendCache;
+    std::vector<MPI_Request>              pendingSends;
+
+    // NOTE(jda) - recvCache/pendingRecvs MUST correspond with each other by
+    //             their index in their respective vectors...
+    std::vector<std::shared_ptr<Message>> recvCache;
+    std::vector<MPI_Request>              pendingRecvs;
+
+    std::map<MPI_Comm, MessageHandler *> handlers;
+
+    std::thread mpiSendRecvThread;
+    std::thread inboxProcThread;
+
+    bool                    canDoMPICalls {false};
+    bool                    sendAndRecieveThreadActive {false};
     std::mutex              canDoMPIMutex;
     std::condition_variable canDoMPICondition;
-    
-    std::thread mpiThreadHandle;
-    std::thread inboxThreadHandle;
-
-    std::mutex                          handlersMutex;
-    std::map<MPI_Comm,MessageHandler *> handlers;
-
-    /*! new messsages that still need to get sent */
-    std::mutex                             outboxMutex;
-    std::vector<std::shared_ptr<Message> > outbox;
-
-    /*! new messsages that have been received but not yet executed */
-    std::mutex                             inboxMutex;
-    std::condition_variable                inboxCondition;
-    std::vector<std::shared_ptr<Message> > inbox;
-
-    /*! used to execute a flush: this condition gets triggered when
-      all messages in the outbox have been (fully) sent */
-    bool                    flushed;
-    std::mutex              flushMutex;
-    std::condition_variable flushCondition;
   };
   
 } // ::maml

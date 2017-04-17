@@ -39,6 +39,8 @@ ELSE()
     array3D/Array3D.cpp
     Socket.cpp
 
+    containers/TransactionalBuffer.h
+
     tasking/parallel_for.inl
     tasking/parallel_for.h
     tasking/async.h

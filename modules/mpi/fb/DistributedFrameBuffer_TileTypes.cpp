@@ -205,7 +205,7 @@ namespace ospray {
         ispc::DFB_zComposite((ispc::VaryingTile*)&tile,
                              (ispc::VaryingTile*)&this->compositedTileData);
 
-      done = (++numPartsComposited == size_t(dfb->comm->numWorkers()));
+      done = (++numPartsComposited == size_t(mpi::numWorkers()));
     }
 
     if (done) {

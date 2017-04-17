@@ -15,7 +15,6 @@
 // ======================================================================== //
 
 #include "mpiCommon/MPICommon.h"
-#include "mpiCommon/async/CommLayer.h"
 #include "mpi/MPIDevice.h"
 #include "common/Model.h"
 #include "common/Data.h"
