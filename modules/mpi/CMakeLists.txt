@@ -72,4 +72,10 @@ IF (OSPRAY_MODULE_MPI)
     ospray
   )
 
+  ##############################################################
+  # Test apps
+  ##############################################################
+
+  ADD_SUBDIRECTORY(apps)
+
 ENDIF (OSPRAY_MODULE_MPI)
