@@ -405,7 +405,7 @@ namespace ospray {
 
           if (!strncmp(token, "type", 4)) {
             parseSep(token += 4);
-            cur->type = std::string(token);
+            cur->child("type").setValue(std::string(token));
             continue;
           }
 
