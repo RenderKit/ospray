@@ -31,6 +31,7 @@ IF (OSPRAY_MODULE_MPI)
 
   OSPRAY_CREATE_LIBRARY(ospray_module_mpi
     MPIDevice.cpp
+    MPIDistributedDevice.cpp
     worker.cpp
 
     common/OSPWork.cpp
