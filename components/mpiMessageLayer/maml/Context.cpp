@@ -153,8 +153,8 @@ namespace maml {
 
       for (int i = 0; i < numDone; ++i) {
         int pendingSendCompletedIndex = done[i];
-        pendingSends[pendingSendCompletedIndex] = nullptr;
-        sendCache[pendingSendCompletedIndex]    = nullptr;
+        pendingSends[pendingSendCompletedIndex] = MPI_REQUEST_NULL;
+        sendCache[pendingSendCompletedIndex].reset();
       }
 
       sendCache.erase(std::remove(sendCache.begin(),
@@ -163,7 +163,7 @@ namespace maml {
 
       pendingSends.erase(std::remove(pendingSends.begin(),
                                      pendingSends.end(),
-                                     nullptr), pendingSends.end());
+                                     MPI_REQUEST_NULL), pendingSends.end());
     }
   }
 
@@ -178,7 +178,7 @@ namespace maml {
 
       for (int i = 0; i < numDone; ++i) {
         int pendingRecvCompletedIndex = done[i];
-        pendingRecvs[pendingRecvCompletedIndex] = nullptr;
+        pendingRecvs[pendingRecvCompletedIndex] = MPI_REQUEST_NULL;
         inbox.push_back(std::move(recvCache[pendingRecvCompletedIndex]));
       }
 
@@ -188,7 +188,7 @@ namespace maml {
 
       pendingRecvs.erase(std::remove(pendingRecvs.begin(),
                                      pendingRecvs.end(),
-                                     nullptr), pendingRecvs.end());
+                                     MPI_REQUEST_NULL), pendingRecvs.end());
     }
   }
 
