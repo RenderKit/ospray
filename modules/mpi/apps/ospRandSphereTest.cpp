@@ -14,10 +14,12 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include <ospray/ospray_cpp/Camera.h>
-#include <ospray/ospray_cpp/Device.h>
-#include <ospray/ospray_cpp/FrameBuffer.h>
-#include <ospray/ospray_cpp/Renderer.h>
+#include "ospray/ospray_cpp/Camera.h"
+#include "ospray/ospray_cpp/Device.h"
+#include "ospray/ospray_cpp/FrameBuffer.h"
+#include "ospray/ospray_cpp/Renderer.h"
+
+#include "common/commandline/CameraParser.h"
 
 #include "widgets/imguiViewer.h"
 
@@ -25,23 +27,33 @@ namespace ospRandSphereTest {
 
   extern "C" int main(int ac, const char **av)
   {
-    // TODO: manually create MPIDistributedDevice and populate parameters
+    auto device = ospray::cpp::Device("mpi_distributed");
+
+    //TODO: set any device parameters?
+
+    device.commit();
+    device.setCurrent();
 
     ospray::imgui3D::init(&ac,av);
 
+    DefaultCameraParser cameraClParser;
+    cameraClParser.parse(ac, av);
+    auto camera = cameraClParser.camera();
+
+    ospray::cpp::Renderer renderer("raycast");
+    renderer.commit();
+
     std::deque<ospcommon::box3f>   bbox;
     std::deque<ospray::cpp::Model> model;
-    ospray::cpp::Renderer renderer;
-    ospray::cpp::Camera   camera;
 
     // TODO: create a random set of spheres based on rank
-    // TODO: create renderer
-    // TODO: create camera
 
+#if 0
     ospray::ImGuiViewer window(bbox, model, renderer, camera);
     window.create("OSPRay Random Spheres Test App");
 
     ospray::imgui3D::run();
+#endif
 
     return 0;
   }

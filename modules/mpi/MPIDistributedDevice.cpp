@@ -29,10 +29,6 @@
 namespace ospray {
   namespace mpi {
 
-    // Forward declarations ///////////////////////////////////////////////////
-
-    bool checkIfWeNeedToDoMPIDebugOutputs();
-
     // Misc helper functions //////////////////////////////////////////////////
 
     static inline void throwIfNotMpiParallel()
@@ -104,8 +100,6 @@ namespace ospray {
     
     MPIDistributedDevice::MPIDistributedDevice()
     {
-      // check if env variables etc compel us to do logging...
-      logMPI = checkIfWeNeedToDoMPIDebugOutputs();
     }
 
     MPIDistributedDevice::~MPIDistributedDevice()
@@ -115,13 +109,24 @@ namespace ospray {
 
     void MPIDistributedDevice::commit()
     {
-      if (initialized)// NOTE (jda) - doesn't make sense to commit again?
+      //TODO: is it necessary to track if we've initialized the device yet?
+#if 0
+      if (initialized)
         return;
+#endif
 
       Device::commit();
 
       initialized = true;
 
+      int _ac = 2;
+      const char *_av[] = {"ospray_mpi_worker", "--osp:mpi"};
+
+      mpi::init(&_ac, _av);
+
+      //TODO: setup mpi::world?
+
+      //TODO: refactor this into a little error fcn
       if (mpi::world.size != 1) {
         if (mpi::world.rank < 0) {
           throw std::runtime_error("OSPRay MPI startup error. Use \"mpirun "
@@ -132,11 +137,13 @@ namespace ospray {
         }
       }
 
-      /* set up fabric and stuff - by now all the communicators should
-         be properly set up */
-      mpiFabric   = make_unique<MPIBcastFabric>(mpi::worker);
-      readStream  = make_unique<BufferedFabric::ReadStream>(*mpiFabric);
-      writeStream = make_unique<BufferedFabric::WriteStream>(*mpiFabric);
+      int masterRank = getParam1i("masterRank", 0);
+
+      //TODO: figure out how to specify who is the 'masterRank' (hold in device)
+
+      std::string mode = getParamString("mode", "data");
+
+      //TODO: implement state changes between API modes
 
       TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Master>();
     }

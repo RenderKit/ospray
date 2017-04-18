@@ -24,4 +24,5 @@ LINK
   ospray
   ospray_module_mpi
   ospray_imgui3d
+  ospray_commandline
 )

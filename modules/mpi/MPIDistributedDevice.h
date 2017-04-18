@@ -22,8 +22,6 @@
 #include "api/Device.h"
 #include "common/Managed.h"
 // ospray::mpi
-#include "common/BufferedDataStreaming.h"
-#include "common/OSPWork.h"
 
 namespace ospray {
   namespace mpi {
@@ -212,12 +210,6 @@ namespace ospray {
     private:
 
       ObjectHandle allocateHandle() const;
-
-      /*! @{ read and write stream for the work commands */
-      std::unique_ptr<Fabric>      mpiFabric;
-      std::unique_ptr<ReadStream>  readStream;
-      std::unique_ptr<WriteStream> writeStream;
-      /*! @} */
 
       bool initialized {false};
     };
