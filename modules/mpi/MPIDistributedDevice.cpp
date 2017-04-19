@@ -52,8 +52,8 @@ namespace ospray {
 
       initialized = true;
 
-      int _ac = 2;
-      const char *_av[] = {"ospray_mpi_worker", "--osp:mpi"};
+      int _ac = 1;
+      const char *_av[] = {"ospray_mpi_worker"};
 
       mpi::init(&_ac, _av);
 
