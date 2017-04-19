@@ -28,8 +28,8 @@ namespace ospray {
 
     struct MPIDistributedDevice : public api::Device
     {
-      MPIDistributedDevice();
-      ~MPIDistributedDevice();
+      MPIDistributedDevice()  = default;
+      ~MPIDistributedDevice() = default;
 
       // ManagedObject Implementation /////////////////////////////////////////
 
@@ -209,10 +209,8 @@ namespace ospray {
 
     private:
 
-      ObjectHandle allocateHandle() const;
-
       bool initialized {false};
-      int masterRank {0};
+      int  masterRank  {0};
     };
 
   } // ::ospray::mpi

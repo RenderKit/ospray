@@ -16,9 +16,14 @@
 
 #undef NDEBUG // do all assertions in this file
 
+//ospray
+#include "ospray/camera/Camera.h"
+//mpiCommon
 #include "mpiCommon/MPICommon.h"
+//ospray_mpi
 #include "mpi/MPIDistributedDevice.h"
 #include "mpi/render/MPILoadBalancer.h"
+
 
 #ifdef OPEN_MPI
 # include <thread>
@@ -29,16 +34,31 @@
 namespace ospray {
   namespace mpi {
 
-    // MPIDistributedDevice definitions ///////////////////////////////////////
-    
-    MPIDistributedDevice::MPIDistributedDevice()
+    // Helper functions ///////////////////////////////////////////////////////
+
+    template <typename OSPRAY_TYPE, typename API_TYPE>
+    inline API_TYPE createOSPRayObjectWithHandle(const char *type)
     {
+      auto *instance = OSPRAY_TYPE::createInstance(type);
+
+      ObjectHandle handle;
+      handle.assign(instance);
+
+      return (API_TYPE)(int64)handle;
     }
 
-    MPIDistributedDevice::~MPIDistributedDevice()
+    static inline ManagedObject& objectFromAPIHandle(OSPObject obj)
     {
-      //TODO
+      auto &handle = reinterpret_cast<ObjectHandle&>(obj);
+      auto *object = handle.lookup();
+
+      if (!object)
+        throw std::runtime_error("#dmpi: ObjectHandle doesn't exist!");
+
+      return *object;
     }
+
+    // MPIDistributedDevice definitions ///////////////////////////////////////
 
     void MPIDistributedDevice::commit()
     {
@@ -68,7 +88,7 @@ namespace ospray {
       }
 
       // TODO: implement 'staticLoadBalancer::Distributed'
-      TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Master>();
+      //TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Master>();
     }
 
     OSPFrameBuffer 
@@ -100,7 +120,8 @@ namespace ospray {
 
     void MPIDistributedDevice::commit(OSPObject _object)
     {
-      NOT_IMPLEMENTED;
+      auto &object = objectFromAPIHandle(_object);
+      object.commit();
     }
 
     void MPIDistributedDevice::addGeometry(OSPModel _model,
@@ -124,7 +145,8 @@ namespace ospray {
                                           const char *bufName,
                                           void *v)
     {
-      NOT_IMPLEMENTED;
+      auto &object = objectFromAPIHandle(_object);
+      object.findParam(bufName, true)->set(v);
     }
 
     void MPIDistributedDevice::removeParam(OSPObject object, const char *name)
@@ -142,68 +164,77 @@ namespace ospray {
                                          const char *bufName,
                                          const char *s)
     {
-      NOT_IMPLEMENTED;
+      auto &object = objectFromAPIHandle(_object);
+      object.findParam(bufName, true)->set(s);
     }
 
     int MPIDistributedDevice::loadModule(const char *name)
     {
-      NOT_IMPLEMENTED;
+      loadLocalModule(name);
     }
 
     void MPIDistributedDevice::setFloat(OSPObject _object,
                                         const char *bufName,
                                         const float f)
     {
-      NOT_IMPLEMENTED;
+      auto &object = objectFromAPIHandle(_object);
+      object.findParam(bufName, true)->set(f);
     }
 
     void MPIDistributedDevice::setInt(OSPObject _object,
                                       const char *bufName,
                                       const int i)
     {
-      NOT_IMPLEMENTED;
+      auto &object = objectFromAPIHandle(_object);
+      object.findParam(bufName, true)->set(i);
     }
 
     void MPIDistributedDevice::setVec2f(OSPObject _object,
                                         const char *bufName,
                                         const vec2f &v)
     {
-      NOT_IMPLEMENTED;
+      auto &object = objectFromAPIHandle(_object);
+      object.findParam(bufName, true)->set(v);
     }
 
     void MPIDistributedDevice::setVec3f(OSPObject _object,
                                         const char *bufName,
                                         const vec3f &v)
     {
-      NOT_IMPLEMENTED;
+      auto &object = objectFromAPIHandle(_object);
+      object.findParam(bufName, true)->set(v);
     }
 
     void MPIDistributedDevice::setVec4f(OSPObject _object,
                                         const char *bufName,
                                         const vec4f &v)
     {
-      NOT_IMPLEMENTED;
+      auto &object = objectFromAPIHandle(_object);
+      object.findParam(bufName, true)->set(v);
     }
 
     void MPIDistributedDevice::setVec2i(OSPObject _object,
                                         const char *bufName,
                                         const vec2i &v)
     {
-      NOT_IMPLEMENTED;
+      auto &object = objectFromAPIHandle(_object);
+      object.findParam(bufName, true)->set(v);
     }
 
     void MPIDistributedDevice::setVec3i(OSPObject _object,
                                         const char *bufName,
                                         const vec3i &v)
     {
-      NOT_IMPLEMENTED;
+      auto &object = objectFromAPIHandle(_object);
+      object.findParam(bufName, true)->set(v);
     }
 
-    void MPIDistributedDevice::setObject(OSPObject _target,
+    void MPIDistributedDevice::setObject(OSPObject _object,
                                          const char *bufName,
                                          OSPObject _value)
     {
-      NOT_IMPLEMENTED;
+      auto &object = objectFromAPIHandle(_object);
+      object.findParam(bufName, true)->set(_value);
     }
 
     OSPPixelOp MPIDistributedDevice::newPixelOp(const char *type)
@@ -223,7 +254,7 @@ namespace ospray {
 
     OSPCamera MPIDistributedDevice::newCamera(const char *type)
     {
-      NOT_IMPLEMENTED;
+      return createOSPRayObjectWithHandle<Camera, OSPCamera>(type);
     }
 
     OSPVolume MPIDistributedDevice::newVolume(const char *type)
@@ -233,7 +264,7 @@ namespace ospray {
 
     OSPGeometry MPIDistributedDevice::newGeometry(const char *type)
     {
-      NOT_IMPLEMENTED;
+      return createOSPRayObjectWithHandle<Geometry, OSPGeometry>(type);
     }
 
     OSPMaterial MPIDistributedDevice::newMaterial(OSPRenderer _renderer,
@@ -289,8 +320,12 @@ namespace ospray {
       NOT_IMPLEMENTED;
     }
 
-    OSPTexture2D MPIDistributedDevice::newTexture2D(const vec2i &sz,
-        const OSPTextureFormat type, void *data, const uint32 flags)
+    OSPTexture2D MPIDistributedDevice::newTexture2D(
+      const vec2i &sz,
+      const OSPTextureFormat type,
+      void *data,
+      const uint32 flags
+    )
     {
       NOT_IMPLEMENTED;
     }
@@ -301,14 +336,6 @@ namespace ospray {
                                             const size_t &count)
     {
       NOT_IMPLEMENTED;
-    }
-
-    ObjectHandle MPIDistributedDevice::allocateHandle() const
-    {
-      if (currentApiMode != OSPD_MODE_MASTERED)
-        throw std::runtime_error("Can only alloc handles in MASTERED mode!");
-
-      return ObjectHandle();
     }
 
     OSP_REGISTER_DEVICE(MPIDistributedDevice, mpi_distributed_device);
