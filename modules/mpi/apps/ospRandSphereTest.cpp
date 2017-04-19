@@ -79,16 +79,22 @@ namespace ospRandSphereTest {
     return std::make_pair(model, bbox);
   }
 
-  extern "C" int main(int ac, const char **av)
+  void initialize_ospray()
   {
-#if 0
     auto device = ospray::cpp::Device("mpi_distributed");
     device.set("masterRank", 0);
     device.commit();
     device.setCurrent();
-#else
-    ospInit(&ac, av);
-#endif
+
+    ospDeviceSetErrorMsgFunc(device.handle(),
+                             [](const char *msg) {
+                               std::cerr << msg << std::endl;
+                             });
+  }
+
+  extern "C" int main(int ac, const char **av)
+  {
+    initialize_ospray();
 
     DefaultCameraParser cameraClParser;
     cameraClParser.parse(ac, av);
@@ -99,14 +105,17 @@ namespace ospRandSphereTest {
 
     auto scene = makeSpheres();
 
-#if 1
-    ospray::imgui3D::init(&ac,av);
+    if (ospray::mpi::IamTheMaster()) {
+      ospray::imgui3D::init(&ac,av);
 
-    ospray::ImGuiViewer window({scene.second}, {scene.first}, renderer, camera);
-    window.create("OSPRay Random Spheres Test App");
+      ospray::ImGuiViewer window({scene.second}, {scene.first},
+                                 renderer, camera);
+      window.create("OSPRay Random Spheres Test App");
 
-    ospray::imgui3D::run();
-#endif
+      ospray::imgui3D::run();
+    } else {
+      //TODO: constantly call ospRenderFrame()?
+    }
 
     return 0;
   }
