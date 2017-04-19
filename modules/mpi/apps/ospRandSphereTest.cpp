@@ -14,27 +14,81 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+// mpiCommon
+#include "mpiCommon/MPICommon.h"
+// public-ospray
 #include "ospray/ospray_cpp/Camera.h"
+#include "ospray/ospray_cpp/Data.h"
 #include "ospray/ospray_cpp/Device.h"
 #include "ospray/ospray_cpp/FrameBuffer.h"
 #include "ospray/ospray_cpp/Renderer.h"
-
+// ospray apps
 #include "common/commandline/CameraParser.h"
-
 #include "widgets/imguiViewer.h"
+// stl
+#include <random>
 
 namespace ospRandSphereTest {
 
+  using namespace ospcommon;
+
+  int   numSpheresPerNode = 100;
+  float sphereRadius      = 0.01f;
+
+  struct Sphere
+  {
+    vec3f org;
+    int colorID {0};
+  };
+
+  std::pair<ospray::cpp::Model, box3f> makeSpheres()
+  {
+    box3f bbox;
+
+    std::vector<Sphere> spheres(numSpheresPerNode);
+
+    std::mt19937 rng;
+    rng.seed(std::random_device()());
+    std::uniform_real_distribution<float> dist(0.f, 1.f);
+
+    for (auto &s : spheres) {
+      s.org.x = dist(rng);
+      s.org.y = dist(rng);
+      s.org.z = dist(rng);
+      bbox.extend(s.org);
+    }
+
+    ospray::cpp::Data sphere_data(numSpheresPerNode * sizeof(Sphere),
+                                  OSP_UCHAR, spheres.data());
+
+    vec4f color(1.f, 0.f, 0.f, 1.f);
+    ospray::cpp::Data color_data(1, OSP_FLOAT4, &color);
+
+    ospray::cpp::Geometry geom("spheres");
+
+    geom.set("spheres", sphere_data);
+    geom.set("color", color_data);
+    geom.set("offset_colorID", int(sizeof(vec3f)));
+    geom.set("radius", sphereRadius);
+    geom.commit();
+
+    ospray::cpp::Model model;
+    model.addGeometry(geom);
+    model.commit();
+
+    return std::make_pair(model, bbox);
+  }
+
   extern "C" int main(int ac, const char **av)
   {
+#if 0
     auto device = ospray::cpp::Device("mpi_distributed");
-
-    //TODO: set any device parameters?
-
+    device.set("masterRank", 0);
     device.commit();
     device.setCurrent();
-
-    ospray::imgui3D::init(&ac,av);
+#else
+    ospInit(&ac, av);
+#endif
 
     DefaultCameraParser cameraClParser;
     cameraClParser.parse(ac, av);
@@ -43,13 +97,12 @@ namespace ospRandSphereTest {
     ospray::cpp::Renderer renderer("raycast");
     renderer.commit();
 
-    std::deque<ospcommon::box3f>   bbox;
-    std::deque<ospray::cpp::Model> model;
+    auto scene = makeSpheres();
 
-    // TODO: create a random set of spheres based on rank
+#if 1
+    ospray::imgui3D::init(&ac,av);
 
-#if 0
-    ospray::ImGuiViewer window(bbox, model, renderer, camera);
+    ospray::ImGuiViewer window({scene.second}, {scene.first}, renderer, camera);
     window.create("OSPRay Random Spheres Test App");
 
     ospray::imgui3D::run();

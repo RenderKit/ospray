@@ -29,73 +29,6 @@
 namespace ospray {
   namespace mpi {
 
-    // Misc helper functions //////////////////////////////////////////////////
-
-    static inline void throwIfNotMpiParallel()
-    {
-      if (world.size <= 1) {
-        throw std::runtime_error("No MPI workers found.\n#osp:mpi: Fatal Error "
-                                 "- OSPRay told to run in MPI mode, but there "
-                                 "seems to be no MPI peers!?\n#osp:mpi: (Did "
-                                 "you forget an 'mpirun' in front of your "
-                                 "application?)");
-      }
-    }
-
-    static inline void setupMaster()
-    {
-      SERIALIZED_MPI_CALL(
-        Comm_split(mpi::world.comm,1,mpi::world.rank,&app.comm)
-      );
-
-      app.makeIntraComm();
-
-      if (logMPI) {
-        postErrorMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-            << "#w: app process " << app.rank << '/' << app.size
-            << " (global " << world.rank << '/' << world.size;
-      }
-
-      SERIALIZED_MPI_CALL(
-        Intercomm_create(app.comm, 0, world.comm, 1, 1, &worker.comm)
-      );
-
-      if (logMPI) {
-        postErrorMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-            << "master: Made 'worker' intercomm (through intercomm_create): "
-            << std::hex << std::showbase << worker.comm
-            << std::noshowbase << std::dec;
-      }
-
-      worker.makeInterComm();
-    }
-
-    static inline void setupWorker()
-    {
-      SERIALIZED_MPI_CALL(
-        Comm_split(mpi::world.comm,0,mpi::world.rank,&worker.comm)
-      );
-
-      worker.makeIntraComm();
-
-      if (logMPI) {
-        postErrorMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-            << "master: Made 'worker' intercomm (through split): "
-            << std::hex << std::showbase << worker.comm
-            << std::noshowbase << std::dec;
-
-        postErrorMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-            << "#w: app process " << app.rank << '/' << app.size
-            << " (global " << world.rank << '/' << world.size;
-      }
-
-      SERIALIZED_MPI_CALL(
-        Intercomm_create(worker.comm, 0, world.comm, 0, 1, &app.comm)
-      );
-
-      app.makeInterComm();
-    }
-
     // MPIDistributedDevice definitions ///////////////////////////////////////
     
     MPIDistributedDevice::MPIDistributedDevice()
@@ -124,27 +57,17 @@ namespace ospray {
 
       mpi::init(&_ac, _av);
 
-      //TODO: setup mpi::world?
+      masterRank = getParam1i("masterRank", 0);
 
-      //TODO: refactor this into a little error fcn
-      if (mpi::world.size != 1) {
-        if (mpi::world.rank < 0) {
-          throw std::runtime_error("OSPRay MPI startup error. Use \"mpirun "
-                                   "-n 1 <command>\" when calling an "
-                                   "application that tries to spawn to start "
-                                   "the application you were trying to "
-                                   "start.");
-        }
+      std::string mode = getParamString("mode", "distributed");
+
+      if (mode == "distributed") {
+        postErrorMsg() << "#dmpi: device commit() setting mode to " << mode;
+      } else {
+        throw std::runtime_error("#dmpi: bad device mode ['" + mode + "]");
       }
 
-      int masterRank = getParam1i("masterRank", 0);
-
-      //TODO: figure out how to specify who is the 'masterRank' (hold in device)
-
-      std::string mode = getParamString("mode", "data");
-
-      //TODO: implement state changes between API modes
-
+      // TODO: implement 'staticLoadBalancer::Distributed'
       TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Master>();
     }
 
@@ -332,7 +255,7 @@ namespace ospray {
     }
 
     void MPIDistributedDevice::frameBufferClear(OSPFrameBuffer _fb,
-                                     const uint32 fbChannelFlags)
+                                                const uint32 fbChannelFlags)
     {
       NOT_IMPLEMENTED;
     }
@@ -349,8 +272,8 @@ namespace ospray {
     }
 
     float MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
-                                 OSPRenderer _renderer,
-                                 const uint32 fbChannelFlags)
+                                            OSPRenderer _renderer,
+                                            const uint32 fbChannelFlags)
     {
       NOT_IMPLEMENTED;
     }
@@ -373,9 +296,9 @@ namespace ospray {
     }
 
     void MPIDistributedDevice::sampleVolume(float **results,
-                                 OSPVolume volume,
-                                 const vec3f *worldCoordinates,
-                                 const size_t &count)
+                                            OSPVolume volume,
+                                            const vec3f *worldCoordinates,
+                                            const size_t &count)
     {
       NOT_IMPLEMENTED;
     }

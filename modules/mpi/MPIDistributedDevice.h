@@ -212,6 +212,7 @@ namespace ospray {
       ObjectHandle allocateHandle() const;
 
       bool initialized {false};
+      int masterRank {0};
     };
 
   } // ::ospray::mpi
