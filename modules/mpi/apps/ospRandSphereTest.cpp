@@ -81,6 +81,7 @@ namespace ospRandSphereTest {
 
   void initialize_ospray()
   {
+    ospLoadModule("mpi");
     auto device = ospray::cpp::Device("mpi_distributed");
     device.set("masterRank", 0);
     device.commit();

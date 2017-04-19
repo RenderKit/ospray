@@ -22,7 +22,7 @@ OSPRAY_CREATE_APPLICATION(ospRandSphereTest
   ospRandSphereTest.cpp
 LINK
   ospray
-  ospray_module_mpi
+  ospray_mpi_common
   ospray_imgui3d
   ospray_commandline
 )
