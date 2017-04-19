@@ -66,7 +66,7 @@ namespace ospray {
       virtual box3f bounds() const override;
 
       //InstanceGroup caches renders.  It will render children during commit, and add
-         //cached rendered children during render call.
+         //cached rendered children during render call.  
       virtual void traverse(RenderContext &ctx, const std::string& operation) override;
       virtual void preCommit(RenderContext &ctx) override;
       virtual void postCommit(RenderContext &ctx) override;

@@ -21,6 +21,7 @@
 #include "sg/geometry/TriangleMesh.h"
 // stl
 #include <map>
+#include <iostream>
 
 namespace ospray {
   namespace sg {
@@ -332,8 +333,11 @@ namespace ospray {
         // empty group...
         ;
       else {
+        size_t counter;
         char *value = strdup(node.content.c_str());
         for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(NULL," \t\n\r")) {
+          if (counter++ > 1000)//DEBUG large groups
+            continue;
           size_t childID = atoi(s);
           std::shared_ptr<sg::Node> child = nodeList[childID];
           group->children.push_back(child);
@@ -395,6 +399,7 @@ namespace ospray {
     void importRIVL(std::shared_ptr<sg::World> world,
                     const std::string &fileName)
     {
+      std::cout << __PRETTY_FUNCTION__ << std::endl;
       string xmlFileName = fileName;
       string binFileName = fileName+".bin";
       binBasePtr = (void *)mapFile(binFileName);
@@ -411,6 +416,7 @@ namespace ospray {
       const xml::Node &root_element = *doc->child[0];
       parseBGFscene(world,root_element);
       PRINT(world->bounds());
+      std::cout << __PRETTY_FUNCTION__ << " done" << std::endl;
     }
 
   } // ::ospray::sg

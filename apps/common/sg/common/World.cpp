@@ -65,9 +65,9 @@ namespace ospray {
 
     void World::preRender(RenderContext &ctx)
     {
-      // preCommit(ctx);
-      oldWorld = ctx.world;
-      ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
+      preCommit(ctx);
+      // oldWorld = ctx.world;
+      // ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
     }
 
     void World::postRender(RenderContext &ctx)
@@ -185,7 +185,6 @@ namespace ospray {
       if (instanced)
       {
         ctx.world = oldWorld;
-        // ospCommit(ospModel);
         if (child("visible").value() == true)
         {
           // if (!bounds().empty())

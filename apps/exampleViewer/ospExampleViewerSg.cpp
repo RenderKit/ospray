@@ -321,14 +321,13 @@ int main(int ac, const char **av)
     renderer.traverse("print");
   }
 
-  renderer.traverse("print");
   std::cout << "verify\n";
   renderer.traverse("verify");
   std::cout << "commit\n";
   renderer.traverse("commit");
   std::cout << "render\n";
   renderer.traverse("render");
-  std::cout << "done render\n";
+  std::cout << "done init\n";
 
   ospray::ImGuiViewerSg window(renderer_ptr, rendererDW);
 

@@ -27,6 +27,9 @@ namespace ospray {
     {
       Renderer();
 
+      // renderer renders the scene into the framebuffer on render call.
+      //  It will call render on model when commit when model modified
+      virtual void traverse(RenderContext &ctx, const std::string& operation) override;
       void preRender(RenderContext &ctx) override;
       void postRender(RenderContext &ctx) override;
       void preCommit(RenderContext &ctx) override;

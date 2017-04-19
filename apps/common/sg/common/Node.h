@@ -168,6 +168,8 @@ namespace ospray {
 
       std::vector<std::shared_ptr<Node>> children() const;
 
+      std::map<std::string, std::shared_ptr<Node>>& childrenMap();
+
       //! add node as child of this one
       void add(std::shared_ptr<Node> node);
       Node& operator+=(std::shared_ptr<Node> node);

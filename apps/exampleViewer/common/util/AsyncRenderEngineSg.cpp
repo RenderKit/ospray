@@ -43,16 +43,11 @@ namespace ospray {
           lastFTime = sg::TimeStamp();
         }
 
-        fps.startRender();
 
         if (scenegraph->childrenLastModified() > lastRTime) {
           static int once = 0;
-          if (once++ < 200)
-          {
-          std::cout << "commit\n";
           scenegraph->traverse("verify");
           scenegraph->traverse("commit");
-        }
 
           if (scenegraphDW) {
             scenegraphDW->traverse("verify");
@@ -62,6 +57,7 @@ namespace ospray {
           lastRTime = sg::TimeStamp();
         }
 
+        fps.startRender();
         scenegraph->traverse("render");
         if (scenegraphDW) 
           scenegraphDW->traverse("render");

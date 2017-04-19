@@ -293,6 +293,11 @@ namespace ospray {
       return result;
     }
 
+    std::map<std::string, std::shared_ptr<Node>>& Node::childrenMap()
+    {
+      return properties.children;
+    }
+
     void Node::add(std::shared_ptr<Node> node)
     {
       std::lock_guard<std::mutex> lock{mutex};
@@ -390,6 +395,7 @@ namespace ospray {
       } else if (operation == "commit" &&
                (lastModified() >= lastCommitted() ||
                 childrenLastModified() >= lastCommitted())) {
+        std::cout << "preCommit: " << name() << std::endl;
         preCommit(ctx);
       } else if (operation == "verify") {
         properties.valid = computeValid();

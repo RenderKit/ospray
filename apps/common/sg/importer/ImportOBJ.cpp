@@ -321,6 +321,7 @@ namespace ospray {
       std::string type;
       auto node =  loadTexture(path,parse<std::string>(token,type),preferLinear);
       // mat->createChildWithValue(keyWord, type, val);
+      std::string name(keyWord);
       mat->setChild(keyWord, node);
       return true;
     }
@@ -390,7 +391,7 @@ namespace ospray {
           if (tryToMatch<vec3f>(token,"Ka",cur)) continue;
           if (tryToMatch<vec3f>(token,"Kd",cur)) continue;
           if (tryToMatch<vec3f>(token,"Ks",cur)) continue;
-          if (tryToMatch<vec3f>(token,"Tf",cur)) continue;
+          // if (tryToMatch<vec3f>(token,"Tf",cur)) continue;
 
           if (tryToMatchTexture(token,"map_d",cur,true)) continue;
           if (tryToMatchTexture(token,"map_Ns",cur,true)) continue;

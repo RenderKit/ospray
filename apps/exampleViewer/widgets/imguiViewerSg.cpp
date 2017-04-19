@@ -282,12 +282,12 @@ namespace ospray {
 
     static float vec4fv[4] = { 0.10f, 0.20f, 0.30f, 0.44f };
     if (ImGui::CollapsingHeader("SceneGraph", "SceneGraph", true, true))
-      buildGUINode(scenegraph, 0);
+      buildGUINode("root", scenegraph, 0);
 
     ImGui::End();
   }
 
-  void ImGuiViewerSg::buildGUINode(std::shared_ptr<sg::Node> node, int indent)
+  void ImGuiViewerSg::buildGUINode(std::string name, std::shared_ptr<sg::Node> node, int indent)
   {
     int styles=0;
     if (!node->isValid()) {
@@ -295,7 +295,14 @@ namespace ospray {
       styles++;
     }
     std::string text;
-    text += std::string(node->name()+" : ");
+    std::string nameLower=name;
+    std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+    std::string nodeNameLower=node->name();
+    std::transform(nodeNameLower.begin(), nodeNameLower.end(), nodeNameLower.begin(), ::tolower);
+    if (nameLower != nodeNameLower)
+      text += std::string(name+" -> "+node->name()+" : ");
+    else
+      text += std::string(name+" : ");
     if (node->type() == "vec3f") {
       ImGui::Text(text.c_str());
       ImGui::SameLine();
@@ -458,8 +465,8 @@ namespace ospray {
         if (!node->isValid())
           ImGui::PopStyleColor(styles--);
 
-        for(auto child : node->children())
-          buildGUINode(child, ++indent);
+        for(auto child : node->childrenMap())
+          buildGUINode(child.first,child.second, ++indent);
 
         ImGui::TreePop();
       }
