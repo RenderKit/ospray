@@ -38,7 +38,8 @@ namespace ospRandSphereTest {
   float sphereRadius      = 0.01f;
   float sceneLowerBound   = 0.f;
   float sceneUpperBound   = 1.f;
-  vec2i fbSize            = vec2i(1024, 768);
+  //vec2i fbSize            = vec2i(1024, 768);
+  vec2i fbSize            = vec2i(128, 128);
 
   //TODO: factor this into a reusable piece inside of ospcommon!!!!!!
   // helper function to write the rendered image as PPM file

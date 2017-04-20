@@ -44,8 +44,8 @@ namespace ospray {
 
       dfb->setFrameMode(DistributedFrameBuffer::Z_COMPOSITE);
 
-      dfb->beginFrame();
       dfb->startNewFrame(errorThreshold);
+      dfb->beginFrame();
 
       auto *perFrameData = Renderer::beginFrame(dfb);
 

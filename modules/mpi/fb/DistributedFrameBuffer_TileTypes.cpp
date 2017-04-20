@@ -206,7 +206,7 @@ namespace ospray {
                              (ispc::VaryingTile*)&this->compositedTileData);
 
       //NOTE(jda) - what is a 'worker' in the distributed API?
-      done = (++numPartsComposited == size_t(mpi::numGlobalRanks() - 1));
+      done = (++numPartsComposited == size_t(mpi::numWorkers()));
     }
 
     if (done) {
