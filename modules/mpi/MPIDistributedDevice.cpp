@@ -18,6 +18,7 @@
 
 //ospray
 #include "ospray/camera/Camera.h"
+#include "ospray/common/Data.h"
 //mpiCommon
 #include "mpiCommon/MPICommon.h"
 //ospray_mpi
@@ -121,6 +122,9 @@ namespace ospray {
     MPIDistributedDevice::frameBufferMap(OSPFrameBuffer _fb,
                                          OSPFrameBufferChannel channel)
     {
+      if (!IamTheMaster())
+        throw std::runtime_error("Can only map framebuffer on the master!");
+
       auto &fb = objectFromAPIHandle<FrameBuffer>(_fb);
 
       switch (channel) {
@@ -177,7 +181,12 @@ namespace ospray {
     OSPData MPIDistributedDevice::newData(size_t nitems, OSPDataType format,
                                           void *init, int flags)
     {
-      NOT_IMPLEMENTED;
+      ObjectHandle handle;
+
+      auto *instance = new Data(nitems, format, init, flags);
+      handle.assign(instance);
+
+      return (OSPData)(int64)handle;
     }
 
     void MPIDistributedDevice::setVoidPtr(OSPObject _object,
@@ -273,7 +282,8 @@ namespace ospray {
                                          OSPObject _value)
     {
       auto &object = objectFromAPIHandle<ManagedObject>(_object);
-      object.findParam(bufName, true)->set(_value);
+      auto &value  = objectFromAPIHandle<ManagedObject>(_value);
+      object.findParam(bufName, true)->set(&value);
     }
 
     OSPPixelOp MPIDistributedDevice::newPixelOp(const char *type)
@@ -345,7 +355,9 @@ namespace ospray {
                                             OSPRenderer _renderer,
                                             const uint32 fbChannelFlags)
     {
-      NOT_IMPLEMENTED;
+      auto &fb       = objectFromAPIHandle<FrameBuffer>(_fb);
+      auto &renderer = objectFromAPIHandle<Renderer>(_renderer);
+      renderer.renderFrame(&fb, fbChannelFlags);
     }
 
     void MPIDistributedDevice::release(OSPObject _obj)

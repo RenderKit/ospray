@@ -32,6 +32,11 @@ namespace ospray {
       ispcEquivalent = ispc::DistributedRaycastRenderer_create(this);
     }
 
+    void DistributedRaycastRenderer::commit()
+    {
+      Renderer::commit();
+    }
+
     float DistributedRaycastRenderer::renderFrame(FrameBuffer *fb,
                                                   const uint32 fbChannelFlags)
     {

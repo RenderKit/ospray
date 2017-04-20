@@ -28,44 +28,68 @@
 // stl
 #include <random>
 
+#define RUN_LOCAL 0
+
 namespace ospRandSphereTest {
 
   using namespace ospcommon;
 
   int   numSpheresPerNode = 100;
   float sphereRadius      = 0.01f;
+  float sceneLowerBound   = 0.f;
+  float sceneUpperBound   = 1.f;
+  vec2i fbSize            = vec2i(1024, 768);
 
-  struct Sphere
+  //TODO: factor this into a reusable piece inside of ospcommon!!!!!!
+  // helper function to write the rendered image as PPM file
+  void writePPM(const std::string &fileName,
+                const int sizeX, const int sizeY,
+                const uint32_t *pixel)
   {
-    vec3f org;
-    int colorID {0};
-  };
+    FILE *file = fopen(fileName.c_str(), "wb");
+    fprintf(file, "P6\n%i %i\n255\n", sizeX, sizeY);
+    unsigned char *out = (unsigned char *)alloca(3*sizeX);
+    for (int y = 0; y < sizeY; y++) {
+      auto *in = (const unsigned char *)&pixel[(sizeY-1-y)*sizeX];
+      for (int x = 0; x < sizeX; x++) {
+        out[3*x + 0] = in[4*x + 0];
+        out[3*x + 1] = in[4*x + 1];
+        out[3*x + 2] = in[4*x + 2];
+      }
+      fwrite(out, 3*sizeX, sizeof(char), file);
+    }
+    fprintf(file, "\n");
+    fclose(file);
+  }
 
   std::pair<ospray::cpp::Model, box3f> makeSpheres()
   {
-    box3f bbox;
+    struct Sphere
+    {
+      vec3f org;
+      int colorID {0};
+    };
 
     std::vector<Sphere> spheres(numSpheresPerNode);
 
     std::mt19937 rng;
     rng.seed(std::random_device()());
-    std::uniform_real_distribution<float> dist(0.f, 1.f);
+    std::uniform_real_distribution<float> dist(sceneLowerBound,
+                                               sceneUpperBound);
 
     for (auto &s : spheres) {
       s.org.x = dist(rng);
       s.org.y = dist(rng);
       s.org.z = dist(rng);
-      bbox.extend(s.org);
     }
 
     ospray::cpp::Data sphere_data(numSpheresPerNode * sizeof(Sphere),
                                   OSP_UCHAR, spheres.data());
 
-    vec4f color(1.f, 0.f, 0.f, 1.f);
+    vec4f color(1.f, 0.f, 0.f, 1.f);//TODO: color based on rank
     ospray::cpp::Data color_data(1, OSP_FLOAT4, &color);
 
     ospray::cpp::Geometry geom("spheres");
-
     geom.set("spheres", sphere_data);
     geom.set("color", color_data);
     geom.set("offset_colorID", int(sizeof(vec3f)));
@@ -76,11 +100,35 @@ namespace ospRandSphereTest {
     model.addGeometry(geom);
     model.commit();
 
+    //NOTE: all ranks will have the same bounding box, no matter what spheres
+    //      were randomly generated
+    auto bbox = box3f(vec3f(sceneLowerBound), vec3f(sceneUpperBound));
+
     return std::make_pair(model, bbox);
+  }
+
+  void setupCamera(ospray::cpp::Camera &camera, box3f worldBounds)
+  {
+    vec3f center = ospcommon::center(worldBounds);
+    vec3f diag   = worldBounds.size();
+    diag         = max(diag,vec3f(0.3f*length(diag)));
+    vec3f from   = center - .75f*vec3f(-.6*diag.x,-1.2f*diag.y,.8f*diag.z);
+    vec3f dir    = center - from;
+
+    camera.set("pos", from);
+    camera.set("dir", dir);
+    camera.set("aspect", static_cast<float>(fbSize.x)/fbSize.y);
+
+    camera.commit();
   }
 
   void initialize_ospray()
   {
+#if RUN_LOCAL
+    auto device = ospray::cpp::Device("default");
+    device.commit();
+    device.setCurrent();
+#else
     ospLoadModule("mpi");
     auto device = ospray::cpp::Device("mpi_distributed");
     device.set("masterRank", 0);
@@ -91,32 +139,45 @@ namespace ospRandSphereTest {
                              [](const char *msg) {
                                std::cerr << msg << std::endl;
                              });
+#endif
   }
 
   extern "C" int main(int ac, const char **av)
   {
     initialize_ospray();
 
-    DefaultCameraParser cameraClParser;
-    cameraClParser.parse(ac, av);
-    auto camera = cameraClParser.camera();
-
-    ospray::cpp::Renderer renderer("raycast");
-    renderer.commit();
+    //TODO: parse command line for configuring global params above
 
     auto scene = makeSpheres();
 
+    DefaultCameraParser cameraClParser;
+    cameraClParser.parse(ac, av);
+    auto camera = cameraClParser.camera();
+    setupCamera(camera, scene.second);
+
+    ospray::cpp::Renderer renderer("raycast");
+    renderer.set("world", scene.first);
+    renderer.set("model", scene.first);
+    renderer.set("camera", camera);
+    renderer.commit();
+
+    ospray::cpp::FrameBuffer fb(fbSize);
+
+    renderer.renderFrame(fb, OSP_FB_COLOR);
+
+#if RUN_LOCAL
+    auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
+    writePPM("randomSphereTestLocal.ppm", fbSize.x, fbSize.y, lfb);
+    fb.unmap(lfb);
+#else
     if (ospray::mpi::IamTheMaster()) {
-      ospray::imgui3D::init(&ac,av);
-
-      ospray::ImGuiViewer window({scene.second}, {scene.first},
-                                 renderer, camera);
-      window.create("OSPRay Random Spheres Test App");
-
-      ospray::imgui3D::run();
-    } else {
-      //TODO: constantly call ospRenderFrame()?
+      auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
+      writePPM("randomSphereTestDistributed.ppm", fbSize.x, fbSize.y, lfb);
+      fb.unmap(lfb);
     }
+
+    ospray::mpi::world.barrier();
+#endif
 
     return 0;
   }
