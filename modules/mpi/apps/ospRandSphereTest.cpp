@@ -39,6 +39,7 @@ namespace ospRandSphereTest {
   float sceneLowerBound   = 0.f;
   float sceneUpperBound   = 1.f;
   vec2i fbSize            = vec2i(1024, 768);
+  int   numFrames         = 32;
 
   //TODO: factor this into a reusable piece inside of ospcommon!!!!!!
   // helper function to write the rendered image as PPM file
@@ -138,6 +139,8 @@ namespace ospRandSphereTest {
         numSpheresPerNode = std::atoi(av[++i]);
       } else if (arg == "-r" || arg == "--radius") {
         sphereRadius = std::atof(av[++i]);
+      } else if (arg == "-nf" || arg == "--num-frames") {
+        numFrames = std::atoi(av[++i]);
       }
     }
   }
@@ -191,15 +194,30 @@ namespace ospRandSphereTest {
     auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
     writePPM("randomSphereTestLocal.ppm", fbSize.x, fbSize.y, lfb);
     fb.unmap(lfb);
+    std::cout << "output: 'randomSphereTestLocal.ppm'" << std::endl;
 #else
     ospray::mpi::world.barrier();
 
-    renderer.renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
+    auto frameStartTime = ospcommon::getSysTime();
+
+    for (int i = 0; i < numFrames; ++i) {
+      if (ospray::mpi::IamTheMaster())
+        std::cout << "rendering frame " << i << std::endl;
+
+      renderer.renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
+
+      ospray::mpi::world.barrier();
+    }
+
+    double seconds = ospcommon::getSysTime() - frameStartTime;
 
     if (ospray::mpi::IamTheMaster()) {
       auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
       writePPM("randomSphereTestDistributed.ppm", fbSize.x, fbSize.y, lfb);
       fb.unmap(lfb);
+      std::cout << "output: 'randomSphereTestDistributed.ppm'" << std::endl;
+      std::cout << "\nrendered " << numFrames << " at an average rate of "
+                << numFrames / seconds << " frames per second" << std::endl;
     }
 
     ospray::mpi::world.barrier();
