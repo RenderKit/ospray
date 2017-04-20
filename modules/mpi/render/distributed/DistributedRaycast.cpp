@@ -14,6 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+// ospcommon
+#include "ospcommon/tasking/parallel_for.h"
 // ospray
 #include "DistributedRaycast.h"
 #include "../../fb/DistributedFrameBuffer.h"
@@ -22,6 +24,8 @@
 
 namespace ospray {
   namespace mpi {
+
+    // DistributedRaycastRenderer definitions /////////////////////////////////
 
     DistributedRaycastRenderer::DistributedRaycastRenderer()
     {
@@ -33,10 +37,30 @@ namespace ospray {
     {
       auto *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
 
-      Renderer::beginFrame(fb);
+      auto *perFrameData = Renderer::beginFrame(fb);
       dfb->startNewFrame(errorThreshold);
 
-      //TODO: implement the actual rendering...
+      //TODO: move to a LoadBalancer instead?
+
+      parallel_for(fb->getTotalTiles(), [&](int taskIndex) {
+        const size_t numTiles_x = fb->getNumTiles().x;
+        const size_t tile_y = taskIndex / numTiles_x;
+        const size_t tile_x = taskIndex - tile_y*numTiles_x;
+        const vec2i tileID(tile_x, tile_y);
+        const int32 accumID = fb->accumID(tileID);
+
+        if (fb->tileError(tileID) <= errorThreshold)
+          return;
+
+        Tile __aligned(64) tile(tileID, fb->size, accumID);
+
+        const int NUM_JOBS = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
+        parallel_for(NUM_JOBS, [&](int tIdx) {
+          renderTile(perFrameData, tile, tIdx);
+        });
+
+        fb->setTile(tile);
+      });
 
       dfb->waitUntilFinished();
       Renderer::endFrame(nullptr, fbChannelFlags);
