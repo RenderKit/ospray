@@ -40,6 +40,7 @@ namespace ospRandSphereTest {
   float sceneUpperBound   = 1.f;
   vec2i fbSize            = vec2i(1024, 768);
   int   numFrames         = 32;
+  bool  runDistributed    = true;
 
   //TODO: factor this into a reusable piece inside of ospcommon!!!!!!
   // helper function to write the rendered image as PPM file
@@ -141,23 +142,27 @@ namespace ospRandSphereTest {
         sphereRadius = std::atof(av[++i]);
       } else if (arg == "-nf" || arg == "--num-frames") {
         numFrames = std::atoi(av[++i]);
+      } else if (arg == "-l" || arg == "--local") {
+        runDistributed = false;
       }
     }
   }
 
   void initialize_ospray()
   {
-#if RUN_LOCAL
-    auto device = ospray::cpp::Device("default");
-    device.commit();
-    device.setCurrent();
-#else
-    ospLoadModule("mpi");
-    auto device = ospray::cpp::Device("mpi_distributed");
-    device.set("masterRank", 0);
-    device.commit();
-    device.setCurrent();
-#endif
+    ospray::cpp::Device device;
+
+    if (runDistributed) {
+      ospLoadModule("mpi");
+      device = ospray::cpp::Device("mpi_distributed");
+      device.set("masterRank", 0);
+      device.commit();
+      device.setCurrent();
+    } else {
+      device = ospray::cpp::Device("default");
+      device.commit();
+      device.setCurrent();
+    }
 
     ospDeviceSetErrorMsgFunc(device.handle(),
                              [](const char *msg) {
@@ -188,40 +193,40 @@ namespace ospRandSphereTest {
     ospray::cpp::FrameBuffer fb(fbSize,OSP_FB_SRGBA,OSP_FB_COLOR|OSP_FB_ACCUM);
     fb.clear(OSP_FB_ACCUM);
 
-#if RUN_LOCAL
-    renderer.renderFrame(fb, OSP_FB_COLOR);
+    if (runDistributed) {
+      ospray::mpi::world.barrier();
 
-    auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
-    writePPM("randomSphereTestLocal.ppm", fbSize.x, fbSize.y, lfb);
-    fb.unmap(lfb);
-    std::cout << "output: 'randomSphereTestLocal.ppm'" << std::endl;
-#else
-    ospray::mpi::world.barrier();
+      auto frameStartTime = ospcommon::getSysTime();
 
-    auto frameStartTime = ospcommon::getSysTime();
+      for (int i = 0; i < numFrames; ++i) {
+        if (ospray::mpi::IamTheMaster())
+          std::cout << "rendering frame " << i << std::endl;
 
-    for (int i = 0; i < numFrames; ++i) {
-      if (ospray::mpi::IamTheMaster())
-        std::cout << "rendering frame " << i << std::endl;
+        renderer.renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
 
-      renderer.renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
+        ospray::mpi::world.barrier();
+      }
+
+      double seconds = ospcommon::getSysTime() - frameStartTime;
+
+      if (ospray::mpi::IamTheMaster()) {
+        auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
+        writePPM("randomSphereTestDistributed.ppm", fbSize.x, fbSize.y, lfb);
+        fb.unmap(lfb);
+        std::cout << "\noutput: 'randomSphereTestDistributed.ppm'" << std::endl;
+        std::cout << "\nrendered " << numFrames << " frames at an avg rate of "
+                  << numFrames / seconds << " frames per second" << std::endl;
+      }
 
       ospray::mpi::world.barrier();
-    }
+    } else {
+      renderer.renderFrame(fb, OSP_FB_COLOR);
 
-    double seconds = ospcommon::getSysTime() - frameStartTime;
-
-    if (ospray::mpi::IamTheMaster()) {
       auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
-      writePPM("randomSphereTestDistributed.ppm", fbSize.x, fbSize.y, lfb);
+      writePPM("randomSphereTestLocal.ppm", fbSize.x, fbSize.y, lfb);
       fb.unmap(lfb);
-      std::cout << "output: 'randomSphereTestDistributed.ppm'" << std::endl;
-      std::cout << "\nrendered " << numFrames << " at an average rate of "
-                << numFrames / seconds << " frames per second" << std::endl;
+      std::cout << "output: 'randomSphereTestLocal.ppm'" << std::endl;
     }
-
-    ospray::mpi::world.barrier();
-#endif
 
     return 0;
   }
