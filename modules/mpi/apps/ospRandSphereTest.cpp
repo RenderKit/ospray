@@ -220,12 +220,22 @@ namespace ospRandSphereTest {
 
       ospray::mpi::world.barrier();
     } else {
-      renderer.renderFrame(fb, OSP_FB_COLOR);
+      auto frameStartTime = ospcommon::getSysTime();
+
+      for (int i = 0; i < numFrames; ++i) {
+        std::cout << "rendering frame " << i << std::endl;
+
+        renderer.renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
+      }
+
+      double seconds = ospcommon::getSysTime() - frameStartTime;
 
       auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
       writePPM("randomSphereTestLocal.ppm", fbSize.x, fbSize.y, lfb);
       fb.unmap(lfb);
-      std::cout << "output: 'randomSphereTestLocal.ppm'" << std::endl;
+      std::cout << "\noutput: 'randomSphereTestLocal.ppm'" << std::endl;
+      std::cout << "\nrendered " << numFrames << " frames at an avg rate of "
+                << numFrames / seconds << " frames per second" << std::endl;
     }
 
     return 0;
