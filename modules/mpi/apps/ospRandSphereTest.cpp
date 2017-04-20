@@ -38,8 +38,7 @@ namespace ospRandSphereTest {
   float sphereRadius      = 0.01f;
   float sceneLowerBound   = 0.f;
   float sceneUpperBound   = 1.f;
-  //vec2i fbSize            = vec2i(1024, 768);
-  vec2i fbSize            = vec2i(128, 128);
+  vec2i fbSize            = vec2i(1024, 768);
 
   //TODO: factor this into a reusable piece inside of ospcommon!!!!!!
   // helper function to write the rendered image as PPM file
@@ -130,6 +129,22 @@ namespace ospRandSphereTest {
     camera.commit();
   }
 
+  void parseCommandLine(int ac, const char **av)
+  {
+    for (int i = 0; i < ac; ++i) {
+      std::string arg = av[i];
+      if (arg == "-w") {
+        fbSize.x = std::atoi(av[++i]);
+      } else if (arg == "-h") {
+        fbSize.y = std::atoi(av[++i]);
+      } else if (arg == "-spn" || arg == "--spheres-per-node") {
+        numSpheresPerNode = std::atoi(av[++i]);
+      } else if (arg == "-r" || arg == "--radius") {
+        sphereRadius = std::atof(av[++i]);
+      }
+    }
+  }
+
   void initialize_ospray()
   {
 #if RUN_LOCAL
@@ -152,9 +167,9 @@ namespace ospRandSphereTest {
 
   extern "C" int main(int ac, const char **av)
   {
-    initialize_ospray();
+    parseCommandLine(ac, av);
 
-    //TODO: parse command line for configuring global params above
+    initialize_ospray();
 
     auto scene = makeSpheres();
 
