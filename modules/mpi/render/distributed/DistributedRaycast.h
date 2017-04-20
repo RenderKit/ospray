@@ -27,6 +27,8 @@ namespace ospray {
       DistributedRaycastRenderer();
       virtual ~DistributedRaycastRenderer() = default;//TODO!
 
+      float renderFrame(FrameBuffer *fb, const uint32 fbChannelFlags) override;
+
       virtual std::string toString() const override;
     };
 

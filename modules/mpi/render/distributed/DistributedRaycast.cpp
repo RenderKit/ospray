@@ -16,6 +16,7 @@
 
 // ospray
 #include "DistributedRaycast.h"
+#include "../../fb/DistributedFrameBuffer.h"
 // ispc exports
 #include "DistributedRaycast_ispc.h"
 
@@ -25,6 +26,22 @@ namespace ospray {
     DistributedRaycastRenderer::DistributedRaycastRenderer()
     {
       ispcEquivalent = ispc::DistributedRaycastRenderer_create(this);
+    }
+
+    float DistributedRaycastRenderer::renderFrame(FrameBuffer *fb,
+                                                  const uint32 fbChannelFlags)
+    {
+      auto *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
+
+      Renderer::beginFrame(fb);
+      dfb->startNewFrame(errorThreshold);
+
+      //TODO: implement the actual rendering...
+
+      dfb->waitUntilFinished();
+      Renderer::endFrame(nullptr, fbChannelFlags);
+
+      return fb->endFrame(0.f);//TODO: can report error threshold here?
     }
 
     std::string DistributedRaycastRenderer::toString() const

@@ -134,8 +134,14 @@ namespace ospray {
                                                 OSPFrameBuffer _fb)
     {
       auto &fb = objectFromAPIHandle<FrameBuffer>(_fb);
-
       fb.unmap(mapped);
+    }
+
+    void MPIDistributedDevice::frameBufferClear(OSPFrameBuffer _fb,
+                                                const uint32 fbChannelFlags)
+    {
+      auto &fb = objectFromAPIHandle<FrameBuffer>(_fb);
+      fb.clear(fbChannelFlags);
     }
 
     OSPModel MPIDistributedDevice::newModel()
@@ -320,12 +326,6 @@ namespace ospray {
 
     OSPLight MPIDistributedDevice::newLight(OSPRenderer _renderer,
                                             const char *type)
-    {
-      NOT_IMPLEMENTED;
-    }
-
-    void MPIDistributedDevice::frameBufferClear(OSPFrameBuffer _fb,
-                                                const uint32 fbChannelFlags)
     {
       NOT_IMPLEMENTED;
     }
