@@ -24,6 +24,8 @@
 #include "mpi/MPIDistributedDevice.h"
 #include "mpi/render/MPILoadBalancer.h"
 
+//distributed objects
+#include "render/distributed/DistributedRaycast.h"
 
 #ifdef OPEN_MPI
 # include <thread>
@@ -249,7 +251,13 @@ namespace ospray {
 
     OSPRenderer MPIDistributedDevice::newRenderer(const char *type)
     {
-      NOT_IMPLEMENTED;
+      UNUSED(type);
+      auto *instance = new DistributedRaycastRenderer;
+
+      ObjectHandle handle;
+      handle.assign(instance);
+
+      return (OSPRenderer)(int64)handle;
     }
 
     OSPCamera MPIDistributedDevice::newCamera(const char *type)

@@ -44,6 +44,8 @@ IF (OSPRAY_MODULE_MPI)
     fb/DistributedFrameBuffer_TileTypes.cpp
 
     render/MPILoadBalancer.cpp
+    render/distributed/DistributedRaycast.cpp
+    render/distributed/DistributedRaycast.ispc
     render/volume/RaycastVolumeMaterial.cpp
     render/volume/RaycastVolumeMaterial.ih
     render/volume/RaycastVolumeMaterial.ispc
