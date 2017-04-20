@@ -231,6 +231,12 @@ namespace ospray {
     myTiles.clear();
   }
 
+  size_t DistributedFrameBuffer::ownerIDFromTileID(size_t tileID)
+  {
+    return masterIsAWorker ? tileID % (mpi::numGlobalRanks()) :
+                             (tileID % (mpi::numGlobalRanks() - 1) + 1);
+  }
+
   TileData *DFB::createTile(const vec2i &xy, size_t tileID, size_t ownerID)
   {
     TileData *td = nullptr;
@@ -244,7 +250,9 @@ namespace ospray {
       break;
     case Z_COMPOSITE:
     default:
-      td = new ZCompositeTile(this, xy, tileID, ownerID);
+      size_t numWorkers = masterIsAWorker ? mpi::numGlobalRanks() :
+                                            mpi::numWorkers();
+      td = new ZCompositeTile(this, xy, tileID, ownerID, numWorkers);
       break;
     }
 
@@ -257,8 +265,8 @@ namespace ospray {
     vec2i numPixels = getNumPixels();
     for (int y = 0; y < numPixels.y; y += TILE_SIZE) {
       for (int x = 0; x < numPixels.x; x += TILE_SIZE, tileID++) {
-        size_t ownerID = tileID % (mpi::numGlobalRanks() - 1);
-        if (mpi::globalRankFromWorkerRank(ownerID) == mpi::globalRank()) {
+        size_t ownerID = ownerIDFromTileID(tileID);
+        if (ownerID == mpi::globalRank()) {
           TileData *td = createTile(vec2i(x, y), tileID, ownerID);
           myTiles.push_back(td);
           allTiles.push_back(td);
@@ -346,7 +354,15 @@ namespace ospray {
     DBG(printf("rank %i: tilecompleted %i,%i\n",mpi::world.rank,
                tile->begin.x,tile->begin.y));
 
-    if (mpi::IamTheMaster()) {
+    if (mpi::IamTheMaster() && tile->ownerID == mpi::masterRank()) {
+      if (pixelOp) {
+        pixelOp->postAccum(tile->final);
+      }
+
+      tile->ownerID = -1;//TODO(jda) - need to refactor this "magic" number...
+                         //            the branching logic here is too cryptic
+      sendTileToMaster(tile);
+    } else if (mpi::IamTheMaster()) {
       int numTilesCompletedByMyTile = 0;
       /*! we will not do anything with the tile other than mark it's done */
       {
@@ -365,51 +381,7 @@ namespace ospray {
         pixelOp->postAccum(tile->final);
       }
 
-      switch(colorBufferFormat) {
-      case OSP_FB_NONE: {
-        /* if the master doesn't have a framebufer (i.e., format
-           'none'), we're only telling it that we're done, but are not
-           sending any pixels */
-        MasterTileMessage_NONE mtm;
-        mtm.command = MASTER_WRITE_TILE_NONE;
-        mtm.coords  = tile->begin;
-        mtm.error   = tile->error;
-
-        auto msg = std::make_shared<maml::Message>(&mtm, sizeof(mtm));
-
-        mpi::messaging::sendTo(mpi::masterRank(), myID, msg);
-      } break;
-      case OSP_FB_RGBA8:
-      case OSP_FB_SRGBA: {
-        /*! if the master has RGBA8 or SRGBA format, we're sending him a tile
-            of the proper data */
-        MasterTileMessage_RGBA_I8 mtm;
-        mtm.command = MASTER_WRITE_TILE_I8;
-        mtm.coords  = tile->begin;
-        mtm.error   = tile->error;
-        memcpy(mtm.color, tile->color, TILE_SIZE*TILE_SIZE*sizeof(uint32));
-
-        auto msg = std::make_shared<maml::Message>(&mtm, sizeof(mtm));
-
-        mpi::messaging::sendTo(mpi::masterRank(), myID, msg);
-      } break;
-      case OSP_FB_RGBA32F: {
-        /*! if the master has RGBA32F format, we're sending him a tile of the
-            proper data */
-        MasterTileMessage_RGBA_F32 mtm;
-        mtm.command = MASTER_WRITE_TILE_F32;
-        mtm.coords  = tile->begin;
-        mtm.error   = tile->error;
-        memcpy(mtm.color, tile->color, TILE_SIZE*TILE_SIZE*sizeof(vec4f));
-
-        auto msg = std::make_shared<maml::Message>(&mtm, sizeof(mtm));
-
-        mpi::messaging::sendTo(mpi::masterRank(), myID, msg);
-      } break;
-      default:
-        throw std::runtime_error("#osp:mpi:dfb: color buffer format not "
-                                 "implemented for distributed frame buffer");
-      };
+      sendTileToMaster(tile);
 
       size_t numTilesCompletedByMe = 0;
       {
@@ -425,6 +397,55 @@ namespace ospray {
         closeCurrentFrame();
       }
     }
+  }
+
+  void DistributedFrameBuffer::sendTileToMaster(TileData *tile)
+  {
+    switch(colorBufferFormat) {
+    case OSP_FB_NONE: {
+      /* if the master doesn't have a framebufer (i.e., format
+         'none'), we're only telling it that we're done, but are not
+         sending any pixels */
+      MasterTileMessage_NONE mtm;
+      mtm.command = MASTER_WRITE_TILE_NONE;
+      mtm.coords  = tile->begin;
+      mtm.error   = tile->error;
+
+      auto msg = std::make_shared<maml::Message>(&mtm, sizeof(mtm));
+
+      mpi::messaging::sendTo(mpi::masterRank(), myID, msg);
+    } break;
+    case OSP_FB_RGBA8:
+    case OSP_FB_SRGBA: {
+      /*! if the master has RGBA8 or SRGBA format, we're sending him a tile
+          of the proper data */
+      MasterTileMessage_RGBA_I8 mtm;
+      mtm.command = MASTER_WRITE_TILE_I8;
+      mtm.coords  = tile->begin;
+      mtm.error   = tile->error;
+      memcpy(mtm.color, tile->color, TILE_SIZE*TILE_SIZE*sizeof(uint32));
+
+      auto msg = std::make_shared<maml::Message>(&mtm, sizeof(mtm));
+
+      mpi::messaging::sendTo(mpi::masterRank(), myID, msg);
+    } break;
+    case OSP_FB_RGBA32F: {
+      /*! if the master has RGBA32F format, we're sending him a tile of the
+          proper data */
+      MasterTileMessage_RGBA_F32 mtm;
+      mtm.command = MASTER_WRITE_TILE_F32;
+      mtm.coords  = tile->begin;
+      mtm.error   = tile->error;
+      memcpy(mtm.color, tile->color, TILE_SIZE*TILE_SIZE*sizeof(vec4f));
+
+      auto msg = std::make_shared<maml::Message>(&mtm, sizeof(mtm));
+
+      mpi::messaging::sendTo(mpi::masterRank(), myID, msg);
+    } break;
+    default:
+      throw std::runtime_error("#osp:mpi:dfb: color buffer format not "
+                               "implemented for distributed frame buffer");
+    };
   }
 
   size_t DFB::numMyTiles() const
@@ -514,14 +535,8 @@ namespace ospray {
       auto msg = std::make_shared<maml::Message>(&msgPayload,
                                                  sizeof(msgPayload));
 
-      if (mpi::IamTheMaster() && masterIsAWorker) {
-#if 0//NOTE(jda) - getting crashes when directly handling the message on master
-        incoming(msg);
-#endif
-      } else {
-        int dstRank = mpi::globalRankFromWorkerRank(tileDesc->ownerID);
-        mpi::messaging::sendTo(dstRank, myID, msg);
-      }
+      int dstRank = tileDesc->ownerID;
+      mpi::messaging::sendTo(dstRank, myID, msg);
     } else {
       if (!frameIsActive)
         throw std::runtime_error("#dfb: cannot setTile if frame is inactive!");

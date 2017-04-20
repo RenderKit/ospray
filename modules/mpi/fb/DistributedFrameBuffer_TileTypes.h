@@ -121,7 +121,7 @@ namespace ospray {
   struct ZCompositeTile : public TileData
   {
     ZCompositeTile(DistributedFrameBuffer *dfb, const vec2i &begin,
-                   size_t tileID, size_t ownerID);
+                   size_t tileID, size_t ownerID, size_t numWorkers);
 
     /*! called exactly once at the beginning of each frame */
     void newFrame() override;
@@ -133,6 +133,8 @@ namespace ospray {
     /*! number of input tiles that have been composited into this
         tile */
     size_t numPartsComposited;
+
+    size_t numWorkers;
 
     /*! since we do not want to mess up the existing accumulatation
         buffer in the parent tile we temporarily composite into this
