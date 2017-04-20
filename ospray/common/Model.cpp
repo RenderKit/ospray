@@ -38,7 +38,7 @@ namespace ospray {
     return "ospray::Model";
   }
 
-  void Model::finalize()
+  void Model::commit()
   {
     postErrorMsg(2)
         << "=======================================================\n"

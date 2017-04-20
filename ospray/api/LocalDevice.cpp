@@ -145,11 +145,6 @@ namespace ospray {
       ManagedObject *object = (ManagedObject *)_object;
       Assert2(object,"null object in LocalDevice::commit()");
       object->commit();
-
-      // hack, to stay compatible with earlier version
-      Model *model = dynamic_cast<Model *>(object);
-      if (model)
-        model->finalize();
     }
 
     /*! add a new geometry to a model */

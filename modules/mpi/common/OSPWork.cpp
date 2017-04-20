@@ -92,12 +92,6 @@ namespace ospray {
         ManagedObject *obj = handle.lookup();
         if (obj) {
           obj->commit();
-
-          // TODO: Do we need this hack anymore?
-          // It looks like yes? or at least glutViewer segfaults if we don't do this
-          // hack, to stay compatible with earlier version
-          Model *model = dynamic_cast<Model*>(obj);
-          if (model) model->finalize();
         } else {
           throw std::runtime_error("Error: rank "
                                    + std::to_string(mpi::world.rank)

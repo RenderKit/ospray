@@ -44,6 +44,7 @@ namespace ospray {
     inline API_TYPE createOSPRayObjectWithHandle(const char *type)
     {
       auto *instance = OSPRAY_TYPE::createInstance(type);
+      instance->refInc();
 
       ObjectHandle handle;
       handle.assign(instance);
@@ -61,6 +62,12 @@ namespace ospray {
         throw std::runtime_error("#dmpi: ObjectHandle doesn't exist!");
 
       return *object;
+    }
+
+    static void embreeErrorFunc(const RTCError code, const char* str)
+    {
+      postErrorMsg() << "#osp: embree internal error " << code << " : " << str;
+      throw std::runtime_error("embree internal error '" +std::string(str)+"'");
     }
 
     // MPIDistributedDevice definitions ///////////////////////////////////////
@@ -92,6 +99,22 @@ namespace ospray {
         throw std::runtime_error("#dmpi: bad device mode ['" + mode + "]");
       }
 
+      std::stringstream embreeConfig;
+      if (debugMode)
+        embreeConfig << " threads=1,verbose=2";
+      else if(numThreads > 0)
+        embreeConfig << " threads=" << numThreads;
+      embreeDevice = rtcNewDevice(embreeConfig.str().c_str());
+
+      rtcDeviceSetErrorFunction(embreeDevice, embreeErrorFunc);
+
+      RTCError erc = rtcDeviceGetError(embreeDevice);
+      if (erc != RTC_NO_ERROR) {
+        // why did the error function not get called !?
+        postErrorMsg() << "#osp:init: embree internal error number " << erc;
+        assert(erc == RTC_NO_ERROR);
+      }
+
       // TODO: implement 'staticLoadBalancer::Distributed'
       //TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Master>();
     }
@@ -111,6 +134,7 @@ namespace ospray {
                                                   hasDepthBuffer,
                                                   hasAccumBuffer,
                                                   hasVarianceBuffer);
+      instance->refInc();
 
       handle.assign(instance);
 
@@ -151,6 +175,7 @@ namespace ospray {
     OSPModel MPIDistributedDevice::newModel()
     {
       auto *instance = new Model;
+      instance->refInc();
 
       ObjectHandle handle;
       handle.assign(instance);
@@ -184,6 +209,8 @@ namespace ospray {
       ObjectHandle handle;
 
       auto *instance = new Data(nitems, format, init, flags);
+      instance->refInc();
+
       handle.assign(instance);
 
       return (OSPData)(int64)handle;
@@ -283,7 +310,7 @@ namespace ospray {
     {
       auto &object = objectFromAPIHandle<ManagedObject>(_object);
       auto &value  = objectFromAPIHandle<ManagedObject>(_value);
-      object.findParam(bufName, true)->set(&value);
+      object.set(bufName, &value);
     }
 
     OSPPixelOp MPIDistributedDevice::newPixelOp(const char *type)
@@ -362,7 +389,8 @@ namespace ospray {
 
     void MPIDistributedDevice::release(OSPObject _obj)
     {
-      NOT_IMPLEMENTED;
+      UNUSED(_obj);
+      postErrorMsg(1) << "WARNING: release() not yet implemented, memory leak!";
     }
 
     void MPIDistributedDevice::setMaterial(OSPGeometry _geometry,

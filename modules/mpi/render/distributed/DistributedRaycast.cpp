@@ -42,8 +42,12 @@ namespace ospray {
     {
       auto *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
 
-      auto *perFrameData = Renderer::beginFrame(fb);
+      dfb->setFrameMode(DistributedFrameBuffer::ALPHA_BLEND);
+
+      dfb->beginFrame();
       dfb->startNewFrame(errorThreshold);
+
+      auto *perFrameData = Renderer::beginFrame(fb);
 
       //TODO: move to a LoadBalancer instead?
 
@@ -70,7 +74,7 @@ namespace ospray {
       dfb->waitUntilFinished();
       Renderer::endFrame(nullptr, fbChannelFlags);
 
-      return fb->endFrame(0.f);//TODO: can report error threshold here?
+      return dfb->endFrame(0.f);//TODO: can report error threshold here?
     }
 
     std::string DistributedRaycastRenderer::toString() const

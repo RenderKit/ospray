@@ -45,7 +45,7 @@ namespace ospray {
     assert(instancedScene);
 
     if (!instancedScene->embreeSceneHandle) {
-      instancedScene->finalize();
+      instancedScene->commit();
     }
 
     embreeGeomID = rtcNewInstance(model->embreeSceneHandle,

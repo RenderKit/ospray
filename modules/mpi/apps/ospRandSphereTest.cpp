@@ -86,7 +86,14 @@ namespace ospRandSphereTest {
     ospray::cpp::Data sphere_data(numSpheresPerNode * sizeof(Sphere),
                                   OSP_UCHAR, spheres.data());
 
-    vec4f color(1.f, 0.f, 0.f, 1.f);//TODO: color based on rank
+    auto numRanks = static_cast<float>(ospray::mpi::numGlobalRanks());
+    auto myRank   = ospray::mpi::globalRank();
+
+    vec4f color((numRanks - myRank) / numRanks,
+                (myRank > numRanks/2.f) ? 1.f : 0.f,
+                myRank / numRanks,
+                1.f);
+
     ospray::cpp::Data color_data(1, OSP_FLOAT4, &color);
 
     ospray::cpp::Geometry geom("spheres");
@@ -163,13 +170,17 @@ namespace ospRandSphereTest {
 
     ospray::cpp::FrameBuffer fb(fbSize);
 
+#if RUN_LOCAL
     renderer.renderFrame(fb, OSP_FB_COLOR);
 
-#if RUN_LOCAL
     auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
     writePPM("randomSphereTestLocal.ppm", fbSize.x, fbSize.y, lfb);
     fb.unmap(lfb);
 #else
+    ospray::mpi::world.barrier();
+
+    renderer.renderFrame(fb, OSP_FB_COLOR);
+
     if (ospray::mpi::IamTheMaster()) {
       auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
       writePPM("randomSphereTestDistributed.ppm", fbSize.x, fbSize.y, lfb);
