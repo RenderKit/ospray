@@ -22,6 +22,7 @@
 #include "mpiCommon/MPICommon.h"
 //ospray_mpi
 #include "mpi/MPIDistributedDevice.h"
+#include "mpi/fb/DistributedFrameBuffer.h"
 #include "mpi/render/MPILoadBalancer.h"
 
 //distributed objects
@@ -49,10 +50,11 @@ namespace ospray {
       return (API_TYPE)(int64)handle;
     }
 
-    static inline ManagedObject& objectFromAPIHandle(OSPObject obj)
+    template <typename OSPRAY_TYPE>
+    inline OSPRAY_TYPE& objectFromAPIHandle(OSPObject obj)
     {
       auto &handle = reinterpret_cast<ObjectHandle&>(obj);
-      auto *object = handle.lookup();
+      auto *object = (OSPRAY_TYPE*)handle.lookup();
 
       if (!object)
         throw std::runtime_error("#dmpi: ObjectHandle doesn't exist!");
@@ -98,7 +100,20 @@ namespace ospray {
                                             const OSPFrameBufferFormat mode,
                                             const uint32 channels)
     {
-      NOT_IMPLEMENTED;
+      const bool hasDepthBuffer    = channels & OSP_FB_DEPTH;
+      const bool hasAccumBuffer    = channels & OSP_FB_ACCUM;
+      const bool hasVarianceBuffer = channels & OSP_FB_VARIANCE;
+
+      ObjectHandle handle;
+
+      auto *instance = new DistributedFrameBuffer(size, handle, mode,
+                                                  hasDepthBuffer,
+                                                  hasAccumBuffer,
+                                                  hasVarianceBuffer);
+
+      handle.assign(instance);
+
+      return (OSPFrameBuffer)(int64)handle;
     }
 
 
@@ -106,30 +121,46 @@ namespace ospray {
     MPIDistributedDevice::frameBufferMap(OSPFrameBuffer _fb,
                                          OSPFrameBufferChannel channel)
     {
-      NOT_IMPLEMENTED;
+      auto &fb = objectFromAPIHandle<FrameBuffer>(_fb);
+
+      switch (channel) {
+      case OSP_FB_COLOR: return fb.mapColorBuffer();
+      case OSP_FB_DEPTH: return fb.mapDepthBuffer();
+      default: return nullptr;
+      }
     }
 
     void MPIDistributedDevice::frameBufferUnmap(const void *mapped,
                                                 OSPFrameBuffer _fb)
     {
-      NOT_IMPLEMENTED;
+      auto &fb = objectFromAPIHandle<FrameBuffer>(_fb);
+
+      fb.unmap(mapped);
     }
 
     OSPModel MPIDistributedDevice::newModel()
     {
-      NOT_IMPLEMENTED;
+      auto *instance = new Model;
+
+      ObjectHandle handle;
+      handle.assign(instance);
+
+      return (OSPModel)(int64)handle;
     }
 
     void MPIDistributedDevice::commit(OSPObject _object)
     {
-      auto &object = objectFromAPIHandle(_object);
+      auto &object = objectFromAPIHandle<ManagedObject>(_object);
       object.commit();
     }
 
     void MPIDistributedDevice::addGeometry(OSPModel _model,
                                            OSPGeometry _geometry)
     {
-      NOT_IMPLEMENTED;
+      auto &model = objectFromAPIHandle<Model>(_model);
+      auto &geom  = objectFromAPIHandle<Geometry>(_geometry);
+
+      model.geometry.push_back(&geom);
     }
 
     void MPIDistributedDevice::addVolume(OSPModel _model, OSPVolume _volume)
@@ -147,7 +178,7 @@ namespace ospray {
                                           const char *bufName,
                                           void *v)
     {
-      auto &object = objectFromAPIHandle(_object);
+      auto &object = objectFromAPIHandle<ManagedObject>(_object);
       object.findParam(bufName, true)->set(v);
     }
 
@@ -166,7 +197,7 @@ namespace ospray {
                                          const char *bufName,
                                          const char *s)
     {
-      auto &object = objectFromAPIHandle(_object);
+      auto &object = objectFromAPIHandle<ManagedObject>(_object);
       object.findParam(bufName, true)->set(s);
     }
 
@@ -179,7 +210,7 @@ namespace ospray {
                                         const char *bufName,
                                         const float f)
     {
-      auto &object = objectFromAPIHandle(_object);
+      auto &object = objectFromAPIHandle<ManagedObject>(_object);
       object.findParam(bufName, true)->set(f);
     }
 
@@ -187,7 +218,7 @@ namespace ospray {
                                       const char *bufName,
                                       const int i)
     {
-      auto &object = objectFromAPIHandle(_object);
+      auto &object = objectFromAPIHandle<ManagedObject>(_object);
       object.findParam(bufName, true)->set(i);
     }
 
@@ -195,7 +226,7 @@ namespace ospray {
                                         const char *bufName,
                                         const vec2f &v)
     {
-      auto &object = objectFromAPIHandle(_object);
+      auto &object = objectFromAPIHandle<ManagedObject>(_object);
       object.findParam(bufName, true)->set(v);
     }
 
@@ -203,7 +234,7 @@ namespace ospray {
                                         const char *bufName,
                                         const vec3f &v)
     {
-      auto &object = objectFromAPIHandle(_object);
+      auto &object = objectFromAPIHandle<ManagedObject>(_object);
       object.findParam(bufName, true)->set(v);
     }
 
@@ -211,7 +242,7 @@ namespace ospray {
                                         const char *bufName,
                                         const vec4f &v)
     {
-      auto &object = objectFromAPIHandle(_object);
+      auto &object = objectFromAPIHandle<ManagedObject>(_object);
       object.findParam(bufName, true)->set(v);
     }
 
@@ -219,7 +250,7 @@ namespace ospray {
                                         const char *bufName,
                                         const vec2i &v)
     {
-      auto &object = objectFromAPIHandle(_object);
+      auto &object = objectFromAPIHandle<ManagedObject>(_object);
       object.findParam(bufName, true)->set(v);
     }
 
@@ -227,7 +258,7 @@ namespace ospray {
                                         const char *bufName,
                                         const vec3i &v)
     {
-      auto &object = objectFromAPIHandle(_object);
+      auto &object = objectFromAPIHandle<ManagedObject>(_object);
       object.findParam(bufName, true)->set(v);
     }
 
@@ -235,7 +266,7 @@ namespace ospray {
                                          const char *bufName,
                                          OSPObject _value)
     {
-      auto &object = objectFromAPIHandle(_object);
+      auto &object = objectFromAPIHandle<ManagedObject>(_object);
       object.findParam(bufName, true)->set(_value);
     }
 
