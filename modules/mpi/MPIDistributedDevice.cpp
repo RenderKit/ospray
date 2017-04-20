@@ -138,7 +138,8 @@ namespace ospray {
       auto *instance = new DistributedFrameBuffer(size, handle, mode,
                                                   hasDepthBuffer,
                                                   hasAccumBuffer,
-                                                  hasVarianceBuffer);
+                                                  hasVarianceBuffer,
+                                                  true);
       instance->refInc();
 
       handle.assign(instance);

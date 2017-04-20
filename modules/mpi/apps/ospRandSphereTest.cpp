@@ -89,10 +89,7 @@ namespace ospRandSphereTest {
     auto numRanks = static_cast<float>(ospray::mpi::numGlobalRanks());
     auto myRank   = ospray::mpi::globalRank();
 
-    vec4f color((numRanks - myRank) / numRanks,
-                (myRank > numRanks/2.f) ? 1.f : 0.f,
-                myRank / numRanks,
-                1.f);
+    vec4f color((numRanks - myRank) / numRanks, 0.f, myRank / numRanks, 1.f);
 
     ospray::cpp::Data color_data(1, OSP_FLOAT4, &color);
 
@@ -205,7 +202,7 @@ namespace ospRandSphereTest {
       fb.unmap(lfb);
     }
 
-    //ospray::mpi::world.barrier();
+    ospray::mpi::world.barrier();
 #endif
 
     return 0;

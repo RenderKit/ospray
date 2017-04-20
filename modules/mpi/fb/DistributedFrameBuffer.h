@@ -48,7 +48,8 @@ namespace ospray {
                            ColorBufferFormat,
                            bool hasDepthBuffer,
                            bool hasAccumBuffer,
-                           bool hasVarianceBuffer);
+                           bool hasVarianceBuffer,
+                           bool masterIsAWorker = false);
 
     ~DistributedFrameBuffer();
 
@@ -192,6 +193,8 @@ namespace ospray {
     /*! set to true when the framebuffer is done for the given
         frame */
     bool frameIsDone;
+
+    bool masterIsAWorker {false};
 
     //! condition that gets triggered when the frame is done
     std::condition_variable frameDoneCond;

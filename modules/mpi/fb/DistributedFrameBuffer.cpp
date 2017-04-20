@@ -123,7 +123,8 @@ namespace ospray {
                               ColorBufferFormat colorBufferFormat,
                               bool hasDepthBuffer,
                               bool hasAccumBuffer,
-                              bool hasVarianceBuffer)
+                              bool hasVarianceBuffer,
+                              bool masterIsAWorker)
     : FrameBuffer(numPixels,colorBufferFormat,hasDepthBuffer,
                   hasAccumBuffer,hasVarianceBuffer),
       myID(myID),
@@ -131,7 +132,8 @@ namespace ospray {
       localFBonMaster(nullptr),
       frameMode(WRITE_ONCE),
       frameIsActive(false),
-      frameIsDone(false)
+      frameIsDone(false),
+      masterIsAWorker(masterIsAWorker)
   {
     this->ispcEquivalent = ispc::DFB_create(this);
     ispc::DFB_set(getIE(), numPixels.x, numPixels.y, colorBufferFormat);
@@ -511,9 +513,15 @@ namespace ospray {
 
       auto msg = std::make_shared<maml::Message>(&msgPayload,
                                                  sizeof(msgPayload));
-      int dstRank = mpi::globalRankFromWorkerRank(tileDesc->ownerID);
 
-      mpi::messaging::sendTo(dstRank, myID, msg);
+      if (mpi::IamTheMaster() && masterIsAWorker) {
+#if 0//NOTE(jda) - getting crashes when directly handling the message on master
+        incoming(msg);
+#endif
+      } else {
+        int dstRank = mpi::globalRankFromWorkerRank(tileDesc->ownerID);
+        mpi::messaging::sendTo(dstRank, myID, msg);
+      }
     } else {
       if (!frameIsActive)
         throw std::runtime_error("#dfb: cannot setTile if frame is inactive!");
