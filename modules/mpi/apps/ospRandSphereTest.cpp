@@ -141,12 +141,12 @@ namespace ospRandSphereTest {
     device.set("masterRank", 0);
     device.commit();
     device.setCurrent();
+#endif
 
     ospDeviceSetErrorMsgFunc(device.handle(),
                              [](const char *msg) {
                                std::cerr << msg << std::endl;
                              });
-#endif
   }
 
   extern "C" int main(int ac, const char **av)
@@ -166,9 +166,11 @@ namespace ospRandSphereTest {
     renderer.set("world", scene.first);
     renderer.set("model", scene.first);
     renderer.set("camera", camera);
+    renderer.set("bgColor", vec3f(1.f, 1.f, 1.f));
     renderer.commit();
 
-    ospray::cpp::FrameBuffer fb(fbSize);
+    ospray::cpp::FrameBuffer fb(fbSize,OSP_FB_SRGBA,OSP_FB_COLOR|OSP_FB_ACCUM);
+    fb.clear(OSP_FB_ACCUM);
 
 #if RUN_LOCAL
     renderer.renderFrame(fb, OSP_FB_COLOR);
@@ -179,7 +181,7 @@ namespace ospRandSphereTest {
 #else
     ospray::mpi::world.barrier();
 
-    renderer.renderFrame(fb, OSP_FB_COLOR);
+    renderer.renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
 
     if (ospray::mpi::IamTheMaster()) {
       auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
@@ -187,7 +189,7 @@ namespace ospRandSphereTest {
       fb.unmap(lfb);
     }
 
-    ospray::mpi::world.barrier();
+    //ospray::mpi::world.barrier();
 #endif
 
     return 0;

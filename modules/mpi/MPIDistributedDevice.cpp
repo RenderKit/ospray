@@ -72,6 +72,11 @@ namespace ospray {
 
     // MPIDistributedDevice definitions ///////////////////////////////////////
 
+    MPIDistributedDevice::~MPIDistributedDevice()
+    {
+      MPI_CALL(Finalize());
+    }
+
     void MPIDistributedDevice::commit()
     {
       //TODO: is it necessary to track if we've initialized the device yet?
