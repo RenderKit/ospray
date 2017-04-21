@@ -194,6 +194,7 @@ namespace ospRandSphereTest {
     fb.clear(OSP_FB_ACCUM);
 
     if (runDistributed) {
+
       ospray::mpi::world.barrier();
 
       auto frameStartTime = ospcommon::getSysTime();
@@ -203,8 +204,6 @@ namespace ospRandSphereTest {
           std::cout << "rendering frame " << i << std::endl;
 
         renderer.renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
-
-        ospray::mpi::world.barrier();
       }
 
       double seconds = ospcommon::getSysTime() - frameStartTime;
@@ -219,7 +218,9 @@ namespace ospRandSphereTest {
       }
 
       ospray::mpi::world.barrier();
+
     } else {
+
       auto frameStartTime = ospcommon::getSysTime();
 
       for (int i = 0; i < numFrames; ++i) {
@@ -236,6 +237,7 @@ namespace ospRandSphereTest {
       std::cout << "\noutput: 'randomSphereTestLocal.ppm'" << std::endl;
       std::cout << "\nrendered " << numFrames << " frames at an avg rate of "
                 << numFrames / seconds << " frames per second" << std::endl;
+
     }
 
     return 0;

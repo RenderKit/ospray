@@ -23,6 +23,5 @@ OSPRAY_CREATE_APPLICATION(ospRandSphereTest
 LINK
   ospray
   ospray_mpi_common
-  ospray_imgui3d
   ospray_commandline
 )
