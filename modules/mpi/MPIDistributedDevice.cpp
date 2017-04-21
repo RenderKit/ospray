@@ -19,6 +19,8 @@
 //ospray
 #include "ospray/camera/Camera.h"
 #include "ospray/common/Data.h"
+#include "ospray/lights/Light.h"
+#include "ospray/transferFunction/TransferFunction.h"
 //mpiCommon
 #include "mpiCommon/MPICommon.h"
 //ospray_mpi
@@ -230,9 +232,10 @@ namespace ospray {
       object.findParam(bufName, true)->set(v);
     }
 
-    void MPIDistributedDevice::removeParam(OSPObject object, const char *name)
+    void MPIDistributedDevice::removeParam(OSPObject _object, const char *name)
     {
-      NOT_IMPLEMENTED;
+      auto &object = objectFromAPIHandle<ManagedObject>(_object);
+      object.removeParam(name);
     }
 
     int MPIDistributedDevice::setRegion(OSPVolume _volume, const void *source,
@@ -364,19 +367,40 @@ namespace ospray {
     OSPTransferFunction
     MPIDistributedDevice::newTransferFunction(const char *type)
     {
-      NOT_IMPLEMENTED;
+      return createOSPRayObjectWithHandle<TransferFunction,
+                                          OSPTransferFunction>(type);
     }
 
     OSPLight MPIDistributedDevice::newLight(OSPRenderer _renderer,
                                             const char *type)
     {
-      NOT_IMPLEMENTED;
+      auto &renderer = objectFromAPIHandle<Renderer>(_renderer);
+      auto *light    = renderer.createLight(type);
+
+      if (light == nullptr)
+        light = Light::createLight(type);
+
+      if (light) {
+        ObjectHandle handle;
+
+        handle.assign(light);
+
+        return (OSPLight)(int64)handle;
+      } else {
+        return nullptr;
+      }
     }
 
     void MPIDistributedDevice::removeGeometry(OSPModel _model,
                                               OSPGeometry _geometry)
     {
-      NOT_IMPLEMENTED;
+      auto model = objectFromAPIHandle<Model>(_model);
+      auto geom  = objectFromAPIHandle<Geometry>(_geometry);
+
+      //TODO: confirm this works?
+      model.geometry.erase(std::remove(model.geometry.begin(),
+                                       model.geometry.end(),
+                                       Ref<Geometry>(&geom)));
     }
 
     void MPIDistributedDevice::removeVolume(OSPModel _model, OSPVolume _volume)
