@@ -29,7 +29,7 @@
 namespace maml {
 
   /*! the singleton object that handles all the communication */
-  struct Context
+  struct OSPRAY_MPI_INTERFACE Context
   {
     Context();
     ~Context();

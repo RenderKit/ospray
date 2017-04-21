@@ -28,7 +28,7 @@ namespace maml {
     pointer to data; the message itself "owns" this pointer, and
     will delete it once the message itself dies. the message itself
     is reference counted using the std::shared_ptr functionality. */
-  struct Message
+  struct OSPRAY_MPI_INTERFACE Message
   {
     Message() = default;
 
@@ -86,20 +86,21 @@ namespace maml {
   
   /*! register a new incoing-message handler. if any message comes in
       on the given communicator we'll call this handler */
-  void registerHandlerFor(MPI_Comm comm, MessageHandler *handler);
+   OSPRAY_MPI_INTERFACE void registerHandlerFor(MPI_Comm comm,
+                                                MessageHandler *handler);
 
   /*! start the service; from this point on maml is free to use MPI
       calls to send/receive messages; if your MPI library is not
       thread safe the app should _not_ do any MPI calls until 'stop()'
       has been called */
-  void start();
+   OSPRAY_MPI_INTERFACE void start();
 
   /*! stops the maml layer; maml will no longer perform any MPI calls;
       if the mpi layer is not thread safe the app is then free to use
       MPI calls of its own, but it should not expect that this node
       receives any more messages (until the next 'start()' call) even
       if they are already in flight */
-  void stop();
+  OSPRAY_MPI_INTERFACE void stop();
   
   /*! schedule the given message to be send to the comm:rank indicated
       in this message. comm and rank have to be a valid address. Once
@@ -110,7 +111,7 @@ namespace maml {
       placed in the outbox to be sent at the next possible
       opportunity. */
   // void send(Message *msg);
-  void send(std::shared_ptr<Message> msg);
+  OSPRAY_MPI_INTERFACE void send(std::shared_ptr<Message> msg);
   
   /*! schedule the given message to be send to the given
       comm:rank. comm and rank have to be a valid address. Once this
@@ -127,6 +128,8 @@ namespace maml {
       sending out some new message(s) that simply haven't even STARTED
       arriving on this node, yet!!!
   */
-  void sendTo(MPI_Comm comm, int rank, std::shared_ptr<Message> msg);
+  OSPRAY_MPI_INTERFACE void sendTo(MPI_Comm comm,
+                                   int rank,
+                                   std::shared_ptr<Message> msg);
 
 } // ::maml
