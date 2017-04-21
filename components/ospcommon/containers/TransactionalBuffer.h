@@ -38,7 +38,7 @@ namespace ospcommon {
 
     bool empty() const;
 
- private:
+  private:
 
     // Data members //
 

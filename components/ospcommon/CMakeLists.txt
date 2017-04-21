@@ -95,4 +95,13 @@ ELSE()
 
     DESTINATION ../ospcommon/tasking #NOTE: this is "next" to the SDK/ directory
     )
+
+  ## Test apps ##
+
+  OSPRAY_CREATE_TEST(test_TransactionalBuffer
+    containers/TransactionalBuffer.h
+    containers/test_TransactionalBuffer.cpp
+  )
+
+  ADD_TEST(NAME TransactionalBuffer COMMAND test_TransactionalBuffer)
 ENDIF()
