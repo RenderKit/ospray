@@ -414,8 +414,9 @@ namespace ospray {
     {
       auto &fb       = objectFromAPIHandle<FrameBuffer>(_fb);
       auto &renderer = objectFromAPIHandle<Renderer>(_renderer);
-      renderer.renderFrame(&fb, fbChannelFlags);
+      auto result    = renderer.renderFrame(&fb, fbChannelFlags);
       mpi::world.barrier();
+      return result;
     }
 
     void MPIDistributedDevice::release(OSPObject _obj)
