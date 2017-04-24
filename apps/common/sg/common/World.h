@@ -50,6 +50,8 @@ namespace ospray {
       OSPModel ospModel {nullptr};
       std::vector<std::shared_ptr<Node>> nodes;
       std::shared_ptr<sg::World> oldWorld;
+      OSPModel oldModel;
+      int numGeometry{0};
     };
 
 
@@ -74,9 +76,13 @@ namespace ospray {
       virtual void postRender(RenderContext &ctx) override;
 
       OSPGeometry ospInstance {nullptr};
+      //currently, nested instances do not appear to work in OSPRay.  To get around this,
+      // instanced can be manually turned off for parent instancegroups.
       bool instanced {true};
+      ospcommon::affine3f cachedTransform;
       ospcommon::affine3f baseTransform;
       ospcommon::affine3f worldTransform;  
+      ospcommon::affine3f oldTransform{ospcommon::one};
       //    computed from baseTransform*position*rotation*scale
 
     };

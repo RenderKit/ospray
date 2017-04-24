@@ -395,7 +395,7 @@ namespace ospray {
       } else if (operation == "commit" &&
                (lastModified() >= lastCommitted() ||
                 childrenLastModified() >= lastCommitted())) {
-        std::cout << "preCommit: " << name() << std::endl;
+        // std::cout << "preCommit: " << name() << std::endl;
         preCommit(ctx);
       } else if (operation == "verify") {
         properties.valid = computeValid();

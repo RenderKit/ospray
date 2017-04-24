@@ -91,6 +91,7 @@ namespace ospray {
     {
       if (ospGeometry)
       {
+        assert((OSPMaterial)child("material").valueAs<OSPObject>());
         ospSetMaterial(ospGeometry,
                        (OSPMaterial)child("material").valueAs<OSPObject>());
         ospCommit(ospGeometry);
@@ -115,6 +116,7 @@ namespace ospray {
       if (index && index->notEmpty())
         ospSetData(ospGeometry,"index",index->getOSP());
 
+      assert((OSPMaterial)child("material").valueAs<OSPObject>());
       ospSetMaterial(ospGeometry,
                      (OSPMaterial)child("material").valueAs<OSPObject>());
       ospCommit(ospGeometry);
@@ -123,7 +125,8 @@ namespace ospray {
 
     void TriangleMesh::postRender(RenderContext& ctx)
     {
-      ospAddGeometry(ctx.world->ospModel,ospGeometry);
+      ospAddGeometry(ctx.currentOSPModel,ospGeometry);
+      // ctx.world->numGeometry++;
     }
 
     OSP_REGISTER_SG_NODE(TriangleMesh);

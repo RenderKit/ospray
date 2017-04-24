@@ -35,7 +35,9 @@ namespace ospray {
 
         auto &sgFB = scenegraph->child("frameBuffer");
 
-        if (sgFB.childrenLastModified() > lastFTime) {
+        static bool once = false;  //TODO: fix stupid timestamp again
+        static int counter = 0;
+        if (sgFB.childrenLastModified() > lastFTime || !once) {
           auto &size = sgFB["size"];
           nPixels = size.valueAs<vec2i>().x * size.valueAs<vec2i>().y;
           pixelBuffer[0].resize(nPixels);
@@ -44,8 +46,11 @@ namespace ospray {
         }
 
 
-        if (scenegraph->childrenLastModified() > lastRTime) {
-          static int once = 0;
+        if (scenegraph->childrenLastModified() > lastRTime || !once) {
+        // scenegraph->child("framebuffer")["size"].setValue(vec2i(1024, 767));
+        // scenegraph->child("framebuffer")["size"].setValue(vec2i(1024, 768));
+        // scenegraph->child("camera")["dir"].setValue(vec3f(0,.5,-.5));
+        // scenegraph->child("camera")["dir"].setValue(vec3f(0,0,-1));
           scenegraph->traverse("verify");
           scenegraph->traverse("commit");
 
@@ -57,12 +62,15 @@ namespace ospray {
           lastRTime = sg::TimeStamp();
         }
 
+        // std::cout << "render\n";
         fps.startRender();
         scenegraph->traverse("render");
         if (scenegraphDW) 
           scenegraphDW->traverse("render");
+        once = true;
         
         fps.doneRender();
+        // std::cout << "donerender\n";
         auto sgFBptr =
             std::static_pointer_cast<sg::FrameBuffer>(sgFB.shared_from_this());
 

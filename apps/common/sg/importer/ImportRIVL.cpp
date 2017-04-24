@@ -201,7 +201,6 @@ namespace ospray {
     void parseMaterialNode(const xml::Node &node)
     {
       std::shared_ptr<sg::Material> mat = std::make_shared<sg::Material>();
-      mat->ospMaterial = NULL;
       nodeList.push_back(mat);
       
       mat->setName(node.getProp("name"));
@@ -254,10 +253,11 @@ namespace ospray {
 
       // std::shared_ptr<sg::Transform> xfNode = std::make_shared<sg::Transform>(xfm,child);
       std::stringstream ss;
-      ss << "instance_" << id;
-      auto xfNode = createNode(ss.str(), "InstanceGroup");
+      ss << "child_" << id;
+      auto xfNode = createNode(ss.str(), "Transform");
       xfNode->setChild(child->name(), child);
-      std::static_pointer_cast<sg::InstanceGroup>(xfNode)->baseTransform = xfm;
+      child->setParent(xfNode);
+      std::static_pointer_cast<sg::Transform>(xfNode)->baseTransform = xfm;
       nodeList.push_back(std::dynamic_pointer_cast<sg::Node>(xfNode));
     }
 
@@ -273,7 +273,9 @@ namespace ospray {
       ss << "_" << node.getProp("id");
       mesh->setName(ss.str());
       mesh->setType("PTMTriangleMesh");
-      nodeList.push_back(mesh);
+      auto instance = createNode ("meshInstance_"+ss.str(),"InstanceGroup");
+      instance->add(mesh);
+      nodeList.push_back(instance);
 
       xml::for_each_child_of(node,[&](const xml::Node &child){
           assert(binBasePtr);
@@ -313,6 +315,7 @@ namespace ospray {
               assert(mat);
               mesh->materialList.push_back(mat);
               mesh->setChild("material", mat);
+              mat->setParent(mesh);
             }
             free(value);
           } else {
@@ -333,10 +336,11 @@ namespace ospray {
         // empty group...
         ;
       else {
-        size_t counter;
+        size_t counter=0;
         char *value = strdup(node.content.c_str());
         for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(NULL," \t\n\r")) {
-          if (counter++ > 1000)//DEBUG large groups
+          counter++;
+          if (counter > 100)//DEBUG large groups
             continue;
           size_t childID = atoi(s);
           std::shared_ptr<sg::Node> child = nodeList[childID];
@@ -344,6 +348,7 @@ namespace ospray {
           std::stringstream ss;
           ss << "child_" << childID;
           group->setChild(ss.str(), child);
+          child->setParent(group);
         }
         free(value);
       }

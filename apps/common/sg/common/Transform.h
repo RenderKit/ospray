@@ -25,8 +25,9 @@ namespace ospray {
     //! a transformation node
     struct OSPSG_INTERFACE Transform : public sg::Node
     {
-      Transform(const AffineSpace3f &xfm,
-                const std::shared_ptr<sg::Node> &node);
+      Transform();
+      // Transform(const AffineSpace3f &xfm,
+      //           const std::shared_ptr<sg::Node> &node);
 
       std::string toString() const override;
 
@@ -36,13 +37,16 @@ namespace ospray {
         camera motion, setting default camera position, etc. Nodes
         for which that does not apply can simpy return
         box3f(empty) */
-      box3f bounds() const override;
+      // box3f bounds() const override;
+      virtual void preCommit(RenderContext &ctx) override;
+      virtual void postCommit(RenderContext &ctx) override;
 
       //! \brief the actual (affine) transformation matrix
       AffineSpace3f xfm;
-
-      //! child node we're transforming
-      std::shared_ptr<sg::Node> node;
+      ospcommon::affine3f cachedTransform;
+      ospcommon::affine3f baseTransform;
+      ospcommon::affine3f worldTransform;  
+      ospcommon::affine3f oldTransform{ospcommon::one};
     };
 
   } // ::ospray::sg

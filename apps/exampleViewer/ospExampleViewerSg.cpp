@@ -327,6 +327,14 @@ int main(int ac, const char **av)
   renderer.traverse("commit");
   std::cout << "render\n";
   renderer.traverse("render");
+  renderer["framebuffer"]["size"].setValue(vec2i(1024,768));
+  renderer["camera"]["dir"].setValue(vec3f(0,0,-1));
+  std::cout << "verify\n";
+  renderer.traverse("verify");
+  std::cout << "commit\n";
+  renderer.traverse("commit");
+  std::cout << "render\n";
+  renderer.traverse("render");
   std::cout << "done init\n";
 
   ospray::ImGuiViewerSg window(renderer_ptr, rendererDW);

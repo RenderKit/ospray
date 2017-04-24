@@ -48,6 +48,8 @@ namespace ospray {
 
     void World::preCommit(RenderContext &ctx)
     {
+      std::cout << __PRETTY_FUNCTION__ << ": " << name() << "\n";
+      numGeometry=0;
       oldWorld = ctx.world;
       ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
       if (ospModel)
@@ -55,12 +57,15 @@ namespace ospray {
       ospModel = ospNewModel();
       ospCommit(ospModel);
       setValue((OSPObject)ospModel);
+      oldModel = ctx.currentOSPModel;
+      ctx.currentOSPModel = ospModel;
     }
 
     void World::postCommit(RenderContext &ctx)
     {
       ospCommit(ospModel);
       ctx.world = oldWorld;
+      ctx.currentOSPModel = oldModel;
     }
 
     void World::preRender(RenderContext &ctx)
@@ -72,8 +77,10 @@ namespace ospray {
 
     void World::postRender(RenderContext &ctx)
     {
-       ospCommit(ospModel);
-       ctx.world = oldWorld;
+       // ospCommit(ospModel);
+       // ctx.world = oldWorld;
+       // ctx.currentOSPModel = oldModel;
+      postCommit(ctx);
     }
 
     InstanceGroup::InstanceGroup()
@@ -130,13 +137,15 @@ namespace ospray {
 
     void InstanceGroup::preCommit(RenderContext &ctx)
     {
+      numGeometry=0;
       if (instanced) {
-        oldWorld = ctx.world;
-        ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
+        std::cout << __PRETTY_FUNCTION__ << ": " << name() << "\n";
+        // oldWorld = ctx.world;
+        // ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
         vec3f scale = child("scale").valueAs<vec3f>();
         vec3f rotation = child("rotation").valueAs<vec3f>();
         vec3f translation = child("position").valueAs<vec3f>();
-        worldTransform = baseTransform*ospcommon::affine3f::translate(translation)*
+        worldTransform = ctx.currentTransform*baseTransform*ospcommon::affine3f::translate(translation)*
         ospcommon::affine3f::rotate(vec3f(1,0,0),rotation.x)*
         ospcommon::affine3f::rotate(vec3f(0,1,0),rotation.y)*
         ospcommon::affine3f::rotate(vec3f(0,0,1),rotation.z)*
@@ -147,31 +156,43 @@ namespace ospray {
         ospModel = ospNewModel();
         ospCommit(ospModel);
         setValue((OSPObject)ospModel);
+        oldModel = ctx.currentOSPModel;
+        ctx.currentOSPModel = ospModel;
+        oldTransform = ctx.currentTransform;
+        ctx.currentTransform = worldTransform;
       }
     }
 
     void InstanceGroup::postCommit(RenderContext &ctx)
     {
+      todo: move this to own function.  call from renders
+      std::cout << __PRETTY_FUNCTION__ << ": " << name() << std::endl;
       if (instanced)
       {
         //instancegroup caches render calls in commit.  
         for (auto child : properties.children)
           child.second->traverse(ctx, "render");
+        ctx.currentOSPModel = oldModel;
+        ctx.currentTransform = oldTransform;
 
         ospCommit(ospModel);
-        ctx.world = oldWorld;
+        // ctx.world = oldWorld;
         if (ospInstance)
           ospRelease(ospInstance);
         ospInstance = ospNewInstance(ospModel,(osp::affine3f&)worldTransform);
-        ospCommit(ospInstance);        
+        std::cout << "InstanceGroup: " << name() << ": " << worldTransform << std::endl;
+        ospCommit(ospInstance);
+        child("bounds").setValue(bounds());
       }
     }
 
     void InstanceGroup::preRender(RenderContext &ctx)
     {
               if (instanced) {
-      oldWorld = ctx.world;
-        ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
+      // oldWorld = ctx.world;
+        // ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
+        oldModel = ctx.currentOSPModel;
+        ctx.currentOSPModel = ospModel;
         {
           // ospModel = ospNewModel();
           // ospCommit(ospModel);
@@ -184,11 +205,11 @@ namespace ospray {
     {
       if (instanced)
       {
-        ctx.world = oldWorld;
+        ctx.currentOSPModel = oldModel;
         if (child("visible").value() == true)
         {
-          // if (!bounds().empty())
-            ospAddGeometry(oldWorld->ospModel,ospInstance);
+          if (ctx.world->ospModel)
+            ospAddGeometry(ctx.world->ospModel,ospInstance);
         }
       }
     }
