@@ -254,7 +254,7 @@ namespace ospray {
 
     int MPIDistributedDevice::loadModule(const char *name)
     {
-      loadLocalModule(name);
+      return loadLocalModule(name);
     }
 
     void MPIDistributedDevice::setFloat(OSPObject _object,
