@@ -18,10 +18,12 @@
 
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/apps/exampleViewer)
 
-OSPRAY_CREATE_APPLICATION(ospRandSphereTest
-  ospRandSphereTest.cpp
-LINK
-  ospray
-  ospray_mpi_common
-  ospray_commandline
-)
+IF (NOT WIN32)# Internal Compiler Error on MSVC12...
+  OSPRAY_CREATE_APPLICATION(ospRandSphereTest
+    ospRandSphereTest.cpp
+  LINK
+    ospray
+    ospray_mpi_common
+    ospray_commandline
+  )
+ENDIF()
