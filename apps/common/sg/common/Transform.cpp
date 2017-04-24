@@ -93,7 +93,7 @@ namespace ospray {
     //   return bounds;
     // }
 
-    void Transform::preCommit(RenderContext &ctx)
+    void Transform::preRender(RenderContext &ctx)
     {
       vec3f scale = child("scale").valueAs<vec3f>();
       vec3f rotation = child("rotation").valueAs<vec3f>();
@@ -108,7 +108,7 @@ namespace ospray {
       ctx.currentTransform = worldTransform;
     }
 
-    void Transform::postCommit(RenderContext &ctx)
+    void Transform::postRender(RenderContext &ctx)
     {
       ctx.currentTransform = oldTransform;
     }

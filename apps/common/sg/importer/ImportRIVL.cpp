@@ -219,11 +219,12 @@ namespace ospray {
       std::shared_ptr<sg::Node> child;
       affine3f xfm;
       int id=0;
+      size_t childID=0;
         
       // find child ID
       xml::for_each_prop(node,[&](const std::string &name, const std::string &value){
           if (name == "child") {
-            size_t childID = atoi(value.c_str());//(char*)value);
+            childID = atoi(value.c_str());//(char*)value);
             child = nodeList[childID];
             assert(child);
           } else if (name == "id") {
@@ -253,8 +254,16 @@ namespace ospray {
 
       // std::shared_ptr<sg::Transform> xfNode = std::make_shared<sg::Transform>(xfm,child);
       std::stringstream ss;
-      ss << "child_" << id;
+      ss << "transform_" << id;
       auto xfNode = createNode(ss.str(), "Transform");
+      if (child->type() == "PTMTriangleMesh")
+      {      
+        ss.clear();
+        ss << "child_" << childID;
+        auto instance = createNode(ss.str(), "InstanceGroup");
+        instance->add(child);
+        child = instance;
+      }
       xfNode->setChild(child->name(), child);
       child->setParent(xfNode);
       std::static_pointer_cast<sg::Transform>(xfNode)->baseTransform = xfm;
@@ -273,9 +282,9 @@ namespace ospray {
       ss << "_" << node.getProp("id");
       mesh->setName(ss.str());
       mesh->setType("PTMTriangleMesh");
-      auto instance = createNode ("meshInstance_"+ss.str(),"InstanceGroup");
-      instance->add(mesh);
-      nodeList.push_back(instance);
+      // auto instance = createNode ("meshInstance_"+ss.str(),"InstanceGroup");
+      // instance->add(mesh);
+      nodeList.push_back(mesh);
 
       xml::for_each_child_of(node,[&](const xml::Node &child){
           assert(binBasePtr);
@@ -340,13 +349,19 @@ namespace ospray {
         char *value = strdup(node.content.c_str());
         for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(NULL," \t\n\r")) {
           counter++;
-          if (counter > 100)//DEBUG large groups
+          if (counter > 5)//DEBUG large groups
             continue;
           size_t childID = atoi(s);
           std::shared_ptr<sg::Node> child = nodeList[childID];
           group->children.push_back(child);
           std::stringstream ss;
           ss << "child_" << childID;
+          if (child->type() == "PTMTriangleMesh")
+          {
+            auto instance = createNode(ss.str(), "InstanceGroup");
+            instance->add(child);
+            child = instance;
+          }
           group->setChild(ss.str(), child);
           child->setParent(group);
         }

@@ -23,7 +23,7 @@ namespace ospray {
   namespace sg {
 
     //! a transformation node
-    struct OSPSG_INTERFACE Transform : public sg::Node
+    struct OSPSG_INTERFACE Transform : public sg::Renderable
     {
       Transform();
       // Transform(const AffineSpace3f &xfm,
@@ -38,8 +38,8 @@ namespace ospray {
         for which that does not apply can simpy return
         box3f(empty) */
       // box3f bounds() const override;
-      virtual void preCommit(RenderContext &ctx) override;
-      virtual void postCommit(RenderContext &ctx) override;
+      virtual void preRender(RenderContext &ctx) override;
+      virtual void postRender(RenderContext &ctx) override;
 
       //! \brief the actual (affine) transformation matrix
       AffineSpace3f xfm;

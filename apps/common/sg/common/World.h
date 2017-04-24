@@ -75,15 +75,21 @@ namespace ospray {
       virtual void preRender(RenderContext &ctx) override;
       virtual void postRender(RenderContext &ctx) override;
 
+
       OSPGeometry ospInstance {nullptr};
       //currently, nested instances do not appear to work in OSPRay.  To get around this,
       // instanced can be manually turned off for parent instancegroups.
       bool instanced {true};
-      ospcommon::affine3f cachedTransform;
       ospcommon::affine3f baseTransform;
+      //    computed from baseTransform*position*rotation*scale
+
+    protected:
+      void updateInstance(RenderContext &ctx);
+      void updateTransform(RenderContext &ctx);
+      bool instanceDirty{true};
+      ospcommon::affine3f cachedTransform;
       ospcommon::affine3f worldTransform;  
       ospcommon::affine3f oldTransform{ospcommon::one};
-      //    computed from baseTransform*position*rotation*scale
 
     };
     
