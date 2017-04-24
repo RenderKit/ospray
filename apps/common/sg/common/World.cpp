@@ -48,7 +48,6 @@ namespace ospray {
 
     void World::preCommit(RenderContext &ctx)
     {
-      std::cout << __PRETTY_FUNCTION__ << ": " << name() << "\n";
       numGeometry=0;
       oldWorld = ctx.world;
       ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
@@ -104,7 +103,7 @@ namespace ospray {
       camera motion, setting default camera position, etc. Nodes
       for which that does not apply can simpy return
       box3f(empty) */
-    box3f InstanceGroup::bounds() const
+    box3f InstanceGroup::computeBounds() const
     {
       box3f cbounds = empty;
       for (const auto &child : properties.children)
@@ -125,6 +124,11 @@ namespace ospray {
       return bounds;
     }
 
+    box3f InstanceGroup::bounds() const
+    {
+      return child("bounds").valueAs<box3f>();
+    }
+
     void InstanceGroup::traverse(RenderContext &ctx, const std::string& operation)
     {
       if (instanced && operation == "render")
@@ -138,9 +142,9 @@ namespace ospray {
 
     void InstanceGroup::preCommit(RenderContext &ctx)
     {
+      std::cout << __PRETTY_FUNCTION__ << " \"" << name() << "\"\n";
       numGeometry=0;
       if (instanced) {
-        std::cout << __PRETTY_FUNCTION__ << ": " << name() << "\n";
         // oldWorld = ctx.world;
         // ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
         instanceDirty=true;
@@ -149,7 +153,6 @@ namespace ospray {
 
     void InstanceGroup::postCommit(RenderContext &ctx)
     {
-      std::cout << __PRETTY_FUNCTION__ << ": " << name() << std::endl;
       if (instanced)
       {
 
@@ -158,6 +161,7 @@ namespace ospray {
 
     void InstanceGroup::preRender(RenderContext &ctx)
     {
+      // std::cout << __PRETTY_FUNCTION__ << " \"" << name() << "\"\n";
       if (instanced) {
       // oldWorld = ctx.world;
         // ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
@@ -203,7 +207,9 @@ namespace ospray {
 
     void InstanceGroup::updateInstance(RenderContext &ctx)
     {
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
         updateTransform(ctx);
+        cachedTransform=ctx.currentTransform;
         ctx.currentTransform = worldTransform;
 
         if (ospModel)
@@ -221,11 +227,9 @@ namespace ospray {
         if (ospInstance)
           ospRelease(ospInstance);
         ospInstance = ospNewInstance(ospModel,(osp::affine3f&)worldTransform);
-        std::cout << "InstanceGroup: " << name() << ": " << worldTransform << std::endl;
         ospCommit(ospInstance);
         child("bounds").setValue(bounds());
         instanceDirty=false;
-        cachedTransform=ctx.currentTransform;
     }
 
     OSP_REGISTER_SG_NODE(World);

@@ -35,6 +35,8 @@ namespace ospray {
 
       //! return bounding box of all primitives
       box3f bounds() const override;
+      
+      box3f computeBounds() const;
 
       void postCommit(RenderContext &ctx) override;
       void postRender(RenderContext& ctx) override;
@@ -97,7 +99,7 @@ namespace ospray {
       //! constructor
       PTMTriangleMesh();
 
-      box3f bounds() const override;
+      // box3f bounds() const override;
 
       // Data members //
 

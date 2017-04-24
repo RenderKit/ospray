@@ -413,20 +413,29 @@ namespace ospray {
     //! a Node with bounds and a render operation
     struct OSPSG_INTERFACE Renderable : public Node
     {
-      Renderable() { createChild("bounds", "box3f"); }
+      Renderable() { createChild("bounds", "box3f", empty); }
       virtual ~Renderable() = default;
 
-      virtual box3f bounds() const override { return bbox; }
-      virtual box3f extendBounds(box3f b) { bbox.extend(b); return bbox; }
+      virtual box3f bounds() const override { return child("bounds").valueAs<box3f>(); }
+      virtual box3f computeBounds() const
+      {
+        box3f cbounds = empty;
+        for (const auto &child : properties.children)
+          cbounds.extend(child.second->bounds());
+        if (cbounds.empty())
+          return cbounds;
+      }
+      // virtual box3f extendBounds(box3f b) { bbox.extend(b); return bbox; }
       virtual void preTraverse(RenderContext &ctx,
                                const std::string& operation) override;
       virtual void postTraverse(RenderContext &ctx,
                                 const std::string& operation) override;
-      virtual void preCommit(RenderContext &ctx) override { bbox = empty; }
+      virtual void postCommit(RenderContext &ctx) override { 
+        child("bounds").setValue(computeBounds()); }
       virtual void preRender(RenderContext &ctx)  {}
       virtual void postRender(RenderContext &ctx) {}
     protected:
-      box3f bbox;
+      // box3f bbox;
     };
 
     /*! \brief registers a internal ospray::<ClassName> renderer under

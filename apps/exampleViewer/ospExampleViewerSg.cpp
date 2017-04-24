@@ -322,11 +322,18 @@ int main(int ac, const char **av)
   }
 
   std::cout << "verify\n";
+  double time = ospcommon::getSysTime();
   renderer.traverse("verify");
+  double verifyTime = ospcommon::getSysTime() - time;
   std::cout << "commit\n";
+  time = ospcommon::getSysTime();
   renderer.traverse("commit");
+  double commitTime = ospcommon::getSysTime() - time;
   std::cout << "render\n";
+  time = ospcommon::getSysTime();
   renderer.traverse("render");
+  double renderTime = ospcommon::getSysTime() - time;
+  std::cout << "bounds: " << renderer["world"].bounds() << std::endl;
   renderer["framebuffer"]["size"].setValue(vec2i(1024,768));
   renderer["camera"]["dir"].setValue(vec3f(0,0,-1));
   std::cout << "verify\n";
@@ -336,6 +343,9 @@ int main(int ac, const char **av)
   std::cout << "render\n";
   renderer.traverse("render");
   std::cout << "done init\n";
+  std::cout << "verify time: " << verifyTime << std::endl;
+  std::cout << "commit time: " << commitTime << std::endl;
+  std::cout << "render time: " << renderTime << std::endl;
 
   ospray::ImGuiViewerSg window(renderer_ptr, rendererDW);
 

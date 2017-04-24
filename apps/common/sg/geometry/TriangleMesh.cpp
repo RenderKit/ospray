@@ -33,6 +33,13 @@ namespace ospray {
 
     box3f TriangleMesh::bounds() const
     {
+      // std::cout << __PRETTY_FUNCTION__ << " " << name() << std::endl;
+      return child("bounds").valueAs<box3f>();
+    }
+
+    box3f TriangleMesh::computeBounds() const
+    {
+      std::cout << __PRETTY_FUNCTION__ << " " << name() << std::endl;
       box3f bounds = empty;
       for (uint32_t i = 0; i < vertex->getSize(); i++)
         bounds.extend(vertex->get3f(i));
@@ -79,14 +86,6 @@ namespace ospray {
     {
     }
 
-    box3f PTMTriangleMesh::bounds() const
-    {
-      box3f bounds = empty;
-      for (uint32_t i = 0; i < vertex->getSize(); i++)
-        bounds.extend(vertex->get3f(i));
-      return bounds;
-    }
-
     void TriangleMesh::postCommit(RenderContext &ctx)
     {
       if (ospGeometry)
@@ -120,6 +119,7 @@ namespace ospray {
       ospSetMaterial(ospGeometry,
                      (OSPMaterial)child("material").valueAs<OSPObject>());
       ospCommit(ospGeometry);
+      child("bounds").setValue(computeBounds());
       // ospAddGeometry(ctx.world->ospModel,ospGeometry);
     }
 

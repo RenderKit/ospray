@@ -349,7 +349,7 @@ namespace ospray {
         char *value = strdup(node.content.c_str());
         for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(NULL," \t\n\r")) {
           counter++;
-          if (counter > 5)//DEBUG large groups
+          if (counter > 100)//DEBUG large groups
             continue;
           size_t childID = atoi(s);
           std::shared_ptr<sg::Node> child = nodeList[childID];

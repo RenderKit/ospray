@@ -66,6 +66,7 @@ namespace ospray {
         for which that does not apply can simpy return
         box3f(embree::empty) */
       virtual box3f bounds() const override;
+      virtual box3f computeBounds() const override;
 
       //InstanceGroup caches renders.  It will render children during commit, and add
          //cached rendered children during render call.  

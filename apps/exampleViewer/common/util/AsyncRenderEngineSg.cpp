@@ -51,8 +51,13 @@ namespace ospray {
         // scenegraph->child("framebuffer")["size"].setValue(vec2i(1024, 768));
         // scenegraph->child("camera")["dir"].setValue(vec3f(0,.5,-.5));
         // scenegraph->child("camera")["dir"].setValue(vec3f(0,0,-1));
+          double time = ospcommon::getSysTime();
           scenegraph->traverse("verify");
+          double verifyTime = ospcommon::getSysTime() - time;
+          time = ospcommon::getSysTime();
           scenegraph->traverse("commit");
+          double commitTime = ospcommon::getSysTime() - time;
+          std::cout << "commit time: " << commitTime << std::endl;
 
           if (scenegraphDW) {
             scenegraphDW->traverse("verify");
@@ -62,7 +67,6 @@ namespace ospray {
           lastRTime = sg::TimeStamp();
         }
 
-        // std::cout << "render\n";
         fps.startRender();
         scenegraph->traverse("render");
         if (scenegraphDW) 
@@ -70,7 +74,6 @@ namespace ospray {
         once = true;
         
         fps.doneRender();
-        // std::cout << "donerender\n";
         auto sgFBptr =
             std::static_pointer_cast<sg::FrameBuffer>(sgFB.shared_from_this());
 
