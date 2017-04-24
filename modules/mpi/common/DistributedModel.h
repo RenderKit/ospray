@@ -27,36 +27,26 @@
 #include "embree2/rtcore.h"
 
 namespace ospray {
+  namespace mpi {
 
-  /*! \brief Base Abstraction for an OSPRay 'Model' entity
+    struct DistributedModel : public ManagedObject
+    {
+      DistributedModel();
+      virtual ~DistributedModel() = default;
 
-    A 'model' is the generalization of a 'scene' in embree: it is a
-    collection of geometries and volumes that one can trace rays
-    against, and that one can afterwards 'query' for certain
-    properties (like the shading normal or material for a given
-    ray/model intersection) */
-  struct OSPRAY_SDK_INTERFACE Model : public ManagedObject
-  {
-    Model();
-    virtual ~Model() = default;
+      //! \brief common function to help printf-debugging
+      virtual std::string toString() const override;
+      virtual void commit() override;
 
-    //! \brief common function to help printf-debugging
-    virtual std::string toString() const override;
-    virtual void commit() override;
+      // Data members //
 
-    // Data members //
+      //! \brief vector of all geometries used in this model
+      std::vector<Ref<Geometry>> geometry;
 
-    using GeometryVector = std::vector<Ref<Geometry>>;
-    using VolumeVector   = std::vector<Ref<Volume>>;
+      //! \brief the embree scene handle for this geometry
+      RTCScene embreeSceneHandle {nullptr};
+      box3f bounds;
+    };
 
-    //! \brief vector of all geometries used in this model
-    GeometryVector geometry;
-    //! \brief vector of all volumes used in this model
-    VolumeVector volume;
-
-    //! \brief the embree scene handle for this geometry
-    RTCScene embreeSceneHandle {nullptr};
-    box3f bounds;
-  };
-
+  } // ::ospray::mpi
 } // ::ospray

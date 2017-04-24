@@ -198,7 +198,7 @@ namespace ospray {
 
     inline int numWorkers()
     {
-      return mpi::worker.size;
+      return mpi::world.size - 1;
     }
 
     inline int workerRank()

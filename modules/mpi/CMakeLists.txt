@@ -31,11 +31,14 @@ IF (OSPRAY_MODULE_MPI)
 
   OSPRAY_CREATE_LIBRARY(ospray_module_mpi
     MPIDevice.cpp
+    MPIDistributedDevice.cpp
     worker.cpp
 
     common/OSPWork.cpp
     common/Messaging.cpp
     common/DataStreaming.h
+    common/DistributedModel.cpp
+    common/DistributedModel.ispc
     common/BufferedDataStreaming.cpp
 
     fb/DistributedFrameBuffer.cpp
@@ -43,6 +46,8 @@ IF (OSPRAY_MODULE_MPI)
     fb/DistributedFrameBuffer_TileTypes.cpp
 
     render/MPILoadBalancer.cpp
+    render/distributed/DistributedRaycast.cpp
+    render/distributed/DistributedRaycast.ispc
     render/volume/RaycastVolumeMaterial.cpp
     render/volume/RaycastVolumeMaterial.ih
     render/volume/RaycastVolumeMaterial.ispc
@@ -70,5 +75,11 @@ IF (OSPRAY_MODULE_MPI)
   LINK
     ospray
   )
+
+  ##############################################################
+  # Test apps
+  ##############################################################
+
+  ADD_SUBDIRECTORY(apps)
 
 ENDIF (OSPRAY_MODULE_MPI)
