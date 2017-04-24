@@ -76,25 +76,41 @@ namespace ospray {
 
     MPIDistributedDevice::~MPIDistributedDevice()
     {
-      MPI_CALL(Finalize());
+      try {
+        MPI_CALL(Finalize());
+      } catch (...) {
+        //TODO: anything to do here? try-catch added to silence a warning...
+      }
     }
 
     void MPIDistributedDevice::commit()
     {
-      //TODO: is it necessary to track if we've initialized the device yet?
-#if 0
-      if (initialized)
-        return;
-#endif
+      if (!initialized) {
+        int _ac = 1;
+        const char *_av[] = {"ospray_mpi_worker"};
+
+        mpi::init(&_ac, _av);
+
+        std::stringstream embreeConfig;
+        if (debugMode)
+          embreeConfig << " threads=1,verbose=2";
+        else if(numThreads > 0)
+          embreeConfig << " threads=" << numThreads;
+        embreeDevice = rtcNewDevice(embreeConfig.str().c_str());
+
+        rtcDeviceSetErrorFunction(embreeDevice, embreeErrorFunc);
+
+        RTCError erc = rtcDeviceGetError(embreeDevice);
+        if (erc != RTC_NO_ERROR) {
+          // why did the error function not get called !?
+          postErrorMsg() << "#osp:init: embree internal error number " << erc;
+          assert(erc == RTC_NO_ERROR);
+        }
+
+        initialized = true;
+      }
 
       Device::commit();
-
-      initialized = true;
-
-      int _ac = 1;
-      const char *_av[] = {"ospray_mpi_worker"};
-
-      mpi::init(&_ac, _av);
 
       masterRank = getParam1i("masterRank", 0);
 
@@ -104,22 +120,6 @@ namespace ospray {
         postErrorMsg() << "#dmpi: device commit() setting mode to " << mode;
       } else {
         throw std::runtime_error("#dmpi: bad device mode ['" + mode + "]");
-      }
-
-      std::stringstream embreeConfig;
-      if (debugMode)
-        embreeConfig << " threads=1,verbose=2";
-      else if(numThreads > 0)
-        embreeConfig << " threads=" << numThreads;
-      embreeDevice = rtcNewDevice(embreeConfig.str().c_str());
-
-      rtcDeviceSetErrorFunction(embreeDevice, embreeErrorFunc);
-
-      RTCError erc = rtcDeviceGetError(embreeDevice);
-      if (erc != RTC_NO_ERROR) {
-        // why did the error function not get called !?
-        postErrorMsg() << "#osp:init: embree internal error number " << erc;
-        assert(erc == RTC_NO_ERROR);
       }
 
       // TODO: implement 'staticLoadBalancer::Distributed'
