@@ -65,7 +65,6 @@ namespace ospray {
         camera motion, setting default camera position, etc. Nodes
         for which that does not apply can simpy return
         box3f(embree::empty) */
-      virtual box3f bounds() const override;
       virtual void preCommit(RenderContext &ctx) override;
       virtual void postCommit(RenderContext &ctx) override;
       virtual void preRender(RenderContext &ctx) override;
@@ -89,7 +88,6 @@ namespace ospray {
         camera motion, setting default camera position, etc. Nodes
         for which that does not apply can simpy return
         box3f(embree::empty) */
-      virtual box3f bounds() const override;
       virtual box3f computeBounds() const override;
 
       //InstanceGroup caches renders.  It will render children during commit, and add

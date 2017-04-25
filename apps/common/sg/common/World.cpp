@@ -24,14 +24,6 @@ namespace ospray {
       createChild("bounds", "box3f");
     }
 
-    box3f World::bounds() const
-    {
-      box3f bounds = empty;
-      for (const auto &child : properties.children)
-        bounds.extend(child.second->bounds());
-      return bounds;
-    }
-
     std::string World::toString() const
     {
       return "ospray::viewer::sg::World";
@@ -122,11 +114,6 @@ namespace ospray {
       bounds.extend(xfmPoint(worldTransform,vec3f(lo.x,hi.y,hi.z)));
       bounds.extend(xfmPoint(worldTransform,vec3f(hi.x,hi.y,hi.z)));
       return bounds;
-    }
-
-    box3f InstanceGroup::bounds() const
-    {
-      return child("bounds").valueAs<box3f>();
     }
 
     void InstanceGroup::traverse(RenderContext &ctx, const std::string& operation)
