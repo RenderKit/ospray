@@ -57,6 +57,7 @@ namespace ospray {
       ospCommit(ospModel);
       ctx.world = oldWorld;
       ctx.currentOSPModel = oldModel;
+      child("bounds").setValue(computeBounds());
     }
 
     void World::preRender(RenderContext &ctx)
