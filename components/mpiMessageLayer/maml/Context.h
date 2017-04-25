@@ -29,7 +29,7 @@
 namespace maml {
 
   /*! the singleton object that handles all the communication */
-  struct OSPRAY_MAML_EXPORT Context
+  struct OSPRAY_MAML_INTERFACE Context
   {
     Context();
     ~Context();
