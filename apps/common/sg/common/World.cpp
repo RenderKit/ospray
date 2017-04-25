@@ -148,6 +148,20 @@ namespace ospray {
         // oldWorld = ctx.world;
         // ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
         instanceDirty=true;
+
+        oldModel = ctx.currentOSPModel;
+        oldTransform = ctx.currentTransform;
+
+        updateTransform(ctx);
+        cachedTransform=ctx.currentTransform;
+        ctx.currentTransform = worldTransform;
+
+        if (ospModel)
+          ospRelease(ospModel);
+        ospModel = ospNewModel();
+        // ospCommit(ospModel);
+        setValue((OSPObject)ospModel);
+        ctx.currentOSPModel = ospModel;
       }
     }
 
@@ -155,8 +169,18 @@ namespace ospray {
     {
       if (instanced)
       {
+        ctx.currentOSPModel = ospModel;
 
+        //instancegroup caches render calls in commit.  
+        for (auto child : properties.children)
+          child.second->traverse(ctx, "render");
+
+        ospCommit(ospModel);
+
+        ctx.currentOSPModel = oldModel;
+        ctx.currentTransform = oldTransform;
       }
+      child("bounds").setValue(computeBounds());
     }
 
     void InstanceGroup::preRender(RenderContext &ctx)
@@ -210,25 +234,15 @@ namespace ospray {
         std::cout << __PRETTY_FUNCTION__ << std::endl;
         updateTransform(ctx);
         cachedTransform=ctx.currentTransform;
-        ctx.currentTransform = worldTransform;
 
-        if (ospModel)
-          ospRelease(ospModel);
-        ospModel = ospNewModel();
-        ospCommit(ospModel);
-        setValue((OSPObject)ospModel);
-        ctx.currentOSPModel = ospModel;
-        //instancegroup caches render calls in commit.  
-        for (auto child : properties.children)
-          child.second->traverse(ctx, "render");
-
-        ospCommit(ospModel);
         // ctx.world = oldWorld;
         if (ospInstance)
           ospRelease(ospInstance);
+
+        ospcommon::affine3f test = ospcommon::one;
         ospInstance = ospNewInstance(ospModel,(osp::affine3f&)worldTransform);
+        // ospInstance = ospNewInstance(ospModel,(osp::affine3f&)one);
         ospCommit(ospInstance);
-        child("bounds").setValue(bounds());
         instanceDirty=false;
     }
 

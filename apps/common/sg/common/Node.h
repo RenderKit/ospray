@@ -413,7 +413,7 @@ namespace ospray {
     //! a Node with bounds and a render operation
     struct OSPSG_INTERFACE Renderable : public Node
     {
-      Renderable() { createChild("bounds", "box3f", empty); }
+      Renderable() { createChild("bounds", "box3f"); }
       virtual ~Renderable() = default;
 
       virtual box3f bounds() const override { return child("bounds").valueAs<box3f>(); }
@@ -421,9 +421,12 @@ namespace ospray {
       {
         box3f cbounds = empty;
         for (const auto &child : properties.children)
-          cbounds.extend(child.second->bounds());
-        if (cbounds.empty())
-          return cbounds;
+        {
+          auto tbounds = child.second->bounds();
+          if (!tbounds.empty())
+            cbounds.extend(tbounds);
+        }
+        return cbounds;
       }
       // virtual box3f extendBounds(box3f b) { bbox.extend(b); return bbox; }
       virtual void preTraverse(RenderContext &ctx,

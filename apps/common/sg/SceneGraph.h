@@ -58,12 +58,12 @@ namespace ospray {
       std::string description;
     };
 
-    struct Group : public sg::Node
+    struct Group : public sg::Renderable
     {
       /*! \brief returns a std::string with the c++ name of this class */
       std::string toString() const override;
 
-      box3f bounds() const override;
+      // box3f bounds() const override;
       
       std::vector<std::shared_ptr<sg::Node>> children;
     };

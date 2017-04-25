@@ -30,15 +30,15 @@ namespace ospray {
       return "ospray::sg::Group";
     }
     
-    box3f Group::bounds() const
-    {
-      box3f bounds = empty;
-      for (auto child : children) {
-        assert(child);
-        bounds.extend(child->bounds());
-      }
-      return bounds;
-    }
+    // box3f Group::bounds() const
+    // {
+    //   box3f bounds = empty;
+    //   for (auto child : children) {
+    //     assert(child);
+    //     bounds.extend(child->bounds());
+    //   }
+    //   return bounds;
+    // }
 
     std::string Info::toString() const
     {

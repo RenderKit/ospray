@@ -31,15 +31,9 @@ namespace ospray {
       return "ospray::sg::Geometry";
     }
 
-    box3f TriangleMesh::bounds() const
-    {
-      // std::cout << __PRETTY_FUNCTION__ << " " << name() << std::endl;
-      return child("bounds").valueAs<box3f>();
-    }
-
     box3f TriangleMesh::computeBounds() const
     {
-      std::cout << __PRETTY_FUNCTION__ << " " << name() << std::endl;
+      // std::cout << __PRETTY_FUNCTION__ << " " << name() << std::endl;
       box3f bounds = empty;
       for (uint32_t i = 0; i < vertex->getSize(); i++)
         bounds.extend(vertex->get3f(i));
