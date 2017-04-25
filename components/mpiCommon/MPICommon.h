@@ -19,8 +19,8 @@
 // std
 #include <memory>
 #include <vector>
-// mpi
 
+// mpi
 #define OMPI_SKIP_MPICXX 1
 #include <mpi.h>
 
@@ -50,12 +50,6 @@
     throw std::runtime_error("MPI call returned error"); \
 }
 
-#define SERIALIZED_MPI_CALL(a) { \
-  ospray::mpi::serialized(CODE_LOCATION, [&]() { \
-    MPI_CALL(a) \
-  }); \
-}
-
 // Log level at which extremely verbose MPI logging output will
 // be written
 #define OSPRAY_MPI_VERBOSE_LEVEL 3
@@ -73,34 +67,6 @@ namespace ospray {
     OSPRAY_MPI_INTERFACE extern bool logMPI;
     OSPRAY_MPI_INTERFACE extern bool mpiIsThreaded;
 
-    /*! helper functions that lock resp unlock the mpi serializer
-      mutex the 'whohasthelock' variable is only for debugging - it
-      allows for querying who acutally has the lock; the value of that
-      parameter is only for human consumptoin, though - we do not
-      defined in any way what this value is supposed to be
-     */
-    OSPRAY_MPI_INTERFACE void lockMPI(const char *whoHasTheLock);
-
-    /*! helper functions that lock resp unlock the mpi serializer mutex */
-    OSPRAY_MPI_INTERFACE void unlockMPI();
-
-    template<typename CLOSURE_T>
-    inline void serialized(const char *lockId, CLOSURE_T&& criticalSection)
-    {
-      lockMPI(lockId);
-      criticalSection();
-      unlockMPI();
-    }
-
-    /*! the value of the 'whoHasTheLock' parameter of the last
-        succeeding lockMPI() call */
-    OSPRAY_MPI_INTERFACE const char *whoHasTheMPILock();
-    
-    /*! use this macro as a lock-guard inside any scope you want to
-        perform MPI calls in */
-#define SERIALIZE_MPI \
-  std::lock_guard<std::mutex>(ospray::mpi::mpiSerializerMutex);
-    
     //! abstraction for an MPI group. 
     /*! it's the responsiblity of the respective mpi setup routines to
       fill in the proper values */

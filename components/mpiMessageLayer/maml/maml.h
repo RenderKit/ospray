@@ -96,14 +96,14 @@ namespace maml {
   
   /*! register a new incoing-message handler. if any message comes in
       on the given communicator we'll call this handler */
-   OSPRAY_MAML_INTERFACE void registerHandlerFor(MPI_Comm comm,
+  OSPRAY_MAML_INTERFACE void registerHandlerFor(MPI_Comm comm,
                                                 MessageHandler *handler);
 
   /*! start the service; from this point on maml is free to use MPI
       calls to send/receive messages; if your MPI library is not
       thread safe the app should _not_ do any MPI calls until 'stop()'
       has been called */
-   OSPRAY_MAML_INTERFACE void start();
+  OSPRAY_MAML_INTERFACE void start();
 
   /*! stops the maml layer; maml will no longer perform any MPI calls;
       if the mpi layer is not thread safe the app is then free to use
@@ -139,7 +139,7 @@ namespace maml {
       arriving on this node, yet!!!
   */
   OSPRAY_MAML_INTERFACE void sendTo(MPI_Comm comm,
-                                   int rank,
-                                   std::shared_ptr<Message> msg);
+                                    int rank,
+                                    std::shared_ptr<Message> msg);
 
 } // ::maml

@@ -44,23 +44,21 @@ namespace ospray {
       // after getting the size we know everyone will enter the blocking barrier and the
       // blocking bcast where the buffer is sent out.
       MPI_Request request;
-      SERIALIZED_MPI_CALL(Ibcast(&sz32, 1, MPI_INT, 0, group.comm, &request));
+      MPI_CALL(Ibcast(&sz32, 1, MPI_INT, 0, group.comm, &request));
 
       // Now do non-blocking test to see when this bcast is satisfied to avoid
       // locking out the send/recv threads
       int size_bcast_done = 0;
       while (!size_bcast_done) {
-        SERIALIZED_MPI_CALL(Test(&request, &size_bcast_done, MPI_STATUS_IGNORE));
+        MPI_CALL(Test(&request, &size_bcast_done, MPI_STATUS_IGNORE));
         if (!size_bcast_done) {
           std::this_thread::sleep_for(std::chrono::nanoseconds(250));
         }
       }
 
       buffer = new uint8_t[sz32];
-      serialized(CODE_LOCATION, [&]() {
-        MPI_CALL(Barrier(group.comm));
-        MPI_CALL(Bcast(buffer, sz32, MPI_BYTE, 0, group.comm));
-      });
+      MPI_CALL(Barrier(group.comm));
+      MPI_CALL(Bcast(buffer, sz32, MPI_BYTE, 0, group.comm));
       mem = buffer;
       return sz32;
     }
@@ -77,22 +75,20 @@ namespace ospray {
       // after getting the size we know everyone will enter the blocking barrier and the
       // blocking bcast where the buffer is sent out.
       MPI_Request request;
-      SERIALIZED_MPI_CALL(Ibcast(&sz32, 1, MPI_INT, MPI_ROOT, group.comm, &request));
+      MPI_CALL(Ibcast(&sz32, 1, MPI_INT, MPI_ROOT, group.comm, &request));
 
       // Now do non-blocking test to see when this bcast is satisfied to avoid
       // locking out the send/recv threads
       int size_bcast_done = 0;
       while (!size_bcast_done) {
-        SERIALIZED_MPI_CALL(Test(&request, &size_bcast_done, MPI_STATUS_IGNORE));
+        MPI_CALL(Test(&request, &size_bcast_done, MPI_STATUS_IGNORE));
         if (!size_bcast_done) {
           std::this_thread::sleep_for(std::chrono::nanoseconds(250));
         }
       }
 
-      serialized(CODE_LOCATION, [&]() {
-        MPI_CALL(Barrier(group.comm));
-        MPI_CALL(Bcast(mem, sz32, MPI_BYTE, MPI_ROOT, group.comm));
-      });
+      MPI_CALL(Barrier(group.comm));
+      MPI_CALL(Bcast(mem, sz32, MPI_BYTE, MPI_ROOT, group.comm));
     }
 
     void BufferedFabric::ReadStream::read(void *mem, size_t size)
@@ -127,7 +123,8 @@ namespace ospray {
       size_t stillToWrite = size;
       uint8_t *readPtr = (uint8_t*)mem;
       while (stillToWrite) {
-        size_t numWeCanWrite = std::min(stillToWrite,size_t(maxBufferSize-numInBuffer));
+        size_t numWeCanWrite = std::min(stillToWrite,
+                                        size_t(maxBufferSize-numInBuffer));
         memcpy(buffer+numInBuffer,readPtr,numWeCanWrite);
 
         readPtr += numWeCanWrite;
@@ -144,7 +141,7 @@ namespace ospray {
       if (numInBuffer > 0)
         fabric.get().send(buffer,numInBuffer);
       numInBuffer = 0;
-    };
+    }
 
   } // ::ospray::mpi
 } // ::ospray

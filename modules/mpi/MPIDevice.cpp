@@ -74,9 +74,7 @@ namespace ospray {
 
     static inline void setupMaster()
     {
-      SERIALIZED_MPI_CALL(
-        Comm_split(mpi::world.comm,1,mpi::world.rank,&app.comm)
-      );
+      MPI_CALL(Comm_split(mpi::world.comm,1,mpi::world.rank,&app.comm));
 
       app.makeIntraComm();
 
@@ -86,9 +84,7 @@ namespace ospray {
             << " (global " << world.rank << '/' << world.size;
       }
 
-      SERIALIZED_MPI_CALL(
-        Intercomm_create(app.comm, 0, world.comm, 1, 1, &worker.comm)
-      );
+      MPI_CALL(Intercomm_create(app.comm, 0, world.comm, 1, 1, &worker.comm));
 
       if (logMPI) {
         postErrorMsg(OSPRAY_MPI_VERBOSE_LEVEL)
@@ -102,9 +98,7 @@ namespace ospray {
 
     static inline void setupWorker()
     {
-      SERIALIZED_MPI_CALL(
-        Comm_split(mpi::world.comm,0,mpi::world.rank,&worker.comm)
-      );
+      MPI_CALL(Comm_split(mpi::world.comm,0,mpi::world.rank,&worker.comm));
 
       worker.makeIntraComm();
 
@@ -119,9 +113,7 @@ namespace ospray {
             << " (global " << world.rank << '/' << world.size;
       }
 
-      SERIALIZED_MPI_CALL(
-        Intercomm_create(worker.comm, 0, world.comm, 0, 1, &app.comm)
-      );
+      MPI_CALL(Intercomm_create(worker.comm, 0, world.comm, 0, 1, &app.comm));
 
       app.makeInterComm();
     }
@@ -129,42 +121,38 @@ namespace ospray {
     static inline void doHandshakeTestMaster()
     {
       MPI_Status status;
-      serialized(CODE_LOCATION, [&](){
+      if (logMPI) {
+        postErrorMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+            << "#m: ping-ponging a test message to every worker...";
+      }
+
+      for (int i=0;i<worker.size;i++) {
         if (logMPI) {
           postErrorMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-              << "#m: ping-ponging a test message to every worker...";
+              << "#m: sending tag "<< i << " to worker " << i;
         }
-
-        for (int i=0;i<worker.size;i++) {
-          if (logMPI) {
-            postErrorMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-                << "#m: sending tag "<< i << " to worker " << i;
-          }
-          MPI_CALL(Send(&i,1,MPI_INT,i,i,worker.comm));
-          int reply;
-          MPI_CALL(Recv(&reply,1,MPI_INT,i,i,worker.comm,&status));
-          Assert(reply == i);
-        }
-        MPI_CALL(Barrier(MPI_COMM_WORLD));
-      });
+        MPI_CALL(Send(&i,1,MPI_INT,i,i,worker.comm));
+        int reply;
+        MPI_CALL(Recv(&reply,1,MPI_INT,i,i,worker.comm,&status));
+        Assert(reply == i);
+      }
+      MPI_CALL(Barrier(MPI_COMM_WORLD));
     }
 
     static inline void doHandshakeTestWorker()
     {
       MPI_Status status;
-      serialized(CODE_LOCATION, [&](){
-        // replying to test-message
-        if (logMPI) {
-          postErrorMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-              << "#w: start-up ping-pong: worker " << worker.rank <<
-                 " trying to receive tag " << worker.rank << "...";
-        }
-        int reply;
-        MPI_CALL(Recv(&reply,1,MPI_INT,0,worker.rank,app.comm,&status));
-        MPI_CALL(Send(&reply,1,MPI_INT,0,worker.rank,app.comm));
+      // replying to test-message
+      if (logMPI) {
+        postErrorMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+            << "#w: start-up ping-pong: worker " << worker.rank <<
+               " trying to receive tag " << worker.rank << "...";
+      }
+      int reply;
+      MPI_CALL(Recv(&reply,1,MPI_INT,0,worker.rank,app.comm,&status));
+      MPI_CALL(Send(&reply,1,MPI_INT,0,worker.rank,app.comm));
 
-        MPI_CALL(Barrier(MPI_COMM_WORLD));
-      });
+      MPI_CALL(Barrier(MPI_COMM_WORLD));
     }
 
     // MPI initialization helper functions ////////////////////////////////////
@@ -212,7 +200,7 @@ namespace ospray {
             << "#o: initMPI::OSPonRanks: " << world.rank << '/' << world.size;
       }
 
-      SERIALIZED_MPI_CALL(Barrier(MPI_COMM_WORLD));
+      MPI_CALL(Barrier(MPI_COMM_WORLD));
 
       throwIfNotMpiParallel();
 

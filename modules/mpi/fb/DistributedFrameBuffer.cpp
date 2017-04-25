@@ -112,8 +112,7 @@ namespace ospray {
     if (tiles <= 0)
       return;
 
-    SERIALIZED_MPI_CALL(Bcast(tileErrorBuffer, tiles,
-                              MPI_FLOAT, 0, MPI_COMM_WORLD));
+    MPI_CALL(Bcast(tileErrorBuffer, tiles, MPI_FLOAT, 0, MPI_COMM_WORLD));
   }
 
   // DistributedFrameBuffer definitions ///////////////////////////////////////

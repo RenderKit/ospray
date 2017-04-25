@@ -726,7 +726,7 @@ namespace ospray {
       void CommandFinalize::runOnMaster()
       {
         world.barrier();
-        SERIALIZED_MPI_CALL(Finalize());
+        MPI_CALL(Finalize());
       }
       
       void CommandFinalize::serialize(WriteStream &b) const

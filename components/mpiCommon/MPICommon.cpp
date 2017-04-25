@@ -31,42 +31,6 @@ namespace ospray {
     OSPRAY_MPI_INTERFACE Group world;
     OSPRAY_MPI_INTERFACE Group app;
     OSPRAY_MPI_INTERFACE Group worker;
-
-    /*! for mpi versions that do not support MPI_THREAD_MULTIPLE
-        (default openmpi, for example) it is not allows to perform
-        concurrnt MPI_... calls from differnt threads. To avoid this,
-        _all_ threads inside ospray should lock this global mutex
-        before doing any MPI calls. Furthermore, this mutex will get
-        unlocked _only_ while ospray is executing api call (we'll
-        always lock it before we return to the calling app), thus we
-        can make sure that no ospray mpi calls will ever interfere
-        with the app */
-    std::mutex mpiSerializerMutex;
-
-    /*! the value of the 'whoHasTheLock' parameter of the last
-        succeeding lockMPI() call */
-    const char *g_whoHasTheMPILock = "<nobody - never been locked>";
-    
-    /*! the value of the 'whoHasTheLock' parameter of the last
-        succeeding lockMPI() call */
-    const char *whoHasTheMPILock()
-    {
-      return g_whoHasTheMPILock;
-    }
-    
-    /*! helper functions that lock resp unlock the mpi serializer mutex */
-    void lockMPI(const char *whoWantsTheLock)
-    {
-      mpiSerializerMutex.lock();
-      g_whoHasTheMPILock = whoWantsTheLock;
-    }
-
-    /*! helper functions that lock resp unlock the mpi serializer mutex */
-    void unlockMPI()
-    {
-      g_whoHasTheMPILock = "<nobody>";
-      mpiSerializerMutex.unlock();
-    }
     
     /*! constructor. sets the 'comm', 'rank', and 'size' fields */
     Group::Group(MPI_Comm initComm)
@@ -83,10 +47,8 @@ namespace ospray {
 
     void Group::makeIntraComm()
     {
-      mpi::serialized(CODE_LOCATION, [&]() {
-        MPI_CALL(Comm_rank(comm,&rank));
-        MPI_CALL(Comm_size(comm,&size));
-      });
+      MPI_CALL(Comm_rank(comm,&rank));
+      MPI_CALL(Comm_size(comm,&size));
       containsMe = true;
     }
 
@@ -102,16 +64,14 @@ namespace ospray {
 
     void Group::makeInterComm()
     {
-      mpi::serialized(CODE_LOCATION, [&]() {
-        containsMe = false;
-        rank = MPI_ROOT;
-        MPI_CALL(Comm_remote_size(comm, &size));
-      });
+      containsMe = false;
+      rank = MPI_ROOT;
+      MPI_CALL(Comm_remote_size(comm, &size));
     }
 
     void Group::barrier() const
     {
-      SERIALIZED_MPI_CALL(Barrier(comm));
+      MPI_CALL(Barrier(comm));
     }
 
     /*! set to given intercomm, and properly set size, root, etc */
@@ -122,7 +82,7 @@ namespace ospray {
         rank = size = -1;
       } else {
         int isInter;
-        SERIALIZED_MPI_CALL(Comm_test_inter(comm,&isInter));
+        MPI_CALL(Comm_test_inter(comm,&isInter));
         if (isInter)
           makeInterComm(comm);
         else
@@ -134,27 +94,27 @@ namespace ospray {
     Group Group::dup() const
     {
       MPI_Comm duped;
-      SERIALIZED_MPI_CALL(Comm_dup(comm,&duped));
+      MPI_CALL(Comm_dup(comm,&duped));
       return Group(duped);
     }
         
     void init(int *ac, const char **av)
     {
       int initialized = false;
-      SERIALIZED_MPI_CALL(Initialized(&initialized));
+      MPI_CALL(Initialized(&initialized));
       
       int provided = 0;
       if (!initialized) {
         /* MPI not initialized by the app - it's up to us */
-        SERIALIZED_MPI_CALL(Init_thread(ac, (char ***)&av,
-                                        MPI_THREAD_MULTIPLE, &provided));
+        MPI_CALL(Init_thread(ac, (char ***)&av,
+                             MPI_THREAD_MULTIPLE, &provided));
       } else {
         /* MPI was already initialized by the app that called us! */
         MPI_Query_thread(&provided);
       }
 
       int rank;
-      SERIALIZED_MPI_CALL(Comm_rank(MPI_COMM_WORLD,&rank));
+      MPI_CALL(Comm_rank(MPI_COMM_WORLD,&rank));
       switch(provided) {
       case MPI_THREAD_MULTIPLE:
         mpiIsThreaded = true;
@@ -173,34 +133,9 @@ namespace ospray {
                                  "even MPI_THREAD_SERIALIZED ...");
       }
       
-      mpi::serialized(CODE_LOCATION, [&]() {
-          world.comm = MPI_COMM_WORLD;
-          MPI_CALL(Comm_rank(MPI_COMM_WORLD,&world.rank));
-          MPI_CALL(Comm_size(MPI_COMM_WORLD,&world.size));
-        });
-
-      // by default, all MPI comm gets locked down, unless we
-      // explicitly enable it
-
-#if 1
-      /* "eventually", if we want to play nicely with apps we have to
-         make sure that mpi calls are locked by default, get
-         (temporarily) unlocked only during ospray API calls (when the
-         app can expect that we do something), and re-locking it when
-         the ospray call is done - this is the only way we can
-         guarantee that nobody in ospray (say, an async messaging
-         thread) is doing any mpi calls at the same time as the
-         applicatoin (which would be bad). for now, i'm NOT yet doing
-         this to find some other bugs, but eventually we have to do
-         this - and once we do, we have to do the lock/unlock for
-         every api call. */
-      // Will: I think we're doing this now but in the device right?
-      postErrorMsg("#osp.mpi: FOR NOW, WE DO _NOT_ LOCK MPI"
-                   " CALLS UPON STARTUP - EVENTUALLY WE HAVE TO DO THIS!!!",
-                   OSPRAY_MPI_VERBOSE_LEVEL);
-#else
-      lockMPI();
-#endif
+      world.comm = MPI_COMM_WORLD;
+      MPI_CALL(Comm_rank(MPI_COMM_WORLD,&world.rank));
+      MPI_CALL(Comm_size(MPI_COMM_WORLD,&world.size));
     }
 
     size_t translatedHash(size_t v)
