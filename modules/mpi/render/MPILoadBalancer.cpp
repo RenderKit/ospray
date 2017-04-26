@@ -76,7 +76,7 @@ namespace ospray {
         if ((ALLTASKS % worker.size) > worker.rank)
           NTASKS++;
 
-        parallel_for(NTASKS, [&](int taskIndex){
+        tasking::parallel_for(NTASKS, [&](int taskIndex) {
           const size_t tileID = taskIndex * worker.size + worker.rank;
           const size_t numTiles_x = fb->getNumTiles().x;
           const size_t tile_y = tileID / numTiles_x;
@@ -96,7 +96,7 @@ namespace ospray {
           Tile __aligned(64) tile(tileId, fb->size, accumID);
 #endif
 
-          parallel_for(numJobs(renderer->spp, accumID), [&](int tid){
+          tasking::parallel_for(numJobs(renderer->spp, accumID), [&](int tid) {
             renderer->renderTile(perFrameData, tile, tid);
           });
 

@@ -116,7 +116,9 @@ namespace ospray {
                                                const vec3i &scaledRegionSize)
   {
     for (int z = 0; z < scaledRegionSize.z; ++z) {
-      parallel_for(scaledRegionSize.x * scaledRegionSize.y, [&](int taskID) {
+      const auto nTasks = scaledRegionSize.x * scaledRegionSize.y;
+
+      tasking::parallel_for(nTasks, [&](int taskID) {
         int x = taskID % scaledRegionSize.x;
         int y = taskID / scaledRegionSize.x;
         const int idx =

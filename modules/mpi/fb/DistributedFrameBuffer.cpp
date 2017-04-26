@@ -479,7 +479,7 @@ namespace ospray {
       }
     }
 
-    schedule([=]() {
+    tasking::schedule([=]() {
       auto *_msg = (TileMessage*)message->data;
       switch (_msg->command) {
       case MASTER_WRITE_TILE_NONE:
@@ -555,7 +555,7 @@ namespace ospray {
   {
     frameID = -1; // we increment at the start of the frame
     if (!myTiles.empty()) {
-      parallel_for(myTiles.size(), [&](int taskIndex) {
+      tasking::parallel_for(myTiles.size(), [&](int taskIndex) {
         TileData *td = this->myTiles[taskIndex];
         assert(td);
         if (fbChannelFlags & OSP_FB_ACCUM) {

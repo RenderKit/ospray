@@ -33,59 +33,61 @@
 #include "../common.h"
 
 namespace ospcommon {
+  namespace tasking {
 
-  struct tasking_system_handle
-  {
-    tasking_system_handle(int numThreads) :
-      numThreads(numThreads)
-#if defined(OSPRAY_TASKING_TBB)
-      , tbb_init(numThreads)
-#endif
+    struct tasking_system_handle
     {
+      tasking_system_handle(int numThreads) :
+        numThreads(numThreads)
+#if defined(OSPRAY_TASKING_TBB)
+        , tbb_init(numThreads)
+#endif
+      {
 #if defined(OSPRAY_TASKING_CILK)
-      __cilkrts_set_param("nworkers", std::to_string(numThreads).c_str());
+        __cilkrts_set_param("nworkers", std::to_string(numThreads).c_str());
 #elif defined(OSPRAY_TASKING_OMP)
-       if (numThreads > 0) omp_set_num_threads(numThreads);
+         if (numThreads > 0) omp_set_num_threads(numThreads);
 #elif defined(OSPRAY_TASKING_INTERNAL)
-       tasking::initTaskSystem(numThreads < 0 ? -1 : numThreads);
+         tasking::initTaskSystem(numThreads < 0 ? -1 : numThreads);
 #endif
-    }
+      }
 
-    int numThreads {-1};
+      int numThreads {-1};
 #if defined(OSPRAY_TASKING_TBB)
-    tbb::task_scheduler_init tbb_init;
+      tbb::task_scheduler_init tbb_init;
 #endif
-  };
+    };
 
-  static std::unique_ptr<tasking_system_handle> g_tasking_handle;
+    static std::unique_ptr<tasking_system_handle> g_tasking_handle;
 
-  void initTaskingSystem(int numThreads)
-  {
-    _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
-    _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
+    void initTaskingSystem(int numThreads)
+    {
+      _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
+      _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
 
 #if defined(OSPRAY_TASKING_TBB)
-    if (!g_tasking_handle.get())
-      g_tasking_handle = make_unique<tasking_system_handle>(numThreads);
-    else {
-      g_tasking_handle->tbb_init.terminate();
-      g_tasking_handle->tbb_init.initialize(numThreads);
-    }
+      if (!g_tasking_handle.get())
+        g_tasking_handle = make_unique<tasking_system_handle>(numThreads);
+      else {
+        g_tasking_handle->tbb_init.terminate();
+        g_tasking_handle->tbb_init.initialize(numThreads);
+      }
 #else
-    g_tasking_handle = make_unique<tasking_system_handle>(numThreads);
+      g_tasking_handle = make_unique<tasking_system_handle>(numThreads);
 #endif
-  }
+    }
 
-  void deAffinitizeCores()
-  {
-  #ifdef __linux__
-    cpu_set_t validCores;
-    CPU_ZERO(&validCores);
-    for (int i=0;i<CPU_SETSIZE;i++)
-      CPU_SET(i,&validCores);
-    int rc = sched_setaffinity(getpid(),sizeof(validCores),&validCores);
-    if (rc != 0) throw std::runtime_error("Error setting thread affinity!");
-  #endif
-  }
+    void deAffinitizeCores()
+    {
+#ifdef __linux__
+      cpu_set_t validCores;
+      CPU_ZERO(&validCores);
+      for (int i=0;i<CPU_SETSIZE;i++)
+        CPU_SET(i,&validCores);
+      int rc = sched_setaffinity(getpid(),sizeof(validCores),&validCores);
+      if (rc != 0) throw std::runtime_error("Error setting thread affinity!");
+#endif
+    }
 
-}// namespace ospcommon
+  } // ::ospcommon::tasking
+} // ::ospcommon

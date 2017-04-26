@@ -142,7 +142,7 @@ namespace ospray {
 
     const int numJobs = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
 
-    parallel_for(numJobs, [&](int tid){
+    tasking::parallel_for(numJobs, [&](int tid){
       ispc::DDDVRRenderer_renderTile(renderer->getIE(),
                                      (ispc::Tile&)fgTile,
                                      (ispc::Tile&)bgTile,
@@ -279,7 +279,7 @@ namespace ospray {
     renderTask.dpv = ddVolumeVec[0];
 
     size_t NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
-    parallel_for(NTASKS, renderTask);
+    tasking::parallel_for(NTASKS, renderTask);
 
     dfb->waitUntilFinished();
     Renderer::endFrame(nullptr, channelFlags);

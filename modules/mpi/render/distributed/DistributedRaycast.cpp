@@ -51,7 +51,7 @@ namespace ospray {
 
       //TODO: move to a LoadBalancer instead?
 
-      parallel_for(dfb->getTotalTiles(), [&](int taskIndex) {
+      tasking::parallel_for(dfb->getTotalTiles(), [&](int taskIndex) {
         const size_t numTiles_x = fb->getNumTiles().x;
         const size_t tile_y = taskIndex / numTiles_x;
         const size_t tile_x = taskIndex - tile_y*numTiles_x;
@@ -64,7 +64,7 @@ namespace ospray {
         Tile __aligned(64) tile(tileID, dfb->size, accumID);
 
         const int NUM_JOBS = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
-        parallel_for(NUM_JOBS, [&](int tIdx) {
+        tasking::parallel_for(NUM_JOBS, [&](int tIdx) {
           renderTile(perFrameData, tile, tIdx);
         });
 

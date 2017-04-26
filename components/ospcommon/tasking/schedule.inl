@@ -27,28 +27,30 @@
 #endif
 
 namespace ospcommon {
+  namespace tasking {
 
-  template<typename TASK_T>
-  inline void schedule_impl(TASK_T&& fcn)
-  {
-#ifdef OSPRAY_TASKING_TBB
-    struct LocalTBBTask : public tbb::task
+    template<typename TASK_T>
+    inline void schedule_impl(TASK_T&& fcn)
     {
-      TASK_T func;
-      tbb::task* execute() override { func(); return nullptr; }
-      LocalTBBTask(TASK_T&& f) : func(std::forward<TASK_T>(f)) {}
-    };
+#ifdef OSPRAY_TASKING_TBB
+      struct LocalTBBTask : public tbb::task
+      {
+        TASK_T func;
+        tbb::task* execute() override { func(); return nullptr; }
+        LocalTBBTask(TASK_T&& f) : func(std::forward<TASK_T>(f)) {}
+      };
 
-    auto *tbb_node =
+      auto *tbb_node =
         new(tbb::task::allocate_root())LocalTBBTask(std::forward<TASK_T>(fcn));
-    tbb::task::enqueue(*tbb_node);
+      tbb::task::enqueue(*tbb_node);
 #elif defined(OSPRAY_TASKING_CILK)
-    cilk_spawn fcn();
+      cilk_spawn fcn();
 #elif defined(OSPRAY_TASKING_INTERNAL)
-    tasking::schedule(std::forward<TASK_T>(fcn));
+      tasking::schedule(std::forward<TASK_T>(fcn));
 #else// OpenMP or Debug --> synchronous!
-    fcn();
+      fcn();
 #endif
-  }
+    }
 
+  } // ::ospcommon::tasking
 } // ::ospcommon
