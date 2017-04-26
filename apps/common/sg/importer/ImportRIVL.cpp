@@ -256,12 +256,11 @@ namespace ospray {
       std::stringstream ss;
       ss << "transform_" << id;
       auto xfNode = createNode(ss.str(), "Transform");
-      if (child->type() == "PTMTriangleMesh")
-      {      
-        ss.clear();
-        ss << "child_" << childID;
-        auto instance = createNode(ss.str(), "InstanceGroup");
-        instance->add(child);
+      if (child->type() == "Model")
+      {
+        auto instance = createNode(ss.str(), "Instance");
+        instance->setChild("model",child);
+        child->setParent(instance);
         child = instance;
       }
       xfNode->setChild(child->name(), child);
@@ -282,9 +281,9 @@ namespace ospray {
       ss << "_" << node.getProp("id");
       mesh->setName(ss.str());
       mesh->setType("PTMTriangleMesh");
-      // auto instance = createNode ("meshInstance_"+ss.str(),"InstanceGroup");
-      // instance->add(mesh);
-      nodeList.push_back(mesh);
+      auto model = createNode ("model_"+ss.str(),"Model");
+      model->add(mesh);
+      nodeList.push_back(model);
 
       xml::for_each_child_of(node,[&](const xml::Node &child){
           assert(binBasePtr);
@@ -349,17 +348,18 @@ namespace ospray {
         char *value = strdup(node.content.c_str());
         for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(NULL," \t\n\r")) {
           counter++;
-          if (counter > 100)//DEBUG large groups
-            continue;
+          // if (counter > 100)//DEBUG large groups
+            // continue;
           size_t childID = atoi(s);
           std::shared_ptr<sg::Node> child = nodeList[childID];
           group->children.push_back(child);
           std::stringstream ss;
           ss << "child_" << childID;
-          if (child->type() == "PTMTriangleMesh")
+          if (child->type() == "Model")
           {
-            auto instance = createNode(ss.str(), "InstanceGroup");
-            instance->add(child);
+            auto instance = createNode(ss.str(), "Instance");
+            instance->setChild("model",child);
+            child->setParent(instance);
             child = instance;
           }
           group->setChild(ss.str(), child);
@@ -369,7 +369,7 @@ namespace ospray {
       }
     }
     
-    void parseBGFscene(std::shared_ptr<sg::World> world, const xml::Node &root)
+    void parseBGFscene(std::shared_ptr<sg::Node> world, const xml::Node &root)
     {
       if (root.name != "BGFscene")
         throw std::runtime_error("XML file is not a RIVL model !?");
@@ -416,7 +416,7 @@ namespace ospray {
       world->add(lastNode);
     }
 
-    void importRIVL(std::shared_ptr<sg::World> world,
+    void importRIVL(std::shared_ptr<sg::Node> world,
                     const std::string &fileName)
     {
       std::cout << __PRETTY_FUNCTION__ << std::endl;

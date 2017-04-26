@@ -354,12 +354,12 @@ namespace ospray {
 
     } // ::ospray::sg::ply
 
-    void importPLY(std::shared_ptr<World> &world, const FileName &fileName)
+    void importPLY(std::shared_ptr<Node> &world, const FileName &fileName)
     {
       std::shared_ptr<sg::TriangleMesh> mesh =
           std::static_pointer_cast<sg::TriangleMesh>(sg::createNode(fileName.name(), "TriangleMesh"));
       ply::readFile(fileName.str(), mesh);
-      world->nodes.push_back(std::dynamic_pointer_cast<Node>(mesh));
+      // world->nodes.push_back(std::dynamic_pointer_cast<Node>(mesh));
       std::cout << "adding ply file to world\n";
       // mesh->setName("ply");
       // mesh->setType("TriangleMesh");

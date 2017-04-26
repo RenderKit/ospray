@@ -82,37 +82,37 @@ namespace ospray {
       box3f _bounds;
     };
 
-    /*! a instance of another model */
-    struct Instance : public sg::Geometry
-    {
-      Instance();
-      /*! \brief returns a std::string with the c++ name of this class */
-      std::string toString() const override;
+    // /*! a instance of another model */
+    // struct Instance : public sg::Geometry
+    // {
+    //   Instance();
+    //   ! \brief returns a std::string with the c++ name of this class 
+    //   std::string toString() const override;
 
-      //! the model we're instancing
-      std::shared_ptr<World> world;
-    };
+    //   //! the model we're instancing
+    //   std::shared_ptr<World> world;
+    // };
 
     /*! import an OBJ wavefront model, and add its contents to the given world */
-    OSPSG_INTERFACE void importOBJ(const std::shared_ptr<World> &world,
+    OSPSG_INTERFACE void importOBJ(const std::shared_ptr<Node> &world,
                                    const FileName &fileName);
 
     /*! import an PLY model, and add its contents to the given world */
-    OSPSG_INTERFACE void importPLY(std::shared_ptr<World> &world,
+    OSPSG_INTERFACE void importPLY(std::shared_ptr<Node> &world,
                                    const FileName &fileName);
 
     /*! import an X3D-format model, and add its contents to the given world */
-    OSPSG_INTERFACE void importX3D(const std::shared_ptr<World> &world,
+    OSPSG_INTERFACE void importX3D(const std::shared_ptr<Node> &world,
                                    const FileName &fileName);
 
-    OSPSG_INTERFACE std::shared_ptr<sg::World> loadOSP(const std::string &fileName);
-    OSPSG_INTERFACE void loadOSP(std::shared_ptr<sg::World> world, const std::string &fileName);
-    OSPSG_INTERFACE std::shared_ptr<sg::World> readXML(const std::string &fileName);
-    OSPSG_INTERFACE void importRIVL(std::shared_ptr<World> world, const std::string &fileName);
-    OSPSG_INTERFACE std::shared_ptr<sg::World> loadOSG(const std::string &fileName);
+    OSPSG_INTERFACE std::shared_ptr<sg::Node> loadOSP(const std::string &fileName);
+    OSPSG_INTERFACE void loadOSP(std::shared_ptr<sg::Node> world, const std::string &fileName);
+    OSPSG_INTERFACE std::shared_ptr<sg::Node> readXML(const std::string &fileName);
+    OSPSG_INTERFACE void importRIVL(std::shared_ptr<Node> world, const std::string &fileName);
+    OSPSG_INTERFACE std::shared_ptr<sg::Node> loadOSG(const std::string &fileName);
 
     OSPSG_INTERFACE void loadOSG(const std::string &fileName,
-                                 std::shared_ptr<sg::World> world);
+                                 std::shared_ptr<sg::Node> world);
     /*! @} */
 
   } // ::ospray::sg

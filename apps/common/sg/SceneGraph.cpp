@@ -60,14 +60,14 @@ namespace ospray {
       return _bounds;
     }
 
-    Instance::Instance() : Geometry("Instance")
-    {
-    }
+    // Instance::Instance() : Geometry("Instance")
+    // {
+    // }
 
-    std::string Instance::toString() const
-    {
-      return "ospray::sg::Instance";
-    }
+    // std::string Instance::toString() const
+    // {
+    //   return "ospray::sg::Instance";
+    // }
 
     OSP_REGISTER_SG_NODE(Group);
 

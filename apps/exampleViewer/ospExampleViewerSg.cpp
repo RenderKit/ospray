@@ -211,8 +211,8 @@ void addPlaneToScene(sg::Node& world)
   auto index = std::make_shared<sg::DataArray3i>((vec3i*)&triangles[0],
                                                  size_t(2),
                                                  false);
-  auto &plane = world.createChild("plane", "InstanceGroup");
-  auto &mesh  = plane.createChild("mesh", "TriangleMesh");
+  auto &plane = world.createChild("plane", "Instance");
+  auto &mesh  = plane.child("model").createChild("mesh", "TriangleMesh");
 
   std::shared_ptr<sg::TriangleMesh> sg_plane =
     std::static_pointer_cast<sg::TriangleMesh>(mesh.shared_from_this());

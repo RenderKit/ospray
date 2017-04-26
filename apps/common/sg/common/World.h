@@ -24,28 +24,24 @@ namespace ospray {
   namespace sg {
 
 
-    // struct OSPSG_INTERFACE Model : public sg::Renderable
-    // {
-    //   Model();
+    struct OSPSG_INTERFACE Model : public sg::Renderable
+    {
+      Model();
 
-    //         /*! \brief return bounding box in world coordinates.
+      //InstanceGroup caches renders.  It will render children during commit, and add
+         //cached rendered children during render call.  
+      virtual void traverse(RenderContext &ctx, const std::string& operation) override;
+      virtual void preCommit(RenderContext &ctx) override;
+      virtual void postCommit(RenderContext &ctx) override;
+      // virtual void preRender(RenderContext &ctx) override;
+      // virtual void postRender(RenderContext &ctx) override;
 
-    //     This function can be used by the viewer(s) for calibrating
-    //     camera motion, setting default camera position, etc. Nodes
-    //     for which that does not apply can simpy return
-    //     box3f(embree::empty) */
-    //   virtual box3f bounds() const override;
-    //   virtual box3f computeBounds() const override;
-
-    //   //InstanceGroup caches renders.  It will render children during commit, and add
-    //      //cached rendered children during render call.  
-    //   virtual void traverse(RenderContext &ctx, const std::string& operation) override;
-    //   virtual void preCommit(RenderContext &ctx) override;
-    //   virtual void postCommit(RenderContext &ctx) override;
-    //   virtual void preRender(RenderContext &ctx) override;
-    //   virtual void postRender(RenderContext &ctx) override;
-
-    // }
+      OSPModel ospModel {nullptr};
+      std::vector<std::shared_ptr<Node>> nodes;
+      std::shared_ptr<sg::World> oldWorld;
+      OSPModel oldModel;
+      int numGeometry{0};
+    };
 
     /*! a world node */
     struct OSPSG_INTERFACE World : public sg::Renderable
@@ -78,9 +74,9 @@ namespace ospray {
     };
 
 
-    struct OSPSG_INTERFACE InstanceGroup : public sg::World
+    struct OSPSG_INTERFACE Instance : public sg::World
     {
-      InstanceGroup();
+      Instance();
 
             /*! \brief return bounding box in world coordinates.
 

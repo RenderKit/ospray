@@ -122,11 +122,11 @@ namespace ospray {
     {
     public:
 
-      std::shared_ptr<World> world;
+      std::shared_ptr<Node> world;
       std::map<std::string,std::shared_ptr<Material> > material;
 
       /*! Constructor. */
-      OBJLoader(std::shared_ptr<World> world, const FileName& fileName);
+      OBJLoader(std::shared_ptr<Node> world, const FileName& fileName);
 
       /*! Destruction */
       ~OBJLoader();
@@ -189,7 +189,7 @@ namespace ospray {
     template<> inline std::string OBJLoader::parse(const char *&token, std::string& type)
     { type="string"; return std::string(token); }
 
-    OBJLoader::OBJLoader(std::shared_ptr<World> world, const FileName &fileName)
+    OBJLoader::OBJLoader(std::shared_ptr<Node> world, const FileName &fileName)
       : world(world),
         path(fileName.path()),
         fullPath(fileName)
@@ -529,7 +529,7 @@ namespace ospray {
       curGroup.clear();
     }
 
-    void importOBJ(const std::shared_ptr<World> &world, const FileName &fileName)
+    void importOBJ(const std::shared_ptr<Node> &world, const FileName &fileName)
     {
       std::cout << "ospray::sg::importOBJ: importing from " << fileName << endl;
       OBJLoader loader(world,fileName);
