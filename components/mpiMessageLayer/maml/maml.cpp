@@ -20,40 +20,23 @@
 namespace maml {
 
   std::mutex messageMutex;
-  
-  /*! create a new message with given amount of bytes in storage */
-  Message::Message(size_t size)
-    : data(NULL), size(size),
-      comm(MPI_COMM_NULL), rank(-1), tag(0)
-  {
-    //new unsigned char [size]
-    assert(size > 0);
 
-    // { std::lock_guard<std::mutex> lock(messageMutex);
-    //   static size_t sumAlloc = 0;
-    //   sumAlloc += size;
-    //   PRINT(size);
-    //   PRINT(sumAlloc);
-      data = (unsigned char *)malloc(size);
-      // PRINT((int*)data);
-    // }
-    
-    assert(data);
+  // maml::Message definitions ////////////////////////////////////////////////
+
+  /*! create a new message with given amount of bytes in storage */
+  Message::Message(size_t size) : size(size)
+  {
+    data = (ospcommon::byte_t*)malloc(size);
   }
   
   /*! create a new message with given amount of storage, and copy
     memory from the given address to it */
-  Message::Message(const void *copyMem, size_t size)
-    : data(NULL), size(size),
-      comm(MPI_COMM_NULL), rank(-1), tag(0)
+  Message::Message(const void *copyMem, size_t size) : Message(size)
   {
-    assert(copyMem);
+    if (copyMem == nullptr)
+      MAML_THROW("#maml: cannot create a message from a null pointer!");
 
-    assert(size > 0);
-    data = (unsigned char *) malloc(size); //new unsigned char [size]
-    assert(data);
-      
-    memcpy(data,copyMem,size);
+    memcpy(data, copyMem, size);
   }
 
     /*! create a new message (addressed to given comm:rank) with given
@@ -61,52 +44,31 @@ namespace maml {
         it */
   Message::Message(MPI_Comm comm, int rank,
                    const void *copyMem, size_t size)
-    : data(NULL), size(size),
-      comm(comm), rank(rank), tag(0)
+    : Message(copyMem, size)
   {
-    assert(copyMem);
-    assert( size > 0);
-
-    //    data = new unsigned char [size];
-    data = (unsigned char *)malloc(size);
-    assert(data);
-    memcpy(data,copyMem,size);
+    this->comm = comm;
+    this->rank = rank;
   }
     
   /*! destruct message and free allocated memory */
-  Message::~Message() {
+  Message::~Message()
+  {
     if (data) {
-      // delete[] data;
-      free(data); //printf("currently NOT deleting the messages!\n");
+      free(data);
     }
   }
-  
-  
-  /*! initialize the maml layer. must be called before doing any call
-      below, but should only be called once. note this assuems that
-      MPI is already initialized; it will use the existing MPI
-      layer */
-  void init(int &ac, char **&av)
-  {
-    int initialized;
-    MPI_CALL(Initialized(&initialized));
-    if (!initialized)
-      MAML_THROW("MPI not initialized");
 
-    if (Context::singleton)
-      MAML_THROW("MAML layer _already_ initialized");
-    
-    Context::singleton = new Context;
-    assert(Context::singleton);
+  bool Message::isValid() const
+  {
+    return comm != MPI_COMM_NULL && rank >= 0;
   }
 
+  // maml API definitions /////////////////////////////////////////////////////
+  
   /*! register a new incoing-message handler. if any message comes in
     on the given communicator we'll call this handler */
   void registerHandlerFor(MPI_Comm comm, MessageHandler *handler)
   {
-    if (!Context::singleton)
-      MAML_THROW("MAML layer not initialized?!");
-
     Context::singleton->registerHandlerFor(comm,handler);
   }
 
@@ -116,9 +78,6 @@ namespace maml {
       has been called */
   void start()
   {
-    if (!Context::singleton)
-      MAML_THROW("MAML layer not initialized?!");
-
     Context::singleton->start();
   }
 
@@ -129,9 +88,6 @@ namespace maml {
       if they are already in flight */
   void stop()
   {
-    if (!Context::singleton)
-      MAML_THROW("MAML layer not initialized?!");
-
     Context::singleton->stop();
   }
 
@@ -140,60 +96,23 @@ namespace maml {
       no longer access it (becuase maml may delete it at any time) */
   void send(std::shared_ptr<Message> msg)
   {
-    assert(msg->comm != MPI_COMM_NULL);
-    assert(msg->rank >= 0);
-    if (!Context::singleton)
-      MAML_THROW("MAML layer not initialized?!");
+    if (msg.get() && !msg->isValid())
+      MAML_THROW("Invalid message");
+
     Context::singleton->send(std::shared_ptr<Message>(msg));
   }
-  
-  // void send(Message *msg)
-  // {
-  //   assert(msg);
-  //   send(std::shared_ptr<Message>(msg));
-  // }
-  
-  
-  /*! send given messsage to given comm:rank. Once this function has
-      called maml has full ownership of this message, and the user may
-      no longer access it (becuase maml may delete it at any time) */
-  // void sendTo(MPI_Comm comm, int rank, Message *msg)
-  // {
-  //   assert(msg);
-  //   msg->rank = rank;
-  //   msg->comm = comm;
-  //   msg->tag  = 0;
-  //   send(msg);
-  // }
 
   /*! send given messsage to given comm:rank. Once this function has
     called maml has full ownership of this message, and the user may
     no longer access it (becuase maml may delete it at any time) */
   void sendTo(MPI_Comm comm, int rank, std::shared_ptr<Message> msg)
   {
-    assert(msg);
-    assert(rank >= 0);
+    if (!(rank >= 0 && msg.get()))
+      MAML_THROW("Incorrect argument values given to maml::sendTo(...)");
+
     msg->rank = rank;
     msg->comm = comm;
-    msg->tag  = 0;
     send(msg);
   }
-
-  /*! make sure all outgoing messages get sent... */
-  void flush()
-  {
-    if (!Context::singleton)
-      MAML_THROW("MAML layer not initialized?!");
-    Context::singleton->flush();
-  }
-  
-  /*! close down and clean exit. NOT YET IMPLEMENTED. */
-  void finalize()
-  {
-    std::cout << "#maml: warning: maml::finalize() not yet implemented" << std::endl;
-  }
-  
-
   
 } // ::maml
-

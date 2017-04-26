@@ -39,13 +39,14 @@ ELSE()
     array3D/Array3D.cpp
     Socket.cpp
 
+    containers/TransactionalBuffer.h
+
     tasking/parallel_for.inl
     tasking/parallel_for.h
     tasking/async.h
     tasking/schedule.inl
     tasking/schedule.h
     tasking/tasking_system_handle.cpp
-    tasking/TaskingTypeTraits.h
     tasking/TaskSys.cpp
     
     AffineSpace.h
@@ -54,9 +55,11 @@ ELSE()
     intrinsics.h
     LinearSpace.h
     math.h
+    Any.h
     platform.h
     Quaternion.h
     RefCount.h
+    TypeTraits.h
     vec.h
   LINK
     ${LINK_LIBS}
@@ -74,15 +77,17 @@ ELSE()
     LinearSpace.h
     malloc.h
     math.h
+    Any.h
     platform.h
     Quaternion.h
     RefCount.h
     sysinfo.h
     thread.h
+    TypeTraits.h
     vec.h
 
     DESTINATION ../ospcommon #NOTE: this is "next" to the SDK/ directory
-    )
+  )
 
   OSPRAY_INSTALL_SDK_HEADERS(
     tasking/parallel_for.h
@@ -92,5 +97,21 @@ ELSE()
     tasking/TaskingTypeTraits.h
 
     DESTINATION ../ospcommon/tasking #NOTE: this is "next" to the SDK/ directory
-    )
+  )
+
+  ## Test apps ##
+
+  OSPRAY_CREATE_TEST(test_Any
+    Any.h
+    test_Any.cpp
+  )
+
+  ADD_TEST(NAME Any COMMAND test_Any)
+
+  OSPRAY_CREATE_TEST(test_TransactionalBuffer
+    containers/TransactionalBuffer.h
+    containers/test_TransactionalBuffer.cpp
+  )
+
+  ADD_TEST(NAME TransactionalBuffer COMMAND test_TransactionalBuffer)
 ENDIF()

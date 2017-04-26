@@ -26,16 +26,15 @@
 // xml
 #include "../../../common/xml/XML.h"
 // ospcommon
+#include "ospcommon/Any.h"
 #include "ospcommon/vec.h"
-
-#include "sg/common/OSPAny.h"
 
 #include <mutex>
 
 namespace ospray {
   namespace sg {
 
-    using SGVar = OSPAny;
+    using SGVar = Any;
 
     /*! forward decl of entity that nodes can write to when writing XML files */
     struct XMLWriter;

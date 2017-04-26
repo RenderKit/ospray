@@ -26,6 +26,19 @@ build-centos6-icc:
     - icc
     - build
 
+build-centos6-icc15:
+  type: build
+  script:
+    - module load gcc/4.9.3
+    - module load intel/2015
+    - export CC=icc
+    - export CXX=icpc
+    - scripts/build_gitlab/linux.sh
+  tags:
+    - centos6
+    - icc
+    - build
+
 build-centos7-gcc:
   type: build
   script:
@@ -147,6 +160,7 @@ release-linux-icc:
     - module load qt
     - export CC=icc
     - export CXX=icpc
+    - export OSPRAY_RELEASE_NO_VERIFY=1 #NOTE: temporary until lib/apps split in release
     - scripts/release/linux.sh
   tags:
     - icc

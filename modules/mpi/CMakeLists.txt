@@ -20,11 +20,10 @@ IF (OSPRAY_MODULE_MPI)
 
   SET(OSPRAY_DEFAULT_COMPONENT mpi)
 
-  OSPRAY_BUILD_COMPONENT(mpiCommon)
-
-  # if mpi mode is enabled, we have to configure the right mpi
-  # compiler etc.
   OSPRAY_CONFIGURE_MPI()
+
+  OSPRAY_BUILD_COMPONENT(mpiCommon)
+  OSPRAY_BUILD_COMPONENT(mpiMessageLayer)
 
   INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/..)
   INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
@@ -32,10 +31,14 @@ IF (OSPRAY_MODULE_MPI)
 
   OSPRAY_CREATE_LIBRARY(ospray_module_mpi
     MPIDevice.cpp
+    MPIDistributedDevice.cpp
     worker.cpp
 
     common/OSPWork.cpp
+    common/Messaging.cpp
     common/DataStreaming.h
+    common/DistributedModel.cpp
+    common/DistributedModel.ispc
     common/BufferedDataStreaming.cpp
 
     fb/DistributedFrameBuffer.cpp
@@ -43,6 +46,8 @@ IF (OSPRAY_MODULE_MPI)
     fb/DistributedFrameBuffer_TileTypes.cpp
 
     render/MPILoadBalancer.cpp
+    render/distributed/DistributedRaycast.cpp
+    render/distributed/DistributedRaycast.ispc
     render/volume/RaycastVolumeMaterial.cpp
     render/volume/RaycastVolumeMaterial.ih
     render/volume/RaycastVolumeMaterial.ispc
@@ -57,6 +62,7 @@ IF (OSPRAY_MODULE_MPI)
     ospray
     ospray_mpi_common
     ospray_common
+    ospray_mpi_maml
     ${MPI_CXX_LIBRARIES}
   )
 
@@ -69,5 +75,11 @@ IF (OSPRAY_MODULE_MPI)
   LINK
     ospray
   )
+
+  ##############################################################
+  # Test apps
+  ##############################################################
+
+  ADD_SUBDIRECTORY(apps)
 
 ENDIF (OSPRAY_MODULE_MPI)

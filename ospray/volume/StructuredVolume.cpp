@@ -118,7 +118,7 @@ namespace ospray {
 
     // Build volume accelerator.
     const int NTASKS = brickCount.x * brickCount.y * brickCount.z;
-    parallel_for(NTASKS, [&](int taskIndex){
+    tasking::parallel_for(NTASKS, [&](int taskIndex){
       ispc::GridAccelerator_buildAccelerator(ispcEquivalent, taskIndex);
     });
   }

@@ -92,12 +92,6 @@ namespace ospray {
         ManagedObject *obj = handle.lookup();
         if (obj) {
           obj->commit();
-
-          // TODO: Do we need this hack anymore?
-          // It looks like yes? or at least glutViewer segfaults if we don't do this
-          // hack, to stay compatible with earlier version
-          Model *model = dynamic_cast<Model*>(obj);
-          if (model) model->finalize();
         } else {
           throw std::runtime_error("Error: rank "
                                    + std::to_string(mpi::world.rank)
@@ -151,17 +145,17 @@ namespace ospray {
     
       void CreateFrameBuffer::run()
       {
-        const bool hasDepthBuffer = channels & OSP_FB_DEPTH;
-        const bool hasAccumBuffer = channels & OSP_FB_ACCUM;
+        const bool hasDepthBuffer    = channels & OSP_FB_DEPTH;
+        const bool hasAccumBuffer    = channels & OSP_FB_ACCUM;
         const bool hasVarianceBuffer = channels & OSP_FB_VARIANCE;
 
         assert(dimensions.x > 0);
         assert(dimensions.y > 0);
+
         FrameBuffer *fb
-          = new DistributedFrameBuffer(ospray::mpi::async::CommLayer::WORLD,
-                                       dimensions, handle, format, hasDepthBuffer,
+          = new DistributedFrameBuffer(dimensions, handle,
+                                       format, hasDepthBuffer,
                                        hasAccumBuffer, hasVarianceBuffer);
-        // TODO: Only the master does this increment, though should the workers do it too?
         fb->refInc();
         handle.assign(fb);
       }
@@ -207,6 +201,7 @@ namespace ospray {
       {
         run();
       }
+
       void LoadModule::serialize(WriteStream &b) const
       {
         b << name;
@@ -537,8 +532,8 @@ namespace ospray {
       
       void RenderFrame::run()
       {
-        FrameBuffer *fb = (FrameBuffer*)fbHandle.lookup();
         Renderer *renderer = (Renderer*)rendererHandle.lookup();
+        FrameBuffer *fb    = (FrameBuffer*)fbHandle.lookup();
         Assert(renderer);
         Assert(fb);
         // TODO: This function execution must run differently
@@ -554,7 +549,7 @@ namespace ospray {
       void RenderFrame::runOnMaster()
       {
         Renderer *renderer = (Renderer*)rendererHandle.lookup();
-        FrameBuffer *fb = (FrameBuffer*)fbHandle.lookup();
+        FrameBuffer *fb    = (FrameBuffer*)fbHandle.lookup();
         Assert(renderer);
         Assert(fb);
         varianceResult =
@@ -716,7 +711,8 @@ namespace ospray {
       
       void CommandFinalize::run()
       {
-        async::shutdown();
+        runOnMaster();
+
         // TODO: Is it ok to call exit again here?
         // should we be calling exit? When the MPIDevice is
         // destroyed (at program exit) we'll send this command
@@ -729,7 +725,8 @@ namespace ospray {
       
       void CommandFinalize::runOnMaster()
       {
-        async::shutdown();
+        world.barrier();
+        MPI_CALL(Finalize());
       }
       
       void CommandFinalize::serialize(WriteStream &b) const

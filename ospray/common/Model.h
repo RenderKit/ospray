@@ -42,7 +42,7 @@ namespace ospray {
 
     //! \brief common function to help printf-debugging
     virtual std::string toString() const override;
-    virtual void finalize();
+    virtual void commit() override;
 
     // Data members //
 

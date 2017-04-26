@@ -16,33 +16,37 @@
 
 #pragma once
 
-#include <type_traits>
+// ospray stuff
+#include "geometry/Geometry.h"
+#include "volume/Volume.h"
+
+// stl
+#include <vector>
+
+// embree
+#include "embree2/rtcore.h"
 
 namespace ospray {
-  namespace sg {
-    namespace traits {
+  namespace mpi {
 
-      template <typename T, typename Arg>
-      std::true_type operator==(const T&, const Arg&);
+    struct DistributedModel : public ManagedObject
+    {
+      DistributedModel();
+      virtual ~DistributedModel() = default;
 
-      template <typename T, typename Arg = T>
-      struct HasOperatorEqualsT
-      {
-        enum
-        {
-          value = !std::is_same<decltype(*(T*)(0) == *(Arg*)(0)),
-                                std::true_type>::value
-        };
-      };
+      //! \brief common function to help printf-debugging
+      virtual std::string toString() const override;
+      virtual void commit() override;
 
-      template <typename T, typename TYPE>
-      using HasOperatorEquals =
-        typename std::enable_if<HasOperatorEqualsT<T>::value, TYPE>::type;
+      // Data members //
 
-      template <typename T, typename TYPE>
-      using NoOperatorEquals =
-        typename std::enable_if<!HasOperatorEqualsT<T>::value, TYPE>::type;
+      //! \brief vector of all geometries used in this model
+      std::vector<Ref<Geometry>> geometry;
 
-    } // ::ospray::sg::traits
-  } // ::ospray::sg
+      //! \brief the embree scene handle for this geometry
+      RTCScene embreeSceneHandle {nullptr};
+      box3f bounds;
+    };
+
+  } // ::ospray::mpi
 } // ::ospray

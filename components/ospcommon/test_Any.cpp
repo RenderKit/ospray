@@ -1,17 +1,21 @@
 #define CATCH_CONFIG_MAIN
-#include "ospcommon/testing/catch.hpp"
+#include "testing/catch.hpp"
 
-#include "ospcommon/box.h"
-#include "ospcommon/vec.h"
-#include "ospray/ospray.h"
-#include "OSPAny.h"
+#include "box.h"
+#include "vec.h"
+#include "Any.h"
 
-using ospray::sg::OSPAny;
+using ospcommon::Any;
+
+// Helper types ///////////////////////////////////////////////////////////////
+
+struct OSPObject_T {};
+using OSPObject = OSPObject_T*;
 
 // Helper functions ///////////////////////////////////////////////////////////
 
 template <typename T>
-inline void verify_value(const OSPAny &v, const T &correctValue)
+inline void verify_value(const Any &v, const T &correctValue)
 {
   REQUIRE(v.valid());
   REQUIRE(v.is<T>());
@@ -21,12 +25,12 @@ inline void verify_value(const OSPAny &v, const T &correctValue)
 template <typename T>
 inline void test_interface(T testValue, T testValue2)
 {
-  OSPAny v;
+  Any v;
   REQUIRE(!v.valid());
 
   SECTION("Can make valid by construction")
   {
-    OSPAny v2(testValue);
+    Any v2(testValue);
     verify_value<T>(v2, testValue);
   }
 
@@ -39,21 +43,21 @@ inline void test_interface(T testValue, T testValue2)
   SECTION("Can make valid by copy construction")
   {
     v = testValue;
-    OSPAny v2(v);
+    Any v2(v);
     verify_value<T>(v2, testValue);
   }
 
   SECTION("Two objects with same value are equal if constructed the same")
   {
     v = testValue;
-    OSPAny v2 = testValue;
+    Any v2 = testValue;
     REQUIRE(v == v2);
   }
 
   SECTION("Two objects with same value are equal if assigned from another")
   {
     v = testValue;
-    OSPAny v2 = testValue2;
+    Any v2 = testValue2;
     v = v2;
     REQUIRE(v == v2);
   }
@@ -61,57 +65,57 @@ inline void test_interface(T testValue, T testValue2)
   SECTION("Two objects with different values are not equal")
   {
     v = testValue;
-    OSPAny v2 = testValue2;
+    Any v2 = testValue2;
     REQUIRE(v != v2);
   }
 }
 
 // Tests //////////////////////////////////////////////////////////////////////
 
-TEST_CASE("OSPAny 'int' type behavior", "[types]")
+TEST_CASE("Any 'int' type behavior", "[types]")
 {
   test_interface<int>(5, 7);
 }
 
-TEST_CASE("OSPAny 'float' type behavior", "[types]")
+TEST_CASE("Any 'float' type behavior", "[types]")
 {
   test_interface<float>(1.f, 2.f);
 }
 
-TEST_CASE("OSPAny 'bool' type behavior", "[types]")
+TEST_CASE("Any 'bool' type behavior", "[types]")
 {
   test_interface<bool>(true, false);
 }
 
-TEST_CASE("OSPAny 'vec3f' type behavior", "[types]")
+TEST_CASE("Any 'vec3f' type behavior", "[types]")
 {
   test_interface<ospcommon::vec3f>({1.f, 1.f, 1.f}, {2.f, 3.f, 4.f});
 }
 
-TEST_CASE("OSPAny 'vec2f' type behavior", "[types]")
+TEST_CASE("Any 'vec2f' type behavior", "[types]")
 {
   test_interface<ospcommon::vec2f>({1.f, 1.f}, {3.f, 4.f});
 }
 
-TEST_CASE("OSPAny 'vec2i' type behavior", "[types]")
+TEST_CASE("Any 'vec2i' type behavior", "[types]")
 {
   test_interface<ospcommon::vec2i>({1, 1}, {3, 4});
 }
 
-TEST_CASE("OSPAny 'box3f' type behavior", "[types]")
+TEST_CASE("Any 'box3f' type behavior", "[types]")
 {
   test_interface<ospcommon::box3f>({{1.f, 1.f, 1.f}, {2.f, 2.f, 2.f}},
                                    {{3.f, 4.f, 5.f}, {6.f, 7.f, 8.f}});
 }
 
-TEST_CASE("OSPAny 'string' type behavior", "[types]")
+TEST_CASE("Any 'string' type behavior", "[types]")
 {
   test_interface<std::string>("Hello", "World");
 }
 
-TEST_CASE("OSPAny 'OSPObject' type behavior", "[types]")
+TEST_CASE("Any 'OSPObject' type behavior", "[types]")
 {
-  // NOTE(jda) - we just need some phony pointer addresses to test OSPAny,
+  // NOTE(jda) - we just need some phony pointer addresses to test Any,
   //             no need to hand it "real" OSPRay objects...
   void *val1 = nullptr;
   void *val2 = nullptr;

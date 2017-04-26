@@ -18,14 +18,11 @@
 #include <atomic>
 #include <sys/times.h>
 
-namespace maml {  
-} // ::maml
-
 struct MyHandler : public maml::MessageHandler
 {
-  MyHandler() : numReceived() {};
+  MyHandler() = default;
   
-  virtual void incoming(const std::shared_ptr<maml::Message> &message)
+  void incoming(const std::shared_ptr<maml::Message> &message) override
   {
     ++numReceived;
   }
@@ -36,8 +33,7 @@ struct MyHandler : public maml::MessageHandler
 extern "C" int main(int ac, char **av)
 {
   MPI_CALL(Init(&ac, &av));
-  maml::init(ac,av);
-  srand48(times(NULL));
+  srand48(times(nullptr));
 
   int numRuns = 1000000;
   int rank = -1;
