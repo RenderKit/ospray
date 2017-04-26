@@ -27,7 +27,14 @@ namespace ospcommon {
   /* 'Any' implements a single item container which erases its type (can hold
    *  any value which is copyable). The value can be extracted successfuly only
    *  if the correct type is queried for the held value, where an exception is
-   *  thrown otherwise.
+   *  thrown otherwise. Similar (but perhaps not identical to) 'boost::any' or
+   *  C++17's 'std::any'.
+   *
+   *  Example:
+   *
+   *      Any myAny = 1;                 // myAny is an 'int' w/ value of '1'
+   *      int value = myAny.get<int>();  // get value of '1' out of myAny
+   *      char bad  = myAny.get<char>(); // throws exception
    */
   struct Any
   {
@@ -144,7 +151,7 @@ namespace ospcommon {
   }
 
   template<typename T>
-  T &Any::get()
+  inline T &Any::get()
   {
     if (!valid())
       throw std::runtime_error("Can't query value from an empty Any!");
@@ -162,7 +169,7 @@ namespace ospcommon {
   }
 
   template<typename T>
-  const T &Any::get() const
+  inline const T &Any::get() const
   {
     if (!valid())
       throw std::runtime_error("Can't query value from an empty Any!");
@@ -180,7 +187,7 @@ namespace ospcommon {
   }
 
   template<typename T>
-  bool Any::is() const
+  inline bool Any::is() const
   {
     return valid() &&
            (typeid(T).hash_code() == currentValue->valueTypeID().hash_code());
@@ -240,7 +247,7 @@ namespace ospcommon {
   }
 
   template<typename T>
-  void *Any::handle<T>::data()
+  inline void *Any::handle<T>::data()
   {
     return &value;
   }

@@ -55,7 +55,7 @@ ELSE()
     intrinsics.h
     LinearSpace.h
     math.h
-    OSPAny.h
+    Any.h
     platform.h
     Quaternion.h
     RefCount.h
@@ -77,7 +77,7 @@ ELSE()
     LinearSpace.h
     malloc.h
     math.h
-    OSPAny.h
+    Any.h
     platform.h
     Quaternion.h
     RefCount.h
@@ -101,12 +101,12 @@ ELSE()
 
   ## Test apps ##
 
-  OSPRAY_CREATE_TEST(test_OSPAny
-    OSPAny.h
-    test_OSPAny.cpp
+  OSPRAY_CREATE_TEST(test_Any
+    Any.h
+    test_Any.cpp
   )
 
-  ADD_TEST(NAME OSPAny COMMAND test_OSPAny)
+  ADD_TEST(NAME Any COMMAND test_Any)
 
   OSPRAY_CREATE_TEST(test_TransactionalBuffer
     containers/TransactionalBuffer.h

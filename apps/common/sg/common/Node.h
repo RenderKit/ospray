@@ -26,7 +26,7 @@
 // xml
 #include "../../../common/xml/XML.h"
 // ospcommon
-#include "ospcommon/OSPAny.h"
+#include "ospcommon/Any.h"
 #include "ospcommon/vec.h"
 
 #include <mutex>

@@ -3,7 +3,7 @@
 
 #include "box.h"
 #include "vec.h"
-#include "OSPAny.h"
+#include "Any.h"
 
 using ospcommon::Any;
 
@@ -72,50 +72,50 @@ inline void test_interface(T testValue, T testValue2)
 
 // Tests //////////////////////////////////////////////////////////////////////
 
-TEST_CASE("OSPAny 'int' type behavior", "[types]")
+TEST_CASE("Any 'int' type behavior", "[types]")
 {
   test_interface<int>(5, 7);
 }
 
-TEST_CASE("OSPAny 'float' type behavior", "[types]")
+TEST_CASE("Any 'float' type behavior", "[types]")
 {
   test_interface<float>(1.f, 2.f);
 }
 
-TEST_CASE("OSPAny 'bool' type behavior", "[types]")
+TEST_CASE("Any 'bool' type behavior", "[types]")
 {
   test_interface<bool>(true, false);
 }
 
-TEST_CASE("OSPAny 'vec3f' type behavior", "[types]")
+TEST_CASE("Any 'vec3f' type behavior", "[types]")
 {
   test_interface<ospcommon::vec3f>({1.f, 1.f, 1.f}, {2.f, 3.f, 4.f});
 }
 
-TEST_CASE("OSPAny 'vec2f' type behavior", "[types]")
+TEST_CASE("Any 'vec2f' type behavior", "[types]")
 {
   test_interface<ospcommon::vec2f>({1.f, 1.f}, {3.f, 4.f});
 }
 
-TEST_CASE("OSPAny 'vec2i' type behavior", "[types]")
+TEST_CASE("Any 'vec2i' type behavior", "[types]")
 {
   test_interface<ospcommon::vec2i>({1, 1}, {3, 4});
 }
 
-TEST_CASE("OSPAny 'box3f' type behavior", "[types]")
+TEST_CASE("Any 'box3f' type behavior", "[types]")
 {
   test_interface<ospcommon::box3f>({{1.f, 1.f, 1.f}, {2.f, 2.f, 2.f}},
                                    {{3.f, 4.f, 5.f}, {6.f, 7.f, 8.f}});
 }
 
-TEST_CASE("OSPAny 'string' type behavior", "[types]")
+TEST_CASE("Any 'string' type behavior", "[types]")
 {
   test_interface<std::string>("Hello", "World");
 }
 
-TEST_CASE("OSPAny 'OSPObject' type behavior", "[types]")
+TEST_CASE("Any 'OSPObject' type behavior", "[types]")
 {
-  // NOTE(jda) - we just need some phony pointer addresses to test OSPAny,
+  // NOTE(jda) - we just need some phony pointer addresses to test Any,
   //             no need to hand it "real" OSPRay objects...
   void *val1 = nullptr;
   void *val2 = nullptr;
