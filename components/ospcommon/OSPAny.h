@@ -20,7 +20,7 @@
 #include <sstream>
 
 #include "common.h"
-#include "OSPTypeTraits.h"
+#include "TypeTraits.h"
 
 namespace ospcommon {
 

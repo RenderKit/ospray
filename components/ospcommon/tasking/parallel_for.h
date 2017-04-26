@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "TaskingTypeTraits.h"
+#include "../TypeTraits.h"
 #include "parallel_for.inl"
 
 namespace ospcommon {
@@ -26,7 +26,7 @@ namespace ospcommon {
   template<typename TASK_T>
   inline void parallel_for(int nTasks, TASK_T&& fcn)
   {
-    static_assert(has_operator_method_with_integral_param<TASK_T>::value,
+    static_assert(traits::has_operator_method_with_integral_param<TASK_T>::value,
                   "ospcommon::parallel_for() requires the implementation of "
                   "method 'void TASK_T::operator(P taskIndex), where P is of "
                   "type unsigned char, short, int, uint, long, or size_t.");
@@ -39,7 +39,7 @@ namespace ospcommon {
   template<typename TASK_T>
   inline void serial_for(int nTasks, const TASK_T& fcn)
   {
-    static_assert(has_operator_method_with_integral_param<TASK_T>::value,
+    static_assert(traits::has_operator_method_with_integral_param<TASK_T>::value,
                   "ospcommon::serial_for() requires the implementation of "
                   "method 'void TASK_T::operator(P taskIndex), where P is of "
                   "type unsigned char, short, int, uint, long, or size_t.");

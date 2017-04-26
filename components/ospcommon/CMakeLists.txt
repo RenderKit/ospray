@@ -47,7 +47,6 @@ ELSE()
     tasking/schedule.inl
     tasking/schedule.h
     tasking/tasking_system_handle.cpp
-    tasking/TaskingTypeTraits.h
     tasking/TaskSys.cpp
     
     AffineSpace.h
@@ -56,9 +55,11 @@ ELSE()
     intrinsics.h
     LinearSpace.h
     math.h
+    OSPAny.h
     platform.h
     Quaternion.h
     RefCount.h
+    TypeTraits.h
     vec.h
   LINK
     ${LINK_LIBS}
@@ -77,12 +78,12 @@ ELSE()
     malloc.h
     math.h
     OSPAny.h
-    OSPTypeTraits.h
     platform.h
     Quaternion.h
     RefCount.h
     sysinfo.h
     thread.h
+    TypeTraits.h
     vec.h
 
     DESTINATION ../ospcommon #NOTE: this is "next" to the SDK/ directory

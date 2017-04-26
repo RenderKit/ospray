@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "TaskingTypeTraits.h"
+#include "../TypeTraits.h"
 #include "schedule.inl"
 
 namespace ospcommon {
@@ -31,7 +31,7 @@ namespace ospcommon {
   template<typename TASK_T>
   inline void schedule(TASK_T&& fcn)
   {
-    static_assert(has_operator_method<TASK_T>::value,
+    static_assert(traits::has_operator_method<TASK_T>::value,
                   "ospcommon::schedule() requires the implementation of method "
                   "'void TASK_T::operator()'.");
 
