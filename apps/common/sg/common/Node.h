@@ -34,7 +34,7 @@
 namespace ospray {
   namespace sg {
 
-    using SGVar = OSPAny;
+    using SGVar = Any;
 
     /*! forward decl of entity that nodes can write to when writing XML files */
     struct XMLWriter;

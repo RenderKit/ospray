@@ -5,7 +5,7 @@
 #include "vec.h"
 #include "OSPAny.h"
 
-using ospcommon::OSPAny;
+using ospcommon::Any;
 
 // Helper types ///////////////////////////////////////////////////////////////
 
@@ -15,7 +15,7 @@ using OSPObject = OSPObject_T*;
 // Helper functions ///////////////////////////////////////////////////////////
 
 template <typename T>
-inline void verify_value(const OSPAny &v, const T &correctValue)
+inline void verify_value(const Any &v, const T &correctValue)
 {
   REQUIRE(v.valid());
   REQUIRE(v.is<T>());
@@ -25,12 +25,12 @@ inline void verify_value(const OSPAny &v, const T &correctValue)
 template <typename T>
 inline void test_interface(T testValue, T testValue2)
 {
-  OSPAny v;
+  Any v;
   REQUIRE(!v.valid());
 
   SECTION("Can make valid by construction")
   {
-    OSPAny v2(testValue);
+    Any v2(testValue);
     verify_value<T>(v2, testValue);
   }
 
@@ -43,21 +43,21 @@ inline void test_interface(T testValue, T testValue2)
   SECTION("Can make valid by copy construction")
   {
     v = testValue;
-    OSPAny v2(v);
+    Any v2(v);
     verify_value<T>(v2, testValue);
   }
 
   SECTION("Two objects with same value are equal if constructed the same")
   {
     v = testValue;
-    OSPAny v2 = testValue;
+    Any v2 = testValue;
     REQUIRE(v == v2);
   }
 
   SECTION("Two objects with same value are equal if assigned from another")
   {
     v = testValue;
-    OSPAny v2 = testValue2;
+    Any v2 = testValue2;
     v = v2;
     REQUIRE(v == v2);
   }
@@ -65,7 +65,7 @@ inline void test_interface(T testValue, T testValue2)
   SECTION("Two objects with different values are not equal")
   {
     v = testValue;
-    OSPAny v2 = testValue2;
+    Any v2 = testValue2;
     REQUIRE(v != v2);
   }
 }
