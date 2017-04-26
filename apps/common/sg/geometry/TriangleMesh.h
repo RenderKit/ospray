@@ -33,7 +33,7 @@ namespace ospray {
       /*! \brief returns a std::string with the c++ name of this class */
       std::string toString() const override;
 
-      box3f computeBounds() const;
+      box3f computeBounds() const override;
 
       void postCommit(RenderContext &ctx) override;
       void postRender(RenderContext& ctx) override;
