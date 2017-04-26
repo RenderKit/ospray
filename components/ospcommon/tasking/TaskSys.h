@@ -85,15 +85,15 @@ namespace ospcommon {
         numThreads==-1 means 'use all that are available; numThreads=0
         means 'no worker thread, assume that whoever calls wait() will
         do the work */
-    void OSPCOMMON_INTERFACE initTaskSystem(int numThreads = -1);
+    void OSPCOMMON_INTERFACE initTaskSystemInternal(int numThreads = -1);
 
     //! schedule the given task with the given number of sub-jobs.
-    void scheduleTask(std::shared_ptr<Task> task,
-                      int numJobs,
-                      ScheduleOrder order = BACK_OF_QUEUE);
+    void scheduleTaskInternal(std::shared_ptr<Task> task,
+                              int numJobs,
+                              ScheduleOrder order = BACK_OF_QUEUE);
 
     template <typename TASK_T>
-    inline void parallel_for(int nTasks, TASK_T && fcn)
+    inline void parallel_for_internal(int nTasks, TASK_T && fcn)
     {
       struct LocalTask : public Task
       {
@@ -103,12 +103,12 @@ namespace ospcommon {
       };
 
       auto task = std::make_shared<LocalTask>(std::forward<TASK_T>(fcn));
-      scheduleTask(task, nTasks);
+      scheduleTaskInternal(task, nTasks);
       task->wait();
     }
 
     template <typename TASK_T>
-    inline void schedule(TASK_T && fcn)
+    inline void schedule_internal(TASK_T && fcn)
     {
       struct LocalTask : public Task
       {
@@ -118,7 +118,7 @@ namespace ospcommon {
       };
 
       auto task = std::make_shared<LocalTask>(std::forward<TASK_T>(fcn));
-      scheduleTask(task, 1, FRONT_OF_QUEUE);
+      scheduleTaskInternal(task, 1, FRONT_OF_QUEUE);
     }
 
   } // ::ospcommon::tasking

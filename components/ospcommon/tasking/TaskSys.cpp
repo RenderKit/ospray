@@ -180,14 +180,14 @@ namespace ospcommon {
 
     // Interface definitions //////////////////////////////////////////////////
 
-    void initTaskSystem(int maxNumRenderTasks)
+    void initTaskSystemInternal(int maxNumRenderTasks)
     {
       TaskSys::global.init(maxNumRenderTasks);
     }
 
-    void scheduleTask(std::shared_ptr<Task> task,
-                      int numJobs,
-                      ScheduleOrder order)
+    void scheduleTaskInternal(std::shared_ptr<Task> task,
+                              int numJobs,
+                              ScheduleOrder order)
     {
       task->numJobsInTask = numJobs;
       task->status = Task::SCHEDULED;

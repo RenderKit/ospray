@@ -55,7 +55,7 @@ namespace ospcommon {
         fcn(taskIndex);
       }
 #elif defined(OSPRAY_TASKING_INTERNAL)
-      tasking::parallel_for(nTasks, std::forward<TASK_T>(fcn));
+      parallel_for_internal(nTasks, std::forward<TASK_T>(fcn));
 #elif defined(OSPRAY_TASKING_LIBDISPATCH)
       dispatch_apply_f(nTasks,
                        dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT,
