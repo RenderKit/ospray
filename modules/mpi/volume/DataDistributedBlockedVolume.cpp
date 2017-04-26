@@ -88,8 +88,9 @@ namespace ospray {
 
   void DataDistributedBlockedVolume::buildAccelerator()
   {
-    postErrorMsg("intentionally SKIP building an accelerator for data parallel "
-        "volume (this'll be done on the brick level)\n", OSPRAY_MPI_VERBOSE_LEVEL);
+    postStatusMsg("intentionally SKIP building an accelerator for data "
+                  "parallel volume (this'll be done on the brick level)\n",
+                  OSPRAY_MPI_VERBOSE_LEVEL);
   }
 
   std::string DataDistributedBlockedVolume::toString() const
@@ -181,7 +182,7 @@ namespace ospray {
     if (mpi::logMPI) {
       msg << "#osp:dp: using data parallel volume of " << ddBlocks
         << " blocks, blockSize is " << blockSize << "\n";
-      postErrorMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
+      postStatusMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
     }
 
     // Set the grid origin, default to (0,0,0).
@@ -203,10 +204,10 @@ namespace ospray {
     if (mpi::logMPI) {
       msg.clear();
       msg << "=======================================================\n"
-        << "created " << ddBlocks.x << "x" << ddBlocks.y << "x" << ddBlocks.z
-        << " data distributed volume blocks\n"
-        << "=======================================================\n";
-      postErrorMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
+          << "created " << ddBlocks.x << "x" << ddBlocks.y << "x" << ddBlocks.z
+          << " data distributed volume blocks\n"
+          << "=======================================================\n";
+      postStatusMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
     }
 
     if (!ospray::mpi::isMpiParallel()) {
@@ -273,7 +274,7 @@ namespace ospray {
                 << " owns block " << ix << "," << iy << "," << iz
                 << " (ID " << blockID << "), dims " << blockDims.x
                 << " " << blockDims.y << " " << blockDims.z << "\n";
-              postErrorMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
+              postStatusMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
             }
 
             block->cppVolume = volume;

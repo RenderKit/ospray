@@ -53,8 +53,8 @@ namespace ospray {
       std::map<std::string,int> numOccurrances;
       const std::string T = type;
       if (numOccurrances[T] == 0) {
-        postErrorMsg() << "#osp:PT: does not know material type '" << type
-                       << "'" << " (replacing with OBJMaterial)";
+        postStatusMsg() << "#osp:PT: does not know material type '" << type
+                        << "'" << " (replacing with OBJMaterial)";
       }
       numOccurrances[T]++;
       material = Material::createMaterial("PathTracer_OBJMaterial");
@@ -90,10 +90,10 @@ namespace ospray {
           if (light)
             lightArray.push_back(light);
           else {
-            postErrorMsg(1) << "#osp:pt Geometry " << geo->toString()
-                            << " does not implement area sampling! "
-                            << "Cannot use importance sampling for that "
-                            << "geometry with emissive material!";
+            postStatusMsg(1) << "#osp:pt Geometry " << geo->toString()
+                             << " does not implement area sampling! "
+                             << "Cannot use importance sampling for that "
+                             << "geometry with emissive material!";
           }
         }
     }

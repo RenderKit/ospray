@@ -79,7 +79,7 @@ namespace ospray {
       app.makeIntraComm();
 
       if (logMPI) {
-        postErrorMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+        postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
             << "#w: app process " << app.rank << '/' << app.size
             << " (global " << world.rank << '/' << world.size;
       }
@@ -87,7 +87,7 @@ namespace ospray {
       MPI_CALL(Intercomm_create(app.comm, 0, world.comm, 1, 1, &worker.comm));
 
       if (logMPI) {
-        postErrorMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+        postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
             << "master: Made 'worker' intercomm (through intercomm_create): "
             << std::hex << std::showbase << worker.comm
             << std::noshowbase << std::dec;
@@ -103,12 +103,12 @@ namespace ospray {
       worker.makeIntraComm();
 
       if (logMPI) {
-        postErrorMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+        postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
             << "master: Made 'worker' intercomm (through split): "
             << std::hex << std::showbase << worker.comm
             << std::noshowbase << std::dec;
 
-        postErrorMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+        postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
             << "#w: app process " << app.rank << '/' << app.size
             << " (global " << world.rank << '/' << world.size;
       }
@@ -122,13 +122,13 @@ namespace ospray {
     {
       MPI_Status status;
       if (logMPI) {
-        postErrorMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+        postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
             << "#m: ping-ponging a test message to every worker...";
       }
 
       for (int i=0;i<worker.size;i++) {
         if (logMPI) {
-          postErrorMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+          postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
               << "#m: sending tag "<< i << " to worker " << i;
         }
         MPI_CALL(Send(&i,1,MPI_INT,i,i,worker.comm));
@@ -144,7 +144,7 @@ namespace ospray {
       MPI_Status status;
       // replying to test-message
       if (logMPI) {
-        postErrorMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+        postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
             << "#w: start-up ping-pong: worker " << worker.rank <<
                " trying to receive tag " << worker.rank << "...";
       }
@@ -196,7 +196,7 @@ namespace ospray {
       logMPI = checkIfWeNeedToDoMPIDebugOutputs();
 
       if (logMPI) {
-        postErrorMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+        postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
             << "#o: initMPI::OSPonRanks: " << world.rank << '/' << world.size;
       }
 
@@ -235,7 +235,7 @@ namespace ospray {
           /* no return here - 'runWorker' will never return */
         } else {
           if (logMPI) {
-            postErrorMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+            postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
                 << "#osp:mpi: distributed mode detected, "
                 << "returning device on all ranks!";
           }
@@ -264,10 +264,10 @@ namespace ospray {
       mpi::init(ac,av);
 
       if (world.rank < 1) {
-        postErrorMsg("=======================================================\n"
-                     "initializing OSPRay MPI in 'listening for workers' mode\n"
-                     "=======================================================\n",
-                     OSPRAY_MPI_VERBOSE_LEVEL);
+        postStatusMsg("====================================================\n"
+                      "initializing OSPRay MPI in 'listen for workers' mode\n"
+                      "====================================================\n",
+                      OSPRAY_MPI_VERBOSE_LEVEL);
       }
 
       app.comm = world.comm;
@@ -302,10 +302,10 @@ namespace ospray {
       mpi::world.makeIntraComm();
 
       if (app.rank == 0) {
-        postErrorMsg("=======================================================\n"
-                     "OSPRAY Worker ring connected\n"
-                     "=======================================================\n",
-                     OSPRAY_MPI_VERBOSE_LEVEL);
+        postStatusMsg("=====================================================\n"
+                      "OSPRAY Worker ring connected\n"
+                      "=====================================================\n",
+                      OSPRAY_MPI_VERBOSE_LEVEL);
       }
 
       mpi::world.barrier();
@@ -317,10 +317,10 @@ namespace ospray {
       mpi::init(ac,av);
       
       if (world.rank < 1) {
-        postErrorMsg("=======================================================\n"
-                     "initializing OSPRay MPI in 'connect to master' mode\n"
-                     "=======================================================\n",
-                     OSPRAY_MPI_VERBOSE_LEVEL);
+        postStatusMsg("=====================================================\n"
+                      "initializing OSPRay MPI in 'connect to master' mode  \n"
+                      "=====================================================\n",
+                      OSPRAY_MPI_VERBOSE_LEVEL);
       }
 
       worker.comm = world.comm;
@@ -348,7 +348,7 @@ namespace ospray {
 
       mpi::world.barrier();
 
-      postErrorMsg("starting worker...", OSPRAY_MPI_VERBOSE_LEVEL);
+      postStatusMsg("starting worker...", OSPRAY_MPI_VERBOSE_LEVEL);
       mpi::runWorker();
     }
 
@@ -374,7 +374,7 @@ namespace ospray {
       char appPortName[MPI_MAX_PORT_NAME];
       if (app.rank == 0 || app.size == -1) {
         if (logMPI) {
-          postErrorMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+          postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
               << "=======================================================\n"
               << "initializing OSPRay MPI in 'launching new workers' mode"
               << "=======================================================\n"
@@ -388,7 +388,7 @@ namespace ospray {
         char *fixedPortName = strdup(appPortName);
 
         if (logMPI) {
-          postErrorMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+          postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
               << "with port " << fixedPortName
               << "\n=======================================================\n";
         }
@@ -405,7 +405,7 @@ namespace ospray {
           auto result = system(systemCommand);
           (void)result;
 
-          postErrorMsg("OSPRay worker process has died - killing application");
+          postStatusMsg("OSPRay worker process has died - killing application");
           exit(0);
         }
 #endif
@@ -415,7 +415,7 @@ namespace ospray {
       worker.makeInterComm();
 
       if (app.rank == 0 || app.size == -1) {
-        postErrorMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+        postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
             << "OSPRay MPI Worker ring successfully connected.\n"
             << "found " << worker.size << " workers."
             << "\n=======================================================\n";
@@ -423,7 +423,7 @@ namespace ospray {
 
       if (app.size > 1) {
         if (app.rank == 1) {
-          postErrorMsg()
+          postStatusMsg()
               << "ospray:WARNING: you're trying to run an mpi-parallel app "
               << "with ospray\n"
               << "(only the root node is allowed to issue ospray api "
@@ -453,7 +453,7 @@ namespace ospray {
       // NOTE(jda) - Seems that there are no MPI Devices on worker ranks...this
       //             will likely change for data-distributed API settings?
       if (IamTheMaster()) {
-        postErrorMsg("shutting down mpi device", OSPRAY_MPI_VERBOSE_LEVEL);
+        postStatusMsg("shutting down mpi device", OSPRAY_MPI_VERBOSE_LEVEL);
         work::CommandFinalize work;
         processWork(work);
       }
@@ -970,7 +970,7 @@ namespace ospray {
     {
       if (logMPI) {
         static size_t numWorkSent = 0;
-        postErrorMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+        postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
             << "#osp.mpi.master: processing/sending work item "
             << numWorkSent++;
       }
@@ -986,7 +986,7 @@ namespace ospray {
       work.runOnMaster();
 
       if (logMPI) {
-        postErrorMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+        postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
             << "#osp.mpi.master: done work item, tag " << tag << ": "
             << typeString(work);
       }

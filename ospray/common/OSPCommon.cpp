@@ -34,9 +34,8 @@ namespace ospray {
   WarnOnce::WarnOnce(const std::string &s, uint32_t postAtLogLevel) 
     : s(s) 
   {
-    postErrorMsg(postAtLogLevel) << "Warning: "
-                                 << s
-                                 << " (only reporting first occurrence)";
+    postStatusMsg(postAtLogLevel) << "Warning: " << s
+                                  << " (only reporting first occurrence)";
   }
   
   /*! for debugging. compute a checksum for given area range... */
@@ -74,7 +73,7 @@ namespace ospray {
         if (parm == "--osp:debug") {
           device->findParam("debug", true)->set(true);
           // per default enable logging to cout; may be overridden later
-          device->error_fcn = [](const char *msg){ std::cout << msg; };
+          device->msg_fcn = [](const char *msg){ std::cout << msg; };
           removeArgs(ac,av,i,1);
         } else if (parm == "--osp:verbose") {
           device->findParam("logLevel", true)->set(1);
@@ -89,11 +88,11 @@ namespace ospray {
           std::string dst = av[i+1];
 
           if (dst == "cout")
-            device->error_fcn = [](const char *msg){ std::cout << msg; };
+            device->msg_fcn = [](const char *msg){ std::cout << msg; };
           else if (dst == "cerr")
-            device->error_fcn = [](const char *msg){ std::cerr << msg; };
+            device->msg_fcn = [](const char *msg){ std::cerr << msg; };
           else
-            postErrorMsg("You must use 'cout' or 'cerr' for --osp:logoutput!");
+            postStatusMsg("You must use 'cout' or 'cerr' for --osp:logoutput!");
 
           removeArgs(ac,av,i,2);
         } else if (parm == "--osp:numthreads" || parm == "--osp:num-threads") {
@@ -297,39 +296,45 @@ namespace ospray {
     return 0;
   }
 
-  void postErrorMsg(const std::stringstream &msg, uint32_t postAtLogLevel)
+  void postStatusMsg(const std::stringstream &msg, uint32_t postAtLogLevel)
   {
-    postErrorMsg(msg.str(), postAtLogLevel);
+    postStatusMsg(msg.str(), postAtLogLevel);
   }
 
-  void postErrorMsg(const std::string &msg, uint32_t postAtLogLevel)
+  void postStatusMsg(const std::string &msg, uint32_t postAtLogLevel)
   {
     if (logLevel() >= postAtLogLevel && ospray::api::Device::current.ptr)
-      ospray::api::Device::current->error_fcn(msg.c_str());
+      ospray::api::Device::current->msg_fcn(msg.c_str());
   }
 
-  ErrorMsgStream::ErrorMsgStream(uint32_t postAtLogLevel)
+  StatusMsgStream::StatusMsgStream(uint32_t postAtLogLevel)
     : logLevel(postAtLogLevel)
   {
   }
 
-  ErrorMsgStream::~ErrorMsgStream()
+  StatusMsgStream::~StatusMsgStream()
   {
     if (!msg.str().empty()) {
       msg << std::endl;
-      postErrorMsg(msg, logLevel);
+      postStatusMsg(msg, logLevel);
     }
   }
 
-  ErrorMsgStream::ErrorMsgStream(ErrorMsgStream &&other)
+  StatusMsgStream::StatusMsgStream(StatusMsgStream &&other)
   {
     msg.str(other.msg.str());
     logLevel = other.logLevel;
   }
 
-  ErrorMsgStream postErrorMsg(uint32_t postAtLogLevel)
+  StatusMsgStream postStatusMsg(uint32_t postAtLogLevel)
   {
-    return ErrorMsgStream(postAtLogLevel);
+    return StatusMsgStream(postAtLogLevel);
+  }
+
+  void handleError(const std::exception &e)
+  {
+    if (ospray::api::Device::current.ptr)
+      ospray::api::Device::current->error_fcn(e);
   }
 
 } // ::ospray

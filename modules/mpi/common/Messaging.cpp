@@ -44,7 +44,7 @@ namespace ospray {
       )
       {
         if (objectListeners.find(handleObjID) != objectListeners.end())
-          postErrorMsg() << "WARNING: overwriting an existing object listener!";
+          postStatusMsg() << "WARNING: overwriting an existing listener!";
 
         objectListeners[handleObjID] = listener;
       }
@@ -57,7 +57,7 @@ namespace ospray {
         if (obj != objectListeners.end()) {
           obj->second->incoming(message);
         } else {
-          postErrorMsg() << "No destination for incoming message!";
+          postStatusMsg() << "No destination for incoming message!";
         }
       }
 

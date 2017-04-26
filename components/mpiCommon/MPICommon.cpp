@@ -122,7 +122,7 @@ namespace ospray {
       case MPI_THREAD_SERIALIZED:
         mpiIsThreaded = false;
         if (rank == 0) {
-          postErrorMsg("#osp.mpi: didn't find 'thread_multiple' MPI, but!\n"
+          postStatusMsg("#osp.mpi: didn't find 'thread_multiple' MPI, but!\n"
               "#osp.mpi: can still do thread_serialized.\n"
               "#osp.mpi: most things should work, but some modules.\n"
               "#osp.mpi: might not.\n", OSPRAY_MPI_VERBOSE_LEVEL);

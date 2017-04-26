@@ -68,7 +68,7 @@ namespace ospray {
 
     static void embreeErrorFunc(const RTCError code, const char* str)
     {
-      postErrorMsg() << "#osp: embree internal error " << code << " : " << str;
+      postStatusMsg() << "#osp: embree internal error " << code << " : " << str;
       throw std::runtime_error("embree internal error '" +std::string(str)+"'");
     }
 
@@ -103,7 +103,7 @@ namespace ospray {
         RTCError erc = rtcDeviceGetError(embreeDevice);
         if (erc != RTC_NO_ERROR) {
           // why did the error function not get called !?
-          postErrorMsg() << "#osp:init: embree internal error number " << erc;
+          postStatusMsg() << "#osp:init: embree internal error number " << erc;
           assert(erc == RTC_NO_ERROR);
         }
 
@@ -117,7 +117,7 @@ namespace ospray {
       std::string mode = getParamString("mode", "distributed");
 
       if (mode == "distributed") {
-        postErrorMsg() << "#dmpi: device commit() setting mode to " << mode;
+        postStatusMsg() << "#dmpi: device commit() setting mode to " << mode;
       } else {
         throw std::runtime_error("#dmpi: bad device mode ['" + mode + "]");
       }
@@ -422,7 +422,7 @@ namespace ospray {
     void MPIDistributedDevice::release(OSPObject _obj)
     {
       UNUSED(_obj);
-      postErrorMsg(1) << "WARNING: release() not yet implemented, memory leak!";
+      postStatusMsg(1) << "WARNING: release() not implemented, memory leak!";
     }
 
     void MPIDistributedDevice::setMaterial(OSPGeometry _geometry,

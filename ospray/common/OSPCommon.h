@@ -138,35 +138,37 @@ namespace ospray {
 
   OSPRAY_INTERFACE uint32_t logLevel();
 
-  OSPRAY_INTERFACE void postErrorMsg(const std::stringstream &msg,
+  OSPRAY_INTERFACE void postStatusMsg(const std::stringstream &msg,
                                      uint32_t postAtLogLevel = 0);
 
-  OSPRAY_INTERFACE void postErrorMsg(const std::string &msg,
+  OSPRAY_INTERFACE void postStatusMsg(const std::string &msg,
                                      uint32_t postAtLogLevel = 0);
 
-  struct OSPRAY_SDK_INTERFACE ErrorMsgStream
+  struct OSPRAY_SDK_INTERFACE StatusMsgStream
   {
-    ErrorMsgStream(uint32_t postAtLogLevel = 0);
-    ~ErrorMsgStream();
+    StatusMsgStream(uint32_t postAtLogLevel = 0);
+    ~StatusMsgStream();
 
-    ErrorMsgStream(ErrorMsgStream &&other);
+    StatusMsgStream(StatusMsgStream &&other);
 
   private:
 
     template <typename T>
-    friend ErrorMsgStream operator<<(ErrorMsgStream &&stream, T &&rhs);
+    friend StatusMsgStream operator<<(StatusMsgStream &&stream, T &&rhs);
 
     std::stringstream msg;
     uint32_t logLevel {0};
   };
 
   template <typename T>
-  inline ErrorMsgStream operator<<(ErrorMsgStream &&stream, T &&rhs)
+  inline StatusMsgStream operator<<(StatusMsgStream &&stream, T &&rhs)
   {
     stream.msg << std::forward<T>(rhs);
-    return std::forward<ErrorMsgStream>(stream);
+    return std::forward<StatusMsgStream>(stream);
   }
 
-  OSPRAY_INTERFACE ErrorMsgStream postErrorMsg(uint32_t postAtLogLevel = 0);
+  OSPRAY_INTERFACE StatusMsgStream postStatusMsg(uint32_t postAtLogLevel = 0);
+
+  OSPRAY_INTERFACE void handleError(const std::exception &e);
 
 } // ::ospray

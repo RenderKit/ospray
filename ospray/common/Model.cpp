@@ -40,7 +40,7 @@ namespace ospray {
 
   void Model::commit()
   {
-    postErrorMsg(2)
+    postStatusMsg(2)
         << "=======================================================\n"
         << "Finalizing model, has " << geometry.size()
         << " geometries and " << volume.size() << " volumes";
@@ -53,7 +53,7 @@ namespace ospray {
     bounds = empty;
 
     for (size_t i = 0; i < geometry.size(); i++) {
-       postErrorMsg(2)
+       postStatusMsg(2)
            << "=======================================================\n"
            << "Finalizing geometry " << i;
 

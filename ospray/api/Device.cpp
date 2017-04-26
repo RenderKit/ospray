@@ -72,9 +72,9 @@ namespace ospray {
       if (OSPRAY_LOG_OUTPUT.first) {
         auto &dst = OSPRAY_LOG_OUTPUT.second;
         if (dst == "cout")
-          error_fcn = [](const char *msg){ std::cout << msg; };
+          msg_fcn = [](const char *msg){ std::cout << msg; };
         else if (dst == "cerr")
-          error_fcn = [](const char *msg){ std::cerr << msg; };
+          msg_fcn = [](const char *msg){ std::cerr << msg; };
       }
 
       if (debugMode) {

@@ -68,7 +68,7 @@ namespace ospray {
       std::stringstream msg;
       msg << "#osp: embree internal error " << code << " : "
         << str << std::endl;
-      postErrorMsg(msg);
+      postStatusMsg(msg);
       throw std::runtime_error(msg.str());
     }
 
@@ -83,14 +83,14 @@ namespace ospray {
         std::stringstream msg;
         msg << "#osp.mpi.worker: got work #" << numWorkReceived++
             << ", tag " << tag << std::endl;
-        postErrorMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
+        postStatusMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
       }
 
       auto make_work = registry.find(tag);
       if (make_work == registry.end()) {
         std::stringstream msg;
         msg << "Invalid work type received - tag #: " << tag << "\n";
-        postErrorMsg(msg);
+        postStatusMsg(msg);
         throw std::runtime_error(msg.str());
       }
 
@@ -99,7 +99,7 @@ namespace ospray {
       if (logMPI) {
         std::stringstream msg;
         msg << ": " << typeString(work).c_str() << "\n";
-        postErrorMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
+        postStatusMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
       }
 
 
@@ -154,7 +154,7 @@ namespace ospray {
         std::stringstream msg;
         msg << "#osp:init: embree internal error number "
                   << (int)rtcDeviceGetError(embreeDevice) << std::endl;
-        postErrorMsg(msg);
+        postStatusMsg(msg);
       }
 
       logMPI = checkIfWeNeedToDoMPIDebugOutputs();
@@ -166,7 +166,7 @@ namespace ospray {
         msg << "#w: running MPI worker process " << worker.rank
           << "/" << worker.size << " on pid " << getpid() << "@"
           << hostname << "\n";
-        postErrorMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
+        postStatusMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
       }
 
       TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Slave>();
@@ -187,7 +187,7 @@ namespace ospray {
           std::stringstream msg;
           msg << "#osp.mpi.worker: processing work " << typeIdOf(work)
             << ": " << typeString(work) << std::endl;
-          postErrorMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
+          postStatusMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
         }
 
         work->run();
@@ -196,7 +196,7 @@ namespace ospray {
           std::stringstream msg;
           msg << "#osp.mpi.worker: done w/ work " << typeIdOf(work)
             << ": " << typeString(work) << std::endl;
-          postErrorMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
+          postStatusMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
         }
       }
     }

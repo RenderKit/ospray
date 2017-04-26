@@ -28,12 +28,13 @@
 #  include <process.h> // for getpid
 #endif
 
-# define LOG(a) if (ospray::logLevel() > 2) { std::cout << "#ospray: " << a << std::endl; }
+#define LOG(a) postStatusMsg(2) << "#ospray: " << a;
 
 /*! \file api.cpp implements the public ospray api functions by
   routing them to a respective \ref device */
 
-std::string getPidString() {
+inline std::string getPidString()
+{
   char s[100];
   sprintf(s, "(pid %i)", getpid());
   return s;
@@ -46,16 +47,16 @@ std::string getPidString() {
                              "first calling ospInit())"+getPidString());
 
 #define OSPRAY_CATCH_BEGIN try {
-#define OSPRAY_CATCH_END                                            \
-  } catch (const std::bad_alloc &) {                                \
-    postErrorMsg() << "OSPRAY_API_ERROR: out of memory";            \
-    std::exit(1);                                                   \
-  } catch (const std::runtime_error &e) {                           \
-    postErrorMsg() << "OSPRAY_API_ERROR: " << e.what();             \
-    std::exit(1);                                                   \
-  } catch (...) {                                                   \
-    postErrorMsg() << "OSPRAY_API_ERROR: caught unknown exception"; \
-    std::exit(1);                                                   \
+#define OSPRAY_CATCH_END                                             \
+  } catch (const std::bad_alloc &e) {                                \
+    postStatusMsg() << "OSPRAY_API_ERROR: out of memory";            \
+    handleError(e);                                                  \
+  } catch (const std::runtime_error &e) {                            \
+    postStatusMsg() << "OSPRAY_API_ERROR: " << e.what();             \
+    handleError(e);                                                  \
+  } catch (...) {                                                    \
+    postStatusMsg() << "OSPRAY_API_ERROR: caught unknown exception"; \
+    handleError(std::runtime_error("unknown caught exception"));     \
   }
 
 using namespace ospray;
@@ -95,7 +96,7 @@ OSPRAY_CATCH_BEGIN
   auto OSP_MPI_LAUNCH = getEnvVar<std::string>("OSPRAY_MPI_LAUNCH");
 
   if (OSP_MPI_LAUNCH.first) {
-    postErrorMsg("#osp: launching ospray mpi ring - "
+    postStatusMsg("#osp: launching ospray mpi ring - "
                  "make sure that mpd is running");
 
     currentDevice = createMpiDevice();
@@ -426,7 +427,7 @@ OSPRAY_CATCH_BEGIN
   }
   OSPRenderer renderer = ospray::api::Device::current->newRenderer(type.c_str());
   if (renderer == nullptr) {
-    postErrorMsg(1) << "#ospray: could not create renderer '" << type << "'";
+    postStatusMsg(1) << "#ospray: could not create renderer '" << type << "'";
   }
   return renderer;
 }
@@ -443,7 +444,7 @@ OSPRAY_CATCH_BEGIN
   LOG("ospNewGeometry(" << type << ")");
   OSPGeometry geometry = ospray::api::Device::current->newGeometry(type);
   if (geometry == nullptr) {
-    postErrorMsg(1) << "#ospray: could not create geometry '" << type << "'";
+    postStatusMsg(1) << "#ospray: could not create geometry '" << type << "'";
   }
   LOG("DONE ospNewGeometry(" << type << ") >> " << (int *)geometry);
   return geometry;
@@ -462,7 +463,7 @@ OSPRAY_CATCH_BEGIN
   LOG("ospNewMaterial(" << renderer << ", " << type << ")");
   OSPMaterial material = ospray::api::Device::current->newMaterial(renderer, type);
   if (material == nullptr) {
-    postErrorMsg(1) << "#ospray: could not create material '" << type << "'";
+    postStatusMsg(1) << "#ospray: could not create material '" << type << "'";
   }
   return material;
 }
@@ -476,7 +477,7 @@ OSPRAY_CATCH_BEGIN
   LOG("ospNewLight(" << renderer << ", " << type << ")");
   OSPLight light = ospray::api::Device::current->newLight(renderer, type);
   if (light == nullptr) {
-    postErrorMsg(1) << "#ospray: could not create light '" << type << "'";
+    postStatusMsg(1) << "#ospray: could not create light '" << type << "'";
   }
   return light;
 }
@@ -493,7 +494,7 @@ OSPRAY_CATCH_BEGIN
   LOG("ospNewCamera(" << type << ")");
   OSPCamera camera = ospray::api::Device::current->newCamera(type);
   if (camera == nullptr) {
-    postErrorMsg(1) << "#ospray: could not create camera '" << type << "'";
+    postStatusMsg(1) << "#ospray: could not create camera '" << type << "'";
   }
   return camera;
 }
@@ -523,7 +524,7 @@ OSPRAY_CATCH_BEGIN
   LOG("ospNewVolume(" << type << ")");
   OSPVolume volume = ospray::api::Device::current->newVolume(type);
   if (volume == nullptr) {
-    postErrorMsg(1) << "#ospray: could not create volume '" << type << "'";
+    postStatusMsg(1) << "#ospray: could not create volume '" << type << "'";
   }
   return volume;
 }
@@ -539,7 +540,7 @@ OSPRAY_CATCH_BEGIN
   LOG("ospNewTransferFunction(" << type << ")");
   OSPTransferFunction transferFunction = ospray::api::Device::current->newTransferFunction(type);
   if (transferFunction == nullptr) {
-    postErrorMsg(1) << "#ospray: could not create transferFunction '" << type << "'";
+    postStatusMsg(1) << "#ospray: could not create transferFunction '" << type << "'";
   }
   return transferFunction;
 }
@@ -608,7 +609,7 @@ extern "C" void ospDeviceSetErrorMsgFunc(OSPDevice object,
 OSPRAY_CATCH_BEGIN
 {
   auto *device = (ospray::api::Device *)object;
-  device->error_fcn = callback;
+  device->msg_fcn = callback;
 }
 OSPRAY_CATCH_END
 

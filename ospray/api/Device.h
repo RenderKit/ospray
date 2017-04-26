@@ -234,7 +234,11 @@ namespace ospray {
       //             needs to have a valid value for the initial Device creation
       static uint32_t logLevel;
 
-      std::function<void(const char *)> error_fcn{[](const char*){}};
+      std::function<void(const char *)>
+      msg_fcn{[](const char*){}};
+
+      std::function<void(const std::exception &)>
+      error_fcn{[](const std::exception &){}};
 
     private:
 
