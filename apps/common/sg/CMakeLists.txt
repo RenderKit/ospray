@@ -34,8 +34,6 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   common/Light.cpp
   common/Material.cpp
   common/Node.cpp
-  common/OSPAny.h
-  common/OSPTypeTraits.h
   common/RenderContext.h
   common/Serialization.cpp
   common/TimeStamp.cpp
@@ -64,12 +62,3 @@ LINK
   ospray_xml
   ospray_minisg
 )
-
-## Test apps ##
-
-OSPRAY_CREATE_TEST(test_OSPAny
-  common/OSPAny.h
-  common/test_OSPAny.cpp
-)
-
-ADD_TEST(NAME OSPAny COMMAND test_OSPAny)

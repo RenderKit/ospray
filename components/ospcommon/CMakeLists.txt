@@ -76,6 +76,8 @@ ELSE()
     LinearSpace.h
     malloc.h
     math.h
+    OSPAny.h
+    OSPTypeTraits.h
     platform.h
     Quaternion.h
     RefCount.h
@@ -84,7 +86,7 @@ ELSE()
     vec.h
 
     DESTINATION ../ospcommon #NOTE: this is "next" to the SDK/ directory
-    )
+  )
 
   OSPRAY_INSTALL_SDK_HEADERS(
     tasking/parallel_for.h
@@ -94,9 +96,16 @@ ELSE()
     tasking/TaskingTypeTraits.h
 
     DESTINATION ../ospcommon/tasking #NOTE: this is "next" to the SDK/ directory
-    )
+  )
 
   ## Test apps ##
+
+  OSPRAY_CREATE_TEST(test_OSPAny
+    OSPAny.h
+    test_OSPAny.cpp
+  )
+
+  ADD_TEST(NAME OSPAny COMMAND test_OSPAny)
 
   OSPRAY_CREATE_TEST(test_TransactionalBuffer
     containers/TransactionalBuffer.h

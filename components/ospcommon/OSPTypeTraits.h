@@ -18,31 +18,29 @@
 
 #include <type_traits>
 
-namespace ospray {
-  namespace sg {
-    namespace traits {
+namespace ospcommon {
+  namespace traits {
 
-      template <typename T, typename Arg>
-      std::true_type operator==(const T&, const Arg&);
+    template <typename T, typename Arg>
+    std::true_type operator==(const T&, const Arg&);
 
-      template <typename T, typename Arg = T>
-      struct HasOperatorEqualsT
+    template <typename T, typename Arg = T>
+    struct HasOperatorEqualsT
+    {
+      enum
       {
-        enum
-        {
-          value = !std::is_same<decltype(*(T*)(0) == *(Arg*)(0)),
-                                std::true_type>::value
-        };
+        value = !std::is_same<decltype(*(T*)(0) == *(Arg*)(0)),
+                              std::true_type>::value
       };
+    };
 
-      template <typename T, typename TYPE>
-      using HasOperatorEquals =
-        typename std::enable_if<HasOperatorEqualsT<T>::value, TYPE>::type;
+    template <typename T, typename TYPE>
+    using HasOperatorEquals =
+      typename std::enable_if<HasOperatorEqualsT<T>::value, TYPE>::type;
 
-      template <typename T, typename TYPE>
-      using NoOperatorEquals =
-        typename std::enable_if<!HasOperatorEqualsT<T>::value, TYPE>::type;
+    template <typename T, typename TYPE>
+    using NoOperatorEquals =
+      typename std::enable_if<!HasOperatorEqualsT<T>::value, TYPE>::type;
 
-    } // ::ospray::sg::traits
-  } // ::ospray::sg
+  } // ::ospray::sg::traits
 } // ::ospray

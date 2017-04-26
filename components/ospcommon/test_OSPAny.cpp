@@ -1,12 +1,16 @@
 #define CATCH_CONFIG_MAIN
-#include "ospcommon/testing/catch.hpp"
+#include "testing/catch.hpp"
 
-#include "ospcommon/box.h"
-#include "ospcommon/vec.h"
-#include "ospray/ospray.h"
+#include "box.h"
+#include "vec.h"
 #include "OSPAny.h"
 
-using ospray::sg::OSPAny;
+using ospcommon::OSPAny;
+
+// Helper types ///////////////////////////////////////////////////////////////
+
+struct OSPObject_T {};
+using OSPObject = OSPObject_T*;
 
 // Helper functions ///////////////////////////////////////////////////////////
 
