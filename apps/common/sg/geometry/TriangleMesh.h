@@ -33,10 +33,10 @@ namespace ospray {
       /*! \brief returns a std::string with the c++ name of this class */
       std::string toString() const override;
 
-      //! return bounding box of all primitives
-      box3f bounds() const override;
+      box3f computeBounds() const override;
 
       void postCommit(RenderContext &ctx) override;
+      void postRender(RenderContext& ctx) override;
 
       //! \brief Initialize this node's value from given XML node
       /*!
@@ -96,8 +96,6 @@ namespace ospray {
       //! constructor
       PTMTriangleMesh();
 
-      box3f bounds() const override;
-
       // Data members //
 
       /*! \brief "material list" for this trianglemesh
@@ -108,25 +106,6 @@ namespace ospray {
        */
       std::vector<std::shared_ptr<sg::Material>> materialList;
       std::vector<uint32_t> materialIDs;      
-      // OSPGeometry ospGeometry {nullptr};
-
-      // to allow memory-mapping triangle arrays (or in general,
-      // sharing data with an application) we use data arrays, not std::vector's
-
-      // //! vertex (position) array
-      // std::shared_ptr<DataBuffer> vertex;
-
-      // //! vertex normal array. empty means 'not present'
-      // std::shared_ptr<DataBuffer> normal;
-
-      // //! vertex color array. empty means 'not present'
-      // std::shared_ptr<DataBuffer> color;
-
-      // //! vertex texture coordinate array. empty means 'not present'
-      // std::shared_ptr<DataBuffer> texcoord;
-
-      // //! triangle indices
-      // std::shared_ptr<DataBuffer> index;
 
       //! material IDs
       OSPData primMatIDs;

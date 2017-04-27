@@ -29,16 +29,6 @@ namespace ospray {
     {
       return "ospray::sg::Group";
     }
-    
-    box3f Group::bounds() const
-    {
-      box3f bounds = empty;
-      for (auto child : children) {
-        assert(child);
-        bounds.extend(child->bounds());
-      }
-      return bounds;
-    }
 
     std::string Info::toString() const
     {
@@ -58,15 +48,6 @@ namespace ospray {
     box3f GenericGeometry::bounds() const
     {
       return _bounds;
-    }
-
-    Instance::Instance() : Geometry("Instance")
-    {
-    }
-
-    std::string Instance::toString() const
-    {
-      return "ospray::sg::Instance";
     }
 
     OSP_REGISTER_SG_NODE(Group);

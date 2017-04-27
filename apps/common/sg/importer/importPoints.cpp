@@ -81,7 +81,7 @@ namespace ospray {
 
     // for now, let's hardcode the importers - should be moved to a
     // registry at some point ...
-    void importFileType_points(std::shared_ptr<World> &world,
+    void importFileType_points(std::shared_ptr<Node> &world,
                                const FileName &url)
     {
       std::cout << "--------------------------------------------" << std::endl;

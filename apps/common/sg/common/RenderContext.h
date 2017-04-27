@@ -39,10 +39,12 @@ namespace ospray {
       // Data members //
 
       std::shared_ptr<sg::World>      world;      //!< world we're rendering into
-      //std::shared_ptr<sg::Integrator> integrator; //!< integrator used to create materials etc
-      const affine3f xfm {one}; //!< affine geometry transform matrix
+      OSPModel currentOSPModel{nullptr};
+      affine3f currentTransform{ospcommon::one};
+
       OSPRenderer ospRenderer {nullptr};
       int level {0};
+
 
       TimeStamp _MTime;
       TimeStamp _childMTime;
@@ -54,8 +56,9 @@ namespace ospray {
                                         const affine3f &newXfm)
       : world(other.world),
         //integrator(other.integrator),
-        xfm(newXfm),
+        currentTransform(newXfm),
         ospRenderer(nullptr),
+        currentOSPModel(nullptr),
         level(0)
     {}
 

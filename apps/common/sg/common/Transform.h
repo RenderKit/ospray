@@ -23,26 +23,20 @@ namespace ospray {
   namespace sg {
 
     //! a transformation node
-    struct OSPSG_INTERFACE Transform : public sg::Node
+    struct OSPSG_INTERFACE Transform : public sg::Renderable
     {
-      Transform(const AffineSpace3f &xfm,
-                const std::shared_ptr<sg::Node> &node);
-
+      Transform();
       std::string toString() const override;
 
-      /*! \brief return bounding box in world coordinates.
-
-        This function can be used by the viewer(s) for calibrating
-        camera motion, setting default camera position, etc. Nodes
-        for which that does not apply can simpy return
-        box3f(empty) */
-      box3f bounds() const override;
+      virtual void preRender(RenderContext &ctx) override;
+      virtual void postRender(RenderContext &ctx) override;
 
       //! \brief the actual (affine) transformation matrix
       AffineSpace3f xfm;
-
-      //! child node we're transforming
-      std::shared_ptr<sg::Node> node;
+      ospcommon::affine3f cachedTransform;
+      ospcommon::affine3f baseTransform;
+      ospcommon::affine3f worldTransform;  
+      ospcommon::affine3f oldTransform{ospcommon::one};
     };
 
   } // ::ospray::sg
