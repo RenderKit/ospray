@@ -369,11 +369,15 @@ namespace ospray {
         return;
 
       ctx._childMTime = TimeStamp();
-      preTraverse(ctx, operation);
+      bool traverseChildren = true;
+      preTraverse(ctx, operation, traverseChildren);
       ctx.level++;
 
-      for (auto &child : properties.children)
-        child.second->traverse(ctx, operation);
+      if (traverseChildren)
+      {
+        for (auto &child : properties.children)
+          child.second->traverse(ctx, operation);
+      }
 
       ctx.level--;
       ctx._childMTime = childrenLastModified();
@@ -386,21 +390,25 @@ namespace ospray {
       traverse(ctx, operation);
     }
 
-    void Node::preTraverse(RenderContext &ctx, const std::string& operation)
+    void Node::preTraverse(RenderContext &ctx, const std::string& operation, bool& traverseChildren)
     {
       if (operation == "print") {
         for (int i=0;i<ctx.level;i++)
           std::cout << "  ";
         std::cout << name() << " : " << type() << "\n";
-      } else if (operation == "commit" &&
-               (lastModified() >= lastCommitted() ||
-                childrenLastModified() >= lastCommitted())) {
-        // std::cout << "preCommit: " << name() << std::endl;
-        preCommit(ctx);
+      } else if (operation == "commit") {
+       if (lastModified() >= lastCommitted() ||
+                childrenLastModified() >= lastCommitted())
+          preCommit(ctx);
+        else 
+          traverseChildren = false;
       } else if (operation == "verify") {
+        if (properties.valid && childrenLastModified() < properties.lastVerified)
+          traverseChildren = false;
         properties.valid = computeValid();
         if (!properties.valid)
           std::cout << name() << " marked invalid\n";
+        properties.lastVerified = TimeStamp();
       } else if (operation == "modified") {
         markAsModified();
       }
@@ -434,9 +442,9 @@ namespace ospray {
     // ==================================================================
 
     void Renderable::preTraverse(RenderContext &ctx,
-                                 const std::string& operation)
+                                 const std::string& operation, bool& traverseChildren)
     {
-      Node::preTraverse(ctx,operation);
+      Node::preTraverse(ctx,operation, traverseChildren);
       if (operation == "render")
         preRender(ctx);
     }

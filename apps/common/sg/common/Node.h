@@ -206,7 +206,7 @@ namespace ospray {
 
       //! called before traversing children
       virtual void preTraverse(RenderContext &ctx,
-                               const std::string& operation);
+                               const std::string& operation, bool& traverseChildren);
 
       //! called after traversing children
       virtual void postTraverse(RenderContext &ctx,
@@ -232,6 +232,7 @@ namespace ospray {
         TimeStamp lastModified;
         TimeStamp childrenMTime;
         TimeStamp lastCommitted;
+        TimeStamp lastVerified;
         Node* parent {nullptr};
         NodeFlags flags;
         bool valid {false};
@@ -428,7 +429,7 @@ namespace ospray {
       }
       // virtual box3f extendBounds(box3f b) { bbox.extend(b); return bbox; }
       virtual void preTraverse(RenderContext &ctx,
-                               const std::string& operation) override;
+                               const std::string& operation, bool& traverseChildren) override;
       virtual void postTraverse(RenderContext &ctx,
                                 const std::string& operation) override;
       virtual void postCommit(RenderContext &ctx) override { 

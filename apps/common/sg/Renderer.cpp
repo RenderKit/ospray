@@ -124,11 +124,12 @@ namespace ospray {
         ospCommit(ospRenderer);
         setValue((OSPObject)ospRenderer);
       }
-      ctx.ospRenderer = ospRenderer;
+      ctx.ospRenderer = ospRenderer;  
     }
 
     void Renderer::postCommit(RenderContext &ctx)
     {
+      double time = ospcommon::getSysTime();
       if (child("camera").childrenLastModified() > frameMTime
           || child("lights").childrenLastModified() > frameMTime
           || lastModified() > frameMTime
@@ -163,18 +164,11 @@ namespace ospray {
         ospSetObject(ospRenderer, "lights", lightsData);
         if (child("world").childrenLastModified() > frameMTime)
         {
-          std::cout << "rendering world model\n";
-          std::cout << "world children modified: " << child("world").childrenLastModified() << std::endl;
-          std::cout << "frameMTime: " << frameMTime << std::endl;
           child("world").traverse(ctx, "render");
           ospSetObject(ospRenderer, "model",  child("world").valueAs<OSPObject>());
         }
-
         ospCommit(ospRenderer);
-
         frameMTime = TimeStamp();
-        std::cout << "new world children modified: " << child("world").childrenLastModified() << std::endl;  
-        std::cout << "new frameMTime: " << frameMTime << std::endl;
       }
 
     }

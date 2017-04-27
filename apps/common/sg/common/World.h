@@ -54,6 +54,7 @@ namespace ospray {
         camera motion, setting default camera position, etc. Nodes
         for which that does not apply can simpy return
         box3f(embree::empty) */
+      virtual void traverse(RenderContext &ctx, const std::string& operation) override;
       virtual void preCommit(RenderContext &ctx) override;
       virtual void postCommit(RenderContext &ctx) override;
       virtual void preRender(RenderContext &ctx) override;

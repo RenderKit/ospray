@@ -247,12 +247,10 @@ namespace ospray {
                            &xfm.p.x,
                            &xfm.p.y,
                            &xfm.p.z);
-      //xmlFree(value);
       if (numRead != 12)  {
         throw std::runtime_error("invalid number of elements in RIVL transform node");
       }
 
-      // std::shared_ptr<sg::Transform> xfNode = std::make_shared<sg::Transform>(xfm,child);
       std::stringstream ss;
       ss << "transform_" << id;
       auto xfNode = createNode(ss.str(), "Transform");
@@ -294,8 +292,6 @@ namespace ospray {
             if (!binBasePtr)
               throw std::runtime_error("xml file mapping to binary file, but binary file not present");
             mesh->vertex = make_aligned<DataArray3f>((char*)binBasePtr+ofs, num);
-            // mesh->vertex = std::make_shared<DataArray3f>(make_aligned<vec3f>((char*)binBasePtr+ofs, num),
-            //                                              num,true);
           } else if (child.name == "normal") {
             size_t ofs      = std::stoll(child.getProp("ofs"));
             size_t num      = std::stoll(child.getProp("num"));
@@ -348,8 +344,6 @@ namespace ospray {
         char *value = strdup(node.content.c_str());
         for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(NULL," \t\n\r")) {
           counter++;
-          // if (counter > 100)//DEBUG large groups
-            // continue;
           size_t childID = atoi(s);
           std::shared_ptr<sg::Node> child = nodeList[childID];
           group->children.push_back(child);
@@ -410,7 +404,6 @@ namespace ospray {
             lastNode = nodeList.back();
           } else {
             nodeList.push_back({});
-            //throw std::runtime_error("unknown node type '"+node.name+"' in RIVL model");
           }
         });
       world->add(lastNode);
@@ -419,7 +412,6 @@ namespace ospray {
     void importRIVL(std::shared_ptr<sg::Node> world,
                     const std::string &fileName)
     {
-      std::cout << __PRETTY_FUNCTION__ << std::endl;
       string xmlFileName = fileName;
       string binFileName = fileName+".bin";
       binBasePtr = (void *)mapFile(binFileName);
@@ -436,7 +428,6 @@ namespace ospray {
       const xml::Node &root_element = *doc->child[0];
       parseBGFscene(world,root_element);
       PRINT(world->bounds());
-      std::cout << __PRETTY_FUNCTION__ << " done" << std::endl;
     }
 
   } // ::ospray::sg

@@ -71,6 +71,17 @@ namespace ospray {
       return "ospray::viewer::sg::World";
     }
 
+    void World::traverse(RenderContext &ctx, const std::string& operation)
+    {
+      if (operation == "render")
+      {
+        preRender(ctx);
+        postRender(ctx);
+      }
+      else 
+        Node::traverse(ctx,operation);
+    }
+
     void World::preCommit(RenderContext &ctx)
     {
       oldWorld = ctx.world;
@@ -86,7 +97,9 @@ namespace ospray {
 
     void World::postCommit(RenderContext &ctx)
     {
-      traverse(ctx, "render");  //cache render operation
+      //cache render operation
+      for (auto child : properties.children)
+        child.second->traverse(ctx, "render");  
       ospCommit(ospModel);
       ctx.world = oldWorld;
       ctx.currentOSPModel = oldModel;
