@@ -40,14 +40,9 @@
 # include <sched.h>
 #endif
 
-
 #ifdef _WIN32
 #  include <windows.h> // for Sleep and gethostname
 #  include <process.h> // for getpid
-void sleep(unsigned int seconds)
-{
-    Sleep(seconds * 1000);
-}
 #else
 #  include <unistd.h> // for gethostname
 #endif
@@ -66,8 +61,7 @@ namespace ospray {
     void embreeErrorFunc(const RTCError code, const char* str)
     {
       std::stringstream msg;
-      msg << "#osp: embree internal error " << code << " : "
-        << str << std::endl;
+      msg << "#osp: embree internal error " << code << " : " << str << '\n';
       postStatusMsg(msg);
       throw std::runtime_error(msg.str());
     }
@@ -122,7 +116,8 @@ namespace ospray {
 
       // NOTE(jda) - This guard guarentees that the embree device gets cleaned
       //             up no matter how the scope of runWorker() is left
-      struct EmbreeDeviceScopeGuard {
+      struct EmbreeDeviceScopeGuard
+      {
         RTCDevice embreeDevice;
         ~EmbreeDeviceScopeGuard() { rtcDeleteDevice(embreeDevice); }
       };
@@ -136,10 +131,8 @@ namespace ospray {
 
       if (rtcDeviceGetError(embreeDevice) != RTC_NO_ERROR) {
         // why did the error function not get called !?
-        std::stringstream msg;
-        msg << "#osp:init: embree internal error number "
-                  << (int)rtcDeviceGetError(embreeDevice) << std::endl;
-        postStatusMsg(msg);
+        postStatusMsg() << "#osp:init: embree internal error number "
+                        << (int)rtcDeviceGetError(embreeDevice);
       }
 
       char hostname[HOST_NAME_MAX];

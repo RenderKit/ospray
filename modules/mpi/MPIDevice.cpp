@@ -88,6 +88,14 @@ namespace ospray {
           << std::noshowbase << std::dec;
 
       worker.makeInterComm();
+
+      // -------------------------------------------------------
+      // at this point, all processes should be set up and synced. in
+      // particular:
+      // - app has intracommunicator to all workers (and vica versa)
+      // - app process(es) are in one intercomm ("app"); workers all in
+      //   another ("worker")
+      // - all processes (incl app) have barrier'ed, and thus now in sync.
     }
 
     static inline void setupWorker()
@@ -108,37 +116,14 @@ namespace ospray {
       MPI_CALL(Intercomm_create(worker.comm, 0, world.comm, 0, 1, &app.comm));
 
       app.makeInterComm();
-    }
 
-    static inline void doHandshakeTestMaster()
-    {
-      MPI_Status status;
-      postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-          << "#m: ping-ponging a test message to every worker...";
-
-      for (int i=0;i<worker.size;i++) {
-        postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-            << "#m: sending tag "<< i << " to worker " << i;
-        MPI_CALL(Send(&i,1,MPI_INT,i,i,worker.comm));
-        int reply;
-        MPI_CALL(Recv(&reply,1,MPI_INT,i,i,worker.comm,&status));
-        Assert(reply == i);
-      }
-      MPI_CALL(Barrier(MPI_COMM_WORLD));
-    }
-
-    static inline void doHandshakeTestWorker()
-    {
-      MPI_Status status;
-      // replying to test-message
-      postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-          << "#w: start-up ping-pong: worker " << worker.rank <<
-             " trying to receive tag " << worker.rank << "...";
-      int reply;
-      MPI_CALL(Recv(&reply,1,MPI_INT,0,worker.rank,app.comm,&status));
-      MPI_CALL(Send(&reply,1,MPI_INT,0,worker.rank,app.comm));
-
-      MPI_CALL(Barrier(MPI_COMM_WORLD));
+      // -------------------------------------------------------
+      // at this point, all processes should be set up and synced. in
+      // particular:
+      // - app has intracommunicator to all workers (and vica versa)
+      // - app process(es) are in one intercomm ("app"); workers all in
+      //   another ("worker")
+      // - all processes (incl app) have barrier'ed, and thus now in sync.
     }
 
     // MPI initialization helper functions ////////////////////////////////////
@@ -174,8 +159,7 @@ namespace ospray {
         - this fct is called from ospInit (with ranksBecomeWorkers=true) or
           from ospdMpiInit (w/ ranksBecomeWorkers = false)
     */
-    void createMPI_runOnExistingRanks(int *ac, const char **av,
-                                      bool ranksBecomeWorkers)
+    void createMPI_RanksBecomeWorkers(int *ac, const char **av)
     {
       mpi::init(ac,av);
 
@@ -186,46 +170,17 @@ namespace ospray {
 
       throwIfNotMpiParallel();
 
-      if (IamTheMaster()) {
+      if (IamTheMaster())
         setupMaster();
-        doHandshakeTestMaster();
-
-        // -------------------------------------------------------
-        // at this point, all processes should be set up and synced. in
-        // particular:
-        // - app has intracommunicator to all workers (and vica versa)
-        // - app process(es) are in one intercomm ("app"); workers all in
-        //   another ("worker")
-        // - all processes (incl app) have barrier'ed, and thus now in sync.
-      } else {
+      else {
         setupWorker();
-        doHandshakeTestWorker();
-
-        // -------------------------------------------------------
-        // at this point, all processes should be set up and synced. in
-        // particular:
-        // - app has intracommunicator to all workers (and vica versa)
-        // - app process(es) are in one intercomm ("app"); workers all in
-        //   another ("worker")
-        // - all processes (incl app) have barrier'ed, and thus now in sync.
 
         // now, all workers will enter their worker loop (ie, they will *not*
         // return)
-        if (ranksBecomeWorkers) {
-          mpi::runWorker();
-          throw std::runtime_error("should never reach here!");
-          /* no return here - 'runWorker' will never return */
-        } else {
-          postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-              << "#osp:mpi: distributed mode detected, "
-              << "returning device on all ranks!";
-        }
+        mpi::runWorker();
+        throw std::runtime_error("should never reach here!");
+        /* no return here - 'runWorker' will never return */
       }
-    }
-
-    void createMPI_RanksBecomeWorkers(int *ac, const char **av)
-    {
-      createMPI_runOnExistingRanks(ac,av,true);
     }
 
     /*! in this mode ("separate worker group" mode)
@@ -308,7 +263,7 @@ namespace ospray {
 
       char appPortName[MPI_MAX_PORT_NAME];
       if (worker.rank == 0) {
-        ospcommon::socket_t masterSocket = ospcommon::connect(host.c_str(),3141);
+        auto masterSocket = ospcommon::connect(host.c_str(),3141);
         
         size_t len;
         ospcommon::read(masterSocket,&len,sizeof(len));
@@ -336,10 +291,10 @@ namespace ospray {
       - the user may or may not have launched MPI explicitly for his app
       - the app may or may not be running distributed
       - the ospray frontend (the part linked to the app) will use the specified
-      'launchCmd' to launch a _new_ MPI group of worker processes.
-      - the ospray frontend will assume the launched process to output 'OSPRAY_SERVICE_PORT'
-      stdout, will parse that output for this string, and create an mpi connection to
-      this port to establish the service
+        'launchCmd' to launch a _new_ MPI group of worker processes.
+      - the ospray frontend will assume the launched process to output
+        'OSPRAY_SERVICE_PORT' stdout, will parse that output for this string,
+        and create an mpi connection to this port to establish the service
     */
     void createMPI_LaunchWorkerGroup(int *ac, const char **av,
                                      const char *launchCommand)
