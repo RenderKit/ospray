@@ -39,7 +39,7 @@ namespace maml {
 
   bool isRunning()
   {
-    Context::singleton->isRunning();
+    return Context::singleton->isRunning();
   }
 
   /*! stops the maml layer; maml will no longer perform any MPI calls;

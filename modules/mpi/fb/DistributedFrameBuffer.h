@@ -100,7 +100,7 @@ namespace ospray {
 
     //! handle incoming message from commlayer. it's the
     //! recipient's job to properly delete the message.
-    void incoming(const std::shared_ptr<maml::Message> &message) override;
+    void incoming(const std::shared_ptr<mpicommon::Message> &message) override;
 
     //! process an empty client-to-master write tile message */
     void processMessage(MasterTileMessage *msg);
@@ -209,7 +209,7 @@ namespace ospray {
         condition can actually happen if another node is just fast
         enough, and sends us the first rendered tile before our node's
         loadbalancer even started working on that frame. */
-    std::vector<std::shared_ptr<maml::Message>> delayedMessage;
+    std::vector<std::shared_ptr<mpicommon::Message>> delayedMessage;
   };
 
   // Inlined definitions //////////////////////////////////////////////////////

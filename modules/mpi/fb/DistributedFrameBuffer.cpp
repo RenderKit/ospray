@@ -165,7 +165,7 @@ namespace ospray {
 
   void DFB::startNewFrame(const float errorThreshold)
   {
-    std::vector<std::shared_ptr<maml::Message>> delayedMessage;
+    std::vector<std::shared_ptr<mpicommon::Message>> delayedMessage;
 
     {
       SCOPED_LOCK(mutex);
@@ -408,7 +408,7 @@ namespace ospray {
       mtm.coords  = tile->begin;
       mtm.error   = tile->error;
 
-      auto msg = std::make_shared<maml::Message>(&mtm, sizeof(mtm));
+      auto msg = std::make_shared<mpicommon::Message>(&mtm, sizeof(mtm));
 
       mpi::messaging::sendTo(mpicommon::masterRank(), myID, msg);
     } break;
@@ -422,7 +422,7 @@ namespace ospray {
       mtm.error   = tile->error;
       memcpy(mtm.color, tile->color, TILE_SIZE*TILE_SIZE*sizeof(uint32));
 
-      auto msg = std::make_shared<maml::Message>(&mtm, sizeof(mtm));
+      auto msg = std::make_shared<mpicommon::Message>(&mtm, sizeof(mtm));
 
       mpi::messaging::sendTo(mpicommon::masterRank(), myID, msg);
     } break;
@@ -435,7 +435,7 @@ namespace ospray {
       mtm.error   = tile->error;
       memcpy(mtm.color, tile->color, TILE_SIZE*TILE_SIZE*sizeof(vec4f));
 
-      auto msg = std::make_shared<maml::Message>(&mtm, sizeof(mtm));
+      auto msg = std::make_shared<mpicommon::Message>(&mtm, sizeof(mtm));
 
       mpi::messaging::sendTo(mpicommon::masterRank(), myID, msg);
     } break;
@@ -465,7 +465,7 @@ namespace ospray {
     return "ospray::DFB";
   }
 
-  void DFB::incoming(const std::shared_ptr<maml::Message> &message)
+  void DFB::incoming(const std::shared_ptr<mpicommon::Message> &message)
   {
     if (!frameIsActive) {
       SCOPED_LOCK(mutex);
@@ -529,8 +529,8 @@ namespace ospray {
       memcpy(&msgPayload.tile, &tile, sizeof(ospray::Tile));
       msgPayload.command = WORKER_WRITE_TILE;
 
-      auto msg = std::make_shared<maml::Message>(&msgPayload,
-                                                 sizeof(msgPayload));
+      auto msg = std::make_shared<mpicommon::Message>(&msgPayload,
+                                                      sizeof(msgPayload));
 
       int dstRank = tileDesc->ownerID;
       mpi::messaging::sendTo(dstRank, myID, msg);

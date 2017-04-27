@@ -37,7 +37,7 @@ namespace ospray {
       bool asyncMessagingEnabled();
 
       void sendTo(int globalRank, ObjectHandle object,
-                  std::shared_ptr<maml::Message> msg);
+                  std::shared_ptr<mpicommon::Message> msg);
 
       void disableAsyncMessaging();
 

@@ -31,7 +31,7 @@ namespace ospray {
         void registerMessageListener(int handleObjID,
                                      maml::MessageHandler *listener);
 
-        void incoming(const std::shared_ptr<maml::Message> &message) override;
+        void incoming(const std::shared_ptr<Message> &message) override;
 
         // Data members //
 
@@ -52,7 +52,7 @@ namespace ospray {
       }
 
       inline void ObjectMessageHandler::incoming(
-        const std::shared_ptr<maml::Message> &message
+        const std::shared_ptr<Message> &message
       )
       {
         auto obj = objectListeners.find(message->tag);
@@ -91,7 +91,7 @@ namespace ospray {
       }
 
       void sendTo(int globalRank, ObjectHandle object,
-                  std::shared_ptr<maml::Message> msg)
+                  std::shared_ptr<Message> msg)
       {
         msg->tag = object.objID();
         maml::sendTo(world.comm, globalRank, msg);
