@@ -436,8 +436,6 @@ namespace ospray {
         child("bounds").setValue(computeBounds()); }
       virtual void preRender(RenderContext &ctx)  {}
       virtual void postRender(RenderContext &ctx) {}
-    protected:
-      // box3f bbox;
     };
 
     /*! \brief registers a internal ospray::<ClassName> renderer under

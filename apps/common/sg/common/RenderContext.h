@@ -42,8 +42,6 @@ namespace ospray {
       OSPModel currentOSPModel{nullptr};
       affine3f currentTransform{ospcommon::one};
 
-      //std::shared_ptr<sg::Integrator> integrator; //!< integrator used to create materials etc
-      // const affine3f xfm {one}; //!< affine geometry transform matrix
       OSPRenderer ospRenderer {nullptr};
       int level {0};
 
