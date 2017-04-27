@@ -30,10 +30,10 @@
 namespace ospray {
   namespace mpi {
 
-    struct MPIDevice : public api::Device
+    struct MPIOffloadDevice : public api::Device
     {
-      MPIDevice() = default;
-      ~MPIDevice();
+      MPIOffloadDevice() = default;
+      ~MPIOffloadDevice();
 
       // ManagedObject Implementation /////////////////////////////////////////
 

@@ -370,7 +370,7 @@ namespace ospray {
 
     // MPIDevice definitions //////////////////////////////////////////////////
     
-    MPIDevice::~MPIDevice()
+    MPIOffloadDevice::~MPIOffloadDevice()
     {
       // NOTE(jda) - Seems that there are no MPI Devices on worker ranks...this
       //             will likely change for data-distributed API settings?
@@ -381,7 +381,7 @@ namespace ospray {
       }
     }
 
-    void MPIDevice::commit()
+    void MPIOffloadDevice::commit()
     {
       if (initialized)// NOTE (jda) - doesn't make sense to commit again?
         return;
@@ -448,7 +448,7 @@ namespace ospray {
     }
 
     OSPFrameBuffer 
-    MPIDevice::frameBufferCreate(const vec2i &size, 
+    MPIOffloadDevice::frameBufferCreate(const vec2i &size,
                                  const OSPFrameBufferFormat mode,
                                  const uint32 channels)
     {
@@ -460,7 +460,7 @@ namespace ospray {
 
 
     /*! map frame buffer */
-    const void *MPIDevice::frameBufferMap(OSPFrameBuffer _fb,
+    const void *MPIOffloadDevice::frameBufferMap(OSPFrameBuffer _fb,
                                           OSPFrameBufferChannel channel)
     {
       ObjectHandle handle = (const ObjectHandle &)_fb;
@@ -475,7 +475,8 @@ namespace ospray {
     }
 
     /*! unmap previously mapped frame buffer */
-    void MPIDevice::frameBufferUnmap(const void *mapped, OSPFrameBuffer _fb)
+    void MPIOffloadDevice::frameBufferUnmap(const void *mapped,
+                                            OSPFrameBuffer _fb)
     {
       ObjectHandle handle = (const ObjectHandle &)_fb;
       FrameBuffer *fb = (FrameBuffer *)handle.lookup();
@@ -485,7 +486,7 @@ namespace ospray {
     }
 
     /*! create a new model */
-    OSPModel MPIDevice::newModel()
+    OSPModel MPIOffloadDevice::newModel()
     {
       ObjectHandle handle = allocateHandle();
       work::NewModel work("", handle);
@@ -494,7 +495,7 @@ namespace ospray {
     }
 
     /*! finalize a newly specified model */
-    void MPIDevice::commit(OSPObject _object)
+    void MPIOffloadDevice::commit(OSPObject _object)
     {
       Assert(_object);
       const ObjectHandle handle = (const ObjectHandle&)_object;
@@ -503,7 +504,7 @@ namespace ospray {
     }
 
     /*! add a new geometry to a model */
-    void MPIDevice::addGeometry(OSPModel _model, OSPGeometry _geometry)
+    void MPIOffloadDevice::addGeometry(OSPModel _model, OSPGeometry _geometry)
     {
       Assert(_model);
       Assert(_geometry);
@@ -512,7 +513,7 @@ namespace ospray {
     }
 
     /*! add a new volume to a model */
-    void MPIDevice::addVolume(OSPModel _model, OSPVolume _volume)
+    void MPIOffloadDevice::addVolume(OSPModel _model, OSPVolume _volume)
     {
       Assert(_model);
       Assert(_volume);
@@ -521,7 +522,7 @@ namespace ospray {
     }
 
     /*! create a new data buffer */
-    OSPData MPIDevice::newData(size_t nitems, OSPDataType format,
+    OSPData MPIOffloadDevice::newData(size_t nitems, OSPDataType format,
                                void *init, int flags)
     {
       ObjectHandle handle = allocateHandle();
@@ -535,14 +536,16 @@ namespace ospray {
     }
 
     /*! assign (named) string parameter to an object */
-    void MPIDevice::setVoidPtr(OSPObject _object, const char *bufName, void *v)
+    void MPIOffloadDevice::setVoidPtr(OSPObject _object,
+                                      const char *bufName,
+                                      void *v)
     {
       UNUSED(_object, bufName, v);
       throw std::runtime_error("setting a void pointer as parameter to an "
                                "object is not allowed in MPI mode");
     }
 
-    void MPIDevice::removeParam(OSPObject object, const char *name)
+    void MPIOffloadDevice::removeParam(OSPObject object, const char *name)
     {
       Assert(object != nullptr  && "invalid object handle");
       Assert(name != nullptr && "invalid identifier for object parameter");
@@ -551,7 +554,7 @@ namespace ospray {
     }
 
     /*! Copy data into the given object. */
-    int MPIDevice::setRegion(OSPVolume _volume, const void *source,
+    int MPIOffloadDevice::setRegion(OSPVolume _volume, const void *source,
                              const vec3i &index, const vec3i &count)
     {
       Assert(_volume);
@@ -571,7 +574,7 @@ namespace ospray {
     }
 
     /*! assign (named) string parameter to an object */
-    void MPIDevice::setString(OSPObject _object,
+    void MPIOffloadDevice::setString(OSPObject _object,
                               const char *bufName,
                               const char *s)
     {
@@ -582,7 +585,7 @@ namespace ospray {
     }
 
     /*! load module */
-    int MPIDevice::loadModule(const char *name)
+    int MPIOffloadDevice::loadModule(const char *name)
     {
       work::LoadModule work(name);
       processWork(work);
@@ -593,7 +596,7 @@ namespace ospray {
     }
 
     /*! assign (named) float parameter to an object */
-    void MPIDevice::setFloat(OSPObject _object,
+    void MPIOffloadDevice::setFloat(OSPObject _object,
                              const char *bufName,
                              const float f)
     {
@@ -604,7 +607,9 @@ namespace ospray {
     }
 
     /*! assign (named) int parameter to an object */
-    void MPIDevice::setInt(OSPObject _object, const char *bufName, const int i)
+    void MPIOffloadDevice::setInt(OSPObject _object,
+                                  const char *bufName,
+                                  const int i)
     {
       Assert(_object);
       Assert(bufName);
@@ -613,7 +618,7 @@ namespace ospray {
     }
 
     /*! assign (named) vec2f parameter to an object */
-    void MPIDevice::setVec2f(OSPObject _object,
+    void MPIOffloadDevice::setVec2f(OSPObject _object,
                              const char *bufName,
                              const vec2f &v)
     {
@@ -624,7 +629,7 @@ namespace ospray {
     }
 
     /*! assign (named) vec3f parameter to an object */
-    void MPIDevice::setVec3f(OSPObject _object,
+    void MPIOffloadDevice::setVec3f(OSPObject _object,
                              const char *bufName,
                              const vec3f &v)
     {
@@ -635,7 +640,7 @@ namespace ospray {
     }
 
     /*! assign (named) vec4f parameter to an object */
-    void MPIDevice::setVec4f(OSPObject _object,
+    void MPIOffloadDevice::setVec4f(OSPObject _object,
                              const char *bufName,
                              const vec4f &v)
     {
@@ -646,7 +651,7 @@ namespace ospray {
     }
 
     /*! assign (named) vec2i parameter to an object */
-    void MPIDevice::setVec2i(OSPObject _object,
+    void MPIOffloadDevice::setVec2i(OSPObject _object,
                              const char *bufName,
                              const vec2i &v)
     {
@@ -657,7 +662,7 @@ namespace ospray {
     }
 
     /*! assign (named) vec3i parameter to an object */
-    void MPIDevice::setVec3i(OSPObject _object,
+    void MPIOffloadDevice::setVec3i(OSPObject _object,
                              const char *bufName,
                              const vec3i &v)
     {
@@ -668,7 +673,7 @@ namespace ospray {
     }
 
     /*! assign (named) data item as a parameter to an object */
-    void MPIDevice::setObject(OSPObject _target,
+    void MPIOffloadDevice::setObject(OSPObject _target,
                               const char *bufName,
                               OSPObject _value)
     {
@@ -679,7 +684,7 @@ namespace ospray {
     }
 
     /*! create a new pixelOp object (out of list of registered pixelOps) */
-    OSPPixelOp MPIDevice::newPixelOp(const char *type)
+    OSPPixelOp MPIOffloadDevice::newPixelOp(const char *type)
     {
       Assert(type != nullptr);
 
@@ -690,7 +695,7 @@ namespace ospray {
     }
 
     /*! set a frame buffer's pixel op object */
-    void MPIDevice::setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op)
+    void MPIOffloadDevice::setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op)
     {
       Assert(_fb != nullptr);
       Assert(_op != nullptr);
@@ -699,7 +704,7 @@ namespace ospray {
     }
 
     /*! create a new renderer object (out of list of registered renderers) */
-    OSPRenderer MPIDevice::newRenderer(const char *type)
+    OSPRenderer MPIOffloadDevice::newRenderer(const char *type)
     {
       Assert(type != nullptr);
 
@@ -710,7 +715,7 @@ namespace ospray {
     }
 
     /*! create a new camera object (out of list of registered cameras) */
-    OSPCamera MPIDevice::newCamera(const char *type)
+    OSPCamera MPIOffloadDevice::newCamera(const char *type)
     {
       Assert(type != nullptr);
       ObjectHandle handle = allocateHandle();
@@ -720,7 +725,7 @@ namespace ospray {
     }
 
     /*! create a new volume object (out of list of registered volumes) */
-    OSPVolume MPIDevice::newVolume(const char *type)
+    OSPVolume MPIOffloadDevice::newVolume(const char *type)
     {
       Assert(type != nullptr);
 
@@ -731,7 +736,7 @@ namespace ospray {
     }
 
     /*! create a new geometry object (out of list of registered geometries) */
-    OSPGeometry MPIDevice::newGeometry(const char *type)
+    OSPGeometry MPIOffloadDevice::newGeometry(const char *type)
     {
       Assert(type != nullptr);
 
@@ -742,7 +747,8 @@ namespace ospray {
     }
 
     /*! have given renderer create a new material */
-    OSPMaterial MPIDevice::newMaterial(OSPRenderer _renderer, const char *type)
+    OSPMaterial MPIOffloadDevice::newMaterial(OSPRenderer _renderer,
+                                              const char *type)
     {
       if (type == nullptr)
         throw std::runtime_error("#osp:mpi:newMaterial: NULL material type");
@@ -760,7 +766,7 @@ namespace ospray {
 
     /*! create a new transfer function object (out of list of
         registered transfer function types) */
-    OSPTransferFunction MPIDevice::newTransferFunction(const char *type)
+    OSPTransferFunction MPIOffloadDevice::newTransferFunction(const char *type)
     {
       Assert(type != nullptr);
 
@@ -771,7 +777,7 @@ namespace ospray {
     }
 
     /*! have given renderer create a new Light */
-    OSPLight MPIDevice::newLight(OSPRenderer _renderer, const char *type)
+    OSPLight MPIOffloadDevice::newLight(OSPRenderer _renderer, const char *type)
     {
       if (type == nullptr)
         throw std::runtime_error("#osp:mpi:newLight: NULL light type");
@@ -796,7 +802,7 @@ namespace ospray {
       if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0,
       and reset accumID.
     */
-    void MPIDevice::frameBufferClear(OSPFrameBuffer _fb,
+    void MPIOffloadDevice::frameBufferClear(OSPFrameBuffer _fb,
                                      const uint32 fbChannelFlags)
     {
       work::ClearFrameBuffer work(_fb, fbChannelFlags);
@@ -804,21 +810,22 @@ namespace ospray {
     }
 
     /*! remove an existing geometry from a model */
-    void MPIDevice::removeGeometry(OSPModel _model, OSPGeometry _geometry)
+    void MPIOffloadDevice::removeGeometry(OSPModel _model,
+                                          OSPGeometry _geometry)
     {
       work::RemoveGeometry work(_model, _geometry);
       processWork(work);
     }
 
     /*! remove an existing volume from a model */
-    void MPIDevice::removeVolume(OSPModel _model, OSPVolume _volume)
+    void MPIOffloadDevice::removeVolume(OSPModel _model, OSPVolume _volume)
     {
       work::RemoveVolume work(_model, _volume);
       processWork(work);
     }
 
     /*! call a renderer to render a frame buffer */
-    float MPIDevice::renderFrame(OSPFrameBuffer _fb,
+    float MPIOffloadDevice::renderFrame(OSPFrameBuffer _fb,
                                  OSPRenderer _renderer,
                                  const uint32 fbChannelFlags)
     {
@@ -839,7 +846,7 @@ namespace ospray {
       create a new material, assign it to a geometry, and immediately
       after this assignation release its refcount; the material will
       stay 'alive' as long as the given geometry requires it. */
-    void MPIDevice::release(OSPObject _obj)
+    void MPIOffloadDevice::release(OSPObject _obj)
     {
       if (!_obj) return;
       work::CommandRelease work((const ObjectHandle&)_obj);
@@ -847,14 +854,15 @@ namespace ospray {
     }
 
     //! assign given material to given geometry
-    void MPIDevice::setMaterial(OSPGeometry _geometry, OSPMaterial _material)
+    void MPIOffloadDevice::setMaterial(OSPGeometry _geometry,
+                                       OSPMaterial _material)
     {
       work::SetMaterial work((ObjectHandle&)_geometry, _material);
       processWork(work);
     }
 
     /*! create a new Texture2D object */
-    OSPTexture2D MPIDevice::newTexture2D(const vec2i &sz,
+    OSPTexture2D MPIOffloadDevice::newTexture2D(const vec2i &sz,
         const OSPTextureFormat type, void *data, const uint32 flags)
     {
       ObjectHandle handle = allocateHandle();
@@ -863,7 +871,7 @@ namespace ospray {
       return (OSPTexture2D)(int64)handle;
     }
 
-    void MPIDevice::sampleVolume(float **results,
+    void MPIOffloadDevice::sampleVolume(float **results,
                                  OSPVolume volume,
                                  const vec3f *worldCoordinates,
                                  const size_t &count)
@@ -872,7 +880,9 @@ namespace ospray {
       NOT_IMPLEMENTED;
     }
 
-    int MPIDevice::getString(OSPObject _object, const char *name, char **value)
+    int MPIOffloadDevice::getString(OSPObject _object,
+                                    const char *name,
+                                    char **value)
     {
       Assert(_object);
       Assert(name);
@@ -888,7 +898,7 @@ namespace ospray {
       return false;
     }
 
-    void MPIDevice::processWork(work::Work &work)
+    void MPIOffloadDevice::processWork(work::Work &work)
     {
       static size_t numWorkSent = 0;
       postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
@@ -910,7 +920,7 @@ namespace ospray {
           << typeString(work);
     }
 
-    ObjectHandle MPIDevice::allocateHandle() const
+    ObjectHandle MPIOffloadDevice::allocateHandle() const
     {
       if (currentApiMode != OSPD_MODE_MASTERED)
         throw std::runtime_error("Can only alloc handles in MASTERED mode!");
@@ -918,8 +928,8 @@ namespace ospray {
       return ObjectHandle();
     }
 
-    OSP_REGISTER_DEVICE(MPIDevice, mpi_device);
-    OSP_REGISTER_DEVICE(MPIDevice, mpi);
+    OSP_REGISTER_DEVICE(MPIOffloadDevice, mpi_offload);
+    OSP_REGISTER_DEVICE(MPIOffloadDevice, mpi);
 
   } // ::ospray::mpi
 } // ::ospray
