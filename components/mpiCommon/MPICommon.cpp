@@ -25,7 +25,6 @@ namespace ospray {
       (for debugging) _may_ eventually turn this into a real logLevel,
       but for now tihs is cleaner here thatn in the MPI device
      */
-    OSPRAY_MPI_INTERFACE bool logMPI = 0;
     OSPRAY_MPI_INTERFACE bool mpiIsThreaded = 0;
 
     OSPRAY_MPI_INTERFACE Group world;

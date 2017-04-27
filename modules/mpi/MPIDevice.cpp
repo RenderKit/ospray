@@ -51,8 +51,6 @@ namespace ospray {
 
     // Forward declarations ///////////////////////////////////////////////////
 
-    bool checkIfWeNeedToDoMPIDebugOutputs();
-
     //! this runs an ospray worker process.
     /*! it's up to the proper init routine to decide which processes
       call this function and which ones don't. This function will not
@@ -78,20 +76,16 @@ namespace ospray {
 
       app.makeIntraComm();
 
-      if (logMPI) {
-        postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-            << "#w: app process " << app.rank << '/' << app.size
-            << " (global " << world.rank << '/' << world.size;
-      }
+      postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+          << "#w: app process " << app.rank << '/' << app.size
+          << " (global " << world.rank << '/' << world.size;
 
       MPI_CALL(Intercomm_create(app.comm, 0, world.comm, 1, 1, &worker.comm));
 
-      if (logMPI) {
-        postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-            << "master: Made 'worker' intercomm (through intercomm_create): "
-            << std::hex << std::showbase << worker.comm
-            << std::noshowbase << std::dec;
-      }
+      postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+          << "master: Made 'worker' intercomm (through intercomm_create): "
+          << std::hex << std::showbase << worker.comm
+          << std::noshowbase << std::dec;
 
       worker.makeInterComm();
     }
@@ -102,16 +96,14 @@ namespace ospray {
 
       worker.makeIntraComm();
 
-      if (logMPI) {
-        postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-            << "master: Made 'worker' intercomm (through split): "
-            << std::hex << std::showbase << worker.comm
-            << std::noshowbase << std::dec;
+      postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+          << "master: Made 'worker' intercomm (through split): "
+          << std::hex << std::showbase << worker.comm
+          << std::noshowbase << std::dec;
 
-        postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-            << "#w: app process " << app.rank << '/' << app.size
-            << " (global " << world.rank << '/' << world.size;
-      }
+      postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+          << "#w: app process " << app.rank << '/' << app.size
+          << " (global " << world.rank << '/' << world.size;
 
       MPI_CALL(Intercomm_create(worker.comm, 0, world.comm, 0, 1, &app.comm));
 
@@ -121,16 +113,12 @@ namespace ospray {
     static inline void doHandshakeTestMaster()
     {
       MPI_Status status;
-      if (logMPI) {
-        postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-            << "#m: ping-ponging a test message to every worker...";
-      }
+      postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+          << "#m: ping-ponging a test message to every worker...";
 
       for (int i=0;i<worker.size;i++) {
-        if (logMPI) {
-          postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-              << "#m: sending tag "<< i << " to worker " << i;
-        }
+        postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+            << "#m: sending tag "<< i << " to worker " << i;
         MPI_CALL(Send(&i,1,MPI_INT,i,i,worker.comm));
         int reply;
         MPI_CALL(Recv(&reply,1,MPI_INT,i,i,worker.comm,&status));
@@ -143,11 +131,9 @@ namespace ospray {
     {
       MPI_Status status;
       // replying to test-message
-      if (logMPI) {
-        postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-            << "#w: start-up ping-pong: worker " << worker.rank <<
-               " trying to receive tag " << worker.rank << "...";
-      }
+      postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+          << "#w: start-up ping-pong: worker " << worker.rank <<
+             " trying to receive tag " << worker.rank << "...";
       int reply;
       MPI_CALL(Recv(&reply,1,MPI_INT,0,worker.rank,app.comm,&status));
       MPI_CALL(Send(&reply,1,MPI_INT,0,worker.rank,app.comm));
@@ -193,12 +179,8 @@ namespace ospray {
     {
       mpi::init(ac,av);
 
-      logMPI = checkIfWeNeedToDoMPIDebugOutputs();
-
-      if (logMPI) {
-        postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-            << "#o: initMPI::OSPonRanks: " << world.rank << '/' << world.size;
-      }
+      postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+          << "#o: initMPI::OSPonRanks: " << world.rank << '/' << world.size;
 
       MPI_CALL(Barrier(MPI_COMM_WORLD));
 
@@ -234,11 +216,9 @@ namespace ospray {
           throw std::runtime_error("should never reach here!");
           /* no return here - 'runWorker' will never return */
         } else {
-          if (logMPI) {
-            postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-                << "#osp:mpi: distributed mode detected, "
-                << "returning device on all ranks!";
-          }
+          postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+              << "#osp:mpi: distributed mode detected, "
+              << "returning device on all ranks!";
         }
       }
     }
@@ -373,13 +353,11 @@ namespace ospray {
 
       char appPortName[MPI_MAX_PORT_NAME];
       if (app.rank == 0 || app.size == -1) {
-        if (logMPI) {
-          postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-              << "=======================================================\n"
-              << "initializing OSPRay MPI in 'launching new workers' mode"
-              << "=======================================================\n"
-              << "using launch script '" << launchCommand << "'\n";
-        }
+        postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+            << "=======================================================\n"
+            << "initializing OSPRay MPI in 'launching new workers' mode"
+            << "=======================================================\n"
+            << "using launch script '" << launchCommand << "'\n";
 
         MPI_CALL(Open_port(MPI_INFO_NULL, appPortName));
 
@@ -387,11 +365,9 @@ namespace ospray {
         //                cmdline...
         char *fixedPortName = strdup(appPortName);
 
-        if (logMPI) {
-          postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-              << "with port " << fixedPortName
-              << "\n=======================================================\n";
-        }
+        postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+            << "with port " << fixedPortName
+            << "\n=======================================================\n";
 
         for (char *s = fixedPortName; *s; ++s)
           if (*s == '$') *s = '%';
@@ -439,15 +415,6 @@ namespace ospray {
 
     // MPIDevice definitions //////////////////////////////////////////////////
     
-    MPIDevice::MPIDevice()
-    {
-      /* do _NOT_ try to set up the fabric, streams, etc, here - MPI
-         comms are _NOT_ yet properly set up */
-
-      // check if env variables etc compel us to do logging...
-      logMPI = checkIfWeNeedToDoMPIDebugOutputs();
-    }
-
     MPIDevice::~MPIDevice()
     {
       // NOTE(jda) - Seems that there are no MPI Devices on worker ranks...this
@@ -968,12 +935,10 @@ namespace ospray {
 
     void MPIDevice::processWork(work::Work &work)
     {
-      if (logMPI) {
-        static size_t numWorkSent = 0;
-        postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-            << "#osp.mpi.master: processing/sending work item "
-            << numWorkSent++;
-      }
+      static size_t numWorkSent = 0;
+      postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+          << "#osp.mpi.master: processing/sending work item "
+          << numWorkSent++;
 
       auto tag = typeIdOf(work);
       writeStream->write(&tag, sizeof(tag));
@@ -985,11 +950,9 @@ namespace ospray {
       // Run the master side variant of the work unit
       work.runOnMaster();
 
-      if (logMPI) {
-        postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-            << "#osp.mpi.master: done work item, tag " << tag << ": "
-            << typeString(work);
-      }
+      postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+          << "#osp.mpi.master: done work item, tag " << tag << ": "
+          << typeString(work);
     }
 
     ObjectHandle MPIDevice::allocateHandle() const

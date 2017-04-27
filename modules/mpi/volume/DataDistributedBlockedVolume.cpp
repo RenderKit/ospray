@@ -178,12 +178,9 @@ namespace ospray {
     ddBlocks    = getParam3i("num_dp_blocks",vec3i(4,4,4));
     blockSize   = divRoundUp(dimensions,ddBlocks);
 
-    std::stringstream msg;
-    if (mpi::logMPI) {
-      msg << "#osp:dp: using data parallel volume of " << ddBlocks
-        << " blocks, blockSize is " << blockSize << "\n";
-      postStatusMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
-    }
+    postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+        << "#osp:dp: using data parallel volume of " << ddBlocks
+        << " blocks, blockSize is " << blockSize;
 
     // Set the grid origin, default to (0,0,0).
     this->gridOrigin = getParam3f("gridOrigin", vec3f(0.f));
@@ -201,14 +198,11 @@ namespace ospray {
     numDDBlocks = ospcommon::reduce_mul(ddBlocks);
     ddBlock     = new DDBlock[numDDBlocks];
 
-    if (mpi::logMPI) {
-      msg.clear();
-      msg << "=======================================================\n"
-          << "created " << ddBlocks.x << "x" << ddBlocks.y << "x" << ddBlocks.z
-          << " data distributed volume blocks\n"
-          << "=======================================================\n";
-      postStatusMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
-    }
+    postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+        << "=======================================================\n"
+        << "created " << ddBlocks.x << "x" << ddBlocks.y << "x" << ddBlocks.z
+        << " data distributed volume blocks\n"
+        << "=======================================================";
 
     if (!ospray::mpi::isMpiParallel()) {
       throw std::runtime_error("data parallel volume, but not in mpi parallel "
@@ -268,14 +262,11 @@ namespace ospray {
               volume->findParam("scaleFactor",1)->set(scaleFactor);
             }
             
-            if (mpi::logMPI) {
-              msg.clear();
-              msg << "worker rank " << mpi::workerRank()
+            postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+                << "worker rank " << mpi::workerRank()
                 << " owns block " << ix << "," << iy << "," << iz
                 << " (ID " << blockID << "), dims " << blockDims.x
-                << " " << blockDims.y << " " << blockDims.z << "\n";
-              postStatusMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
-            }
+                << " " << blockDims.y << " " << blockDims.z;
 
             block->cppVolume = volume;
             block->ispcVolume = nullptr; //volume->getIE();

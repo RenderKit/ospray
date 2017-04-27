@@ -64,7 +64,6 @@ namespace ospray {
       (for debugging) _may_ eventually turn this into a real logLevel,
       but for now tihs is cleaner here thatn in the MPI device
     */
-    OSPRAY_MPI_INTERFACE extern bool logMPI;
     OSPRAY_MPI_INTERFACE extern bool mpiIsThreaded;
 
     //! abstraction for an MPI group. 

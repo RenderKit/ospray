@@ -32,7 +32,7 @@ namespace ospray {
 
     struct MPIDevice : public api::Device
     {
-      MPIDevice();
+      MPIDevice() = default;
       ~MPIDevice();
 
       // ManagedObject Implementation /////////////////////////////////////////

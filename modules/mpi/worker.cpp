@@ -78,13 +78,10 @@ namespace ospray {
       work::Work::tag_t tag;
       readStream >> tag;
 
-      if (logMPI) {
-        static size_t numWorkReceived = 0;
-        std::stringstream msg;
-        msg << "#osp.mpi.worker: got work #" << numWorkReceived++
-            << ", tag " << tag << std::endl;
-        postStatusMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
-      }
+      static size_t numWorkReceived = 0;
+      postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+          << "#osp.mpi.worker: got work #" << numWorkReceived++
+          << ", tag " << tag;
 
       auto make_work = registry.find(tag);
       if (make_work == registry.end()) {
@@ -96,24 +93,12 @@ namespace ospray {
 
       auto work = make_work->second();
 
-      if (logMPI) {
-        std::stringstream msg;
-        msg << ": " << typeString(work).c_str() << "\n";
-        postStatusMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
-      }
-
+      postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL) << ": " << typeString(work);
 
       work->deserialize(readStream);
       return work;
     }
 
-    bool checkIfWeNeedToDoMPIDebugOutputs()
-    {
-      // Use the env-var for backwards compat.
-      char *envVar = getenv("OSPRAY_MPI_DEBUG");
-      return logLevel() >= OSPRAY_MPI_VERBOSE_LEVEL || (envVar && atoi(envVar) > 0);
-    }
-    
     /*! it's up to the proper init
       routine to decide which processes call this function and which
       ones don't. This function will not return.
@@ -157,17 +142,11 @@ namespace ospray {
         postStatusMsg(msg);
       }
 
-      logMPI = checkIfWeNeedToDoMPIDebugOutputs();
-
-      if (logMPI) {
-        char hostname[HOST_NAME_MAX];
-        gethostname(hostname,HOST_NAME_MAX);
-        std::stringstream msg;
-        msg << "#w: running MPI worker process " << worker.rank
-          << "/" << worker.size << " on pid " << getpid() << "@"
-          << hostname << "\n";
-        postStatusMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
-      }
+      char hostname[HOST_NAME_MAX];
+      gethostname(hostname,HOST_NAME_MAX);
+      postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+          << "#w: running MPI worker process " << worker.rank
+          << "/" << worker.size << " on pid " << getpid() << "@" << hostname;
 
       TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Slave>();
 
@@ -183,21 +162,15 @@ namespace ospray {
 
       while (1) {
         auto work = readWork(workTypeRegistry, *readStream);
-        if (logMPI) {
-          std::stringstream msg;
-          msg << "#osp.mpi.worker: processing work " << typeIdOf(work)
-            << ": " << typeString(work) << std::endl;
-          postStatusMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
-        }
+        postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+            << "#osp.mpi.worker: processing work " << typeIdOf(work)
+            << ": " << typeString(work);
 
         work->run();
 
-        if (logMPI) {
-          std::stringstream msg;
-          msg << "#osp.mpi.worker: done w/ work " << typeIdOf(work)
-            << ": " << typeString(work) << std::endl;
-          postStatusMsg(msg, OSPRAY_MPI_VERBOSE_LEVEL);
-        }
+        postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+            << "#osp.mpi.worker: done w/ work " << typeIdOf(work)
+            << ": " << typeString(work);
       }
     }
 
