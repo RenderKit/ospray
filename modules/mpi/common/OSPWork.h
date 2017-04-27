@@ -686,6 +686,7 @@ namespace ospray {
         void deserialize(ReadStream &b) override;
 
         std::string name;
+        int         errorCode {0};
       };
 
       struct CommandFinalize : public Work

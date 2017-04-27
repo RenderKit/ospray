@@ -467,7 +467,6 @@ namespace ospray {
     {
       ObjectHandle handle = (const ObjectHandle &)_fb;
       FrameBuffer *fb = (FrameBuffer *)handle.lookup();
-      assert(fb);
       
       switch (channel) {
       case OSP_FB_COLOR: return fb->mapColorBuffer();
@@ -482,7 +481,6 @@ namespace ospray {
     {
       ObjectHandle handle = (const ObjectHandle &)_fb;
       FrameBuffer *fb = (FrameBuffer *)handle.lookup();
-      assert(fb);
       
       fb->unmap(mapped);
     }
@@ -499,7 +497,6 @@ namespace ospray {
     /*! finalize a newly specified model */
     void MPIOffloadDevice::commit(OSPObject _object)
     {
-      Assert(_object);
       const ObjectHandle handle = (const ObjectHandle&)_object;
       work::CommitObject work(handle);
       processWork(work, true);
@@ -508,8 +505,6 @@ namespace ospray {
     /*! add a new geometry to a model */
     void MPIOffloadDevice::addGeometry(OSPModel _model, OSPGeometry _geometry)
     {
-      Assert(_model);
-      Assert(_geometry);
       work::AddGeometry work(_model, _geometry);
       processWork(work);
     }
@@ -517,15 +512,13 @@ namespace ospray {
     /*! add a new volume to a model */
     void MPIOffloadDevice::addVolume(OSPModel _model, OSPVolume _volume)
     {
-      Assert(_model);
-      Assert(_volume);
       work::AddVolume work(_model, _volume);
       processWork(work);
     }
 
     /*! create a new data buffer */
     OSPData MPIOffloadDevice::newData(size_t nitems, OSPDataType format,
-                               void *init, int flags)
+                                      void *init, int flags)
     {
       ObjectHandle handle = allocateHandle();
       // If we're in mastered mode you can't share data with remote nodes
@@ -549,27 +542,20 @@ namespace ospray {
 
     void MPIOffloadDevice::removeParam(OSPObject object, const char *name)
     {
-      Assert(object != nullptr  && "invalid object handle");
-      Assert(name != nullptr && "invalid identifier for object parameter");
       work::RemoveParam work((ObjectHandle&)object, name);
       processWork(work);
     }
 
     /*! Copy data into the given object. */
     int MPIOffloadDevice::setRegion(OSPVolume _volume, const void *source,
-                             const vec3i &index, const vec3i &count)
+                                    const vec3i &index, const vec3i &count)
     {
-      Assert(_volume);
-      Assert(source);
-
       char *typeString = nullptr;
       getString(_volume, "voxelType", &typeString);
       OSPDataType type = typeForString(typeString);
       delete [] typeString;
 
       Assert(type != OSP_UNKNOWN && "unknown volume voxel type");
-      // TODO: should we be counting and reporting failures of setRegion
-      // like before?
       work::SetRegion work(_volume, index, count, source, type);
       processWork(work);
       return true;
@@ -577,11 +563,9 @@ namespace ospray {
 
     /*! assign (named) string parameter to an object */
     void MPIOffloadDevice::setString(OSPObject _object,
-                              const char *bufName,
-                              const char *s)
+                                     const char *bufName,
+                                     const char *s)
     {
-      Assert(_object);
-      Assert(bufName);
       work::SetParam<std::string> work((ObjectHandle&)_object, bufName, s);
       processWork(work);
     }
@@ -591,19 +575,14 @@ namespace ospray {
     {
       work::LoadModule work(name);
       processWork(work, true);
-      // FIXME: actually we should return an error code here...
-      // TODO: If some fail? Can we assume if the master succeeds in loading
-      // that all have succeeded in loading? I don't think so.
-      return 0;
+      return work.errorCode;
     }
 
     /*! assign (named) float parameter to an object */
     void MPIOffloadDevice::setFloat(OSPObject _object,
-                             const char *bufName,
-                             const float f)
+                                    const char *bufName,
+                                    const float f)
     {
-      Assert(_object);
-      Assert(bufName);
       work::SetParam<float> work((ObjectHandle&)_object, bufName, f);
       processWork(work);
     }
@@ -613,74 +592,60 @@ namespace ospray {
                                   const char *bufName,
                                   const int i)
     {
-      Assert(_object);
-      Assert(bufName);
       work::SetParam<int> work((ObjectHandle&)_object, bufName, i);
       processWork(work);
     }
 
     /*! assign (named) vec2f parameter to an object */
     void MPIOffloadDevice::setVec2f(OSPObject _object,
-                             const char *bufName,
-                             const vec2f &v)
+                                    const char *bufName,
+                                    const vec2f &v)
     {
-      Assert(_object);
-      Assert(bufName);
       work::SetParam<vec2f> work((ObjectHandle&)_object, bufName, v);
       processWork(work);
     }
 
     /*! assign (named) vec3f parameter to an object */
     void MPIOffloadDevice::setVec3f(OSPObject _object,
-                             const char *bufName,
-                             const vec3f &v)
+                                    const char *bufName,
+                                    const vec3f &v)
     {
-      Assert(_object);
-      Assert(bufName);
       work::SetParam<vec3f> work((ObjectHandle&)_object, bufName, v);
       processWork(work);
     }
 
     /*! assign (named) vec4f parameter to an object */
     void MPIOffloadDevice::setVec4f(OSPObject _object,
-                             const char *bufName,
-                             const vec4f &v)
+                                    const char *bufName,
+                                    const vec4f &v)
     {
-      Assert(_object);
-      Assert(bufName);
       work::SetParam<vec4f> work((ObjectHandle&)_object, bufName, v);
       processWork(work);
     }
 
     /*! assign (named) vec2i parameter to an object */
     void MPIOffloadDevice::setVec2i(OSPObject _object,
-                             const char *bufName,
-                             const vec2i &v)
+                                    const char *bufName,
+                                    const vec2i &v)
     {
-      Assert(_object);
-      Assert(bufName);
       work::SetParam<vec2i> work((ObjectHandle&)_object, bufName, v);
       processWork(work);
     }
 
     /*! assign (named) vec3i parameter to an object */
     void MPIOffloadDevice::setVec3i(OSPObject _object,
-                             const char *bufName,
-                             const vec3i &v)
+                                    const char *bufName,
+                                    const vec3i &v)
     {
-      Assert(_object);
-      Assert(bufName);
       work::SetParam<vec3i> work((ObjectHandle&)_object, bufName, v);
       processWork(work);
     }
 
     /*! assign (named) data item as a parameter to an object */
     void MPIOffloadDevice::setObject(OSPObject _target,
-                              const char *bufName,
-                              OSPObject _value)
+                                     const char *bufName,
+                                     OSPObject _value)
     {
-      Assert(_target != nullptr);
-      Assert(bufName != nullptr);
       work::SetParam<OSPObject> work((ObjectHandle&)_target, bufName, _value);
       processWork(work);
     }
@@ -688,8 +653,6 @@ namespace ospray {
     /*! create a new pixelOp object (out of list of registered pixelOps) */
     OSPPixelOp MPIOffloadDevice::newPixelOp(const char *type)
     {
-      Assert(type != nullptr);
-
       ObjectHandle handle = allocateHandle();
       work::NewPixelOp work(type, handle);
       processWork(work);
@@ -699,8 +662,6 @@ namespace ospray {
     /*! set a frame buffer's pixel op object */
     void MPIOffloadDevice::setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op)
     {
-      Assert(_fb != nullptr);
-      Assert(_op != nullptr);
       work::SetPixelOp work(_fb, _op);
       processWork(work);
     }
@@ -708,8 +669,6 @@ namespace ospray {
     /*! create a new renderer object (out of list of registered renderers) */
     OSPRenderer MPIOffloadDevice::newRenderer(const char *type)
     {
-      Assert(type != nullptr);
-
       ObjectHandle handle = allocateHandle();
       work::NewRenderer work(type, handle);
       processWork(work);
@@ -719,7 +678,6 @@ namespace ospray {
     /*! create a new camera object (out of list of registered cameras) */
     OSPCamera MPIOffloadDevice::newCamera(const char *type)
     {
-      Assert(type != nullptr);
       ObjectHandle handle = allocateHandle();
       work::NewCamera work(type, handle);
       processWork(work);
@@ -729,8 +687,6 @@ namespace ospray {
     /*! create a new volume object (out of list of registered volumes) */
     OSPVolume MPIOffloadDevice::newVolume(const char *type)
     {
-      Assert(type != nullptr);
-
       ObjectHandle handle = allocateHandle();
       work::NewVolume work(type, handle);
       processWork(work);
@@ -740,8 +696,6 @@ namespace ospray {
     /*! create a new geometry object (out of list of registered geometries) */
     OSPGeometry MPIOffloadDevice::newGeometry(const char *type)
     {
-      Assert(type != nullptr);
-
       ObjectHandle handle = allocateHandle();
       work::NewGeometry work(type, handle);
       processWork(work);
@@ -752,17 +706,9 @@ namespace ospray {
     OSPMaterial MPIOffloadDevice::newMaterial(OSPRenderer _renderer,
                                               const char *type)
     {
-      if (type == nullptr)
-        throw std::runtime_error("#osp:mpi:newMaterial: NULL material type");
-      
-      if (_renderer == nullptr)
-        throw std::runtime_error("#osp:mpi:newMaterial: NULL renderer handle");
-
       ObjectHandle handle = allocateHandle();
       work::NewMaterial work(type, _renderer, handle);
       processWork(work);
-      // TODO: Should we be tracking number of failures? Shouldn't they
-      // all fail or not fail?
       return (OSPMaterial)(int64)handle;
     }
 
@@ -770,8 +716,6 @@ namespace ospray {
         registered transfer function types) */
     OSPTransferFunction MPIOffloadDevice::newTransferFunction(const char *type)
     {
-      Assert(type != nullptr);
-
       ObjectHandle handle = allocateHandle();
       work::NewTransferFunction work(type, handle);
       processWork(work);
@@ -781,14 +725,9 @@ namespace ospray {
     /*! have given renderer create a new Light */
     OSPLight MPIOffloadDevice::newLight(OSPRenderer _renderer, const char *type)
     {
-      if (type == nullptr)
-        throw std::runtime_error("#osp:mpi:newLight: NULL light type");
-
       ObjectHandle handle = allocateHandle();
       work::NewLight work(type, _renderer, handle);
       processWork(work);
-      // TODO: Should we be tracking number of failures? Shouldn't they
-      // all fail or not fail?
       return (OSPLight)(int64)handle;
     }
 
@@ -831,8 +770,6 @@ namespace ospray {
                                  OSPRenderer _renderer,
                                  const uint32 fbChannelFlags)
     {
-      // Note: render frame is flushing so the work error result will be set,
-      // since the master participates in rendering
       work::RenderFrame work(_fb, _renderer, fbChannelFlags);
       processWork(work, true);
       return work.varianceResult;
@@ -850,7 +787,6 @@ namespace ospray {
       stay 'alive' as long as the given geometry requires it. */
     void MPIOffloadDevice::release(OSPObject _obj)
     {
-      if (!_obj) return;
       work::CommandRelease work((const ObjectHandle&)_obj);
       processWork(work);
     }
@@ -886,9 +822,6 @@ namespace ospray {
                                     const char *name,
                                     char **value)
     {
-      Assert(_object);
-      Assert(name);
-
       ManagedObject *object = ((ObjectHandle&)_object).lookup();
       ManagedObject::Param *param = object->findParam(name);
       bool foundParameter = (param != nullptr && param->type == OSP_STRING);

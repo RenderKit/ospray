@@ -185,18 +185,9 @@ namespace ospray {
       
       void LoadModule::run()
       {
-        const std::string libName = "ospray_module_" + name;
-        loadLibrary(libName);
-
-        const std::string initSymName = "ospray_init_module_" + name;
-        void *initSym = getSymbol(initSymName);
-        if (!initSym) {
-          throw std::runtime_error("could not find module initializer "
-                                   + initSymName);
-        }
-        void (*initMethod)() = (void(*)())initSym;
-        initMethod();
+        errorCode = loadLocalModule(name);
       }
+
       void LoadModule::runOnMaster()
       {
         run();
