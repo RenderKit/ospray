@@ -167,6 +167,8 @@ namespace ospray {
 
       std::vector<std::shared_ptr<Node>> children() const;
 
+      std::map<std::string, std::shared_ptr<Node>>& childrenMap();
+
       //! add node as child of this one
       void add(std::shared_ptr<Node> node);
       Node& operator+=(std::shared_ptr<Node> node);
@@ -204,7 +206,7 @@ namespace ospray {
 
       //! called before traversing children
       virtual void preTraverse(RenderContext &ctx,
-                               const std::string& operation);
+                               const std::string& operation, bool& traverseChildren);
 
       //! called after traversing children
       virtual void postTraverse(RenderContext &ctx,
@@ -230,6 +232,7 @@ namespace ospray {
         TimeStamp lastModified;
         TimeStamp childrenMTime;
         TimeStamp lastCommitted;
+        TimeStamp lastVerified;
         Node* parent {nullptr};
         NodeFlags flags;
         bool valid {false};
@@ -413,17 +416,26 @@ namespace ospray {
       Renderable() { createChild("bounds", "box3f"); }
       virtual ~Renderable() = default;
 
-      virtual box3f bounds() const override { return bbox; }
-      virtual box3f extendBounds(box3f b) { bbox.extend(b); return bbox; }
+      virtual box3f bounds() const override { return child("bounds").valueAs<box3f>(); }
+      virtual box3f computeBounds() const
+      {
+        box3f cbounds = empty;
+        for (const auto &child : properties.children)
+        {
+          auto tbounds = child.second->bounds();
+            cbounds.extend(tbounds);
+        }
+        return cbounds;
+      }
+      // virtual box3f extendBounds(box3f b) { bbox.extend(b); return bbox; }
       virtual void preTraverse(RenderContext &ctx,
-                               const std::string& operation) override;
+                               const std::string& operation, bool& traverseChildren) override;
       virtual void postTraverse(RenderContext &ctx,
                                 const std::string& operation) override;
-      virtual void preCommit(RenderContext &ctx) override { bbox = empty; }
+      virtual void postCommit(RenderContext &ctx) override { 
+        child("bounds").setValue(computeBounds()); }
       virtual void preRender(RenderContext &ctx)  {}
       virtual void postRender(RenderContext &ctx) {}
-    protected:
-      box3f bbox;
     };
 
     /*! \brief registers a internal ospray::<ClassName> renderer under

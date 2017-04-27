@@ -55,7 +55,7 @@ namespace ospray {
     void display() override;
 
     void buildGui() override;
-    void buildGUINode(std::shared_ptr<sg::Node> node, int indent);
+    void buildGUINode(std::string name, std::shared_ptr<sg::Node> node, int indent);
 
     // Data //
 

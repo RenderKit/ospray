@@ -39,7 +39,7 @@ namespace ospray {
       if (!group) group = new Group;
 
       if (fileName.ext() == "osp" || fileName.ext() == "osg") {
-          std::shared_ptr<sg::World> world;;
+          std::shared_ptr<sg::Node> world;;
           std::cout << "loading osp file: \n";
           world = sg::loadOSP(fn);
           std::shared_ptr<sg::Volume> volumeNode;

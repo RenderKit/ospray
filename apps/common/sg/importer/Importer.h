@@ -61,7 +61,7 @@ namespace ospray {
       std::shared_ptr<sg::World> world;
     };
 
-    struct Importer : public sg::InstanceGroup
+    struct Importer : public sg::Renderable
     {
       Importer();
 
