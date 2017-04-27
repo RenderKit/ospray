@@ -17,7 +17,7 @@
 #undef NDEBUG // do all assertions in this file
 
 #include "mpiCommon/MPICommon.h"
-#include "mpi/MPIDevice.h"
+#include "mpi/MPIOffloadDevice.h"
 #include "common/Model.h"
 #include "common/Data.h"
 #include "common/Library.h"

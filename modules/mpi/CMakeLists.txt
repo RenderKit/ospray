@@ -30,9 +30,9 @@ IF (OSPRAY_MODULE_MPI)
   INCLUDE_DIRECTORIES_ISPC(${CMAKE_CURRENT_BINARY_DIR})
 
   OSPRAY_CREATE_LIBRARY(ospray_module_mpi
-    MPIDevice.cpp
     MPIDistributedDevice.cpp
-    worker.cpp
+    MPIOffloadDevice.cpp
+    MPIOffloadWorker.cpp
 
     common/OSPWork.cpp
     common/Messaging.cpp
@@ -71,7 +71,7 @@ IF (OSPRAY_MODULE_MPI)
   ##############################################################
 
   OSPRAY_CREATE_APPLICATION(ospray_mpi_worker
-    MPIWorker.cpp
+    mpi_offload_worker_main.cpp
   LINK
     ospray
   )
