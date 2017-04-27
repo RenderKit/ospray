@@ -35,6 +35,8 @@
 
 namespace ospray {
 
+  using namespace mpicommon;
+
   Material *RaycastVolumeRenderer::createMaterial(const char *type)
   {
     UNUSED(type);
@@ -138,7 +140,7 @@ namespace ospray {
       blockWasVisible[i] = false;
 
     bool renderForeAndBackground =
-        (tileID % mpi::numWorkers()) == mpi::workerRank();
+        (tileID % mpicommon::numWorkers()) == mpicommon::workerRank();
 
     const int numJobs = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
 
@@ -151,7 +153,7 @@ namespace ospray {
                                      dpv->ddBlock,
                                      blockWasVisible,
                                      tileID,
-                                     mpi::workerRank(),
+                                     mpicommon::workerRank(),
                                      renderForeAndBackground,
                                      tid);
     });
@@ -239,7 +241,7 @@ namespace ospray {
 
     // check if we're even in mpi parallel mode (can't do
     // data-parallel otherwise)
-    if (!ospray::mpi::isMpiParallel()) {
+    if (!mpicommon::isMpiParallel()) {
       throw std::runtime_error("#dvr: need data-parallel rendering, "
                                "but not running in mpi mode!?");
     }

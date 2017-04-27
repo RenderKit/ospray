@@ -94,7 +94,7 @@ namespace ospray {
           obj->commit();
         } else {
           throw std::runtime_error("Error: rank "
-                                   + std::to_string(mpi::world.rank)
+                                   + std::to_string(mpicommon::world.rank)
                                    + " did not have object to commit!");
         }
         // TODO: Work units should not be directly making MPI calls.
@@ -106,7 +106,7 @@ namespace ospray {
         /// cyclical dependencies (ie, that the server unit actually
         /// does get flushed etcpp)
         
-        mpi::app.barrier();
+        mpicommon::app.barrier();
       }
       
       void CommitObject::runOnMaster()
@@ -117,7 +117,7 @@ namespace ospray {
             obj->commit();
           }
         }
-        mpi::worker.barrier();
+        mpicommon::worker.barrier();
       }
       
       void CommitObject::serialize(WriteStream &b) const

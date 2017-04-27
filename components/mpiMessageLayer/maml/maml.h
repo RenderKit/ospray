@@ -18,10 +18,6 @@
 
 #include "mpiCommon/MPICommon.h"
 
-#define MAML_THROW(a) \
-  throw std::runtime_error("in " + std::string(__PRETTY_FUNCTION__) + \
-                           " : " + std::string(a))
-
 #ifdef _WIN32
 #  ifdef ospray_mpi_maml_EXPORTS
 #    define OSPRAY_MAML_INTERFACE __declspec(dllexport)
@@ -34,55 +30,7 @@
 
 namespace maml {
 
-  /*! object that handles a message. a message primarily consists of a
-    pointer to data; the message itself "owns" this pointer, and
-    will delete it once the message itself dies. the message itself
-    is reference counted using the std::shared_ptr functionality. */
-  struct OSPRAY_MAML_INTERFACE Message
-  {
-    Message() = default;
-
-    /*! create a new message with given amount of bytes in storage */
-    Message(size_t size);
-    
-    /*! create a new message with given amount of storage, and copy
-        memory from the given address to it */
-    Message(const void *copyMem, size_t size);
-
-    /*! create a new message (addressed to given comm:rank) with given
-        amount of storage, and copy memory from the given address to
-        it */
-    Message(MPI_Comm comm, int rank, const void *copyMem, size_t size);
-    
-    /*! destruct message and free allocated memory */
-    virtual ~Message();
-
-    bool isValid() const;
-
-    /*! @{ sender/receiver of this message */
-    MPI_Comm  comm {MPI_COMM_NULL};
-    int       rank {-1};
-    int       tag  { 0};
-    /*! @} */
-
-    /*! @{ actual payload of this message */
-    ospcommon::byte_t *data {nullptr};
-    size_t             size {0};
-    /*! @} */
-  };
-  
-  /*! a message whose payload is owned by the user, and which we do
-    NOT delete upon termination */
-  struct UserMemMessage : public Message
-  {
-    UserMemMessage(void *nonCopyMem, size_t size)
-      : Message()
-    { data = (ospcommon::byte_t*)nonCopyMem; this->size = size; }
-
-    /* set data to null to keep the parent from deleting it */
-    virtual ~UserMemMessage()
-    { data = nullptr; }
-  };
+  using Message = mpicommon::Message;
 
   /*! abstraction for an object that can receive messages. handlers
       get associated with MPI_Comm's, and get called automatically
@@ -104,6 +52,8 @@ namespace maml {
       thread safe the app should _not_ do any MPI calls until 'stop()'
       has been called */
   OSPRAY_MAML_INTERFACE void start();
+
+  OSPRAY_MAML_INTERFACE bool isRunning();
 
   /*! stops the maml layer; maml will no longer perform any MPI calls;
       if the mpi layer is not thread safe the app is then free to use

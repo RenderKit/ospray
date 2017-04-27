@@ -42,7 +42,7 @@ namespace ospray {
     struct MPIBcastFabric : public Fabric
     {
       /*! constructor - create a new broascast fabric that uses the given communicator */
-      MPIBcastFabric(const mpi::Group &group);
+      MPIBcastFabric(const mpicommon::Group &group);
 
       virtual ~MPIBcastFabric() = default;
       
@@ -55,8 +55,8 @@ namespace ospray {
         and give us size and pointer to this data */
       virtual size_t read(void *&mem) override;
       
-      byte_t *buffer;
-      mpi::Group group;
+      ospcommon::byte_t *buffer;
+      mpicommon::Group group;
     };
 
 
@@ -81,7 +81,7 @@ namespace ospray {
         virtual void read(void *mem, size_t size) override;
 
         std::reference_wrapper<Fabric> fabric;
-        byte_t *buffer;
+        ospcommon::byte_t *buffer;
         size_t  numAvailable;
       };
 
@@ -94,7 +94,7 @@ namespace ospray {
       {
         WriteStream(Fabric &fabric, size_t maxBufferSize = 1LL*1024*1024)
           : fabric(fabric),
-            buffer(new byte_t[maxBufferSize]),
+            buffer(new ospcommon::byte_t[maxBufferSize]),
             maxBufferSize(maxBufferSize),
             numInBuffer(0)
         {
@@ -107,7 +107,7 @@ namespace ospray {
         virtual void flush() override;
           
         std::reference_wrapper<Fabric> fabric;
-        byte_t *buffer;
+        ospcommon::byte_t *buffer;
         size_t  maxBufferSize;
         size_t  numInBuffer;
       };

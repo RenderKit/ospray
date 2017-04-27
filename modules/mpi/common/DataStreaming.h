@@ -40,14 +40,14 @@ namespace ospray {
     template<typename T>
     inline WriteStream &operator<<(WriteStream &buf, const T &rh)
     {
-      buf.write((byte_t*)&rh, sizeof(T));
+      buf.write((mpicommon::byte_t*)&rh, sizeof(T));
       return buf;
     }
 
     template<typename T>
     inline ReadStream &operator>>(ReadStream &buf, T &rh)
     {
-      buf.read((byte_t*)&rh, sizeof(T));
+      buf.read((mpicommon::byte_t*)&rh, sizeof(T));
       return buf;
     }
 
@@ -92,7 +92,7 @@ namespace ospray {
     inline WriteStream &operator<<(WriteStream &buf, const std::string &rh)
     {
       buf << rh.size();
-      buf.write((byte_t*)rh.c_str(), rh.size());
+      buf.write((mpicommon::byte_t*)rh.c_str(), rh.size());
       return buf;
     }
 
@@ -101,7 +101,7 @@ namespace ospray {
       size_t size;
       buf >> size;
       rh = std::string(size, ' ');
-      buf.read((byte_t*)&rh[0], size);
+      buf.read((mpicommon::byte_t*)&rh[0], size);
       return buf;
     }
     /*! @} */

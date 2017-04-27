@@ -15,6 +15,7 @@
 // ************************************************************************** //
 
 #include "Context.h"
+#include "ospcommon/malloc.h"
 #include <iostream>
 
 using ospcommon::make_unique;
@@ -211,6 +212,11 @@ namespace maml {
   {
     canDoMPICalls = true;
     canDoMPICondition.notify_one();
+  }
+
+  bool Context::isRunning() const
+  {
+    return canDoMPICalls || sendAndRecieveThreadActive;
   }
 
   /*! stops the maml layer; maml will no longer perform any MPI calls;

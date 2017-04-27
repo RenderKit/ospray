@@ -45,7 +45,9 @@ namespace maml {
       thread safe the app should _not_ do any MPI calls until 'stop()'
       has been called */
     void start();
-    
+
+    bool isRunning() const;
+
     /*! stops the maml layer; maml will no longer perform any MPI calls;
       if the mpi layer is not thread safe the app is then free to use
       MPI calls of its own, but it should not expect that this node

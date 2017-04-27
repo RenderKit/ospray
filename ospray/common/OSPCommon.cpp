@@ -17,6 +17,8 @@
 #include "OSPCommon.h"
 #include "api/Device.h"
 
+#include <map>
+
 namespace ospray {
 
   /*! 64-bit malloc. allows for alloc'ing memory larger than 64 bits */
@@ -336,6 +338,21 @@ namespace ospray {
     if (ospray::api::Device::current.ptr)
       ospray::api::Device::current->error_fcn(e);
   }
+
+  size_t translatedHash(size_t v)
+  {
+    static std::map<size_t, size_t> id_translation;
+
+    auto itr = id_translation.find(v);
+    if (itr == id_translation.end()) {
+      static size_t newIndex = 0;
+      id_translation[v] = newIndex;
+      return newIndex++;
+    } else {
+      return id_translation[v];
+    }
+  }
+
 
 } // ::ospray
 

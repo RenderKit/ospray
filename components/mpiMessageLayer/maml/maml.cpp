@@ -19,50 +19,6 @@
 
 namespace maml {
 
-  std::mutex messageMutex;
-
-  // maml::Message definitions ////////////////////////////////////////////////
-
-  /*! create a new message with given amount of bytes in storage */
-  Message::Message(size_t size) : size(size)
-  {
-    data = (ospcommon::byte_t*)malloc(size);
-  }
-  
-  /*! create a new message with given amount of storage, and copy
-    memory from the given address to it */
-  Message::Message(const void *copyMem, size_t size) : Message(size)
-  {
-    if (copyMem == nullptr)
-      MAML_THROW("#maml: cannot create a message from a null pointer!");
-
-    memcpy(data, copyMem, size);
-  }
-
-    /*! create a new message (addressed to given comm:rank) with given
-        amount of storage, and copy memory from the given address to
-        it */
-  Message::Message(MPI_Comm comm, int rank,
-                   const void *copyMem, size_t size)
-    : Message(copyMem, size)
-  {
-    this->comm = comm;
-    this->rank = rank;
-  }
-    
-  /*! destruct message and free allocated memory */
-  Message::~Message()
-  {
-    if (data) {
-      free(data);
-    }
-  }
-
-  bool Message::isValid() const
-  {
-    return comm != MPI_COMM_NULL && rank >= 0;
-  }
-
   // maml API definitions /////////////////////////////////////////////////////
   
   /*! register a new incoing-message handler. if any message comes in
@@ -81,6 +37,11 @@ namespace maml {
     Context::singleton->start();
   }
 
+  bool isRunning()
+  {
+    Context::singleton->isRunning();
+  }
+
   /*! stops the maml layer; maml will no longer perform any MPI calls;
       if the mpi layer is not thread safe the app is then free to use
       MPI calls of its own, but it should not expect that this node
@@ -97,7 +58,7 @@ namespace maml {
   void sendTo(MPI_Comm comm, int rank, std::shared_ptr<Message> msg)
   {
     if (!(rank >= 0 && msg.get()))
-      MAML_THROW("Incorrect argument values given to maml::sendTo(...)");
+      OSPRAY_THROW("Incorrect argument values given to maml::sendTo(...)");
 
     msg->rank = rank;
     msg->comm = comm;

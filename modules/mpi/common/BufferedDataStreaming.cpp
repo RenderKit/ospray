@@ -24,7 +24,7 @@ namespace ospray {
   namespace mpi {
 
     /*! constructor - create a new broascast fabric that uses the given communicator */
-    MPIBcastFabric::MPIBcastFabric(const mpi::Group &group)
+    MPIBcastFabric::MPIBcastFabric(const mpicommon::Group &group)
       : group(group),
         buffer(nullptr)
     {

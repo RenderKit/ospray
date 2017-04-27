@@ -171,4 +171,71 @@ namespace ospray {
 
   OSPRAY_INTERFACE void handleError(const std::exception &e);
 
+  // RTTI hash ID lookup helper functions ///////////////////////////////////
+
+  OSPRAY_INTERFACE size_t translatedHash(size_t v);
+
+  template <typename T>
+  inline size_t typeIdOf()
+  {
+    return translatedHash(typeid(T).hash_code());
+  }
+
+  template <typename T>
+  inline size_t typeIdOf(T *v)
+  {
+    return translatedHash(typeid(*v).hash_code());
+  }
+
+  template <typename T>
+  inline size_t typeIdOf(const T &v)
+  {
+    return translatedHash(typeid(v).hash_code());
+  }
+
+  template <typename T>
+  inline size_t typeIdOf(const std::unique_ptr<T> &v)
+  {
+    return translatedHash(typeid(*v).hash_code());
+  }
+
+  template <typename T>
+  inline size_t typeIdOf(const std::shared_ptr<T> &v)
+  {
+    return translatedHash(typeid(*v).hash_code());
+  }
+
+  // RTTI string name lookup helper functions ///////////////////////////////
+
+  template <typename T>
+  inline std::string typeString()
+  {
+    return typeid(T).name();
+  }
+
+  template <typename T>
+  inline std::string typeString(T *v)
+  {
+    return typeid(*v).name();
+  }
+
+  template <typename T>
+  inline std::string typeString(const T &v)
+  {
+    return typeid(v).name();
+  }
+
+  template <typename T>
+  inline std::string typeString(const std::unique_ptr<T> &v)
+  {
+    return typeid(*v).name();
+  }
+
+  template <typename T>
+  inline std::string typeString(const std::shared_ptr<T> &v)
+  {
+    return typeid(*v).name();
+  }
+
+
 } // ::ospray

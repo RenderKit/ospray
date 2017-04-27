@@ -204,13 +204,12 @@ namespace ospray {
         << " data distributed volume blocks\n"
         << "=======================================================";
 
-    if (!ospray::mpi::isMpiParallel()) {
+    if (!mpicommon::isMpiParallel()) {
       throw std::runtime_error("data parallel volume, but not in mpi parallel "
                                "mode...");
     }
-    uint64_t numWorkers = mpi::numWorkers();
-    // PRINT(numDDBlocks);
-    // PRINT(numWorkers);
+
+    uint64_t numWorkers = mpicommon::numWorkers();
 
     voxelType = getParamString("voxelType", "unspecified");  
 
@@ -231,8 +230,8 @@ namespace ospray {
             block->numOwners = nextBlockFirstOwner - block->firstOwner; // + 1;
           }
           block->isMine 
-            = (ospray::mpi::workerRank() >= block->firstOwner)
-            && (ospray::mpi::workerRank() <
+            = (mpicommon::workerRank() >= block->firstOwner)
+            && (mpicommon::workerRank() <
                 (block->firstOwner + block->numOwners));
           block->domain.lower = vec3i(ix,iy,iz) * blockSize;
           block->domain.upper = min(block->domain.lower+blockSize,dimensions);
@@ -263,7 +262,7 @@ namespace ospray {
             }
             
             postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
-                << "worker rank " << mpi::workerRank()
+                << "worker rank " << mpicommon::workerRank()
                 << " owns block " << ix << "," << iy << "," << iz
                 << " (ID " << blockID << "), dims " << blockDims.x
                 << " " << blockDims.y << " " << blockDims.z;

@@ -22,6 +22,8 @@ namespace ospray {
   namespace mpi {
     namespace messaging {
 
+      using namespace mpicommon;
+
       // Internal maml message handler for all of OSPRay //////////////////////
 
       struct ObjectMessageHandler : maml::MessageHandler
@@ -83,11 +85,26 @@ namespace ospray {
         handler->registerMessageListener(handleObjID, listener);
       }
 
+      void enableAsyncMessaging()
+      {
+        maml::start();
+      }
+
       void sendTo(int globalRank, ObjectHandle object,
                   std::shared_ptr<maml::Message> msg)
       {
         msg->tag = object.objID();
         maml::sendTo(world.comm, globalRank, msg);
+      }
+
+      bool asyncMessagingEnabled()
+      {
+        return maml::isRunning();
+      }
+
+      void disableAsyncMessaging()
+      {
+        maml::stop();
       }
 
     } // ::ospray::mpi::messaging

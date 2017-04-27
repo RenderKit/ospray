@@ -42,6 +42,8 @@ namespace ospray {
   namespace mpi {
     namespace work {
 
+      using namespace mpicommon;
+
       /*! abstract interface for a work item. a work item can
         serialize itself, de-serialize itself, and return a tag that
         allows the unbuffering code form figuring out what kind of

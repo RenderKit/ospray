@@ -28,6 +28,8 @@
 namespace ospray {
   namespace mpi {
 
+    using namespace mpicommon;
+
     namespace staticLoadBalancer {
 
       float Master::renderFrame(Renderer *renderer,

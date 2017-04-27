@@ -27,11 +27,19 @@ namespace ospray {
   namespace mpi {
     namespace messaging {
 
+      // async point messaging interface //////////////////////////////////////
+
       void registerMessageListener(int handleObjID,
                                    maml::MessageHandler *listener);
 
+      void enableAsyncMessaging();
+
+      bool asyncMessagingEnabled();
+
       void sendTo(int globalRank, ObjectHandle object,
                   std::shared_ptr<maml::Message> msg);
+
+      void disableAsyncMessaging();
 
     } // ::ospray::mpi::messaging
   } // ::ospray::mpi

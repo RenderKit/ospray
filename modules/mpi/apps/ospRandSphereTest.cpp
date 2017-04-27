@@ -88,8 +88,8 @@ namespace ospRandSphereTest {
     ospray::cpp::Data sphere_data(numSpheresPerNode * sizeof(Sphere),
                                   OSP_UCHAR, spheres.data());
 
-    auto numRanks = static_cast<float>(ospray::mpi::numGlobalRanks());
-    auto myRank   = ospray::mpi::globalRank();
+    auto numRanks = static_cast<float>(mpicommon::numGlobalRanks());
+    auto myRank   = mpicommon::globalRank();
 
     vec4f color((numRanks - myRank) / numRanks, 0.f, myRank / numRanks, 1.f);
 
@@ -195,12 +195,12 @@ namespace ospRandSphereTest {
 
     if (runDistributed) {
 
-      ospray::mpi::world.barrier();
+      mpicommon::world.barrier();
 
       auto frameStartTime = ospcommon::getSysTime();
 
       for (int i = 0; i < numFrames; ++i) {
-        if (ospray::mpi::IamTheMaster())
+        if (mpicommon::IamTheMaster())
           std::cout << "rendering frame " << i << std::endl;
 
         renderer.renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
@@ -208,7 +208,7 @@ namespace ospRandSphereTest {
 
       double seconds = ospcommon::getSysTime() - frameStartTime;
 
-      if (ospray::mpi::IamTheMaster()) {
+      if (mpicommon::IamTheMaster()) {
         auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
         writePPM("randomSphereTestDistributed.ppm", fbSize.x, fbSize.y, lfb);
         fb.unmap(lfb);
@@ -217,7 +217,7 @@ namespace ospRandSphereTest {
                   << numFrames / seconds << " frames per second" << std::endl;
       }
 
-      ospray::mpi::world.barrier();
+      mpicommon::world.barrier();
 
     } else {
 

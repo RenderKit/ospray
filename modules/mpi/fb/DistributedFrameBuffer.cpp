@@ -23,8 +23,6 @@
 
 #include "mpiCommon/MPICommon.h"
 
-#include "../common/Messaging.h"
-
 #ifdef _WIN32
 #  include <windows.h> // for Sleep
 #endif
@@ -144,7 +142,7 @@ namespace ospray {
     tileAccumID = (int32*)alignedMalloc(bytes);
     memset(tileAccumID, 0, bytes);
 
-    if (mpi::IamTheMaster()) {
+    if (mpicommon::IamTheMaster()) {
       if (colorBufferFormat == OSP_FB_NONE) {
         DBG(cout << "#osp:mpi:dfb: we're the master, but framebuffer has 'NONE' "
                  << "format; creating distributed frame buffer WITHOUT having a "
@@ -192,7 +190,7 @@ namespace ospray {
         // increment accumID only for active tiles
         for (int t = 0; t < getTotalTiles(); t++) {
           if (tileError(vec2i(t, 0)) <= errorThreshold) {
-            if (mpi::IamTheMaster() || allTiles[t]->mine())
+            if (mpicommon::IamTheMaster() || allTiles[t]->mine())
               numTilesCompletedThisFrame++;
           } else {
             tileAccumID[t]++;
@@ -216,7 +214,7 @@ namespace ospray {
       this->incoming(msg);
 
     if (numTilesCompletedThisFrame
-        == (mpi::IamTheMaster() ? getTotalTiles() : myTiles.size())) {
+        == (mpicommon::IamTheMaster() ? getTotalTiles() : myTiles.size())) {
       closeCurrentFrame();
     }
   }
@@ -232,8 +230,8 @@ namespace ospray {
 
   size_t DistributedFrameBuffer::ownerIDFromTileID(size_t tileID)
   {
-    return masterIsAWorker ? tileID % (mpi::numGlobalRanks()) :
-                             (tileID % (mpi::numGlobalRanks() - 1) + 1);
+    return masterIsAWorker ? tileID % (mpicommon::numGlobalRanks()) :
+                             (tileID % (mpicommon::numGlobalRanks() - 1) + 1);
   }
 
   TileData *DFB::createTile(const vec2i &xy, size_t tileID, size_t ownerID)
@@ -249,8 +247,8 @@ namespace ospray {
       break;
     case Z_COMPOSITE:
     default:
-      size_t numWorkers = masterIsAWorker ? mpi::numGlobalRanks() :
-                                            mpi::numWorkers();
+      size_t numWorkers = masterIsAWorker ? mpicommon::numGlobalRanks() :
+                                            mpicommon::numWorkers();
       td = new ZCompositeTile(this, xy, tileID, ownerID, numWorkers);
       break;
     }
@@ -265,7 +263,7 @@ namespace ospray {
     for (int y = 0; y < numPixels.y; y += TILE_SIZE) {
       for (int x = 0; x < numPixels.x; x += TILE_SIZE, tileID++) {
         size_t ownerID = ownerIDFromTileID(tileID);
-        if (ownerID == mpi::globalRank()) {
+        if (ownerID == mpicommon::globalRank()) {
           TileData *td = createTile(vec2i(x, y), tileID, ownerID);
           myTiles.push_back(td);
           allTiles.push_back(td);
@@ -353,7 +351,7 @@ namespace ospray {
     DBG(printf("rank %i: tilecompleted %i,%i\n",mpi::world.rank,
                tile->begin.x,tile->begin.y));
 
-    if (mpi::IamTheMaster() && tile->ownerID == mpi::masterRank()) {
+    if (mpicommon::IamTheMaster() && tile->ownerID == mpicommon::masterRank()) {
       if (pixelOp) {
         pixelOp->postAccum(tile->final);
       }
@@ -361,7 +359,7 @@ namespace ospray {
       tile->ownerID = -1;//TODO(jda) - need to refactor this "magic" number...
                          //            the branching logic here is too cryptic
       sendTileToMaster(tile);
-    } else if (mpi::IamTheMaster()) {
+    } else if (mpicommon::IamTheMaster()) {
       int numTilesCompletedByMyTile = 0;
       /*! we will not do anything with the tile other than mark it's done */
       {
@@ -412,7 +410,7 @@ namespace ospray {
 
       auto msg = std::make_shared<maml::Message>(&mtm, sizeof(mtm));
 
-      mpi::messaging::sendTo(mpi::masterRank(), myID, msg);
+      mpi::messaging::sendTo(mpicommon::masterRank(), myID, msg);
     } break;
     case OSP_FB_RGBA8:
     case OSP_FB_SRGBA: {
@@ -426,7 +424,7 @@ namespace ospray {
 
       auto msg = std::make_shared<maml::Message>(&mtm, sizeof(mtm));
 
-      mpi::messaging::sendTo(mpi::masterRank(), myID, msg);
+      mpi::messaging::sendTo(mpicommon::masterRank(), myID, msg);
     } break;
     case OSP_FB_RGBA32F: {
       /*! if the master has RGBA32F format, we're sending him a tile of the
@@ -439,7 +437,7 @@ namespace ospray {
 
       auto msg = std::make_shared<maml::Message>(&mtm, sizeof(mtm));
 
-      mpi::messaging::sendTo(mpi::masterRank(), myID, msg);
+      mpi::messaging::sendTo(mpicommon::masterRank(), myID, msg);
     } break;
     default:
       throw std::runtime_error("#osp:mpi:dfb: color buffer format not "
@@ -506,7 +504,7 @@ namespace ospray {
     frameIsActive = false;
     frameIsDone   = true;
 
-    if (mpi::IamTheMaster()) {
+    if (mpicommon::IamTheMaster()) {
       /* do nothing */
     } else {
       if (pixelOp) { 
@@ -595,13 +593,13 @@ namespace ospray {
 
   void DistributedFrameBuffer::beginFrame()
   {
-    maml::start();
+    mpi::messaging::enableAsyncMessaging();
     FrameBuffer::beginFrame();
   }
 
   float DFB::endFrame(const float errorThreshold)
   {
-    maml::stop();
+    mpi::messaging::disableAsyncMessaging();
     return tileErrorRegion.refine(errorThreshold);
   }
 

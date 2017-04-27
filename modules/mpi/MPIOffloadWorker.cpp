@@ -56,6 +56,8 @@
 namespace ospray {
   namespace mpi {
 
+    using namespace mpicommon;
+
     OSPRAY_MPI_INTERFACE void runWorker();
 
     void embreeErrorFunc(const RTCError code, const char* str)

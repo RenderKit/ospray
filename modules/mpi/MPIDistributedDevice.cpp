@@ -89,7 +89,7 @@ namespace ospray {
         int _ac = 1;
         const char *_av[] = {"ospray_mpi_worker"};
 
-        mpi::init(&_ac, _av);
+        mpicommon::init(&_ac, _av);
 
         std::stringstream embreeConfig;
         if (debugMode)
@@ -154,7 +154,7 @@ namespace ospray {
     MPIDistributedDevice::frameBufferMap(OSPFrameBuffer _fb,
                                          OSPFrameBufferChannel channel)
     {
-      if (!IamTheMaster())
+      if (!mpicommon::IamTheMaster())
         throw std::runtime_error("Can only map framebuffer on the master!");
 
       auto &fb = objectFromAPIHandle<FrameBuffer>(_fb);
@@ -415,7 +415,7 @@ namespace ospray {
       auto &fb       = objectFromAPIHandle<FrameBuffer>(_fb);
       auto &renderer = objectFromAPIHandle<Renderer>(_renderer);
       auto result    = renderer.renderFrame(&fb, fbChannelFlags);
-      mpi::world.barrier();
+      mpicommon::world.barrier();
       return result;
     }
 

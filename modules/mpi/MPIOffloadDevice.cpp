@@ -49,6 +49,8 @@
 namespace ospray {
   namespace mpi {
 
+    using namespace mpicommon;
+
     // Forward declarations ///////////////////////////////////////////////////
 
     //! this runs an ospray worker process.

@@ -16,10 +16,10 @@
 
 #pragma once
 
-// ospray components
-#include "maml/maml.h"
 // ospray
 #include "ospray/fb/LocalFB.h"
+// ospray_mpi
+#include "../common/Messaging.h"
 // std
 #include <condition_variable>
 
