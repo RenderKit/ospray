@@ -457,7 +457,7 @@ namespace ospray {
         }
 
         glViewport(0, 0, new_w, new_h);
-        glClear(GL_COLOR_BUFFER_BIT);
+        // glClear(GL_COLOR_BUFFER_BIT);
         currentWidget->timer.doneRender();
 
         currentWidget->timer.startRender();

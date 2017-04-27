@@ -122,11 +122,11 @@ namespace ospray {
     {
     public:
 
-      std::shared_ptr<World> world;
+      std::shared_ptr<Node> world;
       std::map<std::string,std::shared_ptr<Material> > material;
 
       /*! Constructor. */
-      OBJLoader(std::shared_ptr<World> world, const FileName& fileName);
+      OBJLoader(std::shared_ptr<Node> world, const FileName& fileName);
 
       /*! Destruction */
       ~OBJLoader();
@@ -189,7 +189,7 @@ namespace ospray {
     template<> inline std::string OBJLoader::parse(const char *&token, std::string& type)
     { type="string"; return std::string(token); }
 
-    OBJLoader::OBJLoader(std::shared_ptr<World> world, const FileName &fileName)
+    OBJLoader::OBJLoader(std::shared_ptr<Node> world, const FileName &fileName)
       : world(world),
         path(fileName.path()),
         fullPath(fileName)
@@ -321,6 +321,7 @@ namespace ospray {
       std::string type;
       auto node =  loadTexture(path,parse<std::string>(token,type),preferLinear);
       // mat->createChildWithValue(keyWord, type, val);
+      std::string name(keyWord);
       mat->setChild(keyWord, node);
       return true;
     }
@@ -390,7 +391,7 @@ namespace ospray {
           if (tryToMatch<vec3f>(token,"Ka",cur)) continue;
           if (tryToMatch<vec3f>(token,"Kd",cur)) continue;
           if (tryToMatch<vec3f>(token,"Ks",cur)) continue;
-          if (tryToMatch<vec3f>(token,"Tf",cur)) continue;
+          // if (tryToMatch<vec3f>(token,"Tf",cur)) continue;
 
           if (tryToMatchTexture(token,"map_d",cur,true)) continue;
           if (tryToMatchTexture(token,"map_Ns",cur,true)) continue;
@@ -528,7 +529,7 @@ namespace ospray {
       curGroup.clear();
     }
 
-    void importOBJ(const std::shared_ptr<World> &world, const FileName &fileName)
+    void importOBJ(const std::shared_ptr<Node> &world, const FileName &fileName)
     {
       std::cout << "ospray::sg::importOBJ: importing from " << fileName << endl;
       OBJLoader loader(world,fileName);

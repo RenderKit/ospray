@@ -58,7 +58,16 @@ namespace ospray {
       scenegraph(scenegraph),
       renderEngine(scenegraph, scenegraphDW),scenegraphDW(scenegraphDW)
   {
-    setWorldBounds(scenegraph->child("world").bounds());
+    //do initial commit to make sure bounds are correctly computed
+    scenegraph->traverse("verify");
+    scenegraph->traverse("commit");
+    auto bbox = scenegraph->child("world").bounds();
+    if (bbox.empty())
+    {
+      bbox.lower = vec3f(-5,0,-5);
+      bbox.upper = vec3f(5,10,5);
+    }
+    setWorldBounds(bbox);
     renderEngine.setFbSize({1024, 768});
 
     renderEngine.start();
@@ -276,12 +285,12 @@ namespace ospray {
 
     static float vec4fv[4] = { 0.10f, 0.20f, 0.30f, 0.44f };
     if (ImGui::CollapsingHeader("SceneGraph", "SceneGraph", true, true))
-      buildGUINode(scenegraph, 0);
+      buildGUINode("root", scenegraph, 0);
 
     ImGui::End();
   }
 
-  void ImGuiViewerSg::buildGUINode(std::shared_ptr<sg::Node> node, int indent)
+  void ImGuiViewerSg::buildGUINode(std::string name, std::shared_ptr<sg::Node> node, int indent)
   {
     int styles=0;
     if (!node->isValid()) {
@@ -289,7 +298,14 @@ namespace ospray {
       styles++;
     }
     std::string text;
-    text += std::string(node->name()+" : ");
+    std::string nameLower=name;
+    std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+    std::string nodeNameLower=node->name();
+    std::transform(nodeNameLower.begin(), nodeNameLower.end(), nodeNameLower.begin(), ::tolower);
+    if (nameLower != nodeNameLower)
+      text += std::string(name+" -> "+node->name()+" : ");
+    else
+      text += std::string(name+" : ");
     if (node->type() == "vec3f") {
       ImGui::Text(text.c_str());
       ImGui::SameLine();
@@ -452,8 +468,8 @@ namespace ospray {
         if (!node->isValid())
           ImGui::PopStyleColor(styles--);
 
-        for(auto child : node->children())
-          buildGUINode(child, ++indent);
+        for(auto child : node->childrenMap())
+          buildGUINode(child.first,child.second, ++indent);
 
         ImGui::TreePop();
       }

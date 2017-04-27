@@ -35,7 +35,10 @@ namespace ospray {
 
         auto &sgFB = scenegraph->child("frameBuffer");
 
-        if (sgFB.childrenLastModified() > lastFTime) {
+        static bool once = false;  //TODO: initial commit as timestamp can not
+          // be set to 0
+        static int counter = 0;
+        if (sgFB.childrenLastModified() > lastFTime || !once) {
           auto &size = sgFB["size"];
           nPixels = size.valueAs<vec2i>().x * size.valueAs<vec2i>().y;
           pixelBuffer[0].resize(nPixels);
@@ -43,11 +46,14 @@ namespace ospray {
           lastFTime = sg::TimeStamp();
         }
 
-        fps.startRender();
 
-        if (scenegraph->childrenLastModified() > lastRTime) {
+        if (scenegraph->childrenLastModified() > lastRTime || !once) {
+          double time = ospcommon::getSysTime();
           scenegraph->traverse("verify");
+          double verifyTime = ospcommon::getSysTime() - time;
+          time = ospcommon::getSysTime();
           scenegraph->traverse("commit");
+          double commitTime = ospcommon::getSysTime() - time;
 
           if (scenegraphDW) {
             scenegraphDW->traverse("verify");
@@ -57,9 +63,11 @@ namespace ospray {
           lastRTime = sg::TimeStamp();
         }
 
+        fps.startRender();
         scenegraph->traverse("render");
         if (scenegraphDW) 
           scenegraphDW->traverse("render");
+        once = true;
         
         fps.doneRender();
         auto sgFBptr =

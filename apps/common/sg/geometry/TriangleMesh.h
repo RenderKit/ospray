@@ -33,10 +33,10 @@ namespace ospray {
       /*! \brief returns a std::string with the c++ name of this class */
       std::string toString() const override;
 
-      //! return bounding box of all primitives
-      box3f bounds() const override;
+      box3f computeBounds() const override;
 
       void postCommit(RenderContext &ctx) override;
+      void postRender(RenderContext& ctx) override;
 
       //! \brief Initialize this node's value from given XML node
       /*!
@@ -96,7 +96,7 @@ namespace ospray {
       //! constructor
       PTMTriangleMesh();
 
-      box3f bounds() const override;
+      // box3f bounds() const override;
 
       // Data members //
 

@@ -187,6 +187,11 @@ void addPlaneToScene(sg::Node& world)
 {
   //add plane
   auto bbox = world.bounds();
+  if (bbox.empty())
+  {
+    bbox.lower = vec3f(-5,0,-5);
+    bbox.upper = vec3f(5,10,5);
+  }
 
   osp::vec3f *vertices = new osp::vec3f[4];
   float ps = bbox.upper.x*3.f;
@@ -206,8 +211,8 @@ void addPlaneToScene(sg::Node& world)
   auto index = std::make_shared<sg::DataArray3i>((vec3i*)&triangles[0],
                                                  size_t(2),
                                                  false);
-  auto &plane = world.createChild("plane", "InstanceGroup");
-  auto &mesh  = plane.createChild("mesh", "TriangleMesh");
+  auto &plane = world.createChild("plane", "Instance");
+  auto &mesh  = plane.child("model").createChild("mesh", "TriangleMesh");
 
   std::shared_ptr<sg::TriangleMesh> sg_plane =
     std::static_pointer_cast<sg::TriangleMesh>(mesh.shared_from_this());
@@ -237,7 +242,7 @@ int main(int ac, const char **av)
   auto &renderer = *renderer_ptr;
   /*! the renderer we use for rendering on the display wall; null if
       no dw available */
-  std::shared_ptr<sg::Node> rendererDW;
+  std::shared_ptr<sg::Node> rendererDW=nullptr;
   /*! display wall service info - ignore if 'rendererDW' is null */
   dw::ServiceInfo dwService;
 
@@ -312,12 +317,7 @@ int main(int ac, const char **av)
   }
 
   if (print || debug)
-  {
     renderer.traverse("print");
-  }
-
-  renderer.traverse("verify");
-  renderer.traverse("commit");
 
   ospray::ImGuiViewerSg window(renderer_ptr, rendererDW);
 

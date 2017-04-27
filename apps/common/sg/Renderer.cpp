@@ -81,12 +81,19 @@ namespace ospray {
       createChild("aoTransparency", "bool", true, NodeFlags::required);
     }
 
+    void Renderer::traverse(RenderContext &ctx, const std::string& operation)
+    {
+      if (operation == "render")
+      {
+        preRender(ctx);
+        postRender(ctx);
+      }
+      else 
+        Node::traverse(ctx,operation);
+    }
+
     void Renderer::postRender(RenderContext &ctx)
     {
-      ospSetObject(ospRenderer, "model",
-                   child("world").valueAs<OSPObject>());
-      ospCommit(ospRenderer);
-
       auto fb = (OSPFrameBuffer)child("frameBuffer").valueAs<OSPObject>();
       ospRenderFrame(fb,
                      ospRenderer,
@@ -117,53 +124,53 @@ namespace ospray {
         ospCommit(ospRenderer);
         setValue((OSPObject)ospRenderer);
       }
-      ctx.ospRenderer = ospRenderer;
+      ctx.ospRenderer = ospRenderer;  
     }
 
     void Renderer::postCommit(RenderContext &ctx)
     {
-      ospSetObject(ospRenderer,"model", child("world").valueAs<OSPObject>());
-      ospSetObject(ospRenderer,"camera", child("camera").valueAs<OSPObject>());
-
-      if (lightsData == nullptr ||
-          lightsBuildTime < child("lights").childrenLastModified())
-      {
-        // create and setup light for Ambient Occlusion
-        std::vector<OSPLight> lights;
-        for(auto &lightNode : child("lights").children())
-          lights.push_back((OSPLight)lightNode->valueAs<OSPObject>());
-
-        if (lightsData)
-          ospRelease(lightsData);
-        lightsData = ospNewData(lights.size(), OSP_LIGHT, &lights[0]);
-        ospCommit(lightsData);
-        lightsBuildTime = TimeStamp();
-      }
-
-      // complete setup of renderer
-      ospSetObject(ospRenderer, "model",  child("world").valueAs<OSPObject>());
-      ospSetObject(ospRenderer, "lights", lightsData);
-
-      //TODO: some child is kicking off modified every frame...Should figure
-      //      out which and ignore it
-
+      double time = ospcommon::getSysTime();
       if (child("camera").childrenLastModified() > frameMTime
           || child("lights").childrenLastModified() > frameMTime
-          || child("world").childrenLastModified() > frameMTime
           || lastModified() > frameMTime
           || child("shadowsEnabled").lastModified() > frameMTime
           || child("aoSamples").lastModified() > frameMTime
-          || child("spp").lastModified() > frameMTime)
+          || child("spp").lastModified() > frameMTime
+          || child("world").childrenLastModified() > frameMTime
+          )
       {
         ospFrameBufferClear(
           (OSPFrameBuffer)child("frameBuffer").valueAs<OSPObject>(),
           OSP_FB_COLOR | OSP_FB_ACCUM
         );
 
+        if (lightsData == nullptr ||
+          lightsBuildTime < child("lights").childrenLastModified())
+        {
+          // create and setup light for Ambient Occlusion
+          std::vector<OSPLight> lights;
+          for(auto &lightNode : child("lights").children())
+            lights.push_back((OSPLight)lightNode->valueAs<OSPObject>());
+
+          if (lightsData)
+            ospRelease(lightsData);
+          lightsData = ospNewData(lights.size(), OSP_LIGHT, &lights[0]);
+          ospCommit(lightsData);
+          lightsBuildTime = TimeStamp();
+        }
+
+        // complete setup of renderer
+        ospSetObject(ospRenderer,"camera", child("camera").valueAs<OSPObject>());
+        ospSetObject(ospRenderer, "lights", lightsData);
+        if (child("world").childrenLastModified() > frameMTime)
+        {
+          child("world").traverse(ctx, "render");
+          ospSetObject(ospRenderer, "model",  child("world").valueAs<OSPObject>());
+        }
+        ospCommit(ospRenderer);
         frameMTime = TimeStamp();
       }
 
-      ospCommit(ospRenderer);
     }
 
     OSP_REGISTER_SG_NODE(Renderer);

@@ -31,8 +31,9 @@ namespace ospray {
       return "ospray::sg::Geometry";
     }
 
-    box3f TriangleMesh::bounds() const
+    box3f TriangleMesh::computeBounds() const
     {
+      // std::cout << __PRETTY_FUNCTION__ << " " << name() << std::endl;
       box3f bounds = empty;
       for (uint32_t i = 0; i < vertex->getSize(); i++)
         bounds.extend(vertex->get3f(i));
@@ -79,18 +80,11 @@ namespace ospray {
     {
     }
 
-    box3f PTMTriangleMesh::bounds() const
-    {
-      box3f bounds = empty;
-      for (uint32_t i = 0; i < vertex->getSize(); i++)
-        bounds.extend(vertex->get3f(i));
-      return bounds;
-    }
-
     void TriangleMesh::postCommit(RenderContext &ctx)
     {
       if (ospGeometry)
       {
+        assert((OSPMaterial)child("material").valueAs<OSPObject>());
         ospSetMaterial(ospGeometry,
                        (OSPMaterial)child("material").valueAs<OSPObject>());
         ospCommit(ospGeometry);
@@ -99,10 +93,10 @@ namespace ospray {
 
       if (ospGeometry)
         ospRelease(ospGeometry);
-      if (ospModel)
-        ospRelease(ospModel);
+      // if (ospModel)
+        // ospRelease(ospModel);
       ospGeometry = ospNewGeometry("trianglemesh");
-      ospModel    = ospNewModel();
+      // ospModel    = ospNewModel();
 
       // set vertex data
       if (vertex && vertex->notEmpty())
@@ -115,10 +109,18 @@ namespace ospray {
       if (index && index->notEmpty())
         ospSetData(ospGeometry,"index",index->getOSP());
 
+      assert((OSPMaterial)child("material").valueAs<OSPObject>());
       ospSetMaterial(ospGeometry,
                      (OSPMaterial)child("material").valueAs<OSPObject>());
       ospCommit(ospGeometry);
-      ospAddGeometry(ctx.world->ospModel,ospGeometry);
+      child("bounds").setValue(computeBounds());
+      // ospAddGeometry(ctx.world->ospModel,ospGeometry);
+    }
+
+    void TriangleMesh::postRender(RenderContext& ctx)
+    {
+      ospAddGeometry(ctx.currentOSPModel,ospGeometry);
+      // ctx.world->numGeometry++;
     }
 
     OSP_REGISTER_SG_NODE(TriangleMesh);

@@ -209,7 +209,7 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
         foreach_unique (v in volume)
           {
             //interval sampling
-            volumeColor = SciVisRenderer_computeVolumeInterval(renderer, v, ray, tBegin, tEnd, .98f - color.w, 0, rayOffset, sampleID, 1.f);
+            volumeColor = SciVisRenderer_computeVolumeInterval(renderer, v, ray, tBegin, tEnd, .99f, 0, rayOffset, sampleID, 1.f);
           }
 
         // Volume contribution.
