@@ -379,7 +379,7 @@ namespace ospray {
       if (IamTheMaster()) {
         postStatusMsg("shutting down mpi device", OSPRAY_MPI_VERBOSE_LEVEL);
         work::CommandFinalize work;
-        processWork(work);
+        processWork(work, true);
       }
     }
 
@@ -502,7 +502,7 @@ namespace ospray {
       Assert(_object);
       const ObjectHandle handle = (const ObjectHandle&)_object;
       work::CommitObject work(handle);
-      processWork(work);
+      processWork(work, true);
     }
 
     /*! add a new geometry to a model */
@@ -590,7 +590,7 @@ namespace ospray {
     int MPIOffloadDevice::loadModule(const char *name)
     {
       work::LoadModule work(name);
-      processWork(work);
+      processWork(work, true);
       // FIXME: actually we should return an error code here...
       // TODO: If some fail? Can we assume if the master succeeds in loading
       // that all have succeeded in loading? I don't think so.
@@ -834,7 +834,7 @@ namespace ospray {
       // Note: render frame is flushing so the work error result will be set,
       // since the master participates in rendering
       work::RenderFrame work(_fb, _renderer, fbChannelFlags);
-      processWork(work);
+      processWork(work, true);
       return work.varianceResult;
     }
 
@@ -900,7 +900,7 @@ namespace ospray {
       return false;
     }
 
-    void MPIOffloadDevice::processWork(work::Work &work)
+    void MPIOffloadDevice::processWork(work::Work &work, bool flushWriteStream)
     {
       static size_t numWorkSent = 0;
       postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
@@ -910,8 +910,8 @@ namespace ospray {
       auto tag = typeIdOf(work);
       writeStream->write(&tag, sizeof(tag));
       work.serialize(*writeStream);
-      
-      if (work.flushing())
+
+      if (flushWriteStream)
         writeStream->flush();
 
       // Run the master side variant of the work unit

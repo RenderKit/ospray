@@ -213,7 +213,7 @@ namespace ospray {
 
     private:
 
-      void processWork(work::Work &work);
+      void processWork(work::Work &work, bool flushWriteStream = false);
 
       /*! This only exists to support getting the voxel type for setRegion */
       int getString(OSPObject object, const char *name, char **value);

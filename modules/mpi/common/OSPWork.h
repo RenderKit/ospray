@@ -62,10 +62,6 @@ namespace ospray {
           serialized itself in */
         virtual void deserialize(ReadStream &b) = 0;
 
-        /*! returns whether this objects needs flushing of the buffered
-         *  command stream */
-        virtual bool flushing() { return false; }
-        
         /*! what to do to execute this work item on a worker */
         virtual void run() {}
 
@@ -302,8 +298,6 @@ namespace ospray {
         // TODO: Which objects should the master commit?
         void runOnMaster() override;
 
-        bool flushing() override { return true; }
-
         /*! serializes itself on the given serial buffer - will write
           all data into this buffer in a way that it can afterwards
           un-serialize itself 'on the other side'*/
@@ -344,7 +338,6 @@ namespace ospray {
         
         void run() override;
         void runOnMaster() override;
-        bool flushing() override { return true; }
 
         /*! serializes itself on the given serial buffer - will write
           all data into this buffer in a way that it can afterwards
@@ -682,7 +675,6 @@ namespace ospray {
         void run() override;
         // We do need to load modules on master in the case of scripted modules
         void runOnMaster() override;
-        bool flushing() override { return true; }
 
         /*! serializes itself on the given serial buffer - will write
           all data into this buffer in a way that it can afterwards
@@ -702,7 +694,6 @@ namespace ospray {
 
         void run() override;
         void runOnMaster() override;
-        bool flushing() override { return true; }
 
         /*! serializes itself on the given serial buffer - will write
           all data into this buffer in a way that it can afterwards
