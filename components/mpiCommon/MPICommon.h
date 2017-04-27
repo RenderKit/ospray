@@ -110,33 +110,6 @@ namespace ospray {
       int size {-1};
     };
 
-    //! abstraction for any other peer node that we might want to communicate with
-    struct Address
-    {
-      //! group that this peer is in
-      Group *group;
-      //! this peer's rank in this group
-      int rank;
-        
-      Address(Group *group = nullptr, int rank = -1)
-        : group(group), rank(rank) {}
-      inline bool isValid() const { return group != nullptr && rank >= 0; }
-    };
-
-    inline bool operator==(const Address &a, const Address &b)
-    {
-      return a.group == b.group && a.rank == b.rank;
-    }
-
-    inline bool operator!=(const Address &a, const Address &b)
-    {
-      return !(a == b);
-    }
-
-    //special flags for sending and reciving from all ranks instead of individuals
-    const int SEND_ALL = -1;
-    const int RECV_ALL = -1;
-
     //! MPI_COMM_WORLD
     OSPRAY_MPI_INTERFACE extern Group world;
     /*! for workers: intracommunicator to app

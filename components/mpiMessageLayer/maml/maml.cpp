@@ -92,17 +92,6 @@ namespace maml {
   }
 
   /*! send given messsage to given comm:rank. Once this function has
-      called maml has full ownership of this message, and the user may
-      no longer access it (becuase maml may delete it at any time) */
-  void send(std::shared_ptr<Message> msg)
-  {
-    if (msg.get() && !msg->isValid())
-      MAML_THROW("Invalid message");
-
-    Context::singleton->send(std::shared_ptr<Message>(msg));
-  }
-
-  /*! send given messsage to given comm:rank. Once this function has
     called maml has full ownership of this message, and the user may
     no longer access it (becuase maml may delete it at any time) */
   void sendTo(MPI_Comm comm, int rank, std::shared_ptr<Message> msg)
@@ -112,7 +101,7 @@ namespace maml {
 
     msg->rank = rank;
     msg->comm = comm;
-    send(msg);
+    Context::singleton->send(msg);
   }
   
 } // ::maml
