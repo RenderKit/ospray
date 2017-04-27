@@ -43,7 +43,6 @@ namespace ospray {
       if (ospModel)
         ospRelease(ospModel);
       ospModel = ospNewModel();
-      // ospCommit(ospModel);
       setValue((OSPObject)ospModel);
       ctx.currentOSPModel = ospModel;
     }
@@ -72,18 +71,8 @@ namespace ospray {
       return "ospray::viewer::sg::World";
     }
 
-    //! serialize into given serialization state
-    void sg::World::serialize(sg::Serialization::State &state)
-    {
-      sg::Serialization::State savedState = state;
-      for (auto node: nodes)
-        node->serialize(state);
-      state = savedState;
-    }
-
     void World::preCommit(RenderContext &ctx)
     {
-      numGeometry=0;
       oldWorld = ctx.world;
       ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
       if (ospModel)
@@ -97,6 +86,7 @@ namespace ospray {
 
     void World::postCommit(RenderContext &ctx)
     {
+      traverse(ctx, "render");  //cache render operation
       ospCommit(ospModel);
       ctx.world = oldWorld;
       ctx.currentOSPModel = oldModel;
@@ -105,22 +95,16 @@ namespace ospray {
 
     void World::preRender(RenderContext &ctx)
     {
-      preCommit(ctx);
-      // oldWorld = ctx.world;
-      // ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
+      // renders are cached in commit
     }
 
     void World::postRender(RenderContext &ctx)
     {
-       // ospCommit(ospModel);
-       // ctx.world = oldWorld;
-       // ctx.currentOSPModel = oldModel;
-      postCommit(ctx);
+      // renders are cached in commit
     }
 
     Instance::Instance()
-      : baseTransform(ospcommon::one), worldTransform(ospcommon::one),
-        cachedTransform(ospcommon::one), World()
+      : World()
     {
       createChild("visible", "bool", true);
       createChild("position", "vec3f");
@@ -171,11 +155,7 @@ namespace ospray {
 
     void Instance::preCommit(RenderContext &ctx)
     {
-      // std::cout << __PRETTY_FUNCTION__ << " \"" << name() << "\"\n";
-      numGeometry=0;
       if (instanced) {
-        // oldWorld = ctx.world;
-        // ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
         instanceDirty=true;
 
         oldTransform = ctx.currentTransform;
@@ -189,25 +169,14 @@ namespace ospray {
     void Instance::postCommit(RenderContext &ctx)
     {
       if (instanced)
-      {
-        //instancegroup caches render calls in commit.  
-        // child("model").traverse(ctx, "render");
-
         ctx.currentTransform = oldTransform;
-      }
       child("bounds").setValue(computeBounds());
     }
 
     void Instance::preRender(RenderContext &ctx)
     {
-      // std::cout << __PRETTY_FUNCTION__ << " \"" << name() << "\"\n";
       if (instanced) {
-      // oldWorld = ctx.world;
-        // ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
         oldTransform = ctx.currentTransform;
-        // ospModel = ospNewModel();
-        // ospCommit(ospModel);
-        // setValue((OSPObject)ospModel);
         if (cachedTransform != ctx.currentTransform)
           instanceDirty=true;
         if (instanceDirty)
@@ -219,7 +188,7 @@ namespace ospray {
     void Instance::postRender(RenderContext &ctx)
     {
       if (instanced && child("visible").value() == true
-        && ctx.world->ospModel && ospInstance)
+        && ctx.world && ctx.world->ospModel && ospInstance)
       {
         ospAddGeometry(ctx.world->ospModel,ospInstance);
       }

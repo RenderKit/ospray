@@ -422,7 +422,6 @@ namespace ospray {
         for (const auto &child : properties.children)
         {
           auto tbounds = child.second->bounds();
-          // if (!tbounds.empty())
             cbounds.extend(tbounds);
         }
         return cbounds;

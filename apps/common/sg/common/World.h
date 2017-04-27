@@ -28,19 +28,15 @@ namespace ospray {
     {
       Model();
 
-      //InstanceGroup caches renders.  It will render children during commit, and add
+      //commit caches renders.  It will render children during commit, and add
          //cached rendered children during render call.  
       virtual void traverse(RenderContext &ctx, const std::string& operation) override;
       virtual void preCommit(RenderContext &ctx) override;
       virtual void postCommit(RenderContext &ctx) override;
-      // virtual void preRender(RenderContext &ctx) override;
-      // virtual void postRender(RenderContext &ctx) override;
 
       OSPModel ospModel {nullptr};
-      std::vector<std::shared_ptr<Node>> nodes;
       std::shared_ptr<sg::World> oldWorld;
       OSPModel oldModel;
-      int numGeometry{0};
     };
 
     /*! a world node */
@@ -51,9 +47,6 @@ namespace ospray {
 
       /*! \brief returns a std::string with the c++ name of this class */
       virtual std::string toString() const override;
-
-      //! serialize into given serialization state 
-      virtual void serialize(sg::Serialization::State &serialization) override;
 
       /*! \brief return bounding box in world coordinates.
 
@@ -67,10 +60,8 @@ namespace ospray {
       virtual void postRender(RenderContext &ctx) override;
 
       OSPModel ospModel {nullptr};
-      std::vector<std::shared_ptr<Node>> nodes;
       std::shared_ptr<sg::World> oldWorld;
       OSPModel oldModel;
-      int numGeometry{0};
     };
 
 
@@ -86,7 +77,7 @@ namespace ospray {
         box3f(embree::empty) */
       virtual box3f computeBounds() const override;
 
-      //InstanceGroup caches renders.  It will render children during commit, and add
+      //Instance caches renders.  It will render children during commit, and add
          //cached rendered children during render call.  
       virtual void traverse(RenderContext &ctx, const std::string& operation) override;
       virtual void preCommit(RenderContext &ctx) override;
@@ -99,15 +90,15 @@ namespace ospray {
       //currently, nested instances do not appear to work in OSPRay.  To get around this,
       // instanced can be manually turned off for parent instancegroups.
       bool instanced {true};
-      ospcommon::affine3f baseTransform;
-      //    computed from baseTransform*position*rotation*scale
+      ospcommon::affine3f baseTransform{ospcommon::one};
 
     protected:
       void updateInstance(RenderContext &ctx);
       void updateTransform(RenderContext &ctx);
       bool instanceDirty{true};
-      ospcommon::affine3f cachedTransform;
-      ospcommon::affine3f worldTransform;  
+      ospcommon::affine3f cachedTransform{ospcommon::one};
+      ospcommon::affine3f worldTransform{ospcommon::one};  
+      //    computed from baseTransform*position*rotation*scale
       ospcommon::affine3f oldTransform{ospcommon::one};
 
     };

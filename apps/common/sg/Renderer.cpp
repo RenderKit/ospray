@@ -94,10 +94,6 @@ namespace ospray {
 
     void Renderer::postRender(RenderContext &ctx)
     {
-      // ospSetObject(ospRenderer, "model",
-      //              child("world").valueAs<OSPObject>());
-      // ospCommit(ospRenderer);
-
       auto fb = (OSPFrameBuffer)child("frameBuffer").valueAs<OSPObject>();
       ospRenderFrame(fb,
                      ospRenderer,
@@ -133,9 +129,6 @@ namespace ospray {
 
     void Renderer::postCommit(RenderContext &ctx)
     {
-      //TODO: some child is kicking off modified every frame...Should figure
-      //      out which and ignore it
-
       if (child("camera").childrenLastModified() > frameMTime
           || child("lights").childrenLastModified() > frameMTime
           || lastModified() > frameMTime

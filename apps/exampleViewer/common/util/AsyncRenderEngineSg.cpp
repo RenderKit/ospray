@@ -35,7 +35,8 @@ namespace ospray {
 
         auto &sgFB = scenegraph->child("frameBuffer");
 
-        static bool once = false;  //TODO: fix stupid timestamp again
+        static bool once = false;  //TODO: initial commit as timestamp can not
+          // be set to 0
         static int counter = 0;
         if (sgFB.childrenLastModified() > lastFTime || !once) {
           auto &size = sgFB["size"];
@@ -47,17 +48,12 @@ namespace ospray {
 
 
         if (scenegraph->childrenLastModified() > lastRTime || !once) {
-        // scenegraph->child("framebuffer")["size"].setValue(vec2i(1024, 767));
-        // scenegraph->child("framebuffer")["size"].setValue(vec2i(1024, 768));
-        // scenegraph->child("camera")["dir"].setValue(vec3f(0,.5,-.5));
-        // scenegraph->child("camera")["dir"].setValue(vec3f(0,0,-1));
           double time = ospcommon::getSysTime();
           scenegraph->traverse("verify");
           double verifyTime = ospcommon::getSysTime() - time;
           time = ospcommon::getSysTime();
           scenegraph->traverse("commit");
           double commitTime = ospcommon::getSysTime() - time;
-          std::cout << "commit time: " << commitTime << std::endl;
 
           if (scenegraphDW) {
             scenegraphDW->traverse("verify");

@@ -58,6 +58,9 @@ namespace ospray {
       scenegraph(scenegraph),
       renderEngine(scenegraph, scenegraphDW),scenegraphDW(scenegraphDW)
   {
+    //do initial commit to make sure bounds are correctly computed
+    scenegraph->traverse("verify");
+    scenegraph->traverse("commit");
     auto bbox = scenegraph->child("world").bounds();
     if (bbox.empty())
     {
