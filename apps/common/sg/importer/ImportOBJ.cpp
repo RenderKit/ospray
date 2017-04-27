@@ -497,9 +497,14 @@ namespace ospray {
       ss << fullPath.name() << "_" << counter++ << "_" << curGroupName;
       std::string name = ss.str();
       //scenegraph
-      std::shared_ptr<TriangleMesh> mesh =
+      auto mesh =
           std::static_pointer_cast<TriangleMesh>(createNode(name, "TriangleMesh"));
-      world->add(mesh);
+      auto model = createNode(name+"_model", "Model");
+      auto instance = createNode(name+"_instance", "Instance");
+      model->add(mesh);
+      instance->setChild("model", model);
+      model->setParent(instance);
+      world->add(instance);
       mesh->vertex = std::make_shared<DataVector3f>();
       mesh->normal = std::make_shared<DataVector3f>();
       mesh->texcoord = std::make_shared<DataVector2f>();
