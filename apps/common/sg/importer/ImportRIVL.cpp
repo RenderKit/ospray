@@ -337,10 +337,8 @@ namespace ospray {
         // empty group...
         ;
       else {
-        size_t counter=0;
         char *value = strdup(node.content.c_str());
         for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(NULL," \t\n\r")) {
-          counter++;
           size_t childID = atoi(s);
           std::shared_ptr<sg::Node> child = nodeList[childID];
           group->children.push_back(child);
@@ -380,14 +378,9 @@ namespace ospray {
             parseMaterialNode(node);
             // -------------------------------------------------------
           } else if (node.name == "Transform") {
-            static int counter =0;
             // -------------------------------------------------------
             parseTransformNode(node);
-            // if (counter++ < 2)
-            {
-              lastNode = nodeList.back();
-            // world->add(lastNode);
-            }
+            lastNode = nodeList.back();
             // -------------------------------------------------------
           } else if (node.name == "Mesh") {
             // -------------------------------------------------------

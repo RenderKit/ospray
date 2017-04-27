@@ -391,6 +391,7 @@ namespace ospray {
           if (tryToMatch<vec3f>(token,"Ka",cur)) continue;
           if (tryToMatch<vec3f>(token,"Kd",cur)) continue;
           if (tryToMatch<vec3f>(token,"Ks",cur)) continue;
+          //todo: Tf in path tracer often produces transparent walls
           // if (tryToMatch<vec3f>(token,"Tf",cur)) continue;
 
           if (tryToMatchTexture(token,"map_d",cur,true)) continue;

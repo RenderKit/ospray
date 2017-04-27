@@ -96,8 +96,6 @@ namespace ospray {
       //! constructor
       PTMTriangleMesh();
 
-      // box3f bounds() const override;
-
       // Data members //
 
       /*! \brief "material list" for this trianglemesh
@@ -108,25 +106,6 @@ namespace ospray {
        */
       std::vector<std::shared_ptr<sg::Material>> materialList;
       std::vector<uint32_t> materialIDs;      
-      // OSPGeometry ospGeometry {nullptr};
-
-      // to allow memory-mapping triangle arrays (or in general,
-      // sharing data with an application) we use data arrays, not std::vector's
-
-      // //! vertex (position) array
-      // std::shared_ptr<DataBuffer> vertex;
-
-      // //! vertex normal array. empty means 'not present'
-      // std::shared_ptr<DataBuffer> normal;
-
-      // //! vertex color array. empty means 'not present'
-      // std::shared_ptr<DataBuffer> color;
-
-      // //! vertex texture coordinate array. empty means 'not present'
-      // std::shared_ptr<DataBuffer> texcoord;
-
-      // //! triangle indices
-      // std::shared_ptr<DataBuffer> index;
 
       //! material IDs
       OSPData primMatIDs;
