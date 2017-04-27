@@ -196,7 +196,6 @@ namespace ospray {
       } 
 #endif
       if (fileName.ext() == "obj") {
-        // instanced = false;
         sg::importOBJ(std::static_pointer_cast<sg::Node>(shared_from_this()), fileName);
       } else if (fileName.ext() == "ply") {
         sg::importPLY(wsg, fileName);

@@ -150,9 +150,6 @@ namespace exampleViewer {
       rendererDW = ospray::cpp::Renderer();
     }
 
-    std::cout << bbox[0] << std::endl;
-    std::cout << bbox.size() << std::endl;
-
     ospray::ImGuiViewer window(bbox, model, renderer, rendererDW,
                                frameBufferDW, camera);
     window.setScale(scale);

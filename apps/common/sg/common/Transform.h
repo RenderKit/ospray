@@ -26,18 +26,8 @@ namespace ospray {
     struct OSPSG_INTERFACE Transform : public sg::Renderable
     {
       Transform();
-      // Transform(const AffineSpace3f &xfm,
-      //           const std::shared_ptr<sg::Node> &node);
-
       std::string toString() const override;
 
-      /*! \brief return bounding box in world coordinates.
-
-        This function can be used by the viewer(s) for calibrating
-        camera motion, setting default camera position, etc. Nodes
-        for which that does not apply can simpy return
-        box3f(empty) */
-      // box3f bounds() const override;
       virtual void preRender(RenderContext &ctx) override;
       virtual void postRender(RenderContext &ctx) override;
 

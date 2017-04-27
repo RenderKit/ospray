@@ -85,7 +85,6 @@ namespace ospray {
           memcpy(texel, (char*)binBasePtr+ofs, sz*sizeof(vec4uc));
           for (size_t p = 0; p < sz; p++)
             texel[p].w = 255 - texel[p].w;
-          // txt->texel = texel;
           txt->texelData = std::make_shared<DataArray1uc>((unsigned char*)texel,
                                                           width*height*sizeof(vec4uc),true);
         } else { // float
@@ -93,14 +92,12 @@ namespace ospray {
           memcpy(texel, (char*)binBasePtr+ofs, sz*sizeof(vec4f));
           for (size_t p = 0; p < sz; p++)
             texel[p].w = 1.0f - texel[p].w;
-          // txt->texel = texel;
           txt->texelData = std::make_shared<DataArray1uc>((unsigned char*)texel,
                                                           width*height*sizeof(vec4f),true);
         }
       } else
         txt->texelData = std::make_shared<DataArray1uc>((unsigned char*)(binBasePtr)+ofs,
                                                        width*height*3,false);
-                                                       //(char*)(binBasePtr)+ofs;
     }
 
 
@@ -224,7 +221,7 @@ namespace ospray {
       // find child ID
       xml::for_each_prop(node,[&](const std::string &name, const std::string &value){
           if (name == "child") {
-            childID = atoi(value.c_str());//(char*)value);
+            childID = atoi(value.c_str());
             child = nodeList[childID];
             assert(child);
           } else if (name == "id") {

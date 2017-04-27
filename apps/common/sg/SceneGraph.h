@@ -63,8 +63,6 @@ namespace ospray {
       /*! \brief returns a std::string with the c++ name of this class */
       std::string toString() const override;
 
-      // box3f bounds() const override;
-      
       std::vector<std::shared_ptr<sg::Node>> children;
     };
 
@@ -81,17 +79,6 @@ namespace ospray {
       const std::string type; 
       box3f _bounds;
     };
-
-    // /*! a instance of another model */
-    // struct Instance : public sg::Geometry
-    // {
-    //   Instance();
-    //   ! \brief returns a std::string with the c++ name of this class 
-    //   std::string toString() const override;
-
-    //   //! the model we're instancing
-    //   std::shared_ptr<World> world;
-    // };
 
     /*! import an OBJ wavefront model, and add its contents to the given world */
     OSPSG_INTERFACE void importOBJ(const std::shared_ptr<Node> &world,

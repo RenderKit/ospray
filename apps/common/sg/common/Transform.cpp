@@ -40,58 +40,6 @@ namespace ospray {
     {
       return "ospray::sg::Transform";
     }
-    
-    /*! \brief return bounding box in world coordinates.
-      
-      This function can be used by the viewer(s) for calibrating
-      camera motion, setting default camera position, etc. Nodes
-      for which that does not apply can simpy return
-      box3f(empty) */
-    // box3f Transform::bounds() const
-    // {
-    //   assert(node);
-    //   const box3f nodeBounds = node->bounds();
-    //   const vec3f lo = nodeBounds.lower;
-    //   const vec3f hi = nodeBounds.upper;
-    //   box3f bounds = ospcommon::empty;
-    //   bounds.extend(xfmPoint(xfm,vec3f(lo.x,lo.y,lo.z)));
-    //   bounds.extend(xfmPoint(xfm,vec3f(hi.x,lo.y,lo.z)));
-    //   bounds.extend(xfmPoint(xfm,vec3f(lo.x,hi.y,lo.z)));
-    //   bounds.extend(xfmPoint(xfm,vec3f(hi.x,hi.y,lo.z)));
-    //   bounds.extend(xfmPoint(xfm,vec3f(lo.x,lo.y,hi.z)));
-    //   bounds.extend(xfmPoint(xfm,vec3f(hi.x,lo.y,hi.z)));
-    //   bounds.extend(xfmPoint(xfm,vec3f(lo.x,hi.y,hi.z)));
-    //   bounds.extend(xfmPoint(xfm,vec3f(hi.x,hi.y,hi.z)));
-    //   return bounds;
-    // }
-
-
-        /*! \brief return bounding box in world coordinates.
-      
-      This function can be used by the viewer(s) for calibrating
-      camera motion, setting default camera position, etc. Nodes
-      for which that does not apply can simpy return
-      box3f(empty) */
-    // box3f Transform::bounds() const
-    // {
-    //   box3f cbounds = empty;
-    //   for (const auto &child : properties.children)
-    //     cbounds.extend(child.second->bounds());
-    //   if (cbounds.empty())
-    //     return cbounds;
-    //   const vec3f lo = cbounds.lower;
-    //   const vec3f hi = cbounds.upper;
-    //   box3f bounds = ospcommon::empty;
-    //   bounds.extend(xfmPoint(worldTransform,vec3f(lo.x,lo.y,lo.z)));
-    //   bounds.extend(xfmPoint(worldTransform,vec3f(hi.x,lo.y,lo.z)));
-    //   bounds.extend(xfmPoint(worldTransform,vec3f(lo.x,hi.y,lo.z)));
-    //   bounds.extend(xfmPoint(worldTransform,vec3f(hi.x,hi.y,lo.z)));
-    //   bounds.extend(xfmPoint(worldTransform,vec3f(lo.x,lo.y,hi.z)));
-    //   bounds.extend(xfmPoint(worldTransform,vec3f(hi.x,lo.y,hi.z)));
-    //   bounds.extend(xfmPoint(worldTransform,vec3f(lo.x,hi.y,hi.z)));
-    //   bounds.extend(xfmPoint(worldTransform,vec3f(hi.x,hi.y,hi.z)));
-    //   return bounds;
-    // }
 
     void Transform::preRender(RenderContext &ctx)
     {
