@@ -374,8 +374,6 @@ namespace ospray {
     
     MPIOffloadDevice::~MPIOffloadDevice()
     {
-      // NOTE(jda) - Seems that there are no MPI Devices on worker ranks...this
-      //             will likely change for data-distributed API settings?
       if (IamTheMaster()) {
         postStatusMsg("shutting down mpi device", OSPRAY_MPI_VERBOSE_LEVEL);
         work::CommandFinalize work;
@@ -385,7 +383,7 @@ namespace ospray {
 
     void MPIOffloadDevice::commit()
     {
-      if (initialized)// NOTE (jda) - doesn't make sense to commit again?
+      if (initialized)
         return;
 
       Device::commit();
@@ -401,8 +399,7 @@ namespace ospray {
 
       if (mode == "mpi") {
         createMPI_RanksBecomeWorkers(&_ac,_av);
-      }
-      else if(mode == "mpi-launch") {
+      } else if(mode == "mpi-launch") {
         std::string launchCommand = getParamString("launchCommand", "");
 
         if (launchCommand.empty()) {
@@ -411,11 +408,9 @@ namespace ospray {
         }
 
         createMPI_LaunchWorkerGroup(&_ac,_av,launchCommand.c_str());
-      }
-      else if (mode == "mpi-listen") {
+      } else if (mode == "mpi-listen") {
         createMPI_ListenForWorkers(&_ac,_av);
-      }
-      else if (mode == "mpi-connect") {
+      } else if (mode == "mpi-connect") {
         std::string portName =
             getParamString("portName", "");
 
@@ -425,8 +420,7 @@ namespace ospray {
         }
 
         createMPI_connectToListener(&_ac,_av,portName);
-      }
-      else {
+      } else {
         throw std::runtime_error("Invalid MPI mode!");
       }
 

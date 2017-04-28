@@ -25,8 +25,6 @@ namespace ospray {
       sockets, mpi, etc */
     struct Fabric
     {
-      virtual ~Fabric() = default;
-
       /*! send exact number of bytes - the fabric can do that through
         multiple smaller messages, but all bytes have to be
         delivered */
@@ -41,7 +39,6 @@ namespace ospray {
     /*! a specific fabric based on PMI */
     struct MPIBcastFabric : public Fabric
     {
-      /*! constructor - create a new broascast fabric that uses the given communicator */
       MPIBcastFabric(const mpicommon::Group &group);
 
       virtual ~MPIBcastFabric() = default;
