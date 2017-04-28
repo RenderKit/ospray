@@ -69,7 +69,7 @@ namespace ospray {
     }
 
     std::unique_ptr<work::Work> readWork(work::WorkTypeRegistry &registry,
-                                         ReadStream             &readStream)
+                                         networking::ReadStream &readStream)
     {
       work::Work::tag_t tag;
       readStream >> tag;

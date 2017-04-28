@@ -18,7 +18,7 @@
 #include "common/sg/Renderer.h"
 #include "common/sg/importer/Importer.h"
 #include "ospcommon/FileName.h"
-#include "ospcommon/Socket.h"
+#include "ospcommon/networking/Socket.h"
 #include "ospcommon/vec.h"
 
 #include "sg/geometry/TriangleMesh.h"

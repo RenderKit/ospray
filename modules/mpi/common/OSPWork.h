@@ -27,7 +27,7 @@
 #include <ospray/ospray.h>
 #include "mpiCommon/MPICommon.h"
 #include "common/ObjectHandle.h"
-#include "DataStreaming.h"
+#include "ospcommon/networking/DataStreaming.h"
 
 #include "common/Model.h"
 #include "render/Renderer.h"
@@ -43,6 +43,7 @@ namespace ospray {
     namespace work {
 
       using namespace mpicommon;
+      using namespace ospcommon::networking;
 
       /*! abstract interface for a work item. a work item can
         serialize itself, de-serialize itself, and return a tag that

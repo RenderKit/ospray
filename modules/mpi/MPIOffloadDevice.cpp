@@ -32,7 +32,7 @@
 #include "fb/LocalFB.h"
 #include "mpi/fb/DistributedFrameBuffer.h"
 #include "common/BufferedDataStreaming.h"
-#include "ospcommon/Socket.h"
+#include "ospcommon/networking/Socket.h"
 
 // std
 #ifndef _WIN32

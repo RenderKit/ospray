@@ -36,7 +36,6 @@ IF (OSPRAY_MODULE_MPI)
 
     common/OSPWork.cpp
     common/Messaging.cpp
-    common/DataStreaming.h
     common/DistributedModel.cpp
     common/DistributedModel.ispc
     common/BufferedDataStreaming.cpp

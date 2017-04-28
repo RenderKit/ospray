@@ -16,10 +16,10 @@
 
 #pragma once
 
-#include "mpiCommon/MPICommon.h"
+#include "../common.h"
 
-namespace ospray {
-  namespace mpi {
+namespace ospcommon {
+  namespace networking {
 
     /*! abstraction of an object that we can serailize/write (raw) data into */
     struct WriteStream
@@ -35,23 +35,22 @@ namespace ospray {
       virtual void read(void *mem, size_t size) = 0;
     };
 
-
-    /*! generic stream operators into/out of read/write streams, for raw data blocks */
+    /*! generic stream operators into/out of streams, for raw data blocks */
     template<typename T>
     inline WriteStream &operator<<(WriteStream &buf, const T &rh)
     {
-      buf.write((mpicommon::byte_t*)&rh, sizeof(T));
+      buf.write((byte_t*)&rh, sizeof(T));
       return buf;
     }
 
     template<typename T>
     inline ReadStream &operator>>(ReadStream &buf, T &rh)
     {
-      buf.read((mpicommon::byte_t*)&rh, sizeof(T));
+      buf.read((byte_t*)&rh, sizeof(T));
       return buf;
     }
 
-    /*! @{ stream operators into/out of read/write streams, for std::vectors of data 
+    /*! @{ stream operators into/out of read/write streams, for std::vectors
 
       \warning This code is often _expensive_ - if this, is for
       example, a std::vector<byte>, then we'll do a buf.write for each
@@ -84,14 +83,12 @@ namespace ospray {
       return buf;
     }
     /*! @} */
-
-    
       
     /*! @{ serialize operations for strings */
     inline WriteStream &operator<<(WriteStream &buf, const std::string &rh)
     {
       buf << rh.size();
-      buf.write((mpicommon::byte_t*)rh.c_str(), rh.size());
+      buf.write((byte_t*)rh.c_str(), rh.size());
       return buf;
     }
 
@@ -100,12 +97,10 @@ namespace ospray {
       size_t size;
       buf >> size;
       rh = std::string(size, ' ');
-      buf.read((mpicommon::byte_t*)rh.data(), size);
+      buf.read((byte_t*)rh.data(), size);
       return buf;
     }
     /*! @} */
 
-  } // ::ospray::mpi
-} // ::ospray
-
-      
+  } // ::ospcommon::networking
+} // ::ospcommon

@@ -16,28 +16,14 @@
 
 #pragma once
 
-#include "DataStreaming.h"
+#include "ospcommon/networking/DataStreaming.h"
+#include "ospcommon/networking/Fabric.h"
 
 namespace ospray {
   namespace mpi {
 
-    /*! abstraction for a physical fabric that can transmit data -
-      sockets, mpi, etc */
-    struct Fabric
-    {
-      /*! send exact number of bytes - the fabric can do that through
-        multiple smaller messages, but all bytes have to be
-        delivered */
-      virtual void   send(void *mem, size_t s) = 0;
-
-      /*! receive some block of data - whatever the sender has sent -
-        and give us size and pointer to this data */
-      virtual size_t read(void *&mem) = 0;
-    };
-
-
     /*! a specific fabric based on PMI */
-    struct MPIBcastFabric : public Fabric
+    struct MPIBcastFabric : public ospcommon::networking::Fabric
     {
       MPIBcastFabric(const mpicommon::Group &group);
 
@@ -66,9 +52,9 @@ namespace ospray {
          siez) from a block of data that it queries from a fabric. if
          the internal buffer isn't big enough to fulfill the request,
          te next block will automatically get read from the fabric */ 
-      struct ReadStream : public ospray::mpi::ReadStream
+      struct ReadStream : public ospcommon::networking::ReadStream
       {
-        ReadStream(Fabric &fabric)
+        ReadStream(ospcommon::networking::Fabric &fabric)
           : fabric(fabric), buffer(nullptr), numAvailable(0)
         {
         }
@@ -77,7 +63,7 @@ namespace ospray {
         
         virtual void read(void *mem, size_t size) override;
 
-        std::reference_wrapper<Fabric> fabric;
+        std::reference_wrapper<ospcommon::networking::Fabric> fabric;
         ospcommon::byte_t *buffer;
         size_t  numAvailable;
       };
@@ -87,9 +73,10 @@ namespace ospray {
         buffer gets flushed either when the user explcitly calls
         flush(), or when the maximum size of the buffer gets
         reached */
-      struct WriteStream : public ospray::mpi::WriteStream
+      struct WriteStream : public ospcommon::networking::WriteStream
       {
-        WriteStream(Fabric &fabric, size_t maxBufferSize = 1LL*1024*1024)
+        WriteStream(ospcommon::networking::Fabric &fabric,
+                    size_t maxBufferSize = 1LL*1024*1024)
           : fabric(fabric),
             buffer(new ospcommon::byte_t[maxBufferSize]),
             maxBufferSize(maxBufferSize),
@@ -103,7 +90,7 @@ namespace ospray {
         
         virtual void flush() override;
           
-        std::reference_wrapper<Fabric> fabric;
+        std::reference_wrapper<ospcommon::networking::Fabric> fabric;
         ospcommon::byte_t *buffer;
         size_t  maxBufferSize;
         size_t  numInBuffer;

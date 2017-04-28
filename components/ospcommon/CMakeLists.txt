@@ -37,9 +37,12 @@ ELSE()
     vec.cpp
     PseudoURL.cpp
     array3D/Array3D.cpp
-    Socket.cpp
 
     containers/TransactionalBuffer.h
+
+    networking/DataStreaming.h
+    networking/Fabric.h
+    networking/Socket.cpp
 
     tasking/parallel_for.inl
     tasking/parallel_for.h

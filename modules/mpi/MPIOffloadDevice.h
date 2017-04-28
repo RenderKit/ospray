@@ -216,9 +216,9 @@ namespace ospray {
       ObjectHandle allocateHandle() const;
 
       /*! @{ read and write stream for the work commands */
-      std::unique_ptr<Fabric>      mpiFabric;
-      std::unique_ptr<ReadStream>  readStream;
-      std::unique_ptr<WriteStream> writeStream;
+      std::unique_ptr<networking::Fabric>      mpiFabric;
+      std::unique_ptr<networking::ReadStream>  readStream;
+      std::unique_ptr<networking::WriteStream> writeStream;
       /*! @} */
 
       work::WorkTypeRegistry workRegistry;
