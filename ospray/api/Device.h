@@ -141,7 +141,8 @@ namespace ospray {
       virtual OSPTransferFunction newTransferFunction(const char *type) = 0;
 
       /*! have given renderer create a new material */
-      virtual OSPMaterial newMaterial(OSPRenderer _renderer, const char *type) = 0;
+      virtual OSPMaterial newMaterial(OSPRenderer _renderer,
+                                      const char *type) = 0;
 
       /*! create a new Texture2D object */
       virtual OSPTexture2D newTexture2D(const vec2i &size,
@@ -200,12 +201,6 @@ namespace ospray {
       virtual OSPPickResult pick(OSPRenderer renderer, const vec2f &screenPos) 
       { 
         UNUSED(renderer, screenPos);
-        NOT_IMPLEMENTED;
-      }
-
-      /*! switch API mode for distributed API extensions */
-      virtual void apiMode(OSPDApiMode)
-      { 
         NOT_IMPLEMENTED;
       }
 

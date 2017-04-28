@@ -451,8 +451,8 @@ namespace ospray {
 
     OSPFrameBuffer 
     MPIOffloadDevice::frameBufferCreate(const vec2i &size,
-                                 const OSPFrameBufferFormat mode,
-                                 const uint32 channels)
+                                        const OSPFrameBufferFormat mode,
+                                        const uint32 channels)
     {
       ObjectHandle handle = allocateHandle();
       work::CreateFrameBuffer work(handle, size, mode, channels);
@@ -463,7 +463,7 @@ namespace ospray {
 
     /*! map frame buffer */
     const void *MPIOffloadDevice::frameBufferMap(OSPFrameBuffer _fb,
-                                          OSPFrameBufferChannel channel)
+                                                 OSPFrameBufferChannel channel)
     {
       ObjectHandle handle = (const ObjectHandle &)_fb;
       FrameBuffer *fb = (FrameBuffer *)handle.lookup();
@@ -767,8 +767,8 @@ namespace ospray {
 
     /*! call a renderer to render a frame buffer */
     float MPIOffloadDevice::renderFrame(OSPFrameBuffer _fb,
-                                 OSPRenderer _renderer,
-                                 const uint32 fbChannelFlags)
+                                        OSPRenderer _renderer,
+                                        const uint32 fbChannelFlags)
     {
       work::RenderFrame work(_fb, _renderer, fbChannelFlags);
       processWork(work, true);
@@ -810,9 +810,9 @@ namespace ospray {
     }
 
     void MPIOffloadDevice::sampleVolume(float **results,
-                                 OSPVolume volume,
-                                 const vec3f *worldCoordinates,
-                                 const size_t &count)
+                                        OSPVolume volume,
+                                        const vec3f *worldCoordinates,
+                                        const size_t &count)
     {
       UNUSED(results, volume, worldCoordinates, count);
       NOT_IMPLEMENTED;

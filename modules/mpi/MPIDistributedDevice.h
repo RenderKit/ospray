@@ -196,11 +196,6 @@ namespace ospray {
       OSPTexture2D newTexture2D(const vec2i &size, const OSPTextureFormat,
                                 void *data, const uint32 flags) override;
 
-      // /*! switch API mode for distriubted API extensions */
-      // void apiMode(OSPDApiMode mode) override;
-
-      OSPDApiMode currentApiMode {OSPD_MODE_MASTERED};
-
       /*! sample a volume */
       void sampleVolume(float **results,
                         OSPVolume volume,

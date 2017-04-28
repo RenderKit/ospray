@@ -67,10 +67,9 @@ namespace ospray {
     template<typename T>
     inline WriteStream &operator<<(WriteStream &buf, const std::vector<T> &rh)
     {
-      size_t sz = rh.size();
-      buf << sz;
-      for (size_t i=0; i<sz; i++)
-        buf << (const T &)rh[i];
+      buf << rh.size();
+      for (const T &v : rh)
+        buf << v;
       return buf;
     }
 
@@ -80,8 +79,8 @@ namespace ospray {
       size_t sz;
       buf >> sz;
       rh.resize(sz);
-      for (size_t i=0; i<sz; i++)
-        buf >> rh[i];
+      for (T &v : rh)
+        buf >> v;
       return buf;
     }
     /*! @} */
@@ -101,7 +100,7 @@ namespace ospray {
       size_t size;
       buf >> size;
       rh = std::string(size, ' ');
-      buf.read((mpicommon::byte_t*)&rh[0], size);
+      buf.read((mpicommon::byte_t*)rh.data(), size);
       return buf;
     }
     /*! @} */
