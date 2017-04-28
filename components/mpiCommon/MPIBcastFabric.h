@@ -24,9 +24,9 @@
 namespace mpicommon {
 
   /*! a specific fabric based on PMI */
-  struct MPIBcastFabric : public ospcommon::networking::Fabric
+  struct OSPRAY_MPI_INTERFACE MPIBcastFabric : public networking::Fabric
   {
-    MPIBcastFabric(const mpicommon::Group &group);
+    MPIBcastFabric(const Group &group);
 
     virtual ~MPIBcastFabric() = default;
 
@@ -39,8 +39,8 @@ namespace mpicommon {
       and give us size and pointer to this data */
     virtual size_t read(void *&mem) override;
 
-    ospcommon::byte_t *buffer;
-    mpicommon::Group group;
+    byte_t *buffer;
+    Group   group;
   };
 
 } // ::mpicommon

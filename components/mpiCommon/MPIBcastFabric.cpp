@@ -21,7 +21,7 @@
 
 namespace mpicommon {
 
-  MPIBcastFabric::MPIBcastFabric(const mpicommon::Group &group)
+  MPIBcastFabric::MPIBcastFabric(const Group &group)
     : group(group),
       buffer(nullptr)
   {
