@@ -26,7 +26,7 @@
 // xml
 #include "../../../common/xml/XML.h"
 // ospcommon
-#include "ospcommon/Any.h"
+#include "ospcommon/utility/Any.h"
 #include "ospcommon/vec.h"
 
 #include <mutex>
@@ -34,7 +34,7 @@
 namespace ospray {
   namespace sg {
 
-    using SGVar = Any;
+    using SGVar = ospcommon::utility::Any;
 
     /*! forward decl of entity that nodes can write to when writing XML files */
     struct XMLWriter;

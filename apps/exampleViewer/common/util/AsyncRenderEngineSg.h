@@ -22,14 +22,14 @@
 #include <vector>
 
 // ospcommon
-#include <ospcommon/box.h>
+#include "ospcommon/box.h"
+#include "ospcommon/utility/transactional_value.h"
 
 // ospray::cpp
 #include "ospray/ospray_cpp/Renderer.h"
 
 // ospImGui util
 #include "FPSCounter.h"
-#include "transactional_value.h"
 
 #include "sg/common/Node.h"
 #include "AsyncRenderEngine.h"

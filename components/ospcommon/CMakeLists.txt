@@ -35,7 +35,6 @@ ELSE()
     library.cpp
     thread.cpp
     vec.cpp
-    PseudoURL.cpp
     array3D/Array3D.cpp
 
     containers/TransactionalBuffer.h
@@ -52,14 +51,17 @@ ELSE()
     tasking/schedule.h
     tasking/tasking_system_handle.cpp
     tasking/TaskSys.cpp
-    
+
+    utility/Any.h
+    utility/PseudoURL.cpp
+    utility/transactional_value.h
+
     AffineSpace.h
     box.h
     constants.h
     intrinsics.h
     LinearSpace.h
     math.h
-    Any.h
     platform.h
     Quaternion.h
     RefCount.h
@@ -106,8 +108,8 @@ ELSE()
   ## Test apps ##
 
   OSPRAY_CREATE_TEST(test_Any
-    Any.h
-    test_Any.cpp
+    utility/Any.h
+    utility/test_Any.cpp
   )
 
   ADD_TEST(NAME Any COMMAND test_Any)

@@ -30,7 +30,7 @@
 // ospImGui util
 #include "ImguiUtilExport.h"
 #include "FPSCounter.h"
-#include "transactional_value.h"
+#include "ospcommon/utility/transactional_value.h"
 
 namespace ospray {
 

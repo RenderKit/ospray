@@ -1,11 +1,11 @@
 #define CATCH_CONFIG_MAIN
-#include "testing/catch.hpp"
+#include "../testing/catch.hpp"
 
-#include "box.h"
-#include "vec.h"
+#include "../box.h"
+#include "../vec.h"
 #include "Any.h"
 
-using ospcommon::Any;
+using ospcommon::utility::Any;
 
 // Helper types ///////////////////////////////////////////////////////////////
 
