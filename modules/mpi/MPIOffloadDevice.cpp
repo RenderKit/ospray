@@ -521,12 +521,12 @@ namespace ospray {
                                       void *init, int flags)
     {
       ObjectHandle handle = allocateHandle();
-      // If we're in mastered mode you can't share data with remote nodes
-      if (currentApiMode == OSPD_MODE_MASTERED) {
-        flags = flags & ~OSP_DATA_SHARED_BUFFER;
-      }
+
+      flags = flags & ~OSP_DATA_SHARED_BUFFER;
+
       work::NewData work(handle, nitems, format, init, flags);
       processWork(work);
+
       return (OSPData)(int64)handle;
     }
 
@@ -857,9 +857,6 @@ namespace ospray {
 
     ObjectHandle MPIOffloadDevice::allocateHandle() const
     {
-      if (currentApiMode != OSPD_MODE_MASTERED)
-        throw std::runtime_error("Can only alloc handles in MASTERED mode!");
-
       return ObjectHandle();
     }
 

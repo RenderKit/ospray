@@ -83,57 +83,10 @@ typedef enum {
   OSP_FB_VARIANCE=(1<<3)
 } OSPFrameBufferChannel;
 
-//! constants for switching the OSPRay MPI Scope between 'per rank' and 'all ranks'
-/*! \see ospdApiMode */
-typedef enum {
-  //! \brief all ospNew(), ospSet(), etc calls affect only the current rank
-  /*! \detailed in this mode, all ospXyz() calls made on a given rank
-    will ONLY affect state ont hat rank. This allows for configuring a
-    (globally known) object differnetly on each different rank (also
-    see OSP_MPI_SCOPE_GLOBAL) */
-  OSPD_MODE_INDEPENDENT,
-  OSPD_RANK=OSPD_MODE_INDEPENDENT /*!< alias for OSP_MODE_INDEPENDENT, reads better in code */,
-
-  //! \brief all ospNew(), ospSet() calls affect all ranks
-  /*! \detailed In this mode, ONLY rank 0 should call ospXyz()
-      functions, but all objects defined through those functions---and
-      all parameters set through those---will apply equally to all
-      ranks. E.g., a OSPVolume vol = ospNewVolume(...) would create a
-      volume object handle that exists on (and therefore, is valid on)
-      all ranks. The (distributed) app may then switch to 'current
-      rank only' mode, and may assign different data or parameters on
-      each rank (typically, in order to have different parts of the
-      volume on different nodes), but the object itself is globally
-      known */
-  OSPD_MODE_MASTERED,
-  OSPD_MASTER=OSPD_MODE_MASTERED /*!< alias for OSP_MODE_MASTERED, reads better in code */,
-
-  //! \brief all ospNew(), ospSet() are called collaboratively by all ranks
-  /*! \detailed In this mode, ALL ranks must call (the same!) api
-      function, the result is collaborative across all nodes in the
-      sense that any object being created gets created across all
-      nodes, and ALL ranks get a valid handle returned */
-  OSPD_MODE_COLLABORATIVE,
-  OSPD_ALL=OSPD_MODE_COLLABORATIVE /*!< alias for OSP_MODE_COLLABORATIVE, reads better in code */
-} OSPDApiMode;
-
-/*! flags that can be passed to OSPNewGeometry; can be OR'ed together */
-typedef enum {
-  /*! experimental: currently used to specify that the app ranks -
-      together - hold a logical piece of geometry, with the back-end
-      ospray workers then fetching that on demand..... */
-  OSP_DISTRIBUTED_GEOMETRY = (1<<0),
-} OSPGeometryCreationFlags;
-
 /*! flags that can be passed to OSPNewData; can be OR'ed together */
 typedef enum {
   OSP_DATA_SHARED_BUFFER = (1<<0),
 } OSPDataCreationFlags;
-
-typedef enum {
-  OSPD_Z_COMPOSITE
-} OSPDRenderMode;
-
 
 #ifdef __cplusplus
 namespace osp {

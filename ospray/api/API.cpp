@@ -132,7 +132,7 @@ OSPRAY_CATCH_BEGIN
         continue;
       }
 
-      if (av == "--osp:mpi") {
+      if (av == "--osp:mpi" || av == "--osp:mpi-offload") {
         removeArgs(*_ac,(char **&)_av,i,1);
         if (!currentDevice)
           currentDevice = createMpiDevice();
