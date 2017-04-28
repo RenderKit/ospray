@@ -40,6 +40,7 @@ ELSE()
 
     containers/TransactionalBuffer.h
 
+    networking/BufferedDataStreaming.cpp
     networking/DataStreaming.h
     networking/Fabric.h
     networking/Socket.cpp

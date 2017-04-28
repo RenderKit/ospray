@@ -18,6 +18,8 @@
 
 #include "../common.h"
 
+#include <vector>
+
 namespace ospcommon {
   namespace networking {
 

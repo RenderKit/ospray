@@ -16,13 +16,14 @@
 
 #pragma once
 
+// ospcommon
+#include "ospcommon/networking/BufferedDataStreaming.h"
 // mpicommon
 #include "mpiCommon/MPICommon.h"
 // ospray
 #include "api/Device.h"
 #include "common/Managed.h"
 // ospray::mpi
-#include "common/BufferedDataStreaming.h"
 #include "common/OSPWork.h"
 
 /*! \file MPIDevice.h Implements the "mpi" device for mpi rendering */

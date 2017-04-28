@@ -17,6 +17,7 @@
 #undef NDEBUG // do all assertions in this file
 
 #include "mpiCommon/MPICommon.h"
+#include "mpiCommon/MPIBcastFabric.h"
 #include "mpi/MPIOffloadDevice.h"
 #include "common/Model.h"
 #include "common/Data.h"
@@ -31,7 +32,7 @@
 #include "mpi/render/MPILoadBalancer.h"
 #include "fb/LocalFB.h"
 #include "mpi/fb/DistributedFrameBuffer.h"
-#include "common/BufferedDataStreaming.h"
+#include "ospcommon/networking/BufferedDataStreaming.h"
 #include "ospcommon/networking/Socket.h"
 
 // std
@@ -437,8 +438,8 @@ namespace ospray {
       /* set up fabric and stuff - by now all the communicators should
          be properly set up */
       mpiFabric   = make_unique<MPIBcastFabric>(mpi::worker);
-      readStream  = make_unique<BufferedFabric::ReadStream>(*mpiFabric);
-      writeStream = make_unique<BufferedFabric::WriteStream>(*mpiFabric);
+      readStream  = make_unique<networking::BufferedReadStream>(*mpiFabric);
+      writeStream = make_unique<networking::BufferedWriteStream>(*mpiFabric);
 
       TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Master>();
     }

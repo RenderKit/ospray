@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "mpiCommon/MPICommon.h"
+#include "mpiCommon/MPIBcastFabric.h"
 #include "mpi/MPIOffloadDevice.h"
 #include "common/Model.h"
 #include "common/Data.h"
@@ -149,7 +150,7 @@ namespace ospray {
       // setting up read/write streams
       // -------------------------------------------------------
       auto mpiFabric  = make_unique<MPIBcastFabric>(mpi::app);
-      auto readStream = make_unique<BufferedFabric::ReadStream>(*mpiFabric);
+      auto readStream = make_unique<networking::BufferedReadStream>(*mpiFabric);
 
       // create registry of work item types
       std::map<work::Work::tag_t,work::CreateWorkFct> workTypeRegistry;
