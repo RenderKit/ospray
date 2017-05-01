@@ -208,7 +208,10 @@ namespace ospray {
 
     void MPIDistributedDevice::addVolume(OSPModel _model, OSPVolume _volume)
     {
-      NOT_IMPLEMENTED;
+      auto &model  = objectFromAPIHandle<Model>(_model);
+      auto &volume = objectFromAPIHandle<Volume>(_volume);
+
+      model.volume.push_back(&volume);
     }
 
     OSPData MPIDistributedDevice::newData(size_t nitems, OSPDataType format,
@@ -241,7 +244,8 @@ namespace ospray {
     int MPIDistributedDevice::setRegion(OSPVolume _volume, const void *source,
                                         const vec3i &index, const vec3i &count)
     {
-      NOT_IMPLEMENTED;
+      auto &volume = objectFromAPIHandle<Volume>(_volume);
+      volume.setRegion(source, index, count);
     }
 
     void MPIDistributedDevice::setString(OSPObject _object,
@@ -350,7 +354,7 @@ namespace ospray {
 
     OSPVolume MPIDistributedDevice::newVolume(const char *type)
     {
-      NOT_IMPLEMENTED;
+      return createOSPRayObjectWithHandle<Volume, OSPVolume>(type);
     }
 
     OSPGeometry MPIDistributedDevice::newGeometry(const char *type)
@@ -394,8 +398,8 @@ namespace ospray {
     void MPIDistributedDevice::removeGeometry(OSPModel _model,
                                               OSPGeometry _geometry)
     {
-      auto model = objectFromAPIHandle<Model>(_model);
-      auto geom  = objectFromAPIHandle<Geometry>(_geometry);
+      auto &model = objectFromAPIHandle<Model>(_model);
+      auto &geom  = objectFromAPIHandle<Geometry>(_geometry);
 
       //TODO: confirm this works?
       model.geometry.erase(std::remove(model.geometry.begin(),
@@ -405,7 +409,13 @@ namespace ospray {
 
     void MPIDistributedDevice::removeVolume(OSPModel _model, OSPVolume _volume)
     {
-      NOT_IMPLEMENTED;
+      auto &model  = objectFromAPIHandle<Model>(_model);
+      auto &volume = objectFromAPIHandle<Volume>(_volume);
+
+      //TODO: confirm this works?
+      model.volume.erase(std::remove(model.volume.begin(),
+                                     model.volume.end(),
+                                     Ref<Volume>(&volume)));
     }
 
     float MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
