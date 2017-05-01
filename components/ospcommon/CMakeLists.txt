@@ -27,6 +27,8 @@ ELSE()
     LIST(APPEND LINK_LIBS ws2_32)
   ENDIF()
 
+  ## Create ospcommon library ##
+
   OSPRAY_CREATE_LIBRARY(ospray_common
     common.cpp
     FileName.cpp
@@ -72,6 +74,12 @@ ELSE()
   COMPONENT lib
   )
 
+  ## Install headers ##
+
+  SET(OSPCOMMON_SDK_INSTALL_LOC
+    ../ospcommon #NOTE: this is "next" to the SDK/ directory
+  )
+
   OSPRAY_INSTALL_SDK_HEADERS(
     AffineSpace.h
     box.h
@@ -83,7 +91,6 @@ ELSE()
     LinearSpace.h
     malloc.h
     math.h
-    Any.h
     platform.h
     Quaternion.h
     RefCount.h
@@ -92,7 +99,22 @@ ELSE()
     TypeTraits.h
     vec.h
 
-    DESTINATION ../ospcommon #NOTE: this is "next" to the SDK/ directory
+    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}
+  )
+
+  OSPRAY_INSTALL_SDK_HEADERS(
+    containers/TransactionalBuffer.h
+
+    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/containers
+  )
+
+  OSPRAY_INSTALL_SDK_HEADERS(
+    networking/BufferedDataStreaming.h
+    networking/DataStreaming.h
+    networking/Fabric.h
+    networking/Socket.h
+
+    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/networking
   )
 
   OSPRAY_INSTALL_SDK_HEADERS(
@@ -102,7 +124,15 @@ ELSE()
     tasking/TaskSys.h
     tasking/TaskingTypeTraits.h
 
-    DESTINATION ../ospcommon/tasking #NOTE: this is "next" to the SDK/ directory
+    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/tasking
+  )
+
+  OSPRAY_INSTALL_SDK_HEADERS(
+    utility/Any.h
+    utility/PseudoURL.h
+    utility/transactional_value.h
+
+    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/utility
   )
 
   ## Test apps ##
