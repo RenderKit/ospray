@@ -245,7 +245,7 @@ namespace ospray {
                                         const vec3i &index, const vec3i &count)
     {
       auto &volume = objectFromAPIHandle<Volume>(_volume);
-      volume.setRegion(source, index, count);
+      return volume.setRegion(source, index, count);
     }
 
     void MPIDistributedDevice::setString(OSPObject _object,
