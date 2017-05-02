@@ -328,12 +328,14 @@ namespace ospray {
 
     OSPPixelOp MPIDistributedDevice::newPixelOp(const char *type)
     {
-      NOT_IMPLEMENTED;
+      return createOSPRayObjectWithHandle<PixelOp, OSPPixelOp>(type);
     }
 
     void MPIDistributedDevice::setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op)
     {
-      NOT_IMPLEMENTED;
+      auto &fb = objectFromAPIHandle<FrameBuffer>(_fb);
+      auto &op = objectFromAPIHandle<PixelOp>(_op);
+      fb.pixelOp = op.createInstance(&fb, fb.pixelOp.ptr);
     }
 
     OSPRenderer MPIDistributedDevice::newRenderer(const char *type)
