@@ -91,7 +91,21 @@ namespace ospRandSphereTest {
     auto numRanks = static_cast<float>(mpicommon::numGlobalRanks());
     auto myRank   = mpicommon::globalRank();
 
-    vec4f color((numRanks - myRank) / numRanks, 0.f, myRank / numRanks, 1.f);
+#if 1
+    float r = (numRanks - myRank) / numRanks;
+    float b = myRank / numRanks;
+    float g = myRank > numRanks / 2 ? 2 * r : 2 * b;
+#else
+    float normRank = myRank / numRanks;
+    float r = 2 * (1.f - normRank - 0.5f);
+    if (r < 0.f) r = 0.f;
+    float b = 2 * (normRank - 0.5f);
+    if (b < 0.f) b = 0.f;
+    float g = myRank < numRanks / 2 ? 1.f - r : 1.f - b;
+    g *= 0.5f;
+#endif
+
+    vec4f color(r, g, b, 1.f);
 
     ospray::cpp::Data color_data(1, OSP_FLOAT4, &color);
 
