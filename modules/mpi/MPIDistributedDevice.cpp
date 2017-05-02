@@ -122,8 +122,8 @@ namespace ospray {
         throw std::runtime_error("#dmpi: bad device mode ['" + mode + "]");
       }
 
-      // TODO: implement 'staticLoadBalancer::Distributed'
-      //TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Master>();
+      TiledLoadBalancer::instance =
+                      make_unique<staticLoadBalancer::Distributed>();
     }
 
     OSPFrameBuffer 

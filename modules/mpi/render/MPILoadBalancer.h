@@ -24,9 +24,6 @@
 namespace ospray {
   namespace mpi {
 
-    // =======================================================
-    // =======================================================
-    // =======================================================
     namespace staticLoadBalancer {
       /*! \brief the 'master' in a tile-based master-slave *static*
           load balancer
@@ -38,8 +35,8 @@ namespace ospray {
       struct Master : public TiledLoadBalancer
       {
         float renderFrame(Renderer *tiledRenderer,
-                         FrameBuffer *fb,
-                         const uint32 channelFlags) override;
+                          FrameBuffer *fb,
+                          const uint32 channelFlags) override;
         std::string toString() const override;
       };
 
@@ -59,10 +56,20 @@ namespace ospray {
         int32 numTotalThreads;
 
         float renderFrame(Renderer *tiledRenderer,
-                         FrameBuffer *fb,
-                         const uint32 channelFlags) override;
+                          FrameBuffer *fb,
+                          const uint32 channelFlags) override;
         std::string toString() const override;
       };
+
+      struct Distributed : public TiledLoadBalancer
+      {
+        float renderFrame(Renderer *tiledRenderer,
+                          FrameBuffer *fb,
+                          const uint32 channelFlags) override;
+
+        std::string toString() const override;
+      };
+
     }// ::ospray::mpi::staticLoadBalancer
   } // ::ospray::mpi
 } // ::ospray

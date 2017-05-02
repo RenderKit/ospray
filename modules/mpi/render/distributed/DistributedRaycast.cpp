@@ -18,6 +18,7 @@
 #include "ospcommon/tasking/parallel_for.h"
 // ospray
 #include "DistributedRaycast.h"
+#include "../MPILoadBalancer.h"
 #include "../../fb/DistributedFrameBuffer.h"
 // ispc exports
 #include "DistributedRaycast_ispc.h"
@@ -38,43 +39,12 @@ namespace ospray {
     }
 
     float DistributedRaycastRenderer::renderFrame(FrameBuffer *fb,
-                                                  const uint32 fbChannelFlags)
+                                                  const uint32 channelFlags)
     {
       auto *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
-
       dfb->setFrameMode(DistributedFrameBuffer::Z_COMPOSITE);
 
-      dfb->startNewFrame(errorThreshold);
-      dfb->beginFrame();
-
-      auto *perFrameData = Renderer::beginFrame(dfb);
-
-      //TODO: move to a LoadBalancer instead?
-
-      tasking::parallel_for(dfb->getTotalTiles(), [&](int taskIndex) {
-        const size_t numTiles_x = fb->getNumTiles().x;
-        const size_t tile_y = taskIndex / numTiles_x;
-        const size_t tile_x = taskIndex - tile_y*numTiles_x;
-        const vec2i tileID(tile_x, tile_y);
-        const int32 accumID = fb->accumID(tileID);
-
-        if (dfb->tileError(tileID) <= errorThreshold)
-          return;
-
-        Tile __aligned(64) tile(tileID, dfb->size, accumID);
-
-        const int NUM_JOBS = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
-        tasking::parallel_for(NUM_JOBS, [&](int tIdx) {
-          renderTile(perFrameData, tile, tIdx);
-        });
-
-        fb->setTile(tile);
-      });
-
-      dfb->waitUntilFinished();
-      Renderer::endFrame(nullptr, fbChannelFlags);
-
-      return dfb->endFrame(0.f);//TODO: can report error threshold here?
+      return TiledLoadBalancer::instance->renderFrame(this, fb, channelFlags);
     }
 
     std::string DistributedRaycastRenderer::toString() const
