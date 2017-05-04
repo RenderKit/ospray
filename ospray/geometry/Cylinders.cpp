@@ -48,6 +48,7 @@ namespace ospray {
     cylinderData      = getParamData("cylinders");
     materialList      = getParamData("materialList");
     colorData         = getParamData("color");
+    texcoordData      = getParamData("texcoord");
 
     if (cylinderData.ptr == nullptr || bytesPerCylinder == 0) {
       throw std::runtime_error("#ospray:geometry/cylinders: no 'cylinders'"
@@ -82,9 +83,13 @@ namespace ospray {
       bounds.extend(box3f(v1 - r, v1 + r));
     }
 
+    auto colComps = colorData && colorData->type == OSP_FLOAT3 ? 3 : 4;
     ispc::CylindersGeometry_set(getIE(),model->getIE(),
                                 cylinderData->data,_materialList,
-                                colorData?(ispc::vec4f*)colorData->data:nullptr,
+                                texcoordData ? texcoordData->data : nullptr,
+                                colorData ? colorData->data : nullptr,
+                                colComps * sizeof(float),
+                                colorData && colorData->type == OSP_FLOAT4,
                                 numCylinders,bytesPerCylinder,
                                 radius,materialID,
                                 offset_v0,offset_v1,
