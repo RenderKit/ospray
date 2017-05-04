@@ -322,12 +322,6 @@ namespace ospray {
     }
   }
 
-  StatusMsgStream::StatusMsgStream(StatusMsgStream &&other)
-  {
-    msg.str(other.msg.str());
-    logLevel = other.logLevel;
-  }
-
   StatusMsgStream postStatusMsg(uint32_t postAtLogLevel)
   {
     return StatusMsgStream(postAtLogLevel);

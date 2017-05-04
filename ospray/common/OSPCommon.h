@@ -149,19 +149,19 @@ namespace ospray {
     StatusMsgStream(uint32_t postAtLogLevel = 0);
     ~StatusMsgStream();
 
-    StatusMsgStream(StatusMsgStream &&other);
+    StatusMsgStream(StatusMsgStream &&other) = default;
 
   private:
 
     template <typename T>
-    friend StatusMsgStream operator<<(StatusMsgStream &&stream, T &&rhs);
+    friend StatusMsgStream &&operator<<(StatusMsgStream &&stream, T &&rhs);
 
     std::stringstream msg;
     uint32_t logLevel {0};
   };
 
   template <typename T>
-  inline StatusMsgStream operator<<(StatusMsgStream &&stream, T &&rhs)
+  inline StatusMsgStream &&operator<<(StatusMsgStream &&stream, T &&rhs)
   {
     stream.msg << std::forward<T>(rhs);
     return std::forward<StatusMsgStream>(stream);
