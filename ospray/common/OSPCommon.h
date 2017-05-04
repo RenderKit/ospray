@@ -136,6 +136,11 @@ namespace ospray {
     const std::string s;
   };
 
+  // use postStatusMsg to output any information, which will OSPRay's internal
+  // infrastructure, optionally at a given loglevel
+  // a newline is added implicitely
+  //////////////////////////////////////////////////////////////////////////////
+
   OSPRAY_SDK_INTERFACE uint32_t logLevel();
 
   OSPRAY_SDK_INTERFACE void postStatusMsg(const std::stringstream &msg,

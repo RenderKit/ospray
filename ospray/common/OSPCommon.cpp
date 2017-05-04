@@ -306,7 +306,7 @@ namespace ospray {
   void postStatusMsg(const std::string &msg, uint32_t postAtLogLevel)
   {
     if (logLevel() >= postAtLogLevel && ospray::api::Device::current.ptr)
-      ospray::api::Device::current->msg_fcn(msg.c_str());
+      ospray::api::Device::current->msg_fcn((msg + '\n').c_str());
   }
 
   StatusMsgStream::StatusMsgStream(uint32_t postAtLogLevel)
@@ -317,7 +317,6 @@ namespace ospray {
   StatusMsgStream::~StatusMsgStream()
   {
     if (!msg.str().empty()) {
-      msg << std::endl;
       postStatusMsg(msg, logLevel);
     }
   }

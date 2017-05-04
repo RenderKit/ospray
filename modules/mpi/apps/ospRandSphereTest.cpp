@@ -180,7 +180,7 @@ namespace ospRandSphereTest {
 
     ospDeviceSetErrorMsgFunc(device.handle(),
                              [](const char *msg) {
-                               std::cerr << msg << std::endl;
+                               std::cerr << msg;
                              });
   }
 

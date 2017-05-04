@@ -664,7 +664,7 @@ namespace ospray {
 
         if (!fb->pixelOp) {
           postStatusMsg("#osp:mpi: WARNING: PixelOp did not create "
-                        "an instance!\n");
+                        "an instance!", 1);
         }
       }
 
