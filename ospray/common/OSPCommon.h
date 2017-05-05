@@ -152,9 +152,10 @@ namespace ospray {
   struct OSPRAY_SDK_INTERFACE StatusMsgStream
   {
     StatusMsgStream(uint32_t postAtLogLevel = 0);
+    // a "= default" move constructor is not supported by older compilers
+    // however, apparently it just needs to be declared, it won't be called
+    StatusMsgStream(StatusMsgStream &&other);
     ~StatusMsgStream();
-
-    StatusMsgStream(StatusMsgStream &&other) = default;
 
   private:
 
