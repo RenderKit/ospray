@@ -119,8 +119,7 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
     volume->intersectAdaptive(volume, ray, samplingRate);
   else 
     volume->intersect(volume,ray);
-  tBegin = tBegin+renderer->super.epsilon;
-  // const uniform float oneOverQuality = (1.f/quality);
+  tBegin = tBegin+renderer->volumeEpsilon;
   while (ray.t0 < tEnd && intervalColor.w < maxOpacity)
     {
       // Sample the volume at the hit point in world coordinates.
