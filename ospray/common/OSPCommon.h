@@ -85,7 +85,7 @@ namespace ospray {
   void initFromCommandLine(int *ac = nullptr, const char ***av = nullptr);
 
   /*! for debugging. compute a checksum for given area range... */
-  OSPRAY_INTERFACE void *computeCheckSum(const void *ptr, size_t numBytes);
+  OSPRAY_SDK_INTERFACE void *computeCheckSum(const void *ptr, size_t numBytes);
 
 #ifndef Assert
 #ifdef NDEBUG
@@ -103,21 +103,21 @@ namespace ospray {
 #endif
 
   /*! size of OSPDataType */
-  OSPRAY_INTERFACE size_t sizeOf(const OSPDataType);
+  OSPRAY_SDK_INTERFACE size_t sizeOf(const OSPDataType);
 
   /*! Convert a type string to an OSPDataType. */
-  OSPRAY_INTERFACE OSPDataType typeForString(const char *string);
+  OSPRAY_SDK_INTERFACE OSPDataType typeForString(const char *string);
   /*! Convert a type string to an OSPDataType. */
   inline OSPDataType typeForString(const std::string &s)
   { return typeForString(s.c_str()); }
 
   /*! Convert a type string to an OSPDataType. */
-  OSPRAY_INTERFACE std::string stringForType(OSPDataType type);
+  OSPRAY_SDK_INTERFACE std::string stringForType(OSPDataType type);
 
   /*! size of OSPTextureFormat */
-  OSPRAY_INTERFACE size_t sizeOf(const OSPTextureFormat);
+  OSPRAY_SDK_INTERFACE size_t sizeOf(const OSPTextureFormat);
 
-  OSPRAY_INTERFACE int loadLocalModule(const std::string &name);
+  OSPRAY_SDK_INTERFACE int loadLocalModule(const std::string &name);
 
   /*! little helper class that prints out a warning string upon the
     first time it is encountered.
@@ -136,44 +136,51 @@ namespace ospray {
     const std::string s;
   };
 
-  OSPRAY_INTERFACE uint32_t logLevel();
+  // use postStatusMsg to output any information, which will OSPRay's internal
+  // infrastructure, optionally at a given loglevel
+  // a newline is added implicitely
+  //////////////////////////////////////////////////////////////////////////////
 
-  OSPRAY_INTERFACE void postStatusMsg(const std::stringstream &msg,
+  OSPRAY_SDK_INTERFACE uint32_t logLevel();
+
+  OSPRAY_SDK_INTERFACE void postStatusMsg(const std::stringstream &msg,
                                      uint32_t postAtLogLevel = 0);
 
-  OSPRAY_INTERFACE void postStatusMsg(const std::string &msg,
+  OSPRAY_SDK_INTERFACE void postStatusMsg(const std::string &msg,
                                      uint32_t postAtLogLevel = 0);
 
   struct OSPRAY_SDK_INTERFACE StatusMsgStream
   {
     StatusMsgStream(uint32_t postAtLogLevel = 0);
-    ~StatusMsgStream();
-
+    // a "= default" move constructor is not supported by older compilers
+    // however, apparently it just needs to be declared, it won't be called
     StatusMsgStream(StatusMsgStream &&other);
+    ~StatusMsgStream();
 
   private:
 
     template <typename T>
-    friend StatusMsgStream operator<<(StatusMsgStream &&stream, T &&rhs);
+    friend StatusMsgStream &&operator<<(StatusMsgStream &&stream, T &&rhs);
 
     std::stringstream msg;
     uint32_t logLevel {0};
   };
 
   template <typename T>
-  inline StatusMsgStream operator<<(StatusMsgStream &&stream, T &&rhs)
+  inline StatusMsgStream &&operator<<(StatusMsgStream &&stream, T &&rhs)
   {
-    stream.msg << std::forward<T>(rhs);
+    if (logLevel() >= stream.logLevel)
+      stream.msg << std::forward<T>(rhs);
     return std::forward<StatusMsgStream>(stream);
   }
 
-  OSPRAY_INTERFACE StatusMsgStream postStatusMsg(uint32_t postAtLogLevel = 0);
+  OSPRAY_SDK_INTERFACE StatusMsgStream postStatusMsg(uint32_t postAtLogLevel = 0);
 
-  OSPRAY_INTERFACE void handleError(const std::exception &e);
+  OSPRAY_SDK_INTERFACE void handleError(const std::exception &e);
 
   // RTTI hash ID lookup helper functions ///////////////////////////////////
 
-  OSPRAY_INTERFACE size_t translatedHash(size_t v);
+  OSPRAY_SDK_INTERFACE size_t translatedHash(size_t v);
 
   template <typename T>
   inline size_t typeIdOf()

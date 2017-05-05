@@ -89,7 +89,7 @@ namespace ospray {
   void DataDistributedBlockedVolume::buildAccelerator()
   {
     postStatusMsg("intentionally SKIP building an accelerator for data "
-                  "parallel volume (this'll be done on the brick level)\n",
+                  "parallel volume (this'll be done on the brick level)",
                   OSPRAY_MPI_VERBOSE_LEVEL);
   }
 

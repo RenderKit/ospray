@@ -173,14 +173,14 @@ namespace ospRandSphereTest {
       device.commit();
       device.setCurrent();
     } else {
-      device = ospray::cpp::Device("default");
+      device = ospray::cpp::Device();
       device.commit();
       device.setCurrent();
     }
 
     ospDeviceSetErrorMsgFunc(device.handle(),
                              [](const char *msg) {
-                               std::cerr << msg << std::endl;
+                               std::cerr << msg;
                              });
   }
 

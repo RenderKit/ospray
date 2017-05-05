@@ -1,9 +1,9 @@
 OSPRay
 ======
 
-This is release v1.3.0 (devel) of OSPRay. For changes and new features
-see the [changelog](CHANGELOG.md). Also visit http://www.ospray.org for
-more information.
+This is release v1.3.0 of OSPRay. For changes and new features see the
+[changelog](CHANGELOG.md). Also visit http://www.ospray.org for more
+information.
 
 OSPRay Overview
 ===============
@@ -66,7 +66,7 @@ before you can build OSPRay you need the following prerequisites:
 -   To build OSPRay you need [CMake](http://www.cmake.org), any form of
     C++11 compiler (we recommend using GCC, but also support Clang and
     the [Intel® C++
-    compiler (ICC)](https://software.intel.com/en-us/c-compilers)), and
+    Compiler (icc)](https://software.intel.com/en-us/c-compilers)), and
     standard Linux development tools. To build the demo viewers, you
     should also have some version of OpenGL and the GL Utility Toolkit
     (GLUT or freeglut), as well as Qt 4.6 or higher.
@@ -674,13 +674,13 @@ representations in the application this geometry allows a flexible way
 of specifying the data of center position and radius within a
 [data](#data) array:
 
-<table style="width:99%;">
+<table style="width:97%;">
 <caption>Parameters defining a spheres geometry.</caption>
 <colgroup>
-<col width="11%" />
-<col width="23%" />
-<col width="12%" />
-<col width="51%" />
+<col width="13%" />
+<col width="22%" />
+<col width="13%" />
+<col width="47%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -701,7 +701,7 @@ of specifying the data of center position and radius within a
 <td align="left">OSPData</td>
 <td align="left">spheres</td>
 <td align="right">NULL</td>
-<td align="left">memory holding the <a href="#data">data</a> of all spheres</td>
+<td align="left">memory holding the spatial <a href="#data">data</a> of all spheres</td>
 </tr>
 <tr class="odd">
 <td align="left">int</td>
@@ -721,6 +721,19 @@ of specifying the data of center position and radius within a
 <td align="right">-1</td>
 <td align="left">offset (in bytes) of each sphere's &quot;float radius&quot; within the <code>spheres</code> array (<code>-1</code> means disabled and use <code>radius</code>)</td>
 </tr>
+<tr class="even">
+<td align="left">vec4f[] / vec3f(a)<br />
+[]</td>
+<td align="left">color</td>
+<td align="right">NULL</td>
+<td align="left"><a href="#data">data</a> array of colors (RGBA/RGB), color is constant for each sphere</td>
+</tr>
+<tr class="odd">
+<td align="left">vec2f[]</td>
+<td align="left">texcoord</td>
+<td align="right">NULL</td>
+<td align="left"><a href="#data">data</a> array of texture coordinates, coordinate is constant for each sphere</td>
+</tr>
 </tbody>
 </table>
 
@@ -737,13 +750,13 @@ flexible way of specifying the data of offsets for start position, end
 position and radius within a [data](#data) array. All parameters are
 listed in the table below.
 
-<table style="width:99%;">
+<table style="width:97%;">
 <caption>Parameters defining a cylinders geometry.</caption>
 <colgroup>
-<col width="11%" />
+<col width="13%" />
 <col width="25%" />
-<col width="12%" />
-<col width="48%" />
+<col width="13%" />
+<col width="44%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -764,12 +777,12 @@ listed in the table below.
 <td align="left">OSPData</td>
 <td align="left">cylinders</td>
 <td align="right">NULL</td>
-<td align="left">memory holding the <a href="#data">data</a> of all cylinders</td>
+<td align="left">memory holding the spatial <a href="#data">data</a> of all cylinders</td>
 </tr>
 <tr class="odd">
 <td align="left">int</td>
 <td align="left">bytes_per_cylinder</td>
-<td align="right">28</td>
+<td align="right">24</td>
 <td align="left">size (in bytes) of each cylinder within the <code>cylinders</code> array</td>
 </tr>
 <tr class="even">
@@ -790,10 +803,27 @@ listed in the table below.
 <td align="right">-1</td>
 <td align="left">offset (in bytes) of each cylinder's &quot;float radius&quot; within the <code>cylinders</code> array (<code>-1</code> means disabled and use <code>radius</code> instead)</td>
 </tr>
+<tr class="odd">
+<td align="left">vec4f[] / vec3f(a)<br />
+[]</td>
+<td align="left">color</td>
+<td align="right">NULL</td>
+<td align="left"><a href="#data">data</a> array of colors (RGBA/RGB), color is constant for each cylinder</td>
+</tr>
+<tr class="even">
+<td align="left">OSPData</td>
+<td align="left">texcoord</td>
+<td align="right">NULL</td>
+<td align="left"><a href="#data">data</a> array of texture coordinates, in pairs (each a vec2f at vertex v0 and v1)</td>
+</tr>
 </tbody>
 </table>
 
 : Parameters defining a cylinders geometry.
+
+For texturing each cylinder is seen as a 1D primitive, i.e. a line
+segment: the 2D texture coordinates at its vertices v0 and v1 are
+linearly interpolated.
 
 ### Streamlines
 

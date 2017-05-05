@@ -81,7 +81,8 @@ namespace ospray {
     Ref<Data> cylinderData;
     Ref<Data> materialList;
     void     *_materialList {nullptr};
-    Ref<Data> colorData; /*!< cylinder color array (vec3fa) */
+    Ref<Data> colorData; /*!< cylinder color array */
+    Ref<Data> texcoordData;
   };
 /*! @} */
 

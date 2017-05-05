@@ -204,7 +204,7 @@ namespace ospray {
       if (world.rank < 1) {
         postStatusMsg("====================================================\n"
                       "initializing OSPRay MPI in 'listen for workers' mode\n"
-                      "====================================================\n",
+                      "====================================================",
                       OSPRAY_MPI_VERBOSE_LEVEL);
       }
 
@@ -242,7 +242,7 @@ namespace ospray {
       if (app.rank == 0) {
         postStatusMsg("=====================================================\n"
                       "OSPRAY Worker ring connected\n"
-                      "=====================================================\n",
+                      "=====================================================",
                       OSPRAY_MPI_VERBOSE_LEVEL);
       }
 
@@ -257,7 +257,7 @@ namespace ospray {
       if (world.rank < 1) {
         postStatusMsg("=====================================================\n"
                       "initializing OSPRay MPI in 'connect to master' mode  \n"
-                      "=====================================================\n",
+                      "=====================================================",
                       OSPRAY_MPI_VERBOSE_LEVEL);
       }
 
@@ -315,7 +315,7 @@ namespace ospray {
             << "=======================================================\n"
             << "initializing OSPRay MPI in 'launching new workers' mode"
             << "=======================================================\n"
-            << "using launch script '" << launchCommand << "'\n";
+            << "using launch script '" << launchCommand << "'";
 
         MPI_CALL(Open_port(MPI_INFO_NULL, appPortName));
 
@@ -325,7 +325,7 @@ namespace ospray {
 
         postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
             << "with port " << fixedPortName
-            << "\n=======================================================\n";
+            << "\n=======================================================";
 
         for (char *s = fixedPortName; *s; ++s)
           if (*s == '$') *s = '%';
@@ -352,7 +352,7 @@ namespace ospray {
         postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
             << "OSPRay MPI Worker ring successfully connected.\n"
             << "found " << worker.size << " workers."
-            << "\n=======================================================\n";
+            << "\n=======================================================";
       }
 
       if (app.size > 1) {
@@ -362,7 +362,7 @@ namespace ospray {
               << "with ospray\n"
               << "(only the root node is allowed to issue ospray api "
               << "calls right now)\n"
-              << "=======================================================\n";
+              << "=======================================================";
         }
 
         MPI_CALL(Barrier(app.comm));

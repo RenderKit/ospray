@@ -56,7 +56,9 @@ namespace ospray {
     materialList      = getParamData("materialList");
     colorData         = getParamData("color");
     colorOffset       = getParam1i("color_offset",0);
-    colorStride       = getParam1i("color_stride",4*sizeof(float));
+    auto colComps     = colorData && colorData->type == OSP_FLOAT3 ? 3 : 4;
+    colorStride       = getParam1i("color_stride", colComps * sizeof(float));
+    texcoordData      = getParamData("texcoord");
 
     if (sphereData.ptr == nullptr) {
       throw std::runtime_error("#ospray:geometry/spheres: no 'spheres' data "
@@ -102,8 +104,10 @@ namespace ospray {
 
     ispc::SpheresGeometry_set(getIE(),model->getIE(),
                               sphereData->data,_materialList,
-                              colorData?(unsigned char*)colorData->data:nullptr,
+                              texcoordData ? (ispc::vec2f *)texcoordData->data : nullptr,
+                              colorData ? colorData->data : nullptr,
                               colorOffset, colorStride,
+                              colorData && colorData->type == OSP_FLOAT4,
                               numSpheres,bytesPerSphere,
                               radius,materialID,
                               offset_center,offset_radius,

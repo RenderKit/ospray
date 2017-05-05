@@ -35,7 +35,6 @@ namespace ospray {
 
     // Find the creation function for the subtype if not already known.
     if (symbolRegistry.count(type) == 0) {
-
       postStatusMsg(2) << "#ospray: trying to look up "
                        << type_string << " type '" << type
                        << "' for the first time";

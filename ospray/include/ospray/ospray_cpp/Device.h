@@ -28,9 +28,9 @@ class Device
 {
 public:
 
-  Device(const std::string &type);
+  Device(const std::string &type = "default");
   Device(const Device &copy);
-  Device(OSPDevice existing = nullptr);
+  Device(OSPDevice existing);
 
   void set(const std::string &name, const std::string &v) const;
   void set(const std::string &name, int v) const;

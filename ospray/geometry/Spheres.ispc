@@ -31,25 +31,28 @@ struct Spheres {
   Geometry   super; 
 
   /*! data array that contains the sphere data (possibly but not
-      necessarily including the color, which could be in color_data);
-      all of offset and stride values point into here.  */
+      necessarily including the color, which could be in color);
+      most offset and stride values point into here.  */
   uint8     *data;
-  
-  /*! list of multiple  materials, in case of per-sphere materials */
-  Material **materialList;
-
-  float      radius;
-  int        materialID;
+  int32      stride;
   int        offset_center;
   int        offset_radius;
   int        offset_materialID;
   int        offset_colorID; 
+  
+  float      radius;
 
-  uint8     *color_data;
+  /*! list of multiple  materials, in case of per-sphere materials */
+  Material **materialList;
+
+  int        materialID;
+
+  uint8     *color;
   int        color_stride;
   int        color_offset;
-  
-  int32      bytesPerSphere;
+  bool       has_alpha; // 4th color component is valid
+ 
+  vec2f     *texcoord;
 };
 
 static void Spheres_postIntersect(uniform Geometry *uniform geometry,
@@ -62,18 +65,24 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
 
   dg.Ng = dg.Ns = ray.Ng;
 
-  if ((flags & DG_COLOR) && self->color_data) {
+  if ((flags & DG_COLOR) && self->color) {
     uint32 colorID = 0;
     if (self->offset_colorID >= 0) {
       uniform uint8 *varying spherePtr =
-        self->data + self->bytesPerSphere*ray.primID;
+        self->data + self->stride*ray.primID;
       colorID = *((uniform uint32 *varying)(spherePtr+self->offset_colorID));
-    } else {
+    } else
       colorID = ray.primID;
-    }
     uint32 colorAddr = self->color_offset+colorID*self->color_stride;
-    dg.color = *((vec4f *)(self->color_data+colorAddr));
+    dg.color = *((vec4f *)(self->color+colorAddr));
+    if (!self->has_alpha)
+      dg.color.w = 1.f;
   }
+
+  if (flags & DG_TEXCOORD && self->texcoord)
+    dg.st = self->texcoord[ray.primID];
+  else
+    dg.st = make_vec2f(0.0f);
   
   if (flags & DG_MATERIALID) {
     if (self->offset_materialID >= 0) {
@@ -85,9 +94,9 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
           uniform uint8 *uniform pagePtr   = self->data
             + (((int64)primPage)
                * primsPerPage
-               * self->bytesPerSphere);
+               * self->stride);
           uniform uint8 *varying spherePtr = pagePtr
-            + self->bytesPerSphere*localPrimID;
+            + self->stride*localPrimID;
           dg.materialID =
             *((uniform uint32 *varying)(spherePtr+self->offset_materialID));
           if (self->materialList) {
@@ -96,7 +105,7 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
         }
       } else {
         uniform uint8 *varying spherePtr = self->data
-          + self->bytesPerSphere*ray.primID;
+          + self->stride*ray.primID;
         dg.materialID =
           *((uniform uint32 *varying)(spherePtr+self->offset_materialID));
         if (self->materialList) {
@@ -117,7 +126,7 @@ unmasked void Spheres_bounds(uniform Spheres *uniform self,
                              uniform box3fa &bbox)
 {
   uniform uint8 *uniform spherePtr = self->data
-    + self->bytesPerSphere*((uniform int64)primID);
+    + self->stride*((uniform int64)primID);
   uniform bool offr = self->offset_radius >= 0;
   uniform float radius =
     offr ? *((uniform float *uniform)(spherePtr+self->offset_radius)) :
@@ -132,7 +141,7 @@ void Spheres_intersect(uniform Spheres *uniform self,
                        uniform size_t primID)
 {
   uniform uint8 *uniform spherePtr =
-    self->data + self->bytesPerSphere*((uniform int64)primID);
+    self->data + self->stride*((uniform int64)primID);
   uniform float radius = self->radius;
   if (self->offset_radius >= 0) {
     radius = *((uniform float *uniform)(spherePtr+self->offset_radius));
@@ -190,14 +199,14 @@ SampleAreaRes Spheres_sampleArea(
       uint8 *uniform pagePtr = self->data
         + (((int64)primPage)
             * primsPerPage
-            * self->bytesPerSphere);
-      uint8 *spherePtr = pagePtr + self->bytesPerSphere*localPrimID;
+            * self->stride);
+      uint8 *spherePtr = pagePtr + self->stride*localPrimID;
       center = *((vec3f*)(spherePtr+self->offset_center));
       if (self->offset_radius >= 0)
         radius = *((float *)(spherePtr+self->offset_radius));
     }
   } else {
-    uint8 *spherePtr = self->data + self->bytesPerSphere*primID;
+    uint8 *spherePtr = self->data + self->stride*primID;
     center = *((vec3f*)(spherePtr+self->offset_center));
     if (self->offset_radius >= 0)
       radius = *((float *)(spherePtr+self->offset_radius));
@@ -240,7 +249,7 @@ void Spheres_getAreas(
       area[i] = sphereArea;
   } else {
     const uniform uint8 *uniform radiusPtr = self->data + self->offset_radius;
-    const uniform int64 stride = self->bytesPerSphere;
+    const uniform int64 stride = self->stride;
     // TODO vectorize this loop, with foreach or ProgramCount & ProgramIndex
     for(uniform int32 i = 0; i < spheres; i++, radiusPtr += stride) {
       const uniform float radius = *((float *uniform)radiusPtr);
@@ -259,21 +268,24 @@ export void *uniform Spheres_create(void *uniform cppEquivalent)
   return self;
 }
 
-export void SpheresGeometry_set(void  *uniform _self,
-                                void  *uniform _model,
-                                void  *uniform data,
-                                void  *uniform materialList,
-                                uint8 *uniform color_data,
-                                int    uniform color_offset,
-                                int    uniform color_stride,
-                                int    uniform numSpheres,
-                                int    uniform bytesPerSphere,
-                                float  uniform radius,
-                                int    uniform materialID,
-                                int    uniform offset_center,
-                                int    uniform offset_radius,
-                                int    uniform offset_materialID,
-                                int    uniform offset_colorID)
+export void SpheresGeometry_set(void  *uniform _self
+    , void *uniform _model
+    , void *uniform data
+    , void *uniform materialList
+    , vec2f *uniform texcoord
+    , void *uniform color
+    , uniform int color_offset
+    , uniform int color_stride
+    , uniform bool has_alpha
+    , uniform int numSpheres
+    , uniform int bytesPerSphere
+    , uniform float radius
+    , uniform int materialID
+    , uniform int offset_center
+    , uniform int offset_radius
+    , uniform int offset_materialID
+    , uniform int offset_colorID
+    )
 {
   uniform Spheres *uniform self = (uniform Spheres *uniform)_self;
   uniform Model *uniform model = (uniform Model *uniform)_model;
@@ -286,13 +298,15 @@ export void SpheresGeometry_set(void  *uniform _self,
   self->super.getAreas = Spheres_getAreas;
   self->super.sampleArea = Spheres_sampleArea;
   self->materialList = (Material **)materialList;
-  self->color_data = color_data;
+  self->texcoord = texcoord;
+  self->color = (uint8 *uniform)color;
   self->color_stride = color_stride;
   self->color_offset = color_offset;
+  self->has_alpha = has_alpha;
   self->radius = radius;
-  self->data = (uniform uint8 *uniform)data;
+  self->data = (uint8 *uniform)data;
   self->materialID = materialID;
-  self->bytesPerSphere = bytesPerSphere;
+  self->stride = bytesPerSphere;
 
   self->offset_center     = offset_center;
   self->offset_radius     = offset_radius;

@@ -40,7 +40,7 @@ namespace ospray {
 
     if (!getIE()) {
       postStatusMsg("#osp: warning: geometry does not have an "
-                    "ispc equivalent!\n");
+                    "ispc equivalent!");
     }
     else {
       ispc::Geometry_setMaterial(this->getIE(), mat ? mat->getIE() : nullptr);
