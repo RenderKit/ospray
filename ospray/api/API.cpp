@@ -332,10 +332,10 @@ extern "C" OSPData ospNewData(size_t nitems, OSPDataType format,
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  LOG("ospSetData(...)");
-  LOG("ospSetData(...," << nitems << "," << ((int)format) << "," << ((int*)init) << "," << flags << ",...)");
+  LOG("ospNewData(...)");
+  LOG("ospNewData(" << nitems << "," << stringForType(format) << "," << ((int*)init) << "," << flags << ")");
   OSPData data = ospray::api::Device::current->newData(nitems,format,(void*)init,flags);
-  LOG("DONE ospSetData(...,\"" << nitems << "," << ((int)format) << "," << ((int*)init) << "," << flags << ",...)");
+  LOG("DONE ospNewData(" << nitems << "," << stringForType(format) << "," << ((int*)init) << "," << flags << ")");
   return data;
 }
 OSPRAY_CATCH_END
@@ -382,7 +382,9 @@ extern "C" void ospSetObject(OSPObject target,
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  LOG("ospSetObject(...,\"" << bufName << "\",...)");
+  LOG("ospSetObject(" << ((ospray::ManagedObject*)target)->toString() << ",\""
+      << bufName << "\"," << ((ospray::ManagedObject*)value)->toString() <<
+      ')');
   return ospray::api::Device::current->setObject(target,bufName,value);
 }
 OSPRAY_CATCH_END
@@ -571,7 +573,7 @@ OSPRAY_CATCH_END
 extern "C" void ospCommit(OSPObject object)
 OSPRAY_CATCH_BEGIN
 {
-  LOG("ospCommit(...)");
+  LOG("ospCommit(" << ((ospray::ManagedObject*)object)->toString() << ')');
   ASSERT_DEVICE();
   Assert(object && "invalid object handle to commit to");
   ospray::api::Device::current->commit(object);

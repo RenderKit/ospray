@@ -169,7 +169,8 @@ namespace ospray {
   template <typename T>
   inline StatusMsgStream &&operator<<(StatusMsgStream &&stream, T &&rhs)
   {
-    stream.msg << std::forward<T>(rhs);
+    if (logLevel() >= stream.logLevel)
+      stream.msg << std::forward<T>(rhs);
     return std::forward<StatusMsgStream>(stream);
   }
 
