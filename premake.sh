@@ -23,11 +23,16 @@ LOAD_ISPC()
 export EMBREE_ROOT=${OSPROOT}/embree-2.14.0.x86_64.linux
 LOAD_EMBREE()
 {
-    SET(OSPRAY_USE_EXTERNAL_EMBREE ON) 
+    CMAKEARGS=${CMAKEARGS}" -DOSPRAY_USE_EXTERNAL_EMBREE=ON"
     export embree_DIR=${EMBREE_ROOT}
     source ${EMBREE_ROOT}/embree-vars.sh
 }
 
+# QT path
+QT_PATH=${DIRROOT}/visitOSPRay/qt-everywhere-opensource-src-4.8.3
+
+# initialization
+CUSTOMIZED_PROJSUFFIX=""
 PROJSUFFIX=""
 CMAKEARGS=""
 CMAKEPATH="cmake"
@@ -52,13 +57,15 @@ HELP()
     echo "generate build directory and makefiles for OSPRay"
     echo 
     echo "Option list:"
-    echo "  -h, --help          Print help message"
-    echo "  -m, --mpi           Build with MPI"
-    echo "  -a, --cmake-args    Build with additional cmake arguments"
+    echo "  -h , --help         Print help message"
+    echo "  -m , --mpi          Build with MPI"
+    echo "  -a , --cmake-args   Build with additional cmake arguments"
     echo "  -ic, --intel-icc    Build with intel ICC"
     echo "  -im, --image-magick Build with image magick"
     echo "  -qt, --qt           Build with Qt"
-    echo "  --build-prefix      Build prefix" 
+    echo "  -o , --output-dir   Build directory name"
+    echo "  --build-prefix      Build directory prefix"
+    echo "                        (directory name will be generated based on rules)"
     echo "  --embree-dir        Customer Embree path"
     echo "  --tbb-dir           Customer TBB path"
     echo "  --ispc-dir          Customer ISPC path"
@@ -68,6 +75,10 @@ HELP()
 }
 
 # Stop until all parameters used up
+if [ -z "$1" ]; then
+    HELP
+    exit
+fi
 until [ -z "$1" ]; do
     case "$1" in
 
@@ -103,7 +114,7 @@ until [ -z "$1" ]; do
 
         # --- Qt component
 	-qt | --qt)
-	    export QT_ROOT=${DIRROOT}/visitOSPRay/qt-everywhere-opensource-src-4.8.3
+	    export QT_ROOT=${QT_PATH}
 	    export PATH=${QT_ROOT}/bin:${PATH}
 	    export LD_LIBRARY_PATH=${QT_ROOT}/lib:${LD_LIBRARY_PATH}
 	    PROJSUFFIX=${PROJSUFFIX}_qt
@@ -112,7 +123,13 @@ until [ -z "$1" ]; do
 
 	# --- Setup additionnnnal arguments
 	-a  | --cmake-args)
-	    CMAKEARGS=${CMAKEARGS}" "${2}; 
+	    CMAKEARGS=${CMAKEARGS}" "${2}
+	    shift 2
+	    ;;
+
+	# --- setup customized project suffix
+	-o | --output-dir)
+	    CUSTOMIZED_PROJSUFFIX=${2}
 	    shift 2
 	    ;;
 
@@ -158,9 +175,13 @@ until [ -z "$1" ]; do
     esac
 done
 
+# load libraries
 LOAD_TBB
 LOAD_ISPC
 LOAD_EMBREE
+if [ ${CUSTOMIZED_PROJSUFFIX} -ne "" ]; then
+    PROJSUFFIX=${CUSTOMIZED_PROJSUFFIX}
+fi
 
 # debug
 echo "running command: mkdir -p ${CMAKEBUILD}build${PROJSUFFIX}"
