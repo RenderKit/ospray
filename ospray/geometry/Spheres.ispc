@@ -41,6 +41,7 @@ struct Spheres {
   int        offset_colorID; 
   
   float      radius;
+  float      epsilon;
 
   /*! list of multiple  materials, in case of per-sphere materials */
   Material **materialList;
@@ -166,7 +167,7 @@ void Spheres_intersect(uniform Spheres *uniform self,
   if (t_in > ray.t0 && t_in < ray.t) {
     hit = true;
     ray.t = t_in;
-  } else if (t_out > ray.t0 && t_out < ray.t) {
+  } else if (t_out > (ray.t0 + self->epsilon) && t_out < ray.t) {
     hit = true;
     ray.t = t_out;
   }
@@ -312,6 +313,10 @@ export void SpheresGeometry_set(void  *uniform _self
   self->offset_radius     = offset_radius;
   self->offset_materialID = offset_materialID;
   self->offset_colorID    = offset_colorID;
+
+  self->epsilon = log(self->radius);
+  if (self->epsilon < 0.f)
+    self->epsilon = -1.f/self->epsilon;
 
   rtcSetUserData(model->embreeSceneHandle,geomID,self);
   rtcSetBoundsFunction(model->embreeSceneHandle,geomID,
