@@ -39,6 +39,8 @@ namespace ospray {
       //  these parameters
       std::string type;
       //! vector of textures used by the material
+      // Carson: what is this?  seems to be used by RIVL.  Is this supposed to be map_Kd?
+      // how do I use a vector of textures?
       std::vector<std::shared_ptr<Texture2D>> textures;
       
       OSPMaterial ospMaterial {nullptr};

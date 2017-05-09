@@ -21,14 +21,17 @@
 #include "ospcommon/tasking/parallel_for.h"
 #include "ospcommon/tasking/schedule.h"
 
-#include "mpiCommon/async/Messaging.h"
+#include "mpiCommon/MPICommon.h"
 
 #ifdef _WIN32
 #  include <windows.h> // for Sleep
 #endif
 
-//#define DBG(a) a
-#define DBG(a) /* ignore */
+#if 0
+# define DBG(a) a
+#else
+# define DBG(a) /* ignore */
+#endif
 
 using std::cout;
 using std::endl;
@@ -39,7 +42,12 @@ namespace ospray {
 
   using DFB = DistributedFrameBuffer;
 
-  struct MasterTileMessage : public mpi::async::CommLayer::Message
+  struct TileMessage
+  {
+    int command {-1};
+  };
+
+  struct MasterTileMessage : public TileMessage
   {
     vec2i coords;
     float error;
@@ -59,7 +67,7 @@ namespace ospray {
 
   /*! message sent from one node's instance to another, to tell that
       instance to write that tile */
-  struct WriteTileMessage : public mpi::async::CommLayer::Message
+  struct WriteTileMessage : public TileMessage
   {
     // TODO: add compression of pixels during transmission
     vec2i coords; // XXX redundant: it's also in tile.region.lower
@@ -102,42 +110,43 @@ namespace ospray {
     if (tiles <= 0)
       return;
 
-    SERIALIZED_MPI_CALL(Bcast(tileErrorBuffer, tiles, MPI_FLOAT, 0, MPI_COMM_WORLD));
+    MPI_CALL(Bcast(tileErrorBuffer, tiles, MPI_FLOAT, 0, MPI_COMM_WORLD));
   }
 
   // DistributedFrameBuffer definitions ///////////////////////////////////////
 
-  DFB::DistributedFrameBuffer(mpi::async::CommLayer *comm,
-                              const vec2i &numPixels,
-                              size_t myID,
+  DFB::DistributedFrameBuffer(const vec2i &numPixels,
+                              ObjectHandle myID,
                               ColorBufferFormat colorBufferFormat,
                               bool hasDepthBuffer,
                               bool hasAccumBuffer,
-                              bool hasVarianceBuffer)
+                              bool hasVarianceBuffer,
+                              bool masterIsAWorker)
     : FrameBuffer(numPixels,colorBufferFormat,hasDepthBuffer,
                   hasAccumBuffer,hasVarianceBuffer),
-      mpi::async::CommLayer::Object(comm,myID),
+      myID(myID),
       tileErrorRegion(hasVarianceBuffer ? getNumTiles() : vec2i(0)),
       localFBonMaster(nullptr),
       frameMode(WRITE_ONCE),
       frameIsActive(false),
-      frameIsDone(false)
+      frameIsDone(false),
+      masterIsAWorker(masterIsAWorker)
   {
-    assert(comm);
     this->ispcEquivalent = ispc::DFB_create(this);
     ispc::DFB_set(getIE(), numPixels.x, numPixels.y, colorBufferFormat);
-    comm->registerObject(this,myID);
+
+    mpi::messaging::registerMessageListener(myID.objID(), this);
 
     createTiles();
     const size_t bytes = sizeof(int32)*getTotalTiles();
     tileAccumID = (int32*)alignedMalloc(bytes);
     memset(tileAccumID, 0, bytes);
 
-    if (comm->group->rank == 0) {
+    if (mpicommon::IamTheMaster()) {
       if (colorBufferFormat == OSP_FB_NONE) {
         DBG(cout << "#osp:mpi:dfb: we're the master, but framebuffer has 'NONE' "
-            << "format; creating distributed frame buffer WITHOUT having a "
-            << "mappable copy on the master" << endl);
+                 << "format; creating distributed frame buffer WITHOUT having a "
+                 << "mappable copy on the master" << endl);
       } else {
         localFBonMaster = new LocalFrameBuffer(numPixels,
                                                colorBufferFormat,
@@ -156,10 +165,11 @@ namespace ospray {
 
   void DFB::startNewFrame(const float errorThreshold)
   {
-    std::vector<mpi::async::CommLayer::Message *> delayedMessage;
+    std::vector<std::shared_ptr<mpicommon::Message>> delayedMessage;
+
     {
       SCOPED_LOCK(mutex);
-      DBG(printf("rank %i starting new frame\n",mpi::world.rank));
+      DBG(printf("rank %i starting new frame\n", mpi::world.rank));
       assert(!frameIsActive);
 
       if (pixelOp)
@@ -178,15 +188,17 @@ namespace ospray {
 
       if (hasAccumBuffer) {
         // increment accumID only for active tiles
-        for (int t = 0; t < getTotalTiles(); t++)
+        for (int t = 0; t < getTotalTiles(); t++) {
           if (tileError(vec2i(t, 0)) <= errorThreshold) {
-            if (IamTheMaster() || allTiles[t]->mine())
+            if (mpicommon::IamTheMaster() || allTiles[t]->mine())
               numTilesCompletedThisFrame++;
-          } else
+          } else {
             tileAccumID[t]++;
+          }
+        }
       }
 
-      frameIsDone   = false;
+      frameIsDone = false;
 
       // set frame to active - this HAS TO BE the last thing we do
       // before unlockign the mutex, because the 'incoming()' message
@@ -202,8 +214,9 @@ namespace ospray {
       this->incoming(msg);
 
     if (numTilesCompletedThisFrame
-        == (IamTheMaster() ? getTotalTiles() : myTiles.size()))
+        == (mpicommon::IamTheMaster() ? getTotalTiles() : myTiles.size())) {
       closeCurrentFrame();
+    }
   }
 
   void DFB::freeTiles()
@@ -213,6 +226,12 @@ namespace ospray {
 
     allTiles.clear();
     myTiles.clear();
+  }
+
+  size_t DistributedFrameBuffer::ownerIDFromTileID(size_t tileID)
+  {
+    return masterIsAWorker ? tileID % (mpicommon::numGlobalRanks()) :
+                             (tileID % (mpicommon::numGlobalRanks() - 1) + 1);
   }
 
   TileData *DFB::createTile(const vec2i &xy, size_t tileID, size_t ownerID)
@@ -228,7 +247,9 @@ namespace ospray {
       break;
     case Z_COMPOSITE:
     default:
-      td = new ZCompositeTile(this, xy, tileID, ownerID);
+      size_t numWorkers = masterIsAWorker ? mpicommon::numGlobalRanks() :
+                                            mpicommon::numWorkers();
+      td = new ZCompositeTile(this, xy, tileID, ownerID, numWorkers);
       break;
     }
 
@@ -241,8 +262,8 @@ namespace ospray {
     vec2i numPixels = getNumPixels();
     for (int y = 0; y < numPixels.y; y += TILE_SIZE) {
       for (int x = 0; x < numPixels.x; x += TILE_SIZE, tileID++) {
-        size_t ownerID = tileID % (comm->group->size - 1);
-        if (workerRank(ownerID) == comm->group->rank) {
+        size_t ownerID = ownerIDFromTileID(tileID);
+        if (ownerID == mpicommon::globalRank()) {
           TileData *td = createTile(vec2i(x, y), tileID, ownerID);
           myTiles.push_back(td);
           allTiles.push_back(td);
@@ -330,7 +351,15 @@ namespace ospray {
     DBG(printf("rank %i: tilecompleted %i,%i\n",mpi::world.rank,
                tile->begin.x,tile->begin.y));
 
-    if (IamTheMaster()) {
+    if (mpicommon::IamTheMaster() && tile->ownerID == mpicommon::masterRank()) {
+      if (pixelOp) {
+        pixelOp->postAccum(tile->final);
+      }
+
+      tile->ownerID = -1;//TODO(jda) - need to refactor this "magic" number...
+                         //            the branching logic here is too cryptic
+      sendTileToMaster(tile);
+    } else if (mpicommon::IamTheMaster()) {
       int numTilesCompletedByMyTile = 0;
       /*! we will not do anything with the tile other than mark it's done */
       {
@@ -349,42 +378,7 @@ namespace ospray {
         pixelOp->postAccum(tile->final);
       }
 
-      switch(colorBufferFormat) {
-      case OSP_FB_NONE: {
-        /* if the master doesn't have a framebufer (i.e., format
-           'none'), we're only telling it that we're done, but are not
-           sending any pixels */
-        MasterTileMessage_NONE *mtm = new MasterTileMessage_NONE;
-        mtm->command = MASTER_WRITE_TILE_NONE;
-        mtm->coords  = tile->begin;
-        mtm->error   = tile->error;
-        comm->sendTo(this->master,mtm,sizeof(*mtm));
-      } break;
-      case OSP_FB_RGBA8:
-      case OSP_FB_SRGBA: {
-        /*! if the master has RGBA8 or SRGBA format, we're sending him a tile
-          of the proper data */
-        MasterTileMessage_RGBA_I8 *mtm = new MasterTileMessage_RGBA_I8;
-        mtm->command = MASTER_WRITE_TILE_I8;
-        mtm->coords  = tile->begin;
-        mtm->error   = tile->error;
-        memcpy(mtm->color,tile->color,TILE_SIZE*TILE_SIZE*sizeof(uint32));
-        comm->sendTo(this->master,mtm,sizeof(*mtm));
-      } break;
-      case OSP_FB_RGBA32F: {
-        /*! if the master has RGBA32F format, we're sending him a tile of the
-          proper data */
-        MasterTileMessage_RGBA_F32 *mtm = new MasterTileMessage_RGBA_F32;
-        mtm->command = MASTER_WRITE_TILE_F32;
-        mtm->coords  = tile->begin;
-        mtm->error   = tile->error;
-        memcpy(mtm->color,tile->color,TILE_SIZE*TILE_SIZE*sizeof(vec4f));
-        comm->sendTo(this->master,mtm,sizeof(*mtm));
-      } break;
-      default:
-        throw std::runtime_error("#osp:mpi:dfb: color buffer format not "
-                                 "implemented for distributed frame buffer");
-      };
+      sendTileToMaster(tile);
 
       size_t numTilesCompletedByMe = 0;
       {
@@ -402,19 +396,89 @@ namespace ospray {
     }
   }
 
-  void DFB::incoming(mpi::async::CommLayer::Message *_msg)
+  void DistributedFrameBuffer::sendTileToMaster(TileData *tile)
+  {
+    switch(colorBufferFormat) {
+    case OSP_FB_NONE: {
+      /* if the master doesn't have a framebufer (i.e., format
+         'none'), we're only telling it that we're done, but are not
+         sending any pixels */
+      MasterTileMessage_NONE mtm;
+      mtm.command = MASTER_WRITE_TILE_NONE;
+      mtm.coords  = tile->begin;
+      mtm.error   = tile->error;
+
+      auto msg = std::make_shared<mpicommon::Message>(&mtm, sizeof(mtm));
+
+      mpi::messaging::sendTo(mpicommon::masterRank(), myID, msg);
+    } break;
+    case OSP_FB_RGBA8:
+    case OSP_FB_SRGBA: {
+      /*! if the master has RGBA8 or SRGBA format, we're sending him a tile
+          of the proper data */
+      MasterTileMessage_RGBA_I8 mtm;
+      mtm.command = MASTER_WRITE_TILE_I8;
+      mtm.coords  = tile->begin;
+      mtm.error   = tile->error;
+      memcpy(mtm.color, tile->color, TILE_SIZE*TILE_SIZE*sizeof(uint32));
+
+      auto msg = std::make_shared<mpicommon::Message>(&mtm, sizeof(mtm));
+
+      mpi::messaging::sendTo(mpicommon::masterRank(), myID, msg);
+    } break;
+    case OSP_FB_RGBA32F: {
+      /*! if the master has RGBA32F format, we're sending him a tile of the
+          proper data */
+      MasterTileMessage_RGBA_F32 mtm;
+      mtm.command = MASTER_WRITE_TILE_F32;
+      mtm.coords  = tile->begin;
+      mtm.error   = tile->error;
+      memcpy(mtm.color, tile->color, TILE_SIZE*TILE_SIZE*sizeof(vec4f));
+
+      auto msg = std::make_shared<mpicommon::Message>(&mtm, sizeof(mtm));
+
+      mpi::messaging::sendTo(mpicommon::masterRank(), myID, msg);
+    } break;
+    default:
+      throw std::runtime_error("#osp:mpi:dfb: color buffer format not "
+                               "implemented for distributed frame buffer");
+    };
+  }
+
+  size_t DFB::numMyTiles() const
+  {
+    return myTiles.size();
+  }
+
+  TileDesc *DFB::getTileDescFor(const vec2i &coords) const
+  {
+    return allTiles[getTileIDof(coords)];
+  }
+
+  size_t DFB::getTileIDof(const vec2i &c) const
+  {
+    return (c.x/TILE_SIZE) + (c.y/TILE_SIZE)*numTiles.x;
+  }
+
+  std::string DFB::toString() const
+  {
+    return "ospray::DFB";
+  }
+
+  void DFB::incoming(const std::shared_ptr<mpicommon::Message> &message)
   {
     if (!frameIsActive) {
       SCOPED_LOCK(mutex);
       if (!frameIsActive) {
         // frame is not actually active, yet - put the tile into the
         // delayed processing buffer, and return WITHOUT deleting it.
-        delayedMessage.push_back(_msg);
+        delayedMessage.push_back(message);
         return;
       }
     }
 
-    schedule([=]() {
+    tasking::schedule([=]() {
+      auto *_msg = (TileMessage*)message->data;
       switch (_msg->command) {
       case MASTER_WRITE_TILE_NONE:
         this->processMessage((MasterTileMessage_NONE*)_msg);
@@ -429,19 +493,18 @@ namespace ospray {
         this->processMessage((WriteTileMessage*)_msg);
         break;
       default:
-        assert(0);
+        throw std::runtime_error("#dfb: unknown tile type processed!");
       };
-      delete _msg;
     });
   }
 
   void DFB::closeCurrentFrame()
   {
-    DBG(printf("rank %i CLOSES frame\n",mpi::world.rank));
+    DBG(printf("rank %i CLOSES frame\n", mpi::world.rank));
     frameIsActive = false;
     frameIsDone   = true;
 
-    if (IamTheMaster()) {
+    if (mpicommon::IamTheMaster()) {
       /* do nothing */
     } else {
       if (pixelOp) { 
@@ -449,7 +512,6 @@ namespace ospray {
       }
     }
 
-    mpi::async::flushMessages();
     frameDoneCond.notify_all();
   }
 
@@ -461,19 +523,21 @@ namespace ospray {
 
     if (!tileDesc->mine()) {
       // NOT my tile...
-      WriteTileMessage *msg = new WriteTileMessage;
-      msg->coords = tile.region.lower;
+      WriteTileMessage msgPayload;
+      msgPayload.coords = tile.region.lower;
       // TODO: compress pixels before sending ...
-      memcpy(&msg->tile,&tile,sizeof(ospray::Tile));
-      msg->command = WORKER_WRITE_TILE;
+      memcpy(&msgPayload.tile, &tile, sizeof(ospray::Tile));
+      msgPayload.command = WORKER_WRITE_TILE;
 
-      comm->sendTo(this->worker[tileDesc->ownerID], msg,sizeof(*msg));
+      auto msg = std::make_shared<mpicommon::Message>(&msgPayload,
+                                                      sizeof(msgPayload));
+
+      int dstRank = tileDesc->ownerID;
+      mpi::messaging::sendTo(dstRank, myID, msg);
     } else {
-      // this is my tile...
-      assert(frameIsActive);
-
+      if (!frameIsActive)
+        throw std::runtime_error("#dfb: cannot setTile if frame is inactive!");
       TileData *td = (TileData*)tileDesc;
-
       td->process(tile);
     }
   }
@@ -489,7 +553,7 @@ namespace ospray {
   {
     frameID = -1; // we increment at the start of the frame
     if (!myTiles.empty()) {
-      parallel_for(myTiles.size(), [&](int taskIndex){
+      tasking::parallel_for(myTiles.size(), [&](int taskIndex) {
         TileData *td = this->myTiles[taskIndex];
         assert(td);
         if (fbChannelFlags & OSP_FB_ACCUM) {
@@ -527,8 +591,15 @@ namespace ospray {
     return tileErrorRegion[tile];
   }
 
+  void DistributedFrameBuffer::beginFrame()
+  {
+    mpi::messaging::enableAsyncMessaging();
+    FrameBuffer::beginFrame();
+  }
+
   float DFB::endFrame(const float errorThreshold)
   {
+    mpi::messaging::disableAsyncMessaging();
     return tileErrorRegion.refine(errorThreshold);
   }
 

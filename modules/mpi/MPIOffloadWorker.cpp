@@ -15,8 +15,8 @@
 // ======================================================================== //
 
 #include "mpiCommon/MPICommon.h"
-#include "mpiCommon/async/CommLayer.h"
-#include "mpi/MPIDevice.h"
+#include "mpiCommon/MPIBcastFabric.h"
+#include "mpi/MPIOffloadDevice.h"
 #include "common/Model.h"
 #include "common/Data.h"
 #include "common/Library.h"
@@ -41,14 +41,9 @@
 # include <sched.h>
 #endif
 
-
 #ifdef _WIN32
 #  include <windows.h> // for Sleep and gethostname
 #  include <process.h> // for getpid
-void sleep(unsigned int seconds)
-{
-    Sleep(seconds * 1000);
-}
 #else
 #  include <unistd.h> // for gethostname
 #endif
@@ -62,53 +57,45 @@ void sleep(unsigned int seconds)
 namespace ospray {
   namespace mpi {
 
+    using namespace mpicommon;
+
     OSPRAY_MPI_INTERFACE void runWorker();
 
     void embreeErrorFunc(const RTCError code, const char* str)
     {
-      std::cerr << "#osp: embree internal error " << code << " : "
-                << str << std::endl;
-      throw std::runtime_error("embree internal error '"+std::string(str)+"'");
+      std::stringstream msg;
+      msg << "#osp: embree internal error " << code << " : " << str;
+      postStatusMsg(msg);
+      throw std::runtime_error(msg.str());
     }
 
     std::unique_ptr<work::Work> readWork(work::WorkTypeRegistry &registry,
-                                         ReadStream             &readStream)
+                                         networking::ReadStream &readStream)
     {
       work::Work::tag_t tag;
       readStream >> tag;
 
-      if(logMPI) {
-        static size_t numWorkReceived = 0;
-        std::stringstream msg;
-        msg << "#osp.mpi.worker: got work #" << numWorkReceived++
-            << ", tag " << tag << std::endl;
-      }
+      static size_t numWorkReceived = 0;
+      postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+          << "#osp.mpi.worker: got work #" << numWorkReceived++
+          << ", tag " << tag;
 
       auto make_work = registry.find(tag);
       if (make_work == registry.end()) {
         std::stringstream msg;
-        msg << "Invalid work type received - tag #: " << tag;
+        msg << "Invalid work type received - tag #: " << tag << "\n";
+        postStatusMsg(msg);
         throw std::runtime_error(msg.str());
       }
 
       auto work = make_work->second();
 
-      if(logMPI) {
-        printf(": %s\n", typeString(work).c_str());
-      }
-
+      postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL) << ": " << typeString(work);
 
       work->deserialize(readStream);
       return work;
     }
 
-    bool checkIfWeNeedToDoMPIDebugOutputs()
-    {
-      char *envVar = getenv("OSPRAY_MPI_DEBUG");
-      if (!envVar) return false;
-      return atoi(envVar) > 0;
-    }
-    
     /*! it's up to the proper init
       routine to decide which processes call this function and which
       ones don't. This function will not return.
@@ -132,7 +119,8 @@ namespace ospray {
 
       // NOTE(jda) - This guard guarentees that the embree device gets cleaned
       //             up no matter how the scope of runWorker() is left
-      struct EmbreeDeviceScopeGuard {
+      struct EmbreeDeviceScopeGuard
+      {
         RTCDevice embreeDevice;
         ~EmbreeDeviceScopeGuard() { rtcDeleteDevice(embreeDevice); }
       };
@@ -146,16 +134,15 @@ namespace ospray {
 
       if (rtcDeviceGetError(embreeDevice) != RTC_NO_ERROR) {
         // why did the error function not get called !?
-        std::cerr << "#osp:init: embree internal error number "
-                  << (int)rtcDeviceGetError(embreeDevice) << std::endl;
+        postStatusMsg() << "#osp:init: embree internal error number "
+                        << (int)rtcDeviceGetError(embreeDevice);
       }
 
       char hostname[HOST_NAME_MAX];
       gethostname(hostname,HOST_NAME_MAX);
-      if (logMPI) {
-        printf("#w: running MPI worker process %i/%i on pid %i@%s\n",
-               worker.rank,worker.size,getpid(),hostname);
-      }
+      postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+          << "#w: running MPI worker process " << worker.rank
+          << "/" << worker.size << " on pid " << getpid() << "@" << hostname;
 
       TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Slave>();
 
@@ -163,24 +150,23 @@ namespace ospray {
       // setting up read/write streams
       // -------------------------------------------------------
       auto mpiFabric  = make_unique<MPIBcastFabric>(mpi::app);
-      auto readStream = make_unique<BufferedFabric::ReadStream>(*mpiFabric);
+      auto readStream = make_unique<networking::BufferedReadStream>(*mpiFabric);
 
       // create registry of work item types
       std::map<work::Work::tag_t,work::CreateWorkFct> workTypeRegistry;
       work::registerOSPWorkItems(workTypeRegistry);
 
-      logMPI = checkIfWeNeedToDoMPIDebugOutputs();
       while (1) {
         auto work = readWork(workTypeRegistry, *readStream);
-        if (logMPI) {
-          std::cout << "#osp.mpi.worker: processing work " << typeIdOf(work)
-                    << ": " << typeString(work) << std::endl;
-        }
+        postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+            << "#osp.mpi.worker: processing work " << typeIdOf(work)
+            << ": " << typeString(work);
+
         work->run();
-        if (logMPI) {
-          std::cout << "#osp.mpi.worker: done w/ work " << typeIdOf(work)
-                    << ": " << typeString(work) << std::endl;
-        }
+
+        postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+            << "#osp.mpi.worker: done w/ work " << typeIdOf(work)
+            << ": " << typeString(work);
       }
     }
 

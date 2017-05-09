@@ -81,7 +81,7 @@ namespace ospray {
 
     // for now, let's hardcode the importers - should be moved to a
     // registry at some point ...
-    void importFileType_points(std::shared_ptr<World> &world,
+    void importFileType_points(std::shared_ptr<Node> &world,
                                const FileName &url)
     {
       std::cout << "--------------------------------------------" << std::endl;
@@ -161,7 +161,7 @@ namespace ospray {
       fclose(file);
 
       // create the node
-      auto &sphereObject = world->createChildNode("spheres","Spheres");
+      auto &sphereObject = world->createChild("spheres","Spheres");
 
       // iw - note that 'add' sounds wrong here, but that's the way
       // the current scene graph works - 'adding' that node (which

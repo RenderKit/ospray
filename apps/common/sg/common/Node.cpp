@@ -31,6 +31,12 @@ namespace ospray {
     {
       properties.name = "NULL";
       properties.type = "Node";
+      // MSVC 2013 is buggy and ignores {}-initialization of anonymous structs
+#if _MSC_VER <= 1800
+      properties.parent = nullptr;
+      properties.valid = false;
+#endif
+      properties.flags = sg::NodeFlags::none;
       markAsModified();
     }
 
@@ -46,241 +52,40 @@ namespace ospray {
                                + node.name);
     }
 
+    void Node::serialize(sg::Serialization::State &state)
+    {
+    }
+
+    // Properties /////////////////////////////////////////////////////////////
+
+    std::string Node::name() const
+    {
+      return properties.name;
+    }
+
+    std::string Node::type() const
+    {
+      return properties.type;
+    }
+
+    SGVar Node::min() const
+    {
+      return properties.minmax[0];
+    }
+
+    SGVar Node::max() const
+    {
+      return properties.minmax[1];
+    }
+
+    NodeFlags Node::flags() const
+    {
+      return properties.flags;
+    }
+
     std::string Node::documentation() const
     {
       return properties.documentation;
-    }
-
-    void Node::setDocumentation(const std::string &s)
-    {
-      properties.documentation = s;
-    }
-
-    box3f Node::bounds() const
-    {
-      return empty;
-    }
-
-    TimeStamp Node::lastModified() const
-    {
-      return properties.lastModified;
-    }
-
-    TimeStamp Node::childrenLastModified() const
-    {
-      return properties.childrenMTime;
-    }
-
-    TimeStamp Node::lastCommitted() const
-    {
-      return properties.lastCommitted;
-    }
-
-    void Node::markAsCommitted()
-    {
-      properties.lastCommitted = TimeStamp();
-    }
-
-    void Node::markAsModified()
-    {
-      properties.lastModified = TimeStamp();
-      if (hasParent())
-        parent().setChildrenModified(properties.lastModified);
-    }
-
-    void Node::setChildrenModified(TimeStamp t)
-    {
-      if (t > properties.childrenMTime) {
-        properties.childrenMTime = t;
-        if (hasParent())
-          parent().setChildrenModified(properties.childrenMTime);
-      }
-    }
-
-    bool Node::hasChild(const std::string &name) const
-    {
-      std::lock_guard<std::mutex> lock{mutex};
-      auto itr = properties.children.find(name);
-      return itr != properties.children.end();
-    }
-
-    Node& Node::child(const std::string &name) const
-    {
-      std::lock_guard<std::mutex> lock{mutex};
-      auto itr = properties.children.find(name);
-      if (itr == properties.children.end()) {
-        throw std::runtime_error("in node " + toString() +
-                                 " : could not find sg child node with name '"
-                                 + name + "'");
-      } else {
-        return *itr->second;
-      }
-    }
-
-    Node& Node::childRecursive(const std::string &name)
-    {
-      mutex.lock();
-      Node* n = this;
-      auto f = n->properties.children.find(name);
-      if (f != n->properties.children.end()) {
-        mutex.unlock();
-        return *f->second;
-      }
-
-      for (auto &child : properties.children) {
-        mutex.unlock();
-        try {
-          return child.second->childRecursive(name);
-        }
-        catch (const std::runtime_error &) {}
-
-        mutex.lock();
-      }
-
-      mutex.unlock();
-      throw std::runtime_error("error finding node in Node::childRecursive");
-    }
-
-    std::vector<std::shared_ptr<Node>> Node::children() const
-    {
-      std::lock_guard<std::mutex> lock{mutex};
-      std::vector<std::shared_ptr<Node>> result;
-      for (auto &child : properties.children)
-        result.push_back(child.second);
-      return result;
-    }
-
-    Node& Node::operator[](const std::string &c) const
-    {
-      return child(c);
-    }
-
-    Node& Node::parent() const
-    {
-      return *properties.parent;
-    }
-
-    void Node::setParent(Node &p)
-    {
-      std::lock_guard<std::mutex> lock{mutex};
-      properties.parent = &p;
-    }
-
-    void Node::setParent(const std::shared_ptr<Node> &p)
-    {
-      std::lock_guard<std::mutex> lock{mutex};
-      properties.parent = p.get();
-    }
-
-    bool Node::hasParent() const
-    {
-      return properties.parent != nullptr;
-    }
-
-    SGVar Node::value()
-    {
-      std::lock_guard<std::mutex> lock{mutex};
-      return properties.value;
-    }
-
-    void Node::setValue(SGVar val)
-    {
-      {
-        std::lock_guard<std::mutex> lock{mutex};
-        if (val != properties.value)
-          properties.value = val;
-      }
-
-      markAsModified();
-    }
-
-    void Node::add(std::shared_ptr<Node> node)
-    {
-      std::lock_guard<std::mutex> lock{mutex};
-      properties.children[node->name()] = node;
-
-      node->setParent(*this);
-    }
-
-    Node& Node::operator+=(std::shared_ptr<Node> n)
-    {
-      add(n);
-      return *this;
-    }
-
-    Node& Node::createChildNode(std::string name,
-                                std::string type,
-                                SGVar var,
-                                int flags,
-                                std::string documentation)
-    {
-      auto child = createNode(name, type, var, flags, documentation);
-      add(child);
-      return *child;
-    }
-
-    void Node::traverse(RenderContext &ctx, const std::string& operation)
-    {
-      //TODO: make child m time propagate
-      if (operation != "verify" && !isValid())
-        return;
-
-      ctx._childMTime = TimeStamp();
-      preTraverse(ctx, operation);
-      ctx.level++;
-
-      for (auto &child : properties.children)
-        child.second->traverse(ctx, operation);
-
-      ctx.level--;
-      ctx._childMTime = childrenLastModified();
-      postTraverse(ctx, operation);
-    }
-
-    void Node::traverse(const std::string &operation)
-    {
-      RenderContext ctx;
-      traverse(ctx, operation);
-    }
-
-    void Node::preTraverse(RenderContext &ctx, const std::string& operation)
-    {
-      if (operation == "print") {
-        for (int i=0;i<ctx.level;i++)
-          std::cout << "  ";
-        std::cout << name() << " : " << type() << "\n";
-      } else if (operation == "commit" &&
-               (lastModified() >= lastCommitted() ||
-                childrenLastModified() >= lastCommitted())) {
-        preCommit(ctx);
-      } else if (operation == "verify") {
-        properties.valid = computeValid();
-      } else if (operation == "modified") {
-        markAsModified();
-      }
-    }
-
-    void Node::postTraverse(RenderContext &ctx, const std::string& operation)
-    {
-      if (operation == "commit" &&
-          (lastModified() >= lastCommitted() ||
-           childrenLastModified() >= lastCommitted())) {
-        postCommit(ctx);
-        markAsCommitted();
-      } else if (operation == "verify") {
-        for (const auto &child : properties.children) {
-          if (child.second->flags() & NodeFlags::required)
-            properties.valid &= child.second->isValid();
-        }
-      }
-    }
-
-    void Node::preCommit(RenderContext &ctx)
-    {
-    }
-
-    void Node::postCommit(RenderContext &ctx)
-    {
     }
 
     void Node::setName(const std::string &v)
@@ -293,14 +98,11 @@ namespace ospray {
       properties.type = v;
     }
 
-    std::string Node::name() const
+    void Node::setMinMax(const SGVar &minv, const SGVar &maxv)
     {
-      return properties.name;
-    }
-
-    std::string Node::type() const
-    {
-      return properties.type;
+      properties.minmax.resize(2);
+      properties.minmax[0] = minv;
+      properties.minmax[1] = maxv;
     }
 
     void Node::setFlags(NodeFlags f)
@@ -313,26 +115,9 @@ namespace ospray {
       setFlags(static_cast<NodeFlags>(f));
     }
 
-    NodeFlags Node::flags() const
+    void Node::setDocumentation(const std::string &s)
     {
-      return properties.flags;
-    }
-
-    void Node::setMinMax(const SGVar &minv, const SGVar &maxv)
-    {
-      properties.minmax.resize(2);
-      properties.minmax[0] = minv;
-      properties.minmax[1] = maxv;
-    }
-
-    SGVar Node::min() const
-    {
-      return properties.minmax[0];
-    }
-
-    SGVar Node::max() const
-    {
-      return properties.minmax[1];
+      properties.documentation = s;
     }
 
     void Node::setWhiteList(const std::vector<SGVar> &values)
@@ -382,14 +167,284 @@ namespace ospray {
       return true;
     }
 
+    box3f Node::bounds() const
+    {
+      return empty;
+    }
+
+    // Node stored value (data) interface /////////////////////////////////////
+
+    SGVar Node::value()
+    {
+      std::lock_guard<std::mutex> lock{mutex};
+      return properties.value;
+    }
+
+    void Node::setValue(SGVar val)
+    {
+      {
+        std::lock_guard<std::mutex> lock{mutex};
+        if (val != properties.value)
+          properties.value = val;
+      }
+
+      markAsModified();
+    }
+
+    // Update detection interface /////////////////////////////////////////////
+
+    TimeStamp Node::lastModified() const
+    {
+      return properties.lastModified;
+    }
+
+    TimeStamp Node::lastCommitted() const
+    {
+      return properties.lastCommitted;
+    }
+
+    TimeStamp Node::childrenLastModified() const
+    {
+      return properties.childrenMTime;
+    }
+
+    void Node::markAsCommitted()
+    {
+      properties.lastCommitted = TimeStamp();
+    }
+
+    void Node::markAsModified()
+    {
+      properties.lastModified = TimeStamp();
+      if (hasParent())
+        parent().setChildrenModified(properties.lastModified);
+    }
+
+    void Node::setChildrenModified(TimeStamp t)
+    {
+      if (t > properties.childrenMTime) {
+        properties.childrenMTime = t;
+        if (hasParent())
+          parent().setChildrenModified(properties.childrenMTime);
+      }
+    }
+
+    // Parent-child structual interface ///////////////////////////////////////
+
+    bool Node::hasChild(const std::string &name) const
+    {
+      std::string lower=name;
+      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+      std::lock_guard<std::mutex> lock{mutex};
+      auto itr = properties.children.find(lower);
+      return itr != properties.children.end();
+    }
+
+    Node& Node::child(const std::string &name) const
+    {
+      std::string lower=name;
+      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+      std::lock_guard<std::mutex> lock{mutex};
+      auto itr = properties.children.find(lower);
+      if (itr == properties.children.end()) {
+        throw std::runtime_error("in node " + toString() +
+                                 " : could not find sg child node with name '"
+                                 + name + "'");
+      } else {
+        return *itr->second;
+      }
+    }
+
+    Node& Node::operator[](const std::string &c) const
+    {
+      return child(c);
+    }
+
+    Node& Node::childRecursive(const std::string &name)
+    {
+      mutex.lock();
+      Node* n = this;
+      auto f = n->properties.children.find(name);
+      if (f != n->properties.children.end()) {
+        mutex.unlock();
+        return *f->second;
+      }
+
+      for (auto &child : properties.children) {
+        mutex.unlock();
+        try {
+          return child.second->childRecursive(name);
+        }
+        catch (const std::runtime_error &) {}
+
+        mutex.lock();
+      }
+
+      mutex.unlock();
+      throw std::runtime_error("error finding node in Node::childRecursive");
+    }
+
+    std::vector<std::shared_ptr<Node>> Node::children() const
+    {
+      std::lock_guard<std::mutex> lock{mutex};
+      std::vector<std::shared_ptr<Node>> result;
+      for (auto &child : properties.children)
+        result.push_back(child.second);
+      return result;
+    }
+
+    std::map<std::string, std::shared_ptr<Node>>& Node::childrenMap()
+    {
+      return properties.children;
+    }
+
+    void Node::add(std::shared_ptr<Node> node)
+    {
+      std::lock_guard<std::mutex> lock{mutex};
+      const std::string& name = node->name();
+      std::string lower=name;
+      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+      properties.children[lower] = node;
+
+      node->setParent(*this);
+    }
+
+    Node& Node::operator+=(std::shared_ptr<Node> n)
+    {
+      add(n);
+      return *this;
+    }
+
+    Node& Node::createChild(std::string name,
+                                std::string type,
+                                SGVar var,
+                                int flags,
+                                std::string documentation)
+    {
+      auto child = createNode(name, type, var, flags, documentation);
+      add(child);
+      return *child;
+    }
+
+    void Node::setChild(const std::string &name,
+                            const std::shared_ptr<Node> &node)
+    {
+      std::lock_guard<std::mutex> lock{mutex};
+      std::string lower=name;
+      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+      properties.children[lower] = node;
+#ifndef _WIN32
+# warning "TODO: child node parent needs to be set, which requires multi-parent support"
+#endif
+    }
+
+    bool Node::hasParent() const
+    {
+      return properties.parent != nullptr;
+    }
+
+    Node& Node::parent() const
+    {
+      return *properties.parent;
+    }
+
+    void Node::setParent(Node &p)
+    {
+      std::lock_guard<std::mutex> lock{mutex};
+      properties.parent = &p;
+    }
+
+    void Node::setParent(const std::shared_ptr<Node> &p)
+    {
+      std::lock_guard<std::mutex> lock{mutex};
+      properties.parent = p.get();
+    }
+
+    // Traversal interface ////////////////////////////////////////////////////
+
+    void Node::traverse(RenderContext &ctx, const std::string& operation)
+    {
+      //TODO: make child m time propagate
+      if (operation != "verify" && operation != "print" && !isValid())
+        return;
+
+      ctx._childMTime = TimeStamp();
+      bool traverseChildren = true;
+      preTraverse(ctx, operation, traverseChildren);
+      ctx.level++;
+
+      if (traverseChildren)
+      {
+        for (auto &child : properties.children)
+          child.second->traverse(ctx, operation);
+      }
+
+      ctx.level--;
+      ctx._childMTime = childrenLastModified();
+      postTraverse(ctx, operation);
+    }
+
+    void Node::traverse(const std::string &operation)
+    {
+      RenderContext ctx;
+      traverse(ctx, operation);
+    }
+
+    void Node::preTraverse(RenderContext &ctx, const std::string& operation, bool& traverseChildren)
+    {
+      if (operation == "print") {
+        for (int i=0;i<ctx.level;i++)
+          std::cout << "  ";
+        std::cout << name() << " : " << type() << "\n";
+      } else if (operation == "commit") {
+       if (lastModified() >= lastCommitted() ||
+                childrenLastModified() >= lastCommitted())
+          preCommit(ctx);
+        else 
+          traverseChildren = false;
+      } else if (operation == "verify") {
+        if (properties.valid && childrenLastModified() < properties.lastVerified)
+          traverseChildren = false;
+        properties.valid = computeValid();
+        if (!properties.valid)
+          std::cout << name() << " marked invalid\n";
+        properties.lastVerified = TimeStamp();
+      } else if (operation == "modified") {
+        markAsModified();
+      }
+    }
+
+    void Node::postTraverse(RenderContext &ctx, const std::string& operation)
+    {
+      if (operation == "commit" &&
+          (lastModified() >= lastCommitted() ||
+           childrenLastModified() >= lastCommitted())) {
+        postCommit(ctx);
+        markAsCommitted();
+      } else if (operation == "verify") {
+        for (const auto &child : properties.children) {
+          if (child.second->flags() & NodeFlags::required)
+            properties.valid &= child.second->isValid();
+        }
+      }
+    }
+
+    void Node::preCommit(RenderContext &ctx)
+    {
+    }
+
+    void Node::postCommit(RenderContext &ctx)
+    {
+    }
+
     // ==================================================================
     // Renderable
     // ==================================================================
 
     void Renderable::preTraverse(RenderContext &ctx,
-                                 const std::string& operation)
+                                 const std::string& operation, bool& traverseChildren)
     {
-      Node::preTraverse(ctx,operation);
+      Node::preTraverse(ctx,operation, traverseChildren);
       if (operation == "render")
         preRender(ctx);
     }
@@ -406,7 +461,7 @@ namespace ospray {
     // global stuff
     // ==================================================================
 
-    using CreatorFct = std::shared_ptr<sg::Node>(*)();
+    using CreatorFct = sg::Node*(*)();
 
     std::map<std::string, CreatorFct> nodeRegistry;
 
@@ -431,7 +486,7 @@ namespace ospray {
         creator = it->second;
       }
 
-      std::shared_ptr<sg::Node> newNode = creator();
+      std::shared_ptr<sg::Node> newNode(creator());
       newNode->setName(name);
       newNode->setType(type);
       newNode->setFlags(flags);

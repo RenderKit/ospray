@@ -9,6 +9,8 @@ Version History
     `bgColor` now includes alpha and is always blended (no
     `backgroundEnabled` anymore). To disable the background don't set
     bgColor, or set it to transparent black (0, 0, 0, 0).
+-   Geometries "`spheres`" and "`cylinders`" now support texture
+    coordinates
 
 ### Changes in v1.2.1:
 
@@ -139,7 +141,7 @@ Version History
         -   GLUT viewer now supports volume rendering
         -   Command mode with preliminary scripting capabilities,
             enabled by pressing '`:`' key (not available when using
-            Intel C++ compiler (icc))
+            Intel C++ Compiler (icc))
     -   Enhanced support of sample applications on Windows
 -   New minimum ISPC version is 1.9.0
 -   Support of Intel® AVX-512 for second generation Intel Xeon Phi

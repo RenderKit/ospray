@@ -29,7 +29,7 @@ class LinearTransferFunctionWidget : public QWidget
   LinearTransferFunctionWidget();
 
   //! Minimum size of the widget.
-  virtual QSize minimumSizeHint() const { return QSize(240, 180); }
+  virtual QSize minimumSizeHint() const override { return QSize(240, 180); }
 
   //! Get numValues of the transfer function regularly spaced over the entire interval [0, 1].
   std::vector<float> getInterpolatedValuesOverInterval(const unsigned int &numValues);
@@ -50,10 +50,10 @@ signals:
 
 protected:
 
-  virtual void paintEvent(QPaintEvent * event);
-  virtual void mousePressEvent(QMouseEvent * event);
-  virtual void mouseReleaseEvent(QMouseEvent * event);
-  virtual void mouseMoveEvent(QMouseEvent * event);
+  virtual void paintEvent(QPaintEvent * event) override;
+  virtual void mousePressEvent(QMouseEvent * event) override;
+  virtual void mouseReleaseEvent(QMouseEvent * event) override;
+  virtual void mouseMoveEvent(QMouseEvent * event) override;
 
   //! Transform normalized coordinates to widget coordinates.
   QPointF pointToWidgetPoint(const QPointF &point);

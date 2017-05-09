@@ -43,7 +43,7 @@ namespace ospray {
   {
     struct OSPRAY_SDK_INTERFACE Instance : public RefCount
     {
-      virtual ~Instance() = default;
+      virtual ~Instance() {} // "= default;" causes linker problems with icc15
       /*! gets called every time the frame buffer got 'commit'ted */
       virtual void  commitNotify() {}
       /*! gets called once at the beginning of the frame */

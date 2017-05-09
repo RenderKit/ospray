@@ -35,6 +35,8 @@
 
 namespace ospray {
 
+  using namespace mpicommon;
+
   Material *RaycastVolumeRenderer::createMaterial(const char *type)
   {
     UNUSED(type);
@@ -46,15 +48,18 @@ namespace ospray {
     CacheForBlockTiles(size_t numBlocks)
       : numBlocks(numBlocks), blockTile(new Tile *[numBlocks])
     {
-      for (size_t i = 0; i < numBlocks; i++) blockTile[i] = nullptr;
+      for (size_t i = 0; i < numBlocks; i++)
+        blockTile[i] = nullptr;
     }
 
     ~CacheForBlockTiles()
     {
-      for (size_t i = 0; i < numBlocks; i++)
-        if (blockTile[i]) delete blockTile[i];
+      for (size_t i = 0; i < numBlocks; i++) {
+        if (blockTile[i])
+          delete blockTile[i];
+      }
 
-      delete[] blockTile;
+      delete [] blockTile;
     }
 
     Tile *allocTile()
@@ -92,7 +97,7 @@ namespace ospray {
 #endif
     }
 
-    Mutex mutex;
+    std::mutex mutex;
     size_t numBlocks;
     Tile *volatile *blockTile;
   };
@@ -119,27 +124,27 @@ namespace ospray {
 
   void DPRenderTask::operator()(int taskIndex) const
   {
-    const size_t tileID = taskIndex;
-    const size_t tile_y = taskIndex / numTiles_x;
-    const size_t tile_x = taskIndex - tile_y*numTiles_x;
+    const int &tileID = taskIndex;
+    const int tile_y  = tileID / numTiles_x;
+    const int tile_x  = tileID - tile_y*numTiles_x;
     const vec2i tileId(tile_x, tile_y);
-    const int32 accumID = fb->accumID(tileId);
+    const int accumID = fb->accumID(tileId);
     Tile bgTile(tileId, fb->size, accumID);
     Tile fgTile(bgTile);
 
-    size_t numBlocks = dpv->numDDBlocks;
+    int numBlocks = dpv->numDDBlocks;
     CacheForBlockTiles blockTileCache(numBlocks);
     bool *blockWasVisible = STACK_BUFFER(bool, numBlocks);
 
-    for (size_t i = 0; i < numBlocks; i++)
+    for (int i = 0; i < numBlocks; i++)
       blockWasVisible[i] = false;
 
     bool renderForeAndBackground =
-        (taskIndex % mpi::getWorkerCount()) == mpi::getWorkerRank();
+        (tileID % mpicommon::numWorkers()) == mpicommon::workerRank();
 
     const int numJobs = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
 
-    parallel_for(numJobs, [&](int tid){
+    tasking::parallel_for(numJobs, [&](int tid){
       ispc::DDDVRRenderer_renderTile(renderer->getIE(),
                                      (ispc::Tile&)fgTile,
                                      (ispc::Tile&)bgTile,
@@ -148,11 +153,10 @@ namespace ospray {
                                      dpv->ddBlock,
                                      blockWasVisible,
                                      tileID,
-                                     mpi::getWorkerRank(),
+                                     mpicommon::workerRank(),
                                      renderForeAndBackground,
                                      tid);
     });
-
 
     if (renderForeAndBackground) {
       // this is a tile owned by me - i'm responsible for writing
@@ -170,8 +174,6 @@ namespace ospray {
           + totalBlocksInTile /* plus how many blocks map to this
                                      tile, IN TOTAL (ie, INCLUDING blocks
                                      on other nodes)*/;
-      // printf("rank %i total tiles in tile %i is %i\n",
-      //        core::getWorkerRank(),taskIndex,nextGenTiles);
 
       // set background tile
       bgTile.generation = 0;
@@ -193,7 +195,7 @@ namespace ospray {
     // _across_all_clients_, but we only have to send ours (assuming
     // that all clients together send exactly as many as the owner
     // told the DFB to expect)
-    for (size_t blockID = 0; blockID < numBlocks; blockID++) {
+    for (int blockID = 0; blockID < numBlocks; blockID++) {
       Tile *tile = blockTileCache.blockTile[blockID];
       if (tile == nullptr)
         continue;
@@ -227,32 +229,19 @@ namespace ospray {
     }
 
     if (ddVolumeVec.empty()) {
-      static bool printed = false;
-      if (!printed) {
-        std::stringstream msg;
-        msg << "no data parallel volumes, rendering in traditional"
-             << " raycast_volume_render mode" << endl;
-        postErrorMsg(msg);
-        printed = true;
-      }
-
+      static WarnOnce warning("no data parallel volumes, rendering in "
+                              "traditional raycast_volume_render mode");
       return Renderer::renderFrame(fb,channelFlags);
     }
 
     // =======================================================
     // OK, we _need_ data-parallel rendering ....
-    static bool printed = false;
-    if (!printed) {
-      std::stringstream msg;
-      msg << "#dvr: at least one dp volume -> needs data-parallel rendering ..."
-          << std::endl;
-      postErrorMsg(msg);
-      printed = true;
-    }
+    static WarnOnce dataParMsg("#dvr: at least one dp volume ->"
+                               " needs data-parallel rendering ...");
 
     // check if we're even in mpi parallel mode (can't do
     // data-parallel otherwise)
-    if (!ospray::mpi::isMpiParallel()) {
+    if (!mpicommon::isMpiParallel()) {
       throw std::runtime_error("#dvr: need data-parallel rendering, "
                                "but not running in mpi mode!?");
     }
@@ -292,7 +281,7 @@ namespace ospray {
     renderTask.dpv = ddVolumeVec[0];
 
     size_t NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
-    parallel_for(NTASKS, renderTask);
+    tasking::parallel_for(NTASKS, renderTask);
 
     dfb->waitUntilFinished();
     Renderer::endFrame(nullptr, channelFlags);

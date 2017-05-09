@@ -16,18 +16,14 @@
 
 #pragma once
 
-// ours
-// ospray components
-#include "components/mpiCommon/async/CommLayer.h"
 // ospray
 #include "ospray/fb/LocalFB.h"
+// ospray_mpi
+#include "../common/Messaging.h"
 // std
-#include <queue>
+#include <condition_variable>
 
 namespace ospray {
-  using std::cout;
-  using std::endl;
-
   struct TileDesc;
   struct TileData;
 
@@ -36,24 +32,24 @@ namespace ospray {
   struct MasterTileMessage_FB;
   struct WriteTileMessage;
 
-  class DistributedTileError : public TileError {
+  class DistributedTileError : public TileError
+  {
     public:
       DistributedTileError(const vec2i &numTiles);
       ~DistributedTileError() = default;
       void sync(); // broadcast tileErrorBuffer to all workers
   };
 
-  struct DistributedFrameBuffer
-    : public mpi::async::CommLayer::Object,
-      public virtual FrameBuffer
+  struct DistributedFrameBuffer : public maml::MessageHandler,
+                                  public FrameBuffer
   {
-    DistributedFrameBuffer(mpi::async::CommLayer *comm,
-                           const vec2i &numPixels,
-                           size_t myHandle,
+    DistributedFrameBuffer(const vec2i &numPixels,
+                           ObjectHandle myHandle,
                            ColorBufferFormat,
                            bool hasDepthBuffer,
                            bool hasAccumBuffer,
-                           bool hasVarianceBuffer);
+                           bool hasVarianceBuffer,
+                           bool masterIsAWorker = false);
 
     ~DistributedFrameBuffer();
 
@@ -88,22 +84,23 @@ namespace ospray {
 
     void waitUntilFinished();
 
-    // ==================================================================
-    // remaining framebuffer interface
-    // ==================================================================
-
     int32 accumID(const vec2i &) override;
     float tileError(const vec2i &tile) override;
+    void  beginFrame() override;
     float endFrame(const float errorThreshold) override;
 
+    enum FrameMode { WRITE_ONCE, ALPHA_BLEND, Z_COMPOSITE };
+
+    void setFrameMode(FrameMode newFrameMode) ;
+
     // ==================================================================
-    // interface for the comm layer, to enable communication between
+    // interface for maml messaging, enables communication between
     // different instances of same object
     // ==================================================================
 
     //! handle incoming message from commlayer. it's the
     //! recipient's job to properly delete the message.
-    void incoming(mpi::async::CommLayer::Message *msg) override;
+    void incoming(const std::shared_ptr<mpicommon::Message> &message) override;
 
     //! process an empty client-to-master write tile message */
     void processMessage(MasterTileMessage *msg);
@@ -114,6 +111,13 @@ namespace ospray {
 
     //! process a client-to-client write tile message */
     void processMessage(WriteTileMessage *msg);
+
+  private:
+
+    friend struct TileData;
+    friend struct AlphaBlendTile_simple;
+    friend struct WriteOnlyOnceTile;
+    friend struct ZCompositeTile;
 
     // ==================================================================
     // internal helper functions
@@ -130,34 +134,36 @@ namespace ospray {
         that this tile is now done. */
     void tileIsCompleted(TileData *tile);
 
+    void sendTileToMaster(TileData *tile);
+
     //! number of tiles that "I" own
-    size_t numMyTiles() const { return myTiles.size(); }
-    bool IamTheMaster() const { return comm->IamTheMaster(); }
-    static int32 workerRank(int id) { return mpi::async::CommLayer::workerRank(id); }
-
-    /*! return tile descriptor for given pixel coordinates. this tile
-      ! may or may not belong to current instance */
-    TileDesc *getTileDescFor(const vec2i &coords) const
-    { return allTiles[getTileIDof(coords)]; }
-
-    /*! return the tile ID for given pair of coordinates. this tile
-        may or may not belong to current instance */
-    size_t getTileIDof(const vec2i &c) const
-    { return (c.x/TILE_SIZE)+(c.y/TILE_SIZE)*numTiles.x; }
+    size_t numMyTiles() const;
 
     //! \brief common function to help printf-debugging
     /*! \detailed Every derived class should overrride this! */
-    std::string toString() const override
-    { return "ospray::DistributedFrameBuffer"; }
+    std::string toString() const override;
 
-    typedef enum {
-      WRITE_ONCE, ALPHA_BLEND, Z_COMPOSITE
-    } FrameMode;
+    /*! return tile descriptor for given pixel coordinates. this tile
+      ! may or may not belong to current instance */
+    TileDesc *getTileDescFor(const vec2i &coords) const;
+
+    /*! return the tile ID for given pair of coordinates. this tile
+        may or may not belong to current instance */
+    size_t getTileIDof(const vec2i &c) const;
+
+    void createTiles();
+    TileData *createTile(const vec2i &xy, size_t tileID, size_t ownerID);
+    void freeTiles();
+
+    size_t ownerIDFromTileID(size_t tileID);
+
+    // Data members ///////////////////////////////////////////////////////////
+
+    ObjectHandle myID;
 
     int32 *tileAccumID; //< holds accumID per tile, for adaptive accumulation
     //!< holds error per tile and adaptive regions, for variance estimation / stopping
     DistributedTileError tileErrorRegion;
-
 
     /*! local frame buffer on the master used for storing the final
         tiles. will be null on all workers, and _may_ be null on the
@@ -165,10 +171,6 @@ namespace ospray {
     Ref<LocalFrameBuffer> localFBonMaster;
 
     FrameMode frameMode;
-    void setFrameMode(FrameMode newFrameMode) ;
-    void createTiles();
-    TileData *createTile(const vec2i &xy, size_t tileID, size_t ownerID);
-    void freeTiles();
 
     /*! #tiles we've (already) sent to / received by the master this frame
         (used to track when current node is done with this frame - we are done
@@ -186,7 +188,7 @@ namespace ospray {
 
     /*! mutex used to protect all threading-sensitive data in this
         object */
-    Mutex mutex;
+    std::mutex mutex;
 
     //! set to true when the frame becomes 'active', and write tile
     //! messages can be consumed.
@@ -196,8 +198,10 @@ namespace ospray {
         frame */
     bool frameIsDone;
 
+    bool masterIsAWorker {false};
+
     //! condition that gets triggered when the frame is done
-    Condition frameDoneCond;
+    std::condition_variable frameDoneCond;
 
     /*! a vector of async messages for the *current* frame that got
         received before that frame actually started, and that we have
@@ -205,7 +209,7 @@ namespace ospray {
         condition can actually happen if another node is just fast
         enough, and sends us the first rendered tile before our node's
         loadbalancer even started working on that frame. */
-    std::vector<mpi::async::CommLayer::Message *> delayedMessage;
+    std::vector<std::shared_ptr<mpicommon::Message>> delayedMessage;
   };
 
   // Inlined definitions //////////////////////////////////////////////////////

@@ -108,20 +108,22 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
   vec3f singleCoordinates;
   float singleMax = -1.f;
   float singleMin = 0.01f;
-  ray.t0 = tBegin;
-  float tSkipped = -1;  //for adaptive, skip adapting sampling rate up to this value
-  vec4f intervalColor = make_vec4f(0.f);
-  if (volume->adaptiveSampling)
-    volume->intersectAdaptive(volume, ray, volume->adaptiveMaxSamplingRate);
-  else 
-    volume->intersect(volume,ray);
-  tBegin = ray.t0+renderer->super.epsilon;
-  // const uniform float oneOverQuality = (1.f/quality);
   float samplingRate = volume->samplingRate*quality;
   float lastSample = -1.f;
   const float adaptiveScalar = volume->adaptiveScalar*quality;
   const float maxSamplingRate = volume->adaptiveMaxSamplingRate*quality; //2.f nyquist frequency
   const float adaptiveBacktrack = volume->adaptiveBacktrack;
+  ray.t0 = tBegin;
+  //ray.time = ray.t0-tBegin;
+  float tSkipped = -1f;  //for adaptive, skip adapting sampling rate up to this value
+  vec4f intervalColor = make_vec4f(0.f);
+  //TODO: initially sampling by max samplingRate produced artifacts, not sure why.
+  if (volume->adaptiveSampling)
+    volume->intersectAdaptive(volume, ray, samplingRate);
+  else 
+    volume->intersect(volume,ray);
+  tBegin = tBegin+renderer->super.epsilon;
+  // const uniform float oneOverQuality = (1.f/quality);
   while (ray.t0 < tEnd && intervalColor.w < maxOpacity)
     {
       // Sample the volume at the hit point in world coordinates.

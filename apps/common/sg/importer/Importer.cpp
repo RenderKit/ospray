@@ -99,7 +99,7 @@ namespace ospray {
 
     // for now, let's hardcode the importers - should be moved to a
     // registry at some point ...
-    void importFileType_points(std::shared_ptr<World> &world,
+    void importFileType_points(std::shared_ptr<Node> &world,
                                const FileName &url);
 
 
@@ -153,7 +153,7 @@ namespace ospray {
 
     Importer::Importer()
     {
-      createChildNode("fileName", "string");
+      createChild("fileName", "string");
     }
 
     void Importer::setChildrenModified(TimeStamp t)
@@ -171,7 +171,7 @@ namespace ospray {
 
       loadedFileName = "";
 
-      std::shared_ptr<sg::World> wsg(std::dynamic_pointer_cast<sg::World>(shared_from_this()));
+      std::shared_ptr<sg::Node> wsg(std::dynamic_pointer_cast<sg::Node>(shared_from_this()));
 
 #if 1
       std::shared_ptr<FormatURL> fu;
@@ -196,13 +196,13 @@ namespace ospray {
       } 
 #endif
       if (fileName.ext() == "obj") {
-        std::cout << "importing file: " << fileName.str() << std::endl;
-        sg::importOBJ(std::static_pointer_cast<sg::World>(shared_from_this()), fileName);
+        sg::importOBJ(std::static_pointer_cast<sg::Node>(shared_from_this()), fileName);
       } else if (fileName.ext() == "ply") {
         sg::importPLY(wsg, fileName);
       } else if (fileName.ext() == "osg" || fileName.ext() == "osp") {
         sg::loadOSP(wsg, fileName);
-        instanced = false;
+      } else if (fileName.ext() == "xml") {
+        sg::importRIVL(wsg, fileName);
       } else if (fileName.ext() == "x3d" || fileName.ext() == "hbp" ||
                  fileName.ext() == "msg" || fileName.ext() == "stl" ||
                  fileName.ext() == "tri" || fileName.ext() == "xml") {

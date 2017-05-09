@@ -41,5 +41,5 @@ namespace ospray {
     float intensity {1.f};   //!< Amount of light emitted
   };
 
-}
+} // ::ospray
 

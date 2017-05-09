@@ -18,8 +18,6 @@
 
 #include <mutex>
 
-#include "ImguiUtilExport.h"
-
 namespace ospray {
 
   template <typename T>

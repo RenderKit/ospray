@@ -72,9 +72,9 @@ namespace ospray {
       if (OSPRAY_LOG_OUTPUT.first) {
         auto &dst = OSPRAY_LOG_OUTPUT.second;
         if (dst == "cout")
-          error_fcn = [](const char *msg){ std::cout << msg; };
+          msg_fcn = [](const char *msg){ std::cout << msg; };
         else if (dst == "cerr")
-          error_fcn = [](const char *msg){ std::cerr << msg; };
+          msg_fcn = [](const char *msg){ std::cerr << msg; };
       }
 
       if (debugMode) {
@@ -84,9 +84,9 @@ namespace ospray {
 
       auto OSPRAY_SET_AFFINITY = getEnvVar<int>("OSPRAY_SET_AFFINITY");
       if (OSPRAY_SET_AFFINITY.first && OSPRAY_SET_AFFINITY.second != 0)
-        deAffinitizeCores();
+        tasking::deAffinitizeCores();
 
-      initTaskingSystem(numThreads);
+      tasking::initTaskingSystem(numThreads);
 
       committed = true;
     }

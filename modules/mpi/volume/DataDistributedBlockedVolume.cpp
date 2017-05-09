@@ -52,9 +52,8 @@ namespace ospray {
 
   DataDistributedBlockedVolume::DataDistributedBlockedVolume() :
     numDDBlocks(0),
-    ddBlock(NULL)
+    ddBlock(nullptr)
   {
-    PING;
   }
 
   void DataDistributedBlockedVolume::updateEditableParameters()
@@ -68,7 +67,7 @@ namespace ospray {
       }
 
       Ref<TransferFunction> transferFunction
-        = (TransferFunction *)getParamObject("transferFunction", NULL);
+        = (TransferFunction *)getParamObject("transferFunction", nullptr);
 
       auto &cppVolume = block->cppVolume;
       cppVolume->findParam("transferFunction",1)->set(transferFunction.ptr);
@@ -89,8 +88,9 @@ namespace ospray {
 
   void DataDistributedBlockedVolume::buildAccelerator()
   {
-    std::cout << "intentionally SKIP building an accelerator for data parallel "
-              << "volume (this'll be done on the brick level)" << std::endl;
+    postStatusMsg("intentionally SKIP building an accelerator for data "
+                  "parallel volume (this'll be done on the brick level)",
+                  OSPRAY_MPI_VERBOSE_LEVEL);
   }
 
   std::string DataDistributedBlockedVolume::toString() const
@@ -117,7 +117,7 @@ namespace ospray {
   {
     // Create the equivalent ISPC volume container and allocate memory for voxel
     // data.
-    if (ispcEquivalent == NULL) createEquivalentISPC();
+    if (ispcEquivalent == nullptr) createEquivalentISPC();
 
     // The block domains are in terms of the scaled regions so we must check
     // if the data is for the block in the scaled volume
@@ -161,7 +161,7 @@ namespace ospray {
 
   void DataDistributedBlockedVolume::createEquivalentISPC()
   {
-    if (ispcEquivalent != NULL) return;
+    if (ispcEquivalent != nullptr) return;
 
     // Get the voxel type.
     voxelType = getParamString("voxelType", "unspecified");  
@@ -177,9 +177,11 @@ namespace ospray {
 
     ddBlocks    = getParam3i("num_dp_blocks",vec3i(4,4,4));
     blockSize   = divRoundUp(dimensions,ddBlocks);
-    std::cout << "#osp:dp: using data parallel volume of " << ddBlocks
-              << " blocks, blockSize is " << blockSize << std::endl;
-    
+
+    postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+        << "#osp:dp: using data parallel volume of " << ddBlocks
+        << " blocks, blockSize is " << blockSize;
+
     // Set the grid origin, default to (0,0,0).
     this->gridOrigin = getParam3f("gridOrigin", vec3f(0.f));
 
@@ -196,18 +198,18 @@ namespace ospray {
     numDDBlocks = ospcommon::reduce_mul(ddBlocks);
     ddBlock     = new DDBlock[numDDBlocks];
 
-    printf("=======================================================\n");
-    printf("created %ix%ix%i data distributed volume blocks\n",
-           ddBlocks.x,ddBlocks.y,ddBlocks.z);
-    printf("=======================================================\n");
+    postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+        << "=======================================================\n"
+        << "created " << ddBlocks.x << "x" << ddBlocks.y << "x" << ddBlocks.z
+        << " data distributed volume blocks\n"
+        << "=======================================================";
 
-    if (!ospray::mpi::isMpiParallel()) {
+    if (!mpicommon::isMpiParallel()) {
       throw std::runtime_error("data parallel volume, but not in mpi parallel "
                                "mode...");
     }
-    uint64_t numWorkers = mpi::getWorkerCount();
-    // PRINT(numDDBlocks);
-    // PRINT(numWorkers);
+
+    uint64_t numWorkers = mpicommon::numWorkers();
 
     voxelType = getParamString("voxelType", "unspecified");  
 
@@ -228,8 +230,8 @@ namespace ospray {
             block->numOwners = nextBlockFirstOwner - block->firstOwner; // + 1;
           }
           block->isMine 
-            = (ospray::mpi::getWorkerRank() >= block->firstOwner)
-            && (ospray::mpi::getWorkerRank() <
+            = (mpicommon::workerRank() >= block->firstOwner)
+            && (mpicommon::workerRank() <
                 (block->firstOwner + block->numOwners));
           block->domain.lower = vec3i(ix,iy,iz) * blockSize;
           block->domain.upper = min(block->domain.lower+blockSize,dimensions);
@@ -259,14 +261,17 @@ namespace ospray {
               volume->findParam("scaleFactor",1)->set(scaleFactor);
             }
             
-            printf("worker rank %li owns block %i,%i,%i (ID %i), dims %i %i %i\n",
-                   (size_t)mpi::getWorkerRank(),ix,iy,iz,
-                   blockID,blockDims.x,blockDims.y,blockDims.z);
+            postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
+                << "worker rank " << mpicommon::workerRank()
+                << " owns block " << ix << "," << iy << "," << iz
+                << " (ID " << blockID << "), dims " << blockDims.x
+                << " " << blockDims.y << " " << blockDims.z;
+
             block->cppVolume = volume;
-            block->ispcVolume = NULL; //volume->getIE();
+            block->ispcVolume = nullptr; //volume->getIE();
           } else {
-            block->ispcVolume = NULL;
-            block->cppVolume = NULL;
+            block->ispcVolume = nullptr;
+            block->cppVolume = nullptr;
           }
         }
     

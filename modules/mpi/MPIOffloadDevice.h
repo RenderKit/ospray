@@ -16,22 +16,25 @@
 
 #pragma once
 
+// ospcommon
+#include "ospcommon/networking/BufferedDataStreaming.h"
 // mpicommon
 #include "mpiCommon/MPICommon.h"
 // ospray
 #include "api/Device.h"
 #include "common/Managed.h"
 // ospray::mpi
-#include "common/BufferedDataStreaming.h"
 #include "common/OSPWork.h"
 
 /*! \file MPIDevice.h Implements the "mpi" device for mpi rendering */
 
 namespace ospray {
   namespace mpi {
-    struct MPIDevice : public api::Device {
-      MPIDevice();
-      ~MPIDevice();
+
+    struct MPIOffloadDevice : public api::Device
+    {
+      MPIOffloadDevice() = default;
+      ~MPIOffloadDevice();
 
       // ManagedObject Implementation /////////////////////////////////////////
 
@@ -66,7 +69,8 @@ namespace ospray {
       /*! create a new pixelOp object (out of list of registered pixelOps) */
       OSPPixelOp newPixelOp(const char *type) override;
 
-      /*! clear the specified channel(s) of the frame buffer specified in 'whichChannels'
+      /*! clear the specified channel(s) of the frame buffer specified in
+          'whichChannels'
 
         if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to
         '0,0,0,0'.
@@ -82,9 +86,6 @@ namespace ospray {
 
       /*! create a new model */
       OSPModel newModel() override;
-
-      // /*! finalize a newly specified model */
-      // void finalizeModel(OSPModel _model) override;
 
       /*! commit the given object's outstanding changes */
       void commit(OSPObject object) override;
@@ -152,7 +153,8 @@ namespace ospray {
                     const char *bufName,
                     const vec3i &v) override;
 
-      /*! add untyped void pointer to object - this will *ONLY* work in local rendering!  */
+      /*! add untyped void pointer to object - this will *ONLY* work in local
+          rendering!  */
       void setVoidPtr(OSPObject object, const char *bufName, void *v) override;
 
       void removeParam(OSPObject object, const char *name) override;
@@ -199,45 +201,31 @@ namespace ospray {
       OSPTexture2D newTexture2D(const vec2i &size, const OSPTextureFormat,
                                 void *data, const uint32 flags) override;
 
-      // /*! switch API mode for distriubted API extensions */
-      // void apiMode(OSPDApiMode mode) override;
-
-      OSPDApiMode currentApiMode {OSPD_MODE_MASTERED};
-
       /*! sample a volume */
       void sampleVolume(float **results,
                         OSPVolume volume,
                         const vec3f *worldCoordinates,
                         const size_t &count) override;
 
-      void processWork(work::Work* work);
-
     private:
+
+      void processWork(work::Work &work, bool flushWriteStream = false);
 
       /*! This only exists to support getting the voxel type for setRegion */
       int getString(OSPObject object, const char *name, char **value);
 
       ObjectHandle allocateHandle() const;
 
-      //      std::shared_ptr<mpi::BufferedMPIComm> bufferedComm;
-
       /*! @{ read and write stream for the work commands */
-      std::unique_ptr<Fabric>      mpiFabric;
-      std::unique_ptr<ReadStream>  readStream;
-      std::unique_ptr<WriteStream> writeStream;
+      std::unique_ptr<networking::Fabric>      mpiFabric;
+      std::unique_ptr<networking::ReadStream>  readStream;
+      std::unique_ptr<networking::WriteStream> writeStream;
       /*! @} */
 
       work::WorkTypeRegistry workRegistry;
 
       bool initialized {false};
     };
-
-    // ==================================================================
-    // Helper functions
-    // ==================================================================
-
-    // /*! return a string represenging the given API Mode */
-    // const char *apiModeName(int mode);
 
   } // ::ospray::mpi
 } // ::ospray

@@ -32,186 +32,6 @@ namespace ospray {
   namespace mpi {
     namespace work {
 
-
-      // =======================================================
-      // CMD_COMMIT
-      // =======================================================
-      
-      CommitObject::CommitObject(ObjectHandle handle)
-        : handle(handle)
-      {}
-      
-      void CommitObject::run()
-      {
-        ManagedObject *obj = handle.lookup();
-        if (obj) {
-          obj->commit();
-
-          // TODO: Do we need this hack anymore?
-          // It looks like yes? or at least glutViewer segfaults if we don't do this
-          // hack, to stay compatible with earlier version
-          Model *model = dynamic_cast<Model*>(obj);
-          if (model) model->finalize();
-        } else {
-          throw std::runtime_error("Error: rank "
-                                   + std::to_string(mpi::world.rank)
-                                   + " did not have object to commit!");
-        }
-        // TODO: Work units should not be directly making MPI calls.
-        // What should be responsible for this barrier?
-        // MPI_Barrier(MPI_COMM_WORLD);
-
-        /// iw: nah, perfectly OK to do MPI calls, as long as they
-        /// don't get into each other's ways, nad make sure there's no
-        /// cyclical dependencies (ie, that the server unit actually
-        /// does get flushed etcpp)
-        
-        mpi::app.barrier();
-      }
-      
-      void CommitObject::runOnMaster()
-      {
-        if (handle.defined()) {
-          ManagedObject *obj = handle.lookup();
-          if (dynamic_cast<Renderer*>(obj)) {
-            obj->commit();
-          }
-        }
-        mpi::worker.barrier();
-      }
-      
-      void CommitObject::serialize(WriteStream &b) const
-      {
-        b << (int64)handle;
-      }
-      
-      void CommitObject::deserialize(ReadStream &b)
-      {
-        b >> handle.i64;
-      }
-
-      // =======================================================
-      // CMD_CREATE_FRAMEBUFFER
-      // =======================================================
-
-      CreateFrameBuffer::CreateFrameBuffer(ObjectHandle handle,
-                                           vec2i dimensions,
-                                           OSPFrameBufferFormat format,
-                                           uint32 channels)
-        : handle(handle),
-          dimensions(dimensions),
-          format(format),
-          channels(channels)
-      {
-      }
-    
-      void CreateFrameBuffer::run()
-      {
-        const bool hasDepthBuffer = channels & OSP_FB_DEPTH;
-        const bool hasAccumBuffer = channels & OSP_FB_ACCUM;
-        const bool hasVarianceBuffer = channels & OSP_FB_VARIANCE;
-
-        assert(dimensions.x > 0);
-        assert(dimensions.y > 0);
-        FrameBuffer *fb
-          = new DistributedFrameBuffer(ospray::mpi::async::CommLayer::WORLD,
-                                       dimensions, handle, format, hasDepthBuffer,
-                                       hasAccumBuffer, hasVarianceBuffer);
-        // TODO: Only the master does this increment, though should the workers do it too?
-        fb->refInc();
-        handle.assign(fb);
-      }
-      
-      void CreateFrameBuffer::runOnMaster()
-      {
-        run();
-      }
-      
-      void CreateFrameBuffer::serialize(WriteStream &b) const
-      {
-        b << (int64)handle << dimensions << (int32)format << channels;
-      }
-      
-      void CreateFrameBuffer::deserialize(ReadStream &b)
-      {
-        int32 fmt;
-        b >> handle.i64 >> dimensions >> fmt >> channels;
-        format = (OSPFrameBufferFormat)fmt;
-      }
-
-      // =======================================================
-      // CMD_LOAD_MODULE
-      // =======================================================
-      
-      LoadModule::LoadModule(const std::string &name)
-        : name(name)
-      {}
-      
-      void LoadModule::run()
-      {
-        const std::string libName = "ospray_module_" + name;
-        loadLibrary(libName);
-
-        const std::string initSymName = "ospray_init_module_" + name;
-        void *initSym = getSymbol(initSymName);
-        if (!initSym) {
-          throw std::runtime_error("could not find module initializer "
-                                   + initSymName);
-        }
-        void (*initMethod)() = (void(*)())initSym;
-        initMethod();
-      }
-      void LoadModule::runOnMaster()
-      {
-        run();
-      }
-      void LoadModule::serialize(WriteStream &b) const
-      {
-        b << name;
-      }
-      
-      void LoadModule::deserialize(ReadStream &b)
-      {
-        b >> name;
-      }
-
-      // =======================================================
-      // CMD_SET_PARAM<...>
-      // =======================================================
-      template<>
-      void SetParam<std::string>::run()
-      {
-        ManagedObject *obj = handle.lookup();
-        Assert(obj);
-        obj->findParam(name.c_str(), true)->set(val.c_str());
-      }
-    
-      template<>
-      void SetParam<std::string>::runOnMaster()
-      {
-        if (!handle.defined())
-          return;
-        
-        ManagedObject *obj = handle.lookup();
-        if (dynamic_cast<Renderer*>(obj) || dynamic_cast<Volume*>(obj)) {
-          obj->findParam(name.c_str(), true)->set(val.c_str());
-        }
-      }
-
-      // =======================================================
-      // CMD_SET_MATERIAL
-      // =======================================================
-      void SetMaterial::run() 
-      {
-        Geometry *geom = (Geometry*)handle.lookup();
-        Material *mat = (Material*)material.lookup();
-        Assert(geom);
-        Assert(mat);
-        /* might we worthwhile doing a dyncast here to check if that
-           is actually a proper geometry .. */
-        geom->setMaterial(mat);
-      }
-
       void registerOSPWorkItems(WorkTypeRegistry &registry)
       {
         registerWorkUnit<NewRenderer>(registry);
@@ -261,9 +81,164 @@ namespace ospray {
         registerWorkUnit<CommandFinalize>(registry);
       }
 
-      // =======================================================
-      // ospNewRenderer
-      // =======================================================
+      // ospCommit ////////////////////////////////////////////////////////////
+      
+      CommitObject::CommitObject(ObjectHandle handle)
+        : handle(handle)
+      {}
+      
+      void CommitObject::run()
+      {
+        ManagedObject *obj = handle.lookup();
+        if (obj) {
+          obj->commit();
+        } else {
+          throw std::runtime_error("Error: rank "
+                                   + std::to_string(mpicommon::world.rank)
+                                   + " did not have object to commit!");
+        }
+        // TODO: Work units should not be directly making MPI calls.
+        // What should be responsible for this barrier?
+        // MPI_Barrier(MPI_COMM_WORLD);
+
+        /// iw: nah, perfectly OK to do MPI calls, as long as they
+        /// don't get into each other's ways, nad make sure there's no
+        /// cyclical dependencies (ie, that the server unit actually
+        /// does get flushed etcpp)
+        
+        mpicommon::app.barrier();
+      }
+      
+      void CommitObject::runOnMaster()
+      {
+        if (handle.defined()) {
+          ManagedObject *obj = handle.lookup();
+          if (dynamic_cast<Renderer*>(obj)) {
+            obj->commit();
+          }
+        }
+        mpicommon::worker.barrier();
+      }
+      
+      void CommitObject::serialize(WriteStream &b) const
+      {
+        b << (int64)handle;
+      }
+      
+      void CommitObject::deserialize(ReadStream &b)
+      {
+        b >> handle.i64;
+      }
+
+      // ospNewFrameBuffer ////////////////////////////////////////////////////
+
+      CreateFrameBuffer::CreateFrameBuffer(ObjectHandle handle,
+                                           vec2i dimensions,
+                                           OSPFrameBufferFormat format,
+                                           uint32 channels)
+        : handle(handle),
+          dimensions(dimensions),
+          format(format),
+          channels(channels)
+      {
+      }
+    
+      void CreateFrameBuffer::run()
+      {
+        const bool hasDepthBuffer    = channels & OSP_FB_DEPTH;
+        const bool hasAccumBuffer    = channels & OSP_FB_ACCUM;
+        const bool hasVarianceBuffer = channels & OSP_FB_VARIANCE;
+
+        assert(dimensions.x > 0);
+        assert(dimensions.y > 0);
+
+        FrameBuffer *fb
+          = new DistributedFrameBuffer(dimensions, handle,
+                                       format, hasDepthBuffer,
+                                       hasAccumBuffer, hasVarianceBuffer);
+        fb->refInc();
+        handle.assign(fb);
+      }
+      
+      void CreateFrameBuffer::runOnMaster()
+      {
+        run();
+      }
+      
+      void CreateFrameBuffer::serialize(WriteStream &b) const
+      {
+        b << (int64)handle << dimensions << (int32)format << channels;
+      }
+      
+      void CreateFrameBuffer::deserialize(ReadStream &b)
+      {
+        int32 fmt;
+        b >> handle.i64 >> dimensions >> fmt >> channels;
+        format = (OSPFrameBufferFormat)fmt;
+      }
+
+      // ospLoadModule ////////////////////////////////////////////////////////
+      
+      LoadModule::LoadModule(const std::string &name)
+        : name(name)
+      {}
+      
+      void LoadModule::run()
+      {
+        errorCode = loadLocalModule(name);
+      }
+
+      void LoadModule::runOnMaster()
+      {
+        run();
+      }
+
+      void LoadModule::serialize(WriteStream &b) const
+      {
+        b << name;
+      }
+      
+      void LoadModule::deserialize(ReadStream &b)
+      {
+        b >> name;
+      }
+
+      // ospSetParam //////////////////////////////////////////////////////////
+
+      template<>
+      void SetParam<std::string>::run()
+      {
+        ManagedObject *obj = handle.lookup();
+        Assert(obj);
+        obj->findParam(name.c_str(), true)->set(val.c_str());
+      }
+    
+      template<>
+      void SetParam<std::string>::runOnMaster()
+      {
+        if (!handle.defined())
+          return;
+        
+        ManagedObject *obj = handle.lookup();
+        if (dynamic_cast<Renderer*>(obj) || dynamic_cast<Volume*>(obj)) {
+          obj->findParam(name.c_str(), true)->set(val.c_str());
+        }
+      }
+
+      // ospSetMaterial ///////////////////////////////////////////////////////
+
+      void SetMaterial::run() 
+      {
+        Geometry *geom = (Geometry*)handle.lookup();
+        Material *mat = (Material*)material.lookup();
+        Assert(geom);
+        Assert(mat);
+        /* might we worthwhile doing a dyncast here to check if that
+           is actually a proper geometry .. */
+        geom->setMaterial(mat);
+      }
+
+      // ospNewRenderer ///////////////////////////////////////////////////////
 
       template<>
       void NewRenderer::runOnMaster()
@@ -271,9 +246,7 @@ namespace ospray {
         run();
       }
 
-      // =======================================================
-      // ospNewVolume
-      // =======================================================
+      // ospNewVolume /////////////////////////////////////////////////////////
 
       template<>
       void NewVolume::runOnMaster()
@@ -281,9 +254,8 @@ namespace ospray {
         run();
       }
 
-      // =======================================================
-      // ospNewModel
-      // =======================================================
+      // ospNewModel //////////////////////////////////////////////////////////
+
       template<>
       void NewModel::run()
       {
@@ -291,9 +263,7 @@ namespace ospray {
         handle.assign(model);
       }
 
-      // =======================================================
-      // ospNewMaterial
-      // =======================================================
+      // ospNewMaterial ///////////////////////////////////////////////////////
 
       void NewMaterial::run()
       {
@@ -310,7 +280,9 @@ namespace ospray {
         if (!material) material = Material::createMaterial(type.c_str());
         handle.assign(material);
       }
-      
+
+      // ospNewLight //////////////////////////////////////////////////////////
+
       void NewLight::run()
       {
         Renderer *renderer = (Renderer*)rendererHandle.lookup();
@@ -327,9 +299,7 @@ namespace ospray {
         handle.assign(light);
       }
       
-      // =======================================================
-      // ospNewData
-      // =======================================================
+      // ospNewData ///////////////////////////////////////////////////////////
 
       NewData::NewData(ObjectHandle handle,
                        size_t nItems,
@@ -431,6 +401,8 @@ namespace ospray {
         format = (OSPDataType)fmt;
       }
 
+      // ospNewTexture2d //////////////////////////////////////////////////////
+
       NewTexture2d::NewTexture2d(ObjectHandle handle,
                                  vec2i dimensions,
                                  OSPTextureFormat format,
@@ -466,6 +438,8 @@ namespace ospray {
         b >> handle.i64 >> dimensions >> fmt >> flags >> data;
         format = (OSPTextureFormat)fmt;
       }
+
+      // ospSetRegion /////////////////////////////////////////////////////////
 
       SetRegion::SetRegion(OSPVolume volume, vec3i start, vec3i size,
                            const void *src, OSPDataType type)
@@ -508,10 +482,7 @@ namespace ospray {
         type = (OSPDataType)ty;
       }
 
-
-      // =======================================================
-      // ospFrameBufferClear
-      // =======================================================
+      // ospFrameBufferClear //////////////////////////////////////////////////
 
       ClearFrameBuffer::ClearFrameBuffer(OSPFrameBuffer fb, uint32 channels)
         : handle((ObjectHandle&)fb), channels(channels)
@@ -539,9 +510,7 @@ namespace ospray {
         b >> handle.i64 >> channels;
       }
 
-      // =======================================================
-      // ospRenderFrame
-      // =======================================================
+      // ospRenderFrame ///////////////////////////////////////////////////////
       
       RenderFrame::RenderFrame(OSPFrameBuffer fb,
                                OSPRenderer renderer,
@@ -554,8 +523,8 @@ namespace ospray {
       
       void RenderFrame::run()
       {
-        FrameBuffer *fb = (FrameBuffer*)fbHandle.lookup();
         Renderer *renderer = (Renderer*)rendererHandle.lookup();
+        FrameBuffer *fb    = (FrameBuffer*)fbHandle.lookup();
         Assert(renderer);
         Assert(fb);
         // TODO: This function execution must run differently
@@ -565,21 +534,13 @@ namespace ospray {
         // takes over scheduling of tile work like the distributed volume renderer
         // We need some way to pick the right function to call, either to the
         // renderer or directly to the load balancer to render the frame
-#if 1
         varianceResult = renderer->renderFrame(fb, channels);
-#else
-        if (mpi::world.rank > 0) {
-          renderer->renderFrame(fb, channels);
-        } else {
-          TiledLoadBalancer::instance->renderFrame(nullptr, fb, channels);
-        }
-#endif
       }
       
       void RenderFrame::runOnMaster()
       {
         Renderer *renderer = (Renderer*)rendererHandle.lookup();
-        FrameBuffer *fb = (FrameBuffer*)fbHandle.lookup();
+        FrameBuffer *fb    = (FrameBuffer*)fbHandle.lookup();
         Assert(renderer);
         Assert(fb);
         varianceResult =
@@ -596,6 +557,8 @@ namespace ospray {
         b >> fbHandle.i64 >> rendererHandle.i64 >> channels;
       }
 
+      // ospAddGeometry ///////////////////////////////////////////////////////
+
       void AddGeometry::run()
       {
         Model *model = (Model*)modelHandle.lookup();
@@ -605,6 +568,8 @@ namespace ospray {
         model->geometry.push_back(geometry);
       }
 
+      // ospAddVolume /////////////////////////////////////////////////////////
+
       void AddVolume::run()
       {
         Model *model = (Model*)modelHandle.lookup();
@@ -613,6 +578,8 @@ namespace ospray {
         Assert(volume);
         model->volume.push_back(volume);
       }
+
+      // ospRemoveGeometry ////////////////////////////////////////////////////
 
       void RemoveGeometry::run()
       {
@@ -629,7 +596,10 @@ namespace ospray {
         }
       }
 
-      void RemoveVolume::run() {
+      // ospRemoveVolume //////////////////////////////////////////////////////
+
+      void RemoveVolume::run()
+      {
         Model *model = (Model*)modelHandle.lookup();
         Volume *volume = (Volume*)objectHandle.lookup();
         Assert(model);
@@ -643,6 +613,8 @@ namespace ospray {
           model->volume.erase(it);
         }
       }
+
+      // ospRemoveParam ///////////////////////////////////////////////////////
 
       RemoveParam::RemoveParam(ObjectHandle handle, const char *name)
         : handle(handle), name(name)
@@ -675,9 +647,7 @@ namespace ospray {
         b >> handle.i64 >> name;
       }
 
-      // =======================================================
-      // ospSetPixelOp
-      // =======================================================
+      // ospSetPixelOp ////////////////////////////////////////////////////////
       
       SetPixelOp::SetPixelOp(OSPFrameBuffer fb, OSPPixelOp op)
         : fbHandle((ObjectHandle&)fb),
@@ -693,8 +663,8 @@ namespace ospray {
         fb->pixelOp = po->createInstance(fb, fb->pixelOp.ptr);
 
         if (!fb->pixelOp) {
-          std::cout << "#osp:mpi: WARNING: PixelOp did not create an instance!"
-                    << std::endl;
+          postStatusMsg("#osp:mpi: WARNING: PixelOp did not create "
+                        "an instance!", 1);
         }
       }
 
@@ -708,9 +678,7 @@ namespace ospray {
         b >> fbHandle.i64 >> poHandle.i64;
       }
 
-      // =======================================================
-      // ospRelease
-      // =======================================================
+      // ospRelease ///////////////////////////////////////////////////////////
       
       CommandRelease::CommandRelease(ObjectHandle handle)
         : handle(handle)
@@ -731,13 +699,12 @@ namespace ospray {
         b >> handle.i64;
       }
 
-      // =======================================================
-      // ospFinalize
-      // =======================================================
+      // ospFinalize //////////////////////////////////////////////////////////
       
       void CommandFinalize::run()
       {
-        async::shutdown();
+        runOnMaster();
+
         // TODO: Is it ok to call exit again here?
         // should we be calling exit? When the MPIDevice is
         // destroyed (at program exit) we'll send this command
@@ -750,7 +717,8 @@ namespace ospray {
       
       void CommandFinalize::runOnMaster()
       {
-        async::shutdown();
+        world.barrier();
+        MPI_CALL(Finalize());
       }
       
       void CommandFinalize::serialize(WriteStream &b) const

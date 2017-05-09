@@ -16,8 +16,8 @@
 
 #include "OSPCommon.h"
 #include "api/Device.h"
-// embree
-#include "embree2/rtcore.h"
+
+#include <map>
 
 namespace ospray {
 
@@ -33,11 +33,11 @@ namespace ospray {
     return ospcommon::alignedFree(ptr);
   }
 
-  WarnOnce::WarnOnce(const std::string &s) 
+  WarnOnce::WarnOnce(const std::string &s, uint32_t postAtLogLevel) 
     : s(s) 
   {
-    std::string msg = "Warning: " + s + " (only reporting first occurrence)\n";
-    postErrorMsg(msg);
+    postStatusMsg(postAtLogLevel) << "Warning: " << s
+                                  << " (only reporting first occurrence)";
   }
   
   /*! for debugging. compute a checksum for given area range... */
@@ -75,7 +75,7 @@ namespace ospray {
         if (parm == "--osp:debug") {
           device->findParam("debug", true)->set(true);
           // per default enable logging to cout; may be overridden later
-          device->error_fcn = [](const char *msg){ std::cout << msg; };
+          device->msg_fcn = [](const char *msg){ std::cout << msg; };
           removeArgs(ac,av,i,1);
         } else if (parm == "--osp:verbose") {
           device->findParam("logLevel", true)->set(1);
@@ -90,11 +90,11 @@ namespace ospray {
           std::string dst = av[i+1];
 
           if (dst == "cout")
-            device->error_fcn = [](const char *msg){ std::cout << msg; };
+            device->msg_fcn = [](const char *msg){ std::cout << msg; };
           else if (dst == "cerr")
-            device->error_fcn = [](const char *msg){ std::cerr << msg; };
+            device->msg_fcn = [](const char *msg){ std::cerr << msg; };
           else
-            postErrorMsg("You must use 'cout' or 'cerr' for --osp:logoutput!");
+            postStatusMsg("You must use 'cout' or 'cerr' for --osp:logoutput!");
 
           removeArgs(ac,av,i,2);
         } else if (parm == "--osp:numthreads" || parm == "--osp:num-threads") {
@@ -105,25 +105,6 @@ namespace ospray {
         }
       }
     }
-  }
-
-  void error_handler(const RTCError code, const char *str)
-  {
-    printf("Embree: ");
-    switch (code) {
-      case RTC_UNKNOWN_ERROR    : printf("RTC_UNKNOWN_ERROR"); break;
-      case RTC_INVALID_ARGUMENT : printf("RTC_INVALID_ARGUMENT"); break;
-      case RTC_INVALID_OPERATION: printf("RTC_INVALID_OPERATION"); break;
-      case RTC_OUT_OF_MEMORY    : printf("RTC_OUT_OF_MEMORY"); break;
-      case RTC_UNSUPPORTED_CPU  : printf("RTC_UNSUPPORTED_CPU"); break;
-      default                   : printf("invalid error code"); break;
-    }
-    if (str) { 
-      printf(" ("); 
-      while (*str) putchar(*str++); 
-      printf(")\n"); 
-    }
-    abort();
   }
 
   size_t sizeOf(const OSPDataType type) {
@@ -182,8 +163,9 @@ namespace ospray {
     throw std::runtime_error(error.str());
   }
 
-  OSPDataType typeForString(const char *string) {
-    if (string == NULL)                return(OSP_UNKNOWN);
+  OSPDataType typeForString(const char *string)
+  {
+    if (string == nullptr)             return(OSP_UNKNOWN);
     if (strcmp(string, "char"  ) == 0) return(OSP_CHAR);
     if (strcmp(string, "double") == 0) return(OSP_DOUBLE);
     if (strcmp(string, "float" ) == 0) return(OSP_FLOAT);
@@ -264,7 +246,8 @@ namespace ospray {
     throw std::runtime_error(error.str());
   }
 
-  size_t sizeOf(const OSPTextureFormat type) {
+  size_t sizeOf(const OSPTextureFormat type)
+  {
     switch (type) {
       case OSP_TEXTURE_RGBA8:
       case OSP_TEXTURE_SRGBA:          return sizeof(uint32);
@@ -315,16 +298,54 @@ namespace ospray {
     return 0;
   }
 
-  void postErrorMsg(const std::stringstream &msg, uint32_t postAtLogLevel)
+  void postStatusMsg(const std::stringstream &msg, uint32_t postAtLogLevel)
   {
-    postErrorMsg(msg.str(), postAtLogLevel);
+    postStatusMsg(msg.str(), postAtLogLevel);
   }
 
-  void postErrorMsg(const std::string &msg, uint32_t postAtLogLevel)
+  void postStatusMsg(const std::string &msg, uint32_t postAtLogLevel)
   {
     if (logLevel() >= postAtLogLevel && ospray::api::Device::current.ptr)
-      ospray::api::Device::current->error_fcn(msg.c_str());
+      ospray::api::Device::current->msg_fcn((msg + '\n').c_str());
   }
+
+  StatusMsgStream::StatusMsgStream(uint32_t postAtLogLevel)
+    : logLevel(postAtLogLevel)
+  {
+  }
+
+  StatusMsgStream::~StatusMsgStream()
+  {
+    if (!msg.str().empty()) {
+      postStatusMsg(msg, logLevel);
+    }
+  }
+
+  StatusMsgStream postStatusMsg(uint32_t postAtLogLevel)
+  {
+    return StatusMsgStream(postAtLogLevel);
+  }
+
+  void handleError(const std::exception &e)
+  {
+    if (ospray::api::Device::current.ptr)
+      ospray::api::Device::current->error_fcn(e);
+  }
+
+  size_t translatedHash(size_t v)
+  {
+    static std::map<size_t, size_t> id_translation;
+
+    auto itr = id_translation.find(v);
+    if (itr == id_translation.end()) {
+      static size_t newIndex = 0;
+      id_translation[v] = newIndex;
+      return newIndex++;
+    } else {
+      return id_translation[v];
+    }
+  }
+
 
 } // ::ospray
 

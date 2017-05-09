@@ -38,19 +38,16 @@ namespace ospray {
     as if they were pointers (and thus, 'null' objects are
     consistent between local and mpi rendering)
   */
-  union OSPRAY_SDK_INTERFACE ObjectHandle {
-    static ObjectHandle alloc();
+  union OSPRAY_SDK_INTERFACE ObjectHandle
+  {
     void free();
 
-    inline ObjectHandle(const int64 i = 0) { i64 = i; }
-    inline ObjectHandle(const ObjectHandle &other) { i64 = other.i64; }
-    inline ObjectHandle &operator=(const ObjectHandle &other)
-    { i64 = other.i64; return *this; }
+    ObjectHandle();
+    ObjectHandle(int64 i);
+    ObjectHandle(const ObjectHandle &other);
+    ObjectHandle &operator=(const ObjectHandle &other);
 
-    struct { int32 ID; int32 owner; } i32;
-    int64 i64;
-
-    /*! look up an object by handle, and return it. must be a defiend handle */
+    /*! look up an object by handle, and return it. must be a defined handle */
     ManagedObject *lookup() const;
 
     /*! Return the handle associated with the given object. */
@@ -65,25 +62,32 @@ namespace ospray {
     /*! define the given handle to refer to given object */
     void assign(const ManagedObject *object) const;
 
-    //! free the given object
     void freeObject() const;
 
-    /*! returns the owner's rank */
-    inline int32 owner() const { return i32.owner; }
-
-    /*! returns the local ID to reference this object on the owner rank */
-    inline int32 ID() const { return i32.ID; }
+    int32 ownerRank() const;
+    int32 objID()     const;
 
     /*! cast to int64 to allow fast operations with this type */
-    inline operator int64() const { return i64; }
+    operator int64() const;
 
+    // Data members //
+
+    struct { int32 ID; int32 owner; } i32;
+    int64 i64;
   };
 
   OSPRAY_SDK_INTERFACE extern const ObjectHandle nullHandle;
 
+  // Inlined operator definitions /////////////////////////////////////////////
+
   inline bool operator==(const ObjectHandle &a, const ObjectHandle &b)
-  { return a.i64 == b.i64; }
+  {
+    return a.i64 == b.i64;
+  }
+
   inline bool operator!=(const ObjectHandle &a, const ObjectHandle &b)
-  { return a.i64 != b.i64; }
+  {
+    return !(a == b);
+  }
 
 } // ::ospray

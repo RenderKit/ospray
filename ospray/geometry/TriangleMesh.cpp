@@ -18,10 +18,6 @@
 #include "TriangleMesh.h"
 #include "common/Model.h"
 #include "../include/ospray/ospray.h"
-// embree 
-#include "embree2/rtcore.h"
-#include "embree2/rtcore_scene.h"
-#include "embree2/rtcore_geometry.h"
 // ispc exports
 #include "TriangleMesh_ispc.h"
 #include <cmath>
@@ -52,11 +48,12 @@ namespace ospray {
     static int numPrints = 0;
     numPrints++;
     if (numPrints == 5) {
-      postErrorMsg("(all future printouts for triangle mesh creation "
-                   "will be omitted)\n", 2);
+      postStatusMsg(2) << "(all future printouts for triangle mesh creation "
+                       << "will be omitted)";
     }
     
-    if (numPrints < 5) postErrorMsg("ospray: finalizing trianglemesh ...\n", 2);
+    if (numPrints < 5)
+      postStatusMsg(2) << "ospray: finalizing trianglemesh ...";
 
     Assert(model && "invalid model pointer");
 
@@ -158,11 +155,9 @@ namespace ospray {
       bounds.extend(*(vec3f*)(vertex + i));
 
     if (numPrints < 5) {
-      std::stringstream msg;
-      msg << "  created triangle mesh (" << numTris << " tris "
-          << ", " << numVerts << " vertices)" << std::endl;
-      msg << "  mesh bounds " << bounds << std::endl;
-      postErrorMsg(msg, 2);
+      postStatusMsg(2) << "  created triangle mesh (" << numTris << " tris "
+                       << ", " << numVerts << " vertices)\n"
+                       << "  mesh bounds " << bounds;
     }
 
     ispc::TriangleMesh_set(getIE(),model->getIE(),eMesh,

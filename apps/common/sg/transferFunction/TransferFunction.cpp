@@ -25,8 +25,8 @@ namespace ospray {
     TransferFunction::TransferFunction()
     {
       setDefaultValues();
-      createChildNode("valueRange", "vec2f", vec2f(0.f,1.f));
-      createChildNode("numSamples", "int", 256);
+      createChild("valueRange", "vec2f", vec2f(0.f,1.f));
+      createChild("numSamples", "int", 256);
     }
 
     // //! \brief Sets a new 'texture map' to be used for the color mapping

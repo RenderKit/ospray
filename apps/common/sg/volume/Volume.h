@@ -122,5 +122,55 @@ namespace ospray {
       SG_NODE_DECLARE_MEMBER(vec3i,dimensions,Dimensions);
     };
 
+    /*! a structured volume loaded from the Richtmyer-Meshkov .bob files */
+    struct RichtmyerMeshkov : public Volume
+    {
+      RichtmyerMeshkov();
+
+      std::string toString() const override;
+
+      //! return bounding box of all primitives
+      box3f bounds() const override;
+
+      //! \brief Initialize this node's value from given XML node
+      void setFromXML(const xml::Node &node,
+                      const unsigned char *binBasePtr) override;
+
+      void preCommit(RenderContext &ctx) override;
+      void postCommit(RenderContext &ctx) override;
+
+      SG_NODE_DECLARE_MEMBER(vec3i, dimensions, Dimensions);
+      SG_NODE_DECLARE_MEMBER(std::string, dirName, DirName);
+      SG_NODE_DECLARE_MEMBER(int, timeStep, TimeStep);
+      // TODO WILL: I don't think we need this
+      //SG_NODE_DECLARE_MEMBER(std::string, voxelType, ScalarType);
+
+      //! \brief file name of the xml doc when the node was loaded from xml
+      /*! \detailed we need this to properly resolve relative directory names */
+      FileName fileNameOfCorrespondingXmlDoc;
+
+    private:
+      //! \brief state for the loader threads to use, for picking which block to load
+      struct LoaderState {
+        std::mutex mutex;
+        std::atomic<size_t> nextBlockID;
+        bool useGZip;
+        FileName fullDirName;
+        int timeStep;
+        vec2f voxelRange;
+
+        const static size_t BLOCK_SIZE;
+        const static size_t NUM_BLOCKS;
+
+        LoaderState(const FileName &fullDirName, const int timeStep);
+        //! \brief Load the next RM block and return the id of the loaded block.
+        //         If all blocks are loaded, returns a block ID >= NUM_BLOCKS
+        size_t loadNextBlock(std::vector<uint8_t> &b);
+      };
+
+      //! \brief worker thread function for loading blocks of the RM data
+      void loaderThread(LoaderState &state);
+    };
+
   } // ::ospray::sg
 } // ::ospray

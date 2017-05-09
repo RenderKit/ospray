@@ -19,26 +19,38 @@
 #include <iostream>
 #include <sstream>
 
-#include "ospcommon/common.h"
-#include "OSPTypeTraits.h"
+#include "../common.h"
+#include "../TypeTraits.h"
 
-namespace ospray {
-  namespace sg {
+namespace ospcommon {
+  namespace utility {
 
-    struct OSPAny
+    /* 'Any' implements a single item container which erases its type (can hold
+     *  any value which is copyable). The value can be extracted successfuly
+     *  only if the correct type is queried for the held value, where an
+     *  exception is thrown otherwise. Similar (but perhaps not identical to)
+     *  'boost::any' or C++17's 'std::any'.
+     *
+     *  Example:
+     *
+     *      Any myAny = 1;                 // myAny is an 'int' w/ value of '1'
+     *      int value = myAny.get<int>();  // get value of '1' out of myAny
+     *      char bad  = myAny.get<char>(); // throws exception
+     */
+    struct Any
     {
-      OSPAny() = default;
-      OSPAny(const OSPAny &copy);
+      Any() = default;
+      Any(const Any &copy);
 
       template<typename T>
-      OSPAny(T value);
+      Any(T value);
 
-      ~OSPAny() = default;
+      ~Any() = default;
 
-      OSPAny& operator=(const OSPAny &rhs);
+      Any& operator=(const Any &rhs);
 
       template<typename T>
-      OSPAny& operator=(T rhs);
+      Any& operator=(T rhs);
 
       template<typename T>
       T& get();
@@ -57,7 +69,7 @@ namespace ospray {
 
       // Friends //
 
-      friend bool operator==(const OSPAny &lhs, const OSPAny &rhs);
+      friend bool operator==(const Any &lhs, const Any &rhs);
 
       // Helper types //
 
@@ -98,37 +110,37 @@ namespace ospray {
       std::unique_ptr<handle_base> currentValue;
     };
 
-    // Inlined OSPAny definitions /////////////////////////////////////////////
+    // Inlined Any definitions ////////////////////////////////////////////////
 
     template<typename T>
-    inline OSPAny::OSPAny(T value) :
+    inline Any::Any(T value) :
       currentValue(new handle<typename std::remove_reference<T>::type>(
                      std::forward<T>(value)
                    ))
     {
       static_assert(std::is_copy_constructible<T>::value
                     && std::is_copy_assignable<T>::value,
-                    "OSPAny can only be constructed with copyable values!");
+                    "Any can only be constructed with copyable values!");
     }
 
-    inline OSPAny::OSPAny(const OSPAny &copy) :
+    inline Any::Any(const Any &copy) :
       currentValue(copy.valid() ? copy.currentValue->clone() : nullptr)
     {
     }
 
-    inline OSPAny &OSPAny::operator=(const OSPAny &rhs)
+    inline Any &Any::operator=(const Any &rhs)
     {
-      OSPAny temp(rhs);
+      Any temp(rhs);
       currentValue = std::move(temp.currentValue);
       return *this;
     }
 
     template<typename T>
-    inline OSPAny &OSPAny::operator=(T rhs)
+    inline Any &Any::operator=(T rhs)
     {
       static_assert(std::is_copy_constructible<T>::value
                     && std::is_copy_assignable<T>::value,
-                    "OSPAny can only be assigned values which are copyable!");
+                    "Any can only be assigned values which are copyable!");
 
       currentValue = std::unique_ptr<handle_base>(
         new handle<typename std::remove_reference<T>::type>(
@@ -140,16 +152,16 @@ namespace ospray {
     }
 
     template<typename T>
-    T &OSPAny::get()
+    inline T &Any::get()
     {
       if (!valid())
-        throw std::runtime_error("Can't query value from an empty OSPAny!");
+        throw std::runtime_error("Can't query value from an empty Any!");
 
       if (is<T>())
         return *(static_cast<T*>(currentValue->data()));
       else {
         std::stringstream msg;
-        msg << "Incorrect type queried for OSPAny!" << '\n';
+        msg << "Incorrect type queried for Any!" << '\n';
         msg << "  queried type == " << typeid(T).name() << '\n';
         msg << "  current type == " << currentValue->valueTypeID().name()
             << '\n';
@@ -158,16 +170,16 @@ namespace ospray {
     }
 
     template<typename T>
-    const T &OSPAny::get() const
+    inline const T &Any::get() const
     {
       if (!valid())
-        throw std::runtime_error("Can't query value from an empty OSPAny!");
+        throw std::runtime_error("Can't query value from an empty Any!");
 
       if (is<T>())
         return *(static_cast<T*>(currentValue->data()));
       else {
         std::stringstream msg;
-        msg << "Incorrect type queried for OSPAny!" << '\n';
+        msg << "Incorrect type queried for Any!" << '\n';
         msg << "  queried type == " << typeid(T).name() << '\n';
         msg << "  current type == " << currentValue->valueTypeID().name()
             << '\n';
@@ -176,44 +188,44 @@ namespace ospray {
     }
 
     template<typename T>
-    bool OSPAny::is() const
+    inline bool Any::is() const
     {
       return valid() &&
              (typeid(T).hash_code() == currentValue->valueTypeID().hash_code());
     }
 
-    inline bool OSPAny::valid() const
+    inline bool Any::valid() const
     {
       return currentValue.get() != nullptr;
     }
 
-    inline std::string OSPAny::toString() const
+    inline std::string Any::toString() const
     {
       std::stringstream retval;
-      retval << "OSPAny : (currently holds value of type) --> "
+      retval << "Any : (currently holds value of type) --> "
              << currentValue->valueTypeID().name();
       return retval.str();
     }
 
     template<typename T>
-    inline OSPAny::handle<T>::handle(T v) : value(std::move(v))
+    inline Any::handle<T>::handle(T v) : value(std::move(v))
     {
     }
 
     template<typename T>
-    inline OSPAny::handle_base *OSPAny::handle<T>::clone() const
+    inline Any::handle_base *Any::handle<T>::clone() const
     {
       return new handle<T>(value);
     }
 
     template<typename T>
-    inline const std::type_info &OSPAny::handle<T>::valueTypeID() const
+    inline const std::type_info &Any::handle<T>::valueTypeID() const
     {
       return typeid(T);
     }
 
     template<typename T>
-    inline bool OSPAny::handle<T>::isSame(OSPAny::handle_base *other) const
+    inline bool Any::handle<T>::isSame(Any::handle_base *other) const
     {
       return isSameImpl<T>(other);
     }
@@ -221,7 +233,7 @@ namespace ospray {
     template <typename T>
     template <typename TYPE>
     inline traits::HasOperatorEquals<TYPE, bool>
-    OSPAny::handle<T>::isSameImpl(OSPAny::handle_base *other) const
+    Any::handle<T>::isSameImpl(Any::handle_base *other) const
     {
       handle<T>* otherHandle = dynamic_cast<handle<T>*>(other);
       return (otherHandle != nullptr) && (otherHandle->value == this->value);
@@ -230,28 +242,28 @@ namespace ospray {
     template <typename T>
     template <typename TYPE>
     inline traits::NoOperatorEquals<TYPE, bool>
-    OSPAny::handle<T>::isSameImpl(OSPAny::handle_base *other) const
+    Any::handle<T>::isSameImpl(Any::handle_base *other) const
     {
       return false;
     }
 
     template<typename T>
-    void *OSPAny::handle<T>::data()
+    inline void *Any::handle<T>::data()
     {
       return &value;
     }
 
     // Comparison functions ///////////////////////////////////////////////////
 
-    inline bool operator==(const OSPAny &lhs, const OSPAny &rhs)
+    inline bool operator==(const Any &lhs, const Any &rhs)
     {
       return lhs.currentValue->isSame(rhs.currentValue.get());
     }
 
-    inline bool operator!=(const OSPAny &lhs, const OSPAny &rhs)
+    inline bool operator!=(const Any &lhs, const Any &rhs)
     {
       return !(lhs == rhs);
     }
 
-  } // ::ospray::sg
-} // ::ospray
+  } // ::ospcommon::utility
+} // ::ospcommon

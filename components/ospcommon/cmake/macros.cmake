@@ -134,6 +134,33 @@ MACRO(OSPRAY_CONFIGURE_ISPC_ISA)
     MESSAGE(ERROR "Invalid OSPRAY_BUILD_ISA value. "
                   "Please select one of ${OSPRAY_SUPPORTED_ISAS}, or ALL.")
   ENDIF()
+
+  # workaround link issues to Embree ISPC exports
+  # ISPC only adds the ISA suffix during name mangling (and dynamic dispatch
+  # code) when compiling for multiple targets. Thus, when only one OSPRay ISA is
+  # selected, but Embree was compiled for multiple ISAs, we need to add a
+  # second, different, supported dummy target.
+  LIST(LENGTH OSPRAY_ISPC_TARGET_LIST NUM_TARGETS)
+  IF (NUM_TARGETS EQUAL 1)
+    IF (EMBREE_ISA_SUPPORTS_SSE2)
+      LIST(APPEND OSPRAY_ISPC_TARGET_LIST sse2)
+    ELSEIF (EMBREE_ISA_SUPPORTS_SSE4 AND
+            NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "sse4")
+      LIST(APPEND OSPRAY_ISPC_TARGET_LIST sse4)
+    ELSEIF (EMBREE_ISA_SUPPORTS_AVX AND
+            NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "avx")
+      LIST(APPEND OSPRAY_ISPC_TARGET_LIST avx)
+    ELSEIF (EMBREE_ISA_SUPPORTS_AVX2 AND
+            NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "avx2")
+      LIST(APPEND OSPRAY_ISPC_TARGET_LIST avx2)
+    ELSEIF (EMBREE_ISA_SUPPORTS_AVX512KNL AND
+            NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "avx512knl-i32x16")
+      LIST(APPEND OSPRAY_ISPC_TARGET_LIST avx512knl-i32x16)
+    ELSEIF (EMBREE_ISA_SUPPORTS_AVX512SKX AND
+            NOT OSPRAY_ISPC_TARGET_LIST STREQUAL "avx512skx-i32x16")
+      LIST(APPEND OSPRAY_ISPC_TARGET_LIST avx512skx-i32x16)
+    ENDIF()
+  ENDIF()
 ENDMACRO()
 
 ## Target creation macros ##
@@ -284,7 +311,10 @@ ENDMACRO()
 
 MACRO(OSPRAY_CREATE_TEST)
   IF (OSPRAY_ENABLE_TESTING)
-    OSPRAY_CREATE_APPLICATION(${ARGN})
+    OSPRAY_CREATE_APPLICATION(
+      ${ARGN}
+      COMPONENT tests
+    )
   ENDIF()
 ENDMACRO()
 
@@ -341,6 +371,12 @@ MACRO(OSPRAY_CONFIGURE_COMPILER)
   ELSE()
     MESSAGE(FATAL_ERROR
             "Unsupported compiler specified: '${CMAKE_CXX_COMPILER_ID}'")
+  ENDIF()
+
+  IF (WIN32)
+    # increase stack to 8MB (the default size of 1MB is too small for our apps)
+    # note: linker options are independent of compiler (icc or MSVC)
+    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:8388608")
   ENDIF()
 ENDMACRO()
 

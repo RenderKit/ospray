@@ -21,8 +21,8 @@ namespace ospray {
 
     FrameBuffer::FrameBuffer(vec2i size)
     {
-      createChildNode("size", "vec2i", size);
-      createChildNode("displayWall", "string", std::string(""));
+      createChild("size", "vec2i", size);
+      createChild("displayWall", "string", std::string(""));
       createFB();
     }
 
@@ -50,10 +50,11 @@ namespace ospray {
         std::cout << "this is the display wall frma ebuferr .. size is "
                   << size() << std::endl;
         std::cout << "added display wall pixel op ..." << std::endl;
+        
+        std::cout << "created display wall pixelop, and assigned to frame buffer!"
+                << std::endl;
       }
 
-      std::cout << "created display wall pixelop, and assigned to frame buffer!"
-                << std::endl;
 
       ospCommit(ospFrameBuffer);
     }

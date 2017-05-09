@@ -23,8 +23,8 @@ namespace ospray {
 
     Renderer::Renderer()
     {
-      createChildNode("bounds", "box3f");
-      createChildNode("rendererType", "string", std::string("scivis"),
+      createChild("bounds", "box3f");
+      createChild("rendererType", "string", std::string("scivis"),
                       NodeFlags::required |
                       NodeFlags::valid_whitelist |
                       NodeFlags::gui_combo,
@@ -43,50 +43,57 @@ namespace ospray {
                                           std::string("dvr"),
                                           std::string("pathtracer"),
                                           std::string("pt")});
-      createChildNode("world",
+      createChild("world",
                       "World").setDocumentation("model containing scene objects");
-      createChildNode("camera", "PerspectiveCamera");
-      createChildNode("frameBuffer", "FrameBuffer");
-      createChildNode("lights");
+      createChild("camera", "PerspectiveCamera");
+      createChild("frameBuffer", "FrameBuffer");
+      createChild("lights");
 
-      createChildNode("bgColor", "vec3f", vec3f(0.9f, 0.9f, 0.9f),
+      createChild("bgColor", "vec3f", vec3f(0.9f, 0.9f, 0.9f),
                       NodeFlags::required |
                       NodeFlags::valid_min_max |
                       NodeFlags::gui_color);
 
       //TODO: move these to seperate SciVisRenderer
-      createChildNode("shadowsEnabled", "bool", true);
-      createChildNode("maxDepth", "int", 5,
+      createChild("shadowsEnabled", "bool", true);
+      createChild("maxDepth", "int", 5,
                       NodeFlags::required | NodeFlags::valid_min_max,
                       "maximum number of ray bounces").setMinMax(0,999);
-      createChildNode("aoSamples", "int", 1,
+      createChild("aoSamples", "int", 1,
                      NodeFlags::required |
                       NodeFlags::valid_min_max |
                       NodeFlags::gui_slider,
                      "AO samples per frame.").setMinMax(0,128);
-      createChildNode("spp", "int", 1,
+      createChild("spp", "int", 1,
                       NodeFlags::required | NodeFlags::gui_slider,
                       "the number of samples rendered per pixel. The higher "
                       "the number, the smoother the resulting image.");
       child("spp").setMinMax(-8,128);
 
-      createChildNode("aoDistance", "float", 10000.f,
+      createChild("aoDistance", "float", 10000.f,
                       NodeFlags::required | NodeFlags::valid_min_max,
                       "maximum distance ao rays will trace to."
                       " Useful if you do not want a large interior of a"
                       " building to be completely black from occlusion.");
       child("aoDistance").setMinMax(1e-20f, 1e20f);
 
-      createChildNode("oneSidedLighting", "bool", true, NodeFlags::required);
-      createChildNode("aoTransparency", "bool", true, NodeFlags::required);
+      createChild("oneSidedLighting", "bool", true, NodeFlags::required);
+      createChild("aoTransparency", "bool", true, NodeFlags::required);
+    }
+
+    void Renderer::traverse(RenderContext &ctx, const std::string& operation)
+    {
+      if (operation == "render")
+      {
+        preRender(ctx);
+        postRender(ctx);
+      }
+      else 
+        Node::traverse(ctx,operation);
     }
 
     void Renderer::postRender(RenderContext &ctx)
     {
-      ospSetObject(ospRenderer, "model",
-                   child("world").valueAs<OSPObject>());
-      ospCommit(ospRenderer);
-
       auto fb = (OSPFrameBuffer)child("frameBuffer").valueAs<OSPObject>();
       ospRenderFrame(fb,
                      ospRenderer,
@@ -117,53 +124,53 @@ namespace ospray {
         ospCommit(ospRenderer);
         setValue((OSPObject)ospRenderer);
       }
-      ctx.ospRenderer = ospRenderer;
+      ctx.ospRenderer = ospRenderer;  
     }
 
     void Renderer::postCommit(RenderContext &ctx)
     {
-      ospSetObject(ospRenderer,"model", child("world").valueAs<OSPObject>());
-      ospSetObject(ospRenderer,"camera", child("camera").valueAs<OSPObject>());
-
-      if (lightsData == nullptr ||
-          lightsBuildTime < child("lights").childrenLastModified())
-      {
-        // create and setup light for Ambient Occlusion
-        std::vector<OSPLight> lights;
-        for(auto &lightNode : child("lights").children())
-          lights.push_back((OSPLight)lightNode->valueAs<OSPObject>());
-
-        if (lightsData)
-          ospRelease(lightsData);
-        lightsData = ospNewData(lights.size(), OSP_LIGHT, &lights[0]);
-        ospCommit(lightsData);
-        lightsBuildTime = TimeStamp();
-      }
-
-      // complete setup of renderer
-      ospSetObject(ospRenderer, "model",  child("world").valueAs<OSPObject>());
-      ospSetObject(ospRenderer, "lights", lightsData);
-
-      //TODO: some child is kicking off modified every frame...Should figure
-      //      out which and ignore it
-
+      double time = ospcommon::getSysTime();
       if (child("camera").childrenLastModified() > frameMTime
           || child("lights").childrenLastModified() > frameMTime
-          || child("world").childrenLastModified() > frameMTime
           || lastModified() > frameMTime
           || child("shadowsEnabled").lastModified() > frameMTime
           || child("aoSamples").lastModified() > frameMTime
-          || child("spp").lastModified() > frameMTime)
+          || child("spp").lastModified() > frameMTime
+          || child("world").childrenLastModified() > frameMTime
+          )
       {
         ospFrameBufferClear(
           (OSPFrameBuffer)child("frameBuffer").valueAs<OSPObject>(),
           OSP_FB_COLOR | OSP_FB_ACCUM
         );
 
+        if (lightsData == nullptr ||
+          lightsBuildTime < child("lights").childrenLastModified())
+        {
+          // create and setup light for Ambient Occlusion
+          std::vector<OSPLight> lights;
+          for(auto &lightNode : child("lights").children())
+            lights.push_back((OSPLight)lightNode->valueAs<OSPObject>());
+
+          if (lightsData)
+            ospRelease(lightsData);
+          lightsData = ospNewData(lights.size(), OSP_LIGHT, &lights[0]);
+          ospCommit(lightsData);
+          lightsBuildTime = TimeStamp();
+        }
+
+        // complete setup of renderer
+        ospSetObject(ospRenderer,"camera", child("camera").valueAs<OSPObject>());
+        ospSetObject(ospRenderer, "lights", lightsData);
+        if (child("world").childrenLastModified() > frameMTime)
+        {
+          child("world").traverse(ctx, "render");
+          ospSetObject(ospRenderer, "model",  child("world").valueAs<OSPObject>());
+        }
+        ospCommit(ospRenderer);
         frameMTime = TimeStamp();
       }
 
-      ospCommit(ospRenderer);
     }
 
     OSP_REGISTER_SG_NODE(Renderer);

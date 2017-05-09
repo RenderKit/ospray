@@ -16,33 +16,31 @@
 
 #pragma once
 
-#include <type_traits>
+// mpiCommon
+#include "mpiCommon/MPICommon.h"
+// maml
+#include "maml/maml.h"
+// ospray
+#include "ospray/common/ObjectHandle.h"
 
 namespace ospray {
-  namespace sg {
-    namespace traits {
+  namespace mpi {
+    namespace messaging {
 
-      template <typename T, typename Arg>
-      std::true_type operator==(const T&, const Arg&);
+      // async point messaging interface //////////////////////////////////////
 
-      template <typename T, typename Arg = T>
-      struct HasOperatorEqualsT
-      {
-        enum
-        {
-          value = !std::is_same<decltype(*(T*)(0) == *(Arg*)(0)),
-                                std::true_type>::value
-        };
-      };
+      void registerMessageListener(int handleObjID,
+                                   maml::MessageHandler *listener);
 
-      template <typename T, typename TYPE>
-      using HasOperatorEquals =
-        typename std::enable_if<HasOperatorEqualsT<T>::value, TYPE>::type;
+      void enableAsyncMessaging();
 
-      template <typename T, typename TYPE>
-      using NoOperatorEquals =
-        typename std::enable_if<!HasOperatorEqualsT<T>::value, TYPE>::type;
+      bool asyncMessagingEnabled();
 
-    } // ::ospray::sg::traits
-  } // ::ospray::sg
+      void sendTo(int globalRank, ObjectHandle object,
+                  std::shared_ptr<mpicommon::Message> msg);
+
+      void disableAsyncMessaging();
+
+    } // ::ospray::mpi::messaging
+  } // ::ospray::mpi
 } // ::ospray

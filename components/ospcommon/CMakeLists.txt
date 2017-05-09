@@ -27,6 +27,8 @@ ELSE()
     LIST(APPEND LINK_LIBS ws2_32)
   ENDIF()
 
+  ## Create ospcommon library ##
+
   OSPRAY_CREATE_LIBRARY(ospray_common
     common.cpp
     FileName.cpp
@@ -36,7 +38,13 @@ ELSE()
     thread.cpp
     vec.cpp
     array3D/Array3D.cpp
-    Socket.cpp
+
+    containers/TransactionalBuffer.h
+
+    networking/BufferedDataStreaming.cpp
+    networking/DataStreaming.h
+    networking/Fabric.h
+    networking/Socket.cpp
 
     tasking/parallel_for.inl
     tasking/parallel_for.h
@@ -44,9 +52,12 @@ ELSE()
     tasking/schedule.inl
     tasking/schedule.h
     tasking/tasking_system_handle.cpp
-    tasking/TaskingTypeTraits.h
     tasking/TaskSys.cpp
-    
+
+    utility/Any.h
+    utility/PseudoURL.cpp
+    utility/transactional_value.h
+
     AffineSpace.h
     box.h
     constants.h
@@ -56,10 +67,17 @@ ELSE()
     platform.h
     Quaternion.h
     RefCount.h
+    TypeTraits.h
     vec.h
   LINK
     ${LINK_LIBS}
   COMPONENT lib
+  )
+
+  ## Install headers ##
+
+  SET(OSPCOMMON_SDK_INSTALL_LOC
+    ../ospcommon #NOTE: this is "next" to the SDK/ directory
   )
 
   OSPRAY_INSTALL_SDK_HEADERS(
@@ -78,10 +96,26 @@ ELSE()
     RefCount.h
     sysinfo.h
     thread.h
+    TypeTraits.h
     vec.h
 
-    DESTINATION ../ospcommon #NOTE: this is "next" to the SDK/ directory
-    )
+    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}
+  )
+
+  OSPRAY_INSTALL_SDK_HEADERS(
+    containers/TransactionalBuffer.h
+
+    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/containers
+  )
+
+  OSPRAY_INSTALL_SDK_HEADERS(
+    networking/BufferedDataStreaming.h
+    networking/DataStreaming.h
+    networking/Fabric.h
+    networking/Socket.h
+
+    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/networking
+  )
 
   OSPRAY_INSTALL_SDK_HEADERS(
     tasking/parallel_for.h
@@ -90,6 +124,30 @@ ELSE()
     tasking/TaskSys.h
     tasking/TaskingTypeTraits.h
 
-    DESTINATION ../ospcommon/tasking #NOTE: this is "next" to the SDK/ directory
-    )
+    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/tasking
+  )
+
+  OSPRAY_INSTALL_SDK_HEADERS(
+    utility/Any.h
+    utility/PseudoURL.h
+    utility/transactional_value.h
+
+    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/utility
+  )
+
+  ## Test apps ##
+
+  OSPRAY_CREATE_TEST(test_Any
+    utility/Any.h
+    utility/test_Any.cpp
+  )
+
+  ADD_TEST(NAME Any COMMAND test_Any)
+
+  OSPRAY_CREATE_TEST(test_TransactionalBuffer
+    containers/TransactionalBuffer.h
+    containers/test_TransactionalBuffer.cpp
+  )
+
+  ADD_TEST(NAME TransactionalBuffer COMMAND test_TransactionalBuffer)
 ENDIF()

@@ -32,7 +32,13 @@ namespace ospray {
     : TileDesc(dfb,begin,tileID,ownerID)
   {}
 
-  /*! called exactly once at the beginning of each frame */
+  AlphaBlendTile_simple::AlphaBlendTile_simple(DistributedFrameBuffer *dfb,
+                                               const vec2i &begin,
+                                               size_t tileID,
+                                               size_t ownerID)
+    : TileData(dfb,begin,tileID,ownerID)
+  {}
+
   void AlphaBlendTile_simple::newFrame()
   {
     currentGeneration = 0;
@@ -175,6 +181,15 @@ namespace ospray {
     dfb->tileIsCompleted(this);
   }
 
+  ZCompositeTile::ZCompositeTile(DistributedFrameBuffer *dfb,
+                                 const vec2i &begin,
+                                 size_t tileID,
+                                 size_t ownerID,
+                                 size_t numWorkers)
+    : TileData(dfb,begin,tileID,ownerID),
+      numWorkers(numWorkers)
+  {}
+
   void ZCompositeTile::newFrame()
   {
     numPartsComposited = 0;
@@ -187,12 +202,12 @@ namespace ospray {
     {
       SCOPED_LOCK(mutex);
       if (numPartsComposited == 0)
-        memcpy(&compositedTileData,&tile,sizeof(tile));
+        memcpy(&compositedTileData, &tile, sizeof(tile));
       else
         ispc::DFB_zComposite((ispc::VaryingTile*)&tile,
                              (ispc::VaryingTile*)&this->compositedTileData);
 
-      done = (++numPartsComposited == size_t(dfb->comm->numWorkers()));
+      done = (++numPartsComposited == numWorkers);
     }
 
     if (done) {

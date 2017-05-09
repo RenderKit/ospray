@@ -15,14 +15,7 @@
 // ======================================================================== //
 
 #include "PerspectiveCamera.h"
-#include <limits>
-// ispc-side stuff
 #include "PerspectiveCamera_ispc.h"
-
-#ifdef _WIN32
-#  define _USE_MATH_DEFINES
-#  include <math.h> // M_PI
-#endif
 
 namespace ospray {
 

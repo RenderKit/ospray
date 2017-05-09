@@ -16,10 +16,12 @@
 
 #pragma once
 
-#include "mpiCommon/MPICommon.h"
+#include "../common.h"
 
-namespace ospray {
-  namespace mpi {
+#include <vector>
+
+namespace ospcommon {
+  namespace networking {
 
     /*! abstraction of an object that we can serailize/write (raw) data into */
     struct WriteStream
@@ -35,8 +37,7 @@ namespace ospray {
       virtual void read(void *mem, size_t size) = 0;
     };
 
-
-    /*! generic stream operators into/out of read/write streams, for raw data blocks */
+    /*! generic stream operators into/out of streams, for raw data blocks */
     template<typename T>
     inline WriteStream &operator<<(WriteStream &buf, const T &rh)
     {
@@ -51,7 +52,7 @@ namespace ospray {
       return buf;
     }
 
-    /*! @{ stream operators into/out of read/write streams, for std::vectors of data 
+    /*! @{ stream operators into/out of read/write streams, for std::vectors
 
       \warning This code is often _expensive_ - if this, is for
       example, a std::vector<byte>, then we'll do a buf.write for each
@@ -67,10 +68,9 @@ namespace ospray {
     template<typename T>
     inline WriteStream &operator<<(WriteStream &buf, const std::vector<T> &rh)
     {
-      size_t sz = rh.size();
-      buf << sz;
-      for (size_t i=0; i<sz; i++)
-        buf << (const T &)rh[i];
+      buf << rh.size();
+      for (const T &v : rh)
+        buf << v;
       return buf;
     }
 
@@ -80,13 +80,11 @@ namespace ospray {
       size_t sz;
       buf >> sz;
       rh.resize(sz);
-      for (size_t i=0; i<sz; i++)
-        buf >> rh[i];
+      for (T &v : rh)
+        buf >> v;
       return buf;
     }
     /*! @} */
-
-    
       
     /*! @{ serialize operations for strings */
     inline WriteStream &operator<<(WriteStream &buf, const std::string &rh)
@@ -101,12 +99,10 @@ namespace ospray {
       size_t size;
       buf >> size;
       rh = std::string(size, ' ');
-      buf.read((byte_t*)&rh[0], size);
+      buf.read((byte_t*)rh.data(), size);
       return buf;
     }
     /*! @} */
 
-  } // ::ospray::mpi
-} // ::ospray
-
-      
+  } // ::ospcommon::networking
+} // ::ospcommon

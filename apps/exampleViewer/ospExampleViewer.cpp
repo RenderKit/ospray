@@ -18,7 +18,7 @@
 #include <ospray/ospray_cpp/FrameBuffer.h>
 #include <ospray/ospray_cpp/Renderer.h>
 #include "common/commandline/Utility.h"
-#include "ospcommon/Socket.h"
+#include "ospcommon/networking/Socket.h"
 
 #include "widgets/imguiViewer.h"
 

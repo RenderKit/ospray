@@ -267,8 +267,6 @@ namespace ospray {
               fprintf(stderr, "Faces must have vertex indices\n");
               exit(-1);
             }
-            // if (!has_face_blue)                   
-            //   material = getMaterial(200,200,200);
             
             triangles = num_elems;
             // numTrisWritten += num_elems;
@@ -290,9 +288,6 @@ namespace ospray {
                 vtx.x = tmp.verts[0]; //builder.addVertex(pos[tmp.verts[0]]);
                 vtx.y = tmp.verts[1]; //builder.addVertex(pos[tmp.verts[1]]);
                 vtx.z = tmp.verts[2]; //builder.addVertex(pos[tmp.verts[2]]);
-                // int matID = builder.addMaterial(material,true);
-                // builder.addTriangle(vtx,matID);
-                // vtx = vtx - vec3i(1);
                 idx->v.push_back(vtx);
               } else {
                 PRINT((int)tmp.nverts);
@@ -308,8 +303,6 @@ namespace ospray {
           }
         }
         
-        // if (pos) delete[] pos;
-        // if (nor) delete[] nor;
 
         int num_comments;
         char **comments;
@@ -324,8 +317,6 @@ namespace ospray {
         
         ply_close (ply); 
         
-        // numFilesDone ++;
-        // cout << "total done so far: " << numFilesDone << " files, " << pretty(numTrisWritten) << " tris" << endl;
         for (int i=0;i<ply->nelems;i++) {
           if (ply->elems[i]) continue;
           PlyElement *e = ply->elems[i];
@@ -349,20 +340,15 @@ namespace ospray {
         mesh->vertex = pos;
         if (!nor->v.empty())
           mesh->normal = nor;
-        // return mesh;
       }
 
     } // ::ospray::sg::ply
 
-    void importPLY(std::shared_ptr<World> &world, const FileName &fileName)
+    void importPLY(std::shared_ptr<Node> &world, const FileName &fileName)
     {
       std::shared_ptr<sg::TriangleMesh> mesh =
           std::static_pointer_cast<sg::TriangleMesh>(sg::createNode(fileName.name(), "TriangleMesh"));
       ply::readFile(fileName.str(), mesh);
-      world->nodes.push_back(std::dynamic_pointer_cast<Node>(mesh));
-      std::cout << "adding ply file to world\n";
-      // mesh->setName("ply");
-      // mesh->setType("TriangleMesh");
       world->add(std::dynamic_pointer_cast<sg::Node>(mesh));
     }
 

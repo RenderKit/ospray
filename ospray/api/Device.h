@@ -141,7 +141,8 @@ namespace ospray {
       virtual OSPTransferFunction newTransferFunction(const char *type) = 0;
 
       /*! have given renderer create a new material */
-      virtual OSPMaterial newMaterial(OSPRenderer _renderer, const char *type) = 0;
+      virtual OSPMaterial newMaterial(OSPRenderer _renderer,
+                                      const char *type) = 0;
 
       /*! create a new Texture2D object */
       virtual OSPTexture2D newTexture2D(const vec2i &size,
@@ -203,12 +204,6 @@ namespace ospray {
         NOT_IMPLEMENTED;
       }
 
-      /*! switch API mode for distributed API extensions */
-      virtual void apiMode(OSPDApiMode)
-      { 
-        NOT_IMPLEMENTED;
-      }
-
       virtual void sampleVolume(float **results,
                                 OSPVolume volume,
                                 const vec3f *worldCoordinates,
@@ -234,7 +229,11 @@ namespace ospray {
       //             needs to have a valid value for the initial Device creation
       static uint32_t logLevel;
 
-      std::function<void(const char *)> error_fcn{[](const char*){}};
+      std::function<void(const char *)>
+      msg_fcn{[](const char*){}};
+
+      std::function<void(const std::exception &)>
+      error_fcn{[](const std::exception &){}};
 
     private:
 

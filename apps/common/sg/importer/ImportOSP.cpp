@@ -75,19 +75,19 @@ namespace ospray {
         std::shared_ptr<sg::DataBuffer> dataNode =
             std::dynamic_pointer_cast<sg::DataBuffer>(value);
         assert(dataNode);
-        target->createChildWithValue(name,dataNode);
+        target->createChildWithValue(name,"data",dataNode);
         return true;
       } else if (node.name == "object") {
         assert(node.child.size() == 1);
         std::shared_ptr<sg::Node> value = parseNode(*node.child[0]);
         assert(value);
-        target->createChildWithValue(name,value);
+        target->createChildWithValue(name,"object",value);
         return true;
       } else if (node.name == "int") {
-        target->createChildWithValue(name,std::stoi(node.content));
+        target->createChildWithValue(name,"int",std::stoi(node.content));
         return true;
       } else if (node.name == "float") {
-        target->createChildWithValue(name,std::stof(node.content));
+        target->createChildWithValue(name,"float",std::stof(node.content));
         return true;
       }
 
@@ -112,7 +112,7 @@ namespace ospray {
       return info;
     }
     
-    void parseWorldNode(std::shared_ptr<sg::World> world,
+    void parseWorldNode(std::shared_ptr<sg::Node> world,
                         const xml::Node &node,
                         const unsigned char *binBasePtr)
     {
@@ -147,7 +147,7 @@ namespace ospray {
       return std::shared_ptr<sg::Node>();
     }
 
-    void importOSPVolumeViewerFile(std::shared_ptr<xml::XMLDoc> doc, std::shared_ptr<sg::World> world)
+    void importOSPVolumeViewerFile(std::shared_ptr<xml::XMLDoc> doc, std::shared_ptr<sg::Node> world)
     {
       std::shared_ptr<sg::StructuredVolumeFromFile> volume
         = std::dynamic_pointer_cast<sg::StructuredVolumeFromFile>(
@@ -186,7 +186,7 @@ namespace ospray {
       world->add(volume);
     }
 
-    void loadOSP(std::shared_ptr<sg::World> world, const std::string &fileName)
+    void loadOSP(std::shared_ptr<sg::Node> world, const std::string &fileName)
     {
       std::shared_ptr<xml::XMLDoc> doc;
       // std::shared_ptr<xml::XMLDoc> doc = NULL;
@@ -237,12 +237,12 @@ namespace ospray {
       cout << "#osp:sg: done parsing OSP file" << endl;
     }
 
-    std::shared_ptr<sg::World> loadOSP(const std::string &fileName)
+    std::shared_ptr<sg::Node> loadOSP(const std::string &fileName)
     {
       auto world = createNode("world", "World");
-      loadOSP(std::static_pointer_cast<sg::World>(world), fileName);
+      loadOSP(std::static_pointer_cast<sg::Node>(world), fileName);
 
-      return std::static_pointer_cast<sg::World>(world);
+      return std::static_pointer_cast<sg::Node>(world);
     }
 
   } // ::ospray::sg

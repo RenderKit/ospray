@@ -116,7 +116,7 @@ public slots:
   void screenshot(std::string filename = std::string());
 
   //! Quit the volume viewer when pressing escape
-  virtual void keyPressEvent(QKeyEvent * event);
+  virtual void keyPressEvent(QKeyEvent * event) override;
 
   //! Re-commit all OSPRay volumes.
   void commitVolumes();
@@ -133,6 +133,13 @@ public slots:
   //! Set gradient shading flag on all volumes.
   void setGradientShadingEnabled(bool value);
   bool getGradientShadingEnabled() { return gradientShadingEnabled; }
+
+  void setBgColor(ospcommon::vec3f color) { bgColor = color;
+    std::cout << "setting bgColor to: " << bgColor.x << " "
+      << bgColor.y << " " << bgColor.z << std::endl;
+    ospSet3fv(renderer, "bgColor", &bgColor.x);
+    ospCommit(renderer);
+  }
 
   //! Set gradient shading flag on all volumes.
   void setPreIntegration(bool value);
@@ -194,6 +201,8 @@ protected:
 
   //! Active OSPRay model index (time step).
   size_t modelIndex;
+
+  ospcommon::vec3f bgColor;
 
   //! Bounding box of the (first) volume.
   ospcommon::box3f boundingBox;

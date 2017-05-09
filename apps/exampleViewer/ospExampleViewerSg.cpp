@@ -18,7 +18,7 @@
 #include "common/sg/Renderer.h"
 #include "common/sg/importer/Importer.h"
 #include "ospcommon/FileName.h"
-#include "ospcommon/Socket.h"
+#include "ospcommon/networking/Socket.h"
 #include "ospcommon/vec.h"
 
 #include "sg/geometry/TriangleMesh.h"
@@ -27,14 +27,14 @@
 #include <sstream>
 
 namespace dw {
-    
+
   struct ServiceInfo {
     /* constructor that initializes everything to default values */
     ServiceInfo()
       : totalPixelsInWall(-1,-1),
         mpiPortName("<value not set>")
     {}
-      
+
     /*! total pixels in the entire display wall, across all
       indvididual displays, and including bezels (future versios
       will allow to render to smaller resolutions, too - and have
@@ -45,16 +45,16 @@ namespace dw {
     /*! the MPI port name that the service is listening on client
       connections for (ie, the one to use with
       client::establishConnection) */
-    std::string mpiPortName; 
+    std::string mpiPortName;
 
     /*! whether this runs in stereo mode */
     int stereo;
 
     /*! read a service info from a given hostName:port. The service
-      has to already be running on that port 
+      has to already be running on that port
 
       Note this may throw a std::runtime_error if the connection
-      cannot be established 
+      cannot be established
     */
     void getFrom(const std::string &hostName,
                  const int portNo);
@@ -85,6 +85,7 @@ std::string initialRendererType;
 bool addPlane = true;
 bool debug = false;
 bool fullscreen = false;
+bool print = false;
 
 void parseCommandLine(int ac, const char **&av)
 {
@@ -98,6 +99,8 @@ void parseCommandLine(int ac, const char **&av)
       initialRendererType = av[++i];
     } else if (arg == "-m" || arg == "--module") {
       ospLoadModule(av[++i]);
+    } else if (arg == "--print") {
+      print=true;
     } else if (arg == "--fullscreen") {
       fullscreen = true;
     } else if (arg[0] != '-') {
@@ -184,12 +187,17 @@ void addPlaneToScene(sg::Node& world)
 {
   //add plane
   auto bbox = world.bounds();
+  if (bbox.empty())
+  {
+    bbox.lower = vec3f(-5,0,-5);
+    bbox.upper = vec3f(5,10,5);
+  }
 
   osp::vec3f *vertices = new osp::vec3f[4];
   float ps = bbox.upper.x*3.f;
-  float py = bbox.lower.z-0.01f;
+  float py = bbox.lower.z-.1f;
 
-  py = bbox.lower.y-0.01f;
+  py = bbox.lower.y+0.01f;
   vertices[0] = osp::vec3f{-ps, py, -ps};
   vertices[1] = osp::vec3f{-ps, py, ps};
   vertices[2] = osp::vec3f{ps, py, -ps};
@@ -203,8 +211,8 @@ void addPlaneToScene(sg::Node& world)
   auto index = std::make_shared<sg::DataArray3i>((vec3i*)&triangles[0],
                                                  size_t(2),
                                                  false);
-  auto &plane = world.createChildNode("plane", "InstanceGroup");
-  auto &mesh  = plane.createChildNode("mesh", "TriangleMesh");
+  auto &plane = world.createChild("plane", "Instance");
+  auto &mesh  = plane.child("model").createChild("mesh", "TriangleMesh");
 
   std::shared_ptr<sg::TriangleMesh> sg_plane =
     std::static_pointer_cast<sg::TriangleMesh>(mesh.shared_from_this());
@@ -234,7 +242,7 @@ int main(int ac, const char **av)
   auto &renderer = *renderer_ptr;
   /*! the renderer we use for rendering on the display wall; null if
       no dw available */
-  std::shared_ptr<sg::Node> rendererDW;
+  std::shared_ptr<sg::Node> rendererDW=nullptr;
   /*! display wall service info - ignore if 'rendererDW' is null */
   dw::ServiceInfo dwService;
 
@@ -245,7 +253,7 @@ int main(int ac, const char **av)
     std::cout << "found a DISPLAY_WALL environment variable ...." << std::endl;
     std::cout << "trying to connect to display wall service on "
               << dwNodeName << ":2903" << std::endl;
-    
+
     dwService.getFrom(dwNodeName,2903);
     std::cout << "found display wall service on MPI port "
               << dwService.mpiPortName << std::endl;
@@ -273,17 +281,17 @@ int main(int ac, const char **av)
 
   auto &lights = renderer["lights"];
 
-  auto &sun = lights.createChildNode("sun", "DirectionalLight");
+  auto &sun = lights.createChild("sun", "DirectionalLight");
   sun["color"].setValue(vec3f(1.f,232.f/255.f,166.f/255.f));
   sun["direction"].setValue(vec3f(0.462f,-1.f,-.1f));
   sun["intensity"].setValue(1.5f);
 
-  auto &bounce = lights.createChildNode("bounce", "DirectionalLight");
+  auto &bounce = lights.createChild("bounce", "DirectionalLight");
   bounce["color"].setValue(vec3f(127.f/255.f,178.f/255.f,255.f/255.f));
   bounce["direction"].setValue(vec3f(-.93,-.54f,-.605f));
   bounce["intensity"].setValue(0.25f);
 
-  auto &ambient = lights.createChildNode("ambient", "AmbientLight");
+  auto &ambient = lights.createChild("ambient", "AmbientLight");
   ambient["intensity"].setValue(0.9f);
   ambient["color"].setValue(vec3f(174.f/255.f,218.f/255.f,255.f/255.f));
 
@@ -300,29 +308,23 @@ int main(int ac, const char **av)
   parseCommandLineSG(ac, av, renderer);
 
   if (rendererDW.get()) {
-    rendererDW->properties.children["world"]  =
-        renderer["world"].shared_from_this();
-    rendererDW->properties.children["lights"] =
-        renderer["lights"].shared_from_this();
+    rendererDW->setChild("world",  renderer["world"].shared_from_this());
+    rendererDW->setChild("lights", renderer["lights"].shared_from_this());
 
     auto &frameBuffer = rendererDW->child("frameBuffer");
     frameBuffer["size"].setValue(dwService.totalPixelsInWall);
     frameBuffer["displayWall"].setValue(dwService.mpiPortName);
   }
 
-  if (debug) {
-    renderer.traverse("verify");
+  if (print || debug)
     renderer.traverse("print");
-  }
-
-  renderer.traverse("commit");
 
   ospray::ImGuiViewerSg window(renderer_ptr, rendererDW);
 
   if (addPlane) addPlaneToScene(world);
 
   window.create("OSPRay Example Viewer App", fullscreen);
-  
+
   ospray::imgui3D::run();
 }
-  
+

@@ -19,15 +19,13 @@ OSPRAY_CONFIGURE_MPI()
 OSPRAY_CREATE_LIBRARY(ospray_mpi_common
 
   MPICommon.cpp
-
-  async/Messaging.cpp
-  async/BatchedIsendIrecvMessaging.cpp
-  async/CommLayer.cpp
+  MPIBcastFabric.cpp
 
 LINK
 
   ${MPI_C_LIBRARIES}
   ospray_common
+  ospray
 
 COMPONENT mpi
 )

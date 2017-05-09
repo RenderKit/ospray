@@ -16,10 +16,6 @@
 
 #pragma once
 
-/*! \file OSPCommon.h Defines common types and classes that _every_
-  ospray file should know about */
-
-// include cmake config first
 #include "OSPConfig.h"
 
 #ifdef _WIN32
@@ -40,47 +36,17 @@ typedef int ssize_t;
 # include "unistd.h"
 #endif
 
-#if 1
+// ospcommon
 #include "ospcommon/AffineSpace.h"
 #include "ospcommon/RefCount.h"
 #include "ospcommon/malloc.h"
-#else
-// embree
-#include "common/math/vec2.h"
-#include "common/math/vec3.h"
-#include "common/math/vec4.h"
-#include "common/math/bbox.h"
-#include "common/math/affinespace.h" // includes "common/math/linearspace[23].h"
-#include "common/sys/ref.h"
-#include "common/sys/alloc.h"
-#endif
-
-// C++11
-#include <vector>
-#include <atomic>
-#include <mutex>
-#include <condition_variable>
-#include <type_traits>
-
-#if 1
-// iw: remove this eventually, and replace all occurrences with actual
-// std::atomic_xyz's etc; for now this'll make it easier to try out the new c++11 types
-namespace ospray {
-  typedef std::atomic_int AtomicInt;
-  typedef std::mutex Mutex;
-  typedef std::lock_guard<std::mutex> LockGuard;
-  typedef std::condition_variable Condition;
-
-  using namespace ospcommon;
-}
-#endif
 
 // ospray
 #include "ospray/OSPDataType.h"
 #include "ospray/OSPTexture.h"
 
 // std
-#include <stdint.h> // for int64_t etc
+#include <cstdint> // for int64_t etc
 #include <sstream>
 
 #ifdef _WIN32
@@ -96,40 +62,30 @@ namespace ospray {
 #endif
 #define OSPRAY_SDK_INTERFACE OSPRAY_INTERFACE
 
-#define ALIGNED_STRUCT                                           \
-  void* operator new(size_t size) { return alignedMalloc(size); }       \
-  void operator delete(void* ptr) { alignedFree(ptr); }      \
-  void* operator new[](size_t size) { return alignedMalloc(size); }  \
-  void operator delete[](void* ptr) { alignedFree(ptr); }    \
-
-#define ALIGNED_STRUCT_(align)                                           \
-  void* operator new(size_t size) { return alignedMalloc(size,align); } \
-  void operator delete(void* ptr) { alignedFree(ptr); }                 \
-  void* operator new[](size_t size) { return alignedMalloc(size,align); } \
-  void operator delete[](void* ptr) { alignedFree(ptr); }               \
-
 //! main namespace for all things ospray (for internal code)
 namespace ospray {
 
+  using namespace ospcommon;
+
   /*! basic types */
-  typedef ::int64_t int64;
-  typedef ::uint64_t uint64;
+  using int64  = std::int64_t;
+  using uint64 = std::uint64_t;
 
-  typedef ::int32_t int32;
-  typedef ::uint32_t uint32;
+  using int32  = std::int32_t;
+  using uint32 = std::uint32_t;
 
-  typedef ::int16_t int16;
-  typedef ::uint16_t uint16;
+  using int16  = std::int16_t;
+  using uint16 = std::uint16_t;
 
-  typedef ::int8_t int8;
-  typedef ::uint8_t uint8;
+  using int8  = std::int8_t;
+  using uint8 = std::uint8_t;
 
-  typedef ::int64_t index_t;
+  using index_t = std::int64_t;
 
   void initFromCommandLine(int *ac = nullptr, const char ***av = nullptr);
 
   /*! for debugging. compute a checksum for given area range... */
-  OSPRAY_INTERFACE void *computeCheckSum(const void *ptr, size_t numBytes);
+  OSPRAY_SDK_INTERFACE void *computeCheckSum(const void *ptr, size_t numBytes);
 
 #ifndef Assert
 #ifdef NDEBUG
@@ -147,20 +103,21 @@ namespace ospray {
 #endif
 
   /*! size of OSPDataType */
-  OSPRAY_INTERFACE size_t sizeOf(const OSPDataType);
+  OSPRAY_SDK_INTERFACE size_t sizeOf(const OSPDataType);
 
   /*! Convert a type string to an OSPDataType. */
-  OSPRAY_INTERFACE OSPDataType typeForString(const char *string);
+  OSPRAY_SDK_INTERFACE OSPDataType typeForString(const char *string);
   /*! Convert a type string to an OSPDataType. */
   inline OSPDataType typeForString(const std::string &s)
   { return typeForString(s.c_str()); }
 
   /*! Convert a type string to an OSPDataType. */
-  OSPRAY_INTERFACE std::string stringForType(OSPDataType type);
+  OSPRAY_SDK_INTERFACE std::string stringForType(OSPDataType type);
 
   /*! size of OSPTextureFormat */
-  OSPRAY_INTERFACE size_t sizeOf(const OSPTextureFormat);
+  OSPRAY_SDK_INTERFACE size_t sizeOf(const OSPTextureFormat);
 
+  OSPRAY_SDK_INTERFACE int loadLocalModule(const std::string &name);
 
   /*! little helper class that prints out a warning string upon the
     first time it is encountered.
@@ -174,25 +131,118 @@ namespace ospray {
   */
   struct OSPRAY_SDK_INTERFACE WarnOnce
   {
-    WarnOnce(const std::string &warning);
+    WarnOnce(const std::string &message, uint32_t postAtLogLevel = 0);
   private:
     const std::string s;
   };
 
-  OSPRAY_INTERFACE uint32_t logLevel();
+  // use postStatusMsg to output any information, which will OSPRay's internal
+  // infrastructure, optionally at a given loglevel
+  // a newline is added implicitely
+  //////////////////////////////////////////////////////////////////////////////
 
-  OSPRAY_INTERFACE int loadLocalModule(const std::string &name);
+  OSPRAY_SDK_INTERFACE uint32_t logLevel();
 
-  OSPRAY_INTERFACE void postErrorMsg(const std::stringstream &msg,
+  OSPRAY_SDK_INTERFACE void postStatusMsg(const std::stringstream &msg,
                                      uint32_t postAtLogLevel = 0);
 
-  OSPRAY_INTERFACE void postErrorMsg(const std::string &msg,
+  OSPRAY_SDK_INTERFACE void postStatusMsg(const std::string &msg,
                                      uint32_t postAtLogLevel = 0);
+
+  struct OSPRAY_SDK_INTERFACE StatusMsgStream
+  {
+    StatusMsgStream(uint32_t postAtLogLevel = 0);
+    // a "= default" move constructor is not supported by older compilers
+    // however, apparently it just needs to be declared, it won't be called
+    StatusMsgStream(StatusMsgStream &&other);
+    ~StatusMsgStream();
+
+  private:
+
+    template <typename T>
+    friend StatusMsgStream &&operator<<(StatusMsgStream &&stream, T &&rhs);
+
+    std::stringstream msg;
+    uint32_t logLevel {0};
+  };
+
+  template <typename T>
+  inline StatusMsgStream &&operator<<(StatusMsgStream &&stream, T &&rhs)
+  {
+    if (logLevel() >= stream.logLevel)
+      stream.msg << std::forward<T>(rhs);
+    return std::forward<StatusMsgStream>(stream);
+  }
+
+  OSPRAY_SDK_INTERFACE StatusMsgStream postStatusMsg(uint32_t postAtLogLevel = 0);
+
+  OSPRAY_SDK_INTERFACE void handleError(const std::exception &e);
+
+  // RTTI hash ID lookup helper functions ///////////////////////////////////
+
+  OSPRAY_SDK_INTERFACE size_t translatedHash(size_t v);
+
+  template <typename T>
+  inline size_t typeIdOf()
+  {
+    return translatedHash(typeid(T).hash_code());
+  }
+
+  template <typename T>
+  inline size_t typeIdOf(T *v)
+  {
+    return translatedHash(typeid(*v).hash_code());
+  }
+
+  template <typename T>
+  inline size_t typeIdOf(const T &v)
+  {
+    return translatedHash(typeid(v).hash_code());
+  }
+
+  template <typename T>
+  inline size_t typeIdOf(const std::unique_ptr<T> &v)
+  {
+    return translatedHash(typeid(*v).hash_code());
+  }
+
+  template <typename T>
+  inline size_t typeIdOf(const std::shared_ptr<T> &v)
+  {
+    return translatedHash(typeid(*v).hash_code());
+  }
+
+  // RTTI string name lookup helper functions ///////////////////////////////
+
+  template <typename T>
+  inline std::string typeString()
+  {
+    return typeid(T).name();
+  }
+
+  template <typename T>
+  inline std::string typeString(T *v)
+  {
+    return typeid(*v).name();
+  }
+
+  template <typename T>
+  inline std::string typeString(const T &v)
+  {
+    return typeid(v).name();
+  }
+
+  template <typename T>
+  inline std::string typeString(const std::unique_ptr<T> &v)
+  {
+    return typeid(*v).name();
+  }
+
+  template <typename T>
+  inline std::string typeString(const std::shared_ptr<T> &v)
+  {
+    return typeid(*v).name();
+  }
+
 
 } // ::ospray
-
-#ifdef _WIN32
-#define __PRETTY_FUNCTION__ __FUNCSIG__
-#endif
-#define NOTIMPLEMENTED    throw std::runtime_error(std::string(__PRETTY_FUNCTION__)+": not implemented...");
-

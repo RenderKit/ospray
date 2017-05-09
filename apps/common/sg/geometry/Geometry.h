@@ -32,7 +32,7 @@ namespace ospray {
       const std::string type; 
       
       /*! material for this geometry */
-      std::shared_ptr<Material> material;
+      // std::shared_ptr<Material> material;
     };
 
     // Inlined member definitions /////////////////////////////////////////////
@@ -40,8 +40,8 @@ namespace ospray {
     inline Geometry::Geometry(const std::string &type)
       : type(type)
     {
-      createChildNode("material", "Material");
-      createChildNode("type", "string");
+      createChild("material", "Material");
+      createChild("type", "string");
     }
 
     inline std::string Geometry::toString() const

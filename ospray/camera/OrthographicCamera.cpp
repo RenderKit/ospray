@@ -15,8 +15,6 @@
 // ======================================================================== //
 
 #include "OrthographicCamera.h"
-#include <limits>
-// ispc-side stuff
 #include "OrthographicCamera_ispc.h"
 
 namespace ospray {
@@ -53,7 +51,7 @@ namespace ospray {
 
     vec3f pos_00 = pos - 0.5f * pos_du - 0.5f * pos_dv; 
 
-    ispc::OrthographicCamera_set(getIE(), /*! return the ISPC equivalent of this class */ 
+    ispc::OrthographicCamera_set(getIE(),
                                  (const ispc::vec3f&)dir,
                                  (const ispc::vec3f&)pos_00,
                                  (const ispc::vec3f&)pos_du,
