@@ -40,6 +40,15 @@ inline std::string getPidString()
   return s;
 }
 
+inline std::string toString(OSPObject obj)
+{
+  if (obj)
+    return ((ospray::ManagedObject*)obj)->toString();
+  else
+    return "nullptr";
+}
+
+
 #define ASSERT_DEVICE() if (!ospray::api::Device::current)              \
     throw std::runtime_error("OSPRay not yet initialized "              \
                              "(most likely this means you tried to "    \
@@ -75,7 +84,7 @@ inline ospray::api::Device *createMpiDevice()
       std::string error_msg = "Cannot create a device of type 'mpi'! Make sure "
                               "you have enabled the OSPRAY_MODULE_MPI CMake "
                               "variable in your build of OSPRay.";
-      error_msg += ("\n(Reason device creation failed: "+std::string(err.what())+")");
+      error_msg += ("\n(Reason device creation failed: "+std::string(err.what())+')');
       throw std::runtime_error(error_msg);
     }
   }
@@ -332,10 +341,11 @@ extern "C" OSPData ospNewData(size_t nitems, OSPDataType format,
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  LOG("ospNewData(...)");
-  LOG("ospNewData(" << nitems << "," << stringForType(format) << "," << ((int*)init) << "," << flags << ")");
+  LOG("ospNewData(" << nitems << ", " << stringForType(format) << ", "
+      << ((int*)init) << ", " << flags << ')');
   OSPData data = ospray::api::Device::current->newData(nitems,format,(void*)init,flags);
-  LOG("DONE ospNewData(" << nitems << "," << stringForType(format) << "," << ((int*)init) << "," << flags << ")");
+  LOG("DONE ospNewData(" << nitems << ", " << stringForType(format) << ", "
+      << ((int*)init) << ", " << flags << ") >> " << (int *)data);
   return data;
 }
 OSPRAY_CATCH_END
@@ -345,7 +355,7 @@ extern "C" void ospSetData(OSPObject object, const char *bufName, OSPData data)
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  LOG("ospSetData(...,\"" << bufName << "\",...)");
+  LOG("ospSetData(" << toString(object) << ", \"" << bufName << "\", ...)");
   return ospray::api::Device::current->setObject(object,bufName,(OSPObject)data);
 }
 OSPRAY_CATCH_END
@@ -360,7 +370,8 @@ OSPRAY_CATCH_BEGIN
   static WarnOnce warning("'ospSetParam()' has been deprecated. "
                           "Please use the new naming convention of "
                           "'ospSetObject()' instead");
-  LOG("ospSetParam(...,\"" << bufName << "\",...)");
+  LOG("ospSetParam(" << toString(target) << ", \"" << bufName << "\", "
+      << toString(value) << ')');
   return ospray::api::Device::current->setObject(target,bufName,value);
 }
 OSPRAY_CATCH_END
@@ -370,7 +381,7 @@ extern "C" void ospSetPixelOp(OSPFrameBuffer fb, OSPPixelOp op)
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  LOG("ospSetPixelOp(...,...)");
+  LOG("ospSetPixelOp(..., ...)");
   return ospray::api::Device::current->setPixelOp(fb,op);
 }
 OSPRAY_CATCH_END
@@ -382,11 +393,8 @@ extern "C" void ospSetObject(OSPObject target,
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  if (value) {
-    LOG("ospSetObject(" << ((ospray::ManagedObject*)target)->toString() << ",\""
-      << bufName << "\"," << ((ospray::ManagedObject*)value)->toString() <<
-      ')');
-  }
+  LOG("ospSetObject(" << toString(target) << ", \"" << bufName << "\", "
+      << toString(value) << ')');
   return ospray::api::Device::current->setObject(target,bufName,value);
 }
 OSPRAY_CATCH_END
@@ -399,7 +407,7 @@ OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   Assert2(_type,"invalid render type identifier in ospNewPixelOp");
-  LOG("ospNewPixelOp(" << _type << ")");
+  LOG("ospNewPixelOp(" << _type << ')');
   int L = strlen(_type);
   char *type = STACK_BUFFER(char, L+1);
   for (int i=0;i<=L;i++) {
@@ -422,7 +430,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
 
   Assert2(_type,"invalid render type identifier in ospNewRenderer");
-  LOG("ospNewRenderer(" << _type << ")");
+  LOG("ospNewRenderer(" << _type << ')');
 
   std::string type(_type);
   for (size_t i = 0; i < type.size(); i++) {
@@ -445,7 +453,7 @@ OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   Assert(type != nullptr && "invalid geometry type identifier in ospNewGeometry");
-  LOG("ospNewGeometry(" << type << ")");
+  LOG("ospNewGeometry(" << type << ')');
   OSPGeometry geometry = ospray::api::Device::current->newGeometry(type);
   if (geometry == nullptr) {
     postStatusMsg(1) << "#ospray: could not create geometry '" << type << "'";
@@ -464,7 +472,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   // Assert2(renderer != nullptr, "invalid renderer handle in ospNewMaterial");
   Assert2(type != nullptr, "invalid material type identifier in ospNewMaterial");
-  LOG("ospNewMaterial(" << renderer << ", " << type << ")");
+  LOG("ospNewMaterial(" << renderer << ", " << type << ')');
   OSPMaterial material = ospray::api::Device::current->newMaterial(renderer, type);
   if (material == nullptr) {
     postStatusMsg(1) << "#ospray: could not create material '" << type << "'";
@@ -478,7 +486,7 @@ OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   Assert2(type != nullptr, "invalid light type identifier in ospNewLight");
-  LOG("ospNewLight(" << renderer << ", " << type << ")");
+  LOG("ospNewLight(" << renderer << ", " << type << ')');
   OSPLight light = ospray::api::Device::current->newLight(renderer, type);
   if (light == nullptr) {
     postStatusMsg(1) << "#ospray: could not create light '" << type << "'";
@@ -495,7 +503,7 @@ OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   Assert(type != nullptr && "invalid camera type identifier in ospNewCamera");
-  LOG("ospNewCamera(" << type << ")");
+  LOG("ospNewCamera(" << type << ')');
   OSPCamera camera = ospray::api::Device::current->newCamera(type);
   if (camera == nullptr) {
     postStatusMsg(1) << "#ospray: could not create camera '" << type << "'";
@@ -513,8 +521,8 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   Assert2(size.x > 0, "Width must be greater than 0 in ospNewTexture2D");
   Assert2(size.y > 0, "Height must be greater than 0 in ospNewTexture2D");
-  LOG("ospNewTexture2D( (" << size.x << ", " << size.y << "), "
-                           << type << ", " << data << ", " << flags << ")");
+  LOG("ospNewTexture2D(" << (const vec2i&)size << ", " << type << ", " << data
+      << ", " << flags << ')');
   return ospray::api::Device::current->newTexture2D((vec2i&)size, type, data, flags);
 }
 OSPRAY_CATCH_END
@@ -525,7 +533,7 @@ OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   Assert(type != nullptr && "invalid volume type identifier in ospNewVolume");
-  LOG("ospNewVolume(" << type << ")");
+  LOG("ospNewVolume(" << type << ')');
   OSPVolume volume = ospray::api::Device::current->newVolume(type);
   if (volume == nullptr) {
     postStatusMsg(1) << "#ospray: could not create volume '" << type << "'";
@@ -541,7 +549,7 @@ OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   Assert(type != nullptr && "invalid transfer function type identifier in ospNewTransferFunction");
-  LOG("ospNewTransferFunction(" << type << ")");
+  LOG("ospNewTransferFunction(" << type << ')');
   OSPTransferFunction transferFunction = ospray::api::Device::current->newTransferFunction(type);
   if (transferFunction == nullptr) {
     postStatusMsg(1) << "#ospray: could not create transferFunction '" << type << "'";
@@ -575,9 +583,9 @@ OSPRAY_CATCH_END
 extern "C" void ospCommit(OSPObject object)
 OSPRAY_CATCH_BEGIN
 {
-  LOG("ospCommit(" << ((ospray::ManagedObject*)object)->toString() << ')');
   ASSERT_DEVICE();
   Assert(object && "invalid object handle to commit to");
+  LOG("ospCommit(" << toString(object) << ')');
   ospray::api::Device::current->commit(object);
 }
 OSPRAY_CATCH_END
