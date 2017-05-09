@@ -382,9 +382,11 @@ extern "C" void ospSetObject(OSPObject target,
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  LOG("ospSetObject(" << ((ospray::ManagedObject*)target)->toString() << ",\""
+  if (value) {
+    LOG("ospSetObject(" << ((ospray::ManagedObject*)target)->toString() << ",\""
       << bufName << "\"," << ((ospray::ManagedObject*)value)->toString() <<
       ')');
+  }
   return ospray::api::Device::current->setObject(target,bufName,value);
 }
 OSPRAY_CATCH_END
