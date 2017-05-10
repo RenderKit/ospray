@@ -34,9 +34,10 @@ QT_PATH=${DIRROOT}/visitOSPRay/qt-everywhere-opensource-src-4.8.3
 # initialization
 CUSTOMIZED_PROJSUFFIX=""
 PROJSUFFIX=""
+PROJPREFIX="./"
 CMAKEARGS=""
 CMAKEPATH="cmake"
-CMAKEBUILD="./"
+
 
 HELP()
 {
@@ -158,7 +159,7 @@ until [ -z "$1" ]; do
 	    ;;
 
 	--build-prefix)
-	    CMAKEBUILD=${2}
+	    PROJPREFIX=${2}
 	    shift 2
 	    ;;
 	    
@@ -179,19 +180,21 @@ done
 LOAD_TBB
 LOAD_ISPC
 LOAD_EMBREE
-if [ ${CUSTOMIZED_PROJSUFFIX} -ne "" ]; then
-    PROJSUFFIX=${CUSTOMIZED_PROJSUFFIX}
+if [[ "${CUSTOMIZED_PROJSUFFIX}" == "" ]]; then
+    PROJDIR=${PROJPREFIX}build${PROJSUFFIX}
+else
+    PROJDIR=${CUSTOMIZED_PROJSUFFIX}
 fi
 
 # debug
-echo "running command: mkdir -p ${CMAKEBUILD}build${PROJSUFFIX}"
-echo "running command: cd ${CMAKEBUILD}build${PROJSUFFIX}"
+echo "running command: mkdir -p ${PROJDIR}"
+echo "running command: cd ${PROJDIR}"
 echo "running command: rm -r ./CMakeCache.txt"
 echo "running command: ${CMAKEPATH} ${CMAKEARGS} ${SRCROOT}"
 echo
 
 # run actual cmake
-mkdir -p ${CMAKEBUILD}build${PROJSUFFIX}
-cd ${CMAKEBUILD}build${PROJSUFFIX}
+mkdir -p ${PROJDIR}
+cd ${PROJDIR}
 rm -r ./CMakeCache.txt
 ${CMAKEPATH} ${CMAKEARGS} ${SRCROOT}
