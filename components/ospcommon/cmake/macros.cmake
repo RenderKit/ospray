@@ -181,6 +181,7 @@ MACRO(OSPRAY_ADD_LIBRARY name type)
 ENDMACRO()
 
 ## Target install macros for OSPRay libraries ##
+INCLUDE(GNUInstallDirs)
 
 MACRO(OSPRAY_INSTALL_LIBRARY name component)
   INSTALL(TARGETS ${name}
