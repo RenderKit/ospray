@@ -3,6 +3,7 @@
 bin
 *.user*
 build*
+install*
 *.sw?
 tags
 .ycm_extra_conf.pyc
