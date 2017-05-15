@@ -63,13 +63,13 @@ namespace ospray {
           lastRTime = sg::TimeStamp();
         }
 
-        fps.startRender();
+        fps.start();
         scenegraph->traverse("render");
         if (scenegraphDW) 
           scenegraphDW->traverse("render");
         once = true;
         
-        fps.doneRender();
+        fps.stop();
         auto sgFBptr =
             std::static_pointer_cast<sg::FrameBuffer>(sgFB.shared_from_this());
 

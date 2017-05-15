@@ -21,35 +21,68 @@
 namespace ospcommon {
   namespace utility {
 
-    /*! helper class that allows for easily computing (smoothed) frame rate */
-    struct FPSCounter
+    /*! Helper class that assists with timing a region of code. */
+    struct CodeTimer
     {
-      void startRender();
-      void doneRender();
-      double getFPS() const;
+      void start();
+      void stop();
+
+      double seconds() const;
+      double milliseconds() const;
+      double perSecond() const;
+
+      double secondsSmoothed() const;
+      double millisecondsSmoothed() const;
+      double perSecondSmoothed() const;
 
     private:
 
+      double lastSeconds    {0.0};
       double smooth_nom     {0.0};
       double smooth_den     {0.0};
       double frameStartTime {0.0};
     };
 
-    // Inlined FPSCounter definitions /////////////////////////////////////////
+    // Inlined CodeTimer definitions //////////////////////////////////////////
 
-    inline void FPSCounter::startRender()
+    inline void CodeTimer::start()
     {
       frameStartTime = ospcommon::getSysTime();
     }
 
-    inline void FPSCounter::doneRender()
+    inline void CodeTimer::stop()
     {
-      double seconds = ospcommon::getSysTime() - frameStartTime;
-      smooth_nom = smooth_nom * 0.8f + seconds;
-      smooth_den = smooth_den * 0.8f + 1.f;
+      lastSeconds = ospcommon::getSysTime() - frameStartTime;
+      smooth_nom  = smooth_nom * 0.8f + lastSeconds;
+      smooth_den  = smooth_den * 0.8f + 1.f;
     }
 
-    inline double FPSCounter::getFPS() const
+    inline double CodeTimer::seconds() const
+    {
+      return lastSeconds;
+    }
+
+    inline double CodeTimer::milliseconds() const
+    {
+      return seconds() * 1000.0;
+    }
+
+    inline double CodeTimer::perSecond() const
+    {
+      return 1.0 / seconds();
+    }
+
+    inline double CodeTimer::secondsSmoothed() const
+    {
+      return 1.0 / perSecondSmoothed();
+    }
+
+    inline double CodeTimer::millisecondsSmoothed() const
+    {
+      return secondsSmoothed() * 1000.0;
+    }
+
+    inline double CodeTimer::perSecondSmoothed() const
     {
       return smooth_den / smooth_nom;
     }

@@ -408,11 +408,11 @@ namespace ospray {
 
       // Main loop
       while (!glfwWindowShouldClose(window)) {
-        currentWidget->timerTotal.startRender();
+        currentWidget->timerTotal.start();
         glfwPollEvents();
-        currentWidget->timer.startRender();
+        currentWidget->timer.start();
         ImGui_ImplGlfwGL3_NewFrame();
-        currentWidget->timer.doneRender();
+        currentWidget->timer.stop();
 
         if (ImGui3DWidget::showGui)
           currentWidget->buildGui();
@@ -446,7 +446,7 @@ namespace ospray {
           ImGui::End();
         }
 
-        currentWidget->timer.startRender();
+        currentWidget->timer.start();
         int new_w = 0, new_h = 0;
         glfwGetFramebufferSize(window, &new_w, &new_h);
 
@@ -457,23 +457,23 @@ namespace ospray {
         }
 
         glViewport(0, 0, new_w, new_h);
-        currentWidget->timer.doneRender();
+        currentWidget->timer.stop();
 
-        currentWidget->timer.startRender();
+        currentWidget->timer.start();
         // Render OSPRay frame
         currentWidget->display();
-        currentWidget->timer.doneRender();
-        currentWidget->displayTime = 1.f/currentWidget->timer.getFPS();
+        currentWidget->timer.stop();
+        currentWidget->displayTime = currentWidget->timer.secondsSmoothed();
 
-        currentWidget->timer.startRender();
+        currentWidget->timer.start();
         // Render GUI
         ImGui::Render();
-        currentWidget->timer.doneRender();
-        currentWidget->guiTime = 1.f/currentWidget->timer.getFPS();
+        currentWidget->timer.stop();
+        currentWidget->guiTime = currentWidget->timer.secondsSmoothed();
 
         glfwSwapBuffers(window);
-        currentWidget->timerTotal.doneRender();
-        currentWidget->totalTime = 1.f/currentWidget->timerTotal.getFPS();
+        currentWidget->timerTotal.stop();
+        currentWidget->totalTime = currentWidget->timerTotal.secondsSmoothed();
       }
 
       // Cleanup

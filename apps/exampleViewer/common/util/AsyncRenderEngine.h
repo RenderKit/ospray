@@ -105,6 +105,6 @@ namespace ospray {
 
     std::atomic<bool> newPixels {false};
 
-    ospcommon::utility::FPSCounter fps;
+    ospcommon::utility::CodeTimer fps;
   };
 }// namespace ospray

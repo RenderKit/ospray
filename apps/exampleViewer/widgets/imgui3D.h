@@ -219,8 +219,8 @@ namespace ospray {
 
        static bool animating;
        static bool showGui;
-       ospcommon::utility::FPSCounter timer;
-       ospcommon::utility::FPSCounter timerTotal;
+       ospcommon::utility::CodeTimer timer;
+       ospcommon::utility::CodeTimer timerTotal;
        double displayTime;
        double renderTime;
        double guiTime;
