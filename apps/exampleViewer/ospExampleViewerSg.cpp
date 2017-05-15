@@ -185,10 +185,8 @@ void parseCommandLineSG(int ac, const char **&av, sg::Node &root)
 
 void addPlaneToScene(sg::Node& world)
 {
-  //add plane
   auto bbox = world.bounds();
-  if (bbox.empty())
-  {
+  if (bbox.empty()) {
     bbox.lower = vec3f(-5,0,-5);
     bbox.upper = vec3f(5,10,5);
   }
@@ -227,6 +225,16 @@ void addPlaneToScene(sg::Node& world)
 int main(int ac, const char **av)
 {
   ospInit(&ac,av);
+  auto device = ospGetCurrentDevice();
+  ospDeviceSetStatusFunc(device,
+                         [](const char *msg) { std::cout << msg; });
+
+  ospDeviceSetErrorFunc(device,
+                        [](OSPError e, const char *msg) {
+                          std::cout << "OSPRAY ERROR [" << e << "]: "
+                                    << msg << std::endl;
+                          std::exit(1);
+                        });
 
 #ifdef _WIN32
   // TODO: Why do we not have the sg symbols already available for us
@@ -242,7 +250,7 @@ int main(int ac, const char **av)
   auto &renderer = *renderer_ptr;
   /*! the renderer we use for rendering on the display wall; null if
       no dw available */
-  std::shared_ptr<sg::Node> rendererDW=nullptr;
+  std::shared_ptr<sg::Node> rendererDW;
   /*! display wall service info - ignore if 'rendererDW' is null */
   dw::ServiceInfo dwService;
 

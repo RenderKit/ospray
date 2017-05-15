@@ -178,10 +178,10 @@ namespace ospRandSphereTest {
       device.setCurrent();
     }
 
-    ospDeviceSetErrorMsgFunc(device.handle(),
-                             [](const char *msg) {
-                               std::cerr << msg;
-                             });
+    ospDeviceSetStatusFunc(device.handle(),
+                           [](const char *msg) {
+                             std::cerr << msg;
+                           });
   }
 
   extern "C" int main(int ac, const char **av)

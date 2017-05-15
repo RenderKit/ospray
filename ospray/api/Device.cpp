@@ -52,8 +52,9 @@ namespace ospray {
       int cpuFeatures = ospcommon::getCPUFeatures();
 
       if ((cpuFeatures & ospcommon::CPU_FEATURE_SSE41) == 0) {
-        throw std::runtime_error("Error. OSPRay only runs on CPUs that support"
-                                 " at least SSE4.1.");
+        handleError(OSP_UNSUPPORTED_CPU,
+                    "OSPRay only runs on CPUs that support at least SSE4.1");
+        return;
       }
 
       auto OSPRAY_DEBUG = getEnvVar<int>("OSPRAY_DEBUG");

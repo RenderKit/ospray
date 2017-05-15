@@ -19,7 +19,6 @@
 // ospray
 #include "common/OSPCommon.h"
 #include "common/Managed.h"
-#include "ospray/ospray.h"
 // embree
 #include "embree2/rtcore.h"
 // std
@@ -230,10 +229,13 @@ namespace ospray {
       static uint32_t logLevel;
 
       std::function<void(const char *)>
-      msg_fcn{[](const char*){}};
+      msg_fcn { [](const char*){} };
 
-      std::function<void(const std::exception &)>
-      error_fcn{[](const std::exception &){}};
+      std::function<void(OSPError, const char*)>
+      error_fcn { [](OSPError, const char*){} };
+
+      OSPError    lastErrorCode {OSP_NO_ERROR};
+      std::string lastErrorMsg  {"no error"};
 
     private:
 

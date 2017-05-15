@@ -50,23 +50,20 @@ inline std::string toString(OSPObject obj)
     return "nullptr";
 }
 
-#define ASSERT_DEVICE() if (!deviceIsSet())                             \
-    throw std::runtime_error("OSPRay not yet initialized "              \
-                             "(most likely this means you tried to "    \
-                             "call an ospray API function before "      \
+#define ASSERT_DEVICE() if (!deviceIsSet())                                   \
+    throw std::runtime_error("OSPRay not yet initialized "                    \
+                             "(most likely this means you tried to "          \
+                             "call an ospray API function before "            \
                              "first calling ospInit())" + getPidString());
 
 #define OSPRAY_CATCH_BEGIN try {
-#define OSPRAY_CATCH_END                                             \
-  } catch (const std::bad_alloc &e) {                                \
-    postStatusMsg() << "OSPRAY_API_ERROR: out of memory";            \
-    handleError(e);                                                  \
-  } catch (const std::runtime_error &e) {                            \
-    postStatusMsg() << "OSPRAY_API_ERROR: " << e.what();             \
-    handleError(e);                                                  \
-  } catch (...) {                                                    \
-    postStatusMsg() << "OSPRAY_API_ERROR: caught unknown exception"; \
-    handleError(std::runtime_error("unknown caught exception"));     \
+#define OSPRAY_CATCH_END                                                      \
+  } catch (const std::bad_alloc &e) {                                         \
+    handleError(OSP_OUT_OF_MEMORY, "OSPRay was unable to allocate memory");   \
+  } catch (const std::runtime_error &e) {                                     \
+    handleError(OSP_UNKNOWN_ERROR, e.what());                                 \
+  } catch (...) {                                                             \
+    handleError(OSP_UNKNOWN_ERROR, "an unrecognized exception was caught");   \
   }
 
 using namespace ospray;
@@ -233,10 +230,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! destroy a given frame buffer.
-
-  due to internal reference counting, it may or may not be deleted immediately
-*/
 extern "C" void ospFreeFrameBuffer(OSPFrameBuffer fb)
 OSPRAY_CATCH_BEGIN
 {
@@ -580,12 +573,35 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-extern "C" void ospDeviceSetErrorMsgFunc(OSPDevice object,
-                                         OSPErrorMsgFunc callback)
+extern "C" void ospDeviceSetStatusFunc(OSPDevice object, OSPStatusFunc callback)
 OSPRAY_CATCH_BEGIN
 {
   auto *device = (Device *)object;
   device->msg_fcn = callback;
+}
+OSPRAY_CATCH_END
+
+extern "C" void ospDeviceSetErrorFunc(OSPDevice object, OSPErrorFunc callback)
+OSPRAY_CATCH_BEGIN
+{
+  auto *device = (Device *)object;
+  device->error_fcn = callback;
+}
+OSPRAY_CATCH_END
+
+extern "C" OSPError ospDeviceGetLastErrorCode(OSPDevice object)
+OSPRAY_CATCH_BEGIN
+{
+  auto *device = (Device *)object;
+  return device->lastErrorCode;
+}
+OSPRAY_CATCH_END
+
+extern "C" const char* ospDeviceGetLastErrorMsg(OSPDevice object)
+OSPRAY_CATCH_BEGIN
+{
+  auto *device = (Device *)object;
+  return device->lastErrorMsg.c_str();
 }
 OSPRAY_CATCH_END
 
