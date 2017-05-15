@@ -16,42 +16,39 @@
 
 #pragma once
 
-#include "../common.h"
+#include "../TypeTraits.h"
+#include <functional>
 
 namespace ospcommon {
   namespace utility {
 
-    /*! helper class that allows for easily computing (smoothed) frame rate */
-    struct FPSCounter
+    /* Execute a given function when a scope exits */
+    struct OnScopeExit
     {
-      void startRender();
-      void doneRender();
-      double getFPS() const;
+      template <typename FCN_T>
+      OnScopeExit(FCN_T&& _fcn);
+
+      ~OnScopeExit();
 
     private:
 
-      double smooth_nom     {0.0};
-      double smooth_den     {0.0};
-      double frameStartTime {0.0};
+      std::function<void()> fcn;
     };
 
-    // Inlined FPSCounter definitions /////////////////////////////////////////
+    // Inlined OnScopeExit definitions ////////////////////////////////////////
 
-    inline void FPSCounter::startRender()
+    template <typename FCN_T>
+    inline OnScopeExit::OnScopeExit(FCN_T&& _fcn)
     {
-      frameStartTime = ospcommon::getSysTime();
+      static_assert(traits::has_operator_method<FCN_T>::value,
+                    "FCN_T must implement operator() with no arguments!");
+
+      fcn = std::forward<FCN_T>(_fcn);
     }
 
-    inline void FPSCounter::doneRender()
+    inline OnScopeExit::~OnScopeExit()
     {
-      double seconds = ospcommon::getSysTime() - frameStartTime;
-      smooth_nom = smooth_nom * 0.8f + seconds;
-      smooth_den = smooth_den * 0.8f + 1.f;
-    }
-
-    inline double FPSCounter::getFPS() const
-    {
-      return smooth_den / smooth_nom;
+      fcn();
     }
 
   } // ::ospcommon::utility

@@ -56,6 +56,7 @@ ELSE()
 
     utility/Any.h
     utility/FPSCounter.h
+    utility/OnScopeExit.h
     utility/PseudoURL.cpp
     utility/TransactionalValue.h
 
@@ -131,6 +132,7 @@ ELSE()
   OSPRAY_INSTALL_SDK_HEADERS(
     utility/Any.h
     utility/FPSCounter.h
+    utility/OnScopeExit.h
     utility/PseudoURL.h
     utility/TransactionalValue.h
 
@@ -139,12 +141,25 @@ ELSE()
 
   ## Test apps ##
 
+  # Any
+
   OSPRAY_CREATE_TEST(test_Any
     utility/Any.h
     utility/test_Any.cpp
   )
 
   ADD_TEST(NAME Any COMMAND test_Any)
+
+  # OnScopeExit
+
+  OSPRAY_CREATE_TEST(test_OnScopeExit
+    utility/OnScopeExit.h
+    utility/test_OnScopeExit.cpp
+  )
+
+  ADD_TEST(NAME OnScopeExit COMMAND test_OnScopeExit)
+
+  # TransactionalBuffer
 
   OSPRAY_CREATE_TEST(test_TransactionalBuffer
     containers/TransactionalBuffer.h

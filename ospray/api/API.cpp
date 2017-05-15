@@ -50,11 +50,11 @@ inline std::string toString(OSPObject obj)
     return "nullptr";
 }
 
-#define ASSERT_DEVICE() if (!deviceIsSet())              \
+#define ASSERT_DEVICE() if (!deviceIsSet())                             \
     throw std::runtime_error("OSPRay not yet initialized "              \
                              "(most likely this means you tried to "    \
                              "call an ospray API function before "      \
-                             "first calling ospInit())"+getPidString());
+                             "first calling ospInit())" + getPidString());
 
 #define OSPRAY_CATCH_BEGIN try {
 #define OSPRAY_CATCH_END                                             \
@@ -85,7 +85,8 @@ inline Device *createMpiDevice()
       std::string error_msg = "Cannot create a device of type 'mpi'! Make sure "
                               "you have enabled the OSPRAY_MODULE_MPI CMake "
                               "variable in your build of OSPRay.";
-      error_msg += ("\n(Reason device creation failed: "+std::string(err.what())+')');
+      error_msg += ("\n(Reason device creation failed: "
+                    + std::string(err.what()) + ')');
       throw std::runtime_error(error_msg);
     }
   }
