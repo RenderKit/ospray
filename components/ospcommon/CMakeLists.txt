@@ -55,7 +55,7 @@ ELSE()
     tasking/TaskSys.cpp
 
     utility/Any.h
-    utility/FPSCounter.h
+    utility/CodeTimer.h
     utility/OnScopeExit.h
     utility/PseudoURL.cpp
     utility/TransactionalValue.h
@@ -131,7 +131,7 @@ ELSE()
 
   OSPRAY_INSTALL_SDK_HEADERS(
     utility/Any.h
-    utility/FPSCounter.h
+    utility/CodeTimer.h
     utility/OnScopeExit.h
     utility/PseudoURL.h
     utility/TransactionalValue.h

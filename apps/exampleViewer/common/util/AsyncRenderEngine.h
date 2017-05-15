@@ -23,7 +23,7 @@
 
 // ospcommon
 #include "ospcommon/box.h"
-#include "ospcommon/utility/FPSCounter.h"
+#include "ospcommon/utility/CodeTimer.h"
 #include "ospcommon/utility/TransactionalValue.h"
 
 // ospray::cpp

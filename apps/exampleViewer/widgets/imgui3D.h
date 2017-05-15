@@ -19,7 +19,7 @@
 #include "ospcommon/common.h"
 #include "ospcommon/box.h"
 #include "ospcommon/AffineSpace.h"
-#include "ospcommon/utility/FPSCounter.h"
+#include "ospcommon/utility/CodeTimer.h"
 
 #include "Imgui3dExport.h"
 
