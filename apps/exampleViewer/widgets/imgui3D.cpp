@@ -20,6 +20,7 @@
 #include <imgui.h>
 #include "imgui_impl_glfw_gl3.h"
 
+#include "ospcommon/utility/CodeTimer.h"
 #include "ospray/version.h"
 
 #include <stdio.h>
@@ -408,11 +409,14 @@ namespace ospray {
 
       // Main loop
       while (!glfwWindowShouldClose(window)) {
-        currentWidget->timerTotal.start();
+        ospcommon::utility::CodeTimer timer;
+        ospcommon::utility::CodeTimer timerTotal;
+
+        timerTotal.start();
         glfwPollEvents();
-        currentWidget->timer.start();
+        timer.start();
         ImGui_ImplGlfwGL3_NewFrame();
-        currentWidget->timer.stop();
+        timer.stop();
 
         if (ImGui3DWidget::showGui)
           currentWidget->buildGui();
@@ -446,7 +450,7 @@ namespace ospray {
           ImGui::End();
         }
 
-        currentWidget->timer.start();
+        timer.start();
         int new_w = 0, new_h = 0;
         glfwGetFramebufferSize(window, &new_w, &new_h);
 
@@ -457,23 +461,23 @@ namespace ospray {
         }
 
         glViewport(0, 0, new_w, new_h);
-        currentWidget->timer.stop();
+        timer.stop();
 
-        currentWidget->timer.start();
+        timer.start();
         // Render OSPRay frame
         currentWidget->display();
-        currentWidget->timer.stop();
-        currentWidget->displayTime = currentWidget->timer.secondsSmoothed();
+        timer.stop();
+        currentWidget->displayTime = timer.secondsSmoothed();
 
-        currentWidget->timer.start();
+        timer.start();
         // Render GUI
         ImGui::Render();
-        currentWidget->timer.stop();
-        currentWidget->guiTime = currentWidget->timer.secondsSmoothed();
+        timer.stop();
+        currentWidget->guiTime = timer.secondsSmoothed();
 
         glfwSwapBuffers(window);
-        currentWidget->timerTotal.stop();
-        currentWidget->totalTime = currentWidget->timerTotal.secondsSmoothed();
+        timerTotal.stop();
+        currentWidget->totalTime = timerTotal.secondsSmoothed();
       }
 
       // Cleanup

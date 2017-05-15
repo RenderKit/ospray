@@ -19,7 +19,6 @@
 #include "ospcommon/common.h"
 #include "ospcommon/box.h"
 #include "ospcommon/AffineSpace.h"
-#include "ospcommon/utility/CodeTimer.h"
 
 #include "Imgui3dExport.h"
 
@@ -219,8 +218,6 @@ namespace ospray {
 
        static bool animating;
        static bool showGui;
-       ospcommon::utility::CodeTimer timer;
-       ospcommon::utility::CodeTimer timerTotal;
        double displayTime;
        double renderTime;
        double guiTime;
