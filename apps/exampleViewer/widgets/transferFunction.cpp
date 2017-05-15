@@ -163,13 +163,13 @@ void TransferFunction::drawUi()
     ImDrawList *draw_list = ImGui::GetWindowDrawList();
     draw_list->AddRect(canvasPos, canvasPos + canvasSize, ImColor(255, 255, 255));
 
-    const vec2f view_scale(canvasSize.x, -canvasSize.y + 10);
+    const vec2f viewScale(canvasSize.x, -canvasSize.y + 10);
     const vec2f viewOffset(canvasPos.x, canvasPos.y + canvasSize.y - 10);
 
     ImGui::InvisibleButton("canvas", canvasSize);
     if (ImGui::IsItemHovered()){
       vec2f mousePos = vec2f(ImGui::GetIO().MousePos.x, ImGui::GetIO().MousePos.y);
-      mousePos = (mousePos - viewOffset) / view_scale;
+      mousePos = (mousePos - viewOffset) / viewScale;
       // Need to somehow find which line of RGBA the mouse is closest too
       if (ImGui::GetIO().MouseDown[0]){
         rgbaLines[activeLine].movePoint(mousePos.x, mousePos);
@@ -191,7 +191,7 @@ void TransferFunction::drawUi()
         for (size_t j = 0; j < rgbaLines[i].line.size() - 1; ++j){
           const vec2f &a = rgbaLines[i].line[j];
           const vec2f &b = rgbaLines[i].line[j + 1];
-          draw_list->AddLine(viewOffset + view_scale * a, viewOffset + view_scale * b,
+          draw_list->AddLine(viewOffset + viewScale * a, viewOffset + viewScale * b,
               rgbaLines[i].color, 2.0f);
         }
       }
@@ -200,8 +200,13 @@ void TransferFunction::drawUi()
     for (size_t j = 0; j < rgbaLines[activeLine].line.size() - 1; ++j){
       const vec2f &a = rgbaLines[activeLine].line[j];
       const vec2f &b = rgbaLines[activeLine].line[j + 1];
-      draw_list->AddLine(viewOffset + view_scale * a, viewOffset + view_scale * b,
+      draw_list->AddLine(viewOffset + viewScale * a, viewOffset + viewScale * b,
           rgbaLines[activeLine].color, 2.0f);
+      draw_list->AddCircleFilled(viewOffset + viewScale * a, 4.f, rgbaLines[activeLine].color);
+      // If we're last draw the list Circle as well
+      if (j == rgbaLines[activeLine].line.size() - 2) {
+        draw_list->AddCircleFilled(viewOffset + viewScale * b, 4.f, rgbaLines[activeLine].color);
+      }
     }
     draw_list->PopClipRect();
   }
