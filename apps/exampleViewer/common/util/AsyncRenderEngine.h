@@ -89,9 +89,9 @@ namespace ospray {
     cpp::FrameBuffer frameBuffer;
     cpp::FrameBuffer frameBufferDW;
 
-    transactional_value<cpp::Renderer>    renderer;
-    transactional_value<cpp::Renderer>    rendererDW;
-    transactional_value<ospcommon::vec2i> fbSize;
+    ospcommon::utility::TransactionalValue<cpp::Renderer>    renderer;
+    ospcommon::utility::TransactionalValue<cpp::Renderer>    rendererDW;
+    ospcommon::utility::TransactionalValue<ospcommon::vec2i> fbSize;
 
     int nPixels {0};
 
