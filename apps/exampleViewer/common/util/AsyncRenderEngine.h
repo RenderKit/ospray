@@ -22,15 +22,15 @@
 #include <vector>
 
 // ospcommon
-#include <ospcommon/box.h>
+#include "ospcommon/box.h"
+#include "ospcommon/utility/FPSCounter.h"
+#include "ospcommon/utility/TransactionalValue.h"
 
 // ospray::cpp
 #include "ospray/ospray_cpp/Renderer.h"
 
 // ospImGui util
 #include "ImguiUtilExport.h"
-#include "FPSCounter.h"
-#include "ospcommon/utility/transactional_value.h"
 
 namespace ospray {
 
@@ -105,6 +105,6 @@ namespace ospray {
 
     std::atomic<bool> newPixels {false};
 
-    FPSCounter fps;
+    ospcommon::utility::FPSCounter fps;
   };
 }// namespace ospray

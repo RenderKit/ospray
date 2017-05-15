@@ -1,5 +1,4 @@
 // ======================================================================== //
-// Copyright 2016 SURVICE Engineering Company                               //
 // Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
@@ -15,27 +14,45 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "FPSCounter.h"
+#pragma once
 
-#include "ospcommon/common.h"
+#include "../common.h"
 
-namespace ospray {
+namespace ospcommon {
+  namespace utility {
 
-  FPSCounter::FPSCounter()
-  {
-    smooth_nom = 0.;
-    smooth_den = 0.;
-    frameStartTime = 0.;
-  }
+    /*! helper class that allows for easily computing (smoothed) frame rate */
+    struct FPSCounter
+    {
+      void startRender();
+      void doneRender();
+      double getFPS() const;
 
-  void FPSCounter::startRender()
-  {
-    frameStartTime = ospcommon::getSysTime();
-  }
+    private:
 
-  void FPSCounter::doneRender() {
-    double seconds = ospcommon::getSysTime() - frameStartTime;
-    smooth_nom = smooth_nom * 0.8f + seconds;
-    smooth_den = smooth_den * 0.8f + 1.f;
-  }
-}// namespace ospray
+      double smooth_nom     {0.0};
+      double smooth_den     {0.0};
+      double frameStartTime {0.0};
+    };
+
+    // Inlined FPSCounter definitions /////////////////////////////////////////
+
+    inline void FPSCounter::startRender()
+    {
+      frameStartTime = ospcommon::getSysTime();
+    }
+
+    inline void FPSCounter::doneRender()
+    {
+      double seconds = ospcommon::getSysTime() - frameStartTime;
+      smooth_nom = smooth_nom * 0.8f + seconds;
+      smooth_den = smooth_den * 0.8f + 1.f;
+    }
+
+    inline double FPSCounter::getFPS() const
+    {
+      return smooth_den / smooth_nom;
+    }
+
+  } // ::ospcommon::utility
+} // ::ospcommon

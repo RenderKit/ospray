@@ -16,21 +16,6 @@
 
 #pragma once
 
-// std
-#include <atomic>
-#include <thread>
-#include <vector>
-
-// ospcommon
-#include "ospcommon/box.h"
-#include "ospcommon/utility/transactional_value.h"
-
-// ospray::cpp
-#include "ospray/ospray_cpp/Renderer.h"
-
-// ospImGui util
-#include "FPSCounter.h"
-
 #include "sg/common/Node.h"
 #include "AsyncRenderEngine.h"
 

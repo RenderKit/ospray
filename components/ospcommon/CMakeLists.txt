@@ -55,8 +55,9 @@ ELSE()
     tasking/TaskSys.cpp
 
     utility/Any.h
+    utility/FPSCounter.h
     utility/PseudoURL.cpp
-    utility/transactional_value.h
+    utility/TransactionalValue.h
 
     AffineSpace.h
     box.h
@@ -129,8 +130,9 @@ ELSE()
 
   OSPRAY_INSTALL_SDK_HEADERS(
     utility/Any.h
+    utility/FPSCounter.h
     utility/PseudoURL.h
-    utility/transactional_value.h
+    utility/TransactionalValue.h
 
     DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/utility
   )
