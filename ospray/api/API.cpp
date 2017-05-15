@@ -355,20 +355,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! add an object parameter to another object */
-extern "C" void ospSetParam(OSPObject target,
-                            const char *bufName,
-                            OSPObject value)
-OSPRAY_CATCH_BEGIN
-{
-  ASSERT_DEVICE();
-  static WarnOnce warning("'ospSetParam()' has been deprecated. "
-                          "Please use the new naming convention of "
-                          "'ospSetObject()' instead");
-  return currentDevice().setObject(target, bufName, value);
-}
-OSPRAY_CATCH_END
-
 /*! set/add a pixel op to a frame buffer */
 extern "C" void ospSetPixelOp(OSPFrameBuffer fb, OSPPixelOp op)
 OSPRAY_CATCH_BEGIN
