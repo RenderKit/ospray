@@ -144,10 +144,10 @@ namespace ospray {
   OSPRAY_SDK_INTERFACE uint32_t logLevel();
 
   OSPRAY_SDK_INTERFACE void postStatusMsg(const std::stringstream &msg,
-                                     uint32_t postAtLogLevel = 0);
+                                          uint32_t postAtLogLevel = 0);
 
   OSPRAY_SDK_INTERFACE void postStatusMsg(const std::string &msg,
-                                     uint32_t postAtLogLevel = 0);
+                                          uint32_t postAtLogLevel = 0);
 
   struct OSPRAY_SDK_INTERFACE StatusMsgStream
   {

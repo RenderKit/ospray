@@ -28,8 +28,6 @@
 #  include <process.h> // for getpid
 #endif
 
-#define LOG(a) postStatusMsg(2) << "#ospray: " << a;
-
 /*! \file api.cpp implements the public ospray api functions by
   routing them to a respective \ref device */
 
@@ -47,7 +45,6 @@ inline std::string toString(OSPObject obj)
   else
     return "nullptr";
 }
-
 
 #define ASSERT_DEVICE() if (!ospray::api::Device::current)              \
     throw std::runtime_error("OSPRay not yet initialized "              \
@@ -341,11 +338,8 @@ extern "C" OSPData ospNewData(size_t nitems, OSPDataType format,
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  LOG("ospNewData(" << nitems << ", " << stringForType(format) << ", "
-      << ((int*)init) << ", " << flags << ')');
-  OSPData data = ospray::api::Device::current->newData(nitems,format,(void*)init,flags);
-  LOG("DONE ospNewData(" << nitems << ", " << stringForType(format) << ", "
-      << ((int*)init) << ", " << flags << ") >> " << (int *)data);
+  OSPData data =
+      ospray::api::Device::current->newData(nitems, format, (void*)init, flags);
   return data;
 }
 OSPRAY_CATCH_END
@@ -355,7 +349,6 @@ extern "C" void ospSetData(OSPObject object, const char *bufName, OSPData data)
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  LOG("ospSetData(" << toString(object) << ", \"" << bufName << "\", ...)");
   return ospray::api::Device::current->setObject(object,bufName,(OSPObject)data);
 }
 OSPRAY_CATCH_END
@@ -370,8 +363,6 @@ OSPRAY_CATCH_BEGIN
   static WarnOnce warning("'ospSetParam()' has been deprecated. "
                           "Please use the new naming convention of "
                           "'ospSetObject()' instead");
-  LOG("ospSetParam(" << toString(target) << ", \"" << bufName << "\", "
-      << toString(value) << ')');
   return ospray::api::Device::current->setObject(target,bufName,value);
 }
 OSPRAY_CATCH_END
@@ -381,7 +372,6 @@ extern "C" void ospSetPixelOp(OSPFrameBuffer fb, OSPPixelOp op)
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  LOG("ospSetPixelOp(..., ...)");
   return ospray::api::Device::current->setPixelOp(fb,op);
 }
 OSPRAY_CATCH_END
@@ -393,8 +383,6 @@ extern "C" void ospSetObject(OSPObject target,
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  LOG("ospSetObject(" << toString(target) << ", \"" << bufName << "\", "
-      << toString(value) << ')');
   return ospray::api::Device::current->setObject(target,bufName,value);
 }
 OSPRAY_CATCH_END
@@ -407,7 +395,6 @@ OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   Assert2(_type,"invalid render type identifier in ospNewPixelOp");
-  LOG("ospNewPixelOp(" << _type << ')');
   int L = strlen(_type);
   char *type = STACK_BUFFER(char, L+1);
   for (int i=0;i<=L;i++) {
@@ -430,7 +417,6 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
 
   Assert2(_type,"invalid render type identifier in ospNewRenderer");
-  LOG("ospNewRenderer(" << _type << ')');
 
   std::string type(_type);
   for (size_t i = 0; i < type.size(); i++) {
@@ -453,12 +439,10 @@ OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   Assert(type != nullptr && "invalid geometry type identifier in ospNewGeometry");
-  LOG("ospNewGeometry(" << type << ')');
   OSPGeometry geometry = ospray::api::Device::current->newGeometry(type);
   if (geometry == nullptr) {
     postStatusMsg(1) << "#ospray: could not create geometry '" << type << "'";
   }
-  LOG("DONE ospNewGeometry(" << type << ") >> " << (int *)geometry);
   return geometry;
 }
 OSPRAY_CATCH_END
@@ -472,7 +456,6 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   // Assert2(renderer != nullptr, "invalid renderer handle in ospNewMaterial");
   Assert2(type != nullptr, "invalid material type identifier in ospNewMaterial");
-  LOG("ospNewMaterial(" << renderer << ", " << type << ')');
   OSPMaterial material = ospray::api::Device::current->newMaterial(renderer, type);
   if (material == nullptr) {
     postStatusMsg(1) << "#ospray: could not create material '" << type << "'";
@@ -486,7 +469,6 @@ OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   Assert2(type != nullptr, "invalid light type identifier in ospNewLight");
-  LOG("ospNewLight(" << renderer << ", " << type << ')');
   OSPLight light = ospray::api::Device::current->newLight(renderer, type);
   if (light == nullptr) {
     postStatusMsg(1) << "#ospray: could not create light '" << type << "'";
@@ -503,7 +485,6 @@ OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   Assert(type != nullptr && "invalid camera type identifier in ospNewCamera");
-  LOG("ospNewCamera(" << type << ')');
   OSPCamera camera = ospray::api::Device::current->newCamera(type);
   if (camera == nullptr) {
     postStatusMsg(1) << "#ospray: could not create camera '" << type << "'";
@@ -521,8 +502,6 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   Assert2(size.x > 0, "Width must be greater than 0 in ospNewTexture2D");
   Assert2(size.y > 0, "Height must be greater than 0 in ospNewTexture2D");
-  LOG("ospNewTexture2D(" << (const vec2i&)size << ", " << type << ", " << data
-      << ", " << flags << ')');
   return ospray::api::Device::current->newTexture2D((vec2i&)size, type, data, flags);
 }
 OSPRAY_CATCH_END
@@ -533,7 +512,6 @@ OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   Assert(type != nullptr && "invalid volume type identifier in ospNewVolume");
-  LOG("ospNewVolume(" << type << ')');
   OSPVolume volume = ospray::api::Device::current->newVolume(type);
   if (volume == nullptr) {
     postStatusMsg(1) << "#ospray: could not create volume '" << type << "'";
@@ -549,7 +527,6 @@ OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   Assert(type != nullptr && "invalid transfer function type identifier in ospNewTransferFunction");
-  LOG("ospNewTransferFunction(" << type << ')');
   OSPTransferFunction transferFunction = ospray::api::Device::current->newTransferFunction(type);
   if (transferFunction == nullptr) {
     postStatusMsg(1) << "#ospray: could not create transferFunction '" << type << "'";
@@ -585,7 +562,6 @@ OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   Assert(object && "invalid object handle to commit to");
-  LOG("ospCommit(" << toString(object) << ')');
   ospray::api::Device::current->commit(object);
 }
 OSPRAY_CATCH_END
