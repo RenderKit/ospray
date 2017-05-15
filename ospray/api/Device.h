@@ -240,6 +240,11 @@ namespace ospray {
       bool committed {false};
     };
 
+    // Shorthand functions to query current API device //
+
+    OSPRAY_SDK_INTERFACE bool    deviceIsSet();
+    OSPRAY_SDK_INTERFACE Device& currentDevice();
+
     /*! \brief registers a internal ospray::<ClassName> renderer under
         the externally accessible name "external_name"
 

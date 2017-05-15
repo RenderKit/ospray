@@ -96,5 +96,15 @@ namespace ospray {
       return committed;
     }
 
+    bool deviceIsSet()
+    {
+      return Device::current.ptr != nullptr;
+    }
+
+    Device &currentDevice()
+    {
+      return *Device::current;
+    }
+
   } // ::ospray::api
 } // ::ospray
