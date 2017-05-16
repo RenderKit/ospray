@@ -137,7 +137,7 @@ namespace ospRandSphereTest {
       vec3f(0.865003, 0.865003 , 0.86500),
       vec3f(0.705882, 0.0156863, 0.14902)
     };
-    const std::vector<float> opacities = {0.05, 0.1};
+    const std::vector<float> opacities = {0.15, 0.05};
     ospray::cpp::Data colorsData(colors.size(), OSP_FLOAT3, colors.data());
     ospray::cpp::Data opacityData(opacities.size(), OSP_FLOAT, opacities.data());
     colorsData.commit();
@@ -256,7 +256,7 @@ namespace ospRandSphereTest {
     renderer.set("world", model);
     renderer.set("model", model);
     renderer.set("camera", camera);
-    renderer.set("bgColor", vec3f(1.f, 1.f, 1.f));
+    renderer.set("bgColor", vec3f(0.01f, 0.01f, 0.01f));
     renderer.commit();
 
     ospray::cpp::FrameBuffer fb(fbSize,OSP_FB_SRGBA,OSP_FB_COLOR|OSP_FB_ACCUM);
