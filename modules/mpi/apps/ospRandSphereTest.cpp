@@ -22,6 +22,8 @@
 #include "ospray/ospray_cpp/Device.h"
 #include "ospray/ospray_cpp/FrameBuffer.h"
 #include "ospray/ospray_cpp/Renderer.h"
+#include "ospray/ospray_cpp/TransferFunction.h"
+#include "ospray/ospray_cpp/Volume.h"
 // ospray apps
 #include "common/commandline/CameraParser.h"
 #include "widgets/imguiViewer.h"
@@ -41,6 +43,7 @@ namespace ospRandSphereTest {
   vec2i fbSize            = vec2i(1024, 768);
   int   numFrames         = 32;
   bool  runDistributed    = true;
+  bool  withVolume        = false;
 
   //TODO: factor this into a reusable piece inside of ospcommon!!!!!!
   // helper function to write the rendered image as PPM file
@@ -64,7 +67,7 @@ namespace ospRandSphereTest {
     fclose(file);
   }
 
-  std::pair<ospray::cpp::Model, box3f> makeSpheres()
+  std::pair<ospray::cpp::Geometry, box3f> makeSpheres()
   {
     struct Sphere
     {
@@ -116,15 +119,54 @@ namespace ospRandSphereTest {
     geom.set("radius", sphereRadius);
     geom.commit();
 
-    ospray::cpp::Model model;
-    model.addGeometry(geom);
-    model.commit();
-
     //NOTE: all ranks will have the same bounding box, no matter what spheres
     //      were randomly generated
     auto bbox = box3f(vec3f(sceneLowerBound), vec3f(sceneUpperBound));
 
-    return std::make_pair(model, bbox);
+    return std::make_pair(geom, bbox);
+  }
+
+  std::pair<ospray::cpp::Volume, box3f> makeVolume()
+  {
+    auto numRanks = static_cast<float>(mpicommon::numGlobalRanks());
+    auto myRank   = mpicommon::globalRank();
+
+    ospray::cpp::TransferFunction transferFcn("piecewise_linear");
+    const std::vector<vec3f> colors = {
+      vec3f(0.231373, 0.298039 , 0.75294),
+      vec3f(0.865003, 0.865003 , 0.86500),
+      vec3f(0.705882, 0.0156863, 0.14902)
+    };
+    const std::vector<float> opacities = {0.05, 0.1};
+    ospray::cpp::Data colorsData(colors.size(), OSP_FLOAT3, colors.data());
+    ospray::cpp::Data opacityData(opacities.size(), OSP_FLOAT, opacities.data());
+    colorsData.commit();
+    opacityData.commit();
+
+    const vec2f valueRange(static_cast<float>(0), static_cast<float>(255));
+    transferFcn.set("colors", colorsData);
+    transferFcn.set("opacities", opacityData);
+    transferFcn.set("valueRange", valueRange);
+    transferFcn.commit();
+
+
+    ospray::cpp::Volume volume("block_bricked_volume");
+    volume.set("voxelType", "uchar");
+    volume.set("dimensions", vec3i(16));
+    volume.set("transferFunction", transferFcn);
+    volume.set("gridSpacing", vec3f(0.5f / 16.f));
+    const vec3f gridOrigin(myRank / 2.f, 0.f, 0.f);
+    volume.set("gridOrigin", gridOrigin);
+
+    std::vector<unsigned char> volumeData(16 * 16 * 16, 0);
+    for (size_t i = 0; i < volumeData.size(); ++i) {
+      volumeData[i] = i % 256;
+    }
+    volume.setRegion(volumeData.data(), vec3i(0), vec3i(16));
+    volume.commit();
+
+    auto bbox = box3f(gridOrigin, gridOrigin + vec3f(0.5f));
+    return std::make_pair(volume, bbox);
   }
 
   void setupCamera(ospray::cpp::Camera &camera, box3f worldBounds)
@@ -158,6 +200,8 @@ namespace ospRandSphereTest {
         numFrames = std::atoi(av[++i]);
       } else if (arg == "-l" || arg == "--local") {
         runDistributed = false;
+      } else if (arg == "-vol") {
+        withVolume = true;
       }
     }
   }
@@ -190,16 +234,27 @@ namespace ospRandSphereTest {
 
     initialize_ospray();
 
-    auto scene = makeSpheres();
+    ospray::cpp::Model model;
+    auto spheres = makeSpheres();
+    model.addGeometry(spheres.first);
+
+    box3f worldBounds = spheres.second;
+    if (withVolume) {
+      auto volume = makeVolume();
+      model.addVolume(volume.first);
+      worldBounds.extend(volume.second);
+    }
+
+    model.commit();
 
     DefaultCameraParser cameraClParser;
     cameraClParser.parse(ac, av);
     auto camera = cameraClParser.camera();
-    setupCamera(camera, scene.second);
+    setupCamera(camera, worldBounds);
 
     ospray::cpp::Renderer renderer("raycast");
-    renderer.set("world", scene.first);
-    renderer.set("model", scene.first);
+    renderer.set("world", model);
+    renderer.set("model", model);
     renderer.set("camera", camera);
     renderer.set("bgColor", vec3f(1.f, 1.f, 1.f));
     renderer.commit();
