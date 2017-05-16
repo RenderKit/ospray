@@ -169,7 +169,7 @@ namespace ospray {
 
     {
       SCOPED_LOCK(mutex);
-      DBG(printf("rank %i starting new frame\n", mpi::world.rank));
+      DBG(printf("rank %i starting new frame\n", mpicommon::globalRank()));
       assert(!frameIsActive);
 
       if (pixelOp)
@@ -348,7 +348,7 @@ namespace ospray {
 
   void DFB::tileIsCompleted(TileData *tile)
   {
-    DBG(printf("rank %i: tilecompleted %i,%i\n",mpi::world.rank,
+    DBG(printf("rank %i: tilecompleted %i,%i\n",mpicommon::globalRank(),
                tile->begin.x,tile->begin.y));
 
     if (mpicommon::IamTheMaster() && tile->ownerID == mpicommon::masterRank()) {
@@ -385,7 +385,7 @@ namespace ospray {
         SCOPED_LOCK(mutex);
         numTilesCompletedByMe = ++numTilesCompletedThisFrame;
         DBG(printf("rank %i: MARKING AS COMPLETED %i,%i -> %i %i\n",
-                   mpi::world.rank,
+                   mpicommon::globalRank(),
                    tile->begin.x,tile->begin.y,(int)numTilesCompletedThisFrame,
                    numTiles.x*numTiles.y));
       }
@@ -500,7 +500,7 @@ namespace ospray {
 
   void DFB::closeCurrentFrame()
   {
-    DBG(printf("rank %i CLOSES frame\n", mpi::world.rank));
+    DBG(printf("rank %i CLOSES frame\n", mpicommon::globalRank()));
     frameIsActive = false;
     frameIsDone   = true;
 
