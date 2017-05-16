@@ -19,6 +19,7 @@
 // ospray stuff
 #include "geometry/Geometry.h"
 #include "volume/Volume.h"
+#include "common/Model.h"
 
 // stl
 #include <vector>
@@ -29,7 +30,7 @@
 namespace ospray {
   namespace mpi {
 
-    struct DistributedModel : public ManagedObject
+    struct DistributedModel : public Model
     {
       DistributedModel();
       virtual ~DistributedModel() = default;
@@ -37,15 +38,6 @@ namespace ospray {
       //! \brief common function to help printf-debugging
       virtual std::string toString() const override;
       virtual void commit() override;
-
-      // Data members //
-
-      //! \brief vector of all geometries used in this model
-      std::vector<Ref<Geometry>> geometry;
-
-      //! \brief the embree scene handle for this geometry
-      RTCScene embreeSceneHandle {nullptr};
-      box3f bounds;
     };
 
   } // ::ospray::mpi

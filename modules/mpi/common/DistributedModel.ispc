@@ -19,6 +19,7 @@
 
 typedef uniform Geometry *uniform uniGeomPtr;
 typedef uniform Material *uniform uniMaterialPtr;
+typedef uniform Volume   *uniform uniVolumePtr;
 
 export void *uniform DistributedModel_create(void *uniform cppE)
 {
@@ -32,7 +33,8 @@ export void *uniform DistributedModel_create(void *uniform cppE)
 
 export void DistributedModel_init(void *uniform _model,
                                   void *uniform embreeDevice,
-                                  uniform int32 numGeometries)
+                                  uniform int32 numGeometries,
+                                  uniform int32 numVolumes)
 {
   uniform Model *uniform model = (uniform Model *uniform)_model;
   if (model->embreeSceneHandle)
@@ -53,6 +55,12 @@ export void DistributedModel_init(void *uniform _model,
     model->geometry = uniform new uniform uniGeomPtr[numGeometries];
   else
     model->geometry = NULL;
+  if (model->volumes) delete[] model->volumes;
+  model->volumeCount = numVolumes;
+  if (numVolumes > 0) 
+    model->volumes = uniform new uniform uniVolumePtr[numVolumes];
+  else
+    model->volumes = NULL;
 }
 
 export void *uniform DistributedModel_getEmbreeSceneHandle(void *uniform _model)
@@ -68,4 +76,12 @@ export void DistributedModel_setGeometry(void *uniform _model,
   uniform Model *uniform model = (uniform Model *uniform)_model;
   uniform Geometry *uniform geom = (uniform Geometry *uniform)_geom;
   model->geometry[geomID] = geom;
+}
+
+export void DistributedModel_setVolume(void *uniform pointer,
+                                       uniform int32 index,
+                                       void *uniform volume)
+{
+  uniform Model *uniform model = (uniform Model *uniform) pointer;
+  model->volumes[index] = (uniform Volume *uniform) volume;
 }
