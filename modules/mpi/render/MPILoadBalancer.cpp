@@ -140,6 +140,7 @@ namespace ospray {
           const size_t tile_x = taskIndex - tile_y*numTiles_x;
           const vec2i tileID(tile_x, tile_y);
           const int32 accumID = fb->accumID(tileID);
+          const bool tileOwner = (taskIndex % mpicommon::numGlobalRanks()) == mpicommon::globalRank();
 
           if (dfb->tileError(tileID) <= renderer->errorThreshold)
             return;
@@ -150,6 +151,14 @@ namespace ospray {
           tasking::parallel_for(NUM_JOBS, [&](int tIdx) {
             renderer->renderTile(perFrameData, tile, tIdx);
           });
+
+          if (tileOwner) {
+            tile.generation = 0;
+            tile.children = mpicommon::numGlobalRanks() - 1;
+          } else {
+            tile.generation = 1;
+            tile.children = 0;
+          }
 
           fb->setTile(tile);
         });

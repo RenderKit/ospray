@@ -42,7 +42,7 @@ namespace ospray {
                                                   const uint32 channelFlags)
     {
       auto *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
-      dfb->setFrameMode(DistributedFrameBuffer::Z_COMPOSITE);
+      dfb->setFrameMode(DistributedFrameBuffer::ALPHA_BLEND);
 
       return TiledLoadBalancer::instance->renderFrame(this, fb, channelFlags);
     }

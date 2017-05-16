@@ -17,6 +17,7 @@
 //ospray
 #include "common/Model.ih"
 #include "render/Renderer.ih"
+#include "render/util.ih"
 
 struct DistributedRaycastRenderer
 {
@@ -58,6 +59,8 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
     Volume *uniform volume = self->super.model->volumes[0];
     intersectBox(ray, volume->boundingBox, t0, t1);
     if (t0 < t1 && t0 > ray.t0 && t0 < ray.t) {
+      // TODO: Sample offset placement correction, like in the data-parallel
+      // raycast renderer
       ray.t0 = t0;
       ray.t = min(t1, sample.ray.t);
 
