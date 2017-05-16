@@ -47,6 +47,7 @@ LINK
   ospray
   ospray_common
   ospray_imgui_util_sg
+  ospray_tfn
   glfw
   gl3w
   imgui
