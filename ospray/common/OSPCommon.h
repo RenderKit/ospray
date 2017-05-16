@@ -179,6 +179,8 @@ namespace ospray {
 
   OSPRAY_SDK_INTERFACE void handleError(OSPError e, const std::string &message);
 
+  OSPRAY_SDK_INTERFACE void postTraceMsg(const std::string &message);
+
   // RTTI hash ID lookup helper functions ///////////////////////////////////
 
   OSPRAY_SDK_INTERFACE size_t translatedHash(size_t v);

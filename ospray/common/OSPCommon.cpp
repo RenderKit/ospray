@@ -338,6 +338,14 @@ namespace ospray {
     }
   }
 
+  void postTraceMsg(const std::string &message)
+  {
+    if (api::deviceIsSet()) {
+      auto &device = api::currentDevice();
+      device.trace_fcn(message.c_str());
+    }
+  }
+
   size_t translatedHash(size_t v)
   {
     static std::map<size_t, size_t> id_translation;
@@ -351,7 +359,6 @@ namespace ospray {
       return id_translation[v];
     }
   }
-
 
 } // ::ospray
 

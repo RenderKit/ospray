@@ -234,6 +234,9 @@ namespace ospray {
       std::function<void(OSPError, const char*)>
       error_fcn { [](OSPError, const char*){} };
 
+      std::function<void(const char *)>
+      trace_fcn { [](const char*){} };
+
       OSPError    lastErrorCode = OSP_NO_ERROR;
       std::string lastErrorMsg  = "no error";// no braced initializer for MSVC12
 

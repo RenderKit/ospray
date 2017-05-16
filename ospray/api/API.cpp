@@ -14,6 +14,10 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+//ospcommon
+#include "ospcommon/utility/OnScopeExit.h"
+
+//ospray
 #include "common/OSPCommon.h"
 #include "common/Util.h"
 #include "include/ospray/ospray.h"
@@ -56,7 +60,12 @@ inline std::string toString(OSPObject obj)
                              "call an ospray API function before "            \
                              "first calling ospInit())" + getPidString());
 
-#define OSPRAY_CATCH_BEGIN try {
+#define OSPRAY_CATCH_BEGIN try {                                              \
+  auto *fcn_name_ = __PRETTY_FUNCTION__;                                      \
+  ospcommon::utility::OnScopeExit guard([&]() {                               \
+    postTraceMsg(fcn_name_);                                                  \
+  });
+
 #define OSPRAY_CATCH_END                                                      \
   } catch (const std::bad_alloc &e) {                                         \
     handleError(OSP_OUT_OF_MEMORY, "OSPRay was unable to allocate memory");   \
@@ -249,7 +258,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-//! load module \<name\> from shard lib libospray_module_\<name\>.so
 extern "C" int32_t ospLoadModule(const char *moduleName)
 OSPRAY_CATCH_BEGIN
 {
@@ -328,7 +336,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! create a new data buffer, with optional init data and control flags */
 extern "C" OSPData ospNewData(size_t nitems, OSPDataType format,
                               const void *init, const uint32_t flags)
 OSPRAY_CATCH_BEGIN
@@ -339,7 +346,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! add a data array to another object */
 extern "C" void ospSetData(OSPObject object, const char *bufName, OSPData data)
 OSPRAY_CATCH_BEGIN
 {
@@ -348,7 +354,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! set/add a pixel op to a frame buffer */
 extern "C" void ospSetPixelOp(OSPFrameBuffer fb, OSPPixelOp op)
 OSPRAY_CATCH_BEGIN
 {
@@ -357,7 +362,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! add an object parameter to another object */
 extern "C" void ospSetObject(OSPObject target,
                              const char *bufName,
                              OSPObject value)
@@ -368,9 +372,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! \brief create a new pixelOp of given type
-
-  return 'nullptr' if that type is not known */
 extern "C" OSPPixelOp ospNewPixelOp(const char *_type)
 OSPRAY_CATCH_BEGIN
 {
@@ -389,9 +390,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! \brief create a new renderer of given type
-
-  return 'nullptr' if that type is not known */
 extern "C" OSPRenderer ospNewRenderer(const char *_type)
 OSPRAY_CATCH_BEGIN
 {
@@ -412,9 +410,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! \brief create a new geometry of given type
-
-  return 'nullptr' if that type is not known */
 extern "C" OSPGeometry ospNewGeometry(const char *type)
 OSPRAY_CATCH_BEGIN
 {
@@ -428,14 +423,10 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! \brief create a new material of given type
-
-  return 'nullptr' if that type is not known */
 extern "C" OSPMaterial ospNewMaterial(OSPRenderer renderer, const char *type)
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  // Assert2(renderer != nullptr, "invalid renderer handle in ospNewMaterial");
   Assert2(type != nullptr, "invalid material type identifier in ospNewMaterial");
   OSPMaterial material = currentDevice().newMaterial(renderer, type);
   if (material == nullptr) {
@@ -458,9 +449,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! \brief create a new camera of given type
-
-  return 'nullptr' if that type is not known */
 extern "C" OSPCamera ospNewCamera(const char *type)
 OSPRAY_CATCH_BEGIN
 {
@@ -487,7 +475,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! \brief create a new volume of given type, return 'nullptr' if that type is not known */
 extern "C" OSPVolume ospNewVolume(const char *type)
 OSPRAY_CATCH_BEGIN
 {
@@ -501,8 +488,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! \brief create a new transfer function of given type
-  return 'nullptr' if that type is not known */
 extern "C" OSPTransferFunction ospNewTransferFunction(const char *type)
 OSPRAY_CATCH_BEGIN
 {
@@ -525,9 +510,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! \brief call a renderer to render given model into given framebuffer
-
-  model _may_ be empty (though most framebuffers will expect one!) */
 extern "C" float ospRenderFrame(OSPFrameBuffer fb,
                                 OSPRenderer renderer,
                                 const uint32_t fbChannelFlags)
@@ -645,7 +627,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! Copy data into the given volume. */
 extern "C" int ospSetRegion(OSPVolume object, void *source,
                             const osp::vec3i &index, const osp::vec3i &count)
 OSPRAY_CATCH_BEGIN
@@ -656,7 +637,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! add a vec2f parameter to an object */
 extern "C" void ospSetVec2f(OSPObject _object,
                             const char *id,
                             const osp::vec2f &v)
@@ -667,7 +647,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! add a vec2i parameter to an object */
 extern "C" void ospSetVec2i(OSPObject _object,
                             const char *id,
                             const osp::vec2i &v)
@@ -678,7 +657,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! add a vec3f parameter to another object */
 extern "C" void ospSetVec3f(OSPObject _object,
                             const char *id,
                             const osp::vec3f &v)
@@ -689,7 +667,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! add a vec4f parameter to another object */
 extern "C" void ospSetVec4f(OSPObject _object,
                             const char *id,
                             const osp::vec4f &v)
@@ -700,7 +677,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! add a vec3i parameter to another object */
 extern "C" void ospSetVec3i(OSPObject _object,
                             const char *id,
                             const osp::vec3i &v)
@@ -711,7 +687,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! add a vec2f parameter to another object */
 extern "C" void ospSet2f(OSPObject _object, const char *id, float x, float y)
 OSPRAY_CATCH_BEGIN
 {
@@ -720,7 +695,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! add a vec2f parameter to another object */
 extern "C" void ospSet2fv(OSPObject _object, const char *id, const float *xy)
 OSPRAY_CATCH_BEGIN
 {
@@ -729,7 +703,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! add a vec2i parameter to another object */
 extern "C" void ospSet2i(OSPObject _object, const char *id, int x, int y)
 OSPRAY_CATCH_BEGIN
 {
@@ -738,7 +711,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! add a vec2i parameter to another object */
 extern "C" void ospSet2iv(OSPObject _object, const char *id, const int *xy)
 OSPRAY_CATCH_BEGIN
 {
@@ -747,7 +719,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! add a vec3f parameter to another object */
 extern "C" void ospSet3f(OSPObject _object, const char *id, float x, float y, float z)
 OSPRAY_CATCH_BEGIN
 {
@@ -756,7 +727,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! add a vec3f parameter to another object */
 extern "C" void ospSet3fv(OSPObject _object, const char *id, const float *xyz)
 OSPRAY_CATCH_BEGIN
 {
@@ -765,7 +735,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! add a vec3i parameter to another object */
 extern "C" void ospSet3i(OSPObject _object, const char *id, int x, int y, int z)
 OSPRAY_CATCH_BEGIN
 {
@@ -774,7 +743,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! add a vec3i parameter to another object */
 extern "C" void ospSet3iv(OSPObject _object, const char *id, const int *xyz)
 OSPRAY_CATCH_BEGIN
 {
@@ -783,7 +751,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! add a vec4f parameter to another object */
 extern "C" void ospSet4f(OSPObject _object, const char *id,
                          float x, float y, float z, float w)
 OSPRAY_CATCH_BEGIN
@@ -793,7 +760,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! add a vec4f parameter to another object */
 extern "C" void ospSet4fv(OSPObject _object, const char *id, const float *xyzw)
 OSPRAY_CATCH_BEGIN
 {
@@ -803,7 +769,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! add a void pointer to another object */
 extern "C" void ospSetVoidPtr(OSPObject _object, const char *id, void *v)
 OSPRAY_CATCH_BEGIN
 {
@@ -829,7 +794,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-//! assign given material to given geometry
 extern "C" void ospSetMaterial(OSPGeometry geometry, OSPMaterial material)
 OSPRAY_CATCH_BEGIN
 {
@@ -839,9 +803,6 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END
 
-/*! \brief create a new instance geometry that instantiates another
-  model.  the resulting geometry still has to be added to another
-  model via ospAddGeometry */
 extern "C" OSPGeometry ospNewInstance(OSPModel modelToInstantiate,
                                       const osp::affine3f &xfm)
 OSPRAY_CATCH_BEGIN
