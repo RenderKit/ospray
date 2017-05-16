@@ -57,7 +57,7 @@ export void DistributedModel_init(void *uniform _model,
     model->geometry = NULL;
   if (model->volumes) delete[] model->volumes;
   model->volumeCount = numVolumes;
-  if (numVolumes > 0) 
+  if (numVolumes > 0)
     model->volumes = uniform new uniform uniVolumePtr[numVolumes];
   else
     model->volumes = NULL;
