@@ -1,5 +1,4 @@
 #include <cmath>
-#include <set>
 #include <algorithm>
 #include <iostream>
 #include <fstream>
@@ -315,12 +314,17 @@ void TransferFunction::save(const ospcommon::FileName &fileName) const
   // here we may need to do some interpolation, if the RGB lines have differing numbers
   // of control points
   // Find which x values we need to sample to get all the control points for the tfcn.
-  std::set<float> controlPoints;
+  std::vector<float> controlPoints;
   for (size_t i = 0; i < 3; ++i) {
     for (const auto &x : rgbaLines[i].line) {
-      controlPoints.insert(x.x);
+      controlPoints.push_back(x.x);
     }
   }
+  // Filter out same or within epsilon control points to get unique list
+  std::sort(controlPoints.begin(), controlPoints.end());
+  auto uniqueEnd = std::unique(controlPoints.begin(), controlPoints.end(),
+      [](const float &a, const float &b) { return std::abs(a - b) < 0.0001; });
+  controlPoints.erase(uniqueEnd, controlPoints.end());
 
   // Step along the lines and sample them
   std::array<std::vector<vec2f>::const_iterator, 3> lit = {
