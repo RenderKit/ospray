@@ -1,4 +1,5 @@
 #include <cmath>
+#include <set>
 #include <algorithm>
 #include <iostream>
 #include <fstream>
@@ -77,6 +78,7 @@ TransferFunction::TransferFunction(std::shared_ptr<sg::TransferFunction> &tfn) :
   transferFcn(tfn),
   activeLine(3),
   tfcnSelection(JET),
+  customizing(false),
   fcnChanged(true),
   paletteTex(0),
   textBuffer(512, '\0')
@@ -100,11 +102,12 @@ TransferFunction::TransferFunction(const TransferFunction &t) :
   rgbaLines(t.rgbaLines),
   activeLine(t.activeLine),
   tfcnSelection(t.tfcnSelection),
+  customizing(t.customizing),
+  transferFunctions(t.transferFunctions),
   fcnChanged(true),
   paletteTex(0),
   textBuffer(512, '\0')
 {
-  loadColorMapPresets();
   setColorMap(false);
 }
 TransferFunction& TransferFunction::operator=(const TransferFunction &t)
@@ -115,7 +118,11 @@ TransferFunction& TransferFunction::operator=(const TransferFunction &t)
   transferFcn = t.transferFcn;
   rgbaLines = t.rgbaLines;
   activeLine = t.activeLine;
+  tfcnSelection = t.tfcnSelection;
+  customizing = t.customizing;
+  transferFunctions = t.transferFunctions;
   fcnChanged = true;
+  setColorMap(false);
   return *this;
 }
 
@@ -136,17 +143,19 @@ void TransferFunction::drawUi()
     std::vector<const char*> colorMaps(transferFunctions.size(), nullptr);
     std::transform(transferFunctions.begin(), transferFunctions.end(), colorMaps.begin(),
         [](const tfn::TransferFunction &t) { return t.name.c_str(); });
-
     if (ImGui::Combo("ColorMap", &tfcnSelection, colorMaps.data(), colorMaps.size())) {
-      fcnChanged = true;
-      if (tfcnSelection != CUSTOM) {
-        setColorMap(false);
-      }
+      setColorMap(false);
     }
-    if (tfcnSelection == CUSTOM) {
+
+    ImGui::Checkbox("Customize", &customizing);
+    if (customizing) {
+      ImGui::SameLine();
       ImGui::RadioButton("Red", &activeLine, 0); ImGui::SameLine();
+      ImGui::SameLine();
       ImGui::RadioButton("Green", &activeLine, 1); ImGui::SameLine();
+      ImGui::SameLine();
       ImGui::RadioButton("Blue", &activeLine, 2); ImGui::SameLine();
+      ImGui::SameLine();
       ImGui::RadioButton("Alpha", &activeLine, 3);
     } else {
       activeLine = 3;
@@ -189,9 +198,7 @@ void TransferFunction::drawUi()
     }
     draw_list->PushClipRect(canvasPos, canvasPos + canvasSize);
 
-    // TODO: Should also draw little boxes showing the clickable region for each
-    // line segment
-    if (tfcnSelection == CUSTOM) {
+    if (customizing) {
       for (int i = 0; i < static_cast<int>(rgbaLines.size()); ++i){
         if (i == activeLine){
           continue;
@@ -299,7 +306,42 @@ void TransferFunction::load(const ospcommon::FileName &fileName)
 }
 void TransferFunction::save(const ospcommon::FileName &fileName) const
 {
-  // TODO: Pull the RGBA line values to compute the transfer function and save it
+  // For opacity we can store the associated data value and only have 1 line,
+  // so just save it out directly
+  tfn::TransferFunction output(transferFunctions[tfcnSelection].name,
+      std::vector<vec3f>(), rgbaLines[3].line, 0, 1, 1);
+
+  // Pull the RGB line values to compute the transfer function and save it out
+  // here we may need to do some interpolation, if the RGB lines have differing numbers
+  // of control points
+  // Find which x values we need to sample to get all the control points for the tfcn.
+  std::set<float> controlPoints;
+  for (size_t i = 0; i < 3; ++i) {
+    for (const auto &x : rgbaLines[i].line) {
+      controlPoints.insert(x.x);
+    }
+  }
+
+  // Step along the lines and sample them
+  std::array<std::vector<vec2f>::const_iterator, 3> lit = {
+    rgbaLines[0].line.begin(), rgbaLines[1].line.begin(),
+    rgbaLines[2].line.begin()
+  };
+  for (const auto &x : controlPoints) {
+    std::array<float, 3> sampleColor;
+    for (size_t j = 0; j < 3; ++j){
+      if (x > (lit[j] + 1)->x) {
+        ++lit[j];
+      }
+      assert(lit[j] != rgbaLines[j].line.end());
+      const float t = (x - lit[j]->x) / ((lit[j] + 1)->x - lit[j]->x);
+      // It's hard to click down at exactly 0, so offset a little bit
+      sampleColor[j] = clamp(lerp(lit[j]->y - 0.001, (lit[j] + 1)->y - 0.001, t));
+    }
+    output.rgbValues.push_back(vec3f(sampleColor[0], sampleColor[1], sampleColor[2]));
+  }
+
+  output.save(fileName);
 }
 void TransferFunction::setColorMap(const bool useOpacity)
 {
@@ -378,11 +420,6 @@ void TransferFunction::loadColorMapPresets()
   colors.push_back(vec3f(0));
   colors.push_back(vec3f(1));
   transferFunctions.emplace_back("Grayscale", colors, opacity, 0, 1, 1);
-  colors.clear();
-
-  // Custom is sort of a dummy placeholder, since it actually just
-  // switches to allow editing the of selected presets RGB values
-  transferFunctions.emplace_back("Custom", colors, opacity, 0, 1, 1);
   colors.clear();
 }
 

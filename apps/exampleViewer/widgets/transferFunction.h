@@ -69,7 +69,6 @@ namespace ospray {
       COOL_WARM,
       BLUE_RED,
       GRAYSCALE,
-      CUSTOM
     };
 
     // The scenegraph transfer function being manipulated by this widget
@@ -80,6 +79,8 @@ namespace ospray {
     int activeLine;
     // The selected transfer function being shown
     int tfcnSelection;
+    // If we're customizing the transfer function's RGB values
+    bool customizing;
     // The list of avaliable transfer functions, both built-in and loaded
     std::vector<tfn::TransferFunction> transferFunctions;
     // The filename input text buffer
