@@ -12,6 +12,7 @@
 #include <GLFW/glfw3native.h>
 #endif
 
+#include <tfn_lib/tfn_lib.h>
 #include "Imgui3dExport.h"
 #include <ospray/ospray_cpp/TransferFunction.h>
 #include "common/sg/transferFunction/TransferFunction.h"
@@ -33,6 +34,10 @@ namespace ospray {
      * be applied to volume data
      */
     void render();
+    // Load the transfer function in the file passed and set it active
+    void load(const ospcommon::FileName &fileName);
+    // Save the current transfer function out to the file
+    void save(const ospcommon::FileName &fileName) const;
 
     struct Line
     {
@@ -57,7 +62,7 @@ namespace ospray {
 
   private:
 
-    // The transfer function color presets available
+    // The indices of the transfer function color presets available
     enum ColorMap {
       JET,
       ICE_FIRE,
@@ -75,6 +80,10 @@ namespace ospray {
     int activeLine;
     // The selected transfer function being shown
     int tfcnSelection;
+    // The list of avaliable transfer functions, both built-in and loaded
+    std::vector<tfn::TransferFunction> transferFunctions;
+    // The filename input text buffer
+    std::vector<char> textBuffer;
 
     // Track if the function changed and must be re-uploaded.
     // We start by marking it changed to upload the initial palette
@@ -82,8 +91,13 @@ namespace ospray {
     // The 2d palette texture on the GPU for displaying the color map in the UI.
     GLuint paletteTex;
 
-    // Select the provided color map specified by tfcnSelection
-    void setColorMap();
+    // Select the provided color map specified by tfcnSelection. useOpacity
+    // indicates if the transfer function's opacity values should be used if available
+    // overwriting the user's set opacity data. This is done when loading from a file
+    // to show the loaded tfcn, but not when switching from the preset picker.
+    void setColorMap(const bool useOpacity);
+    // Load up the preset color maps
+    void loadColorMapPresets();
   };
 
 }// ::ospray

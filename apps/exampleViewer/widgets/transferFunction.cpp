@@ -7,6 +7,7 @@
 
 #include <ospcommon/math.h>
 #include <ospray/ospray_cpp/Data.h>
+#include <tfn_lib/tfn_lib.h>
 #include "transferFunction.h"
 
 using namespace ospcommon;
@@ -77,14 +78,16 @@ TransferFunction::TransferFunction(std::shared_ptr<sg::TransferFunction> &tfn) :
   activeLine(3),
   tfcnSelection(JET),
   fcnChanged(true),
-  paletteTex(0)
+  paletteTex(0),
+  textBuffer(512, '\0')
 {
   // TODO: Use the transfer function passed to use to configure the initial widget lines
   rgbaLines[0].color = 0xff0000ff;
   rgbaLines[1].color = 0xff00ff00;
   rgbaLines[2].color = 0xffff0000;
   rgbaLines[3].color = 0xffffffff;
-  setColorMap();
+  loadColorMapPresets();
+  setColorMap(false);
 }
 TransferFunction::~TransferFunction()
 {
@@ -98,9 +101,11 @@ TransferFunction::TransferFunction(const TransferFunction &t) :
   activeLine(t.activeLine),
   tfcnSelection(t.tfcnSelection),
   fcnChanged(true),
-  paletteTex(0)
+  paletteTex(0),
+  textBuffer(512, '\0')
 {
-  setColorMap();
+  loadColorMapPresets();
+  setColorMap(false);
 }
 TransferFunction& TransferFunction::operator=(const TransferFunction &t)
 {
@@ -118,22 +123,25 @@ void TransferFunction::drawUi()
 {
   if (ImGui::Begin("Transfer Function")){
     ImGui::Text("Left click and drag to add/move points\nRight click to remove\n");
-    /*
+    ImGui::InputText("filename", textBuffer.data(), textBuffer.size() - 1);
+
     if (ImGui::Button("Save")){
-      save_fcn();
+      save(textBuffer.data());
     }
     ImGui::SameLine();
     if (ImGui::Button("Load")){
-      load_fcn();
+      load(textBuffer.data());
     }
-    */
-    const static char* colorMaps[] = { "Jet", "Ice Fire", "Cool Warm",
-                                       "Blue Red", "Grayscale", "Custom" };
-    if (ImGui::Combo("ColorMap", &tfcnSelection, colorMaps, 6)) {
-      if (tfcnSelection != CUSTOM) {
-        setColorMap();
-      }
+
+    std::vector<const char*> colorMaps(transferFunctions.size(), nullptr);
+    std::transform(transferFunctions.begin(), transferFunctions.end(), colorMaps.begin(),
+        [](const tfn::TransferFunction &t) { return t.name.c_str(); });
+
+    if (ImGui::Combo("ColorMap", &tfcnSelection, colorMaps.data(), colorMaps.size())) {
       fcnChanged = true;
+      if (tfcnSelection != CUSTOM) {
+        setColorMap(false);
+      }
     }
     if (tfcnSelection == CUSTOM) {
       ImGui::RadioButton("Red", &activeLine, 0); ImGui::SameLine();
@@ -282,48 +290,21 @@ void TransferFunction::render()
     fcnChanged = false;
   }
 }
-void TransferFunction::setColorMap()
+void TransferFunction::load(const ospcommon::FileName &fileName)
 {
-  std::vector<vec3f> colors;
-  if (tfcnSelection == JET) {
-    // From the old volume viewer, these are based on ParaView
-    colors.push_back(vec3f(0       , 0, 0.562493));
-    colors.push_back(vec3f(0       , 0, 1       ));
-    colors.push_back(vec3f(0       , 1, 1       ));
-    colors.push_back(vec3f(0.500008, 1, 0.500008));
-    colors.push_back(vec3f(1       , 1, 0       ));
-    colors.push_back(vec3f(1       , 0, 0       ));
-    colors.push_back(vec3f(0.500008, 0, 0       ));
-  } else if (tfcnSelection == ICE_FIRE) {
-    colors.push_back(vec3f(0        , 0          , 0          ));
-    colors.push_back(vec3f(0        , 0.120394   , 0.302678   ));
-    colors.push_back(vec3f(0        , 0.216587   , 0.524575   ));
-    colors.push_back(vec3f(0.0552529, 0.345022   , 0.659495   ));
-    colors.push_back(vec3f(0.128054 , 0.492592   , 0.720287   ));
-    colors.push_back(vec3f(0.188952 , 0.641306   , 0.792096   ));
-    colors.push_back(vec3f(0.327672 , 0.784939   , 0.873426   ));
-    colors.push_back(vec3f(0.60824  , 0.892164   , 0.935546   ));
-    colors.push_back(vec3f(0.881376 , 0.912184   , 0.818097   ));
-    colors.push_back(vec3f(0.9514   , 0.835615   , 0.449271   ));
-    colors.push_back(vec3f(0.904479 , 0.690486   , 0          ));
-    colors.push_back(vec3f(0.854063 , 0.510857   , 0          ));
-    colors.push_back(vec3f(0.777096 , 0.330175   , 0.000885023));
-    colors.push_back(vec3f(0.672862 , 0.139086   , 0.00270085 ));
-    colors.push_back(vec3f(0.508812 , 0          , 0          ));
-    colors.push_back(vec3f(0.299413 , 0.000366217, 0.000549325));
-    colors.push_back(vec3f(0.0157473, 0.00332647 , 0          ));
-  } else if (tfcnSelection == COOL_WARM) {
-    colors.push_back(vec3f(0.231373, 0.298039 , 0.752941));
-    colors.push_back(vec3f(0.865003, 0.865003 , 0.865003));
-    colors.push_back(vec3f(0.705882, 0.0156863, 0.14902));
-  } else if (tfcnSelection == BLUE_RED) {
-    colors.push_back(vec3f(0, 0, 1));
-    colors.push_back(vec3f(1, 0, 0));
-  } else {
-    colors.push_back(vec3f(0));
-    colors.push_back(vec3f(1));
-  }
-
+  tfn::TransferFunction loaded(fileName);
+  transferFunctions.emplace_back(fileName);
+  tfcnSelection = transferFunctions.size() - 1;
+  setColorMap(true);
+}
+void TransferFunction::save(const ospcommon::FileName &fileName) const
+{
+  // TODO: Pull the RGBA line values to compute the transfer function and save it
+}
+void TransferFunction::setColorMap(const bool useOpacity)
+{
+  const std::vector<vec3f> &colors = transferFunctions[tfcnSelection].rgbValues;
+  const std::vector<vec2f> &opacities = transferFunctions[tfcnSelection].opacityValues;
   for (size_t i = 0; i < 3; ++i) {
     rgbaLines[i].line.clear();
   }
@@ -333,6 +314,76 @@ void TransferFunction::setColorMap()
       rgbaLines[j].line.push_back(vec2f(i / nColors, colors[i][j]));
     }
   }
+
+  if (useOpacity && !opacities.empty()) {
+    rgbaLines[3].line.clear();
+    const double valMin = transferFunctions[tfcnSelection].dataValueMin;
+    const double valMax = transferFunctions[tfcnSelection].dataValueMax;
+    // Setup opacity if the colormap has it
+    for (size_t i = 0; i < opacities.size(); ++i) {
+      const float x = (opacities[i].x - valMin) / (valMax - valMin);
+      rgbaLines[3].line.push_back(vec2f(x, opacities[i].y));
+    }
+  }
+  fcnChanged = true;
+}
+void TransferFunction::loadColorMapPresets()
+{
+  std::vector<vec3f> colors;
+  // The presets have no existing opacity value
+  const std::vector<vec2f> opacity;
+  // From the old volume viewer, these are based on ParaView
+  // Jet transfer function
+  colors.push_back(vec3f(0       , 0, 0.562493));
+  colors.push_back(vec3f(0       , 0, 1       ));
+  colors.push_back(vec3f(0       , 1, 1       ));
+  colors.push_back(vec3f(0.500008, 1, 0.500008));
+  colors.push_back(vec3f(1       , 1, 0       ));
+  colors.push_back(vec3f(1       , 0, 0       ));
+  colors.push_back(vec3f(0.500008, 0, 0       ));
+  transferFunctions.emplace_back("Jet", colors, opacity, 0, 1, 1);
+  colors.clear();
+
+  colors.push_back(vec3f(0        , 0          , 0          ));
+  colors.push_back(vec3f(0        , 0.120394   , 0.302678   ));
+  colors.push_back(vec3f(0        , 0.216587   , 0.524575   ));
+  colors.push_back(vec3f(0.0552529, 0.345022   , 0.659495   ));
+  colors.push_back(vec3f(0.128054 , 0.492592   , 0.720287   ));
+  colors.push_back(vec3f(0.188952 , 0.641306   , 0.792096   ));
+  colors.push_back(vec3f(0.327672 , 0.784939   , 0.873426   ));
+  colors.push_back(vec3f(0.60824  , 0.892164   , 0.935546   ));
+  colors.push_back(vec3f(0.881376 , 0.912184   , 0.818097   ));
+  colors.push_back(vec3f(0.9514   , 0.835615   , 0.449271   ));
+  colors.push_back(vec3f(0.904479 , 0.690486   , 0          ));
+  colors.push_back(vec3f(0.854063 , 0.510857   , 0          ));
+  colors.push_back(vec3f(0.777096 , 0.330175   , 0.000885023));
+  colors.push_back(vec3f(0.672862 , 0.139086   , 0.00270085 ));
+  colors.push_back(vec3f(0.508812 , 0          , 0          ));
+  colors.push_back(vec3f(0.299413 , 0.000366217, 0.000549325));
+  colors.push_back(vec3f(0.0157473, 0.00332647 , 0          ));
+  transferFunctions.emplace_back("Ice Fire", colors, opacity, 0, 1, 1);
+  colors.clear();
+
+  colors.push_back(vec3f(0.231373, 0.298039 , 0.752941));
+  colors.push_back(vec3f(0.865003, 0.865003 , 0.865003));
+  colors.push_back(vec3f(0.705882, 0.0156863, 0.14902));
+  transferFunctions.emplace_back("Cool Warm", colors, opacity, 0, 1, 1);
+  colors.clear();
+
+  colors.push_back(vec3f(0, 0, 1));
+  colors.push_back(vec3f(1, 0, 0));
+  transferFunctions.emplace_back("Blue Red", colors, opacity, 0, 1, 1);
+  colors.clear();
+
+  colors.push_back(vec3f(0));
+  colors.push_back(vec3f(1));
+  transferFunctions.emplace_back("Grayscale", colors, opacity, 0, 1, 1);
+  colors.clear();
+
+  // Custom is sort of a dummy placeholder, since it actually just
+  // switches to allow editing the of selected presets RGB values
+  transferFunctions.emplace_back("Custom", colors, opacity, 0, 1, 1);
+  colors.clear();
 }
 
 }// ::ospray
