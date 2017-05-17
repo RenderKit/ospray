@@ -21,7 +21,7 @@
 
 set(LIB_NAME imgui)
 
-add_library(${LIB_NAME} SHARED
+add_library(${LIB_NAME} STATIC
   imgui.cpp
   imgui_draw.cpp
   imgui_demo.cpp
