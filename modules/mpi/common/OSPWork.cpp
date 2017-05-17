@@ -527,24 +527,12 @@ namespace ospray {
         FrameBuffer *fb    = (FrameBuffer*)fbHandle.lookup();
         Assert(renderer);
         Assert(fb);
-        // TODO: This function execution must run differently
-        // if we're the master vs. the worker in master/worker
-        // mode. Actually, if the Master has the Master load balancer,
-        // it should be fine??? Actually not if the renderer
-        // takes over scheduling of tile work like the distributed volume renderer
-        // We need some way to pick the right function to call, either to the
-        // renderer or directly to the load balancer to render the frame
         varianceResult = renderer->renderFrame(fb, channels);
       }
       
       void RenderFrame::runOnMaster()
       {
-        Renderer *renderer = (Renderer*)rendererHandle.lookup();
-        FrameBuffer *fb    = (FrameBuffer*)fbHandle.lookup();
-        Assert(renderer);
-        Assert(fb);
-        varianceResult =
-            TiledLoadBalancer::instance->renderFrame(renderer, fb, channels);
+        run();
       }
       
       void RenderFrame::serialize(WriteStream &b) const

@@ -600,7 +600,8 @@ namespace ospray {
   float DFB::endFrame(const float errorThreshold)
   {
     mpi::messaging::disableAsyncMessaging();
-    return tileErrorRegion.refine(errorThreshold);
+    return mpicommon::IamTheMaster() ?
+           tileErrorRegion.refine(errorThreshold) : errorThreshold;
   }
 
 } // ::ospray

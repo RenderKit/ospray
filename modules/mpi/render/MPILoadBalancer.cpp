@@ -112,7 +112,7 @@ namespace ospray {
         dfb->waitUntilFinished();
         renderer->endFrame(perFrameData,channelFlags);
 
-        return dfb->endFrame(0.f); // irrelevant return value on slave, still
+        return dfb->endFrame(inf); // irrelevant return value on slave, still
                                    // call to stop maml layer
       }
 
@@ -140,7 +140,7 @@ namespace ospray {
           const size_t tile_x = taskIndex - tile_y*numTiles_x;
           const vec2i tileID(tile_x, tile_y);
           const int32 accumID = fb->accumID(tileID);
-          const bool tileOwner = (taskIndex % mpicommon::numGlobalRanks()) == mpicommon::globalRank();
+          const bool tileOwner = (taskIndex % numGlobalRanks()) == globalRank();
 
           if (dfb->tileError(tileID) <= renderer->errorThreshold)
             return;
@@ -154,7 +154,7 @@ namespace ospray {
 
           if (tileOwner) {
             tile.generation = 0;
-            tile.children = mpicommon::numGlobalRanks() - 1;
+            tile.children = numGlobalRanks() - 1;
           } else {
             tile.generation = 1;
             tile.children = 0;
