@@ -82,7 +82,7 @@ namespace ospRandSphereTest {
     return grid;
   }
 
-  std::pair<ospray::cpp::Geometry, box3f> makeSpheres()
+  ospray::cpp::Geometry makeSpheres(const box3f &bbox)
   {
     struct Sphere
     {
@@ -97,11 +97,6 @@ namespace ospRandSphereTest {
 
     std::mt19937 rng;
     rng.seed(std::random_device()());
-
-    const vec3i grid = computeGrid(numRanks);
-    const vec3i brickId(myRank % grid.x, (myRank / grid.x) % grid.y, myRank / (grid.x * grid.y));
-    const vec3f gridOrigin = vec3f(brickId) / vec3f(grid);
-    auto bbox = box3f(gridOrigin, gridOrigin + vec3f(1.f) / vec3f(grid));
 
     // Generate spheres within this nodes volume, to keep the data disjoint.
     // We also leave some buffer space on the boundaries to avoid clipping
@@ -138,7 +133,7 @@ namespace ospRandSphereTest {
     geom.set("radius", sphereRadius);
     geom.commit();
 
-    return std::make_pair(geom, bbox);
+    return geom;
   }
 
   std::pair<ospray::cpp::Volume, box3f> makeVolume()
@@ -257,11 +252,13 @@ namespace ospRandSphereTest {
     initialize_ospray();
 
     ospray::cpp::Model model;
-    auto spheres = makeSpheres();
-    model.addGeometry(spheres.first);
-
     auto volume = makeVolume();
     model.addVolume(volume.first);
+
+    // Generate spheres within the bounds of the volume
+    auto spheres = makeSpheres(volume.second);
+    model.addGeometry(spheres);
+
     // Note: now we must use the global world bounds, not our local bounds
     box3f worldBounds(vec3f(0), vec3f(1));
 
