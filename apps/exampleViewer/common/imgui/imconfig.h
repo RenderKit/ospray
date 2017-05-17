@@ -12,11 +12,15 @@
 //#define IM_ASSERT(_EXPR)  MyAssert(_EXPR)
 
 //---- Define attributes of all API symbols declarations, e.g. for DLL under Windows.
-#ifdef _WIN32
-#  ifdef imgui_EXPORTS
-#    define IMGUI_API __declspec(dllexport)
+#if 0
+#  ifdef _WIN32
+#    ifdef imgui_EXPORTS
+#      define IMGUI_API __declspec(dllexport)
+#    else
+#      define IMGUI_API __declspec(dllimport)
+#    endif
 #  else
-#    define IMGUI_API __declspec(dllimport)
+#    define IMGUI_API
 #  endif
 #else
 #  define IMGUI_API
