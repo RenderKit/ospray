@@ -51,28 +51,7 @@ IF(OSPRAY_APPS_ENABLE_SCRIPTING)
   ADD_SUBDIRECTORY(common/script)
 ENDIF()
 
-# volume viewer application
-IF(NOT (APPLE AND OSPRAY_COMPILER_ICC))
-  OPTION(OSPRAY_APPS_VOLUMEVIEWER "Build ospVolumeViewer application." ON)
-  IF(OSPRAY_APPS_VOLUMEVIEWER)
-    ADD_SUBDIRECTORY(volumeViewer)
-  ENDIF()
-ENDIF()
-
-
-OPTION(OSPRAY_APPS_EXAMPLEVIEWER "Build 'Viewer' example app" ON)
+OPTION(OSPRAY_APPS_EXAMPLEVIEWER "Build example viewer apps" ON)
 IF (OSPRAY_APPS_EXAMPLEVIEWER)
   ADD_SUBDIRECTORY(exampleViewer)
-ENDIF()
-
-# -------------------------------------------------------
-# redistribute QT on Windows
-# -------------------------------------------------------
-IF (OSPRAY_INSTALL_DEPENDENCIES AND WIN32 AND
-    (OSPRAY_APPS_VOLUMEVIEWER))
-  FOREACH(QT_COMPONENT QTCORE QTGUI QTOPENGL)
-    STRING(REGEX REPLACE lib$ dll QT_DLL ${QT_${QT_COMPONENT}_LIBRARY_RELEASE})
-    INSTALL(PROGRAMS ${QT_DLL}
-            DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT redist)
-  ENDFOREACH()
 ENDIF()

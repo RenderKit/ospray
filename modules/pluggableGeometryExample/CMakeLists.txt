@@ -40,6 +40,8 @@ IF (OSPRAY_MODULE_BILINEAR_PATCH)
   # example. If other modules come with their own
   # tools/converters/importers/etc, this is where those sohuld go.
   #
-  ADD_SUBDIRECTORY(apps)
+  IF (OSPRAY_APPS_EXAMPLEVIEWER)#Must build example viewer app to build this one
+    ADD_SUBDIRECTORY(apps)
+  ENDIF()
 
 ENDIF (OSPRAY_MODULE_BILINEAR_PATCH)

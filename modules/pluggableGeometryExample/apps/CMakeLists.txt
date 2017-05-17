@@ -33,9 +33,9 @@ OSPRAY_CREATE_APPLICATION(ospBilinearPatchViewer
   ospray
   ospray_commandline
   ospray_common
-  ospray_glut3d
+  ospray_imgui3d
   ospray_minisg
   ospray_importer
   ${OPENGL_LIBRARIES}
   ${GLUT_LIBRARIES}
-  )
+)
