@@ -32,7 +32,24 @@
 
 #define RUN_LOCAL 0
 
-namespace ospRandSphereTest {
+/* This app demonstrates how to write a distributed scivis style
+ * renderer using the distributed MPI device. Note that because
+ * OSPRay uses sort-last compositing it is up to the user to ensure
+ * that the data distribution across the nodes is suitable. Specifically,
+ * each nodes data must be convex, and disjoint. This renderer only
+ * supports a single volume per node but within the volume could be
+ * arbitrary geometry.
+ *
+ * In the case that you have geometry crossing the boundary of nodes
+ * and are replicating it on both nodes to render (ghost zones, etc.)
+ * you can specify the clipBox for the renderer to clip rays against
+ * its data region, keeping the regions disjoint. For example, if a
+ * sphere center is on the border between two nodes, each would
+ * render half the sphere and the halves would be composited to produce
+ * the final whole-sphere in the image.
+ */
+
+namespace ospRandSciVisTest {
 
   using namespace ospcommon;
 
@@ -101,7 +118,9 @@ namespace ospRandSphereTest {
     // Generate spheres within this nodes volume, to keep the data disjoint.
     // We also leave some buffer space on the boundaries to avoid clipping
     // artifacts or needing duplication across nodes in the case a sphere
-    // crosses a boundary.
+    // crosses a boundary. Note: Since we don't communicated ghost regions
+    // among the nodes, we make sure not to generate any spheres which would
+    // be clipped.
     std::uniform_real_distribution<float> dist_x(bbox.lower.x + sphereRadius,
                                                  bbox.upper.x - sphereRadius);
     std::uniform_real_distribution<float> dist_y(bbox.lower.y + sphereRadius,
@@ -274,6 +293,8 @@ namespace ospRandSphereTest {
     renderer.set("model", model);
     renderer.set("camera", camera);
     renderer.set("bgColor", vec3f(0.01f, 0.01f, 0.01f));
+    renderer.set("clipBox.lower", volume.second.lower);
+    renderer.set("clipBox.upper", volume.second.upper);
     renderer.commit();
 
     ospray::cpp::FrameBuffer fb(fbSize,OSP_FB_SRGBA,OSP_FB_COLOR|OSP_FB_ACCUM);
@@ -329,5 +350,5 @@ namespace ospRandSphereTest {
     return 0;
   }
 
-} // ::ospRandSphereTest
+}
 
