@@ -93,7 +93,7 @@ SET(CPACK_COMPONENT_MPI_DISPLAY_NAME "MPI Module")
 SET(CPACK_COMPONENT_MPI_DESCRIPTION "OSPRay module for MPI-based distributed rendering.")
 
 SET(CPACK_COMPONENT_REDIST_DISPLAY_NAME "Redistributables")
-SET(CPACK_COMPONENT_REDIST_DESCRIPTION "Dependencies of OSPRay (such as Embree, TBB, Qt, Glut) that may or may not be already installed on your system.")
+SET(CPACK_COMPONENT_REDIST_DESCRIPTION "Dependencies of OSPRay (such as Embree, TBB, glfw) that may or may not be already installed on your system.")
 
 # dependencies between components
 SET(CPACK_COMPONENT_DEVEL_DEPENDS lib)
