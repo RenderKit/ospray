@@ -335,7 +335,7 @@ namespace ospray {
     // and finally, tell the master that this tile is done
     auto *tileDesc = this->getTileDescFor(msg->coords);
     TileData *td = (TileData*)tileDesc;
-    this->tileIsCompleted(td);
+    this->masterTileIsCompleted(td);
   }
 
   void DFB::processMessage(WriteTileMessage *msg)
@@ -355,29 +355,11 @@ namespace ospray {
       if (pixelOp) {
         pixelOp->postAccum(tile->final);
       }
-
-      tile->ownerID = -1;//TODO(jda) - need to refactor this "magic" number...
-                         //            the branching logic here is too cryptic
       sendTileToMaster(tile);
-    } else if (mpicommon::IamTheMaster()) {
-      int numTilesCompletedByMyTile = 0;
-      /*! we will not do anything with the tile other than mark it's done */
-      {
-        SCOPED_LOCK(mutex);
-        numTilesCompletedByMyTile = ++numTilesCompletedThisFrame;
-        DBG(printf("MASTER: MARKING AS COMPLETED %i,%i -> %li %i\n",
-                   tile->begin.x,tile->begin.y,numTilesCompletedThisFrame,
-                   numTiles.x*numTiles.y));
-      }
-      DBG(printf("MASTER: num tilescmpletedbymytiles: %i/%i\n",
-                 numTilesCompletedByMyTile,numTiles.x*numTiles.y));
-      if (numTilesCompletedByMyTile == numTiles.x*numTiles.y)
-        closeCurrentFrame();
     } else {
       if (pixelOp) {
         pixelOp->postAccum(tile->final);
       }
-
       sendTileToMaster(tile);
 
       size_t numTilesCompletedByMe = 0;
@@ -394,6 +376,23 @@ namespace ospray {
         closeCurrentFrame();
       }
     }
+  }
+
+  void DFB::masterTileIsCompleted(TileData *tile) {
+    assert(mpicommon::globalRank() == mpicommon::masterRank());
+    int numTilesCompletedByMyTile = 0;
+    /*! we will not do anything with the tile other than mark it's done */
+    {
+      SCOPED_LOCK(mutex);
+      numTilesCompletedByMyTile = ++numTilesCompletedThisFrame;
+      DBG(printf("MASTER: MARKING AS COMPLETED %i,%i -> %li %i\n",
+            tile->begin.x,tile->begin.y,numTilesCompletedThisFrame,
+            numTiles.x*numTiles.y));
+    }
+    DBG(printf("MASTER: num tilescmpletedbymytiles: %i/%i\n",
+          numTilesCompletedByMyTile,numTiles.x*numTiles.y));
+    if (numTilesCompletedByMyTile == numTiles.x*numTiles.y)
+      closeCurrentFrame();
   }
 
   void DistributedFrameBuffer::sendTileToMaster(TileData *tile)
@@ -504,7 +503,7 @@ namespace ospray {
     frameIsActive = false;
     frameIsDone   = true;
 
-    if (mpicommon::IamTheMaster()) {
+    if (mpicommon::IamTheMaster() && !masterIsAWorker) {
       /* do nothing */
     } else {
       if (pixelOp) { 
