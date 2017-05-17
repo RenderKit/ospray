@@ -22,6 +22,7 @@
 struct DistributedRaycastRenderer
 {
   uniform Renderer super;
+  uniform box3f clipBox;
 };
 
 void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
@@ -41,11 +42,18 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
     rayOffset -= 1.f;
   }
 
+  // Intersect with the clipping box for this node's local data, if we have one
+  if (self->clipBox.lower.x != inf) {
+    intersectBox(sample.ray, self->clipBox, sample.ray.t0, sample.ray.t);
+  }
+
   traceRay(self->super.model, sample.ray);
   sample.z     = sample.ray.t;
 
   if (sample.ray.geomID < 0) {
-    sample.rgb = make_vec3f(self->super.bgColor);
+    // TODO: We need the owner to send the background tile, for now
+    // a bit of hack but just make the background black and transparent
+    sample.rgb = make_vec3f(0.f);
     sample.alpha = 0.f;
   } else {
     // Spheres are cheap to shade so it's fine we do it early, potentially tossing
@@ -68,7 +76,7 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
     float t0, t1;
     Volume *uniform volume = self->super.model->volumes[0];
     intersectBox(ray, volume->boundingBox, t0, t1);
-    if (t0 < t1 && t0 > ray.t0 && t0 < ray.t) {
+    if (t0 < t1 && t0 >= ray.t0 && t0 <= ray.t) {
       // Sample offset placement correction, like in the data-parallel
       // raycast renderer. We must offset and step as if we're sampling a continuous
       // volume on a single node.
@@ -120,6 +128,16 @@ export void *uniform DistributedRaycastRenderer_create(void *uniform cppE)
 
   Renderer_Constructor(&self->super, cppE, NULL, NULL, 1);
   self->super.renderSample = DistributedRaycastRenderer_renderSample;
+  self->clipBox = make_box3f_empty();
 
   return self;
 }
+
+export void DistributedRaycastRenderer_setClipBox(void *uniform _self,
+                                                  uniform box3f *uniform clipBox)
+{
+  uniform DistributedRaycastRenderer *uniform self =
+    (uniform DistributedRaycastRenderer *uniform)_self;
+  self->clipBox = *clipBox;
+}
+
