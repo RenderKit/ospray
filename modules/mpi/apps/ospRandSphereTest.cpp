@@ -67,6 +67,24 @@ namespace ospRandSphereTest {
     fclose(file);
   }
 
+  // Compute an X x Y x Z grid to have num bricks,
+  // only gives a nice grid for numbers with even factors since
+  // we don't search for factors of the number, we just try dividing by two
+  vec3i computeGrid(int num)
+  {
+    vec3i grid(1);
+    int axis = 0;
+    while (num % 2 == 0) {
+      grid[axis] *= 2;
+      num /= 2;
+      axis = (axis + 1) % 3;
+    }
+    if (num != 1) {
+      grid[axis] = num;
+    }
+    return grid;
+  }
+
   std::pair<ospray::cpp::Geometry, box3f> makeSpheres()
   {
     struct Sphere
@@ -133,39 +151,48 @@ namespace ospRandSphereTest {
 
     ospray::cpp::TransferFunction transferFcn("piecewise_linear");
     const std::vector<vec3f> colors = {
-      vec3f(0.231373, 0.298039 , 0.75294),
-      vec3f(0.865003, 0.865003 , 0.86500),
-      vec3f(0.705882, 0.0156863, 0.14902)
+      vec3f(0, 0, 0.56),
+      vec3f(0, 0, 1),
+      vec3f(0, 1, 1),
+      vec3f(0.5, 1, 0.5),
+      vec3f(1, 1, 0),
+      vec3f(1, 0, 0),
+      vec3f(0.5, 0, 0)
     };
-    const std::vector<float> opacities = {0.15, 0.05};
+    const std::vector<float> opacities = {0.01, 0.01};
     ospray::cpp::Data colorsData(colors.size(), OSP_FLOAT3, colors.data());
     ospray::cpp::Data opacityData(opacities.size(), OSP_FLOAT, opacities.data());
     colorsData.commit();
     opacityData.commit();
 
-    const vec2f valueRange(static_cast<float>(0), static_cast<float>(255));
+    const vec2f valueRange(static_cast<float>(0), static_cast<float>(numRanks));
     transferFcn.set("colors", colorsData);
     transferFcn.set("opacities", opacityData);
     transferFcn.set("valueRange", valueRange);
     transferFcn.commit();
 
-
+    const vec3i volumeDims(128);
+    const vec3i grid = computeGrid(numRanks);
     ospray::cpp::Volume volume("block_bricked_volume");
     volume.set("voxelType", "uchar");
-    volume.set("dimensions", vec3i(16));
+    volume.set("dimensions", volumeDims);
     volume.set("transferFunction", transferFcn);
-    volume.set("gridSpacing", vec3f(0.5f / 16.f));
-    const vec3f gridOrigin(myRank / 2.f, 0.f, 0.f);
+
+    const vec3f gridSpacing = vec3f(1.f) / (vec3f(grid) * vec3f(volumeDims));
+    volume.set("gridSpacing", gridSpacing);
+
+    const vec3i brickId(myRank % grid.x, (myRank / grid.x) % grid.y, myRank / (grid.x * grid.y));
+    const vec3f gridOrigin = vec3f(brickId) * gridSpacing * vec3f(volumeDims);
     volume.set("gridOrigin", gridOrigin);
 
-    std::vector<unsigned char> volumeData(16 * 16 * 16, 0);
+    std::vector<unsigned char> volumeData(volumeDims.x * volumeDims.y * volumeDims.z, 0);
     for (size_t i = 0; i < volumeData.size(); ++i) {
-      volumeData[i] = i % 256;
+      volumeData[i] = myRank;
     }
-    volume.setRegion(volumeData.data(), vec3i(0), vec3i(16));
+    volume.setRegion(volumeData.data(), vec3i(0), volumeDims);
     volume.commit();
 
-    auto bbox = box3f(gridOrigin, gridOrigin + vec3f(0.5f));
+    auto bbox = box3f(gridOrigin, gridOrigin + vec3f(1.f) / vec3f(grid));
     return std::make_pair(volume, bbox);
   }
 
