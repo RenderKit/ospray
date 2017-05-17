@@ -31,6 +31,16 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
   uniform DistributedRaycastRenderer *uniform self =
     (uniform DistributedRaycastRenderer *uniform)_self;
 
+  // Ray offset for this sample, as a fraction of the nominal step size.
+  float rayOffset = precomputedHalton2(sample.sampleID.z);
+  int ix = sample.sampleID.x % 4;
+  int iy = sample.sampleID.y % 4;
+  int patternID = ix + 4 * iy;
+  rayOffset += precomputedHalton3(patternID);
+  if (rayOffset > 1.f) {
+    rayOffset -= 1.f;
+  }
+
   traceRay(self->super.model, sample.ray);
   sample.z     = sample.ray.t;
 
@@ -59,9 +69,15 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
     Volume *uniform volume = self->super.model->volumes[0];
     intersectBox(ray, volume->boundingBox, t0, t1);
     if (t0 < t1 && t0 > ray.t0 && t0 < ray.t) {
-      // TODO: Sample offset placement correction, like in the data-parallel
-      // raycast renderer
-      ray.t0 = t0;
+      // Sample offset placement correction, like in the data-parallel
+      // raycast renderer. We must offset and step as if we're sampling a continuous
+      // volume on a single node.
+      float dt = volume->samplingStep * rcpf(volume->samplingRate);
+      int i0 = (int)(t0 / dt);
+      ray.t0 = (i0 + rayOffset)*dt;
+      if (ray.t0 < t0) {
+        ray.t0 += dt;
+      }
       ray.t = min(t1, sample.ray.t);
 
       // Now raymarch the volume
@@ -84,7 +100,9 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
         volume->intersect(volume, ray);
       }
       volumeColor.w = clamp(volumeColor.w);
-      sample.z = ray.t;
+      if (sample.ray.geomID < 0) {
+        sample.z = t1;
+      }
     }
   }
   // Composite the geometry
