@@ -58,6 +58,10 @@ namespace ospray {
         const bool asyncWasRunning = asyncMessagingEnabled();
         disableAsyncMessaging();
 
+        // TODO: We don't want to re-use the MPIOffload fabric because it's
+        // an intercommunicator between the app/worker groups and thus will
+        // only support bcast from master -> workers, not the workers <-> workers
+        // style communication we want here.
         mpicommon::MPIBcastFabric fabric(mpicommon::world, rootGlobalRank);
         if (mpicommon::globalRank() == rootGlobalRank) {
           networking::BufferedWriteStream stream(fabric);

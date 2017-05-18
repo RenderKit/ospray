@@ -14,11 +14,13 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <algorithm>
 // ospray
 #include "api/Device.h"
 #include "DistributedModel.h"
 #include "mpiCommon/MPICommon.h"
 #include "Messaging.h"
+#include "common/Data.h"
 // ispc exports
 #include "DistributedModel_ispc.h"
 
@@ -51,9 +53,35 @@ namespace ospray {
       //TODO: send my bounding boxes to other nodes, recieve theirs for a
       //      "full picture" of what geometries live on what nodes
       std::vector<int> result = {mpicommon::globalRank()};
-      messaging::bcast(0, result);
-      std::cout << "Rank " << mpicommon::globalRank() << ": Got back "
-        << result[0] << "\n";
+      Data *clipBoxData = getParamData("clipBoxes");
+      box3f *boxes = reinterpret_cast<box3f*>(clipBoxData->data);
+      // The box3f data is sent as data of FLOAT3 items
+      // TODO: It's a little awkward to copy the boxes again like this, maybe
+      // can re-thinkg the send side of the bcast call? One that takes
+      // a ptr and a size since we know we won't be writing out to it?
+      std::vector<box3f> myBoxes(boxes, boxes + clipBoxData->numItems / 2);
+      std::vector<box3f> otherBoxes;
+      for (size_t i = 0; i < mpicommon::numGlobalRanks(); ++i) {
+        if (i == mpicommon::globalRank()) {
+          messaging::bcast(i, myBoxes);
+        } else {
+          std::vector<box3f> recv;
+          messaging::bcast(i, recv);
+          std::copy(recv.begin(), recv.end(), std::back_inserter(otherBoxes));
+        }
+      }
+      // WILL: Just for making the debug log more readable
+      for (size_t i = 0; i < mpicommon::numGlobalRanks(); ++i) {
+        if (i == mpicommon::globalRank()) {
+          std::cout << "Rank " << mpicommon::globalRank()
+            << ": Got boxes from others {\n";
+          for (const auto &b : otherBoxes) {
+            std::cout << "\t" << b << ",\n";
+          }
+          std::cout << "}" << std::endl;
+        }
+        MPI_Barrier(mpicommon::world.comm);
+      }
     }
 
   } // ::ospray::mpi
