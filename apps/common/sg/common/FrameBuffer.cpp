@@ -102,7 +102,8 @@ namespace ospray {
                                          (displayWallStream=="")
                                          ? OSP_FB_SRGBA
                                          : OSP_FB_NONE,
-                                         OSP_FB_COLOR | OSP_FB_ACCUM);
+                                         OSP_FB_COLOR | OSP_FB_ACCUM |
+                                         OSP_FB_VARIANCE);
       setValue((OSPObject)ospFrameBuffer);
     }
 

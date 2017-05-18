@@ -50,31 +50,40 @@ namespace ospray {
       createChild("lights");
 
       createChild("bgColor", "vec3f", vec3f(0.9f, 0.9f, 0.9f),
-                      NodeFlags::required |
-                      NodeFlags::valid_min_max |
-                      NodeFlags::gui_color);
+                  NodeFlags::required |
+                  NodeFlags::valid_min_max |
+                  NodeFlags::gui_color);
+
+      createChild("spp", "int", 1,
+                  NodeFlags::required | NodeFlags::gui_slider,
+                  "the number of samples rendered per pixel. The higher "
+                  "the number, the smoother the resulting image.");
+      child("spp").setMinMax(-8,128);
+
+      createChild("varianceThreshold", "float", 0.f,
+                  NodeFlags::required |
+                  NodeFlags::valid_min_max |
+                  NodeFlags::gui_slider,
+                  "the percent (%) threshold of pixel difference to enable"
+                  " tile rendering early termination.");
+      child("varianceThreshold").setMinMax(0.f, 25.f);
 
       //TODO: move these to seperate SciVisRenderer
       createChild("shadowsEnabled", "bool", true);
       createChild("maxDepth", "int", 5,
-                      NodeFlags::required | NodeFlags::valid_min_max,
-                      "maximum number of ray bounces").setMinMax(0,999);
+                  NodeFlags::required | NodeFlags::valid_min_max,
+                  "maximum number of ray bounces").setMinMax(0,999);
       createChild("aoSamples", "int", 1,
-                     NodeFlags::required |
-                      NodeFlags::valid_min_max |
-                      NodeFlags::gui_slider,
-                     "AO samples per frame.").setMinMax(0,128);
-      createChild("spp", "int", 1,
-                      NodeFlags::required | NodeFlags::gui_slider,
-                      "the number of samples rendered per pixel. The higher "
-                      "the number, the smoother the resulting image.");
-      child("spp").setMinMax(-8,128);
+                  NodeFlags::required |
+                  NodeFlags::valid_min_max |
+                  NodeFlags::gui_slider,
+                  "AO samples per frame.").setMinMax(0,128);
 
       createChild("aoDistance", "float", 10000.f,
-                      NodeFlags::required | NodeFlags::valid_min_max,
-                      "maximum distance ao rays will trace to."
-                      " Useful if you do not want a large interior of a"
-                      " building to be completely black from occlusion.");
+                  NodeFlags::required | NodeFlags::valid_min_max,
+                  "maximum distance ao rays will trace to."
+                  " Useful if you do not want a large interior of a"
+                  " building to be completely black from occlusion.");
       child("aoDistance").setMinMax(1e-20f, 1e20f);
 
       createChild("oneSidedLighting", "bool", true, NodeFlags::required);
