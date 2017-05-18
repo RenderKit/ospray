@@ -17,6 +17,8 @@
 // ospray
 #include "api/Device.h"
 #include "DistributedModel.h"
+#include "mpiCommon/MPICommon.h"
+#include "Messaging.h"
 // ispc exports
 #include "DistributedModel_ispc.h"
 
@@ -48,6 +50,10 @@ namespace ospray {
       Model::commit();
       //TODO: send my bounding boxes to other nodes, recieve theirs for a
       //      "full picture" of what geometries live on what nodes
+      std::vector<int> result = {mpicommon::globalRank()};
+      messaging::bcast(0, result);
+      std::cout << "Rank " << mpicommon::globalRank() << ": Got back "
+        << result[0] << "\n";
     }
 
   } // ::ospray::mpi
