@@ -42,9 +42,9 @@ namespace ospray {
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
         assert(dfb);
 
+        dfb->startNewFrame(renderer->errorThreshold);
         dfb->beginFrame();
 
-        dfb->startNewFrame(renderer->errorThreshold);
         /* the client will do its magic here, and the distributed
            frame buffer will be writing tiles here, without us doing
            anything ourselves */
@@ -65,14 +65,13 @@ namespace ospray {
                                const uint32 channelFlags)
       {
         auto *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
-        dfb->beginFrame();
+
         dfb->startNewFrame(renderer->errorThreshold);
+        dfb->beginFrame();
 
         void *perFrameData = renderer->beginFrame(fb);
 
         const int ALLTASKS = fb->getTotalTiles();
-        // TODO WILL: In collaborative mode rank 0 should join the worker group
-        // as well so this worker should actually just be worker as before
         int NTASKS = ALLTASKS / worker.size;
 
         // NOTE(jda) - If all tiles do not divide evenly among all worker ranks

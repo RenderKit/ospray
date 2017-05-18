@@ -183,6 +183,10 @@ namespace ospray {
       delayedMessage = this->delayedMessage;
       this->delayedMessage.clear();
 
+      // NOTE: Doing error sync may do a broadcast, needs to be done before
+      //       async messaging enabled in beginFrame()
+      tileErrorRegion.sync();
+
       numTilesCompletedThisFrame = 0;
 
       if (hasAccumBuffer) {
@@ -585,10 +589,6 @@ namespace ospray {
 
   void DistributedFrameBuffer::beginFrame()
   {
-    // NOTE: Doing error sync may do a broadcast, needs to be done before async
-    //       messaging enabled
-    tileErrorRegion.sync();
-
     mpi::messaging::enableAsyncMessaging();
     FrameBuffer::beginFrame();
   }
