@@ -281,6 +281,10 @@ namespace ospRandSciVisTest {
     // Note: now we must use the global world bounds, not our local bounds
     box3f worldBounds(vec3f(0), vec3f(1));
 
+    std::vector<box3f> clipBoxes{volume.second};
+    ospray::cpp::Data clipBoxData(clipBoxes.size() * 2, OSP_FLOAT3,
+        clipBoxes.data());
+    model.set("clipBoxes", clipBoxData);
     model.commit();
 
     DefaultCameraParser cameraClParser;
@@ -298,8 +302,6 @@ namespace ospRandSciVisTest {
     renderer.set("model", model);
     renderer.set("camera", camera);
     renderer.set("bgColor", vec3f(0.01f, 0.01f, 0.01f));
-    renderer.set("clipBox.lower", volume.second.lower);
-    renderer.set("clipBox.upper", volume.second.upper);
     renderer.commit();
 
     ospray::cpp::FrameBuffer fb(fbSize,OSP_FB_SRGBA,OSP_FB_COLOR|OSP_FB_ACCUM);

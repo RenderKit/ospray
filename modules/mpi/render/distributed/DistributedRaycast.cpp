@@ -16,6 +16,7 @@
 
 // ospcommon
 #include "ospcommon/tasking/parallel_for.h"
+#include "common/Data.h"
 // ospray
 #include "DistributedRaycast.h"
 #include "../MPILoadBalancer.h"
@@ -36,11 +37,13 @@ namespace ospray {
     void DistributedRaycastRenderer::commit()
     {
       Renderer::commit();
-      if (hasParam("clipBox.lower") && hasParam("clipBox.upper")) {
-        box3f clipBox;
-        clipBox.lower = getParam3f("clipBox.lower", vec3f(inf));
-        clipBox.upper = getParam3f("clipBox.upper", vec3f(neg_inf));
-        ispc::DistributedRaycastRenderer_setClipBox(ispcEquivalent, (ispc::box3f*)&clipBox);
+      Data *clipBoxData = model->getParamData("clipBoxes");
+      if (clipBoxData) {
+        box3f *boxes = reinterpret_cast<box3f*>(clipBoxData->data);
+        // Just sets one box for now
+        ispc::DistributedRaycastRenderer_setClipBox(ispcEquivalent, (ispc::box3f*)boxes);
+      } else {
+        std::cout << "Warning: no clipBoxes found on the model\n";
       }
     }
 
