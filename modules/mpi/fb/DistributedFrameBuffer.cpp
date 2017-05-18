@@ -183,7 +183,6 @@ namespace ospray {
       delayedMessage = this->delayedMessage;
       this->delayedMessage.clear();
 
-      tileErrorRegion.sync();
       numTilesCompletedThisFrame = 0;
 
       if (hasAccumBuffer) {
@@ -373,7 +372,7 @@ namespace ospray {
   }
 
   void DFB::finalizeTileOnMaster(TileData *tile) {
-    assert(mpicommon::globalRank() == mpicommon::masterRank());
+    assert(mpicommon::IamTheMaster());
     int numTilesCompletedByMyTile = 0;
     /*! we will not do anything with the tile other than mark it's done */
     {
@@ -586,6 +585,10 @@ namespace ospray {
 
   void DistributedFrameBuffer::beginFrame()
   {
+    // NOTE: Doing error sync may do a broadcast, needs to be done before async
+    //       messaging enabled
+    tileErrorRegion.sync();
+
     mpi::messaging::enableAsyncMessaging();
     FrameBuffer::beginFrame();
   }
