@@ -335,7 +335,7 @@ namespace ospray {
     // and finally, tell the master that this tile is done
     auto *tileDesc = this->getTileDescFor(msg->coords);
     TileData *td = (TileData*)tileDesc;
-    this->masterTileIsCompleted(td);
+    this->finalizeTileOnMaster(td);
   }
 
   void DFB::processMessage(WriteTileMessage *msg)
@@ -351,17 +351,11 @@ namespace ospray {
     DBG(printf("rank %i: tilecompleted %i,%i\n",mpicommon::globalRank(),
                tile->begin.x,tile->begin.y));
 
-    if (mpicommon::IamTheMaster() && tile->ownerID == mpicommon::masterRank()) {
-      if (pixelOp) {
-        pixelOp->postAccum(tile->final);
-      }
-      sendTileToMaster(tile);
-    } else {
-      if (pixelOp) {
-        pixelOp->postAccum(tile->final);
-      }
-      sendTileToMaster(tile);
-
+    if (pixelOp) {
+      pixelOp->postAccum(tile->final);
+    }
+    sendTileToMaster(tile);
+    if (!mpicommon::IamTheMaster()) {
       size_t numTilesCompletedByMe = 0;
       {
         SCOPED_LOCK(mutex);
@@ -378,7 +372,7 @@ namespace ospray {
     }
   }
 
-  void DFB::masterTileIsCompleted(TileData *tile) {
+  void DFB::finalizeTileOnMaster(TileData *tile) {
     assert(mpicommon::globalRank() == mpicommon::masterRank());
     int numTilesCompletedByMyTile = 0;
     /*! we will not do anything with the tile other than mark it's done */
