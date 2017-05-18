@@ -223,7 +223,7 @@ namespace ospray {
     if (mpicommon::IamTheMaster()) {
       //NOTE: This function is for offload render worker ranks only, thus the
       //      master punts to default behavior
-      Renderer::renderFrame(fb, channelFlags);
+      return Renderer::renderFrame(fb, channelFlags);
     }
 
     using DDBV = DataDistributedBlockedVolume;
@@ -237,7 +237,7 @@ namespace ospray {
     if (ddVolumeVec.empty()) {
       static WarnOnce warning("no data parallel volumes, rendering in "
                               "traditional raycast_volume_render mode");
-      return Renderer::renderFrame(fb,channelFlags);
+      return Renderer::renderFrame(fb, channelFlags);
     }
 
     // =======================================================
