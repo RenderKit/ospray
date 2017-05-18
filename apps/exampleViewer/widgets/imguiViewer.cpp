@@ -437,7 +437,7 @@ namespace ospray {
       }
 
       static bool singleSidedLighting = true;
-      if (ImGui::Checkbox("single_sided_lighting", &singleSidedLighting)) {
+      if (ImGui::Checkbox("single sided lighting", &singleSidedLighting)) {
         renderer.set("oneSidedLighting", int(singleSidedLighting));
         if (rendererDW)
           rendererDW.set("oneSidedLighting", int(singleSidedLighting));
@@ -445,7 +445,7 @@ namespace ospray {
       }
 
       static int exponent = -6;
-      if (ImGui::SliderInt("ray_epsilon (exponent)", &exponent, -10, 2)) {
+      if (ImGui::SliderInt("ray epsilon (exponent)", &exponent, -10, 2)) {
         renderer.set("epsilon", ospcommon::pow(10.f, (float)exponent));
         if (rendererDW)
           rendererDW.set("epsilon", ospcommon::pow(10.f, (float)exponent));
@@ -457,6 +457,12 @@ namespace ospray {
         renderer.set("spp", spp);
         if (rendererDW)
           rendererDW.set("spp", spp);
+        renderer_changed = true;
+      }
+
+      static float varianceThreshold = 0.f;
+      if (ImGui::InputFloat("variance threshold", &varianceThreshold)) {
+        renderer.set("varianceThreshold", varianceThreshold);
         renderer_changed = true;
       }
 

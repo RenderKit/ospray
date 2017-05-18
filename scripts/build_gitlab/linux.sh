@@ -19,6 +19,6 @@
 mkdir build
 cd build
 
-cmake -DOSPRAY_BUILD_ISA=ALL "$@" ..
+cmake -DOSPRAY_BUILD_ISA=ALL -DOSPRAY_MODULE_BILINEAR_PATCH=ON "$@" ..
 
 make -j`nproc`

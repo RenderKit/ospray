@@ -87,7 +87,6 @@ cp $DEP_DIR/OSPRay_readme_$BRANCH.pdf readme.pdf
 # set release and installer settings
 cmake \
 -D OSPRAY_BUILD_ISA=ALL \
--D OSPRAY_USE_EXTERNAL_EMBREE=ON \
 -D OSPRAY_MODULE_MPI=ON \
 -D TBB_ROOT=$DEP_DIR/$DEP_TBB \
 -D ISPC_EXECUTABLE=$DEP_DIR/$DEP_ISPC/ispc \

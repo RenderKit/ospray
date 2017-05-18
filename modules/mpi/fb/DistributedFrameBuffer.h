@@ -133,6 +133,10 @@ namespace ospray {
         to the master (if required), and properly do the bookkeeping
         that this tile is now done. */
     void tileIsCompleted(TileData *tile);
+    /*! This function is called when a master write tile is completed, on the
+        master process. It only marks on the master that the tile is done, and
+        checks if we've completed rendering the frame. */
+    void finalizeTileOnMaster(TileData *tile);
 
     void sendTileToMaster(TileData *tile);
 
@@ -242,7 +246,7 @@ namespace ospray {
     // and finally, tell the master that this tile is done
     auto *tileDesc = this->getTileDescFor(msg->coords);
     TileData *td = (TileData*)tileDesc;
-    this->tileIsCompleted(td);
+    this->finalizeTileOnMaster(td);
   }
 
 } // ::ospray

@@ -19,6 +19,7 @@
 #include <ospcommon/vec.h>
 #include <ospcommon/box.h>
 #include <stdexcept>
+#include <vector>
 
 /*! _everything_ in the ospray core universe should _always_ be in the
   'ospray' namespace. */

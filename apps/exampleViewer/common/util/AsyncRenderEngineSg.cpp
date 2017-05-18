@@ -46,7 +46,6 @@ namespace ospray {
           lastFTime = sg::TimeStamp();
         }
 
-
         if (scenegraph->childrenLastModified() > lastRTime || !once) {
           double time = ospcommon::getSysTime();
           scenegraph->traverse("verify");
