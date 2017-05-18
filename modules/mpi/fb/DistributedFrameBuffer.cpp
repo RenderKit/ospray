@@ -379,7 +379,7 @@ namespace ospray {
   }
 
   void DFB::masterTileIsCompleted(TileData *tile) {
-    assert(mpicommon::globalRank() == mpicommon::masterRank());
+    assert(mpicommon::IamTheMaster());
     int numTilesCompletedByMyTile = 0;
     /*! we will not do anything with the tile other than mark it's done */
     {

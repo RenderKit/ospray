@@ -220,11 +220,12 @@ namespace ospray {
   float RaycastVolumeRenderer::renderFrame(FrameBuffer *fb,
                                            const uint32 channelFlags)
   {
-    // The master has no data and doesn't participate in rendering, so just
-    // hand back to the Master load balancer.
-    if (globalRank() == 0) {
-      return TiledLoadBalancer::instance->renderFrame(this, fb, channelFlags);
+    if (mpicommon::IamTheMaster()) {
+      //NOTE: This function is for offload render worker ranks only, thus the
+      //      master punts to default behavior
+      Renderer::renderFrame(fb, channelFlags);
     }
+
     using DDBV = DataDistributedBlockedVolume;
     std::vector<const DDBV*> ddVolumeVec;
     for (size_t volumeID = 0; volumeID < model->volume.size(); volumeID++) {
