@@ -257,7 +257,7 @@ namespace ospRandSciVisTest {
       device.commit();
       device.setCurrent();
     }
-
+    ospLoadModule("visit");
     ospDeviceSetStatusFunc(device.handle(),
                            [](const char *msg) {
                              std::cerr << msg;
@@ -288,7 +288,7 @@ namespace ospRandSciVisTest {
     auto camera = cameraClParser.camera();
     setupCamera(camera, worldBounds);
 
-    ospray::cpp::Renderer renderer("mpi_raycast");
+    ospray::cpp::Renderer renderer("visitrc");
     renderer.set("world", model);
     renderer.set("model", model);
     renderer.set("camera", camera);
@@ -297,7 +297,7 @@ namespace ospRandSciVisTest {
     renderer.set("clipBox.upper", volume.second.upper);
     renderer.commit();
 
-    ospray::cpp::FrameBuffer fb(fbSize,OSP_FB_SRGBA,OSP_FB_COLOR|OSP_FB_ACCUM);
+    ospray::cpp::FrameBuffer fb(fbSize, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
     fb.clear(OSP_FB_ACCUM);
 
     if (runDistributed) {

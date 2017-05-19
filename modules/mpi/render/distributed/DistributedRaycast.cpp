@@ -58,6 +58,8 @@ namespace ospray {
       return "ospray::mpi::DistributedRaycastRenderer";
     }
 
+    OSP_REGISTER_RENDERER(DistributedRaycastRenderer, mpi_raycast);
+
   } // ::ospray::mpi
 } // ::ospray
 
