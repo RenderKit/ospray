@@ -288,7 +288,12 @@ namespace ospRandSciVisTest {
     auto camera = cameraClParser.camera();
     setupCamera(camera, worldBounds);
 
-    ospray::cpp::Renderer renderer("raycast");
+    ospray::cpp::Renderer renderer;
+    if (runDistributed) {
+      renderer = ospray::cpp::Renderer("mpi_raycast");
+    } else {
+      renderer = ospray::cpp::Renderer("raycast");
+    }
     renderer.set("world", model);
     renderer.set("model", model);
     renderer.set("camera", camera);
