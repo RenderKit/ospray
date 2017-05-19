@@ -99,16 +99,12 @@ namespace ospray {
         // doing the tests again.
         Tile __aligned(64) tile(tileID, dfb->size, accumID);
 
-        // We use the first tile rendering to also fill out the block was visible structure
+        // We use the task of rendering the first box to also fill out the block visiblility list
         const int NUM_JOBS = (TILE_SIZE * TILE_SIZE) / RENDERTILE_PIXELS_PER_JOB;
         tasking::parallel_for(NUM_JOBS, [&](int tIdx) {
           renderTile(&boxInfo, tile, tIdx);
         });
 
-        // TODO: Go through the other boxes and render them. How to send this info
-        // over to the renderer? Right now it assumes if perframedata is not null its
-        // the block list. Should merge into a struct
-        const size_t boxesOnThisTile = std::count(boxInfo.boxVisible, boxInfo.boxVisible + numBoxes, true);
 
         if (boxInfo.boxVisible[0]) {
           tile.generation = 1;
@@ -120,7 +116,7 @@ namespace ospray {
         // number of boxes projecting to it that will be sent.
         if (tileOwner) {
           tile.generation = 0;
-          tile.children = boxesOnThisTile;
+          tile.children = std::count(boxInfo.boxVisible, boxInfo.boxVisible + numBoxes, true);
           std::fill(tile.r, tile.r + TILE_SIZE * TILE_SIZE, bgColor.x);
           std::fill(tile.g, tile.g + TILE_SIZE * TILE_SIZE, bgColor.y);
           std::fill(tile.b, tile.b + TILE_SIZE * TILE_SIZE, bgColor.z);

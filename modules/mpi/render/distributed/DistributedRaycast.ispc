@@ -66,7 +66,7 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
     (uniform DistributedRaycastRenderer *uniform)_self;
 
   uniform ClipBoxInfo *uniform boxInfo = (uniform ClipBoxInfo *uniform)perFrameData;
-  if (boxInfo) {
+  if (boxInfo && boxInfo->currentBox == 0) {
     DistributedRaycastRenderer_testBoxes(self, boxInfo, sample);
   }
 
