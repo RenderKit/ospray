@@ -52,30 +52,38 @@ namespace ospray {
       Model::commit();
       //TODO: send my bounding boxes to other nodes, recieve theirs for a
       //      "full picture" of what geometries live on what nodes
-      std::vector<int> result = {mpicommon::globalRank()};
       Data *clipBoxData = getParamData("clipBoxes");
       box3f *boxes = reinterpret_cast<box3f*>(clipBoxData->data);
       // The box3f data is sent as data of FLOAT3 items
       // TODO: It's a little awkward to copy the boxes again like this, maybe
       // can re-thinkg the send side of the bcast call? One that takes
       // a ptr and a size since we know we won't be writing out to it?
-      std::vector<box3f> myBoxes(boxes, boxes + clipBoxData->numItems / 2);
-      std::vector<box3f> otherBoxes;
+      // TODO: For now it doesn't matter that we don't know who owns the
+      // other boxes, just that we know they exist and their bounds, and that
+      // they aren't ours.
+      myClipBoxes = std::vector<box3f>(boxes, boxes + clipBoxData->numItems / 2);
+      // If the user hasn't set any clip boxes, there's an implicit infinitely large
+      // clipping box we can place around the entire world.
+      if (myClipBoxes.empty()) {
+        std::cout << "No clip boxes found, making implicit infinitely large clip box\n";
+        myClipBoxes.push_back(box3f(vec3f(neg_inf), vec3f(pos_inf)));
+      }
       for (size_t i = 0; i < mpicommon::numGlobalRanks(); ++i) {
         if (i == mpicommon::globalRank()) {
-          messaging::bcast(i, myBoxes);
+          messaging::bcast(i, myClipBoxes);
         } else {
           std::vector<box3f> recv;
           messaging::bcast(i, recv);
-          std::copy(recv.begin(), recv.end(), std::back_inserter(otherBoxes));
+          std::copy(recv.begin(), recv.end(), std::back_inserter(othersClipBoxes));
         }
       }
-      // WILL: Just for making the debug log more readable
+      // TODO: WILL: Just for making the debug log more readable,
+      // this will NOT stick around
       for (size_t i = 0; i < mpicommon::numGlobalRanks(); ++i) {
         if (i == mpicommon::globalRank()) {
           std::cout << "Rank " << mpicommon::globalRank()
             << ": Got boxes from others {\n";
-          for (const auto &b : otherBoxes) {
+          for (const auto &b : othersClipBoxes) {
             std::cout << "\t" << b << ",\n";
           }
           std::cout << "}" << std::endl;
