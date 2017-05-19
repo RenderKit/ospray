@@ -22,15 +22,15 @@
 #include <vector>
 
 // ospcommon
-#include <ospcommon/box.h>
+#include "ospcommon/box.h"
+#include "ospcommon/utility/CodeTimer.h"
+#include "ospcommon/utility/TransactionalValue.h"
 
 // ospray::cpp
 #include "ospray/ospray_cpp/Renderer.h"
 
 // ospImGui util
 #include "ImguiUtilExport.h"
-#include "FPSCounter.h"
-#include "ospcommon/utility/transactional_value.h"
 
 namespace ospray {
 
@@ -89,9 +89,9 @@ namespace ospray {
     cpp::FrameBuffer frameBuffer;
     cpp::FrameBuffer frameBufferDW;
 
-    transactional_value<cpp::Renderer>    renderer;
-    transactional_value<cpp::Renderer>    rendererDW;
-    transactional_value<ospcommon::vec2i> fbSize;
+    ospcommon::utility::TransactionalValue<cpp::Renderer>    renderer;
+    ospcommon::utility::TransactionalValue<cpp::Renderer>    rendererDW;
+    ospcommon::utility::TransactionalValue<ospcommon::vec2i> fbSize;
 
     int nPixels {0};
 
@@ -105,6 +105,6 @@ namespace ospray {
 
     std::atomic<bool> newPixels {false};
 
-    FPSCounter fps;
+    ospcommon::utility::CodeTimer fps;
   };
 }// namespace ospray

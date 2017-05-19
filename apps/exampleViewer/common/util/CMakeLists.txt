@@ -17,7 +17,6 @@
 ospray_create_library(ospray_imgui_util
   ImguiUtilExport.h
   AsyncRenderEngine.cpp
-  FPSCounter.cpp
 LINK
   ospray
 )
@@ -26,7 +25,6 @@ ospray_create_library(ospray_imgui_util_sg
   ImguiUtilExport.h
   AsyncRenderEngine.cpp
   AsyncRenderEngineSg.cpp
-  FPSCounter.cpp
 LINK
   ospray
   ospray_sg

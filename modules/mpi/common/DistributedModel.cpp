@@ -41,6 +41,11 @@ namespace ospray {
 
     void DistributedModel::commit()
     {
+      // TODO: We may need to override the ISPC calls made
+      // to the Model or customize the model struct on the ISPC
+      // side. In which case we need some ISPC side inheritence
+      // for the model type. Currently the code is actually identical.
+      Model::commit();
       //TODO: send my bounding boxes to other nodes, recieve theirs for a
       //      "full picture" of what geometries live on what nodes
     }

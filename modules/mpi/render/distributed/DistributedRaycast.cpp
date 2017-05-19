@@ -36,13 +36,19 @@ namespace ospray {
     void DistributedRaycastRenderer::commit()
     {
       Renderer::commit();
+      if (hasParam("clipBox.lower") && hasParam("clipBox.upper")) {
+        box3f clipBox;
+        clipBox.lower = getParam3f("clipBox.lower", vec3f(inf));
+        clipBox.upper = getParam3f("clipBox.upper", vec3f(neg_inf));
+        ispc::DistributedRaycastRenderer_setClipBox(ispcEquivalent, (ispc::box3f*)&clipBox);
+      }
     }
 
     float DistributedRaycastRenderer::renderFrame(FrameBuffer *fb,
                                                   const uint32 channelFlags)
     {
       auto *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
-      dfb->setFrameMode(DistributedFrameBuffer::Z_COMPOSITE);
+      dfb->setFrameMode(DistributedFrameBuffer::ALPHA_BLEND);
 
       return TiledLoadBalancer::instance->renderFrame(this, fb, channelFlags);
     }

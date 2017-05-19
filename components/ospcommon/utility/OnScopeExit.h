@@ -16,64 +16,40 @@
 
 #pragma once
 
-#include <ospray/ospray.h>
-#include "ospcommon/box.h"
-#include <QtGui>
+#include "../TypeTraits.h"
+#include <functional>
 
-struct SliceParameters
-{
-  ospcommon::vec3f origin;
-  ospcommon::vec3f normal;
-};
+namespace ospcommon {
+  namespace utility {
 
-class SliceEditor;
+    /* Execute a given function when a scope exits */
+    struct OnScopeExit
+    {
+      template <typename FCN_T>
+      OnScopeExit(FCN_T&& _fcn);
 
+      ~OnScopeExit();
 
-class SliceWidget : public QFrame
-{
-Q_OBJECT
+    private:
 
-public:
+      std::function<void()> fcn;
+    };
 
-  SliceWidget(SliceEditor *sliceEditor, ospcommon::box3f boundingBox);
-  ~SliceWidget();
+    // Inlined OnScopeExit definitions ////////////////////////////////////////
 
-  SliceParameters getSliceParameters();
+    template <typename FCN_T>
+    inline OnScopeExit::OnScopeExit(FCN_T&& _fcn)
+    {
+      static_assert(traits::has_operator_method<FCN_T>::value,
+                    "FCN_T must implement operator() with no arguments!");
 
-signals:
+      fcn = std::forward<FCN_T>(_fcn);
+    }
 
-  void sliceChanged();
-  void sliceDeleted(SliceWidget *);
+    inline OnScopeExit::~OnScopeExit()
+    {
+      fcn();
+    }
 
-public slots:
-
-  void load(std::string filename = std::string());
-
-protected slots:
-
-  void apply();
-  void save();
-  void originSliderValueChanged(int value);
-  void setAnimation(bool set);
-  void animate();
-
-protected:
-
-  //! Bounding box of the volume.
-  ospcommon::box3f boundingBox;
-
-  //! UI elements.
-  QDoubleSpinBox originXSpinBox;
-  QDoubleSpinBox originYSpinBox;
-  QDoubleSpinBox originZSpinBox;
-
-  QDoubleSpinBox normalXSpinBox;
-  QDoubleSpinBox normalYSpinBox;
-  QDoubleSpinBox normalZSpinBox;
-
-  QSlider originSlider;
-  QPushButton originSliderAnimateButton;
-  QTimer originSliderAnimationTimer;
-  int originSliderAnimationDirection;
-
-};
+  } // ::ospcommon::utility
+} // ::ospcommon

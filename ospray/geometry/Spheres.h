@@ -93,6 +93,8 @@ namespace ospray {
       'colorOffset+i*colorStride */
     size_t    colorOffset;
 
+
+    float epsilon;  //epsilon for intersections
   };
   /*! @} */
 

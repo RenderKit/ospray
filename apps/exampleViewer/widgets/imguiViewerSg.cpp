@@ -307,7 +307,7 @@ namespace ospray {
     else
       text += std::string(name+" : ");
     if (node->type() == "vec3f") {
-      ImGui::Text(text.c_str());
+      ImGui::Text("%s", text.c_str());
       ImGui::SameLine();
       vec3f val = node->valueAs<vec3f>();
       text = "##"+((std::ostringstream&)(std::ostringstream("")
@@ -335,7 +335,7 @@ namespace ospray {
         node->setValue(val);
       }
     } else if (node->type() == "vec2i") {
-      ImGui::Text(text.c_str());
+      ImGui::Text("%s", text.c_str());
       ImGui::SameLine();
       vec2i val = node->valueAs<vec2i>();
       text = "##"+((std::ostringstream&)(std::ostringstream("")
@@ -478,7 +478,7 @@ namespace ospray {
     if (!node->isValid())
       ImGui::PopStyleColor(styles--);
     if (ImGui::IsItemHovered())
-      ImGui::SetTooltip(node->documentation().c_str());
+      ImGui::SetTooltip("%s", node->documentation().c_str());
   }
 
 }// namepace ospray

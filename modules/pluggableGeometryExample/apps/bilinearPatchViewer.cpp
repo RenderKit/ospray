@@ -14,6 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <vector>
+
 #include <ospray/ospray.h>
 #include "CommandLine.h"
 #include "Patch.h"
@@ -23,8 +25,7 @@
 #include <ospray/ospray_cpp/Data.h>
 #include <ospray/ospray_cpp/Material.h>
 #include "common/commandline/Utility.h"
-#include "common/widgets/OSPGlutViewer.h"
-
+#include "exampleViewer/widgets/imguiViewer.h"
 
 /*! _everything_ in the ospray core universe should _always_ be in the
   'ospray' namespace. */
@@ -50,15 +51,13 @@ namespace ospray {
       // off the command-line)
       ospInit(&ac,av);
 
-      ospray::glut3D::initGLUT(&ac,av);
+      ospray::imgui3D::init(&ac,av);
 
       std::deque<ospcommon::box3f>   bbox;
       std::deque<ospray::cpp::Model> models;
       ospray::cpp::Renderer renderer("ao");
-      ospray::cpp::Camera   camera = ospNewCamera("perspective");
+      ospray::cpp::Camera   camera("perspective");
 
-
-      
       // parse the commandline; complain about anything we do not
       // recognize
       CommandLine args(ac,av);
@@ -82,14 +81,14 @@ namespace ospray {
       models.push_back(model);
       bbox.push_back(worldBounds);
 
-      ospray::OSPGlutViewer window(bbox, models, renderer, camera);
+      ospray::ImGuiViewer window(bbox, models, renderer, camera);
       
       window.setScale(scale);
       window.setLockFirstAnimationFrame(lockFirstFrame);
       window.setTranslation(translate);
-      window.create("ospGlutViewer: OSPRay Mini-Scene Graph test viewer");
+      window.create("ospBilinearPatchViewer: OSPRay module example app");
       
-      ospray::glut3D::runGLUT();
+      ospray::imgui3D::run();
     }
         
   } // ::ospray::bilinearPatch

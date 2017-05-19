@@ -107,6 +107,16 @@ namespace exampleViewer {
   extern "C" int main(int ac, const char **av)
   {
     ospInit(&ac,av);
+    auto device = ospGetCurrentDevice();
+    ospDeviceSetStatusFunc(device,
+                           [](const char *msg) { std::cout << msg; });
+
+    ospDeviceSetErrorFunc(device,
+                          [](OSPError e, const char *msg) {
+                            std::cout << "OSPRAY ERROR [" << e << "]: "
+                                      << msg << std::endl;
+                            std::exit(1);
+                          });
 
     ospray::imgui3D::init(&ac,av);
 

@@ -43,6 +43,7 @@ struct Cylinders {
   int   offset_materialID;
   int   offset_colorID;
   int32 bytesPerCylinder;
+  float epsilon;
 
   uint8 *color;
   int    color_stride;
@@ -108,10 +109,11 @@ void Cylinders_intersect(Cylinders *uniform self,
   const float t_out= (- b + srad) *rcpf(2.f*a);
 
   bool hit = false;
-  if (t_in >= tAB0 && t_in <= tAB1) {
+
+  if (t_in >= (tAB0) && t_in <= (tAB1)) {
     hit = true;
     ray.t = t_in;
-  } else if (t_out >= tAB0 && t_out <= tAB1) {
+  } else if (t_out >= (tAB0+self->epsilon) && t_out <= (tAB1)) {
     hit = true;
     ray.t = t_out;
   }
@@ -284,6 +286,10 @@ export void CylindersGeometry_set(void *uniform _self
   self->offset_radius     = offset_radius;
   self->offset_materialID = offset_materialID;
   self->offset_colorID    = offset_colorID;
+
+  self->epsilon = log(self->radius);
+  if (self->epsilon < 0.f)
+    self->epsilon = -1.f/self->epsilon;
 
   rtcSetUserData(model->embreeSceneHandle, geomID, self);
   rtcSetBoundsFunction(model->embreeSceneHandle,geomID,

@@ -20,6 +20,7 @@
 #include <imgui.h>
 #include "imgui_impl_glfw_gl3.h"
 
+#include "ospcommon/utility/CodeTimer.h"
 #include "ospray/version.h"
 
 #include <stdio.h>
@@ -408,11 +409,14 @@ namespace ospray {
 
       // Main loop
       while (!glfwWindowShouldClose(window)) {
-        currentWidget->timerTotal.startRender();
+        ospcommon::utility::CodeTimer timer;
+        ospcommon::utility::CodeTimer timerTotal;
+
+        timerTotal.start();
         glfwPollEvents();
-        currentWidget->timer.startRender();
+        timer.start();
         ImGui_ImplGlfwGL3_NewFrame();
-        currentWidget->timer.doneRender();
+        timer.stop();
 
         if (ImGui3DWidget::showGui)
           currentWidget->buildGui();
@@ -431,7 +435,7 @@ namespace ospray {
           ImGui::PushStyleColor(ImGuiCol_Text, ImColor(.3,.3,.3,1.f));
           ImGui::SetWindowFontScale(currentWidget->fontScale*1.0f);
           font->Scale = 5.f;
-          ImGui::Text(("OSPRay v" + std::string(OSPRAY_VERSION)).c_str());
+          ImGui::Text("%s", ("OSPRay v" + std::string(OSPRAY_VERSION)).c_str());
           font->Scale = 1.f;
           ImGui::SetWindowFontScale(currentWidget->fontScale*0.7f);
           ImGui::PopStyleColor(1);
@@ -439,14 +443,14 @@ namespace ospray {
           std::stringstream ss;
           ss << 1.f/currentWidget->renderTime;
           ImGui::PushStyleColor(ImGuiCol_Text, ImColor(.8,.8,.8,1.f));
-          ImGui::Text(("FPS: " + ss.str()).c_str());
+          ImGui::Text("%s", ("FPS: " + ss.str()).c_str());
           ImGui::Text("press \'g\' for menu");
           ImGui::PopStyleColor(1);
 
           ImGui::End();
         }
 
-        currentWidget->timer.startRender();
+        timer.start();
         int new_w = 0, new_h = 0;
         glfwGetFramebufferSize(window, &new_w, &new_h);
 
@@ -457,23 +461,23 @@ namespace ospray {
         }
 
         glViewport(0, 0, new_w, new_h);
-        currentWidget->timer.doneRender();
+        timer.stop();
 
-        currentWidget->timer.startRender();
+        timer.start();
         // Render OSPRay frame
         currentWidget->display();
-        currentWidget->timer.doneRender();
-        currentWidget->displayTime = 1.f/currentWidget->timer.getFPS();
+        timer.stop();
+        currentWidget->displayTime = timer.secondsSmoothed();
 
-        currentWidget->timer.startRender();
+        timer.start();
         // Render GUI
         ImGui::Render();
-        currentWidget->timer.doneRender();
-        currentWidget->guiTime = 1.f/currentWidget->timer.getFPS();
+        timer.stop();
+        currentWidget->guiTime = timer.secondsSmoothed();
 
         glfwSwapBuffers(window);
-        currentWidget->timerTotal.doneRender();
-        currentWidget->totalTime = 1.f/currentWidget->timerTotal.getFPS();
+        timerTotal.stop();
+        currentWidget->totalTime = timerTotal.secondsSmoothed();
       }
 
       // Cleanup

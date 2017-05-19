@@ -28,8 +28,6 @@
 
 namespace ospray {
 
-  void error_handler(const RTCError code, const char *str);
-
   namespace api {
 
     Ref<Device> Device::current = nullptr;
@@ -52,13 +50,27 @@ namespace ospray {
       int cpuFeatures = ospcommon::getCPUFeatures();
 
       if ((cpuFeatures & ospcommon::CPU_FEATURE_SSE41) == 0) {
-        throw std::runtime_error("Error. OSPRay only runs on CPUs that support"
-                                 " at least SSE4.1.");
+        handleError(OSP_UNSUPPORTED_CPU,
+                    "OSPRay only runs on CPUs that support at least SSE4.1");
+        return;
       }
 
       auto OSPRAY_DEBUG = getEnvVar<int>("OSPRAY_DEBUG");
       debugMode = OSPRAY_DEBUG.first ? OSPRAY_DEBUG.second :
                                        getParam1i("debug", 0);
+
+      auto OSPRAY_TRACE_API = getEnvVar<int>("OSPRAY_TRACE_API");
+      bool traceAPI = OSPRAY_TRACE_API.first ? OSPRAY_TRACE_API.second :
+                                               getParam1i("traceApi", 0);
+      if (traceAPI) {
+        auto streamPtr =
+          std::make_shared<std::ofstream>("ospray_api_trace.txt");
+
+        trace_fcn = [=](const char *message) {
+          auto &stream = *streamPtr;
+          stream << message << std::endl;
+        };
+      }
 
       auto OSPRAY_LOG_LEVEL = getEnvVar<int>("OSPRAY_LOG_LEVEL");
       logLevel = OSPRAY_LOG_LEVEL.first ? OSPRAY_LOG_LEVEL.second :
@@ -94,6 +106,16 @@ namespace ospray {
     bool Device::isCommitted()
     {
       return committed;
+    }
+
+    bool deviceIsSet()
+    {
+      return Device::current.ptr != nullptr;
+    }
+
+    Device &currentDevice()
+    {
+      return *Device::current;
     }
 
   } // ::ospray::api

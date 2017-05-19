@@ -7,6 +7,7 @@
 
 #include <ospcommon/math.h>
 #include <ospray/ospray_cpp/Data.h>
+#include <tfn_lib/tfn_lib.h>
 #include "transferFunction.h"
 
 using namespace ospcommon;
@@ -76,15 +77,18 @@ TransferFunction::TransferFunction(std::shared_ptr<sg::TransferFunction> &tfn) :
   transferFcn(tfn),
   activeLine(3),
   tfcnSelection(JET),
+  customizing(false),
   fcnChanged(true),
-  paletteTex(0)
+  paletteTex(0),
+  textBuffer(512, '\0')
 {
   // TODO: Use the transfer function passed to use to configure the initial widget lines
   rgbaLines[0].color = 0xff0000ff;
   rgbaLines[1].color = 0xff00ff00;
   rgbaLines[2].color = 0xffff0000;
   rgbaLines[3].color = 0xffffffff;
-  setColorMap();
+  loadColorMapPresets();
+  setColorMap(false);
 }
 TransferFunction::~TransferFunction()
 {
@@ -97,10 +101,13 @@ TransferFunction::TransferFunction(const TransferFunction &t) :
   rgbaLines(t.rgbaLines),
   activeLine(t.activeLine),
   tfcnSelection(t.tfcnSelection),
+  customizing(t.customizing),
+  transferFunctions(t.transferFunctions),
   fcnChanged(true),
-  paletteTex(0)
+  paletteTex(0),
+  textBuffer(512, '\0')
 {
-  setColorMap();
+  setColorMap(false);
 }
 TransferFunction& TransferFunction::operator=(const TransferFunction &t)
 {
@@ -110,7 +117,11 @@ TransferFunction& TransferFunction::operator=(const TransferFunction &t)
   transferFcn = t.transferFcn;
   rgbaLines = t.rgbaLines;
   activeLine = t.activeLine;
+  tfcnSelection = t.tfcnSelection;
+  customizing = t.customizing;
+  transferFunctions = t.transferFunctions;
   fcnChanged = true;
+  setColorMap(false);
   return *this;
 }
 
@@ -118,27 +129,32 @@ void TransferFunction::drawUi()
 {
   if (ImGui::Begin("Transfer Function")){
     ImGui::Text("Left click and drag to add/move points\nRight click to remove\n");
-    /*
+    ImGui::InputText("filename", textBuffer.data(), textBuffer.size() - 1);
+
     if (ImGui::Button("Save")){
-      save_fcn();
+      save(textBuffer.data());
     }
     ImGui::SameLine();
     if (ImGui::Button("Load")){
-      load_fcn();
+      load(textBuffer.data());
     }
-    */
-    const static char* colorMaps[] = { "Jet", "Ice Fire", "Cool Warm",
-                                       "Blue Red", "Grayscale", "Custom" };
-    if (ImGui::Combo("ColorMap", &tfcnSelection, colorMaps, 6)) {
-      if (tfcnSelection != CUSTOM) {
-        setColorMap();
-      }
-      fcnChanged = true;
+
+    std::vector<const char*> colorMaps(transferFunctions.size(), nullptr);
+    std::transform(transferFunctions.begin(), transferFunctions.end(), colorMaps.begin(),
+        [](const tfn::TransferFunction &t) { return t.name.c_str(); });
+    if (ImGui::Combo("ColorMap", &tfcnSelection, colorMaps.data(), colorMaps.size())) {
+      setColorMap(false);
     }
-    if (tfcnSelection == CUSTOM) {
+
+    ImGui::Checkbox("Customize", &customizing);
+    if (customizing) {
+      ImGui::SameLine();
       ImGui::RadioButton("Red", &activeLine, 0); ImGui::SameLine();
+      ImGui::SameLine();
       ImGui::RadioButton("Green", &activeLine, 1); ImGui::SameLine();
+      ImGui::SameLine();
       ImGui::RadioButton("Blue", &activeLine, 2); ImGui::SameLine();
+      ImGui::SameLine();
       ImGui::RadioButton("Alpha", &activeLine, 3);
     } else {
       activeLine = 3;
@@ -163,13 +179,13 @@ void TransferFunction::drawUi()
     ImDrawList *draw_list = ImGui::GetWindowDrawList();
     draw_list->AddRect(canvasPos, canvasPos + canvasSize, ImColor(255, 255, 255));
 
-    const vec2f view_scale(canvasSize.x, -canvasSize.y + 10);
+    const vec2f viewScale(canvasSize.x, -canvasSize.y + 10);
     const vec2f viewOffset(canvasPos.x, canvasPos.y + canvasSize.y - 10);
 
     ImGui::InvisibleButton("canvas", canvasSize);
     if (ImGui::IsItemHovered()){
       vec2f mousePos = vec2f(ImGui::GetIO().MousePos.x, ImGui::GetIO().MousePos.y);
-      mousePos = (mousePos - viewOffset) / view_scale;
+      mousePos = (mousePos - viewOffset) / viewScale;
       // Need to somehow find which line of RGBA the mouse is closest too
       if (ImGui::GetIO().MouseDown[0]){
         rgbaLines[activeLine].movePoint(mousePos.x, mousePos);
@@ -181,9 +197,7 @@ void TransferFunction::drawUi()
     }
     draw_list->PushClipRect(canvasPos, canvasPos + canvasSize);
 
-    // TODO: Should also draw little boxes showing the clickable region for each
-    // line segment
-    if (tfcnSelection == CUSTOM) {
+    if (customizing) {
       for (int i = 0; i < static_cast<int>(rgbaLines.size()); ++i){
         if (i == activeLine){
           continue;
@@ -191,7 +205,7 @@ void TransferFunction::drawUi()
         for (size_t j = 0; j < rgbaLines[i].line.size() - 1; ++j){
           const vec2f &a = rgbaLines[i].line[j];
           const vec2f &b = rgbaLines[i].line[j + 1];
-          draw_list->AddLine(viewOffset + view_scale * a, viewOffset + view_scale * b,
+          draw_list->AddLine(viewOffset + viewScale * a, viewOffset + viewScale * b,
               rgbaLines[i].color, 2.0f);
         }
       }
@@ -200,8 +214,13 @@ void TransferFunction::drawUi()
     for (size_t j = 0; j < rgbaLines[activeLine].line.size() - 1; ++j){
       const vec2f &a = rgbaLines[activeLine].line[j];
       const vec2f &b = rgbaLines[activeLine].line[j + 1];
-      draw_list->AddLine(viewOffset + view_scale * a, viewOffset + view_scale * b,
+      draw_list->AddLine(viewOffset + viewScale * a, viewOffset + viewScale * b,
           rgbaLines[activeLine].color, 2.0f);
+      draw_list->AddCircleFilled(viewOffset + viewScale * a, 4.f, rgbaLines[activeLine].color);
+      // If we're last draw the list Circle as well
+      if (j == rgbaLines[activeLine].line.size() - 2) {
+        draw_list->AddCircleFilled(viewOffset + viewScale * b, 4.f, rgbaLines[activeLine].color);
+      }
     }
     draw_list->PopClipRect();
   }
@@ -277,48 +296,61 @@ void TransferFunction::render()
     fcnChanged = false;
   }
 }
-void TransferFunction::setColorMap()
+void TransferFunction::load(const ospcommon::FileName &fileName)
 {
-  std::vector<vec3f> colors;
-  if (tfcnSelection == JET) {
-    // From the old volume viewer, these are based on ParaView
-    colors.push_back(vec3f(0       , 0, 0.562493));
-    colors.push_back(vec3f(0       , 0, 1       ));
-    colors.push_back(vec3f(0       , 1, 1       ));
-    colors.push_back(vec3f(0.500008, 1, 0.500008));
-    colors.push_back(vec3f(1       , 1, 0       ));
-    colors.push_back(vec3f(1       , 0, 0       ));
-    colors.push_back(vec3f(0.500008, 0, 0       ));
-  } else if (tfcnSelection == ICE_FIRE) {
-    colors.push_back(vec3f(0        , 0          , 0          ));
-    colors.push_back(vec3f(0        , 0.120394   , 0.302678   ));
-    colors.push_back(vec3f(0        , 0.216587   , 0.524575   ));
-    colors.push_back(vec3f(0.0552529, 0.345022   , 0.659495   ));
-    colors.push_back(vec3f(0.128054 , 0.492592   , 0.720287   ));
-    colors.push_back(vec3f(0.188952 , 0.641306   , 0.792096   ));
-    colors.push_back(vec3f(0.327672 , 0.784939   , 0.873426   ));
-    colors.push_back(vec3f(0.60824  , 0.892164   , 0.935546   ));
-    colors.push_back(vec3f(0.881376 , 0.912184   , 0.818097   ));
-    colors.push_back(vec3f(0.9514   , 0.835615   , 0.449271   ));
-    colors.push_back(vec3f(0.904479 , 0.690486   , 0          ));
-    colors.push_back(vec3f(0.854063 , 0.510857   , 0          ));
-    colors.push_back(vec3f(0.777096 , 0.330175   , 0.000885023));
-    colors.push_back(vec3f(0.672862 , 0.139086   , 0.00270085 ));
-    colors.push_back(vec3f(0.508812 , 0          , 0          ));
-    colors.push_back(vec3f(0.299413 , 0.000366217, 0.000549325));
-    colors.push_back(vec3f(0.0157473, 0.00332647 , 0          ));
-  } else if (tfcnSelection == COOL_WARM) {
-    colors.push_back(vec3f(0.231373, 0.298039 , 0.752941));
-    colors.push_back(vec3f(0.865003, 0.865003 , 0.865003));
-    colors.push_back(vec3f(0.705882, 0.0156863, 0.14902));
-  } else if (tfcnSelection == BLUE_RED) {
-    colors.push_back(vec3f(0, 0, 1));
-    colors.push_back(vec3f(1, 0, 0));
-  } else {
-    colors.push_back(vec3f(0));
-    colors.push_back(vec3f(1));
+  tfn::TransferFunction loaded(fileName);
+  transferFunctions.emplace_back(fileName);
+  tfcnSelection = transferFunctions.size() - 1;
+  setColorMap(true);
+}
+void TransferFunction::save(const ospcommon::FileName &fileName) const
+{
+  // For opacity we can store the associated data value and only have 1 line,
+  // so just save it out directly
+  tfn::TransferFunction output(transferFunctions[tfcnSelection].name,
+      std::vector<vec3f>(), rgbaLines[3].line, 0, 1, 1);
+
+  // Pull the RGB line values to compute the transfer function and save it out
+  // here we may need to do some interpolation, if the RGB lines have differing numbers
+  // of control points
+  // Find which x values we need to sample to get all the control points for the tfcn.
+  std::vector<float> controlPoints;
+  for (size_t i = 0; i < 3; ++i) {
+    for (const auto &x : rgbaLines[i].line) {
+      controlPoints.push_back(x.x);
+    }
+  }
+  // Filter out same or within epsilon control points to get unique list
+  std::sort(controlPoints.begin(), controlPoints.end());
+  auto uniqueEnd = std::unique(controlPoints.begin(), controlPoints.end(),
+      [](const float &a, const float &b) { return std::abs(a - b) < 0.0001; });
+  controlPoints.erase(uniqueEnd, controlPoints.end());
+
+  // Step along the lines and sample them
+  std::array<std::vector<vec2f>::const_iterator, 3> lit = {
+    rgbaLines[0].line.begin(), rgbaLines[1].line.begin(),
+    rgbaLines[2].line.begin()
+  };
+  for (const auto &x : controlPoints) {
+    std::array<float, 3> sampleColor;
+    for (size_t j = 0; j < 3; ++j){
+      if (x > (lit[j] + 1)->x) {
+        ++lit[j];
+      }
+      assert(lit[j] != rgbaLines[j].line.end());
+      const float t = (x - lit[j]->x) / ((lit[j] + 1)->x - lit[j]->x);
+      // It's hard to click down at exactly 0, so offset a little bit
+      sampleColor[j] = clamp(lerp(lit[j]->y - 0.001, (lit[j] + 1)->y - 0.001, t));
+    }
+    output.rgbValues.push_back(vec3f(sampleColor[0], sampleColor[1], sampleColor[2]));
   }
 
+  output.save(fileName);
+}
+void TransferFunction::setColorMap(const bool useOpacity)
+{
+  const std::vector<vec3f> &colors = transferFunctions[tfcnSelection].rgbValues;
+  const std::vector<vec2f> &opacities = transferFunctions[tfcnSelection].opacityValues;
   for (size_t i = 0; i < 3; ++i) {
     rgbaLines[i].line.clear();
   }
@@ -328,6 +360,71 @@ void TransferFunction::setColorMap()
       rgbaLines[j].line.push_back(vec2f(i / nColors, colors[i][j]));
     }
   }
+
+  if (useOpacity && !opacities.empty()) {
+    rgbaLines[3].line.clear();
+    const double valMin = transferFunctions[tfcnSelection].dataValueMin;
+    const double valMax = transferFunctions[tfcnSelection].dataValueMax;
+    // Setup opacity if the colormap has it
+    for (size_t i = 0; i < opacities.size(); ++i) {
+      const float x = (opacities[i].x - valMin) / (valMax - valMin);
+      rgbaLines[3].line.push_back(vec2f(x, opacities[i].y));
+    }
+  }
+  fcnChanged = true;
+}
+void TransferFunction::loadColorMapPresets()
+{
+  std::vector<vec3f> colors;
+  // The presets have no existing opacity value
+  const std::vector<vec2f> opacity;
+  // From the old volume viewer, these are based on ParaView
+  // Jet transfer function
+  colors.push_back(vec3f(0       , 0, 0.562493));
+  colors.push_back(vec3f(0       , 0, 1       ));
+  colors.push_back(vec3f(0       , 1, 1       ));
+  colors.push_back(vec3f(0.500008, 1, 0.500008));
+  colors.push_back(vec3f(1       , 1, 0       ));
+  colors.push_back(vec3f(1       , 0, 0       ));
+  colors.push_back(vec3f(0.500008, 0, 0       ));
+  transferFunctions.emplace_back("Jet", colors, opacity, 0, 1, 1);
+  colors.clear();
+
+  colors.push_back(vec3f(0        , 0          , 0          ));
+  colors.push_back(vec3f(0        , 0.120394   , 0.302678   ));
+  colors.push_back(vec3f(0        , 0.216587   , 0.524575   ));
+  colors.push_back(vec3f(0.0552529, 0.345022   , 0.659495   ));
+  colors.push_back(vec3f(0.128054 , 0.492592   , 0.720287   ));
+  colors.push_back(vec3f(0.188952 , 0.641306   , 0.792096   ));
+  colors.push_back(vec3f(0.327672 , 0.784939   , 0.873426   ));
+  colors.push_back(vec3f(0.60824  , 0.892164   , 0.935546   ));
+  colors.push_back(vec3f(0.881376 , 0.912184   , 0.818097   ));
+  colors.push_back(vec3f(0.9514   , 0.835615   , 0.449271   ));
+  colors.push_back(vec3f(0.904479 , 0.690486   , 0          ));
+  colors.push_back(vec3f(0.854063 , 0.510857   , 0          ));
+  colors.push_back(vec3f(0.777096 , 0.330175   , 0.000885023));
+  colors.push_back(vec3f(0.672862 , 0.139086   , 0.00270085 ));
+  colors.push_back(vec3f(0.508812 , 0          , 0          ));
+  colors.push_back(vec3f(0.299413 , 0.000366217, 0.000549325));
+  colors.push_back(vec3f(0.0157473, 0.00332647 , 0          ));
+  transferFunctions.emplace_back("Ice Fire", colors, opacity, 0, 1, 1);
+  colors.clear();
+
+  colors.push_back(vec3f(0.231373, 0.298039 , 0.752941));
+  colors.push_back(vec3f(0.865003, 0.865003 , 0.865003));
+  colors.push_back(vec3f(0.705882, 0.0156863, 0.14902));
+  transferFunctions.emplace_back("Cool Warm", colors, opacity, 0, 1, 1);
+  colors.clear();
+
+  colors.push_back(vec3f(0, 0, 1));
+  colors.push_back(vec3f(1, 0, 0));
+  transferFunctions.emplace_back("Blue Red", colors, opacity, 0, 1, 1);
+  colors.clear();
+
+  colors.push_back(vec3f(0));
+  colors.push_back(vec3f(1));
+  transferFunctions.emplace_back("Grayscale", colors, opacity, 0, 1, 1);
+  colors.clear();
 }
 
 }// ::ospray

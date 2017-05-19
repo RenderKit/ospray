@@ -81,7 +81,7 @@ namespace ospray {
 
   double AsyncRenderEngine::lastFrameFps() const
   {
-    return fps.getFPS();
+    return fps.perSecondSmoothed();
   }
 
   const std::vector<uint32_t> &AsyncRenderEngine::mapFramebuffer()
@@ -130,7 +130,8 @@ namespace ospray {
     if (changed) {
       auto &size  = fbSize.ref();
       frameBuffer = cpp::FrameBuffer(size, OSP_FB_SRGBA,
-                                     OSP_FB_COLOR | OSP_FB_DEPTH | OSP_FB_ACCUM);
+                                     OSP_FB_COLOR | OSP_FB_DEPTH |
+                                     OSP_FB_ACCUM | OSP_FB_VARIANCE);
 
       nPixels = size.x * size.y;
       pixelBuffer[0].resize(nPixels);
@@ -159,11 +160,11 @@ namespace ospray {
           frameBufferDW.clear(OSP_FB_ACCUM);
       }
 
-      fps.startRender();
+      fps.start();
       renderer.ref().renderFrame(frameBuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
       if (rendererDW.ref())
         rendererDW.ref().renderFrame(frameBufferDW, OSP_FB_COLOR | OSP_FB_ACCUM);
-      fps.doneRender();
+      fps.stop();
 
       auto *srcPB = (uint32_t*)frameBuffer.map(OSP_FB_COLOR);
       auto *dstPB = (uint32_t*)pixelBuffer[currentPB].data();

@@ -30,6 +30,7 @@
 
 //distributed objects
 #include "render/distributed/DistributedRaycast.h"
+#include "common/DistributedModel.h"
 
 #ifdef OPEN_MPI
 # include <thread>
@@ -182,7 +183,7 @@ namespace ospray {
 
     OSPModel MPIDistributedDevice::newModel()
     {
-      auto *instance = new Model;
+      auto *instance = new DistributedModel;
       instance->refInc();
 
       ObjectHandle handle;

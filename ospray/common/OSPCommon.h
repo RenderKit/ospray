@@ -44,6 +44,7 @@ typedef int ssize_t;
 // ospray
 #include "ospray/OSPDataType.h"
 #include "ospray/OSPTexture.h"
+#include "ospray/ospray.h"
 
 // std
 #include <cstdint> // for int64_t etc
@@ -144,10 +145,10 @@ namespace ospray {
   OSPRAY_SDK_INTERFACE uint32_t logLevel();
 
   OSPRAY_SDK_INTERFACE void postStatusMsg(const std::stringstream &msg,
-                                     uint32_t postAtLogLevel = 0);
+                                          uint32_t postAtLogLevel = 0);
 
   OSPRAY_SDK_INTERFACE void postStatusMsg(const std::string &msg,
-                                     uint32_t postAtLogLevel = 0);
+                                          uint32_t postAtLogLevel = 0);
 
   struct OSPRAY_SDK_INTERFACE StatusMsgStream
   {
@@ -176,7 +177,9 @@ namespace ospray {
 
   OSPRAY_SDK_INTERFACE StatusMsgStream postStatusMsg(uint32_t postAtLogLevel = 0);
 
-  OSPRAY_SDK_INTERFACE void handleError(const std::exception &e);
+  OSPRAY_SDK_INTERFACE void handleError(OSPError e, const std::string &message);
+
+  OSPRAY_SDK_INTERFACE void postTraceMsg(const std::string &message);
 
   // RTTI hash ID lookup helper functions ///////////////////////////////////
 

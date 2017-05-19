@@ -19,7 +19,6 @@
 // ospray
 #include "common/OSPCommon.h"
 #include "common/Managed.h"
-#include "ospray/ospray.h"
 // embree
 #include "embree2/rtcore.h"
 // std
@@ -230,15 +229,26 @@ namespace ospray {
       static uint32_t logLevel;
 
       std::function<void(const char *)>
-      msg_fcn{[](const char*){}};
+      msg_fcn { [](const char*){} };
 
-      std::function<void(const std::exception &)>
-      error_fcn{[](const std::exception &){}};
+      std::function<void(OSPError, const char*)>
+      error_fcn { [](OSPError, const char*){} };
+
+      std::function<void(const char *)>
+      trace_fcn { [](const char*){} };
+
+      OSPError    lastErrorCode = OSP_NO_ERROR;
+      std::string lastErrorMsg  = "no error";// no braced initializer for MSVC12
 
     private:
 
       bool committed {false};
     };
+
+    // Shorthand functions to query current API device //
+
+    OSPRAY_SDK_INTERFACE bool    deviceIsSet();
+    OSPRAY_SDK_INTERFACE Device& currentDevice();
 
     /*! \brief registers a internal ospray::<ClassName> renderer under
         the externally accessible name "external_name"

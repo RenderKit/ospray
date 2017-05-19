@@ -326,10 +326,24 @@ namespace ospray {
     return StatusMsgStream(postAtLogLevel);
   }
 
-  void handleError(const std::exception &e)
+  void handleError(OSPError e, const std::string &message)
   {
-    if (ospray::api::Device::current.ptr)
-      ospray::api::Device::current->error_fcn(e);
+    if (api::deviceIsSet()) {
+      auto &device = api::currentDevice();
+
+      device.lastErrorCode = e;
+      device.lastErrorMsg  = message;
+
+      device.error_fcn(e, message.c_str());
+    }
+  }
+
+  void postTraceMsg(const std::string &message)
+  {
+    if (api::deviceIsSet()) {
+      auto &device = api::currentDevice();
+      device.trace_fcn(message.c_str());
+    }
   }
 
   size_t translatedHash(size_t v)
@@ -345,7 +359,6 @@ namespace ospray {
       return id_translation[v];
     }
   }
-
 
 } // ::ospray
 

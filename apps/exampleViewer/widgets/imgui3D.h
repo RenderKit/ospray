@@ -21,7 +21,6 @@
 #include "ospcommon/AffineSpace.h"
 
 #include "Imgui3dExport.h"
-#include "../common/util/FPSCounter.h"
 
 class GLFWwindow;
 
@@ -219,8 +218,6 @@ namespace ospray {
 
        static bool animating;
        static bool showGui;
-       FPSCounter timer;
-       FPSCounter timerTotal;
        double displayTime;
        double renderTime;
        double guiTime;

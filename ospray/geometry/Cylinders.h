@@ -77,6 +77,7 @@ namespace ospray {
     int64 offset_radius;
     int64 offset_materialID;
     int64 offset_colorID;
+    float epsilon;  //epsilon for intersections
 
     Ref<Data> cylinderData;
     Ref<Data> materialList;

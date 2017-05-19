@@ -42,9 +42,9 @@ namespace ospray {
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
         assert(dfb);
 
+        dfb->startNewFrame(renderer->errorThreshold);
         dfb->beginFrame();
 
-        dfb->startNewFrame(renderer->errorThreshold);
         /* the client will do its magic here, and the distributed
            frame buffer will be writing tiles here, without us doing
            anything ourselves */
@@ -65,14 +65,13 @@ namespace ospray {
                                const uint32 channelFlags)
       {
         auto *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
-        dfb->beginFrame();
+
         dfb->startNewFrame(renderer->errorThreshold);
+        dfb->beginFrame();
 
         void *perFrameData = renderer->beginFrame(fb);
 
         const int ALLTASKS = fb->getTotalTiles();
-        // TODO WILL: In collaborative mode rank 0 should join the worker group
-        // as well so this worker should actually just be worker as before
         int NTASKS = ALLTASKS / worker.size;
 
         // NOTE(jda) - If all tiles do not divide evenly among all worker ranks
@@ -112,7 +111,7 @@ namespace ospray {
         dfb->waitUntilFinished();
         renderer->endFrame(perFrameData,channelFlags);
 
-        return dfb->endFrame(0.f); // irrelevant return value on slave, still
+        return dfb->endFrame(inf); // irrelevant return value on slave, still
                                    // call to stop maml layer
       }
 
@@ -140,6 +139,7 @@ namespace ospray {
           const size_t tile_x = taskIndex - tile_y*numTiles_x;
           const vec2i tileID(tile_x, tile_y);
           const int32 accumID = fb->accumID(tileID);
+          const bool tileOwner = (taskIndex % numGlobalRanks()) == globalRank();
 
           if (dfb->tileError(tileID) <= renderer->errorThreshold)
             return;
@@ -150,6 +150,14 @@ namespace ospray {
           tasking::parallel_for(NUM_JOBS, [&](int tIdx) {
             renderer->renderTile(perFrameData, tile, tIdx);
           });
+
+          if (tileOwner) {
+            tile.generation = 0;
+            tile.children = numGlobalRanks() - 1;
+          } else {
+            tile.generation = 1;
+            tile.children = 0;
+          }
 
           fb->setTile(tile);
         });
