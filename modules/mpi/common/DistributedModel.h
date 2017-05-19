@@ -38,6 +38,8 @@ namespace ospray {
       //! \brief common function to help printf-debugging
       virtual std::string toString() const override;
       virtual void commit() override;
+
+      std::vector<box3f> myRegions, othersRegions;
     };
 
   } // ::ospray::mpi

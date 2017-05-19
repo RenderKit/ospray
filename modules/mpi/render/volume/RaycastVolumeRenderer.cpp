@@ -261,10 +261,9 @@ namespace ospray {
     }
 
     dfb->setFrameMode(DistributedFrameBuffer::ALPHA_BLEND);
-
+    dfb->startNewFrame(errorThreshold);
     Renderer::beginFrame(fb);
 
-    dfb->startNewFrame(errorThreshold);
 
     if (ddVolumeVec.size() > 1) {
       /* note: our assumption below is that all blocks together are
