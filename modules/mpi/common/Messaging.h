@@ -61,7 +61,9 @@ namespace ospray {
         // TODO: We don't want to re-use the MPIOffload fabric because it's
         // an intercommunicator between the app/worker groups and thus will
         // only support bcast from master -> workers, not the workers <-> workers
-        // style communication we want here.
+        // style communication we want here. Is it best to just create
+        // a fabric each time? Or have some other fabric we save statically?
+        // The distributed device doesn't have a fabric in it by default either.
         mpicommon::MPIBcastFabric fabric(mpicommon::world, rootGlobalRank);
         if (mpicommon::globalRank() == rootGlobalRank) {
           networking::BufferedWriteStream stream(fabric);
