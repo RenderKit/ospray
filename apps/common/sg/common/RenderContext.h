@@ -55,10 +55,9 @@ namespace ospray {
     inline RenderContext::RenderContext(const RenderContext &other,
                                         const affine3f &newXfm)
       : world(other.world),
-        //integrator(other.integrator),
+        currentOSPModel(nullptr),
         currentTransform(newXfm),
         ospRenderer(nullptr),
-        currentOSPModel(nullptr),
         level(0)
     {}
 

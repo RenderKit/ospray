@@ -56,14 +56,14 @@ namespace ospray {
                                )
     : ImGui3DWidget(ImGui3DWidget::FRAMEBUFFER_NONE),
       scenegraph(scenegraph),
-      renderEngine(scenegraph, scenegraphDW),scenegraphDW(scenegraphDW)
+      scenegraphDW(scenegraphDW),
+      renderEngine(scenegraph, scenegraphDW)
   {
     //do initial commit to make sure bounds are correctly computed
     scenegraph->traverse("verify");
     scenegraph->traverse("commit");
     auto bbox = scenegraph->child("world").bounds();
-    if (bbox.empty())
-    {
+    if (bbox.empty()) {
       bbox.lower = vec3f(-5,0,-5);
       bbox.upper = vec3f(5,10,5);
     }
@@ -198,7 +198,7 @@ namespace ospray {
 
     if (renderEngine.hasNewFrame()) {
       auto &mappedFB = renderEngine.mapFramebuffer();
-      auto nPixels = windowSize.x * windowSize.y;
+      size_t nPixels = windowSize.x * windowSize.y;
 
       if (mappedFB.size() == nPixels) {
         auto *srcPixels = mappedFB.data();
@@ -283,7 +283,6 @@ namespace ospray {
       ImGui::NewLine();
     }
 
-    static float vec4fv[4] = { 0.10f, 0.20f, 0.30f, 0.44f };
     if (ImGui::CollapsingHeader("SceneGraph", "SceneGraph", true, true))
       buildGUINode("root", scenegraph, 0);
 
@@ -405,7 +404,6 @@ namespace ospray {
           std::string popupName = "Add Node: ##" +
             ((std::ostringstream&)(std::ostringstream("")
                                    << node.get())).str();
-          float value = 1.f;
           static bool addChild = true;
           if (ImGui::BeginPopupContextItem("item context menu")) {
             char buf[256];

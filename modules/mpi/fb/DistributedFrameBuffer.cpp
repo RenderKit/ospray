@@ -266,7 +266,7 @@ namespace ospray {
     for (int y = 0; y < numPixels.y; y += TILE_SIZE) {
       for (int x = 0; x < numPixels.x; x += TILE_SIZE, tileID++) {
         size_t ownerID = ownerIDFromTileID(tileID);
-        if (ownerID == mpicommon::globalRank()) {
+        if (ownerID == size_t(mpicommon::globalRank())) {
           TileData *td = createTile(vec2i(x, y), tileID, ownerID);
           myTiles.push_back(td);
           allTiles.push_back(td);

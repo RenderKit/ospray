@@ -151,7 +151,8 @@ namespace ospray {
 
     private:
       //! \brief state for the loader threads to use, for picking which block to load
-      struct LoaderState {
+      struct LoaderState
+      {
         std::mutex mutex;
         std::atomic<size_t> nextBlockID;
         bool useGZip;

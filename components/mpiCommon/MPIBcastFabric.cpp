@@ -22,8 +22,7 @@
 namespace mpicommon {
 
   MPIBcastFabric::MPIBcastFabric(const Group &group)
-    : group(group),
-      buffer(nullptr)
+    : buffer(nullptr), group(group)
   {
     if (!group.valid())
       throw std::runtime_error("#osp:mpi: trying to set up a MPI fabric "
