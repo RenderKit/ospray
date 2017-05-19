@@ -22,7 +22,12 @@
 struct DistributedRaycastRenderer
 {
   uniform Renderer super;
-  uniform box3f clipBox;
+  // TODO: For now it's sufficient just to know which clip boxes
+  // we own and their bounds, and which clip boxes 'others' own and
+  // their bounds. With that info we can properly setup the information
+  // about the total # of tiles to expect for each image tile.
+  uniform box3f *uniform myClipBoxes;
+  uniform box3f *uniform othersClipBoxes;
 };
 
 void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
@@ -43,8 +48,8 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
   }
 
   // Intersect with the clipping box for this node's local data, if we have one
-  if (self->clipBox.lower.x != inf) {
-    intersectBox(sample.ray, self->clipBox, sample.ray.t0, sample.ray.t);
+  if (self->myClipBoxes) {
+    intersectBox(sample.ray, self->myClipBoxes[0], sample.ray.t0, sample.ray.t);
   }
 
   traceRay(self->super.model, sample.ray);
@@ -121,23 +126,25 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
 
 // Exported functions /////////////////////////////////////////////////////////
 
-export void *uniform DistributedRaycastRenderer_create(void *uniform cppE)
-{
+export void *uniform DistributedRaycastRenderer_create(void *uniform cppE) {
   uniform DistributedRaycastRenderer *uniform self =
     uniform new uniform DistributedRaycastRenderer;
 
   Renderer_Constructor(&self->super, cppE, NULL, NULL, 1);
   self->super.renderSample = DistributedRaycastRenderer_renderSample;
-  self->clipBox = make_box3f_empty();
+  self->myClipBoxes = NULL;
+  self->othersClipBoxes = NULL;
 
   return self;
 }
 
-export void DistributedRaycastRenderer_setClipBox(void *uniform _self,
-                                                  uniform box3f *uniform clipBox)
+export void DistributedRaycastRenderer_setClipBoxes(void *uniform _self,
+                                                    uniform box3f *uniform myClipBoxes,
+                                                    uniform box3f *uniform othersClipBoxes)
 {
   uniform DistributedRaycastRenderer *uniform self =
     (uniform DistributedRaycastRenderer *uniform)_self;
-  self->clipBox = *clipBox;
+  self->myClipBoxes = myClipBoxes;
+  self->othersClipBoxes = othersClipBoxes;
 }
 
