@@ -281,6 +281,8 @@ namespace ospRandSciVisTest {
     // Note: now we must use the global world bounds, not our local bounds
     box3f worldBounds(vec3f(0), vec3f(1));
 
+    // On some ranks we add some additional regions to clip the volume
+    // and make some gaps, just to show usage and test multiple regions per-rank
     std::vector<box3f> regions{volume.second};
     bool setGap = false;
     if (mpicommon::numGlobalRanks() % 2 == 0) {
