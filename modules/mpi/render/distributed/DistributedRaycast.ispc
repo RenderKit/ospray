@@ -32,22 +32,28 @@ struct DistributedRaycastRenderer
   uniform int numOthersClipBoxes;
 };
 
+struct ClipBoxInfo
+{
+  uniform int currentBox;
+  uniform bool *uniform boxVisible;
+};
+
 void DistributedRaycastRenderer_testBoxes(uniform DistributedRaycastRenderer *uniform self,
-                                          uniform bool *uniform boxWasVisible,
+                                          uniform ClipBoxInfo *uniform boxInfo,
                                           const varying ScreenSample &sample)
 {
   for (uniform int i = 0; i < self->numMyClipBoxes; ++i) {
     float t0, t1;
     intersectBox(sample.ray, self->myClipBoxes[i], t0, t1);
     if (t0 < t1 && t0 >= sample.ray.t0 && t0 <= sample.ray.t) {
-      boxWasVisible[i] = true;
+      boxInfo->boxVisible[i] = true;
     }
   }
   for (uniform int i = 0; i < self->numOthersClipBoxes; ++i) {
     float t0, t1;
     intersectBox(sample.ray, self->othersClipBoxes[i], t0, t1);
     if (t0 < t1 && t0 >= sample.ray.t0 && t0 <= sample.ray.t) {
-      boxWasVisible[self->numMyClipBoxes + i] = true;
+      boxInfo->boxVisible[self->numMyClipBoxes + i] = true;
     }
   }
 }
@@ -59,8 +65,9 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
   uniform DistributedRaycastRenderer *uniform self =
     (uniform DistributedRaycastRenderer *uniform)_self;
 
-  if (perFrameData) {
-    DistributedRaycastRenderer_testBoxes(self, (uniform bool *uniform)perFrameData, sample);
+  uniform ClipBoxInfo *uniform boxInfo = (uniform ClipBoxInfo *uniform)perFrameData;
+  if (boxInfo) {
+    DistributedRaycastRenderer_testBoxes(self, boxInfo, sample);
   }
 
   // Ray offset for this sample, as a fraction of the nominal step size.
@@ -74,8 +81,8 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
   }
 
   // Intersect with the clipping box for this node's local data, if we have one
-  if (self->myClipBoxes) {
-    intersectBox(sample.ray, self->myClipBoxes[0], sample.ray.t0, sample.ray.t);
+  if (self->myClipBoxes && boxInfo) {
+    intersectBox(sample.ray, self->myClipBoxes[boxInfo->currentBox], sample.ray.t0, sample.ray.t);
   }
 
   traceRay(self->super.model, sample.ray);

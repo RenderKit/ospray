@@ -28,6 +28,14 @@
 namespace ospray {
   namespace mpi {
 
+    struct ClipBoxInfo
+    {
+      int currentBox;
+      bool *boxVisible;
+
+      ClipBoxInfo() : currentBox(0), boxVisible(nullptr) {}
+    };
+
     // DistributedRaycastRenderer definitions /////////////////////////////////
 
     DistributedRaycastRenderer::DistributedRaycastRenderer()
@@ -74,13 +82,15 @@ namespace ospray {
         const int32 accumID = fb->accumID(tileID);
         const bool tileOwner = (taskIndex % numGlobalRanks()) == globalRank();
 
-        if (dfb->tileError(tileID) <= errorThreshold)
+        if (dfb->tileError(tileID) <= errorThreshold) {
           return;
+        }
 
         // The first 0..myClipBoxes.size() - 1 entries are for my boxes,
         // the following entries are for other nodes boxes
-        bool *boxVisible = STACK_BUFFER(bool, numBoxes);
-        std::fill(boxVisible, boxVisible + numBoxes, false);
+        ClipBoxInfo boxInfo;
+        boxInfo.boxVisible = STACK_BUFFER(bool, numBoxes);
+        std::fill(boxInfo.boxVisible, boxInfo.boxVisible + numBoxes, false);
 
         // TODO: Call render for each box we own, and pass through 'perFrameData'
         // some per tile data so we can get out information about which other
@@ -90,21 +100,19 @@ namespace ospray {
         Tile __aligned(64) tile(tileID, dfb->size, accumID);
 
         // We use the first tile rendering to also fill out the block was visible structure
-        const int NUM_JOBS = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
+        const int NUM_JOBS = (TILE_SIZE * TILE_SIZE) / RENDERTILE_PIXELS_PER_JOB;
         tasking::parallel_for(NUM_JOBS, [&](int tIdx) {
-          renderTile(boxVisible, tile, tIdx);
+          renderTile(&boxInfo, tile, tIdx);
         });
 
         // TODO: Go through the other boxes and render them. How to send this info
         // over to the renderer? Right now it assumes if perframedata is not null its
         // the block list. Should merge into a struct
-        const size_t boxesOnThisTile = std::count(boxVisible, boxVisible + numBoxes, true);
+        const size_t boxesOnThisTile = std::count(boxInfo.boxVisible, boxInfo.boxVisible + numBoxes, true);
 
-        if (boxVisible[0]) {
+        if (boxInfo.boxVisible[0]) {
           tile.generation = 1;
           tile.children = 0;
-          std::cout << "Tile [" << tile_x << ", " << tile_y << "] "
-            << "being sent by " << globalRank() << "\n";
           fb->setTile(tile);
         }
 
@@ -113,13 +121,25 @@ namespace ospray {
         if (tileOwner) {
           tile.generation = 0;
           tile.children = boxesOnThisTile;
-          std::cout << "Tile [" << tile_x << ", " << tile_y << "] "
-            << "# boxes = " << boxesOnThisTile << "\n";
           std::fill(tile.r, tile.r + TILE_SIZE * TILE_SIZE, bgColor.x);
           std::fill(tile.g, tile.g + TILE_SIZE * TILE_SIZE, bgColor.y);
           std::fill(tile.b, tile.b + TILE_SIZE * TILE_SIZE, bgColor.z);
           std::fill(tile.a, tile.a + TILE_SIZE * TILE_SIZE, 1.0);
           std::fill(tile.z, tile.z + TILE_SIZE * TILE_SIZE, std::numeric_limits<float>::infinity());
+          fb->setTile(tile);
+        }
+
+        // Render the rest of our boxes that project to this tile
+        tile.generation = 1;
+        tile.children = 0;
+        for (size_t bid = 1; bid < distribModel->myClipBoxes.size(); ++bid) {
+          if (!boxInfo.boxVisible[bid]) {
+            continue;
+          }
+          boxInfo.currentBox = bid;
+          tasking::parallel_for(NUM_JOBS, [&](int tIdx) {
+            renderTile(&boxInfo, tile, tIdx);
+          });
           fb->setTile(tile);
         }
       });
