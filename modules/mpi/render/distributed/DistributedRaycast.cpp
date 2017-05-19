@@ -100,30 +100,26 @@ namespace ospray {
         // the block list. Should merge into a struct
         const size_t boxesOnThisTile = std::count(boxVisible, boxVisible + numBoxes, true);
 
-        if (tileOwner) {
-          tile.generation = 0;
-          // TODO: This one should be the background tile then we don't need this -1 check
-          tile.children = boxesOnThisTile > 0 ? boxesOnThisTile : 0;
-          if (boxVisible[0]) {
-            tile.children -= 1;
-          }
-          std::cout << "Tile [" << tile_x << ", " << tile_y << "] "
-            << "owned by " << globalRank() << " my box hit it? "
-            << std::boolalpha << boxVisible[0]
-            << ", children = " << tile.children << "\n";
-
-          // TODO: If we're the owner, fill a tile with the renderer's background color
-          // and send that as well.
-        } else {
+        if (boxVisible[0]) {
           tile.generation = 1;
           tile.children = 0;
-        }
-        std::cout << "Tile [" << tile_x << ", " << tile_y << "] "
-          << "# boxes = " << boxesOnThisTile << "\n";
-
-        if (boxVisible[0] || tileOwner) {
           std::cout << "Tile [" << tile_x << ", " << tile_y << "] "
             << "being sent by " << globalRank() << "\n";
+          fb->setTile(tile);
+        }
+
+        // If we own the tile send the background color and the count of children for the
+        // number of boxes projecting to it that will be sent.
+        if (tileOwner) {
+          tile.generation = 0;
+          tile.children = boxesOnThisTile;
+          std::cout << "Tile [" << tile_x << ", " << tile_y << "] "
+            << "# boxes = " << boxesOnThisTile << "\n";
+          std::fill(tile.r, tile.r + TILE_SIZE * TILE_SIZE, bgColor.x);
+          std::fill(tile.g, tile.g + TILE_SIZE * TILE_SIZE, bgColor.y);
+          std::fill(tile.b, tile.b + TILE_SIZE * TILE_SIZE, bgColor.z);
+          std::fill(tile.a, tile.a + TILE_SIZE * TILE_SIZE, 1.0);
+          std::fill(tile.z, tile.z + TILE_SIZE * TILE_SIZE, std::numeric_limits<float>::infinity());
           fb->setTile(tile);
         }
       });

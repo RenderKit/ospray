@@ -82,8 +82,8 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
   sample.z     = sample.ray.t;
 
   if (sample.ray.geomID < 0) {
-    // TODO: We need the owner to send the background tile, for now
-    // a bit of hack but just make the background black and transparent
+    // The owner sends the background color, so we composite with a transparent
+    // black instead of the scene's bgcolor
     sample.rgb = make_vec3f(0.0f);
     sample.alpha = 0.f;
   } else {

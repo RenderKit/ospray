@@ -301,7 +301,7 @@ namespace ospRandSciVisTest {
     renderer.set("world", model);
     renderer.set("model", model);
     renderer.set("camera", camera);
-    renderer.set("bgColor", vec3f(0.01f, 0.01f, 0.01f));
+    renderer.set("bgColor", vec3f(0.02));
     renderer.commit();
 
     ospray::cpp::FrameBuffer fb(fbSize,OSP_FB_SRGBA,OSP_FB_COLOR|OSP_FB_ACCUM);
