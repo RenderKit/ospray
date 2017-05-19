@@ -14,8 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(OSPRAY_CXX_FLAGS
-    "-std=c++11 -fPIC -Wsuggest-override -fno-strict-aliasing -no-ansi-alias -DNOMINMAX")
+SET(OSPRAY_CXX_FLAGS "-std=c++11 -fPIC -fno-strict-aliasing -no-ansi-alias -DNOMINMAX")
 
 IF(OSPRAY_STRICT_BUILD)
   SET(OSPRAY_CXX_FLAGS "-Wall ${OSPRAY_CXX_FLAGS}")
