@@ -41,11 +41,11 @@ namespace ospray {
       DistributedModel *distribModel = dynamic_cast<DistributedModel*>(model);
       if (distribModel) {
         ispc::DistributedRaycastRenderer_setClipBoxes(ispcEquivalent,
-            (ispc::box3f*)distribModel->myClipBoxes.data(),
-            (ispc::box3f*)distribModel->othersClipBoxes.data());
+            (ispc::box3f*)distribModel->myClipBoxes.data(), distribModel->myClipBoxes.size(),
+            (ispc::box3f*)distribModel->othersClipBoxes.data(), distribModel->othersClipBoxes.size());
       } else {
-        // TODO: Should this be a hard error and we just throw?
-        static WarnOnce warning("Using DistributedRaycastRender but not a distributed model!?");
+        throw std::runtime_error("DistributedRaycastRender must use a DistributedModel from "
+                                 "the MPIDistributedDevice");
       }
     }
 
@@ -60,6 +60,11 @@ namespace ospray {
       dfb->beginFrame();
 
       auto *perFrameData = beginFrame(dfb);
+      // This renderer doesn't use per frame data, since we sneak in some tile
+      // info in this pointer.
+      assert(!perFrameData);
+      DistributedModel *distribModel = dynamic_cast<DistributedModel*>(model);
+      const size_t numBoxes = distribModel->myClipBoxes.size() + distribModel->othersClipBoxes.size();
 
       tasking::parallel_for(dfb->getTotalTiles(), [&](int taskIndex) {
         const size_t numTiles_x = fb->getNumTiles().x;
@@ -72,6 +77,11 @@ namespace ospray {
         if (dfb->tileError(tileID) <= errorThreshold)
           return;
 
+        // The first 0..myClipBoxes.size() - 1 entries are for my boxes,
+        // the following entries are for other nodes boxes
+        bool *boxVisible = STACK_BUFFER(bool, numBoxes);
+        std::fill(boxVisible, boxVisible + numBoxes, false);
+
         // TODO: Call render for each box we own, and pass through 'perFrameData'
         // some per tile data so we can get out information about which other
         // boxes of our own and others projected to this tile. This could be passed
@@ -79,22 +89,43 @@ namespace ospray {
         // doing the tests again.
         Tile __aligned(64) tile(tileID, dfb->size, accumID);
 
+        // We use the first tile rendering to also fill out the block was visible structure
         const int NUM_JOBS = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
         tasking::parallel_for(NUM_JOBS, [&](int tIdx) {
-          renderTile(perFrameData, tile, tIdx);
+          renderTile(boxVisible, tile, tIdx);
         });
+
+        // TODO: Go through the other boxes and render them. How to send this info
+        // over to the renderer? Right now it assumes if perframedata is not null its
+        // the block list. Should merge into a struct
+        const size_t boxesOnThisTile = std::count(boxVisible, boxVisible + numBoxes, true);
 
         if (tileOwner) {
           tile.generation = 0;
-          tile.children = numGlobalRanks() - 1;
+          // TODO: This one should be the background tile then we don't need this -1 check
+          tile.children = boxesOnThisTile > 0 ? boxesOnThisTile : 0;
+          if (boxVisible[0]) {
+            tile.children -= 1;
+          }
+          std::cout << "Tile [" << tile_x << ", " << tile_y << "] "
+            << "owned by " << globalRank() << " my box hit it? "
+            << std::boolalpha << boxVisible[0]
+            << ", children = " << tile.children << "\n";
+
           // TODO: If we're the owner, fill a tile with the renderer's background color
           // and send that as well.
         } else {
           tile.generation = 1;
           tile.children = 0;
         }
+        std::cout << "Tile [" << tile_x << ", " << tile_y << "] "
+          << "# boxes = " << boxesOnThisTile << "\n";
 
-        fb->setTile(tile);
+        if (boxVisible[0] || tileOwner) {
+          std::cout << "Tile [" << tile_x << ", " << tile_y << "] "
+            << "being sent by " << globalRank() << "\n";
+          fb->setTile(tile);
+        }
       });
 
       dfb->waitUntilFinished();

@@ -27,8 +27,30 @@ struct DistributedRaycastRenderer
   // their bounds. With that info we can properly setup the information
   // about the total # of tiles to expect for each image tile.
   uniform box3f *uniform myClipBoxes;
+  uniform int numMyClipBoxes;
   uniform box3f *uniform othersClipBoxes;
+  uniform int numOthersClipBoxes;
 };
+
+void DistributedRaycastRenderer_testBoxes(uniform DistributedRaycastRenderer *uniform self,
+                                          uniform bool *uniform boxWasVisible,
+                                          const varying ScreenSample &sample)
+{
+  for (uniform int i = 0; i < self->numMyClipBoxes; ++i) {
+    float t0, t1;
+    intersectBox(sample.ray, self->myClipBoxes[i], t0, t1);
+    if (t0 < t1 && t0 >= sample.ray.t0 && t0 <= sample.ray.t) {
+      boxWasVisible[i] = true;
+    }
+  }
+  for (uniform int i = 0; i < self->numOthersClipBoxes; ++i) {
+    float t0, t1;
+    intersectBox(sample.ray, self->othersClipBoxes[i], t0, t1);
+    if (t0 < t1 && t0 >= sample.ray.t0 && t0 <= sample.ray.t) {
+      boxWasVisible[self->numMyClipBoxes + i] = true;
+    }
+  }
+}
 
 void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
                                              void *uniform perFrameData,
@@ -36,6 +58,10 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
 {
   uniform DistributedRaycastRenderer *uniform self =
     (uniform DistributedRaycastRenderer *uniform)_self;
+
+  if (perFrameData) {
+    DistributedRaycastRenderer_testBoxes(self, (uniform bool *uniform)perFrameData, sample);
+  }
 
   // Ray offset for this sample, as a fraction of the nominal step size.
   float rayOffset = precomputedHalton2(sample.sampleID.z);
@@ -58,7 +84,7 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
   if (sample.ray.geomID < 0) {
     // TODO: We need the owner to send the background tile, for now
     // a bit of hack but just make the background black and transparent
-    sample.rgb = make_vec3f(0.f);
+    sample.rgb = make_vec3f(0.0f);
     sample.alpha = 0.f;
   } else {
     // Spheres are cheap to shade so it's fine we do it early, potentially tossing
@@ -140,11 +166,15 @@ export void *uniform DistributedRaycastRenderer_create(void *uniform cppE) {
 
 export void DistributedRaycastRenderer_setClipBoxes(void *uniform _self,
                                                     uniform box3f *uniform myClipBoxes,
-                                                    uniform box3f *uniform othersClipBoxes)
+                                                    uniform int numMyClipBoxes,
+                                                    uniform box3f *uniform othersClipBoxes,
+                                                    uniform int numOthersClipBoxes)
 {
   uniform DistributedRaycastRenderer *uniform self =
     (uniform DistributedRaycastRenderer *uniform)_self;
   self->myClipBoxes = myClipBoxes;
+  self->numMyClipBoxes = numMyClipBoxes;
   self->othersClipBoxes = othersClipBoxes;
+  self->numOthersClipBoxes = numOthersClipBoxes;
 }
 
