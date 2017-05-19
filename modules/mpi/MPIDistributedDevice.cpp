@@ -341,13 +341,7 @@ namespace ospray {
 
     OSPRenderer MPIDistributedDevice::newRenderer(const char *type)
     {
-      UNUSED(type);
-      auto *instance = new DistributedRaycastRenderer;
-
-      ObjectHandle handle;
-      handle.assign(instance);
-
-      return (OSPRenderer)(int64)handle;
+      return createOSPRayObjectWithHandle<Renderer, OSPRenderer>(type);
     }
 
     OSPCamera MPIDistributedDevice::newCamera(const char *type)
