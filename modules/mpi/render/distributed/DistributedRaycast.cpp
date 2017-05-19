@@ -28,12 +28,12 @@
 namespace ospray {
   namespace mpi {
 
-    struct ClipBoxInfo
+    struct RegionInfo
     {
-      int currentBox;
-      bool *boxVisible;
+      int currentRegion;
+      bool *regionVisible;
 
-      ClipBoxInfo() : currentBox(0), boxVisible(nullptr) {}
+      RegionInfo() : currentRegion(0), regionVisible(nullptr) {}
     };
 
     // DistributedRaycastRenderer definitions /////////////////////////////////
@@ -48,9 +48,9 @@ namespace ospray {
       Renderer::commit();
       DistributedModel *distribModel = dynamic_cast<DistributedModel*>(model);
       if (distribModel) {
-        ispc::DistributedRaycastRenderer_setClipBoxes(ispcEquivalent,
-            (ispc::box3f*)distribModel->myClipBoxes.data(), distribModel->myClipBoxes.size(),
-            (ispc::box3f*)distribModel->othersClipBoxes.data(), distribModel->othersClipBoxes.size());
+        ispc::DistributedRaycastRenderer_setRegions(ispcEquivalent,
+            (ispc::box3f*)distribModel->myRegions.data(), distribModel->myRegions.size(),
+            (ispc::box3f*)distribModel->othersRegions.data(), distribModel->othersRegions.size());
       } else {
         throw std::runtime_error("DistributedRaycastRender must use a DistributedModel from "
                                  "the MPIDistributedDevice");
@@ -72,7 +72,7 @@ namespace ospray {
       // info in this pointer.
       assert(!perFrameData);
       DistributedModel *distribModel = dynamic_cast<DistributedModel*>(model);
-      const size_t numBoxes = distribModel->myClipBoxes.size() + distribModel->othersClipBoxes.size();
+      const size_t numRegions = distribModel->myRegions.size() + distribModel->othersRegions.size();
 
       tasking::parallel_for(dfb->getTotalTiles(), [&](int taskIndex) {
         const size_t numTiles_x = fb->getNumTiles().x;
@@ -86,37 +86,32 @@ namespace ospray {
           return;
         }
 
-        // The first 0..myClipBoxes.size() - 1 entries are for my boxes,
-        // the following entries are for other nodes boxes
-        ClipBoxInfo boxInfo;
-        boxInfo.boxVisible = STACK_BUFFER(bool, numBoxes);
-        std::fill(boxInfo.boxVisible, boxInfo.boxVisible + numBoxes, false);
+        // The first 0..myRegions.size() - 1 entries are for my regions,
+        // the following entries are for other nodes regions
+        RegionInfo regionInfo;
+        regionInfo.regionVisible = STACK_BUFFER(bool, numRegions);
+        std::fill(regionInfo.regionVisible, regionInfo.regionVisible + numRegions, false);
 
-        // TODO: Call render for each box we own, and pass through 'perFrameData'
-        // some per tile data so we can get out information about which other
-        // boxes of our own and others projected to this tile. This could be passed
-        // just on the first box we render, then we pass null for the remaining to skip
-        // doing the tests again.
         Tile __aligned(64) tile(tileID, dfb->size, accumID);
 
-        // We use the task of rendering the first box to also fill out the block visiblility list
+        // We use the task of rendering the first region to also fill out the block visiblility list
         const int NUM_JOBS = (TILE_SIZE * TILE_SIZE) / RENDERTILE_PIXELS_PER_JOB;
         tasking::parallel_for(NUM_JOBS, [&](int tIdx) {
-          renderTile(&boxInfo, tile, tIdx);
+          renderTile(&regionInfo, tile, tIdx);
         });
 
 
-        if (boxInfo.boxVisible[0]) {
+        if (regionInfo.regionVisible[0]) {
           tile.generation = 1;
           tile.children = 0;
           fb->setTile(tile);
         }
 
         // If we own the tile send the background color and the count of children for the
-        // number of boxes projecting to it that will be sent.
+        // number of regions projecting to it that will be sent.
         if (tileOwner) {
           tile.generation = 0;
-          tile.children = std::count(boxInfo.boxVisible, boxInfo.boxVisible + numBoxes, true);
+          tile.children = std::count(regionInfo.regionVisible, regionInfo.regionVisible + numRegions, true);
           std::fill(tile.r, tile.r + TILE_SIZE * TILE_SIZE, bgColor.x);
           std::fill(tile.g, tile.g + TILE_SIZE * TILE_SIZE, bgColor.y);
           std::fill(tile.b, tile.b + TILE_SIZE * TILE_SIZE, bgColor.z);
@@ -125,16 +120,16 @@ namespace ospray {
           fb->setTile(tile);
         }
 
-        // Render the rest of our boxes that project to this tile
+        // Render the rest of our regions that project to this tile
         tile.generation = 1;
         tile.children = 0;
-        for (size_t bid = 1; bid < distribModel->myClipBoxes.size(); ++bid) {
-          if (!boxInfo.boxVisible[bid]) {
+        for (size_t bid = 1; bid < distribModel->myRegions.size(); ++bid) {
+          if (!regionInfo.regionVisible[bid]) {
             continue;
           }
-          boxInfo.currentBox = bid;
+          regionInfo.currentRegion = bid;
           tasking::parallel_for(NUM_JOBS, [&](int tIdx) {
-            renderTile(&boxInfo, tile, tIdx);
+            renderTile(&regionInfo, tile, tIdx);
           });
           fb->setTile(tile);
         }

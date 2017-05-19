@@ -42,7 +42,7 @@
  *
  * In the case that you have geometry crossing the boundary of nodes
  * and are replicating it on both nodes to render (ghost zones, etc.)
- * you can specify the clipBox for the renderer to clip rays against
+ * you can specify the region for the renderer to clip rays against
  * its data region, keeping the regions disjoint. For example, if a
  * sphere center is on the border between two nodes, each would
  * render half the sphere and the halves would be composited to produce
@@ -281,7 +281,7 @@ namespace ospRandSciVisTest {
     // Note: now we must use the global world bounds, not our local bounds
     box3f worldBounds(vec3f(0), vec3f(1));
 
-    std::vector<box3f> clipBoxes{volume.second};
+    std::vector<box3f> regions{volume.second};
     bool setGap = false;
     if (mpicommon::numGlobalRanks() % 2 == 0) {
       setGap = mpicommon::globalRank() % 3 == 0;
@@ -289,16 +289,16 @@ namespace ospRandSciVisTest {
       setGap = mpicommon::globalRank() % 2 == 0;
     }
     if (setGap) {
-      const float step = (clipBoxes[0].upper.x - clipBoxes[0].lower.x) / 4.0;
-      const vec3f low = clipBoxes[0].lower;
-      const vec3f hi = clipBoxes[0].upper;
-      clipBoxes[0].upper.x = low.x + step;
-      clipBoxes.push_back(box3f(vec3f(low.x + step * 3, low.y, low.z),
+      const float step = (regions[0].upper.x - regions[0].lower.x) / 4.0;
+      const vec3f low = regions[0].lower;
+      const vec3f hi = regions[0].upper;
+      regions[0].upper.x = low.x + step;
+      regions.push_back(box3f(vec3f(low.x + step * 3, low.y, low.z),
                                 vec3f(low.x + step * 4, hi.y, hi.z)));
     }
-    ospray::cpp::Data clipBoxData(clipBoxes.size() * 2, OSP_FLOAT3,
-        clipBoxes.data());
-    model.set("clipBoxes", clipBoxData);
+    ospray::cpp::Data regionData(regions.size() * 2, OSP_FLOAT3,
+        regions.data());
+    model.set("regions", regionData);
     model.commit();
 
     DefaultCameraParser cameraClParser;
