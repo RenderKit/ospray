@@ -19,6 +19,7 @@
 // ospray
 #include "render/Renderer.h"
 #include "fb/Tile.h"
+#include <vector>
 
 namespace ospray {
     namespace visit {
@@ -35,6 +36,30 @@ namespace ospray {
 	 * Also see apps/ospRandSciVisTest.cpp and apps/ospRandSphereTest.cpp for
 	 * example usage.
 	 */
+	struct TileInfo {
+	    // basic info
+	    int regionSize[4];
+	    int fbSize[2];
+	    float depth{std::numeric_limits<float>::infinity()};
+	    bool visible{false};
+            // 'red' component; in float.
+	    float r[TILE_SIZE*TILE_SIZE];
+	    // 'green' component; in float.
+	    float g[TILE_SIZE*TILE_SIZE];
+	    // 'blue' component; in float.
+	    float b[TILE_SIZE*TILE_SIZE];
+	    // 'alpha' component; in float.
+	    float a[TILE_SIZE*TILE_SIZE];
+	    // constructor
+	    ~TileInfo() = default;
+	    TileInfo() = default;
+	    TileInfo(const Tile& src);
+	};
+	
+	struct TileRetriever {
+	    virtual void operator()(const std::vector<std::vector<TileInfo>>& list) {}
+	};
+
 	struct VisItDistributedRaycastRenderer : public Renderer
 	{
 	    VisItDistributedRaycastRenderer();
@@ -45,7 +70,10 @@ namespace ospray {
 	    float renderFrame(FrameBuffer *fb, const uint32 fbChannelFlags) override;
 
 	    std::string toString() const override;
+
+	    // function pointer to retrieve all the tiles
+	    void* tileRetriever {nullptr};
 	};
 
-    } // ::ospray::mpi
+    } // ::ospray::visit
 } // ::ospray

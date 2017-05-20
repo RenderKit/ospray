@@ -38,6 +38,7 @@
 # b) contain a (extern C linkage) initializatoin routine named
 #    void ospray_init_module_<moduleName>()
 #
+
 OSPRAY_CREATE_LIBRARY(ospray_module_visit
 
   # the cpp file that contains all the plugin code - parsing
@@ -65,3 +66,6 @@ OSPRAY_CREATE_LIBRARY(ospray_module_visit
   ospray_mpi_maml 
   )
 
+INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/render/VisItDistributedRaycast.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/render
+  )
