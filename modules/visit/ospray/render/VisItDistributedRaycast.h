@@ -18,33 +18,34 @@
 
 // ospray
 #include "render/Renderer.h"
+#include "fb/Tile.h"
 
 namespace ospray {
-  namespace visit {
+    namespace visit {
 
-    /* The distributed raycast renderer supports rendering distributed
-     * geometry and volume data, assuming that the data distribution is suitable
-     * for sort-last compositing. Specifically, the data must be organized
-     * among nodes such that each nodes region is convex and disjoint from the
-     * others. In the case of overlapping geometry (ghost zones, etc.) you
-     * can specify the 'clipBox.lower' and 'clipBox.upper' parameters to clip
-     * the geometry to only find hits within this node's region.
-     * Only one volume per node is currently supported.
-     *
-     * Also see apps/ospRandSciVisTest.cpp and apps/ospRandSphereTest.cpp for
-     * example usage.
-     */
-    struct VisItDistributedRaycastRenderer : public Renderer
-    {
-      VisItDistributedRaycastRenderer();
-      virtual ~VisItDistributedRaycastRenderer() = default; //TODO!
+	/* The distributed raycast renderer supports rendering distributed
+	 * geometry and volume data, assuming that the data distribution is suitable
+	 * for sort-last compositing. Specifically, the data must be organized
+	 * among nodes such that each nodes region is convex and disjoint from the
+	 * others. In the case of overlapping geometry (ghost zones, etc.) you
+	 * can specify the 'clipBox.lower' and 'clipBox.upper' parameters to clip
+	 * the geometry to only find hits within this node's region.
+	 * Only one volume per node is currently supported.
+	 *
+	 * Also see apps/ospRandSciVisTest.cpp and apps/ospRandSphereTest.cpp for
+	 * example usage.
+	 */
+	struct VisItDistributedRaycastRenderer : public Renderer
+	{
+	    VisItDistributedRaycastRenderer();
+	    virtual ~VisItDistributedRaycastRenderer() = default;//TODO!
 
-      void commit() override;
+	    void commit() override;
 
-      float renderFrame(FrameBuffer *fb, const uint32 fbChannelFlags) override;
+	    float renderFrame(FrameBuffer *fb, const uint32 fbChannelFlags) override;
 
-      std::string toString() const override;
-    };
+	    std::string toString() const override;
+	};
 
-  } // ::ospray::visit
+    } // ::ospray::mpi
 } // ::ospray

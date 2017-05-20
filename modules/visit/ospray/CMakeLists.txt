@@ -59,6 +59,7 @@ OSPRAY_CREATE_LIBRARY(ospray_module_visit
   LINK
   ospray
   ${MPI_CXX_LIBRARIES}
+  ospray_module_mpi
   ospray_mpi_common
   ospray_common
   ospray_mpi_maml 
