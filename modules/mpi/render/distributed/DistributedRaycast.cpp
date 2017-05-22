@@ -100,7 +100,6 @@ namespace ospray {
           renderTile(&regionInfo, tile, tIdx);
         });
 
-
         if (regionInfo.regionVisible[0]) {
           tile.generation = 1;
           tile.children = 0;
@@ -120,7 +119,7 @@ namespace ospray {
           fb->setTile(tile);
         }
 
-        // Render the rest of our regions that project to this tile
+        // Render the rest of our regions that project to this tile and ship them off
         tile.generation = 1;
         tile.children = 0;
         for (size_t bid = 1; bid < distribModel->myRegions.size(); ++bid) {
