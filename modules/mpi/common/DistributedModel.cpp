@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <iterator>
 #include <algorithm>
 // ospray
 #include "api/Device.h"
