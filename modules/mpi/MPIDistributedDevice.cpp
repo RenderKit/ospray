@@ -127,7 +127,7 @@ namespace ospray {
                       make_unique<staticLoadBalancer::Distributed>();
     }
 
-    OSPFrameBuffer 
+    OSPFrameBuffer
     MPIDistributedDevice::frameBufferCreate(const vec2i &size,
                                             const OSPFrameBufferFormat mode,
                                             const uint32 channels)

@@ -23,7 +23,7 @@ struct DistributedRaycastRenderer
 {
   uniform Renderer super;
   // TODO: For now it's sufficient just to know which regions
-  // we own and their bounds, and which clip regions 'others' own and
+  // we own and their bounds, and which regions 'others' own and
   // their bounds. With that info we can properly setup the information
   // about the total # of tiles to expect for each image tile.
   uniform box3f *uniform myRegions;
@@ -80,7 +80,7 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
     rayOffset -= 1.f;
   }
 
-  // Intersect with the clipping region for this node's local data, if we have one
+  // Intersect with current region for this node's local data
   if (self->myRegions && regionInfo) {
     intersectBox(sample.ray, self->myRegions[regionInfo->currentRegion], sample.ray.t0, sample.ray.t);
   }

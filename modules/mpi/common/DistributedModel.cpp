@@ -65,8 +65,8 @@ namespace ospray {
       // they aren't ours.
       myRegions = std::vector<box3f>(boxes, boxes + regionData->numItems / 2);
 
-      // If the user hasn't set any clip boxes, there's an implicit infinitely
-      // large clipping box we can place around the entire world.
+      // If the user hasn't set any regions, there's an implicit infinitely
+      // large region box we can place around the entire world.
       if (myRegions.empty()) {
         postStatusMsg("No regions found, making implicit "
                       "infinitely large region");
