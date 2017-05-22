@@ -43,7 +43,8 @@ namespace ospray {
 
       void disableAsyncMessaging();
 
-      // collective messaging interface //////////////////////////////////////
+      // collective messaging interface ///////////////////////////////////////
+
       // Broadcast some data, if rank == rootGlobalRank we send data, otherwise
       // the received data will be put in data.
       // TODO: Handling non-world groups? I'm not sure how
@@ -54,17 +55,13 @@ namespace ospray {
       // mismatch collectives or hang trying to dispatch
       // the wrong ones?
       template<typename T>
-      void bcast(const int rootGlobalRank, std::vector<T> &data) {
+      inline void bcast(const int rootGlobalRank, T &data)
+      {
         const bool asyncWasRunning = asyncMessagingEnabled();
         disableAsyncMessaging();
 
-        // TODO: We don't want to re-use the MPIOffload fabric because it's
-        // an intercommunicator between the app/worker groups and thus will
-        // only support bcast from master -> workers, not the workers <-> workers
-        // style communication we want here. Is it best to just create
-        // a fabric each time? Or have some other fabric we save statically?
-        // The distributed device doesn't have a fabric in it by default either.
         mpicommon::MPIBcastFabric fabric(mpicommon::world, rootGlobalRank);
+
         if (mpicommon::globalRank() == rootGlobalRank) {
           networking::BufferedWriteStream stream(fabric);
           stream << data;
@@ -74,8 +71,12 @@ namespace ospray {
           stream >> data;
         }
 
+        // TODO: What if some other thread re-enables async messaging during the
+        // bcast? Can we like lock it out or something until we're done? Or
+        // send the bcasts through the same messaging layer so we know for
+        // sure no other MPI calls are being made?
         if (asyncWasRunning) {
-          std::cout << "Async was running, re-enabling\n";
+          postStatusMsg("Async was running, re-enabling", 1);
           enableAsyncMessaging();
         }
       }

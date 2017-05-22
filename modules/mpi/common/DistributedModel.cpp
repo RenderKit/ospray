@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <iterator>
 #include <algorithm>
 // ospray
 #include "api/Device.h"
@@ -63,33 +64,49 @@ namespace ospray {
       // other boxes, just that we know they exist and their bounds, and that
       // they aren't ours.
       myRegions = std::vector<box3f>(boxes, boxes + regionData->numItems / 2);
-      // If the user hasn't set any clip boxes, there's an implicit infinitely large
-      // clipping box we can place around the entire world.
+
+      // If the user hasn't set any clip boxes, there's an implicit infinitely
+      // large clipping box we can place around the entire world.
       if (myRegions.empty()) {
-        std::cout << "No regions found, making implicit infinitely large region\n";
+        postStatusMsg("No regions found, making implicit "
+                      "infinitely large region");
         myRegions.push_back(box3f(vec3f(neg_inf), vec3f(pos_inf)));
       }
+
       for (size_t i = 0; i < mpicommon::numGlobalRanks(); ++i) {
         if (i == mpicommon::globalRank()) {
           messaging::bcast(i, myRegions);
         } else {
           std::vector<box3f> recv;
           messaging::bcast(i, recv);
-          std::copy(recv.begin(), recv.end(), std::back_inserter(othersRegions));
+          std::copy(recv.begin(), recv.end(),
+                    std::back_inserter(othersRegions));
         }
       }
-      // TODO: WILL: Just for making the debug log more readable,
-      // this will NOT stick around
-      for (size_t i = 0; i < mpicommon::numGlobalRanks(); ++i) {
-        if (i == mpicommon::globalRank()) {
-          std::cout << "Rank " << mpicommon::globalRank()
-            << ": Got regions from others {\n";
-          for (const auto &b : othersRegions) {
-            std::cout << "\t" << b << ",\n";
+
+      if (logLevel() >= 1) {
+        const bool asyncWasRunning = messaging::asyncMessagingEnabled();
+        messaging::disableAsyncMessaging();
+
+        // TODO: WILL: Just for making the debug log more readable,
+        // this will NOT stick around
+        for (size_t i = 0; i < mpicommon::numGlobalRanks(); ++i) {
+          if (i == mpicommon::globalRank()) {
+            postStatusMsg(1) << "Rank " << mpicommon::globalRank()
+              << ": Got regions from others {";
+            for (const auto &b : othersRegions) {
+              postStatusMsg(1) << "\t" << b << ",";
+            }
+            postStatusMsg(1) << "}";
           }
-          std::cout << "}" << std::endl;
+
+          mpicommon::world.barrier();
         }
-        MPI_Barrier(mpicommon::world.comm);
+
+        if (asyncWasRunning) {
+          postStatusMsg("Async was running, re-enabling", 1);
+          messaging::enableAsyncMessaging();
+        }
       }
     }
 

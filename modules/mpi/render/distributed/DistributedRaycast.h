@@ -26,10 +26,9 @@ namespace ospray {
      * geometry and volume data, assuming that the data distribution is suitable
      * for sort-last compositing. Specifically, the data must be organized
      * among nodes such that each nodes region is convex and disjoint from the
-     * others. In the case of overlapping geometry (ghost zones, etc.) you
-     * can specify the 'clipBox.lower' and 'clipBox.upper' parameters to clip
-     * the geometry to only find hits within this node's region.
-     * Only one volume per node is currently supported.
+     * others. The renderer uses the 'regions' data set on the distributed model
+     * from the MPIDistributedDevice to determine the number of tiles to
+     * render and expect for compositing.
      *
      * Also see apps/ospRandSciVisTest.cpp and apps/ospRandSphereTest.cpp for
      * example usage.
