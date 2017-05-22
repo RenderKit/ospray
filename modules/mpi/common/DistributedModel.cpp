@@ -64,19 +64,23 @@ namespace ospray {
       // other boxes, just that we know they exist and their bounds, and that
       // they aren't ours.
       myRegions = std::vector<box3f>(boxes, boxes + regionData->numItems / 2);
-      // If the user hasn't set any clip boxes, there's an implicit infinitely large
-      // clipping box we can place around the entire world.
+
+      // If the user hasn't set any clip boxes, there's an implicit infinitely
+      // large clipping box we can place around the entire world.
       if (myRegions.empty()) {
-        postStatusMsg("No regions found, making implicit infinitely large region");
+        postStatusMsg("No regions found, making implicit "
+                      "infinitely large region");
         myRegions.push_back(box3f(vec3f(neg_inf), vec3f(pos_inf)));
       }
+
       for (size_t i = 0; i < mpicommon::numGlobalRanks(); ++i) {
         if (i == mpicommon::globalRank()) {
           messaging::bcast(i, myRegions);
         } else {
           std::vector<box3f> recv;
           messaging::bcast(i, recv);
-          std::copy(recv.begin(), recv.end(), std::back_inserter(othersRegions));
+          std::copy(recv.begin(), recv.end(),
+                    std::back_inserter(othersRegions));
         }
       }
 
@@ -95,7 +99,8 @@ namespace ospray {
             }
             postStatusMsg(1) << "}";
           }
-          MPI_Barrier(mpicommon::world.comm);
+
+          mpicommon::world.barrier();
         }
 
         if (asyncWasRunning) {
