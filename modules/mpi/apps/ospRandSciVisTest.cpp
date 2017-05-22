@@ -58,6 +58,7 @@ namespace ospRandSciVisTest {
   vec2i fbSize            = vec2i(1024, 768);
   int   numFrames         = 32;
   bool  runDistributed    = true;
+  int   logLevel          = 0;
 
   //TODO: factor this into a reusable piece inside of ospcommon!!!!!!
   // helper function to write the rendered image as PPM file
@@ -238,6 +239,8 @@ namespace ospRandSciVisTest {
         numFrames = std::atoi(av[++i]);
       } else if (arg == "-l" || arg == "--local") {
         runDistributed = false;
+      } else if (arg == "--log") {
+        logLevel = std::atoi(av[++i]);
       }
     }
   }
@@ -250,10 +253,12 @@ namespace ospRandSciVisTest {
       ospLoadModule("mpi");
       device = ospray::cpp::Device("mpi_distributed");
       device.set("masterRank", 0);
+      device.set("logLevel", logLevel);
       device.commit();
       device.setCurrent();
     } else {
       device = ospray::cpp::Device();
+      device.set("logLevel", logLevel);
       device.commit();
       device.setCurrent();
     }

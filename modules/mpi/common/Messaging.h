@@ -74,8 +74,12 @@ namespace ospray {
           stream >> data;
         }
 
+        // TODO: What if some other thread re-enables async messaging during the
+        // bcast? Can we like lock it out or something until we're done? Or
+        // send the bcasts through the same messaging layer so we know for
+        // sure no other MPI calls are being made?
         if (asyncWasRunning) {
-          std::cout << "Async was running, re-enabling\n";
+          postStatusMsg("Async was running, re-enabling", 1);
           enableAsyncMessaging();
         }
       }

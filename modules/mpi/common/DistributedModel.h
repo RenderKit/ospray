@@ -37,6 +37,8 @@ namespace ospray {
 
       //! \brief common function to help printf-debugging
       virtual std::string toString() const override;
+      //! \brief commit synchronizes the distributed models between processes
+      //         so that ranks know how many tiles to expect for sort-last compositing.
       virtual void commit() override;
 
       std::vector<box3f> myRegions, othersRegions;
