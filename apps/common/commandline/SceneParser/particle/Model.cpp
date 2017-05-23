@@ -140,10 +140,16 @@ namespace ospray {
 #endif
         }
 
+#if 1
         rc = sscanf(line,"%100s %f %f %f %f %f %f\n",atomName,
-                    &a.position.x,&a.position.y,&a.position.z,
+                    &a.position.x,&a.position.y,&a.position.z,atomName,
                     &n.x,&n.y,&n.z
                     );
+#else
+        rc = sscanf(line,"%f,%f,%f,%s\n",
+                    &a.position.x,&a.position.y,&a.position.z,atomName
+                    );
+#endif
         // rc = fscanf(file,"%100s %f %f %f %f %f %f\n",atomName,
         //             &a.position.x,&a.position.y,&a.position.z,
         //             &n.x,&n.y,&n.z
