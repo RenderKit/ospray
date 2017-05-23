@@ -39,7 +39,7 @@ namespace ospcommon
   {
     LARGE_INTEGER li;
     QueryPerformanceCounter(&li);
-    return li.QuadPart;
+    return (size_t)li.QuadPart;
   }
   
 ////////////////////////////////////////////////////////////////////////////////
@@ -47,6 +47,8 @@ namespace ospcommon
 ////////////////////////////////////////////////////////////////////////////////
   
 #else
+  
+#if defined(__i386__) && defined(__PIC__)
   
   __forceinline void __cpuid(int out[4], int op) 
   {
@@ -65,6 +67,18 @@ namespace ospcommon
                   : "=a" (out[0]), "=r" (out[1]), "=c" (out[2]), "=d" (out[3])
                   : "0" (op1), "2" (op2)); 
   }
+  
+#else
+  
+  __forceinline void __cpuid(int out[4], int op) {
+    asm volatile ("cpuid" : "=a"(out[0]), "=b"(out[1]), "=c"(out[2]), "=d"(out[3]) : "a"(op)); 
+  }
+  
+  __forceinline void __cpuid_count(int out[4], int op1, int op2) {
+    asm volatile ("cpuid" : "=a"(out[0]), "=b"(out[1]), "=c"(out[2]), "=d"(out[3]) : "a"(op1), "c"(op2)); 
+  }
+  
+#endif
   
   __forceinline uint64_t read_tsc()  {
     uint32_t high,low;
