@@ -22,9 +22,7 @@
 #include "common/DistributedModel.h"
 #include "render/MPILoadBalancer.h"
 #include "fb/DistributedFrameBuffer.h"
-// ispc exports
-#include "VisItDistributedRaycast_ispc.h"
-// C++ standard
+// STL standard
 #include <algorithm>
 
 namespace ospray {
@@ -57,46 +55,37 @@ namespace ospray {
 
 	VisItDistributedRaycastRenderer::VisItDistributedRaycastRenderer()
 	{
-	    ispcEquivalent = ispc::VisItDistributedRaycastRenderer_create(this);
+	    DistributedRaycastRenderer::DistributedRaycastRenderer();
 	    std::cout << "#osp: creating VisIt distributed raycast renderer!" << std::endl;
 	}
 
 	void VisItDistributedRaycastRenderer::commit()
 	{
-	    Renderer::commit();
-	    mpi::DistributedModel *distribModel = dynamic_cast<mpi::DistributedModel*>(model);
+	    DistributedRaycastRenderer::commit();
 	    tileRetriever = getVoidPtr("tileRetriever", nullptr);
-	    if (distribModel) {
-		ispc::VisItDistributedRaycastRenderer_setRegions(ispcEquivalent,
-								 (ispc::box3f*)distribModel->myRegions.data(), distribModel->myRegions.size(),
-								 (ispc::box3f*)distribModel->othersRegions.data(), distribModel->othersRegions.size());
-	    } else {
-		throw std::runtime_error("DistributedRaycastRender must use a DistributedModel from "
-					 "the MPIDistributedDevice");
-	    }
 	}
 
 	float VisItDistributedRaycastRenderer::renderFrame(FrameBuffer *fb,
 							   const uint32 channelFlags)
 	{
 	    using namespace mpicommon;
-	   
+	    using namespace ospray::mpi;
+
 	    auto *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
 	    dfb->setFrameMode(DistributedFrameBuffer::ALPHA_BLEND);
 	    if (tileRetriever == nullptr) { dfb->startNewFrame(errorThreshold); }
 	    dfb->beginFrame();
-	    auto *perFrameData = beginFrame(dfb);
 
+	    auto *perFrameData = beginFrame(dfb);
 	    // This renderer doesn't use per frame data, since we sneak in some tile
 	    // info in this pointer.
 	    assert(!perFrameData);
-	    mpi::DistributedModel *distribModel = dynamic_cast<mpi::DistributedModel*>(model);
+	    DistributedModel *distribModel = dynamic_cast<DistributedModel*>(model);
 	    const size_t numRegions = distribModel->myRegions.size() + distribModel->othersRegions.size();
 
 	    // Initialize the tile list
-	    std::vector<std::vector<TileInfo>> tileInfoList(dfb->getTotalTiles());
+	    TileRegionList tileInfoList(dfb->getTotalTiles());
 
-	    // write each tile into 
 	    tasking::parallel_for(dfb->getTotalTiles(), [&](int taskIndex) {
 		    const size_t numTiles_x = fb->getNumTiles().x;
 		    const size_t tile_y = taskIndex / numTiles_x;
@@ -123,8 +112,8 @@ namespace ospray {
 			    renderTile(&regionInfo, tile, tIdx);
 			});
 
-		    size_t numOfRegions = std::count(regionInfo.regionVisible, regionInfo.regionVisible + numRegions, true);
-		    tileInfoList[taskIndex] = std::vector<TileInfo>(numOfRegions + 1);
+		    // initialize tile information list
+		    tileInfoList[taskIndex] = std::vector<TileInfo>(0);
 
 		    if (regionInfo.regionVisible[0]) {
 			tile.generation = 1;
@@ -133,15 +122,16 @@ namespace ospray {
 			    fb->setTile(tile);
 			} 
 			else {
-			    tileInfoList[taskIndex][0] = tile;
+			    tileInfoList[taskIndex].emplace_back(tile);
 			}			
+
 		    }
 
 		    // If we own the tile send the background color and the count of children for the
 		    // number of regions projecting to it that will be sent.
 		    if (tileOwner) {
 			tile.generation = 0;
-			tile.children = numOfRegions;
+			tile.children = std::count(regionInfo.regionVisible, regionInfo.regionVisible + numRegions, true);
 			std::fill(tile.r, tile.r + TILE_SIZE * TILE_SIZE, bgColor.x);
 			std::fill(tile.g, tile.g + TILE_SIZE * TILE_SIZE, bgColor.y);
 			std::fill(tile.b, tile.b + TILE_SIZE * TILE_SIZE, bgColor.z);
@@ -151,11 +141,12 @@ namespace ospray {
 			    fb->setTile(tile);
 			} 
 			else {
-			    tileInfoList[taskIndex][numOfRegions] = tile;
+			    tileInfoList[taskIndex].emplace_back(tile);
 			}			
+
 		    }
 
-		    // Render the rest of our regions that project to this tile
+		    // Render the rest of our regions that project to this tile and ship them off
 		    tile.generation = 1;
 		    tile.children = 0;
 		    for (size_t bid = 1; bid < distribModel->myRegions.size(); ++bid) {
@@ -170,17 +161,14 @@ namespace ospray {
 			    fb->setTile(tile);
 			} 
 			else {
-			    tileInfoList[taskIndex][bid] = tile;
+			    tileInfoList[taskIndex].emplace_back(tile);
 			}			
+
 		    }
 		});
 
-	    if (tileRetriever == nullptr) { 
-		dfb->waitUntilFinished(); 
-	    }
-	    else {
-		(*static_cast<TileRetriever*>(tileRetriever))(tileInfoList);
-	    }
+	    if (tileRetriever == nullptr) { dfb->waitUntilFinished(); }
+	    else { (*static_cast<TileRetriever*>(tileRetriever))(tileInfoList); }
 
 	    endFrame(nullptr, channelFlags);
 	    return dfb->endFrame(errorThreshold);

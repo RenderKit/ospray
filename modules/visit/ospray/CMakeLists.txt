@@ -50,8 +50,7 @@ OSPRAY_CREATE_LIBRARY(ospray_module_visit
   # on a previously computed ray-prim intersection)
 
   # renderer
-  render/VisItDistributedRaycast.cpp  
-  render/VisItDistributedRaycast.ispc
+  render/VisItDistributedRaycast.cpp
 
   # and finally, the module init code (not doing much, but must be there)
   moduleInit.cpp
@@ -66,6 +65,9 @@ OSPRAY_CREATE_LIBRARY(ospray_module_visit
   ospray_mpi_maml 
   )
 
-INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/render/VisItDistributedRaycast.h
+INSTALL(
+  FILES 
+  ${CMAKE_CURRENT_SOURCE_DIR}/render/VisItDistributedRaycast.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mpi/render/distributed/DistributedRaycast.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/render
   )

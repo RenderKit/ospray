@@ -17,9 +17,11 @@
 #pragma once
 
 // ospray
-#include "render/Renderer.h"
+#include "render/distributed/DistributedRaycast.h"
 #include "fb/Tile.h"
+// STL
 #include <vector>
+#include <functional>
 
 namespace ospray {
     namespace visit {
@@ -55,15 +57,16 @@ namespace ospray {
 	    TileInfo() = default;
 	    TileInfo(const Tile& src);
 	};
-	
+
+	typedef std::vector<std::vector<TileInfo>> TileRegionList;
 	struct TileRetriever {
-	    virtual void operator()(const std::vector<std::vector<TileInfo>>& list) {}
+	    virtual void operator()(const TileRegionList& list) {}
 	};
 
-	struct VisItDistributedRaycastRenderer : public Renderer
+	struct VisItDistributedRaycastRenderer : public ospray::mpi::DistributedRaycastRenderer
 	{
 	    VisItDistributedRaycastRenderer();
-	    virtual ~VisItDistributedRaycastRenderer() = default;//TODO!
+	    virtual ~VisItDistributedRaycastRenderer() = default;
 
 	    void commit() override;
 
