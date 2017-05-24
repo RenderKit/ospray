@@ -71,7 +71,7 @@ namespace ospray {
       // large region box we can place around the entire world.
       if (myRegions.empty()) {
         postStatusMsg("No regions found, making implicit "
-                      "infinitely large region");
+                      "infinitely large region", 1);
         myRegions.push_back(box3f(vec3f(neg_inf), vec3f(pos_inf)));
       }
 
