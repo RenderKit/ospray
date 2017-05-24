@@ -68,6 +68,6 @@ OSPRAY_CREATE_LIBRARY(ospray_module_visit
 INSTALL(
   FILES 
   ${CMAKE_CURRENT_SOURCE_DIR}/render/VisItDistributedRaycast.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/../mpi/render/distributed/DistributedRaycast.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../mpi/render/distributed/DistributedRaycast.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray/render
   )
