@@ -26,7 +26,7 @@ namespace mpicommon {
   /*! a specific fabric based on PMI */
   struct OSPRAY_MPI_INTERFACE MPIBcastFabric : public networking::Fabric
   {
-    MPIBcastFabric(const Group &group);
+    MPIBcastFabric(const Group &group, int rootRank = 0);
 
     virtual ~MPIBcastFabric() = default;
 
@@ -41,6 +41,7 @@ namespace mpicommon {
 
     byte_t *buffer;
     Group   group;
+    int     recvRank, sendRank;
   };
 
 } // ::mpicommon

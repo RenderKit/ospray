@@ -127,7 +127,7 @@ namespace ospray {
                       make_unique<staticLoadBalancer::Distributed>();
     }
 
-    OSPFrameBuffer 
+    OSPFrameBuffer
     MPIDistributedDevice::frameBufferCreate(const vec2i &size,
                                             const OSPFrameBufferFormat mode,
                                             const uint32 channels)
@@ -341,13 +341,7 @@ namespace ospray {
 
     OSPRenderer MPIDistributedDevice::newRenderer(const char *type)
     {
-      UNUSED(type);
-      auto *instance = new DistributedRaycastRenderer;
-
-      ObjectHandle handle;
-      handle.assign(instance);
-
-      return (OSPRenderer)(int64)handle;
+      return createOSPRayObjectWithHandle<Renderer, OSPRenderer>(type);
     }
 
     OSPCamera MPIDistributedDevice::newCamera(const char *type)
@@ -434,8 +428,9 @@ namespace ospray {
 
     void MPIDistributedDevice::release(OSPObject _obj)
     {
-      UNUSED(_obj);
-      postStatusMsg(1) << "WARNING: release() not implemented, memory leak!";
+      if (!_obj) return;
+      auto &obj = objectFromAPIHandle<ManagedObject>(_obj);
+      obj.refDec();
     }
 
     void MPIDistributedDevice::setMaterial(OSPGeometry _geometry,

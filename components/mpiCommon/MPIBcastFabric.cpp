@@ -21,12 +21,20 @@
 
 namespace mpicommon {
 
-  MPIBcastFabric::MPIBcastFabric(const Group &group)
-    : buffer(nullptr), group(group)
+  MPIBcastFabric::MPIBcastFabric(const Group &group, int rootRank)
+    : buffer(nullptr), group(group), recvRank(rootRank)
   {
     if (!group.valid())
       throw std::runtime_error("#osp:mpi: trying to set up a MPI fabric "
                                "with a invalid MPI communicator");
+    int isInter = 0;
+    MPI_CALL(Comm_test_inter(group.comm, &isInter));
+    if (isInter) {
+      recvRank = 0;
+      sendRank = MPI_ROOT;
+    } else {
+      sendRank = recvRank;
+    }
   }
 
   /*! receive some block of data - whatever the sender has sent -
@@ -40,7 +48,7 @@ namespace mpicommon {
     // after getting the size we know everyone will enter the blocking barrier and the
     // blocking bcast where the buffer is sent out.
     MPI_Request request;
-    MPI_CALL(Ibcast(&sz32, 1, MPI_INT, 0, group.comm, &request));
+    MPI_CALL(Ibcast(&sz32, 1, MPI_INT, recvRank, group.comm, &request));
 
     // Now do non-blocking test to see when this bcast is satisfied to avoid
     // locking out the send/recv threads
@@ -54,7 +62,7 @@ namespace mpicommon {
 
     buffer = new uint8_t[sz32];
     MPI_CALL(Barrier(group.comm));
-    MPI_CALL(Bcast(buffer, sz32, MPI_BYTE, 0, group.comm));
+    MPI_CALL(Bcast(buffer, sz32, MPI_BYTE, recvRank, group.comm));
     mem = buffer;
     return sz32;
   }
@@ -71,7 +79,7 @@ namespace mpicommon {
     // after getting the size we know everyone will enter the blocking barrier and the
     // blocking bcast where the buffer is sent out.
     MPI_Request request;
-    MPI_CALL(Ibcast(&sz32, 1, MPI_INT, MPI_ROOT, group.comm, &request));
+    MPI_CALL(Ibcast(&sz32, 1, MPI_INT, sendRank, group.comm, &request));
 
     // Now do non-blocking test to see when this bcast is satisfied to avoid
     // locking out the send/recv threads
@@ -84,7 +92,7 @@ namespace mpicommon {
     }
 
     MPI_CALL(Barrier(group.comm));
-    MPI_CALL(Bcast(mem, sz32, MPI_BYTE, MPI_ROOT, group.comm));
+    MPI_CALL(Bcast(mem, sz32, MPI_BYTE, sendRank, group.comm));
   }
 
 } // ::mpicommon

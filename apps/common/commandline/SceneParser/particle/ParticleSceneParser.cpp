@@ -122,6 +122,11 @@ namespace commandline {
           m->loadXYZ2(fn);
           particleModel.push_back(m);
           loadedScene = true;
+        } else if (fn.ext() == "xyz3") {
+          particle::Model *m = new particle::Model;
+          m->loadXYZ3(fn);
+          particleModel.push_back(m);
+          loadedScene = true;
 #if 1 // NOTE(jda) - The '.xml' file extension conflicts with RIVL files in
       //             TriangleMeshSceneParser...disabling here for now until the
       //             the problem requires a solution.

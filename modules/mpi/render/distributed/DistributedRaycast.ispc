@@ -22,8 +22,41 @@
 struct DistributedRaycastRenderer
 {
   uniform Renderer super;
-  uniform box3f clipBox;
+  // TODO: For now it's sufficient just to know which regions
+  // we own and their bounds, and which regions 'others' own and
+  // their bounds. With that info we can properly setup the information
+  // about the total # of tiles to expect for each image tile.
+  uniform box3f *uniform myRegions;
+  uniform int numMyRegions;
+  uniform box3f *uniform othersRegions;
+  uniform int numOthersRegions;
 };
+
+struct RegionInfo
+{
+  uniform int currentRegion;
+  uniform bool *uniform regionVisible;
+};
+
+void DistributedRaycastRenderer_testRegions(uniform DistributedRaycastRenderer *uniform self,
+                                            uniform RegionInfo *uniform regionInfo,
+                                            const varying ScreenSample &sample)
+{
+  for (uniform int i = 0; i < self->numMyRegions; ++i) {
+    float t0, t1;
+    intersectBox(sample.ray, self->myRegions[i], t0, t1);
+    if (t0 < t1 && t0 >= sample.ray.t0 && t0 <= sample.ray.t) {
+      regionInfo->regionVisible[i] = true;
+    }
+  }
+  for (uniform int i = 0; i < self->numOthersRegions; ++i) {
+    float t0, t1;
+    intersectBox(sample.ray, self->othersRegions[i], t0, t1);
+    if (t0 < t1 && t0 >= sample.ray.t0 && t0 <= sample.ray.t) {
+      regionInfo->regionVisible[self->numMyRegions + i] = true;
+    }
+  }
+}
 
 void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
                                              void *uniform perFrameData,
@@ -31,6 +64,11 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
 {
   uniform DistributedRaycastRenderer *uniform self =
     (uniform DistributedRaycastRenderer *uniform)_self;
+
+  uniform RegionInfo *uniform regionInfo = (uniform RegionInfo *uniform)perFrameData;
+  if (regionInfo && regionInfo->currentRegion == 0) {
+    DistributedRaycastRenderer_testRegions(self, regionInfo, sample);
+  }
 
   // Ray offset for this sample, as a fraction of the nominal step size.
   float rayOffset = precomputedHalton2(sample.sampleID.z);
@@ -42,18 +80,18 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
     rayOffset -= 1.f;
   }
 
-  // Intersect with the clipping box for this node's local data, if we have one
-  if (self->clipBox.lower.x != inf) {
-    intersectBox(sample.ray, self->clipBox, sample.ray.t0, sample.ray.t);
+  // Intersect with current region for this node's local data
+  if (self->myRegions && regionInfo) {
+    intersectBox(sample.ray, self->myRegions[regionInfo->currentRegion], sample.ray.t0, sample.ray.t);
   }
 
   traceRay(self->super.model, sample.ray);
   sample.z     = sample.ray.t;
 
   if (sample.ray.geomID < 0) {
-    // TODO: We need the owner to send the background tile, for now
-    // a bit of hack but just make the background black and transparent
-    sample.rgb = make_vec3f(0.f);
+    // The owner sends the background color, so we composite with a transparent
+    // black instead of the scene's bgcolor
+    sample.rgb = make_vec3f(0.0f);
     sample.alpha = 0.f;
   } else {
     // Spheres are cheap to shade so it's fine we do it early, potentially tossing
@@ -121,23 +159,29 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
 
 // Exported functions /////////////////////////////////////////////////////////
 
-export void *uniform DistributedRaycastRenderer_create(void *uniform cppE)
-{
+export void *uniform DistributedRaycastRenderer_create(void *uniform cppE) {
   uniform DistributedRaycastRenderer *uniform self =
     uniform new uniform DistributedRaycastRenderer;
 
   Renderer_Constructor(&self->super, cppE, NULL, NULL, 1);
   self->super.renderSample = DistributedRaycastRenderer_renderSample;
-  self->clipBox = make_box3f_empty();
+  self->myRegions = NULL;
+  self->othersRegions = NULL;
 
   return self;
 }
 
-export void DistributedRaycastRenderer_setClipBox(void *uniform _self,
-                                                  uniform box3f *uniform clipBox)
+export void DistributedRaycastRenderer_setRegions(void *uniform _self,
+                                                    uniform box3f *uniform myRegions,
+                                                    uniform int numMyRegions,
+                                                    uniform box3f *uniform othersRegions,
+                                                    uniform int numOthersRegions)
 {
   uniform DistributedRaycastRenderer *uniform self =
     (uniform DistributedRaycastRenderer *uniform)_self;
-  self->clipBox = *clipBox;
+  self->myRegions = myRegions;
+  self->numMyRegions = numMyRegions;
+  self->othersRegions = othersRegions;
+  self->numOthersRegions = numOthersRegions;
 }
 

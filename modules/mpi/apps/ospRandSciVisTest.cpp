@@ -36,17 +36,23 @@
  * renderer using the distributed MPI device. Note that because
  * OSPRay uses sort-last compositing it is up to the user to ensure
  * that the data distribution across the nodes is suitable. Specifically,
- * each nodes data must be convex, and disjoint. This renderer only
- * supports a single volume per node but within the volume could be
- * arbitrary geometry.
+ * each nodes' data must be convex and disjoint. This renderer only
+ * supports multiple volumes and geometries per-node, to ensure they're
+ * composited correctly you specify a list of bounding regions to the
+ * model, within these regions can be arbitrary volumes/geometries
+ * and each rank can have as many regions as needed. As long as the
+ * regions are disjoint/convex the data will be rendered correctly.
+ * In this example we set two regions on certain ranks just to produce
+ * a gap in the ranks volume to demonstrate how they work.
  *
  * In the case that you have geometry crossing the boundary of nodes
  * and are replicating it on both nodes to render (ghost zones, etc.)
- * you can specify the clipBox for the renderer to clip rays against
- * its data region, keeping the regions disjoint. For example, if a
- * sphere center is on the border between two nodes, each would
- * render half the sphere and the halves would be composited to produce
- * the final whole-sphere in the image.
+ * the region will be used by the renderer to clip rays against allowing
+ * to split the object between the two nodes, with each rendering half.
+ * This will keep the regions rendered by each rank disjoint and thus
+ * avoid any artifacts. For example, if a sphere center is on the border
+ * between two nodes, each would render half the sphere and the halves
+ * would be composited to produce the final complete sphere in the image.
  */
 
 namespace ospRandSciVisTest {
@@ -58,6 +64,7 @@ namespace ospRandSciVisTest {
   vec2i fbSize            = vec2i(1024, 768);
   int   numFrames         = 32;
   bool  runDistributed    = true;
+  int   logLevel          = 0;
 
   //TODO: factor this into a reusable piece inside of ospcommon!!!!!!
   // helper function to write the rendered image as PPM file
@@ -99,6 +106,10 @@ namespace ospRandSciVisTest {
     return grid;
   }
 
+  /* This function generates the rank's local geometry within its
+   * volume's bounding box. The bbox represents say its simulation
+   * or owned data region.
+   */
   ospray::cpp::Geometry makeSpheres(const box3f &bbox)
   {
     struct Sphere
@@ -138,11 +149,10 @@ namespace ospRandSciVisTest {
                                   OSP_UCHAR, spheres.data());
 
 
-    float r = (numRanks - myRank) / numRanks;
-    float b = myRank / numRanks;
-    float g = myRank > numRanks / 2 ? 2 * r : 2 * b;
+    const float r = (numRanks - myRank) / numRanks;
+    const float b = myRank / numRanks;
+    const float g = myRank > numRanks / 2 ? 2 * r : 2 * b;
     vec4f color(r, g, b, 1.f);
-
     ospray::cpp::Data color_data(1, OSP_FLOAT4, &color);
 
     ospray::cpp::Geometry geom("spheres");
@@ -155,6 +165,14 @@ namespace ospRandSciVisTest {
     return geom;
   }
 
+  /* Generate this rank's volume data. The volumes are placed in
+   * cells of the grid computed in 'computeGrid' based on the number
+   * of ranks with each rank owning a specific cell in the gridding.
+   * The coloring is based on color-mapping the ranks id.
+   * The region occupied by the volume is then used to be the rank's
+   * overall region bounds and will be the bounding box for the
+   * generated geometry as well.
+   */
   std::pair<ospray::cpp::Volume, box3f> makeVolume()
   {
     auto numRanks = static_cast<float>(mpicommon::numGlobalRanks());
@@ -238,10 +256,20 @@ namespace ospRandSciVisTest {
         numFrames = std::atoi(av[++i]);
       } else if (arg == "-l" || arg == "--local") {
         runDistributed = false;
+      } else if (arg == "--log") {
+        logLevel = std::atoi(av[++i]);
       }
     }
   }
 
+  /* Manually set up the OSPRay device. In MPI distributed mode
+   * we use the 'mpi_distributed' renderer, which allows each
+   * rank to make separate independent OSPRay calls locally.
+   * The model created by this device will handle coordinating
+   * the regions of data and the renderer used in the distributed
+   * case 'mpi_raycast' knows how to use this information to
+   * perform sort-last compositing rendering of the data.
+   */
   void initialize_ospray()
   {
     ospray::cpp::Device device;
@@ -250,10 +278,12 @@ namespace ospRandSciVisTest {
       ospLoadModule("mpi");
       device = ospray::cpp::Device("mpi_distributed");
       device.set("masterRank", 0);
+      device.set("logLevel", logLevel);
       device.commit();
       device.setCurrent();
     } else {
       device = ospray::cpp::Device();
+      device.set("logLevel", logLevel);
       device.commit();
       device.setCurrent();
     }
@@ -278,9 +308,40 @@ namespace ospRandSciVisTest {
     auto spheres = makeSpheres(volume.second);
     model.addGeometry(spheres);
 
-    // Note: now we must use the global world bounds, not our local bounds
+    // We must use the global world bounds, not our local bounds
+    // when computing the automatically picked camera position.
     box3f worldBounds(vec3f(0), vec3f(1));
 
+    /* The regions listing specifies the data regions that this rank owns
+     * and is responsible for rendering. All volumes and geometry on the rank
+     * should be contained within these bounds and will be clipped against them.
+     * In the case of ghost regions or splitting geometry across the region border
+     * it's up to the user to ensure the other rank also has the geometry being
+     * split and renders the correct region bounds. The region data is specified
+     * as an OSPData of OSP_FLOAT3 to pass the lower and upper corners of each
+     * regions bounding box.
+     *
+     * On some ranks we add some additional regions to clip the volume
+     * and make some gaps, just to show usage and test multiple regions per-rank
+     */
+    std::vector<box3f> regions{volume.second};
+    bool setGap = false;
+    if (mpicommon::numGlobalRanks() % 2 == 0) {
+      setGap = mpicommon::globalRank() % 3 == 0;
+    } else  {
+      setGap = mpicommon::globalRank() % 2 == 0;
+    }
+    if (setGap) {
+      const float step = (regions[0].upper.x - regions[0].lower.x) / 4.0;
+      const vec3f low = regions[0].lower;
+      const vec3f hi = regions[0].upper;
+      regions[0].upper.x = low.x + step;
+      regions.push_back(box3f(vec3f(low.x + step * 3, low.y, low.z),
+                                vec3f(low.x + step * 4, hi.y, hi.z)));
+    }
+    ospray::cpp::Data regionData(regions.size() * 2, OSP_FLOAT3,
+        regions.data());
+    model.set("regions", regionData);
     model.commit();
 
     DefaultCameraParser cameraClParser;
@@ -288,13 +349,19 @@ namespace ospRandSciVisTest {
     auto camera = cameraClParser.camera();
     setupCamera(camera, worldBounds);
 
-    ospray::cpp::Renderer renderer("raycast");
+    // In the distributed mode we use the 'mpi_raycast' renderer which
+    // knows how to read the region information from the model and render
+    // the distributed data.
+    ospray::cpp::Renderer renderer;
+    if (runDistributed) {
+      renderer = ospray::cpp::Renderer("mpi_raycast");
+    } else {
+      renderer = ospray::cpp::Renderer("raycast");
+    }
     renderer.set("world", model);
     renderer.set("model", model);
     renderer.set("camera", camera);
-    renderer.set("bgColor", vec3f(0.01f, 0.01f, 0.01f));
-    renderer.set("clipBox.lower", volume.second.lower);
-    renderer.set("clipBox.upper", volume.second.upper);
+    renderer.set("bgColor", vec3f(0.02));
     renderer.commit();
 
     ospray::cpp::FrameBuffer fb(fbSize,OSP_FB_SRGBA,OSP_FB_COLOR|OSP_FB_ACCUM);
@@ -315,6 +382,9 @@ namespace ospRandSciVisTest {
 
       double seconds = ospcommon::getSysTime() - frameStartTime;
 
+      // Only the OSPRay master rank will have the final framebuffer which
+      // can be saved out or displayed to the user, the others only store
+      // the tiles which they composite.
       if (mpicommon::IamTheMaster()) {
         auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
         writePPM("randomSciVisTestDistributed.ppm", fbSize.x, fbSize.y, lfb);
