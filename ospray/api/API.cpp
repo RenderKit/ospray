@@ -66,13 +66,16 @@ inline std::string toString(OSPObject obj)
     postTraceMsg(fcn_name_);                                                  \
   });
 
-#define OSPRAY_CATCH_END                                                      \
+#define OSPRAY_CATCH_END(a)                                                   \
   } catch (const std::bad_alloc &e) {                                         \
     handleError(OSP_OUT_OF_MEMORY, "OSPRay was unable to allocate memory");   \
+    return a;                                                                 \
   } catch (const std::runtime_error &e) {                                     \
     handleError(OSP_UNKNOWN_ERROR, e.what());                                 \
+    return a;                                                                 \
   } catch (...) {                                                             \
     handleError(OSP_UNKNOWN_ERROR, "an unrecognized exception was caught");   \
+    return a;                                                                 \
   }
 
 using namespace ospray;
@@ -210,14 +213,14 @@ OSPRAY_CATCH_BEGIN
 
   currentDevice->commit();
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" OSPDevice ospCreateDevice(const char *deviceType)
 OSPRAY_CATCH_BEGIN
 {
   return (OSPDevice)Device::createDevice(deviceType);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END(nullptr)
 
 extern "C" void ospSetCurrentDevice(OSPDevice _device)
 OSPRAY_CATCH_BEGIN
@@ -230,14 +233,14 @@ OSPRAY_CATCH_BEGIN
 
   Device::current = device;
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" OSPDevice ospGetCurrentDevice()
 OSPRAY_CATCH_BEGIN
 {
   return (OSPDevice)Device::current.ptr;
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END(nullptr)
 
 extern "C" void ospFreeFrameBuffer(OSPFrameBuffer fb)
 OSPRAY_CATCH_BEGIN
@@ -246,7 +249,7 @@ OSPRAY_CATCH_BEGIN
   Assert(fb != nullptr);
   currentDevice().release(fb);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size,
                                             const OSPFrameBufferFormat mode,
@@ -256,7 +259,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   return currentDevice().frameBufferCreate((vec2i&)size, mode, channels);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END(nullptr)
 
 extern "C" int32_t ospLoadModule(const char *moduleName)
 OSPRAY_CATCH_BEGIN
@@ -267,7 +270,7 @@ OSPRAY_CATCH_BEGIN
     return loadLocalModule(moduleName);
   }
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END(1)
 
 extern "C" const void *ospMapFrameBuffer(OSPFrameBuffer fb,
                                          OSPFrameBufferChannel channel)
@@ -276,7 +279,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   return currentDevice().frameBufferMap(fb,channel);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END(nullptr)
 
 extern "C" void ospUnmapFrameBuffer(const void *mapped,
                                     OSPFrameBuffer fb)
@@ -286,7 +289,7 @@ OSPRAY_CATCH_BEGIN
   Assert(mapped != nullptr && "invalid mapped pointer in ospUnmapFrameBuffer");
   currentDevice().frameBufferUnmap(mapped,fb);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" OSPModel ospNewModel()
 OSPRAY_CATCH_BEGIN
@@ -294,7 +297,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   return currentDevice().newModel();
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END(nullptr)
 
 extern "C" void ospAddGeometry(OSPModel model, OSPGeometry geometry)
 OSPRAY_CATCH_BEGIN
@@ -304,7 +307,7 @@ OSPRAY_CATCH_BEGIN
   Assert(geometry != nullptr && "invalid geometry in ospAddGeometry");
   return currentDevice().addGeometry(model, geometry);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospRemoveGeometry(OSPModel model, OSPGeometry geometry)
 OSPRAY_CATCH_BEGIN
@@ -314,7 +317,7 @@ OSPRAY_CATCH_BEGIN
   Assert(geometry != nullptr && "invalid geometry in ospRemoveGeometry");
   return currentDevice().removeGeometry(model, geometry);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospAddVolume(OSPModel model, OSPVolume volume)
 OSPRAY_CATCH_BEGIN
@@ -324,7 +327,7 @@ OSPRAY_CATCH_BEGIN
   Assert(volume != nullptr && "invalid volume in ospAddVolume");
   return currentDevice().addVolume(model, volume);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospRemoveVolume(OSPModel model, OSPVolume volume)
 OSPRAY_CATCH_BEGIN
@@ -334,7 +337,7 @@ OSPRAY_CATCH_BEGIN
   Assert(volume != nullptr && "invalid volume in ospRemoveVolume");
   return currentDevice().removeVolume(model, volume);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" OSPData ospNewData(size_t nitems, OSPDataType format,
                               const void *init, const uint32_t flags)
@@ -344,7 +347,7 @@ OSPRAY_CATCH_BEGIN
   OSPData data = currentDevice().newData(nitems, format, (void*)init, flags);
   return data;
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END(nullptr)
 
 extern "C" void ospSetData(OSPObject object, const char *bufName, OSPData data)
 OSPRAY_CATCH_BEGIN
@@ -352,7 +355,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   return currentDevice().setObject(object, bufName, (OSPObject)data);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospSetPixelOp(OSPFrameBuffer fb, OSPPixelOp op)
 OSPRAY_CATCH_BEGIN
@@ -360,7 +363,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   return currentDevice().setPixelOp(fb, op);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospSetObject(OSPObject target,
                              const char *bufName,
@@ -370,7 +373,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   return currentDevice().setObject(target, bufName, value);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" OSPPixelOp ospNewPixelOp(const char *_type)
 OSPRAY_CATCH_BEGIN
@@ -388,7 +391,7 @@ OSPRAY_CATCH_BEGIN
   OSPPixelOp pixelOp = currentDevice().newPixelOp(type);
   return pixelOp;
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END(nullptr)
 
 extern "C" OSPRenderer ospNewRenderer(const char *_type)
 OSPRAY_CATCH_BEGIN
@@ -408,7 +411,7 @@ OSPRAY_CATCH_BEGIN
   }
   return renderer;
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END(nullptr)
 
 extern "C" OSPGeometry ospNewGeometry(const char *type)
 OSPRAY_CATCH_BEGIN
@@ -421,7 +424,7 @@ OSPRAY_CATCH_BEGIN
   }
   return geometry;
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END(nullptr)
 
 extern "C" OSPMaterial ospNewMaterial(OSPRenderer renderer, const char *type)
 OSPRAY_CATCH_BEGIN
@@ -434,7 +437,7 @@ OSPRAY_CATCH_BEGIN
   }
   return material;
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END(nullptr)
 
 extern "C" OSPLight ospNewLight(OSPRenderer renderer, const char *type)
 OSPRAY_CATCH_BEGIN
@@ -447,7 +450,7 @@ OSPRAY_CATCH_BEGIN
   }
   return light;
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END(nullptr)
 
 extern "C" OSPCamera ospNewCamera(const char *type)
 OSPRAY_CATCH_BEGIN
@@ -460,7 +463,7 @@ OSPRAY_CATCH_BEGIN
   }
   return camera;
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END(nullptr)
 
 extern "C" OSPTexture2D ospNewTexture2D(const osp::vec2i &size,
                                         const OSPTextureFormat type,
@@ -473,7 +476,7 @@ OSPRAY_CATCH_BEGIN
   Assert2(size.y > 0, "Height must be greater than 0 in ospNewTexture2D");
   return currentDevice().newTexture2D((vec2i&)size, type, data, flags);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END(nullptr)
 
 extern "C" OSPVolume ospNewVolume(const char *type)
 OSPRAY_CATCH_BEGIN
@@ -486,7 +489,7 @@ OSPRAY_CATCH_BEGIN
   }
   return volume;
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END(nullptr)
 
 extern "C" OSPTransferFunction ospNewTransferFunction(const char *type)
 OSPRAY_CATCH_BEGIN
@@ -499,7 +502,7 @@ OSPRAY_CATCH_BEGIN
   }
   return transferFunction;
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END(nullptr)
 
 extern "C" void ospFrameBufferClear(OSPFrameBuffer fb,
                                     const uint32_t fbChannelFlags)
@@ -508,7 +511,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   currentDevice().frameBufferClear(fb, fbChannelFlags);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" float ospRenderFrame(OSPFrameBuffer fb,
                                 OSPRenderer renderer,
@@ -518,7 +521,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   return currentDevice().renderFrame(fb, renderer, fbChannelFlags);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END(0.f)
 
 extern "C" void ospCommit(OSPObject object)
 OSPRAY_CATCH_BEGIN
@@ -527,7 +530,7 @@ OSPRAY_CATCH_BEGIN
   Assert(object && "invalid object handle to commit to");
   currentDevice().commit(object);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospDeviceCommit(OSPDevice _object)
 OSPRAY_CATCH_BEGIN
@@ -535,7 +538,7 @@ OSPRAY_CATCH_BEGIN
   auto *object = (Device *)_object;
   object->commit();
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospDeviceSetString(OSPDevice _object,
                                    const char *id,
@@ -545,7 +548,7 @@ OSPRAY_CATCH_BEGIN
   ManagedObject *object = (ManagedObject *)_object;
   object->findParam(id, true)->set(s);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospDeviceSet1i(OSPDevice _object, const char *id, int32_t x)
 OSPRAY_CATCH_BEGIN
@@ -553,7 +556,7 @@ OSPRAY_CATCH_BEGIN
   ManagedObject *object = (ManagedObject *)_object;
   object->findParam(id, true)->set(x);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospDeviceSetStatusFunc(OSPDevice object, OSPStatusFunc callback)
 OSPRAY_CATCH_BEGIN
@@ -561,7 +564,7 @@ OSPRAY_CATCH_BEGIN
   auto *device = (Device *)object;
   device->msg_fcn = callback;
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospDeviceSetErrorFunc(OSPDevice object, OSPErrorFunc callback)
 OSPRAY_CATCH_BEGIN
@@ -569,7 +572,7 @@ OSPRAY_CATCH_BEGIN
   auto *device = (Device *)object;
   device->error_fcn = callback;
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" OSPError ospDeviceGetLastErrorCode(OSPDevice object)
 OSPRAY_CATCH_BEGIN
@@ -577,7 +580,7 @@ OSPRAY_CATCH_BEGIN
   auto *device = (Device *)object;
   return device->lastErrorCode;
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END(OSP_NO_ERROR)
 
 extern "C" const char* ospDeviceGetLastErrorMsg(OSPDevice object)
 OSPRAY_CATCH_BEGIN
@@ -585,7 +588,7 @@ OSPRAY_CATCH_BEGIN
   auto *device = (Device *)object;
   return device->lastErrorMsg.c_str();
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END(nullptr)
 
 extern "C" void ospSetString(OSPObject _object, const char *id, const char *s)
 OSPRAY_CATCH_BEGIN
@@ -593,7 +596,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   currentDevice().setString(_object, id, s);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospSetf(OSPObject _object, const char *id, float x)
 OSPRAY_CATCH_BEGIN
@@ -601,7 +604,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   currentDevice().setFloat(_object, id, x);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospSet1f(OSPObject _object, const char *id, float x)
 OSPRAY_CATCH_BEGIN
@@ -609,7 +612,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   currentDevice().setFloat(_object, id, x);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospSet1i(OSPObject _object, const char *id, int32_t x)
 OSPRAY_CATCH_BEGIN
@@ -617,7 +620,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   currentDevice().setInt(_object, id, x);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospSeti(OSPObject _object, const char *id, int x)
 OSPRAY_CATCH_BEGIN
@@ -625,7 +628,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   currentDevice().setInt(_object, id, x);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" int ospSetRegion(OSPVolume object, void *source,
                             const osp::vec3i &index, const osp::vec3i &count)
@@ -635,7 +638,7 @@ OSPRAY_CATCH_BEGIN
   return currentDevice().setRegion(object, source,
                                    (vec3i&)index, (vec3i&)count);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END(0)
 
 extern "C" void ospSetVec2f(OSPObject _object,
                             const char *id,
@@ -645,7 +648,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   currentDevice().setVec2f(_object, id, (const vec2f &)v);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospSetVec2i(OSPObject _object,
                             const char *id,
@@ -655,7 +658,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   currentDevice().setVec2i(_object, id, (const vec2i &)v);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospSetVec3f(OSPObject _object,
                             const char *id,
@@ -665,7 +668,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   currentDevice().setVec3f(_object, id, (const vec3f &)v);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospSetVec4f(OSPObject _object,
                             const char *id,
@@ -675,7 +678,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   currentDevice().setVec4f(_object, id, (const vec4f &)v);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospSetVec3i(OSPObject _object,
                             const char *id,
@@ -685,7 +688,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   currentDevice().setVec3i(_object, id, (const vec3i &)v);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospSet2f(OSPObject _object, const char *id, float x, float y)
 OSPRAY_CATCH_BEGIN
@@ -693,7 +696,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   currentDevice().setVec2f(_object, id, ospray::vec2f(x, y));
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospSet2fv(OSPObject _object, const char *id, const float *xy)
 OSPRAY_CATCH_BEGIN
@@ -701,7 +704,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   currentDevice().setVec2f(_object, id, vec2f(xy[0], xy[1]));
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospSet2i(OSPObject _object, const char *id, int x, int y)
 OSPRAY_CATCH_BEGIN
@@ -709,7 +712,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   currentDevice().setVec2i(_object, id, vec2i(x,y));
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospSet2iv(OSPObject _object, const char *id, const int *xy)
 OSPRAY_CATCH_BEGIN
@@ -717,7 +720,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   currentDevice().setVec2i(_object, id, vec2i(xy[0], xy[1]));
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospSet3f(OSPObject _object, const char *id, float x, float y, float z)
 OSPRAY_CATCH_BEGIN
@@ -725,7 +728,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   currentDevice().setVec3f(_object,id,vec3f(x,y,z));
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospSet3fv(OSPObject _object, const char *id, const float *xyz)
 OSPRAY_CATCH_BEGIN
@@ -733,7 +736,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   currentDevice().setVec3f(_object,id,vec3f(xyz[0],xyz[1],xyz[2]));
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospSet3i(OSPObject _object, const char *id, int x, int y, int z)
 OSPRAY_CATCH_BEGIN
@@ -741,7 +744,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   currentDevice().setVec3i(_object, id, vec3i(x, y, z));
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospSet3iv(OSPObject _object, const char *id, const int *xyz)
 OSPRAY_CATCH_BEGIN
@@ -749,7 +752,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   currentDevice().setVec3i(_object, id, vec3i(xyz[0], xyz[1], xyz[2]));
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospSet4f(OSPObject _object, const char *id,
                          float x, float y, float z, float w)
@@ -758,7 +761,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   currentDevice().setVec4f(_object, id, vec4f(x, y, z, w));
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospSet4fv(OSPObject _object, const char *id, const float *xyzw)
 OSPRAY_CATCH_BEGIN
@@ -767,7 +770,7 @@ OSPRAY_CATCH_BEGIN
   currentDevice().setVec4f(_object, id,
                            vec4f(xyzw[0], xyzw[1], xyzw[2], xyzw[3]));
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospSetVoidPtr(OSPObject _object, const char *id, void *v)
 OSPRAY_CATCH_BEGIN
@@ -775,7 +778,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   currentDevice().setVoidPtr(_object, id, v);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospRemoveParam(OSPObject _object, const char *id)
 OSPRAY_CATCH_BEGIN
@@ -783,7 +786,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   currentDevice().removeParam(_object, id);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospRelease(OSPObject _object)
 OSPRAY_CATCH_BEGIN
@@ -792,7 +795,7 @@ OSPRAY_CATCH_BEGIN
   if (!_object) return;
   currentDevice().release(_object);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospSetMaterial(OSPGeometry geometry, OSPMaterial material)
 OSPRAY_CATCH_BEGIN
@@ -801,7 +804,7 @@ OSPRAY_CATCH_BEGIN
   Assert2(geometry,"nullptr geometry passed to ospSetMaterial");
   currentDevice().setMaterial(geometry, material);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" OSPGeometry ospNewInstance(OSPModel modelToInstantiate,
                                       const osp::affine3f &xfm)
@@ -816,7 +819,7 @@ OSPRAY_CATCH_BEGIN
   ospSetObject(geom,"model",modelToInstantiate);
   return geom;
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END(nullptr)
 
 extern "C" void ospPick(OSPPickResult *result,
                         OSPRenderer renderer,
@@ -828,7 +831,7 @@ OSPRAY_CATCH_BEGIN
   if (!result) return;
   *result = currentDevice().pick(renderer, (const vec2f&)screenPos);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()
 
 extern "C" void ospSampleVolume(float **results,
                                 OSPVolume volume,
@@ -847,4 +850,4 @@ OSPRAY_CATCH_BEGIN
   currentDevice().sampleVolume(results, volume,
                                (vec3f*)&worldCoordinates, count);
 }
-OSPRAY_CATCH_END
+OSPRAY_CATCH_END()

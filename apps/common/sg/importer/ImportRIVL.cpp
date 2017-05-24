@@ -58,11 +58,11 @@ namespace ospray {
           else if (name == "depth") 
             depth = atol(value.c_str());
         });
-      assert(ofs != size_t(-1) && "Offset not properly parsed for Texture2D nodes");
-      assert(width != size_t(-1) && "Width not properly parsed for Texture2D nodes");
-      assert(height != size_t(-1) && "Height not properly parsed for Texture2D nodes");
-      assert(channels != size_t(-1) && "Channel count not properly parsed for Texture2D nodes");
-      assert(depth != size_t(-1) && "Depth not properly parsed for Texture2D nodes");
+      assert(ofs != -1 && "Offset not properly parsed for Texture2D nodes");
+      assert(width != -1 && "Width not properly parsed for Texture2D nodes");
+      assert(height != -1 && "Height not properly parsed for Texture2D nodes");
+      assert(channels != -1 && "Channel count not properly parsed for Texture2D nodes");
+      assert(depth != -1 && "Depth not properly parsed for Texture2D nodes");
 
       txt->texelType = OSP_TEXTURE_R8;
       if (channels == 4 && depth == 1)

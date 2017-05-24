@@ -38,8 +38,8 @@ namespace mpicommon {
 
   /*! constructor. sets the 'comm', 'rank', and 'size' fields */
   Group::Group(const Group &other)
-    : comm(other.comm), rank(other.rank),
-      size(other.size), containsMe(other.containsMe)
+    : containsMe(other.containsMe), comm(other.comm),
+      rank(other.rank), size(other.size)
   {
   }
 

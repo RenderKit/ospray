@@ -22,9 +22,7 @@
 namespace mpicommon {
 
   MPIBcastFabric::MPIBcastFabric(const Group &group, int rootRank)
-    : group(group),
-      buffer(nullptr),
-      recvRank(rootRank)
+    : buffer(nullptr), group(group), recvRank(rootRank)
   {
     if (!group.valid())
       throw std::runtime_error("#osp:mpi: trying to set up a MPI fabric "

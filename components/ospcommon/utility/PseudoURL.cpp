@@ -68,7 +68,7 @@ namespace ospcommon {
         return;
 
       fileName = colonSeparatedComponents[0];
-      for (int arg_it = 1;arg_it<colonSeparatedComponents.size();arg_it++) {
+      for (size_t arg_it = 1; arg_it < colonSeparatedComponents.size(); arg_it++) {
         std::string arg = colonSeparatedComponents[arg_it];
         const size_t equalSign = arg.find('=');
         if (equalSign != std::string::npos) {
@@ -105,7 +105,7 @@ namespace ospcommon {
          in some cases a class using this _wants_ to have multiple
          instances of the same parameter!?), so let's fix that here */
       int found = -1;
-      for (int i=0;i<params.size();i++) {
+      for (size_t i = 0; i < params.size(); i++) {
         if (params[i].first == name)
           found = i;
       }
