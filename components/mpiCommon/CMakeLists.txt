@@ -29,3 +29,13 @@ LINK
 
 COMPONENT mpi
 )
+
+SET(MPICOMMON_SDK_INSTALL_LOC
+  ../mpiCommon #NOTE: this is "next" to the SDK/ directory
+)
+
+OSPRAY_INSTALL_SDK_HEADERS(
+  MPICommon.h
+  MPIBcastFabric.h
+  DESTINATION ${MPICOMMON_SDK_INSTALL_LOC}
+)

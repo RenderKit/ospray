@@ -31,6 +31,15 @@ LINK
 COMPONENT mpi
 )
 
+SET(MAML_SDK_INSTALL_LOC
+  ../maml #NOTE: this is "next" to the SDK/ directory
+)
+
+OSPRAY_INSTALL_SDK_HEADERS(
+  maml/maml.h
+  DESTINATION ${MAML_SDK_INSTALL_LOC}
+)
+
 # ------------------------------------------------------------------
 # tests and examples
 # ------------------------------------------------------------------
