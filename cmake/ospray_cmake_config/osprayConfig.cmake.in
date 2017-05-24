@@ -150,16 +150,8 @@ ELSE()
   SET(LIBRARY_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
 ENDIF()
 
-if(OSPRAY_USE_EXTERNAL_EMBREE)
-  # Find existing Embree on the machine
-  find_package(embree @EMBREE_VERSION_REQUIRED@ REQUIRED)
-else()
-  if (APPLE)
-    set(EMBREE_LIBRARY ${LIBRARY_PATH_PREFIX}embree.2${LIBRARY_SUFFIX})
-  else()
-    set(EMBREE_LIBRARY ${LIBRARY_PATH_PREFIX}embree${LIBRARY_SUFFIX}.2)
-  endif()
-endif()
+# Find existing Embree on the machine
+find_package(embree @EMBREE_VERSION_REQUIRED@ REQUIRED)
 list(APPEND OSPRAY_INCLUDE_DIRS ${EMBREE_INCLUDE_DIRS})
 
 # Restore state
