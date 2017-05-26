@@ -28,6 +28,7 @@ IF (NOT WIN32)# Internal Compiler Error on MSVC12...
   )
   OSPRAY_CREATE_APPLICATION(ospRandSciVisTest
     ospRandSciVisTest.cpp
+    generateSciVis.cpp
   LINK
     ospray
     ospray_mpi_common
