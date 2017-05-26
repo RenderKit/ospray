@@ -223,6 +223,9 @@ namespace ospray {
       int numThreads {-1};
       /*! whether we're running in debug mode (cmdline: --osp:debug) */
       bool debugMode {false};
+
+      enum OSP_THREAD_AFFINITY {AUTO_DETECT, AFFINITIZE, DEAFFINITIZE};
+      int threadAffinity {AUTO_DETECT};
       /*! logging level (cmdline: --osp:loglevel \<n\>) */
       // NOTE(jda) - Keep logLevel static because the device factory function
       //             needs to have a valid value for the initial Device creation
@@ -249,6 +252,9 @@ namespace ospray {
 
     OSPRAY_SDK_INTERFACE bool    deviceIsSet();
     OSPRAY_SDK_INTERFACE Device& currentDevice();
+
+    OSPRAY_SDK_INTERFACE
+    std::string generateEmbreeDeviceCfg(const Device &device);
 
     /*! \brief registers a internal ospray::<ClassName> renderer under
         the externally accessible name "external_name"

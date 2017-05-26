@@ -106,17 +106,6 @@ namespace ospray {
     {
       auto &device = ospray::api::Device::current;
 
-      auto numThreads = device ? device->numThreads : -1;
-
-      // initialize embree. (we need to do this here rather than in
-      // ospray::init() because in mpi-mode the latter is also called
-      // in the host-stubs, where it shouldn't.
-      std::stringstream embreeConfig;
-      if (device && device->debugMode)
-        embreeConfig << " threads=1,verbose=2";
-      else if(numThreads > 0)
-        embreeConfig << " threads=" << numThreads;
-
       // NOTE(jda) - This guard guarentees that the embree device gets cleaned
       //             up no matter how the scope of runWorker() is left
       struct EmbreeDeviceScopeGuard
@@ -125,7 +114,8 @@ namespace ospray {
         ~EmbreeDeviceScopeGuard() { rtcDeleteDevice(embreeDevice); }
       };
 
-      RTCDevice embreeDevice = rtcNewDevice(embreeConfig.str().c_str());
+      auto embreeDevice =
+          rtcNewDevice(generateEmbreeDeviceCfg(*device).c_str());
       device->embreeDevice = embreeDevice;
       EmbreeDeviceScopeGuard guard;
       guard.embreeDevice = embreeDevice;
