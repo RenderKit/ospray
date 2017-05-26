@@ -1,4 +1,4 @@
-// ======================================================================== //
+﻿// ======================================================================== //
 // Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
@@ -95,8 +95,12 @@ namespace ospray {
       }
 
       auto OSPRAY_SET_AFFINITY = getEnvVar<int>("OSPRAY_SET_AFFINITY");
-      if (OSPRAY_SET_AFFINITY.first && OSPRAY_SET_AFFINITY.second != 0)
-        tasking::deAffinitizeCores();
+      if (OSPRAY_SET_AFFINITY.first) {
+        threadAffinity = OSPRAY_SET_AFFINITY.second == 0 ? DEAFFINITIZE :
+                                                           AFFINITIZE;
+      }
+
+      threadAffinity = getParam1i("setAffinity", threadAffinity);
 
       tasking::initTaskingSystem(numThreads);
 
@@ -116,6 +120,23 @@ namespace ospray {
     Device &currentDevice()
     {
       return *Device::current;
+    }
+
+    std::string generateEmbreeDeviceCfg(const Device &device)
+    {
+      std::stringstream embreeConfig;
+
+      if (device.debugMode)
+        embreeConfig << " threads=1,verbose=2";
+      else if(device.numThreads > 0)
+        embreeConfig << " threads=" << device.numThreads;
+
+      if (device.threadAffinity == api::Device::AFFINITIZE)
+        embreeConfig << ",set_affinity=1";
+      else if (device.threadAffinity == api::Device::DEAFFINITIZE)
+        embreeConfig << ",set_affinity=0";
+
+      return embreeConfig.str();
     }
 
   } // ::ospray::api
