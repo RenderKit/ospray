@@ -34,4 +34,13 @@ IF (NOT WIN32)# Internal Compiler Error on MSVC12...
     ospray_mpi_common
     ospray_commandline
   )
+  OSPRAY_CREATE_APPLICATION(ospDistribViewerDemo
+    ospDistribViewerDemo.cpp
+    generateSciVis.cpp
+  LINK
+    ospray
+    ospray_mpi_common
+    glfw
+    gl3w
+  )
 ENDIF()
