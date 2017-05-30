@@ -55,7 +55,7 @@ namespace ospray {
 
 	VisItDistributedRaycastRenderer::VisItDistributedRaycastRenderer()
 	{
-	    DistributedRaycastRenderer::DistributedRaycastRenderer();
+	    DistributedRaycastRenderer();
 	    std::cout << "#osp: creating VisIt distributed raycast renderer!" << std::endl;
 	}
 
