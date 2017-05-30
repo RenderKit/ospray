@@ -1,4 +1,5 @@
 #include <random>
+#include <array>
 #include <chrono>
 #include <GLFW/glfw3.h>
 #include <mpiCommon/MPICommon.h>
