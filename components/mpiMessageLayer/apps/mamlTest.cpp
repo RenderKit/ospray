@@ -71,7 +71,6 @@ extern "C" int main(int ac, char **av)
       usleep(10000);
     }
 
-    maml::flush();
     maml::stop();
     double t1 = ospcommon::getSysTime();
     double bytes = numRanks * numMessages * payloadSize / (t1-t0);

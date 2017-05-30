@@ -84,9 +84,9 @@ namespace mpicommon {
 
     // this is the RIGHT naming convention - old code has them all inside out.
     void makeIntraComm();
-    void makeIntraComm(MPI_Comm comm);
-    void makeInterComm(MPI_Comm comm);
+    void makeIntraComm(MPI_Comm);
     void makeInterComm();
+    void makeInterComm(MPI_Comm);
 
     /*! set to given intercomm, and properly set size, root, etc */
     void setTo(MPI_Comm comm);

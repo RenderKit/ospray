@@ -64,7 +64,7 @@ namespace ospray {
     void embreeErrorFunc(const RTCError code, const char* str)
     {
       std::stringstream msg;
-      msg << "#osp: embree internal error " << code << " : " << str;
+      msg << "#osp: Embree internal error " << code << " : " << str;
       postStatusMsg(msg);
       throw std::runtime_error(msg.str());
     }
