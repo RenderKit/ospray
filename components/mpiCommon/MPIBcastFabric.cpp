@@ -21,28 +21,25 @@
 
 namespace mpicommon {
 
-  MPIBcastFabric::MPIBcastFabric(const Group &group, int rootRank)
-    : buffer(nullptr), group(group), recvRank(rootRank)
+  MPIBcastFabric::MPIBcastFabric(const Group &group, int sendRank, int recvRank)
+    : group(group), sendRank(sendRank), recvRank(recvRank)
   {
     if (!group.valid())
       throw std::runtime_error("#osp:mpi: trying to set up a MPI fabric "
                                "with a invalid MPI communicator");
+#ifndef NDEBUG
     int isInter = 0;
     MPI_CALL(Comm_test_inter(group.comm, &isInter));
     if (isInter) {
-      recvRank = 0;
-      sendRank = MPI_ROOT;
-    } else {
-      sendRank = recvRank;
+      assert(recvRank == 0 && sendRank == MPI_ROOT);
     }
+#endif
   }
 
   /*! receive some block of data - whatever the sender has sent -
     and give us size and pointer to this data */
   size_t MPIBcastFabric::read(void *&mem)
   {
-    if (buffer) delete[] buffer;
-
     uint32_t sz32 = 0;
     // Get the size of the bcast being sent to us. Only this part must be non-blocking,
     // after getting the size we know everyone will enter the blocking barrier and the
@@ -60,10 +57,11 @@ namespace mpicommon {
       }
     }
 
-    buffer = new uint8_t[sz32];
     MPI_CALL(Barrier(group.comm));
-    MPI_CALL(Bcast(buffer, sz32, MPI_BYTE, recvRank, group.comm));
-    mem = buffer;
+    // TODO: Maybe at some point we should dump the buffer if it gets really large
+    buffer.resize(sz32);
+    MPI_CALL(Bcast(buffer.data(), sz32, MPI_BYTE, recvRank, group.comm));
+    mem = buffer.data();
     return sz32;
   }
 

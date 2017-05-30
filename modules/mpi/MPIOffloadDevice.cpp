@@ -437,7 +437,7 @@ namespace ospray {
 
       /* set up fabric and stuff - by now all the communicators should
          be properly set up */
-      mpiFabric   = make_unique<MPIBcastFabric>(mpi::worker);
+      mpiFabric   = make_unique<MPIBcastFabric>(mpi::worker, MPI_ROOT, 0);
       readStream  = make_unique<networking::BufferedReadStream>(*mpiFabric);
       writeStream = make_unique<networking::BufferedWriteStream>(*mpiFabric);
 

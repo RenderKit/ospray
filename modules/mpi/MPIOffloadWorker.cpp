@@ -139,7 +139,7 @@ namespace ospray {
       // -------------------------------------------------------
       // setting up read/write streams
       // -------------------------------------------------------
-      auto mpiFabric  = make_unique<MPIBcastFabric>(mpi::app);
+      auto mpiFabric  = make_unique<MPIBcastFabric>(mpi::app, MPI_ROOT, 0);
       auto readStream = make_unique<networking::BufferedReadStream>(*mpiFabric);
 
       // create registry of work item types
