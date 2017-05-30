@@ -58,7 +58,7 @@ namespace ospray {
     /*! it's up to the proper init routine to decide which processes
       call this function and which ones don't. This function will not
       return. */
-    OSPRAY_MPI_INTERFACE void runWorker();
+    void runWorker();
 
     // Misc helper functions //////////////////////////////////////////////////
 
