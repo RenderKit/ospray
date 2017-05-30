@@ -45,7 +45,7 @@ namespace ospray {
         color.push_back(ospcommon::vec3f(0.231373  , 0.298039    , 0.752941    ));       
         color.push_back(ospcommon::vec3f(0.865003  , 0.865003    , 0.865003    ));       
         color.push_back(ospcommon::vec3f(0.705882  , 0.0156863   , 0.14902     ));
-      };
+      }
 
       vec4f colorFor(float f)
       {
@@ -88,18 +88,11 @@ namespace ospray {
       std::cout << "#osp.sg: importer for 'points': " << url.str() << std::endl;
 
       FormatURL fu(url.str());
-      PRINT(fu.fileName);
-
-      // const std::string portHeader = strstr(url.str().c_str(),"://")+3;
-      
-      // const char *fileName = strstr(url.str().c_str(),"://")+3;
-      PRINT(fu.fileName);
       FILE *file = fopen(fu.fileName.c_str(),"rb");
       if (!file)
         throw std::runtime_error("could not open file "+fu.fileName);
 
       // read the data vector
-      PING;
       std::shared_ptr<DataVectorT<Spheres::Sphere,OSP_RAW>> sphereData
         = std::make_shared<DataVectorT<Spheres::Sphere,OSP_RAW>>();
 
@@ -171,11 +164,12 @@ namespace ospray {
       sphereObject.add(sphereData); //["data"]->setValue(data);
       
       if (!mappedScalarVector.empty()) {
-        std::cout << "#osp.sg: creating color map for points data ..." << std::endl;
+        std::cout << "#osp.sg: creating color map for points data ..."
+                  << std::endl;
         ColorMap cm(mappedScalarMin,mappedScalarMax);
         std::shared_ptr<DataVectorT<vec4f,OSP_RAW>> colorData
           = std::make_shared<DataVectorT<vec4f,OSP_RAW>>();
-        for (int i=0;i<mappedScalarVector.size();i++)
+        for (size_t i = 0; i < mappedScalarVector.size(); i++)
           colorData->v.push_back(cm.colorFor(mappedScalarVector[i]));
         colorData->setName("colorData");
         sphereObject.add(colorData);

@@ -54,7 +54,6 @@ namespace ospray {
       // Send my bounding boxes to other nodes, recieve theirs for a
       // "full picture" of what geometries live on what nodes
       Data *regionData = getParamData("regions");
-      box3f *boxes = reinterpret_cast<box3f*>(regionData->data);
 
       // The box3f data is sent as data of FLOAT3 items
       // TODO: It's a little awkward to copy the boxes again like this, maybe
@@ -63,13 +62,16 @@ namespace ospray {
       // TODO: For now it doesn't matter that we don't know who owns the
       // other boxes, just that we know they exist and their bounds, and that
       // they aren't ours.
-      myRegions = std::vector<box3f>(boxes, boxes + regionData->numItems / 2);
+      if (regionData) {
+        box3f *boxes = reinterpret_cast<box3f*>(regionData->data);
+        myRegions = std::vector<box3f>(boxes, boxes + regionData->numItems / 2);
+      }
 
-      // If the user hasn't set any clip boxes, there's an implicit infinitely
-      // large clipping box we can place around the entire world.
+      // If the user hasn't set any regions, there's an implicit infinitely
+      // large region box we can place around the entire world.
       if (myRegions.empty()) {
         postStatusMsg("No regions found, making implicit "
-                      "infinitely large region");
+                      "infinitely large region", 1);
         myRegions.push_back(box3f(vec3f(neg_inf), vec3f(pos_inf)));
       }
 

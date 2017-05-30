@@ -14,20 +14,26 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -no-ansi-alias -std=c++11 -DNOMINMAX")
+SET(OSPRAY_CXX_FLAGS "-std=c++11 -fPIC -fno-strict-aliasing -no-ansi-alias -DNOMINMAX")
+
+IF(OSPRAY_STRICT_BUILD)
+  SET(OSPRAY_CXX_FLAGS "-Wall ${OSPRAY_CXX_FLAGS}")
+ENDIF()
+
+SET(CMAKE_CXX_FLAGS "${OSPRAY_CXX_FLAGS} ${CMAKE_CXX_FLAGS}")
 SET(CMAKE_CXX_FLAGS_DEBUG          "-DDEBUG  -g")
 SET(CMAKE_CXX_FLAGS_RELEASE        "-DNDEBUG -O3")
 # on Windows use "-fp:fast" instead of "-fp-model fast"
 #SET(CMAKE_CXX_FLAGS_RELEASE        "-DNDEBUG    -O3 -no-ansi-alias -restrict -fp-model fast -fimf-precision=low -no-prec-div -no-prec-sqrt -fma -no-inline-max-total-size -inline-factor=200 ")
-SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELEASE} -g")
-SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
+SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g ${CMAKE_CXX_FLAGS_RELEASE}")
+SET(CMAKE_C_FLAGS "-std=c99 ${CMAKE_C_FLAGS}")
 
 IF (APPLE)
-  SET (CMAKE_SHARED_LINKER_FLAGS ${CMAKE_SHARED_LINKER_FLAGS_INIT} -dynamiclib)
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.7") # we only use MacOSX 10.7 features
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++") # link against C++11 stdlib
+  SET (CMAKE_SHARED_LINKER_FLAGS "-dynamiclib ${CMAKE_SHARED_LINKER_FLAGS_INIT}")
+  SET(CMAKE_CXX_FLAGS "-mmacosx-version-min=10.7 ${CMAKE_CXX_FLAGS}") # we only use MacOSX 10.7 features
+  SET(CMAKE_CXX_FLAGS "-stdlib=libc++ ${CMAKE_CXX_FLAGS}") # link against C++11 stdlib
 ENDIF()
 
 # enable -static-intel and avoid to export ICC specific symbols from OSPRay
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-intel")
-SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--exclude-libs=ALL")
+SET(CMAKE_CXX_FLAGS "-static-intel ${CMAKE_CXX_FLAGS}")
+SET(CMAKE_SHARED_LINKER_FLAGS "-Wl,--exclude-libs=ALL ${CMAKE_SHARED_LINKER_FLAGS}")

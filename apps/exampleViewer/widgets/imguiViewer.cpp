@@ -65,12 +65,11 @@ namespace ospray {
                            cpp::Camera camera)
     : ImGui3DWidget(ImGui3DWidget::FRAMEBUFFER_NONE),
       sceneModels(model),
+      worldBounds(worldBounds),
+      camera(camera),
       renderer(renderer),
       rendererDW(rendererDW),
-      frameBufferDW(frameBufferDW),
-      camera(camera),
-      worldBounds(worldBounds),
-      lockFirstAnimationFrame(false)
+      frameBufferDW(frameBufferDW)
   {
     if (!worldBounds.empty())
       setWorldBounds(worldBounds[0]);
@@ -93,12 +92,7 @@ namespace ospray {
     renderEngine.start();
 
     frameTimer = ospcommon::getSysTime();
-    animationTimer = 0.;
-    animationFrameDelta = .03;
-    animationFrameId = 0;
-    animationPaused = false;
     originalView = viewPort;
-    scale = vec3f(1,1,1);
   }
 
   ImGuiViewer::~ImGuiViewer()
@@ -256,7 +250,7 @@ namespace ospray {
 
     if (renderEngine.hasNewFrame()) {
       auto &mappedFB = renderEngine.mapFramebuffer();
-      auto nPixels = windowSize.x * windowSize.y;
+      size_t nPixels = windowSize.x * windowSize.y;
 
       if (mappedFB.size() == nPixels) {
         auto *srcPixels = mappedFB.data();

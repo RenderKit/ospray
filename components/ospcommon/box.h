@@ -44,7 +44,7 @@ namespace ospcommon {
     inline bool contains(const vec_t &vec) const 
     { return !anyLessThan(vec,lower) && !anyLessThan(upper,vec); }
 
-    vec_t lower, upper;
+    vec_t lower {vec_t()}, upper {vec_t()};
   };
 
   template<typename scalar_t>

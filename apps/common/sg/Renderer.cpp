@@ -138,7 +138,6 @@ namespace ospray {
 
     void Renderer::postCommit(RenderContext &ctx)
     {
-      double time = ospcommon::getSysTime();
       if (child("camera").childrenLastModified() > frameMTime
           || child("lights").childrenLastModified() > frameMTime
           || lastModified() > frameMTime

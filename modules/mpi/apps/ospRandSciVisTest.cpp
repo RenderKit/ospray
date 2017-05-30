@@ -308,7 +308,8 @@ namespace ospRandSciVisTest {
     auto spheres = makeSpheres(volume.second);
     model.addGeometry(spheres);
 
-    // Note: now we must use the global world bounds, not our local bounds
+    // We must use the global world bounds, not our local bounds
+    // when computing the automatically picked camera position.
     box3f worldBounds(vec3f(0), vec3f(1));
 
     /* The regions listing specifies the data regions that this rank owns

@@ -211,24 +211,31 @@ namespace ospray {
         importMiniSg(msgModel, fileName);
 
         for (auto mesh : msgModel.mesh) {
-          auto sgMesh = std::dynamic_pointer_cast<sg::TriangleMesh>
-            (createNode(mesh->name, "TriangleMesh"));
-          sgMesh->vertex = std::make_shared<DataVector3f>();
-          for(int i =0; i < mesh->position.size(); i++)
-            std::dynamic_pointer_cast<DataVector3f>(sgMesh->vertex)->push_back(
-                                                                               mesh->position[i]);
-          sgMesh->normal = std::make_shared<DataVector3f>();
-          for(int i =0; i < mesh->normal.size(); i++)
-            std::dynamic_pointer_cast<DataVector3f>(sgMesh->normal)->push_back(
-                                                                               mesh->normal[i]);
-          sgMesh->texcoord = std::make_shared<DataVector2f>();
-          for(int i =0; i < mesh->texcoord.size(); i++)
-            std::dynamic_pointer_cast<DataVector2f>(sgMesh->texcoord)->push_back(
-                                                                                 mesh->texcoord[i]);
-          sgMesh->index =  std::make_shared<DataVector3i>();
-          for(int i =0; i < mesh->triangle.size(); i++)
-            std::dynamic_pointer_cast<DataVector3i>(sgMesh->index)->push_back(
-                                                                              vec3i(mesh->triangle[i].v0, mesh->triangle[i].v1, mesh->triangle[i].v2));
+          auto sgMesh = std::dynamic_pointer_cast<sg::TriangleMesh>(createNode(mesh->name, "TriangleMesh"));
+
+          auto vertex = std::make_shared<DataVector3f>();
+          for(size_t i = 0; i < mesh->position.size(); i++)
+            vertex->push_back(mesh->position[i]);
+          sgMesh->vertex = vertex;
+
+          auto normal = std::make_shared<DataVector3f>();
+          for(size_t i = 0; i < mesh->normal.size(); i++)
+            normal->push_back(mesh->normal[i]);
+          sgMesh->normal = normal;
+
+          auto texcoord = std::make_shared<DataVector2f>();
+          for(size_t i =0; i < mesh->texcoord.size(); i++)
+            texcoord->push_back(mesh->texcoord[i]);
+          sgMesh->texcoord = texcoord;
+
+          auto index = std::make_shared<DataVector3i>();
+          for(size_t i =0; i < mesh->triangle.size(); i++) {
+            index->push_back(vec3i(mesh->triangle[i].v0,
+                                   mesh->triangle[i].v1,
+                                   mesh->triangle[i].v2));
+          }
+          sgMesh->index = index;
+
           add(sgMesh);
         }
       } else {

@@ -96,13 +96,13 @@ namespace ospray {
     imgui3D::ImGui3DWidget::ViewPort originalView;
 
     double frameTimer;
-    double animationTimer;
-    double animationFrameDelta;
-    size_t animationFrameId;
-    bool animationPaused;
-    bool lockFirstAnimationFrame;  //use for static scene
+    double animationTimer {0.};
+    double animationFrameDelta {0.03};
+    size_t animationFrameId {0};
+    bool animationPaused {false};
+    bool lockFirstAnimationFrame {false};  //use for static scene
     ospcommon::vec3f translate;
-    ospcommon::vec3f scale;
+    ospcommon::vec3f scale {1.f, 1.f, 1.f};
 
     float aoDistance {1e20f};
 

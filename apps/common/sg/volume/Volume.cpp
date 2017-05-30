@@ -304,7 +304,7 @@ namespace ospray {
         const size_t nPerSlice = (size_t)dimensions.x * (size_t)dimensions.y;
         std::vector<uint8_t> slice(nPerSlice * voxelSize, 0);
 
-        for (size_t z = 0; z < dimensions.z; ++z) {
+        for (int z = 0; z < dimensions.z; ++z) {
           if (fread(slice.data(), voxelSize, nPerSlice, file) != nPerSlice) {
             throw std::runtime_error("StructuredVolume::render(): read incomplete slice "
                 "data ... partial file or wrong format!?");
@@ -526,11 +526,14 @@ namespace ospray {
     const size_t RichtmyerMeshkov::LoaderState::BLOCK_SIZE = 256 * 256 * 128;
     const size_t RichtmyerMeshkov::LoaderState::NUM_BLOCKS = 8 * 8 * 15;
 
-    RichtmyerMeshkov::LoaderState::LoaderState(const FileName &fullDirName, const int timeStep)
-      : nextBlockID(0), useGZip(getenv("OSPRAY_RM_NO_GZIP") == NULL),
-      fullDirName(fullDirName),
-      voxelRange(std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity()),
-      timeStep(timeStep)
+    RichtmyerMeshkov::LoaderState::LoaderState(const FileName &fullDirName,
+                                               const int timeStep)
+      : nextBlockID(0),
+        useGZip(getenv("OSPRAY_RM_NO_GZIP") == nullptr),
+        fullDirName(fullDirName),
+        timeStep(timeStep),
+        voxelRange(std::numeric_limits<float>::infinity(),
+                   -std::numeric_limits<float>::infinity())
     {}
 
     size_t RichtmyerMeshkov::LoaderState::loadNextBlock(std::vector<uint8_t> &b)

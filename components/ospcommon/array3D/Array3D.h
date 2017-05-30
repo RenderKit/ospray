@@ -29,8 +29,8 @@ namespace ospcommon {
     
     /*! ABSTRACTION for a 3D array of data */
     template<typename value_t>
-    struct Array3D {
-
+    struct Array3D
+    {
       /*! return size (ie, "dimensions") of volume */
       virtual vec3i size() const = 0;
 
@@ -50,13 +50,13 @@ namespace ospcommon {
       /*! returns number of elements (as 64-bit int) across all dimensions */
       virtual size_t numElements() const = 0;
     };
-
     
     /*! implementation for an actual array3d that stores a 3D array of values */
     template<typename value_t>
-    struct ActualArray3D : public Array3D<value_t> {
+    struct ActualArray3D : public Array3D<value_t>
+    {
 
-      ActualArray3D(const vec3i &dims, void *externalMem=nullptr);
+      ActualArray3D(const vec3i &dims, void *externalMem = nullptr);
       virtual ~ActualArray3D() { if (valuesAreMine) delete[] value; }
 
       /*! return size (ie, "dimensions") of volume */
@@ -87,48 +87,17 @@ namespace ospcommon {
       bool valuesAreMine;
     };
 
-
-    // /*! implementation for an actual array3d that stores a 3D array of values */
-    // template<typename value_t>
-    // struct DummyArray3D : public Array3D<value_t> {
-
-    //   DummyArray3D(const vec3i &dims) : dims(dims) {};
-
-    //   /*! return size (ie, "dimensions") of volume */
-    //   virtual vec3i size() const override { return dims; };
-
-    //   /*! get cell value at location
-
-    //     \warning 'where' MUST be a valid cell location */
-    //   virtual value_t get(const vec3i &where) const override {
-    //     return reduce_mul(where) / ((float)reduce_mul(dims-vec3i(1))); 
-    //   }
-      
-    //   /*! set cell value at location to given value
-
-    //     \warning 'where' MUST be a valid cell location */
-    //   virtual void set(const vec3i &where, const value_t &t) { throw std::runtime_error("cannot 'set' in a dummyarray3d"); };
-
-    //   void clear(const value_t &t) {};
-
-    //   /*! returns number of elements (as 64-bit int) across all dimensions */
-    //   virtual size_t numElements() const override { 
-    //     return size_t(dims.x)*size_t(dims.y)*size_t(dims.z);
-    //   };
-
-    //   const vec3i dims;
-    // };
-
     /*! shifts another array3d by a given amount */
     template<typename value_t>
-    struct IndexShiftedArray3D : public Array3D<value_t> {
-
-      IndexShiftedArray3D(std::shared_ptr<Array3D<value_t>> actual, const vec3i &shift) 
+    struct IndexShiftedArray3D : public Array3D<value_t>
+    {
+      IndexShiftedArray3D(std::shared_ptr<Array3D<value_t>> actual,
+                          const vec3i &shift)
         : actual(actual), shift(shift) 
-      {};
+      {}
 
       /*! return size (ie, "dimensions") of volume */
-      virtual vec3i size() const override { return actual->size(); };
+      virtual vec3i size() const override { return actual->size(); }
 
       /*! get cell value at location
 
@@ -139,7 +108,8 @@ namespace ospcommon {
       /*! set cell value at location to given value
 
         \warning 'where' MUST be a valid cell location */
-      virtual void set(const vec3i &where, const value_t &t) { throw std::runtime_error("cannot 'set' in a IndexShiftArray3D"); };
+      virtual void set(const vec3i &where, const value_t &t)
+      { throw std::runtime_error("cannot 'set' in a IndexShiftArray3D"); }
 
       /*! returns number of elements (as 64-bit int) across all dimensions */
       virtual size_t numElements() const override 
@@ -152,8 +122,8 @@ namespace ospcommon {
     /*! implemnetaiton of a wrapper class that makes an actual array3d
       of one type look like that of another type */
     template<typename in_t, typename out_t>
-    struct Array3DAccessor : public Array3D<out_t> {
-
+    struct Array3DAccessor : public Array3D<out_t>
+    {
       Array3DAccessor(std::shared_ptr<Array3D<in_t>> actual);
 
       /*! return size (ie, "dimensions") of volume */
@@ -175,8 +145,8 @@ namespace ospcommon {
     /*! wrapper class that generates an artifically larger data set by
       simply repeating the given input */
     template<typename T>
-    struct Array3DRepeater : public Array3D<T> {
-
+    struct Array3DRepeater : public Array3D<T>
+    {
       Array3DRepeater(const std::shared_ptr<Array3D<T>> &actual,
                       const vec3i &repeatedSize);
 
@@ -195,22 +165,23 @@ namespace ospcommon {
       const std::shared_ptr<Array3D<T>> actual;
     };
 
-
-        /*! implements a sub-set of another array3d */
+    /*! implements a sub-set of another array3d */
     template<typename value_t>
-    struct SubBoxArray3D : public Array3D<value_t> {
+    struct SubBoxArray3D : public Array3D<value_t>
+    {
 
-      SubBoxArray3D(const std::shared_ptr<Array3D<value_t>> &actual, const box3i &clipBox) 
+      SubBoxArray3D(const std::shared_ptr<Array3D<value_t>> &actual,
+                    const box3i &clipBox)
         : actual(actual), clipBox(clipBox) 
       {
         assert(actual);
         assert(clipBox.upper.x <= actual->size().x);
         assert(clipBox.upper.y <= actual->size().y);
         assert(clipBox.upper.z <= actual->size().z);
-      };
+      }
 
       /*! return size (ie, "dimensions") of volume */
-      virtual vec3i size() const override { return clipBox.size(); };
+      virtual vec3i size() const override { return clipBox.size(); }
 
       /*! get cell value at location
 
@@ -221,7 +192,8 @@ namespace ospcommon {
       /*! set cell value at location to given value
 
         \warning 'where' MUST be a valid cell location */
-      virtual void set(const vec3i &where, const value_t &t) { throw std::runtime_error("cannot 'set' in a SubBoxArray3D"); };
+      virtual void set(const vec3i &where, const value_t &t)
+      { throw std::runtime_error("cannot 'set' in a SubBoxArray3D"); }
 
       /*! returns number of elements (as 64-bit int) across all dimensions */
       virtual size_t numElements() const override 
@@ -238,16 +210,16 @@ namespace ospcommon {
 
     /*! implements a array3d that's composed of multiple individual slices */
     template<typename value_t>
-    struct MultiSliceArray3D : public Array3D<value_t> {
-
-      MultiSliceArray3D(const std::vector<std::shared_ptr<Array3D<value_t>> > &slice) 
+    struct MultiSliceArray3D : public Array3D<value_t>
+    {
+      MultiSliceArray3D(const std::vector<std::shared_ptr<Array3D<value_t>>> &slice)
         : slice(slice)
       {
-      };
+      }
 
       /*! return size (ie, "dimensions") of volume */
       virtual vec3i size() const override 
-      { return vec3i(slice[0]->size().x,slice[0]->size().y,slice.size()); };
+      { return vec3i(slice[0]->size().x,slice[0]->size().y,slice.size()); }
 
       /*! get cell value at location
 
@@ -260,7 +232,8 @@ namespace ospcommon {
       /*! set cell value at location to given value
         
         \warning 'where' MUST be a valid cell location */
-      virtual void set(const vec3i &where, const value_t &t) { throw std::runtime_error("cannot 'set' in a MultiSliceArray3D"); };
+      virtual void set(const vec3i &where, const value_t &t)
+      { throw std::runtime_error("cannot 'set' in a MultiSliceArray3D"); }
       
       /*! returns number of elements (as 64-bit int) across all dimensions */
       virtual size_t numElements() const override 
@@ -275,20 +248,18 @@ namespace ospcommon {
       file (uint8,float,...) is given through the function's
       template parameter */
     template<typename T>
-    std::shared_ptr<Array3D<T>> loadRAW(const std::string &fileName, const vec3i &dims);
+    std::shared_ptr<Array3D<T>> loadRAW(const std::string &fileName,
+                                        const vec3i &dims);
 
     /*! load raw file with given dimensions. the 'type' of the raw
       file (uint8,float,...) is given through the function's
       template parameter */
     template<typename T>
-    std::shared_ptr<Array3D<T>> mmapRAW(const std::string &fileName, const vec3i &dims);
-
-
-
-
+    std::shared_ptr<Array3D<T>> mmapRAW(const std::string &fileName,
+                                        const vec3i &dims);
 
     // -------------------------------------------------------
-    // iplementation section
+    // implementation section
     // -------------------------------------------------------
 
     template<typename T>

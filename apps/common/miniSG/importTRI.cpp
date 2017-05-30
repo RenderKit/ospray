@@ -38,7 +38,7 @@ namespace ospray {
         mesh->position.push_back(tri[1]);
         mesh->position.push_back(tri[2]);
       }
-      for (int i=0;i<mesh->position.size()/3;i++) {
+      for (size_t i = 0; i < mesh->position.size()/3; i++) {
         mesh->triangle.push_back(Triangle(vec3i(3*i)+vec3i(0,1,2)));
       }
       mesh->material = new Material;
@@ -47,7 +47,8 @@ namespace ospray {
       
       model.instance.push_back(Instance(model.mesh.size()));
       model.mesh.push_back(mesh);
-      std::cout << "#msg: loaded .tri file of " << mesh->triangle.size() << " triangles" << std::endl;
+      std::cout << "#msg: loaded .tri file of " << mesh->triangle.size()
+                << " triangles" << std::endl;
     }
 
     /*! NASA 'tri' format, with three vec3fa vertices per triangle (no
@@ -67,7 +68,7 @@ namespace ospray {
         mesh->position.push_back(tri[1]);
         mesh->position.push_back(tri[2]);
       }
-      for (int i=0;i<mesh->position.size()/3;i++) {
+      for (size_t i = 0; i < mesh->position.size()/3; i++) {
         mesh->triangle.push_back(Triangle(vec3i(3*i)+vec3i(0,1,2)));
       }
 
@@ -77,7 +78,8 @@ namespace ospray {
 
       model.instance.push_back(Instance(model.mesh.size()));
       model.mesh.push_back(mesh);
-      std::cout << "#msg: loaded .tri file of " << mesh->triangle.size() << " triangles" << std::endl;
+      std::cout << "#msg: loaded .tri file of " << mesh->triangle.size()
+                << " triangles" << std::endl;
     }
 
   } // ::ospray::minisg

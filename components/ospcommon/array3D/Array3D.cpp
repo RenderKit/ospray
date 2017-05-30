@@ -54,7 +54,8 @@ namespace ospcommon {
     }
 
     template<typename T>
-    std::shared_ptr<Array3D<T>> loadRAW(const std::string &fileName, const vec3i &dims)
+    std::shared_ptr<Array3D<T>> loadRAW(const std::string &fileName,
+                                        const vec3i &dims)
     {
       std::shared_ptr<ActualArray3D<T>> volume = std::make_shared<ActualArray3D<T>>(dims);
       FILE *file = fopen(fileName.c_str(),"rb");
@@ -70,7 +71,8 @@ namespace ospcommon {
     }
     
     template<typename T>
-    std::shared_ptr<Array3D<T>> mmapRAW(const std::string &fileName, const vec3i &dims)
+    std::shared_ptr<Array3D<T>> mmapRAW(const std::string &fileName,
+                                        const vec3i &dims)
     {
 #ifdef _WIN32
       throw std::runtime_error("mmap not supported under windows");
@@ -83,7 +85,8 @@ namespace ospcommon {
 
       size_t fileSize = size_t(dims.x)*size_t(dims.y)*size_t(dims.z)*sizeof(T);
       std::cout << "mapping file " << fileName
-                << " exptd size " << prettyNumber(fileSize) << " actual size " << prettyNumber(actualFileSize) << std::endl;
+                << " exptd size " << prettyNumber(fileSize) << " actual size "
+                << prettyNumber(actualFileSize) << std::endl;
       if (actualFileSize < fileSize)
         throw std::runtime_error("incomplete file!");
       if (actualFileSize > fileSize)
@@ -139,7 +142,7 @@ namespace ospcommon {
     template<typename T>
     Array3DRepeater<T>::Array3DRepeater(const std::shared_ptr<Array3D<T>> &actual, 
                                         const vec3i &repeatedSize) :
-      actual(actual), repeatedSize(repeatedSize)
+      repeatedSize(repeatedSize), actual(actual)
     {}
     
     template<typename T>

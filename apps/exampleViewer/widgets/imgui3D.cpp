@@ -138,8 +138,8 @@ namespace ospray {
       motionSpeed(.003f),
       rotateSpeed(.003f),
       frameBufferMode(frameBufferMode),
-      ucharFB(nullptr),
-      fontScale(2.f)
+      fontScale(2.f),
+      ucharFB(nullptr)
     {
       if (activeWindow != nullptr)
         throw std::runtime_error("ERROR: Can't create more than one ImGui3DWidget!");
@@ -393,11 +393,11 @@ namespace ospray {
 
       int display_w = 0, display_h = 0;
 
-      ImGuiIO& io = ImGui::GetIO();
       ImFontConfig config;
       config.MergeMode = false;
 
       #if 0 // NOTE(jda) - this can cause crashes in Debug builds, needs fixed
+      ImGuiIO& io = ImGui::GetIO();
       ImFont* font =
           io.Fonts->AddFontFromFileTTF("LibreBaskerville-Regular.ttf",
                                        28, &config);
