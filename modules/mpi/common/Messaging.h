@@ -57,12 +57,13 @@ namespace ospray {
       template<typename T>
       inline void bcast(const int rootGlobalRank, T &data)
       {
+        using namespace mpicommon;
         const bool asyncWasRunning = asyncMessagingEnabled();
         disableAsyncMessaging();
 
-        mpicommon::MPIBcastFabric fabric(mpicommon::world, rootGlobalRank);
+        MPIBcastFabric fabric(world, rootGlobalRank, rootGlobalRank);
 
-        if (mpicommon::globalRank() == rootGlobalRank) {
+        if (globalRank() == rootGlobalRank) {
           networking::BufferedWriteStream stream(fabric);
           stream << data;
           stream.flush();
