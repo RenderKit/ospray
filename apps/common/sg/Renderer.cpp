@@ -23,7 +23,6 @@ namespace ospray {
 
     Renderer::Renderer()
     {
-      createChild("bounds", "box3f");
       createChild("rendererType", "string", std::string("scivis"),
                       NodeFlags::required |
                       NodeFlags::valid_whitelist |
@@ -86,8 +85,16 @@ namespace ospray {
                   " building to be completely black from occlusion.");
       child("aoDistance").setMinMax(1e-20f, 1e20f);
 
+      createChild("epsilon", "float", 1e-3f,
+                  NodeFlags::required | NodeFlags::valid_min_max,
+                  "epsilon step for secondary ray generation.  Adjust"
+                  " if you see speckles or a lack of lighting.");
+      child("epsilon").setMinMax(1e-20f, 1e20f);
+      createChild("autoEpsilon", "bool", true, NodeFlags::required,
+        "automatically adjust epsilon step by world bounds");
+
       createChild("oneSidedLighting", "bool", true, NodeFlags::required);
-      createChild("aoTransparency", "bool", true, NodeFlags::required);
+      createChild("aoTransparencyEnabled", "bool", true, NodeFlags::required);
     }
 
     void Renderer::traverse(RenderContext &ctx, const std::string& operation)
@@ -174,6 +181,19 @@ namespace ospray {
         {
           child("world").traverse(ctx, "render");
           ospSetObject(ospRenderer, "model",  child("world").valueAs<OSPObject>());
+          if (child("autoEpsilon").valueAs<bool>()) {
+            const box3f bounds = child("world")["bounds"].valueAs<box3f>();
+            const float diam = bounds.upper.x - bounds.lower.x;
+            float logDiam = log(diam);
+            if (logDiam < 0.f)
+            {
+              logDiam = 1.f/(fabs(logDiam));
+            }
+            const float epsilon = 1e-5f*logDiam;
+            ospSet1f(ospRenderer, "epsilon", epsilon);
+            ospSet1f(ospRenderer, "aoDistance", diam*0.3);
+          }
+
         }
         ospCommit(ospRenderer);
         frameMTime = TimeStamp();
