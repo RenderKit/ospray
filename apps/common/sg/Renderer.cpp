@@ -183,11 +183,11 @@ namespace ospray {
           ospSetObject(ospRenderer, "model",  child("world").valueAs<OSPObject>());
           if (child("autoEpsilon").valueAs<bool>()) {
             const box3f bounds = child("world")["bounds"].valueAs<box3f>();
-            const float diam = bounds.upper.x - bounds.lower.x;
-            float logDiam = log(diam);
+            const float diam = length(bounds.size());
+            float logDiam = ospcommon::log(diam);
             if (logDiam < 0.f)
             {
-              logDiam = 1.f/(fabs(logDiam));
+              logDiam = -1.f/logDiam;
             }
             const float epsilon = 1e-5f*logDiam;
             ospSet1f(ospRenderer, "epsilon", epsilon);
