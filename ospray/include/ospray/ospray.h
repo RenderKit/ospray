@@ -217,7 +217,9 @@ extern "C" {
   //! initialize the ospray engine (for single-node user application) using
   //! commandline arguments...equivalent to doing ospNewDevice() followed by
   //! ospSetCurrentDevice()
-  OSPRAY_INTERFACE void ospInit(int *argc, const char **argv);
+  //!
+  //! returns OSPError value to report any errors during initialization
+  OSPRAY_INTERFACE int ospInit(int *argc, const char **argv);
 
   //! initialize the ospray engine (for single-node user application) using
   //! explicit device string.

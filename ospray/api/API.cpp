@@ -103,14 +103,13 @@ inline Device *createMpiDevice()
   return device;
 }
 
-extern "C" void ospInit(int *_ac, const char **_av)
+extern "C" int ospInit(int *_ac, const char **_av)
 OSPRAY_CATCH_BEGIN
 {
   auto &currentDevice = Device::current;
 
   if (currentDevice) {
-    throw std::runtime_error("OSPRay error: device already exists "
-                             "(did you call ospInit twice?)");
+    throw std::runtime_error("device already exists [ospInit() called twice?]");
   }
 
   auto OSP_MPI_LAUNCH = getEnvVar<std::string>("OSPRAY_MPI_LAUNCH");
@@ -130,9 +129,9 @@ OSPRAY_CATCH_BEGIN
       std::string av(_av[i]);
 
       if (av == "--osp:coi") {
-        throw std::runtime_error("OSPRay's COI device is no longer supported!");
-        --i;
-        continue;
+        handleError(OSP_INVALID_ARGUMENT,
+                    "OSPRay's COI device is no longer supported!");
+        return OSP_INVALID_ARGUMENT;
       }
 
       auto deviceSwitch = av.substr(0, 13);
@@ -212,8 +211,10 @@ OSPRAY_CATCH_BEGIN
   ospray::initFromCommandLine(_ac,&_av);
 
   currentDevice->commit();
+
+  return OSP_NO_ERROR;
 }
-OSPRAY_CATCH_END()
+OSPRAY_CATCH_END(OSP_INVALID_OPERATION)
 
 extern "C" OSPDevice ospNewDevice(const char *deviceType)
 OSPRAY_CATCH_BEGIN
