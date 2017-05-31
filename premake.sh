@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # change this block to fit your environment
-OSPROOT=~/OSPRay
+OSPROOT=~/software
 SRCROOT=$(pwd)
 
 # TBB component
@@ -29,7 +29,7 @@ LOAD_EMBREE()
 }
 
 # QT path
-QT_PATH=${DIRROOT}/visitOSPRay/qt-everywhere-opensource-src-4.8.3
+QT_PATH=${OSPROOT}/qt-4.8.6/qt-everywhere-opensource-src-4.8.6-install
 
 # initialization
 CUSTOMIZED_PROJSUFFIX=""
@@ -37,7 +37,6 @@ PROJSUFFIX=""
 PROJPREFIX="./"
 CMAKEARGS=""
 CMAKEPATH="cmake"
-
 
 HELP()
 {
