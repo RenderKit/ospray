@@ -224,7 +224,12 @@ void addPlaneToScene(sg::Node& world)
 
 int main(int ac, const char **av)
 {
-  ospInit(&ac,av);
+  int init_error = ospInit(&ac, av);
+  if (init_error != OSP_NO_ERROR) {
+    std::cerr << "FATAL ERROR DURING INITIALIZATION!" << std::endl;
+    return init_error;
+  }
+
   auto device = ospGetCurrentDevice();
   ospDeviceSetStatusFunc(device,
                          [](const char *msg) { std::cout << msg; });

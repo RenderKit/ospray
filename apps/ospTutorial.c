@@ -79,7 +79,9 @@ int main(int argc, const char **argv) {
 
 
   // initialize OSPRay; OSPRay parses (and removes) its commandline parameters, e.g. "--osp:debug"
-  ospInit(&argc, argv);
+  int init_error = ospInit(&argc, argv);
+  if (init_error != OSP_NO_ERROR)
+    return init_error;
 
   // create and setup camera
   OSPCamera camera = ospNewCamera("perspective");
