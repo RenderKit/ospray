@@ -215,13 +215,13 @@ extern "C" {
 #endif
 
   //! initialize the ospray engine (for single-node user application) using
-  //! commandline arguments...equivalent to doing ospCreateDevice() followed by
+  //! commandline arguments...equivalent to doing ospNewDevice() followed by
   //! ospSetCurrentDevice()
   OSPRAY_INTERFACE void ospInit(int *argc, const char **argv);
 
   //! initialize the ospray engine (for single-node user application) using
   //! explicit device string.
-  OSPRAY_INTERFACE OSPDevice ospCreateDevice(const char *deviceType OSP_DEFAULT_VAL(="default"));
+  OSPRAY_INTERFACE OSPDevice ospNewDevice(const char *deviceType OSP_DEFAULT_VAL(="default"));
 
   //! set current device the API responds to
   OSPRAY_INTERFACE void ospSetCurrentDevice(OSPDevice device);

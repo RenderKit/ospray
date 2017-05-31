@@ -215,7 +215,7 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END()
 
-extern "C" OSPDevice ospCreateDevice(const char *deviceType)
+extern "C" OSPDevice ospNewDevice(const char *deviceType)
 OSPRAY_CATCH_BEGIN
 {
   return (OSPDevice)Device::createDevice(deviceType);
