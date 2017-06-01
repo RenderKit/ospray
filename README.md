@@ -67,9 +67,8 @@ before you can build OSPRay you need the following prerequisites:
     C++11 compiler (we recommend using GCC, but also support Clang and
     the [Intel® C++
     Compiler (icc)](https://software.intel.com/en-us/c-compilers)), and
-    standard Linux development tools. To build the demo viewers, you
-    should also have some version of OpenGL and the GL Utility Toolkit
-    (GLUT or freeglut), as well as Qt 4.6 or higher.
+    standard Linux development tools. To build the example viewers, you
+    should also have some version of OpenGL.
 -   Additionally you require a copy of the [Intel® SPMD Program
     Compiler (ISPC)](http://ispc.github.io). Please obtain a copy of the
     latest binary release of ISPC (currently 1.9.1) from the [ISPC
@@ -94,20 +93,16 @@ Type the following to install the dependencies using `yum`:
 
     sudo yum install cmake.x86_64
     sudo yum install tbb.x86_64 tbb-devel.x86_64
-    sudo yum install freeglut.x86_64 freeglut-devel.x86_64
-    sudo yum install qt-devel.x86_64
 
 Type the following to install the dependencies using `apt-get`:
 
     sudo apt-get install cmake-curses-gui
     sudo apt-get install libtbb-dev
-    sudo apt-get install freeglut3-dev
-    sudo apt-get install libqt4-dev
 
 Under Mac OS X these dependencies can be installed using
 [MacPorts](http://www.macports.org/):
 
-    sudo port install cmake tbb freeglut qt4
+    sudo port install cmake tbb
 
 Compiling OSPRay
 ----------------
@@ -149,8 +144,8 @@ CMake is easy:
         user@mymachine[~/Projects/ospray/release]: make
 
 -   You should now have `libospray.so` as well as a set of
-    sample viewers. You can test your version of OSPRay using any of the
-    examples on the [OSPRay Demos and
+    example application. You can test your version of OSPRay using any
+    of the examples on the [OSPRay Demos and
     Examples](http://www.ospray.org/demos.html) page.
 
 Documentation
@@ -259,11 +254,12 @@ convention with "`--osp:`") are understood:
 
 The second method of initialization is to explicitly create the device
 yourself, and possibly set parameters. This method looks almost
-identical to how other objects are created and used by OSPRay (described
-in later sections). The first step is to create the device with
+identical to how other [objects](#objects) are created and used by
+OSPRay (described in later sections). The first step is to create the
+device with
 
 ``` {.cpp}
-OSPDevice ospCreateDevice(const char *type);
+OSPDevice ospNewDevice(const char *type);
 ```
 
 where the `type` string maps to a specific device implementation. OSPRay
@@ -1657,8 +1653,8 @@ void ospFreeFrameBuffer(OSPFrameBuffer);
 Because OSPRay uses reference counting internally the framebuffer may
 not immediately be deleted at this time.
 
-The application can map the given channel of a framebuffer -- and thus
-access the stored pixel information -- via
+The application can map the given channel of a framebuffer – and thus
+access the stored pixel information – via
 
 ``` {.cpp}
 const void *ospMapFrameBuffer(OSPFrameBuffer,
@@ -1737,7 +1733,7 @@ Tutorial
 --------
 
 A minimal working example demonstrating how to use OSPRay can be found
-at `apps/ospTutorial.cpp`[^6]. On Linux build it in the build\_directory
+at `apps/ospTutorial.cpp`[^6]. On Linux build it in the build directory
 with
 
     g++ ../apps/ospTutorial.cpp -I ../ospray/include -I .. ./libospray.so -Wl,-rpath,. -o ospTutorial
@@ -1749,7 +1745,7 @@ On Windows build it in the build\_directory\\\$Configuration with
 Running `ospTutorial` will create two images of two triangles, rendered
 with the Scientific Visualization renderer with full Ambient Occlusion.
 The first image `firstFrame.ppm` shows the result after one call to
-`ospRenderFrame` -- jagged edges and noise in the shadow can be seen.
+`ospRenderFrame` – jagged edges and noise in the shadow can be seen.
 Calling `ospRenderFrame` multiple times enables progressive refinement,
 resulting in antialiased edges and converged shadows, shown after ten
 frames in the second image `accumulatedFrames.png`.
@@ -1762,21 +1758,24 @@ frames.](https://ospray.github.io/images/tutorial_accumulatedframe.png)
 Example Viewer
 --------------
 
-The OSPRay Example Viewer uses a built-in ImGUI library with minimal
-dependencies. The viewer uses the OSPRay scenegraph interface, which the
-GUI displays and manipulates. Run as `ospExampleViewerSg teapot.obj`,
-for example.
+OSPRay also includes a exemplary viewer application `ospExampleViewer`,
+showcasing all features of OSPRay. The Example Viewer uses a built-in
+ImGUI library with minimal dependencies. The viewer is based on the
+OSPRay scenegraph interface, its nodes are displayed in the GUI and can
+be manipulated interactively. For instance, simply run it as
+`ospExampleViewerSg teapot.obj`.
 
 <img src="https://ospray.github.io/images/exampleViewer.jpg" alt="Screenshot of ospExampleViewerSg." style="width:80.0%" />
 
-This also functions as an OSPRay state debugger -- invalid values will
-display in red up the hierarchy and shouldn't break the viewer until
-corrected. You can also add new nodes where appropriate. For instance,
-when "lights" is expanded, right click on "lights" and type in a light
-type, such as "point": a [point light](#point-light-sphere-light) is
-automatically added. Similarly, right click on "world" and create an
-"Importer". Change the filename to an appropriate file, and the Importer
-will propagate with the resulting state.
+This tool also functions as an OSPRay state debugger – invalid values
+will be shown in red up the hierarchy and shouldn't break the viewer
+until corrected. You can also add new nodes where appropriate. For
+example, when "lights" is expanded, right click on "lights" and type in
+a light type, such as "point": a [point
+light](#point-light-sphere-light) is automatically added. Similarly,
+right click on "world" and create an "Importer". Change the filename to
+an appropriate file, and the Importer will propagate with the resulting
+state.
 
 All commandline options with the exception of a few[^7] function
 directly on the scenegraph itself. For instance, to change the renderer
@@ -1789,26 +1788,8 @@ to
 
     ospExampleViewer rendererType=pt
 
-as any node specified before the "`=`" sign will walk down the tree
+because any node specified before the "`=`" sign will walk down the tree
 until it finds the first instance of that name.
-
-Qt Viewer
----------
-
-OSPRay also includes a demo viewer application `ospQtViewer`, showcasing
-all features of OSPRay.
-
-![Screenshot of
-`ospQtViewer`.](https://ospray.github.io/images/QtViewer.jpg)
-
-Volume Viewer
--------------
-
-Additionally, OSPRay includes a demo viewer application
-`ospVolumeViewer`, which is specifically tailored for volume rendering.
-
-![Screenshot of
-`ospVolumeViewer`.](https://ospray.github.io/images/VolumeViewer.png)
 
 Demos
 -----

@@ -223,6 +223,12 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(nullptr)
 
+// for backward compatibility, will be removed in future
+extern "C" OSPDevice ospCreateDevice(const char *deviceType)
+{
+  return ospNewDevice(deviceType);
+}
+
 extern "C" void ospSetCurrentDevice(OSPDevice _device)
 OSPRAY_CATCH_BEGIN
 {

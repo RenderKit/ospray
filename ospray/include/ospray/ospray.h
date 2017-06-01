@@ -214,16 +214,18 @@ typedef struct _OSPManagedObject *OSPManagedObject,
 extern "C" {
 #endif
 
-  //! initialize the ospray engine (for single-node user application) using
+  //! initialize the OSPRay engine (for single-node user application) using
   //! commandline arguments...equivalent to doing ospNewDevice() followed by
   //! ospSetCurrentDevice()
   //!
   //! returns OSPError value to report any errors during initialization
   OSPRAY_INTERFACE int ospInit(int *argc, const char **argv);
 
-  //! initialize the ospray engine (for single-node user application) using
+  //! initialize the OSPRay engine (for single-node user application) using
   //! explicit device string.
   OSPRAY_INTERFACE OSPDevice ospNewDevice(const char *deviceType OSP_DEFAULT_VAL(="default"));
+  // old name, will be removed in future
+  OSP_DEPRECATED OSPRAY_INTERFACE OSPDevice ospCreateDevice(const char *deviceType OSP_DEFAULT_VAL(="default"));
 
   //! set current device the API responds to
   OSPRAY_INTERFACE void ospSetCurrentDevice(OSPDevice device);

@@ -8,14 +8,17 @@ Version History
 -   Changed behavior of the background color in the SciVis renderer:
     `bgColor` now includes alpha and is always blended (no
     `backgroundEnabled` anymore). To disable the background don't set
-    bgColor, or set it to transparent black (0, 0, 0, 0).
+    bgColor, or set it to transparent black (0, 0, 0, 0)
 -   Geometries "`spheres`" and "`cylinders`" now support texture
     coordinates
+-   The GLUT- and Qt-based demo viewer applications have been replaced
+    by an Example Viewer with minimal dependencies
+-   Deprecated `ospCreateDevice()`; use `ospNewDevice()` instead
 
 ### Changes in v1.2.1:
 
 -   Various bugfixes related to MPI distributed rendering, ISPC issues
-    on Windows, and other build related issues.
+    on Windows, and other build related issues
 
 ### Changes in v1.2.0:
 
@@ -34,7 +37,7 @@ Version History
     via new material "`Luminous`"
 -   Lights can optionally made invisible by using the new parameter
     `isVisible` (only relevant for path tracer)
--   OSPRay Devices are now extendable through modules and the SDK.
+-   OSPRay Devices are now extendable through modules and the SDK
     -   Devices can be created and set current, creating an alternative
         method for initializing the API
     -   New API functions for committing parameters on Devices
