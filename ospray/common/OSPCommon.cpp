@@ -100,6 +100,9 @@ namespace ospray {
         } else if (parm == "--osp:numthreads" || parm == "--osp:num-threads") {
           device->findParam("numThreads", true)->set(atoi(av[i+1]));
           removeArgs(ac,av,i,2);
+        } else if (parm == "--osp:setaffinity" || parm == "--osp:affinity") {
+          device->findParam("setAffinity", true)->set(atoi(av[i+1]));
+          removeArgs(ac,av,i,2);
         } else {
           ++i;
         }
