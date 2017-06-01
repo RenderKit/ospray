@@ -25,8 +25,8 @@ namespace mpicommon {
     : group(group), sendRank(sendRank), recvRank(recvRank)
   {
     if (!group.valid())
-      throw std::runtime_error("#osp:mpi: trying to set up a MPI fabric "
-                               "with a invalid MPI communicator");
+      throw std::runtime_error("#osp:mpi: trying to set up an MPI fabric "
+                               "with an invalid MPI communicator");
 #ifndef NDEBUG
     int isInter = 0;
     MPI_CALL(Comm_test_inter(group.comm, &isInter));
@@ -49,12 +49,12 @@ namespace mpicommon {
 
     // Now do non-blocking test to see when this bcast is satisfied to avoid
     // locking out the send/recv threads
-    int size_bcast_done = 0;
-    while (!size_bcast_done) {
+    for(;;) {
+      int size_bcast_done;
       MPI_CALL(Test(&request, &size_bcast_done, MPI_STATUS_IGNORE));
-      if (!size_bcast_done) {
-        std::this_thread::sleep_for(std::chrono::nanoseconds(250));
-      }
+      if (size_bcast_done)
+        break;
+      std::this_thread::sleep_for(std::chrono::nanoseconds(250));
     }
 
     MPI_CALL(Barrier(group.comm));
@@ -81,12 +81,12 @@ namespace mpicommon {
 
     // Now do non-blocking test to see when this bcast is satisfied to avoid
     // locking out the send/recv threads
-    int size_bcast_done = 0;
-    while (!size_bcast_done) {
+    for(;;) {
+      int size_bcast_done;
       MPI_CALL(Test(&request, &size_bcast_done, MPI_STATUS_IGNORE));
-      if (!size_bcast_done) {
-        std::this_thread::sleep_for(std::chrono::nanoseconds(250));
-      }
+      if (size_bcast_done)
+        break;
+      std::this_thread::sleep_for(std::chrono::nanoseconds(250));
     }
 
     MPI_CALL(Barrier(group.comm));

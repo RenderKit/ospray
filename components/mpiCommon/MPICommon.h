@@ -64,7 +64,7 @@ namespace mpicommon {
 
   /*! global variable that turns on logging of MPI communication
     (for debugging) _may_ eventually turn this into a real logLevel,
-    but for now tihs is cleaner here thatn in the MPI device
+    but for now this is cleaner here than in the MPI device
   */
   OSPRAY_MPI_INTERFACE extern bool mpiIsThreaded;
 
