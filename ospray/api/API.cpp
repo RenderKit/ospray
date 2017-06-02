@@ -134,6 +134,17 @@ OSPRAY_CATCH_BEGIN
         return OSP_INVALID_ARGUMENT;
       }
 
+      auto moduleSwitch = av.substr(0, 13);
+      if (moduleSwitch == "--osp:module:") {
+        removeArgs(*_ac,(char **&)_av,i,1);
+
+        auto moduleName = av.substr(13);
+        loadLocalModule(moduleName);
+
+        --i;
+        continue;
+      }
+
       auto deviceSwitch = av.substr(0, 13);
       if (deviceSwitch == "--osp:device:") {
         removeArgs(*_ac,(char **&)_av,i,1);
@@ -215,7 +226,7 @@ OSPRAY_CATCH_BEGIN
   // no device created on cmd line, yet, so default to localdevice
   if (!deviceIsSet())
     currentDevice = new ospray::api::LocalDevice;
-  
+
   ospray::initFromCommandLine(_ac,&_av);
 
   currentDevice->commit();
