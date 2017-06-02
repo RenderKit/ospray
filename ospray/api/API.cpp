@@ -103,7 +103,7 @@ inline Device *createMpiDevice(const std::string &type)
   return device;
 }
 
-extern "C" int ospInit(int *_ac, const char **_av)
+extern "C" OSPError ospInit(int *_ac, const char **_av)
 OSPRAY_CATCH_BEGIN
 {
   auto &currentDevice = Device::current;
@@ -276,16 +276,16 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(nullptr)
 
-extern "C" int32_t ospLoadModule(const char *moduleName)
+extern "C" OSPError ospLoadModule(const char *moduleName)
 OSPRAY_CATCH_BEGIN
 {
   if (deviceIsSet()) {
-    return currentDevice().loadModule(moduleName);
+    return (OSPError)currentDevice().loadModule(moduleName);
   } else {
     return loadLocalModule(moduleName);
   }
 }
-OSPRAY_CATCH_END(1)
+OSPRAY_CATCH_END(OSP_UNKNOWN_ERROR)
 
 extern "C" const void *ospMapFrameBuffer(OSPFrameBuffer fb,
                                          OSPFrameBufferChannel channel)
@@ -536,7 +536,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   return currentDevice().renderFrame(fb, renderer, fbChannelFlags);
 }
-OSPRAY_CATCH_END(0.f)
+OSPRAY_CATCH_END(inf)
 
 extern "C" void ospCommit(OSPObject object)
 OSPRAY_CATCH_BEGIN
@@ -645,15 +645,15 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END()
 
-extern "C" int ospSetRegion(OSPVolume object, void *source,
+extern "C" OSPError ospSetRegion(OSPVolume object, void *source,
                             const osp::vec3i &index, const osp::vec3i &count)
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  return currentDevice().setRegion(object, source,
-                                   (vec3i&)index, (vec3i&)count);
+  return currentDevice().setRegion(object, source, (vec3i&)index, (vec3i&)count)
+    ? OSP_NO_ERROR : OSP_UNKNOWN_ERROR;
 }
-OSPRAY_CATCH_END(0)
+OSPRAY_CATCH_END(OSP_UNKNOWN_ERROR)
 
 extern "C" void ospSetVec2f(OSPObject _object,
                             const char *id,

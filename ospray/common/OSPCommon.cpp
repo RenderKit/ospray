@@ -274,7 +274,7 @@ namespace ospray {
     return ospray::api::Device::current->logLevel;
   }
 
-  int loadLocalModule(const std::string &name)
+  OSPError loadLocalModule(const std::string &name)
   {
     std::string libName = "ospray_module_" + name;
     loadLibrary(libName);
@@ -288,17 +288,16 @@ namespace ospray {
 
     void (*initMethod)() = (void(*)())initSym;
 
-    //NOTE(jda) - don't use magic numbers!
     if (!initMethod)
-      return 2;
+      return OSP_INVALID_ARGUMENT;
 
     try {
       initMethod();
     } catch (...) {
-      return 3;
+      return OSP_UNKNOWN_ERROR;
     }
 
-    return 0;
+    return OSP_NO_ERROR;
   }
 
   void postStatusMsg(const std::stringstream &msg, uint32_t postAtLogLevel)
