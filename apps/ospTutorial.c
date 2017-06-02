@@ -79,7 +79,9 @@ int main(int argc, const char **argv) {
 
 
   // initialize OSPRay; OSPRay parses (and removes) its commandline parameters, e.g. "--osp:debug"
-  ospInit(&argc, argv);
+  int init_error = ospInit(&argc, argv);
+  if (init_error != OSP_NO_ERROR)
+    return init_error;
 
   // create and setup camera
   OSPCamera camera = ospNewCamera("perspective");
@@ -123,6 +125,7 @@ int main(int argc, const char **argv) {
 
   // complete setup of renderer
   ospSet1i(renderer, "aoSamples", 1);
+  ospSet1f(renderer, "bgColor", 1.0f); // white, transparent
   ospSetObject(renderer, "model",  world);
   ospSetObject(renderer, "camera", camera);
   ospSetObject(renderer, "lights", lights);

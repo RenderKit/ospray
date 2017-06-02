@@ -14,15 +14,12 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-// obj
 #include "SciVisRenderer.h"
 #include "SciVisMaterial.h"
 // ospray
 #include "common/Data.h"
 #include "lights/Light.h"
 #include "lights/AmbientLight.h"
-//sys
-#include <vector>
 // ispc exports
 #include "SciVisRenderer_ispc.h"
 

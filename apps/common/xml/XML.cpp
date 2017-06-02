@@ -260,7 +260,8 @@ namespace ospray {
         consume(s,"?>");
         return true;
       }
-      if (!isWhite(*s)) return false; ++s;
+      if (!isWhite(*s)) return false;
+      ++s;
 
       skipWhites(s);
 
@@ -360,7 +361,6 @@ namespace ospray {
         (void)rc;
         std::shared_ptr<XMLDoc> doc = std::make_shared<XMLDoc>();
         doc->fileName = fn;
-        bool valid = false;
         parseXML(doc,mem);
         delete[] mem;
         fclose(file);

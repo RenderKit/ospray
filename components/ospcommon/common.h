@@ -20,6 +20,7 @@
 // std
 #include <mutex>
 #include <stdexcept>
+#include <algorithm> // std::min etc on windows
 
 #ifdef _WIN32
 // ----------- windows only -----------
@@ -68,7 +69,7 @@ typedef int ssize_t;
 #ifdef _WIN32
 #define __PRETTY_FUNCTION__ __FUNCSIG__
 #endif
-#define NOTIMPLEMENTED    throw std::runtime_error(std::string(__PRETTY_FUNCTION__)+": not implemented...");
+#define NOTIMPLEMENTED throw std::runtime_error(std::string(__PRETTY_FUNCTION__)+": not implemented...");
 
 #define SCOPED_LOCK(x) \
   std::lock_guard<std::mutex> _lock(x); \
@@ -76,7 +77,7 @@ typedef int ssize_t;
 
 namespace ospcommon {
 
-  using byte_t = unsigned char;
+  typedef unsigned char byte_t;
 
   /*! return system time in seconds */
   OSPCOMMON_INTERFACE double getSysTime();

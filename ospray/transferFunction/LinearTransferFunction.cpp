@@ -14,8 +14,6 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "common/Data.h"
-#include "common/OSPCommon.h"
 #include "transferFunction/LinearTransferFunction.h"
 #include "LinearTransferFunction_ispc.h"
 

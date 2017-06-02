@@ -26,13 +26,13 @@ namespace ospray {
     typedef vec3f Color;
 
     //! Material used by RaycastVolumeRenderer.
-    struct RaycastVolumeMaterial : public Material {
-
+    struct RaycastVolumeMaterial : public Material
+    {
       RaycastVolumeMaterial();
 
-      void commit();
+      void commit() override;
 
-      std::string toString() const;
+      std::string toString() const override;
 
       /*! opacity: 0 (transparent), 1 (opaque) */
       Texture2D *map_d;   float d;

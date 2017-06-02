@@ -19,27 +19,26 @@
 #include "sg/common/Node.h"
 #include "sg/geometry/Geometry.h"
 #include "sg/common/Data.h"
+#include "sg/common/World.h"
 
 namespace ospray {
   namespace sg {
 
     /*! A Simple Triangle Mesh that stores vertex, normal, texcoord,
         and vertex color in separate arrays */
-    struct TriangleMesh : public sg::Geometry {
+    struct TriangleMesh : public sg::Geometry
+    {
+      TriangleMesh();
 
-      //! constructor
-      TriangleMesh() : Geometry("trianglemesh"), ospGeometry(NULL) {};
-      
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const { return "ospray::sg::Geometry"; }
+      std::string toString() const override;
 
-      //! return bounding box of all primitives
-      virtual box3f getBounds();
+      box3f computeBounds() const override;
 
-      /*! 'render' the nodes */
-      virtual void render(RenderContext &ctx);
+      void postCommit(RenderContext &ctx) override;
+      void postRender(RenderContext& ctx) override;
 
-      //! \brief Initialize this node's value from given XML node 
+      //! \brief Initialize this node's value from given XML node
       /*!
         \detailed This allows a plug-and-play concept where a XML
         file can specify all kind of nodes wihout needing to know
@@ -47,27 +46,32 @@ namespace ospray {
         create a proper C++ instance of the given node type (the
         OSP_REGISTER_SG_NODE() macro will allow it to do so), and can
         tell the node to parse itself from the given XML content and
-        XML children 
-        
+        XML children
+
         \param node The XML node specifying this node's fields
 
         \param binBasePtr A pointer to an accompanying binary file (if
         existant) that contains additional binary data that the xml
         node fields may point into
       */
-      virtual void setFromXML(const xml::Node *const node, const unsigned char *binBasePtr);
+      void setFromXML(const xml::Node &node,
+                      const unsigned char *binBasePtr) override;
 
-      OSPGeometry         ospGeometry;
-      
+      // Data members //
+
+      OSPGeometry ospGeometry {nullptr};
+      OSPGeometry ospGeometryInstance {nullptr};
+      OSPModel    ospModel {nullptr};
+
       // to allow memory-mapping triangle arrays (or in general,
       // sharing data with an application) we use data arrays, not std::vector's
 
       //! vertex (position) array
       std::shared_ptr<DataBuffer> vertex;
-      
+
       //! vertex normal array. empty means 'not present'
       std::shared_ptr<DataBuffer> normal;
-      
+
       //! vertex color array. empty means 'not present'
       std::shared_ptr<DataBuffer> color;
 
@@ -80,51 +84,29 @@ namespace ospray {
 
 
     /*! A special triangle mesh that allows per-triangle materials */
-    struct PTMTriangleMesh : public sg::Geometry {
-
+    //TODO: add commit code to commit material list!
+    struct PTMTriangleMesh : public sg::TriangleMesh
+    {
       /*! triangle with per-triangle material ID */
-      struct Triangle {
+      struct Triangle
+      {
         uint32_t vtxID[3], materialID;
       };
 
       //! constructor
-      PTMTriangleMesh() : Geometry("trianglemesh"), ospGeometry(NULL) {};
-      
-      // return bounding box of all primitives
-      virtual box3f getBounds();
+      PTMTriangleMesh();
 
-      /*! 'render' the nodes */
-      virtual void render(RenderContext &ctx);
+      // Data members //
 
-      OSPGeometry         ospGeometry;
+      /*! \brief "material list" for this trianglemesh
 
-      /*! \brief "material list" for this trianglemesh 
-        
         If non-empty, the 'Triangle::materialID' indexes into this
         list; if empty, all trianlges should use the
         Geometry::material no matter what Triangle::materialID is set
        */
-      std::vector<std::shared_ptr<sg::Material> > materialList;
-      std::vector<uint32_t> materialIDs;
+      std::vector<std::shared_ptr<sg::Material>> materialList;
+      std::vector<uint32_t> materialIDs;      
 
-      // to allow memory-mapping triangle arrays (or in general,
-      // sharing data with an application) we use data arrays, not std::vector's
-
-      //! vertex (position) array
-      std::shared_ptr<DataBuffer> vertex;
-      
-      //! vertex normal array. empty means 'not present'
-      std::shared_ptr<DataBuffer> normal;
-      
-      //! vertex color array. empty means 'not present'
-      std::shared_ptr<DataBuffer> color;
-
-      //! vertex texture coordinate array. empty means 'not present'
-      std::shared_ptr<DataBuffer> texcoord;
-
-      //! triangle indices
-      std::shared_ptr<DataBuffer> index;
-      
       //! material IDs
       OSPData primMatIDs;
    };

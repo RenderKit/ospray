@@ -72,42 +72,53 @@ namespace ospray {
     /*! Abstraction for a 'material' that a renderer can query from
       any geometry (it's up to the renderer to know what to do with
       the respective mateiral type) */
-    struct RIVLMaterial : public miniSG::Node {
-      virtual string toString() const { return "ospray::miniSG::RIVLMaterial"; } 
+    struct RIVLMaterial : public miniSG::Node
+    {
+      virtual string toString() const override
+      { return "ospray::miniSG::RIVLMaterial"; }
       Ref<miniSG::Material> general;
     };
 
-    struct RIVLCamera : public miniSG::Node {
-      virtual string toString() const { return "ospray::miniSG::RIVLCamera"; } 
+    struct RIVLCamera : public miniSG::Node
+    {
+      virtual string toString() const override
+      { return "ospray::miniSG::RIVLCamera"; }
       vec3f from, at, up;
     };
 
     /*! Scene graph grouping node */
-    struct Group : public miniSG::Node {
-      virtual string toString() const;
+    struct Group : public miniSG::Node
+    {
+      virtual string toString() const override;
       std::vector<Ref<miniSG::Node> > child;
     };
 
     /*! scene graph node that contains an ospray geometry type (i.e.,
       anything that defines some sort of geometric surface */
-    struct Geometry : public miniSG::Node {
-      std::vector<Ref<RIVLMaterial> > material;
-      virtual string toString() const { return "ospray::miniSG::Geometry"; } 
+    struct Geometry : public miniSG::Node
+    {
+      std::vector<Ref<RIVLMaterial>> material;
+      virtual string toString() const  override
+      { return "ospray::miniSG::Geometry"; }
     };
 
     /*! scene graph node that contains an ospray geometry type (i.e.,
       anything that defines some sort of geometric surface */
-    struct RIVLTexture : public miniSG::Node {
-      virtual string toString() const { return "ospray::miniSG::Texture"; } 
+    struct RIVLTexture : public miniSG::Node
+    {
+      virtual string toString() const override
+      { return "ospray::miniSG::Texture"; }
       Ref<miniSG::Texture2D> texData;
     };
 
     /*! scene graph node that contains an ospray geometry type (i.e.,
       anything that defines some sort of geometric surface */
-    struct Transform : public miniSG::Node {
+    struct Transform : public miniSG::Node
+    {
       Ref<miniSG::Node> child;
       affine3f xfm;
-      virtual string toString() const { return "ospray::miniSG::Transform"; } 
+      virtual string toString() const override
+      { return "ospray::miniSG::Transform"; }
     };
 
     /*! a triangle mesh with 3 floats and 3 ints for vertex and index
@@ -116,8 +127,9 @@ namespace ospray {
     //          typename vtx_t=ospray::vec3f,
     //          typename nor_t=ospray::vec3f,
     //          typename txt_t=ospray::vec2f>
-    struct TriangleMesh : public miniSG::Geometry {
-      virtual string toString() const;
+    struct TriangleMesh : public miniSG::Geometry
+    {
+      virtual string toString() const override;
       TriangleMesh();
 
       // /*! \brief data handle to vertex data array. 
@@ -177,7 +189,6 @@ namespace ospray {
       return ss.str();
     } 
     
-
     std::string Group::toString() const 
     { 
       std::stringstream ss;
@@ -206,11 +217,11 @@ namespace ospray {
             txt.ptr->texData = new miniSG::Texture2D;
             nodeList.push_back(txt.ptr);
 
-            int height   = std::stol(node.getProp("height"));
-            int width    = std::stol(node.getProp("width"));
-            int ofs      = std::stol(node.getProp("ofs"));
-            int channels = std::stol(node.getProp("channels"));
-            int depth    = std::stol(node.getProp("depth"));
+            size_t height   = std::stoll(node.getProp("height"));
+            size_t width    = std::stoll(node.getProp("width"));
+            size_t ofs      = std::stoll(node.getProp("ofs"));
+            size_t channels = std::stoll(node.getProp("channels"));
+            size_t depth    = std::stoll(node.getProp("depth"));
             std::string format = node.getProp("format");
 
             txt.ptr->texData->channels = channels;
@@ -248,6 +259,7 @@ namespace ospray {
             std::string name = node.getProp("name","");
             std::string type = node.getProp("type");
 
+            mat->setParam("type",strdup(type.c_str()));
             xml::for_each_child_of(node,[&](const xml::Node &child){
                 std::string childNodeType = child.name;
 
@@ -312,14 +324,17 @@ namespace ospray {
                     s = NEXT_TOK;
                     int32_t w = atol(s);
                     mat->setParam(childName.c_str(), vec4i(x,y,z,w));
+                  } else if (!childType.compare("texture")) {
+                    std::cout << "not yet handling 'texture' fields in rivl files" << std::endl;
+                  } else if (!childType.compare("material")) {
+                    std::cout << "not yet handling 'material' fields in rivl files" << std::endl;
                   } else {
                     //error!
                     throw std::runtime_error("unknown parameter type '" + childType + "' when parsing RIVL materials.");
                   }
                   free(value);
                 } else if (!childNodeType.compare("textures")) {
-                  int num = std::stoll(child.getProp("num","-1"));
-
+                  size_t num = std::stoll(child.getProp("num","-1"));
                   if (child.content == "") {
                   } else {
                     char *tokenBuffer = strdup(child.content.c_str());

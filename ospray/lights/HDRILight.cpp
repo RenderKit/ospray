@@ -48,13 +48,12 @@ namespace ospray {
     frame.vy = normalize(cross(frame.vx, up));
     frame.vz = cross(frame.vx, frame.vy);
 
-    ispc::HDRILight_set(
-        getIE(),
-        (const ispc::LinearSpace3f&)frame,
-        map ? map->getIE() : nullptr,
-        intensity);
+    ispc::HDRILight_set(getIE(),
+                        (const ispc::LinearSpace3f&)frame,
+                        map ? map->getIE() : nullptr,
+                        intensity);
   }
 
   OSP_REGISTER_LIGHT(HDRILight, hdri);
-//  OSP_REGISTER_LIGHT(HDRILight, HDRILight);
-}
+
+} // ::ospray

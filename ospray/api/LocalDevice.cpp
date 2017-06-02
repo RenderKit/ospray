@@ -39,9 +39,7 @@ namespace ospray {
 
     void embreeErrorFunc(const RTCError code, const char* str)
     {
-      std::stringstream msg;
-      msg << "#osp: embree internal error " << code << " : " << str << '\n';
-      postErrorMsg(msg.str());
+      postStatusMsg() << "#osp: embree internal error " << code << " : " << str;
       throw std::runtime_error("embree internal error '" +std::string(str)+"'");
     }
 
@@ -54,21 +52,14 @@ namespace ospray {
       // ospray::init() because in mpi-mode the latter is also called
       // in the host-stubs, where it shouldn't.
       // -------------------------------------------------------
-      std::stringstream embreeConfig;
-      if (debugMode)
-        embreeConfig << " threads=1,verbose=2";
-      else if(numThreads > 0)
-        embreeConfig << " threads=" << numThreads;
-      embreeDevice = rtcNewDevice(embreeConfig.str().c_str());
+      embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
 
       rtcDeviceSetErrorFunction(embreeDevice, embreeErrorFunc);
 
       RTCError erc = rtcDeviceGetError(embreeDevice);
       if (erc != RTC_NO_ERROR) {
         // why did the error function not get called !?
-        std::stringstream msg;
-        msg << "#osp:init: embree internal error number " << erc << '\n';
-        postErrorMsg(msg.str());
+        postStatusMsg() << "#osp:init: embree internal error number " << erc;
         assert(erc == RTC_NO_ERROR);
       }
 
@@ -149,11 +140,6 @@ namespace ospray {
       ManagedObject *object = (ManagedObject *)_object;
       Assert2(object,"null object in LocalDevice::commit()");
       object->commit();
-
-      // hack, to stay compatible with earlier version
-      Model *model = dynamic_cast<Model *>(object);
-      if (model)
-        model->finalize();
     }
 
     /*! add a new geometry to a model */
@@ -287,7 +273,7 @@ namespace ospray {
     {
       Volume *volume = (Volume *) handle;
       Assert(volume != nullptr && "invalid volume object handle");
-      return(volume->setRegion(source, index, count));
+      return volume->setRegion(source, index, count);
     }
 
     /*! assign (named) vec2f parameter to an object */
@@ -368,7 +354,7 @@ namespace ospray {
     OSPPixelOp LocalDevice::newPixelOp(const char *type)
     {
       Assert(type != nullptr && "invalid render type identifier");
-      PixelOp *pixelOp = PixelOp::createPixelOp(type);
+      PixelOp *pixelOp = PixelOp::createInstance(type);
       if (!pixelOp) {
         if (debugMode) {
           throw std::runtime_error("unknown pixelOp type '" +
@@ -395,7 +381,7 @@ namespace ospray {
     OSPRenderer LocalDevice::newRenderer(const char *type)
     {
       Assert(type != nullptr && "invalid render type identifier");
-      Renderer *renderer = Renderer::createRenderer(type);
+      Renderer *renderer = Renderer::createInstance(type);
       if (!renderer) {
         if (debugMode) {
           throw std::runtime_error("unknown renderer type '" +
@@ -412,7 +398,7 @@ namespace ospray {
     OSPGeometry LocalDevice::newGeometry(const char *type)
     {
       Assert(type != nullptr && "invalid render type identifier");
-      Geometry *geometry = Geometry::createGeometry(type);
+      Geometry *geometry = Geometry::createInstance(type);
       if (!geometry) return nullptr;
       geometry->refInc();
       return (OSPGeometry)geometry;
@@ -451,7 +437,7 @@ namespace ospray {
     OSPCamera LocalDevice::newCamera(const char *type)
     {
       Assert(type != nullptr && "invalid camera type identifier");
-      Camera *camera = Camera::createCamera(type);
+      Camera *camera = Camera::createInstance(type);
       if (!camera) {
         if (debugMode) {
           throw std::runtime_error("unknown camera type '"
@@ -550,11 +536,10 @@ namespace ospray {
       try {
         return renderer->renderFrame(fb, fbChannelFlags);
       } catch (const std::runtime_error &e) {
-        std::string msg = "=================================================\n";
-        msg += "# >>> ospray fatal error <<< \n";
-        msg += e.what() + '\n';
-        msg += "=================================================\n";
-        postErrorMsg(msg);
+        postStatusMsg() << "================================================\n"
+                        << "# >>> ospray fatal error <<< \n"
+                        << std::string(e.what()) + '\n'
+                        << "================================================";
         exit(1);
       }
     }

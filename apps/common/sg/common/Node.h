@@ -18,6 +18,7 @@
 
 #include "sg/common/TimeStamp.h"
 #include "sg/common/Serialization.h"
+#include "sg/common/RenderContext.h"
 #include "sg/common/RuntimeError.h"
 // stl
 #include <map>
@@ -25,11 +26,15 @@
 // xml
 #include "../../../common/xml/XML.h"
 // ospcommon
+#include "ospcommon/utility/Any.h"
 #include "ospcommon/vec.h"
 
-namespace ospray {
+#include <mutex>
 
+namespace ospray {
   namespace sg {
+
+    using SGVar = ospcommon::utility::Any;
 
     /*! forward decl of entity that nodes can write to when writing XML files */
     struct XMLWriter;
@@ -38,66 +43,35 @@ namespace ospray {
       automatically defines all accessor functions for said
       member.  */
 #define SG_NODE_DECLARE_MEMBER(type,name,capName)       \
-    public:                                             \
-    inline type get##capName() const { return name; }   \
   public:                                               \
-  inline void set##capName(const type &name) {          \
-    this->name = name;                                  \
-    this->lastModified = TimeStamp::now();              \
-  };                                                    \
+    inline type get##capName() const { return name; }   \
+    inline void set##capName(const type &name) {        \
+      this->name = name;                                \
+      this->properties.lastModified = TimeStamp();      \
+    };                                                  \
   protected:                                            \
-  type name;                                            \
+  type name                                             \
 
-    /*! \brief a parameter to a node (is not in itself a node).
-
-      \note This is only the abstract base class, actual instantiations are
-      the in the 'ParamT' template. */
-    struct Param {
-      /*! constructor. the passed name alwasys remains constant */
-      Param(const std::string &name) : name(name) {};
-      /*! return name of this parameter. the value is in the derived class */
-      inline const std::string getName() const { return name; }
-      virtual void write(XMLWriter &) { NOTIMPLEMENTED; };
-      /*! returns the ospray data type that this node corresponds to */
-      virtual OSPDataType getOSPDataType() const = 0;
-    protected:
-      /*! name of this node */
-      const std::string name;
+    enum NodeFlags
+    {
+      none = 0 << 0,
+      required = 1 << 1,  //! this node is required to be valid by its parent
+      valid_min_max = 1 << 2,  //! validity determined by minmax range
+      valid_whitelist = 1 << 3, //! validity determined by whitelist
+      valid_blacklist = 1 << 4,  //! validity determined by blacklist
+      gui_slider = 1 << 5,
+      gui_color = 1<<6,
+      gui_combo = 1<<7
     };
 
-    /*! \brief a concrete parameter to a scene graph node */
-    template<typename T>
-    struct ParamT : public sg::Param {
-      ParamT(const std::string &name, const T &t) : Param(name), value(t) {};
-      virtual OSPDataType getOSPDataType() const override;
-      virtual void write(XMLWriter &) { NOTIMPLEMENTED; };
-      T value;
-    };
-
-    /*! class that encapsulate all the context/state required for
-      rendering any object. note we INTENTIONALLY do not use
-      shared_ptrs here because certain nodes want to set these values
-      to 'this', which isn't valid for shared_ptrs */
-    struct RenderContext {
-      std::shared_ptr<sg::World>      world;      //!< world we're rendering into
-      std::shared_ptr<sg::Integrator> integrator; //!< integrator used to create materials etc
-      const affine3f  xfm;        //!< affine geometry transform matrix
-
-      //! create a new context
-      RenderContext() : xfm(one) {};
-
-      //! create a new context with new transformation matrix
-      RenderContext(const RenderContext &other, const affine3f &newXfm)
-        : world(other.world), integrator(other.integrator), xfm(newXfm)
-      {}
-    };
+    // Base Node class definition /////////////////////////////////////////////
 
     /*! \brief base node of all scene graph nodes */
-    struct Node : public std::enable_shared_from_this<Node>
+    struct OSPSG_INTERFACE Node : public std::enable_shared_from_this<Node>
     {
-      Node() : lastModified(1), lastCommitted(0) {};
+      Node();
 
-      virtual    std::string toString() const = 0;
+      virtual std::string toString() const;
 
       //! \brief Initialize this node's value from given XML node
       /*!
@@ -115,31 +89,35 @@ namespace ospray {
         existant) that contains additional binary data that the xml
         node fields may point into
       */
-      virtual void setFromXML(const xml::Node &node, 
+      virtual void setFromXML(const xml::Node &node,
                               const unsigned char *binBasePtr);
-
-      //! just for convenience; add a typed 'setParam' function
-      template<typename T>
-      inline void setParam(const std::string &name, const T &t)
-      { params[name] = std::make_shared<ParamT<T>>(name,t); }
-
-      // /*! query given parameter */
-      // std::shared_ptr<sg::Param> getParam(const std::string &name) const;
-
-      template<typename Lambda>
-      inline void for_each_param(const Lambda &functor)
-      { for (auto it=params.begin(); it!=params.end(); ++it) functor(it->second); }
-    
 
       /*! serialize the scene graph - add object to the serialization,
         but don't do anything else to the node(s) */
       virtual void serialize(sg::Serialization::State &state);
 
-      /*! \brief 'render' the object for the first time */
-      virtual void render(RenderContext &ctx) {};
+      // Properties ///////////////////////////////////////////////////////////
 
-      /*! \brief 'commit' updates */
-      virtual void commit() {};
+      std::string name()          const;
+      std::string type()          const;
+      SGVar       min()           const;
+      SGVar       max()           const;
+      NodeFlags   flags()         const;
+      std::string documentation() const;
+
+      void setName(const std::string &v);
+      void setType(const std::string &v);
+      void setMinMax(const SGVar& minv, const SGVar& maxv);
+      void setFlags(NodeFlags f);
+      void setFlags(int f);
+      void setDocumentation(const std::string &s);
+      void setWhiteList(const std::vector<SGVar> &values);
+      void setBlackList(const std::vector<SGVar> &values);
+
+      bool isValid() const;
+
+      virtual bool computeValid();
+      virtual bool computeValidMinMax();
 
       /*! \brief return bounding box in world coordinates.
 
@@ -147,32 +125,318 @@ namespace ospray {
         camera motion, setting default camera position, etc. Nodes
         for which that does not apply can simpy return
         box3f(empty) */
-      virtual box3f getBounds() { return box3f(empty); };
+      virtual box3f bounds() const;
 
-      //! return when this node was last modified
-      inline TimeStamp getLastModified()  const { return lastModified; };
+      // Node stored value (data) interface ///////////////////////////////////
 
-      //! return when this node was last committed
-      inline TimeStamp getLastCommitted() const { return lastCommitted; };
+      //! get the value of the node, whithout template conversion
+      SGVar value();
 
-      std::string name;
+      //! returns the value of the node in the desired type
+      template<typename T>
+      T& valueAs();
+
+      //! returns the value of the node in the desired type
+      template<typename T>
+      const T& valueAs() const;
+
+      //! set the value of the node.  Requires strict typecast
+      void setValue(SGVar val);
+
+      // Update detection interface ///////////////////////////////////////////
+
+      TimeStamp lastModified() const;
+      TimeStamp lastCommitted() const;
+      TimeStamp childrenLastModified() const;
+
+      void markAsCommitted();
+      virtual void markAsModified();
+      virtual void setChildrenModified(TimeStamp t);
+
+      // Parent-child structual interface /////////////////////////////////////
+
+      // Children //
+
+      bool hasChild(const std::string &name) const;
+
+      /*! return named child node. */
+      Node& child(const std::string &name) const;
+      Node& operator[] (const std::string &c) const;
+
+      Node& childRecursive(const std::string &name);
+
+      std::vector<std::shared_ptr<Node>> children() const;
+
+      std::map<std::string, std::shared_ptr<Node>>& childrenMap();
+
+      //! add node as child of this one
+      void add(std::shared_ptr<Node> node);
+      Node& operator+=(std::shared_ptr<Node> node);
+
+      //! just for convenience; add a typed 'setParam' function
+      template<typename T>
+      void createChildWithValue(const std::string &name, const std::string& type, const T &t);
+
+      Node& createChild(std::string name,
+                            std::string type = "Node",
+                            SGVar var = SGVar(),
+                            int flags = sg::NodeFlags::none,
+                            std::string documentation="");
+
+      void setChild(const std::string &name,
+                        const std::shared_ptr<Node> &node);
+
+      // Parent //
+
+      bool hasParent() const;
+
+      Node& parent() const;
+      void setParent(Node &p);
+      void setParent(const std::shared_ptr<Node>& p);
+
+      // Traversal interface //////////////////////////////////////////////////
+
+      //! traverse this node and childrend with given operation, such as
+      //  print,commit,render or custom operations
+      virtual void traverse(RenderContext &ctx, const std::string& operation);
+
+      //! Helper overload to use a default constructed RenderContext for root
+      //  level traversal
+      void traverse(const std::string& operation);
+
+      //! called before traversing children
+      virtual void preTraverse(RenderContext &ctx,
+                               const std::string& operation, bool& traverseChildren);
+
+      //! called after traversing children
+      virtual void postTraverse(RenderContext &ctx,
+                                const std::string& operation);
+
+      //! called before committing children during traversal
+      virtual void preCommit(RenderContext &ctx);
+
+      //! called after committing children during traversal
+      virtual void postCommit(RenderContext &ctx);
+
     protected:
-      TimeStamp lastModified;
-      TimeStamp lastCommitted;
-      std::map<std::string, std::shared_ptr<Param>> params;
+
+      struct
+      {
+        std::string name;
+        std::string type;
+        std::vector<SGVar> minmax;
+        std::vector<SGVar> whitelist;
+        std::vector<SGVar> blacklist;
+        std::map<std::string, std::shared_ptr<Node>> children;
+        SGVar value;
+        TimeStamp lastModified;
+        TimeStamp childrenMTime;
+        TimeStamp lastCommitted;
+        TimeStamp lastVerified;
+        Node* parent {nullptr};
+        NodeFlags flags;
+        bool valid {false};
+        std::string documentation;
+      } properties;
+
+      // NOTE(jda) - The mutex is 'mutable' because const methods still need
+      //             to be able to lock the mutex
+      mutable std::mutex mutex;
     };
 
-    /*! read a given scene graph node from its correspondoing xml node represenation */
-    sg::Node *parseNode(xml::Node *node);
+    // Inlined Node definitions ///////////////////////////////////////////////
+
+    //! just for convenience; add a typed 'setParam' function
+    template<typename T>
+    inline void Node::createChildWithValue(const std::string &name, const std::string& type, const T &t)
+    {
+      if (hasChild(name))
+        child(name).setValue(t);
+      else {
+        auto node = std::make_shared<Node>();
+        node->setType(type);
+        node->setValue(t);
+        node->setName(name);
+        add(node);
+      }
+    }
+
+    template<typename T>
+    inline T& Node::valueAs()
+    {
+      std::lock_guard<std::mutex> lock{mutex};
+      return properties.value.get<T>();
+    }
+
+    template<typename T>
+    inline const T& Node::valueAs() const
+    {
+      std::lock_guard<std::mutex> lock{mutex};
+      return properties.value.get<T>();
+    }
+
+    OSPSG_INTERFACE std::shared_ptr<Node> createNode(std::string name,
+                                                     std::string type = "Node",
+                                                     SGVar var = SGVar(),
+                                                     int flags = sg::NodeFlags::none,
+                                                     std::string documentation="");
+
+    // Helper functions ///////////////////////////////////////////////////////
+
+    // Compare //
+
+    template <typename T>
+    inline bool compare(const SGVar& min, const SGVar& max, const SGVar& value)
+    {
+      if (value.get<T>() < min.get<T>() || value.get<T>() > max.get<T>())
+        return false;
+      return true;
+    }
+
+    template <>
+    inline bool compare<vec2f>(const SGVar& min,
+                               const SGVar& max,
+                               const SGVar& value)
+    {
+      const vec2f &v1 = min.get<vec2f>();
+      const vec2f &v2 = max.get<vec2f>();
+      const vec2f &v  = value.get<vec2f>();
+      return !(v1.x > v.x || v2.x < v.x ||
+               v1.y > v.y || v2.y < v.y);
+    }
+
+    template <>
+    inline bool compare<vec2i>(const SGVar& min,
+                               const SGVar& max,
+                               const SGVar& value)
+    {
+      const vec2i &v1 = min.get<vec2i>();
+      const vec2i &v2 = max.get<vec2i>();
+      const vec2i &v  = value.get<vec2i>();
+      return !(v1.x > v.x || v2.x < v.x ||
+               v1.y > v.y || v2.y < v.y);
+    }
+
+    template <>
+    inline bool compare<vec3f>(const SGVar& min,
+                               const SGVar& max,
+                               const SGVar& value)
+    {
+      const vec3f &v1 = min.get<vec3f>();
+      const vec3f &v2 = max.get<vec3f>();
+      const vec3f &v  = value.get<vec3f>();
+      return !(v1.x > v.x || v2.x < v.x ||
+               v1.y > v.y || v2.y < v.y ||
+               v1.z > v.z || v2.z < v.z);
+    }
+
+    template <>
+    inline bool compare<box3f>(const SGVar& min,
+                               const SGVar& max,
+                               const SGVar& value)
+    {
+      return true;// NOTE(jda) - this is wrong, was incorrect before refactoring
+    }
+
+    // Commit //
+
+    template <typename T>
+    inline void commitNodeValue(Node &)
+    {
+    }
+
+    template <>
+    inline void commitNodeValue<float>(Node &n)
+    {
+      ospSet1f(n.parent().valueAs<OSPObject>(),
+               n.name().c_str(), n.valueAs<float>());
+    }
+
+    template <>
+    inline void commitNodeValue<bool>(Node &n)
+    {
+      ospSet1i(n.parent().valueAs<OSPObject>(),
+               n.name().c_str(), n.valueAs<bool>());
+    }
+
+    template <>
+    inline void commitNodeValue<int>(Node &n)
+    {
+      ospSet1i(n.parent().valueAs<OSPObject>(),
+               n.name().c_str(), n.valueAs<int>());
+    }
+
+    template <>
+    inline void commitNodeValue<vec3f>(Node &n)
+    {
+      ospSet3fv(n.parent().valueAs<OSPObject>(),
+                n.name().c_str(), &n.valueAs<vec3f>().x);
+    }
 
 
-    // list of all named nodes - for now use this as a global
-    // variable, but eventually we'll need tofind a better way for
-    // storing this ... maybe in the world!?
-    extern std::map<std::string,std::shared_ptr<sg::Node> > namedNodes;
-    std::shared_ptr<sg::Node> findNamedNode(const std::string &name);
-    void registerNamedNode(const std::string &name, const std::shared_ptr<sg::Node> &node);
+    template <>
+    inline void commitNodeValue<vec2f>(Node &n)
+    {
+      ospSet3fv(n.parent().valueAs<OSPObject>(),
+                n.name().c_str(), &n.valueAs<vec2f>().x);
+    }
 
+    // Helper parameter node wrapper //////////////////////////////////////////
+
+    template <typename T>
+    struct NodeParam : public Node
+    {
+      NodeParam() : Node() { setValue(T()); }
+      virtual void postCommit(RenderContext &ctx) override
+      {
+        if (hasParent()) {
+          //TODO: generalize to other types of ManagedObject
+
+          //NOTE(jda) - OMG the syntax for the 'if' is strange...
+          if (parent().value().template is<OSPObject>())
+            commitNodeValue<T>(*this);
+        }
+      }
+
+      virtual bool computeValidMinMax() override
+      {
+        if (properties.minmax.size() < 2 ||
+            !(flags() & NodeFlags::valid_min_max))
+          return true;
+
+        return compare<T>(min(), max(), value());
+      }
+    };
+
+    // Base Node for all renderables //////////////////////////////////////////
+
+    //! a Node with bounds and a render operation
+    struct OSPSG_INTERFACE Renderable : public Node
+    {
+      Renderable() { createChild("bounds", "box3f"); }
+      virtual ~Renderable() = default;
+
+      virtual box3f bounds() const override { return child("bounds").valueAs<box3f>(); }
+      virtual box3f computeBounds() const
+      {
+        box3f cbounds = empty;
+        for (const auto &child : properties.children)
+        {
+          auto tbounds = child.second->bounds();
+            cbounds.extend(tbounds);
+        }
+        return cbounds;
+      }
+      // virtual box3f extendBounds(box3f b) { bbox.extend(b); return bbox; }
+      virtual void preTraverse(RenderContext &ctx,
+                               const std::string& operation, bool& traverseChildren) override;
+      virtual void postTraverse(RenderContext &ctx,
+                                const std::string& operation) override;
+      virtual void postCommit(RenderContext &ctx) override { 
+        child("bounds").setValue(computeBounds()); }
+      virtual void preRender(RenderContext &ctx)  {}
+      virtual void postRender(RenderContext &ctx) {}
+    };
 
     /*! \brief registers a internal ospray::<ClassName> renderer under
       the externally accessible name "external_name"
@@ -184,13 +448,22 @@ namespace ospray {
       of this renderer.
     */
 #define OSP_REGISTER_SG_NODE(InternalClassName)                         \
-    extern "C" std::shared_ptr<ospray::sg::Node>                        \
+    extern "C" OSPSG_INTERFACE ospray::sg::Node*                        \
     ospray_create_sg_node__##InternalClassName()                        \
     {                                                                   \
-      return std::make_shared<ospray::sg::InternalClassName>();         \
-    }
+      return new ospray::sg::InternalClassName;                         \
+    }                                                                   \
+    /* Extra declaration to avoid "extra ;" pedantic warnings */        \
+    ospray::sg::Node* ospray_create_sg_node__##InternalClassName()
+
+#define OSP_REGISTER_SG_NODE_NAME(InternalClassName,Name)               \
+    extern "C" OSPSG_INTERFACE ospray::sg::Node*                        \
+    ospray_create_sg_node__##Name()                                     \
+    {                                                                   \
+      return new ospray::sg::InternalClassName;                         \
+    }                                                                   \
+    /* Extra declaration to avoid "extra ;" pedantic warnings */        \
+    ospray::sg::Node* ospray_create_sg_node__##Name()
 
   } // ::ospray::sg
 } // ::ospray
-
-

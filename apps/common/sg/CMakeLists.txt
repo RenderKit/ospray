@@ -21,21 +21,26 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   SceneGraph.cpp
   Renderer.cpp
 
+  geometry/Geometry.h
   geometry/Spheres.cpp
   geometry/TriangleMesh.cpp
 
+  camera/Camera.h
   camera/PerspectiveCamera.cpp
 
-  common/Serialization.cpp
   common/Common.cpp
-  common/Node.cpp
-  common/Integrator.cpp
-  common/World.cpp
-  common/Texture2D.cpp
-  common/Material.cpp
-  common/Transform.cpp
+  common/Data.h
   common/FrameBuffer.cpp
-  
+  common/Light.cpp
+  common/Material.cpp
+  common/Node.cpp
+  common/RenderContext.h
+  common/Serialization.cpp
+  common/TimeStamp.cpp
+  common/Texture2D.cpp
+  common/Transform.cpp
+  common/World.cpp
+
   transferFunction/TransferFunction.cpp
   volume/Volume.cpp
 
@@ -45,8 +50,9 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
 
   # scene graph importers
   importer/Importer.cpp
+  importer/importPoints.cpp
+# all these should be lower-case: they're functions, not classes
   importer/ImportOSP.cpp
-#  importer/ImportOSG.cpp
   importer/ImportOBJ.cpp
   importer/ImportPLY.cpp
   importer/ImportRIVL.cpp
@@ -54,4 +60,5 @@ LINK
   ospray
   ospray_common
   ospray_xml
+  ospray_minisg
 )

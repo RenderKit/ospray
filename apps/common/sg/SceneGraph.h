@@ -16,12 +16,18 @@
 
 #pragma once
 
-// std
-#include <map>
+#ifdef _WIN32
+#  ifdef ospray_sg_EXPORTS
+#    define OSPSG_INTERFACE __declspec(dllexport)
+#  else
+#    define OSPSG_INTERFACE __declspec(dllimport)
+#  endif
+#else
+#  define OSPSG_INTERFACE
+#endif
 
 // sg components
 #include "sg/common/Node.h"
-#include "sg/common/Integrator.h"
 #include "sg/common/Data.h"
 #include "sg/common/Transform.h"
 
@@ -35,90 +41,65 @@
 // ospcommon
 #include "ospcommon/FileName.h"
 
-#ifdef _WIN32
-#  ifdef ospray_sg_EXPORTS
-#    define OSPSG_INTERFACE __declspec(dllexport)
-#  else
-#    define OSPSG_INTERFACE __declspec(dllimport)
-#  endif
-#else
-#  define OSPSG_INTERFACE
-#endif
-
 namespace ospray {
   namespace sg {
+
     using ospcommon::FileName;
     
     /*! \brief allows for adding semantical info to a model/scene
      graph.  \note will not do anything by itself. */
-    struct Info : public sg::Node {
+    struct Info : public sg::Node
+    {
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const override { return "ospray::sg::Info"; };
+      std::string toString() const override;
 
       std::string permissions;
       std::string acks;
       std::string description;
     };
 
-    struct Group : public sg::Node {
+    struct Group : public sg::Renderable
+    {
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const override { return "ospray::sg::Group"; };
+      std::string toString() const override;
 
-      /*! 'render' the nodes */
-      virtual void render(RenderContext &ctx) override;
-      virtual box3f getBounds() override;
-      
-      std::vector<std::shared_ptr<sg::Node> > children;
+      std::vector<std::shared_ptr<sg::Node>> children;
     };
 
     /*! a geometry node - the generic geometry node */
-    struct GenericGeometry : public sg::Geometry {
-      GenericGeometry(const std::string &type) : Geometry(type) {};
+    struct GenericGeometry : public sg::Geometry
+    {
+      GenericGeometry(const std::string &type);
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const override { return "ospray::sg::GenericGeometry"; }
-      virtual box3f getBounds() override { return bounds; };
+      std::string toString() const override;
+      box3f bounds() const override;
 
       /*! geometry type, i.e., 'spheres', 'cylinders', 'trianglemesh', ... */
       const std::string type; 
-      box3f bounds;
-    };
-
-    /*! a instance of another model */
-    struct Instance : public sg::Geometry {
-      Instance() : Geometry("Instance") {};
-      /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const override { return "ospray::sg::Instance"; }
-
-      //! the model we're instancing
-      std::shared_ptr<World>    world;
-    };
-
-    /*! a light node - the generic light node */
-    struct Light : public sg::Node {
-      //! \brief constructor
-      Light(const std::string &type) : type(type) {};
-
-      /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const override { return "ospray::sg::Light"; }
-
-      /*! \brief light type, i.e., 'DirectionalLight', 'PointLight', ... */
-      const std::string type; 
+      box3f _bounds;
     };
 
     /*! import an OBJ wavefront model, and add its contents to the given world */
-    OSPSG_INTERFACE void importOBJ(const std::shared_ptr<World> &world, const FileName &fileName);
+    OSPSG_INTERFACE void importOBJ(const std::shared_ptr<Node> &world,
+                                   const FileName &fileName);
 
     /*! import an PLY model, and add its contents to the given world */
-    OSPSG_INTERFACE void importPLY(std::shared_ptr<World> &world, const FileName &fileName);
+    OSPSG_INTERFACE void importPLY(std::shared_ptr<Node> &world,
+                                   const FileName &fileName);
 
     /*! import an X3D-format model, and add its contents to the given world */
-    OSPSG_INTERFACE void importX3D(const std::shared_ptr<World> &world, const FileName &fileName);
+    OSPSG_INTERFACE void importX3D(const std::shared_ptr<Node> &world,
+                                   const FileName &fileName);
 
-    OSPSG_INTERFACE std::shared_ptr<sg::World> loadOSP(const std::string &fileName);
-    OSPSG_INTERFACE std::shared_ptr<sg::World> readXML(const std::string &fileName);
-    OSPSG_INTERFACE std::shared_ptr<sg::World> importRIVL(const std::string &fileName);
-    OSPSG_INTERFACE std::shared_ptr<sg::World> loadOSG(const std::string &fileName);
+    OSPSG_INTERFACE std::shared_ptr<sg::Node> loadOSP(const std::string &fileName);
+    OSPSG_INTERFACE void loadOSP(std::shared_ptr<sg::Node> world, const std::string &fileName);
+    OSPSG_INTERFACE std::shared_ptr<sg::Node> readXML(const std::string &fileName);
+    OSPSG_INTERFACE void importRIVL(std::shared_ptr<Node> world, const std::string &fileName);
+    OSPSG_INTERFACE std::shared_ptr<sg::Node> loadOSG(const std::string &fileName);
+
+    OSPSG_INTERFACE void loadOSG(const std::string &fileName,
+                                 std::shared_ptr<sg::Node> world);
     /*! @} */
 
   } // ::ospray::sg

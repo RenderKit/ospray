@@ -21,11 +21,14 @@
 namespace ospray {
   namespace pathtracer {
 
-    struct MixMaterial : public ospray::Material {
-      virtual std::string toString() const { return "ospray::pathtracer::MixMaterial"; }
+    struct MixMaterial : public ospray::Material
+    {
+      virtual std::string toString() const override
+      { return "ospray::pathtracer::MixMaterial"; }
 
       //! \brief commit the material's parameters
-      virtual void commit() {
+      virtual void commit() override
+      {
         if (getIE() == nullptr)
           ispcEquivalent = ispc::PathTracer_Mix_create();
 

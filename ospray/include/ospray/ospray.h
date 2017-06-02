@@ -62,6 +62,16 @@
 #define OSP_DEPRECATED
 #endif
 
+/*! \brief Error codes returned by various API and callback functions */
+typedef enum {
+  OSP_NO_ERROR = 0,          //!< No error has been recorded
+  OSP_UNKNOWN_ERROR = 1,     //!< An unknown error has occured
+  OSP_INVALID_ARGUMENT = 2,  //!< An invalid argument is specified
+  OSP_INVALID_OPERATION = 3, //!< The operation is not allowed for the specified object
+  OSP_OUT_OF_MEMORY = 4,     //!< There is not enough memory left to execute the command
+  OSP_UNSUPPORTED_CPU = 5,   //!< The CPU is not supported as it does not support SSE4.1
+} OSPError;
+
 /*! OSPRay format constants for Frame Buffer creation */
 typedef enum {
   OSP_FB_NONE,    //!< framebuffer will not be mapped by application
@@ -83,57 +93,10 @@ typedef enum {
   OSP_FB_VARIANCE=(1<<3)
 } OSPFrameBufferChannel;
 
-//! constants for switching the OSPRay MPI Scope between 'per rank' and 'all ranks'
-/*! \see ospdApiMode */
-typedef enum {
-  //! \brief all ospNew(), ospSet(), etc calls affect only the current rank
-  /*! \detailed in this mode, all ospXyz() calls made on a given rank
-    will ONLY affect state ont hat rank. This allows for configuring a
-    (globally known) object differnetly on each different rank (also
-    see OSP_MPI_SCOPE_GLOBAL) */
-  OSPD_MODE_INDEPENDENT,
-  OSPD_RANK=OSPD_MODE_INDEPENDENT /*!< alias for OSP_MODE_INDEPENDENT, reads better in code */,
-
-  //! \brief all ospNew(), ospSet() calls affect all ranks
-  /*! \detailed In this mode, ONLY rank 0 should call ospXyz()
-      functions, but all objects defined through those functions---and
-      all parameters set through those---will apply equally to all
-      ranks. E.g., a OSPVolume vol = ospNewVolume(...) would create a
-      volume object handle that exists on (and therefore, is valid on)
-      all ranks. The (distributed) app may then switch to 'current
-      rank only' mode, and may assign different data or parameters on
-      each rank (typically, in order to have different parts of the
-      volume on different nodes), but the object itself is globally
-      known */
-  OSPD_MODE_MASTERED,
-  OSPD_MASTER=OSPD_MODE_MASTERED /*!< alias for OSP_MODE_MASTERED, reads better in code */,
-
-  //! \brief all ospNew(), ospSet() are called collaboratively by all ranks
-  /*! \detailed In this mode, ALL ranks must call (the same!) api
-      function, the result is collaborative across all nodes in the
-      sense that any object being created gets created across all
-      nodes, and ALL ranks get a valid handle returned */
-  OSPD_MODE_COLLABORATIVE,
-  OSPD_ALL=OSPD_MODE_COLLABORATIVE /*!< alias for OSP_MODE_COLLABORATIVE, reads better in code */
-} OSPDApiMode;
-
-/*! flags that can be passed to OSPNewGeometry; can be OR'ed together */
-typedef enum {
-  /*! experimental: currently used to specify that the app ranks -
-      together - hold a logical piece of geometry, with the back-end
-      ospray workers then fetching that on demand..... */
-  OSP_DISTRIBUTED_GEOMETRY = (1<<0),
-} OSPGeometryCreationFlags;
-
 /*! flags that can be passed to OSPNewData; can be OR'ed together */
 typedef enum {
   OSP_DATA_SHARED_BUFFER = (1<<0),
 } OSPDataCreationFlags;
-
-typedef enum {
-  OSPD_Z_COMPOSITE
-} OSPDRenderMode;
-
 
 #ifdef __cplusplus
 namespace osp {
@@ -251,14 +214,18 @@ typedef struct _OSPManagedObject *OSPManagedObject,
 extern "C" {
 #endif
 
-  //! initialize the ospray engine (for single-node user application) using
-  //! commandline arguments...equivalent to doing ospCreateDevice() followed by
+  //! initialize the OSPRay engine (for single-node user application) using
+  //! commandline arguments...equivalent to doing ospNewDevice() followed by
   //! ospSetCurrentDevice()
-  OSPRAY_INTERFACE void ospInit(int *argc, const char **argv);
+  //!
+  //! returns OSPError value to report any errors during initialization
+  OSPRAY_INTERFACE OSPError ospInit(int *argc, const char **argv);
 
-  //! initialize the ospray engine (for single-node user application) using
+  //! initialize the OSPRay engine (for single-node user application) using
   //! explicit device string.
-  OSPRAY_INTERFACE OSPDevice ospCreateDevice(const char *deviceType OSP_DEFAULT_VAL(="default"));
+  OSPRAY_INTERFACE OSPDevice ospNewDevice(const char *deviceType OSP_DEFAULT_VAL(="default"));
+  // old name, will be removed in future
+  OSP_DEPRECATED OSPRAY_INTERFACE OSPDevice ospCreateDevice(const char *deviceType OSP_DEFAULT_VAL(="default"));
 
   //! set current device the API responds to
   OSPRAY_INTERFACE void ospSetCurrentDevice(OSPDevice device);
@@ -272,18 +239,35 @@ extern "C" {
   /*! add 1-int parameter to given Device */
   OSPRAY_INTERFACE void ospDeviceSet1i(OSPDevice, const char *id, int32_t x);
 
-  /*! Error callback function type */
+  /*! status message callback function type */
+  typedef void (*OSPStatusFunc)(const char* messageText);
+
+  /*! set callback for given Device to call when a status message occurs*/
+  OSPRAY_INTERFACE void ospDeviceSetStatusFunc(OSPDevice, OSPStatusFunc);
+
+  // old names
   typedef void (*OSPErrorMsgFunc)(const char* str);
+  OSP_DEPRECATED OSPRAY_INTERFACE void ospDeviceSetErrorMsgFunc(OSPDevice, OSPErrorMsgFunc);
 
-  /*! Set callback for given Device to call when an error message occurs*/
-  OSPRAY_INTERFACE void ospDeviceSetErrorMsgFunc(OSPDevice, OSPErrorMsgFunc);
 
-  /*! Commit parameters on a given device */
+  /*! error message callback function type */
+  typedef void (*OSPErrorFunc)(OSPError, const char* errorDetails);
+
+  /*! set callback for given Device to call when an error occurs*/
+  OSPRAY_INTERFACE void ospDeviceSetErrorFunc(OSPDevice, OSPErrorFunc);
+
+  /*! get the OSPError code for the last error that has occured on the device */
+  OSPRAY_INTERFACE OSPError ospDeviceGetLastErrorCode(OSPDevice);
+
+  /*! get the message for the last error that has occured on the device */
+  OSPRAY_INTERFACE const char* ospDeviceGetLastErrorMsg(OSPDevice);
+
+  /*! commit parameters on a given device */
   OSPRAY_INTERFACE void ospDeviceCommit(OSPDevice);
 
   //! load plugin 'name' from shard lib libospray_module_<name>.so
-  /*! returns 0 if the module could be loaded, else it returns an error code > 0 */
-  OSPRAY_INTERFACE int32_t ospLoadModule(const char *pluginName);
+  //! returns OSPError value to report any errors during initialization
+  OSPRAY_INTERFACE OSPError ospLoadModule(const char *pluginName);
 
   //! use renderer to render a frame.
   /*! What input to use for rendering the frame is encoded in the
@@ -463,7 +447,7 @@ extern "C" {
     [regionCoords...regionCoord+regionSize].
   */
 #ifdef __cplusplus
-  OSPRAY_INTERFACE int ospSetRegion(/*! the object we're writing this block of pixels into */
+  OSPRAY_INTERFACE OSPError ospSetRegion(/*! the object we're writing this block of pixels into */
                                     OSPVolume,
                                     /* points to the first voxel to be copies. The
                                        voxels at 'source' MUST have dimensions
@@ -478,7 +462,7 @@ extern "C" {
                                       be the same as the dimensions of source[][][] */
                                     const osp::vec3i &regionSize);
 #else
-  OSPRAY_INTERFACE int ospSetRegion(OSPVolume,
+  OSPRAY_INTERFACE OSPError ospSetRegion(OSPVolume,
                                     void *source,
                                     const osp_vec3i *regionCoords,
                                     const osp_vec3i *regionSize);

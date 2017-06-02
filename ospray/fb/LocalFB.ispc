@@ -94,7 +94,7 @@ export uniform float LocalFrameBuffer_accumulateTile(void *uniform _fb,
 
       uint32 pixelID = iiy*fb->super.size.x+iix;
 
-      /*! todo: rather than gathering, replace this code with
+      /* TODO: rather than gathering, replace this code with
           'load4f's and swizzles */
       varying vec4f acc = make_vec4f(0.f);
       if (tile.accumID > 0)
@@ -110,20 +110,21 @@ export uniform float LocalFrameBuffer_accumulateTile(void *uniform _fb,
 
       // variance buffer accumulates every other frame
       if (variance && (tile.accumID & 1) == 1) {
-        varying vec3f vari = make_vec3f(0.f);
+        varying vec4f vari = make_vec4f(0.f);
         if (tile.accumID > 1)
-          vari = make_vec3f(variance[pixelID]);
+          vari = variance[pixelID];
         unmasked {
           vari.x += varyTile->r[chunkID];
           vari.y += varyTile->g[chunkID];
           vari.z += varyTile->b[chunkID];
+          vari.w += varyTile->a[chunkID];
         }
-        variance[pixelID] = make_vec4f(vari);
+        variance[pixelID] = vari;
 
-        const vec3f acc3 = make_vec3f(acc);
-        const float den2 = reduce_add(acc3);
+        // invert alpha (bright alpha is more important)
+        const float den2 = reduce_add(make_vec3f(acc)) + (1.f-acc.w);
         if (den2 > 0.0f) {
-          const vec3f diff = absf(acc3 - accHalfScale * vari);
+          const vec4f diff = absf(acc - accHalfScale * vari);
           err += reduce_add(diff) * rsqrtf(den2);
         }
       }

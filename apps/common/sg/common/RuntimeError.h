@@ -29,7 +29,7 @@ namespace ospray {
       \detailed we derive from std::runtime_error to allow apps to
       just catch those errors if they're not explicitly interested in
       where it came from */
-    struct RuntimeError : public std::runtime_error {
+    struct OSPSG_INTERFACE RuntimeError : public std::runtime_error {
       RuntimeError(const std::string &err) : std::runtime_error("#osp:sg: "+err) {}
     };
 

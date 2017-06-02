@@ -14,15 +14,21 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -fno-strict-aliasing  -std=c++11 -Wno-narrowing")
+SET(OSPRAY_CXX_FLAGS "-std=c++11 -fPIC -fno-strict-aliasing -Wno-narrowing")
+
+IF(OSPRAY_STRICT_BUILD)
+  SET(OSPRAY_CXX_FLAGS "-Wall ${OSPRAY_CXX_FLAGS}")
+ENDIF()
+
+SET(CMAKE_CXX_FLAGS "${OSPRAY_CXX_FLAGS} ${CMAKE_CXX_FLAGS}")
 SET(CMAKE_CXX_FLAGS_DEBUG          "-DDEBUG  -g     -Wstrict-aliasing=1")
 SET(CMAKE_CXX_FLAGS_RELEASE        "-DNDEBUG    -O3 -Wstrict-aliasing=1 -ffast-math ")
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-DNDEBUG -g -O3 -Wstrict-aliasing=1 -ffast-math ")
-SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
+SET(CMAKE_C_FLAGS "-std=c99 ${CMAKE_C_FLAGS}")
 
 IF (APPLE)
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.7") # we only use MacOSX 10.7 features
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++") # link against C++11 stdlib
+  SET(CMAKE_CXX_FLAGS "-mmacosx-version-min=10.7 ${CMAKE_CXX_FLAGS}") # we only use MacOSX 10.7 features
+  SET(CMAKE_CXX_FLAGS "-stdlib=libc++ ${CMAKE_CXX_FLAGS}") # link against C++11 stdlib
 ENDIF()
 
 # check whether GCC version is new enough for C++11

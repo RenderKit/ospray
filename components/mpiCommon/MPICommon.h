@@ -19,11 +19,13 @@
 // std
 #include <memory>
 #include <vector>
+
 // mpi
+#define OMPI_SKIP_MPICXX 1
 #include <mpi.h>
+
 // ospcommon
 #include "ospcommon/common.h"
-#include "OSPMPIConfig.h"
 
 #ifdef _WIN32
 #  ifdef ospray_mpi_common_EXPORTS
@@ -41,126 +43,188 @@
 #endif
 /*! helper macro that checks the return value of all MPI_xxx(...)
     calls via MPI_CALL(xxx(...)).  */
-#define MPI_CALL(a) { int rc = MPI_##a; if (rc != MPI_SUCCESS) throw std::runtime_error("MPI call returned error"); }
+#define MPI_CALL(a) { \
+  int rc = MPI_##a; \
+  if (rc != MPI_SUCCESS) \
+    throw std::runtime_error("MPI call returned error"); \
+}
 
-namespace ospray {
-  namespace mpi {
+#define OSPRAY_THROW(a) \
+  throw std::runtime_error("in " + std::string(__PRETTY_FUNCTION__) + \
+                           " : " + std::string(a))
 
-    inline void checkMpiError(int rc)
+// Log level at which extremely verbose MPI logging output will
+// be written
+#define OSPRAY_MPI_VERBOSE_LEVEL 3
+
+#define OSPRAY_WORLD_GROUP_TAG 290374
+
+namespace mpicommon {
+  using namespace ospcommon;
+
+  /*! global variable that turns on logging of MPI communication
+    (for debugging) _may_ eventually turn this into a real logLevel,
+    but for now tihs is cleaner here thatn in the MPI device
+  */
+  OSPRAY_MPI_INTERFACE extern bool mpiIsThreaded;
+
+  //! abstraction for an MPI group.
+  /*! it's the responsiblity of the respective mpi setup routines to
+    fill in the proper values */
+  struct OSPRAY_MPI_INTERFACE Group
+  {
+    /*! constructor. sets the 'comm', 'rank', and 'size' fields */
+    Group(MPI_Comm initComm = MPI_COMM_NULL);
+    Group(const Group &other);
+
+    inline bool valid() const
     {
-      if (rc != MPI_SUCCESS)
-        throw std::runtime_error("MPI Error");
+      return comm != MPI_COMM_NULL;
     }
 
-    //! abstraction for an MPI group. 
-    /*! it's the responsiblity of the respective mpi setup routines to
-      fill in the proper values */
-    struct Group
-    {
-      /*! constructor. sets the 'comm', 'rank', and 'size' fields */
-      Group(MPI_Comm initComm=MPI_COMM_NULL);
-      
-      // this is the RIGHT naming convention - old code has them all inside out.
-      void makeIntraComm() 
-      { MPI_Comm_rank(comm,&rank); MPI_Comm_size(comm,&size); containsMe = true; }
-      void makeIntraComm(MPI_Comm comm)
-      { this->comm = comm; makeIntraComm(); }
-      void makeInterComm(MPI_Comm comm)
-      { this->comm = comm; makeInterComm(); }
-      void makeInterComm()
-      { containsMe = false; rank = MPI_ROOT; MPI_Comm_remote_size(comm,&size); }
+    // this is the RIGHT naming convention - old code has them all inside out.
+    void makeIntraComm();
+    void makeIntraComm(MPI_Comm);
+    void makeInterComm();
+    void makeInterComm(MPI_Comm);
 
-      /*! set to given intercomm, and properly set size, root, etc */
-      void setTo(MPI_Comm comm);
+    /*! set to given intercomm, and properly set size, root, etc */
+    void setTo(MPI_Comm comm);
 
-      /*! do an MPI_Comm_dup, and return duplicated communicator */
-      Group dup() const;
+    /*! do an MPI_Comm_dup, and return duplicated communicator */
+    Group dup() const;
 
-      /*! perform a MPI_barrier on this communicator */
-      void barrier() const { MPI_CALL(Barrier(comm)); }
-      
-      /*! whether the current process/thread is a member of this
-        gorup */
-      bool containsMe {false};
-      /*! communictor for this group. intercommunicator if i'm a
-        member of this gorup; else it's an intracommunicator */
-      MPI_Comm comm {MPI_COMM_NULL};
-      /*! my rank in this group if i'm a member; else set to
-        MPI_ROOT */
-      int rank {-1};
-      /*! size of this group if i'm a member, else size of remote
-        group this intracommunicaotr refers to */
-      int size {-1};
-    };
+    /*! perform a MPI_barrier on this communicator */
+    void barrier() const;
 
-    // //! abstraction for any other peer node that we might want to communicate with
-    struct Address
-    {
-      //! group that this peer is in
-      Group *group;
-      //! this peer's rank in this group
-      int rank;
-        
-      Address(Group *group = nullptr, int rank = -1)
-        : group(group), rank(rank) {}
-      inline bool isValid() const { return group != nullptr && rank >= 0; }
-    };
+    /*! whether the current process/thread is a member of this
+      gorup */
+    bool containsMe {false};
+    /*! communictor for this group. intercommunicator if i'm a
+      member of this gorup; else it's an intracommunicator */
+    MPI_Comm comm {MPI_COMM_NULL};
+    /*! my rank in this group if i'm a member; else set to
+      MPI_ROOT */
+    int rank {-1};
+    /*! size of this group if i'm a member, else size of remote
+      group this intracommunicaotr refers to */
+    int size {-1};
+  };
 
-    inline bool operator==(const Address &a, const Address &b)
-    {
-      return a.group == b.group && a.rank == b.rank;
-    }
+  /*! object that handles a message. a message primarily consists of a
+    pointer to data; the message itself "owns" this pointer, and
+    will delete it once the message itself dies. the message itself
+    is reference counted using the std::shared_ptr functionality. */
+  struct OSPRAY_MPI_INTERFACE Message
+  {
+    Message() = default;
 
-    inline bool operator!=(const Address &a, const Address &b)
-    {
-      return !(a == b);
-    }
+    /*! create a new message with given amount of bytes in storage */
+    Message(size_t size);
 
-    //special flags for sending and reciving from all ranks instead of individuals
-    const int SEND_ALL = -1;
-    const int RECV_ALL = -1;
+    /*! create a new message with given amount of storage, and copy
+        memory from the given address to it */
+    Message(const void *copyMem, size_t size);
 
-    //! MPI_COMM_WORLD
-    OSPRAY_MPI_INTERFACE extern Group world;
-    /*! for workers: intracommunicator to app
-      for app: intercommunicator among app processes
-      */
-    OSPRAY_MPI_INTERFACE extern Group app;
-    /*!< group of all ospray workers (often the
-      world root is reserved for either app or
-      load balancing, and not part of the worker
-      group */
-    OSPRAY_MPI_INTERFACE extern Group worker;
+    /*! create a new message (addressed to given comm:rank) with given
+        amount of storage, and copy memory from the given address to
+        it */
+    Message(MPI_Comm comm, int rank, const void *copyMem, size_t size);
 
-    // Initialize OSPRay's MPI groups
-    OSPRAY_MPI_INTERFACE void init(int *ac, const char **av);
+    /*! destruct message and free allocated memory */
+    virtual ~Message();
 
-    namespace work {
-      struct Work;
-    }
+    bool isValid() const;
 
-    // OSPRAY_INTERFACE void send(const Address& address, void* msgPtr, int32 msgSize);
-    OSPRAY_MPI_INTERFACE void send(const Address& addr, work::Work* work);
-    //TODO: callback?
-    OSPRAY_MPI_INTERFACE void recv(const Address& addr, std::vector<work::Work*>& work);
-    // OSPRAY_INTERFACE void send(const Address& addr, )
-    OSPRAY_MPI_INTERFACE void flush();
-    OSPRAY_MPI_INTERFACE void barrier(const Group& group);
+    /*! @{ sender/receiver of this message */
+    MPI_Comm  comm {MPI_COMM_NULL};
+    int       rank {-1};
+    int       tag  { 0};
+    /*! @} */
 
-    inline int getWorkerCount()
-    {
-      return mpi::worker.size;
-    }
+    /*! @{ actual payload of this message */
+    ospcommon::byte_t *data {nullptr};
+    size_t             size {0};
+    /*! @} */
+  };
 
-    inline int getWorkerRank()
-    {
-      return mpi::worker.rank;
-    }
+  /*! a message whose payload is owned by the user, and which we do
+    NOT delete upon termination */
+  struct UserMemMessage : public Message
+  {
+    UserMemMessage(void *nonCopyMem, size_t size)
+      : Message()
+    { data = (ospcommon::byte_t*)nonCopyMem; this->size = size; }
 
-    inline bool isMpiParallel()
-    {
-      return getWorkerCount() > 0;
-    }
+    /* set data to null to keep the parent from deleting it */
+    virtual ~UserMemMessage()
+    { data = nullptr; }
+  };
 
-  }// ::ospray::mpi
-} // ::ospray
+
+  //! MPI_COMM_WORLD
+  OSPRAY_MPI_INTERFACE extern Group world;
+  /*! for workers: intracommunicator to app
+    for app: intercommunicator among app processes
+    */
+  OSPRAY_MPI_INTERFACE extern Group app;
+  /*!< group of all ospray workers (often the
+    world root is reserved for either app or
+    load balancing, and not part of the worker
+    group */
+  OSPRAY_MPI_INTERFACE extern Group worker;
+
+  // Initialize OSPRay's MPI groups
+  OSPRAY_MPI_INTERFACE void init(int *ac, const char **av);
+
+  inline int globalRank()
+  {
+    return world.rank;
+  }
+
+  inline int numGlobalRanks()
+  {
+    return world.size;
+  }
+
+  inline int numWorkers()
+  {
+    return world.size - 1;
+  }
+
+  inline int workerRank()
+  {
+    return worker.rank;
+  }
+
+  inline bool isMpiParallel()
+  {
+    return numWorkers() > 0;
+  }
+
+  inline int masterRank()
+  {
+    return 0;
+  }
+
+  inline bool IamTheMaster()
+  {
+    return world.rank == masterRank();
+  }
+
+  inline bool IamAWorker()
+  {
+    return world.rank > 0;
+  }
+
+  inline int workerRankFromGlobalRank(int globalRank)
+  {
+    return globalRank - 1;
+  }
+
+  inline int globalRankFromWorkerRank(int workerRank)
+  {
+    return 1 + workerRank;
+  }
+
+} // ::mpicommon

@@ -21,13 +21,16 @@
 namespace ospray {
   namespace pathtracer {
 
-    struct OBJMaterial : public ospray::Material {
+    struct OBJMaterial : public ospray::Material
+    {
       //! \brief common function to help printf-debugging 
       /*! Every derived class should overrride this! */
-      virtual std::string toString() const { return "ospray::pathtracer::OBJMaterial"; }
+      virtual std::string toString() const  override
+      { return "ospray::pathtracer::OBJMaterial"; }
 
       //! \brief commit the material's parameters
-      virtual void commit() {
+      virtual void commit()  override
+      {
         if (getIE() == nullptr)
           ispcEquivalent = ispc::PathTracer_OBJ_create();
 
@@ -51,9 +54,9 @@ namespace ospray {
 
         const float color_total = reduce_max(Kd + Ks + Tf);
         if (color_total > 1.0) {
-          std::stringstream msg;
-          msg << "#osp:PT: warning: OBJ material produces energy (Kd + Ks + Tf = " << color_total << ", should be <= 1). Scaling down to 1." << std::endl;
-          postErrorMsg(msg);
+          postStatusMsg() << "#osp:PT: warning: OBJ material produces energy "
+                          << "(Kd + Ks + Tf = " << color_total
+                          << ", should be <= 1). Scaling down to 1.";
           Kd /= color_total;
           Ks /= color_total;
           Tf /= color_total;

@@ -22,7 +22,8 @@
 namespace ospray {
 
   /*! local frame buffer - frame buffer that exists on local machine */
-  struct OSPRAY_SDK_INTERFACE LocalFrameBuffer : public FrameBuffer {
+  struct OSPRAY_SDK_INTERFACE LocalFrameBuffer : public FrameBuffer
+  {
     void      *colorBuffer; /*!< format depends on
                                FrameBuffer::colorBufferFormat, may be
                                NULL */

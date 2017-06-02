@@ -23,18 +23,30 @@
 namespace ospray {
   namespace sg {
 
+
+    struct OSPSG_INTERFACE Model : public sg::Renderable
+    {
+      Model();
+
+      //commit caches renders.  It will render children during commit, and add
+         //cached rendered children during render call.  
+      virtual void traverse(RenderContext &ctx, const std::string& operation) override;
+      virtual void preCommit(RenderContext &ctx) override;
+      virtual void postCommit(RenderContext &ctx) override;
+
+      OSPModel ospModel {nullptr};
+      std::shared_ptr<sg::World> oldWorld;
+      OSPModel oldModel;
+    };
+
     /*! a world node */
-    struct World : public sg::Node {
-      World() : ospModel(NULL) {};
+    struct OSPSG_INTERFACE World : public sg::Renderable
+    {
+      World();
+      virtual ~World() = default;
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const override { return "ospray::viewer::sg::World"; }
-
-      //! serialize into given serialization state 
-      virtual void serialize(sg::Serialization::State &serialization) override;
-
-      /*! 'render' the object for the first time */
-      virtual void render(RenderContext &ctx) override;
+      virtual std::string toString() const override;
 
       /*! \brief return bounding box in world coordinates.
 
@@ -42,18 +54,54 @@ namespace ospray {
         camera motion, setting default camera position, etc. Nodes
         for which that does not apply can simpy return
         box3f(embree::empty) */
-      virtual box3f getBounds() override;
+      virtual void traverse(RenderContext &ctx, const std::string& operation) override;
+      virtual void preCommit(RenderContext &ctx) override;
+      virtual void postCommit(RenderContext &ctx) override;
+      virtual void preRender(RenderContext &ctx) override;
+      virtual void postRender(RenderContext &ctx) override;
 
-      template<typename T>
-      inline void add(const std::shared_ptr<T> &t) {
-        assert(t);
-        std::shared_ptr<sg::Node> asNode = std::dynamic_pointer_cast<Node>(t);
-        assert(asNode);
-        nodes.push_back(asNode);
-      }
+      OSPModel ospModel {nullptr};
+      std::shared_ptr<sg::World> oldWorld;
+      OSPModel oldModel;
+    };
 
-      std::vector<std::shared_ptr<sg::Node> > nodes;
-      OSPModel ospModel;
+
+    struct OSPSG_INTERFACE Instance : public sg::World
+    {
+      Instance();
+
+            /*! \brief return bounding box in world coordinates.
+
+        This function can be used by the viewer(s) for calibrating
+        camera motion, setting default camera position, etc. Nodes
+        for which that does not apply can simpy return
+        box3f(embree::empty) */
+      virtual box3f computeBounds() const override;
+
+      //Instance caches renders.  It will render children during commit, and add
+         //cached rendered children during render call.  
+      virtual void traverse(RenderContext &ctx, const std::string& operation) override;
+      virtual void preCommit(RenderContext &ctx) override;
+      virtual void postCommit(RenderContext &ctx) override;
+      virtual void preRender(RenderContext &ctx) override;
+      virtual void postRender(RenderContext &ctx) override;
+
+
+      OSPGeometry ospInstance {nullptr};
+      //currently, nested instances do not appear to work in OSPRay.  To get around this,
+      // instanced can be manually turned off for parent instancegroups.
+      bool instanced {true};
+      ospcommon::affine3f baseTransform{ospcommon::one};
+
+    protected:
+      void updateInstance(RenderContext &ctx);
+      void updateTransform(RenderContext &ctx);
+      bool instanceDirty{true};
+      ospcommon::affine3f cachedTransform{ospcommon::one};
+      ospcommon::affine3f worldTransform{ospcommon::one};  
+      //    computed from baseTransform*position*rotation*scale
+      ospcommon::affine3f oldTransform{ospcommon::one};
+
     };
     
   } // ::ospray::sg

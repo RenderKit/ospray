@@ -187,6 +187,13 @@ namespace ospray {
     };
 
     struct Triangle {
+      Triangle() {}
+      Triangle(uint32_t v0, uint32_t v1, uint32_t v2)
+        : v0(v0), v1(v1), v2(v2)
+      {}
+      Triangle(const vec3i &idx)
+        : v0(idx.x), v1(idx.y), v2(idx.z)
+      {}
       uint32_t v0, v1, v2;
     };
 
@@ -261,7 +268,9 @@ namespace ospray {
     OSPMINISG_INTERFACE void importHBP(Model &model, const FileName &fileName);
 
     /*! import a TRI file (format:vec3fa[3][numTris]), and add it to the specified model */
-    OSPMINISG_INTERFACE void importTRI(Model &model, const FileName &fileName);
+    OSPMINISG_INTERFACE void importTRI_xyz(Model &model, const FileName &fileName);
+    /*! import a TRI file (format:vec3fa[3][numTris]), and add it to the specified model */
+    OSPMINISG_INTERFACE void importTRI_xyzs(Model &model, const FileName &fileName);
 
     /*! import a wavefront OBJ file, and add it to the specified model */
     OSPMINISG_INTERFACE void importRIVL(Model &model, const FileName &fileName);

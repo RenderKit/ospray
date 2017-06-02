@@ -23,27 +23,56 @@ namespace ospray {
   namespace sg {
 
     /*! a camera node - the generic camera node */
-    struct Camera : public sg::Node {
-      Camera(const std::string &type) : type(type), ospCamera(NULL) {};
-      /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const { return "ospray::sg::Camera"; }
+    struct OSPSG_INTERFACE Camera : public sg::Node
+    {
+      Camera(const std::string &type);
+
+      virtual std::string toString() const override;
+
+      virtual void create();
+      virtual void destroy();
+      virtual void postCommit(RenderContext &ctx) override;
+
+    protected:
+
+      // Data members //
+
       /*! camera type, i.e., 'ao', 'obj', 'pathtracer', ... */
-      const std::string type; 
-
-      virtual void create() { 
-        if (ospCamera) destroy();
-        ospCamera = ospNewCamera(type.c_str());
-        commit();
-      };
-      virtual void commit() {}
-      virtual void destroy() {
-        if (!ospCamera) return;
-        ospRelease(ospCamera);
-        ospCamera = 0;
-      }
-
-      OSPCamera ospCamera;
+      const std::string type;
+      OSPCamera ospCamera {nullptr};
     };
+
+    // Inlined Camera definitions /////////////////////////////////////////////
+
+    inline Camera::Camera(const std::string &type) : type(type)
+    {
+    }
+
+    inline std::string Camera::toString() const
+    {
+      return "ospray::sg::Camera";
+    }
+
+    inline void Camera::create()
+    {
+      if (ospCamera) destroy();
+      ospCamera = ospNewCamera(type.c_str());
+      setValue((OSPObject)ospCamera);
+    }
+
+    inline void Camera::destroy()
+    {
+      if (!ospCamera) return;
+      ospRelease(ospCamera);
+      ospCamera = 0;
+    }
+
+    inline void Camera::postCommit(RenderContext &ctx)
+    {
+      if (!ospCamera)
+        create();
+      ospCommit(ospCamera);
+    }
 
   } // ::ospray::sg
 } // ::ospray

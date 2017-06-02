@@ -19,13 +19,17 @@
 
 namespace ospray {
   namespace pathtracer {
-    struct Matte : public ospray::Material {
+
+    struct Matte : public ospray::Material
+    {
       //! \brief common function to help printf-debugging
       /*! Every derived class should overrride this! */
-      virtual std::string toString() const { return "ospray::pathtracer::Matte"; }
+      virtual std::string toString() const override
+      { return "ospray::pathtracer::Matte"; }
 
       //! \brief commit the material's parameters
-      virtual void commit() {
+      virtual void commit() override
+      {
         if (getIE() != nullptr) return;
 
         const vec3f reflectance = getParam3f("reflectance",vec3f(1.f));

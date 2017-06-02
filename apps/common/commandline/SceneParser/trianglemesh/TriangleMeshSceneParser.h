@@ -21,43 +21,47 @@
 #include <ospray/ospray_cpp/Renderer.h>
 #include <common/miniSG/miniSG.h>
 
-class OSPRAY_COMMANDLINE_INTERFACE TriangleMeshSceneParser : public SceneParser
-{
-public:
-  TriangleMeshSceneParser(ospray::cpp::Renderer renderer,
-                          std::string geometryType = "triangles");
+namespace commandline {
 
-  bool parse(int ac, const char **&av) override;
+  class OSPRAY_COMMANDLINE_INTERFACE TriangleMeshSceneParser : public SceneParser
+  {
+  public:
+    TriangleMeshSceneParser(ospray::cpp::Renderer renderer,
+                            std::string geometryType = "triangles");
 
-  std::deque<ospray::cpp::Model> model() const override;
-  std::deque<ospcommon::box3f>   bbox()  const override;
-  ospray::cpp::Geometry createOSPRayGeometry(ospray::miniSG::Model *msgModel,
-                                             ospray::miniSG::Mesh  *msgMesh);
+    bool parse(int ac, const char **&av) override;
 
-private:
+    std::deque<ospray::cpp::Model> model() const override;
+    std::deque<ospcommon::box3f>   bbox()  const override;
+    ospray::cpp::Geometry createOSPRayGeometry(ospray::miniSG::Model *msgModel,
+                                               ospray::miniSG::Mesh  *msgMesh);
 
-  ospray::cpp::Material createDefaultMaterial(ospray::cpp::Renderer renderer);
-  ospray::cpp::Material createMaterial(ospray::cpp::Renderer renderer,
-                                       ospray::miniSG::Material *mat);
+  private:
 
-  ospray::cpp::Renderer renderer;
+    ospray::cpp::Material createDefaultMaterial(ospray::cpp::Renderer renderer);
+    ospray::cpp::Material createMaterial(ospray::cpp::Renderer renderer,
+                                         ospray::miniSG::Material *mat);
 
-  std::deque<ospray::cpp::Model> sceneModels;
+    ospray::cpp::Renderer renderer;
 
-  std::string geometryType;
+    std::deque<ospray::cpp::Model> sceneModels;
 
-  bool alpha;
-  bool shouldCreateDefaultMaterial;
-  unsigned int maxObjectsToConsider;
+    std::string geometryType;
 
-  // if turned on, we'll put each triangle mesh into its own instance,
-  // no matter what
-  bool forceInstancing;
-  bool forceNoInstancing;
+    bool alpha;
+    bool shouldCreateDefaultMaterial;
+    unsigned int maxObjectsToConsider;
 
-  ospcommon::Ref<ospray::miniSG::Model> msgModel;
-  std::deque<ospcommon::Ref<ospray::miniSG::Model> > msgModels;
-  std::vector<ospray::miniSG::Model *> msgAnimation;
+    // if turned on, we'll put each triangle mesh into its own instance,
+    // no matter what
+    bool forceInstancing;
+    bool forceNoInstancing;
 
-  void finalize();
-};
+    ospcommon::Ref<ospray::miniSG::Model> msgModel;
+    std::deque<ospcommon::Ref<ospray::miniSG::Model> > msgModels;
+    std::vector<ospray::miniSG::Model *> msgAnimation;
+
+    void finalize();
+  };
+
+} // ::commandline

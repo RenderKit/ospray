@@ -19,3 +19,4 @@ ospray-doc
 !/modules
 /modules/*
 !/modules/mpi
+!/modules/pluggableGeometryExample

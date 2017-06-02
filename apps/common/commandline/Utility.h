@@ -28,59 +28,117 @@
 #include <tuple>
 #include <type_traits>
 
-inline void parseForLoadingModules(int ac, const char**& av)
-{
-  for (int i = 1; i < ac; i++) {
-    const std::string arg = av[i];
-    if (arg == "--module" || arg == "-m") {
-      ospLoadModule(av[++i]);
+namespace commandline {
+
+  inline void parseForLoadingModules(int ac, const char**& av)
+  {
+    for (int i = 1; i < ac; i++) {
+      const std::string arg = av[i];
+      if (arg == "--module" || arg == "-m") {
+        ospLoadModule(av[++i]);
+      }
     }
   }
-}
+  
+  using ParsedOSPObjects = std::tuple<std::deque<ospcommon::box3f>,
+                                      std::deque<ospray::cpp::Model>,
+                                      ospray::cpp::Renderer,
+                                      ospray::cpp::Camera>;
 
-using ParsedOSPObjects = std::tuple<std::deque<ospcommon::box3f>,
-                                    std::deque<ospray::cpp::Model>,
-                                    ospray::cpp::Renderer,
-                                    ospray::cpp::Camera>;
+  template <typename RendererParser_T,
+            typename CameraParser_T,
+            typename SceneParser_T,
+            typename LightsParser_T>
+  inline ParsedOSPObjects parseCommandLine(int ac, const char **&av)
+  {
+    static_assert(std::is_base_of<RendererParser, RendererParser_T>::value,
+                  "RendererParser_T is not a subclass of RendererParser.");
+    static_assert(std::is_base_of<CameraParser, CameraParser_T>::value,
+                  "CameraParser_T is not a subclass of CameraParser.");
+    static_assert(std::is_base_of<SceneParser, SceneParser_T>::value,
+                  "SceneParser_T is not a subclass of SceneParser.");
+    static_assert(std::is_base_of<LightsParser, LightsParser_T>::value,
+                  "LightsParser_T is not a subclass of LightsParser.");
 
-template <typename RendererParser_T,
-          typename CameraParser_T,
-          typename SceneParser_T,
-          typename LightsParser_T>
-inline ParsedOSPObjects parseCommandLine(int ac, const char **&av)
-{
-  static_assert(std::is_base_of<RendererParser, RendererParser_T>::value,
-                "RendererParser_T is not a subclass of RendererParser.");
-  static_assert(std::is_base_of<CameraParser, CameraParser_T>::value,
-                "CameraParser_T is not a subclass of CameraParser.");
-  static_assert(std::is_base_of<SceneParser, SceneParser_T>::value,
-                "SceneParser_T is not a subclass of SceneParser.");
-  static_assert(std::is_base_of<LightsParser, LightsParser_T>::value,
-                "LightsParser_T is not a subclass of LightsParser.");
+    parseForLoadingModules(ac, av);
 
-  parseForLoadingModules(ac, av);
+    CameraParser_T cameraParser;
+    cameraParser.parse(ac, av);
+    auto camera = cameraParser.camera();
 
-  CameraParser_T cameraParser;
-  cameraParser.parse(ac, av);
-  auto camera = cameraParser.camera();
+    RendererParser_T rendererParser;
+    rendererParser.parse(ac, av);
+    auto renderer = rendererParser.create();
 
-  RendererParser_T rendererParser;
-  rendererParser.parse(ac, av);
-  auto renderer = rendererParser.renderer();
+    SceneParser_T sceneParser{renderer};
+    sceneParser.parse(ac, av);
+    auto model = sceneParser.model();
+    auto bbox  = sceneParser.bbox();
 
-  SceneParser_T sceneParser{rendererParser.renderer()};
-  sceneParser.parse(ac, av);
-  auto model = sceneParser.model();
-  auto bbox  = sceneParser.bbox();
+    LightsParser_T lightsParser(renderer);
+    lightsParser.parse(ac, av);
 
-  LightsParser_T lightsParser(renderer);
-  lightsParser.parse(ac, av);
+    return std::make_tuple(bbox, model, renderer, camera);
+  }
 
-  return std::make_tuple(bbox, model, renderer, camera);
-}
+  inline ParsedOSPObjects parseWithDefaultParsers(int ac, const char**& av)
+  {
+    return parseCommandLine<DefaultRendererParser, DefaultCameraParser,
+      MultiSceneParser, DefaultLightsParser>(ac, av);
+  }
 
-inline ParsedOSPObjects parseWithDefaultParsers(int ac, const char**& av)
-{
-  return parseCommandLine<DefaultRendererParser, DefaultCameraParser,
-                          MultiSceneParser, DefaultLightsParser>(ac, av);
-}
+  // Display Wall versions ////////////////////////////////////////////////////
+
+  using ParsedOSPObjectsDW = std::tuple<std::deque<ospcommon::box3f>,
+                                        std::deque<ospray::cpp::Model>,
+                                        ospray::cpp::Renderer,
+                                        ospray::cpp::Renderer,
+                                        ospray::cpp::Camera>;
+
+  template <typename RendererParser_T,
+            typename CameraParser_T,
+            typename SceneParser_T,
+            typename LightsParser_T>
+  inline ParsedOSPObjectsDW parseCommandLineDW(int ac, const char **&av)
+  {
+    static_assert(std::is_base_of<RendererParser, RendererParser_T>::value,
+                  "RendererParser_T is not a subclass of RendererParser.");
+    static_assert(std::is_base_of<CameraParser, CameraParser_T>::value,
+                  "CameraParser_T is not a subclass of CameraParser.");
+    static_assert(std::is_base_of<SceneParser, SceneParser_T>::value,
+                  "SceneParser_T is not a subclass of SceneParser.");
+    static_assert(std::is_base_of<LightsParser, LightsParser_T>::value,
+                  "LightsParser_T is not a subclass of LightsParser.");
+
+    parseForLoadingModules(ac, av);
+
+    CameraParser_T cameraParser;
+    cameraParser.parse(ac, av);
+    auto camera = cameraParser.camera();
+
+    RendererParser_T rendererParser;
+    rendererParser.parse(ac, av);
+    auto renderer = rendererParser.create();
+    auto rendererDW = rendererParser.create();
+
+    SceneParser_T sceneParser{renderer};
+    sceneParser.parse(ac, av);
+    auto model = sceneParser.model();
+    auto bbox  = sceneParser.bbox();
+
+    LightsParser_T lightsParser(renderer);
+    lightsParser.parse(ac, av);
+
+    LightsParser_T lightsParserDW(rendererDW);
+    lightsParserDW.parse(ac, av);
+
+    return std::make_tuple(bbox, model, renderer, rendererDW, camera);
+  }
+
+  inline ParsedOSPObjectsDW parseWithDefaultParsersDW(int ac, const char**& av)
+  {
+    return parseCommandLineDW<DefaultRendererParser, DefaultCameraParser,
+      MultiSceneParser, DefaultLightsParser>(ac, av);
+  }
+
+} // ::commandline

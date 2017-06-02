@@ -16,10 +16,7 @@
 
 // ospray
 #include "Material.h"
-#include "common/Library.h"
 #include "common/Util.h"
-// stl
-#include <map>
 
 namespace ospray {
 

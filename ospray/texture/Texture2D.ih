@@ -43,6 +43,11 @@ inline vec2f clamp2edge(const uniform Texture2D *uniform self, const vec2f p)
   return clamp(p, self->halfTexel, 1.0f - self->halfTexel);
 }
 
+inline uniform bool hasAlpha(const uniform Texture2D *uniform self)
+{
+  return (self == NULL) ? false : self->hasAlpha;
+}
+
 /*! helper function that returns the sampled value for the first
   channel of the given texture
 

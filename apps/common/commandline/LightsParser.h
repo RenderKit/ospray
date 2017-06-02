@@ -22,27 +22,31 @@
 #include <ospray/ospray_cpp/Renderer.h>
 #include <ospray/ospray_cpp/Light.h>
 
-class OSPRAY_COMMANDLINE_INTERFACE LightsParser : public CommandLineParser
-{
-public:
-  virtual ~LightsParser() = default;
-};
+namespace commandline {
 
-class OSPRAY_COMMANDLINE_INTERFACE DefaultLightsParser : public LightsParser
-{
-public:
-  DefaultLightsParser(ospray::cpp::Renderer renderer);
-  bool parse(int ac, const char **&av) override;
+  class OSPRAY_COMMANDLINE_INTERFACE LightsParser : public CommandLineParser
+  {
+  public:
+    virtual ~LightsParser() = default;
+  };
 
-protected:
+  class OSPRAY_COMMANDLINE_INTERFACE DefaultLightsParser : public LightsParser
+  {
+  public:
+    DefaultLightsParser(ospray::cpp::Renderer renderer);
+    bool parse(int ac, const char **&av) override;
 
-  ospray::cpp::Renderer renderer;
+  protected:
 
-  /*! when using the OBJ renderer, we create a automatic dirlight with this
-   * direction; use ''--sun-dir x y z' to change */
-  ospcommon::vec3f defaultDirLight_direction;
-  float defaultDirLight_intensity;
-private:
+    ospray::cpp::Renderer renderer;
 
-  void finalize();
-};
+    /*! when using the OBJ renderer, we create a automatic dirlight with this
+     * direction; use ''--sun-dir x y z' to change */
+    ospcommon::vec3f defaultDirLight_direction;
+    float defaultDirLight_intensity;
+  private:
+
+    void finalize();
+  };
+
+}

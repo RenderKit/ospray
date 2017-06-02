@@ -1,0 +1,65 @@
+// ======================================================================== //
+// Copyright 2009-2017 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+#include "SciVisRenderer.ih"
+
+/*! a 'shadinginfo' seems to be a local (phong) shading context; it's
+  also used during volume shading, but otherwise - at least, together
+  with a DG - realizes the concept of a local diffential surface: it
+  has position (in DG), normal, and material parameters for a phong
+  lobe */
+struct SciVisShadingInfo
+{
+  float d;
+  vec3f Kd;
+  vec3f Ks;
+  float Ns;
+  vec3f shadingNormal;
+
+  float local_opacity;
+};
+void initShadingInfo(varying SciVisShadingInfo &info);
+void shadeMaterials(const varying DifferentialGeometry &dg,
+                    varying SciVisShadingInfo &info);
+
+
+void shadeAO(const uniform SciVisRenderer *uniform self,
+             const varying vec3i &sampleID,
+             const varying DifferentialGeometry &dg,
+             const varying SciVisShadingInfo &info,
+             varying vec3f &color);
+
+/*! iterate over all light sources, and, for each, compute incident
+    irradiance (including shadowing, if required), shade with BRDF,
+    and accumulate in 'color' (?) */
+void integrateOverLights(const uniform SciVisRenderer *uniform self,
+                         const varying Ray &ray,
+                         const varying DifferentialGeometry &dg,
+                         const varying SciVisShadingInfo &info,
+                         varying vec3f &color,
+                         const varying float &rayOffset,
+                         const varying vec3i &sampleID,
+                         const uniform float quality);
+
+/*! compute ambient-occlusoin term, using the materials' ao color
+    field. will internally check if ao is actually enabled or not,
+    and, if not, just skip these computatoins */
+float calculateAO(const uniform SciVisRenderer *uniform self,
+                  const varying vec3i &sampleID,
+                  const varying DifferentialGeometry &dg,
+                  const varying vec3f &shadingNormal);

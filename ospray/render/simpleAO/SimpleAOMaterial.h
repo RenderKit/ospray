@@ -33,7 +33,7 @@ namespace ospray {
 
       /*! \brief commit the object's outstanding changes
        *         (such as changed parameters etc) */
-      virtual void commit();
+      virtual void commit() override;
 
       // -------------------------------------------------------
       // member variables

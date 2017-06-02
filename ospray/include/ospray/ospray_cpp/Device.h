@@ -28,9 +28,9 @@ class Device
 {
 public:
 
-  Device(const std::string &type);
+  Device(const std::string &type = "default");
   Device(const Device &copy);
-  Device(OSPDevice existing = nullptr);
+  Device(OSPDevice existing);
 
   void set(const std::string &name, const std::string &v) const;
   void set(const std::string &name, int v) const;
@@ -39,51 +39,58 @@ public:
 
   void setCurrent() const;
 
+  OSPDevice handle() const;
+
 private:
 
-  OSPDevice handle;
+  OSPDevice ospHandle;
 };
 
 // Inlined function definitions ///////////////////////////////////////////////
 
 inline Device::Device(const std::string &type)
 {
-  OSPDevice c = ospCreateDevice(type.c_str());
+  OSPDevice c = ospNewDevice(type.c_str());
   if (c) {
-    handle = c;
+    ospHandle = c;
   } else {
     throw std::runtime_error("Failed to create OSPDevice!");
   }
 }
 
 inline Device::Device(const Device &copy) :
-  handle(copy.handle)
+  ospHandle(copy.ospHandle)
 {
 }
 
 inline Device::Device(OSPDevice existing) :
-  handle(existing)
+  ospHandle(existing)
 {
 }
 
 inline void Device::set(const std::string &name, const std::string &v) const
 {
-  ospDeviceSetString(handle, name.c_str(), v.c_str());
+  ospDeviceSetString(ospHandle, name.c_str(), v.c_str());
 }
 
 inline void Device::set(const std::string &name, int v) const
 {
-  ospDeviceSet1i(handle, name.c_str(), v);
+  ospDeviceSet1i(ospHandle, name.c_str(), v);
 }
 
 inline void Device::commit() const
 {
-  ospDeviceCommit(handle);
+  ospDeviceCommit(ospHandle);
 }
 
 inline void Device::setCurrent() const
 {
-  ospSetCurrentDevice(handle);
+  ospSetCurrentDevice(ospHandle);
+}
+
+inline OSPDevice Device::handle() const
+{
+  return ospHandle;
 }
 
 }// namespace cpp

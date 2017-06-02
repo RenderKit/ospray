@@ -53,7 +53,6 @@ inline vec3##S gather_vec3##S(const uniform bool huge,                         \
                                 const varying int index)                       \
 {                                                                              \
   vec3##S v;                                                                   \
-                                                                               \
   if (huge) {                                                                  \
     const int index_lo = index & ((1<<BITS)-1);                                \
     const int index_hi = index - index_lo;                                     \

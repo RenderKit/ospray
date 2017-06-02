@@ -45,7 +45,7 @@ namespace ospray {
       in either ospray proper or any already loaded module. For
       renderer types specified in special modules, make sure to call
       ospLoadModule first. */
-    static Renderer *createRenderer(const char *identifier);
+    static Renderer *createInstance(const char *identifier);
 
     virtual void commit() override;
     virtual std::string toString() const override;
@@ -91,12 +91,12 @@ namespace ospray {
     /*! adaptive accumulation: variance-based error to reach */
     float errorThreshold {0.f};
 
-    /*! \brief whether the background should be rendered (e.g. for compositing the background may be disabled) */
-    bool backgroundEnabled {true};
+    /*! \brief the background color */
+    vec4f bgColor {0.f};
 
     /*! \brief maximum depth texture provided as an optional parameter to the renderer, used for early ray termination
 
-      The texture format should be OSP_FLOAT and texture filtering
+      The texture format should be OSP_TEXTURE_R32F and texture filtering
       should be set to nearest-neighbor interpolation:
       (OSP_TEXTURE_FILTER_NEAREST). */
     Ref<Texture2D> maxDepthTexture;

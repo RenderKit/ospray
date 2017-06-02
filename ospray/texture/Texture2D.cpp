@@ -22,7 +22,7 @@ namespace ospray {
   Texture2D::~Texture2D()
   {
     if (!(flags & OSP_TEXTURE_SHARED_BUFFER))
-      delete[] (unsigned char *)data;
+      delete [] (unsigned char *)data;
   }
 
   std::string Texture2D::toString() const

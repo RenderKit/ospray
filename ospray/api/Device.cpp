@@ -1,4 +1,4 @@
-// ======================================================================== //
+﻿// ======================================================================== //
 // Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
@@ -28,8 +28,6 @@
 
 namespace ospray {
 
-  void error_handler(const RTCError code, const char *str);
-
   namespace api {
 
     Ref<Device> Device::current = nullptr;
@@ -52,13 +50,27 @@ namespace ospray {
       int cpuFeatures = ospcommon::getCPUFeatures();
 
       if ((cpuFeatures & ospcommon::CPU_FEATURE_SSE41) == 0) {
-        throw std::runtime_error("Error. OSPRay only runs on CPUs that support"
-                                 " at least SSE4.1.");
+        handleError(OSP_UNSUPPORTED_CPU,
+                    "OSPRay only runs on CPUs that support at least SSE4.1");
+        return;
       }
 
       auto OSPRAY_DEBUG = getEnvVar<int>("OSPRAY_DEBUG");
       debugMode = OSPRAY_DEBUG.first ? OSPRAY_DEBUG.second :
                                        getParam1i("debug", 0);
+
+      auto OSPRAY_TRACE_API = getEnvVar<int>("OSPRAY_TRACE_API");
+      bool traceAPI = OSPRAY_TRACE_API.first ? OSPRAY_TRACE_API.second :
+                                               getParam1i("traceApi", 0);
+      if (traceAPI) {
+        auto streamPtr =
+          std::make_shared<std::ofstream>("ospray_api_trace.txt");
+
+        trace_fcn = [=](const char *message) {
+          auto &stream = *streamPtr;
+          stream << message << std::endl;
+        };
+      }
 
       auto OSPRAY_LOG_LEVEL = getEnvVar<int>("OSPRAY_LOG_LEVEL");
       logLevel = OSPRAY_LOG_LEVEL.first ? OSPRAY_LOG_LEVEL.second :
@@ -72,9 +84,9 @@ namespace ospray {
       if (OSPRAY_LOG_OUTPUT.first) {
         auto &dst = OSPRAY_LOG_OUTPUT.second;
         if (dst == "cout")
-          error_fcn = [](const char *msg){ std::cout << msg; };
+          msg_fcn = [](const char *msg){ std::cout << msg; };
         else if (dst == "cerr")
-          error_fcn = [](const char *msg){ std::cerr << msg; };
+          msg_fcn = [](const char *msg){ std::cerr << msg; };
       }
 
       if (debugMode) {
@@ -82,7 +94,15 @@ namespace ospray {
         numThreads = 1;
       }
 
-      initTaskingSystem(numThreads);
+      auto OSPRAY_SET_AFFINITY = getEnvVar<int>("OSPRAY_SET_AFFINITY");
+      if (OSPRAY_SET_AFFINITY.first) {
+        threadAffinity = OSPRAY_SET_AFFINITY.second == 0 ? DEAFFINITIZE :
+                                                           AFFINITIZE;
+      }
+
+      threadAffinity = getParam1i("setAffinity", threadAffinity);
+
+      tasking::initTaskingSystem(numThreads);
 
       committed = true;
     }
@@ -90,6 +110,33 @@ namespace ospray {
     bool Device::isCommitted()
     {
       return committed;
+    }
+
+    bool deviceIsSet()
+    {
+      return Device::current.ptr != nullptr;
+    }
+
+    Device &currentDevice()
+    {
+      return *Device::current;
+    }
+
+    std::string generateEmbreeDeviceCfg(const Device &device)
+    {
+      std::stringstream embreeConfig;
+
+      if (device.debugMode)
+        embreeConfig << " threads=1,verbose=2";
+      else if(device.numThreads > 0)
+        embreeConfig << " threads=" << device.numThreads;
+
+      if (device.threadAffinity == api::Device::AFFINITIZE)
+        embreeConfig << ",set_affinity=1";
+      else if (device.threadAffinity == api::Device::DEAFFINITIZE)
+        embreeConfig << ",set_affinity=0";
+
+      return embreeConfig.str();
     }
 
   } // ::ospray::api

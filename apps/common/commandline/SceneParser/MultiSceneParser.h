@@ -20,23 +20,27 @@
 #include <common/commandline/SceneParser/SceneParser.h>
 #include <ospray/ospray_cpp/Renderer.h>
 
-class OSPRAY_COMMANDLINE_INTERFACE MultiSceneParser : public SceneParser
-{
-public:
-  MultiSceneParser(ospray::cpp::Renderer);
+namespace commandline {
 
-  bool parse(int ac, const char **&av) override;
+  class OSPRAY_COMMANDLINE_INTERFACE MultiSceneParser : public SceneParser
+  {
+  public:
+    MultiSceneParser(ospray::cpp::Renderer);
 
-  std::deque<ospray::cpp::Model> model() const override;
-  std::deque<ospcommon::box3f>   bbox()  const override;
+    bool parse(int ac, const char **&av) override;
 
-protected:
+    std::deque<ospray::cpp::Model> model() const override;
+    std::deque<ospcommon::box3f>   bbox()  const override;
 
-  ospray::cpp::Renderer renderer;
-  std::deque<ospray::cpp::Model>    sceneModels;
-  std::deque<ospcommon::box3f>      sceneBboxes;
+  protected:
 
-private:
+    ospray::cpp::Renderer renderer;
+    std::deque<ospray::cpp::Model>    sceneModels;
+    std::deque<ospcommon::box3f>      sceneBboxes;
 
-  void finalize();
-};
+  private:
+
+    void finalize();
+  };
+
+} // ::commandline

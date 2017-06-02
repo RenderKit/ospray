@@ -16,30 +16,30 @@
 
 #pragma once
 
-// use ospcommon vector types in ospray.h
-//#define OSPRAY_EXTERNAL_VECTOR_TYPES 1
+#ifndef OSPSG_INTERFACE
+#ifdef _WIN32
+#  ifdef ospray_sg_EXPORTS
+#    define OSPSG_INTERFACE __declspec(dllexport)
+#  else
+#    define OSPSG_INTERFACE __declspec(dllimport)
+#  endif
+#else
+#  define OSPSG_INTERFACE
+#endif
+#endif
+
 // ospcommon 
 #include "ospcommon/AffineSpace.h"
-
-// namespace osp {
-//   using ospcommon::vec2i;
-//   using ospcommon::vec2f;
-//   using ospcommon::vec3i;
-//   using ospcommon::vec3f;
-//   using ospcommon::vec4f;
-//   using ospcommon::affine3f;
-// }
-
 
 // ospray API
 #include "ospray/ospray.h"
 
+// core ospray
+#include "ospray/common/OSPCommon.h"
+
 namespace ospray {
   namespace sg {
     using namespace ospcommon;
-
-    typedef AffineSpace3f affine3f;
-    typedef LinearSpace3f linear3f;
 
 #define THROW_SG_ERROR(err) \
     throw std::runtime_error("in "+std::string(__PRETTY_FUNCTION__)+":"+std::string(err))
@@ -63,8 +63,10 @@ namespace ospray {
         'integrator' */
     struct Integrator;
 
+    struct RenderContext;
+
     //! map the given file to memory and return that pointer
-    const unsigned char * mapFile(const std::string &fileName);
+    const unsigned char* mapFile(const std::string &fileName);
 
   } // ::ospray::sg
 } // ::ospray

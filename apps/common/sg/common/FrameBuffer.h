@@ -22,30 +22,30 @@
 namespace ospray {
   namespace sg {
 
-    struct FrameBuffer : public sg::Node {
-
+    struct OSPSG_INTERFACE FrameBuffer : public sg::Node
+    {
       /*! constructor allocates an OSP frame buffer object */
-      FrameBuffer(const vec2i &size);
+      FrameBuffer(vec2i size = vec2i(300,300));
 
       /*! destructor - relasess the OSP frame buffer object */
       virtual ~FrameBuffer();
 
       unsigned char *map();
-      void unmap(unsigned char *mem);
+      void unmap(void *mem);
 
       void clear();
 
       void clearAccum();
       
-      vec2i getSize() const;
+      vec2i size() const;
+
+      virtual void postCommit(RenderContext &ctx) override;
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual std::string toString() const;
+      virtual std::string toString() const override;
 
-      OSPFrameBuffer getOSPHandle() const;
+      OSPFrameBuffer handle() const;
       
-    // private:
-    
       // create the ospray framebuffer for this class
       void createFB();
 
@@ -53,7 +53,7 @@ namespace ospray {
       void destroyFB();
 
       OSPFrameBuffer ospFrameBuffer {nullptr};
-      const vec2i size;
+      std::string displayWallStream;
     };
 
   } // ::ospray::sg

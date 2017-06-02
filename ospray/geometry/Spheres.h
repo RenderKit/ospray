@@ -80,6 +80,8 @@ namespace ospray {
     /*! data array from which we read the per-sphere color data; if
       NULL we do not have per-sphere data */
     Ref<Data> colorData;
+
+    Ref<Data> texcoordData;
     
     /*! stride in colorData array for accessing i'th sphere's
       color. color of sphere i will be read as 3 floats from
@@ -91,6 +93,8 @@ namespace ospray {
       'colorOffset+i*colorStride */
     size_t    colorOffset;
 
+
+    float epsilon;  //epsilon for intersections
   };
   /*! @} */
 

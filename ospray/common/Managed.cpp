@@ -15,7 +15,6 @@
 // ======================================================================== //
 
 #include "Managed.h"
-#include "Data.h"
 #include "OSPCommon_ispc.h"
 
 namespace ospray {
@@ -182,8 +181,8 @@ namespace ospray {
   void ManagedObject::emitMessage(const std::string &kind,
                                   const std::string &message) const
   {
-    std::string msg = "  " + toString() + "  " + kind + ": " + message + ".\n";
-    postErrorMsg(msg);
+    postStatusMsg() << "  " << toString()
+                   << "  " << kind << ": " << message + '.';
   }
 
   void ManagedObject::exitOnCondition(bool condition,

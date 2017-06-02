@@ -21,19 +21,12 @@
 namespace ospray {
   namespace sg {
 
-    struct PerspectiveCamera : public sg::Camera {     
+    struct OSPSG_INTERFACE PerspectiveCamera : public sg::Camera
+    {
       PerspectiveCamera();
 
-      virtual void commit();
-      
-      SG_NODE_DECLARE_MEMBER(vec3f,from,From);
-      SG_NODE_DECLARE_MEMBER(vec3f,at,At);
-      SG_NODE_DECLARE_MEMBER(vec3f,up,Up);
-      SG_NODE_DECLARE_MEMBER(float,aspect,Aspect);    
-      SG_NODE_DECLARE_MEMBER(float,fovy,Fovy);    
+      void postCommit(RenderContext &ctx) override;
     };
 
   } // ::ospray::sg
 } // ::ospray
-
-

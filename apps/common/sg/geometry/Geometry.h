@@ -21,22 +21,33 @@
 namespace ospray {
   namespace sg {
 
-    /*! a geometry node - the generic geometry node */
-    struct Geometry : public sg::Node {
-      Geometry(const std::string &type) : type(type) {};
+    struct Geometry : public sg::Renderable
+    {
+      Geometry(const std::string &type);
 
       /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const override { return "ospray::sg::Geometry"; }
-
-      //! return bounding box of all primitives
-      virtual box3f getBounds() override = 0;
+      virtual std::string toString() const override;
 
       /*! geometry type, i.e., 'spheres', 'cylinders', 'trianglemesh', ... */
       const std::string type; 
       
       /*! material for this geometry */
-      std::shared_ptr<Material> material;
+      // std::shared_ptr<Material> material;
     };
+
+    // Inlined member definitions /////////////////////////////////////////////
+
+    inline Geometry::Geometry(const std::string &type)
+      : type(type)
+    {
+      createChild("material", "Material");
+      createChild("type", "string");
+    }
+
+    inline std::string Geometry::toString() const
+    {
+      return "ospray::sg::Geometry";
+    }
     
   } // ::ospray::sg
 } // ::ospray

@@ -77,7 +77,7 @@ namespace ospray {
                                         finalRegionSize, finalRegionCoords);
     // Copy voxel data into the volume.
     const size_t NTASKS = finalRegionSize.y * finalRegionSize.z;
-    parallel_for(NTASKS, [&](size_t taskIndex) {
+    tasking::parallel_for(NTASKS, [&](size_t taskIndex) {
       ispc::BlockBrickedVolume_setRegion(ispcEquivalent,
                                          finalSource,
                                          (const ispc::vec3i&)finalRegionCoords,

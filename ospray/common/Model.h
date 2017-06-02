@@ -20,13 +20,11 @@
 #include "geometry/Geometry.h"
 #include "volume/Volume.h"
 
-// stl stuff
+// stl
 #include <vector>
 
-// embree stuff
+// embree
 #include "embree2/rtcore.h"
-#include "embree2/rtcore_scene.h"
-#include "embree2/rtcore_geometry.h"
 
 namespace ospray {
 
@@ -44,7 +42,7 @@ namespace ospray {
 
     //! \brief common function to help printf-debugging
     virtual std::string toString() const override;
-    virtual void finalize();
+    virtual void commit() override;
 
     // Data members //
 

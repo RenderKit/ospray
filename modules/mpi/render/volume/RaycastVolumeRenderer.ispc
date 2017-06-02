@@ -426,10 +426,8 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
   }
 
   // Attenuate the foreground and background colors by the opacity.
-  if (useBG && self->super.backgroundEnabled) {
-    const vec4f background = make_vec4f(self->super.bgColor, 1.f);
-    color = color.w * color + (1.0f - color.w) * background;
-  }
+  if (useBG)
+    color = lerp(color.w, self->super.bgColor, color);
 
   // Store the result in the sample.
   sample.rgb.x = color.x;

@@ -26,37 +26,41 @@
 #include <string>
 #include <vector>
 
-class OSPRAY_COMMANDLINE_INTERFACE VolumeSceneParser : public SceneParser
-{
-public:
-  VolumeSceneParser(ospray::cpp::Renderer);
+namespace commandline {
 
-  bool parse(int ac, const char **&av) override;
+  class OSPRAY_COMMANDLINE_INTERFACE VolumeSceneParser : public SceneParser
+  {
+  public:
+    VolumeSceneParser(ospray::cpp::Renderer);
 
-  std::deque<ospray::cpp::Model> model() const override;
-  std::deque<ospcommon::box3f>   bbox()  const override;
+    bool parse(int ac, const char **&av) override;
 
-private:
+    std::deque<ospray::cpp::Model> model() const override;
+    std::deque<ospcommon::box3f>   bbox()  const override;
 
-  // Helper functions //
+  private:
 
-  void importObjectsFromFile(const std::string &filename,
-                             bool loadedTransferFunction);
-  void importTransferFunction(const std::string &filename);
-  void createDefaultTransferFunction();
+    // Helper functions //
 
-  // Data //
+    void importObjectsFromFile(const std::string &filename,
+                               bool loadedTransferFunction);
+    void importTransferFunction(const std::string &filename);
+    void createDefaultTransferFunction();
 
-  ospray::cpp::Renderer renderer;
-  ospcommon::box3f      sceneBbox;
+    // Data //
 
-  std::unique_ptr<ospray::cpp::Model> sceneModel;
+    ospray::cpp::Renderer renderer;
+    ospcommon::box3f      sceneBbox;
 
-  float samplingRate{0.125f};
+    std::unique_ptr<ospray::cpp::Model> sceneModel;
 
-  float tf_scale{1.f};
-  std::vector<ospcommon::vec4f> tf_colors;
-  std::vector<float> isosurfaces;
+    float samplingRate{0.125f};
 
-  ospray::cpp::TransferFunction transferFunction;
-};
+    float tf_scale{1.f};
+    std::vector<ospcommon::vec4f> tf_colors;
+    std::vector<float> isosurfaces;
+
+    ospray::cpp::TransferFunction transferFunction;
+  };
+
+} // ::commandline

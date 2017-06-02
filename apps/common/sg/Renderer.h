@@ -20,59 +20,32 @@
 
 namespace ospray {
   namespace sg {
+
     class FrameBuffer;
-    struct Renderer {
+
+    struct Renderer : public Renderable
+    {
       Renderer();
 
-      /*! re-start accumulation (for progressive rendering). make sure
-          that this function gets called at lesat once every time that
-          anything changes that might change the appearance of the
-          converged image (e.g., camera position, scene, frame size,
-          etc) */
-      void resetAccumulation();
+      // renderer renders the scene into the framebuffer on render call.
+      //  It will call render on model when commit when model modified
+      virtual void traverse(RenderContext &ctx, const std::string& operation) override;
+      void preRender(RenderContext &ctx) override;
+      void postRender(RenderContext &ctx) override;
+      void preCommit(RenderContext &ctx) override;
+      void postCommit(RenderContext &ctx) override;
 
-      void setWorld(const std::shared_ptr<sg::World> &world);
-      void setCamera(const std::shared_ptr<sg::Camera> &camera);
-      void setIntegrator(const std::shared_ptr<sg::Integrator> &integrator);
+    private:
 
-      // -------------------------------------------------------
-      // query functions
-      // -------------------------------------------------------
-      
-      //! find the last camera in the scene graph
-      std::shared_ptr<sg::Camera> getLastDefinedCamera() const;
-      //! find the last integrator in the scene graph
-      std::shared_ptr<sg::Integrator> getLastDefinedIntegrator() const;
-      
-      //! create a default camera
-      std::shared_ptr<sg::Camera> createDefaultCamera(vec3f up=vec3f(0,1,0));
+      // Data members //
 
-      // //! set a default camera
-      // void setDefaultCamera() { setCamera(createDefaultCamera()); }
-
-      /*! render a frame. return 0 if successful, any non-zero number if not */
-      virtual int renderFrame();
-
-      // =======================================================
-      // state variables
-      // =======================================================
-      std::shared_ptr<sg::World>       world;
-      std::shared_ptr<sg::Camera>      camera;
-      std::shared_ptr<sg::FrameBuffer> frameBuffer;
-      std::shared_ptr<sg::Integrator>  integrator;
-      // std::shared_ptr<Frame>  frame;
-
-      // state variables
-      /*! all _unique_ nodes (i.e, even instanced nodes are listed
-          only once */
-      Serialization uniqueNodes;
-      /*! _all_ nodes (i.e, instanced nodes are listed once for each
-          time they are instanced */
-      Serialization allNodes;
-
-      //! accumulation ID
-      size_t accumID;
+      OSPRenderer ospRenderer {nullptr};
+      OSPData lightsData {nullptr};
+      TimeStamp lightsBuildTime;
+      TimeStamp frameMTime;
+      std::string createdType = "none";
     };
-  }
-}
+
+  } // ::ospray::sg
+} // ::ospray
 

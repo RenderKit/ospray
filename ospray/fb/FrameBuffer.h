@@ -64,7 +64,7 @@ namespace ospray {
     virtual int32 accumID(const vec2i &tile) = 0;
     virtual float tileError(const vec2i &tile) = 0;
 
-    void beginFrame();
+    virtual void beginFrame();
 
     //! returns error of frame
     virtual float endFrame(const float errorThreshold) = 0;

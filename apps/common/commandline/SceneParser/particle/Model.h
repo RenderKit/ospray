@@ -58,6 +58,7 @@ namespace ospray {
       /*! load xyz files in which there is *no* atom count, but just a
         list of "type x y z" lines */
       void loadXYZ2(const std::string &fileName);
+      void loadXYZ3(const std::string &fileName);
 
       box3f getBBox() const;
 

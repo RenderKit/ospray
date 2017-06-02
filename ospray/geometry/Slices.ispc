@@ -43,7 +43,7 @@ void Slices_intersect(uniform Slices *uniform slices,
                       varying Ray &ray,
                       uniform size_t primID)
 {
-  const float tIntersect = -(dot(ray.org, make_vec3f(slices->planes[primID])) + slices->planes[primID].w) * rcpf(dot(ray.dir, make_vec3f(slices->planes[primID])));
+  const float tIntersect = intersectPlane(ray, slices->planes[primID]);
 
   float tBox0, tBox1;
   intersectBox(ray, slices->volume->boundingBox, tBox0, tBox1);

@@ -32,6 +32,9 @@
 #define  O_LARGEFILE  0
 #endif
 
+#include <iostream>
+#include <sstream>
+
 namespace ospray {
   namespace sg {
 

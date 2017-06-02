@@ -28,7 +28,6 @@
 namespace bench {
 void writePPM(const std::string &fileName, const int sizeX, const int sizeY,
               const uint32_t *pixel);
-}
 
 struct OSPRayFixture {
   using Millis = std::chrono::duration<double, std::ratio<1, 1000>>;
@@ -68,3 +67,4 @@ private:
   int framebufferFlags;
 };
 
+}// ::bench

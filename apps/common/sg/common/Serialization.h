@@ -24,11 +24,12 @@
 
 namespace ospray {
   namespace sg {
-    typedef ospcommon::AffineSpace3f affine3f;
 
     /*! class one can use to serialize all nodes in the scene graph */
-    struct Serialization {
-      typedef enum { 
+    struct OSPSG_INTERFACE Serialization
+    {
+      enum Mode
+      {
         /*! when serializing the scene graph, traverse through all
          instances and record each and every occurrence of any object
          (ie, an instanced object will appear multiple times in the
@@ -38,17 +39,17 @@ namespace ospray {
             object only ONCE, and list all its instantiations in its
             instantiation vector */
         DONT_FOLLOW_INSTANCES
-      } Mode;
+      };
       
-      struct Instantiation {
+      struct OSPSG_INTERFACE Instantiation
+      {
         std::shared_ptr<Instantiation> parentWorld;
-        affine3f           xfm;
-
-        Instantiation() : xfm(one) {}
+        affine3f xfm {one};
       };
       
       /*! describes one object that we encountered */
-      struct Object {
+      struct OSPSG_INTERFACE Object
+      {
         /*! the node itself - this is intentionally NOT a shared_ptr
             since nodes call this with 'this', for which we have no
             shared_ptr info */
@@ -58,23 +59,24 @@ namespace ospray {
           NULL if object isn't instanced (or only instanced once) */
         std::shared_ptr<Instantiation> instantiation;
 
-        Object(const std::shared_ptr<sg::Node> &node, //const sg::Node *node=nullptr,
+        Object(const std::shared_ptr<sg::Node> &node,
                std::shared_ptr<Instantiation> inst)
-          : node(node), instantiation(inst) 
-        {};
+          : node(node), instantiation(inst)  {}
       };
 
       /*! the node that maintains all the traversal state when
           traversing the scene graph */
-      struct State {
+      struct OSPSG_INTERFACE State
+      {
         std::shared_ptr<Instantiation> instantiation;
         Serialization *serialization;
       };
 
-      void serialize(std::shared_ptr<sg::World> world, Serialization::Mode mode);
+      void serialize(std::shared_ptr<sg::World> world,
+                     Serialization::Mode mode);
       
       /*! clear all old objects */
-      void clear() {  object.clear(); }
+      void clear() { object.clear(); }
 
       size_t size() const { return object.size(); }
 

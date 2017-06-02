@@ -40,7 +40,8 @@ const varying BSDF* uniform Plastic_getBSDF(const uniform PathTraceMaterial* uni
   const uniform Plastic* uniform self = (const uniform Plastic* uniform)super;
 
   varying LinearSpace3f* uniform shadingFrame = LinearSpace3f_create(ctx, frame(dg.Ns));
-  varying BSDF* uniform bsdf = Lambert_create(ctx, shadingFrame, self->pigmentColor);
+  const vec3f _pigmentColor = self->pigmentColor;
+  varying BSDF* uniform bsdf = Lambert_create(ctx, shadingFrame, _pigmentColor);
 
   if (self->roughness == 0.0f)
     bsdf = DielectricLayer_create(ctx, shadingFrame, bsdf, self->eta, make_vec3f(1.0f), 1.0f);

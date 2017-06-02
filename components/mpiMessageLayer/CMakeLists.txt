@@ -14,11 +14,11 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-OSPRAY_BUILD_COMPONENT(mpiCommon)
+SET(MAML_LIBRARY ospray_mpi_maml)
 
 OSPRAY_CONFIGURE_MPI()
 
-SET(MAML_LIBRARY ospray_mpi_maml)
+OSPRAY_BUILD_COMPONENT(mpiCommon)
 
 # ------------------------------------------------------------------
 # The MAML library itself
@@ -31,19 +31,29 @@ LINK
 COMPONENT mpi
 )
 
+SET(MAML_SDK_INSTALL_LOC
+  ../maml #NOTE: this is "next" to the SDK/ directory
+)
+
+OSPRAY_INSTALL_SDK_HEADERS(
+  maml/maml.h
+  DESTINATION ${MAML_SDK_INSTALL_LOC}
+)
+
 # ------------------------------------------------------------------
 # tests and examples
 # ------------------------------------------------------------------
-OSPRAY_CREATE_APPLICATION(mamlTest
+
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_LIST_DIR})
+
+OSPRAY_CREATE_TEST(mamlTest
   apps/mamlTest.cpp
 LINK
   ${MAML_LIBRARY}
-EXCLUDE_FROM_ALL
 )
 
-OSPRAY_CREATE_APPLICATION(mamlTestMessageSwarm
+OSPRAY_CREATE_TEST(mamlTestMessageSwarm
   apps/testMessageSwarm.cpp
 LINK
   ${MAML_LIBRARY}
-EXCLUDE_FROM_ALL
 )

@@ -179,6 +179,9 @@ SET(OSPRAY_SOURCES
   render/simpleAO/SimpleAOMaterial.cpp
   render/simpleAO/SimpleAOMaterial.ih
   render/simpleAO/SimpleAOMaterial.ispc
+  render/scivis/lightAlpha.ispc
+  render/scivis/volumeIntegration.ispc
+  render/scivis/surfaceShading.ispc
   render/scivis/SciVisRenderer.ispc
   render/scivis/SciVisMaterial.ispc
   render/scivis/SciVisMaterial.ih
@@ -377,10 +380,27 @@ SET(OSPRAY_LIBS
 
 IF (WIN32)
   LIST(APPEND OSPRAY_LIBS ws2_32)
-  # export ISPC SDK symbols on Windows
-  IF (OSPRAY_BUILD_ISA STREQUAL "ALL")
-    LIST(APPEND OSPRAY_SOURCES ospray.def)
-  ENDIF()
+
+  # -------------------------------------------------------
+  # export ISPC SDK symbols on Windows ##
+  # -------------------------------------------------------
+
+  FILE(READ def_header.txt OSPRAY_DEF)
+  FILE(READ ispc_symbols.txt OSPRAY_ISPC_SYMBOLS_IN)
+
+  FOREACH(isa ${OSPRAY_ISPC_TARGET_LIST})
+    STRING(REPLACE "-i32x16" "" isa ${isa}) # strip avx512(knl|skx)-i32x16
+    # add isa suffix
+    STRING(REPLACE "," ${isa} OSPRAY_ISPC_SYMBOLS ${OSPRAY_ISPC_SYMBOLS_IN})
+    STRING(APPEND OSPRAY_DEF ${OSPRAY_ISPC_SYMBOLS})
+  ENDFOREACH()
+
+  FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/ospray.def.in "${OSPRAY_DEF}")
+
+  # changes ospray.def only if content changed, avoids unnecessary re-linking
+  CONFIGURE_FILE(${CMAKE_CURRENT_BINARY_DIR}/ospray.def.in ospray.def COPYONLY)
+
+  LIST(APPEND OSPRAY_SOURCES ospray.def)
 ENDIF()
 
 OSPRAY_CREATE_LIBRARY(ospray ${OSPRAY_SOURCES} LINK ${OSPRAY_LIBS} COMPONENT lib)

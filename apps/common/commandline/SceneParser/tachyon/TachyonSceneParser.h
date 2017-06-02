@@ -17,7 +17,7 @@
 #pragma once
 
 #include <common/commandline/SceneParser/SceneParser.h>
-#include <ospray_cpp/Renderer.h>
+#include <ospray/ospray_cpp/Renderer.h>
 
 class TachyonSceneParser : public SceneParser
 {

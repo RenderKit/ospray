@@ -19,16 +19,44 @@
 namespace ospray {
   namespace sg {
 
-    FrameBuffer::FrameBuffer(const vec2i &size) 
-      : size(size), 
-        ospFrameBuffer(NULL) 
+    FrameBuffer::FrameBuffer(vec2i size)
     {
+      createChild("size", "vec2i", size);
+      createChild("displayWall", "string", std::string(""));
       createFB();
-    };
-    
+    }
+
     FrameBuffer::~FrameBuffer()
     {
       destroyFB();
+    }
+
+    void FrameBuffer::postCommit(RenderContext &ctx)
+    {
+      std::string displayWall = child("displayWall").valueAs<std::string>();
+      this->displayWallStream = displayWall;
+
+      destroyFB();
+      createFB();
+      
+      if (displayWall != "") {
+        ospLoadModule("displayWald");
+        OSPPixelOp pixelOp = ospNewPixelOp("display_wald");
+        ospSetString(pixelOp,"streamName",displayWall.c_str());
+        ospCommit(pixelOp);
+        ospSetPixelOp(ospFrameBuffer,pixelOp);
+        std::cout << "-------------------------------------------------------"
+                  << std::endl;
+        std::cout << "this is the display wall frma ebuferr .. size is "
+                  << size() << std::endl;
+        std::cout << "added display wall pixel op ..." << std::endl;
+        
+        std::cout << "created display wall pixelop, and assigned to frame buffer!"
+                << std::endl;
+      }
+
+
+      ospCommit(ospFrameBuffer);
     }
 
     unsigned char *FrameBuffer::map()
@@ -36,7 +64,7 @@ namespace ospray {
       return (unsigned char *)ospMapFrameBuffer(ospFrameBuffer, OSP_FB_COLOR);
     }
 
-    void FrameBuffer::unmap(unsigned char *mem)
+    void FrameBuffer::unmap(void *mem)
     {
       ospUnmapFrameBuffer(mem,ospFrameBuffer);
     }
@@ -51,9 +79,9 @@ namespace ospray {
       ospFrameBufferClear(ospFrameBuffer,OSP_FB_ACCUM);
     }
 
-    vec2i FrameBuffer::getSize() const
+    vec2i FrameBuffer::size() const
     {
-      return size;
+      return child("size").valueAs<vec2i>();
     }
     
     /*! \brief returns a std::string with the c++ name of this class */
@@ -62,22 +90,29 @@ namespace ospray {
       return "ospray::sg::FrameBuffer";
     }
     
-    OSPFrameBuffer FrameBuffer::getOSPHandle() const
+    OSPFrameBuffer FrameBuffer::handle() const
     {
       return ospFrameBuffer;
     }
 
     void ospray::sg::FrameBuffer::createFB()
     {
-      ospFrameBuffer =
-          ospNewFrameBuffer((const osp::vec2i &)size, OSP_FB_SRGBA,
-                            OSP_FB_COLOR | OSP_FB_ACCUM);
+      auto fbsize = size();
+      ospFrameBuffer = ospNewFrameBuffer((osp::vec2i&)fbsize,
+                                         (displayWallStream=="")
+                                         ? OSP_FB_SRGBA
+                                         : OSP_FB_NONE,
+                                         OSP_FB_COLOR | OSP_FB_ACCUM |
+                                         OSP_FB_VARIANCE);
+      setValue((OSPObject)ospFrameBuffer);
     }
 
     void ospray::sg::FrameBuffer::destroyFB()
     {
       ospFreeFrameBuffer(ospFrameBuffer);
     }
+
+    OSP_REGISTER_SG_NODE(FrameBuffer);
 
   } // ::ospray::sg
 } // ::ospray

@@ -17,15 +17,11 @@
 // ospray 
 #include "Camera.h"
 #include "common/Util.h"
-#include "common/Library.h"
-// ispc-side stuff
 #include "Camera_ispc.h"
-// stl 
-#include <map>
 
 namespace ospray {
 
-  Camera *Camera::createCamera(const char *type)
+  Camera *Camera::createInstance(const char *type)
   {
     return createInstanceHelper<Camera, OSP_CAMERA>(type);
   }

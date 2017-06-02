@@ -17,7 +17,6 @@
 #pragma once
 
 #include "common/OSPCommon.h"
-#include "render/util.h"
 
 namespace ospray {
 
@@ -37,10 +36,8 @@ namespace ospray {
       agree on which fields will be set. Similarly, the frame buffer
       may actually use uchars, but the tile will always store
       floats. */
-  struct OSPRAY_SDK_INTERFACE __aligned(64) Tile {
-    // make sure this tile is 64-byte aligned when alloc'ed
-    ALIGNED_STRUCT;
-
+  struct OSPRAY_SDK_INTERFACE __aligned(64) Tile
+  {
     // 'red' component; in float.
     float r[TILE_SIZE*TILE_SIZE];
     // 'green' component; in float.
@@ -58,7 +55,7 @@ namespace ospray {
     int32    children;
     int32    accumID; //!< how often has been accumulated into this tile
 
-    Tile() {}
+    Tile() = default;
     Tile(const vec2i &tile, const vec2i &fbsize, const int32 accumId)
       : fbSize(fbsize),
         rcp_fbSize(rcp(vec2f(fbsize))),

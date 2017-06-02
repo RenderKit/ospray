@@ -17,12 +17,6 @@
 #include "SpotLight.h"
 #include "SpotLight_ispc.h"
 
-#ifdef _WIN32
-#  define _USE_MATH_DEFINES
-#  include <math.h> // M_PI
-#endif
-
-
 namespace ospray {
 
   SpotLight::SpotLight()
@@ -35,7 +29,6 @@ namespace ospray {
     return "ospray::SpotLight";
   }
 
-  //!< Copy understood parameters into class members
   void SpotLight::commit()
   {
     Light::commit();

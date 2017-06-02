@@ -17,10 +17,6 @@
 // ospray
 #include "api/Device.h"
 #include "Model.h"
-// embree
-#include "embree2/rtcore.h"
-#include "embree2/rtcore_scene.h"
-#include "embree2/rtcore_geometry.h"
 // ispc exports
 #include "Model_ispc.h"
 
@@ -42,13 +38,12 @@ namespace ospray {
     return "ospray::Model";
   }
 
-  void Model::finalize()
+  void Model::commit()
   {
-    std::stringstream msg;
-    msg << "=======================================================\n";
-    msg << "Finalizing model, has " << geometry.size()
-        << " geometries and " << volume.size() << " volumes" << std::endl;
-    postErrorMsg(msg, 2);
+    postStatusMsg(2)
+        << "=======================================================\n"
+        << "Finalizing model, has " << geometry.size()
+        << " geometries and " << volume.size() << " volumes";
 
     RTCDevice embreeDevice = (RTCDevice)ospray_getEmbreeDevice();
 
@@ -58,11 +53,9 @@ namespace ospray {
     bounds = empty;
 
     for (size_t i = 0; i < geometry.size(); i++) {
-
-       std::stringstream msg;
-       msg << "=======================================================\n"
-           << "Finalizing geometry " << i << std::endl;
-       postErrorMsg(msg, 2);
+       postStatusMsg(2)
+           << "=======================================================\n"
+           << "Finalizing geometry " << i;
 
       geometry[i]->finalize(this);
 

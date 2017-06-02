@@ -19,7 +19,6 @@
 // ospray
 #include "common/OSPCommon.h"
 #include "common/Managed.h"
-#include "ospray/ospray.h"
 // embree
 #include "embree2/rtcore.h"
 // std
@@ -141,7 +140,8 @@ namespace ospray {
       virtual OSPTransferFunction newTransferFunction(const char *type) = 0;
 
       /*! have given renderer create a new material */
-      virtual OSPMaterial newMaterial(OSPRenderer _renderer, const char *type) = 0;
+      virtual OSPMaterial newMaterial(OSPRenderer _renderer,
+                                      const char *type) = 0;
 
       /*! create a new Texture2D object */
       virtual OSPTexture2D newTexture2D(const vec2i &size,
@@ -203,12 +203,6 @@ namespace ospray {
         NOT_IMPLEMENTED;
       }
 
-      /*! switch API mode for distributed API extensions */
-      virtual void apiMode(OSPDApiMode)
-      { 
-        NOT_IMPLEMENTED;
-      }
-
       virtual void sampleVolume(float **results,
                                 OSPVolume volume,
                                 const vec3f *worldCoordinates,
@@ -229,17 +223,38 @@ namespace ospray {
       int numThreads {-1};
       /*! whether we're running in debug mode (cmdline: --osp:debug) */
       bool debugMode {false};
+
+      enum OSP_THREAD_AFFINITY {AUTO_DETECT, AFFINITIZE, DEAFFINITIZE};
+      int threadAffinity {AUTO_DETECT};
       /*! logging level (cmdline: --osp:loglevel \<n\>) */
       // NOTE(jda) - Keep logLevel static because the device factory function
       //             needs to have a valid value for the initial Device creation
       static uint32_t logLevel;
 
-      std::function<void(const char *)> error_fcn{[](const char*){}};
+      std::function<void(const char *)>
+      msg_fcn { [](const char*){} };
+
+      std::function<void(OSPError, const char*)>
+      error_fcn { [](OSPError, const char*){} };
+
+      std::function<void(const char *)>
+      trace_fcn { [](const char*){} };
+
+      OSPError    lastErrorCode = OSP_NO_ERROR;
+      std::string lastErrorMsg  = "no error";// no braced initializer for MSVC12
 
     private:
 
       bool committed {false};
     };
+
+    // Shorthand functions to query current API device //
+
+    OSPRAY_SDK_INTERFACE bool    deviceIsSet();
+    OSPRAY_SDK_INTERFACE Device& currentDevice();
+
+    OSPRAY_SDK_INTERFACE
+    std::string generateEmbreeDeviceCfg(const Device &device);
 
     /*! \brief registers a internal ospray::<ClassName> renderer under
         the externally accessible name "external_name"

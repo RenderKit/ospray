@@ -43,7 +43,7 @@ namespace ospray {
   {
     struct OSPRAY_SDK_INTERFACE Instance : public RefCount
     {
-      virtual ~Instance() = default;
+      virtual ~Instance() {} // "= default;" causes linker problems with icc15
       /*! gets called every time the frame buffer got 'commit'ted */
       virtual void  commitNotify() {}
       /*! gets called once at the beginning of the frame */
@@ -80,15 +80,9 @@ namespace ospray {
     virtual ~PixelOp() = default;
 
     //! \brief create an instance of this pixel op
-    virtual Instance *createInstance(FrameBuffer *fb, PixelOp::Instance *prev);
+    virtual Instance *createInstance(FrameBuffer *fb, PixelOp::Instance *prev) = 0;
 
-    /*! \brief creates an abstract renderer class of given type
-
-      The respective renderer type must be a registered renderer type
-      in either ospray proper or any already loaded module. For
-      renderer types specified in special modules, make sure to call
-      ospLoadModule first. */
-    static PixelOp *createPixelOp(const char *identifier);
+    static PixelOp *createInstance(const char *identifier);
   };
 
   /*! \brief registers a internal ospray::<ClassName> renderer under

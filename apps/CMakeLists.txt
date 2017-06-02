@@ -21,6 +21,7 @@ INCLUDE_DIRECTORIES(
   ${CMAKE_SOURCE_DIR}
   ${CMAKE_CURRENT_LIST_DIR}
   common
+  common/boost.any
 )
 
 # common utilities
@@ -50,42 +51,7 @@ IF(OSPRAY_APPS_ENABLE_SCRIPTING)
   ADD_SUBDIRECTORY(common/script)
 ENDIF()
 
-# mini-scene graph viewer implemented with GLUT
-OPTION(OSPRAY_APPS_GLUTVIEWER "Build ospGlutViewer application." ON)
-
-IF(OSPRAY_APPS_GLUTVIEWER)
-  INCLUDE(glut)
-  # common utility classes for GLUT-based 3D viewer widget
-  ADD_SUBDIRECTORY(common/widgets)
-  ADD_SUBDIRECTORY(glutViewer)
-ENDIF()
-
-# NOTE(jda) - Disable Qt based viewers when on OS X using ICC due to
-#             unresolved issues
-# qt-based viewer for geometry (and soon volumes)
-IF(NOT (APPLE AND OSPRAY_COMPILER_ICC) AND NOT WIN32)
-  OPTION(OSPRAY_APPS_QTVIEWER "Build ospQtViewer (Qt-based model viewer)" ON)
-  IF (OSPRAY_APPS_QTVIEWER)
-    ADD_SUBDIRECTORY(qtViewer)
-  ENDIF()
-ENDIF()
-
-# volume viewer application
-IF(NOT (APPLE AND OSPRAY_COMPILER_ICC))
-  OPTION(OSPRAY_APPS_VOLUMEVIEWER "Build ospVolumeViewer application." ON)
-  IF(OSPRAY_APPS_VOLUMEVIEWER)
-    ADD_SUBDIRECTORY(volumeViewer)
-  ENDIF()
-ENDIF()
-
-# -------------------------------------------------------
-# redistribute QT on Windows
-# -------------------------------------------------------
-IF (OSPRAY_INSTALL_DEPENDENCIES AND WIN32 AND
-    (OSPRAY_APPS_QTVIEWER OR OSPRAY_APPS_VOLUMEVIEWER))
-  FOREACH(QT_COMPONENT QTCORE QTGUI QTOPENGL)
-    STRING(REGEX REPLACE lib$ dll QT_DLL ${QT_${QT_COMPONENT}_LIBRARY_RELEASE})
-    INSTALL(PROGRAMS ${QT_DLL}
-            DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT redist)
-  ENDFOREACH()
+OPTION(OSPRAY_APPS_EXAMPLEVIEWER "Build example viewer apps" ON)
+IF (OSPRAY_APPS_EXAMPLEVIEWER)
+  ADD_SUBDIRECTORY(exampleViewer)
 ENDIF()

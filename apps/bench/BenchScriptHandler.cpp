@@ -30,6 +30,8 @@
 
 #include "BenchScriptHandler.h"
 
+namespace bench {
+
 BenchScriptHandler::BenchScriptHandler(std::shared_ptr<OSPRayFixture> &fixture)
   : OSPRayScriptHandler(fixture->model.handle(), fixture->renderer.handle(), fixture->camera.handle())
 {
@@ -126,6 +128,8 @@ void BenchScriptHandler::registerScriptTypes() {
   );
 
   chai.add(m);
+}
+
 }
 
 #endif

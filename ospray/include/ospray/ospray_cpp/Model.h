@@ -21,90 +21,98 @@
 #include <ospray/ospray_cpp/Volume.h>
 
 namespace ospray {
-namespace cpp    {
+  namespace cpp    {
 
-class Model : public ManagedObject_T<OSPModel>
-{
-public:
+    class Model : public ManagedObject_T<OSPModel>
+    {
+    public:
 
-  Model();
-  Model(const Model &copy);
-  Model(OSPModel existing);
+      Model();
+      Model(const Model &copy);
+      Model(OSPModel existing);
 
-  void addGeometry(Geometry &v) const;
-  void addGeometry(OSPGeometry v) const;
+      void addGeometry(Geometry &v) const;
+      void addGeometry(OSPGeometry v) const;
 
-  void removeGeometry(Geometry &v) const;
-  void removeGeometry(OSPGeometry v) const;
+      void removeGeometry(Geometry &v) const;
+      void removeGeometry(OSPGeometry v) const;
 
-  void addVolume(Volume &v) const;
-  void addVolume(OSPVolume v) const;
+      void addVolume(Volume &v) const;
+      void addVolume(OSPVolume v) const;
 
-  void removeVolume(Volume &v) const;
-  void removeVolume(OSPVolume v) const;
-};
+      void removeVolume(Volume &v) const;
+      void removeVolume(OSPVolume v) const;
 
-// Inlined function definitions ///////////////////////////////////////////////
+      Geometry createInstance(const ospcommon::affine3f &transform) const;
+    };
 
-inline Model::Model()
-{
-  OSPModel c = ospNewModel();
-  if (c) {
-    ospObject = c;
-  } else {
-    throw std::runtime_error("Failed to create OSPModel!");
-  }
-}
+    // Inlined function definitions ///////////////////////////////////////////////
 
-inline Model::Model(const Model &copy) :
-  ManagedObject_T<OSPModel>(copy.handle())
-{
-}
+    inline Model::Model()
+    {
+      OSPModel c = ospNewModel();
+      if (c) {
+        ospObject = c;
+      } else {
+        throw std::runtime_error("Failed to create OSPModel!");
+      }
+    }
 
-inline Model::Model(OSPModel existing) :
-  ManagedObject_T<OSPModel>(existing)
-{
-}
+    inline Model::Model(const Model &copy) :
+      ManagedObject_T<OSPModel>(copy.handle())
+    {
+    }
 
-inline void Model::addGeometry(Geometry &v) const
-{
-  addGeometry(v.handle());
-}
+    inline Model::Model(OSPModel existing) :
+      ManagedObject_T<OSPModel>(existing)
+    {
+    }
 
-inline void Model::addGeometry(OSPGeometry v) const
-{
-  ospAddGeometry(handle(), v);
-}
+    inline void Model::addGeometry(Geometry &v) const
+    {
+      addGeometry(v.handle());
+    }
 
-inline void Model::removeGeometry(Geometry &v) const
-{
-  removeGeometry(v.handle());
-}
+    inline void Model::addGeometry(OSPGeometry v) const
+    {
+      ospAddGeometry(handle(), v);
+    }
 
-inline void Model::removeGeometry(OSPGeometry v) const
-{
-  ospRemoveGeometry(handle(), v);
-}
+    inline void Model::removeGeometry(Geometry &v) const
+    {
+      removeGeometry(v.handle());
+    }
 
-inline void Model::addVolume(Volume &v) const
-{
-  addVolume(v.handle());
-}
+    inline void Model::removeGeometry(OSPGeometry v) const
+    {
+      ospRemoveGeometry(handle(), v);
+    }
 
-inline void Model::addVolume(OSPVolume v) const
-{
-  ospAddVolume(handle(), v);
-}
+    inline void Model::addVolume(Volume &v) const
+    {
+      addVolume(v.handle());
+    }
 
-inline void Model::removeVolume(Volume &v) const
-{
-  removeVolume(v.handle());
-}
+    inline void Model::addVolume(OSPVolume v) const
+    {
+      ospAddVolume(handle(), v);
+    }
 
-inline void Model::removeVolume(OSPVolume v) const
-{
-  ospRemoveVolume(handle(), v);
-}
+    inline void Model::removeVolume(Volume &v) const
+    {
+      removeVolume(v.handle());
+    }
 
-}// namespace cpp
+    inline void Model::removeVolume(OSPVolume v) const
+    {
+      ospRemoveVolume(handle(), v);
+    }
+
+    inline Geometry
+    Model::createInstance(const ospcommon::affine3f &transform) const
+    {
+      return ospNewInstance(handle(), (const osp::affine3f&)transform);
+    }
+
+  }// namespace cpp
 }// namespace ospray

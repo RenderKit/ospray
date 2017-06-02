@@ -43,7 +43,7 @@ inline uniform bool valid(const uniform TextureParam uniform &tex)
 
 inline uniform bool hasAlpha(const uniform TextureParam uniform &tex)
 {
-  return valid(tex) ? tex.map->hasAlpha : false;
+  return hasAlpha(tex.map);
 }
 
 inline float get1f(const uniform TextureParam uniform &tex,
@@ -56,7 +56,7 @@ inline float get1f(const uniform TextureParam uniform &tex,
                    const varying vec2f uv,
                    const varying float defaultValue)
 {
-  if (tex.map == NULL)
+  if (!valid(tex))
     return defaultValue;
   return get1f(tex.map, tex.xform * uv);
 }
@@ -71,7 +71,7 @@ inline vec3f get3f(const uniform TextureParam uniform &tex,
                    const varying vec2f uv,
                    const varying vec3f defaultValue)
 {
-  if (tex.map == NULL)
+  if (!valid(tex))
     return defaultValue;
   return get3f(tex.map, tex.xform * uv);
 }
@@ -86,7 +86,7 @@ inline vec4f get4f(const uniform TextureParam uniform &tex,
                    const varying vec2f uv,
                    const varying vec4f defaultValue)
 {
-  if (tex.map == NULL)
+  if (!valid(tex))
     return defaultValue;
   return get4f(tex.map, tex.xform * uv);
 }
