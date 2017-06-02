@@ -3,8 +3,20 @@ Version History
 
 ### Changes in v1.3.0:
 
+-   New MPI distributed device to support MPI distributed applications
+    using OSPRay collectively for "in-situ" rendering (currently in "alpha")
+    -   Enabled via new `mpi_distributed` device type
+    -   Currently only supports `raycast` renderer, other renderers will be
+        supported in the future
+    -   All API calls are expected to be exactly replicated (object instances
+        and parameters) except scene data (geometries and volumes)
+    -   The original MPI device is now called the `mpi_offload` device to
+        differentiate between the two different implementations
 -   Support of Intel® AVX-512 for next generation Intel® Xeon® processor
     (codename Skylake), thus new minimum ISPC version is 1.9.1
+-   Thread affinity of OSPRay's tasking system can now be controlled via
+    either an environment variable (`OSPRAY_SET_AFFINITY`) or device
+    parameter (`set_affinity`)
 -   Changed behavior of the background color in the SciVis renderer:
     `bgColor` now includes alpha and is always blended (no
     `backgroundEnabled` anymore). To disable the background don't set
@@ -13,7 +25,17 @@ Version History
     coordinates
 -   The GLUT- and Qt-based demo viewer applications have been replaced
     by an Example Viewer with minimal dependencies
+    -   Building the sample applications now requires GCC 4.9 (previously
+        4.8) for features used in the C++ standard library
+    -   OSPRay itself can still be built with GCC 4.8
+    -   The new example viewer based on `ospray::sg` (called
+        `ospExampleViewerSg`) is the single app we are consolidating to,
+        `ospExampleViewer` will remain only as a depricated viewer for
+        compatibility with the old `ospGlutViewer` app
 -   Deprecated `ospCreateDevice()`; use `ospNewDevice()` instead
+-   Fixed bug where exceptions could leak to C applications
+    -   New API functions added to handle exceptions as error codes via
+        a callback function
 
 ### Changes in v1.2.1:
 
