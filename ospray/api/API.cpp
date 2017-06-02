@@ -80,23 +80,23 @@ inline std::string toString(OSPObject obj)
 
 using namespace ospray;
 
-inline Device *createMpiDevice()
+inline Device *createMpiDevice(const std::string &type)
 {
   Device *device = nullptr;
 
   try {
-    device = Device::createDevice("mpi");
+    device = Device::createDevice(type.c_str());
   } catch (const std::runtime_error &) {
     try {
       ospLoadModule("mpi");
-      device = Device::createDevice("mpi");
+      device = Device::createDevice(type.c_str());
     } catch (const std::runtime_error &err) {
-      std::string error_msg = "Cannot create a device of type 'mpi'! Make sure "
-                              "you have enabled the OSPRAY_MODULE_MPI CMake "
-                              "variable in your build of OSPRay.";
-      error_msg += ("\n(Reason device creation failed: "
-                    + std::string(err.what()) + ')');
-      throw std::runtime_error(error_msg);
+      std::stringstream error_msg;
+      error_msg << "Cannot create a device of type '" << type << "'! Make sure "
+                << "you have enabled the OSPRAY_MODULE_MPI CMake "
+                << "variable in your build of OSPRay.\n";
+      error_msg << "(Reason device creation failed: " << err.what() << ')';
+      throw std::runtime_error(error_msg.str());
     }
   }
 
@@ -118,7 +118,7 @@ OSPRAY_CATCH_BEGIN
     postStatusMsg("#osp: launching ospray mpi ring - "
                  "make sure that mpd is running");
 
-    currentDevice = createMpiDevice();
+    currentDevice = createMpiDevice("mpi_offload");
     currentDevice->findParam("mpiMode", true)->set("mpi-launch");
     currentDevice->findParam("launchCommand", true)
                  ->set(OSP_MPI_LAUNCH.second.c_str());
@@ -154,7 +154,15 @@ OSPRAY_CATCH_BEGIN
       if (av == "--osp:mpi" || av == "--osp:mpi-offload") {
         removeArgs(*_ac,(char **&)_av,i,1);
         if (!currentDevice)
-          currentDevice = createMpiDevice();
+          currentDevice = createMpiDevice("mpi_offload");
+        --i;
+        continue;
+      }
+
+      if (av == "--osp:mpi-distributed") {
+        removeArgs(*_ac,(char **&)_av,i,1);
+        if (!currentDevice)
+          currentDevice = createMpiDevice("mpi_distributed");
         --i;
         continue;
       }
@@ -165,7 +173,7 @@ OSPRAY_CATCH_BEGIN
         const char *launchCommand = strdup(_av[i+1]);
         removeArgs(*_ac,(char **&)_av,i,2);
 
-        currentDevice = createMpiDevice();
+        currentDevice = createMpiDevice("mpi_offload");
         currentDevice->findParam("mpiMode", true)->set("mpi-launch");
         currentDevice->findParam("launchCommand", true)->set(launchCommand);
         --i;
@@ -180,7 +188,7 @@ OSPRAY_CATCH_BEGIN
         }
         removeArgs(*_ac,(char **&)_av,i,1);
 
-        currentDevice = createMpiDevice();
+        currentDevice = createMpiDevice("mpi_offload");
         currentDevice->findParam("mpiMode", true)->set("mpi-listen");
         currentDevice->findParam("fileNameToStorePortIn", true)
                      ->set(fileNameToStorePortIn?fileNameToStorePortIn:"");
@@ -194,7 +202,7 @@ OSPRAY_CATCH_BEGIN
         removeArgs(*_ac,(char **&)_av,i,2);
 
         if (!currentDevice)
-          currentDevice = createMpiDevice();
+          currentDevice = createMpiDevice("mpi_offload");
 
         currentDevice->findParam("mpiMode", true)->set("mpi-connect");
         currentDevice->findParam("portName", true)->set(portName.c_str());
