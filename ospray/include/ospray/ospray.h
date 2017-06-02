@@ -239,25 +239,30 @@ extern "C" {
   /*! add 1-int parameter to given Device */
   OSPRAY_INTERFACE void ospDeviceSet1i(OSPDevice, const char *id, int32_t x);
 
-  /*! Status message callback function type */
+  /*! status message callback function type */
   typedef void (*OSPStatusFunc)(const char* messageText);
 
-  /*! Set callback for given Device to call when a status message occurs*/
+  /*! set callback for given Device to call when a status message occurs*/
   OSPRAY_INTERFACE void ospDeviceSetStatusFunc(OSPDevice, OSPStatusFunc);
 
-  /*! Error message callback function type */
+  // old names
+  typedef void (*OSPErrorMsgFunc)(const char* str);
+  OSP_DEPRECATED OSPRAY_INTERFACE void ospDeviceSetErrorMsgFunc(OSPDevice, OSPErrorMsgFunc);
+
+
+  /*! error message callback function type */
   typedef void (*OSPErrorFunc)(OSPError, const char* errorDetails);
 
-  /*! Set callback for given Device to call when an error occurs*/
+  /*! set callback for given Device to call when an error occurs*/
   OSPRAY_INTERFACE void ospDeviceSetErrorFunc(OSPDevice, OSPErrorFunc);
 
-  /*! Get the OSPError code for the last error that has occured on the device */
+  /*! get the OSPError code for the last error that has occured on the device */
   OSPRAY_INTERFACE OSPError ospDeviceGetLastErrorCode(OSPDevice);
 
-  /*! Get the message for the last error that has occured on the device */
+  /*! get the message for the last error that has occured on the device */
   OSPRAY_INTERFACE const char* ospDeviceGetLastErrorMsg(OSPDevice);
 
-  /*! Commit parameters on a given device */
+  /*! commit parameters on a given device */
   OSPRAY_INTERFACE void ospDeviceCommit(OSPDevice);
 
   //! load plugin 'name' from shard lib libospray_module_<name>.so

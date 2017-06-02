@@ -581,6 +581,12 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END()
 
+// for backward compatibility, will be removed in futur
+extern "C" void ospDeviceSetErrorMsgFunc(OSPDevice dev, OSPErrorMsgFunc cb)
+{
+  ospDeviceSetStatusFunc(dev, cb);
+}
+
 extern "C" void ospDeviceSetErrorFunc(OSPDevice object, OSPErrorFunc callback)
 OSPRAY_CATCH_BEGIN
 {
