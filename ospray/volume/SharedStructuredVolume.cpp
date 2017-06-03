@@ -80,7 +80,7 @@ namespace ospray {
                                "support for volumes of voxel type '"
                                + voxelType + "'");
     }
-    return 0;
+    return true;
   }
 
   void SharedStructuredVolume::createEquivalentISPC()

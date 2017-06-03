@@ -67,6 +67,7 @@ inline void Volume::setRegion(void *source,
                               const ospcommon::vec3i &regionCoords,
                               const ospcommon::vec3i &regionSize) const
 {
+  // TODO return error code
   ospSetRegion(handle(),
                source,
                (const osp::vec3i&)regionCoords,

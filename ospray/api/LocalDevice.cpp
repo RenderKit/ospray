@@ -273,7 +273,7 @@ namespace ospray {
     {
       Volume *volume = (Volume *) handle;
       Assert(volume != nullptr && "invalid volume object handle");
-      return(volume->setRegion(source, index, count));
+      return volume->setRegion(source, index, count);
     }
 
     /*! assign (named) vec2f parameter to an object */
