@@ -26,6 +26,7 @@ ospray_create_library(ospray_imgui3d
   imgui_impl_glfw_gl3.cpp
   imgui3D.cpp
   imguiViewer.cpp
+  cameraManipulator.cpp
 LINK
   ospray
   ospray_common
@@ -43,6 +44,7 @@ ospray_create_library(ospray_imgui3d_sg
   imgui3D.cpp
   imguiViewerSg.cpp
   transferFunction.cpp
+  cameraManipulator.cpp
 LINK
   ospray
   ospray_common

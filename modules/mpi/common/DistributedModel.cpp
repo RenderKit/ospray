@@ -46,6 +46,8 @@ namespace ospray {
 
     void DistributedModel::commit()
     {
+      othersRegions.clear();
+
       // TODO: We may need to override the ISPC calls made
       // to the Model or customize the model struct on the ISPC
       // side. In which case we need some ISPC side inheritence

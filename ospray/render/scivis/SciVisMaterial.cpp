@@ -59,6 +59,7 @@ namespace ospray {
 
     OSP_REGISTER_MATERIAL(SciVisMaterial, SciVisMaterial);
     OSP_REGISTER_MATERIAL(SciVisMaterial, OBJMaterial);
+    OSP_REGISTER_MATERIAL(SciVisMaterial, default);
 
   } // ::ospray::scivis
 } // ::ospray

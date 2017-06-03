@@ -64,7 +64,7 @@ namespace mpicommon {
 
   /*! global variable that turns on logging of MPI communication
     (for debugging) _may_ eventually turn this into a real logLevel,
-    but for now tihs is cleaner here thatn in the MPI device
+    but for now this is cleaner here than in the MPI device
   */
   OSPRAY_MPI_INTERFACE extern bool mpiIsThreaded;
 
@@ -84,9 +84,9 @@ namespace mpicommon {
 
     // this is the RIGHT naming convention - old code has them all inside out.
     void makeIntraComm();
-    void makeIntraComm(MPI_Comm comm);
-    void makeInterComm(MPI_Comm comm);
+    void makeIntraComm(MPI_Comm);
     void makeInterComm();
+    void makeInterComm(MPI_Comm);
 
     /*! set to given intercomm, and properly set size, root, etc */
     void setTo(MPI_Comm comm);

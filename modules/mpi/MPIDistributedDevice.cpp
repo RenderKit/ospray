@@ -92,12 +92,7 @@ namespace ospray {
 
         mpicommon::init(&_ac, _av);
 
-        std::stringstream embreeConfig;
-        if (debugMode)
-          embreeConfig << " threads=1,verbose=2";
-        else if(numThreads > 0)
-          embreeConfig << " threads=" << numThreads;
-        embreeDevice = rtcNewDevice(embreeConfig.str().c_str());
+        embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
 
         rtcDeviceSetErrorFunction(embreeDevice, embreeErrorFunc);
 

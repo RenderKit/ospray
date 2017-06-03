@@ -23,9 +23,9 @@ namespace ospcommon {
   namespace networking {
 
     /* read stream that serves smaller read requests (of a given
-       siez) from a block of data that it queries from a fabric. if
+       size) from a block of data that it queries from a fabric. if
        the internal buffer isn't big enough to fulfill the request,
-       te next block will automatically get read from the fabric */
+       the next block will automatically get read from the fabric */
     struct OSPCOMMON_INTERFACE BufferedReadStream : public ReadStream
     {
       BufferedReadStream(Fabric &fabric);
@@ -37,12 +37,12 @@ namespace ospcommon {
 
       std::reference_wrapper<Fabric> fabric;
       ospcommon::byte_t *buffer;
-      size_t  numAvailable;
+      size_t numAvailable;
     };
 
     /*! maintains an internal buffer of a given size, and buffers
-      asll write ops preferably into this buffer; this internal
-      buffer gets flushed either when the user explcitly calls
+      all write ops preferably into this buffer; this internal
+      buffer gets flushed either when the user explicitly calls
       flush(), or when the maximum size of the buffer gets
       reached */
     struct OSPCOMMON_INTERFACE BufferedWriteStream : public WriteStream

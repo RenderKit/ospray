@@ -34,6 +34,9 @@
 // ospray API
 #include "ospray/ospray.h"
 
+// core ospray
+#include "ospray/common/OSPCommon.h"
+
 namespace ospray {
   namespace sg {
     using namespace ospcommon;
@@ -64,15 +67,6 @@ namespace ospray {
 
     //! map the given file to memory and return that pointer
     const unsigned char* mapFile(const std::string &fileName);
-
-    /*! return the size (in byte) for a given ospray data type */
-    size_t sizeOf(const OSPDataType type);
-
-    /*! return the ospray data type for a given string-ified type */
-    OSPDataType getOSPDataTypeFor(const char *typeName);
-
-    /*! return the ospray data type for a given string-ified type */
-    OSPDataType getOSPDataTypeFor(const std::string &typeName);
 
   } // ::ospray::sg
 } // ::ospray

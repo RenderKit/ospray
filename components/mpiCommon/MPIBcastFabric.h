@@ -23,10 +23,13 @@
 
 namespace mpicommon {
 
-  /*! a specific fabric based on PMI */
+  /*! a specific fabric based on MPI. Note that in the case of an
+   *  MPIBcastFabric using an intercommunicator the send rank must
+   *  be MPI_ROOT and the recv rank must be 0.
+   */
   struct OSPRAY_MPI_INTERFACE MPIBcastFabric : public networking::Fabric
   {
-    MPIBcastFabric(const Group &group, int rootRank = 0);
+    MPIBcastFabric(const Group &group, int sendRank, int recvRank);
 
     virtual ~MPIBcastFabric() = default;
 
@@ -39,9 +42,9 @@ namespace mpicommon {
       and give us size and pointer to this data */
     virtual size_t read(void *&mem) override;
 
-    byte_t *buffer;
+    std::vector<byte_t> buffer;
     Group   group;
-    int     recvRank, sendRank;
+    int     sendRank, recvRank;
   };
 
 } // ::mpicommon

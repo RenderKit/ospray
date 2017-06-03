@@ -335,6 +335,10 @@ namespace ospray {
       device.lastErrorMsg  = message;
 
       device.error_fcn(e, message.c_str());
+    } else {
+      // NOTE: No device, but something should still get printed for the user to
+      //       debug the calling application.
+      std::cerr << "#osp: INITIALIZATION ERROR --> " << message << std::endl;
     }
   }
 
