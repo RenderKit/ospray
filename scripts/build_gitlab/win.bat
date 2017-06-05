@@ -26,11 +26,12 @@ cmake -L ^
 -D OSPRAY_BUILD_ISA=ALL ^
 -D OSPRAY_MODULE_MPI=ON ^
 -D OSPRAY_MODULE_BILINEAR_PATCH=ON ^
--D OSPRAY_USE_EXTERNAL_EMBREE=ON ^
+-D OSPRAY_ENABLE_TESTING=ON ^
 -D USE_IMAGE_MAGICK=OFF ^
 ..
 
 cmake --build . --config Release --target ALL_BUILD -- /m /nologo
+ctest .
 
 :abort
 endlocal
