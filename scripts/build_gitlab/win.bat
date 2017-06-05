@@ -31,7 +31,7 @@ cmake -L ^
 ..
 
 cmake --build . --config Release --target ALL_BUILD -- /m /nologo
-ctest .
+ctest . -C Release
 
 :abort
 endlocal
