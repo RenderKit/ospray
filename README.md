@@ -151,10 +151,10 @@ Documentation
 =============
 
 The following [API
-documentation](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
+documentation](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation")
 of OSPRay can also be found as a [pdf
-document](http://www.sdvis.org/ospray/download/OSPRay_readme_devel.pdf "OSPRay Documentation")
-(2.6MB).
+document](http://www.sdvis.org/ospray/download/OSPRay_readme.pdf "OSPRay Documentation")
+(2.1MB).
 
 For a deeper explanation of the concepts, design, features and
 performance of OSPRay also have a look at the IEEE Vis 2016 paper
@@ -199,7 +199,7 @@ application's `main` function. For an example see the
 [tutorial](#tutorial). For possible error codes see section [Error
 Handling and Status Messages](#error-handling-and-status-messages). It
 is important to note that the arguments passed to `ospInit()` are
-prcessed in order they are listed. The following parameters (which are
+processed in order they are listed. The following parameters (which are
 prefixed by convention with "`--osp:`") are understood:
 
 <table style="width:98%;">
@@ -285,7 +285,7 @@ always provides the "`default`" device, which maps to a local CPU
 rendering device. If it is enabled in the build, you can also use
 "`mpi`" to access the MPI multi-node rendering device (see [Parallel
 Rendering with MPI](#parallel-rendering-with-mpi) section for more
-info). Once a device is created, you can call
+information). Once a device is created, you can call
 
 ``` {.cpp}
 void ospDeviceSet1i(OSPDevice, const char *id, int val);
@@ -360,8 +360,8 @@ The following errors are currently used by OSPRay:
 
 | Name                    | Description                                           |
 |:------------------------|:------------------------------------------------------|
-| OSP\_NO\_ERROR          | no error occured                                      |
-| OSP\_UNKNOWN\_ERROR     | an unknown error occured                              |
+| OSP\_NO\_ERROR          | no error occurred                                     |
+| OSP\_UNKNOWN\_ERROR     | an unknown error occurred                             |
 | OSP\_INVALID\_ARGUMENT  | an invalid argument was specified                     |
 | OSP\_INVALID\_OPERATION | the operation is not allowed for the specified object |
 | OSP\_OUT\_OF\_MEMORY    | there is not enough memory to execute the command     |
@@ -1075,7 +1075,7 @@ ambient lights cause ambient illumination (without occlusion).
 Per default the background of the rendered image will be transparent
 black, i.e. the alpha channel holds the opacity of the rendered objects.
 This facilitates transparency-aware blending of the image with an
-arbitraty background image by the application. The parameter `bgColor`
+arbitrary background image by the application. The parameter `bgColor`
 can be used to already blend with a constant background color (and
 alpha) during rendering.
 
@@ -1906,7 +1906,7 @@ example above using this syntax:
 
 This method of launching the application and OSPRay worker separately
 works best for applications which do not immediately call `ospInit()` in
-thier `main()` function, or for environments where application
+their `main()` function, or for environments where application
 dependencies (such as GUI libraries) may not be available on compute
 nodes.
 
