@@ -27,8 +27,9 @@ namespace mpicommon {
    *  MPIBcastFabric using an intercommunicator the send rank must
    *  be MPI_ROOT and the recv rank must be 0.
    */
-  struct OSPRAY_MPI_INTERFACE MPIBcastFabric : public networking::Fabric
+  class OSPRAY_MPI_INTERFACE MPIBcastFabric : public networking::Fabric
   {
+  public:
     MPIBcastFabric(const Group &group, int sendRank, int recvRank);
 
     virtual ~MPIBcastFabric() = default;
@@ -41,6 +42,10 @@ namespace mpicommon {
     /*! receive some block of data - whatever the sender has sent -
       and give us size and pointer to this data */
     virtual size_t read(void *&mem) override;
+
+  private:
+    // wait for Bcast with non-blocking test, and barrier
+    void waitForBcast(MPI_Request &);
 
     std::vector<byte_t> buffer;
     Group   group;
