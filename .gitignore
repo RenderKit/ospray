@@ -17,3 +17,4 @@ tbb
 embree
 ispc
 ospray-doc
+modules/ospray-module-bricktree/
