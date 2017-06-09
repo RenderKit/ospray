@@ -70,7 +70,7 @@ namespace maml {
         Some notes:
 
         - this thread does MPI calls (only!) between calls of start()
-        and end(). unless you cal start(), nothing will ever get sent
+        and stop(). unless you call start(), nothing will ever get sent
         or received.
 
         - it only looks for incoming messages on communicators for
@@ -78,14 +78,14 @@ namespace maml {
         to a comm, nothing will ever get received from this comm (you
         may still send on it, though!)
 
-        - messages to be sent are retried from 'outbox'; messages that
-          are received get put to 'inbox' and the 'iboxcondition' gets
+        - messages to be sent are retrieved from 'outbox'; messages that
+          are received get put to 'inbox' and the 'inboxcondition' gets
           triggered. it's another thread's job to execute those
           messages
     */
     void mpiSendAndRecieveThread();
 
-    /*! the thread that executes messages that the receiveer thread
+    /*! the thread that executes messages that the receiver thread
         put into the inbox */
     void processInboxThread();
 

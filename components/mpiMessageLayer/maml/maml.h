@@ -64,8 +64,8 @@ namespace maml {
   
   /*! schedule the given message to be send to the given
       comm:rank. comm and rank have to be a valid address. Once this
-      function has called maml has full ownership of this message, and
-      the user may no longer access it (becuase maml may delete it at
+      function has been called maml has full ownership of this message,
+      and the user may no longer access it (because maml may delete it at
       any time). note this message will not be sent immediately if the
       mpi sending is stopped; it will, however, be placed in the
       outbox to be sent at the next possible opportunity. 

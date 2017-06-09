@@ -51,16 +51,16 @@ namespace mpicommon {
     this->comm = comm; makeIntraComm();
   }
 
-  void Group::makeInterComm(MPI_Comm comm)
-  {
-    this->comm = comm; makeInterComm();
-  }
-
   void Group::makeInterComm()
   {
     containsMe = false;
     rank = MPI_ROOT;
     MPI_CALL(Comm_remote_size(comm, &size));
+  }
+
+  void Group::makeInterComm(MPI_Comm comm)
+  {
+    this->comm = comm; makeInterComm();
   }
 
   void Group::barrier() const
