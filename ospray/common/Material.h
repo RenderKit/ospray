@@ -67,6 +67,7 @@ namespace ospray {
       of this material.
   */
 #define OSP_REGISTER_MATERIAL(InternalClass, external_name) \
-  OSP_REGISTER_OBJECT(Material, material, InternalClass, external_name)
+  OSP_REGISTER_OBJECT(::ospray::Material, material, \
+                      InternalClass, external_name)
 
 } // ::ospray
