@@ -108,19 +108,20 @@ namespace ospray {
 
   void VisItStructuredVolume::buildAccelerator()
   {
-    // Create instance of volume accelerator.
-    void *accel = ispc::VisItStructuredVolume_createAccelerator(ispcEquivalent);
-
-    vec3i brickCount;
-    brickCount.x = ispc::VisItGridAccelerator_getBrickCount_x(accel);
-    brickCount.y = ispc::VisItGridAccelerator_getBrickCount_y(accel);
-    brickCount.z = ispc::VisItGridAccelerator_getBrickCount_z(accel);
-
-    // Build volume accelerator.
-    const int NTASKS = brickCount.x * brickCount.y * brickCount.z;
-    tasking::parallel_for(NTASKS, [&](int taskIndex){
-      ispc::VisItGridAccelerator_buildAccelerator(ispcEquivalent, taskIndex);
-    });
+      std::cout << "#osp: disabled accelerator grid" << std::endl;
+    // // Create instance of volume accelerator.
+    // void *accel = ispc::VisItStructuredVolume_createAccelerator(ispcEquivalent);
+    //
+    // vec3i brickCount;
+    // brickCount.x = ispc::VisItGridAccelerator_getBrickCount_x(accel);
+    // brickCount.y = ispc::VisItGridAccelerator_getBrickCount_y(accel);
+    // brickCount.z = ispc::VisItGridAccelerator_getBrickCount_z(accel);
+    //
+    // // Build volume accelerator.
+    // const int NTASKS = brickCount.x * brickCount.y * brickCount.z;
+    // tasking::parallel_for(NTASKS, [&](int taskIndex){
+    //   ispc::VisItGridAccelerator_buildAccelerator(ispcEquivalent, taskIndex);
+    // });
   }
 
   void VisItStructuredVolume::finish()
