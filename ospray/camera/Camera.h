@@ -56,6 +56,6 @@ namespace ospray {
       of this camera.
   */
 #define OSP_REGISTER_CAMERA(InternalClass, external_name) \
-  OSP_REGISTER_OBJECT(Camera, camera, InternalClass, external_name)
+  OSP_REGISTER_OBJECT(::ospray::Camera, camera, InternalClass, external_name)
 
 } // ::ospray

@@ -38,6 +38,6 @@ namespace ospray {
   };
 
 #define OSP_REGISTER_LIGHT(InternalClass, external_name) \
-  OSP_REGISTER_OBJECT(Light, light, InternalClass, external_name)
+  OSP_REGISTER_OBJECT(::ospray::Light, light, InternalClass, external_name)
 
 } // ::ospray

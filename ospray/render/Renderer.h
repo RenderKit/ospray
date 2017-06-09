@@ -126,7 +126,8 @@ namespace ospray {
       of this renderer.
   */
 #define OSP_REGISTER_RENDERER(InternalClass, external_name) \
-  OSP_REGISTER_OBJECT(Renderer, renderer, InternalClass, external_name)
+  OSP_REGISTER_OBJECT(::ospray::Renderer, renderer, \
+                      InternalClass, external_name)
 
 } // ::ospray
 

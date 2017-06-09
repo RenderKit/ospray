@@ -99,6 +99,6 @@ namespace ospray {
   module and registered with OSPRay using this macro.
 */
 #define OSP_REGISTER_VOLUME(InternalClass, external_name) \
-  OSP_REGISTER_OBJECT(Volume, volume, InternalClass, external_name)
+  OSP_REGISTER_OBJECT(::ospray::Volume, volume, InternalClass, external_name)
 
 } // ::ospray

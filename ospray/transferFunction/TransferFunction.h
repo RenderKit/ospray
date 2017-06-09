@@ -50,6 +50,7 @@ namespace ospray {
   module and registered with OSPRay using this macro.
 */
 #define OSP_REGISTER_TRANSFER_FUNCTION(InternalClass, external_name) \
-  OSP_REGISTER_OBJECT(TransferFunction, transfer_function, InternalClass, external_name)
+  OSP_REGISTER_OBJECT(::ospray::TransferFunction, transfer_function, \
+                      InternalClass, external_name)
 
 } // ::ospray
