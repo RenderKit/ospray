@@ -497,8 +497,6 @@ namespace ospray {
   void DFB::closeCurrentFrame()
   {
     DBG(printf("rank %i CLOSES frame\n", mpicommon::globalRank()));
-    frameIsActive = false;
-    frameIsDone   = true;
 
     if (mpicommon::IamTheMaster() && !masterIsAWorker) {
       /* do nothing */
@@ -508,6 +506,9 @@ namespace ospray {
       }
     }
 
+    SCOPED_LOCK(mutex);
+    frameIsActive = false;
+    frameIsDone   = true;
     frameDoneCond.notify_all();
   }
 
