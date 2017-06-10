@@ -25,8 +25,8 @@ namespace ospray {
 
     VisItSharedStructuredVolume::VisItSharedStructuredVolume()
     {
-	std::cout << "#osp: creating VisIt shared structured volume" 
-		  << std::endl;
+	//std::cout << "#osp: creating VisIt shared structured volume" 
+	//          << std::endl;
     }
 
     VisItSharedStructuredVolume::~VisItSharedStructuredVolume()

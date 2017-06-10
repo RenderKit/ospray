@@ -108,7 +108,7 @@ namespace ospray {
 
   void VisItStructuredVolume::buildAccelerator()
   {
-      std::cout << "#osp: disabled accelerator grid" << std::endl;
+    // std::cout << "#osp: disabled accelerator grid" << std::endl;
     // // Create instance of volume accelerator.
     // void *accel = ispc::VisItStructuredVolume_createAccelerator(ispcEquivalent);
     //
