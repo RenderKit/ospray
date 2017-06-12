@@ -32,23 +32,40 @@ namespace ospray {
 	{
 	    int currentRegion;
 	    bool *regionVisible;
-
 	    RegionInfo() : currentRegion(0), regionVisible(nullptr) {}
 	};
 
-	TileInfo::TileInfo(const Tile& src) {	   
-	    std::copy(src.r, src.r + TILE_SIZE * TILE_SIZE, r);
-	    std::copy(src.g, src.g + TILE_SIZE * TILE_SIZE, g);
-	    std::copy(src.b, src.b + TILE_SIZE * TILE_SIZE, b);
-	    std::copy(src.a, src.a + TILE_SIZE * TILE_SIZE, a);
-	    depth = *(std::min_element(src.z, src.z + TILE_SIZE * TILE_SIZE));
-	    regionSize[0] = src.region.lower.x;
-	    regionSize[1] = src.region.lower.y;
-	    regionSize[2] = src.region.upper.x;
-	    regionSize[3] = src.region.upper.y;
-	    fbSize[0] = src.fbSize.x;
-	    fbSize[1] = src.fbSize.y;
-	    visible = true;
+	TileInfo::TileInfo(const Tile& src) 
+	{
+	    const float aTh = 0.01f;
+ 	    if (*(std::max_element(src.a,src.a+TILE_SIZE*TILE_SIZE)) > aTh) {
+		depth = *(std::min_element(src.z,src.z+TILE_SIZE*TILE_SIZE));
+		// // break single tile into smaller patches for parallel copying
+		// const int patchRatio = 8;
+		// const int numOfPatches = patchRatio * 4;
+		// const float* src_chs[4] = {src.r, src.g, src.b, src.a};
+		// float*       des_chs[4] = {r, g, b, a};
+		// tasking::parallel_for(numOfPatches, [&](int ch) {
+		// 	const float* src_ch = 
+		// 	    src_chs[ch/4] + (ch%4)*TILE_SIZE*TILE_SIZE/patchRatio;
+		// 	float*       des_ch=
+		// 	    des_chs[ch/4] + (ch%4)*TILE_SIZE*TILE_SIZE/patchRatio;
+		// 	std::copy(src_ch, 
+		// 		  src_ch+TILE_SIZE*TILE_SIZE/patchRatio, 
+		// 		  des_ch);
+		//     });
+		std::copy(src.r, src.r + TILE_SIZE * TILE_SIZE, r);
+		std::copy(src.g, src.g + TILE_SIZE * TILE_SIZE, g);
+		std::copy(src.b, src.b + TILE_SIZE * TILE_SIZE, b);
+		std::copy(src.a, src.a + TILE_SIZE * TILE_SIZE, a);			
+		regionSize[0] = src.region.lower.x;
+		regionSize[1] = src.region.lower.y;
+		regionSize[2] = src.region.upper.x;
+		regionSize[3] = src.region.upper.y;
+		fbSize[0] = src.fbSize.x;
+		fbSize[1] = src.fbSize.y;
+		visible = true;
+	    }
 	}
 
 	// VisItDistributedRaycastRenderer definitions /////////////////////////////////
@@ -83,7 +100,8 @@ namespace ospray {
 	    // info in this pointer.
 	    assert(!perFrameData);
 	    DistributedModel *distribModel = dynamic_cast<DistributedModel*>(model);
-	    const size_t numRegions = distribModel->myRegions.size() + distribModel->othersRegions.size();
+	    const size_t numRegions = 
+		distribModel->myRegions.size() + distribModel->othersRegions.size();
 
 	    // Initialize the tile list
 	    TileRegionList tileInfoList(dfb->getTotalTiles());
@@ -102,13 +120,16 @@ namespace ospray {
 		    // the following entries are for other nodes regions
 		    RegionInfo regionInfo;
 		    regionInfo.regionVisible = STACK_BUFFER(bool, numRegions);
-		    std::fill(regionInfo.regionVisible, regionInfo.regionVisible + numRegions, false);
+		    std::fill(regionInfo.regionVisible, 
+			      regionInfo.regionVisible + numRegions, false);
 
 		    // Create a tile in cache
 		    Tile __aligned(64) tile(tileID, dfb->size, accumID);
 
-		    // We use the task of rendering the first region to also fill out the block visiblility list
-		    const int NUM_JOBS = (TILE_SIZE * TILE_SIZE) / RENDERTILE_PIXELS_PER_JOB;
+		    // We use the task of rendering the first region to also fill out
+		    // the block visiblility list
+		    const int NUM_JOBS = (TILE_SIZE * TILE_SIZE) / 
+			RENDERTILE_PIXELS_PER_JOB;
 		    tasking::parallel_for(NUM_JOBS, [&](int tIdx) {
 			    renderTile(&regionInfo, tile, tIdx);
 			});
@@ -127,7 +148,8 @@ namespace ospray {
 
 		    }
 
-		    // If we own the tile send the background color and the count of children for the
+		    // If we own the tile send the background color and the count of 
+		    // children for the
 		    // number of regions projecting to it that will be sent.
 		    if (tileOwner) {
 			tile.generation = 0;

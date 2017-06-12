@@ -41,8 +41,8 @@ namespace ospray {
 	struct TileInfo 
 	{
 	    // basic info
-	    int regionSize[4];
-	    int fbSize[2];
+	    int regionSize[4] = {0};
+	    int fbSize[2] = {0};
 	    float depth{std::numeric_limits<float>::infinity()};
 	    bool visible{false};
             // 'red' component; in float.
@@ -63,7 +63,8 @@ namespace ospray {
 	{
 	    virtual void operator()(const TileRegionList& list) {}
 	};
-	struct VisItDistributedRaycastRenderer : public ospray::mpi::DistributedRaycastRenderer
+	struct VisItDistributedRaycastRenderer : 
+	    public ospray::mpi::DistributedRaycastRenderer
 	{
 	    VisItDistributedRaycastRenderer();
 	    virtual ~VisItDistributedRaycastRenderer() = default;

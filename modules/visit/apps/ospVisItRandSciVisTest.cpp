@@ -210,13 +210,17 @@ namespace ospRandSciVisTest {
 	const vec3i grid = computeGrid(numRanks);
 	ospray::cpp::Volume volume("block_bricked_volume");
 	volume.set("voxelType", "uchar");
+	volume.set("samplingRate", 3.0);
+	volume.set("adaptiveSampling", 0);
 	volume.set("dimensions", volumeDims);
 	volume.set("transferFunction", transferFcn);
 
 	const vec3f gridSpacing = vec3f(1.f) / (vec3f(grid) * vec3f(volumeDims));
 	volume.set("gridSpacing", gridSpacing);
 
-	const vec3i brickId(myRank % grid.x, (myRank / grid.x) % grid.y, myRank / (grid.x * grid.y));
+	const vec3i brickId(myRank % grid.x, 
+			    (myRank / grid.x) % grid.y, 
+			    myRank / (grid.x * grid.y));
 	const vec3f gridOrigin = vec3f(brickId) * gridSpacing * vec3f(volumeDims);
 	volume.set("gridOrigin", gridOrigin);
 
@@ -289,14 +293,16 @@ namespace ospRandSciVisTest {
     }
 
     struct SaveTiles: public ospray::visit::TileRetriever {
-	int index = 0;
-	void reset() { index = 0; }
-	void operator() (const std::vector<std::vector<ospray::visit::TileInfo>>& tileInfoList) {
+	int id = 0;
+	void reset() { id = 0; }
+	void operator() (const ospray::visit::TileRegionList& tileInfoList) {
 	    for (auto& l : tileInfoList) {
 		for (auto& t : l) {
 		    if (t.visible) {
-			writePPM("DistributedTile" + std::to_string(index++) + ".ppm", t);
-			std::cout << "rendering tile to 'DistributedTile" + std::to_string(index++) + ".ppm'" << std::endl;
+			writePPM("DistributedTile" + std::to_string(id++) + ".ppm", t);
+			std::cout 
+			    << "rendering 'DistributedTile" + std::to_string(id++) + ".ppm'" 
+			    << std::endl;
 		    }
 		}
 	    }
@@ -373,14 +379,14 @@ namespace ospRandSciVisTest {
 		{ std::cout << "rendering frame " << i << std::endl; }
 		renderer.renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
 	    }
-	    // render tiles
-	    SaveTiles fcn;
-	    fcn.reset();
-	    renderer.set("tileRetriever", &fcn);
-	    renderer.commit();
-	    renderer.renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
-
 	    double seconds = ospcommon::getSysTime() - frameStartTime;
+
+	    // // render tiles
+	    // SaveTiles fcn;
+	    // fcn.reset();
+	    // renderer.set("tileRetriever", &fcn);
+	    // renderer.commit();
+	    // renderer.renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
 
 	    if (mpicommon::IamTheMaster()) {
 		auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
