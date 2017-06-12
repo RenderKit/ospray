@@ -25,7 +25,7 @@
 
 namespace ospray {
     namespace visit {
-
+	
 	/* The distributed raycast renderer supports rendering distributed
 	 * geometry and volume data, assuming that the data distribution is suitable
 	 * for sort-last compositing. Specifically, the data must be organized
@@ -38,7 +38,8 @@ namespace ospray {
 	 * Also see apps/ospRandSciVisTest.cpp and apps/ospRandSphereTest.cpp for
 	 * example usage.
 	 */
-	struct TileInfo {
+	struct TileInfo 
+	{
 	    // basic info
 	    int regionSize[4];
 	    int fbSize[2];
@@ -57,12 +58,11 @@ namespace ospray {
 	    TileInfo() = default;
 	    TileInfo(const Tile& src);
 	};
-
 	typedef std::vector<std::vector<TileInfo>> TileRegionList;
-	struct TileRetriever {
+	struct TileRetriever 
+	{
 	    virtual void operator()(const TileRegionList& list) {}
 	};
-
 	struct VisItDistributedRaycastRenderer : public ospray::mpi::DistributedRaycastRenderer
 	{
 	    VisItDistributedRaycastRenderer();

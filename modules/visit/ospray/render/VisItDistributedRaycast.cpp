@@ -52,7 +52,6 @@ namespace ospray {
 	}
 
 	// VisItDistributedRaycastRenderer definitions /////////////////////////////////
-
 	VisItDistributedRaycastRenderer::VisItDistributedRaycastRenderer()
 	{
 	    DistributedRaycastRenderer();
@@ -73,7 +72,10 @@ namespace ospray {
 
 	    auto *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
 	    dfb->setFrameMode(DistributedFrameBuffer::ALPHA_BLEND);
-	    if (tileRetriever == nullptr) { dfb->startNewFrame(errorThreshold); }
+	    if (tileRetriever == nullptr) { 
+                // never start to sync if using render to tile mode
+		dfb->startNewFrame(errorThreshold); 
+	    }
 	    dfb->beginFrame();
 
 	    auto *perFrameData = beginFrame(dfb);
@@ -94,9 +96,7 @@ namespace ospray {
 		    const int32 accumID = fb->accumID(tileID);
 		    const bool tileOwner = (taskIndex % numGlobalRanks()) == globalRank();
 
-		    if (dfb->tileError(tileID) <= errorThreshold) {
-			return;
-		    }
+		    if (dfb->tileError(tileID) <= errorThreshold) { return; }
 
 		    // The first 0..myRegions.size() - 1 entries are for my regions,
 		    // the following entries are for other nodes regions
@@ -104,6 +104,7 @@ namespace ospray {
 		    regionInfo.regionVisible = STACK_BUFFER(bool, numRegions);
 		    std::fill(regionInfo.regionVisible, regionInfo.regionVisible + numRegions, false);
 
+		    // Create a tile in cache
 		    Tile __aligned(64) tile(tileID, dfb->size, accumID);
 
 		    // We use the task of rendering the first region to also fill out the block visiblility list
@@ -114,7 +115,6 @@ namespace ospray {
 
 		    // initialize tile information list
 		    tileInfoList[taskIndex] = std::vector<TileInfo>(0);
-
 		    if (regionInfo.regionVisible[0]) {
 			tile.generation = 1;
 			tile.children = 0;
@@ -167,9 +167,15 @@ namespace ospray {
 		    }
 		});
 
-	    if (tileRetriever == nullptr) { dfb->waitUntilFinished(); }
-	    else { (*static_cast<TileRetriever*>(tileRetriever))(tileInfoList); }
-
+	    // finishing frame
+	    if (tileRetriever == nullptr) {
+		// do normal rendering
+		dfb->waitUntilFinished(); 
+	    }
+	    else { 
+                // send all tiles to tile handler
+		(*static_cast<TileRetriever*>(tileRetriever))(tileInfoList); 
+	    }
 	    endFrame(nullptr, channelFlags);
 	    return dfb->endFrame(errorThreshold);
 	}
