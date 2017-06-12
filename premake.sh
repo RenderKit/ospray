@@ -5,7 +5,7 @@ OSPROOT=~/software
 SRCROOT=$(pwd)
 
 # TBB component
-export TBB_ROOT=${OSPROOT}/tbb2017_20160916oss
+export TBB_ROOT=${OSPROOT}/tbb2017_20170604oss
 LOAD_TBB()
 {
     export LD_LIBRARY_PATH=${TBB_ROOT}/lib/intel64/gcc4.7:${LD_LIBRARY_PATH}
@@ -20,7 +20,7 @@ LOAD_ISPC()
 }
 
 # Embree component
-export EMBREE_ROOT=${OSPROOT}/embree-2.14.0.x86_64.linux
+export EMBREE_ROOT=${OSPROOT}/embree-2.15.0.x86_64.linux
 LOAD_EMBREE()
 {
     # CMAKEARGS=${CMAKEARGS}" -DOSPRAY_USE_EXTERNAL_EMBREE=ON"
@@ -163,7 +163,7 @@ until [ -z "$1" ]; do
 	    ;;
 	    
 	--no-apps)
-	    CMAKEARGS=${CMAKEARGS}" -DOSPRAY_APPS_EXAMPLEVIEWER=OFF -DOSPRAY_APPS_PARAVIEW_TFN_CVT=OFF -DOSPRAY_APPS_VOLUMEVIEWER=OFF"
+	    CMAKEARGS=${CMAKEARGS}" -DOSPRAY_ENABLE_APPS=OFF"
 	    shift 1
 	    ;;
 
