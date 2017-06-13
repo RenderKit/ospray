@@ -49,19 +49,12 @@ namespace mpicommon {
 
     // Now do non-blocking test to see when this bcast is satisfied to avoid
     // locking out the send/recv threads
-    for(;;) {
-      int size_bcast_done;
-      MPI_CALL(Test(&request, &size_bcast_done, MPI_STATUS_IGNORE));
-      if (size_bcast_done)
-        break;
-      std::this_thread::sleep_for(std::chrono::nanoseconds(250));
-    }
+    waitForBcast(request);
 
-    MPI_CALL(Barrier(group.comm));
     // TODO: Maybe at some point we should dump the buffer if it gets really large
     buffer.resize(sz32);
-    MPI_CALL(Bcast(buffer.data(), sz32, MPI_BYTE, recvRank, group.comm));
     mem = buffer.data();
+    MPI_CALL(Bcast(mem, sz32, MPI_BYTE, recvRank, group.comm));
     return sz32;
   }
 
@@ -81,6 +74,13 @@ namespace mpicommon {
 
     // Now do non-blocking test to see when this bcast is satisfied to avoid
     // locking out the send/recv threads
+    waitForBcast(request);
+
+    MPI_CALL(Bcast(mem, sz32, MPI_BYTE, sendRank, group.comm));
+  }
+
+  void MPIBcastFabric::waitForBcast(MPI_Request &request)
+  {
     for(;;) {
       int size_bcast_done;
       MPI_CALL(Test(&request, &size_bcast_done, MPI_STATUS_IGNORE));
@@ -88,9 +88,7 @@ namespace mpicommon {
         break;
       std::this_thread::sleep_for(std::chrono::nanoseconds(250));
     }
-
-    MPI_CALL(Barrier(group.comm));
-    MPI_CALL(Bcast(mem, sz32, MPI_BYTE, sendRank, group.comm));
+    group.barrier();
   }
 
 } // ::mpicommon

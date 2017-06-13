@@ -83,6 +83,7 @@ namespace ospray {
       of this geometry.
   */
 #define OSP_REGISTER_GEOMETRY(InternalClass, external_name) \
-  OSP_REGISTER_OBJECT(Geometry, geometry, InternalClass, external_name)
+  OSP_REGISTER_OBJECT(::ospray::Geometry, geometry, \
+                      InternalClass, external_name)
 
 } // ::ospray
