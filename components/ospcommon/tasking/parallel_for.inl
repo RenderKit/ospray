@@ -44,7 +44,7 @@ namespace ospcommon {
     inline void parallel_for_impl(int nTasks, TASK_T&& fcn)
     {
 #ifdef OSPRAY_TASKING_TBB
-      tbb::parallel_for(0, nTasks, 1, std::forward<TASK_T>(fcn));
+      tbb::parallel_for(0, nTasks, std::forward<TASK_T>(fcn));
 #elif defined(OSPRAY_TASKING_CILK)
       cilk_for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
         fcn(taskIndex);
