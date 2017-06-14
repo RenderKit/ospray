@@ -24,6 +24,8 @@
 #include "ospcommon/tasking/schedule.h"
 // std
 #include <algorithm>
+#include <chrono>
+#include <thread>
 
 namespace ospray {
   namespace mpi {
@@ -195,15 +197,19 @@ namespace ospray {
         if (workerNotified[w])
           return;
 
-        // look for next non-empty queue, starting with the one which DFB owns
         ssize_t tileIndex = -1;
-        for (int off = 0; off < worker.size; off++,w++) {
-          if (w==worker.size)
-            w = 0;
-          if (preferredTiles[w] > numPreAllocated) {
-            tileIndex = --preferredTiles[w] * worker.size + w;
-            break;
-          }
+        if (preferredTiles[w] > numPreAllocated)
+          tileIndex = --preferredTiles[w] * worker.size + w;
+        else { // look for largest non-empty queue
+          int ms = numPreAllocated;
+          int mi = -1;
+          for (w = 0; w < worker.size; w++)
+            if (preferredTiles[w] > ms) {
+              ms = preferredTiles[w];
+              mi = w;
+            }
+          if (mi > -1)
+            tileIndex = --preferredTiles[mi] * worker.size + mi;
         }
 
         if (tileIndex == -1)
@@ -289,8 +295,12 @@ namespace ospray {
 
         tilesAvailable = true;
         tilesScheduled = numPreAllocated;
-        for(int taskIndex = 0; taskIndex < numPreAllocated; taskIndex++)
+        for(int taskIndex = 0; taskIndex < numPreAllocated; taskIndex++) {
           tasking::schedule([&,taskIndex]{tileTask(taskIndex * worker.size + worker.rank);});
+          // XXX helps to have better ordering of completed tiles
+          // actually, we want finer control of task scheduling
+          std::this_thread::sleep_for(std::chrono::nanoseconds(50));
+        }
 
         dfb->waitUntilFinished();
 
@@ -325,10 +335,11 @@ namespace ospray {
 
         tasking::parallel_for(numJobs(renderer->spp, accumID), [&](int tid) {
           renderer->renderTile(perFrameData, tile, tid);
-//          SCOPED_LOCK(mutex); std::cout << tileID << " : " << tid << std::endl;
+//          std::stringstream msg; msg << (int)((tileID - worker.rank)/worker.size) << " : " << tid << " \ttile " << tileID << std::endl; SCOPED_LOCK(mutex); std::cout << msg.str();
         });
 
         fb->setTile(tile);
+//        if (worker.rank == 1) {std::stringstream msg; msg << taskIdx << " \ttile " << tileID << " DONE\n"; std::cout << msg.str();}
 
         if (tilesAvailable) {
           int requester = mpi::globalRank();
