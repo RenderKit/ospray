@@ -28,6 +28,7 @@
 #include <iomanip>
 #include <fstream>
 #include <string>
+#include <sstream>
 #include <cstring>
 #include <stdint.h>
 
@@ -89,11 +90,11 @@
 #define STRING(x) #x
 #define TOSTRING(x) STRING(x)
 #define CODE_LOCATION __FILE__ " (" TOSTRING(__LINE__) ")"
-#define PING std::cout << CODE_LOCATION << ": " << __FUNCTION__ << std::endl
-#define PRINT(x) std::cout << STRING(x) << " = " << (x) << std::endl
-#define PRINT2(x,y) std::cout << STRING(x) << " = " << (x) << ", " << STRING(y) << " = " << (y) << std::endl
-#define PRINT3(x,y,z) std::cout << STRING(x) << " = " << (x) << ", " << STRING(y) << " = " << (y) << ", " << STRING(z) << " = " << (z) << std::endl
-#define PRINT4(x,y,z,w) std::cout << STRING(x) << " = " << (x) << ", " << STRING(y) << " = " << (y) << ", " << STRING(z) << " = " << (z) << ", " << STRING(w) << " = " << (w) << std::endl
+#define PING { std::stringstream msg; msg << CODE_LOCATION << ": " << __FUNCTION__ << std::endl; std::cout << msg.str(); }
+#define PRINT(x) { std::stringstream msg; msg << STRING(x) << " = " << (x) << std::endl; std::cout << msg.str(); }
+#define PRINT2(x,y) { std::stringstream msg; msg << STRING(x) << " = " << (x) << ", " << STRING(y) << " = " << (y) << std::endl; std::cout << msg.str(); }
+#define PRINT3(x,y,z) { std::stringstream msg; msg << STRING(x) << " = " << (x) << ", " << STRING(y) << " = " << (y) << ", " << STRING(z) << " = " << (z) << std::endl; std::cout << msg.str(); }
+#define PRINT4(x,y,z,w) { std::stringstream msg; msg << STRING(x) << " = " << (x) << ", " << STRING(y) << " = " << (y) << ", " << STRING(z) << " = " << (z) << ", " << STRING(w) << " = " << (w) << std::endl; std::cout << msg.str(); }
 
 #define THROW_RUNTIME_ERROR(str) \
   throw std::runtime_error(std::string(__FILE__) + " (" + std::to_string((long long)__LINE__) + "): " + std::string(str));
