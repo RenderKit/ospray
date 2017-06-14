@@ -52,6 +52,13 @@ OSPRAY_CREATE_LIBRARY(ospray_module_visit
   # renderer
   render/VisItDistributedRaycast.cpp
 
+  # volume without marcocell
+  volume/VisItGridAccelerator.ispc
+  volume/VisItStructuredVolume.cpp
+  volume/VisItStructuredVolume.ispc
+  volume/VisItSharedStructuredVolume.cpp
+  volume/VisItSharedStructuredVolume.ispc
+
   # and finally, the module init code (not doing much, but must be there)
   moduleInit.cpp
   

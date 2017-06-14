@@ -47,6 +47,8 @@ IF (OSPRAY_MODULE_VISIT)
   # example. If other modules come with their own
   # tools/converters/importers/etc, this is where those sohuld go.
   #
-  ADD_SUBDIRECTORY(apps)
+  IF(OSPRAY_ENABLE_APPS)
+    ADD_SUBDIRECTORY(apps)
+  ENDIF()
 
 ENDIF (OSPRAY_MODULE_VISIT)

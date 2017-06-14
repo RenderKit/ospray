@@ -5,7 +5,7 @@ OSPROOT=~/software
 SRCROOT=$(pwd)
 
 # TBB component
-export TBB_ROOT=${OSPROOT}/tbb2017_20160916oss
+export TBB_ROOT=${OSPROOT}/tbb2017_20170604oss
 LOAD_TBB()
 {
     export LD_LIBRARY_PATH=${TBB_ROOT}/lib/intel64/gcc4.7:${LD_LIBRARY_PATH}
@@ -20,13 +20,17 @@ LOAD_ISPC()
 }
 
 # Embree component
-export EMBREE_ROOT=${OSPROOT}/embree-2.14.0.x86_64.linux
+export EMBREE_ROOT=${OSPROOT}/embree-2.15.0.x86_64.linux
 LOAD_EMBREE()
 {
     # CMAKEARGS=${CMAKEARGS}" -DOSPRAY_USE_EXTERNAL_EMBREE=ON"
     export embree_DIR=${EMBREE_ROOT}
     source ${EMBREE_ROOT}/embree-vars.sh
 }
+
+#ICC
+# source /opt/intel/parallel_studio_xe_2017.0.035/bin/psxevars.sh intel64
+INTELICC_PATH=/opt/intel/bin/icc
 
 # QT path
 QT_PATH=${OSPROOT}/qt-4.8.6/qt-everywhere-opensource-src-4.8.6-install
@@ -69,6 +73,7 @@ HELP()
     echo "  --embree-dir        Customer Embree path"
     echo "  --tbb-dir           Customer TBB path"
     echo "  --ispc-dir          Customer ISPC path"
+    echo "  --icc-dir           Customer ICC path"
     echo "  --cmake-dir         Customer CMAKE path"
     echo "  --no-apps           Disable all OSPRay applications"
     echo 
@@ -90,8 +95,6 @@ until [ -z "$1" ]; do
 
 	# --- Setup intel icc
 	-ic | --intel-icc)
-	    source /opt/intel/parallel_studio_xe_2017.0.035/bin/psxevars.sh intel64
-	    export INTELICC_PATH=/opt/intel/bin/icc
 	    CMAKEARGS=${CMAKEARGS}" -DCMAKE_CXX_COMPILER=${INTELICC_PATH}"
 	    CMAKEARGS=${CMAKEARGS}" -DCMAKE_C_COMPILER=${INTELICC_PATH}"
 	    shift 1
@@ -152,6 +155,12 @@ until [ -z "$1" ]; do
 	    shift 2
 	    ;;
 
+	--icc-dir)
+	    export INTELICC_PATH=${2}
+	    echo "user-defined icc path ${INTELICC_PATH}"
+	    shift 2
+	    ;;
+
 	--cmake-dir)
 	    CMAKEPATH=${2}
 	    shift 2
@@ -163,7 +172,7 @@ until [ -z "$1" ]; do
 	    ;;
 	    
 	--no-apps)
-	    CMAKEARGS=${CMAKEARGS}" -DOSPRAY_APPS_EXAMPLEVIEWER=OFF -DOSPRAY_APPS_PARAVIEW_TFN_CVT=OFF -DOSPRAY_APPS_VOLUMEVIEWER=OFF"
+	    CMAKEARGS=${CMAKEARGS}" -DOSPRAY_ENABLE_APPS=OFF"
 	    shift 1
 	    ;;
 
