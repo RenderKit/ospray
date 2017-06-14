@@ -174,7 +174,6 @@ namespace ospray {
     }// ::ospray::mpi::staticLoadBalancer
 
     namespace dynamicLoadBalancer {
-      const int numPreAllocated = 4;
 
       // dynamicLoadBalancer::Master definitions ///////////////////////////////
 
@@ -183,6 +182,10 @@ namespace ospray {
         mpi::messaging::registerMessageListener(myId, this);
         preferredTiles.resize(worker.size);
         workerNotified.resize(worker.size);
+
+        auto OSPRAY_PREALLOCATED_TILES = getEnvVar<int>("OSPRAY_PREALLOCATED_TILES");
+        numPreAllocated = OSPRAY_PREALLOCATED_TILES.first ? OSPRAY_PREALLOCATED_TILES.second : 4;
+        PRINT(numPreAllocated);
       }
 
       void Master::incoming(const std::shared_ptr<mpicommon::Message> &msg)
@@ -247,6 +250,10 @@ namespace ospray {
       Slave::Slave()
       {
         mpi::messaging::registerMessageListener(myId, this);
+
+        auto OSPRAY_PREALLOCATED_TILES = getEnvVar<int>("OSPRAY_PREALLOCATED_TILES");
+        numPreAllocated = OSPRAY_PREALLOCATED_TILES.first ? OSPRAY_PREALLOCATED_TILES.second : 4;
+        PRINT(numPreAllocated);
       }
 
       void Slave::incoming(const std::shared_ptr<mpicommon::Message> &msg)

@@ -132,6 +132,11 @@ namespace ospray {
           << "#w: running MPI worker process " << worker.rank
           << "/" << worker.size << " on pid " << getpid() << "@" << hostname;
 
+      auto OSPRAY_DYNAMIC_LOADBALANCER = getEnvVar<int>("OSPRAY_DYNAMIC_LOADBALANCER");
+      if (OSPRAY_DYNAMIC_LOADBALANCER.first && OSPRAY_DYNAMIC_LOADBALANCER.second) {
+        puts("#osp:mpi: using dynamicLoadBalancer");
+        TiledLoadBalancer::instance = make_unique<dynamicLoadBalancer::Slave>();
+      } else
       TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Slave>();
 
       // -------------------------------------------------------

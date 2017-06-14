@@ -439,6 +439,11 @@ namespace ospray {
       readStream  = make_unique<networking::BufferedReadStream>(*mpiFabric);
       writeStream = make_unique<networking::BufferedWriteStream>(*mpiFabric);
 
+      auto OSPRAY_DYNAMIC_LOADBALANCER = getEnvVar<int>("OSPRAY_DYNAMIC_LOADBALANCER");
+      if (OSPRAY_DYNAMIC_LOADBALANCER.first && OSPRAY_DYNAMIC_LOADBALANCER.second) {
+        puts("#osp:mpi: using dynamicLoadBalancer");
+        TiledLoadBalancer::instance = make_unique<dynamicLoadBalancer::Master>();
+      } else
       TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Master>();
     }
 

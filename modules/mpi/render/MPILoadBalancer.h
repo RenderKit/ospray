@@ -90,6 +90,7 @@ namespace ospray {
         std::vector<int> preferredTiles; // per worker default queue
         std::vector<bool> workerNotified; // worker knows we're done?
         ObjectHandle myId;
+        int numPreAllocated;
       };
 
       /*! \brief the 'slave' in a tile-based master-slave load balancer
@@ -119,6 +120,7 @@ namespace ospray {
         int tilesScheduled;
         bool tilesAvailable;
         ObjectHandle myId;
+        int numPreAllocated;
       };
 
     }// ::ospray::mpi::dynamicLoadBalancer
