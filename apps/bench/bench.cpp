@@ -213,7 +213,12 @@ namespace bench {
   }
 
   extern "C" int main(int argc, const char *argv[]) {
-    ospInit(&argc, argv);
+    int init_error = ospInit(&argc, argv);
+    if (init_error != OSP_NO_ERROR) {
+      std::cerr << "FATAL ERROR DURING INITIALIZATION!" << std::endl;
+      return init_error;
+    }
+
     parseCommandLine(argc, argv);
 
     if (scriptFile.empty()) {

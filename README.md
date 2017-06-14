@@ -65,18 +65,17 @@ before you can build OSPRay you need the following prerequisites:
 
 -   To build OSPRay you need [CMake](http://www.cmake.org), any form of
     C++11 compiler (we recommend using GCC, but also support Clang and
-    the [Intel® C++
-    Compiler (icc)](https://software.intel.com/en-us/c-compilers)), and
-    standard Linux development tools. To build the demo viewers, you
-    should also have some version of OpenGL and the GL Utility Toolkit
-    (GLUT or freeglut), as well as Qt 4.6 or higher.
--   Additionally you require a copy of the [Intel® SPMD Program
-    Compiler (ISPC)](http://ispc.github.io). Please obtain a copy of the
-    latest binary release of ISPC (currently 1.9.1) from the [ISPC
-    downloads page](https://ispc.github.io/downloads.html). The build
-    system looks for ISPC in the `PATH` and in the directory right "next
-    to" the checked-out OSPRay sources.[^1] Alternatively set the CMake
-    variable `ISPC_EXECUTABLE` to the location of the ISPC compiler.
+    the [Intel® C++ Compiler
+    (icc)](https://software.intel.com/en-us/c-compilers)), and standard
+    Linux development tools. To build the example viewers, you should
+    also have some version of OpenGL.
+-   Additionally you require a copy of the [Intel® SPMD Program Compiler
+    (ISPC)](http://ispc.github.io). Please obtain a copy of the latest
+    binary release of ISPC (currently 1.9.1) from the [ISPC downloads
+    page](https://ispc.github.io/downloads.html). The build system looks
+    for ISPC in the `PATH` and in the directory right "next to" the
+    checked-out OSPRay sources.[^1] Alternatively set the CMake variable
+    `ISPC_EXECUTABLE` to the location of the ISPC compiler.
 -   Per default OSPRay uses the [Intel® Threading Building
     Blocks](https://www.threadingbuildingblocks.org/) (TBB) as tasking
     system, which we recommend for performance and flexibility reasons.
@@ -94,20 +93,16 @@ Type the following to install the dependencies using `yum`:
 
     sudo yum install cmake.x86_64
     sudo yum install tbb.x86_64 tbb-devel.x86_64
-    sudo yum install freeglut.x86_64 freeglut-devel.x86_64
-    sudo yum install qt-devel.x86_64
 
 Type the following to install the dependencies using `apt-get`:
 
     sudo apt-get install cmake-curses-gui
     sudo apt-get install libtbb-dev
-    sudo apt-get install freeglut3-dev
-    sudo apt-get install libqt4-dev
 
 Under Mac OS X these dependencies can be installed using
 [MacPorts](http://www.macports.org/):
 
-    sudo port install cmake tbb freeglut qt4
+    sudo port install cmake tbb
 
 Compiling OSPRay
 ----------------
@@ -125,10 +120,9 @@ CMake is easy:
 
 -   The compiler CMake will use will default to whatever the `CC` and
     `CXX` environment variables point to. Should you want to specify a
-    different compiler, run cmake manually while specifying the
-    desired compiler. The default compiler on most linux machines is
-    `gcc`, but it can be pointed to `clang` instead by executing the
-    following:
+    different compiler, run cmake manually while specifying the desired
+    compiler. The default compiler on most linux machines is `gcc`, but
+    it can be pointed to `clang` instead by executing the following:
 
         user@mymachine[~/Projects/ospray/release]: cmake
             -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang ..
@@ -148,8 +142,8 @@ CMake is easy:
 
         user@mymachine[~/Projects/ospray/release]: make
 
--   You should now have `libospray.so` as well as a set of
-    sample viewers. You can test your version of OSPRay using any of the
+-   You should now have `libospray.so` as well as a set of example
+    application. You can test your version of OSPRay using any of the
     examples on the [OSPRay Demos and
     Examples](http://www.ospray.org/demos.html) page.
 
@@ -197,19 +191,22 @@ The first is to do so by giving OSPRay the command line from `main()` by
 calling
 
 ``` {.cpp}
-void ospInit(int *argc, const char **argv);
+OSPError ospInit(int *argc, const char **argv);
 ```
 
 OSPRay parses (and removes) its known command line parameters from your
 application's `main` function. For an example see the
-[tutorial](#tutorial). The following parameters (which are prefixed by
-convention with "`--osp:`") are understood:
+[tutorial](#tutorial). For possible error codes see section [Error
+Handling and Status Messages](#error-handling-and-status-messages). It
+is important to note that the arguments passed to `ospInit()` are
+prcessed in order they are listed. The following parameters (which are
+prefixed by convention with "`--osp:`") are understood:
 
-<table style="width:97%;">
+<table style="width:98%;">
 <caption>Command line parameters accepted by OSPRay's <code>ospInit</code>.</caption>
 <colgroup>
-<col width="33%" />
-<col width="64%" />
+<col width="32%" />
+<col width="65%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -239,16 +236,32 @@ convention with "`--osp:`") are understood:
 <td align="left">shortcut for <code>--osp:loglevel 2</code></td>
 </tr>
 <tr class="even">
-<td align="left"><code>--osp:mpi</code></td>
-<td align="left">enables MPI mode for parallel rendering, to be used in conjunction with <code>mpirun</code></td>
+<td align="left"><code>--osp:module:&lt;name&gt;</code></td>
+<td align="left">load a module during initialization; equivalent to calling <code>ospLoadModule(name)</code></td>
 </tr>
 <tr class="odd">
-<td align="left"><code>--osp:logoutput</code></td>
-<td align="left">convenience for setting where error/status messages go; valid values are <code>cerr</code> and <code>cout</code></td>
+<td align="left"><code>--osp:mpi</code></td>
+<td align="left">enables MPI mode for parallel rendering with the <code>mpi_offload</code> device, to be used in conjunction with <code>mpirun</code>; this will automatically load the &quot;mpi&quot; module if it is not yet loaded or linked</td>
 </tr>
 <tr class="even">
+<td align="left"><code>--osp:mpi-offload</code></td>
+<td align="left">same as <code>--osp:mpi</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>--osp:mpi-distributed</code></td>
+<td align="left">same as <code>--osp:mpi</code>, but will create an <code>mpi_distributed</code> device instead; Note that this will likely require application changes to work properly</td>
+</tr>
+<tr class="even">
+<td align="left"><code>--osp:logoutput &lt;dst&gt;</code></td>
+<td align="left">convenience for setting where error/status messages go; valid values for <code>dst</code> are <code>cerr</code> and <code>cout</code></td>
+</tr>
+<tr class="odd">
 <td align="left"><code>--osp:device:&lt;name&gt;</code></td>
-<td align="left">use <code>name</code> as the type of device for OSPRay to create; e.g. <code>--osp:device:default</code> gives you the default local device and <code>--osp:device:mpi</code> gives you the MPI device</td>
+<td align="left">use <code>name</code> as the type of device for OSPRay to create; e.g. <code>--osp:device:default</code> gives you the default local device; Note if the device to be used is defined in a module, remember to pass <code>--osp:module:&lt;name&gt;</code> first</td>
+</tr>
+<tr class="even">
+<td align="left"><code>--osp:setaffinity &lt;n&gt;</code></td>
+<td align="left">if <code>1</code>, bind software threads to hardware threads; <code>0</code> disables binding; default is <code>1</code> on KNL and <code>0</code> otherwise</td>
 </tr>
 </tbody>
 </table>
@@ -259,18 +272,20 @@ convention with "`--osp:`") are understood:
 
 The second method of initialization is to explicitly create the device
 yourself, and possibly set parameters. This method looks almost
-identical to how other objects are created and used by OSPRay (described
-in later sections). The first step is to create the device with
+identical to how other [objects](#objects) are created and used by
+OSPRay (described in later sections). The first step is to create the
+device with
 
 ``` {.cpp}
-OSPDevice ospCreateDevice(const char *type);
+OSPDevice ospNewDevice(const char *type);
 ```
 
 where the `type` string maps to a specific device implementation. OSPRay
 always provides the "`default`" device, which maps to a local CPU
 rendering device. If it is enabled in the build, you can also use
-"`mpi`" to access the MPI multi-node rendering device. Once a device is
-created, you can call
+"`mpi`" to access the MPI multi-node rendering device (see [Parallel
+Rendering with MPI](#parallel-rendering-with-mpi) section for more
+info). Once a device is created, you can call
 
 ``` {.cpp}
 void ospDeviceSet1i(OSPDevice, const char *id, int val);
@@ -285,11 +300,12 @@ void ospDeviceSetString(OSPDevice, const char *id, const char *val);
 to set parameters on the device. The following parameters can be set on
 all devices:
 
-| Type | Name       | Description                                               |
-|:-----|:-----------|:----------------------------------------------------------|
-| int  | numThreads | number of threads which OSPRay should use                 |
-| int  | logLevel   | logging level                                             |
-| int  | debug      | set debug mode; equivalent to logLevel=2 and numThreads=1 |
+| Type | Name        | Description                                                                                                             |
+|:-----|:------------|:------------------------------------------------------------------------------------------------------------------------|
+| int  | numThreads  | number of threads which OSPRay should use                                                                               |
+| int  | logLevel    | logging level                                                                                                           |
+| int  | debug       | set debug mode; equivalent to logLevel=2 and numThreads=1                                                               |
+| int  | setAffinity | bind software threads to hardware threads if set to 1; 0 disables binding omitting the parameter will let OSPRay choose |
 
 : Parameters shared by all devices.
 
@@ -328,29 +344,77 @@ environment variables for easy changes to OSPRay's behavior without
 needing to change the application (variables are prefixed by convention
 with "`OSPRAY_`"):
 
-| Variable            | Description                      |
-|:--------------------|:---------------------------------|
-| OSPRAY\_THREADS     | equivalent to `--osp:numthreads` |
-| OSPRAY\_LOG\_LEVEL  | equivalent to `--osp:loglevel`   |
-| OSPRAY\_LOG\_OUTPUT | equivalent to `--osp:logoutput`  |
-| OSPRAY\_DEBUG       | equivalent to `--osp:debug`      |
+| Variable              | Description                       |
+|:----------------------|:----------------------------------|
+| OSPRAY\_THREADS       | equivalent to `--osp:numthreads`  |
+| OSPRAY\_LOG\_LEVEL    | equivalent to `--osp:loglevel`    |
+| OSPRAY\_LOG\_OUTPUT   | equivalent to `--osp:logoutput`   |
+| OSPRAY\_DEBUG         | equivalent to `--osp:debug`       |
+| OSPRAY\_SET\_AFFINITY | equivalent to `--osp:setaffinity` |
 
 : Environment variables interpreted by OSPRay.
 
-### Handling Error and Status Messages from OSPRay
+### Error Handling and Status Messages
+
+The following errors are currently used by OSPRay:
+
+| Name                    | Description                                           |
+|:------------------------|:------------------------------------------------------|
+| OSP\_NO\_ERROR          | no error occured                                      |
+| OSP\_UNKNOWN\_ERROR     | an unknown error occured                              |
+| OSP\_INVALID\_ARGUMENT  | an invalid argument was specified                     |
+| OSP\_INVALID\_OPERATION | the operation is not allowed for the specified object |
+| OSP\_OUT\_OF\_MEMORY    | there is not enough memory to execute the command     |
+| OSP\_UNSUPPORTED\_CPU   | the CPU is not supported (minimum ISA is SSE4.1)      |
+
+: Possible error codes, i.e. valid named constants of type `OSPError`.
+
+These error codes are either directly return by some API functions, or
+are recorded to be later queried by the application via
+
+``` {.cpp}
+OSPError ospDeviceGetLastErrorCode(OSPDevice);
+```
+
+A more descriptive error message can be queried by calling
+
+``` {.cpp}
+const char* ospDeviceGetLastErrorMsg(OSPDevice);
+```
+
+Alternatively, the application can also register a callback function of
+type
+
+``` {.cpp}
+typedef void (*OSPErrorFunc)(OSPError, const char* errorDetails);
+```
+
+via
+
+``` {.cpp}
+void ospDeviceSetErrorFunc(OSPDevice, OSPErrorFunc);
+```
+
+to get notified when errors occur.
 
 Applications may be interested in messages which OSPRay emits, whether
 for debugging or logging events. Applications can call
 
 ``` {.cpp}
-void ospDeviceSetErrorMsgFunc(OSPDevice, OSPErrorMsgFunc callback);
+void ospDeviceSetStatusFunc(OSPDevice, OSPStatusFunc);
 ```
 
-in order to set the callback OSPRay will use to emit error messages. By
-default, OSPRay uses a callback which does nothing, so any output
-desired by an application will require that a callback be provided. Note
-that callbacks for C++ std::cout and std::cerr can be alternatively set
-through ospInit() or OSPRAY\_LOG\_OUTPUT environment variable.
+in order to register a callback function of type
+
+``` {.cpp}
+typedef void (*OSPStatusFunc)(const char* messageText);
+```
+
+which OSPRay will use to emit status messages. By default, OSPRay uses a
+callback which does nothing, so any output desired by an application
+will require that a callback is provided. Note that callbacks for C++
+`std::cout` and `std::cerr` can be alternatively set through `ospInit()`
+or the `OSPRAY_LOG_OUTPUT` environment variable.
 
 ### Loading OSPRay Extensions at Runtime
 
@@ -360,12 +424,12 @@ implemented in shared libraries. To load plugin `name` from
 `ospray_module_<name>.dll` (on Windows) use
 
 ``` {.cpp}
-int32_t ospLoadModule(const char *name);
+OSPError ospLoadModule(const char *name);
 ```
 
 Modules are searched in OS-dependent paths, which include the
-application directory. `ospLoadModule` returns `0` if the plugin could
-be loaded and an error code `> 0` otherwise.
+application directory. `ospLoadModule` returns `OSP_NO_ERROR` if the
+plugin could be successfully loaded.
 
 Objects
 -------
@@ -562,9 +626,9 @@ rearrangement of voxel data it cannot be shared the with the application
 anymore, but has to be transferred to OSPRay via
 
 ``` {.cpp}
-int ospSetRegion(OSPVolume, void *source,
-                            const vec3i &regionCoords,
-                            const vec3i &regionSize);
+OSPError ospSetRegion(OSPVolume, void *source,
+                      const vec3i &regionCoords,
+                      const vec3i &regionSize);
 ```
 
 The voxel data pointed to by `source` is copied into the given volume
@@ -572,10 +636,9 @@ starting at position `regionCoords`, must be of size `regionSize` and be
 placed in memory in XYZ order. Note that OSPRay distinguishes between
 volume data and volume parameters. This function must be called only
 after all volume parameters (in particular `dimensions` and `voxelType`,
-see below) have been set and *before* `ospCommit(volume)` is called.
-Memory for the volume is allocated on the first call to this function.
-If allocation is unsuccessful or the region size is invalid, the return
-value is `0`, and non-zero otherwise.
+see below) have been set and *before* `ospCommit(volume)` is called. If
+necessary then memory for the volume is allocated on the first call to
+this function.
 
 The common parameters understood by both structured volume variants are
 summarized in the table below. If `voxelRange` is not provided for a
@@ -674,13 +737,13 @@ representations in the application this geometry allows a flexible way
 of specifying the data of center position and radius within a
 [data](#data) array:
 
-<table style="width:97%;">
+<table style="width:99%;">
 <caption>Parameters defining a spheres geometry.</caption>
 <colgroup>
-<col width="13%" />
+<col width="14%" />
 <col width="22%" />
 <col width="13%" />
-<col width="47%" />
+<col width="48%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -722,8 +785,7 @@ of specifying the data of center position and radius within a
 <td align="left">offset (in bytes) of each sphere's &quot;float radius&quot; within the <code>spheres</code> array (<code>-1</code> means disabled and use <code>radius</code>)</td>
 </tr>
 <tr class="even">
-<td align="left">vec4f[] / vec3f(a)<br />
-[]</td>
+<td align="left">vec4f[] / vec3f(a)[]</td>
 <td align="left">color</td>
 <td align="right">NULL</td>
 <td align="left"><a href="#data">data</a> array of colors (RGBA/RGB), color is constant for each sphere</td>
@@ -750,13 +812,13 @@ flexible way of specifying the data of offsets for start position, end
 position and radius within a [data](#data) array. All parameters are
 listed in the table below.
 
-<table style="width:97%;">
+<table style="width:99%;">
 <caption>Parameters defining a cylinders geometry.</caption>
 <colgroup>
-<col width="13%" />
+<col width="14%" />
 <col width="25%" />
 <col width="13%" />
-<col width="44%" />
+<col width="46%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -804,8 +866,7 @@ listed in the table below.
 <td align="left">offset (in bytes) of each cylinder's &quot;float radius&quot; within the <code>cylinders</code> array (<code>-1</code> means disabled and use <code>radius</code> instead)</td>
 </tr>
 <tr class="odd">
-<td align="left">vec4f[] / vec3f(a)<br />
-[]</td>
+<td align="left">vec4f[] / vec3f(a)[]</td>
 <td align="left">color</td>
 <td align="right">NULL</td>
 <td align="left"><a href="#data">data</a> array of colors (RGBA/RGB), color is constant for each cylinder</td>
@@ -946,10 +1007,10 @@ special parameters:
 <table style="width:99%;">
 <caption>Special parameters understood by the SciVis renderer.</caption>
 <colgroup>
-<col width="18%" />
+<col width="17%" />
 <col width="28%" />
-<col width="13%" />
-<col width="38%" />
+<col width="17%" />
+<col width="34%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -1621,7 +1682,7 @@ values of `OSPFrameBufferChannel` listed in the table below.
 | Name              | Description                                                   |
 |:------------------|:--------------------------------------------------------------|
 | OSP\_FB\_COLOR    | RGB color including alpha                                     |
-| OSP\_FB\_DEPTH    | Euclidean distance to the camera (*not* to the image plane)   |
+| OSP\_FB\_DEPTH    | euclidean distance to the camera (*not* to the image plane)   |
 | OSP\_FB\_ACCUM    | accumulation buffer for progressive refinement                |
 | OSP\_FB\_VARIANCE | estimate of the current variance, see [rendering](#rendering) |
 
@@ -1657,8 +1718,8 @@ void ospFreeFrameBuffer(OSPFrameBuffer);
 Because OSPRay uses reference counting internally the framebuffer may
 not immediately be deleted at this time.
 
-The application can map the given channel of a framebuffer -- and thus
-access the stored pixel information -- via
+The application can map the given channel of a framebuffer – and thus
+access the stored pixel information – via
 
 ``` {.cpp}
 const void *ospMapFrameBuffer(OSPFrameBuffer,
@@ -1730,6 +1791,136 @@ rendered image, otherwise `inf` is returned. The estimated variance can
 be used by the application as a quality indicator and thus to decide
 whether to stop or to continue progressive rendering.
 
+Parallel Rendering with MPI
+===========================
+
+OSPRay has the ability to scale to multiple nodes in a cluster via MPI.
+This enables applications to take advantage of larger compute and memory
+resources when available.
+
+Prerequisites for MPI Mode
+--------------------------
+
+In addition to the standard build requirements of OSPRay, you must have
+the following items available in your environment in order to build&run
+OSPRay in MPI mode:
+
+-   An MPI enabled multi-node environment, such as an HPC cluster
+-   An MPI implementation you can build against (i.e. Intel MPI,
+    MVAPICH2, etc...)
+
+Enabling the MPI module in your build
+-------------------------------------
+
+To build the MPI module the CMake variable `OSPRAY_MODULE_MPI` must be
+enabled, which can be done directly on the command line (with `-D...`)
+or through a configuration dialog (`ccmake`, `cmake-gui`), see also
+\[Compiling OSPRay\].
+
+This will trigger CMake to go look for an MPI implementation in your
+environment. You can then inspect the CMake value of `MPI_LIBRARY` to
+make sure that CMake found your MPI build environment correctly.
+
+This will result in an OSPRay module being built. To enable using it,
+applications will need to either link `libospray_module_mpi`, or call
+
+``` {.cpp}
+ospLoadModule("mpi");
+```
+
+before initializing OSPRay.
+
+Modes of using OSPRay's MPI features
+------------------------------------
+
+OSPRay provides two ways of using MPI to scale up rendering: offload and
+distributed.
+
+The "offload" rendering mode is where a single (not-distributed) calling
+application treats the OSPRay API the same as with local rendering.
+However, OSPRay uses multiple MPI connected nodes to evenly distribute
+frame rendering work, where each node contains a full copy of all scene
+data. This method is most effective for scenes which can fit into
+memory, but are very expensive to render: for example, path tracing with
+many samples-per-pixel is very compute heavy, making it a good situation
+to use the offload feature. This can be done with any application which
+already uses OSPRay for local rendering without the need for any code
+changes.
+
+The "distributed" rendering mode is where a MPI distributed application
+(such as a scientific simulation) uses OSPRay collectively to render
+frames. In this case, the API expects all calls (both created objects
+and parameters) to be the same on every application rank, except each
+rank can specify arbitrary geometries and volumes. Each renderer will
+have its own limitations on the topology of the data (i.e. overlapping
+data regions, concave data, etc.), but the API calls will only differ
+for scene objects. Thus all other calls (i.e. setting camera, creating
+framebuffer, rendering frame, etc.) will all be assumed to be identical,
+but only rendering a frame and committing the model must be in
+lock-step. This mode targets using all available aggregate memory for
+very large scenes and for "in-situ" visualization where the data is
+already distributed by a simulation app.
+
+Running an application with the "offload" device
+------------------------------------------------
+
+As an example, our sample viewer can be run as a single application
+which offloads rendering work to multiple MPI processes running on
+multiple machines.
+
+The example apps are setup to be launched in two different setups. In
+either setup, the application must initialize OSPRay with the offload
+device. This can be done by creating an "`mpi_offload`" device and
+setting it as the current device (via the `ospSetCurrentDevice()`
+function), or passing either "`--osp:mpi`" or "`--osp:mpi-offload`" as a
+command line parameter to `ospInit()`. Note that passing a command line
+parameter will automatically call `ospLoadModule("mpi")` to load the MPI
+module, while the application will have to load the module explicitly if
+using `ospNewDevice()`.
+
+**Option 1: single MPI launch**
+
+OSPRay is initialized with the `ospInit()` function call which takes
+command line arguments in and configures OSPRay based on what it finds.
+In this setup, the app is launched across all ranks, but workers will
+never return from `ospInit()`, essentially turning the application into
+a worker process for OSPRay. Here's an example of running the
+ospVolumeViewer data-replicated, using `c1`-`c4` as compute nodes and
+`localhost` the process running the viewer itself:
+
+``` {.cpp}
+% mpirun -perhost 1 -hosts localhost,c1,c2,c3,c4 ./ospExampleViewer [scene_file] --osp:mpi
+```
+
+**Option 2: separate app/worker launches**
+
+The second option is to explicitly launch the app on rank 0 and worker
+ranks on the other nodes. This is done by running `ospray_mpi_worker` on
+worker nodes and the application on the display node. Here's the same
+example above using this syntax:
+
+``` {.cpp}
+% mpirun -perhost 1 -hosts localhost ./ospExampleViewer [scene_file] --osp:mpi \
+  : -hosts c1,c2,c3,c4 ./ospray_mpi_worker --osp:mpi
+```
+
+This method of launching the application and OSPRay worker separately
+works best for applications which do not immediately call `ospInit()` in
+thier `main()` function, or for environments where application
+dependencies (such as GUI libraries) may not be available on compute
+nodes.
+
+Running an application with the "distributed" device
+----------------------------------------------------
+
+Applications using the new distributed device should initialize OSPRay
+by creating (and setting current) an "`mpi_distributed`" device or pass
+`"--osp:mpi-distributed"` as a command line argument to `ospInit()`.
+Note that due to the semantic differences the distributed device gives
+the OSPRay API, it is not expected for applications which can already
+use the offload device to correctly use the distributed device without
+changes to the application.
+
 Examples
 ========
 
@@ -1737,7 +1928,7 @@ Tutorial
 --------
 
 A minimal working example demonstrating how to use OSPRay can be found
-at `apps/ospTutorial.cpp`[^6]. On Linux build it in the build\_directory
+at `apps/ospTutorial.cpp`[^6]. On Linux build it in the build directory
 with
 
     g++ ../apps/ospTutorial.cpp -I ../ospray/include -I .. ./libospray.so -Wl,-rpath,. -o ospTutorial
@@ -1749,7 +1940,7 @@ On Windows build it in the build\_directory\\\$Configuration with
 Running `ospTutorial` will create two images of two triangles, rendered
 with the Scientific Visualization renderer with full Ambient Occlusion.
 The first image `firstFrame.ppm` shows the result after one call to
-`ospRenderFrame` -- jagged edges and noise in the shadow can be seen.
+`ospRenderFrame` – jagged edges and noise in the shadow can be seen.
 Calling `ospRenderFrame` multiple times enables progressive refinement,
 resulting in antialiased edges and converged shadows, shown after ten
 frames in the second image `accumulatedFrames.png`.
@@ -1762,53 +1953,23 @@ frames.](https://ospray.github.io/images/tutorial_accumulatedframe.png)
 Example Viewer
 --------------
 
-The OSPRay Example Viewer uses a built-in ImGUI library with minimal
-dependencies. The viewer uses the OSPRay scenegraph interface, which the
-GUI displays and manipulates. Run as `ospExampleViewerSg teapot.obj`,
-for example.
+OSPRay also includes an exemplary viewer application
+`ospExampleViewerSg`, showcasing all features of OSPRay. The Example
+Viewer uses the ImGui library for user interface controls. The viewer is
+based on a prototype OSPRay scenegraph interface where its nodes are
+displayed in the GUI and can be manipulated interactively. For instance,
+simply run it as `ospExampleViewerSg teapot.obj`.
 
-<img src="https://ospray.github.io/images/exampleViewer.jpg" alt="Screenshot of ospExampleViewerSg." style="width:80.0%" />
+This application also functions as an OSPRay state debugger – invalid
+values will be shown in red up the hierarchy and won't change the viewer
+until corrected. You can also add new nodes where appropriate: for
+example, when "lights" is expanded right clicking on "lights" and typing
+in a light type, such as "point", will add it to the scene. Similarly,
+right clicking on "world" and creating an "Importer" node will add a new
+scene importer from a file. Changing the filename to an appropriate file
+will load the scene and propagate the resulting state.
 
-This also functions as an OSPRay state debugger -- invalid values will
-display in red up the hierarchy and shouldn't break the viewer until
-corrected. You can also add new nodes where appropriate. For instance,
-when "lights" is expanded, right click on "lights" and type in a light
-type, such as "point": a [point light](#point-light-sphere-light) is
-automatically added. Similarly, right click on "world" and create an
-"Importer". Change the filename to an appropriate file, and the Importer
-will propagate with the resulting state.
-
-All commandline options with the exception of a few[^7] function
-directly on the scenegraph itself. For instance, to change the renderer
-to the [path tracer](#path-tracer) from the commandline run
-
-    ospExampleViewer ospray:renderer:rendererType=pt
-
-where "`:`" denotes walking the scenegraph nodes. This can be shortened
-to
-
-    ospExampleViewer rendererType=pt
-
-as any node specified before the "`=`" sign will walk down the tree
-until it finds the first instance of that name.
-
-Qt Viewer
----------
-
-OSPRay also includes a demo viewer application `ospQtViewer`, showcasing
-all features of OSPRay.
-
-![Screenshot of
-`ospQtViewer`.](https://ospray.github.io/images/QtViewer.jpg)
-
-Volume Viewer
--------------
-
-Additionally, OSPRay includes a demo viewer application
-`ospVolumeViewer`, which is specifically tailored for volume rendering.
-
-![Screenshot of
-`ospVolumeViewer`.](https://ospray.github.io/images/VolumeViewer.png)
+<img src="https://ospray.github.io/images/exampleViewer.jpg" alt="Screenshot of ospExampleViewerSg" style="width:80.0%" />
 
 Demos
 -----
@@ -1831,5 +1992,3 @@ page.
     framebuffer are always updated.
 
 [^6]: A C99 version is available at `apps/ospTutorial.c`.
-
-[^7]: such as `--nogui`

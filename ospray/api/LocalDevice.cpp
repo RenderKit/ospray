@@ -52,12 +52,7 @@ namespace ospray {
       // ospray::init() because in mpi-mode the latter is also called
       // in the host-stubs, where it shouldn't.
       // -------------------------------------------------------
-      std::stringstream embreeConfig;
-      if (debugMode)
-        embreeConfig << " threads=1,verbose=2";
-      else if(numThreads > 0)
-        embreeConfig << " threads=" << numThreads;
-      embreeDevice = rtcNewDevice(embreeConfig.str().c_str());
+      embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
 
       rtcDeviceSetErrorFunction(embreeDevice, embreeErrorFunc);
 
@@ -278,7 +273,7 @@ namespace ospray {
     {
       Volume *volume = (Volume *) handle;
       Assert(volume != nullptr && "invalid volume object handle");
-      return(volume->setRegion(source, index, count));
+      return volume->setRegion(source, index, count);
     }
 
     /*! assign (named) vec2f parameter to an object */

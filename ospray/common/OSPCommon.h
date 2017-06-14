@@ -118,7 +118,7 @@ namespace ospray {
   /*! size of OSPTextureFormat */
   OSPRAY_SDK_INTERFACE size_t sizeOf(const OSPTextureFormat);
 
-  OSPRAY_SDK_INTERFACE int loadLocalModule(const std::string &name);
+  OSPRAY_SDK_INTERFACE OSPError loadLocalModule(const std::string &name);
 
   /*! little helper class that prints out a warning string upon the
     first time it is encountered.

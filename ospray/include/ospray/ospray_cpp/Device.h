@@ -50,7 +50,7 @@ private:
 
 inline Device::Device(const std::string &type)
 {
-  OSPDevice c = ospCreateDevice(type.c_str());
+  OSPDevice c = ospNewDevice(type.c_str());
   if (c) {
     ospHandle = c;
   } else {

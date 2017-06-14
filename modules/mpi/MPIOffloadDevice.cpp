@@ -58,7 +58,7 @@ namespace ospray {
     /*! it's up to the proper init routine to decide which processes
       call this function and which ones don't. This function will not
       return. */
-    OSPRAY_MPI_INTERFACE void runWorker();
+    void runWorker();
 
     // Misc helper functions //////////////////////////////////////////////////
 
@@ -190,12 +190,10 @@ namespace ospray {
       - the user may or may not have launched MPI explicitly for his app
       - the app may or may not be running distributed
       - the ospray frontend (the part linked to the app) will wait for a remote
-        MPI gruop of
-      workers to connect to this app
+        MPI group of workers to connect to this app
       - the ospray frontend will store the port its waiting on connections for
-        in the
-      filename passed to this function; or will print it to stdout if this is
-      nullptr
+        in the filename passed to this function; or will print it to stdout if
+        this is nullptr
     */
     void createMPI_ListenForWorkers(int *ac, const char **av)
     {
@@ -437,7 +435,7 @@ namespace ospray {
 
       /* set up fabric and stuff - by now all the communicators should
          be properly set up */
-      mpiFabric   = make_unique<MPIBcastFabric>(mpi::worker);
+      mpiFabric   = make_unique<MPIBcastFabric>(mpi::worker, MPI_ROOT, 0);
       readStream  = make_unique<networking::BufferedReadStream>(*mpiFabric);
       writeStream = make_unique<networking::BufferedWriteStream>(*mpiFabric);
 

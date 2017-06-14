@@ -80,37 +80,36 @@ inline std::string toString(OSPObject obj)
 
 using namespace ospray;
 
-inline Device *createMpiDevice()
+inline Device *createMpiDevice(const std::string &type)
 {
   Device *device = nullptr;
 
   try {
-    device = Device::createDevice("mpi");
+    device = Device::createDevice(type.c_str());
   } catch (const std::runtime_error &) {
     try {
       ospLoadModule("mpi");
-      device = Device::createDevice("mpi");
+      device = Device::createDevice(type.c_str());
     } catch (const std::runtime_error &err) {
-      std::string error_msg = "Cannot create a device of type 'mpi'! Make sure "
-                              "you have enabled the OSPRAY_MODULE_MPI CMake "
-                              "variable in your build of OSPRay.";
-      error_msg += ("\n(Reason device creation failed: "
-                    + std::string(err.what()) + ')');
-      throw std::runtime_error(error_msg);
+      std::stringstream error_msg;
+      error_msg << "Cannot create a device of type '" << type << "'! Make sure "
+                << "you have enabled the OSPRAY_MODULE_MPI CMake "
+                << "variable in your build of OSPRay.\n";
+      error_msg << "(Reason device creation failed: " << err.what() << ')';
+      throw std::runtime_error(error_msg.str());
     }
   }
 
   return device;
 }
 
-extern "C" void ospInit(int *_ac, const char **_av)
+extern "C" OSPError ospInit(int *_ac, const char **_av)
 OSPRAY_CATCH_BEGIN
 {
   auto &currentDevice = Device::current;
 
   if (currentDevice) {
-    throw std::runtime_error("OSPRay error: device already exists "
-                             "(did you call ospInit twice?)");
+    throw std::runtime_error("device already exists [ospInit() called twice?]");
   }
 
   auto OSP_MPI_LAUNCH = getEnvVar<std::string>("OSPRAY_MPI_LAUNCH");
@@ -119,7 +118,7 @@ OSPRAY_CATCH_BEGIN
     postStatusMsg("#osp: launching ospray mpi ring - "
                  "make sure that mpd is running");
 
-    currentDevice = createMpiDevice();
+    currentDevice = createMpiDevice("mpi_offload");
     currentDevice->findParam("mpiMode", true)->set("mpi-launch");
     currentDevice->findParam("launchCommand", true)
                  ->set(OSP_MPI_LAUNCH.second.c_str());
@@ -130,7 +129,18 @@ OSPRAY_CATCH_BEGIN
       std::string av(_av[i]);
 
       if (av == "--osp:coi") {
-        throw std::runtime_error("OSPRay's COI device is no longer supported!");
+        handleError(OSP_INVALID_ARGUMENT,
+                    "OSPRay's COI device is no longer supported!");
+        return OSP_INVALID_ARGUMENT;
+      }
+
+      auto moduleSwitch = av.substr(0, 13);
+      if (moduleSwitch == "--osp:module:") {
+        removeArgs(*_ac,(char **&)_av,i,1);
+
+        auto moduleName = av.substr(13);
+        loadLocalModule(moduleName);
+
         --i;
         continue;
       }
@@ -155,7 +165,15 @@ OSPRAY_CATCH_BEGIN
       if (av == "--osp:mpi" || av == "--osp:mpi-offload") {
         removeArgs(*_ac,(char **&)_av,i,1);
         if (!currentDevice)
-          currentDevice = createMpiDevice();
+          currentDevice = createMpiDevice("mpi_offload");
+        --i;
+        continue;
+      }
+
+      if (av == "--osp:mpi-distributed") {
+        removeArgs(*_ac,(char **&)_av,i,1);
+        if (!currentDevice)
+          currentDevice = createMpiDevice("mpi_distributed");
         --i;
         continue;
       }
@@ -166,7 +184,7 @@ OSPRAY_CATCH_BEGIN
         const char *launchCommand = strdup(_av[i+1]);
         removeArgs(*_ac,(char **&)_av,i,2);
 
-        currentDevice = createMpiDevice();
+        currentDevice = createMpiDevice("mpi_offload");
         currentDevice->findParam("mpiMode", true)->set("mpi-launch");
         currentDevice->findParam("launchCommand", true)->set(launchCommand);
         --i;
@@ -181,7 +199,7 @@ OSPRAY_CATCH_BEGIN
         }
         removeArgs(*_ac,(char **&)_av,i,1);
 
-        currentDevice = createMpiDevice();
+        currentDevice = createMpiDevice("mpi_offload");
         currentDevice->findParam("mpiMode", true)->set("mpi-listen");
         currentDevice->findParam("fileNameToStorePortIn", true)
                      ->set(fileNameToStorePortIn?fileNameToStorePortIn:"");
@@ -195,7 +213,7 @@ OSPRAY_CATCH_BEGIN
         removeArgs(*_ac,(char **&)_av,i,2);
 
         if (!currentDevice)
-          currentDevice = createMpiDevice();
+          currentDevice = createMpiDevice("mpi_offload");
 
         currentDevice->findParam("mpiMode", true)->set("mpi-connect");
         currentDevice->findParam("portName", true)->set(portName.c_str());
@@ -208,19 +226,27 @@ OSPRAY_CATCH_BEGIN
   // no device created on cmd line, yet, so default to localdevice
   if (!deviceIsSet())
     currentDevice = new ospray::api::LocalDevice;
-  
+
   ospray::initFromCommandLine(_ac,&_av);
 
   currentDevice->commit();
-}
-OSPRAY_CATCH_END()
 
-extern "C" OSPDevice ospCreateDevice(const char *deviceType)
+  return OSP_NO_ERROR;
+}
+OSPRAY_CATCH_END(OSP_INVALID_OPERATION)
+
+extern "C" OSPDevice ospNewDevice(const char *deviceType)
 OSPRAY_CATCH_BEGIN
 {
   return (OSPDevice)Device::createDevice(deviceType);
 }
 OSPRAY_CATCH_END(nullptr)
+
+// for backward compatibility, will be removed in future
+extern "C" OSPDevice ospCreateDevice(const char *deviceType)
+{
+  return ospNewDevice(deviceType);
+}
 
 extern "C" void ospSetCurrentDevice(OSPDevice _device)
 OSPRAY_CATCH_BEGIN
@@ -261,16 +287,16 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END(nullptr)
 
-extern "C" int32_t ospLoadModule(const char *moduleName)
+extern "C" OSPError ospLoadModule(const char *moduleName)
 OSPRAY_CATCH_BEGIN
 {
   if (deviceIsSet()) {
-    return currentDevice().loadModule(moduleName);
+    return (OSPError)currentDevice().loadModule(moduleName);
   } else {
     return loadLocalModule(moduleName);
   }
 }
-OSPRAY_CATCH_END(1)
+OSPRAY_CATCH_END(OSP_UNKNOWN_ERROR)
 
 extern "C" const void *ospMapFrameBuffer(OSPFrameBuffer fb,
                                          OSPFrameBufferChannel channel)
@@ -521,7 +547,7 @@ OSPRAY_CATCH_BEGIN
   ASSERT_DEVICE();
   return currentDevice().renderFrame(fb, renderer, fbChannelFlags);
 }
-OSPRAY_CATCH_END(0.f)
+OSPRAY_CATCH_END(inf)
 
 extern "C" void ospCommit(OSPObject object)
 OSPRAY_CATCH_BEGIN
@@ -565,6 +591,12 @@ OSPRAY_CATCH_BEGIN
   device->msg_fcn = callback;
 }
 OSPRAY_CATCH_END()
+
+// for backward compatibility, will be removed in futur
+extern "C" void ospDeviceSetErrorMsgFunc(OSPDevice dev, OSPErrorMsgFunc cb)
+{
+  ospDeviceSetStatusFunc(dev, cb);
+}
 
 extern "C" void ospDeviceSetErrorFunc(OSPDevice object, OSPErrorFunc callback)
 OSPRAY_CATCH_BEGIN
@@ -630,15 +662,15 @@ OSPRAY_CATCH_BEGIN
 }
 OSPRAY_CATCH_END()
 
-extern "C" int ospSetRegion(OSPVolume object, void *source,
+extern "C" OSPError ospSetRegion(OSPVolume object, void *source,
                             const osp::vec3i &index, const osp::vec3i &count)
 OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
-  return currentDevice().setRegion(object, source,
-                                   (vec3i&)index, (vec3i&)count);
+  return currentDevice().setRegion(object, source, (vec3i&)index, (vec3i&)count)
+    ? OSP_NO_ERROR : OSP_UNKNOWN_ERROR;
 }
-OSPRAY_CATCH_END(0)
+OSPRAY_CATCH_END(OSP_UNKNOWN_ERROR)
 
 extern "C" void ospSetVec2f(OSPObject _object,
                             const char *id,
