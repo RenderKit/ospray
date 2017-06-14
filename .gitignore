@@ -19,3 +19,4 @@ ispc
 ospray-doc
 modules/ospray-module-bricktree/
 imgui.ini
+premake.local.sh
