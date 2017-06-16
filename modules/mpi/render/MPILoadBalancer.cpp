@@ -320,23 +320,20 @@ namespace ospray {
         const vec2i tileId(tile_x, tile_y);
         const int32 accumID = fb->accumID(tileId);
 
-        if (fb->tileError(tileId) <= renderer->errorThreshold)
-          return;
-
+        if (fb->tileError(tileId) > renderer->errorThreshold) {
 #if TILE_SIZE > MAX_TILE_SIZE
-        auto tilePtr = make_unique<Tile>(tileId, fb->size, accumID);
-        auto &tile   = *tilePtr;
+          auto tilePtr = make_unique<Tile>(tileId, fb->size, accumID);
+          auto &tile   = *tilePtr;
 #else
-        Tile __aligned(64) tile(tileId, fb->size, accumID);
+          Tile __aligned(64) tile(tileId, fb->size, accumID);
 #endif
 
-        tasking::parallel_for(numJobs(renderer->spp, accumID), [&](int tid) {
-          renderer->renderTile(perFrameData, tile, tid);
-//          std::stringstream msg; msg << (int)((tileID - worker.rank)/worker.size) << " : " << tid << " \ttile " << tileID << std::endl; SCOPED_LOCK(mutex); std::cout << msg.str();
-        });
+          tasking::parallel_for(numJobs(renderer->spp, accumID), [&](int tid) {
+            renderer->renderTile(perFrameData, tile, tid);
+          });
 
-        fb->setTile(tile);
-//        if (worker.rank == 1) {std::stringstream msg; msg << taskIdx << " \ttile " << tileID << " DONE\n"; std::cout << msg.str();}
+          fb->setTile(tile);
+        }
 
         if (tilesAvailable)
           requestTile();
