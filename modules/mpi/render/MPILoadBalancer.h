@@ -109,6 +109,7 @@ namespace ospray {
 
       private:
         void tileTask(const size_t tileID);
+        void requestTile();
 
         // "local" state
         Renderer *renderer;

@@ -24,8 +24,6 @@
 #include "ospcommon/tasking/schedule.h"
 // std
 #include <algorithm>
-#include <chrono>
-#include <thread>
 
 namespace ospray {
   namespace mpi {
@@ -297,9 +295,8 @@ namespace ospray {
         tilesScheduled = numPreAllocated;
         for(int taskIndex = 0; taskIndex < numPreAllocated; taskIndex++) {
           tasking::schedule([&,taskIndex]{tileTask(taskIndex * worker.size + worker.rank);});
-          // XXX helps to have better ordering of completed tiles
-          // actually, we want finer control of task scheduling
-          std::this_thread::sleep_for(std::chrono::nanoseconds(50));
+          // already "prefetch" a next tile
+          requestTile();
         }
 
         dfb->waitUntilFinished();
@@ -341,16 +338,20 @@ namespace ospray {
         fb->setTile(tile);
 //        if (worker.rank == 1) {std::stringstream msg; msg << taskIdx << " \ttile " << tileID << " DONE\n"; std::cout << msg.str();}
 
-        if (tilesAvailable) {
-          int requester = mpi::globalRank();
-          auto msg = std::make_shared<mpicommon::Message>(&requester, sizeof(requester));
-          mpi::messaging::sendTo(mpi::masterRank(), myId, msg);
-        }
+        if (tilesAvailable)
+          requestTile();
+
         SCOPED_LOCK(mutex);
         if (--tilesScheduled == 0)
           cv.notify_one();
       }
 
+      void Slave::requestTile()
+      {
+          int requester = mpi::globalRank();
+          auto msg = std::make_shared<mpicommon::Message>(&requester, sizeof(requester));
+          mpi::messaging::sendTo(mpi::masterRank(), myId, msg);
+      }
 
       std::string Slave::toString() const
       {
