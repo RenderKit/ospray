@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #include "volume/VisItStructuredVolume.ih"
-#include "volume/VisItGridAccelerator.ih"
+//#include "volume/VisItGridAccelerator.ih"
 
 // //! Bit count used to represent the brick width.
 // #define BRICK_WIDTH_BITCOUNT (4)
@@ -374,7 +374,7 @@ void VisItStructuredVolume_Constructor(VisItStructuredVolume *uniform volume,
   Volume_Constructor(&volume->super,cppEquivalent);
 
   volume->dimensions = dimensions;
-  volume->accelerator = NULL;
+  //volume->accelerator = NULL;
   volume->localCoordinatesUpperBound = nextafter(volume->dimensions - 1, make_vec3i(0));
   volume->getVoxel = NULL;
   volume->transformLocalToWorld = VisItStructuredVolume_transformLocalToWorld;
@@ -409,16 +409,17 @@ export void VisItStructuredVolume_setGridSpacing(void *uniform _self, const unif
   self->super.boundingBox = make_box3f(self->gridOrigin, self->gridOrigin + make_vec3f(self->dimensions - 1) * self->gridSpacing);
 }
 
-export void *uniform VisItStructuredVolume_createAccelerator(void *uniform _self)
-{
-  // Cast to the actual Volume type.
-  VisItStructuredVolume *uniform self = (VisItStructuredVolume *uniform)_self;
+// export void *uniform VisItStructuredVolume_createAccelerator(void *uniform _self)
+// {
+//   // // Cast to the actual Volume type.
+//   // VisItStructuredVolume *uniform self = (VisItStructuredVolume *uniform)_self;
 
-  // Delete the current accelerator if it exists.
-  if(self->accelerator) VisItGridAccelerator_destroy(self->accelerator);
+//   // // Delete the current accelerator if it exists.
+//   // if(self->accelerator) VisItGridAccelerator_destroy(self->accelerator);
 
-  // Set the accelerator structure field.
-  self->accelerator = VisItGridAccelerator_createInstance(&self->super);
+//   // // Set the accelerator structure field.
+//   // self->accelerator = VisItGridAccelerator_createInstance(&self->super);
 
-  return self->accelerator;
-}
+//   // return self->accelerator;
+//     return NULL;
+// }

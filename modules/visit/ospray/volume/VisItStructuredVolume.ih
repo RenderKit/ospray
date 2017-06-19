@@ -19,7 +19,7 @@
 #include "common/OSPCommon.ih"
 #include "volume/Volume.ih"
 
-struct VisItGridAccelerator;
+// struct VisItGridAccelerator;
 
 //! \brief Base class for all structured volume types
 /*! \detailed Variables and methods common to all subtypes of the
@@ -40,7 +40,7 @@ struct VisItStructuredVolume {
     uniform vec3f gridSpacing;
 
     //! Spatial acceleration structure used for space skipping.
-    VisItGridAccelerator *uniform accelerator; // will be removed
+    // VisItGridAccelerator *uniform accelerator; // will be removed
 
     //! The largest coordinate value (in local coordinates) still inside the volume.
     uniform vec3f localCoordinatesUpperBound;

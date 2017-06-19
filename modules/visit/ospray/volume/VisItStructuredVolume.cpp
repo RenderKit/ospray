@@ -17,8 +17,8 @@
 //ospray
 #include "common/Data.h"
 #include "volume/VisItStructuredVolume.h"
-#include "VisItGridAccelerator_ispc.h"
 #include "VisItStructuredVolume_ispc.h"
+//#include "VisItGridAccelerator_ispc.h"
 
 namespace ospray {
 
