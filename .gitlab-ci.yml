@@ -16,7 +16,7 @@ build-centos6-gcc:
 build-centos6-icc:
   type: build
   script:
-    - module load gcc/4.9.3
+    - module load gcc/4.8.2
     - module load intel
     - export CC=icc
     - export CXX=icpc
@@ -155,11 +155,10 @@ release-linux-icc:
   type: deploy
   script:
     - module load cmake
-    - module load gcc/4.9.3
+    - module load gcc/4.8.2
     - module load intel
     - export CC=icc
     - export CXX=icpc
-    - export OSPRAY_RELEASE_NO_VERIFY=1 #NOTE: temporary until lib/apps split in release
     - scripts/release/linux.sh
   tags:
     - icc
