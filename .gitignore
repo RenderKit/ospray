@@ -11,6 +11,7 @@ tags
 *.rpm
 *.zip
 *.bak
+.vscode
 deps
 tbb
 embree
