@@ -14,47 +14,34 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
-// sg components
-#include "sg/common/Node.h"
+#include "sg/camera/PanoramicCamera.h"
 
 namespace ospray {
   namespace sg {
 
-    struct OSPSG_INTERFACE FrameBuffer : public sg::Node
+    PanoramicCamera::PanoramicCamera()
+      : Camera("panoramic")
     {
-      /*! constructor allocates an OSP frame buffer object */
-      FrameBuffer(vec2i size = vec2i(300,300));
+      createChild("pos", "vec3f", vec3f(0, -1, 0));
+      createChild("dir", "vec3f", vec3f(0, 0, 0),
+                       NodeFlags::required | NodeFlags::valid_min_max |
+                       NodeFlags::required | NodeFlags::valid_min_max |
+                       NodeFlags::gui_slider).setMinMax(vec3f(-1), vec3f(1));
+      createChild("up", "vec3f", vec3f(0, 0, 1),NodeFlags::required);
+    }
 
-      /*! destructor - relasess the OSP frame buffer object */
-      virtual ~FrameBuffer();
+    void PanoramicCamera::postCommit(RenderContext &ctx)
+    {
+      if (!ospCamera) create();
 
-      unsigned char *map();
-      void unmap(const void *mem);
+      ospSetVec3f(ospCamera,"pos",(const osp::vec3f&)child("pos").valueAs<vec3f>());
+      ospSetVec3f(ospCamera,"dir",(const osp::vec3f&)child("dir").valueAs<vec3f>());
+      ospSetVec3f(ospCamera,"up",(const osp::vec3f&)child("up").valueAs<vec3f>());
+      ospCommit(ospCamera);
+    }
 
-      void clear();
-
-      void clearAccum();
-      
-      vec2i size() const;
-
-      virtual void postCommit(RenderContext &ctx) override;
-
-      /*! \brief returns a std::string with the c++ name of this class */
-      virtual std::string toString() const override;
-
-      OSPFrameBuffer handle() const;
-      
-      // create the ospray framebuffer for this class
-      void createFB();
-
-      // destroy the ospray framebuffer created via createFB()
-      void destroyFB();
-
-      OSPFrameBuffer ospFrameBuffer {nullptr};
-      std::string displayWallStream;
-    };
+    OSP_REGISTER_SG_NODE(PanoramicCamera);
 
   } // ::ospray::sg
 } // ::ospray
+
