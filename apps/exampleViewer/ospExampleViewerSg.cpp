@@ -332,9 +332,6 @@ int main(int ac, const char **av)
   if (print || debug)
     renderer.traverse("print");
 
-  sg::writeOSPSG(renderer_ptr,
-     "/Users/cbrownle/git/osprayDev/build/test.osg");
-
   ospray::ImGuiViewerSg window(renderer_ptr, rendererDW);
 
   if (addPlane) addPlaneToScene(world);
