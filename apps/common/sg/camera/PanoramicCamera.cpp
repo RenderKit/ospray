@@ -14,43 +14,34 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "common.h"
-// std
-#include <map>
-#include <string>
+#include "sg/camera/PanoramicCamera.h"
 
-namespace ospcommon {
+namespace ospray {
+  namespace sg {
 
-  class OSPCOMMON_INTERFACE Library
-  {
-    public:
-      /* opens a shared library */
-      Library(const std::string& name);
+    PanoramicCamera::PanoramicCamera()
+      : Camera("panoramic")
+    {
+      createChild("pos", "vec3f", vec3f(0, -1, 0));
+      createChild("dir", "vec3f", vec3f(0, 0, 0),
+                       NodeFlags::required | NodeFlags::valid_min_max |
+                       NodeFlags::required | NodeFlags::valid_min_max |
+                       NodeFlags::gui_slider).setMinMax(vec3f(-1), vec3f(1));
+      createChild("up", "vec3f", vec3f(0, 0, 1),NodeFlags::required);
+    }
 
-      /* returns address of a symbol from the library */
-      void* getSymbol(const std::string& sym) const;
+    void PanoramicCamera::postCommit(RenderContext &ctx)
+    {
+      if (!ospCamera) create();
 
-    private:
-      Library(void* const lib);
-      void *lib;
-      friend class LibraryRepository;
-  };
+      ospSetVec3f(ospCamera,"pos",(const osp::vec3f&)child("pos").valueAs<vec3f>());
+      ospSetVec3f(ospCamera,"dir",(const osp::vec3f&)child("dir").valueAs<vec3f>());
+      ospSetVec3f(ospCamera,"up",(const osp::vec3f&)child("up").valueAs<vec3f>());
+      ospCommit(ospCamera);
+    }
 
-  class OSPCOMMON_INTERFACE LibraryRepository
-  {
-    public:
-      static LibraryRepository* getInstance();
+    OSP_REGISTER_SG_NODE(PanoramicCamera);
 
-      /* add a library to the repo */
-      void add(const std::string& name);
-
-      /* returns address of a symbol from any library in the repo */
-      void* getSymbol(const std::string& sym) const;
-
-    private:
-      static LibraryRepository* instance;
-      LibraryRepository();
-      std::map<std::string, Library*> repo;
-  };
-}
+  } // ::ospray::sg
+} // ::ospray
 

@@ -262,9 +262,11 @@ namespace ospray {
 
     Node& Node::childRecursive(const std::string &name)
     {
+      std::string lower=name;
+      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
       mutex.lock();
       Node* n = this;
-      auto f = n->properties.children.find(name);
+      auto f = n->properties.children.find(lower);
       if (f != n->properties.children.end()) {
         mutex.unlock();
         return *f->second;

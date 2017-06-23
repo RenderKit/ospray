@@ -31,7 +31,7 @@ namespace ospray {
       virtual ~FrameBuffer();
 
       unsigned char *map();
-      void unmap(void *mem);
+      void unmap(const void *mem);
 
       void clear();
 
