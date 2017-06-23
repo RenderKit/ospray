@@ -18,8 +18,10 @@
 
 // ospray components
 #include "components/mpiCommon/MPICommon.h"
+#include "../common/Messaging.h"
 // ours
 #include "render/LoadBalancer.h"
+#include <condition_variable>
 
 namespace ospray {
   namespace mpi {
@@ -49,12 +51,6 @@ namespace ospray {
       */
       struct Slave : public TiledLoadBalancer
       {
-        /*! number of tiles preallocated to this client; we can always
-          render those even without asking for them. */
-        uint32 numPreAllocated;
-        /*! total number of worker threads across all(!) slaves */
-        int32 numTotalThreads;
-
         float renderFrame(Renderer *tiledRenderer,
                           FrameBuffer *fb,
                           const uint32 channelFlags) override;
@@ -71,5 +67,63 @@ namespace ospray {
       };
 
     }// ::ospray::mpi::staticLoadBalancer
+
+    namespace dynamicLoadBalancer {
+      /*! \brief the 'master' in a tile-based master-slave load balancer
+
+          The dynamic load balancer assigns tiles asynchronously, favouring the
+          same tiles as the DistributedFramebuffer (i.e. round-robin pattern,
+          each client 'i' renderss tiles with 'tileID%numWorkers==i') to avoid
+          transferring a computed tile for accumulation
+      */
+      class Master : public maml::MessageHandler,
+                     public TiledLoadBalancer
+      {
+      public:
+        Master();
+        void incoming(const std::shared_ptr<mpicommon::Message> &) override;
+        float renderFrame(Renderer *tiledRenderer,
+                          FrameBuffer *fb,
+                          const uint32 channelFlags) override;
+        std::string toString() const override;
+      private:
+        std::vector<int> preferredTiles; // per worker default queue
+        std::vector<bool> workerNotified; // worker knows we're done?
+        ObjectHandle myId;
+        int numPreAllocated;
+      };
+
+      /*! \brief the 'slave' in a tile-based master-slave load balancer
+
+      */
+      class Slave : public maml::MessageHandler,
+                    public TiledLoadBalancer
+      {
+      public:
+        Slave();
+        void incoming(const std::shared_ptr<mpicommon::Message> &) override;
+        float renderFrame(Renderer *tiledRenderer,
+                          FrameBuffer *fb,
+                          const uint32 channelFlags) override;
+        std::string toString() const override;
+
+      private:
+        void tileTask(const size_t tileID);
+        void requestTile();
+
+        // "local" state
+        Renderer *renderer;
+        FrameBuffer *fb;
+        void *perFrameData;
+
+        std::mutex mutex;
+        std::condition_variable cv;
+        int tilesScheduled;
+        bool tilesAvailable;
+        ObjectHandle myId;
+        int numPreAllocated;
+      };
+
+    }// ::ospray::mpi::dynamicLoadBalancer
   } // ::ospray::mpi
 } // ::ospray

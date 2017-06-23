@@ -363,7 +363,7 @@ namespace ospray {
       {
         SCOPED_LOCK(mutex);
         numTilesCompletedByMe = ++numTilesCompletedThisFrame;
-        DBG(printf("rank %i: MARKING AS COMPLETED %i,%i -> %i %i\n",
+        DBG(printf("rank %i: MARKING AS COMPLETED %i,%i -> %i/%i\n",
                    mpicommon::globalRank(),
                    tile->begin.x,tile->begin.y,(int)numTilesCompletedThisFrame,
                    numTiles.x*numTiles.y));
@@ -382,12 +382,10 @@ namespace ospray {
     {
       SCOPED_LOCK(mutex);
       numTilesCompletedByMyTile = ++numTilesCompletedThisFrame;
-      DBG(printf("MASTER: MARKING AS COMPLETED %i,%i -> %li %i\n",
+      DBG(printf("MASTER: MARKING AS COMPLETED %i,%i -> %i|%i/%i\n",
             tile->begin.x,tile->begin.y,numTilesCompletedThisFrame,
-            numTiles.x*numTiles.y));
+            numTilesCompletedByMyTile,numTiles.x*numTiles.y));
     }
-    DBG(printf("MASTER: num tilescmpletedbymytiles: %i/%i\n",
-          numTilesCompletedByMyTile,numTiles.x*numTiles.y));
     if (numTilesCompletedByMyTile == numTiles.x*numTiles.y)
       closeCurrentFrame();
   }
@@ -497,8 +495,6 @@ namespace ospray {
   void DFB::closeCurrentFrame()
   {
     DBG(printf("rank %i CLOSES frame\n", mpicommon::globalRank()));
-    frameIsActive = false;
-    frameIsDone   = true;
 
     if (mpicommon::IamTheMaster() && !masterIsAWorker) {
       /* do nothing */
@@ -508,6 +504,9 @@ namespace ospray {
       }
     }
 
+    SCOPED_LOCK(mutex);
+    frameIsActive = false;
+    frameIsDone   = true;
     frameDoneCond.notify_all();
   }
 
@@ -529,6 +528,8 @@ namespace ospray {
                                                       sizeof(msgPayload));
 
       int dstRank = tileDesc->ownerID;
+      DBG(printf("rank %i: send tile %i,%i to %i\n",mpicommon::globalRank(),
+               tileDesc->begin.x,tileDesc->begin.y,dstRank));
       mpi::messaging::sendTo(dstRank, myID, msg);
     } else {
       if (!frameIsActive)
