@@ -26,10 +26,59 @@
 namespace ospray {
   namespace sg {
 
+    std::shared_ptr<sg::Node> parseXMLNode(const xml::Node &node,
+                      const unsigned char *binBasePtr)
+    {
+      const std::string& name = node.name;
+      std::string type = node.getProp("type");
+      std::string value = node.getProp("value");
+      if (value == "")
+        value = std::string(node.content);
+      if (type == "")
+        type = "Node";
+      std::cout << "parsing xml node: " << name << ":" << type << "=" << value << "\n";
+      auto sgNode = sg::createNode(name,type);
+      std::stringstream ss(value);
+      if (type == "float")
+        sgNode->setValue(std::stof(value));
+      else if (type == "int")
+        sgNode->setValue(std::stoi(value));
+      else if (type == "string")
+        sgNode->setValue(value);
+      else if (type == "vec3f")
+      {
+        vec3f val;
+        ss >> val.x >> val.y >> val.z;
+        sgNode->setValue(val);
+      }
+      else if (type == "vec2i")
+      {
+        vec2i val;
+        ss >> val.x >> val.y;
+        sgNode->setValue(val);
+      }
+      for (auto child : node.child)
+      {
+        sgNode->add(parseXMLNode(*child, binBasePtr));
+      }
+      return sgNode;
+    }
+
     void loadOSPSG(const std::shared_ptr<Node> &world,
                                    const std::string &fileName)
     {
+      std::shared_ptr<xml::XMLDoc> doc;
+      doc = xml::readXML(fileName);
+      if (doc->child.empty())
+        throw std::runtime_error("ospray xml input file does not contain any nodes!?");
+      const std::string binFileName = fileName+"bin";
+      const unsigned char * const binBasePtr = mapFile(binFileName);
+      std::shared_ptr<xml::Node> root = doc->child[0];
 
+      auto node = parseXMLNode(*root, binBasePtr);
+      std::cout << "loaded xml: \n";
+      node->traverse("print");
+      world->add(node);
     }
 
     void writeNode(const std::shared_ptr<Node> &node, FILE* out, const int indent)
@@ -91,8 +140,10 @@ namespace ospray {
         throw std::runtime_error("ospray::XML error: could not open file for writing '"
                                  + fileName +"'");
       }
-      fprintf(file,"<?xml version=\"%s\"?>\n","1.2.3");
-      writeNode(root, file, 0);
+      fprintf(file,"<?xml version=\"%s\"?>\n","1.0");
+      fprintf(file,"<!-- OSPRay Version 1.2.3 -->");
+      writeNode(root, file, 1);
+      fclose(file);
     }
 
   } // ::ospray::sg
