@@ -51,10 +51,15 @@ namespace ospray {
     */
     extern "C" void ospray_init_module_visit()
     {
-      std::cout << "#osp: initializing the 'visit' module" << std::endl;
-      /* nothing to do, actually - this is only an example */
+	auto OSPRAY_VERBOSE_PAIR = getEnvVar<int>("OSPRAY_VERBOSE");
+	if (OSPRAY_VERBOSE_PAIR.first ? 
+	    OSPRAY_VERBOSE_PAIR.second > 0 : false) 
+	{
+	    std::cout << "#osp: initializing the 'visit' module" << std::endl;
+	}
+	/* nothing to do, actually - this is only an example */
     }
     
-  } // ::ospray::bilinearPatch
+  } // ::ospray::visit
 } // ::ospray
   

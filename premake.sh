@@ -29,8 +29,12 @@ LOAD_EMBREE()
 }
 
 #ICC
-# source /opt/intel/parallel_studio_xe_2017.0.035/bin/psxevars.sh intel64
 INTELICC_PATH=/opt/intel/bin/icc
+
+#GCC
+USE_GCC=1
+GCC_PATH=$(which gcc)
+GXX_PATH=$(which g++)
 
 # QT path
 QT_PATH=${OSPROOT}/qt-4.8.6/qt-everywhere-opensource-src-4.8.6-install
@@ -39,7 +43,7 @@ QT_PATH=${OSPROOT}/qt-4.8.6/qt-everywhere-opensource-src-4.8.6-install
 CUSTOMIZED_PROJSUFFIX=""
 PROJSUFFIX=""
 PROJPREFIX="./"
-CMAKEARGS=""
+CMAKEARGS=" -DOSPRAY_MODULE_VISIT=ON" # enable visit module by default XD
 CMAKEPATH="cmake"
 
 HELP()
@@ -74,6 +78,7 @@ HELP()
     echo "  --tbb-dir           Customer TBB path"
     echo "  --ispc-dir          Customer ISPC path"
     echo "  --icc-dir           Customer ICC path"
+    echo "  --gcc-dir           Customer GCC binary path"
     echo "  --cmake-dir         Customer CMAKE path"
     echo "  --no-apps           Disable all OSPRay applications"
     echo 
@@ -97,6 +102,7 @@ until [ -z "$1" ]; do
 	-ic | --intel-icc)
 	    CMAKEARGS=${CMAKEARGS}" -DCMAKE_CXX_COMPILER=${INTELICC_PATH}"
 	    CMAKEARGS=${CMAKEARGS}" -DCMAKE_C_COMPILER=${INTELICC_PATH}"
+	    USE_GCC=0
 	    shift 1
 	    ;;
 	    
@@ -156,10 +162,18 @@ until [ -z "$1" ]; do
 	    ;;
 
 	--icc-dir)
-	    export INTELICC_PATH=${2}
+	    INTELICC_PATH=${2}
 	    echo "user-defined icc path ${INTELICC_PATH}"
 	    shift 2
 	    ;;
+
+	--gcc-dir)
+	    GCC_PATH=${2}/gcc
+	    GXX_PATH=${2}/g++
+	    echo "user-defined gcc path ${GCC_PATH} ${G++_PATH}"
+	    shift 2
+	    ;;
+
 
 	--cmake-dir)
 	    CMAKEPATH=${2}
@@ -172,7 +186,7 @@ until [ -z "$1" ]; do
 	    ;;
 	    
 	--no-apps)
-	    CMAKEARGS=${CMAKEARGS}" -DOSPRAY_ENABLE_APPS=OFF"
+	    CMAKEARGS=${CMAKEARGS}" -DOSPRAY_ENABLE_APPS=OFF -DOSPRAY_ENABLE_MPI_APPS=OFF"
 	    shift 1
 	    ;;
 
@@ -183,6 +197,12 @@ until [ -z "$1" ]; do
 	    ;;
     esac
 done
+
+# setup compiler
+if [[ "${USE_GCC}" == "1" ]]; then
+    CMAKEARGS=${CMAKEARGS}" -DCMAKE_CXX_COMPILER=${GXX_PATH}"
+    CMAKEARGS=${CMAKEARGS}" -DCMAKE_C_COMPILER=${GCC_PATH}"    
+fi
 
 # load libraries
 LOAD_TBB
@@ -204,5 +224,5 @@ echo
 # run actual cmake
 mkdir -p ${PROJDIR}
 cd ${PROJDIR}
-rm -r ./CMakeCache.txt
+rm -r ./CMakeCache.txt ./CMakeFiles
 ${CMAKEPATH} ${CMAKEARGS} ${SRCROOT}
