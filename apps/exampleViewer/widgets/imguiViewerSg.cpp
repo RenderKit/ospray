@@ -228,7 +228,7 @@ namespace ospray {
   {
     ImGuiWindowFlags flags = ImGuiWindowFlags_MenuBar;
 
-    static bool demo_window = true;
+    static bool demo_window = false;
 
     ImGui::Begin("Viewer Controls: press 'g' to show/hide", nullptr, flags);
     ImGui::SetWindowFontScale(0.5f*fontScale);

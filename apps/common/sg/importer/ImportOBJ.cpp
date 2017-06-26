@@ -320,9 +320,9 @@ namespace ospray {
       parseSep(token+=strlen(keyWord));
       std::string type;
       auto node =  loadTexture(path,parse<std::string>(token,type),preferLinear);
-      // mat->createChildWithValue(keyWord, type, val);
       std::string name(keyWord);
       mat->setChild(keyWord, node);
+      node->setParent(mat);
       return true;
     }
 
@@ -512,6 +512,7 @@ namespace ospray {
       mesh->index =  std::make_shared<DataVector3i>();
       //std::cout << "setting mesh curMaterial: " << curMaterial->name << std::endl;
       mesh->setChild("material",curMaterial);
+      curMaterial->setParent(mesh);
 
       // merge three indices into one
       for (size_t j=0; j < curGroup.size(); j++) {

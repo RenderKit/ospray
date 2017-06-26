@@ -312,6 +312,10 @@ int main(int ac, const char **av)
 
   for (auto file : files) {
     FileName fn = file;
+    if (fn.ext() == "ospsg")
+    {
+      
+    }
     auto importerNode_ptr = sg::createNode(fn.name(), "Importer");
     auto &importerNode = *importerNode_ptr;
     importerNode["fileName"].setValue(fn.str());

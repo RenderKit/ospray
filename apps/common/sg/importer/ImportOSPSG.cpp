@@ -27,7 +27,7 @@ namespace ospray {
   namespace sg {
 
     std::shared_ptr<sg::Node> parseXMLNode(const xml::Node &node,
-                      const unsigned char *binBasePtr)
+                      const unsigned char *binBasePtr, std::shared_ptr<sg::Node> sgNode)
     {
       const std::string& name = node.name;
       std::string type = node.getProp("type");
@@ -36,15 +36,15 @@ namespace ospray {
         value = std::string(node.content);
       if (type == "")
         type = "Node";
-      std::cout << "parsing xml node: " << name << ":" << type << "=" << value << "\n";
-      auto sgNode = sg::createNode(name,type);
       std::stringstream ss(value);
       if (type == "float")
         sgNode->setValue(std::stof(value));
       else if (type == "int")
         sgNode->setValue(std::stoi(value));
       else if (type == "string")
+      {
         sgNode->setValue(value);
+      }
       else if (type == "vec3f")
       {
         vec3f val;
@@ -59,7 +59,25 @@ namespace ospray {
       }
       for (auto child : node.child)
       {
-        sgNode->add(parseXMLNode(*child, binBasePtr));
+        if (sgNode->hasChild(child->name))
+        {
+          parseXMLNode(*child, binBasePtr, sgNode->child(child->name).shared_from_this());
+        }
+        else
+        {
+          const std::string& cname = child->name;
+          const std::string ctype = child->getProp("type");
+          const std::string cname2 = child->getProp("nodeName"); // for node references
+          if (cname2 != "")
+          {
+            auto newNode = sg::createNode(cname2,ctype);
+            sgNode->setChild(cname, newNode);
+            newNode->setParent(sgNode);
+            parseXMLNode(*child, binBasePtr, newNode);
+          }
+          else
+            sgNode->add(parseXMLNode(*child, binBasePtr, sg::createNode(cname,ctype)));
+        }
       }
       return sgNode;
     }
@@ -75,18 +93,40 @@ namespace ospray {
       const unsigned char * const binBasePtr = mapFile(binFileName);
       std::shared_ptr<xml::Node> root = doc->child[0];
 
-      auto node = parseXMLNode(*root, binBasePtr);
+      std::shared_ptr<Node> node = world;
+      if (root->name != world->name())
+      {
+        try
+        {
+          node = world->childRecursive(root->name).shared_from_this();
+        }
+        catch (const std::runtime_error &)
+        {
+          std::string type = root->getProp("type");
+          if (type == "")
+            type = "Node";
+          node = sg::createNode(root->name, type);
+          world->add(node);
+        }
+      }
+
+      parseXMLNode(*root, binBasePtr, node);
       std::cout << "loaded xml: \n";
       node->traverse("print");
-      world->add(node);
+      node->traverse("modified");
     }
 
-    void writeNode(const std::shared_ptr<Node> &node, FILE* out, const int indent)
+    void writeNode(const std::string ptrName, const std::shared_ptr<sg::Node> &node, FILE* out, const int indent)
     {
       for (int i=0;i<indent;i++)
         fprintf(out,"  ");
       const std::string type = node->type();
-    	fprintf(out, "<%s type=\"%s\"",node->name().c_str(), type.c_str());
+      std::string lower=node->name();
+      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+      if (ptrName != lower)
+        fprintf(out, "<%s nodeName=\"%s\" type=\"%s\"",ptrName.c_str(), node->name().c_str(), type.c_str());
+      else
+    	  fprintf(out, "<%s type=\"%s\"",node->name().c_str(), type.c_str());
     	if (node->children().empty())
     	  fprintf(out, ">");
     	else
@@ -115,19 +155,22 @@ namespace ospray {
       if (!node->children().empty())
         fprintf(out, "\">\n");
 
-      for(auto child : node->children())
+      for(auto child : node->childrenMap())
       {
-        writeNode(child, out, indent+1);
+        writeNode(child.first, child.second, out, indent+1);
       }
       if (!node->children().empty())
       {
         for (int i=0;i<indent;i++)
           fprintf(out,"  ");
       }
-      fprintf(out, "</%s>\n",node->name().c_str());
+      if (ptrName != lower)
+        fprintf(out, "</%s>\n",ptrName.c_str());
+      else
+        fprintf(out, "</%s>\n",node->name().c_str());
     }
 
-    void writeOSPSG(const std::shared_ptr<Node> &root,
+    void writeOSPSG(const std::shared_ptr<sg::Node> &root,
                                    const std::string &fileName)
     {
       FILE *file = fopen(fileName.c_str(),"w");
@@ -141,8 +184,8 @@ namespace ospray {
                                  + fileName +"'");
       }
       fprintf(file,"<?xml version=\"%s\"?>\n","1.0");
-      fprintf(file,"<!-- OSPRay Version 1.2.3 -->");
-      writeNode(root, file, 1);
+      fprintf(file,"<!-- OSPRay Version 1.2.3 -->\n");
+      writeNode(root->name(), root, file, 1);
       fclose(file);
     }
 
