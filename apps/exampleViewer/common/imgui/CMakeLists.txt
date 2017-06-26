@@ -22,7 +22,6 @@
 set(LIB_NAME imgui)
 
 include_directories(
-  ${CMAKE_SOURCE_DIR}
   ${CMAKE_SOURCE_DIR}/apps/exampleViewer/common/imgui
   ${CMAKE_SOURCE_DIR}/apps/exampleViewer/common/imgui/imguifilesystem
 )
