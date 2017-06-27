@@ -137,12 +137,6 @@ make -j `nproc` package
 # read OSPRay version
 OSPRAY_VERSION=`sed -n 's/#define OSPRAY_VERSION "\(.*\)"/\1/p' ospray/version.h`
 
-# rename RPMs to have component name before version
-for i in ospray-${OSPRAY_VERSION}-1.*.rpm ; do 
-  newname=`echo $i | sed -e "s/ospray-\(.\+\)-\([a-z_]\+\)\.rpm/ospray-\2-\1.rpm/"`
-  mv $i $newname
-done
-
 tar czf ospray-${OSPRAY_VERSION}.x86_64.rpm.tar.gz ospray-*-${OSPRAY_VERSION}-1.x86_64.rpm
 
 # change settings for zip mode
