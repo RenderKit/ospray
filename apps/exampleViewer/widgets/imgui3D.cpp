@@ -87,7 +87,6 @@ namespace ospray {
                 << fileName << std::endl;
     }
 
-//#define INVERT_RMB
     /*! currently active window */
     ImGui3DWidget *ImGui3DWidget::activeWindow = nullptr;
     vec2i ImGui3DWidget::defaultInitSize(1024,768);
