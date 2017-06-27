@@ -15,8 +15,11 @@
 // ************************************************************************** //
 
 #include "Context.h"
-#include "ospcommon/malloc.h"
 #include <iostream>
+
+#include "ospcommon/malloc.h"
+#include "ospcommon/tasking/async.h"
+#include "ospcommon/tasking/tasking_system_handle.h"
 
 using ospcommon::make_unique;
 
@@ -25,18 +28,9 @@ namespace maml {
   /*! the singleton object that handles all the communication */
   std::unique_ptr<Context> Context::singleton = make_unique<Context>();
 
-  Context::Context()
-  {
-    mpiSendRecvThread = std::thread([this](){ mpiSendAndRecieveThread(); });
-    inboxProcThread   = std::thread([this](){ processInboxThread();      });
-  }
-
   Context::~Context()
   {
-    threadsRunning = false;
-    start();// wake up mpiSendRecvThread so it can be shutdown
-    mpiSendRecvThread.join();
-    inboxProcThread.join();
+    stop();
   }
 
   /*! register a new incoing-message handler. if any message comes in
@@ -64,38 +58,32 @@ namespace maml {
     outbox.push_back(msg);
   }
 
-  void Context::processInboxThread()
+  void Context::processInboxTask()
   {
-    while(threadsRunning) {
-      if (!inbox.empty()) {
-        auto incomingMessages = inbox.consume();
-
-        for (auto &message : incomingMessages) {
-          auto *handler = handlers[message->comm];
-          handler->incoming(message);
-        }
-      }
-    }
+    while(tasksAreRunning)
+      processInboxMessages();
   }
 
-  void Context::mpiSendAndRecieveThread()
+  void Context::mpiSendAndRecieveTask()
   {
-    while(true) {
-      std::unique_lock<std::mutex> lock(canDoMPIMutex);
-      canDoMPICondition.wait(lock, [&]{ return canDoMPICalls; });
-
-      if (!threadsRunning)
-        return;
-
-      sendAndRecieveThreadActive = true;
-
+    while(tasksAreRunning) {
       sendMessagesFromOutbox();
       pollForAndRecieveMessages();
 
       waitOnSomeSendRequests();
       waitOnSomeRecvRequests();
+    }
+  }
 
-      sendAndRecieveThreadActive = false;
+  void Context::processInboxMessages()
+  {
+    if (!inbox.empty()) {
+      auto incomingMessages = inbox.consume();
+
+      for (auto &message : incomingMessages) {
+        auto *handler = handlers[message->comm];
+        handler->incoming(message);
+      }
     }
   }
 
@@ -197,11 +185,11 @@ namespace maml {
   {
     sendMessagesFromOutbox();
 
-    while (!pendingRecvs.empty())
+    while (!pendingRecvs.empty() && !pendingSends.empty() && !inbox.empty()) {
       waitOnSomeRecvRequests();
-
-    while (!pendingSends.empty())
       waitOnSomeSendRequests();
+      processInboxMessages();
+    }
   }
 
   /*! start the service; from this point on maml is free to use MPI
@@ -210,13 +198,27 @@ namespace maml {
     has been called */
   void Context::start()
   {
-    canDoMPICalls = true;
-    canDoMPICondition.notify_one();
+    if (!isRunning()) {
+      tasksAreRunning = true;
+
+      if (ospcommon::tasking::numTaskingThreads() < 3) {
+        throw std::runtime_error("Tasking system must have at least 3 threads"
+                                 " for maml to function.");
+      }
+
+      sendReceiveFuture = ospcommon::tasking::async([&]() {
+        mpiSendAndRecieveTask();
+      });
+
+      processInboxFuture = ospcommon::tasking::async([&]() {
+        processInboxTask();
+      });
+    }
   }
 
   bool Context::isRunning() const
   {
-    return canDoMPICalls || sendAndRecieveThreadActive;
+    return tasksAreRunning;
   }
 
   /*! stops the maml layer; maml will no longer perform any MPI calls;
@@ -226,9 +228,13 @@ namespace maml {
     if they are already in flight */
   void Context::stop()
   {
-    canDoMPICalls = false;
-    std::unique_lock<std::mutex> lock(canDoMPIMutex);
-    canDoMPICondition.wait(lock, [&]{ return !sendAndRecieveThreadActive; });
+    tasksAreRunning = false;
+
+    if (sendReceiveFuture.valid())
+      sendReceiveFuture.wait();
+
+    if (processInboxFuture.valid())
+      processInboxFuture.wait();
 
     flushRemainingMessages();
   }

@@ -20,18 +20,17 @@
 //ospcommon
 #include "ospcommon/containers/TransactionalBuffer.h"
 //stl
-#include <vector>
+#include <future>
 #include <map>
-#include <thread>
 #include <mutex>
-#include <condition_variable>
+#include <vector>
 
 namespace maml {
 
   /*! the singleton object that handles all the communication */
   struct OSPRAY_MAML_INTERFACE Context
   {
-    Context();
+    Context() = default;
     ~Context();
 
     static std::unique_ptr<Context> singleton;
@@ -83,11 +82,13 @@ namespace maml {
           triggered. it's another thread's job to execute those
           messages
     */
-    void mpiSendAndRecieveThread();
+    void mpiSendAndRecieveTask();
 
     /*! the thread that executes messages that the receiver thread
         put into the inbox */
-    void processInboxThread();
+    void processInboxTask();
+
+    void processInboxMessages();
 
     void sendMessagesFromOutbox();
     void pollForAndRecieveMessages();
@@ -99,7 +100,10 @@ namespace maml {
 
     // Data members //
 
-    bool threadsRunning {true};
+    bool tasksAreRunning {true};
+
+    std::future<void> sendReceiveFuture;
+    std::future<void> processInboxFuture;
 
     ospcommon::TransactionalBuffer<std::shared_ptr<Message>> inbox;
     ospcommon::TransactionalBuffer<std::shared_ptr<Message>> outbox;
@@ -115,14 +119,6 @@ namespace maml {
     std::vector<MPI_Request>              pendingRecvs;
 
     std::map<MPI_Comm, MessageHandler *> handlers;
-
-    std::thread mpiSendRecvThread;
-    std::thread inboxProcThread;
-
-    bool                    canDoMPICalls {false};
-    bool                    sendAndRecieveThreadActive {false};
-    std::mutex              canDoMPIMutex;
-    std::condition_variable canDoMPICondition;
   };
-  
+
 } // ::maml
