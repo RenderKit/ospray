@@ -3,6 +3,7 @@
 #include "ospray/ospray_cpp/Data.h"
 #include "ospray/ospray_cpp/TransferFunction.h"
 #include "ospray/ospray_cpp/Volume.h"
+#include "raw_reader.h"
 #include "generateSciVis.h"
 
 namespace gensv {
@@ -176,5 +177,71 @@ namespace gensv {
     auto bbox = box3f(gridOrigin, gridOrigin + vec3f(1.f) / vec3f(grid));
     return std::make_pair(volume, bbox);
   }
+
+  size_t sizeForDtype(const std::string &dtype) {
+    if (dtype == "uchar" || dtype == "char") {
+      return 1;
+    }
+    if (dtype == "float") {
+      return 4;
+    }
+    if (dtype == "double") {
+      return 8;
+    }
+  }
+
+  std::pair<ospray::cpp::Volume, box3f> loadVolume(const FileName &file,
+      const vec3i &dimensions, const std::string &dtype,
+      const vec2f &valueRange)
+  {
+    auto numRanks = static_cast<float>(mpicommon::numGlobalRanks());
+    auto myRank   = mpicommon::globalRank();
+
+    ospray::cpp::TransferFunction transferFcn("piecewise_linear");
+    const std::vector<vec3f> colors = {
+      vec3f(0, 0, 0.56),
+      vec3f(0, 0, 1),
+      vec3f(0, 1, 1),
+      vec3f(0.5, 1, 0.5),
+      vec3f(1, 1, 0),
+      vec3f(1, 0, 0),
+      vec3f(0.5, 0, 0)
+    };
+    const std::vector<float> opacities = {0.0001, 1.0};
+    ospray::cpp::Data colorsData(colors.size(), OSP_FLOAT3, colors.data());
+    ospray::cpp::Data opacityData(opacities.size(), OSP_FLOAT, opacities.data());
+    colorsData.commit();
+    opacityData.commit();
+
+    transferFcn.set("colors", colorsData);
+    transferFcn.set("opacities", opacityData);
+    transferFcn.set("valueRange", valueRange);
+    transferFcn.commit();
+
+    const vec3i grid = computeGrid(numRanks);
+    ospray::cpp::Volume volume("block_bricked_volume");
+    volume.set("voxelType", dtype.c_str());
+    volume.set("dimensions", dimensions);
+    volume.set("transferFunction", transferFcn);
+
+    const vec3f gridSpacing = vec3f(1.f) / vec3f(dimensions);
+    volume.set("gridSpacing", gridSpacing);
+
+    const vec3i brickDims = dimensions / grid;
+    const vec3i brickId(myRank % grid.x, (myRank / grid.x) % grid.y, myRank / (grid.x * grid.y));
+    const vec3f gridOrigin = vec3f(brickId) * gridSpacing * vec3f(brickDims);
+    volume.set("gridOrigin", gridOrigin);
+
+    const size_t dtypeSize = sizeForDtype(dtype);
+    std::vector<unsigned char> volumeData(brickDims.x * brickDims.y * brickDims.z * dtypeSize, 0);
+    RawReader reader(file, dimensions, dtypeSize);
+    reader.readRegion(brickId * brickDims, brickDims, volumeData.data());
+    volume.setRegion(volumeData.data(), vec3i(0), brickDims);
+    volume.commit();
+
+    auto bbox = box3f(gridOrigin, gridOrigin + vec3f(1.f) / vec3f(grid));
+    return std::make_pair(volume, bbox);
+  }
+
 }
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ospcommon/FileName.h"
 // mpiCommon
 #include "mpiCommon/MPICommon.h"
 // public-ospray
@@ -36,5 +37,13 @@ namespace gensv {
    * generated geometry as well.
    */
   std::pair<ospray::cpp::Volume, box3f> makeVolume();
+
+  /* Load this rank's volume data. The volumes are placed in
+   * cells of the grid computed in 'computeGrid' based on the number
+   * of ranks with each rank owning a specific cell in the gridding.
+   */
+  std::pair<ospray::cpp::Volume, box3f> loadVolume(const FileName &file,
+      const vec3i &dimensions, const std::string &dtype,
+      const vec2f &valueRange);
 }
 
