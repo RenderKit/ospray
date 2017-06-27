@@ -28,6 +28,17 @@ namespace gensv {
     fclose(file);
   }
 
+  bool computeDivisor(int x, int &divisor) {
+    int upperBound = std::sqrt(x);
+    for (int i = 2; i <= upperBound; ++i) {
+      if (x % i == 0) {
+        divisor = i;
+        return true;
+      }
+    }
+    return false;
+  }
+
   // Compute an X x Y x Z grid to have num bricks,
   // only gives a nice grid for numbers with even factors since
   // we don't search for factors of the number, we just try dividing by two
@@ -35,9 +46,10 @@ namespace gensv {
   {
     vec3i grid(1);
     int axis = 0;
-    while (num % 2 == 0) {
-      grid[axis] *= 2;
-      num /= 2;
+    int divisor = 0;
+    while (computeDivisor(num, divisor)) {
+      grid[axis] *= divisor;
+      num /= divisor;
       axis = (axis + 1) % 3;
     }
     if (num != 1) {
