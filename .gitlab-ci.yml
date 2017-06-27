@@ -151,36 +151,11 @@ build-windows-icc:
 
 ### RELEASE JOBS ###
 
-release-core-linux-icc:
+release-linux-icc:
   type: deploy
   script:
     - module load cmake
     - module load gcc/4.8.2
-    - module load intel
-    - export CC=icc
-    - export CXX=icpc
-    - scripts/release/linux.sh -DOSPRAY_MODULE_MPI=ON -DOSPRAY_ENABLE_APPS=OFF
-  tags:
-    - icc
-    - release
-    - centos6
-    - mpi
-  only:
-    - devel
-    - master
-    - release-1.3.x
-  artifacts:
-    paths:
-      - build_release/ospray-lib*.rpm
-      - build_release/ospray-mpi*.rpm
-      - build_release/ospray-devel*.rpm
-      - build_release/ospray*.gz
-
-release-apps-linux-icc:
-  type: deploy
-  script:
-    - module load cmake
-    - module load gcc/4.9.3
     - module load intel
     - export CC=icc
     - export CXX=icpc
@@ -196,8 +171,7 @@ release-apps-linux-icc:
     - release-1.3.x
   artifacts:
     paths:
-      - build_release/ospray-apps*.rpm
-      - build_release/ospray*.gz
+      - build_release/*.gz
 
 release-osx-clang:
   type: deploy

@@ -68,15 +68,6 @@ if [ -z $CC ]; then
   export CXX=icpc
 fi
 
-# to make sure we do not include nor link against wrong TBB
-# NOTE: if we are not verifying CentOS6 defaults, we are likely using
-#       a different compiler which requires LD_LIBRARY_PATH!
-if [ -n $OSPRAY_RELEASE_NO_VERIFY ]; then
-  unset CPATH
-  unset LIBRARY_PATH
-  unset LD_LIBRARY_PATH
-fi
-
 #### Fetch dependencies (TBB+Embree+ISPC) ####
 
 mkdir -p $DEP_DIR
@@ -112,26 +103,28 @@ cp $DEP_DIR/OSPRay_readme_$BRANCH.pdf readme.pdf
 # set release and RPM settings
 cmake \
 -D OSPRAY_BUILD_ISA=ALL \
+-D OSPRAY_MODULE_MPI=ON \
 -D TBB_ROOT=$DEP_DIR/$DEP_TBB \
 -D ISPC_EXECUTABLE=$DEP_DIR/$DEP_ISPC/ispc \
 -D USE_IMAGE_MAGICK=OFF \
 -D OSPRAY_ZIP_MODE=OFF \
 -D OSPRAY_INSTALL_DEPENDENCIES=OFF \
 -D CMAKE_INSTALL_PREFIX=/usr \
-"$@" ..
+..
 
 # create RPM files
 make -j `nproc` preinstall
 
-# without extra arguments we build apps, which need C++11 and thus more recent
-# versions anyway
-if [ -z $@ ]; then
-  check_symbols libospray.so GLIBC   2 4 0
-  check_symbols libospray.so GLIBCXX 3 4 11
-  check_symbols libospray.so CXXABI  1 3 0
-fi
+check_symbols libospray.so GLIBC   2 4 0
+check_symbols libospray.so GLIBCXX 3 4 11
+check_symbols libospray.so CXXABI  1 3 0
 
 make -j `nproc` package
+
+# read OSPRay version
+OSPRAY_VERSION=`sed -n 's/#define OSPRAY_VERSION "\(.*\)"/\1/p' ospray/version.h`
+
+tar czf ospray-${OSPRAY_VERSION}.x86_64.rpm.tar.gz ospray-*-${OSPRAY_VERSION}-1.x86_64.rpm
 
 # change settings for zip mode
 cmake \

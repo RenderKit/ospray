@@ -77,6 +77,16 @@ namespace ospcommon {
 #endif
     }
 
+    int numTaskingThreads()
+    {
+      if (!g_tasking_handle.get())
+        return 0;
+      else if (g_tasking_handle->numThreads < 0)
+        return std::thread::hardware_concurrency();
+      else
+        return g_tasking_handle->numThreads;
+    }
+
     void deAffinitizeCores()
     {
 #ifdef __linux__
