@@ -112,32 +112,26 @@ cp $DEP_DIR/OSPRay_readme_$BRANCH.pdf readme.pdf
 # set release and RPM settings
 cmake \
 -D OSPRAY_BUILD_ISA=ALL \
--D OSPRAY_MODULE_MPI=ON \
 -D TBB_ROOT=$DEP_DIR/$DEP_TBB \
 -D ISPC_EXECUTABLE=$DEP_DIR/$DEP_ISPC/ispc \
 -D USE_IMAGE_MAGICK=OFF \
 -D OSPRAY_ZIP_MODE=OFF \
 -D OSPRAY_INSTALL_DEPENDENCIES=OFF \
 -D CMAKE_INSTALL_PREFIX=/usr \
-..
+"$@" ..
 
 # create RPM files
 make -j `nproc` preinstall
 
-# if we define 'OSPRAY_RELEASE_NO_VERIFY' to anything, then we
-#   don't verify link dependencies for CentOS6
-if [ -z $OSPRAY_RELEASE_NO_VERIFY ]; then
+# without extra arguments we build apps, which need C++11 and thus more recent
+# versions anyway
+if [ -z $@ ]; then
   check_symbols libospray.so GLIBC   2 4 0
   check_symbols libospray.so GLIBCXX 3 4 11
   check_symbols libospray.so CXXABI  1 3 0
 fi
 
 make -j `nproc` package
-
-# read OSPRay version
-OSPRAY_VERSION=`sed -n 's/#define OSPRAY_VERSION "\(.*\)"/\1/p' ospray/version.h`
-
-tar czf ospray-${OSPRAY_VERSION}.x86_64.rpm.tar.gz ospray-*-${OSPRAY_VERSION}-1.x86_64.rpm
 
 # change settings for zip mode
 cmake \
