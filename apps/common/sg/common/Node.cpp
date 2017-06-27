@@ -397,7 +397,16 @@ namespace ospray {
       if (operation == "print") {
         for (int i=0;i<ctx.level;i++)
           std::cout << "  ";
-        std::cout << name() << " : " << type() << "\n";
+        std::cout << name() << " : " << type() << "=\"";
+        if (type() == "string")
+          std::cout << valueAs<std::string>();
+        if (type() == "float")
+          std::cout << valueAs<float>();
+        if (type() == "vec3f")
+          std::cout << valueAs<vec3f>();
+        if (type() == "vec2i")
+          std::cout << valueAs<vec2i>();
+        std::cout << "\"\n";
       } else if (operation == "commit") {
        if (lastModified() >= lastCommitted() ||
                 childrenLastModified() >= lastCommitted())

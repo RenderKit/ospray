@@ -464,7 +464,7 @@ namespace ospray {
             }
             static ImGuiFs::Dialog importdlg;
             const bool importButtonPressed = ImGui::Button("Import...");
-            const char* importpath = importdlg.saveFileDialog(importButtonPressed);
+            const char* importpath = importdlg.chooseFileDialog(importButtonPressed);
             if (strlen(importpath) > 0)
             {
               std::cout << "importing OSPSG file from path: " << importpath << std::endl;

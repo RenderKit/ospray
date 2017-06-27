@@ -34,6 +34,8 @@ namespace ospray {
     box3f TriangleMesh::computeBounds() const
     {
       box3f bounds = empty;
+      if (!vertex)
+        return bounds;
       for (uint32_t i = 0; i < vertex->getSize(); i++)
         bounds.extend(vertex->get3f(i));
       return bounds;
@@ -90,6 +92,9 @@ namespace ospray {
         return;
       }
 
+      if (!vertex)
+        return;
+
       if (ospGeometry)
         ospRelease(ospGeometry);
       ospGeometry = ospNewGeometry("trianglemesh");
@@ -114,7 +119,8 @@ namespace ospray {
 
     void TriangleMesh::postRender(RenderContext& ctx)
     {
-      ospAddGeometry(ctx.currentOSPModel,ospGeometry);
+      if (ospGeometry)
+        ospAddGeometry(ctx.currentOSPModel,ospGeometry);
     }
 
     OSP_REGISTER_SG_NODE(TriangleMesh);

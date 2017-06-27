@@ -314,12 +314,15 @@ int main(int ac, const char **av)
     FileName fn = file;
     if (fn.ext() == "ospsg")
     {
-      
+      sg::loadOSPSG(renderer_ptr,fn.str());
     }
-    auto importerNode_ptr = sg::createNode(fn.name(), "Importer");
-    auto &importerNode = *importerNode_ptr;
-    importerNode["fileName"].setValue(fn.str());
-    world += importerNode_ptr;
+    else
+    {
+      auto importerNode_ptr = sg::createNode(fn.name(), "Importer");
+      auto &importerNode = *importerNode_ptr;
+      importerNode["fileName"].setValue(fn.str());
+      world += importerNode_ptr;
+    }
   }
 
   parseCommandLineSG(ac, av, renderer);
