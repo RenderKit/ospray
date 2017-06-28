@@ -48,6 +48,7 @@ namespace ospray {
     void setTile(Tile &tile) override;
     int32 accumID(const vec2i &tile) override;
     float tileError(const vec2i &tile) override;
+    void beginFrame() override;
     float endFrame(const float errorThreshold) override;
 
     const void *mapColorBuffer() override;
