@@ -77,8 +77,6 @@ namespace ospDDLoader {
     diag         = max(diag,vec3f(0.3f*length(diag)));
     vec3f from   = center - .85f*vec3f(-.6*diag.x,-1.2f*diag.y,.8f*diag.z);
     vec3f dir    = center - from;
-    PRINT(from);
-    PRINT(dir);
 
     camera.set("pos", from);
     camera.set("dir", dir);

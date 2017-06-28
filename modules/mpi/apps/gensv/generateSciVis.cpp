@@ -224,12 +224,9 @@ namespace gensv {
     volume.set("dimensions", dimensions);
     volume.set("transferFunction", transferFcn);
 
-    const vec3f gridSpacing = vec3f(1.f) / vec3f(dimensions);
-    volume.set("gridSpacing", gridSpacing);
-
     const vec3i brickDims = dimensions / grid;
     const vec3i brickId(myRank % grid.x, (myRank / grid.x) % grid.y, myRank / (grid.x * grid.y));
-    const vec3f gridOrigin = vec3f(brickId) * gridSpacing * vec3f(brickDims);
+    const vec3f gridOrigin = vec3f(brickId) * vec3f(brickDims);
     volume.set("gridOrigin", gridOrigin);
 
     const size_t dtypeSize = sizeForDtype(dtype);
@@ -239,7 +236,7 @@ namespace gensv {
     volume.setRegion(volumeData.data(), vec3i(0), brickDims);
     volume.commit();
 
-    auto bbox = box3f(gridOrigin, gridOrigin + vec3f(1.f) / vec3f(grid));
+    auto bbox = box3f(gridOrigin, gridOrigin + vec3f(brickDims));
     return std::make_pair(volume, bbox);
   }
 
