@@ -52,7 +52,7 @@ namespace ospray {
 	  (see comments regarding library name in CMakeLists.txt)
 	*/
 
-	bool ::ospray::visit::verbose = false;
+	bool verbose = false;
 	extern "C" void ospray_init_module_visit()
 	{
 	    auto OSPRAY_VERBOSE_PAIR = getEnvVar<int>("OSPRAY_VERBOSE");
