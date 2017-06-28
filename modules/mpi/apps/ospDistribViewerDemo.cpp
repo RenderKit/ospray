@@ -13,7 +13,7 @@
 #include <ospray/ospray_cpp/TransferFunction.h>
 #include <ospray/ospray_cpp/Volume.h>
 #include <ospray/ospray_cpp/Model.h>
-#include "generateSciVis.h"
+#include "gensv/generateSciVis.h"
 
 using namespace ospray::cpp;
 using namespace ospcommon;

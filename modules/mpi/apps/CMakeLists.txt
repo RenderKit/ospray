@@ -19,7 +19,8 @@
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/apps/exampleViewer)
 
 IF (NOT WIN32)# Internal Compiler Error on MSVC12...
-  add_library(gensv generateSciVis.cpp raw_reader.cpp)
+  add_subdirectory(gensv)
+
   OSPRAY_CREATE_TEST(ospRandSphereTest
     ospRandSphereTest.cpp
   LINK

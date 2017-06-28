@@ -29,7 +29,7 @@
 #include "widgets/imguiViewer.h"
 // stl
 #include <random>
-#include "generateSciVis.h"
+#include "gensv/generateSciVis.h"
 
 #define RUN_LOCAL 0
 
@@ -77,9 +77,12 @@ namespace ospDDLoader {
     diag         = max(diag,vec3f(0.3f*length(diag)));
     vec3f from   = center - .85f*vec3f(-.6*diag.x,-1.2f*diag.y,.8f*diag.z);
     vec3f dir    = center - from;
+    PRINT(from);
+    PRINT(dir);
 
     camera.set("pos", from);
     camera.set("dir", dir);
+    camera.set("up", vec3f(0, 1, 0));
     camera.set("aspect", static_cast<float>(fbSize.x)/fbSize.y);
 
     camera.commit();
@@ -165,7 +168,7 @@ namespace ospDDLoader {
 
     // We must use the global world bounds, not our local bounds
     // when computing the automatically picked camera position.
-    box3f worldBounds(vec3f(0), vec3f(1));
+    box3f worldBounds(vec3f(0), vec3f(dimensions) - vec3f(1));
 
     /* The regions listing specifies the data regions that this rank owns
      * and is responsible for rendering. All volumes and geometry on the rank
@@ -177,6 +180,7 @@ namespace ospDDLoader {
      * regions bounding box.
      */
     std::vector<box3f> regions{volume.second};
+    PRINT(volume.second);
     ospray::cpp::Data regionData(regions.size() * 2, OSP_FLOAT3,
         regions.data());
     model.set("regions", regionData);

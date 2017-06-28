@@ -31,7 +31,7 @@
 #include "apps/bench/pico_bench/pico_bench.h"
 // stl
 #include <random>
-#include "generateSciVis.h"
+#include "gensv/generateSciVis.h"
 
 #define RUN_LOCAL 0
 
