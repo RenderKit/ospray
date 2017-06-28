@@ -18,7 +18,7 @@
 
 // ospray
 #include "render/distributed/DistributedRaycast.h"
-#include "fb/Tile.h"
+
 // STL
 #include <vector>
 #include <functional>
@@ -38,31 +38,6 @@ namespace ospray {
 	 * Also see apps/ospRandSciVisTest.cpp and apps/ospRandSphereTest.cpp for
 	 * example usage.
 	 */
-	struct TileInfo 
-	{
-	    // basic info
-	    int regionSize[4] = {0};
-	    int fbSize[2] = {0};
-	    float depth{std::numeric_limits<float>::infinity()};
-	    bool visible{false};
-            // 'red' component; in float.
-	    float r[TILE_SIZE*TILE_SIZE];
-	    // 'green' component; in float.
-	    float g[TILE_SIZE*TILE_SIZE];
-	    // 'blue' component; in float.
-	    float b[TILE_SIZE*TILE_SIZE];
-	    // 'alpha' component; in float.
-	    float a[TILE_SIZE*TILE_SIZE];
-	    // constructor
-	    ~TileInfo() = default;
-	    TileInfo() = default;
-	    TileInfo(const Tile& src);
-	};
-	typedef std::vector<std::vector<TileInfo>> TileRegionList;
-	struct TileRetriever 
-	{
-	    virtual void operator()(const TileRegionList& list) {}
-	};
 	struct VisItDistributedRaycastRenderer : 
 	    public ospray::mpi::DistributedRaycastRenderer
 	{

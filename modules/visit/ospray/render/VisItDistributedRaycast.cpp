@@ -14,14 +14,15 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-// ospcommon
-#include "ospcommon/tasking/parallel_for.h"
-#include "common/Data.h"
-// ospray
 #include "VisItDistributedRaycast.h"
+// ospray
+#include "VisItModuleCommon.h"
 #include "common/DistributedModel.h"
 #include "render/MPILoadBalancer.h"
 #include "fb/DistributedFrameBuffer.h"
+// ospcommon
+#include "ospcommon/tasking/parallel_for.h"
+#include "common/Data.h"
 // STL standard
 #include <algorithm>
 

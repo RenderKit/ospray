@@ -120,7 +120,7 @@ template_accessArray(uint16);
 template_accessArray(float);
 template_accessArray(double);
 #undef template_accessArray
- 
+
 
 /*! perform trilinear interpolation for given sample. unlike old way
   of doing this (a single computesample on the StructuredVolume level
@@ -262,14 +262,90 @@ template_computeSample(float)
 template_computeSample(double)
 #undef template_computeSample
 
+// ray.time is set to interval length of intersected sample
+inline void VisItSharedStructuredVolume_intersect(void *uniform _volume, varying Ray &ray)
+{
+  // Cast to the actual Volume subtype.
+  StructuredVolume *uniform volume = (StructuredVolume *uniform) _volume;
+
+  // The recommended step size for ray casting based volume renderers.
+  const uniform float step = volume->super.samplingStep / volume->super.samplingRate;
+
+  // Tentatively advance the ray.
+  ray.t0 += step;
+  ray.time = step;
+}
+
+// ray.time is set to interval length of intersected sample
+inline void VisItSharedStructuredVolume_intersectAdaptive(void *uniform _volume, 
+							  varying Ray &ray, 
+							  const varying float samplingRate)
+{
+  // Cast to the actual Volume subtype.
+  StructuredVolume *uniform volume = (StructuredVolume *uniform) _volume;
+
+  // The recommended step size for ray casting based volume renderers.
+  const varying float step = volume->super.samplingStep / samplingRate;
+
+  // Tentatively advance the ray.
+  ray.t0 += step;
+  ray.time = step;
+
+}
+
+inline void VisItSharedStructuredVolume_intersectIsosurface(void *uniform _volume, 
+							    uniform float *uniform isovalues, 
+							    uniform int numIsovalues, 
+							    varying Ray &ray)
+{
+  // Cast to the actual Volume subtype.
+  StructuredVolume *uniform volume = (StructuredVolume *uniform) _volume;
+
+  // The nominal step size for ray casting based volume renderers, not considering the sampling rate.
+  const uniform float step = volume->super.samplingStep;
+
+  // Tentatively advance the ray.
+  ray.t0 += step;
+  if (ray.t0 >= ray.t) return;
+}
+
+// export void VisItSharedStructuredVolume_UseGridAccelerator(VisItSharedStructuredVolume *uniform self, uniform int useGridAccelerator)
+// {
+//     if (useGridAccelerator == 0) {
+// 	self->super.super.intersect = self->na_intersect;
+// 	self->super.super.intersectAdaptive = self->na_intersectAdaptive;
+// 	self->super.super.intersectIsosurface = self->na_intersectIsosurface;
+//     }
+//     else {
+// 	self->super.super.intersect = self->ga_intersect;
+// 	self->super.super.intersectAdaptive = self->ga_intersectAdaptive;
+// 	self->super.super.intersectIsosurface = self->ga_intersectIsosurface;    
+//     }
+//     return;
+// }
 
 void VisItSharedStructuredVolume_Constructor(VisItSharedStructuredVolume *uniform self,
-                                        void *uniform cppEquivalent,
-                                        const uniform int voxelType,
-                                        const uniform vec3i &dimensions,
-                                        const void *uniform voxelData)
+					     void *uniform cppEquivalent,
+					     uniform int useGridAccelerator,
+					     const uniform int voxelType,
+					     const uniform vec3i &dimensions,
+					     const void *uniform voxelData)
 {
-  VisItStructuredVolume_Constructor(&self->super, cppEquivalent, dimensions);
+  StructuredVolume_Constructor(&self->super, cppEquivalent, dimensions);
+  
+  // backup grid accelerator functions
+  self->useGridAccelerator = useGridAccelerator;
+  self->ga_intersect = self->super.super.intersect;
+  self->ga_intersectAdaptive = self->super.super.intersectAdaptive;
+  self->ga_intersectIsosurface = self->super.super.intersectIsosurface;
+  self->na_intersect = VisItSharedStructuredVolume_intersect;
+  self->na_intersectAdaptive = VisItSharedStructuredVolume_intersectAdaptive;
+  self->na_intersectIsosurface = VisItSharedStructuredVolume_intersectIsosurface;
+  if (useGridAccelerator == 0) {
+      self->super.super.intersect = self->na_intersect;
+      self->super.super.intersectAdaptive = self->na_intersectAdaptive;
+      self->super.super.intersectIsosurface = self->na_intersectIsosurface;
+  }
 
   uniform uint64 bytesPerVoxel;
 
@@ -362,14 +438,16 @@ void VisItSharedStructuredVolume_Constructor(VisItSharedStructuredVolume *unifor
 }
 
 export void *uniform VisItSharedStructuredVolume_createInstance(void *uniform cppEquivalent, 
-                                                           const uniform int voxelType, 
-                                                           const uniform vec3i &dimensions, 
-                                                           const void *uniform voxelData)
+								uniform int useGridAccelerator,
+								const uniform int voxelType, 
+								const uniform vec3i &dimensions, 
+								const void *uniform voxelData)
 {
   // The volume container.
   VisItSharedStructuredVolume *uniform volume = uniform new uniform VisItSharedStructuredVolume;
 
-  VisItSharedStructuredVolume_Constructor(volume, cppEquivalent, voxelType, dimensions, voxelData);
+  VisItSharedStructuredVolume_Constructor
+      (volume, cppEquivalent, useGridAccelerator, voxelType, dimensions, voxelData);
 
   return volume;
 }
@@ -377,14 +455,14 @@ export void *uniform VisItSharedStructuredVolume_createInstance(void *uniform cp
 /*! this is a very simple implementation that does not yet use either
   vectors OR threads ... should be fixed */
 #define template_setRegion(type)                                             \
-export void VisItSharedStructuredVolume_setRegion_##type                          \
+export void VisItSharedStructuredVolume_setRegion_##type                     \
 (void *uniform _self,                                                        \
  const void *uniform source,                                                 \
  const uniform vec3i &index,                                                 \
  const uniform vec3i &count)                                                 \
 {                                                                            \
-  VisItSharedStructuredVolume *uniform self                                       \
-    = (VisItSharedStructuredVolume *uniform)_self;                                \
+  VisItSharedStructuredVolume *uniform self                                  \
+    = (VisItSharedStructuredVolume *uniform)_self;                           \
   uniform type *uniform ptr_out = (uniform type *)self->voxelData;           \
   const uniform type *uniform ptr_in = (const uniform type *)source;         \
   for (uniform int iz=0;iz<count.z;iz++) {                                   \

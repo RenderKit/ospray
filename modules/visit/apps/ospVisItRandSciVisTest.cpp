@@ -27,7 +27,8 @@
 // ospray apps
 #include "common/commandline/CameraParser.h"
 #include "widgets/imguiViewer.h"
-#include "render/VisItDistributedRaycast.h"
+// visit module
+#include "VisItModuleCommon.h"
 // stl
 #include <random>
 

@@ -16,47 +16,57 @@
 
 #pragma once
 
-#include "volume/VisItStructuredVolume.h"
+#include "volume/StructuredVolume.h"
 
 namespace ospray {
+    namespace visit {
 
-  //! \brief A concrete implementation of the StructuredVolume class
-  //!  in which the voxel data is laid out in memory in XYZ order and
-  //!  provided via a shared data buffer.
-  //!
-    struct OSPRAY_SDK_INTERFACE VisItSharedStructuredVolume 
-	: public VisItStructuredVolume
-    {
-	VisItSharedStructuredVolume();
-	virtual ~VisItSharedStructuredVolume();
+	//! \brief A concrete implementation of the StructuredVolume class
+	//!  in which the voxel data is laid out in memory in XYZ order and
+	//!  provided via a shared data buffer.
+	//!
+	struct OSPRAY_SDK_INTERFACE VisItSharedStructuredVolume 
+	    : public StructuredVolume
+	{
+	    VisItSharedStructuredVolume();
+	    virtual ~VisItSharedStructuredVolume();
 
-	//! A string description of this class.
-	virtual std::string toString() const override;
+	    //! A string description of this class.
+	    virtual std::string toString() const override;
 
-	//! Allocate storage and populate the volume,
-	//! called through the OSPRay API.
-	virtual void commit() override;
+	    //! Allocate storage and populate the volume,
+	    //! called through the OSPRay API.
+	    virtual void commit() override;
 
-	//! Copy voxels into the volume at the given index; not allowed on
-	//!  VisItSharedStructuredVolume.
-	virtual int setRegion(const void *source,
-			      const vec3i &index,
-			      const vec3i &count) override;
+	    //! Copy voxels into the volume at the given index; not allowed on
+	    //!  VisItSharedStructuredVolume.
+	    virtual int setRegion(const void *source,
+				  const vec3i &index,
+				  const vec3i &count) override;
 
-    protected:
+	protected:
+	    //! Create the equivalent ISPC volume container.
+	    void createEquivalentISPC() override;
 
-	//! Create the equivalent ISPC volume container.
-	void createEquivalentISPC() override;
+	    //! Complete volume initialization (only on first commit).
+	    void finish() override;
 
-	//! Called when a dependency of this object changes.
-	void dependencyGotChanged(ManagedObject *object) override;
+	    //! Called when a dependency of this object changes.
+	    void dependencyGotChanged(ManagedObject *object) override;
 
-	//! The voxelData object upon commit().
-	Data *voxelData {nullptr};
+	    //! The voxelData object upon commit().
+	    Data *voxelData {nullptr};
 
-	//! the pointer to allocated data if the user did _not_ specify	
-	//! a shared buffer
-	void *allocatedVoxelData;
+	    //! The corresponding ghost region data
+	    unsigned char *ghostData {nullptr};
+
+	    //! the pointer to allocated data if the user did _not_ specify	
+	    //! a shared buffer
+	    void *allocatedVoxelData;
+
+	    //! flag to use grid accelerator
+	    bool useGridAccelerator{false};
+	};
+
     };
-
 } // ::ospray
