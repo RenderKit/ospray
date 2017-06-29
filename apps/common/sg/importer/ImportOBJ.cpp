@@ -37,18 +37,16 @@ int strncasecmp(const char *s1, const char *s2, size_t n)
 
 namespace ospray {
   namespace sg {
-    using std::string;
-    using std::cout;
-    using std::endl;
 
     std::shared_ptr<Texture2D> loadTexture(const std::string &path,
                                            const std::string &fileName,
                                            const bool preferLinear = false)
     {
-      FileName texFileName = path+"/"+fileName;
-      std::shared_ptr<Texture2D> tex = Texture2D::load(texFileName, preferLinear);
+      FileName texFileName = path + "/" + fileName;
+      std::shared_ptr<Texture2D> tex = Texture2D::load(texFileName,
+                                                       preferLinear);
       if (!tex)
-        std::cout << "could not load texture " << texFileName << " !" << endl;
+        std::cout << "could not load texture " << texFileName << " !\n";
       return tex;
     }
 
@@ -117,21 +115,17 @@ namespace ospray {
       return vec3f(x,y,z);
     }
 
-
     class OBJLoader
     {
     public:
 
-      std::shared_ptr<Node> world;
-      std::map<std::string,std::shared_ptr<Material> > material;
-
-      /*! Constructor. */
       OBJLoader(std::shared_ptr<Node> world, const FileName& fileName);
 
-      /*! Destruction */
-      ~OBJLoader();
+    private:
 
-      /*! Public methods. */
+      std::shared_ptr<Node> world;
+      std::map<std::string, std::shared_ptr<Material>> material;
+
       void loadMTL(const FileName& fileName);
 
       template<typename T>
@@ -152,8 +146,6 @@ namespace ospray {
                              const char *keyWord,
                              const std::shared_ptr<Material> &mat,
                              bool preferLinear=false);
-
-    private:
 
       FileName path;
       FileName fullPath;
@@ -203,89 +195,81 @@ namespace ospray {
       }
 
       // /* generate default material */
-      // Handle<Device::RTMaterial> defaultMaterial = g_device->rtNewMaterial("matte");
-      // g_device->rtSetFloat3(defaultMaterial, "reflectance", 0.5f, 0.5f, 0.5f);
-      // g_device->rtCommit(defaultMaterial);
-      defaultMaterial = std::static_pointer_cast<Material>(createNode("material","Material"));
+      defaultMaterial =
+        std::static_pointer_cast<Material>(createNode("material","Material"));
       curMaterial = defaultMaterial;
 
       char line[1000000];
       memset(line, 0, sizeof(line));
 
-      while (cin.peek() != -1)
-        {
-          /* load next multiline */
-          char* pline = line;
-          while (true) {
-            cin.getline(pline, sizeof(line) - (pline - line) - 16, '\n');
-            ssize_t last = strlen(pline) - 1;
-            if (last < 0 || pline[last] != '\\') break;
-            pline += last;
-            *pline++ = ' ';
-          }
-
-          const char* token = trimEnd(line + strspn(line, " \t"));
-          if (token[0] == 0) continue;
-
-          if (token[0] == 'g')
-            curGroupName = std::string(parseSep(token += 1));
-
-          /*! parse position */
-          if (token[0] == 'v' && isSep(token[1]))
-            { v.push_back(getVec3f(token += 2)); continue; }
-
-          /* parse normal */
-          if (token[0] == 'v' && token[1] == 'n' && isSep(token[2]))
-            { vn.push_back(getVec3f(token += 3)); continue; }
-
-          /* parse texcoord */
-          if (token[0] == 'v' && token[1] == 't' && isSep(token[2]))
-            { vt.push_back(getVec2f(token += 3)); continue; }
-
-          /*! parse face */
-          if (token[0] == 'f' && isSep(token[1]))
-            {
-              parseSep(token += 1);
-
-              std::vector<Vertex> face;
-              while (token[0]) {
-                face.push_back(getInt3(token));
-                parseSepOpt(token);
-              }
-              curGroup.push_back(face);
-              continue;
-            }
-
-          /*! use material */
-          if (!strncmp(token, "usemtl", 6) && isSep(token[6]))
-            {
-              flushFaceGroup();
-              std::string name(parseSep(token += 6));
-              if (material.find(name) == material.end())
-                curMaterial = defaultMaterial;
-              else
-              {
-                curMaterial = material[name];
-              }
-              continue;
-            }
-
-          /* load material library */
-          if (!strncmp(token, "mtllib", 6) && isSep(token[6])) {
-            loadMTL(path + std::string(parseSep(token += 6)));
-            continue;
-          }
-
-          // ignore unknown stuff
+      while (cin.peek() != -1) {
+        /* load next multiline */
+        char* pline = line;
+        while (true) {
+          cin.getline(pline, sizeof(line) - (pline - line) - 16, '\n');
+          ssize_t last = strlen(pline) - 1;
+          if (last < 0 || pline[last] != '\\') break;
+          pline += last;
+          *pline++ = ' ';
         }
+
+        const char* token = trimEnd(line + strspn(line, " \t"));
+        if (token[0] == 0) continue;
+
+        if (token[0] == 'g')
+          curGroupName = std::string(parseSep(token += 1));
+
+        /*! parse position */
+        if (token[0] == 'v' && isSep(token[1]))
+        { v.push_back(getVec3f(token += 2)); continue; }
+
+        /* parse normal */
+        if (token[0] == 'v' && token[1] == 'n' && isSep(token[2]))
+        { vn.push_back(getVec3f(token += 3)); continue; }
+
+        /* parse texcoord */
+        if (token[0] == 'v' && token[1] == 't' && isSep(token[2]))
+        { vt.push_back(getVec2f(token += 3)); continue; }
+
+        /*! parse face */
+        if (token[0] == 'f' && isSep(token[1]))
+        {
+          parseSep(token += 1);
+
+          std::vector<Vertex> face;
+          while (token[0]) {
+            face.push_back(getInt3(token));
+            parseSepOpt(token);
+          }
+          curGroup.push_back(face);
+          continue;
+        }
+
+        /*! use material */
+        if (!strncmp(token, "usemtl", 6) && isSep(token[6]))
+        {
+          flushFaceGroup();
+          std::string name(parseSep(token += 6));
+          if (material.find(name) == material.end())
+            curMaterial = defaultMaterial;
+          else
+          {
+            curMaterial = material[name];
+          }
+          continue;
+        }
+
+        /* load material library */
+        if (!strncmp(token, "mtllib", 6) && isSep(token[6])) {
+          loadMTL(path + std::string(parseSep(token += 6)));
+          continue;
+        }
+
+        // ignore unknown stuff
+      }
       flushFaceGroup();
       cin.close();
     }
-
-    OBJLoader::~OBJLoader()
-    {
-    }
-
 
     /*! try to parse given token stream as a float-type with given
       keyword; and if successful, assign to material. returns true
@@ -371,7 +355,7 @@ namespace ospray {
 
           if (!cur) {
             std::cout << "#osp:sg:importOBJ: Ignoring line >> " << line << " <<"
-                      << endl;
+                      << std::endl;
             continue;
           }//throw std::runtime_error("invalid material file: newmtl expected first");
 
@@ -538,8 +522,9 @@ namespace ospray {
 
     void importOBJ(const std::shared_ptr<Node> &world, const FileName &fileName)
     {
-      std::cout << "ospray::sg::importOBJ: importing from " << fileName << endl;
-      OBJLoader loader(world,fileName);
+      std::cout << "ospray::sg::importOBJ: importing from " << fileName
+                << std::endl;
+      OBJLoader loader(world, fileName);
     }
   }
 } // ::ospray
