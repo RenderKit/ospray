@@ -14,6 +14,8 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+# TODO WILL: On windows seems like we're not setting the GLFW include dir
+# properly here?
 include_directories(
   ${CMAKE_CURRENT_LIST_DIR}/../common/gl3w
   ${CMAKE_CURRENT_LIST_DIR}/../common/imgui
