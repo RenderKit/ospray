@@ -31,8 +31,6 @@
 #include <random>
 #include "gensv/generateSciVis.h"
 
-#define RUN_LOCAL 0
-
 /* This app demonstrates how to write a distributed scivis style
  * renderer using the distributed MPI device. Note that because
  * OSPRay uses sort-last compositing it is up to the user to ensure
