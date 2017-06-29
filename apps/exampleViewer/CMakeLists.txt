@@ -36,8 +36,8 @@ include_directories(
   ${OPENGL_INCLUDE_DIR}
 )
 
-ospray_create_application(ospExampleViewerSg
-  ospExampleViewerSg.cpp
+ospray_create_application(ospExampleViewer
+  ospExampleViewer.cpp
   LINK
   ${OPENGL_LIBRARIES}
   glfw
