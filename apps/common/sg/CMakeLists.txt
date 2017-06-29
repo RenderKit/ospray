@@ -62,5 +62,4 @@ LINK
   ospray
   ospray_common
   ospray_xml
-  ospray_minisg
 )

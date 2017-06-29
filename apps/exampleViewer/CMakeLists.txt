@@ -45,20 +45,6 @@ ospray_create_application(ospExampleViewerSg
   imgui
   ospray
   ospray_common
-  ospray_commandline
   ospray_imgui3d_sg
   ospray_sg
-)
-
-ospray_create_application(ospExampleViewer
-  ospExampleViewer.cpp
-  LINK
-  ${OPENGL_LIBRARIES}
-  glfw
-  gl3w
-  imgui
-  ospray
-  ospray_common
-  ospray_commandline
-  ospray_imgui3d
 )

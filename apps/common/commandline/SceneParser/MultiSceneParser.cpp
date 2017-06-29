@@ -21,60 +21,41 @@
 #ifdef OSPRAY_TACHYON_SUPPORT
 #  include "tachyon/TachyonSceneParser.h"
 #endif
-#include "trianglemesh/TriangleMeshSceneParser.h"
-#ifndef _WIN32
-# include "volume/VolumeSceneParser.h"
-#endif
 
 namespace commandline {
 
   using namespace ospray;
   using namespace ospcommon;
 
-  MultiSceneParser::MultiSceneParser(cpp::Renderer renderer) 
+  MultiSceneParser::MultiSceneParser(cpp::Renderer renderer)
     : renderer(renderer)
   {
   }
 
   bool MultiSceneParser::parse(int ac, const char **&av)
   {
-    TriangleMeshSceneParser triangleMeshParser(renderer);
 #ifdef OSPRAY_TACHYON_SUPPORT
     TachyonSceneParser      tachyonParser(renderer);
 #endif
     ParticleSceneParser     particleParser(renderer);
     StreamLineSceneParser   streamlineParser(renderer);
-#ifndef _WIN32
-    VolumeSceneParser       volumeParser(renderer);
-#endif
 
-    bool gotTriangleMeshScene = triangleMeshParser.parse(ac, av);
 #ifdef OSPRAY_TACHYON_SUPPORT
     bool gotTachyonScene      = tachyonParser.parse(ac, av);
 #endif
     bool gotParticleScene      = particleParser.parse(ac, av);
     bool gotStreamLineScene   = streamlineParser.parse(ac, av);
-#ifndef _WIN32
-    bool gotVolumeScene       = volumeParser.parse(ac, av);
-#endif
 
     SceneParser *parser = nullptr;
 
-    if (gotTriangleMeshScene)
-      parser = &triangleMeshParser;
+    if (gotParticleScene)
+      parser = &particleParser;
+    else if (gotStreamLineScene)
+      parser = &streamlineParser;
 #ifdef OSPRAY_TACHYON_SUPPORT
     else if (gotTachyonScene)
       parser = &tachyonParser;
 #endif
-    else if (gotParticleScene)
-      parser = &particleParser;
-    else if (gotStreamLineScene)
-      parser = &streamlineParser;
-#ifndef _WIN32
-    else if (gotVolumeScene)
-      parser = &volumeParser;
-#endif
-
 
     if (parser) {
       sceneModels = parser->model();

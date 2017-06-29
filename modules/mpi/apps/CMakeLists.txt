@@ -28,6 +28,7 @@ IF (NOT WIN32)# Internal Compiler Error on MSVC12...
     ospray_mpi_common
     ospray_commandline
   )
+
   OSPRAY_CREATE_TEST(ospRandSciVisTest
     ospRandSciVisTest.cpp
   LINK
@@ -36,6 +37,7 @@ IF (NOT WIN32)# Internal Compiler Error on MSVC12...
     ospray_commandline
     gensv
   )
+
   OSPRAY_CREATE_TEST(ospDDLoader
     ospDDLoader.cpp
   LINK

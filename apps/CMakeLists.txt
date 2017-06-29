@@ -27,18 +27,17 @@ INCLUDE_DIRECTORIES(
 # common utilities
 # TODO build only when needed
 ADD_SUBDIRECTORY(common/commandline)
-ADD_SUBDIRECTORY(common/importer)
-ADD_SUBDIRECTORY(common/tfn_lib)
-ADD_SUBDIRECTORY(common/miniSG)
-ADD_SUBDIRECTORY(common/xml)
 ADD_SUBDIRECTORY(common/sg)
+ADD_SUBDIRECTORY(common/tfn_lib)
+ADD_SUBDIRECTORY(common/xml)
 
 # benchmark application which has no windowing framework dependencies
 OPTION(OSPRAY_APPS_BENCHMARK "Build ospBenchmark application." ON)
 
-IF(OSPRAY_APPS_BENCHMARK)
-  ADD_SUBDIRECTORY(bench)
-ENDIF()
+# NOTE(jda) - benchmark app needs rewritten to use ospray_sg
+#IF(OSPRAY_APPS_BENCHMARK)
+#  ADD_SUBDIRECTORY(bench)
+#ENDIF()
 
 OPTION(OSPRAY_APPS_ENABLE_SCRIPTING
        "Enable scripting features in viewer apps, may not compile with ICC"

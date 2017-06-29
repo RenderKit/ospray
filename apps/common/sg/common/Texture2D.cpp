@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "miniSG/stb_image.h"
+#include "../3rdParty/stb_image.h"
 
 #ifdef USE_IMAGEMAGICK
 #define MAGICKCORE_QUANTUM_DEPTH 16

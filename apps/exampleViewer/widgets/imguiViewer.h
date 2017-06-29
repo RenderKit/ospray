@@ -19,9 +19,6 @@
 #include <atomic>
 #include <mutex>
 
-// mini scene graph for loading the model
-#include "common/miniSG/miniSG.h"
-
 #include <ospray/ospray_cpp/Camera.h>
 #include <ospray/ospray_cpp/Model.h>
 #include <ospray/ospray_cpp/Renderer.h>

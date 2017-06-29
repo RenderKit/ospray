@@ -66,21 +66,15 @@ SET(SOURCE_FILES
   CommandLineExport.h
   CommandLineParser.h
   CameraParser.cpp
-  LightsParser.cpp
   RendererParser.cpp
 
   SceneParser/SceneParser.h
-  SceneParser/MultiSceneParser.cpp
 
   SceneParser/particle/ParticleSceneParser.cpp
   SceneParser/particle/Model.cpp
   SceneParser/particle/uintah.cpp
 
   SceneParser/streamlines/StreamLineSceneParser.cpp
-
-  SceneParser/trianglemesh/TriangleMeshSceneParser.cpp
-
-  SceneParser/volume/VolumeSceneParser.cpp
 
   Utility.h
 )
@@ -99,8 +93,6 @@ OSPRAY_CREATE_LIBRARY(ospray_commandline
   ${SOURCE_FILES}
 LINK
   ospray_common
-  ospray_minisg
   ospray_xml
-  ospray_importer
   ospray_tfn
 )

@@ -18,7 +18,6 @@
 #include "Importer.h"
 #include "common/sg/SceneGraph.h"
 #include "common/sg/geometry/TriangleMesh.h"
-#include "common/miniSG/miniSG.h"
 
 /*! \file sg/module/Importer.cpp Defines the interface for writing
   file importers for the ospray::sg */
@@ -40,9 +39,9 @@ namespace ospray {
     {
       char *buffer = strdup(input.c_str());
       AutoFree _buffer(buffer);
-        
+
       char *urlSep = strstr(buffer,"://");
-      if (!urlSep) 
+      if (!urlSep)
         throw std::runtime_error("not actually a file format url");
 
       *urlSep = 0;
@@ -72,26 +71,26 @@ namespace ospray {
 
     /*! returns whether the given argument was specified in the format url */
     bool FormatURL::hasArg(const std::string &name) const
-    { 
+    {
       for (auto &a : args)
         if (a.first == name) return true;
-      return false; 
+      return false;
     }
 
     /*! return value of parameter with given name; returns "" if
       parameter wasn't supplied */
     std::string FormatURL::operator[](const std::string &name) const
-    { 
+    {
       for (auto &a : args)
         if (a.first == name) return a.second;
-      return std::string("<invalid parameter name>"); 
+      return std::string("<invalid parameter name>");
     }
 
     /*! return value of parameter with given name; returns "" if
       parameter wasn't supplied */
     std::string FormatURL::operator[](const char *name) const
-    { 
-      return (*this)[std::string(name)]; 
+    {
+      return (*this)[std::string(name)];
     }
 
 
@@ -104,33 +103,12 @@ namespace ospray {
 
 
 
-    // Helper functions ///////////////////////////////////////////////////////
-
-    static inline void importMiniSg(miniSG::Model &msgModel,
-                                    const ospcommon::FileName &fn)
-    {
-      if (fn.ext() == "stl")
-        miniSG::importSTL(msgModel,fn);
-      else if (fn.ext() == "msg")
-        miniSG::importMSG(msgModel,fn);
-      else if (fn.ext() == "tri")
-        miniSG::importTRI_xyz(msgModel,fn);
-      else if (fn.ext() == "xyzs")
-        miniSG::importTRI_xyzs(msgModel,fn);
-      else if (fn.ext() == "xml")
-        miniSG::importRIVL(msgModel,fn);
-      else if (fn.ext() == "hbp")
-        miniSG::importHBP(msgModel,fn);
-      else if (fn.ext() == "x3d")
-        miniSG::importX3D(msgModel,fn);
-    }
-
     // Importer definitions ///////////////////////////////////////////////////
 
     using FileExtToImporterMap = std::map<const std::string, ImporterFunction>;
 
     FileExtToImporterMap importerForExtension;
-    
+
     /*! declare an importer function for a given file extension */
     void declareImporterForFileExtension(const std::string &fileExtension,
                                          ImporterFunction importer)
@@ -193,7 +171,7 @@ namespace ospray {
           return;
         } else
           std::cout << "Found a URL-style file type specified, but didn't recognize file type '" << fu->formatType<< "' ... reverting to loading by file extension" << std::endl;
-      } 
+      }
 #endif
       if (fileName.ext() == "obj") {
         sg::importOBJ(std::static_pointer_cast<sg::Node>(shared_from_this()), fileName);
@@ -203,46 +181,11 @@ namespace ospray {
         sg::loadOSP(wsg, fileName);
       } else if (fileName.ext() == "xml") {
         sg::importRIVL(wsg, fileName);
-      } else if (fileName.ext() == "x3d" || fileName.ext() == "hbp" ||
-                 fileName.ext() == "msg" || fileName.ext() == "stl" ||
-                 fileName.ext() == "tri" || fileName.ext() == "xml") {
-
-        miniSG::Model msgModel;
-        importMiniSg(msgModel, fileName);
-
-        for (auto mesh : msgModel.mesh) {
-          auto sgMesh = std::dynamic_pointer_cast<sg::TriangleMesh>(createNode(mesh->name, "TriangleMesh"));
-
-          auto vertex = std::make_shared<DataVector3f>();
-          for(size_t i = 0; i < mesh->position.size(); i++)
-            vertex->push_back(mesh->position[i]);
-          sgMesh->vertex = vertex;
-
-          auto normal = std::make_shared<DataVector3f>();
-          for(size_t i = 0; i < mesh->normal.size(); i++)
-            normal->push_back(mesh->normal[i]);
-          sgMesh->normal = normal;
-
-          auto texcoord = std::make_shared<DataVector2f>();
-          for(size_t i =0; i < mesh->texcoord.size(); i++)
-            texcoord->push_back(mesh->texcoord[i]);
-          sgMesh->texcoord = texcoord;
-
-          auto index = std::make_shared<DataVector3i>();
-          for(size_t i =0; i < mesh->triangle.size(); i++) {
-            index->push_back(vec3i(mesh->triangle[i].v0,
-                                   mesh->triangle[i].v1,
-                                   mesh->triangle[i].v2));
-          }
-          sgMesh->index = index;
-
-          add(sgMesh);
-        }
       } else {
         std::cout << "unsupported file format\n";
         return;
       }
-    
+
       loadedFileName = fileName.str();
     }
 
