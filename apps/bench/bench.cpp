@@ -18,6 +18,8 @@
 #include <string>
 #include <vector>
 
+#include "pico_bench/pico_bench.h"
+
 // NOTE(jda) - Issues with template type deduction w/ GCC 7.1 and Clang 4.0,
 //             thus defining the use of operator<<() from pico_bench here before
 //             OSPCommon.h (offending file) gets eventually included through
@@ -34,8 +36,6 @@ inline void outputStats(const T &stats)
 #include "common/sg/importer/Importer.h"
 #include "common/sg/SceneGraph.h"
 #include "common/sg/Renderer.h"
-
-#include "pico_bench/pico_bench.h"
 
 namespace ospray {
 
