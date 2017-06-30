@@ -41,14 +41,13 @@ namespace ospray {
 
     void Model::preCommit(RenderContext &ctx)
     {
-      stashedModel = ctx.currentOSPModel;
-
       auto model = ospModel();
       if (model)
         ospRelease(model);
       model = ospNewModel();
       setValue((OSPObject)model);
       ctx.currentOSPModel = model;
+      stashedModel = ctx.currentOSPModel;
     }
 
     void Model::postCommit(RenderContext &ctx)
@@ -61,7 +60,6 @@ namespace ospray {
         child.second->traverse(ctx, "render");
 
       ospCommit(model);
-
       ctx.currentOSPModel = stashedModel;
       child("bounds").setValue(computeBounds());
     }
@@ -80,25 +78,13 @@ namespace ospray {
     {
       stashedWorld = ctx.world;
       ctx.world = this->nodeAs<sg::World>();
-      auto model = ospModel();
-      if (model)
-        ospRelease(model);
-      model = ospNewModel();
-      ospCommit(model);
-      setValue((OSPObject)model);
-      stashedModel = ctx.currentOSPModel;
-      ctx.currentOSPModel = model;
+      Model::preCommit(ctx);
     }
 
     void World::postCommit(RenderContext &ctx)
     {
-      //cache render operation
-      for (auto child : properties.children)
-        child.second->traverse(ctx, "render");
-      ospCommit(ospModel());
+      Model::postCommit(ctx);
       ctx.world = stashedWorld;
-      ctx.currentOSPModel = stashedModel;
-      child("bounds").setValue(computeBounds());
     }
 
     Instance::Instance()
