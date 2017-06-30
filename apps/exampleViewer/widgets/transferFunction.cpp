@@ -74,7 +74,7 @@ void TransferFunction::Line::removePoint(const float &x)
   }
 }
 
-TransferFunction::TransferFunction(std::shared_ptr<sg::TransferFunction> &tfn) :
+TransferFunction::TransferFunction(std::shared_ptr<sg::TransferFunction> tfn) :
   transferFcn(tfn),
   activeLine(3),
   tfcnSelection(JET),
@@ -91,23 +91,6 @@ TransferFunction::TransferFunction(std::shared_ptr<sg::TransferFunction> &tfn) :
   loadColorMapPresets();
   setColorMap(false);
 }
-TransferFunction::TransferFunction(cpp::TransferFunction tfn) :
-  transferFcn(nullptr),
-  cppTransferFcn(tfn),
-  activeLine(3),
-  tfcnSelection(JET),
-  customizing(false),
-  fcnChanged(true),
-  paletteTex(0),
-  textBuffer(512, '\0')
-{
-  rgbaLines[0].color = 0xff0000ff;
-  rgbaLines[1].color = 0xff00ff00;
-  rgbaLines[2].color = 0xffff0000;
-  rgbaLines[3].color = 0xffffffff;
-  loadColorMapPresets();
-  setColorMap(false);
-}
 TransferFunction::~TransferFunction()
 {
   if (paletteTex){
@@ -116,7 +99,6 @@ TransferFunction::~TransferFunction()
 }
 TransferFunction::TransferFunction(const TransferFunction &t) :
   transferFcn(t.transferFcn),
-  cppTransferFcn(t.cppTransferFcn),
   rgbaLines(t.rgbaLines),
   activeLine(t.activeLine),
   tfcnSelection(t.tfcnSelection),
@@ -134,7 +116,6 @@ TransferFunction& TransferFunction::operator=(const TransferFunction &t)
     return *this;
   }
   transferFcn = t.transferFcn;
-  cppTransferFcn = t.cppTransferFcn;
   rgbaLines = t.rgbaLines;
   activeLine = t.activeLine;
   tfcnSelection = t.tfcnSelection;
@@ -247,6 +228,42 @@ void TransferFunction::drawUi()
   ImGui::End();
 }
 
+bool TransferFunction::getColorMap(std::vector<vec3f> &colors,
+                                   std::vector<vec2f> &alpha) const
+{
+  if (!fcnChanged) {
+    return false;
+  }
+  // Step along the alpha line and sample it
+  std::array<std::vector<vec2f>::const_iterator, 4> lit = {
+    rgbaLines[0].line.begin(), rgbaLines[1].line.begin(),
+    rgbaLines[2].line.begin(), rgbaLines[3].line.begin()
+  };
+  assert(colors.size() == alpha.size());
+  const size_t samples = colors.size();
+  const float step = 1.0 / samples;
+
+  for (size_t i = 0; i < samples; ++i){
+    const float x = step * i;
+    std::array<float, 4> sampleColor;
+    for (size_t j = 0; j < 4; ++j){
+      if (x > (lit[j] + 1)->x) {
+        ++lit[j];
+      }
+      assert(lit[j] != rgbaLines[j].line.end());
+      const float t = (x - lit[j]->x) / ((lit[j] + 1)->x - lit[j]->x);
+      // It's hard to click down at exactly 0, so offset a little bit
+      sampleColor[j] = clamp(lerp(lit[j]->y - 0.001, (lit[j] + 1)->y - 0.001, t));
+    }
+    for (size_t j = 0; j < 3; ++j) {
+      colors[i][j] = sampleColor[j];
+    }
+    alpha[i].x = x;
+    alpha[i].y = sampleColor[3];
+  }
+  return true;
+}
+
 void TransferFunction::render()
 {
   // TODO: How many samples for a palette? 128 or 256 is probably plent
@@ -276,33 +293,14 @@ void TransferFunction::render()
     std::vector<uint8_t> palette(samples * 4, 0);
     std::vector<vec3f> ospColors(samples, vec3f(0));
     std::vector<vec2f> ospAlpha(samples, vec2f(0));
-    // Step along the alpha line and sample it
-    std::array<std::vector<vec2f>::const_iterator, 4> lit = {
-      rgbaLines[0].line.begin(), rgbaLines[1].line.begin(),
-      rgbaLines[2].line.begin(), rgbaLines[3].line.begin()
-    };
-    const float step = 1.0 / samples;
-
-    for (size_t i = 0; i < samples; ++i){
-      const float x = step * i;
-      std::array<float, 4> sampleColor;
-      for (size_t j = 0; j < 4; ++j){
-        if (x > (lit[j] + 1)->x) {
-          ++lit[j];
-        }
-        assert(lit[j] != rgbaLines[j].line.end());
-        const float t = (x - lit[j]->x) / ((lit[j] + 1)->x - lit[j]->x);
-        // It's hard to click down at exactly 0, so offset a little bit
-        sampleColor[j] = clamp(lerp(lit[j]->y - 0.001, (lit[j] + 1)->y - 0.001, t));
-      }
+    getColorMap(ospColors, ospAlpha);
+    for (size_t i = 0; i < ospColors.size(); ++i) {
       for (size_t j = 0; j < 3; ++j) {
-        palette[i * 4 + j] = clamp(sampleColor[j] * 255.0, 0.0, 255.0);
-        ospColors[i][j] = sampleColor[j];
+        palette[i * 4 + j] = clamp(ospColors[i][j] * 255.0, 0.0, 255.0);
       }
-      ospAlpha[i].x = x;
-      ospAlpha[i].y = sampleColor[3];
       palette[i * 4 + 3] = 255;
     }
+
     glBindTexture(GL_TEXTURE_2D, paletteTex);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, samples, 1, GL_RGBA, GL_UNSIGNED_BYTE,
         static_cast<const void*>(palette.data()));
@@ -310,15 +308,7 @@ void TransferFunction::render()
     if (transferFcn) {
       transferFcn->setColorMap(ospColors);
       transferFcn->setAlphaMap(ospAlpha);
-    } else {
-      cpp::Data colorData(ospColors.size(), OSP_FLOAT3, ospColors.data());
-      cpp::Data alphaData(ospAlpha.size(), OSP_FLOAT, ospAlpha.data());
-      cppTransferFcn.set("colors", colorData);
-      cppTransferFcn.set("opacities", alphaData);
-      // TODO: Safe to assume we're on the ospray thread if not in SG?
-      cppTransferFcn.commit();
     }
-
     if (prevBinding) {
       glBindTexture(GL_TEXTURE_2D, prevBinding);
     }
