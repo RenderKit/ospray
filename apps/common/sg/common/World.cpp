@@ -85,7 +85,7 @@ namespace ospray {
     void World::preCommit(RenderContext &ctx)
     {
       oldWorld = ctx.world;
-      ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
+      ctx.world = this->nodeAs<sg::World>();
       if (ospModel)
         ospRelease(ospModel);
       ospModel = ospNewModel();
