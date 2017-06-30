@@ -118,6 +118,29 @@ namespace gensv {
     return geom;
   }
 
+  enum GhostFace {
+    NEITHER_FACE = 0,
+    POS_FACE = 1,
+    NEG_FACE = 1 << 1,
+  };
+
+  /* Compute which faces of this brick we need to specify ghost voxels for,
+   * to have correct interpolation at brick boundaries. Returns mask of
+   * GhostFaces for x, y, z.
+   */
+  std::array<int, 3> computeGhostFaces(const vec3i &brickId, const vec3i &grid) {
+    std::array<int, 3> faces = {NEITHER_FACE, NEITHER_FACE, NEITHER_FACE};
+    for (size_t i = 0; i < 3; ++i) {
+      if (brickId[i] < grid[i] - 1) {
+        faces[i] |= POS_FACE;
+      }
+      if (brickId[i] > 0) {
+        faces[i] |= NEG_FACE;
+      }
+    }
+    return faces;
+  }
+
   /* Generate this rank's volume data. The volumes are placed in
    * cells of the grid computed in 'computeGrid' based on the number
    * of ranks with each rank owning a specific cell in the gridding.
@@ -155,23 +178,36 @@ namespace gensv {
 
     const vec3i volumeDims(128);
     const vec3i grid = computeGrid(numRanks);
-    ospray::cpp::Volume volume("block_bricked_volume");
-    volume.set("voxelType", "uchar");
-    volume.set("dimensions", volumeDims);
-    volume.set("transferFunction", transferFcn);
-
     const vec3f gridSpacing = vec3f(1.f) / (vec3f(grid) * vec3f(volumeDims));
-    volume.set("gridSpacing", gridSpacing);
-
     const vec3i brickId(myRank % grid.x, (myRank / grid.x) % grid.y, myRank / (grid.x * grid.y));
     const vec3f gridOrigin = vec3f(brickId) * gridSpacing * vec3f(volumeDims);
-    volume.set("gridOrigin", gridOrigin);
+    const std::array<int, 3> ghosts = computeGhostFaces(brickId, grid);
+    vec3i ghostDims(0);
+    for (size_t i = 0; i < 3; ++i) {
+      if (ghosts[i] & POS_FACE) {
+        ghostDims[i] += 1;
+      }
+      if (ghosts[i] & NEG_FACE) {
+        ghostDims[i] += 1;
+      }
+    }
+    const vec3i fullDims = volumeDims + ghostDims;
+    const vec3i ghostOffset(ghosts[0] & NEG_FACE ? 1 : 0,
+                               ghosts[1] & NEG_FACE ? 1 : 0,
+                               ghosts[2] & NEG_FACE ? 1 : 0);
 
-    std::vector<unsigned char> volumeData(volumeDims.x * volumeDims.y * volumeDims.z, 0);
+    ospray::cpp::Volume volume("block_bricked_volume");
+    volume.set("voxelType", "uchar");
+    volume.set("dimensions", fullDims);
+    volume.set("transferFunction", transferFcn);
+    volume.set("gridSpacing", gridSpacing);
+    volume.set("gridOrigin", gridOrigin - vec3f(ghostOffset));
+
+    std::vector<unsigned char> volumeData(fullDims.x * fullDims.y * fullDims.z, 0);
     for (size_t i = 0; i < volumeData.size(); ++i) {
       volumeData[i] = myRank;
     }
-    volume.setRegion(volumeData.data(), vec3i(0), volumeDims);
+    volume.setRegion(volumeData.data(), vec3i(0), fullDims);
     volume.commit();
 
     auto bbox = box3f(gridOrigin, gridOrigin + vec3f(1.f) / vec3f(grid));
@@ -219,21 +255,37 @@ namespace gensv {
     transferFcn.commit();
 
     const vec3i grid = computeGrid(numRanks);
-    ospray::cpp::Volume volume("block_bricked_volume");
-    volume.set("voxelType", dtype.c_str());
-    volume.set("dimensions", dimensions);
-    volume.set("transferFunction", transferFcn);
-
     const vec3i brickDims = dimensions / grid;
     const vec3i brickId(myRank % grid.x, (myRank / grid.x) % grid.y, myRank / (grid.x * grid.y));
     const vec3f gridOrigin = vec3f(brickId) * vec3f(brickDims);
-    volume.set("gridOrigin", gridOrigin);
+
+    const std::array<int, 3> ghosts = computeGhostFaces(brickId, grid);
+    vec3i ghostDims(0);
+    for (size_t i = 0; i < 3; ++i) {
+      if (ghosts[i] & POS_FACE) {
+        ghostDims[i] += 1;
+      }
+      if (ghosts[i] & NEG_FACE) {
+        ghostDims[i] += 1;
+      }
+    }
+    const vec3i fullDims = brickDims + ghostDims;
+    const vec3i ghostOffset(ghosts[0] & NEG_FACE ? 1 : 0,
+                               ghosts[1] & NEG_FACE ? 1 : 0,
+                               ghosts[2] & NEG_FACE ? 1 : 0);
+
+    ospray::cpp::Volume volume("block_bricked_volume");
+    volume.set("voxelType", dtype.c_str());
+    volume.set("dimensions", fullDims);
+    volume.set("transferFunction", transferFcn);
+    volume.set("gridOrigin", gridOrigin - vec3f(ghostOffset));
 
     const size_t dtypeSize = sizeForDtype(dtype);
-    std::vector<unsigned char> volumeData(brickDims.x * brickDims.y * brickDims.z * dtypeSize, 0);
+    std::vector<unsigned char> volumeData(fullDims.x * fullDims.y * fullDims.z * dtypeSize, 0);
+
     RawReader reader(file, dimensions, dtypeSize);
-    reader.readRegion(brickId * brickDims, brickDims, volumeData.data());
-    volume.setRegion(volumeData.data(), vec3i(0), brickDims);
+    reader.readRegion(brickId * brickDims , fullDims, volumeData.data());
+    volume.setRegion(volumeData.data(), vec3i(0), fullDims);
     volume.commit();
 
     auto bbox = box3f(gridOrigin, gridOrigin + vec3f(brickDims));
