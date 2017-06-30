@@ -14,18 +14,31 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "pico_bench/pico_bench.h"
-
 #include <iostream>
 #include <string>
 #include <vector>
 
-#include "common/sg/SceneGraph.h"
-#include "common/sg/Renderer.h"
-#include "common/sg/importer/Importer.h"
+// NOTE(jda) - Issues with template type deduction w/ GCC 7.1 and Clang 4.0,
+//             thus defining the use of operator<<() from pico_bench here before
+//             OSPCommon.h (offending file) gets eventually included through
+//             ospray_sg headers. [blech]
+template <typename T>
+inline void outputStats(const T &stats)
+{
+  std::cout << stats << std::endl;
+}
+
 #include "ospcommon/FileName.h"
 
+#include "common/sg/importer/Importer.h"
+#include "common/sg/SceneGraph.h"
+#include "common/sg/Renderer.h"
+
+#include "pico_bench/pico_bench.h"
+
 namespace ospray {
+
+  using namespace std::chrono;
 
   void printUsageAndExit()
   {
@@ -34,8 +47,8 @@ namespace ospray {
 
   std::vector<std::string> files;
   std::string imageOutputFile = "";
-  size_t numWarmupFrames = 10;
-  size_t numBenchFrames  = 100;
+  int numWarmupFrames = 10;
+  int numBenchFrames  = 100;
   bool logFrameTimes = false;
   int width  = 1024;
   int height = 1024;
@@ -135,14 +148,14 @@ namespace ospray {
 
     // Run benchmark //////////////////////////////////////////////////////////
 
-    auto benchmarker =
-      pico_bench::Benchmarker<std::chrono::milliseconds>(numBenchFrames);
+    auto benchmarker = pico_bench::Benchmarker<milliseconds>{numBenchFrames};
 
     auto stats = benchmarker([&]() {
       //TODO
+      return milliseconds{500};// NOTE(jda) - this getting ignored?
     });
 
-    std::cout << stats << '\n';
+    outputStats(stats);
 
     return 0;
   }
