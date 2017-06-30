@@ -14,40 +14,17 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-# Test app which generates data-parallel groups of spheres ####################
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/apps/common)
 
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/apps/exampleViewer)
+OSPRAY_CREATE_APPLICATION(ospDistribViewerDemo
+  ospDistribViewerDemo.cpp
+  arcball.cpp
+LINK
+  ospray
+  ospray_mpi_common
+  ospray_tfn
+  glfw
+  gl3w
+  gensv
+)
 
-IF (NOT WIN32)# Internal Compiler Error on MSVC12...
-  ADD_SUBDIRECTORY(gensv)
-
-  OSPRAY_CREATE_TEST(ospRandSphereTest
-    ospRandSphereTest.cpp
-  LINK
-    ospray
-    ospray_mpi_common
-    ospray_commandline
-  )
-  OSPRAY_CREATE_TEST(ospRandSciVisTest
-    ospRandSciVisTest.cpp
-  LINK
-    ospray
-    ospray_mpi_common
-    ospray_commandline
-    gensv
-  )
-  OSPRAY_CREATE_TEST(ospDDLoader
-    ospDDLoader.cpp
-  LINK
-    ospray
-    ospray_mpi_common
-    ospray_commandline
-    gensv
-  )
-
-  OPTION(OSPRAY_MODULE_MPI_APPS "MPI module viewer app" OFF)
-  IF (OSPRAY_MODULE_MPI_APPS)
-    INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
-    ADD_SUBDIRECTORY(viewer)
-  ENDIF()
-ENDIF()

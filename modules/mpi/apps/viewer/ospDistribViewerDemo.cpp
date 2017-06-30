@@ -4,7 +4,6 @@
 #include <GLFW/glfw3.h>
 #include <mpiCommon/MPICommon.h>
 #include <mpi.h>
-#include <ospcommon/AffineSpace.h>
 #include <ospray/ospray_cpp/Camera.h>
 #include <ospray/ospray_cpp/Data.h>
 #include <ospray/ospray_cpp/Device.h>
@@ -14,7 +13,9 @@
 #include <ospray/ospray_cpp/TransferFunction.h>
 #include <ospray/ospray_cpp/Volume.h>
 #include <ospray/ospray_cpp/Model.h>
+#include <tfn_lib/tfn_lib.h>
 #include "gensv/generateSciVis.h"
+#include "arcball.h"
 
 /* This app demonstrates how to write an distributed scivis style
  * interactive renderer using the distributed MPI device. Note that because
@@ -52,72 +53,6 @@ struct Sphere {
   int colorID{0};
 };
 
-struct Arcball {
-  Arcball(const box3f &worldBounds);
-
-  // All mouse positions passed should be in [-1, 1] normalized screen coords
-  void rotate(const vec2f &from, const vec2f &to);
-  void zoom(float amount);
-  vec3f eyePos() const;
-  vec3f lookDir() const;
-  vec3f upDir() const;
-
-private:
-  void updateCamera();
-  // Project the point in [-1, 1] screen space onto the arcball sphere
-  Quaternion3f screenToArcball(const vec2f &p);
-
-  float zoomSpeed;
-  AffineSpace3f lookAt, translation, inv_camera;
-  Quaternion3f rotation;
-};
-
-Arcball::Arcball(const box3f &worldBounds)
-  : translation(one), rotation(one)
-{
-  vec3f diag = worldBounds.size();
-  zoomSpeed = max(length(diag) / 150.0, 0.001);
-  diag = max(diag, vec3f(0.3f * length(diag)));
-
-  lookAt = AffineSpace3f::lookat(vec3f(0, 0, 1), vec3f(0, 0, 0), vec3f(0, 1, 0));
-  translation = AffineSpace3f::translate(vec3f(0, 0, diag.z));
-  updateCamera();
-}
-void Arcball::rotate(const vec2f &from, const vec2f &to) {
-  rotation = screenToArcball(to) * screenToArcball(from) * rotation;
-  updateCamera();
-}
-void Arcball::zoom(float amount) {
-  amount *= zoomSpeed;
-  translation = AffineSpace3f::translate(vec3f(0, 0, amount)) * translation;
-  updateCamera();
-}
-vec3f Arcball::eyePos() const {
-  return xfmPoint(inv_camera, vec3f(0, 0, 1));
-}
-vec3f Arcball::lookDir() const {
-  return xfmVector(inv_camera, vec3f(0, 0, 1));
-}
-vec3f Arcball::upDir() const {
-  return xfmVector(inv_camera, vec3f(0, 1, 0));
-}
-void Arcball::updateCamera() {
-  const AffineSpace3f rot = LinearSpace3f(rotation);
-  const AffineSpace3f camera = translation * lookAt * rot;
-  inv_camera = rcp(camera);
-}
-Quaternion3f Arcball::screenToArcball(const vec2f &p) {
-  const float dist = dot(p, p);
-  // If we're on/in the sphere return the point on it
-  if (dist <= 1.f){
-    return Quaternion3f(0, p.x, p.y, std::sqrt(1.f - dist));
-  } else {
-    // otherwise we project the point onto the sphere
-    const vec2f unitDir = normalize(p);
-    return Quaternion3f(0, unitDir.x, unitDir.y, 0);
-  }
-}
-
 // Struct for bcasting out the camera change info and general app state
 struct AppState {
   // eye pos, look dir, up dir
@@ -128,7 +63,8 @@ struct AppState {
   AppState() : fbSize(1024), cameraChanged(false), quit(false), fbSizeChanged(false)
   {}
 };
-// Extra junk we need in GLFW callbacks
+
+// Extra stuff we need in GLFW callbacks
 struct WindowState {
   Arcball &camera;
   vec2f prevMouse;
@@ -184,7 +120,7 @@ int main(int argc, char **argv) {
   std::string volumeFile, dtype;
   vec3i dimensions = vec3i(-1);
   vec2f valueRange = vec2f(-1);
-  size_t nSpheres = 100;
+  size_t nSpheres = 0;
   for (int i = 0; i < argc; ++i) {
     std::string arg = argv[i];
     if (arg == "-f") {
@@ -228,7 +164,6 @@ int main(int argc, char **argv) {
 
   const int rank = mpicommon::world.rank;
   const int worldSize = mpicommon::world.size;
-
 
   AppState app;
   Model model;

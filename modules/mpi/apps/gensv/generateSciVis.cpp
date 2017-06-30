@@ -245,7 +245,7 @@ namespace gensv {
       vec3f(1, 0, 0),
       vec3f(0.5, 0, 0)
     };
-    const std::vector<float> opacities = {0.0001, 1.0};
+    const std::vector<float> opacities = {0.0, 1.0};
     ospray::cpp::Data colorsData(colors.size(), OSP_FLOAT3, colors.data());
     ospray::cpp::Data opacityData(opacities.size(), OSP_FLOAT, opacities.data());
     colorsData.commit();
