@@ -1,4 +1,5 @@
 #include <random>
+#include <array>
 #include "mpiCommon/MPICommon.h"
 #include "ospray/ospray_cpp/Data.h"
 #include "ospray/ospray_cpp/TransferFunction.h"
