@@ -7,6 +7,7 @@
 
 #include <ospcommon/math.h>
 #include <ospray/ospray_cpp/Data.h>
+#include <ospray/ospray_cpp/TransferFunction.h>
 #include <tfn_lib/tfn_lib.h>
 #include "transferFunction.h"
 
@@ -90,6 +91,23 @@ TransferFunction::TransferFunction(std::shared_ptr<sg::TransferFunction> &tfn) :
   loadColorMapPresets();
   setColorMap(false);
 }
+TransferFunction::TransferFunction(cpp::TransferFunction tfn) :
+  transferFcn(nullptr),
+  cppTransferFcn(tfn),
+  activeLine(3),
+  tfcnSelection(JET),
+  customizing(false),
+  fcnChanged(true),
+  paletteTex(0),
+  textBuffer(512, '\0')
+{
+  rgbaLines[0].color = 0xff0000ff;
+  rgbaLines[1].color = 0xff00ff00;
+  rgbaLines[2].color = 0xffff0000;
+  rgbaLines[3].color = 0xffffffff;
+  loadColorMapPresets();
+  setColorMap(false);
+}
 TransferFunction::~TransferFunction()
 {
   if (paletteTex){
@@ -98,6 +116,7 @@ TransferFunction::~TransferFunction()
 }
 TransferFunction::TransferFunction(const TransferFunction &t) :
   transferFcn(t.transferFcn),
+  cppTransferFcn(t.cppTransferFcn),
   rgbaLines(t.rgbaLines),
   activeLine(t.activeLine),
   tfcnSelection(t.tfcnSelection),
@@ -115,6 +134,7 @@ TransferFunction& TransferFunction::operator=(const TransferFunction &t)
     return *this;
   }
   transferFcn = t.transferFcn;
+  cppTransferFcn = t.cppTransferFcn;
   rgbaLines = t.rgbaLines;
   activeLine = t.activeLine;
   tfcnSelection = t.tfcnSelection;
@@ -287,8 +307,17 @@ void TransferFunction::render()
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, samples, 1, GL_RGBA, GL_UNSIGNED_BYTE,
         static_cast<const void*>(palette.data()));
 
-    transferFcn->setColorMap(ospColors);
-    transferFcn->setAlphaMap(ospAlpha);
+    if (transferFcn) {
+      transferFcn->setColorMap(ospColors);
+      transferFcn->setAlphaMap(ospAlpha);
+    } else {
+      cpp::Data colorData(ospColors.size(), OSP_FLOAT3, ospColors.data());
+      cpp::Data alphaData(ospAlpha.size(), OSP_FLOAT, ospAlpha.data());
+      cppTransferFcn.set("colors", colorData);
+      cppTransferFcn.set("opacities", alphaData);
+      // TODO: Safe to assume we're on the ospray thread if not in SG?
+      cppTransferFcn.commit();
+    }
 
     if (prevBinding) {
       glBindTexture(GL_TEXTURE_2D, prevBinding);

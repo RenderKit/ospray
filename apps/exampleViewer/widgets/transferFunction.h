@@ -24,16 +24,19 @@ namespace ospray {
   public:
 
     TransferFunction(std::shared_ptr<sg::TransferFunction> &tfn);
+    TransferFunction(cpp::TransferFunction tfn);
     ~TransferFunction();
     TransferFunction(const TransferFunction &t);
     TransferFunction& operator=(const TransferFunction &t);
-    /* Draw the transfer function editor widget
+    /* Draw the transfer function editor widget, returns true if the
+     * transfer function changed
     */
     void drawUi();
     /* Render the transfer function to a 1D texture that can
      * be applied to volume data
      */
     void render();
+    // TODO: A query raw style thing to get the OSPData if the fcn changed
     // Load the transfer function in the file passed and set it active
     void load(const ospcommon::FileName &fileName);
     // Save the current transfer function out to the file
@@ -73,6 +76,10 @@ namespace ospray {
 
     // The scenegraph transfer function being manipulated by this widget
     std::shared_ptr<sg::TransferFunction> transferFcn;
+    // If we're not working with a scenegraph transfer function we update this
+    // TODO: A little disapointing in the design here, but I want to re-use
+    // this in a non-sg app (distrib viewer) without copy-pasting the whole widget.
+    cpp::TransferFunction cppTransferFcn;
     // Lines for RGBA transfer function controls
     std::array<Line, 4> rgbaLines;
     // The line currently being edited
