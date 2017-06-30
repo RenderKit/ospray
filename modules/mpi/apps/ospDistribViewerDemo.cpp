@@ -39,6 +39,7 @@ private:
   // Project the point in [-1, 1] screen space onto the arcball sphere
   Quaternion3f screenToArcball(const vec2f &p);
 
+  float zoomSpeed;
   AffineSpace3f lookAt, translation, inv_camera;
   Quaternion3f rotation;
 };
@@ -47,6 +48,7 @@ Arcball::Arcball(const box3f &worldBounds)
   : translation(one), rotation(one)
 {
   vec3f diag = worldBounds.size();
+  zoomSpeed = length(diag) / 150.0;
   diag = max(diag, vec3f(0.3f * length(diag)));
 
   lookAt = AffineSpace3f::lookat(vec3f(0, 0, 1), vec3f(0, 0, 0), vec3f(0, 1, 0));
@@ -58,6 +60,7 @@ void Arcball::rotate(const vec2f &from, const vec2f &to) {
   updateCamera();
 }
 void Arcball::zoom(float amount) {
+  amount *= zoomSpeed;
   translation = AffineSpace3f::translate(vec3f(0, 0, amount)) * translation;
   updateCamera();
 }
@@ -222,7 +225,9 @@ int main(int argc, char **argv) {
     volume = gensv::makeVolume();
     // Translate the volume to center it
     worldBounds = box3f(vec3f(-0.5), vec3f(0.5));
-    volume.first.set("gridOrigin", vec3f(-0.5));
+    volume.second.lower -= vec3f(0.5f);
+    volume.second.upper -= vec3f(0.5f);
+    volume.first.set("gridOrigin", volume.second.lower);
   }
   volume.first.commit();
   model.addVolume(volume.first);
