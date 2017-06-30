@@ -10,12 +10,6 @@
 namespace gensv {
   using namespace ospcommon;
 
-  //TODO: factor this into a reusable piece inside of ospcommon!!!!!!
-  // helper function to write the rendered image as PPM file
-  void writePPM(const std::string &fileName,
-                const int sizeX, const int sizeY,
-                const uint32_t *pixel);
-
   // Compute an X x Y x Z grid to have num bricks,
   // only gives a nice grid for numbers with even factors since
   // we don't search for factors of the number, we just try dividing by two

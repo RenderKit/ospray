@@ -14,6 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+// ospcommon
+#include "ospcommon/utility/SaveImage.h"
 // mpiCommon
 #include "mpiCommon/MPICommon.h"
 // public-ospray
@@ -219,8 +221,7 @@ namespace ospDDLoader {
     // the tiles which they composite.
     if (mpicommon::IamTheMaster()) {
       auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
-      gensv::writePPM("ddLoaderTest.ppm", fbSize.x,
-          fbSize.y, lfb);
+      utility::writePPM("ddLoaderTest.ppm", fbSize.x, fbSize.y, lfb);
       fb.unmap(lfb);
       std::cout << "\noutput: 'ddLoaderTest.ppm'" << std::endl;
       std::cout << "\nrendered " << numFrames << " frames at an avg rate of "

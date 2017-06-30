@@ -14,6 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+// ospcommon
+#include "ospcommon/utility/SaveImage.h"
 // mpiCommon
 #include "mpiCommon/MPICommon.h"
 // public-ospray
@@ -235,8 +237,8 @@ namespace ospRandSciVisTest {
       if (mpicommon::IamTheMaster()) {
         std::cout << stats << '\n';
         auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
-        gensv::writePPM("randomSciVisTestDistributed.ppm", fbSize.x,
-                        fbSize.y, lfb);
+        utility::writePPM("randomSciVisTestDistributed.ppm",
+                          fbSize.x, fbSize.y, lfb);
         fb.unmap(lfb);
         std::cout << "\noutput: 'randomSciVisTestDistributed.ppm'" << std::endl;
       }
@@ -253,7 +255,7 @@ namespace ospRandSciVisTest {
       });
 
       auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
-      gensv::writePPM("randomSciVisTestLocal.ppm", fbSize.x, fbSize.y, lfb);
+      utility::writePPM("randomSciVisTestLocal.ppm", fbSize.x, fbSize.y, lfb);
       fb.unmap(lfb);
       std::cout << "\noutput: 'randomSciVisTestLocal.ppm'" << std::endl;
     }

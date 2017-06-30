@@ -15,34 +15,15 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+// ospcommon
+#include "ospcommon/utility/SaveImage.h"
+
 #include "imguiViewer.h"
 
 #include <imgui.h>
 
 using std::string;
 using namespace ospcommon;
-
-// Static local helper functions //////////////////////////////////////////////
-
-// helper function to write the rendered image as PPM file
-static void writePPM(const string &fileName, const int sizeX, const int sizeY,
-                     const uint32_t *pixel)
-{
-  FILE *file = fopen(fileName.c_str(), "wb");
-  fprintf(file, "P6\n%i %i\n255\n", sizeX, sizeY);
-  unsigned char *out = (unsigned char *)alloca(3*sizeX);
-  for (int y = 0; y < sizeY; y++) {
-    const unsigned char *in = (const unsigned char *)&pixel[(sizeY-1-y)*sizeX];
-    for (int x = 0; x < sizeX; x++) {
-      out[3*x + 0] = in[4*x + 0];
-      out[3*x + 1] = in[4*x + 1];
-      out[3*x + 2] = in[4*x + 2];
-    }
-    fwrite(out, 3*sizeX, sizeof(char), file);
-  }
-  fprintf(file, "\n");
-  fclose(file);
-}
 
 // ImGuiViewer definitions ////////////////////////////////////////////////////
 
@@ -100,7 +81,7 @@ namespace ospray {
     renderEngine.stop();
   }
 
-  void ImGuiViewer::setRenderer(OSPRenderer renderer, 
+  void ImGuiViewer::setRenderer(OSPRenderer renderer,
                                 OSPRenderer rendererDW,
                                 OSPFrameBuffer frameBufferDW)
   {
@@ -210,7 +191,8 @@ namespace ospray {
 
   void ImGuiViewer::saveScreenshot(const std::string &basename)
   {
-    writePPM(basename + ".ppm", windowSize.x, windowSize.y, pixelBuffer.data());
+    utility::writePPM(basename + ".ppm",
+                      windowSize.x, windowSize.y, pixelBuffer.data());
     std::cout << "saved current frame to '" << basename << ".ppm'" << std::endl;
   }
 
@@ -220,7 +202,7 @@ namespace ospray {
     renderingPaused ? renderEngine.stop() : renderEngine.start();
   }
 
-  void ImGuiViewer::setWorldBounds(const box3f &worldBounds) 
+  void ImGuiViewer::setWorldBounds(const box3f &worldBounds)
   {
     ImGui3DWidget::setWorldBounds(worldBounds);
     aoDistance = (worldBounds.upper.x - worldBounds.lower.x)/4.f;

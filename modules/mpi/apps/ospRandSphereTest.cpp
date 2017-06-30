@@ -14,6 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+// ospcommon
+#include "ospcommon/utility/SaveImage.h"
 // mpiCommon
 #include "mpiCommon/MPICommon.h"
 // public-ospray
@@ -44,28 +46,6 @@ namespace ospRandSphereTest {
   vec2i fbSize            = vec2i(1024, 768);
   int   numFrames         = 32;
   bool  runDistributed    = true;
-
-  //TODO: factor this into a reusable piece inside of ospcommon!!!!!!
-  // helper function to write the rendered image as PPM file
-  void writePPM(const std::string &fileName,
-                const int sizeX, const int sizeY,
-                const uint32_t *pixel)
-  {
-    FILE *file = fopen(fileName.c_str(), "wb");
-    fprintf(file, "P6\n%i %i\n255\n", sizeX, sizeY);
-    unsigned char *out = (unsigned char *)alloca(3*sizeX);
-    for (int y = 0; y < sizeY; y++) {
-      auto *in = (const unsigned char *)&pixel[(sizeY-1-y)*sizeX];
-      for (int x = 0; x < sizeX; x++) {
-        out[3*x + 0] = in[4*x + 0];
-        out[3*x + 1] = in[4*x + 1];
-        out[3*x + 2] = in[4*x + 2];
-      }
-      fwrite(out, 3*sizeX, sizeof(char), file);
-    }
-    fprintf(file, "\n");
-    fclose(file);
-  }
 
   // Compute an X x Y x Z grid to have num bricks,
   // only gives a nice grid for numbers with even factors since
@@ -252,7 +232,8 @@ namespace ospRandSphereTest {
       if (mpicommon::IamTheMaster()) {
         std::cout << stats << '\n';
         auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
-        writePPM("randomSphereTestDistributed.ppm", fbSize.x, fbSize.y, lfb);
+        utility::writePPM("randomSphereTestDistributed.ppm",
+                          fbSize.x, fbSize.y, lfb);
         fb.unmap(lfb);
         std::cout << "\noutput: 'randomSphereTestDistributed.ppm'" << std::endl;
       }
@@ -271,7 +252,8 @@ namespace ospRandSphereTest {
       std::cout << stats << '\n';
 
       auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
-      writePPM("randomSphereTestLocal.ppm", fbSize.x, fbSize.y, lfb);
+      utility::writePPM("randomSphereTestLocal.ppm",
+                        fbSize.x, fbSize.y, lfb);
       fb.unmap(lfb);
       std::cout << "\noutput: 'randomSphereTestLocal.ppm'" << std::endl;
 

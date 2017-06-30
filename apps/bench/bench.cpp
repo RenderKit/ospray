@@ -29,6 +29,7 @@ inline void outputStats(const T &stats)
 }
 
 #include "ospcommon/FileName.h"
+#include "ospcommon/utility/SaveImage.h"
 
 #include "common/sg/importer/Importer.h"
 #include "common/sg/SceneGraph.h"
