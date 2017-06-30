@@ -1,4 +1,5 @@
 #include <random>
+#include <algorithm>
 #include <array>
 #include <chrono>
 #include <GLFW/glfw3.h>
@@ -27,7 +28,7 @@
  * each nodes' data must be convex and disjoint. This renderer only
  * supports multiple volumes and geometries per-node, to ensure they're
  * composited correctly you specify a list of bounding regions to the
- * model, within these regions can be arbitrary volumes/geometries
+ * model, within these regions can be arbitrary volumes/geometrys
  * and each rank can have as many regions as needed. As long as the
  * regions are disjoint/convex the data will be rendered correctly.
  * In this example we set two regions on certain ranks just to produce
@@ -61,9 +62,10 @@ struct AppState {
   // eye pos, look dir, up dir
   std::array<vec3f, 3> v;
   vec2i fbSize;
-  bool cameraChanged, quit, fbSizeChanged;
+  bool cameraChanged, quit, fbSizeChanged, tfcnChanged;
 
-  AppState() : fbSize(1024), cameraChanged(false), quit(false), fbSizeChanged(false)
+  AppState() : fbSize(1024), cameraChanged(false), quit(false),
+    fbSizeChanged(false)
   {}
 };
 
@@ -73,9 +75,11 @@ struct WindowState {
   vec2f prevMouse;
   bool cameraChanged;
   AppState &app;
+  bool isImGuiHovered;
 
   WindowState(AppState &app, Arcball &camera)
-    : camera(camera), prevMouse(-1), cameraChanged(false), app(app)
+    : camera(camera), prevMouse(-1), cameraChanged(false), app(app),
+    isImGuiHovered(false)
   {}
 };
 
@@ -95,6 +99,9 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 }
 void cursorPosCallback(GLFWwindow *window, double x, double y) {
   WindowState *state = static_cast<WindowState*>(glfwGetWindowUserPointer(window));
+  if (state->isImGuiHovered) {
+    return;
+  }
   const vec2f mouse(x, y);
   if (state->prevMouse != vec2f(-1)) {
     const bool leftDown = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
@@ -294,11 +301,13 @@ int main(int argc, char **argv) {
       const size_t samples = 16;
       std::vector<vec3f> ospColors(samples, vec3f(0));
       std::vector<vec2f> ospAlpha(samples, vec2f(0));
+      // TODO: When the transfer functon changes, we need to notify everyone
+      // else and BCast out the new values
       if (tfnWidget->getColorMap(ospColors, ospAlpha)) {
         std::vector<float> alphas(samples, 0.f);
         std::transform(ospAlpha.begin(), ospAlpha.end(), alphas.begin(),
             [](const vec2f &a) { return a.y; });
-                    
+
         Data colorData(ospColors.size(), OSP_FLOAT3, ospColors.data());
         Data alphaData(ospAlpha.size(), OSP_FLOAT, alphas.data());
         colorData.commit();
@@ -319,6 +328,7 @@ int main(int argc, char **argv) {
       app.v[2] = vec3f(up.x, up.y, up.z);
       app.cameraChanged = windowState->cameraChanged;
       windowState->cameraChanged = false;
+      windowState->isImGuiHovered = ImGui::IsMouseHoveringAnyWindow();
     }
     // Send out the shared app state that the workers need to know, e.g. camera
     // position, if we should be quitting.
