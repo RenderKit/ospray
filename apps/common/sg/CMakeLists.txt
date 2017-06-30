@@ -54,6 +54,7 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   importer/importPoints.cpp
 # all these should be lower-case: they're functions, not classes
   importer/ImportOSP.cpp
+  importer/ImportOSPModel.cpp
   importer/ImportOSPSG.cpp
   importer/ImportOBJ.cpp
   importer/ImportPLY.cpp

@@ -20,19 +20,22 @@ namespace ospray {
   namespace sg {
 
     Model::Model()
-      : Renderable()
-    { 
+    {
       setValue((OSPObject)nullptr);
+    }
+
+    std::string Model::toString() const
+    {
+      return "ospray::sg::Model";
     }
 
     void Model::traverse(RenderContext &ctx, const std::string& operation)
     {
-      if (operation == "render")
-      {
+      if (operation == "render") {
         preRender(ctx);
         postRender(ctx);
       }
-      else 
+      else
         Node::traverse(ctx,operation);
     }
 
@@ -51,7 +54,7 @@ namespace ospray {
     {
         ctx.currentOSPModel = ospModel;
 
-        //instancegroup caches render calls in commit.  
+        //instancegroup caches render calls in commit.
         for (auto child : properties.children)
           child.second->traverse(ctx, "render");
 
@@ -61,24 +64,18 @@ namespace ospray {
       child("bounds").setValue(computeBounds());
     }
 
-    World::World()
-      : Renderable()
-    {
-    }
-
     std::string World::toString() const
     {
-      return "ospray::viewer::sg::World";
+      return "ospray::sg::World";
     }
 
     void World::traverse(RenderContext &ctx, const std::string& operation)
     {
-      if (operation == "render")
-      {
+      if (operation == "render") {
         preRender(ctx);
         postRender(ctx);
       }
-      else 
+      else
         Node::traverse(ctx,operation);
     }
 
@@ -99,7 +96,7 @@ namespace ospray {
     {
       //cache render operation
       for (auto child : properties.children)
-        child.second->traverse(ctx, "render");  
+        child.second->traverse(ctx, "render");
       ospCommit(ospModel);
       ctx.world = oldWorld;
       ctx.currentOSPModel = oldModel;
@@ -131,7 +128,7 @@ namespace ospray {
     }
 
         /*! \brief return bounding box in world coordinates.
-      
+
       This function can be used by the viewer(s) for calibrating
       camera motion, setting default camera position, etc. Nodes
       for which that does not apply can simpy return
@@ -157,12 +154,11 @@ namespace ospray {
 
     void Instance::traverse(RenderContext &ctx, const std::string& operation)
     {
-      if (instanced && operation == "render")
-      {
+      if (instanced && operation == "render") {
         preRender(ctx);
         postRender(ctx);
       }
-      else 
+      else
         Node::traverse(ctx,operation);
     }
 
@@ -230,8 +226,7 @@ namespace ospray {
         ospInstance = nullptr;
 
         OSPModel model = (OSPModel)child("model").valueAs<OSPObject>();
-        if (model)
-        {
+        if (model) {
           ospInstance = ospNewInstance(model,(osp::affine3f&)worldTransform);
           ospCommit(ospInstance);
         }

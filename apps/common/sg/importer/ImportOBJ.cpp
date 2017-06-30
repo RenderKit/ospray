@@ -526,6 +526,6 @@ namespace ospray {
                 << std::endl;
       OBJLoader loader(world, fileName);
     }
-  }
+  } // ::ospray::sg
 } // ::ospray
 

@@ -428,7 +428,12 @@ namespace ospray {
       Renderable() { createChild("bounds", "box3f"); }
       virtual ~Renderable() = default;
 
-      virtual box3f bounds() const override { return child("bounds").valueAs<box3f>(); }
+      virtual std::string toString() const override
+      { return "ospray::sg::Renderable"; }
+
+      virtual box3f bounds() const override
+      { return child("bounds").valueAs<box3f>(); }
+
       virtual box3f computeBounds() const
       {
         box3f cbounds = empty;

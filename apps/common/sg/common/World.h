@@ -27,22 +27,24 @@ namespace ospray {
     struct OSPSG_INTERFACE Model : public sg::Renderable
     {
       Model();
+      virtual std::string toString() const override;
 
       //commit caches renders.  It will render children during commit, and add
-         //cached rendered children during render call.  
-      virtual void traverse(RenderContext &ctx, const std::string& operation) override;
+         //cached rendered children during render call.
+      virtual void traverse(RenderContext &ctx,
+                            const std::string& operation) override;
       virtual void preCommit(RenderContext &ctx) override;
       virtual void postCommit(RenderContext &ctx) override;
 
       OSPModel ospModel {nullptr};
       std::shared_ptr<sg::World> oldWorld;
-      OSPModel oldModel;
+      OSPModel oldModel{nullptr};
     };
 
     /*! a world node */
     struct OSPSG_INTERFACE World : public sg::Renderable
     {
-      World();
+      World() = default;
       virtual ~World() = default;
 
       /*! \brief returns a std::string with the c++ name of this class */
@@ -54,7 +56,8 @@ namespace ospray {
         camera motion, setting default camera position, etc. Nodes
         for which that does not apply can simpy return
         box3f(embree::empty) */
-      virtual void traverse(RenderContext &ctx, const std::string& operation) override;
+      virtual void traverse(RenderContext &ctx,
+                            const std::string& operation) override;
       virtual void preCommit(RenderContext &ctx) override;
       virtual void postCommit(RenderContext &ctx) override;
       virtual void preRender(RenderContext &ctx) override;
@@ -62,7 +65,7 @@ namespace ospray {
 
       OSPModel ospModel {nullptr};
       std::shared_ptr<sg::World> oldWorld;
-      OSPModel oldModel;
+      OSPModel oldModel{nullptr};
     };
 
 
@@ -70,16 +73,16 @@ namespace ospray {
     {
       Instance();
 
-            /*! \brief return bounding box in world coordinates.
+      /*! \brief return bounding box in world coordinates.
 
-        This function can be used by the viewer(s) for calibrating
-        camera motion, setting default camera position, etc. Nodes
-        for which that does not apply can simpy return
-        box3f(embree::empty) */
+      This function can be used by the viewer(s) for calibrating
+      camera motion, setting default camera position, etc. Nodes
+      for which that does not apply can simpy return
+      box3f(embree::empty) */
       virtual box3f computeBounds() const override;
 
       //Instance caches renders.  It will render children during commit, and add
-         //cached rendered children during render call.  
+         //cached rendered children during render call.
       virtual void traverse(RenderContext &ctx, const std::string& operation) override;
       virtual void preCommit(RenderContext &ctx) override;
       virtual void postCommit(RenderContext &ctx) override;
@@ -98,12 +101,12 @@ namespace ospray {
       void updateTransform(RenderContext &ctx);
       bool instanceDirty{true};
       ospcommon::affine3f cachedTransform{ospcommon::one};
-      ospcommon::affine3f worldTransform{ospcommon::one};  
+      ospcommon::affine3f worldTransform{ospcommon::one};
       //    computed from baseTransform*position*rotation*scale
       ospcommon::affine3f oldTransform{ospcommon::one};
 
     };
-    
+
   } // ::ospray::sg
 } // ::ospray
 

@@ -43,7 +43,7 @@ namespace ospray {
                                           std::string("pathtracer"),
                                           std::string("pt")});
       createChild("world",
-                      "World").setDocumentation("model containing scene objects");
+                  "World").setDocumentation("model containing scene objects");
       createChild("camera", "PerspectiveCamera");
       createChild("frameBuffer", "FrameBuffer");
       createChild("lights");
@@ -97,6 +97,11 @@ namespace ospray {
       createChild("aoTransparencyEnabled", "bool", true, NodeFlags::required);
     }
 
+    std::string Renderer::toString() const
+    {
+      return "ospray::sg::Renderer";
+    }
+
     void Renderer::traverse(RenderContext &ctx, const std::string& operation)
     {
       if (operation == "render")
@@ -104,7 +109,7 @@ namespace ospray {
         preRender(ctx);
         postRender(ctx);
       }
-      else 
+      else
         Node::traverse(ctx,operation);
     }
 
@@ -126,7 +131,7 @@ namespace ospray {
       if (child("camera").hasChild("aspect") &&
           child("frameBuffer")["size"].lastModified() >
           child("camera")["aspect"].lastCommitted()) {
-        
+
         child("camera")["aspect"].setValue(
           child("frameBuffer")["size"].valueAs<vec2i>().x /
           float(child("frameBuffer")["size"].valueAs<vec2i>().y)
@@ -141,7 +146,7 @@ namespace ospray {
         ospCommit(ospRenderer);
         setValue((OSPObject)ospRenderer);
       }
-      ctx.ospRenderer = ospRenderer;  
+      ctx.ospRenderer = ospRenderer;
     }
 
     void Renderer::postCommit(RenderContext &ctx)

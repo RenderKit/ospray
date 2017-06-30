@@ -14,40 +14,16 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
-#include "SceneGraph.h"
+#include "../common/World.h"
 
 namespace ospray {
   namespace sg {
 
-    class FrameBuffer;
-
-    struct Renderer : public Renderable
+    void importOSPModel(Node &world, OSPModel model, ospcommon::box3f bbox)
     {
-      Renderer();
-      virtual std::string toString() const override;
-
-      // renderer renders the scene into the framebuffer on render call.
-      //  It will call render on model when commit when model modified
-      virtual void traverse(RenderContext &ctx,
-                            const std::string& operation) override;
-      void preRender(RenderContext &ctx) override;
-      void postRender(RenderContext &ctx) override;
-      void preCommit(RenderContext &ctx) override;
-      void postCommit(RenderContext &ctx) override;
-
-    private:
-
-      // Data members //
-
-      OSPRenderer ospRenderer {nullptr};
-      OSPData lightsData {nullptr};
-      TimeStamp lightsBuildTime;
-      TimeStamp frameMTime;
-      std::string createdType = "none";
-    };
+      PRINT(world.toString());
+      //world.setValue(model);
+    }
 
   } // ::ospray::sg
 } // ::ospray
-

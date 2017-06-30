@@ -30,7 +30,7 @@ namespace ospray {
       fileName="/tmp/myFile.xyz"
       args={ {"format","xyz"}, {"whatEver",""}, {"radius",".3"} }
     */
-    struct FormatURL 
+    struct FormatURL
     {
       /*! do the actual parsing, and return a formatURL */
       FormatURL(const std::string &input);
@@ -73,13 +73,17 @@ namespace ospray {
     /*! prototype for any scene graph importer function */
     using ImporterFunction = void (*)(const FileName &fileName,
                                       sg::ImportState &importerState);
-    
+
     /*! declare an importer function for a given file extension */
     void declareImporterForFileExtension(const std::string &fileExtension,
                                          ImporterFunction importer);
 
     /*! import a given file. throws a sg::RuntimeError if this could not be done */
-    void importFile(std::shared_ptr<sg::World> &world, const FileName &fileName);
+    void importFile(std::shared_ptr<sg::World> &world,
+                    const FileName &fileName);
+
+    /*! create a world from an already existing OSPModel */
+    void importOSPModel(Node &world, OSPModel model, ospcommon::box3f bbox);
 
   } // ::ospray::sg
 } // ::ospray
