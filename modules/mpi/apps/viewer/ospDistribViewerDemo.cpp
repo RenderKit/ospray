@@ -14,6 +14,9 @@
 #include <ospray/ospray_cpp/Volume.h>
 #include <ospray/ospray_cpp/Model.h>
 #include <tfn_lib/tfn_lib.h>
+#include <widgets/transferFunction.h>
+#include <widgets/imgui_impl_glfw_gl3.h>
+#include <common/imgui/imgui.h>
 #include "gensv/generateSciVis.h"
 #include "arcball.h"
 
@@ -76,7 +79,7 @@ struct WindowState {
   {}
 };
 
-void keyCallback(GLFWwindow *window, int key, int, int action, int) {
+void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
   WindowState *state = static_cast<WindowState*>(glfwGetWindowUserPointer(window));
   if (action == GLFW_PRESS) {
     switch (key) {
@@ -87,6 +90,8 @@ void keyCallback(GLFWwindow *window, int key, int, int action, int) {
         break;
     }
   }
+  // Forward on to ImGui
+  ImGui_ImplGlfwGL3_KeyCallback(window, key, scancode, action, mods);
 }
 void cursorPosCallback(GLFWwindow *window, double x, double y) {
   WindowState *state = static_cast<WindowState*>(glfwGetWindowUserPointer(window));
@@ -232,6 +237,8 @@ int main(int argc, char **argv) {
 
   mpicommon::world.barrier();
 
+  TransferFunction ospTfcn;
+  std::shared_ptr<ospray::TransferFunction> tfnWidget;
   std::shared_ptr<WindowState> windowState;
   GLFWwindow *window = nullptr;
   if (rank == 0) {
@@ -244,13 +251,20 @@ int main(int argc, char **argv) {
       glfwTerminate();
       return 1;
     }
+    glfwMakeContextCurrent(window);
+
     windowState = std::make_shared<WindowState>(app, arcballCamera);
+    tfnWidget = std::make_shared<ospray::TransferFunction>(ospTfcn);
+
+    ImGui_ImplGlfwGL3_Init(window, false);
 
     glfwSetKeyCallback(window, keyCallback);
     glfwSetCursorPosCallback(window, cursorPosCallback);
     glfwSetWindowUserPointer(window, windowState.get());
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
-    glfwMakeContextCurrent(window);
+
+    glfwSetMouseButtonCallback(window, ImGui_ImplGlfwGL3_MouseButtonCallback);
+    glfwSetScrollCallback(window, ImGui_ImplGlfwGL3_ScrollCallback);
   }
 
   while (!app.quit) {
@@ -270,12 +284,19 @@ int main(int argc, char **argv) {
       uint32_t *img = (uint32_t*)fb.map(OSP_FB_COLOR);
       glDrawPixels(app.fbSize.x, app.fbSize.y, GL_RGBA, GL_UNSIGNED_BYTE, img);
       fb.unmap(img);
+
+      ImGui_ImplGlfwGL3_NewFrame();
+      tfnWidget->drawUi();
+      ImGui::Render();
+
       glfwSwapBuffers(window);
 
       glfwPollEvents();
       if (glfwWindowShouldClose(window)) {
         app.quit = true;
       }
+
+      tfnWidget->render();
 
       const vec3f eye = windowState->camera.eyePos();
       const vec3f look = windowState->camera.lookDir();
@@ -301,6 +322,10 @@ int main(int argc, char **argv) {
         glViewport(0, 0, app.fbSize.x, app.fbSize.y);
       }
     }
+  }
+  if (rank == 0) {
+      ImGui_ImplGlfwGL3_Shutdown();
+      glfwDestroyWindow(window);
   }
   return 0;
 }

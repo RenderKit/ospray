@@ -14,15 +14,21 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/apps/common)
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/apps/common
+                    ${CMAKE_SOURCE_DIR}/apps/exampleViewer)
 
 OSPRAY_CREATE_APPLICATION(ospDistribViewerDemo
   ospDistribViewerDemo.cpp
   arcball.cpp
 LINK
   ospray
+  ospray_common
   ospray_mpi_common
+  ospray_imgui_util_sg
+  ospray_imgui3d_sg
+  ospray_sg
   ospray_tfn
+  imgui
   glfw
   gl3w
   gensv
