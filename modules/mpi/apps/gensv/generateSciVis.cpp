@@ -149,7 +149,7 @@ namespace gensv {
    * overall region bounds and will be the bounding box for the
    * generated geometry as well.
    */
-  std::pair<ospray::cpp::Volume, box3f> makeVolume()
+  std::pair<ospray::cpp::Volume, box3f> makeVolume(vec3f &ghostGridOrigin)
   {
     auto numRanks = static_cast<float>(mpicommon::numGlobalRanks());
     auto myRank   = mpicommon::globalRank();
@@ -195,13 +195,14 @@ namespace gensv {
     const vec3i ghostOffset(ghosts[0] & NEG_FACE ? 1 : 0,
                                ghosts[1] & NEG_FACE ? 1 : 0,
                                ghosts[2] & NEG_FACE ? 1 : 0);
+    ghostGridOrigin = gridOrigin - vec3f(ghostOffset) * gridSpacing;
 
     ospray::cpp::Volume volume("block_bricked_volume");
     volume.set("voxelType", "uchar");
     volume.set("dimensions", fullDims);
     volume.set("transferFunction", transferFcn);
     volume.set("gridSpacing", gridSpacing);
-    volume.set("gridOrigin", gridOrigin - vec3f(ghostOffset));
+    volume.set("gridOrigin", ghostGridOrigin);
 
     std::vector<unsigned char> volumeData(fullDims.x * fullDims.y * fullDims.z, 0);
     for (size_t i = 0; i < volumeData.size(); ++i) {
@@ -228,7 +229,7 @@ namespace gensv {
 
   std::pair<ospray::cpp::Volume, box3f> loadVolume(const FileName &file,
       const vec3i &dimensions, const std::string &dtype,
-      const vec2f &valueRange)
+      const vec2f &valueRange, vec3f &ghostGridOrigin)
   {
     auto numRanks = static_cast<float>(mpicommon::numGlobalRanks());
     auto myRank   = mpicommon::globalRank();
@@ -273,18 +274,19 @@ namespace gensv {
     const vec3i ghostOffset(ghosts[0] & NEG_FACE ? 1 : 0,
                                ghosts[1] & NEG_FACE ? 1 : 0,
                                ghosts[2] & NEG_FACE ? 1 : 0);
+    ghostGridOrigin = gridOrigin - vec3f(ghostOffset);
 
     ospray::cpp::Volume volume("block_bricked_volume");
     volume.set("voxelType", dtype.c_str());
     volume.set("dimensions", fullDims);
     volume.set("transferFunction", transferFcn);
-    volume.set("gridOrigin", gridOrigin - vec3f(ghostOffset));
+    volume.set("gridOrigin", ghostGridOrigin);
 
     const size_t dtypeSize = sizeForDtype(dtype);
     std::vector<unsigned char> volumeData(fullDims.x * fullDims.y * fullDims.z * dtypeSize, 0);
 
     RawReader reader(file, dimensions, dtypeSize);
-    reader.readRegion(brickId * brickDims , fullDims, volumeData.data());
+    reader.readRegion(brickId * brickDims - ghostOffset, fullDims, volumeData.data());
     volume.setRegion(volumeData.data(), vec3i(0), fullDims);
     volume.commit();
 

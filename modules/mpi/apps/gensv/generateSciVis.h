@@ -35,15 +35,19 @@ namespace gensv {
    * The region occupied by the volume is then used to be the rank's
    * overall region bounds and will be the bounding box for the
    * generated geometry as well.
+   * Returns the ghostGridOrigin of the volume which may be outside the bounding
+   * box, due to the ghost voxels.
    */
-  std::pair<ospray::cpp::Volume, box3f> makeVolume();
+  std::pair<ospray::cpp::Volume, box3f> makeVolume(vec3f &ghostGridOrigin);
 
   /* Load this rank's volume data. The volumes are placed in
    * cells of the grid computed in 'computeGrid' based on the number
    * of ranks with each rank owning a specific cell in the gridding.
+   * Returns the ghostGridOrigin of the volume which may be outside the bounding
+   * box, due to the ghost voxels.
    */
   std::pair<ospray::cpp::Volume, box3f> loadVolume(const FileName &file,
       const vec3i &dimensions, const std::string &dtype,
-      const vec2f &valueRange);
+      const vec2f &valueRange, vec3f &ghostGridOrigin);
 }
 
