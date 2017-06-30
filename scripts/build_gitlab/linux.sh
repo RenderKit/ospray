@@ -25,5 +25,4 @@ cmake \
   -D OSPRAY_ENABLE_TESTING=ON \
   "$@" ..
 
-make -j`nproc`
-make test
+make -j`nproc` && make test

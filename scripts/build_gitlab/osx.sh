@@ -11,5 +11,4 @@ cmake \
 -D OSPRAY_ENABLE_TESTING=ON \
 ..
 
-make -j 4
-make test
+make -j 4 && make test
