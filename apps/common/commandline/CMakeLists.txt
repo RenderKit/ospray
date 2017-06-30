@@ -92,6 +92,7 @@ ENDIF()
 OSPRAY_CREATE_LIBRARY(ospray_commandline
   ${SOURCE_FILES}
 LINK
+  ospray
   ospray_common
   ospray_xml
   ospray_tfn
