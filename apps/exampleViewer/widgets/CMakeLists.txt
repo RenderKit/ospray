@@ -32,7 +32,7 @@ LINK
   ospray_common
   ospray_imgui_util
   ospray_tfn
-  glfw
+  ${GLFW_LIBRARY}
   gl3w
   imgui
   ${OPENGL_LIBRARIES}
@@ -50,7 +50,7 @@ LINK
   ospray_common
   ospray_imgui_util_sg
   ospray_tfn
-  glfw
+  ${GLFW_LIBRARY}
   gl3w
   imgui
   ${OPENGL_LIBRARIES}

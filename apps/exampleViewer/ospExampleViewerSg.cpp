@@ -242,8 +242,6 @@ int main(int ac, const char **av)
                         });
 
 #ifdef _WIN32
-  // TODO: Why do we not have the sg symbols already available for us
-  // since we link against it?
   loadLibrary("ospray_sg");
 #endif
 

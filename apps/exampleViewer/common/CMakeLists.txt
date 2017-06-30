@@ -18,6 +18,7 @@ if (NOT WIN32)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 endif()
 
+if (1)
 ##############################################################
 # Find or build GLFW
 ##############################################################
@@ -41,11 +42,15 @@ if (NOT GLFW_FOUND)
   MARK_AS_ADVANCED(USE_MSVC_RUNTIME_LIBRARY_DLL)
 
   add_subdirectory(glfw)
-
-  set(GLFW_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/glfw/include PARENT_SCOPE)
-  set(GLFW_LIBRARIES glfw PARENT_SCOPE)
+  set(GLFW_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/common/glfw/include PARENT_SCOPE)
+  set(GLFW_LIBRARY glfw PARENT_SCOPE)
+  set(GLFW_LIBRARIES ${GLFW_LIBRARY} PARENT_SCOPE)
 else()
+  set(GLFW_INCLUDE_DIRS ${GLFW_INCLUDE_DIRS} PARENT_SCOPE)
+  set(GLFW_LIBRARY ${GLFW_LIBRARY} PARENT_SCOPE)
+  set(GLFW_LIBRARIES ${GLFW_LIBRARY} PARENT_SCOPE)
   message(STATUS "Using GLFW found in the environment")
+endif()
 endif()
 
 ##############################################################

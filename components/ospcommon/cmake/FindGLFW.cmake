@@ -27,25 +27,45 @@ IF (NOT GLFW_ROOT STREQUAL GLFW_ROOT_LAST)
   UNSET(GLFW_LIBRARY CACHE)
 ENDIF()
 
+set(GLFW_LIB_SUFFIX "")
 IF (WIN32)
-  MESSAGE(WARNING "FindGLFW TODO on Windows!")
-ELSE ()
+  IF (MSVC14)
+    SET(GLFW_LIB_SUFFIX "vc2015")
+  ELSEIF (MSVC12)
+    SET(GLFW_LIB_SUFFIX "vc2013")
+  ELSEIF (MSVC11)
+    SET(GLFW_LIB_SUFFIX "vc2012")
+  ELSEIF (MINGW)
+    IF (X64)
+      SET(GLFW_LIB_SUFFIX "mingw-w64")
+    # Who's ever going to build for 32bit??
+    ELSE ()
+      SET(GLFW_LIB_SUFFIX "mingw-w64")
+    ENDIF()
+  ENDIF()
+ENDIF ()
 
-  FIND_PATH(GLFW_ROOT include/GLFW/glfw3.h
-    DOC "Root of GLFW installation"
-    HINTS ${GLFW_ROOT}
-    PATHS
-      ${PROJECT_SOURCE_DIR}/glfw
-      /usr/local
-      /usr
-      /
+FIND_PATH(GLFW_ROOT include/GLFW/glfw3.h
+  DOC "Root of GLFW installation"
+  HINTS ${GLFW_ROOT}
+  PATHS
+    ${PROJECT_SOURCE_DIR}/glfw
+    /usr/local
+    /usr
+    /
+)
+
+FIND_PATH(GLFW_INCLUDE_DIR GLFW/glfw3.h PATHS ${GLFW_ROOT}/include NO_DEFAULT_PATH)
+SET(GLFW_HINTS
+  HINTS
+    ${GLFW_ROOT}
+  PATH_SUFFIXES
+    /lib
+    /lib64
+    /lib-${GLFW_LIB_SUFFIX}
   )
-
-  FIND_PATH(GLFW_INCLUDE_DIR GLFW/glfw3.h PATHS ${GLFW_ROOT}/include NO_DEFAULT_PATH)
-  SET(GLFW_HINTS HINTS ${GLFW_ROOT}/lib ${GLFW_ROOT}/lib64)
-  SET(GLFW_PATHS PATHS /usr/lib /usr/lib64 /lib /lib64)
-  FIND_LIBRARY(GLFW_LIBRARY libglfw.so ${GLFW_HINTS} ${GLFW_PATHS})
-ENDIF()
+SET(GLFW_PATHS PATHS /usr/lib /usr/lib64 /lib /lib64)
+FIND_LIBRARY(GLFW_LIBRARY libglfw.so glfw3dll ${GLFW_HINTS} ${GLFW_PATHS})
 
 SET(GLFW_ROOT_LAST ${GLFW_ROOT} CACHE INTERNAL "Last value of GLFW_ROOT to detect changes")
 
