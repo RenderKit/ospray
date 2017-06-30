@@ -30,9 +30,18 @@ struct AppState {
   vec2i fbSize;
   bool cameraChanged, quit, fbSizeChanged;
 
-  AppState() : fbSize(1024), cameraChanged(false), quit(false),
-  fbSizeChanged(false)
+  AppState() : fbSize(1024), cameraChanged(false), quit(false), fbSizeChanged(false)
   {}
+  void positionCamera(const box3f &worldBounds) {
+    const vec3f center = ospcommon::center(worldBounds);
+    vec3f diag   = worldBounds.size();
+    diag = max(diag,vec3f(0.3f*length(diag)));
+    const vec3f from = center - .85f*vec3f(-.6*diag.x,-1.2f*diag.y,.8f*diag.z);
+
+    v[0] = center - .85f*vec3f(-.6*diag.x,-1.2f*diag.y,.8f*diag.z);
+    v[1] = center - from;
+    v[2] = vec3f(0, 1, 0);
+  }
 };
 // Extra junk we need in GLFW callbacks
 struct WindowState {
@@ -86,6 +95,42 @@ void framebufferSizeCallback(GLFWwindow *window, int width, int height) {
 }
 
 int main(int argc, char **argv) {
+  std::string volumeFile, dtype;
+  vec3i dimensions = vec3i(-1);
+  vec2f valueRange = vec2f(-1);
+  size_t nSpheres = 100;
+  for (int i = 0; i < argc; ++i) {
+    std::string arg = argv[i];
+    if (arg == "-f") {
+      volumeFile = argv[++i];
+    } else if (arg == "-dtype") {
+      dtype = argv[++i];
+    } else if (arg == "-dims") {
+      dimensions.x = std::atoi(argv[++i]);
+      dimensions.y = std::atoi(argv[++i]);
+      dimensions.z = std::atoi(argv[++i]);
+    } else if (arg == "-range") {
+      valueRange.x = std::atof(argv[++i]);
+      valueRange.y = std::atof(argv[++i]);
+    } else if (arg == "-spheres") {
+      nSpheres = std::atol(argv[++i]);
+    }
+  }
+  if (!volumeFile.empty()) {
+    if (dtype.empty()) {
+      std::cerr << "Error: -dtype (uchar|char|float|double) is required\n";
+      return 1;
+    }
+    if (dimensions == vec3i(-1)) {
+      std::cerr << "Error: -dims X Y Z is required to pass volume dims\n";
+      return 1;
+    }
+    if (valueRange == vec2f(-1)) {
+      std::cerr << "Error: -range X Y is required to set transfer function range\n";
+      return 1;
+    }
+  }
+
   ospLoadModule("mpi");
   int provided = 0;
   MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
@@ -98,12 +143,25 @@ int main(int argc, char **argv) {
   const int rank = mpicommon::world.rank;
   const int worldSize = mpicommon::world.size;
 
+
   AppState app;
   Model model;
-  auto volume = gensv::makeVolume();
+  std::pair<Volume, box3f> volume(nullptr, box3f());
+  box3f worldBounds;
+  float sphereRadius = 0.005;
+  if (!volumeFile.empty()) {
+    volume = gensv::loadVolume(volumeFile, dimensions, dtype, valueRange);
+    worldBounds = box3f(vec3f(0), vec3f(dimensions - vec3i(1)));
+    sphereRadius *= dimensions.x;
+  } else {
+    worldBounds = box3f(vec3f(0), vec3f(1));
+    volume = gensv::makeVolume();
+  }
   model.addVolume(volume.first);
-  auto spheres = gensv::makeSpheres(volume.second, 100, 0.01);
-  model.addGeometry(spheres);
+  if (nSpheres != 0) {
+    auto spheres = gensv::makeSpheres(volume.second, nSpheres, sphereRadius);
+    model.addGeometry(spheres);
+  }
 
   std::vector<box3f> regions{volume.second};
   ospray::cpp::Data regionData(regions.size() * 2, OSP_FLOAT3,
@@ -112,11 +170,11 @@ int main(int argc, char **argv) {
 
   model.commit();
 
+  app.positionCamera(worldBounds);
   Camera camera("perspective");
-  const vec3f pos(0, 1.5, 2);
-  camera.set("pos", pos);
-  camera.set("dir", vec3f(0.5) - pos);
-  camera.set("up", vec3f(0, 1, 0));
+  camera.set("pos", app.v[0]);
+  camera.set("dir", app.v[1]);
+  camera.set("up", app.v[2]);
   camera.set("aspect", static_cast<float>(app.fbSize.x) / app.fbSize.y);
   camera.commit();
 
