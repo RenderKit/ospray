@@ -34,10 +34,9 @@ ADD_SUBDIRECTORY(common/xml)
 # benchmark application which has no windowing framework dependencies
 OPTION(OSPRAY_APPS_BENCHMARK "Build ospBenchmark application." ON)
 
-# NOTE(jda) - benchmark app needs rewritten to use ospray_sg
-#IF(OSPRAY_APPS_BENCHMARK)
-#  ADD_SUBDIRECTORY(bench)
-#ENDIF()
+IF(OSPRAY_APPS_BENCHMARK)
+  ADD_SUBDIRECTORY(bench)
+ENDIF()
 
 OPTION(OSPRAY_APPS_ENABLE_SCRIPTING
        "Enable scripting features in viewer apps, may not compile with ICC"
