@@ -76,7 +76,7 @@ Arcball::Arcball(const box3f &worldBounds)
   : translation(one), rotation(one)
 {
   vec3f diag = worldBounds.size();
-  zoomSpeed = length(diag) / 150.0;
+  zoomSpeed = max(length(diag) / 150.0, 0.001);
   diag = max(diag, vec3f(0.3f * length(diag)));
 
   lookAt = AffineSpace3f::lookat(vec3f(0, 0, 1), vec3f(0, 0, 0), vec3f(0, 1, 0));
@@ -236,7 +236,9 @@ int main(int argc, char **argv) {
   box3f worldBounds;
   float sphereRadius = 0.005;
   if (!volumeFile.empty()) {
-    volume = gensv::loadVolume(volumeFile, dimensions, dtype, valueRange);
+    vec3f ghostGridOrigin;
+    volume = gensv::loadVolume(volumeFile, dimensions, dtype, valueRange,
+                               ghostGridOrigin);
 
     // Translate the volume to center it
     const vec3f upper = vec3f(dimensions);
@@ -244,18 +246,19 @@ int main(int argc, char **argv) {
     worldBounds = box3f(vec3f(-halfLength), vec3f(halfLength));
     volume.second.lower -= vec3f(halfLength);
     volume.second.upper -= vec3f(halfLength);
-    volume.first.set("gridOrigin", volume.second.lower);
+    volume.first.set("gridOrigin", ghostGridOrigin - vec3f(halfLength));
 
     // Pick a nice sphere radius for a consisten voxel size to
     // sphere size ratio
     sphereRadius *= dimensions.x;
   } else {
-    volume = gensv::makeVolume();
+    vec3f ghostGridOrigin;
+    volume = gensv::makeVolume(ghostGridOrigin);
     // Translate the volume to center it
     worldBounds = box3f(vec3f(-0.5), vec3f(0.5));
     volume.second.lower -= vec3f(0.5f);
     volume.second.upper -= vec3f(0.5f);
-    volume.first.set("gridOrigin", volume.second.lower);
+    volume.first.set("gridOrigin", ghostGridOrigin - vec3f(0.5f));
   }
   volume.first.commit();
   model.addVolume(volume.first);
