@@ -52,7 +52,6 @@ namespace ospray {
   std::string imageOutputFile = "";
   int numWarmupFrames = 10;
   int numBenchFrames  = 100;
-  bool logFrameTimes = false;
   int width  = 1024;
   int height = 1024;
 
@@ -96,8 +95,6 @@ namespace ospray {
         numWarmupFrames = atoi(argv[++i]);
       } else if (arg == "-bf" || arg == "--bench") {
         numBenchFrames = atoi(argv[++i]);
-      } else if (arg == "-lft" || arg == "--log-frame-times") {
-        logFrameTimes = true;
       } else if (arg[0] != '-') {
         files.push_back(arg);
       }
@@ -173,7 +170,9 @@ namespace ospray {
     camera["up"].setValue(up);
 
     renderer.traverse("commit");
-    renderer.traverse("render");
+
+    for (int i = 0; i < numWarmupFrames; ++i)
+      renderer.traverse("render");
 
     // Run benchmark //////////////////////////////////////////////////////////
 
@@ -187,11 +186,12 @@ namespace ospray {
 
     // Print results //////////////////////////////////////////////////////////
 
-    auto sgFBptr = sgFB.nodeAs<sg::FrameBuffer>();
-
-    auto *srcPB = (uint32_t*)sgFBptr->map();
-    utility::writePPM("ospbenchmark.ppm", width, height, srcPB);
-    sgFBptr->unmap(srcPB);
+    if (!imageOutputFile.empty()) {
+      auto sgFBptr = sgFB.nodeAs<sg::FrameBuffer>();
+      auto *srcPB = (uint32_t*)sgFBptr->map();
+      utility::writePPM(imageOutputFile + ".ppm", width, height, srcPB);
+      sgFBptr->unmap(srcPB);
+    }
 
     outputStats(stats);
 
