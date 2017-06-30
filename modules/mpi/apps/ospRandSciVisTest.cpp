@@ -183,7 +183,7 @@ namespace ospRandSciVisTest {
     } else  {
       setGap = mpicommon::globalRank() % 2 == 0;
     }
-    if (false) {
+    if (setGap) {
       const float step = (regions[0].upper.x - regions[0].lower.x) / 4.0;
       const vec3f low = regions[0].lower;
       const vec3f hi = regions[0].upper;
