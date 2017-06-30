@@ -38,7 +38,7 @@ IF (WIN32)
   ELSEIF (MINGW)
     IF (X64)
       SET(GLFW_LIB_SUFFIX "mingw-w64")
-    # Who'se going to build for 32bit??
+    # Who's ever going to build for 32bit??
     ELSE ()
       SET(GLFW_LIB_SUFFIX "mingw-w64")
     ENDIF()
@@ -65,7 +65,7 @@ SET(GLFW_HINTS
     /lib-${GLFW_LIB_SUFFIX}
   )
 SET(GLFW_PATHS PATHS /usr/lib /usr/lib64 /lib /lib64)
-FIND_LIBRARY(GLFW_LIBRARY libglfw.so glfw glfw3 ${GLFW_HINTS} ${GLFW_PATHS})
+FIND_LIBRARY(GLFW_LIBRARY libglfw.so glfw3dll ${GLFW_HINTS} ${GLFW_PATHS})
 
 SET(GLFW_ROOT_LAST ${GLFW_ROOT} CACHE INTERNAL "Last value of GLFW_ROOT to detect changes")
 

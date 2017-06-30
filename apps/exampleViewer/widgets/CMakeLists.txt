@@ -14,8 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-# TODO WILL: On windows seems like we're not setting the GLFW include dir
-# properly here?
 include_directories(
   ${CMAKE_CURRENT_LIST_DIR}/../common/gl3w
   ${CMAKE_CURRENT_LIST_DIR}/../common/imgui
@@ -34,7 +32,7 @@ LINK
   ospray_common
   ospray_imgui_util
   ospray_tfn
-  glfw
+  ${GLFW_LIBRARY}
   gl3w
   imgui
   ${OPENGL_LIBRARIES}
@@ -52,7 +50,7 @@ LINK
   ospray_common
   ospray_imgui_util_sg
   ospray_tfn
-  glfw
+  ${GLFW_LIBRARY}
   gl3w
   imgui
   ${OPENGL_LIBRARIES}
