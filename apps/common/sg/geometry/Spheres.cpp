@@ -25,12 +25,12 @@
 namespace ospray {
   namespace sg {
 
-    Spheres::Sphere::Sphere(const vec3f &position, 
-                            float radius, 
+    Spheres::Sphere::Sphere(const vec3f &position,
+                            float radius,
                             uint32_t typeID)
-      : position(position), 
-        radius(radius), 
-        typeID(typeID) 
+      : position(position),
+        radius(radius),
+        typeID(typeID)
     {
     }
 
@@ -53,16 +53,16 @@ namespace ospray {
     box3f Spheres::bounds() const
     {
       auto sphereData = child("sphereData").shared_from_this();
-      std::shared_ptr<DataVectorT<Sphere,OSP_RAW>> spheres 
+      std::shared_ptr<DataVectorT<Sphere,OSP_RAW>> spheres
         = std::dynamic_pointer_cast<DataVectorT<Sphere,OSP_RAW>>(sphereData);
-      
+
       box3f bounds = empty;
       for (auto &s : spheres->v)
         bounds.extend(s.bounds());
       return bounds;
     }
 
-    //! \brief Initialize this node's value from given XML node 
+    //! \brief Initialize this node's value from given XML node
     /*!
       \detailed This allows a plug-and-play concept where a XML
       file can specify all kind of nodes wihout needing to know
@@ -70,8 +70,8 @@ namespace ospray {
       create a proper C++ instance of the given node type (the
       OSP_REGISTER_SG_NODE() macro will allow it to do so), and can
       tell the node to parse itself from the given XML content and
-      XML children 
-        
+      XML children
+
       \param node The XML node specifying this node's fields
 
       \param binBasePtr A pointer to an accompanying binary file (if
@@ -118,12 +118,12 @@ namespace ospray {
         ospSet1i(ospGeometry,"color_offset",     0*sizeof(float));
         ospSet1i(ospGeometry,"color_stride",     4*sizeof(float));
       }
-      
+
       ospSetMaterial(ospGeometry,
                      (OSPMaterial)child("material").valueAs<OSPObject>());
       ospCommit(ospGeometry);
-      
-      ospAddGeometry(ctx.world->ospModel, ospGeometry);
+
+      ospAddGeometry(ctx.world->ospModel(), ospGeometry);
     }
 
     OSP_REGISTER_SG_NODE(Spheres);

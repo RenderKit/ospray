@@ -23,7 +23,6 @@
 namespace ospray {
   namespace sg {
 
-
     struct OSPSG_INTERFACE Model : public sg::Renderable
     {
       Model();
@@ -36,15 +35,18 @@ namespace ospray {
       virtual void preCommit(RenderContext &ctx) override;
       virtual void postCommit(RenderContext &ctx) override;
 
-      OSPModel ospModel {nullptr};
+      OSPModel ospModel();
+
+    protected:
+
       std::shared_ptr<sg::World> oldWorld;
-      OSPModel oldModel{nullptr};
+      OSPModel stashedModel{nullptr};
     };
 
     /*! a world node */
     struct OSPSG_INTERFACE World : public sg::Renderable
     {
-      World() = default;
+      World();
       virtual ~World() = default;
 
       /*! \brief returns a std::string with the c++ name of this class */
@@ -63,9 +65,12 @@ namespace ospray {
       virtual void preRender(RenderContext &ctx) override;
       virtual void postRender(RenderContext &ctx) override;
 
-      OSPModel ospModel {nullptr};
+      OSPModel ospModel();
+
+    protected:
+
       std::shared_ptr<sg::World> oldWorld;
-      OSPModel oldModel{nullptr};
+      OSPModel stashedModel{nullptr};
     };
 
 

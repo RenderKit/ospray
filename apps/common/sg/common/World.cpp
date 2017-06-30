@@ -21,7 +21,7 @@ namespace ospray {
 
     Model::Model()
     {
-      setValue((OSPObject)nullptr);
+      setValue((OSPObject)ospNewModel());
     }
 
     std::string Model::toString() const
@@ -41,27 +41,39 @@ namespace ospray {
 
     void Model::preCommit(RenderContext &ctx)
     {
-      oldModel = ctx.currentOSPModel;
+      stashedModel = ctx.currentOSPModel;
 
-      if (ospModel)
-        ospRelease(ospModel);
-      ospModel = ospNewModel();
-      setValue((OSPObject)ospModel);
-      ctx.currentOSPModel = ospModel;
+      auto model = ospModel();
+      if (model)
+        ospRelease(model);
+      model = ospNewModel();
+      setValue((OSPObject)model);
+      ctx.currentOSPModel = model;
     }
 
     void Model::postCommit(RenderContext &ctx)
     {
-        ctx.currentOSPModel = ospModel;
+      auto model = ospModel();
+      ctx.currentOSPModel = model;
 
-        //instancegroup caches render calls in commit.
-        for (auto child : properties.children)
-          child.second->traverse(ctx, "render");
+      //instancegroup caches render calls in commit.
+      for (auto child : properties.children)
+        child.second->traverse(ctx, "render");
 
-        ospCommit(ospModel);
+      ospCommit(model);
 
-        ctx.currentOSPModel = oldModel;
+      ctx.currentOSPModel = stashedModel;
       child("bounds").setValue(computeBounds());
+    }
+
+    OSPModel Model::ospModel()
+    {
+      return (OSPModel)valueAs<OSPObject>();
+    }
+
+    World::World()
+    {
+      setValue((OSPObject)ospNewModel());
     }
 
     std::string World::toString() const
@@ -83,13 +95,14 @@ namespace ospray {
     {
       oldWorld = ctx.world;
       ctx.world = this->nodeAs<sg::World>();
-      if (ospModel)
-        ospRelease(ospModel);
-      ospModel = ospNewModel();
-      ospCommit(ospModel);
-      setValue((OSPObject)ospModel);
-      oldModel = ctx.currentOSPModel;
-      ctx.currentOSPModel = ospModel;
+      auto model = ospModel();
+      if (model)
+        ospRelease(model);
+      model = ospNewModel();
+      ospCommit(model);
+      setValue((OSPObject)model);
+      stashedModel = ctx.currentOSPModel;
+      ctx.currentOSPModel = model;
     }
 
     void World::postCommit(RenderContext &ctx)
@@ -97,9 +110,9 @@ namespace ospray {
       //cache render operation
       for (auto child : properties.children)
         child.second->traverse(ctx, "render");
-      ospCommit(ospModel);
+      ospCommit(ospModel());
       ctx.world = oldWorld;
-      ctx.currentOSPModel = oldModel;
+      ctx.currentOSPModel = stashedModel;
       child("bounds").setValue(computeBounds());
     }
 
@@ -111,6 +124,11 @@ namespace ospray {
     void World::postRender(RenderContext &ctx)
     {
       // renders are cached in commit
+    }
+
+    OSPModel World::ospModel()
+    {
+      return (OSPModel)valueAs<OSPObject>();
     }
 
     Instance::Instance()
@@ -197,9 +215,9 @@ namespace ospray {
     void Instance::postRender(RenderContext &ctx)
     {
       if (instanced && child("visible").value() == true
-        && ctx.world && ctx.world->ospModel && ospInstance)
+        && ctx.world && ctx.world->ospModel() && ospInstance)
       {
-        ospAddGeometry(ctx.world->ospModel,ospInstance);
+        ospAddGeometry(ctx.world->ospModel(), ospInstance);
       }
       ctx.currentTransform = oldTransform;
     }

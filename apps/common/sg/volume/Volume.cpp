@@ -143,10 +143,10 @@ namespace ospray {
     void Volume::preRender(RenderContext &ctx)
     {
       if (volume) {
-        ospAddVolume(ctx.world->ospModel,volume);
+        ospAddVolume(ctx.world->ospModel(), volume);
         if (child("isosurfaceEnabled").valueAs<bool>() == true
             && isosurfacesGeometry)
-          ospAddGeometry(ctx.world->ospModel, isosurfacesGeometry);
+          ospAddGeometry(ctx.world->ospModel(), isosurfacesGeometry);
       }
     }
 
@@ -254,7 +254,7 @@ namespace ospray {
         ospCommit(volume);
         if (child("isosurfaceEnabled").valueAs<bool>() == true
             && isosurfacesGeometry) {
-          OSPData isovaluesData = ospNewData(1, OSP_FLOAT, 
+          OSPData isovaluesData = ospNewData(1, OSP_FLOAT,
             &child("isosurface").valueAs<float>());
           ospSetData(isosurfacesGeometry, "isovalues", isovaluesData);
           ospCommit(isosurfacesGeometry);
@@ -425,7 +425,7 @@ namespace ospray {
         ospCommit(volume);
         if (child("isosurfaceEnabled").valueAs<bool>() == true
             && isosurfacesGeometry) {
-          OSPData isovaluesData = ospNewData(1, OSP_FLOAT, 
+          OSPData isovaluesData = ospNewData(1, OSP_FLOAT,
             &child("isosurface").valueAs<float>());
           ospSetData(isosurfacesGeometry, "isovalues", isovaluesData);
           ospCommit(isosurfacesGeometry);
