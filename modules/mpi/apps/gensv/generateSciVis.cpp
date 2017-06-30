@@ -54,7 +54,7 @@ namespace gensv {
       axis = (axis + 1) % 3;
     }
     if (num != 1) {
-      grid[axis] = num;
+      grid[axis] *= num;
     }
     return grid;
   }
