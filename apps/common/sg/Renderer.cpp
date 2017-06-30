@@ -23,12 +23,12 @@ namespace ospray {
 
     Renderer::Renderer()
     {
-      createChild("rendererType", "string", std::string("raycast"),
-                      NodeFlags::required |
-                      NodeFlags::valid_whitelist |
-                      NodeFlags::gui_combo,
-                      "scivis: standard whitted style ray tracer. "
-                      "pathtracer/pt: photo-realistic path tracer");
+      createChild("rendererType", "string", std::string("scivis"),
+                  NodeFlags::required |
+                  NodeFlags::valid_whitelist |
+                  NodeFlags::gui_combo,
+                  "scivis: standard whitted style ray tracer. "
+                  "pathtracer/pt: photo-realistic path tracer");
       child("rendererType").setWhiteList({std::string("scivis"),
                                           std::string("sv"),
                                           std::string("raytracer"),
