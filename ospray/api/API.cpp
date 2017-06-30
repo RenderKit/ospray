@@ -67,7 +67,7 @@ inline std::string toString(OSPObject obj)
   });
 
 #define OSPRAY_CATCH_END(a)                                                   \
-  } catch (const std::bad_alloc &e) {                                         \
+  } catch (const std::bad_alloc &) {                                          \
     handleError(OSP_OUT_OF_MEMORY, "OSPRay was unable to allocate memory");   \
     return a;                                                                 \
   } catch (const std::runtime_error &e) {                                     \
