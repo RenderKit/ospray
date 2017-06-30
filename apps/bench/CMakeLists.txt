@@ -14,8 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-ADD_DEFINITIONS(-DPICO_BENCH_NO_DECLVAL)
-
 OSPRAY_CREATE_APPLICATION(ospBenchmark
   bench.cpp
 LINK

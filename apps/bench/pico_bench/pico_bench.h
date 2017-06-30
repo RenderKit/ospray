@@ -145,17 +145,10 @@ public:
 	Benchmarker(const size_t max_iter) : MAX_ITER(max_iter), MAX_RUNTIME(0)
 	{}
 
-#ifndef PICO_BENCH_NO_DECLVAL
+#ifdef PICO_BENCH_NO_DECLVAL
 	template<typename Fn>
-	typename std::enable_if<std::is_void<decltype(std::declval<Fn>()())>::value, stats_type>::type
-	operator()(Fn fn) const {
-		return (*this)(BenchWrapper<Fn>{fn});
-	}
-
-	template<typename Fn>
-	typename std::enable_if<std::is_same<decltype(std::declval<Fn>()()), T>::value,
-		stats_type>::type
-	operator()(Fn fn) const {
+	stats_type operator()(Fn _fn) const {
+		BenchWrapper<Fn> fn{_fn};
 		// Do a single un-timed warm up run
 		fn();
 		T elapsed{0};
@@ -169,8 +162,15 @@ public:
 	}
 #else
 	template<typename Fn>
-	stats_type operator()(Fn _fn) const {
-		BenchWrapper<Fn> fn{_fn};
+	typename std::enable_if<std::is_void<decltype(std::declval<Fn>()())>::value, stats_type>::type
+	operator()(Fn fn) const {
+		return (*this)(BenchWrapper<Fn>{fn});
+	}
+
+	template<typename Fn>
+	typename std::enable_if<std::is_same<decltype(std::declval<Fn>()()), T>::value,
+		stats_type>::type
+	operator()(Fn fn) const {
 		// Do a single un-timed warm up run
 		fn();
 		T elapsed{0};

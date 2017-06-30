@@ -212,8 +212,7 @@ void addPlaneToScene(sg::Node& world)
   auto &plane = world.createChild("plane", "Instance");
   auto &mesh  = plane.child("model").createChild("mesh", "TriangleMesh");
 
-  std::shared_ptr<sg::TriangleMesh> sg_plane =
-    std::static_pointer_cast<sg::TriangleMesh>(mesh.shared_from_this());
+  auto sg_plane = mesh.nodeAs<sg::TriangleMesh>();
   sg_plane->vertex = position;
   sg_plane->index = index;
   auto &planeMaterial = mesh["material"];

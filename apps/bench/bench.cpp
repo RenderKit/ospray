@@ -34,8 +34,9 @@ inline void outputStats(const T &stats)
 #include "ospcommon/utility/SaveImage.h"
 
 #include "common/sg/importer/Importer.h"
-#include "common/sg/SceneGraph.h"
 #include "common/sg/Renderer.h"
+#include "sg/common/FrameBuffer.h"
+#include "common/sg/SceneGraph.h"
 
 namespace ospray {
 
@@ -43,6 +44,7 @@ namespace ospray {
 
   void printUsageAndExit()
   {
+    std::cout << "TODO: usage description..." << std::endl;
     exit(0);
   }
 
@@ -77,9 +79,8 @@ namespace ospray {
 
   void parseCommandLine(int argc, const char *argv[])
   {
-    if (argc <= 1) {
+    if (argc <= 1)
       printUsageAndExit();
-    }
 
     for (int i = 1; i < argc; ++i) {
       std::string arg = argv[i];
@@ -115,7 +116,6 @@ namespace ospray {
 
     renderer["shadowsEnabled"].setValue(true);
     renderer["aoSamples"].setValue(1);
-    renderer["camera"]["fovy"].setValue(60.f);
 
     auto &lights = renderer["lights"];
 
@@ -147,14 +147,51 @@ namespace ospray {
       }
     }
 
+    auto &sgFB = renderer.child("frameBuffer");
+
+    auto &size = sgFB["size"];
+    size.setValue(vec2i(width, height));
+
+    renderer.traverse("verify");
+    renderer.traverse("commit");
+
+    // Setup camera ///////////////////////////////////////////////////////////
+
+    auto bbox = world.bounds();
+
+    vec3f center = ospcommon::center(bbox);
+    vec3f diag   = bbox.size();
+    diag         = max(diag,vec3f(0.3f*length(diag)));
+    vec3f from   = center - .75f*vec3f(-.6*diag.x,-1.2f*diag.y,.8f*diag.z);
+    vec3f dir    = center - from;
+    vec3f up     = vec3f(0.f, 1.f, 0.f);
+
+    auto &camera = renderer["camera"];
+    camera["fovy"].setValue(60.f);
+    camera["pos"].setValue(from);
+    camera["dir"].setValue(dir);
+    camera["up"].setValue(up);
+
+    renderer.traverse("commit");
+    renderer.traverse("render");
+
     // Run benchmark //////////////////////////////////////////////////////////
 
     auto benchmarker = pico_bench::Benchmarker<milliseconds>{numBenchFrames};
 
     auto stats = benchmarker([&]() {
-      //TODO
-      return milliseconds{500};// NOTE(jda) - this getting ignored?
+      renderer.traverse("render");
+      // TODO: measure just ospRenderFrame() time from within ospray_sg
+      // return milliseconds{500};
     });
+
+    // Print results //////////////////////////////////////////////////////////
+
+    auto sgFBptr = sgFB.nodeAs<sg::FrameBuffer>();
+
+    auto *srcPB = (uint32_t*)sgFBptr->map();
+    utility::writePPM("ospbenchmark.ppm", width, height, srcPB);
+    sgFBptr->unmap(srcPB);
 
     outputStats(stats);
 

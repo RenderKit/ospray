@@ -96,6 +96,9 @@ namespace ospray {
         but don't do anything else to the node(s) */
       virtual void serialize(sg::Serialization::State &state);
 
+      template <typename T>
+      std::shared_ptr<T> nodeAs();
+
       // Properties ///////////////////////////////////////////////////////////
 
       std::string name()          const;
@@ -245,6 +248,15 @@ namespace ospray {
     };
 
     // Inlined Node definitions ///////////////////////////////////////////////
+
+    template <typename T>
+    inline std::shared_ptr<T> Node::nodeAs()
+    {
+      static_assert(std::is_base_of<Node, T>::value,
+                    "Can only use nodeAs<T> to cast to an ospray::sg::Node"
+                    " type! 'T' must be a child of ospray::sg::Node!");
+      return std::static_pointer_cast<T>(shared_from_this());
+    }
 
     //! just for convenience; add a typed 'setParam' function
     template<typename T>
@@ -432,7 +444,7 @@ namespace ospray {
                                const std::string& operation, bool& traverseChildren) override;
       virtual void postTraverse(RenderContext &ctx,
                                 const std::string& operation) override;
-      virtual void postCommit(RenderContext &ctx) override { 
+      virtual void postCommit(RenderContext &ctx) override {
         child("bounds").setValue(computeBounds()); }
       virtual void preRender(RenderContext &ctx)  {}
       virtual void postRender(RenderContext &ctx) {}
