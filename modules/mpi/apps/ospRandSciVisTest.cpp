@@ -56,6 +56,10 @@
  * avoid any artifacts. For example, if a sphere center is on the border
  * between two nodes, each would render half the sphere and the halves
  * would be composited to produce the final complete sphere in the image.
+ *
+ * See gensv::makeVolume for an example of how to properly load a volume
+ * distributed across ranks with correct specification of brick positions
+ * and ghost voxels.
  */
 
 namespace ospRandSciVisTest {

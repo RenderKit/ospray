@@ -32,7 +32,7 @@
 #include "gensv/generateSciVis.h"
 
 /* This app demonstrates how to write a distributed scivis style
- * renderer using the distributed MPI device. Note that because
+ * batch renderer using the distributed MPI device. Note that because
  * OSPRay uses sort-last compositing it is up to the user to ensure
  * that the data distribution across the nodes is suitable. Specifically,
  * each nodes' data must be convex and disjoint. This renderer only
@@ -53,8 +53,9 @@
  * between two nodes, each would render half the sphere and the halves
  * would be composited to produce the final complete sphere in the image.
  *
- * NOTE: This example doesn't set ghost regions to interpolate properly
- * at the edges of each brick, so some artifacts at the borders may appear.
+ * See gensv::loadVolume for an example of how to properly load a volume
+ * distributed across ranks with correct specification of brick positions
+ * and ghost voxels.
  */
 
 namespace ospDDLoader {

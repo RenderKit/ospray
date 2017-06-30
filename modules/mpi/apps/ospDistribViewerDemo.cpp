@@ -16,6 +16,34 @@
 #include <ospray/ospray_cpp/Model.h>
 #include "gensv/generateSciVis.h"
 
+/* This app demonstrates how to write an distributed scivis style
+ * interactive renderer using the distributed MPI device. Note that because
+ * OSPRay uses sort-last compositing it is up to the user to ensure
+ * that the data distribution across the nodes is suitable. Specifically,
+ * each nodes' data must be convex and disjoint. This renderer only
+ * supports multiple volumes and geometries per-node, to ensure they're
+ * composited correctly you specify a list of bounding regions to the
+ * model, within these regions can be arbitrary volumes/geometries
+ * and each rank can have as many regions as needed. As long as the
+ * regions are disjoint/convex the data will be rendered correctly.
+ * In this example we set two regions on certain ranks just to produce
+ * a gap in the ranks volume to demonstrate how they work.
+ *
+ * In the case that you have geometry crossing the boundary of nodes
+ * and are replicating it on both nodes to render (ghost zones, etc.)
+ * the region will be used by the renderer to clip rays against allowing
+ * to split the object between the two nodes, with each rendering half.
+ * This will keep the regions rendered by each rank disjoint and thus
+ * avoid any artifacts. For example, if a sphere center is on the border
+ * between two nodes, each would render half the sphere and the halves
+ * would be composited to produce the final complete sphere in the image.
+ *
+ * See gensv::loadVolume for an example of how to properly load a volume
+ * distributed across ranks with correct specification of brick positions
+ * and ghost voxels. If no volume file data is passed a volume will be
+ * generated instead, in that case see gensv::makeVolume.
+ */
+
 using namespace ospray::cpp;
 using namespace ospcommon;
 
