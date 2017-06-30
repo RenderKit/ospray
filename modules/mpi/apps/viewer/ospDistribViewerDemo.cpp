@@ -127,6 +127,12 @@ void framebufferSizeCallback(GLFWwindow *window, int width, int height) {
   state->app.fbSize = vec2i(width, height);
   state->app.fbSizeChanged = true;
 }
+void charCallback(GLFWwindow *window, unsigned int c) {
+  ImGuiIO& io = ImGui::GetIO();
+  if (c > 0 && c < 0x10000) {
+    io.AddInputCharacter((unsigned short)c);
+  }
+}
 
 int main(int argc, char **argv) {
   std::string volumeFile, dtype;
@@ -267,8 +273,12 @@ int main(int argc, char **argv) {
 
     glfwSetMouseButtonCallback(window, ImGui_ImplGlfwGL3_MouseButtonCallback);
     glfwSetScrollCallback(window, ImGui_ImplGlfwGL3_ScrollCallback);
+    glfwSetCharCallback(window, charCallback);
   }
 
+  const size_t tfcnSamples = 128;
+  std::vector<vec3f> tfcnColors(tfcnSamples, vec3f(0));
+  std::vector<float> tfcnAlphas(tfcnSamples, 0.f);
   while (!app.quit) {
     if (app.cameraChanged) {
       camera.set("pos", app.v[0]);
@@ -298,26 +308,13 @@ int main(int argc, char **argv) {
         app.quit = true;
       }
 
-      const size_t samples = 16;
-      std::vector<vec3f> ospColors(samples, vec3f(0));
-      std::vector<vec2f> ospAlpha(samples, vec2f(0));
-      // TODO: When the transfer functon changes, we need to notify everyone
-      // else and BCast out the new values
-      if (tfnWidget->getColorMap(ospColors, ospAlpha)) {
-        std::vector<float> alphas(samples, 0.f);
-        std::transform(ospAlpha.begin(), ospAlpha.end(), alphas.begin(),
+      std::vector<vec2f> ospAlpha(tfcnSamples, vec2f(0));
+      if (tfnWidget->getColorMap(tfcnColors, ospAlpha)) {
+        std::transform(ospAlpha.begin(), ospAlpha.end(), tfcnAlphas.begin(),
             [](const vec2f &a) { return a.y; });
-
-        Data colorData(ospColors.size(), OSP_FLOAT3, ospColors.data());
-        Data alphaData(ospAlpha.size(), OSP_FLOAT, alphas.data());
-        colorData.commit();
-        alphaData.commit();
-
-        volume.tfcn.set("colors", colorData);
-        volume.tfcn.set("opacities", alphaData);
-        volume.tfcn.commit();
+        app.tfcnChanged = true;
       }
-
+      // Now update the displayed widget and unset the modified flag
       tfnWidget->render();
 
       const vec3f eye = windowState->camera.eyePos();
@@ -344,6 +341,24 @@ int main(int argc, char **argv) {
       if (rank == 0) {
         glViewport(0, 0, app.fbSize.x, app.fbSize.y);
       }
+    }
+    if (app.tfcnChanged) {
+      MPI_Bcast(tfcnColors.data(), sizeof(vec3f) * tfcnSamples, MPI_BYTE,
+                0, MPI_COMM_WORLD);
+      MPI_Bcast(tfcnAlphas.data(), sizeof(float) * tfcnSamples, MPI_BYTE,
+                0, MPI_COMM_WORLD);
+
+      Data colorData(tfcnColors.size(), OSP_FLOAT3, tfcnColors.data());
+      Data alphaData(tfcnAlphas.size(), OSP_FLOAT, tfcnAlphas.data());
+      colorData.commit();
+      alphaData.commit();
+
+      volume.tfcn.set("colors", colorData);
+      volume.tfcn.set("opacities", alphaData);
+      volume.tfcn.commit();
+
+      fb.clear(OSP_FB_COLOR | OSP_FB_ACCUM);
+      app.tfcnChanged = false;
     }
   }
   if (rank == 0) {
