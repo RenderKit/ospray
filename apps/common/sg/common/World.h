@@ -30,7 +30,7 @@ namespace ospray {
       virtual std::string toString() const override;
 
       //commit caches renders.  It will render children during commit, and add
-         //cached rendered children during render call.
+      //cached rendered children during render call.
       virtual void traverse(RenderContext &ctx,
                             const std::string& operation) override;
       virtual void preCommit(RenderContext &ctx) override;

@@ -178,16 +178,18 @@ namespace ospray {
 
       //! just for convenience; add a typed 'setParam' function
       template<typename T>
-      void createChildWithValue(const std::string &name, const std::string& type, const T &t);
+      Node& createChildWithValue(const std::string &name,
+                                 const std::string& type,
+                                 const T &t);
 
       Node& createChild(std::string name,
-                            std::string type = "Node",
-                            SGVar var = SGVar(),
-                            int flags = sg::NodeFlags::none,
-                            std::string documentation="");
+                        std::string type = "Node",
+                        SGVar var = SGVar(),
+                        int flags = sg::NodeFlags::none,
+                        std::string documentation="");
 
       void setChild(const std::string &name,
-                        const std::shared_ptr<Node> &node);
+                    const std::shared_ptr<Node> &node);
 
       // Parent //
 
@@ -260,16 +262,22 @@ namespace ospray {
 
     //! just for convenience; add a typed 'setParam' function
     template<typename T>
-    inline void Node::createChildWithValue(const std::string &name, const std::string& type, const T &t)
+    inline Node &Node::createChildWithValue(const std::string &name,
+                                            const std::string& type,
+                                            const T &t)
     {
-      if (hasChild(name))
-        child(name).setValue(t);
+      if (hasChild(name)) {
+        auto &c = child(name);
+        c.setValue(t);
+        return c;
+      }
       else {
         auto node = std::make_shared<Node>();
         node->setType(type);
         node->setValue(t);
         node->setName(name);
         add(node);
+        return *node;
       }
     }
 

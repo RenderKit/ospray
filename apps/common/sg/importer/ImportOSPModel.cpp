@@ -19,10 +19,60 @@
 namespace ospray {
   namespace sg {
 
-    void importOSPModel(Node &world, OSPModel model, ospcommon::box3f bbox)
+    struct ImportedModel : public sg::Model
     {
-      PRINT(world.toString());
-      //world.setValue(model);
+      ImportedModel();
+      virtual ~ImportedModel() = default;
+      virtual std::string toString() const override;
+
+      virtual void preCommit(RenderContext &ctx) override;
+      virtual void postCommit(RenderContext &ctx) override;
+
+      // Data //
+
+      ospcommon::box3f bbox;
+    };
+
+    ImportedModel::ImportedModel()
+    {
+      setValue((OSPObject)nullptr);
+    }
+
+    std::string ImportedModel::toString() const
+    {
+      return "ospray::sg::ImportedModel";
+    }
+
+    void ImportedModel::preCommit(RenderContext &ctx)
+    {
+      stashedModel = ctx.currentOSPModel;
+      ctx.currentOSPModel = ospModel();
+    }
+
+    void ImportedModel::postCommit(RenderContext &ctx)
+    {
+      ctx.currentOSPModel = stashedModel;
+    }
+
+    OSP_REGISTER_SG_NODE(ImportedModel);
+
+    void importOSPModel(Node &world, OSPModel model,
+                        const ospcommon::box3f &bbox)
+    {
+      ospCommit(model);
+
+      auto instanceNode = createNode("appModel_instance", "Instance");
+
+      auto modelNodePtr = createNode("appModel", "ImportedModel");
+      auto &modelNode = *modelNodePtr;
+
+      modelNode.setValue((OSPObject)model);
+      modelNode["bounds"].setValue(bbox);
+
+      instanceNode->setChild("model", modelNodePtr);
+      modelNode.setParent(instanceNode);
+
+      world.add(instanceNode);
     }
 
   } // ::ospray::sg

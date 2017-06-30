@@ -83,7 +83,8 @@ namespace ospray {
                     const FileName &fileName);
 
     /*! create a world from an already existing OSPModel */
-    void importOSPModel(Node &world, OSPModel model, ospcommon::box3f bbox);
+    void importOSPModel(Node &world, OSPModel model,
+                        const ospcommon::box3f &bbox);
 
   } // ::ospray::sg
 } // ::ospray

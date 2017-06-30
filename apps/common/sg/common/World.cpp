@@ -46,8 +46,8 @@ namespace ospray {
         ospRelease(model);
       model = ospNewModel();
       setValue((OSPObject)model);
-      ctx.currentOSPModel = model;
       stashedModel = ctx.currentOSPModel;
+      ctx.currentOSPModel = model;
     }
 
     void Model::postCommit(RenderContext &ctx)

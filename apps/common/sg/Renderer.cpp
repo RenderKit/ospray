@@ -23,7 +23,7 @@ namespace ospray {
 
     Renderer::Renderer()
     {
-      createChild("rendererType", "string", std::string("scivis"),
+      createChild("rendererType", "string", std::string("raycast"),
                       NodeFlags::required |
                       NodeFlags::valid_whitelist |
                       NodeFlags::gui_combo,
@@ -40,6 +40,7 @@ namespace ospray {
                                           std::string("ao8"),
                                           std::string("ao16"),
                                           std::string("dvr"),
+                                          std::string("raycast"),
                                           std::string("pathtracer"),
                                           std::string("pt")});
       createChild("world",
