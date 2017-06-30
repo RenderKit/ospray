@@ -160,7 +160,9 @@ namespace ospDDLoader {
     initialize_ospray();
 
     ospray::cpp::Model model;
-    auto volume = gensv::loadVolume(volumeFile, dimensions, dtype, valueRange);
+    vec3f ghostGridOrigin;
+    auto volume = gensv::loadVolume(volumeFile, dimensions, dtype, valueRange,
+                                    ghostGridOrigin);
     model.addVolume(volume.first);
 
     // We must use the global world bounds, not our local bounds
