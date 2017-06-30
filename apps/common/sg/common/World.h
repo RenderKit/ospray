@@ -26,6 +26,7 @@ namespace ospray {
     struct OSPSG_INTERFACE Model : public sg::Renderable
     {
       Model();
+      virtual ~Model() = default;
       virtual std::string toString() const override;
 
       //commit caches renders.  It will render children during commit, and add
@@ -39,38 +40,24 @@ namespace ospray {
 
     protected:
 
-      std::shared_ptr<sg::World> oldWorld;
       OSPModel stashedModel{nullptr};
     };
 
     /*! a world node */
-    struct OSPSG_INTERFACE World : public sg::Renderable
+    struct OSPSG_INTERFACE World : public Model
     {
-      World();
+      World() = default;
       virtual ~World() = default;
 
       /*! \brief returns a std::string with the c++ name of this class */
       virtual std::string toString() const override;
 
-      /*! \brief return bounding box in world coordinates.
-
-        This function can be used by the viewer(s) for calibrating
-        camera motion, setting default camera position, etc. Nodes
-        for which that does not apply can simpy return
-        box3f(embree::empty) */
-      virtual void traverse(RenderContext &ctx,
-                            const std::string& operation) override;
       virtual void preCommit(RenderContext &ctx) override;
       virtual void postCommit(RenderContext &ctx) override;
-      virtual void preRender(RenderContext &ctx) override;
-      virtual void postRender(RenderContext &ctx) override;
-
-      OSPModel ospModel();
 
     protected:
 
-      std::shared_ptr<sg::World> oldWorld;
-      OSPModel stashedModel{nullptr};
+      std::shared_ptr<sg::World> stashedWorld;
     };
 
 

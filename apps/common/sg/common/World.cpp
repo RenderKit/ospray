@@ -71,29 +71,14 @@ namespace ospray {
       return (OSPModel)valueAs<OSPObject>();
     }
 
-    World::World()
-    {
-      setValue((OSPObject)ospNewModel());
-    }
-
     std::string World::toString() const
     {
       return "ospray::sg::World";
     }
 
-    void World::traverse(RenderContext &ctx, const std::string& operation)
-    {
-      if (operation == "render") {
-        preRender(ctx);
-        postRender(ctx);
-      }
-      else
-        Node::traverse(ctx,operation);
-    }
-
     void World::preCommit(RenderContext &ctx)
     {
-      oldWorld = ctx.world;
+      stashedWorld = ctx.world;
       ctx.world = this->nodeAs<sg::World>();
       auto model = ospModel();
       if (model)
@@ -111,24 +96,9 @@ namespace ospray {
       for (auto child : properties.children)
         child.second->traverse(ctx, "render");
       ospCommit(ospModel());
-      ctx.world = oldWorld;
+      ctx.world = stashedWorld;
       ctx.currentOSPModel = stashedModel;
       child("bounds").setValue(computeBounds());
-    }
-
-    void World::preRender(RenderContext &ctx)
-    {
-      // renders are cached in commit
-    }
-
-    void World::postRender(RenderContext &ctx)
-    {
-      // renders are cached in commit
-    }
-
-    OSPModel World::ospModel()
-    {
-      return (OSPModel)valueAs<OSPObject>();
     }
 
     Instance::Instance()
@@ -137,10 +107,10 @@ namespace ospray {
       createChild("visible", "bool", true);
       createChild("position", "vec3f");
       createChild("rotation", "vec3f", vec3f(0),
-                     NodeFlags::required      |
-                     NodeFlags::valid_min_max |
-                     NodeFlags::gui_slider).setMinMax(-vec3f(2*3.15f),
-                                                      vec3f(2*3.15f));
+                  NodeFlags::required      |
+                  NodeFlags::valid_min_max |
+                  NodeFlags::gui_slider).setMinMax(-vec3f(2*3.15f),
+                                                    vec3f(2*3.15f));
       createChild("scale", "vec3f", vec3f(1.f));
       createChild("model", "Model");
     }
