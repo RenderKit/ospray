@@ -28,6 +28,15 @@ namespace gensv {
   ospray::cpp::Geometry makeSpheres(const box3f &bbox, const size_t numSpheres,
                                     const float sphereRadius);
 
+  struct LoadedVolume {
+    ospray::cpp::Volume volume;
+    ospray::cpp::TransferFunction tfcn;
+    box3f bounds;
+    vec3f ghostGridOrigin;
+
+    LoadedVolume();
+  };
+
   /* Generate this rank's volume data. The volumes are placed in
    * cells of the grid computed in 'computeGrid' based on the number
    * of ranks with each rank owning a specific cell in the gridding.
@@ -38,7 +47,7 @@ namespace gensv {
    * Returns the ghostGridOrigin of the volume which may be outside the bounding
    * box, due to the ghost voxels.
    */
-  std::pair<ospray::cpp::Volume, box3f> makeVolume(vec3f &ghostGridOrigin);
+  LoadedVolume makeVolume();
 
   /* Load this rank's volume data. The volumes are placed in
    * cells of the grid computed in 'computeGrid' based on the number
@@ -46,8 +55,7 @@ namespace gensv {
    * Returns the ghostGridOrigin of the volume which may be outside the bounding
    * box, due to the ghost voxels.
    */
-  std::pair<ospray::cpp::Volume, box3f> loadVolume(const FileName &file,
-      const vec3i &dimensions, const std::string &dtype,
-      const vec2f &valueRange, vec3f &ghostGridOrigin);
+  LoadedVolume loadVolume(const FileName &file, const vec3i &dimensions,
+                          const std::string &dtype, const vec2f &valueRange);
 }
 

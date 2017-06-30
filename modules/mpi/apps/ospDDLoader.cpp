@@ -160,10 +160,9 @@ namespace ospDDLoader {
     initialize_ospray();
 
     ospray::cpp::Model model;
-    vec3f ghostGridOrigin;
-    auto volume = gensv::loadVolume(volumeFile, dimensions, dtype, valueRange,
-                                    ghostGridOrigin);
-    model.addVolume(volume.first);
+    gensv::LoadedVolume volume = gensv::loadVolume(volumeFile, dimensions,
+                                                   dtype, valueRange);
+    model.addVolume(volume.volume);
 
     // We must use the global world bounds, not our local bounds
     // when computing the automatically picked camera position.
@@ -178,8 +177,7 @@ namespace ospDDLoader {
      * as an OSPData of OSP_FLOAT3 to pass the lower and upper corners of each
      * regions bounding box.
      */
-    std::vector<box3f> regions{volume.second};
-    PRINT(volume.second);
+    std::vector<box3f> regions{volume.bounds};
     ospray::cpp::Data regionData(regions.size() * 2, OSP_FLOAT3,
         regions.data());
     model.set("regions", regionData);

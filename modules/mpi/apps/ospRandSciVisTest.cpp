@@ -151,12 +151,11 @@ namespace ospRandSciVisTest {
     initialize_ospray();
 
     ospray::cpp::Model model;
-    vec3f ghostGridOrigin;
-    auto volume = gensv::makeVolume(ghostGridOrigin);
-    model.addVolume(volume.first);
+    gensv::LoadedVolume volume = gensv::makeVolume();
+    model.addVolume(volume.volume);
 
     // Generate spheres within the bounds of the volume
-    auto spheres = gensv::makeSpheres(volume.second, numSpheresPerNode,
+    auto spheres = gensv::makeSpheres(volume.bounds, numSpheresPerNode,
                                       sphereRadius);
     model.addGeometry(spheres);
 
@@ -176,7 +175,7 @@ namespace ospRandSciVisTest {
      * On some ranks we add some additional regions to clip the volume
      * and make some gaps, just to show usage and test multiple regions per-rank
      */
-    std::vector<box3f> regions{volume.second};
+    std::vector<box3f> regions{volume.bounds};
     bool setGap = false;
     if (mpicommon::numGlobalRanks() % 2 == 0) {
       setGap = mpicommon::globalRank() % 3 == 0;

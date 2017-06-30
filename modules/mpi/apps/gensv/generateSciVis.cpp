@@ -119,6 +119,26 @@ namespace gensv {
     return geom;
   }
 
+  LoadedVolume::LoadedVolume() : volume(nullptr), tfcn("piecewise_linear") {
+    const std::vector<vec3f> colors = {
+      vec3f(0, 0, 0.56),
+      vec3f(0, 0, 1),
+      vec3f(0, 1, 1),
+      vec3f(0.5, 1, 0.5),
+      vec3f(1, 1, 0),
+      vec3f(1, 0, 0),
+      vec3f(0.5, 0, 0)
+    };
+    const std::vector<float> opacities = {0.0001, 1.0};
+    ospray::cpp::Data colorsData(colors.size(), OSP_FLOAT3, colors.data());
+    ospray::cpp::Data opacityData(opacities.size(), OSP_FLOAT, opacities.data());
+    colorsData.commit();
+    opacityData.commit();
+
+    tfcn.set("colors", colorsData);
+    tfcn.set("opacities", opacityData);
+  }
+
   enum GhostFace {
     NEITHER_FACE = 0,
     POS_FACE = 1,
@@ -150,32 +170,13 @@ namespace gensv {
    * overall region bounds and will be the bounding box for the
    * generated geometry as well.
    */
-  std::pair<ospray::cpp::Volume, box3f> makeVolume(vec3f &ghostGridOrigin)
-  {
+  LoadedVolume makeVolume() {
     auto numRanks = static_cast<float>(mpicommon::numGlobalRanks());
     auto myRank   = mpicommon::globalRank();
 
-    ospray::cpp::TransferFunction transferFcn("piecewise_linear");
-    const std::vector<vec3f> colors = {
-      vec3f(0, 0, 0.56),
-      vec3f(0, 0, 1),
-      vec3f(0, 1, 1),
-      vec3f(0.5, 1, 0.5),
-      vec3f(1, 1, 0),
-      vec3f(1, 0, 0),
-      vec3f(0.5, 0, 0)
-    };
-    const std::vector<float> opacities = {0.015, 0.015};
-    ospray::cpp::Data colorsData(colors.size(), OSP_FLOAT3, colors.data());
-    ospray::cpp::Data opacityData(opacities.size(), OSP_FLOAT, opacities.data());
-    colorsData.commit();
-    opacityData.commit();
-
-    const vec2f valueRange(static_cast<float>(0), static_cast<float>(numRanks));
-    transferFcn.set("colors", colorsData);
-    transferFcn.set("opacities", opacityData);
-    transferFcn.set("valueRange", valueRange);
-    transferFcn.commit();
+    LoadedVolume vol;
+    vol.tfcn.set("valueRange", vec2f(0, numRanks - 1));
+    vol.tfcn.commit();
 
     const vec3i volumeDims(128);
     const vec3i grid = computeGrid(numRanks);
@@ -196,24 +197,24 @@ namespace gensv {
     const vec3i ghostOffset(ghosts[0] & NEG_FACE ? 1 : 0,
                                ghosts[1] & NEG_FACE ? 1 : 0,
                                ghosts[2] & NEG_FACE ? 1 : 0);
-    ghostGridOrigin = gridOrigin - vec3f(ghostOffset) * gridSpacing;
+    vol.ghostGridOrigin = gridOrigin - vec3f(ghostOffset) * gridSpacing;
 
-    ospray::cpp::Volume volume("block_bricked_volume");
-    volume.set("voxelType", "uchar");
-    volume.set("dimensions", fullDims);
-    volume.set("transferFunction", transferFcn);
-    volume.set("gridSpacing", gridSpacing);
-    volume.set("gridOrigin", ghostGridOrigin);
+    vol.volume = ospray::cpp::Volume("block_bricked_volume");
+    vol.volume.set("voxelType", "uchar");
+    vol.volume.set("dimensions", fullDims);
+    vol.volume.set("transferFunction", vol.tfcn);
+    vol.volume.set("gridSpacing", gridSpacing);
+    vol.volume.set("gridOrigin", vol.ghostGridOrigin);
 
     std::vector<unsigned char> volumeData(fullDims.x * fullDims.y * fullDims.z, 0);
     for (size_t i = 0; i < volumeData.size(); ++i) {
       volumeData[i] = myRank;
     }
-    volume.setRegion(volumeData.data(), vec3i(0), fullDims);
-    volume.commit();
+    vol.volume.setRegion(volumeData.data(), vec3i(0), fullDims);
+    vol.volume.commit();
 
-    auto bbox = box3f(gridOrigin, gridOrigin + vec3f(1.f) / vec3f(grid));
-    return std::make_pair(volume, bbox);
+    vol.bounds = box3f(gridOrigin, gridOrigin + vec3f(1.f) / vec3f(grid));
+    return vol;
   }
 
   size_t sizeForDtype(const std::string &dtype) {
@@ -228,33 +229,15 @@ namespace gensv {
     }
   }
 
-  std::pair<ospray::cpp::Volume, box3f> loadVolume(const FileName &file,
-      const vec3i &dimensions, const std::string &dtype,
-      const vec2f &valueRange, vec3f &ghostGridOrigin)
+  LoadedVolume loadVolume(const FileName &file, const vec3i &dimensions,
+                          const std::string &dtype, const vec2f &valueRange)
   {
     auto numRanks = static_cast<float>(mpicommon::numGlobalRanks());
     auto myRank   = mpicommon::globalRank();
 
-    ospray::cpp::TransferFunction transferFcn("piecewise_linear");
-    const std::vector<vec3f> colors = {
-      vec3f(0, 0, 0.56),
-      vec3f(0, 0, 1),
-      vec3f(0, 1, 1),
-      vec3f(0.5, 1, 0.5),
-      vec3f(1, 1, 0),
-      vec3f(1, 0, 0),
-      vec3f(0.5, 0, 0)
-    };
-    const std::vector<float> opacities = {0.0001, 1.0};
-    ospray::cpp::Data colorsData(colors.size(), OSP_FLOAT3, colors.data());
-    ospray::cpp::Data opacityData(opacities.size(), OSP_FLOAT, opacities.data());
-    colorsData.commit();
-    opacityData.commit();
-
-    transferFcn.set("colors", colorsData);
-    transferFcn.set("opacities", opacityData);
-    transferFcn.set("valueRange", valueRange);
-    transferFcn.commit();
+    LoadedVolume vol;
+    vol.tfcn.set("valueRange", valueRange);
+    vol.tfcn.commit();
 
     const vec3i grid = computeGrid(numRanks);
     const vec3i brickDims = dimensions / grid;
@@ -275,24 +258,24 @@ namespace gensv {
     const vec3i ghostOffset(ghosts[0] & NEG_FACE ? 1 : 0,
                                ghosts[1] & NEG_FACE ? 1 : 0,
                                ghosts[2] & NEG_FACE ? 1 : 0);
-    ghostGridOrigin = gridOrigin - vec3f(ghostOffset);
+    vol.ghostGridOrigin = gridOrigin - vec3f(ghostOffset);
 
-    ospray::cpp::Volume volume("block_bricked_volume");
-    volume.set("voxelType", dtype.c_str());
-    volume.set("dimensions", fullDims);
-    volume.set("transferFunction", transferFcn);
-    volume.set("gridOrigin", ghostGridOrigin);
+    vol.volume = ospray::cpp::Volume("block_bricked_volume");
+    vol.volume.set("voxelType", dtype.c_str());
+    vol.volume.set("dimensions", fullDims);
+    vol.volume.set("transferFunction", vol.tfcn);
+    vol.volume.set("gridOrigin", vol.ghostGridOrigin);
 
     const size_t dtypeSize = sizeForDtype(dtype);
     std::vector<unsigned char> volumeData(fullDims.x * fullDims.y * fullDims.z * dtypeSize, 0);
 
     RawReader reader(file, dimensions, dtypeSize);
     reader.readRegion(brickId * brickDims - ghostOffset, fullDims, volumeData.data());
-    volume.setRegion(volumeData.data(), vec3i(0), fullDims);
-    volume.commit();
+    vol.volume.setRegion(volumeData.data(), vec3i(0), fullDims);
+    vol.volume.commit();
 
-    auto bbox = box3f(gridOrigin, gridOrigin + vec3f(brickDims));
-    return std::make_pair(volume, bbox);
+    vol.bounds = box3f(gridOrigin, gridOrigin + vec3f(brickDims));
+    return vol;
   }
 
 }

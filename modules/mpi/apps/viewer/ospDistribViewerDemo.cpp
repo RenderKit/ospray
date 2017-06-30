@@ -172,46 +172,42 @@ int main(int argc, char **argv) {
 
   AppState app;
   Model model;
-  std::pair<Volume, box3f> volume(nullptr, box3f());
+  gensv::LoadedVolume volume;
   box3f worldBounds;
   float sphereRadius = 0.005;
   if (!volumeFile.empty()) {
-    vec3f ghostGridOrigin;
-    volume = gensv::loadVolume(volumeFile, dimensions, dtype, valueRange,
-                               ghostGridOrigin);
+    volume = gensv::loadVolume(volumeFile, dimensions, dtype, valueRange);
 
     // Translate the volume to center it
     const vec3f upper = vec3f(dimensions);
     const vec3i halfLength = dimensions / 2;
     worldBounds = box3f(vec3f(-halfLength), vec3f(halfLength));
-    volume.second.lower -= vec3f(halfLength);
-    volume.second.upper -= vec3f(halfLength);
-    volume.first.set("gridOrigin", ghostGridOrigin - vec3f(halfLength));
+    volume.bounds.lower -= vec3f(halfLength);
+    volume.bounds.upper -= vec3f(halfLength);
+    volume.volume.set("gridOrigin", volume.ghostGridOrigin - vec3f(halfLength));
 
     // Pick a nice sphere radius for a consisten voxel size to
     // sphere size ratio
     sphereRadius *= dimensions.x;
   } else {
-    vec3f ghostGridOrigin;
-    volume = gensv::makeVolume(ghostGridOrigin);
+    volume = gensv::makeVolume();
     // Translate the volume to center it
     worldBounds = box3f(vec3f(-0.5), vec3f(0.5));
-    volume.second.lower -= vec3f(0.5f);
-    volume.second.upper -= vec3f(0.5f);
-    volume.first.set("gridOrigin", ghostGridOrigin - vec3f(0.5f));
+    volume.bounds.lower -= vec3f(0.5f);
+    volume.bounds.upper -= vec3f(0.5f);
+    volume.volume.set("gridOrigin", volume.ghostGridOrigin - vec3f(0.5f));
   }
-  volume.first.commit();
-  model.addVolume(volume.first);
+  volume.volume.commit();
+  model.addVolume(volume.volume);
   if (nSpheres != 0) {
-    auto spheres = gensv::makeSpheres(volume.second, nSpheres, sphereRadius);
+    auto spheres = gensv::makeSpheres(volume.bounds, nSpheres, sphereRadius);
     model.addGeometry(spheres);
   }
 
   Arcball arcballCamera(worldBounds);
 
-  std::vector<box3f> regions{volume.second};
-  ospray::cpp::Data regionData(regions.size() * 2, OSP_FLOAT3,
-      regions.data());
+  std::vector<box3f> regions{volume.bounds};
+  ospray::cpp::Data regionData(regions.size() * 2, OSP_FLOAT3, regions.data());
   model.set("regions", regionData);
 
   model.commit();
@@ -237,7 +233,6 @@ int main(int argc, char **argv) {
 
   mpicommon::world.barrier();
 
-  TransferFunction ospTfcn;
   std::shared_ptr<ospray::TransferFunction> tfnWidget;
   std::shared_ptr<WindowState> windowState;
   GLFWwindow *window = nullptr;
@@ -254,7 +249,7 @@ int main(int argc, char **argv) {
     glfwMakeContextCurrent(window);
 
     windowState = std::make_shared<WindowState>(app, arcballCamera);
-    tfnWidget = std::make_shared<ospray::TransferFunction>(ospTfcn);
+    tfnWidget = std::make_shared<ospray::TransferFunction>(nullptr);
 
     ImGui_ImplGlfwGL3_Init(window, false);
 
@@ -294,6 +289,24 @@ int main(int argc, char **argv) {
       glfwPollEvents();
       if (glfwWindowShouldClose(window)) {
         app.quit = true;
+      }
+
+      const size_t samples = 16;
+      std::vector<vec3f> ospColors(samples, vec3f(0));
+      std::vector<vec2f> ospAlpha(samples, vec2f(0));
+      if (tfnWidget->getColorMap(ospColors, ospAlpha)) {
+        std::vector<float> alphas(samples, 0.f);
+        std::transform(ospAlpha.begin(), ospAlpha.end(), alphas.begin(),
+            [](const vec2f &a) { return a.y; });
+                    
+        Data colorData(ospColors.size(), OSP_FLOAT3, ospColors.data());
+        Data alphaData(ospAlpha.size(), OSP_FLOAT, alphas.data());
+        colorData.commit();
+        alphaData.commit();
+
+        volume.tfcn.set("colors", colorData);
+        volume.tfcn.set("opacities", alphaData);
+        volume.tfcn.commit();
       }
 
       tfnWidget->render();
