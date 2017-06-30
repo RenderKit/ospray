@@ -19,6 +19,8 @@
 #include <string>
 #include <stdio.h>
 
+#include "../malloc.h"
+
 namespace ospcommon {
   namespace utility {
 
