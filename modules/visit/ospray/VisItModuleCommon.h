@@ -19,6 +19,8 @@
 #pragma once
 
 #include "fb/Tile.h"
+#include <vector>
+
 // this file will be installed so can expose new functions to the users
 
 namespace ospray {
