@@ -14,46 +14,34 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "sg/camera/PerspectiveCamera.h"
+#include "sg/camera/PanoramicCamera.h"
 
 namespace ospray {
   namespace sg {
 
-    PerspectiveCamera::PerspectiveCamera() 
-      : Camera("perspective")
+    PanoramicCamera::PanoramicCamera()
+      : Camera("panoramic")
     {
       createChild("pos", "vec3f", vec3f(0, -1, 0));
       createChild("dir", "vec3f", vec3f(0, 0, 0),
                        NodeFlags::required | NodeFlags::valid_min_max |
+                       NodeFlags::required | NodeFlags::valid_min_max |
                        NodeFlags::gui_slider).setMinMax(vec3f(-1), vec3f(1));
       createChild("up", "vec3f", vec3f(0, 0, 1),NodeFlags::required);
-      createChild("aspect", "float", 1.f,
-                      NodeFlags::required |
-                      NodeFlags::valid_min_max).setMinMax(1e-31f, 1e31f);
-      createChild("fovy", "float", 60.f,
-                      NodeFlags::required | NodeFlags::valid_min_max |
-                      NodeFlags::gui_slider).setMinMax(.1f, 360.f);
-      createChild("apertureRadius", "float", 0.f,
-                      NodeFlags::valid_min_max).setMinMax(0.f, 1e31f);
-      createChild("focusDistance", "float", 1.f,
-                      NodeFlags::valid_min_max).setMinMax(0.f, 1e31f);
     }
 
-    void PerspectiveCamera::postCommit(RenderContext &ctx)
+    void PanoramicCamera::postCommit(RenderContext &ctx)
     {
       if (!ospCamera) create();
-      
+
       ospSetVec3f(ospCamera,"pos",(const osp::vec3f&)child("pos").valueAs<vec3f>());
       ospSetVec3f(ospCamera,"dir",(const osp::vec3f&)child("dir").valueAs<vec3f>());
       ospSetVec3f(ospCamera,"up",(const osp::vec3f&)child("up").valueAs<vec3f>());
-      ospSetf(ospCamera,"aspect",child("aspect").valueAs<float>());
-      ospSetf(ospCamera,"fovy",child("fovy").valueAs<float>());
-      ospCommit(ospCamera);  
+      ospCommit(ospCamera);
     }
 
-    OSP_REGISTER_SG_NODE(PerspectiveCamera);
-    
+    OSP_REGISTER_SG_NODE(PanoramicCamera);
+
   } // ::ospray::sg
 } // ::ospray
-
 

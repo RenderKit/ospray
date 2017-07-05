@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ospcommon/FileName.h"
 // mpiCommon
 #include "mpiCommon/MPICommon.h"
 // public-ospray
@@ -27,6 +28,15 @@ namespace gensv {
   ospray::cpp::Geometry makeSpheres(const box3f &bbox, const size_t numSpheres,
                                     const float sphereRadius);
 
+  struct LoadedVolume {
+    ospray::cpp::Volume volume;
+    ospray::cpp::TransferFunction tfcn;
+    box3f bounds;
+    vec3f ghostGridOrigin;
+
+    LoadedVolume();
+  };
+
   /* Generate this rank's volume data. The volumes are placed in
    * cells of the grid computed in 'computeGrid' based on the number
    * of ranks with each rank owning a specific cell in the gridding.
@@ -34,7 +44,18 @@ namespace gensv {
    * The region occupied by the volume is then used to be the rank's
    * overall region bounds and will be the bounding box for the
    * generated geometry as well.
+   * Returns the ghostGridOrigin of the volume which may be outside the bounding
+   * box, due to the ghost voxels.
    */
-  std::pair<ospray::cpp::Volume, box3f> makeVolume();
+  LoadedVolume makeVolume();
+
+  /* Load this rank's volume data. The volumes are placed in
+   * cells of the grid computed in 'computeGrid' based on the number
+   * of ranks with each rank owning a specific cell in the gridding.
+   * Returns the ghostGridOrigin of the volume which may be outside the bounding
+   * box, due to the ghost voxels.
+   */
+  LoadedVolume loadVolume(const FileName &file, const vec3i &dimensions,
+                          const std::string &dtype, const vec2f &valueRange);
 }
 

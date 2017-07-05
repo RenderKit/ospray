@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -20,23 +20,20 @@
 #include "ospray/ospray_cpp/Camera.h"
 #include "ospray/ospray_cpp/Data.h"
 #include "ospray/ospray_cpp/Device.h"
-#include "ospray/ospray_cpp/Model.h"
 #include "ospray/ospray_cpp/FrameBuffer.h"
 #include "ospray/ospray_cpp/Renderer.h"
 #include "ospray/ospray_cpp/TransferFunction.h"
 #include "ospray/ospray_cpp/Volume.h"
 // ospray apps
 #include "common/commandline/CameraParser.h"
-// pico_bench
-#include "apps/bench/pico_bench/pico_bench.h"
+#include "widgets/imguiViewer.h"
+#include <tfn_lib/tfn_lib.h>
 // stl
 #include <random>
 #include "gensv/generateSciVis.h"
 
-#define RUN_LOCAL 0
-
 /* This app demonstrates how to write a distributed scivis style
- * renderer using the distributed MPI device. Note that because
+ * batch renderer using the distributed MPI device. Note that because
  * OSPRay uses sort-last compositing it is up to the user to ensure
  * that the data distribution across the nodes is suitable. Specifically,
  * each nodes' data must be convex and disjoint. This renderer only
@@ -57,21 +54,22 @@
  * between two nodes, each would render half the sphere and the halves
  * would be composited to produce the final complete sphere in the image.
  *
- * See gensv::makeVolume for an example of how to properly load a volume
+ * See gensv::loadVolume for an example of how to properly load a volume
  * distributed across ranks with correct specification of brick positions
  * and ghost voxels.
  */
 
-namespace ospRandSciVisTest {
+namespace ospDDLoader {
 
   using namespace ospcommon;
 
-  int   numSpheresPerNode = 100;
-  float sphereRadius      = 0.01f;
+  std::string volumeFile, dtype;
+  vec3i dimensions        = vec3i(-1);
+  vec2f valueRange        = vec2f(-1);
   vec2i fbSize            = vec2i(1024, 768);
   int   numFrames         = 32;
-  bool  runDistributed    = true;
   int   logLevel          = 0;
+  FileName transferFcn;
 
   void setupCamera(ospray::cpp::Camera &camera, box3f worldBounds)
   {
@@ -83,6 +81,7 @@ namespace ospRandSciVisTest {
 
     camera.set("pos", from);
     camera.set("dir", dir);
+    camera.set("up", vec3f(0, 1, 0));
     camera.set("aspect", static_cast<float>(fbSize.x)/fbSize.y);
 
     camera.commit();
@@ -96,16 +95,23 @@ namespace ospRandSciVisTest {
         fbSize.x = std::atoi(av[++i]);
       } else if (arg == "-h") {
         fbSize.y = std::atoi(av[++i]);
-      } else if (arg == "-spn" || arg == "--spheres-per-node") {
-        numSpheresPerNode = std::atoi(av[++i]);
-      } else if (arg == "-r" || arg == "--radius") {
-        sphereRadius = std::atof(av[++i]);
       } else if (arg == "-nf" || arg == "--num-frames") {
         numFrames = std::atoi(av[++i]);
-      } else if (arg == "-l" || arg == "--local") {
-        runDistributed = false;
       } else if (arg == "--log") {
         logLevel = std::atoi(av[++i]);
+      } else if (arg == "-f") {
+        volumeFile = av[++i];
+      } else if (arg == "-dtype") {
+        dtype = av[++i];
+      } else if (arg == "-dims") {
+        dimensions.x = std::atoi(av[++i]);
+        dimensions.y = std::atoi(av[++i]);
+        dimensions.z = std::atoi(av[++i]);
+      } else if (arg == "-range") {
+        valueRange.x = std::atof(av[++i]);
+        valueRange.y = std::atof(av[++i]);
+      } else if (arg == "-tfn") {
+        transferFcn = FileName(av[++i]);
       }
     }
   }
@@ -122,19 +128,12 @@ namespace ospRandSciVisTest {
   {
     ospray::cpp::Device device;
 
-    if (runDistributed) {
-      ospLoadModule("mpi");
-      device = ospray::cpp::Device("mpi_distributed");
-      device.set("masterRank", 0);
-      device.set("logLevel", logLevel);
-      device.commit();
-      device.setCurrent();
-    } else {
-      device = ospray::cpp::Device();
-      device.set("logLevel", logLevel);
-      device.commit();
-      device.setCurrent();
-    }
+    ospLoadModule("mpi");
+    device = ospray::cpp::Device("mpi_distributed");
+    device.set("masterRank", 0);
+    device.set("logLevel", logLevel);
+    device.commit();
+    device.setCurrent();
 
     ospDeviceSetStatusFunc(device.handle(),
                            [](const char *msg) {
@@ -144,24 +143,63 @@ namespace ospRandSciVisTest {
 
   extern "C" int main(int ac, const char **av)
   {
-    using namespace std::chrono;
-
     parseCommandLine(ac, av);
+    if (volumeFile.empty()) {
+      std::cerr << "Error: -f <volume file.raw> is required\n";
+      return 1;
+    }
+    if (dtype.empty()) {
+      std::cerr << "Error: -dtype (uchar|char|float|double) is required\n";
+      return 1;
+    }
+    if (dimensions == vec3i(-1)) {
+      std::cerr << "Error: -dims X Y Z is required to pass volume dims\n";
+      return 1;
+    }
+    if (valueRange == vec2f(-1)) {
+      std::cerr << "Error: -range X Y is required to set transfer function range\n";
+      return 1;
+    }
 
     initialize_ospray();
 
     ospray::cpp::Model model;
-    gensv::LoadedVolume volume = gensv::makeVolume();
-    model.addVolume(volume.volume);
+    gensv::LoadedVolume volume = gensv::loadVolume(volumeFile, dimensions,
+                                                   dtype, valueRange);
 
-    // Generate spheres within the bounds of the volume
-    auto spheres = gensv::makeSpheres(volume.bounds, numSpheresPerNode,
-                                      sphereRadius);
-    model.addGeometry(spheres);
+    if (!transferFcn.str().empty()) {
+      tfn::TransferFunction fcn(transferFcn);
+
+      const size_t opacitySamples = 256;
+      const float stepSize = 1.0 / opacitySamples;
+      std::vector<float> opacities(opacitySamples, 0.f);
+      auto iter = fcn.opacityValues.cbegin();
+      // Re-sample the opacity values
+      for (size_t i = 0; i < opacitySamples; ++i){
+        const float x = stepSize * i;
+        std::array<float, 4> sampleColor;
+        if (x > (iter + 1)->x) {
+          ++iter;
+        }
+        const float t = (x - iter->x) / ((iter + 1)->x - iter->x);
+        opacities[i] = clamp((1.0 - t) * iter->y + t * (iter + 1)->y);
+      }
+
+      ospray::cpp::Data colorData(fcn.rgbValues.size(), OSP_FLOAT3, fcn.rgbValues.data());
+      ospray::cpp::Data opacityData(opacities.size(), OSP_FLOAT, opacities.data());
+      colorData.commit();
+      opacityData.commit();
+
+      volume.tfcn.set("colors", colorData);
+      volume.tfcn.set("opacities", opacityData);
+      volume.tfcn.commit();
+    }
+
+    model.addVolume(volume.volume);
 
     // We must use the global world bounds, not our local bounds
     // when computing the automatically picked camera position.
-    box3f worldBounds(vec3f(0), vec3f(1));
+    box3f worldBounds(vec3f(0), vec3f(dimensions) - vec3f(1));
 
     /* The regions listing specifies the data regions that this rank owns
      * and is responsible for rendering. All volumes and geometry on the rank
@@ -171,25 +209,8 @@ namespace ospRandSciVisTest {
      * split and renders the correct region bounds. The region data is specified
      * as an OSPData of OSP_FLOAT3 to pass the lower and upper corners of each
      * regions bounding box.
-     *
-     * On some ranks we add some additional regions to clip the volume
-     * and make some gaps, just to show usage and test multiple regions per-rank
      */
     std::vector<box3f> regions{volume.bounds};
-    bool setGap = false;
-    if (mpicommon::numGlobalRanks() % 2 == 0) {
-      setGap = mpicommon::globalRank() % 3 == 0;
-    } else  {
-      setGap = mpicommon::globalRank() % 2 == 0;
-    }
-    if (setGap) {
-      const float step = (regions[0].upper.x - regions[0].lower.x) / 4.0;
-      const vec3f low = regions[0].lower;
-      const vec3f hi = regions[0].upper;
-      regions[0].upper.x = low.x + step;
-      regions.push_back(box3f(vec3f(low.x + step * 3, low.y, low.z),
-                                vec3f(low.x + step * 4, hi.y, hi.z)));
-    }
     ospray::cpp::Data regionData(regions.size() * 2, OSP_FLOAT3,
         regions.data());
     model.set("regions", regionData);
@@ -203,12 +224,7 @@ namespace ospRandSciVisTest {
     // In the distributed mode we use the 'mpi_raycast' renderer which
     // knows how to read the region information from the model and render
     // the distributed data.
-    ospray::cpp::Renderer renderer;
-    if (runDistributed) {
-      renderer = ospray::cpp::Renderer("mpi_raycast");
-    } else {
-      renderer = ospray::cpp::Renderer("raycast");
-    }
+    ospray::cpp::Renderer renderer = ospray::cpp::Renderer("mpi_raycast");
     renderer.set("world", model);
     renderer.set("model", model);
     renderer.set("camera", camera);
@@ -218,49 +234,34 @@ namespace ospRandSciVisTest {
     ospray::cpp::FrameBuffer fb(fbSize,OSP_FB_SRGBA,OSP_FB_COLOR|OSP_FB_ACCUM);
     fb.clear(OSP_FB_ACCUM);
 
-    auto bencher = pico_bench::Benchmarker<milliseconds>{numFrames};
 
-    if (runDistributed) {
+    mpicommon::world.barrier();
 
-      if (mpicommon::IamTheMaster()) {
-        std::cout << "Benchmark results will be in (ms)" << '\n';
-        std::cout << "...starting distributed tests" << '\n';
-      }
+    auto frameStartTime = ospcommon::getSysTime();
 
-      mpicommon::world.barrier();
+    for (int i = 0; i < numFrames; ++i) {
+      if (mpicommon::IamTheMaster())
+        std::cout << "rendering frame " << i << std::endl;
 
-      auto stats = bencher([&](){
-        renderer.renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
-      });
-
-      // Only the OSPRay master rank will have the final framebuffer which
-      // can be saved out or displayed to the user, the others only store
-      // the tiles which they composite.
-      if (mpicommon::IamTheMaster()) {
-        std::cout << stats << '\n';
-        auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
-        gensv::writePPM("randomSciVisTestDistributed.ppm", fbSize.x,
-                        fbSize.y, lfb);
-        fb.unmap(lfb);
-        std::cout << "\noutput: 'randomSciVisTestDistributed.ppm'" << std::endl;
-      }
-
-      mpicommon::world.barrier();
-
-    } else {
-
-      std::cout << "Benchmark results will be in (ms)" << '\n';
-      std::cout << "...starting non-distributed tests" << '\n';
-
-      auto stats = bencher([&](){
-        renderer.renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
-      });
-
-      auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
-      gensv::writePPM("randomSciVisTestLocal.ppm", fbSize.x, fbSize.y, lfb);
-      fb.unmap(lfb);
-      std::cout << "\noutput: 'randomSciVisTestLocal.ppm'" << std::endl;
+      renderer.renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
     }
+
+    double seconds = ospcommon::getSysTime() - frameStartTime;
+
+    // Only the OSPRay master rank will have the final framebuffer which
+    // can be saved out or displayed to the user, the others only store
+    // the tiles which they composite.
+    if (mpicommon::IamTheMaster()) {
+      auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
+      gensv::writePPM("ddLoaderTest.ppm", fbSize.x,
+          fbSize.y, lfb);
+      fb.unmap(lfb);
+      std::cout << "\noutput: 'ddLoaderTest.ppm'" << std::endl;
+      std::cout << "\nrendered " << numFrames << " frames at an avg rate of "
+        << numFrames / seconds << " frames per second" << std::endl;
+    }
+
+    mpicommon::world.barrier();
 
     return 0;
   }

@@ -153,12 +153,9 @@ namespace mpicommon {
     case MPI_THREAD_MULTIPLE:
       mpiIsThreaded = true;
       break;
-    case MPI_THREAD_SERIALIZED:
+    default:
       mpiIsThreaded = false;
       break;
-    default:
-      throw std::runtime_error("fatal MPI error: MPI runtime doesn't offer "
-                               "even MPI_THREAD_SERIALIZED ...");
     }
 
     world.comm = MPI_COMM_WORLD;

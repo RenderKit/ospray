@@ -123,7 +123,8 @@ namespace ospray {
 
     void Renderer::preCommit(RenderContext &ctx)
     {
-      if (child("frameBuffer")["size"].lastModified() >
+      if (child("camera").hasChild("aspect") &&
+          child("frameBuffer")["size"].lastModified() >
           child("camera")["aspect"].lastCommitted()) {
         
         child("camera")["aspect"].setValue(

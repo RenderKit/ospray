@@ -262,9 +262,11 @@ namespace ospray {
 
     Node& Node::childRecursive(const std::string &name)
     {
+      std::string lower=name;
+      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
       mutex.lock();
       Node* n = this;
-      auto f = n->properties.children.find(name);
+      auto f = n->properties.children.find(lower);
       if (f != n->properties.children.end()) {
         mutex.unlock();
         return *f->second;
@@ -395,7 +397,16 @@ namespace ospray {
       if (operation == "print") {
         for (int i=0;i<ctx.level;i++)
           std::cout << "  ";
-        std::cout << name() << " : " << type() << "\n";
+        std::cout << name() << " : " << type() << "=\"";
+        if (type() == "string")
+          std::cout << valueAs<std::string>();
+        if (type() == "float")
+          std::cout << valueAs<float>();
+        if (type() == "vec3f")
+          std::cout << valueAs<vec3f>();
+        if (type() == "vec2i")
+          std::cout << valueAs<vec2i>();
+        std::cout << "\"\n";
       } else if (operation == "commit") {
        if (lastModified() >= lastCommitted() ||
                 childrenLastModified() >= lastCommitted())

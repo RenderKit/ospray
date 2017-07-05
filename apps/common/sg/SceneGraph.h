@@ -98,8 +98,10 @@ namespace ospray {
     OSPSG_INTERFACE void importRIVL(std::shared_ptr<Node> world, const std::string &fileName);
     OSPSG_INTERFACE std::shared_ptr<sg::Node> loadOSG(const std::string &fileName);
 
-    OSPSG_INTERFACE void loadOSG(const std::string &fileName,
-                                 std::shared_ptr<sg::Node> world);
+    OSPSG_INTERFACE void loadOSPSG(const std::shared_ptr<Node> &world,
+      const std::string &fileName);
+    OSPSG_INTERFACE void writeOSPSG(const std::shared_ptr<Node> &world,
+      const std::string &fileName);
     /*! @} */
 
   } // ::ospray::sg

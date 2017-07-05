@@ -20,10 +20,9 @@ mkdir build
 cd build
 
 cmake \
-  -DOSPRAY_BUILD_ISA=ALL \
-  -DOSPRAY_MODULE_BILINEAR_PATCH=ON \
-  -DOSPRAY_ENABLE_TESTING=ON \
+  -D OSPRAY_BUILD_ISA=ALL \
+  -D OSPRAY_MODULE_BILINEAR_PATCH=ON \
+  -D OSPRAY_ENABLE_TESTING=ON \
   "$@" ..
 
-make -j`nproc`
-make test
+make -j`nproc` && make test

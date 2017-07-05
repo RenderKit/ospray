@@ -27,6 +27,7 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
 
   camera/Camera.h
   camera/PerspectiveCamera.cpp
+  camera/PanoramicCamera.cpp
 
   common/Common.cpp
   common/Data.h
@@ -53,6 +54,7 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   importer/importPoints.cpp
 # all these should be lower-case: they're functions, not classes
   importer/ImportOSP.cpp
+  importer/ImportOSPSG.cpp
   importer/ImportOBJ.cpp
   importer/ImportPLY.cpp
   importer/ImportRIVL.cpp

@@ -144,8 +144,17 @@ namespace ospray {
     return tileErrorRegion[tile];
   }
 
+  void LocalFrameBuffer::beginFrame()
+  {
+    FrameBuffer::beginFrame();
+    if (pixelOp)
+      pixelOp->beginFrame();
+  }
+
   float LocalFrameBuffer::endFrame(const float errorThreshold)
   {
+    if (pixelOp)
+      pixelOp->endFrame();
     return tileErrorRegion.refine(errorThreshold);
   }
 

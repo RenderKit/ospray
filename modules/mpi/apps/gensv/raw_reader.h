@@ -1,3 +1,5 @@
+#pragma once
+
 // ======================================================================== //
 // Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
@@ -14,16 +16,41 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "ospcommon/FileName.h"
+#include "ospcommon/vec.h"
+#include <cstdio>
 
-#include "../common.h"
+namespace gensv {
 
-namespace ospcommon {
-  namespace tasking {
+// Convenience class for reading/seeking around RAW volume files
+class RawReader {
+  ospcommon::FileName fileName;
+  ospcommon::vec3i dimensions;
+  size_t voxelSize;
+  FILE *file;
+  int64_t offset;
 
-    void OSPCOMMON_INTERFACE initTaskingSystem(int numThreads = -1);
-    int  OSPCOMMON_INTERFACE numTaskingThreads();
-    void OSPCOMMON_INTERFACE deAffinitizeCores();
+public:
+  RawReader(const ospcommon::FileName &fileName,
+      const ospcommon::vec3i &dimensions, size_t voxelSize);
+  ~RawReader();
+  // Read a region of volume data from the file into the buffer passed.
+  // It's assumed the buffer passed has enough room. Returns the
+  // number voxels read
+  size_t readRegion(const ospcommon::vec3i &start,
+      const ospcommon::vec3i &size, unsigned char *buffer);
 
-  } // ::ospcommon::tasking
-} // ::ospcommon
+private:
+  inline bool convexRead(const ospcommon::vec3i &size) {
+    // 3 cases for convex reads:
+    // - We're reading a set of slices of the volume
+    // - We're reading a set of scanlines of a slice
+    // - We're reading a set of voxels in a scanline
+    return (size.x == dimensions.x && size.y == dimensions.y)
+      || (size.x == dimensions.x && size.z == 1)
+      || (size.y == 1 && size.z == 1);
+  }
+};
+
+}
+

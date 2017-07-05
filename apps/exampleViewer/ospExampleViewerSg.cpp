@@ -242,8 +242,6 @@ int main(int ac, const char **av)
                         });
 
 #ifdef _WIN32
-  // TODO: Why do we not have the sg symbols already available for us
-  // since we link against it?
   loadLibrary("ospray_sg");
 #endif
 
@@ -312,10 +310,17 @@ int main(int ac, const char **av)
 
   for (auto file : files) {
     FileName fn = file;
-    auto importerNode_ptr = sg::createNode(fn.name(), "Importer");
-    auto &importerNode = *importerNode_ptr;
-    importerNode["fileName"].setValue(fn.str());
-    world += importerNode_ptr;
+    if (fn.ext() == "ospsg")
+    {
+      sg::loadOSPSG(renderer_ptr,fn.str());
+    }
+    else
+    {
+      auto importerNode_ptr = sg::createNode(fn.name(), "Importer");
+      auto &importerNode = *importerNode_ptr;
+      importerNode["fileName"].setValue(fn.str());
+      world += importerNode_ptr;
+    }
   }
 
   parseCommandLineSG(ac, av, renderer);

@@ -20,12 +20,14 @@
 #include "ospray/ospray_cpp/Camera.h"
 #include "ospray/ospray_cpp/Data.h"
 #include "ospray/ospray_cpp/Device.h"
+#include "ospray/ospray_cpp/Model.h"
 #include "ospray/ospray_cpp/FrameBuffer.h"
 #include "ospray/ospray_cpp/Renderer.h"
 #include "ospray/ospray_cpp/TransferFunction.h"
 // ospray apps
 #include "common/commandline/CameraParser.h"
-#include "widgets/imguiViewer.h"
+// pico_bench
+#include "apps/bench/pico_bench/pico_bench.h"
 // stl
 #include <random>
 
@@ -201,6 +203,8 @@ namespace ospRandSphereTest {
 
   extern "C" int main(int ac, const char **av)
   {
+    using namespace std::chrono;
+
     parseCommandLine(ac, av);
 
     initialize_ospray();
@@ -230,50 +234,46 @@ namespace ospRandSphereTest {
     ospray::cpp::FrameBuffer fb(fbSize,OSP_FB_SRGBA,OSP_FB_COLOR|OSP_FB_ACCUM);
     fb.clear(OSP_FB_ACCUM);
 
+    auto bencher = pico_bench::Benchmarker<milliseconds>{numFrames};
+
     if (runDistributed) {
+
+      if (mpicommon::IamTheMaster()) {
+        std::cout << "Benchmark results will be in (ms)" << '\n';
+        std::cout << "...starting distributed tests" << '\n';
+      }
 
       mpicommon::world.barrier();
 
-      auto frameStartTime = ospcommon::getSysTime();
-
-      for (int i = 0; i < numFrames; ++i) {
-        if (mpicommon::IamTheMaster())
-          std::cout << "rendering frame " << i << std::endl;
-
+      auto stats = bencher([&](){
         renderer.renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
-      }
-
-      double seconds = ospcommon::getSysTime() - frameStartTime;
+      });
 
       if (mpicommon::IamTheMaster()) {
+        std::cout << stats << '\n';
         auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
         writePPM("randomSphereTestDistributed.ppm", fbSize.x, fbSize.y, lfb);
         fb.unmap(lfb);
         std::cout << "\noutput: 'randomSphereTestDistributed.ppm'" << std::endl;
-        std::cout << "\nrendered " << numFrames << " frames at an avg rate of "
-                  << numFrames / seconds << " frames per second" << std::endl;
       }
 
       mpicommon::world.barrier();
 
     } else {
 
-      auto frameStartTime = ospcommon::getSysTime();
+      std::cout << "Benchmark results will be in (ms)" << '\n';
+      std::cout << "...starting non-distributed tests" << '\n';
 
-      for (int i = 0; i < numFrames; ++i) {
-        std::cout << "rendering frame " << i << std::endl;
-
+      auto stats = bencher([&](){
         renderer.renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);
-      }
+      });
 
-      double seconds = ospcommon::getSysTime() - frameStartTime;
+      std::cout << stats << '\n';
 
       auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
       writePPM("randomSphereTestLocal.ppm", fbSize.x, fbSize.y, lfb);
       fb.unmap(lfb);
       std::cout << "\noutput: 'randomSphereTestLocal.ppm'" << std::endl;
-      std::cout << "\nrendered " << numFrames << " frames at an avg rate of "
-                << numFrames / seconds << " frames per second" << std::endl;
 
     }
 
