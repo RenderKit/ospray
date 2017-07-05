@@ -14,7 +14,6 @@
 #include <ospray/ospray_cpp/TransferFunction.h>
 #include <ospray/ospray_cpp/Volume.h>
 #include <ospray/ospray_cpp/Model.h>
-#include <tfn_lib/tfn_lib.h>
 #include <widgets/transferFunction.h>
 #include <widgets/imgui_impl_glfw_gl3.h>
 #include <common/imgui/imgui.h>
@@ -140,6 +139,8 @@ int main(int argc, char **argv) {
   vec2f valueRange = vec2f(-1);
   size_t nSpheres = 0;
   float varianceThreshold = 0.0f;
+  FileName transferFcn;
+
   for (int i = 0; i < argc; ++i) {
     std::string arg = argv[i];
     if (arg == "-f") {
@@ -157,6 +158,8 @@ int main(int argc, char **argv) {
       nSpheres = std::atol(argv[++i]);
     } else if (arg == "-variance") {
       varianceThreshold = std::atof(argv[++i]);
+    } else if (arg == "-tfn") {
+      transferFcn = argv[++i];
     }
   }
   if (!volumeFile.empty()) {
@@ -266,6 +269,9 @@ int main(int argc, char **argv) {
 
     windowState = std::make_shared<WindowState>(app, arcballCamera);
     tfnWidget = std::make_shared<ospray::TransferFunction>(nullptr);
+    if (!transferFcn.str().empty()) {
+      tfnWidget->load(transferFcn);
+    }
 
     ImGui_ImplGlfwGL3_Init(window, false);
 

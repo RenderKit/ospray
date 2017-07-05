@@ -27,6 +27,7 @@
 // ospray apps
 #include "common/commandline/CameraParser.h"
 #include "widgets/imguiViewer.h"
+#include <tfn_lib/tfn_lib.h>
 // stl
 #include <random>
 #include "gensv/generateSciVis.h"
@@ -68,6 +69,7 @@ namespace ospDDLoader {
   vec2i fbSize            = vec2i(1024, 768);
   int   numFrames         = 32;
   int   logLevel          = 0;
+  FileName transferFcn;
 
   void setupCamera(ospray::cpp::Camera &camera, box3f worldBounds)
   {
@@ -108,6 +110,8 @@ namespace ospDDLoader {
       } else if (arg == "-range") {
         valueRange.x = std::atof(av[++i]);
         valueRange.y = std::atof(av[++i]);
+      } else if (arg == "-tfn") {
+        transferFcn = FileName(av[++i]);
       }
     }
   }
@@ -162,6 +166,35 @@ namespace ospDDLoader {
     ospray::cpp::Model model;
     gensv::LoadedVolume volume = gensv::loadVolume(volumeFile, dimensions,
                                                    dtype, valueRange);
+
+    if (!transferFcn.str().empty()) {
+      tfn::TransferFunction fcn(transferFcn);
+
+      const size_t opacitySamples = 256;
+      const float stepSize = 1.0 / opacitySamples;
+      std::vector<float> opacities(opacitySamples, 0.f);
+      auto iter = fcn.opacityValues.cbegin();
+      // Re-sample the opacity values
+      for (size_t i = 0; i < opacitySamples; ++i){
+        const float x = stepSize * i;
+        std::array<float, 4> sampleColor;
+        if (x > (iter + 1)->x) {
+          ++iter;
+        }
+        const float t = (x - iter->x) / ((iter + 1)->x - iter->x);
+        opacities[i] = clamp((1.0 - t) * iter->y + t * (iter + 1)->y);
+      }
+
+      ospray::cpp::Data colorData(fcn.rgbValues.size(), OSP_FLOAT3, fcn.rgbValues.data());
+      ospray::cpp::Data opacityData(opacities.size(), OSP_FLOAT, opacities.data());
+      colorData.commit();
+      opacityData.commit();
+
+      volume.tfcn.set("colors", colorData);
+      volume.tfcn.set("opacities", opacityData);
+      volume.tfcn.commit();
+    }
+
     model.addVolume(volume.volume);
 
     // We must use the global world bounds, not our local bounds
