@@ -139,6 +139,7 @@ int main(int argc, char **argv) {
   vec3i dimensions = vec3i(-1);
   vec2f valueRange = vec2f(-1);
   size_t nSpheres = 0;
+  float varianceThreshold = 0.0f;
   for (int i = 0; i < argc; ++i) {
     std::string arg = argv[i];
     if (arg == "-f") {
@@ -154,6 +155,8 @@ int main(int argc, char **argv) {
       valueRange.y = std::atof(argv[++i]);
     } else if (arg == "-spheres") {
       nSpheres = std::atol(argv[++i]);
+    } else if (arg == "-variance") {
+      varianceThreshold = std::atof(argv[++i]);
     }
   }
   if (!volumeFile.empty()) {
@@ -222,7 +225,6 @@ int main(int argc, char **argv) {
   std::vector<box3f> regions{volume.bounds};
   ospray::cpp::Data regionData(regions.size() * 2, OSP_FLOAT3, regions.data());
   model.set("regions", regionData);
-
   model.commit();
 
   Camera camera("perspective");
@@ -238,11 +240,12 @@ int main(int argc, char **argv) {
   renderer.set("model", model);
   renderer.set("camera", camera);
   renderer.set("bgColor", vec3f(0.02));
+  renderer.set("varianceThreshold", varianceThreshold);
   renderer.commit();
   assert(renderer);
 
-  FrameBuffer fb(app.fbSize, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
-  fb.clear(OSP_FB_COLOR | OSP_FB_ACCUM);
+  FrameBuffer fb(app.fbSize, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_VARIANCE);
+  fb.clear(OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_VARIANCE);
 
   mpicommon::world.barrier();
 
@@ -286,7 +289,7 @@ int main(int argc, char **argv) {
       camera.set("up", app.v[2]);
       camera.commit();
 
-      fb.clear(OSP_FB_COLOR | OSP_FB_ACCUM);
+      fb.clear(OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_VARIANCE);
       app.cameraChanged = false;
     }
     renderer.renderFrame(fb, OSP_FB_COLOR);
@@ -333,7 +336,7 @@ int main(int argc, char **argv) {
 
     if (app.fbSizeChanged) {
       fb = FrameBuffer(app.fbSize, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
-      fb.clear(OSP_FB_COLOR | OSP_FB_ACCUM);
+      fb.clear(OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_VARIANCE);
       camera.set("aspect", static_cast<float>(app.fbSize.x) / app.fbSize.y);
       camera.commit();
 
