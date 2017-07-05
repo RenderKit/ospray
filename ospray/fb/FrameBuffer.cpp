@@ -118,7 +118,7 @@ namespace ospray {
     for (int i = 0; i < regions; i++) {
       box2i& region = errorRegion[i];
       float err = 0.f;
-      float maxErr = 0.0f;
+      float maxErr = 0.f;
       for (int y = region.lower.y; y < region.upper.y; y++)
         for (int x = region.lower.x; x < region.upper.x; x++) {
           int idx = y * numTiles.x + x;
@@ -134,7 +134,7 @@ namespace ospray {
         }
       vec2i size = region.size();
       int area = reduce_mul(size);
-      err /= area; // avg
+      err /= area; // == avg
       if (err < 4.f*errorThreshold) { // split region?
         if (area <= 2) { // would just contain single tile after split: remove
           regions--;
@@ -145,7 +145,7 @@ namespace ospray {
           continue;
         }
         vec2i split = region.lower + size / 2; // TODO: find split with equal
-        //       variance
+                                               //       variance
         errorRegion.push_back(region); // region ref might become invalid
         if (size.x > size.y) {
           errorRegion[i].upper.x = split.x;
@@ -157,7 +157,7 @@ namespace ospray {
       }
     }
 
-    float maxErr = 0.0f;
+    float maxErr = 0.f;
     for (int i = 0; i < tiles; i++)
       maxErr = std::max(maxErr, tileErrorBuffer[i]);
 
