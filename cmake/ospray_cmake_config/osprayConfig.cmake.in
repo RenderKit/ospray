@@ -96,13 +96,15 @@ set(OSPRAY_INCLUDE_DIRS
   ${OSPRAY_INCLUDE_DIR}/ospray/SDK
 )
 
-
 ###############################################################################
 # OSPRay build configuration
 
-
 set(OSPRAY_VERSION   @OSPRAY_VERSION@)
 set(OSPRAY_SOVERSION @OSPRAY_SOVERSION@)
+
+set(OSPRAY_BUILD_DEBUG          @OSPRAY_BUILD_DEBUG@)
+set(OSPRAY_BUILD_RELWITHDEBINFO @OSPRAY_BUILD_RELWITHDEBINFO@)
+set(OSPRAY_BUILD_RELEASE        @OSPRAY_BUILD_RELEASE@)
 
 set(OSPRAY_COMPILER_ICC   @OSPRAY_COMPILER_ICC@)
 set(OSPRAY_COMPILER_GCC   @OSPRAY_COMPILER_GCC@)
@@ -110,9 +112,17 @@ set(OSPRAY_COMPILER_CLANG @OSPRAY_COMPILER_CLANG@)
 set(OSPRAY_COMPILER_MSVC  @OSPRAY_COMPILER_MSVC@)
 
 set(OSPRAY_TASKING_TBB         @OSPRAY_TASKING_TBB@)
-set(OSPRAY_ISPC_TARGET_LIST    @OSPRAY_ISPC_TARGET_LIST@)
+set(OSPRAY_TASKING_CILK        @OSPRAY_TASKING_CILK@)
+set(OSPRAY_TASKING_OPENMP      @OSPRAY_TASKING_OPENMP@)
+set(OSPRAY_TASKING_INTERNAL    @OSPRAY_TASKING_INTERNAL@)
+set(OSPRAY_TASKING_LIBDISPATCH @OSPRAY_TASKING_LIBDISPATCH@)
+set(OSPRAY_TASKING_DEBUG       @OSPRAY_TASKING_DEBUG@)
 
+set(OSPRAY_ISPC_TARGET_LIST    @OSPRAY_ISPC_TARGET_LIST@)
 set(OSPRAY_MPI_ENABLED         @OSPRAY_MODULE_MPI@)
+
+set(OSPRAY_TILE_SIZE      @OSPRAY_TILE_SIZE@)
+set(OSPRAY_PIXELS_PER_JOB @OSPRAY_PIXELS_PER_JOB@)
 
 ###############################################################################
 # OSPRay dependencies
@@ -130,7 +140,7 @@ if (OSPRAY_TASKING_TBB)
   # Find tbb
   find_package(TBB)
   if (":${TBB_LIBRARY}" STREQUAL ":")
-    message(FATAL_ERROR "Missing required optional OSPRay dependency "
+    message(FATAL_ERROR "Missing required OSPRay dependency "
       "TBB, please set TBB_ROOT to the root of your TBB install.")
   else()
     message(STATUS "Found required OSPRay dependency: TBB in ${TBB_INCLUDE_DIRS}")
@@ -138,10 +148,16 @@ if (OSPRAY_TASKING_TBB)
 
   add_definitions(-DOSPRAY_TASKING_TBB)
   list(APPEND OSPRAY_DEPENDENCIES ${TBB_LIBRARIES})
-endif()
-
-if (OSPRAY_TASKING_CILK)
+elseif (OSPRAY_TASKING_CILK)
   add_definitions(-DOSPRAY_TASKING_CILK)
+elseif (OSPRAY_TASKING_OPENMP)
+  add_definitions(-DOSPRAY_TASKING_OPENMP)
+elseif (OSPRAY_TASKING_INTERNAL)
+  add_definitions(-DOSPRAY_TASKING_INTERNAL)
+elseif (OSPRAY_TASKING_LIBDISPATCH)
+  add_definitions(-DOSPRAY_TASKING_LIBDISPATCH)
+else()
+  add_definitions(-DOSPRAY_TASKING_DEBUG)
 endif()
 
 if (WIN32)
@@ -175,14 +191,6 @@ set(OSPRAY_LIBRARIES
   ${LIBRARY_PATH_PREFIX}ospray${LIBRARY_SUFFIX}
   ${LIBRARY_PATH_PREFIX}ospray_common${LIBRARY_SUFFIX}
 )
-
-if (OSPRAY_MPI_ENABLED)
-  set(OSPRAY_LIBRARIES
-    ${OSPRAY_LIBRARIES}
-    ${LIBRARY_PATH_PREFIX}ospray_mpi_common${LIBRARY_SUFFIX}
-    ${LIBRARY_PATH_PREFIX}ospray_mpi_maml${LIBRARY_SUFFIX}
-  )
-endif()
 
 # Reset CMake module path to its state when this script was called.
 set(CMAKE_MODULE_PATH ${OSPRAY_CALLERS_CMAKE_MODULE_PATH})
