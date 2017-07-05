@@ -38,7 +38,7 @@ ospray_create_application(ospExampleViewer
   ospExampleViewer.cpp
   LINK
   ${OPENGL_LIBRARIES}
-  glfw
+  ${GLFW_LIBRARY}
   gl3w
   imgui
   ospray

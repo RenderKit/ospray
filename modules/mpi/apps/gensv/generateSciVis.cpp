@@ -1,4 +1,5 @@
 #include <random>
+#include <array>
 #include "mpiCommon/MPICommon.h"
 #include "ospray/ospray_cpp/Data.h"
 #include "ospray/ospray_cpp/TransferFunction.h"
@@ -98,87 +99,7 @@ namespace gensv {
     return geom;
   }
 
-  /* Generate this rank's volume data. The volumes are placed in
-   * cells of the grid computed in 'computeGrid' based on the number
-   * of ranks with each rank owning a specific cell in the gridding.
-   * The coloring is based on color-mapping the ranks id.
-   * The region occupied by the volume is then used to be the rank's
-   * overall region bounds and will be the bounding box for the
-   * generated geometry as well.
-   */
-  std::pair<ospray::cpp::Volume, box3f> makeVolume()
-  {
-    auto numRanks = static_cast<float>(mpicommon::numGlobalRanks());
-    auto myRank   = mpicommon::globalRank();
-
-    ospray::cpp::TransferFunction transferFcn("piecewise_linear");
-    const std::vector<vec3f> colors = {
-      vec3f(0, 0, 0.56),
-      vec3f(0, 0, 1),
-      vec3f(0, 1, 1),
-      vec3f(0.5, 1, 0.5),
-      vec3f(1, 1, 0),
-      vec3f(1, 0, 0),
-      vec3f(0.5, 0, 0)
-    };
-    const std::vector<float> opacities = {0.015, 0.015};
-    ospray::cpp::Data colorsData(colors.size(), OSP_FLOAT3, colors.data());
-    ospray::cpp::Data opacityData(opacities.size(), OSP_FLOAT, opacities.data());
-    colorsData.commit();
-    opacityData.commit();
-
-    const vec2f valueRange(static_cast<float>(0), static_cast<float>(numRanks));
-    transferFcn.set("colors", colorsData);
-    transferFcn.set("opacities", opacityData);
-    transferFcn.set("valueRange", valueRange);
-    transferFcn.commit();
-
-    const vec3i volumeDims(128);
-    const vec3i grid = computeGrid(numRanks);
-    ospray::cpp::Volume volume("block_bricked_volume");
-    volume.set("voxelType", "uchar");
-    volume.set("dimensions", volumeDims);
-    volume.set("transferFunction", transferFcn);
-
-    const vec3f gridSpacing = vec3f(1.f) / (vec3f(grid) * vec3f(volumeDims));
-    volume.set("gridSpacing", gridSpacing);
-
-    const vec3i brickId(myRank % grid.x, (myRank / grid.x) % grid.y, myRank / (grid.x * grid.y));
-    const vec3f gridOrigin = vec3f(brickId) * gridSpacing * vec3f(volumeDims);
-    volume.set("gridOrigin", gridOrigin);
-
-    std::vector<unsigned char> volumeData(volumeDims.x * volumeDims.y * volumeDims.z, 0);
-    for (size_t i = 0; i < volumeData.size(); ++i) {
-      volumeData[i] = myRank;
-    }
-    volume.setRegion(volumeData.data(), vec3i(0), volumeDims);
-    volume.commit();
-
-    auto bbox = box3f(gridOrigin, gridOrigin + vec3f(1.f) / vec3f(grid));
-    return std::make_pair(volume, bbox);
-  }
-
-  size_t sizeForDtype(const std::string &dtype)
-  {
-    if (dtype == "uchar" || dtype == "char") {
-      return 1;
-    }
-    if (dtype == "float") {
-      return 4;
-    }
-    if (dtype == "double") {
-      return 8;
-    }
-  }
-
-  std::pair<ospray::cpp::Volume, box3f> loadVolume(const FileName &file,
-      const vec3i &dimensions, const std::string &dtype,
-      const vec2f &valueRange)
-  {
-    auto numRanks = static_cast<float>(mpicommon::numGlobalRanks());
-    auto myRank   = mpicommon::globalRank();
-
-    ospray::cpp::TransferFunction transferFcn("piecewise_linear");
+  LoadedVolume::LoadedVolume() : volume(nullptr), tfcn("piecewise_linear") {
     const std::vector<vec3f> colors = {
       vec3f(0, 0, 0.56),
       vec3f(0, 0, 1),
@@ -194,31 +115,148 @@ namespace gensv {
     colorsData.commit();
     opacityData.commit();
 
-    transferFcn.set("colors", colorsData);
-    transferFcn.set("opacities", opacityData);
-    transferFcn.set("valueRange", valueRange);
-    transferFcn.commit();
+    tfcn.set("colors", colorsData);
+    tfcn.set("opacities", opacityData);
+  }
+
+  enum GhostFace {
+    NEITHER_FACE = 0,
+    POS_FACE = 1,
+    NEG_FACE = 1 << 1,
+  };
+
+  /* Compute which faces of this brick we need to specify ghost voxels for,
+   * to have correct interpolation at brick boundaries. Returns mask of
+   * GhostFaces for x, y, z.
+   */
+  std::array<int, 3> computeGhostFaces(const vec3i &brickId, const vec3i &grid) {
+    std::array<int, 3> faces = {NEITHER_FACE, NEITHER_FACE, NEITHER_FACE};
+    for (size_t i = 0; i < 3; ++i) {
+      if (brickId[i] < grid[i] - 1) {
+        faces[i] |= POS_FACE;
+      }
+      if (brickId[i] > 0) {
+        faces[i] |= NEG_FACE;
+      }
+    }
+    return faces;
+  }
+
+  /* Generate this rank's volume data. The volumes are placed in
+   * cells of the grid computed in 'computeGrid' based on the number
+   * of ranks with each rank owning a specific cell in the gridding.
+   * The coloring is based on color-mapping the ranks id.
+   * The region occupied by the volume is then used to be the rank's
+   * overall region bounds and will be the bounding box for the
+   * generated geometry as well.
+   */
+  LoadedVolume makeVolume() {
+    auto numRanks = static_cast<float>(mpicommon::numGlobalRanks());
+    auto myRank   = mpicommon::globalRank();
+
+    LoadedVolume vol;
+    vol.tfcn.set("valueRange", vec2f(0, numRanks - 1));
+    vol.tfcn.commit();
+
+    const vec3i volumeDims(128);
+    const vec3i grid = computeGrid(numRanks);
+    const vec3f gridSpacing = vec3f(1.f) / (vec3f(grid) * vec3f(volumeDims));
+    const vec3i brickId(myRank % grid.x, (myRank / grid.x) % grid.y, myRank / (grid.x * grid.y));
+    const vec3f gridOrigin = vec3f(brickId) * gridSpacing * vec3f(volumeDims);
+    const std::array<int, 3> ghosts = computeGhostFaces(brickId, grid);
+    vec3i ghostDims(0);
+    for (size_t i = 0; i < 3; ++i) {
+      if (ghosts[i] & POS_FACE) {
+        ghostDims[i] += 1;
+      }
+      if (ghosts[i] & NEG_FACE) {
+        ghostDims[i] += 1;
+      }
+    }
+    const vec3i fullDims = volumeDims + ghostDims;
+    const vec3i ghostOffset(ghosts[0] & NEG_FACE ? 1 : 0,
+                               ghosts[1] & NEG_FACE ? 1 : 0,
+                               ghosts[2] & NEG_FACE ? 1 : 0);
+    vol.ghostGridOrigin = gridOrigin - vec3f(ghostOffset) * gridSpacing;
+
+    vol.volume = ospray::cpp::Volume("block_bricked_volume");
+    vol.volume.set("voxelType", "uchar");
+    vol.volume.set("dimensions", fullDims);
+    vol.volume.set("transferFunction", vol.tfcn);
+    vol.volume.set("gridSpacing", gridSpacing);
+    vol.volume.set("gridOrigin", vol.ghostGridOrigin);
+
+    std::vector<unsigned char> volumeData(fullDims.x * fullDims.y * fullDims.z, 0);
+    for (size_t i = 0; i < volumeData.size(); ++i) {
+      volumeData[i] = myRank;
+    }
+    vol.volume.setRegion(volumeData.data(), vec3i(0), fullDims);
+    vol.volume.commit();
+
+    vol.bounds = box3f(gridOrigin, gridOrigin + vec3f(1.f) / vec3f(grid));
+    return vol;
+  }
+
+  size_t sizeForDtype(const std::string &dtype)
+  {
+    if (dtype == "uchar" || dtype == "char") {
+      return 1;
+    }
+    if (dtype == "float") {
+      return 4;
+    }
+    if (dtype == "double") {
+      return 8;
+    }
+  }
+
+  LoadedVolume loadVolume(const FileName &file, const vec3i &dimensions,
+                          const std::string &dtype, const vec2f &valueRange)
+  {
+    auto numRanks = static_cast<float>(mpicommon::numGlobalRanks());
+    auto myRank   = mpicommon::globalRank();
+
+    LoadedVolume vol;
+    vol.tfcn.set("valueRange", valueRange);
+    vol.tfcn.commit();
 
     const vec3i grid = computeGrid(numRanks);
-    ospray::cpp::Volume volume("block_bricked_volume");
-    volume.set("voxelType", dtype.c_str());
-    volume.set("dimensions", dimensions);
-    volume.set("transferFunction", transferFcn);
-
     const vec3i brickDims = dimensions / grid;
     const vec3i brickId(myRank % grid.x, (myRank / grid.x) % grid.y, myRank / (grid.x * grid.y));
     const vec3f gridOrigin = vec3f(brickId) * vec3f(brickDims);
-    volume.set("gridOrigin", gridOrigin);
+
+    const std::array<int, 3> ghosts = computeGhostFaces(brickId, grid);
+    vec3i ghostDims(0);
+    for (size_t i = 0; i < 3; ++i) {
+      if (ghosts[i] & POS_FACE) {
+        ghostDims[i] += 1;
+      }
+      if (ghosts[i] & NEG_FACE) {
+        ghostDims[i] += 1;
+      }
+    }
+    const vec3i fullDims = brickDims + ghostDims;
+    const vec3i ghostOffset(ghosts[0] & NEG_FACE ? 1 : 0,
+                               ghosts[1] & NEG_FACE ? 1 : 0,
+                               ghosts[2] & NEG_FACE ? 1 : 0);
+    vol.ghostGridOrigin = gridOrigin - vec3f(ghostOffset);
+
+    vol.volume = ospray::cpp::Volume("block_bricked_volume");
+    vol.volume.set("voxelType", dtype.c_str());
+    vol.volume.set("dimensions", fullDims);
+    vol.volume.set("transferFunction", vol.tfcn);
+    vol.volume.set("gridOrigin", vol.ghostGridOrigin);
 
     const size_t dtypeSize = sizeForDtype(dtype);
-    std::vector<unsigned char> volumeData(brickDims.x * brickDims.y * brickDims.z * dtypeSize, 0);
-    RawReader reader(file, dimensions, dtypeSize);
-    reader.readRegion(brickId * brickDims, brickDims, volumeData.data());
-    volume.setRegion(volumeData.data(), vec3i(0), brickDims);
-    volume.commit();
+    std::vector<unsigned char> volumeData(fullDims.x * fullDims.y * fullDims.z * dtypeSize, 0);
 
-    auto bbox = box3f(gridOrigin, gridOrigin + vec3f(brickDims));
-    return std::make_pair(volume, bbox);
+    RawReader reader(file, dimensions, dtypeSize);
+    reader.readRegion(brickId * brickDims - ghostOffset, fullDims, volumeData.data());
+    vol.volume.setRegion(volumeData.data(), vec3i(0), fullDims);
+    vol.volume.commit();
+
+    vol.bounds = box3f(gridOrigin, gridOrigin + vec3f(brickDims));
+    return vol;
   }
 
 } // ::gensv

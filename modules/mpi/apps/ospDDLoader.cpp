@@ -29,12 +29,13 @@
 // ospray apps
 #include "common/commandline/CameraParser.h"
 #include "widgets/imguiViewer.h"
+#include <tfn_lib/tfn_lib.h>
 // stl
 #include <random>
 #include "gensv/generateSciVis.h"
 
 /* This app demonstrates how to write a distributed scivis style
- * renderer using the distributed MPI device. Note that because
+ * batch renderer using the distributed MPI device. Note that because
  * OSPRay uses sort-last compositing it is up to the user to ensure
  * that the data distribution across the nodes is suitable. Specifically,
  * each nodes' data must be convex and disjoint. This renderer only
@@ -55,8 +56,9 @@
  * between two nodes, each would render half the sphere and the halves
  * would be composited to produce the final complete sphere in the image.
  *
- * NOTE: This example doesn't set ghost regions to interpolate properly
- * at the edges of each brick, so some artifacts at the borders may appear.
+ * See gensv::loadVolume for an example of how to properly load a volume
+ * distributed across ranks with correct specification of brick positions
+ * and ghost voxels.
  */
 
 namespace ospDDLoader {
@@ -69,6 +71,7 @@ namespace ospDDLoader {
   vec2i fbSize            = vec2i(1024, 768);
   int   numFrames         = 32;
   int   logLevel          = 0;
+  FileName transferFcn;
 
   void setupCamera(ospray::cpp::Camera &camera, box3f worldBounds)
   {
@@ -109,6 +112,8 @@ namespace ospDDLoader {
       } else if (arg == "-range") {
         valueRange.x = std::atof(av[++i]);
         valueRange.y = std::atof(av[++i]);
+      } else if (arg == "-tfn") {
+        transferFcn = FileName(av[++i]);
       }
     }
   }
@@ -161,8 +166,38 @@ namespace ospDDLoader {
     initialize_ospray();
 
     ospray::cpp::Model model;
-    auto volume = gensv::loadVolume(volumeFile, dimensions, dtype, valueRange);
-    model.addVolume(volume.first);
+    gensv::LoadedVolume volume = gensv::loadVolume(volumeFile, dimensions,
+                                                   dtype, valueRange);
+
+    if (!transferFcn.str().empty()) {
+      tfn::TransferFunction fcn(transferFcn);
+
+      const size_t opacitySamples = 256;
+      const float stepSize = 1.0 / opacitySamples;
+      std::vector<float> opacities(opacitySamples, 0.f);
+      auto iter = fcn.opacityValues.cbegin();
+      // Re-sample the opacity values
+      for (size_t i = 0; i < opacitySamples; ++i){
+        const float x = stepSize * i;
+        std::array<float, 4> sampleColor;
+        if (x > (iter + 1)->x) {
+          ++iter;
+        }
+        const float t = (x - iter->x) / ((iter + 1)->x - iter->x);
+        opacities[i] = clamp((1.0 - t) * iter->y + t * (iter + 1)->y);
+      }
+
+      ospray::cpp::Data colorData(fcn.rgbValues.size(), OSP_FLOAT3, fcn.rgbValues.data());
+      ospray::cpp::Data opacityData(opacities.size(), OSP_FLOAT, opacities.data());
+      colorData.commit();
+      opacityData.commit();
+
+      volume.tfcn.set("colors", colorData);
+      volume.tfcn.set("opacities", opacityData);
+      volume.tfcn.commit();
+    }
+
+    model.addVolume(volume.volume);
 
     // We must use the global world bounds, not our local bounds
     // when computing the automatically picked camera position.
@@ -177,8 +212,7 @@ namespace ospDDLoader {
      * as an OSPData of OSP_FLOAT3 to pass the lower and upper corners of each
      * regions bounding box.
      */
-    std::vector<box3f> regions{volume.second};
-    PRINT(volume.second);
+    std::vector<box3f> regions{volume.bounds};
     ospray::cpp::Data regionData(regions.size() * 2, OSP_FLOAT3,
         regions.data());
     model.set("regions", regionData);

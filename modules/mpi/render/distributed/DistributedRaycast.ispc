@@ -96,13 +96,24 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
   } else {
     // Spheres are cheap to shade so it's fine we do it early, potentially tossing
     // the result if the volume is opaque before the hit. This also assumes that
-    // the spheres are opaque.
+    // the spheres are opaque, since we treat the hit point as the end of the
+    // ray, and send alpha to 1 for this sample.
     DifferentialGeometry dg;
     dg.color = make_vec4f(0.f);
     postIntersect(self->super.model, dg, sample.ray,
                   DG_COLOR | DG_MATERIALID | DG_NG | DG_NS);
-    sample.rgb = make_vec3f(dg.color) *
-                 abs(dot(normalize(sample.ray.dir), normalize(dg.Ns)));
+    const vec3f matColor = make_vec3f(dg.color);
+    const vec3f specColor = make_vec3f(0.6);
+    const vec3f viewDir = normalize(negate(sample.ray.dir));
+    // TODO: read the light params?
+    const vec3f lightDir = normalize(make_vec3f(1.0));
+    const vec3f dgNormal = normalize(dg.Ns);
+    // Hard-coded Blinn-Phong. TODO: Materials API support
+    sample.rgb = matColor * make_vec3f(0.05);
+    if (dot(lightDir, dgNormal) > 0.0) {
+      sample.rgb = sample.rgb + matColor * dot(lightDir, dgNormal)
+                + specColor * pow(dot(dgNormal, normalize(viewDir + lightDir)), 20);
+    }
     sample.alpha = 1.f;
   }
 

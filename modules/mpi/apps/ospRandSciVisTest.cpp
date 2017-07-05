@@ -58,6 +58,10 @@
  * avoid any artifacts. For example, if a sphere center is on the border
  * between two nodes, each would render half the sphere and the halves
  * would be composited to produce the final complete sphere in the image.
+ *
+ * See gensv::makeVolume for an example of how to properly load a volume
+ * distributed across ranks with correct specification of brick positions
+ * and ghost voxels.
  */
 
 namespace ospRandSciVisTest {
@@ -149,11 +153,11 @@ namespace ospRandSciVisTest {
     initialize_ospray();
 
     ospray::cpp::Model model;
-    auto volume = gensv::makeVolume();
-    model.addVolume(volume.first);
+    gensv::LoadedVolume volume = gensv::makeVolume();
+    model.addVolume(volume.volume);
 
     // Generate spheres within the bounds of the volume
-    auto spheres = gensv::makeSpheres(volume.second, numSpheresPerNode,
+    auto spheres = gensv::makeSpheres(volume.bounds, numSpheresPerNode,
                                       sphereRadius);
     model.addGeometry(spheres);
 
@@ -173,7 +177,7 @@ namespace ospRandSciVisTest {
      * On some ranks we add some additional regions to clip the volume
      * and make some gaps, just to show usage and test multiple regions per-rank
      */
-    std::vector<box3f> regions{volume.second};
+    std::vector<box3f> regions{volume.bounds};
     bool setGap = false;
     if (mpicommon::numGlobalRanks() % 2 == 0) {
       setGap = mpicommon::globalRank() % 3 == 0;
