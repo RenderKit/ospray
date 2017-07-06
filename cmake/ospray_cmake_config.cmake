@@ -79,6 +79,7 @@ INSTALL(FILES
   ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/gcc.cmake
   ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/msvc.cmake
   ${CMAKE_SOURCE_DIR}/components/ospcommon/cmake/macros.cmake#NOTE(jda) - hack!
+  ${CMAKE_SOURCE_DIR}/cmake/ospray_macros.cmake
   DESTINATION ${OSPRAY_CMAKECONFIG_DIR}
   COMPONENT devel
 )

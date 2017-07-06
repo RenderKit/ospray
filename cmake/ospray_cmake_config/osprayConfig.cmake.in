@@ -124,6 +124,8 @@ set(OSPRAY_MPI_ENABLED         @OSPRAY_MODULE_MPI@)
 set(OSPRAY_TILE_SIZE      @OSPRAY_TILE_SIZE@)
 set(OSPRAY_PIXELS_PER_JOB @OSPRAY_PIXELS_PER_JOB@)
 
+set(EMBREE_VERSION_REQUIRED @EMBREE_VERSION_REQUIRED@)
+
 ###############################################################################
 # OSPRay dependencies
 
@@ -131,6 +133,9 @@ set(OSPRAY_PIXELS_PER_JOB @OSPRAY_PIXELS_PER_JOB@)
 set(OSPRAY_CMAKE_CURRENT_LIST_DIR     ${CMAKE_CURRENT_LIST_DIR})
 set(OSPRAY_CURRENT_CONFIG_INSTALL_DIR ${CURRENT_CONFIG_INSTALL_DIR})
 set(OSPRAY_CURRENT_ROOT_INSTALL_DIR   ${CURRENT_ROOT_INSTALL_DIR})
+
+# Include macros for finding embree
+include(ospray_macros)
 
 # NOTE(jda) - Here is where find_package(...) is automatically called for
 #             any OSPRay dependencies. A list of libs should be constructed
@@ -169,7 +174,9 @@ else()
 endif()
 
 # Find existing Embree on the machine
-find_package(embree @EMBREE_VERSION_REQUIRED@ REQUIRED)
+ospray_find_embree(${EMBREE_VERSION_REQUIRED})
+ospray_verify_embree_features()
+
 list(APPEND OSPRAY_INCLUDE_DIRS ${EMBREE_INCLUDE_DIRS})
 
 # Restore state
@@ -184,12 +191,15 @@ set(CURRENT_ROOT_INSTALL_DIR   ${OSPRAY_CURRENT_ROOT_INSTALL_DIR})
 # Remove duplicate entries from OSPRAY_INCLUDE_DIRS
 list(REMOVE_DUPLICATES OSPRAY_INCLUDE_DIRS)
 
+set(OSPRAY_LIBRARY ${LIBRARY_PATH_PREFIX}ospray${LIBRARY_SUFFIX})
+set(OSPRAY_COMMON_LIBRARY ${LIBRARY_PATH_PREFIX}ospray_common${LIBRARY_SUFFIX})
+
 # Set expected OSPRAY_LIBRARIES variable for FindPackage().
 set(OSPRAY_LIBRARIES
   ${OSPRAY_DEPENDENCIES}
   ${EMBREE_LIBRARY}
-  ${LIBRARY_PATH_PREFIX}ospray${LIBRARY_SUFFIX}
-  ${LIBRARY_PATH_PREFIX}ospray_common${LIBRARY_SUFFIX}
+  ${OSPRAY_LIBRARY}
+  ${OSPRAY_COMMON_LIBRARY}
 )
 
 # Reset CMake module path to its state when this script was called.
@@ -203,5 +213,5 @@ set(OSPRAY_USE_FILE ${OSPRAY_CMAKE_ROOT}/osprayUse.cmake)
 # OSPRAY_REPORT_NOT_FOUND() aborts, so if we made it this far,
 # we have found ospray and all required dependencies.
 include(FindPackageMessage)
-find_package_MESSAGE(ospray "Found OSPRay: ${OSPRAY_LIBRARIES}"
+find_package_MESSAGE(ospray "Found OSPRay: ${OSPRAY_LIBRARY}"
   "[${OSPRAY_INCLUDE_DIRS}]")

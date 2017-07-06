@@ -28,22 +28,6 @@ MACRO(OSPRAY_WARN_ONCE identifier message)
   ENDIF()
 ENDMACRO()
 
-## Function to check for Embree features ##
-FUNCTION(OSPRAY_CHECK_EMBREE_FEATURE FEATURE DESCRIPTION)
-  SET(FEATURE EMBREE_${FEATURE})
-  IF(NOT ${ARGN})
-    IF (${FEATURE})
-      MESSAGE(FATAL_ERROR "OSPRay requires Embree to be compiled "
-              "without ${DESCRIPTION} (${FEATURE}=OFF).")
-    ENDIF()
-  ELSE()
-    IF (NOT ${FEATURE})
-      MESSAGE(FATAL_ERROR "OSPRay requires Embree to be compiled "
-              "with support for ${DESCRIPTION} (${FEATURE}=ON).")
-    ENDIF()
-  ENDIF()
-ENDFUNCTION()
-
 ## Macro configure ISA targets for ispc ##
 MACRO(OSPRAY_CONFIGURE_ISPC_ISA)
 
