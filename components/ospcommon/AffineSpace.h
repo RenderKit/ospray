@@ -70,11 +70,11 @@ namespace ospcommon {
     /*! return matrix for rotation around arbitrary axis and point, only in 3D */
     static inline AffineSpaceT rotate(const VectorT& p, const VectorT& u, const ScalarT& r) { return translate(+p) * rotate(u,r) * translate(-p);  }
 
-    /*! return matrix for looking at given point, only in 3D */
+    /*! return matrix for looking at given point, only in 3D; right-handed coordinate system */
     static inline AffineSpaceT lookat(const VectorT& eye, const VectorT& point, const VectorT& up) {
       VectorT Z = normalize(point-eye);
-      VectorT U = normalize(cross(up,Z));
-      VectorT V = normalize(cross(Z,U));
+      VectorT U = normalize(cross(Z,up));
+      VectorT V = cross(U,Z);
       return AffineSpaceT(L(U,V,Z),eye);
     }
 
