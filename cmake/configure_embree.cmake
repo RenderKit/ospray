@@ -17,7 +17,7 @@
 
 # Find existing Embree on the machine #######################################
 
-ospray_find_embree(2.13.0)
+ospray_find_embree(${EMBREE_VERSION_REQUIRED})
 ospray_verify_embree_features()
 ospray_determine_embree_isa_support()
 

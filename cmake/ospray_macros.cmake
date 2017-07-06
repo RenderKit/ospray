@@ -39,9 +39,7 @@ function(ospray_verify_embree_features)
   ospray_check_embree_feature(BACKFACE_CULLING "backface culling" OFF)
 endfunction()
 
-macro(ospray_find_embree VERSION)
-  set(EMBREE_VERSION_REQUIRED 2.13.0)
-
+macro(ospray_find_embree EMBREE_VERSION_REQUIRED)
   find_package(embree ${EMBREE_VERSION_REQUIRED} QUIET)
   if(NOT DEFINED EMBREE_INCLUDE_DIRS)
     message(FATAL_ERROR
