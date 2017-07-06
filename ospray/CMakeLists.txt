@@ -239,6 +239,8 @@ OSPRAY_INSTALL_SDK_HEADERS(
 OSPRAY_INSTALL_SDK_HEADERS(
   fb/FrameBuffer.h
   fb/FrameBuffer.ih
+  fb/LocalFB.h
+  fb/LocalFB.ih
   fb/PixelOp.h
   fb/Tile.h
   fb/Tile.ih
@@ -250,6 +252,7 @@ OSPRAY_INSTALL_SDK_HEADERS(
   geometry/Geometry.h
   geometry/Geometry.ih
   geometry/Instance.h
+  geometry/Instance.ih
   geometry/Isosurfaces.h
   geometry/Slices.h
   geometry/Spheres.h
