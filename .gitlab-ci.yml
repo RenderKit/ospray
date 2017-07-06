@@ -159,6 +159,7 @@ release-linux-icc:
     - module load intel
     - export CC=icc
     - export CXX=icpc
+    - export OSPRAY_RELEASE_NO_VERIFY=1
     - scripts/release/linux.sh
   tags:
     - icc
