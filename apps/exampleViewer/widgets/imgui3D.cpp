@@ -193,15 +193,13 @@ namespace ospray {
       renderTime=-1.f;
       guiTime=-1.f;
       totalTime=-1.f;
-
     }
 
     void ImGui3DWidget::computeFrame()
     {
       viewPort.frame.l.vy = normalize(viewPort.at - viewPort.from);
       viewPort.frame.l.vx = normalize(cross(viewPort.frame.l.vy,viewPort.up));
-      viewPort.frame.l.vz =
-          normalize(cross(viewPort.frame.l.vx,viewPort.frame.l.vy));
+      viewPort.frame.l.vz = normalize(cross(viewPort.frame.l.vx,viewPort.frame.l.vy));
       viewPort.frame.p    = viewPort.from;
       viewPort.snapFrameUp();
       viewPort.modified = true;
@@ -271,8 +269,7 @@ namespace ospray {
       this->worldBounds = worldBounds;
       viewPort.frame.l.vy = normalize(dir);
       viewPort.frame.l.vx = normalize(cross(viewPort.frame.l.vy,up));
-      viewPort.frame.l.vz =
-          normalize(cross(viewPort.frame.l.vx,viewPort.frame.l.vy));
+      viewPort.frame.l.vz = normalize(cross(viewPort.frame.l.vx,viewPort.frame.l.vy));
       viewPort.frame.p    = from;
       viewPort.snapFrameUp();
       viewPort.modified = true;
@@ -298,8 +295,7 @@ namespace ospray {
         this->worldBounds = worldBounds;
         viewPort.frame.l.vy = normalize(dir);
         viewPort.frame.l.vx = normalize(cross(viewPort.frame.l.vy,up));
-        viewPort.frame.l.vz =
-            normalize(cross(viewPort.frame.l.vx,viewPort.frame.l.vy));
+        viewPort.frame.l.vz = normalize(cross(viewPort.frame.l.vx,viewPort.frame.l.vy));
         viewPort.frame.p    = from;
         viewPort.snapFrameUp();
         viewPort.modified = true;
@@ -597,6 +593,13 @@ namespace ospray {
           viewPortFromCmdLine->at.z = atof(av[i+3]);
           assert(i+3 < *ac);
           removeArgs(*ac,(char **&)av,i,4); --i;
+          continue;
+        } if (arg == "-fv") {
+          if (!viewPortFromCmdLine)
+            viewPortFromCmdLine = new ImGui3DWidget::ViewPort;
+          viewPortFromCmdLine->openingAngle = atof(av[i+1]);
+          assert(i+1 < *ac);
+          removeArgs(*ac,(char **&)av,i,2); --i;
           continue;
         }
       }

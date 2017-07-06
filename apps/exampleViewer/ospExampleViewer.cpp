@@ -439,6 +439,7 @@ int main(int ac, const char **av)
   renderer["camera"]["dir"] = dir;
   renderer["camera"]["pos"] = viewPort.from;
   renderer["camera"]["up"]  = viewPort.up;
+  renderer["camera"]["fovy"] = viewPort.openingAngle;
 
   window.create("OSPRay Example Viewer App", fullscreen);
 
