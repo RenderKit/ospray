@@ -22,5 +22,9 @@
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${OSPRAY_CMAKE_ROOT})
 
-include(${OSPRAY_CMAKE_ROOT}/ispc.cmake)
-include(${OSPRAY_CMAKE_ROOT}/macros.cmake)
+include(macros)
+include(ispc)
+
+message(STATUS "Using found OSPRay ISA targets: ${OSPRAY_ISPC_TARGET_LIST}")
+
+include_directories_ispc(${OSPRAY_INCLUDE_DIRS})

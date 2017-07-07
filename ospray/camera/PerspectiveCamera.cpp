@@ -49,7 +49,7 @@ namespace ospray {
     // now, update the local precomputed values
     // ------------------------------------------------------------------
     dir = normalize(dir);
-    vec3f dir_du = normalize(cross(dir, up));
+    vec3f dir_du = normalize(cross(dir, up)); // right-handed coordinate system
     vec3f dir_dv;
     if (architectural)
       dir_dv = normalize(up); // orient film to be parallel to 'up' and shift such that 'dir' is centered

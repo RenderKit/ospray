@@ -120,8 +120,11 @@ ELSE()
   )
 
   OSPRAY_INSTALL_SDK_HEADERS(
-    tasking/parallel_for.h
     tasking/async.h
+    tasking/parallel_for.h
+    tasking/parallel_for.inl
+    tasking/schedule.h
+    tasking/schedule.inl
     tasking/tasking_system_handle.h
     tasking/TaskSys.h
     tasking/TaskingTypeTraits.h

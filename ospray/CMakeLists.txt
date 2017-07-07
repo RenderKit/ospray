@@ -23,29 +23,6 @@ SET(THREADS_PREFER_PTHREAD_FLAG TRUE) # for gcc6
 FIND_PACKAGE(Threads REQUIRED)
 
 # -------------------------------------------------------
-# redistribute TBB
-# -------------------------------------------------------
-
-IF (OSPRAY_TASKING_TBB AND OSPRAY_INSTALL_DEPENDENCIES)
-  IF (WIN32)
-    SET(TBB_DLL_HINTS
-      ${TBB_ROOT}/../redist/${TBB_ARCH}_win/tbb/${TBB_VCVER}
-      ${TBB_ROOT}/../redist/${TBB_ARCH}/tbb/${TBB_VCVER}
-      ${TBB_ROOT}/bin/${TBB_ARCH}/${TBB_VCVER}
-    )
-    FIND_FILE(TBB_DLL tbb.dll HINTS ${TBB_DLL_HINTS})
-    FIND_FILE(TBB_DLL_MALLOC tbbmalloc.dll PATHS HINTS ${TBB_DLL_HINTS})
-    MARK_AS_ADVANCED(TBB_DLL)
-    MARK_AS_ADVANCED(TBB_DLL_MALLOC)
-    INSTALL(PROGRAMS ${TBB_DLL} ${TBB_DLL_MALLOC}
-            DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT redist)
-  ELSE()
-    INSTALL(PROGRAMS ${TBB_LIBRARY} ${TBB_LIBRARY_MALLOC}
-            DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT redist)
-  ENDIF()
-ENDIF()
-
-# -------------------------------------------------------
 # Setup ospray include directories and source files
 # -------------------------------------------------------
 
@@ -262,6 +239,8 @@ OSPRAY_INSTALL_SDK_HEADERS(
 OSPRAY_INSTALL_SDK_HEADERS(
   fb/FrameBuffer.h
   fb/FrameBuffer.ih
+  fb/LocalFB.h
+  fb/LocalFB.ih
   fb/PixelOp.h
   fb/Tile.h
   fb/Tile.ih
@@ -273,6 +252,7 @@ OSPRAY_INSTALL_SDK_HEADERS(
   geometry/Geometry.h
   geometry/Geometry.ih
   geometry/Instance.h
+  geometry/Instance.ih
   geometry/Isosurfaces.h
   geometry/Slices.h
   geometry/Spheres.h
