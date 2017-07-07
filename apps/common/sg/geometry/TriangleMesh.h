@@ -93,8 +93,7 @@ namespace ospray {
         uint32_t vtxID[3], materialID;
       };
 
-      //! constructor
-      PTMTriangleMesh();
+      PTMTriangleMesh() = default;
 
       // Data members //
 

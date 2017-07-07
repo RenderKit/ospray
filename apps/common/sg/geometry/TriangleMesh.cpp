@@ -77,10 +77,6 @@ namespace ospray {
       }
     }
 
-    PTMTriangleMesh::PTMTriangleMesh() : TriangleMesh()
-    {
-    }
-
     void TriangleMesh::postCommit(RenderContext &ctx)
     {
       if (ospGeometry)
