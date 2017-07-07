@@ -41,7 +41,7 @@ namespace ospray {
       cam.frame = xfm * cam.frame;
       cam.from  = xfmPoint(xfm,cam.from);
       cam.at    = xfmPoint(xfm,cam.at);
-      cam.snapUp();
+      cam.snapFrameUp();
       cam.modified = true;
     }
 
@@ -103,7 +103,11 @@ namespace ospray {
       cam.frame = xfm * cam.frame;
       cam.from  = xfmPoint(xfm,cam.from);
       cam.at    = xfmPoint(xfm,cam.at);
-      cam.snapUp();
+
+      if (!(widget->keysDown & ImGui3DWidget::Keys::CNTRL_KEY))
+        cam.snapViewUp();
+
+      cam.snapFrameUp();
       cam.modified = true;
     }
 
@@ -161,7 +165,7 @@ namespace ospray {
       cam.frame = xfm * cam.frame;
       cam.from  = xfmPoint(xfm,cam.from);
       cam.at    = xfmPoint(xfm,cam.at);
-      cam.snapUp();
+      cam.snapFrameUp();
       cam.modified = true;
     }
   }
