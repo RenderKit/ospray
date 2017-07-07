@@ -25,6 +25,7 @@
 
 namespace ospray {
   namespace sg {
+#if 0
     using std::cout;
     using std::endl;
     using std::string;
@@ -47,15 +48,15 @@ namespace ospray {
 
       int height = -1, width = -1, ofs = -1, channels = -1, depth = -1;
       xml::for_each_prop(node,[&](const std::string &name, const std::string &value){
-          if (name == "ofs") 
+          if (name == "ofs")
             ofs = atol(value.c_str());
-          else if (name == "width") 
+          else if (name == "width")
             width = atol(value.c_str());
-          else if (name == "height") 
+          else if (name == "height")
             height = atol(value.c_str());
-          else if (name == "channels") 
+          else if (name == "channels")
             channels = atol(value.c_str());
-          else if (name == "depth") 
+          else if (name == "depth")
             depth = atol(value.c_str());
         });
       assert(ofs != -1 && "Offset not properly parsed for Texture2D nodes");
@@ -117,7 +118,7 @@ namespace ospray {
         }
         free(tokenBuffer);
       }
-      
+
       if (mat->textures.size() != num) {
         throw std::runtime_error("invalid number of textures in material "
                                  "(found either more or less than the 'num' field specifies");
@@ -128,7 +129,7 @@ namespace ospray {
     {
       const std::string paramName = node.getProp("name");
       const std::string paramType = node.getProp("type");
-      
+
       //Get the data out of the node
       char *value = strdup(node.content.c_str());
 #define NEXT_TOK strtok(NULL, " \t\n\r")
@@ -194,17 +195,17 @@ namespace ospray {
       }
       free(value);
     }
-      
+
     void parseMaterialNode(const xml::Node &node)
     {
       std::shared_ptr<sg::Material> mat = std::make_shared<sg::Material>();
       nodeList.push_back(mat);
-      
+
       mat->setName(node.getProp("name"));
       mat->child("type").setValue(node.getProp("type"));
-      
+
       xml::for_each_child_of(node,[&](const xml::Node &child){
-          if (!child.name.compare("textures")) 
+          if (!child.name.compare("textures"))
             parseMaterialTextures(mat,child);
           else if (!child.name.compare("param"))
             parseMaterialParam(mat,child);
@@ -217,7 +218,7 @@ namespace ospray {
       affine3f xfm;
       int id=0;
       size_t childID=0;
-        
+
       // find child ID
       xml::for_each_prop(node,[&](const std::string &name, const std::string &value){
           if (name == "child") {
@@ -359,14 +360,14 @@ namespace ospray {
         free(value);
       }
     }
-    
+
     void parseBGFscene(std::shared_ptr<sg::Node> world, const xml::Node &root)
     {
       if (root.name != "BGFscene")
         throw std::runtime_error("XML file is not a RIVL model !?");
       if (root.child.empty())
         throw std::runtime_error("emply RIVL model !?");
-      
+
       std::shared_ptr<sg::Node> lastNode;
       xml::for_each_child_of(root,[&](const xml::Node &node){
           if (node.name == "text") {
@@ -399,10 +400,12 @@ namespace ospray {
         });
       world->add(lastNode);
     }
+#endif
 
     void importRIVL(std::shared_ptr<sg::Node> world,
                     const std::string &fileName)
     {
+#if 0
       string xmlFileName = fileName;
       string binFileName = fileName+".bin";
       binBasePtr = (void *)mapFile(binFileName);
@@ -419,6 +422,7 @@ namespace ospray {
       const xml::Node &root_element = *doc->child[0];
       parseBGFscene(world,root_element);
       PRINT(world->bounds());
+#endif
     }
 
   } // ::ospray::sg

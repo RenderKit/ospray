@@ -62,6 +62,7 @@ namespace ospray {
       // to allow memory-mapping triangle arrays (or in general,
       // sharing data with an application) we use data arrays, not std::vector's
 
+#if 0
       //! vertex (position) array
       std::shared_ptr<DataBuffer> vertex;
 
@@ -76,6 +77,26 @@ namespace ospray {
 
       //! triangle indices
       std::shared_ptr<DataBuffer> index;
+#endif
+
+    private:
+
+      // NOTE(jda) - the should probable return const refs instead?
+
+      //! vertex (position) array
+      std::shared_ptr<DataBuffer> vertex() const;
+
+      //! vertex normal array. empty means 'not present'
+      std::shared_ptr<DataBuffer> normal() const;
+
+      //! vertex color array. empty means 'not present'
+      std::shared_ptr<DataBuffer> color() const;
+
+      //! vertex texture coordinate array. empty means 'not present'
+      std::shared_ptr<DataBuffer> texcoord() const;
+
+      //! triangle indices
+      std::shared_ptr<DataBuffer> index() const;
     };
 
 

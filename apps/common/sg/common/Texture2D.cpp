@@ -443,7 +443,7 @@ namespace ospray {
 
       void* dat = data;
       if (!dat && texelData)
-        dat = texelData->getBase();
+        dat = texelData->base();
       if (!dat)
       {
         ospTexture2D = nullptr;

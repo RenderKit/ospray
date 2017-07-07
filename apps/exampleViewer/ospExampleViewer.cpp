@@ -189,6 +189,7 @@ void parseCommandLineSG(int ac, const char **&av, sg::Node &root)
 
 void addPlaneToScene(sg::Node& world)
 {
+  #if 0
   auto bbox = world.bounds();
   if (bbox.empty()) {
     bbox.lower = vec3f(-5,0,-5);
@@ -223,6 +224,7 @@ void addPlaneToScene(sg::Node& world)
   planeMaterial["Kd"].setValue(vec3f(0.5f));
   planeMaterial["Ks"].setValue(vec3f(0.6f));
   planeMaterial["Ns"].setValue(2.f);
+  #endif
 }
 
 int main(int ac, const char **av)

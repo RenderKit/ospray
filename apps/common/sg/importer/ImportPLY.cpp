@@ -30,6 +30,7 @@
 
 namespace ospray {
   namespace sg {
+#if 0
     namespace ply {
       using std::string;
       using std::cout;
@@ -127,7 +128,7 @@ namespace ospray {
         int has_vertex_blue=0; // vertex colors
         int has_nx=0, has_ny=0, has_nz=0;
         int has_fverts=0;
-        
+
         PlyOtherElems *other_elements = NULL;
         PlyOtherProp *vert_other,*face_other;//,*edge_other;
 
@@ -138,7 +139,7 @@ namespace ospray {
         std::shared_ptr<sg::DataVector3f> pos = std::make_shared<sg::DataVector3f>();
         std::shared_ptr<sg::DataVector3f> nor = std::make_shared<sg::DataVector3f>();
         std::shared_ptr<sg::DataVector3i> idx = std::make_shared<sg::DataVector3i>();
-        
+
         /*** Read in the original PLY object ***/
         const char *filename = fileName.c_str();
         FILE *file;
@@ -155,29 +156,29 @@ namespace ospray {
 #endif
         } else
           file = fopen(filename,"rb");
-    
-        if (!file) 
+
+        if (!file)
           throw std::runtime_error("#osp:sg:ply: could not open '"+fileName+"'");
-        
+
         int nelems = -1;
         PlyFile *ply  = ply_read (file, &nelems, &element_list);
         ply_get_info (ply, &version, &file_type);
 
         for (int i=0; i<nelems; i++) {
           int num_elems;
-          
+
           /* get the description of the first element */
           char *elem_name = element_list[i];
           plist = ply_get_element_description (ply, elem_name, &num_elems, &nprops);
-          
+
           if (equal_strings ("vertex", elem_name)) {
             /* create a vertex list to hold all the vertices */
-            
+
             /* set up for getting vertex elements */
             /* verify which properties these vertices have */
             has_x = has_y = has_z = FALSE;
             has_nx = has_ny = has_nz = FALSE;
-	    
+
             for (int j=0; j<nprops; j++) {
               if (equal_strings("x", plist[j]->name)) {
                 ply_get_property (ply, elem_name, &vert_props[VTX_X]);  /* x */
@@ -189,7 +190,7 @@ namespace ospray {
                 ply_get_property (ply, elem_name, &vert_props[VTX_Z]);  /* z */
                 has_z = TRUE;
               }
-              
+
               if (equal_strings("nx", plist[j]->name)) {
                 ply_get_property (ply, elem_name, &vert_props[VTX_NX]);  /* x */
                 has_nx = TRUE;
@@ -210,22 +211,22 @@ namespace ospray {
                 has_vertex_blue = TRUE;
               }
             }
-    
+
             vert_other = ply_get_other_properties (ply, elem_name,
                                                    offsetof(Vertex,other_props));
-            
+
             /* test for necessary properties */
             if ((!has_x) || (!has_y) || (!has_z))
               {
                 fprintf(stderr, "Vertices don't have x, y, and z\n");
                 exit(-1);
               }
-	  
+
             vertices = num_elems;
             if (has_nx && has_ny && has_nz)
               nor->v.resize(vertices);
             pos->v.resize(vertices);
-	  
+
             /* grab all the vertex elements */
             for (int j=0; j<vertices; j++) {
               Vertex tmp;
@@ -235,14 +236,14 @@ namespace ospray {
                 nor->v[j] = vec3f(tmp.normal[0],tmp.normal[1],tmp.normal[2]);
             }
           } else if (equal_strings ("face", elem_name)) {
-            
+
             /* create a list to hold all the face elements */
             cout << "num faces : " << (num_elems) << endl;
 
             /* set up for getting face elements */
             /* verify which properties these vertices have */
             has_fverts = FALSE;
-            
+
             for (int j=0; j<nprops; j++) {
               if (equal_strings("vertex_indices", plist[j]->name)) {
                 ply_get_property(ply, elem_name, &face_props[FACE_INDICES]);/* vertex_indices */
@@ -260,17 +261,17 @@ namespace ospray {
             }
             face_other = ply_get_other_properties (ply, elem_name,
                                                    offsetof(Face,other_props));
-            
-            
+
+
             /* test for necessary properties */
             if (!has_fverts) {
               fprintf(stderr, "Faces must have vertex indices\n");
               exit(-1);
             }
-            
+
             triangles = num_elems;
             // numTrisWritten += num_elems;
-            
+
             /* grab all the face elements */
             Face tmp;
             tmp.verts = NULL;
@@ -302,7 +303,7 @@ namespace ospray {
             ply_free_other_elements(other_elements);
           }
         }
-        
+
 
         int num_comments;
         char **comments;
@@ -311,12 +312,12 @@ namespace ospray {
         int num_obj_info;
         char **obj_info;
 
-        
+
         comments = ply_get_comments (ply, &num_comments);
         obj_info = ply_get_obj_info (ply, &num_obj_info);
-        
-        ply_close (ply); 
-        
+
+        ply_close (ply);
+
         for (int i=0;i<ply->nelems;i++) {
           if (ply->elems[i]) continue;
           PlyElement *e = ply->elems[i];
@@ -343,13 +344,16 @@ namespace ospray {
       }
 
     } // ::ospray::sg::ply
+#endif
 
     void importPLY(std::shared_ptr<Node> &world, const FileName &fileName)
     {
+#if 0
       std::shared_ptr<sg::TriangleMesh> mesh =
           std::static_pointer_cast<sg::TriangleMesh>(sg::createNode(fileName.name(), "TriangleMesh"));
       ply::readFile(fileName.str(), mesh);
       world->add(std::dynamic_pointer_cast<sg::Node>(mesh));
+#endif
     }
 
   } // ::ospray::sg

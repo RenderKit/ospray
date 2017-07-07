@@ -30,7 +30,7 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   camera/PanoramicCamera.cpp
 
   common/Common.cpp
-  common/Data.h
+  common/Data.cpp
   common/FrameBuffer.cpp
   common/Light.cpp
   common/Material.cpp
