@@ -1,7 +1,7 @@
 OSPRay
 ======
 
-This is release v1.3.0 of OSPRay. For changes and new features see the
+This is release v1.3.1 of OSPRay. For changes and new features see the
 [changelog](CHANGELOG.md). Also visit http://www.ospray.org for more
 information.
 
@@ -76,7 +76,7 @@ before you can build OSPRay you need the following prerequisites:
     for ISPC in the `PATH` and in the directory right "next to" the
     checked-out OSPRay sources.[^1] Alternatively set the CMake variable
     `ISPC_EXECUTABLE` to the location of the ISPC compiler.
--   Per default OSPRay uses the [Intel® Threading Building
+-   Per default OSPRay uses the Intel® [Threading Building
     Blocks](https://www.threadingbuildingblocks.org/) (TBB) as tasking
     system, which we recommend for performance and flexibility reasons.
     Alternatively you can set CMake variable `OSPRAY_TASKING_SYSTEM` to

@@ -14,7 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-# Called if we failed to find ospray or any of it's required dependencies,
+# Called if we failed to find OSPRay or any of it's required dependencies,
 # unsets all public (designed to be used externally) variables and reports
 # error message at priority depending upon [REQUIRED/QUIET/<NONE>] argument.
 macro(OSPRAY_REPORT_NOT_FOUND REASON_MSG)
@@ -27,20 +27,21 @@ macro(OSPRAY_REPORT_NOT_FOUND REASON_MSG)
 
   # Note <package>_FIND_[REQUIRED/QUIETLY] variables defined by FindPackage()
   # use the camelcase library name, not uppercase.
-  if(OSPRAY_FIND_QUIETLY)
-    message(STATUS "Failed to find ospray - " ${REASON_MSG} ${ARGN})
-  else(OSPRAY_FIND_REQUIRED)
-    message(FATAL_ERROR "Failed to find ospray - " ${REASON_MSG} ${ARGN})
+  if (OSPRAY_FIND_QUIETLY)
+    set(MSG_TYPE STATUS)
+  elseif(OSPRAY_FIND_REQUIRED)
+    set(MSG_TYPE FATAL_ERROR)
   else()
     # Neither QUIETLY nor REQUIRED, use SEND_ERROR which emits an error
     # that prevents generation, but continues configuration.
-    message(SEND_ERROR "Failed to find ospray - " ${REASON_MSG} ${ARGN})
+   set(MSG_TYPE SEND_ERROR)
   endif()
+  message(${MSG_TYPE} "Failed to find OSPRay - " ${REASON_MSG} ${ARGN})
   return()
-endmacro(OSPRAY_REPORT_NOT_FOUND)
+endmacro()
 
 ###############################################################################
-# Attempt to find ospray
+# Attempt to find OSPRay
 
 # Get the (current, i.e. installed) directory containing this file.
 set(CURRENT_CONFIG_INSTALL_DIR ${CMAKE_CURRENT_LIST_DIR})
@@ -51,43 +52,43 @@ set(CURRENT_CONFIG_INSTALL_DIR ${CMAKE_CURRENT_LIST_DIR})
 set(OSPRAY_CALLERS_CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH})
 
 # Reset CMake module path to the installation directory of this script,
-# thus we will use the FindPackage() scripts shipped with ospray to find
-# ospray's dependencies, even if the user has equivalently named FindPackage()
+# thus we will use the FindPackage() scripts shipped with OSPRay to find
+# OSPRay's dependencies, even if the user has equivalently named FindPackage()
 # scripts in their project.
 set(CMAKE_MODULE_PATH ${CURRENT_CONFIG_INSTALL_DIR})
 
 # Build the absolute root install directory as a relative path (determined when
-# ospray was configured & built) from the current install directory for this
-# this file.  This allows for the install tree to be relocated, after ospray
+# OSPRay was configured & built) from the current install directory for this
+# this file. This allows for the install tree to be relocated, after OSPRay
 # was built, outside of CMake.
 get_filename_component(CURRENT_ROOT_INSTALL_DIR
-  ${CURRENT_CONFIG_INSTALL_DIR}/../../../ ABSOLUTE
+  ${CURRENT_CONFIG_INSTALL_DIR}/@OSPRAY_RELATIV_ROOT_DIR@ ABSOLUTE
 )
 
-if(NOT EXISTS ${CURRENT_ROOT_INSTALL_DIR})
+if (NOT EXISTS ${CURRENT_ROOT_INSTALL_DIR})
   OSPRAY_REPORT_NOT_FOUND(
-    "ospray install root: ${CURRENT_ROOT_INSTALL_DIR}, "
+    "OSPRay install root: ${CURRENT_ROOT_INSTALL_DIR}, "
     "determined from relative path from osprayConfig.cmake install location:  "
     "${CURRENT_CONFIG_INSTALL_DIR}, does not exist.  Either the install "
     "directory was deleted, or the install tree was only partially relocated "
-    "outside of CMake after ospray was built.")
-endif(NOT EXISTS ${CURRENT_ROOT_INSTALL_DIR})
+    "outside of CMake after OSPRay was built.")
+endif()
 
 set(OSPRAY_ROOT ${CURRENT_ROOT_INSTALL_DIR})
 
-# Set the include directories for ospray (itself).
+# Set the include directories for OSPRay (itself).
 set(OSPRAY_INCLUDE_DIR "${OSPRAY_ROOT}/include")
-if(NOT EXISTS ${OSPRAY_INCLUDE_DIR}/ospray/version.h)
+if (NOT EXISTS ${OSPRAY_INCLUDE_DIR}/ospray/version.h)
   OSPRAY_REPORT_NOT_FOUND(
-    "ospray install root:  ${OSPRAY_ROOT}, "
+    "OSPRay install root:  ${OSPRAY_ROOT}, "
     "determined from relative path from osprayConfg.cmake install location:  "
-    "${CURRENT_CONFIG_INSTALL_DIR}, does not contain ospray headers. "
+    "${CURRENT_CONFIG_INSTALL_DIR}, does not contain OSPRay headers. "
     "Either the install directory was deleted, or the install tree was only "
-    "partially relocated outside of CMake after ospray was built.")
-endif(NOT EXISTS ${OSPRAY_INCLUDE_DIR}/ospray/version.h)
+    "partially relocated outside of CMake after OSPRay was built.")
+endif()
 
 # Append the include directories for all (potentially optional) dependencies
-# with which ospray was compiled, the libraries themselves come in via
+# with which OSPRay was compiled, the libraries themselves come in via
 # osprayTargets-<release/debug>.cmake as link libraries for ospray target.
 set(OSPRAY_INCLUDE_DIRS
   ${OSPRAY_INCLUDE_DIR}
@@ -95,13 +96,15 @@ set(OSPRAY_INCLUDE_DIRS
   ${OSPRAY_INCLUDE_DIR}/ospray/SDK
 )
 
-
 ###############################################################################
-# ospray build configuration
-
+# OSPRay build configuration
 
 set(OSPRAY_VERSION   @OSPRAY_VERSION@)
 set(OSPRAY_SOVERSION @OSPRAY_SOVERSION@)
+
+set(OSPRAY_BUILD_DEBUG          @OSPRAY_BUILD_DEBUG@)
+set(OSPRAY_BUILD_RELWITHDEBINFO @OSPRAY_BUILD_RELWITHDEBINFO@)
+set(OSPRAY_BUILD_RELEASE        @OSPRAY_BUILD_RELEASE@)
 
 set(OSPRAY_COMPILER_ICC   @OSPRAY_COMPILER_ICC@)
 set(OSPRAY_COMPILER_GCC   @OSPRAY_COMPILER_GCC@)
@@ -109,27 +112,40 @@ set(OSPRAY_COMPILER_CLANG @OSPRAY_COMPILER_CLANG@)
 set(OSPRAY_COMPILER_MSVC  @OSPRAY_COMPILER_MSVC@)
 
 set(OSPRAY_TASKING_TBB         @OSPRAY_TASKING_TBB@)
-set(OSPRAY_ISPC_TARGET_LIST    @OSPRAY_ISPC_TARGET_LIST@)
+set(OSPRAY_TASKING_CILK        @OSPRAY_TASKING_CILK@)
+set(OSPRAY_TASKING_OPENMP      @OSPRAY_TASKING_OPENMP@)
+set(OSPRAY_TASKING_INTERNAL    @OSPRAY_TASKING_INTERNAL@)
+set(OSPRAY_TASKING_LIBDISPATCH @OSPRAY_TASKING_LIBDISPATCH@)
+set(OSPRAY_TASKING_DEBUG       @OSPRAY_TASKING_DEBUG@)
 
+set(OSPRAY_ISPC_TARGET_LIST    @OSPRAY_ISPC_TARGET_LIST@)
 set(OSPRAY_MPI_ENABLED         @OSPRAY_MODULE_MPI@)
 
+set(OSPRAY_TILE_SIZE      @OSPRAY_TILE_SIZE@)
+set(OSPRAY_PIXELS_PER_JOB @OSPRAY_PIXELS_PER_JOB@)
+
+set(EMBREE_VERSION_REQUIRED @EMBREE_VERSION_REQUIRED@)
+
 ###############################################################################
-# ospray dependencies
+# OSPRay dependencies
 
 # Save state
 set(OSPRAY_CMAKE_CURRENT_LIST_DIR     ${CMAKE_CURRENT_LIST_DIR})
 set(OSPRAY_CURRENT_CONFIG_INSTALL_DIR ${CURRENT_CONFIG_INSTALL_DIR})
 set(OSPRAY_CURRENT_ROOT_INSTALL_DIR   ${CURRENT_ROOT_INSTALL_DIR})
 
+# Include macros for finding embree
+include(ospray_macros)
+
 # NOTE(jda) - Here is where find_package(...) is automatically called for
-#             any ospray dependencies. A list of libs should be constructed
+#             any OSPRay dependencies. A list of libs should be constructed
 #             and added to the OSPRAY_LIBRARIES variable below.
 
 if (OSPRAY_TASKING_TBB)
   # Find tbb
   find_package(TBB)
-  if(":${TBB_LIBRARY}" STREQUAL ":")
-    message(FATAL_ERROR "Missing required optional OSPRay dependency "
+  if (":${TBB_LIBRARY}" STREQUAL ":")
+    message(FATAL_ERROR "Missing required OSPRay dependency "
       "TBB, please set TBB_ROOT to the root of your TBB install.")
   else()
     message(STATUS "Found required OSPRay dependency: TBB in ${TBB_INCLUDE_DIRS}")
@@ -137,22 +153,30 @@ if (OSPRAY_TASKING_TBB)
 
   add_definitions(-DOSPRAY_TASKING_TBB)
   list(APPEND OSPRAY_DEPENDENCIES ${TBB_LIBRARIES})
-endif()
-
-if (OSPRAY_TASKING_CILK)
+elseif (OSPRAY_TASKING_CILK)
   add_definitions(-DOSPRAY_TASKING_CILK)
+elseif (OSPRAY_TASKING_OPENMP)
+  add_definitions(-DOSPRAY_TASKING_OPENMP)
+elseif (OSPRAY_TASKING_INTERNAL)
+  add_definitions(-DOSPRAY_TASKING_INTERNAL)
+elseif (OSPRAY_TASKING_LIBDISPATCH)
+  add_definitions(-DOSPRAY_TASKING_LIBDISPATCH)
+else()
+  add_definitions(-DOSPRAY_TASKING_DEBUG)
 endif()
 
-IF(WIN32)
-  SET(LIBRARY_PATH_PREFIX ${OSPRAY_ROOT}/@CMAKE_INSTALL_LIBDIR@/${CMAKE_IMPORT_LIBRARY_PREFIX})
-  SET(LIBRARY_SUFFIX ${CMAKE_IMPORT_LIBRARY_SUFFIX})
-ELSE()
-  SET(LIBRARY_PATH_PREFIX ${OSPRAY_ROOT}/@CMAKE_INSTALL_LIBDIR@/${CMAKE_SHARED_LIBRARY_PREFIX})
-  SET(LIBRARY_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
-ENDIF()
+if (WIN32)
+  set(LIBRARY_PATH_PREFIX ${OSPRAY_ROOT}/@CMAKE_INSTALL_LIBDIR@/${CMAKE_IMPORT_LIBRARY_PREFIX})
+  set(LIBRARY_SUFFIX ${CMAKE_IMPORT_LIBRARY_SUFFIX})
+else()
+  set(LIBRARY_PATH_PREFIX ${OSPRAY_ROOT}/@CMAKE_INSTALL_LIBDIR@/${CMAKE_SHARED_LIBRARY_PREFIX})
+  set(LIBRARY_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
+endif()
 
 # Find existing Embree on the machine
-find_package(embree @EMBREE_VERSION_REQUIRED@ REQUIRED)
+ospray_find_embree(${EMBREE_VERSION_REQUIRED})
+ospray_verify_embree_features()
+
 list(APPEND OSPRAY_INCLUDE_DIRS ${EMBREE_INCLUDE_DIRS})
 
 # Restore state
@@ -162,26 +186,21 @@ set(CURRENT_ROOT_INSTALL_DIR   ${OSPRAY_CURRENT_ROOT_INSTALL_DIR})
 
 
 ###############################################################################
-# Finish ospray
+# Finish OSPRay
 
 # Remove duplicate entries from OSPRAY_INCLUDE_DIRS
 list(REMOVE_DUPLICATES OSPRAY_INCLUDE_DIRS)
+
+set(OSPRAY_LIBRARY ${LIBRARY_PATH_PREFIX}ospray${LIBRARY_SUFFIX})
+set(OSPRAY_COMMON_LIBRARY ${LIBRARY_PATH_PREFIX}ospray_common${LIBRARY_SUFFIX})
 
 # Set expected OSPRAY_LIBRARIES variable for FindPackage().
 set(OSPRAY_LIBRARIES
   ${OSPRAY_DEPENDENCIES}
   ${EMBREE_LIBRARY}
-  ${LIBRARY_PATH_PREFIX}ospray${LIBRARY_SUFFIX}
-  ${LIBRARY_PATH_PREFIX}ospray_common${LIBRARY_SUFFIX}
+  ${OSPRAY_LIBRARY}
+  ${OSPRAY_COMMON_LIBRARY}
 )
-
-if(OSPRAY_MPI_ENABLED)
-  set(OSPRAY_LIBRARIES
-    ${OSPRAY_LIBRARIES}
-    ${LIBRARY_PATH_PREFIX}ospray_mpi_common${LIBRARY_SUFFIX}
-    ${LIBRARY_PATH_PREFIX}ospray_mpi_maml${LIBRARY_SUFFIX}
-  )
-endif()
 
 # Reset CMake module path to its state when this script was called.
 set(CMAKE_MODULE_PATH ${OSPRAY_CALLERS_CMAKE_MODULE_PATH})
@@ -194,5 +213,5 @@ set(OSPRAY_USE_FILE ${OSPRAY_CMAKE_ROOT}/osprayUse.cmake)
 # OSPRAY_REPORT_NOT_FOUND() aborts, so if we made it this far,
 # we have found ospray and all required dependencies.
 include(FindPackageMessage)
-find_package_MESSAGE(ospray "Found ospray: ${OSPRAY_LIBRARIES}"
+find_package_MESSAGE(ospray "Found OSPRay: ${OSPRAY_LIBRARY}"
   "[${OSPRAY_INCLUDE_DIRS}]")

@@ -1,6 +1,14 @@
 Version History
 ---------------
 
+### Changes in v1.3.1:
+
+-   Improved robustness of OSPRay CMake find_package config
+    -   Fixed bugs related to CMake configuration when using
+        the OSPRay SDK from an install
+-   Fixed issue with Embree library when installing with
+    `OSPRAY_INSTALL_DEPENDENCIES` enabled
+
 ### Changes in v1.3.0:
 
 -   New MPI distributed device to support MPI distributed applications

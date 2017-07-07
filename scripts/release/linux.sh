@@ -68,15 +68,6 @@ if [ -z $CC ]; then
   export CXX=icpc
 fi
 
-# to make sure we do not include nor link against wrong TBB
-# NOTE: if we are not verifying CentOS6 defaults, we are likely using
-#       a different compiler which requires LD_LIBRARY_PATH!
-if [ -n $OSPRAY_RELEASE_NO_VERIFY ]; then
-  unset CPATH
-  unset LIBRARY_PATH
-  unset LD_LIBRARY_PATH
-fi
-
 #### Fetch dependencies (TBB+Embree+ISPC) ####
 
 mkdir -p $DEP_DIR
@@ -124,13 +115,9 @@ cmake \
 # create RPM files
 make -j `nproc` preinstall
 
-# if we define 'OSPRAY_RELEASE_NO_VERIFY' to anything, then we
-#   don't verify link dependencies for CentOS6
-if [ -z $OSPRAY_RELEASE_NO_VERIFY ]; then
-  check_symbols libospray.so GLIBC   2 4 0
-  check_symbols libospray.so GLIBCXX 3 4 11
-  check_symbols libospray.so CXXABI  1 3 0
-fi
+check_symbols libospray.so GLIBC   2 4 0
+check_symbols libospray.so GLIBCXX 3 4 11
+check_symbols libospray.so CXXABI  1 3 0
 
 make -j `nproc` package
 
@@ -138,7 +125,7 @@ make -j `nproc` package
 OSPRAY_VERSION=`sed -n 's/#define OSPRAY_VERSION "\(.*\)"/\1/p' ospray/version.h`
 
 # rename RPMs to have component name before version
-for i in ospray-${OSPRAY_VERSION}-1.*.rpm ; do 
+for i in ospray-${OSPRAY_VERSION}-1.*.rpm ; do
   newname=`echo $i | sed -e "s/ospray-\(.\+\)-\([a-z_]\+\)\.rpm/ospray-\2-\1.rpm/"`
   mv $i $newname
 done
