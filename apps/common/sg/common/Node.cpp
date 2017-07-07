@@ -318,10 +318,10 @@ namespace ospray {
     }
 
     Node& Node::createChild(std::string name,
-                                std::string type,
-                                SGVar var,
-                                int flags,
-                                std::string documentation)
+                            std::string type,
+                            SGVar var,
+                            int flags,
+                            std::string documentation)
     {
       auto child = createNode(name, type, var, flags, documentation);
       add(child);
@@ -411,7 +411,7 @@ namespace ospray {
        if (lastModified() >= lastCommitted() ||
                 childrenLastModified() >= lastCommitted())
           preCommit(ctx);
-        else 
+        else
           traverseChildren = false;
       } else if (operation == "verify") {
         if (properties.valid && childrenLastModified() < properties.lastVerified)

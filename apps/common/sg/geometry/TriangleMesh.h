@@ -59,10 +59,6 @@ namespace ospray {
 
       // Data members //
 
-      OSPGeometry ospGeometry {nullptr};
-      OSPGeometry ospGeometryInstance {nullptr};
-      OSPModel    ospModel {nullptr};
-
       // to allow memory-mapping triangle arrays (or in general,
       // sharing data with an application) we use data arrays, not std::vector's
 
@@ -104,7 +100,7 @@ namespace ospray {
         Geometry::material no matter what Triangle::materialID is set
        */
       std::vector<std::shared_ptr<sg::Material>> materialList;
-      std::vector<uint32_t> materialIDs;      
+      std::vector<uint32_t> materialIDs;
 
       //! material IDs
       OSPData primMatIDs;

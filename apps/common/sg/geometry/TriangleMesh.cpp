@@ -28,7 +28,7 @@ namespace ospray {
 
     std::string TriangleMesh::toString() const
     {
-      return "ospray::sg::Geometry";
+      return "ospray::sg::TriangleMesh";
     }
 
     box3f TriangleMesh::computeBounds() const
@@ -79,8 +79,9 @@ namespace ospray {
 
     void TriangleMesh::postCommit(RenderContext &ctx)
     {
-      if (ospGeometry)
-      {
+      auto ospGeometry = (OSPGeometry)valueAs<OSPObject>();
+
+      if (ospGeometry) {
         assert((OSPMaterial)child("material").valueAs<OSPObject>());
         ospSetMaterial(ospGeometry,
                        (OSPMaterial)child("material").valueAs<OSPObject>());
@@ -91,9 +92,8 @@ namespace ospray {
       if (!vertex)
         return;
 
-      if (ospGeometry)
-        ospRelease(ospGeometry);
       ospGeometry = ospNewGeometry("trianglemesh");
+      setValue((OSPObject)ospGeometry);
 
       // set vertex data
       if (vertex && vertex->notEmpty())
@@ -115,8 +115,9 @@ namespace ospray {
 
     void TriangleMesh::postRender(RenderContext& ctx)
     {
+      auto ospGeometry = (OSPGeometry)valueAs<OSPObject>();
       if (ospGeometry)
-        ospAddGeometry(ctx.currentOSPModel,ospGeometry);
+        ospAddGeometry(ctx.currentOSPModel, ospGeometry);
     }
 
     OSP_REGISTER_SG_NODE(TriangleMesh);

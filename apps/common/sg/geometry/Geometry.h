@@ -29,8 +29,8 @@ namespace ospray {
       virtual std::string toString() const override;
 
       /*! geometry type, i.e., 'spheres', 'cylinders', 'trianglemesh', ... */
-      const std::string type; 
-      
+      const std::string type;
+
       /*! material for this geometry */
       // std::shared_ptr<Material> material;
     };
@@ -42,13 +42,14 @@ namespace ospray {
     {
       createChild("material", "Material");
       createChild("type", "string");
+      setValue((OSPObject)nullptr);
     }
 
     inline std::string Geometry::toString() const
     {
       return "ospray::sg::Geometry";
     }
-    
+
   } // ::ospray::sg
 } // ::ospray
 
