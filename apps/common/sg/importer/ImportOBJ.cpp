@@ -29,7 +29,7 @@
 namespace ospray {
   namespace sg {
 
-    std::vector<std::shared_ptr<Material>>
+    static inline std::vector<std::shared_ptr<Material>>
     createSgMaterials(std::vector<tinyobj::material_t> &mats)
     {
       std::vector<std::shared_ptr<Material>> sgMaterials;
@@ -42,6 +42,7 @@ namespace ospray {
         if (!type.empty())
           matNode["type"].setValue(type);
 
+        matNode["d"].setValue(mat.dissolve);
         matNode["Ka"].setValue(vec3f(mat.ambient[0],
                                      mat.ambient[1],
                                      mat.ambient[2]));
@@ -121,8 +122,12 @@ namespace ospray {
         mesh->add(vi);
 
         auto matIdx = shape.mesh.material_ids[0];
-        if (!sgMaterials.empty() && matIdx > 0)
-          mesh->setChild("material", sgMaterials[matIdx]);
+        if (!sgMaterials.empty()) {
+          if (matIdx > 0)
+            mesh->setChild("material", sgMaterials[matIdx]);
+          else
+            mesh->setChild("material", sgMaterials[0]);
+        }
 
         auto model = createNode(name + " model", "Model");
         model->add(mesh);
