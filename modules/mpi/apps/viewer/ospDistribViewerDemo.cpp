@@ -366,7 +366,7 @@ int main(int argc, char **argv) {
       volume.tfcn.set("opacities", alphaData);
       volume.tfcn.commit();
 
-      fb.clear(OSP_FB_COLOR | OSP_FB_ACCUM);
+      fb.clear(OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_VARIANCE);
       app.tfcnChanged = false;
     }
   }

@@ -70,6 +70,15 @@ namespace ospray {
          INSPECT_CENTER_MODE =(1<<1)
        } ManipulatorMode;
 
+       enum Keys
+       {
+         CNTRL_KEY = (1 << 0),
+         SHIFT_KEY = (1 << 1),
+         ALT_KEY   = (1 << 2)
+       };
+
+       int keysDown {0};
+
        /*! internal viewPort class */
        struct OSPRAY_IMGUI3D_INTERFACE ViewPort {
          bool modified; /* the viewPort will set this flag any time any of
@@ -87,9 +96,13 @@ namespace ospray {
            itself remains normalized. */
          AffineSpace3fa frame;
 
+         /*! use current 'from', 'up', and 'at' to fix the 'up' vector according
+             to */
+         void snapViewUp();
+
          /*! set 'up' vector. if this vector is '0,0,0' the viewer will
           *not* apply the up-vector after camera manipulation */
-         void snapUp();
+         void snapFrameUp();
 
          ViewPort();
        };

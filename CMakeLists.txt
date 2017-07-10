@@ -46,6 +46,7 @@ SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${OSPCOMMON_DIR}/cmake)
 ##############################################################
 
 INCLUDE(macros)
+INCLUDE(ospray_macros)
 INCLUDE(ospray_options)
 INCLUDE(ispc)
 
