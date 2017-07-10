@@ -91,14 +91,14 @@ namespace ospray {
                         *dst++ = pixel.green * rcpMaxRGB;
                         *dst++ = pixel.blue * rcpMaxRGB;
                         if (tex->channels == 4)
-                          *dst++ = pixel.opacity * rcpMaxRGB;
+                          *dst++ = (MaxRGB - pixel.opacity) * rcpMaxRGB;
                       } else {
                         unsigned char *dst = &((unsigned char*)tex->data)[(x+(tex->size.y-1-y)*tex->size.x)*tex->channels];
                         *dst++ = pixel.red;
                         *dst++ = pixel.green;
                         *dst++ = pixel.blue;
                         if (tex->channels == 4)
-                          *dst++ = pixel.opacity;
+                          *dst++ = 255 - (unsigned char)pixel.opacity;
                       }
                     }
                   }
@@ -282,14 +282,14 @@ namespace ospray {
                 *dst++ = pixel.green * rcpMaxRGB;
                 *dst++ = pixel.blue * rcpMaxRGB;
                 if (tex->channels == 4)
-                  *dst++ = pixel.opacity * rcpMaxRGB;
+                  *dst++ = (MaxRGB - pixel.opacity) * rcpMaxRGB;
               } else {
                 unsigned char *dst = &((unsigned char*)tex->data)[(x+(tex->size.y-1-y)*tex->size.x)*tex->channels];
                 *dst++ = pixel.red;
                 *dst++ = pixel.green;
                 *dst++ = pixel.blue;
                 if (tex->channels == 4)
-                  *dst++ = pixel.opacity;
+                  *dst++ = 255 - (unsigned char)pixel.opacity;
               }
             }
           }
