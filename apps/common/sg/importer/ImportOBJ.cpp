@@ -29,24 +29,56 @@
 namespace ospray {
   namespace sg {
 
+    std::vector<std::shared_ptr<Material>>
+    createSgMaterials(std::vector<tinyobj::material_t> &mats)
+    {
+      std::vector<std::shared_ptr<Material>> sgMaterials;
+
+      for (auto &mat : mats) {
+        auto matNodePtr = createNode(mat.name, "Material")->nodeAs<Material>();
+        auto &matNode = *matNodePtr;
+
+        auto type = mat.unknown_parameter["type"];
+        if (!type.empty())
+          matNode["type"].setValue(type);
+
+        matNode["Ka"].setValue(vec3f(mat.ambient[0],
+                                     mat.ambient[1],
+                                     mat.ambient[2]));
+        matNode["Kd"].setValue(vec3f(mat.diffuse[0],
+                                     mat.diffuse[1],
+                                     mat.diffuse[2]));
+        matNode["Ks"].setValue(vec3f(mat.specular[0],
+                                     mat.specular[1],
+                                     mat.specular[2]));
+
+        sgMaterials.push_back(matNodePtr);
+      }
+
+      return sgMaterials;
+    }
+
     void importOBJ(const std::shared_ptr<Node> &world, const FileName &fileName)
     {
-      std::cout << "ospray::sg::importOBJ: importing from " << fileName
-                << std::endl;
-
       tinyobj::attrib_t attrib;
       std::vector<tinyobj::shape_t> shapes;
       std::vector<tinyobj::material_t> materials;
 
       std::string err;
+      auto containingPath = fileName.path().str() + '/';
       bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &err,
-                                  fileName.c_str());
+                                  fileName.c_str(), containingPath.c_str());
 
       if (!err.empty())
-        std::cerr << "#ospsg: OBJ PARSING ERROR: " << err << std::endl;
+        std::cerr << "#ospsg: obj parsing warning(s)...\n" << err << std::endl;
 
-      if (!ret)
+      if (!ret) {
+        std::cerr << "#ospsg: FATAL error parsing obj file, no geometry added"
+                  << " to the scene!" << std::endl;
         return;
+      }
+
+      auto sgMaterials = createSgMaterials(materials);
 
       auto v = createNode("vertex", "DataVector3f")->nodeAs<DataVector3f>();
       auto numSrcElements = attrib.vertices.size();
@@ -88,10 +120,14 @@ namespace ospray {
         mesh->add(vt);
         mesh->add(vi);
 
-        auto model = createNode(name+"_model", "Model");
+        auto matIdx = shape.mesh.material_ids[0];
+        if (!sgMaterials.empty() && matIdx > 0)
+          mesh->setChild("material", sgMaterials[matIdx]);
+
+        auto model = createNode(name + " model", "Model");
         model->add(mesh);
 
-        auto instance = createNode(name+"_instance", "Instance");
+        auto instance = createNode(name + " instance", "Instance");
         instance->setChild("model", model);
         model->setParent(instance);
 
