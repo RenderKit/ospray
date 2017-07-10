@@ -29,8 +29,32 @@
 namespace ospray {
   namespace sg {
 
+    std::shared_ptr<Texture2D> loadTexture(const FileName &fullPath,
+                                           const bool preferLinear = false)
+    {
+      std::shared_ptr<Texture2D> tex = Texture2D::load(fullPath,
+                                                       preferLinear);
+      if (!tex)
+        std::cout << "could not load texture " << fullPath.str() << " !\n";
+
+      return tex;
+    }
+
+    void addTextureIfNeeded(Material &node,
+                            const std::string &type,
+                            const FileName &texName,
+                            const FileName &containingPath)
+    {
+      if (!texName.str().empty()) {
+        auto tex = loadTexture(containingPath + texName);
+        tex->setName(type);
+        node.add(tex);
+      }
+    }
+
     static inline std::vector<std::shared_ptr<Material>>
-    createSgMaterials(std::vector<tinyobj::material_t> &mats)
+    createSgMaterials(std::vector<tinyobj::material_t> &mats,
+                      const FileName &containingPath)
     {
       std::vector<std::shared_ptr<Material>> sgMaterials;
 
@@ -52,6 +76,17 @@ namespace ospray {
         matNode["Ks"].setValue(vec3f(mat.specular[0],
                                      mat.specular[1],
                                      mat.specular[2]));
+
+        addTextureIfNeeded(matNode, "map_Ka",
+                           mat.ambient_texname, containingPath);
+        addTextureIfNeeded(matNode, "map_Kd",
+                           mat.diffuse_texname, containingPath);
+        addTextureIfNeeded(matNode, "map_Ks",
+                           mat.specular_texname, containingPath);
+        addTextureIfNeeded(matNode, "map_Ns",
+                           mat.specular_highlight_texname, containingPath);
+        addTextureIfNeeded(matNode, "map_bump",
+                           mat.bump_texname, containingPath);
 
         sgMaterials.push_back(matNodePtr);
       }
@@ -79,7 +114,7 @@ namespace ospray {
         return;
       }
 
-      auto sgMaterials = createSgMaterials(materials);
+      auto sgMaterials = createSgMaterials(materials, containingPath);
 
       auto v = createNode("vertex", "DataVector3f")->nodeAs<DataVector3f>();
       auto numSrcElements = attrib.vertices.size();
