@@ -189,7 +189,6 @@ void parseCommandLineSG(int ac, const char **&av, sg::Node &root)
 
 void addPlaneToScene(sg::Node& world)
 {
-  #if 0
   auto bbox = world.bounds();
   if (bbox.empty()) {
     bbox.lower = vec3f(-5,0,-5);
@@ -208,23 +207,26 @@ void addPlaneToScene(sg::Node& world)
   auto position = std::make_shared<sg::DataArray3f>((vec3f*)&vertices[0],
                                                     size_t(4),
                                                     false);
+  position->setName("vertex");
+
   osp::vec3i *triangles = new osp::vec3i[2];
   triangles[0] = osp::vec3i{0,1,2};
   triangles[1] = osp::vec3i{1,2,3};
   auto index = std::make_shared<sg::DataArray3i>((vec3i*)&triangles[0],
                                                  size_t(2),
                                                  false);
+  index->setName("index");
+
   auto &plane = world.createChild("plane", "Instance");
   auto &mesh  = plane.child("model").createChild("mesh", "TriangleMesh");
 
   auto sg_plane = mesh.nodeAs<sg::TriangleMesh>();
-  sg_plane->vertex = position;
-  sg_plane->index = index;
+  sg_plane->add(position);
+  sg_plane->add(index);
   auto &planeMaterial = mesh["material"];
   planeMaterial["Kd"].setValue(vec3f(0.5f));
   planeMaterial["Ks"].setValue(vec3f(0.6f));
   planeMaterial["Ns"].setValue(2.f);
-  #endif
 }
 
 int main(int ac, const char **av)
