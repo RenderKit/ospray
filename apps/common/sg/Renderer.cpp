@@ -41,6 +41,11 @@ namespace ospray {
                                           std::string("ao16"),
                                           std::string("dvr"),
                                           std::string("raycast"),
+                                          std::string("raycast_Ng"),
+                                          std::string("raycast_Ns"),
+                                          std::string("primID"),
+                                          std::string("geomID"),
+                                          std::string("instID"),
                                           std::string("pathtracer"),
                                           std::string("pt")});
       createChild("world",

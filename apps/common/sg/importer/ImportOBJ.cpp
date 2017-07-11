@@ -120,26 +120,6 @@ namespace ospray {
 
       auto sgMaterials = createSgMaterials(materials, containingPath);
 
-      auto v = createNode("vertex", "DataVector3f")->nodeAs<DataVector3f>();
-      auto numSrcElements = attrib.vertices.size();
-      v->v.resize(numSrcElements / 3);
-      std::memcpy(v->v.data(), attrib.vertices.data(),
-                  numSrcElements * sizeof(float));
-
-#if 0
-      auto vn = createNode("normal", "DataVector3f")->nodeAs<DataVector3f>();
-      numSrcElements = attrib.normals.size();
-      vn->v.resize(numSrcElements / 3);
-      std::memcpy(vn->v.data(), attrib.normals.data(),
-                  numSrcElements * sizeof(float));
-
-      auto vt = createNode("texcoord", "DataVector2f")->nodeAs<DataVector2f>();
-      numSrcElements = attrib.texcoords.size();
-      vt->v.resize(numSrcElements / 2);
-      std::memcpy(vt->v.data(), attrib.texcoords.data(),
-                  numSrcElements * sizeof(float));
-#endif
-
       std::string base_name = fileName.name() + '_';
       int shapeId = 0;
 
@@ -154,27 +134,37 @@ namespace ospray {
         auto name = base_name + std::to_string(shapeId++) + '_' + shape.name;
         auto mesh = createNode(name, "TriangleMesh")->nodeAs<TriangleMesh>();
 
+        auto v = createNode("vertex", "DataVector3f")->nodeAs<DataVector3f>();
+        auto numSrcIndices = shape.mesh.indices.size();
+        v->v.reserve(numSrcIndices);
+
         auto vi = createNode("index", "DataVector3i")->nodeAs<DataVector3i>();
-        numSrcElements = shape.mesh.indices.size();
-        vi->v.reserve(numSrcElements / 3);
+        vi->v.reserve(numSrcIndices / 3);
 
         auto vn = createNode("normal", "DataVector3f")->nodeAs<DataVector3f>();
-        vn->v.reserve(numSrcElements / 3);
+        vn->v.reserve(numSrcIndices);
 
         auto vt = createNode("texcoord","DataVector2f")->nodeAs<DataVector2f>();
-        vt->v.reserve(numSrcElements / 3);
+        vt->v.reserve(numSrcIndices);
 
         for (int i = 0; i < shape.mesh.indices.size(); i += 3) {
           auto idx0 = shape.mesh.indices[i+0];
           auto idx1 = shape.mesh.indices[i+1];
           auto idx2 = shape.mesh.indices[i+2];
 
-          auto prim = vec3i(idx0.vertex_index,
-                            idx1.vertex_index,
-                            idx2.vertex_index);
+          auto prim = vec3i(i+0, i+1, i+2);
           vi->push_back(prim);
 
-#if 1
+          v->push_back(vec3f(attrib.vertices[idx0.vertex_index*3+0],
+                             attrib.vertices[idx0.vertex_index*3+1],
+                             attrib.vertices[idx0.vertex_index*3+2]));
+          v->push_back(vec3f(attrib.vertices[idx1.vertex_index*3+0],
+                             attrib.vertices[idx1.vertex_index*3+1],
+                             attrib.vertices[idx1.vertex_index*3+2]));
+          v->push_back(vec3f(attrib.vertices[idx2.vertex_index*3+0],
+                             attrib.vertices[idx2.vertex_index*3+1],
+                             attrib.vertices[idx2.vertex_index*3+2]));
+
           if (!attrib.normals.empty()) {
             vn->push_back(vec3f(attrib.normals[idx0.normal_index*3+0],
                                 attrib.normals[idx0.normal_index*3+1],
@@ -186,9 +176,7 @@ namespace ospray {
                                 attrib.normals[idx2.normal_index*3+1],
                                 attrib.normals[idx2.normal_index*3+2]));
           }
-#endif
 
-#if 1
           if (!attrib.texcoords.empty()) {
             vt->push_back(vec2f(attrib.texcoords[idx0.texcoord_index+0],
                                 attrib.texcoords[idx0.texcoord_index+1]));
@@ -197,7 +185,6 @@ namespace ospray {
             vt->push_back(vec2f(attrib.texcoords[idx2.texcoord_index+0],
                                 attrib.texcoords[idx2.texcoord_index+1]));
           }
-#endif
         }
 
         mesh->add(v);
