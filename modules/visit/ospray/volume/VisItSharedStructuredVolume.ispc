@@ -309,20 +309,39 @@ inline void VisItSharedStructuredVolume_intersectIsosurface(void *uniform _volum
   if (ray.t0 >= ray.t) return;
 }
 
-// export void VisItSharedStructuredVolume_UseGridAccelerator(VisItSharedStructuredVolume *uniform self, uniform int useGridAccelerator)
-// {
-//     if (useGridAccelerator == 0) {
-// 	self->super.super.intersect = self->na_intersect;
-// 	self->super.super.intersectAdaptive = self->na_intersectAdaptive;
-// 	self->super.super.intersectIsosurface = self->na_intersectIsosurface;
-//     }
-//     else {
-// 	self->super.super.intersect = self->ga_intersect;
-// 	self->super.super.intersectAdaptive = self->ga_intersectAdaptive;
-// 	self->super.super.intersectIsosurface = self->ga_intersectIsosurface;    
-//     }
-//     return;
-// }
+inline varying vec3f VisItSharedStructuredVolume_computeGradient(void *uniform _volume, const varying vec3f &worldCoordinates)
+{
+  // Cast to the actual Volume subtype.
+  StructuredVolume *uniform volume = (StructuredVolume *uniform) _volume;
+
+  // Gradient step in each dimension (world coordinates).
+  const uniform vec3f gradientStep = volume->gridSpacing * 0.25f;
+  // print("#osp: gradient step: %, %, %\n",
+  // 	gradientStep.x, gradientStep.y, gradientStep.z);
+  // print("#osp: grid spacing : %, %, %\n", 
+  // 	volume->gridSpacing.x, volume->gridSpacing.y, volume->gridSpacing.z);
+
+  // The gradient will be computed using central differences.
+  varying vec3f gradient;
+
+  // Forward differences
+
+  // Sample at gradient location.
+  float sample = volume->super.computeSample(volume, worldCoordinates);
+
+  // Gradient magnitude in the X direction.
+  gradient.x = volume->super.computeSample(volume, worldCoordinates + make_vec3f(gradientStep.x, 0.0f, 0.0f)) - sample;
+
+  // Gradient magnitude in the Y direction.
+  gradient.y = volume->super.computeSample(volume, worldCoordinates + make_vec3f(0.0f, gradientStep.y, 0.0f)) - sample;
+
+  // Gradient magnitude in the Z direction.
+  gradient.z = volume->super.computeSample(volume, worldCoordinates + make_vec3f(0.0f, 0.0f, gradientStep.z)) - sample;
+
+  // This approximation may yield image artifacts.
+  return(gradient / gradientStep);
+
+}
 
 void VisItSharedStructuredVolume_Constructor(VisItSharedStructuredVolume *uniform self,
 					     void *uniform cppEquivalent,
@@ -346,6 +365,7 @@ void VisItSharedStructuredVolume_Constructor(VisItSharedStructuredVolume *unifor
       self->super.super.intersectAdaptive = self->na_intersectAdaptive;
       self->super.super.intersectIsosurface = self->na_intersectIsosurface;
   }
+  self->super.super.computeGradient = VisItSharedStructuredVolume_computeGradient;
 
   uniform uint64 bytesPerVoxel;
 
