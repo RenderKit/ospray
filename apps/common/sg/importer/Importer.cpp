@@ -149,9 +149,8 @@ namespace ospray {
 
       loadedFileName = "";
 
-      std::shared_ptr<sg::Node> wsg(std::dynamic_pointer_cast<sg::Node>(shared_from_this()));
+      auto wsg = this->nodeAs<Node>();
 
-#if 1
       std::shared_ptr<FormatURL> fu;
       try {
         fu = std::make_shared<FormatURL>(fileName.c_str());
@@ -172,9 +171,8 @@ namespace ospray {
         } else
           std::cout << "Found a URL-style file type specified, but didn't recognize file type '" << fu->formatType<< "' ... reverting to loading by file extension" << std::endl;
       }
-#endif
       if (fileName.ext() == "obj") {
-        sg::importOBJ(std::static_pointer_cast<sg::Node>(shared_from_this()), fileName);
+        sg::importOBJ(wsg, fileName);
       } else if (fileName.ext() == "ply") {
         sg::importPLY(wsg, fileName);
       } else if (fileName.ext() == "osg" || fileName.ext() == "osp") {

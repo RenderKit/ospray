@@ -36,6 +36,8 @@
 #include "sg/geometry/Geometry.h"
 #include "sg/geometry/Spheres.h"
 
+#include "sg/importer/Importer.h"
+
 #include "sg/volume/Volume.h"
 
 // ospcommon
@@ -45,7 +47,7 @@ namespace ospray {
   namespace sg {
 
     using ospcommon::FileName;
-    
+
     /*! \brief allows for adding semantical info to a model/scene
      graph.  \note will not do anything by itself. */
     struct Info : public sg::Node
@@ -76,34 +78,12 @@ namespace ospray {
       box3f bounds() const override;
 
       /*! geometry type, i.e., 'spheres', 'cylinders', 'trianglemesh', ... */
-      const std::string type; 
+      const std::string type;
       box3f _bounds;
     };
 
-    /*! import an OBJ wavefront model, and add its contents to the given world */
-    OSPSG_INTERFACE void importOBJ(const std::shared_ptr<Node> &world,
-                                   const FileName &fileName);
-
-    /*! import an PLY model, and add its contents to the given world */
-    OSPSG_INTERFACE void importPLY(std::shared_ptr<Node> &world,
-                                   const FileName &fileName);
-
-    /*! import an X3D-format model, and add its contents to the given world */
-    OSPSG_INTERFACE void importX3D(const std::shared_ptr<Node> &world,
-                                   const FileName &fileName);
-
-    OSPSG_INTERFACE std::shared_ptr<sg::Node> loadOSP(const std::string &fileName);
-    OSPSG_INTERFACE void loadOSP(std::shared_ptr<sg::Node> world, const std::string &fileName);
-    OSPSG_INTERFACE std::shared_ptr<sg::Node> readXML(const std::string &fileName);
-    OSPSG_INTERFACE void importRIVL(std::shared_ptr<Node> world, const std::string &fileName);
-    OSPSG_INTERFACE std::shared_ptr<sg::Node> loadOSG(const std::string &fileName);
-
-    OSPSG_INTERFACE void loadOSPSG(const std::shared_ptr<Node> &world,
-      const std::string &fileName);
-    OSPSG_INTERFACE void writeOSPSG(const std::shared_ptr<Node> &world,
-      const std::string &fileName);
     /*! @} */
 
   } // ::ospray::sg
 } // ::ospray
-  
+
