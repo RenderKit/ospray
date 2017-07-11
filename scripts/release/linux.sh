@@ -109,7 +109,7 @@ cmake \
 -D USE_IMAGE_MAGICK=OFF \
 -D OSPRAY_ZIP_MODE=OFF \
 -D OSPRAY_INSTALL_DEPENDENCIES=OFF \
--D CMAKE_INSTALL_PREFIX=/usr \
+-D CPACK_PACKAGING_INSTALL_PREFIX=/usr \
 ..
 
 # create RPM files
@@ -126,10 +126,18 @@ OSPRAY_VERSION=`sed -n 's/#define OSPRAY_VERSION "\(.*\)"/\1/p' ospray/version.h
 
 tar czf ospray-${OSPRAY_VERSION}.x86_64.rpm.tar.gz ospray-*-${OSPRAY_VERSION}-*.rpm
 
+
+# generate Appliance RPMs
+cmake -D CPACK_PACKAGING_INSTALL_PREFIX=/work/software/ospray-${OSPRAY_VERSION} ..
+make -j `nproc` package
+tar czf ospray-${OSPRAY_VERSION}.Appliance.rpm.tar.gz ospray-*-${OSPRAY_VERSION}-*.rpm
+
+
 # change settings for zip mode
 cmake \
 -D OSPRAY_ZIP_MODE=ON \
 -D OSPRAY_INSTALL_DEPENDENCIES=ON \
+-D CPACK_PACKAGING_INSTALL_PREFIX=/ \
 -D CMAKE_INSTALL_INCLUDEDIR=include \
 -D CMAKE_INSTALL_LIBDIR=lib \
 -D CMAKE_INSTALL_DOCDIR=doc \
