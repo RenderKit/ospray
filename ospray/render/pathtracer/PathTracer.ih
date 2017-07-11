@@ -29,6 +29,7 @@ struct PathTracer {
   Renderer super;
 
   int32 maxDepth;
+  int32 rouletteDepth;
   float minContribution;
   float maxRadiance;
   Texture2D* uniform backplate;

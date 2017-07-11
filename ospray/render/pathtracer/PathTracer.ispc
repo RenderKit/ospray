@@ -23,8 +23,8 @@
 #include "math/random.ih"
 #include "fb/LocalFB.ih"
 
+#define MAX_ROULETTE_CONT_PROB 0.95f
 #define PDF_CULLING 0.0f
-
 
 inline float misHeuristic(float pdf1, float pdf2)
 {
@@ -42,8 +42,8 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
                         Ray &shadowRay,
                         Medium medium)
 {
-  uniform int max_depth = self->maxDepth;
-  const float org_t_max = shadowRay.t;
+  uniform int maxDepth = self->maxDepth;
+  const float tOriginal = shadowRay.t;
 
   while (1) {
     traceRay(self->super.model, shadowRay);
@@ -53,15 +53,14 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
 
     DifferentialGeometry dg;
     postIntersect(self->super.model, dg, shadowRay,
-        DG_MATERIALID|
-        DG_NS|DG_NG|DG_FACEFORWARD|DG_NORMALIZE|DG_TEXCOORD|DG_COLOR
-        );
+      DG_MATERIALID |
+      DG_NS | DG_NG | DG_FACEFORWARD | DG_NORMALIZE | DG_TEXCOORD | DG_COLOR);
 
-    uniform PathTraceMaterial *m = (uniform PathTraceMaterial*)dg.material;
+    uniform PathTraceMaterial *material = (uniform PathTraceMaterial*)dg.material;
     vec3f transparency;
-    foreach_unique(mm in m)
-      if (mm != NULL)
-        transparency = mm->getTransparency(mm, dg, shadowRay, medium);
+    foreach_unique(m in material)
+      if (m != NULL)
+        transparency = m->getTransparency(m, dg, shadowRay, medium);
 
     lightContrib = lightContrib * transparency;
 
@@ -73,16 +72,16 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
     if (reduce_max(lightContrib) <= self->minContribution)
       return lightContrib;
 
-    if (--max_depth <= 0)
+    if (--maxDepth <= 0)
       return make_vec3f(0.f);
 
     /*! Tracking medium if we hit a medium interface. */
-    foreach_unique(mm in m)
-      if (mm != NULL)
-        mm->selectNextMedium(mm, medium);
+    foreach_unique(m in material)
+      if (m != NULL)
+        m->selectNextMedium(m, medium);
 
     shadowRay.t0 = shadowRay.t + self->super.epsilon;
-    shadowRay.t = org_t_max;
+    shadowRay.t = tOriginal;
     shadowRay.primID = -1;
     shadowRay.geomID = -1;
     shadowRay.instID = -1;
@@ -100,7 +99,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
   vec3f L = make_vec3f(0.f); // accumulated radiance
   vec3f Lw = make_vec3f(1.f); // path throughput
   Medium currentMedium = make_Medium_vacuum();
-  float lastBSDFPdf = inf; // probability density of previous sampled BSDF, for MIS
+  float lastBsdfPdf = inf; // probability density of previous sampled BSDF, for MIS
   bool straightPath = true; // path from camera did not change direction, for alpha and backplate
   uniform uint32 depth = 0;
   // geometric configuration of last surface interaction
@@ -161,14 +160,14 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
             continue;
 
           // test for shadows
-          Ray shadow_ray;
-          setRay(shadow_ray, dg.P, ls.dir,
+          Ray shadowRay;
+          setRay(shadowRay, dg.P, ls.dir,
               self->super.epsilon, ls.dist - self->super.epsilon);
-          shadow_ray.time = ray.time;
+          shadowRay.time = ray.time;
 
-          const vec3f unshaded_light_contrib = Lw * ls.weight * brdf;// * misHeuristic(ls.pdf, brdf);
-          unshaded = unshaded + unshaded_light_contrib;
-          shaded = shaded + transparentShadow(self, unshaded_light_contrib, shadow_ray, currentMedium);
+          const vec3f unshadedLightContrib = Lw * ls.weight * brdf;// * misHeuristic(ls.pdf, brdf);
+          unshaded = unshaded + unshadedLightContrib;
+          shaded = shaded + transparentShadow(self, unshadedLightContrib, shadowRay, currentMedium);
         }
         // order of args important to filter NaNs (in case unshaded.X is zero)
         const vec3f ratio = min(Lw * shaded * rcp(unshaded), Lw);
@@ -184,7 +183,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         break;
       }
 
-      // update dist for potential next intersection (if transparent) 
+      // update dist for potential next intersection (if transparent)
       shadowCatcherDist -= ray.t;
     }
 
@@ -201,24 +200,24 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
           maxLightDist = 1e38; // backplate hides envLights (i.e. the ones at infinity)
         }
       }
-    } else
+    } else {
       // virtual lights are occluded by hit geometry
       // because lastDg.P can be different from ray.org (when previously sampled a Dirac transmission)
       // we cannot just use ray.t as maxDist
       maxLightDist = distance(lastDg.P, ray.org + ray.t * ray.dir);
-
+    }
 
     // add light from *virtual* lights by intersecting them
     for (uniform int i = self->numGeoLights; i < self->numLights; i++) {
       const float minLightDist = distance(lastDg.P, ray.org); // minDist is not always zero, see above
-      const uniform Light *uniform l = self->lights[i];
-      if (!straightPath || l->isVisible) {
+      const uniform Light *uniform light = self->lights[i];
+      if (!straightPath || light->isVisible) {
         // to correctly handle MIS through transparencies the light pdf needs to be calculated wrt. lastDg
         // however, we only have a valid intersection with the light in [minLightDist, maxLightDist],
         // otherwise light could be added twice
-        Light_EvalRes le = l->eval(l, lastDg, ray.dir, minLightDist, maxLightDist);
+        Light_EvalRes le = light->eval(light, lastDg, ray.dir, minLightDist, maxLightDist);
         if (reduce_max(le.radiance) > 0.0f)
-          L = L + Lw * le.radiance * misHeuristic(lastBSDFPdf, le.pdf);
+          L = L + Lw * le.radiance * misHeuristic(lastBsdfPdf, le.pdf);
       }
     }
 
@@ -234,29 +233,28 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     // handle next surface interaction
 
     postIntersect(self->super.model, dg, ray,
-        DG_MATERIALID|
-        DG_NS|DG_NG|DG_FACEFORWARD|DG_NORMALIZE|DG_TEXCOORD|DG_COLOR|DG_TANGENTS
-        );
-    uniform PathTraceMaterial* m = (uniform PathTraceMaterial*)dg.material;
+                  DG_MATERIALID |
+                  DG_NS | DG_NG | DG_FACEFORWARD | DG_NORMALIZE | DG_TEXCOORD | DG_COLOR | DG_TANGENTS);
+    uniform PathTraceMaterial* material = (uniform PathTraceMaterial*)dg.material;
 
     // evaluate geometry lights
-    foreach_unique(mm in m)
-      if (mm != NULL && reduce_max(mm->emission) > 0.f) {
-        float area_pdf;
+    foreach_unique(m in material)
+      if (m != NULL && reduce_max(m->emission) > 0.f) {
+        float areaPdf;
         // XXX same hack as in Model.ih; to get areaPDF of hit geometry instance
         if (ray.instID < 0) { // a regular geometry
-          area_pdf = self->areaPDF[ray.geomID];
+          areaPdf = self->areaPDF[ray.geomID];
         } else { // an instance
           foreach_unique(instID in ray.instID) {
             Instance *uniform inst = (Instance *uniform)self->super.model->geometry[instID];
-            area_pdf = inst->areaPDF[ray.geomID];
+            areaPdf = inst->areaPDF[ray.geomID];
           }
         }
 
         // convert pdf wrt. area to pdf wrt. solid angle
         const float cosd = dot(dg.Ng, ray.dir);
-        const float le_pdf = area_pdf * sqr(ray.t) / abs(cosd);
-        L = L + Lw * mm->emission * misHeuristic(lastBSDFPdf, le_pdf);
+        const float lePdf = areaPdf * sqr(ray.t) / abs(cosd);
+        L = L + Lw * m->emission * misHeuristic(lastBsdfPdf, lePdf);
       }
 
     // terminate after evaluation of lights and before next shading to always have both samples for MIS
@@ -268,9 +266,9 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     ShadingContext_Constructor(&ctx);
     const varying BSDF* bsdf = NULL;
 
-    foreach_unique(mm in m)
-      if (mm != NULL)
-        bsdf = mm->getBSDF(mm, &ctx, dg, ray, currentMedium);
+    foreach_unique(m in material)
+      if (m != NULL)
+        bsdf = m->getBSDF(m, &ctx, dg, ray, currentMedium);
 
     // terminate path when we don't have any BSDF
     if (!bsdf)
@@ -290,28 +288,37 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
         // evaluate BSDF
         BSDF_EvalRes fe;
-        foreach_unique(f in bsdf)
+        foreach_unique(f in bsdf) {
           if (f != NULL)
             fe = f->eval(f, wo, ls.dir);
+        }
 
         // skip when zero contribution from material
         if (reduce_max(fe.value) <= 0.0f)
           continue;
 
         // test for shadows
-        Ray shadow_ray;
-        setRay(shadow_ray, dg.P, ls.dir,
+        Ray shadowRay;
+        setRay(shadowRay, dg.P, ls.dir,
                self->super.epsilon, ls.dist - self->super.epsilon);
-        shadow_ray.time = ray.time;
+        shadowRay.time = ray.time;
 
-        const vec3f unshaded_light_contrib = Lw * ls.weight * fe.value * misHeuristic(ls.pdf, fe.pdf);
-        L = L + transparentShadow(self, unshaded_light_contrib, shadow_ray, currentMedium);
+        const vec3f nextLw = Lw * fe.value;
+
+        // Russian roulette adjustment
+        if (depth >= self->rouletteDepth) {
+          const float contProb = min(luminance(nextLw * rcp(fe.pdf)), MAX_ROULETTE_CONT_PROB);
+          fe.pdf *= contProb;
+        }
+
+        const vec3f unshadedLightContrib = nextLw * ls.weight * misHeuristic(ls.pdf, fe.pdf);
+        L = L + transparentShadow(self, unshadedLightContrib, shadowRay, currentMedium);
       }
     }
 
     // sample BSDF
     vec2f s  = RandomTEA__getFloats(rng);
-    vec2f ss = RandomTEA__getFloats(rng); // TODO use other component to select one light
+    vec2f ss = RandomTEA__getFloats(rng); // ss.y used for Russian roulette
     BSDF_SampleRes fs;
     foreach_unique(f in bsdf)
       if (f != NULL)
@@ -323,23 +330,32 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     Lw = Lw * fs.weight;
 
+    // Russian roulette
+    if (depth >= self->rouletteDepth) {
+      const float contProb = min(luminance(Lw), MAX_ROULETTE_CONT_PROB);
+      if (ss.y >= contProb)
+        break;
+      Lw = Lw * rcp(contProb);
+      fs.pdf *= contProb;
+    }
+
     // compute attenuation with Beer's law
     if (reduce_min(currentMedium.attenuation) < 0.f)
       Lw = Lw * expf(currentMedium.attenuation * ray.t);
 
-    // update currentMedium if we hit a medium interface 
+    // update currentMedium if we hit a medium interface
     // TODO: support nested dielectrics
     if (fs.type & BSDF_TRANSMISSION) {
-      foreach_unique(mm in m) {
-        if (mm != NULL)
-          mm->selectNextMedium(mm, currentMedium);
+      foreach_unique(m in material) {
+        if (m != NULL)
+          m->selectNextMedium(m, currentMedium);
       }
     }
 
-    // keep lastBSDFPdf and lastDg when there was a Dirac transmission
+    // keep lastBsdfPdf and lastDg when there was a Dirac transmission
     // to better combine MIS with transparent shadows
     if (fs.type & ~BSDF_SPECULAR_TRANSMISSION) {
-      lastBSDFPdf = fs.pdf;
+      lastBsdfPdf = fs.pdf;
       lastDg = dg;
     }
 
@@ -451,6 +467,7 @@ unmasked void PathTracer_renderTile(uniform Renderer *uniform _self,
 
 export void PathTracer_set(void *uniform _self
     , const uniform int32 maxDepth
+    , const uniform int32 rouletteDepth
     , const uniform float minContribution
     , const uniform float maxRadiance
     , void *uniform backplate
@@ -464,6 +481,7 @@ export void PathTracer_set(void *uniform _self
   PathTracer *uniform self = (PathTracer *uniform)_self;
 
   self->maxDepth = maxDepth;
+  self->rouletteDepth = rouletteDepth;
   self->minContribution = minContribution;
   self->maxRadiance = maxRadiance;
   self->backplate = (uniform Texture2D *uniform)backplate;
@@ -486,7 +504,7 @@ export void* uniform PathTracer_create(void *uniform cppE)
   Renderer_Constructor(&self->super,cppE);
   self->super.renderTile = PathTracer_renderTile;
 
-  PathTracer_set(self, 20, 0.01f, inf, NULL, make_vec4f(0.f), NULL, 0, 0, NULL);
+  PathTracer_set(self, 20, 5, 0.01f, inf, NULL, make_vec4f(0.f), NULL, 0, 0, NULL);
   precomputeZOrder();
 
   return self;
