@@ -24,13 +24,6 @@ namespace ospray {
       : Geometry("trianglemesh")
     {
       createChild("material", "Material");
-      #if 0
-      createChild("vertex");
-      createChild("normal");
-      createChild("color");
-      createChild("texcoord");
-      createChild("index");
-      #endif
     }
 
     std::string TriangleMesh::toString() const

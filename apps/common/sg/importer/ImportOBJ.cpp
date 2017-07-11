@@ -43,12 +43,14 @@ namespace ospray {
     void addTextureIfNeeded(Material &node,
                             const std::string &type,
                             const FileName &texName,
-                            const FileName &containingPath)
+                            const FileName &containingPath,
+                            bool preferLinear = false)
     {
       if (!texName.str().empty()) {
-        auto tex = loadTexture(containingPath + texName);
+        auto tex = loadTexture(containingPath + texName, preferLinear);
         tex->setName(type);
-        node.add(tex);
+        node.setChild(type, tex);
+        tex->setParent(node);
       }
     }
 
@@ -77,16 +79,18 @@ namespace ospray {
                                      mat.specular[1],
                                      mat.specular[2]));
 
-        addTextureIfNeeded(matNode, "map_Ka",
-                           mat.ambient_texname, containingPath);
-        addTextureIfNeeded(matNode, "map_Kd",
-                           mat.diffuse_texname, containingPath);
-        addTextureIfNeeded(matNode, "map_Ks",
-                           mat.specular_texname, containingPath);
-        addTextureIfNeeded(matNode, "map_Ns",
-                           mat.specular_highlight_texname, containingPath);
-        addTextureIfNeeded(matNode, "map_bump",
-                           mat.bump_texname, containingPath);
+        addTextureIfNeeded(matNode, "map_Ka", mat.ambient_texname,
+                           containingPath);
+        addTextureIfNeeded(matNode, "map_Kd", mat.diffuse_texname,
+                           containingPath);
+        addTextureIfNeeded(matNode, "map_Ks", mat.specular_texname,
+                           containingPath);
+        addTextureIfNeeded(matNode, "map_Ns", mat.specular_highlight_texname,
+                           containingPath, true);
+        addTextureIfNeeded(matNode, "map_bump", mat.bump_texname,
+                           containingPath);
+        addTextureIfNeeded(matNode, "map_d", mat.alpha_texname,
+                           containingPath, true);
 
         sgMaterials.push_back(matNodePtr);
       }
@@ -122,43 +126,88 @@ namespace ospray {
       std::memcpy(v->v.data(), attrib.vertices.data(),
                   numSrcElements * sizeof(float));
 
+#if 0
       auto vn = createNode("normal", "DataVector3f")->nodeAs<DataVector3f>();
       numSrcElements = attrib.normals.size();
       vn->v.resize(numSrcElements / 3);
-      std::memcpy(vn->v.data(), attrib.vertices.data(),
+      std::memcpy(vn->v.data(), attrib.normals.data(),
                   numSrcElements * sizeof(float));
 
       auto vt = createNode("texcoord", "DataVector2f")->nodeAs<DataVector2f>();
       numSrcElements = attrib.texcoords.size();
       vt->v.resize(numSrcElements / 2);
-      std::memcpy(vt->v.data(), attrib.vertices.data(),
+      std::memcpy(vt->v.data(), attrib.texcoords.data(),
                   numSrcElements * sizeof(float));
+#endif
 
       std::string base_name = fileName.name() + '_';
       int shapeId = 0;
 
       for (auto &shape : shapes) {
+        for (int numVertsInFace : shape.mesh.num_face_vertices) {
+          if (numVertsInFace != 3) {
+            std::cerr << "Warning: more thant 3 verts in face!";
+            PRINT(numVertsInFace);
+          }
+        }
+
         auto name = base_name + std::to_string(shapeId++) + '_' + shape.name;
         auto mesh = createNode(name, "TriangleMesh")->nodeAs<TriangleMesh>();
 
         auto vi = createNode("index", "DataVector3i")->nodeAs<DataVector3i>();
         numSrcElements = shape.mesh.indices.size();
         vi->v.reserve(numSrcElements / 3);
+
+        auto vn = createNode("normal", "DataVector3f")->nodeAs<DataVector3f>();
+        vn->v.reserve(numSrcElements / 3);
+
+        auto vt = createNode("texcoord","DataVector2f")->nodeAs<DataVector2f>();
+        vt->v.reserve(numSrcElements / 3);
+
         for (int i = 0; i < shape.mesh.indices.size(); i += 3) {
-          auto prim = vec3i(shape.mesh.indices[i+0].vertex_index,
-                            shape.mesh.indices[i+1].vertex_index,
-                            shape.mesh.indices[i+2].vertex_index);
+          auto idx0 = shape.mesh.indices[i+0];
+          auto idx1 = shape.mesh.indices[i+1];
+          auto idx2 = shape.mesh.indices[i+2];
+
+          auto prim = vec3i(idx0.vertex_index,
+                            idx1.vertex_index,
+                            idx2.vertex_index);
           vi->push_back(prim);
+
+#if 1
+          if (!attrib.normals.empty()) {
+            vn->push_back(vec3f(attrib.normals[idx0.normal_index*3+0],
+                                attrib.normals[idx0.normal_index*3+1],
+                                attrib.normals[idx0.normal_index*3+2]));
+            vn->push_back(vec3f(attrib.normals[idx1.normal_index*3+0],
+                                attrib.normals[idx1.normal_index*3+1],
+                                attrib.normals[idx1.normal_index*3+2]));
+            vn->push_back(vec3f(attrib.normals[idx2.normal_index*3+0],
+                                attrib.normals[idx2.normal_index*3+1],
+                                attrib.normals[idx2.normal_index*3+2]));
+          }
+#endif
+
+#if 1
+          if (!attrib.texcoords.empty()) {
+            vt->push_back(vec2f(attrib.texcoords[idx0.texcoord_index+0],
+                                attrib.texcoords[idx0.texcoord_index+1]));
+            vt->push_back(vec2f(attrib.texcoords[idx1.texcoord_index+0],
+                                attrib.texcoords[idx1.texcoord_index+1]));
+            vt->push_back(vec2f(attrib.texcoords[idx2.texcoord_index+0],
+                                attrib.texcoords[idx2.texcoord_index+1]));
+          }
+#endif
         }
 
         mesh->add(v);
-        mesh->add(vn);
-        mesh->add(vt);
         mesh->add(vi);
+        if(!vn->empty()) mesh->add(vn);
+        if(!vt->empty()) mesh->add(vt);
 
         auto matIdx = shape.mesh.material_ids[0];
         if (!sgMaterials.empty()) {
-          if (matIdx > 0)
+          if (matIdx >= 0)
             mesh->setChild("material", sgMaterials[matIdx]);
           else
             mesh->setChild("material", sgMaterials[0]);
