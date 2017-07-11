@@ -43,7 +43,6 @@ ospray_create_application(ospExampleViewer
   imgui
   ospray
   ospray_common
-  ospray_commandline # REMOVE ME
   ospray_imgui3d_sg
   ospray_sg
 )

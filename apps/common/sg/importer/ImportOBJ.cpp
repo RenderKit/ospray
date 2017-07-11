@@ -202,10 +202,10 @@ namespace ospray {
             mesh->setChild("material", sgMaterials[0]);
         }
 
-        auto model = createNode(name + " model", "Model");
+        auto model = createNode(name + "_model", "Model");
         model->add(mesh);
 
-        auto instance = createNode(name + " instance", "Instance");
+        auto instance = createNode(name + "_instance", "Instance");
         instance->setChild("model", model);
         model->setParent(instance);
 

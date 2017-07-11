@@ -177,6 +177,8 @@ namespace ospray {
         sg::importPLY(wsg, fileName);
       } else if (fileName.ext() == "osg" || fileName.ext() == "osp") {
         sg::loadOSP(wsg, fileName);
+      } else if (fileName.ext() == "osx") {
+        sg::importOSX(wsg, fileName);
       } else if (fileName.ext() == "xml") {
         sg::importRIVL(wsg, fileName);
       } else {

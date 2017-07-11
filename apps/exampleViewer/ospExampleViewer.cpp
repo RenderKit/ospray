@@ -26,10 +26,6 @@
 #include "widgets/imguiViewerSg.h"
 #include <sstream>
 
-//////// REMOVE ME
-#include "../common/commandline/SceneParser/streamlines/StreamLineSceneParser.h"
-////////
-
 namespace dw {
 
   struct ServiceInfo {
@@ -321,14 +317,6 @@ int main(int ac, const char **av)
     FileName fn = file;
     if (fn.ext() == "ospsg")
       sg::loadOSPSG(renderer_ptr,fn.str());
-    else if (fn.ext() == "osx") {
-      commandline::StreamLineSceneParser parser(ospray::cpp::Renderer("ao"));
-      parser.parse(ac, av);
-      auto model = parser.model()[0].handle();
-      auto bbox  = parser.bbox()[0];
-      sg::importOSPModel(world, model, bbox);
-      //std::exit(1);
-    }
     else {
       auto importerNode_ptr = sg::createNode(fn.name(), "Importer");
       auto &importerNode = *importerNode_ptr;

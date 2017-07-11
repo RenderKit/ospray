@@ -62,7 +62,7 @@ namespace ospray {
       for (uint32_t i = 0; i < numVertices; i++)
         bounds.extend(box3f(vertex[i] - radius, vertex[i] + radius));
     }
-    
+
     ispc::StreamLines_set(getIE(),model->getIE(),radius, (ispc::vec3fa*)vertex,
                           numVertices, (uint32_t*)index,numSegments,
                           (ispc::vec4f*)color);

@@ -20,8 +20,7 @@
 namespace ospray {
   namespace sg {
 
-    TriangleMesh::TriangleMesh()
-      : Geometry("trianglemesh")
+    TriangleMesh::TriangleMesh() : Geometry("trianglemesh")
     {
       createChild("material", "Material");
     }

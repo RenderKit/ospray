@@ -50,7 +50,7 @@ namespace commandline {
       float f = (x-x0)/(x1-x0);
       return f*y1+(1-f)*y0;
     }
-  
+
     vec4f colorOf(const float f)
     {
       if (f < .5f)

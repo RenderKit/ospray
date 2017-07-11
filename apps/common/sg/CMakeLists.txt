@@ -23,6 +23,7 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
 
   geometry/Geometry.h
   geometry/Spheres.cpp
+  geometry/StreamLines.cpp
   geometry/TriangleMesh.cpp
 
   camera/Camera.h
@@ -56,6 +57,7 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   importer/ImportOSP.cpp
   importer/ImportOSPModel.cpp
   importer/ImportOSPSG.cpp
+  importer/ImportOSX.cpp
   importer/ImportOBJ.cpp
   importer/ImportPLY.cpp
   importer/ImportRIVL.cpp

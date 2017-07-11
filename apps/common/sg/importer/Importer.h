@@ -95,6 +95,11 @@ namespace ospray {
     OSPSG_INTERFACE void importOBJ(const std::shared_ptr<Node> &world,
                                    const FileName &fileName);
 
+    /*! import an OSX streamlines model, and add its contents to the given
+        world */
+    OSPSG_INTERFACE void importOSX(const std::shared_ptr<Node> &world,
+                                   const FileName &fileName);
+
     /*! import an PLY model, and add its contents to the given world */
     OSPSG_INTERFACE void importPLY(std::shared_ptr<Node> &world,
                                    const FileName &fileName);
