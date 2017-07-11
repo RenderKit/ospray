@@ -48,9 +48,11 @@ namespace ospray {
     {
       if (!texName.str().empty()) {
         auto tex = loadTexture(containingPath + texName, preferLinear);
-        tex->setName(type);
-        node.setChild(type, tex);
-        tex->setParent(node);
+        if (tex) {
+          tex->setName(type);
+          node.setChild(type, tex);
+          tex->setParent(node);
+        }
       }
     }
 
