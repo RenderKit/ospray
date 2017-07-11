@@ -173,8 +173,11 @@ namespace ospray {
       std::map<std::string, std::shared_ptr<Node>>& childrenMap();
 
       //! add node as child of this one
-      void add(std::shared_ptr<Node> node);
       Node& operator+=(std::shared_ptr<Node> node);
+      void add(std::shared_ptr<Node> node);
+      void add(std::shared_ptr<Node> node, const std::string &name);
+
+      void remove(const std::string& name);
 
       //! just for convenience; add a typed 'setParam' function
       template<typename T>
@@ -186,7 +189,7 @@ namespace ospray {
                         std::string type = "Node",
                         SGVar var = SGVar(),
                         int flags = sg::NodeFlags::none,
-                        std::string documentation="");
+                        std::string documentation = "");
 
       void setChild(const std::string &name,
                     const std::shared_ptr<Node> &node);
@@ -295,11 +298,12 @@ namespace ospray {
       return properties.value.get<T>();
     }
 
-    OSPSG_INTERFACE std::shared_ptr<Node> createNode(std::string name,
-                                                     std::string type = "Node",
-                                                     SGVar var = SGVar(),
-                                                     int flags = sg::NodeFlags::none,
-                                                     std::string documentation="");
+    OSPSG_INTERFACE std::shared_ptr<Node>
+    createNode(std::string name,
+               std::string type = "Node",
+               SGVar var = SGVar(),
+               int flags = sg::NodeFlags::none,
+               std::string documentation = "");
 
     // Helper functions ///////////////////////////////////////////////////////
 
@@ -452,13 +456,13 @@ namespace ospray {
         }
         return cbounds;
       }
-      // virtual box3f extendBounds(box3f b) { bbox.extend(b); return bbox; }
+
       virtual void preTraverse(RenderContext &ctx,
                                const std::string& operation, bool& traverseChildren) override;
       virtual void postTraverse(RenderContext &ctx,
                                 const std::string& operation) override;
-      virtual void postCommit(RenderContext &ctx) override {
-        child("bounds").setValue(computeBounds()); }
+      virtual void postCommit(RenderContext &ctx) override
+      { child("bounds").setValue(computeBounds()); }
       virtual void preRender(RenderContext &ctx)  {}
       virtual void postRender(RenderContext &ctx) {}
     };
