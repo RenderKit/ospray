@@ -180,12 +180,12 @@ namespace ospray {
           }
 
           if (!attrib.texcoords.empty()) {
-            vt->push_back(vec2f(attrib.texcoords[idx0.texcoord_index+0],
-                                attrib.texcoords[idx0.texcoord_index+1]));
-            vt->push_back(vec2f(attrib.texcoords[idx1.texcoord_index+0],
-                                attrib.texcoords[idx1.texcoord_index+1]));
-            vt->push_back(vec2f(attrib.texcoords[idx2.texcoord_index+0],
-                                attrib.texcoords[idx2.texcoord_index+1]));
+            vt->push_back(vec2f(attrib.texcoords[idx0.texcoord_index*2+0],
+                                attrib.texcoords[idx0.texcoord_index*2+1]));
+            vt->push_back(vec2f(attrib.texcoords[idx1.texcoord_index*2+0],
+                                attrib.texcoords[idx1.texcoord_index*2+1]));
+            vt->push_back(vec2f(attrib.texcoords[idx2.texcoord_index*2+0],
+                                attrib.texcoords[idx2.texcoord_index*2+1]));
           }
         }
 
