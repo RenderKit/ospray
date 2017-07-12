@@ -202,6 +202,14 @@ set(OSPRAY_LIBRARIES
   ${OSPRAY_COMMON_LIBRARY}
 )
 
+if(OSPRAY_MPI_ENABLED)
+  set(OSPRAY_LIBRARIES
+    ${OSPRAY_LIBRARIES}
+    ${LIBRARY_PATH_PREFIX}ospray_mpi_common${LIBRARY_SUFFIX}
+    ${LIBRARY_PATH_PREFIX}ospray_mpi_maml${LIBRARY_SUFFIX}
+  )
+endif()
+
 # Reset CMake module path to its state when this script was called.
 set(CMAKE_MODULE_PATH ${OSPRAY_CALLERS_CMAKE_MODULE_PATH})
 
