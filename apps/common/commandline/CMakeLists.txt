@@ -74,8 +74,6 @@ SET(SOURCE_FILES
   SceneParser/particle/Model.cpp
   SceneParser/particle/uintah.cpp
 
-  SceneParser/streamlines/StreamLineSceneParser.cpp
-
   Utility.h
 )
 

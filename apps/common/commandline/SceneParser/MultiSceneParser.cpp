@@ -17,7 +17,6 @@
 #include "MultiSceneParser.h"
 
 #include "particle/ParticleSceneParser.h"
-#include "streamlines/StreamLineSceneParser.h"
 #ifdef OSPRAY_TACHYON_SUPPORT
 #  include "tachyon/TachyonSceneParser.h"
 #endif
@@ -38,20 +37,16 @@ namespace commandline {
     TachyonSceneParser      tachyonParser(renderer);
 #endif
     ParticleSceneParser     particleParser(renderer);
-    StreamLineSceneParser   streamlineParser(renderer);
 
 #ifdef OSPRAY_TACHYON_SUPPORT
     bool gotTachyonScene      = tachyonParser.parse(ac, av);
 #endif
     bool gotParticleScene      = particleParser.parse(ac, av);
-    bool gotStreamLineScene   = streamlineParser.parse(ac, av);
 
     SceneParser *parser = nullptr;
 
     if (gotParticleScene)
       parser = &particleParser;
-    else if (gotStreamLineScene)
-      parser = &streamlineParser;
 #ifdef OSPRAY_TACHYON_SUPPORT
     else if (gotTachyonScene)
       parser = &tachyonParser;
