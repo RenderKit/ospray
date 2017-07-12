@@ -14,26 +14,52 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
-#include "sg/common/Material.h"
+#include "Geometry.h"
+#include "sg/common/World.h"
 
 namespace ospray {
   namespace sg {
 
-    struct Geometry : public sg::Renderable
+    Geometry::Geometry(const std::string &type)
     {
-      Geometry(const std::string &type);
+      createChild("material", "Material");
+      createChild("type", "string", type);
+      setValue((OSPObject)nullptr);
+    }
 
-      /*! \brief returns a std::string with the c++ name of this class */
-      virtual std::string toString() const override;
+    std::string Geometry::toString() const
+    {
+      return "ospray::sg::Geometry";
+    }
 
-      virtual void preCommit(RenderContext& ctx) override;
-      virtual void postCommit(RenderContext& ctx) override;
-      virtual void postRender(RenderContext& ctx) override;
-    };
+    void Geometry::preCommit(RenderContext &ctx)
+    {
+      auto ospGeometry = (OSPGeometry)valueAs<OSPObject>();
+      if (!ospGeometry) {
+        auto type = child("type").valueAs<std::string>();
+        ospGeometry = ospNewGeometry(type.c_str());
+        setValue((OSPObject)ospGeometry);
+
+        child("bounds").setValue(computeBounds());
+      }
+    }
+
+    void Geometry::postCommit(RenderContext &ctx)
+    {
+      auto ospGeometry = (OSPGeometry)valueAs<OSPObject>();
+      if (hasChild("material")) {
+        ospSetMaterial(ospGeometry,
+                       (OSPMaterial)child("material").valueAs<OSPObject>());
+      }
+      ospCommit(ospGeometry);
+    }
+
+    void Geometry::postRender(RenderContext& ctx)
+    {
+      auto ospGeometry = (OSPGeometry)valueAs<OSPObject>();
+      if (ospGeometry)
+        ospAddGeometry(ctx.currentOSPModel, ospGeometry);
+    }
 
   } // ::ospray::sg
 } // ::ospray
-
-

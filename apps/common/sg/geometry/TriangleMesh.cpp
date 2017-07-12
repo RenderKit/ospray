@@ -20,10 +20,7 @@
 namespace ospray {
   namespace sg {
 
-    TriangleMesh::TriangleMesh() : Geometry("trianglemesh")
-    {
-      createChild("material", "Material");
-    }
+    TriangleMesh::TriangleMesh() : Geometry("trianglemesh") {}
 
     std::string TriangleMesh::toString() const
     {
@@ -88,34 +85,11 @@ namespace ospray {
 
     void TriangleMesh::preCommit(RenderContext &ctx)
     {
-      auto ospGeometry = (OSPGeometry)valueAs<OSPObject>();
-      if (!ospGeometry) {
-        ospGeometry = ospNewGeometry("trianglemesh");
-        setValue((OSPObject)ospGeometry);
+      // NOTE(jda) - how many buffers to we minimally _have_ to have?
+      if (!hasChild("vertex") || !hasChild("index"))
+        throw std::runtime_error("#osp.sg - error, invalid TriangleMesh!");
 
-        // NOTE(jda) - how many buffers to we minimally _have_ to have?
-        if (!hasChild("vertex") || !hasChild("index"))
-          return;
-
-        child("bounds").setValue(computeBounds());
-      }
-    }
-
-    void TriangleMesh::postCommit(RenderContext &ctx)
-    {
-      auto ospGeometry = (OSPGeometry)valueAs<OSPObject>();
-      if (hasChild("material")) {
-        ospSetMaterial(ospGeometry,
-                       (OSPMaterial)child("material").valueAs<OSPObject>());
-      }
-      ospCommit(ospGeometry);
-    }
-
-    void TriangleMesh::postRender(RenderContext& ctx)
-    {
-      auto ospGeometry = (OSPGeometry)valueAs<OSPObject>();
-      if (ospGeometry)
-        ospAddGeometry(ctx.currentOSPModel, ospGeometry);
+      Geometry::preCommit(ctx);
     }
 
     OSP_REGISTER_SG_NODE(TriangleMesh);

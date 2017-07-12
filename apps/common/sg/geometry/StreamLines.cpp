@@ -68,41 +68,13 @@ namespace ospray {
 
     void StreamLines::preCommit(RenderContext &ctx)
     {
-      auto ospGeometry = (OSPGeometry)valueAs<OSPObject>();
-      if (!ospGeometry) {
-        ospGeometry = ospNewGeometry("streamlines");
-        setValue((OSPObject)ospGeometry);
+      if (!hasChild("vertex") || !hasChild("index"))
+        throw std::runtime_error("#osp.sg - error, invalid StreamLines!");
 
-        if (!hasChild("vertex") || !hasChild("index"))
-          return;
-
-        ospGeometry = ospNewGeometry("streamlines");
-        setValue((OSPObject)ospGeometry);
-
-        child("bounds").setValue(computeBounds());
-      }
-    }
-
-    void StreamLines::postCommit(RenderContext &ctx)
-    {
-      auto ospGeometry = (OSPGeometry)valueAs<OSPObject>();
-      if (hasChild("material")) {
-        ospSetMaterial(ospGeometry,
-                       (OSPMaterial)child("material").valueAs<OSPObject>());
-      }
-      ospCommit(ospGeometry);
-    }
-
-    void StreamLines::postRender(RenderContext& ctx)
-    {
-      auto ospGeometry = (OSPGeometry)valueAs<OSPObject>();
-      if (ospGeometry)
-        ospAddGeometry(ctx.currentOSPModel, ospGeometry);
+      Geometry::preCommit(ctx);
     }
 
     OSP_REGISTER_SG_NODE(StreamLines);
 
   } // ::ospray::sg
 } // ::ospray
-
-

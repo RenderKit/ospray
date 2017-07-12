@@ -36,8 +36,6 @@ namespace ospray {
       box3f computeBounds() const override;
 
       void preCommit(RenderContext& ctx) override;
-      void postCommit(RenderContext& ctx) override;
-      void postRender(RenderContext& ctx) override;
 
       //! \brief Initialize this node's value from given XML node
       /*!
