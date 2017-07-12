@@ -30,7 +30,6 @@
 
 namespace ospray {
   namespace sg {
-#if 0
     namespace ply {
       using std::string;
       using std::cout;
@@ -136,9 +135,9 @@ namespace ospray {
         int file_type = 0;
 
 
-        std::shared_ptr<sg::DataVector3f> pos = std::make_shared<sg::DataVector3f>();
-        std::shared_ptr<sg::DataVector3f> nor = std::make_shared<sg::DataVector3f>();
-        std::shared_ptr<sg::DataVector3i> idx = std::make_shared<sg::DataVector3i>();
+        auto pos = createNode("vertex", "DataVector3f")->nodeAs<DataVector3f>();
+        auto nor = createNode("normal", "DataVector3f")->nodeAs<DataVector3f>();
+        auto idx = createNode("index", "DataVector3i")->nodeAs<DataVector3i>();
 
         /*** Read in the original PLY object ***/
         const char *filename = fileName.c_str();
@@ -337,23 +336,20 @@ namespace ospray {
 
         free(ply->elems);
 
-        mesh->index = idx;
-        mesh->vertex = pos;
+        mesh->add(idx);
+        mesh->add(pos);
         if (!nor->v.empty())
-          mesh->normal = nor;
+          mesh->add(nor);
       }
 
     } // ::ospray::sg::ply
-#endif
 
     void importPLY(std::shared_ptr<Node> &world, const FileName &fileName)
     {
-#if 0
-      std::shared_ptr<sg::TriangleMesh> mesh =
-          std::static_pointer_cast<sg::TriangleMesh>(sg::createNode(fileName.name(), "TriangleMesh"));
+      auto mesh = sg::createNode(fileName.name(),
+                                 "TriangleMesh")->nodeAs<TriangleMesh>();
       ply::readFile(fileName.str(), mesh);
-      world->add(std::dynamic_pointer_cast<sg::Node>(mesh));
-#endif
+      world->add(mesh);
     }
 
   } // ::ospray::sg
