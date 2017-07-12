@@ -25,7 +25,6 @@
 
 namespace ospray {
   namespace sg {
-#if 0
     using std::cout;
     using std::endl;
     using std::string;
@@ -289,25 +288,39 @@ namespace ospray {
             size_t num      = std::stoll(child.getProp("num"));
             if (!binBasePtr)
               throw std::runtime_error("xml file mapping to binary file, but binary file not present");
-            mesh->vertex = make_aligned<DataArray3f>((char*)binBasePtr+ofs, num);
+            auto vertex =
+              make_shared_aligned<DataArray3f>((char*)binBasePtr+ofs, num);
+            vertex->setName("vertex");
+            mesh->add(vertex);
           } else if (child.name == "normal") {
             size_t ofs      = std::stoll(child.getProp("ofs"));
             size_t num      = std::stoll(child.getProp("num"));
             if (!binBasePtr)
               throw std::runtime_error("xml file mapping to binary file, but binary file not present");
-            mesh->normal = std::make_shared<DataArray3f>((vec3f*)((char*)binBasePtr+ofs),num,false);
+            auto normal =
+              std::make_shared<DataArray3f>((vec3f*)((char*)binBasePtr+ofs),
+                                            num, false);
+            normal->setName("normal");
+            mesh->add(normal);
           } else if (child.name == "texcoord") {
             size_t ofs      = std::stoll(child.getProp("ofs"));
             size_t num      = std::stoll(child.getProp("num"));
             if (!binBasePtr)
               throw std::runtime_error("xml file mapping to binary file, but binary file not present");
-            mesh->texcoord = std::make_shared<DataArray2f>((vec2f*)((char*)binBasePtr+ofs),num,false);
+            auto texcoord =
+              std::make_shared<DataArray2f>((vec2f*)((char*)binBasePtr+ofs),
+                                            num, false);
+            texcoord->setName("texcoord");
+            mesh->add(texcoord);
           } else if (child.name == "prim") {
             size_t ofs      = std::stoll(child.getProp("ofs"));
             size_t num      = std::stoll(child.getProp("num"));
             if (!binBasePtr)
               throw std::runtime_error("xml file mapping to binary file, but binary file not present");
-            mesh->index = make_aligned<DataArray4i>((char*)binBasePtr+ofs, num);
+            auto index =
+              make_shared_aligned<DataArray4i>((char*)binBasePtr+ofs, num);
+            index->setName("index");
+            mesh->add(index);
           } else if (child.name == "materiallist") {
             char* value = strdup(child.content.c_str());
             for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(NULL," \t\n\r")) {
@@ -400,12 +413,10 @@ namespace ospray {
         });
       world->add(lastNode);
     }
-#endif
 
     void importRIVL(std::shared_ptr<sg::Node> world,
                     const std::string &fileName)
     {
-#if 0
       string xmlFileName = fileName;
       string binFileName = fileName+".bin";
       binBasePtr = (void *)mapFile(binFileName);
@@ -422,7 +433,6 @@ namespace ospray {
       const xml::Node &root_element = *doc->child[0];
       parseBGFscene(world,root_element);
       PRINT(world->bounds());
-#endif
     }
 
   } // ::ospray::sg
