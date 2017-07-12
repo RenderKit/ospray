@@ -37,7 +37,7 @@ namespace ospray {
     {
       box3f bounds = empty;
       if (hasChild("vertex")) {
-        auto v = vertex();
+        auto v = child("vertex").nodeAs<DataBuffer>();
         for (uint32_t i = 0; i < v->size(); i++)
           bounds.extend(v->get<vec3fa>(i));
       }
@@ -79,15 +79,6 @@ namespace ospray {
         ospGeometry = ospNewGeometry("streamlines");
         setValue((OSPObject)ospGeometry);
 
-        // set vertex data
-        if (!vertex()->empty())
-          ospSetData(ospGeometry, "vertex", vertex()->getOSP());
-        if (hasChild("color") && !color()->empty())
-          ospSetData(ospGeometry, "color", color()->getOSP());
-        // set index data
-        if (!index()->empty())
-          ospSetData(ospGeometry, "index", index()->getOSP());
-
         child("bounds").setValue(computeBounds());
       }
     }
@@ -107,21 +98,6 @@ namespace ospray {
       auto ospGeometry = (OSPGeometry)valueAs<OSPObject>();
       if (ospGeometry)
         ospAddGeometry(ctx.currentOSPModel, ospGeometry);
-    }
-
-    std::shared_ptr<DataBuffer> StreamLines::vertex() const
-    {
-      return child("vertex").nodeAs<DataBuffer>();
-    }
-
-    std::shared_ptr<DataBuffer> StreamLines::color() const
-    {
-      return child("color").nodeAs<DataBuffer>();
-    }
-
-    std::shared_ptr<DataBuffer> StreamLines::index() const
-    {
-      return child("index").nodeAs<DataBuffer>();
     }
 
     OSP_REGISTER_SG_NODE(StreamLines);

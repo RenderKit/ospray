@@ -34,7 +34,7 @@ namespace ospray {
     {
       box3f bounds = empty;
       if (hasChild("vertex")) {
-        auto v = vertex();
+        auto v = child("vertex").nodeAs<DataBuffer>();
         for (uint32_t i = 0; i < v->size(); i++)
           bounds.extend(v->get<vec3f>(i));
       }
@@ -97,19 +97,6 @@ namespace ospray {
         if (!hasChild("vertex") || !hasChild("index"))
           return;
 
-        // set vertex data
-        if (!vertex()->empty())
-          ospSetData(ospGeometry, "vertex", vertex()->getOSP());
-        if (hasChild("normal") && !normal()->empty())
-          ospSetData(ospGeometry, "vertex.normal", normal()->getOSP());
-        if (hasChild("texcoord") && !texcoord()->empty())
-          ospSetData(ospGeometry, "vertex.texcoord", texcoord()->getOSP());
-        if (hasChild("color") && !color()->empty())
-          ospSetData(ospGeometry, "vertex.color", color()->getOSP());
-        // set index data
-        if (!index()->empty())
-          ospSetData(ospGeometry, "index", index()->getOSP());
-
         child("bounds").setValue(computeBounds());
       }
     }
@@ -129,31 +116,6 @@ namespace ospray {
       auto ospGeometry = (OSPGeometry)valueAs<OSPObject>();
       if (ospGeometry)
         ospAddGeometry(ctx.currentOSPModel, ospGeometry);
-    }
-
-    std::shared_ptr<DataBuffer> TriangleMesh::vertex() const
-    {
-      return child("vertex").nodeAs<DataBuffer>();
-    }
-
-    std::shared_ptr<DataBuffer> TriangleMesh::normal() const
-    {
-      return child("normal").nodeAs<DataBuffer>();
-    }
-
-    std::shared_ptr<DataBuffer> TriangleMesh::color() const
-    {
-      return child("color").nodeAs<DataBuffer>();
-    }
-
-    std::shared_ptr<DataBuffer> TriangleMesh::texcoord() const
-    {
-      return child("texcoord").nodeAs<DataBuffer>();
-    }
-
-    std::shared_ptr<DataBuffer> TriangleMesh::index() const
-    {
-      return child("index").nodeAs<DataBuffer>();
     }
 
     OSP_REGISTER_SG_NODE(TriangleMesh);

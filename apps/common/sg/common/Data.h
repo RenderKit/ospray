@@ -45,6 +45,14 @@ namespace ospray {
       virtual std::string toString() const override
       { return "DataBuffer<abstract>"; }
 
+      virtual void postCommit(RenderContext &ctx) override
+      {
+        if (hasParent()) {
+          if (parent().value().is<OSPObject>())
+            ospSetData(parent().valueAs<OSPObject>(), name().c_str(), getOSP());
+        }
+      }
+
       template <typename T>
       T get(index_t idx) const { return ((T*)base())[idx]; }
 

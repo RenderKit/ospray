@@ -57,19 +57,6 @@ namespace ospray {
       */
       void setFromXML(const xml::Node &node,
                       const unsigned char *binBasePtr) override;
-
-    private:
-
-      // NOTE(jda) - the should probable return const refs instead?
-
-      //! vertex (position) array
-      std::shared_ptr<DataBuffer> vertex() const;
-
-      //! vertex color array. empty means 'not present'
-      std::shared_ptr<DataBuffer> color() const;
-
-      //! triangle indices
-      std::shared_ptr<DataBuffer> index() const;
     };
 
   } // ::ospray::sg
