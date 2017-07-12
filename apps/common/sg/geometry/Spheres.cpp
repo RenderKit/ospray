@@ -25,40 +25,26 @@
 namespace ospray {
   namespace sg {
 
-    Spheres::Sphere::Sphere(const vec3f &position,
-                            float radius,
-                            uint32_t typeID)
-      : position(position),
-        radius(radius),
-        typeID(typeID)
-    {
-    }
-
-    box3f Spheres::Sphere::bounds() const
-    {
-      return {position - vec3f(radius), position + vec3f(radius)};
-    }
-
     Spheres::Spheres()
       : Geometry("spheres")
-    {
-      createChild("sphereData");
-      createChild("colorData");
-      auto &materialNode = createChild("material", "Material");
-      materialNode["Kd"].setValue(vec3f(1,1,1));
-      materialNode["Ks"].setValue(vec3f(0,0,0));
-      materialNode["Ns"].setValue(0.f);
-    }
+    {}
 
     box3f Spheres::bounds() const
     {
-      auto sphereData = child("sphereData").shared_from_this();
-      std::shared_ptr<DataVectorT<Sphere,OSP_RAW>> spheres
-        = std::dynamic_pointer_cast<DataVectorT<Sphere,OSP_RAW>>(sphereData);
+      auto spheres = child("sphereData").nodeAs<DataBuffer>();
+
+      auto *base = (byte_t*)spheres->base();
+      auto sphereBytes = child("bytes_per_sphere").valueAs<int>();
+      auto offset_center = child("offset_center").valueAs<int>();
+      auto offset_radius = child("offset_radius").valueAs<int>();
 
       box3f bounds = empty;
-      for (auto &s : spheres->v)
-        bounds.extend(s.bounds());
+      for (int i = 0; i < spheres->numBytes(); i += sphereBytes) {
+        vec3f &center = *(vec3f*)(base + i + offset_center);
+        float &radius = *(float*)(base + i + offset_radius);
+        bounds.extend(center + radius);
+      }
+
       return bounds;
     }
 
@@ -85,47 +71,7 @@ namespace ospray {
                                " new scene graph design");
     }
 
-    void Spheres::postCommit(RenderContext &ctx)
-    {
-      ospGeometry = ospNewGeometry("spheres");
-
-      auto sphereDataNode = child("sphereData").shared_from_this();
-      std::shared_ptr<DataVectorT<Sphere,OSP_RAW>> sphereData
-        = std::dynamic_pointer_cast<DataVectorT<Sphere,OSP_RAW>>(sphereDataNode);
-      OSPData ospSphereData = ospNewData(sphereData->v.size()*5,OSP_FLOAT,
-                                         sphereData->v.data(),
-                                         OSP_DATA_SHARED_BUFFER);
-      ospCommit(ospSphereData);
-
-      ospSetData(ospGeometry,"spheres",ospSphereData);
-
-      ospSet1i(ospGeometry,"bytes_per_sphere",sizeof(Spheres::Sphere));
-      ospSet1i(ospGeometry,"center_offset",     0*sizeof(float));
-      ospSet1i(ospGeometry,"offset_radius",     3*sizeof(float));
-      ospSet1i(ospGeometry,"offset_materialID", 4*sizeof(float));
-
-      auto colorDataNode = child("colorData").shared_from_this();
-      std::shared_ptr<DataVectorT<vec4f,OSP_RAW>> colorData
-        = std::dynamic_pointer_cast<DataVectorT<vec4f,OSP_RAW>>(colorDataNode);
-
-      if (colorData) {
-        OSPData ospColorData = ospNewData(colorData->v.size()*5,OSP_FLOAT,
-                                          colorData->v.data(),
-                                          OSP_DATA_SHARED_BUFFER);
-        ospCommit(ospColorData);
-
-        ospSetData(ospGeometry,"color",ospColorData);
-        ospSet1i(ospGeometry,"color_offset",     0*sizeof(float));
-        ospSet1i(ospGeometry,"color_stride",     4*sizeof(float));
-      }
-
-      ospSetMaterial(ospGeometry,
-                     (OSPMaterial)child("material").valueAs<OSPObject>());
-      ospCommit(ospGeometry);
-
-      ospAddGeometry(ctx.world->ospModel(), ospGeometry);
-    }
-
     OSP_REGISTER_SG_NODE(Spheres);
+
   }// ::ospray::sg
 }// ::ospray

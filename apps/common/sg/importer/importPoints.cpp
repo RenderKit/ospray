@@ -24,27 +24,32 @@
 namespace ospray {
   namespace sg {
 
+    struct Sphere
+    {
+      Sphere(const vec3f &position = vec3f(0.f),
+             float radius = 1.f,
+             uint32_t typeID = 0)
+        : position(position), radius(radius), typeID(typeID) {}
+
+      box3f bounds() const
+      { return {position - vec3f(radius), position + vec3f(radius)}; }
+
+      vec3f position;
+      float radius;
+      uint32_t typeID;
+    };
+
+
     struct ColorMap
     {
-      ColorMap(float lo, float hi) 
-        : lo(lo), hi(hi) 
-      { 
-        assert(lo <= hi); 
+      ColorMap(float lo, float hi)
+        : lo(lo), hi(hi)
+      {
+        assert(lo <= hi);
 
-        // TODO: need a better color map here ...
-        // color.push_back(vec3f(0.f,0.f,0.f));
-        // color.push_back(vec3f(0.f,0.f,1.f));
-        // color.push_back(vec3f(0.f,1.f,0.f));
-        // color.push_back(vec3f(1.f,0.f,0.f));
-        // color.push_back(vec3f(1.f,1.f,0.f));
-        // color.push_back(vec3f(0.f,1.f,1.f));
-        // color.push_back(vec3f(1.f,0.f,1.f));
-        // color.push_back(vec3f(1.f,1.f,1.f));
-
-        // from old qtivewre: "cool to warm"
-        color.push_back(ospcommon::vec3f(0.231373  , 0.298039    , 0.752941    ));       
-        color.push_back(ospcommon::vec3f(0.865003  , 0.865003    , 0.865003    ));       
-        color.push_back(ospcommon::vec3f(0.705882  , 0.0156863   , 0.14902     ));
+        color.push_back(ospcommon::vec3f(0.231373, 0.298039 , 0.752941));
+        color.push_back(ospcommon::vec3f(0.865003, 0.865003 , 0.865003));
+        color.push_back(ospcommon::vec3f(0.705882, 0.0156863, 0.14902 ));
       }
 
       vec4f colorFor(float f)
@@ -56,7 +61,7 @@ namespace ospray {
         int idx = int(r);
         if (idx < 0) idx = 0;
         if (idx >= color.size()) idx = color.size()-2;
-        
+
         vec3f c = color[idx] + (r-idx)*(color[idx+1]-color[idx]);
         return vec4f(c,1.f);
       }
@@ -69,7 +74,7 @@ namespace ospray {
     {
       if (!ascii)
         return fread(f,sizeof(float),N,file) == N;
-      
+
       // ascii:
       for (int i=0;i<N;i++) {
         int rc = fscanf(file,"%f",f+i);
@@ -93,15 +98,14 @@ namespace ospray {
         throw std::runtime_error("could not open file "+fu.fileName);
 
       // read the data vector
-      std::shared_ptr<DataVectorT<Spheres::Sphere,OSP_RAW>> sphereData
-        = std::make_shared<DataVectorT<Spheres::Sphere,OSP_RAW>>();
+      auto sphereData = std::make_shared<DataVectorT<Sphere,OSP_RAW>>();
 
       float radius = .1f;
       if (fu.hasArg("radius"))
         radius = std::stof(fu["radius"]);
       if (radius == 0.f)
         throw std::runtime_error("#sg.importPoints: could not parse radius ...");
-      
+
       std::string format = "xyz";
       if (fu.hasArg("format"))
         format = fu["format"];
@@ -133,7 +137,7 @@ namespace ospray {
 
       while (readOne(file,f,numFloatsPerSphere,ascii)) {
         // read one more sphere ....
-        Spheres::Sphere s;
+        Sphere s;
         s.position.x = f[xPos];
         s.position.y = f[yPos];
         s.position.z = f[zPos];
@@ -151,31 +155,38 @@ namespace ospray {
           mappedScalarMax = std::max(mappedScalarMax,f[sPos]);
         }
       }
+
       fclose(file);
 
       // create the node
-      auto &sphereObject = world->createChild("spheres","Spheres");
+      auto &sphereObject = world->createChild("spheres", "Spheres");
 
       // iw - note that 'add' sounds wrong here, but that's the way
       // the current scene graph works - 'adding' that node (which
       // happens to have the right name) will essentially replace the
       // old value of that node, and thereby assign the 'data' field
       sphereData->setName("sphereData");
-      sphereObject.add(sphereData); //["data"]->setValue(data);
-      
+      sphereObject.add(sphereData);
+
       if (!mappedScalarVector.empty()) {
         std::cout << "#osp.sg: creating color map for points data ..."
                   << std::endl;
         ColorMap cm(mappedScalarMin,mappedScalarMax);
-        std::shared_ptr<DataVectorT<vec4f,OSP_RAW>> colorData
-          = std::make_shared<DataVectorT<vec4f,OSP_RAW>>();
+        auto colorData = std::make_shared<DataVectorT<vec4f,OSP_RAW>>();
         for (size_t i = 0; i < mappedScalarVector.size(); i++)
           colorData->v.push_back(cm.colorFor(mappedScalarVector[i]));
         colorData->setName("colorData");
         sphereObject.add(colorData);
       }
 
-      std::cout << "#osp.sg: imported " << prettyNumber(sphereData->v.size()) 
+      sphereObject.createChild("bytes_per_sphere", "int", int(sizeof(Sphere)));
+      sphereObject.createChild("offset_center", "int", int(0*sizeof(float)));
+      sphereObject.createChild("offset_radius", "int", int(3*sizeof(float)));
+      sphereObject.createChild("offset_materialID", "int",int(4*sizeof(float)));
+      sphereObject.createChild("color_offset", "int", int(0*sizeof(float)));
+      sphereObject.createChild("color_stride", "int", int(4*sizeof(float)));
+
+      std::cout << "#osp.sg: imported " << prettyNumber(sphereData->v.size())
                 << " points, bounds = " << bounds << std::endl;;
     }
 

@@ -27,29 +27,12 @@ namespace ospray {
         and a int32_t type specifier baked into each sphere  */
     struct Spheres : public sg::Geometry
     {
-      struct Sphere
-      {
-        // constructor
-        Sphere(const vec3f &position=vec3f(0.f), 
-               float radius=1.f, 
-               uint32_t typeID = 0);
-        
-        box3f bounds() const;
-
-        vec3f position;
-        float radius;
-        uint32_t typeID;
-      };
-
       Spheres();
-      
+
       // return bounding box of all primitives
       box3f bounds() const override;
 
-      /*! 'render' the nodes */
-      void postCommit(RenderContext &ctx) override;
-
-      //! \brief Initialize this node's value from given XML node 
+      //! \brief Initialize this node's value from given XML node
       /*!
         \detailed This allows a plug-and-play concept where a XML
         file can specify all kind of nodes wihout needing to know
@@ -57,8 +40,8 @@ namespace ospray {
         create a proper C++ instance of the given node type (the
         OSP_REGISTER_SG_NODE() macro will allow it to do so), and can
         tell the node to parse itself from the given XML content and
-        XML children 
-        
+        XML children
+
         \param node The XML node specifying this node's fields
 
         \param binBasePtr A pointer to an accompanying binary file (if

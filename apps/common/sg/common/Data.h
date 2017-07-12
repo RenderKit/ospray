@@ -56,12 +56,12 @@ namespace ospray {
       template <typename T>
       T get(index_t idx) const { return ((T*)base())[idx]; }
 
-      virtual void       *base()  const = 0;
-      virtual size_t      size()  const = 0;
-      virtual bool        empty() const { return size() == 0; }
-      virtual OSPDataType getType()  const { return type; }
+      virtual void*  base()  const = 0;
+      virtual size_t size()  const = 0;
+      virtual bool   empty() const { return size() == 0; }
 
-      virtual OSPData     getOSP()
+      OSPDataType getType()  const { return type; }
+      OSPData     getOSP()
       {
         if (!empty() && !data) {
           data = ospNewData(size(), type, base(), OSP_DATA_SHARED_BUFFER);
@@ -69,6 +69,8 @@ namespace ospray {
         }
         return data;
       }
+
+      size_t numBytes() const { return size() * sizeOf(getType()); }
 
       OSPDataType type;
       OSPData     data;
