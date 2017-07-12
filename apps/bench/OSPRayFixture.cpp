@@ -60,7 +60,7 @@ OSPRayFixture::OSPRayFixture(cpp::Renderer r, cpp::Camera c,  cpp::Model m)
 
 pico_bench::Statistics<OSPRayFixture::Millis>
 OSPRayFixture::benchmark(const size_t warmUpFrames, const size_t benchFrames) {
-  const size_t warmup = warmUpFrames == 0 ? defaultWarmupFrames : warmUpFrames;
+  const size_t warmup = warmUpFrames;
   const size_t bench = benchFrames == 0 ? defaultBenchFrames : benchFrames;
   for (size_t i = 0; i < warmup; ++i) {
     renderer.renderFrame(fb, framebufferFlags);

@@ -36,3 +36,21 @@ if [ ! -e ${llnl_iso} ]; then
   wget http://sdvis.org/~jdamstut/test_data/${llnl_iso}
   tar -xaf ${llnl_iso}
 fi
+
+sponza="crytek-sponza.tgz"
+if [ ! -e ${sponza} ]; then
+  wget http://www.sdvis.org/ospray/download/demos/${sponza}
+  tar -xaf ${sponza}
+fi
+
+sanmiguel="san-miguel.tgz"
+if [ ! -e ${sanmiguel} ]; then
+  wget http://www.sdvis.org/ospray/download/demos/${sanmiguel}
+  tar -xaf ${sanmiguel}
+fi
+
+sibenik="sibenik.tgz"
+if [ ! -e ${sibenik} ]; then
+  wget http://www.sdvis.org/ospray/download/demos/${sibenik}
+  tar -xaf ${sibenik}
+fi

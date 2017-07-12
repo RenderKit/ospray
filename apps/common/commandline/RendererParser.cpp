@@ -31,8 +31,14 @@ namespace commandline {
         shadows = 0;
       } else if (arg == "--ao-samples" || arg == "-ao") {
         aoSamples = atoi(av[++i]);
+      } else if (arg == "--ao-distance" || arg == "-ao") {
+        aoDistance = atof(av[++i]);
       } else if (arg == "--max-depth") {
         maxDepth = atoi(av[++i]);
+      } else if (arg == "--bg-color") {
+        bgColor.x = atof(av[++i]);
+        bgColor.y = atof(av[++i]);
+        bgColor.z = atof(av[++i]);
       }
     }
 
@@ -62,8 +68,10 @@ namespace commandline {
     if (rendererType[0] != 'a' && rendererType[1] != 'o')
       {
         parsedRenderer.set("aoSamples", aoSamples);
+        parsedRenderer.set("aoDistance", aoDistance);
         parsedRenderer.set("shadowsEnabled", shadows);
         parsedRenderer.set("aoTransparencyEnabled", 1);
+        parsedRenderer.set("bgColor", bgColor);
       }
 
     parsedRenderer.set("spp", spp);
