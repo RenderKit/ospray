@@ -203,22 +203,22 @@ namespace ospray {
         world->add(instance);
       }
 
-#if 0 // NOTE(jda) - triangles are WIP
       if (!triangles.index.empty()) {
         auto slNode = createNode(name + "_triangles",
-                                 "StreamLines")->nodeAs<StreamLines>();
+                                 "TriangleMesh")->nodeAs<StreamLines>();
+        slNode->remove("material");
 
         auto v  = createNode("vertex","DataVector3fa")->nodeAs<DataVector3fa>();
         auto vi = createNode("index", "DataVector3i")->nodeAs<DataVector3i>();
-        //auto vc = createNode("color", "DataVector4f")->nodeAs<DataVector4f>();
+        auto vc = createNode("color", "DataVector4f")->nodeAs<DataVector4f>();
 
         v->v  = std::move(triangles.vertex);
         vi->v = std::move(triangles.index);
-        //vc->v = std::move(triangles.color);
+        vc->v = std::move(triangles.color);
 
         slNode->add(v);
         slNode->add(vi);
-        //if(!vc->empty()) slNode->add(vc);
+        if(!vc->empty()) slNode->add(vc);
 
         auto model = createNode(name + "_triangles_model", "Model");
         model->add(slNode);
@@ -229,7 +229,6 @@ namespace ospray {
 
         world->add(instance);
       }
-#endif
     }
 
   } // ::ospray::sg

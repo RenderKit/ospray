@@ -86,41 +86,42 @@ namespace ospray {
       }
     }
 
+    void TriangleMesh::preCommit(RenderContext &ctx)
+    {
+      auto ospGeometry = (OSPGeometry)valueAs<OSPObject>();
+      if (!ospGeometry) {
+        ospGeometry = ospNewGeometry("trianglemesh");
+        setValue((OSPObject)ospGeometry);
+
+        // NOTE(jda) - how many buffers to we minimally _have_ to have?
+        if (!hasChild("vertex") || !hasChild("index"))
+          return;
+
+        // set vertex data
+        if (!vertex()->empty())
+          ospSetData(ospGeometry, "vertex", vertex()->getOSP());
+        if (hasChild("normal") && !normal()->empty())
+          ospSetData(ospGeometry, "vertex.normal", normal()->getOSP());
+        if (hasChild("texcoord") && !texcoord()->empty())
+          ospSetData(ospGeometry, "vertex.texcoord", texcoord()->getOSP());
+        if (hasChild("color") && !color()->empty())
+          ospSetData(ospGeometry, "vertex.color", color()->getOSP());
+        // set index data
+        if (!index()->empty())
+          ospSetData(ospGeometry, "index", index()->getOSP());
+
+        child("bounds").setValue(computeBounds());
+      }
+    }
+
     void TriangleMesh::postCommit(RenderContext &ctx)
     {
       auto ospGeometry = (OSPGeometry)valueAs<OSPObject>();
-
-      if (ospGeometry) {
-        assert((OSPMaterial)child("material").valueAs<OSPObject>());
+      if (hasChild("material")) {
         ospSetMaterial(ospGeometry,
                        (OSPMaterial)child("material").valueAs<OSPObject>());
-        ospCommit(ospGeometry);
-        return;
       }
-
-      // NOTE(jda) - how many buffers to we minimally _have_ to have?
-      if (!hasChild("vertex") || !hasChild("index"))
-        return;
-
-      ospGeometry = ospNewGeometry("trianglemesh");
-      setValue((OSPObject)ospGeometry);
-
-      // set vertex data
-      if (!vertex()->empty())
-        ospSetData(ospGeometry, "vertex", vertex()->getOSP());
-      if (hasChild("normal") && !normal()->empty())
-        ospSetData(ospGeometry, "vertex.normal", normal()->getOSP());
-      if (hasChild("texcoord") && !texcoord()->empty())
-        ospSetData(ospGeometry, "vertex.texcoord", texcoord()->getOSP());
-      // set index data
-      if (!index()->empty())
-        ospSetData(ospGeometry, "index", index()->getOSP());
-
-      assert((OSPMaterial)child("material").valueAs<OSPObject>());
-      ospSetMaterial(ospGeometry,
-                     (OSPMaterial)child("material").valueAs<OSPObject>());
       ospCommit(ospGeometry);
-      child("bounds").setValue(computeBounds());
     }
 
     void TriangleMesh::postRender(RenderContext& ctx)

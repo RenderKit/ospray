@@ -25,7 +25,7 @@ namespace ospray {
       createChild("material", "Material");
       createChild("radius", "float", 0.01f,
                   NodeFlags::required |
-                  NodeFlags::valid_min_max).setMinMax(0.f, 1e20f);
+                  NodeFlags::valid_min_max).setMinMax(1e-20f, 1e20f);
     }
 
     std::string StreamLines::toString() const
@@ -95,8 +95,10 @@ namespace ospray {
     void StreamLines::postCommit(RenderContext &ctx)
     {
       auto ospGeometry = (OSPGeometry)valueAs<OSPObject>();
-      ospSetMaterial(ospGeometry,
-                     (OSPMaterial)child("material").valueAs<OSPObject>());
+      if (hasChild("material")) {
+        ospSetMaterial(ospGeometry,
+                       (OSPMaterial)child("material").valueAs<OSPObject>());
+      }
       ospCommit(ospGeometry);
     }
 

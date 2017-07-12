@@ -24,6 +24,7 @@ namespace ospray {
     OSP_REGISTER_SG_NODE(DataVector2f);
     OSP_REGISTER_SG_NODE(DataVector3f);
     OSP_REGISTER_SG_NODE(DataVector3fa);
+    OSP_REGISTER_SG_NODE(DataVector4f);
     OSP_REGISTER_SG_NODE(DataVector1i);
     OSP_REGISTER_SG_NODE(DataVector2i);
     OSP_REGISTER_SG_NODE(DataVector3i);
