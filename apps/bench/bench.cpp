@@ -158,6 +158,7 @@ namespace bench {
   size_t numWarmupFrames = 0;
   size_t numBenchFrames = 0;
   bool logFrameTimes = false;
+  float variance = 0;
   // This is the fixture setup by the command line arguments
   std::shared_ptr<OSPRayFixture> cmdlineFixture;
 
@@ -187,6 +188,8 @@ namespace bench {
         numBenchFrames = atoi(argv[++i]);
       } else if (arg == "-lft" || arg == "--log-frame-times") {
         logFrameTimes = true;
+      } else if (arg == "-v" || arg == "--variance") {
+        variance = atof(argv[++i]);
       } else if (arg == "--script") {
         scriptFile = argv[++i];
       }
@@ -200,8 +203,8 @@ namespace bench {
     std::tie(std::ignore, model, renderer, camera) = ospObjs;
 
     cmdlineFixture = std::make_shared<OSPRayFixture>(renderer, camera, model[0]);
-    if (width > 0 || height > 0) {
-      cmdlineFixture->setFrameBuffer(width, height);
+    if (width > 0 || height > 0 || variance > 0.f) {
+      cmdlineFixture->setFrameBuffer(width, height, OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_VARIANCE);
     }
     // Set the default warm up and bench frames
     if (numWarmupFrames > 0) {
@@ -210,6 +213,7 @@ namespace bench {
     if (numBenchFrames > 0){
       cmdlineFixture->defaultBenchFrames = numBenchFrames;
     }
+    cmdlineFixture->maxVariance = variance;
   }
 
   extern "C" int main(int argc, const char *argv[]) {

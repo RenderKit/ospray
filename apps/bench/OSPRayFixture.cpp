@@ -49,7 +49,8 @@ void writePPM(const std::string &fileName, const int sizeX, const int sizeY,
 
 OSPRayFixture::OSPRayFixture(cpp::Renderer r, cpp::Camera c,  cpp::Model m)
   : renderer(r), camera(c), model(m), width(DEFAULT_WIDTH), height(DEFAULT_HEIGHT),
-  defaultBenchFrames(DEFAULT_BENCH_FRAMES), defaultWarmupFrames(DEFAULT_WARMUP_FRAMES)
+  defaultBenchFrames(DEFAULT_BENCH_FRAMES), defaultWarmupFrames(DEFAULT_WARMUP_FRAMES),
+  maxVariance(0.f)
 {
   setFrameBuffer(width, height);
   renderer.set("world", model);
@@ -69,7 +70,8 @@ OSPRayFixture::benchmark(const size_t warmUpFrames, const size_t benchFrames) {
 
   auto benchmarker = pico_bench::Benchmarker<Millis>(bench);
   auto stats = benchmarker([&]() {
-      renderer.renderFrame(fb, framebufferFlags);
+      const float variance = renderer.renderFrame(fb, framebufferFlags);
+std::cout << variance << std::endl;
   });
   stats.time_suffix = " ms";
   return stats;
