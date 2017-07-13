@@ -105,14 +105,16 @@ namespace ospray {
     {
       FILE *file = fopen(fileName.c_str(),"r");
       if (!file)
-        throw std::runtime_error("could not open input file "+fileName);
-      int numAtoms;
+        throw std::runtime_error("could not open input file " + fileName);
 
-      // int rc = sscanf(line,"%i",&numAtoms);
+      int numAtoms;
       int rc = fscanf(file,"%i\n",&numAtoms);
       PRINT(numAtoms);
-      if (rc != 1)
-        throw std::runtime_error("could not parse .dat.xyz header in input file "+fileName);
+
+      if (rc != 1) {
+        throw std::runtime_error("could not parse .dat.xyz header in "
+                                 "input file " + fileName);
+      }
 
       char line[10000];
       if (!fgets(line,10000,file))
@@ -121,7 +123,7 @@ namespace ospray {
       std::cout << "#" << fileName << " (.dat.xyz format): expecting "
                 << numAtoms << " atoms" << std::endl;
 
-      for (int i=0;i<numAtoms;i++) {
+      for (int i = 0; i < numAtoms; i++) {
         char atomName[110];
         Atom a;
         vec3f n;
@@ -154,11 +156,6 @@ namespace ospray {
         a.radius = atomType[a.type]->radius;
         if (a.radius == 0.f)
           a.radius = defaultRadius;
-        if (a.radius == 0.f)
-          throw std::runtime_error("particle has invalid radius. Either "
-                                   "specify proper radius in the def file, or "
-                                   "use '--radius' cmdline parameter to set a "
-                                   "valid radius");
         atom[a.type].push_back(a);
       }
     }
@@ -167,9 +164,9 @@ namespace ospray {
         list of "type x y z" lines */
     void Model::loadXYZ2(const std::string &fileName)
     {
-      FILE *file = fopen(fileName.c_str(),"r");
+      FILE *file = fopen(fileName.c_str(), "r");
       if (!file)
-        throw std::runtime_error("could not open input file "+fileName);
+        throw std::runtime_error("could not open input file " + fileName);
 
       int rc = 0;
       char atomType[1000];
@@ -192,15 +189,18 @@ namespace ospray {
     void Model::loadXYZ3(const std::string &fileName)
     {
       FILE *file = fopen(fileName.c_str(),"r");
+
       if (!file)
         throw std::runtime_error("could not open input file "+fileName);
+
       int numAtoms;
 
-      // int rc = sscanf(line,"%i",&numAtoms);
-      int rc = fscanf(file,"%i\n",&numAtoms);
+      int rc = fscanf(file, "%i\n", &numAtoms);
       PRINT(numAtoms);
-      if (rc != 1)
-        throw std::runtime_error("could not parse .dat.xyz header in input file "+fileName);
+      if (rc != 1) {
+        throw std::runtime_error("could not parse .dat.xyz header in "
+                                 "input file "+fileName);
+      }
 
       char line[10000];
       if (!fgets(line,10000,file))
@@ -241,11 +241,6 @@ namespace ospray {
         a.radius = atomType[a.type]->radius;
         if (a.radius == 0.f)
           a.radius = defaultRadius;
-        if (a.radius == 0.f)
-          throw std::runtime_error("particle has invalid radius. Either "
-                                   "specify proper radius in the def file, or "
-                                   "use '--radius' cmdline parameter to set a "
-                                   "valid radius");
         atom[a.type].push_back(a);
       }
     }
