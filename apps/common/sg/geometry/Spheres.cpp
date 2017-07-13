@@ -25,24 +25,24 @@
 namespace ospray {
   namespace sg {
 
-    Spheres::Spheres()
-      : Geometry("spheres")
-    {}
+    Spheres::Spheres() : Geometry("spheres") {}
 
     box3f Spheres::bounds() const
     {
-      auto spheres = child("sphereData").nodeAs<DataBuffer>();
-
-      auto *base = (byte_t*)spheres->base();
-      auto sphereBytes = child("bytes_per_sphere").valueAs<int>();
-      auto offset_center = child("offset_center").valueAs<int>();
-      auto offset_radius = child("offset_radius").valueAs<int>();
-
       box3f bounds = empty;
-      for (int i = 0; i < spheres->numBytes(); i += sphereBytes) {
-        vec3f &center = *(vec3f*)(base + i + offset_center);
-        float &radius = *(float*)(base + i + offset_radius);
-        bounds.extend(center + radius);
+
+      if (hasChild("spheres")) {
+        auto spheres = child("spheres").nodeAs<DataBuffer>();
+
+        auto *base = (byte_t*)spheres->base();
+        auto sphereBytes = child("bytes_per_sphere").valueAs<int>();
+        auto offset_center = child("offset_center").valueAs<int>();
+        auto offset_radius = child("offset_radius").valueAs<int>();
+        for (int i = 0; i < spheres->numBytes(); i += sphereBytes) {
+          vec3f &center = *(vec3f*)(base + i + offset_center);
+          float &radius = *(float*)(base + i + offset_radius);
+          bounds.extend(center + radius);
+        }
       }
 
       return bounds;

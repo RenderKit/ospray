@@ -117,6 +117,8 @@ namespace ospray {
     using DataArray2i  = DataArrayT<vec2i, OSP_INT2>;
     using DataArray3i  = DataArrayT<vec3i, OSP_INT3>;
     using DataArray4i  = DataArrayT<vec4i, OSP_INT4>;
+    using DataArrayOSP = DataArrayT<OSPObject, OSP_OBJECT>;
+    using DataArrayRAW = DataArrayT<byte_t, OSP_RAW>;
 
     // -------------------------------------------------------
     // data *VECTORS*
@@ -153,6 +155,8 @@ namespace ospray {
     using DataVector2i  = DataVectorT<vec2i, OSP_INT2>;
     using DataVector3i  = DataVectorT<vec3i, OSP_INT3>;
     using DataVector4i  = DataVectorT<vec4i, OSP_INT4>;
+    using DataVectorOSP = DataVectorT<OSPObject, OSP_OBJECT>;
+    using DataVectorRAW = DataVectorT<byte_t, OSP_RAW>;
 
     template<typename T>
     std::shared_ptr<T> make_shared_aligned(void *data, size_t num)

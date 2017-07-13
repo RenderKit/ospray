@@ -18,11 +18,6 @@
 // stl
 #include <sstream>
 
-extern int  yyparse();
-extern void yyerror(const char* msg);
-extern FILE *yyin;
-extern int yydebug;
-
 namespace ospray {
   namespace particle {
 
@@ -51,56 +46,56 @@ namespace ospray {
       char line[10000];
       const char *sep = "\n\t ";
 
-      AtomType *currentType = NULL;
+      AtomType *currentType = nullptr;
       while (fgets(line,10000,file) && !feof(file)) {
         if (line[0] == '#')
           continue;
 
         char *tok = strtok(line,sep);
-        if (tok == NULL)
+        if (tok == nullptr)
           continue;
 
         if (!strcmp(tok,"atomtype")) {
-          const char *name = strtok(NULL,sep);
+          const char *name = strtok(nullptr,sep);
           assert(name);
-          currentType = atomType[getAtomType(name)];
+          currentType = atomType[getAtomType(name)].get();
           assert(currentType);
           continue;
         }
 
         if (!strcmp(tok,"color")) {
           assert(currentType);
-          float r = atof(strtok(NULL,sep));
-          float g = atof(strtok(NULL,sep));
-          float b = atof(strtok(NULL,sep));
+          float r = atof(strtok(nullptr,sep));
+          float g = atof(strtok(nullptr,sep));
+          float b = atof(strtok(nullptr,sep));
           currentType->color = vec3f(r,g,b);
           continue;
         }
-        
+
         if (!strcmp(tok,"radius")) {
           assert(currentType);
-          float r = atof(strtok(NULL,sep));
+          float r = atof(strtok(nullptr,sep));
           currentType->radius = r;
           continue;
         }
-        
+
         throw std::runtime_error("#osp:particleViewer:readAtomTypeDefs: cannot parse token '"+std::string(tok)+"'");
       }
 
       fclose(file);
     }
-      
+
 
     int Model::getAtomType(const std::string &name)
     {
-      std::map<std::string,int>::iterator it = atomTypeByName.find(name);
+      auto it = atomTypeByName.find(name);
       if (it == atomTypeByName.end()) {
         std::cout << "Found atom type '"+name+"'" << std::endl;
-        AtomType *a = new AtomType(name);
+        auto a = make_unique<AtomType>(name);
         a->color = makeRandomColor(atomType.size());
         int newID = atomType.size();
         atomTypeByName[name] = newID;
-        atomType.push_back(a);
+        atomType.push_back(std::move(a));
         return newID;
       }
       return it->second;
@@ -109,7 +104,7 @@ namespace ospray {
     void Model::loadXYZ(const std::string &fileName)
     {
       FILE *file = fopen(fileName.c_str(),"r");
-      if (!file) 
+      if (!file)
         throw std::runtime_error("could not open input file "+fileName);
       int numAtoms;
 
@@ -118,8 +113,8 @@ namespace ospray {
       PRINT(numAtoms);
       if (rc != 1)
         throw std::runtime_error("could not parse .dat.xyz header in input file "+fileName);
-      
-      char line[10000]; 
+
+      char line[10000];
       if (!fgets(line,10000,file))
         throw std::runtime_error("could not fgets");
 
@@ -168,7 +163,7 @@ namespace ospray {
                                    "specify proper radius in the def file, or "
                                    "use '--radius' cmdline parameter to set a "
                                    "valid radius");
-        atom.push_back(a);
+        atom[a.type].push_back(a);
       }
     }
 
@@ -177,7 +172,7 @@ namespace ospray {
     void Model::loadXYZ2(const std::string &fileName)
     {
       FILE *file = fopen(fileName.c_str(),"r");
-      if (!file) 
+      if (!file)
         throw std::runtime_error("could not open input file "+fileName);
 
       int rc = 0;
@@ -189,7 +184,7 @@ namespace ospray {
         Atom a;
         a.type = getAtomType(atomType);
         a.position = pos;
-        atom.push_back(a);
+        atom[a.type].push_back(a);
       }
 
       if (rc != 4) {
@@ -259,16 +254,8 @@ namespace ospray {
                                    "specify proper radius in the def file, or "
                                    "use '--radius' cmdline parameter to set a "
                                    "valid radius");
-        atom.push_back(a);
+        atom[a.type].push_back(a);
       }
-    }
-
-    box3f Model::getBBox() const 
-    {
-      box3f bbox = empty;
-      for (auto &a : atom)
-        bbox.extend(a.position);
-      return bbox;
     }
 
   } // ::ospray::particle

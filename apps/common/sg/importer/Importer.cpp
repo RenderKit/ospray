@@ -171,16 +171,21 @@ namespace ospray {
         } else
           std::cout << "Found a URL-style file type specified, but didn't recognize file type '" << fu->formatType<< "' ... reverting to loading by file extension" << std::endl;
       }
-      if (fileName.ext() == "obj") {
+
+      auto ext = fileName.ext();
+
+      if (ext == "obj") {
         sg::importOBJ(wsg, fileName);
-      } else if (fileName.ext() == "ply") {
+      } else if (ext == "ply") {
         sg::importPLY(wsg, fileName);
-      } else if (fileName.ext() == "osg" || fileName.ext() == "osp") {
+      } else if (ext == "osg" || ext == "osp") {
         sg::loadOSP(wsg, fileName);
-      } else if (fileName.ext() == "osx") {
+      } else if (ext == "osx") {
         sg::importOSX(wsg, fileName);
-      } else if (fileName.ext() == "xml") {
+      } else if (ext == "xml") {
         sg::importRIVL(wsg, fileName);
+      } else if (ext == "xyz" || ext == "xyz2" || ext == "xyz3") {
+        sg::importXYZ(wsg, fileName);
       } else {
         std::cout << "unsupported file format\n";
         return;

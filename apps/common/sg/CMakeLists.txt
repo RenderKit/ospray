@@ -60,6 +60,9 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   importer/importOBJ.cpp
   importer/importPLY.cpp
   importer/importRIVL.cpp
+  importer/importXYZ.cpp
+
+  importer/detail_xyz/Model.cpp
 LINK
   ospray
   ospray_common

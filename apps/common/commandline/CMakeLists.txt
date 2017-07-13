@@ -70,10 +70,6 @@ SET(SOURCE_FILES
 
   SceneParser/SceneParser.h
 
-  SceneParser/particle/ParticleSceneParser.cpp
-  SceneParser/particle/Model.cpp
-  SceneParser/particle/uintah.cpp
-
   Utility.h
 )
 
