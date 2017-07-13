@@ -57,34 +57,6 @@ namespace ospray {
                       const unsigned char *binBasePtr) override;
     };
 
-
-    /*! A special triangle mesh that allows per-triangle materials */
-    //TODO: add commit code to commit material list!
-    struct PTMTriangleMesh : public sg::TriangleMesh
-    {
-      /*! triangle with per-triangle material ID */
-      struct Triangle
-      {
-        uint32_t vtxID[3], materialID;
-      };
-
-      PTMTriangleMesh() = default;
-
-      // Data members //
-
-      /*! \brief "material list" for this trianglemesh
-
-        If non-empty, the 'Triangle::materialID' indexes into this
-        list; if empty, all trianlges should use the
-        Geometry::material no matter what Triangle::materialID is set
-       */
-      std::vector<std::shared_ptr<sg::Material>> materialList;
-      std::vector<uint32_t> materialIDs;
-
-      //! material IDs
-      OSPData primMatIDs;
-   };
-
   } // ::ospray::sg
 } // ::ospray
 

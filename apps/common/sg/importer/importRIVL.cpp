@@ -268,14 +268,14 @@ namespace ospray {
 
     void parseMeshNode(const xml::Node &node)
     {
-      std::shared_ptr<sg::PTMTriangleMesh> mesh = std::make_shared<sg::PTMTriangleMesh>();
+      std::shared_ptr<sg::TriangleMesh> mesh = std::make_shared<sg::TriangleMesh>();
       std::stringstream ss;
       ss << node.getProp("name");
       if (ss.str() == "")
         ss << "mesh";
       ss << "_" << node.getProp("id");
       mesh->setName(ss.str());
-      mesh->setType("PTMTriangleMesh");
+      mesh->setType("TriangleMesh");
       auto model = createNode ("model_"+ss.str(),"Model");
       model->add(mesh);
       nodeList.push_back(model);
@@ -325,10 +325,7 @@ namespace ospray {
             char* value = strdup(child.content.c_str());
             for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(NULL," \t\n\r")) {
               size_t matID = atoi(s);
-              std::shared_ptr<sg::Material> mat
-                = std::dynamic_pointer_cast<sg::Material>(nodeList[matID]);
-              assert(mat);
-              mesh->materialList.push_back(mat);
+              auto mat = nodeList[matID]->nodeAs<sg::Material>();
               mesh->setChild("material", mat);
               mat->setParent(mesh);
             }
