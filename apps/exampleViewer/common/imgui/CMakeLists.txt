@@ -26,7 +26,7 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/apps/exampleViewer/common/imgui/imguifilesystem
 )
 
-add_library(${LIB_NAME} STATIC
+add_library(${LIB_NAME} SHARED
   imgui.cpp
   imgui_draw.cpp
   imgui_demo.cpp

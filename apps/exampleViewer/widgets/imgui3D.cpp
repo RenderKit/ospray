@@ -112,7 +112,14 @@ namespace ospray {
       frame = AffineSpace3fa::translate(from) * AffineSpace3fa(ospcommon::one);
     }
 
-    void ImGui3DWidget::ViewPort::snapUp()
+    void ImGui3DWidget::ViewPort::snapViewUp()
+    {
+      auto look = at - from;
+      auto right = cross(look, up);
+      up = normalize(cross(right, look));
+    }
+
+    void ImGui3DWidget::ViewPort::snapFrameUp()
     {
       if (fabsf(dot(up,frame.l.vz)) < 1e-3f)
         return;
@@ -190,7 +197,7 @@ namespace ospray {
       viewPort.frame.l.vz =
           normalize(cross(viewPort.frame.l.vx,viewPort.frame.l.vy));
       viewPort.frame.p    = viewPort.from;
-      viewPort.snapUp();
+      viewPort.snapFrameUp();
       viewPort.modified = true;
     }
 
@@ -198,7 +205,7 @@ namespace ospray {
     {
       viewPort.up = up;
       if (up != vec3f(0.f))
-        viewPort.snapUp();
+        viewPort.snapFrameUp();
     }
 
     void ImGui3DWidget::reshape(const vec2i &newSize)
@@ -263,7 +270,7 @@ namespace ospray {
       viewPort.frame.l.vz =
           normalize(cross(viewPort.frame.l.vx,viewPort.frame.l.vy));
       viewPort.frame.p    = from;
-      viewPort.snapUp();
+      viewPort.snapFrameUp();
       viewPort.modified = true;
     }
 
@@ -290,7 +297,7 @@ namespace ospray {
         viewPort.frame.l.vz =
             normalize(cross(viewPort.frame.l.vx,viewPort.frame.l.vy));
         viewPort.frame.p    = from;
-        viewPort.snapUp();
+        viewPort.snapFrameUp();
         viewPort.modified = true;
       }
 
@@ -351,7 +358,6 @@ namespace ospray {
       // NOTE(jda) - move key handler registration into this class
       ImGui_ImplGlfwGL3_Init(window, true);
 
-
       glfwSetCursorPosCallback(
         window,
         [](GLFWwindow*, double xpos, double ypos) {
@@ -368,9 +374,37 @@ namespace ospray {
         }
       );
 
+      glfwSetKeyCallback(
+        window,
+        [](GLFWwindow*, int key, int scancode, int action, int mods) {
+          ImGuiIO& io = ImGui::GetIO();
+
+          if (!io.WantCaptureKeyboard) {
+            auto &widget = *ImGui3DWidget::activeWindow;
+            if ((key == GLFW_KEY_LEFT_CONTROL ||
+                 key == GLFW_KEY_RIGHT_CONTROL)) {
+              if (action == GLFW_PRESS) {
+                widget.keysDown |= ImGui3DWidget::CNTRL_KEY;
+                if (widget.manipulator == widget.inspectCenterManipulator) {
+                  std::cout << "locking camera 'up' dir to "
+                            << widget.viewPort.up << std::endl;
+                }
+              }
+              else {
+                widget.keysDown &= ~ImGui3DWidget::CNTRL_KEY;
+                if (widget.manipulator == widget.inspectCenterManipulator)
+                  std::cout << "unlocking camera 'up' direction" << std::endl;
+              }
+            }
+
+            //NOTE: add other keys if necessary here
+          }
+        }
+      );
+
       glfwSetCharCallback(
         window,
-       [](GLFWwindow*, unsigned int c) {
+        [](GLFWwindow*, unsigned int c) {
           ImGuiIO& io = ImGui::GetIO();
           if (c > 0 && c < 0x10000)
             io.AddInputCharacter((unsigned short)c);
