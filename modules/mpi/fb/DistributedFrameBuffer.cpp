@@ -42,29 +42,6 @@ namespace ospray {
 
   using DFB = DistributedFrameBuffer;
 
-  /*! color buffer and depth buffer on master */
-  enum COMMANDTAG {
-    /*! command tag that identifies a CommLayer::message as a write
-      tile command. this is a command using for sending a tile of
-      new samples to another instance of the framebuffer (the one
-      that actually owns that tile) for processing and 'writing' of
-      that tile on that owner node. */
-    WORKER_WRITE_TILE = 13,
-    /*! command tag used for sending 'final' tiles from the tile
-        owner to the master frame buffer. Note that we *do* send a
-        message back ot the master even in cases where the master
-        does not actually care about the pixel data - we still have
-        to let the master know when we're done. */
-    MASTER_WRITE_TILE_I8,
-    MASTER_WRITE_TILE_F32,
-    /*! command tag used for sending 'final' tiles from the tile
-        owner to the master frame buffer. Note that we *do* send a
-        message back ot the master even in cases where the master
-        does not actually care about the pixel data - we still have
-        to let the master know when we're done. */
-    MASTER_WRITE_TILE_NONE,
-  };
-
   struct TileMessage
   {
     int command {-1};
@@ -74,30 +51,6 @@ namespace ospray {
   {
     vec2i coords;
     float error;
-
-#if 0
-    MasterTileMessage(vec2i coords, float error)
-      : coords(coords), error(error)
-    {
-      command = MASTER_WRITE_TILE_NONE;
-    }
-    virtual void setColor(const vec4f *data) {}
-    // TODO: I can't say I'm super thrilled by this..
-    virtual size_t msgSize() {
-      return sizeof(*this);
-    }
-#endif
-  };
-
-  template<typename FBType>
-  struct MakeTileCmdTag;
-  template<>
-  struct MakeTileCmdTag<uint32> {
-    const static COMMANDTAG tag = MASTER_WRITE_TILE_I8;
-  };
-  template<>
-  struct MakeTileCmdTag<vec4f> {
-    const static COMMANDTAG tag = MASTER_WRITE_TILE_F32;
   };
 
   /*! message sent to the master when a tile is finished. Todo:
@@ -106,23 +59,12 @@ namespace ospray {
   struct MasterTileMessage_FB : public MasterTileMessage
   {
     FBType color[TILE_SIZE * TILE_SIZE];
+  };
 
-#if 0
-    // TODO: Switch to using typeIdOf instead of the enum?
-    MasterTileMessage_FB(vec2i coords, float error)
-      : MasterTileMessage(coords, error)
-    {
-      command = MakeTileCmdTag<FBType>::tag;
-    }
-    void setColor(const vec4f *data) override {
-      const FBType *d = reinterpret_cast<const FBType*>(data);
-      std::copy(d, d + TILE_SIZE * TILE_SIZE, color);
-    }
-    // TODO: I can't say I'm super thrilled by this..
-    size_t msgSize() override {
-      return sizeof(*this);
-    }
-#endif
+  template <typename ColorT>
+  struct MasterTileMessage_FB_Depth : public MasterTileMessage_FB<ColorT>
+  {
+    float depth[TILE_SIZE * TILE_SIZE];
   };
   // TODO: Maybe we want to add a separate MasterTileMessage_FBD
   // that has an additional depth channel it ships along? If we
@@ -130,9 +72,78 @@ namespace ospray {
   // 4 * TILE_SIZE * TILE_SIZE bytes on the messaging system
   // since it will add quite a bit of overhead.
 
-  using MasterTileMessage_RGBA_I8  = MasterTileMessage_FB<uint32>;
-  using MasterTileMessage_RGBA_F32 = MasterTileMessage_FB<vec4f>;
-  using MasterTileMessage_NONE     = MasterTileMessage;
+  using MasterTileMessage_RGBA_I8    = MasterTileMessage_FB<uint32>;
+  using MasterTileMessage_RGBA_F32   = MasterTileMessage_FB<vec4f>;
+  using MasterTileMessage_RGBA_I8_Z  = MasterTileMessage_FB_Depth<uint32>;
+  using MasterTileMessage_RGBA_F32   = MasterTileMessage_FB<vec4f>;
+  using MasterTileMessage_RGBA_F32_Z = MasterTileMessage_FB_Depth<vec4f>;
+  using MasterTileMessage_NONE       = MasterTileMessage;
+
+  /*! It's a real PITA do try and do this using the message structs
+   * but keep them POD and also try to not copy a ton.
+   */
+  class MasterTileMessageBuilder
+  {
+    OSPFrameBufferFormat colorFormat;
+    bool hasDepth;
+    size_t pixelSize;
+    MasterTileMessage_NONE *header;
+
+  public:
+    std::shared_ptr<mpicommon::Message> message;
+
+    MasterTileMessageBuilder(OSPFrameBufferFormat fmt, bool hasDepth,
+        vec2i coords, float error)
+      : colorFormat(fmt), hasDepth(hasDepth)
+    {
+      int command;
+      size_t msgSize = 0;
+      switch (colorFormat) {
+        case OSP_FB_NONE:
+          command = MASTER_WRITE_TILE_NONE;
+          msgSize = sizeof(MasterTileMessage_NONE);
+          pixelSize = 0;
+          break;
+        case OSP_FB_RGBA8:
+        case OSP_FB_SRGBA:
+          command = MASTER_WRITE_TILE_I8;
+          msgSize = sizeof(MasterTileMessage_RGBA_I8);
+          pixelSize = sizeof(uint32);
+          break;
+        case OSP_FB_RGBA32F:
+          command = MASTER_WRITE_TILE_F32;
+          msgSize = sizeof(MasterTileMessage_RGBA_F32);
+          pixelSize = sizeof(vec4f);
+          break;
+        default:
+          throw std::runtime_error("Unsupported color buffer fmt in DFB!");
+      }
+      if (hasDepth) {
+        msgSize += sizeof(float) * TILE_SIZE * TILE_SIZE;
+        command = command | MASTER_TILE_HAS_DEPTH;
+      }
+      message = std::make_shared<mpicommon::Message>(msgSize);
+      header = reinterpret_cast<MasterTileMessage_NONE*>(message->data);
+      header->command = command;
+      header->coords = coords;
+      header->error = error;
+    }
+    void setColor(const vec4f *color) {
+      if (colorFormat != OSP_FB_NONE) {
+        const uint8_t *input = reinterpret_cast<const uint8_t*>(color);
+        uint8_t *out = message->data + sizeof(MasterTileMessage_NONE);
+        std::copy(input, input + pixelSize * TILE_SIZE * TILE_SIZE, out);
+      }
+    }
+    void setDepth(const float *depth) {
+      if (hasDepth) {
+        float *out = reinterpret_cast<float*>(message->data
+                     + sizeof(MasterTileMessage_NONE)
+                     + pixelSize * TILE_SIZE * TILE_SIZE);
+        std::copy(depth, depth + TILE_SIZE * TILE_SIZE, out);
+      }
+    }
+  };
 
   /*! message sent from one node's instance to another, to tell that
       instance to write that tile */
@@ -437,77 +448,11 @@ namespace ospray {
 
   void DistributedFrameBuffer::sendTileToMaster(TileData *tile)
   {
-#if 0
-    std::unique_ptr<MasterTileMessage> mtm;
-    switch (colorBufferFormat) {
-    case OSP_FB_NONE:
-      std::cout << "MTM_NONE\n";
-      mtm = make_unique<MasterTileMessage_NONE>(tile->begin, tile->error);
-      break;
-    case OSP_FB_RGBA8:
-    case OSP_FB_SRGBA:
-      std::cout << "MTM_RGBA_I8\n";
-      mtm = make_unique<MasterTileMessage_RGBA_I8>(tile->begin, tile->error);
-      break;
-    case OSP_FB_RGBA32F:
-      std::cout << "MTM_RGBA_F32\n";
-      mtm = make_unique<MasterTileMessage_RGBA_F32>(tile->begin, tile->error);
-      break;
-    default:
-      throw std::runtime_error("#osp:mpi:dfb: color buffer format not "
-                               "implemented for distributed frame buffer");
-    }
-    mtm->setColor(tile->color);
-    std::cout << "msg size = " << mtm->msgSize() << "\n";
-    auto msg = std::make_shared<mpicommon::Message>(mtm.get(), mtm->msgSize());
-    mpi::messaging::sendTo(mpicommon::masterRank(), myID, msg);
-#else
-    switch(colorBufferFormat) {
-    case OSP_FB_NONE: {
-      /* if the master doesn't have a framebufer (i.e., format
-         'none'), we're only telling it that we're done, but are not
-         sending any pixels */
-      MasterTileMessage_NONE mtm;
-      mtm.command = MASTER_WRITE_TILE_NONE;
-      mtm.coords  = tile->begin;
-      mtm.error   = tile->error;
-
-      auto msg = std::make_shared<mpicommon::Message>(&mtm, sizeof(mtm));
-
-      mpi::messaging::sendTo(mpicommon::masterRank(), myID, msg);
-    } break;
-    case OSP_FB_RGBA8:
-    case OSP_FB_SRGBA: {
-      /*! if the master has RGBA8 or SRGBA format, we're sending him a tile
-          of the proper data */
-      MasterTileMessage_RGBA_I8 mtm;
-      mtm.command = MASTER_WRITE_TILE_I8;
-      mtm.coords  = tile->begin;
-      mtm.error   = tile->error;
-      memcpy(mtm.color, tile->color, TILE_SIZE*TILE_SIZE*sizeof(uint32));
-
-      auto msg = std::make_shared<mpicommon::Message>(&mtm, sizeof(mtm));
-
-      mpi::messaging::sendTo(mpicommon::masterRank(), myID, msg);
-    } break;
-    case OSP_FB_RGBA32F: {
-      /*! if the master has RGBA32F format, we're sending him a tile of the
-          proper data */
-      MasterTileMessage_RGBA_F32 mtm;
-      mtm.command = MASTER_WRITE_TILE_F32;
-      mtm.coords  = tile->begin;
-      mtm.error   = tile->error;
-      memcpy(mtm.color, tile->color, TILE_SIZE*TILE_SIZE*sizeof(vec4f));
-
-      auto msg = std::make_shared<mpicommon::Message>(&mtm, sizeof(mtm));
-
-      mpi::messaging::sendTo(mpicommon::masterRank(), myID, msg);
-    } break;
-    default:
-      throw std::runtime_error("#osp:mpi:dfb: color buffer format not "
-                               "implemented for distributed frame buffer");
-    }
-#endif
+    MasterTileMessageBuilder msg(colorBufferFormat, hasDepthBuffer,
+                                 tile->begin, tile->error);
+    msg.setColor(tile->color);
+    msg.setDepth(tile->final.z);
+    mpi::messaging::sendTo(mpicommon::masterRank(), myID, msg.message);
   }
 
   size_t DFB::numMyTiles() const
@@ -532,7 +477,6 @@ namespace ospray {
 
   void DFB::incoming(const std::shared_ptr<mpicommon::Message> &message)
   {
-    PING;
     if (!frameIsActive) {
       SCOPED_LOCK(mutex);
       if (!frameIsActive) {
@@ -545,23 +489,17 @@ namespace ospray {
 
     tasking::schedule([=]() {
       auto *_msg = (TileMessage*)message->data;
-      PRINT(_msg->command);
-      switch (_msg->command) {
-      case MASTER_WRITE_TILE_NONE:
+      if (_msg->command & MASTER_WRITE_TILE_NONE) {
         this->processMessage((MasterTileMessage_NONE*)_msg);
-        break;
-      case MASTER_WRITE_TILE_I8:
+      } else if (_msg->command & MASTER_WRITE_TILE_I8) {
         this->processMessage((MasterTileMessage_RGBA_I8*)_msg);
-        break;
-      case MASTER_WRITE_TILE_F32:
+      } else if (_msg->command & MASTER_WRITE_TILE_F32) {
         this->processMessage((MasterTileMessage_RGBA_F32*)_msg);
-        break;
-      case WORKER_WRITE_TILE:
+      } else if (_msg->command & WORKER_WRITE_TILE) {
         this->processMessage((WriteTileMessage*)_msg);
-        break;
-      default:
+      } else {
         throw std::runtime_error("#dfb: unknown tile type processed!");
-      };
+      }
     });
   }
 
