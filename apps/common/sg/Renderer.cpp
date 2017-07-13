@@ -110,8 +110,7 @@ namespace ospray {
 
     void Renderer::traverse(RenderContext &ctx, const std::string& operation)
     {
-      if (operation == "render")
-      {
+      if (operation == "render") {
         preRender(ctx);
         postRender(ctx);
       }
@@ -122,9 +121,7 @@ namespace ospray {
     void Renderer::postRender(RenderContext &ctx)
     {
       auto fb = (OSPFrameBuffer)child("frameBuffer").valueAs<OSPObject>();
-      ospRenderFrame(fb,
-                     ospRenderer,
-                     OSP_FB_COLOR | OSP_FB_ACCUM);
+      ospRenderFrame(fb, ospRenderer, OSP_FB_COLOR | OSP_FB_ACCUM);
     }
 
     void Renderer::preRender(RenderContext& ctx)
@@ -163,8 +160,7 @@ namespace ospray {
           || child("shadowsEnabled").lastModified() > frameMTime
           || child("aoSamples").lastModified() > frameMTime
           || child("spp").lastModified() > frameMTime
-          || child("world").childrenLastModified() > frameMTime
-          )
+          || child("world").childrenLastModified() > frameMTime)
       {
         ospFrameBufferClear(
           (OSPFrameBuffer)child("frameBuffer").valueAs<OSPObject>(),

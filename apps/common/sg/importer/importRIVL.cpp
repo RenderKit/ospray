@@ -429,7 +429,6 @@ namespace ospray {
         throw std::runtime_error("could not parse RIVL file: Not in RIVL format!?");
       const xml::Node &root_element = *doc->child[0];
       parseBGFscene(world,root_element);
-      PRINT(world->bounds());
     }
 
   } // ::ospray::sg
