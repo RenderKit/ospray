@@ -132,8 +132,6 @@ namespace ospray {
 #if 1
           std::cout << "warning: " << ss.str() << std::endl;
           break;
-#else
-          throw std::runtime_error(ss.str());
 #endif
         }
 
@@ -150,8 +148,6 @@ namespace ospray {
 #if 1
           std::cout << "warning: " << ss.str() << std::endl;
           break;
-#else
-          throw std::runtime_error(ss.str());
 #endif
         }
         a.type = getAtomType(atomName);
@@ -224,8 +220,6 @@ namespace ospray {
 #if 1
           std::cout << "warning: " << ss.str() << std::endl;
           break;
-#else
-          throw std::runtime_error(ss.str());
 #endif
         }
 
@@ -241,8 +235,6 @@ namespace ospray {
 #if 1
           std::cout << "warning: " << ss.str() << std::endl;
           break;
-#else
-          throw std::runtime_error(ss.str());
 #endif
         }
         a.type = getAtomType(atomName);

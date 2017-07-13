@@ -52,15 +52,14 @@ namespace ospray {
       else if (fileName.ext() == "xyz3")
         m.loadXYZ3(fileName);
 
-      auto name = fileName.str();
-
       for (int i = 0; i < m.atomType.size(); i++) {
-        auto spGeom = createNode(name + "_spheres_type_" + std::to_string(i),
+        auto name = fileName.str() + "_type_" + std::to_string(i);
+
+        auto spGeom = createNode(name + "_geometry",
                                  "Spheres")->nodeAs<Spheres>();
 
         spGeom->createChild("bytes_per_sphere", "int",
                             int(sizeof(particle::Model::Atom)));
-
         spGeom->createChild("offset_center", "int", int(0));
         spGeom->createChild("offset_radius", "int", int(3*sizeof(float)));
         spGeom->createChild("offset_materialID", "int", int(4*sizeof(float)));
@@ -68,7 +67,8 @@ namespace ospray {
         auto spheres =
           std::make_shared<DataVectorT<particle::Model::Atom, OSP_RAW>>();
         spheres->setName("spheres");
-        spheres->v = std::move(m.atom[i]);
+        auto atomTypeID = m.atomTypeByName[m.atomType[i]->name];
+        spheres->v = std::move(m.atom[atomTypeID]);
 
         spGeom->add(spheres);
 
@@ -79,10 +79,10 @@ namespace ospray {
         material["Kd"].setValue(m.atomType[i]->color);
         material["Ks"].setValue(vec3f(0.2f, 0.2f, 0.2f));
 
-        auto model = createNode(name + "_spheres_model", "Model");
+        auto model = createNode(name + "_model", "Model");
         model->add(spGeom);
 
-        auto instance = createNode(name + "_spheres_instance", "Instance");
+        auto instance = createNode(name + "_instance", "Instance");
         instance->setChild("model", model);
         model->setParent(instance);
 

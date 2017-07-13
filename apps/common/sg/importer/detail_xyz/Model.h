@@ -48,7 +48,7 @@ namespace ospray {
       };
 
       std::vector<std::unique_ptr<AtomType>> atomType;
-      std::map<std::string,int> atomTypeByName;
+      std::map<std::string, int> atomTypeByName;
       std::map<int, std::vector<Atom>> atom; //NOTE(jda) - maps typeID->atoms
 
       //! list of attribute values, if applicable.
