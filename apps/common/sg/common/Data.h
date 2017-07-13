@@ -32,8 +32,6 @@ namespace ospray {
 
     typedef unsigned long long index_t;
 
-#define INVALID_DATA_ERROR throw RuntimeError("invalid data format ")
-
     struct OSPSG_INTERFACE DataBuffer : public Node
     {
       DataBuffer(OSPDataType type)
@@ -58,25 +56,31 @@ namespace ospray {
 
       virtual void*  base()  const = 0;
       virtual size_t size()  const = 0;
-      virtual bool   empty() const { return size() == 0; }
+      virtual size_t bytesPerElement() const = 0;
 
       OSPDataType getType()  const { return type; }
       OSPData     getOSP()
       {
         if (!empty() && !data) {
-          data = ospNewData(size(), type, base(), OSP_DATA_SHARED_BUFFER);
+          if (type == OSP_RAW) {
+            data = ospNewData(numBytes(), type, base(),
+                              OSP_DATA_SHARED_BUFFER);
+          }
+          else
+            data = ospNewData(size(), type, base(), OSP_DATA_SHARED_BUFFER);
+
           ospCommit(data);
         }
+
         return data;
       }
 
-      size_t numBytes() const { return size() * sizeOf(getType()); }
+      bool   empty()    const { return size() == 0; }
+      size_t numBytes() const { return size() * bytesPerElement(); }
 
       OSPDataType type;
       OSPData     data;
     };
-
-#undef INVALID_DATA_ERROR
 
     // -------------------------------------------------------
     // data *ARRAYS*
@@ -94,6 +98,8 @@ namespace ospray {
 
       void   *base() const override { return (void*)base_ptr; }
       size_t  size() const override { return numElements; }
+
+      size_t bytesPerElement() const override { return sizeof(T); }
 
       inline T& operator[](int index) { return base_ptr[index]; }
       inline const T& operator[](int index) const { return base_ptr[index]; }
@@ -134,9 +140,11 @@ namespace ospray {
       void   *base() const override { return (void*)v.data(); }
       size_t  size() const override { return v.size(); }
 
-      inline void push_back(const T &t) { v.push_back(t); }
-      inline T& operator[](int index) { return v[index]; }
-      inline const T& operator[](int index) const { return v[index]; }
+      size_t bytesPerElement() const override { return sizeof(T); }
+
+      void push_back(const T &t) { v.push_back(t); }
+      T& operator[](int index) { return v[index]; }
+      const T& operator[](int index) const { return v[index]; }
 
       // Data Members //
 
