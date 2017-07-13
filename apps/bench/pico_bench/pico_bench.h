@@ -156,8 +156,6 @@ public:
 	typename std::enable_if<std::is_same<decltype(std::declval<Fn>()()), T>::value,
 		stats_type>::type
 	operator()(Fn fn) const {
-		// Do a single un-timed warm up run
-		fn();
 		T elapsed{0};
 		std::vector<T> samples;
 		for (size_t i = 0; i < MAX_ITER && (MAX_RUNTIME.count() == 0 || elapsed < MAX_RUNTIME);
@@ -171,8 +169,6 @@ public:
 	template<typename Fn>
 	stats_type operator()(Fn _fn) const {
 		BenchWrapper<Fn> fn{_fn};
-		// Do a single un-timed warm up run
-		fn();
 		T elapsed{0};
 		std::vector<T> samples;
 		for (size_t i = 0; i < MAX_ITER && (MAX_RUNTIME.count() == 0 || elapsed < MAX_RUNTIME);
