@@ -25,22 +25,6 @@
 namespace ospray {
   namespace sg {
 
-    OSPData makeMaterials(OSPRenderer renderer, const particle::Model &model)
-    {
-      int numMaterials = model.atomType.size();
-      std::vector<OSPMaterial> matArray(numMaterials);
-
-      for (int i = 0; i < numMaterials; i++) {
-        OSPMaterial mat = ospNewMaterial(renderer, "OBJMaterial");
-        ospSet3fv(mat, "kd", &model.atomType[i]->color.x);
-        ospCommit(mat);
-        matArray[i] = mat;
-      }
-
-      OSPData data = ospNewData(numMaterials,OSP_OBJECT,matArray.data());
-      return data;
-    }
-
     void importXYZ(const std::shared_ptr<Node> &world, const FileName &fileName)
     {
       particle::Model m;
