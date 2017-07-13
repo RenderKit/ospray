@@ -82,7 +82,7 @@ using namespace ospray;
 
 std::vector<std::string> files;
 std::string initialRendererType;
-bool addPlane = true;
+bool addPlane = false;
 bool debug = false;
 bool fullscreen = false;
 bool print = false;
@@ -91,8 +91,8 @@ void parseCommandLine(int ac, const char **&av)
 {
   for (int i = 1; i < ac; i++) {
     const std::string arg = av[i];
-    if (arg == "-np" || arg == "--no-plane") {
-      addPlane = false;
+    if (arg == "-p" || arg == "--plane") {
+      addPlane = true;
     } else if (arg == "-d" || arg == "--debug") {
       debug = true;
     } else if (arg == "-r" || arg == "--renderer") {
@@ -214,6 +214,7 @@ void addPlaneToScene(sg::Node& world)
   index->setName("index");
 
   auto &plane = world.createChild("plane", "Instance");
+  plane["visible"].setValue(addPlane);
   auto &mesh  = plane.child("model").createChild("mesh", "TriangleMesh");
 
   auto sg_plane = mesh.nodeAs<sg::TriangleMesh>();
@@ -341,7 +342,7 @@ int main(int ac, const char **av)
 
   ospray::ImGuiViewerSg window(renderer_ptr, rendererDW);
 
-  if (addPlane) addPlaneToScene(world);
+  addPlaneToScene(world);
 
   window.create("OSPRay Example Viewer App", fullscreen);
 
