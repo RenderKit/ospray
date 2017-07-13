@@ -222,6 +222,7 @@ namespace ospray {
   inline void
   DistributedFrameBuffer::processMessage(MasterTileMessage_FB<FBType> *msg)
   {
+    PING;
     if (hasVarianceBuffer) {
       const vec2i tileID = msg->coords/TILE_SIZE;
       if ((accumID(tileID) & 1) == 1)
@@ -239,7 +240,7 @@ namespace ospray {
         if (iix >= numPixels.x) continue;
 
         ((FBType*)localFBonMaster->colorBuffer)[iix + iiy*numPixels.x]
-          = msg->color[iy][ix];
+          = msg->color[iy * TILE_SIZE + ix];
       }
     }
 

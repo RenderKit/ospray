@@ -76,10 +76,12 @@ export uniform float DFB_accumulate_##name(void  *uniform _self,             \
       accum->g[i] = col.y;                                                   \
       accum->b[i] = col.z;                                                   \
       accum->a[i] = col.w;                                                   \
+      accum->z[i] = tile->z[i];                                              \
       final->r[i] = col.x;                                                   \
       final->g[i] = col.y;                                                   \
       final->b[i] = col.z;                                                   \
       final->a[i] = col.w;                                                   \
+      final->z[i] = tile->z[i];                                              \
                                                                              \
       color[i] = cvt(col);                                                   \
     }                                                                        \
