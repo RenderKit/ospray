@@ -41,7 +41,8 @@ namespace ospray {
         for (int i = 0; i < spheres->numBytes(); i += sphereBytes) {
           vec3f &center = *(vec3f*)(base + i + offset_center);
           float &radius = *(float*)(base + i + offset_radius);
-          bounds.extend(center + radius);
+          box3f sphereBounds(center - radius, center + radius);
+          bounds.extend(sphereBounds);
         }
       }
 
