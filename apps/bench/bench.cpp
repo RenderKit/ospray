@@ -55,6 +55,12 @@ namespace ospray {
   int width  = 1024;
   int height = 1024;
 
+  vec3f up;
+  vec3f pos;
+  vec3f gaze;
+  float fovy = 60.f;
+  bool customView = false;
+
   void initializeOSPRay(int argc, const char *argv[])
   {
     int init_error = ospInit(&argc, argv);
@@ -95,6 +101,23 @@ namespace ospray {
         numWarmupFrames = atoi(argv[++i]);
       } else if (arg == "-bf" || arg == "--bench") {
         numBenchFrames = atoi(argv[++i]);
+      } else if (arg == "-vp" || arg == "--eye") {
+        pos.x = atof(argv[++i]);
+        pos.y = atof(argv[++i]);
+        pos.z = atof(argv[++i]);
+        customView = true;
+      } else if (arg == "-vu" || arg == "--up") {
+        up.x = atof(argv[++i]);
+        up.y = atof(argv[++i]);
+        up.z = atof(argv[++i]);
+        customView = true;
+      } else if (arg == "-vi" || arg == "--gaze") {
+        gaze.x = atof(argv[++i]);
+        gaze.y = atof(argv[++i]);
+        gaze.z = atof(argv[++i]);
+        customView = true;
+      } else if (arg == "-fv" || arg == "--fovy") {
+        fovy = atof(argv[++i]);
       } else if (arg[0] != '-') {
         files.push_back(arg);
       }
@@ -154,18 +177,22 @@ namespace ospray {
 
     // Setup camera ///////////////////////////////////////////////////////////
 
-    auto bbox = world.bounds();
+    if (!customView) {
+      auto bbox = world.bounds();
+      vec3f diag = bbox.size();
+      diag       = max(diag,vec3f(0.3f*length(diag)));
 
-    vec3f center = ospcommon::center(bbox);
-    vec3f diag   = bbox.size();
-    diag         = max(diag,vec3f(0.3f*length(diag)));
-    vec3f from   = center - .75f*vec3f(-.6*diag.x,-1.2f*diag.y,.8f*diag.z);
-    vec3f dir    = center - from;
-    vec3f up     = vec3f(0.f, 1.f, 0.f);
+      gaze = ospcommon::center(bbox);
+
+      pos = gaze - .75f*vec3f(-.6*diag.x,-1.2f*diag.y,.8f*diag.z);
+      up  = vec3f(0.f, 1.f, 0.f);
+    }
+
+    auto dir = gaze - pos;
 
     auto &camera = renderer["camera"];
-    camera["fovy"].setValue(60.f);
-    camera["pos"].setValue(from);
+    camera["fovy"].setValue(fovy);
+    camera["pos"].setValue(pos);
     camera["dir"].setValue(dir);
     camera["up"].setValue(up);
 

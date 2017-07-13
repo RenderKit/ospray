@@ -21,24 +21,23 @@ INCLUDE_DIRECTORIES(
   ${CMAKE_SOURCE_DIR}
   ${CMAKE_CURRENT_LIST_DIR}
   common
-  common/boost.any
 )
-
-# common utilities
-# TODO build only when needed
-ADD_SUBDIRECTORY(common/commandline)
-ADD_SUBDIRECTORY(common/sg)
-ADD_SUBDIRECTORY(common/tfn_lib)
-ADD_SUBDIRECTORY(common/xml)
 
 # benchmark application which has no windowing framework dependencies
 OPTION(OSPRAY_APPS_BENCHMARK "Build ospBenchmark application." ON)
+OPTION(OSPRAY_APPS_EXAMPLEVIEWER "Build example viewer apps" ON)
+
+# common utilities
+IF(OSPRAY_APPS_BENCHMARK OR OSRPAY_APPS_EXAMPLEVIEWER)
+  ADD_SUBDIRECTORY(common/sg)
+  ADD_SUBDIRECTORY(common/tfn_lib)
+  ADD_SUBDIRECTORY(common/xml)
+ENDIF()
 
 IF(OSPRAY_APPS_BENCHMARK)
   ADD_SUBDIRECTORY(bench)
 ENDIF()
 
-OPTION(OSPRAY_APPS_EXAMPLEVIEWER "Build example viewer apps" ON)
 IF (OSPRAY_APPS_EXAMPLEVIEWER)
   ADD_SUBDIRECTORY(exampleViewer)
 ENDIF()
