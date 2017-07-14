@@ -56,7 +56,7 @@ struct OSPRayFixture {
 
   size_t defaultWarmupFrames;
   size_t defaultBenchFrames;
-  float maxVariance;
+  float variance;
 
 private:
   ospray::cpp::FrameBuffer fb;

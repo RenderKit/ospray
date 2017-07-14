@@ -158,7 +158,7 @@ namespace bench {
   size_t numWarmupFrames = 0;
   size_t numBenchFrames = 0;
   bool logFrameTimes = false;
-  float variance = 0;
+  bool variance = false;
   // This is the fixture setup by the command line arguments
   std::shared_ptr<OSPRayFixture> cmdlineFixture;
 
@@ -189,7 +189,7 @@ namespace bench {
       } else if (arg == "-lft" || arg == "--log-frame-times") {
         logFrameTimes = true;
       } else if (arg == "-v" || arg == "--variance") {
-        variance = atof(argv[++i]);
+        variance = true;
       } else if (arg == "--script") {
         scriptFile = argv[++i];
       }
@@ -203,7 +203,7 @@ namespace bench {
     std::tie(std::ignore, model, renderer, camera) = ospObjs;
 
     cmdlineFixture = std::make_shared<OSPRayFixture>(renderer, camera, model[0]);
-    if (width > 0 || height > 0 || variance > 0.f) {
+    if (width > 0 || height > 0 || variance ==true) {
       cmdlineFixture->setFrameBuffer(width, height, OSP_FB_COLOR | OSP_FB_ACCUM | OSP_FB_VARIANCE);
     }
     // Set the default warm up and bench frames
@@ -213,7 +213,6 @@ namespace bench {
     if (numBenchFrames > 0){
       cmdlineFixture->defaultBenchFrames = numBenchFrames;
     }
-    cmdlineFixture->maxVariance = variance;
   }
 
   extern "C" int main(int argc, const char *argv[]) {
@@ -239,7 +238,8 @@ namespace bench {
                 << "\tmax: " << 1000.0 / stats.min().count() << " fps\n"
                 << "\tmin: " << 1000.0 / stats.max().count() << " fps\n"
                 << "\tmedian: " << 1000.0 / stats.median().count() << " fps\n"
-                << "\tmean: " << 1000.0 / stats.mean().count() << " fps\n";
+                << "\tmean: " << 1000.0 / stats.mean().count() << " fps\n"
+                << "Variance: " << cmdlineFixture->variance << "\n";
     } else {
 #ifdef OSPRAY_APPS_ENABLE_SCRIPTING
       // The script will be responsible for setting up the benchmark config
