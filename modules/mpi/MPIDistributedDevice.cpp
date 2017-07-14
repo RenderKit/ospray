@@ -77,10 +77,12 @@ namespace ospray {
 
     MPIDistributedDevice::~MPIDistributedDevice()
     {
-      try {
-        MPI_CALL(Finalize());
-      } catch (...) {
-        //TODO: anything to do here? try-catch added to silence a warning...
+      if (shouldFinalizeMPI) {
+        try {
+          MPI_CALL(Finalize());
+        } catch (...) {
+          //TODO: anything to do here? try-catch added to silence a warning...
+        }
       }
     }
 
@@ -88,9 +90,9 @@ namespace ospray {
     {
       if (!initialized) {
         int _ac = 1;
-        const char *_av[] = {"ospray_mpi_worker"};
+        const char *_av[] = {"ospray_mpi_distributed_device"};
 
-        mpicommon::init(&_ac, _av);
+        shouldFinalizeMPI = mpicommon::init(&_ac, _av);
 
         embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
 
