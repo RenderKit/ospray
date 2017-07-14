@@ -132,7 +132,7 @@ namespace mpicommon {
     return comm != MPI_COMM_NULL && rank >= 0;
   }
 
-  void init(int *ac, const char **av)
+  bool init(int *ac, const char **av)
   {
     int initialized = false;
     MPI_CALL(Initialized(&initialized));
@@ -161,6 +161,7 @@ namespace mpicommon {
     world.comm = MPI_COMM_WORLD;
     MPI_CALL(Comm_rank(MPI_COMM_WORLD,&world.rank));
     MPI_CALL(Comm_size(MPI_COMM_WORLD,&world.size));
+    return !initialized;
   }
 
 } // ::mpicommon
