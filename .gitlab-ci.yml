@@ -7,7 +7,7 @@ stages:
 build-centos6-gcc:
   type: build
   script:
-    - module load gcc/4.9.3
+    - module load gcc/4.8.2
     - scripts/build_gitlab/linux.sh
   tags:
     - centos6
