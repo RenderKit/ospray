@@ -26,8 +26,6 @@
 #include "ospray/ospray_cpp/FrameBuffer.h"
 #include "ospray/ospray_cpp/Renderer.h"
 #include "ospray/ospray_cpp/TransferFunction.h"
-// ospray apps
-#include "common/commandline/CameraParser.h"
 // pico_bench
 #include "apps/bench/pico_bench/pico_bench.h"
 // stl
@@ -46,6 +44,12 @@ namespace ospRandSphereTest {
   vec2i fbSize            = vec2i(1024, 768);
   int   numFrames         = 32;
   bool  runDistributed    = true;
+
+  vec3f up;
+  vec3f pos;
+  vec3f gaze;
+  float fovy = 60.f;
+  bool customView = false;
 
   // Compute an X x Y x Z grid to have num bricks,
   // only gives a nice grid for numbers with even factors since
@@ -126,14 +130,19 @@ namespace ospRandSphereTest {
 
   void setupCamera(ospray::cpp::Camera &camera, box3f worldBounds)
   {
-    vec3f center = ospcommon::center(worldBounds);
-    vec3f diag   = worldBounds.size();
-    diag         = max(diag,vec3f(0.3f*length(diag)));
-    vec3f from   = center - .85f*vec3f(-.6*diag.x,-1.2f*diag.y,.8f*diag.z);
-    vec3f dir    = center - from;
+    if (!customView) {
+      vec3f diag = worldBounds.size();
+      diag       = max(diag,vec3f(0.3f*length(diag)));
 
-    camera.set("pos", from);
-    camera.set("dir", dir);
+      gaze = ospcommon::center(worldBounds);
+
+      pos = gaze - .75f*vec3f(-.6*diag.x,-1.2f*diag.y,.8f*diag.z);
+      up  = vec3f(0.f, 1.f, 0.f);
+    }
+
+    camera.set("pos", pos);
+    camera.set("dir", gaze - pos);
+    camera.set("up",  up );
     camera.set("aspect", static_cast<float>(fbSize.x)/fbSize.y);
 
     camera.commit();
@@ -155,6 +164,23 @@ namespace ospRandSphereTest {
         numFrames = std::atoi(av[++i]);
       } else if (arg == "-l" || arg == "--local") {
         runDistributed = false;
+      } else if (arg == "-vp" || arg == "--eye") {
+        pos.x = atof(av[++i]);
+        pos.y = atof(av[++i]);
+        pos.z = atof(av[++i]);
+        customView = true;
+      } else if (arg == "-vu" || arg == "--up") {
+        up.x = atof(av[++i]);
+        up.y = atof(av[++i]);
+        up.z = atof(av[++i]);
+        customView = true;
+      } else if (arg == "-vi" || arg == "--gaze") {
+        gaze.x = atof(av[++i]);
+        gaze.y = atof(av[++i]);
+        gaze.z = atof(av[++i]);
+        customView = true;
+      } else if (arg == "-fv" || arg == "--fovy") {
+        fovy = atof(av[++i]);
       }
     }
   }
@@ -194,9 +220,7 @@ namespace ospRandSphereTest {
     model.addGeometry(spheres.first);
     model.commit();
 
-    DefaultCameraParser cameraClParser;
-    cameraClParser.parse(ac, av);
-    auto camera = cameraClParser.camera();
+    auto camera = ospray::cpp::Camera("perspective");
     setupCamera(camera, spheres.second);
 
     ospray::cpp::Renderer renderer;
