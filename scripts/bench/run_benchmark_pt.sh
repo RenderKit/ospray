@@ -28,10 +28,10 @@ runBenchmark()
   params="$4"
   run_name=${name}_scivis
   echo -n "test[$run_name] : "
-  ${exe} ${file} ${camera} -bf 100 -wf 50 -r sv -spp 1 --ao-distance 1e8f --sun-int 0 --ao-samples 1 --noshadows --bg-color 1 1 1 -i ${img_dir}/test_${run_name} ${params}
+  ${exe} ${file} ${camera} -bf 100 -wf 50 -r sv --variance -spp 1 --ao-distance 1e8f --sun-int 0 --ao-samples 1 --noshadows --bg-color 1 1 1 -i ${img_dir}/test_${run_name} ${params}
   run_name=${name}_pt
   echo -n "test[$run_name] : "
-  ${exe} ${file} ${camera} -bf 100 -wf 50 -r pt --max-depth 1 --sun-int 0 -i ${img_dir}/test_${run_name} ${params}
+  ${exe} ${file} ${camera} -bf 100 -wf 50 -r pt --variance --max-depth 1 --sun-int 0 -i ${img_dir}/test_${run_name} ${params}
 }
 
 # Test counter
@@ -56,12 +56,10 @@ camera="-vp 3371.659912 210.557999 -443.156006 \
     -vi 1439.359985 1005.450012 871.119019"
 runBenchmark "llnl1" "test_data/llnl-2048-iso.xml" "$camera"
 
-
 camera="-vp 2056.597168 999.748108 402.587219 \
     -vu -0.000000 -0.000000 -1.000000 \
     -vi 1439.358887 1005.449951 871.118164"
 runBenchmark "llnl2" "test_data/llnl-2048-iso.xml" "$camera"
-
 
 # SPONZA TESTS #################################################################
 
