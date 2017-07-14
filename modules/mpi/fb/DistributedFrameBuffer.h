@@ -261,9 +261,6 @@ namespace ospray {
     MasterTileMessage_FB_Depth<FBType> *depth = nullptr;
     if (msg->command & MASTER_TILE_HAS_DEPTH) {
       depth = reinterpret_cast<MasterTileMessage_FB_Depth<FBType>*>(msg);
-      auto minmax = std::minmax_element(depth->depth, depth->depth + TILE_SIZE * TILE_SIZE);
-      std::cout << "depth range for tile = [" << *minmax.first << ", "
-        << *minmax.second << "]\n";
     }
 
     FBType *color = reinterpret_cast<FBType*>(localFBonMaster->colorBuffer);
