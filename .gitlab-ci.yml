@@ -2,6 +2,9 @@ stages:
   - build
   - deploy
 
+variables:
+  GIT_DEPTH: "1"
+
 ### BUILD JOBS ###
 
 build-centos6-gcc:
