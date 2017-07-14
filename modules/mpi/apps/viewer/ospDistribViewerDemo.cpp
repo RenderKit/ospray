@@ -140,6 +140,7 @@ int main(int argc, char **argv) {
   size_t nSpheres = 0;
   float varianceThreshold = 0.0f;
   FileName transferFcn;
+  bool appInitMPI = false;
 
   for (int i = 0; i < argc; ++i) {
     std::string arg = argv[i];
@@ -160,6 +161,8 @@ int main(int argc, char **argv) {
       varianceThreshold = std::atof(argv[++i]);
     } else if (arg == "-tfn") {
       transferFcn = argv[++i];
+    } else if (arg == "-appMPI") {
+      appInitMPI = true;
     }
   }
   if (!volumeFile.empty()) {
@@ -178,9 +181,15 @@ int main(int argc, char **argv) {
   }
 
   ospLoadModule("mpi");
-  int provided = 0;
-  MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
-  assert(provided == MPI_THREAD_MULTIPLE);
+  // The application can be responsible for initializing and finalizing MPI,
+  // or can let OSPRay's mpi_distributed device handle it. In the case that
+  // the distributed device is responsible MPI will be initialized when the
+  // device is created and finalized when it's destroyed.
+  if (appInitMPI) {
+    int provided = 0;
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
+    assert(provided == MPI_THREAD_MULTIPLE);
+  }
   Device device("mpi_distributed");
   device.set("masterRank", 0);
   device.commit();
@@ -373,6 +382,12 @@ int main(int argc, char **argv) {
   if (rank == 0) {
       ImGui_ImplGlfwGL3_Shutdown();
       glfwDestroyWindow(window);
+  }
+
+  // If the app is responsible for setting up MPI we've also got
+  // to finalize it at the exit
+  if (appInitMPI) {
+    MPI_Finalize();
   }
   return 0;
 }
