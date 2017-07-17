@@ -61,9 +61,7 @@ x> Never tested on a real Windows OS and on MacOS.
                                 // When experiencing problems on Windows, trying defining this definition is a good start.
                                 // Windows users can always define it at the project level, if needed.
 
-#ifndef IMGUI_API
 #include <imgui.h>
-#endif //IMGUI_API
 
 // TODO: Remove this definition: it doesn't work on some systems (= Windows AFAIK)
 //#define IMGUIFS_NO_EXTRA_METHODS    // optional, but it makes this header lighter...
@@ -128,7 +126,7 @@ enum FileExtensionType {
 };
 
 
-struct Dialog {
+struct IMGUI_API Dialog {
     public:
 
     // default arguments are usually what most users expect (better not touch them in most cases)
@@ -177,15 +175,15 @@ typedef ImVector<FilenameString>      FilenameStringVector;
 typedef ImVector<PathString>          PathStringVector;
 
 // all the strings should be MAX_PATH_BYTES long
-extern bool PathExists(const char* path);
-extern void PathGetAbsolute(const char *path, char *rv);
-extern void PathGetDirectoryName(const char *filePath, char *rv);
-extern void PathGetFileName(const char *filePath, char *rv);
-extern void PathGetFileNameWithoutExtension(const char *filePath, char *rv);
-extern void PathGetExtension(const char* filePath,char *rv);
-extern void PathChangeExtension(const char* filePath, const char *newExtension, char *rv);
-extern void PathAppend(const char* directory,char* rv);
-extern void PathSplit(const char* path,FilenameStringVector& rv,bool leaveIntermediateTrailingSlashes=true);
+IMGUI_API extern bool PathExists(const char* path);
+IMGUI_API extern void PathGetAbsolute(const char *path, char *rv);
+IMGUI_API extern void PathGetDirectoryName(const char *filePath, char *rv);
+IMGUI_API extern void PathGetFileName(const char *filePath, char *rv);
+IMGUI_API extern void PathGetFileNameWithoutExtension(const char *filePath, char *rv);
+IMGUI_API extern void PathGetExtension(const char* filePath,char *rv);
+IMGUI_API extern void PathChangeExtension(const char* filePath, const char *newExtension, char *rv);
+IMGUI_API extern void PathAppend(const char* directory,char* rv);
+IMGUI_API extern void PathSplit(const char* path,FilenameStringVector& rv,bool leaveIntermediateTrailingSlashes=true);
 
 enum Sorting {
     SORT_ORDER_ALPHABETIC=0,
@@ -198,20 +196,20 @@ enum Sorting {
     SORT_ORDER_TYPE_INVERSE=7,
     SORT_ORDER_COUNT
 };
-extern bool DirectoryExists(const char* path);
-extern void DirectoryCreate(const char* directoryName);
-extern void DirectoryGetDirectories(const char* directoryName,PathStringVector& result,FilenameStringVector* pOptionalNamesOut=NULL,Sorting sorting= SORT_ORDER_ALPHABETIC);
-extern void DirectoryGetFiles(const char* directoryName,PathStringVector& result,FilenameStringVector* pOptionalNamesOut=NULL, Sorting sorting= SORT_ORDER_ALPHABETIC);
-extern bool FileExists(const char* path);
-extern bool FileGetContent(const char* path,ImVector<unsigned char>& bufferOut,const char* password=NULL);  // password is used if it's a file inside a zip path when IMGUI_USE_MINIZIP is defined (e.g. path="C://MyDocuments/myzipfile.zip/myzipFile/something.txt")
-extern bool FileGetContent(const char* path,ImVector<char>& bufferOut,const char* password=NULL);  // password is used if it's a file inside a zip path when IMGUI_USE_MINIZIP is defined (e.g. path="C://MyDocuments/myzipfile.zip/myzipFile/something.txt")
-extern int FileGetExtensionType(const char* path);  // returns one of the FileExtensionType enums, or -1. Slow: you'd better cache the result wherever possible.
-extern void FileGetExtensionTypesFromFilenames(ImVector<int>& fileExtensionTypesOut,const FilenameStringVector& fileNames); // Same as above, except that now FilenameStringVector are chars of MAX_FILENAME_BYTES, usually shorter than MAX_PATH_BYTES
+IMGUI_API extern bool DirectoryExists(const char* path);
+IMGUI_API extern void DirectoryCreate(const char* directoryName);
+IMGUI_API extern void DirectoryGetDirectories(const char* directoryName,PathStringVector& result,FilenameStringVector* pOptionalNamesOut=NULL,Sorting sorting= SORT_ORDER_ALPHABETIC);
+IMGUI_API extern void DirectoryGetFiles(const char* directoryName,PathStringVector& result,FilenameStringVector* pOptionalNamesOut=NULL, Sorting sorting= SORT_ORDER_ALPHABETIC);
+IMGUI_API extern bool FileExists(const char* path);
+IMGUI_API extern bool FileGetContent(const char* path,ImVector<unsigned char>& bufferOut,const char* password=NULL);  // password is used if it's a file inside a zip path when IMGUI_USE_MINIZIP is defined (e.g. path="C://MyDocuments/myzipfile.zip/myzipFile/something.txt")
+IMGUI_API extern bool FileGetContent(const char* path,ImVector<char>& bufferOut,const char* password=NULL);  // password is used if it's a file inside a zip path when IMGUI_USE_MINIZIP is defined (e.g. path="C://MyDocuments/myzipfile.zip/myzipFile/something.txt")
+IMGUI_API extern int FileGetExtensionType(const char* path);  // returns one of the FileExtensionType enums, or -1. Slow: you'd better cache the result wherever possible.
+IMGUI_API extern void FileGetExtensionTypesFromFilenames(ImVector<int>& fileExtensionTypesOut,const FilenameStringVector& fileNames); // Same as above, except that now FilenameStringVector are chars of MAX_FILENAME_BYTES, usually shorter than MAX_PATH_BYTES
 #if (defined(__EMSCRIPTEN__) && defined(EMSCRIPTEN_SAVE_SHELL))
-extern bool FileDownload(const char* path,const char* optionalSaveFileName);
+IMGUI_API extern bool FileDownload(const char* path,const char* optionalSaveFileName);
 #endif // (defined(__EMSCRIPTEN__) && defined(EMSCRIPTEN_SAVE_SHELL))
 #ifdef IMGUI_USE_MINIZIP
-class UnZipFile {
+class IMGUI_API UnZipFile {
 public:
 UnZipFile(const char* zipFilePath=NULL);
 bool load(const char* zipFilePath,bool reloadIfAlreadyLoaded=true);
@@ -234,16 +232,16 @@ struct UnZipFileImpl* im;
 };
 
 // eg: path="C://MyDocuments/myzipfile.zip/myzipFile/something" -> rv1="C://MyDocuments/myzipfile.zip", rv2="myzipFile/something"
-extern bool PathSplitFirstZipFolder(const char* path, char* rv1,char* rv2,bool rv1IsAbsolutePath=true);
+IMGUI_API extern bool PathSplitFirstZipFolder(const char* path, char* rv1,char* rv2,bool rv1IsAbsolutePath=true);
 // eg: path="C://MyDocuments/myzipfile.zip/myzipFile/something"
-extern bool PathExistsWithZipSupport(const char* path, bool reportOnlyFiles=false, bool reportOnlyDirectories=false, bool checkAbsolutePath=true, bool *isInsideAZipFile=NULL);
+IMGUI_API extern bool PathExistsWithZipSupport(const char* path, bool reportOnlyFiles=false, bool reportOnlyDirectories=false, bool checkAbsolutePath=true, bool *isInsideAZipFile=NULL);
 // eg: path="C://MyDocuments/myzipfile.zip/myzipFile/something" (regardless if it exists or not)
-extern bool PathIsInsideAZipFile(const char* path);
+IMGUI_API extern bool PathIsInsideAZipFile(const char* path);
 // eg: directoryName="C://MyDocuments/myzipfile.zip/myzipFile"
-extern bool DirectoryGetDirectoriesWithZipSupport(const char* directoryName,PathStringVector& result,FilenameStringVector* pOptionalNamesOut=NULL,Sorting sorting= SORT_ORDER_ALPHABETIC,bool prefixResultWithTheFullPathOfTheZipFile=true);
-extern bool DirectoryGetFilesWithZipSupport(const char* directoryName,PathStringVector& result,FilenameStringVector* pOptionalNamesOut=NULL,Sorting sorting= SORT_ORDER_ALPHABETIC,bool prefixResultWithTheFullPathOfTheZipFile=true);
-extern void PathGetDirectoryNameWithZipSupport(const char* path,char* rv,bool prefixResultWithTheFullPathOfTheZipFile=true);
-extern void PathGetAbsoluteWithZipSupport(const char* path,char* rv);
+IMGUI_API extern bool DirectoryGetDirectoriesWithZipSupport(const char* directoryName,PathStringVector& result,FilenameStringVector* pOptionalNamesOut=NULL,Sorting sorting= SORT_ORDER_ALPHABETIC,bool prefixResultWithTheFullPathOfTheZipFile=true);
+IMGUI_API extern bool DirectoryGetFilesWithZipSupport(const char* directoryName,PathStringVector& result,FilenameStringVector* pOptionalNamesOut=NULL,Sorting sorting= SORT_ORDER_ALPHABETIC,bool prefixResultWithTheFullPathOfTheZipFile=true);
+IMGUI_API extern void PathGetDirectoryNameWithZipSupport(const char* path,char* rv,bool prefixResultWithTheFullPathOfTheZipFile=true);
+IMGUI_API extern void PathGetAbsoluteWithZipSupport(const char* path,char* rv);
 #endif //IMGUI_USE_MINIZIP
 #endif //IMGUIFS_NO_EXTRA_METHODS
 
