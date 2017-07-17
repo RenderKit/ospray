@@ -7,7 +7,7 @@ stages:
   tags:
     - build
   variables:
-    GIT_DEPTH: "1"
+    GIT_DEPTH: "3"
 
 .job_template: &release_job
   type: deploy
