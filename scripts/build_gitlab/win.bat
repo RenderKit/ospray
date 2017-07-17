@@ -30,9 +30,7 @@ cmake -L ^
 -D USE_IMAGE_MAGICK=OFF ^
 ..
 
-(cmake --build . --config Release --target ALL_BUILD -- /m /nologo) ^
--and ^
-(ctest . -C Release)
+(cmake --build . --config Release --target ALL_BUILD -- /m /nologo) -and (ctest . -C Release)
 
 :abort
 endlocal
