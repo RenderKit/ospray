@@ -79,6 +79,7 @@ namespace ospray {
         registerWorkUnit<RemoveParam>(registry);
 
         registerWorkUnit<CommandFinalize>(registry);
+        registerWorkUnit<Pick>(registry);
       }
 
       // ospCommit ////////////////////////////////////////////////////////////
@@ -714,6 +715,41 @@ namespace ospray {
       
       void CommandFinalize::deserialize(ReadStream &b)
       {}
+
+      Pick::Pick(OSPRenderer renderer, const vec2f &screenPos)
+        : rendererHandle((ObjectHandle&)renderer), screenPos(screenPos)
+      {}
+
+      void Pick::run()
+      {
+        // The MPIOffloadDevice only handles duplicated data, so
+        // just have the first worker run the pick and send the result
+        // back to the master
+        if (mpicommon::world.rank == 1) {
+          Renderer *renderer = (Renderer*)rendererHandle.lookup();
+          Assert(renderer);
+          pickResult = renderer->pick(screenPos);
+          MPI_CALL(Send(&pickResult, sizeof(pickResult), MPI_BYTE, 0, 0,
+                        mpicommon::world.comm));
+        }
+        mpicommon::worker.barrier();
+      }
+      void Pick::runOnMaster()
+      {
+        // Master just needs to recv the result from the first worker
+        MPI_CALL(Recv(&pickResult, sizeof(pickResult), MPI_BYTE, 1, 0,
+                      mpicommon::world.comm, MPI_STATUS_IGNORE));
+      }
+
+      void Pick::serialize(WriteStream &b) const
+      {
+        b << (int64)rendererHandle << screenPos;
+      }
+
+      void Pick::deserialize(ReadStream &b)
+      {
+        b >> rendererHandle.i64 >> screenPos;
+      }
 
     } // ::ospray::mpi::work
   } // ::ospray::mpi
