@@ -2,12 +2,13 @@ stages:
   - build
   - deploy
 
+variables:
+  GIT_DEPTH: "3"
+
 .job_template: &build_job
   type: build
   tags:
     - build
-  variables:
-    GIT_DEPTH: "3"
 
 .job_template: &release_job
   type: deploy
