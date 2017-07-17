@@ -2,13 +2,26 @@ stages:
   - build
   - deploy
 
-variables:
-  GIT_DEPTH: "1"
+.job_template: &build_job
+  type: build
+  tags:
+    - build
+  variables:
+    GIT_DEPTH: "1"
+
+.job_template: &release_job
+  type: deploy
+  tags:
+    - release
+  only:
+    - devel
+    - master
+    - release-1.4.x
 
 ### BUILD JOBS ###
 
 build-centos6-gcc:
-  type: build
+  <<: *build_job
   script:
     - module load gcc
     - module load tbb
@@ -16,10 +29,9 @@ build-centos6-gcc:
   tags:
     - centos6
     - gcc
-    - build
 
 build-centos6-icc:
-  type: build
+  <<: *build_job
   script:
     - module load gcc
     - module load intel
@@ -29,10 +41,9 @@ build-centos6-icc:
   tags:
     - centos6
     - icc
-    - build
 
 build-centos6-icc15:
-  type: build
+  <<: *build_job
   script:
     - module load gcc
     - module load intel/2015
@@ -42,37 +53,33 @@ build-centos6-icc15:
   tags:
     - centos6
     - icc
-    - build
 
 build-centos7-gcc:
-  type: build
+  <<: *build_job
   script:
     - scripts/build_gitlab/linux.sh
   tags:
     - centos7
     - gcc
-    - build
 
 build-arch-gcc:
-  type: build
+  <<: *build_job
   script:
     - scripts/build_gitlab/linux.sh
   tags:
     - arch
     - gcc
-    - build
 
 build-ubuntu1604-gcc:
-  type: build
+  <<: *build_job
   script:
     - scripts/build_gitlab/linux.sh
   tags:
     - ubuntu1604
     - gcc
-    - build
 
 build-ubuntu1604-clang:
-  type: build
+  <<: *build_job
   script:
     - export CC=clang
     - export CXX=clang++
@@ -82,82 +89,74 @@ build-ubuntu1604-clang:
     - clang
 
 build-ubuntu1404-gcc:
-  type: build
+  <<: *build_job
   script:
     - scripts/build_gitlab/linux.sh
   tags:
     - ubuntu1404
     - gcc
-    - build
 
 build-debug:
-  type: build
+  <<: *build_job
   script:
     - scripts/build_gitlab/linux.sh -DCMAKE_BUILD_TYPE=Debug
   tags:
     - gcc
     - linux
-    - build
 
 build-mpi:
-  type: build
+  <<: *build_job
   script:
     - scripts/build_gitlab/linux.sh -DOSPRAY_MODULE_MPI=ON
   tags:
     - linux
     - mpi
     - gcc
-    - build
 
 build-osx-clang:
-  type: build
+  <<: *build_job
   script:
     - scripts/build_gitlab/osx.sh
   tags:
     - osx
     - clang
-    - build
 
 build-windows-msvc:
-  type: build
+  <<: *build_job
   script:
     - call scripts\build_gitlab\win.bat "Visual Studio 12 2013 Win64" "v120"
   tags:
     - msvc
-    - build
     - win7
 
 build-windows-msvc14:
-  type: build
+  <<: *build_job
   script:
     - call scripts\build_gitlab\win.bat "Visual Studio 14 2015 Win64" "v140"
   tags:
     - msvc14
-    - build
     - win7
 
 build-windows-msvc15:
-  type: build
+  <<: *build_job
   script:
     - call scripts\build_gitlab\win.bat "Visual Studio 15 2017 Win64" "v141"
   tags:
     - msvc15
-    - build
     - win7
 
 build-windows-icc:
-  type: build
+  <<: *build_job
   script:
     - call scripts\build_gitlab\win.bat "Visual Studio 12 2013 Win64" "Intel C++ Compiler 17.0"
   tags:
     - icc
-    - build
     - win7
 
 ### RELEASE JOBS ###
 
 release-linux-icc:
-  type: deploy
+  <<: *release_job
   script:
     - module load cmake
     - module load gcc/4.8.2
@@ -167,50 +166,35 @@ release-linux-icc:
     - scripts/release/linux.sh
   tags:
     - icc
-    - release
     - centos6
     - mpi
-  only:
-    - devel
-    - master
-    - release-1.3.x
   artifacts:
     paths:
       - build_release/*.gz
 
 release-osx-clang:
-  type: deploy
+  <<: *release_job
   script:
     - export CC=clang
     - export CXX=clang++
     - scripts/release/macosx.sh
   tags:
     - clang
-    - release
     - osx
     - mpi
-  only:
-    - devel
-    - master
-    - release-1.3.x
   artifacts:
     paths:
       - build_release/*.gz
       - build_release/*.dmg
 
 release-windows:
-  type: deploy
+  <<: *release_job
   script:
     - call scripts\release\win.bat
   tags:
     - msvc
-    - release
     - win7
     - mpi
-  only:
-    - devel
-    - master
-    - release-1.3.x
   artifacts:
     paths:
       - build_release\ospray*.zip
