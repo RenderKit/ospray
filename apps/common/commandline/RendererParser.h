@@ -46,7 +46,7 @@ namespace commandline {
     int maxDepth{5};
     int shadows{1};
     int aoSamples{1};
-    int aoDistance{1e1f};
+    float aoDistance{1e1f};
     ospcommon::vec3f bgColor{1.f,1.f,1.f};
 
   private:
