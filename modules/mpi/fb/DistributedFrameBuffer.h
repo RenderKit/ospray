@@ -30,7 +30,34 @@ namespace ospray {
   struct MasterTileMessage;
   template <typename FBType>
   struct MasterTileMessage_FB;
+  template <typename ColorT>
+  struct MasterTileMessage_FB_Depth;
   struct WriteTileMessage;
+
+  /*! color buffer and depth buffer on master */
+  enum COMMANDTAG {
+    /*! command tag that identifies a CommLayer::message as a write
+      tile command. this is a command using for sending a tile of
+      new samples to another instance of the framebuffer (the one
+      that actually owns that tile) for processing and 'writing' of
+      that tile on that owner node. */
+    WORKER_WRITE_TILE = 1 << 1,
+    /*! command tag used for sending 'final' tiles from the tile
+        owner to the master frame buffer. Note that we *do* send a
+        message back ot the master even in cases where the master
+        does not actually care about the pixel data - we still have
+        to let the master know when we're done. */
+    MASTER_WRITE_TILE_I8 = 1 << 2,
+    MASTER_WRITE_TILE_F32 = 1 << 3,
+    /*! command tag used for sending 'final' tiles from the tile
+        owner to the master frame buffer. Note that we *do* send a
+        message back ot the master even in cases where the master
+        does not actually care about the pixel data - we still have
+        to let the master know when we're done. */
+    MASTER_WRITE_TILE_NONE = 1 << 4,
+    // Modifier to indicate the tile also has depth values
+    MASTER_TILE_HAS_DEPTH = 1,
+  };
 
   class DistributedTileError : public TileError
   {
@@ -224,26 +251,40 @@ namespace ospray {
   {
     if (hasVarianceBuffer) {
       const vec2i tileID = msg->coords/TILE_SIZE;
-      if ((accumID(tileID) & 1) == 1)
+      if ((accumID(tileID) & 1) == 1) {
         tileErrorRegion.update(tileID, msg->error);
+      }
     }
 
     vec2i numPixels = getNumPixels();
 
+    MasterTileMessage_FB_Depth<FBType> *depth = nullptr;
+    if (msg->command & MASTER_TILE_HAS_DEPTH) {
+      depth = reinterpret_cast<MasterTileMessage_FB_Depth<FBType>*>(msg);
+    }
+
+    FBType *color = reinterpret_cast<FBType*>(localFBonMaster->colorBuffer);
     for (int iy = 0; iy < TILE_SIZE; iy++) {
-      int iiy = iy+msg->coords.y;
-      if (iiy >= numPixels.y) continue;
+      int iiy = iy + msg->coords.y;
+      if (iiy >= numPixels.y) {
+        continue;
+      }
 
       for (int ix = 0; ix < TILE_SIZE; ix++) {
-        int iix = ix+msg->coords.x;
-        if (iix >= numPixels.x) continue;
+        int iix = ix + msg->coords.x;
+        if (iix >= numPixels.x) {
+          continue;
+        }
 
-        ((FBType*)localFBonMaster->colorBuffer)[iix + iiy*numPixels.x]
-          = msg->color[iy][ix];
+        color[iix + iiy * numPixels.x] = msg->color[ix + iy * TILE_SIZE];
+        if (depth) {
+          localFBonMaster->depthBuffer[iix + iiy * numPixels.x]
+            = depth->depth[ix + iy * TILE_SIZE];
+        }
       }
     }
 
-    // and finally, tell the master that this tile is done
+    // Finally, tell the master that this tile is done
     auto *tileDesc = this->getTileDescFor(msg->coords);
     TileData *td = (TileData*)tileDesc;
     this->finalizeTileOnMaster(td);

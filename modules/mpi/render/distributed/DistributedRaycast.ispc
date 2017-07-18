@@ -125,6 +125,7 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
     float t0, t1;
     Volume *uniform volume = self->super.model->volumes[0];
     intersectBox(ray, volume->boundingBox, t0, t1);
+    t1 = min(t1, sample.ray.t);
     if (t0 < t1 && t0 >= ray.t0 && t0 <= ray.t) {
       // Sample offset placement correction, like in the data-parallel
       // raycast renderer. We must offset and step as if we're sampling a continuous
@@ -157,9 +158,6 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
         volume->intersect(volume, ray);
       }
       volumeColor.w = clamp(volumeColor.w);
-      if (sample.ray.geomID < 0) {
-        sample.z = t1;
-      }
     }
   }
   // Composite the geometry
