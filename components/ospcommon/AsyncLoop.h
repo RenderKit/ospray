@@ -36,10 +36,10 @@ namespace ospcommon {
   {
   public:
 
-    ~AsyncLoop();
-
     template <typename LOOP_BODY_FCN>
     AsyncLoop(LOOP_BODY_FCN &&fcn);
+
+    ~AsyncLoop();
 
     void start();
     void stop();
@@ -83,20 +83,27 @@ namespace ospcommon {
   inline AsyncLoop::~AsyncLoop()
   {
     threadShouldBeAlive = false;
-    stop();
+    start();
+    if (backgroundThread.joinable()) {
+      backgroundThread.join();
+    }
   }
 
   inline void AsyncLoop::start()
   {
-    loopShouldBeRunning = true;
-    loopRunningCond.notify_one();
+    if (!loopShouldBeRunning) {
+      loopShouldBeRunning = true;
+      loopRunningCond.notify_one();
+    }
   }
 
   inline void AsyncLoop::stop()
   {
-    loopShouldBeRunning = false;
-    std::unique_lock<std::mutex> lock(loopRunningMutex);
-    loopRunningCond.wait(lock, [&] { return !insideLoopBody; });
+    if (loopShouldBeRunning) {
+      loopShouldBeRunning = false;
+      std::unique_lock<std::mutex> lock(loopRunningMutex);
+      loopRunningCond.wait(lock, [&] { return !insideLoopBody; });
+    }
   }
 
 } // ::ospcommon
