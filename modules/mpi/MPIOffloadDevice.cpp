@@ -826,7 +826,7 @@ namespace ospray {
                                          const vec2f &screenPos) 
     { 
       work::Pick work(renderer, screenPos);
-      processWork(work);
+      processWork(work, true);
       return work.pickResult;
     }
 
