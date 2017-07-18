@@ -21,6 +21,7 @@
 #include "ospcommon/tasking/async.h"
 #include "ospcommon/tasking/tasking_system_handle.h"
 
+using ospcommon::AsyncLoop;
 using ospcommon::make_unique;
 
 namespace maml {
@@ -206,13 +207,39 @@ namespace maml {
                                  " for maml to function.");
       }
 
-      sendReceiveFuture = ospcommon::tasking::async([&]() {
-        mpiSendAndRecieveTask();
-      });
+      auto MAML_SPAWN_THREADS = ospcommon::getEnvVar<int>("MAML_SPAWN_THREADS");
 
-      processInboxFuture = ospcommon::tasking::async([&]() {
-        processInboxTask();
-      });
+      if (MAML_SPAWN_THREADS.first)
+        useTaskingSystem = !MAML_SPAWN_THREADS.second;
+
+      if (useTaskingSystem) {
+        sendReceiveFuture = ospcommon::tasking::async([&](){
+          mpiSendAndRecieveTask();
+        });
+
+        processInboxFuture = ospcommon::tasking::async([&](){
+          processInboxTask();
+        });
+      } else {
+        if (!sendReceiveThread.get()) {
+          sendReceiveThread = make_unique<AsyncLoop>([&](){
+            sendMessagesFromOutbox();
+            pollForAndRecieveMessages();
+
+            waitOnSomeSendRequests();
+            waitOnSomeRecvRequests();
+          });
+        }
+
+        if (!processInboxThread.get()) {
+          processInboxThread = make_unique<AsyncLoop>([&](){
+            processInboxMessages();
+          });
+        }
+
+        sendReceiveThread->start();
+        processInboxThread->start();
+      }
     }
   }
 
@@ -230,11 +257,16 @@ namespace maml {
   {
     tasksAreRunning = false;
 
-    if (sendReceiveFuture.valid())
-      sendReceiveFuture.wait();
+    if (useTaskingSystem) {
+      if (sendReceiveFuture.valid())
+        sendReceiveFuture.wait();
 
-    if (processInboxFuture.valid())
-      processInboxFuture.wait();
+      if (processInboxFuture.valid())
+        processInboxFuture.wait();
+    } else {
+      sendReceiveThread->stop();
+      processInboxThread->stop();
+    }
 
     flushRemainingMessages();
   }

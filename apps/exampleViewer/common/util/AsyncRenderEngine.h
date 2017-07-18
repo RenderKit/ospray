@@ -20,6 +20,7 @@
 #include <atomic>
 #include <thread>
 #include <vector>
+#include <functional>
 
 // ospcommon
 #include "ospcommon/box.h"
@@ -39,6 +40,7 @@ namespace ospray {
   class OSPRAY_IMGUI_UTIL_INTERFACE AsyncRenderEngine
   {
   public:
+    using ScheduledFunction = std::function<void(cpp::Renderer&)>;
 
     AsyncRenderEngine() = default;
     ~AsyncRenderEngine();
@@ -54,6 +56,7 @@ namespace ospray {
     // Method to say that an objects needs to be comitted before next frame //
 
     void scheduleObjectCommit(const cpp::ManagedObject &obj);
+    void scheduleFunction(ScheduledFunction f);
 
     // Engine conrols //
 
@@ -75,7 +78,7 @@ namespace ospray {
     // Helper functions //
 
     virtual void validate();
-    bool checkForObjCommits();
+    bool checkForScheduledFunctions();
     bool checkForFbResize();
     virtual void run();
 
@@ -100,8 +103,8 @@ namespace ospray {
     std::mutex fbMutex;
     std::vector<uint32_t> pixelBuffer[2];
 
-    std::mutex objMutex;
-    std::vector<OSPObject> objsToCommit;
+    std::mutex scheduleFcnMutex;
+    std::vector<ScheduledFunction> scheduledFunctions;
 
     std::atomic<bool> newPixels {false};
 
