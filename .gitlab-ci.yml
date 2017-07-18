@@ -24,7 +24,6 @@ variables:
 build-centos6-gcc:
   <<: *build_job
   script:
-    - module load gcc
     - module load tbb
     - scripts/build_gitlab/linux.sh
   tags:
@@ -34,7 +33,6 @@ build-centos6-gcc:
 build-centos6-icc:
   <<: *build_job
   script:
-    - module load gcc
     - module load intel
     - export CC=icc
     - export CXX=icpc
@@ -46,7 +44,6 @@ build-centos6-icc:
 build-centos6-icc15:
   <<: *build_job
   script:
-    - module load gcc
     - module load intel/2015
     - export CC=icc
     - export CXX=icpc
