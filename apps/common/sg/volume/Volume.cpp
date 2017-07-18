@@ -131,12 +131,6 @@ namespace ospray {
     // structured volume class
     // =======================================================
 
-    //! constructor
-    StructuredVolume::StructuredVolume()
-      : dimensions(-1), voxelType("<undefined>"), mappedPointer(nullptr)
-    {
-    }
-
     /*! \brief returns a std::string with the c++ name of this class */
     std::string StructuredVolume::toString() const
     {
@@ -184,13 +178,6 @@ namespace ospray {
       return "ospray::sg::StructuredVolumeFromFile";
     }
 
-    //! return bounding box of all primitives
-    box3f StructuredVolumeFromFile::bounds() const
-    {
-      return {vec3f(0.f),
-              vec3f(dimensions)*child("gridSpacing").valueAs<vec3f>()};
-    }
-
     //! \brief Initialize this node's value from given XML node
     void StructuredVolumeFromFile::setFromXML(const xml::Node &node,
                                               const unsigned char *binBasePtr)
@@ -205,7 +192,7 @@ namespace ospray {
                                  "no 'fileName' specified");
       }
       if (unsupportedVoxelType(voxelType)) {
-        THROW_SG_ERROR("unknown StructuredVolume.voxelType '" + voxelType + "'");
+        THROW_SG_ERROR("unknown StructuredVolume.voxelType '"+voxelType+"'");
       }
 
       fileNameOfCorrespondingXmlDoc = node.doc->fileName;
@@ -309,20 +296,19 @@ namespace ospray {
     // Richtmyer-Meshkov volume class and utils
     // =======================================================
 
+    RichtmyerMeshkov::RichtmyerMeshkov()
+    {
+      dimensions = vec3i(2048, 2048, 1920);
+    }
+
     std::string RichtmyerMeshkov::toString() const
     {
       return "ospray::sg::RichtmyerMeshkov";
     }
 
-    //! return bounding box of all primitives
-    box3f RichtmyerMeshkov::bounds() const
-    {
-      return box3f(vec3f(0.f), vec3f(dimensions));
-    }
-
     //! \brief Initialize this node's value from given XML node
     void RichtmyerMeshkov::setFromXML(const xml::Node &node,
-        const unsigned char *binBasePtr)
+                                      const unsigned char *binBasePtr)
     {
       dirName = node.getProp("dirName");
       const std::string t = node.getProp("timeStep");

@@ -43,8 +43,6 @@ namespace ospray {
     /*! a plain old structured volume */
     struct StructuredVolume : public Volume
     {
-      StructuredVolume();
-
       std::string toString() const override;
 
       //! return bounding box of all primitives
@@ -54,19 +52,16 @@ namespace ospray {
       void setFromXML(const xml::Node &node,
                       const unsigned char *binBasePtr) override;
 
-      vec3i dimensions;
-      std::string voxelType;
+      vec3i dimensions {-1};
+      std::string voxelType = "<undefined>";
 
-      const unsigned char *mappedPointer;
+      const unsigned char *mappedPointer {nullptr};
     };
 
     /*! a plain old structured volume */
-    struct StructuredVolumeFromFile : public Volume
+    struct StructuredVolumeFromFile : public StructuredVolume
     {
       std::string toString() const override;
-
-      //! return bounding box of all primitives
-      box3f bounds() const override;
 
       //! \brief Initialize this node's value from given XML node
       void setFromXML(const xml::Node &node,
@@ -79,18 +74,15 @@ namespace ospray {
       /*! \detailed we need this to properly resolve relative file names */
       FileName fileNameOfCorrespondingXmlDoc;
 
-      vec3i dimensions {-1};
       std::string fileName;
-      std::string voxelType = "<undefined>";
     };
 
     /*! a structured volume loaded from the Richtmyer-Meshkov .bob files */
-    struct RichtmyerMeshkov : public Volume
+    struct RichtmyerMeshkov : public StructuredVolume
     {
-      std::string toString() const override;
+      RichtmyerMeshkov();
 
-      //! return bounding box of all primitives
-      box3f bounds() const override;
+      std::string toString() const override;
 
       //! \brief Initialize this node's value from given XML node
       void setFromXML(const xml::Node &node,
@@ -99,9 +91,8 @@ namespace ospray {
       void preCommit(RenderContext &ctx) override;
       void postCommit(RenderContext &ctx) override;
 
-      vec3i dimensions {2048, 2048, 1920};
       std::string dirName;
-      int timeStep;
+      int timeStep {-1};
 
       //! \brief file name of the xml doc when the node was loaded from xml
       /*! \detailed we need this to properly resolve relative directory names */
