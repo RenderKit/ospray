@@ -81,7 +81,7 @@ namespace ospray {
 
       vec3i dimensions {-1};
       std::string fileName;
-      std::string voxelType {"<undefined>"};
+      std::string voxelType = "<undefined>";
     };
 
     /*! a structured volume whose input comes from a set of stacked RAW files */
