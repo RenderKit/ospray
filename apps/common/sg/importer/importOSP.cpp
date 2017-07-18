@@ -50,7 +50,7 @@ namespace ospray {
       std::shared_ptr<sg::Node> newNode = createNode(name, node.name);
       if (!newNode.get())
         throw std::runtime_error("could not create scene graph node");
-      
+
       newNode->setFromXML(node,binBasePtr);
 
       return newNode;
@@ -105,13 +105,13 @@ namespace ospray {
           info->description = c->content;
         else if (c->name == "permissions")
           info->permissions = c->content;
-        else 
+        else
           throw std::runtime_error("unknown node type '"+c->name
                                    +"' in ospray::sg::Info node");
       }
       return info;
     }
-    
+
     void parseWorldNode(std::shared_ptr<sg::Node> world,
                         const xml::Node &node,
                         const unsigned char *binBasePtr)
@@ -121,7 +121,7 @@ namespace ospray {
         world->add(newNode);
       }
     }
-    
+
     std::shared_ptr<sg::DataBuffer> parseDataNode(const xml::Node &node)
     {
 #if 1
@@ -176,13 +176,11 @@ namespace ospray {
       std::cout << "  voxelType  = " << voxelType << std::endl;
       std::cout << "  dimensions = " << dimensions << std::endl;
       std::cout << "  path       = " << doc->fileName.path() << std::endl;
-      // TODO: This works on the old style of scenegraph!
-      //volume->setTransferFunction(std::make_shared<TransferFunction>());
       volume->fileNameOfCorrespondingXmlDoc = doc->fileName;
-      volume->setFileName(fileName);
-      volume->setDimensions(dimensions);
-      volume->setScalarType(voxelType);
-      
+      volume->fileName = fileName;
+      volume->dimensions = dimensions;
+      volume->voxelType = voxelType;
+
       world->add(volume);
     }
 
@@ -212,9 +210,9 @@ namespace ospray {
       const std::string binFileName = fileName+"bin";
       const unsigned char * const binBasePtr = mapFile(binFileName);
 
-      if (!doc) 
+      if (!doc)
         throw std::runtime_error("could not parse "+fileName);
-      
+
       if (doc->child.size() != 1)
       {
         throw std::runtime_error(
@@ -233,7 +231,7 @@ namespace ospray {
       } else {
         parseWorldNode(world,*root,binBasePtr);
       }
-      
+
       cout << "#osp:sg: done parsing OSP file" << endl;
     }
 

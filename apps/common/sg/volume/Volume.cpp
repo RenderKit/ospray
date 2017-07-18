@@ -24,27 +24,6 @@
 namespace ospray {
   namespace sg {
 
-    static vec3i checkForAndEnableDistributedVolumes()
-    {
-      auto dpFromEnv = getEnvVar<std::string>("OSPRAY_DATA_PARALLEL");
-
-      if (dpFromEnv.first) {
-        // Create the OSPRay object.
-        vec3i blockDims;
-        int rc = sscanf(dpFromEnv.second.c_str(), "%dx%dx%d",
-                        &blockDims.x, &blockDims.y, &blockDims.z);
-        if (rc != 3) {
-          throw std::runtime_error("could not parse OSPRAY_DATA_PARALLEL "
-                                   "env-var. Must be of format <X>x<Y>x<>Z "
-                                   "(e.g., '4x4x4'");
-        }
-        Volume::useDataDistributedVolume = true;
-        return blockDims;
-      } else {
-        return {0, 0, 0,};
-      }
-    }
-
     /*! helper function to help build voxel ranges during parsing */
     template<typename T>
     inline void extendVoxelRange(ospcommon::vec2f &voxelRange,
@@ -101,8 +80,6 @@ namespace ospray {
     // base volume class
     // =======================================================
 
-    bool Volume::useDataDistributedVolume = false;
-
     /*! \brief returns a std::string with the c++ name of this class */
     Volume::Volume()
     {
@@ -111,8 +88,8 @@ namespace ospray {
       createChild("preIntegration", "bool", true);
       createChild("singleShade", "bool", true);
       createChild("voxelRange", "vec2f",
-                      vec2f(std::numeric_limits<float>::infinity(),
-                            -std::numeric_limits<float>::infinity()));
+                  vec2f(std::numeric_limits<float>::infinity(),
+                        -std::numeric_limits<float>::infinity()));
       createChild("adaptiveSampling", "bool", true);
       createChild("adaptiveScalar", "float", 15.f);
       createChild("adaptiveBacktrack", "float", 0.03f);
@@ -125,9 +102,9 @@ namespace ospray {
       createChild("gridSpacing", "vec3f", vec3f(1.f));
       createChild("isosurfaceEnabled", "bool", false);
       createChild("isosurface", "float",
-                      -std::numeric_limits<float>::infinity(),
-                      NodeFlags::valid_min_max |
-                      NodeFlags::gui_slider).setMinMax(0.f,255.f);
+                  -std::numeric_limits<float>::infinity(),
+                  NodeFlags::valid_min_max |
+                  NodeFlags::gui_slider).setMinMax(0.f,255.f);
     }
 
     std::string Volume::toString() const
@@ -178,9 +155,6 @@ namespace ospray {
     void StructuredVolume::setFromXML(const xml::Node &node,
                                       const unsigned char *binBasePtr)
     {
-      Assert2(binBasePtr,
-              "mapped binary file is nullptr, in XML node that "
-              "needs mapped binary data (sg::StructuredVolume)");
       voxelType = node.getProp("voxelType");
       if (node.hasProp("ofs"))
         mappedPointer = binBasePtr + std::stoll(node.getProp("ofs","0"));
@@ -189,15 +163,12 @@ namespace ospray {
       if (voxelType == "uint8")
         voxelType = "uchar";
       if (unsupportedVoxelType(voxelType)) {
-        THROW_SG_ERROR("unknown StructuredVolume.voxelType '" + voxelType + "'");
+        THROW_SG_ERROR("unknown StructuredVolume.voxelType '"
+                       + voxelType + "'");
       }
 
       std::cout << "#osp:sg: created StructuredVolume from XML file, "
                 << "dimensions = " << getDimensions() << std::endl;
-    }
-
-    void StructuredVolume::postCommit(RenderContext &ctx)
-    {
     }
 
     OSP_REGISTER_SG_NODE(StructuredVolume);
@@ -206,11 +177,6 @@ namespace ospray {
     // structured volume that is stored in a separate file (ie, a file
     // other than the ospbin file)
     // =======================================================
-
-    //! constructor
-    StructuredVolumeFromFile::StructuredVolumeFromFile()
-      : dimensions(-1), fileName(""), voxelType("<undefined>")
-    {}
 
     /*! \brief returns a std::string with the c++ name of this class */
     std::string StructuredVolumeFromFile::toString() const
@@ -221,8 +187,8 @@ namespace ospray {
     //! return bounding box of all primitives
     box3f StructuredVolumeFromFile::bounds() const
     {
-      return  {vec3f(0.f),
-              vec3f(getDimensions())*child("gridSpacing").valueAs<vec3f>()};
+      return {vec3f(0.f),
+              vec3f(dimensions)*child("gridSpacing").valueAs<vec3f>()};
     }
 
     //! \brief Initialize this node's value from given XML node
@@ -245,7 +211,7 @@ namespace ospray {
       fileNameOfCorrespondingXmlDoc = node.doc->fileName;
 
       std::cout << "#osp:sg: created StructuredVolume from XML file, "
-                << "dimensions = " << getDimensions() << std::endl;
+                << "dimensions = " << dimensions << std::endl;
     }
 
     void StructuredVolumeFromFile::preCommit(RenderContext &ctx)
@@ -267,17 +233,9 @@ namespace ospray {
                                  "invalid volume dimensions");
       }
 
-      vec3i dataDistributedBlocks = checkForAndEnableDistributedVolumes();
-
-      bool useBlockBricked = 1;
-
-      if (useDataDistributedVolume) {
-        volume = ospNewVolume("data_distributed_volume");
-        ospSetVec3i(volume,"num_dp_blocks",(osp::vec3i&)dataDistributedBlocks);
-      }
-      else
-        volume = ospNewVolume(useBlockBricked ? "block_bricked_volume" :
-                                                "shared_structured_volume");
+      bool useBlockBricked = true;
+      volume = ospNewVolume(useBlockBricked ? "block_bricked_volume" :
+                                              "shared_structured_volume");
 
       if (!volume) THROW_SG_ERROR("could not allocate volume");
 
@@ -291,17 +249,19 @@ namespace ospray {
 
       FileName realFileName = fileNameOfCorrespondingXmlDoc.path()+fileName;
       FILE *file = fopen(realFileName.c_str(),"rb");
-      if (!file)
+      if (!file) {
         throw std::runtime_error("StructuredVolumeFromFile::render(): could not open file '"
                                  +realFileName.str()+"' (expanded from xml file '"
                                  +fileNameOfCorrespondingXmlDoc.str()
                                  +"' and file name '"+fileName+"')");
+      }
 
       vec2f voxelRange(std::numeric_limits<float>::infinity(),
                        -std::numeric_limits<float>::infinity());
       const OSPDataType ospVoxelType = typeForString(voxelType);
       const size_t voxelSize = sizeOf(ospVoxelType);
-      if (useBlockBricked || useDataDistributedVolume) {
+
+      if (useBlockBricked) {
         const size_t nPerSlice = (size_t)dimensions.x * (size_t)dimensions.y;
         std::vector<uint8_t> slice(nPerSlice * voxelSize, 0);
 
@@ -325,6 +285,7 @@ namespace ospray {
         OSPData data = ospNewData(nVoxels, ospVoxelType, voxels, OSP_DATA_SHARED_BUFFER);
         ospSetData(volume,"voxelData",data);
       }
+
       fclose(file);
 
       child("voxelRange").setValue(voxelRange);
@@ -433,15 +394,7 @@ namespace ospray {
         return;
       }
 
-      const vec3i dataDistributedBlocks = checkForAndEnableDistributedVolumes();
-
-      if (useDataDistributedVolume) {
-        volume = ospNewVolume("data_distributed_volume");
-        ospSetVec3i(volume, "num_dp_blocks", (osp::vec3i&)dataDistributedBlocks);
-      }
-      else {
-        volume = ospNewVolume("block_bricked_volume");
-      }
+      volume = ospNewVolume("block_bricked_volume");
 
       if (!volume) {
         THROW_SG_ERROR("could not allocate volume");

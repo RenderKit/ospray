@@ -36,8 +36,6 @@ namespace ospray {
 
       virtual void preRender(RenderContext &ctx) override;
 
-      static bool useDataDistributedVolume;
-
       OSPVolume volume {nullptr};
       OSPGeometry isosurfacesGeometry{nullptr};
     };
@@ -56,8 +54,6 @@ namespace ospray {
       void setFromXML(const xml::Node &node,
                       const unsigned char *binBasePtr) override;
 
-      void postCommit(RenderContext &ctx) override;
-
       SG_NODE_DECLARE_MEMBER(vec3i, dimensions, Dimensions);
       SG_NODE_DECLARE_MEMBER(std::string, voxelType, ScalarType);
 
@@ -67,8 +63,6 @@ namespace ospray {
     /*! a plain old structured volume */
     struct StructuredVolumeFromFile : public Volume
     {
-      StructuredVolumeFromFile();
-
       std::string toString() const override;
 
       //! return bounding box of all primitives
@@ -81,15 +75,13 @@ namespace ospray {
       void preCommit(RenderContext &ctx) override;
       void postCommit(RenderContext &ctx) override;
 
-
-      SG_NODE_DECLARE_MEMBER(vec3i, dimensions, Dimensions);
-      SG_NODE_DECLARE_MEMBER(std::string, fileName, FileName);
-      SG_NODE_DECLARE_MEMBER(std::string, voxelType, ScalarType);
-
-    public:
       //! \brief file name of the xml doc when the node was loaded from xml
       /*! \detailed we need this to properly resolve relative file names */
       FileName fileNameOfCorrespondingXmlDoc;
+
+      vec3i dimensions {-1};
+      std::string fileName;
+      std::string voxelType {"<undefined>"};
     };
 
     /*! a structured volume whose input comes from a set of stacked RAW files */
