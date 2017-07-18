@@ -46,17 +46,15 @@ OSPRAY_INSTALL_SDK_HEADERS(
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_LIST_DIR})
 
-IF (NOT WIN32)
-  OSPRAY_CREATE_TEST(mamlTest
-    apps/mamlTest.cpp
+OSPRAY_CREATE_TEST(mamlTest
+  apps/mamlTest.cpp
   LINK
-    ${MAML_LIBRARY}
-  )
+  ${MAML_LIBRARY}
+)
 
-  OSPRAY_CREATE_TEST(mamlTestMessageSwarm
-    apps/testMessageSwarm.cpp
+OSPRAY_CREATE_TEST(mamlTestMessageSwarm
+  apps/testMessageSwarm.cpp
   LINK
-    ${MAML_LIBRARY}
-  )
-ENDIF()
+  ${MAML_LIBRARY}
+)
 
