@@ -222,7 +222,7 @@ namespace ospray {
       if (animating) {
         auto *hack =
             (InspectCenter*)ImGui3DWidget::activeWindow->inspectCenterManipulator;
-        hack->rotate(-10.f * ImGui3DWidget::activeWindow->motionSpeed, 0);
+        hack->rotate(-.01f * ImGui3DWidget::activeWindow->motionSpeed, 0);
       }
 
 
