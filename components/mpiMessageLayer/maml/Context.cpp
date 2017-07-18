@@ -212,8 +212,6 @@ namespace maml {
       if (MAML_SPAWN_THREADS.first)
         useTaskingSystem = !MAML_SPAWN_THREADS.second;
 
-      PRINT(useTaskingSystem);
-
       if (useTaskingSystem) {
         sendReceiveFuture = ospcommon::tasking::async([&](){
           mpiSendAndRecieveTask();
