@@ -15,9 +15,10 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "imguiViewer.h"
+#include <GLFW/glfw3.h>
 
 #include <imgui.h>
+#include "imguiViewer.h"
 
 using std::string;
 using namespace ospcommon;
@@ -189,6 +190,26 @@ namespace ospray {
     break;
     default:
       ImGui3DWidget::keypress(key);
+    }
+  }
+
+  void ImGuiViewer::mouseButton(int button, int action, int mods)
+  {
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS
+        && (mods & GLFW_MOD_SHIFT))
+    {
+      renderEngine.scheduleFunction([&](cpp::Renderer &renderer) {
+        const vec2f pos(currMousePos.x / static_cast<float>(windowSize.x),
+                        1.f - currMousePos.y / static_cast<float>(windowSize.y));
+        OSPPickResult result;
+        ospPick(&result, renderer.handle(), osp::vec2f{pos.x, pos.y});
+        if (result.hit) {
+          viewPort.at = vec3f(result.position.x, result.position.y,
+                              result.position.z);
+          viewPort.modified = true;
+          computeFrame();
+        }
+      });
     }
   }
 

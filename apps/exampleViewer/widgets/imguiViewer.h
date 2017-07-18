@@ -67,6 +67,7 @@ namespace ospray {
 
     virtual void reshape(const ospcommon::vec2i &newSize) override;
     virtual void keypress(char key) override;
+    virtual void mouseButton(int button, int action, int mods) override;
 
     void resetView();
     void printViewport();
