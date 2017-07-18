@@ -119,6 +119,7 @@ namespace ospray {
     for (auto &f: scheduledFunctions) {
       f(renderer.ref());
     }
+    scheduledFunctions.clear();
     return ranFcns;
   }
 
