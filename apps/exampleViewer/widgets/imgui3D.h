@@ -132,6 +132,7 @@ namespace ospray {
        // ------------------------------------------------------------------
 
        virtual void motion(const vec2i &pos);
+       virtual void mouseButton(int button, int action, int mods);
        virtual void reshape(const vec2i &newSize);
        /*! display this window. By default this will just clear this
            window's framebuffer; it's up to the user to override this fct

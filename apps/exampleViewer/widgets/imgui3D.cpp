@@ -135,6 +135,9 @@ namespace ospray {
       lastMousePos = currMousePos;
     }
 
+    void ImGui3DWidget::mouseButton(int button, int action, int mods)
+    {}
+
     ImGui3DWidget::ImGui3DWidget(FrameBufferMode frameBufferMode,
                                  ManipulatorMode initialManipulator,
                                  int allowedManipulators) :
@@ -371,6 +374,7 @@ namespace ospray {
         window,
         [](GLFWwindow*, int button, int action, int mods) {
           ImGui3DWidget::activeWindow->currButton[button] = action;
+          ImGui3DWidget::activeWindow->mouseButton(button, action, mods);
         }
       );
 
