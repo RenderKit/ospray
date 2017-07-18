@@ -84,36 +84,6 @@ namespace ospray {
       std::string voxelType = "<undefined>";
     };
 
-    /*! a structured volume whose input comes from a set of stacked RAW files */
-    struct StackedRawSlices : public Volume
-    {
-      StackedRawSlices();
-
-      std::string toString() const override;
-
-      //! return bounding box of all primitives
-      box3f bounds() const override;
-
-      //! \brief Initialize this node's value from given XML node
-      void setFromXML(const xml::Node &node,
-                              const unsigned char *binBasePtr) override;
-
-      /*! resolution (X x Y) of each slice */
-      SG_NODE_DECLARE_MEMBER(vec2i, sliceResolution, SliceResolution);
-
-      /*! base path name for the slices, in "printf format"
-       *  (e.g., "/mydir/slice%04i.raw")
-       */
-      SG_NODE_DECLARE_MEMBER(std::string, baseName, BaseName);
-      SG_NODE_DECLARE_MEMBER(int32_t, firstSliceID, FirstSliceID);
-      SG_NODE_DECLARE_MEMBER(int32_t, numSlices, numSlices);
-      SG_NODE_DECLARE_MEMBER(std::string, voxelType, ScalarType);
-
-      //! actual dimensions after the data is loaded in - to be computed from
-      //  sliceResolutiona nd numSlices
-      SG_NODE_DECLARE_MEMBER(vec3i,dimensions,Dimensions);
-    };
-
     /*! a structured volume loaded from the Richtmyer-Meshkov .bob files */
     struct RichtmyerMeshkov : public Volume
     {

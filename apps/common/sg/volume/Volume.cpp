@@ -306,44 +306,6 @@ namespace ospray {
     OSP_REGISTER_SG_NODE(StructuredVolumeFromFile);
 
     // =======================================================
-    // stacked slices volume class
-    // =======================================================
-
-    StackedRawSlices::StackedRawSlices()
-      : baseName(""), voxelType("uint8_t"), dimensions(-1)
-    {}
-
-    /*! \brief returns a std::string with the c++ name of this class */
-    std::string StackedRawSlices::toString() const
-    {
-      return "ospray::sg::StackedRawSlices";
-    }
-
-    //! return bounding box of all primitives
-    box3f StackedRawSlices::bounds() const
-    {
-      return box3f(vec3f(0.f),vec3f(getDimensions()));
-    }
-
-    //! \brief Initialize this node's value from given XML node
-    void StackedRawSlices::setFromXML(const xml::Node &node,
-                                      const unsigned char *binBasePtr)
-    {
-      voxelType       = node.getProp("voxelType");
-      sliceResolution = toVec2i(node.getProp("sliceResolution").c_str());
-      baseName        = node.getProp("baseName");
-      firstSliceID    = std::stoll(node.getProp("firstSliceID","0"));
-      numSlices       = std::stoll(node.getProp("numSlices"));
-
-      if (voxelType != "uint8_t") {
-        throw std::runtime_error("unknown StackedRawSlices.voxelType "
-                                 "(currently only supporting 'uint8_t')");
-      }
-    }
-
-    OSP_REGISTER_SG_NODE(StackedRawSlices);
-
-    // =======================================================
     // Richtmyer-Meshkov volume class and utils
     // =======================================================
 
