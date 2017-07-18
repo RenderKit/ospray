@@ -36,7 +36,6 @@ namespace ospcommon {
   {
   public:
 
-    AsyncLoop() = default;
     ~AsyncLoop();
 
     template <typename LOOP_BODY_FCN>
@@ -66,7 +65,7 @@ namespace ospcommon {
                   "method 'void LOOP_BODY_FCN::operator()' in order to "
                   "construct the loop instance.");
 
-    backgroundThread = std::thread([&](){
+    backgroundThread = std::thread([&,fcn](){
       while (threadShouldBeAlive) {
         std::unique_lock<std::mutex> lock(loopRunningMutex);
         loopRunningCond.wait(lock, [&] { return loopShouldBeRunning; });
@@ -89,7 +88,7 @@ namespace ospcommon {
 
   inline void AsyncLoop::start()
   {
-    loopShouldBeRunning;
+    loopShouldBeRunning = true;
     loopRunningCond.notify_one();
   }
 

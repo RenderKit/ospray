@@ -223,13 +223,17 @@ namespace maml {
       } else {
         if (!sendReceiveThread.get()) {
           sendReceiveThread = make_unique<AsyncLoop>([&](){
-            mpiSendAndRecieveTask();
+            sendMessagesFromOutbox();
+            pollForAndRecieveMessages();
+
+            waitOnSomeSendRequests();
+            waitOnSomeRecvRequests();
           });
         }
 
         if (!processInboxThread.get()) {
           processInboxThread = make_unique<AsyncLoop>([&](){
-            processInboxTask();
+            processInboxMessages();
           });
         }
 
