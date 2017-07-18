@@ -147,7 +147,7 @@ namespace ospray {
     box3f StructuredVolume::bounds() const
     {
       return {vec3f(0.f),
-              vec3f(getDimensions())*child("gridSpacing").valueAs<vec3f>()};
+              vec3f(dimensions)*child("gridSpacing").valueAs<vec3f>()};
     }
 
     //! \brief Initialize this node's value from given XML node
@@ -168,7 +168,7 @@ namespace ospray {
       }
 
       std::cout << "#osp:sg: created StructuredVolume from XML file, "
-                << "dimensions = " << getDimensions() << std::endl;
+                << "dimensions = " << dimensions << std::endl;
     }
 
     OSP_REGISTER_SG_NODE(StructuredVolume);
@@ -309,10 +309,6 @@ namespace ospray {
     // Richtmyer-Meshkov volume class and utils
     // =======================================================
 
-    RichtmyerMeshkov::RichtmyerMeshkov()
-      : dimensions(2048, 2048, 1920)
-    {}
-
     std::string RichtmyerMeshkov::toString() const
     {
       return "ospray::sg::RichtmyerMeshkov";
@@ -321,7 +317,7 @@ namespace ospray {
     //! return bounding box of all primitives
     box3f RichtmyerMeshkov::bounds() const
     {
-      return box3f(vec3f(0.f), vec3f(getDimensions()));
+      return box3f(vec3f(0.f), vec3f(dimensions));
     }
 
     //! \brief Initialize this node's value from given XML node

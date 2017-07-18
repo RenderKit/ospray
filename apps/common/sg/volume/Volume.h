@@ -54,8 +54,8 @@ namespace ospray {
       void setFromXML(const xml::Node &node,
                       const unsigned char *binBasePtr) override;
 
-      SG_NODE_DECLARE_MEMBER(vec3i, dimensions, Dimensions);
-      SG_NODE_DECLARE_MEMBER(std::string, voxelType, ScalarType);
+      vec3i dimensions;
+      std::string voxelType;
 
       const unsigned char *mappedPointer;
     };
@@ -87,8 +87,6 @@ namespace ospray {
     /*! a structured volume loaded from the Richtmyer-Meshkov .bob files */
     struct RichtmyerMeshkov : public Volume
     {
-      RichtmyerMeshkov();
-
       std::string toString() const override;
 
       //! return bounding box of all primitives
@@ -101,17 +99,16 @@ namespace ospray {
       void preCommit(RenderContext &ctx) override;
       void postCommit(RenderContext &ctx) override;
 
-      SG_NODE_DECLARE_MEMBER(vec3i, dimensions, Dimensions);
-      SG_NODE_DECLARE_MEMBER(std::string, dirName, DirName);
-      SG_NODE_DECLARE_MEMBER(int, timeStep, TimeStep);
-      // TODO WILL: I don't think we need this
-      //SG_NODE_DECLARE_MEMBER(std::string, voxelType, ScalarType);
+      vec3i dimensions {2048, 2048, 1920};
+      std::string dirName;
+      int timeStep;
 
       //! \brief file name of the xml doc when the node was loaded from xml
       /*! \detailed we need this to properly resolve relative directory names */
       FileName fileNameOfCorrespondingXmlDoc;
 
     private:
+
       //! \brief state for the loader threads to use, for picking which block to load
       struct LoaderState
       {
