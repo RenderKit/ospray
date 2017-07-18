@@ -33,7 +33,7 @@ std::atomic<size_t> numReceived;
 struct BounceHandler : public maml::MessageHandler
 {
   std::mt19937 rng;
-  std::uniform_int_distribution<int> rank_distrib;
+  std::uniform_int_distribution<> rank_distrib;
 
   BounceHandler() : rng(std::random_device{}()), rank_distrib(0, numRanks - 1)
   {}
@@ -57,7 +57,7 @@ extern "C" int main(int ac, char **av)
 
   std::mt19937 rng(std::random_device{}());
   std::uniform_int_distribution<char> distrib;
-  std::uniform_int_distribution<int> rank_distrib(0, numRanks - 1);
+  std::uniform_int_distribution<> rank_distrib(0, numRanks - 1);
 
   int numMessages = 100;
   int payloadSize = 100000;
