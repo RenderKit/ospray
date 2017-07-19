@@ -61,6 +61,8 @@ namespace ospray {
 
           lastRTime = sg::TimeStamp();
         }
+        if (scenegraph->hasChild("animationcontroller"))
+          scenegraph->child("animationcontroller").traverse("animate");
 
         fps.start();
         scenegraph->traverse("render");

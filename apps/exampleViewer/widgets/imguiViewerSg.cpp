@@ -377,7 +377,10 @@ namespace ospray {
                            value.size()+256,
                            ImGuiInputTextFlags_EnterReturnsTrue))
         node->setValue(std::string(buf));
-    } else { // generic holder node
+    }
+//    else { // generic holder node
+    if (node->children().size())
+    {
       text+=node->type();
       text += "##"+((std::ostringstream&)(std::ostringstream("")
                                           << node.get())).str(); //TODO: use unique uuid for every node

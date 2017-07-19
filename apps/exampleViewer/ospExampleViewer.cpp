@@ -20,6 +20,7 @@
 #include "ospcommon/FileName.h"
 #include "ospcommon/networking/Socket.h"
 #include "ospcommon/vec.h"
+#include "common/sg/common/Animator.h"
 
 #include "sg/geometry/TriangleMesh.h"
 
@@ -302,6 +303,7 @@ int main(int ac, const char **av)
   sun["color"].setValue(vec3f(1.f,232.f/255.f,166.f/255.f));
   sun["direction"].setValue(vec3f(0.462f,-1.f,-.1f));
   sun["intensity"].setValue(1.5f);
+  auto &sunIntensity =  sun["intensity"].createChild("animator", "Animator");
 
   auto &bounce = lights.createChild("bounce", "DirectionalLight");
   bounce["color"].setValue(vec3f(127.f/255.f,178.f/255.f,255.f/255.f));
@@ -327,6 +329,9 @@ int main(int ac, const char **av)
   }
 
   parseCommandLineSG(ac, av, renderer);
+
+  auto &animation = renderer.createChild("animationcontroller", "AnimationController");
+  animation.setChild("sunintensity", sunIntensity.shared_from_this());
 
   if (rendererDW.get()) {
     rendererDW->setChild("world",  renderer["world"].shared_from_this());
