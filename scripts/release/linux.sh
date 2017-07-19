@@ -126,13 +126,6 @@ OSPRAY_VERSION=`sed -n 's/#define OSPRAY_VERSION "\(.*\)"/\1/p' ospray/version.h
 
 tar czf ospray-${OSPRAY_VERSION}.x86_64.rpm.tar.gz ospray-*-${OSPRAY_VERSION}-*.rpm
 
-
-# generate Appliance RPMs
-cmake -D CPACK_PACKAGING_INSTALL_PREFIX=/work/software/ospray-${OSPRAY_VERSION} ..
-make -j `nproc` package
-tar czf ospray-${OSPRAY_VERSION}.Appliance.rpm.tar.gz ospray-*-${OSPRAY_VERSION}-*.rpm
-
-
 # change settings for zip mode
 cmake \
 -D OSPRAY_ZIP_MODE=ON \
