@@ -78,6 +78,15 @@ namespace ospray {
   void ImGuiViewerSg::keypress(char key)
   {
     switch (key) {
+    case ' ':
+    {
+      if (scenegraph && scenegraph->hasChild("animationcontroller"))
+      {
+        bool animating = scenegraph->child("animationcontroller")["enabled"].valueAs<bool>();
+        scenegraph->child("animationcontroller")["enabled"].setValue(!animating);
+      }
+      break;
+    }
     case 'R':
       toggleRenderingPaused();
       break;

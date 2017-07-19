@@ -25,7 +25,7 @@ namespace ospray {
       createChild("start","float", 0.0f);
       createChild("stop","float", 1.0f);
       createChild("time","float", 0.0f);
-      createChild("step","float", 0.1f);
+      createChild("step","float", 0.01f);
       createChild("enabled","bool",false);
     }
 

@@ -316,6 +316,11 @@ int main(int ac, const char **av)
 
   auto &world = renderer["world"];
 
+
+  auto &animation = renderer.createChild("animationcontroller", "AnimationController");
+  // animation.child("enabled").setValue(true);
+  animation.setChild("sunintensity", sunIntensity.shared_from_this());
+  
   for (auto file : files) {
     FileName fn = file;
     if (fn.ext() == "ospsg")
@@ -324,14 +329,17 @@ int main(int ac, const char **av)
       auto importerNode_ptr = sg::createNode(fn.name(), "Importer");
       auto &importerNode = *importerNode_ptr;
       importerNode["fileName"].setValue(fn.str());
+      auto &rotation = importerNode.childRecursive("rotation").createChild("animator", "Animator");
+      rotation.traverse("verify");
+      rotation.traverse("commit");
+      rotation.child("value1").setValue(ospcommon::vec3f{0.f,0.f,0.f});
+      rotation.child("value2").setValue(ospcommon::vec3f{0.f,2.f*3.14f,0.f});
+      animation.setChild("rotation", rotation.shared_from_this());
       world += importerNode_ptr;
     }
   }
 
   parseCommandLineSG(ac, av, renderer);
-
-  auto &animation = renderer.createChild("animationcontroller", "AnimationController");
-  animation.setChild("sunintensity", sunIntensity.shared_from_this());
 
   if (rendererDW.get()) {
     rendererDW->setChild("world",  renderer["world"].shared_from_this());
