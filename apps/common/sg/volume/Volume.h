@@ -34,9 +34,8 @@ namespace ospray {
       //! serialize into given serialization state
       virtual void serialize(sg::Serialization::State &state) override;
 
-      virtual void preRender(RenderContext &ctx) override;
+      virtual void postRender(RenderContext &ctx) override;
 
-      OSPVolume volume {nullptr};
       OSPGeometry isosurfacesGeometry{nullptr};
     };
 

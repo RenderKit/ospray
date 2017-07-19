@@ -31,7 +31,7 @@ using namespace ospray;
 
 std::vector<std::string> files;
 std::string initialRendererType;
-bool addPlane = false;
+bool addPlane = true;
 bool debug = false;
 bool fullscreen = false;
 bool print = false;
@@ -40,8 +40,8 @@ static inline void parseCommandLine(int ac, const char **&av)
 {
   for (int i = 1; i < ac; i++) {
     const std::string arg = av[i];
-    if (arg == "-p" || arg == "--plane") {
-      addPlane = true;
+    if (arg == "-np" || arg == "--no-plane") {
+      addPlane = false;
     } else if (arg == "-d" || arg == "--debug") {
       debug = true;
     } else if (arg == "-r" || arg == "--renderer") {

@@ -83,6 +83,8 @@ namespace ospray {
     /*! \brief returns a std::string with the c++ name of this class */
     Volume::Volume()
     {
+      setValue((OSPObject)nullptr);
+
       createChild("transferFunction", "TransferFunction");
       createChild("gradientShadingEnabled", "bool", true);
       createChild("preIntegration", "bool", true);
@@ -117,12 +119,12 @@ namespace ospray {
       Node::serialize(state);
     }
 
-    void Volume::preRender(RenderContext &ctx)
+    void Volume::postRender(RenderContext &ctx)
     {
-      if (volume) {
-        ospAddVolume(ctx.world->ospModel(), volume);
-        if (child("isosurfaceEnabled").valueAs<bool>() == true
-            && isosurfacesGeometry)
+      auto ospVolume = (OSPVolume)valueAs<OSPObject>();
+      if (ospVolume) {
+        ospAddVolume(ctx.world->ospModel(), ospVolume);
+        if (child("isosurfaceEnabled").valueAs<bool>() && isosurfacesGeometry)
           ospAddGeometry(ctx.world->ospModel(), isosurfacesGeometry);
       }
     }
@@ -203,8 +205,9 @@ namespace ospray {
 
     void StructuredVolumeFromFile::preCommit(RenderContext &ctx)
     {
-      if (volume) {
-        ospCommit(volume);
+      auto ospVolume = (OSPVolume)valueAs<OSPObject>();
+      if (ospVolume) {
+        ospCommit(ospVolume);
         if (child("isosurfaceEnabled").valueAs<bool>() == true
             && isosurfacesGeometry) {
           OSPData isovaluesData = ospNewData(1, OSP_FLOAT,
@@ -221,20 +224,21 @@ namespace ospray {
       }
 
       bool useBlockBricked = true;
-      volume = ospNewVolume(useBlockBricked ? "block_bricked_volume" :
-                                              "shared_structured_volume");
+      ospVolume = ospNewVolume(useBlockBricked ? "block_bricked_volume" :
+                                                 "shared_structured_volume");
 
-      if (!volume) THROW_SG_ERROR("could not allocate volume");
+      if (!ospVolume)
+        THROW_SG_ERROR("could not allocate volume");
 
       isosurfacesGeometry = ospNewGeometry("isosurfaces");
-      ospSetObject(isosurfacesGeometry, "volume", volume);
+      ospSetObject(isosurfacesGeometry, "volume", ospVolume);
 
-      setValue((OSPObject)volume);
+      setValue((OSPObject)ospVolume);
 
-      ospSetString(volume,"voxelType",voxelType.c_str());
-      ospSetVec3i(volume,"dimensions",(const osp::vec3i&)dimensions);
+      ospSetString(ospVolume,"voxelType",voxelType.c_str());
+      ospSetVec3i(ospVolume,"dimensions",(const osp::vec3i&)dimensions);
 
-      FileName realFileName = fileNameOfCorrespondingXmlDoc.path()+fileName;
+      FileName realFileName = fileNameOfCorrespondingXmlDoc.path() + fileName;
       FILE *file = fopen(realFileName.c_str(),"rb");
       if (!file) {
         throw std::runtime_error("StructuredVolumeFromFile::render(): could not open file '"
@@ -260,17 +264,21 @@ namespace ospray {
           const vec3i region_lo(0, 0, z);
           const vec3i region_sz(dimensions.x, dimensions.y, 1);
           extendVoxelRange(voxelRange, ospVoxelType, slice.data(), nPerSlice);
-          ospSetRegion(volume, slice.data(), (const osp::vec3i&)region_lo, (const osp::vec3i&)region_sz);
+          ospSetRegion(ospVolume,
+                       slice.data(),
+                       (const osp::vec3i&)region_lo,
+                       (const osp::vec3i&)region_sz);
         }
       } else {
         const size_t nVoxels = (size_t)dimensions.x * (size_t)dimensions.y * (size_t)dimensions.z;
         uint8_t *voxels = new uint8_t[nVoxels * voxelSize];
         if (fread(voxels, voxelSize, nVoxels, file) != nVoxels) {
-          THROW_SG_ERROR("read incomplete data (truncated file or wrong format?!)");
+          THROW_SG_ERROR("read incomplete data (truncated file or "
+                         "wrong format?!)");
         }
         extendVoxelRange(voxelRange, ospVoxelType, voxels, nVoxels);
         OSPData data = ospNewData(nVoxels, ospVoxelType, voxels, OSP_DATA_SHARED_BUFFER);
-        ospSetData(volume,"voxelData",data);
+        ospSetData(ospVolume,"voxelData",data);
       }
 
       fclose(file);
@@ -285,9 +293,10 @@ namespace ospray {
 
     void StructuredVolumeFromFile::postCommit(RenderContext &ctx)
     {
-      ospSetObject(volume,"transferFunction",
+      auto ospVolume = (OSPVolume)valueAs<OSPObject>();
+      ospSetObject(ospVolume, "transferFunction",
                    child("transferFunction").valueAs<OSPObject>());
-      ospCommit(volume);
+      ospCommit(ospVolume);
     }
 
     OSP_REGISTER_SG_NODE(StructuredVolumeFromFile);
@@ -326,8 +335,9 @@ namespace ospray {
 
     void RichtmyerMeshkov::preCommit(RenderContext &ctx)
     {
-      if (volume) {
-        ospCommit(volume);
+      auto ospVolume = (OSPVolume)valueAs<OSPObject>();
+      if (ospVolume) {
+        ospCommit(ospVolume);
         if (child("isosurfaceEnabled").valueAs<bool>() == true
             && isosurfacesGeometry) {
           OSPData isovaluesData = ospNewData(1, OSP_FLOAT,
@@ -338,60 +348,59 @@ namespace ospray {
         return;
       }
 
-      volume = ospNewVolume("block_bricked_volume");
+      ospVolume = ospNewVolume("block_bricked_volume");
 
-      if (!volume) {
+      if (!ospVolume)
         THROW_SG_ERROR("could not allocate volume");
-      }
 
       isosurfacesGeometry = ospNewGeometry("isosurfaces");
-      ospSetObject(isosurfacesGeometry, "volume", volume);
+      ospSetObject(isosurfacesGeometry, "volume", ospVolume);
 
-      setValue((OSPObject)volume);
+      setValue((OSPObject)ospVolume);
 
-      ospSetString(volume, "voxelType", "uchar");
-      ospSetVec3i(volume, "dimensions", (const osp::vec3i&)dimensions);
+      ospSetString(ospVolume, "voxelType", "uchar");
+      ospSetVec3i(ospVolume, "dimensions", (const osp::vec3i&)dimensions);
 
       const FileName realFileName = fileNameOfCorrespondingXmlDoc.path() + dirName;
 
       // Launch loader threads to load the volume
       LoaderState loaderState(fileNameOfCorrespondingXmlDoc.path() + dirName, timeStep);
       std::vector<std::thread> threads;
-      createChild("blocksLoaded", "string", "0/" + std::to_string(LoaderState::NUM_BLOCKS));
+      createChild("blocksLoaded", "string",
+                  "0/" + std::to_string(LoaderState::NUM_BLOCKS));
 
-      for (size_t i = 0; i < std::thread::hardware_concurrency(); ++i) {
+      for (size_t i = 0; i < std::thread::hardware_concurrency(); ++i)
         threads.push_back(std::thread([&](){ loaderThread(loaderState); }));
-      }
-      for (auto &t : threads) {
+
+      for (auto &t : threads)
         t.join();
-      }
 
       child("voxelRange").setValue(loaderState.voxelRange);
       child("isosurface").setMinMax(loaderState.voxelRange.x,
                                     loaderState.voxelRange.y);
       float iso = child("isosurface").valueAs<float>();
       if (iso < loaderState.voxelRange.x || iso > loaderState.voxelRange.y) {
-        child("isosurface").setValue((loaderState.voxelRange.y - loaderState.voxelRange.x) / 2.f);
+        child("isosurface").setValue((loaderState.voxelRange.y -
+                                      loaderState.voxelRange.x) / 2.f);
       }
+
       child("transferFunction")["valueRange"].setValue(loaderState.voxelRange);
-      child("transferFunction").preCommit(ctx);
-      ospSetObject(volume,"transferFunction",
-                   child("transferFunction").valueAs<OSPObject>());
-      ospCommit(volume);
     }
 
     void RichtmyerMeshkov::postCommit(RenderContext &ctx)
     {
+      auto ospVolume = (OSPVolume)valueAs<OSPObject>();
       // In StructuredVolumeFromFile it does this at the end
       // of pre-commit as well, but shouldn't that not be needed? Since
       // it will be done in postCommit which is called immediately after?
-      ospSetObject(volume,"transferFunction",
+      ospSetObject(ospVolume,"transferFunction",
                    child("transferFunction").valueAs<OSPObject>());
-      ospCommit(volume);
+      ospCommit(ospVolume);
     }
 
     void RichtmyerMeshkov::loaderThread(LoaderState &state)
     {
+      auto ospVolume = (OSPVolume)valueAs<OSPObject>();
       Node &progressLog = child("blocksLoaded");
       std::vector<uint8_t> block(LoaderState::BLOCK_SIZE, 0);
       while (true) {
@@ -410,7 +419,9 @@ namespace ospray {
         const vec3i region_sz(256, 256, 128);
         {
           std::lock_guard<std::mutex> lock(state.mutex);
-          ospSetRegion(volume, block.data(), (const osp::vec3i&)region_lo,
+          ospSetRegion(ospVolume,
+                       block.data(),
+                       (const osp::vec3i&)region_lo,
                        (const osp::vec3i&)region_sz);
 
           state.voxelRange.x = std::min(state.voxelRange.x, blockRange.x);
