@@ -38,8 +38,11 @@ namespace ospray {
   {
   public:
 
+    ImGuiViewerSg(const std::shared_ptr<sg::Node> &scenegraph);
+
     ImGuiViewerSg(const std::shared_ptr<sg::Node> &scenegraph,
                   const std::shared_ptr<sg::Node> &scenegraphDW);
+
     ~ImGuiViewerSg();
 
   protected:
