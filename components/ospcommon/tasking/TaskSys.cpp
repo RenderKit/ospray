@@ -53,9 +53,10 @@ namespace ospcommon {
 
     // Task definitions ///////////////////////////////////////////////////////
 
-    Task::Task()
+    Task::Task(bool needsToBeDeleted)
     : numJobsCompleted(),
-      numJobsStarted()
+      numJobsStarted(),
+      willNeedToBeDeleted(needsToBeDeleted)
     {
     }
 
@@ -76,9 +77,13 @@ namespace ospcommon {
       if (myCompleted != 0) {
         const int nowCompleted = (numJobsCompleted += myCompleted);
         if (nowCompleted == numJobsInTask) {
-          SCOPED_LOCK(mutex);
-          status = Task::COMPLETED;
-          allJobsCompletedCond.notify_all();
+          {
+            SCOPED_LOCK(mutex);
+            status = Task::COMPLETED;
+            allJobsCompletedCond.notify_all();
+          }
+          if (willNeedToBeDeleted)
+            delete this;
         }
       }
     }
@@ -185,29 +190,27 @@ namespace ospcommon {
       TaskSys::global.init(maxNumRenderTasks);
     }
 
-    void scheduleTaskInternal(std::shared_ptr<Task> task,
+    void scheduleTaskInternal(Task *task,
                               int numJobs,
                               ScheduleOrder order)
     {
       task->numJobsInTask = numJobs;
       task->status = Task::SCHEDULED;
 
-      auto *t_ptr = task.get();
-
       SCOPED_LOCK(TaskSys::global.mutex);
       bool wasEmpty = TaskSys::global.activeListFirst == nullptr;
       if (wasEmpty) {
-        TaskSys::global.activeListFirst = TaskSys::global.activeListLast = t_ptr;
+        TaskSys::global.activeListFirst = TaskSys::global.activeListLast = task;
         task->next = nullptr;
         TaskSys::global.tasksAvailable.notify_all();
       } else {
         if (order == BACK_OF_QUEUE) {
           task->next = nullptr;
-          TaskSys::global.activeListLast->next = t_ptr;
-          TaskSys::global.activeListLast = t_ptr;
+          TaskSys::global.activeListLast->next = task;
+          TaskSys::global.activeListLast = task;
         } else {
           task->next = TaskSys::global.activeListFirst;
-          TaskSys::global.activeListFirst = t_ptr;
+          TaskSys::global.activeListFirst = task;
         }
       }
 

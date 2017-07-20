@@ -38,7 +38,7 @@ namespace ospcommon {
 
     struct OSPCOMMON_INTERFACE __aligned(64) Task
     {
-      Task();
+      Task(bool needsToBeDeleted);
       virtual ~Task() = default;
 
       // ------------------------------------------------------------------
@@ -75,6 +75,7 @@ namespace ospcommon {
       std::condition_variable __aligned(64) allJobsCompletedCond;
 
       __aligned(64) Task *volatile next;
+      bool willNeedToBeDeleted {true};
     };
 
     // Public interface to the tasking system /////////////////////////////////
@@ -88,7 +89,7 @@ namespace ospcommon {
     void OSPCOMMON_INTERFACE initTaskSystemInternal(int numThreads = -1);
 
     //! schedule the given task with the given number of sub-jobs.
-    void scheduleTaskInternal(std::shared_ptr<Task> task,
+    void scheduleTaskInternal(Task *task,
                               int numJobs,
                               ScheduleOrder order = BACK_OF_QUEUE);
 
@@ -98,13 +99,13 @@ namespace ospcommon {
       struct LocalTask : public Task
       {
         const TASK_T &t;
-        LocalTask(TASK_T&& fcn) : t(std::forward<TASK_T>(fcn)) {}
+        LocalTask(TASK_T&& fcn) : Task(false), t(std::forward<TASK_T>(fcn)) {}
         void run(int taskIndex) override { t(taskIndex); }
       };
 
-      auto task = std::make_shared<LocalTask>(std::forward<TASK_T>(fcn));
-      scheduleTaskInternal(task, nTasks);
-      task->wait();
+      LocalTask task(std::forward<TASK_T>(fcn));
+      scheduleTaskInternal(&task, nTasks);
+      task.wait();
     }
 
     template <typename TASK_T>
@@ -113,11 +114,11 @@ namespace ospcommon {
       struct LocalTask : public Task
       {
         TASK_T t;
-        LocalTask(TASK_T&& fcn) : t(std::forward<TASK_T>(fcn)) {}
+        LocalTask(TASK_T&& fcn) : Task(true), t(std::forward<TASK_T>(fcn)) {}
         void run(int) override { t(); }
       };
 
-      auto task = std::make_shared<LocalTask>(std::forward<TASK_T>(fcn));
+      auto *task = new LocalTask(std::forward<TASK_T>(fcn));
       scheduleTaskInternal(task, 1, FRONT_OF_QUEUE);
     }
 
