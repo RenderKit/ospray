@@ -378,39 +378,6 @@ namespace ospray {
         }
       );
 
-// TODO: This key callback collides with ImGui, some keys end up not working
-//       in the gui that should. (ex: pressing 'Enter' key to confirm a
-//       parameter change)
-#if 0
-      glfwSetKeyCallback(
-        window,
-        [](GLFWwindow*, int key, int scancode, int action, int mods) {
-          ImGuiIO& io = ImGui::GetIO();
-
-          if (!io.WantCaptureKeyboard) {
-            auto &widget = *ImGui3DWidget::activeWindow;
-            if ((key == GLFW_KEY_LEFT_CONTROL ||
-                 key == GLFW_KEY_RIGHT_CONTROL)) {
-              if (action == GLFW_PRESS) {
-                widget.keysDown |= ImGui3DWidget::CNTRL_KEY;
-                if (widget.manipulator == widget.inspectCenterManipulator) {
-                  std::cout << "locking camera 'up' dir to "
-                            << widget.viewPort.up << std::endl;
-                }
-              }
-              else {
-                widget.keysDown &= ~ImGui3DWidget::CNTRL_KEY;
-                if (widget.manipulator == widget.inspectCenterManipulator)
-                  std::cout << "unlocking camera 'up' direction" << std::endl;
-              }
-            }
-
-            //NOTE: add other keys if necessary here
-          }
-        }
-      );
-#endif
-
       glfwSetCharCallback(
         window,
         [](GLFWwindow*, unsigned int c) {

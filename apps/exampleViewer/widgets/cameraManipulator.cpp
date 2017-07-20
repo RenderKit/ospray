@@ -104,7 +104,7 @@ namespace ospray {
       cam.from  = xfmPoint(xfm,cam.from);
       cam.at    = xfmPoint(xfm,cam.at);
 
-      if (!(widget->keysDown & ImGui3DWidget::Keys::CNTRL_KEY))
+      if (!widget->upLocked)
         cam.snapViewUp();
 
       cam.snapFrameUp();
