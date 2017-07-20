@@ -83,9 +83,9 @@ using namespace ospray;
 
 struct clTransform
 {
- vec3f translate;
+ vec3f translate{0,0,0};
  vec3f scale{1,1,1};
- vec3f rotation;
+ vec3f rotation{0,0,0};
 };
 
 //command line file
@@ -185,38 +185,39 @@ void parseCommandLineSG(int ac, const char **&av, sg::Node &root)
         node.setValue(value);
       } catch(...) {};
       try {
+        node.valueAs<float>();
         std::stringstream vals(value);
         float x;
         vals >> x;
-        node.valueAs<float>();
         node.setValue(x);
       } catch(...) {}
       try {
+        node.valueAs<int>();
         std::stringstream vals(value);
         int x;
         vals >> x;
-        node.valueAs<int>();
         node.setValue(x);
       } catch(...) {}
       try {
+        node.valueAs<bool>();
         std::stringstream vals(value);
         bool x;
         vals >> x;
-        node.valueAs<bool>();
         node.setValue(x);
       } catch(...) {}
       try {
+        node.valueAs<ospcommon::vec3f>();
         std::stringstream vals(value);
+        std::cout << "vec3f: \"" << value << "\"\n";
         float x,y,z;
         vals >> x >> y >> z;
-        node.valueAs<ospcommon::vec3f>();
         node.setValue(ospcommon::vec3f(x,y,z));
       } catch(...) {}
       try {
+        node.valueAs<ospcommon::vec2i>();
         std::stringstream vals(value);
         int x,y;
         vals >> x >> y;
-        node.valueAs<ospcommon::vec2i>();
         node.setValue(ospcommon::vec2i(x,y));
       } catch(...) {}
     }
@@ -366,16 +367,20 @@ int main(int ac, const char **av)
       auto importerNode_ptr = sg::createNode(fn.name(), "Importer");
       auto &importerNode = *importerNode_ptr;
       importerNode["fileName"].setValue(fn.str());
-      if (files.size() < 2 && importerNode.hasChildRecursive("rotation"))
+      auto &transform = world.createChild("transform_"+file.file, "Transform");
+      transform["scale"].setValue(file.transform.scale);
+      transform["position"].setValue(file.transform.translate);
+      transform["rotation"].setValue(file.transform.rotation);
+      if (files.size() < 2 && animatedFiles.empty())
       {
-        auto &rotation = importerNode.childRecursive("rotation").createChild("animator", "Animator");
+        auto &rotation = transform["rotation"].createChild("animator", "Animator");
         rotation.traverse("verify");
         rotation.traverse("commit");
         rotation.child("value1").setValue(ospcommon::vec3f{0.f,0.f,0.f});
         rotation.child("value2").setValue(ospcommon::vec3f{0.f,2.f*3.14f,0.f});
         animation.setChild("rotation", rotation.shared_from_this());
       }
-      world += importerNode_ptr;
+      transform += importerNode_ptr;
     }
   }
   for (auto animatedFile : animatedFiles)

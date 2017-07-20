@@ -27,10 +27,7 @@ namespace ospray {
       //! \brief constructor
       Selector();
 
-//      virtual void preCommit(RenderContext &ctx) override;
-//      virtual void postCommit(RenderContext &ctx) override;
       virtual void preTraverse(RenderContext &ctx, const std::string& operation, bool& traverseChildren) override;
-      virtual void postTraverse(RenderContext &ctx, const std::string& operation) override;
 
     };
 

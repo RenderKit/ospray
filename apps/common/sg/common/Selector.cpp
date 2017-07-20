@@ -26,14 +26,6 @@ namespace ospray {
       createChild("index", "int", 0);
     }
 
-//    void Selector::preCommit(RenderContext &ctx)
-//    {
-//    }
-
-//    void Selector::postCommit(RenderContext &ctx)
-//    {
-//    }
-
     void Selector::preTraverse(RenderContext &ctx, const std::string& operation, bool& traverseChildren)
     {
       if (operation == "render")
@@ -49,10 +41,7 @@ namespace ospray {
              if (child.second->name() != "index" && child.second->name() != "bounds")
              {
                if (i++ == index)
-               {
-                 std::cout << "found index: " << child.second->name() << std::endl;
                  child.second->traverse(ctx, "render");
-               }
              }
            }
          }
@@ -62,30 +51,6 @@ namespace ospray {
         Node::preTraverse(ctx,operation, traverseChildren);
       }
     }
-
-    void Selector::postTraverse(RenderContext &ctx, const std::string& operation)
-    {
-      if (operation == "render")
-      {
-//        return;
-//         const int index = child("index").valueAs<int>()+1;
-//         const int numChildren = properties.children.size();
-//         if (index < numChildren && index > 0)
-//         {
-//           int i =0;
-//           for(auto &child : properties.children)
-//           {
-//             if (i++ == index)
-//               child.second->traverse(ctx, "render");
-//           }
-//         }
-      }
-      else
-      {
-        Node::postTraverse(ctx,operation);
-      }
-    }
-
 
     OSP_REGISTER_SG_NODE(Selector);
 
