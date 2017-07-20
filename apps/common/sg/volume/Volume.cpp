@@ -98,6 +98,7 @@ namespace ospray {
       createChild("volumeClippingBoxLower", "vec3f", vec3f(0.f));
       createChild("volumeClippingBoxUpper", "vec3f", vec3f(0.f));
       createChild("specular", "vec3f", vec3f(0.3f));
+      createChild("ns", "float", 20.f);
       createChild("gridOrigin", "vec3f", vec3f(0.0f));
       createChild("gridSpacing", "vec3f", vec3f(1.f));
       createChild("isosurfaceEnabled", "bool", false);
