@@ -241,7 +241,7 @@ namespace ospray {
         if (ImGui::Checkbox("Orbit Camera Mode", &orbitMode))
           manipulator = inspectCenterManipulator;
 
-        if (orbitMode) ImGui::Checkbox("Anchor 'Up' Direction", &upLocked);
+        if (orbitMode) ImGui::Checkbox("Anchor 'Up' Direction", &upAnchored);
 
         if (ImGui::Checkbox("Fly Camera Mode", &flyMode))
           manipulator = moveModeManipulator;

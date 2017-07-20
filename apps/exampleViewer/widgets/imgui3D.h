@@ -181,7 +181,7 @@ namespace ospray {
        double guiTime;
        double totalTime;
        float  fontScale;
-       bool upLocked {false};
+       bool upAnchored {true};
 
        bool renderingPaused {false};
        /*! pointer to the frame buffer data. it is the repsonsiblity of

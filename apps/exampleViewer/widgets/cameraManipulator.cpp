@@ -104,7 +104,7 @@ namespace ospray {
       cam.from  = xfmPoint(xfm,cam.from);
       cam.at    = xfmPoint(xfm,cam.at);
 
-      if (!widget->upLocked)
+      if (!widget->upAnchored)
         cam.snapViewUp();
 
       cam.snapFrameUp();
