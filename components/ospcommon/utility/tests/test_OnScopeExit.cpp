@@ -1,7 +1,7 @@
 #define CATCH_CONFIG_MAIN
-#include "../testing/catch.hpp"
+#include "../../testing/catch.hpp"
 
-#include "OnScopeExit.h"
+#include "../OnScopeExit.h"
 
 using ospcommon::utility::OnScopeExit;
 

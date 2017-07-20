@@ -17,7 +17,7 @@
 #pragma once
 
 #include "../TypeTraits.h"
-#include "parallel_for.inl"
+#include "detail/parallel_for.inl"
 
 namespace ospcommon {
   namespace tasking {
@@ -29,11 +29,12 @@ namespace ospcommon {
     {
       using namespace traits;
       static_assert(has_operator_method_with_integral_param<TASK_T>::value,
-                    "ospcommon::parallel_for() requires the implementation of "
-                    "method 'void TASK_T::operator(P taskIndex), where P is of "
+                    "ospcommon::tasking::parallel_for() requires the "
+                    "implementation of method "
+                    "'void TASK_T::operator(P taskIndex), where P is of "
                     "type unsigned char, short, int, uint, long, or size_t.");
 
-      parallel_for_impl(nTasks, std::forward<TASK_T>(fcn));
+      detail::parallel_for_impl(nTasks, std::forward<TASK_T>(fcn));
     }
 
     // NOTE(jda) - Allow serial version of parallel_for() without the need to
@@ -43,13 +44,13 @@ namespace ospcommon {
     {
       using namespace traits;
       static_assert(has_operator_method_with_integral_param<TASK_T>::value,
-                    "ospcommon::serial_for() requires the implementation of "
-                    "method 'void TASK_T::operator(P taskIndex), where P is of "
+                    "ospcommon::tasking::serial_for() requires the "
+                    "implementation of method "
+                    "'void TASK_T::operator(P taskIndex), where P is of "
                     "type unsigned char, short, int, uint, long, or size_t.");
 
-      for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
+      for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex)
         fcn(taskIndex);
-      }
     }
 
   } // ::ospcommon::tasking

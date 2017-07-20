@@ -70,15 +70,6 @@ namespace ospray {
          INSPECT_CENTER_MODE =(1<<1)
        } ManipulatorMode;
 
-       enum Keys
-       {
-         CNTRL_KEY = (1 << 0),
-         SHIFT_KEY = (1 << 1),
-         ALT_KEY   = (1 << 2)
-       };
-
-       int keysDown {0};
-
        /*! internal viewPort class */
        struct OSPRAY_IMGUI3D_INTERFACE ViewPort {
          bool modified; /* the viewPort will set this flag any time any of
@@ -190,6 +181,7 @@ namespace ospray {
        double guiTime;
        double totalTime;
        float  fontScale;
+       bool upAnchored {true};
 
        bool renderingPaused {false};
        /*! pointer to the frame buffer data. it is the repsonsiblity of

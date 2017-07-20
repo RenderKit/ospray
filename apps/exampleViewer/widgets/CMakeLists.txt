@@ -21,23 +21,6 @@ include_directories(
   ${OPENGL_INCLUDE_DIR}
 )
 
-ospray_create_library(ospray_imgui3d
-  Imgui3dExport.h
-  imgui_impl_glfw_gl3.cpp
-  imgui3D.cpp
-  imguiViewer.cpp
-  cameraManipulator.cpp
-LINK
-  ospray
-  ospray_common
-  ospray_imgui_util
-  ospray_tfn
-  ${GLFW_LIBRARY}
-  gl3w
-  imgui
-  ${OPENGL_LIBRARIES}
-)
-
 ospray_create_library(ospray_imgui3d_sg
   Imgui3dExport.h
   imgui_impl_glfw_gl3.cpp

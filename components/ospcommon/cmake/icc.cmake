@@ -30,7 +30,7 @@ SET(CMAKE_C_FLAGS "-std=c99 ${CMAKE_C_FLAGS}")
 
 IF (APPLE)
   SET (CMAKE_SHARED_LINKER_FLAGS "-dynamiclib ${CMAKE_SHARED_LINKER_FLAGS_INIT}")
-  SET(CMAKE_CXX_FLAGS "-mmacosx-version-min=10.7 ${CMAKE_CXX_FLAGS}") # we only use MacOSX 10.7 features
+  SET(CMAKE_CXX_FLAGS "-mmacosx-version-min=10.8 ${CMAKE_CXX_FLAGS}") # we only use MacOSX 10.8 features
   SET(CMAKE_CXX_FLAGS "-stdlib=libc++ ${CMAKE_CXX_FLAGS}") # link against C++11 stdlib
 ENDIF()
 

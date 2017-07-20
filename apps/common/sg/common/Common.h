@@ -28,7 +28,7 @@
 #endif
 #endif
 
-// ospcommon 
+// ospcommon
 #include "ospcommon/AffineSpace.h"
 
 // ospray API
@@ -39,13 +39,14 @@
 
 namespace ospray {
   namespace sg {
+
     using namespace ospcommon;
 
 #define THROW_SG_ERROR(err) \
     throw std::runtime_error("in "+std::string(__PRETTY_FUNCTION__)+":"+std::string(err))
 
-    typedef unsigned int uint;
-    
+    using uint = unsigned int;
+
     /*! base node for every scene graph node */
     struct Node;
     /*! c++ wrapper for an ospray model */

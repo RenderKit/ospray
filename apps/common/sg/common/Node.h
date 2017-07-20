@@ -39,19 +39,6 @@ namespace ospray {
     /*! forward decl of entity that nodes can write to when writing XML files */
     struct XMLWriter;
 
-    /*! helper macro that adds a new member to a scene graph node, and
-      automatically defines all accessor functions for said
-      member.  */
-#define SG_NODE_DECLARE_MEMBER(type,name,capName)       \
-  public:                                               \
-    inline type get##capName() const { return name; }   \
-    inline void set##capName(const type &name) {        \
-      this->name = name;                                \
-      this->properties.lastModified = TimeStamp();      \
-    };                                                  \
-  protected:                                            \
-  type name                                             \
-
     enum NodeFlags
     {
       none = 0 << 0,

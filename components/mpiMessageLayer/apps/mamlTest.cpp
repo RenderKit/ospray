@@ -39,7 +39,7 @@ extern "C" int main(int ac, char **av)
   ospcommon::tasking::initTaskingSystem();
 
   std::mt19937 rng(std::random_device{}());
-  std::uniform_int_distribution<char> distrib;
+  std::uniform_int_distribution<int> distrib(0, 255);
 
   int numRuns = 1000000;
   int rank = -1;

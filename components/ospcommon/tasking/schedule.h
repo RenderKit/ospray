@@ -17,7 +17,7 @@
 #pragma once
 
 #include "../TypeTraits.h"
-#include "schedule.inl"
+#include "detail/schedule.inl"
 
 namespace ospcommon {
   namespace tasking {
@@ -33,10 +33,10 @@ namespace ospcommon {
     inline void schedule(TASK_T&& fcn)
     {
       static_assert(traits::has_operator_method<TASK_T>::value,
-                    "ospcommon::schedule() requires the implementation of "
-                    "method 'void TASK_T::operator()'.");
+                    "ospcommon::tasking::schedule() requires the "
+                    "implementation of method 'void TASK_T::operator()'.");
 
-      schedule_impl(std::forward<TASK_T>(fcn));
+      detail::schedule_impl(std::forward<TASK_T>(fcn));
     }
 
   } // ::ospcommon::tasking
