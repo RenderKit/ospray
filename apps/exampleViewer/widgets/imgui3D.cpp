@@ -378,6 +378,10 @@ namespace ospray {
         }
       );
 
+// TODO: This key callback collides with ImGui, some keys end up not working
+//       in the gui that should. (ex: pressing 'Enter' key to confirm a
+//       parameter change)
+#if 0
       glfwSetKeyCallback(
         window,
         [](GLFWwindow*, int key, int scancode, int action, int mods) {
@@ -405,6 +409,7 @@ namespace ospray {
           }
         }
       );
+#endif
 
       glfwSetCharCallback(
         window,
