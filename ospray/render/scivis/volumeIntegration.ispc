@@ -187,7 +187,7 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
 
                   //hardcode volume spec for now
                   info.Ks = volume->specular*sampleOpacity;
-                  info.Ns = 20.0f;
+                  info.Ns = volume->ns;
                   info.local_opacity=sampleOpacity;
                   dg.material = 0;
                   shadeMaterials(dg, info);
@@ -241,7 +241,7 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
 
       //hardcode volume spec for now
       info.Ks = volume->specular*singleMax;
-      info.Ns = 30.0f;
+      info.Ns = volume->ns;
       info.local_opacity=intervalColor.w;
       dg.material = 0;
       shadeMaterials(dg, info);
