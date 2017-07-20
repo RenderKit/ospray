@@ -51,7 +51,8 @@ namespace ospray {
         if (tex) {
           tex->setName(type);
           node.setChild(type, tex);
-          tex->setParent(node);
+          if (!tex->hasParent())
+            tex->setParent(node);
         }
       }
     }

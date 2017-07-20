@@ -19,38 +19,57 @@
 #include <utility>
 
 #ifdef OSPRAY_TASKING_TBB
-#  include <tbb/task.h>
+#  include <tbb/parallel_for.h>
 #elif defined(OSPRAY_TASKING_CILK)
 #  include <cilk/cilk.h>
 #elif defined(OSPRAY_TASKING_INTERNAL)
 #  include "TaskSys.h"
+#elif defined(OSPRAY_TASKING_LIBDISPATCH)
+#  include "dispatch/dispatch.h"
 #endif
 
 namespace ospcommon {
   namespace tasking {
+    namespace detail {
 
-    template<typename TASK_T>
-    inline void schedule_impl(TASK_T&& fcn)
-    {
-#ifdef OSPRAY_TASKING_TBB
-      struct LocalTBBTask : public tbb::task
+#if defined(OSPRAY_TASKING_LIBDISPATCH)
+      template <typename TASK_T>
+      inline void callFcn_T(void *_task, size_t taskIndex)
       {
-        TASK_T func;
-        tbb::task* execute() override { func(); return nullptr; }
-        LocalTBBTask(TASK_T&& f) : func(std::forward<TASK_T>(f)) {}
-      };
-
-      auto *tbb_node =
-        new(tbb::task::allocate_root())LocalTBBTask(std::forward<TASK_T>(fcn));
-      tbb::task::enqueue(*tbb_node);
-#elif defined(OSPRAY_TASKING_CILK)
-      cilk_spawn fcn();
-#elif defined(OSPRAY_TASKING_INTERNAL)
-      schedule_internal(std::forward<TASK_T>(fcn));
-#else// OpenMP or Debug --> synchronous!
-      fcn();
+        auto &task = *((TASK_T*)_task);
+        task(taskIndex);
+      }
 #endif
-    }
 
+      template<typename TASK_T>
+      inline void parallel_for_impl(int nTasks, TASK_T&& fcn)
+      {
+#ifdef OSPRAY_TASKING_TBB
+        tbb::parallel_for(0, nTasks, std::forward<TASK_T>(fcn));
+#elif defined(OSPRAY_TASKING_CILK)
+        cilk_for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
+          fcn(taskIndex);
+        }
+#elif defined(OSPRAY_TASKING_OMP)
+#       pragma omp parallel for schedule(dynamic)
+        for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
+          fcn(taskIndex);
+        }
+#elif defined(OSPRAY_TASKING_INTERNAL)
+        detail::parallel_for_internal(nTasks, std::forward<TASK_T>(fcn));
+#elif defined(OSPRAY_TASKING_LIBDISPATCH)
+        dispatch_apply_f(nTasks,
+                         dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT,
+                                                   0),
+                         &fcn,
+                         &callFcn_T<TASK_T>);
+#else // Debug (no tasking system)
+        for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
+          fcn(taskIndex);
+        }
+#endif
+      }
+
+    } // ::ospcommon::tasking::detail
   } // ::ospcommon::tasking
 } // ::ospcommon

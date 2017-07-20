@@ -56,7 +56,7 @@ extern "C" int main(int ac, char **av)
   MPI_CALL(Comm_rank(MPI_COMM_WORLD, &rank));
 
   std::mt19937 rng(std::random_device{}());
-  std::uniform_int_distribution<char> distrib;
+  std::uniform_int_distribution<int> distrib(0, 255);
   std::uniform_int_distribution<> rank_distrib(0, numRanks - 1);
 
   int numMessages = 100;

@@ -34,9 +34,9 @@ namespace ospcommon {
     inline auto async(TASK_T&& fcn) -> std::future<operator_return_t<TASK_T>>
     {
       static_assert(traits::has_operator_method<TASK_T>::value,
-                    "ospcommon::async() requires the implementation of method "
-                    "'RETURN_T TASK_T::operator()', where RETURN_T is the "
-                    "return value of the passed in task.");
+                    "ospcommon::tasking::async() requires the implementation of"
+                    "method 'RETURN_T TASK_T::operator()', where RETURN_T "
+                    "is the return value of the passed in task.");
 
       using package_t = std::packaged_task<operator_return_t<TASK_T>()>;
 

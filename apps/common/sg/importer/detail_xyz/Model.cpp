@@ -91,7 +91,7 @@ namespace ospray {
       auto it = atomTypeByName.find(name);
       if (it == atomTypeByName.end()) {
         std::cout << "Found atom type '"+name+"'" << std::endl;
-        auto a = make_unique<AtomType>(name);
+        auto a = ospcommon::make_unique<AtomType>(name);
         a->color = makeRandomColor(atomType.size());
         int newID = atomType.size();
         atomTypeByName[name] = newID;

@@ -27,57 +27,6 @@
 #include "widgets/imguiViewerSg.h"
 #include <sstream>
 
-namespace dw {
-
-  struct ServiceInfo {
-    /* constructor that initializes everything to default values */
-    ServiceInfo()
-      : totalPixelsInWall(-1,-1),
-        mpiPortName("<value not set>")
-    {}
-
-    /*! total pixels in the entire display wall, across all
-      indvididual displays, and including bezels (future versios
-      will allow to render to smaller resolutions, too - and have
-      the clients upscale this - but for now the client(s) have to
-      render at exactly this resolution */
-    ospcommon::vec2i totalPixelsInWall;
-
-    /*! the MPI port name that the service is listening on client
-      connections for (ie, the one to use with
-      client::establishConnection) */
-    std::string mpiPortName;
-
-    /*! whether this runs in stereo mode */
-    int stereo;
-
-    /*! read a service info from a given hostName:port. The service
-      has to already be running on that port
-
-      Note this may throw a std::runtime_error if the connection
-      cannot be established
-    */
-    void getFrom(const std::string &hostName,
-                 const int portNo);
-  };
-  /*! read a service info from a given hostName:port. The service
-    has to already be running on that port */
-  void ServiceInfo::getFrom(const std::string &hostName,
-                            const int portNo)
-  {
-    ospcommon::socket_t sock = ospcommon::connect(hostName.c_str(),portNo);
-    if (!sock)
-      throw std::runtime_error("could not create display wall connection!");
-
-    mpiPortName = read_string(sock);
-    totalPixelsInWall.x = read_int(sock);
-    totalPixelsInWall.y = read_int(sock);
-    stereo = read_int(sock);
-    close(sock);
-  }
-}
-
-
 using namespace ospcommon;
 using namespace ospray;
 
@@ -99,20 +48,19 @@ struct clFile
 std::vector<clFile> files;
 std::vector< std::vector<clFile> > animatedFiles;
 std::string initialRendererType;
-bool addPlane = false;
+bool addPlane = true;
 bool debug = false;
 bool fullscreen = false;
 bool print = false;
 
-
-void parseCommandLine(int ac, const char **&av)
+static inline void parseCommandLine(int ac, const char **&av)
 {
   clTransform currentCLTransform;
   bool inAnimation = false;
   for (int i = 1; i < ac; i++) {
     const std::string arg = av[i];
-    if (arg == "-p" || arg == "--plane") {
-      addPlane = true;
+    if (arg == "-np" || arg == "--no-plane") {
+      addPlane = false;
     } else if (arg == "-d" || arg == "--debug") {
       debug = true;
     } else if (arg == "-r" || arg == "--renderer") {
@@ -151,7 +99,7 @@ void parseCommandLine(int ac, const char **&av)
 
 //parse command line arguments containing the format:
 //  -nodeName:...:nodeName=value,value,value
-void parseCommandLineSG(int ac, const char **&av, sg::Node &root)
+static inline void parseCommandLineSG(int ac, const char **&av, sg::Node &root)
 {
   for(int i=1;i < ac; i++) {
     std::string arg(av[i]);
@@ -224,8 +172,10 @@ void parseCommandLineSG(int ac, const char **&av, sg::Node &root)
   }
 }
 
-void addPlaneToScene(sg::Node& world)
+static inline void addPlaneToScene(sg::Node& renderer)
 {
+  auto &world = renderer["world"];
+
   auto bbox = world.bounds();
   if (bbox.empty()) {
     bbox.lower = vec3f(-5,0,-5);
@@ -267,6 +217,99 @@ void addPlaneToScene(sg::Node& world)
   planeMaterial["Ns"].setValue(2.f);
 }
 
+static inline void addLightsToScene(sg::Node& renderer)
+{
+  auto &lights = renderer["lights"];
+
+  auto &sun = lights.createChild("sun", "DirectionalLight");
+  sun["color"].setValue(vec3f(1.f,232.f/255.f,166.f/255.f));
+  sun["direction"].setValue(vec3f(0.462f,-1.f,-.1f));
+  sun["intensity"].setValue(1.5f);
+
+  auto &bounce = lights.createChild("bounce", "DirectionalLight");
+  bounce["color"].setValue(vec3f(127.f/255.f,178.f/255.f,255.f/255.f));
+  bounce["direction"].setValue(vec3f(-.93,-.54f,-.605f));
+  bounce["intensity"].setValue(0.25f);
+
+  auto &ambient = lights.createChild("ambient", "AmbientLight");
+  ambient["intensity"].setValue(0.9f);
+  ambient["color"].setValue(vec3f(174.f/255.f,218.f/255.f,255.f/255.f));
+
+}
+
+static inline void addImporterNodesToWorld(sg::Node& renderer)
+{
+  auto &world = renderer["world"];
+  auto &animation = renderer["animationcontroller"];
+
+  for (auto file : files) {
+    FileName fn = file.file;
+    if (fn.ext() == "ospsg")
+      sg::loadOSPSG(renderer.shared_from_this(), fn.str());
+    else {
+      auto importerNode_ptr = sg::createNode(fn.name(), "Importer");
+      auto &importerNode = *importerNode_ptr;
+      importerNode["fileName"].setValue(fn.str());
+      auto &transform = world.createChild("transform_"+file.file, "Transform");
+      transform["scale"].setValue(file.transform.scale);
+      transform["position"].setValue(file.transform.translate);
+      transform["rotation"].setValue(file.transform.rotation);
+      if (files.size() < 2 && animatedFiles.empty()) {
+        auto &rotation =
+          transform["rotation"].createChild("animator", "Animator");
+
+        rotation.traverse("verify");
+        rotation.traverse("commit");
+        rotation.child("value1").setValue(ospcommon::vec3f{0.f,0.f,0.f});
+        rotation.child("value2").setValue(ospcommon::vec3f{0.f,2.f*3.14f,0.f});
+
+        animation.setChild("rotation", rotation.shared_from_this());
+      }
+
+      transform += importerNode_ptr;
+    }
+  }
+}
+
+static inline void addAnimatedImporterNodesToWorld(sg::Node& renderer)
+{
+  auto &world = renderer["world"];
+  auto &animation = renderer["animationcontroller"];
+
+  for (auto &animatedFile : animatedFiles) {
+    if (animatedFile.empty())
+      continue;
+
+    auto &transform =
+      world.createChild("transform_" + animatedFile[0].file, "Transform");
+
+    transform["scale"].setValue(animatedFile[0].transform.scale);
+    transform["position"].setValue(animatedFile[0].transform.translate);
+    transform["rotation"].setValue(animatedFile[0].transform.rotation);
+    auto &selector =
+      transform.createChild("selector_" + animatedFile[0].file, "Selector");
+
+    for (auto file : animatedFile) {
+      FileName fn = file.file;
+      if (fn.ext() == "ospsg")
+        sg::loadOSPSG(renderer.shared_from_this(),fn.str());
+      else {
+        auto importerNode_ptr = sg::createNode(fn.name(), "Importer");
+        auto &importerNode = *importerNode_ptr;
+        importerNode["fileName"].setValue(fn.str());
+        selector += importerNode_ptr;
+      }
+    }
+    auto& anim_selector =
+      selector["index"].createChild("anim_"+animatedFile[0].file, "Animator");
+
+    anim_selector.traverse("verify");
+    anim_selector.traverse("commit");
+    anim_selector["value2"].setValue(int(animatedFile.size()));
+    animation.setChild("anim_selector", anim_selector.shared_from_this());
+  }
+}
+
 int main(int ac, const char **av)
 {
   int init_error = ospInit(&ac, av);
@@ -298,136 +341,24 @@ int main(int ac, const char **av)
 
   auto renderer_ptr = sg::createNode("renderer", "Renderer");
   auto &renderer = *renderer_ptr;
-  /*! the renderer we use for rendering on the display wall; null if
-      no dw available */
-  std::shared_ptr<sg::Node> rendererDW;
-  /*! display wall service info - ignore if 'rendererDW' is null */
-  dw::ServiceInfo dwService;
 
-  const char *dwNodeName = getenv("DISPLAY_WALL");
-  if (dwNodeName) {
-    std::cout << "#######################################################"
-              << std::endl;
-    std::cout << "found a DISPLAY_WALL environment variable ...." << std::endl;
-    std::cout << "trying to connect to display wall service on "
-              << dwNodeName << ":2903" << std::endl;
-
-    dwService.getFrom(dwNodeName,2903);
-    std::cout << "found display wall service on MPI port "
-              << dwService.mpiPortName << std::endl;
-    std::cout << "#######################################################"
-              << std::endl;
-    rendererDW = sg::createNode("renderer", "Renderer");
-  }
-
-  renderer["shadowsEnabled"].setValue(true);
-  renderer["aoSamples"].setValue(1);
-  renderer["camera"]["fovy"].setValue(60.f);
-
-  if (rendererDW.get()) {
-    rendererDW->child("shadowsEnabled").setValue(true);
-    rendererDW->child("aoSamples").setValue(1);
-    rendererDW->child("camera")["fovy"].setValue(60.f);
-  }
-
-  if (!initialRendererType.empty()) {
+  if (!initialRendererType.empty())
     renderer["rendererType"].setValue(initialRendererType);
-    if (rendererDW.get()) {
-      rendererDW->child("rendererType").setValue(initialRendererType);
-    }
-  }
 
-  auto &lights = renderer["lights"];
+  renderer.createChild("animationcontroller", "AnimationController");
 
-  auto &sun = lights.createChild("sun", "DirectionalLight");
-  sun["color"].setValue(vec3f(1.f,232.f/255.f,166.f/255.f));
-  sun["direction"].setValue(vec3f(0.462f,-1.f,-.1f));
-  sun["intensity"].setValue(1.5f);
-
-
-  auto &bounce = lights.createChild("bounce", "DirectionalLight");
-  bounce["color"].setValue(vec3f(127.f/255.f,178.f/255.f,255.f/255.f));
-  bounce["direction"].setValue(vec3f(-.93,-.54f,-.605f));
-  bounce["intensity"].setValue(0.25f);
-
-  auto &ambient = lights.createChild("ambient", "AmbientLight");
-  ambient["intensity"].setValue(0.9f);
-  ambient["color"].setValue(vec3f(174.f/255.f,218.f/255.f,255.f/255.f));
-
-  auto &world = renderer["world"];
-
-
-  auto &animation = renderer.createChild("animationcontroller", "AnimationController");
-
-  for (auto file : files) {
-    FileName fn = file.file;
-    if (fn.ext() == "ospsg")
-      sg::loadOSPSG(renderer_ptr,fn.str());
-    else {
-      auto importerNode_ptr = sg::createNode(fn.name(), "Importer");
-      auto &importerNode = *importerNode_ptr;
-      importerNode["fileName"].setValue(fn.str());
-      auto &transform = world.createChild("transform_"+file.file, "Transform");
-      transform["scale"].setValue(file.transform.scale);
-      transform["position"].setValue(file.transform.translate);
-      transform["rotation"].setValue(file.transform.rotation);
-      if (files.size() < 2 && animatedFiles.empty())
-      {
-        auto &rotation = transform["rotation"].createChild("animator", "Animator");
-        rotation.traverse("verify");
-        rotation.traverse("commit");
-        rotation.child("value1").setValue(ospcommon::vec3f{0.f,0.f,0.f});
-        rotation.child("value2").setValue(ospcommon::vec3f{0.f,2.f*3.14f,0.f});
-        animation.setChild("rotation", rotation.shared_from_this());
-      }
-      transform += importerNode_ptr;
-    }
-  }
-  for (auto animatedFile : animatedFiles)
-  {
-    if (animatedFile.empty())
-      continue;
-    auto &transform = world.createChild("transform_"+animatedFile[0].file, "Transform");
-    transform["scale"].setValue(animatedFile[0].transform.scale);
-    transform["position"].setValue(animatedFile[0].transform.translate);
-    transform["rotation"].setValue(animatedFile[0].transform.rotation);
-    auto &selector = transform.createChild("selector_"+animatedFile[0].file, "Selector");
-    for (auto file : animatedFile)
-    {
-      FileName fn = file.file;
-      if (fn.ext() == "ospsg")
-        sg::loadOSPSG(renderer_ptr,fn.str());
-      else {
-        auto importerNode_ptr = sg::createNode(fn.name(), "Importer");
-        auto &importerNode = *importerNode_ptr;
-        importerNode["fileName"].setValue(fn.str());
-        selector += importerNode_ptr;
-      }
-    }
-    auto& anim_selector = selector["index"].createChild("anim_"+animatedFile[0].file, "Animator");
-    anim_selector.traverse("verify");
-    anim_selector.traverse("commit");
-    anim_selector["value2"].setValue(int(animatedFile.size()));
-    animation.setChild("anim_selector", anim_selector.shared_from_this());
-  }
+  addLightsToScene(renderer);
+  addImporterNodesToWorld(renderer);
+  addAnimatedImporterNodesToWorld(renderer);
 
   parseCommandLineSG(ac, av, renderer);
-
-  if (rendererDW.get()) {
-    rendererDW->setChild("world",  renderer["world"].shared_from_this());
-    rendererDW->setChild("lights", renderer["lights"].shared_from_this());
-
-    auto &frameBuffer = rendererDW->child("frameBuffer");
-    frameBuffer["size"].setValue(dwService.totalPixelsInWall);
-    frameBuffer["displayWall"].setValue(dwService.mpiPortName);
-  }
 
   if (print || debug)
     renderer.traverse("print");
 
-  ospray::ImGuiViewerSg window(renderer_ptr, rendererDW);
+  ospray::ImGuiViewerSg window(renderer_ptr);
 
-  addPlaneToScene(world);
+  addPlaneToScene(renderer);
 
   window.create("OSPRay Example Viewer App", fullscreen);
 

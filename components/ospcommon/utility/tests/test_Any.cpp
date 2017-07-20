@@ -1,9 +1,9 @@
 #define CATCH_CONFIG_MAIN
-#include "../testing/catch.hpp"
+#include "../../testing/catch.hpp"
 
-#include "../box.h"
-#include "../vec.h"
-#include "Any.h"
+#include "../../box.h"
+#include "../../vec.h"
+#include "../Any.h"
 
 using ospcommon::utility::Any;
 

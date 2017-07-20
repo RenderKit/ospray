@@ -50,8 +50,8 @@ namespace ospray {
 
   std::vector<std::string> files;
   std::string imageOutputFile = "";
-  int numWarmupFrames = 10;
-  int numBenchFrames  = 100;
+  size_t numWarmupFrames = 10;
+  size_t numBenchFrames  = 100;
   int width  = 1024;
   int height = 1024;
 

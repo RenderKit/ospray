@@ -33,9 +33,12 @@ using namespace ospcommon;
 
 namespace ospray {
 
+  ImGuiViewerSg::ImGuiViewerSg(const std::shared_ptr<sg::Node> &scenegraph)
+    : ImGuiViewerSg(scenegraph, nullptr)
+  {}
+
   ImGuiViewerSg::ImGuiViewerSg(const std::shared_ptr<sg::Node> &scenegraph,
-                               const std::shared_ptr<sg::Node> &scenegraphDW
-                               )
+                               const std::shared_ptr<sg::Node> &scenegraphDW)
     : ImGui3DWidget(ImGui3DWidget::FRAMEBUFFER_NONE),
       scenegraph(scenegraph),
       scenegraphDW(scenegraphDW),
@@ -244,12 +247,13 @@ namespace ospray {
         bool orbitMode = (manipulator == inspectCenterManipulator);
         bool flyMode   = (manipulator == moveModeManipulator);
 
-        if (ImGui::Checkbox("Orbit Camera Mode", &orbitMode)) {
+        if (ImGui::Checkbox("Orbit Camera Mode", &orbitMode))
           manipulator = inspectCenterManipulator;
-        }
-        if (ImGui::Checkbox("Fly Camera Mode", &flyMode)) {
+
+        if (orbitMode) ImGui::Checkbox("Anchor 'Up' Direction", &upAnchored);
+
+        if (ImGui::Checkbox("Fly Camera Mode", &flyMode))
           manipulator = moveModeManipulator;
-        }
 
         if (ImGui::MenuItem("Reset View")) resetView();
         if (ImGui::MenuItem("Reset Accumulation")) viewPort.modified = true;
@@ -281,7 +285,9 @@ namespace ospray {
     ImGui::End();
   }
 
-  void ImGuiViewerSg::buildGUINode(std::string name, std::shared_ptr<sg::Node> node, int indent)
+  void ImGuiViewerSg::buildGUINode(std::string name,
+                                   std::shared_ptr<sg::Node> node,
+                                   int indent)
   {
     int styles=0;
     if (!node->isValid()) {
