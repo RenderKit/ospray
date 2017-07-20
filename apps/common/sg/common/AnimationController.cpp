@@ -39,7 +39,6 @@ namespace ospray {
 
     void AnimationController::preTraverse(RenderContext &ctx, const std::string& operation, bool& traverseChildren)
     {
-      std::cout << __PRETTY_FUNCTION__ << std::endl;
       Node::preTraverse(ctx,operation, traverseChildren);
       if (operation == "animate")
       {
@@ -57,7 +56,6 @@ namespace ospray {
         if (over > 0.f)
           time = start + over;
         child("time").setValue(time);
-        std::cout << "setting time: " << time << std::endl;
         ctx.time = time;
       }
     }

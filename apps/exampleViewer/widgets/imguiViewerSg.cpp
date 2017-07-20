@@ -385,7 +385,11 @@ namespace ospray {
       if (ImGui::InputText(text.c_str(), buf,
                            value.size()+256,
                            ImGuiInputTextFlags_EnterReturnsTrue))
+      {
+        std::cout << "enter pressed\n";
         node->setValue(std::string(buf));
+      }
+      free(buf);
     }
 //    else { // generic holder node
     if (node->children().size())

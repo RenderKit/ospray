@@ -378,6 +378,7 @@ namespace ospray {
         }
       );
 
+#if 0
       glfwSetKeyCallback(
         window,
         [](GLFWwindow*, int key, int scancode, int action, int mods) {
@@ -405,6 +406,7 @@ namespace ospray {
           }
         }
       );
+#endif
 
       glfwSetCharCallback(
         window,

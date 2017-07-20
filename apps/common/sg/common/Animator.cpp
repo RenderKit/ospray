@@ -22,17 +22,7 @@ namespace ospray {
    template<typename T>
    SGVar lerp(float interp, const SGVar& value1, const SGVar& value2)
    {
-     return interp*(1.f-value1.get<T>())+interp*value2.get<T>();
-   }
-   template<>
-   SGVar lerp<float>(float interp, const SGVar& value1, const SGVar& value2)
-   {
-     return (1.f-interp)*value1.get<float>()+interp*value2.get<float>();
-   }
-   template<>
-   SGVar lerp<vec3f>(float interp, const SGVar& value1, const SGVar& value2)
-   {
-     return (1.f-interp)*value1.get<vec3f>()+interp*value2.get<vec3f>();
+     return T((1.f-interp)*value1.get<T>()+interp*value2.get<T>());
    }
 
     Animator::Animator()
@@ -72,11 +62,16 @@ namespace ospray {
         const float start = child("start").valueAs<float>();
         const float stop = child("stop").valueAs<float>();
         const float duration = stop-start;
-        float interp = (ctx.time-start)/duration;
-        if (value1.is<float>())
-          setValue(lerp<float>(interp, value1, value2));
-        else if (value1.is<vec3f>())
-          setValue(lerp<vec3f>(interp, value1, value2));
+        if (ctx.time >= start && ctx.time <= stop)
+        {
+          float interp = (ctx.time-start)/duration;
+          if (value1.is<float>())
+            setValue(lerp<float>(interp, value1, value2));
+          else if (value1.is<vec3f>())
+            setValue(lerp<vec3f>(interp, value1, value2));
+          else if (value1.is<int>())
+            setValue(lerp<int>(interp, value1, value2));
+        }
       }
     }
 

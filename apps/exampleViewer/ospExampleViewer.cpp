@@ -81,15 +81,34 @@ namespace dw {
 using namespace ospcommon;
 using namespace ospray;
 
-std::vector<std::string> files;
+struct clTransform
+{
+ vec3f translate;
+ vec3f scale{1,1,1};
+ vec3f rotation;
+};
+
+//command line file
+struct clFile
+{
+  clFile(std::string f, const clTransform& t) : file(f), transform(t) {}
+ std::string file;
+ clTransform transform;
+};
+
+std::vector<clFile> files;
+std::vector< std::vector<clFile> > animatedFiles;
 std::string initialRendererType;
 bool addPlane = false;
 bool debug = false;
 bool fullscreen = false;
 bool print = false;
 
+
 void parseCommandLine(int ac, const char **&av)
 {
+  clTransform currentCLTransform;
+  bool inAnimation = false;
   for (int i = 1; i < ac; i++) {
     const std::string arg = av[i];
     if (arg == "-p" || arg == "--plane") {
@@ -104,8 +123,28 @@ void parseCommandLine(int ac, const char **&av)
       print=true;
     } else if (arg == "--fullscreen") {
       fullscreen = true;
+    } else if (arg == "--translate") {
+      currentCLTransform.translate.x = atof(av[++i]);
+      currentCLTransform.translate.y = atof(av[++i]);
+      currentCLTransform.translate.z = atof(av[++i]);
+    } else if (arg == "--scale") {
+      currentCLTransform.scale.x = atof(av[++i]);
+      currentCLTransform.scale.y = atof(av[++i]);
+      currentCLTransform.scale.z = atof(av[++i]);
+    } else if (arg == "--rotate") {
+      currentCLTransform.rotation.x = atof(av[++i]);
+      currentCLTransform.rotation.y = atof(av[++i]);
+      currentCLTransform.rotation.z = atof(av[++i]);
+    } else if (arg == "--animation") {
+      inAnimation = true;
+      animatedFiles.push_back(std::vector<clFile>());
+    } else if (arg == "--file") {
+      inAnimation = false;
     } else if (arg[0] != '-') {
-      files.push_back(av[i]);
+      if (!inAnimation)
+        files.push_back(clFile(av[i], currentCLTransform));
+      else
+        animatedFiles.back().push_back(clFile(av[i], currentCLTransform));
     }
   }
 }
@@ -303,7 +342,7 @@ int main(int ac, const char **av)
   sun["color"].setValue(vec3f(1.f,232.f/255.f,166.f/255.f));
   sun["direction"].setValue(vec3f(0.462f,-1.f,-.1f));
   sun["intensity"].setValue(1.5f);
-  auto &sunIntensity =  sun["intensity"].createChild("animator", "Animator");
+
 
   auto &bounce = lights.createChild("bounce", "DirectionalLight");
   bounce["color"].setValue(vec3f(127.f/255.f,178.f/255.f,255.f/255.f));
@@ -318,25 +357,53 @@ int main(int ac, const char **av)
 
 
   auto &animation = renderer.createChild("animationcontroller", "AnimationController");
-  // animation.child("enabled").setValue(true);
-  animation.setChild("sunintensity", sunIntensity.shared_from_this());
-  
+
   for (auto file : files) {
-    FileName fn = file;
+    FileName fn = file.file;
     if (fn.ext() == "ospsg")
       sg::loadOSPSG(renderer_ptr,fn.str());
     else {
       auto importerNode_ptr = sg::createNode(fn.name(), "Importer");
       auto &importerNode = *importerNode_ptr;
       importerNode["fileName"].setValue(fn.str());
-      auto &rotation = importerNode.childRecursive("rotation").createChild("animator", "Animator");
-      rotation.traverse("verify");
-      rotation.traverse("commit");
-      rotation.child("value1").setValue(ospcommon::vec3f{0.f,0.f,0.f});
-      rotation.child("value2").setValue(ospcommon::vec3f{0.f,2.f*3.14f,0.f});
-      animation.setChild("rotation", rotation.shared_from_this());
+      if (files.size() < 2 && importerNode.hasChildRecursive("rotation"))
+      {
+        auto &rotation = importerNode.childRecursive("rotation").createChild("animator", "Animator");
+        rotation.traverse("verify");
+        rotation.traverse("commit");
+        rotation.child("value1").setValue(ospcommon::vec3f{0.f,0.f,0.f});
+        rotation.child("value2").setValue(ospcommon::vec3f{0.f,2.f*3.14f,0.f});
+        animation.setChild("rotation", rotation.shared_from_this());
+      }
       world += importerNode_ptr;
     }
+  }
+  for (auto animatedFile : animatedFiles)
+  {
+    if (animatedFile.empty())
+      continue;
+    auto &transform = world.createChild("transform_"+animatedFile[0].file, "Transform");
+    transform["scale"].setValue(animatedFile[0].transform.scale);
+    transform["position"].setValue(animatedFile[0].transform.translate);
+    transform["rotation"].setValue(animatedFile[0].transform.rotation);
+    auto &selector = transform.createChild("selector_"+animatedFile[0].file, "Selector");
+    for (auto file : animatedFile)
+    {
+      FileName fn = file.file;
+      if (fn.ext() == "ospsg")
+        sg::loadOSPSG(renderer_ptr,fn.str());
+      else {
+        auto importerNode_ptr = sg::createNode(fn.name(), "Importer");
+        auto &importerNode = *importerNode_ptr;
+        importerNode["fileName"].setValue(fn.str());
+        selector += importerNode_ptr;
+      }
+    }
+    auto& anim_selector = selector["index"].createChild("anim_"+animatedFile[0].file, "Animator");
+    anim_selector.traverse("verify");
+    anim_selector.traverse("commit");
+    anim_selector["value2"].setValue(int(animatedFile.size()));
+    animation.setChild("anim_selector", anim_selector.shared_from_this());
   }
 
   parseCommandLineSG(ac, av, renderer);

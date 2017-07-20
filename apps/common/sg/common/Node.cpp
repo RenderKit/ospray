@@ -180,13 +180,18 @@ namespace ospray {
 
     void Node::setValue(SGVar val)
     {
+      bool modified = false;
       {
         std::lock_guard<std::mutex> lock{mutex};
         if (val != properties.value)
+        {
           properties.value = val;
+          modified = true;
+        }
       }
 
-      markAsModified();
+      if (modified)
+        markAsModified();
     }
 
     // Update detection interface /////////////////////////////////////////////
@@ -256,6 +261,32 @@ namespace ospray {
     Node& Node::operator[](const std::string &c) const
     {
       return child(c);
+    }
+
+    bool Node::hasChildRecursive(const std::string &name)
+    {
+      std::string lower=name;
+      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+      mutex.lock();
+      Node* n = this;
+      auto f = n->properties.children.find(lower);
+      if (f != n->properties.children.end()) {
+        mutex.unlock();
+        return true;
+      }
+      bool found = false;
+
+      for (auto &child : properties.children) {
+        mutex.unlock();
+        try {
+          found |= child.second->hasChildRecursive(name);
+        }
+        catch (const std::runtime_error &) {}
+        mutex.lock();
+      }
+
+      mutex.unlock();
+      return found;
     }
 
     Node& Node::childRecursive(const std::string &name)
