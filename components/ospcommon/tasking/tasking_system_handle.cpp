@@ -48,7 +48,7 @@ namespace ospcommon {
 #elif defined(OSPRAY_TASKING_OMP)
          if (numThreads > 0) omp_set_num_threads(numThreads);
 #elif defined(OSPRAY_TASKING_INTERNAL)
-         initTaskSystemInternal(numThreads < 0 ? -1 : numThreads);
+         detail::initTaskSystemInternal(numThreads < 0 ? -1 : numThreads);
 #endif
       }
 
