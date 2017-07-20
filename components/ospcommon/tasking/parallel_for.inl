@@ -23,7 +23,7 @@
 #elif defined(OSPRAY_TASKING_CILK)
 #  include <cilk/cilk.h>
 #elif defined(OSPRAY_TASKING_INTERNAL)
-#  include "ospcommon/tasking/TaskSys.h"
+#  include "TaskSys.h"
 #elif defined(OSPRAY_TASKING_LIBDISPATCH)
 #  include "dispatch/dispatch.h"
 #endif

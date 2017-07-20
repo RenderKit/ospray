@@ -150,6 +150,8 @@ ELSE()
   OSPRAY_CREATE_TEST(test_Any
     utility/Any.h
     utility/test_Any.cpp
+  LINK
+    ospray_common
   )
 
   ADD_TEST(NAME Any COMMAND test_Any)
@@ -159,6 +161,8 @@ ELSE()
   OSPRAY_CREATE_TEST(test_OnScopeExit
     utility/OnScopeExit.h
     utility/test_OnScopeExit.cpp
+  LINK
+    ospray_common
   )
 
   ADD_TEST(NAME OnScopeExit COMMAND test_OnScopeExit)
@@ -168,6 +172,8 @@ ELSE()
   OSPRAY_CREATE_TEST(test_TransactionalBuffer
     containers/TransactionalBuffer.h
     containers/test_TransactionalBuffer.cpp
+  LINK
+    ospray_common
   )
 
   ADD_TEST(NAME TransactionalBuffer COMMAND test_TransactionalBuffer)
@@ -176,7 +182,7 @@ ELSE()
   OSPRAY_CREATE_TEST(test_async
     tasking/test_async.cpp
   LINK
-    ${LINK_LIBS}
+    ospray_common
   )
 
   ADD_TEST(NAME async COMMAND test_async)
@@ -185,7 +191,7 @@ ELSE()
   OSPRAY_CREATE_TEST(test_parallel_for
     tasking/test_parallel_for.cpp
   LINK
-    ${LINK_LIBS}
+    ospray_common
   )
 
   ADD_TEST(NAME parallel_for COMMAND test_parallel_for)
@@ -194,7 +200,7 @@ ELSE()
   OSPRAY_CREATE_TEST(test_schedule
     tasking/test_schedule.cpp
   LINK
-    ${LINK_LIBS}
+    ospray_common
   )
 
   ADD_TEST(NAME schedule COMMAND test_schedule)
