@@ -154,7 +154,7 @@ ELSE()
 
   ADD_TEST(NAME Any COMMAND test_Any)
 
-  # OnScopeExit
+  # utility/OnScopeExit
 
   OSPRAY_CREATE_TEST(test_OnScopeExit
     utility/OnScopeExit.h
@@ -163,7 +163,7 @@ ELSE()
 
   ADD_TEST(NAME OnScopeExit COMMAND test_OnScopeExit)
 
-  # TransactionalBuffer
+  # containers/TransactionalBuffer
 
   OSPRAY_CREATE_TEST(test_TransactionalBuffer
     containers/TransactionalBuffer.h
@@ -171,4 +171,32 @@ ELSE()
   )
 
   ADD_TEST(NAME TransactionalBuffer COMMAND test_TransactionalBuffer)
+
+  # tasking/async
+  OSPRAY_CREATE_TEST(test_async
+    tasking/test_async.cpp
+  LINK
+    ${LINK_LIBS}
+  )
+
+  ADD_TEST(NAME async COMMAND test_async)
+
+  # tasking/parallel_for
+  OSPRAY_CREATE_TEST(test_parallel_for
+    tasking/test_parallel_for.cpp
+  LINK
+    ${LINK_LIBS}
+  )
+
+  ADD_TEST(NAME parallel_for COMMAND test_parallel_for)
+
+  # tasking/schedule
+  OSPRAY_CREATE_TEST(test_schedule
+    tasking/test_schedule.cpp
+  LINK
+    ${LINK_LIBS}
+  )
+
+  ADD_TEST(NAME schedule COMMAND test_schedule)
+
 ENDIF()
