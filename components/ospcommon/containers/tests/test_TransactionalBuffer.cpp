@@ -1,8 +1,8 @@
 #define CATCH_CONFIG_MAIN
-#include "../testing/catch.hpp"
+#include "../../testing/catch.hpp"
 
 #define private public
-#include "TransactionalBuffer.h"
+#include "../TransactionalBuffer.h"
 #undef private
 
 using ospcommon::TransactionalBuffer;

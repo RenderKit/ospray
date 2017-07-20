@@ -17,7 +17,7 @@
 #pragma once
 
 #include "../TypeTraits.h"
-#include "parallel_for.inl"
+#include "detail/parallel_for.inl"
 
 namespace ospcommon {
   namespace tasking {

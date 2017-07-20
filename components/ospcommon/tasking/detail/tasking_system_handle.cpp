@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "tasking_system_handle.h"
+#include "../tasking_system_handle.h"
 
 // tasking system internals
 #if defined(OSPRAY_TASKING_TBB)
@@ -29,8 +29,8 @@
 
 #include <thread>
 
-#include "../intrinsics.h"
-#include "../common.h"
+#include "../../intrinsics.h"
+#include "../../common.h"
 
 namespace ospcommon {
   namespace tasking {

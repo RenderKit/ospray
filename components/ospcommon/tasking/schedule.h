@@ -17,7 +17,7 @@
 #pragma once
 
 #include "../TypeTraits.h"
-#include "schedule.inl"
+#include "detail/schedule.inl"
 
 namespace ospcommon {
   namespace tasking {

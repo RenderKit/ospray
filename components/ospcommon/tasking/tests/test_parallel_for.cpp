@@ -1,6 +1,6 @@
 #define CATCH_CONFIG_MAIN
-#include "../testing/catch.hpp"
-#include "parallel_for.h"
+#include "../../testing/catch.hpp"
+#include "../parallel_for.h"
 
 #include <algorithm>
 #include <vector>

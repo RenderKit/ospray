@@ -1,6 +1,6 @@
 #define CATCH_CONFIG_MAIN
-#include "../testing/catch.hpp"
-#include "async.h"
+#include "../../testing/catch.hpp"
+#include "../async.h"
 
 using ospcommon::tasking::async;
 

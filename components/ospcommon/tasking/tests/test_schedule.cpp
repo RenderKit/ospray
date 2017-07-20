@@ -1,6 +1,6 @@
 #define CATCH_CONFIG_MAIN
-#include "../testing/catch.hpp"
-#include "schedule.h"
+#include "../../testing/catch.hpp"
+#include "../schedule.h"
 
 #include <atomic>
 #include <chrono>

@@ -16,7 +16,7 @@
 
 #include "TaskSys.h"
 //ospray
-#include "../platform.h"
+#include "../../platform.h"
 //stl
 #include <thread>
 #include <vector>
