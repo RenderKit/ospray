@@ -179,31 +179,33 @@ ELSE()
 
   ADD_TEST(NAME TransactionalBuffer COMMAND test_TransactionalBuffer)
 
-  # tasking/async
-  OSPRAY_CREATE_TEST(test_async
-    tasking/tests/test_async.cpp
-  LINK
-    ospray_common
-  )
+  IF(NOT WIN32)
+    # tasking/async
+    OSPRAY_CREATE_TEST(test_async
+      tasking/tests/test_async.cpp
+    LINK
+      ospray_common
+    )
 
-  ADD_TEST(NAME async COMMAND test_async)
+    ADD_TEST(NAME async COMMAND test_async)
 
-  # tasking/parallel_for
-  OSPRAY_CREATE_TEST(test_parallel_for
-    tasking/tests/test_parallel_for.cpp
-  LINK
-    ospray_common
-  )
+    # tasking/parallel_for
+    OSPRAY_CREATE_TEST(test_parallel_for
+      tasking/tests/test_parallel_for.cpp
+    LINK
+      ospray_common
+    )
 
-  ADD_TEST(NAME parallel_for COMMAND test_parallel_for)
+    ADD_TEST(NAME parallel_for COMMAND test_parallel_for)
 
-  # tasking/schedule
-  OSPRAY_CREATE_TEST(test_schedule
-    tasking/tests/test_schedule.cpp
-  LINK
-    ospray_common
-  )
+    # tasking/schedule
+    OSPRAY_CREATE_TEST(test_schedule
+      tasking/tests/test_schedule.cpp
+    LINK
+      ospray_common
+    )
 
-  ADD_TEST(NAME schedule COMMAND test_schedule)
+    ADD_TEST(NAME schedule COMMAND test_schedule)
+  ENDIF()
 
 ENDIF()
