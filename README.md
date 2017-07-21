@@ -1,9 +1,9 @@
 OSPRay
 ======
 
-This is release v1.3.1 of OSPRay. For changes and new features see the
-[changelog](CHANGELOG.md). Also visit http://www.ospray.org for more
-information.
+This is release v1.3.1 (devel) of OSPRay. For changes and new features
+see the [changelog](CHANGELOG.md). Also visit http://www.ospray.org for
+more information.
 
 OSPRay Overview
 ===============
@@ -1539,13 +1539,15 @@ parameters:
 : Parameters accepted by all cameras.
 
 The camera is placed and oriented in the world with `pos`, `dir` and
-`up`. The region of the camera sensor that is rendered to the image can
-be specified in normalized screen-space coordinates with `imageStart`
-(lower left corner) and `imageEnd` (upper right corner). This can be
-used, for example, to crop the image or to achieve asymmetrical view
-frusta. Note that values outside the default range of \[0–1\] are valid,
-which is useful to easily realize overscan or film gate, or to emulate a
-shifted sensor.
+`up`. OSPRay uses a right-handed coordinate system. The region of the
+camera sensor that is rendered to the image can be specified in
+normalized screen-space coordinates with `imageStart` (lower left
+corner) and `imageEnd` (upper right corner). This can be used, for
+example, to crop the image, to achieve asymmetrical view frusta, or to
+horizontally flip the image to view scenes which are specified in a
+left-handed coordinate system. Note that values outside the default
+range of \[0–1\] are valid, which is useful to easily realize overscan
+or film gate, or to emulate a shifted sensor.
 
 #### Perspective Camera
 
@@ -1943,7 +1945,7 @@ The first image `firstFrame.ppm` shows the result after one call to
 `ospRenderFrame` – jagged edges and noise in the shadow can be seen.
 Calling `ospRenderFrame` multiple times enables progressive refinement,
 resulting in antialiased edges and converged shadows, shown after ten
-frames in the second image `accumulatedFrames.png`.
+frames in the second image `accumulatedFrames.ppm`.
 
 ![First frame.](https://ospray.github.io/images/tutorial_firstframe.png)
 

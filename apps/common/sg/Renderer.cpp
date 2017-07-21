@@ -24,11 +24,11 @@ namespace ospray {
     Renderer::Renderer()
     {
       createChild("rendererType", "string", std::string("scivis"),
-                      NodeFlags::required |
-                      NodeFlags::valid_whitelist |
-                      NodeFlags::gui_combo,
-                      "scivis: standard whitted style ray tracer. "
-                      "pathtracer/pt: photo-realistic path tracer");
+                  NodeFlags::required |
+                  NodeFlags::valid_whitelist |
+                  NodeFlags::gui_combo,
+                  "scivis: standard whitted style ray tracer. "
+                  "pathtracer/pt: photo-realistic path tracer");
       child("rendererType").setWhiteList({std::string("scivis"),
                                           std::string("sv"),
                                           std::string("raytracer"),
@@ -40,10 +40,16 @@ namespace ospray {
                                           std::string("ao8"),
                                           std::string("ao16"),
                                           std::string("dvr"),
+                                          std::string("raycast"),
+                                          std::string("raycast_Ng"),
+                                          std::string("raycast_Ns"),
+                                          std::string("primID"),
+                                          std::string("geomID"),
+                                          std::string("instID"),
                                           std::string("pathtracer"),
                                           std::string("pt")});
       createChild("world",
-                      "World").setDocumentation("model containing scene objects");
+                  "World").setDocumentation("model containing scene objects");
       createChild("camera", "PerspectiveCamera");
       createChild("frameBuffer", "FrameBuffer");
       createChild("lights");
@@ -97,23 +103,25 @@ namespace ospray {
       createChild("aoTransparencyEnabled", "bool", true, NodeFlags::required);
     }
 
+    std::string Renderer::toString() const
+    {
+      return "ospray::sg::Renderer";
+    }
+
     void Renderer::traverse(RenderContext &ctx, const std::string& operation)
     {
-      if (operation == "render")
-      {
+      if (operation == "render") {
         preRender(ctx);
         postRender(ctx);
       }
-      else 
+      else
         Node::traverse(ctx,operation);
     }
 
     void Renderer::postRender(RenderContext &ctx)
     {
       auto fb = (OSPFrameBuffer)child("frameBuffer").valueAs<OSPObject>();
-      ospRenderFrame(fb,
-                     ospRenderer,
-                     OSP_FB_COLOR | OSP_FB_ACCUM);
+      ospRenderFrame(fb, ospRenderer, OSP_FB_COLOR | OSP_FB_ACCUM);
     }
 
     void Renderer::preRender(RenderContext& ctx)
@@ -126,7 +134,7 @@ namespace ospray {
       if (child("camera").hasChild("aspect") &&
           child("frameBuffer")["size"].lastModified() >
           child("camera")["aspect"].lastCommitted()) {
-        
+
         child("camera")["aspect"].setValue(
           child("frameBuffer")["size"].valueAs<vec2i>().x /
           float(child("frameBuffer")["size"].valueAs<vec2i>().y)
@@ -141,7 +149,7 @@ namespace ospray {
         ospCommit(ospRenderer);
         setValue((OSPObject)ospRenderer);
       }
-      ctx.ospRenderer = ospRenderer;  
+      ctx.ospRenderer = ospRenderer;
     }
 
     void Renderer::postCommit(RenderContext &ctx)
@@ -152,8 +160,7 @@ namespace ospray {
           || child("shadowsEnabled").lastModified() > frameMTime
           || child("aoSamples").lastModified() > frameMTime
           || child("spp").lastModified() > frameMTime
-          || child("world").childrenLastModified() > frameMTime
-          )
+          || child("world").childrenLastModified() > frameMTime)
       {
         ospFrameBufferClear(
           (OSPFrameBuffer)child("frameBuffer").valueAs<OSPObject>(),

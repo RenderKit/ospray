@@ -8,29 +8,9 @@
 #include "generateSciVis.h"
 
 namespace gensv {
-  //TODO: factor this into a reusable piece inside of ospcommon!!!!!!
-  // helper function to write the rendered image as PPM file
-  void writePPM(const std::string &fileName,
-                const int sizeX, const int sizeY,
-                const uint32_t *pixel)
-  {
-    FILE *file = fopen(fileName.c_str(), "wb");
-    fprintf(file, "P6\n%i %i\n255\n", sizeX, sizeY);
-    unsigned char *out = (unsigned char *)alloca(3*sizeX);
-    for (int y = 0; y < sizeY; y++) {
-      auto *in = (const unsigned char *)&pixel[(sizeY-1-y)*sizeX];
-      for (int x = 0; x < sizeX; x++) {
-        out[3*x + 0] = in[4*x + 0];
-        out[3*x + 1] = in[4*x + 1];
-        out[3*x + 2] = in[4*x + 2];
-      }
-      fwrite(out, 3*sizeX, sizeof(char), file);
-    }
-    fprintf(file, "\n");
-    fclose(file);
-  }
 
-  bool computeDivisor(int x, int &divisor) {
+  bool computeDivisor(int x, int &divisor)
+  {
     int upperBound = std::sqrt(x);
     for (int i = 2; i <= upperBound; ++i) {
       if (x % i == 0) {
@@ -217,7 +197,8 @@ namespace gensv {
     return vol;
   }
 
-  size_t sizeForDtype(const std::string &dtype) {
+  size_t sizeForDtype(const std::string &dtype)
+  {
     if (dtype == "uchar" || dtype == "char") {
       return 1;
     }
@@ -278,5 +259,5 @@ namespace gensv {
     return vol;
   }
 
-}
+} // ::gensv
 

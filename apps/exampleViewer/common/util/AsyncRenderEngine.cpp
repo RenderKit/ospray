@@ -39,8 +39,14 @@ namespace ospray {
 
   void AsyncRenderEngine::scheduleObjectCommit(const cpp::ManagedObject &obj)
   {
-    std::lock_guard<std::mutex> lock{objMutex};
-    objsToCommit.push_back(obj.object()); 
+    OSPObject h = obj.object();
+    scheduleFunction([=](cpp::Renderer&) { ospCommit(h); });
+  }
+
+  void AsyncRenderEngine::scheduleFunction(ScheduledFunction f)
+  {
+    std::lock_guard<std::mutex> lock{scheduleFcnMutex};
+    scheduledFunctions.push_back(f);
   }
 
   void AsyncRenderEngine::start(int numThreads)
@@ -106,21 +112,15 @@ namespace ospray {
     }
   }
 
-  bool AsyncRenderEngine::checkForObjCommits()
+  bool AsyncRenderEngine::checkForScheduledFunctions()
   {
-    bool commitOccurred = false;
-
-    if (!objsToCommit.empty()) {
-      std::lock_guard<std::mutex> lock{objMutex};
-
-      for (auto obj : objsToCommit)
-        ospCommit(obj);
-
-      objsToCommit.clear();
-      commitOccurred = true;
+    std::lock_guard<std::mutex> lock{scheduleFcnMutex};
+    const bool ranFcns = !scheduledFunctions.empty();
+    for (auto &f: scheduledFunctions) {
+      f(renderer.ref());
     }
-
-    return commitOccurred;
+    scheduledFunctions.clear();
+    return ranFcns;
   }
 
   bool AsyncRenderEngine::checkForFbResize()
@@ -152,7 +152,7 @@ namespace ospray {
       bool resetAccum = false;
       resetAccum |= renderer.update();
       resetAccum |= checkForFbResize();
-      resetAccum |= checkForObjCommits();
+      resetAccum |= checkForScheduledFunctions();
 
       if (resetAccum) {
         frameBuffer.clear(OSP_FB_ACCUM);

@@ -14,6 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+// ospcommon
+#include "ospcommon/utility/SaveImage.h"
 // mpiCommon
 #include "mpiCommon/MPICommon.h"
 // public-ospray
@@ -24,8 +26,6 @@
 #include "ospray/ospray_cpp/Renderer.h"
 #include "ospray/ospray_cpp/TransferFunction.h"
 #include "ospray/ospray_cpp/Volume.h"
-// ospray apps
-#include "common/commandline/CameraParser.h"
 #include "widgets/imguiViewer.h"
 #include <tfn_lib/tfn_lib.h>
 // stl
@@ -71,17 +71,27 @@ namespace ospDDLoader {
   int   logLevel          = 0;
   FileName transferFcn;
 
+  vec3f up;
+  vec3f pos;
+  vec3f gaze;
+  float fovy = 60.f;
+  bool customView = false;
+
   void setupCamera(ospray::cpp::Camera &camera, box3f worldBounds)
   {
-    vec3f center = ospcommon::center(worldBounds);
-    vec3f diag   = worldBounds.size();
-    diag         = max(diag,vec3f(0.3f*length(diag)));
-    vec3f from   = center - .85f*vec3f(-.6*diag.x,-1.2f*diag.y,.8f*diag.z);
-    vec3f dir    = center - from;
+    if (!customView) {
+      vec3f diag = worldBounds.size();
+      diag       = max(diag,vec3f(0.3f*length(diag)));
 
-    camera.set("pos", from);
-    camera.set("dir", dir);
-    camera.set("up", vec3f(0, 1, 0));
+      gaze = ospcommon::center(worldBounds);
+
+      pos = gaze - .75f*vec3f(-.6*diag.x,-1.2f*diag.y,.8f*diag.z);
+      up  = vec3f(0.f, 1.f, 0.f);
+    }
+
+    camera.set("pos", pos);
+    camera.set("dir", gaze - pos);
+    camera.set("up",  up );
     camera.set("aspect", static_cast<float>(fbSize.x)/fbSize.y);
 
     camera.commit();
@@ -112,6 +122,23 @@ namespace ospDDLoader {
         valueRange.y = std::atof(av[++i]);
       } else if (arg == "-tfn") {
         transferFcn = FileName(av[++i]);
+      } else if (arg == "-vp" || arg == "--eye") {
+        pos.x = atof(av[++i]);
+        pos.y = atof(av[++i]);
+        pos.z = atof(av[++i]);
+        customView = true;
+      } else if (arg == "-vu" || arg == "--up") {
+        up.x = atof(av[++i]);
+        up.y = atof(av[++i]);
+        up.z = atof(av[++i]);
+        customView = true;
+      } else if (arg == "-vi" || arg == "--gaze") {
+        gaze.x = atof(av[++i]);
+        gaze.y = atof(av[++i]);
+        gaze.z = atof(av[++i]);
+        customView = true;
+      } else if (arg == "-fv" || arg == "--fovy") {
+        fovy = atof(av[++i]);
       }
     }
   }
@@ -216,9 +243,7 @@ namespace ospDDLoader {
     model.set("regions", regionData);
     model.commit();
 
-    DefaultCameraParser cameraClParser;
-    cameraClParser.parse(ac, av);
-    auto camera = cameraClParser.camera();
+    auto camera = ospray::cpp::Camera("perspective");
     setupCamera(camera, worldBounds);
 
     // In the distributed mode we use the 'mpi_raycast' renderer which
@@ -253,8 +278,7 @@ namespace ospDDLoader {
     // the tiles which they composite.
     if (mpicommon::IamTheMaster()) {
       auto *lfb = (uint32_t*)fb.map(OSP_FB_COLOR);
-      gensv::writePPM("ddLoaderTest.ppm", fbSize.x,
-          fbSize.y, lfb);
+      utility::writePPM("ddLoaderTest.ppm", fbSize.x, fbSize.y, lfb);
       fb.unmap(lfb);
       std::cout << "\noutput: 'ddLoaderTest.ppm'" << std::endl;
       std::cout << "\nrendered " << numFrames << " frames at an avg rate of "

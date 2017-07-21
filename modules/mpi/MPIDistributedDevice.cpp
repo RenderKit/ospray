@@ -44,7 +44,15 @@ namespace ospray {
     // Helper functions ///////////////////////////////////////////////////////
 
     template <typename OSPRAY_TYPE, typename API_TYPE>
-    inline API_TYPE createOSPRayObjectWithHandle(const char *type)
+    inline API_TYPE createLocalObject(const char *type)
+    {
+      auto *instance = OSPRAY_TYPE::createInstance(type);
+      instance->refInc();
+      return (API_TYPE)instance;
+    }
+
+    template <typename OSPRAY_TYPE, typename API_TYPE>
+    inline API_TYPE createDistributedObject(const char *type)
     {
       auto *instance = OSPRAY_TYPE::createInstance(type);
       instance->refInc();
@@ -56,7 +64,7 @@ namespace ospray {
     }
 
     template <typename OSPRAY_TYPE>
-    inline OSPRAY_TYPE& objectFromAPIHandle(OSPObject obj)
+    inline OSPRAY_TYPE& lookupDistributedObject(OSPObject obj)
     {
       auto &handle = reinterpret_cast<ObjectHandle&>(obj);
       auto *object = (OSPRAY_TYPE*)handle.lookup();
@@ -65,6 +73,17 @@ namespace ospray {
         throw std::runtime_error("#dmpi: ObjectHandle doesn't exist!");
 
       return *object;
+    }
+
+    template <typename OSPRAY_TYPE>
+    inline OSPRAY_TYPE* lookupObject(OSPObject obj)
+    {
+      auto &handle = reinterpret_cast<ObjectHandle&>(obj);
+      if (handle.defined()) {
+        return (OSPRAY_TYPE*)handle.lookup();
+      } else {
+        return (OSPRAY_TYPE*)obj;
+      }
     }
 
     static void embreeErrorFunc(const RTCError code, const char* str)
@@ -77,10 +96,12 @@ namespace ospray {
 
     MPIDistributedDevice::~MPIDistributedDevice()
     {
-      try {
-        MPI_CALL(Finalize());
-      } catch (...) {
-        //TODO: anything to do here? try-catch added to silence a warning...
+      if (shouldFinalizeMPI) {
+        try {
+          MPI_CALL(Finalize());
+        } catch (...) {
+          //TODO: anything to do here? try-catch added to silence a warning...
+        }
       }
     }
 
@@ -88,9 +109,9 @@ namespace ospray {
     {
       if (!initialized) {
         int _ac = 1;
-        const char *_av[] = {"ospray_mpi_worker"};
+        const char *_av[] = {"ospray_mpi_distributed_device"};
 
-        mpicommon::init(&_ac, _av);
+        shouldFinalizeMPI = mpicommon::init(&_ac, _av);
 
         embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
 
@@ -153,7 +174,7 @@ namespace ospray {
       if (!mpicommon::IamTheMaster())
         throw std::runtime_error("Can only map framebuffer on the master!");
 
-      auto &fb = objectFromAPIHandle<FrameBuffer>(_fb);
+      auto &fb = lookupDistributedObject<FrameBuffer>(_fb);
 
       switch (channel) {
       case OSP_FB_COLOR: return fb.mapColorBuffer();
@@ -165,14 +186,14 @@ namespace ospray {
     void MPIDistributedDevice::frameBufferUnmap(const void *mapped,
                                                 OSPFrameBuffer _fb)
     {
-      auto &fb = objectFromAPIHandle<FrameBuffer>(_fb);
+      auto &fb = lookupDistributedObject<FrameBuffer>(_fb);
       fb.unmap(mapped);
     }
 
     void MPIDistributedDevice::frameBufferClear(OSPFrameBuffer _fb,
                                                 const uint32 fbChannelFlags)
     {
-      auto &fb = objectFromAPIHandle<FrameBuffer>(_fb);
+      auto &fb = lookupDistributedObject<FrameBuffer>(_fb);
       fb.clear(fbChannelFlags);
     }
 
@@ -189,67 +210,62 @@ namespace ospray {
 
     void MPIDistributedDevice::commit(OSPObject _object)
     {
-      auto &object = objectFromAPIHandle<ManagedObject>(_object);
-      object.commit();
+      auto *object = lookupObject<ManagedObject>(_object);
+      object->commit();
     }
 
     void MPIDistributedDevice::addGeometry(OSPModel _model,
                                            OSPGeometry _geometry)
     {
-      auto &model = objectFromAPIHandle<Model>(_model);
-      auto &geom  = objectFromAPIHandle<Geometry>(_geometry);
+      auto &model = lookupDistributedObject<Model>(_model);
+      auto *geom  = lookupObject<Geometry>(_geometry);
 
-      model.geometry.push_back(&geom);
+      model.geometry.push_back(geom);
     }
 
     void MPIDistributedDevice::addVolume(OSPModel _model, OSPVolume _volume)
     {
-      auto &model  = objectFromAPIHandle<Model>(_model);
-      auto &volume = objectFromAPIHandle<Volume>(_volume);
+      auto &model  = lookupDistributedObject<Model>(_model);
+      auto *volume = lookupObject<Volume>(_volume);
 
-      model.volume.push_back(&volume);
+      model.volume.push_back(volume);
     }
 
     OSPData MPIDistributedDevice::newData(size_t nitems, OSPDataType format,
                                           void *init, int flags)
     {
-      ObjectHandle handle;
-
       auto *instance = new Data(nitems, format, init, flags);
       instance->refInc();
-
-      handle.assign(instance);
-
-      return (OSPData)(int64)handle;
+      return (OSPData)instance;
     }
 
     void MPIDistributedDevice::setVoidPtr(OSPObject _object,
                                           const char *bufName,
                                           void *v)
     {
-      auto &object = objectFromAPIHandle<ManagedObject>(_object);
-      object.findParam(bufName, true)->set(v);
+      auto *object = lookupObject<ManagedObject>(_object);
+      object->findParam(bufName, true)->set(v);
     }
 
     void MPIDistributedDevice::removeParam(OSPObject _object, const char *name)
     {
-      auto &object = objectFromAPIHandle<ManagedObject>(_object);
-      object.removeParam(name);
+      auto *object = lookupObject<ManagedObject>(_object);
+      object->removeParam(name);
     }
 
     int MPIDistributedDevice::setRegion(OSPVolume _volume, const void *source,
                                         const vec3i &index, const vec3i &count)
     {
-      auto &volume = objectFromAPIHandle<Volume>(_volume);
-      return volume.setRegion(source, index, count);
+      auto *volume = (Volume*)_volume;
+      return volume->setRegion(source, index, count);
     }
 
     void MPIDistributedDevice::setString(OSPObject _object,
                                          const char *bufName,
                                          const char *s)
     {
-      auto &object = objectFromAPIHandle<ManagedObject>(_object);
-      object.findParam(bufName, true)->set(s);
+      auto *object = lookupObject<ManagedObject>(_object);
+      object->findParam(bufName, true)->set(s);
     }
 
     int MPIDistributedDevice::loadModule(const char *name)
@@ -261,97 +277,97 @@ namespace ospray {
                                         const char *bufName,
                                         const float f)
     {
-      auto &object = objectFromAPIHandle<ManagedObject>(_object);
-      object.findParam(bufName, true)->set(f);
+      auto *object = lookupObject<ManagedObject>(_object);
+      object->findParam(bufName, true)->set(f);
     }
 
     void MPIDistributedDevice::setInt(OSPObject _object,
                                       const char *bufName,
                                       const int i)
     {
-      auto &object = objectFromAPIHandle<ManagedObject>(_object);
-      object.findParam(bufName, true)->set(i);
+      auto *object = lookupObject<ManagedObject>(_object);
+      object->findParam(bufName, true)->set(i);
     }
 
     void MPIDistributedDevice::setVec2f(OSPObject _object,
                                         const char *bufName,
                                         const vec2f &v)
     {
-      auto &object = objectFromAPIHandle<ManagedObject>(_object);
-      object.findParam(bufName, true)->set(v);
+      auto *object = lookupObject<ManagedObject>(_object);
+      object->findParam(bufName, true)->set(v);
     }
 
     void MPIDistributedDevice::setVec3f(OSPObject _object,
                                         const char *bufName,
                                         const vec3f &v)
     {
-      auto &object = objectFromAPIHandle<ManagedObject>(_object);
-      object.findParam(bufName, true)->set(v);
+      auto *object = lookupObject<ManagedObject>(_object);
+      object->findParam(bufName, true)->set(v);
     }
 
     void MPIDistributedDevice::setVec4f(OSPObject _object,
                                         const char *bufName,
                                         const vec4f &v)
     {
-      auto &object = objectFromAPIHandle<ManagedObject>(_object);
-      object.findParam(bufName, true)->set(v);
+      auto *object = lookupObject<ManagedObject>(_object);
+      object->findParam(bufName, true)->set(v);
     }
 
     void MPIDistributedDevice::setVec2i(OSPObject _object,
                                         const char *bufName,
                                         const vec2i &v)
     {
-      auto &object = objectFromAPIHandle<ManagedObject>(_object);
-      object.findParam(bufName, true)->set(v);
+      auto *object = lookupObject<ManagedObject>(_object);
+      object->findParam(bufName, true)->set(v);
     }
 
     void MPIDistributedDevice::setVec3i(OSPObject _object,
                                         const char *bufName,
                                         const vec3i &v)
     {
-      auto &object = objectFromAPIHandle<ManagedObject>(_object);
-      object.findParam(bufName, true)->set(v);
+      auto *object = lookupObject<ManagedObject>(_object);
+      object->findParam(bufName, true)->set(v);
     }
 
     void MPIDistributedDevice::setObject(OSPObject _object,
                                          const char *bufName,
                                          OSPObject _value)
     {
-      auto &object = objectFromAPIHandle<ManagedObject>(_object);
-      auto &value  = objectFromAPIHandle<ManagedObject>(_value);
-      object.set(bufName, &value);
+      auto *object = lookupObject<ManagedObject>(_object);
+      auto *value  = lookupObject<ManagedObject>(_value);
+      object->set(bufName, value);
     }
 
     OSPPixelOp MPIDistributedDevice::newPixelOp(const char *type)
     {
-      return createOSPRayObjectWithHandle<PixelOp, OSPPixelOp>(type);
+      return createDistributedObject<PixelOp, OSPPixelOp>(type);
     }
 
     void MPIDistributedDevice::setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op)
     {
-      auto &fb = objectFromAPIHandle<FrameBuffer>(_fb);
-      auto &op = objectFromAPIHandle<PixelOp>(_op);
+      auto &fb = lookupDistributedObject<FrameBuffer>(_fb);
+      auto &op = lookupDistributedObject<PixelOp>(_op);
       fb.pixelOp = op.createInstance(&fb, fb.pixelOp.ptr);
     }
 
     OSPRenderer MPIDistributedDevice::newRenderer(const char *type)
     {
-      return createOSPRayObjectWithHandle<Renderer, OSPRenderer>(type);
+      return createDistributedObject<Renderer, OSPRenderer>(type);
     }
 
     OSPCamera MPIDistributedDevice::newCamera(const char *type)
     {
-      return createOSPRayObjectWithHandle<Camera, OSPCamera>(type);
+      return createLocalObject<Camera, OSPCamera>(type);
     }
 
     OSPVolume MPIDistributedDevice::newVolume(const char *type)
     {
-      return createOSPRayObjectWithHandle<Volume, OSPVolume>(type);
+      return createLocalObject<Volume, OSPVolume>(type);
     }
 
     OSPGeometry MPIDistributedDevice::newGeometry(const char *type)
     {
-      return createOSPRayObjectWithHandle<Geometry, OSPGeometry>(type);
+      return createLocalObject<Geometry, OSPGeometry>(type);
     }
 
     OSPMaterial MPIDistributedDevice::newMaterial(OSPRenderer _renderer,
@@ -363,25 +379,21 @@ namespace ospray {
     OSPTransferFunction
     MPIDistributedDevice::newTransferFunction(const char *type)
     {
-      return createOSPRayObjectWithHandle<TransferFunction,
-                                          OSPTransferFunction>(type);
+      return createLocalObject<TransferFunction,
+                               OSPTransferFunction>(type);
     }
 
     OSPLight MPIDistributedDevice::newLight(OSPRenderer _renderer,
                                             const char *type)
     {
-      auto &renderer = objectFromAPIHandle<Renderer>(_renderer);
+      auto &renderer = lookupDistributedObject<Renderer>(_renderer);
       auto *light    = renderer.createLight(type);
 
       if (light == nullptr)
         light = Light::createLight(type);
 
       if (light) {
-        ObjectHandle handle;
-
-        handle.assign(light);
-
-        return (OSPLight)(int64)handle;
+        return (OSPLight)light;
       } else {
         return nullptr;
       }
@@ -390,32 +402,32 @@ namespace ospray {
     void MPIDistributedDevice::removeGeometry(OSPModel _model,
                                               OSPGeometry _geometry)
     {
-      auto &model = objectFromAPIHandle<Model>(_model);
-      auto &geom  = objectFromAPIHandle<Geometry>(_geometry);
+      auto &model = lookupDistributedObject<Model>(_model);
+      auto *geom  = lookupObject<Geometry>(_geometry);
 
       //TODO: confirm this works?
       model.geometry.erase(std::remove(model.geometry.begin(),
                                        model.geometry.end(),
-                                       Ref<Geometry>(&geom)));
+                                       Ref<Geometry>(geom)));
     }
 
     void MPIDistributedDevice::removeVolume(OSPModel _model, OSPVolume _volume)
     {
-      auto &model  = objectFromAPIHandle<Model>(_model);
-      auto &volume = objectFromAPIHandle<Volume>(_volume);
+      auto &model  = lookupDistributedObject<Model>(_model);
+      auto *volume = lookupObject<Volume>(_volume);
 
       //TODO: confirm this works?
       model.volume.erase(std::remove(model.volume.begin(),
                                      model.volume.end(),
-                                     Ref<Volume>(&volume)));
+                                     Ref<Volume>(volume)));
     }
 
     float MPIDistributedDevice::renderFrame(OSPFrameBuffer _fb,
                                             OSPRenderer _renderer,
                                             const uint32 fbChannelFlags)
     {
-      auto &fb       = objectFromAPIHandle<FrameBuffer>(_fb);
-      auto &renderer = objectFromAPIHandle<Renderer>(_renderer);
+      auto &fb       = lookupDistributedObject<FrameBuffer>(_fb);
+      auto &renderer = lookupDistributedObject<Renderer>(_renderer);
       auto result    = renderer.renderFrame(&fb, fbChannelFlags);
       mpicommon::world.barrier();
       return result;
@@ -424,8 +436,8 @@ namespace ospray {
     void MPIDistributedDevice::release(OSPObject _obj)
     {
       if (!_obj) return;
-      auto &obj = objectFromAPIHandle<ManagedObject>(_obj);
-      obj.refDec();
+      auto *obj = lookupObject<ManagedObject>(_obj);
+      obj->refDec();
     }
 
     void MPIDistributedDevice::setMaterial(OSPGeometry _geometry,

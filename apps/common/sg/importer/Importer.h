@@ -30,7 +30,7 @@ namespace ospray {
       fileName="/tmp/myFile.xyz"
       args={ {"format","xyz"}, {"whatEver",""}, {"radius",".3"} }
     */
-    struct FormatURL 
+    struct FormatURL
     {
       /*! do the actual parsing, and return a formatURL */
       FormatURL(const std::string &input);
@@ -73,15 +73,66 @@ namespace ospray {
     /*! prototype for any scene graph importer function */
     using ImporterFunction = void (*)(const FileName &fileName,
                                       sg::ImportState &importerState);
-    
+
     /*! declare an importer function for a given file extension */
+    OSPSG_INTERFACE
     void declareImporterForFileExtension(const std::string &fileExtension,
                                          ImporterFunction importer);
 
-    /*! import a given file. throws a sg::RuntimeError if this could not be done */
-    void importFile(std::shared_ptr<sg::World> &world, const FileName &fileName);
+    /*! import a given file. throws a sg::RuntimeError if this could
+     *  not be done */
+    OSPSG_INTERFACE
+    void importFile(std::shared_ptr<sg::World> &world,
+                    const FileName &fileName);
+
+    /*! create a world from an already existing OSPModel */
+    OSPSG_INTERFACE
+    void importOSPModel(Node &world, OSPModel model,
+                        const ospcommon::box3f &bbox);
+
+    /*! import an OBJ wavefront model, and add its contents to the given
+        world */
+    OSPSG_INTERFACE void importOBJ(const std::shared_ptr<Node> &world,
+                                   const FileName &fileName);
+
+    /*! import an OSX streamlines model, and add its contents to the given
+        world */
+    OSPSG_INTERFACE void importOSX(const std::shared_ptr<Node> &world,
+                                   const FileName &fileName);
+
+    /*! import an PLY model, and add its contents to the given world */
+    OSPSG_INTERFACE void importPLY(std::shared_ptr<Node> &world,
+                                   const FileName &fileName);
+
+    /*! import an X3D-format model, and add its contents to the given world */
+    OSPSG_INTERFACE void importX3D(const std::shared_ptr<Node> &world,
+                                   const FileName &fileName);
+
+    OSPSG_INTERFACE void importXYZ(const std::shared_ptr<Node> &world,
+                                   const FileName &fileName);
+
+    OSPSG_INTERFACE
+    std::shared_ptr<sg::Node> loadOSP(const std::string &fileName);
+
+    OSPSG_INTERFACE
+    void loadOSP(std::shared_ptr<sg::Node> world, const std::string &fileName);
+
+    OSPSG_INTERFACE
+    std::shared_ptr<sg::Node> readXML(const std::string &fileName);
+
+    OSPSG_INTERFACE
+    void importRIVL(std::shared_ptr<Node> world, const std::string &fileName);
+
+    OSPSG_INTERFACE
+    std::shared_ptr<sg::Node> loadOSG(const std::string &fileName);
+
+    OSPSG_INTERFACE
+    void loadOSPSG(const std::shared_ptr<Node> &world,
+                   const std::string &fileName);
+
+    OSPSG_INTERFACE
+    void writeOSPSG(const std::shared_ptr<Node> &world,
+                    const std::string &fileName);
 
   } // ::ospray::sg
 } // ::ospray
-
-

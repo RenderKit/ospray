@@ -807,15 +807,6 @@ namespace ospray {
       return (OSPTexture2D)(int64)handle;
     }
 
-    void MPIOffloadDevice::sampleVolume(float **results,
-                                        OSPVolume volume,
-                                        const vec3f *worldCoordinates,
-                                        const size_t &count)
-    {
-      UNUSED(results, volume, worldCoordinates, count);
-      NOT_IMPLEMENTED;
-    }
-
     int MPIOffloadDevice::getString(OSPObject _object,
                                     const char *name,
                                     char **value)
@@ -829,6 +820,14 @@ namespace ospray {
         return true;
       }
       return false;
+    }
+
+    OSPPickResult MPIOffloadDevice::pick(OSPRenderer renderer,
+                                         const vec2f &screenPos) 
+    { 
+      work::Pick work(renderer, screenPos);
+      processWork(work, true);
+      return work.pickResult;
     }
 
     void MPIOffloadDevice::processWork(work::Work &work, bool flushWriteStream)

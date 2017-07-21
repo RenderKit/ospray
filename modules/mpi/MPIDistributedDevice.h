@@ -205,6 +205,7 @@ namespace ospray {
     private:
 
       bool initialized {false};
+      bool shouldFinalizeMPI {false};
       int  masterRank  {0};
     };
 

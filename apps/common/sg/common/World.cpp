@@ -20,100 +20,71 @@ namespace ospray {
   namespace sg {
 
     Model::Model()
-      : Renderable()
-    { 
-      setValue((OSPObject)nullptr);
+    {
+      setValue((OSPObject)ospNewModel());
+    }
+
+    std::string Model::toString() const
+    {
+      return "ospray::sg::Model";
     }
 
     void Model::traverse(RenderContext &ctx, const std::string& operation)
     {
-      if (operation == "render")
-      {
+      if (operation == "render") {
         preRender(ctx);
         postRender(ctx);
       }
-      else 
+      else
         Node::traverse(ctx,operation);
     }
 
     void Model::preCommit(RenderContext &ctx)
     {
-      oldModel = ctx.currentOSPModel;
-
-      if (ospModel)
-        ospRelease(ospModel);
-      ospModel = ospNewModel();
-      setValue((OSPObject)ospModel);
-      ctx.currentOSPModel = ospModel;
+      auto model = ospModel();
+      if (model)
+        ospRelease(model);
+      model = ospNewModel();
+      setValue((OSPObject)model);
+      stashedModel = ctx.currentOSPModel;
+      ctx.currentOSPModel = model;
     }
 
     void Model::postCommit(RenderContext &ctx)
     {
-        ctx.currentOSPModel = ospModel;
+      auto model = ospModel();
+      ctx.currentOSPModel = model;
 
-        //instancegroup caches render calls in commit.  
-        for (auto child : properties.children)
-          child.second->traverse(ctx, "render");
+      //instancegroup caches render calls in commit.
+      for (auto child : properties.children)
+        child.second->traverse(ctx, "render");
 
-        ospCommit(ospModel);
-
-        ctx.currentOSPModel = oldModel;
+      ospCommit(model);
+      ctx.currentOSPModel = stashedModel;
       child("bounds").setValue(computeBounds());
     }
 
-    World::World()
-      : Renderable()
+    OSPModel Model::ospModel()
     {
+      return (OSPModel)valueAs<OSPObject>();
     }
 
     std::string World::toString() const
     {
-      return "ospray::viewer::sg::World";
-    }
-
-    void World::traverse(RenderContext &ctx, const std::string& operation)
-    {
-      if (operation == "render")
-      {
-        preRender(ctx);
-        postRender(ctx);
-      }
-      else 
-        Node::traverse(ctx,operation);
+      return "ospray::sg::World";
     }
 
     void World::preCommit(RenderContext &ctx)
     {
-      oldWorld = ctx.world;
-      ctx.world = std::static_pointer_cast<sg::World>(shared_from_this());
-      if (ospModel)
-        ospRelease(ospModel);
-      ospModel = ospNewModel();
-      ospCommit(ospModel);
-      setValue((OSPObject)ospModel);
-      oldModel = ctx.currentOSPModel;
-      ctx.currentOSPModel = ospModel;
+      stashedWorld = ctx.world;
+      ctx.world = this->nodeAs<sg::World>();
+      Model::preCommit(ctx);
     }
 
     void World::postCommit(RenderContext &ctx)
     {
-      //cache render operation
-      for (auto child : properties.children)
-        child.second->traverse(ctx, "render");  
-      ospCommit(ospModel);
-      ctx.world = oldWorld;
-      ctx.currentOSPModel = oldModel;
-      child("bounds").setValue(computeBounds());
-    }
-
-    void World::preRender(RenderContext &ctx)
-    {
-      // renders are cached in commit
-    }
-
-    void World::postRender(RenderContext &ctx)
-    {
-      // renders are cached in commit
+      Model::postCommit(ctx);
+      ctx.world = stashedWorld;
     }
 
     Instance::Instance()
@@ -122,16 +93,16 @@ namespace ospray {
       createChild("visible", "bool", true);
       createChild("position", "vec3f");
       createChild("rotation", "vec3f", vec3f(0),
-                     NodeFlags::required      |
-                     NodeFlags::valid_min_max |
-                     NodeFlags::gui_slider).setMinMax(-vec3f(2*3.15f),
-                                                      vec3f(2*3.15f));
+                  NodeFlags::required      |
+                  NodeFlags::valid_min_max |
+                  NodeFlags::gui_slider).setMinMax(-vec3f(2*3.15f),
+                                                    vec3f(2*3.15f));
       createChild("scale", "vec3f", vec3f(1.f));
       createChild("model", "Model");
     }
 
         /*! \brief return bounding box in world coordinates.
-      
+
       This function can be used by the viewer(s) for calibrating
       camera motion, setting default camera position, etc. Nodes
       for which that does not apply can simpy return
@@ -157,12 +128,11 @@ namespace ospray {
 
     void Instance::traverse(RenderContext &ctx, const std::string& operation)
     {
-      if (instanced && operation == "render")
-      {
+      if (instanced && operation == "render") {
         preRender(ctx);
         postRender(ctx);
       }
-      else 
+      else
         Node::traverse(ctx,operation);
     }
 
@@ -201,9 +171,9 @@ namespace ospray {
     void Instance::postRender(RenderContext &ctx)
     {
       if (instanced && child("visible").value() == true
-        && ctx.world && ctx.world->ospModel && ospInstance)
+        && ctx.world && ctx.world->ospModel() && ospInstance)
       {
-        ospAddGeometry(ctx.world->ospModel,ospInstance);
+        ospAddGeometry(ctx.world->ospModel(), ospInstance);
       }
       ctx.currentTransform = oldTransform;
     }
@@ -230,8 +200,7 @@ namespace ospray {
         ospInstance = nullptr;
 
         OSPModel model = (OSPModel)child("model").valueAs<OSPObject>();
-        if (model)
-        {
+        if (model) {
           ospInstance = ospNewInstance(model,(osp::affine3f&)worldTransform);
           ospCommit(ospInstance);
         }

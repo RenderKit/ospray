@@ -132,7 +132,7 @@ namespace mpicommon {
     return comm != MPI_COMM_NULL && rank >= 0;
   }
 
-  void init(int *ac, const char **av)
+  bool init(int *ac, const char **av)
   {
     int initialized = false;
     MPI_CALL(Initialized(&initialized));
@@ -146,21 +146,12 @@ namespace mpicommon {
       /* MPI was already initialized by the app that called us! */
       MPI_Query_thread(&provided);
     }
-
-    int rank;
-    MPI_CALL(Comm_rank(MPI_COMM_WORLD,&rank));
-    switch(provided) {
-    case MPI_THREAD_MULTIPLE:
-      mpiIsThreaded = true;
-      break;
-    default:
-      mpiIsThreaded = false;
-      break;
-    }
+    mpiIsThreaded = provided == MPI_THREAD_MULTIPLE;
 
     world.comm = MPI_COMM_WORLD;
     MPI_CALL(Comm_rank(MPI_COMM_WORLD,&world.rank));
     MPI_CALL(Comm_size(MPI_COMM_WORLD,&world.size));
+    return !initialized;
   }
 
 } // ::mpicommon

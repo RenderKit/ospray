@@ -19,9 +19,6 @@
 #include <atomic>
 #include <mutex>
 
-// mini scene graph for loading the model
-#include "common/miniSG/miniSG.h"
-
 #include <ospray/ospray_cpp/Camera.h>
 #include <ospray/ospray_cpp/Model.h>
 #include <ospray/ospray_cpp/Renderer.h>
@@ -67,6 +64,7 @@ namespace ospray {
 
     virtual void reshape(const ospcommon::vec2i &newSize) override;
     virtual void keypress(char key) override;
+    virtual void mouseButton(int button, int action, int mods) override;
 
     void resetView();
     void printViewport();

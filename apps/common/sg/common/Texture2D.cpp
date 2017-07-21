@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "miniSG/stb_image.h"
+#include "../3rdParty/stb_image.h"
 
 #ifdef USE_IMAGEMAGICK
 #define MAGICKCORE_QUANTUM_DEPTH 16
@@ -443,7 +443,7 @@ namespace ospray {
 
       void* dat = data;
       if (!dat && texelData)
-        dat = texelData->getBase();
+        dat = texelData->base();
       if (!dat)
       {
         ospTexture2D = nullptr;

@@ -15,6 +15,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+// ospcommon
+#include "ospcommon/utility/SaveImage.h"
+
 #include "imguiViewerSg.h"
 #include "common/sg/common/FrameBuffer.h"
 #include "transferFunction.h"
@@ -26,35 +29,16 @@
 using std::string;
 using namespace ospcommon;
 
-// Static local helper functions //////////////////////////////////////////////
-
-// helper function to write the rendered image as PPM file
-static void writePPM(const string &fileName, const int sizeX, const int sizeY,
-                     const uint32_t *pixel)
-{
-  FILE *file = fopen(fileName.c_str(), "wb");
-  fprintf(file, "P6\n%i %i\n255\n", sizeX, sizeY);
-  unsigned char *out = (unsigned char *)alloca(3*sizeX);
-  for (int y = 0; y < sizeY; y++) {
-    const unsigned char *in = (const unsigned char *)&pixel[(sizeY-1-y)*sizeX];
-    for (int x = 0; x < sizeX; x++) {
-      out[3*x + 0] = in[4*x + 0];
-      out[3*x + 1] = in[4*x + 1];
-      out[3*x + 2] = in[4*x + 2];
-    }
-    fwrite(out, 3*sizeX, sizeof(char), file);
-  }
-  fprintf(file, "\n");
-  fclose(file);
-}
-
 // ImGuiViewer definitions ////////////////////////////////////////////////////
 
 namespace ospray {
 
+  ImGuiViewerSg::ImGuiViewerSg(const std::shared_ptr<sg::Node> &scenegraph)
+    : ImGuiViewerSg(scenegraph, nullptr)
+  {}
+
   ImGuiViewerSg::ImGuiViewerSg(const std::shared_ptr<sg::Node> &scenegraph,
-                               const std::shared_ptr<sg::Node> &scenegraphDW
-                               )
+                               const std::shared_ptr<sg::Node> &scenegraphDW)
     : ImGui3DWidget(ImGui3DWidget::FRAMEBUFFER_NONE),
       scenegraph(scenegraph),
       scenegraphDW(scenegraphDW),
@@ -165,7 +149,8 @@ namespace ospray {
 
   void ImGuiViewerSg::saveScreenshot(const std::string &basename)
   {
-    writePPM(basename + ".ppm", windowSize.x, windowSize.y, pixelBuffer.data());
+    utility::writePPM(basename + ".ppm",
+                      windowSize.x, windowSize.y, pixelBuffer.data());
     std::cout << "saved current frame to '" << basename << ".ppm'" << std::endl;
   }
 
@@ -253,12 +238,13 @@ namespace ospray {
         bool orbitMode = (manipulator == inspectCenterManipulator);
         bool flyMode   = (manipulator == moveModeManipulator);
 
-        if (ImGui::Checkbox("Orbit Camera Mode", &orbitMode)) {
+        if (ImGui::Checkbox("Orbit Camera Mode", &orbitMode))
           manipulator = inspectCenterManipulator;
-        }
-        if (ImGui::Checkbox("Fly Camera Mode", &flyMode)) {
+
+        if (orbitMode) ImGui::Checkbox("Anchor 'Up' Direction", &upAnchored);
+
+        if (ImGui::Checkbox("Fly Camera Mode", &flyMode))
           manipulator = moveModeManipulator;
-        }
 
         if (ImGui::MenuItem("Reset View")) resetView();
         if (ImGui::MenuItem("Reset Accumulation")) viewPort.modified = true;
@@ -290,7 +276,9 @@ namespace ospray {
     ImGui::End();
   }
 
-  void ImGuiViewerSg::buildGUINode(std::string name, std::shared_ptr<sg::Node> node, int indent)
+  void ImGuiViewerSg::buildGUINode(std::string name,
+                                   std::shared_ptr<sg::Node> node,
+                                   int indent)
   {
     int styles=0;
     if (!node->isValid()) {

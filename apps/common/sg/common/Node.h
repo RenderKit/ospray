@@ -39,19 +39,6 @@ namespace ospray {
     /*! forward decl of entity that nodes can write to when writing XML files */
     struct XMLWriter;
 
-    /*! helper macro that adds a new member to a scene graph node, and
-      automatically defines all accessor functions for said
-      member.  */
-#define SG_NODE_DECLARE_MEMBER(type,name,capName)       \
-  public:                                               \
-    inline type get##capName() const { return name; }   \
-    inline void set##capName(const type &name) {        \
-      this->name = name;                                \
-      this->properties.lastModified = TimeStamp();      \
-    };                                                  \
-  protected:                                            \
-  type name                                             \
-
     enum NodeFlags
     {
       none = 0 << 0,
@@ -95,6 +82,9 @@ namespace ospray {
       /*! serialize the scene graph - add object to the serialization,
         but don't do anything else to the node(s) */
       virtual void serialize(sg::Serialization::State &state);
+
+      template <typename T>
+      std::shared_ptr<T> nodeAs();
 
       // Properties ///////////////////////////////////////////////////////////
 
@@ -170,21 +160,26 @@ namespace ospray {
       std::map<std::string, std::shared_ptr<Node>>& childrenMap();
 
       //! add node as child of this one
-      void add(std::shared_ptr<Node> node);
       Node& operator+=(std::shared_ptr<Node> node);
+      void add(std::shared_ptr<Node> node);
+      void add(std::shared_ptr<Node> node, const std::string &name);
+
+      void remove(const std::string& name);
 
       //! just for convenience; add a typed 'setParam' function
       template<typename T>
-      void createChildWithValue(const std::string &name, const std::string& type, const T &t);
+      Node& createChildWithValue(const std::string &name,
+                                 const std::string& type,
+                                 const T &t);
 
       Node& createChild(std::string name,
-                            std::string type = "Node",
-                            SGVar var = SGVar(),
-                            int flags = sg::NodeFlags::none,
-                            std::string documentation="");
+                        std::string type = "Node",
+                        SGVar var = SGVar(),
+                        int flags = sg::NodeFlags::none,
+                        std::string documentation = "");
 
       void setChild(const std::string &name,
-                        const std::shared_ptr<Node> &node);
+                    const std::shared_ptr<Node> &node);
 
       // Parent //
 
@@ -246,18 +241,33 @@ namespace ospray {
 
     // Inlined Node definitions ///////////////////////////////////////////////
 
+    template <typename T>
+    inline std::shared_ptr<T> Node::nodeAs()
+    {
+      static_assert(std::is_base_of<Node, T>::value,
+                    "Can only use nodeAs<T> to cast to an ospray::sg::Node"
+                    " type! 'T' must be a child of ospray::sg::Node!");
+      return std::static_pointer_cast<T>(shared_from_this());
+    }
+
     //! just for convenience; add a typed 'setParam' function
     template<typename T>
-    inline void Node::createChildWithValue(const std::string &name, const std::string& type, const T &t)
+    inline Node &Node::createChildWithValue(const std::string &name,
+                                            const std::string& type,
+                                            const T &t)
     {
-      if (hasChild(name))
-        child(name).setValue(t);
+      if (hasChild(name)) {
+        auto &c = child(name);
+        c.setValue(t);
+        return c;
+      }
       else {
         auto node = std::make_shared<Node>();
         node->setType(type);
         node->setValue(t);
         node->setName(name);
         add(node);
+        return *node;
       }
     }
 
@@ -275,11 +285,12 @@ namespace ospray {
       return properties.value.get<T>();
     }
 
-    OSPSG_INTERFACE std::shared_ptr<Node> createNode(std::string name,
-                                                     std::string type = "Node",
-                                                     SGVar var = SGVar(),
-                                                     int flags = sg::NodeFlags::none,
-                                                     std::string documentation="");
+    OSPSG_INTERFACE std::shared_ptr<Node>
+    createNode(std::string name,
+               std::string type = "Node",
+               SGVar var = SGVar(),
+               int flags = sg::NodeFlags::none,
+               std::string documentation = "");
 
     // Helper functions ///////////////////////////////////////////////////////
 
@@ -416,7 +427,12 @@ namespace ospray {
       Renderable() { createChild("bounds", "box3f"); }
       virtual ~Renderable() = default;
 
-      virtual box3f bounds() const override { return child("bounds").valueAs<box3f>(); }
+      virtual std::string toString() const override
+      { return "ospray::sg::Renderable"; }
+
+      virtual box3f bounds() const override
+      { return child("bounds").valueAs<box3f>(); }
+
       virtual box3f computeBounds() const
       {
         box3f cbounds = empty;
@@ -427,13 +443,13 @@ namespace ospray {
         }
         return cbounds;
       }
-      // virtual box3f extendBounds(box3f b) { bbox.extend(b); return bbox; }
+
       virtual void preTraverse(RenderContext &ctx,
                                const std::string& operation, bool& traverseChildren) override;
       virtual void postTraverse(RenderContext &ctx,
                                 const std::string& operation) override;
-      virtual void postCommit(RenderContext &ctx) override { 
-        child("bounds").setValue(computeBounds()); }
+      virtual void postCommit(RenderContext &ctx) override
+      { child("bounds").setValue(computeBounds()); }
       virtual void preRender(RenderContext &ctx)  {}
       virtual void postRender(RenderContext &ctx) {}
     };

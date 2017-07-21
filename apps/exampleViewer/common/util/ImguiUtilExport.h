@@ -17,7 +17,7 @@
 #pragma once
 
 #ifdef _WIN32
-#  if defined(ospray_imgui_util_EXPORTS) || defined(ospray_imgui_util_sg_EXPORTS)
+#  ifdef ospray_imgui_util_sg_EXPORTS
 #    define OSPRAY_IMGUI_UTIL_INTERFACE __declspec(dllexport)
 #  else
 #    define OSPRAY_IMGUI_UTIL_INTERFACE __declspec(dllimport)

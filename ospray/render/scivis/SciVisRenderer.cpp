@@ -91,6 +91,7 @@ namespace ospray {
     OSP_REGISTER_RENDERER(SciVisRenderer, sv);
     OSP_REGISTER_RENDERER(SciVisRenderer, obj);
     OSP_REGISTER_RENDERER(SciVisRenderer, OBJ);
+    OSP_REGISTER_RENDERER(SciVisRenderer, dvr);
 
   } // ::ospray::scivis
 } // ::ospray

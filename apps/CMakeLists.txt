@@ -21,37 +21,23 @@ INCLUDE_DIRECTORIES(
   ${CMAKE_SOURCE_DIR}
   ${CMAKE_CURRENT_LIST_DIR}
   common
-  common/boost.any
 )
-
-# common utilities
-# TODO build only when needed
-ADD_SUBDIRECTORY(common/commandline)
-ADD_SUBDIRECTORY(common/importer)
-ADD_SUBDIRECTORY(common/tfn_lib)
-ADD_SUBDIRECTORY(common/miniSG)
-ADD_SUBDIRECTORY(common/xml)
-ADD_SUBDIRECTORY(common/sg)
 
 # benchmark application which has no windowing framework dependencies
 OPTION(OSPRAY_APPS_BENCHMARK "Build ospBenchmark application." ON)
+OPTION(OSPRAY_APPS_EXAMPLEVIEWER "Build example viewer apps" ON)
+
+# common utilities
+IF(OSPRAY_APPS_BENCHMARK OR OSRPAY_APPS_EXAMPLEVIEWER)
+  ADD_SUBDIRECTORY(common/sg)
+  ADD_SUBDIRECTORY(common/tfn_lib)
+  ADD_SUBDIRECTORY(common/xml)
+ENDIF()
 
 IF(OSPRAY_APPS_BENCHMARK)
   ADD_SUBDIRECTORY(bench)
 ENDIF()
 
-OPTION(OSPRAY_APPS_ENABLE_SCRIPTING
-       "Enable scripting features in viewer apps, may not compile with ICC"
-       OFF)
-MARK_AS_ADVANCED(OSPRAY_APPS_ENABLE_SCRIPTING)
-
-IF(OSPRAY_APPS_ENABLE_SCRIPTING)
-  ADD_DEFINITIONS(-DOSPRAY_APPS_ENABLE_SCRIPTING)
-  INCLUDE_DIRECTORIES(common/script/chaiscript)
-  ADD_SUBDIRECTORY(common/script)
-ENDIF()
-
-OPTION(OSPRAY_APPS_EXAMPLEVIEWER "Build example viewer apps" ON)
 IF (OSPRAY_APPS_EXAMPLEVIEWER)
   ADD_SUBDIRECTORY(exampleViewer)
 ENDIF()

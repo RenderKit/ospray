@@ -115,8 +115,10 @@ namespace ospray {
     ispc::Volume_setSamplingRate(ispcEquivalent,
                                  getParam1f("samplingRate", 0.125f));
 
-    vec3f specular = getParam3f("specular", vec3f(0.3f));
+    vec3f specular = getParam3f("specular", getParam3f("ks", getParam3f("Ks", vec3f(0.3f))));
     ispc::Volume_setSpecular(ispcEquivalent, (const ispc::vec3f &)specular);
+    float Ns = getParam1f("ns", getParam1f("Ns", 20.f));
+    ispc::Volume_setNs(ispcEquivalent, Ns);
 
     // Set the transfer function.
     TransferFunction *transferFunction =

@@ -41,7 +41,7 @@ IF (OSPRAY_MODULE_BILINEAR_PATCH)
   # tools/converters/importers/etc, this is where those sohuld go.
   #
   IF (OSPRAY_APPS_EXAMPLEVIEWER)#Must build example viewer app to build this one
-    ADD_SUBDIRECTORY(apps)
+    #ADD_SUBDIRECTORY(apps)
   ENDIF()
 
 ENDIF (OSPRAY_MODULE_BILINEAR_PATCH)

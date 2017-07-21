@@ -173,10 +173,6 @@ ELSE() # Linux specific settings
 
     # dependencies
     SET(OSPLIB_REQS "embree-lib >= ${EMBREE_VERSION_REQUIRED}")
-    OSPRAY_CONFIGURE_TASKING_SYSTEM() # for OSPRAY_TASKING_SYSTEM
-    IF(${OSPRAY_TASKING_SYSTEM} STREQUAL "TBB")
-      SET(OSPLIB_REQS "${OSPLIB_REQS}, tbb >= 3.0")
-    ENDIF()
     IF(CMAKE_VERSION VERSION_LESS "3.4.0")
       OSPRAY_WARN_ONCE(RPM_PACKAGING "You need at least v3.4.0 of CMake for generating RPMs")
       SET(CPACK_RPM_PACKAGE_REQUIRES ${OSPLIB_REQS})

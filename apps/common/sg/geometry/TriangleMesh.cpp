@@ -20,24 +20,21 @@
 namespace ospray {
   namespace sg {
 
-    TriangleMesh::TriangleMesh()
-      : Geometry("trianglemesh")
-    {
-      createChild("material", "Material");
-    }
+    TriangleMesh::TriangleMesh() : Geometry("trianglemesh") {}
 
     std::string TriangleMesh::toString() const
     {
-      return "ospray::sg::Geometry";
+      return "ospray::sg::TriangleMesh";
     }
 
     box3f TriangleMesh::computeBounds() const
     {
       box3f bounds = empty;
-      if (!vertex)
-        return bounds;
-      for (uint32_t i = 0; i < vertex->getSize(); i++)
-        bounds.extend(vertex->get3f(i));
+      if (hasChild("vertex")) {
+        auto v = child("vertex").nodeAs<DataBuffer>();
+        for (uint32_t i = 0; i < v->size(); i++)
+          bounds.extend(v->get<vec3f>(i));
+      }
       return bounds;
     }
 
@@ -66,61 +63,33 @@ namespace ospray {
             if (child.name == "vertex") {
               size_t num = std::stoll(child.getProp("num"));
               size_t ofs = std::stoll(child.getProp("ofs"));
-              vertex = std::shared_ptr<DataBuffer>(new DataArray3f((vec3f*)((char*)binBasePtr+ofs),num,false));
+
+              auto vertex_buf =
+                std::make_shared<DataArray3f>((vec3f*)((char*)binBasePtr+ofs),
+                                              num,
+                                              false);
+              add(vertex_buf);
             }
             else if (child.name == "index") {
               size_t num = std::stoll(child.getProp("num"));
               size_t ofs = std::stoll(child.getProp("ofs"));
-              index = std::shared_ptr<DataBuffer>(new DataArray3i((vec3i*)((char*)binBasePtr+ofs),num,false));
+              auto index_buf =
+                std::make_shared<DataArray3i>((vec3i*)((char*)binBasePtr+ofs),
+                                              num,
+                                              false);
+              add(index_buf);
             }
           });
       }
     }
 
-    PTMTriangleMesh::PTMTriangleMesh() : TriangleMesh()
+    void TriangleMesh::preCommit(RenderContext &ctx)
     {
-    }
+      // NOTE(jda) - how many buffers to we minimally _have_ to have?
+      if (!hasChild("vertex") || !hasChild("index"))
+        throw std::runtime_error("#osp.sg - error, invalid TriangleMesh!");
 
-    void TriangleMesh::postCommit(RenderContext &ctx)
-    {
-      if (ospGeometry)
-      {
-        assert((OSPMaterial)child("material").valueAs<OSPObject>());
-        ospSetMaterial(ospGeometry,
-                       (OSPMaterial)child("material").valueAs<OSPObject>());
-        ospCommit(ospGeometry);
-        return;
-      }
-
-      if (!vertex)
-        return;
-
-      if (ospGeometry)
-        ospRelease(ospGeometry);
-      ospGeometry = ospNewGeometry("trianglemesh");
-
-      // set vertex data
-      if (vertex && vertex->notEmpty())
-        ospSetData(ospGeometry,"vertex",vertex->getOSP());
-      if (normal && normal->notEmpty())
-        ospSetData(ospGeometry,"vertex.normal",normal->getOSP());
-      if (texcoord && texcoord->notEmpty())
-        ospSetData(ospGeometry,"vertex.texcoord",texcoord->getOSP());
-      // set index data
-      if (index && index->notEmpty())
-        ospSetData(ospGeometry,"index",index->getOSP());
-
-      assert((OSPMaterial)child("material").valueAs<OSPObject>());
-      ospSetMaterial(ospGeometry,
-                     (OSPMaterial)child("material").valueAs<OSPObject>());
-      ospCommit(ospGeometry);
-      child("bounds").setValue(computeBounds());
-    }
-
-    void TriangleMesh::postRender(RenderContext& ctx)
-    {
-      if (ospGeometry)
-        ospAddGeometry(ctx.currentOSPModel,ospGeometry);
+      Geometry::preCommit(ctx);
     }
 
     OSP_REGISTER_SG_NODE(TriangleMesh);

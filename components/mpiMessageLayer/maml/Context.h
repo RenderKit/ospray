@@ -18,6 +18,7 @@
 
 #include "maml.h"
 //ospcommon
+#include "ospcommon/AsyncLoop.h"
 #include "ospcommon/containers/TransactionalBuffer.h"
 //stl
 #include <future>
@@ -100,7 +101,7 @@ namespace maml {
 
     // Data members //
 
-    bool tasksAreRunning {true};
+    bool tasksAreRunning {false};
 
     std::future<void> sendReceiveFuture;
     std::future<void> processInboxFuture;
@@ -119,6 +120,12 @@ namespace maml {
     std::vector<MPI_Request>              pendingRecvs;
 
     std::map<MPI_Comm, MessageHandler *> handlers;
+
+    bool useTaskingSystem {true};
+
+    // NOTE(jda) - these are only used when _not_ using the tasking sytem...
+    std::unique_ptr<ospcommon::AsyncLoop> sendReceiveThread;
+    std::unique_ptr<ospcommon::AsyncLoop> processInboxThread;
   };
 
 } // ::maml

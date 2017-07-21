@@ -46,13 +46,13 @@ ELSE()
     networking/Fabric.h
     networking/Socket.cpp
 
-    tasking/parallel_for.inl
-    tasking/parallel_for.h
+    tasking/detail/parallel_for.inl
+    tasking/detail/schedule.inl
+    tasking/detail/tasking_system_handle.cpp
+    tasking/detail/TaskSys.cpp
     tasking/async.h
-    tasking/schedule.inl
+    tasking/parallel_for.h
     tasking/schedule.h
-    tasking/tasking_system_handle.cpp
-    tasking/TaskSys.cpp
 
     utility/Any.h
     utility/CodeTimer.h
@@ -84,6 +84,7 @@ ELSE()
 
   OSPRAY_INSTALL_SDK_HEADERS(
     AffineSpace.h
+    AsyncLoop.h
     box.h
     common.h
     constants.h
@@ -122,14 +123,18 @@ ELSE()
   OSPRAY_INSTALL_SDK_HEADERS(
     tasking/async.h
     tasking/parallel_for.h
-    tasking/parallel_for.inl
     tasking/schedule.h
-    tasking/schedule.inl
     tasking/tasking_system_handle.h
-    tasking/TaskSys.h
-    tasking/TaskingTypeTraits.h
 
     DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/tasking
+  )
+
+  OSPRAY_INSTALL_SDK_HEADERS(
+    tasking/detail/parallel_for.inl
+    tasking/detail/schedule.inl
+    tasking/detail/TaskSys.h
+
+    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/tasking/detail
   )
 
   OSPRAY_INSTALL_SDK_HEADERS(
@@ -147,27 +152,58 @@ ELSE()
   # Any
 
   OSPRAY_CREATE_TEST(test_Any
-    utility/Any.h
-    utility/test_Any.cpp
+    utility/tests/test_Any.cpp
+  LINK
+    ospray_common
   )
 
   ADD_TEST(NAME Any COMMAND test_Any)
 
-  # OnScopeExit
+  # utility/OnScopeExit
 
   OSPRAY_CREATE_TEST(test_OnScopeExit
-    utility/OnScopeExit.h
-    utility/test_OnScopeExit.cpp
+    utility/tests/test_OnScopeExit.cpp
+  LINK
+    ospray_common
   )
 
   ADD_TEST(NAME OnScopeExit COMMAND test_OnScopeExit)
 
-  # TransactionalBuffer
+  # containers/TransactionalBuffer
 
   OSPRAY_CREATE_TEST(test_TransactionalBuffer
-    containers/TransactionalBuffer.h
-    containers/test_TransactionalBuffer.cpp
+    containers/tests/test_TransactionalBuffer.cpp
+  LINK
+    ospray_common
   )
 
   ADD_TEST(NAME TransactionalBuffer COMMAND test_TransactionalBuffer)
+
+  # tasking/async
+  OSPRAY_CREATE_TEST(test_async
+    tasking/tests/test_async.cpp
+  LINK
+    ospray_common
+  )
+
+  ADD_TEST(NAME async COMMAND test_async)
+
+  # tasking/parallel_for
+  OSPRAY_CREATE_TEST(test_parallel_for
+    tasking/tests/test_parallel_for.cpp
+  LINK
+    ospray_common
+  )
+
+  ADD_TEST(NAME parallel_for COMMAND test_parallel_for)
+
+  # tasking/schedule
+  OSPRAY_CREATE_TEST(test_schedule
+    tasking/tests/test_schedule.cpp
+  LINK
+    ospray_common
+  )
+
+  ADD_TEST(NAME schedule COMMAND test_schedule)
+
 ENDIF()

@@ -14,165 +14,81 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include <chrono>
+#include <iostream>
+#include <string>
+#include <vector>
 
-#include "OSPRayFixture.h"
-#include "BenchScriptHandler.h"
-
-#include "commandline/Utility.h"
 #include "pico_bench/pico_bench.h"
 
-namespace bench {
+// NOTE(jda) - Issues with template type deduction w/ GCC 7.1 and Clang 4.0,
+//             thus defining the use of operator<<() from pico_bench here before
+//             OSPCommon.h (offending file) gets eventually included through
+//             ospray_sg headers. [blech]
+template <typename T>
+inline void outputStats(const T &stats)
+{
+  std::cout << stats << std::endl;
+}
 
-  using std::cout;
-  using std::endl;
-  using std::string;
+#include "ospcommon/FileName.h"
+#include "ospcommon/utility/SaveImage.h"
 
-  using namespace commandline;
+#include "common/sg/importer/Importer.h"
+#include "common/sg/Renderer.h"
+#include "sg/common/FrameBuffer.h"
+#include "common/sg/SceneGraph.h"
+
+namespace ospray {
+
+  using namespace std::chrono;
 
   void printUsageAndExit()
   {
-    cout << "Usage: ospBenchmark [options] model_file" << endl;
-
-    cout << endl << "Args:" << endl;
-
-    cout << endl;
-    cout << "    model_file --> Scene used for benchmarking, supported types"
-         << " are:" << endl;
-    cout << "                   stl, msg, tri, xml, obj, hbp, x3d" << endl;
-
-    cout << endl;
-    cout << "Options:" << endl;
-
-    cout << endl;
-    cout << "**generic rendering options**" << endl;
-
-    cout << endl;
-    cout << "    -i | --image --> Specify the base filename to write the"
-         << " framebuffer to a file." << endl;
-    cout << "                     If ommitted, no file will be written." << endl;
-    cout << "                     NOTE: this option adds '.ppm' to the end of the"
-         << " filename" << endl;
-
-    cout << endl;
-    cout << "    -w | --width --> Specify the width of the benchmark frame"
-         << endl;
-    cout << "                     default: 1024" << endl;
-
-    cout << endl;
-    cout << "    -h | --height --> Specify the height of the benchmark frame"
-         << endl;
-    cout << "                      default: 1024" << endl;
-
-    cout << endl;
-    cout << "    -r | --renderer --> Specify the renderer to be benchmarked."
-         << endl;
-    cout << "                        Ex: -r pathtracer" << endl;
-    cout << "                        default: ao1" << endl;
-
-    /*
-     * TODO: This was never used anyway?
-     cout << endl;
-     cout << "    -bg | --background --> Specify the background color: R G B"
-     << endl;
-    */
-
-    cout << endl;
-    cout << "    -wf | --warmup --> Specify the number of warmup frames: N"
-         << endl;
-    cout << "                       default: 10" << endl;
-
-    cout << endl;
-    cout << "    -bf | --bench --> Specify the number of benchmark frames: N"
-         << endl;
-    cout << "                      default: 100" << endl;
-
-    cout << endl;
-    cout << "    -lft | --log-frame-times --> Log frame time in ms for every frame rendered"
-         << endl;
-
-    cout << endl;
-    cout << "**camera rendering options**" << endl;
-
-    cout << endl;
-    cout << "    -vp | --eye --> Specify the camera eye as: ex ey ez " << endl;
-
-    cout << endl;
-    cout << "    -vi | --gaze --> Specify the camera gaze point as: ix iy iz "
-         << endl;
-
-    cout << endl;
-    cout << "    -vu | --up --> Specify the camera up as: ux uy uz " << endl;
-
-
-    cout << endl;
-    cout << "**volume rendering options**" << endl;
-
-    cout << endl;
-    cout << "    -s | --sampling-rate --> Specify the sampling rate for volumes."
-         << endl;
-    cout << "                             default: 0.125" << endl;
-
-    cout << endl;
-    cout << "    -dr | --data-range --> Specify the data range for volumes."
-         << " If not specified, then the min and max data" << endl
-         << " values will be used when reading the data into memory." << endl;
-    cout << "                           Format: low high" << endl;
-
-    cout << endl;
-    cout << "    -tfc | --tf-color --> Specify the next color to in the transfer"
-         << " function for volumes. Each entry will add to the total list of"
-         << " colors in the order they are specified." << endl;
-    cout << "                              Format: R G B A" << endl;
-    cout << "                         Value Range: [0,1]" << endl;
-
-    cout << "    -tfs | --tf-scale --> Specify the opacity the transfer function"
-         << " will scale to: [0,x] where x is the input value." << endl;
-    cout << "                          default: 1.0" << endl;
-
-    cout << "    -tff | --tf-file --> Specify the transfer function file to use"
-         << endl;
-
-    cout << endl;
-    cout << "    -is | --surface --> Specify an isosurface at value: val "
-         << endl;
-
-    cout << endl;
-    cout << "    --help --> Print this help text" << endl;
-#ifdef OSPRAY_APPS_ENABLE_SCRIPTING
-    cout << endl;
-    cout << "    --script --> Specify a script file to drive the benchmarker.\n"
-         << "                 In a script you can access the parsed world and command\n"
-         << "                 line benchmark configuration via the following variables:\n"
-         << "                 defaultFixture -> benchmark settings from the commandline\n"
-         << "                 m -> world model parsed from command line scene args\n"
-         << "                 c -> camera set from command line args\n"
-         << "                 r -> renderer set from command line args\n";
-#endif
-
+    std::cout << "TODO: usage description..." << std::endl;
     exit(0);
   }
 
+  std::vector<std::string> files;
   std::string imageOutputFile = "";
-  std::string scriptFile = "";
-  size_t numWarmupFrames = 0;
-  size_t numBenchFrames = 0;
-  bool logFrameTimes = false;
-  // This is the fixture setup by the command line arguments
-  std::shared_ptr<OSPRayFixture> cmdlineFixture;
+  size_t numWarmupFrames = 10;
+  size_t numBenchFrames  = 100;
+  int width  = 1024;
+  int height = 1024;
+
+  vec3f up;
+  vec3f pos;
+  vec3f gaze;
+  float fovy = 60.f;
+  bool customView = false;
+
+  void initializeOSPRay(int argc, const char *argv[])
+  {
+    int init_error = ospInit(&argc, argv);
+    if (init_error != OSP_NO_ERROR) {
+      std::cerr << "FATAL ERROR DURING INITIALIZATION!" << std::endl;
+      std::exit(init_error);
+    }
+
+    auto device = ospGetCurrentDevice();
+    ospDeviceSetStatusFunc(device,
+                           [](const char *msg) { std::cout << msg; });
+
+    ospDeviceSetErrorFunc(device,
+                          [](OSPError e, const char *msg) {
+                            std::cout << "OSPRAY ERROR [" << e << "]: "
+                                      << msg << std::endl;
+                            std::exit(1);
+                          });
+  }
+
 
   void parseCommandLine(int argc, const char *argv[])
   {
-    using namespace ospcommon;
-    using namespace ospray::cpp;
-    if (argc <= 1) {
+    if (argc <= 1)
       printUsageAndExit();
-    }
 
-    int width = 0;
-    int height = 0;
     for (int i = 1; i < argc; ++i) {
-      string arg = argv[i];
+      std::string arg = argv[i];
       if (arg == "--help") {
         printUsageAndExit();
       } else if (arg == "-i" || arg == "--image") {
@@ -185,73 +101,128 @@ namespace bench {
         numWarmupFrames = atoi(argv[++i]);
       } else if (arg == "-bf" || arg == "--bench") {
         numBenchFrames = atoi(argv[++i]);
-      } else if (arg == "-lft" || arg == "--log-frame-times") {
-        logFrameTimes = true;
-      } else if (arg == "--script") {
-        scriptFile = argv[++i];
+      } else if (arg == "-vp" || arg == "--eye") {
+        pos.x = atof(argv[++i]);
+        pos.y = atof(argv[++i]);
+        pos.z = atof(argv[++i]);
+        customView = true;
+      } else if (arg == "-vu" || arg == "--up") {
+        up.x = atof(argv[++i]);
+        up.y = atof(argv[++i]);
+        up.z = atof(argv[++i]);
+        customView = true;
+      } else if (arg == "-vi" || arg == "--gaze") {
+        gaze.x = atof(argv[++i]);
+        gaze.y = atof(argv[++i]);
+        gaze.z = atof(argv[++i]);
+        customView = true;
+      } else if (arg == "-fv" || arg == "--fovy") {
+        fovy = atof(argv[++i]);
+      } else if (arg[0] != '-') {
+        files.push_back(arg);
       }
-    }
-
-    auto ospObjs = parseWithDefaultParsers(argc, argv);
-
-    std::deque<Model> model;
-    Renderer renderer;
-    Camera camera;
-    std::tie(std::ignore, model, renderer, camera) = ospObjs;
-
-    cmdlineFixture = std::make_shared<OSPRayFixture>(renderer, camera, model[0]);
-    if (width > 0 || height > 0) {
-      cmdlineFixture->setFrameBuffer(width, height);
-    }
-    // Set the default warm up and bench frames
-    if (numWarmupFrames > 0) {
-      cmdlineFixture->defaultWarmupFrames = numWarmupFrames;
-    }
-    if (numBenchFrames > 0){
-      cmdlineFixture->defaultBenchFrames = numBenchFrames;
     }
   }
 
-  extern "C" int main(int argc, const char *argv[]) {
-    int init_error = ospInit(&argc, argv);
-    if (init_error != OSP_NO_ERROR) {
-      std::cerr << "FATAL ERROR DURING INITIALIZATION!" << std::endl;
-      return init_error;
-    }
-
+  extern "C" int main(int argc, const char *argv[])
+  {
+    initializeOSPRay(argc, argv);
     parseCommandLine(argc, argv);
 
-    if (scriptFile.empty()) {
-      // If we don't have a script do this, otherwise run the script
-      // and let it setup bench scenes and benchmrk them and so on
-      auto stats = cmdlineFixture->benchmark();
-      if (logFrameTimes) {
-        for (size_t i = 0; i < stats.size(); ++i) {
-          std::cout << stats[i].count() << stats.time_suffix << "\n";
-        }
+    // Setup scene nodes //////////////////////////////////////////////////////
+
+    auto renderer_ptr = sg::createNode("renderer", "Renderer");
+    auto &renderer = *renderer_ptr;
+
+    renderer["shadowsEnabled"].setValue(true);
+    renderer["aoSamples"].setValue(1);
+
+    auto &lights = renderer["lights"];
+
+    auto &sun = lights.createChild("sun", "DirectionalLight");
+    sun["color"].setValue(vec3f(1.f,232.f/255.f,166.f/255.f));
+    sun["direction"].setValue(vec3f(0.462f,-1.f,-.1f));
+    sun["intensity"].setValue(1.5f);
+
+    auto &bounce = lights.createChild("bounce", "DirectionalLight");
+    bounce["color"].setValue(vec3f(127.f/255.f,178.f/255.f,255.f/255.f));
+    bounce["direction"].setValue(vec3f(-.93,-.54f,-.605f));
+    bounce["intensity"].setValue(0.25f);
+
+    auto &ambient = lights.createChild("ambient", "AmbientLight");
+    ambient["intensity"].setValue(0.9f);
+    ambient["color"].setValue(vec3f(174.f/255.f,218.f/255.f,255.f/255.f));
+
+    auto &world = renderer["world"];
+
+    for (auto file : files) {
+      FileName fn = file;
+      if (fn.ext() == "ospsg")
+        sg::loadOSPSG(renderer_ptr,fn.str());
+      else {
+        auto importerNode_ptr = sg::createNode(fn.name(), "Importer");
+        auto &importerNode = *importerNode_ptr;
+        importerNode["fileName"].setValue(fn.str());
+        world += importerNode_ptr;
       }
-      std::cout << "Frame Time " << stats << "\n"
-                << "FPS Statistics:\n"
-                << "\tmax: " << 1000.0 / stats.min().count() << " fps\n"
-                << "\tmin: " << 1000.0 / stats.max().count() << " fps\n"
-                << "\tmedian: " << 1000.0 / stats.median().count() << " fps\n"
-                << "\tmean: " << 1000.0 / stats.mean().count() << " fps\n";
-    } else {
-#ifdef OSPRAY_APPS_ENABLE_SCRIPTING
-      // The script will be responsible for setting up the benchmark config
-      // and calling `benchmark(N)` to benchmark the scene
-      BenchScriptHandler scriptHandler(cmdlineFixture);
-      scriptHandler.runScriptFromFile(scriptFile);
-#else
-      throw std::runtime_error("You must build with OSPRAY_APPS_ENABLE_SCRIPTING=ON "
-                               "to use scripting");
-#endif
     }
 
-    if (!imageOutputFile.empty()) {
-      cmdlineFixture->saveImage(imageOutputFile);
+    auto &sgFB = renderer.child("frameBuffer");
+
+    auto &size = sgFB["size"];
+    size.setValue(vec2i(width, height));
+
+    renderer.traverse("verify");
+    renderer.traverse("commit");
+
+    // Setup camera ///////////////////////////////////////////////////////////
+
+    if (!customView) {
+      auto bbox = world.bounds();
+      vec3f diag = bbox.size();
+      diag       = max(diag,vec3f(0.3f*length(diag)));
+
+      gaze = ospcommon::center(bbox);
+
+      pos = gaze - .75f*vec3f(-.6*diag.x,-1.2f*diag.y,.8f*diag.z);
+      up  = vec3f(0.f, 1.f, 0.f);
     }
+
+    auto dir = gaze - pos;
+
+    auto &camera = renderer["camera"];
+    camera["fovy"].setValue(fovy);
+    camera["pos"].setValue(pos);
+    camera["dir"].setValue(dir);
+    camera["up"].setValue(up);
+
+    renderer.traverse("commit");
+
+    for (int i = 0; i < numWarmupFrames; ++i)
+      renderer.traverse("render");
+
+    // Run benchmark //////////////////////////////////////////////////////////
+
+    auto benchmarker = pico_bench::Benchmarker<milliseconds>{numBenchFrames};
+
+    auto stats = benchmarker([&]() {
+      renderer.traverse("render");
+      // TODO: measure just ospRenderFrame() time from within ospray_sg
+      // return milliseconds{500};
+    });
+
+    // Print results //////////////////////////////////////////////////////////
+
+    if (!imageOutputFile.empty()) {
+      auto sgFBptr = sgFB.nodeAs<sg::FrameBuffer>();
+      auto *srcPB = (uint32_t*)sgFBptr->map();
+      utility::writePPM(imageOutputFile + ".ppm", width, height, srcPB);
+      sgFBptr->unmap(srcPB);
+    }
+
+    outputStats(stats);
+
     return 0;
   }
 
-}
+} // ::ospray

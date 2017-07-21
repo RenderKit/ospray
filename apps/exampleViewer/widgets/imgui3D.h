@@ -70,15 +70,6 @@ namespace ospray {
          INSPECT_CENTER_MODE =(1<<1)
        } ManipulatorMode;
 
-       enum Keys
-       {
-         CNTRL_KEY = (1 << 0),
-         SHIFT_KEY = (1 << 1),
-         ALT_KEY   = (1 << 2)
-       };
-
-       int keysDown {0};
-
        /*! internal viewPort class */
        struct OSPRAY_IMGUI3D_INTERFACE ViewPort {
          bool modified; /* the viewPort will set this flag any time any of
@@ -132,6 +123,7 @@ namespace ospray {
        // ------------------------------------------------------------------
 
        virtual void motion(const vec2i &pos);
+       virtual void mouseButton(int button, int action, int mods);
        virtual void reshape(const vec2i &newSize);
        /*! display this window. By default this will just clear this
            window's framebuffer; it's up to the user to override this fct
@@ -189,6 +181,7 @@ namespace ospray {
        double guiTime;
        double totalTime;
        float  fontScale;
+       bool upAnchored {true};
 
        bool renderingPaused {false};
        /*! pointer to the frame buffer data. it is the repsonsiblity of

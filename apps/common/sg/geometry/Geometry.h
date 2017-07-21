@@ -28,27 +28,11 @@ namespace ospray {
       /*! \brief returns a std::string with the c++ name of this class */
       virtual std::string toString() const override;
 
-      /*! geometry type, i.e., 'spheres', 'cylinders', 'trianglemesh', ... */
-      const std::string type; 
-      
-      /*! material for this geometry */
-      // std::shared_ptr<Material> material;
+      virtual void preCommit(RenderContext& ctx) override;
+      virtual void postCommit(RenderContext& ctx) override;
+      virtual void postRender(RenderContext& ctx) override;
     };
 
-    // Inlined member definitions /////////////////////////////////////////////
-
-    inline Geometry::Geometry(const std::string &type)
-      : type(type)
-    {
-      createChild("material", "Material");
-      createChild("type", "string");
-    }
-
-    inline std::string Geometry::toString() const
-    {
-      return "ospray::sg::Geometry";
-    }
-    
   } // ::ospray::sg
 } // ::ospray
 

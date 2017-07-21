@@ -92,6 +92,12 @@ export void Volume_setSpecular(void *uniform _self, const uniform vec3f &value)
   self->specular = value;
 }
 
+export void Volume_setNs(void *uniform _self, const uniform float &value)
+{
+  uniform Volume *uniform self = (uniform Volume *uniform)_self;
+  self->ns = value;
+}
+
 export void Volume_setTransferFunction(void *uniform _self, void *uniform value)
 {
   uniform Volume *uniform self = (uniform Volume *uniform)_self;

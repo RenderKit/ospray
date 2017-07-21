@@ -21,6 +21,7 @@
 #include "ospcommon/tasking/async.h"
 #include "ospcommon/tasking/tasking_system_handle.h"
 
+using ospcommon::AsyncLoop;
 using ospcommon::make_unique;
 
 namespace maml {
@@ -201,18 +202,43 @@ namespace maml {
     if (!isRunning()) {
       tasksAreRunning = true;
 
-      if (ospcommon::tasking::numTaskingThreads() < 3) {
+      auto MAML_SPAWN_THREADS = ospcommon::getEnvVar<int>("MAML_SPAWN_THREADS");
+      if (!MAML_SPAWN_THREADS.second && ospcommon::tasking::numTaskingThreads() < 3) {
         throw std::runtime_error("Tasking system must have at least 3 threads"
                                  " for maml to function.");
       }
 
-      sendReceiveFuture = ospcommon::tasking::async([&]() {
-        mpiSendAndRecieveTask();
-      });
+      if (MAML_SPAWN_THREADS.first)
+        useTaskingSystem = !MAML_SPAWN_THREADS.second;
 
-      processInboxFuture = ospcommon::tasking::async([&]() {
-        processInboxTask();
-      });
+      if (useTaskingSystem) {
+        sendReceiveFuture = ospcommon::tasking::async([&](){
+          mpiSendAndRecieveTask();
+        });
+
+        processInboxFuture = ospcommon::tasking::async([&](){
+          processInboxTask();
+        });
+      } else {
+        if (!sendReceiveThread.get()) {
+          sendReceiveThread = make_unique<AsyncLoop>([&](){
+            sendMessagesFromOutbox();
+            pollForAndRecieveMessages();
+
+            waitOnSomeSendRequests();
+            waitOnSomeRecvRequests();
+          });
+        }
+
+        if (!processInboxThread.get()) {
+          processInboxThread = make_unique<AsyncLoop>([&](){
+            processInboxMessages();
+          });
+        }
+
+        sendReceiveThread->start();
+        processInboxThread->start();
+      }
     }
   }
 
@@ -230,11 +256,16 @@ namespace maml {
   {
     tasksAreRunning = false;
 
-    if (sendReceiveFuture.valid())
-      sendReceiveFuture.wait();
+    if (useTaskingSystem) {
+      if (sendReceiveFuture.valid())
+        sendReceiveFuture.wait();
 
-    if (processInboxFuture.valid())
-      processInboxFuture.wait();
+      if (processInboxFuture.valid())
+        processInboxFuture.wait();
+    } else {
+      sendReceiveThread->stop();
+      processInboxThread->stop();
+    }
 
     flushRemainingMessages();
   }

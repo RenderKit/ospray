@@ -16,6 +16,9 @@
 
 #pragma once
 
+// ospray
+#include "ospray/common/OSPCommon.h"
+// ospray::sg
 #include "sg/common/TimeStamp.h"
 #include "sg/common/Serialization.h"
 #include "sg/common/RuntimeError.h"
@@ -29,8 +32,6 @@ namespace ospray {
 
     typedef unsigned long long index_t;
 
-#define INVALID_DATA_ERROR throw RuntimeError("invalid data format ")
-
     struct OSPSG_INTERFACE DataBuffer : public Node
     {
       DataBuffer(OSPDataType type)
@@ -42,126 +43,88 @@ namespace ospray {
       virtual std::string toString() const override
       { return "DataBuffer<abstract>"; }
 
-      virtual float  get1f(index_t idx)  const { INVALID_DATA_ERROR; }
-      virtual vec2f  get2f(index_t idx)  const { INVALID_DATA_ERROR; }
-      virtual vec3f  get3f(index_t idx)  const { INVALID_DATA_ERROR; }
-      virtual vec3fa get3fa(index_t idx) const { INVALID_DATA_ERROR; }
-      virtual vec4f  get4f(index_t idx)  const { INVALID_DATA_ERROR; }
+      virtual void postCommit(RenderContext &ctx) override
+      {
+        if (hasParent()) {
+          if (parent().value().is<OSPObject>())
+            ospSetData(parent().valueAs<OSPObject>(), name().c_str(), getOSP());
+        }
+      }
 
-      virtual int    get1i(index_t idx)  const { INVALID_DATA_ERROR; }
-      virtual vec2i  get2i(index_t idx)  const { INVALID_DATA_ERROR; }
-      virtual vec3i  get3i(index_t idx)  const { INVALID_DATA_ERROR; }
-      virtual vec4i  get4i(index_t idx)  const { INVALID_DATA_ERROR; }
+      template <typename T>
+      T get(index_t idx) const { return ((T*)base())[idx]; }
 
-      virtual void       *getBase()  const = 0;
-      virtual size_t      getSize()  const = 0;
-      virtual bool        notEmpty() const { return getSize() != 0; }
-      virtual OSPDataType getType()  const { return type; }
+      virtual void*  base()  const = 0;
+      virtual size_t size()  const = 0;
+      virtual size_t bytesPerElement() const = 0;
 
-      virtual OSPData     getOSP()   {
-        if (notEmpty() && !data) {
-          data = ospNewData(getSize(),type,getBase(),OSP_DATA_SHARED_BUFFER);
+      OSPDataType getType()  const { return type; }
+      OSPData     getOSP()
+      {
+        if (!empty() && !data) {
+          if (type == OSP_RAW) {
+            data = ospNewData(numBytes(), type, base(),
+                              OSP_DATA_SHARED_BUFFER);
+          }
+          else
+            data = ospNewData(size(), type, base(), OSP_DATA_SHARED_BUFFER);
+
           ospCommit(data);
         }
+
         return data;
       }
+
+      bool   empty()    const { return size() == 0; }
+      size_t numBytes() const { return size() * bytesPerElement(); }
 
       OSPDataType type;
       OSPData     data;
     };
 
-#undef INVALID_DATA_ERROR
-
-
     // -------------------------------------------------------
     // data *ARRAYS*
     // -------------------------------------------------------
     template<typename T, long int TID>
-    struct DataArrayT : public DataBuffer {
-      DataArrayT(T *base, size_t size, bool mine=true)
-        : DataBuffer((OSPDataType)TID),  size(size), mine(mine), base(base)
-      {
-      }
-      virtual void        *getBase()  const override { return (void*)base; }
-      virtual size_t       getSize()  const override { return size; }
-      virtual ~DataArrayT() { if (mine && base) delete base; }
-
-      typedef T ElementType;
-
-      size_t size;
-      bool   mine;
-      T     *base;
-    };
-
-    struct DataArray1uc : public DataArrayT<unsigned char,OSP_UCHAR>
+    struct DataArrayT : public DataBuffer
     {
-      DataArray1uc(unsigned char *base, size_t size, bool mine=true)
-        : DataArrayT<unsigned char,OSP_UCHAR>(base,size,mine)
-      {}
+      DataArrayT(T *base, size_t size, bool mine = true)
+        : DataBuffer((OSPDataType)TID), numElements(size),
+          mine(mine), base_ptr(base) {}
+      ~DataArrayT() { if (mine && base_ptr) delete base_ptr; }
+
+      std::string toString() const override
+      { return "DataArray<" + stringForType((OSPDataType)TID) + ">"; }
+
+      void   *base() const override { return (void*)base_ptr; }
+      size_t  size() const override { return numElements; }
+
+      size_t bytesPerElement() const override { return sizeof(T); }
+
+      inline T& operator[](int index) { return base_ptr[index]; }
+      inline const T& operator[](int index) const { return base_ptr[index]; }
+
+      // Data Members //
+
+      using   ElementType = T;
+
+      size_t  numElements {0};
+      bool    mine {false};
+      T      *base_ptr {nullptr};
     };
 
-    struct DataArray2f : public DataArrayT<vec2f,OSP_FLOAT2>
-    {
-      DataArray2f(vec2f *base, size_t size, bool mine=true)
-        : DataArrayT<vec2f,OSP_FLOAT2>(base,size,mine)
-      {}
-      virtual vec2f get2f(index_t idx) const  override
-      { assert(base); return this->base[idx]; }
-    };
-
-    struct DataArray3f : public DataArrayT<vec3f,OSP_FLOAT3>
-    {
-      DataArray3f(vec3f *base, size_t size, bool mine=true)
-        : DataArrayT<vec3f,OSP_FLOAT3>(base,size,mine)
-      {}
-      virtual vec3f get3f(index_t idx) const override
-      { assert(base); return this->base[idx]; }
-    };
-
-    struct DataArray3fa : public DataArrayT<vec3fa,OSP_FLOAT3A>
-    {
-      DataArray3fa(vec3fa *base, size_t size, bool mine=true)
-        : DataArrayT<vec3fa,OSP_FLOAT3A>(base,size,mine)
-      {}
-      virtual vec3fa get3fa(index_t idx) const override
-      { assert(base); return this->base[idx]; }
-    };
-
-    struct DataArray4f : public DataArrayT<vec4f,OSP_FLOAT4>
-    {
-      DataArray4f(vec4f *base, size_t size, bool mine=true)
-        : DataArrayT<vec4f,OSP_FLOAT4>(base,size,mine)
-      {}
-      virtual vec4f get4f(index_t idx) const override
-      { assert(base); return this->base[idx]; }
-    };
-
-    struct DataArray1i : public DataArrayT<int32_t,OSP_INT>
-    {
-      DataArray1i(int32_t *base, size_t size, bool mine=true)
-        : DataArrayT<int32_t,OSP_INT>(base,size,mine)
-        {}
-      virtual int32_t get1i(index_t idx) const override
-      { assert(base); return this->base[idx]; }
-    };
-
-    struct DataArray3i : public DataArrayT<vec3i,OSP_INT3>
-    {
-      DataArray3i(vec3i *base, size_t size, bool mine=true)
-        : DataArrayT<vec3i,OSP_INT3>(base,size,mine)
-      {}
-      virtual vec3i get3i(index_t idx) const override
-      { assert(base); return this->base[idx]; }
-    };
-
-    struct DataArray4i : public DataArrayT<vec4i,OSP_INT4>
-    {
-      DataArray4i(vec4i *base, size_t size, bool mine=true)
-        : DataArrayT<vec4i,OSP_INT4>(base,size,mine)
-      {}
-      virtual vec4i get4i(index_t idx) const override
-      { assert(base); return this->base[idx]; }
-    };
+    using DataArray1uc = DataArrayT<unsigned char, OSP_UCHAR>;
+    using DataArray1f  = DataArrayT<float, OSP_FLOAT>;
+    using DataArray2f  = DataArrayT<vec2f, OSP_FLOAT2>;
+    using DataArray3f  = DataArrayT<vec3f, OSP_FLOAT3>;
+    using DataArray3fa = DataArrayT<vec3fa, OSP_FLOAT3A>;
+    using DataArray4f  = DataArrayT<vec4f, OSP_FLOAT4>;
+    using DataArray1i  = DataArrayT<int, OSP_INT>;
+    using DataArray2i  = DataArrayT<vec2i, OSP_INT2>;
+    using DataArray3i  = DataArrayT<vec3i, OSP_INT3>;
+    using DataArray4i  = DataArrayT<vec4i, OSP_INT4>;
+    using DataArrayOSP = DataArrayT<OSPObject, OSP_OBJECT>;
+    using DataArrayRAW = DataArrayT<byte_t, OSP_RAW>;
 
     // -------------------------------------------------------
     // data *VECTORS*
@@ -169,47 +132,42 @@ namespace ospray {
     template<typename T, int TID>
     struct DataVectorT : public DataBuffer
     {
-      DataVectorT()
-        : DataBuffer((OSPDataType)TID)
-      {}
-      virtual void   *getBase() const override { return (void*)&v[0]; }
-      virtual size_t  getSize() const override { return v.size(); }
-      inline void push_back(const T &t) { v.push_back(t); }
+      DataVectorT() : DataBuffer((OSPDataType)TID) {}
+
+      std::string toString() const override
+      { return "DataVector<" + stringForType((OSPDataType)TID) + ">"; }
+
+      void   *base() const override { return (void*)v.data(); }
+      size_t  size() const override { return v.size(); }
+
+      size_t bytesPerElement() const override { return sizeof(T); }
+
+      void push_back(const T &t) { v.push_back(t); }
+      T& operator[](int index) { return v[index]; }
+      const T& operator[](int index) const { return v[index]; }
+
+      // Data Members //
+
+      using ElementType = T;
+
       std::vector<T> v;
     };
 
-    struct DataVector2f : public DataVectorT<vec2f,OSP_FLOAT2>
-    {
-      virtual vec2f get2f(index_t idx) const override
-      { assert(idx<v.size()); return this->v[idx]; }
-    };
-
-    struct DataVector3f : public DataVectorT<vec3f,OSP_FLOAT3>
-    {
-      virtual vec3f get3f(index_t idx) const override
-      { assert(idx<v.size()); return this->v[idx]; }
-    };
-
-    struct DataVector3fa : public DataVectorT<vec3fa,OSP_FLOAT3A>
-    {
-      virtual vec3fa get3fa(index_t idx) const override
-      { assert(idx<v.size()); return this->v[idx]; }
-    };
-
-    struct DataVector4f : public DataVectorT<vec4f,OSP_FLOAT4>
-    {
-      virtual vec4f get4f(index_t idx) const override
-      { assert(idx<v.size()); return this->v[idx]; }
-    };
-
-    struct DataVector3i : public DataVectorT<vec3i,OSP_INT3>
-    {
-      virtual vec3i get3i(index_t idx) const override
-      { assert(idx<v.size()); return this->v[idx]; }
-    };
+    using DataVector1uc = DataVectorT<unsigned char, OSP_UCHAR>;
+    using DataVector1f  = DataVectorT<float, OSP_FLOAT>;
+    using DataVector2f  = DataVectorT<vec2f, OSP_FLOAT2>;
+    using DataVector3f  = DataVectorT<vec3f, OSP_FLOAT3>;
+    using DataVector3fa = DataVectorT<vec3fa, OSP_FLOAT3A>;
+    using DataVector4f  = DataVectorT<vec4f, OSP_FLOAT4>;
+    using DataVector1i  = DataVectorT<int, OSP_INT>;
+    using DataVector2i  = DataVectorT<vec2i, OSP_INT2>;
+    using DataVector3i  = DataVectorT<vec3i, OSP_INT3>;
+    using DataVector4i  = DataVectorT<vec4i, OSP_INT4>;
+    using DataVectorOSP = DataVectorT<OSPObject, OSP_OBJECT>;
+    using DataVectorRAW = DataVectorT<byte_t, OSP_RAW>;
 
     template<typename T>
-    std::shared_ptr<T> make_aligned(void *data, size_t num)
+    std::shared_ptr<T> make_shared_aligned(void *data, size_t num)
     {
       typedef typename T::ElementType ElementType;
       if ((size_t)data & 0x3) {

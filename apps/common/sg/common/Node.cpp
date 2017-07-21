@@ -300,28 +300,40 @@ namespace ospray {
       return properties.children;
     }
 
-    void Node::add(std::shared_ptr<Node> node)
-    {
-      std::lock_guard<std::mutex> lock{mutex};
-      const std::string& name = node->name();
-      std::string lower=name;
-      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
-      properties.children[lower] = node;
-
-      node->setParent(*this);
-    }
-
     Node& Node::operator+=(std::shared_ptr<Node> n)
     {
       add(n);
       return *this;
     }
 
+    void Node::add(std::shared_ptr<Node> node)
+    {
+      add(node, node->name());
+    }
+
+    void Node::add(std::shared_ptr<Node> node, const std::string &name)
+    {
+      std::lock_guard<std::mutex> lock{mutex};
+      std::string lower = name;
+      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+      properties.children[lower] = node;
+
+      node->setParent(*this);
+    }
+
+    void Node::remove(const std::string &name)
+    {
+      if (hasChild(name)) {
+        child(name).properties.parent = nullptr;
+        properties.children.erase(name);
+      }
+    }
+
     Node& Node::createChild(std::string name,
-                                std::string type,
-                                SGVar var,
-                                int flags,
-                                std::string documentation)
+                            std::string type,
+                            SGVar var,
+                            int flags,
+                            std::string documentation)
     {
       auto child = createNode(name, type, var, flags, documentation);
       add(child);
@@ -329,10 +341,10 @@ namespace ospray {
     }
 
     void Node::setChild(const std::string &name,
-                            const std::shared_ptr<Node> &node)
+                        const std::shared_ptr<Node> &node)
     {
       std::lock_guard<std::mutex> lock{mutex};
-      std::string lower=name;
+      std::string lower = name;
       std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
       properties.children[lower] = node;
 #ifndef _WIN32
@@ -411,7 +423,7 @@ namespace ospray {
        if (lastModified() >= lastCommitted() ||
                 childrenLastModified() >= lastCommitted())
           preCommit(ctx);
-        else 
+        else
           traverseChildren = false;
       } else if (operation == "verify") {
         if (properties.valid && childrenLastModified() < properties.lastVerified)

@@ -135,6 +135,9 @@ namespace ospray {
       lastMousePos = currMousePos;
     }
 
+    void ImGui3DWidget::mouseButton(int button, int action, int mods)
+    {}
+
     ImGui3DWidget::ImGui3DWidget(FrameBufferMode frameBufferMode,
                                  ManipulatorMode initialManipulator,
                                  int allowedManipulators) :
@@ -219,7 +222,7 @@ namespace ospray {
       if (animating) {
         auto *hack =
             (InspectCenter*)ImGui3DWidget::activeWindow->inspectCenterManipulator;
-        hack->rotate(-10.f * ImGui3DWidget::activeWindow->motionSpeed, 0);
+        hack->rotate(-.01f * ImGui3DWidget::activeWindow->motionSpeed, 0);
       }
 
 
@@ -371,34 +374,7 @@ namespace ospray {
         window,
         [](GLFWwindow*, int button, int action, int mods) {
           ImGui3DWidget::activeWindow->currButton[button] = action;
-        }
-      );
-
-      glfwSetKeyCallback(
-        window,
-        [](GLFWwindow*, int key, int scancode, int action, int mods) {
-          ImGuiIO& io = ImGui::GetIO();
-
-          if (!io.WantCaptureKeyboard) {
-            auto &widget = *ImGui3DWidget::activeWindow;
-            if ((key == GLFW_KEY_LEFT_CONTROL ||
-                 key == GLFW_KEY_RIGHT_CONTROL)) {
-              if (action == GLFW_PRESS) {
-                widget.keysDown |= ImGui3DWidget::CNTRL_KEY;
-                if (widget.manipulator == widget.inspectCenterManipulator) {
-                  std::cout << "locking camera 'up' dir to "
-                            << widget.viewPort.up << std::endl;
-                }
-              }
-              else {
-                widget.keysDown &= ~ImGui3DWidget::CNTRL_KEY;
-                if (widget.manipulator == widget.inspectCenterManipulator)
-                  std::cout << "unlocking camera 'up' direction" << std::endl;
-              }
-            }
-
-            //NOTE: add other keys if necessary here
-          }
+          ImGui3DWidget::activeWindow->mouseButton(button, action, mods);
         }
       );
 

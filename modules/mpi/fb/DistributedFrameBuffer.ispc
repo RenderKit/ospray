@@ -76,10 +76,12 @@ export uniform float DFB_accumulate_##name(void  *uniform _self,             \
       accum->g[i] = col.y;                                                   \
       accum->b[i] = col.z;                                                   \
       accum->a[i] = col.w;                                                   \
+      accum->z[i] = tile->z[i];                                              \
       final->r[i] = col.x;                                                   \
       final->g[i] = col.y;                                                   \
       final->b[i] = col.z;                                                   \
       final->a[i] = col.w;                                                   \
+      final->z[i] = tile->z[i];                                              \
                                                                              \
       color[i] = cvt(col);                                                   \
     }                                                                        \
@@ -199,28 +201,28 @@ inline void sortAndBlendFragments(VaryingTile *uniform *uniform tileArray,
                                   uniform int32 numTiles,
                                   uniform int begin_frag, uniform int end_frag)
 {
-  for (uniform int frag=begin_frag;frag<end_frag;frag++) {
-    for (uniform int i=1;i<numTiles;i++)
-      for (uniform int j=i;j>0;--j) {
+  for (uniform int frag = begin_frag; frag < end_frag; ++frag) {
+    for (uniform int i = 1; i < numTiles; ++i) {
+      for (uniform int j = i; j > 0; --j) {
         VaryingTile *uniform ta = tileArray[j];
         VaryingTile *uniform tb = tileArray[j-1];
         if (ta->z[frag] < tb->z[frag])
           break;
         swapFragments(ta,tb,frag);
       }
+    }
 
     vec3f acc_col = make_vec3f(0,0,0);
     float acc_alpha = 0.f;
 
-    for (uniform int i=0;i<numTiles;i++) {
+    for (uniform int i = 0; i < numTiles; ++i) {
       VaryingTile *uniform tile = tileArray[i];
       vec3f frag_col = make_vec3f(tile->r[frag],tile->g[frag],tile->b[frag]);
       float frag_alpha = tile->a[frag];
 
-      acc_col = //frag_alpha * 
-        frag_col + (1.f-frag_alpha) * acc_col;
-      acc_alpha = //frag_alpha * 
-        frag_alpha + (1.f-frag_alpha) * acc_alpha;
+      // Note: back-to-front blending
+      acc_col = frag_col + (1.f - frag_alpha) * acc_col;
+      acc_alpha = frag_alpha + (1.f - frag_alpha) * acc_alpha;
     }
     
     VaryingTile *uniform tile = tileArray[0];
@@ -228,6 +230,9 @@ inline void sortAndBlendFragments(VaryingTile *uniform *uniform tileArray,
     tile->g[frag] = acc_col.y;
     tile->b[frag] = acc_col.z;
     tile->a[frag] = acc_alpha;
+    // Since we blend back-to-front, the nearest depth sample is
+    // on the last tile after sorting.
+    tile->z[frag] = tileArray[numTiles - 1]->z[frag];
   }
 }
 

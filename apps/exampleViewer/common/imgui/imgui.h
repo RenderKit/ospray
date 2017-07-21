@@ -1,4 +1,4 @@
-// dear imgui, v1.50 WIP
+// dear imgui, v1.50
 // (headers)
 
 // See imgui.cpp file for documentation.
@@ -16,14 +16,12 @@
 #include <stddef.h>         // ptrdiff_t, NULL
 #include <string.h>         // memset, memmove, memcpy, strlen, strchr, strcpy, strcmp
 
-#define IMGUI_VERSION       "1.50 WIP"
+#define IMGUI_VERSION       "1.50"
 
 // Define attributes of all API symbols declarations, e.g. for DLL under Windows.
 #ifndef IMGUI_API
 #define IMGUI_API
 #endif
-
-
 
 // Define assertion handler.
 #ifndef IM_ASSERT
@@ -120,7 +118,7 @@ namespace ImGui
     IMGUI_API void          ShowUserGuide();                            // help block
     IMGUI_API void          ShowStyleEditor(ImGuiStyle* ref = NULL);    // style editor block. you can pass in a reference ImGuiStyle structure to compare to, revert to and save to (else it uses the default style)
     IMGUI_API void          ShowTestWindow(bool* p_open = NULL);        // test window demonstrating ImGui features
-    IMGUI_API void          ShowMetricsWindow(bool* p_open = NULL);     // metrics window for debugging ImGui
+    IMGUI_API void          ShowMetricsWindow(bool* p_open = NULL);     // metrics window for debugging ImGui (browse draw commands, individual vertices, window list, etc.)
 
     // Window
     IMGUI_API bool          Begin(const char* name, bool* p_open = NULL, ImGuiWindowFlags flags = 0);                                                   // push window to the stack and start appending to it. see .cpp for details. return false when window is collapsed, so you can early out in your code. 'bool* p_open' creates a widget on the upper-right to close the window (which sets your bool to false).
@@ -267,7 +265,7 @@ namespace ImGui
     IMGUI_API bool          CheckboxFlags(const char* label, unsigned int* flags, unsigned int flags_value);
     IMGUI_API bool          RadioButton(const char* label, bool active);
     IMGUI_API bool          RadioButton(const char* label, int* v, int v_button);
-    IMGUI_API bool          Combo(const char* label, int* current_item, const char** items, int items_count, int height_in_items = -1);
+    IMGUI_API bool          Combo(const char* label, int* current_item, const char* const* items, int items_count, int height_in_items = -1);
     IMGUI_API bool          Combo(const char* label, int* current_item, const char* items_separated_by_zeros, int height_in_items = -1);      // separate items with \0, end item-list with \0\0
     IMGUI_API bool          Combo(const char* label, int* current_item, bool (*items_getter)(void* data, int idx, const char** out_text), void* data, int items_count, int height_in_items = -1);
     IMGUI_API bool          ColorButton(const ImVec4& col, bool small_height = false, bool outline_border = true);
@@ -341,7 +339,7 @@ namespace ImGui
     // Widgets: Selectable / Lists
     IMGUI_API bool          Selectable(const char* label, bool selected = false, ImGuiSelectableFlags flags = 0, const ImVec2& size = ImVec2(0,0));  // size.x==0.0: use remaining width, size.x>0.0: specify width. size.y==0.0: use label height, size.y>0.0: specify height
     IMGUI_API bool          Selectable(const char* label, bool* p_selected, ImGuiSelectableFlags flags = 0, const ImVec2& size = ImVec2(0,0));
-    IMGUI_API bool          ListBox(const char* label, int* current_item, const char** items, int items_count, int height_in_items = -1);
+    IMGUI_API bool          ListBox(const char* label, int* current_item, const char* const* items, int items_count, int height_in_items = -1);
     IMGUI_API bool          ListBox(const char* label, int* current_item, bool (*items_getter)(void* data, int idx, const char** out_text), void* data, int items_count, int height_in_items = -1);
     IMGUI_API bool          ListBoxHeader(const char* label, const ImVec2& size = ImVec2(0,0)); // use if you want to reimplement ListBox() will custom data or interactions. make sure to call ListBoxFooter() afterwards.
     IMGUI_API bool          ListBoxHeader(const char* label, int items_count, int height_in_items = -1); // "
@@ -374,7 +372,7 @@ namespace ImGui
     // Popups
     IMGUI_API void          OpenPopup(const char* str_id);                                      // mark popup as open. popups are closed when user click outside, or activate a pressable item, or CloseCurrentPopup() is called within a BeginPopup()/EndPopup() block. popup identifiers are relative to the current ID-stack (so OpenPopup and BeginPopup needs to be at the same level).
     IMGUI_API bool          BeginPopup(const char* str_id);                                     // return true if the popup is open, and you can start outputting to it. only call EndPopup() if BeginPopup() returned true!
-    IMGUI_API bool          BeginPopupModal(const char* name, bool* p_open = NULL, ImGuiWindowFlags extra_flags = 0);               // modal dialog (can't close them by clicking outside)
+    IMGUI_API bool          BeginPopupModal(const char* name, bool* p_open = NULL, ImGuiWindowFlags extra_flags = 0);               // modal dialog (block interactions behind the modal window, can't close the modal window by clicking outside)
     IMGUI_API bool          BeginPopupContextItem(const char* str_id, int mouse_button = 1);                                        // helper to open and begin popup when clicked on last item. read comments in .cpp!
     IMGUI_API bool          BeginPopupContextWindow(bool also_over_items = true, const char* str_id = NULL, int mouse_button = 1);  // helper to open and begin popup when clicked on current window.
     IMGUI_API bool          BeginPopupContextVoid(const char* str_id = NULL, int mouse_button = 1);                                 // helper to open and begin popup when clicked in void (no window).
@@ -429,10 +427,10 @@ namespace ImGui
     IMGUI_API void          ColorConvertHSVtoRGB(float h, float s, float v, float& out_r, float& out_g, float& out_b);
 
     // Inputs
-    IMGUI_API int           GetKeyIndex(ImGuiKey key);                                          // map ImGuiKey_* values into user's key index. == io.KeyMap[key]
-    IMGUI_API bool          IsKeyDown(int key_index);                                           // key_index into the keys_down[] array, imgui doesn't know the semantic of each entry, uses your own indices!
-    IMGUI_API bool          IsKeyPressed(int key_index, bool repeat = true);                    // uses user's key indices as stored in the keys_down[] array. if repeat=true. uses io.KeyRepeatDelay / KeyRepeatRate
-    IMGUI_API bool          IsKeyReleased(int key_index);                                       // "
+    IMGUI_API int           GetKeyIndex(ImGuiKey imgui_key);                                    // map ImGuiKey_* values into user's key index. == io.KeyMap[key]
+    IMGUI_API bool          IsKeyDown(int user_key_index);                                      // is key being held. == io.KeysDown[user_key_index]. note that imgui doesn't know the semantic of each entry of io.KeyDown[]. Use your own indices/enums according to how your backend/engine stored them into KeyDown[]!
+    IMGUI_API bool          IsKeyPressed(int user_key_index, bool repeat = true);               // was key pressed (went from !Down to Down). if repeat=true, uses io.KeyRepeatDelay / KeyRepeatRate
+    IMGUI_API bool          IsKeyReleased(int user_key_index);                                  // was key released (went from Down to !Down)..
     IMGUI_API bool          IsMouseDown(int button);                                            // is mouse button held
     IMGUI_API bool          IsMouseClicked(int button, bool repeat = false);                    // did mouse button clicked (went from !Down to Down)
     IMGUI_API bool          IsMouseDoubleClicked(int button);                                   // did mouse button double-clicked. a double-click returns false in IsMouseClicked(). uses io.MouseDoubleClickTime.
@@ -523,7 +521,7 @@ enum ImGuiInputTextFlags_
     ImGuiInputTextFlags_CallbackAlways      = 1 << 8,   // Call user function every time. User code may query cursor position, modify text buffer.
     ImGuiInputTextFlags_CallbackCharFilter  = 1 << 9,   // Call user function to filter character. Modify data->EventChar to replace/filter input, or return 1 to discard character.
     ImGuiInputTextFlags_AllowTabInput       = 1 << 10,  // Pressing TAB input a '\t' character into the text field
-    ImGuiInputTextFlags_CtrlEnterForNewLine = 1 << 11,  // In multi-line mode, allow exiting edition by pressing Enter. Ctrl+Enter to add new line (by default adds new lines with Enter).
+    ImGuiInputTextFlags_CtrlEnterForNewLine = 1 << 11,  // In multi-line mode, unfocus with Enter, add new line with Ctrl+Enter (default is opposite: unfocus with Ctrl+Enter, add line with Enter).
     ImGuiInputTextFlags_NoHorizontalScroll  = 1 << 12,  // Disable following the cursor horizontally
     ImGuiInputTextFlags_AlwaysInsertMode    = 1 << 13,  // Insert mode
     ImGuiInputTextFlags_ReadOnly            = 1 << 14,  // Read-only mode
@@ -741,6 +739,7 @@ struct ImGuiIO
     ImFontAtlas*  Fonts;                    // <auto>               // Load and assemble one or more fonts into a single tightly packed texture. Output to Fonts array.
     float         FontGlobalScale;          // = 1.0f               // Global scale all fonts
     bool          FontAllowUserScaling;     // = false              // Allow user scaling text of individual window with CTRL+Wheel.
+    ImFont*       FontDefault;              // = NULL               // Font to use on NewFrame(). Use NULL to uses Fonts->Fonts[0].
     ImVec2        DisplayFramebufferScale;  // = (1.0f,1.0f)        // For retina display or other situations where window coordinates are different from framebuffer coordinates. User storage only, presently not used by ImGui.
     ImVec2        DisplayVisibleMin;        // <unset> (0.0f,0.0f)  // If you use DisplaySize as a virtual space larger than your screen, set DisplayVisibleMin/Max to the visible area.
     ImVec2        DisplayVisibleMax;        // <unset> (0.0f,0.0f)  // If the values are the same, we defaults to Min=(0.0f) and Max=DisplaySize
@@ -789,29 +788,29 @@ struct ImGuiIO
     ImWchar     InputCharacters[16+1];      // List of characters input (translated by user from keypress+keyboard state). Fill using AddInputCharacter() helper.
 
     // Functions
-    IMGUI_API void AddInputCharacter(ImWchar c);                        // Helper to add a new character into InputCharacters[]
-    IMGUI_API void AddInputCharactersUTF8(const char* utf8_chars);      // Helper to add new characters into InputCharacters[] from an UTF-8 string
-    inline void    ClearInputCharacters() { InputCharacters[0] = 0; }   // Helper to clear the text input buffer
+    IMGUI_API void AddInputCharacter(ImWchar c);                        // Add new character into InputCharacters[]
+    IMGUI_API void AddInputCharactersUTF8(const char* utf8_chars);      // Add new characters into InputCharacters[] from an UTF-8 string
+    inline void    ClearInputCharacters() { InputCharacters[0] = 0; }   // Clear the text input buffer manually
 
     //------------------------------------------------------------------
-    // Output - Retrieve after calling NewFrame(), you can use them to discard inputs or hide them from the rest of your application
+    // Output - Retrieve after calling NewFrame()
     //------------------------------------------------------------------
 
-    bool        WantCaptureMouse;           // Mouse is hovering a window or widget is active (= ImGui will use your mouse input)
-    bool        WantCaptureKeyboard;        // Widget is active (= ImGui will use your keyboard input)
-    bool        WantTextInput;              // Some text input widget is active, which will read input characters from the InputCharacters array.
-    float       Framerate;                  // Framerate estimation, in frame per second. Rolling average estimation based on IO.DeltaTime over 120 frames
+    bool        WantCaptureMouse;           // Mouse is hovering a window or widget is active (= ImGui will use your mouse input). Use to hide mouse from the rest of your application
+    bool        WantCaptureKeyboard;        // Widget is active (= ImGui will use your keyboard input). Use to hide keyboard from the rest of your application
+    bool        WantTextInput;              // Some text input widget is active, which will read input characters from the InputCharacters array. Use to activate on screen keyboard if your system needs one
+    float       Framerate;                  // Application framerate estimation, in frame per second. Solely for convenience. Rolling average estimation based on IO.DeltaTime over 120 frames
     int         MetricsAllocs;              // Number of active memory allocations
     int         MetricsRenderVertices;      // Vertices output during last call to Render()
     int         MetricsRenderIndices;       // Indices output during last call to Render() = number of triangles * 3
-    int         MetricsActiveWindows;       // Number of visible windows (exclude child windows)
+    int         MetricsActiveWindows;       // Number of visible root windows (exclude child windows)
+    ImVec2      MouseDelta;                 // Mouse delta. Note that this is zero if either current or previous position are negative, so a disappearing/reappearing mouse won't have a huge delta for one frame.
 
     //------------------------------------------------------------------
     // [Private] ImGui will maintain those fields. Forward compatibility not guaranteed!
     //------------------------------------------------------------------
 
-    ImVec2      MousePosPrev;               // Previous mouse position
-    ImVec2      MouseDelta;                 // Mouse delta. Note that this is zero if either current or previous position are negative to allow mouse enabling/disabling.
+    ImVec2      MousePosPrev;               // Previous mouse position temporary storage (nb: not for public use, set to MousePos in NewFrame())
     bool        MouseClicked[5];            // Mouse button went from !Down to Down
     ImVec2      MouseClickedPos[5];         // Position at time of clicking
     float       MouseClickedTime[5];        // Time of last click (used to figure out double-click)
@@ -1021,8 +1020,8 @@ struct ImGuiTextEditCallbackData
     int                 SelectionEnd;   //                                      // Read-write
 
     // NB: Helper functions for text manipulation. Calling those function loses selection.
-    void    DeleteChars(int pos, int bytes_count);
-    void    InsertChars(int pos, const char* text, const char* text_end = NULL);
+    IMGUI_API void    DeleteChars(int pos, int bytes_count);
+    IMGUI_API void    InsertChars(int pos, const char* text, const char* text_end = NULL);
     bool    HasSelection() const { return SelectionStart != SelectionEnd; }
 };
 
@@ -1051,9 +1050,9 @@ struct ImGuiSizeConstraintCallbackData
 #define IM_COL32_A_MASK     0xFF000000
 #endif
 #define IM_COL32(R,G,B,A)    (((ImU32)(A)<<IM_COL32_A_SHIFT) | ((ImU32)(B)<<IM_COL32_B_SHIFT) | ((ImU32)(G)<<IM_COL32_G_SHIFT) | ((ImU32)(R)<<IM_COL32_R_SHIFT))
-#define IM_COL32_WHITE       IM_COL32(255,255,255,255)  // Opaque white
+#define IM_COL32_WHITE       IM_COL32(255,255,255,255)  // Opaque white = 0xFFFFFFFF
 #define IM_COL32_BLACK       IM_COL32(0,0,0,255)        // Opaque black
-#define IM_COL32_BLACK_TRANS IM_COL32(0,0,0,0)          // Transparent black
+#define IM_COL32_BLACK_TRANS IM_COL32(0,0,0,0)          // Transparent black = 0x00000000
 
 // ImColor() helper to implicity converts colors to either ImU32 (packed 4x1 byte) or ImVec4 (4x1 float)
 // Prefer using IM_COL32() macros if you want a guaranteed compile-time ImU32 for usage with ImDrawList API.
@@ -1203,7 +1202,8 @@ struct ImDrawList
     IMGUI_API void  AddCircleFilled(const ImVec2& centre, float radius, ImU32 col, int num_segments = 12);
     IMGUI_API void  AddText(const ImVec2& pos, ImU32 col, const char* text_begin, const char* text_end = NULL);
     IMGUI_API void  AddText(const ImFont* font, float font_size, const ImVec2& pos, ImU32 col, const char* text_begin, const char* text_end = NULL, float wrap_width = 0.0f, const ImVec4* cpu_fine_clip_rect = NULL);
-    IMGUI_API void  AddImage(ImTextureID user_texture_id, const ImVec2& a, const ImVec2& b, const ImVec2& uv0 = ImVec2(0,0), const ImVec2& uv1 = ImVec2(1,1), ImU32 col = 0xFFFFFFFF);
+    IMGUI_API void  AddImage(ImTextureID user_texture_id, const ImVec2& a, const ImVec2& b, const ImVec2& uv_a = ImVec2(0,0), const ImVec2& uv_b = ImVec2(1,1), ImU32 col = 0xFFFFFFFF);
+    IMGUI_API void  AddImageQuad(ImTextureID user_texture_id, const ImVec2& a, const ImVec2& b, const ImVec2& c, const ImVec2& d, const ImVec2& uv_a = ImVec2(0,0), const ImVec2& uv_b = ImVec2(1,0), const ImVec2& uv_c = ImVec2(1,1), const ImVec2& uv_d = ImVec2(0,1), ImU32 col = 0xFFFFFFFF);
     IMGUI_API void  AddPolyline(const ImVec2* points, const int num_points, ImU32 col, bool closed, float thickness, bool anti_aliased);
     IMGUI_API void  AddConvexPolyFilled(const ImVec2* points, const int num_points, ImU32 col, bool anti_aliased);
     IMGUI_API void  AddBezierCurve(const ImVec2& pos0, const ImVec2& cp0, const ImVec2& cp1, const ImVec2& pos1, ImU32 col, float thickness, int num_segments = 0);
@@ -1212,7 +1212,7 @@ struct ImDrawList
     inline    void  PathClear()                                                 { _Path.resize(0); }
     inline    void  PathLineTo(const ImVec2& pos)                               { _Path.push_back(pos); }
     inline    void  PathLineToMergeDuplicate(const ImVec2& pos)                 { if (_Path.Size == 0 || memcmp(&_Path[_Path.Size-1], &pos, 8) != 0) _Path.push_back(pos); }
-    inline    void  PathFill(ImU32 col)                                         { AddConvexPolyFilled(_Path.Data, _Path.Size, col, true); PathClear(); }
+    inline    void  PathFillConvex(ImU32 col)                                   { AddConvexPolyFilled(_Path.Data, _Path.Size, col, true); PathClear(); }
     inline    void  PathStroke(ImU32 col, bool closed, float thickness = 1.0f)  { AddPolyline(_Path.Data, _Path.Size, col, closed, thickness, true); PathClear(); }
     IMGUI_API void  PathArcTo(const ImVec2& centre, float radius, float a_min, float a_max, int num_segments = 10);
     IMGUI_API void  PathArcToFast(const ImVec2& centre, float radius, int a_min_of_12, int a_max_of_12);                                // Use precomputed angles for a 12 steps circle
@@ -1270,9 +1270,9 @@ struct ImFontConfig
     int             OversampleH, OversampleV;   // 3, 1     // Rasterize at higher quality for sub-pixel positioning. We don't use sub-pixel positions on the Y axis.
     bool            PixelSnapH;                 // false    // Align every glyph to pixel boundary. Useful e.g. if you are merging a non-pixel aligned font with the default font. If enabled, you can set OversampleH/V to 1.
     ImVec2          GlyphExtraSpacing;          // 0, 0     // Extra spacing (in pixels) between glyphs
+    ImVec2          GlyphOffset;                // 0, 0     // Offset all glyphs from this font input
     const ImWchar*  GlyphRanges;                //          // Pointer to a user-provided list of Unicode range (2 value per range, values are inclusive, zero-terminated list). THE ARRAY DATA NEEDS TO PERSIST AS LONG AS THE FONT IS ALIVE.
-    bool            MergeMode;                  // false    // Merge into previous ImFont, so you can combine multiple inputs font into one ImFont (e.g. ASCII font + icons + Japanese glyphs).
-    bool            MergeGlyphCenterV;          // false    // When merging (multiple ImFontInput for one ImFont), vertically center new glyphs instead of aligning their baseline
+    bool            MergeMode;                  // false    // Merge into previous ImFont, so you can combine multiple inputs font into one ImFont (e.g. ASCII font + icons + Japanese glyphs). You may want to use GlyphOffset.y when merge font of different heights.
 
     // [Internal]
     char            Name[32];                               // Name (strictly for debugging)
@@ -1312,7 +1312,7 @@ struct ImFontAtlas
     // Pitch = Width * BytesPerPixels
     IMGUI_API void              GetTexDataAsAlpha8(unsigned char** out_pixels, int* out_width, int* out_height, int* out_bytes_per_pixel = NULL);  // 1 byte per-pixel
     IMGUI_API void              GetTexDataAsRGBA32(unsigned char** out_pixels, int* out_width, int* out_height, int* out_bytes_per_pixel = NULL);  // 4 bytes-per-pixel
-    void                        SetTexID(void* id)  { TexID = id; }
+    void                        SetTexID(ImTextureID id)  { TexID = id; }
 
     // Helpers to retrieve list of common Unicode ranges (2 value per range, values are inclusive, zero-terminated list)
     // NB: Make sure that your string are UTF-8 and NOT in your local code page. See FAQ for details.
@@ -1325,7 +1325,7 @@ struct ImFontAtlas
 
     // Members
     // (Access texture data via GetTexData*() calls which will setup a default font for you.)
-    void*                       TexID;              // User data to refer to the texture once it has been uploaded to user's graphic systems. It ia passed back to you during rendering.
+    ImTextureID                 TexID;              // User data to refer to the texture once it has been uploaded to user's graphic systems. It is passed back to you during rendering via the ImDrawCmd structure.
     unsigned char*              TexPixelsAlpha8;    // 1 component per pixel, each component is unsigned 8-bit. Total size = TexWidth * TexHeight
     unsigned int*               TexPixelsRGBA32;    // 4 component per pixel, each component is unsigned 8-bit. Total size = TexWidth * TexHeight * 4
     int                         TexWidth;           // Texture width calculated during Build().
@@ -1368,6 +1368,7 @@ struct ImFont
     ImFontConfig*               ConfigData;         //              // Pointer within ContainerAtlas->ConfigData
     ImFontAtlas*                ContainerAtlas;     //              // What we has been loaded into
     float                       Ascent, Descent;    //              // Ascent: distance from top to bottom of e.g. 'A' [0..FontSize]
+    int                         MetricsTotalSurface;//              // Total surface in pixels to get an idea of the font rasterization/texture cost (not exact, we approximate the cost of padding between glyphs)
 
     // Methods
     IMGUI_API ImFont();
