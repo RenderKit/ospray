@@ -17,6 +17,11 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "../3rdParty/stb_image.h"
 
+#ifdef USE_OPENIMAGEIO
+#include <OpenImageIO/imageio.h>
+OIIO_NAMESPACE_USING
+#endif
+
 #ifdef USE_IMAGEMAGICK
 #define MAGICKCORE_QUANTUM_DEPTH 16
 #define MAGICKCORE_HDRI_ENABLE 1
@@ -61,6 +66,37 @@ namespace ospray {
 
       std::shared_ptr<Texture2D> tex = std::static_pointer_cast<Texture2D>(
         createNode(fileName.name(),"Texture2D"));
+
+#if USE_OPENIMAGEIO
+      ImageInput *in = ImageInput::open(fileName.str().c_str());
+      if (!in) {
+        std::cerr << "#osp:sg: failed to load texture '"+fileName.str()+"'" << std::endl;
+      } else {
+        const ImageSpec &spec = in->spec();
+
+        tex->size.x = spec.width;
+        tex->size.y = spec.height;
+        tex->channels = spec.nchannels;
+        const bool hdr = spec.format.size() > 1;
+        tex->depth = hdr ? 4 : 1;
+        tex->preferLinear = preferLinear;
+        const size_t stride = tex->size.x * tex->channels * tex->depth;
+        tex->data = new unsigned char[tex->size.y * stride];
+
+        in->read_image(hdr ? TypeDesc::FLOAT : TypeDesc::UINT8, tex->data);
+        in->close();
+        ImageInput::destroy(in);
+
+        // flip image (because OSPRay's textures have the origin at the lower left corner)
+        unsigned char* data = (unsigned char*)tex->data;
+        for (size_t y = 0; y < tex->size.y / 2; y++) {
+          unsigned char *src = &data[y * stride];
+          unsigned char *dest = &data[(tex->size.y-1-y) * stride];
+          for (size_t x = 0; x < stride; x++)
+            std::swap(src[x], dest[x]);
+        }
+      }
+#else
       const std::string ext = fileName.ext();
 
       if (ext == "ppm") {
@@ -336,6 +372,7 @@ namespace ospray {
         }
 #endif
       }
+#endif
       textureCache[fileName.str()] = tex;
       return tex;
     }

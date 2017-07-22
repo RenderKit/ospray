@@ -34,6 +34,18 @@ IF(OSPRAY_APPS_SG_VTK)
   ADD_DEFINITIONS(-DOSPRAY_APPS_SG_VTK=1)
 ENDIF()
 
+OPTION(USE_OPENIMAGEIO "Enable OpenImageIO support" OFF)
+
+IF(USE_OPENIMAGEIO)
+  FIND_PACKAGE(OpenImageIO)
+  IF (OPENIMAGEIO_FOUND)
+    ADD_DEFINITIONS(-DUSE_OPENIMAGEIO)
+    INCLUDE_DIRECTORIES(${OPENIMAGEIO_INCLUDE_DIRS})
+  ELSE()
+    MESSAGE(STATUS "OpenImageIO not found. Using stb_image instead.")
+  ENDIF()
+ENDIF()
+
 OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   # scene graph nodes
   SceneGraph.cpp
@@ -97,4 +109,5 @@ LINK
   ospray_common
   ospray_xml
   ${VTK_LIBRARIES}
+  ${OPENIMAGEIO_LIBRARIES}
 )
