@@ -9,12 +9,15 @@ variables:
   type: build
   tags:
     - docker
+  script:
+    - scripts/build_gitlab/linux.sh
 
 ### BUILD JOBS ###
 
 build-arch-gcc:
   <<: *build_job
-  image: jeffamstutz/docker-autobuild
-  script:
-    - scripts/build_gitlab/linux.sh
+  image: jeffamstutz/docker-autobuild:latest
 
+build-ubuntu-gcc:
+  <<: *build_job
+  image: jeffamstutz/docker-autobuild:ubuntu
