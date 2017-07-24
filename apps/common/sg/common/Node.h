@@ -191,7 +191,7 @@ namespace ospray {
 
       // Traversal interface //////////////////////////////////////////////////
 
-      //! traverse this node and childrend with given operation, such as
+      //! traverse this node and children with given operation, such as
       //  print,commit,render or custom operations
       virtual void traverse(RenderContext &ctx, const std::string& operation);
 

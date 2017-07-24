@@ -170,7 +170,7 @@ namespace ospray {
         if (lightsData == nullptr ||
           lightsBuildTime < child("lights").childrenLastModified())
         {
-          // create and setup light for Ambient Occlusion
+          // create and setup light list
           std::vector<OSPLight> lights;
           for(auto &lightNode : child("lights").children())
             lights.push_back((OSPLight)lightNode->valueAs<OSPObject>());

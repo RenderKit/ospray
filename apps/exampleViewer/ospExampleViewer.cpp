@@ -246,6 +246,9 @@ int main(int ac, const char **av)
   auto renderer_ptr = sg::createNode("renderer", "Renderer");
   auto &renderer = *renderer_ptr;
 
+  auto &win_size = ospray::imgui3D::ImGui3DWidget::defaultInitSize;
+  renderer["frameBuffer"]["size"].setValue(win_size);
+
   if (!initialRendererType.empty())
     renderer["rendererType"].setValue(initialRendererType);
 

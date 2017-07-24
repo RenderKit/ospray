@@ -509,7 +509,7 @@ namespace ospray {
             removeArgs(*ac,(char **&)av,i,2); --i;
           } else {
             ImGui3DWidget::defaultInitSize.x = atoi(av[i+1]);
-            ImGui3DWidget::defaultInitSize.y = atoi(av[i+1]);
+            ImGui3DWidget::defaultInitSize.y = atoi(av[i+2]);
             removeArgs(*ac,(char **&)av,i,3); --i;
           }
           continue;
