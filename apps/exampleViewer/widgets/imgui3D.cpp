@@ -96,7 +96,6 @@ namespace ospray {
     // InspectCenter Glut3DWidget::INSPECT_CENTER;
     /*! viewport as specified on the command line */
     ImGui3DWidget::ViewPort *viewPortFromCmdLine = nullptr;
-    vec3f upVectorFromCmdLine(0,1,0);
 
     // ------------------------------------------------------------------
     // implementation of glut3d::viewPorts
@@ -105,7 +104,7 @@ namespace ospray {
       modified(true),
       from(0,0,-1),
       at(0,0,0),
-      up(upVectorFromCmdLine),
+      up(0,1,0),
       openingAngle(60.f),
       aspect(1.f)
     {
@@ -543,9 +542,9 @@ namespace ospray {
           auto& ay = viewPortFromCmdLine->at.y;
           auto& az = viewPortFromCmdLine->at.z;
 
-          auto& ux = upVectorFromCmdLine.x;
-          auto& uy = upVectorFromCmdLine.y;
-          auto& uz = upVectorFromCmdLine.z;
+          auto& ux = viewPortFromCmdLine->up.x;
+          auto& uy = viewPortFromCmdLine->up.y;
+          auto& uz = viewPortFromCmdLine->up.z;
 
           auto& fov = viewPortFromCmdLine->openingAngle;
 
@@ -569,11 +568,11 @@ namespace ospray {
           removeArgs(*ac,(char **&)av, i, 2); --i;
           continue;
         } if (arg == "-vu") {
-          upVectorFromCmdLine.x = atof(av[i+1]);
-          upVectorFromCmdLine.y = atof(av[i+2]);
-          upVectorFromCmdLine.z = atof(av[i+3]);
-          if (viewPortFromCmdLine)
-            viewPortFromCmdLine->up = upVectorFromCmdLine;
+          if (!viewPortFromCmdLine)
+            viewPortFromCmdLine = new ImGui3DWidget::ViewPort;
+          viewPortFromCmdLine->up.x = atof(av[i+1]);
+          viewPortFromCmdLine->up.y = atof(av[i+2]);
+          viewPortFromCmdLine->up.z = atof(av[i+3]);
           assert(i+3 < *ac);
           removeArgs(*ac,(char **&)av,i,4); --i;
           continue;

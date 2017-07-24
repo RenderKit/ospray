@@ -262,6 +262,13 @@ int main(int ac, const char **av)
 
   ospray::ImGuiViewerSg window(renderer_ptr);
 
+  auto &viewPort = window.viewPort;
+  // XXX SG is too restrictive: OSPRay cameras accept non-normalized directions
+  auto dir = normalize(viewPort.at - viewPort.from);
+  renderer["camera"]["dir"].setValue(dir);
+  renderer["camera"]["pos"].setValue(viewPort.from);
+  renderer["camera"]["up"].setValue(viewPort.up);
+
   addPlaneToScene(renderer);
 
   window.create("OSPRay Example Viewer App", fullscreen);
