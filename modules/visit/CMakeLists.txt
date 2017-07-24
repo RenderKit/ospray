@@ -49,7 +49,7 @@ IF (OSPRAY_MODULE_VISIT)
   # tools/converters/importers/etc, this is where those sohuld go.
   #
   IF(OSPRAY_ENABLE_APPS)
-    ADD_SUBDIRECTORY(apps)
+    # ADD_SUBDIRECTORY(apps)
   ENDIF()
 
 ENDIF (OSPRAY_MODULE_VISIT)
