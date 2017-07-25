@@ -10,6 +10,13 @@ variables:
   tags:
     - docker
 
+.job_template: &test
+  type: build
+  tags:
+    - docker
+  script:
+    - echo "This is the base job"
+
 ### BUILD JOBS ###
 
 build-arch-gcc:
@@ -43,3 +50,9 @@ build-centos7-gcc:
   image: jeffamstutz/docker-autobuild:centos7
   script:
     - scripts/build_gitlab/linux.sh
+
+test-job:
+  <<: *test
+  image: jeffamstutz/docker-autobuild:latest
+  script:
+    - echo "This is the derived job"
