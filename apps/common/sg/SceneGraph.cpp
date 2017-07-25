@@ -35,21 +35,6 @@ namespace ospray {
       return "ospray::sg::Info";
     }
 
-    GenericGeometry::GenericGeometry(const std::string &type)
-      : Geometry(type)
-    {
-    }
-
-    std::string GenericGeometry::toString() const
-    {
-      return "ospray::sg::GenericGeometry";
-    }
-
-    box3f GenericGeometry::bounds() const
-    {
-      return _bounds;
-    }
-
     OSP_REGISTER_SG_NODE(Group);
 
   } // ::ospray::sg

@@ -68,20 +68,6 @@ namespace ospray {
       std::vector<std::shared_ptr<sg::Node>> children;
     };
 
-    /*! a geometry node - the generic geometry node */
-    struct GenericGeometry : public sg::Geometry
-    {
-      GenericGeometry(const std::string &type);
-
-      /*! \brief returns a std::string with the c++ name of this class */
-      std::string toString() const override;
-      box3f bounds() const override;
-
-      /*! geometry type, i.e., 'spheres', 'cylinders', 'trianglemesh', ... */
-      const std::string type;
-      box3f _bounds;
-    };
-
     /*! @} */
 
   } // ::ospray::sg
