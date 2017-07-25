@@ -104,6 +104,7 @@ namespace ospray {
                                          : OSP_FB_NONE,
                                          OSP_FB_COLOR | OSP_FB_ACCUM |
                                          OSP_FB_VARIANCE);
+      clearAccum();
       setValue((OSPObject)ospFrameBuffer);
     }
 
