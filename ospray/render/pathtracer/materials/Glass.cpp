@@ -29,19 +29,25 @@ namespace ospray {
       //! \brief commit the material's parameters
       virtual void commit() override
       {
-        if (getIE() != nullptr) return;
+        if (getIE() == nullptr) {
+          ispcEquivalent = ispc::PathTracer_Glass_create();
+        }
 
         const float etaInside = getParamf("etaInside", getParamf("eta", 1.5f));
-        const float etaOutside = getParamf("etaOutside", 1.f);;
-        const vec3f& attenuationColorInside
-          = getParam3f("attenuationColorInside", getParam3f("attenuationColor",
-                getParam3f("color", vec3f(1.f))));
-        const vec3f& attenuationColorOutside
-          = getParam3f("attenuationColorOutside", vec3f(1.f));
-        const float attenuationDistance = getParamf("attenuationDistance", 1.0f);
-          
-        ispcEquivalent = ispc::PathTracer_Glass_create();
-
+        
+        const float etaOutside = getParamf("etaOutside", 1.f);
+        
+        const vec3f& attenuationColorInside =
+          getParam3f("attenuationColorInside",
+          getParam3f("attenuationColor",
+          getParam3f("color", vec3f(1.f))));
+        
+        const vec3f& attenuationColorOutside =
+          getParam3f("attenuationColorOutside", vec3f(1.f));
+        
+        const float attenuationDistance =
+          getParamf("attenuationDistance", getParamf("distance", 1.0f));
+        
         ispc::PathTracer_Glass_set(
           ispcEquivalent,
           etaInside, 
