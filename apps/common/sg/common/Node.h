@@ -425,7 +425,7 @@ namespace ospray {
     //! a Node with bounds and a render operation
     struct OSPSG_INTERFACE Renderable : public Node
     {
-      Renderable() { createChild("bounds", "box3f"); }
+      Renderable() { createChild("bounds", "box3f", box3f(empty)); }
       virtual ~Renderable() = default;
 
       virtual std::string toString() const override
