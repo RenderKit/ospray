@@ -25,6 +25,7 @@
 #include "../3rdParty/tiny_obj_loader.h"
 
 #include <cstring>
+#include <sstream>
 
 namespace ospray {
   namespace sg {
@@ -56,6 +57,47 @@ namespace ospray {
         }
       }
     }
+    
+    static inline float parseFloatString(std::string valueString)
+    {
+      std::stringstream valueStream(valueString);
+      
+      float value;
+      valueStream >> value;
+      
+      return value;
+    }
+    
+    static inline vec3f parseVec3fString(std::string valueString)
+    {
+      std::stringstream valueStream(valueString);
+      
+      vec3f value;
+      valueStream >> value.x >> value.y >> value.z;
+      
+      return value;
+    }
+    
+    static inline void parseParameterString(std::string typeAndValueString,
+                                            std::string & paramType,
+                                            ospcommon::utility::Any & paramValue)
+    {
+      std::stringstream typeAndValueStream(typeAndValueString);
+      
+      typeAndValueStream >> paramType;
+      
+      std::string paramValueString;
+      getline(typeAndValueStream,paramValueString);
+      
+      if (paramType == "float") {
+        paramValue = parseFloatString(paramValueString);
+      } else if (paramType == "vec3f") {
+        paramValue = parseVec3fString(paramValueString);
+      } else {
+        // Unknown type.
+        paramValue = typeAndValueString;
+      }
+    }
 
     static inline std::vector<std::shared_ptr<Material>>
     createSgMaterials(std::vector<tinyobj::material_t> &mats,
@@ -67,9 +109,18 @@ namespace ospray {
         auto matNodePtr = createNode(mat.name, "Material")->nodeAs<Material>();
         auto &matNode = *matNodePtr;
 
-        auto type = mat.unknown_parameter["type"];
-        if (!type.empty())
-          matNode["type"].setValue(type);
+        for (auto &param : mat.unknown_parameter) {
+          if (param.first == "type") {
+            matNode["type"].setValue(param.second);
+            std::cout << "Creating material node of type " << param.second << std::endl;
+          } else {
+            std::string paramType;
+            ospcommon::utility::Any paramValue;
+            parseParameterString(param.second, paramType, paramValue);
+            matNode.createChildWithValue(param.first, paramType, paramValue);
+            std::cout << "Parsed parameter " << param.first << " of type " << paramType << std::endl;
+          }
+        }
 
         matNode["d"].setValue(mat.dissolve);
         matNode["Ka"].setValue(vec3f(mat.ambient[0],

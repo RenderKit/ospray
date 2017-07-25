@@ -239,6 +239,13 @@ namespace ospray {
       //             to be able to lock the mutex
       mutable std::mutex mutex;
     };
+    
+    OSPSG_INTERFACE std::shared_ptr<Node>
+    createNode(std::string name,
+               std::string type = "Node",
+               SGVar var = SGVar(),
+               int flags = sg::NodeFlags::none,
+               std::string documentation = "");
 
     // Inlined Node definitions ///////////////////////////////////////////////
 
@@ -263,10 +270,7 @@ namespace ospray {
         return c;
       }
       else {
-        auto node = std::make_shared<Node>();
-        node->setType(type);
-        node->setValue(t);
-        node->setName(name);
+        auto node = createNode(name, type, t);
         add(node);
         return *node;
       }
@@ -286,12 +290,7 @@ namespace ospray {
       return properties.value.get<T>();
     }
 
-    OSPSG_INTERFACE std::shared_ptr<Node>
-    createNode(std::string name,
-               std::string type = "Node",
-               SGVar var = SGVar(),
-               int flags = sg::NodeFlags::none,
-               std::string documentation = "");
+
 
     // Helper functions ///////////////////////////////////////////////////////
 
