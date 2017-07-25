@@ -9,21 +9,14 @@ variables:
   type: build
   tags:
     - docker
-
-.job_template: &test
-  type: build
-  tags:
-    - docker
   script:
-    - echo "This is the base job"
+    - scripts/build_gitlab/linux.sh
 
 ### BUILD JOBS ###
 
 build-arch-gcc:
   <<: *build_job
   image: jeffamstutz/docker-autobuild:latest
-  script:
-    - scripts/build_gitlab/linux.sh
 
 build-arch-clang:
   <<: *build_job
@@ -36,23 +29,11 @@ build-arch-clang:
 build-ubuntu-gcc:
   <<: *build_job
   image: jeffamstutz/docker-autobuild:ubuntu
-  script:
-    - scripts/build_gitlab/linux.sh
 
 build-centos6-gcc:
   <<: *build_job
   image: jeffamstutz/docker-autobuild:centos6
-  script:
-    - scripts/build_gitlab/linux.sh
 
 build-centos7-gcc:
   <<: *build_job
   image: jeffamstutz/docker-autobuild:centos7
-  script:
-    - scripts/build_gitlab/linux.sh
-
-test-job:
-  <<: *test
-  image: jeffamstutz/docker-autobuild:latest
-  script:
-    - echo "This is the derived job"
