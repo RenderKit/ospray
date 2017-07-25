@@ -5,35 +5,44 @@ stages:
 variables:
   GIT_DEPTH: "3"
 
-.job_template: &build_job
+.job_template: &build_job_docker
   type: build
   tags:
     - docker
+  image: jeffamstutz/docker-autobuild:latest # default image
   script:
-    - scripts/build_gitlab/linux.sh
+    - scripts/build_gitlab/linux.sh          # default script
 
 ### BUILD JOBS ###
 
 build-arch-gcc:
-  <<: *build_job
-  image: jeffamstutz/docker-autobuild:latest
+  <<: *build_job_docker
 
 build-arch-clang:
-  <<: *build_job
-  image: jeffamstutz/docker-autobuild:latest
+  <<: *build_job_docker
   script:
     - export CC=clang
     - export CXX=clang++
     - scripts/build_gitlab/linux.sh
 
 build-ubuntu-gcc:
-  <<: *build_job
+  <<: *build_job_docker
   image: jeffamstutz/docker-autobuild:ubuntu
 
 build-centos6-gcc:
-  <<: *build_job
+  <<: *build_job_docker
   image: jeffamstutz/docker-autobuild:centos6
 
 build-centos7-gcc:
-  <<: *build_job
+  <<: *build_job_docker
   image: jeffamstutz/docker-autobuild:centos7
+
+build-debug:
+  <<: *build_job_docker
+  script:
+    - scripts/build_gitlab/linux.sh -DCMAKE_BUILD_TYPE=Debug
+
+build-mpi:
+  <<: *build_job_docker
+  script:
+    - scripts/build_gitlab/linux.sh -DOSPRAY_MODULE_MPI=ON
