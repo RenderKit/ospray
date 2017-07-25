@@ -175,6 +175,10 @@ static inline void addPlaneToScene(sg::Node& renderer)
 {
   auto &world = renderer["world"];
 
+  // update world bounds first
+  renderer.traverse("verify");
+  renderer.traverse("commit");
+
   auto bbox = world.bounds();
   if (bbox.empty()) {
     bbox.lower = vec3f(-5,0,-5);
@@ -352,7 +356,9 @@ int main(int ac, const char **av)
   addLightsToScene(renderer);
   addImporterNodesToWorld(renderer);
   addAnimatedImporterNodesToWorld(renderer);
+  addPlaneToScene(renderer);
 
+  // last, to be able to modify all created SG nodes
   parseCommandLineSG(ac, av, renderer);
 
   if (print || debug)
@@ -366,8 +372,6 @@ int main(int ac, const char **av)
   renderer["camera"]["dir"].setValue(dir);
   renderer["camera"]["pos"].setValue(viewPort.from);
   renderer["camera"]["up"].setValue(viewPort.up);
-
-  addPlaneToScene(renderer);
 
   window.create("OSPRay Example Viewer App", fullscreen);
 
