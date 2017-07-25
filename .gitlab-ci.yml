@@ -9,15 +9,37 @@ variables:
   type: build
   tags:
     - docker
-  script:
-    - scripts/build_gitlab/linux.sh
 
 ### BUILD JOBS ###
 
 build-arch-gcc:
   <<: *build_job
   image: jeffamstutz/docker-autobuild:latest
+  script:
+    - scripts/build_gitlab/linux.sh
+
+build-arch-clang:
+  <<: *build_job
+  image: jeffamstutz/docker-autobuild:latest
+  script:
+    - export CC=clang
+    - export CXX=clang++
+    - scripts/build_gitlab/linux.sh
 
 build-ubuntu-gcc:
   <<: *build_job
   image: jeffamstutz/docker-autobuild:ubuntu
+  script:
+    - scripts/build_gitlab/linux.sh
+
+build-centos6-gcc:
+  <<: *build_job
+  image: jeffamstutz/docker-autobuild:centos6
+  script:
+    - scripts/build_gitlab/linux.sh
+
+build-centos7-gcc:
+  <<: *build_job
+  image: jeffamstutz/docker-autobuild:centos7
+  script:
+    - scripts/build_gitlab/linux.sh
