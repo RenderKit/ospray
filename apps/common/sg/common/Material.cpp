@@ -24,13 +24,13 @@ namespace ospray {
     Material::Material()
     {
       createChild("type", "string", std::string("OBJMaterial"));
-      vec3f kd(10.f/255.f,68.f/255.f,117.f/255.f);
-      vec3f ks(208.f/255.f,140.f/255.f,82.f/255.f);
+      vec3f kd(.7f);
+      vec3f ks(.3f);
       createChild("d", "float", 1.f,
                   NodeFlags::required |
                   NodeFlags::valid_min_max |
                   NodeFlags::gui_color).setMinMax(0.f, 1.f);
-      createChild("Ka", "vec3f", vec3f(1),
+      createChild("Ka", "vec3f", vec3f(0),
                   NodeFlags::required |
                   NodeFlags::valid_min_max |
                   NodeFlags::gui_color).setMinMax(vec3f(0), vec3f(1));
@@ -45,7 +45,7 @@ namespace ospray {
       createChild("Ns", "float", 10.f,
                   NodeFlags::required |
                   NodeFlags::valid_min_max |
-                  NodeFlags::gui_slider).setMinMax(0.f, 100.f);
+                  NodeFlags::gui_slider).setMinMax(2.f, 1000.f);
       setValue((OSPObject)nullptr);
     }
 
@@ -71,7 +71,7 @@ namespace ospray {
           vec3f ks(.3f);
           ospSet3fv(defaultMaterial, "Kd", &kd.x);
           ospSet3fv(defaultMaterial, "Ks", &ks.x);
-          ospSet1f(defaultMaterial, "Ns", 99.f);
+          ospSet1f(defaultMaterial, "Ns", 10.f);
           ospCommit(defaultMaterial);
         }
         mat = defaultMaterial;

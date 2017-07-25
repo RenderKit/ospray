@@ -156,7 +156,6 @@ static inline void parseCommandLineSG(int ac, const char **&av, sg::Node &root)
       try {
         node.valueAs<ospcommon::vec3f>();
         std::stringstream vals(value);
-        std::cout << "vec3f: \"" << value << "\"\n";
         float x,y,z;
         vals >> x >> y >> z;
         node.setValue(ospcommon::vec3f(x,y,z));
@@ -213,8 +212,8 @@ static inline void addPlaneToScene(sg::Node& renderer)
   sg_plane->add(index);
   auto &planeMaterial = mesh["material"];
   planeMaterial["Kd"].setValue(vec3f(0.5f));
-  planeMaterial["Ks"].setValue(vec3f(0.6f));
-  planeMaterial["Ns"].setValue(2.f);
+  planeMaterial["Ks"].setValue(vec3f(0.1f));
+  planeMaterial["Ns"].setValue(10.f);
 }
 
 static inline void addLightsToScene(sg::Node& renderer)
