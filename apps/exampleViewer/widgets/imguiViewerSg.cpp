@@ -81,6 +81,15 @@ namespace ospray {
   void ImGuiViewerSg::keypress(char key)
   {
     switch (key) {
+    case ' ':
+    {
+      if (scenegraph && scenegraph->hasChild("animationcontroller"))
+      {
+        bool animating = scenegraph->child("animationcontroller")["enabled"].valueAs<bool>();
+        scenegraph->child("animationcontroller")["enabled"].setValue(!animating);
+      }
+      break;
+    }
     case 'R':
       toggleRenderingPaused();
       break;
@@ -382,8 +391,15 @@ namespace ospray {
       if (ImGui::InputText(text.c_str(), buf,
                            value.size()+256,
                            ImGuiInputTextFlags_EnterReturnsTrue))
+      {
+        std::cout << "enter pressed\n";
         node->setValue(std::string(buf));
-    } else { // generic holder node
+      }
+      free(buf);
+    }
+//    else { // generic holder node
+    if (node->children().size())
+    {
       text+=node->type();
       text += "##"+((std::ostringstream&)(std::ostringstream("")
                                           << node.get())).str(); //TODO: use unique uuid for every node

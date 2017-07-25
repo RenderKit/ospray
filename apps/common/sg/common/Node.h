@@ -154,6 +154,7 @@ namespace ospray {
       Node& operator[] (const std::string &c) const;
 
       Node& childRecursive(const std::string &name);
+      bool hasChildRecursive(const std::string &name);
 
       std::vector<std::shared_ptr<Node>> children() const;
 

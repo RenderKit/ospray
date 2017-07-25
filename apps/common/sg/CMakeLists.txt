@@ -42,6 +42,12 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   common/Texture2D.cpp
   common/Transform.cpp
   common/World.cpp
+  common/Animator.cpp
+  common/Animator.h
+  common/AnimationController.h
+  common/AnimationController.cpp
+  common/Selector.h
+  common/Selector.cpp
 
   transferFunction/TransferFunction.cpp
   volume/Volume.cpp

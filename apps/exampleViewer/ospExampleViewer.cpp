@@ -20,6 +20,7 @@
 #include "ospcommon/FileName.h"
 #include "ospcommon/networking/Socket.h"
 #include "ospcommon/vec.h"
+#include "common/sg/common/Animator.h"
 
 #include "sg/geometry/TriangleMesh.h"
 
@@ -29,7 +30,23 @@
 using namespace ospcommon;
 using namespace ospray;
 
-std::vector<std::string> files;
+struct clTransform
+{
+ vec3f translate{0,0,0};
+ vec3f scale{1,1,1};
+ vec3f rotation{0,0,0};
+};
+
+//command line file
+struct clFile
+{
+  clFile(std::string f, const clTransform& t) : file(f), transform(t) {}
+ std::string file;
+ clTransform transform;
+};
+
+std::vector<clFile> files;
+std::vector< std::vector<clFile> > animatedFiles;
 std::string initialRendererType;
 bool addPlane = true;
 bool debug = false;
@@ -38,6 +55,8 @@ bool print = false;
 
 static inline void parseCommandLine(int ac, const char **&av)
 {
+  clTransform currentCLTransform;
+  bool inAnimation = false;
   for (int i = 1; i < ac; i++) {
     const std::string arg = av[i];
     if (arg == "-np" || arg == "--no-plane") {
@@ -52,8 +71,28 @@ static inline void parseCommandLine(int ac, const char **&av)
       print=true;
     } else if (arg == "--fullscreen") {
       fullscreen = true;
+    } else if (arg == "--translate") {
+      currentCLTransform.translate.x = atof(av[++i]);
+      currentCLTransform.translate.y = atof(av[++i]);
+      currentCLTransform.translate.z = atof(av[++i]);
+    } else if (arg == "--scale") {
+      currentCLTransform.scale.x = atof(av[++i]);
+      currentCLTransform.scale.y = atof(av[++i]);
+      currentCLTransform.scale.z = atof(av[++i]);
+    } else if (arg == "--rotate") {
+      currentCLTransform.rotation.x = atof(av[++i]);
+      currentCLTransform.rotation.y = atof(av[++i]);
+      currentCLTransform.rotation.z = atof(av[++i]);
+    } else if (arg == "--animation") {
+      inAnimation = true;
+      animatedFiles.push_back(std::vector<clFile>());
+    } else if (arg == "--file") {
+      inAnimation = false;
     } else if (arg[0] != '-') {
-      files.push_back(av[i]);
+      if (!inAnimation)
+        files.push_back(clFile(av[i], currentCLTransform));
+      else
+        animatedFiles.back().push_back(clFile(av[i], currentCLTransform));
     }
   }
 }
@@ -94,38 +133,39 @@ static inline void parseCommandLineSG(int ac, const char **&av, sg::Node &root)
         node.setValue(value);
       } catch(...) {};
       try {
+        node.valueAs<float>();
         std::stringstream vals(value);
         float x;
         vals >> x;
-        node.valueAs<float>();
         node.setValue(x);
       } catch(...) {}
       try {
+        node.valueAs<int>();
         std::stringstream vals(value);
         int x;
         vals >> x;
-        node.valueAs<int>();
         node.setValue(x);
       } catch(...) {}
       try {
+        node.valueAs<bool>();
         std::stringstream vals(value);
         bool x;
         vals >> x;
-        node.valueAs<bool>();
         node.setValue(x);
       } catch(...) {}
       try {
+        node.valueAs<ospcommon::vec3f>();
         std::stringstream vals(value);
+        std::cout << "vec3f: \"" << value << "\"\n";
         float x,y,z;
         vals >> x >> y >> z;
-        node.valueAs<ospcommon::vec3f>();
         node.setValue(ospcommon::vec3f(x,y,z));
       } catch(...) {}
       try {
+        node.valueAs<ospcommon::vec2i>();
         std::stringstream vals(value);
         int x,y;
         vals >> x >> y;
-        node.valueAs<ospcommon::vec2i>();
         node.setValue(ospcommon::vec2i(x,y));
       } catch(...) {}
     }
@@ -200,17 +240,73 @@ static inline void addLightsToScene(sg::Node& renderer)
 static inline void addImporterNodesToWorld(sg::Node& renderer)
 {
   auto &world = renderer["world"];
+  auto &animation = renderer["animationcontroller"];
 
   for (auto file : files) {
-    FileName fn = file;
+    FileName fn = file.file;
     if (fn.ext() == "ospsg")
       sg::loadOSPSG(renderer.shared_from_this(), fn.str());
     else {
       auto importerNode_ptr = sg::createNode(fn.name(), "Importer");
       auto &importerNode = *importerNode_ptr;
       importerNode["fileName"].setValue(fn.str());
-      world += importerNode_ptr;
+      auto &transform = world.createChild("transform_"+file.file, "Transform");
+      transform["scale"].setValue(file.transform.scale);
+      transform["position"].setValue(file.transform.translate);
+      transform["rotation"].setValue(file.transform.rotation);
+      if (files.size() < 2 && animatedFiles.empty()) {
+        auto &rotation =
+          transform["rotation"].createChild("animator", "Animator");
+
+        rotation.traverse("verify");
+        rotation.traverse("commit");
+        rotation.child("value1").setValue(ospcommon::vec3f{0.f,0.f,0.f});
+        rotation.child("value2").setValue(ospcommon::vec3f{0.f,2.f*3.14f,0.f});
+
+        animation.setChild("rotation", rotation.shared_from_this());
+      }
+
+      transform += importerNode_ptr;
     }
+  }
+}
+
+static inline void addAnimatedImporterNodesToWorld(sg::Node& renderer)
+{
+  auto &world = renderer["world"];
+  auto &animation = renderer["animationcontroller"];
+
+  for (auto &animatedFile : animatedFiles) {
+    if (animatedFile.empty())
+      continue;
+
+    auto &transform =
+      world.createChild("transform_" + animatedFile[0].file, "Transform");
+
+    transform["scale"].setValue(animatedFile[0].transform.scale);
+    transform["position"].setValue(animatedFile[0].transform.translate);
+    transform["rotation"].setValue(animatedFile[0].transform.rotation);
+    auto &selector =
+      transform.createChild("selector_" + animatedFile[0].file, "Selector");
+
+    for (auto file : animatedFile) {
+      FileName fn = file.file;
+      if (fn.ext() == "ospsg")
+        sg::loadOSPSG(renderer.shared_from_this(),fn.str());
+      else {
+        auto importerNode_ptr = sg::createNode(fn.name(), "Importer");
+        auto &importerNode = *importerNode_ptr;
+        importerNode["fileName"].setValue(fn.str());
+        selector += importerNode_ptr;
+      }
+    }
+    auto& anim_selector =
+      selector["index"].createChild("anim_"+animatedFile[0].file, "Animator");
+
+    anim_selector.traverse("verify");
+    anim_selector.traverse("commit");
+    anim_selector["value2"].setValue(int(animatedFile.size()));
+    animation.setChild("anim_selector", anim_selector.shared_from_this());
   }
 }
 
@@ -252,8 +348,11 @@ int main(int ac, const char **av)
   if (!initialRendererType.empty())
     renderer["rendererType"].setValue(initialRendererType);
 
+  renderer.createChild("animationcontroller", "AnimationController");
+
   addLightsToScene(renderer);
   addImporterNodesToWorld(renderer);
+  addAnimatedImporterNodesToWorld(renderer);
 
   parseCommandLineSG(ac, av, renderer);
 
