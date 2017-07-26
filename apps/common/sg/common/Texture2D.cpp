@@ -168,7 +168,7 @@ namespace ospray {
                                      "Please report this bug at ospray.github.io, and include named file to reproduce the error.");
 
           // tex = new Texture2D;
-          tex->size.x    = width;
+          tex->size.x   = width;
           tex->size.y   = height;
           tex->channels = 3;
           tex->depth    = 1;
@@ -302,30 +302,28 @@ namespace ospray {
           pixels = (unsigned char*)stbi_loadf(fileName.str().c_str(), &width, &height, &n, 0);
         else
           pixels = stbi_load(fileName.str().c_str(),&width,&height,&n,0);
-        tex->size.x    = width;
+        tex->size.x   = width;
         tex->size.y   = height;
         tex->channels = n;
         tex->depth    = hdr ? 4 : 1;
         tex->preferLinear = preferLinear;
-        unsigned char MaxRGB = 1;
-        float rcpMaxRGB = 1.0f/float(MaxRGB);
         if (!pixels) {
-          std::cerr << "#osp:minisg: failed to load texture '"+fileName.str()+"'" << std::endl;
+          std::cerr << "#osp:sg: failed to load texture '"+fileName.str()+"'" << std::endl;
         } else {
           tex->data = new unsigned char[tex->size.x*tex->size.y*tex->channels*tex->depth];
           // convert pixels and flip image (because OSPRay's textures have the origin at the lower left corner)
           for (size_t y=0; y<tex->size.y; y++) {
             for (size_t x=0; x<tex->size.x; x++) {
-              const unsigned char *pixel = &pixels[(y*tex->size.x+x)*tex->channels];
               if (hdr) {
-                printf("loading hdr image\n");
+                const float *pixel = &((float*)pixels)[(y*tex->size.x+x)*tex->channels];
                 float *dst = &((float*)tex->data)[(x+(tex->size.y-1-y)*tex->size.x)*tex->channels];
-                *dst++ = pixel[0] * rcpMaxRGB;
-                *dst++ = pixel[1] * rcpMaxRGB;
-                *dst++ = pixel[2] * rcpMaxRGB;
+                *dst++ = pixel[0];
+                *dst++ = pixel[1];
+                *dst++ = pixel[2];
                 if (tex->channels == 4)
-                  *dst++ = pixel[3] * rcpMaxRGB;
+                  *dst++ = pixel[3];
               } else {
+                const unsigned char *pixel = &pixels[(y*tex->size.x+x)*tex->channels];
                 unsigned char *dst = &((unsigned char*)tex->data)[((tex->size.y-1-y)*tex->size.x+x)*tex->channels];
                 *dst++ = pixel[0];
                 *dst++ = pixel[1];
