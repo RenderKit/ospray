@@ -58,5 +58,11 @@ namespace ospray {
       PointLight();
     };
 
+    struct OSPSG_INTERFACE HDRILight : public Light
+    {
+      HDRILight();
+    };
+
+
   } // ::ospray::sg
 } // ::ospray

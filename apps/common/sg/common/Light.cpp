@@ -95,10 +95,18 @@ namespace ospray {
                       NodeFlags::gui_slider).setMinMax(0.f,4.f);
     }
 
+
+    HDRILight::HDRILight()
+      : Light("HDRILight")
+    {
+      
+    }
+
     OSP_REGISTER_SG_NODE(Light);
     OSP_REGISTER_SG_NODE(DirectionalLight);
     OSP_REGISTER_SG_NODE(AmbientLight);
     OSP_REGISTER_SG_NODE(PointLight);
+    OSP_REGISTER_SG_NODE(HDRILight);
 
   } // ::ospray::sg
 } // ::ospray
