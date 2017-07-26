@@ -29,8 +29,8 @@ namespace ospray {
     struct OSPSG_INTERFACE Light : public sg::Node
     {
       //! \brief constructor
-      Light() = default;
-      Light(const std::string &type) : type(type) {}
+      Light();
+      Light(const std::string &type);
 
       virtual void preCommit(RenderContext &ctx) override;
       virtual void postCommit(RenderContext &ctx) override;
@@ -61,6 +61,7 @@ namespace ospray {
     struct OSPSG_INTERFACE HDRILight : public Light
     {
       HDRILight();
+      virtual bool computeValid() override;
     };
 
 

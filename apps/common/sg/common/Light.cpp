@@ -19,6 +19,17 @@
 namespace ospray {
   namespace sg {
 
+
+    Light::Light()
+    {
+      setValue(OSPObject(nullptr));
+    }
+
+    Light::Light(const std::string &type) : type(type)
+    {
+      setValue(OSPObject(nullptr));
+    }
+
     void Light::preCommit(RenderContext &ctx)
     {
       if (!ospLight)
@@ -97,10 +108,28 @@ namespace ospray {
 
 
     HDRILight::HDRILight()
-      : Light("HDRILight")
+      : Light("hdri")
     {
-      
+      createChild("up", "vec3f", vec3f(0.f,1.f,0.f),
+                NodeFlags::required |
+                NodeFlags::valid_min_max).setMinMax(vec3f(0), vec3f(1));
+      createChild("dir", "vec3f", vec3f(1.f,0.f,0.f),
+                NodeFlags::required |
+                NodeFlags::valid_min_max).setMinMax(vec3f(0), vec3f(1));
+      createChild("intensity", "float", 3.f,
+                NodeFlags::required |
+                NodeFlags::valid_min_max |
+                NodeFlags::gui_slider).setMinMax(0.f,12.f);
     }
+
+    bool HDRILight::computeValid()
+    {
+      if (hasChild("map") && child("map").valueAs<OSPObject>() != nullptr)
+        return Node::computeValid();
+      else
+        return false;
+    }
+
 
     OSP_REGISTER_SG_NODE(Light);
     OSP_REGISTER_SG_NODE(DirectionalLight);

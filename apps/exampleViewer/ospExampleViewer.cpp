@@ -53,6 +53,7 @@ bool debug = false;
 bool fullscreen = false;
 bool print = false;
 bool no_defaults = false;
+std::string hdri_light;
 
 static inline void parseCommandLine(int ac, const char **&av)
 {
@@ -74,6 +75,8 @@ static inline void parseCommandLine(int ac, const char **&av)
       no_defaults=true;
     } else if (arg == "--fullscreen") {
       fullscreen = true;
+    } else if (arg == "--hdri-light") {
+      hdri_light = av[++i];
     } else if (arg == "--translate") {
       currentCLTransform.translate.x = atof(av[++i]);
       currentCLTransform.translate.y = atof(av[++i]);
@@ -259,6 +262,16 @@ static inline void addLightsToScene(sg::Node& renderer)
   auto &ambient = lights.createChild("ambient", "AmbientLight");
   ambient["intensity"].setValue(0.9f);
   ambient["color"].setValue(vec3f(174.f/255.f,218.f/255.f,255.f/255.f));
+
+  if (hdri_light != "")
+  {
+    auto tex = sg::Texture2D::load(hdri_light, false);
+    tex->setName("map");
+    auto& hdri = lights.createChild("hdri", "HDRILight");
+    tex->traverse("verify");
+    tex->traverse("commit");
+    hdri.add(tex);
+  }
 
 }
 

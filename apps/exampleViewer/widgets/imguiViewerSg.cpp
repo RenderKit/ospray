@@ -294,7 +294,7 @@ namespace ospray {
       ImGui::PushStyleColor(ImGuiCol_Text, ImColor(200, 75, 48,255));
       styles++;
     }
-    std::string text;
+    std::string text("");
     std::string nameLower=name;
     std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
     std::string nodeNameLower=node->name();
@@ -396,8 +396,10 @@ namespace ospray {
         node->setValue(std::string(buf));
       }
       free(buf);
+    } else if (node->type() == "Texture2D")
+    {
+      ImGui::Text(text.c_str(),"");
     }
-//    else { // generic holder node
     if (node->children().size())
     {
       text+=node->type();
@@ -512,7 +514,8 @@ namespace ospray {
 
         ImGui::TreePop();
       }
-    }
+    } else { // generic holder node
+   }
 
     if (!node->isValid())
       ImGui::PopStyleColor(styles--);
