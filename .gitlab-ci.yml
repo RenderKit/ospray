@@ -9,9 +9,9 @@ variables:
   type: build
   tags:
     - docker
-  image: jeffamstutz/docker-autobuild:latest # default image
+  image: ospray/docker-images:arch  # default image
   script:
-    - scripts/build_gitlab/linux.sh          # default script
+    - scripts/build_gitlab/linux.sh # default script
 
 ### BUILD JOBS ###
 
@@ -25,17 +25,17 @@ build-arch-clang:
     - export CXX=clang++
     - scripts/build_gitlab/linux.sh
 
-build-ubuntu-gcc:
+build-ubuntu1604-gcc:
   <<: *build_job_docker
-  image: jeffamstutz/docker-autobuild:ubuntu
+  image: ospray/docker-images:ubuntu16.04
 
 build-centos6-gcc:
   <<: *build_job_docker
-  image: jeffamstutz/docker-autobuild:centos6
+  image: ospray/docker-images:centos6
 
 build-centos7-gcc:
   <<: *build_job_docker
-  image: jeffamstutz/docker-autobuild:centos7
+  image: ospray/docker-images:centos7
 
 build-debug:
   <<: *build_job_docker
