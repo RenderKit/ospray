@@ -5,7 +5,15 @@ stages:
 variables:
   GIT_DEPTH: "3"
 
-.job_template: &build_job
+.job_template: &build_job_docker
+  type: build
+  tags:
+    - docker
+  image: ospray/docker-images:arch  # default image
+  script:
+    - scripts/build_gitlab/linux.sh # default script
+
+.job_template: &build_job_shell
   type: build
   tags:
     - build
@@ -21,17 +29,30 @@ variables:
 
 ### BUILD JOBS ###
 
-build-centos6-gcc:
-  <<: *build_job
+build-arch-gcc:
+  <<: *build_job_docker
+
+build-arch-clang:
+  <<: *build_job_docker
   script:
-    - module load tbb
+    - export CC=clang
+    - export CXX=clang++
     - scripts/build_gitlab/linux.sh
-  tags:
-    - centos6
-    - gcc
+
+build-ubuntu1604-gcc:
+  <<: *build_job_docker
+  image: ospray/docker-images:ubuntu16.04
+
+build-ubuntu1404-gcc:
+  <<: *build_job_docker
+  image: ospray/docker-images:ubuntu14.04
+
+build-centos6-gcc:
+  <<: *build_job_docker
+  image: ospray/docker-images:centos6
 
 build-centos6-icc:
-  <<: *build_job
+  <<: *build_job_shell
   script:
     - module load intel
     - export CC=icc
@@ -42,7 +63,7 @@ build-centos6-icc:
     - icc
 
 build-centos6-icc15:
-  <<: *build_job
+  <<: *build_job_shell
   script:
     - module load intel/2015
     - export CC=icc
@@ -52,67 +73,23 @@ build-centos6-icc15:
     - centos6
     - icc
 
+
 build-centos7-gcc:
-  <<: *build_job
-  script:
-    - scripts/build_gitlab/linux.sh
-  tags:
-    - centos7
-    - gcc
-
-build-arch-gcc:
-  <<: *build_job
-  script:
-    - scripts/build_gitlab/linux.sh
-  tags:
-    - arch
-    - gcc
-
-build-ubuntu1604-gcc:
-  <<: *build_job
-  script:
-    - scripts/build_gitlab/linux.sh
-  tags:
-    - ubuntu1604
-    - gcc
-
-build-ubuntu1604-clang:
-  <<: *build_job
-  script:
-    - export CC=clang
-    - export CXX=clang++
-    - scripts/build_gitlab/linux.sh
-  tags:
-    - ubuntu1604
-    - clang
-
-build-ubuntu1404-gcc:
-  <<: *build_job
-  script:
-    - scripts/build_gitlab/linux.sh
-  tags:
-    - ubuntu1404
-    - gcc
+  <<: *build_job_docker
+  image: ospray/docker-images:centos7
 
 build-debug:
-  <<: *build_job
+  <<: *build_job_docker
   script:
     - scripts/build_gitlab/linux.sh -DCMAKE_BUILD_TYPE=Debug
-  tags:
-    - gcc
-    - linux
 
 build-mpi:
-  <<: *build_job
+  <<: *build_job_docker
   script:
     - scripts/build_gitlab/linux.sh -DOSPRAY_MODULE_MPI=ON
-  tags:
-    - linux
-    - mpi
-    - gcc
 
 build-osx-clang:
-  <<: *build_job
+  <<: *build_job_shell
   script:
     - scripts/build_gitlab/osx.sh
   tags:
@@ -120,7 +97,7 @@ build-osx-clang:
     - clang
 
 build-windows-msvc:
-  <<: *build_job
+  <<: *build_job_shell
   script:
     - call scripts\build_gitlab\win.bat "Visual Studio 12 2013 Win64" "v120"
   tags:
@@ -128,7 +105,7 @@ build-windows-msvc:
     - win7
 
 build-windows-msvc14:
-  <<: *build_job
+  <<: *build_job_shell
   script:
     - call scripts\build_gitlab\win.bat "Visual Studio 14 2015 Win64" "v140"
   tags:
@@ -136,7 +113,7 @@ build-windows-msvc14:
     - win7
 
 build-windows-msvc15:
-  <<: *build_job
+  <<: *build_job_shell
   script:
     - call scripts\build_gitlab\win.bat "Visual Studio 15 2017 Win64" "v141"
   tags:
@@ -144,7 +121,7 @@ build-windows-msvc15:
     - win7
 
 build-windows-icc:
-  <<: *build_job
+  <<: *build_job_shell
   script:
     - call scripts\build_gitlab\win.bat "Visual Studio 12 2013 Win64" "Intel C++ Compiler 17.0"
   tags:
