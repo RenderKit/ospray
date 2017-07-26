@@ -400,13 +400,14 @@ namespace ospray {
     {
       ImGui::Text(text.c_str(),"");
     }
-    if (node->children().size())
+    const int numChildren = node->children().size();
+    if (numChildren > 0)
     {
       text+=node->type();
       text += "##"+((std::ostringstream&)(std::ostringstream("")
                                           << node.get())).str(); //TODO: use unique uuid for every node
       if (ImGui::TreeNodeEx(text.c_str(),
-                            (indent > 0) ? 0 : ImGuiTreeNodeFlags_DefaultOpen)) {
+                            (indent > 1 && numChildren > 20) ? 0 : ImGuiTreeNodeFlags_DefaultOpen)) {
         {
           std::string popupName = "Add Node: ##" +
             ((std::ostringstream&)(std::ostringstream("")
