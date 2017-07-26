@@ -52,6 +52,7 @@ bool addPlane = true;
 bool debug = false;
 bool fullscreen = false;
 bool print = false;
+bool no_defaults = false;
 
 static inline void parseCommandLine(int ac, const char **&av)
 {
@@ -69,6 +70,8 @@ static inline void parseCommandLine(int ac, const char **&av)
       ospLoadModule(av[++i]);
     } else if (arg == "--print") {
       print=true;
+    } else if (arg == "--no-defaults") {
+      no_defaults=true;
     } else if (arg == "--fullscreen") {
       fullscreen = true;
     } else if (arg == "--translate") {
@@ -113,9 +116,19 @@ static inline void parseCommandLineSG(int ac, const char **&av, sg::Node &root)
       arg[f] = ' ';
     }
 
-    f = arg.find("=");
+    f = arg.find("+=");
+    bool addNode = false;
     if (f != std::string::npos)
-      value = arg.substr(f+1,arg.size());
+    {
+      value = arg.substr(f+2,arg.size());
+      addNode = true;
+    }
+    else
+    {
+      f = arg.find("=");
+      if (f != std::string::npos)
+        value = arg.substr(f+1,arg.size());
+    }
 
     if (value != "") {
       std::stringstream ss;
@@ -126,6 +139,15 @@ static inline void parseCommandLineSG(int ac, const char **&av, sg::Node &root)
         node_ref = node_ref.get().childRecursive(child);
       }
       auto &node = node_ref.get();
+
+      if (addNode)
+      {
+        std::stringstream vals(value);
+        std::string name, type;
+        vals >> name >> type;
+        node.createChild(name, type);
+        continue;
+      }
       //Carson: TODO: reimplement with a way of determining type of node value
       //  currently relies on exception on value cast
       try {
@@ -353,10 +375,16 @@ int main(int ac, const char **av)
 
   renderer.createChild("animationcontroller", "AnimationController");
 
-  addLightsToScene(renderer);
+  if (!no_defaults)
+  {
+    addLightsToScene(renderer);
+  }
   addImporterNodesToWorld(renderer);
-  addAnimatedImporterNodesToWorld(renderer);
-  addPlaneToScene(renderer);
+  addAnimatedImporterNodesToWorld(renderer);  
+  if (!no_defaults)
+  {
+    addPlaneToScene(renderer);
+  }
 
   // last, to be able to modify all created SG nodes
   parseCommandLineSG(ac, av, renderer);
