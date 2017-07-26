@@ -29,6 +29,10 @@ build-ubuntu1604-gcc:
   <<: *build_job_docker
   image: ospray/docker-images:ubuntu16.04
 
+build-ubuntu1404-gcc:
+  <<: *build_job_docker
+  image: ospray/docker-images:ubuntu14.04
+
 build-centos6-gcc:
   <<: *build_job_docker
   image: ospray/docker-images:centos6
