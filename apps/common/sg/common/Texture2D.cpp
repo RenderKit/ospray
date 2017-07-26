@@ -448,6 +448,7 @@ namespace ospray {
       if (!dat)
       {
         ospTexture2D = nullptr;
+        std::cout << "Texture2D: image data null\n";
         return;
       }
 

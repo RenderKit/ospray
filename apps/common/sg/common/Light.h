@@ -62,6 +62,7 @@ namespace ospray {
     {
       HDRILight();
       virtual bool computeValid() override;
+      virtual void postCommit(RenderContext &ctx) override;
     };
 
 

@@ -249,19 +249,25 @@ static inline void addLightsToScene(sg::Node& renderer)
 {
   auto &lights = renderer["lights"];
 
-  auto &sun = lights.createChild("sun", "DirectionalLight");
-  sun["color"].setValue(vec3f(1.f,232.f/255.f,166.f/255.f));
-  sun["direction"].setValue(vec3f(0.462f,-1.f,-.1f));
-  sun["intensity"].setValue(1.5f);
+  if (!no_defaults)
+  {
+    auto &sun = lights.createChild("sun", "DirectionalLight");
+    sun["color"].setValue(vec3f(1.f,232.f/255.f,166.f/255.f));
+    sun["direction"].setValue(vec3f(0.462f,-1.f,-.1f));
+    sun["intensity"].setValue(1.5f);
 
-  auto &bounce = lights.createChild("bounce", "DirectionalLight");
-  bounce["color"].setValue(vec3f(127.f/255.f,178.f/255.f,255.f/255.f));
-  bounce["direction"].setValue(vec3f(-.93,-.54f,-.605f));
-  bounce["intensity"].setValue(0.25f);
+    auto &bounce = lights.createChild("bounce", "DirectionalLight");
+    bounce["color"].setValue(vec3f(127.f/255.f,178.f/255.f,255.f/255.f));
+    bounce["direction"].setValue(vec3f(-.93,-.54f,-.605f));
+    bounce["intensity"].setValue(0.25f);
 
-  auto &ambient = lights.createChild("ambient", "AmbientLight");
-  ambient["intensity"].setValue(0.9f);
-  ambient["color"].setValue(vec3f(174.f/255.f,218.f/255.f,255.f/255.f));
+    if (hdri_light == "")
+    {
+      auto &ambient = lights.createChild("ambient", "AmbientLight");
+      ambient["intensity"].setValue(0.9f);
+      ambient["color"].setValue(vec3f(174.f/255.f,218.f/255.f,255.f/255.f));
+    }
+  }
 
   if (hdri_light != "")
   {
@@ -388,16 +394,11 @@ int main(int ac, const char **av)
 
   renderer.createChild("animationcontroller", "AnimationController");
 
-  if (!no_defaults)
-  {
-    addLightsToScene(renderer);
-  }
+  addLightsToScene(renderer);
   addImporterNodesToWorld(renderer);
   addAnimatedImporterNodesToWorld(renderer);  
   if (!no_defaults)
-  {
     addPlaneToScene(renderer);
-  }
 
   // last, to be able to modify all created SG nodes
   parseCommandLineSG(ac, av, renderer);

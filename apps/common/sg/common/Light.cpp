@@ -116,10 +116,18 @@ namespace ospray {
       createChild("dir", "vec3f", vec3f(1.f,0.f,0.f),
                 NodeFlags::required |
                 NodeFlags::valid_min_max).setMinMax(vec3f(0), vec3f(1));
-      createChild("intensity", "float", 3.f,
+      createChild("intensity", "float", 0.3f,
                 NodeFlags::required |
                 NodeFlags::valid_min_max |
                 NodeFlags::gui_slider).setMinMax(0.f,12.f);
+    }
+
+    void HDRILight::postCommit(RenderContext &ctx)
+    {
+      if (hasChild("map"))
+        ospSetObject(valueAs<OSPObject>(), "map",
+          child("map").valueAs<OSPObject>());
+      ospCommit(ospLight);
     }
 
     bool HDRILight::computeValid()
