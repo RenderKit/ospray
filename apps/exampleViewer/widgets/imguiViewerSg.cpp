@@ -400,7 +400,7 @@ namespace ospray {
     {
       ImGui::Text(text.c_str(),"");
     }
-    const int numChildren = node->children().size();
+    const int numChildren = node->numChildren();
     if (numChildren > 0)
     {
       text+=node->type();

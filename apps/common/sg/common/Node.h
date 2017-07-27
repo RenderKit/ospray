@@ -158,6 +158,8 @@ namespace ospray {
 
       std::vector<std::shared_ptr<Node>> children() const;
 
+      size_t numChildren() { return properties.children.size(); }
+
       std::map<std::string, std::shared_ptr<Node>>& childrenMap();
 
       //! add node as child of this one
