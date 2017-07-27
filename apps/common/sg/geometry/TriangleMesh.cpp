@@ -106,7 +106,7 @@ namespace ospray {
         auto ospMaterialList = ospNewData(mats.size(), OSP_OBJECT, mats.data());
         ospCommit(ospMaterialList);
         ospSetData(valueAs<OSPObject>(), "materialList", ospMaterialList);
-        ospSetData(valueAs<OSPObject>(), "prim.materialID", ospPrimIDList);
+        if (ospPrimIDList) ospSetData(valueAs<OSPObject>(), "prim.materialID", ospPrimIDList);
       }
       Geometry::postCommit(ctx);
     }
