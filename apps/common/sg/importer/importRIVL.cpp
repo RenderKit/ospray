@@ -321,13 +321,25 @@ namespace ospray {
               make_shared_aligned<DataArray4i>((char*)binBasePtr+ofs, num);
             index->setName("index");
             mesh->add(index);
+
+            std::vector<uint32_t> matIDs;
+            for( size_t i=0;i<index->size();i++)
+              matIDs.push_back((*index)[i].w >> 16);
+            auto ospPrimIDList = ospNewData(matIDs.size(), OSP_INT, matIDs.data());
+            ospCommit(ospPrimIDList);
+            mesh->ospPrimIDList = ospPrimIDList;
           } else if (child.name == "materiallist") {
+            auto &materialList = mesh->materialList;
             char* value = strdup(child.content.c_str());
+            int matCounter=0;
+            auto &materialListNode = mesh->createChild("materialList", "Node");
             for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(NULL," \t\n\r")) {
               size_t matID = atoi(s);
               auto mat = nodeList[matID]->nodeAs<sg::Material>();
               mesh->setChild("material", mat);
               mat->setParent(mesh);
+              materialList.push_back(mat);
+              materialListNode.add(mat);
             }
             free(value);
           } else {
