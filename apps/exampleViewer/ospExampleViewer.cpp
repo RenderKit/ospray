@@ -104,7 +104,8 @@ static inline void parseCommandLine(int ac, const char **&av)
 }
 
 //parse command line arguments containing the format:
-//  -nodeName:...:nodeName=value,value,value
+//  -nodeName:...:nodeName=value,value,value -- changes value
+//  -nodeName:...:nodeName+=name,type        -- adds new child node
 static inline void parseCommandLineSG(int ac, const char **&av, sg::Node &root)
 {
   for(int i=1;i < ac; i++) {
@@ -114,6 +115,7 @@ static inline void parseCommandLineSG(int ac, const char **&av, sg::Node &root)
     if (arg.size() < 2 || arg[0] != '-')
       continue;
 
+    const std::string orgarg(arg);
     while ((f = arg.find(":")) != std::string::npos ||
            (f = arg.find(",")) != std::string::npos) {
       arg[f] = ' ';
@@ -138,8 +140,13 @@ static inline void parseCommandLineSG(int ac, const char **&av, sg::Node &root)
       ss << arg.substr(1,f-1);
       std::string child;
       std::reference_wrapper<sg::Node> node_ref = root;
-      while (ss >> child) {
-        node_ref = node_ref.get().childRecursive(child);
+      try {
+        while (ss >> child) {
+          node_ref = node_ref.get().childRecursive(child);
+        }
+      } catch (const std::runtime_error &) {
+        std::cerr << "Warning: unknown sg::Node '" << child
+          << "', ignoring option '" << orgarg << "'." << std::endl;
       }
       auto &node = node_ref.get();
 
@@ -148,7 +155,12 @@ static inline void parseCommandLineSG(int ac, const char **&av, sg::Node &root)
         std::stringstream vals(value);
         std::string name, type;
         vals >> name >> type;
-        node.createChild(name, type);
+        try {
+          node.createChild(name, type);
+        } catch (const std::runtime_error &) {
+          std::cerr << "Warning: unknown sg::Node type '" << type
+            << "', ignoring option '" << orgarg << "'." << std::endl;
+        }
         continue;
       }
       //Carson: TODO: reimplement with a way of determining type of node value
@@ -156,7 +168,7 @@ static inline void parseCommandLineSG(int ac, const char **&av, sg::Node &root)
       try {
         node.valueAs<std::string>();
         node.setValue(value);
-      } catch(...) {};
+      } catch(...) {}
       try {
         node.valueAs<float>();
         std::stringstream vals(value);
