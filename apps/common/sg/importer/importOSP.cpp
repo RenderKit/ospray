@@ -142,7 +142,7 @@ namespace ospray {
         return parseDataNode(node);
       if (node.name == "Info")
         return parseInfoNode(node);
-      std::cout << "warning: unknown sg::Node type '" << node.name << "'"
+      std::cerr << "Warning: unknown sg::Node type '" << node.name << "'"
                 << std::endl;
       return std::shared_ptr<sg::Node>();
     }
