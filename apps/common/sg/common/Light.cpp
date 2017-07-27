@@ -78,7 +78,7 @@ namespace ospray {
                       NodeFlags::valid_min_max |
                       NodeFlags::gui_slider).setMinMax(0.f,12.f);
 
-      createChild("angularDiameter", "float", 0.01f,
+      createChild("angularDiameter", "float", 0.53f,
                       NodeFlags::required |
                       NodeFlags::valid_min_max |
                       NodeFlags::gui_slider).setMinMax(0.f,4.f);
@@ -98,9 +98,9 @@ namespace ospray {
       createChild("intensity", "float", 3.f,
                       NodeFlags::required |
                       NodeFlags::valid_min_max |
-                      NodeFlags::gui_slider).setMinMax(0.f,12.f);
+                      NodeFlags::gui_slider).setMinMax(0.f,999.f);
 
-      createChild("radius", "float", 1.0f,
+      createChild("radius", "float", 0.0f,
                       NodeFlags::required |
                       NodeFlags::valid_min_max |
                       NodeFlags::gui_slider).setMinMax(0.f,4.f);

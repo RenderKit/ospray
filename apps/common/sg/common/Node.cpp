@@ -527,11 +527,11 @@ namespace ospray {
       CreatorFct creator = nullptr;
 
       if (it == nodeRegistry.end()) {
-        std::string creatorName = "ospray_create_sg_node__"+std::string(type);
+        std::string creatorName = "ospray_create_sg_node__" + type;
         creator = (CreatorFct)getSymbol(creatorName);
 
         if (!creator)
-          throw std::runtime_error("unknown ospray scene graph node '"+type+"'");
+          throw std::runtime_error("unknown OSPRay sg::Node '" + type + "'");
 
         nodeRegistry[type] = creator;
       } else {

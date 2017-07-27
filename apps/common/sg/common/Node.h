@@ -463,15 +463,6 @@ namespace ospray {
       lateron always get a handle to this fct and create an instance
       of this renderer.
     */
-#define OSP_REGISTER_SG_NODE(InternalClassName)                         \
-    extern "C" OSPSG_INTERFACE ospray::sg::Node*                        \
-    ospray_create_sg_node__##InternalClassName()                        \
-    {                                                                   \
-      return new ospray::sg::InternalClassName;                         \
-    }                                                                   \
-    /* Extra declaration to avoid "extra ;" pedantic warnings */        \
-    ospray::sg::Node* ospray_create_sg_node__##InternalClassName()
-
 #define OSP_REGISTER_SG_NODE_NAME(InternalClassName,Name)               \
     extern "C" OSPSG_INTERFACE ospray::sg::Node*                        \
     ospray_create_sg_node__##Name()                                     \
@@ -480,6 +471,9 @@ namespace ospray {
     }                                                                   \
     /* Extra declaration to avoid "extra ;" pedantic warnings */        \
     ospray::sg::Node* ospray_create_sg_node__##Name()
+
+#define OSP_REGISTER_SG_NODE(InternalClassName)                         \
+    OSP_REGISTER_SG_NODE_NAME(InternalClassName, InternalClassName)
 
   } // ::ospray::sg
 } // ::ospray
