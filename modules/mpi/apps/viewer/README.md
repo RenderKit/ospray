@@ -28,7 +28,8 @@ mpirun -np N ./ospDistribViewerDemo \
 ```
 
 The volume file will then be chunked up into an `X x Y x Z` grid such that
-`N = X * Y * Z`. See `loadVolume` in [gensv](../gensv) for an example of how
+`N = X * Y * Z`. See `loadVolume` in [gensv/generateSciVis.cpp](../gensv/generateSciVis.cpp)
+for an example of how
 to properly load a volume distributed across ranks with correct specification of brick positions
 and ghost voxels for interpolation at boundaries. If no volume file data is passed a volume will be
 generated instead, in that case see `makeVolume`.
