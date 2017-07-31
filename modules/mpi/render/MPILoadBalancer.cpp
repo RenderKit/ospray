@@ -191,30 +191,33 @@ namespace ospray {
       void Master::incoming(const std::shared_ptr<mpicommon::Message> &msg)
       {
         const int requester = *(int*)msg->data;
-        int w = workerRankFromGlobalRank(requester);
-        if (workerNotified[w])
+        scheduleTile(workerRankFromGlobalRank(requester));
+      }
+
+      void Master::scheduleTile(const int worker)
+      {
+        if (workerNotified[worker])
           return;
 
-        ssize_t tileIndex = -1;
-        if (preferredTiles[w] > numPreAllocated)
-          tileIndex = --preferredTiles[w] * worker.size + w;
-        else { // look for largest non-empty queue
-          int ms = numPreAllocated;
-          int mi = -1;
-          for (w = 0; w < worker.size; w++)
-            if (preferredTiles[w] > ms) {
-              ms = preferredTiles[w];
-              mi = w;
-            }
-          if (mi > -1)
-            tileIndex = --preferredTiles[mi] * worker.size + mi;
+        // choose tile from preferred queue
+        auto queue = preferredTiles.begin() + worker;
+
+        // else look for largest non-empty queue
+        if (queue->empty())
+          queue = std::max_element(preferredTiles.begin(), preferredTiles.end(),
+              [](TileVector a, TileVector b) { return a.size() < b.size(); });
+
+        TileTask task;
+        if (queue->empty()) {
+          task.instances = 0; // no more tiles available
+          workerNotified[worker] = true;
+        } else {
+          task = queue->back();
+          queue->pop_back();
         }
 
-        if (tileIndex == -1)
-          workerNotified[workerRankFromGlobalRank(requester)] = true;
-
-        auto answer = std::make_shared<mpicommon::Message>(&tileIndex, sizeof(tileIndex));
-        mpi::messaging::sendTo(requester, myId, answer);
+        auto answer = std::make_shared<mpicommon::Message>(&task, sizeof(task));
+        mpi::messaging::sendTo(globalRankFromWorkerRank(worker), myId, answer);
       }
 
       float Master::renderFrame(Renderer *renderer
@@ -225,18 +228,38 @@ namespace ospray {
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
         assert(dfb);
 
+        // only duplicate tile together with region it is part of
+
         const int tilesTotal = fb->getTotalTiles();
         const int tilesPerWorker = tilesTotal / worker.size;
         const int remainingTiles = tilesTotal % worker.size;
 
-        for (int w = 0; w < worker.size; w++) {
-          preferredTiles[w] = tilesPerWorker + (w < remainingTiles);
-          workerNotified[w] = false;
+        TileTask task;
+        size_t tileId = 0;
+        for (int y = 0; y < dfb->numTiles.y; y++) {
+          for (int x = 0; x < dfb->numTiles.x; x++, tileId++) {
+            task.tileId = vec2i(x, y);
+            if (fb->tileError(task.tileId) <= renderer->errorThreshold)
+              continue;
+
+            // XXX accumID is incremented in DFB::startNewFrame, but we already
+            // want to create the tasks here
+            task.accumId = fb->accumID(task.tileId) + 1;
+            task.instances = 1;
+
+            auto nr = workerRankFromGlobalRank(dfb->ownerIDFromTileID(tileId));
+            preferredTiles[nr].push_back(task);
+          }
         }
+        for(auto&& notified : workerNotified)
+          notified = false;
 
         dfb->startNewFrame(renderer->errorThreshold);
-
         dfb->beginFrame();
+
+        for(int tiles = 0; tiles < numPreAllocated; tiles++)
+          for(int workerID = 0; workerID < worker.size; workerID++)
+            scheduleTile(workerID);
 
         dfb->waitUntilFinished();
 
@@ -254,27 +277,23 @@ namespace ospray {
       Slave::Slave()
       {
         mpi::messaging::registerMessageListener(myId, this);
-
-        auto OSPRAY_PREALLOCATED_TILES = getEnvVar<int>("OSPRAY_PREALLOCATED_TILES");
-        numPreAllocated = OSPRAY_PREALLOCATED_TILES.first ? OSPRAY_PREALLOCATED_TILES.second : 4;
-        PRINT(numPreAllocated);
       }
 
       void Slave::incoming(const std::shared_ptr<mpicommon::Message> &msg)
       {
-        auto tileIndex = *(ssize_t*)msg->data;
+        auto task = *(TileTask*)msg->data;
 
         mutex.lock();
-        if (tileIndex == -1) {
+        if (task.instances == 0)
           tilesAvailable = false;
-        } else
+        else
           tilesScheduled++;
         mutex.unlock();
 
-        if (tileIndex == -1)
-          cv.notify_one();
+        if (tilesAvailable)
+          tasking::schedule([&,task]{tileTask(task);});
         else
-          tasking::schedule([&,tileIndex]{tileTask(tileIndex);});
+          cv.notify_one();
       }
 
       float Slave::renderFrame(Renderer *_renderer
@@ -286,25 +305,21 @@ namespace ospray {
         fb = _fb;
         auto *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
 
+        tilesAvailable = true;
+        tilesScheduled = 0;
+
         dfb->startNewFrame(renderer->errorThreshold);
         dfb->beginFrame();
 
         perFrameData = renderer->beginFrame(fb);
+        frameActive = true;
 
-        tilesAvailable = true;
-        tilesScheduled = numPreAllocated;
-        for(int taskIndex = 0; taskIndex < numPreAllocated; taskIndex++) {
-          tasking::schedule([&,taskIndex]{tileTask(taskIndex * worker.size + worker.rank);});
-          // already "prefetch" a next tile
-          requestTile();
-        }
-
-        dfb->waitUntilFinished();
-
+        dfb->waitUntilFinished(); // swap with below?
         { // wait for render threads to finish
           std::unique_lock<std::mutex> lock(mutex);
           cv.wait(lock, [&]{ return tilesScheduled == 0 && !tilesAvailable; });
         }
+        frameActive = false;
 
         renderer->endFrame(perFrameData,channelFlags);
 
@@ -312,31 +327,27 @@ namespace ospray {
                                    // call to stop maml layer
       }
 
-      void Slave::tileTask(const size_t tileID)
-      {
-        const size_t numTiles_x = fb->getNumTiles().x;
-        const size_t tile_y = tileID / numTiles_x;
-        const size_t tile_x = tileID - tile_y*numTiles_x;
-        const vec2i tileId(tile_x, tile_y);
-        const int32 accumID = fb->accumID(tileId);
 
-        if (fb->tileError(tileId) > renderer->errorThreshold) {
+      void Slave::tileTask(const TileTask &task)
+      {
 #if TILE_SIZE > MAX_TILE_SIZE
-          auto tilePtr = make_unique<Tile>(tileId, fb->size, accumID);
+          auto tilePtr = make_unique<Tile>(task.tileId, fb->size, task.accumId);
           auto &tile   = *tilePtr;
 #else
-          Tile __aligned(64) tile(tileId, fb->size, accumID);
+          Tile __aligned(64) tile(task.tileId, fb->size, task.accumId);
 #endif
 
-          tasking::parallel_for(numJobs(renderer->spp, accumID), [&](int tid) {
+          while (!frameActive) PRINT(frameActive); // XXX busy wait for valid perFrameData
+
+          tasking::parallel_for(numJobs(renderer->spp, task.accumId), [&](int tid) {
             renderer->renderTile(perFrameData, tile, tid);
           });
 
-          fb->setTile(tile);
-        }
-
         if (tilesAvailable)
-          requestTile();
+          requestTile(); // XXX here or after setTile?
+
+        fb->setTile(tile);
+
 
         SCOPED_LOCK(mutex);
         if (--tilesScheduled == 0)

@@ -139,6 +139,8 @@ namespace ospray {
     //! process a client-to-client write tile message */
     void processMessage(WriteTileMessage *msg);
 
+    size_t ownerIDFromTileID(size_t tileID);
+
   private:
 
     friend struct TileData;
@@ -185,8 +187,6 @@ namespace ospray {
     void createTiles();
     TileData *createTile(const vec2i &xy, size_t tileID, size_t ownerID);
     void freeTiles();
-
-    size_t ownerIDFromTileID(size_t tileID);
 
     // Data members ///////////////////////////////////////////////////////////
 

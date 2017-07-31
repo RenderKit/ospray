@@ -289,8 +289,8 @@ namespace ospray {
 
   size_t DistributedFrameBuffer::ownerIDFromTileID(size_t tileID)
   {
-    return masterIsAWorker ? tileID % (mpicommon::numGlobalRanks()) :
-                             (tileID % (mpicommon::numGlobalRanks() - 1) + 1);
+    return masterIsAWorker ? tileID % mpicommon::numGlobalRanks() :
+      mpicommon::globalRankFromWorkerRank(tileID % mpicommon::numWorkers());
   }
 
   TileData *DFB::createTile(const vec2i &xy, size_t tileID, size_t ownerID)
@@ -321,13 +321,14 @@ namespace ospray {
     vec2i numPixels = getNumPixels();
     for (int y = 0; y < numPixels.y; y += TILE_SIZE) {
       for (int x = 0; x < numPixels.x; x += TILE_SIZE, tileID++) {
-        size_t ownerID = ownerIDFromTileID(tileID);
+        const size_t ownerID = ownerIDFromTileID(tileID);
+        const vec2i tileStart(x, y);
         if (ownerID == size_t(mpicommon::globalRank())) {
-          TileData *td = createTile(vec2i(x, y), tileID, ownerID);
+          TileData *td = createTile(tileStart, tileID, ownerID);
           myTiles.push_back(td);
           allTiles.push_back(td);
         } else {
-          allTiles.push_back(new TileDesc(this, vec2i(x,y), tileID, ownerID));
+          allTiles.push_back(new TileDesc(this, tileStart, tileID, ownerID));
         }
       }
     }
@@ -414,20 +415,18 @@ namespace ospray {
       pixelOp->postAccum(tile->final);
     }
     sendTileToMaster(tile);
-    if (!mpicommon::IamTheMaster()) {
-      size_t numTilesCompletedByMe = 0;
-      {
-        SCOPED_LOCK(mutex);
-        numTilesCompletedByMe = ++numTilesCompletedThisFrame;
-        DBG(printf("rank %i: MARKING AS COMPLETED %i,%i -> %i/%i\n",
-                   mpicommon::globalRank(),
-                   tile->begin.x,tile->begin.y,(int)numTilesCompletedThisFrame,
-                   numTiles.x*numTiles.y));
-      }
+    size_t numTilesCompletedByMe = 0;
+    {
+      SCOPED_LOCK(mutex);
+      numTilesCompletedByMe = ++numTilesCompletedThisFrame;
+      DBG(printf("rank %i: MARKING AS COMPLETED %i,%i -> %i/%i\n",
+            mpicommon::globalRank(),
+            tile->begin.x,tile->begin.y,(int)numTilesCompletedThisFrame,
+            numTiles.x*numTiles.y));
+    }
 
-      if (numTilesCompletedByMe == myTiles.size()) {
-        closeCurrentFrame();
-      }
+    if (numTilesCompletedByMe == myTiles.size()) {
+      closeCurrentFrame();
     }
   }
 
@@ -608,8 +607,10 @@ namespace ospray {
   float DFB::endFrame(const float errorThreshold)
   {
     mpi::messaging::disableAsyncMessaging();
-    return mpicommon::IamTheMaster() ?
-           tileErrorRegion.refine(errorThreshold) : errorThreshold;
+    if (mpicommon::IamTheMaster()) // only refine on master
+      return tileErrorRegion.refine(errorThreshold);
+    else // slaves will get updated error with next sync() anyway
+      return inf;
   }
 
 } // ::ospray

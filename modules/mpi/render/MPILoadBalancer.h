@@ -76,6 +76,15 @@ namespace ospray {
           each client 'i' renderss tiles with 'tileID%numWorkers==i') to avoid
           transferring a computed tile for accumulation
       */
+
+      struct TileTask {
+        vec2i tileId;
+        int32 accumId;
+        // how many copies of this tile are active, usually 1; 0 means no
+        // more tiles available
+        int32 instances;
+      };
+
       class Master : public maml::MessageHandler,
                      public TiledLoadBalancer
       {
@@ -86,8 +95,12 @@ namespace ospray {
                           FrameBuffer *fb,
                           const uint32 channelFlags) override;
         std::string toString() const override;
+
       private:
-        std::vector<int> preferredTiles; // per worker default queue
+        void scheduleTile(const int worker);
+
+        typedef std::vector<TileTask> TileVector;
+        std::vector<TileVector> preferredTiles; // per worker default queue
         std::vector<bool> workerNotified; // worker knows we're done?
         ObjectHandle myId;
         int numPreAllocated;
@@ -108,7 +121,7 @@ namespace ospray {
         std::string toString() const override;
 
       private:
-        void tileTask(const size_t tileID);
+        void tileTask(const TileTask &task);
         void requestTile();
 
         // "local" state
@@ -120,8 +133,8 @@ namespace ospray {
         std::condition_variable cv;
         int tilesScheduled;
         bool tilesAvailable;
+        bool frameActive;
         ObjectHandle myId;
-        int numPreAllocated;
       };
 
     }// ::ospray::mpi::dynamicLoadBalancer

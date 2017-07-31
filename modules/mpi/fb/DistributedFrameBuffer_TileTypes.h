@@ -44,7 +44,7 @@ namespace ospray {
 
     DistributedFrameBuffer *dfb;
     vec2i   begin;
-    size_t  tileID,ownerID;
+    size_t  tileID, ownerID;
   };
 
   // -------------------------------------------------------
