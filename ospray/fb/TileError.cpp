@@ -24,7 +24,7 @@ namespace ospray {
     , tiles(_numTiles.x * _numTiles.y)
   {
     if (tiles > 0)
-      tileErrorBuffer = (float*)alignedMalloc(sizeof(float) * tiles);
+      tileErrorBuffer = alignedMalloc<float>(tiles);
     else
       tileErrorBuffer = nullptr;
 
