@@ -67,7 +67,6 @@ SET(OSPRAY_SOURCES
   common/ospray.rc
   common/OSPCommon.ispc
   common/OSPCommon.cpp
-  common/ISPC_KNL_Backend.h
   common/Managed.cpp
   common/ObjectHandle.cpp
   common/Data.cpp
