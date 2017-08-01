@@ -220,13 +220,13 @@ namespace gensv {
     vol.tfcn.set("valueRange", valueRange);
     vol.tfcn.commit();
 
-    const vec3i grid = computeGrid(numRanks);
-    const vec3i brickDims = dimensions / grid;
-    const vec3i brickId(myRank % grid.x, (myRank / grid.x) % grid.y, myRank / (grid.x * grid.y));
+    const vec3sz grid = vec3sz(computeGrid(numRanks));
+    const vec3sz brickDims = vec3sz(dimensions) / grid;
+    const vec3sz brickId(myRank % grid.x, (myRank / grid.x) % grid.y, myRank / (grid.x * grid.y));
     const vec3f gridOrigin = vec3f(brickId) * vec3f(brickDims);
 
-    const std::array<int, 3> ghosts = computeGhostFaces(brickId, grid);
-    vec3i ghostDims(0);
+    const std::array<int, 3> ghosts = computeGhostFaces(vec3i(brickId), vec3i(grid));
+    vec3sz ghostDims(0);
     for (size_t i = 0; i < 3; ++i) {
       if (ghosts[i] & POS_FACE) {
         ghostDims[i] += 1;
@@ -235,7 +235,7 @@ namespace gensv {
         ghostDims[i] += 1;
       }
     }
-    const vec3i fullDims = brickDims + ghostDims;
+    const vec3sz fullDims = brickDims + ghostDims;
     const vec3i ghostOffset(ghosts[0] & NEG_FACE ? 1 : 0,
                                ghosts[1] & NEG_FACE ? 1 : 0,
                                ghosts[2] & NEG_FACE ? 1 : 0);
@@ -243,16 +243,17 @@ namespace gensv {
 
     vol.volume = ospray::cpp::Volume("block_bricked_volume");
     vol.volume.set("voxelType", dtype.c_str());
-    vol.volume.set("dimensions", fullDims);
+    vol.volume.set("dimensions", vec3i(fullDims));
     vol.volume.set("transferFunction", vol.tfcn);
     vol.volume.set("gridOrigin", vol.ghostGridOrigin);
 
     const size_t dtypeSize = sizeForDtype(dtype);
     std::vector<unsigned char> volumeData(fullDims.x * fullDims.y * fullDims.z * dtypeSize, 0);
 
-    RawReader reader(file, dimensions, dtypeSize);
-    reader.readRegion(brickId * brickDims - ghostOffset, fullDims, volumeData.data());
-    vol.volume.setRegion(volumeData.data(), vec3i(0), fullDims);
+    RawReader reader(file, vec3sz(dimensions), dtypeSize);
+    reader.readRegion(brickId * brickDims - vec3sz(ghostOffset),
+        vec3sz(fullDims), volumeData.data());
+    vol.volume.setRegion(volumeData.data(), vec3i(0), vec3i(fullDims));
     vol.volume.commit();
 
     vol.bounds = box3f(gridOrigin, gridOrigin + vec3f(brickDims));

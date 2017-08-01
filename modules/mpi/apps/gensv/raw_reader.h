@@ -22,26 +22,28 @@
 
 namespace gensv {
 
+using vec3sz = ospcommon::vec_t<size_t, 3>;
+
 // Convenience class for reading/seeking around RAW volume files
 class RawReader {
   ospcommon::FileName fileName;
-  ospcommon::vec3i dimensions;
+  vec3sz dimensions;
   size_t voxelSize;
   FILE *file;
   int64_t offset;
 
 public:
   RawReader(const ospcommon::FileName &fileName,
-      const ospcommon::vec3i &dimensions, size_t voxelSize);
+      const vec3sz &dimensions, size_t voxelSize);
   ~RawReader();
   // Read a region of volume data from the file into the buffer passed.
   // It's assumed the buffer passed has enough room. Returns the
   // number voxels read
-  size_t readRegion(const ospcommon::vec3i &start,
-      const ospcommon::vec3i &size, unsigned char *buffer);
+  size_t readRegion(const vec3sz &start,
+      const vec3sz &size, unsigned char *buffer);
 
 private:
-  inline bool convexRead(const ospcommon::vec3i &size) {
+  inline bool convexRead(const vec3sz &size) {
     // 3 cases for convex reads:
     // - We're reading a set of slices of the volume
     // - We're reading a set of scanlines of a slice
