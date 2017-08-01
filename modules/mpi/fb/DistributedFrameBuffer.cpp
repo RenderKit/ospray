@@ -287,6 +287,15 @@ namespace ospray {
     myTiles.clear();
   }
 
+  bool DFB::isFrameComplete()
+  {
+    if (mpicommon::IamAWorker()) {
+      return numTilesCompletedThisFrame == myTiles.size();
+    } else {
+      return numTilesCompletedThisFrame == numTiles.x * numTiles.y;
+    }
+  }
+
   size_t DistributedFrameBuffer::ownerIDFromTileID(size_t tileID)
   {
     return masterIsAWorker ? tileID % mpicommon::numGlobalRanks() :
@@ -422,20 +431,16 @@ namespace ospray {
 
     // Note: In the data-distributed device the master will be rendering
     // and completing tiles.
-    if (!mpicommon::IamTheMaster()) {
+    if (mpicommon::IamAWorker()) {
       mpi::messaging::sendTo(mpicommon::masterRank(), myID, msg.message);
+      numTilesCompletedThisFrame++;
 
-      size_t numTilesCompletedByMe = 0;
-      {
-        SCOPED_LOCK(mutex);
-        numTilesCompletedByMe = ++numTilesCompletedThisFrame;
-        DBG(printf("rank %i: MARKING AS COMPLETED %i,%i -> %i/%i\n",
-              mpicommon::globalRank(),
-              tile->begin.x,tile->begin.y,(int)numTilesCompletedThisFrame,
-              numTiles.x*numTiles.y));
-      }
+      DBG(printf("RANK %d MARKING AS COMPLETED %i,%i -> %i|%i/%i\n",
+                 mpicommon::globalRank(), tile->begin.x, tile->begin.y,
+                 numTilesCompletedThisFrame.load(),
+                 numTilesCompletedThisFrame.load(), myTiles.size()));
 
-      if (numTilesCompletedByMe == myTiles.size()) {
+      if (isFrameComplete()) {
         closeCurrentFrame();
       }
     } else {
@@ -445,19 +450,19 @@ namespace ospray {
     }
   }
 
-  void DFB::finalizeTileOnMaster(TileData *tile) {
+  void DFB::finalizeTileOnMaster(TileData *tile)
+  {
     assert(mpicommon::IamTheMaster());
-    int numTilesCompletedByMyTile = 0;
     /*! we will not do anything with the tile other than mark it's done */
-    {
-      SCOPED_LOCK(mutex);
-      numTilesCompletedByMyTile = ++numTilesCompletedThisFrame;
-      DBG(printf("MASTER: MARKING AS COMPLETED %i,%i -> %i|%i/%i\n",
-            tile->begin.x,tile->begin.y,numTilesCompletedThisFrame,
-            numTilesCompletedByMyTile,numTiles.x*numTiles.y));
-    }
-    if (numTilesCompletedByMyTile == numTiles.x*numTiles.y)
+    numTilesCompletedThisFrame++;
+
+    DBG(printf("MASTER MARKING AS COMPLETED %i,%i -> %i|%i/%i\n",
+               tile->begin.x, tile->begin.y, numTilesCompletedThisFrame.load(),
+               numTilesCompletedThisFrame.load(), numTiles.x*numTiles.y));
+
+    if (isFrameComplete()) {
       closeCurrentFrame();
+    }
   }
 
   size_t DFB::numMyTiles() const

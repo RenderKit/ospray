@@ -186,6 +186,8 @@ namespace ospray {
     TileData *createTile(const vec2i &xy, size_t tileID, size_t ownerID);
     void freeTiles();
 
+    bool isFrameComplete();
+
     // Data members ///////////////////////////////////////////////////////////
 
     ObjectHandle myID;
@@ -205,7 +207,7 @@ namespace ospray {
         (used to track when current node is done with this frame - we are done
         exactly once we've completed sending / receiving the last tile to / by
         the master) */
-    size_t numTilesCompletedThisFrame;
+    std::atomic<size_t> numTilesCompletedThisFrame;
 
     /*! vector of info for *all* tiles. Each logical tile in the
       screen has an entry here */
