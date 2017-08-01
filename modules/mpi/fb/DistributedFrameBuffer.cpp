@@ -414,19 +414,34 @@ namespace ospray {
     if (pixelOp) {
       pixelOp->postAccum(tile->final);
     }
-    sendTileToMaster(tile);
-    size_t numTilesCompletedByMe = 0;
-    {
-      SCOPED_LOCK(mutex);
-      numTilesCompletedByMe = ++numTilesCompletedThisFrame;
-      DBG(printf("rank %i: MARKING AS COMPLETED %i,%i -> %i/%i\n",
-            mpicommon::globalRank(),
-            tile->begin.x,tile->begin.y,(int)numTilesCompletedThisFrame,
-            numTiles.x*numTiles.y));
-    }
 
-    if (numTilesCompletedByMe == myTiles.size()) {
-      closeCurrentFrame();
+    MasterTileMessageBuilder msg(colorBufferFormat, hasDepthBuffer,
+                                 tile->begin, tile->error);
+    msg.setColor(tile->color);
+    msg.setDepth(tile->final.z);
+
+    // Note: In the data-distributed device the master will be rendering
+    // and completing tiles.
+    if (!mpicommon::IamTheMaster()) {
+      mpi::messaging::sendTo(mpicommon::masterRank(), myID, msg.message);
+
+      size_t numTilesCompletedByMe = 0;
+      {
+        SCOPED_LOCK(mutex);
+        numTilesCompletedByMe = ++numTilesCompletedThisFrame;
+        DBG(printf("rank %i: MARKING AS COMPLETED %i,%i -> %i/%i\n",
+              mpicommon::globalRank(),
+              tile->begin.x,tile->begin.y,(int)numTilesCompletedThisFrame,
+              numTiles.x*numTiles.y));
+      }
+
+      if (numTilesCompletedByMe == myTiles.size()) {
+        closeCurrentFrame();
+      }
+    } else {
+      // If we're the master sending a message to ourself skip going
+      // through the messaging layer entirely and just call incoming directly
+      incoming(msg.message);
     }
   }
 
@@ -443,15 +458,6 @@ namespace ospray {
     }
     if (numTilesCompletedByMyTile == numTiles.x*numTiles.y)
       closeCurrentFrame();
-  }
-
-  void DistributedFrameBuffer::sendTileToMaster(TileData *tile)
-  {
-    MasterTileMessageBuilder msg(colorBufferFormat, hasDepthBuffer,
-                                 tile->begin, tile->error);
-    msg.setColor(tile->color);
-    msg.setDepth(tile->final.z);
-    mpi::messaging::sendTo(mpicommon::masterRank(), myID, msg.message);
   }
 
   size_t DFB::numMyTiles() const

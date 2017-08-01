@@ -167,8 +167,6 @@ namespace ospray {
         checks if we've completed rendering the frame. */
     void finalizeTileOnMaster(TileData *tile);
 
-    void sendTileToMaster(TileData *tile);
-
     //! number of tiles that "I" own
     size_t numMyTiles() const;
 
