@@ -81,6 +81,7 @@ SET(OSPRAY_SOURCES
   fb/LocalFB.cpp
   fb/PixelOp.cpp
   fb/Tile.h
+  fb/TileError.cpp
 
   camera/Camera.cpp
   camera/Camera.ispc
@@ -243,6 +244,7 @@ OSPRAY_INSTALL_SDK_HEADERS(
   fb/PixelOp.h
   fb/Tile.h
   fb/Tile.ih
+  fb/TileError.h
   DESTINATION fb
 )
 

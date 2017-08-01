@@ -94,22 +94,4 @@ namespace ospray {
 
     Ref<PixelOp::Instance> pixelOp;
   };
-
-  // manages error per tile and adaptive regions, for variance estimation / stopping
-  class OSPRAY_SDK_INTERFACE TileError
-  {
-    public:
-      TileError(const vec2i &numTiles);
-      virtual ~TileError();
-      void clear();
-      float operator[](const vec2i &tile) const;
-      void update(const vec2i &tile, const float error);
-      float refine(const float errorThreshold);
-
-    protected:
-      vec2i numTiles;
-      int tiles;
-      float *tileErrorBuffer; /*!< holds error per tile, for variance estimation / stopping */
-      std::vector<box2i> errorRegion; // image regions (in #tiles) which do not yet estimate the error on tile base
-  };
 } // ::ospray

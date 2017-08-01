@@ -18,6 +18,7 @@
 
 // ospray
 #include "fb/FrameBuffer.h"
+#include "fb/TileError.h"
 
 namespace ospray {
 
