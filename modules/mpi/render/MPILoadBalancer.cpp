@@ -226,6 +226,65 @@ namespace ospray {
         mpi::messaging::sendTo(globalRankFromWorkerRank(worker), myId, answer);
       }
 
+      void Master::generateTileTasks(DistributedFrameBuffer * const dfb
+          , const float errorThreshold
+          )
+      {
+        struct ActiveTile {
+          float error;
+          vec2i id;
+        };
+        std::vector<ActiveTile> activeTiles;
+        TileTask task;
+        for (int y = 0, tileNr = 0; y < dfb->numTiles.y; y++) {
+          for (int x = 0; x < dfb->numTiles.x; x++, tileNr++) {
+            const auto tileId = vec2i(x, y);
+            const auto tileError = dfb->tileError(tileId);
+            if (tileError <= errorThreshold)
+              continue;
+
+            // remember active tiles
+            activeTiles.push_back({tileError, tileId});
+
+            task.tileId = tileId;
+            // XXX accumID is incremented in DFB::startNewFrame, but we already
+            // want to create the tasks here
+            task.accumId = dfb->accumID(tileId) + 1;
+            task.instances = 1;
+
+            auto nr = workerRankFromGlobalRank(dfb->ownerIDFromTileID(tileNr));
+            preferredTiles[nr].push_back(task);
+          }
+        }
+
+        if (activeTiles.empty())
+          return;
+
+        // sort active tiles, highest error first
+        std::sort(activeTiles.begin(), activeTiles.end(),
+            [](ActiveTile a, ActiveTile b) { return a.error > b.error; });
+
+        // TODO: estimate variance reduction to avoid duplicating tiles that are
+        // just slightly above errorThreshold too often
+        int accumIdOffset = 2;
+        auto it = activeTiles.begin();
+        const int tilesTotal = dfb->getTotalTiles();
+        for (auto i = activeTiles.size(); i < tilesTotal; i++) {
+          const auto tileId = it->id;
+          task.tileId = tileId;
+          task.accumId = dfb->accumID(tileId) + accumIdOffset;
+          // TODO task.instances++
+          const auto tileNr = tileId.y*dfb->numTiles.x + tileId.x;
+          auto nr = workerRankFromGlobalRank(dfb->ownerIDFromTileID(tileNr));
+          preferredTiles[nr].push_back(task);
+
+          if (++it == activeTiles.end()) {
+            it = activeTiles.begin(); // start again from beginning
+            accumIdOffset++;
+          }
+        }
+      }
+
       float Master::renderFrame(Renderer *renderer
           , FrameBuffer *fb
           , const uint32 /*channelFlags*/
@@ -234,31 +293,10 @@ namespace ospray {
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
         assert(dfb);
 
-        // only duplicate tile together with region it is part of
-
-        const int tilesTotal = fb->getTotalTiles();
-        const int tilesPerWorker = tilesTotal / worker.size;
-        const int remainingTiles = tilesTotal % worker.size;
-
-        TileTask task;
-        size_t tileId = 0;
-        for (int y = 0; y < dfb->numTiles.y; y++) {
-          for (int x = 0; x < dfb->numTiles.x; x++, tileId++) {
-            task.tileId = vec2i(x, y);
-            if (fb->tileError(task.tileId) <= renderer->errorThreshold)
-              continue;
-
-            // XXX accumID is incremented in DFB::startNewFrame, but we already
-            // want to create the tasks here
-            task.accumId = fb->accumID(task.tileId) + 1;
-            task.instances = 1;
-
-            auto nr = workerRankFromGlobalRank(dfb->ownerIDFromTileID(tileId));
-            preferredTiles[nr].push_back(task);
-          }
-        }
         for(auto&& notified : workerNotified)
           notified = false;
+
+        generateTileTasks(dfb, renderer->errorThreshold);
 
         dfb->startNewFrame(renderer->errorThreshold);
         dfb->beginFrame();

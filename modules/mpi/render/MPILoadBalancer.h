@@ -21,6 +21,7 @@
 #include "../common/Messaging.h"
 // ours
 #include "render/LoadBalancer.h"
+#include "mpi/fb/DistributedFrameBuffer.h"
 #include <condition_variable>
 
 namespace ospray {
@@ -91,13 +92,17 @@ namespace ospray {
       public:
         Master();
         void incoming(const std::shared_ptr<mpicommon::Message> &) override;
-        float renderFrame(Renderer *tiledRenderer,
-                          FrameBuffer *fb,
-                          const uint32 channelFlags) override;
+        float renderFrame(Renderer *tiledRenderer
+            , FrameBuffer *fb
+            , const uint32 channelFlags
+            ) override;
         std::string toString() const override;
 
       private:
         void scheduleTile(const int worker);
+        void generateTileTasks(DistributedFrameBuffer * const dfb
+            , const float errorThreshold
+            );
 
         typedef std::vector<TileTask> TileVector;
         std::vector<TileVector> preferredTiles; // per worker default queue
@@ -115,9 +120,10 @@ namespace ospray {
       public:
         Slave();
         void incoming(const std::shared_ptr<mpicommon::Message> &) override;
-        float renderFrame(Renderer *tiledRenderer,
-                          FrameBuffer *fb,
-                          const uint32 channelFlags) override;
+        float renderFrame(Renderer *tiledRenderer
+            , FrameBuffer *fb
+            , const uint32 channelFlags
+            ) override;
         std::string toString() const override;
 
       private:
