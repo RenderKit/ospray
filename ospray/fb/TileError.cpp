@@ -78,18 +78,22 @@ namespace ospray {
           err += tileErrorBuffer[idx];
           maxErr = std::max(maxErr, tileErrorBuffer[idx]);
         }
-      // set all tiles of this region to local max error to enforce their
-      // refinement as a group
-      for (int y = region.lower.y; y < region.upper.y; y++)
-        for (int x = region.lower.x; x < region.upper.x; x++) {
-          int idx = y * numTiles.x + x;
-          tileErrorBuffer[idx] = maxErr;
-        }
-      vec2i size = region.size();
-      int area = reduce_mul(size);
+      if (maxErr > errorThreshold) {
+        // set all tiles of this region to >errorThreshold to enforce their
+        // refinement as a group
+        const float minErr = nextafter(errorThreshold, inf);
+        for (int y = region.lower.y; y < region.upper.y; y++)
+          for (int x = region.lower.x; x < region.upper.x; x++) {
+            int idx = y * numTiles.x + x;
+            tileErrorBuffer[idx] = std::max(tileErrorBuffer[idx], minErr);
+          }
+      }
+      const vec2i size = region.size();
+      const int area = reduce_mul(size);
       err /= area; // == avg
-      if (err < 4.f*errorThreshold) { // split region?
-        if (area <= 2) { // would just contain single tile after split: remove
+      if (err <= 4.f*errorThreshold) { // split region?
+        // if would just contain single tile after split or wholly done: remove
+        if (area <= 2 || maxErr <= errorThreshold) {
           regions--;
           errorRegion[i] = errorRegion[regions];
           errorRegion[regions] = errorRegion.back();
@@ -97,8 +101,8 @@ namespace ospray {
           i--;
           continue;
         }
-        vec2i split = region.lower + size / 2; // TODO: find split with equal
-                                               //       variance
+        const vec2i split = region.lower + size / 2; // TODO: find split with
+                                                     //       equal variance
         errorRegion.push_back(region); // region ref might become invalid
         if (size.x > size.y) {
           errorRegion[i].upper.x = split.x;
@@ -110,10 +114,6 @@ namespace ospray {
       }
     }
 
-    float maxErr = 0.f;
-    for (int i = 0; i < tiles; i++)
-      maxErr = std::max(maxErr, tileErrorBuffer[i]);
-
-    return maxErr;
+    return *std::max_element(tileErrorBuffer, tileErrorBuffer + tiles);
   }
 } // ::ospray
