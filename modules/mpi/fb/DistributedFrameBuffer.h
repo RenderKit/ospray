@@ -115,7 +115,7 @@ namespace ospray {
     void  beginFrame() override;
     float endFrame(const float errorThreshold) override;
 
-    enum FrameMode { WRITE_ONCE, ALPHA_BLEND, Z_COMPOSITE };
+    enum FrameMode { WRITE_ONCE, WRITE_MULTIPLE, ALPHA_BLEND, Z_COMPOSITE };
 
     void setFrameMode(FrameMode newFrameMode) ;
 
@@ -143,8 +143,9 @@ namespace ospray {
   private:
 
     friend struct TileData;
-    friend struct AlphaBlendTile_simple;
     friend struct WriteOnlyOnceTile;
+    friend struct WriteMultipleTile;
+    friend struct AlphaBlendTile_simple;
     friend struct ZCompositeTile;
 
     // ==================================================================

@@ -181,6 +181,44 @@ namespace ospray {
     dfb->tileIsCompleted(this);
   }
 
+  void WriteMultipleTile::newFrame()
+  {
+  }
+
+// just last tile needs to do that
+// also support out-of-order tiles
+// and serialize duplicated tiles
+  void WriteMultipleTile::process(const ospray::Tile &tile)
+  {
+    bool done = false;
+
+    if (tile.accumID == 0) {
+      final.region = tile.region;
+      final.fbSize = tile.fbSize;
+      final.rcp_fbSize = tile.rcp_fbSize;
+
+      const auto bytes = tile.region.size().y * (TILE_SIZE * sizeof(float));
+      memcpy(accum.z, tile.z, bytes);
+      memcpy(final.z, tile.z, bytes);
+    }
+
+    {
+      SCOPED_LOCK(mutex);
+      ispc::DFB_accumulate_only((ispc::VaryingTile*)&tile
+          , (ispc::VaryingTile*)&this->accum
+          , (ispc::VaryingTile*)&this->variance
+          );
+
+// TODO      done = dfb->tileInstances[tileNr] == 0;
+    }
+
+    if (done) {
+      // TODO correct AccumID
+      accumulate(tile);
+      dfb->tileIsCompleted(this);
+    }
+  }
+
   ZCompositeTile::ZCompositeTile(DistributedFrameBuffer *dfb,
                                  const vec2i &begin,
                                  size_t tileID,

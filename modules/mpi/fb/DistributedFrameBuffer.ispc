@@ -118,6 +118,36 @@ template_accumulate(RGBA32F, varying vec4f, soa_to_aos4f);
 #undef template_accumulate
 
 
+// variant that only accumulates (without computing error or final color result)
+// assumption: there is always ACCUM and VARIANCE buffer (otherwise variance
+// will always be inf and WriteMultipleTiles mode won't be used)
+export void DFB_accumulate_only(VaryingTile *uniform tile
+    , VaryingTile *uniform accum
+    , VaryingTile *uniform variance
+    )
+{
+  // variance buffer accumulates every other frame
+  const uniform bool accumulateVariance = (tile->accumID & 1) == 1;
+  const uniform vec2i size = box_size(tile->region);
+  const uniform int maxi = size.y*(TILE_SIZE/programCount);
+
+  for (uniform int i = 0; i < maxi; i++) {
+    vec4f col = make_vec4f(tile->r[i], tile->g[i], tile->b[i], tile->a[i]);
+
+    accum->r[i] += col.x;
+    accum->g[i] += col.y;
+    accum->b[i] += col.z;
+    accum->a[i] += col.w;
+
+    if (accumulateVariance) {
+      variance->r[i] += col.x;
+      variance->g[i] += col.y;
+      variance->b[i] += col.z;
+      variance->a[i] += col.w;
+    }
+  }
+}
+
 export void DFB_zComposite(VaryingTile    *uniform delta,
                            VaryingTile    *uniform current)
 {

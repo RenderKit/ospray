@@ -116,8 +116,32 @@ namespace ospray {
   };
 
   // -------------------------------------------------------
-  /*! specialized tile for doing Z-compositing. this does not have
-      additional data, but a different write op. */
+  /*! specialized tile for plain sort-first rendering, but where the same tile
+      region is computed multiple times (with different accumId). */
+  class WriteMultipleTile : public TileData
+  {
+   public:
+    WriteMultipleTile(DistributedFrameBuffer *dfb
+        , const vec2i &begin
+        , size_t tileID
+        , size_t ownerID
+        )
+      : TileData(dfb, begin, tileID, ownerID)
+    {}
+
+    void newFrame() override;
+
+    // accumulate into ACUUM and VARIANCE, and for last tile read-out
+    void process(const ospray::Tile &tile) override;
+
+   private:
+    size_t instancesProcessed;
+    // serialize when multiple instances of this tile arrive at the same time
+    std::mutex mutex;
+  };
+
+  // -------------------------------------------------------
+  /*! specialized tile for doing Z-compositing. */
   struct ZCompositeTile : public TileData
   {
     ZCompositeTile(DistributedFrameBuffer *dfb, const vec2i &begin,

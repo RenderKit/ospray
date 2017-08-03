@@ -313,6 +313,9 @@ namespace ospray {
     case WRITE_ONCE:
       td = new WriteOnlyOnceTile(this, xy, tileID, ownerID);
       break;
+    case WRITE_MULTIPLE:
+      td = new WriteMultipleTile(this, xy, tileID, ownerID);
+      break;
     case ALPHA_BLEND:
       td = new AlphaBlendTile_simple(this, xy, tileID, ownerID);
       break;
@@ -577,20 +580,27 @@ namespace ospray {
       tasking::parallel_for(myTiles.size(), [&](int taskIndex) {
         TileData *td = this->myTiles[taskIndex];
         assert(td);
-        if (fbChannelFlags & OSP_FB_ACCUM) {
-          for (int i = 0; i < TILE_SIZE*TILE_SIZE; i++) td->accum.r[i] = 0.f;
-          for (int i = 0; i < TILE_SIZE*TILE_SIZE; i++) td->accum.g[i] = 0.f;
-          for (int i = 0; i < TILE_SIZE*TILE_SIZE; i++) td->accum.b[i] = 0.f;
-          for (int i = 0; i < TILE_SIZE*TILE_SIZE; i++) td->accum.a[i] = 0.f;
+        const auto bytes = TILE_SIZE * TILE_SIZE * sizeof(float);
+        if (hasAccumBuffer && (fbChannelFlags & OSP_FB_ACCUM)) {
+          memset(td->accum.r, 0, bytes);
+          memset(td->accum.g, 0, bytes);
+          memset(td->accum.b, 0, bytes);
+          memset(td->accum.a, 0, bytes);
           for (int i = 0; i < TILE_SIZE*TILE_SIZE; i++) td->accum.z[i] = inf;
+          if (hasVarianceBuffer) { // clearing ACCUM also clears VARIANCE
+            memset(td->variance.r, 0, bytes);
+            memset(td->variance.g, 0, bytes);
+            memset(td->variance.b, 0, bytes);
+            memset(td->variance.a, 0, bytes);
+          }
         }
-        if (fbChannelFlags & OSP_FB_DEPTH)
+        if (hasDepthBuffer && (fbChannelFlags & OSP_FB_DEPTH))
           for (int i = 0; i < TILE_SIZE*TILE_SIZE; i++) td->final.z[i] = inf;
         if (fbChannelFlags & OSP_FB_COLOR) {
-          for (int i = 0; i < TILE_SIZE*TILE_SIZE; i++) td->final.r[i] = 0.f;
-          for (int i = 0; i < TILE_SIZE*TILE_SIZE; i++) td->final.g[i] = 0.f;
-          for (int i = 0; i < TILE_SIZE*TILE_SIZE; i++) td->final.b[i] = 0.f;
-          for (int i = 0; i < TILE_SIZE*TILE_SIZE; i++) td->final.a[i] = 0.f;
+          memset(td->final.r, 0, bytes);
+          memset(td->final.g, 0, bytes);
+          memset(td->final.b, 0, bytes);
+          memset(td->final.a, 0, bytes);
         }
       });
     }
