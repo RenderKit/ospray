@@ -30,6 +30,8 @@ namespace ospray {
 
     using namespace mpicommon;
 
+#define MAX_TILE_SIZE 128
+
     namespace staticLoadBalancer {
 
       // staticLoadBalancer::Master definitions ///////////////////////////////
@@ -91,7 +93,6 @@ namespace ospray {
           if (fb->tileError(tileId) <= renderer->errorThreshold)
             return;
 
-#define MAX_TILE_SIZE 128
 #if TILE_SIZE > MAX_TILE_SIZE
           auto tilePtr = make_unique<Tile>(tileId, fb->size, accumID);
           auto &tile   = *tilePtr;
@@ -142,7 +143,12 @@ namespace ospray {
           if (dfb->tileError(tileID) <= renderer->errorThreshold)
             return;
 
+#if TILE_SIZE > MAX_TILE_SIZE
+          auto tilePtr = make_unique<Tile>(task.tileId, fb->size, task.accumId);
+          auto &tile   = *tilePtr;
+#else
           Tile __aligned(64) tile(tileID, dfb->size, accumID);
+#endif
 
           const int NUM_JOBS = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
           tasking::parallel_for(NUM_JOBS, [&](int tIdx) {
