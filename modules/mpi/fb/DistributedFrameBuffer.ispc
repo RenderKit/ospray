@@ -21,39 +21,8 @@ struct DistributedFrameBuffer {
   FrameBuffer super;
 };
 
-export void DFB_alphaBlendBackground(VaryingTile    *uniform firstTile,
-                                     const uniform vec4f &bgColor)
-{
-  /*! note: alpha=1 means "fully opaque" */
-  for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
-    vec4f col_over = make_vec4f(firstTile->r[i],
-                                firstTile->g[i],
-                                firstTile->b[i],
-                                firstTile->a[i]);
-    vec4f col_new = col_over + bgColor * (1.f-col_over.w);
-    firstTile->r[i] = col_new.x;
-    firstTile->g[i] = col_new.y;
-    firstTile->b[i] = col_new.z;
-    firstTile->a[i] = col_new.w;
-  }
-}
-
-export void DFB_alphaBlendTiles(VaryingTile    *uniform prev,
-                                VaryingTile    *uniform over)
-{
-  for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
-    vec4f col_prev = make_vec4f(prev->r[i], prev->g[i], prev->b[i], prev->a[i]);
-    vec4f col_over = make_vec4f(over->r[i], over->g[i], over->b[i], over->a[i]);
-    vec4f col_new = col_over + col_prev * (1.f-col_over.w);
-    prev->r[i] = col_new.x;
-    prev->g[i] = col_new.y;
-    prev->b[i] = col_new.z;
-    prev->a[i] = col_new.w;
-  }
-}
-
 #define template_accumulate(name, dst_fmt, cvt)                              \
-export uniform float DFB_accumulate_##name(void  *uniform _self,             \
+export uniform float DFB_accumulate_##name(void  *uniform /*_self*/,         \
                                   VaryingTile    *uniform tile,              \
                                   VaryingTile    *uniform final,             \
                                   VaryingTile    *uniform accum,             \
@@ -66,7 +35,6 @@ export uniform float DFB_accumulate_##name(void  *uniform _self,             \
   const uniform int accumID = tile->accumID;                                 \
   const uniform vec2i size = box_size(tile->region);                         \
   const uniform int maxi = size.y*(TILE_SIZE/programCount);                  \
-  DistributedFrameBuffer *uniform self = (DistributedFrameBuffer*)_self;     \
   dst_fmt *uniform color = (dst_fmt*uniform)_color;                          \
   uniform float errf = inf;                                                  \
   if (!hasAccumBuffer || accumID < 1) {                                      \
@@ -236,26 +204,10 @@ inline void sortAndBlendFragments(VaryingTile *uniform *uniform tileArray,
   }
 }
 
-#if 0
-task void DFB_sortAndBlendFragments_job(VaryingTile *uniform *uniform tileArray,
-                                        uniform int32 numTiles)
-{
-  uniform int begin = taskIndex * (PIXELS_PER_BLEND_JOB/programCount);
-  uniform int end = begin + (PIXELS_PER_BLEND_JOB/programCount);
-  sortAndBlendFragments(tileArray,numTiles,begin,end);
-}
-#endif
-
 export void DFB_sortAndBlendFragments(VaryingTile *uniform *uniform tileArray,
                                       uniform int32 numTiles)
 {
-// NOTE(jda) - I do not know if this should be removed...?
-#if 1
   sortAndBlendFragments(tileArray,numTiles,0,TILE_SIZE*TILE_SIZE/programCount);
-#else
-  uniform int numJobs = (TILE_SIZE*TILE_SIZE) / PIXELS_PER_BLEND_JOB;
-  launch[numJobs] DFB_sortAndBlendFragments_job(tileArray,numTiles);
-#endif
 }
 
 
