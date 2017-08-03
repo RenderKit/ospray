@@ -139,7 +139,7 @@ namespace ospray {
     //! process a client-to-client write tile message */
     void processMessage(WriteTileMessage *msg);
 
-    size_t ownerIDFromTileID(size_t tileID);
+    size_t ownerIDFromTileID(size_t tileID) const;
 
   private:
 
@@ -193,7 +193,9 @@ namespace ospray {
     ObjectHandle myID;
 
     int32 *tileAccumID; //< holds accumID per tile, for adaptive accumulation
-    //!< holds error per tile and adaptive regions, for variance estimation / stopping
+
+    /*! holds error per tile and adaptive regions, for variance estimation /
+        stopping */
     DistributedTileError tileErrorRegion;
 
     /*! local frame buffer on the master used for storing the final

@@ -246,13 +246,10 @@ namespace ospray {
       numTilesCompletedThisFrame = 0;
 
       if (hasAccumBuffer) {
-        // increment accumID only for active tiles
         for (int t = 0; t < getTotalTiles(); t++) {
           if (tileError(vec2i(t, 0)) <= errorThreshold) {
             if (mpicommon::IamTheMaster() || allTiles[t]->mine())
               numTilesCompletedThisFrame++;
-          } else {
-            tileAccumID[t]++;
           }
         }
       }
@@ -296,7 +293,7 @@ namespace ospray {
     }
   }
 
-  size_t DistributedFrameBuffer::ownerIDFromTileID(size_t tileID)
+  size_t DistributedFrameBuffer::ownerIDFromTileID(size_t tileID) const
   {
     return masterIsAWorker ? tileID % mpicommon::numGlobalRanks() :
       mpicommon::globalRankFromWorkerRank(tileID % mpicommon::numWorkers());
@@ -593,15 +590,14 @@ namespace ospray {
     }
 
     if (hasAccumBuffer && (fbChannelFlags & OSP_FB_ACCUM)) {
-      // we increment at the start of the frame
-      memset(tileAccumID, -1, getTotalTiles()*sizeof(int32));
+      memset(tileAccumID, 0, getTotalTiles()*sizeof(int32));
       tileErrorRegion.clear();
     }
   }
 
   int32 DFB::accumID(const vec2i &tile)
   {
-    return tileAccumID[tile.y * numTiles.x + tile.x];
+    return tileAccumID[tile.y * numTiles.x + tile.x]++;
   }
 
   float DFB::tileError(const vec2i &tile)
