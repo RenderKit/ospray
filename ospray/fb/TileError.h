@@ -26,7 +26,7 @@ namespace ospray {
   {
     public:
       TileError(const vec2i &numTiles);
-      virtual ~TileError();
+      ~TileError();
       void clear();
       float operator[](const vec2i &tile) const;
       void update(const vec2i &tile, const float error);

@@ -198,6 +198,9 @@ namespace ospray {
     tileAccumID = (int32*)alignedMalloc(bytes);
     memset(tileAccumID, 0, bytes);
 
+    tileInstances = (int32*)alignedMalloc(bytes);
+    memset(tileInstances, 0, bytes);
+
     if (mpicommon::IamTheMaster()) {
       if (colorBufferFormat == OSP_FB_NONE) {
         DBG(cout << "#osp:mpi:dfb: we're the master, but framebuffer has 'NONE' "
@@ -217,6 +220,7 @@ namespace ospray {
   {
     freeTiles();
     alignedFree(tileAccumID);
+    alignedFree(tileInstances);
   }
 
   void DFB::startNewFrame(const float errorThreshold)
@@ -242,6 +246,7 @@ namespace ospray {
       // NOTE: Doing error sync may do a broadcast, needs to be done before
       //       async messaging enabled in beginFrame()
       tileErrorRegion.sync();
+      MPI_CALL(Bcast(tileInstances, getTotalTiles(), MPI_INT, 0, MPI_COMM_WORLD));
 
       numTilesCompletedThisFrame = 0;
 
@@ -262,6 +267,7 @@ namespace ospray {
       // 'frameIsActive' is true: as soon as the frame is tagged active,
       // incoming WILL write into the frame buffer, composite tiles,
       // etc!
+      // XXX So, shouldn't this wait until beginFrame()??
       frameIsActive = true;
     }
 
@@ -293,7 +299,7 @@ namespace ospray {
     }
   }
 
-  size_t DistributedFrameBuffer::ownerIDFromTileID(size_t tileID) const
+  size_t DFB::ownerIDFromTileID(size_t tileID) const
   {
     return masterIsAWorker ? tileID % mpicommon::numGlobalRanks() :
       mpicommon::globalRankFromWorkerRank(tileID % mpicommon::numWorkers());
@@ -597,7 +603,9 @@ namespace ospray {
 
   int32 DFB::accumID(const vec2i &tile)
   {
-    return tileAccumID[tile.y * numTiles.x + tile.x]++;
+    const auto tileNr = tile.y * numTiles.x + tile.x;
+    tileInstances[tileNr]++;
+    return tileAccumID[tileNr]++;
   }
 
   float DFB::tileError(const vec2i &tile)
@@ -605,7 +613,7 @@ namespace ospray {
     return tileErrorRegion[tile];
   }
 
-  void DistributedFrameBuffer::beginFrame()
+  void DFB::beginFrame()
   {
     mpi::messaging::enableAsyncMessaging();
     FrameBuffer::beginFrame();
@@ -614,6 +622,7 @@ namespace ospray {
   float DFB::endFrame(const float errorThreshold)
   {
     mpi::messaging::disableAsyncMessaging();
+    memset(tileInstances, 0, sizeof(int32)*getTotalTiles()); // XXX needed?
     if (mpicommon::IamTheMaster()) // only refine on master
       return tileErrorRegion.refine(errorThreshold);
     else // slaves will get updated error with next sync() anyway

@@ -81,9 +81,7 @@ namespace ospray {
       struct TileTask {
         vec2i tileId;
         int32 accumId;
-        // how many copies of this tile are active, usually 1; 0 means no
-        // more tiles available
-        int32 instances;
+        bool tilesExhausted; // no more tiles available
       };
 
       class Master : public maml::MessageHandler,

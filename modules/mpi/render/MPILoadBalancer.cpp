@@ -215,11 +215,12 @@ namespace ospray {
 
         TileTask task;
         if (queue->empty()) {
-          task.instances = 0; // no more tiles available
           workerNotified[worker] = true;
+          task.tilesExhausted = true;
         } else {
           task = queue->back();
           queue->pop_back();
+          task.tilesExhausted = false;
         }
 
         auto answer = std::make_shared<mpicommon::Message>(&task, sizeof(task));
@@ -248,7 +249,6 @@ namespace ospray {
 
             task.tileId = tileId;
             task.accumId = dfb->accumID(tileId);
-            task.instances = 1;
 
             auto nr = workerRankFromGlobalRank(dfb->ownerIDFromTileID(tileNr));
             preferredTiles[nr].push_back(task);
@@ -270,7 +270,6 @@ namespace ospray {
           const auto tileId = it->id;
           task.tileId = tileId;
           task.accumId = dfb->accumID(tileId);
-          // TODO task.instances++
           const auto tileNr = tileId.y*dfb->numTiles.x + tileId.x;
           auto nr = workerRankFromGlobalRank(dfb->ownerIDFromTileID(tileNr));
           preferredTiles[nr].push_back(task);
@@ -323,7 +322,7 @@ namespace ospray {
         auto task = *(TileTask*)msg->data;
 
         mutex.lock();
-        if (task.instances == 0)
+        if (task.tilesExhausted)
           tilesAvailable = false;
         else
           tilesScheduled++;

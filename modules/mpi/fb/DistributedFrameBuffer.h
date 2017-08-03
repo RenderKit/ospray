@@ -63,7 +63,6 @@ namespace ospray {
   {
     public:
       DistributedTileError(const vec2i &numTiles);
-      ~DistributedTileError() = default;
       void sync(); // broadcast tileErrorBuffer to all workers
   };
 
@@ -193,6 +192,7 @@ namespace ospray {
     ObjectHandle myID;
 
     int32 *tileAccumID; //< holds accumID per tile, for adaptive accumulation
+    int32 *tileInstances; //< how many copies of this tile are active, usually 1
 
     /*! holds error per tile and adaptive regions, for variance estimation /
         stopping */
