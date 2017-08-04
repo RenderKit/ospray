@@ -53,7 +53,7 @@ namespace ospray {
     float error;
   };
 
-  /*! message sent to the master when a tile is finished. Todo:
+  /*! message sent to the master when a tile is finished. TODO:
       compress the color data */
   template <typename FBType>
   struct MasterTileMessage_FB : public MasterTileMessage
@@ -183,7 +183,7 @@ namespace ospray {
       myID(myID),
       tileErrorRegion(hasVarianceBuffer ? getNumTiles() : vec2i(0)),
       localFBonMaster(nullptr),
-      frameMode(WRITE_ONCE),
+      frameMode(WRITE_MULTIPLE),
       frameIsActive(false),
       frameIsDone(false),
       masterIsAWorker(masterIsAWorker)
@@ -194,6 +194,9 @@ namespace ospray {
     mpi::messaging::registerMessageListener(myID.objID(), this);
 
     createTiles();
+
+    // TODO: accumID is eventually only needed on master once static
+    // loadbalancing is removed
     const size_t bytes = sizeof(int32)*getTotalTiles();
     tileAccumID = (int32*)alignedMalloc(bytes);
     memset(tileAccumID, 0, bytes);
@@ -235,9 +238,6 @@ namespace ospray {
       if (pixelOp)
         pixelOp->beginFrame();
 
-      for (auto &tile : myTiles)
-        tile->newFrame();
-
       // create a local copy of delayed tiles, so we can work on them outside
       // the mutex
       delayedMessage = this->delayedMessage;
@@ -247,6 +247,10 @@ namespace ospray {
       //       async messaging enabled in beginFrame()
       tileErrorRegion.sync();
       MPI_CALL(Bcast(tileInstances, getTotalTiles(), MPI_INT, 0, MPI_COMM_WORLD));
+
+      // after Bcast of tileInstances (needed in WriteMultipleTile::newFrame)
+      for (auto &tile : myTiles)
+        tile->newFrame();
 
       numTilesCompletedThisFrame = 0;
 
@@ -275,10 +279,8 @@ namespace ospray {
     for (auto &msg : delayedMessage)
       this->incoming(msg);
 
-    if (numTilesCompletedThisFrame
-        == (mpicommon::IamTheMaster() ? getTotalTiles() : myTiles.size())) {
+    if (isFrameComplete())
       closeCurrentFrame();
-    }
   }
 
   void DFB::freeTiles()
@@ -292,11 +294,8 @@ namespace ospray {
 
   bool DFB::isFrameComplete()
   {
-    if (mpicommon::IamAWorker()) {
-      return numTilesCompletedThisFrame == myTiles.size();
-    } else {
-      return numTilesCompletedThisFrame == numTiles.x * numTiles.y;
-    }
+    return numTilesCompletedThisFrame ==
+      (mpicommon::IamAWorker() ? myTiles.size() : getTotalTiles());
   }
 
   size_t DFB::ownerIDFromTileID(size_t tileID) const
@@ -310,9 +309,6 @@ namespace ospray {
     TileData *td = nullptr;
 
     switch(frameMode) {
-    case WRITE_ONCE:
-      td = new WriteOnlyOnceTile(this, xy, tileID, ownerID);
-      break;
     case WRITE_MULTIPLE:
       td = new WriteMultipleTile(this, xy, tileID, ownerID);
       break;
@@ -403,7 +399,7 @@ namespace ospray {
     /* just update error for 'none' tiles */
     if (hasVarianceBuffer) {
       const vec2i tileID = msg->coords/TILE_SIZE;
-      if ((accumID(tileID) & 1) == 1)
+      if (msg->error < (float)inf)
         tileErrorRegion.update(tileID, msg->error);
     }
 
@@ -441,9 +437,8 @@ namespace ospray {
       mpi::messaging::sendTo(mpicommon::masterRank(), myID, msg.message);
       numTilesCompletedThisFrame++;
 
-      DBG(printf("RANK %d MARKING AS COMPLETED %i,%i -> %i|%i/%i\n",
+      DBG(printf("RANK %d MARKING AS COMPLETED %i,%i -> %i/%i\n",
                  mpicommon::globalRank(), tile->begin.x, tile->begin.y,
-                 numTilesCompletedThisFrame.load(),
                  numTilesCompletedThisFrame.load(), myTiles.size()));
 
       if (isFrameComplete()) {
@@ -462,9 +457,9 @@ namespace ospray {
     /*! we will not do anything with the tile other than mark it's done */
     numTilesCompletedThisFrame++;
 
-    DBG(printf("MASTER MARKING AS COMPLETED %i,%i -> %i|%i/%i\n",
-               tile->begin.x, tile->begin.y, numTilesCompletedThisFrame.load(),
-               numTilesCompletedThisFrame.load(), numTiles.x*numTiles.y));
+    DBG(printf("MASTER MARKING AS COMPLETED %i,%i -> %i/%i\n",
+               tile->begin.x, tile->begin.y,
+               numTilesCompletedThisFrame.load(), getTotalTiles()));
 
     if (isFrameComplete()) {
       closeCurrentFrame();

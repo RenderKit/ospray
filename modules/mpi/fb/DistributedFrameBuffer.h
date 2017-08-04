@@ -115,7 +115,7 @@ namespace ospray {
     void  beginFrame() override;
     float endFrame(const float errorThreshold) override;
 
-    enum FrameMode { WRITE_ONCE, WRITE_MULTIPLE, ALPHA_BLEND, Z_COMPOSITE };
+    enum FrameMode { WRITE_MULTIPLE, ALPHA_BLEND, Z_COMPOSITE };
 
     void setFrameMode(FrameMode newFrameMode) ;
 
@@ -143,7 +143,6 @@ namespace ospray {
   private:
 
     friend struct TileData;
-    friend struct WriteOnlyOnceTile;
     friend struct WriteMultipleTile;
     friend struct AlphaBlendTile_simple;
     friend struct ZCompositeTile;
@@ -254,9 +253,8 @@ namespace ospray {
   {
     if (hasVarianceBuffer) {
       const vec2i tileID = msg->coords/TILE_SIZE;
-      if ((accumID(tileID) & 1) == 1) {
+      if (msg->error < (float)inf)
         tileErrorRegion.update(tileID, msg->error);
-      }
     }
 
     vec2i numPixels = getNumPixels();

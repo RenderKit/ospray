@@ -22,13 +22,11 @@ struct DistributedFrameBuffer {
 };
 
 #define template_accumulate(name, dst_fmt, cvt)                              \
-export uniform float DFB_accumulate_##name(void  *uniform /*_self*/,         \
-                                  VaryingTile    *uniform tile,              \
+export uniform float DFB_accumulate_##name(VaryingTile *uniform tile,        \
                                   VaryingTile    *uniform final,             \
                                   VaryingTile    *uniform accum,             \
                                   VaryingTile    *uniform variance,          \
                                   void           *uniform _color,            \
-                                  uniform float   cntu,                      \
                                   uniform bool    hasAccumBuffer,            \
                                   uniform bool    hasVarianceBuffer)         \
 {                                                                            \
@@ -100,7 +98,7 @@ export uniform float DFB_accumulate_##name(void  *uniform /*_self*/,         \
     /* error is also only updated every other frame to avoid alternating     \
      * error (get a monotone sequence) */                                    \
     if (hasVarianceBuffer && (accumID & 1) == 1)                             \
-      errf = reduce_add(err) * rsqrtf(cntu);                                 \
+      errf = reduce_add(err) * rsqrtf(size.x*size.y);                        \
   }                                                                          \
   return errf;                                                               \
 }
@@ -147,6 +145,52 @@ export void DFB_accumulate_only(VaryingTile *uniform tile
     }
   }
 }
+
+#define template_readout(name, dst_fmt, cvt)                                   \
+export uniform float DFB_readout_##name(const uniform vec2i &size              \
+    , const VaryingTile *uniform accum                                         \
+    , const VaryingTile *uniform variance                                      \
+    , const uniform float accumID                                              \
+    , VaryingTile *uniform final                                               \
+    , void *uniform _color                                                     \
+    )                                                                          \
+{                                                                              \
+  const uniform int maxi = size.y*(TILE_SIZE/programCount);                    \
+  dst_fmt *uniform color = (dst_fmt*uniform)_color;                            \
+  const uniform float rcpAccumID = rcpf(accumID+1);                            \
+  const uniform float accHalfScale = rcpf((accumID+1)/2);                      \
+  float err = 0.f;                                                             \
+  for (uniform int i = 0; i < maxi; i++) {                                     \
+    vec4f acc = make_vec4f(accum->r[i], accum->g[i], accum->b[i], accum->a[i]);\
+    acc = acc * rcpAccumID;                                                    \
+                                                                               \
+    final->r[i] = acc.x;                                                       \
+    final->g[i] = acc.y;                                                       \
+    final->b[i] = acc.z;                                                       \
+    final->a[i] = acc.w;                                                       \
+                                                                               \
+    color[i] = cvt(acc);                                                       \
+                                                                               \
+    /* invert alpha (bright alpha is more important */                         \
+    const float den2 = reduce_add(make_vec3f(acc)) + (1.f-acc.w);              \
+    if (den2 > 0.0f) {                                                         \
+      const vec4f vari = make_vec4f(variance->r[i], variance->g[i],            \
+          variance->b[i], variance->a[i]);                                     \
+      const vec4f diff = absf(acc - accHalfScale * vari);                      \
+      if ((i*programCount % TILE_SIZE) + programIndex < size.x)                \
+        err += reduce_add(diff) * rsqrtf(den2);                                \
+    }                                                                          \
+  }                                                                            \
+  return reduce_add(err) * rsqrtf(size.x*size.y);                              \
+}
+
+
+template_readout(RGBA8, varying uint32, cvt_uint32);
+template_readout(SRGBA, varying uint32, linear_to_srgba8);
+template_readout(RGBA32F, varying vec4f, soa_to_aos4f);
+#undef template_readout
+
+
 
 export void DFB_zComposite(VaryingTile    *uniform delta,
                            VaryingTile    *uniform current)

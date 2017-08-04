@@ -88,36 +88,10 @@ namespace ospray {
     vec4f __aligned(64) color[TILE_SIZE*TILE_SIZE];
   };
 
-  // -------------------------------------------------------
-  /*! specialized tile for plain sort-first rendering, where each
-      tile is written only exactly once. */
-  struct WriteOnlyOnceTile : public TileData
-  {
-    /*! constructor */
-    WriteOnlyOnceTile(DistributedFrameBuffer *dfb,
-                      const vec2i &begin,
-                      size_t tileID,
-                      size_t ownerID)
-      : TileData(dfb,begin,tileID,ownerID)
-    {}
-
-    /*! called exactly once at the beginning of each frame */
-    void newFrame() override;
-
-    /*! called exactly once for each ospray::Tile that needs to get
-      written into / composited into this dfb tile.
-
-      for a write-once tile, we expect this to be called exactly
-      once per tile, so there's not a lot to do in here than
-      accumulating the tile data and telling the parent that we're
-      done.
-    */
-    void process(const ospray::Tile &tile) override;
-  };
 
   // -------------------------------------------------------
   /*! specialized tile for plain sort-first rendering, but where the same tile
-      region is computed multiple times (with different accumId). */
+      region could be computed multiple times (with different accumId). */
   class WriteMultipleTile : public TileData
   {
    public:
@@ -127,15 +101,18 @@ namespace ospray {
         , size_t ownerID
         )
       : TileData(dfb, begin, tileID, ownerID)
+        , writeOnceTile(true)
     {}
 
     void newFrame() override;
 
-    // accumulate into ACUUM and VARIANCE, and for last tile read-out
+    // accumulate into ACCUM and VARIANCE, and for last tile read-out
     void process(const ospray::Tile &tile) override;
 
    private:
-    size_t instancesProcessed;
+    int maxAccumID;
+    size_t instances;
+    bool writeOnceTile;
     // serialize when multiple instances of this tile arrive at the same time
     std::mutex mutex;
   };

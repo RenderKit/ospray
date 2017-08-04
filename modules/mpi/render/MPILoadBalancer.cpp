@@ -189,6 +189,7 @@ namespace ospray {
         preferredTiles.resize(worker.size);
         workerNotified.resize(worker.size);
 
+        // TODO numPreAllocated should be estimated/tuned automatically
         auto OSPRAY_PREALLOCATED_TILES = getEnvVar<int>("OSPRAY_PREALLOCATED_TILES");
         numPreAllocated = OSPRAY_PREALLOCATED_TILES.first ? OSPRAY_PREALLOCATED_TILES.second : 4;
         PRINT(numPreAllocated);
