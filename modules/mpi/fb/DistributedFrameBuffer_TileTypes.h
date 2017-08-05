@@ -115,6 +115,9 @@ namespace ospray {
     bool writeOnceTile;
     // serialize when multiple instances of this tile arrive at the same time
     std::mutex mutex;
+    // defer accumulation to get correct variance estimate
+    ospray::Tile bufferedTile;
+    bool tileBuffered;
   };
 
   // -------------------------------------------------------

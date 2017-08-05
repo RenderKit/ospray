@@ -59,8 +59,9 @@ namespace ospray {
 
   void TileData::accumulate(const ospray::Tile &tile)
   {
-    // Note: also used for FB_NONE; We accumulate here to enable PixelOps
-    // working correctly here... this needs a better solution!
+    // Note: also used for FB_NONE
+    // We accumulate here to enable PixelOps working correctly...
+    // TODO this needs a better solution!
     auto DFB_accumulate = &ispc::DFB_accumulate_RGBA32F;
     switch(dfb->colorBufferFormat) {
       case OSP_FB_RGBA8:
@@ -139,6 +140,7 @@ namespace ospray {
     maxAccumID = 0;
     instances = dfb->tileInstances[tileID];
     writeOnceTile = instances <= 1;
+    tileBuffered = false;
   }
 
   void WriteMultipleTile::process(const ospray::Tile &tile)
@@ -167,10 +169,14 @@ namespace ospray {
     {
       SCOPED_LOCK(mutex);
       maxAccumID = std::max(maxAccumID, tile.accumID);
-      ispc::DFB_accumulate_only((ispc::VaryingTile*)&tile
-          , (ispc::VaryingTile*)&this->accum
-          , (ispc::VaryingTile*)&this->variance
-          );
+      if (!tileBuffered && (tile.accumID & 1) == 0) {
+        memcpy(&bufferedTile, &tile, sizeof(ospray::Tile));
+        tileBuffered = true;
+      } else
+        ispc::DFB_accumulate_only((ispc::VaryingTile*)&tile
+            , (ispc::VaryingTile*)&this->accum
+            , (ispc::VaryingTile*)&this->variance
+            );
       done = --instances == 0;
     }
 
@@ -185,21 +191,37 @@ namespace ospray {
           DFB_readout = &ispc::DFB_readout_SRGBA;
       }
       auto sz = tile.region.size();
-      error = DFB_readout((ispc::vec2i&)sz
-          , (ispc::VaryingTile*)&accum
-          , (ispc::VaryingTile*)&variance
-          , maxAccumID
-          , (ispc::VaryingTile*)&final
-          , &color
-          );
 
-      // if maxAccumID is even, variance buffer is one accumulated tile short,
-      // which can lead to vast over-estimation of variance ==> disable error
-      // TODO this needs a better solution: when maxAccumID is even and
-      // instances as well, the variance of this tile is not updated for
-      // several frames
-      if ((maxAccumID & 1) == 0)
-        error = inf;
+      if ((maxAccumID & 1) == 0) {
+        // if maxAccumID is even, variance buffer is one accumulated tile
+        // short, which leads to vast over-estimation of variance; thus
+        // estimate variance now, when accum buffer is also one (the buffered)
+        // tile short
+        const float prevErr = DFB_calcerror((ispc::vec2i&)sz
+            , (ispc::VaryingTile*)&accum
+            , (ispc::VaryingTile*)&variance
+            , maxAccumID - 1
+            );
+
+        // use maxAccumID for correct normalization
+        // this is OK, because both accumIDs are even
+        bufferedTile.accumID = maxAccumID;
+        accumulate(bufferedTile);
+        error = prevErr;
+      } else {
+        ispc::DFB_accumulate_only((ispc::VaryingTile*)&bufferedTile
+            , (ispc::VaryingTile*)&this->accum
+            , (ispc::VaryingTile*)&this->variance
+            );
+        error = DFB_readout((ispc::vec2i&)sz
+            , (ispc::VaryingTile*)&accum
+            , (ispc::VaryingTile*)&variance
+            , maxAccumID
+            , (ispc::VaryingTile*)&final
+            , &color
+            );
+      }
+
       dfb->tileIsCompleted(this);
     }
   }

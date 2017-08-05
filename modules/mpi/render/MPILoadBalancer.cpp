@@ -267,6 +267,10 @@ namespace ospray {
         // just slightly above errorThreshold too often
         auto it = activeTiles.begin();
         const int tilesTotal = dfb->getTotalTiles();
+        // loop over (active) tiles multiple times (instead of e.g. computing
+        // instance count) to have maximum distance between duplicated tiles in
+        // queue ==> higher chance that duplicated tiles do not arrive at the
+        // same time at DFB and thus avoid the mutex in WriteMultipleTile::process
         for (auto i = activeTiles.size(); i < tilesTotal; i++) {
           const auto tileId = it->id;
           task.tileId = tileId;

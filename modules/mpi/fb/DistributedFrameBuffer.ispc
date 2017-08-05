@@ -146,6 +146,33 @@ export void DFB_accumulate_only(VaryingTile *uniform tile
   }
 }
 
+export uniform float DFB_calcerror(const uniform vec2i &size
+    , const VaryingTile *uniform accum
+    , const VaryingTile *uniform variance
+    , const uniform float accumID
+    )
+{
+  const uniform int maxi = size.y*(TILE_SIZE/programCount);
+  const uniform float rcpAccumID = rcpf(accumID+1);
+  const uniform float accHalfScale = rcpf((accumID+1)/2);
+  float err = 0.f;
+  for (uniform int i = 0; i < maxi; i++) {
+    vec4f acc = make_vec4f(accum->r[i], accum->g[i], accum->b[i], accum->a[i]);
+    acc = acc * rcpAccumID;
+
+    /* invert alpha (bright alpha is more important */
+    const float den2 = reduce_add(make_vec3f(acc)) + (1.f-acc.w);
+    if (den2 > 0.0f) {
+      const vec4f vari = make_vec4f(variance->r[i], variance->g[i],
+          variance->b[i], variance->a[i]);
+      const vec4f diff = absf(acc - accHalfScale * vari);
+      if ((i*programCount % TILE_SIZE) + programIndex < size.x)
+        err += reduce_add(diff) * rsqrtf(den2);
+    }
+  }
+  return reduce_add(err) * rsqrtf(size.x*size.y);
+}
+
 #define template_readout(name, dst_fmt, cvt)                                   \
 export uniform float DFB_readout_##name(const uniform vec2i &size              \
     , const VaryingTile *uniform accum                                         \
@@ -183,7 +210,6 @@ export uniform float DFB_readout_##name(const uniform vec2i &size              \
   }                                                                            \
   return reduce_add(err) * rsqrtf(size.x*size.y);                              \
 }
-
 
 template_readout(RGBA8, varying uint32, cvt_uint32);
 template_readout(SRGBA, varying uint32, linear_to_srgba8);
