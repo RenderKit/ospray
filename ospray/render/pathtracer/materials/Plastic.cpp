@@ -36,10 +36,9 @@ namespace ospray {
         const float eta          = getParamf("eta",1.4f);
         const float roughness    = getParamf("roughness",0.01f);
         // const float rcpRoughness = rcpf(roughness);
-        const float thickness    = getParamf("thickness",1.0f);
 
         ispcEquivalent = ispc::PathTracer_Plastic_create
-          ((const ispc::vec3f&)pigmentColor,eta,roughness,thickness);
+          ((const ispc::vec3f&)pigmentColor,eta,roughness);
       }
     };
 
