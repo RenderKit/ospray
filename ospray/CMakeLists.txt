@@ -42,27 +42,9 @@ INCLUDE_DIRECTORIES_ISPC(
 )
 
 SET(OSPRAY_SOURCES
-  include/ospray/ospray.h
-  include/ospray/OSPDataType.h
-  include/ospray/OSPTexture.h
-
-  include/ospray/ospray_cpp/Camera.h
-  include/ospray/ospray_cpp/Data.h
-  include/ospray/ospray_cpp/FrameBuffer.h
-  include/ospray/ospray_cpp/Geometry.h
-  include/ospray/ospray_cpp/Light.h
-  include/ospray/ospray_cpp/ManagedObject.h
-  include/ospray/ospray_cpp/Material.h
-  include/ospray/ospray_cpp/Model.h
-  include/ospray/ospray_cpp/PixelOp.h
-  include/ospray/ospray_cpp/Renderer.h
-  include/ospray/ospray_cpp/Texture2D.h
-  include/ospray/ospray_cpp/TransferFunction.h
-  include/ospray/ospray_cpp/Volume.h
-
-  math/box.ispc
-  math/Distribution1D.ispc
-  math/Distribution2D.ispc
+  api/API.cpp
+  api/Device.cpp
+  api/LocalDevice.cpp
 
   common/ospray.rc
   common/OSPCommon.ispc
@@ -92,24 +74,6 @@ SET(OSPRAY_SOURCES
   camera/PanoramicCamera.ispc
   camera/PanoramicCamera.cpp
 
-  volume/BlockBrickedVolume.ispc
-  volume/BlockBrickedVolume.cpp
-  volume/GhostBlockBrickedVolume.ispc
-  volume/GhostBlockBrickedVolume.cpp
-
-  volume/GridAccelerator.ispc
-  volume/SharedStructuredVolume.ispc
-  volume/SharedStructuredVolume.cpp
-  volume/StructuredVolume.ispc
-  volume/StructuredVolume.cpp
-  volume/Volume.ispc
-  volume/Volume.cpp
-
-  transferFunction/LinearTransferFunction.ispc
-  transferFunction/LinearTransferFunction.cpp
-  transferFunction/TransferFunction.ispc
-  transferFunction/TransferFunction.cpp
-
   geometry/Geometry.ispc
   geometry/Geometry.cpp
   geometry/TriangleMesh.ispc
@@ -127,6 +91,24 @@ SET(OSPRAY_SOURCES
   geometry/Isosurfaces.ispc
   geometry/Isosurfaces.cpp
 
+  include/ospray/ospray.h
+  include/ospray/OSPDataType.h
+  include/ospray/OSPTexture.h
+
+  include/ospray/ospray_cpp/Camera.h
+  include/ospray/ospray_cpp/Data.h
+  include/ospray/ospray_cpp/FrameBuffer.h
+  include/ospray/ospray_cpp/Geometry.h
+  include/ospray/ospray_cpp/Light.h
+  include/ospray/ospray_cpp/ManagedObject.h
+  include/ospray/ospray_cpp/Material.h
+  include/ospray/ospray_cpp/Model.h
+  include/ospray/ospray_cpp/PixelOp.h
+  include/ospray/ospray_cpp/Renderer.h
+  include/ospray/ospray_cpp/Texture2D.h
+  include/ospray/ospray_cpp/TransferFunction.h
+  include/ospray/ospray_cpp/Volume.h
+
   lights/Light.ispc
   lights/Light.cpp
   lights/AmbientLight.ispc
@@ -142,8 +124,9 @@ SET(OSPRAY_SOURCES
   lights/HDRILight.cpp
   lights/HDRILight.ispc
 
-  texture/Texture2D.cpp
-  texture/Texture2D.ispc
+  math/box.ispc
+  math/Distribution1D.ispc
+  math/Distribution2D.ispc
 
   render/LoadBalancer.cpp
   render/Renderer.ispc
@@ -190,9 +173,32 @@ SET(OSPRAY_SOURCES
   render/pathtracer/materials/Mix.ispc
   render/pathtracer/materials/Mix.cpp
 
-  api/API.cpp
-  api/Device.cpp
-  api/LocalDevice.cpp
+  texture/Texture2D.cpp
+  texture/Texture2D.ispc
+
+  transferFunction/LinearTransferFunction.ispc
+  transferFunction/LinearTransferFunction.cpp
+  transferFunction/TransferFunction.ispc
+  transferFunction/TransferFunction.cpp
+
+  volume/BlockBrickedVolume.ispc
+  volume/BlockBrickedVolume.cpp
+  volume/GhostBlockBrickedVolume.ispc
+  volume/GhostBlockBrickedVolume.cpp
+
+  volume/GridAccelerator.ispc
+  volume/SharedStructuredVolume.ispc
+  volume/SharedStructuredVolume.cpp
+  volume/StructuredVolume.ispc
+  volume/StructuredVolume.cpp
+  volume/Volume.ispc
+  volume/Volume.cpp
+
+  volume/unstructured/common.ispc
+  volume/unstructured/TetrahedralVolume.cpp
+  volume/unstructured/TetrahedralVolume.ispc
+  volume/unstructured/MinMaxBVH2.cpp
+  volume/unstructured/MinMaxBVH2.ispc
 )
 
 # -------------------------------------------------------

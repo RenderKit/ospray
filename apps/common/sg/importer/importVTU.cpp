@@ -14,29 +14,18 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#undef NDEBUG
-
 // sg
 #include "SceneGraph.h"
-#include "sg/common/Texture2D.h"
-#include "sg/geometry/TriangleMesh.h"
 
 // vtk
-#include <vtkPolyDataMapper.h>
-#include <vtkSmartPointer.h>
-#include <vtkXMLPolyDataReader.h>
+// TODO...
 
 namespace ospray {
   namespace sg {
 
-    void importVTP(const std::shared_ptr<Node> &world, const FileName &fileName)
+    void importVTU(const std::shared_ptr<Node> &world, const FileName &fileName)
     {
-      // Read all the data from the file
-      auto reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
-      reader->SetFileName(fileName.c_str());
-      reader->Update();
-
-      std::cout << "TODO: unpack .vtp file into OSPRay mesh..." << std::endl;
+      std::cout << "TODO: unpack .vtu file into OSPRay volume..." << std::endl;
     }
 
   } // ::ospray::sg
