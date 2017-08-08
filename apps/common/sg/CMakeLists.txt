@@ -16,6 +16,16 @@
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
+FIND_PACKAGE(VTK COMPONENTS REQUIRED
+  vtkIOLegacy
+  vtkIOXML
+  vtkIOXMLParser
+  vtkIOExport
+  vtksys
+)
+
+INCLUDE(${VTK_USE_FILE})
+
 OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   # scene graph nodes
   SceneGraph.cpp
@@ -66,6 +76,7 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   importer/importOBJ.cpp
   importer/importPLY.cpp
   importer/importRIVL.cpp
+  importer/importVTP.cpp
   importer/importXYZ.cpp
 
   importer/detail_xyz/Model.cpp
@@ -73,4 +84,5 @@ LINK
   ospray
   ospray_common
   ospray_xml
+  ${VTK_LIBRARIES}
 )
