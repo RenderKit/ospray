@@ -153,7 +153,7 @@ namespace ospray {
       if (isalpha(*s) || *s == '_') {
         char *begin = s;
         ++s;
-        while (isalpha(*s) || isdigit(*s) || *s == '_') {
+        while (isalpha(*s) || isdigit(*s) || *s == '_' || *s == '.') {
           ++s;
         }
         char *end = s;
@@ -205,6 +205,7 @@ namespace ospray {
         node->properties[name] = value;
         skipWhites(s);
       }
+      std::cout << "parsing node value: " << node->name << " " <<  name << " " << value << std::endl;
 
       if (*s == '/') {
         consume(s,"/>");
