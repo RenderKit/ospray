@@ -57,7 +57,13 @@ namespace ospray {
     void Material::preCommit(RenderContext &ctx)
     {
       assert(ctx.ospRenderer);
-      if (ospMaterial != nullptr && ospRenderer == ctx.ospRenderer) return;
+      const bool typeChanged =
+        child("type").lastModified() > child("type").lastCommitted();
+      if (!typeChanged && ospMaterial != nullptr
+          && ospRenderer == ctx.ospRenderer)
+      {
+        return;
+      }
       auto mat = ospNewMaterial(ctx.ospRenderer,
                                 child("type").valueAs<std::string>().c_str());
       if (!mat)
