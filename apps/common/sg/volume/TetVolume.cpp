@@ -14,10 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
 // sg
 #include "TetVolume.h"
+#include "../common/Data.h"
 
 namespace ospray {
   namespace sg {
@@ -29,7 +28,7 @@ namespace ospray {
 
     box3f TetVolume::bounds() const
     {
-      return {};
+      return child("bounds").valueAs<box3f>();
     }
 
     void TetVolume::preCommit(RenderContext &ctx)
@@ -47,14 +46,39 @@ namespace ospray {
         return;
       }
 
-#if 0
+      ospVolume = ospNewVolume("tetrahedral_volume");
+      setValue((OSPObject)ospVolume);
+
+      if (!hasChild("vertices"))
+        throw std::runtime_error("#osp:sg TetVolume -> no 'vertices' array!");
+      else if (!hasChild("tetrahedra"))
+        throw std::runtime_error("#osp:sg TetVolume -> no 'tetrahedra' array!");
+      else if (!hasChild("field"))
+        throw std::runtime_error("#osp:sg TetVolume -> no 'tetrahedra' array!");
+
+      auto vertices = child("vertices").nodeAs<DataBuffer>();
+      auto field    = child("field").nodeAs<DataBuffer>();
+
+      ospcommon::box3f bounds;
+      for (int i = 0; i < vertices->size(); ++i)
+        bounds.extend(vertices->get<vec3f>(i));
+      child("bounds").setValue(bounds);
+
+      vec2f voxelRange(std::numeric_limits<float>::infinity(),
+                       -std::numeric_limits<float>::infinity());
+      for (int i = 0; i < field->size(); ++i) {
+        auto value = field->get<float>(i);
+        if (value > voxelRange.x)
+          voxelRange.x = value;
+        else if (value < voxelRange.y)
+          voxelRange.y = value;
+      }
       child("voxelRange").setValue(voxelRange);
       child("isosurface").setMinMax(voxelRange.x, voxelRange.y);
       float iso = child("isosurface").valueAs<float>();
       if (iso < voxelRange.x || iso > voxelRange.y)
         child("isosurface").setValue((voxelRange.y-voxelRange.x)/2.f);
       child("transferFunction")["valueRange"].setValue(voxelRange);
-#endif
     }
 
     void TetVolume::postCommit(RenderContext &ctx)
