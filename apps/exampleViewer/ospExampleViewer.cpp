@@ -54,6 +54,7 @@ bool fullscreen = false;
 bool print = false;
 bool no_defaults = false;
 std::string hdri_light;
+int matrix_i =1, matrix_j=1, matrix_k = 1;
 
 static inline void parseCommandLine(int ac, const char **&av)
 {
@@ -73,6 +74,10 @@ static inline void parseCommandLine(int ac, const char **&av)
       print=true;
     } else if (arg == "--no-defaults") {
       no_defaults=true;
+    } else if (arg == "--matrix") {
+      matrix_i = atoi(av[++i]);
+      matrix_j = atoi(av[++i]);
+      matrix_k = atoi(av[++i]);
     } else if (arg == "--fullscreen") {
       fullscreen = true;
     } else if (arg == "--hdri-light") {
@@ -303,26 +308,44 @@ static inline void addImporterNodesToWorld(sg::Node& renderer)
     if (fn.ext() == "ospsg")
       sg::loadOSPSG(renderer.shared_from_this(), fn.str());
     else {
-      auto importerNode_ptr = sg::createNode(fn.name(), "Importer");
-      auto &importerNode = *importerNode_ptr;
-      importerNode["fileName"].setValue(fn.str());
-      auto &transform = world.createChild("transform_"+file.file, "Transform");
-      transform["scale"].setValue(file.transform.scale);
-      transform["position"].setValue(file.transform.translate);
-      transform["rotation"].setValue(file.transform.rotation);
-      if (files.size() < 2 && animatedFiles.empty()) {
-        auto &rotation =
-          transform["rotation"].createChild("animator", "Animator");
+      //create material array
+      for (int i=0;i<matrix_i;i++)
+      {
+        for(int j=0;j<matrix_j;j++)
+        {
+          for(int k=0;k<matrix_k;k++)
+          {
+            std::stringstream ss;
+            ss << fn.name() << "_" << i << "_" << j << "_" << k;
+            auto importerNode_ptr = sg::createNode(ss.str(), "Importer");
+            auto &importerNode = *importerNode_ptr;
+            importerNode["fileName"].setValue(fn.str());
+            importerNode.traverse("verify");
+            importerNode.traverse("commit");
+            auto bounds = std::dynamic_pointer_cast<sg::Renderable>(importerNode_ptr)->computeBounds();
+            auto size = bounds.upper - bounds.lower;
 
-        rotation.traverse("verify");
-        rotation.traverse("commit");
-        rotation.child("value1").setValue(ospcommon::vec3f{0.f,0.f,0.f});
-        rotation.child("value2").setValue(ospcommon::vec3f{0.f,2.f*3.14f,0.f});
+            auto &transform = world.createChild("transform_"+ss.str(), "Transform");
+            transform["scale"].setValue(file.transform.scale);
+            vec3f offset={i*size.x*1.3f,j*size.y*1.3f,k*size.z*1.3f};
+            transform["position"].setValue(file.transform.translate+offset);
+            transform["rotation"].setValue(file.transform.rotation);
+            if (files.size() < 2 && animatedFiles.empty()) {
+              auto &rotation =
+                              transform["rotation"].createChild("animator", "Animator");
 
-        animation.setChild("rotation", rotation.shared_from_this());
+              rotation.traverse("verify");
+              rotation.traverse("commit");
+              rotation.child("value1").setValue(ospcommon::vec3f{0.f,0.f,0.f});
+              rotation.child("value2").setValue(ospcommon::vec3f{0.f,2.f*3.14f,0.f});
+
+              animation.setChild("rotation", rotation.shared_from_this());
+            }
+
+            transform += importerNode_ptr;
+          }
+        }
       }
-
-      transform += importerNode_ptr;
     }
   }
 }
