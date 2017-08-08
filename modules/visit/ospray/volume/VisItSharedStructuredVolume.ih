@@ -26,55 +26,55 @@
 */
 struct VisItSharedStructuredVolume {
 
-    //! Fields common to all StructuredVolume subtypes (must be the first entry of this struct).
-    StructuredVolume super;
+  //! Fields common to all StructuredVolume subtypes (must be the first entry of this struct).
+  StructuredVolume super;
 
-    //! \brief pointer to voxel data. 
-    /* In this volume class, this memory region will typically be shared
-       with the applicattion, so we mess with either data layout */
-    const void *uniform voxelData;
+  //! \brief pointer to voxel data. 
+  /* In this volume class, this memory region will typically be shared
+     with the applicattion, so we mess with either data layout */
+  const void *uniform voxelData;
 
-    //! \brief pointer to ghost region data. 
-    /* In VisIt, ghost region information forms a data array of the same
-      size with the voxelData, so we need a seperate data container here*/
-    const uint8 *uniform ghostData; // not used yet
+  //! \brief pointer to ghost region data. 
+  /* In VisIt, ghost region information forms a data array of the same
+     size with the voxelData, so we need a seperate data container here*/
+  const uint8 *uniform ghostData; // not used yet
 
-    uniform int useGridAccelerator;
+  uniform int useGridAccelerator;
 
-    //! \brief number of bytes for one x/y slice of the data. 
-    /*! \detailed THis is used to compute offsets for slices with
-      different z values */
-    uniform uint64 bytesPerVoxel,bytesPerLine,bytesPerSlice;
+  //! \brief number of bytes for one x/y slice of the data. 
+  /*! \detailed THis is used to compute offsets for slices with
+    different z values */
+  uniform uint64 bytesPerVoxel,bytesPerLine,bytesPerSlice;
 
-    //! Voxel type.
-    uniform OSPDataType voxelType;
+  //! Voxel type.
+  uniform OSPDataType voxelType;
   
-    /*! @{ offsets, in bytes, for one step in x,y,z direction. ONLY
-      valid if bytesPerSlice < 2G */
-    varying uint32 voxelOfs_dx;
-    varying uint32 voxelOfs_dy;
-    varying uint32 voxelOfs_dz;
-    /* @} */
+  /*! @{ offsets, in bytes, for one step in x,y,z direction. ONLY
+    valid if bytesPerSlice < 2G */
+  varying uint32 voxelOfs_dx;
+  varying uint32 voxelOfs_dy;
+  varying uint32 voxelOfs_dz;
+  /* @} */
     
-    //! Find the next hit point in the volume for ray casting based renderers.
-    void (*uniform ga_intersect)(void *uniform _self, varying Ray &ray);
-    void (*uniform na_intersect)(void *uniform _self, varying Ray &ray);
+  //! Find the next hit point in the volume for ray casting based renderers.
+  void (*uniform ga_intersect)(void *uniform _self, varying Ray &ray);
+  void (*uniform na_intersect)(void *uniform _self, varying Ray &ray);
 
-    //! Find the next hit point in the volume for ray casting based renderers.
-    void (*uniform ga_intersectAdaptive)(void *uniform _self, varying Ray &ray, 
-					 const varying float samplingRate);
-    void (*uniform na_intersectAdaptive)(void *uniform _self, varying Ray &ray, 
-					 const varying float samplingRate);
+  //! Find the next hit point in the volume for ray casting based renderers.
+  void (*uniform ga_intersectAdaptive)(void *uniform _self, varying Ray &ray, 
+				       const varying float samplingRate);
+  void (*uniform na_intersectAdaptive)(void *uniform _self, varying Ray &ray, 
+				       const varying float samplingRate);
 
-    //! Find the next isosurface hit point in the volume for ray casting based renderers.
-    void (*uniform ga_intersectIsosurface)(void *uniform _self, 
-					   uniform float *uniform isovalues, 
-					   uniform int numIsovalues, 
-					   varying Ray &ray);
-    void (*uniform na_intersectIsosurface)(void *uniform _self, 
-					   uniform float *uniform isovalues, 
-					   uniform int numIsovalues, 
-					   varying Ray &ray);
+  //! Find the next isosurface hit point in the volume for ray casting based renderers.
+  void (*uniform ga_intersectIsosurface)(void *uniform _self, 
+					 uniform float *uniform isovalues, 
+					 uniform int numIsovalues, 
+					 varying Ray &ray);
+  void (*uniform na_intersectIsosurface)(void *uniform _self, 
+					 uniform float *uniform isovalues, 
+					 uniform int numIsovalues, 
+					 varying Ray &ray);
 
 };
 

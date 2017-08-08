@@ -309,7 +309,8 @@ inline void VisItSharedStructuredVolume_intersectIsosurface(void *uniform _volum
   if (ray.t0 >= ray.t) return;
 }
 
-inline varying vec3f VisItSharedStructuredVolume_computeGradient(void *uniform _volume, const varying vec3f &worldCoordinates)
+inline varying vec3f VisItSharedStructuredVolume_computeGradient(void *uniform _volume, 
+								 const varying vec3f &worldCoordinates)
 {
   // Cast to the actual Volume subtype.
   StructuredVolume *uniform volume = (StructuredVolume *uniform) _volume;

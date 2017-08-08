@@ -24,35 +24,35 @@
 #include <functional>
 
 namespace ospray {
-    namespace visit {
+  namespace visit {
 	
-	/* The distributed raycast renderer supports rendering distributed
-	 * geometry and volume data, assuming that the data distribution is suitable
-	 * for sort-last compositing. Specifically, the data must be organized
-	 * among nodes such that each nodes region is convex and disjoint from the
-	 * others. In the case of overlapping geometry (ghost zones, etc.) you
-	 * can specify the 'clipBox.lower' and 'clipBox.upper' parameters to clip
-	 * the geometry to only find hits within this node's region.
-	 * Only one volume per node is currently supported.
-	 *
-	 * Also see apps/ospRandSciVisTest.cpp and apps/ospRandSphereTest.cpp for
-	 * example usage.
-	 */
-	struct VisItDistributedRaycastRenderer : 
-	    public ospray::mpi::DistributedRaycastRenderer
-	{
-	    VisItDistributedRaycastRenderer();
-	    virtual ~VisItDistributedRaycastRenderer() = default;
+    /* The distributed raycast renderer supports rendering distributed
+     * geometry and volume data, assuming that the data distribution is suitable
+     * for sort-last compositing. Specifically, the data must be organized
+     * among nodes such that each nodes region is convex and disjoint from the
+     * others. In the case of overlapping geometry (ghost zones, etc.) you
+     * can specify the 'clipBox.lower' and 'clipBox.upper' parameters to clip
+     * the geometry to only find hits within this node's region.
+     * Only one volume per node is currently supported.
+     *
+     * Also see apps/ospRandSciVisTest.cpp and apps/ospRandSphereTest.cpp for
+     * example usage.
+     */
+    struct VisItDistributedRaycastRenderer : 
+      public ospray::mpi::DistributedRaycastRenderer
+    {
+      VisItDistributedRaycastRenderer();
+      virtual ~VisItDistributedRaycastRenderer() = default;
 
-	    void commit() override;
+      void commit() override;
 
-	    float renderFrame(FrameBuffer *fb, const uint32 fbChannelFlags) override;
+      float renderFrame(FrameBuffer *fb, const uint32 fbChannelFlags) override;
 
-	    std::string toString() const override;
+      std::string toString() const override;
 
-	    // function pointer to retrieve all the tiles
-	    void* tileRetriever {nullptr};
-	};
+      // function pointer to retrieve all the tiles
+      void* tileRetriever {nullptr};
+    };
 
-    } // ::ospray::visit
+  } // ::ospray::visit
 } // ::ospray
