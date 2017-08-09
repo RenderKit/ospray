@@ -85,21 +85,10 @@ namespace ospray {
           vertices->push_back(vec3f(point[0], point[1], point[2]));
         }
 
-        // Generate a report
-        std::cout << "------------------------" << std::endl;
-        std::cout << fileName << std::endl
-                  << " contains a " << std::endl
-                  << dataSet->GetClassName() << " that has " << numberOfCells
-                  << " cells"
-                  << " and " << numberOfPoints << " points." << std::endl;
-
-        using CellContainer = std::map<int, int>;
-        CellContainer cellMap;
-
         for (int i = 0; i < numberOfCells; i++) {
           vtkCell *cell = dataSet->GetCell(i);
 
-          if (cell->GetCellType() == 10) {  // vtkTetra
+          if (cell->GetCellType() == VTK_TETRA) {
             tetrahedra->push_back(vec4i(cell->GetPointId(0),
                                         cell->GetPointId(1),
                                         cell->GetPointId(2),
@@ -107,25 +96,10 @@ namespace ospray {
           }
         }
 
-        auto it = cellMap.begin();
-        while (it != cellMap.end()) {
-          std::cout << "\tCell type "
-                    << vtkCellTypes::GetClassNameFromTypeId(it->first)
-                    << " occurs " << it->second << " times." << std::endl;
-          ++it;
-        }
-
         // Now check for point data
         vtkPointData *pd = dataSet->GetPointData();
         if (pd) {
-          std::cout << " contains point data with " << pd->GetNumberOfArrays()
-                    << " arrays." << std::endl;
-
           for (int i = 0; i < pd->GetNumberOfArrays(); i++) {
-            std::cout << "\tArray " << i << " is named "
-                      << (pd->GetArrayName(i) ? pd->GetArrayName(i) : "NULL")
-                      << std::endl;
-
             vtkAbstractArray *ad = pd->GetAbstractArray(i);
             int nDataPoints      = ad->GetNumberOfValues();
 
@@ -135,10 +109,6 @@ namespace ospray {
             int arrayType = ad->GetArrayType();
 
             auto array = make_vtkSP(vtkDataArray::SafeDownCast(ad));
-
-            std::cout << "\tArray " << i << " is named "
-                      << (pd->GetArrayName(i) ? pd->GetArrayName(i) : "NULL")
-                      << " and has " << nDataPoints << " points" << std::endl;
 
             for (int j = 0; j < nDataPoints; j++) {
               float val = static_cast<float>(array->GetTuple1(j));
@@ -171,22 +141,16 @@ namespace ospray {
         }
       }
 
-      bool loadFile(std::string fileName)
+      void loadFile(const FileName &fileName)
       {
-        std::string extension =
-            vtksys::SystemTools::GetFilenameLastExtension(fileName);
+        std::string extension = fileName.ext();
 
-        if (extension == ".vtk") {
+        if (extension == "vtk")
           loadVTKFile<vtkGenericDataObjectReader>(fileName.c_str());
-        } else if (extension == ".vtu") {
+        else if (extension == "vtu")
           loadVTKFile<vtkXMLUnstructuredGridReader>(fileName.c_str());
-        } else if (extension == ".off") {
+        else if (extension == "off")
           loadOFFFile(fileName);
-        } else {
-          return false;
-        }
-
-        return true;
       }
     };
 
@@ -194,7 +158,7 @@ namespace ospray {
                          const FileName &fileName)
     {
       TetMesh mesh;
-      mesh.loadFile(fileName.str());
+      mesh.loadFile(fileName);
 
       auto &v = world->createChild("tetrahedral_volume", "TetVolume");
 
