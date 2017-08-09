@@ -31,6 +31,16 @@
 #include <vtksys/SystemTools.hxx>
 
 namespace ospray {
+
+  // NOTE(jda) - This should be put in a more general place, only used here
+  //             right now.
+
+  template <typename T>
+  inline vtkSmartPointer<T> make_vtkSP(T *p)
+  {
+    return vtkSmartPointer<T>(p);
+  }
+
   namespace sg {
 
     class TetMesh
@@ -124,8 +134,7 @@ namespace ospray {
 
             int arrayType = ad->GetArrayType();
 
-            vtkSmartPointer<vtkDataArray> array =
-                vtkDataArray::SafeDownCast(ad);
+            auto array = make_vtkSP(vtkDataArray::SafeDownCast(ad));
 
             std::cout << "\tArray " << i << " is named "
                       << (pd->GetArrayName(i) ? pd->GetArrayName(i) : "NULL")
