@@ -65,14 +65,13 @@ namespace ospray {
         bounds.extend(vertices->get<vec3f>(i));
       child("bounds").setValue(bounds);
 
-      vec2f voxelRange(std::numeric_limits<float>::infinity(),
-                       -std::numeric_limits<float>::infinity());
+      vec2f voxelRange(field->get<float>(0), field->get<float>(0));
 
-      for (int i = 0; i < field->size(); ++i) {
+      for (int i = 1; i < field->size(); ++i) {
         auto value = field->get<float>(i);
-        if (value > voxelRange.x)
+        if (value < voxelRange.x)
           voxelRange.x = value;
-        else if (value < voxelRange.y)
+        else if (value > voxelRange.y)
           voxelRange.y = value;
       }
 
@@ -83,6 +82,10 @@ namespace ospray {
         child("isosurface").setValue((voxelRange.y-voxelRange.x)/2.f);
       child("transferFunction")["valueRange"].setValue(voxelRange);
 
+      //NOTE: These children are removed because they are not yet implemnted
+      //      in the base Tetrahedral volume in OSPRay!
+      child("gradientShadingEnabled").setValue(false);
+      child("singleShade").setValue(false);
       child("adaptiveSampling").setValue(false);
     }
 

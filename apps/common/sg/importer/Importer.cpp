@@ -186,7 +186,7 @@ namespace ospray {
         sg::importRIVL(wsg, fileName);
       } else if (ext == "xyz" || ext == "xyz2" || ext == "xyz3") {
         sg::importXYZ(wsg, fileName);
-      } else if (ext == "vtu") {
+      } else if (ext == "vtu" || ext == "off") {
         sg::importVTU(wsg, fileName);
       } else {
         std::cout << "unsupported file format\n";
