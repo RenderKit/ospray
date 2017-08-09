@@ -123,20 +123,16 @@ namespace ospray {
             int nTuples     = ad->GetNumberOfTuples();
 
             int arrayType = ad->GetArrayType();
-            std::cout << "array type = " << arrayType << "\n";
-            // VTK_FLOAT
 
-            vtkSmartPointer<vtkFloatArray> array =
-                vtkFloatArray::SafeDownCast(ad);
-            vtkSmartPointer<vtkDoubleArray> array_d =
-                vtkDoubleArray::SafeDownCast(ad);
+            vtkSmartPointer<vtkDataArray> array =
+                vtkDataArray::SafeDownCast(ad);
 
             std::cout << "\tArray " << i << " is named "
                       << (pd->GetArrayName(i) ? pd->GetArrayName(i) : "NULL")
                       << " and has " << nDataPoints << " points" << std::endl;
 
             for (int j = 0; j < nDataPoints; j++) {
-              float val = array->GetValue(j);
+              float val = static_cast<float>(array->GetTuple1(j));
               field->push_back(val);
             }
           }
