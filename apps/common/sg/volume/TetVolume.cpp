@@ -54,10 +54,11 @@ namespace ospray {
       else if (!hasChild("tetrahedra"))
         throw std::runtime_error("#osp:sg TetVolume -> no 'tetrahedra' array!");
       else if (!hasChild("field"))
-        throw std::runtime_error("#osp:sg TetVolume -> no 'tetrahedra' array!");
+        throw std::runtime_error("#osp:sg TetVolume -> no 'field' array!");
 
-      auto vertices = child("vertices").nodeAs<DataBuffer>();
-      auto field    = child("field").nodeAs<DataBuffer>();
+      auto vertices   = child("vertices").nodeAs<DataBuffer>();
+      auto tetrahedra = child("tetrahedra").nodeAs<DataBuffer>();
+      auto field      = child("field").nodeAs<DataBuffer>();
 
       ospcommon::box3f bounds;
       for (int i = 0; i < vertices->size(); ++i)
@@ -66,6 +67,7 @@ namespace ospray {
 
       vec2f voxelRange(std::numeric_limits<float>::infinity(),
                        -std::numeric_limits<float>::infinity());
+
       for (int i = 0; i < field->size(); ++i) {
         auto value = field->get<float>(i);
         if (value > voxelRange.x)
@@ -73,12 +75,15 @@ namespace ospray {
         else if (value < voxelRange.y)
           voxelRange.y = value;
       }
+
       child("voxelRange").setValue(voxelRange);
       child("isosurface").setMinMax(voxelRange.x, voxelRange.y);
       float iso = child("isosurface").valueAs<float>();
       if (iso < voxelRange.x || iso > voxelRange.y)
         child("isosurface").setValue((voxelRange.y-voxelRange.x)/2.f);
       child("transferFunction")["valueRange"].setValue(voxelRange);
+
+      child("adaptiveSampling").setValue(false);
     }
 
     void TetVolume::postCommit(RenderContext &ctx)

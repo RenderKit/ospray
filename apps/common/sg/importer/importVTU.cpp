@@ -38,9 +38,11 @@ namespace ospray {
      public:
       TetMesh()
       {
-        vertices = createNode("vertex", "DataVector3f")->nodeAs<DataVector3f>();
-        field    = createNode("field", "DataVector1f")->nodeAs<DataVector1f>();
-        tetrahedra = createNode("tets", "DataVector4i")->nodeAs<DataVector4i>();
+        vertices =
+            createNode("vertices", "DataVector3f")->nodeAs<DataVector3f>();
+        field = createNode("field", "DataVector1f")->nodeAs<DataVector1f>();
+        tetrahedra =
+            createNode("tetrahedra", "DataVector4i")->nodeAs<DataVector4i>();
       }
 
       std::shared_ptr<DataVector3f> vertices;
@@ -186,16 +188,6 @@ namespace ospray {
 
         return true;
       }
-
-      ospcommon::box3f calcualteBounds() const
-      {
-        ospcommon::box3f bounds;
-
-        for (const auto &v : vertices->v)
-          bounds.extend(v);
-
-        return bounds;
-      }
     };
 
     void importVTU(const std::shared_ptr<Node> &world, const FileName &fileName)
@@ -204,6 +196,12 @@ namespace ospray {
 
       TetMesh mesh;
       mesh.loadFile(fileName.str());
+
+      auto &v = world->createChild("tetrahedral_volume", "TetVolume");
+
+      v.add(mesh.vertices);
+      v.add(mesh.tetrahedra);
+      v.add(mesh.field);
     }
 
   }  // ::ospray::sg

@@ -114,18 +114,23 @@ namespace ospray
   {
     // Create an ISPC SharedStructuredVolume object and assign
     // type-specific function pointers.
-
-    nVertices = getParam1i("nVertices", 0);
-    nTetrahedra = getParam1i("nTetrahedra", 0);
     float samplingRate = getParam1f("samplingRate",1);
 
     Data *verticesData = getParamData("vertices", nullptr);
     Data *tetrahedraData = getParamData("tetrahedra", nullptr);
     Data *fieldData = getParamData("field", nullptr);
 
-    vec3f * verts_data = nullptr;
-    vec4i * tets_data = nullptr;
-    float * vals_data = nullptr;
+    if (!verticesData || !tetrahedraData || !fieldData) {
+      throw std::runtime_error("#osp: missing correct data arrays in "
+                               " TetrahedralVolume!");
+    }
+
+    nVertices = verticesData->size();
+    nTetrahedra = tetrahedraData->size();
+
+    vec3f *verts_data = nullptr;
+    vec4i *tets_data = nullptr;
+    float *vals_data = nullptr;
 
     if (verticesData != nullptr) {
       vertices.resize(nVertices);
@@ -178,22 +183,6 @@ namespace ospray
           }
         }
       }
-
-      /*
-       for (int i=0; i<nVertices; i++) {
-       float val = vals_data[i];
-
-       if (max_val != min_val) {
-       val = (val - min_val)/(max_val - min_val);
-       } else {
-       val = 0.5;
-       }
-
-       field[i] = val;
-       vals_data[i] = val;
-       }*/
-
-
     }
 
     float min_x=0, min_y=0, min_z=0, max_x=0, max_y=0, max_z=0;
@@ -245,11 +234,8 @@ namespace ospray
     } else {
       samplingStep = dz * 0.01f;
     }
-    samplingStep = getParam1f("samplingStep",samplingStep);
 
-    for (int i=0; i<nVertices; i++) {
-      //std::cout << "cpp field " << i << ": " << field[i] << "\n";
-    }
+    samplingStep = getParam1f("samplingStep", samplingStep);
 
     // Make sure each tetrahedron is right-handed, and fix if necessary.
     for (int i = 0; i < nTetrahedra; i++) {
