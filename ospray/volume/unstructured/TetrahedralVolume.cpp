@@ -217,7 +217,6 @@ namespace ospray
           max_z = z;
         }
       }
-      //std::cout << "cpp vertex " << i << ": " << x << " " << y << " " << z << "\n";
     }
 
     bbox.lower = vec3f(min_x, min_y, min_z);
@@ -282,14 +281,9 @@ namespace ospray
         Sub(p1, p0, q0);
         Sub(p2, p0, q1);
 
-        //vec3f q0 = p1 - p0;
-        //vec3f q1 = p2 - p0;
-
         Point norm;
         Cross(q0, q1, norm);
         Normalize(norm);
-
-        //vec3f norm = normalize(cross(q0, q1));
 
         faceNormal.normals[j] = norm;
       }

@@ -87,8 +87,6 @@ namespace ospray {
         CellContainer cellMap;
 
         for (int i = 0; i < numberOfCells; i++) {
-          // cellMap[dataSet->GetCellType(i)]++;
-
           vtkCell *cell = dataSet->GetCell(i);
 
           if (cell->GetCellType() == 10) {  // vtkTetra
@@ -137,13 +135,10 @@ namespace ospray {
                       << (pd->GetArrayName(i) ? pd->GetArrayName(i) : "NULL")
                       << " and has " << nDataPoints << " points" << std::endl;
 
-            std::cout << "field values ";
             for (int j = 0; j < nDataPoints; j++) {
               float val = array->GetValue(j);
-              std::cout << val << " ";
               field->push_back(val);
             }
-            std::cout << "\n";
           }
         }
 
@@ -192,8 +187,6 @@ namespace ospray {
 
     void importVTU(const std::shared_ptr<Node> &world, const FileName &fileName)
     {
-      std::cout << "TODO: unpack .vtu file into OSPRay volume..." << std::endl;
-
       TetMesh mesh;
       mesh.loadFile(fileName.str());
 
