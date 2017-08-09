@@ -16,15 +16,23 @@
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
-FIND_PACKAGE(VTK COMPONENTS REQUIRED
-  vtkIOLegacy
-  vtkIOXML
-  vtkIOXMLParser
-  vtkIOExport
-  vtksys
-)
+OPTION(OSPRAY_APPS_SG_VTK "Enable VTK loaders for ospray_sg" OFF)
 
-INCLUDE(${VTK_USE_FILE})
+IF(OSPRAY_APPS_SG_VTK)
+  FIND_PACKAGE(VTK COMPONENTS REQUIRED
+    vtkIOLegacy
+    vtkIOXML
+    vtkIOXMLParser
+    vtkIOExport
+    vtksys
+  )
+
+  INCLUDE(${VTK_USE_FILE})
+
+  SET(SG_VTK_SRCS importer/importVTU.cpp)
+
+  ADD_DEFINITIONS(-DOSPRAY_APPS_SG_VTK=1)
+ENDIF()
 
 OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   # scene graph nodes
@@ -77,10 +85,11 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   importer/importOBJ.cpp
   importer/importPLY.cpp
   importer/importRIVL.cpp
-  importer/importVTU.cpp
   importer/importXYZ.cpp
 
   importer/detail_xyz/Model.cpp
+
+  ${SG_VTK_SRCS}
 
 LINK
   ospray

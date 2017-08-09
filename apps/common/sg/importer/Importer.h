@@ -104,8 +104,10 @@ namespace ospray {
     OSPSG_INTERFACE void importPLY(std::shared_ptr<Node> &world,
                                    const FileName &fileName);
 
+#ifdef OSPRAY_APPS_SG_VTK
     OSPSG_INTERFACE void importVTU(const std::shared_ptr<Node> &world,
                                    const FileName &fileName);
+#endif
 
     /*! import an X3D-format model, and add its contents to the given world */
     OSPSG_INTERFACE void importX3D(const std::shared_ptr<Node> &world,
