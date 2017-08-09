@@ -188,7 +188,7 @@ namespace ospray {
         sg::importXYZ(wsg, fileName);
 #ifdef OSPRAY_APPS_SG_VTK
       } else if (ext == "vtu" || ext == "off") {
-        sg::importVTU(wsg, fileName);
+        sg::importTetVolume(wsg, fileName);
 #endif
       } else {
         std::cout << "unsupported file format\n";

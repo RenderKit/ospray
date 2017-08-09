@@ -29,7 +29,7 @@ IF(OSPRAY_APPS_SG_VTK)
 
   INCLUDE(${VTK_USE_FILE})
 
-  SET(SG_VTK_SRCS importer/importVTU.cpp)
+  SET(SG_VTK_SRCS importer/importTetVolume.cpp)
 
   ADD_DEFINITIONS(-DOSPRAY_APPS_SG_VTK=1)
 ENDIF()

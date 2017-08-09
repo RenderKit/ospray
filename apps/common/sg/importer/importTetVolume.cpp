@@ -185,7 +185,8 @@ namespace ospray {
       }
     };
 
-    void importVTU(const std::shared_ptr<Node> &world, const FileName &fileName)
+    void importTetVolume(const std::shared_ptr<Node> &world,
+                         const FileName &fileName)
     {
       TetMesh mesh;
       mesh.loadFile(fileName.str());
