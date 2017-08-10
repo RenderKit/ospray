@@ -103,7 +103,7 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
                                            float tEnd, float maxOpacity, bool isShadowRay, const varying float &rayOffset, const varying vec3i &sampleID, uniform float quality)
 {
   // ray to model coordinate
-  rayTransform(ray, volume->rcp_xfm);
+//  rayTransform(ray, volume->rcp_xfm);
   // start computation
   vec3f singleCoordinates;
   float singleMax = -1.f;
@@ -256,7 +256,7 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform rendere
       intervalColor = make_vec4f(litColor,intervalColor.w);
     }
   // ray back to world coordinate
-  rayTransform(ray, volume->xfm);
+//  rayTransform(ray, volume->xfm);
   return intervalColor;
 }
 
@@ -283,7 +283,7 @@ SciVisRenderer_intersectVolumes(const uniform SciVisRenderer *uniform renderer,
     Volume *uniform volume_i = renderer->super.model->volumes[i];
 
     // ray to model coordinate
-    rayTransform(ray, volume_i->rcp_xfm);
+//    rayTransform(ray, volume_i->rcp_xfm);
 
     // Intersect volume bounding box.
     float t0, t1;
@@ -300,7 +300,7 @@ SciVisRenderer_intersectVolumes(const uniform SciVisRenderer *uniform renderer,
     }
 
     // ray back to world coordinate
-    rayTransform(ray, volume_i->xfm);
+//    rayTransform(ray, volume_i->xfm);
 
     // Update intersected volume.
     if (t0 < t1 && t0 < volumeRay.t0) {

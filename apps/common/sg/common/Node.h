@@ -110,6 +110,7 @@ namespace ospray {
       virtual bool computeValidMinMax();
 
       /*! \brief return bounding box in world coordinates.
+        Cached on node commit.
 
         This function can be used by the viewer(s) for calibrating
         camera motion, setting default camera position, etc. Nodes
