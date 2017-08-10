@@ -33,20 +33,6 @@ namespace ospray {
       vec3f corners[4];
     };
 
-    int nVertices;
-    std::vector<vec3f> vertices;
-
-    int nTetrahedra;
-    std::vector<vec4i> tetrahedra;
-
-    std::vector<float> field;  // Attribute value at each vertex.
-
-    box3f bbox;
-
-    MinMaxBVH bvh;
-
-    bool finished {false};
-
     ~TetrahedralVolume() = default;
 
     //! A string description of this class.
@@ -66,17 +52,32 @@ namespace ospray {
                         const vec3f *worldCoordinates,
                         const size_t &count) override;
 
-    float sample(float world_x, float world_y, float world_z);
+   private:
 
     void getTetBBox(size_t id, box4f &bbox);
-
-   protected:
 
     //! Create the equivalent ISPC volume container.
     void createEquivalentISPC();
 
     //! Complete volume initialization (only on first commit).
     void finish() override;
+
+    // Data members //
+
+    int nVertices;
+    std::vector<vec3f> vertices;
+
+    int nTetrahedra;
+    std::vector<vec4i> tetrahedra;
+
+    std::vector<float> field;  // Attribute value at each vertex.
+
+    box3f bbox;
+
+    MinMaxBVH bvh;
+
+    bool finished {false};
+
   };
 
 }  // ::ospray
