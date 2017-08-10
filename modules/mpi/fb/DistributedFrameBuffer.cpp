@@ -166,7 +166,7 @@ namespace ospray {
     if (tiles <= 0)
       return;
 
-    MPI_CALL(Bcast(tileErrorBuffer, tiles, MPI_FLOAT, 0, MPI_COMM_WORLD));
+    MPI_CALL(Bcast(tileErrorBuffer, tiles, MPI_FLOAT, 0, mpicommon::world.comm));
   }
 
   // DistributedFrameBuffer definitions ///////////////////////////////////////
@@ -246,7 +246,8 @@ namespace ospray {
       // NOTE: Doing error sync may do a broadcast, needs to be done before
       //       async messaging enabled in beginFrame()
       tileErrorRegion.sync();
-      MPI_CALL(Bcast(tileInstances, getTotalTiles(), MPI_INT, 0, MPI_COMM_WORLD));
+      MPI_CALL(Bcast(tileInstances, getTotalTiles(), MPI_INT, 0,
+                     mpicommon::world.comm));
 
       // after Bcast of tileInstances (needed in WriteMultipleTile::newFrame)
       for (auto &tile : myTiles)
