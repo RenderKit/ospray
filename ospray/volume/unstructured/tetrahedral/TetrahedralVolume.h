@@ -61,7 +61,9 @@ namespace ospray {
     //! Complete volume initialization (only on first commit).
     void finish() override;
 
-    void calculateFaceNormals();
+    void  buildBvhAndCalculateBounds();
+    void  calculateFaceNormals();
+    float calculateSamplingStep();
 
     // Data members //
 

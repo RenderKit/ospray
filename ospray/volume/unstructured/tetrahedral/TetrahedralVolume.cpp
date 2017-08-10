@@ -46,8 +46,6 @@ namespace ospray {
 
   void TetrahedralVolume::finish()
   {
-    float samplingRate = getParam1f("samplingRate", 1);
-
     Data *verticesData   = getParamData("vertices", nullptr);
     Data *tetrahedraData = getParamData("tetrahedra", nullptr);
     Data *fieldData      = getParamData("field", nullptr);
@@ -65,6 +63,33 @@ namespace ospray {
     tetrahedra = (vec4i *)tetrahedraData->data;
     field      = (float *)fieldData->data;
 
+    buildBvhAndCalculateBounds();
+    calculateFaceNormals();
+
+    float samplingRate = getParam1f("samplingRate", 1.f);
+    float samplingStep = calculateSamplingStep();
+
+    TetrahedralVolume_set(ispcEquivalent,
+                          nVertices,
+                          nTetrahedra,
+                          (const ispc::box3f &)bbox,
+                          (const ispc::vec3f *)vertices,
+                          (const ispc::vec3f *)faceNormals.data(),
+                          (const ispc::vec4i *)tetrahedra,
+                          (const float *)field,
+                          bvh.rootRef,
+                          bvh.getNodePtr(),
+                          (int64_t *)bvh.getItemListPtr(),
+                          samplingRate,
+                          samplingStep);
+
+
+    Volume::finish();
+    finished = true;
+  }
+
+  void TetrahedralVolume::buildBvhAndCalculateBounds()
+  {
     int64 *primID     = new int64[nTetrahedra];
     box4f *primBounds = new box4f[nTetrahedra];
 
@@ -85,40 +110,6 @@ namespace ospray {
 
     delete [] primBounds;
     delete [] primID;
-
-    float samplingStep = 1;
-    float dx           = bbox.upper.x - bbox.lower.x;
-    float dy           = bbox.upper.y - bbox.lower.y;
-    float dz           = bbox.upper.z - bbox.lower.z;
-    if (dx < dy && dx < dz && dx != 0) {
-      samplingStep = dx * 0.01f;
-    } else if (dy < dx && dy < dz && dy != 0) {
-      samplingStep = dy * 0.01f;
-    } else {
-      samplingStep = dz * 0.01f;
-    }
-
-    calculateFaceNormals();
-
-    samplingStep = getParam1f("samplingStep", samplingStep);
-
-    TetrahedralVolume_set(ispcEquivalent,
-                          nVertices,
-                          nTetrahedra,
-                          (const ispc::box3f &)bbox,
-                          (const ispc::vec3f *)vertices,
-                          (const ispc::vec3f *)faceNormals.data(),
-                          (const ispc::vec4i *)tetrahedra,
-                          (const float *)field,
-                          bvh.rootRef,
-                          bvh.getNodePtr(),
-                          (int64_t *)bvh.getItemListPtr(),
-                          samplingRate,
-                          samplingStep);
-
-
-    Volume::finish();
-    finished = true;
   }
 
   void TetrahedralVolume::calculateFaceNormals()
@@ -150,6 +141,26 @@ namespace ospray {
         faceNormals[i + j] = norm;
       }
     });
+  }
+
+
+  float TetrahedralVolume::calculateSamplingStep()
+  {
+    float samplingStep = 1.f;
+
+    float dx = bbox.upper.x - bbox.lower.x;
+    float dy = bbox.upper.y - bbox.lower.y;
+    float dz = bbox.upper.z - bbox.lower.z;
+
+    if (dx < dy && dx < dz && dx != 0) {
+      samplingStep = dx * 0.01f;
+    } else if (dy < dx && dy < dz && dy != 0) {
+      samplingStep = dy * 0.01f;
+    } else {
+      samplingStep = dz * 0.01f;
+    }
+
+    return getParam1f("samplingStep", samplingStep);
   }
 
   int TetrahedralVolume::setRegion(const void *source_pointer,
