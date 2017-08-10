@@ -19,12 +19,6 @@
 #include "../../../common/OSPCommon.ih"
 #include "../../Volume.ih"
 #include "../MinMaxBVH2.ih"
-#include "../common.ih"
-
-struct TetFaceNormal
-{
-  uniform vec3f normals[4];
-};
 
 struct TetrahedralVolume
 {
@@ -37,10 +31,8 @@ struct TetrahedralVolume
 
   uniform int nTetrahedra;
   const vec4i *uniform tetrahedra;  // indices into vertices array.
-
   const float *uniform field;  // Attribute value at each vertex.
-
-  uniform TetFaceNormal *uniform faceNormals;
+  const vec3f *uniform faceNormals;
 
   uniform MinMaxBVH2 bvh;
 };

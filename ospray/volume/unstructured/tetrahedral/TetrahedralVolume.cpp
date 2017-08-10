@@ -14,8 +14,12 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+// ospray
 #include "TetrahedralVolume.h"
 #include "../../../common/Data.h"
+
+// ospcommon
+#include "ospcommon/tasking/parallel_for.h"
 
 // auto-generated .h file.
 #include "TetrahedralVolume_ispc.h"
@@ -79,8 +83,8 @@ namespace ospray {
 
     bvh.build(primBounds, primID, nTetrahedra);
 
-    delete[] primBounds;
-    delete[] primID;
+    delete [] primBounds;
+    delete [] primID;
 
     float samplingStep = 1;
     float dx           = bbox.upper.x - bbox.lower.x;
@@ -94,6 +98,8 @@ namespace ospray {
       samplingStep = dz * 0.01f;
     }
 
+    calculateFaceNormals();
+
     samplingStep = getParam1f("samplingStep", samplingStep);
 
     TetrahedralVolume_set(ispcEquivalent,
@@ -101,6 +107,7 @@ namespace ospray {
                           nTetrahedra,
                           (const ispc::box3f &)bbox,
                           (const ispc::vec3f *)vertices,
+                          (const ispc::vec3f *)faceNormals.data(),
                           (const ispc::vec4i *)tetrahedra,
                           (const float *)field,
                           bvh.rootRef,
@@ -112,6 +119,37 @@ namespace ospray {
 
     Volume::finish();
     finished = true;
+  }
+
+  void TetrahedralVolume::calculateFaceNormals()
+  {
+    auto numNormals = nTetrahedra * 4;
+    faceNormals.resize(numNormals);
+
+    tasking::parallel_for(numNormals / 4, [&](int taskIndex){
+      int i = taskIndex * 4;
+      auto &t = tetrahedra[i / 4];
+
+      // The corners of each triangle in the tetrahedron.
+      int faces[4][3] = {{1, 2, 3}, {2, 0, 3}, {3, 0, 1}, {0, 2, 1}};
+
+      for (int j = 0; j < 4; j++) {
+        int t0 = t[faces[j][0]];
+        int t1 = t[faces[j][1]];
+        int t2 = t[faces[j][2]];
+
+        const auto &p0 = vertices[t0];
+        const auto &p1 = vertices[t1];
+        const auto &p2 = vertices[t2];
+
+        auto q0 = p1 - p0;
+        auto q1 = p2 - p0;
+
+        auto norm = normalize(cross(q0, q1));
+
+        faceNormals[i + j] = norm;
+      }
+    });
   }
 
   int TetrahedralVolume::setRegion(const void *source_pointer,

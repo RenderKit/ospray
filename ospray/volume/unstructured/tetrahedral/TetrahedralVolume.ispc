@@ -32,11 +32,10 @@ bool intersectAndSampleTet(void *uniform userData,
   vec3f p2 = self->vertices[t.z];
   vec3f p3 = self->vertices[t.w];
 
-  uniform vec3f faceNormals[4] = self->faceNormals[id].normals;
-  uniform vec3f norm0          = faceNormals[0];
-  uniform vec3f norm1          = faceNormals[1];
-  uniform vec3f norm2          = faceNormals[2];
-  uniform vec3f norm3          = faceNormals[3];
+  uniform vec3f norm0          = self->faceNormals[(id * 4) + 0];
+  uniform vec3f norm1          = self->faceNormals[(id * 4) + 1];
+  uniform vec3f norm2          = self->faceNormals[(id * 4) + 2];
+  uniform vec3f norm3          = self->faceNormals[(id * 4) + 3];
 
   // Distance from the world point to the faces.
   float d0 = dot(norm0, p1 - samplePos);
@@ -205,6 +204,7 @@ export void TetrahedralVolume_set(void *uniform _self,
                                   const uniform int &_nTetrahedra,
                                   const uniform box3f &_bbox,
                                   const vec3f *uniform _vertices,
+                                  const vec3f *uniform _faceNormals,
                                   const vec4i *uniform _tetrahedra,
                                   const float *uniform _field,
                                   uniform int64 rootRef,
@@ -227,33 +227,7 @@ export void TetrahedralVolume_set(void *uniform _self,
   self->super.samplingRate = samplingRate;
   self->super.samplingStep = samplingStep;
 
-  self->faceNormals = uniform new uniform TetFaceNormal[_nTetrahedra];
-
-  for (uniform int i = 0; i < self->nTetrahedra; i++) {
-    uniform vec4i t = self->tetrahedra[i];
-
-    // The corners of each triangle in the tetrahedron.
-    uniform int faces[4][3] = {{1, 2, 3}, {2, 0, 3}, {3, 0, 1}, {0, 2, 1}};
-
-    uniform vec3f *uniform faceNormals = self->faceNormals[i].normals;
-
-    for (uniform int j = 0; j < 4; j++) {
-      uniform int t0 = getVec4iComponent(t, faces[j][0]);
-      uniform int t1 = getVec4iComponent(t, faces[j][1]);
-      uniform int t2 = getVec4iComponent(t, faces[j][2]);
-
-      uniform vec3f p0 = self->vertices[t0];
-      uniform vec3f p1 = self->vertices[t1];
-      uniform vec3f p2 = self->vertices[t2];
-
-      uniform vec3f q0 = p1 - p0;
-      uniform vec3f q1 = p2 - p0;
-
-      uniform vec3f norm = normalize(cross(q0, q1));
-
-      faceNormals[j] = norm;
-    }
-  }
+  self->faceNormals = _faceNormals;
 
   self->bvh.rootRef = rootRef;
   self->bvh.node    = (MinMaxBVH2Node * uniform) _bvhNode;

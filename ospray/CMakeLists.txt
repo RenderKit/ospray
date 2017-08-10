@@ -196,7 +196,6 @@ SET(OSPRAY_SOURCES
   volume/structured/shared/SharedStructuredVolume.ispc
   volume/structured/shared/SharedStructuredVolume.cpp
 
-  volume/unstructured/common.ispc
   volume/unstructured/MinMaxBVH2.cpp
   volume/unstructured/MinMaxBVH2.ispc
   volume/unstructured/tetrahedral/TetrahedralVolume.cpp
@@ -351,7 +350,6 @@ OSPRAY_INSTALL_SDK_HEADERS(
 )
 
 OSPRAY_INSTALL_SDK_HEADERS(
-  volume/unstructured/common.ih
   volume/unstructured/MinMaxBVH2.h
   volume/unstructured/MinMaxBVH2.ih
   DESTINATION volume/unstructured

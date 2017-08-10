@@ -61,6 +61,8 @@ namespace ospray {
     //! Complete volume initialization (only on first commit).
     void finish() override;
 
+    void calculateFaceNormals();
+
     // Data members //
 
     int nVertices;
@@ -69,6 +71,8 @@ namespace ospray {
 
     int nTetrahedra;
     vec4i *tetrahedra {nullptr};
+
+    std::vector<vec3f> faceNormals;
 
     box3f bbox;
 
