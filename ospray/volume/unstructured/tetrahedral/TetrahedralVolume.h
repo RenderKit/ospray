@@ -27,6 +27,8 @@ namespace ospray {
   {
    public:
 
+    TetrahedralVolume();
+
     struct TetFaceNormal
     {
       vec3f normals[4];
@@ -56,23 +58,17 @@ namespace ospray {
 
     box4f getTetBBox(size_t id);
 
-    void verifyAllTetrahedraRightHanded();
-
-    //! Create the equivalent ISPC volume container.
-    void createEquivalentISPC();
-
     //! Complete volume initialization (only on first commit).
     void finish() override;
 
     // Data members //
 
     int nVertices;
-    std::vector<vec3f> vertices;
+    vec3f *vertices {nullptr};
+    float *field {nullptr};  // Attribute value at each vertex.
 
     int nTetrahedra;
-    std::vector<vec4i> tetrahedra;
-
-    std::vector<float> field;  // Attribute value at each vertex.
+    vec4i *tetrahedra {nullptr};
 
     box3f bbox;
 
