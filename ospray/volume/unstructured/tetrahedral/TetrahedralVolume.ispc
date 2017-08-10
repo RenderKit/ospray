@@ -16,17 +16,6 @@
 
 #include "TetrahedralVolume.ih"
 
-#include <embree2/rtcore.isph>
-#include <embree2/rtcore_ray.isph>
-#ifndef RTCORE_VERSION_MAJOR
-#include <embree2/rtcore_version.h>
-#endif
-
-extern "C" uniform float callSample(void *uniform volume,
-                                    uniform float world_x,
-                                    uniform float world_y,
-                                    uniform float world_z);
-
 bool intersectAndSampleTet(void *uniform userData,
                            uniform uint64 id,
                            float &result,
@@ -55,9 +44,8 @@ bool intersectAndSampleTet(void *uniform userData,
   float d2 = dot(norm2, p3 - samplePos);
   float d3 = dot(norm3, p0 - samplePos);
 
-  if (!(d0 > 0 && d1 > 0 && d2 > 0 && d3 > 0)) {
+  if (!(d0 > 0 && d1 > 0 && d2 > 0 && d3 > 0))
     return false;
-  }
 
   // Distance of tetrahedron corners to their opposite faces.
   float h0 = dot(norm0, p1 - p0);
@@ -200,12 +188,6 @@ void TetrahedralVolume_Constructor(TetrahedralVolume *uniform self,
   self->super.intersect           = TetrahedralVolume_intersect;
   self->super.intersectAdaptive   = TetrahedralVolume_intersectAdaptive;
   self->super.intersectIsosurface = TetrahedralVolume_intersectIsosurface;
-
-  self->embree_device = rtcNewDevice(NULL);
-  self->embree_scene =
-      rtcDeviceNewScene(self->embree_device,
-                        RTC_SCENE_STATIC,
-                        RTC_INTERSECT_UNIFORM | RTC_INTERSECT_VARYING);
 }
 
 export void *uniform
@@ -271,84 +253,6 @@ void tetBounds4Func(void *uniform userData,
   uniform box4f bbox = self->tetBBoxes[id];
 
   bounds = bbox;
-
-  // print("ispc tet % bbox: lower(% % %), upper(% % %)\n\n", id, bbox.lower.x,
-  // bbox.lower.y, bbox.lower.z, bbox.upper.x, bbox.upper.y, bbox.upper.z);
-}
-
-#if (RTCORE_VERSION_MAJOR > 2 || \
-     (RTCORE_VERSION_MAJOR == 2 && RTCORE_VERSION_MINOR >= 16))
-unmasked void tetBoundsFunc(void *uniform userData,
-                            uniform uintptr_t id,
-                            uniform RTCBounds &bounds_o)
-#else
-unmasked void tetBoundsFunc(void *uniform userData,
-                            uniform size_t id,
-                            uniform RTCBounds &bounds_o)
-#endif
-{
-  const uniform TetrahedralVolume *uniform self =
-      (const uniform TetrahedralVolume *uniform)userData;
-
-  uniform box4f bbox = self->tetBBoxes[id];
-
-  bounds_o.lower_x = bbox.lower.x;
-  bounds_o.lower_y = bbox.lower.y;
-  bounds_o.lower_z = bbox.lower.z;
-  bounds_o.upper_x = bbox.upper.x;
-  bounds_o.upper_y = bbox.upper.y;
-  bounds_o.upper_z = bbox.upper.z;
-
-  // print("ispc tet % bbox: lower(% % %), upper(% % %)\n\n", id, bbox.lower.x,
-  // bbox.lower.y, bbox.lower.z, bbox.upper.x, bbox.upper.y, bbox.upper.z);
-}
-
-#if (RTCORE_VERSION_MAJOR > 2 || \
-     (RTCORE_VERSION_MAJOR == 2 && RTCORE_VERSION_MINOR >= 16))
-void tetIntersectFunc(void *uniform userData,
-                      varying RTCRay &ray,
-                      uniform uintptr_t id)
-#else
-void tetIntersectFunc(void *uniform userData,
-                      varying RTCRay &ray,
-                      uniform size_t id)
-#endif
-{
-  const uniform TetrahedralVolume *uniform self =
-      (const uniform TetrahedralVolume *uniform)userData;
-
-  uniform box4f bbox = self->tetBBoxes[id];
-
-  vec3f world = make_vec3f(ray.orgx, ray.orgy, ray.orgz);
-
-  if (isLessThan(world, bbox.lower) || isGreaterThan(world, bbox.upper)) {
-    return;
-  }
-
-  uniform vec4i t =
-      self->tetrahedra[id];  // The 4 corner indices of the tetrahedron.
-
-  uniform vec3f p0 = self->vertices[t.x];
-  uniform vec3f p1 = self->vertices[t.y];
-  uniform vec3f p2 = self->vertices[t.z];
-  uniform vec3f p3 = self->vertices[t.w];
-
-  uniform vec3f *uniform faceNormals = self->faceNormals[id].normals;
-  uniform vec3f norm0                = faceNormals[0];
-  uniform vec3f norm1                = faceNormals[1];
-  uniform vec3f norm2                = faceNormals[2];
-  uniform vec3f norm3                = faceNormals[3];
-
-  // Distance from the world point to the faces.
-  float d0 = dot(norm0, p1 - world);
-  float d1 = dot(norm1, p2 - world);
-  float d2 = dot(norm2, p3 - world);
-  float d3 = dot(norm3, p0 - world);
-
-  if (d0 > 0 && d1 > 0 && d2 > 0 && d3 > 0) {
-    ray.primID = id;
-    ray.geomID = self->geomID;
-  }
 }
 
 export void TetrahedralVolume_set(void *uniform _self,
@@ -379,9 +283,8 @@ export void TetrahedralVolume_set(void *uniform _self,
   self->super.samplingStep = samplingStep;
 
   uniform int nNiceVerts = _nVertices / programCount;
-  if (_nVertices % programCount != 0) {
+  if (_nVertices % programCount != 0)
     nNiceVerts = nNiceVerts + 1;
-  }
 
   self->nNiceVerts    = nNiceVerts;
   self->nice_vertices = uniform new varying vec3f[nNiceVerts];
@@ -393,21 +296,11 @@ export void TetrahedralVolume_set(void *uniform _self,
     }
   }
 
-  for (uniform int i = 0; i < self->nVertices; i++) {
-    uniform vec3f v = self->vertices[i];
-    uniform float x = v.x;
-    uniform float y = v.y;
-    uniform float z = v.z;
-    // print("ispc verts % : % % %\n", i, x, y, z);
-  }
-
   self->faceNormals = uniform new uniform TetFaceNormal[_nTetrahedra];
-
-  self->tetBBoxes = uniform new uniform box4f[_nTetrahedra];
+  self->tetBBoxes   = uniform new uniform box4f[_nTetrahedra];
 
   for (uniform int i = 0; i < self->nTetrahedra; i++) {
-    uniform vec4i t =
-        self->tetrahedra[i];  // The 4 corner indices of the tetrahedron.
+    uniform vec4i t = self->tetrahedra[i];
 
     uniform box4f &bbox = self->tetBBoxes[i];
     getTetBBox(self, i, bbox);
@@ -433,27 +326,8 @@ export void TetrahedralVolume_set(void *uniform _self,
 
       faceNormals[j] = norm;
     }
-
-    // print("ispc tets % : % % % %\n", i, t.x, t.y, t.z, t.w);
   }
 
-  for (uniform int i = 0; i < self->nVertices; i++) {
-    uniform float v = self->field[i];
-    // print("ispc field % : %\n", i, v);
-  }
-
-  // Set up embree callbacks.
-  self->geomID = rtcNewUserGeometry(self->embree_scene, self->nTetrahedra);
-  rtcSetUserData(self->embree_scene, self->geomID, self);
-  rtcSetBoundsFunction(self->embree_scene, self->geomID, tetBoundsFunc);
-  rtcSetIntersectFunction(self->embree_scene, self->geomID, tetIntersectFunc);
-  rtcSetOccludedFunction(self->embree_scene, self->geomID, tetIntersectFunc);
-  rtcCommit(self->embree_scene);
-
-  // self->bvh.intersectAndSamplePrimFunc = intersectAndSampleTet;
-  // self->bvh.primBoundsFunc = tetBounds4Func;
-  // self->bvh.userData = self;
-  // self->bvh.nPrims = self->nTetrahedra;
   self->bvh.rootRef = rootRef;
   self->bvh.node    = (MinMaxBVH2Node * uniform) _bvhNode;
   self->bvh.primID  = _bvhPrimID;

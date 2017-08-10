@@ -55,8 +55,4 @@ struct TetrahedralVolume
       nice_vertices;  // programCount (vector width -> 4,8,16)
 
   uniform MinMaxBVH2 bvh;
-
-  RTCDevice embree_device;
-  RTCScene embree_scene;
-  uniform unsigned int geomID;
 };
