@@ -86,7 +86,6 @@ namespace ospray {
       //      in the base Tetrahedral volume in OSPRay!
       child("gradientShadingEnabled").setValue(false);
       child("singleShade").setValue(false);
-      child("adaptiveSampling").setValue(false);
     }
 
     void TetVolume::postCommit(RenderContext &ctx)
