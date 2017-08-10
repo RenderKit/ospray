@@ -200,61 +200,6 @@ TetrahedralVolume_createInstance(void *uniform cppEquivalent)
   return self;
 }
 
-void getTetBBox(const uniform TetrahedralVolume *uniform self,
-                uniform size_t id,
-                uniform box4f &bbox)
-{
-  uniform vec4i t =
-      self->tetrahedra[id];  // The 4 corner indices of the tetrahedron.
-
-  uniform float &x0 = bbox.lower.x, &y0 = bbox.lower.y, &z0 = bbox.lower.z,
-                &x1 = bbox.upper.x, &y1 = bbox.upper.y, &z1 = bbox.upper.z,
-                &val0 = bbox.lower.w, &val1 = bbox.upper.w;
-
-  for (uniform int i = 0; i < 4; i++) {
-    uniform vec3f p   = self->vertices[getVec4iComponent(t, i)];
-    uniform float val = self->field[getVec4iComponent(t, i)];
-    if (i == 0) {
-      x0 = x1 = p.x;
-      y0 = y1 = p.y;
-      z0 = z1 = p.z;
-      val0 = val1 = val;
-    } else {
-      if (p.x < x0)
-        x0 = p.x;
-      if (p.x > x1)
-        x1 = p.x;
-
-      if (p.y < y0)
-        y0 = p.y;
-      if (p.y > y1)
-        y1 = p.y;
-
-      if (p.z < z0)
-        z0 = p.z;
-      if (p.z > z1)
-        z1 = p.z;
-
-      if (val < val0)
-        val0 = val;
-      if (val > val1)
-        val1 = val;
-    }
-  }
-}
-
-void tetBounds4Func(void *uniform userData,
-                    uniform uint64 id,
-                    uniform box4f &bounds)
-{
-  const uniform TetrahedralVolume *uniform self =
-      (const uniform TetrahedralVolume *uniform)userData;
-
-  uniform box4f bbox = self->tetBBoxes[id];
-
-  bounds = bbox;
-}
-
 export void TetrahedralVolume_set(void *uniform _self,
                                   const uniform int &_nVertices,
                                   const uniform int &_nTetrahedra,
@@ -283,13 +228,9 @@ export void TetrahedralVolume_set(void *uniform _self,
   self->super.samplingStep = samplingStep;
 
   self->faceNormals = uniform new uniform TetFaceNormal[_nTetrahedra];
-  self->tetBBoxes   = uniform new uniform box4f[_nTetrahedra];
 
   for (uniform int i = 0; i < self->nTetrahedra; i++) {
     uniform vec4i t = self->tetrahedra[i];
-
-    uniform box4f &bbox = self->tetBBoxes[i];
-    getTetBBox(self, i, bbox);
 
     // The corners of each triangle in the tetrahedron.
     uniform int faces[4][3] = {{1, 2, 3}, {2, 0, 3}, {3, 0, 1}, {0, 2, 1}};

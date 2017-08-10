@@ -21,14 +21,10 @@
 #include "../MinMaxBVH2.ih"
 #include "../common.ih"
 
-// Geometry intersection acceleration structure (BVH).
-
 struct TetFaceNormal
 {
   uniform vec3f normals[4];
 };
-
-// std::vector<BBox> tetBBoxes;
 
 struct TetrahedralVolume
 {
@@ -43,8 +39,6 @@ struct TetrahedralVolume
   const vec4i *uniform tetrahedra;  // indices into vertices array.
 
   const float *uniform field;  // Attribute value at each vertex.
-
-  uniform box4f *uniform tetBBoxes;
 
   uniform TetFaceNormal *uniform faceNormals;
 
