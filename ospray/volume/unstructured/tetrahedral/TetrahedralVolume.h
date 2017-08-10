@@ -54,7 +54,7 @@ namespace ospray {
 
    private:
 
-    void getTetBBox(size_t id, box4f &bbox);
+    box4f getTetBBox(size_t id);
 
     void verifyAllTetrahedraRightHanded();
 

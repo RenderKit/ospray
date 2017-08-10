@@ -59,44 +59,24 @@ namespace ospray {
     NOT_IMPLEMENTED;
   }
 
-  void TetrahedralVolume::getTetBBox(size_t id, box4f &bbox)
+  box4f TetrahedralVolume::getTetBBox(size_t id)
   {
     auto t = tetrahedra[id];
 
-    float &x0 = bbox.lower.x, &y0 = bbox.lower.y, &z0 = bbox.lower.z,
-          &x1 = bbox.upper.x, &y1 = bbox.upper.y, &z1 = bbox.upper.z,
-          &val0 = bbox.lower.w, &val1 = bbox.upper.w;
+    box4f bbox;
 
     for (int i = 0; i < 4; i++) {
-      const auto &p = vertices[t[i]];
-      float val     = field[t[i]];
-      if (i == 0) {
-        x0 = x1 = p.x;
-        y0 = y1 = p.y;
-        z0 = z1 = p.z;
-        val0 = val1 = val;
-      } else {
-        if (p.x < x0)
-          x0 = p.x;
-        if (p.x > x1)
-          x1 = p.x;
+      const auto &v = vertices[t[i]];
+      const float f = field[t[i]];
+      const auto p  = vec4f(v.x, v.y, v.z, f);
 
-        if (p.y < y0)
-          y0 = p.y;
-        if (p.y > y1)
-          y1 = p.y;
-
-        if (p.z < z0)
-          z0 = p.z;
-        if (p.z > z1)
-          z1 = p.z;
-
-        if (val < val0)
-          val0 = val;
-        if (val > val1)
-          val1 = val;
-      }
+      if (i == 0)
+        bbox.upper = bbox.lower = p;
+      else
+        bbox.extend(p);
     }
+
+    return bbox;
   }
 
   void TetrahedralVolume::verifyAllTetrahedraRightHanded()
@@ -244,7 +224,7 @@ namespace ospray {
 
     for (int i = 0; i < nTetrahedra; i++) {
       primID[i] = i;
-      getTetBBox(i, primBounds[i]);
+      primBounds[i] = getTetBBox(i);
     }
 
     bvh.build(primBounds, primID, nTetrahedra);
