@@ -33,8 +33,6 @@ namespace ospray {
       vec3f corners[4];
     };
 
-    std::vector<box3f> tetBBoxes;
-
     int nVertices;
     std::vector<vec3f> vertices;
 
@@ -45,40 +43,9 @@ namespace ospray {
 
     box3f bbox;
 
-    std::vector<TetFaceNormal> faceNormals;
-
     MinMaxBVH bvh;
 
     bool finished {false};
-
-    void addTetBBox(int id)
-    {
-      auto &t    = tetrahedra[id];
-      auto &bbox = tetBBoxes[id];
-      for (int i = 0; i < 4; i++) {
-        const auto &p = vertices[t[i]];
-        if (i == 0) {
-          bbox.lower.x = bbox.upper.x = p.x;
-          bbox.lower.y = bbox.upper.y = p.y;
-          bbox.lower.z = bbox.upper.z = p.z;
-        } else {
-          if (p.x < bbox.lower.x)
-            bbox.lower.x = p.x;
-          if (p.x > bbox.upper.x)
-            bbox.upper.x = p.x;
-
-          if (p.y < bbox.lower.y)
-            bbox.lower.y = p.y;
-          if (p.y > bbox.upper.y)
-            bbox.upper.y = p.y;
-
-          if (p.z < bbox.lower.z)
-            bbox.lower.z = p.z;
-          if (p.z > bbox.upper.z)
-            bbox.upper.z = p.z;
-        }
-      }
-    }
 
     ~TetrahedralVolume() = default;
 

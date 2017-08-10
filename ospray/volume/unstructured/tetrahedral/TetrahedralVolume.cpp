@@ -238,37 +238,16 @@ namespace ospray {
       }
     }
 
-    faceNormals.resize(nTetrahedra);
-
-    // Calculate outward normal of all faces.
-    for (int i = 0; i < nTetrahedra; i++) {
-      auto &t                   = tetrahedra[i];
-      TetFaceNormal &faceNormal = faceNormals[i];
-
-      int faces[4][3] = {{1, 2, 3}, {2, 0, 3}, {3, 0, 1}, {0, 2, 1}};
-      for (int j = 0; j < 4; j++) {
-        int t0 = t[faces[j][0]];
-        int t1 = t[faces[j][1]];
-        int t2 = t[faces[j][2]];
-
-        const auto &p0 = vertices[t0];
-        const auto &p1 = vertices[t1];
-        const auto &p2 = vertices[t2];
-
-        auto q0 = p1 - p0;
-        auto q1 = p2 - p0;
-
-        faceNormal.normals[j] = normalize(cross(q0, q1));
-      }
-    }
-
     int64 *primID     = new int64[nTetrahedra];
     box4f *primBounds = new box4f[nTetrahedra];
+
     for (int i = 0; i < nTetrahedra; i++) {
       primID[i] = i;
       getTetBBox(i, primBounds[i]);
     }
+
     bvh.build(primBounds, primID, nTetrahedra);
+
     delete[] primBounds;
     delete[] primID;
 
@@ -286,11 +265,6 @@ namespace ospray {
                           (int64_t *)bvh.getItemListPtr(),
                           samplingRate,
                           samplingStep);
-
-    std::cout << "nTetrahedra = " << nTetrahedra << std::endl;
-    std::cout << "nVertices = " << nVertices << std::endl;
-    std::cout << "samplingRate = " << samplingRate << std::endl;
-    std::cout << "samplingStep = " << samplingStep << std::endl;
   }
 
   OSP_REGISTER_VOLUME(TetrahedralVolume, tetrahedral_volume);
