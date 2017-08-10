@@ -56,6 +56,8 @@ namespace ospray {
 
     void getTetBBox(size_t id, box4f &bbox);
 
+    void verifyAllTetrahedraRightHanded();
+
     //! Create the equivalent ISPC volume container.
     void createEquivalentISPC();
 

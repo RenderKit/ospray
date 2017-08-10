@@ -99,6 +99,27 @@ namespace ospray {
     }
   }
 
+  void TetrahedralVolume::verifyAllTetrahedraRightHanded()
+  {
+    // Make sure each tetrahedron is right-handed, and fix if necessary.
+    for (int i = 0; i < nTetrahedra; i++) {
+      auto &t        = tetrahedra[i];
+      const auto &p0 = vertices[t[0]];
+      const auto &p1 = vertices[t[1]];
+      const auto &p2 = vertices[t[2]];
+      const auto &p3 = vertices[t[3]];
+
+      auto q0 = p1 - p0;
+      auto q1 = p2 - p0;
+      auto q2 = p3 - p0;
+
+      auto norm = cross(q0, q1);
+
+      if (dot(norm, q2) < 0)
+        std::swap(t[1], t[2]);
+    }
+  }
+
   //! Create the equivalent ISPC volume container.
   void TetrahedralVolume::createEquivalentISPC()
   {
@@ -216,27 +237,7 @@ namespace ospray {
 
     samplingStep = getParam1f("samplingStep", samplingStep);
 
-    // Make sure each tetrahedron is right-handed, and fix if necessary.
-    for (int i = 0; i < nTetrahedra; i++) {
-      auto &t        = tetrahedra[i];
-      const auto &p0 = vertices[t[0]];
-      const auto &p1 = vertices[t[1]];
-      const auto &p2 = vertices[t[2]];
-      const auto &p3 = vertices[t[3]];
-
-      auto q0 = p1 - p0;
-      auto q1 = p2 - p0;
-      auto q2 = p3 - p0;
-
-      auto norm = cross(q0, q1);
-
-      if (dot(norm, q2) < 0) {
-        int tmp1 = t[1];
-        int tmp2 = t[2];
-        t[1]     = tmp2;
-        t[2]     = tmp1;
-      }
-    }
+    verifyAllTetrahedraRightHanded();
 
     int64 *primID     = new int64[nTetrahedra];
     box4f *primBounds = new box4f[nTetrahedra];
