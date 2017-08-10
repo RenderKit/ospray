@@ -17,43 +17,41 @@
 #pragma once
 
 // ospray
-#include "ospray/math/vec.ih"
+#include "ospray/common/Model.ih"
 #include "ospray/common/Ray.ih"
 #include "ospray/geometry/Geometry.ih"
-#include "ospray/common/Model.ih"
+#include "ospray/math/vec.ih"
 // embree
 #include "embree2/rtcore.isph"
-#include "embree2/rtcore_scene.isph"
 #include "embree2/rtcore_geometry_user.isph"
-
+#include "embree2/rtcore_scene.isph"
 
 /*! BVH node for a MinMaxBVH2 */
-struct MinMaxBVH2Node {
-    vec3f bounds_lo;
-    float range_lo;
-    vec3f bounds_hi; // spatial bounds
-    float range_hi; // attribute range
-    int64 childRef;
+struct MinMaxBVH2Node
+{
+  vec3f bounds_lo;
+  float range_lo;
+  vec3f bounds_hi;  // spatial bounds
+  float range_hi;   // attribute range
+  int64 childRef;
 };
 
 /*! the base abstraction for a min/max BVH, not yet saying whether
   it's for volumes or isosurfaces, let alone for which type of
   primitive */
-struct MinMaxBVH2 {
-    int64           rootRef;
-    MinMaxBVH2Node *node;
-    int64          *primID;
+struct MinMaxBVH2
+{
+  int64 rootRef;
+  MinMaxBVH2Node *node;
+  int64 *primID;
 };
 
-inline bool pointInAABBTest(const uniform MinMaxBVH2Node &box, const vec3f &point)
+inline bool pointInAABBTest(const uniform MinMaxBVH2Node &box,
+                            const vec3f &point)
 {
-    return
-            point.x >= box.bounds_lo.x &&
-            point.y >= box.bounds_lo.y &&
-            point.z >= box.bounds_lo.z &&
-            point.x <= box.bounds_hi.x &&
-            point.y <= box.bounds_hi.y &&
-            point.z <= box.bounds_hi.z;
+  return point.x >= box.bounds_lo.x && point.y >= box.bounds_lo.y &&
+         point.z >= box.bounds_lo.z && point.x <= box.bounds_hi.x &&
+         point.y <= box.bounds_hi.y && point.z <= box.bounds_hi.z;
 }
 
 inline bool pointsInRangeAABBTest(const uniform MinMaxBVH2Node &box,
@@ -61,26 +59,32 @@ inline bool pointsInRangeAABBTest(const uniform MinMaxBVH2Node &box,
                                   const varying int begin,
                                   const varying int end)
 {
-    for (int i = begin; i < end; i++) {
-        if (points[i].x >= box.bounds_lo.x &&
-                points[i].y >= box.bounds_lo.y &&
-                points[i].z >= box.bounds_lo.z &&
-                points[i].x <= box.bounds_hi.x &&
-                points[i].y <= box.bounds_hi.y &&
-                points[i].z <= box.bounds_hi.z) {
-            return true;
-        }
+  for (int i = begin; i < end; i++) {
+    if (points[i].x >= box.bounds_lo.x && points[i].y >= box.bounds_lo.y &&
+        points[i].z >= box.bounds_lo.z && points[i].x <= box.bounds_hi.x &&
+        points[i].y <= box.bounds_hi.y && points[i].z <= box.bounds_hi.z) {
+      return true;
     }
-    return false;
+  }
+  return false;
 }
 
 inline bool anyPointInAABBTest(const uniform MinMaxBVH2Node &box,
                                const varying vec3f *uniform points,
                                const varying int numPoints)
 {
-    return pointsInRangeAABBTest(box, points, 0, numPoints);
+  return pointsInRangeAABBTest(box, points, 0, numPoints);
 }
 
-typedef bool (*intersectAndSamplePrim)(void * uniform userData, uniform uint64 id, float & result, vec3f samplePos, float range_lo, float range_hi);
+typedef bool (*intersectAndSamplePrim)(void *uniform userData,
+                                       uniform uint64 id,
+                                       float &result,
+                                       vec3f samplePos,
+                                       float range_lo,
+                                       float range_hi);
 
-void traverse(uniform MinMaxBVH2 & bvh, void * uniform userPtr, uniform intersectAndSamplePrim sampleFunc, float & result, const vec3f & samplePos);
+void traverse(uniform MinMaxBVH2 &bvh,
+              void *uniform userPtr,
+              uniform intersectAndSamplePrim sampleFunc,
+              float &result,
+              const vec3f &samplePos);

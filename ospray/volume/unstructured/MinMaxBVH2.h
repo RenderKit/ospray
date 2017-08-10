@@ -20,20 +20,23 @@
 #include "ospray/common/Data.h"
 #include "ospray/common/Model.h"
 
-namespace ospray
-{
+namespace ospray {
 
-/*! defines a (binary) BVH with some float min/max value per
-    node. The BVH itself does not specify the primitive type it is
-    used with, or what those min/max values represent. */
-struct MinMaxBVH {
+  /*! defines a (binary) BVH with some float min/max value per
+      node. The BVH itself does not specify the primitive type it is
+      used with, or what those min/max values represent. */
+  struct MinMaxBVH
+  {
     /*! a node in a MinMaxBVH: a (4D-)bounding box, plus a child/leaf refence */
-    struct Node : public box4f {
-        uint64 childRef;
+    struct Node : public box4f
+    {
+      uint64 childRef;
     };
-    void buildRec(const size_t nodeID, const box4f *const primBounds,
+    void buildRec(const size_t nodeID,
+                  const box4f *const primBounds,
                   int64 *tmp_primID,
-                  const size_t begin, const size_t end);
+                  const size_t begin,
+                  const size_t end);
     void build(/*! one bounding box per primitive. The attribute value
                             is in the 'w' component */
                const box4f *const primBounds,
@@ -49,14 +52,14 @@ struct MinMaxBVH {
     /*! to allow passing this pointer to ISCP: */
     const void *getNodePtr() const
     {
-        assert(!node.empty());
-        return &node[0];
+      assert(!node.empty());
+      return &node[0];
     };
     /*! to allow passing this pointer to ISCP: */
     const int64 *getItemListPtr() const
     {
-        assert(!primID.empty());
-        return &primID[0];
+      assert(!primID.empty());
+      return &primID[0];
     };
 
     void calcAndPrintOverlap() const;
@@ -71,9 +74,10 @@ struct MinMaxBVH {
     uint64 rootRef;
     const box4f &getBounds() const
     {
-        return overallBounds;
+      return overallBounds;
     }
-protected:
+
+   protected:
     box4f overallBounds;
-};
+  };
 }
