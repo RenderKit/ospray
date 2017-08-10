@@ -282,20 +282,6 @@ export void TetrahedralVolume_set(void *uniform _self,
   self->super.samplingRate = samplingRate;
   self->super.samplingStep = samplingStep;
 
-  uniform int nNiceVerts = _nVertices / programCount;
-  if (_nVertices % programCount != 0)
-    nNiceVerts = nNiceVerts + 1;
-
-  self->nNiceVerts    = nNiceVerts;
-  self->nice_vertices = uniform new varying vec3f[nNiceVerts];
-
-  for (uniform int i = 0; i < self->nNiceVerts; i++) {
-    varying int index = i * programCount + programIndex;
-    if (index < _nVertices) {
-      self->nice_vertices[i] = self->vertices[index];
-    }
-  }
-
   self->faceNormals = uniform new uniform TetFaceNormal[_nTetrahedra];
   self->tetBBoxes   = uniform new uniform box4f[_nTetrahedra];
 

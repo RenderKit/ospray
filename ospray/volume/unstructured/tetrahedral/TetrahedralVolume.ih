@@ -48,11 +48,5 @@ struct TetrahedralVolume
 
   uniform TetFaceNormal *uniform faceNormals;
 
-  // nice
-
-  uniform int nNiceVerts;
-  varying vec3f *uniform
-      nice_vertices;  // programCount (vector width -> 4,8,16)
-
   uniform MinMaxBVH2 bvh;
 };
