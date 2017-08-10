@@ -99,7 +99,7 @@ build-osx-clang:
 build-windows-msvc:
   <<: *build_job_shell
   script:
-    - call scripts\build_gitlab\win.bat "Visual Studio 12 2013 Win64" "v120"
+    - call scripts\build_gitlab\win.bat "Visual Studio 12 2013 Win64" "v120" "-D OSPRAY_MODULE_MPI=ON"
   tags:
     - msvc
     - win7
@@ -107,7 +107,7 @@ build-windows-msvc:
 build-windows-msvc14:
   <<: *build_job_shell
   script:
-    - call scripts\build_gitlab\win.bat "Visual Studio 14 2015 Win64" "v140"
+    - call scripts\build_gitlab\win.bat "Visual Studio 14 2015 Win64" "v140" "-D OSPRAY_MODULE_MPI=ON"
   tags:
     - msvc14
     - win7
@@ -123,7 +123,7 @@ build-windows-msvc15:
 build-windows-icc:
   <<: *build_job_shell
   script:
-    - call scripts\build_gitlab\win.bat "Visual Studio 12 2013 Win64" "Intel C++ Compiler 17.0"
+    - call scripts\build_gitlab\win.bat "Visual Studio 12 2013 Win64" "Intel C++ Compiler 17.0" "-D OSPRAY_MODULE_MPI=ON"
   tags:
     - icc
     - win7
