@@ -18,45 +18,45 @@
 
 #include "../../../common/OSPCommon.ih"
 #include "../../Volume.ih"
-#include "../common.ih"
 #include "../MinMaxBVH2.ih"
+#include "../common.ih"
 
 // Geometry intersection acceleration structure (BVH).
 
-struct TetFaceNormal {
-    uniform vec3f normals[4];
+struct TetFaceNormal
+{
+  uniform vec3f normals[4];
 };
 
-//std::vector<BBox> tetBBoxes;
+// std::vector<BBox> tetBBoxes;
 
-struct TetrahedralVolume {
+struct TetrahedralVolume
+{
+  //! Fields common to all Volume subtypes (must be the first entry of this
+  //! struct).
+  Volume super;
 
-    //! Fields common to all Volume subtypes (must be the first entry of this struct).
-    Volume super;
+  uniform int nVertices;
+  const vec3f *uniform vertices;
 
-    uniform int nVertices;
-    const vec3f * uniform vertices;
+  uniform int nTetrahedra;
+  const vec4i *uniform tetrahedra;  // indices into vertices array.
 
-    uniform int nTetrahedra;
-    const vec4i * uniform tetrahedra;// indices into vertices array.
+  const float *uniform field;  // Attribute value at each vertex.
 
-    const float * uniform field;// Attribute value at each vertex.
+  uniform box4f *uniform tetBBoxes;
 
-    uniform box4f * uniform tetBBoxes;
+  uniform TetFaceNormal *uniform faceNormals;
 
-    uniform TetFaceNormal * uniform faceNormals;
+  // nice
 
-    // nice
+  uniform int nNiceVerts;
+  varying vec3f *uniform
+      nice_vertices;  // programCount (vector width -> 4,8,16)
 
-    uniform int nNiceVerts;
-    varying vec3f * uniform nice_vertices;// programCount (vector width -> 4,8,16)
+  uniform MinMaxBVH2 bvh;
 
-
-    uniform MinMaxBVH2 bvh;
-
-    RTCDevice embree_device;
-    RTCScene embree_scene;
-    uniform unsigned int geomID;
+  RTCDevice embree_device;
+  RTCScene embree_scene;
+  uniform unsigned int geomID;
 };
-
-

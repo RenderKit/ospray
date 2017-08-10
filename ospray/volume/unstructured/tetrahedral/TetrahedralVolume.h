@@ -27,159 +27,190 @@
 
 #include "../MinMaxBVH2.h"
 
-void embree_error_handler( const RTCError code, const char* str ) {
-    printf( "Embree: " );
-    switch( code ) {
-    case RTC_UNKNOWN_ERROR: printf( "RTC_UNKNOWN_ERROR" ); break;
-    case RTC_INVALID_ARGUMENT: printf( "RTC_INVALID_ARGUMENT" ); break;
-    case RTC_INVALID_OPERATION: printf( "RTC_INVALID_OPERATION" ); break;
-    case RTC_OUT_OF_MEMORY: printf( "RTC_OUT_OF_MEMORY" ); break;
-    case RTC_UNSUPPORTED_CPU: printf( "RTC_UNSUPPORTED_CPU" ); break;
-    case RTC_CANCELLED: printf( "RTC_CANCELLED" ); break;
-    default: printf( "invalid error code" ); break;
-    }
-    if( str ) {
-        printf( " (" );
-        while( *str ) putchar( *str++ );
-        printf( ")\n" );
-    }
-    //exit( 1 );
+void embree_error_handler(const RTCError code, const char *str)
+{
+  printf("Embree: ");
+  switch (code) {
+  case RTC_UNKNOWN_ERROR:
+    printf("RTC_UNKNOWN_ERROR");
+    break;
+  case RTC_INVALID_ARGUMENT:
+    printf("RTC_INVALID_ARGUMENT");
+    break;
+  case RTC_INVALID_OPERATION:
+    printf("RTC_INVALID_OPERATION");
+    break;
+  case RTC_OUT_OF_MEMORY:
+    printf("RTC_OUT_OF_MEMORY");
+    break;
+  case RTC_UNSUPPORTED_CPU:
+    printf("RTC_UNSUPPORTED_CPU");
+    break;
+  case RTC_CANCELLED:
+    printf("RTC_CANCELLED");
+    break;
+  default:
+    printf("invalid error code");
+    break;
+  }
+  if (str) {
+    printf(" (");
+    while (*str)
+      putchar(*str++);
+    printf(")\n");
+  }
+  // exit( 1 );
 }
 
-namespace ospray
-{
-class TetrahedralVolume : public Volume
-{
-public:
+namespace ospray {
+  class TetrahedralVolume : public Volume
+  {
+   public:
+    class Point
+    {
+     public:
+      float x, y, z;
 
-    class Point {
-    public:
-        float x,y,z;
+      Point() : x(0), y(0), z(0)
+      {
+      }
 
-        Point () :
-            x(0), y(0), z(0)
-        {}
+      Point(float _x, float _y, float _z) : x(_x), y(_y), z(_z)
+      {
+      }
 
-        Point (float _x, float _y, float _z) :
-            x(_x), y(_y), z(_z)
-        {}
-
-        float & operator[] (int index)
-        {
-            if (index == 0) {
-                return x;
-            }
-
-            if (index == 1) {
-                return y;
-            }
-
-            if (index == 2) {
-                return z;
-            }
-
-            throw std::runtime_error("Point operator[] index out of range.");
+      float &operator[](int index)
+      {
+        if (index == 0) {
+          return x;
         }
+
+        if (index == 1) {
+          return y;
+        }
+
+        if (index == 2) {
+          return z;
+        }
+
+        throw std::runtime_error("Point operator[] index out of range.");
+      }
     };
 
-    static void Cross (const Point & A, const Point & B, Point & C)
+    static void Cross(const Point &A, const Point &B, Point &C)
     {
-        // A cross B
-        C.x = A.y * B.z - A.z * B.y;
-        C.y = A.z * B.x - A.x * B.z;
-        C.z = A.x * B.y - A.y * B.x;
+      // A cross B
+      C.x = A.y * B.z - A.z * B.y;
+      C.y = A.z * B.x - A.x * B.z;
+      C.z = A.x * B.y - A.y * B.x;
     }
 
-    static void Sub (const Point & A, const Point & B, Point & C)
+    static void Sub(const Point &A, const Point &B, Point &C)
     {
-        // A - B
-        C.x = A.x - B.x;
-        C.y = A.y - B.y;
-        C.z = A.z - B.z;
+      // A - B
+      C.x = A.x - B.x;
+      C.y = A.y - B.y;
+      C.z = A.z - B.z;
     }
 
-    static float Dot (const Point & A, const Point & B)
+    static float Dot(const Point &A, const Point &B)
     {
-        return (A.x*B.x + A.y*B.y + A.z*B.z);
+      return (A.x * B.x + A.y * B.y + A.z * B.z);
     }
 
-    static void Normalize (Point & A)
+    static void Normalize(Point &A)
     {
-        float length = sqrtf(Dot(A,A));
-        A.x /= length;
-        A.y /= length;
-        A.z /= length;
+      float length = sqrtf(Dot(A, A));
+      A.x /= length;
+      A.y /= length;
+      A.z /= length;
     }
 
-    class Int4 {
-    public:
-        int i,j,k,w;
+    class Int4
+    {
+     public:
+      int i, j, k, w;
 
-        Int4 () :
-            i(0), j(0), k(0), w(0)
-        {}
+      Int4() : i(0), j(0), k(0), w(0)
+      {
+      }
 
-        Int4 (int _i, int _j, int _k, int _w) :
-            i(_i), j(_j), k(_k), w(_w)
-        {}
+      Int4(int _i, int _j, int _k, int _w) : i(_i), j(_j), k(_k), w(_w)
+      {
+      }
 
-        int & operator[] (int index)
-        {
-            if (index == 0) {
-                return i;
-            }
-
-            if (index == 1) {
-                return j;
-            }
-
-            if (index == 2) {
-                return k;
-            }
-
-            if (index == 3) {
-                return w;
-            }
-
-            throw std::runtime_error("Int4 operator[] index out of range.");
+      int &operator[](int index)
+      {
+        if (index == 0) {
+          return i;
         }
+
+        if (index == 1) {
+          return j;
+        }
+
+        if (index == 2) {
+          return k;
+        }
+
+        if (index == 3) {
+          return w;
+        }
+
+        throw std::runtime_error("Int4 operator[] index out of range.");
+      }
     };
 
-    class BBox {
-    public:
-        float min_x, min_y, min_z, max_x, max_y, max_z;
+    class BBox
+    {
+     public:
+      float min_x, min_y, min_z, max_x, max_y, max_z;
 
-        BBox () :
-            min_x(0), min_y(0), min_z(0), max_x(0), max_y(0), max_z(0)
-        {}
+      BBox() : min_x(0), min_y(0), min_z(0), max_x(0), max_y(0), max_z(0)
+      {
+      }
 
-        BBox (float _min_x, float _min_y, float _min_z, float _max_x, float _max_y, float _max_z) :
-            min_x(_min_x),
+      BBox(float _min_x,
+           float _min_y,
+           float _min_z,
+           float _max_x,
+           float _max_y,
+           float _max_z)
+          : min_x(_min_x),
             min_y(_min_y),
             min_z(_min_z),
             max_x(_max_x),
             max_y(_max_y),
             max_z(_max_z)
-        {}
+      {
+      }
 
-        bool Contains(const Point & p) {
-            if (p.x < min_x) return false;
-            if (p.x > max_x) return false;
+      bool Contains(const Point &p)
+      {
+        if (p.x < min_x)
+          return false;
+        if (p.x > max_x)
+          return false;
 
-            if (p.y < min_y) return false;
-            if (p.y > max_y) return false;
+        if (p.y < min_y)
+          return false;
+        if (p.y > max_y)
+          return false;
 
-            if (p.z < min_z) return false;
-            if (p.z > max_z) return false;
+        if (p.z < min_z)
+          return false;
+        if (p.z > max_z)
+          return false;
 
-            return true;
-        }
+        return true;
+      }
     };
 
-    class TetFaceNormal {
-    public:
-        Point normals[4];
-        Point corners[4];
+    class TetFaceNormal
+    {
+     public:
+      Point normals[4];
+      Point corners[4];
     };
 
     std::vector<BBox> tetBBoxes;
@@ -190,7 +221,7 @@ public:
     int nTetrahedra;
     std::vector<Int4> tetrahedra;
 
-    std::vector<float> field;// Attribute value at each vertex.
+    std::vector<float> field;  // Attribute value at each vertex.
 
     box3f bbox;
 
@@ -205,42 +236,48 @@ public:
 
     bool finished;
 
-    TetrahedralVolume() :
-        finished(false)
+    TetrahedralVolume() : finished(false)
     {
-        embree_device = rtcNewDevice( NULL );
-        rtcDeviceSetErrorFunction( embree_device, embree_error_handler );
-        //embree_scene = rtcDeviceNewScene(embree_device, RTC_SCENE_STATIC | RTC_SCENE_INCOHERENT | RTC_SCENE_HIGH_QUALITY | RTC_SCENE_ROBUST, RTC_INTERSECT1);
+      embree_device = rtcNewDevice(NULL);
+      rtcDeviceSetErrorFunction(embree_device, embree_error_handler);
+      // embree_scene = rtcDeviceNewScene(embree_device, RTC_SCENE_STATIC |
+      // RTC_SCENE_INCOHERENT | RTC_SCENE_HIGH_QUALITY | RTC_SCENE_ROBUST,
+      // RTC_INTERSECT1);
 
-        embree_scene = rtcDeviceNewScene( embree_device, RTC_SCENE_STATIC | RTC_SCENE_INCOHERENT, RTC_INTERSECT1 );
+      embree_scene = rtcDeviceNewScene(embree_device,
+                                       RTC_SCENE_STATIC | RTC_SCENE_INCOHERENT,
+                                       RTC_INTERSECT1);
     }
 
-    void addTetBBox (int id) {
-        Int4 & t = tetrahedra[id];
-        BBox & tet_bbox = tetBBoxes[id];
-        float & x0 = tet_bbox.min_x,
-                & y0 = tet_bbox.min_y,
-                & z0 = tet_bbox.min_z,
-                & x1 = tet_bbox.max_x,
-                & y1 = tet_bbox.max_y,
-                & z1 = tet_bbox.max_z;
-        for (int i = 0; i < 4; i++) {
-            const Point & p = vertices[t[i]];
-            if (i == 0) {
-                x0 = x1 = p.x;
-                y0 = y1 = p.y;
-                z0 = z1 = p.z;
-            } else {
-                if(p.x < x0) x0 = p.x;
-                if(p.x > x1) x1 = p.x;
+    void addTetBBox(int id)
+    {
+      Int4 &t        = tetrahedra[id];
+      BBox &tet_bbox = tetBBoxes[id];
+      float &x0 = tet_bbox.min_x, &y0 = tet_bbox.min_y, &z0 = tet_bbox.min_z,
+            &x1 = tet_bbox.max_x, &y1 = tet_bbox.max_y, &z1 = tet_bbox.max_z;
+      for (int i = 0; i < 4; i++) {
+        const Point &p = vertices[t[i]];
+        if (i == 0) {
+          x0 = x1 = p.x;
+          y0 = y1 = p.y;
+          z0 = z1 = p.z;
+        } else {
+          if (p.x < x0)
+            x0 = p.x;
+          if (p.x > x1)
+            x1 = p.x;
 
-                if(p.y < y0) y0 = p.y;
-                if(p.y > y1) y1 = p.y;
+          if (p.y < y0)
+            y0 = p.y;
+          if (p.y > y1)
+            y1 = p.y;
 
-                if(p.z < z0) z0 = p.z;
-                if(p.z > z1) z1 = p.z;
-            }
+          if (p.z < z0)
+            z0 = p.z;
+          if (p.z > z1)
+            z1 = p.z;
         }
+      }
     }
 
     void addTetrahedralMeshToScene(RTCScene scene);
@@ -266,27 +303,32 @@ public:
 
     float sample(float world_x, float world_y, float world_z);
 
-    void getTetBBox(size_t id, box4f & bbox);
+    void getTetBBox(size_t id, box4f &bbox);
 
-protected:
-
+   protected:
     //! Create the equivalent ISPC volume container.
     virtual void createEquivalentISPC();
 
     //! Complete volume initialization (only on first commit).
     virtual void finish() override;
-};
+  };
 
-} // ::ospray
+}  // ::ospray
 
-extern "C" float callSample(ospray::TetrahedralVolume *volume, float world_x, float world_y, float world_z) {
-    return volume->sample(world_x,world_y,world_z);
+extern "C" float callSample(ospray::TetrahedralVolume *volume,
+                            float world_x,
+                            float world_y,
+                            float world_z)
+{
+  return volume->sample(world_x, world_y, world_z);
 }
 
-void tetBoundsFunc(void *userData, size_t id, RTCBounds& bounds_o);
-void tetIntersectFunc(void *userData, RTCRay & ray, size_t id);
-void tetOccludedFunc(void *userData, RTCRay & ray, size_t id);
+void tetBoundsFunc(void *userData, size_t id, RTCBounds &bounds_o);
+void tetIntersectFunc(void *userData, RTCRay &ray, size_t id);
+void tetOccludedFunc(void *userData, RTCRay &ray, size_t id);
 
-void tetBoundsFunc3(void *userData, void* geomUserPtr, size_t id, size_t timeStep, RTCBounds& bounds_o);
-
-
+void tetBoundsFunc3(void *userData,
+                    void *geomUserPtr,
+                    size_t id,
+                    size_t timeStep,
+                    RTCBounds &bounds_o);

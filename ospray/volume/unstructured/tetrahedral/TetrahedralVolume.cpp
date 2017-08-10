@@ -14,14 +14,13 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "../../../common/Data.h"
 #include "TetrahedralVolume.h"
+#include "../../../common/Data.h"
 
 // auto-generated .h file.
 #include "TetrahedralVolume_ispc.h"
 
-namespace ospray
-{
+namespace ospray {
 
   std::string TetrahedralVolume::toString() const
   {
@@ -45,12 +44,11 @@ namespace ospray
 
     Volume::commit();
 
-    rtcCommit( embree_scene );
+    rtcCommit(embree_scene);
   }
 
   void TetrahedralVolume::finish()
   {
-
     // Volume finish actions.
     Volume::finish();
   }
@@ -66,44 +64,45 @@ namespace ospray
                                          const vec3f *worldCoordinates,
                                          const size_t &count)
   {
-
     std::cout << "cpp TetrahedralVolume::computeSamples\n";
   }
 
-  void TetrahedralVolume::getTetBBox(size_t id, box4f & bbox)
+  void TetrahedralVolume::getTetBBox(size_t id, box4f &bbox)
   {
-    Int4 t = tetrahedra[id];// The 4 corner indices of the tetrahedron.
+    Int4 t = tetrahedra[id];  // The 4 corner indices of the tetrahedron.
 
-    float
-    & x0 = bbox.lower.x,
-    & y0 = bbox.lower.y,
-    & z0 = bbox.lower.z,
-    & x1 = bbox.upper.x,
-    & y1 = bbox.upper.y,
-    & z1 = bbox.upper.z,
-    & val0 = bbox.lower.w,
-    & val1 = bbox.upper.w;
+    float &x0 = bbox.lower.x, &y0 = bbox.lower.y, &z0 = bbox.lower.z,
+          &x1 = bbox.upper.x, &y1 = bbox.upper.y, &z1 = bbox.upper.z,
+          &val0 = bbox.lower.w, &val1 = bbox.upper.w;
 
     for (int i = 0; i < 4; i++) {
       const Point &p = vertices[t[i]];
-      float val = field[t[i]];
+      float val      = field[t[i]];
       if (i == 0) {
         x0 = x1 = p.x;
         y0 = y1 = p.y;
         z0 = z1 = p.z;
         val0 = val1 = val;
       } else {
-        if (p.x < x0) x0 = p.x;
-        if (p.x > x1) x1 = p.x;
+        if (p.x < x0)
+          x0 = p.x;
+        if (p.x > x1)
+          x1 = p.x;
 
-        if (p.y < y0) y0 = p.y;
-        if (p.y > y1) y1 = p.y;
+        if (p.y < y0)
+          y0 = p.y;
+        if (p.y > y1)
+          y1 = p.y;
 
-        if (p.z < z0) z0 = p.z;
-        if (p.z > z1) z1 = p.z;
+        if (p.z < z0)
+          z0 = p.z;
+        if (p.z > z1)
+          z1 = p.z;
 
-        if (val < val0) val0 = val;
-        if (val > val1) val1 = val;
+        if (val < val0)
+          val0 = val;
+        if (val > val1)
+          val1 = val;
       }
     }
   }
@@ -113,30 +112,31 @@ namespace ospray
   {
     // Create an ISPC SharedStructuredVolume object and assign
     // type-specific function pointers.
-    float samplingRate = getParam1f("samplingRate",1);
+    float samplingRate = getParam1f("samplingRate", 1);
 
-    Data *verticesData = getParamData("vertices", nullptr);
+    Data *verticesData   = getParamData("vertices", nullptr);
     Data *tetrahedraData = getParamData("tetrahedra", nullptr);
-    Data *fieldData = getParamData("field", nullptr);
+    Data *fieldData      = getParamData("field", nullptr);
 
     if (!verticesData || !tetrahedraData || !fieldData) {
-      throw std::runtime_error("#osp: missing correct data arrays in "
-                               " TetrahedralVolume!");
+      throw std::runtime_error(
+          "#osp: missing correct data arrays in "
+          " TetrahedralVolume!");
     }
 
-    nVertices = verticesData->size();
+    nVertices   = verticesData->size();
     nTetrahedra = tetrahedraData->size();
 
     vec3f *verts_data = nullptr;
-    vec4i *tets_data = nullptr;
-    float *vals_data = nullptr;
+    vec4i *tets_data  = nullptr;
+    float *vals_data  = nullptr;
 
     if (verticesData != nullptr) {
       vertices.resize(nVertices);
       verts_data = (vec3f *)verticesData->data;
-      for (int i=0; i<nVertices; i++) {
-        vec3f & v = verts_data[i];
-        Point & p = vertices[i];
+      for (int i = 0; i < nVertices; i++) {
+        vec3f &v = verts_data[i];
+        Point &p = vertices[i];
 
         p.x = v.x;
         p.y = v.y;
@@ -146,12 +146,12 @@ namespace ospray
       nVertices = 0;
     }
 
-    if (tetrahedraData != nullptr ) {
+    if (tetrahedraData != nullptr) {
       tets_data = (vec4i *)tetrahedraData->data;
       tetrahedra.resize(nTetrahedra);
-      for (int i=0; i<nTetrahedra; i++) {
-        vec4i & v = tets_data[i];
-        Int4 & t = tetrahedra[i];
+      for (int i = 0; i < nTetrahedra; i++) {
+        vec4i &v = tets_data[i];
+        Int4 &t  = tetrahedra[i];
 
         t.i = v[0];
         t.j = v[1];
@@ -166,12 +166,12 @@ namespace ospray
     if (fieldData != nullptr) {
       field.resize(nVertices);
       vals_data = (float *)fieldData->data;
-      for (int i=0; i<nVertices; i++) {
+      for (int i = 0; i < nVertices; i++) {
         field[i] = vals_data[i];
 
         float val = vals_data[i];
 
-        if (i==0) {
+        if (i == 0) {
           min_val = max_val = val;
         } else {
           if (val < min_val) {
@@ -184,35 +184,35 @@ namespace ospray
       }
     }
 
-    float min_x=0, min_y=0, min_z=0, max_x=0, max_y=0, max_z=0;
-    for (int i=0; i<nVertices; i++) {
+    float min_x = 0, min_y = 0, min_z = 0, max_x = 0, max_y = 0, max_z = 0;
+    for (int i = 0; i < nVertices; i++) {
       const Point &v = vertices[i];
-      float x = v.x;
-      float y = v.y;
-      float z = v.z;
+      float x        = v.x;
+      float y        = v.y;
+      float z        = v.z;
       if (i == 0) {
         min_x = max_x = x;
         min_y = max_y = y;
         min_z = max_z = z;
       } else {
-        if(x < min_x) {
+        if (x < min_x) {
           min_x = x;
         }
-        if(x > max_x) {
+        if (x > max_x) {
           max_x = x;
         }
 
-        if(y < min_y) {
+        if (y < min_y) {
           min_y = y;
         }
-        if(y > max_y) {
+        if (y > max_y) {
           max_y = y;
         }
 
-        if(z < min_z) {
+        if (z < min_z) {
           min_z = z;
         }
-        if(z > max_z) {
+        if (z > max_z) {
           max_z = z;
         }
       }
@@ -222,9 +222,9 @@ namespace ospray
     bbox.upper = vec3f(max_x, max_y, max_z);
 
     float samplingStep = 1;
-    float dx = max_x - min_x;
-    float dy = max_y - min_y;
-    float dz = max_z - min_z;
+    float dx           = max_x - min_x;
+    float dy           = max_y - min_y;
+    float dz           = max_z - min_z;
     if (dx < dy && dx < dz && dx != 0) {
       samplingStep = dx * 0.01f;
     } else if (dy < dx && dy < dz && dy != 0) {
@@ -237,11 +237,11 @@ namespace ospray
 
     // Make sure each tetrahedron is right-handed, and fix if necessary.
     for (int i = 0; i < nTetrahedra; i++) {
-      Int4 & t = tetrahedra[i];
-      const Point & p0 = vertices[t[0]];
-      const Point & p1 = vertices[t[1]];
-      const Point & p2 = vertices[t[2]];
-      const Point & p3 = vertices[t[3]];
+      Int4 &t         = tetrahedra[i];
+      const Point &p0 = vertices[t[0]];
+      const Point &p1 = vertices[t[1]];
+      const Point &p2 = vertices[t[2]];
+      const Point &p3 = vertices[t[3]];
 
       Point q0, q1, q2;
       Sub(p1, p0, q0);
@@ -251,30 +251,30 @@ namespace ospray
       Point norm;
       Cross(q0, q1, norm);
 
-      if (Dot(norm,q2) < 0) {
+      if (Dot(norm, q2) < 0) {
         int tmp1 = t[1];
         int tmp2 = t[2];
-        t[1] = tmp2;
-        t[2] = tmp1;
+        t[1]     = tmp2;
+        t[2]     = tmp1;
       }
     }
 
     faceNormals.resize(nTetrahedra);
 
     // Calculate outward normal of all faces.
-    for (int i=0; i<nTetrahedra; i++) {
-      Int4 &t = tetrahedra[i];
-      TetFaceNormal & faceNormal = faceNormals[i];
+    for (int i = 0; i < nTetrahedra; i++) {
+      Int4 &t                   = tetrahedra[i];
+      TetFaceNormal &faceNormal = faceNormals[i];
 
-      int faces[4][3] = {{1,2,3}, {2,0,3}, {3,0,1}, {0,2,1}};
-      for (int j=0; j<4; j++) {
+      int faces[4][3] = {{1, 2, 3}, {2, 0, 3}, {3, 0, 1}, {0, 2, 1}};
+      for (int j = 0; j < 4; j++) {
         int t0 = t[faces[j][0]];
         int t1 = t[faces[j][1]];
         int t2 = t[faces[j][2]];
 
-        const Point & p0 = vertices[t0];
-        const Point & p1 = vertices[t1];
-        const Point & p2 = vertices[t2];
+        const Point &p0 = vertices[t0];
+        const Point &p1 = vertices[t1];
+        const Point &p2 = vertices[t2];
 
         Point q0, q1;
         Sub(p1, p0, q0);
@@ -290,7 +290,7 @@ namespace ospray
 
     addTetrahedralMeshToScene(embree_scene);
 
-    int64 *primID = new int64[nTetrahedra];
+    int64 *primID     = new int64[nTetrahedra];
     box4f *primBounds = new box4f[nTetrahedra];
     for (int i = 0; i < nTetrahedra; i++) {
       primID[i] = i;
@@ -311,7 +311,7 @@ namespace ospray
                           (const float *)vals_data,
                           bvh.rootRef,
                           bvh.getNodePtr(),
-                          (int64_t*)bvh.getItemListPtr(),
+                          (int64_t *)bvh.getItemListPtr(),
                           samplingRate,
                           samplingStep);
 
@@ -321,23 +321,21 @@ namespace ospray
     std::cout << "samplingStep = " << samplingStep << std::endl;
   }
 
-  float TetrahedralVolume::sample(float world_x, float world_y, float world_z) {
-
+  float TetrahedralVolume::sample(float world_x, float world_y, float world_z)
+  {
     Point world(world_x, world_y, world_z);
 
-    //if(!bbox.contains(world)) {
+    // if(!bbox.contains(world)) {
     //    return 0;
     //}
 
     bool found = false;
-    Point p0,p1,p2,p3,norm0,norm1,norm2,norm3;
-    float d0,d1,d2,d3;
+    Point p0, p1, p2, p3, norm0, norm1, norm2, norm3;
+    float d0, d1, d2, d3;
     Int4 t;
     TetFaceNormal faceNormal;
 
-
-
-    if(1) {
+    if (1) {
       // Accelerator - get a list of possible tetrahedra.
       RTCRay ray;
       ray.dir[0] = 1;
@@ -346,13 +344,13 @@ namespace ospray
       ray.org[0] = world_x;
       ray.org[1] = world_y;
       ray.org[2] = world_z;
-      ray.tnear = 0;
-      ray.tfar = 1.0e8;
+      ray.tnear  = 0;
+      ray.tfar   = 1.0e8;
       ray.primID = -1;
       ray.geomID = -1;
-      rtcIntersect(embree_scene,ray);
+      rtcIntersect(embree_scene, ray);
 
-      if(ray.primID < nTetrahedra ) {
+      if (ray.primID < nTetrahedra) {
         int i = ray.primID;
 
         ospray::TetrahedralVolume::BBox tet_bbox = tetBBoxes[i];
@@ -360,20 +358,20 @@ namespace ospray
           std::cout << "Error, embree did not actually find an intersection!\n";
         }
 
-        t = tetrahedra[i];
+        t  = tetrahedra[i];
         p0 = vertices[t[0]];
         p1 = vertices[t[1]];
         p2 = vertices[t[2]];
         p3 = vertices[t[3]];
 
         faceNormal = faceNormals[i];
-        norm0 = faceNormal.normals[0];
-        norm1 = faceNormal.normals[1];
-        norm2 = faceNormal.normals[2];
-        norm3 = faceNormal.normals[3];
+        norm0      = faceNormal.normals[0];
+        norm1      = faceNormal.normals[1];
+        norm2      = faceNormal.normals[2];
+        norm3      = faceNormal.normals[3];
 
         // Distance from the world point to the faces.
-        Point q0,q1,q2,q3;
+        Point q0, q1, q2, q3;
         Sub(p1, world, q0);
         Sub(p2, world, q1);
         Sub(p3, world, q2);
@@ -385,14 +383,15 @@ namespace ospray
         d3 = Dot(norm3, q3);
 
         float smallEps = 1.0e-8;
-        if(d0 > -smallEps && d1 > -smallEps && d2 > -smallEps && d3 > -smallEps) {
+        if (d0 > -smallEps && d1 > -smallEps && d2 > -smallEps &&
+            d3 > -smallEps) {
           found = true;
         } else {
           std::cout << "Error, embree did not actually find an intersection!\n";
         }
       }
     } else {
-      for(int i=0; i<nTetrahedra && !found; i++) {
+      for (int i = 0; i < nTetrahedra && !found; i++) {
         t = tetrahedra[i];
 
         p0 = vertices[t[0]];
@@ -401,13 +400,13 @@ namespace ospray
         p3 = vertices[t[3]];
 
         faceNormal = faceNormals[i];
-        norm0 = faceNormal.normals[0];
-        norm1 = faceNormal.normals[1];
-        norm2 = faceNormal.normals[2];
-        norm3 = faceNormal.normals[3];
+        norm0      = faceNormal.normals[0];
+        norm1      = faceNormal.normals[1];
+        norm2      = faceNormal.normals[2];
+        norm3      = faceNormal.normals[3];
 
         // Distance from the world point to the faces.
-        Point q0,q1,q2,q3;
+        Point q0, q1, q2, q3;
         Sub(p1, world, q0);
         Sub(p2, world, q1);
         Sub(p3, world, q2);
@@ -418,20 +417,21 @@ namespace ospray
         d2 = Dot(norm2, q2);
         d3 = Dot(norm3, q3);
 
-        if(d0 > 0 && d1 > 0 && d2 > 0 && d3 > 0) {
+        if (d0 > 0 && d1 > 0 && d2 > 0 && d3 > 0) {
           found = true;
         }
       }
     }
 
-    if(!found) {
+    if (!found) {
       return 0;
     }
 
-    // Interpolate the field value at the world position using the values at the corners.
+    // Interpolate the field value at the world position using the values at the
+    // corners.
 
     // Distance of tetrahedron corners to their opposite faces.
-    Point q0,q1,q2,q3;
+    Point q0, q1, q2, q3;
     Sub(p1, p0, q0);
     Sub(p2, p1, q1);
     Sub(p3, p2, q2);
@@ -442,10 +442,10 @@ namespace ospray
     float h3 = Dot(norm3, q3);
 
     // Local coordinates = ratio of distances.
-    float z0 = d0/h0;
-    float z1 = d1/h1;
-    float z2 = d2/h2;
-    float z3 = d3/h3;
+    float z0 = d0 / h0;
+    float z1 = d1 / h1;
+    float z2 = d2 / h2;
+    float z3 = d3 / h3;
 
     // The sum of the location coordinates should add up to approximately 1.
     float z_total = z0 + z1 + z2 + z3;
@@ -458,33 +458,34 @@ namespace ospray
     float v3 = field[t[3]];
 
     // Interpolated field/attribute value at the world position.
-    return (z0*v0 + z1*v1 + z2*v2 + z3*v3);
+    return (z0 * v0 + z1 * v1 + z2 * v2 + z3 * v3);
   }
 
-  void TetrahedralVolume::addTetrahedralMeshToScene (RTCScene scene)
+  void TetrahedralVolume::addTetrahedralMeshToScene(RTCScene scene)
   {
     tetBBoxes.resize(nTetrahedra);
-    for(int i=0; i<nTetrahedra; i++) {
+    for (int i = 0; i < nTetrahedra; i++) {
       addTetBBox(i);
     }
 
-    //int geomID = rtcNewUserGeometry3(scene, RTC_GEOMETRY_STATIC, 1, 1);
+    // int geomID = rtcNewUserGeometry3(scene, RTC_GEOMETRY_STATIC, 1, 1);
     geomID = rtcNewUserGeometry(scene, nTetrahedra);
 
     rtcSetUserData(scene, geomID, this);
     rtcSetBoundsFunction(scene, geomID, (RTCBoundsFunc)&tetBoundsFunc);
-    //rtcSetBoundsFunction3(scene, geomID, tetBoundsFunc3, this);
+    // rtcSetBoundsFunction3(scene, geomID, tetBoundsFunc3, this);
     rtcSetIntersectFunction(scene, geomID, tetIntersectFunc);
     rtcSetOccludedFunction(scene, geomID, tetOccludedFunc);
   }
 
   OSP_REGISTER_VOLUME(TetrahedralVolume, tetrahedral_volume);
 
-} // ::ospray
+}  // ::ospray
 
-void tetBoundsFunc (void *userData, size_t id, RTCBounds & bounds_o) {
-  ospray::TetrahedralVolume * volume = (ospray::TetrahedralVolume *)userData;
-  const ospray::TetrahedralVolume::BBox & bbox = volume->tetBBoxes[id];
+void tetBoundsFunc(void *userData, size_t id, RTCBounds &bounds_o)
+{
+  ospray::TetrahedralVolume *volume = (ospray::TetrahedralVolume *)userData;
+  const ospray::TetrahedralVolume::BBox &bbox = volume->tetBBoxes[id];
 
   bounds_o.lower_x = bbox.min_x;
   bounds_o.lower_y = bbox.min_y;
@@ -494,8 +495,12 @@ void tetBoundsFunc (void *userData, size_t id, RTCBounds & bounds_o) {
   bounds_o.upper_z = bbox.max_z;
 }
 
-void tetBoundsFunc3(void *userData, size_t id, size_t timeStep, RTCBounds & bounds_o) {
-  ospray::TetrahedralVolume * volume = (ospray::TetrahedralVolume *)userData;
+void tetBoundsFunc3(void *userData,
+                    size_t id,
+                    size_t timeStep,
+                    RTCBounds &bounds_o)
+{
+  ospray::TetrahedralVolume *volume = (ospray::TetrahedralVolume *)userData;
   /*
    ospray::vec4i &t = volume->tetrahedra[id];
    ospray::vec3f p0 = volume->vertices[t[0]];
@@ -518,14 +523,16 @@ void tetBoundsFunc3(void *userData, size_t id, size_t timeStep, RTCBounds & boun
    */
 }
 
-void tetIntersectFunc(void *userData, RTCRay & ray, size_t id) {
-  ospray::TetrahedralVolume * volume = (ospray::TetrahedralVolume *)userData;
-  ospray::TetrahedralVolume::Point p0,p1,p2,p3,norm0,norm1,norm2,norm3;
-  float d0,d1,d2,d3;
+void tetIntersectFunc(void *userData, RTCRay &ray, size_t id)
+{
+  ospray::TetrahedralVolume *volume = (ospray::TetrahedralVolume *)userData;
+  ospray::TetrahedralVolume::Point p0, p1, p2, p3, norm0, norm1, norm2, norm3;
+  float d0, d1, d2, d3;
 
-  ospray::TetrahedralVolume::Point world(ray.org[0],ray.org[1],ray.org[2]);
-  ospray::TetrahedralVolume::Int4 & t = volume->tetrahedra[id];
-  ospray::TetrahedralVolume::TetFaceNormal & faceNormal = volume->faceNormals[id];
+  ospray::TetrahedralVolume::Point world(ray.org[0], ray.org[1], ray.org[2]);
+  ospray::TetrahedralVolume::Int4 &t = volume->tetrahedra[id];
+  ospray::TetrahedralVolume::TetFaceNormal &faceNormal =
+      volume->faceNormals[id];
 
   ospray::TetrahedralVolume::BBox bbox = volume->tetBBoxes[id];
   if (!bbox.Contains(world)) {
@@ -543,7 +550,7 @@ void tetIntersectFunc(void *userData, RTCRay & ray, size_t id) {
   norm3 = faceNormal.normals[3];
 
   // Distance from the world point to the faces.
-  ospray::TetrahedralVolume::Point q0,q1,q2,q3;
+  ospray::TetrahedralVolume::Point q0, q1, q2, q3;
   ospray::TetrahedralVolume::Sub(p1, world, q0);
   ospray::TetrahedralVolume::Sub(p2, world, q1);
   ospray::TetrahedralVolume::Sub(p3, world, q2);
@@ -561,7 +568,7 @@ void tetIntersectFunc(void *userData, RTCRay & ray, size_t id) {
   // std::cout << "tetIntersectFunc\n";
 }
 
-void tetOccludedFunc(void* userData, RTCRay& ray, size_t item) {
-
+void tetOccludedFunc(void *userData, RTCRay &ray, size_t item)
+{
   std::cout << "tetOccludedFunc\n";
 }
