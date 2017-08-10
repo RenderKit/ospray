@@ -20,5 +20,3 @@
 #include "../Volume.ih"
 
 uniform int getVec4iComponent (uniform vec4i v, varying int i);
-bool isGreaterThan (vec3f v1, uniform vec4f v2);
-bool isLessThan (vec3f v1, uniform vec4f v2);

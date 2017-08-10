@@ -16,41 +16,23 @@
 
 #include "common.ih"
 
-uniform int getVec4iComponent (uniform vec4i v, varying int i)
+uniform int getVec4iComponent(uniform vec4i v, varying int i)
 {
-    if (i==0) {
-        return v.x;
-    }
+  if (i == 0) {
+    return v.x;
+  }
 
-    if (i==1) {
-        return v.y;
-    }
+  if (i == 1) {
+    return v.y;
+  }
 
-    if (i==2) {
-        return v.z;
-    }
+  if (i == 2) {
+    return v.z;
+  }
 
-    if (i==3) {
-        return v.w;
-    }
+  if (i == 3) {
+    return v.w;
+  }
 
-    return 0;
-}
-
-bool isLessThan (vec3f v1, uniform vec4f v2)
-{
-    if (v1.x < v2.x || v1.y < v2.y || v1.z < v2.z) {
-        return true;
-    }
-
-    return false;
-}
-
-bool isGreaterThan (vec3f v1, uniform vec4f v2)
-{
-    if (v1.x > v2.x || v1.y > v2.y || v1.z > v2.z) {
-        return true;
-    }
-
-    return false;
+  return 0;
 }
