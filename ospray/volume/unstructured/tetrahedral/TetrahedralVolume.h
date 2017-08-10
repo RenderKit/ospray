@@ -28,13 +28,6 @@ namespace ospray {
    public:
 
     TetrahedralVolume();
-
-    struct TetFaceNormal
-    {
-      vec3f normals[4];
-      vec3f corners[4];
-    };
-
     ~TetrahedralVolume() = default;
 
     //! A string description of this class.

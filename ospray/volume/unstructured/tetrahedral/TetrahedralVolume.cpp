@@ -44,6 +44,40 @@ namespace ospray {
     Volume::commit();
   }
 
+  int TetrahedralVolume::setRegion(const void *source_pointer,
+                                   const vec3i &target_index,
+                                   const vec3i &source_count)
+  {
+    return 0;
+  }
+
+  void TetrahedralVolume::computeSamples(float **results,
+                                         const vec3f *worldCoordinates,
+                                         const size_t &count)
+  {
+    NOT_IMPLEMENTED;
+  }
+
+  box4f TetrahedralVolume::getTetBBox(size_t id)
+  {
+    auto t = tetrahedra[id];
+
+    box4f bbox;
+
+    for (int i = 0; i < 4; i++) {
+      const auto &v = vertices[t[i]];
+      const float f = field[t[i]];
+      const auto p  = vec4f(v.x, v.y, v.z, f);
+
+      if (i == 0)
+        bbox.upper = bbox.lower = p;
+      else
+        bbox.extend(p);
+    }
+
+    return bbox;
+  }
+
   void TetrahedralVolume::finish()
   {
     Data *verticesData   = getParamData("vertices", nullptr);
@@ -161,40 +195,6 @@ namespace ospray {
     }
 
     return getParam1f("samplingStep", samplingStep);
-  }
-
-  int TetrahedralVolume::setRegion(const void *source_pointer,
-                                   const vec3i &target_index,
-                                   const vec3i &source_count)
-  {
-    return 0;
-  }
-
-  void TetrahedralVolume::computeSamples(float **results,
-                                         const vec3f *worldCoordinates,
-                                         const size_t &count)
-  {
-    NOT_IMPLEMENTED;
-  }
-
-  box4f TetrahedralVolume::getTetBBox(size_t id)
-  {
-    auto t = tetrahedra[id];
-
-    box4f bbox;
-
-    for (int i = 0; i < 4; i++) {
-      const auto &v = vertices[t[i]];
-      const float f = field[t[i]];
-      const auto p  = vec4f(v.x, v.y, v.z, f);
-
-      if (i == 0)
-        bbox.upper = bbox.lower = p;
-      else
-        bbox.extend(p);
-    }
-
-    return bbox;
   }
 
   OSP_REGISTER_VOLUME(TetrahedralVolume, tetrahedral_volume);
