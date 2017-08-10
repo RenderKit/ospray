@@ -1,43 +1,16 @@
 #! /bin/bash
 
-# change this block to fit your environment
-OSPROOT=~/software
-SRCROOT=$(pwd)
+if [[ "$(hostname)" != "hastur.sci.utah.edu" ]]; then
+    echo "Warning: You are suggested to change "
+fi
 
-# TBB component
-export TBB_ROOT=${OSPROOT}/tbb2017_20170604oss
-LOAD_TBB()
-{
-    export LD_LIBRARY_PATH=${TBB_ROOT}/lib/intel64/gcc4.7:${LD_LIBRARY_PATH}
-    source ${TBB_ROOT}/bin/tbbvars.sh intel64
-}
+# initialize ICC
+INTELICC_PATH=$(which icc)
 
-# ispc component
-export ISPC_ROOT=${OSPROOT}/ispc-v1.9.1-linux
-LOAD_ISPC()
-{
-    export PATH=${ISPC_ROOT}:${PATH}
-}
-
-# Embree component
-export EMBREE_ROOT=${OSPROOT}/embree-2.15.0.x86_64.linux
-LOAD_EMBREE()
-{
-    # CMAKEARGS=${CMAKEARGS}" -DOSPRAY_USE_EXTERNAL_EMBREE=ON"
-    export embree_DIR=${EMBREE_ROOT}
-    source ${EMBREE_ROOT}/embree-vars.sh
-}
-
-#ICC
-INTELICC_PATH=/opt/intel/bin/icc
-
-#GCC
+# initialize GCC
 USE_GCC=1
 GCC_PATH=$(which gcc)
 GXX_PATH=$(which g++)
-
-# QT path
-QT_PATH=${OSPROOT}/qt-4.8.6/qt-everywhere-opensource-src-4.8.6-install
 
 # initialization
 CUSTOMIZED_PROJSUFFIX=""
@@ -45,6 +18,38 @@ PROJSUFFIX=""
 PROJPREFIX="./"
 CMAKEARGS=" -DOSPRAY_MODULE_VISIT=ON" # enable visit module by default XD
 CMAKEPATH="cmake"
+
+#-------------------------------------------------------------------------------
+# change this block to fit your environment
+OSPROOT=~/software # the directory for all dependencies
+SRCROOT=$(pwd)
+
+# TBB component
+TBB_ROOT=${OSPROOT}/tbb2017_20170604oss
+LOAD_TBB()
+{
+    source ${TBB_ROOT}/bin/tbbvars.sh intel64
+    CMAKEARGS=${CMAKEARGS}" -DTBB_ROOT="${TBB_ROOT}
+}
+
+# ispc component
+ISPC_ROOT=${OSPROOT}/ispc-v1.9.1-linux
+LOAD_ISPC()
+{
+    CMAKEARGS=${CMAKEARGS}" -DISPC_DIR_HINT="${ISPC_ROOT}
+}
+
+# Embree component
+EMBREE_ROOT=${OSPROOT}/embree-2.15.0.x86_64.linux
+LOAD_EMBREE()
+{
+    source ${EMBREE_ROOT}/embree-vars.sh
+    CMAKEARGS=${CMAKEARGS}" -Dembree_DIR="${EMBREE_ROOT}
+}
+
+# QT path
+QT_PATH=${OSPROOT}/qt-4.8.6/qt-everywhere-opensource-src-4.8.6-install
+#-------------------------------------------------------------------------------
 
 HELP()
 {
@@ -66,25 +71,29 @@ HELP()
     echo 
     echo "Option list:"
     echo "  -h , --help         Print help message"
-    echo "  -m , --mpi          Build with MPI"
+    echo "  -i , --prefix       Build with customized install path"
     echo "  -a , --cmake-args   Build with additional cmake arguments"
-    echo "  -ic, --intel-icc    Build with intel ICC"
-    echo "  -im, --image-magick Build with image magick"
-    echo "  -qt, --qt           Build with Qt"
     echo "  -o , --output-dir   Build directory name"
+    echo "    (If not set, build directory will be generated based on rules)"
     echo "  --build-prefix      Build directory prefix"
-    echo "                        (directory name will be generated based on rules)"
-    echo "  --embree-dir        Customer Embree path"
-    echo "  --tbb-dir           Customer TBB path"
-    echo "  --ispc-dir          Customer ISPC path"
-    echo "  --icc-dir           Customer ICC path"
-    echo "  --gcc-dir           Customer GCC binary path"
-    echo "  --cmake-dir         Customer CMAKE path"
+    echo "    (Build directory will be generated based on rules)"
+    echo "  --mpi               Build with MPI"
+    echo "  --intel-icc         Build with intel ICC"
+    echo "  --qt                Build with Qt"
+    echo "  --image-magick      Build with image magick"
+    echo "  --embree-dir        Customized Embree path"
+    echo "  --tbb-dir           Customized TBB path"
+    echo "  --ispc-dir          Customized ISPC path"
+    echo "  --icc-dir           Customized ICC path"
+    echo "  --gcc-dir           Customized GCC binary path"
+    echo "  --cmake-dir         Customized CMAKE path"
     echo "  --no-apps           Disable all OSPRay applications"
+    echo "    (Turn off all ospray applications)"
     echo 
 }
 
 # Stop until all parameters used up
+ARGCACHE=""
 if [ -z "$1" ]; then
     HELP
     exit
@@ -98,48 +107,67 @@ until [ -z "$1" ]; do
 	    exit
 	    ;;
 
-	# --- Setup intel icc
-	-ic | --intel-icc)
-	    CMAKEARGS=${CMAKEARGS}" -DCMAKE_CXX_COMPILER=${INTELICC_PATH}"
-	    CMAKEARGS=${CMAKEARGS}" -DCMAKE_C_COMPILER=${INTELICC_PATH}"
-	    USE_GCC=0
-	    shift 1
-	    ;;
-	    
-	# --- Setup mpi flag
-	-m  | --mpi)
-	    # load information for mpi (need to make sure that we are using intel icc)
-	    PROJSUFFIX=${PROJSUFFIX}_mpi
-	    CMAKEARGS=${CMAKEARGS}" -DOSPRAY_MODULE_MPI=ON"
-	    shift 1
-	    ;;
-
-	# --- Setup image magick
-	-im | --image-magick)
-	    PROJSUFFIX=${PROJSUFFIX}_imagemagick
-	    CMAKEARGS=${CMAKEARGS}" -DUSE_IMAGE_MAGICK=ON"
-	    shift 1
-	    ;;
-
-        # --- Qt component
-	-qt | --qt)
-	    export QT_ROOT=${QT_PATH}
-	    export PATH=${QT_ROOT}/bin:${PATH}
-	    export LD_LIBRARY_PATH=${QT_ROOT}/lib:${LD_LIBRARY_PATH}
-	    PROJSUFFIX=${PROJSUFFIX}_qt
-	    shift 1
-	    ;;
-
 	# --- Setup additionnnnal arguments
 	-a  | --cmake-args)
 	    CMAKEARGS=${CMAKEARGS}" "${2}
+	    ARGCACHE=${ARGCACHE}" -a "${2}
 	    shift 2
 	    ;;
 
 	# --- setup customized project suffix
 	-o | --output-dir)
 	    CUSTOMIZED_PROJSUFFIX=${2}
+	    ARGCACHE=${ARGCACHE}" -o "${2}
 	    shift 2
+	    ;;
+
+	# --- setup customized install prefix
+	-i | --install-dir | --prefix | --install-prefix)
+	    INSTALL_PREFIX=${2}
+	    if [[ "${INSTALL_PREFIX}" != /* ]]; then
+		if [[ "${INSTALL_PREFIX}" != ~/* ]]; then
+		    INSTALL_PREFIX=$(pwd)/${INSTALL_PREFIX}
+		fi
+	    fi
+	    CMAKEARGS=${CMAKEARGS}" -DCMAKE_INSTALL_PREFIX="${INSTALL_PREFIX}
+	    ARGCACHE=${ARGCACHE}" -i "${INSTALL_PREFIX}
+	    shift 2
+	    ;;
+
+	# --- Setup intel icc
+	--intel-icc)
+	    CMAKEARGS=${CMAKEARGS}" -DCMAKE_CXX_COMPILER=${INTELICC_PATH}"
+	    CMAKEARGS=${CMAKEARGS}" -DCMAKE_C_COMPILER=${INTELICC_PATH}"
+	    USE_GCC=0
+	    ARGCACHE=${ARGCACHE}" --intel-icc"
+	    shift 1
+	    ;;
+	    
+	# --- Setup mpi flag
+	--mpi)
+	    # load information for mpi (need to make sure that we are using intel icc)
+	    PROJSUFFIX=${PROJSUFFIX}_mpi
+	    CMAKEARGS=${CMAKEARGS}" -DOSPRAY_MODULE_MPI=ON"
+	    ARGCACHE=${ARGCACHE}" --mpi"
+	    shift 1
+	    ;;
+
+	# --- Setup image magick
+	--image-magick)
+	    PROJSUFFIX=${PROJSUFFIX}_imagemagick
+	    CMAKEARGS=${CMAKEARGS}" -DUSE_IMAGE_MAGICK=ON"
+	    ARGCACHE=${ARGCACHE}" --image-magick"
+	    shift 1
+	    ;;
+
+        # --- Qt component
+	--qt)
+	    export QT_ROOT=${QT_PATH}
+	    export PATH=${QT_ROOT}/bin:${PATH}
+	    export LD_LIBRARY_PATH=${QT_ROOT}/lib:${LD_LIBRARY_PATH}
+	    PROJSUFFIX=${PROJSUFFIX}_qt
+	    ARGCACHE=${ARGCACHE}" --qt"
+	    shift 1
 	    ;;
 
 	# --- Setup external libraries
@@ -174,7 +202,6 @@ until [ -z "$1" ]; do
 	    shift 2
 	    ;;
 
-
 	--cmake-dir)
 	    CMAKEPATH=${2}
 	    shift 2
@@ -182,11 +209,13 @@ until [ -z "$1" ]; do
 
 	--build-prefix)
 	    PROJPREFIX=${2}
+	    ARGCACHE=${ARGCACHE}" --build-prefix "${2}
 	    shift 2
 	    ;;
 	    
 	--no-apps)
-	    CMAKEARGS=${CMAKEARGS}" -DOSPRAY_ENABLE_APPS=OFF -DOSPRAY_ENABLE_MPI_APPS=OFF"
+	    CMAKEARGS=${CMAKEARGS}" -DOSPRAY_ENABLE_APPS=OFF -DOSPRAY_MODULE_MPI_APPS=OFF -DOSPRAY_MODULE_VISIT_APPS=OFF"
+	    ARGCACHE=${ARGCACHE}" --no-apps"
 	    shift 1
 	    ;;
 
@@ -226,3 +255,10 @@ mkdir -p ${PROJDIR}
 cd ${PROJDIR}
 rm -r ./CMakeCache.txt ./CMakeFiles
 ${CMAKEPATH} ${CMAKEARGS} ${SRCROOT}
+cd -
+
+# save cache
+cat > premake.local.$(hostname).sh <<EOF
+#!/bin/bash
+$(pwd)/premake.sh ${ARGCACHE} --embree-dir ${EMBREE_ROOT} --tbb-dir ${TBB_ROOT} --ispc-dir ${ISPC_ROOT} --icc-dir ${INTELICC_PATH} --gcc-dir ${GCC_PATH%/*} --cmake-dir ${CMAKEPATH}
+EOF
