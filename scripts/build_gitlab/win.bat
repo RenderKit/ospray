@@ -23,7 +23,7 @@ cd build
 cmake -L ^
 -G "%~1" ^
 -T "%~2" ^
-"%~3" ^
+-D "%~3" ^
 -D OSPRAY_BUILD_ISA=ALL ^
 -D OSPRAY_MODULE_BILINEAR_PATCH=ON ^
 -D OSPRAY_ENABLE_TESTING=ON ^
