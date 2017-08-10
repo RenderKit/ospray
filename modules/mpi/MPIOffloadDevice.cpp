@@ -169,7 +169,7 @@ namespace ospray {
       postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
           << "#o: initMPI::OSPonRanks: " << world.rank << '/' << world.size;
 
-      MPI_CALL(Barrier(MPI_COMM_WORLD));
+      MPI_CALL(Barrier(world.comm));
 
       throwIfNotMpiParallel();
 
