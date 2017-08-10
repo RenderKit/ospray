@@ -177,22 +177,14 @@ namespace ospray {
     });
   }
 
-
   float TetrahedralVolume::calculateSamplingStep()
   {
-    float samplingStep = 1.f;
-
     float dx = bbox.upper.x - bbox.lower.x;
     float dy = bbox.upper.y - bbox.lower.y;
     float dz = bbox.upper.z - bbox.lower.z;
 
-    if (dx < dy && dx < dz && dx != 0) {
-      samplingStep = dx * 0.01f;
-    } else if (dy < dx && dy < dz && dy != 0) {
-      samplingStep = dy * 0.01f;
-    } else {
-      samplingStep = dz * 0.01f;
-    }
+    float d = std::min(std::min(dx, dy), dz);
+    float samplingStep = d * 0.01f;
 
     return getParam1f("samplingStep", samplingStep);
   }
