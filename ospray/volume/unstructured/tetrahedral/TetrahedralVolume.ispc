@@ -60,7 +60,6 @@ bool intersectAndSampleTet(void *uniform userData,
 
   // The sum of the location coordinates should add up to approximately 1.
   float z_total = z0 + z1 + z2 + z3;
-  // assert((0.9) < z_total && z_total < (1.1));
 
   // Field/attribute values at the tetrahedron corners.
   float v0 = self->field[t.x];
@@ -107,14 +106,9 @@ inline void TetrahedralVolume_intersect(void *uniform _self, varying Ray &ray)
   // Cast to the actual Volume subtype.
   TetrahedralVolume *uniform self = (TetrahedralVolume * uniform) _self;
 
-  // print("TetrahedralVolume_intersect\n");
-
   // The recommended step size for ray casting based volume renderers.
   const uniform float step =
       self->super.samplingStep / self->super.samplingRate;
-
-  // Compute the next hit point using a spatial acceleration structure.
-  // GridAccelerator_intersect(volume->accelerator, step, ray);
 
   vec3f coord = ray.org + ray.t0 * ray.dir;
 
@@ -133,16 +127,8 @@ inline void TetrahedralVolume_intersectAdaptive(
   // Cast to the actual Volume subtype.
   TetrahedralVolume *uniform self = (TetrahedralVolume * uniform) _self;
 
-  // print("TetrahedralVolume_intersectAdaptive\n\n");
-  // print("samplingRate = %", samplingRate);
-
   // The recommended step size for ray casting based volume renderers.
   const varying float step = self->super.samplingStep / samplingRate;
-
-  // print("samplingStep = %\n\n", volume->super.samplingStep);
-
-  // Compute the next hit point using a spatial acceleration structure.
-  // GridAccelerator_intersectAdaptive(volume->accelerator, step, ray);
 
   ray.t0 += step;
   ray.time = step;
@@ -161,14 +147,9 @@ inline void TetrahedralVolume_intersectIsosurface(void *uniform _self,
   // Cast to the actual Volume subtype.
   TetrahedralVolume *uniform self = (TetrahedralVolume * uniform) _self;
 
-  print("TetrahedralVolume_intersectIsosurface\n");
   // The nominal step size for ray casting based volume renderers, not
   // considering the sampling rate.
   const uniform float step = self->super.samplingStep;
-
-  // Compute the next hit point using a spatial acceleration structure.
-  // GridAccelerator_intersectIsosurface(volume->accelerator, step, isovalues,
-  // numIsovalues, ray);
 
   // Tentatively advance the ray.
   ray.t0 += step;
