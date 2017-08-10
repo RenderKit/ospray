@@ -19,8 +19,8 @@
 # Though not actually required we guard each module 'moduleName' with
 # a OSPRAY_MODULE_MODULENAME flag that enables/disables its building.
 #
-OPTION(OSPRAY_MODULE_VISIT "Build visit distributed rendering module" OFF)
-IF (OSPRAY_MODULE_VISIT)
+OPTION(OSPRAY_MODULE_VISIT "Build visit-ospray module" OFF)
+IF (OSPRAY_MODULE_VISIT AND OSPRAY_MODULE_MPI)
 
   INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/..)
   INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../mpi)
@@ -48,8 +48,9 @@ IF (OSPRAY_MODULE_VISIT)
   # example. If other modules come with their own
   # tools/converters/importers/etc, this is where those sohuld go.
   #
-  IF(OSPRAY_ENABLE_APPS)
-    # ADD_SUBDIRECTORY(apps)
+  OPTION(OSPRAY_MODULE_VISIT_APPS "Build applications for visit-ospray module" ON)
+  IF(OSPRAY_MODULE_VISIT_APPS)
+    ADD_SUBDIRECTORY(apps)
   ENDIF()
 
-ENDIF (OSPRAY_MODULE_VISIT)
+ENDIF ()

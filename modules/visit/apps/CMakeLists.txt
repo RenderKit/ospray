@@ -17,6 +17,7 @@
 # Test app which generates data-parallel groups of spheres ####################
 
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/apps/exampleViewer)
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../../mpi/apps)
 
 IF (NOT WIN32)# Internal Compiler Error on MSVC12...
   OSPRAY_CREATE_APPLICATION(ospVisItRandSciVisTest
@@ -24,6 +25,6 @@ IF (NOT WIN32)# Internal Compiler Error on MSVC12...
   LINK
     ospray
     ospray_mpi_common
-    ospray_commandline
+    gensv
   )
 ENDIF()
