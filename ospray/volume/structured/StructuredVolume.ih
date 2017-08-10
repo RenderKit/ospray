@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "common/OSPCommon.ih"
-#include "volume/Volume.ih"
+#include "../../common/OSPCommon.ih"
+#include "../Volume.ih"
 
 struct GridAccelerator;
 
@@ -49,18 +49,18 @@ struct StructuredVolume {
   void (*uniform getVoxel)(void *uniform volume, const varying vec3i &index, varying float &value);
 
   //! Transform from local coordinates to world coordinates using the volume's grid definition.
-  void (*uniform transformLocalToWorld)(StructuredVolume *uniform volume, 
-                                        const varying vec3f &localCoordinates, 
+  void (*uniform transformLocalToWorld)(StructuredVolume *uniform volume,
+                                        const varying vec3f &localCoordinates,
                                         varying vec3f &worldCoordinates);
 
   //! Transform from world coordinates to local coordinates using the volume's grid definition.
-  void (*uniform transformWorldToLocal)(StructuredVolume *uniform volume, 
-                                        const varying vec3f &worldCoordinates, 
+  void (*uniform transformWorldToLocal)(StructuredVolume *uniform volume,
+                                        const varying vec3f &worldCoordinates,
                                         varying vec3f &localCoordinates);
 
 };
 
-void StructuredVolume_Constructor(StructuredVolume *uniform volume, 
+void StructuredVolume_Constructor(StructuredVolume *uniform volume,
                                   /*! pointer to the c++-equivalent class of this entity */
                                   void *uniform cppEquivalent,
                                   const uniform vec3i &dimensions);

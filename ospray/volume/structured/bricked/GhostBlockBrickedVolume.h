@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "volume/StructuredVolume.h"
+#include "../StructuredVolume.h"
 
 namespace ospray {
 

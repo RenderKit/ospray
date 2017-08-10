@@ -181,24 +181,26 @@ SET(OSPRAY_SOURCES
   transferFunction/TransferFunction.ispc
   transferFunction/TransferFunction.cpp
 
-  volume/BlockBrickedVolume.ispc
-  volume/BlockBrickedVolume.cpp
-  volume/GhostBlockBrickedVolume.ispc
-  volume/GhostBlockBrickedVolume.cpp
-
-  volume/GridAccelerator.ispc
-  volume/SharedStructuredVolume.ispc
-  volume/SharedStructuredVolume.cpp
-  volume/StructuredVolume.ispc
-  volume/StructuredVolume.cpp
   volume/Volume.ispc
   volume/Volume.cpp
 
+  volume/structured/GridAccelerator.ispc
+  volume/structured/StructuredVolume.ispc
+  volume/structured/StructuredVolume.cpp
+
+  volume/structured/bricked/BlockBrickedVolume.ispc
+  volume/structured/bricked/BlockBrickedVolume.cpp
+  volume/structured/bricked/GhostBlockBrickedVolume.ispc
+  volume/structured/bricked/GhostBlockBrickedVolume.cpp
+
+  volume/structured/shared/SharedStructuredVolume.ispc
+  volume/structured/shared/SharedStructuredVolume.cpp
+
   volume/unstructured/common.ispc
-  volume/unstructured/TetrahedralVolume.cpp
-  volume/unstructured/TetrahedralVolume.ispc
   volume/unstructured/MinMaxBVH2.cpp
   volume/unstructured/MinMaxBVH2.ispc
+  volume/unstructured/tetrahedral/TetrahedralVolume.cpp
+  volume/unstructured/tetrahedral/TetrahedralVolume.ispc
 )
 
 # -------------------------------------------------------
@@ -322,18 +324,43 @@ OSPRAY_INSTALL_SDK_HEADERS(
 )
 
 OSPRAY_INSTALL_SDK_HEADERS(
-  volume/BlockBrickedVolume.h
-  volume/BlockBrickedVolume.ih
-  volume/GridAccelerator.ih
-  volume/GhostBlockBrickedVolume.h
-  volume/GhostBlockBrickedVolume.ih
-  volume/SharedStructuredVolume.h
-  volume/SharedStructuredVolume.ih
-  volume/StructuredVolume.h
-  volume/StructuredVolume.ih
   volume/Volume.h
   volume/Volume.ih
   DESTINATION volume
+)
+
+OSPRAY_INSTALL_SDK_HEADERS(
+  volume/structured/GridAccelerator.ih
+  volume/structured/StructuredVolume.h
+  volume/structured/StructuredVolume.ih
+  DESTINATION volume/structured
+)
+
+OSPRAY_INSTALL_SDK_HEADERS(
+  volume/structured/bricked/BlockBrickedVolume.h
+  volume/structured/bricked/BlockBrickedVolume.ih
+  volume/structured/bricked/GhostBlockBrickedVolume.h
+  volume/structured/bricked/GhostBlockBrickedVolume.ih
+  DESTINATION volume/structured/bricked
+)
+
+OSPRAY_INSTALL_SDK_HEADERS(
+  volume/structured/shared/SharedStructuredVolume.h
+  volume/structured/shared/SharedStructuredVolume.ih
+  DESTINATION volume/structured/shared
+)
+
+OSPRAY_INSTALL_SDK_HEADERS(
+  volume/unstructured/common.ih
+  volume/unstructured/MinMaxBVH2.h
+  volume/unstructured/MinMaxBVH2.ih
+  DESTINATION volume/unstructured
+)
+
+OSPRAY_INSTALL_SDK_HEADERS(
+  volume/unstructured/tetrahedral/TetrahedralVolume.h
+  volume/unstructured/tetrahedral/TetrahedralVolume.ih
+  DESTINATION volume/unstructured/tetrahedral
 )
 
 OSPRAY_INSTALL_SDK_HEADERS(

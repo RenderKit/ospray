@@ -18,7 +18,7 @@
 
 // ospray
 #include "ospcommon/tasking/parallel_for.h"
-#include "volume/Volume.h"
+#include "../Volume.h"
 
 namespace ospray {
 

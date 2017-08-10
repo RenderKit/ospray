@@ -15,11 +15,10 @@
 // ======================================================================== //
 
 //ospray
-#include "volume/SharedStructuredVolume.h"
+#include "SharedStructuredVolume.h"
 #include "SharedStructuredVolume_ispc.h"
 #include "StructuredVolume_ispc.h"
-#include "common/Data.h"
-#include "ospray/ospray.h"
+#include "../../../common/Data.h"
 
 namespace ospray {
 
@@ -43,8 +42,8 @@ namespace ospray {
     StructuredVolume::commit();
   }
 
-  int SharedStructuredVolume::setRegion(const void *source, 
-                                        const vec3i &index, 
+  int SharedStructuredVolume::setRegion(const void *source,
+                                        const vec3i &index,
                                         const vec3i &count)
   {
     if (getIE() == nullptr)
@@ -96,7 +95,7 @@ namespace ospray {
 
     // Get the voxel data.
     voxelData = (Data *)getParamObject("voxelData", nullptr);
-    
+
     if (voxelData) {
       warnOnCondition(!(voxelData->flags & OSP_DATA_SHARED_BUFFER),
                       "The voxel data buffer was not created with the "
@@ -111,7 +110,7 @@ namespace ospray {
                         (size_t)dimensions.z;
     allocatedVoxelData = (voxelData == nullptr) ?
                          malloc(voxelCount*sizeOf(ospVoxelType)) : nullptr;
-    
+
     // Create an ISPC SharedStructuredVolume object and assign
     // type-specific function pointers.
     ispcEquivalent

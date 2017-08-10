@@ -14,9 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "../../common/Data.h"
+#include "../../../common/Data.h"
 #include "TetrahedralVolume.h"
-
 
 // auto-generated .h file.
 #include "TetrahedralVolume_ispc.h"

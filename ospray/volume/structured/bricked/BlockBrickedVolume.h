@@ -16,47 +16,36 @@
 
 #pragma once
 
-#include "../../common/OSPCommon.ih"
-#include "../Volume.ih"
-#include "common.ih"
-#include "MinMaxBVH2.ih"
+#include "../StructuredVolume.h"
 
-// Geometry intersection acceleration structure (BVH).
+namespace ospray {
 
-struct TetFaceNormal {
-    uniform vec3f normals[4];
-};
+  //! \brief A concrete implementation of the StructuredVolume class
+  //!  with 64-bit addressing in which the voxel data is laid out in
+  //!  memory in multiple pages each in brick order.
+  //!
+  struct OSPRAY_SDK_INTERFACE BlockBrickedVolume : public StructuredVolume
+  {
+    virtual ~BlockBrickedVolume();
 
-//std::vector<BBox> tetBBoxes;
+    //! A string description of this class.
+    virtual std::string toString() const override;
 
-struct TetrahedralVolume {
+    //! Allocate storage and populate the volume, called through the OSPRay API.
+    virtual void commit() override;
 
-    //! Fields common to all Volume subtypes (must be the first entry of this struct).
-    Volume super;
+    //! Copy voxels into the volume at the given index (non-zero return value
+    //!  indicates success).
+    virtual int setRegion(const void *source,
+                          const vec3i &index,
+                          const vec3i &count) override;
 
-    uniform int nVertices;
-    const vec3f * uniform vertices;
+  private:
 
-    uniform int nTetrahedra;
-    const vec4i * uniform tetrahedra;// indices into vertices array.
+    //! Create the equivalent ISPC volume container.
+    void createEquivalentISPC() override;
 
-    const float * uniform field;// Attribute value at each vertex.
+  };
 
-    uniform box4f * uniform tetBBoxes;
-
-    uniform TetFaceNormal * uniform faceNormals;
-
-    // nice
-
-    uniform int nNiceVerts;
-    varying vec3f * uniform nice_vertices;// programCount (vector width -> 4,8,16)
-
-
-    uniform MinMaxBVH2 bvh;
-
-    RTCDevice embree_device;
-    RTCScene embree_scene;
-    uniform unsigned int geomID;
-};
-
+} // ::ospray
 

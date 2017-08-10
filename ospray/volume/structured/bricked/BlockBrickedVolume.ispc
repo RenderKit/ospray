@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "volume/BlockBrickedVolume.ih"
+#include "BlockBrickedVolume.ih"
 
 //! The number of bits used to represent the width of a Block in voxels.
 #define BLOCK_VOXEL_WIDTH_BITCOUNT (6)

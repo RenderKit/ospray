@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "volume/SharedStructuredVolume.ih"
+#include "SharedStructuredVolume.ih"
 
 /*! get a voxel from given volume type */
 
@@ -113,14 +113,14 @@ inline float accessArrayWithOffset(const type *uniform basePtr,              \
   uniform uint8 *uniform base = (uniform uint8 *uniform)(basePtr);           \
   return *((uniform type *)((base+baseOfs)+offset));                         \
 }                                                                            \
-  
+
 template_accessArray(uint8);
 template_accessArray(int16);
 template_accessArray(uint16);
 template_accessArray(float);
 template_accessArray(double);
 #undef template_accessArray
- 
+
 
 /*! perform trilinear interpolation for given sample. unlike old way
   of doing this (a single computesample on the StructuredVolume level
@@ -361,9 +361,9 @@ void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform self,
   }
 }
 
-export void *uniform SharedStructuredVolume_createInstance(void *uniform cppEquivalent, 
-                                                           const uniform int voxelType, 
-                                                           const uniform vec3i &dimensions, 
+export void *uniform SharedStructuredVolume_createInstance(void *uniform cppEquivalent,
+                                                           const uniform int voxelType,
+                                                           const uniform vec3i &dimensions,
                                                            const void *uniform voxelData)
 {
   // The volume container.

@@ -17,15 +17,15 @@
 #pragma once
 
 // ospray
-#include "../Volume.h"
+#include "../../Volume.h"
 
-#include "../../common/OSPCommon.h"
+#include "../../../common/OSPCommon.h"
 
 // Geometry intersection acceleration structure (BVH).
 #include <embree2/rtcore.h>
 #include <embree2/rtcore_ray.h>
 
-#include "MinMaxBVH2.h"
+#include "../MinMaxBVH2.h"
 
 void embree_error_handler( const RTCError code, const char* str ) {
     printf( "Embree: " );
