@@ -17,8 +17,8 @@
 #pragma once
 
 // ospray
-#include "../../Volume.h"
 #include "../../../common/OSPCommon.h"
+#include "../../Volume.h"
 #include "../MinMaxBVH2.h"
 
 namespace ospray {
@@ -26,7 +26,6 @@ namespace ospray {
   class TetrahedralVolume : public Volume
   {
    public:
-
     TetrahedralVolume();
     ~TetrahedralVolume() = default;
 
@@ -48,24 +47,23 @@ namespace ospray {
                         const size_t &count) override;
 
    private:
-
     box4f getTetBBox(size_t id);
 
     //! Complete volume initialization (only on first commit).
     void finish() override;
 
-    void  buildBvhAndCalculateBounds();
-    void  calculateFaceNormals();
+    void buildBvhAndCalculateBounds();
+    void calculateFaceNormals();
     float calculateSamplingStep();
 
     // Data members //
 
     int nVertices;
-    vec3f *vertices {nullptr};
-    float *field {nullptr};  // Attribute value at each vertex.
+    vec3f *vertices{nullptr};
+    float *field{nullptr};  // Attribute value at each vertex.
 
     int nTetrahedra;
-    vec4i *tetrahedra {nullptr};
+    vec4i *tetrahedra{nullptr};
 
     std::vector<vec3f> faceNormals;
 
@@ -73,7 +71,7 @@ namespace ospray {
 
     MinMaxBVH2 bvh;
 
-    bool finished {false};
+    bool finished{false};
   };
 
 }  // ::ospray

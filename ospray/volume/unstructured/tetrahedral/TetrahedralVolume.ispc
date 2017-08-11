@@ -32,10 +32,10 @@ bool intersectAndSampleTet(void *uniform userData,
   vec3f p2 = self->vertices[t.z];
   vec3f p3 = self->vertices[t.w];
 
-  uniform vec3f norm0          = self->faceNormals[(id * 4) + 0];
-  uniform vec3f norm1          = self->faceNormals[(id * 4) + 1];
-  uniform vec3f norm2          = self->faceNormals[(id * 4) + 2];
-  uniform vec3f norm3          = self->faceNormals[(id * 4) + 3];
+  uniform vec3f norm0 = self->faceNormals[(id * 4) + 0];
+  uniform vec3f norm1 = self->faceNormals[(id * 4) + 1];
+  uniform vec3f norm2 = self->faceNormals[(id * 4) + 2];
+  uniform vec3f norm3 = self->faceNormals[(id * 4) + 3];
 
   // Distance from the world point to the faces.
   float d0 = dot(norm0, p1 - samplePos);

@@ -31,7 +31,7 @@ struct TetrahedralVolume
 
   uniform int nTetrahedra;
   const vec4i *uniform tetrahedra;  // indices into vertices array.
-  const float *uniform field;  // Attribute value at each vertex.
+  const float *uniform field;       // Attribute value at each vertex.
   const vec3f *uniform faceNormals;
 
   uniform MinMaxBVH2 bvh;

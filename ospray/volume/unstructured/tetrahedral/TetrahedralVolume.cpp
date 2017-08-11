@@ -117,7 +117,6 @@ namespace ospray {
                           samplingRate,
                           samplingStep);
 
-
     Volume::finish();
     finished = true;
   }
@@ -128,7 +127,7 @@ namespace ospray {
     std::vector<box4f> primBounds(nTetrahedra);
 
     for (int i = 0; i < nTetrahedra; i++) {
-      primID[i] = i;
+      primID[i]   = i;
       auto bounds = getTetBBox(i);
       if (i == 0) {
         bbox.lower = vec3f(bounds.lower.x, bounds.lower.y, bounds.lower.z);
@@ -148,8 +147,8 @@ namespace ospray {
     auto numNormals = nTetrahedra * 4;
     faceNormals.resize(numNormals);
 
-    tasking::parallel_for(numNormals / 4, [&](int taskIndex){
-      int i = taskIndex * 4;
+    tasking::parallel_for(numNormals / 4, [&](int taskIndex) {
+      int i   = taskIndex * 4;
       auto &t = tetrahedra[i / 4];
 
       // The corners of each triangle in the tetrahedron.
@@ -180,7 +179,7 @@ namespace ospray {
     float dy = bbox.upper.y - bbox.lower.y;
     float dz = bbox.upper.z - bbox.lower.z;
 
-    float d = std::min(std::min(dx, dy), dz);
+    float d            = std::min(std::min(dx, dy), dz);
     float samplingStep = d * 0.01f;
 
     return getParam1f("samplingStep", samplingStep);
