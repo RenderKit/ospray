@@ -32,7 +32,7 @@ namespace ospray {
   {
     auto size = b.upper - b.lower;
     float f   = size.x * size.y + size.x * size.z + size.y * size.z;
-    return (fabs(f) < 1e-20) ? 1e-20 : f;
+    return std::max(std::fabs(f), 1e-20f);
   }
 
   void MinMaxBVH2::buildRec(const size_t nodeID,
