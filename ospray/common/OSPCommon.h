@@ -150,7 +150,7 @@ namespace ospray {
   OSPRAY_SDK_INTERFACE void postStatusMsg(const std::string &msg,
                                           uint32_t postAtLogLevel = 0);
 
-  struct OSPRAY_SDK_INTERFACE StatusMsgStream
+  struct OSPRAY_SDK_INTERFACE StatusMsgStream : public std::stringstream
   {
     StatusMsgStream(uint32_t postAtLogLevel = 0);
     // a "= default" move constructor is not supported by older compilers
@@ -163,7 +163,7 @@ namespace ospray {
     template <typename T>
     friend StatusMsgStream &&operator<<(StatusMsgStream &&stream, T &&rhs);
 
-    std::stringstream msg;
+    //std::stringstream msg;
     uint32_t logLevel {0};
   };
 
@@ -171,7 +171,7 @@ namespace ospray {
   inline StatusMsgStream &&operator<<(StatusMsgStream &&stream, T &&rhs)
   {
     if (logLevel() >= stream.logLevel)
-      stream.msg << std::forward<T>(rhs);
+      stream << std::forward<T>(rhs);
     return std::forward<StatusMsgStream>(stream);
   }
 
