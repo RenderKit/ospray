@@ -401,6 +401,7 @@ int main(int ac, const char **av)
   auto device = ospGetCurrentDevice();
   ospDeviceSetStatusFunc(device,
                          [](const char *msg) { std::cout << msg; });
+  ospDeviceSetErrorMsgFunc(device, [](const char *msg) { std::cout << msg; });
 
   ospDeviceSetErrorFunc(device,
                         [](OSPError e, const char *msg) {
