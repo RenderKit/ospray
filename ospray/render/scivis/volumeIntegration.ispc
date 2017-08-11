@@ -15,14 +15,6 @@
 // ======================================================================== //
 
 #include "SciVisRenderer.ih"
-// #include "fb/FrameBuffer.ih"
-// #include "render/util.ih"
-// #include "texture/Texture2D.ih"
-// #include "math/random.ih"
-// #include "math/sampling.ih"
-// #include "math/LinearSpace.ih"
-// #include "surfaceShading.ih"
-// #include "SciVisMaterial.ih"
 #include "surfaceShading.ih"
 
 vec4f SciVisRenderer_computeVolumeSample(SciVisRenderer *uniform renderer,
