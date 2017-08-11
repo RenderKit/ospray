@@ -71,10 +71,9 @@ namespace ospray {
 
     box3f bbox;
 
-    MinMaxBVH bvh;
+    MinMaxBVH2 bvh;
 
     bool finished {false};
-
   };
 
 }  // ::ospray

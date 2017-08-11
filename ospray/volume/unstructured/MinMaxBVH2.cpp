@@ -35,12 +35,12 @@ namespace ospray {
     return (fabs(f) < 1e-20) ? 1e-20 : f;
   }
 
-  void MinMaxBVH::buildRec(const size_t nodeID,
-                           const box4f *const primBounds,
-                           /*! tmp primid array, for non-inplace partition */
-                           int64 *tmp_primID,
-                           const size_t begin,
-                           const size_t end)
+  void MinMaxBVH2::buildRec(const size_t nodeID,
+                            const box4f *const primBounds,
+                            /*! tmp primid array, for non-inplace partition */
+                            int64 *tmp_primID,
+                            const size_t begin,
+                            const size_t end)
   {
 #if DBG
     std::cout << "building minmaxbvh " << begin << " " << end << std::endl;
@@ -152,21 +152,21 @@ namespace ospray {
   }
 
   void
-  MinMaxBVH::build(/*! one bounding box per primitive. The attribute value
+  MinMaxBVH2::build(/*! one bounding box per primitive. The attribute value
                                              is in the 'w' component */
-                   const box4f *const primBounds,
-                   /*! primitive references; each entry refers to one
-                       primitive, but the BVH or builder itself will _NOT_
-                       specify what exactly one such 64-bit value stands for
-                       (ie, it mmay be IDs, but does not have to. The BVH
-                       will copy this array; the app can free after this
-                       call*/
-                   const int64 *const primRefs,
-                   /*! number of primitives */
-                   const size_t numPrims)
+                    const box4f *const primBounds,
+                    /*! primitive references; each entry refers to one
+                        primitive, but the BVH or builder itself will _NOT_
+                        specify what exactly one such 64-bit value stands for
+                        (ie, it mmay be IDs, but does not have to. The BVH
+                        will copy this array; the app can free after this
+                        call*/
+                    const int64 *const primRefs,
+                    /*! number of primitives */
+                    const size_t numPrims)
   {
     if (!this->node.empty())
-      std::cout << "*REBUILDING* MinMaxBVH2!?" << std::endl;
+      std::cout << "*REBUILDING* MinMaxBVH22!?" << std::endl;
 
     this->primID.resize(numPrims);
     std::copy(primRefs, primRefs + numPrims, primID.begin());
@@ -188,24 +188,24 @@ namespace ospray {
 #endif
   }
 
-  const void *MinMaxBVH::nodePtr() const
+  const void *MinMaxBVH2::nodePtr() const
   {
     assert(!node.empty());
     return node.data();
   }
 
-  const int64 *MinMaxBVH::itemListPtr() const
+  const int64 *MinMaxBVH2::itemListPtr() const
   {
     assert(!primID.empty());
     return primID.data();
   }
 
-  uint64 MinMaxBVH::rootRef() const
+  uint64 MinMaxBVH2::rootRef() const
   {
     return root;
   }
 
-  const box4f &MinMaxBVH::bounds() const
+  const box4f &MinMaxBVH2::bounds() const
   {
     return overallBounds;
   }

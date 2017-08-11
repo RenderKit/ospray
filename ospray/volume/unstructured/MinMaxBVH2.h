@@ -25,7 +25,7 @@ namespace ospray {
   /*! defines a (binary) BVH with some float min/max value per
       node. The BVH itself does not specify the primitive type it is
       used with, or what those min/max values represent. */
-  struct MinMaxBVH
+  struct MinMaxBVH2
   {
     /*! a node in a MinMaxBVH: a (4D-)bounding box, plus a child/leaf refence */
     struct Node : public box4f
