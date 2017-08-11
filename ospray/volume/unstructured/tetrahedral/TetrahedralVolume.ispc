@@ -92,12 +92,28 @@ inline varying vec3f TetrahedralVolume_computeGradient(
   // Cast to the actual Volume subtype.
   TetrahedralVolume *uniform self = (TetrahedralVolume * uniform) _self;
 
+  // Gradient step in each dimension (world coordinates).
+  const uniform vec3f gradientStep = make_vec3f(self->super.samplingStep);
+
   // The gradient will be computed using central differences.
   varying vec3f gradient;
 
-  gradient = make_vec3f(0, 0, 0);
+  // Forward differences.
 
-  return gradient;
+  // Sample at gradient location.
+  float sample = self->super.computeSample(self, worldCoordinates);
+
+  // Gradient magnitude in the X direction.
+  gradient.x = self->super.computeSample(self, worldCoordinates + make_vec3f(gradientStep.x, 0.0f, 0.0f)) - sample;
+
+  // Gradient magnitude in the Y direction.
+  gradient.y = self->super.computeSample(self, worldCoordinates + make_vec3f(0.0f, gradientStep.y, 0.0f)) - sample;
+
+  // Gradient magnitude in the Z direction.
+  gradient.z = self->super.computeSample(self, worldCoordinates + make_vec3f(0.0f, 0.0f, gradientStep.z)) - sample;
+
+  // This approximation may yield image artifacts.
+  return gradient / gradientStep;
 }
 
 // ray.time is set to interval length of intersected sample
