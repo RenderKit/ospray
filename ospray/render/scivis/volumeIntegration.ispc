@@ -108,7 +108,8 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform
   vec3f singleCoordinates;
   float singleMax            = -1.f;
   float singleMin            = 0.01f;
-  float samplingRate         = volume->samplingRate * quality;
+  float volumeSamplingRate   = volume->samplingRate;
+  float samplingRate         = volumeSamplingRate * quality;
   float lastSample           = -1.f;
   const float adaptiveScalar = volume->adaptiveScalar * quality;
   const float maxSamplingRate =
@@ -119,12 +120,14 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform
   float tSkipped =
       -1f;  // for adaptive, skip adapting sampling rate up to this value
   vec4f intervalColor = make_vec4f(0.f);
+
   // TODO: initially sampling by max samplingRate produced artifacts, not sure
   // why.
   if (volume->adaptiveSampling)
     volume->intersectAdaptive(volume, ray, samplingRate);
   else
-    volume->intersect(volume, ray);
+    volume->intersectAdaptive(volume, ray, volumeSamplingRate);
+
   tBegin = tBegin + renderer->volumeEpsilon;
   while (ray.t0 < tEnd && intervalColor.w < maxOpacity) {
     // Sample the volume at the hit point in world coordinates.
@@ -232,7 +235,7 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform
           clamp(sampleOpacity / volume->samplingRate) *
           make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
       intervalColor = intervalColor + (1.0f - intervalColor.w) * contribution;
-      volume->intersect(volume, ray);
+      volume->intersectAdaptive(volume, ray, volumeSamplingRate);
     }
   }
   if (!isShadowRay && volume->gradientShadingEnabled && volume->singleShade &&
