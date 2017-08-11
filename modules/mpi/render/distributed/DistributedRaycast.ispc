@@ -155,7 +155,7 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
         volumeColor = volumeColor + (1.f - volumeColor.w) * color;
 
         // Advance the ray
-        volume->intersect(volume, ray, volume->samplingRate);
+        volume->stepRay(volume, ray, volume->samplingRate);
       }
       volumeColor.w = clamp(volumeColor.w);
     }

@@ -83,9 +83,9 @@ struct Volume {
                                            const varying vec3f &worldCoordinates);
 
   //! Find the next hit point in the volume for ray casting based renderers.
-  void (*uniform intersect)(void *uniform _self,
-                            varying Ray &ray,
-                            const varying float samplingRate);
+  void (*uniform stepRay)(void *uniform _self,
+                          varying Ray &ray,
+                          const varying float samplingRate);
 
   //! Find the next isosurface hit point in the volume for ray casting based renderers.
   void (*uniform intersectIsosurface)(void *uniform _self,

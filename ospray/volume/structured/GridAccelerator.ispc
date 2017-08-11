@@ -244,8 +244,8 @@ inline vec2f GridAccelerator_intersectCell(const varying box3f &bounds,
   return interval;
 }
 
-void GridAccelerator_intersect(GridAccelerator *uniform accelerator,
-                               const varying float step, varying Ray &ray)
+void GridAccelerator_stepRay(GridAccelerator *uniform accelerator,
+                             const varying float step, varying Ray &ray)
 {
   // The associated volume.
   StructuredVolume *uniform volume =

@@ -123,7 +123,7 @@ inline varying vec3f TetrahedralVolume_computeGradient(
 }
 
 // ray.time is set to interval length of intersected sample
-inline void TetrahedralVolume_intersect(
+inline void TetrahedralVolume_stepRay(
     void *uniform _self, varying Ray &ray, const varying float samplingRate)
 {
   // Cast to the actual Volume subtype.
@@ -167,7 +167,7 @@ void TetrahedralVolume_Constructor(TetrahedralVolume *uniform self,
   // Set the ispc functions.
   self->super.computeSample       = TetrahedralVolume_computeSample;
   self->super.computeGradient     = TetrahedralVolume_computeGradient;
-  self->super.intersect           = TetrahedralVolume_intersect;
+  self->super.stepRay             = TetrahedralVolume_stepRay;
   self->super.intersectIsosurface = TetrahedralVolume_intersectIsosurface;
 }
 
