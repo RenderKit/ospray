@@ -141,7 +141,7 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
       // Now raymarch the volume
       while (ray.t0 < ray.t && volumeColor.w < 1.0) {
         const vec3f coordinates = ray.org + ray.t0 * ray.dir;
-        const float sample = volume->computeSample(volume, coordinates);
+        const float sample = volume->sample(volume, coordinates);
 
         TransferFunction *uniform tfcn = volume->transferFunction;
         // Look up the color associated with the volume sample.
@@ -155,7 +155,7 @@ void DistributedRaycastRenderer_renderSample(uniform Renderer *uniform _self,
         volumeColor = volumeColor + (1.f - volumeColor.w) * color;
 
         // Advance the ray
-        volume->intersect(volume, ray);
+        volume->stepRay(volume, ray, volume->samplingRate);
       }
       volumeColor.w = clamp(volumeColor.w);
     }

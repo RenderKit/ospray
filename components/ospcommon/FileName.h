@@ -33,7 +33,7 @@ namespace ospcommon
 
     /*! create a valid filename from a string */
     OSPCOMMON_INTERFACE FileName(const std::string& filename);
-    
+
     /*! returns path to home folder */
     OSPCOMMON_INTERFACE static FileName homeFolder();
 
@@ -44,7 +44,7 @@ namespace ospcommon
     OSPCOMMON_INTERFACE operator std::string() const { return filename; }
 
     /*! returns a string of the filename */
-    OSPCOMMON_INTERFACE const std::string str() const { return filename; }
+    OSPCOMMON_INTERFACE const std::string& str() const { return filename; }
 
     /*! returns a c-string of the filename */
     OSPCOMMON_INTERFACE const char* c_str() const { return filename.c_str(); }
@@ -87,7 +87,7 @@ namespace ospcommon
 
     /*! output operator */
     OSPCOMMON_INTERFACE friend std::ostream& operator<<(std::ostream& cout, const FileName& filename);
-   
+
   private:
     std::string filename;
   };

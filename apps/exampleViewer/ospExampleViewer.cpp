@@ -320,15 +320,9 @@ static inline void addImporterNodesToWorld(sg::Node& renderer)
             auto importerNode_ptr = sg::createNode(ss.str(), "Importer");
             auto &importerNode = *importerNode_ptr;
             importerNode["fileName"].setValue(fn.str());
-            importerNode.traverse("verify");
-            importerNode.traverse("commit");
-            auto bounds = std::dynamic_pointer_cast<sg::Renderable>(importerNode_ptr)->computeBounds();
-            auto size = bounds.upper - bounds.lower;
 
             auto &transform = world.createChild("transform_"+ss.str(), "Transform");
             transform["scale"].setValue(file.transform.scale);
-            vec3f offset={i*size.x*1.3f,j*size.y*1.3f,k*size.z*1.3f};
-            transform["position"].setValue(file.transform.translate+offset);
             transform["rotation"].setValue(file.transform.rotation);
             if (files.size() < 2 && animatedFiles.empty()) {
               auto &rotation =
@@ -343,6 +337,13 @@ static inline void addImporterNodesToWorld(sg::Node& renderer)
             }
 
             transform += importerNode_ptr;
+            renderer.traverse("verify");
+            renderer.traverse("commit");
+            auto bounds = std::dynamic_pointer_cast<sg::Renderable>(importerNode_ptr)->computeBounds();
+            auto size = bounds.upper - bounds.lower;
+            float maxSize = max(max(size.x,size.y),size.z);
+            vec3f offset={i*maxSize*1.3f,j*maxSize*1.3f,k*maxSize*1.3f};
+            transform["position"].setValue(file.transform.translate+offset);
           }
         }
       }
