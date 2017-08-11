@@ -190,7 +190,7 @@ export void TetrahedralVolume_set(void *uniform _self,
                                   const float *uniform _field,
                                   uniform int64 rootRef,
                                   const void *uniform _bvhNode,
-                                  int64 *uniform _bvhPrimID,
+                                  const int64 *uniform _bvhPrimID,
                                   const uniform float samplingRate,
                                   const uniform float samplingStep)
 {

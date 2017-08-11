@@ -39,7 +39,7 @@ struct MinMaxBVH2
 {
   int64 rootRef;
   MinMaxBVH2Node *node;
-  int64 *primID;
+  const int64 *primID;
 };
 
 inline bool pointInAABBTest(const uniform MinMaxBVH2Node &box,

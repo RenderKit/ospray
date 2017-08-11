@@ -111,9 +111,9 @@ namespace ospray {
                           (const ispc::vec3f *)faceNormals.data(),
                           (const ispc::vec4i *)tetrahedra,
                           (const float *)field,
-                          bvh.rootRef,
-                          bvh.getNodePtr(),
-                          (int64_t *)bvh.getItemListPtr(),
+                          bvh.rootRef(),
+                          bvh.nodePtr(),
+                          bvh.itemListPtr(),
                           samplingRate,
                           samplingStep);
 

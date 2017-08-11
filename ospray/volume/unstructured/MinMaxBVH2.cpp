@@ -97,8 +97,9 @@ namespace ospray {
       }
     }
 
-    for (int i = begin; i < end; i++)
+    for (int i = begin; i < end; i++) {
       primID[i] = tmp_primID[i];
+    }
 
 #if DBG
     PRINT(l);
@@ -180,10 +181,33 @@ namespace ospray {
     buildRec(0, primBounds, tmp_primID.data(), 0, numPrims);
     this->node.resize(this->node.size());
 
-    rootRef = node[0].childRef;
+    root = node[0].childRef;
 
 #if DBG
     PRINT(leafCount);
 #endif
   }
-}
+
+  const void *MinMaxBVH::nodePtr() const
+  {
+    assert(!node.empty());
+    return node.data();
+  }
+
+  const int64 *MinMaxBVH::itemListPtr() const
+  {
+    assert(!primID.empty());
+    return primID.data();
+  }
+
+  uint64 MinMaxBVH::rootRef() const
+  {
+    return root;
+  }
+
+  const box4f &MinMaxBVH::bounds() const
+  {
+    return overallBounds;
+  }
+
+}  // ::ospray

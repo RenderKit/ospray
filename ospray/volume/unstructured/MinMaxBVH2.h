@@ -32,11 +32,7 @@ namespace ospray {
     {
       uint64 childRef;
     };
-    void buildRec(const size_t nodeID,
-                  const box4f *const primBounds,
-                  int64 *tmp_primID,
-                  const size_t begin,
-                  const size_t end);
+
     void build(/*! one bounding box per primitive. The attribute value
                             is in the 'w' component */
                const box4f *const primBounds,
@@ -49,35 +45,32 @@ namespace ospray {
                const int64 *const primRefs,
                /*! number of primitives */
                const size_t numPrims);
-    /*! to allow passing this pointer to ISCP: */
-    const void *getNodePtr() const
-    {
-      assert(!node.empty());
-      return &node[0];
-    };
-    /*! to allow passing this pointer to ISCP: */
-    const int64 *getItemListPtr() const
-    {
-      assert(!primID.empty());
-      return &primID[0];
-    };
 
-    void calcAndPrintOverlap() const;
+    const void *nodePtr() const;
 
-    //  protected:
+    const int64 *itemListPtr() const;
+
+    uint64 rootRef() const;
+
+   private:
+    void buildRec(const size_t nodeID,
+                  const box4f *const primBounds,
+                  int64 *tmp_primID,
+                  const size_t begin,
+                  const size_t end);
+
+    const box4f &bounds() const;
+
+    // Data members //
+
     /*! node vector */
     std::vector<Node> node;
     /*! item list. The builder allocates this array, and fills it with
       ints that refer to the primitives; it's up to the */
     std::vector<int64> primID;
     /*! node reference to the root node */
-    uint64 rootRef;
-    const box4f &getBounds() const
-    {
-      return overallBounds;
-    }
+    uint64 root;
 
-   protected:
     box4f overallBounds;
   };
 }
