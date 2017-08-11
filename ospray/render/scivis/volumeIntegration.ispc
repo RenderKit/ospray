@@ -25,7 +25,7 @@ vec4f SciVisRenderer_computeVolumeSample(SciVisRenderer *uniform renderer,
 {
   // Sample the volume at the hit point in world coordinates.
   const vec3f coordinates = ray.org + ray.t0 * ray.dir;
-  const float sample      = volume->computeSample(volume, coordinates);
+  const float sample      = volume->sample(volume, coordinates);
 
   // Look up the color associated with the volume sample.
   vec3f sampleColor = volume->transferFunction->getColorForValue(
@@ -132,7 +132,7 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform
   while (ray.t0 < tEnd && intervalColor.w < maxOpacity) {
     // Sample the volume at the hit point in world coordinates.
     const vec3f coordinates = ray.org + ray.t0 * ray.dir;
-    const float sample      = volume->computeSample(volume, coordinates);
+    const float sample      = volume->sample(volume, coordinates);
     if (lastSample == -1.f)
       lastSample = sample;
 

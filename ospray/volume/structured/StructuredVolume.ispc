@@ -17,7 +17,7 @@
 #include "StructuredVolume.ih"
 #include "GridAccelerator.ih"
 
-inline varying float StructuredVolume_computeSample(void *uniform _volume, const varying vec3f &worldCoordinates)
+inline varying float StructuredVolume_sample(void *uniform _volume, const varying vec3f &worldCoordinates)
 {
   // Cast to the actual Volume subtype.
   StructuredVolume *uniform volume = (StructuredVolume *uniform) _volume;
@@ -82,13 +82,13 @@ inline varying vec3f StructuredVolume_computeGradient(void *uniform _volume, con
   // Central differences.
 
   // Gradient magnitude in the X direction.
-  gradient.x = volume->super.computeSample(volume, location + make_vec3f(gradientStep.x, 0.0f, 0.0f)) - volume->super.computeSample(volume, location + make_vec3f(-gradientStep.x, 0.0f, 0.0f));
+  gradient.x = volume->super.sample(volume, location + make_vec3f(gradientStep.x, 0.0f, 0.0f)) - volume->super.sample(volume, location + make_vec3f(-gradientStep.x, 0.0f, 0.0f));
 
   // Gradient magnitude in the Y direction.
-  gradient.y = volume->super.computeSample(volume, location + make_vec3f(0.0f, gradientStep.y, 0.0f)) - volume->super.computeSample(volume, location + make_vec3f(0.0f, -gradientStep.y, 0.0f));
+  gradient.y = volume->super.sample(volume, location + make_vec3f(0.0f, gradientStep.y, 0.0f)) - volume->super.sample(volume, location + make_vec3f(0.0f, -gradientStep.y, 0.0f));
 
   // Gradient magnitude in the Z direction.
-  gradient.z = volume->super.computeSample(volume, location + make_vec3f(0.0f, 0.0f, gradientStep.z)) - volume->super.computeSample(volume, location + make_vec3f(0.0f, 0.0f, -gradientStep.z));
+  gradient.z = volume->super.sample(volume, location + make_vec3f(0.0f, 0.0f, gradientStep.z)) - volume->super.sample(volume, location + make_vec3f(0.0f, 0.0f, -gradientStep.z));
 
   // This approximation may yield image artifacts.
   return(0.5f * gradient / gradientStep);
@@ -96,16 +96,16 @@ inline varying vec3f StructuredVolume_computeGradient(void *uniform _volume, con
   // Forward differences.
 
   // Sample at gradient location.
-  float sample = volume->super.computeSample(volume, worldCoordinates);
+  float sample = volume->super.sample(volume, worldCoordinates);
 
   // Gradient magnitude in the X direction.
-  gradient.x = volume->super.computeSample(volume, worldCoordinates + make_vec3f(gradientStep.x, 0.0f, 0.0f)) - sample;
+  gradient.x = volume->super.sample(volume, worldCoordinates + make_vec3f(gradientStep.x, 0.0f, 0.0f)) - sample;
 
   // Gradient magnitude in the Y direction.
-  gradient.y = volume->super.computeSample(volume, worldCoordinates + make_vec3f(0.0f, gradientStep.y, 0.0f)) - sample;
+  gradient.y = volume->super.sample(volume, worldCoordinates + make_vec3f(0.0f, gradientStep.y, 0.0f)) - sample;
 
   // Gradient magnitude in the Z direction.
-  gradient.z = volume->super.computeSample(volume, worldCoordinates + make_vec3f(0.0f, 0.0f, gradientStep.z)) - sample;
+  gradient.z = volume->super.sample(volume, worldCoordinates + make_vec3f(0.0f, 0.0f, gradientStep.z)) - sample;
 
   // This approximation may yield image artifacts.
   return(gradient / gradientStep);
@@ -163,7 +163,7 @@ void StructuredVolume_Constructor(StructuredVolume *uniform volume,
   volume->transformWorldToLocal = StructuredVolume_transformWorldToLocal;
 
   volume->super.boundingBox = make_box3f(volume->gridOrigin, volume->gridOrigin + make_vec3f(volume->dimensions - 1) * volume->gridSpacing);
-  volume->super.computeSample = StructuredVolume_computeSample;
+  volume->super.sample = StructuredVolume_sample;
   volume->super.computeGradient = StructuredVolume_computeGradient;
   volume->super.stepRay = StructuredVolume_stepRay;
   volume->super.intersectIsosurface = StructuredVolume_intersectIsosurface;

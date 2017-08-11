@@ -70,7 +70,7 @@ bool intersectAndSampleTet(void *uniform userData,
   return true;
 }
 
-inline varying float TetrahedralVolume_computeSample(
+inline varying float TetrahedralVolume_sample(
     void *uniform _self, const varying vec3f &worldCoordinates)
 {
   // Cast to the actual Volume subtype.
@@ -98,23 +98,23 @@ inline varying vec3f TetrahedralVolume_computeGradient(
   // Forward differences.
 
   // Sample at gradient location.
-  float sample = self->super.computeSample(self, worldCoordinates);
+  float sample = self->super.sample(self, worldCoordinates);
 
   // Gradient magnitude in the X direction.
   gradient.x =
-      self->super.computeSample(
+      self->super.sample(
           self, worldCoordinates + make_vec3f(gradientStep.x, 0.0f, 0.0f)) -
       sample;
 
   // Gradient magnitude in the Y direction.
   gradient.y =
-      self->super.computeSample(
+      self->super.sample(
           self, worldCoordinates + make_vec3f(0.0f, gradientStep.y, 0.0f)) -
       sample;
 
   // Gradient magnitude in the Z direction.
   gradient.z =
-      self->super.computeSample(
+      self->super.sample(
           self, worldCoordinates + make_vec3f(0.0f, 0.0f, gradientStep.z)) -
       sample;
 
@@ -165,7 +165,7 @@ void TetrahedralVolume_Constructor(TetrahedralVolume *uniform self,
   Volume_Constructor(&self->super, cppEquivalent);
 
   // Set the ispc functions.
-  self->super.computeSample       = TetrahedralVolume_computeSample;
+  self->super.sample              = TetrahedralVolume_sample;
   self->super.computeGradient     = TetrahedralVolume_computeGradient;
   self->super.stepRay             = TetrahedralVolume_stepRay;
   self->super.intersectIsosurface = TetrahedralVolume_intersectIsosurface;

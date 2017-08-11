@@ -128,8 +128,8 @@ template_accessArray(double);
   function will directly do all the addressing for the getSample
   (inlined), and thus be about 50% faster (wall-time, meaning even
   much faster in pure sample speed) */
-#define template_computeSample(type)                                         \
-inline float SSV_computeSample_##type##_32(void *uniform _self,              \
+#define template_sample(type)                                         \
+inline float SSV_sample_##type##_32(void *uniform _self,              \
                                            const vec3f &worldCoordinates)    \
 {                                                                            \
   /* Cast to the actual Volume subtype. */                                   \
@@ -190,7 +190,7 @@ inline float SSV_computeSample_##type##_32(void *uniform _self,              \
   return val;                                                                \
 }                                                                            \
                                                                              \
-inline float SSV_computeSample_##type##_64_32(void *uniform _self,           \
+inline float SSV_sample_##type##_64_32(void *uniform _self,           \
                                               const vec3f &worldCoordinates) \
 {                                                                            \
   /* Cast to the actual Volume subtype. */                                   \
@@ -255,12 +255,12 @@ inline float SSV_computeSample_##type##_64_32(void *uniform _self,           \
   return ret;                                                                \
 }
 
-template_computeSample(uint8)
-template_computeSample(int16)
-template_computeSample(uint16)
-template_computeSample(float)
-template_computeSample(double)
-#undef template_computeSample
+template_sample(uint8)
+template_sample(int16)
+template_sample(uint16)
+template_sample(float)
+template_sample(double)
+#undef template_sample
 
 
 void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform self,
@@ -307,19 +307,19 @@ void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform self,
 
     if (voxelType == OSP_UCHAR) {
       self->super.getVoxel = SSV_getVoxel_uint8_32;
-      self->super.super.computeSample = SSV_computeSample_uint8_32;
+      self->super.super.sample = SSV_sample_uint8_32;
     } else if (voxelType == OSP_SHORT) {
       self->super.getVoxel = SSV_getVoxel_int16_32;
-      self->super.super.computeSample = SSV_computeSample_float_32;
+      self->super.super.sample = SSV_sample_float_32;
     } else if (voxelType == OSP_USHORT) {
       self->super.getVoxel = SSV_getVoxel_uint16_32;
-      self->super.super.computeSample = SSV_computeSample_float_32;
+      self->super.super.sample = SSV_sample_float_32;
     } else if (voxelType == OSP_FLOAT) {
       self->super.getVoxel = SSV_getVoxel_float_32;
-      self->super.super.computeSample = SSV_computeSample_float_32;
+      self->super.super.sample = SSV_sample_float_32;
     } else if (voxelType == OSP_DOUBLE) {
       self->super.getVoxel = SSV_getVoxel_double_32;
-      self->super.super.computeSample = SSV_computeSample_double_32;
+      self->super.super.sample = SSV_sample_double_32;
     }
 
   } else if (bytesPerSlice <= (1ULL << 30)) {
@@ -329,19 +329,19 @@ void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform self,
 
     if (voxelType == OSP_UCHAR) {
       self->super.getVoxel = SSV_getVoxel_uint8_64_32;
-      self->super.super.computeSample = SSV_computeSample_uint8_64_32;
+      self->super.super.sample = SSV_sample_uint8_64_32;
     } else if (voxelType == OSP_SHORT) {
       self->super.getVoxel = SSV_getVoxel_int16_64_32;
-      self->super.super.computeSample = SSV_computeSample_int16_64_32;
+      self->super.super.sample = SSV_sample_int16_64_32;
     } else if (voxelType == OSP_USHORT) {
       self->super.getVoxel = SSV_getVoxel_uint16_64_32;
-      self->super.super.computeSample = SSV_computeSample_uint16_64_32;
+      self->super.super.sample = SSV_sample_uint16_64_32;
     } else if (voxelType == OSP_FLOAT) {
       self->super.getVoxel = SSV_getVoxel_float_64_32;
-      self->super.super.computeSample = SSV_computeSample_float_64_32;
+      self->super.super.sample = SSV_sample_float_64_32;
     } else if (voxelType == OSP_DOUBLE) {
       self->super.getVoxel = SSV_getVoxel_double_64_32;
-      self->super.super.computeSample = SSV_computeSample_double_64_32;
+      self->super.super.sample = SSV_sample_double_64_32;
     }
   } else {
     //print("#osp:shared_structured_volume: using 64-bit mode\n");

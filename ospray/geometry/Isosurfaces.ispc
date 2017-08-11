@@ -56,7 +56,7 @@ void Isosurfaces_intersect(uniform Isosurfaces *uniform self,
 
   // Sample the volume at the current point in world coordinates.
   float t0 = rayCopy.t0;
-  float sample0 = volume->computeSample(volume, rayCopy.org + rayCopy.t0 * rayCopy.dir);
+  float sample0 = volume->sample(volume, rayCopy.org + rayCopy.t0 * rayCopy.dir);
 
   while(1) {
 
@@ -67,7 +67,7 @@ void Isosurfaces_intersect(uniform Isosurfaces *uniform self,
       return;
 
     const float t = rayCopy.t0;
-    const float sample = volume->computeSample(volume, rayCopy.org + rayCopy.t0 * rayCopy.dir);
+    const float sample = volume->sample(volume, rayCopy.org + rayCopy.t0 * rayCopy.dir);
 
     // Find t value and isovalue index for the first isosurface intersection.
     float tHit = infinity;

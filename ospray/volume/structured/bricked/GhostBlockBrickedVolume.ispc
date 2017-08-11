@@ -427,8 +427,8 @@ template_setRegion(double)
   function will directly do all the addressing for the getSample
   (inlined), and thus be about 50% faster (wall-time, meaning even
   much faster in pure sample speed) */
-#define template_computeSample(type)                                    \
-  inline float GBBV_computeSample_##type(void *uniform _volume,         \
+#define template_sample(type)                                    \
+  inline float GBBV_sample_##type(void *uniform _volume,         \
                                          const vec3f &worldCoordinates) \
   {                                                                     \
     /* Cast to the actual Volume subtype. */                            \
@@ -505,12 +505,12 @@ template_setRegion(double)
       return retValue;                                                  \
   }
 
-template_computeSample(uint8)
-template_computeSample(int16)
-template_computeSample(uint16)
-template_computeSample(float)
-template_computeSample(double)
-#undef template_computeSample
+template_sample(uint8)
+template_sample(int16)
+template_sample(uint16)
+template_sample(float)
+template_sample(double)
+#undef template_sample
 
 
 inline void GBBV_allocateMemory(GBBV *uniform volume)
@@ -549,31 +549,31 @@ void GBBV_Constructor(GBBV *uniform volume,
     volume->voxelSize      = sizeof(uniform uint8);
     volume->super.getVoxel = GBBV_getVoxel_uint8;
     volume->setRegion      = &GBBV_setRegionTask_uint8;
-    volume->super.super.computeSample = GBBV_computeSample_uint8;
+    volume->super.super.sample = GBBV_sample_uint8;
   }
   else if (volume->voxelType == OSP_SHORT) {
     volume->voxelSize      = sizeof(uniform int16);
     volume->super.getVoxel = GBBV_getVoxel_int16;
     volume->setRegion      = &GBBV_setRegionTask_int16;
-    volume->super.super.computeSample = GBBV_computeSample_int16;
+    volume->super.super.sample = GBBV_sample_int16;
   }
   else if (volume->voxelType == OSP_USHORT) {
     volume->voxelSize      = sizeof(uniform uint16);
     volume->super.getVoxel = GBBV_getVoxel_uint16;
     volume->setRegion      = &GBBV_setRegionTask_uint16;
-    volume->super.super.computeSample = GBBV_computeSample_uint16;
+    volume->super.super.sample = GBBV_sample_uint16;
   }
   else if (volume->voxelType == OSP_FLOAT) {
     volume->voxelSize      = sizeof(uniform float);
     volume->super.getVoxel = GBBV_getVoxel_float;
     volume->setRegion      = &GBBV_setRegionTask_float;
-    volume->super.super.computeSample = GBBV_computeSample_float;
+    volume->super.super.sample = GBBV_sample_float;
   }
   else if (volume->voxelType == OSP_DOUBLE) {
     volume->voxelSize      = sizeof(uniform double);
     volume->super.getVoxel = GBBV_getVoxel_double;
     volume->setRegion      = &GBBV_setRegionTask_double;
-    volume->super.super.computeSample = GBBV_computeSample_double;
+    volume->super.super.sample = GBBV_sample_double;
   }
   else {
     print("#osp:block_bricked_volume: unknown voxel type\n");
