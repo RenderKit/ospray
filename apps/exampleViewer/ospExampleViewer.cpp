@@ -401,6 +401,7 @@ int main(int ac, const char **av)
   auto device = ospGetCurrentDevice();
   ospDeviceSetStatusFunc(device,
                          [](const char *msg) { std::cout << msg; });
+  ospDeviceSetErrorMsgFunc(device, [](const char *msg) { std::cout << msg; });
 
   ospDeviceSetErrorFunc(device,
                         [](OSPError e, const char *msg) {
@@ -408,12 +409,6 @@ int main(int ac, const char **av)
                                     << msg << std::endl;
                           std::exit(1);
                         });
-
-#ifdef _WIN32
-  // TODO: Why do we not have the sg symbols already available for us
-  // since we link against it?
-  loadLibrary("ospray_sg");
-#endif
 
   ospray::imgui3D::init(&ac,av);
 
