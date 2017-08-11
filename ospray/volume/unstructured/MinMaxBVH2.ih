@@ -21,10 +21,6 @@
 #include "ospray/common/Ray.ih"
 #include "ospray/geometry/Geometry.ih"
 #include "ospray/math/vec.ih"
-// embree
-#include "embree2/rtcore.isph"
-#include "embree2/rtcore_geometry_user.isph"
-#include "embree2/rtcore_scene.isph"
 
 /*! BVH node for a MinMaxBVH2 */
 struct MinMaxBVH2Node
