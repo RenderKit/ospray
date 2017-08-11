@@ -19,12 +19,6 @@
 // num prims that _force_ a leaf; undef to revert to sah termination criterion
 //#define LEAF_THRESHOLD 2
 
-#define DBG (0)
-
-#if DBG
-static int leafCount = 0;
-#endif
-
 namespace ospray {
 
   template <typename T, int SIZE>
@@ -42,11 +36,6 @@ namespace ospray {
                             const size_t begin,
                             const size_t end)
   {
-#if DBG
-    std::cout << "building minmaxbvh " << begin << " " << end << std::endl;
-    PRINT(nodeID);
-#endif
-
     box4f bounds4     = empty;
     box4f centBounds4 = empty;
 
@@ -67,10 +56,6 @@ namespace ospray {
 
     node[nodeID].lower = bounds4.lower;
     node[nodeID].upper = bounds4.upper;
-
-#if DBG
-    std::cout << "bounds " << nodeID << " " << bounds4 << std::endl;
-#endif
 
     const box3f centBounds((vec3f &)centBounds4.lower,
                            (vec3f &)centBounds4.upper);
@@ -101,25 +86,11 @@ namespace ospray {
       primID[i] = tmp_primID[i];
     }
 
-#if DBG
-    PRINT(l);
-    PRINT(r);
-    PRINT(begin);
-    PRINT(end);
-#endif
-
     float costIfSplit =
         1 +
         (1.f / safeArea(bounds4)) * (safeArea(lBounds) * (l - begin) +
 
                                      safeArea(rBounds) * (end - l));
-
-#if DBG
-    PRINT(costIfSplit);
-    PRINT(costNoSplit);
-    PRINT(lBounds);
-    PRINT(rBounds);
-#endif
 
     if (
 #ifdef LEAF_THRESHOLD
@@ -128,9 +99,6 @@ namespace ospray {
         ((costIfSplit >= costNoSplit) && ((end - begin) <= 7)) ||
         (l == begin) || (l == end)) {
       node[nodeID].childRef = (end - begin) + begin * sizeof(primID[0]);
-#if DBG
-      leafCount++;
-#endif
     } else {
       assert(l > begin);
       assert(l < end);
@@ -178,10 +146,6 @@ namespace ospray {
     this->node.resize(this->node.size());
 
     root = node[0].childRef;
-
-#if DBG
-    PRINT(leafCount);
-#endif
   }
 
   const void *MinMaxBVH2::nodePtr() const
