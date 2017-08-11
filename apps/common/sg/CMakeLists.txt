@@ -16,6 +16,24 @@
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
+OPTION(OSPRAY_APPS_SG_VTK "Enable VTK loaders for ospray_sg" OFF)
+
+IF(OSPRAY_APPS_SG_VTK)
+  FIND_PACKAGE(VTK COMPONENTS REQUIRED
+    vtkIOLegacy
+    vtkIOXML
+    vtkIOXMLParser
+    vtkIOExport
+    vtksys
+  )
+
+  INCLUDE(${VTK_USE_FILE})
+
+  SET(SG_VTK_SRCS importer/importTetVolume.cpp)
+
+  ADD_DEFINITIONS(-DOSPRAY_APPS_SG_VTK=1)
+ENDIF()
+
 OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   # scene graph nodes
   SceneGraph.cpp
@@ -51,6 +69,7 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
 
   transferFunction/TransferFunction.cpp
   volume/Volume.cpp
+  volume/TetVolume.cpp
 
   module/Module.cpp
 
@@ -69,8 +88,12 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   importer/importXYZ.cpp
 
   importer/detail_xyz/Model.cpp
+
+  ${SG_VTK_SRCS}
+
 LINK
   ospray
   ospray_common
   ospray_xml
+  ${VTK_LIBRARIES}
 )

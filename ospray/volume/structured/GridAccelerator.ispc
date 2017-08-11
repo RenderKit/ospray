@@ -15,9 +15,9 @@
 // ======================================================================== //
 
 // ospray
-#include "volume/GridAccelerator.ih"
-#include "volume/StructuredVolume.ih"
-#include "math/box.ih"
+#include "GridAccelerator.ih"
+#include "StructuredVolume.ih"
+#include "../../math/box.ih"
 
 //! Bit count used to represent the brick width.
 #define BRICK_WIDTH_BITCOUNT (4)
@@ -293,7 +293,7 @@ void GridAccelerator_intersect(GridAccelerator *uniform accelerator,
                                                              cellRange);
 
     // Return the hit point if the grid cell is not fully transparent.
-    if (maximumOpacity > 0.0f) 
+    if (maximumOpacity > 0.0f)
     {
       return;
     }
@@ -364,7 +364,7 @@ void GridAccelerator_intersectAdaptive(GridAccelerator *uniform accelerator,
                                                              cellRange);
 
     // Return the hit point if the grid cell is not fully transparent.
-    if (maximumOpacity > 0.0f) 
+    if (maximumOpacity > 0.0f)
     {
       //adaptive sampling based on maximum opacity in cell
       //ray.t0 -= step;

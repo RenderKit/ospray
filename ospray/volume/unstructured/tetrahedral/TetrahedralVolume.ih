@@ -16,30 +16,23 @@
 
 #pragma once
 
-#include "volume/StructuredVolume.h"
+#include "../../../common/OSPCommon.ih"
+#include "../../Volume.ih"
+#include "../MinMaxBVH2.ih"
 
-namespace ospray {
+struct TetrahedralVolume
+{
+  //! Fields common to all Volume subtypes (must be the first entry of this
+  //! struct).
+  Volume super;
 
-  //! \brief A concrete implementation of the StructuredVolume class
-  //!  with 64-bit addressing in which the voxel data is laid out in
-  //!  memory in multiple pages each in brick order.
-  //!
-  struct OSPRAY_SDK_INTERFACE GhostBlockBrickedVolume : public StructuredVolume
-  {
-    virtual ~GhostBlockBrickedVolume();
-    virtual std::string toString() const override;
-    virtual void commit() override;
+  uniform int nVertices;
+  const vec3f *uniform vertices;
 
-    virtual int setRegion(const void *source,
-                          const vec3i &index,
-                          const vec3i &count) override;
+  uniform int nTetrahedra;
+  const vec4i *uniform tetrahedra;  // indices into vertices array.
+  const float *uniform field;       // Attribute value at each vertex.
+  const vec3f *uniform faceNormals;
 
-  private:
-
-    //! Create the equivalent ISPC volume container.
-    void createEquivalentISPC() override;
-
-  };
-
-} // ::ospray
-
+  uniform MinMaxBVH2 bvh;
+};

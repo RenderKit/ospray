@@ -15,8 +15,8 @@
 // ======================================================================== //
 
 //ospray
-#include "common/Data.h"
-#include "volume/StructuredVolume.h"
+#include "../common/Data.h"
+#include "StructuredVolume.h"
 #include "GridAccelerator_ispc.h"
 #include "StructuredVolume_ispc.h"
 

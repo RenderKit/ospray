@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "volume/StructuredVolume.ih"
-#include "volume/GridAccelerator.ih"
+#include "StructuredVolume.ih"
+#include "GridAccelerator.ih"
 
 inline varying float StructuredVolume_computeSample(void *uniform _volume, const varying vec3f &worldCoordinates)
 {

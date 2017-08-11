@@ -17,41 +17,42 @@
 #pragma once
 
 #include "ospray/OSPDataType.h"
-#include "../volume/StructuredVolume.ih"
+#include "../StructuredVolume.ih"
 
-//! \brief ISPC variables and functions for the SharedStructuredVolume class
-/*! \detailed The SharedStructuredVolume is a concrete implementation
-  of the StructuredVolume class in which the voxel data is laid out in
-  memory in XYZ order and provided via a shared data buffer.
+//! \brief ISPC variables and functions for the BlockBrickedVolume class
+/*! \detailed ISPC variables and functions for the BlockBrickedVolume class,
+  a concrete implementation of the StructuredVolume class with 64-bit
+  addressing in which the voxel data is laid out in memory in multiple
+  pages each in brick order.
 */
-struct SharedStructuredVolume {
+struct BlockBrickedVolume {
 
   //! Fields common to all StructuredVolume subtypes (must be the first entry of this struct).
   StructuredVolume super;
 
-  //! \brief pointer to voxel data. 
-  /* In this volume class, this memory region will typically be shared
-     with the applicattion, so we mess with either data layout */
-  const void *uniform voxelData;
-  
-  //! \brief number of bytes for one x/y slice of the data. 
-  /*! \detailed THis is used to compute offsets for slices with
-      different z values */
-  uniform uint64 bytesPerVoxel,bytesPerLine,bytesPerSlice;
+  //! Volume size in blocks per dimension with padding to the nearest block.
+  uniform vec3i blockCount;
+
+  //! pointer to the large array of blocks.
+  void *uniform blockMem;
 
   //! Voxel type.
   uniform OSPDataType voxelType;
-  
-  /*! @{ offsets, in bytes, for one step in x,y,z direction. ONLY
-    valid if bytesPerSlice < 2G */
-  varying uint32 voxelOfs_dx;
-  varying uint32 voxelOfs_dy;
-  varying uint32 voxelOfs_dz;
-  /* @} */
+
+  //! Voxel size in bytes.
+  uniform size_t voxelSize;
+
+  /*! copy given block of voxels into the volume, where source[0] will
+    be written to volume[targetCoord000] */
+  void (*uniform setRegion)(BlockBrickedVolume *uniform self,
+                            const void *uniform source,
+                            const uniform vec3i &regionSize,
+                            const uniform vec3i &targetCoord000,
+                            const uniform int taskIndex);
 };
 
-void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform volume,
-                                        void *uniform cppEquivalent,
-                                        const uniform int voxelType,
-                                        const uniform vec3i &dimensions,
-                                        const void *uniform voxelData);
+void BlockBrickedVolume_Constructor(BlockBrickedVolume *uniform volume,
+                                    /*! pointer to the c++-equivalent class of this entity */
+                                    void *uniform cppEquivalent,
+                                    const uniform int voxelType,
+                                    const uniform vec3i &dimensions);

@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "volume/StructuredVolume.h"
+#include "../StructuredVolume.h"
 
 namespace ospray {
 
@@ -24,18 +24,12 @@ namespace ospray {
   //!  with 64-bit addressing in which the voxel data is laid out in
   //!  memory in multiple pages each in brick order.
   //!
-  struct OSPRAY_SDK_INTERFACE BlockBrickedVolume : public StructuredVolume
+  struct OSPRAY_SDK_INTERFACE GhostBlockBrickedVolume : public StructuredVolume
   {
-    virtual ~BlockBrickedVolume();
-
-    //! A string description of this class.
+    virtual ~GhostBlockBrickedVolume();
     virtual std::string toString() const override;
-
-    //! Allocate storage and populate the volume, called through the OSPRay API.
     virtual void commit() override;
 
-    //! Copy voxels into the volume at the given index (non-zero return value
-    //!  indicates success).
     virtual int setRegion(const void *source,
                           const vec3i &index,
                           const vec3i &count) override;
