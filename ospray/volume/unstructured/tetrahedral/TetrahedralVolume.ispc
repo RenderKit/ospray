@@ -104,13 +104,22 @@ inline varying vec3f TetrahedralVolume_computeGradient(
   float sample = self->super.computeSample(self, worldCoordinates);
 
   // Gradient magnitude in the X direction.
-  gradient.x = self->super.computeSample(self, worldCoordinates + make_vec3f(gradientStep.x, 0.0f, 0.0f)) - sample;
+  gradient.x =
+      self->super.computeSample(
+          self, worldCoordinates + make_vec3f(gradientStep.x, 0.0f, 0.0f)) -
+      sample;
 
   // Gradient magnitude in the Y direction.
-  gradient.y = self->super.computeSample(self, worldCoordinates + make_vec3f(0.0f, gradientStep.y, 0.0f)) - sample;
+  gradient.y =
+      self->super.computeSample(
+          self, worldCoordinates + make_vec3f(0.0f, gradientStep.y, 0.0f)) -
+      sample;
 
   // Gradient magnitude in the Z direction.
-  gradient.z = self->super.computeSample(self, worldCoordinates + make_vec3f(0.0f, 0.0f, gradientStep.z)) - sample;
+  gradient.z =
+      self->super.computeSample(
+          self, worldCoordinates + make_vec3f(0.0f, 0.0f, gradientStep.z)) -
+      sample;
 
   // This approximation may yield image artifacts.
   return gradient / gradientStep;
