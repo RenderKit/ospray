@@ -65,15 +65,10 @@ namespace ospray {
         bounds.extend(vertices->get<vec3f>(i));
       child("bounds").setValue(bounds);
 
-      vec2f voxelRange(field->get<float>(0), field->get<float>(0));
-
-      for (int i = 1; i < field->size(); ++i) {
-        auto value = field->get<float>(i);
-        if (value < voxelRange.x)
-          voxelRange.x = value;
-        else if (value > voxelRange.y)
-          voxelRange.y = value;
-      }
+      auto *field_array = field->baseAs<float>();
+      auto minMax = std::minmax_element(field_array,
+                                        field_array + field->size() - 1);
+      vec2f voxelRange(*minMax.first, *minMax.second);
 
       child("voxelRange").setValue(voxelRange);
       child("isosurface").setMinMax(voxelRange.x, voxelRange.y);
