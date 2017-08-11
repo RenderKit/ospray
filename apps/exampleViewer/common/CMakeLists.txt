@@ -28,10 +28,14 @@ find_package(GLFW)
 if (NOT GLFW_FOUND)
   message(STATUS "Building GLFW from included source")
 
-  set(GLFW_BUILD_DOCS     OFF CACHE BOOL "" FORCE)
-  set(GLFW_BUILD_TESTS    OFF CACHE BOOL "" FORCE)
-  set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-  set(GLFW_INSTALL        OFF CACHE BOOL "" FORCE)
+  set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+  set(GLFW_INSTALL    OFF CACHE BOOL "" FORCE)
+
+  mark_as_advanced(GLFW_BUILD_DOCS)
+  mark_as_advanced(GLFW_DOCUMENT_INTERNALS)
+  mark_as_advanced(GLFW_INSTALL)
+  mark_as_advanced(GLFW_USE_MIR)
+  mark_as_advanced(GLFW_USE_WAYLAND)
 
   if (USE_STATIC_RUNTIME)
     set(USE_MSVC_RUNTIME_LIBRARY_DLL OFF)
