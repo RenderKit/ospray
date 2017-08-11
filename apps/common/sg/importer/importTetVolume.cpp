@@ -30,22 +30,22 @@
 #include <vtkXMLUnstructuredGridReader.h>
 #include <vtksys/SystemTools.hxx>
 
+// NOTE(jda) - This should be put in a more general place, only used here
+//             right now.
+
+template <typename T>
+inline vtkSmartPointer<T> make_vtkSP(T *p)
+{
+  return vtkSmartPointer<T>(p);
+}
+
 namespace ospray {
-
-  // NOTE(jda) - This should be put in a more general place, only used here
-  //             right now.
-
-  template <typename T>
-  inline vtkSmartPointer<T> make_vtkSP(T *p)
-  {
-    return vtkSmartPointer<T>(p);
-  }
-
   namespace sg {
 
     class TetMesh
     {
      public:
+
       TetMesh()
       {
         vertices =
@@ -60,11 +60,11 @@ namespace ospray {
       std::shared_ptr<DataVector4i> tetrahedra;
 
       template <class TReader>
-      vtkDataSet *ReadVTKFile(const char *fileName)
+      vtkDataSet *readVTKFile(const FileName &fileName)
       {
         vtkSmartPointer<TReader> reader = vtkSmartPointer<TReader>::New();
 
-        reader->SetFileName(fileName);
+        reader->SetFileName(fileName.c_str());
         reader->Update();
 
         reader->GetOutput()->Register(reader);
@@ -72,9 +72,9 @@ namespace ospray {
       }
 
       template <class TReader>
-      bool loadVTKFile(std::string fileName)
+      bool loadVTKFile(const FileName &fileName)
       {
-        vtkDataSet *dataSet = ReadVTKFile<TReader>(fileName.c_str());
+        vtkDataSet *dataSet = readVTKFile<TReader>(fileName);
 
         int numberOfCells  = dataSet->GetNumberOfCells();
         int numberOfPoints = dataSet->GetNumberOfPoints();
@@ -120,7 +120,7 @@ namespace ospray {
         return true;
       }
 
-      bool loadOFFFile(std::string fileName)
+      bool loadOFFFile(const FileName &fileName)
       {
         ifstream in(fileName);
         int nPoints = 0, nTetrahedra = 0;
