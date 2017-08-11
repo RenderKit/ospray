@@ -124,8 +124,8 @@ namespace ospray {
 
   void TetrahedralVolume::buildBvhAndCalculateBounds()
   {
-    int64 *primID     = new int64[nTetrahedra];
-    box4f *primBounds = new box4f[nTetrahedra];
+    std::vector<int64> primID(nTetrahedra);
+    std::vector<box4f> primBounds(nTetrahedra);
 
     for (int i = 0; i < nTetrahedra; i++) {
       primID[i] = i;
@@ -140,10 +140,7 @@ namespace ospray {
       primBounds[i] = bounds;
     }
 
-    bvh.build(primBounds, primID, nTetrahedra);
-
-    delete [] primBounds;
-    delete [] primID;
+    bvh.build(primBounds.data(), primID.data(), nTetrahedra);
   }
 
   void TetrahedralVolume::calculateFaceNormals()
