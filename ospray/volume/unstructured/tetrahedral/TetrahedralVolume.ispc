@@ -58,9 +58,6 @@ bool intersectAndSampleTet(void *uniform userData,
   float z2 = d2 / h2;
   float z3 = d3 / h3;
 
-  // The sum of the location coordinates should add up to approximately 1.
-  float z_total = z0 + z1 + z2 + z3;
-
   // Field/attribute values at the tetrahedron corners.
   float v0 = self->field[t.x];
   float v1 = self->field[t.y];
