@@ -32,42 +32,37 @@ inline BSDF_EvalRes Dielectric_eval(const varying BSDF* uniform super,
   return make_BSDF_EvalRes_zero();
 }
 
-inline vec3f RefractionDirection(const vec3f & d, const vec3f & N, const float eta, 
-  varying float & FresnelR, varying bool & mustReflect)
+inline vec3f RefractionDirection(const vec3f& incomingDir, const vec3f& surfaceNormal, 
+  const float eta, varying float& FresnelR, varying bool& mustReflect)
 {
   mustReflect = false;
 
-  float cos1 = dot(d, N);
+  float cos1 = dot(incomingDir, surfaceNormal);
   float cos1_abs = cos1;
   if (cos1_abs < 0.0) {
     cos1_abs = -cos1_abs;
   }
+  // For head-on collisions the cosine of the angle of the ray with the surface
+  // normal will be equal to one or minus one.
   bool headOn = (1.0-1.0e-6 < cos1_abs && cos1_abs < 1.0-1.0e-6);
   vec3f dir;
   if (headOn) {
-    FresnelR = (eta - 1.0)/(eta + 1.0);
-    FresnelR = FresnelR*FresnelR;
-    dir = d;
+    FresnelR = sqr((eta - 1.0)/(eta + 1.0));
+    //FresnelR = FresnelR*FresnelR;
+    dir = incomingDir;
   } else {
-    vec3f dt = cos1*N;
-    vec3f dp = d - dt;
-    vec3f b = normalize(dp);
-    float sin1 = dot(dp,b);
+    vec3f dirParallelToNormal = cos1*surfaceNormal;
+    vec3f dirPerpendicularToNormal = incomingDir - dirParallelToNormal;
+    vec3f b = normalize(dirPerpendicularToNormal);
+    float sin1 = dot(dirPerpendicularToNormal,b);
     float sin2 = sin1/eta;
     if (sin2 > 1.0) {// total internal reflection.
       dir = make_vec3f(0.0f);// Can't refract.
       FresnelR = 1.0;
       mustReflect = true;
     } else {
-      float k = 1.0 - sin2*sin2;
-      if (k < 0.0) {
-        k = 0.0;
-      }
-      if (k > 1.0) {
-        k = 1.0;
-      }
-      float cos2 = sqrt(k);
-      vec3f N2 = normalize(dt);
+      float cos2 = sqrt(clamp(1.0 - sin2*sin2));
+      vec3f N2 = normalize(dirParallelToNormal);
       dir = N2*cos2 + b*sin2;
       float c1 = cos1_abs;
       float c2 = cos2;
@@ -76,23 +71,21 @@ inline vec3f RefractionDirection(const vec3f & d, const vec3f & N, const float e
       FresnelR = 0.5*(r1*r1 + r2*r2);
     }
   }
-  if (FresnelR < 0) {// Clamp in case of roundoff error.
-    FresnelR = 0;
-  }
-  if (FresnelR > 1.0) {
-    FresnelR = 1.0;
-  }
+  FresnelR = clamp(FresnelR);// Clamp in case of roundoff error.
 
   return dir;
 }
 
-inline vec3f ReflectionDirection(const vec3f & d, const vec3f & N)
-{
-  float cos1 = dot(d, N);
-  vec3f dt = cos1*N;
-  vec3f dp = d - dt;
-  vec3f dir = dp - dt;
-  return dir;
+inline vec3f ReflectionDirection(const vec3f& incomingDir, const vec3f& normal)
+{ // Imagine a particle traveling toward the surface and then bouncing off in the
+  // reflection direction.
+  
+  // Parallel or anti-parallel direction.
+  vec3f dirParallelToNormal = dot(incomingDir, normal) * normal;
+  vec3f dirPerpendicularToNormal = incomingDir - dirParallelToNormal;
+  
+  // Outgoing direction.
+  return (dirPerpendicularToNormal - dirParallelToNormal);
 }
 
 inline BSDF_SampleRes Dielectric_sample(const varying BSDF* uniform super,
@@ -178,9 +171,9 @@ inline BSDF_SampleRes Dielectric_sample(const varying BSDF* uniform super,
   return res;
 }
 
-//inline void Dielectric_Constructor(varying Dielectric* uniform self, const varying linear3f* uniform frame,
-//                                   float eta)
-inline void Dielectric_Constructor(varying Dielectric* uniform self, uniform ShadingContext* uniform ctx, const DifferentialGeometry& dg,
+inline void Dielectric_Constructor(varying Dielectric* uniform self,
+                                   uniform ShadingContext* uniform ctx,
+                                   const DifferentialGeometry& dg,
                                    float eta)
 {
 
@@ -193,18 +186,13 @@ inline void Dielectric_Constructor(varying Dielectric* uniform self, uniform Sha
   self->dgeom = dg;
 }
 
-//inline varying BSDF* uniform Dielectric_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
-//                                               float eta)
-
-inline varying BSDF* uniform Dielectric_create(uniform ShadingContext* uniform ctx, const DifferentialGeometry& dg,
+inline varying BSDF* uniform Dielectric_create(uniform ShadingContext* uniform ctx,
+                                               const DifferentialGeometry& dg,
                                                float eta)
 
 {
   varying Dielectric* uniform self = (varying Dielectric* uniform)ShadingContext_alloc(ctx, sizeof(Dielectric));
-
-
   
   Dielectric_Constructor(self, ctx, dg, eta);
-  //Dielectric_Constructor(self, frame, eta);
   return &self->super;
 }
