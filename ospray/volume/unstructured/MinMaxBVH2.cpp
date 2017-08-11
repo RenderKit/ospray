@@ -162,12 +162,8 @@ namespace ospray {
                         will copy this array; the app can free after this
                         call*/
                     const int64 *const primRefs,
-                    /*! number of primitives */
                     const size_t numPrims)
   {
-    if (!this->node.empty())
-      std::cout << "*REBUILDING* MinMaxBVH22!?" << std::endl;
-
     this->primID.resize(numPrims);
     std::copy(primRefs, primRefs + numPrims, primID.begin());
 

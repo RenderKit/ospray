@@ -43,7 +43,6 @@ namespace ospray {
                  will copy this array; the app can free after this
                  call*/
                const int64 *const primRefs,
-               /*! number of primitives */
                const size_t numPrims);
 
     const void *nodePtr() const;
