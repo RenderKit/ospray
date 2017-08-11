@@ -124,9 +124,9 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform
   // TODO: initially sampling by max samplingRate produced artifacts, not sure
   // why.
   if (volume->adaptiveSampling)
-    volume->intersectAdaptive(volume, ray, samplingRate);
+    volume->intersect(volume, ray, samplingRate);
   else
-    volume->intersectAdaptive(volume, ray, volumeSamplingRate);
+    volume->intersect(volume, ray, volumeSamplingRate);
 
   tBegin = tBegin + renderer->volumeEpsilon;
   while (ray.t0 < tEnd && intervalColor.w < maxOpacity) {
@@ -159,7 +159,7 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform
         // but currently greatly reduces artifacts from low to high opacity
         // regions.  issue with space skipping?
         tSkipped = ot0;
-        volume->intersectAdaptive(volume, ray, samplingRate);
+        volume->intersect(volume, ray, samplingRate);
         lastSample = -1;
         continue;
       }
@@ -229,13 +229,13 @@ vec4f SciVisRenderer_computeVolumeInterval(const SciVisRenderer *uniform
         samplingRate = max(min(adaptiveScalar * sampleOpacity * quality,
                                maxSamplingRate) /*nyquist frequency*/,
                            volume->samplingRate * quality);
-      volume->intersectAdaptive(volume, ray, samplingRate);
+      volume->intersect(volume, ray, samplingRate);
     } else {
       vec4f contribution =
           clamp(sampleOpacity / volume->samplingRate) *
           make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
       intervalColor = intervalColor + (1.0f - intervalColor.w) * contribution;
-      volume->intersectAdaptive(volume, ray, volumeSamplingRate);
+      volume->intersect(volume, ray, volumeSamplingRate);
     }
   }
   if (!isShadowRay && volume->gradientShadingEnabled && volume->singleShade &&

@@ -123,27 +123,7 @@ inline varying vec3f TetrahedralVolume_computeGradient(
 }
 
 // ray.time is set to interval length of intersected sample
-inline void TetrahedralVolume_intersect(void *uniform _self, varying Ray &ray)
-{
-  // Cast to the actual Volume subtype.
-  TetrahedralVolume *uniform self = (TetrahedralVolume * uniform) _self;
-
-  // The recommended step size for ray casting based volume renderers.
-  const uniform float step =
-      self->super.samplingStep / self->super.samplingRate;
-
-  vec3f coord = ray.org + ray.t0 * ray.dir;
-
-  ray.t0 += step;
-  ray.time = step;
-
-  ray.geomID = 1;
-  ray.primID = 1;
-  ray.instID = 1;
-}
-
-// ray.time is set to interval length of intersected sample
-inline void TetrahedralVolume_intersectAdaptive(
+inline void TetrahedralVolume_intersect(
     void *uniform _self, varying Ray &ray, const varying float samplingRate)
 {
   // Cast to the actual Volume subtype.
@@ -188,7 +168,6 @@ void TetrahedralVolume_Constructor(TetrahedralVolume *uniform self,
   self->super.computeSample       = TetrahedralVolume_computeSample;
   self->super.computeGradient     = TetrahedralVolume_computeGradient;
   self->super.intersect           = TetrahedralVolume_intersect;
-  self->super.intersectAdaptive   = TetrahedralVolume_intersectAdaptive;
   self->super.intersectIsosurface = TetrahedralVolume_intersectIsosurface;
 }
 
