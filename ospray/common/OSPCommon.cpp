@@ -318,10 +318,9 @@ namespace ospray {
 
   StatusMsgStream::~StatusMsgStream()
   {
-    if (!str().empty()) {
-      postStatusMsg(str(), logLevel);
+    if (!msg.str().empty()) {
+      postStatusMsg(msg, logLevel);
     }
-    std::cout << "msg destructor: " << str() << std::endl;
   }
 
   StatusMsgStream postStatusMsg(uint32_t postAtLogLevel)
