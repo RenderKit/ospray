@@ -14,16 +14,16 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#undef NDEBUG
-
 #include "MinMaxBVH2.h"
 
 // num prims that _force_ a leaf; undef to revert to sah termination criterion
 //#define LEAF_THRESHOLD 2
 
-static int leafCount = 0;
+#define DBG (0)
 
-#define dbg (0)
+#if DBG
+static int leafCount = 0;
+#endif
 
 namespace ospray {
 
@@ -42,10 +42,10 @@ namespace ospray {
                            const size_t begin,
                            const size_t end)
   {
-    if (dbg) {
-      std::cout << "building minmaxbvh " << begin << " " << end << std::endl;
-      PRINT(nodeID);
-    }
+#if DBG
+    std::cout << "building minmaxbvh " << begin << " " << end << std::endl;
+    PRINT(nodeID);
+#endif
 
     box4f bounds4     = empty;
     box4f centBounds4 = empty;
@@ -68,8 +68,9 @@ namespace ospray {
     node[nodeID].lower = bounds4.lower;
     node[nodeID].upper = bounds4.upper;
 
-    if (dbg)
-      std::cout << "bounds " << nodeID << " " << bounds4 << std::endl;
+#if DBG
+    std::cout << "bounds " << nodeID << " " << bounds4 << std::endl;
+#endif
 
     const box3f centBounds((vec3f &)centBounds4.lower,
                            (vec3f &)centBounds4.upper);
@@ -99,12 +100,12 @@ namespace ospray {
     for (int i = begin; i < end; i++)
       primID[i] = tmp_primID[i];
 
-    if (dbg) {
-      PRINT(l);
-      PRINT(r);
-      PRINT(begin);
-      PRINT(end);
-    }
+#if DBG
+    PRINT(l);
+    PRINT(r);
+    PRINT(begin);
+    PRINT(end);
+#endif
 
     float costIfSplit =
         1 +
@@ -112,12 +113,12 @@ namespace ospray {
 
                                      safeArea(rBounds) * (end - l));
 
-    if (dbg) {
-      PRINT(costIfSplit);
-      PRINT(costNoSplit);
-      PRINT(lBounds);
-      PRINT(rBounds);
-    }
+#if DBG
+    PRINT(costIfSplit);
+    PRINT(costNoSplit);
+    PRINT(lBounds);
+    PRINT(rBounds);
+#endif
 
     if (
 #ifdef LEAF_THRESHOLD
@@ -126,7 +127,9 @@ namespace ospray {
         ((costIfSplit >= costNoSplit) && ((end - begin) <= 7)) ||
         (l == begin) || (l == end)) {
       node[nodeID].childRef = (end - begin) + begin * sizeof(primID[0]);
+#if DBG
       leafCount++;
+#endif
     } else {
       assert(l > begin);
       assert(l < end);
@@ -179,7 +182,8 @@ namespace ospray {
 
     rootRef = node[0].childRef;
 
-    if (dbg)
-      PRINT(leafCount);
+#if DBG
+    PRINT(leafCount);
+#endif
   }
 }
