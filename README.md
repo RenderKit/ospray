@@ -1812,7 +1812,7 @@ OSPRay in MPI mode:
 Enabling the MPI module in your build
 -------------------------------------
 
-To build the MPI module the CMake variable `OSPRAY_MODULE_MPI` must be
+To build the MPI module the CMake variable `OSPRAY_MODULE_MPI=ON` must be
 enabled, which can be done directly on the command line (with `-D...`)
 or through a configuration dialog (`ccmake`, `cmake-gui`), see also
 \[Compiling OSPRay\].
