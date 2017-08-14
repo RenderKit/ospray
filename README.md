@@ -1815,7 +1815,7 @@ Enabling the MPI module in your build
 To build the MPI module the CMake variable `OSPRAY_MODULE_MPI` must be
 enabled, which can be done directly on the command line (with `-D...`)
 or through a configuration dialog (`ccmake`, `cmake-gui`), see also
-\[Compiling OSPRay\].
+[Compiling OSPRay](#compiling-ospray).
 
 This will trigger CMake to go look for an MPI implementation in your
 environment. You can then inspect the CMake value of `MPI_LIBRARY` to
