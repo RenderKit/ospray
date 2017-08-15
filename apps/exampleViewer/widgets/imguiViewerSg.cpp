@@ -392,7 +392,6 @@ namespace ospray {
                            value.size()+256,
                            ImGuiInputTextFlags_EnterReturnsTrue))
       {
-        std::cout << "enter pressed\n";
         node->setValue(std::string(buf));
       }
       free(buf);

@@ -458,8 +458,6 @@ namespace ospray {
         if (properties.valid && childrenLastModified() < properties.lastVerified)
           traverseChildren = false;
         properties.valid = computeValid();
-        if (!properties.valid)
-          std::cout << name() << " marked invalid\n";
         properties.lastVerified = TimeStamp();
       } else if (operation == "modified") {
         markAsModified();
