@@ -337,7 +337,6 @@ namespace ospray {
 #endif
       }
       textureCache[fileName.str()] = tex;
-      std::cout << "loaded texture " << fileName << std::endl;
       return tex;
 
       // if (ext == "ppm") {
