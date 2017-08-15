@@ -250,7 +250,6 @@ static inline void addPlaneToScene(sg::Node& renderer)
   index->setName("index");
 
   auto &plane = world.createChild("plane", "Instance");
-  plane["visible"].setValue(addPlane);
   auto &mesh  = plane.child("model").createChild("mesh", "TriangleMesh");
 
   auto sg_plane = mesh.nodeAs<sg::TriangleMesh>();
@@ -433,8 +432,8 @@ int main(int ac, const char **av)
 
   addLightsToScene(renderer);
   addImporterNodesToWorld(renderer);
-  addAnimatedImporterNodesToWorld(renderer);  
-  if (!no_defaults)
+  addAnimatedImporterNodesToWorld(renderer);
+  if (!no_defaults && addPlane)
     addPlaneToScene(renderer);
 
   // last, to be able to modify all created SG nodes
