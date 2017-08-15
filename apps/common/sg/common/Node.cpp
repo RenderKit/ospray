@@ -342,11 +342,7 @@ namespace ospray {
 
     void Node::add(std::shared_ptr<Node> node, const std::string &name)
     {
-      std::lock_guard<std::mutex> lock{mutex};
-      std::string lower = name;
-      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
-      properties.children[lower] = node;
-
+      setChild(name, node);
       node->setParent(*this);
     }
 
@@ -379,6 +375,7 @@ namespace ospray {
 #ifndef _WIN32
 # warning "TODO: child node parent needs to be set, which requires multi-parent support"
 #endif
+      markAsModified();
     }
 
     bool Node::hasParent() const

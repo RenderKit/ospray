@@ -19,12 +19,6 @@
 
 namespace ospray {
 
-  LinearTransferFunction::~LinearTransferFunction() 
-  {
-    if (ispcEquivalent != nullptr)
-      ispc::LinearTransferFunction_destroy(ispcEquivalent); 
-  }
-
   void LinearTransferFunction::commit()
   {
     // Create the equivalent ISPC transfer function.
