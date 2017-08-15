@@ -485,26 +485,6 @@ namespace ospray {
     }
 
     // ==================================================================
-    // Renderable
-    // ==================================================================
-
-    void Renderable::preTraverse(RenderContext &ctx,
-                                 const std::string& operation, bool& traverseChildren)
-    {
-      Node::preTraverse(ctx,operation, traverseChildren);
-      if (operation == "render")
-        preRender(ctx);
-    }
-
-    void Renderable::postTraverse(RenderContext &ctx,
-                                  const std::string& operation)
-    {
-      Node::postTraverse(ctx,operation);
-      if (operation == "render")
-        postRender(ctx);
-    }
-
-    // ==================================================================
     // global stuff
     // ==================================================================
 

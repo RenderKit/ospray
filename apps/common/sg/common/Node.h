@@ -16,10 +16,10 @@
 
 #pragma once
 
-#include "sg/common/TimeStamp.h"
-#include "sg/common/Serialization.h"
-#include "sg/common/RenderContext.h"
-#include "sg/common/RuntimeError.h"
+#include "TimeStamp.h"
+#include "Serialization.h"
+#include "RenderContext.h"
+#include "RuntimeError.h"
 // stl
 #include <map>
 #include <memory>
@@ -205,7 +205,8 @@ namespace ospray {
 
       //! called before traversing children
       virtual void preTraverse(RenderContext &ctx,
-                               const std::string& operation, bool& traverseChildren);
+                               const std::string& operation,
+                               bool& traverseChildren);
 
       //! called after traversing children
       virtual void postTraverse(RenderContext &ctx,
@@ -242,7 +243,7 @@ namespace ospray {
       //             to be able to lock the mutex
       mutable std::mutex mutex;
     };
-    
+
     OSPSG_INTERFACE std::shared_ptr<Node>
     createNode(std::string name,
                std::string type = "Node",
@@ -420,41 +421,6 @@ namespace ospray {
 
         return compare<T>(min(), max(), value());
       }
-    };
-
-    // Base Node for all renderables //////////////////////////////////////////
-
-    //! a Node with bounds and a render operation
-    struct OSPSG_INTERFACE Renderable : public Node
-    {
-      Renderable() { createChild("bounds", "box3f", box3f(empty)); }
-      virtual ~Renderable() = default;
-
-      virtual std::string toString() const override
-      { return "ospray::sg::Renderable"; }
-
-      virtual box3f bounds() const override
-      { return child("bounds").valueAs<box3f>(); }
-
-      virtual box3f computeBounds() const
-      {
-        box3f cbounds = empty;
-        for (const auto &child : properties.children)
-        {
-          auto tbounds = child.second->bounds();
-            cbounds.extend(tbounds);
-        }
-        return cbounds;
-      }
-
-      virtual void preTraverse(RenderContext &ctx,
-                               const std::string& operation, bool& traverseChildren) override;
-      virtual void postTraverse(RenderContext &ctx,
-                                const std::string& operation) override;
-      virtual void postCommit(RenderContext &ctx) override
-      { child("bounds").setValue(computeBounds()); }
-      virtual void preRender(RenderContext &ctx)  {}
-      virtual void postRender(RenderContext &ctx) {}
     };
 
     /*! \brief registers a internal ospray::<ClassName> renderer under

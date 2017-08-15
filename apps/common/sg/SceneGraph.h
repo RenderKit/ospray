@@ -27,18 +27,18 @@
 #endif
 
 // sg components
-#include "sg/common/Node.h"
-#include "sg/common/Data.h"
-#include "sg/common/Transform.h"
+#include "common/Data.h"
+#include "common/Renderable.h"
+#include "common/Transform.h"
 
-#include "sg/camera/PerspectiveCamera.h"
+#include "camera/PerspectiveCamera.h"
 
-#include "sg/geometry/Geometry.h"
-#include "sg/geometry/Spheres.h"
+#include "geometry/Geometry.h"
+#include "geometry/Spheres.h"
 
-#include "sg/importer/Importer.h"
+#include "importer/Importer.h"
 
-#include "sg/volume/Volume.h"
+#include "volume/Volume.h"
 
 // ospcommon
 #include "ospcommon/FileName.h"

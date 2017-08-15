@@ -14,29 +14,57 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
 #include "Renderable.h"
 
 namespace ospray {
   namespace sg {
 
-    struct OSPSG_INTERFACE Transform : public Renderable
+    Renderable::Renderable()
     {
-      Transform();
-      std::string toString() const override;
+      createChild("bounds", "box3f", box3f(empty));
+    }
 
-      void preRender(RenderContext &ctx) override;
-      void postRender(RenderContext &ctx) override;
+    std::string Renderable::toString() const
+    {
+      return "ospray::sg::Renderable";
+    }
 
-      //! \brief the actual (affine) transformation matrix
-      AffineSpace3f xfm;
-      ospcommon::affine3f cachedTransform;
-      ospcommon::affine3f baseTransform;
-      ospcommon::affine3f worldTransform;
-      ospcommon::affine3f oldTransform{ospcommon::one};
-    };
+    box3f Renderable::bounds() const
+    {
+      return child("bounds").valueAs<box3f>();
+    }
+
+    box3f Renderable::computeBounds() const
+    {
+      box3f cbounds = empty;
+      for (const auto &child : properties.children)
+      {
+        auto tbounds = child.second->bounds();
+          cbounds.extend(tbounds);
+      }
+      return cbounds;
+    }
+
+    void Renderable::preTraverse(RenderContext &ctx,
+                                 const std::string& operation, bool& traverseChildren)
+    {
+      Node::preTraverse(ctx,operation, traverseChildren);
+      if (operation == "render")
+        preRender(ctx);
+    }
+
+    void Renderable::postTraverse(RenderContext &ctx,
+                                  const std::string& operation)
+    {
+      Node::postTraverse(ctx,operation);
+      if (operation == "render")
+        postRender(ctx);
+    }
+
+    void Renderable::postCommit(RenderContext &ctx)
+    {
+      child("bounds").setValue(computeBounds());
+    }
 
   } // ::ospray::sg
 } // ::ospray
-

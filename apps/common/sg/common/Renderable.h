@@ -16,27 +16,35 @@
 
 #pragma once
 
-#include "Renderable.h"
+#include "Node.h"
 
 namespace ospray {
   namespace sg {
 
-    struct OSPSG_INTERFACE Transform : public Renderable
+    // Base Node for all renderables //////////////////////////////////////////
+
+    //! a Node with bounds and a render operation
+    struct OSPSG_INTERFACE Renderable : public Node
     {
-      Transform();
-      std::string toString() const override;
+      Renderable();
+      virtual ~Renderable() = default;
 
-      void preRender(RenderContext &ctx) override;
-      void postRender(RenderContext &ctx) override;
+      virtual std::string toString() const override;
 
-      //! \brief the actual (affine) transformation matrix
-      AffineSpace3f xfm;
-      ospcommon::affine3f cachedTransform;
-      ospcommon::affine3f baseTransform;
-      ospcommon::affine3f worldTransform;
-      ospcommon::affine3f oldTransform{ospcommon::one};
+      virtual box3f bounds() const override;
+      virtual box3f computeBounds() const;
+
+      virtual void preTraverse(RenderContext &ctx,
+                               const std::string& operation, bool& traverseChildren) override;
+      virtual void postTraverse(RenderContext &ctx,
+                                const std::string& operation) override;
+      virtual void postCommit(RenderContext &ctx) override;
+
+      // Interface for render traversals //
+
+      virtual void preRender(RenderContext &ctx) {}
+      virtual void postRender(RenderContext &ctx) {}
     };
 
   } // ::ospray::sg
 } // ::ospray
-
