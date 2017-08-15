@@ -65,7 +65,7 @@ namespace ospray {
         throw std::runtime_error(err.str());
       }
     }
-    
+
     inline void expect(char *&s, const char w0, const char w1)
     {
       if (*s != w0 && *s != w1) {
@@ -75,13 +75,13 @@ namespace ospray {
         throw std::runtime_error(err.str());
       }
     }
-    
+
     inline void consume(char *&s, const char w)
     {
       expect(s,w);
       ++s;
     }
-    
+
     inline void consumeComment(char *&s)
     {
       consume(s,'<');
@@ -93,7 +93,7 @@ namespace ospray {
       consume(s,'-');
       consume(s,'>');
     }
-    
+
     inline void consume(char *&s, const char *word)
     {
       const char *in = word;
@@ -189,7 +189,6 @@ namespace ospray {
       return false;
     }
 
-    
     std::shared_ptr<Node> parseNode(char *&s, XMLDoc *doc)
     {
       consume(s,'<');
@@ -205,7 +204,6 @@ namespace ospray {
         node->properties[name] = value;
         skipWhites(s);
       }
-      std::cout << "parsing node value: " << node->name << " " <<  name << " " << value << std::endl;
 
       if (*s == '/') {
         consume(s,"/>");
