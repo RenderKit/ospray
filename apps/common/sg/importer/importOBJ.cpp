@@ -114,9 +114,11 @@ namespace ospray {
             std::string paramType;
             ospcommon::utility::Any paramValue;
             parseParameterString(param.second, paramType, paramValue);
-            matNode.createChildWithValue(param.first, paramType, paramValue);
-            std::cout << "Parsed parameter " << param.first << " of type "
-                      << paramType << std::endl;
+            try {
+              matNode.createChildWithValue(param.first, paramType, paramValue);
+            } catch (const std::runtime_error &) {
+              // NOTE(jda) - silently move on if parsed node type doesn't exist
+            }
           }
         }
 
