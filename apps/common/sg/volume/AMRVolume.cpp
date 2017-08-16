@@ -16,77 +16,12 @@
 
 /*! \file sg/AMRVolume.cpp node for reading and rendering amr files */
 
-#undef NDEBUG
-
 #include "AMRVolume.h"
 // sg
 #include "sg/importer/Importer.h"
 
-#define amr_ISO_SURFACE 0
-#define amr_NO_VOLUME 0
-
 namespace ospray {
   namespace sg {
-
-    struct Histogram
-    {
-      enum
-      {
-        N = 128
-      };
-
-      Histogram(const Range<float> &range) : range(range)
-      {
-        for (int i = 0; i < N; i++)
-          bin[i]   = 0;
-      }
-      inline void count(float f)
-      {
-        int i = int(N * (f - range.lower) / (range.upper - range.lower));
-        if (i == N)
-          i = N - 1;
-        if (i < 0 || i >= N) {
-          PRINT(f);
-          PRINT(range);
-          PRINT(i);
-        }
-        assert(i >= 0);
-        assert(i < N);
-        bin[i]++;
-        total++;
-      }
-      void print()
-      {
-        for (int i = 0; i < N; i++) {
-          float lo = range.lower + (range.upper - range.lower) * float(i) / N;
-          float hi =
-              range.lower + (range.upper - range.lower) * float(i + 1) / N;
-          printf("bin[%3i] { %8.4f-%8.4f } = %9li (%3i%%)\n",
-                 i,
-                 lo,
-                 hi,
-                 bin[i],
-                 int(bin[i] * 100.f / total));
-        }
-      };
-      Range<float> range;
-      size_t bin[N];
-      size_t total;
-    };
-
-    void importAMR(const FileName &fileName, sg::ImportState &importerState)
-    {
-#ifdef OSPRAY_APPS_SG_CHOMBO
-      std::shared_ptr<AMRVolume> cv = std::make_shared<AMRVolume>();
-      parseAMRChomboFile(cv, fileName, "", nullptr);
-      importerState.world->add(cv);
-#endif
-    }
-
-    inline float clamp(const Range<float> &range, float v)
-    {
-      return max(range.lower, min(range.upper, v));
-    }
 
     AMRVolume::AMRVolume()
     {
