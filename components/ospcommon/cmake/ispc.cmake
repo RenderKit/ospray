@@ -79,6 +79,15 @@ MACRO (INCLUDE_DIRECTORIES_ISPC)
   SET(ISPC_INCLUDE_DIR ${ISPC_INCLUDE_DIR} ${ARGN})
 ENDMACRO ()
 
+# ##################################################################
+# add macro ADD_DEFINITIONS_ISPC() that allows to specify
+# ISPC pre-processor definitions
+# ##################################################################
+SET(ISPC_DEFINITIONS "")
+MACRO (ADD_DEFINITIONS_ISPC)
+  SET(ISPC_DEFINITIONS ${ISPC_DEFINITIONS} ${ARGN})
+ENDMACRO ()
+
 MACRO (OSPRAY_ISPC_COMPILE)
   SET(ISPC_ADDITIONAL_ARGS "")
   SET(ISPC_TARGETS ${OSPRAY_ISPC_TARGET_LIST})
@@ -158,6 +167,7 @@ MACRO (OSPRAY_ISPC_COMPILE)
       OUTPUT ${results} ${ISPC_TARGET_DIR}/${fname}_ispc.h
       COMMAND ${CMAKE_COMMAND} -E make_directory ${outdir}
       COMMAND ${ISPC_EXECUTABLE}
+      ${ISPC_DEFINITIONS}
       -I ${CMAKE_CURRENT_SOURCE_DIR}
       ${ISPC_INCLUDE_DIR_PARMS}
       --arch=${ISPC_ARCHITECTURE}
