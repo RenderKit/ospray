@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,24 +14,33 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#pragma once 
 
-// sg
-#include "Volume.h"
+struct FindStack {
+  varying bool active;
+  uniform int32 nodeID;
+};
 
-namespace ospray {
-  namespace sg {
+inline uniform FindStack *uniform pushStack(uniform FindStack *uniform stackPtr, 
+                                            uniform int nodeID)
+{
+  unmasked { stackPtr->active = false; }
+  stackPtr->active = true;
+  stackPtr->nodeID = nodeID;
+  return stackPtr+1;
+}
 
-    /*! a plain old structured volume */
-    struct TetVolume : public Volume
-    {
-      std::string toString() const override;
+inline uniform FindStack *uniform pushStack(uniform FindStack *uniform stackPtr, 
+                                            uniform int nodeID,
+                                            varying bool valid)
+{
+  unmasked { stackPtr->active = false; }
+   stackPtr->active = valid;
+   //unmasked { stackPtr->active = valid; };
+  stackPtr->nodeID = nodeID;
+  return stackPtr+1;
+}
 
-      void preCommit(RenderContext &ctx) override;
-      void postCommit(RenderContext &ctx) override;
 
-      std::string fileName;
-    };
 
-  } // ::ospray::sg
-} // ::ospray
+

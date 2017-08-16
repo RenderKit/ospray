@@ -28,9 +28,6 @@ namespace ospray {
 
       virtual std::string toString() const override;
 
-      //! return bounding box of all primitives
-      virtual box3f bounds() const override = 0;
-
       //! serialize into given serialization state
       virtual void serialize(sg::Serialization::State &state) override;
 

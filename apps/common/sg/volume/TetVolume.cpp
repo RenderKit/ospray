@@ -26,11 +26,6 @@ namespace ospray {
       return "ospray::sg::TetVolume";
     }
 
-    box3f TetVolume::bounds() const
-    {
-      return child("bounds").valueAs<box3f>();
-    }
-
     void TetVolume::preCommit(RenderContext &ctx)
     {
       auto ospVolume = (OSPVolume)valueAs<OSPObject>();

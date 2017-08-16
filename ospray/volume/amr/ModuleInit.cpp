@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2017 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,24 +14,19 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
-// sg
-#include "Volume.h"
+// ospray
+#include "ospray/common/Model.h"
 
 namespace ospray {
-  namespace sg {
+  namespace amr {
+    using std::endl;
+    using std::cout;
+    using std::ostream;
+    using std::flush;
 
-    /*! a plain old structured volume */
-    struct TetVolume : public Volume
+    extern "C" void ospray_init_module_amr()
     {
-      std::string toString() const override;
-
-      void preCommit(RenderContext &ctx) override;
-      void postCommit(RenderContext &ctx) override;
-
-      std::string fileName;
-    };
-
-  } // ::ospray::sg
+      StatusMsgStream(1) << "#amr: initializing ospray amr plugin" << std::endl;
+    }
+  }
 } // ::ospray

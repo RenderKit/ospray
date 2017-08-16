@@ -200,7 +200,20 @@ SET(OSPRAY_SOURCES
   volume/unstructured/MinMaxBVH2.ispc
   volume/unstructured/tetrahedral/TetrahedralVolume.cpp
   volume/unstructured/tetrahedral/TetrahedralVolume.ispc
+
+  volume/amr/current.ispc
+  volume/amr/DualCell.ispc
+  volume/amr/finest.ispc
+  volume/amr/octant.ispc
+  volume/amr/CellRef.ispc
+  volume/amr/AMRAccel.cpp
+  volume/amr/AMRData.cpp
+  volume/amr/AMRGeometry.cpp
+  volume/amr/AMRGeometry.ispc
+  volume/amr/AMRVolume.ispc
+  volume/amr/AMRVolume.cpp
 )
+
 
 # -------------------------------------------------------
 # Install API headers

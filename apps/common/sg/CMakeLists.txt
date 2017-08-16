@@ -34,6 +34,20 @@ IF(OSPRAY_APPS_SG_VTK)
   ADD_DEFINITIONS(-DOSPRAY_APPS_SG_VTK=1)
 ENDIF()
 
+OPTION(OSPRAY_APPS_SG_CHOMBO "AMR Chombo Reader" OFF)
+SET(CHOMBO_SRCS "")
+
+IF (OSPRAY_APPS_SG_CHOMBO)
+  FIND_PACKAGE(HDF5 REQUIRED)
+  IF (HDF5_FOUND)
+    INCLUDE_DIRECTORIES(${HDF5_INCLUDE_DIRS})
+  ENDIF()
+  SET(CHOMBO_SRCS importer/importAMRChombo.cpp)
+  ADD_DEFINITIONS(-DOSPRAY_APPS_SG_CHOMBO=1)
+ENDIF()
+
+
+
 OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   # scene graph nodes
   SceneGraph.cpp
@@ -70,6 +84,7 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   transferFunction/TransferFunction.cpp
   volume/Volume.cpp
   volume/TetVolume.cpp
+  volume/AMRVolume.cpp
 
   module/Module.cpp
 
@@ -90,10 +105,12 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   importer/detail_xyz/Model.cpp
 
   ${SG_VTK_SRCS}
+  ${CHOMBO_SRCS}
 
 LINK
   ospray
   ospray_common
   ospray_xml
+  ${HDF5_LIBRARIES}
   ${VTK_LIBRARIES}
 )

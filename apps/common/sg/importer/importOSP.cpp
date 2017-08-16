@@ -36,13 +36,6 @@ namespace ospray {
     std::shared_ptr<sg::Node> createNodeFrom(const xml::Node &node,
                                              const unsigned char *binBasePtr)
     {
-      if (node.name.find("Chombo") != std::string::npos) {
-        if (!ospLoadModule("amr"))
-            std::runtime_error("could not load amr module\n");
-        if (!ospLoadModule("sg_amr"))
-            std::runtime_error("could not load amr module\n");
-      }
-
       std::string name = "untitled";
       if (node.hasProp("name"))
         name = node.getProp("name");
