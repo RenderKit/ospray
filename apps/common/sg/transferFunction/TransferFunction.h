@@ -42,9 +42,6 @@ namespace ospray {
 
      private:
 
-      //! \brief initialize color and alpha arrays to 'some' useful values
-      void setDefaultValues();
-
       float interpolatedAlpha(const DataBuffer &alpha, float x);
 
       void calculateOpacities();

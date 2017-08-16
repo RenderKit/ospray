@@ -21,10 +21,27 @@ namespace ospray {
 
     TransferFunction::TransferFunction()
     {
+      setValue((OSPObject)nullptr);
       createChild("valueRange", "vec2f", vec2f(0.f,1.f));
       createChild("numSamples", "int", 256);
-      setDefaultValues();
-      setValue((OSPObject)nullptr);
+
+      auto colors = createChild("colors",
+                                "DataVector3f").nodeAs<DataVector3f>();
+
+      // 'Jet' transfer function
+      colors->v.emplace_back(0       , 0, 0.562493);
+      colors->v.emplace_back(0       , 0, 1       );
+      colors->v.emplace_back(0       , 1, 1       );
+      colors->v.emplace_back(0.500008, 1, 0.500008);
+      colors->v.emplace_back(1       , 1, 0       );
+      colors->v.emplace_back(1       , 0, 0       );
+      colors->v.emplace_back(0.500008, 0, 0       );
+
+      auto alpha = createChild("alpha", "DataVector2f").nodeAs<DataVector2f>();
+      alpha->v.emplace_back(0.f, 0.f);
+      alpha->v.emplace_back(1.f, 1.f);
+
+      createChild("opacities", "DataVector1f");
     }
 
     float TransferFunction::interpolatedAlpha(const DataBuffer &alpha,
@@ -86,35 +103,6 @@ namespace ospray {
                                       const unsigned char *binBasePtr)
     {
       NOT_IMPLEMENTED;
-    }
-
-    //! \brief Initialize this node's value from given corresponding XML node
-    void TransferFunction::setDefaultValues()
-    {
-      auto colors = createNode("colors",
-                               "DataVector3f")->nodeAs<DataVector3f>();
-
-      // 'Jet' transfer function
-      colors->v.emplace_back(0       , 0, 0.562493);
-      colors->v.emplace_back(0       , 0, 1       );
-      colors->v.emplace_back(0       , 1, 1       );
-      colors->v.emplace_back(0.500008, 1, 0.500008);
-      colors->v.emplace_back(1       , 1, 0       );
-      colors->v.emplace_back(1       , 0, 0       );
-      colors->v.emplace_back(0.500008, 0, 0       );
-      colors->markAsModified();
-
-      add(colors);
-
-      auto alpha = createNode("alpha", "DataVector2f")->nodeAs<DataVector2f>();
-      alpha->v.emplace_back(0.f, 0.f);
-      alpha->v.emplace_back(1.f, 1.f);
-
-      add(alpha);
-
-      auto opacities = createNode("opacities",
-                                  "DataVector1f")->nodeAs<DataVector1f>();
-      add(opacities);
     }
 
     std::string TransferFunction::toString() const
