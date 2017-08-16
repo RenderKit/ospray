@@ -375,7 +375,6 @@ namespace ospray {
 #ifndef _WIN32
 # warning "TODO: child node parent needs to be set, which requires multi-parent support"
 #endif
-      markAsModified();
     }
 
     bool Node::hasParent() const
