@@ -28,7 +28,6 @@ namespace ospray {
       std::string toString() const override;
 
       void preCommit(RenderContext &ctx) override;
-      void postCommit(RenderContext &ctx) override;
 
       std::string fileName;
     };

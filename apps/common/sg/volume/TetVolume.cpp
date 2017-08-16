@@ -77,14 +77,6 @@ namespace ospray {
       child("gradientShadingEnabled").setValue(false);
     }
 
-    void TetVolume::postCommit(RenderContext &ctx)
-    {
-      auto ospVolume = (OSPVolume)valueAs<OSPObject>();
-      ospSetObject(ospVolume, "transferFunction",
-                   child("transferFunction").valueAs<OSPObject>());
-      ospCommit(ospVolume);
-    }
-
     OSP_REGISTER_SG_NODE(TetVolume);
 
   } // ::ospray::sg

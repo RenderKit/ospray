@@ -28,9 +28,6 @@
 namespace ospray {
   namespace sg {
 
-    using std::endl;
-    using std::cout;
-
     struct Histogram
     {
       enum
@@ -81,7 +78,7 @@ namespace ospray {
     {
 #ifdef OSPRAY_APPS_SG_CHOMBO
       std::shared_ptr<AMRVolume> cv = std::make_shared<AMRVolume>();
-      parseAMRChomboFile(cv, fileName, "", NULL);
+      parseAMRChomboFile(cv, fileName, "", nullptr);
       importerState.world->add(cv);
 #endif
     }
@@ -89,6 +86,16 @@ namespace ospray {
     inline float clamp(const Range<float> &range, float v)
     {
       return max(range.lower, min(range.upper, v));
+    }
+
+    AMRVolume::AMRVolume()
+    {
+      createChild("maxLevel", "int", 1 << 30);
+    }
+
+    std::string AMRVolume::toString() const
+    {
+      return "ospray::sg::AMRVolume";
     }
 
     void AMRVolume::parseRaw2AmrFile(const FileName &fileName,
@@ -128,7 +135,7 @@ namespace ospray {
       }
       child("bounds").setValue(bounds);
       ospLogF(1) << "read file; found " << brickInfo.size() << " bricks"
-                 << endl;
+                 << std::endl;
 
       fclose(infoFile);
       fclose(dataFile);
@@ -136,11 +143,13 @@ namespace ospray {
 
     void AMRVolume::preCommit(RenderContext &ctx)
     {
-      OSPObject volume = valueAs<OSPObject>();
-      if (volume != NULL)
-        return;
+      OSPVolume volume = (OSPVolume)valueAs<OSPObject>();
 
-      assert(!brickInfo.empty());
+      if (!volume) {
+        volume = ospNewVolume("amr_volume");
+        setValue((OSPObject)volume);
+      }
+
       for (int bID = 0; bID < brickInfo.size(); bID++) {
         BrickInfo bi = brickInfo[bID];
 
@@ -151,44 +160,15 @@ namespace ospray {
         this->brickData.push_back(data);
       }
 
-      volume = ospNewVolume("amr_volume");
-      assert(volume);
-
-      setValue((OSPObject)volume);
-
       brickDataData =
           ospNewData(brickData.size(), OSP_OBJECT, &brickData[0], 0);
       ospSetData(volume, "brickData", brickDataData);
       brickInfoData = ospNewData(
           brickInfo.size() * sizeof(brickInfo[0]), OSP_RAW, &brickInfo[0], 0);
       ospSetData(volume, "brickInfo", brickInfoData);
-      ospSet1i(volume, "singleShade", 1);
-      ospSet1i(volume, "preIntegration", 0);
-      ospSet1i(volume, "gradientShadingEnabled", 1);
-      ospSet1i(volume, "adaptiveSampling", 1);
-      ospSet2f(
-          volume, "voxelRange", valueRange.toVec2f().x, valueRange.toVec2f().y);
+
       child("voxelRange").setValue(valueRange.toVec2f());
-
       child("transferFunction")["valueRange"].setValue(valueRange.toVec2f());
-      child("transferFunction").preCommit(ctx);
-
-      ospSetObject(volume,
-                   "transferFunction",
-                   child("transferFunction").valueAs<OSPObject>());
-
-      ospCommit(volume);
-      ospAddVolume((OSPModel)ctx.world->valueAs<OSPObject>(),
-                   (OSPVolume)volume);
-    }
-
-    void AMRVolume::postCommit(RenderContext &ctx)
-    {
-      OSPObject volume = valueAs<OSPObject>();
-      ospSetObject(volume,
-                   "transferFunction",
-                   child("transferFunction").valueAs<OSPObject>());
-      ospCommit(volume);
     }
 
     //! \brief Initialize this node's value from given XML node
@@ -213,7 +193,7 @@ namespace ospray {
           parseAMRChomboFile(nodePtr,
                              realFN,
                              compName,
-                             clampRangeString.empty() ? NULL : &clampRange,
+                             clampRangeString.empty() ? nullptr : &clampRange,
                              child("maxLevel").valueAs<int>());
 #else
           throw std::runtime_error("chombo support not built in");
