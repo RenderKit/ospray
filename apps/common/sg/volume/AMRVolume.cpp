@@ -103,7 +103,6 @@ namespace ospray {
       ospSetData(volume, "brickInfo", brickInfoData);
 
       child("voxelRange").setValue(valueRange.toVec2f());
-      child("transferFunction")["valueRange"].setValue(valueRange.toVec2f());
     }
 
     //! \brief Initialize this node's value from given XML node
@@ -143,6 +142,8 @@ namespace ospray {
         }
       } else
         throw std::runtime_error("no filename set in xml node...");
+
+      child("transferFunction")["valueRange"].setValue(valueRange.toVec2f());
     }
 
     OSP_REGISTER_SG_NODE(AMRVolume);
