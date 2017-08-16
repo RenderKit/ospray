@@ -45,10 +45,19 @@ struct clFile
  clTransform transform;
 };
 
+inline bool groundPlaneDefaultFromEnv()
+{
+  auto env = getEnvVar<int>("OSPRAY_VIEWER_GROUND_PLANE");
+  if (!env.first)
+    return true;
+  else
+    return env.second;
+}
+
 std::vector<clFile> files;
 std::vector< std::vector<clFile> > animatedFiles;
 std::string initialRendererType;
-bool addPlane = true;
+bool addPlane = groundPlaneDefaultFromEnv();
 bool debug = false;
 bool fullscreen = false;
 bool print = false;
