@@ -22,7 +22,7 @@ namespace ospray {
     TransferFunction::TransferFunction()
     {
       setValue((OSPObject)nullptr);
-      createChild("valueRange", "vec2f", vec2f(0.f,1.f));
+      createChild("valueRange", "vec2f", vec2f(0.f, 1.f));
       createChild("numSamples", "int", 256);
 
       auto colors = createChild("colors",
@@ -86,9 +86,6 @@ namespace ospray {
         ospTransferFunction = ospNewTransferFunction("piecewise_linear");
         setValue((OSPObject)ospTransferFunction);
       }
-
-      vec2f valueRange = child("valueRange").valueAs<vec2f>();
-      ospSetVec2f(ospTransferFunction,"valueRange",{valueRange.x,valueRange.y});
 
       calculateOpacities();
     }

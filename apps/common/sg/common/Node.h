@@ -294,8 +294,6 @@ namespace ospray {
       return properties.value.get<T>();
     }
 
-
-
     // Helper functions ///////////////////////////////////////////////////////
 
     // Compare //
@@ -361,13 +359,6 @@ namespace ospray {
     }
 
     template <>
-    inline void commitNodeValue<float>(Node &n)
-    {
-      ospSet1f(n.parent().valueAs<OSPObject>(),
-               n.name().c_str(), n.valueAs<float>());
-    }
-
-    template <>
     inline void commitNodeValue<bool>(Node &n)
     {
       ospSet1i(n.parent().valueAs<OSPObject>(),
@@ -382,18 +373,45 @@ namespace ospray {
     }
 
     template <>
+    inline void commitNodeValue<vec2i>(Node &n)
+    {
+      ospSet2iv(n.parent().valueAs<OSPObject>(),
+                n.name().c_str(), &n.valueAs<vec2i>().x);
+    }
+
+    template <>
+    inline void commitNodeValue<vec3i>(Node &n)
+    {
+      ospSet3iv(n.parent().valueAs<OSPObject>(),
+                n.name().c_str(), &n.valueAs<vec3i>().x);
+    }
+
+    template <>
+    inline void commitNodeValue<float>(Node &n)
+    {
+      ospSet1f(n.parent().valueAs<OSPObject>(),
+               n.name().c_str(), n.valueAs<float>());
+    }
+
+    template <>
+    inline void commitNodeValue<vec2f>(Node &n)
+    {
+      ospSet2fv(n.parent().valueAs<OSPObject>(),
+                n.name().c_str(), &n.valueAs<vec2f>().x);
+    }
+
+    template <>
     inline void commitNodeValue<vec3f>(Node &n)
     {
       ospSet3fv(n.parent().valueAs<OSPObject>(),
                 n.name().c_str(), &n.valueAs<vec3f>().x);
     }
 
-
     template <>
-    inline void commitNodeValue<vec2f>(Node &n)
+    inline void commitNodeValue<vec4f>(Node &n)
     {
-      ospSet3fv(n.parent().valueAs<OSPObject>(),
-                n.name().c_str(), &n.valueAs<vec2f>().x);
+      ospSet4fv(n.parent().valueAs<OSPObject>(),
+                n.name().c_str(), &n.valueAs<vec4f>().x);
     }
 
     // Helper parameter node wrapper //////////////////////////////////////////
