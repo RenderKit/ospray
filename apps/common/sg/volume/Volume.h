@@ -17,12 +17,13 @@
 #pragma once
 
 // sg
-#include "sg/transferFunction/TransferFunction.h"
+#include "../common/Renderable.h"
+#include "../transferFunction/TransferFunction.h"
 
 namespace ospray {
   namespace sg {
 
-    struct Volume : public sg::Renderable
+    struct Volume : public Renderable
     {
       Volume();
 

@@ -14,37 +14,57 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
-// ospray
-#include "common/Data.h"
-#include "transferFunction/TransferFunction.h"
+#include "Renderable.h"
 
 namespace ospray {
+  namespace sg {
 
-  /*! \brief A concrete implementation of the TransferFunction class for
-    piecewise linear transfer functions.
-  */
-  struct OSPRAY_SDK_INTERFACE LinearTransferFunction : public TransferFunction
-  {
-    LinearTransferFunction() = default;
+    Renderable::Renderable()
+    {
+      createChild("bounds", "box3f", box3f(empty));
+    }
 
-    virtual void commit() override;
+    std::string Renderable::toString() const
+    {
+      return "ospray::sg::Renderable";
+    }
 
-    virtual std::string toString() const override;
+    box3f Renderable::bounds() const
+    {
+      return child("bounds").valueAs<box3f>();
+    }
 
-  private:
+    box3f Renderable::computeBounds() const
+    {
+      box3f cbounds = empty;
+      for (const auto &child : properties.children)
+      {
+        auto tbounds = child.second->bounds();
+          cbounds.extend(tbounds);
+      }
+      return cbounds;
+    }
 
-    //! Data array that stores the color map.
-    Ref<Data> colorValues;
+    void Renderable::preTraverse(RenderContext &ctx,
+                                 const std::string& operation, bool& traverseChildren)
+    {
+      Node::preTraverse(ctx,operation, traverseChildren);
+      if (operation == "render")
+        preRender(ctx);
+    }
 
-    //! Data array that stores the opacity map.
-    Ref<Data> opacityValues;
+    void Renderable::postTraverse(RenderContext &ctx,
+                                  const std::string& operation)
+    {
+      Node::postTraverse(ctx,operation);
+      if (operation == "render")
+        postRender(ctx);
+    }
 
-    //! Create the equivalent ISPC transfer function.
-    void createEquivalentISPC();
+    void Renderable::postCommit(RenderContext &ctx)
+    {
+      child("bounds").setValue(computeBounds());
+    }
 
-  };
-
+  } // ::ospray::sg
 } // ::ospray
-

@@ -140,11 +140,12 @@ namespace ospray {
       return std::shared_ptr<sg::Node>();
     }
 
-    void importOSPVolumeViewerFile(std::shared_ptr<xml::XMLDoc> doc, std::shared_ptr<sg::Node> world)
+    void importOSPVolumeViewerFile(std::shared_ptr<xml::XMLDoc> doc,
+                                   std::shared_ptr<sg::Node> world)
     {
-      std::shared_ptr<sg::StructuredVolumeFromFile> volume
-        = std::dynamic_pointer_cast<sg::StructuredVolumeFromFile>(
-          createNode("volume", "StructuredVolumeFromFile"));
+      using SVFF = StructuredVolumeFromFile;
+      auto volume = createNode("volume",
+                               "StructuredVolumeFromFile")->nodeAs<SVFF>();
 
       vec3i dimensions(-1);
       std::string fileName = "";
@@ -157,18 +158,13 @@ namespace ospray {
           else if (child.name == "filename")
             fileName = child.content;
           else if (child.name == "samplingRate") {
-            std::cout << "#osp.sg: cowardly refusing to parse 'samplingRate'"
-                      << std::endl;
-            std::cout << "#osp.sg: (note this should be OK)" << std::endl;
-          } else
-            throw std::runtime_error("unknown old-style osp file component volume::"
-                                     + child.name);
+            // Silently ignore
+          } else {
+            throw std::runtime_error("unknown old-style osp file "
+                                     "component volume::" + child.name);
+          }
         });
-      std::cout << "#osp.sg: parsed old-style osp file as: " << std::endl;
-      std::cout << "  fileName   = " << fileName << std::endl;
-      std::cout << "  voxelType  = " << voxelType << std::endl;
-      std::cout << "  dimensions = " << dimensions << std::endl;
-      std::cout << "  path       = " << doc->fileName.path() << std::endl;
+
       volume->fileNameOfCorrespondingXmlDoc = doc->fileName;
       volume->fileName = fileName;
       volume->dimensions = dimensions;
@@ -192,10 +188,6 @@ namespace ospray {
       /* TEMPORARY FIX while we transition old volumeViewer .osp files
          (that are not in scene graph format) to actual scene graph */
       if (doc->child[0]->name == "volume") {
-        std::cout << "#osp.sg: Seems the file we are parsing is actually not a " << endl;
-        std::cout << "#osp.sg: ospray scene graph file, but rather an (older) " << endl;
-        std::cout << "#osp.sg: ospVolumeViewer input file. Heroically trying to " << endl;
-        std::cout << "#osp.sg: convert this to scene graph while loading. " << endl;
         importOSPVolumeViewerFile(doc, world);
         return;
       }

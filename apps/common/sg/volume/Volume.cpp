@@ -152,20 +152,7 @@ namespace ospray {
     void StructuredVolume::setFromXML(const xml::Node &node,
                                       const unsigned char *binBasePtr)
     {
-      voxelType = node.getProp("voxelType");
-      if (node.hasProp("ofs"))
-        mappedPointer = binBasePtr + std::stoll(node.getProp("ofs","0"));
-      dimensions = toVec3i(node.getProp("dimensions").c_str());
-
-      if (voxelType == "uint8")
-        voxelType = "uchar";
-      if (unsupportedVoxelType(voxelType)) {
-        THROW_SG_ERROR("unknown StructuredVolume.voxelType '"
-                       + voxelType + "'");
-      }
-
-      std::cout << "#osp:sg: created StructuredVolume from XML file, "
-                << "dimensions = " << dimensions << std::endl;
+      NOT_IMPLEMENTED;
     }
 
     OSP_REGISTER_SG_NODE(StructuredVolume);

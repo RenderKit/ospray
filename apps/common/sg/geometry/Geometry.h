@@ -16,12 +16,13 @@
 
 #pragma once
 
-#include "sg/common/Material.h"
+#include "../common/Material.h"
+#include "../common/Renderable.h"
 
 namespace ospray {
   namespace sg {
 
-    struct Geometry : public sg::Renderable
+    struct Geometry : public Renderable
     {
       Geometry(const std::string &type);
 

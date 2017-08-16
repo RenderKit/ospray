@@ -16,14 +16,14 @@
 
 #pragma once
 
-#include "sg/common/Node.h"
-#include "sg/common/Serialization.h"
-#include "sg/camera/Camera.h"
+#include "Renderable.h"
+#include "Serialization.h"
+#include "../camera/Camera.h"
 
 namespace ospray {
   namespace sg {
 
-    struct OSPSG_INTERFACE Model : public sg::Renderable
+    struct OSPSG_INTERFACE Model : public Renderable
     {
       Model();
       virtual ~Model() = default;
@@ -61,7 +61,7 @@ namespace ospray {
     };
 
 
-    struct OSPSG_INTERFACE Instance : public sg::World
+    struct OSPSG_INTERFACE Instance : public World
     {
       Instance();
 
