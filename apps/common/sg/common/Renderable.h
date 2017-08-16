@@ -16,35 +16,35 @@
 
 #pragma once
 
-// ospray
-#include "common/Data.h"
-#include "transferFunction/TransferFunction.h"
+#include "Node.h"
 
 namespace ospray {
+  namespace sg {
 
-  /*! \brief A concrete implementation of the TransferFunction class for
-    piecewise linear transfer functions.
-  */
-  struct OSPRAY_SDK_INTERFACE LinearTransferFunction : public TransferFunction
-  {
-    LinearTransferFunction() = default;
+    // Base Node for all renderables //////////////////////////////////////////
 
-    virtual void commit() override;
+    //! a Node with bounds and a render operation
+    struct OSPSG_INTERFACE Renderable : public Node
+    {
+      Renderable();
+      virtual ~Renderable() = default;
 
-    virtual std::string toString() const override;
+      virtual std::string toString() const override;
 
-  private:
+      virtual box3f bounds() const override;
+      virtual box3f computeBounds() const;
 
-    //! Data array that stores the color map.
-    Ref<Data> colorValues;
+      virtual void preTraverse(RenderContext &ctx,
+                               const std::string& operation, bool& traverseChildren) override;
+      virtual void postTraverse(RenderContext &ctx,
+                                const std::string& operation) override;
+      virtual void postCommit(RenderContext &ctx) override;
 
-    //! Data array that stores the opacity map.
-    Ref<Data> opacityValues;
+      // Interface for render traversals //
 
-    //! Create the equivalent ISPC transfer function.
-    void createEquivalentISPC();
+      virtual void preRender(RenderContext &ctx) {}
+      virtual void postRender(RenderContext &ctx) {}
+    };
 
-  };
-
+  } // ::ospray::sg
 } // ::ospray
-

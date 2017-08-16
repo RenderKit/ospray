@@ -16,13 +16,13 @@
 
 #pragma once
 
-#include "sg/common/Node.h"
+#include "Renderable.h"
 
 namespace ospray {
   namespace sg {
 
     /*! a light node - the generic light node */
-    struct OSPSG_INTERFACE Selector : public sg::Renderable
+    struct OSPSG_INTERFACE Selector : public Renderable
     {
       //! \brief constructor
       Selector();

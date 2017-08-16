@@ -16,10 +16,10 @@
 
 #pragma once
 
-#include "sg/common/TimeStamp.h"
-#include "sg/common/Serialization.h"
-#include "sg/common/RenderContext.h"
-#include "sg/common/RuntimeError.h"
+#include "TimeStamp.h"
+#include "Serialization.h"
+#include "RenderContext.h"
+#include "RuntimeError.h"
 // stl
 #include <map>
 #include <memory>
@@ -205,7 +205,8 @@ namespace ospray {
 
       //! called before traversing children
       virtual void preTraverse(RenderContext &ctx,
-                               const std::string& operation, bool& traverseChildren);
+                               const std::string& operation,
+                               bool& traverseChildren);
 
       //! called after traversing children
       virtual void postTraverse(RenderContext &ctx,
@@ -242,7 +243,7 @@ namespace ospray {
       //             to be able to lock the mutex
       mutable std::mutex mutex;
     };
-    
+
     OSPSG_INTERFACE std::shared_ptr<Node>
     createNode(std::string name,
                std::string type = "Node",
@@ -292,8 +293,6 @@ namespace ospray {
       std::lock_guard<std::mutex> lock{mutex};
       return properties.value.get<T>();
     }
-
-
 
     // Helper functions ///////////////////////////////////////////////////////
 
@@ -360,13 +359,6 @@ namespace ospray {
     }
 
     template <>
-    inline void commitNodeValue<float>(Node &n)
-    {
-      ospSet1f(n.parent().valueAs<OSPObject>(),
-               n.name().c_str(), n.valueAs<float>());
-    }
-
-    template <>
     inline void commitNodeValue<bool>(Node &n)
     {
       ospSet1i(n.parent().valueAs<OSPObject>(),
@@ -381,18 +373,45 @@ namespace ospray {
     }
 
     template <>
+    inline void commitNodeValue<vec2i>(Node &n)
+    {
+      ospSet2iv(n.parent().valueAs<OSPObject>(),
+                n.name().c_str(), &n.valueAs<vec2i>().x);
+    }
+
+    template <>
+    inline void commitNodeValue<vec3i>(Node &n)
+    {
+      ospSet3iv(n.parent().valueAs<OSPObject>(),
+                n.name().c_str(), &n.valueAs<vec3i>().x);
+    }
+
+    template <>
+    inline void commitNodeValue<float>(Node &n)
+    {
+      ospSet1f(n.parent().valueAs<OSPObject>(),
+               n.name().c_str(), n.valueAs<float>());
+    }
+
+    template <>
+    inline void commitNodeValue<vec2f>(Node &n)
+    {
+      ospSet2fv(n.parent().valueAs<OSPObject>(),
+                n.name().c_str(), &n.valueAs<vec2f>().x);
+    }
+
+    template <>
     inline void commitNodeValue<vec3f>(Node &n)
     {
       ospSet3fv(n.parent().valueAs<OSPObject>(),
                 n.name().c_str(), &n.valueAs<vec3f>().x);
     }
 
-
     template <>
-    inline void commitNodeValue<vec2f>(Node &n)
+    inline void commitNodeValue<vec4f>(Node &n)
     {
-      ospSet3fv(n.parent().valueAs<OSPObject>(),
-                n.name().c_str(), &n.valueAs<vec2f>().x);
+      ospSet4fv(n.parent().valueAs<OSPObject>(),
+                n.name().c_str(), &n.valueAs<vec4f>().x);
     }
 
     // Helper parameter node wrapper //////////////////////////////////////////
@@ -420,41 +439,6 @@ namespace ospray {
 
         return compare<T>(min(), max(), value());
       }
-    };
-
-    // Base Node for all renderables //////////////////////////////////////////
-
-    //! a Node with bounds and a render operation
-    struct OSPSG_INTERFACE Renderable : public Node
-    {
-      Renderable() { createChild("bounds", "box3f", box3f(empty)); }
-      virtual ~Renderable() = default;
-
-      virtual std::string toString() const override
-      { return "ospray::sg::Renderable"; }
-
-      virtual box3f bounds() const override
-      { return child("bounds").valueAs<box3f>(); }
-
-      virtual box3f computeBounds() const
-      {
-        box3f cbounds = empty;
-        for (const auto &child : properties.children)
-        {
-          auto tbounds = child.second->bounds();
-            cbounds.extend(tbounds);
-        }
-        return cbounds;
-      }
-
-      virtual void preTraverse(RenderContext &ctx,
-                               const std::string& operation, bool& traverseChildren) override;
-      virtual void postTraverse(RenderContext &ctx,
-                                const std::string& operation) override;
-      virtual void postCommit(RenderContext &ctx) override
-      { child("bounds").setValue(computeBounds()); }
-      virtual void preRender(RenderContext &ctx)  {}
-      virtual void postRender(RenderContext &ctx) {}
     };
 
     /*! \brief registers a internal ospray::<ClassName> renderer under

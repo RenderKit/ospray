@@ -342,11 +342,7 @@ namespace ospray {
 
     void Node::add(std::shared_ptr<Node> node, const std::string &name)
     {
-      std::lock_guard<std::mutex> lock{mutex};
-      std::string lower = name;
-      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
-      properties.children[lower] = node;
-
+      setChild(name, node);
       node->setParent(*this);
     }
 
@@ -485,26 +481,6 @@ namespace ospray {
 
     void Node::postCommit(RenderContext &ctx)
     {
-    }
-
-    // ==================================================================
-    // Renderable
-    // ==================================================================
-
-    void Renderable::preTraverse(RenderContext &ctx,
-                                 const std::string& operation, bool& traverseChildren)
-    {
-      Node::preTraverse(ctx,operation, traverseChildren);
-      if (operation == "render")
-        preRender(ctx);
-    }
-
-    void Renderable::postTraverse(RenderContext &ctx,
-                                  const std::string& operation)
-    {
-      Node::postTraverse(ctx,operation);
-      if (operation == "render")
-        postRender(ctx);
     }
 
     // ==================================================================
