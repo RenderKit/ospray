@@ -57,6 +57,15 @@ namespace ospray {
     struct OSPSG_INTERFACE Node : public std::enable_shared_from_this<Node>
     {
       Node();
+      virtual ~Node() {}
+
+      // NOTE: Nodes are not copyable nor movable! The operator=() will be used
+      //       to assign a Node's _value_, which is different than the
+      //       parent/child structure of the Node itself.
+      Node(const Node &) = delete;
+      Node(Node &&) = delete;
+      Node& operator=(const Node &) = delete;
+      Node& operator=(Node &&) = delete;
 
       virtual std::string toString() const;
 
@@ -124,15 +133,19 @@ namespace ospray {
       SGVar value();
 
       //! returns the value of the node in the desired type
-      template<typename T>
+      template <typename T>
       T& valueAs();
 
       //! returns the value of the node in the desired type
-      template<typename T>
+      template <typename T>
       const T& valueAs() const;
 
-      //! set the value of the node.  Requires strict typecast
+      //! set the value of the node. Requires strict typecast
       void setValue(SGVar val);
+
+      //! set the value via the '=' operator
+      template <typename T>
+      void operator=(T &&val);
 
       // Update detection interface ///////////////////////////////////////////
 
@@ -171,7 +184,7 @@ namespace ospray {
       void remove(const std::string& name);
 
       //! just for convenience; add a typed 'setParam' function
-      template<typename T>
+      template <typename T>
       Node& createChildWithValue(const std::string &name,
                                  const std::string& type,
                                  const T &t);
@@ -263,7 +276,7 @@ namespace ospray {
     }
 
     //! just for convenience; add a typed 'setParam' function
-    template<typename T>
+    template <typename T>
     inline Node &Node::createChildWithValue(const std::string &name,
                                             const std::string& type,
                                             const T &t)
@@ -280,18 +293,24 @@ namespace ospray {
       }
     }
 
-    template<typename T>
+    template <typename T>
     inline T& Node::valueAs()
     {
       std::lock_guard<std::mutex> lock{mutex};
       return properties.value.get<T>();
     }
 
-    template<typename T>
+    template <typename T>
     inline const T& Node::valueAs() const
     {
       std::lock_guard<std::mutex> lock{mutex};
       return properties.value.get<T>();
+    }
+
+    template <typename T>
+    inline void Node::operator=(T &&v)
+    {
+      setValue(std::forward<T>(v));
     }
 
     // Helper functions ///////////////////////////////////////////////////////
