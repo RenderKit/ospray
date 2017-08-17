@@ -68,7 +68,7 @@ namespace ospray {
           valueRange.extend(bd[i]);
         brickPtrs.push_back(bd);
       }
-      child("bounds").setValue(bounds);
+      child("bounds") = bounds;
       ospLogF(1) << "read file; found " << brickInfo.size() << " bricks"
                  << std::endl;
 
@@ -102,7 +102,7 @@ namespace ospray {
           brickInfo.size() * sizeof(brickInfo[0]), OSP_RAW, &brickInfo[0], 0);
       ospSetData(volume, "brickInfo", brickInfoData);
 
-      child("voxelRange").setValue(valueRange.toVec2f());
+      child("voxelRange") = valueRange.toVec2f();
     }
 
     //! \brief Initialize this node's value from given XML node
@@ -143,7 +143,7 @@ namespace ospray {
       } else
         throw std::runtime_error("no filename set in xml node...");
 
-      child("transferFunction")["valueRange"].setValue(valueRange.toVec2f());
+      child("transferFunction")["valueRange"] = valueRange.toVec2f();
     }
 
     OSP_REGISTER_SG_NODE(AMRVolume);

@@ -321,7 +321,7 @@ void parseAMRChomboFile(std::shared_ptr<sg::AMRVolume> &node, const FileName &fi
     rootLevelBounds.extend(amr->level[0]->boxes[i]);
   assert(rootLevelBounds.lower == vec3i(0));
 
-  node->child("bounds").setValue(amr->getWorldBounds());
+  node->child("bounds") = amr->getWorldBounds();
 
   node->componentID = -1;
   for (int i=0;i<amr->component.size();i++)
