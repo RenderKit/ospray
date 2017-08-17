@@ -25,17 +25,6 @@
 
 namespace ospray {
 
-  using namespace ospcommon;
-  using namespace sg;
-
-  using std::endl;
-  using std::cout;
-
-  using ospcommon::vec3f;
-  using ospcommon::box3f;
-  using ospcommon::vec3i;
-  using ospcommon::box3i;
-
   //! namespace amr declares various functions for loading AMR data
   namespace amr {
 
@@ -53,7 +42,7 @@ namespace ospray {
 
       inline vec3i boxSize(const int boxID) const
       {
-        return boxes[boxID].size() + vec3i(1);
+        return boxes[boxID].size() + 1;
       }
 
       inline double getValue(int boxID, int compID, const vec3i &coordNoGhost)
@@ -207,7 +196,7 @@ namespace ospray {
       parseOffsets(file, level);
 
       ospLogF(1) << "read input level #" << level->levelID << ", cellWidth is "
-                 << level->dt << endl;
+                 << level->dt << std::endl;
     }
 
     //! parse hdf5 file
@@ -276,7 +265,7 @@ namespace ospray {
         if (rc == 1) {
           if (levelID > maxLevel) {
             ospLogF(1) << "#osp:amr: skipping amr level #" << levelID
-                       << " as instructed by amr_MAX_LEVEL envvar" << endl;
+                       << " as instructed by amr_MAX_LEVEL envvar" << std::endl;
             continue;
           }
 
@@ -286,7 +275,7 @@ namespace ospray {
           continue;
         }
         ospLogF(1) << "#osp:qtv:amr: unknown HDF5 block '" << name << "'"
-                   << endl;
+                   << std::endl;
       }
 
       H5Fclose(file);
@@ -317,7 +306,9 @@ namespace ospray {
         bounds.extend(level[i]->getWorldBounds());
       return bounds;
     }
-  }
+
+  }  // ::ospray::amr
+
   namespace sg {
 
     //! parse Chombo hdf5 file into world node
@@ -357,7 +348,7 @@ namespace ospray {
       if (node->componentID < 0) {
         if (desiredComponent == "") {
           ospLogF(1) << "no component specified - defaulting to component 0"
-                     << endl;
+                     << std::endl;
           node->componentID = 0;
         } else
           throw std::runtime_error("could not find desird component '" +
@@ -367,7 +358,7 @@ namespace ospray {
       for (int levelID = 0; levelID < amr->level.size(); levelID++) {
         amr::Level *level = amr->level[levelID];
         ospLogF(1) << " - level: " << levelID << " : " << level->boxes.size()
-                   << " boxes" << endl;
+                   << " boxes" << std::endl;
         for (int brickID = 0; brickID < level->boxes.size(); brickID++) {
           AMRVolume::BrickInfo bi;
           bi.box   = level->boxes[brickID];
@@ -392,7 +383,9 @@ namespace ospray {
         }
         level->data.clear();
       }
-      ospLogF(1) << "found " << node->brickInfo.size() << " bricks" << endl;
+      ospLogF(1) << "found " << node->brickInfo.size() << " bricks"
+                 << std::endl;
     }
-  }
-}
+
+  }  // ::ospray::sg
+}  // ::ospray
