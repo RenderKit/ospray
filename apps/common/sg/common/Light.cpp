@@ -19,15 +19,14 @@
 namespace ospray {
   namespace sg {
 
-
     Light::Light()
     {
       setValue(OSPObject(nullptr));
     }
 
-    Light::Light(const std::string &type) : type(type)
+    Light::Light(const std::string &type) : Light()
     {
-      setValue(OSPObject(nullptr));
+      this->type = type;
     }
 
     void Light::preCommit(RenderContext &ctx)

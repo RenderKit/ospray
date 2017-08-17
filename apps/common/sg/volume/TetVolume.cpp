@@ -63,23 +63,20 @@ namespace ospray {
       ospcommon::box3f bounds;
       for (int i = 0; i < vertices->size(); ++i)
         bounds.extend(vertices->get<vec3f>(i));
-      child("bounds").setValue(bounds);
+      child("bounds") = bounds;
 
       auto *field_array = field->baseAs<float>();
       auto minMax = std::minmax_element(field_array,
                                         field_array + field->size() - 1);
       vec2f voxelRange(*minMax.first, *minMax.second);
 
-      child("voxelRange").setValue(voxelRange);
+      child("voxelRange") = voxelRange;
+      child("transferFunction")["valueRange"] = voxelRange;
+
       child("isosurface").setMinMax(voxelRange.x, voxelRange.y);
       float iso = child("isosurface").valueAs<float>();
       if (iso < voxelRange.x || iso > voxelRange.y)
-        child("isosurface").setValue((voxelRange.y-voxelRange.x)/2.f);
-      child("transferFunction")["valueRange"].setValue(voxelRange);
-
-      //NOTE: These children are removed because they are not yet implemnted
-      //      in the base Tetrahedral volume in OSPRay!
-      child("gradientShadingEnabled").setValue(false);
+        child("isosurface") = (voxelRange.y - voxelRange.x) / 2.f;
     }
 
     void TetVolume::postCommit(RenderContext &ctx)

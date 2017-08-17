@@ -40,7 +40,7 @@ namespace ospray {
         ospGeometry = ospNewGeometry(type.c_str());
         setValue((OSPObject)ospGeometry);
 
-        child("bounds").setValue(computeBounds());
+        child("bounds") = computeBounds();
       }
     }
 

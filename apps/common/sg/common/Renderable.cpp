@@ -63,7 +63,7 @@ namespace ospray {
 
     void Renderable::postCommit(RenderContext &ctx)
     {
-      child("bounds").setValue(computeBounds());
+      child("bounds") = computeBounds();
     }
 
   } // ::ospray::sg

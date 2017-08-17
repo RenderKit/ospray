@@ -201,7 +201,7 @@ namespace ospray {
       nodeList.push_back(mat);
 
       mat->setName(node.getProp("name"));
-      mat->child("type").setValue(node.getProp("type"));
+      mat->child("type") = node.getProp("type");
 
       xml::for_each_child_of(node,[&](const xml::Node &child){
           if (!child.name.compare("textures"))
