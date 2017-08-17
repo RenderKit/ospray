@@ -176,8 +176,6 @@ namespace ospray {
 
       std::map<std::string, std::shared_ptr<Node>>& childrenMap();
 
-      //! add node as child of this one
-      Node& operator+=(std::shared_ptr<Node> node);
       void add(std::shared_ptr<Node> node);
       void add(std::shared_ptr<Node> node, const std::string &name);
 

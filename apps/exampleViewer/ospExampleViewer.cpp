@@ -344,7 +344,7 @@ static inline void addImporterNodesToWorld(sg::Node& renderer)
               animation.setChild("rotation", rotation.shared_from_this());
             }
 
-            transform += importerNode_ptr;
+            transform.add(importerNode_ptr);
             renderer.traverse("verify");
             renderer.traverse("commit");
             auto bounds = std::dynamic_pointer_cast<sg::Renderable>(importerNode_ptr)->computeBounds();
@@ -385,7 +385,7 @@ static inline void addAnimatedImporterNodesToWorld(sg::Node& renderer)
         auto importerNode_ptr = sg::createNode(fn.name(), "Importer");
         auto &importerNode = *importerNode_ptr;
         importerNode["fileName"] = fn.str();
-        selector += importerNode_ptr;
+        selector.add(importerNode_ptr);
       }
     }
     auto& anim_selector =

@@ -329,12 +329,6 @@ namespace ospray {
       return properties.children;
     }
 
-    Node& Node::operator+=(std::shared_ptr<Node> n)
-    {
-      add(n);
-      return *this;
-    }
-
     void Node::add(std::shared_ptr<Node> node)
     {
       add(node, node->name());
