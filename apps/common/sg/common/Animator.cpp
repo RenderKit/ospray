@@ -41,7 +41,7 @@ namespace ospray {
         const std::string type = parent().type();
         createChild("value1", type);
         createChild("value2", type);
-        child("value2").setValue(parent().value());
+        child("value2") = parent().value();
         setValue(parent().value());
       }
       parent().setValue(value());

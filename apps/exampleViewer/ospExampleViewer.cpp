@@ -32,17 +32,17 @@ using namespace ospray;
 
 struct clTransform
 {
- vec3f translate{0,0,0};
- vec3f scale{1,1,1};
- vec3f rotation{0,0,0};
+  vec3f translate{0,0,0};
+  vec3f scale{1,1,1};
+  vec3f rotation{0,0,0};
 };
 
 //command line file
 struct clFile
 {
   clFile(std::string f, const clTransform& t) : file(f), transform(t) {}
- std::string file;
- clTransform transform;
+  std::string file;
+  clTransform transform;
 };
 
 inline bool groundPlaneDefaultFromEnv()
@@ -265,9 +265,9 @@ static inline void addPlaneToScene(sg::Node& renderer)
   sg_plane->add(position);
   sg_plane->add(index);
   auto &planeMaterial = mesh["material"];
-  planeMaterial["Kd"].setValue(vec3f(0.5f));
-  planeMaterial["Ks"].setValue(vec3f(0.1f));
-  planeMaterial["Ns"].setValue(10.f);
+  planeMaterial["Kd"] = vec3f(0.5f);
+  planeMaterial["Ks"] = vec3f(0.1f);
+  planeMaterial["Ns"] = 10.f;
 }
 
 static inline void addLightsToScene(sg::Node& renderer)
@@ -277,20 +277,20 @@ static inline void addLightsToScene(sg::Node& renderer)
   if (!no_defaults)
   {
     auto &sun = lights.createChild("sun", "DirectionalLight");
-    sun["color"].setValue(vec3f(1.f,232.f/255.f,166.f/255.f));
-    sun["direction"].setValue(vec3f(0.462f,-1.f,-.1f));
-    sun["intensity"].setValue(1.5f);
+    sun["color"] = vec3f(1.f,232.f/255.f,166.f/255.f);
+    sun["direction"] = vec3f(0.462f,-1.f,-.1f);
+    sun["intensity"] = 1.5f;
 
     auto &bounce = lights.createChild("bounce", "DirectionalLight");
-    bounce["color"].setValue(vec3f(127.f/255.f,178.f/255.f,255.f/255.f));
-    bounce["direction"].setValue(vec3f(-.93,-.54f,-.605f));
-    bounce["intensity"].setValue(0.25f);
+    bounce["color"] = vec3f(127.f/255.f,178.f/255.f,255.f/255.f);
+    bounce["direction"] = vec3f(-.93,-.54f,-.605f);
+    bounce["intensity"] = 0.25f;
 
     if (hdri_light == "")
     {
       auto &ambient = lights.createChild("ambient", "AmbientLight");
-      ambient["intensity"].setValue(0.9f);
-      ambient["color"].setValue(vec3f(174.f/255.f,218.f/255.f,255.f/255.f));
+      ambient["intensity"] = 0.9f;
+      ambient["color"] = vec3f(174.f/255.f,218.f/255.f,255.f/255.f);
     }
   }
 
@@ -327,19 +327,19 @@ static inline void addImporterNodesToWorld(sg::Node& renderer)
             ss << fn.name() << "_" << i << "_" << j << "_" << k;
             auto importerNode_ptr = sg::createNode(ss.str(), "Importer");
             auto &importerNode = *importerNode_ptr;
-            importerNode["fileName"].setValue(fn.str());
+            importerNode["fileName"] = fn.str();
 
             auto &transform = world.createChild("transform_"+ss.str(), "Transform");
-            transform["scale"].setValue(file.transform.scale);
-            transform["rotation"].setValue(file.transform.rotation);
+            transform["scale"] = file.transform.scale;
+            transform["rotation"] = file.transform.rotation;
             if (files.size() < 2 && animatedFiles.empty()) {
               auto &rotation =
                               transform["rotation"].createChild("animator", "Animator");
 
               rotation.traverse("verify");
               rotation.traverse("commit");
-              rotation.child("value1").setValue(ospcommon::vec3f{0.f,0.f,0.f});
-              rotation.child("value2").setValue(ospcommon::vec3f{0.f,2.f*3.14f,0.f});
+              rotation.child("value1") = vec3f(0.f,0.f,0.f);
+              rotation.child("value2") = vec3f(0.f,2.f*3.14f,0.f);
 
               animation.setChild("rotation", rotation.shared_from_this());
             }
@@ -351,7 +351,7 @@ static inline void addImporterNodesToWorld(sg::Node& renderer)
             auto size = bounds.upper - bounds.lower;
             float maxSize = max(max(size.x,size.y),size.z);
             vec3f offset={i*maxSize*1.3f,j*maxSize*1.3f,k*maxSize*1.3f};
-            transform["position"].setValue(file.transform.translate+offset);
+            transform["position"] = file.transform.translate + offset;
           }
         }
       }
@@ -371,9 +371,9 @@ static inline void addAnimatedImporterNodesToWorld(sg::Node& renderer)
     auto &transform =
       world.createChild("transform_" + animatedFile[0].file, "Transform");
 
-    transform["scale"].setValue(animatedFile[0].transform.scale);
-    transform["position"].setValue(animatedFile[0].transform.translate);
-    transform["rotation"].setValue(animatedFile[0].transform.rotation);
+    transform["scale"] = animatedFile[0].transform.scale;
+    transform["position"] = animatedFile[0].transform.translate;
+    transform["rotation"] = animatedFile[0].transform.rotation;
     auto &selector =
       transform.createChild("selector_" + animatedFile[0].file, "Selector");
 
@@ -384,7 +384,7 @@ static inline void addAnimatedImporterNodesToWorld(sg::Node& renderer)
       else {
         auto importerNode_ptr = sg::createNode(fn.name(), "Importer");
         auto &importerNode = *importerNode_ptr;
-        importerNode["fileName"].setValue(fn.str());
+        importerNode["fileName"] = fn.str();
         selector += importerNode_ptr;
       }
     }
@@ -393,7 +393,7 @@ static inline void addAnimatedImporterNodesToWorld(sg::Node& renderer)
 
     anim_selector.traverse("verify");
     anim_selector.traverse("commit");
-    anim_selector["value2"].setValue(int(animatedFile.size()));
+    anim_selector["value2"] = int(animatedFile.size());
     animation.setChild("anim_selector", anim_selector.shared_from_this());
   }
 }
@@ -432,10 +432,10 @@ int main(int ac, const char **av)
   auto &renderer = *renderer_ptr;
 
   auto &win_size = ospray::imgui3D::ImGui3DWidget::defaultInitSize;
-  renderer["frameBuffer"]["size"].setValue(win_size);
+  renderer["frameBuffer"]["size"] = win_size;
 
   if (!initialRendererType.empty())
-    renderer["rendererType"].setValue(initialRendererType);
+    renderer["rendererType"] = initialRendererType;
 
   renderer.createChild("animationcontroller", "AnimationController");
 
@@ -456,9 +456,9 @@ int main(int ac, const char **av)
   auto &viewPort = window.viewPort;
   // XXX SG is too restrictive: OSPRay cameras accept non-normalized directions
   auto dir = normalize(viewPort.at - viewPort.from);
-  renderer["camera"]["dir"].setValue(dir);
-  renderer["camera"]["pos"].setValue(viewPort.from);
-  renderer["camera"]["up"].setValue(viewPort.up);
+  renderer["camera"]["dir"] = dir;
+  renderer["camera"]["pos"] = viewPort.from;
+  renderer["camera"]["up"]  = viewPort.up;
 
   window.create("OSPRay Example Viewer App", fullscreen);
 

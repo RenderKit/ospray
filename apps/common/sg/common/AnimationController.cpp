@@ -55,7 +55,7 @@ namespace ospray {
         const float over = time - stop;
         if (over > 0.f)
           time = start + over;
-        child("time").setValue(time);
+        child("time") = time;
         ctx.time = time;
       }
     }

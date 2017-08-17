@@ -61,7 +61,7 @@ namespace ospray {
 
       ospCommit(model);
       ctx.currentOSPModel = stashedModel;
-      child("bounds").setValue(computeBounds());
+      child("bounds") = computeBounds();
     }
 
     OSPModel Model::ospModel()

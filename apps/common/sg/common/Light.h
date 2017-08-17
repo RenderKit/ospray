@@ -38,8 +38,9 @@ namespace ospray {
       //! \brief returns a std::string with the c++ name of this class
       virtual std::string toString() const override;
 
+    protected:
       /*! \brief light type, i.e., 'DirectionalLight', 'PointLight', ... */
-      const std::string type = "none";
+      std::string type = "none";
       OSPLight ospLight {nullptr};
     };
 

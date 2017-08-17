@@ -180,7 +180,7 @@ namespace ospray {
         slNode->add(v);
         slNode->add(vi);
 
-        slNode->child("radius").setValue(streamLines.radius);
+        slNode->child("radius") = streamLines.radius;
 
         auto model = createNode(name + "_streamlines_model", "Model");
         model->add(slNode);
@@ -193,12 +193,12 @@ namespace ospray {
           slNode->createChild("material", "Material").nodeAs<Material>();
         auto &matNode = *matNodePtr;
 
-        matNode["type"].setValue(std::string("default"));
+        matNode["type"] = std::string("default");
 
-        matNode["d"].setValue(1.f);
-        matNode["Ka"].setValue(vec3f(0.0f, 0.0f, 0.0f));
-        matNode["Kd"].setValue(vec3f(0.9f, 0.9f, 0.9f));
-        matNode["Ks"].setValue(vec3f(0.2f, 0.2f, 0.2f));
+        matNode["d"]  = 1.f;
+        matNode["Ka"] = vec3f(0.0f, 0.0f, 0.0f);
+        matNode["Kd"] = vec3f(0.9f, 0.9f, 0.9f);
+        matNode["Ks"] = vec3f(0.2f, 0.2f, 0.2f);
 
         world->add(instance);
       }

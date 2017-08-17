@@ -57,10 +57,10 @@ namespace ospray {
 
         auto &material = spGeom->child("material");
 
-        material["d"].setValue(1.f);
-        material["Ka"].setValue(vec3f(0.0f, 0.0f, 0.0f));
-        material["Kd"].setValue(m.atomType[i]->color);
-        material["Ks"].setValue(vec3f(0.2f, 0.2f, 0.2f));
+        material["d"]  = 1.f;
+        material["Ka"] = vec3f(0.0f, 0.0f, 0.0f);
+        material["Kd"] = m.atomType[i]->color;
+        material["Ks"] = vec3f(0.2f, 0.2f, 0.2f);
 
         auto model = createNode(name + "_model", "Model");
         model->add(spGeom);

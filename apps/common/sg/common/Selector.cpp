@@ -20,7 +20,6 @@ namespace ospray {
   namespace sg {
 
     Selector::Selector()
-      : Renderable()
     {
       setValue(0.f);
       createChild("index", "int", 0);

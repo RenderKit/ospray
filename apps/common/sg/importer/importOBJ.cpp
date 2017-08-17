@@ -107,7 +107,7 @@ namespace ospray {
 
         for (auto &param : mat.unknown_parameter) {
           if (param.first == "type") {
-            matNode["type"].setValue(param.second);
+            matNode["type"] = param.second;
             std::cout << "Creating material node of type " << param.second
                       << std::endl;
           } else {
@@ -122,13 +122,11 @@ namespace ospray {
           }
         }
 
-        matNode["d"].setValue(mat.dissolve);
-        matNode["Ka"].setValue(
-            vec3f(mat.ambient[0], mat.ambient[1], mat.ambient[2]));
-        matNode["Kd"].setValue(
-            vec3f(mat.diffuse[0], mat.diffuse[1], mat.diffuse[2]));
-        matNode["Ks"].setValue(
-            vec3f(mat.specular[0], mat.specular[1], mat.specular[2]));
+        matNode["d"]  = mat.dissolve;
+        matNode["Ka"] = vec3f(mat.ambient[0], mat.ambient[1], mat.ambient[2]);
+        matNode["Kd"] = vec3f(mat.diffuse[0], mat.diffuse[1], mat.diffuse[2]);
+        matNode["Ks"] =
+            vec3f(mat.specular[0], mat.specular[1], mat.specular[2]);
 
         addTextureIfNeeded(
             matNode, "map_Ka", mat.ambient_texname, containingPath);
