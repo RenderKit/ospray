@@ -22,16 +22,6 @@
 OIIO_NAMESPACE_USING
 #endif
 
-#ifdef USE_IMAGEMAGICK
-#define MAGICKCORE_QUANTUM_DEPTH 16
-#define MAGICKCORE_HDRI_ENABLE 1
-# include <Magick++.h>
-using namespace Magick;
-#  ifndef MaxRGB
-#    define MaxRGB QuantumRange
-#  endif
-#endif
-
 #include "sg/common/Texture2D.h"
 #include "ospray/common/OSPCommon.h"
 
@@ -101,47 +91,6 @@ namespace ospray {
 
       if (ext == "ppm") {
         try {
-            #ifdef USE_IMAGEMAGICK
-            if (1)
-            {
-                Magick::Image image(fileName.str().c_str());
-                tex->size.x    = image.columns();
-                tex->size.y   = image.rows();
-                tex->channels = image.matte() ? 4 : 3;
-                const bool hdr = image.depth() > 8;
-                tex->depth    = hdr ? 4 : 1;
-                tex->preferLinear = preferLinear;
-                float rcpMaxRGB = 1.0f/float(MaxRGB);
-                const Magick::PixelPacket* pixels = image.getConstPixels(0,0,tex->size.x,tex->size.y);
-                if (!pixels) {
-                  std::cerr << "#osp:minisg: failed to load texture '"+fileName.str()+"'" << std::endl;
-                } else {
-                  tex->data = new unsigned char[tex->size.x*tex->size.y*tex->channels*tex->depth];
-                  // convert pixels and flip image (because OSPRay's textures have the origin at the lower left corner)
-                  for (size_t y=0; y<tex->size.y; y++) {
-                    for (size_t x=0; x<tex->size.x; x++) {
-                      const Magick::PixelPacket &pixel = pixels[y*tex->size.x+x];
-                      if (hdr) {
-                        float *dst = &((float*)tex->data)[(x+(tex->size.y-1-y)*tex->size.x)*tex->channels];
-                        *dst++ = pixel.red * rcpMaxRGB;
-                        *dst++ = pixel.green * rcpMaxRGB;
-                        *dst++ = pixel.blue * rcpMaxRGB;
-                        if (tex->channels == 4)
-                          *dst++ = (MaxRGB - pixel.opacity) * rcpMaxRGB;
-                      } else {
-                        unsigned char *dst = &((unsigned char*)tex->data)[(x+(tex->size.y-1-y)*tex->size.x)*tex->channels];
-                        *dst++ = pixel.red;
-                        *dst++ = pixel.green;
-                        *dst++ = pixel.blue;
-                        if (tex->channels == 4)
-                          *dst++ = 255 - (unsigned char)pixel.opacity;
-                      }
-                    }
-                  }
-                }
-            } else
-            #endif
-        {
           int rc, peekchar;
 
           // open file
@@ -216,7 +165,6 @@ namespace ospray {
           for (int y = 0; y < height/2; y++)
             for (int x = 0; x < width*3; x++)
               std::swap(texels[y*width*3+x], texels[(height-1-y)*width*3+x]);
-      }
         } catch(std::runtime_error e) {
           std::cerr << e.what() << std::endl;
         }
@@ -294,43 +242,6 @@ namespace ospray {
         }
       }
       else {
-#ifdef USE_IMAGEMAGICK
-        Magick::Image image(fileName.str().c_str());
-        tex->size.x    = image.columns();
-        tex->size.y   = image.rows();
-        tex->channels = image.matte() ? 4 : 3;
-        const bool hdr = image.depth() > 8;
-        tex->depth    = hdr ? 4 : 1;
-        tex->preferLinear = preferLinear;
-        float rcpMaxRGB = 1.0f/float(MaxRGB);
-        const Magick::PixelPacket* pixels = image.getConstPixels(0,0,tex->size.x,tex->size.y);
-        if (!pixels) {
-          std::cerr << "#osp:minisg: failed to load texture '"+fileName.str()+"'" << std::endl;
-        } else {
-          tex->data = new unsigned char[tex->size.x*tex->size.y*tex->channels*tex->depth];
-          // convert pixels and flip image (because OSPRay's textures have the origin at the lower left corner)
-          for (size_t y=0; y<tex->size.y; y++) {
-            for (size_t x=0; x<tex->size.x; x++) {
-              const Magick::PixelPacket &pixel = pixels[y*tex->size.x+x];
-              if (hdr) {
-                float *dst = &((float*)tex->data)[(x+(tex->size.y-1-y)*tex->size.x)*tex->channels];
-                *dst++ = pixel.red * rcpMaxRGB;
-                *dst++ = pixel.green * rcpMaxRGB;
-                *dst++ = pixel.blue * rcpMaxRGB;
-                if (tex->channels == 4)
-                  *dst++ = (MaxRGB - pixel.opacity) * rcpMaxRGB;
-              } else {
-                unsigned char *dst = &((unsigned char*)tex->data)[(x+(tex->size.y-1-y)*tex->size.x)*tex->channels];
-                *dst++ = pixel.red;
-                *dst++ = pixel.green;
-                *dst++ = pixel.blue;
-                if (tex->channels == 4)
-                  *dst++ = 255 - (unsigned char)pixel.opacity;
-              }
-            }
-          }
-        }
-#else
         int width,height,n;
         const bool hdr = stbi_is_hdr(fileName.str().c_str());
         unsigned char* pixels = nullptr;
@@ -370,7 +281,6 @@ namespace ospray {
             }
           }
         }
-#endif
       }
 #endif
       textureCache[fileName.str()] = tex;
