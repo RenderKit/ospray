@@ -102,6 +102,8 @@ set(OSPRAY_INCLUDE_DIRS
 set(OSPRAY_VERSION   @OSPRAY_VERSION@)
 set(OSPRAY_SOVERSION @OSPRAY_SOVERSION@)
 
+set(OSPRAY_INSTALL_DEPENDENCIES @OSPRAY_INSTALL_DEPENDENCIES@)
+
 set(OSPRAY_BUILD_DEBUG          @OSPRAY_BUILD_DEBUG@)
 set(OSPRAY_BUILD_RELWITHDEBINFO @OSPRAY_BUILD_RELWITHDEBINFO@)
 set(OSPRAY_BUILD_RELEASE        @OSPRAY_BUILD_RELEASE@)
@@ -134,6 +136,15 @@ set(OSPRAY_CMAKE_CURRENT_LIST_DIR     ${CMAKE_CURRENT_LIST_DIR})
 set(OSPRAY_CURRENT_CONFIG_INSTALL_DIR ${CURRENT_CONFIG_INSTALL_DIR})
 set(OSPRAY_CURRENT_ROOT_INSTALL_DIR   ${CURRENT_ROOT_INSTALL_DIR})
 
+# Setup library path vars
+if (WIN32)
+  set(LIBRARY_PATH_PREFIX ${OSPRAY_ROOT}/@CMAKE_INSTALL_LIBDIR@/${CMAKE_IMPORT_LIBRARY_PREFIX})
+  set(LIBRARY_SUFFIX ${CMAKE_IMPORT_LIBRARY_SUFFIX})
+else()
+  set(LIBRARY_PATH_PREFIX ${OSPRAY_ROOT}/@CMAKE_INSTALL_LIBDIR@/${CMAKE_SHARED_LIBRARY_PREFIX})
+  set(LIBRARY_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
+endif()
+
 # Include macros for finding embree
 include(ospray_macros)
 
@@ -142,13 +153,19 @@ include(ospray_macros)
 #             and added to the OSPRAY_LIBRARIES variable below.
 
 if (OSPRAY_TASKING_TBB)
-  # Find tbb
-  find_package(TBB)
-  if (":${TBB_LIBRARY}" STREQUAL ":")
-    message(FATAL_ERROR "Missing required OSPRay dependency "
-      "TBB, please set TBB_ROOT to the root of your TBB install.")
+  if (OSPRAY_INSTALL_DEPENDENCIES)
+    # TBB installed with OSPRay
+    file(GLOB_RECURSE TBB_LIBRARIES ${LIBRARY_PATH_PREFIX}tbb*)
   else()
-    message(STATUS "Found required OSPRay dependency: TBB in ${TBB_INCLUDE_DIRS}")
+    # Find tbb
+    find_package(TBB)
+    if (":${TBB_LIBRARY}" STREQUAL ":")
+      message(FATAL_ERROR "Missing required OSPRay dependency "
+        "TBB, please set TBB_ROOT to the root of your TBB install.")
+    else()
+      message(STATUS
+              "Found required OSPRay dependency: TBB in ${TBB_INCLUDE_DIRS}")
+    endif()
   endif()
 
   add_definitions(-DOSPRAY_TASKING_TBB)
@@ -165,17 +182,15 @@ else()
   add_definitions(-DOSPRAY_TASKING_DEBUG)
 endif()
 
-if (WIN32)
-  set(LIBRARY_PATH_PREFIX ${OSPRAY_ROOT}/@CMAKE_INSTALL_LIBDIR@/${CMAKE_IMPORT_LIBRARY_PREFIX})
-  set(LIBRARY_SUFFIX ${CMAKE_IMPORT_LIBRARY_SUFFIX})
+# Embree
+if (OSPRAY_INSTALL_DEPENDENCIES)
+  # Embree installed with OSPRay
+  file(GLOB_RECURSE EMBREE_LIBRARY ${LIBRARY_PATH_PREFIX}embree*)
 else()
-  set(LIBRARY_PATH_PREFIX ${OSPRAY_ROOT}/@CMAKE_INSTALL_LIBDIR@/${CMAKE_SHARED_LIBRARY_PREFIX})
-  set(LIBRARY_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
+  # Find existing Embree on the machine
+  ospray_find_embree(${EMBREE_VERSION_REQUIRED})
+  ospray_verify_embree_features()
 endif()
-
-# Find existing Embree on the machine
-ospray_find_embree(${EMBREE_VERSION_REQUIRED})
-ospray_verify_embree_features()
 
 list(APPEND OSPRAY_INCLUDE_DIRS ${EMBREE_INCLUDE_DIRS})
 
