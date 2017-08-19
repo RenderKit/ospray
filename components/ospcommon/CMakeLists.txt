@@ -57,6 +57,7 @@ ELSE()
     utility/Any.h
     utility/CodeTimer.h
     utility/OnScopeExit.h
+    utility/Optional.h
     utility/PseudoURL.cpp
     utility/TransactionalValue.h
 
@@ -141,6 +142,7 @@ ELSE()
     utility/Any.h
     utility/CodeTimer.h
     utility/OnScopeExit.h
+    utility/Optional.h
     utility/PseudoURL.h
     utility/TransactionalValue.h
 
@@ -168,6 +170,16 @@ ELSE()
   )
 
   ADD_TEST(NAME OnScopeExit COMMAND test_OnScopeExit)
+
+  # Optional
+
+  OSPRAY_CREATE_TEST(test_Optional
+    utility/tests/test_Optional.cpp
+  LINK
+    ospray_common
+  )
+
+  ADD_TEST(NAME Optional COMMAND test_Optional)
 
   # containers/TransactionalBuffer
 
