@@ -306,7 +306,7 @@ namespace ospcommon {
                     " to value_or() to be convertible to type T, the type"
                     " parameter of Optional<>.");
       return has_value() ? value() : 
-                           reinterpret_cast<T>(std::forward<U>(default_value));
+                           static_cast<T>(std::forward<U>(default_value));
     }
 
     template <typename T>
