@@ -668,7 +668,9 @@ bool Reader::readObject(Token& tokenStart) {
       Value numberName;
       if (!decodeNumber(tokenName, numberName))
         return recoverFromError(tokenObjectEnd);
-      name = JSONCPP_STRING(numberName.asCString());
+      const char* numberNameCString = numberName.asCString();
+      if(numberNameCString != NULL)
+        name = JSONCPP_STRING(numberNameCString);
     } else {
       break;
     }
@@ -3540,7 +3542,6 @@ Value const& Value::operator[](CppTL::ConstString const& key) const
 }
 #endif
 
-Value& Value::append(const Value& value) { return (*this)[size()] = value; }
 
 Value Value::get(char const* key, char const* cend, Value const& defaultValue) const
 {
@@ -4176,7 +4177,8 @@ JSONCPP_STRING valueToString(double value, bool useSpecialFloats, unsigned int p
   char buffer[32];
   int len = -1;
 
-  char formatString[6];
+  //3 non-format characters + 11 characters for %d + 1 for \0
+  char formatString[15];
   sprintf(formatString, "%%.%dg", precision);
 
   // Print into the buffer. We need not request the alternative representation

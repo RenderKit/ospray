@@ -864,8 +864,6 @@ Json::Value obj_value(Json::objectValue); // {}
   bool isValidIndex(ArrayIndex index) const;
   /// \brief Append value to array at the end.
   ///
-  /// Equivalent to jsonvalue[jsonvalue.size()] = value;
-  Value& append(const Value& value);
 
   /// Access an object value by name, create a null member if it does not exist.
   /// \note Because of our implementation, keys are limited to 2^30 -1 chars.

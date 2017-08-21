@@ -1,33 +1,42 @@
-/* ************************************************************************* *\
-   INTEL CORPORATION PROPRIETARY INFORMATION
-   This software is supplied under the terms of a license agreement or 
-   nondisclosure agreement with Intel Corporation and may not be copied 
-   or disclosed except in accordance with the terms of that agreement. 
-   Copyright (C) 2017 Intel Corporation. All Rights Reserved.
-   ************************************************************************* */
+/*
 
-// #include <map>
+    The interface routines for reading and writing PLY polygon files.
+
+    Greg Turk, February 1994
+
+    ---------------------------------------------------------------
+
+    A PLY file contains a single polygonal _object_.
+
+    An object is composed of lists of _elements_.  Typical elements are
+    vertices, faces, edges and materials.
+
+    Each type of element for a given object has one or more _properties_
+    associated with the element type.  For instance, a vertex element may
+    have as properties the floating-point values x,y,z and the three unsigned
+    chars representing red, green and blue.
+
+    ---------------------------------------------------------------
+
+    Copyright (c) 1994 The Board of Trustees of The Leland Stanford
+    Junior University.  All rights reserved.
+
+    Permission to use, copy, modify and distribute this software and its
+    documentation for any purpose is hereby granted without fee, provided
+    that the above copyright notice and this permission notice appear in
+    all copies of this software and that you do not sell the software.
+
+    THE SOFTWARE IS PROVIDED "AS IS" AND WITHOUT WARRANTY OF ANY KIND,
+    EXPRESS, IMPLIED OR OTHERWISE, INCLUDING WITHOUT LIMITATION, ANY
+    WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+  */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <string.h>
 #include "ply.h"
-// #include "mesh/Mesh.h"
-// #include "mesh/MeshBuilder.h"
-// #include "sg/Writer.h"
-// #include <map>
-
-// using namespace std;
-// using namespace sg;
-
-// using namespace sg;
-// using namespace sg::OBJ;
-
-// enum { SPLIT_NONE, SPLIT_FILES };
-
-// int split = SPLIT_NONE;
-// // int split = SPLIT_GROUPS;
-
-// /*! object (->stream) we're currently writing polys into */
-// MeshBuilder builder;
-
-// #include <sstream>
 
 #define FALSE           0
 #define TRUE            1
@@ -36,71 +45,7 @@
 #define Y               1
 #define Z               2
 
-// std::map<int,sg::Material*> alreadyCreatedMaterials;
 
-// sg::Material *getMaterial(unsigned char r, unsigned char g, unsigned char b)
-// {
-//   int rgb = (b<<16)+(g<<8)+r;
-//   if (alreadyCreatedMaterials.find(rgb) != alreadyCreatedMaterials.end())
-//     return alreadyCreatedMaterials[rgb];
-
-//   Material *newMat = new Material;
-//   char name[1000];
-//   sprintf(name,"mat_%03i_%03i_%03i",r,g,b);
-//   newMat->type = "OBJMaterial";
-//   newMat->name = name;
-//   Material::Param diffuse;
-//   diffuse.set(vec3f(r/255.f,g/255.f,b/255.f));
-//   newMat->param["Kd"] = diffuse;
-//   alreadyCreatedMaterials[rgb] = newMat;
-//   return newMat;
-// }
-// int getMaterialID(Scene *scene, unsigned char r, unsigned char g, unsigned char b)
-  // {
-  //   static map<uint,uint> rgbToMatID;
-  //   uint rgb = (((int)r)<<16) + (((int)g)<<8) + ((int)b);
-  //   if (rgbToMatID.find(rgb) == rgbToMatID.end()) {
-  //     rgbToMatID[rgb] = scene->material.size();
-  //     COMMON::Material newMat;
-  //     newMat.Kd.x = r * 1.f/255.f;
-  //     newMat.Kd.y = g * 1.f/255.f;
-  //     newMat.Kd.z = b * 1.f/255.f;
-  //     scene->material.push_back(newMat);
-  //   }
-  //   return rgbToMatID[rgb];
-/*
-    static int old_r = -1;
-    static int old_g = -1;
-    static int old_b = -1;
-    static RTMaterial old_id = 0;
-  
-    if (r == old_r && g == old_g && b == old_b)
-      return old_id;
-
-    old_r = r;
-    old_g = g;
-    old_b = b;
-  
-    vec3f diffuse = 1./255. * vec3f(r,g,b);
-    cout << diffuse << endl;
-
-    for (std::map<RTMaterial,Material*>::iterator it = MaterialList::singleton.matByID.begin();
-         it != MaterialList::singleton.matByID.end();
-         it++)
-      {
-        PLYMaterial *mat = dynamic_cast<PLYMaterial*>(it->second);
-        if (!mat) continue;
-        if (mat->diffuse == diffuse) {
-          old_id = it->first;
-          return old_id;
-        }
-      }
-    PLYMaterial *mat = new PLYMaterial;
-    mat->diffuse = diffuse;
-    old_id = MaterialList::singleton.addMaterial(mat);
-    return old_id;
-*/
-  // };
   double LAmag,LAsum; int LAi,LAj,LAk;
 #define VEC3_ZERO(a)	       { a[0]=a[1]=a[2]=0; }
 #define VEC3_NEG(a,b)           { a[0]= -b[0]; a[1]= -b[1];a[2]= -b[2];}
@@ -192,20 +137,6 @@
   };
 
   /*** the PLY object ***/
-
-  //static int nverts,nfaces;
-  //static Vertex **vlist;
-  //static Face **flist;
-  //static PlyOtherElems *other_elements = NULL;
-  //static PlyOtherProp *vert_other,*face_other;//,*edge_other;
-  //static int nelems;
-  //static char **element_list;
-  //static int num_comments;
-  //static char **comments;
-  //static int num_obj_info;
-  //static char **obj_info;
-  //static int file_type;
-
   int has_x, has_y, has_z;
   int has_face_red=0; // face colors
   int has_face_green=0; // face colors
@@ -219,434 +150,6 @@
 #define PRINTPROP(o,var,prop,val,str,vals)                  \
   if (vals) o << ",";                                       \
   if (has_##prop) { o << str << "=" << var . val; vals++; }
-
-// // ostream& operator<<(ostream &o, const ::Vertex &vtx)
-//   {
-//     int vals = 0;
-//     o << "Vertex(";
-//     PRINTPROP(o,vtx,x,coord[0],"x",vals);
-//     PRINTPROP(o,vtx,y,coord[1],"y",vals);
-//     PRINTPROP(o,vtx,z,coord[2],"z",vals);
-//     PRINTPROP(o,vtx,x,normal[0],"nx",vals);
-//     PRINTPROP(o,vtx,y,normal[1],"ny",vals);
-//     PRINTPROP(o,vtx,z,normal[2],"nz",vals);
-//     PRINTPROP(o,vtx,vertex_red,red,"red",vals);
-//     PRINTPROP(o,vtx,vertex_green,green,"green",vals);
-//     PRINTPROP(o,vtx,vertex_blue,blue,"blue",vals);
-//     o << ")";
-//     return o;
-//   }
-
-
-// inline string pretty(long l)
-// {
-//   char buf[1000];
-//   if (l >= 1000000000000L) {
-//     sprintf(buf,"%fT",l*1e-12f);
-//   } else if (l >= 1000000000L) {
-//     sprintf(buf,"%f.1G",l*1e-9f);
-//   } else if (l >= 1000000) {
-//     sprintf(buf,"%.1fM",l*1e-6f);
-//   } else if (l >= 1000) {
-//     sprintf(buf,"%.1fK",l*1e-3f);
-//   } else {
-//     sprintf(buf,"%.1li",l);
-//   }
-//   return buf;
-// }
-
-#if 0
-  void parsePLY(const char *const filename)
-  {
-    int i,j;
-    int nprops;
-    sg::Material *material = NULL;
-//    int num_elems;
-    PlyProperty **plist;
-    char *elem_name;
-    float version;
-    PlyFile *ply = NULL;
-    int vertices = 0;
-    // sg::Mesh::Prim *triangle = NULL;
-    int triangles = 0;
-    common::vec3fa *pos = NULL;
-    common::vec3fa *nor = NULL;
-
-    static int numFilesDone = 0;
-    static long numTrisWritten = 0;
-
-    /*** Read in the original PLY object ***/
-    FILE *file;
-    bool isPipe = false;
-    if (strlen(filename) > 7 && !strcmp(filename+strlen(filename)-7,".ply.gz")) 
-      {
-        isPipe = true;
-        char cmd[10000];
-        sprintf(cmd,"/usr/bin/gunzip -c %s",filename);
-        file = popen(cmd,"r");
-      } 
-    else 
-      file = fopen(filename,"rb");
-    
-    cout << "plyfile: " << filename << endl;
-    if (!file) {
-      FATAL("could not open " << filename);
-    }
-    ply  = ply_read (file, &nelems, &element_list);
-    ply_get_info (ply, &version, &file_type);
-    
-    for (i = 0; i < nelems; i++)
-      {
-        int num_elems;
-
-        /* get the description of the first element */
-        elem_name = element_list[i];
-        plist = ply_get_element_description (ply, elem_name, &num_elems, &nprops);
-
-        if (equal_strings ("vertex", elem_name))
-          {
-            /* create a vertex list to hold all the vertices */
-            // 	  vlist = (Vertex **) malloc (sizeof (Vertex *) * num_elems);
-            // 	  nverts = num_elems;
-	    
-            /* set up for getting vertex elements */
-            /* verify which properties these vertices have */
-            has_x = has_y = has_z = FALSE;
-            has_nx = has_ny = has_nz = FALSE;
-	    
-            for (j=0; j<nprops; j++)
-              {
-                if (equal_strings("x", plist[j]->name))
-                  {
-                    ply_get_property (ply, elem_name, &vert_props[VTX_X]);  /* x */
-                    has_x = TRUE;
-                  }
-                else if (equal_strings("y", plist[j]->name))
-                  {
-                    ply_get_property (ply, elem_name, &vert_props[VTX_Y]);  /* y */
-                    has_y = TRUE;
-                  }
-                else if (equal_strings("z", plist[j]->name))
-                  {
-                    ply_get_property (ply, elem_name, &vert_props[VTX_Z]);  /* z */
-                    has_z = TRUE;
-                  }
-                if (equal_strings("nx", plist[j]->name))
-                  {
-                    ply_get_property (ply, elem_name, &vert_props[VTX_NX]);  /* x */
-                    has_nx = TRUE;
-                  }
-                else if (equal_strings("ny", plist[j]->name))
-                  {
-                    ply_get_property (ply, elem_name, &vert_props[VTX_NY]);  /* y */
-                    has_ny = TRUE;
-                  }
-                else if (equal_strings("nz", plist[j]->name))
-                  {
-                    ply_get_property (ply, elem_name, &vert_props[VTX_NZ]);  /* z */
-                    has_nz = TRUE;
-                  }
-                else if (equal_strings("diffuse_red", plist[j]->name))
-                  {
-                    ply_get_property (ply, elem_name, &vert_props[VTX_RED]);  /* z */
-                    has_vertex_red = TRUE;
-                  }
-                else if (equal_strings("diffuse_green", plist[j]->name))
-                  {
-                    ply_get_property (ply, elem_name, &vert_props[VTX_GREEN]);  /* z */
-                    has_vertex_green = TRUE;
-                  }
-                else if (equal_strings("diffuse_blue", plist[j]->name))
-                  {
-                    ply_get_property (ply, elem_name, &vert_props[VTX_BLUE]);  /* z */
-                    has_vertex_blue = TRUE;
-                  }
-              }
-    
-            vert_other = ply_get_other_properties (ply, elem_name,
-                                                   offsetof(Vertex,other_props));
-	  
-            /* test for necessary properties */
-            if ((!has_x) || (!has_y) || (!has_z))
-              {
-                fprintf(stderr, "Vertices don't have x, y, and z\n");
-                exit(-1);
-              }
-	  
-            vertices = num_elems;
-            if (has_nx && has_ny && has_nz)
-              nor = new common::vec3fa[vertices];
-            else
-              nor = NULL;
-            pos = new common::vec3fa[vertices];
-	  
-            /* grab all the vertex elements */
-            for (j = 0; j < vertices; j++)
-              {
-                Vertex tmp;
-                ply_get_element (ply, (void *) &tmp);
-                pos[j] = common::vec3fa(tmp.coord[0],tmp.coord[1],tmp.coord[2]);
-                if (nor)
-                  nor[j] = common::vec3fa(tmp.normal[0],tmp.normal[1],tmp.normal[2]);
-              }
-          }
-	
-        else if (equal_strings ("face", elem_name)) {
-        
-          /* create a list to hold all the face elements */
-          cout << "num faces : " << pretty(num_elems) << endl;
-          // 	flist = (Face **) malloc (sizeof (Face *) * num_elems);
-          // 	nfaces = num_elems;
-          // 	triangles = num_elements;
-          /* set up for getting face elements */
-          /* verify which properties these vertices have */
-          has_fverts = FALSE;
-        
-          for (j=0; j<nprops; j++)
-            {
-              if (equal_strings("vertex_indices", plist[j]->name))
-                {
-                  ply_get_property(ply, elem_name, &face_props[FACE_INDICES]);/* vertex_indices */
-                  has_fverts = TRUE;
-                }
-              else if (equal_strings("red", plist[j]->name))
-                {
-                  ply_get_property(ply, elem_name, &face_props[FACE_RED]);/* vertex_indices */
-                  has_face_red = TRUE;
-                }
-              else if (equal_strings("green", plist[j]->name))
-                {
-                  ply_get_property(ply, elem_name, &face_props[FACE_GREEN]);/* vertex_indices */
-                  has_face_green = TRUE;
-                }
-              else if (equal_strings("blue", plist[j]->name))
-                {
-                  ply_get_property(ply, elem_name, &face_props[FACE_BLUE]);/* vertex_indices */
-                  has_face_blue = TRUE;
-                }
-            }
-          face_other = ply_get_other_properties (ply, elem_name,
-                                                 offsetof(Face,other_props));
-        
-        
-          /* test for necessary properties */
-          if (!has_fverts)
-            {
-              fprintf(stderr, "Faces must have vertex indices\n");
-              exit(-1);
-            }
-          if (!has_face_blue)                   
-            material = getMaterial(200,200,200);
-
-          triangles = num_elems;
-          numTrisWritten += num_elems;
-
-          // triangle = new sg::Mesh::Prim[triangles];
-          /* grab all the face elements */
-          Face tmp;
-          tmp.verts = NULL;
-          tmp.other_props = NULL;
-          for (j = 0; j < num_elems; j++) 
-            {
-              ply_get_element (ply, (void *) &tmp);
-              // PRINT((int)tmp.nverts);
-              // PRINT(pos[tmp.verts[0]]);
-              // PRINT(pos[tmp.verts[1]]);
-              // PRINT(pos[tmp.verts[2]]);
-              if (!has_face_blue) {
-                tmp.red = tmp.green = tmp.blue = 255;
-              }
-              if (tmp.nverts == 3) {
-                // 	  flist[j] = (Face *) malloc (sizeof (Face));
-                if (has_face_blue)
-                  material = getMaterial(tmp.red,tmp.green,tmp.blue);;
-
-                vec3i vtx;
-                vtx.x = builder.addVertex(pos[tmp.verts[0]]);
-                vtx.y = builder.addVertex(pos[tmp.verts[1]]);
-                vtx.z = builder.addVertex(pos[tmp.verts[2]]);
-                // PRINT(vtx);
-                int matID = builder.addMaterial(material,true);
-                builder.addTriangle(vtx,matID);
-
-                // pstream::Poly p(matID);
-                // pstream::Vertex v;
-                // v.clear();
-                // v.p = pos[tmp.verts[0]];
-                // p.add(v);
-                // v.p = pos[tmp.verts[1]];
-                // p.add(v);
-                // v.p = pos[tmp.verts[2]];
-                // p.add(v);
-                // object->stream.write(p);
-                // triangle[j].vtxID[0] = tmp.verts[0];
-                // triangle[j].vtxID[1] = tmp.verts[1];
-                // triangle[j].vtxID[2] = tmp.verts[2];
-                // triangle[j].matID = getMaterialID(tmp.red,tmp.green,tmp.blue);
-                //           triangle[j].materialID = rtMaterialId(MaterialList::singleton.getDefaultMaterial());
-              // } else if (tmp.nverts == 4) {
-                // 	  flist[j] = (Face *) malloc (sizeof (Face));
-                // FATAL("quads not yet not implemented");
-                // triangle[j].vtxID[0] = tmp.verts[0];
-                // triangle[j].vtxID[1] = tmp.verts[1];
-                // triangle[j].vtxID[2] = tmp.verts[2];
-                // triangle[j].matID = getMaterialID(tmp.red,tmp.green,tmp.blue);
-                // //           triangle[j].materialID = rtMaterialId(MaterialList::singlet
-                // on.getDefaultMaterial());
-              } else {
-                PRINT((int)tmp.nverts);
-                FATAL("can only read ply files made up of triangles...");
-              }
-              free(tmp.verts);
-              if (tmp.other_props) free(tmp.other_props);
-              
-            }
-        }
-        else {
-          other_elements = ply_get_other_element (ply, elem_name, num_elems);
-          ply_free_other_elements(other_elements);
-        }
-      }
-  
-      //cout << "AFTER LOOP" << endl;
-    //if (!nor)
-    //  interpolateNormals();
-    
-    if (pos) delete[] pos;
-    if (nor) delete[] nor;
-
-    comments = ply_get_comments (ply, &num_comments);
-    obj_info = ply_get_obj_info (ply, &num_obj_info);
-    
-    ply_close (ply); 
-
-    numFilesDone ++;
-    cout << "total done so far: " << numFilesDone << " files, " << pretty(numTrisWritten) << " tris" << endl;
-    // kf->vertex.resize(vertices);
-    // copy(pos,pos+vertices,&kf->vertex[0]);
-    // if (nor) {
-    //   kf->normal.resize(vertices);
-    //   copy(nor,nor+vertices,&kf->normal[0]);
-    // }
-    // if (scene->triangle.size() == 0) {
-    //   scene->triangle.resize(triangles);
-    //   copy(triangle,triangle+triangles,&scene->triangle[0]);
-    // } else if (scene->triangle.size() != triangles)
-    //   FATAL("tris alrady exist, but don't match this ply file !");
-    // kf->bounds.clear();
-    // for (int i=0;i<vertices;i++)
-    //   kf->bounds.extend(pos[i]);
-    //   info.addObject(object);
-
-    for (int i=0;i<ply->nelems;i++) {
-      if (ply->elems[i]) continue;
-      PlyElement *e = ply->elems[i];
-      FREE(e->name);
-      FREE(e->store_prop);
-      if (e->props) {
-        for (int j=0;j<e->nprops;j++) {
-          PlyProperty *p = e->props[j];
-          if (!e) continue;
-          FREE(p->name);
-          FREE(p);
-        }
-        FREE(e->props);
-      }
-      FREE(e);
-    }
-
-    free(ply->elems);
-  }
-#endif
-
-
-// void doFile(const char *inFileName)
-// {
-//     int l = strlen(inFileName);
-    
-//     if (l > 4 && !strcmp(inFileName+l-4,".ply") ||
-//         l > 7 && !strcmp(inFileName+l-7,".ply.gz")) {
-//       parsePLY(inFileName);
-//     } else if (l > 8 && !strcmp(inFileName+l-8,".plylist")) {
-//       char line[10000];
-//       FILE *file = fopen(inFileName,"r");
-//       while (fgets(line,10000,file) && !feof(file)) {
-//         if (line[0] == '#') continue;
-//         if (strstr(line,"\n")) *strstr(line,"\n") = 0;
-//         if (strstr(line,"\n")) *strstr(line,"\n") = 0;
-//         doFile(line);
-//       }
-//     } else {
-//       FATAL("unknown file format. Only know .ply, .ply.gz, and .plylist");
-//     }
-
-// }
-
-// int main(int ac, const char **av)
-// {
-//   try {
-//     if (ac != 3) {
-//       std::cerr << "./obj2tri infilelist.plylist outfile.xml" << std::endl;
-//       exit(0);
-//     }
-//     const char *inFileName  = av[1];
-//     const char *outFileName = av[2];
-    
-//     doFile(inFileName);
-//     XMLWriter writer(outFileName);
-//     writer.write(builder.getMesh());
-//   // } catch (sg::OBJ::Exception *e) {
-//   //   FATAL(e->toString());
-//   } catch (pstream::Exception *e) {
-//     FATAL(e->toString());
-//   }
-// };
-
-
-
-
-
-  /*
-
-    The interface routines for reading and writing PLY polygon files.
-
-    Greg Turk, February 1994
-
-    ---------------------------------------------------------------
-
-    A PLY file contains a single polygonal _object_.
-
-    An object is composed of lists of _elements_.  Typical elements are
-    vertices, faces, edges and materials.
-
-    Each type of element for a given object has one or more _properties_
-    associated with the element type.  For instance, a vertex element may
-    have as properties the floating-point values x,y,z and the three unsigned
-    chars representing red, green and blue.
-
-    ---------------------------------------------------------------
-
-    Copyright (c) 1994 The Board of Trustees of The Leland Stanford
-    Junior University.  All rights reserved.   
-  
-    Permission to use, copy, modify and distribute this software and its   
-    documentation for any purpose is hereby granted without fee, provided   
-    that the above copyright notice and this permission notice appear in   
-    all copies of this software and that you do not sell the software.   
-  
-    THE SOFTWARE IS PROVIDED "AS IS" AND WITHOUT WARRANTY OF ANY KIND,   
-    EXPRESS, IMPLIED OR OTHERWISE, INCLUDING WITHOUT LIMITATION, ANY   
-    WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.   
-
-  */
-
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <string.h>
-  // #include <ply.h>
-
 extern "C" {
 
 #define LION_HACK 1
@@ -949,6 +452,11 @@ Entry:
         realloc (elem->props, sizeof (PlyProperty *) * elem->nprops);
       elem->store_prop = (char *)
         realloc (elem->store_prop, sizeof (char) * elem->nprops);
+
+      if(elem->props == nullptr || elem->store_prop == nullptr) {
+        fprintf(stderr, "ply_describe_property: can't alloc memory for props\n");
+        exit(1);
+      }
     }
 
     /* copy the new property */
@@ -998,6 +506,11 @@ they are in an element.
         realloc (elem->props, sizeof (PlyProperty *) * newsize);
       elem->store_prop = (char *)
         realloc (elem->store_prop, sizeof (char) * newsize);
+
+      if(elem->props == nullptr || elem->store_prop == nullptr) {
+        fprintf(stderr, "ply_describe_other_properties: can't alloc memory for props\n");
+        exit(1);
+      }
     }
 
     /* copy the other properties */
@@ -1269,7 +782,10 @@ Entry:
     else
       plyfile->comments = (char **) realloc (plyfile->comments,
                                              sizeof (char *) * (plyfile->num_comments + 1));
-
+    if(plyfile->comments == nullptr) {
+      fprintf(stderr, "ply_put_comment: can't alloc memory for plyfile->comments\n");
+      exit(1);
+    }
     /* add comment to list */
     plyfile->comments[plyfile->num_comments] = strdup (comment);
     plyfile->num_comments++;
@@ -1293,7 +809,10 @@ Entry:
     else
       plyfile->obj_info = (char **) realloc (plyfile->obj_info,
                                              sizeof (char *) * (plyfile->num_obj_info + 1));
-
+    if(plyfile->obj_info == nullptr) {
+      fprintf(stderr, "ply_put_obj_info: can't alloc memory for plyfile->obj_info\n");
+      exit(1);
+    }
     /* add info to list */
     plyfile->obj_info[plyfile->num_obj_info] = strdup (obj_info);
     plyfile->num_obj_info++;
@@ -1471,6 +990,8 @@ Exit:
     /* create the PlyFile data structure */
 
     plyfile = ply_read (fp, nelems, elem_names);
+    if (plyfile == nullptr)
+      return NULL;
 
     /* determine the file type and version */
 
@@ -1554,6 +1075,11 @@ Entry:
 
     /* find information about the element */
     elem = find_element (plyfile, elem_name);
+    if (elem == nullptr) {
+        fprintf (stderr, "Warning:  Can't find element'%s'\n",
+                 elem_name);
+        return;
+    }
     plyfile->which_elem = elem;
 
     /* deposit the property information into the element's description */
@@ -1561,7 +1087,7 @@ Entry:
 
       /* look for actual property */
       prop = find_property (elem, prop_list[i].name, &index);
-      if (prop == NULL) {
+      if (prop == nullptr) {
         fprintf (stderr, "Warning:  Can't find property '%s' in element '%s'\n",
                  prop_list[i].name, elem_name);
         continue;
@@ -1603,6 +1129,12 @@ Entry:
 
     /* find information about the element */
     elem = find_element (plyfile, elem_name);
+    if (elem == nullptr) {
+      fprintf (stderr, "Warning:  Can't find element '%s'\n",
+               elem_name);
+      return;
+    }
+
     plyfile->which_elem = elem;
 
     /* deposit the property information into the element's description */
@@ -1883,6 +1415,10 @@ Exit:
       other_elems = plyfile->other_elems;
       other_elems->other_list = (OtherElem *) realloc (other_elems->other_list,
                                                        sizeof (OtherElem) * other_elems->num_elems + 1);
+      if (other_elems->other_list == nullptr) {
+        fprintf(stderr, "ply_get_other_element: can't alloc memory for other_elems->other_list\n");
+        exit(1);
+      }
       other = &(other_elems->other_list[other_elems->num_elems]);
       other_elems->num_elems++;
     }
@@ -1944,6 +1480,11 @@ Entry:
   
     REALLOCN(plyfile->elems, PlyElement *,
              plyfile->nelems, plyfile->nelems + other_elems->num_elems);
+    if (plyfile->elems == nullptr) {
+      fprintf (stderr, "ply_describe_other_elements: Can't alloc memory for plyfile->elems\n");
+      return;
+    }
+
     for (i = 0; i < other_elems->num_elems; i++) {
       other = &(other_elems->other_list[i]);
       elem = (PlyElement *) myalloc (sizeof (PlyElement));
@@ -2176,8 +1717,12 @@ Entry:
       /* store either in the user's structure or in other_props */
       if (elem->store_prop[j])
         elem_data = elem_ptr;
-      else
+      else if(other_data)
         elem_data = other_data;
+      else {
+        fprintf (stderr, "binary_get_element: trying to use unallocated other_data\n");
+        exit (-1);
+      }
 
       if (prop->is_list) {       /* a list */
 
@@ -2265,13 +1810,9 @@ Entry:
     /* do we need to setup for other_props? */
 
     if (elem->other_offset != NO_OTHER_PROPS) {
-      char **ptr;
       other_flag = 1;
       /* make room for other_props */
       other_data = (char *) myalloc (elem->other_size);
-      /* store pointer in user's structure to the other_props */
-      ptr = (char **) (elem_ptr + elem->other_offset);
-      *ptr = other_data;
     }
     else
       other_flag = 0;
@@ -2286,8 +1827,12 @@ Entry:
       /* store either in the user's structure or in other_props */
       if (elem->store_prop[j])
         elem_data = elem_ptr;
-      else
+      else if(other_data)
         elem_data = other_data;
+	  else {
+        fprintf (stderr, "binary_get_element: trying to use unallocated other_data\n");
+        exit (-1);
+	  }
 
       if (prop->is_list) {       /* a list */
 
@@ -2509,6 +2054,10 @@ Exit:
       if (num_words >= max_words) {
         max_words += 10;
         words = (char **) realloc (words, sizeof (char *) * max_words);
+        if (words == nullptr) {
+          fprintf(stderr, "get_words: can't alloc memory for words\n");
+          exit(1);
+        }
       }
       words[num_words++] = ptr;
 
@@ -3095,6 +2644,10 @@ Entry:
     else
       plyfile->elems = (PlyElement **) realloc (plyfile->elems,
                                                 sizeof (PlyElement *) * (plyfile->nelems + 1));
+    if (plyfile->elems == nullptr) {
+      fprintf(stderr,"add_element: can't alloc memory for plyfile->elemens\n");
+      exit (-1);
+    }
 
     /* add the new element to the object's list */
     plyfile->elems[plyfile->nelems] = elem;
@@ -3179,7 +2732,10 @@ Entry:
     else
       elem->props = (PlyProperty **) realloc (elem->props,
                                               sizeof (PlyProperty *) * (elem->nprops + 1));
-
+    if(elem->props == nullptr) {
+      fprintf(stderr, "add_property: can't alloc memory for elem->props\n");
+      exit(1);
+    }
     elem->props[elem->nprops] = prop;
     elem->nprops++;
   }

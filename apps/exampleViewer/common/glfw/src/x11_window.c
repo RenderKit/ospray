@@ -416,6 +416,12 @@ static char** parseUriList(char* text, int* count)
 
         char* path = calloc(strlen(line) + 1, 1);
         paths = realloc(paths, *count * sizeof(char*));
+        if(!path || !paths)
+        {
+            _glfwInputErrorX11(GLFW_PLATFORM_ERROR,
+                               "X11: Failed to parseUriList - cannot allocate memory");
+            return GLFW_FALSE;
+        }
         paths[*count - 1] = path;
 
         while (*line)

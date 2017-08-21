@@ -68,13 +68,13 @@ namespace ospray {
 
       typedef struct Face {
         int id;
-        unsigned char nverts;    /* number of vertex indices in list */
-        int *verts;              /* vertex index list */
+        unsigned char nverts;           /* number of vertex indices in list */
+        int *verts = nullptr;              /* vertex index list */
         unsigned char red;
         unsigned char green;
         unsigned char blue;
 
-        void *other_props;       /* other properties */
+        void *other_props = nullptr;      /* other properties */
       } Face;
 
       PlyProperty vert_props[] = { /* list of property information for a vertex */
@@ -128,10 +128,10 @@ namespace ospray {
         int has_nx=0, has_ny=0, has_nz=0;
         int has_fverts=0;
 
-        PlyOtherElems *other_elements = NULL;
+        PlyOtherElems *other_elements = nullptr;
         PlyOtherProp *vert_other,*face_other;//,*edge_other;
 
-        char **element_list = NULL;
+        char **element_list = nullptr;
         int file_type = 0;
 
 
@@ -149,9 +149,11 @@ namespace ospray {
           THROW_SG_ERROR("#osp:sg:ply: gzipped file not supported yet on Windows");
 #else
           isPipe = true;
-          char cmd[10000];
-          sprintf(cmd,"/usr/bin/gunzip -c %s",filename);
+          const char cmdPattern[] = "/usr/bin/gunzip -c %s";
+          char *cmd = new char[sizeof(cmdPattern) + strlen(filename)];
+          sprintf(cmd, cmdPattern, filename);
           file = popen(cmd,"r");
+          delete[] cmd;
 #endif
         } else
           file = fopen(filename,"rb");
@@ -161,6 +163,9 @@ namespace ospray {
 
         int nelems = -1;
         PlyFile *ply  = ply_read (file, &nelems, &element_list);
+        if (ply == nullptr)
+          throw std::runtime_error("#osp:sg:ply: could not parse '"+fileName+"'");
+
         ply_get_info (ply, &version, &file_type);
 
         for (int i=0; i<nelems; i++) {
@@ -169,6 +174,10 @@ namespace ospray {
           /* get the description of the first element */
           char *elem_name = element_list[i];
           plist = ply_get_element_description (ply, elem_name, &num_elems, &nprops);
+          if(plist == nullptr) {
+            fprintf(stderr, "Can't get description of element %s\n", elem_name);
+            continue;
+          }
 
           if (equal_strings ("vertex", elem_name)) {
             /* create a vertex list to hold all the vertices */
@@ -229,6 +238,7 @@ namespace ospray {
             /* grab all the vertex elements */
             for (int j=0; j<vertices; j++) {
               Vertex tmp;
+              memset(&tmp, 0, sizeof(tmp));
               ply_get_element (ply, (void *) &tmp);
               pos->v[j] = vec3f(tmp.coord[0],tmp.coord[1],tmp.coord[2]);
               if (has_nx && has_ny && has_nz)
@@ -272,15 +282,14 @@ namespace ospray {
             // numTrisWritten += num_elems;
 
             /* grab all the face elements */
-            Face tmp;
-            tmp.verts = NULL;
-            tmp.other_props = NULL;
             for (int j=0; j<num_elems; j++)  {
+              Face tmp;
+              memset(&tmp, 0, sizeof(tmp));
               ply_get_element (ply, (void *) &tmp);
               if (!has_face_blue) {
                 tmp.red = tmp.green = tmp.blue = 255;
               }
-              if (tmp.nverts == 3) {
+              if (tmp.nverts == 3 && tmp.verts != nullptr) {
                 // if (has_face_blue)
                 //   material = getMaterial(tmp.red,tmp.green,tmp.blue);;
 
@@ -294,7 +303,7 @@ namespace ospray {
                 FATAL("can only read ply files made up of triangles...");
               }
               free(tmp.verts);
-              if (tmp.other_props) free(tmp.other_props);
+              free(tmp.other_props);
             }
           }
           else {
@@ -320,12 +329,13 @@ namespace ospray {
         for (int i=0;i<ply->nelems;i++) {
           if (ply->elems[i]) continue;
           PlyElement *e = ply->elems[i];
+          if(!e) continue;
           FREE(e->name);
           FREE(e->store_prop);
           if (e->props) {
             for (int j=0;j<e->nprops;j++) {
               PlyProperty *p = e->props[j];
-              if (!e) continue;
+              if (!p) continue;
               FREE(p->name);
               FREE(p);
             }

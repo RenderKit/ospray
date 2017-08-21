@@ -872,6 +872,7 @@ static void InitMaterial(material_t *material) {
     material->transmittance[i] = 0.f;
     material->emission[i] = 0.f;
   }
+  material->dummy = 0;
   material->illum = 0;
   material->dissolve = 1.f;
   material->shininess = 1.f;
@@ -884,12 +885,14 @@ static void InitMaterial(material_t *material) {
   material->clearcoat_roughness = 0.f;
   material->anisotropy_rotation = 0.f;
   material->anisotropy = 0.f;
+  material->pad0 = 0.f;
   material->roughness_texname = "";
   material->metallic_texname = "";
   material->sheen_texname = "";
   material->emissive_texname = "";
   material->normal_texname = "";
 
+  material->pad2 = 0;
   material->unknown_parameter.clear();
 }
 

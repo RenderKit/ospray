@@ -54,9 +54,6 @@ namespace ospray {
       //! list of attribute values, if applicable.
       std::map<std::string, std::vector<float>*> attribute;
 
-      /*! read given file with atom type definitions */
-      void readAtomTypeDefinitions(const FileName &fn);
-
       int getAtomType(const std::string &name);
 
       /*! \brief load lammps xyz files */

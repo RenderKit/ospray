@@ -235,7 +235,7 @@ static GLFWglproc getProcAddressEGL(const char* procname)
 {
     _GLFWwindow* window = _glfwPlatformGetCurrentContext();
 
-    if (window->context.egl.client)
+    if (window != NULL && window->context.egl.client)
     {
         GLFWglproc proc = (GLFWglproc) _glfw_dlsym(window->context.egl.client,
                                                    procname);

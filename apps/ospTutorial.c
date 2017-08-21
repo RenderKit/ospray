@@ -25,6 +25,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <errno.h>
 #ifdef _WIN32
 #  include <malloc.h>
 #else
@@ -38,6 +39,10 @@ void writePPM(const char *fileName,
               const uint32_t *pixel)
 {
   FILE *file = fopen(fileName, "wb");
+  if (!file) {
+    fprintf(stderr, "fopen('%s', 'wb') failed: %d", fileName, errno);
+    return;
+  }
   fprintf(file, "P6\n%i %i\n255\n", size->x, size->y);
   unsigned char *out = (unsigned char *)alloca(3*size->x);
   for (int y = 0; y < size->y; y++) {

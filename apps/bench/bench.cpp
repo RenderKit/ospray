@@ -70,6 +70,12 @@ namespace ospray {
     }
 
     auto device = ospGetCurrentDevice();
+    if (device == nullptr) {
+      std::cerr << "FATAL ERROR DURING GETTING DEVICE!" << std::endl;
+      std::exit(1);
+    }
+
+
     ospDeviceSetStatusFunc(device,
                            [](const char *msg) { std::cout << msg; });
 
