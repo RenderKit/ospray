@@ -175,11 +175,17 @@ static void swapBuffersGLX(_GLFWwindow* window)
 
 static void swapIntervalGLX(int interval)
 {
-    _GLFWwindow* window = _glfwPlatformGetCurrentContext();
 
     if (_glfw.glx.EXT_swap_control)
     {
-        _glfw.glx.SwapIntervalEXT(_glfw.x11.display,
+      _GLFWwindow* window = _glfwPlatformGetCurrentContext();
+      if (!window)
+      {
+        _glfwInputError(GLFW_PLATFORM_ERROR,
+                            "GLX: Failed to get current context");
+        return;
+      }
+      _glfw.glx.SwapIntervalEXT(_glfw.x11.display,
                                   window->context.glx.window,
                                   interval);
     }

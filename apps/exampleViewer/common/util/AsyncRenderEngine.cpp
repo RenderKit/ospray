@@ -144,6 +144,9 @@ namespace ospray {
   void AsyncRenderEngine::run()
   {
     auto device = ospGetCurrentDevice();
+    if(device == nullptr)
+      throw std::runtime_error("Can't get current device!");
+
     if (numOsprayThreads > 0)
       ospDeviceSet1i(device, "numThreads", numOsprayThreads);
     ospDeviceCommit(device);

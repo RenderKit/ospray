@@ -553,7 +553,7 @@ class Directory {
 public:
     static void GetDirectories(const char* directoryName,PathStringVector& result,FilenameStringVector* pOptionalNamesOut=NULL,Sorting sorting= SORT_ORDER_ALPHABETIC)   {
         result.clear();if (pOptionalNamesOut) pOptionalNamesOut->clear();
-        static char tempString[MAX_PATH_BYTES];size_t sz;
+        size_t sz;
         struct dirent **eps = NULL;
 
         sz = strlen(directoryName);
@@ -564,10 +564,10 @@ public:
 #       endif //_WIN32
         const int n = scandir (directoryName2, &eps, DirentGetDirectories, SortingHelper::SetSorter(sorting));
 
-        static char directoryNameWithoutSlash[MAX_PATH_BYTES];
-        if (sz>0 && directoryName[sz-1] == '/') String::Substr(directoryName,directoryNameWithoutSlash,0,sz-1);
-        else strcpy(directoryNameWithoutSlash,directoryName);
-
+        std::string directoryNameWithoutSlash = directoryName;
+        if (sz>0 && directoryName[sz-1] == '/') {
+          directoryNameWithoutSlash.substr(0, sz-1);
+        }
         if (n >= 0) {
         result.reserve((size_t)n);
         if (pOptionalNamesOut) pOptionalNamesOut->reserve((size_t)n);
@@ -578,14 +578,11 @@ public:
             if (strcmp(pName,".")!=0 && strcmp(pName,"..")!=0 && pName[0]!='.' && pName[sz-1]!='~'
 #               ifdef __EMSCRIPTEN__
                 && (!(
-                    strcmp(pName,"fd")==0 && strcmp(directoryNameWithoutSlash,"/proc/self")==0
+                    strcmp(pName,"fd")==0 && directoryNameWithoutSlash == "/proc/self")==0
                 ))
 #               endif //__EMSCRIPTEN__
             )    {
-			strcpy(tempString,directoryNameWithoutSlash);
-			strcat(tempString,"/");
-			strcat(tempString,pName);
-			String::PushBack(result,tempString);
+			String::PushBack(result, (directoryNameWithoutSlash + "/" + pName).c_str());
 			if (pOptionalNamesOut) String::PushBack(*pOptionalNamesOut,pName);
 		    }
 		}
@@ -609,7 +606,7 @@ public:
 
         static char directoryNameWithoutSlash[MAX_PATH_BYTES];
         if (sz>0 && directoryName[sz-1] == '/') String::Substr(directoryName,directoryNameWithoutSlash,0,sz-1);
-        else strcpy(directoryNameWithoutSlash,directoryName);
+        else strncpy(directoryNameWithoutSlash,directoryName,MAX_PATH_BYTES-1);
 
         if (n >= 0) {
         result.reserve((size_t)n);
@@ -619,9 +616,9 @@ public:
 		sz = strlen(pName);
 		if (sz>0) {
 		    if (pName[0]!='.' && pName[sz-1]!='~')    {
-			strcpy(tempString,directoryNameWithoutSlash);
-			strcat(tempString,"/");
-			strcat(tempString,pName);
+			strncpy(tempString,directoryNameWithoutSlash,MAX_PATH_BYTES-1);
+			strncat(tempString,"/",MAX_PATH_BYTES-1-strlen(tempString));
+			strncat(tempString,pName,MAX_PATH_BYTES-1-strlen(tempString));
 			String::PushBack(result,tempString);
 			if (pOptionalNamesOut) String::PushBack(*pOptionalNamesOut,pName);
 		    }
@@ -763,8 +760,11 @@ public:
             homedir = getpwuid(getuid())->pw_dir;
         }
         if (homedir==NULL) return rv;
-        char homeString[MAX_PATH_BYTES];strcpy(homeString,homedir);
-        char userString[MAX_PATH_BYTES];Path::GetFileName(homeString,userString);
+        char homeString[MAX_PATH_BYTES];
+        strncpy(homeString,homedir,MAX_PATH_BYTES-1);
+        homeString[MAX_PATH_BYTES-1] = '\0';
+        char userString[MAX_PATH_BYTES];
+        Path::GetFileName(homeString,userString);
         // Known folders ---------------------------------------------
         static const char folder[][MAX_FILENAME_BYTES] = {
             "Desktop",
@@ -778,7 +778,7 @@ public:
         rv.reserve(folderSize+1);
         dn.reserve(rv.size());
         String::PushBack(rv,homeString);
-        char temp[MAX_PATH_BYTES];
+        char temp[MAX_PATH_BYTES*2];
         strcpy(temp,"Home");
         String::PushBack(dn,temp);
         for (int i=0;i<folderSize;i++)    {

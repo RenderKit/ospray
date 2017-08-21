@@ -18,6 +18,7 @@
 
 #include <string>
 #include <stdio.h>
+#include <errno.h>
 
 #include "../malloc.h"
 
@@ -29,6 +30,10 @@ namespace ospcommon {
                          const uint32_t *pixel)
     {
       FILE *file = fopen(fileName.c_str(), "wb");
+      if(file == nullptr) {
+        throw std::runtime_error("Can't open file for writePPM!");
+      }
+
       fprintf(file, "P6\n%i %i\n255\n", sizeX, sizeY);
       unsigned char *out = (unsigned char *)alloca(3*sizeX);
       for (int y = 0; y < sizeY; y++) {

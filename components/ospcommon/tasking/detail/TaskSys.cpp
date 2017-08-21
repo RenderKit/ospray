@@ -140,10 +140,10 @@ namespace ospcommon {
           threads.emplace_back([&](){
             while (true) {
               Task *task = getNextActiveTask();
-
               if (!running)
                 break;
-
+              if(task == nullptr)
+                continue;
               task->workOnIt();
             }
           });
