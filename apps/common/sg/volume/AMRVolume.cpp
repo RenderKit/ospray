@@ -46,10 +46,19 @@ namespace ospray {
 
       FileName infoFileName = fileName.str() + std::string(".info");
       FileName dataFileName = fileName.str() + std::string(".data");
-      FILE *infoFile        = fopen(infoFileName.c_str(), "rb");
-      assert(infoFile);
+
+      FILE *infoFile = fopen(infoFileName.c_str(), "rb");
       FILE *dataFile = fopen(dataFileName.c_str(), "rb");
-      assert(dataFile);
+
+      if (infoFile == nullptr) {
+        throw std::runtime_error(std::string("#osp:sg - ERROR could not open '")
+                                 + infoFileName.c_str() + "'");
+      }
+
+      if (dataFile == nullptr) {
+        throw std::runtime_error(std::string("#osp:sg - ERROR could not open '")
+                                 + dataFileName.c_str() + "'");
+      }
 
       BrickInfo bi;
       auto bounds = child("bounds").valueAs<box3f>();
