@@ -114,10 +114,11 @@ namespace ospray {
       if (!begin || !end)
         throw std::runtime_error("invalid substring in osp::xml::makeString");
       if (begin == end) return "";
+
       char *mem = new char[end-begin+1];
+      memcpy(mem,begin,end-begin);
       mem[end-begin] = 0;
 
-      memcpy(mem,begin,end-begin);
       std::string s = mem;
       delete [] mem;
       return s;

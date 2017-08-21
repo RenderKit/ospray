@@ -1045,7 +1045,7 @@ static unsigned char *stbi__load_and_postprocess_8bit(stbi__context *s, int *x, 
 
    // @TODO: move stbi__convert_format to here
 
-   if (stbi__vertically_flip_on_load) {
+   if (result && stbi__vertically_flip_on_load) {
       int w = *x, h = *y;
       int channels = req_comp ? req_comp : *comp;
       int row,col,z;
@@ -1083,7 +1083,7 @@ static stbi__uint16 *stbi__load_and_postprocess_16bit(stbi__context *s, int *x, 
    // @TODO: move stbi__convert_format16 to here
    // @TODO: special case RGB-to-Y (and RGBA-to-YA) for 8-bit-to-16-bit case to keep more precision
 
-   if (stbi__vertically_flip_on_load) {
+   if (result && stbi__vertically_flip_on_load) {
       int w = *x, h = *y;
       int channels = req_comp ? req_comp : *comp;
       int row,col,z;
@@ -3547,7 +3547,7 @@ static stbi_uc *load_jpeg_image(stbi__jpeg *z, int *out_x, int *out_y, int *comp
       int k;
       unsigned int i,j;
       stbi_uc *output;
-      stbi_uc *coutput[4];
+      stbi_uc *coutput[4] = {};
 
       stbi__resample res_comp[4];
 
@@ -6003,7 +6003,7 @@ static void *stbi__pic_load(stbi__context *s,int *px,int *py,int *comp,int req_c
 
    if (!stbi__pic_load_core(s,x,y,comp, result)) {
       STBI_FREE(result);
-      result=0;
+      return nullptr;
    }
    *px = x;
    *py = y;

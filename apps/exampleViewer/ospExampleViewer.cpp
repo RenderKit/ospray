@@ -325,7 +325,7 @@ static inline void addImporterNodesToWorld(sg::Node& renderer)
           {
             std::stringstream ss;
             ss << fn.name() << "_" << i << "_" << j << "_" << k;
-            auto importerNode_ptr = sg::createNode(ss.str(), "Importer");
+            auto importerNode_ptr = sg::createNode(ss.str(), "Importer")->nodeAs<sg::Importer>();;
             auto &importerNode = *importerNode_ptr;
             importerNode["fileName"] = fn.str();
 
@@ -347,7 +347,7 @@ static inline void addImporterNodesToWorld(sg::Node& renderer)
             transform.add(importerNode_ptr);
             renderer.traverse("verify");
             renderer.traverse("commit");
-            auto bounds = std::dynamic_pointer_cast<sg::Renderable>(importerNode_ptr)->computeBounds();
+            auto bounds = importerNode_ptr->computeBounds();
             auto size = bounds.upper - bounds.lower;
             float maxSize = max(max(size.x,size.y),size.z);
             vec3f offset={i*maxSize*1.3f,j*maxSize*1.3f,k*maxSize*1.3f};
@@ -407,6 +407,10 @@ int main(int ac, const char **av)
   }
 
   auto device = ospGetCurrentDevice();
+  if(device == nullptr) {
+	std::cerr << "FATAL ERROR DURING GETTING CURRENT DEVICE!" << std::endl;
+    return 1;
+  }
   ospDeviceSetStatusFunc(device,
                          [](const char *msg) { std::cout << msg; });
   ospDeviceSetErrorMsgFunc(device, [](const char *msg) { std::cout << msg; });
@@ -463,5 +467,6 @@ int main(int ac, const char **av)
   window.create("OSPRay Example Viewer App", fullscreen);
 
   ospray::imgui3D::run();
+  return 0;
 }
 

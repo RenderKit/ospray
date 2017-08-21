@@ -131,8 +131,11 @@ namespace ospray {
 
       //Get the data out of the node
       char *value = strdup(node.content.c_str());
-#define NEXT_TOK strtok(NULL, " \t\n\r")
+#define NEXT_TOK strtok(NULL, " \t\n\r"); if (!s) throw std::runtime_error("unknown parameter type '" + paramType + "' when parsing RIVL materials.");
       char *s = strtok((char*)value, " \t\n\r");
+      if (!s) {
+        throw std::runtime_error("unknown parameter type '" + paramType + "' when parsing RIVL materials.");
+      }
       //TODO: UGLY! Find a better way.
       if (paramName.find("map_") != std::string::npos)
       {

@@ -151,20 +151,27 @@ namespace ospray {
           if (maxVal != 255)
             throw std::runtime_error("#osp:miniSG: could not parse P6 PPM file '"+fileName.str()+"': currently supporting only maxVal=255 formats."
                                      "Please report this bug at ospray.github.io, and include named file to reproduce the error.");
-
           // tex = new Texture2D;
           tex->size.x   = width;
           tex->size.y   = height;
           tex->channels = 3;
           tex->depth    = 1;
           tex->preferLinear = preferLinear;
-          tex->data     = new unsigned char[width*height*3];
-          rc = fread(tex->data,width*height*3,1,file);
+
+          unsigned int dataSize = tex->size.x * tex->size.y * tex->channels * tex->depth;
+          tex->data     = new unsigned char[dataSize];
+          rc = fread(tex->data,dataSize,1,file);
           // flip in y, because OSPRay's textures have the origin at the lower left corner
           unsigned char *texels = (unsigned char *)tex->data;
           for (int y = 0; y < height/2; y++)
-            for (int x = 0; x < width*3; x++)
-              std::swap(texels[y*width*3+x], texels[(height-1-y)*width*3+x]);
+            for (int x = 0; x < width*3; x++) {
+              unsigned int a = (y * width * 3) + x;
+              unsigned int b = ((height - 1 - y) * width * 3) + x;
+              if (a >= dataSize || b >= dataSize) {
+                throw std::runtime_error("#osp:minisg: could not parse P6 PPM file '" + fileName.str() + "': buffer overflow.");
+              }
+              std::swap(texels[a], texels[b]);
+            }
         } catch(std::runtime_error e) {
           std::cerr << e.what() << std::endl;
         }

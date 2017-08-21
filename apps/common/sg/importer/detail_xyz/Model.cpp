@@ -34,58 +34,6 @@ namespace ospray {
                    (g % mz)*(1.f/(mz-1)));
     }
 
-    /*! read given file with atom type definitions */
-    void Model::readAtomTypeDefinitions(const FileName &fn)
-    {
-      FILE *file = fopen(fn.str().c_str(),"r");
-      if (!file) {
-        std::cout << "#osp:particle: could not open '" << fn.str() << "'" << std::endl;
-        return;
-      }
-
-      char line[10000];
-      const char *sep = "\n\t ";
-
-      AtomType *currentType = nullptr;
-      while (fgets(line,10000,file) && !feof(file)) {
-        if (line[0] == '#')
-          continue;
-
-        char *tok = strtok(line,sep);
-        if (tok == nullptr)
-          continue;
-
-        if (!strcmp(tok,"atomtype")) {
-          const char *name = strtok(nullptr,sep);
-          assert(name);
-          currentType = atomType[getAtomType(name)].get();
-          assert(currentType);
-          continue;
-        }
-
-        if (!strcmp(tok,"color")) {
-          assert(currentType);
-          float r = atof(strtok(nullptr,sep));
-          float g = atof(strtok(nullptr,sep));
-          float b = atof(strtok(nullptr,sep));
-          currentType->color = vec3f(r,g,b);
-          continue;
-        }
-
-        if (!strcmp(tok,"radius")) {
-          assert(currentType);
-          float r = atof(strtok(nullptr,sep));
-          currentType->radius = r;
-          continue;
-        }
-
-        throw std::runtime_error("#osp:particleViewer:readAtomTypeDefs: cannot parse token '"+std::string(tok)+"'");
-      }
-
-      fclose(file);
-    }
-
-
     int Model::getAtomType(const std::string &name)
     {
       auto it = atomTypeByName.find(name);
@@ -174,9 +122,7 @@ namespace ospray {
 
       while ((rc = fscanf(file, "%s %f %f %f\n",
                           atomType, &pos.x, &pos.y, &pos.z)) == 4) {
-        Atom a;
-        a.type = getAtomType(atomType);
-        a.position = pos;
+        Atom a = {pos, 0, getAtomType(atomType)};
         atom[a.type].push_back(a);
       }
 

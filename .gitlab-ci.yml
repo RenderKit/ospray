@@ -1,9 +1,12 @@
+variables:
+  GIT_DEPTH: "3"
+  KW_PROJECT_NAME: ospray
+
 stages:
   - build
   - deploy
+  - test
 
-variables:
-  GIT_DEPTH: "3"
 
 .job_template: &build_job_docker
   type: build
@@ -73,7 +76,6 @@ build-centos6-icc15:
     - centos6
     - icc
 
-
 build-centos7-gcc:
   <<: *build_job_docker
   image: ospray/docker-images:centos7
@@ -128,6 +130,7 @@ build-windows-icc:
     - icc
     - win7
 
+
 ### RELEASE JOBS ###
 
 release-linux-icc:
@@ -174,3 +177,28 @@ release-windows:
     paths:
       - build_release\ospray*.zip
       - build_release\ospray*.exe
+
+### KW SCAN ###
+ 
+build-scan-kw:
+  type: build
+  image: ospray-kw-centos7
+  script:
+    - /tmp/build-scan-kw.sh
+  tags:
+    - kw-scan-docker
+  artifacts:
+    paths:
+        - $CI_PROJECT_DIR/kw_build_number
+    expire_in: 1 day
+
+test-kw-critical:
+  type: test
+  image: ospray-kw-centos7
+  script:
+    - /tmp/test-kw-critical.sh
+  dependencies:
+    - build-scan-kw
+  tags:
+    - kw-scan-docker
+

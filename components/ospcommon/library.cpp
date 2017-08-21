@@ -62,7 +62,7 @@ namespace ospcommon {
       // to log out the error that occurred when calling LoadLibrary
       throw std::runtime_error("could not open module lib "+name);
 #else
-      std::string error = dlerror();
+      const char* error = dlerror();
       throw std::runtime_error("could not open module lib "+name
           +" due to "+error);
 #endif

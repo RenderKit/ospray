@@ -73,10 +73,10 @@ namespace ospray {
         static OSPMaterial defaultMaterial = nullptr;
         if (!defaultMaterial) {
           defaultMaterial = ospNewMaterial(ctx.ospRenderer, "OBJ");
-          vec3f kd(.7f);
-          vec3f ks(.3f);
-          ospSet3fv(defaultMaterial, "Kd", &kd.x);
-          ospSet3fv(defaultMaterial, "Ks", &ks.x);
+          const float kd[] = {.7f, .7f, .7f};
+          const float ks[] = {.3f, .3f, .3f};
+          ospSet3fv(defaultMaterial, "Kd", kd);
+          ospSet3fv(defaultMaterial, "Ks", ks);
           ospSet1f(defaultMaterial, "Ns", 10.f);
           ospCommit(defaultMaterial);
         }
