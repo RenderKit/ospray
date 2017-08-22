@@ -207,7 +207,7 @@ namespace maml {
       if (MAML_SPAWN_THREADS.first)
         useTaskingSystem = !MAML_SPAWN_THREADS.second;
       else
-        useTaskingSystem = ospcommon::tasking::numTaskingThreads() >= 3;
+        useTaskingSystem = ospcommon::tasking::numTaskingThreads() >= 4;
 
       if (useTaskingSystem) {
         sendReceiveFuture = ospcommon::tasking::async([&](){
