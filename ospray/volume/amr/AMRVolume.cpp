@@ -22,9 +22,9 @@
 #include "ospcommon/tasking/parallel_for.h"
 // ispc exports
 #include "AMRVolume_ispc.h"
-#include "finest_ispc.h"
-#include "current_ispc.h"
-#include "octant_ispc.h"
+#include "method_finest_ispc.h"
+#include "method_current_ispc.h"
+#include "method_octant_ispc.h"
 // stl
 #include <set>
 #include <map>
