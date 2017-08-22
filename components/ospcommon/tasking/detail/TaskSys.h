@@ -89,6 +89,8 @@ namespace ospcommon {
           do the work */
       void OSPCOMMON_INTERFACE initTaskSystemInternal(int numThreads = -1);
 
+      int OSPCOMMON_INTERFACE numThreadsTaskSystemInternal();
+
       //! schedule the given task with the given number of sub-jobs.
       void scheduleTaskInternal(Task *task,
                                 int numJobs,

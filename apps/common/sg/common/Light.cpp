@@ -19,6 +19,16 @@
 namespace ospray {
   namespace sg {
 
+    Light::Light()
+    {
+      setValue(OSPObject(nullptr));
+    }
+
+    Light::Light(const std::string &type) : Light()
+    {
+      this->type = type;
+    }
+
     void Light::preCommit(RenderContext &ctx)
     {
       if (!ospLight)
@@ -67,7 +77,7 @@ namespace ospray {
                       NodeFlags::valid_min_max |
                       NodeFlags::gui_slider).setMinMax(0.f,12.f);
 
-      createChild("angularDiameter", "float", 0.01f,
+      createChild("angularDiameter", "float", 0.53f,
                       NodeFlags::required |
                       NodeFlags::valid_min_max |
                       NodeFlags::gui_slider).setMinMax(0.f,4.f);
@@ -87,18 +97,52 @@ namespace ospray {
       createChild("intensity", "float", 3.f,
                       NodeFlags::required |
                       NodeFlags::valid_min_max |
-                      NodeFlags::gui_slider).setMinMax(0.f,12.f);
+                      NodeFlags::gui_slider).setMinMax(0.f,999.f);
 
-      createChild("radius", "float", 1.0f,
+      createChild("radius", "float", 0.0f,
                       NodeFlags::required |
                       NodeFlags::valid_min_max |
                       NodeFlags::gui_slider).setMinMax(0.f,4.f);
     }
 
+
+    HDRILight::HDRILight()
+      : Light("hdri")
+    {
+      createChild("up", "vec3f", vec3f(0.f,1.f,0.f),
+                NodeFlags::required |
+                NodeFlags::valid_min_max).setMinMax(vec3f(0), vec3f(1));
+      createChild("dir", "vec3f", vec3f(1.f,0.f,0.f),
+                NodeFlags::required |
+                NodeFlags::valid_min_max).setMinMax(vec3f(0), vec3f(1));
+      createChild("intensity", "float", 0.3f,
+                NodeFlags::required |
+                NodeFlags::valid_min_max |
+                NodeFlags::gui_slider).setMinMax(0.f,12.f);
+    }
+
+    void HDRILight::postCommit(RenderContext &ctx)
+    {
+      if (hasChild("map"))
+        ospSetObject(valueAs<OSPObject>(), "map",
+          child("map").valueAs<OSPObject>());
+      ospCommit(ospLight);
+    }
+
+    bool HDRILight::computeValid()
+    {
+      if (hasChild("map") && child("map").valueAs<OSPObject>() != nullptr)
+        return Node::computeValid();
+      else
+        return false;
+    }
+
+
     OSP_REGISTER_SG_NODE(Light);
     OSP_REGISTER_SG_NODE(DirectionalLight);
     OSP_REGISTER_SG_NODE(AmbientLight);
     OSP_REGISTER_SG_NODE(PointLight);
+    OSP_REGISTER_SG_NODE(HDRILight);
 
   } // ::ospray::sg
 } // ::ospray

@@ -21,6 +21,7 @@
 #include "../common/Messaging.h"
 // ours
 #include "render/LoadBalancer.h"
+#include "mpi/fb/DistributedFrameBuffer.h"
 #include <condition_variable>
 
 namespace ospray {
@@ -76,18 +77,33 @@ namespace ospray {
           each client 'i' renderss tiles with 'tileID%numWorkers==i') to avoid
           transferring a computed tile for accumulation
       */
+
+      struct TileTask {
+        vec2i tileId;
+        int32 accumId;
+        bool tilesExhausted; // no more tiles available
+      };
+
       class Master : public maml::MessageHandler,
                      public TiledLoadBalancer
       {
       public:
         Master();
         void incoming(const std::shared_ptr<mpicommon::Message> &) override;
-        float renderFrame(Renderer *tiledRenderer,
-                          FrameBuffer *fb,
-                          const uint32 channelFlags) override;
+        float renderFrame(Renderer *tiledRenderer
+            , FrameBuffer *fb
+            , const uint32 channelFlags
+            ) override;
         std::string toString() const override;
+
       private:
-        std::vector<int> preferredTiles; // per worker default queue
+        void scheduleTile(const int worker);
+        void generateTileTasks(DistributedFrameBuffer * const dfb
+            , const float errorThreshold
+            );
+
+        typedef std::vector<TileTask> TileVector;
+        std::vector<TileVector> preferredTiles; // per worker default queue
         std::vector<bool> workerNotified; // worker knows we're done?
         ObjectHandle myId;
         int numPreAllocated;
@@ -102,13 +118,14 @@ namespace ospray {
       public:
         Slave();
         void incoming(const std::shared_ptr<mpicommon::Message> &) override;
-        float renderFrame(Renderer *tiledRenderer,
-                          FrameBuffer *fb,
-                          const uint32 channelFlags) override;
+        float renderFrame(Renderer *tiledRenderer
+            , FrameBuffer *fb
+            , const uint32 channelFlags
+            ) override;
         std::string toString() const override;
 
       private:
-        void tileTask(const size_t tileID);
+        void tileTask(const TileTask &task);
         void requestTile();
 
         // "local" state
@@ -120,8 +137,8 @@ namespace ospray {
         std::condition_variable cv;
         int tilesScheduled;
         bool tilesAvailable;
+        bool frameActive;
         ObjectHandle myId;
-        int numPreAllocated;
       };
 
     }// ::ospray::mpi::dynamicLoadBalancer

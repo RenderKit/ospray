@@ -6,7 +6,7 @@ using namespace ospcommon;
 
 namespace gensv {
 
-RawReader::RawReader(const FileName &fileName, const vec3i &dimensions, size_t voxelSize)
+RawReader::RawReader(const FileName &fileName, const vec3sz &dimensions, size_t voxelSize)
   : fileName(fileName), dimensions(dimensions), voxelSize(voxelSize),
   file(fopen(fileName.c_str(), "rb")), offset(0)
 {
@@ -19,7 +19,7 @@ RawReader::~RawReader() {
 }
 // Read a region of volume data from the file into the buffer passed. It's assumed
 // the buffer passed has enough room. Returns the number voxels read
-size_t RawReader::readRegion(const vec3i &start, const vec3i &size, unsigned char *buffer) {
+size_t RawReader::readRegion(const vec3sz &start, const vec3sz &size, unsigned char *buffer) {
   assert(size.x > 0 && size.y > 0 && size.z > 0);
 
   int64_t startRead = (start.x + dimensions.x * (start.y + dimensions.y * start.z)) * voxelSize;
@@ -39,15 +39,15 @@ size_t RawReader::readRegion(const vec3i &start, const vec3i &size, unsigned cha
     offset = startRead + read * voxelSize;
   } else if (size.x == dimensions.x) {
     for (int z = start.z; z < start.z + size.z; ++z) {
-      const vec3i startSlice(start.x, start.y, z);
-      const vec3i sizeSlice(size.x, size.y, 1);
+      const vec3sz startSlice(start.x, start.y, z);
+      const vec3sz sizeSlice(size.x, size.y, 1);
       read += readRegion(startSlice, sizeSlice, buffer + read * voxelSize);
     }
   } else {
     for (int z = start.z; z < start.z + size.z; ++z) {
       for (int y = start.y; y < start.y + size.y; ++y) {
-        const vec3i startLine(start.x, y, z);
-        const vec3i sizeLine(size.x, 1, 1);
+        const vec3sz startLine(start.x, y, z);
+        const vec3sz sizeLine(size.x, 1, 1);
         read += readRegion(startLine, sizeLine, buffer + read * voxelSize);
       }
     }

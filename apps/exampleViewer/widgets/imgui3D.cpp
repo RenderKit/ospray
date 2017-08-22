@@ -28,6 +28,7 @@
 #include <GLFW/glfw3.h>
 
 #ifdef _WIN32
+#  define snprintf(buf,len, format,...) _snprintf_s(buf, len,len, format, __VA_ARGS__)
 #  ifndef WIN32_LEAN_AND_MEAN
 #    define WIN32_LEAN_AND_MEAN
 #  endif
@@ -96,7 +97,6 @@ namespace ospray {
     // InspectCenter Glut3DWidget::INSPECT_CENTER;
     /*! viewport as specified on the command line */
     ImGui3DWidget::ViewPort *viewPortFromCmdLine = nullptr;
-    vec3f upVectorFromCmdLine(0,1,0);
 
     // ------------------------------------------------------------------
     // implementation of glut3d::viewPorts
@@ -105,7 +105,7 @@ namespace ospray {
       modified(true),
       from(0,0,-1),
       at(0,0,0),
-      up(upVectorFromCmdLine),
+      up(0,1,0),
       openingAngle(60.f),
       aspect(1.f)
     {
@@ -148,7 +148,9 @@ namespace ospray {
       rotateSpeed(.003f),
       frameBufferMode(frameBufferMode),
       fontScale(2.f),
-      ucharFB(nullptr)
+      ucharFB(nullptr),
+	  moveModeManipulator(nullptr),
+	  inspectCenterManipulator(nullptr)
     {
       if (activeWindow != nullptr)
         throw std::runtime_error("ERROR: Can't create more than one ImGui3DWidget!");
@@ -233,8 +235,6 @@ namespace ospray {
         if (ImGui3DWidget::animating && dumpScreensDuringAnimation) {
           char tmpFileName[] = "/tmp/ospray_scene_dump_file.XXXXXXXXXX";
           static const char *dumpFileRoot;
-          if (!dumpFileRoot)
-            dumpFileRoot = getenv("OSPRAY_SCREEN_DUMP_ROOT");
           if (!dumpFileRoot) {
             auto rc = mkstemp(tmpFileName);
             (void)rc;
@@ -242,7 +242,7 @@ namespace ospray {
           }
 
           char fileName[100000];
-          sprintf(fileName,"%s_%08ld.ppm",dumpFileRoot,times(nullptr));
+          snprintf(fileName,sizeof(fileName),"%s_%08ld.ppm",dumpFileRoot,times(nullptr));
           saveFrameBufferToFile(fileName,ucharFB,windowSize.x,windowSize.y);
         }
 #endif
@@ -348,7 +348,9 @@ namespace ospray {
       if (fullScreen) {
         auto *monitor = glfwGetPrimaryMonitor();
         const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-
+        if(mode == nullptr) {
+          throw std::runtime_error("could not get video mode");
+        }
         window = glfwCreateWindow(mode->width, mode->height,
                                   title, monitor, nullptr);
       }
@@ -509,7 +511,7 @@ namespace ospray {
             removeArgs(*ac,(char **&)av,i,2); --i;
           } else {
             ImGui3DWidget::defaultInitSize.x = atoi(av[i+1]);
-            ImGui3DWidget::defaultInitSize.y = atoi(av[i+1]);
+            ImGui3DWidget::defaultInitSize.y = atoi(av[i+2]);
             removeArgs(*ac,(char **&)av,i,3); --i;
           }
           continue;
@@ -543,9 +545,9 @@ namespace ospray {
           auto& ay = viewPortFromCmdLine->at.y;
           auto& az = viewPortFromCmdLine->at.z;
 
-          auto& ux = upVectorFromCmdLine.x;
-          auto& uy = upVectorFromCmdLine.y;
-          auto& uz = upVectorFromCmdLine.z;
+          auto& ux = viewPortFromCmdLine->up.x;
+          auto& uy = viewPortFromCmdLine->up.y;
+          auto& uz = viewPortFromCmdLine->up.z;
 
           auto& fov = viewPortFromCmdLine->openingAngle;
 
@@ -569,11 +571,11 @@ namespace ospray {
           removeArgs(*ac,(char **&)av, i, 2); --i;
           continue;
         } if (arg == "-vu") {
-          upVectorFromCmdLine.x = atof(av[i+1]);
-          upVectorFromCmdLine.y = atof(av[i+2]);
-          upVectorFromCmdLine.z = atof(av[i+3]);
-          if (viewPortFromCmdLine)
-            viewPortFromCmdLine->up = upVectorFromCmdLine;
+          if (!viewPortFromCmdLine)
+            viewPortFromCmdLine = new ImGui3DWidget::ViewPort;
+          viewPortFromCmdLine->up.x = atof(av[i+1]);
+          viewPortFromCmdLine->up.y = atof(av[i+2]);
+          viewPortFromCmdLine->up.z = atof(av[i+3]);
           assert(i+3 < *ac);
           removeArgs(*ac,(char **&)av,i,4); --i;
           continue;
@@ -608,8 +610,6 @@ namespace ospray {
         } else {
           char tmpFileName[] = "/tmp/ospray_screen_dump_file.XXXXXXXX";
           static const char *dumpFileRoot;
-          if (!dumpFileRoot)
-            dumpFileRoot = getenv("OSPRAY_SCREEN_DUMP_ROOT");
 #ifndef _WIN32
           if (!dumpFileRoot) {
             auto rc = mkstemp(tmpFileName);
@@ -619,7 +619,7 @@ namespace ospray {
 #endif
           char fileName[100000];
           static int frameDumpSequenceID = 0;
-          sprintf(fileName,"%s_%05d.ppm",dumpFileRoot,frameDumpSequenceID++);
+          snprintf(fileName, sizeof(fileName), "%s_%05d.ppm",dumpFileRoot,frameDumpSequenceID++);
           if (ucharFB)
             saveFrameBufferToFile(fileName,ucharFB,windowSize.x,windowSize.y);
           return;

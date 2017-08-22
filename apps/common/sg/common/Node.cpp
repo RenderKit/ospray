@@ -137,29 +137,27 @@ namespace ospray {
 
     bool Node::computeValid()
     {
-#ifndef _WIN32
-# warning "Are validation node flags mutually exclusive?"
-#endif
+      bool valid = true;
 
       if ((flags() & NodeFlags::valid_min_max) &&
           properties.minmax.size() > 1) {
         if (!computeValidMinMax())
-          return false;
+          valid = false;
       }
 
       if (flags() & NodeFlags::valid_blacklist) {
-        return std::find(properties.blacklist.begin(),
+        valid &= std::find(properties.blacklist.begin(),
                          properties.blacklist.end(),
                          value()) == properties.blacklist.end();
       }
 
       if (flags() & NodeFlags::valid_whitelist) {
-        return std::find(properties.whitelist.begin(),
+        valid &= std::find(properties.whitelist.begin(),
                          properties.whitelist.end(),
                          value()) != properties.whitelist.end();
       }
 
-      return true;
+      return valid;
     }
 
     bool Node::computeValidMinMax()
@@ -182,13 +180,18 @@ namespace ospray {
 
     void Node::setValue(SGVar val)
     {
+      bool modified = false;
       {
         std::lock_guard<std::mutex> lock{mutex};
         if (val != properties.value)
+        {
           properties.value = val;
+          modified = true;
+        }
       }
 
-      markAsModified();
+      if (modified)
+        markAsModified();
     }
 
     // Update detection interface /////////////////////////////////////////////
@@ -260,6 +263,32 @@ namespace ospray {
       return child(c);
     }
 
+    bool Node::hasChildRecursive(const std::string &name)
+    {
+      std::string lower=name;
+      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+      mutex.lock();
+      Node* n = this;
+      auto f = n->properties.children.find(lower);
+      if (f != n->properties.children.end()) {
+        mutex.unlock();
+        return true;
+      }
+      bool found = false;
+
+      for (auto &child : properties.children) {
+        mutex.unlock();
+        try {
+          found |= child.second->hasChildRecursive(name);
+        }
+        catch (const std::runtime_error &) {}
+        mutex.lock();
+      }
+
+      mutex.unlock();
+      return found;
+    }
+
     Node& Node::childRecursive(const std::string &name)
     {
       std::string lower=name;
@@ -300,12 +329,6 @@ namespace ospray {
       return properties.children;
     }
 
-    Node& Node::operator+=(std::shared_ptr<Node> n)
-    {
-      add(n);
-      return *this;
-    }
-
     void Node::add(std::shared_ptr<Node> node)
     {
       add(node, node->name());
@@ -313,11 +336,7 @@ namespace ospray {
 
     void Node::add(std::shared_ptr<Node> node, const std::string &name)
     {
-      std::lock_guard<std::mutex> lock{mutex};
-      std::string lower = name;
-      std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
-      properties.children[lower] = node;
-
+      setChild(name, node);
       node->setParent(*this);
     }
 
@@ -429,8 +448,6 @@ namespace ospray {
         if (properties.valid && childrenLastModified() < properties.lastVerified)
           traverseChildren = false;
         properties.valid = computeValid();
-        if (!properties.valid)
-          std::cout << name() << " marked invalid\n";
         properties.lastVerified = TimeStamp();
       } else if (operation == "modified") {
         markAsModified();
@@ -461,26 +478,6 @@ namespace ospray {
     }
 
     // ==================================================================
-    // Renderable
-    // ==================================================================
-
-    void Renderable::preTraverse(RenderContext &ctx,
-                                 const std::string& operation, bool& traverseChildren)
-    {
-      Node::preTraverse(ctx,operation, traverseChildren);
-      if (operation == "render")
-        preRender(ctx);
-    }
-
-    void Renderable::postTraverse(RenderContext &ctx,
-                                  const std::string& operation)
-    {
-      Node::postTraverse(ctx,operation);
-      if (operation == "render")
-        postRender(ctx);
-    }
-
-    // ==================================================================
     // global stuff
     // ==================================================================
 
@@ -498,11 +495,11 @@ namespace ospray {
       CreatorFct creator = nullptr;
 
       if (it == nodeRegistry.end()) {
-        std::string creatorName = "ospray_create_sg_node__"+std::string(type);
+        std::string creatorName = "ospray_create_sg_node__" + type;
         creator = (CreatorFct)getSymbol(creatorName);
 
         if (!creator)
-          throw std::runtime_error("unknown ospray scene graph node '"+type+"'");
+          throw std::runtime_error("unknown OSPRay sg::Node '" + type + "'");
 
         nodeRegistry[type] = creator;
       } else {

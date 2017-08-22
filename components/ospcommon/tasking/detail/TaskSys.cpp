@@ -140,10 +140,10 @@ namespace ospcommon {
           threads.emplace_back([&](){
             while (true) {
               Task *task = getNextActiveTask();
-
               if (!running)
                 break;
-
+              if(task == nullptr)
+                continue;
               task->workOnIt();
             }
           });
@@ -189,6 +189,11 @@ namespace ospcommon {
       void initTaskSystemInternal(int maxNumRenderTasks)
       {
         TaskSys::global.init(maxNumRenderTasks);
+      }
+
+      int OSPCOMMON_INTERFACE numThreadsTaskSystemInternal()
+      {
+        return static_cast<int>(TaskSys::global.threads.size());
       }
 
       void scheduleTaskInternal(Task *task,

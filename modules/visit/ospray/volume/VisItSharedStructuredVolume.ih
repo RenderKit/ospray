@@ -57,13 +57,13 @@ struct VisItSharedStructuredVolume {
   /* @} */
     
   //! Find the next hit point in the volume for ray casting based renderers.
-  void (*uniform ga_intersect)(void *uniform _self, varying Ray &ray);
-  void (*uniform na_intersect)(void *uniform _self, varying Ray &ray);
+  void (*uniform ga_stepRay)(void *uniform _self, varying Ray &ray);
+  void (*uniform na_stepRay)(void *uniform _self, varying Ray &ray);
 
   //! Find the next hit point in the volume for ray casting based renderers.
-  void (*uniform ga_intersectAdaptive)(void *uniform _self, varying Ray &ray, 
+  void (*uniform ga_intersect)(void *uniform _self, varying Ray &ray, 
 				       const varying float samplingRate);
-  void (*uniform na_intersectAdaptive)(void *uniform _self, varying Ray &ray, 
+  void (*uniform na_intersect)(void *uniform _self, varying Ray &ray, 
 				       const varying float samplingRate);
 
   //! Find the next isosurface hit point in the volume for ray casting based renderers.

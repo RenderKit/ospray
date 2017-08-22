@@ -110,6 +110,13 @@ GLFWbool _glfwSetVideoModeX11(_GLFWmonitor* monitor, const GLFWvidmode* desired)
         int i;
 
         best = _glfwChooseVideoMode(monitor, desired);
+        if (!best)
+        {
+            _glfwInputError(GLFW_PLATFORM_ERROR,
+                            "X11: Can't get video modes for platform");
+            return GLFW_FALSE;
+        }
+
         _glfwPlatformGetVideoMode(monitor, &current);
         if (_glfwCompareVideoModes(&current, best) == 0)
             return GLFW_TRUE;
@@ -121,7 +128,7 @@ GLFWbool _glfwSetVideoModeX11(_GLFWmonitor* monitor, const GLFWvidmode* desired)
         for (i = 0;  i < oi->nmode;  i++)
         {
             const XRRModeInfo* mi = getModeInfo(sr, oi->modes[i]);
-            if (!modeIsGood(mi))
+            if (!mi || !modeIsGood(mi))
                 continue;
 
             const GLFWvidmode mode = vidmodeFromModeInfo(mi, ci);
@@ -353,7 +360,7 @@ GLFWvidmode* _glfwPlatformGetVideoModes(_GLFWmonitor* monitor, int* count)
         for (i = 0;  i < oi->nmode;  i++)
         {
             const XRRModeInfo* mi = getModeInfo(sr, oi->modes[i]);
-            if (!modeIsGood(mi))
+            if (!mi || !modeIsGood(mi))
                 continue;
 
             const GLFWvidmode mode = vidmodeFromModeInfo(mi, ci);

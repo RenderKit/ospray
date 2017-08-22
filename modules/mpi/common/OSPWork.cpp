@@ -98,16 +98,6 @@ namespace ospray {
                                    + std::to_string(mpicommon::world.rank)
                                    + " did not have object to commit!");
         }
-        // TODO: Work units should not be directly making MPI calls.
-        // What should be responsible for this barrier?
-        // MPI_Barrier(MPI_COMM_WORLD);
-
-        /// iw: nah, perfectly OK to do MPI calls, as long as they
-        /// don't get into each other's ways, nad make sure there's no
-        /// cyclical dependencies (ie, that the server unit actually
-        /// does get flushed etcpp)
-        
-        mpicommon::app.barrier();
       }
       
       void CommitObject::runOnMaster()
@@ -118,7 +108,6 @@ namespace ospray {
             obj->commit();
           }
         }
-        mpicommon::worker.barrier();
       }
       
       void CommitObject::serialize(WriteStream &b) const

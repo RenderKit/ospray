@@ -65,7 +65,7 @@ namespace ospray {
         throw std::runtime_error(err.str());
       }
     }
-    
+
     inline void expect(char *&s, const char w0, const char w1)
     {
       if (*s != w0 && *s != w1) {
@@ -75,13 +75,13 @@ namespace ospray {
         throw std::runtime_error(err.str());
       }
     }
-    
+
     inline void consume(char *&s, const char w)
     {
       expect(s,w);
       ++s;
     }
-    
+
     inline void consumeComment(char *&s)
     {
       consume(s,'<');
@@ -93,7 +93,7 @@ namespace ospray {
       consume(s,'-');
       consume(s,'>');
     }
-    
+
     inline void consume(char *&s, const char *word)
     {
       const char *in = word;
@@ -114,10 +114,11 @@ namespace ospray {
       if (!begin || !end)
         throw std::runtime_error("invalid substring in osp::xml::makeString");
       if (begin == end) return "";
+
       char *mem = new char[end-begin+1];
+      memcpy(mem,begin,end-begin);
       mem[end-begin] = 0;
 
-      memcpy(mem,begin,end-begin);
       std::string s = mem;
       delete [] mem;
       return s;
@@ -153,7 +154,7 @@ namespace ospray {
       if (isalpha(*s) || *s == '_') {
         char *begin = s;
         ++s;
-        while (isalpha(*s) || isdigit(*s) || *s == '_') {
+        while (isalpha(*s) || isdigit(*s) || *s == '_' || *s == '.') {
           ++s;
         }
         char *end = s;
@@ -189,7 +190,6 @@ namespace ospray {
       return false;
     }
 
-    
     std::shared_ptr<Node> parseNode(char *&s, XMLDoc *doc)
     {
       consume(s,'<');

@@ -81,6 +81,15 @@ namespace ospray {
   void ImGuiViewerSg::keypress(char key)
   {
     switch (key) {
+    case ' ':
+    {
+      if (scenegraph && scenegraph->hasChild("animationcontroller"))
+      {
+        bool animating = scenegraph->child("animationcontroller")["enabled"].valueAs<bool>();
+        scenegraph->child("animationcontroller")["enabled"].setValue(!animating);
+      }
+      break;
+    }
     case 'R':
       toggleRenderingPaused();
       break;
@@ -285,7 +294,7 @@ namespace ospray {
       ImGui::PushStyleColor(ImGuiCol_Text, ImColor(200, 75, 48,255));
       styles++;
     }
-    std::string text;
+    std::string text("");
     std::string nameLower=name;
     std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
     std::string nodeNameLower=node->name();
@@ -382,13 +391,22 @@ namespace ospray {
       if (ImGui::InputText(text.c_str(), buf,
                            value.size()+256,
                            ImGuiInputTextFlags_EnterReturnsTrue))
+      {
         node->setValue(std::string(buf));
-    } else { // generic holder node
+      }
+      free(buf);
+    } else if (node->type() == "Texture2D")
+    {
+      ImGui::Text(text.c_str(),"");
+    }
+    const int numChildren = node->numChildren();
+    if (numChildren > 0)
+    {
       text+=node->type();
       text += "##"+((std::ostringstream&)(std::ostringstream("")
                                           << node.get())).str(); //TODO: use unique uuid for every node
       if (ImGui::TreeNodeEx(text.c_str(),
-                            (indent > 0) ? 0 : ImGuiTreeNodeFlags_DefaultOpen)) {
+                            (indent > 1 && numChildren > 20) ? 0 : ImGuiTreeNodeFlags_DefaultOpen)) {
         {
           std::string popupName = "Add Node: ##" +
             ((std::ostringstream&)(std::ostringstream("")
@@ -496,7 +514,8 @@ namespace ospray {
 
         ImGui::TreePop();
       }
-    }
+    } else { // generic holder node
+   }
 
     if (!node->isValid())
       ImGui::PopStyleColor(styles--);

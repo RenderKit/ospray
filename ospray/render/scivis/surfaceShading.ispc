@@ -105,8 +105,8 @@ void integrateOverLights(const uniform SciVisRenderer *uniform self,
         cosNL = abs(cosNL);
       const float cosLR = max(0.f, dot(light.dir, R));
       vec3f specular = info.Ks * powf(cosLR, info.Ns);
-      const vec3f brdf = info.Kd * cosNL + specular;
-      const vec3f light_contrib = info.local_opacity * brdf * light.weight;
+      const vec3f brdf = info.Kd + specular;
+      const vec3f light_contrib = info.local_opacity * brdf * cosNL * light.weight;
 
       if (self->shadowsEnabled) {
         const float max_contrib = reduce_max(light_contrib);

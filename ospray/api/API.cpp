@@ -844,10 +844,10 @@ OSPRAY_CATCH_BEGIN
 {
   ASSERT_DEVICE();
   OSPGeometry geom = ospNewGeometry("instance");
-  ospSet3fv(geom,"xfm.l.vx",&xfm.l.vx.x);
-  ospSet3fv(geom,"xfm.l.vy",&xfm.l.vy.x);
-  ospSet3fv(geom,"xfm.l.vz",&xfm.l.vz.x);
-  ospSet3fv(geom,"xfm.p",&xfm.p.x);
+  ospSet3f(geom, "xfm.l.vx", xfm.l.vx.x, xfm.l.vx.y, xfm.l.vx.z);
+  ospSet3f(geom, "xfm.l.vy", xfm.l.vy.x, xfm.l.vy.y, xfm.l.vy.z);
+  ospSet3f(geom, "xfm.l.vz", xfm.l.vz.x, xfm.l.vz.y, xfm.l.vz.z);
+  ospSet3f(geom, "xfm.p", xfm.p.x, xfm.p.y, xfm.p.z);
   ospSetObject(geom,"model",modelToInstantiate);
   return geom;
 }

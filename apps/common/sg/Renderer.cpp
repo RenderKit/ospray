@@ -135,10 +135,8 @@ namespace ospray {
           child("frameBuffer")["size"].lastModified() >
           child("camera")["aspect"].lastCommitted()) {
 
-        child("camera")["aspect"].setValue(
-          child("frameBuffer")["size"].valueAs<vec2i>().x /
-          float(child("frameBuffer")["size"].valueAs<vec2i>().y)
-        );
+        auto fbSize = child("frameBuffer")["size"].valueAs<vec2i>();
+        child("camera")["aspect"] = fbSize.x / float(fbSize.y);
       }
       auto rendererType = child("rendererType").valueAs<std::string>();
       if (!ospRenderer || rendererType != createdType) {
@@ -170,10 +168,14 @@ namespace ospray {
         if (lightsData == nullptr ||
           lightsBuildTime < child("lights").childrenLastModified())
         {
-          // create and setup light for Ambient Occlusion
+          // create and setup light list
           std::vector<OSPLight> lights;
           for(auto &lightNode : child("lights").children())
-            lights.push_back((OSPLight)lightNode->valueAs<OSPObject>());
+          {
+            auto light = (OSPLight)lightNode->valueAs<OSPObject>();
+            if (light)
+              lights.push_back(light);
+          }
 
           if (lightsData)
             ospRelease(lightsData);

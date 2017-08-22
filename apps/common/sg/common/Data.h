@@ -58,6 +58,9 @@ namespace ospray {
       virtual size_t size()  const = 0;
       virtual size_t bytesPerElement() const = 0;
 
+      template <typename T>
+      inline T* baseAs() const { return static_cast<T*>(base()); }
+
       OSPDataType getType()  const { return type; }
       OSPData     getOSP()
       {

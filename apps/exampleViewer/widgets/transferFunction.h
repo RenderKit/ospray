@@ -31,12 +31,6 @@ namespace ospray {
      * transfer function changed
     */
     void drawUi();
-    /* Query the latest transfer function data from the widget,
-     * returns true if the data has updated since the last 'render' call.
-     * The alpha vector is [x, alpha] pairs
-     */
-    bool getColorMap(std::vector<vec3f> &colors,
-                     std::vector<vec2f> &alpha) const;
     /* Render the transfer function to a 1D texture that can
      * be applied to volume data
      */

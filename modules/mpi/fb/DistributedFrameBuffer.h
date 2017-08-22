@@ -63,7 +63,6 @@ namespace ospray {
   {
     public:
       DistributedTileError(const vec2i &numTiles);
-      ~DistributedTileError() = default;
       void sync(); // broadcast tileErrorBuffer to all workers
   };
 
@@ -116,7 +115,7 @@ namespace ospray {
     void  beginFrame() override;
     float endFrame(const float errorThreshold) override;
 
-    enum FrameMode { WRITE_ONCE, ALPHA_BLEND, Z_COMPOSITE };
+    enum FrameMode { WRITE_MULTIPLE, ALPHA_BLEND, Z_COMPOSITE };
 
     void setFrameMode(FrameMode newFrameMode) ;
 
@@ -139,11 +138,13 @@ namespace ospray {
     //! process a client-to-client write tile message */
     void processMessage(WriteTileMessage *msg);
 
+    size_t ownerIDFromTileID(size_t tileID) const;
+
   private:
 
     friend struct TileData;
+    friend struct WriteMultipleTile;
     friend struct AlphaBlendTile_simple;
-    friend struct WriteOnlyOnceTile;
     friend struct ZCompositeTile;
 
     // ==================================================================
@@ -165,8 +166,6 @@ namespace ospray {
         checks if we've completed rendering the frame. */
     void finalizeTileOnMaster(TileData *tile);
 
-    void sendTileToMaster(TileData *tile);
-
     //! number of tiles that "I" own
     size_t numMyTiles() const;
 
@@ -186,14 +185,17 @@ namespace ospray {
     TileData *createTile(const vec2i &xy, size_t tileID, size_t ownerID);
     void freeTiles();
 
-    size_t ownerIDFromTileID(size_t tileID);
+    bool isFrameComplete();
 
     // Data members ///////////////////////////////////////////////////////////
 
     ObjectHandle myID;
 
     int32 *tileAccumID; //< holds accumID per tile, for adaptive accumulation
-    //!< holds error per tile and adaptive regions, for variance estimation / stopping
+    int32 *tileInstances; //< how many copies of this tile are active, usually 1
+
+    /*! holds error per tile and adaptive regions, for variance estimation /
+        stopping */
     DistributedTileError tileErrorRegion;
 
     /*! local frame buffer on the master used for storing the final
@@ -207,7 +209,7 @@ namespace ospray {
         (used to track when current node is done with this frame - we are done
         exactly once we've completed sending / receiving the last tile to / by
         the master) */
-    size_t numTilesCompletedThisFrame;
+    std::atomic<size_t> numTilesCompletedThisFrame;
 
     /*! vector of info for *all* tiles. Each logical tile in the
       screen has an entry here */
@@ -251,9 +253,8 @@ namespace ospray {
   {
     if (hasVarianceBuffer) {
       const vec2i tileID = msg->coords/TILE_SIZE;
-      if ((accumID(tileID) & 1) == 1) {
+      if (msg->error < (float)inf)
         tileErrorRegion.update(tileID, msg->error);
-      }
     }
 
     vec2i numPixels = getNumPixels();

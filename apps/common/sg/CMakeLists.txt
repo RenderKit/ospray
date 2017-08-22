@@ -16,6 +16,36 @@
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
+OPTION(OSPRAY_APPS_SG_VTK "Enable VTK loaders for ospray_sg" OFF)
+
+IF(OSPRAY_APPS_SG_VTK)
+  FIND_PACKAGE(VTK COMPONENTS REQUIRED
+    vtkIOLegacy
+    vtkIOXML
+    vtkIOXMLParser
+    vtkIOExport
+    vtksys
+  )
+
+  INCLUDE(${VTK_USE_FILE})
+
+  SET(SG_VTK_SRCS importer/importTetVolume.cpp)
+
+  ADD_DEFINITIONS(-DOSPRAY_APPS_SG_VTK=1)
+ENDIF()
+
+OPTION(USE_OPENIMAGEIO "Enable OpenImageIO support" OFF)
+
+IF(USE_OPENIMAGEIO)
+  FIND_PACKAGE(OpenImageIO)
+  IF (OPENIMAGEIO_FOUND)
+    ADD_DEFINITIONS(-DUSE_OPENIMAGEIO)
+    INCLUDE_DIRECTORIES(${OPENIMAGEIO_INCLUDE_DIRS})
+  ELSE()
+    MESSAGE(STATUS "OpenImageIO not found. Using stb_image instead.")
+  ENDIF()
+ENDIF()
+
 OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   # scene graph nodes
   SceneGraph.cpp
@@ -36,15 +66,23 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   common/Light.cpp
   common/Material.cpp
   common/Node.cpp
+  common/Renderable.cpp
   common/RenderContext.h
   common/Serialization.cpp
   common/TimeStamp.cpp
   common/Texture2D.cpp
   common/Transform.cpp
   common/World.cpp
+  common/Animator.cpp
+  common/Animator.h
+  common/AnimationController.h
+  common/AnimationController.cpp
+  common/Selector.h
+  common/Selector.cpp
 
   transferFunction/TransferFunction.cpp
   volume/Volume.cpp
+  volume/TetVolume.cpp
 
   module/Module.cpp
 
@@ -63,8 +101,13 @@ OSPRAY_CREATE_LIBRARY(ospray_sg SHARED
   importer/importXYZ.cpp
 
   importer/detail_xyz/Model.cpp
+
+  ${SG_VTK_SRCS}
+
 LINK
   ospray
   ospray_common
   ospray_xml
+  ${VTK_LIBRARIES}
+  ${OPENIMAGEIO_LIBRARIES}
 )

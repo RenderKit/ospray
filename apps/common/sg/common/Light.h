@@ -29,8 +29,8 @@ namespace ospray {
     struct OSPSG_INTERFACE Light : public sg::Node
     {
       //! \brief constructor
-      Light() = default;
-      Light(const std::string &type) : type(type) {}
+      Light();
+      Light(const std::string &type);
 
       virtual void preCommit(RenderContext &ctx) override;
       virtual void postCommit(RenderContext &ctx) override;
@@ -38,8 +38,9 @@ namespace ospray {
       //! \brief returns a std::string with the c++ name of this class
       virtual std::string toString() const override;
 
+    protected:
       /*! \brief light type, i.e., 'DirectionalLight', 'PointLight', ... */
-      const std::string type = "none";
+      std::string type = "none";
       OSPLight ospLight {nullptr};
     };
 
@@ -57,6 +58,14 @@ namespace ospray {
     {
       PointLight();
     };
+
+    struct OSPSG_INTERFACE HDRILight : public Light
+    {
+      HDRILight();
+      virtual bool computeValid() override;
+      virtual void postCommit(RenderContext &ctx) override;
+    };
+
 
   } // ::ospray::sg
 } // ::ospray

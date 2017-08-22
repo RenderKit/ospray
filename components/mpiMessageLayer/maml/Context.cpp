@@ -203,13 +203,11 @@ namespace maml {
       tasksAreRunning = true;
 
       auto MAML_SPAWN_THREADS = ospcommon::getEnvVar<int>("MAML_SPAWN_THREADS");
-      if (!MAML_SPAWN_THREADS.second && ospcommon::tasking::numTaskingThreads() < 3) {
-        throw std::runtime_error("Tasking system must have at least 3 threads"
-                                 " for maml to function.");
-      }
 
       if (MAML_SPAWN_THREADS.first)
         useTaskingSystem = !MAML_SPAWN_THREADS.second;
+      else
+        useTaskingSystem = ospcommon::tasking::numTaskingThreads() >= 4;
 
       if (useTaskingSystem) {
         sendReceiveFuture = ospcommon::tasking::async([&](){

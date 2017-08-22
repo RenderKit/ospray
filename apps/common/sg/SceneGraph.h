@@ -27,18 +27,18 @@
 #endif
 
 // sg components
-#include "sg/common/Node.h"
-#include "sg/common/Data.h"
-#include "sg/common/Transform.h"
+#include "common/Data.h"
+#include "common/Renderable.h"
+#include "common/Transform.h"
 
-#include "sg/camera/PerspectiveCamera.h"
+#include "camera/PerspectiveCamera.h"
 
-#include "sg/geometry/Geometry.h"
-#include "sg/geometry/Spheres.h"
+#include "geometry/Geometry.h"
+#include "geometry/Spheres.h"
 
-#include "sg/importer/Importer.h"
+#include "importer/Importer.h"
 
-#include "sg/volume/Volume.h"
+#include "volume/Volume.h"
 
 // ospcommon
 #include "ospcommon/FileName.h"
@@ -66,20 +66,6 @@ namespace ospray {
       std::string toString() const override;
 
       std::vector<std::shared_ptr<sg::Node>> children;
-    };
-
-    /*! a geometry node - the generic geometry node */
-    struct GenericGeometry : public sg::Geometry
-    {
-      GenericGeometry(const std::string &type);
-
-      /*! \brief returns a std::string with the c++ name of this class */
-      std::string toString() const override;
-      box3f bounds() const override;
-
-      /*! geometry type, i.e., 'spheres', 'cylinders', 'trianglemesh', ... */
-      const std::string type;
-      box3f _bounds;
     };
 
     /*! @} */

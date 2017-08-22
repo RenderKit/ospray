@@ -87,7 +87,7 @@ namespace ospray {
       dir_du *= focusDistance;
       dir_dv *= focusDistance;
       dir_00 *= focusDistance;
-      scaledAperture = apertureRadius / imgPlane_size_x;
+      scaledAperture = apertureRadius / (imgPlane_size_x * focusDistance);
     }
 
     ispc::PerspectiveCamera_set(getIE(),

@@ -66,8 +66,8 @@ namespace ospray {
       auto modelNodePtr = createNode("appModel", "ImportedModel");
       auto &modelNode = *modelNodePtr;
 
-      modelNode.setValue((OSPObject)model);
-      modelNode["bounds"].setValue(bbox);
+      modelNode = (OSPObject)model;
+      modelNode["bounds"] = bbox;
 
       instanceNode->setChild("model", modelNodePtr);
       modelNode.setParent(instanceNode);

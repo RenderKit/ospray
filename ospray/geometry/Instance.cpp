@@ -89,6 +89,12 @@ namespace ospray {
                                (ispc::AffineSpace3f&)rcp_xfm,
                                instancedScene->getIE(),
                                &areaPDF[0]);
+    for (auto volume : instancedScene->volume) {
+      ospSet3f((OSPObject)volume.ptr, "xfm.l.vx", xfm.l.vx.x, xfm.l.vx.y, xfm.l.vx.z);
+      ospSet3f((OSPObject)volume.ptr, "xfm.l.vy", xfm.l.vy.x, xfm.l.vy.y, xfm.l.vy.z);
+      ospSet3f((OSPObject)volume.ptr, "xfm.l.vz", xfm.l.vz.x, xfm.l.vz.y, xfm.l.vz.z);
+      ospSet3f((OSPObject)volume.ptr, "xfm.p", xfm.p.x, xfm.p.y, xfm.p.z);
+    }
   }
 
   OSP_REGISTER_GEOMETRY(Instance,instance);

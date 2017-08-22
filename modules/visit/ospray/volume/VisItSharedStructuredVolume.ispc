@@ -128,8 +128,8 @@ template_accessArray(double);
   function will directly do all the addressing for the getSample
   (inlined), and thus be about 50% faster (wall-time, meaning even
   much faster in pure sample speed) */
-#define template_computeSample(type)                                         \
-inline float SSV_computeSample_##type##_32(void *uniform _self,              \
+#define template_sample(type)                                         \
+inline float SSV_sample_##type##_32(void *uniform _self,              \
                                            const vec3f &worldCoordinates)    \
 {                                                                            \
   /* Cast to the actual Volume subtype. */                                   \
@@ -190,7 +190,7 @@ inline float SSV_computeSample_##type##_32(void *uniform _self,              \
   return val;                                                                \
 }                                                                            \
                                                                              \
-inline float SSV_computeSample_##type##_64_32(void *uniform _self,           \
+inline float SSV_sample_##type##_64_32(void *uniform _self,           \
                                               const vec3f &worldCoordinates) \
 {                                                                            \
   /* Cast to the actual Volume subtype. */                                   \
@@ -255,15 +255,15 @@ inline float SSV_computeSample_##type##_64_32(void *uniform _self,           \
   return ret;                                                                \
 }
 
-template_computeSample(uint8)
-template_computeSample(int16)
-template_computeSample(uint16)
-template_computeSample(float)
-template_computeSample(double)
-#undef template_computeSample
+template_sample(uint8)
+template_sample(int16)
+template_sample(uint16)
+template_sample(float)
+template_sample(double)
+#undef template_sample
 
 // ray.time is set to interval length of intersected sample
-inline void VisItSharedStructuredVolume_intersect(void *uniform _volume, varying Ray &ray)
+inline void VisItSharedStructuredVolume_stepRay(void *uniform _volume, varying Ray &ray)
 {
   // Cast to the actual Volume subtype.
   StructuredVolume *uniform volume = (StructuredVolume *uniform) _volume;
@@ -277,9 +277,9 @@ inline void VisItSharedStructuredVolume_intersect(void *uniform _volume, varying
 }
 
 // ray.time is set to interval length of intersected sample
-inline void VisItSharedStructuredVolume_intersectAdaptive(void *uniform _volume, 
-							  varying Ray &ray, 
-							  const varying float samplingRate)
+inline void VisItSharedStructuredVolume_intersect(void *uniform _volume, 
+						  varying Ray &ray, 
+						  const varying float samplingRate)
 {
   // Cast to the actual Volume subtype.
   StructuredVolume *uniform volume = (StructuredVolume *uniform) _volume;
@@ -328,16 +328,16 @@ inline varying vec3f VisItSharedStructuredVolume_computeGradient(void *uniform _
   // Forward differences
 
   // Sample at gradient location.
-  float sample = volume->super.computeSample(volume, worldCoordinates);
+  float sample = volume->super.sample(volume, worldCoordinates);
 
   // Gradient magnitude in the X direction.
-  gradient.x = volume->super.computeSample(volume, worldCoordinates + make_vec3f(gradientStep.x, 0.0f, 0.0f)) - sample;
+  gradient.x = volume->super.sample(volume, worldCoordinates + make_vec3f(gradientStep.x, 0.0f, 0.0f)) - sample;
 
   // Gradient magnitude in the Y direction.
-  gradient.y = volume->super.computeSample(volume, worldCoordinates + make_vec3f(0.0f, gradientStep.y, 0.0f)) - sample;
+  gradient.y = volume->super.sample(volume, worldCoordinates + make_vec3f(0.0f, gradientStep.y, 0.0f)) - sample;
 
   // Gradient magnitude in the Z direction.
-  gradient.z = volume->super.computeSample(volume, worldCoordinates + make_vec3f(0.0f, 0.0f, gradientStep.z)) - sample;
+  gradient.z = volume->super.sample(volume, worldCoordinates + make_vec3f(0.0f, 0.0f, gradientStep.z)) - sample;
 
   // This approximation may yield image artifacts.
   return(gradient / gradientStep);
@@ -355,15 +355,15 @@ void VisItSharedStructuredVolume_Constructor(VisItSharedStructuredVolume *unifor
   
   // backup grid accelerator functions
   self->useGridAccelerator = useGridAccelerator;
+  self->ga_stepRay = self->super.super.stepRay;
   self->ga_intersect = self->super.super.intersect;
-  self->ga_intersectAdaptive = self->super.super.intersectAdaptive;
   self->ga_intersectIsosurface = self->super.super.intersectIsosurface;
+  self->na_stepRay = VisItSharedStructuredVolume_stepRay;
   self->na_intersect = VisItSharedStructuredVolume_intersect;
-  self->na_intersectAdaptive = VisItSharedStructuredVolume_intersectAdaptive;
   self->na_intersectIsosurface = VisItSharedStructuredVolume_intersectIsosurface;
   if (useGridAccelerator == 0) {
+      self->super.super.stepRay = self->na_stepRay;
       self->super.super.intersect = self->na_intersect;
-      self->super.super.intersectAdaptive = self->na_intersectAdaptive;
       self->super.super.intersectIsosurface = self->na_intersectIsosurface;
   }
   self->super.super.computeGradient = VisItSharedStructuredVolume_computeGradient;
@@ -404,19 +404,19 @@ void VisItSharedStructuredVolume_Constructor(VisItSharedStructuredVolume *unifor
 
     if (voxelType == OSP_UCHAR) {
       self->super.getVoxel = SSV_getVoxel_uint8_32;
-      self->super.super.computeSample = SSV_computeSample_uint8_32;
+      self->super.super.sample = SSV_sample_uint8_32;
     } else if (voxelType == OSP_SHORT) {
       self->super.getVoxel = SSV_getVoxel_int16_32;
-      self->super.super.computeSample = SSV_computeSample_float_32;
+      self->super.super.sample = SSV_sample_float_32;
     } else if (voxelType == OSP_USHORT) {
       self->super.getVoxel = SSV_getVoxel_uint16_32;
-      self->super.super.computeSample = SSV_computeSample_float_32;
+      self->super.super.sample = SSV_sample_float_32;
     } else if (voxelType == OSP_FLOAT) {
       self->super.getVoxel = SSV_getVoxel_float_32;
-      self->super.super.computeSample = SSV_computeSample_float_32;
+      self->super.super.sample = SSV_sample_float_32;
     } else if (voxelType == OSP_DOUBLE) {
       self->super.getVoxel = SSV_getVoxel_double_32;
-      self->super.super.computeSample = SSV_computeSample_double_32;
+      self->super.super.sample = SSV_sample_double_32;
     }
 
   } else if (bytesPerSlice <= (1ULL << 30)) {
@@ -426,19 +426,19 @@ void VisItSharedStructuredVolume_Constructor(VisItSharedStructuredVolume *unifor
 
     if (voxelType == OSP_UCHAR) {
       self->super.getVoxel = SSV_getVoxel_uint8_64_32;
-      self->super.super.computeSample = SSV_computeSample_uint8_64_32;
+      self->super.super.sample = SSV_sample_uint8_64_32;
     } else if (voxelType == OSP_SHORT) {
       self->super.getVoxel = SSV_getVoxel_int16_64_32;
-      self->super.super.computeSample = SSV_computeSample_int16_64_32;
+      self->super.super.sample = SSV_sample_int16_64_32;
     } else if (voxelType == OSP_USHORT) {
       self->super.getVoxel = SSV_getVoxel_uint16_64_32;
-      self->super.super.computeSample = SSV_computeSample_uint16_64_32;
+      self->super.super.sample = SSV_sample_uint16_64_32;
     } else if (voxelType == OSP_FLOAT) {
       self->super.getVoxel = SSV_getVoxel_float_64_32;
-      self->super.super.computeSample = SSV_computeSample_float_64_32;
+      self->super.super.sample = SSV_sample_float_64_32;
     } else if (voxelType == OSP_DOUBLE) {
       self->super.getVoxel = SSV_getVoxel_double_64_32;
-      self->super.super.computeSample = SSV_computeSample_double_64_32;
+      self->super.super.sample = SSV_sample_double_64_32;
     }
   } else {
     //print("#osp:shared_structured_volume: using 64-bit mode\n");

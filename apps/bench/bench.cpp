@@ -70,6 +70,12 @@ namespace ospray {
     }
 
     auto device = ospGetCurrentDevice();
+    if (device == nullptr) {
+      std::cerr << "FATAL ERROR DURING GETTING DEVICE!" << std::endl;
+      std::exit(1);
+    }
+
+
     ospDeviceSetStatusFunc(device,
                            [](const char *msg) { std::cout << msg; });
 
@@ -134,24 +140,24 @@ namespace ospray {
     auto renderer_ptr = sg::createNode("renderer", "Renderer");
     auto &renderer = *renderer_ptr;
 
-    renderer["shadowsEnabled"].setValue(true);
-    renderer["aoSamples"].setValue(1);
+    renderer["shadowsEnabled"] = true;
+    renderer["aoSamples"] = 1;
 
     auto &lights = renderer["lights"];
 
     auto &sun = lights.createChild("sun", "DirectionalLight");
-    sun["color"].setValue(vec3f(1.f,232.f/255.f,166.f/255.f));
-    sun["direction"].setValue(vec3f(0.462f,-1.f,-.1f));
-    sun["intensity"].setValue(1.5f);
+    sun["color"] = vec3f(1.f, 232.f/255.f, 166.f/255.f);
+    sun["direction"] = vec3f(0.462f, -1.f, -.1f);
+    sun["intensity"] = 1.5f;
 
     auto &bounce = lights.createChild("bounce", "DirectionalLight");
-    bounce["color"].setValue(vec3f(127.f/255.f,178.f/255.f,255.f/255.f));
-    bounce["direction"].setValue(vec3f(-.93,-.54f,-.605f));
-    bounce["intensity"].setValue(0.25f);
+    bounce["color"] = vec3f(127.f/255.f, 178.f/255.f, 255.f/255.f);
+    bounce["direction"] = vec3f(-.93, -.54f, -.605f);
+    bounce["intensity"] = 0.25f;
 
     auto &ambient = lights.createChild("ambient", "AmbientLight");
-    ambient["intensity"].setValue(0.9f);
-    ambient["color"].setValue(vec3f(174.f/255.f,218.f/255.f,255.f/255.f));
+    ambient["intensity"] = 0.9f;
+    ambient["color"] = vec3f(174.f/255.f, 218.f/255.f, 255.f/255.f);
 
     auto &world = renderer["world"];
 
@@ -162,15 +168,13 @@ namespace ospray {
       else {
         auto importerNode_ptr = sg::createNode(fn.name(), "Importer");
         auto &importerNode = *importerNode_ptr;
-        importerNode["fileName"].setValue(fn.str());
-        world += importerNode_ptr;
+        importerNode["fileName"] = fn.str();
+        world.add(importerNode_ptr);
       }
     }
 
-    auto &sgFB = renderer.child("frameBuffer");
-
-    auto &size = sgFB["size"];
-    size.setValue(vec2i(width, height));
+    auto sgFB = renderer.child("frameBuffer").nodeAs<sg::FrameBuffer>();
+    sgFB->child("size") = vec2i(width, height);
 
     renderer.traverse("verify");
     renderer.traverse("commit");
@@ -178,7 +182,7 @@ namespace ospray {
     // Setup camera ///////////////////////////////////////////////////////////
 
     if (!customView) {
-      auto bbox = world.bounds();
+      auto bbox  = world.bounds();
       vec3f diag = bbox.size();
       diag       = max(diag,vec3f(0.3f*length(diag)));
 
@@ -191,10 +195,10 @@ namespace ospray {
     auto dir = gaze - pos;
 
     auto &camera = renderer["camera"];
-    camera["fovy"].setValue(fovy);
-    camera["pos"].setValue(pos);
-    camera["dir"].setValue(dir);
-    camera["up"].setValue(up);
+    camera["fovy"] = fovy;
+    camera["pos"]  = pos;
+    camera["dir"]  = dir;
+    camera["up"]   = up;
 
     renderer.traverse("commit");
 
@@ -214,10 +218,9 @@ namespace ospray {
     // Print results //////////////////////////////////////////////////////////
 
     if (!imageOutputFile.empty()) {
-      auto sgFBptr = sgFB.nodeAs<sg::FrameBuffer>();
-      auto *srcPB = (uint32_t*)sgFBptr->map();
+      auto *srcPB = (uint32_t*)sgFB->map();
       utility::writePPM(imageOutputFile + ".ppm", width, height, srcPB);
-      sgFBptr->unmap(srcPB);
+      sgFB->unmap(srcPB);
     }
 
     outputStats(stats);

@@ -152,20 +152,7 @@ namespace ospray {
     void StructuredVolume::setFromXML(const xml::Node &node,
                                       const unsigned char *binBasePtr)
     {
-      voxelType = node.getProp("voxelType");
-      if (node.hasProp("ofs"))
-        mappedPointer = binBasePtr + std::stoll(node.getProp("ofs","0"));
-      dimensions = toVec3i(node.getProp("dimensions").c_str());
-
-      if (voxelType == "uint8")
-        voxelType = "uchar";
-      if (unsupportedVoxelType(voxelType)) {
-        THROW_SG_ERROR("unknown StructuredVolume.voxelType '"
-                       + voxelType + "'");
-      }
-
-      std::cout << "#osp:sg: created StructuredVolume from XML file, "
-                << "dimensions = " << dimensions << std::endl;
+      NOT_IMPLEMENTED;
     }
 
     OSP_REGISTER_SG_NODE(StructuredVolume);
@@ -284,12 +271,13 @@ namespace ospray {
 
       fclose(file);
 
-      child("voxelRange").setValue(voxelRange);
+      child("voxelRange") = voxelRange;
+      child("transferFunction")["valueRange"] = voxelRange;
+
       child("isosurface").setMinMax(voxelRange.x, voxelRange.y);
       float iso = child("isosurface").valueAs<float>();
       if (iso < voxelRange.x || iso > voxelRange.y)
-        child("isosurface").setValue((voxelRange.y-voxelRange.x)/2.f);
-      child("transferFunction")["valueRange"].setValue(voxelRange);
+        child("isosurface") = (voxelRange.y - voxelRange.x) / 2.f;
     }
 
     void StructuredVolumeFromFile::postCommit(RenderContext &ctx)
@@ -376,16 +364,16 @@ namespace ospray {
       for (auto &t : threads)
         t.join();
 
-      child("voxelRange").setValue(loaderState.voxelRange);
+      child("voxelRange") = loaderState.voxelRange;
       child("isosurface").setMinMax(loaderState.voxelRange.x,
                                     loaderState.voxelRange.y);
       float iso = child("isosurface").valueAs<float>();
       if (iso < loaderState.voxelRange.x || iso > loaderState.voxelRange.y) {
-        child("isosurface").setValue((loaderState.voxelRange.y -
-                                      loaderState.voxelRange.x) / 2.f);
+        child("isosurface") = (loaderState.voxelRange.y -
+                               loaderState.voxelRange.x) / 2.f;
       }
 
-      child("transferFunction")["valueRange"].setValue(loaderState.voxelRange);
+      child("transferFunction")["valueRange"] = loaderState.voxelRange;
     }
 
     void RichtmyerMeshkov::postCommit(RenderContext &ctx)
