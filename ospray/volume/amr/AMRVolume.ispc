@@ -27,28 +27,9 @@
 // embree
 #include "embree2/rtcore.isph"
 
-//! The c++-side, scalar sampler we're calling back to
-extern "C" unmasked
-void ospray_amr_sample(void *uniform _self,
-                              uniform float &result,
-                              const uniform vec3f &worldCoordinates);
-
-//! The c++-side, scalar sampler we're calling back to
-extern "C" unmasked
-void ospray_amr_sampleLevel(void *uniform _self,
-                              uniform float &result,
-                              const uniform vec3f &worldCoordinates, uniform float& width);
-
-//! The c++-side, scalar gradient sampler we're calling back to
-extern "C" unmasked
-void ospray_amr_gradient(void *uniform _self,
-                                uniform vec3f &result,
-                                const uniform vec3f &worldCoordinates);
-
 // ------------------------------------------------------------------
 //! The gradient at the given sample location in world coordinates.
-static varying float AMR_level(void *uniform _self,
-                                   const varying vec3f &pos)
+static varying float AMR_level(void *uniform _self, const varying vec3f &pos)
 {
   AMRVolume *uniform self = (AMRVolume *uniform) _self;
   return self->computeSampleLevel(self, pos);
@@ -56,8 +37,7 @@ static varying float AMR_level(void *uniform _self,
 
 // ------------------------------------------------------------------
 //! The gradient at the given sample location in world coordinates.
-static varying vec3f AMR_gradient(void *uniform _self,
-                                     const varying vec3f &pos)
+static varying vec3f AMR_gradient(void *uniform _self, const varying vec3f &pos)
 {
   // Cast to the actual Volume subtype.
   AMRVolume *uniform volume = (AMRVolume *uniform) _self;
@@ -87,11 +67,12 @@ static varying vec3f AMR_gradient(void *uniform _self,
 }
 
 // ray.time is set to interval length of intersected sample
-inline void AMR_stepRay(void *uniform _volume, varying Ray &ray, const varying float samplingRate)
+inline void AMR_stepRay(void *uniform _volume,
+                        varying Ray &ray,
+                        const varying float samplingRate)
 {
   // Cast to the actual Volume subtype.
   AMRVolume *uniform volume = (AMRVolume *uniform) _volume;
-
 
   const float level1 = AMR_level(volume, ray.org + ray.dir*ray.t0);
   const float level2 = AMR_level(volume, ray.org + ray.dir*(ray.t0+ray.time));
@@ -99,7 +80,8 @@ inline void AMR_stepRay(void *uniform _volume, varying Ray &ray, const varying f
   float rate = 1.f;
   if (level < 1.0f)
   {
-    float nlevel = log(level)*-1.0f; // take log of value.  otherwise step sizes get microscopically small.
+    // take log of value.  otherwise step sizes get microscopically small.
+    float nlevel = log(level)*-1.0f;
     nlevel = max(1.f/nlevel, 0.07f);
     rate = nlevel/samplingRate;
   }
@@ -114,25 +96,25 @@ inline void AMR_stepRay(void *uniform _volume, varying Ray &ray, const varying f
   ray.time = step;
 }
 
-
 export void *uniform AMRVolume_create(void *uniform cppE)
 {
   AMRVolume *uniform self = uniform new uniform AMRVolume;
   return self;
 }
 
-
 export void AMRVolume_computeValueRangeOfLeaf(void *uniform _self,
                                               uniform int leafID)
 {
-  AMRVolume *uniform self  = (AMRVolume *uniform)_self;
-  AMR *uniform amr      = &self->amr;
-  AMRLeaf *uniform leaf    = amr->leaf + leafID;
-  AMRBrick *uniform brick  = leaf->brickList[0];
+  AMRVolume *uniform self = (AMRVolume *uniform)_self;
+
+  AMR *uniform amr            = &self->amr;
+  AMRLeaf *uniform leaf       = amr->leaf + leafID;
+  AMRBrick *uniform brick     = leaf->brickList[0];
   uniform float leafCellWidth = brick->cellWidth;
   uniform vec3f leafSize      = brick->bounds.upper - brick->bounds.lower;
   uniform vec3i leafCells     = make_vec3i((leafSize + 0.5f*leafCellWidth)
                                            * rcp(leafCellWidth));
+
   uniform vec3i numSamplePoints = 2*leafCells+1;
   for (uniform int iz=0;iz<numSamplePoints.z;iz++)
     for (uniform int iy=0;iy<numSamplePoints.y;iy++)
@@ -151,29 +133,28 @@ export void AMRVolume_setAMR(void *uniform _self,
                              const uniform box3f &worldBounds)
 {
   AMRVolume *uniform self = (AMRVolume *uniform)_self;
-  self->amr.worldBounds = worldBounds;
-  self->amr.maxValidPos = nextafter(worldBounds.upper,-1.f);
-  self->amr.node = (KDTreeNode *uniform)_node;
-  self->amr.numNodes = numNodes;
-  self->amr.leaf = (AMRLeaf *uniform)_leaf;
-  self->amr.numLeaves = numLeaves;
-  self->amr.level = (AMRLevel *uniform)_level;
-  self->amr.finestLevel = self->amr.level+numLevels-1;
-  self->amr.numLevels = numLevels;
+
+  self->amr.worldBounds          = worldBounds;
+  self->amr.maxValidPos          = nextafter(worldBounds.upper,-1.f);
+  self->amr.node                 = (KDTreeNode *uniform)_node;
+  self->amr.numNodes             = numNodes;
+  self->amr.leaf                 = (AMRLeaf *uniform)_leaf;
+  self->amr.numLeaves            = numLeaves;
+  self->amr.level                = (AMRLevel *uniform)_level;
+  self->amr.finestLevel          = self->amr.level+numLevels-1;
+  self->amr.numLevels            = numLevels;
   self->amr.finestLevelCellWidth = self->amr.level[numLevels-1].cellWidth;
 }
 
 export void AMRVolume_set(void *uniform _self,
-                          void *uniform _xf,
                           uniform box3f &worldBounds,
                           uniform float samplingStep)
 {
   AMRVolume *uniform self = (AMRVolume *uniform)_self;
-  assert(self);
+
   self->super.boundingBox       = worldBounds;
   self->super.volumeClippingBox = worldBounds;
   self->super.samplingStep      = samplingStep;
-  self->super.transferFunction  = (TransferFunction *uniform)_xf;
   self->super.stepRay           = &AMR_stepRay;
   self->super.computeGradient   = &AMR_gradient;
 }

@@ -402,7 +402,8 @@ varying float doOctant(const AMR *uniform self,
     // this isn't actually necessary: in theory we alreay KNOW this
     // cell from the dual cell. for now, do the actual findcell again,
     // just to make sure we have all the right values initialized
-    const CellRef fillFrom = findCell(self,needToFillFrom[ii].pos,needToFillFrom[ii].width);
+    const CellRef fillFrom = findCell(self,needToFillFrom[ii].pos,
+                                      needToFillFrom[ii].width);
     O.value[ii] = doOctant(self,fillFrom,vtxPos);
     done[ii] = true;
   }

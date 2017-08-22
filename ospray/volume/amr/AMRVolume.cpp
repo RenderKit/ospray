@@ -94,9 +94,6 @@ namespace ospray {
       assert(accel == nullptr);
       accel = new AMRAccel(*data);
 
-      Ref<TransferFunction> xf = (TransferFunction*)getParamObject("transferFunction");
-      assert(xf);
-
       float finestLevelCellWidth = data->brick[0]->cellWidth;
       box3i rootLevelBox = empty;
       for (int i=0;i<data->numBricks;i++) {
@@ -120,10 +117,7 @@ namespace ospray {
 
       box3f worldBounds = accel->worldBounds;
 
-      ispc::AMRVolume_set(getIE(),
-                          xf->getIE(),
-                          (ispc::box3f&)worldBounds,
-                          samplingStep);
+      ispc::AMRVolume_set(getIE(), (ispc::box3f&)worldBounds, samplingStep);
 
       ispc::AMRVolume_setAMR(getIE(),
                              accel->node.size(),
