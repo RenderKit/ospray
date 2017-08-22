@@ -98,7 +98,6 @@ namespace ospray {
                                    + std::to_string(mpicommon::world.rank)
                                    + " did not have object to commit!");
         }
-        mpicommon::app.barrier();
       }
       
       void CommitObject::runOnMaster()
@@ -109,7 +108,6 @@ namespace ospray {
             obj->commit();
           }
         }
-        mpicommon::worker.barrier();
       }
       
       void CommitObject::serialize(WriteStream &b) const
