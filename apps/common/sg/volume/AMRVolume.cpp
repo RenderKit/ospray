@@ -26,6 +26,12 @@ namespace ospray {
     AMRVolume::AMRVolume()
     {
       createChild("maxLevel", "int", 1 << 30);
+      createChild("amrMethod", "string", std::string("current"))
+          .setWhiteList({std::string("current"),
+                         std::string("currentLevel"),
+                         std::string("octant"),
+                         std::string("finest"),
+                         std::string("finestLevel")});
     }
 
     std::string AMRVolume::toString() const
@@ -143,14 +149,22 @@ namespace ospray {
 #endif
         } else {
           std::string BSs = node.getProp("brickSize");
-          if (BSs == "")
+          if (BSs == "") {
             throw std::runtime_error(
                 "no 'brickSize' specified for raw2amr generated file");
+          }
           int BS = atoi(BSs.c_str());
           parseRaw2AmrFile(realFN, BS);
         }
       } else
         throw std::runtime_error("no filename set in xml node...");
+
+      std::string method = node.getProp("method");
+      if (method.empty())
+        method = node.getProp("amrMethod");
+
+      if (!method.empty())
+        child("amrMethod").setValue(method);
 
       child("transferFunction")["valueRange"] = valueRange.toVec2f();
     }

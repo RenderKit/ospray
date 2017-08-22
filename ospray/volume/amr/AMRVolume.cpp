@@ -146,25 +146,24 @@ namespace ospray {
       vec3i rootGridDims = rootLevelBox.size()+vec3i(1);
       ospLogF(1) << "found root level dimensions of " << rootGridDims;
 
-      // int method = AMR_FINEST;
-      const char *methodStringFromEnv = getenv("OSPRAY_AMR_METHOD");
+      auto methodStringFromEnv = getEnvVar<std::string>("OSPRAY_AMR_METHOD");
       std::string methodString = "current";
-      if (methodStringFromEnv != nullptr) {
-        methodString = methodStringFromEnv;
-      }
-      if (!methodStringFromEnv)
+
+      if (methodStringFromEnv.first)
+        methodString = methodStringFromEnv.second;
+      else
         methodString = getParamString("amrMethod","current");
 
-      if (methodString == "finest" ||
-               methodString == "finestLevel")
+      if (methodString == "finest" || methodString == "finestLevel")
         sampler = new AMRVolumeSampler_finestLevel(this);
-      else if (methodString == "current" ||
-               methodString == "currentLevel")
+      else if (methodString == "current" || methodString == "currentLevel")
         sampler = new AMRVolumeSampler_currentLevel(this);
       else if (methodString == "octant")
         sampler = new AMRVolumeSampler_octMethod(this);
-      else
-        throw std::runtime_error("cannot parse ospray_amr_method '"+methodString+"'");
+      else {
+        throw std::runtime_error(std::string("cannot parse ospray_amr_method '")
+                                 + methodString + "'");
+      }
 
       // finding coarset cell size:
       float coarsestCellWidth = 0.f;
@@ -172,45 +171,46 @@ namespace ospray {
         coarsestCellWidth = max(coarsestCellWidth,data->brick[i]->cellWidth);
       ospLogF(1) << "coarsest cell width is " << coarsestCellWidth << std::endl;
       float samplingStep = 0.1f*coarsestCellWidth;
-      char *rateFromString = getenv("OSPRAY_AMR_SAMPLING_STEP");
-      if (rateFromString) {
-        samplingStep = atof(rateFromString);
-      }
+
+      auto rateFromString = getEnvVar<std::string>("OSPRAY_AMR_SAMPLING_STEP");
+      if (rateFromString.first)
+        samplingStep = atof(rateFromString.second.c_str());
 
       box3f worldBounds = accel->worldBounds;
+
       ispc::AMRVolume_set(getIE(),
-                             sampler,
-                             xf->getIE(),
-                             (ispc::box3f&)worldBounds,
-                             samplingStep);
+                          sampler,
+                          xf->getIE(),
+                          (ispc::box3f&)worldBounds,
+                          samplingStep);
+
       ispc::AMRVolume_setAMR(getIE(),
-                                   accel->node.size(),
-                                   &accel->node[0],
-                                   accel->leaf.size(),
-                                   &accel->leaf[0],
-                                   accel->level.size(),
-                                   &accel->level[0],
-                                   (ispc::box3f &)worldBounds);
-      if (methodString == "finest" ||
-                 methodString == "finestLevel") {
+                             accel->node.size(),
+                             &accel->node[0],
+                             accel->leaf.size(),
+                             &accel->leaf[0],
+                             accel->level.size(),
+                             &accel->level[0],
+                             (ispc::box3f &)worldBounds);
+
+      if (methodString == "finest" || methodString == "finestLevel")
         ispc::AMR_install_finest(getIE());
-      } else if (methodString == "current" ||
-                 methodString == "currentLevel") {
+      else if (methodString == "current" || methodString == "currentLevel")
         ispc::AMR_install_current(getIE());
-      } else if (methodString == "octant") {
+      else if (methodString == "octant")
         ispc::AMR_install_octant(getIE());
-      }
+
 
       ospcommon::tasking::parallel_for(accel->leaf.size(),[&](int leafID) {
-          ispc::AMRVolume_computeValueRangeOfLeaf(getIE(),leafID);
-        });
+        ispc::AMRVolume_computeValueRangeOfLeaf(getIE(),leafID);
+      });
     }
 
     //! The c++-side, scalar sampler we're calling back to
     extern "C"
     void ospray_amr_sample(VolumeSampler *cppSampler,
-                                  float &result,
-                                  const vec3f &pos)
+                           float &result,
+                           const vec3f &pos)
     {
       throw std::runtime_error("do not do this any more ...\n");
       result = cppSampler->sample(pos);
@@ -219,8 +219,8 @@ namespace ospray {
         //! The c++-side, scalar sampler we're calling back to
     extern "C"
     void ospray_amr_sampleLevel(VolumeSampler *cppSampler,
-                                  float &result,
-                                  const vec3f &pos, float& width)
+                                float &result,
+                                const vec3f &pos, float& width)
     {
       throw std::runtime_error("do not do this any more ...\n");
       result = cppSampler->sampleLevel(pos, width);
@@ -229,8 +229,8 @@ namespace ospray {
     //! The c++-side, scalar gradient sampler we're calling back to
     extern "C"
     void ospray_amr_gradient(VolumeSampler *cppSampler,
-                                    vec3f &result,
-                                    const vec3f &pos)
+                             vec3f &result,
+                             const vec3f &pos)
     {
       throw std::runtime_error("do not do this any more ...\n");
       result = cppSampler->gradient(pos);
