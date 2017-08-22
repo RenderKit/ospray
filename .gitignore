@@ -18,6 +18,6 @@ tbb
 embree
 ispc
 ospray-doc
-modules/ospray-module-bricktree/
+modules/*
 imgui.ini
 premake.local.*

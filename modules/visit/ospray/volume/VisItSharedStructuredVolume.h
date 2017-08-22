@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "volume/StructuredVolume.h"
+#include "volume/structured/StructuredVolume.h"
 
 namespace ospray {
   namespace visit {
