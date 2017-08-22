@@ -113,5 +113,3 @@ extern CellRef findLeafCell(const AMR *uniform self,
     }
   }
 }
-
-

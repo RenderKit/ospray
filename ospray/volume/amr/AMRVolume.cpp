@@ -37,6 +37,11 @@ namespace ospray {
       ispcEquivalent = ispc::AMRVolume_create(this);
     }
 
+    std::string AMRVolume::toString() const
+    {
+      return "ospray::AMRVolume";
+    }
+
     /*! Copy voxels into the volume at the given index (non-zero
       return value indicates success). */
     int AMRVolume::setRegion(const void *source,
@@ -134,38 +139,8 @@ namespace ospray {
       });
     }
 
-    //! The c++-side, scalar sampler we're calling back to
-    extern "C"
-    void ospray_amr_sample(VolumeSampler *cppSampler,
-                           float &result,
-                           const vec3f &pos)
-    {
-      throw std::runtime_error("do not do this any more ...\n");
-      result = cppSampler->sample(pos);
-    }
+    OSP_REGISTER_VOLUME(AMRVolume, AMRVolume);
+    OSP_REGISTER_VOLUME(AMRVolume, amr_volume);
 
-        //! The c++-side, scalar sampler we're calling back to
-    extern "C"
-    void ospray_amr_sampleLevel(VolumeSampler *cppSampler,
-                                float &result,
-                                const vec3f &pos, float& width)
-    {
-      throw std::runtime_error("do not do this any more ...\n");
-      result = cppSampler->sampleLevel(pos, width);
-    }
-
-    //! The c++-side, scalar gradient sampler we're calling back to
-    extern "C"
-    void ospray_amr_gradient(VolumeSampler *cppSampler,
-                             vec3f &result,
-                             const vec3f &pos)
-    {
-      throw std::runtime_error("do not do this any more ...\n");
-      result = cppSampler->gradient(pos);
-    }
-
-    OSP_REGISTER_VOLUME(AMRVolume,AMRVolume);
-    OSP_REGISTER_VOLUME(AMRVolume,amr_volume);
-  }
-
+  } // ::ospray::amr
 } // ::ospray

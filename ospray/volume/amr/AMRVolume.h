@@ -24,29 +24,15 @@
 namespace ospray {
   namespace amr {
 
-    /*! abstraction for an object that performs scalar volume sampling */
-    struct VolumeSampler
-    {
-      /*! compute scalar field value at given location */
-      virtual float sample(const vec3f &v) = 0;
-      virtual float sampleLevel(const vec3f &v, float& width) = 0;
-      /*! compute gradient at given location */
-      virtual vec3f gradient(const vec3f &v) = 0;
-    };
-
     /*! the actual ospray volume object */
     struct AMRVolume : public ospray::Volume
     {
       AMRVolume();
 
-      //! \brief common function to help printf-debugging
-      std::string toString() const override { return "ospray::AMRVolume"; }
+      std::string toString() const override;
 
-      //! Allocate storage and populate the volume.
       void commit() override;
 
-      /*! Copy voxels into the volume at the given index (non-zero
-        return value indicates success). */
       int setRegion(const void *source,
                     const vec3i &index,
                     const vec3i &count) override;

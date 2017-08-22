@@ -46,7 +46,3 @@ inline uniform FindStack *uniform pushStack(uniform FindStack *uniform stackPtr,
   stackPtr->nodeID = nodeID;
   return stackPtr+1;
 }
-
-
-
-
