@@ -208,8 +208,6 @@ SET(OSPRAY_SOURCES
   volume/amr/CellRef.ispc
   volume/amr/AMRAccel.cpp
   volume/amr/AMRData.cpp
-  volume/amr/AMRGeometry.cpp
-  volume/amr/AMRGeometry.ispc
   volume/amr/AMRVolume.ispc
   volume/amr/AMRVolume.cpp
 )

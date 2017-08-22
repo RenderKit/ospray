@@ -15,8 +15,6 @@
 // ======================================================================== //
 
 #include "AMRVolume.h"
-// amr
-#include "AMRSampler.h"
 // ospray
 #include "ospray/common/Model.h"
 #include "ospray/common/Data.h"
@@ -33,63 +31,6 @@
 
 namespace ospray {
   namespace amr {
-
-    struct Sampler_NotImplemented : public AMRSampler
-    {
-      Sampler_NotImplemented(AMRAccel *accel)
-        : AMRSampler(accel)
-      {
-      }
-
-      /*! compute scalar field value at given location */
-      inline float sample(const vec3f &P)
-      {
-        NOT_IMPLEMENTED;
-      }
-
-      /*! compute scalar field value at given location */
-      inline float sampleLevel(const vec3f &P, float& width)
-      {
-        NOT_IMPLEMENTED;
-      }
-
-      /*! compute gradient at given location */
-      inline vec3f gradient(const vec3f &P)
-      {
-        NOT_IMPLEMENTED;
-      }
-    };
-
-    template<class Sampler>
-    struct AMRVolumeSampler : public VolumeSampler
-    {
-      AMRVolumeSampler(AMRVolume *amr)
-        : sampler(amr->accel),
-          amr(amr)
-      {}
-
-      /*! compute scalar field value at given location */
-      float sample(const vec3f &v) override
-      { return sampler.sample(v); }
-
-      /*! compute scalar field value at given location */
-      float sampleLevel(const vec3f &v, float& width)
-      { return sampler.sampleLevel(v, width); }
-
-      /*! compute gradient at given location */
-      vec3f gradient(const vec3f &v) override
-      { return sampler.gradient(v); }
-
-      Sampler sampler;
-      AMRVolume *amr{nullptr};
-    };
-
-    using AMRVolumeSampler_finestLevel = AMRVolumeSampler<Sampler_finestLevel>;
-
-    using AMRVolumeSampler_currentLevel =
-        AMRVolumeSampler<Sampler_currentLevel>;
-
-    using AMRVolumeSampler_octMethod = AMRVolumeSampler<Sampler_NotImplemented>;
 
     AMRVolume::AMRVolume()
     {
