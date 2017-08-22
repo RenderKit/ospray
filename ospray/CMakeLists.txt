@@ -340,6 +340,20 @@ OSPRAY_INSTALL_SDK_HEADERS(
 )
 
 OSPRAY_INSTALL_SDK_HEADERS(
+  volume/amr/AMR.ih
+  volume/amr/AMRAccel.h
+  volume/amr/AMRData.h
+  volume/amr/AMRVolume.h
+  volume/amr/AMRVolume.ih
+  volume/amr/CellRef.ih
+  volume/amr/DualCell.ih
+  volume/amr/FindStack.ih
+  volume/amr/KDTree.ih
+  volume/amr/range.ih
+  DESTINATION volume/amr
+)
+
+OSPRAY_INSTALL_SDK_HEADERS(
   volume/structured/GridAccelerator.ih
   volume/structured/StructuredVolume.h
   volume/structured/StructuredVolume.ih
