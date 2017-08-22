@@ -14,23 +14,40 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "CellRef.ih"
+#include "AMRVolume.ih"
+#include "DualCell.ih"
 
-// sg
-#include "Volume.h"
+varying float AMR_current(void *uniform _self, const varying vec3f &P)
+{
+  const AMRVolume *uniform self = (AMRVolume *)_self;
+  const AMR *uniform amr = &self->amr;
 
-namespace ospray {
-  namespace sg {
+  const CellRef C = findLeafCell(amr,P);
 
-    /*! a plain old structured volume */
-    struct TetVolume : public Volume
-    {
-      std::string toString() const override;
+  DualCell D;
+  initDualCell(D,P,C.width);
+  findDualCell(amr,D);
 
-      void preCommit(RenderContext &ctx) override;
+  return lerp(D);
+}
 
-      std::string fileName;
-    };
 
-  } // ::ospray::sg
-} // ::ospray
+varying float AMR_currentLevel(void *uniform _self, const varying vec3f &P)
+{
+  AMRVolume *uniform self = (AMRVolume *uniform)_self;
+  AMR *uniform amr = &self->amr;
+
+  const CellRef C = findLeafCell(amr,P);
+  float width = C.width;
+  if (isnan(width))
+    width = 1.0f;
+  return width;
+}
+
+export void AMR_install_current(void *uniform _self)
+{
+  AMRVolume *uniform self = (AMRVolume *uniform)_self;
+  self->super.sample = AMR_current;
+  self->computeSampleLevel = AMR_currentLevel;
+}

@@ -186,6 +186,13 @@ namespace ospray {
 
   OSPRAY_SDK_INTERFACE void postTraceMsg(const std::string &message);
 
+  //! log status message at loglevel x
+  #define ospLog(x) StatusMsgStream(x) << "(" << x << "): "
+  //! log status message at loglevel x with function name
+  #define ospLogF(x) StatusMsgStream(x) << __FUNCTION__ << ": "
+  //! log status message at loglevel x with function, file, and line number
+  #define ospLogL(x) StatusMsgStream(x) << __FUNCTION__ << "(" << __FILE__ << ":" << __LINE__ << "): "
+
   // RTTI hash ID lookup helper functions ///////////////////////////////////
 
   OSPRAY_SDK_INTERFACE size_t translatedHash(size_t v);

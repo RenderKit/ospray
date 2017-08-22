@@ -16,21 +16,42 @@
 
 #pragma once
 
-// sg
-#include "Volume.h"
+// ospray
+#include "ospray/volume/Volume.h"
+// amr base
+#include "AMRAccel.h"
 
 namespace ospray {
-  namespace sg {
+  namespace amr {
 
-    /*! a plain old structured volume */
-    struct TetVolume : public Volume
+    /*! the actual ospray volume object */
+    struct AMRVolume : public ospray::Volume
     {
+      AMRVolume();
+
       std::string toString() const override;
 
-      void preCommit(RenderContext &ctx) override;
+      void commit() override;
 
-      std::string fileName;
+      int setRegion(const void *source,
+                    const vec3i &index,
+                    const vec3i &count) override;
+
+      AMRData  *data{nullptr};
+      AMRAccel *accel{nullptr};
+
+      Ref<Data> brickInfoData;
+      Ref<Data> brickDataData;
+
+      //! Voxel value range (will be computed if not provided as a parameter).
+      vec2f voxelRange {FLT_MAX, -FLT_MAX};
+
+      /*! Scale factor for the volume, mostly for internal use or data scaling
+        benchmarking. Note that this must be set **before** calling
+        'ospSetRegion' on the volume as the scaling is applied in that function.
+      */
+      vec3f scaleFactor {1};
     };
 
-  } // ::ospray::sg
+  } // ::ospray::amr
 } // ::ospray

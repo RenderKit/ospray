@@ -29,11 +29,9 @@ namespace ospray {
 
       virtual std::string toString() const override;
 
-      //! return bounding box of all primitives
-      virtual box3f bounds() const override = 0;
-
-      //! serialize into given serialization state
       virtual void serialize(sg::Serialization::State &state) override;
+
+      virtual void postCommit(RenderContext &ctx) override;
 
       virtual void postRender(RenderContext &ctx) override;
 
@@ -68,7 +66,6 @@ namespace ospray {
                       const unsigned char *binBasePtr) override;
 
       void preCommit(RenderContext &ctx) override;
-      void postCommit(RenderContext &ctx) override;
 
       //! \brief file name of the xml doc when the node was loaded from xml
       /*! \detailed we need this to properly resolve relative file names */
@@ -89,7 +86,6 @@ namespace ospray {
                       const unsigned char *binBasePtr) override;
 
       void preCommit(RenderContext &ctx) override;
-      void postCommit(RenderContext &ctx) override;
 
       std::string dirName;
       int timeStep {-1};

@@ -16,21 +16,16 @@
 
 #pragma once
 
-// sg
-#include "Volume.h"
+// ours
+#include "../amr/AMR.ih"
+// ospray
+#include "ospray/volume/Volume.ih"
 
-namespace ospray {
-  namespace sg {
-
-    /*! a plain old structured volume */
-    struct TetVolume : public Volume
-    {
-      std::string toString() const override;
-
-      void preCommit(RenderContext &ctx) override;
-
-      std::string fileName;
-    };
-
-  } // ::ospray::sg
-} // ::ospray
+struct AMRVolume
+{
+  Volume super; //!< inherited from superclass
+  AMR amr;
+    //! The value at the given sample location in world coordinates.
+  varying float (*uniform computeSampleLevel)(void *uniform _self,
+                                         const varying vec3f &worldCoordinates);
+};

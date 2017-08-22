@@ -16,21 +16,38 @@
 
 #pragma once
 
-// sg
-#include "Volume.h"
+// ours
+#include "AMR.ih"
+#include "AMRVolume.ih"
 
-namespace ospray {
-  namespace sg {
+/*! a reference to a given cell on a given level; this is what a 'node location' kernel will return */
+struct CellRef
+{
+  //! lower left front position, in unit grid space
+  vec3f pos;
+  //! width of cell, also doubles as level indicator
+  float width;
+  //! value at this cell
+  float value;
+};
 
-    /*! a plain old structured volume */
-    struct TetVolume : public Volume
-    {
-      std::string toString() const override;
+inline vec3f centerOf(const CellRef &cr)
+{
+  return cr.pos + make_vec3f(0.5f*cr.width);
+}
 
-      void preCommit(RenderContext &ctx) override;
+inline void set(CellRef &cr, const vec3f &pos,
+                const float width, const float value)
+{
+  cr.pos   = pos;
+  cr.width = width;
+  cr.value = value;
+}
 
-      std::string fileName;
-    };
+  /* packet-based variant of findCell kernel */
+extern CellRef findCell(const AMR *uniform self,
+                        const varying vec3f &_worldSpacePos,
+                        const float minWidth);
 
-  } // ::ospray::sg
-} // ::ospray
+extern CellRef findLeafCell(const AMR *uniform self,
+                            const varying vec3f &_worldSpacePos);

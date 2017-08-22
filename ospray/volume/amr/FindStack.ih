@@ -16,21 +16,33 @@
 
 #pragma once
 
-// sg
-#include "Volume.h"
+struct FindStack
+{
+  varying bool active;
+  uniform int32 nodeID;
+};
 
-namespace ospray {
-  namespace sg {
+inline uniform FindStack *uniform pushStack(uniform FindStack *uniform stackPtr,
+                                            uniform int nodeID)
+{
+  unmasked {
+    stackPtr->active = false;
+  }
 
-    /*! a plain old structured volume */
-    struct TetVolume : public Volume
-    {
-      std::string toString() const override;
+  stackPtr->active = true;
+  stackPtr->nodeID = nodeID;
+  return stackPtr+1;
+}
 
-      void preCommit(RenderContext &ctx) override;
+inline uniform FindStack *uniform pushStack(uniform FindStack *uniform stackPtr,
+                                            uniform int nodeID,
+                                            varying bool valid)
+{
+  unmasked {
+    stackPtr->active = false;
+  }
 
-      std::string fileName;
-    };
-
-  } // ::ospray::sg
-} // ::ospray
+  stackPtr->active = valid;
+  stackPtr->nodeID = nodeID;
+  return stackPtr+1;
+}

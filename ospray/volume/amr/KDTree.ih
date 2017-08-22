@@ -16,21 +16,60 @@
 
 #pragma once
 
-// sg
-#include "Volume.h"
+/*! ispc equivalent of the c++-side kdtree that we build over the
+    boxes */
+struct KDTreeNode
+{
+  uint32 dim_and_ofs;
+  uint32 pos_or_numItems;
+};
 
-namespace ospray {
-  namespace sg {
+inline uint32 getDim(const KDTreeNode & node)
+{
+  return node.dim_and_ofs >> 30;
+}
 
-    /*! a plain old structured volume */
-    struct TetVolume : public Volume
-    {
-      std::string toString() const override;
+inline uint32 getOfs(const KDTreeNode & node)
+{
+  return node.dim_and_ofs & ((1<<30)-1);
+}
 
-      void preCommit(RenderContext &ctx) override;
+inline bool isLeaf(const KDTreeNode & node)
+{
+  return getDim(node) == 3;
+}
 
-      std::string fileName;
-    };
+inline float getPos(const KDTreeNode & node)
+{
+  return floatbits(node.pos_or_numItems);
+}
 
-  } // ::ospray::sg
-} // ::ospray
+inline float getNumItems(const KDTreeNode & node)
+{
+  return node.pos_or_numItems;
+}
+
+inline uniform uint32 getDim(const uniform KDTreeNode & node)
+{
+  return node.dim_and_ofs >> 30;
+}
+
+inline uniform uint32 getOfs(const uniform KDTreeNode & node)
+{
+  return node.dim_and_ofs & ((1<<30)-1);
+}
+
+inline uniform bool isLeaf(const uniform KDTreeNode & node)
+{
+  return getDim(node) == 3;
+}
+
+inline uniform float getPos(const uniform KDTreeNode & node)
+{
+  return floatbits(node.pos_or_numItems);
+}
+
+inline uniform float getNumItems(const uniform KDTreeNode & node)
+{
+  return node.pos_or_numItems;
+}

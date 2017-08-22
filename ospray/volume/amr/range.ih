@@ -16,21 +16,26 @@
 
 #pragma once
 
-// sg
-#include "Volume.h"
+struct range1f
+{
+  float lower;
+  float upper;
+};
 
-namespace ospray {
-  namespace sg {
+inline void extend(uniform range1f &r, uniform float v)
+{
+  r.lower = min(r.lower,v);
+  r.upper = max(r.upper,v);
+}
 
-    /*! a plain old structured volume */
-    struct TetVolume : public Volume
-    {
-      std::string toString() const override;
+inline void extend(uniform range1f &r, varying float v)
+{
+  r.lower = min(r.lower,reduce_min(v));
+  r.upper = max(r.upper,reduce_max(v));
+}
 
-      void preCommit(RenderContext &ctx) override;
-
-      std::string fileName;
-    };
-
-  } // ::ospray::sg
-} // ::ospray
+inline void extend(range1f &r, float v)
+{
+  r.lower = min(r.lower,v);
+  r.upper = max(r.upper,v);
+}

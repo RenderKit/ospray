@@ -99,7 +99,6 @@ namespace ospray {
     void TransferFunction::setFromXML(const xml::Node& node,
                                       const unsigned char *binBasePtr)
     {
-      NOT_IMPLEMENTED;
     }
 
     std::string TransferFunction::toString() const

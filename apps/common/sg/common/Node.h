@@ -431,6 +431,13 @@ namespace ospray {
                 n.name().c_str(), &n.valueAs<vec4f>().x);
     }
 
+    template <>
+    inline void commitNodeValue<std::string>(Node &n)
+    {
+      ospSetString(n.parent().valueAs<OSPObject>(),
+                   n.name().c_str(), n.valueAs<std::string>().c_str());
+    }
+
     // Helper parameter node wrapper //////////////////////////////////////////
 
     template <typename T>

@@ -14,23 +14,36 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "CellRef.ih"
+#include "AMRVolume.ih"
+#include "DualCell.ih"
 
-// sg
-#include "Volume.h"
+varying float AMR_finest(void *uniform _self, const varying vec3f &P)
+{
+  const AMRVolume *uniform self = (AMRVolume *)_self;
+  const AMR *uniform amr = &self->amr;
 
-namespace ospray {
-  namespace sg {
+  DualCell D;
+  initDualCell(D,P,*amr->finestLevel);
+  findDualCell(amr,D);
+  return lerp(D);
+}
 
-    /*! a plain old structured volume */
-    struct TetVolume : public Volume
-    {
-      std::string toString() const override;
+varying float AMR_finestLevel(void *uniform _self, const varying vec3f &P)
+{
+  AMRVolume *uniform self = (AMRVolume *uniform)_self;
+  AMR *uniform amr = &self->amr;
 
-      void preCommit(RenderContext &ctx) override;
+  const CellRef C = findLeafCell(amr,P);
+  float width = C.width;
+  if (isnan(width))
+    width = 1.0f;
+  return width;
+}
 
-      std::string fileName;
-    };
-
-  } // ::ospray::sg
-} // ::ospray
+export void AMR_install_finest(void *uniform _self)
+{
+  AMRVolume *uniform self = (AMRVolume *uniform)_self;
+  self->super.sample = AMR_finest;
+  self->computeSampleLevel = AMR_finestLevel;
+}

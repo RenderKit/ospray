@@ -120,6 +120,14 @@ namespace ospray {
       Node::serialize(state);
     }
 
+    void Volume::postCommit(RenderContext &ctx)
+    {
+      auto ospVolume = (OSPVolume)valueAs<OSPObject>();
+      ospSetObject(ospVolume, "transferFunction",
+                   child("transferFunction").valueAs<OSPObject>());
+      ospCommit(ospVolume);
+    }
+
     void Volume::postRender(RenderContext &ctx)
     {
       auto ospVolume = (OSPVolume)valueAs<OSPObject>();
@@ -280,14 +288,6 @@ namespace ospray {
         child("isosurface") = (voxelRange.y - voxelRange.x) / 2.f;
     }
 
-    void StructuredVolumeFromFile::postCommit(RenderContext &ctx)
-    {
-      auto ospVolume = (OSPVolume)valueAs<OSPObject>();
-      ospSetObject(ospVolume, "transferFunction",
-                   child("transferFunction").valueAs<OSPObject>());
-      ospCommit(ospVolume);
-    }
-
     OSP_REGISTER_SG_NODE(StructuredVolumeFromFile);
 
     // =======================================================
@@ -374,17 +374,6 @@ namespace ospray {
       }
 
       child("transferFunction")["valueRange"] = loaderState.voxelRange;
-    }
-
-    void RichtmyerMeshkov::postCommit(RenderContext &ctx)
-    {
-      auto ospVolume = (OSPVolume)valueAs<OSPObject>();
-      // In StructuredVolumeFromFile it does this at the end
-      // of pre-commit as well, but shouldn't that not be needed? Since
-      // it will be done in postCommit which is called immediately after?
-      ospSetObject(ospVolume,"transferFunction",
-                   child("transferFunction").valueAs<OSPObject>());
-      ospCommit(ospVolume);
     }
 
     void RichtmyerMeshkov::loaderThread(LoaderState &state)

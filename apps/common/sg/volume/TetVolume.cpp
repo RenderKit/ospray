@@ -26,11 +26,6 @@ namespace ospray {
       return "ospray::sg::TetVolume";
     }
 
-    box3f TetVolume::bounds() const
-    {
-      return child("bounds").valueAs<box3f>();
-    }
-
     void TetVolume::preCommit(RenderContext &ctx)
     {
       auto ospVolume = (OSPVolume)valueAs<OSPObject>();
@@ -77,14 +72,6 @@ namespace ospray {
       float iso = child("isosurface").valueAs<float>();
       if (iso < voxelRange.x || iso > voxelRange.y)
         child("isosurface") = (voxelRange.y - voxelRange.x) / 2.f;
-    }
-
-    void TetVolume::postCommit(RenderContext &ctx)
-    {
-      auto ospVolume = (OSPVolume)valueAs<OSPObject>();
-      ospSetObject(ospVolume, "transferFunction",
-                   child("transferFunction").valueAs<OSPObject>());
-      ospCommit(ospVolume);
     }
 
     OSP_REGISTER_SG_NODE(TetVolume);
