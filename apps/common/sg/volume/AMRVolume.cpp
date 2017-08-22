@@ -83,6 +83,7 @@ namespace ospray {
           valueRange.extend(bd[i]);
         brickPtrs.push_back(bd);
       }
+
       child("bounds") = bounds;
       ospLogF(1) << "read file; found " << brickInfo.size() << " bricks"
                  << std::endl;
@@ -101,8 +102,7 @@ namespace ospray {
       }
 
       for (int bID = 0; bID < brickInfo.size(); bID++) {
-        BrickInfo bi = brickInfo[bID];
-
+        const auto &bi = brickInfo[bID];
         OSPData data = ospNewData(bi.size().product(),
                                   OSP_FLOAT,
                                   this->brickPtrs[bID],
@@ -111,16 +111,15 @@ namespace ospray {
       }
 
       brickDataData =
-          ospNewData(brickData.size(), OSP_OBJECT, &brickData[0], 0);
+          ospNewData(brickData.size(), OSP_OBJECT, brickData.data());
       ospSetData(volume, "brickData", brickDataData);
       brickInfoData = ospNewData(
-          brickInfo.size() * sizeof(brickInfo[0]), OSP_RAW, &brickInfo[0], 0);
+          brickInfo.size() * sizeof(brickInfo[0]), OSP_RAW, brickInfo.data());
       ospSetData(volume, "brickInfo", brickInfoData);
 
       child("voxelRange") = valueRange.toVec2f();
     }
 
-    //! \brief Initialize this node's value from given XML node
     void AMRVolume::setFromXML(const xml::Node &node,
                                const unsigned char *binBasePtr)
     {
@@ -164,7 +163,7 @@ namespace ospray {
         method = node.getProp("amrMethod");
 
       if (!method.empty())
-        child("amrMethod").setValue(method);
+        child("amrMethod") = method;
 
       child("transferFunction")["valueRange"] = valueRange.toVec2f();
     }

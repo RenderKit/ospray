@@ -117,6 +117,21 @@ namespace ospray {
       else
         voxelRange = getParam2f("voxelRange", voxelRange);
 
+      auto methodStringFromEnv = getEnvVar<std::string>("OSPRAY_AMR_METHOD");
+      std::string methodString = "current";
+
+      if (methodStringFromEnv.first)
+        methodString = methodStringFromEnv.second;
+      else
+        methodString = getParamString("amrMethod","current");
+
+      if (methodString == "finest" || methodString == "finestLevel")
+        ispc::AMR_install_finest(getIE());
+      else if (methodString == "current" || methodString == "currentLevel")
+        ispc::AMR_install_current(getIE());
+      else if (methodString == "octant")
+        ispc::AMR_install_octant(getIE());
+
       if (data != nullptr) //TODO: support data updates
         return;
 
@@ -146,25 +161,6 @@ namespace ospray {
       vec3i rootGridDims = rootLevelBox.size()+vec3i(1);
       ospLogF(1) << "found root level dimensions of " << rootGridDims;
 
-      auto methodStringFromEnv = getEnvVar<std::string>("OSPRAY_AMR_METHOD");
-      std::string methodString = "current";
-
-      if (methodStringFromEnv.first)
-        methodString = methodStringFromEnv.second;
-      else
-        methodString = getParamString("amrMethod","current");
-
-      if (methodString == "finest" || methodString == "finestLevel")
-        sampler = new AMRVolumeSampler_finestLevel(this);
-      else if (methodString == "current" || methodString == "currentLevel")
-        sampler = new AMRVolumeSampler_currentLevel(this);
-      else if (methodString == "octant")
-        sampler = new AMRVolumeSampler_octMethod(this);
-      else {
-        throw std::runtime_error(std::string("cannot parse ospray_amr_method '")
-                                 + methodString + "'");
-      }
-
       // finding coarset cell size:
       float coarsestCellWidth = 0.f;
       for (int i=0;i<data->numBricks;i++)
@@ -179,7 +175,6 @@ namespace ospray {
       box3f worldBounds = accel->worldBounds;
 
       ispc::AMRVolume_set(getIE(),
-                          sampler,
                           xf->getIE(),
                           (ispc::box3f&)worldBounds,
                           samplingStep);
@@ -193,16 +188,8 @@ namespace ospray {
                              &accel->level[0],
                              (ispc::box3f &)worldBounds);
 
-      if (methodString == "finest" || methodString == "finestLevel")
-        ispc::AMR_install_finest(getIE());
-      else if (methodString == "current" || methodString == "currentLevel")
-        ispc::AMR_install_current(getIE());
-      else if (methodString == "octant")
-        ispc::AMR_install_octant(getIE());
-
-
       ospcommon::tasking::parallel_for(accel->leaf.size(),[&](int leafID) {
-        ispc::AMRVolume_computeValueRangeOfLeaf(getIE(),leafID);
+        ispc::AMRVolume_computeValueRangeOfLeaf(getIE(), leafID);
       });
     }
 

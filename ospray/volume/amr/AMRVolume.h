@@ -53,7 +53,6 @@ namespace ospray {
 
       AMRData  *data{nullptr};
       AMRAccel *accel{nullptr};
-      VolumeSampler *sampler{nullptr};
 
       Ref<Data> brickInfoData;
       Ref<Data> brickDataData;

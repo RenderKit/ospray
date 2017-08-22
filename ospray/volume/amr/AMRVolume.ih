@@ -26,9 +26,8 @@ struct AMRVolume
 {
   Volume super; //!< inherited from superclass
   AMR amr;
-  void *uniform cppSampler;
     //! The value at the given sample location in world coordinates.
-  varying float (*uniform computeSampleLevel)(void *uniform _self, 
+  varying float (*uniform computeSampleLevel)(void *uniform _self,
                                          const varying vec3f &worldCoordinates);
 };
 

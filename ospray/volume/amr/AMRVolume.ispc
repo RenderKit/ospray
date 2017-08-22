@@ -123,7 +123,7 @@ export void *uniform AMRVolume_create(void *uniform cppE)
 
 
 export void AMRVolume_computeValueRangeOfLeaf(void *uniform _self,
-                                                 uniform int leafID)
+                                              uniform int leafID)
 {
   AMRVolume *uniform self  = (AMRVolume *uniform)_self;
   AMR *uniform amr      = &self->amr;
@@ -145,10 +145,10 @@ export void AMRVolume_computeValueRangeOfLeaf(void *uniform _self,
 }
 
 export void AMRVolume_setAMR(void *uniform _self,
-                                   uniform int numNodes, void *uniform _node,
-                                   uniform int numLeaves, void *uniform _leaf,
-                                   uniform int numLevels, void *uniform _level,
-                                   const uniform box3f &worldBounds)
+                             uniform int numNodes, void *uniform _node,
+                             uniform int numLeaves, void *uniform _leaf,
+                             uniform int numLevels, void *uniform _level,
+                             const uniform box3f &worldBounds)
 {
   AMRVolume *uniform self = (AMRVolume *uniform)_self;
   self->amr.worldBounds = worldBounds;
@@ -164,7 +164,6 @@ export void AMRVolume_setAMR(void *uniform _self,
 }
 
 export void AMRVolume_set(void *uniform _self,
-                          void *uniform cppSampler,
                           void *uniform _xf,
                           uniform box3f &worldBounds,
                           uniform float samplingStep)
@@ -175,11 +174,6 @@ export void AMRVolume_set(void *uniform _self,
   self->super.volumeClippingBox = worldBounds;
   self->super.samplingStep      = samplingStep;
   self->super.transferFunction  = (TransferFunction *uniform)_xf;
-  self->cppSampler              = cppSampler;
   self->super.stepRay           = &AMR_stepRay;
   self->super.computeGradient   = &AMR_gradient;
 }
-
-
-
-
