@@ -86,7 +86,7 @@ extern CellRef findLeafCell(const AMR *uniform self,
       const uniform KDTreeNode node = self->node[nodeID];
       if (isLeaf(node)) {
         const AMRLeaf *uniform leaf = &self->leaf[getOfs(node)];
-        const AMRBrick *uniform brick = leaf->brickList[0];//self->item[getOfs(node)];
+        const AMRBrick *uniform brick = leaf->brickList[0];
         const vec3f relBrickPos
           = (worldSpacePos - brick->bounds.lower) * brick->bounds_scale;
         // brick coords: integer cell coordinates inside brick

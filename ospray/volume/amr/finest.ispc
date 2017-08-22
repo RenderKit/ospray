@@ -33,7 +33,7 @@ varying float AMR_finestLevel(void *uniform _self, const varying vec3f &P)
 {
   AMRVolume *uniform self = (AMRVolume *uniform)_self;
   AMR *uniform amr = &self->amr;
-  
+
   const CellRef C = findLeafCell(amr,P);
   float width = C.width;
   if (isnan(width))
@@ -47,4 +47,3 @@ export void AMR_install_finest(void *uniform _self)
   self->super.sample = AMR_finest;
   self->computeSampleLevel = AMR_finestLevel;
 }
-

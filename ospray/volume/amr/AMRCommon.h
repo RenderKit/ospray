@@ -5,4 +5,3 @@ typedef enum  {
   AMR_BLEND,
   AMR_OCT_SIMPLE
 } ReconstructionMethod;
-

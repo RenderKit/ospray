@@ -14,29 +14,35 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once 
+#pragma once
 
-struct FindStack {
+struct FindStack
+{
   varying bool active;
   uniform int32 nodeID;
 };
 
-inline uniform FindStack *uniform pushStack(uniform FindStack *uniform stackPtr, 
+inline uniform FindStack *uniform pushStack(uniform FindStack *uniform stackPtr,
                                             uniform int nodeID)
 {
-  unmasked { stackPtr->active = false; }
+  unmasked {
+    stackPtr->active = false;
+  }
+
   stackPtr->active = true;
   stackPtr->nodeID = nodeID;
   return stackPtr+1;
 }
 
-inline uniform FindStack *uniform pushStack(uniform FindStack *uniform stackPtr, 
+inline uniform FindStack *uniform pushStack(uniform FindStack *uniform stackPtr,
                                             uniform int nodeID,
                                             varying bool valid)
 {
-  unmasked { stackPtr->active = false; }
-   stackPtr->active = valid;
-   //unmasked { stackPtr->active = valid; };
+  unmasked {
+    stackPtr->active = false;
+  }
+
+  stackPtr->active = valid;
   stackPtr->nodeID = nodeID;
   return stackPtr+1;
 }

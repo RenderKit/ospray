@@ -43,53 +43,64 @@ namespace ospray {
 
       /*! compute scalar field value at given location */
       inline float sample(const vec3f &P)
-      { throw std::runtime_error("not implemented"); }
+      {
+        NOT_IMPLEMENTED;
+      }
 
       /*! compute scalar field value at given location */
       inline float sampleLevel(const vec3f &P, float& width)
-      { throw std::runtime_error("not implemented"); }
+      {
+        NOT_IMPLEMENTED;
+      }
 
       /*! compute gradient at given location */
       inline vec3f gradient(const vec3f &P)
-      { throw std::runtime_error("not implemented"); }
+      {
+        NOT_IMPLEMENTED;
+      }
     };
-    
+
     template<class Sampler>
-    struct AMRVolumeSampler : public VolumeSampler {
+    struct AMRVolumeSampler : public VolumeSampler
+    {
       AMRVolumeSampler(AMRVolume *amr)
         : sampler(amr->accel),
           amr(amr)
       {}
-      
+
       /*! compute scalar field value at given location */
-      virtual float sample(const vec3f &v) override
+      float sample(const vec3f &v) override
       { return sampler.sample(v); }
 
       /*! compute scalar field value at given location */
-      virtual float sampleLevel(const vec3f &v, float& width)
+      float sampleLevel(const vec3f &v, float& width)
       { return sampler.sampleLevel(v, width); }
-      
+
       /*! compute gradient at given location */
-      virtual vec3f gradient(const vec3f &v) override
+      vec3f gradient(const vec3f &v) override
       { return sampler.gradient(v); }
-      
+
       Sampler sampler;
-      AMRVolume *amr;
+      AMRVolume *amr{nullptr};
     };
 
-    typedef AMRVolumeSampler<Sampler_finestLevel> AMRVolumeSampler_finestLevel;
-    typedef AMRVolumeSampler<Sampler_currentLevel> AMRVolumeSampler_currentLevel;
-    typedef AMRVolumeSampler<Sampler_NotImplemented> AMRVolumeSampler_octMethod;
+    using AMRVolumeSampler_finestLevel = AMRVolumeSampler<Sampler_finestLevel>;
+
+    using AMRVolumeSampler_currentLevel =
+        AMRVolumeSampler<Sampler_currentLevel>;
+
+    using AMRVolumeSampler_octMethod = AMRVolumeSampler<Sampler_NotImplemented>;
 
     AMRVolume::AMRVolume()
-      : Volume(), accel(NULL), data(NULL), sampler(NULL)
     {
       ispcEquivalent = ispc::AMRVolume_create(this);
     }
 
     /*! Copy voxels into the volume at the given index (non-zero
       return value indicates success). */
-    int AMRVolume::setRegion(const void *source, const vec3i &index, const vec3i &count)
+    int AMRVolume::setRegion(const void *source,
+                             const vec3i &index,
+                             const vec3i &count)
     {
       FATAL("'setRegion()' doesn't make sense for AMR volumes; "
             "they can only be set from existing data");
@@ -101,12 +112,12 @@ namespace ospray {
       updateEditableParameters();
 
       // Make the voxel value range visible to the application.
-      if (findParam("voxelRange") == NULL)
+      if (findParam("voxelRange") == nullptr)
         set("voxelRange", voxelRange);
       else
         voxelRange = getParam2f("voxelRange", voxelRange);
 
-      if (data != NULL) //TODO: support data updates
+      if (data != nullptr) //TODO: support data updates
         return;
 
       brickInfoData = getParamData("brickInfo");
@@ -116,11 +127,11 @@ namespace ospray {
       brickDataData = getParamData("brickData");
       assert(brickDataData);
       assert(brickDataData->data);
-      
-      assert(data == NULL);
+
+      assert(data == nullptr);
       data = new AMRData(*brickInfoData,*brickDataData);
-      assert(accel == NULL);
-      accel = new AMRAccel(data);
+      assert(accel == nullptr);
+      accel = new AMRAccel(*data);
 
       Ref<TransferFunction> xf = (TransferFunction*)getParamObject("transferFunction");
       assert(xf);
@@ -138,7 +149,7 @@ namespace ospray {
       // int method = AMR_FINEST;
       const char *methodStringFromEnv = getenv("OSPRAY_AMR_METHOD");
       std::string methodString = "current";
-      if (methodStringFromEnv != NULL) {
+      if (methodStringFromEnv != nullptr) {
         methodString = methodStringFromEnv;
       }
       if (!methodStringFromEnv)
@@ -152,7 +163,7 @@ namespace ospray {
         sampler = new AMRVolumeSampler_currentLevel(this);
       else if (methodString == "octant")
         sampler = new AMRVolumeSampler_octMethod(this);
-      else 
+      else
         throw std::runtime_error("cannot parse ospray_amr_method '"+methodString+"'");
 
       // finding coarset cell size:
@@ -165,7 +176,7 @@ namespace ospray {
       if (rateFromString) {
         samplingStep = atof(rateFromString);
       }
-      
+
       box3f worldBounds = accel->worldBounds;
       ispc::AMRVolume_set(getIE(),
                              sampler,
@@ -196,38 +207,37 @@ namespace ospray {
     }
 
     //! The c++-side, scalar sampler we're calling back to
-    extern "C" 
+    extern "C"
     void ospray_amr_sample(VolumeSampler *cppSampler,
                                   float &result,
                                   const vec3f &pos)
     {
-      PING; throw std::runtime_error("do not do this any more ...\n");
+      throw std::runtime_error("do not do this any more ...\n");
       result = cppSampler->sample(pos);
     }
 
         //! The c++-side, scalar sampler we're calling back to
-    extern "C" 
+    extern "C"
     void ospray_amr_sampleLevel(VolumeSampler *cppSampler,
                                   float &result,
                                   const vec3f &pos, float& width)
     {
-      PING; throw std::runtime_error("do not do this any more ...\n");
+      throw std::runtime_error("do not do this any more ...\n");
       result = cppSampler->sampleLevel(pos, width);
     }
-    
+
     //! The c++-side, scalar gradient sampler we're calling back to
-    extern "C" 
+    extern "C"
     void ospray_amr_gradient(VolumeSampler *cppSampler,
                                     vec3f &result,
                                     const vec3f &pos)
     {
-      PING; throw std::runtime_error("do not do this any more ...\n");
+      throw std::runtime_error("do not do this any more ...\n");
       result = cppSampler->gradient(pos);
     }
-
 
     OSP_REGISTER_VOLUME(AMRVolume,AMRVolume);
     OSP_REGISTER_VOLUME(AMRVolume,amr_volume);
   }
-} // ::ospray
 
+} // ::ospray

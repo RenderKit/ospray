@@ -14,9 +14,6 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-// ours
-//#include "CellRef.ih"
-// #include "AMRCommon.h"
 #include "AMRVolume.ih"
 #include "../amr/AMR.ih"
 // ospray
@@ -30,17 +27,17 @@
 
 struct AMRGeometry
 {
-  Geometry      super;         //!< inherited geometry fields
+  Geometry   super;         //!< inherited geometry fields
   AMR       *amr;        //!< pointer to the amr volume that we traverse
   AMRVolume *amrVolume;
   /*! @{ the iso-values we are going to be looking for */
   const float  *isoValue;
   uint32        numIsoValues;
   /*! @} */
-  
+
   /*! @{ the list of leaves active for this iso-value list */
   const AMRLeaf  **activeLeaf;
-  uint32              numActiveLeaves;
+  uint32           numActiveLeaves;
   /*! @} */
 };
 
@@ -100,7 +97,7 @@ export void AMRGeometry_set(void   *uniform _self,
   Model *uniform model = (Model *uniform)_model;
 
   uniform uint32 geomID = rtcNewUserGeometry(model->embreeSceneHandle,numActiveLeaves);
-  
+
   self->super.model     = model;
   self->super.geomID    = geomID;
   self->isoValue        = isoValue;
@@ -117,6 +114,3 @@ export void AMRGeometry_set(void   *uniform _self,
                           (uniform RTCOccludedFuncVarying)&AMRGeometry_intersect);
 
 }
-
-
-

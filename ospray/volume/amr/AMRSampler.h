@@ -22,61 +22,77 @@
 
 namespace ospray {
   namespace amr {
-    using std::cout;
-    using std::endl;
-    
+
     inline vec3f floor(const vec3f &v)
     {
       return vec3f(floorf(v.x),
-                   floorf(v.y), 
+                   floorf(v.y),
                    floorf(v.z));
     }
+
     inline vec3i clamp(const box3i &box, const vec3i &P)
-    { return max(box.lower,min(box.upper,P)); }
+    {
+      return max(box.lower,min(box.upper,P));
+    }
+
     inline vec3f clamp(const box3f &box, const vec3f &P)
-    { return max(box.lower,min(box.upper,P)); }
-    
-    struct AMRSampler {
+    {
+      return max(box.lower,min(box.upper,P));
+    }
+
+    struct AMRSampler
+    {
       AMRSampler(const AMRAccel *accel) : accel(accel) {}
-      
+
       /*! a *logical* cell reference; this can be a cell that exists
           OR that is virtual */
-      struct CellRef {
-        inline CellRef() {};
-        inline CellRef(const CellRef &other) : coord(other.coord), level(other.level) {}
-        inline CellRef(const vec3i &coord, int level) : coord(coord), level(level) {}
-        inline CellRef &operator=(const CellRef &other) {
+      struct CellRef
+      {
+        inline CellRef() {}
+
+        inline CellRef(const CellRef &other)
+          : coord(other.coord), level(other.level) {}
+
+        inline CellRef(const vec3i &coord, int level)
+          : coord(coord), level(level) {}
+
+        inline CellRef &operator=(const CellRef &other)
+        {
           coord = other.coord;
           level = other.level;
           return *this;
         }
+
         static inline CellRef logicalCellOnLevelOf(const AMRData::Brick *brick,
                                                    const vec3f &P);
         static inline CellRef logicalCellOn(const AMRAccel::Level &level,
                                             const vec3f &P);
         static inline CellRef logicalDualCellOn(const AMRAccel::Level &level,
                                                 const vec3f &P);
-        
+
         //! integer coords on given level
         vec3i coord;
-        
+
         //! level
         int level;
       };
 
       /*! an actual cell that actually exists in the input */
-      struct ActualCell {
-        inline ActualCell() {};
+      struct ActualCell
+      {
+        inline ActualCell() {}
+
         inline ActualCell(const ActualCell &other)
-          : logical(other.logical), actual(other.actual), value(other.value)
-        {}
+          : logical(other.logical), actual(other.actual), value(other.value) {}
+
         inline ActualCell(const CellRef &logical,
                           const CellRef &actual,
                           float value)
-          : logical(logical), actual(actual), value(value)
-        {}
+          : logical(logical), actual(actual), value(value) {}
+
         static inline ActualCell getActual(const AMRData::Brick *brick,
                                            const CellRef &logical);
+
         //! logical coordinates requested for this cell
         CellRef logical;
         //! actual coordinates found for this cell
@@ -84,24 +100,29 @@ namespace ospray {
         //! value for the _actual_ coords
         float value;
       };
-      
-      struct DualCell {
+
+      struct DualCell
+      {
         inline float lerp() const;
         inline float lerpOpacity() const;
-        
+
         CellRef logical;
         ActualCell corner[8];
         /*! the interpolation weights for the poit P we used to find this cell */
         vec3f lerpWeights;
       };
-     
+
       /*! find actual leaf cell containing point P */
       inline ActualCell findLeafCell(const vec3f &P) const;
+
       /*! find actual cell on given level, or closest existing
           equivalent if it doesn't */
-      inline ActualCell findCellOn(const AMRAccel::Level &level, const vec3f &P) const;
+      inline ActualCell findCellOn(const AMRAccel::Level &level,
+                                   const vec3f &P) const;
+
       /*! find dual cell (including all actual corner cells) */
-      inline DualCell findDualCell(const AMRAccel::Level &level, const vec3f &P) const;
+      inline DualCell findDualCell(const AMRAccel::Level &level,
+                                   const vec3f &P) const;
 
       /*! compute 3d position of the dual cell's given corner */
       inline vec3f cornerPos(const DualCell &D, const vec3i cornerID) const;
@@ -109,55 +130,65 @@ namespace ospray {
       const AMRAccel *accel;
     };
 
-    inline std::ostream &operator<<(std::ostream &o, const AMRSampler::CellRef &c)
-    { o << "(coord=" << c.coord << ", l=" <<c.level<<")"; return o; }
-    
-    inline std::ostream &operator<<(std::ostream &o, const AMRSampler::ActualCell &c)
-    { o << "Cell(log=" << c.logical << ", act=" << c.actual << ", val=" << c.value << ")"; return o; }
-    
+    inline std::ostream &operator<<(std::ostream &o,
+                                    const AMRSampler::CellRef &c)
+    {
+      o << "(coord=" << c.coord << ", l=" <<c.level<<")"; return o;
+    }
+
+    inline std::ostream &operator<<(std::ostream &o,
+                                    const AMRSampler::ActualCell &c)
+    {
+      o << "Cell(log=" << c.logical
+        << ", act=" << c.actual
+        << ", val=" << c.value << ")";
+      return o;
+    }
+
     // -------------------------------------------------------
     /*! compute 3d position of the dual cell's given corner */
-    inline vec3f AMRSampler::cornerPos(const DualCell &dual, const vec3i cornerID) const
+    inline vec3f AMRSampler::cornerPos(const DualCell &dual,
+                                       const vec3i cornerID) const
     {
       const vec3i cornerCellCoord = dual.logical.coord + cornerID;
       const AMRAccel::Level &level = accel->level[dual.logical.level];
       return level.halfCellWidth + level.cellWidth * vec3f(cornerCellCoord);
     }
-    
+
     // -------------------------------------------------------
     inline AMRSampler::CellRef
     AMRSampler::CellRef::logicalCellOnLevelOf(const AMRData::Brick *brick,
-                                                 const vec3f &P)
+                                              const vec3f &P)
     {
       const float scale = brick->gridToWorldScale;
       const vec3i coord = vec3i(floor(P * scale));
       return AMRSampler::CellRef(coord,brick->level);
     }
-    
+
     // -------------------------------------------------------
     inline AMRSampler::CellRef
     AMRSampler::CellRef::logicalCellOn(const AMRAccel::Level &level,
-                                          const vec3f &P)
+                                       const vec3f &P)
     {
       const vec3f xformed = P * level.rcpCellWidth;
       const vec3i coord   = vec3i(floor(xformed));
       return AMRSampler::CellRef(coord,level.level);
     }
-    
+
     // -------------------------------------------------------
     inline AMRSampler::CellRef
     AMRSampler::CellRef::logicalDualCellOn(const AMRAccel::Level &level,
-                                              const vec3f &P)
+                                           const vec3f &P)
     {
       const vec3f xformed = (P - level.halfCellWidth) * level.rcpCellWidth;
       const vec3i coord   = vec3i(floor(xformed));
       return AMRSampler::CellRef(coord,level.level);
     }
-    
+
     // -------------------------------------------------------
     inline AMRSampler::ActualCell
     AMRSampler::ActualCell::getActual(const AMRData::Brick *brick,
-                                         const CellRef &logical)
+                                      const CellRef &logical)
     {
       assert(logical.level == brick->level);
       // PING;
@@ -176,35 +207,26 @@ namespace ospray {
     inline AMRSampler::ActualCell
     AMRSampler::findLeafCell(const vec3f &P) const
     {
-      // PING;
-      // PRINT(P);
       ActualCell C;
       const AMRAccel::Node *node = &accel->node[0];
       assert(node);
+
       while (!node->isLeaf()) {
         node = &accel->node[node->ofs + ((P[node->dim] >= node->pos)?1:0)];
         assert(node);
       }
+
       const AMRAccel::Leaf *leaf = &accel->leaf[node->ofs];
-      // for (int i=0;i<node->numItems;i++) {
-      //   PRINT(leaf->brickList[i]->level);
-      //   PRINT(leaf->brickList[i]->box);
-      //   PRINT(leaf->brickList[i]->value[0]);
-      // }
-        
+
       assert(leaf);
       const AMRData::Brick *brick = leaf->brickList[0];
       assert(brick);
-      // PRINT(brick);
-      // PRINT(brick->box);
       const CellRef logical = CellRef::logicalCellOnLevelOf(brick,P);
       C = ActualCell::getActual(brick,logical);
-      // PRINT(logical);
-      // PRINT(C);
-      
+
       return C;
     }
-    
+
     // -------------------------------------------------------
     /*! find dual cell (including all actual corner cells) */
     inline AMRSampler::DualCell
@@ -214,9 +236,6 @@ namespace ospray {
       D.logical = CellRef::logicalDualCellOn(level,P);
       const vec3f lo = cornerPos(D,vec3i(0,0,0));
       const vec3f hi = cornerPos(D,vec3i(1,1,1));
-      // PING;
-      // PRINT(lo);
-      // PRINT(hi);
       D.corner[0] = findCellOn(level,vec3f(lo.x,lo.y,lo.z));
       D.corner[1] = findCellOn(level,vec3f(hi.x,lo.y,lo.z));
       D.corner[2] = findCellOn(level,vec3f(lo.x,hi.y,lo.z));
@@ -227,63 +246,32 @@ namespace ospray {
       D.corner[7] = findCellOn(level,vec3f(hi.x,hi.y,hi.z));
       D.lerpWeights = (clamp(box3f(lo,hi),P)-lo) * level.rcpCellWidth;
 
-      // PRINT(D.logical.coord);
-      // PRINT(D.logical.level);
-      // PRINT(lo);
-      // PRINT(hi);
-      // PRINT(D.corner[0].logical);
-      // PRINT(D.corner[1].logical);
-      // PRINT(D.corner[2].logical);
-      // PRINT(D.corner[3].logical);
-      // PRINT(D.corner[4].logical);
-      // PRINT(D.corner[5].logical);
-      // PRINT(D.corner[6].logical);
-      // PRINT(D.corner[7].logical);
-      // PRINT(D.corner[0].actual);
-      // PRINT(D.corner[1].actual);
-      // PRINT(D.corner[2].actual);
-      // PRINT(D.corner[3].actual);
-      // PRINT(D.corner[4].actual);
-      // PRINT(D.corner[5].actual);
-      // PRINT(D.corner[6].actual);
-      // PRINT(D.corner[7].actual);
-      // PRINT(D.corner[0].value);
-      // PRINT(D.corner[1].value);
-      // PRINT(D.corner[2].value);
-      // PRINT(D.corner[3].value);
-      // PRINT(D.corner[4].value);
-      // PRINT(D.corner[5].value);
-      // PRINT(D.corner[6].value);
-      // PRINT(D.corner[7].value);
-      // PRINT(D.lerpWeights);
       return D;
     }
-      
+
     // -------------------------------------------------------
     /*! find actual cell on given level, or closest existing
       equivalent if it doesn't */
     inline AMRSampler::ActualCell
     AMRSampler::findCellOn(const AMRAccel::Level &level, const vec3f &P) const
     {
-      // PING;
-      // PRINT(P);
-      
       ActualCell C;
       const AMRAccel::Node *node = &accel->node[0];
-      while (!node->isLeaf()) {
+
+      while (!node->isLeaf())
         node = &accel->node[node->ofs + ((P[node->dim] >= node->pos)?1:0)];
-      }
+
       const AMRAccel::Leaf *leaf = &accel->leaf[node->ofs];
       const AMRData::Brick **brickList = leaf->brickList;
-      // PRINT(brickList[0]->level);
+
       while ((*brickList)->level > level.level)
         ++brickList;
+
       const AMRData::Brick *brick = *brickList;
       const CellRef logical = CellRef::logicalCellOnLevelOf(brick,P);
       C = ActualCell::getActual(brick,logical);
       return C;
     }
-    
 
     inline float AMRSampler::DualCell::lerp() const
     {
@@ -308,7 +296,7 @@ namespace ospray {
 
       return v;
     }
-    
+
     inline float AMRSampler::DualCell::lerpOpacity() const
     {
       const float v000 = (corner[0].actual.level == corner[0].logical.level) ? 1.f:0.f;
@@ -332,12 +320,11 @@ namespace ospray {
 
       return v;
     }
-        
 
-
-    struct Sampler_nearest : public AMRSampler {
+    struct Sampler_nearest : public AMRSampler
+    {
       Sampler_nearest(const AMRAccel *accel) : AMRSampler(accel) {};
-      
+
       /*! compute scalar field value at given location */
       inline float sample(const vec3f &P)
       {
@@ -355,14 +342,15 @@ namespace ospray {
 
       /*! compute gradient at given location */
       inline vec3f gradient(const vec3f &P)
-      { throw std::runtime_error("not implemented"); }
+      {
+        NOT_IMPLEMENTED;
+      }
     };
 
-
-    
-    struct Sampler_finestLevel : public AMRSampler {
+    struct Sampler_finestLevel : public AMRSampler
+    {
       Sampler_finestLevel(const AMRAccel *accel) : AMRSampler(accel) {};
-      
+
       /*! compute scalar field value at given location */
       inline float sample(const vec3f &P)
       {
@@ -381,12 +369,15 @@ namespace ospray {
 
       /*! compute gradient at given location */
       inline vec3f gradient(const vec3f &P)
-      { throw std::runtime_error("not implemented"); }
+      {
+        NOT_IMPLEMENTED;
+      }
     };
-    
-    struct Sampler_currentLevel : public AMRSampler {
+
+    struct Sampler_currentLevel : public AMRSampler
+    {
       Sampler_currentLevel(const AMRAccel *accel) : AMRSampler(accel) {};
-      
+
       /*! compute scalar field value at given location */
       inline float sample(const vec3f &P)
       {
@@ -408,17 +399,18 @@ namespace ospray {
 
       /*! compute gradient at given location */
       inline vec3f gradient(const vec3f &P)
-      { throw std::runtime_error("not implemented"); }
+      {
+        NOT_IMPLEMENTED;
+      }
     };
-    
-    struct Sampler_blendLevels : public AMRSampler {
+
+    struct Sampler_blendLevels : public AMRSampler
+    {
       Sampler_blendLevels(const AMRAccel *accel) : AMRSampler(accel) {};
-      
+
       /*! compute scalar field value at given location */
       inline float sample(const vec3f &P)
       {
-        // const ActualCell C = findLeafCell(P);
-        // return C.value;
         float result = 0.f;
         for (int l=0;l<accel->level.size();l++) {
           const DualCell D = findDualCell(accel->level[l],P);
@@ -427,6 +419,7 @@ namespace ospray {
 
           if (a == 0.f)
             break;
+
           result = a*f + (1.f-a)*result;
         }
         return result;
@@ -437,7 +430,6 @@ namespace ospray {
       {
         const ActualCell C = findLeafCell(P);
         width = float(C.actual.level);
-        // return C.value;
         float result = 0.f;
         for (int l=0;l<accel->level.size();l++) {
           const DualCell D = findDualCell(accel->level[l],P);
@@ -453,12 +445,11 @@ namespace ospray {
 
       /*! compute gradient at given location */
       inline vec3f gradient(const vec3f &P)
-      { throw std::runtime_error("not implemented"); }
+      {
+        NOT_IMPLEMENTED;
+      }
     };
-    
 
-
-    
   } // ::ospray::amr
 } // ::ospray
 

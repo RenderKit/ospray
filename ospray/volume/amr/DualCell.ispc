@@ -16,7 +16,8 @@
 
 #include "DualCell.ih"
 
-struct FindEightStack {
+struct FindEightStack
+{
   varying bool act_lo[3];
   varying bool act_hi[3];
   uniform int32 nodeID;
@@ -31,18 +32,17 @@ void findDualCell(const AMR *uniform self,
   const vec3f _P1 = clamp(dual.cellID.pos+dual.cellID.width,
                           make_vec3f(0.f),
                           self->maxValidPos);
-  
+
   const varying float *const uniform p0 = &_P0.x;
   const varying float *const uniform p1 = &_P1.x;
-  
-  const varying float *const uniform lo = p0; //[3] = { min(_P0.x,_P1.x),min(_P0.y,_P1.y),min(_P0.z,_P1.z) };
-  const varying float *const uniform hi = p1; //hi[3] = { max(_P0.x,_P1.x),max(_P0.y,_P1.y),max(_P0.z,_P1.z) };
+
+  const varying float *const uniform lo = p0;
+  const varying float *const uniform hi = p1;
 
 #define STACK_SIZE 64
   uniform FindEightStack stack[STACK_SIZE];
   uniform FindEightStack *uniform stackPtr = &stack[0];
-  // uniform FindStack *uniform stackPtr = pushStack(&stack[0],0,true);
-  
+
   uniform int32 leafList[programCount*8];
   uniform int32 numLeaves = 0;
 
@@ -63,15 +63,15 @@ void findDualCell(const AMR *uniform self,
         = (act_lo[0] | act_hi[0])
         & (act_lo[1] | act_hi[1])
         & (act_lo[2] | act_hi[2]);
-      const bool go_left 
-        = ((act_lo[dim] & (lo[dim] < pos)) | 
+      const bool go_left
+        = ((act_lo[dim] & (lo[dim] < pos)) |
            (act_hi[dim] & (hi[dim] < pos)))
         & in_active;
       const bool go_right
-        = ((act_lo[dim] & (lo[dim] >= pos)) | 
+        = ((act_lo[dim] & (lo[dim] >= pos)) |
            (act_hi[dim] & (hi[dim] >= pos)))
         & in_active;
-      
+
       if (none(go_right)) {
         // all to the left: go left and iterate
         nodeID = childID+0;
@@ -96,7 +96,7 @@ void findDualCell(const AMR *uniform self,
       stackPtr->act_hi[dim] &= (hi[dim] >= pos);
       ++stackPtr;
       assert(stackPtr-stack < STACK_SIZE);
-      
+
       // go left
       nodeID = childID+0;
       act_lo[dim] &= (lo[dim] < pos);
@@ -125,14 +125,14 @@ void findDualCell(const AMR *uniform self,
       const bool valid_x0 = _P0.x >= leaf->bounds.lower.x & _P0.x < leaf->bounds.upper.x;
       const bool valid_y0 = _P0.y >= leaf->bounds.lower.y & _P0.y < leaf->bounds.upper.y;
       const bool valid_z0 = _P0.z >= leaf->bounds.lower.z & _P0.z < leaf->bounds.upper.z;
-      
+
       const bool valid_x1 = _P1.x >= leaf->bounds.lower.x & _P1.x < leaf->bounds.upper.x;
       const bool valid_y1 = _P1.y >= leaf->bounds.lower.y & _P1.y < leaf->bounds.upper.y;
       const bool valid_z1 = _P1.z >= leaf->bounds.lower.z & _P1.z < leaf->bounds.upper.z;
 
-      const bool anyValid = 
+      const bool anyValid =
         (valid_x0 | valid_x1) &
-        (valid_y0 | valid_y1) & 
+        (valid_y0 | valid_y1) &
         (valid_z0 | valid_z1);
       if (!(anyValid))
         continue;
@@ -144,11 +144,11 @@ void findDualCell(const AMR *uniform self,
         brick = leaf->brickList[++brickID];
         isLeaf = false;
       }
-      
+
       const float *uniform v = brick->value;
       const vec3f rp0 = (_P0 - brick->bounds.lower) * brick->bounds_scale;
       const vec3f rp1 = (_P1 - brick->bounds.lower) * brick->bounds_scale;
-      
+
       const vec3f f_bc0 = floor(rp0 * brick->f_dims);
       const vec3f f_bc1 = floor(rp1 * brick->f_dims);
 
@@ -156,18 +156,18 @@ void findDualCell(const AMR *uniform self,
       const float f_idx_dx0 = f_bc0.x;
       const float f_idx_dy0 = f_bc0.y*brick->f_dims.x;
       const float f_idx_dz0 = f_bc0.z*brick->f_dims.x*brick->f_dims.y;
-      
+
       const float f_idx_dx1 = f_bc1.x;
       const float f_idx_dy1 = f_bc1.y*brick->f_dims.x;
       const float f_idx_dz1 = f_bc1.z*brick->f_dims.x*brick->f_dims.y;
-      
+
 #define DOCORNER(X,Y,Z)                                                 \
       if (valid_z##Z & valid_y##Y & valid_x##X) {                       \
         const int idx = (int)(f_idx_dx##X+f_idx_dy##Y+f_idx_dz##Z);     \
         dual.value[Z*4+Y*2+X]       = v[idx];                           \
         dual.actualWidth[Z*4+Y*2+X] = brick->cellWidth;                 \
         dual.isLeaf[Z*4+Y*2+X]      = isLeaf;                           \
-      }                                                                 
+      }
       DOCORNER(0,0,0);
       DOCORNER(0,0,1);
       DOCORNER(0,1,0);
@@ -194,21 +194,20 @@ void findMirroredDualCell(const AMR *uniform self,
   const vec3f _P1 = clamp(dual.cellID.pos+dual.cellID.width,
                           make_vec3f(0.f),
                           self->maxValidPos);
-  
+
   const varying float *const uniform p0 = &_P0.x;
   const varying float *const uniform p1 = &_P1.x;
-  
+
   const float lo[3] = { mirror.x?_P1.x:_P0.x, mirror.y?_P1.y:_P0.y, mirror.z?_P1.z:_P0.z };
   const float hi[3] = { mirror.x?_P0.x:_P1.x, mirror.y?_P0.y:_P1.y, mirror.z?_P0.z:_P1.z };
 
 #define STACK_SIZE 64
   uniform FindEightStack stack[STACK_SIZE];
   uniform FindEightStack *uniform stackPtr = &stack[0];
-  
+
   uniform int32 leafList[programCount*8];
   uniform int32 numLeaves = 0;
 
-// #if 1
   bool act_lo[3] = { true, true, true };
   bool act_hi[3] = { true, true, true };
   uniform int nodeID = 0;
@@ -226,15 +225,15 @@ void findMirroredDualCell(const AMR *uniform self,
         = (act_lo[0] | act_hi[0])
         & (act_lo[1] | act_hi[1])
         & (act_lo[2] | act_hi[2]);
-      const bool go_left 
-        = ((act_lo[dim] & (lo[dim] < pos)) | 
+      const bool go_left
+        = ((act_lo[dim] & (lo[dim] < pos)) |
            (act_hi[dim] & (hi[dim] < pos)))
         & in_active;
       const bool go_right
-        = ((act_lo[dim] & (lo[dim] >= pos)) | 
+        = ((act_lo[dim] & (lo[dim] >= pos)) |
            (act_hi[dim] & (hi[dim] >= pos)))
         & in_active;
-      
+
       if (none(go_right)) {
         // all to the left: go left and iterate
         nodeID = childID+0;
@@ -258,8 +257,7 @@ void findMirroredDualCell(const AMR *uniform self,
       stackPtr->act_lo[dim] &= (lo[dim] >= pos);
       stackPtr->act_hi[dim] &= (hi[dim] >= pos);
       ++stackPtr;
-      // assert(stackPtr-stack < STACK_SIZE);
-      
+
       // go left
       nodeID = childID+0;
       act_lo[dim] &= (lo[dim] < pos);
@@ -288,14 +286,14 @@ void findMirroredDualCell(const AMR *uniform self,
       const bool valid_x0 = lo[0] >= leaf->bounds.lower.x & lo[0] < leaf->bounds.upper.x;
       const bool valid_y0 = lo[1] >= leaf->bounds.lower.y & lo[1] < leaf->bounds.upper.y;
       const bool valid_z0 = lo[2] >= leaf->bounds.lower.z & lo[2] < leaf->bounds.upper.z;
-      
+
       const bool valid_x1 = hi[0] >= leaf->bounds.lower.x & hi[0] < leaf->bounds.upper.x;
       const bool valid_y1 = hi[1] >= leaf->bounds.lower.y & hi[1] < leaf->bounds.upper.y;
       const bool valid_z1 = hi[2] >= leaf->bounds.lower.z & hi[2] < leaf->bounds.upper.z;
 
-      const bool anyValid = 
+      const bool anyValid =
         (valid_x0 | valid_x1) &
-        (valid_y0 | valid_y1) & 
+        (valid_y0 | valid_y1) &
         (valid_z0 | valid_z1);
       if (!(anyValid))
         continue;
@@ -307,11 +305,11 @@ void findMirroredDualCell(const AMR *uniform self,
         brick = leaf->brickList[++brickID];
         isLeaf = false;
       }
-      
+
       const float *uniform v = brick->value;
       const vec3f rp0 = (make_vec3f(lo[0],lo[1],lo[2]) - brick->bounds.lower) * brick->bounds_scale;
       const vec3f rp1 = (make_vec3f(hi[0],hi[1],hi[2]) - brick->bounds.lower) * brick->bounds_scale;
-      
+
       const vec3f f_bc0 = floor(rp0 * brick->f_dims);
       const vec3f f_bc1 = floor(rp1 * brick->f_dims);
 
@@ -319,18 +317,18 @@ void findMirroredDualCell(const AMR *uniform self,
       const float f_idx_dx0 = f_bc0.x;
       const float f_idx_dy0 = f_bc0.y*brick->f_dims.x;
       const float f_idx_dz0 = f_bc0.z*brick->f_dims.x*brick->f_dims.y;
-      
+
       const float f_idx_dx1 = f_bc1.x;
       const float f_idx_dy1 = f_bc1.y*brick->f_dims.x;
       const float f_idx_dz1 = f_bc1.z*brick->f_dims.x*brick->f_dims.y;
-      
+
 #define DOCORNER(X,Y,Z)                                                 \
       if (valid_z##Z & valid_y##Y & valid_x##X) {                       \
         const int idx = (int)(f_idx_dx##X+f_idx_dy##Y+f_idx_dz##Z);     \
         dual.value[Z*4+Y*2+X]       = v[idx];                           \
         dual.actualWidth[Z*4+Y*2+X] = brick->cellWidth;                 \
         dual.isLeaf[Z*4+Y*2+X]      = isLeaf;                           \
-      }                                                                 
+      }
       DOCORNER(0,0,0);
       DOCORNER(0,0,1);
       DOCORNER(0,1,0);

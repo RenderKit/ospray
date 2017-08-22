@@ -14,26 +14,30 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once 
+#pragma once
 
 // ours
-#include "../amr/AMR.ih"
+#include "AMR.ih"
 #include "AMRVolume.ih"
 
 /*! a reference to a given cell on a given level; this is what a 'node location' kernel will return */
-struct CellRef {
+struct CellRef
+{
   //! lower left front position, in unit grid space
   vec3f pos;
-  //! width of cell, also doubles as level indicator 
-  float width; 
+  //! width of cell, also doubles as level indicator
+  float width;
   //! value at this cell
   float value;
 };
 
 inline vec3f centerOf(const CellRef &cr)
-{ return cr.pos + make_vec3f(0.5f*cr.width); }
+{
+  return cr.pos + make_vec3f(0.5f*cr.width);
+}
 
-inline void set(CellRef &cr, const vec3f &pos, const float width, const float value)
+inline void set(CellRef &cr, const vec3f &pos,
+                const float width, const float value)
 {
   cr.pos   = pos;
   cr.width = width;
@@ -44,7 +48,6 @@ inline void set(CellRef &cr, const vec3f &pos, const float width, const float va
 extern CellRef findCell(const AMR *uniform self,
                         const varying vec3f &_worldSpacePos,
                         const float minWidth);
+
 extern CellRef findLeafCell(const AMR *uniform self,
                             const varying vec3f &_worldSpacePos);
-
-

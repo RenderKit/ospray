@@ -17,17 +17,18 @@
 // ours
 #include "CellRef.ih"
 #include "FindStack.ih"
-#include "../amr/AMR.ih"
+#include "AMR.ih"
 
-
-struct DualCellID {
+struct DualCellID
+{
   /*! position of LOWER-LEFT COORDINATE (ie, CENTER of lower-left cell */
   vec3f pos;
-  //! width of dual cell, also doubles as level indicator 
-  float width; 
+  //! width of dual cell, also doubles as level indicator
+  float width;
 };
 
-struct DualCell {
+struct DualCell
+{
   // -------------------------------------------------------
   /* input parameters that specify the cell. coords must be the actual
      cell centers on the desired level */
@@ -52,7 +53,9 @@ inline vec3f dualCellLerpWeightsForLevel(const vec3f &P, const float cellWidth)
   return (xfmed - f_idx);
 }
 
-inline void initDualCell(DualCell &D, const vec3f &P, const uniform AMRLevel &level)
+inline void initDualCell(DualCell &D,
+                         const vec3f &P,
+                         const uniform AMRLevel &level)
 {
   const float cellWidth = level.cellWidth;
   const float halfCellWidth = 0.5f*cellWidth;
@@ -78,12 +81,12 @@ inline void initDualCell(DualCell &D, const vec3f &P, const float cellWidth)
 inline bool allCornersAreLeaves(const DualCell &D)
 {
   return
-    D.isLeaf[0] & 
-    D.isLeaf[1] & 
-    D.isLeaf[2] & 
-    D.isLeaf[3] & 
-    D.isLeaf[4] & 
-    D.isLeaf[5] & 
+    D.isLeaf[0] &
+    D.isLeaf[1] &
+    D.isLeaf[2] &
+    D.isLeaf[3] &
+    D.isLeaf[4] &
+    D.isLeaf[5] &
     D.isLeaf[6] &
     D.isLeaf[7];
 }
@@ -91,13 +94,13 @@ inline bool allCornersAreLeaves(const DualCell &D)
 inline bool allCornersArePresent(const DualCell &D)
 {
   return
-    (D.actualWidth[0] == D.cellID.width) & 
-    (D.actualWidth[1] == D.cellID.width) & 
-    (D.actualWidth[2] == D.cellID.width) & 
-    (D.actualWidth[3] == D.cellID.width) & 
-    (D.actualWidth[4] == D.cellID.width) & 
-    (D.actualWidth[5] == D.cellID.width) & 
-    (D.actualWidth[6] == D.cellID.width) & 
+    (D.actualWidth[0] == D.cellID.width) &
+    (D.actualWidth[1] == D.cellID.width) &
+    (D.actualWidth[2] == D.cellID.width) &
+    (D.actualWidth[3] == D.cellID.width) &
+    (D.actualWidth[4] == D.cellID.width) &
+    (D.actualWidth[5] == D.cellID.width) &
+    (D.actualWidth[6] == D.cellID.width) &
     (D.actualWidth[7] == D.cellID.width);
 }
 
@@ -107,20 +110,20 @@ inline float lerp(const DualCell &D)
   const float f000 = D.value[C000];
   const float f001 = D.value[C001];
   const float f010 = D.value[C010];
-  const float f011 = D.value[C011]; 
+  const float f011 = D.value[C011];
   const float f100 = D.value[C100];
   const float f101 = D.value[C101];
   const float f110 = D.value[C110];
   const float f111 = D.value[C111];
-    
+
   const float f00 = (1.f-w.x)*f000 + w.x*f001;
   const float f01 = (1.f-w.x)*f010 + w.x*f011;
   const float f10 = (1.f-w.x)*f100 + w.x*f101;
   const float f11 = (1.f-w.x)*f110 + w.x*f111;
-    
+
   const float f0 = (1.f-w.y)*f00+w.y*f01;
   const float f1 = (1.f-w.y)*f10+w.y*f11;
-    
+
   const float f = (1.f-w.z)*f0+w.z*f1;
   return f;
 }
@@ -130,20 +133,20 @@ inline float lerpWithExplicitWeights(const DualCell &D, const vec3f &w)
   const float f000 = D.value[C000];
   const float f001 = D.value[C001];
   const float f010 = D.value[C010];
-  const float f011 = D.value[C011]; 
+  const float f011 = D.value[C011];
   const float f100 = D.value[C100];
   const float f101 = D.value[C101];
   const float f110 = D.value[C110];
   const float f111 = D.value[C111];
-    
+
   const float f00 = (1.f-w.x)*f000 + w.x*f001;
   const float f01 = (1.f-w.x)*f010 + w.x*f011;
   const float f10 = (1.f-w.x)*f100 + w.x*f101;
   const float f11 = (1.f-w.x)*f110 + w.x*f111;
-    
+
   const float f0 = (1.f-w.y)*f00+w.y*f01;
   const float f1 = (1.f-w.y)*f10+w.y*f11;
-    
+
   const float f = (1.f-w.z)*f0+w.z*f1;
   return f;
 }
@@ -159,15 +162,15 @@ inline float lerpAlpha(const DualCell &D)
   const float f101 = D.actualWidth[C101] == D.cellID.width ? 1.f : 0.f;
   const float f110 = D.actualWidth[C110] == D.cellID.width ? 1.f : 0.f;
   const float f111 = D.actualWidth[C111] == D.cellID.width ? 1.f : 0.f;
-    
+
   const float f00 = (1.f-w.x)*f000 + w.x*f001;
   const float f01 = (1.f-w.x)*f010 + w.x*f011;
   const float f10 = (1.f-w.x)*f100 + w.x*f101;
   const float f11 = (1.f-w.x)*f110 + w.x*f111;
-    
+
   const float f0 = (1.f-w.y)*f00+w.y*f01;
   const float f1 = (1.f-w.y)*f10+w.y*f11;
-    
+
   const float f = (1.f-w.z)*f0+w.z*f1;
   return f;
 }
@@ -185,5 +188,3 @@ extern void findDualCell(const AMR *uniform self,
 extern void findMirroredDualCell(const AMR *uniform self,
                                  const vec3i &loID,
                                  DualCell &dual);
-  
-                       

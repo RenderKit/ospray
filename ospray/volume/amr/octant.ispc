@@ -19,7 +19,6 @@
 #include "DualCell.ih"
 
 #define DBG(a)
-//if (dbg) { a }
 
 struct Octant {
   // -------------------------------------------------------
@@ -28,14 +27,13 @@ struct Octant {
   // vec3f centerPos;
   vec3f signs;
   vec3i mirror;
-  // float width;
   bool left_x, left_y, left_z;
 
   // position of cell-center that spans this octant
   vec3f center;
   // position of cell-vertex that spans other extreme of this octant
   vec3f vertex;
-  
+
   //! interpolation weights
   vec3f weights; // weight for C000 being at the CELL CENTER, and C111 being the CELL CORNER
   // -------------------------------------------------------
@@ -51,20 +49,20 @@ inline float lerp(const Octant &O)
   const float f000 = O.value[C000];
   const float f001 = O.value[C001];
   const float f010 = O.value[C010];
-  const float f011 = O.value[C011]; 
+  const float f011 = O.value[C011];
   const float f100 = O.value[C100];
   const float f101 = O.value[C101];
   const float f110 = O.value[C110];
   const float f111 = O.value[C111];
-    
+
   const float f00 = (1.f-w.x)*f000 + w.x*f001;
   const float f01 = (1.f-w.x)*f010 + w.x*f011;
   const float f10 = (1.f-w.x)*f100 + w.x*f101;
   const float f11 = (1.f-w.x)*f110 + w.x*f111;
-    
+
   const float f0 = (1.f-w.y)*f00+w.y*f01;
   const float f1 = (1.f-w.y)*f10+w.y*f11;
-    
+
   const float f = (1.f-w.z)*f0+w.z*f1;
   return f;
 }
@@ -104,10 +102,10 @@ void initOctantAndDual(Octant &O, DualCell &D, const vec3f &P, const CellRef &C)
   O.signs = make_vec3f(O.left_x ? -1.f : +1.f,
                        O.left_y ? -1.f : +1.f,
                        O.left_z ? -1.f : +1.f);
-  
+
   O.center = CC;
   O.vertex = O.center + O.signs * halfCellWidth;
-  
+
   O.weights = abs(P - O.center) * (2.f * rcpCellWidth);
 }
 
@@ -156,12 +154,12 @@ varying float doOctant(const AMR *uniform self,
   O.value[C000] = C.value;
   done[C000]    = true;
   bool coarseFilled = false;
-  
+
   /* ###################### SIDES ###################### */
   /* sides touch one neighbor. we can interpolate if it's on the same
      level, will have to defer to that neighbor if that neighbor is
      coarser, and compute our own if that neighbor is finer */
-  
+
   /* ----------- side C001 ----------- */ {
     if ((D.actualWidth[C001] == C.width) & D.isLeaf[C001]) {
       /* same level - interpolate and done */
@@ -181,7 +179,7 @@ varying float doOctant(const AMR *uniform self,
       done[C001]    = true;
     }
   }
-  
+
   /* ----------- side C010 ----------- */ {
     if ((D.actualWidth[C010] == C.width) & D.isLeaf[C010]) {
       /* same level - interpolate and done */
@@ -230,7 +228,7 @@ varying float doOctant(const AMR *uniform self,
      least one of the neighbors, with no other neighbor begin even
      coarser - ie, 'we' (ie, this vertex) is on the bounardy, and
      we're the coarse side to fill it */
-  
+
   /* ----------- edge C011 ----------- */ {
     const float maxWidth  = max(D.actualWidth[C001],D.actualWidth[C010],D.actualWidth[C011]);
     const bool  allLeaves = (D.isLeaf[C001] & D.isLeaf[C010] & D.isLeaf[C011]);
@@ -269,7 +267,7 @@ varying float doOctant(const AMR *uniform self,
       done[C011]    = true;
     }
   }
-  
+
 
   /* ----------- edge C101 ----------- */ {
     const float maxWidth  = max(D.actualWidth[C001],D.actualWidth[C100],D.actualWidth[C101]);
@@ -309,7 +307,7 @@ varying float doOctant(const AMR *uniform self,
       done[C101]    = true;
     }
   }
-  
+
 
   /* ----------- edge C110 ----------- */ {
     const float maxWidth = max(D.actualWidth[C010],D.actualWidth[C100],D.actualWidth[C110]);
@@ -349,8 +347,6 @@ varying float doOctant(const AMR *uniform self,
       done[C110]    = true;
     }
   }
-  
-
 
   /* ###################### VERTEX ###################### */
   /* the vertex touches all seven neighbors. if all are on the same
@@ -362,7 +358,7 @@ varying float doOctant(const AMR *uniform self,
   /* ----------- vertex ----------- */ {
     const float maxWidth = max(D.actualWidth[0],D.actualWidth[1],D.actualWidth[2],D.actualWidth[3],
                                D.actualWidth[4],D.actualWidth[5],D.actualWidth[6],D.actualWidth[7]);
-    const bool allLeaves = (D.isLeaf[0] & D.isLeaf[1] & D.isLeaf[2] & D.isLeaf[3] & 
+    const bool allLeaves = (D.isLeaf[0] & D.isLeaf[1] & D.isLeaf[2] & D.isLeaf[3] &
                             D.isLeaf[4] & D.isLeaf[5] & D.isLeaf[6] & D.isLeaf[7]);
     if ((maxWidth == C.width) && allLeaves) {
       /* all on same level. average, and done */
@@ -411,10 +407,8 @@ varying float doOctant(const AMR *uniform self,
     done[ii] = true;
   }
 
-  
   return lerp(O);
 }
-
 
 varying float AMR_octant(void *uniform _self, const varying vec3f &P)
 {
@@ -429,14 +423,13 @@ varying float AMR_octantLevel(void *uniform _self, const varying vec3f &P)
 {
   AMRVolume *uniform self = (AMRVolume *uniform)_self;
   AMR *uniform amr = &self->amr;
-  
+
   const CellRef C = findLeafCell(amr,P);
   float width = C.width;
   if (isnan(width))
     width = 1.0f;
   return width;
 }
-
 
 export void AMR_install_octant(void *uniform _self)
 {

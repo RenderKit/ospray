@@ -27,11 +27,11 @@ namespace ospray {
       this->box = info.box;
       this->level = info.level;
       this->cellWidth = info.cellWidth;
-      
+
       this->value = data;
       this->dims  = this->box.size() + vec3i(1);
       this->gridToWorldScale = 1.f/this->cellWidth;
-      this->worldBounds = box3f(vec3f(this->box.lower) * this->cellWidth, 
+      this->worldBounds = box3f(vec3f(this->box.lower) * this->cellWidth,
                                 vec3f(this->box.upper+vec3i(1)) * this->cellWidth);
       this->worldToGridScale = rcp(this->worldBounds.size());
       this->f_dims = vec3f(this->dims);
@@ -41,18 +41,16 @@ namespace ospray {
     {
       return brickInfoData.numBytes / sizeof(AMRData::BrickInfo);
     }
-    
+
     /*! this structure defines only the format of the INPUT of amr
       data - ie, what we get from the scene graph or applicatoin */
-    AMRData::AMRData(const Data &brickInfoData,
-                           const Data &brickDataData)
-      : numBricks(getNumBricks(brickInfoData)),
-        brick(NULL)
+    AMRData::AMRData(const Data &brickInfoData, const Data &brickDataData)
+      : numBricks(getNumBricks(brickInfoData))
     {
       brick = new const Brick *[numBricks];
       const BrickInfo *brickInfo = (const BrickInfo *)brickInfoData.data;
       const Data **allBricksData = (const Data **)brickDataData.data;
-      for (int i=0;i<numBricks;i++) 
+      for (int i=0;i<numBricks;i++)
         brick[i] = new Brick(brickInfo[i],(const float*)allBricksData[i]->data);
     }
 

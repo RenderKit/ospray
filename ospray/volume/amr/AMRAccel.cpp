@@ -20,14 +20,12 @@ namespace ospray {
   namespace amr {
 
     /*! constructor that constructs the actual accel from the amr data */
-    AMRAccel::AMRAccel(const AMRData *input)
+    AMRAccel::AMRAccel(const AMRData &input)
     {
-      assert(input);
-
       box3f bounds = empty;
       std::vector<const AMRData::Brick *> brickVec;
-      for (int i=0;i<input->numBricks;i++) {
-        brickVec.push_back(input->brick[i]);
+      for (int i=0;i<input.numBricks;i++) {
+        brickVec.push_back(input.brick[i]);
         bounds.extend(brickVec.back()->worldBounds);
       }
       this->worldBounds = bounds;
@@ -45,25 +43,25 @@ namespace ospray {
       node.resize(1);
       buildRec(0,bounds,brickVec);
     }
-    
+
     /*! destructor that frees all allocated memory */
     AMRAccel::~AMRAccel()
     {
-      for (int i=0;i<leaf.size();i++)
-        delete[] leaf[i].brickList;
+      for (auto &l : leaf)
+        delete[] l.brickList;
+
       leaf.clear();
       node.clear();
     }
 
     void AMRAccel::makeLeaf(index_t nodeID,
-                               const box3f &bounds,
-                               const std::vector<const AMRData::Brick *> &brick)
+                            const box3f &bounds,
+                            const std::vector<const AMRData::Brick *> &brick)
     {
-      node[nodeID].dim = 3; 
-      node[nodeID].ofs = this->leaf.size(); //item.size(); 
+      node[nodeID].dim = 3;
+      node[nodeID].ofs = this->leaf.size(); //item.size();
       node[nodeID].numItems = brick.size();
 
-      
       AMRAccel::Leaf newLeaf;
       newLeaf.bounds = bounds;
       newLeaf.brickList = new const AMRData::Brick *[brick.size()+1];
@@ -74,21 +72,21 @@ namespace ospray {
                 [&](const AMRData::Brick *a, const AMRData::Brick *b){
                   return a->level > b->level;
                 });
-        
-      newLeaf.brickList[brick.size()] = NULL;
+
+      newLeaf.brickList[brick.size()] = nullptr;
       this->leaf.push_back(newLeaf);
     }
-    
+
     void AMRAccel::makeInner(index_t nodeID, int dim, float pos, int childID)
-    { 
-      node[nodeID].dim = dim; 
-      node[nodeID].pos = pos; 
-      node[nodeID].ofs = childID; 
+    {
+      node[nodeID].dim = dim;
+      node[nodeID].pos = pos;
+      node[nodeID].ofs = childID;
     }
-    
+
     void AMRAccel::buildRec(int nodeID,
-                               const box3f &bounds,
-                               std::vector<const AMRData::Brick *> &brick)
+                            const box3f &bounds,
+                            std::vector<const AMRData::Brick *> &brick)
     {
       std::set<float> possibleSplits[3];
       for (int i=0;i<brick.size();i++) {
@@ -109,6 +107,7 @@ namespace ospray {
         if (clipped.upper.z != bounds.upper.z)
           possibleSplits[2].insert(clipped.upper.z);
       }
+
       int bestDim = -1;
       vec3f width = bounds.size();
       for (int dim=0;dim<3;dim++) {
@@ -129,10 +128,9 @@ namespace ospray {
       } else {
         float bestPos = std::numeric_limits<float>::infinity();
         float mid = bounds.center()[bestDim];
-        for (auto it = possibleSplits[bestDim].begin(); 
-             it != possibleSplits[bestDim].end(); it++) {
-          if (fabsf(*it - mid) < fabsf(bestPos-mid))
-            bestPos = *it;
+        for (const auto &split : possibleSplits[bestDim]) {
+          if (fabsf(split - mid) < fabsf(bestPos-mid))
+            bestPos = split;
         }
         box3f lBounds = bounds;
         box3f rBounds = bounds;
@@ -184,7 +182,7 @@ namespace ospray {
             std::cout << "  brick " << brick[i]->worldBounds << " " << brick[i]->level << std::endl;
         }
         assert(!(l.empty() || r.empty()));
-        
+
         int newNodeID = node.size();
         makeInner(nodeID,bestDim,bestPos,newNodeID);
 

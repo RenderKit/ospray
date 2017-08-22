@@ -33,26 +33,28 @@ namespace ospray {
       /*! compute gradient at given location */
       virtual vec3f gradient(const vec3f &v) = 0;
     };
-    
+
     /*! the actual ospray volume object */
-    struct AMRVolume : public ospray::Volume {
-      //! default constructor
+    struct AMRVolume : public ospray::Volume
+    {
       AMRVolume();
 
-      //! \brief common function to help printf-debugging 
-      virtual std::string toString() const { return "ospray::amr::AMR"; }
-      
+      //! \brief common function to help printf-debugging
+      std::string toString() const override { return "ospray::AMRVolume"; }
+
       //! Allocate storage and populate the volume.
-      virtual void commit();
+      void commit() override;
 
       /*! Copy voxels into the volume at the given index (non-zero
         return value indicates success). */
-      virtual int setRegion(const void *source, const vec3i &index, const vec3i &count);
+      int setRegion(const void *source,
+                    const vec3i &index,
+                    const vec3i &count) override;
 
-      AMRData  *data;
-      AMRAccel *accel;
-      VolumeSampler *sampler;
-      
+      AMRData  *data{nullptr};
+      AMRAccel *accel{nullptr};
+      VolumeSampler *sampler{nullptr};
+
       Ref<Data> brickInfoData;
       Ref<Data> brickDataData;
 
@@ -68,4 +70,3 @@ namespace ospray {
 
   } // ::ospray::amr
 } // ::ospray
-

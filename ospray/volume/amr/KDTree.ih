@@ -18,7 +18,8 @@
 
 /*! ispc equivalent of the c++-side kdtree that we build over the
     boxes */
-struct KDTreeNode {
+struct KDTreeNode
+{
   uint32 dim_and_ofs;
   uint32 pos_or_numItems;
 };
@@ -72,6 +73,3 @@ inline uniform float getNumItems(const uniform KDTreeNode & node)
 {
   return node.pos_or_numItems;
 }
-
-
-

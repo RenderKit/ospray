@@ -22,20 +22,19 @@
 #include "ospray/common/Data.h"
 
 namespace ospray {
-  using namespace ospray::array3D;
-  
   namespace amr {
 
     /*! this structure defines only the format of the INPUT of amr
         data - ie, what we get from the scene graph or applicatoin */
-    struct AMRData {
-      AMRData(const Data &brickInfoData,
-                 const Data &brickDataData);
-      
+    struct AMRData
+    {
+      AMRData(const Data &brickInfoData, const Data &brickDataData);
+
       /*! this is how an app _specifies_ a brick (or better, the array
         of bricks); the brick data is specified through a separate
         array of data buffers (one data buffer per brick) */
-      struct BrickInfo {
+      struct BrickInfo
+      {
         /*! bounding box of integer coordinates of cells. note that
           this EXCLUDES the width of the rightmost cell: ie, a 4^3
           box at root level pos (0,0,0) would have a _box_ of
@@ -50,15 +49,15 @@ namespace ospray {
         // width of each cell in this level
         float cellWidth;
 
-        inline box3f worldBounds() const {
+        inline box3f worldBounds() const
+        {
           return box3f(vec3f(box.lower)*cellWidth,
                        vec3f(box.upper+vec3i(1))*cellWidth);
         }
       };
 
-      struct Brick : public BrickInfo {
-        //! default constructor
-        Brick() : value(NULL) {};
+      struct Brick : public BrickInfo
+      {
         /*! actual constructor from a brick info and data pointer */
         /*! initialize from given data */
         Brick(const BrickInfo &info, const float *data);
@@ -69,9 +68,9 @@ namespace ospray {
            [(0,0,0)-(4,4,4)] (as opposed to the 'box' value, see
            above!) */
         box3f worldBounds;
-        
+
         //! pointer to the actual data values stored in this brick
-        const float *value;
+        const float *value{nullptr};
         //! dimensions of this box's data
         vec3i dims;
         //! scale factor from grid space to world space (ie,1.f/cellWidth)
@@ -81,15 +80,16 @@ namespace ospray {
         //! dimensions, in float
         vec3f f_dims;
       };
-      
+
       //! out own, internal represenation of a brick
-      const Brick **brick;
+      const Brick **brick{nullptr};
       const size_t numBricks;
-      
+
       /*! compute world-space bounding box (lot in _logical_ space,
           but in _absolute_ space, with proper cell width as specified
           in each level */
-      inline box3f worldBounds() const {
+      inline box3f worldBounds() const
+      {
         box3f worldBounds = empty;
         for (int i=0;i<numBricks;i++)
           worldBounds.extend(brick[i]->worldBounds);

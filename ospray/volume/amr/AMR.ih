@@ -27,18 +27,33 @@ inline vec3f lerp(const box3f box, const vec3f w)
   return box.lower + (box.upper-box.lower)*w;
 }
 
-inline float max(float a, float b, float c) { return max(max(a,b),c); }
-inline float min(float a, float b, float c) { return min(min(a,b),c); }
+inline float max(float a, float b, float c)
+{
+  return max(max(a,b),c);
+}
 
-inline float max(float a, float b, float c, float d, float e, float f, float g, float h)
-{ return max(max(max(a,b),max(c,d)),max(max(e,f),max(g,h))); }
-inline float min(float a, float b, float c, float d, float e, float f, float g, float h)
-{ return min(min(min(a,b),min(c,d)),min(min(e,f),min(g,h))); }
+inline float min(float a, float b, float c)
+{
+   return min(min(a,b),c);
+}
+
+inline float max(float a, float b, float c, float d,
+                 float e, float f, float g, float h)
+{
+  return max(max(max(a,b),max(c,d)),max(max(e,f),max(g,h)));
+}
+
+inline float min(float a, float b, float c, float d,
+                 float e, float f, float g, float h)
+{
+  return min(min(min(a,b),min(c,d)),min(min(e,f),min(g,h)));
+}
 
 /*! enum to symbolically iterate the 8 corners of an octant */
 enum { C000=0, C001,C010,C011,C100,C101,C110,C111 };
 
-struct AMRBrick {
+struct AMRBrick
+{
   /*! bounding box of integer coordinates of cells. note that
     this EXCLUDES the width of the rightmost cell: ie, a 4^3
     box at root level pos (0,0,0) would have a _box_ of
@@ -63,20 +78,22 @@ struct AMRBrick {
   vec3i dims;
   // scale factor from grid space to world space (ie,1.f/cellWidth)
   float gridToWorldScale;
-  
+
   // rcp(bounds.upper-bounds.lower);
   vec3f bounds_scale;
   // dimensions, in float
   vec3f f_dims;
 };
 
-struct AMRLeaf {
+struct AMRLeaf
+{
   AMRBrick **brickList;
   box3f bounds;
   range1f valueRange;
 };
 
-struct AMRLevel {
+struct AMRLevel
+{
   float cellWidth;
   /* do not use these values: they are computed on the C side, at
      apparently different accuracy than when they get computed on the
@@ -86,7 +103,8 @@ struct AMRLevel {
   int   level;
 };
 
-struct AMR {
+struct AMR
+{
   /*! "item list" array - each leaf node in the tree points into this
     array, and the 'num' elements follwing the pointed-to-location
     are the bricks stored at this leaf */
@@ -102,47 +120,25 @@ struct AMR {
 
   box3f worldBounds;
   vec3f maxValidPos;
-
-  /*! nodeValueRange[i] is the complete value range for any possible
-    sample that might fall into the bounding box of the kd tree node
-    node[i] */
-  // box1f *nodeRange;
 };
 
 inline float nextafter(const float f, const float s)
 {
   const float af = abs(f);
   const float nf = f+s*af*(1.f/(float)(1<<23));
-// #ifndef NDEBUG
-//   if (nf == f)
-//     print("NEXTAFTER NOT WORKING");
-// #endif
   return nf;
 }
 
-// inline uniform float nextafter(const uniform float f, const uniform float s)
-// {
-//   const float af = abs(f);
-//   const float nf = f+s*af*(1.f/(float)(1<<23));
-// // #ifndef NDEBUG
-// //   if (nf == f)
-// //     print("NEXTAFTER NOT WORKING");
-// // #endif
-//   return nf;
-// }
-
 inline vec3f nextafter(const vec3f v, const vec3f sign)
-{ 
+{
   return make_vec3f(nextafter(v.x,sign.x),
                     nextafter(v.y,sign.y),
-                    nextafter(v.z,sign.z)); 
+                    nextafter(v.z,sign.z));
 }
 
 inline uniform vec3f nextafter(const uniform vec3f v, const uniform float sign)
-{ 
+{
   return make_vec3f(nextafter(v.x,sign),
                     nextafter(v.y,sign),
-                    nextafter(v.z,sign)); 
+                    nextafter(v.z,sign));
 }
-
-

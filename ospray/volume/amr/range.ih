@@ -16,22 +16,11 @@
 
 #pragma once
 
-struct range1f {
+struct range1f
+{
   float lower;
   float upper;
 };
-
-// inline void clear(uniform range1f &r)
-// {
-//   r.lower = +infinity;
-//   r.upper = -infinity;
-// }
-
-// inline void clear(range1f &r)
-// {
-//   r.lower = +infinity;
-//   r.upper = -infinity;
-// }
 
 inline void extend(uniform range1f &r, uniform float v)
 {
@@ -50,4 +39,3 @@ inline void extend(range1f &r, float v)
   r.lower = min(r.lower,v);
   r.upper = max(r.upper,v);
 }
-

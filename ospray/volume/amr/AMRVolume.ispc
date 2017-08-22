@@ -99,19 +99,17 @@ inline void AMR_stepRay(void *uniform _volume, varying Ray &ray, const varying f
   float rate = 1.f;
   if (level < 1.0f)
   {
-    float nlevel = log(level)*-1.0f; // take log of value.  otherwise step sizes get microscopically small.  
+    float nlevel = log(level)*-1.0f; // take log of value.  otherwise step sizes get microscopically small.
     nlevel = max(1.f/nlevel, 0.07f);
     rate = nlevel/samplingRate;
   }
-  else 
+  else
     rate = 1.0f/samplingRate;
-  // print("level: % rate: %\n", level, rate);
 
   // The recommended step size for ray casting based volume renderers.
   const varying float step = volume->super.samplingStep * rate;
 
   // Compute the next hit point using a spatial acceleration structure.
-  //GridAccelerator_intersectAdaptive(volume->accelerator, step, ray);
   ray.t0 += step;
   ray.time = step;
 }
@@ -121,7 +119,7 @@ export void *uniform AMRVolume_create(void *uniform cppE)
 {
   AMRVolume *uniform self = uniform new uniform AMRVolume;
   return self;
-} 
+}
 
 
 export void AMRVolume_computeValueRangeOfLeaf(void *uniform _self,
@@ -145,7 +143,7 @@ export void AMRVolume_computeValueRangeOfLeaf(void *uniform _self,
         extend(leaf->valueRange,sampleValue);
       }
 }
-                                                 
+
 export void AMRVolume_setAMR(void *uniform _self,
                                    uniform int numNodes, void *uniform _node,
                                    uniform int numLeaves, void *uniform _leaf,
@@ -166,20 +164,20 @@ export void AMRVolume_setAMR(void *uniform _self,
 }
 
 export void AMRVolume_set(void *uniform _self,
-                             void *uniform cppSampler,
-                             void *uniform _xf,
-                             uniform box3f &worldBounds,
-                             uniform float samplingStep)
+                          void *uniform cppSampler,
+                          void *uniform _xf,
+                          uniform box3f &worldBounds,
+                          uniform float samplingStep)
 {
   AMRVolume *uniform self = (AMRVolume *uniform)_self;
   assert(self);
-  self->super.boundingBox             = worldBounds;
-  self->super.volumeClippingBox       = worldBounds;
-  self->super.samplingStep            = samplingStep;
-  self->super.transferFunction        = (TransferFunction *uniform)_xf;
-  self->cppSampler                    = cppSampler;
-  self->super.stepRay                 = &AMR_stepRay;
-  self->super.computeGradient         = &AMR_gradient;
+  self->super.boundingBox       = worldBounds;
+  self->super.volumeClippingBox = worldBounds;
+  self->super.samplingStep      = samplingStep;
+  self->super.transferFunction  = (TransferFunction *uniform)_xf;
+  self->cppSampler              = cppSampler;
+  self->super.stepRay           = &AMR_stepRay;
+  self->super.computeGradient   = &AMR_gradient;
 }
 
 
