@@ -56,18 +56,22 @@ namespace ospcommon {
       int num_threads()
       {
 #if defined(OSPRAY_TASKING_TBB)
-         return tbb::this_task_arena::max_concurrency();
+#  if TBB_INTERFACE_VERSION >= 9100
+        return tbb::this_task_arena::max_concurrency();
+#  else
+        return tbb::task_scheduler_init::default_num_threads();
+#  endif
 #elif defined(OSPRAY_TASKING_CILK)
-         return numThreads >= 0 ? std::thread::hardware_concurrency();
+        return numThreads >= 0 ? std::thread::hardware_concurrency();
 #elif defined(OSPRAY_TASKING_OMP)
-         int threads = 0;
-         #pragma omp parallel
-         {
-           threads = omp_get_num_threads();
-         }
-         return threads;
+        int threads = 0;
+        #pragma omp parallel
+        {
+          threads = omp_get_num_threads();
+        }
+        return threads;
 #elif defined(OSPRAY_TASKING_INTERNAL)
-         return detail::numThreadsTaskSystemInternal();
+        return detail::numThreadsTaskSystemInternal();
 #endif
       }
 
