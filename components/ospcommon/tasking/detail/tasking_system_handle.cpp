@@ -18,6 +18,7 @@
 
 // tasking system internals
 #if defined(OSPRAY_TASKING_TBB)
+# include <tbb/task_arena.h>
 # include <tbb/task_scheduler_init.h>
 #elif defined(OSPRAY_TASKING_CILK)
 # include <cilk/cilk_api.h>
@@ -52,6 +53,24 @@ namespace ospcommon {
 #endif
       }
 
+      int num_threads()
+      {
+#if defined(OSPRAY_TASKING_TBB)
+         return tbb::this_task_arena::max_concurrency();
+#elif defined(OSPRAY_TASKING_CILK)
+         return numThreads >= 0 ? std::thread::hardware_concurrency();
+#elif defined(OSPRAY_TASKING_OMP)
+         int threads = 0;
+         #pragma omp parallel
+         {
+           threads = omp_get_num_threads();
+         }
+         return threads;
+#elif defined(OSPRAY_TASKING_INTERNAL)
+         return detail::numThreadsTaskSystemInternal();
+#endif
+      }
+
       int numThreads {-1};
 #if defined(OSPRAY_TASKING_TBB)
       tbb::task_scheduler_init tbb_init;
@@ -81,10 +100,8 @@ namespace ospcommon {
     {
       if (!g_tasking_handle.get())
         return 0;
-      else if (g_tasking_handle->numThreads < 0)
-        return std::thread::hardware_concurrency();
       else
-        return g_tasking_handle->numThreads;
+        return g_tasking_handle->num_threads();
     }
 
     void deAffinitizeCores()

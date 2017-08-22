@@ -191,6 +191,11 @@ namespace ospcommon {
         TaskSys::global.init(maxNumRenderTasks);
       }
 
+      int OSPCOMMON_INTERFACE numThreadsTaskSystemInternal()
+      {
+        return static_cast<int>(TaskSys::global.threads.size());
+      }
+
       void scheduleTaskInternal(Task *task,
                                 int numJobs,
                                 ScheduleOrder order)
