@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -28,7 +28,7 @@ varying float AMR_current(void *uniform _self, const varying vec3f &P)
   DualCell D;
   initDualCell(D,P,C.width);
   findDualCell(amr,D);
-  
+
   return lerp(D);
 }
 
@@ -37,7 +37,7 @@ varying float AMR_currentLevel(void *uniform _self, const varying vec3f &P)
 {
   AMRVolume *uniform self = (AMRVolume *uniform)_self;
   AMR *uniform amr = &self->amr;
-  
+
   const CellRef C = findLeafCell(amr,P);
   float width = C.width;
   if (isnan(width))

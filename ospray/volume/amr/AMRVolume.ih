@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -21,7 +21,6 @@
 // ospray
 #include "ospray/volume/Volume.ih"
 
-
 struct AMRVolume
 {
   Volume super; //!< inherited from superclass
@@ -30,4 +29,3 @@ struct AMRVolume
   varying float (*uniform computeSampleLevel)(void *uniform _self,
                                          const varying vec3f &worldCoordinates);
 };
-
