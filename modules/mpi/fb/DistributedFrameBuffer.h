@@ -27,6 +27,7 @@ namespace ospray {
   struct TileDesc;
   struct TileData;
 
+  struct AllTilesDoneMessage;
   struct MasterTileMessage;
   template <typename FBType>
   struct MasterTileMessage_FB;
@@ -50,11 +51,11 @@ namespace ospray {
     MASTER_WRITE_TILE_I8 = 1 << 2,
     MASTER_WRITE_TILE_F32 = 1 << 3,
     /*! command tag used for sending 'final' tiles from the tile
-        owner to the master frame buffer. Note that we *do* send a
-        message back ot the master even in cases where the master
-        does not actually care about the pixel data - we still have
-        to let the master know when we're done. */
-    MASTER_WRITE_TILE_NONE = 1 << 4,
+        owner to the master frame buffer. We do send only one message
+        after all worker tiles are processed. This only applies for
+        the FB_NONE case where the master does not care about the
+        pixel data. */
+    WORKER_ALL_TILES_DONE  = 1 << 4,
     // Modifier to indicate the tile also has depth values
     MASTER_TILE_HAS_DEPTH = 1,
   };
@@ -128,9 +129,8 @@ namespace ospray {
     //! recipient's job to properly delete the message.
     void incoming(const std::shared_ptr<mpicommon::Message> &message) override;
 
-    //! process an empty client-to-master write tile message */
-    void processMessage(MasterTileMessage *msg);
-
+    //! process an client-to-master all-tiles-are-done message */
+    void processMessage(AllTilesDoneMessage *msg, ospcommon::byte_t* data);
     //! process a (non-empty) write tile message at the master
     template <typename FBType>
     void processMessage(MasterTileMessage_FB<FBType> *msg);
@@ -191,6 +191,9 @@ namespace ospray {
     /*! Offloads processing of incoming message to tasking system */
     void scheduleProcessing(const std::shared_ptr<mpicommon::Message> &message);
 
+    /*! Compose and send all-tiles-done message including tile errors. */
+    void sendAllTilesDoneMessage();
+
     // Data members ///////////////////////////////////////////////////////////
 
     ObjectHandle myID;
@@ -250,6 +253,12 @@ namespace ospray {
         enough, and sends us the first rendered tile before our node's
         loadbalancer even started working on that frame. */
     std::vector<std::shared_ptr<mpicommon::Message>> delayedMessage;
+
+    /*! Gather all tile errors in the optimized FB_NONE case to send them out
+        in the single AllTilesDoneMessage. */
+    std::mutex tileErrorsMutex;
+    std::vector< vec2i > tileIDs;
+    std::vector< float > tileErrors;
   };
 
   // Inlined definitions //////////////////////////////////////////////////////
