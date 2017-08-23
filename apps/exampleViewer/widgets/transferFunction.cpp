@@ -235,8 +235,7 @@ void TransferFunction::drawUi()
 
 void TransferFunction::render()
 {
-  // TODO: How many samples for a palette? 128 or 256 is probably plent
-  const int samples = 256;
+  const int samples = transferFcn->child("numSamples").valueAs<int>();
   // Upload to GL if the transfer function has changed
   if (!paletteTex) {
     GLint prevBinding = 0;
@@ -265,13 +264,34 @@ void TransferFunction::render()
     auto alpha  = sg::createNode("alpha",
                                  "DataVector2f")->nodeAs<sg::DataVector2f>();
 
-    colors->v = transferFunctions[tfcnSelection].rgbValues;
-    alpha->v  = rgbaLines[3].line;
+    colors->v.resize(samples);
+    alpha->v.resize(samples);
 
-    for (size_t i = 0; i < colors->size(); ++i) {
-      for (size_t j = 0; j < 3; ++j) {
-        palette[i * 4 + j] = clamp(colors->v[i][j] * 255.0, 0.0, 255.0);
+    // Step along the alpha line and sample it
+    std::array<std::vector<vec2f>::const_iterator, 4> lit = {
+      rgbaLines[0].line.begin(), rgbaLines[1].line.begin(),
+      rgbaLines[2].line.begin(), rgbaLines[3].line.begin()
+    };
+    const float step = 1.0 / samples;
+
+    for (size_t i = 0; i < samples; ++i){
+      const float x = step * i;
+      std::array<float, 4> sampleColor;
+      for (size_t j = 0; j < 4; ++j){
+        if (x > (lit[j] + 1)->x) {
+          ++lit[j];
+        }
+        assert(lit[j] != rgbaLines[j].line.end());
+        const float t = (x - lit[j]->x) / ((lit[j] + 1)->x - lit[j]->x);
+        // It's hard to click down at exactly 0, so offset a little bit
+        sampleColor[j] = clamp(lerp(lit[j]->y - 0.001, (lit[j] + 1)->y - 0.001, t));
       }
+      for (size_t j = 0; j < 3; ++j) {
+        colors->v[i][j] = sampleColor[j];
+        palette[i * 4 + j] = clamp(sampleColor[j] * 255.0, 0.0, 255.0);
+      }
+      alpha->v[i].x = x;
+      alpha->v[i].y = clamp(sampleColor[3], 0.f, 1.f);
       palette[i * 4 + 3] = 255;
     }
 
