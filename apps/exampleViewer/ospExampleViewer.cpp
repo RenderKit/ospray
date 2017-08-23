@@ -19,6 +19,7 @@
 #include "common/sg/importer/Importer.h"
 #include "ospcommon/FileName.h"
 #include "ospcommon/networking/Socket.h"
+#include "ospcommon/utility/getEnvVar.h"
 #include "ospcommon/vec.h"
 #include "common/sg/common/Animator.h"
 
@@ -45,19 +46,13 @@ struct clFile
   clTransform transform;
 };
 
-inline bool groundPlaneDefaultFromEnv()
-{
-  auto env = getEnvVar<int>("OSPRAY_VIEWER_GROUND_PLANE");
-  if (!env.first)
-    return true;
-  else
-    return env.second;
-}
-
 std::vector<clFile> files;
 std::vector< std::vector<clFile> > animatedFiles;
 std::string initialRendererType;
-bool addPlane = groundPlaneDefaultFromEnv();
+
+bool addPlane =
+    utility::getEnvVar<int>("OSPRAY_VIEWER_GROUND_PLANE").value_or(true);
+
 bool debug = false;
 bool fullscreen = false;
 bool print = false;

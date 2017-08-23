@@ -32,6 +32,7 @@
 #include "mpi/render/MPILoadBalancer.h"
 #include "transferFunction/TransferFunction.h"
 #include "common/OSPWork.h"
+#include "ospcommon/utility/getEnvVar.h"
 // std
 #include <algorithm>
 
@@ -58,6 +59,7 @@ namespace ospray {
   namespace mpi {
 
     using namespace mpicommon;
+    using ospcommon::utility::getEnvVar;
 
     void embreeErrorFunc(const RTCError code, const char* str)
     {
@@ -132,12 +134,15 @@ namespace ospray {
           << "#w: running MPI worker process " << worker.rank
           << "/" << worker.size << " on pid " << getpid() << "@" << hostname;
 
-      auto OSPRAY_DYNAMIC_LOADBALANCER = getEnvVar<int>("OSPRAY_DYNAMIC_LOADBALANCER");
-      if (OSPRAY_DYNAMIC_LOADBALANCER.first && OSPRAY_DYNAMIC_LOADBALANCER.second) {
+      auto useDynamicLoadBalancer =
+          getEnvVar<int>("OSPRAY_DYNAMIC_LOADBALANCER").value_or(false);
+
+      if (useDynamicLoadBalancer) {
         puts("#osp:mpi: using dynamicLoadBalancer");
         TiledLoadBalancer::instance = make_unique<dynamicLoadBalancer::Slave>();
-      } else
-      TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Slave>();
+      } else {
+        TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Slave>();
+      }
 
       // -------------------------------------------------------
       // setting up read/write streams

@@ -18,8 +18,9 @@
 #include "Device.h"
 #include "common/OSPCommon.h"
 #include "common/Util.h"
+// ospcommon
+#include "ospcommon/utility/getEnvVar.h"
 #include "ospcommon/sysinfo.h"
-// tasking system internals
 #include "ospcommon/tasking/tasking_system_handle.h"
 // embree
 #include "embree2/rtcore.h"
@@ -55,13 +56,12 @@ namespace ospray {
         return;
       }
 
-      auto OSPRAY_DEBUG = getEnvVar<int>("OSPRAY_DEBUG");
-      debugMode = OSPRAY_DEBUG.first ? OSPRAY_DEBUG.second :
-                                       getParam1i("debug", 0);
+      auto OSPRAY_DEBUG = utility::getEnvVar<int>("OSPRAY_DEBUG");
+      debugMode = OSPRAY_DEBUG.value_or(getParam1i("debug", 0));
 
-      auto OSPRAY_TRACE_API = getEnvVar<int>("OSPRAY_TRACE_API");
-      bool traceAPI = OSPRAY_TRACE_API.first ? OSPRAY_TRACE_API.second :
-                                               getParam1i("traceApi", 0);
+      auto OSPRAY_TRACE_API = utility::getEnvVar<int>("OSPRAY_TRACE_API");
+      bool traceAPI = OSPRAY_TRACE_API.value_or(getParam1i("traceApi", 0));
+
       if (traceAPI) {
         auto streamPtr =
           std::make_shared<std::ofstream>("ospray_api_trace.txt");
@@ -72,17 +72,17 @@ namespace ospray {
         };
       }
 
-      auto OSPRAY_LOG_LEVEL = getEnvVar<int>("OSPRAY_LOG_LEVEL");
-      logLevel = OSPRAY_LOG_LEVEL.first ? OSPRAY_LOG_LEVEL.second :
-                                          getParam1i("logLevel", 0);
+      auto OSPRAY_LOG_LEVEL = utility::getEnvVar<int>("OSPRAY_LOG_LEVEL");
+      logLevel = OSPRAY_LOG_LEVEL.value_or(getParam1i("logLevel", 0));
 
-      auto OSPRAY_THREADS = getEnvVar<int>("OSPRAY_THREADS");
-      numThreads = OSPRAY_THREADS.first ? OSPRAY_THREADS.second :
-                                          getParam1i("numThreads", -1);
+      auto OSPRAY_THREADS = utility::getEnvVar<int>("OSPRAY_THREADS");
+      numThreads = OSPRAY_THREADS.value_or(getParam1i("numThreads", -1));
 
-      auto OSPRAY_LOG_OUTPUT = getEnvVar<std::string>("OSPRAY_LOG_OUTPUT");
-      if (OSPRAY_LOG_OUTPUT.first) {
-        auto &dst = OSPRAY_LOG_OUTPUT.second;
+      auto OSPRAY_LOG_OUTPUT =
+          utility::getEnvVar<std::string>("OSPRAY_LOG_OUTPUT");
+
+      if (OSPRAY_LOG_OUTPUT) {
+        auto &dst = OSPRAY_LOG_OUTPUT.value();
         if (dst == "cout")
           msg_fcn = [](const char *msg){ std::cout << msg; };
         else if (dst == "cerr")
@@ -94,10 +94,10 @@ namespace ospray {
         numThreads = 1;
       }
 
-      auto OSPRAY_SET_AFFINITY = getEnvVar<int>("OSPRAY_SET_AFFINITY");
-      if (OSPRAY_SET_AFFINITY.first) {
-        threadAffinity = OSPRAY_SET_AFFINITY.second == 0 ? DEAFFINITIZE :
-                                                           AFFINITIZE;
+      auto OSPRAY_SET_AFFINITY = utility::getEnvVar<int>("OSPRAY_SET_AFFINITY");
+      if (OSPRAY_SET_AFFINITY) {
+        threadAffinity = OSPRAY_SET_AFFINITY.value() == 0 ? DEAFFINITIZE :
+                                                            AFFINITIZE;
       }
 
       threadAffinity = getParam1i("setAffinity", threadAffinity);

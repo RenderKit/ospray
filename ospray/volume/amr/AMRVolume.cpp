@@ -19,7 +19,9 @@
 #include "ospray/common/Model.h"
 #include "ospray/common/Data.h"
 #include "ospray/transferFunction/TransferFunction.h"
+// ospcommon
 #include "ospcommon/tasking/parallel_for.h"
+#include "ospcommon/utility/getEnvVar.h"
 // ispc exports
 #include "AMRVolume_ispc.h"
 #include "method_finest_ispc.h"
@@ -63,13 +65,11 @@ namespace ospray {
       else
         voxelRange = getParam2f("voxelRange", voxelRange);
 
-      auto methodStringFromEnv = getEnvVar<std::string>("OSPRAY_AMR_METHOD");
-      std::string methodString = "current";
+      auto methodStringFromEnv =
+          utility::getEnvVar<std::string>("OSPRAY_AMR_METHOD");
 
-      if (methodStringFromEnv.first)
-        methodString = methodStringFromEnv.second;
-      else
-        methodString = getParamString("amrMethod","current");
+      std::string methodString =
+          methodStringFromEnv.value_or(getParamString("amrMethod","current"));
 
       if (methodString == "finest" || methodString == "finestLevel")
         ispc::AMR_install_finest(getIE());
@@ -109,11 +109,11 @@ namespace ospray {
       for (int i=0;i<data->numBricks;i++)
         coarsestCellWidth = max(coarsestCellWidth,data->brick[i]->cellWidth);
       ospLogF(1) << "coarsest cell width is " << coarsestCellWidth << std::endl;
-      float samplingStep = 0.1f*coarsestCellWidth;
 
-      auto rateFromString = getEnvVar<std::string>("OSPRAY_AMR_SAMPLING_STEP");
-      if (rateFromString.first)
-        samplingStep = atof(rateFromString.second.c_str());
+      auto rateFromEnv =
+          utility::getEnvVar<float>("OSPRAY_AMR_SAMPLING_STEP");
+
+      float samplingStep = rateFromEnv.value_or(0.1f * coarsestCellWidth);
 
       box3f worldBounds = accel->worldBounds;
 

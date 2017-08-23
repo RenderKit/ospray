@@ -22,6 +22,7 @@
 // ospcommon
 #include "ospcommon/tasking/parallel_for.h"
 #include "ospcommon/tasking/schedule.h"
+#include "ospcommon/utility/getEnvVar.h"
 // std
 #include <algorithm>
 
@@ -190,8 +191,8 @@ namespace ospray {
         workerNotified.resize(worker.size);
 
         // TODO numPreAllocated should be estimated/tuned automatically
-        auto OSPRAY_PREALLOCATED_TILES = getEnvVar<int>("OSPRAY_PREALLOCATED_TILES");
-        numPreAllocated = OSPRAY_PREALLOCATED_TILES.first ? OSPRAY_PREALLOCATED_TILES.second : 4;
+        numPreAllocated =
+            utility::getEnvVar<int>("OSPRAY_PREALLOCATED_TILES").value_or(4);
         PRINT(numPreAllocated);
       }
 
@@ -314,7 +315,6 @@ namespace ospray {
         return "osp::mpi::dynamicLoadBalancer::Master";
       }
 
-
       // dynamicLoadBalancer::Slave definitions ////////////////////////////////
 
       Slave::Slave()
@@ -374,17 +374,17 @@ namespace ospray {
       void Slave::tileTask(const TileTask &task)
       {
 #if TILE_SIZE > MAX_TILE_SIZE
-          auto tilePtr = make_unique<Tile>(task.tileId, fb->size, task.accumId);
-          auto &tile   = *tilePtr;
+        auto tilePtr = make_unique<Tile>(task.tileId, fb->size, task.accumId);
+        auto &tile   = *tilePtr;
 #else
-          Tile __aligned(64) tile(task.tileId, fb->size, task.accumId);
+        Tile __aligned(64) tile(task.tileId, fb->size, task.accumId);
 #endif
 
-          while (!frameActive) PRINT(frameActive); // XXX busy wait for valid perFrameData
+        while (!frameActive) PRINT(frameActive); // XXX busy wait for valid perFrameData
 
-          tasking::parallel_for(numJobs(renderer->spp, task.accumId), [&](int tid) {
-            renderer->renderTile(perFrameData, tile, tid);
-          });
+        tasking::parallel_for(numJobs(renderer->spp, task.accumId), [&](int tid) {
+          renderer->renderTile(perFrameData, tile, tid);
+        });
 
         if (tilesAvailable)
           requestTile(); // XXX here or after setTile?
@@ -399,9 +399,10 @@ namespace ospray {
 
       void Slave::requestTile()
       {
-          int requester = mpi::globalRank();
-          auto msg = std::make_shared<mpicommon::Message>(&requester, sizeof(requester));
-          mpi::messaging::sendTo(mpi::masterRank(), myId, msg);
+        int requester = mpi::globalRank();
+        auto msg =
+            std::make_shared<mpicommon::Message>(&requester, sizeof(requester));
+        mpi::messaging::sendTo(mpi::masterRank(), myId, msg);
       }
 
       std::string Slave::toString() const
