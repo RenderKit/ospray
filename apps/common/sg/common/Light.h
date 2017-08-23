@@ -41,7 +41,6 @@ namespace ospray {
     protected:
       /*! \brief light type, i.e., 'DirectionalLight', 'PointLight', ... */
       std::string type = "none";
-      OSPLight ospLight {nullptr};
     };
 
     struct OSPSG_INTERFACE AmbientLight : public Light

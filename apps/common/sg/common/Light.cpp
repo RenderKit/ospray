@@ -21,7 +21,7 @@ namespace ospray {
 
     Light::Light()
     {
-      setValue(OSPObject(nullptr));
+      setValue((OSPLight)nullptr);
     }
 
     Light::Light(const std::string &type) : Light()
@@ -31,20 +31,18 @@ namespace ospray {
 
     void Light::preCommit(RenderContext &ctx)
     {
-      if (!ospLight)
-        ospLight = ospNewLight(ctx.ospRenderer, type.c_str());
-      ospCommit(ospLight);
-      setValue((OSPObject)ospLight);
+      if (!valueAs<OSPLight>())
+        setValue(ospNewLight(ctx.ospRenderer, type.c_str()));
     }
 
     void Light::postCommit(RenderContext &ctx)
     {
-      ospCommit(ospLight);
+      ospCommit(valueAs<OSPLight>());
     }
 
     std::string Light::toString() const
     {
-      return "ospray::sg::Light";
+      return "ospray::sg::Light<" + type + ">";
     }
 
     AmbientLight::AmbientLight()
@@ -123,10 +121,12 @@ namespace ospray {
 
     void HDRILight::postCommit(RenderContext &ctx)
     {
-      if (hasChild("map"))
+      if (hasChild("map")) {
         ospSetObject(valueAs<OSPObject>(), "map",
           child("map").valueAs<OSPObject>());
-      ospCommit(ospLight);
+      }
+
+      Light::postCommit(ctx);
     }
 
     bool HDRILight::computeValid()

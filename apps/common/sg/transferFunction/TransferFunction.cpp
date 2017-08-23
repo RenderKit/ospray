@@ -21,7 +21,7 @@ namespace ospray {
 
     TransferFunction::TransferFunction()
     {
-      setValue((OSPObject)nullptr);
+      setValue((OSPTransferFunction)nullptr);
       createChild("valueRange", "vec2f", vec2f(0.f, 1.f));
       createChild("numSamples", "int", 256);
 
@@ -81,10 +81,10 @@ namespace ospray {
 
     void TransferFunction::preCommit(RenderContext &ctx)
     {
-      auto ospTransferFunction = (OSPTransferFunction)valueAs<OSPObject>();
+      auto ospTransferFunction = valueAs<OSPTransferFunction>();
       if (!ospTransferFunction) {
         ospTransferFunction = ospNewTransferFunction("piecewise_linear");
-        setValue((OSPObject)ospTransferFunction);
+        setValue(ospTransferFunction);
       }
 
       calculateOpacities();
@@ -92,8 +92,7 @@ namespace ospray {
 
     void TransferFunction::postCommit(RenderContext &ctx)
     {
-      auto ospTransferFunction = (OSPTransferFunction)valueAs<OSPObject>();
-      ospCommit(ospTransferFunction);
+      ospCommit(valueAs<OSPTransferFunction>());
     }
 
     void TransferFunction::setFromXML(const xml::Node& node,

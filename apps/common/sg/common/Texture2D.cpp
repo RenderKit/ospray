@@ -295,9 +295,9 @@ namespace ospray {
     }
 
     Texture2D::Texture2D()
-      : data(nullptr), texelData(nullptr), ospTexture2D(nullptr)
+      : data(nullptr), texelData(nullptr)
     {
-      setValue((OSPObject)nullptr);
+      setValue((OSPTexture2D)nullptr);
     }
 
     void Texture2D::preCommit(RenderContext &ctx)
@@ -321,21 +321,17 @@ namespace ospray {
         dat = texelData->base();
       if (!dat)
       {
-        ospTexture2D = nullptr;
+        setValue((OSPTexture2D)nullptr);
         std::cout << "Texture2D: image data null\n";
         return;
       }
 
-      ospTexture2D = ospNewTexture2D( (osp::vec2i&)size,
-                                       type,
-                                       dat,
-                                       0);
-      setValue((OSPObject)ospTexture2D);
+      auto ospTexture2D = ospNewTexture2D((osp::vec2i&)size, type, dat, 0);
+      setValue(ospTexture2D);
       ospCommit(ospTexture2D);
     }
 
     OSP_REGISTER_SG_NODE(Texture2D);
-
 
   } // ::ospray::sg
 } // ::ospray

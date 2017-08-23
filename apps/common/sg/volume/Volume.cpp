@@ -83,7 +83,7 @@ namespace ospray {
     /*! \brief returns a std::string with the c++ name of this class */
     Volume::Volume()
     {
-      setValue((OSPObject)nullptr);
+      setValue((OSPVolume)nullptr);
 
       createChild("transferFunction", "TransferFunction");
       createChild("gradientShadingEnabled", "bool", true);
@@ -122,15 +122,16 @@ namespace ospray {
 
     void Volume::postCommit(RenderContext &ctx)
     {
-      auto ospVolume = (OSPVolume)valueAs<OSPObject>();
+      auto ospVolume = valueAs<OSPVolume>();
       ospSetObject(ospVolume, "transferFunction",
-                   child("transferFunction").valueAs<OSPObject>());
+                   child("transferFunction").valueAs<OSPTransferFunction>());
       ospCommit(ospVolume);
     }
 
     void Volume::postRender(RenderContext &ctx)
     {
-      auto ospVolume = (OSPVolume)valueAs<OSPObject>();
+      auto ospVolume = valueAs<OSPVolume>();
+
       if (ospVolume) {
         ospAddVolume(ctx.world->ospModel(), ospVolume);
         if (child("isosurfaceEnabled").valueAs<bool>() && isosurfacesGeometry)
@@ -201,7 +202,8 @@ namespace ospray {
 
     void StructuredVolumeFromFile::preCommit(RenderContext &ctx)
     {
-      auto ospVolume = (OSPVolume)valueAs<OSPObject>();
+      auto ospVolume = valueAs<OSPVolume>();
+
       if (ospVolume) {
         ospCommit(ospVolume);
         if (child("isosurfaceEnabled").valueAs<bool>() == true
@@ -229,7 +231,7 @@ namespace ospray {
       isosurfacesGeometry = ospNewGeometry("isosurfaces");
       ospSetObject(isosurfacesGeometry, "volume", ospVolume);
 
-      setValue((OSPObject)ospVolume);
+      setValue(ospVolume);
 
       ospSetString(ospVolume,"voxelType",voxelType.c_str());
       ospSetVec3i(ospVolume,"dimensions",(const osp::vec3i&)dimensions);
@@ -324,7 +326,8 @@ namespace ospray {
 
     void RichtmyerMeshkov::preCommit(RenderContext &ctx)
     {
-      auto ospVolume = (OSPVolume)valueAs<OSPObject>();
+      auto ospVolume = valueAs<OSPVolume>();
+
       if (ospVolume) {
         ospCommit(ospVolume);
         if (child("isosurfaceEnabled").valueAs<bool>() == true
@@ -345,7 +348,7 @@ namespace ospray {
       isosurfacesGeometry = ospNewGeometry("isosurfaces");
       ospSetObject(isosurfacesGeometry, "volume", ospVolume);
 
-      setValue((OSPObject)ospVolume);
+      setValue(ospVolume);
 
       ospSetString(ospVolume, "voxelType", "uchar");
       ospSetVec3i(ospVolume, "dimensions", (const osp::vec3i&)dimensions);
@@ -378,7 +381,7 @@ namespace ospray {
 
     void RichtmyerMeshkov::loaderThread(LoaderState &state)
     {
-      auto ospVolume = (OSPVolume)valueAs<OSPObject>();
+      auto ospVolume = valueAs<OSPVolume>();
       Node &progressLog = child("blocksLoaded");
       std::vector<uint8_t> block(LoaderState::BLOCK_SIZE, 0);
       while (true) {

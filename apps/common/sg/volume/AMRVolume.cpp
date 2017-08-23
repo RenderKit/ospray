@@ -94,11 +94,11 @@ namespace ospray {
 
     void AMRVolume::preCommit(RenderContext &ctx)
     {
-      OSPVolume volume = (OSPVolume)valueAs<OSPObject>();
+      auto volume = valueAs<OSPVolume>();
 
       if (!volume) {
         volume = ospNewVolume("amr_volume");
-        setValue((OSPObject)volume);
+        setValue(volume);
       }
 
       for (int bID = 0; bID < brickInfo.size(); bID++) {

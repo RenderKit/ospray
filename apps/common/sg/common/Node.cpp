@@ -68,12 +68,12 @@ namespace ospray {
       return properties.type;
     }
 
-    SGVar Node::min() const
+    Any Node::min() const
     {
       return properties.minmax[0];
     }
 
-    SGVar Node::max() const
+    Any Node::max() const
     {
       return properties.minmax[1];
     }
@@ -98,7 +98,7 @@ namespace ospray {
       properties.type = v;
     }
 
-    void Node::setMinMax(const SGVar &minv, const SGVar &maxv)
+    void Node::setMinMax(const Any &minv, const Any &maxv)
     {
       properties.minmax.resize(2);
       properties.minmax[0] = minv;
@@ -120,12 +120,12 @@ namespace ospray {
       properties.documentation = s;
     }
 
-    void Node::setWhiteList(const std::vector<SGVar> &values)
+    void Node::setWhiteList(const std::vector<Any> &values)
     {
       properties.whitelist = values;
     }
 
-    void Node::setBlackList(const std::vector<SGVar> &values)
+    void Node::setBlackList(const std::vector<Any> &values)
     {
       properties.blacklist = values;
     }
@@ -172,26 +172,10 @@ namespace ospray {
 
     // Node stored value (data) interface /////////////////////////////////////
 
-    SGVar Node::value()
+    Any Node::value()
     {
       std::lock_guard<std::mutex> lock{mutex};
       return properties.value;
-    }
-
-    void Node::setValue(SGVar val)
-    {
-      bool modified = false;
-      {
-        std::lock_guard<std::mutex> lock{mutex};
-        if (val != properties.value)
-        {
-          properties.value = val;
-          modified = true;
-        }
-      }
-
-      if (modified)
-        markAsModified();
     }
 
     // Update detection interface /////////////////////////////////////////////
@@ -350,7 +334,7 @@ namespace ospray {
 
     Node& Node::createChild(std::string name,
                             std::string type,
-                            SGVar var,
+                            Any var,
                             int flags,
                             std::string documentation)
     {
@@ -487,7 +471,7 @@ namespace ospray {
 
     std::shared_ptr<Node> createNode(std::string name,
                                      std::string type,
-                                     SGVar var,
+                                     Any var,
                                      int flags,
                                      std::string documentation)
     {

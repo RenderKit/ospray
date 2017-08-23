@@ -28,7 +28,8 @@ namespace ospray {
 
     void TetVolume::preCommit(RenderContext &ctx)
     {
-      auto ospVolume = (OSPVolume)valueAs<OSPObject>();
+      auto ospVolume = valueAs<OSPVolume>();
+
       if (ospVolume) {
         ospCommit(ospVolume);
         if (child("isosurfaceEnabled").valueAs<bool>() == true
@@ -41,8 +42,7 @@ namespace ospray {
         return;
       }
 
-      ospVolume = ospNewVolume("tetrahedral_volume");
-      setValue((OSPObject)ospVolume);
+      setValue(ospNewVolume("tetrahedral_volume"));
 
       if (!hasChild("vertices"))
         throw std::runtime_error("#osp:sg TetVolume -> no 'vertices' array!");

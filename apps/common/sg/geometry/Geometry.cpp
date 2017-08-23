@@ -24,7 +24,7 @@ namespace ospray {
     {
       createChild("material", "Material");
       createChild("type", "string", type);
-      setValue((OSPObject)nullptr);
+      setValue((OSPGeometry)nullptr);
     }
 
     std::string Geometry::toString() const
@@ -34,11 +34,11 @@ namespace ospray {
 
     void Geometry::preCommit(RenderContext &ctx)
     {
-      auto ospGeometry = (OSPGeometry)valueAs<OSPObject>();
+      auto ospGeometry = valueAs<OSPGeometry>();
       if (!ospGeometry) {
         auto type = child("type").valueAs<std::string>();
         ospGeometry = ospNewGeometry(type.c_str());
-        setValue((OSPObject)ospGeometry);
+        setValue(ospGeometry);
 
         child("bounds") = computeBounds();
       }
@@ -46,17 +46,16 @@ namespace ospray {
 
     void Geometry::postCommit(RenderContext &ctx)
     {
-      auto ospGeometry = (OSPGeometry)valueAs<OSPObject>();
+      auto ospGeometry = valueAs<OSPGeometry>();
       if (hasChild("material")) {
-        ospSetMaterial(ospGeometry,
-                       (OSPMaterial)child("material").valueAs<OSPObject>());
+        ospSetMaterial(ospGeometry, child("material").valueAs<OSPMaterial>());
       }
       ospCommit(ospGeometry);
     }
 
     void Geometry::postRender(RenderContext& ctx)
     {
-      auto ospGeometry = (OSPGeometry)valueAs<OSPObject>();
+      auto ospGeometry = valueAs<OSPGeometry>();
       if (ospGeometry)
         ospAddGeometry(ctx.currentOSPModel, ospGeometry);
     }

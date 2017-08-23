@@ -42,7 +42,7 @@ namespace ospray {
       std::shared_ptr<sg::Texture2D> txt = std::make_shared<sg::Texture2D>();
       txt->setName(name);
       txt->setType(type);
-      txt->ospTexture = NULL;
+      txt->setValue((OSPTexture2D)nullptr);
       nodeList.push_back(txt);
 
       int height = -1, width = -1, ofs = -1, channels = -1, depth = -1;
@@ -113,7 +113,7 @@ namespace ospray {
           int texID = atoi(s);
           std::shared_ptr<Texture2D> tex = std::dynamic_pointer_cast<Texture2D>(nodeList[texID]);
           mat->textures.push_back(tex);
-          s = strtok(NULL, " \t\n\r");
+          s = strtok(nullptr, " \t\n\r");
         }
         free(tokenBuffer);
       }
@@ -131,7 +131,7 @@ namespace ospray {
 
       //Get the data out of the node
       char *value = strdup(node.content.c_str());
-#define NEXT_TOK strtok(NULL, " \t\n\r"); if (!s) throw std::runtime_error("unknown parameter type '" + paramType + "' when parsing RIVL materials.");
+#define NEXT_TOK strtok(nullptr, " \t\n\r"); if (!s) throw std::runtime_error("unknown parameter type '" + paramType + "' when parsing RIVL materials.");
       char *s = strtok((char*)value, " \t\n\r");
       if (!s) {
         throw std::runtime_error("unknown parameter type '" + paramType + "' when parsing RIVL materials.");
@@ -142,7 +142,7 @@ namespace ospray {
         //TODO: lookup id into textures
         int texID = atoi(s);
           std::shared_ptr<Texture2D> tex = std::dynamic_pointer_cast<Texture2D>(mat->textures[texID]);
-          s = strtok(NULL, " \t\n\r");
+          s = strtok(nullptr, " \t\n\r");
           mat->setChild(paramName, tex);
       }
       else if (!paramType.compare("float")) {
@@ -336,7 +336,7 @@ namespace ospray {
             char* value = strdup(child.content.c_str());
             int matCounter=0;
             auto &materialListNode = mesh->createChild("materialList", "Node");
-            for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(NULL," \t\n\r")) {
+            for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(nullptr," \t\n\r")) {
               size_t matID = atoi(s);
               auto mat = nodeList[matID]->nodeAs<sg::Material>();
               mesh->setChild("material", mat);
@@ -362,7 +362,7 @@ namespace ospray {
       if (!node.content.empty()) {
         char *value = strdup(node.content.c_str());
 
-        for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(NULL," \t\n\r")) {
+        for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(nullptr," \t\n\r")) {
           size_t childID = atoi(s);
           auto child = nodeList[childID];
 
@@ -433,11 +433,11 @@ namespace ospray {
       string binFileName = fileName+".bin";
       binBasePtr = (void *)mapFile(binFileName);
       if (binBasePtr == nullptr) {
-        std::cerr << "#osp:sg: WARNING: mapped file is NULL!!!!" << std::endl;
-        std::cerr << "#osp:sg: WARNING: mapped file is NULL!!!!" << std::endl;
-        std::cerr << "#osp:sg: WARNING: mapped file is NULL!!!!" << std::endl;
-        std::cerr << "#osp:sg: WARNING: mapped file is NULL!!!!" << std::endl;
-        std::cerr << "#osp:sg: WARNING: mapped file is NULL!!!!" << std::endl;
+        std::cerr << "#osp:sg: WARNING: mapped file is nullptr!!!!" << std::endl;
+        std::cerr << "#osp:sg: WARNING: mapped file is nullptr!!!!" << std::endl;
+        std::cerr << "#osp:sg: WARNING: mapped file is nullptr!!!!" << std::endl;
+        std::cerr << "#osp:sg: WARNING: mapped file is nullptr!!!!" << std::endl;
+        std::cerr << "#osp:sg: WARNING: mapped file is nullptr!!!!" << std::endl;
       }
       std::shared_ptr<xml::XMLDoc> doc = xml::readXML(fileName);
       if (doc->child.size() != 1 || doc->child[0]->name != "BGFscene")
