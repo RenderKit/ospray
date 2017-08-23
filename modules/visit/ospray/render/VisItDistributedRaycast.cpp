@@ -16,7 +16,6 @@
 
 #include "VisItDistributedRaycast.h"
 // ospray
-#include "VisItModuleCommon.h"
 #include "common/DistributedModel.h"
 #include "render/MPILoadBalancer.h"
 #include "fb/DistributedFrameBuffer.h"
@@ -29,6 +28,26 @@
 namespace ospray {
   namespace visit {
 
+    VisItTile_Internal::VisItTile_Internal(const Tile& src) 
+    {
+      const float aTh = 0.0f; // alpha threshold
+      if (*(std::max_element(src.a,src.a+TILE_SIZE*TILE_SIZE)) > aTh) {
+	minDepth = *(std::min_element(src.z,src.z+TILE_SIZE*TILE_SIZE));
+	maxDepth = *(std::max_element(src.z,src.z+TILE_SIZE*TILE_SIZE));      
+	r = std::vector<float>(src.r, src.r + TILE_SIZE * TILE_SIZE);
+	g = std::vector<float>(src.g, src.g + TILE_SIZE * TILE_SIZE);
+	b = std::vector<float>(src.b, src.b + TILE_SIZE * TILE_SIZE);
+	a = std::vector<float>(src.a, src.a + TILE_SIZE * TILE_SIZE);
+	region[0] = src.region.lower.x;
+	region[1] = src.region.lower.y;
+	region[2] = src.region.upper.x;
+	region[3] = src.region.upper.y;
+	fbSize[0] = src.fbSize.x;
+	fbSize[1] = src.fbSize.y;
+	visible = true;
+      }
+    }
+    
     struct RegionInfo
     {
       int currentRegion;
@@ -36,50 +55,18 @@ namespace ospray {
       RegionInfo() : currentRegion(0), regionVisible(nullptr) {}
     };
 
-    TileInfo::TileInfo(const Tile& src) 
-    {
-      const float aTh = 0.01f;
-      if (*(std::max_element(src.a,src.a+TILE_SIZE*TILE_SIZE)) > aTh) {
-	depth = *(std::min_element(src.z,src.z+TILE_SIZE*TILE_SIZE));
-	// // break single tile into smaller patches for parallel copying
-	// const int patchRatio = 8;
-	// const int numOfPatches = patchRatio * 4;
-	// const float* src_chs[4] = {src.r, src.g, src.b, src.a};
-	// float*       des_chs[4] = {r, g, b, a};
-	// tasking::parallel_for(numOfPatches, [&](int ch) {
-	// 	const float* src_ch = 
-	// 	    src_chs[ch/4] + (ch%4)*TILE_SIZE*TILE_SIZE/patchRatio;
-	// 	float*       des_ch=
-	// 	    des_chs[ch/4] + (ch%4)*TILE_SIZE*TILE_SIZE/patchRatio;
-	// 	std::copy(src_ch, 
-	// 		  src_ch+TILE_SIZE*TILE_SIZE/patchRatio, 
-	// 		  des_ch);
-	//     });
-	std::copy(src.r, src.r + TILE_SIZE * TILE_SIZE, r);
-	std::copy(src.g, src.g + TILE_SIZE * TILE_SIZE, g);
-	std::copy(src.b, src.b + TILE_SIZE * TILE_SIZE, b);
-	std::copy(src.a, src.a + TILE_SIZE * TILE_SIZE, a);			
-	regionSize[0] = src.region.lower.x;
-	regionSize[1] = src.region.lower.y;
-	regionSize[2] = src.region.upper.x;
-	regionSize[3] = src.region.upper.y;
-	fbSize[0] = src.fbSize.x;
-	fbSize[1] = src.fbSize.y;
-	visible = true;
-      }
-    }
-
-    // VisItDistributedRaycastRenderer definitions /////////////////////////////////
+    // VisItDistributedRaycastRenderer definitions //////////////////////////////
     VisItDistributedRaycastRenderer::VisItDistributedRaycastRenderer()
     {
       DistributedRaycastRenderer();
-      std::cout << "#osp: creating VisIt distributed raycast renderer!" << std::endl;
+      std::cout << "#osp: creating VisIt distributed raycast renderer!" 
+		<< std::endl;
     }
 
     void VisItDistributedRaycastRenderer::commit()
     {
       DistributedRaycastRenderer::commit();
-      tileRetriever = getVoidPtr("tileRetriever", nullptr);
+      tilefcn = getVoidPtr("VisItTileRetriever", nullptr);
     }
 
     float VisItDistributedRaycastRenderer::renderFrame(FrameBuffer *fb,
@@ -90,7 +77,7 @@ namespace ospray {
 
       auto *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
       dfb->setFrameMode(DistributedFrameBuffer::ALPHA_BLEND);
-      if (tileRetriever == nullptr) { 
+      if (tilefcn == nullptr) { 
 	// never start to sync if using render to tile mode
 	dfb->startNewFrame(errorThreshold); 
       }
@@ -105,7 +92,7 @@ namespace ospray {
 	distribModel->myRegions.size() + distribModel->othersRegions.size();
 
       // Initialize the tile list
-      TileRegionList tileInfoList(dfb->getTotalTiles());
+      std::vector<VisItTileArray> tilemap(dfb->getTotalTiles());
 
       tasking::parallel_for(dfb->getTotalTiles(), [&](int taskIndex) {
 	  const size_t numTiles_x = fb->getNumTiles().x;
@@ -136,17 +123,17 @@ namespace ospray {
 	    });
 
 	  // initialize tile information list
-	  tileInfoList[taskIndex] = std::vector<TileInfo>(0);
+	  tilemap[taskIndex] = VisItTileArray(0);
 	  if (regionInfo.regionVisible[0]) {
 	    tile.generation = 1;
 	    tile.children = 0;
-	    if (tileRetriever == nullptr) {
+	    if (tilefcn == nullptr) {
 	      fb->setTile(tile);
 	    } 
 	    else {
-	      tileInfoList[taskIndex].emplace_back(tile);
+	      VisItTile* visitTile = new VisItTile_Internal(tile);
+	      tilemap[taskIndex].push_back(visitTile);
 	    }			
-
 	  }
 
 	  // If we own the tile send the background color and the count of 
@@ -154,22 +141,26 @@ namespace ospray {
 	  // number of regions projecting to it that will be sent.
 	  if (tileOwner) {
 	    tile.generation = 0;
-	    tile.children = std::count(regionInfo.regionVisible, regionInfo.regionVisible + numRegions, true);
+	    tile.children = std::count(regionInfo.regionVisible, 
+				       regionInfo.regionVisible + numRegions, 
+				       true);
 	    std::fill(tile.r, tile.r + TILE_SIZE * TILE_SIZE, bgColor.x);
 	    std::fill(tile.g, tile.g + TILE_SIZE * TILE_SIZE, bgColor.y);
 	    std::fill(tile.b, tile.b + TILE_SIZE * TILE_SIZE, bgColor.z);
 	    std::fill(tile.a, tile.a + TILE_SIZE * TILE_SIZE, 1.0);
-	    std::fill(tile.z, tile.z + TILE_SIZE * TILE_SIZE, std::numeric_limits<float>::infinity());
-	    if (tileRetriever == nullptr) {
+	    std::fill(tile.z, tile.z + TILE_SIZE * TILE_SIZE, 
+		      std::numeric_limits<float>::infinity());
+	    if (tilefcn == nullptr) {
 	      fb->setTile(tile);
 	    } 
 	    else {
-	      tileInfoList[taskIndex].emplace_back(tile);
+	      VisItTile* visitTile = new VisItTile_Internal(tile);
+	      tilemap[taskIndex].push_back(visitTile);
 	    }			
-
 	  }
 
-	  // Render the rest of our regions that project to this tile and ship them off
+	  // Render the rest of our regions that project to this tile and ship
+	  // them off
 	  tile.generation = 1;
 	  tile.children = 0;
 	  for (size_t bid = 1; bid < distribModel->myRegions.size(); ++bid) {
@@ -180,24 +171,36 @@ namespace ospray {
 	    tasking::parallel_for(NUM_JOBS, [&](int tIdx) {
 		renderTile(&regionInfo, tile, tIdx);
 	      });
-	    if (tileRetriever == nullptr) {
+	    if (tilefcn == nullptr) {
 	      fb->setTile(tile);
 	    } 
 	    else {
-	      tileInfoList[taskIndex].emplace_back(tile);
-	    }			
-
+	      VisItTile* visitTile = new VisItTile_Internal(tile);
+	      tilemap[taskIndex].push_back(visitTile);
+	    }
 	  }
 	});
 
       // finishing frame
-      if (tileRetriever == nullptr) {
+      if (tilefcn == nullptr) {
 	// do normal rendering
 	dfb->waitUntilFinished(); 
       }
-      else { 
-	// send all tiles to tile handler
-	(*static_cast<TileRetriever*>(tileRetriever))(tileInfoList); 
+      else {
+	// remove empty tiles
+	VisItTileArray finalizedTileArray;
+	for (auto& r : tilemap) {
+	  for (auto& c : r) {
+	    VisItTile_Internal* t = (VisItTile_Internal*)c;
+	    if (t->visible) {
+	      finalizedTileArray.push_back(t);
+	    }
+	  }
+	}
+	// send all tiles to tile handler	
+	(*static_cast<VisItTileRetriever*>(tilefcn))(finalizedTileArray); 
+	// clean up
+	for (auto& t : finalizedTileArray) { delete t; }
       }
       endFrame(nullptr, channelFlags);
       return dfb->endFrame(errorThreshold);

@@ -18,6 +18,8 @@
 
 // ospray
 #include "render/distributed/DistributedRaycast.h"
+#include "VisItModuleCommon.h"
+#include "fb/Tile.h"
 
 // STL
 #include <vector>
@@ -25,7 +27,15 @@
 
 namespace ospray {
   namespace visit {
-	
+
+    // definition of tiles for MPI distributed renderer
+    struct VisItTile_Internal : public VisItTile
+    {
+      bool visible{false};
+      VisItTile_Internal() = default;
+      VisItTile_Internal(const Tile& src);
+    };
+    
     /* The distributed raycast renderer supports rendering distributed
      * geometry and volume data, assuming that the data distribution is suitable
      * for sort-last compositing. Specifically, the data must be organized
@@ -51,7 +61,7 @@ namespace ospray {
       std::string toString() const override;
 
       // function pointer to retrieve all the tiles
-      void* tileRetriever {nullptr};
+      void* tilefcn {nullptr};
     };
 
   } // ::ospray::visit

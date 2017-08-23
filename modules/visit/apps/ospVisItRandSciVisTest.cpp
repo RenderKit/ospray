@@ -31,6 +31,7 @@
 #include "apps/bench/pico_bench/pico_bench.h"
 // stl
 #include <random>
+#include <algorithm>    // std::sort
 #include "gensv/generateSciVis.h"
 // visit module
 #include "VisItModuleCommon.h"
@@ -101,12 +102,21 @@ namespace ospVisItRandSciVisTest {
     camera.commit();
   }
 
+  float SRGB(float c) {
+    const float a = 0.055f;
+    if (c <= 0.0031308) {
+      return (12.92 * c);
+    } else {
+      return (1+a) * std::pow(c, 1.f/2.4f) - a; 
+    }
+  }
+
   void writePPM(const std::string &fileName,
-		const ospray::visit::TileInfo &tile)
+		const ospray::visit::VisItTile &tile)
   {
     FILE *file = fopen(fileName.c_str(), "wb");
-    const int sizeX = tile.regionSize[2] - tile.regionSize[0];
-    const int sizeY = tile.regionSize[3] - tile.regionSize[1];
+    const int sizeX = tile.region[2] - tile.region[0];
+    const int sizeY = tile.region[3] - tile.region[1];
     fprintf(file, "P6\n%i %i\n255\n", sizeX, sizeY);
     unsigned char *out = (unsigned char *)alloca(3*sizeX);
     for (int y = 0; y < sizeY; y++) {
@@ -114,11 +124,32 @@ namespace ospVisItRandSciVisTest {
       const float *ing = &tile.g[(sizeY-1-y)*sizeX];
       const float *inb = &tile.b[(sizeY-1-y)*sizeX];
       for (int x = 0; x < sizeX; x++) {
-	out[3*x + 0] = (unsigned char)(inr[x] * 256);
-	out[3*x + 1] = (unsigned char)(ing[x] * 256);
-	out[3*x + 2] = (unsigned char)(inb[x] * 256);
+	out[3*x + 0] = (unsigned char)(SRGB(inr[x]) * 255);
+	out[3*x + 1] = (unsigned char)(SRGB(ing[x]) * 255);
+	out[3*x + 2] = (unsigned char)(SRGB(inb[x]) * 255);
       }
       fwrite(out, 3*sizeX, sizeof(char), file);
+    }
+    fprintf(file, "\n");
+    fclose(file);
+  }
+
+  void writePPM(const std::string &fileName, 
+		const ospcommon::vec2i size,
+		const float* image)
+  {
+    FILE *file = fopen(fileName.c_str(), "wb");
+    fprintf(file, "P6\n%i %i\n255\n", size.x, size.y);
+    unsigned char *out = (unsigned char *)alloca(3*size.x);
+    for (int y = 0; y < size.y; y++) 
+    {
+      const float *in = &image[(size.y-1-y)*size.x*4];
+      for (int x = 0; x < size.x; x++) {
+	out[3*x + 0] = (unsigned char)(SRGB(in[4*x+0]) * 255);
+	out[3*x + 1] = (unsigned char)(SRGB(in[4*x+1]) * 255);
+	out[3*x + 2] = (unsigned char)(SRGB(in[4*x+2]) * 255);
+      }
+      fwrite(out, 3*size.x, sizeof(char), file);
     }
     fprintf(file, "\n");
     fclose(file);
@@ -195,20 +226,107 @@ namespace ospVisItRandSciVisTest {
                            });
   }
 
-  struct SaveTiles: public ospray::visit::TileRetriever {
-    int id = 0;
-    void reset() { id = 0; }
-    void operator() (const ospray::visit::TileRegionList& tileInfoList) {
-      for (auto& l : tileInfoList) {
-	for (auto& t : l) {
-	  if (t.visible) {
-	    writePPM("DistributedTile" + std::to_string(id++) + ".ppm", t);
-	    std::cout 
-	      << "rendering 'DistributedTile" + std::to_string(id++) + ".ppm'" 
-	      << std::endl;
+  template<class T>
+  constexpr const T& clamp( const T& v, const T& lo, const T& hi )
+  {
+    return (v < lo ? lo : (v > hi ? hi : v));
+  }
+
+  bool SortTileFcn (ospray::visit::VisItTile* i, ospray::visit::VisItTile* j) {
+    return (i->minDepth < j->minDepth); 
+  }
+
+  void BlendFrontToBack
+  (const ospray::visit::VisItTile* src, float* dstImage, int dstExtents[4])
+  {  
+    // image sizes
+    const int srcX = src->region[2] - src->region[0];
+    const int srcY = src->region[3] - src->region[1];
+    const int dstX = dstExtents[1] - dstExtents[0];
+    const int dstY = dstExtents[3] - dstExtents[2];
+    // determin the region to blend
+    const int startX = 
+      std::max(src->region[0], dstExtents[0]);
+    const int startY = 
+      std::max(src->region[1], dstExtents[2]);
+    const int endX = 
+      std::min(src->region[2], dstExtents[1]);
+    const int endY = 
+      std::min(src->region[3], dstExtents[3]);
+
+    for (int y = startY; y < endY; ++y) {
+      for (int x = startX; x < endX; ++x) {	  	    
+	if (true)
+	{
+	  bool printError = false;
+	  if (x <  dstExtents[0]) { printError = true; }
+	  if (x >= dstExtents[1]) { printError = true; }
+	  if (y <  dstExtents[2]) { printError = true; }
+	  if (y >= dstExtents[3]) { printError = true; }
+	  if (x <  src->region[0]) { printError = true; }
+	  if (x >= src->region[2]) { printError = true; }
+	  if (y <  src->region[1]) { printError = true; }
+	  if (y >= src->region[3]) { printError = true; }
+
+	  if (printError) {
+	    std::cout << "Err: "
+		      << "index goes out of bound "
+		      << "(" << x << "," << y << ") "
+		      << "extents " 
+		      << dstExtents[0] << " " << dstExtents[1] << " "
+		      << dstExtents[2] << " " << dstExtents[3] << " "
+		      << std::endl;
+	    continue; 
 	  }
 	}
+
+	// get indices
+	int srcIndex = (srcX * (y-src->region[1]) + x-src->region[0]);
+	int dstIndex = (dstX * (y-dstExtents[2]) + x-dstExtents[0]) * 4;
+
+	// front to back compositing
+	if (dstImage[dstIndex + 3] < 1.0f) {
+	  float trans = 1.0f - dstImage[dstIndex + 3];
+	  dstImage[dstIndex+0] = 
+	    clamp(src->r[srcIndex] * trans + dstImage[dstIndex+0], 0.0f, 1.0f);
+	  dstImage[dstIndex+1] = 
+	    clamp(src->g[srcIndex] * trans + dstImage[dstIndex+1], 0.0f, 1.0f);
+	  dstImage[dstIndex+2] = 
+	    clamp(src->b[srcIndex] * trans + dstImage[dstIndex+2], 0.0f, 1.0f);
+	  dstImage[dstIndex+3] = 
+	    clamp(src->a[srcIndex] * trans + dstImage[dstIndex+3], 0.0f, 1.0f);
+	}
       }
+    }
+  }
+
+  struct SaveTiles: public ospray::visit::VisItTileRetriever 
+  {
+    int id = 0;
+    float* image = nullptr;
+    SaveTiles() {
+      image = new float[fbSize.x * fbSize.y * 4]();
+    }
+    void reset() { id = 0; }
+    void operator() (const ospray::visit::VisItTileArray& tiles) {
+      ospray::visit::VisItTileArray sortedtiles = tiles;
+      std::sort(sortedtiles.begin(), sortedtiles.end(), SortTileFcn);
+      std::cout << "fb size: " << fbSize.x << " " << fbSize.y << std::endl;
+      int imageExtents[4] = {0, fbSize.x, 0, fbSize.y};
+      for (auto t : sortedtiles) 
+      {
+	writePPM("DistributedTile" + std::to_string(id++) + ".ppm", *t);
+	std::cout << "new tile " 
+		  << t->region[0] << " "
+		  << t->region[1] << " "
+		  << t->region[2] << " "
+		  << t->region[3] << " "
+		  << "depth " 
+		  << t->minDepth << " "
+		  << std::endl;
+	BlendFrontToBack(t, image, imageExtents);
+      }
+      writePPM("randomComposed.ppm", fbSize, image);	
     }
   };
 
@@ -317,7 +435,7 @@ namespace ospVisItRandSciVisTest {
       // render tiles
       SaveTiles fcn;
       fcn.reset();
-      renderer.set("tileRetriever", &fcn);
+      renderer.set("VisItTileRetriever", &fcn);
       renderer.commit();
       renderer.renderFrame(fb, OSP_FB_COLOR | OSP_FB_ACCUM);	
 

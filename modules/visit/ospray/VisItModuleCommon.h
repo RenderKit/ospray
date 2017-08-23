@@ -15,50 +15,52 @@
 // See the License for the specific language governing permissions and      //
 // limitations under the License.                                           //
 // ======================================================================== //
+// this file will be installed so can expose new functions to the users
 
 #pragma once
 
-#include "fb/Tile.h"
 #include <vector>
-
-// this file will be installed so can expose new functions to the users
+#include <limits>
+#include <cstddef>
 
 namespace ospray {
-    namespace visit {
-
-	// this is a place to define all global flags that might be helpful
-	// throughout the program
-
-	// definition of tiles for MPI distributed renderer
-	struct TileInfo 
-	{
-	    // basic info
-	    int regionSize[4] = {0};
-	    int fbSize[2] = {0};
-	    float depth{std::numeric_limits<float>::infinity()};
-	    bool visible{false};
-            // 'red' component; in float.
-	    float r[TILE_SIZE*TILE_SIZE];
-	    // 'green' component; in float.
-	    float g[TILE_SIZE*TILE_SIZE];
-	    // 'blue' component; in float.
-	    float b[TILE_SIZE*TILE_SIZE];
-	    // 'alpha' component; in float.
-	    float a[TILE_SIZE*TILE_SIZE];
-	    // constructor
-	    ~TileInfo() = default;
-	    TileInfo() = default;
-	    TileInfo(const Tile& src);
-	};
-	typedef std::vector<std::vector<TileInfo>> TileRegionList;
-	struct TileRetriever 
-	{
-	    virtual void operator()(const TileRegionList& list) {}
-	};
-
-	//! this is the verbose flag, which is used in VisIt also
-	extern bool verbose;
-	inline bool CheckVerbose() { return verbose; }
-
+  namespace visit {
+    //
+    // this is a place to define all global flags that might be helpful
+    // throughout the program
+    //
+    //! tile type for MPI renderer
+    struct VisItTile {
+      // basic info
+      int region[4];
+      int fbSize[2];
+      float minDepth;
+      float maxDepth;
+      // 'red'   component in float.
+      std::vector<float> r;
+      // 'green' component in float.
+      std::vector<float> g;
+      // 'blue'  component in float.
+      std::vector<float> b;
+      // 'alpha' component in float.
+      std::vector<float> a;
+      // constructor
+      virtual ~VisItTile() = default;
+      VisItTile() {
+	region[0] = region[1] = region[2] = region[3] = 0;
+	fbSize[0] = fbSize[1] = 0;
+	minDepth = std::numeric_limits<float>::max();
+	maxDepth = std::numeric_limits<float>::min();
+      };
     };
+    typedef std::vector<VisItTile*> VisItTileArray;
+    struct VisItTileRetriever 
+    {
+      virtual void operator()(const VisItTileArray& list) = 0;
+    };
+    //
+    //! this is the verbose flag, which is used in VisIt also
+    extern bool verbose;
+    inline bool CheckVerbose() { return verbose; }
+  };
 };
