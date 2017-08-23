@@ -103,12 +103,13 @@ namespace ospVisItRandSciVisTest {
   }
 
   float SRGB(float c) {
-    const float a = 0.055f;
-    if (c <= 0.0031308) {
-      return (12.92 * c);
-    } else {
-      return (1+a) * std::pow(c, 1.f/2.4f) - a; 
-    }
+    return pow(c, 1.f/2.2f);
+    // const float a = 0.055f;
+    // if (c <= 0.0031308) {
+    //   return (12.92 * c);
+    // } else {
+    //   return (1+a) * std::pow(c, 1.f/2.4f) - a; 
+    // }
   }
 
   void writePPM(const std::string &fileName,
