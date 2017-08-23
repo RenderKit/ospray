@@ -5,18 +5,19 @@
 #include <GLFW/glfw3.h>
 #include <mpiCommon/MPICommon.h>
 #include <mpi.h>
-#include <ospray/ospray_cpp/Camera.h>
-#include <ospray/ospray_cpp/Data.h>
-#include <ospray/ospray_cpp/Device.h>
-#include <ospray/ospray_cpp/FrameBuffer.h>
-#include <ospray/ospray_cpp/Geometry.h>
-#include <ospray/ospray_cpp/Renderer.h>
-#include <ospray/ospray_cpp/TransferFunction.h>
-#include <ospray/ospray_cpp/Volume.h>
-#include <ospray/ospray_cpp/Model.h>
-#include <widgets/transferFunction.h>
-#include <widgets/imgui_impl_glfw_gl3.h>
-#include <common/imgui/imgui.h>
+#include "ospray/ospray_cpp/Camera.h"
+#include "ospray/ospray_cpp/Data.h"
+#include "ospray/ospray_cpp/Device.h"
+#include "ospray/ospray_cpp/FrameBuffer.h"
+#include "ospray/ospray_cpp/Geometry.h"
+#include "ospray/ospray_cpp/Renderer.h"
+#include "ospray/ospray_cpp/TransferFunction.h"
+#include "ospray/ospray_cpp/Volume.h"
+#include "ospray/ospray_cpp/Model.h"
+#include "widgets/transferFunction.h"
+#include "common/sg/transferFunction/TransferFunction.h"
+#include "widgets/imgui_impl_glfw_gl3.h"
+#include "common/imgui/imgui.h"
 #include "gensv/generateSciVis.h"
 #include "arcball.h"
 
@@ -139,7 +140,7 @@ int main(int argc, char **argv) {
   vec2f valueRange = vec2f(-1);
   size_t nSpheres = 0;
   float varianceThreshold = 0.0f;
-  FileName transferFcn;
+  FileName transferFcnFile;
   bool appInitMPI = false;
 
   for (int i = 0; i < argc; ++i) {
@@ -160,7 +161,7 @@ int main(int argc, char **argv) {
     } else if (arg == "-variance") {
       varianceThreshold = std::atof(argv[++i]);
     } else if (arg == "-tfn") {
-      transferFcn = argv[++i];
+      transferFcnFile = argv[++i];
     } else if (arg == "-appMPI") {
       appInitMPI = true;
     }
@@ -261,6 +262,7 @@ int main(int argc, char **argv) {
 
   mpicommon::world.barrier();
 
+  std::shared_ptr<ospray::sg::TransferFunction> transferFcn;
   std::shared_ptr<ospray::TransferFunction> tfnWidget;
   std::shared_ptr<WindowState> windowState;
   GLFWwindow *window = nullptr;
@@ -277,9 +279,10 @@ int main(int argc, char **argv) {
     glfwMakeContextCurrent(window);
 
     windowState = std::make_shared<WindowState>(app, arcballCamera);
-    tfnWidget = std::make_shared<ospray::TransferFunction>(nullptr);
-    if (!transferFcn.str().empty()) {
-      tfnWidget->load(transferFcn);
+    transferFcn = std::make_shared<ospray::sg::TransferFunction>();
+    tfnWidget = std::make_shared<ospray::TransferFunction>(transferFcn);
+    if (!transferFcnFile.str().empty()) {
+      tfnWidget->load(transferFcnFile);
     }
 
     ImGui_ImplGlfwGL3_Init(window, false);
@@ -294,9 +297,8 @@ int main(int argc, char **argv) {
     glfwSetCharCallback(window, charCallback);
   }
 
-  const size_t tfcnSamples = 128;
-  std::vector<vec3f> tfcnColors(tfcnSamples, vec3f(0));
-  std::vector<float> tfcnAlphas(tfcnSamples, 0.f);
+  std::vector<vec3f> tfcnColors;
+  std::vector<float> tfcnAlphas;
   while (!app.quit) {
     if (app.cameraChanged) {
       camera.set("pos", app.v[0]);
@@ -315,6 +317,8 @@ int main(int argc, char **argv) {
       glDrawPixels(app.fbSize.x, app.fbSize.y, GL_RGBA, GL_UNSIGNED_BYTE, img);
       fb.unmap(img);
 
+      const auto tfcnTimeStamp = transferFcn->childrenLastModified();
+
       ImGui_ImplGlfwGL3_NewFrame();
       tfnWidget->drawUi();
       ImGui::Render();
@@ -326,14 +330,16 @@ int main(int argc, char **argv) {
         app.quit = true;
       }
 
-      std::vector<vec2f> ospAlpha(tfcnSamples, vec2f(0));
-      if (tfnWidget->getColorMap(tfcnColors, ospAlpha)) {
-        std::transform(ospAlpha.begin(), ospAlpha.end(), tfcnAlphas.begin(),
+      tfnWidget->render();
+
+      if (transferFcn->childrenLastModified() != tfcnTimeStamp) {
+        tfcnColors = transferFcn->child("colors").nodeAs<ospray::sg::DataVector3f>()->v;
+        const auto &ospAlpha = transferFcn->child("alpha").nodeAs<ospray::sg::DataVector2f>()->v;
+        tfcnAlphas.clear();
+        std::transform(ospAlpha.begin(), ospAlpha.end(), std::back_inserter(tfcnAlphas),
             [](const vec2f &a) { return a.y; });
         app.tfcnChanged = true;
       }
-      // Now update the displayed widget and unset the modified flag
-      tfnWidget->render();
 
       const vec3f eye = windowState->camera.eyePos();
       const vec3f look = windowState->camera.lookDir();
@@ -361,9 +367,20 @@ int main(int argc, char **argv) {
       }
     }
     if (app.tfcnChanged) {
-      MPI_Bcast(tfcnColors.data(), sizeof(vec3f) * tfcnSamples, MPI_BYTE,
+      size_t sz = tfcnColors.size();
+      MPI_Bcast(&sz, sizeof(size_t), MPI_BYTE, 0, MPI_COMM_WORLD);
+      if (rank != 0) {
+        tfcnColors.resize(sz);
+      }
+      MPI_Bcast(tfcnColors.data(), sizeof(vec3f) * tfcnColors.size(), MPI_BYTE,
                 0, MPI_COMM_WORLD);
-      MPI_Bcast(tfcnAlphas.data(), sizeof(float) * tfcnSamples, MPI_BYTE,
+
+      sz = tfcnAlphas.size();
+      MPI_Bcast(&sz, sizeof(size_t), MPI_BYTE, 0, MPI_COMM_WORLD);
+      if (rank != 0) {
+        tfcnAlphas.resize(sz);
+      }
+      MPI_Bcast(tfcnAlphas.data(), sizeof(float) * tfcnAlphas.size(), MPI_BYTE,
                 0, MPI_COMM_WORLD);
 
       Data colorData(tfcnColors.size(), OSP_FLOAT3, tfcnColors.data());
