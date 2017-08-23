@@ -112,20 +112,20 @@ CMake is easy:
 
 -   Create a build directory, and go into it
 
-        user@mymachine[~/Projects]: mkdir ospray/release
-        user@mymachine[~/Projects]: cd ospray/release
+        mkdir ospray/build
+        cd ospray/build
 
     (We do recommend having separate build directories for different
     configurations such as release, debug, etc).
 
 -   The compiler CMake will use will default to whatever the `CC` and
     `CXX` environment variables point to. Should you want to specify a
-    different compiler, run cmake manually while specifying the desired
-    compiler. The default compiler on most linux machines is `gcc`, but
-    it can be pointed to `clang` instead by executing the following:
+    different compiler, run cmake manually while specifying the
+    desired compiler. The default compiler on most linux machines is
+    `gcc`, but it can be pointed to `clang` instead by executing the
+    following:
 
-        user@mymachine[~/Projects/ospray/release]: cmake
-            -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang ..
+        cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang ..
 
     CMake will now use Clang instead of GCC. If you are ok with using
     the default compiler on your system, then simply skip this step.
@@ -134,17 +134,17 @@ CMake is easy:
 
 -   Open the CMake configuration dialog
 
-        user@mymachine[~/Projects/ospray/release]: ccmake ..
+        ccmake ..
 
 -   Make sure to properly set build mode and enable the components you
     need, etc; then type 'c'onfigure and 'g'enerate. When back on the
     command prompt, build it using
 
-        user@mymachine[~/Projects/ospray/release]: make
+        make
 
--   You should now have `libospray.so` as well as a set of example
-    application. You can test your version of OSPRay using any of the
-    examples on the [OSPRay Demos and
+-   You should now have `libospray.so` as well as a set of
+    example application. You can test your version of OSPRay using any
+    of the examples on the [OSPRay Demos and
     Examples](http://www.ospray.org/demos.html) page.
 
 Documentation
@@ -1811,13 +1811,13 @@ OSPRay in MPI mode:
 -   An MPI implementation you can build against (i.e. Intel MPI,
     MVAPICH2, etc...)
 
-Enabling the MPI module in your build
+Enabling the MPI Module in your Build
 -------------------------------------
 
-To build the MPI module the CMake variable `OSPRAY_MODULE_MPI=ON` must
-be enabled, which can be done directly on the command line (with
-`-D...`) or through a configuration dialog (`ccmake`, `cmake-gui`), see
-also [Compiling OSPRay](#compiling-ospray).
+To build the MPI module the CMake option `OSPRAY_MODULE_MPI` must be
+enabled, which can be done directly on the command line (with
+`-DOSPRAY_MODULE_MPI=ON`) or through a configuration dialog (`ccmake`,
+`cmake-gui`), see also [Compiling OSPRay](#compiling-ospray).
 
 This will trigger CMake to go look for an MPI implementation in your
 environment. You can then inspect the CMake value of `MPI_LIBRARY` to
@@ -1826,13 +1826,11 @@ make sure that CMake found your MPI build environment correctly.
 This will result in an OSPRay module being built. To enable using it,
 applications will need to either link `libospray_module_mpi`, or call
 
-``` {.cpp}
-ospLoadModule("mpi");
-```
+    ospLoadModule("mpi");
 
 before initializing OSPRay.
 
-Modes of using OSPRay's MPI features
+Modes of Using OSPRay's MPI Features
 ------------------------------------
 
 OSPRay provides two ways of using MPI to scale up rendering: offload and
@@ -1863,7 +1861,7 @@ lock-step. This mode targets using all available aggregate memory for
 very large scenes and for "in-situ" visualization where the data is
 already distributed by a simulation app.
 
-Running an application with the "offload" device
+Running an Application with the "offload" Device
 ------------------------------------------------
 
 As an example, our sample viewer can be run as a single application
@@ -1880,7 +1878,7 @@ parameter will automatically call `ospLoadModule("mpi")` to load the MPI
 module, while the application will have to load the module explicitly if
 using `ospNewDevice()`.
 
-**Option 1: single MPI launch**
+### Single MPI Launch
 
 OSPRay is initialized with the `ospInit()` function call which takes
 command line arguments in and configures OSPRay based on what it finds.
@@ -1890,21 +1888,17 @@ a worker process for OSPRay. Here's an example of running the
 ospVolumeViewer data-replicated, using `c1`-`c4` as compute nodes and
 `localhost` the process running the viewer itself:
 
-``` {.cpp}
-% mpirun -perhost 1 -hosts localhost,c1,c2,c3,c4 ./ospExampleViewer [scene_file] --osp:mpi
-```
+    mpirun -perhost 1 -hosts localhost,c1,c2,c3,c4 ./ospExampleViewer <scene file> --osp:mpi
 
-**Option 2: separate app/worker launches**
+### Separate Application&Worker Launches
 
 The second option is to explicitly launch the app on rank 0 and worker
 ranks on the other nodes. This is done by running `ospray_mpi_worker` on
 worker nodes and the application on the display node. Here's the same
 example above using this syntax:
 
-``` {.cpp}
-% mpirun -perhost 1 -hosts localhost ./ospExampleViewer [scene_file] --osp:mpi \
-  : -hosts c1,c2,c3,c4 ./ospray_mpi_worker --osp:mpi
-```
+    mpirun -perhost 1 -hosts localhost ./ospExampleViewer <scene file> --osp:mpi \
+      : -hosts c1,c2,c3,c4 ./ospray_mpi_worker
 
 This method of launching the application and OSPRay worker separately
 works best for applications which do not immediately call `ospInit()` in
@@ -1912,7 +1906,7 @@ their `main()` function, or for environments where application
 dependencies (such as GUI libraries) may not be available on compute
 nodes.
 
-Running an application with the "distributed" device
+Running an Application with the "distributed" Device
 ----------------------------------------------------
 
 Applications using the new distributed device should initialize OSPRay

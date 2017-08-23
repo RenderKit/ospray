@@ -411,10 +411,8 @@ int main(int ac, const char **av)
 	std::cerr << "FATAL ERROR DURING GETTING CURRENT DEVICE!" << std::endl;
     return 1;
   }
-  ospDeviceSetStatusFunc(device,
-                         [](const char *msg) { std::cout << msg; });
-  ospDeviceSetErrorMsgFunc(device, [](const char *msg) { std::cout << msg; });
 
+  ospDeviceSetStatusFunc(device, [](const char *msg) { std::cout << msg; });
   ospDeviceSetErrorFunc(device,
                         [](OSPError e, const char *msg) {
                           std::cout << "OSPRAY ERROR [" << e << "]: "
@@ -422,11 +420,8 @@ int main(int ac, const char **av)
                           std::exit(1);
                         });
 
-#ifdef _WIN32
-  // TODO: Why do we not have the sg symbols already available for us
-  // since we link against it?
+  // access/load symbols/sg::Nodes dynamically
   loadLibrary("ospray_sg");
-#endif
 
   ospray::imgui3D::init(&ac,av);
 
