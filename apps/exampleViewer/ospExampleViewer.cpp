@@ -231,26 +231,19 @@ static inline void addPlaneToScene(sg::Node& renderer)
     bbox.upper = vec3f(5,10,5);
   }
 
-  osp::vec3f *vertices = new osp::vec3f[4];
-  float ps = bbox.upper.x*3.f;
-  float py = bbox.lower.z-.1f;
+  float ps = bbox.upper.x * 3.f;
+  float py = bbox.lower.y + 0.01f;
 
-  py = bbox.lower.y+0.01f;
-  vertices[0] = osp::vec3f{-ps, py, -ps};
-  vertices[1] = osp::vec3f{-ps, py, ps};
-  vertices[2] = osp::vec3f{ps, py, -ps};
-  vertices[3] = osp::vec3f{ps, py, ps};
-  auto position = std::make_shared<sg::DataArray3f>((vec3f*)&vertices[0],
-                                                    size_t(4),
-                                                    false);
+  auto position = std::make_shared<sg::DataVector3f>();
+  position->push_back(vec3f{-ps, py, -ps});
+  position->push_back(vec3f{-ps, py, ps});
+  position->push_back(vec3f{ps, py, -ps});
+  position->push_back(vec3f{ps, py, ps});
   position->setName("vertex");
 
-  osp::vec3i *triangles = new osp::vec3i[2];
-  triangles[0] = osp::vec3i{0,1,2};
-  triangles[1] = osp::vec3i{1,2,3};
-  auto index = std::make_shared<sg::DataArray3i>((vec3i*)&triangles[0],
-                                                 size_t(2),
-                                                 false);
+  auto index = std::make_shared<sg::DataVector3i>();
+  index->push_back(vec3i{0,1,2});
+  index->push_back(vec3i{1,2,3});
   index->setName("index");
 
   auto &plane = world.createChild("plane", "Instance");
