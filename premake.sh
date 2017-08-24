@@ -4,11 +4,12 @@ if [[ "$(hostname)" != "hastur.sci.utah.edu" ]]; then
     echo "Warning: You are suggested to change "
 fi
 
-# initialize ICC
-INTELICC_PATH=$(which icc)
-
-# initialize GCC
-USE_GCC=1
+# initialize compiler
+# ICC
+USE_ICC=0
+ICC_PATH=$(which icc)
+# GCC
+USE_GCC=0
 GCC_PATH=$(which gcc)
 GXX_PATH=$(which g++)
 
@@ -78,7 +79,8 @@ HELP()
     echo "  --build-prefix      Build directory prefix"
     echo "    (Build directory will be generated based on rules)"
     echo "  --mpi               Build with MPI"
-    echo "  --intel-icc         Build with intel ICC"
+    echo "  --icc               Build with intel ICC"
+    echo "  --gcc               Build with intel GCC"
     echo "  --qt                Build with Qt"
     echo "  --image-magick      Build with image magick"
     echo "  --embree-dir        Customized Embree path"
@@ -134,12 +136,18 @@ until [ -z "$1" ]; do
 	    shift 2
 	    ;;
 
-	# --- Setup intel icc
-	--intel-icc)
-	    CMAKEARGS=${CMAKEARGS}" -DCMAKE_CXX_COMPILER=${INTELICC_PATH}"
-	    CMAKEARGS=${CMAKEARGS}" -DCMAKE_C_COMPILER=${INTELICC_PATH}"
+	# --- Setup compiler
+	--gcc)
+	    USE_GCC=1
+	    USE_ICC=0
+	    ARGCACHE=${ARGCACHE}" --gcc"
+	    shift 1
+	    ;;
+
+	--icc)
+	    USE_ICC=1
 	    USE_GCC=0
-	    ARGCACHE=${ARGCACHE}" --intel-icc"
+	    ARGCACHE=${ARGCACHE}" --icc"
 	    shift 1
 	    ;;
 	    
@@ -190,8 +198,8 @@ until [ -z "$1" ]; do
 	    ;;
 
 	--icc-dir)
-	    INTELICC_PATH=${2}
-	    echo "user-defined icc path ${INTELICC_PATH}"
+	    ICC_PATH=${2}/icc
+	    echo "user-defined icc path ${ICC_PATH}"
 	    shift 2
 	    ;;
 
@@ -214,7 +222,7 @@ until [ -z "$1" ]; do
 	    ;;
 	    
 	--no-apps)
-	    CMAKEARGS=${CMAKEARGS}" -DOSPRAY_ENABLE_APPS=OFF -DOSPRAY_MODULE_MPI_APPS=OFF -DOSPRAY_MODULE_VISIT_APPS=OFF"
+	    CMAKEARGS=${CMAKEARGS}" -DOSPRAY_ENABLE_APPS=OFF -DOSPRAY_MODULE_VISIT_APPS=OFF"
 	    ARGCACHE=${ARGCACHE}" --no-apps"
 	    shift 1
 	    ;;
@@ -231,6 +239,10 @@ done
 if [[ "${USE_GCC}" == "1" ]]; then
     CMAKEARGS=${CMAKEARGS}" -DCMAKE_CXX_COMPILER=${GXX_PATH}"
     CMAKEARGS=${CMAKEARGS}" -DCMAKE_C_COMPILER=${GCC_PATH}"    
+fi
+if [[ "${USE_ICC}" == "1" ]]; then
+    CMAKEARGS=${CMAKEARGS}" -DCMAKE_CXX_COMPILER=${ICC_PATH}"
+    CMAKEARGS=${CMAKEARGS}" -DCMAKE_C_COMPILER=${ICC_PATH}"
 fi
 
 # load libraries
@@ -260,5 +272,5 @@ cd -
 # save cache
 cat > premake.local.$(hostname).sh <<EOF
 #!/bin/bash
-$(pwd)/premake.sh ${ARGCACHE} --embree-dir ${EMBREE_ROOT} --tbb-dir ${TBB_ROOT} --ispc-dir ${ISPC_ROOT} --icc-dir ${INTELICC_PATH} --gcc-dir ${GCC_PATH%/*} --cmake-dir ${CMAKEPATH}
+$(pwd)/premake.sh ${ARGCACHE} --embree-dir ${EMBREE_ROOT} --tbb-dir ${TBB_ROOT} --ispc-dir ${ISPC_ROOT} --icc-dir ${ICC_PATH%/*} --gcc-dir ${GCC_PATH%/*} --cmake-dir ${CMAKEPATH}
 EOF
