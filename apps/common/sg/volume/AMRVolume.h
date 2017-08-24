@@ -23,7 +23,7 @@ namespace ospray {
   namespace sg {
 
     //! AMR SG node with Chombo style structure
-    struct AMRVolume : public Volume
+    struct OSPSG_INTERFACE AMRVolume : public Volume
     {
       AMRVolume();
 

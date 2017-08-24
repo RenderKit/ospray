@@ -31,6 +31,10 @@ namespace ospray {
                           const std::shared_ptr<Node> &sgRendererDW);
       ~AsyncRenderEngineSg() = default;
 
+      void pick(const vec2f &screenPos);
+      bool hasNewPickResult();
+      OSPPickResult getPickResult();
+
     private:
 
       virtual void run()      override;
@@ -39,6 +43,9 @@ namespace ospray {
       const std::shared_ptr<Node> scenegraph;
       const std::shared_ptr<Node> scenegraphDW;
       sg::TimeStamp  lastRTime;
+
+      ospcommon::utility::TransactionalValue<vec2f> pickPos;
+      ospcommon::utility::TransactionalValue<OSPPickResult> pickResult;
     };
 
   } // ::ospray::sg

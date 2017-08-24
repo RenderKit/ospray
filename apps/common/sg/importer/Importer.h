@@ -30,7 +30,7 @@ namespace ospray {
       fileName="/tmp/myFile.xyz"
       args={ {"format","xyz"}, {"whatEver",""}, {"radius",".3"} }
     */
-    struct FormatURL
+    struct OSPSG_INTERFACE FormatURL
     {
       /*! do the actual parsing, and return a formatURL */
       FormatURL(const std::string &input);
@@ -52,7 +52,7 @@ namespace ospray {
     };
 
 
-    struct ImportState
+    struct OSPSG_INTERFACE ImportState
     {
       ImportState(std::shared_ptr<sg::World> world)
         : world(world)
@@ -61,7 +61,7 @@ namespace ospray {
       std::shared_ptr<sg::World> world;
     };
 
-    struct Importer : public sg::Renderable
+    struct OSPSG_INTERFACE Importer : public sg::Renderable
     {
       Importer();
 

@@ -211,6 +211,13 @@ namespace ospray {
 
     }
 
+    OSPPickResult Renderer::pick(const vec2f &pickPos)
+    {
+      OSPPickResult result;
+      ospPick(&result, ospRenderer, (osp::vec2f&)pickPos);
+      return result;
+    }
+
     OSP_REGISTER_SG_NODE(Renderer);
 
   } // ::ospray::sg

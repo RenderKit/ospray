@@ -23,7 +23,7 @@ namespace ospray {
 
     class FrameBuffer;
 
-    struct Renderer : public Renderable
+    struct OSPSG_INTERFACE Renderer : public Renderable
     {
       Renderer();
       virtual std::string toString() const override;
@@ -36,6 +36,7 @@ namespace ospray {
       void postRender(RenderContext &ctx) override;
       void preCommit(RenderContext &ctx) override;
       void postCommit(RenderContext &ctx) override;
+      OSPPickResult pick(const vec2f &pickPos);
 
     private:
 

@@ -23,7 +23,7 @@ namespace ospray {
   namespace sg {
 
     /*! a plain old structured volume */
-    struct TetVolume : public Volume
+    struct OSPSG_INTERFACE TetVolume : public Volume
     {
       std::string toString() const override;
 
