@@ -23,7 +23,7 @@
 namespace ospray {
   namespace sg {
 
-    struct Volume : public Renderable
+    struct OSPSG_INTERFACE Volume : public Renderable
     {
       Volume();
 
@@ -39,7 +39,7 @@ namespace ospray {
     };
 
     /*! a plain old structured volume */
-    struct StructuredVolume : public Volume
+    struct OSPSG_INTERFACE StructuredVolume : public Volume
     {
       std::string toString() const override;
 
@@ -57,7 +57,7 @@ namespace ospray {
     };
 
     /*! a plain old structured volume */
-    struct StructuredVolumeFromFile : public StructuredVolume
+    struct OSPSG_INTERFACE StructuredVolumeFromFile : public StructuredVolume
     {
       std::string toString() const override;
 
@@ -75,7 +75,7 @@ namespace ospray {
     };
 
     /*! a structured volume loaded from the Richtmyer-Meshkov .bob files */
-    struct RichtmyerMeshkov : public StructuredVolume
+    struct OSPSG_INTERFACE RichtmyerMeshkov : public StructuredVolume
     {
       RichtmyerMeshkov();
 

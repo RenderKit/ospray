@@ -23,7 +23,7 @@ namespace ospray {
 
     class FrameBuffer;
 
-    struct Renderer : public Renderable
+    struct OSPSG_INTERFACE Renderer : public Renderable
     {
       Renderer();
       virtual std::string toString() const override;
