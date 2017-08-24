@@ -47,6 +47,7 @@ namespace ospray {
 
   protected:
 
+    void mouseButton(int button, int action, int mods);
     void reshape(const ospcommon::vec2i &newSize) override;
     void keypress(char key) override;
 

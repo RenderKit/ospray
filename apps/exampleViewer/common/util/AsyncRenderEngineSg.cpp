@@ -17,6 +17,7 @@
 #include "AsyncRenderEngineSg.h"
 
 #include "sg/common/FrameBuffer.h"
+#include "sg/Renderer.h"
 
 namespace ospray {
   namespace sg {
@@ -26,6 +27,21 @@ namespace ospray {
       : scenegraph(sgRenderer),
         scenegraphDW(sgRendererDW)
     {
+    }
+
+    void AsyncRenderEngineSg::pick(const vec2f &screenPos)
+    {
+      pickPos = screenPos;
+    }
+
+    bool AsyncRenderEngineSg::hasNewPickResult()
+    {
+      return pickResult.update();
+    }
+
+    OSPPickResult AsyncRenderEngineSg::getPickResult()
+    {
+      return pickResult.get();
     }
 
     void AsyncRenderEngineSg::run()
@@ -63,6 +79,11 @@ namespace ospray {
         }
         if (scenegraph->hasChild("animationcontroller"))
           scenegraph->child("animationcontroller").traverse("animate");
+
+        if (pickPos.update()) {
+          PING;
+          pickResult = scenegraph->nodeAs<sg::Renderer>()->pick(pickPos.ref());
+        }
 
         fps.start();
         scenegraph->traverse("render");

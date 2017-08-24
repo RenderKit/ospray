@@ -65,6 +65,17 @@ namespace ospray {
     renderEngine.stop();
   }
 
+  void ImGuiViewerSg::mouseButton(int button, int action, int mods)
+  {
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS
+        && (mods & GLFW_MOD_SHIFT))
+    {
+      const vec2f pos(currMousePos.x / static_cast<float>(windowSize.x),
+                      1.f - currMousePos.y / static_cast<float>(windowSize.y));
+      renderEngine.pick(pos);
+    }
+  }
+
   void ImGuiViewerSg::reshape(const vec2i &newSize)
   {
     ImGui3DWidget::reshape(newSize);
@@ -171,6 +182,19 @@ namespace ospray {
 
   void ImGuiViewerSg::display()
   {
+    if (renderEngine.hasNewPickResult()) {
+      PING;
+      auto picked = renderEngine.getPickResult();
+      if (picked.hit) {
+        PING;
+        // No conversion operator or ctor??
+        viewPort.at.x = picked.position.x;
+        viewPort.at.y = picked.position.y;
+        viewPort.at.z = picked.position.z;
+        viewPort.modified = true;
+      }
+    }
+
     if (viewPort.modified) {
       auto dir = viewPort.at - viewPort.from;
       dir = normalize(dir);
