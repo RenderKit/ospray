@@ -183,10 +183,8 @@ namespace ospray {
   void ImGuiViewerSg::display()
   {
     if (renderEngine.hasNewPickResult()) {
-      PING;
       auto picked = renderEngine.getPickResult();
       if (picked.hit) {
-        PING;
         // No conversion operator or ctor??
         viewPort.at.x = picked.position.x;
         viewPort.at.y = picked.position.y;

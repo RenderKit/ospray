@@ -81,7 +81,6 @@ namespace ospray {
           scenegraph->child("animationcontroller").traverse("animate");
 
         if (pickPos.update()) {
-          PING;
           pickResult = scenegraph->nodeAs<sg::Renderer>()->pick(pickPos.ref());
         }
 
