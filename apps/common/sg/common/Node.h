@@ -57,7 +57,7 @@ namespace ospray {
     struct OSPSG_INTERFACE Node : public std::enable_shared_from_this<Node>
     {
       Node();
-      virtual ~Node() {}
+      virtual ~Node();
 
       // NOTE: Nodes are not copyable nor movable! The operator=() will be used
       //       to assign a Node's _value_, which is different than the
@@ -139,6 +139,10 @@ namespace ospray {
       //! returns the value of the node in the desired type
       template <typename T>
       const T& valueAs() const;
+
+      //! return if the value is the given type
+      template <typename T>
+      bool valueIsType() const;
 
       //! set the value of the node. Requires strict typecast
       template <typename T>
@@ -339,6 +343,12 @@ namespace ospray {
     {
       std::lock_guard<std::mutex> lock{mutex};
       return properties.value.get<T>();
+    }
+
+    template <typename T>
+    inline bool Node::valueIsType() const
+    {
+      return properties.value.is<T>();
     }
 
     template <typename T>

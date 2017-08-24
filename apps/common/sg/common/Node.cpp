@@ -40,6 +40,13 @@ namespace ospray {
       markAsModified();
     }
 
+    Node::~Node()
+    {
+      // Call ospRelease() if the value is an OSPObject handle
+      if (valueIsType<OSPObject>())
+        ospRelease(valueAs<OSPObject>());
+    }
+
     std::string Node::toString() const
     {
       return "ospray::sg::Node";
