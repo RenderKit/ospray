@@ -193,7 +193,6 @@ namespace ospray {
           = new DistributedFrameBuffer(dimensions, handle,
                                        format, hasDepthBuffer,
                                        hasAccumBuffer, hasVarianceBuffer);
-        fb->refInc();
         handle.assign(fb);
       }
 
@@ -306,12 +305,9 @@ namespace ospray {
       {
         Renderer *renderer = (Renderer*)rendererHandle.lookup();
         Material *material = nullptr;
-        if (renderer) {
+        if (renderer)
           material = renderer->createMaterial(type.c_str());
-          if (material) {
-            material->refInc();
-          }
-        }
+
         // No renderer present or the renderer doesn't intercept this
         // material type.
         if (!material) material = Material::createMaterial(type.c_str());
@@ -324,12 +320,8 @@ namespace ospray {
       {
         Renderer *renderer = (Renderer*)rendererHandle.lookup();
         Light *light = nullptr;
-        if (renderer) {
           light = renderer->createLight(type.c_str());
-          if (light) {
-            light->refInc();
-          }
-        }
+
         // No renderer present or the renderer doesn't intercept this
         // material type.
         if (!light) light = Light::createLight(type.c_str());
@@ -393,10 +385,8 @@ namespace ospray {
           ObjectHandle   *asHandle = (ObjectHandle*)ospdata->data;
           ManagedObject **asObjPtr = (ManagedObject**)ospdata->data;
           for (size_t i = 0; i < nItems; ++i) {
-            if (asHandle[i] != NULL_HANDLE) {
+            if (asHandle[i] != NULL_HANDLE)
               asObjPtr[i] = asHandle[i].lookup();
-              asObjPtr[i]->refInc();
-            }
           }
         }
       }
@@ -688,6 +678,13 @@ namespace ospray {
       void CommandRelease::run()
       {
         handle.freeObject();
+      }
+
+      void CommandRelease::runOnMaster()
+      {
+        // master only create some type of objects
+        if( handle.defined())
+          handle.freeObject();
       }
 
       void CommandRelease::serialize(WriteStream &b) const
