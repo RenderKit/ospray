@@ -145,7 +145,7 @@ namespace ospray {
             return;
 
 #if TILE_SIZE > MAX_TILE_SIZE
-          auto tilePtr = make_unique<Tile>(task.tileId, fb->size, task.accumId);
+          auto tilePtr = make_unique<Tile>(tileID, dfb->size, accumID);
           auto &tile   = *tilePtr;
 #else
           Tile __aligned(64) tile(tileID, dfb->size, accumID);
