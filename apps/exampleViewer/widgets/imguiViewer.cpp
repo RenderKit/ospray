@@ -18,7 +18,8 @@
 // ospcommon
 #include "ospcommon/utility/SaveImage.h"
 
-#include "imguiViewerSg.h"
+#include "imguiViewer.h"
+
 #include "common/sg/common/FrameBuffer.h"
 #include "transferFunction.h"
 

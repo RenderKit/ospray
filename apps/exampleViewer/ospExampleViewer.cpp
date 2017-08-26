@@ -25,7 +25,7 @@
 
 #include "sg/geometry/TriangleMesh.h"
 
-#include "widgets/imguiViewerSg.h"
+#include "widgets/imguiViewer.h"
 #include <sstream>
 
 using namespace ospcommon;
