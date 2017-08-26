@@ -1,6 +1,6 @@
 // ======================================================================== //
 // Copyright 2016 SURVICE Engineering Company                               //
-// Copyright 2016 Intel Corporation                                         //
+// Copyright 2016-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -34,12 +34,12 @@ using namespace ospcommon;
 
 namespace ospray {
 
-  ImGuiViewerSg::ImGuiViewerSg(const std::shared_ptr<sg::Node> &scenegraph)
-    : ImGuiViewerSg(scenegraph, nullptr)
+  ImGuiViewer::ImGuiViewer(const std::shared_ptr<sg::Node> &scenegraph)
+    : ImGuiViewer(scenegraph, nullptr)
   {}
 
-  ImGuiViewerSg::ImGuiViewerSg(const std::shared_ptr<sg::Node> &scenegraph,
-                               const std::shared_ptr<sg::Node> &scenegraphDW)
+  ImGuiViewer::ImGuiViewer(const std::shared_ptr<sg::Node> &scenegraph,
+                           const std::shared_ptr<sg::Node> &scenegraphDW)
     : ImGui3DWidget(ImGui3DWidget::FRAMEBUFFER_NONE),
       scenegraph(scenegraph),
       scenegraphDW(scenegraphDW),
@@ -61,12 +61,12 @@ namespace ospray {
     originalView = viewPort;
   }
 
-  ImGuiViewerSg::~ImGuiViewerSg()
+  ImGuiViewer::~ImGuiViewer()
   {
     renderEngine.stop();
   }
 
-  void ImGuiViewerSg::mouseButton(int button, int action, int mods)
+  void ImGuiViewer::mouseButton(int button, int action, int mods)
   {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS
         && (mods & GLFW_MOD_SHIFT))
@@ -77,7 +77,7 @@ namespace ospray {
     }
   }
 
-  void ImGuiViewerSg::reshape(const vec2i &newSize)
+  void ImGuiViewer::reshape(const vec2i &newSize)
   {
     ImGui3DWidget::reshape(newSize);
     windowSize = newSize;
@@ -90,15 +90,16 @@ namespace ospray {
     pixelBuffer.resize(newSize.x * newSize.y);
   }
 
-  void ImGuiViewerSg::keypress(char key)
+  void ImGuiViewer::keypress(char key)
   {
     switch (key) {
     case ' ':
     {
       if (scenegraph && scenegraph->hasChild("animationcontroller"))
       {
-        bool animating = scenegraph->child("animationcontroller")["enabled"].valueAs<bool>();
-        scenegraph->child("animationcontroller")["enabled"].setValue(!animating);
+        bool animating =
+            scenegraph->child("animationcontroller")["enabled"].valueAs<bool>();
+        scenegraph->child("animationcontroller")["enabled"] = !animating;
       }
       break;
     }
@@ -106,7 +107,7 @@ namespace ospray {
       toggleRenderingPaused();
       break;
     case '!':
-      saveScreenshot("ospimguiviewer");
+      saveScreenshot("ospexampleviewer");
       break;
     case 'X':
       if (viewPort.up == vec3f(1,0,0) || viewPort.up == vec3f(-1.f,0,0)) {
@@ -152,14 +153,14 @@ namespace ospray {
     }
   }
 
-  void ImGuiViewerSg::resetView()
+  void ImGuiViewer::resetView()
   {
     auto oldAspect = viewPort.aspect;
     viewPort = originalView;
     viewPort.aspect = oldAspect;
   }
 
-  void ImGuiViewerSg::printViewport()
+  void ImGuiViewer::printViewport()
   {
     printf("-vp %f %f %f -vu %f %f %f -vi %f %f %f\n",
            viewPort.from.x, viewPort.from.y, viewPort.from.z,
@@ -168,20 +169,20 @@ namespace ospray {
     fflush(stdout);
   }
 
-  void ImGuiViewerSg::saveScreenshot(const std::string &basename)
+  void ImGuiViewer::saveScreenshot(const std::string &basename)
   {
     utility::writePPM(basename + ".ppm",
                       windowSize.x, windowSize.y, pixelBuffer.data());
     std::cout << "saved current frame to '" << basename << ".ppm'" << std::endl;
   }
 
-  void ImGuiViewerSg::toggleRenderingPaused()
+  void ImGuiViewer::toggleRenderingPaused()
   {
     renderingPaused = !renderingPaused;
     renderingPaused ? renderEngine.stop() : renderEngine.start();
   }
 
-  void ImGuiViewerSg::display()
+  void ImGuiViewer::display()
   {
     if (renderEngine.hasNewPickResult()) {
       auto picked = renderEngine.getPickResult();
@@ -202,14 +203,12 @@ namespace ospray {
       camera["pos"].setValue(viewPort.from);
       camera["up"].setValue(viewPort.up);
 
-#if 1
       if (scenegraphDW.get()) {
         auto &camera = scenegraphDW->child("camera");
         camera["dir"].setValue(dir);
         camera["pos"].setValue(viewPort.from);
         camera["up"].setValue(viewPort.up);
       }
-#endif
 
       viewPort.modified = false;
     }
@@ -241,7 +240,7 @@ namespace ospray {
     ucharFB = nullptr;
   }
 
-  void ImGuiViewerSg::buildGui()
+  void ImGuiViewer::buildGui()
   {
     ImGuiWindowFlags flags = ImGuiWindowFlags_MenuBar;
 
@@ -254,15 +253,19 @@ namespace ospray {
       if (ImGui::BeginMenu("App")) {
 
         ImGui::Checkbox("Auto-Rotate", &animating);
+
         bool paused = renderingPaused;
-        if (ImGui::Checkbox("Pause Rendering", &paused)) {
+        if (ImGui::Checkbox("Pause Rendering", &paused))
           toggleRenderingPaused();
-        }
-        if (ImGui::MenuItem("Take Screenshot")) saveScreenshot("ospimguiviewer");
+
+        if (ImGui::MenuItem("Take Screenshot"))
+            saveScreenshot("ospimguiviewer");
+
         if (ImGui::MenuItem("Quit")) {
           renderEngine.stop();
           std::exit(0);
         }
+
         ImGui::EndMenu();
       }
 
@@ -308,9 +311,9 @@ namespace ospray {
     ImGui::End();
   }
 
-  void ImGuiViewerSg::buildGUINode(std::string name,
-                                   std::shared_ptr<sg::Node> node,
-                                   int indent)
+  void ImGuiViewer::buildGUINode(std::string name,
+                                 std::shared_ptr<sg::Node> node,
+                                 int indent)
   {
     int styles=0;
     if (!node->isValid()) {
@@ -546,4 +549,4 @@ namespace ospray {
       ImGui::SetTooltip("%s", node->documentation().c_str());
   }
 
-}// namepace ospray
+}// ::ospray

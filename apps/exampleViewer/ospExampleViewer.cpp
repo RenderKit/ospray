@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2016 Intel Corporation                                    //
+// Copyright 2009-2017 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -438,7 +438,7 @@ int main(int ac, const char **av)
   if (print || debug)
     renderer.traverse("print");
 
-  ospray::ImGuiViewerSg window(renderer_ptr);
+  ospray::ImGuiViewer window(renderer_ptr);
 
   auto &viewPort = window.viewPort;
   // XXX SG is too restrictive: OSPRay cameras accept non-normalized directions
