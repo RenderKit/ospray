@@ -18,17 +18,15 @@
 
 // std
 #include <atomic>
-#include <thread>
 #include <vector>
-#include <functional>
 
 // ospcommon
 #include "ospcommon/box.h"
+#include "ospcommon/AsyncLoop.h"
 #include "ospcommon/utility/CodeTimer.h"
 #include "ospcommon/utility/TransactionalValue.h"
 
-// ospray::cpp
-#include "ospray/ospray_cpp/Renderer.h"
+#include "sg/common/Node.h"
 
 // ospImGui util
 #include "ImguiUtilExport.h"
@@ -40,28 +38,23 @@ namespace ospray {
   class OSPRAY_IMGUI_UTIL_INTERFACE AsyncRenderEngine
   {
   public:
-    using ScheduledFunction = std::function<void(cpp::Renderer&)>;
 
-    AsyncRenderEngine() = default;
+    AsyncRenderEngine(std::shared_ptr<sg::Node> sgRenderer,
+                      std::shared_ptr<sg::Node> sgRendererDW);
     ~AsyncRenderEngine();
 
     // Properties //
-
-    void setRenderer(cpp::Renderer renderer,
-                     cpp::Renderer rendererDW,
-                     cpp::FrameBuffer frameBufferDW);
 
     void setFbSize(const ospcommon::vec2i &size);
 
     // Method to say that an objects needs to be comitted before next frame //
 
-    void scheduleObjectCommit(const cpp::ManagedObject &obj);
-    void scheduleFunction(ScheduledFunction f);
+    void pick(const vec2f &screenPos);
 
     // Engine conrols //
 
-    virtual void start(int numThreads = -1);
-    virtual void stop();
+    void start(int numThreads = -1);
+    void stop();
 
     ExecState runningState() const;
 
@@ -70,41 +63,42 @@ namespace ospray {
     bool   hasNewFrame() const;
     double lastFrameFps() const;
 
+    bool          hasNewPickResult();
+    OSPPickResult getPickResult();
+
     const std::vector<uint32_t> &mapFramebuffer();
     void                         unmapFramebuffer();
 
-  protected:
+    private:
 
     // Helper functions //
 
-    virtual void validate();
-    bool checkForScheduledFunctions();
-    bool checkForFbResize();
-    virtual void run();
+    void validate();
 
     // Data //
 
+    std::unique_ptr<ospcommon::AsyncLoop> backgroundThread;
+
+    std::atomic<ExecState> state{ExecState::INVALID};
+
     int numOsprayThreads {-1};
 
-    std::thread backgroundThread;
-    std::atomic<ExecState> state {ExecState::INVALID};
+    std::shared_ptr<sg::Node> scenegraph;
+    std::shared_ptr<sg::Node> scenegraphDW;
 
-    cpp::FrameBuffer frameBuffer;
-    cpp::FrameBuffer frameBufferDW;
+    ospcommon::utility::TransactionalValue<vec2i> fbSize;
+    ospcommon::utility::TransactionalValue<vec2f> pickPos;
+    ospcommon::utility::TransactionalValue<OSPPickResult> pickResult;
 
-    ospcommon::utility::TransactionalValue<cpp::Renderer>    renderer;
-    ospcommon::utility::TransactionalValue<cpp::Renderer>    rendererDW;
-    ospcommon::utility::TransactionalValue<ospcommon::vec2i> fbSize;
+    sg::TimeStamp lastRTime;
 
     int nPixels {0};
 
     int currentPB {0};
     int mappedPB  {1};
+
     std::mutex fbMutex;
     std::vector<uint32_t> pixelBuffer[2];
-
-    std::mutex scheduleFcnMutex;
-    std::vector<ScheduledFunction> scheduledFunctions;
 
     std::atomic<bool> newPixels {false};
 

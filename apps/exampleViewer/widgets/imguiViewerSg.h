@@ -19,7 +19,7 @@
 #include <atomic>
 #include <mutex>
 
-#include "../common/util/AsyncRenderEngineSg.h"
+#include "../common/util/AsyncRenderEngine.h"
 
 #include "imgui3D.h"
 #include "Imgui3dExport.h"
@@ -74,7 +74,7 @@ namespace ospray {
     std::shared_ptr<sg::Node> scenegraph;
     std::shared_ptr<sg::Node> scenegraphDW;
 
-    sg::AsyncRenderEngineSg renderEngine;
+    AsyncRenderEngine renderEngine;
     std::vector<uint32_t> pixelBuffer;
   };
 
