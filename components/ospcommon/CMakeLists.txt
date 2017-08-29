@@ -161,6 +161,16 @@ ELSE()
 
   ADD_TEST(NAME Any COMMAND test_Any)
 
+  # ArrayView
+
+  OSPRAY_CREATE_TEST(test_ArrayView
+    utility/tests/test_ArrayView.cpp
+  LINK
+    ospray_common
+  )
+
+  ADD_TEST(NAME ArrayView COMMAND test_ArrayView)
+
   # utility/OnScopeExit
 
   OSPRAY_CREATE_TEST(test_OnScopeExit

@@ -525,8 +525,6 @@ namespace ospray {
     {
       ObjectHandle handle = allocateHandle();
 
-      flags = flags & ~OSP_DATA_SHARED_BUFFER;
-
       work::NewData work(handle, nitems, format, init, flags);
       processWork(work);
 

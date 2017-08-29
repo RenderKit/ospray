@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 /*! \file OSPWork.h implements everything require to encode and
-  serialize work items that represent api calls 
+  serialize work items that represent api calls
 
   this code currently lives only in the mpi device, but shuld in
   theory also be applicable to other sorts of 'fabrics' for conveying
@@ -27,7 +27,9 @@
 #include <ospray/ospray.h>
 #include "mpiCommon/MPICommon.h"
 #include "common/ObjectHandle.h"
+
 #include "ospcommon/networking/DataStreaming.h"
+#include "ospcommon/utility/ArrayView.h"
 
 #include "common/Model.h"
 #include "render/Renderer.h"
@@ -116,18 +118,18 @@ namespace ospray {
         }
 
         void runOnMaster() override {}
-        
+
         /*! serializes itself on the given serial buffer - will write
           all data into this buffer in a way that it can afterwards
           un-serialize itself 'on the other side'*/
         void serialize(WriteStream &b) const override
         { b << (int64)handle << type; }
-        
+
         /*! de-serialize from a buffer that an object of this type ha
           serialized itself in */
         void deserialize(ReadStream &b) override
         { b >> handle.i64 >> type; }
-        
+
         std::string  type;
         ObjectHandle handle;
       };
@@ -166,7 +168,7 @@ namespace ospray {
           un-serialize itself 'on the other side'*/
         void serialize(WriteStream &b) const override
         { b << (int64)rendererHandle << (int64)handle << type; }
-        
+
         /*! de-serialize from a buffer that an object of this type has
           serialized itself in */
         void deserialize(ReadStream &b) override
@@ -192,7 +194,7 @@ namespace ospray {
           un-serialize itself 'on the other side'*/
         void serialize(WriteStream &b) const override
         { b << (int64)rendererHandle << (int64)handle << type; }
-        
+
         /*! de-serialize from a buffer that an object of this type has
           serialized itself in */
         void deserialize(ReadStream &b) override
@@ -230,17 +232,19 @@ namespace ospray {
           serialized itself in */
         void deserialize(ReadStream &b) override;
 
-        ObjectHandle        handle;
-        size_t              nItems;
-        OSPDataType         format;
-        std::vector<byte_t> data;
-        // If we're in collab/independent mode we can
-        // be setting with just a local shared pointer
-        void              *localData;
-        int32              flags;
+        ObjectHandle handle;
+        size_t       nItems;
+        OSPDataType  format;
+
+        std::vector<byte_t>        copiedData;
+        utility::ArrayView<byte_t> dataView;//<-- may point to user data or
+                                            //    'copiedData' member, depending
+                                            //    on flags given on construction
+
+        int32 flags;
       };
 
-      
+
       struct NewTexture2d : public Work
       {
         NewTexture2d() = default;
@@ -265,7 +269,7 @@ namespace ospray {
         uint32              flags;
       };
 
-      
+
       struct SetRegion : public Work
       {
         SetRegion() = default;
@@ -336,7 +340,7 @@ namespace ospray {
       {
         RenderFrame() = default;
         RenderFrame(OSPFrameBuffer fb, OSPRenderer renderer, uint32 channels);
-        
+
         void run() override;
         void runOnMaster() override;
 
@@ -376,12 +380,12 @@ namespace ospray {
           serialized itself in */
         void deserialize(ReadStream &b) override
         { b >> modelHandle.i64 >> objectHandle.i64; }
-        
+
         ObjectHandle modelHandle;
         ObjectHandle objectHandle;
       };
 
-      
+
       struct AddGeometry : public Work
       {
         AddGeometry() = default;
@@ -402,12 +406,12 @@ namespace ospray {
           serialized itself in */
         void deserialize(ReadStream &b) override
         { b >> modelHandle.i64 >> objectHandle.i64; }
-        
+
         ObjectHandle modelHandle;
         ObjectHandle objectHandle;
       };
 
-      
+
       struct RemoveGeometry : public Work
       {
         RemoveGeometry() = default;
@@ -463,7 +467,7 @@ namespace ospray {
         CreateFrameBuffer() = default;
         CreateFrameBuffer(ObjectHandle handle, vec2i dimensions,
                           OSPFrameBufferFormat format, uint32 channels);
-        
+
         void run() override;
         void runOnMaster() override;
 
@@ -487,7 +491,7 @@ namespace ospray {
       struct SetParam :  public Work
       {
         SetParam() = default;
-        
+
         SetParam(ObjectHandle handle, const char *name, const T &val)
           : handle(handle), name(name), val(val)
         {
@@ -527,12 +531,12 @@ namespace ospray {
         std::string name;
         T val;
       };
-      
+
       // run for setString needs to know to pass the C string to
       // set the param so we need to provide a different run.
       template<>
       void SetParam<std::string>::run();
-      
+
       template<>
       void SetParam<std::string>::runOnMaster();
 
@@ -550,7 +554,7 @@ namespace ospray {
         }
 
         void run() override;
-        
+
         /*! serializes itself on the given serial buffer - will write
           all data into this buffer in a way that it can afterwards
           un-serialize itself 'on the other side'*/
@@ -570,7 +574,7 @@ namespace ospray {
       struct SetParam<OSPObject> : public Work
       {
         SetParam() = default;
-        
+
         SetParam(ObjectHandle handle, const char *name, OSPObject &obj)
           : handle(handle),
             name(name),
@@ -590,13 +594,13 @@ namespace ospray {
           }
           obj->findParam(name.c_str(), true)->set(param);
         }
-        
+
         /*! serializes itself on the given serial buffer - will write
           all data into this buffer in a way that it can afterwards
           un-serialize itself 'on the other side'*/
         void serialize(WriteStream &b) const override
         { b << (int64)handle << name << (int64)val; }
-        
+
 
         /*! de-serialize from a buffer that an object of this type has
           serialized itself in */
@@ -728,7 +732,7 @@ namespace ospray {
         vec2f screenPos;
         OSPPickResult pickResult;
       };
-      
+
     } // ::ospray::mpi::work
   } // ::ospray::mpi
 } // ::ospray

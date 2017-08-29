@@ -83,11 +83,11 @@ namespace ospray {
       }
 
       // ospCommit ////////////////////////////////////////////////////////////
-      
+
       CommitObject::CommitObject(ObjectHandle handle)
         : handle(handle)
       {}
-      
+
       void CommitObject::run()
       {
         ManagedObject *obj = handle.lookup();
@@ -99,7 +99,7 @@ namespace ospray {
                                    + " did not have object to commit!");
         }
       }
-      
+
       void CommitObject::runOnMaster()
       {
         if (handle.defined()) {
@@ -109,12 +109,12 @@ namespace ospray {
           }
         }
       }
-      
+
       void CommitObject::serialize(WriteStream &b) const
       {
         b << (int64)handle;
       }
-      
+
       void CommitObject::deserialize(ReadStream &b)
       {
         b >> handle.i64;
@@ -132,7 +132,7 @@ namespace ospray {
           channels(channels)
       {
       }
-    
+
       void CreateFrameBuffer::run()
       {
         const bool hasDepthBuffer    = channels & OSP_FB_DEPTH;
@@ -149,17 +149,17 @@ namespace ospray {
         fb->refInc();
         handle.assign(fb);
       }
-      
+
       void CreateFrameBuffer::runOnMaster()
       {
         run();
       }
-      
+
       void CreateFrameBuffer::serialize(WriteStream &b) const
       {
         b << (int64)handle << dimensions << (int32)format << channels;
       }
-      
+
       void CreateFrameBuffer::deserialize(ReadStream &b)
       {
         int32 fmt;
@@ -168,11 +168,11 @@ namespace ospray {
       }
 
       // ospLoadModule ////////////////////////////////////////////////////////
-      
+
       LoadModule::LoadModule(const std::string &name)
         : name(name)
       {}
-      
+
       void LoadModule::run()
       {
         errorCode = loadLocalModule(name);
@@ -187,7 +187,7 @@ namespace ospray {
       {
         b << name;
       }
-      
+
       void LoadModule::deserialize(ReadStream &b)
       {
         b >> name;
@@ -202,13 +202,13 @@ namespace ospray {
         Assert(obj);
         obj->findParam(name.c_str(), true)->set(val.c_str());
       }
-    
+
       template<>
       void SetParam<std::string>::runOnMaster()
       {
         if (!handle.defined())
           return;
-        
+
         ManagedObject *obj = handle.lookup();
         if (dynamic_cast<Renderer*>(obj) || dynamic_cast<Volume*>(obj)) {
           obj->findParam(name.c_str(), true)->set(val.c_str());
@@ -217,7 +217,7 @@ namespace ospray {
 
       // ospSetMaterial ///////////////////////////////////////////////////////
 
-      void SetMaterial::run() 
+      void SetMaterial::run()
       {
         Geometry *geom = (Geometry*)handle.lookup();
         Material *mat = (Material*)material.lookup();
@@ -288,7 +288,7 @@ namespace ospray {
         if (!light) light = Light::createLight(type.c_str());
         handle.assign(light);
       }
-      
+
       // ospNewData ///////////////////////////////////////////////////////////
 
       NewData::NewData(ObjectHandle handle,
@@ -299,47 +299,30 @@ namespace ospray {
         : handle(handle),
           nItems(nItems),
           format(format),
-          localData(nullptr),
           flags(flags)
       {
-        // TODO: Is this check ok for ParaView e.g. what Carson is changing in 2e81c005 ?
         if (init && nItems) {
+          auto numBytes = sizeOf(format) * nItems;
+
           if (flags & OSP_DATA_SHARED_BUFFER) {
-            localData = init;
+            dataView.reset((byte_t*)init, numBytes);
           } else {
-            static WarnOnce warning("#osp.mpi: warning - newdata currently "
-                                    "creates a std::vector copy of input data");
-            data.resize(ospray::sizeOf(format) * nItems);
-            std::memcpy(data.data(), init, data.size());
+            copiedData.resize(numBytes);
+            std::memcpy(copiedData.data(), init, numBytes);
+            dataView = copiedData;
           }
         }
       }
-      
+
       void NewData::run()
       {
-        Data *ospdata = nullptr;
-        if (!data.empty()) {
-          // iw - shouldn't we _always_ set the shared_data flag here?
-          // after deserialization all the data is in a std::vector
-          // (data) that we own, and never free, anywya -- shouldn't
-          // we just share this?
-          ospdata = new Data(nItems, format, data.data(), flags);
-        } else if (localData) {
-          // iw - how can that ever trigger? localdata should get set
-          // only on the master, but 'run' happens only on the
-          // workers.... right?
-          ospdata = new Data(nItems, format, localData, flags);
-        } else {
-          // iw - can this ever happen? (empty data?) if so, shouldn't
-          // we make sure that flags get the shared flag removed (in
-          // case it was set)
-          ospdata = new Data(nItems, format, nullptr, flags);
-        }
-        Assert(ospdata);
         // iw - not sure if string would be handled correctly (I doubt
         // it), so let's assert that nobody accidentally uses it.
         assert(format != OSP_STRING);
+
+        Data *ospdata = new Data(nItems, format, dataView.data());
         handle.assign(ospdata);
+
         if (format == OSP_OBJECT ||
             format == OSP_CAMERA  ||
             format == OSP_DATA ||
@@ -370,24 +353,17 @@ namespace ospray {
           }
         }
       }
-      
+
       void NewData::serialize(WriteStream &b) const
       {
-        static WarnOnce warning("#osp.mpi: Warning - newdata serialize "
-                                "currently uses a std::vector... ");
-        /* note there are two issues with this: first is that when
-           sharing data buffer we'd have only localdata set (not the
-           this->data vector; second is that even _if_ we use the data
-           vector we're (temporarily) doubling memory consumption
-           because we copy all data into the std::vector first, just
-           so we can send it.... */
-        b << (int64)handle << nItems << (int32)format << flags << data;
+        b << (int64)handle << nItems << (int32)format << flags << dataView;
       }
-      
+
       void NewData::deserialize(ReadStream &b)
       {
         int32 fmt;
-        b >> handle.i64 >> nItems >> fmt >> flags >> data;
+        b >> handle.i64 >> nItems >> fmt >> flags >> copiedData;
+        dataView = copiedData;
         format = (OSPDataType)fmt;
       }
 
@@ -407,7 +383,7 @@ namespace ospray {
         data.resize(sz);
         std::memcpy(data.data(), texture, sz);
       }
-      
+
       void NewTexture2d::run()
       {
         Texture2D *texture =
@@ -416,12 +392,12 @@ namespace ospray {
         Assert(texture);
         handle.assign(texture);
       }
-      
+
       void NewTexture2d::serialize(WriteStream &b) const
       {
         b << (int64)handle << dimensions << (int32)format << flags << data;
       }
-      
+
       void NewTexture2d::deserialize(ReadStream &b)
       {
         int32 fmt;
@@ -477,14 +453,14 @@ namespace ospray {
       ClearFrameBuffer::ClearFrameBuffer(OSPFrameBuffer fb, uint32 channels)
         : handle((ObjectHandle&)fb), channels(channels)
       {}
-      
+
       void ClearFrameBuffer::run()
       {
         FrameBuffer *fb = (FrameBuffer*)handle.lookup();
         Assert(fb);
         fb->clear(channels);
       }
-      
+
       void ClearFrameBuffer::runOnMaster()
       {
         run();
@@ -494,14 +470,14 @@ namespace ospray {
       {
         b << (int64)handle << channels;
       }
-      
+
       void ClearFrameBuffer::deserialize(ReadStream &b)
       {
         b >> handle.i64 >> channels;
       }
 
       // ospRenderFrame ///////////////////////////////////////////////////////
-      
+
       RenderFrame::RenderFrame(OSPFrameBuffer fb,
                                OSPRenderer renderer,
                                uint32 channels)
@@ -510,7 +486,7 @@ namespace ospray {
           channels(channels),
           varianceResult(0.f)
       {}
-      
+
       void RenderFrame::run()
       {
         Renderer *renderer = (Renderer*)rendererHandle.lookup();
@@ -519,17 +495,17 @@ namespace ospray {
         Assert(fb);
         varianceResult = renderer->renderFrame(fb, channels);
       }
-      
+
       void RenderFrame::runOnMaster()
       {
         run();
       }
-      
+
       void RenderFrame::serialize(WriteStream &b) const
       {
         b << (int64)fbHandle << (int64)rendererHandle << channels;
       }
-      
+
       void RenderFrame::deserialize(ReadStream &b)
       {
         b >> fbHandle.i64 >> rendererHandle.i64 >> channels;
@@ -599,14 +575,14 @@ namespace ospray {
       {
         Assert(handle != nullHandle);
       }
-      
+
       void RemoveParam::run()
       {
         ManagedObject *obj = handle.lookup();
         Assert(obj);
         obj->removeParam(name.c_str());
       }
-      
+
       void RemoveParam::runOnMaster()
       {
         ManagedObject *obj = handle.lookup();
@@ -626,12 +602,12 @@ namespace ospray {
       }
 
       // ospSetPixelOp ////////////////////////////////////////////////////////
-      
+
       SetPixelOp::SetPixelOp(OSPFrameBuffer fb, OSPPixelOp op)
         : fbHandle((ObjectHandle&)fb),
           poHandle((ObjectHandle&)op)
       {}
-      
+
       void SetPixelOp::run()
       {
         FrameBuffer *fb = (FrameBuffer*)fbHandle.lookup();
@@ -650,18 +626,18 @@ namespace ospray {
       {
         b << (int64)fbHandle << (int64)poHandle;
       }
-      
+
       void SetPixelOp::deserialize(ReadStream &b)
       {
         b >> fbHandle.i64 >> poHandle.i64;
       }
 
       // ospRelease ///////////////////////////////////////////////////////////
-      
+
       CommandRelease::CommandRelease(ObjectHandle handle)
         : handle(handle)
       {}
-      
+
       void CommandRelease::run()
       {
         handle.freeObject();
@@ -671,14 +647,14 @@ namespace ospray {
       {
         b << (int64)handle;
       }
-      
+
       void CommandRelease::deserialize(ReadStream &b)
       {
         b >> handle.i64;
       }
 
       // ospFinalize //////////////////////////////////////////////////////////
-      
+
       void CommandFinalize::run()
       {
         runOnMaster();
@@ -692,16 +668,16 @@ namespace ospray {
         // be exiting.
         std::exit(0);
       }
-      
+
       void CommandFinalize::runOnMaster()
       {
         world.barrier();
         MPI_CALL(Finalize());
       }
-      
+
       void CommandFinalize::serialize(WriteStream &b) const
       {}
-      
+
       void CommandFinalize::deserialize(ReadStream &b)
       {}
 
