@@ -271,19 +271,13 @@ namespace ospray {
               if (hdr) {
                 const float *pixel = &((float*)pixels)[(y*tex->size.x+x)*tex->channels];
                 float *dst = &((float*)tex->data)[(x+(tex->size.y-1-y)*tex->size.x)*tex->channels];
-                *dst++ = pixel[0];
-                *dst++ = pixel[1];
-                *dst++ = pixel[2];
-                if (tex->channels == 4)
-                  *dst++ = pixel[3];
+                for(int i = 0;i<tex->channels;i++)
+                  *dst++ = pixel[i];
               } else {
                 const unsigned char *pixel = &pixels[(y*tex->size.x+x)*tex->channels];
                 unsigned char *dst = &((unsigned char*)tex->data)[((tex->size.y-1-y)*tex->size.x+x)*tex->channels];
-                *dst++ = pixel[0];
-                *dst++ = pixel[1];
-                *dst++ = pixel[2];
-                if (tex->channels == 4)
-                  *dst++ = pixel[3];
+                for(int i = 0;i<tex->channels;i++)
+                  *dst++ = pixel[i];
               }
             }
           }

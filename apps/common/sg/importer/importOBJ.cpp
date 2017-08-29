@@ -143,7 +143,6 @@ namespace ospray {
             matNode, "map_bump", mat.bump_texname, containingPath);
         addTextureIfNeeded(
             matNode, "map_d", mat.alpha_texname, containingPath, true);
-
         sgMaterials.push_back(matNodePtr);
       }
 
