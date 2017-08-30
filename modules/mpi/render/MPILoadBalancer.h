@@ -88,7 +88,7 @@ namespace ospray {
                      public TiledLoadBalancer
       {
       public:
-        Master(ObjectHandle handle);
+        Master(ObjectHandle handle, int numPreAllocated = 4);
         void incoming(const std::shared_ptr<mpicommon::Message> &) override;
         float renderFrame(Renderer *tiledRenderer
             , FrameBuffer *fb
@@ -105,7 +105,7 @@ namespace ospray {
         typedef std::vector<TileTask> TileVector;
         std::vector<TileVector> preferredTiles; // per worker default queue
         std::vector<bool> workerNotified; // worker knows we're done?
-        int numPreAllocated;
+        int numPreAllocated{4};
       };
 
       /*! \brief the 'slave' in a tile-based master-slave load balancer

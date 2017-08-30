@@ -78,6 +78,7 @@ namespace ospray {
     std::vector<uint32_t> pixelBuffer;
 
     bool useDynamicLoadBalancer{false};
+    int  numPreAllocatedTiles{4};
   };
 
 }// namespace ospray

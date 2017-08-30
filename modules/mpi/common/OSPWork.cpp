@@ -88,8 +88,10 @@ namespace ospray {
 
 
       SetLoadBalancer::SetLoadBalancer(ObjectHandle _handle,
-                                       bool _useDynamicLoadBalancer)
+                                       bool _useDynamicLoadBalancer,
+                                       int _numTilesPreAllocated)
         : useDynamicLoadBalancer(_useDynamicLoadBalancer),
+          numTilesPreAllocated(_numTilesPreAllocated),
           handleID(_handle.i64)
       {
       }
@@ -109,7 +111,8 @@ namespace ospray {
       {
         if (useDynamicLoadBalancer) {
           TiledLoadBalancer::instance =
-              make_unique<dynamicLoadBalancer::Master>(handleID);
+              make_unique<dynamicLoadBalancer::Master>(handleID,
+                                                       numTilesPreAllocated);
         } else {
           TiledLoadBalancer::instance =
               make_unique<staticLoadBalancer::Master>();

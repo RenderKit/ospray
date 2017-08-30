@@ -306,6 +306,20 @@ namespace ospray {
             renderEngine.start();
         }
 
+        if (useDynamicLoadBalancer) {
+          if (ImGui::InputInt("PreAllocated Tiles", &numPreAllocatedTiles)) {
+            renderEngine.stop();
+            auto device = ospGetCurrentDevice();
+            if (device == nullptr)
+              throw std::runtime_error("FATAL: could not get OSPDevice!");
+
+            ospDeviceSet1i(device, "preAllocatedTiles", numPreAllocatedTiles);
+            ospDeviceCommit(device);
+            if (!renderingPaused)
+              renderEngine.start();
+          }
+        }
+
         ImGui::EndMenu();
       }
 

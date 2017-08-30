@@ -451,7 +451,15 @@ namespace ospray {
           getParam1i("dynamicLoadBalancer",
                      OSPRAY_DYNAMIC_LOADBALANCER.value_or(false));
 
-      work::SetLoadBalancer slbWork(ObjectHandle(), useDynamicLoadBalancer);
+      auto OSPRAY_PREALLOCATED_TILES =
+          utility::getEnvVar<int>("OSPRAY_PREALLOCATED_TILES");
+
+      auto preAllocatedTiles =
+          OSPRAY_PREALLOCATED_TILES.value_or(getParam1i("preAllocatedTiles",4));
+
+      work::SetLoadBalancer slbWork(ObjectHandle(),
+                                    useDynamicLoadBalancer,
+                                    preAllocatedTiles);
       processWork(slbWork);
     }
 

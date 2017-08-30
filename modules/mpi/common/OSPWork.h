@@ -103,7 +103,9 @@ namespace ospray {
       struct SetLoadBalancer :  public Work
       {
         SetLoadBalancer() = default;
-        SetLoadBalancer(ObjectHandle _handle, bool _useDynamicLoadBalancer);
+        SetLoadBalancer(ObjectHandle _handle,
+                        bool _useDynamicLoadBalancer,
+                        int _numTilesPreAllocated = 4);
 
         void run() override;
         void runOnMaster() override;
@@ -114,6 +116,7 @@ namespace ospray {
       private:
 
         int   useDynamicLoadBalancer{false};
+        int   numTilesPreAllocated{4};
         int64 handleID{-1};
       };
 
