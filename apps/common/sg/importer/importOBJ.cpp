@@ -80,11 +80,20 @@ namespace ospray {
                                             ospcommon::utility::Any &paramValue)
     {
       std::stringstream typeAndValueStream(typeAndValueString);
-
-      typeAndValueStream >> paramType;
-
       std::string paramValueString;
       getline(typeAndValueStream, paramValueString);
+
+      std::vector<float> floats;
+      std::stringstream valueStream(typeAndValueString);
+      float val;
+      while (valueStream >> val)
+        floats.push_back(val);
+      if (floats.size() == 1)
+        paramType = "float";
+      else if (floats.size() == 2)
+        paramType = "vec2f";
+      else if (floats.size() == 3)
+        paramType = "vec3f";
 
       if (paramType == "float") {
         paramValue = parseFloatString(paramValueString);
