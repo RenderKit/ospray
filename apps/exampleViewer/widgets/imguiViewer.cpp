@@ -295,28 +295,14 @@ namespace ospray {
       if (ImGui::BeginMenu("MPI Extras")) {
         if (ImGui::Checkbox("Use Dynamic Load Balancer",
                             &useDynamicLoadBalancer)) {
-          renderEngine.stop();
-          auto device = ospGetCurrentDevice();
-          if (device == nullptr)
-            throw std::runtime_error("FATAL: could not get current OSPDevice!");
-
-          ospDeviceSet1i(device, "dynamicLoadBalancer", useDynamicLoadBalancer);
-          ospDeviceCommit(device);
-          if (!renderingPaused)
-            renderEngine.start();
+          setCurrentDeviceParameter("dynamicLoadBalancer",
+                                    useDynamicLoadBalancer);
         }
 
         if (useDynamicLoadBalancer) {
           if (ImGui::InputInt("PreAllocated Tiles", &numPreAllocatedTiles)) {
-            renderEngine.stop();
-            auto device = ospGetCurrentDevice();
-            if (device == nullptr)
-              throw std::runtime_error("FATAL: could not get OSPDevice!");
-
-            ospDeviceSet1i(device, "preAllocatedTiles", numPreAllocatedTiles);
-            ospDeviceCommit(device);
-            if (!renderingPaused)
-              renderEngine.start();
+            setCurrentDeviceParameter("preAllocatedTiles",
+                                      numPreAllocatedTiles);
           }
         }
 
@@ -582,6 +568,22 @@ namespace ospray {
       ImGui::PopStyleColor(styles--);
     if (ImGui::IsItemHovered())
       ImGui::SetTooltip("%s", node->documentation().c_str());
+  }
+
+  void ImGuiViewer::setCurrentDeviceParameter(const std::string &param,
+                                              int value)
+  {
+    renderEngine.stop();
+
+    auto device = ospGetCurrentDevice();
+    if (device == nullptr)
+      throw std::runtime_error("FATAL: could not get current OSPDevice!");
+
+    ospDeviceSet1i(device, param.c_str(), value);
+    ospDeviceCommit(device);
+
+    if (!renderingPaused)
+      renderEngine.start();
   }
 
 }// ::ospray

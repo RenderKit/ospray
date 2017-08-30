@@ -61,6 +61,8 @@ namespace ospray {
     void buildGui() override;
     void buildGUINode(std::string name, std::shared_ptr<sg::Node> node, int indent);
 
+    void setCurrentDeviceParameter(const std::string &param, int value);
+
     // Data //
 
     double lastFrameFPS;
