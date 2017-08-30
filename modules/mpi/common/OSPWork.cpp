@@ -34,6 +34,8 @@ namespace ospray {
 
       void registerOSPWorkItems(WorkTypeRegistry &registry)
       {
+        registerWorkUnit<SetLoadBalancer>(registry);
+
         registerWorkUnit<NewRenderer>(registry);
         registerWorkUnit<NewModel>(registry);
         registerWorkUnit<NewGeometry>(registry);
@@ -80,6 +82,48 @@ namespace ospray {
 
         registerWorkUnit<CommandFinalize>(registry);
         registerWorkUnit<Pick>(registry);
+      }
+
+      // SetLoadBalancer //////////////////////////////////////////////////////
+
+
+      SetLoadBalancer::SetLoadBalancer(ObjectHandle _handle,
+                                       bool _useDynamicLoadBalancer)
+        : useDynamicLoadBalancer(_useDynamicLoadBalancer),
+          handleID(_handle.i64)
+      {
+      }
+
+      void SetLoadBalancer::run()
+      {
+        if (useDynamicLoadBalancer) {
+          TiledLoadBalancer::instance =
+              make_unique<dynamicLoadBalancer::Slave>(handleID);
+        } else {
+          TiledLoadBalancer::instance =
+              make_unique<staticLoadBalancer::Slave>();
+        }
+      }
+
+      void SetLoadBalancer::runOnMaster()
+      {
+        if (useDynamicLoadBalancer) {
+          TiledLoadBalancer::instance =
+              make_unique<dynamicLoadBalancer::Master>(handleID);
+        } else {
+          TiledLoadBalancer::instance =
+              make_unique<staticLoadBalancer::Master>();
+        }
+      }
+
+      void SetLoadBalancer::serialize(WriteStream &b) const
+      {
+        b << handleID << useDynamicLoadBalancer;
+      }
+
+      void SetLoadBalancer::deserialize(ReadStream &b)
+      {
+        b >> handleID >> useDynamicLoadBalancer;
       }
 
       // ospCommit ////////////////////////////////////////////////////////////

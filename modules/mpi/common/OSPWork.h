@@ -99,6 +99,24 @@ namespace ospray {
 
       void registerOSPWorkItems(WorkTypeRegistry &registry);
 
+      /*! this should go into implementation section ... */
+      struct SetLoadBalancer :  public Work
+      {
+        SetLoadBalancer() = default;
+        SetLoadBalancer(ObjectHandle _handle, bool _useDynamicLoadBalancer);
+
+        void run() override;
+        void runOnMaster() override;
+
+        void serialize(WriteStream &b) const override;
+        void deserialize(ReadStream &b) override;
+
+      private:
+
+        int   useDynamicLoadBalancer{false};
+        int64 handleID{-1};
+      };
+
       /*! All of the simple CMD_NEW_* can be implemented with the same
        template. The more unique ones like NEW_DATA, NEW_TEXTURE2D or
        render specific objects like lights and materials require some

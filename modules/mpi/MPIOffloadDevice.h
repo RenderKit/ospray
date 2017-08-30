@@ -202,9 +202,11 @@ namespace ospray {
                                 void *data, const uint32 flags) override;
 
       OSPPickResult pick(OSPRenderer renderer,
-                         const vec2f &screenPos) override; 
+                         const vec2f &screenPos) override;
 
     private:
+
+      void initializeDevice();
 
       void processWork(work::Work &work, bool flushWriteStream = false);
 

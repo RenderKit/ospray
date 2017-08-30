@@ -84,11 +84,11 @@ namespace ospray {
         bool tilesExhausted; // no more tiles available
       };
 
-      class Master : public maml::MessageHandler,
+      class Master : public messaging::MessageHandler,
                      public TiledLoadBalancer
       {
       public:
-        Master();
+        Master(ObjectHandle handle);
         void incoming(const std::shared_ptr<mpicommon::Message> &) override;
         float renderFrame(Renderer *tiledRenderer
             , FrameBuffer *fb
@@ -105,18 +105,17 @@ namespace ospray {
         typedef std::vector<TileTask> TileVector;
         std::vector<TileVector> preferredTiles; // per worker default queue
         std::vector<bool> workerNotified; // worker knows we're done?
-        ObjectHandle myId;
         int numPreAllocated;
       };
 
       /*! \brief the 'slave' in a tile-based master-slave load balancer
 
       */
-      class Slave : public maml::MessageHandler,
+      class Slave : public messaging::MessageHandler,
                     public TiledLoadBalancer
       {
       public:
-        Slave();
+        Slave(ObjectHandle handle);
         void incoming(const std::shared_ptr<mpicommon::Message> &) override;
         float renderFrame(Renderer *tiledRenderer
             , FrameBuffer *fb
@@ -138,7 +137,6 @@ namespace ospray {
         int tilesScheduled;
         bool tilesAvailable;
         bool frameActive;
-        ObjectHandle myId;
       };
 
     }// ::ospray::mpi::dynamicLoadBalancer

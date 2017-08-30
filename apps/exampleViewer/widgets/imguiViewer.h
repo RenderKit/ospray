@@ -76,6 +76,8 @@ namespace ospray {
 
     AsyncRenderEngine renderEngine;
     std::vector<uint32_t> pixelBuffer;
+
+    bool useDynamicLoadBalancer{false};
   };
 
 }// namespace ospray

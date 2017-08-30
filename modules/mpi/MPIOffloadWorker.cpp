@@ -29,7 +29,6 @@
 #include "texture/Texture2D.h"
 #include "fb/LocalFB.h"
 #include "mpi/fb/DistributedFrameBuffer.h"
-#include "mpi/render/MPILoadBalancer.h"
 #include "transferFunction/TransferFunction.h"
 #include "common/OSPWork.h"
 #include "ospcommon/utility/getEnvVar.h"
@@ -133,16 +132,6 @@ namespace ospray {
       postStatusMsg(OSPRAY_MPI_VERBOSE_LEVEL)
           << "#w: running MPI worker process " << worker.rank
           << "/" << worker.size << " on pid " << getpid() << "@" << hostname;
-
-      auto useDynamicLoadBalancer =
-          getEnvVar<int>("OSPRAY_DYNAMIC_LOADBALANCER").value_or(false);
-
-      if (useDynamicLoadBalancer) {
-        puts("#osp:mpi: using dynamicLoadBalancer");
-        TiledLoadBalancer::instance = make_unique<dynamicLoadBalancer::Slave>();
-      } else {
-        TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Slave>();
-      }
 
       // -------------------------------------------------------
       // setting up read/write streams

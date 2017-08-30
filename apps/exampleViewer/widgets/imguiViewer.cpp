@@ -17,6 +17,7 @@
 
 // ospcommon
 #include "ospcommon/utility/SaveImage.h"
+#include "ospcommon/utility/getEnvVar.h"
 
 #include "imguiViewer.h"
 
@@ -45,6 +46,9 @@ namespace ospray {
       scenegraphDW(scenegraphDW),
       renderEngine(scenegraph, scenegraphDW)
   {
+    useDynamicLoadBalancer =
+        utility::getEnvVar<int>("OSPRAY_DYNAMIC_LOADBALANCER").value_or(false);
+
     //do initial commit to make sure bounds are correctly computed
     scenegraph->traverse("verify");
     scenegraph->traverse("commit");
@@ -284,6 +288,23 @@ namespace ospray {
         if (ImGui::MenuItem("Reset View")) resetView();
         if (ImGui::MenuItem("Reset Accumulation")) viewPort.modified = true;
         if (ImGui::MenuItem("Print View")) printViewport();
+
+        ImGui::EndMenu();
+      }
+
+      if (ImGui::BeginMenu("MPI Extras")) {
+        if (ImGui::Checkbox("Use Dynamic Load Balancer",
+                            &useDynamicLoadBalancer)) {
+          renderEngine.stop();
+          auto device = ospGetCurrentDevice();
+          if (device == nullptr)
+            throw std::runtime_error("FATAL: could not get current OSPDevice!");
+
+          ospDeviceSet1i(device, "dynamicLoadBalancer", useDynamicLoadBalancer);
+          ospDeviceCommit(device);
+          if (!renderingPaused)
+            renderEngine.start();
+        }
 
         ImGui::EndMenu();
       }

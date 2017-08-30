@@ -29,10 +29,25 @@ namespace ospray {
   namespace mpi {
     namespace messaging {
 
+      // message handling base ////////////////////////////////////////////////
+
+      struct MessageHandler : public maml::MessageHandler
+      {
+        //! NOTE: automatically register/de-registers itself
+
+        MessageHandler(ObjectHandle handle);
+        virtual ~MessageHandler();
+
+      protected:
+
+        ObjectHandle myId;
+      };
+
       // async point messaging interface //////////////////////////////////////
 
-      void registerMessageListener(int handleObjID,
-                                   maml::MessageHandler *listener);
+      void registerMessageListener(int handleObjID, MessageHandler *listener);
+
+      void removeMessageListener(int handleObjID);
 
       void enableAsyncMessaging();
 

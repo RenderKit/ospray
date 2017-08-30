@@ -184,9 +184,8 @@ namespace ospray {
 
       // dynamicLoadBalancer::Master definitions ///////////////////////////////
 
-      Master::Master()
+      Master::Master(ObjectHandle handle) : MessageHandler(handle)
       {
-        mpi::messaging::registerMessageListener(myId, this);
         preferredTiles.resize(worker.size);
         workerNotified.resize(worker.size);
 
@@ -317,9 +316,8 @@ namespace ospray {
 
       // dynamicLoadBalancer::Slave definitions ////////////////////////////////
 
-      Slave::Slave()
+      Slave::Slave(ObjectHandle handle) : MessageHandler(handle)
       {
-        mpi::messaging::registerMessageListener(myId, this);
       }
 
       void Slave::incoming(const std::shared_ptr<mpicommon::Message> &msg)
