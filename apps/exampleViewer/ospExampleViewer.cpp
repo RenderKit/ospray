@@ -395,8 +395,8 @@ int main(int ac, const char **av)
   }
 
   auto device = ospGetCurrentDevice();
-  if(device == nullptr) {
-	std::cerr << "FATAL ERROR DURING GETTING CURRENT DEVICE!" << std::endl;
+  if (device == nullptr) {
+    std::cerr << "FATAL ERROR DURING GETTING CURRENT DEVICE!" << std::endl;
     return 1;
   }
 

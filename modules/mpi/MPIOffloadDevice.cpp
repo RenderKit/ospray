@@ -382,11 +382,8 @@ namespace ospray {
       }
     }
 
-    void MPIOffloadDevice::commit()
+    void MPIOffloadDevice::initializeDevice()
     {
-      if (initialized)
-        return;
-
       Device::commit();
 
       initialized = true;
@@ -440,16 +437,30 @@ namespace ospray {
       mpiFabric   = make_unique<MPIBcastFabric>(mpi::worker, MPI_ROOT, 0);
       readStream  = make_unique<networking::BufferedReadStream>(*mpiFabric);
       writeStream = make_unique<networking::BufferedWriteStream>(*mpiFabric);
+    }
+
+    void MPIOffloadDevice::commit()
+    {
+      if (!initialized)
+        initializeDevice();
+
+      auto OSPRAY_DYNAMIC_LOADBALANCER =
+          getEnvVar<int>("OSPRAY_DYNAMIC_LOADBALANCER");
 
       auto useDynamicLoadBalancer =
-          getEnvVar<int>("OSPRAY_DYNAMIC_LOADBALANCER").value_or(false);
+          getParam1i("dynamicLoadBalancer",
+                     OSPRAY_DYNAMIC_LOADBALANCER.value_or(false));
 
-      if (useDynamicLoadBalancer) {
-        puts("#osp:mpi: using dynamicLoadBalancer");
-        TiledLoadBalancer::instance = make_unique<dynamicLoadBalancer::Master>();
-      } else {
-        TiledLoadBalancer::instance = make_unique<staticLoadBalancer::Master>();
-      }
+      auto OSPRAY_PREALLOCATED_TILES =
+          utility::getEnvVar<int>("OSPRAY_PREALLOCATED_TILES");
+
+      auto preAllocatedTiles =
+          OSPRAY_PREALLOCATED_TILES.value_or(getParam1i("preAllocatedTiles",4));
+
+      work::SetLoadBalancer slbWork(ObjectHandle(),
+                                    useDynamicLoadBalancer,
+                                    preAllocatedTiles);
+      processWork(slbWork);
     }
 
     OSPFrameBuffer
