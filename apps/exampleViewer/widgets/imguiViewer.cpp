@@ -203,15 +203,17 @@ namespace ospray {
       auto dir = viewPort.at - viewPort.from;
       dir = normalize(dir);
       auto &camera = scenegraph->child("camera");
-      camera["dir"].setValue(dir);
-      camera["pos"].setValue(viewPort.from);
-      camera["up"].setValue(viewPort.up);
+      camera["dir"] = dir;
+      camera["pos"] = viewPort.from;
+      camera["up"]  = viewPort.up;
+      camera.markAsModified();
 
       if (scenegraphDW.get()) {
         auto &camera = scenegraphDW->child("camera");
-        camera["dir"].setValue(dir);
-        camera["pos"].setValue(viewPort.from);
-        camera["up"].setValue(viewPort.up);
+        camera["dir"] = dir;
+        camera["pos"] = viewPort.from;
+        camera["up"]  = viewPort.up;
+        camera.markAsModified();
       }
 
       viewPort.modified = false;
@@ -297,6 +299,7 @@ namespace ospray {
                             &useDynamicLoadBalancer)) {
           setCurrentDeviceParameter("dynamicLoadBalancer",
                                     useDynamicLoadBalancer);
+          viewPort.modified = true;
         }
 
         if (useDynamicLoadBalancer) {

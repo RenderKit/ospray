@@ -153,6 +153,7 @@ namespace ospray {
     void Renderer::postCommit(RenderContext &ctx)
     {
       if (child("camera").childrenLastModified() > frameMTime
+          || child("camera").lastModified() > frameMTime
           || child("lights").childrenLastModified() > frameMTime
           || lastModified() > frameMTime
           || child("shadowsEnabled").lastModified() > frameMTime
