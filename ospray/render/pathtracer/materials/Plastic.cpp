@@ -27,18 +27,20 @@ namespace ospray {
       virtual std::string toString() const  override
       { return "ospray::pathtracer::Plastic"; }
 
+      Plastic()
+      {
+        ispcEquivalent = ispc::PathTracer_Plastic_create();
+      }
+
       //! \brief commit the material's parameters
       virtual void commit() override
       {
-        if (getIE() != nullptr) return;
-
         const vec3f pigmentColor = getParam3f("pigmentColor",vec3f(1.f));
         const float eta          = getParamf("eta",1.4f);
         const float roughness    = getParamf("roughness",0.01f);
-        // const float rcpRoughness = rcpf(roughness);
 
-        ispcEquivalent = ispc::PathTracer_Plastic_create
-          ((const ispc::vec3f&)pigmentColor,eta,roughness);
+        ispc::PathTracer_Plastic_set
+          (getIE(), (const ispc::vec3f&)pigmentColor,eta,roughness);
       }
     };
 
