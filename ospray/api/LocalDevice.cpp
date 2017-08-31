@@ -47,20 +47,22 @@ namespace ospray {
     {
       Device::commit();
 
+      if (!embreeDevice) {
       // -------------------------------------------------------
       // initialize embree. (we need to do this here rather than in
       // ospray::init() because in mpi-mode the latter is also called
       // in the host-stubs, where it shouldn't.
       // -------------------------------------------------------
-      embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
+        embreeDevice = rtcNewDevice(generateEmbreeDeviceCfg(*this).c_str());
 
-      rtcDeviceSetErrorFunction(embreeDevice, embreeErrorFunc);
+        rtcDeviceSetErrorFunction(embreeDevice, embreeErrorFunc);
 
-      RTCError erc = rtcDeviceGetError(embreeDevice);
-      if (erc != RTC_NO_ERROR) {
-        // why did the error function not get called !?
-        postStatusMsg() << "#osp:init: embree internal error number " << erc;
-        assert(erc == RTC_NO_ERROR);
+        RTCError erc = rtcDeviceGetError(embreeDevice);
+        if (erc != RTC_NO_ERROR) {
+          // why did the error function not get called !?
+          postStatusMsg() << "#osp:init: embree internal error number " << erc;
+          assert(erc == RTC_NO_ERROR);
+        }
       }
 
       TiledLoadBalancer::instance = make_unique<LocalTiledLoadBalancer>();
