@@ -58,28 +58,25 @@ const varying BSDF* uniform Velvet_getBSDF(const uniform PathTraceMaterial* unif
   return bsdf;
 }
 
-void Velvet_Constructor(uniform Velvet* uniform self,
-                        const uniform vec3f& reflectance,
-                        const uniform vec3f& horizonScatteringColor,
-                        uniform float horizonScatteringFallOff,
-                        uniform float backScattering)
+export void* uniform PathTracer_Velvet_create()
 {
-  PathTraceMaterial_Constructor(&self->super, Velvet_getBSDF);
-  self->reflectance = reflectance;
-  self->horizonScatteringColor = horizonScatteringColor;
-  self->horizonScatteringFallOff = horizonScatteringFallOff;
-  self->backScattering = backScattering;
+  uniform Velvet* uniform self = uniform new uniform Velvet;
+  return self;
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // External API
 
-export void* uniform PathTracer_Velvet_create(const uniform vec3f& reflectance,
+export void* uniform PathTracer_Velvet_set(void* uniform _self, const uniform vec3f& reflectance,
                                               const uniform vec3f& horizonScatteringColor,
                                               uniform float horizonScatteringFallOff,
                                               uniform float backScattering)
 {
-  uniform Velvet* uniform self = uniform new uniform Velvet;
-  Velvet_Constructor(self,reflectance,horizonScatteringColor,horizonScatteringFallOff,backScattering);
-  return self;
+  uniform Velvet* uniform self = (uniform Velvet* uniform)_self;
+  self->reflectance = reflectance;
+  self->horizonScatteringColor = horizonScatteringColor;
+  self->horizonScatteringFallOff = horizonScatteringFallOff;
+  self->backScattering = backScattering;
+  PathTraceMaterial_Constructor(&self->super, Velvet_getBSDF);
 }
