@@ -15,6 +15,8 @@
 // ======================================================================== //
 
 #include "Messaging.h"
+// ospcommon
+#include "ospcommon/utility/DeletedUniquePtr.h"
 // stl
 #include <unordered_map>
 
@@ -23,6 +25,8 @@ namespace ospray {
     namespace messaging {
 
       using namespace mpicommon;
+      using ospcommon::utility::DeletedUniquePtr;
+      using ospcommon::utility::make_deleted_unique;
 
       // Internal maml message handler for all of OSPRay //////////////////////
 
@@ -68,20 +72,28 @@ namespace ospray {
         if (obj != objectListeners.end()) {
           obj->second->incoming(message);
         } else {
-          postStatusMsg() << "No destination for incoming message!";
+          postStatusMsg() << "WARNING: No destination for incoming message!";
         }
       }
 
       // Singleton instance (hidden) and helper creation function /////////////
 
-      std::unique_ptr<ObjectMessageHandler> createHandler()
+      static DeletedUniquePtr<ObjectMessageHandler> handler;
+      static bool handlerValid = false;
+
+      DeletedUniquePtr<ObjectMessageHandler> createHandler()
       {
-        auto instance = ospcommon::make_unique<ObjectMessageHandler>();
+        auto instance =
+            make_deleted_unique<ObjectMessageHandler>(
+              [](ObjectMessageHandler *handler){
+                handlerValid = false; delete handler;
+              }
+            );
+
         maml::registerHandlerFor(world.comm, instance.get());
+        handlerValid = true;
         return instance;
       }
-
-      static std::unique_ptr<ObjectMessageHandler> handler;
 
       // MessageHandler definitions ///////////////////////////////////////////
 
@@ -100,7 +112,7 @@ namespace ospray {
       void registerMessageListener(int handleObjID,
                                    MessageHandler *listener)
       {
-        if (!handler.get())
+        if (!handlerValid)
           handler = createHandler();
 
         handler->registerMessageListener(handleObjID, listener);
@@ -108,7 +120,7 @@ namespace ospray {
 
       void removeMessageListener(int handleObjID)
       {
-        if (handler.get())
+        if (handlerValid)
           handler->removeMessageListener(handleObjID);
       }
 
