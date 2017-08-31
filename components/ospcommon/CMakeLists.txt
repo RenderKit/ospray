@@ -37,6 +37,7 @@ ELSE()
     library.cpp
     thread.cpp
     vec.cpp
+
     array3D/Array3D.cpp
 
     containers/TransactionalBuffer.h
@@ -104,6 +105,14 @@ ELSE()
     vec.h
 
     DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}
+  )
+
+  OSPRAY_INSTALL_SDK_HEADERS(
+    array3D/Array3D.h
+    array3D/for_each.h
+    array3D/Range.h
+
+    DESTINATION ${OSPCOMMON_SDK_INSTALL_LOC}/array3D
   )
 
   OSPRAY_INSTALL_SDK_HEADERS(
