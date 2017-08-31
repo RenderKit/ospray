@@ -408,6 +408,8 @@ int main(int ac, const char **av)
                           std::exit(1);
                         });
 
+  ospDeviceCommit(device);
+
   // access/load symbols/sg::Nodes dynamically
   loadLibrary("ospray_sg");
 
