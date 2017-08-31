@@ -17,6 +17,7 @@
 
 // ospcommon
 #include "ospcommon/utility/SaveImage.h"
+#include "ospcommon/utility/getEnvVar.h"
 
 #include "imguiViewer.h"
 
@@ -45,6 +46,9 @@ namespace ospray {
       scenegraphDW(scenegraphDW),
       renderEngine(scenegraph, scenegraphDW)
   {
+    useDynamicLoadBalancer =
+        utility::getEnvVar<int>("OSPRAY_DYNAMIC_LOADBALANCER").value_or(false);
+
     //do initial commit to make sure bounds are correctly computed
     scenegraph->traverse("verify");
     scenegraph->traverse("commit");
@@ -199,15 +203,17 @@ namespace ospray {
       auto dir = viewPort.at - viewPort.from;
       dir = normalize(dir);
       auto &camera = scenegraph->child("camera");
-      camera["dir"].setValue(dir);
-      camera["pos"].setValue(viewPort.from);
-      camera["up"].setValue(viewPort.up);
+      camera["dir"] = dir;
+      camera["pos"] = viewPort.from;
+      camera["up"]  = viewPort.up;
+      camera.markAsModified();
 
       if (scenegraphDW.get()) {
         auto &camera = scenegraphDW->child("camera");
-        camera["dir"].setValue(dir);
-        camera["pos"].setValue(viewPort.from);
-        camera["up"].setValue(viewPort.up);
+        camera["dir"] = dir;
+        camera["pos"] = viewPort.from;
+        camera["up"]  = viewPort.up;
+        camera.markAsModified();
       }
 
       viewPort.modified = false;
@@ -284,6 +290,24 @@ namespace ospray {
         if (ImGui::MenuItem("Reset View")) resetView();
         if (ImGui::MenuItem("Reset Accumulation")) viewPort.modified = true;
         if (ImGui::MenuItem("Print View")) printViewport();
+
+        ImGui::EndMenu();
+      }
+
+      if (ImGui::BeginMenu("MPI Extras")) {
+        if (ImGui::Checkbox("Use Dynamic Load Balancer",
+                            &useDynamicLoadBalancer)) {
+          setCurrentDeviceParameter("dynamicLoadBalancer",
+                                    useDynamicLoadBalancer);
+          viewPort.modified = true;
+        }
+
+        if (useDynamicLoadBalancer) {
+          if (ImGui::InputInt("PreAllocated Tiles", &numPreAllocatedTiles)) {
+            setCurrentDeviceParameter("preAllocatedTiles",
+                                      numPreAllocatedTiles);
+          }
+        }
 
         ImGui::EndMenu();
       }
@@ -547,6 +571,22 @@ namespace ospray {
       ImGui::PopStyleColor(styles--);
     if (ImGui::IsItemHovered())
       ImGui::SetTooltip("%s", node->documentation().c_str());
+  }
+
+  void ImGuiViewer::setCurrentDeviceParameter(const std::string &param,
+                                              int value)
+  {
+    renderEngine.stop();
+
+    auto device = ospGetCurrentDevice();
+    if (device == nullptr)
+      throw std::runtime_error("FATAL: could not get current OSPDevice!");
+
+    ospDeviceSet1i(device, param.c_str(), value);
+    ospDeviceCommit(device);
+
+    if (!renderingPaused)
+      renderEngine.start();
   }
 
 }// ::ospray

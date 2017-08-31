@@ -172,15 +172,15 @@ namespace ospray {
   // DistributedFrameBuffer definitions ///////////////////////////////////////
 
   DFB::DistributedFrameBuffer(const vec2i &numPixels,
-                              ObjectHandle myID,
+                              ObjectHandle myId,
                               ColorBufferFormat colorBufferFormat,
                               bool hasDepthBuffer,
                               bool hasAccumBuffer,
                               bool hasVarianceBuffer,
                               bool masterIsAWorker)
-    : FrameBuffer(numPixels,colorBufferFormat,hasDepthBuffer,
+    : MessageHandler(myId),
+      FrameBuffer(numPixels,colorBufferFormat,hasDepthBuffer,
                   hasAccumBuffer,hasVarianceBuffer),
-      myID(myID),
       tileErrorRegion(hasVarianceBuffer ? getNumTiles() : vec2i(0)),
       localFBonMaster(nullptr),
       frameMode(WRITE_MULTIPLE),
@@ -190,8 +190,6 @@ namespace ospray {
   {
     this->ispcEquivalent = ispc::DFB_create(this);
     ispc::DFB_set(getIE(), numPixels.x, numPixels.y, colorBufferFormat);
-
-    mpi::messaging::registerMessageListener(myID.objID(), this);
 
     createTiles();
 
@@ -435,7 +433,7 @@ namespace ospray {
     // Note: In the data-distributed device the master will be rendering
     // and completing tiles.
     if (mpicommon::IamAWorker()) {
-      mpi::messaging::sendTo(mpicommon::masterRank(), myID, msg.message);
+      mpi::messaging::sendTo(mpicommon::masterRank(), myId, msg.message);
       numTilesCompletedThisFrame++;
 
       DBG(printf("RANK %d MARKING AS COMPLETED %i,%i -> %i/%i\n",
@@ -522,7 +520,7 @@ namespace ospray {
     if (mpicommon::IamTheMaster() && !masterIsAWorker) {
       /* do nothing */
     } else {
-      if (pixelOp) { 
+      if (pixelOp) {
         pixelOp->endFrame();
       }
     }
@@ -553,7 +551,7 @@ namespace ospray {
       int dstRank = tileDesc->ownerID;
       DBG(printf("rank %i: send tile %i,%i to %i\n",mpicommon::globalRank(),
                tileDesc->begin.x,tileDesc->begin.y,dstRank));
-      mpi::messaging::sendTo(dstRank, myID, msg);
+      mpi::messaging::sendTo(dstRank, myId, msg);
     } else {
       if (!frameIsActive)
         throw std::runtime_error("#dfb: cannot setTile if frame is inactive!");

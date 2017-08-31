@@ -108,6 +108,7 @@ namespace ospray {
           child("map_Bump").valueAs<OSPObject>());
 
       ospCommit(valueAs<OSPMaterial>());
+
     }
 
     OSP_REGISTER_SG_NODE(Material);

@@ -265,6 +265,7 @@ namespace ospray {
             mesh->setChild("material", sgMaterials[matIdx]);
           else
             mesh->setChild("material", sgMaterials[0]);
+          mesh->child("material").setParent(mesh);
         }
 
         auto model = createNode(name + "_model", "Model");

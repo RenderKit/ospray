@@ -43,28 +43,24 @@ const varying BSDF* uniform Metal_getBSDF(const uniform PathTraceMaterial* unifo
     return MicrofacetConductor_create(ctx, LinearSpace3f_create(ctx, frame(dg.Ns)), self->reflectance, self->eta, self->k, self->roughness);
 }
 
-void Metal_Constructor(uniform Metal* uniform self,
-                       const uniform vec3f& reflectance,
-                       const uniform vec3f& eta,
-                       const uniform vec3f& k,
-                       uniform float roughness)
-{
-  PathTraceMaterial_Constructor(&self->super, Metal_getBSDF);
-  self->reflectance = reflectance;
-  self->eta = eta;
-  self->k = k;
-  self->roughness = roughness;
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 // External API
 
-export void* uniform PathTracer_Metal_create(const uniform vec3f& reflectance,
+export void* uniform PathTracer_Metal_create()
+{
+  uniform Metal* uniform self = uniform new uniform Metal;
+  return self;
+}
+
+export void* uniform PathTracer_Metal_set(void* uniform _self, const uniform vec3f& reflectance,
                                              const uniform vec3f& eta,
                                              const uniform vec3f& k,
                                              uniform float roughness)
 {
-  uniform Metal* uniform self = uniform new uniform Metal;
-  Metal_Constructor(self, reflectance, eta, k, roughness);
-  return self;
+  uniform Metal* uniform self = (uniform Metal* uniform)_self;
+  self->reflectance = reflectance;
+  self->eta = eta;
+  self->k = k;
+  self->roughness = roughness;
+  PathTraceMaterial_Constructor(&self->super, Metal_getBSDF);
 }

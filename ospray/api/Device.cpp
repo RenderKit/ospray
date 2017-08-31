@@ -28,8 +28,27 @@
 #include <map>
 
 namespace ospray {
-
   namespace api {
+
+    // Helper functions ///////////////////////////////////////////////////////
+
+    template <typename OSTREAM_T>
+    static inline void installStatusMsgFunc(OSTREAM_T &stream)
+    {
+      auto &device = currentDevice();
+      device.msg_fcn = [&](const char *msg){ stream << msg; };
+    }
+
+    template <typename OSTREAM_T>
+    static inline void installErrorMsgFunc(OSTREAM_T &stream)
+    {
+      auto &device = currentDevice();
+      device.error_fcn = [&](OSPError e, const char *msg) {
+        stream << "OSPRAY ERROR [" << e << "]: " << msg << std::endl;
+      };
+    }
+
+    // Device definitions /////////////////////////////////////////////////////
 
     Ref<Device> Device::current = nullptr;
 
@@ -81,13 +100,24 @@ namespace ospray {
       auto OSPRAY_LOG_OUTPUT =
           utility::getEnvVar<std::string>("OSPRAY_LOG_OUTPUT");
 
-      if (OSPRAY_LOG_OUTPUT) {
-        auto &dst = OSPRAY_LOG_OUTPUT.value();
-        if (dst == "cout")
-          msg_fcn = [](const char *msg){ std::cout << msg; };
-        else if (dst == "cerr")
-          msg_fcn = [](const char *msg){ std::cerr << msg; };
-      }
+      auto dst = OSPRAY_LOG_OUTPUT.value_or(getParamString("logOutput"));
+      if (dst == "cout")
+        installStatusMsgFunc(std::cout);
+      else if (dst == "cerr")
+        installStatusMsgFunc(std::cerr);
+      else if (dst == "none")
+        msg_fcn = [](const char*){};
+
+      auto OSPRAY_ERROR_OUTPUT =
+          utility::getEnvVar<std::string>("OSPRAY_ERROR_OUTPUT");
+
+      dst = OSPRAY_ERROR_OUTPUT.value_or(getParamString("errorOutput"));
+      if (dst == "cout")
+        installErrorMsgFunc(std::cout);
+      else if (dst == "cerr")
+        installErrorMsgFunc(std::cerr);
+      else if (dst == "none")
+        error_fcn = [](OSPError, const char*){};
 
       if (debugMode) {
         logLevel   = 2;

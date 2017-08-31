@@ -27,11 +27,14 @@ namespace ospray {
       virtual std::string toString() const override
       { return "ospray::pathtracer::Metal"; }
 
+      Metal()
+      {
+        ispcEquivalent = ispc::PathTracer_Metal_create();
+      }
+
       //! \brief commit the material's parameters
       virtual void commit() override
       {
-        if (getIE() != nullptr) return;
-
         const vec3f& reflectance
           = getParam3f("reflectance",getParam3f("color",vec3f(1.f)));
         const vec3f& eta
@@ -41,8 +44,8 @@ namespace ospray {
         const float roughness
           = getParamf("roughness",0.01f);
 
-        ispcEquivalent = ispc::PathTracer_Metal_create
-          ((const ispc::vec3f&)reflectance,
+        ispc::PathTracer_Metal_set(getIE(),
+           (const ispc::vec3f&)reflectance,
            (const ispc::vec3f&)eta,
            (const ispc::vec3f&)k,
            roughness);

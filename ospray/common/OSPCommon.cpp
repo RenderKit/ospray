@@ -89,12 +89,21 @@ namespace ospray {
         } else if (parm == "--osp:logoutput") {
           std::string dst = av[i+1];
 
-          if (dst == "cout")
-            device->msg_fcn = [](const char *msg){ std::cout << msg; };
-          else if (dst == "cerr")
-            device->msg_fcn = [](const char *msg){ std::cerr << msg; };
+          if (dst == "cout" || dst == "cerr")
+            device->findParam("logOutput", true)->set(av[i+1]);
           else
             postStatusMsg("You must use 'cout' or 'cerr' for --osp:logoutput!");
+
+          removeArgs(ac,av,i,2);
+        } else if (parm == "--osp:erroroutput") {
+          std::string dst = av[i+1];
+
+          if (dst == "cout" || dst == "cerr")
+            device->findParam("errorOutput", true)->set(av[i+1]);
+          else {
+            postStatusMsg("You must use 'cout' or 'cerr' for"
+                          " --osp:erroroutput!");
+          }
 
           removeArgs(ac,av,i,2);
         } else if (parm == "--osp:numthreads" || parm == "--osp:num-threads") {
