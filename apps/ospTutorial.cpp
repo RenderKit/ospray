@@ -31,13 +31,8 @@
 #else
 #  include <alloca.h>
 #endif
-#include "ospray/ospray_cpp/Camera.h"
-#include "ospray/ospray_cpp/Data.h"
-#include "ospray/ospray_cpp/FrameBuffer.h"
-#include "ospray/ospray_cpp/Geometry.h"
-#include "ospray/ospray_cpp/Light.h"
-#include "ospray/ospray_cpp/Model.h"
-#include "ospray/ospray_cpp/Renderer.h"
+
+#include "ospray/ospray_cpp.h"
 
 // helper function to write the rendered image as PPM file
 void writePPM(const char *fileName,
