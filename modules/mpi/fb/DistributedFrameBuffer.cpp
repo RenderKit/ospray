@@ -276,9 +276,9 @@ namespace ospray {
 
     // might actually want to move this to a thread:
     for (auto &msg : delayedMessage)
-      this->incoming(msg);
+      scheduleProcessing(msg);
 
-    if (isFrameComplete())
+    if (isFrameComplete(0))
       closeCurrentFrame();
   }
 
@@ -291,8 +291,10 @@ namespace ospray {
     myTiles.clear();
   }
 
-  bool DFB::isFrameComplete()
+  bool DFB::isFrameComplete(const size_t numTiles)
   {
+    SCOPED_LOCK(numTilesMutex);
+    numTilesCompletedThisFrame += numTiles;
     return numTilesCompletedThisFrame ==
       (mpicommon::IamAWorker() ? myTiles.size() : getTotalTiles());
   }
@@ -434,15 +436,14 @@ namespace ospray {
     // and completing tiles.
     if (mpicommon::IamAWorker()) {
       mpi::messaging::sendTo(mpicommon::masterRank(), myId, msg.message);
-      numTilesCompletedThisFrame++;
+
+      if (isFrameComplete(1)) {
+        closeCurrentFrame();
+      }
 
       DBG(printf("RANK %d MARKING AS COMPLETED %i,%i -> %i/%i\n",
                  mpicommon::globalRank(), tile->begin.x, tile->begin.y,
                  numTilesCompletedThisFrame.load(), myTiles.size()));
-
-      if (isFrameComplete()) {
-        closeCurrentFrame();
-      }
     } else {
       // If we're the master sending a message to ourself skip going
       // through the messaging layer entirely and just call incoming directly
@@ -454,15 +455,13 @@ namespace ospray {
   {
     assert(mpicommon::IamTheMaster());
     /*! we will not do anything with the tile other than mark it's done */
-    numTilesCompletedThisFrame++;
+    if (isFrameComplete(1)) {
+      closeCurrentFrame();
+    }
 
     DBG(printf("MASTER MARKING AS COMPLETED %i,%i -> %i/%i\n",
                tile->begin.x, tile->begin.y,
-               numTilesCompletedThisFrame.load(), getTotalTiles()));
-
-    if (isFrameComplete()) {
-      closeCurrentFrame();
-    }
+               numTilesCompletedThisFrame, getTotalTiles()));
   }
 
   size_t DFB::numMyTiles() const
@@ -497,20 +496,25 @@ namespace ospray {
       }
     }
 
-    tasking::schedule([=]() {
-      auto *_msg = (TileMessage*)message->data;
-      if (_msg->command & MASTER_WRITE_TILE_NONE) {
-        this->processMessage((MasterTileMessage_NONE*)_msg);
-      } else if (_msg->command & MASTER_WRITE_TILE_I8) {
-        this->processMessage((MasterTileMessage_RGBA_I8*)_msg);
-      } else if (_msg->command & MASTER_WRITE_TILE_F32) {
-        this->processMessage((MasterTileMessage_RGBA_F32*)_msg);
-      } else if (_msg->command & WORKER_WRITE_TILE) {
-        this->processMessage((WriteTileMessage*)_msg);
-      } else {
-        throw std::runtime_error("#dfb: unknown tile type processed!");
-      }
-    });
+    scheduleProcessing(message);
+  }
+
+  void DFB::scheduleProcessing(const std::shared_ptr<mpicommon::Message> &message)
+  {
+      tasking::schedule([=]() {
+        auto *msg = (TileMessage*)message->data;
+        if (msg->command & MASTER_WRITE_TILE_NONE) {
+          this->processMessage((MasterTileMessage_NONE*)msg);
+        } else if (msg->command & MASTER_WRITE_TILE_I8) {
+          this->processMessage((MasterTileMessage_RGBA_I8*)msg);
+        } else if (msg->command & MASTER_WRITE_TILE_F32) {
+          this->processMessage((MasterTileMessage_RGBA_F32*)msg);
+        } else if (msg->command & WORKER_WRITE_TILE) {
+          this->processMessage((WriteTileMessage*)msg);
+        } else {
+          throw std::runtime_error("#dfb: unknown tile type processed!");
+        }
+      });
   }
 
   void DFB::closeCurrentFrame()

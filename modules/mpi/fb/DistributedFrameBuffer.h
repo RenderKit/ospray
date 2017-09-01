@@ -185,7 +185,11 @@ namespace ospray {
     TileData *createTile(const vec2i &xy, size_t tileID, size_t ownerID);
     void freeTiles();
 
-    bool isFrameComplete();
+    /*! atomic update and check if frame is complete with given tiles */
+    bool isFrameComplete(size_t numTiles);
+
+    /*! Offloads processing of incoming message to tasking system */
+    void scheduleProcessing(const std::shared_ptr<mpicommon::Message> &message);
 
     // Data members ///////////////////////////////////////////////////////////
 
@@ -209,7 +213,10 @@ namespace ospray {
         (used to track when current node is done with this frame - we are done
         exactly once we've completed sending / receiving the last tile to / by
         the master) */
-    std::atomic<size_t> numTilesCompletedThisFrame;
+    size_t numTilesCompletedThisFrame;
+
+    /* protected numTilesCompletedThisFrame to ensure atomic update and compare */
+    std::mutex numTilesMutex;
 
     /*! vector of info for *all* tiles. Each logical tile in the
       screen has an entry here */
