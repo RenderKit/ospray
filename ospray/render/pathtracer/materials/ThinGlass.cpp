@@ -27,11 +27,14 @@ namespace ospray {
       virtual std::string toString() const  override
       { return "ospray::pathtracer::ThinGlass"; }
 
+      ThinGlass()
+      {
+        ispcEquivalent = ispc::PathTracer_ThinGlass_create();
+      }
+
       //! \brief commit the material's parameters
       virtual void commit()  override
       {
-        if (getIE() != nullptr) return;
-
         const vec3f& transmission
           = getParam3f("transmission", vec3f(1.f));
         const float eta
@@ -39,8 +42,8 @@ namespace ospray {
         const float thickness
           = getParamf("thickness",1.f);
 
-        ispcEquivalent = ispc::PathTracer_ThinGlass_create
-          (eta,(const ispc::vec3f&)transmission,thickness);
+        ispc::PathTracer_ThinGlass_set
+          (getIE(), eta,(const ispc::vec3f&)transmission,thickness);
       }
     };
 
