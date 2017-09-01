@@ -31,11 +31,17 @@
 #else
 #  include <alloca.h>
 #endif
-#include "ospray/ospray.h"
+#include "ospray/ospray_cpp/Camera.h"
+#include "ospray/ospray_cpp/Data.h"
+#include "ospray/ospray_cpp/FrameBuffer.h"
+#include "ospray/ospray_cpp/Geometry.h"
+#include "ospray/ospray_cpp/Light.h"
+#include "ospray/ospray_cpp/Model.h"
+#include "ospray/ospray_cpp/Renderer.h"
 
 // helper function to write the rendered image as PPM file
 void writePPM(const char *fileName,
-              const osp::vec2i &size,
+              const ospcommon::vec2i &size,
               const uint32_t *pixel)
 {
   FILE *file = fopen(fileName, "wb");
@@ -61,14 +67,14 @@ void writePPM(const char *fileName,
 
 int main(int argc, const char **argv) {
   // image size
-  osp::vec2i imgSize;
+  ospcommon::vec2i imgSize;
   imgSize.x = 1024; // width
   imgSize.y = 768; // height
 
   // camera
-  float cam_pos[] = {0.f, 0.f, 0.f};
-  float cam_up [] = {0.f, 1.f, 0.f};
-  float cam_view [] = {0.1f, 0.f, 1.f};
+  ospcommon::vec3f cam_pos{0.f, 0.f, 0.f};
+  ospcommon::vec3f cam_up{0.f, 1.f, 0.f};
+  ospcommon::vec3f cam_view{0.1f, 0.f, 1.f};
 
   // triangle mesh data
   float vertex[] = { -1.0f, -1.0f, 3.0f, 0.f,
@@ -89,74 +95,74 @@ int main(int argc, const char **argv) {
     return init_error;
 
   // create and setup camera
-  OSPCamera camera = ospNewCamera("perspective");
-  ospSetf(camera, "aspect", imgSize.x/(float)imgSize.y);
-  ospSet3fv(camera, "pos", cam_pos);
-  ospSet3fv(camera, "dir", cam_view);
-  ospSet3fv(camera, "up",  cam_up);
-  ospCommit(camera); // commit each object to indicate modifications are done
-
+  ospray::cpp::Camera camera("perspective");
+  camera.set("aspect", imgSize.x/(float)imgSize.y);
+  camera.set("pos", cam_pos);
+  camera.set("dir", cam_view);
+  camera.set("up",  cam_up);
+  camera.commit(); // commit each object to indicate modifications are done
 
   // create and setup model and mesh
-  OSPGeometry mesh = ospNewGeometry("triangles");
-  OSPData data = ospNewData(4, OSP_FLOAT3A, vertex); // OSP_FLOAT3 format is also supported for vertex positions
-  ospCommit(data);
-  ospSetData(mesh, "vertex", data);
+  ospray::cpp::Geometry mesh("triangles");
+  ospray::cpp::Data data(4, OSP_FLOAT3A, vertex); // OSP_FLOAT3 format is also supported for vertex positions
+  data.commit();
+  mesh.set("vertex", data);
 
-  data = ospNewData(4, OSP_FLOAT4, color);
-  ospCommit(data);
-  ospSetData(mesh, "vertex.color", data);
+  data = ospray::cpp::Data(4, OSP_FLOAT4, color);
+  data.commit();
+  mesh.set("vertex.color", data);
 
-  data = ospNewData(2, OSP_INT3, index); // OSP_INT4 format is also supported for triangle indices
-  ospCommit(data);
-  ospSetData(mesh, "index", data);
+  data = ospray::cpp::Data(2, OSP_INT3, index); // OSP_INT4 format is also supported for triangle indices
+  data.commit();
+  mesh.set("index", data);
 
-  ospCommit(mesh);
+  mesh.commit();
 
 
-  OSPModel world = ospNewModel();
-  ospAddGeometry(world, mesh);
-  ospCommit(world);
+  ospray::cpp::Model world;
+  world.addGeometry(mesh);
+  world.commit();
 
 
   // create renderer
-  OSPRenderer renderer = ospNewRenderer("scivis"); // choose Scientific Visualization renderer
-  
+  ospray::cpp::Renderer renderer("scivis"); // choose Scientific Visualization renderer
+
   // create and setup light for Ambient Occlusion
-  OSPLight light = ospNewLight(renderer, "ambient");
-  ospCommit(light);
-  OSPData lights = ospNewData(1, OSP_LIGHT, &light);
-  ospCommit(lights);
+  ospray::cpp::Light light = renderer.newLight("ambient");
+  light.commit();
+  auto lightHandle = light.handle();
+  ospray::cpp::Data lights(1, OSP_LIGHT, &lightHandle);
+  lights.commit();
 
   // complete setup of renderer
-  ospSet1i(renderer, "aoSamples", 1);
-  ospSet1f(renderer, "bgColor", 1.0f); // white, transparent
-  ospSetObject(renderer, "model",  world);
-  ospSetObject(renderer, "camera", camera);
-  ospSetObject(renderer, "lights", lights);
-  ospCommit(renderer);
+  renderer.set("aoSamples", 1);
+  renderer.set("bgColor", 1.0f); // white, transparent
+  renderer.set("model",  world);
+  renderer.set("camera", camera);
+  renderer.set("lights", lights);
+  renderer.commit();
 
 
   // create and setup framebuffer
-  OSPFrameBuffer framebuffer = ospNewFrameBuffer(imgSize, OSP_FB_SRGBA, OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
-  ospFrameBufferClear(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
+  ospray::cpp::FrameBuffer framebuffer(imgSize, OSP_FB_SRGBA, OSP_FB_COLOR | /*OSP_FB_DEPTH |*/ OSP_FB_ACCUM);
+  framebuffer.clear(OSP_FB_COLOR | OSP_FB_ACCUM);
 
   // render one frame
-  ospRenderFrame(framebuffer, renderer, OSP_FB_COLOR | OSP_FB_ACCUM);
+  renderer.renderFrame(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
 
   // access framebuffer and write its content as PPM file
-  const uint32_t * fb = (uint32_t*)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
+  uint32_t* fb = (uint32_t*)framebuffer.map(OSP_FB_COLOR);
   writePPM("firstFrame.ppm", imgSize, fb);
-  ospUnmapFrameBuffer(fb, framebuffer);
+  framebuffer.unmap(fb);
 
 
   // render 10 more frames, which are accumulated to result in a better converged image
   for (int frames = 0; frames < 10; frames++)
-    ospRenderFrame(framebuffer, renderer, OSP_FB_COLOR | OSP_FB_ACCUM);
+    renderer.renderFrame(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
 
-  fb = (uint32_t*)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
+  fb = (uint32_t*)framebuffer.map(OSP_FB_COLOR);
   writePPM("accumulatedFrame.ppm", imgSize, fb);
-  ospUnmapFrameBuffer(fb, framebuffer);
+  framebuffer.unmap(fb);
 
   return 0;
 }
