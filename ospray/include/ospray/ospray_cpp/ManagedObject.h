@@ -70,7 +70,7 @@ namespace ospray {
 
       // OSPObject*
       virtual void set(const std::string &name, OSPObject v) const = 0;
-     
+
       // ManagedObject&
       virtual void set(const std::string &name, const ManagedObject &v) const = 0;
 
@@ -79,6 +79,9 @@ namespace ospray {
 
       //! Commit to ospray
       virtual void commit() const = 0;
+
+      //! Release the handle, sets the held handle instance to 'nullptr'
+      virtual void release() = 0;
 
       //! Get the underlying generic OSPObject handle
       virtual OSPObject object() const = 0;
@@ -132,6 +135,8 @@ namespace ospray {
 
       void commit() const override;
 
+      void release() override;
+
       OSPObject object() const override;
 
       //! Get the underlying specific OSP* handle
@@ -139,7 +144,6 @@ namespace ospray {
 
       //! return whether the given object is valid, or NULL
       inline operator bool () const { return handle() != nullptr; }
-
 
     protected:
 
@@ -319,6 +323,13 @@ namespace ospray {
     inline void ManagedObject_T<OSP_TYPE>::commit() const
     {
       ospCommit(ospObject);
+    }
+
+    template <typename OSP_TYPE>
+    inline void ManagedObject_T<OSP_TYPE>::release()
+    {
+      ospRelease(ospObject);
+      ospObject = nullptr;
     }
 
     template <typename OSP_TYPE>
