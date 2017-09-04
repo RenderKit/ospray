@@ -75,6 +75,16 @@ namespace ospray {
       return value;
     }
 
+    static inline vec2f parseVec2fString(std::string valueString)
+    {
+      std::stringstream valueStream(valueString);
+
+      vec2f value;
+      valueStream >> value.x >> value.y;
+
+      return value;
+    }
+
     static inline void parseParameterString(std::string typeAndValueString,
                                             std::string &paramType,
                                             ospcommon::utility::Any &paramValue)
@@ -97,6 +107,8 @@ namespace ospray {
 
       if (paramType == "float") {
         paramValue = parseFloatString(paramValueString);
+      } else if (paramType == "vec2f") {
+        paramValue = parseVec2fString(paramValueString);
       } else if (paramType == "vec3f") {
         paramValue = parseVec3fString(paramValueString);
       } else {
