@@ -58,6 +58,11 @@ namespace ospray {
       PointLight();
     };
 
+    struct OSPSG_INTERFACE QuadLight : public Light
+    {
+      QuadLight();
+    };
+
     struct OSPSG_INTERFACE HDRILight : public Light
     {
       HDRILight();
