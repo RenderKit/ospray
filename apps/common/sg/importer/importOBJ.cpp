@@ -230,7 +230,8 @@ namespace ospray {
                              attrib.vertices[idx2.vertex_index * 3 + 1],
                              attrib.vertices[idx2.vertex_index * 3 + 2]));
 
-          if (!attrib.normals.empty()) {
+          // TODO create missing normals&texcoords if only some faces have them
+          if (!attrib.normals.empty() && idx0.normal_index != -1) {
             vn->push_back(vec3f(attrib.normals[idx0.normal_index * 3 + 0],
                                 attrib.normals[idx0.normal_index * 3 + 1],
                                 attrib.normals[idx0.normal_index * 3 + 2]));
@@ -242,7 +243,7 @@ namespace ospray {
                                 attrib.normals[idx2.normal_index * 3 + 2]));
           }
 
-          if (!attrib.texcoords.empty()) {
+          if (!attrib.texcoords.empty() && idx0.texcoord_index != -1) {
             vt->push_back(vec2f(attrib.texcoords[idx0.texcoord_index * 2 + 0],
                                 attrib.texcoords[idx0.texcoord_index * 2 + 1]));
             vt->push_back(vec2f(attrib.texcoords[idx1.texcoord_index * 2 + 0],
