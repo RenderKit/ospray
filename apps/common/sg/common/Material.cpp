@@ -91,24 +91,16 @@ namespace ospray {
 
     void Material::postCommit(RenderContext &ctx)
     {
-      if (hasChild("map_Kd"))
-        ospSetObject(valueAs<OSPMaterial>(), "map_Kd",
-          child("map_Kd").valueAs<OSPObject>());
-      if (hasChild("map_Ks"))
-        ospSetObject(valueAs<OSPMaterial>(), "map_Ks",
-          child("map_Ks").valueAs<OSPObject>());
-      if (hasChild("map_Ns"))
-        ospSetObject(valueAs<OSPMaterial>(), "map_Ns",
-          child("map_Ns").valueAs<OSPObject>());
-      if (hasChild("map_d"))
-        ospSetObject(valueAs<OSPMaterial>(), "map_d",
-          child("map_d").valueAs<OSPObject>());
-      if (hasChild("map_Bump"))
-        ospSetObject(valueAs<OSPMaterial>(), "map_Bump",
-          child("map_Bump").valueAs<OSPObject>());
+      auto mat = valueAs<OSPMaterial>();
 
-      ospCommit(valueAs<OSPMaterial>());
+      // handle objects (mostly textures)
+      for (auto &it : properties.children) {
+        auto &child = *it.second;
+        if (child.valueIsType<OSPObject>())
+          ospSetObject(mat, child.name().c_str(), child.valueAs<OSPObject>());
+      }
 
+      ospCommit(mat);
     }
 
     OSP_REGISTER_SG_NODE(Material);
