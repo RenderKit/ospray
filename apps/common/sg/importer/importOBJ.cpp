@@ -41,7 +41,7 @@ namespace ospray {
     }
 
     void addTextureIfNeeded(Material &node,
-                            const std::string &type,
+                            const std::string &name,
                             const FileName &texName,
                             const FileName &containingPath,
                             bool preferLinear = false)
@@ -49,40 +49,10 @@ namespace ospray {
       if (!texName.str().empty()) {
         auto tex = loadTexture(containingPath + texName, preferLinear);
         if (tex) {
-          tex->setName(type);
-          node.setChild(type, tex);
+          tex->setName(name);
+          node.setChild(name, tex);
         }
       }
-    }
-
-    static inline float parseFloatString(std::string valueString)
-    {
-      std::stringstream valueStream(valueString);
-
-      float value;
-      valueStream >> value;
-
-      return value;
-    }
-
-    static inline vec3f parseVec3fString(std::string valueString)
-    {
-      std::stringstream valueStream(valueString);
-
-      vec3f value;
-      valueStream >> value.x >> value.y >> value.z;
-
-      return value;
-    }
-
-    static inline vec2f parseVec2fString(std::string valueString)
-    {
-      std::stringstream valueStream(valueString);
-
-      vec2f value;
-      valueStream >> value.x >> value.y;
-
-      return value;
     }
 
     static inline void parseParameterString(std::string typeAndValueString,
@@ -98,19 +68,16 @@ namespace ospray {
       float val;
       while (valueStream >> val)
         floats.push_back(val);
-      if (floats.size() == 1)
-        paramType = "float";
-      else if (floats.size() == 2)
-        paramType = "vec2f";
-      else if (floats.size() == 3)
-        paramType = "vec3f";
 
-      if (paramType == "float") {
-        paramValue = parseFloatString(paramValueString);
-      } else if (paramType == "vec2f") {
-        paramValue = parseVec2fString(paramValueString);
-      } else if (paramType == "vec3f") {
-        paramValue = parseVec3fString(paramValueString);
+      if (floats.size() == 1) {
+        paramType = "float";
+        paramValue = floats[0];
+      } else if (floats.size() == 2) {
+        paramType = "vec2f";
+        paramValue = vec2f(floats[0], floats[1]);
+      } else if (floats.size() == 3) {
+        paramType = "vec3f";
+        paramValue = vec3f(floats[0], floats[1], floats[2]);
       } else {
         // Unknown type.
         paramValue = typeAndValueString;
@@ -139,6 +106,8 @@ namespace ospray {
               matNode.createChildWithValue(param.first, paramType, paramValue);
             } catch (const std::runtime_error &) {
               // NOTE(jda) - silently move on if parsed node type doesn't exist
+              // maybe it's a texture, try it
+              addTextureIfNeeded(matNode, param.first, param.second, containingPath);
             }
           }
         }
