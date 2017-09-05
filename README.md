@@ -120,10 +120,9 @@ CMake is easy:
 
 -   The compiler CMake will use will default to whatever the `CC` and
     `CXX` environment variables point to. Should you want to specify a
-    different compiler, run cmake manually while specifying the
-    desired compiler. The default compiler on most linux machines is
-    `gcc`, but it can be pointed to `clang` instead by executing the
-    following:
+    different compiler, run cmake manually while specifying the desired
+    compiler. The default compiler on most linux machines is `gcc`, but
+    it can be pointed to `clang` instead by executing the following:
 
         cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang ..
 
@@ -142,9 +141,9 @@ CMake is easy:
 
         make
 
--   You should now have `libospray.so` as well as a set of
-    example application. You can test your version of OSPRay using any
-    of the examples on the [OSPRay Demos and
+-   You should now have `libospray.so` as well as a set of example
+    application. You can test your version of OSPRay using any of the
+    examples on the [OSPRay Demos and
     Examples](http://www.ospray.org/demos.html) page.
 
 Documentation
@@ -427,9 +426,8 @@ implemented in shared libraries. To load plugin `name` from
 OSPError ospLoadModule(const char *name);
 ```
 
-Modules are searched in OS-dependent paths, which include the
-application directory. `ospLoadModule` returns `OSP_NO_ERROR` if the
-plugin could be successfully loaded.
+Modules are searched in OS-dependent paths. `ospLoadModule` returns
+`OSP_NO_ERROR` if the plugin could be successfully loaded.
 
 Objects
 -------
@@ -1445,6 +1443,40 @@ For convenience, the rather counterintuitive physical attenuation
 coefficients will be calculated from the user inputs in such a way, that
 the `attenuationColor` will be the result when white light traveled
 trough a glass of thickness `attenuationDistance`.
+
+#### ThinGlass
+
+The [path tracer](#path-tracer) offers a thin glass material useful for
+objects with just a single surface, most prominently windows. It models
+a very thin, transparent slab, i.e. it behaves as if a second, virtual
+surface is parallel to the real geometric surface. The implementation
+accounts for multiple internal reflections between the interfaces
+(including attenuation), but neglects parallaxe effects due to its
+(virtual) thickness. To create a such a thin glass material pass the
+type string "`ThinGlass`" to `ospNewMaterial`. Its parameters are
+
+| Type  | Name                |  Default| Description                        |
+|:------|:--------------------|--------:|:-----------------------------------|
+| float | eta                 |      1.5| index of refraction                |
+| vec3f | attenuationColor    |    white| resulting color due to attenuation |
+| float | attenuationDistance |        1| distance affecting attenuation     |
+| float | thickness           |        1| virtual thickness                  |
+
+: Parameters of the ThinGlass material.
+
+<img src="https://ospray.github.io/images/material_ThinGlass.jpg" alt="Rendering of a ThinGlass material with red attenuation." style="width:60.0%" />
+
+For convenience the attenuation is controlled the same way as with the
+[Glass](#glass) material. Additionally, the color due to attenuation can
+be modulated with a [texture](#texture) `map_attenuationColor` ([texture
+transformations](#texture-transformations) are supported as well). The
+`thickness` parameter sets the (virtual) thickness and allows for easy
+exchange of parameters with the (real) [Glass](#glass) material;
+internally just the ratio between `attenuationDistance` and `thickness`
+is used to calculate the resulting attenuation and thus the material
+appearence.
+
+<img src="https://ospray.github.io/images/ColoredWindow.jpg" alt="Example image of a colored window made with textured attenuation of the ThinGlass material." style="width:60.0%" />
 
 #### Luminous
 
