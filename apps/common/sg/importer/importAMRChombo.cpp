@@ -315,7 +315,7 @@ namespace ospray {
     void importAMRChombo(std::shared_ptr<sg::Node> &world,
                          const FileName &fileName,
                          const std::string &desiredComponent,
-                         const range_t<float> *clampRange)
+                         const range1f *clampRange)
     {
       auto node = sg::createNode("amr", "AMRVolume")->nodeAs<sg::AMRVolume>();
       parseAMRChomboFile(node, fileName, desiredComponent, clampRange);
@@ -326,7 +326,7 @@ namespace ospray {
     void parseAMRChomboFile(std::shared_ptr<sg::AMRVolume> &node,
                             const FileName &fileName,
                             const std::string &desiredComponent,
-                            const range_t<float> *clampRange,
+                            const range1f *clampRange,
                             int maxLevel)
     {
       amr::AMR *amr = ospray::amr::AMR::parse(fileName.str(), maxLevel);

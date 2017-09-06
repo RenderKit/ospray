@@ -66,7 +66,7 @@ namespace ospray {
       // ID of the data component we want to render (each brick can
       // contain multiple components)
       int componentID{0};
-      range_t<float> valueRange;
+      range1f valueRange;
       std::vector<OSPData> brickData;
       std::vector<BrickInfo> brickInfo;
       std::vector<float *> brickPtrs;
@@ -78,7 +78,7 @@ namespace ospray {
     extern void parseAMRChomboFile(std::shared_ptr<sg::AMRVolume> &node,
                                    const FileName &fileName,
                                    const std::string &desiredComponent,
-                                   const range_t<float> *clampRange,
+                                   const range1f *clampRange,
                                    int maxLevel = 1 << 30);
 #endif
 
