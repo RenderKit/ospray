@@ -455,7 +455,7 @@ namespace ospray {
           std::stringstream ss;
           ss << 1.f/currentWidget->renderTime;
           ImGui::PushStyleColor(ImGuiCol_Text, ImColor(.8,.8,.8,1.f));
-          ImGui::Text("%s", ("FPS: " + ss.str()).c_str());
+          ImGui::Text("%s", ("fps: " + ss.str()).c_str());
           ImGui::Text("press \'g\' for menu");
           ImGui::PopStyleColor(1);
 

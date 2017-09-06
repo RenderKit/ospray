@@ -121,7 +121,7 @@ namespace ospray {
     void Renderer::postRender(RenderContext &ctx)
     {
       auto fb = (OSPFrameBuffer)child("frameBuffer").valueAs<OSPObject>();
-      ospRenderFrame(fb, ospRenderer, OSP_FB_COLOR | OSP_FB_ACCUM);
+      variance = ospRenderFrame(fb, ospRenderer, OSP_FB_COLOR | OSP_FB_ACCUM);
     }
 
     void Renderer::preRender(RenderContext& ctx)
@@ -217,6 +217,11 @@ namespace ospray {
       OSPPickResult result;
       ospPick(&result, ospRenderer, (osp::vec2f&)pickPos);
       return result;
+    }
+
+    float Renderer::getLastVariance() const
+    {
+      return variance;
     }
 
     OSP_REGISTER_SG_NODE(Renderer);

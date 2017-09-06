@@ -145,6 +145,11 @@ namespace ospray {
     return fps.perSecondSmoothed();
   }
 
+  float AsyncRenderEngine::getLastVariance() const
+  {
+    return scenegraph->nodeAs<sg::Renderer>()->getLastVariance();
+  }
+
   void AsyncRenderEngine::pick(const vec2f &screenPos)
   {
     pickPos = screenPos;

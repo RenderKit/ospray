@@ -69,6 +69,7 @@ namespace ospray {
     double lastGUITime;
     double lastDisplayTime;
     double lastTotalTime;
+    float lastVariance;
 
     ospcommon::vec2i windowSize;
     imgui3D::ImGui3DWidget::ViewPort originalView;

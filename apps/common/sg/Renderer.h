@@ -37,6 +37,7 @@ namespace ospray {
       void preCommit(RenderContext &ctx) override;
       void postCommit(RenderContext &ctx) override;
       OSPPickResult pick(const vec2f &pickPos);
+      float getLastVariance() const;
 
     private:
 
@@ -46,6 +47,7 @@ namespace ospray {
       OSPData lightsData {nullptr};
       TimeStamp lightsBuildTime;
       TimeStamp frameMTime;
+      float variance {inf};
       std::string createdType = "none";
     };
 

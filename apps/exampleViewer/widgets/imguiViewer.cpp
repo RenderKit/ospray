@@ -319,14 +319,15 @@ namespace ospray {
 
     if (demo_window) ImGui::ShowTestWindow(&demo_window);
 
-    if (ImGui::CollapsingHeader("FPS Statistics", "FPS Statistics",
+    if (ImGui::CollapsingHeader("Rendering Statistics", "Rendering Statistics",
                                 true, false)) {
       ImGui::NewLine();
-      ImGui::Text("OSPRay render rate: %.1f FPS", lastFrameFPS);
-      ImGui::Text("  Total GUI frame rate: %.1f FPS", ImGui::GetIO().Framerate);
-      ImGui::Text("  Total 3dwidget time: %.1fms ", lastTotalTime*1000.f);
-      ImGui::Text("  GUI time: %.1fms ", lastGUITime*1000.f);
-      ImGui::Text("  display pixel time: %.1fms ", lastDisplayTime*1000.f);
+      ImGui::Text("OSPRay render rate: %.1f fps", lastFrameFPS);
+      ImGui::Text("  Total GUI frame rate: %.1f fps", ImGui::GetIO().Framerate);
+      ImGui::Text("  Total 3dwidget time: %.1f ms", lastTotalTime*1000.f);
+      ImGui::Text("  GUI time: %.1f ms", lastGUITime*1000.f);
+      ImGui::Text("  display pixel time: %.1f ms", lastDisplayTime*1000.f);
+      ImGui::Text("Variance: %.3f", renderEngine.getLastVariance());
       ImGui3DWidget::display();
       ImGui::NewLine();
     }
